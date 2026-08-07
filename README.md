@@ -1,12 +1,57 @@
 # Budgetisation
 
-Première version navigable de l’application d’analyse du budget historique d’Adrien et Manon.
+Application Next.js privée pour analyser le budget historique d’un foyer partagé.
+
+## Architecture
+
+Les pages utilisent `SupabaseBudgetRepository`, qui lit PostgreSQL via Supabase. Le
+schéma relationnel couvre le foyer, ses membres, les comptes, les imports, la
+taxonomie et les opérations. Supabase Auth protège les routes et les politiques
+RLS limitent chaque lecture/écriture aux membres du foyer concerné.
+
+## Configuration
+
+Copier `.env.example` vers `.env.local`, puis renseigner :
+
+```dotenv
+NEXT_PUBLIC_SUPABASE_URL=
+NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=
+```
+
+Ne jamais ajouter de clé `service_role` au navigateur.
+
+## Initialisation Supabase
+
+Exécuter une seule fois `supabase/bootstrap.sql` dans Supabase SQL Editor. Ce
+fichier crée le schéma, les politiques RLS, le foyer `Budgetisation` et les 418
+opérations historiques uniques issues du XLSX fourni.
+
+Dans **Authentication > Users**, créer ensuite les deux utilisateurs avec leur
+e-mail et leur mot de passe. Copier leurs UUID, puis exécuter dans SQL Editor :
+
+```sql
+select public.attach_user_to_budgetisation(
+  '<UUID_ADRIEN>',
+  'Adrien',
+  'owner'
+);
+
+select public.attach_user_to_budgetisation(
+  '<UUID_MANON>',
+  'Manon',
+  'member'
+);
+```
+
+Le rattachement utilise les UUID Auth, jamais les e-mails.
+
+## Démarrage local
 
 ```bash
 npm install
 npm run dev
 ```
 
-Les données fictives locales se trouvent dans `src/data/mock/mock-budget-data.ts`.
-
-Pour connecter Supabase plus tard, créez une nouvelle implémentation du contrat `BudgetRepository` défini dans `src/data/budget-repository.ts`, puis remplacez l’instance locale exportée par `src/data/index.ts`.
+Les migrations versionnées se trouvent dans `supabase/migrations`. Le script
+`scripts/generate_historical_seed.py` permet de régénérer le seed à partir du
+fichier source, sans déduire de compte ni de personne.

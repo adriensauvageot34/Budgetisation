@@ -117,6 +117,13 @@ export function OperationsTable({
   const [selectedOperation, setSelectedOperation] = useState<Operation | null>(
     null,
   );
+  const people = [
+    ...new Set(
+      operations
+        .map((operation) => operation.person)
+        .filter((value): value is string => Boolean(value)),
+    ),
+  ].sort((a, b) => a.localeCompare(b, "fr"));
 
   const filtered = useMemo(() => {
     const normalizedQuery = query.trim().toLocaleLowerCase("fr-FR");
@@ -213,8 +220,8 @@ export function OperationsTable({
   const activeAdvanced = [person, importance, recurrence, status].filter(
     (value) => value !== "Toutes" && value !== "Tous",
   ).length;
-  const accountName = (id: string) =>
-    accounts.find((account) => account.id === id)?.name ?? id;
+  const accountName = (id: string | null) =>
+    accounts.find((account) => account.id === id)?.name ?? "Non renseigné";
 
   const filterFields = (
     <>
@@ -394,8 +401,9 @@ export function OperationsTable({
                 }}
               >
                 <option>Toutes</option>
-                <option>Adrien</option>
-                <option>Manon</option>
+                {people.map((entry) => (
+                  <option key={entry}>{entry}</option>
+                ))}
               </select>
             </label>
             <label className="text-xs font-bold text-[var(--color-muted)]">
@@ -555,7 +563,7 @@ export function OperationsTable({
                   <td>
                     <p className="font-extrabold">{operation.label}</p>
                     <p className="mt-0.5 text-xs text-[var(--color-muted)]">
-                      {operation.normalizedMerchant} · {operation.person}
+                      {operation.normalizedMerchant} · {operation.person ?? "Non renseigné"}
                     </p>
                   </td>
                   <td
@@ -575,9 +583,9 @@ export function OperationsTable({
                   {view === "Complète" ? (
                     <>
                       <td>{operation.subcategory}</td>
-                      <td>{operation.preciseType}</td>
-                      <td>{operation.importance}</td>
-                      <td>{operation.recurrence}</td>
+                      <td>{operation.preciseType ?? "Non renseigné"}</td>
+                      <td>{operation.importance ?? "Non renseigné"}</td>
+                      <td>{operation.recurrence ?? "Non renseigné"}</td>
                       <td>
                         <StatusBadge status={operation.status} />
                       </td>
@@ -602,7 +610,7 @@ export function OperationsTable({
               <div className="min-w-0">
                 <p className="truncate font-extrabold">{operation.label}</p>
                 <p className="mt-1 text-xs text-[var(--color-muted)]">
-                  {formatDate(operation.date)} · {operation.person}
+                  {formatDate(operation.date)} · {operation.person ?? "Non renseigné"}
                 </p>
               </div>
               <p
@@ -713,7 +721,7 @@ export function OperationsTable({
                   {selectedOperation.flow}
                 </span>
                 <span className="rounded-full bg-white/12 px-3 py-1 text-xs font-bold">
-                  {selectedOperation.person}
+                  {selectedOperation.person ?? "Non renseigné"}
                 </span>
                 <span className="rounded-full bg-white/12 px-3 py-1 text-xs font-bold">
                   {accountName(selectedOperation.accountId)}
@@ -727,9 +735,9 @@ export function OperationsTable({
                 {[
                   ["Catégorie", selectedOperation.category],
                   ["Sous-catégorie", selectedOperation.subcategory],
-                  ["Type précis", selectedOperation.preciseType],
-                  ["Importance", selectedOperation.importance],
-                  ["Nature", selectedOperation.recurrence],
+                  ["Type précis", selectedOperation.preciseType ?? "Non renseigné"],
+                  ["Importance", selectedOperation.importance ?? "Non renseigné"],
+                  ["Nature", selectedOperation.recurrence ?? "Non renseigné"],
                   ["Statut", selectedOperation.status],
                 ].map(([label, value]) => (
                   <div key={label}>

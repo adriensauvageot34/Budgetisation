@@ -7,10 +7,10 @@ import type {
 } from "@/domain/budget";
 
 export interface BudgetRepository {
-  getMonths(): MonthKey[];
-  getOperations(): Operation[];
-  getOperationsByMonth(month: MonthKey): Operation[];
-  getAccounts(): Account[];
-  getCategories(): CategoryDefinition[];
-  getImportBatches(): ImportBatch[];
+  getMonths(): Promise<MonthKey[]>;
+  getOperations(): Promise<Operation[]>;
+  getOperationsByMonth(month: MonthKey): Promise<Operation[]>;
+  getAccounts(): Promise<Account[]>;
+  getCategories(): Promise<CategoryDefinition[]>;
+  getImportBatches(): Promise<ImportBatch[]>;
 }

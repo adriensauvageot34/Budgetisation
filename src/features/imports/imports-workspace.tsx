@@ -1,186 +1,282 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
+import { useRouter } from "next/navigation";
 import {
   AlertTriangle,
   CheckCircle2,
   FileSpreadsheet,
   FileUp,
   Info,
-  Plus,
   TriangleAlert,
   UploadCloud,
 } from "lucide-react";
 import type { ImportBatch } from "@/domain/budget";
-import { formatMonth } from "@/lib/format";
+import {
+  parseImportFile,
+  type ParsedImport,
+  type PreviewRow,
+} from "@/features/imports/import-file";
+import { createClient } from "@/lib/supabase/client";
+import { formatCurrency, formatDate, formatMonth } from "@/lib/format";
 import { PageHeader } from "@/components/ui/page-header";
 
-const previewRows = [
-  {
-    date: "29/08/2026",
-    label: "CARTE · MARCHÉ DES HALLES",
-    amount: "- 73,40 €",
-    category: "Alimentation",
-    issue: null,
-  },
-  {
-    date: "28/08/2026",
-    label: "VIREMENT INTERNE · ÉPARGNE",
-    amount: "- 150,00 €",
-    category: "Transferts internes",
-    issue: null,
-  },
-  {
-    date: "27/08/2026",
-    label: "CARTE · LIBELLÉ INCOMPLET",
-    amount: "- 24,90 €",
-    category: "Achats & maison ?",
-    issue: "Classement incertain",
-  },
-  {
-    date: "26/08/2026",
-    label: "CARTE · CAFÉ DES QUAIS",
-    amount: "- 4,20 €",
-    category: "Alimentation",
-    issue: "Doublon possible",
-  },
-];
+function batchPeriod(batch: ImportBatch) {
+  if (batch.firstMonth && batch.lastMonth && batch.firstMonth !== batch.lastMonth) {
+    return `${formatMonth(batch.firstMonth)} — ${formatMonth(batch.lastMonth)}`;
+  }
+  return batch.month ? formatMonth(batch.month) : "Non renseigné";
+}
+
+async function existingFingerprints(rows: PreviewRow[]) {
+  const supabase = createClient();
+  const found = new Set<string>();
+  for (let offset = 0; offset < rows.length; offset += 100) {
+    const chunk = rows.slice(offset, offset + 100).map((row) => row.fingerprint);
+    const { data, error } = await supabase
+      .from("operations")
+      .select("fingerprint")
+      .in("fingerprint", chunk);
+    if (error) throw new Error(error.message);
+    data?.forEach((row) => found.add(row.fingerprint));
+  }
+  return found;
+}
 
 export function ImportsWorkspace({ batches }: { batches: ImportBatch[] }) {
-  const [previewOpen, setPreviewOpen] = useState(true);
+  const router = useRouter();
+  const inputRef = useRef<HTMLInputElement>(null);
+  const [file, setFile] = useState<File | null>(null);
+  const [parsed, setParsed] = useState<ParsedImport | null>(null);
+  const [busy, setBusy] = useState(false);
+  const [message, setMessage] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  async function loadFile(selected: File | null) {
+    if (!selected) return;
+    setFile(selected);
+    setParsed(null);
+    setMessage(null);
+    setError(null);
+    setBusy(true);
+    try {
+      const result = await parseImportFile(selected);
+      const fingerprints = await existingFingerprints(result.rows);
+      result.rows.forEach((row) => {
+        row.potentialDuplicate = fingerprints.has(row.fingerprint);
+      });
+      setParsed(result);
+    } catch (caught) {
+      setError(
+        caught instanceof Error ? caught.message : "Lecture du fichier impossible.",
+      );
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function confirmImport() {
+    if (!file || !parsed) return;
+    const rows = parsed.rows.filter(
+      (row) =>
+        !row.potentialDuplicate &&
+        !row.missing.some((field) =>
+          ["Date", "Mois", "Montant net", "Libellé bancaire"].includes(field),
+        ),
+    );
+    if (!rows.length) {
+      setError("Aucune ligne insérable après les contrôles.");
+      return;
+    }
+
+    setBusy(true);
+    setError(null);
+    const payload = rows.map(
+      ({ sourceIndex: _sourceIndex, missing: _missing, potentialDuplicate: _duplicate, ...row }) =>
+        row,
+    );
+    const { data, error: rpcError } = await createClient().rpc(
+      "import_operations",
+      {
+        source_filename: file.name,
+        source_rows: payload,
+      },
+    );
+    if (rpcError) {
+      setError(rpcError.message);
+      setBusy(false);
+      return;
+    }
+
+    const inserted =
+      data && typeof data === "object" && "inserted" in data
+        ? Number(data.inserted)
+        : rows.length;
+    setMessage(`${inserted} opérations ont été importées.`);
+    setParsed(null);
+    setFile(null);
+    setBusy(false);
+    router.refresh();
+  }
+
+  const potentialDuplicates =
+    parsed?.rows.filter((row) => row.potentialDuplicate).length ?? 0;
+  const blockingRows =
+    parsed?.rows.filter((row) =>
+      row.missing.some((field) =>
+        ["Date", "Mois", "Montant net", "Libellé bancaire"].includes(field),
+      ),
+    ).length ?? 0;
+  const insertable =
+    (parsed?.rows.length ?? 0) - potentialDuplicates - blockingRows;
 
   return (
     <div>
       <PageHeader
         eyebrow="Données"
         title="Imports"
-        description="Prévisualisez un relevé, repérez les doublons et contrôlez les classements avant un futur enregistrement."
+        description="Lisez un relevé CSV ou XLSX, contrôlez les données et confirmez son insertion dans Supabase."
         action={
           <button
             type="button"
             className="button-primary"
-            onClick={() => setPreviewOpen(true)}
+            onClick={() => inputRef.current?.click()}
           >
-            <Plus size={17} />
+            <FileUp size={17} />
             Nouvel import
           </button>
         }
       />
 
       <div className="mb-5 flex gap-3 rounded-[var(--radius-md)] border border-[#cfded8] bg-[#e9f1ee] p-4">
-        <Info
-          size={19}
-          className="mt-0.5 shrink-0 text-[var(--color-primary)]"
-        />
-        <div>
-          <p className="font-extrabold">Démonstration sans enregistrement</p>
-          <p className="mt-1 text-sm leading-6 text-[var(--color-muted)]">
-            La zone ci-dessous illustre le futur parcours d’import. Aucun fichier
-            n’est transmis, analysé ou conservé dans cette version.
-          </p>
-        </div>
+        <Info size={19} className="mt-0.5 shrink-0 text-[var(--color-primary)]" />
+        <p className="text-sm leading-6 text-[var(--color-muted)]">
+          Le fichier reste local pendant la prévisualisation. Seules les lignes
+          confirmées sont envoyées à Supabase, avec leur libellé bancaire original
+          et leurs métadonnées source.
+        </p>
       </div>
 
-      <section className="grid gap-5 xl:grid-cols-[0.82fr_1.18fr]">
+      {error ? (
+        <p className="mb-5 rounded-[var(--radius-md)] bg-[#f7dfda] p-4 text-sm font-bold text-[#9a463c]">
+          {error}
+        </p>
+      ) : null}
+      {message ? (
+        <p className="mb-5 rounded-[var(--radius-md)] bg-[#e9f1ee] p-4 text-sm font-bold text-[var(--color-primary-deep)]">
+          {message}
+        </p>
+      ) : null}
+
+      <section className="grid gap-5 xl:grid-cols-[0.72fr_1.28fr]">
         <div className="card p-4 sm:p-6">
-          <div className="mb-5">
-            <p className="eyebrow mb-2">Nouveau fichier</p>
-            <h2 className="text-xl font-black">Déposer un relevé</h2>
-          </div>
+          <p className="eyebrow mb-2">Nouveau fichier</p>
+          <h2 className="text-xl font-black">Déposer un relevé</h2>
+          <input
+            ref={inputRef}
+            type="file"
+            className="sr-only"
+            accept=".xlsx,.xls,.csv"
+            onChange={(event) => loadFile(event.target.files?.[0] ?? null)}
+          />
           <button
             type="button"
-            onClick={() => setPreviewOpen(true)}
-            className="flex min-h-[260px] w-full flex-col items-center justify-center rounded-[var(--radius-lg)] border-2 border-dashed border-[#bfcac5] bg-[#fafaf7] px-6 text-center transition hover:border-[var(--color-primary)] hover:bg-[var(--color-primary-soft)]/35"
+            onClick={() => inputRef.current?.click()}
+            onDragOver={(event) => event.preventDefault()}
+            onDrop={(event) => {
+              event.preventDefault();
+              loadFile(event.dataTransfer.files?.[0] ?? null);
+            }}
+            className="mt-5 flex min-h-[250px] w-full flex-col items-center justify-center rounded-[var(--radius-lg)] border-2 border-dashed border-[#bfcac5] bg-[#fafaf7] px-6 text-center transition hover:border-[var(--color-primary)]"
           >
             <span className="mb-4 flex size-14 items-center justify-center rounded-2xl bg-[var(--color-primary-soft)] text-[var(--color-primary)]">
               <UploadCloud size={26} />
             </span>
             <span className="font-black">Glissez un fichier Excel ou CSV</span>
             <span className="mt-2 text-sm text-[var(--color-muted)]">
-              ou cliquez pour simuler une sélection
+              ou cliquez pour sélectionner
             </span>
-            <span className="badge mt-4">Fichier fictif uniquement</span>
-          </button>
-          <button
-            type="button"
-            className="button-primary mt-4 w-full"
-            onClick={() => setPreviewOpen(true)}
-          >
-            <FileUp size={17} />
-            Prévisualiser l’import
+            {file ? <span className="badge mt-4">{file.name}</span> : null}
           </button>
         </div>
 
         <div className="card min-w-0 p-4 sm:p-6">
-          <div className="mb-5 flex items-start justify-between gap-4">
-            <div>
-              <p className="eyebrow mb-2">Prévisualisation fictive</p>
-              <h2 className="text-xl font-black">operations_aout_2026.xlsx</h2>
-              <p className="mt-1 text-sm text-[var(--color-muted)]">
-                42 lignes détectées · 2 points à contrôler
+          <p className="eyebrow mb-2">Prévisualisation et contrôles</p>
+          {!parsed ? (
+            <div className="flex min-h-[360px] flex-col items-center justify-center text-center text-[var(--color-muted)]">
+              <FileSpreadsheet size={34} className="text-[var(--color-primary)]" />
+              <p className="mt-3 font-black text-[var(--color-ink)]">
+                {busy ? "Lecture et contrôle en cours…" : "Aucun fichier sélectionné"}
+              </p>
+              <p className="mt-1 text-sm">
+                Les données seront affichées ici avant toute insertion.
               </p>
             </div>
-            <span className="badge" data-tone="warning">
-              <TriangleAlert size={13} />
-              À contrôler
-            </span>
-          </div>
-
-          {previewOpen ? (
+          ) : (
             <>
-              <div className="mb-4 grid grid-cols-3 gap-2">
+              <div className="mb-4 grid grid-cols-2 gap-2 sm:grid-cols-4">
                 <div className="soft-card p-3">
-                  <p className="text-xs font-bold text-[var(--color-muted)]">
-                    Lignes prêtes
-                  </p>
-                  <p className="mt-1 text-xl font-black">40</p>
+                  <p className="text-xs font-bold text-[var(--color-muted)]">Prêtes</p>
+                  <p className="mt-1 text-xl font-black">{insertable}</p>
                 </div>
                 <div className="rounded-[var(--radius-md)] bg-[#f6ead2] p-3">
                   <p className="text-xs font-bold text-[#8a6021]">Incertaines</p>
-                  <p className="mt-1 text-xl font-black">1</p>
+                  <p className="mt-1 text-xl font-black">{parsed.uncertainRows}</p>
                 </div>
                 <div className="rounded-[var(--radius-md)] bg-[#f7dfda] p-3">
                   <p className="text-xs font-bold text-[#9a463c]">Doublons</p>
-                  <p className="mt-1 text-xl font-black">1</p>
+                  <p className="mt-1 text-xl font-black">
+                    {potentialDuplicates + parsed.strictDuplicatesRemoved}
+                  </p>
+                </div>
+                <div className="soft-card p-3">
+                  <p className="text-xs font-bold text-[var(--color-muted)]">Manquantes</p>
+                  <p className="mt-1 text-xl font-black">{parsed.missingRows}</p>
                 </div>
               </div>
 
               <div className="table-shell">
                 <div className="overflow-x-auto">
-                  <table className="data-table min-w-[700px]">
+                  <table className="data-table min-w-[760px]">
                     <thead>
                       <tr>
                         <th>Date</th>
-                        <th>Libellé</th>
+                        <th>Libellé original</th>
                         <th>Montant</th>
-                        <th>Classement proposé</th>
+                        <th>Classement</th>
                         <th>Contrôle</th>
                       </tr>
                     </thead>
                     <tbody>
-                      {previewRows.map((row) => (
-                        <tr key={`${row.date}-${row.label}`}>
-                          <td>{row.date}</td>
-                          <td className="font-extrabold">{row.label}</td>
-                          <td className="font-black negative">{row.amount}</td>
-                          <td>{row.category}</td>
+                      {parsed.rows.slice(0, 10).map((row) => (
+                        <tr key={`${row.sourceIndex}-${row.fingerprint}`}>
+                          <td>{row.date ? formatDate(row.date) : "Non renseigné"}</td>
+                          <td className="font-extrabold">
+                            {row.source_label || "Non renseigné"}
+                          </td>
+                          <td className={row.amount >= 0 ? "positive" : "negative"}>
+                            {formatCurrency(row.amount, true)}
+                          </td>
                           <td>
-                            {row.issue ? (
-                              <span
-                                className="badge"
-                                data-tone={
-                                  row.issue === "Doublon possible"
-                                    ? "negative"
-                                    : "warning"
-                                }
-                              >
-                                <AlertTriangle size={12} />
-                                {row.issue}
+                            {row.category ?? "Non renseigné"} ·{" "}
+                            {row.subcategory ?? "Non renseigné"}
+                          </td>
+                          <td>
+                            {row.potentialDuplicate ? (
+                              <span className="badge" data-tone="negative">
+                                <AlertTriangle size={12} /> Doublon potentiel
+                              </span>
+                            ) : row.missing.length ? (
+                              <span className="badge" data-tone="warning">
+                                <TriangleAlert size={12} /> {row.missing.join(", ")}
+                              </span>
+                            ) : row.uncertain ? (
+                              <span className="badge" data-tone="warning">
+                                <TriangleAlert size={12} /> Incertain
                               </span>
                             ) : (
                               <span className="badge" data-tone="positive">
-                                <CheckCircle2 size={12} />
-                                Prêt
+                                <CheckCircle2 size={12} /> Prêt
                               </span>
                             )}
                           </td>
@@ -190,54 +286,37 @@ export function ImportsWorkspace({ batches }: { batches: ImportBatch[] }) {
                   </table>
                 </div>
               </div>
-
-              <div className="mt-4 flex flex-col gap-2 sm:flex-row sm:justify-end">
+              {parsed.rows.length > 10 ? (
+                <p className="mt-3 text-xs text-[var(--color-muted)]">
+                  10 lignes affichées sur {parsed.rows.length}.
+                </p>
+              ) : null}
+              <div className="mt-4 flex justify-end">
                 <button
                   type="button"
-                  className="button-secondary"
-                  onClick={() => setPreviewOpen(false)}
+                  className="button-primary"
+                  disabled={busy || insertable === 0}
+                  onClick={confirmImport}
                 >
-                  Fermer l’aperçu
-                </button>
-                <button
-                  type="button"
-                  className="button-primary opacity-55"
-                  aria-disabled="true"
-                  title="Indisponible dans la démonstration"
-                >
-                  Confirmer 40 lignes
+                  <FileUp size={17} />
+                  {busy ? "Insertion…" : `Confirmer ${insertable} lignes`}
                 </button>
               </div>
             </>
-          ) : (
-            <div className="flex min-h-[350px] flex-col items-center justify-center rounded-[var(--radius-md)] bg-[var(--color-surface-soft)] p-6 text-center">
-              <FileSpreadsheet
-                size={34}
-                className="text-[var(--color-primary)]"
-              />
-              <p className="mt-3 font-black">Aperçu fermé</p>
-              <button
-                type="button"
-                className="button-secondary mt-4"
-                onClick={() => setPreviewOpen(true)}
-              >
-                Rouvrir la prévisualisation
-              </button>
-            </div>
           )}
         </div>
       </section>
 
       <section className="card mt-5 overflow-hidden">
         <div className="border-b border-[var(--color-border)] px-4 py-4 sm:px-6">
-          <p className="eyebrow mb-2">Historique fictif</p>
+          <p className="eyebrow mb-2">Traçabilité</p>
           <h2 className="text-xl font-black">Imports précédents</h2>
         </div>
         <div className="overflow-x-auto">
-          <table className="data-table min-w-[760px]">
+          <table className="data-table min-w-[800px]">
             <thead>
               <tr>
-                <th>Mois</th>
+                <th>Période</th>
                 <th>Fichier</th>
                 <th>Date</th>
                 <th>Statut</th>
@@ -248,9 +327,7 @@ export function ImportsWorkspace({ batches }: { batches: ImportBatch[] }) {
             <tbody>
               {batches.map((batch) => (
                 <tr key={batch.id}>
-                  <td className="font-extrabold capitalize">
-                    {formatMonth(batch.month)}
-                  </td>
+                  <td className="font-extrabold capitalize">{batchPeriod(batch)}</td>
                   <td>{batch.filename}</td>
                   <td>
                     {new Intl.DateTimeFormat("fr-FR", {

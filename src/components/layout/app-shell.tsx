@@ -12,6 +12,7 @@ import {
   Settings2,
   TableProperties,
 } from "lucide-react";
+import { SignOutButton } from "@/features/auth/sign-out-button";
 
 const navigation = [
   { href: "/", label: "Accueil", icon: LayoutDashboard },
@@ -29,6 +30,9 @@ function isActive(pathname: string, href: string) {
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
+  if (pathname === "/connexion" || pathname === "/acces-refuse") {
+    return children;
+  }
 
   return (
     <div className="min-h-screen md:grid md:grid-cols-[248px_minmax(0,1fr)]">
@@ -72,10 +76,15 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           <div className="flex items-center gap-2.5">
             <CircleUserRound size={20} className="text-[var(--color-primary)]" />
             <div className="min-w-0">
-              <p className="truncate text-sm font-extrabold">Adrien & Manon</p>
-              <p className="text-xs text-[var(--color-muted)]">Données de démonstration</p>
+              <p className="truncate text-sm font-extrabold">
+                Foyer Budgetisation
+              </p>
+              <p className="text-xs text-[var(--color-muted)]">
+                Données privées
+              </p>
             </div>
           </div>
+          <SignOutButton />
         </div>
       </aside>
 
@@ -87,7 +96,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             </span>
             Budgetisation
           </Link>
-          <span className="badge">Démo locale</span>
+          <SignOutButton compact />
         </header>
 
         <main className="mx-auto min-h-screen max-w-[1540px] px-[var(--space-page)] pb-24 pt-6 md:pb-10 md:pt-8">

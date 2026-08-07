@@ -10,7 +10,16 @@ import type {
   Person,
   Recurrence,
 } from "@/domain/budget";
-import { monthKeys } from "@/domain/budget";
+const monthKeys: MonthKey[] = [
+  "2026-01",
+  "2026-02",
+  "2026-03",
+  "2026-04",
+  "2026-05",
+  "2026-06",
+  "2026-07",
+  "2026-08",
+];
 
 export const mockAccounts: Account[] = [
   {
@@ -233,8 +242,11 @@ function createOperation(
     status: seed.status ?? "Habituel",
     sourceLabel: `LIBELLÉ FICTIF · ${seed.merchant.toUpperCase()} · ${day}/${month.slice(5)}`,
     importId: `IMP-${month.replace("-", "")}`,
-    note: seed.note,
-    uncertain: seed.uncertain,
+    note: seed.note ?? null,
+    event: null,
+    uncertain: seed.uncertain ?? false,
+    fingerprint: `fixture-${month}-${index + 1}`,
+    sourceMetadata: { fixture: true },
   };
 }
 
@@ -825,6 +837,8 @@ export const mockImportBatches: ImportBatch[] = monthKeys
       id: `IMP-${month.replace("-", "")}`,
       importedAt: `2026-${String(Math.min(index + 2, 8)).padStart(2, "0")}-05T18:30:00`,
       month,
+      firstMonth: month,
+      lastMonth: month,
       status: warnings ? "Importé avec avertissements" : "Terminé",
       rows: operations.length,
       warnings,
