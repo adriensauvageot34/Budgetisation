@@ -114,7 +114,7 @@ export default async function HistoryPage() {
 
                 <div>
                   <div className="mb-1.5 flex items-center justify-between text-sm">
-                    <span className="text-[var(--color-muted)]">Dépenses</span>
+                    <span className="text-[var(--color-muted)]">Dépenses nettes</span>
                     <span className="font-black">
                       {formatCurrency(summary.expenses)}
                     </span>
@@ -132,10 +132,13 @@ export default async function HistoryPage() {
                   </div>
                   <div className="mt-2 flex gap-4 text-xs text-[var(--color-muted)]">
                     <span>Revenus {formatCurrency(summary.income)}</span>
+                    <span>
+                      Autres entrées {formatCurrency(summary.otherInflows)}
+                    </span>
                     <span
                       className={summary.net >= 0 ? "positive" : "negative"}
                     >
-                      Net {summary.net >= 0 ? "+" : ""}
+                      Résultat {summary.net >= 0 ? "+" : ""}
                       {formatCurrency(summary.net)}
                     </span>
                   </div>

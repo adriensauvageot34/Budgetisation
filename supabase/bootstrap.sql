@@ -126,6 +126,37 @@ create table if not exists public.operations (
     check (analytical_status in ('Habituel', 'Exceptionnel', 'Hors budget', 'À ventiler')),
   note text,
   event text,
+  event_detail text,
+  resource_type text
+    constraint operations_resource_type_check
+    check (
+      resource_type is null or resource_type in (
+        'Revenu',
+        'Entrée d''argent',
+        'Remboursement',
+        'Transfert interne',
+        'Flux technique',
+        'À qualifier'
+      )
+    ),
+  resource_context text,
+  analysis_month_override date
+    constraint operations_analysis_month_override_check
+    check (
+      analysis_month_override is null
+      or (
+        amount > 0
+        and extract(day from analysis_month_override) = 1
+      )
+    ),
+  reimburses_operation_id uuid
+    constraint operations_reimburses_operation_id_fkey
+    references public.operations(id) on delete set null,
+  constraint operations_reimbursement_link_check
+    check (
+      reimburses_operation_id is null
+      or (resource_type = 'Remboursement' and amount > 0)
+    ),
   uncertain boolean not null default false,
   fingerprint text not null,
   source_metadata jsonb not null default '{}'::jsonb,
@@ -150,6 +181,11 @@ create index if not exists operations_household_category_idx
   on public.operations(household_id, category_id);
 create index if not exists operations_household_fingerprint_idx
   on public.operations(household_id, fingerprint);
+create index if not exists operations_household_resource_type_idx
+  on public.operations(household_id, resource_type);
+create index if not exists operations_reimburses_operation_id_idx
+  on public.operations(reimburses_operation_id)
+  where reimburses_operation_id is not null;
 
 create or replace function private.slugify(value text)
 returns text
@@ -534,6 +570,11 @@ begin
     analytical_status,
     note,
     event,
+    event_detail,
+    resource_type,
+    resource_context,
+    analysis_month_override,
+    reimburses_operation_id,
     uncertain,
     fingerprint,
     source_metadata
@@ -559,6 +600,15 @@ begin
     coalesce(nullif(row_data ->> 'analytical_status', ''), 'Habituel'),
     nullif(row_data ->> 'note', ''),
     nullif(row_data ->> 'event', ''),
+    nullif(row_data ->> 'event_detail', ''),
+    nullif(row_data ->> 'resource_type', ''),
+    nullif(row_data ->> 'resource_context', ''),
+    case
+      when (row_data ->> 'amount')::numeric > 0
+      then nullif(row_data ->> 'analysis_month_override', '')::date
+      else null
+    end,
+    null,
     coalesce((row_data ->> 'uncertain')::boolean, false),
     coalesce(
       nullif(row_data ->> 'fingerprint', ''),

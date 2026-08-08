@@ -4,6 +4,7 @@ import type {
   FlowType,
   Importance,
   Recurrence,
+  ResourceType,
 } from "@/domain/budget";
 
 const targetImportance = new Set<Importance>([
@@ -11,6 +12,14 @@ const targetImportance = new Set<Importance>([
   "Contrainte",
   "Ajustable",
   "Optionnelle",
+]);
+const targetResourceTypes = new Set<ResourceType>([
+  "Revenu",
+  "Entrée d'argent",
+  "Remboursement",
+  "Transfert interne",
+  "Flux technique",
+  "À qualifier",
 ]);
 
 export type ImportOperationRow = {
@@ -30,6 +39,11 @@ export type ImportOperationRow = {
   analytical_status: AnalyticalStatus;
   note: string | null;
   event: string | null;
+  event_detail: string | null;
+  resource_type: ResourceType | null;
+  resource_context: string | null;
+  analysis_month_override: string | null;
+  reimburses_operation_id: null;
   uncertain: boolean;
   fingerprint: string;
   source_metadata: Record<string, unknown>;
@@ -53,6 +67,14 @@ function asText(value: unknown): string | null {
   if (value === null || value === undefined) return null;
   const result = String(value).trim();
   return result || null;
+}
+
+function firstText(row: Record<string, unknown>, headers: string[]) {
+  for (const header of headers) {
+    const value = asText(row[header]);
+    if (value) return value;
+  }
+  return null;
 }
 
 function asMoney(value: unknown): number | null {
@@ -197,6 +219,11 @@ export async function parseImportFile(file: File): Promise<ParsedImport> {
       const nature = asText(source["Nature"]);
       const priority = asText(source["Priorité budgétaire"]);
       const precision = asText(source["Précision"]);
+      const rawResourceType = asText(source["Type de ressource"]);
+      const resourceType =
+        rawResourceType && targetResourceTypes.has(rawResourceType as ResourceType)
+          ? (rawResourceType as ResourceType)
+          : null;
       const missing = [
         !date ? "Date" : null,
         !month ? "Mois" : null,
@@ -227,12 +254,27 @@ export async function parseImportFile(file: File): Promise<ParsedImport> {
         analytical_status: targetStatus(nature, priority, precision),
         note: asText(source["Note"]),
         event: asText(source["Événement"]),
+        event_detail: firstText(source, [
+          "Spécification de l'événement",
+          "Spécification de l’événement",
+        ]),
+        resource_type: resourceType,
+        resource_context: firstText(source, [
+          "Contexte de l'entrée",
+          "Contexte de l’entrée",
+        ]),
+        analysis_month_override:
+          amount !== null && amount > 0
+            ? importMonth(source["Mois de rattachement"], null)
+            : null,
+        reimburses_operation_id: null,
         uncertain:
           precision === "À ventiler" ||
           precision === "À préciser" ||
           priority === "À identifier" ||
           !family ||
-          !subcategory,
+          !subcategory ||
+          Boolean(rawResourceType && !resourceType),
         source_metadata: serializableRaw(source),
       };
 

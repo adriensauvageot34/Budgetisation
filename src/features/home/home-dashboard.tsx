@@ -37,9 +37,6 @@ import {
   importanceBreakdown,
   mean,
   monthlySummaries,
-  totalExpenses,
-  totalIncome,
-  netResult,
 } from "@/domain/calculations";
 import {
   formatCompactCurrency,
@@ -125,9 +122,13 @@ export function HomeDashboard({
   const selectedOperations = operations.filter(
     (operation) => operation.importMonth === selectedMonth,
   );
-  const expenses = totalExpenses(selectedOperations);
-  const income = totalIncome(selectedOperations);
-  const net = netResult(selectedOperations);
+  const selectedSummary = summaries.find(
+    (summary) => summary.month === selectedMonth,
+  );
+  const expenses = selectedSummary?.expenses ?? 0;
+  const income = selectedSummary?.income ?? 0;
+  const otherInflows = selectedSummary?.otherInflows ?? 0;
+  const net = selectedSummary?.net ?? 0;
   const average = mean(summaries.map((summary) => summary.expenses));
   const previous = summaries[selectedIndex - 1]?.expenses ?? expenses;
   const averageDelta = average ? (expenses - average) / average : 0;
@@ -164,7 +165,7 @@ export function HomeDashboard({
       ]
     : visibleCategories;
 
-  const importance = importanceBreakdown(selectedOperations);
+  const importance = importanceBreakdown(selectedOperations, operations);
 
   function categoryHref(row: CategoryBreakdown) {
     const query =
@@ -203,7 +204,9 @@ export function HomeDashboard({
           <div className="bg-[var(--color-primary)] p-6 text-white sm:p-8">
             <div className="flex items-start justify-between gap-4">
               <div>
-                <p className="text-sm font-bold text-white/70">Dépenses du mois</p>
+                <p className="text-sm font-bold text-white/70">
+                  Dépenses nettes du mois
+                </p>
                 <p className="mt-2 text-[clamp(2.7rem,7vw,4.8rem)] font-black leading-none tracking-[-0.06em]">
                   {formatCurrency(expenses)}
                 </p>
@@ -228,18 +231,31 @@ export function HomeDashboard({
             </div>
           </div>
 
-          <div className="grid grid-cols-2 divide-x divide-y divide-[var(--color-border)] lg:divide-y-0">
+          <div className="grid divide-y divide-[var(--color-border)] sm:grid-cols-3 sm:divide-x sm:divide-y-0">
             <div className="p-5 sm:p-6">
               <p className="text-sm font-bold text-[var(--color-muted)]">Revenus</p>
               <p className="mt-2 text-2xl font-black tracking-[-0.03em]">
                 {formatCurrency(income)}
               </p>
               <p className="mt-1 text-xs text-[var(--color-muted)]">
-                Flux de revenus uniquement
+                Argent réellement gagné
               </p>
             </div>
             <div className="p-5 sm:p-6">
-              <p className="text-sm font-bold text-[var(--color-muted)]">Résultat net</p>
+              <p className="text-sm font-bold text-[var(--color-muted)]">
+                Autres entrées d’argent
+              </p>
+              <p className="mt-2 text-2xl font-black tracking-[-0.03em]">
+                {formatCurrency(otherInflows)}
+              </p>
+              <p className="mt-1 text-xs text-[var(--color-muted)]">
+                Aides, cadeaux et apports externes
+              </p>
+            </div>
+            <div className="p-5 sm:p-6">
+              <p className="text-sm font-bold text-[var(--color-muted)]">
+                Résultat analytique
+              </p>
               <p
                 className={`mt-2 text-2xl font-black tracking-[-0.03em] ${
                   net >= 0 ? "positive" : "negative"
@@ -249,7 +265,7 @@ export function HomeDashboard({
                 {formatCurrency(net)}
               </p>
               <p className="mt-1 text-xs text-[var(--color-muted)]">
-                Remboursements inclus
+                Ressources moins dépenses nettes
               </p>
             </div>
           </div>

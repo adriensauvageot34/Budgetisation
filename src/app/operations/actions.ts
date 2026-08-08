@@ -4,7 +4,9 @@ import type {
   AnalyticalStatus,
   FlowType,
   Importance,
+  MonthKey,
   Recurrence,
+  ResourceType,
 } from "@/domain/budget";
 import { createClient } from "@/lib/supabase/server";
 
@@ -21,6 +23,11 @@ export type OperationUpdateInput = {
   status: AnalyticalStatus;
   note: string | null;
   event: string | null;
+  eventDetail: string | null;
+  resourceType: ResourceType | null;
+  resourceContext: string | null;
+  analysisMonthOverride: MonthKey | null;
+  reimbursesOperationId: string | null;
   uncertain: boolean;
 };
 
@@ -47,6 +54,14 @@ const statuses: AnalyticalStatus[] = [
   "Hors budget",
   "À ventiler",
 ];
+const resourceTypes: ResourceType[] = [
+  "Revenu",
+  "Entrée d'argent",
+  "Remboursement",
+  "Transfert interne",
+  "Flux technique",
+  "À qualifier",
+];
 
 function optionalText(value: string | null) {
   const normalized = value?.trim();
@@ -63,6 +78,14 @@ function validatedDate(value: string) {
     throw new Error("Date invalide.");
   }
   return value;
+}
+
+function validatedMonth(value: MonthKey | null) {
+  if (!value) return null;
+  if (!/^\d{4}-(0[1-9]|1[0-2])$/.test(value)) {
+    throw new Error("Mois de rattachement invalide.");
+  }
+  return `${value}-01`;
 }
 
 async function currentHouseholdId(supabase: SupabaseServerClient) {
@@ -168,12 +191,43 @@ export async function updateOperation(
     throw new Error("Importance invalide.");
   }
   if (!statuses.includes(input.status)) throw new Error("Statut invalide.");
+  if (input.resourceType && !resourceTypes.includes(input.resourceType)) {
+    throw new Error("Type de ressource invalide.");
+  }
+  if (amount <= 0 && input.analysisMonthOverride) {
+    throw new Error("Le mois analytique manuel est réservé aux flux entrants.");
+  }
 
   const supabase = await createClient();
   const householdId = await currentHouseholdId(supabase);
   const { categoryId, subcategoryId, preciseTypeId } =
     await resolveTaxonomyIds(supabase, householdId, input);
   const roundedAmount = Math.round((amount + Number.EPSILON) * 100) / 100;
+  const analysisMonthOverride = validatedMonth(input.analysisMonthOverride);
+  let reimbursesOperationId: string | null = null;
+
+  if (input.reimbursesOperationId) {
+    if (input.resourceType !== "Remboursement" || roundedAmount <= 0) {
+      throw new Error("Seul un remboursement entrant peut être affecté.");
+    }
+    if (input.reimbursesOperationId === operationId) {
+      throw new Error("Une opération ne peut pas se rembourser elle-même.");
+    }
+    const { data: reimbursedOperation, error: reimbursementError } =
+      await supabase
+        .from("operations")
+        .select("id")
+        .eq("id", input.reimbursesOperationId)
+        .eq("household_id", householdId)
+        .eq("flow", "Dépense")
+        .lt("amount", 0)
+        .maybeSingle();
+    if (reimbursementError) throw new Error(reimbursementError.message);
+    if (!reimbursedOperation) {
+      throw new Error("Dépense remboursée introuvable.");
+    }
+    reimbursesOperationId = String(reimbursedOperation.id);
+  }
 
   const { data, error } = await supabase
     .from("operations")
@@ -193,6 +247,11 @@ export async function updateOperation(
       analytical_status: input.status,
       note: optionalText(input.note),
       event: optionalText(input.event),
+      event_detail: optionalText(input.eventDetail),
+      resource_type: input.resourceType,
+      resource_context: optionalText(input.resourceContext),
+      analysis_month_override: analysisMonthOverride,
+      reimburses_operation_id: reimbursesOperationId,
       uncertain: input.uncertain,
     })
     .eq("id", operationId)
