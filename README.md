@@ -28,24 +28,21 @@ opérations historiques issues du XLSX fourni. Aucune ligne n’est supprimée s
 la seule base de valeurs identiques ; les fingerprints servent uniquement à
 signaler des doublons potentiels.
 
-Dans **Authentication > Users**, créer ensuite les deux utilisateurs avec leur
-e-mail et leur mot de passe. Copier leurs UUID, puis exécuter dans SQL Editor :
+Un seul compte Supabase Auth partagé est actuellement utilisé par Adrien et
+Manon. Dans **Authentication > Users**, créer ou sélectionner cet utilisateur,
+copier son UUID, puis exécuter dans SQL Editor :
 
 ```sql
 select public.attach_user_to_budgetisation(
-  '<UUID_ADRIEN>',
-  'Adrien',
+  '<UUID_COMPTE_PARTAGE>',
+  'Adrien et Manon',
   'owner'
-);
-
-select public.attach_user_to_budgetisation(
-  '<UUID_MANON>',
-  'Manon',
-  'member'
 );
 ```
 
-Le rattachement utilise les UUID Auth, jamais les e-mails.
+Le rattachement utilise les UUID Auth, jamais les e-mails. L’architecture Auth
+et RLS reste compatible avec plusieurs membres : un second utilisateur pourra
+être créé et rattaché plus tard avec la même fonction et le rôle `member`.
 
 ## Démarrage local
 
