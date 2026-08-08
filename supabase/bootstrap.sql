@@ -211,6 +211,8 @@ drop policy if exists "Members can read precise types" on public.precise_types;
 drop policy if exists "Members can create precise types" on public.precise_types;
 drop policy if exists "Members can read operations" on public.operations;
 drop policy if exists "Members can create operations" on public.operations;
+drop policy if exists "Members can update operations" on public.operations;
+drop policy if exists "Members can delete operations" on public.operations;
 
 create policy "Members can read their household"
   on public.households for select to authenticated
@@ -272,6 +274,15 @@ create policy "Members can create operations"
   on public.operations for insert to authenticated
   with check (private.is_household_member(household_id));
 
+create policy "Members can update operations"
+  on public.operations for update to authenticated
+  using (private.is_household_member(household_id))
+  with check (private.is_household_member(household_id));
+
+create policy "Members can delete operations"
+  on public.operations for delete to authenticated
+  using (private.is_household_member(household_id));
+
 revoke all on public.households from anon;
 revoke all on public.household_members from anon;
 revoke all on public.accounts from anon;
@@ -288,7 +299,38 @@ grant select, insert, update on public.import_batches to authenticated;
 grant select, insert on public.categories to authenticated;
 grant select, insert on public.subcategories to authenticated;
 grant select, insert on public.precise_types to authenticated;
-grant select, insert on public.operations to authenticated;
+grant select, insert, update, delete on public.operations to authenticated;
+
+create or replace function private.sync_import_batch_row_count_after_operation_delete()
+returns trigger
+language plpgsql
+security definer
+set search_path = ''
+as $$
+begin
+  if old.import_batch_id is not null then
+    update public.import_batches batch
+    set row_count = (
+      select count(*)::integer
+      from public.operations operation
+      where operation.import_batch_id = old.import_batch_id
+    )
+    where batch.id = old.import_batch_id;
+  end if;
+
+  return old;
+end;
+$$;
+
+revoke all on function private.sync_import_batch_row_count_after_operation_delete()
+  from public, anon, authenticated;
+
+drop trigger if exists sync_import_batch_row_count_after_operation_delete
+  on public.operations;
+create trigger sync_import_batch_row_count_after_operation_delete
+after delete on public.operations
+for each row
+execute function private.sync_import_batch_row_count_after_operation_delete();
 
 create or replace function public.attach_user_to_budgetisation(
   target_user_id uuid,

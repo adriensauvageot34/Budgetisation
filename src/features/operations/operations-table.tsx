@@ -1,6 +1,7 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
 import {
   ArrowDown,
   ArrowUp,
@@ -12,6 +13,11 @@ import {
   SlidersHorizontal,
   X,
 } from "lucide-react";
+import {
+  deleteOperation,
+  updateOperation,
+  type OperationUpdateInput,
+} from "@/app/operations/actions";
 import type {
   Account,
   AnalyticalStatus,
@@ -33,8 +39,68 @@ import { PageHeader } from "@/components/ui/page-header";
 type ViewMode = "Compacte" | "Standard" | "Complète";
 type SortKey = "date" | "label" | "amount" | "category" | "accountId";
 type SortDirection = "asc" | "desc";
+type PanelMode = "read" | "edit" | "delete";
+
+type OperationDraft = {
+  date: string;
+  amount: string;
+  normalizedMerchant: string;
+  flow: FlowType;
+  category: string;
+  subcategory: string;
+  preciseType: string;
+  recurrence: Recurrence | "";
+  importance: Importance | "";
+  status: AnalyticalStatus;
+  note: string;
+  event: string;
+  uncertain: boolean;
+};
 
 const pageSize = 50;
+const flowOptions: FlowType[] = [
+  "Dépense",
+  "Revenu",
+  "Remboursement",
+  "Transfert interne",
+  "Prêt et avance",
+  "Flux technique",
+];
+const importanceOptions: Importance[] = [
+  "Indispensable",
+  "Contrainte",
+  "Ajustable",
+  "Optionnelle",
+];
+const statusOptions: AnalyticalStatus[] = [
+  "Habituel",
+  "Exceptionnel",
+  "Hors budget",
+  "À ventiler",
+];
+
+function operationDraft(operation: Operation): OperationDraft {
+  return {
+    date: operation.date,
+    amount: String(operation.amount),
+    normalizedMerchant:
+      operation.normalizedMerchant === "Non renseigné"
+        ? ""
+        : operation.normalizedMerchant,
+    flow: operation.flow,
+    category:
+      operation.category === "Non renseigné" ? "" : operation.category,
+    subcategory:
+      operation.subcategory === "Non renseigné" ? "" : operation.subcategory,
+    preciseType: operation.preciseType ?? "",
+    recurrence: operation.recurrence ?? "",
+    importance: operation.importance ?? "",
+    status: operation.status,
+    note: operation.note ?? "",
+    event: operation.event ?? "",
+    uncertain: operation.uncertain,
+  };
+}
 
 function StatusBadge({ status }: { status: AnalyticalStatus }) {
   const tone =
@@ -99,6 +165,8 @@ export function OperationsTable({
   accounts: Account[];
   initialMonth: MonthKey;
 }) {
+  const router = useRouter();
+  const [operationRows, setOperationRows] = useState(operations);
   const [view, setView] = useState<ViewMode>("Standard");
   const [query, setQuery] = useState("");
   const [month, setMonth] = useState<MonthKey | "Tous">(initialMonth);
@@ -117,9 +185,18 @@ export function OperationsTable({
   const [selectedOperation, setSelectedOperation] = useState<Operation | null>(
     null,
   );
+  const [panelMode, setPanelMode] = useState<PanelMode>("read");
+  const [draft, setDraft] = useState<OperationDraft | null>(null);
+  const [actionPending, setActionPending] = useState(false);
+  const [actionError, setActionError] = useState<string | null>(null);
+
+  useEffect(() => {
+    setOperationRows(operations);
+  }, [operations]);
+
   const people = [
     ...new Set(
-      operations
+      operationRows
         .map((operation) => operation.person)
         .filter((value): value is string => Boolean(value)),
     ),
@@ -127,7 +204,7 @@ export function OperationsTable({
 
   const filtered = useMemo(() => {
     const normalizedQuery = query.trim().toLocaleLowerCase("fr-FR");
-    return operations
+    return operationRows
       .filter(
         (operation) =>
           (month === "Tous" || operation.importMonth === month) &&
@@ -174,7 +251,7 @@ export function OperationsTable({
     flow,
     importance,
     month,
-    operations,
+    operationRows,
     person,
     query,
     recurrence,
@@ -222,6 +299,133 @@ export function OperationsTable({
   ).length;
   const accountName = (id: string | null) =>
     accounts.find((account) => account.id === id)?.name ?? "Non renseigné";
+  const selectedDraftCategory = categories.find(
+    (entry) => entry.name === draft?.category,
+  );
+  const draftSubcategories = selectedDraftCategory?.subcategories ?? [];
+  const draftPreciseTypes = draft?.subcategory
+    ? (selectedDraftCategory?.preciseTypesBySubcategory?.[
+        draft.subcategory
+      ] ?? [])
+    : [];
+
+  function openOperation(operation: Operation) {
+    setSelectedOperation(operation);
+    setDraft(operationDraft(operation));
+    setPanelMode("read");
+    setActionError(null);
+  }
+
+  function closePanel() {
+    if (actionPending) return;
+    setSelectedOperation(null);
+    setDraft(null);
+    setPanelMode("read");
+    setActionError(null);
+  }
+
+  function cancelEditing() {
+    if (!selectedOperation || actionPending) return;
+    setDraft(operationDraft(selectedOperation));
+    setPanelMode("read");
+    setActionError(null);
+  }
+
+  function updateDraft<K extends keyof OperationDraft>(
+    key: K,
+    value: OperationDraft[K],
+  ) {
+    setDraft((current) => (current ? { ...current, [key]: value } : current));
+  }
+
+  async function confirmUpdate() {
+    if (!selectedOperation || !draft || actionPending) return;
+    const parsedAmount = Number(draft.amount.replace(",", "."));
+    if (!draft.date || !Number.isFinite(parsedAmount)) {
+      setActionError("Renseignez une date et un montant valides.");
+      return;
+    }
+    const amount =
+      Math.round((parsedAmount + Number.EPSILON) * 100) / 100;
+
+    const input: OperationUpdateInput = {
+      date: draft.date,
+      amount,
+      normalizedMerchant: draft.normalizedMerchant || null,
+      flow: draft.flow,
+      category: draft.category || null,
+      subcategory: draft.subcategory || null,
+      preciseType: draft.preciseType || null,
+      recurrence: draft.recurrence || null,
+      importance: draft.importance || null,
+      status: draft.status,
+      note: draft.note || null,
+      event: draft.event || null,
+      uncertain: draft.uncertain,
+    };
+
+    setActionPending(true);
+    setActionError(null);
+    try {
+      await updateOperation(selectedOperation.id, input);
+      const normalizedMerchant = draft.normalizedMerchant.trim();
+      const updatedOperation: Operation = {
+        ...selectedOperation,
+        date: draft.date,
+        importMonth: draft.date.slice(0, 7),
+        amount,
+        normalizedMerchant: normalizedMerchant || "Non renseigné",
+        label: normalizedMerchant || selectedOperation.sourceLabel,
+        flow: draft.flow,
+        category: draft.category || "Non renseigné",
+        subcategory: draft.subcategory || "Non renseigné",
+        preciseType: draft.preciseType || null,
+        recurrence: draft.recurrence || null,
+        importance: draft.importance || null,
+        status: draft.status,
+        note: draft.note.trim() || null,
+        event: draft.event.trim() || null,
+        uncertain: draft.uncertain,
+      };
+      setOperationRows((rows) =>
+        rows.map((operation) =>
+          operation.id === updatedOperation.id ? updatedOperation : operation,
+        ),
+      );
+      setSelectedOperation(updatedOperation);
+      setDraft(operationDraft(updatedOperation));
+      setPanelMode("read");
+      router.refresh();
+    } catch (caught) {
+      setActionError(
+        caught instanceof Error ? caught.message : "La modification a échoué.",
+      );
+    } finally {
+      setActionPending(false);
+    }
+  }
+
+  async function confirmDelete() {
+    if (!selectedOperation || actionPending) return;
+    setActionPending(true);
+    setActionError(null);
+    try {
+      await deleteOperation(selectedOperation.id);
+      setOperationRows((rows) =>
+        rows.filter((operation) => operation.id !== selectedOperation.id),
+      );
+      setSelectedOperation(null);
+      setDraft(null);
+      setPanelMode("read");
+      router.refresh();
+    } catch (caught) {
+      setActionError(
+        caught instanceof Error ? caught.message : "La suppression a échoué.",
+      );
+    } finally {
+      setActionPending(false);
+    }
+  }
 
   const filterFields = (
     <>
@@ -304,7 +508,7 @@ export function OperationsTable({
       <PageHeader
         eyebrow="Recherche détaillée"
         title="Opérations"
-        description="Retrouvez une transaction, vérifiez son classement et consultez sa traçabilité sans modifier les données."
+        description="Retrouvez une transaction, vérifiez son classement et corrigez-la si nécessaire."
         action={
           <div className="flex rounded-[var(--radius-sm)] border border-[var(--color-border)] bg-white p-1">
             {(["Compacte", "Standard", "Complète"] as ViewMode[]).map(
@@ -468,7 +672,7 @@ export function OperationsTable({
           <span className="font-bold lowercase">{view}</span>
         </p>
         <p className="text-xs text-[var(--color-muted)]">
-          Cliquez sur une opération pour consulter son détail
+          Cliquez sur une opération pour consulter ou modifier son détail
         </p>
       </div>
 
@@ -549,11 +753,11 @@ export function OperationsTable({
                   role="button"
                   tabIndex={0}
                   className="cursor-pointer"
-                  onClick={() => setSelectedOperation(operation)}
+                  onClick={() => openOperation(operation)}
                   onKeyDown={(event) => {
                     if (event.key === "Enter" || event.key === " ") {
                       event.preventDefault();
-                      setSelectedOperation(operation);
+                      openOperation(operation);
                     }
                   }}
                 >
@@ -603,7 +807,7 @@ export function OperationsTable({
           <button
             key={operation.id}
             type="button"
-            onClick={() => setSelectedOperation(operation)}
+            onClick={() => openOperation(operation)}
             className="card w-full p-4 text-left"
           >
             <div className="flex items-start justify-between gap-3">
@@ -680,7 +884,7 @@ export function OperationsTable({
           className="fixed inset-0 z-50 bg-[#1d2927]/35"
           role="presentation"
           onMouseDown={(event) => {
-            if (event.target === event.currentTarget) setSelectedOperation(null);
+            if (event.target === event.currentTarget) closePanel();
           }}
         >
           <aside
@@ -691,7 +895,13 @@ export function OperationsTable({
           >
             <div className="mb-7 flex items-start justify-between gap-4">
               <div>
-                <p className="eyebrow mb-2">Détail consultatif</p>
+                <p className="eyebrow mb-2">
+                  {panelMode === "read"
+                    ? "Détail consultatif"
+                    : panelMode === "edit"
+                      ? "Modifier l’opération"
+                      : "Confirmer la suppression"}
+                </p>
                 <h2 className="text-2xl font-black tracking-[-0.035em]">
                   {selectedOperation.label}
                 </h2>
@@ -703,13 +913,15 @@ export function OperationsTable({
               <button
                 type="button"
                 className="button-secondary min-h-10 shrink-0 px-3"
-                onClick={() => setSelectedOperation(null)}
+                onClick={closePanel}
                 aria-label="Fermer"
               >
                 <X size={17} />
               </button>
             </div>
 
+            {panelMode === "read" ? (
+              <>
             <div className="rounded-[var(--radius-lg)] bg-[var(--color-primary)] p-5 text-white">
               <p className="text-sm font-bold text-white/65">Montant</p>
               <p className="mt-1 text-4xl font-black tracking-[-0.05em]">
@@ -751,7 +963,7 @@ export function OperationsTable({
             </section>
 
             <section className="mt-6">
-              <p className="eyebrow mb-3">Données bancaires fictives</p>
+              <p className="eyebrow mb-3">Données bancaires</p>
               <div className="space-y-4 rounded-[var(--radius-md)] border border-[var(--color-border)] p-4">
                 <div>
                   <p className="text-xs font-bold text-[var(--color-muted)]">
@@ -802,10 +1014,296 @@ export function OperationsTable({
               </div>
             </section>
 
-            <p className="mt-6 text-xs leading-5 text-[var(--color-muted)]">
-              Cette première version est en lecture seule. La correction du
-              classement sera ajoutée dans une phase ultérieure.
-            </p>
+            {selectedOperation.event ? (
+              <p className="mt-4 rounded-xl bg-[var(--color-surface-soft)] p-3 text-sm text-[var(--color-muted)]">
+                Événement : {selectedOperation.event}
+              </p>
+            ) : null}
+
+            <div className="mt-6 flex justify-end">
+              <button
+                type="button"
+                className="button-primary"
+                onClick={() => {
+                  setDraft(operationDraft(selectedOperation));
+                  setPanelMode("edit");
+                  setActionError(null);
+                }}
+              >
+                Modifier
+              </button>
+            </div>
+              </>
+            ) : panelMode === "edit" && draft ? (
+              <form
+                onSubmit={(event) => {
+                  event.preventDefault();
+                  void confirmUpdate();
+                }}
+              >
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <label className="text-xs font-bold text-[var(--color-muted)]">
+                    Date
+                    <input
+                      type="date"
+                      className="field mt-1 w-full text-sm"
+                      value={draft.date}
+                      onChange={(event) => updateDraft("date", event.target.value)}
+                      required
+                    />
+                  </label>
+                  <label className="text-xs font-bold text-[var(--color-muted)]">
+                    Montant
+                    <input
+                      type="text"
+                      inputMode="decimal"
+                      className="field mt-1 w-full text-sm"
+                      value={draft.amount}
+                      onChange={(event) => updateDraft("amount", event.target.value)}
+                      required
+                    />
+                  </label>
+                </div>
+
+                <label className="mt-4 block text-xs font-bold text-[var(--color-muted)]">
+                  Libellé bancaire d’origine
+                  <div className="mt-1 rounded-[var(--radius-sm)] border border-[var(--color-border)] bg-[var(--color-surface-soft)] px-3 py-3 text-sm font-bold text-[var(--color-ink)]">
+                    {selectedOperation.sourceLabel}
+                  </div>
+                </label>
+
+                <label className="mt-4 block text-xs font-bold text-[var(--color-muted)]">
+                  Commerçant / tiers normalisé
+                  <input
+                    className="field mt-1 w-full text-sm"
+                    value={draft.normalizedMerchant}
+                    onChange={(event) =>
+                      updateDraft("normalizedMerchant", event.target.value)
+                    }
+                  />
+                </label>
+
+                <div className="mt-4 grid gap-4 sm:grid-cols-2">
+                  <label className="text-xs font-bold text-[var(--color-muted)]">
+                    Flux
+                    <select
+                      className="field mt-1 w-full text-sm"
+                      value={draft.flow}
+                      onChange={(event) =>
+                        updateDraft("flow", event.target.value as FlowType)
+                      }
+                    >
+                      {flowOptions.map((entry) => (
+                        <option key={entry}>{entry}</option>
+                      ))}
+                    </select>
+                  </label>
+                  <label className="text-xs font-bold text-[var(--color-muted)]">
+                    Catégorie
+                    <select
+                      className="field mt-1 w-full text-sm"
+                      value={draft.category}
+                      onChange={(event) => {
+                        updateDraft("category", event.target.value);
+                        updateDraft("subcategory", "");
+                        updateDraft("preciseType", "");
+                      }}
+                    >
+                      <option value="">Non renseigné</option>
+                      {categories.map((entry) => (
+                        <option key={entry.slug} value={entry.name}>
+                          {entry.name}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                  <label className="text-xs font-bold text-[var(--color-muted)]">
+                    Sous-catégorie
+                    <select
+                      className="field mt-1 w-full text-sm"
+                      value={draft.subcategory}
+                      disabled={!draft.category}
+                      onChange={(event) => {
+                        updateDraft("subcategory", event.target.value);
+                        updateDraft("preciseType", "");
+                      }}
+                    >
+                      <option value="">Non renseigné</option>
+                      {draftSubcategories.map((entry) => (
+                        <option key={entry}>{entry}</option>
+                      ))}
+                    </select>
+                  </label>
+                  <label className="text-xs font-bold text-[var(--color-muted)]">
+                    Type précis
+                    <select
+                      className="field mt-1 w-full text-sm"
+                      value={draft.preciseType}
+                      disabled={!draft.subcategory || !draftPreciseTypes.length}
+                      onChange={(event) =>
+                        updateDraft("preciseType", event.target.value)
+                      }
+                    >
+                      <option value="">Non renseigné</option>
+                      {draftPreciseTypes.map((entry) => (
+                        <option key={entry}>{entry}</option>
+                      ))}
+                    </select>
+                  </label>
+                  <label className="text-xs font-bold text-[var(--color-muted)]">
+                    Nature
+                    <select
+                      className="field mt-1 w-full text-sm"
+                      value={draft.recurrence}
+                      onChange={(event) =>
+                        updateDraft(
+                          "recurrence",
+                          event.target.value as Recurrence | "",
+                        )
+                      }
+                    >
+                      <option value="">Non renseigné</option>
+                      <option>Fixe</option>
+                      <option>Variable</option>
+                    </select>
+                  </label>
+                  <label className="text-xs font-bold text-[var(--color-muted)]">
+                    Importance
+                    <select
+                      className="field mt-1 w-full text-sm"
+                      value={draft.importance}
+                      onChange={(event) =>
+                        updateDraft(
+                          "importance",
+                          event.target.value as Importance | "",
+                        )
+                      }
+                    >
+                      <option value="">Non renseigné</option>
+                      {importanceOptions.map((entry) => (
+                        <option key={entry}>{entry}</option>
+                      ))}
+                    </select>
+                  </label>
+                  <label className="text-xs font-bold text-[var(--color-muted)] sm:col-span-2">
+                    Statut analytique
+                    <select
+                      className="field mt-1 w-full text-sm"
+                      value={draft.status}
+                      onChange={(event) =>
+                        updateDraft(
+                          "status",
+                          event.target.value as AnalyticalStatus,
+                        )
+                      }
+                    >
+                      {statusOptions.map((entry) => (
+                        <option key={entry}>{entry}</option>
+                      ))}
+                    </select>
+                  </label>
+                </div>
+
+                <label className="mt-4 block text-xs font-bold text-[var(--color-muted)]">
+                  Note
+                  <textarea
+                    className="field mt-1 min-h-24 w-full resize-y text-sm"
+                    value={draft.note}
+                    onChange={(event) => updateDraft("note", event.target.value)}
+                  />
+                </label>
+                <label className="mt-4 block text-xs font-bold text-[var(--color-muted)]">
+                  Événement
+                  <input
+                    className="field mt-1 w-full text-sm"
+                    value={draft.event}
+                    onChange={(event) => updateDraft("event", event.target.value)}
+                  />
+                </label>
+                <label className="mt-4 flex items-center gap-3 rounded-[var(--radius-sm)] border border-[var(--color-border)] p-3 text-sm font-bold">
+                  <input
+                    type="checkbox"
+                    checked={draft.uncertain}
+                    onChange={(event) =>
+                      updateDraft("uncertain", event.target.checked)
+                    }
+                  />
+                  Classification incertaine
+                </label>
+
+                {actionError ? (
+                  <p className="mt-4 rounded-[var(--radius-sm)] bg-[#fff1ef] p-3 text-sm font-bold text-[#9a463c]">
+                    {actionError}
+                  </p>
+                ) : null}
+
+                <div className="mt-6 flex flex-wrap justify-between gap-3 border-t border-[var(--color-border)] pt-5">
+                  <button
+                    type="button"
+                    className="button-secondary"
+                    disabled={actionPending}
+                    onClick={cancelEditing}
+                  >
+                    Annuler
+                  </button>
+                  <div className="flex flex-wrap gap-3">
+                    <button
+                      type="button"
+                      className="rounded-[var(--radius-sm)] border border-[#c9655b] px-4 py-2.5 text-sm font-extrabold text-[#a83d35] transition hover:bg-[#fff1ef]"
+                      disabled={actionPending}
+                      onClick={() => {
+                        setPanelMode("delete");
+                        setActionError(null);
+                      }}
+                    >
+                      Supprimer
+                    </button>
+                    <button
+                      type="submit"
+                      className="button-primary"
+                      disabled={actionPending}
+                    >
+                      {actionPending ? "Enregistrement…" : "Confirmer"}
+                    </button>
+                  </div>
+                </div>
+              </form>
+            ) : (
+              <div className="rounded-[var(--radius-md)] border border-[#e5aaa2] bg-[#fff7f5] p-5">
+                <p className="font-black text-[#913c34]">
+                  Cette opération sera supprimée définitivement.
+                </p>
+                <p className="mt-2 text-sm text-[var(--color-muted)]">
+                  Le libellé bancaire et la traçabilité de cette opération ne
+                  seront plus disponibles.
+                </p>
+                {actionError ? (
+                  <p className="mt-4 text-sm font-bold text-[#9a463c]">
+                    {actionError}
+                  </p>
+                ) : null}
+                <div className="mt-6 flex flex-wrap justify-end gap-3">
+                  <button
+                    type="button"
+                    className="button-secondary"
+                    disabled={actionPending}
+                    onClick={cancelEditing}
+                  >
+                    Annuler
+                  </button>
+                  <button
+                    type="button"
+                    className="rounded-[var(--radius-sm)] bg-[#a9443a] px-4 py-2.5 text-sm font-extrabold text-white transition hover:bg-[#8f372f]"
+                    disabled={actionPending}
+                    onClick={() => void confirmDelete()}
+                  >
+                    {actionPending
+                      ? "Suppression…"
+                      : "Confirmer la suppression"}
+                  </button>
+                </div>
+              </div>
+            )}
           </aside>
         </div>
       ) : null}

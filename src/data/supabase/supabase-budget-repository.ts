@@ -111,7 +111,9 @@ class SupabaseBudgetRepository implements BudgetRepository {
           .order("created_at", { ascending: false }),
         this.supabase
           .from("categories")
-          .select("name,slug,color,included_in_consumption,subcategories(name)")
+          .select(
+            "name,slug,color,included_in_consumption,subcategories(name,precise_types(name))",
+          )
           .eq("household_id", this.householdId)
           .order("name"),
         this.supabase
@@ -148,16 +150,34 @@ class SupabaseBudgetRepository implements BudgetRepository {
     );
 
     const categories = categoryRows.map((row, index) => {
-      const subcategories = Array.isArray(row.subcategories)
-        ? row.subcategories
-            .map((subcategory) =>
-              typeof subcategory === "object" && subcategory
-                ? String((subcategory as Record<string, unknown>).name ?? "")
-                : "",
-            )
-            .filter(Boolean)
-            .sort((a, b) => a.localeCompare(b, "fr"))
+      const subcategoryRows = Array.isArray(row.subcategories)
+        ? row.subcategories.filter(
+            (subcategory): subcategory is Record<string, unknown> =>
+              typeof subcategory === "object" && subcategory !== null,
+          )
         : [];
+      const subcategories = subcategoryRows
+        .map((subcategory) => String(subcategory.name ?? ""))
+        .filter(Boolean)
+        .sort((a, b) => a.localeCompare(b, "fr"));
+      const preciseTypesBySubcategory = Object.fromEntries(
+        subcategoryRows.map((subcategory) => {
+          const subcategoryName = String(subcategory.name ?? "");
+          const preciseTypes = Array.isArray(subcategory.precise_types)
+            ? subcategory.precise_types
+                .map((preciseType) =>
+                  typeof preciseType === "object" && preciseType
+                    ? String(
+                        (preciseType as Record<string, unknown>).name ?? "",
+                      )
+                    : "",
+                )
+                .filter(Boolean)
+                .sort((a, b) => a.localeCompare(b, "fr"))
+            : [];
+          return [subcategoryName, preciseTypes];
+        }),
+      );
       return {
         name: String(row.name),
         slug: String(row.slug),
@@ -166,6 +186,7 @@ class SupabaseBudgetRepository implements BudgetRepository {
             ? row.color
             : categoryColors[index % categoryColors.length],
         subcategories,
+        preciseTypesBySubcategory,
         includedInConsumption: Boolean(row.included_in_consumption),
       };
     });
