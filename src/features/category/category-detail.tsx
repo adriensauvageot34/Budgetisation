@@ -28,6 +28,7 @@ import type {
 import {
   categoryTrend,
   mean,
+  netExpenseAmount,
   totalExpenses,
 } from "@/domain/calculations";
 import {
@@ -77,9 +78,10 @@ export function CategoryDetail({
       categoryNames.includes(operation.category) &&
       operation.flow === "Dépense",
   );
-  const total = totalExpenses(selectedOperations);
+  const total = totalExpenses(selectedOperations, operations);
   const monthTotal = totalExpenses(
     operations.filter((operation) => operation.importMonth === month),
+    operations,
   );
 
   const subcategories = useMemo(() => {
@@ -87,7 +89,8 @@ export function CategoryDetail({
     for (const operation of selectedOperations) {
       grouped.set(
         operation.subcategory,
-        (grouped.get(operation.subcategory) ?? 0) + Math.abs(operation.amount),
+        (grouped.get(operation.subcategory) ?? 0) +
+          netExpenseAmount(operation, operations),
       );
     }
     return [...grouped.entries()]

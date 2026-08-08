@@ -7,31 +7,88 @@ import type {
   MonthlySummary,
   Operation,
 } from "@/domain/budget";
+import {
+  effectiveResourceType,
+  operationAnalysisMonth,
+} from "@/domain/inflow-analysis";
 
 export function isConsumptionExpense(operation: Operation) {
-  return operation.flow === "Dépense" && operation.amount < 0;
+  const resourceType = effectiveResourceType(operation);
+  return (
+    operation.flow === "Dépense" &&
+    operation.amount < 0 &&
+    resourceType !== "Transfert interne" &&
+    resourceType !== "Flux technique"
+  );
 }
 
-export function totalExpenses(operations: Operation[]) {
+export function netExpenseAmount(
+  operation: Operation,
+  allOperations: Operation[],
+) {
+  if (!isConsumptionExpense(operation)) return 0;
+  const refunds = allOperations
+    .filter(
+      (candidate) =>
+        candidate.amount > 0 &&
+        effectiveResourceType(candidate) === "Remboursement" &&
+        candidate.reimbursesOperationId === operation.id,
+    )
+    .reduce((total, refund) => total + refund.amount, 0);
+  return Math.max(Math.abs(operation.amount) - refunds, 0);
+}
+
+export function totalExpenses(
+  operations: Operation[],
+  allOperations: Operation[] = operations,
+) {
   return operations
     .filter(isConsumptionExpense)
-    .reduce((total, operation) => total + Math.abs(operation.amount), 0);
+    .reduce(
+      (total, operation) => total + netExpenseAmount(operation, allOperations),
+      0,
+    );
 }
 
 export function totalIncome(operations: Operation[]) {
   return operations
-    .filter((operation) => operation.flow === "Revenu" && operation.amount > 0)
+    .filter(
+      (operation) =>
+        effectiveResourceType(operation) === "Revenu" && operation.amount > 0,
+    )
+    .reduce((total, operation) => total + operation.amount, 0);
+}
+
+export function totalOtherInflows(operations: Operation[]) {
+  return operations
+    .filter(
+      (operation) =>
+        effectiveResourceType(operation) === "Entrée d'argent" &&
+        operation.amount > 0,
+    )
     .reduce((total, operation) => total + operation.amount, 0);
 }
 
 export function totalRefunds(operations: Operation[]) {
   return operations
-    .filter((operation) => operation.flow === "Remboursement" && operation.amount > 0)
+    .filter(
+      (operation) =>
+        effectiveResourceType(operation) === "Remboursement" &&
+        operation.amount > 0 &&
+        operation.reimbursesOperationId,
+    )
     .reduce((total, operation) => total + operation.amount, 0);
 }
 
-export function netResult(operations: Operation[]) {
-  return totalIncome(operations) + totalRefunds(operations) - totalExpenses(operations);
+export function netResult(
+  operations: Operation[],
+  allOperations: Operation[] = operations,
+) {
+  return (
+    totalIncome(operations) +
+    totalOtherInflows(operations) -
+    totalExpenses(operations, allOperations)
+  );
 }
 
 export function mean(values: number[]) {
@@ -52,23 +109,44 @@ export function median(values: number[]) {
 export function monthlySummaries(
   operations: Operation[],
   months: MonthKey[],
+  allOperations: Operation[] = operations,
 ): MonthlySummary[] {
   const expenses = months.map((month) =>
-    totalExpenses(operations.filter((operation) => operation.importMonth === month)),
+    totalExpenses(
+      operations.filter((operation) => operation.importMonth === month),
+      allOperations,
+    ),
   );
   const average = mean(expenses);
 
   return months.map((month, index) => {
+    const monthExpenseIds = new Set(
+      operations
+        .filter(
+          (operation) =>
+            operation.importMonth === month && isConsumptionExpense(operation),
+        )
+        .map((operation) => operation.id),
+    );
     const monthOperations = operations.filter(
-      (operation) => operation.importMonth === month,
+      (operation) => operationAnalysisMonth(operation) === month,
     );
     const monthExpenses = expenses[index];
+    const income = totalIncome(monthOperations);
+    const otherInflows = totalOtherInflows(monthOperations);
     return {
       month,
       expenses: monthExpenses,
-      income: totalIncome(monthOperations),
-      refunds: totalRefunds(monthOperations),
-      net: netResult(monthOperations),
+      income,
+      otherInflows,
+      refunds: totalRefunds(
+        allOperations.filter(
+          (operation) =>
+            Boolean(operation.reimbursesOperationId) &&
+            monthExpenseIds.has(operation.reimbursesOperationId!),
+        ),
+      ),
+      net: income + otherInflows - monthExpenses,
       averageDelta: average ? (monthExpenses - average) / average : 0,
     };
   });
@@ -83,7 +161,7 @@ export function categoryBreakdown(
   const monthOperations = operations.filter(
     (operation) => operation.importMonth === selectedMonth,
   );
-  const expenses = totalExpenses(monthOperations);
+  const netExpenses = totalExpenses(monthOperations, operations);
 
   return categories
     .filter((category) => category.includedInConsumption)
@@ -92,6 +170,7 @@ export function categoryBreakdown(
         monthOperations.filter(
           (operation) => operation.category === category.name,
         ),
+        operations,
       );
       const monthlyValues = months.map((month) =>
         totalExpenses(
@@ -100,6 +179,7 @@ export function categoryBreakdown(
               operation.importMonth === month &&
               operation.category === category.name,
           ),
+          operations,
         ),
       );
       const average = mean(monthlyValues);
@@ -109,7 +189,7 @@ export function categoryBreakdown(
         color: category.color,
         amount,
         average,
-        share: expenses ? amount / expenses : 0,
+        share: netExpenses ? amount / netExpenses : 0,
         delta: average ? (amount - average) / average : 0,
       };
     })
@@ -117,7 +197,10 @@ export function categoryBreakdown(
     .sort((a, b) => b.amount - a.amount);
 }
 
-export function importanceBreakdown(operations: Operation[]) {
+export function importanceBreakdown(
+  operations: Operation[],
+  allOperations: Operation[] = operations,
+) {
   const importance: Importance[] = [
     "Indispensable",
     "Contrainte",
@@ -128,11 +211,15 @@ export function importanceBreakdown(operations: Operation[]) {
     name,
     value: totalExpenses(
       operations.filter((operation) => operation.importance === name),
+      allOperations,
     ),
   }));
 }
 
-export function statusBreakdown(operations: Operation[]) {
+export function statusBreakdown(
+  operations: Operation[],
+  allOperations: Operation[] = operations,
+) {
   const statuses: AnalyticalStatus[] = [
     "Habituel",
     "Exceptionnel",
@@ -143,6 +230,7 @@ export function statusBreakdown(operations: Operation[]) {
     name,
     value: totalExpenses(
       operations.filter((operation) => operation.status === name),
+      allOperations,
     ),
   }));
 }
@@ -159,10 +247,28 @@ export function categoryTrend(
         (operation) =>
           operation.importMonth === month && operation.category === category,
       ),
+      operations,
     ),
   }));
   const average = mean(values.map((entry) => entry.amount));
   return values.map((entry) => ({ ...entry, average }));
+}
+
+export function eventNetCost(
+  operations: Operation[],
+  event: string,
+  eventDetail?: string | null,
+  allOperations: Operation[] = operations,
+) {
+  return totalExpenses(
+    operations.filter(
+      (operation) =>
+        (operation.event === event ||
+          (event === "Vie courante" && !operation.event)) &&
+        (!eventDetail || operation.eventDetail === eventDetail),
+    ),
+    allOperations,
+  );
 }
 
 export function descriptiveStats(summaries: MonthlySummary[]) {

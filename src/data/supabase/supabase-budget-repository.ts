@@ -10,7 +10,9 @@ import type {
   MonthKey,
   Operation,
   Recurrence,
+  ResourceType,
 } from "@/domain/budget";
+import { applyInflowAnalysis } from "@/domain/inflow-analysis";
 import { createClient } from "@/lib/supabase/server";
 
 const categoryColors = [
@@ -97,6 +99,11 @@ class SupabaseBudgetRepository implements BudgetRepository {
             "analytical_status",
             "note",
             "event",
+            "event_detail",
+            "resource_type",
+            "resource_context",
+            "analysis_month_override",
+            "reimburses_operation_id",
             "uncertain",
             "fingerprint",
             "source_metadata",
@@ -211,7 +218,7 @@ class SupabaseBudgetRepository implements BudgetRepository {
       };
     });
 
-    const operations = operationRows.map((row) => {
+    const operations = applyInflowAnalysis(operationRows.map((row) => {
       const account = related<AccountRelation>(row.account);
       const person = related<MemberRelation>(row.person);
       const category = related<CategoryRelation>(row.category);
@@ -268,6 +275,19 @@ class SupabaseBudgetRepository implements BudgetRepository {
             : "Non renseigné",
         note: typeof row.note === "string" ? row.note : null,
         event: typeof row.event === "string" ? row.event : null,
+        eventDetail:
+          typeof row.event_detail === "string" ? row.event_detail : null,
+        resourceType:
+          typeof row.resource_type === "string"
+            ? (row.resource_type as ResourceType)
+            : null,
+        resourceContext:
+          typeof row.resource_context === "string" ? row.resource_context : null,
+        analysisMonthOverride: monthKey(row.analysis_month_override),
+        reimbursesOperationId:
+          typeof row.reimburses_operation_id === "string"
+            ? row.reimburses_operation_id
+            : null,
         uncertain: Boolean(row.uncertain),
         fingerprint: String(row.fingerprint),
         sourceMetadata:
@@ -275,7 +295,7 @@ class SupabaseBudgetRepository implements BudgetRepository {
             ? (row.source_metadata as Record<string, unknown>)
             : {},
       } satisfies Operation;
-    });
+    }));
 
     const accounts = accountRows.map((row) => {
       const owner = related<MemberRelation>(row.owner);
@@ -316,7 +336,10 @@ class SupabaseBudgetRepository implements BudgetRepository {
     const months = [
       ...new Set(
         operations
-          .map((operation) => operation.importMonth)
+          .flatMap((operation) => [
+            operation.importMonth,
+            operation.analysisMonth ?? operation.importMonth,
+          ])
           .filter((month) => Boolean(month)),
       ),
     ].sort();

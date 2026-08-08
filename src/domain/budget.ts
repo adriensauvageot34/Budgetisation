@@ -13,6 +13,13 @@ export type Importance =
   | "Ajustable"
   | "Optionnelle";
 export type Recurrence = "Fixe" | "Variable";
+export type ResourceType =
+  | "Revenu"
+  | "Entrée d'argent"
+  | "Remboursement"
+  | "Transfert interne"
+  | "Flux technique"
+  | "À qualifier";
 export type AnalyticalStatus =
   | "Habituel"
   | "Exceptionnel"
@@ -56,6 +63,13 @@ export interface Operation {
   importId: string;
   note: string | null;
   event: string | null;
+  eventDetail?: string | null;
+  resourceType?: ResourceType | null;
+  resourceContext?: string | null;
+  analysisMonthOverride?: MonthKey | null;
+  analysisMonth?: MonthKey;
+  analysisUncertain?: boolean;
+  reimbursesOperationId?: string | null;
   uncertain: boolean;
   fingerprint: string;
   sourceMetadata: Record<string, unknown>;
@@ -77,6 +91,7 @@ export interface MonthlySummary {
   month: MonthKey;
   expenses: number;
   income: number;
+  otherInflows: number;
   refunds: number;
   net: number;
   averageDelta: number;

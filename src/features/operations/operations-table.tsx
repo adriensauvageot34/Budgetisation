@@ -28,7 +28,13 @@ import type {
   Operation,
   Person,
   Recurrence,
+  ResourceType,
 } from "@/domain/budget";
+import {
+  applyInflowAnalysis,
+  operationAnalysisMonth,
+} from "@/domain/inflow-analysis";
+import { isConsumptionExpense } from "@/domain/calculations";
 import {
   formatCurrency,
   formatDate,
@@ -54,6 +60,11 @@ type OperationDraft = {
   status: AnalyticalStatus;
   note: string;
   event: string;
+  eventDetail: string;
+  resourceType: ResourceType | "";
+  resourceContext: string;
+  analysisMonthOverride: MonthKey | "";
+  reimbursesOperationId: string;
   uncertain: boolean;
 };
 
@@ -78,6 +89,14 @@ const statusOptions: AnalyticalStatus[] = [
   "Hors budget",
   "À ventiler",
 ];
+const resourceTypeOptions: ResourceType[] = [
+  "Revenu",
+  "Entrée d'argent",
+  "Remboursement",
+  "Transfert interne",
+  "Flux technique",
+  "À qualifier",
+];
 
 function operationDraft(operation: Operation): OperationDraft {
   return {
@@ -98,6 +117,11 @@ function operationDraft(operation: Operation): OperationDraft {
     status: operation.status,
     note: operation.note ?? "",
     event: operation.event ?? "",
+    eventDetail: operation.eventDetail ?? "",
+    resourceType: operation.resourceType ?? "",
+    resourceContext: operation.resourceContext ?? "",
+    analysisMonthOverride: operation.analysisMonthOverride ?? "",
+    reimbursesOperationId: operation.reimbursesOperationId ?? "",
     uncertain: operation.uncertain,
   };
 }
@@ -189,6 +213,7 @@ export function OperationsTable({
   const [draft, setDraft] = useState<OperationDraft | null>(null);
   const [actionPending, setActionPending] = useState(false);
   const [actionError, setActionError] = useState<string | null>(null);
+  const [reimbursementQuery, setReimbursementQuery] = useState("");
 
   useEffect(() => {
     setOperationRows(operations);
@@ -222,6 +247,10 @@ export function OperationsTable({
               operation.sourceLabel,
               operation.subcategory,
               operation.preciseType,
+              operation.event,
+              operation.eventDetail,
+              operation.resourceType,
+              operation.resourceContext,
             ]
               .join(" ")
               .toLocaleLowerCase("fr-FR")
@@ -308,12 +337,40 @@ export function OperationsTable({
         draft.subcategory
       ] ?? [])
     : [];
+  const reimbursementCandidates = useMemo(() => {
+    const query = reimbursementQuery.trim().toLocaleLowerCase("fr-FR");
+    return operationRows
+      .filter(
+        (operation) =>
+          isConsumptionExpense(operation) &&
+          operation.id !== selectedOperation?.id &&
+          (!query ||
+            [
+              operation.label,
+              operation.sourceLabel,
+              operation.category,
+              operation.event,
+              operation.eventDetail,
+            ]
+              .join(" ")
+              .toLocaleLowerCase("fr-FR")
+              .includes(query)),
+      )
+      .sort((a, b) => b.date.localeCompare(a.date))
+      .slice(0, 100);
+  }, [operationRows, reimbursementQuery, selectedOperation?.id]);
+  const selectedReimbursedOperation = selectedOperation?.reimbursesOperationId
+    ? operationRows.find(
+        (operation) => operation.id === selectedOperation.reimbursesOperationId,
+      )
+    : null;
 
   function openOperation(operation: Operation) {
     setSelectedOperation(operation);
     setDraft(operationDraft(operation));
     setPanelMode("read");
     setActionError(null);
+    setReimbursementQuery("");
   }
 
   function closePanel() {
@@ -322,6 +379,7 @@ export function OperationsTable({
     setDraft(null);
     setPanelMode("read");
     setActionError(null);
+    setReimbursementQuery("");
   }
 
   function cancelEditing() {
@@ -329,6 +387,7 @@ export function OperationsTable({
     setDraft(operationDraft(selectedOperation));
     setPanelMode("read");
     setActionError(null);
+    setReimbursementQuery("");
   }
 
   function updateDraft<K extends keyof OperationDraft>(
@@ -361,6 +420,15 @@ export function OperationsTable({
       status: draft.status,
       note: draft.note || null,
       event: draft.event || null,
+      eventDetail: draft.eventDetail || null,
+      resourceType: draft.resourceType || null,
+      resourceContext: draft.resourceContext || null,
+      analysisMonthOverride:
+        amount > 0 ? draft.analysisMonthOverride || null : null,
+      reimbursesOperationId:
+        draft.resourceType === "Remboursement"
+          ? draft.reimbursesOperationId || null
+          : null,
       uncertain: draft.uncertain,
     };
 
@@ -385,15 +453,30 @@ export function OperationsTable({
         status: draft.status,
         note: draft.note.trim() || null,
         event: draft.event.trim() || null,
+        eventDetail: draft.eventDetail.trim() || null,
+        resourceType: draft.resourceType || null,
+        resourceContext: draft.resourceContext.trim() || null,
+        analysisMonthOverride:
+          amount > 0 ? draft.analysisMonthOverride || null : null,
+        analysisMonth:
+          draft.analysisMonthOverride || selectedOperation.analysisMonth,
+        reimbursesOperationId:
+          draft.resourceType === "Remboursement"
+            ? draft.reimbursesOperationId || null
+            : null,
         uncertain: draft.uncertain,
       };
-      setOperationRows((rows) =>
-        rows.map((operation) =>
+      const analysedRows = applyInflowAnalysis(
+        operationRows.map((operation) =>
           operation.id === updatedOperation.id ? updatedOperation : operation,
         ),
       );
-      setSelectedOperation(updatedOperation);
-      setDraft(operationDraft(updatedOperation));
+      const analysedOperation =
+        analysedRows.find((operation) => operation.id === updatedOperation.id) ??
+        updatedOperation;
+      setOperationRows(analysedRows);
+      setSelectedOperation(analysedOperation);
+      setDraft(operationDraft(analysedOperation));
       setPanelMode("read");
       router.refresh();
     } catch (caught) {
@@ -951,6 +1034,14 @@ export function OperationsTable({
                   ["Importance", selectedOperation.importance ?? "Non renseigné"],
                   ["Nature", selectedOperation.recurrence ?? "Non renseigné"],
                   ["Statut", selectedOperation.status],
+                  [
+                    "Type de ressource",
+                    selectedOperation.resourceType ?? "Non renseigné",
+                  ],
+                  [
+                    "Mois analytique",
+                    formatMonth(operationAnalysisMonth(selectedOperation)),
+                  ],
                 ].map(([label, value]) => (
                   <div key={label}>
                     <dt className="text-xs font-bold text-[var(--color-muted)]">
@@ -1017,6 +1108,29 @@ export function OperationsTable({
             {selectedOperation.event ? (
               <p className="mt-4 rounded-xl bg-[var(--color-surface-soft)] p-3 text-sm text-[var(--color-muted)]">
                 Événement : {selectedOperation.event}
+                {selectedOperation.eventDetail
+                  ? ` · ${selectedOperation.eventDetail}`
+                  : ""}
+              </p>
+            ) : null}
+
+            {selectedOperation.resourceContext ? (
+              <p className="mt-4 rounded-xl bg-[var(--color-surface-soft)] p-3 text-sm text-[var(--color-muted)]">
+                Contexte : {selectedOperation.resourceContext}
+              </p>
+            ) : null}
+
+            {selectedOperation.resourceType === "Remboursement" ? (
+              <p className="mt-4 rounded-xl bg-[var(--color-surface-soft)] p-3 text-sm text-[var(--color-muted)]">
+                {selectedReimbursedOperation
+                  ? `Remboursement de : ${formatDate(selectedReimbursedOperation.date)} · ${selectedReimbursedOperation.label} · ${formatCurrency(Math.abs(selectedReimbursedOperation.amount))}`
+                  : "Remboursement à affecter"}
+              </p>
+            ) : null}
+
+            {selectedOperation.analysisUncertain ? (
+              <p className="mt-4 rounded-xl bg-[#f6ead2] p-3 text-sm font-bold text-[#8a6021]">
+                Rattachement analytique à contrôler.
               </p>
             ) : null}
 
@@ -1094,6 +1208,25 @@ export function OperationsTable({
                       }
                     >
                       {flowOptions.map((entry) => (
+                        <option key={entry}>{entry}</option>
+                      ))}
+                    </select>
+                  </label>
+                  <label className="text-xs font-bold text-[var(--color-muted)]">
+                    Type de ressource
+                    <select
+                      className="field mt-1 w-full text-sm"
+                      value={draft.resourceType}
+                      onChange={(event) => {
+                        const value = event.target.value as ResourceType | "";
+                        updateDraft("resourceType", value);
+                        if (value !== "Remboursement") {
+                          updateDraft("reimbursesOperationId", "");
+                        }
+                      }}
+                    >
+                      <option value="">Automatique</option>
+                      {resourceTypeOptions.map((entry) => (
                         <option key={entry}>{entry}</option>
                       ))}
                     </select>
@@ -1204,6 +1337,75 @@ export function OperationsTable({
                   </label>
                 </div>
 
+                <div className="mt-4 grid gap-4 sm:grid-cols-2">
+                  <label className="text-xs font-bold text-[var(--color-muted)]">
+                    Contexte de l’entrée
+                    <input
+                      className="field mt-1 w-full text-sm"
+                      value={draft.resourceContext}
+                      onChange={(event) =>
+                        updateDraft("resourceContext", event.target.value)
+                      }
+                      placeholder="Aide parentale, cadeau…"
+                    />
+                  </label>
+                  <label className="text-xs font-bold text-[var(--color-muted)]">
+                    Mois de rattachement analytique
+                    <select
+                      className="field mt-1 w-full text-sm"
+                      value={draft.analysisMonthOverride}
+                      disabled={Number(draft.amount.replace(",", ".")) <= 0}
+                      onChange={(event) =>
+                        updateDraft(
+                          "analysisMonthOverride",
+                          event.target.value as MonthKey | "",
+                        )
+                      }
+                    >
+                      <option value="">
+                        Automatique · {formatMonth(operationAnalysisMonth(selectedOperation))}
+                      </option>
+                      {months.map((entry) => (
+                        <option key={entry} value={entry}>
+                          {formatMonth(entry)}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                </div>
+
+                {draft.resourceType === "Remboursement" &&
+                Number(draft.amount.replace(",", ".")) > 0 ? (
+                  <div className="mt-4 rounded-[var(--radius-md)] border border-[var(--color-border)] p-4">
+                    <p className="text-xs font-bold text-[var(--color-muted)]">
+                      Remboursement de
+                    </p>
+                    <input
+                      className="field mt-2 w-full text-sm"
+                      value={reimbursementQuery}
+                      onChange={(event) => setReimbursementQuery(event.target.value)}
+                      placeholder="Rechercher une dépense"
+                    />
+                    <select
+                      className="field mt-2 w-full text-sm"
+                      value={draft.reimbursesOperationId}
+                      onChange={(event) =>
+                        updateDraft("reimbursesOperationId", event.target.value)
+                      }
+                    >
+                      <option value="">Remboursement à affecter</option>
+                      {reimbursementCandidates.map((operation) => (
+                        <option key={operation.id} value={operation.id}>
+                          {formatDate(operation.date)} · {operation.label} ·{" "}
+                          {formatCurrency(Math.abs(operation.amount))} ·{" "}
+                          {operation.category}
+                          {operation.event ? ` · ${operation.event}` : ""}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                ) : null}
+
                 <label className="mt-4 block text-xs font-bold text-[var(--color-muted)]">
                   Note
                   <textarea
@@ -1218,6 +1420,17 @@ export function OperationsTable({
                     className="field mt-1 w-full text-sm"
                     value={draft.event}
                     onChange={(event) => updateDraft("event", event.target.value)}
+                  />
+                </label>
+                <label className="mt-4 block text-xs font-bold text-[var(--color-muted)]">
+                  Spécification de l’événement
+                  <input
+                    className="field mt-1 w-full text-sm"
+                    value={draft.eventDetail}
+                    onChange={(event) =>
+                      updateDraft("eventDetail", event.target.value)
+                    }
+                    placeholder="Minorque, Anniversaire Adrien, Canapé…"
                   />
                 </label>
                 <label className="mt-4 flex items-center gap-3 rounded-[var(--radius-sm)] border border-[var(--color-border)] p-3 text-sm font-bold">

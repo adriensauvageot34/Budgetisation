@@ -32,11 +32,14 @@ import type {
 } from "@/domain/budget";
 import {
   descriptiveStats,
+  eventNetCost,
   importanceBreakdown,
+  isConsumptionExpense,
   monthlySummaries,
   statusBreakdown,
   totalExpenses,
 } from "@/domain/calculations";
+import { operationAnalysisMonth } from "@/domain/inflow-analysis";
 import {
   formatCompactCurrency,
   formatCurrency,
@@ -67,10 +70,33 @@ export function AnalysisDashboard({
   const [person, setPerson] = useState<Person | "Toutes">("Toutes");
   const [accountId, setAccountId] = useState("Tous");
   const [status, setStatus] = useState<AnalyticalStatus | "Tous">("Tous");
+  const [eventFilter, setEventFilter] = useState("Tous");
+  const [eventDetailFilter, setEventDetailFilter] = useState("Toutes");
   const people = [
     ...new Set(
       operations
         .map((operation) => operation.person)
+        .filter((value): value is string => Boolean(value)),
+    ),
+  ].sort((a, b) => a.localeCompare(b, "fr"));
+  const events = [
+    "Vie courante",
+    ...new Set(
+      operations
+        .map((operation) => operation.event)
+        .filter((value): value is string => Boolean(value)),
+    ),
+  ].sort((a, b) => a.localeCompare(b, "fr"));
+  const eventDetails = [
+    ...new Set(
+      operations
+        .filter(
+          (operation) =>
+            eventFilter === "Tous" ||
+            operation.event === eventFilter ||
+            (eventFilter === "Vie courante" && !operation.event),
+        )
+        .map((operation) => operation.eventDetail)
         .filter((value): value is string => Boolean(value)),
     ),
   ].sort((a, b) => a.localeCompare(b, "fr"));
@@ -82,18 +108,40 @@ export function AnalysisDashboard({
     () =>
       operations.filter(
         (operation) =>
-          selectedMonths.includes(operation.importMonth) &&
+          selectedMonths.includes(
+            isConsumptionExpense(operation)
+              ? operation.importMonth
+              : operationAnalysisMonth(operation),
+          ) &&
           (category === "Toutes" || operation.category === category) &&
           (person === "Toutes" || operation.person === person) &&
           (accountId === "Tous" || operation.accountId === accountId) &&
-          (status === "Tous" || operation.status === status),
+          (status === "Tous" || operation.status === status) &&
+          (eventFilter === "Tous" ||
+            operation.event === eventFilter ||
+            (eventFilter === "Vie courante" && !operation.event)) &&
+          (eventDetailFilter === "Toutes" ||
+            operation.eventDetail === eventDetailFilter),
       ),
-    [accountId, category, operations, person, selectedMonths, status],
+    [
+      accountId,
+      category,
+      eventDetailFilter,
+      eventFilter,
+      operations,
+      person,
+      selectedMonths,
+      status,
+    ],
   );
-  const summaries = monthlySummaries(filteredOperations, selectedMonths);
+  const summaries = monthlySummaries(
+    filteredOperations,
+    selectedMonths,
+    operations,
+  );
   const stats = descriptiveStats(summaries);
-  const importance = importanceBreakdown(filteredOperations);
-  const statuses = statusBreakdown(filteredOperations);
+  const importance = importanceBreakdown(filteredOperations, operations);
+  const statuses = statusBreakdown(filteredOperations, operations);
 
   const categoryRanking = useMemo(() => {
     return categories
@@ -104,16 +152,30 @@ export function AnalysisDashboard({
           filteredOperations.filter(
             (operation) => operation.category === definition.name,
           ),
+          operations,
         ),
         color: definition.color,
       }))
       .filter((entry) => entry.amount > 0)
       .sort((a, b) => b.amount - a.amount)
       .slice(0, 8);
-  }, [categories, filteredOperations]);
+  }, [categories, filteredOperations, operations]);
 
   const total = summaries.reduce((sum, summary) => sum + summary.expenses, 0);
   const usual = statuses.find((entry) => entry.name === "Habituel")?.value ?? 0;
+  const selectedEventCost =
+    eventFilter === "Tous"
+      ? null
+      : eventNetCost(
+          filteredOperations,
+          eventFilter,
+          eventDetailFilter === "Toutes" ? null : eventDetailFilter,
+          operations,
+        );
+  const selectedEventMonths = filteredOperations
+    .filter(isConsumptionExpense)
+    .map((operation) => operation.importMonth)
+    .sort();
 
   return (
     <div>
@@ -134,7 +196,7 @@ export function AnalysisDashboard({
           <SlidersHorizontal size={17} className="text-[var(--color-primary)]" />
           <h2 className="font-black">Filtres de l’analyse</h2>
         </div>
-        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-6">
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-8">
           <label className="text-xs font-bold text-[var(--color-muted)]">
             Du mois
             <select
@@ -232,8 +294,57 @@ export function AnalysisDashboard({
               <option>À ventiler</option>
             </select>
           </label>
+          <label className="text-xs font-bold text-[var(--color-muted)]">
+            Événement
+            <select
+              className="field mt-1 w-full text-sm"
+              value={eventFilter}
+              onChange={(event) => {
+                setEventFilter(event.target.value);
+                setEventDetailFilter("Toutes");
+              }}
+            >
+              <option>Tous</option>
+              {events.map((entry) => (
+                <option key={entry}>{entry}</option>
+              ))}
+            </select>
+          </label>
+          <label className="text-xs font-bold text-[var(--color-muted)]">
+            Spécification
+            <select
+              className="field mt-1 w-full text-sm"
+              value={eventDetailFilter}
+              onChange={(event) => setEventDetailFilter(event.target.value)}
+            >
+              <option>Toutes</option>
+              {eventDetails.map((entry) => (
+                <option key={entry}>{entry}</option>
+              ))}
+            </select>
+          </label>
         </div>
       </section>
+
+      {selectedEventCost !== null ? (
+        <section className="card mb-5 p-4 sm:p-5">
+          <p className="text-xs font-bold text-[var(--color-muted)]">
+            Coût net de l’événement
+          </p>
+          <p className="mt-1 text-2xl font-black">
+            {eventFilter}
+            {eventDetailFilter !== "Toutes" ? ` · ${eventDetailFilter}` : ""}
+            {" · "}
+            {formatCurrency(selectedEventCost)}
+          </p>
+          {selectedEventMonths.length ? (
+            <p className="mt-1 text-sm text-[var(--color-muted)]">
+              Période bancaire : {formatMonth(selectedEventMonths[0])} —{" "}
+              {formatMonth(selectedEventMonths.at(-1)!)}
+            </p>
+          ) : null}
+        </section>
+      ) : null}
 
       <section className="card mb-5 overflow-hidden">
         <div className="grid grid-cols-2 lg:grid-cols-6">
@@ -282,7 +393,9 @@ export function AnalysisDashboard({
         <div className="card p-4 sm:p-6">
           <div className="mb-5">
             <p className="eyebrow mb-2">Évolution globale</p>
-            <h2 className="text-xl font-black">Dépenses et revenus</h2>
+            <h2 className="text-xl font-black">
+              Dépenses nettes, revenus et autres entrées
+            </h2>
           </div>
           <div className="h-[360px]">
             <ResponsiveContainer width="100%" height="100%">
@@ -302,6 +415,10 @@ export function AnalysisDashboard({
                     <stop offset="0%" stopColor="#52766f" stopOpacity={0.24} />
                     <stop offset="100%" stopColor="#52766f" stopOpacity={0.02} />
                   </linearGradient>
+                  <linearGradient id="otherInflowsFill" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor="#d69a3c" stopOpacity={0.24} />
+                    <stop offset="100%" stopColor="#d69a3c" stopOpacity={0.02} />
+                  </linearGradient>
                 </defs>
                 <CartesianGrid vertical={false} strokeDasharray="3 3" />
                 <XAxis
@@ -320,12 +437,20 @@ export function AnalysisDashboard({
                 <Tooltip
                   formatter={(value, name) => [
                     formatCurrency(Number(value)),
-                    name === "expenses" ? "Dépenses" : "Revenus",
+                    name === "expenses"
+                      ? "Dépenses nettes"
+                      : name === "otherInflows"
+                        ? "Autres entrées d’argent"
+                        : "Revenus",
                   ]}
                 />
                 <Legend
                   formatter={(value) =>
-                    value === "expenses" ? "Dépenses" : "Revenus"
+                    value === "expenses"
+                      ? "Dépenses nettes"
+                      : value === "otherInflows"
+                        ? "Autres entrées d’argent"
+                        : "Revenus"
                   }
                 />
                 <Area
@@ -334,6 +459,13 @@ export function AnalysisDashboard({
                   stroke="#52766f"
                   strokeWidth={2.5}
                   fill="url(#incomeFill)"
+                />
+                <Area
+                  type="monotone"
+                  dataKey="otherInflows"
+                  stroke="#d69a3c"
+                  strokeWidth={2.5}
+                  fill="url(#otherInflowsFill)"
                 />
                 <Area
                   type="monotone"
