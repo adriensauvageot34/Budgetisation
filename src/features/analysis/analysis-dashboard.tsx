@@ -67,6 +67,13 @@ export function AnalysisDashboard({
   const [person, setPerson] = useState<Person | "Toutes">("Toutes");
   const [accountId, setAccountId] = useState("Tous");
   const [status, setStatus] = useState<AnalyticalStatus | "Tous">("Tous");
+  const people = [
+    ...new Set(
+      operations
+        .map((operation) => operation.person)
+        .filter((value): value is string => Boolean(value)),
+    ),
+  ].sort((a, b) => a.localeCompare(b, "fr"));
 
   const selectedMonths = months.filter(
     (month) => month >= startMonth && month <= endMonth,
@@ -189,8 +196,9 @@ export function AnalysisDashboard({
               }
             >
               <option>Toutes</option>
-              <option>Adrien</option>
-              <option>Manon</option>
+              {people.map((entry) => (
+                <option key={entry}>{entry}</option>
+              ))}
             </select>
           </label>
           <label className="text-xs font-bold text-[var(--color-muted)]">

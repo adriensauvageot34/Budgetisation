@@ -1,18 +1,29 @@
 import type { Metadata } from "next";
-import { budgetRepository } from "@/data";
+import { getBudgetRepository } from "@/data";
 import { AnalysisDashboard } from "@/features/analysis/analysis-dashboard";
 
-export const metadata: Metadata = {
-  title: "Analyse",
-};
+export const metadata: Metadata = { title: "Analyse" };
+export const dynamic = "force-dynamic";
 
-export default function AnalysisPage() {
+export default async function AnalysisPage() {
+  const repository = await getBudgetRepository();
+  const [months, operations, categories, accounts] = await Promise.all([
+    repository.getMonths(),
+    repository.getOperations(),
+    repository.getCategories(),
+    repository.getAccounts(),
+  ]);
+
+  if (!months.length) {
+    return <p className="card p-6">Aucune opération disponible.</p>;
+  }
+
   return (
     <AnalysisDashboard
-      months={budgetRepository.getMonths()}
-      operations={budgetRepository.getOperations()}
-      categories={budgetRepository.getCategories()}
-      accounts={budgetRepository.getAccounts()}
+      months={months}
+      operations={operations}
+      categories={categories}
+      accounts={accounts}
     />
   );
 }

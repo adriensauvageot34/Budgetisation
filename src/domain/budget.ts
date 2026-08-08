@@ -1,16 +1,5 @@
-export const monthKeys = [
-  "2026-01",
-  "2026-02",
-  "2026-03",
-  "2026-04",
-  "2026-05",
-  "2026-06",
-  "2026-07",
-  "2026-08",
-] as const;
-
-export type MonthKey = (typeof monthKeys)[number];
-export type Person = "Adrien" | "Manon";
+export type MonthKey = string;
+export type Person = string;
 export type FlowType =
   | "Dépense"
   | "Revenu"
@@ -33,9 +22,9 @@ export type AnalyticalStatus =
 export interface Account {
   id: string;
   name: string;
-  owner: Person | "Foyer";
-  kind: "Compte courant" | "Carte repas" | "Épargne" | "Espèces";
-  color: string;
+  owner: Person | null;
+  kind: string | null;
+  color: string | null;
 }
 
 export interface CategoryDefinition {
@@ -53,25 +42,30 @@ export interface Operation {
   label: string;
   normalizedMerchant: string;
   amount: number;
-  person: Person;
-  accountId: string;
+  person: Person | null;
+  accountId: string | null;
   flow: FlowType;
   category: string;
   subcategory: string;
-  preciseType: string;
-  importance: Importance;
-  recurrence: Recurrence;
+  preciseType: string | null;
+  importance: Importance | null;
+  recurrence: Recurrence | null;
   status: AnalyticalStatus;
   sourceLabel: string;
   importId: string;
-  note?: string;
-  uncertain?: boolean;
+  note: string | null;
+  event: string | null;
+  uncertain: boolean;
+  fingerprint: string;
+  sourceMetadata: Record<string, unknown>;
 }
 
 export interface ImportBatch {
   id: string;
   importedAt: string;
-  month: MonthKey;
+  month: MonthKey | null;
+  firstMonth: MonthKey | null;
+  lastMonth: MonthKey | null;
   status: "Terminé" | "À contrôler" | "Importé avec avertissements";
   rows: number;
   warnings: number;

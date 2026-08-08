@@ -86,7 +86,7 @@ function CategoryTooltip({
               className="size-2 rounded-full"
               style={{ background: item.color }}
             />
-            {item.dataKey === "amount" ? "Août sélectionné" : "Moyenne"}
+            {item.dataKey === "amount" ? "Mois sélectionné" : "Moyenne"}
           </span>
           <span className="font-bold">{formatCurrency(Number(item.value))}</span>
         </div>

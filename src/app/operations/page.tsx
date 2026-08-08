@@ -1,11 +1,10 @@
 import type { Metadata } from "next";
-import { budgetRepository } from "@/data";
+import { getBudgetRepository } from "@/data";
 import type { MonthKey } from "@/domain/budget";
 import { OperationsTable } from "@/features/operations/operations-table";
 
-export const metadata: Metadata = {
-  title: "Opérations",
-};
+export const metadata: Metadata = { title: "Opérations" };
+export const dynamic = "force-dynamic";
 
 export default async function OperationsPage({
   searchParams,
@@ -13,18 +12,28 @@ export default async function OperationsPage({
   searchParams: Promise<{ month?: string }>;
 }) {
   const query = await searchParams;
-  const months = budgetRepository.getMonths();
+  const repository = await getBudgetRepository();
+  const [months, operations, categories, accounts] = await Promise.all([
+    repository.getMonths(),
+    repository.getOperations(),
+    repository.getCategories(),
+    repository.getAccounts(),
+  ]);
   const requestedMonth = query.month as MonthKey | undefined;
-  const initialMonth = months.includes(requestedMonth as MonthKey)
-    ? (requestedMonth as MonthKey)
-    : months.at(-1)!;
+  const initialMonth = months.includes(requestedMonth ?? "")
+    ? requestedMonth!
+    : months.at(-1);
+
+  if (!initialMonth) {
+    return <p className="card p-6">Aucune opération disponible.</p>;
+  }
 
   return (
     <OperationsTable
       months={months}
-      operations={budgetRepository.getOperations()}
-      categories={budgetRepository.getCategories()}
-      accounts={budgetRepository.getAccounts()}
+      operations={operations}
+      categories={categories}
+      accounts={accounts}
       initialMonth={initialMonth}
     />
   );

@@ -1,7 +1,9 @@
 import { notFound } from "next/navigation";
-import { budgetRepository } from "@/data";
+import { getBudgetRepository } from "@/data";
 import type { MonthKey } from "@/domain/budget";
 import { CategoryDetail } from "@/features/category/category-detail";
+
+export const dynamic = "force-dynamic";
 
 export default async function CategoryPage({
   params,
@@ -12,17 +14,23 @@ export default async function CategoryPage({
 }) {
   const { slug } = await params;
   const query = await searchParams;
-  const months = budgetRepository.getMonths();
+  const repository = await getBudgetRepository();
+  const [months, operations, categories, accounts] = await Promise.all([
+    repository.getMonths(),
+    repository.getOperations(),
+    repository.getCategories(),
+    repository.getAccounts(),
+  ]);
   const requestedMonth = query.month as MonthKey | undefined;
-  const month = months.includes(requestedMonth as MonthKey)
-    ? (requestedMonth as MonthKey)
-    : months.at(-1)!;
-  const categories = budgetRepository.getCategories();
+  const month = months.includes(requestedMonth ?? "")
+    ? requestedMonth!
+    : months.at(-1);
   const hiddenSlugs = query.hidden?.split(",").filter(Boolean) ?? [];
 
   if (
-    slug !== "autres" &&
-    !categories.some((category) => category.slug === slug)
+    !month ||
+    (slug !== "autres" &&
+      !categories.some((category) => category.slug === slug))
   ) {
     notFound();
   }
@@ -33,9 +41,9 @@ export default async function CategoryPage({
       month={month}
       hiddenSlugs={hiddenSlugs}
       months={months}
-      operations={budgetRepository.getOperations()}
+      operations={operations}
       categories={categories}
-      accounts={budgetRepository.getAccounts()}
+      accounts={accounts}
     />
   );
 }

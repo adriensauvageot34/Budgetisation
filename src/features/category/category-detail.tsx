@@ -291,7 +291,9 @@ export function CategoryDetail({
           <div>
             <div className="mb-5 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
               <div>
-                <p className="eyebrow mb-2">Janvier — août 2026</p>
+                <p className="eyebrow mb-2">
+                  {formatMonth(months[0])} — {formatMonth(months.at(-1)!)}
+                </p>
                 <h2 className="text-xl font-black tracking-[-0.025em]">
                   Évolution mensuelle
                 </h2>
@@ -383,11 +385,11 @@ export function CategoryDetail({
                               {operation.subcategory}
                             </p>
                           </td>
-                          <td>{operation.person}</td>
+                          <td>{operation.person ?? "Non renseigné"}</td>
                           <td>
                             {accounts.find(
                               (account) => account.id === operation.accountId,
-                            )?.name ?? operation.accountId}
+                            )?.name ?? "Non renseigné"}
                           </td>
                           <td className="text-right font-black negative">
                             {formatCurrency(operation.amount, true)}

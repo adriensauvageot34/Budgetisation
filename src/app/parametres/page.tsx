@@ -7,12 +7,14 @@ import {
   Settings2,
   Tags,
 } from "lucide-react";
-import { budgetRepository } from "@/data";
+import { getBudgetRepository } from "@/data";
 import { PageHeader } from "@/components/ui/page-header";
 
 export const metadata: Metadata = {
   title: "Paramètres",
 };
+
+export const dynamic = "force-dynamic";
 
 const flows = [
   ["Dépense", "Comptée dans la consommation si le montant est débiteur."],
@@ -30,8 +32,9 @@ const importance = [
   ["Optionnelle", "#806da5", "Premier levier de réduction si nécessaire."],
 ];
 
-export default function SettingsPage() {
-  const categories = budgetRepository.getCategories();
+export default async function SettingsPage() {
+  const repository = await getBudgetRepository();
+  const categories = await repository.getCategories();
 
   return (
     <div>

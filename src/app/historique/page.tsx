@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { ArrowRight, CalendarRange } from "lucide-react";
-import { budgetRepository } from "@/data";
+import { getBudgetRepository } from "@/data";
 import {
   categoryBreakdown,
   descriptiveStats,
@@ -19,10 +19,18 @@ export const metadata: Metadata = {
   title: "Historique",
 };
 
-export default function HistoryPage() {
-  const months = budgetRepository.getMonths();
-  const operations = budgetRepository.getOperations();
-  const categories = budgetRepository.getCategories();
+export const dynamic = "force-dynamic";
+
+export default async function HistoryPage() {
+  const repository = await getBudgetRepository();
+  const [months, operations, categories] = await Promise.all([
+    repository.getMonths(),
+    repository.getOperations(),
+    repository.getCategories(),
+  ]);
+  if (!months.length) {
+    return <p className="card p-6">Aucune opération disponible.</p>;
+  }
   const summaries = monthlySummaries(operations, months);
   const stats = descriptiveStats(summaries);
   const maximum = Math.max(...summaries.map((summary) => summary.expenses));
@@ -36,7 +44,7 @@ export default function HistoryPage() {
         action={
           <span className="badge">
             <CalendarRange size={14} />
-            Janvier — août 2026
+            {titleCase(formatMonth(months[0]))} — {formatMonth(months.at(-1)!)}
           </span>
         }
       />
@@ -74,7 +82,9 @@ export default function HistoryPage() {
 
       <section className="card overflow-hidden">
         <div className="border-b border-[var(--color-border)] px-4 py-4 sm:px-6">
-          <h2 className="text-lg font-black">Les huit mois disponibles</h2>
+          <h2 className="text-lg font-black">
+            {months.length} mois disponibles
+          </h2>
         </div>
         <div className="divide-y divide-[var(--color-border)]">
           {[...summaries].reverse().map((summary) => {
@@ -161,7 +171,7 @@ export default function HistoryPage() {
 
       <p className="mt-4 text-center text-xs text-[var(--color-muted)]">
         {titleCase(formatMonth(months[0]))} marque le début de l’historique
-        fictif disponible.
+        disponible.
       </p>
     </div>
   );

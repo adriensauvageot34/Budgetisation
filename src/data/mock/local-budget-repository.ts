@@ -1,6 +1,5 @@
 import type { MonthKey } from "@/domain/budget";
 import type { BudgetRepository } from "@/data/budget-repository";
-import { monthKeys } from "@/domain/budget";
 import {
   mockAccounts,
   mockCategories,
@@ -9,27 +8,27 @@ import {
 } from "@/data/mock/mock-budget-data";
 
 export class LocalBudgetRepository implements BudgetRepository {
-  getMonths() {
-    return [...monthKeys];
+  async getMonths() {
+    return [...new Set(mockOperations.map((operation) => operation.importMonth))];
   }
 
-  getOperations() {
+  async getOperations() {
     return mockOperations;
   }
 
-  getOperationsByMonth(month: MonthKey) {
+  async getOperationsByMonth(month: MonthKey) {
     return mockOperations.filter((operation) => operation.importMonth === month);
   }
 
-  getAccounts() {
+  async getAccounts() {
     return mockAccounts;
   }
 
-  getCategories() {
+  async getCategories() {
     return mockCategories;
   }
 
-  getImportBatches() {
+  async getImportBatches() {
     return mockImportBatches;
   }
 }

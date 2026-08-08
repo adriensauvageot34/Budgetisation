@@ -1,0 +1,416 @@
+from __future__ import annotations
+
+import argparse
+import hashlib
+import json
+import unicodedata
+import uuid
+from pathlib import Path
+
+import pandas as pd
+
+
+EXPECTED_COLUMNS = [
+    "Date",
+    "Libellé bancaire",
+    "Débit",
+    "Crédit",
+    "Commerçant / tiers",
+    "Famille",
+    "Catégorie détaillée",
+    "Nature",
+    "Mois",
+    "Montant net",
+    "Flux",
+    "Précision",
+    "Priorité budgétaire",
+    "Groupe budgétaire",
+    "Marge de réduction",
+    "Conseil de pilotage",
+]
+
+TARGET_IMPORTANCE = {
+    "Indispensable",
+    "Contrainte",
+    "Ajustable",
+    "Optionnelle",
+}
+
+HOUSEHOLD_ID = uuid.uuid5(
+    uuid.NAMESPACE_URL,
+    "https://budgetisation.local/household/Budgetisation",
+)
+BATCH_ID = uuid.uuid5(
+    uuid.NAMESPACE_URL,
+    "https://budgetisation.local/import/historique-initial-2026-04-2026-07",
+)
+
+
+def scalar(value: object) -> object | None:
+    if pd.isna(value):
+        return None
+    if isinstance(value, pd.Timestamp):
+        return value.date().isoformat()
+    if hasattr(value, "item"):
+        value = value.item()
+    return value
+
+
+def text(value: object) -> str | None:
+    converted = scalar(value)
+    if converted is None:
+        return None
+    result = str(converted).strip()
+    return result or None
+
+
+def money(value: object) -> float | None:
+    converted = scalar(value)
+    if converted is None:
+        return None
+    if isinstance(converted, str):
+        converted = converted.replace("\u202f", "").replace(" ", "").replace(",", ".")
+    return round(float(converted), 2)
+
+
+def normalized_token(value: str | None) -> str:
+    if not value:
+        return ""
+    return unicodedata.normalize("NFC", value).strip()
+
+
+def target_flow(raw_flow: str | None, family: str | None, nature: str | None) -> str:
+    if family == "Transferts" or nature == "Transfert":
+        return "Transfert interne"
+    if family == "Remboursements" or nature == "Remboursement":
+        return "Remboursement"
+    if family == "Revenus" or nature == "Revenu":
+        return "Revenu"
+    if nature == "À ventiler" or family == "Espèces":
+        return "Flux technique"
+    if raw_flow == "Revenu":
+        return "Revenu"
+    return "Dépense"
+
+
+def analytical_status(nature: str | None, priority: str | None, precision: str | None) -> str:
+    if nature == "Exceptionnelle":
+        return "Exceptionnel"
+    if priority == "Hors budget":
+        return "Hors budget"
+    if nature == "À ventiler" or precision == "À ventiler":
+        return "À ventiler"
+    return "Habituel"
+
+
+def row_fingerprint(row: dict[str, object]) -> str:
+    stable = "|".join(
+        [
+            str(row["date"]),
+            normalized_token(row.get("source_label")),
+            "" if row.get("debit") is None else f"{row['debit']:.2f}",
+            "" if row.get("credit") is None else f"{row['credit']:.2f}",
+            f"{row['amount']:.2f}",
+            normalized_token(row.get("normalized_merchant")),
+            normalized_token(row.get("category")),
+            normalized_token(row.get("subcategory")),
+            str(row["import_month"]),
+        ]
+    )
+    return hashlib.sha256(stable.encode("utf-8")).hexdigest()
+
+
+def transform(source_path: Path) -> tuple[list[dict[str, object]], int, int]:
+    workbook = pd.ExcelFile(source_path)
+    if workbook.sheet_names != ["Opérations"]:
+        raise ValueError(f"Feuilles inattendues : {workbook.sheet_names}")
+
+    frame = pd.read_excel(source_path, sheet_name="Opérations")
+    if list(frame.columns) != EXPECTED_COLUMNS:
+        raise ValueError(f"Colonnes inattendues : {list(frame.columns)}")
+    if len(frame) != 481:
+        raise ValueError(f"Nombre de lignes source inattendu : {len(frame)}")
+
+    duplicate_mask = frame.duplicated(keep=False)
+    potential_duplicate_rows = int(duplicate_mask.sum())
+    potential_duplicate_groups = len(frame.loc[duplicate_mask].drop_duplicates())
+
+    transformed: list[dict[str, object]] = []
+    for source_index, source in frame.iterrows():
+        source_row_number = int(source_index) + 2
+        source_date = pd.to_datetime(source["Date"], errors="raise").date().isoformat()
+        month = pd.to_datetime(source["Mois"], errors="raise").strftime("%Y-%m-01")
+        family = text(source["Famille"])
+        subcategory = text(source["Catégorie détaillée"])
+        nature = text(source["Nature"])
+        priority = text(source["Priorité budgétaire"])
+        precision = text(source["Précision"])
+        raw_flow = text(source["Flux"])
+        amount = money(source["Montant net"])
+        if amount is None:
+            raise ValueError(f"Montant net absent pour la ligne datée du {source_date}")
+
+        source_metadata = {
+            column: scalar(source[column])
+            for column in EXPECTED_COLUMNS
+        }
+        source_metadata["source_row_number"] = source_row_number
+        row: dict[str, object] = {
+            "id": str(uuid.uuid5(BATCH_ID, f"source-row:{source_row_number}")),
+            "date": source_date,
+            "import_month": month,
+            "amount": amount,
+            "debit": money(source["Débit"]),
+            "credit": money(source["Crédit"]),
+            "source_label": text(source["Libellé bancaire"]),
+            "normalized_merchant": text(source["Commerçant / tiers"]),
+            "flow": target_flow(raw_flow, family, nature),
+            "category": family,
+            "subcategory": subcategory,
+            "precise_type": None,
+            "recurrence": nature if nature in {"Fixe", "Variable"} else None,
+            "importance": priority if priority in TARGET_IMPORTANCE else None,
+            "analytical_status": analytical_status(nature, priority, precision),
+            "note": None,
+            "event": None,
+            "uncertain": (
+                precision in {"À ventiler", "À préciser"}
+                or priority == "À identifier"
+            ),
+            "source_metadata": source_metadata,
+        }
+        row["fingerprint"] = row_fingerprint(row)
+        transformed.append(row)
+
+    return transformed, potential_duplicate_groups, potential_duplicate_rows
+
+
+def seed_sql(
+    rows: list[dict[str, object]],
+    potential_duplicate_groups: int,
+    potential_duplicate_rows: int,
+    source_name: str,
+) -> str:
+    rows_json = json.dumps(rows, ensure_ascii=False, separators=(",", ":"))
+    return f"""begin;
+
+do $budgetisation_seed$
+declare
+  seed_household_id uuid;
+  inserted_operation_count integer;
+  historical_rows jsonb :=
+    $historical_rows${rows_json}$historical_rows$::jsonb;
+begin
+  insert into public.households (id, name)
+  select '{HOUSEHOLD_ID}', 'Budgetisation'
+  where not exists (
+    select 1
+    from public.households
+    where name = 'Budgetisation'
+  )
+  on conflict (id) do update set name = excluded.name;
+
+  select id
+  into seed_household_id
+  from public.households
+  where name = 'Budgetisation';
+
+  if seed_household_id is null then
+    raise exception 'Le foyer Budgetisation n''a pas pu être initialisé';
+  end if;
+
+insert into public.categories (
+  household_id,
+  name,
+  slug,
+  included_in_consumption
+)
+select
+  seed_household_id,
+  row_data ->> 'category',
+  private.slugify(row_data ->> 'category'),
+  bool_or(row_data ->> 'flow' = 'Dépense')
+from jsonb_array_elements(historical_rows) as rows(row_data)
+where nullif(row_data ->> 'category', '') is not null
+group by row_data ->> 'category'
+on conflict (household_id, name) do update
+set included_in_consumption =
+  public.categories.included_in_consumption
+  or excluded.included_in_consumption;
+
+insert into public.subcategories (
+  household_id,
+  category_id,
+  name,
+  slug
+)
+select distinct
+  seed_household_id,
+  category.id,
+  row_data ->> 'subcategory',
+  private.slugify(row_data ->> 'subcategory')
+from jsonb_array_elements(historical_rows) as rows(row_data)
+join public.categories category
+  on category.household_id = seed_household_id
+ and category.name = row_data ->> 'category'
+where nullif(row_data ->> 'subcategory', '') is not null
+on conflict (category_id, name) do nothing;
+
+insert into public.import_batches (
+  id,
+  household_id,
+  filename,
+  status,
+  row_count,
+  warning_count,
+  month_start,
+  month_end,
+  source_metadata
+)
+values (
+  '{BATCH_ID}',
+  seed_household_id,
+  '{source_name.replace("'", "''")}',
+  'completed_with_warnings',
+  {len(rows)},
+  {sum(1 for row in rows if row["uncertain"])},
+  '2026-04-01',
+  '2026-07-01',
+  jsonb_build_object(
+    'source', 'historical_xlsx',
+    'source_rows', 481,
+    'historical_rows_preserved', {len(rows)},
+    'automatic_deduplication', false,
+    'potential_duplicate_groups', {potential_duplicate_groups},
+    'potential_duplicate_rows', {potential_duplicate_rows}
+  )
+)
+on conflict (id) do update
+set household_id = excluded.household_id,
+    filename = excluded.filename,
+    status = excluded.status,
+    row_count = excluded.row_count,
+    warning_count = excluded.warning_count,
+    month_start = excluded.month_start,
+    month_end = excluded.month_end,
+    source_metadata = excluded.source_metadata;
+
+delete from public.operations
+where import_batch_id = '{BATCH_ID}'::uuid;
+
+insert into public.operations (
+  id,
+  household_id,
+  import_batch_id,
+  date,
+  import_month,
+  amount,
+  debit,
+  credit,
+  source_label,
+  normalized_merchant,
+  flow,
+  category_id,
+  subcategory_id,
+  precise_type_id,
+  recurrence,
+  importance,
+  analytical_status,
+  note,
+  event,
+  uncertain,
+  fingerprint,
+  source_metadata
+)
+select
+  (row_data ->> 'id')::uuid,
+  seed_household_id,
+  '{BATCH_ID}'::uuid,
+  (row_data ->> 'date')::date,
+  (row_data ->> 'import_month')::date,
+  (row_data ->> 'amount')::numeric(14, 2),
+  nullif(row_data ->> 'debit', '')::numeric(14, 2),
+  nullif(row_data ->> 'credit', '')::numeric(14, 2),
+  row_data ->> 'source_label',
+  nullif(row_data ->> 'normalized_merchant', ''),
+  row_data ->> 'flow',
+  category.id,
+  subcategory.id,
+  null,
+  nullif(row_data ->> 'recurrence', ''),
+  nullif(row_data ->> 'importance', ''),
+  row_data ->> 'analytical_status',
+  null,
+  null,
+  coalesce((row_data ->> 'uncertain')::boolean, false),
+  row_data ->> 'fingerprint',
+  coalesce(row_data -> 'source_metadata', '{{}}'::jsonb)
+from jsonb_array_elements(historical_rows) as rows(row_data)
+left join public.categories category
+  on category.household_id = seed_household_id
+ and category.name = row_data ->> 'category'
+left join public.subcategories subcategory
+  on subcategory.category_id = category.id
+ and subcategory.name = row_data ->> 'subcategory';
+
+get diagnostics inserted_operation_count = row_count;
+
+if inserted_operation_count <> {len(rows)} then
+  raise exception 'Import historique incomplet : % operations inserees sur % attendues',
+    inserted_operation_count,
+    {len(rows)};
+end if;
+
+end;
+$budgetisation_seed$;
+
+commit;
+"""
+
+
+def main() -> None:
+    parser = argparse.ArgumentParser()
+    parser.add_argument("source", type=Path)
+    parser.add_argument("--schema", type=Path, required=True)
+    parser.add_argument("--seed", type=Path, required=True)
+    parser.add_argument("--bootstrap", type=Path, required=True)
+    args = parser.parse_args()
+
+    rows, potential_duplicate_groups, potential_duplicate_rows = transform(args.source)
+    generated_seed = seed_sql(
+        rows,
+        potential_duplicate_groups,
+        potential_duplicate_rows,
+        args.source.name,
+    )
+    args.seed.parent.mkdir(parents=True, exist_ok=True)
+    args.seed.write_text(generated_seed, encoding="utf-8")
+
+    schema = args.schema.read_text(encoding="utf-8")
+    args.bootstrap.write_text(
+        "-- Bootstrap Supabase Budgetisation : schéma, RLS et historique réel.\n"
+        "-- À exécuter une seule fois dans Supabase SQL Editor.\n\n"
+        f"{schema}\n\n{generated_seed}",
+        encoding="utf-8",
+    )
+
+    print(
+        json.dumps(
+            {
+                "source_rows": 481,
+                "automatic_deduplication": False,
+                "potential_duplicate_groups": potential_duplicate_groups,
+                "potential_duplicate_rows": potential_duplicate_rows,
+                "operations": len(rows),
+                "household_id": str(HOUSEHOLD_ID),
+                "batch_id": str(BATCH_ID),
+                "seed": str(args.seed),
+                "bootstrap": str(args.bootstrap),
+            },
+            ensure_ascii=False,
+        )
+    )
+
+
+if __name__ == "__main__":
+    main()
