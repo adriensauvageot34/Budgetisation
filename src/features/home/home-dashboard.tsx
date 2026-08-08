@@ -98,12 +98,14 @@ export function HomeDashboard({
   categories,
   accounts: _accounts,
   initialMonth,
+  embedded = false,
 }: {
   months: MonthKey[];
   operations: Operation[];
   categories: CategoryDefinition[];
   accounts: Account[];
   initialMonth: MonthKey;
+  embedded?: boolean;
 }) {
   const router = useRouter();
   const [selectedMonth, setSelectedMonth] = useState(initialMonth);
@@ -168,6 +170,15 @@ export function HomeDashboard({
   const importance = importanceBreakdown(selectedOperations, operations);
 
   function categoryHref(row: CategoryBreakdown) {
+    if (embedded && row.slug !== "autres") {
+      const params = new URLSearchParams({
+        month: selectedMonth,
+        start: selectedMonth,
+        end: selectedMonth,
+        category: row.category,
+      });
+      return `/historique?${params.toString()}`;
+    }
     const query =
       row.slug === "autres"
         ? `&hidden=${hiddenCategories.map((item) => item.slug).join(",")}`
@@ -175,8 +186,41 @@ export function HomeDashboard({
     return `/categorie/${row.slug}?month=${selectedMonth}${query}`;
   }
 
+  function selectMonth(month: MonthKey) {
+    setSelectedMonth(month);
+    if (embedded) {
+      const params = new URLSearchParams({
+        month,
+        start: month,
+        end: month,
+      });
+      router.replace(`/historique?${params.toString()}`);
+    }
+  }
+
+  function importanceHref(name: string) {
+    const params = new URLSearchParams({
+      month: selectedMonth,
+      start: selectedMonth,
+      end: selectedMonth,
+      importance: name,
+    });
+    return `/historique?${params.toString()}`;
+  }
+
+  const historyReturnUrl = `/historique?${new URLSearchParams({
+    month: selectedMonth,
+    start: selectedMonth,
+    end: selectedMonth,
+  }).toString()}`;
+  const operationsHref = `/operations?${new URLSearchParams({
+    month: selectedMonth,
+    returnTo: historyReturnUrl,
+  }).toString()}`;
+
   return (
     <div>
+      {!embedded ? (
       <header className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <p className="eyebrow mb-2">Bilan mensuel</p>
@@ -192,11 +236,20 @@ export function HomeDashboard({
           Dernier import disponible
         </span>
       </header>
+      ) : (
+        <div className="mb-4">
+          <p className="eyebrow mb-1">Lecture mensuelle</p>
+          <h2 className="text-2xl font-black">Comprendre un mois</h2>
+          <p className="mt-1 text-sm text-[var(--color-muted)]">
+            Choisissez un mois pour retrouver son bilan et ses principaux postes.
+          </p>
+        </div>
+      )}
 
       <MonthTimeline
         months={months}
         selected={selectedMonth}
-        onChange={setSelectedMonth}
+        onChange={selectMonth}
       />
 
       <section className="card mt-5 overflow-hidden">
@@ -473,8 +526,9 @@ export function HomeDashboard({
             </div>
             <div className="space-y-2">
               {importance.map((entry, index) => (
-                <div
+                <Link
                   key={entry.name}
+                  href={importanceHref(entry.name)}
                   className="flex items-center gap-3 rounded-xl bg-[var(--color-surface-soft)] px-4 py-3.5"
                 >
                   <span
@@ -490,7 +544,7 @@ export function HomeDashboard({
                       {formatPercent(expenses ? entry.value / expenses : 0)}
                     </span>
                   </span>
-                </div>
+                </Link>
               ))}
             </div>
           </div>
@@ -562,7 +616,7 @@ export function HomeDashboard({
           </p>
         </div>
         <Link
-          href={`/operations?month=${selectedMonth}`}
+          href={operationsHref}
           className="card group flex items-center justify-between p-5 transition hover:border-[var(--color-primary)] hover:shadow-[var(--shadow-md)]"
         >
           <span>

@@ -1,6 +1,8 @@
 "use client";
 
+import Link from "next/link";
 import { useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
 import {
   Area,
   AreaChart,
@@ -26,6 +28,7 @@ import type {
   Account,
   AnalyticalStatus,
   CategoryDefinition,
+  Importance,
   MonthKey,
   Operation,
   Person,
@@ -53,25 +56,63 @@ import { PageHeader } from "@/components/ui/page-header";
 const importanceColors = ["#52766f", "#d69a3c", "#d36e53", "#806da5"];
 const statusColors = ["#52766f", "#d69a3c", "#d36e53", "#989b95"];
 
+type ExpenseScope = "all" | "current" | "events";
+
+export type AnalysisInitialFilters = {
+  startMonth?: MonthKey;
+  endMonth?: MonthKey;
+  category?: string;
+  person?: Person;
+  accountId?: string;
+  importance?: Importance;
+  status?: AnalyticalStatus;
+  scope?: ExpenseScope;
+  event?: string;
+  eventDetail?: string;
+};
+
 export function AnalysisDashboard({
   months,
   operations,
   categories,
   accounts,
+  embedded = false,
+  initialFilters,
 }: {
   months: MonthKey[];
   operations: Operation[];
   categories: CategoryDefinition[];
   accounts: Account[];
+  embedded?: boolean;
+  initialFilters?: AnalysisInitialFilters;
 }) {
-  const [startMonth, setStartMonth] = useState<MonthKey>(months[0]);
-  const [endMonth, setEndMonth] = useState<MonthKey>(months.at(-1)!);
-  const [category, setCategory] = useState("Toutes");
-  const [person, setPerson] = useState<Person | "Toutes">("Toutes");
-  const [accountId, setAccountId] = useState("Tous");
-  const [status, setStatus] = useState<AnalyticalStatus | "Tous">("Tous");
-  const [eventFilter, setEventFilter] = useState("Tous");
-  const [eventDetailFilter, setEventDetailFilter] = useState("Toutes");
+  const router = useRouter();
+  const initialStart = months.includes(initialFilters?.startMonth ?? "")
+    ? initialFilters!.startMonth!
+    : months[0];
+  const initialEnd = months.includes(initialFilters?.endMonth ?? "")
+    ? initialFilters!.endMonth!
+    : months.at(-1)!;
+  const [startMonth, setStartMonth] = useState<MonthKey>(initialStart);
+  const [endMonth, setEndMonth] = useState<MonthKey>(initialEnd);
+  const [category, setCategory] = useState(initialFilters?.category ?? "Toutes");
+  const [person, setPerson] = useState<Person | "Toutes">(
+    initialFilters?.person ?? "Toutes",
+  );
+  const [accountId, setAccountId] = useState(initialFilters?.accountId ?? "Tous");
+  const [importanceFilter, setImportanceFilter] = useState<Importance | "Toutes">(
+    initialFilters?.importance ?? "Toutes",
+  );
+  const [status, setStatus] = useState<AnalyticalStatus | "Tous">(
+    initialFilters?.status ?? "Tous",
+  );
+  const [expenseScope, setExpenseScope] = useState<ExpenseScope>(
+    initialFilters?.scope ?? "all",
+  );
+  const [eventFilter, setEventFilter] = useState(initialFilters?.event ?? "Tous");
+  const [eventDetailFilter, setEventDetailFilter] = useState(
+    initialFilters?.eventDetail ?? "Toutes",
+  );
   const people = [
     ...new Set(
       operations
@@ -80,7 +121,6 @@ export function AnalysisDashboard({
     ),
   ].sort((a, b) => a.localeCompare(b, "fr"));
   const events = [
-    "Vie courante",
     ...new Set(
       operations
         .map((operation) => operation.event)
@@ -93,8 +133,7 @@ export function AnalysisDashboard({
         .filter(
           (operation) =>
             eventFilter === "Tous" ||
-            operation.event === eventFilter ||
-            (eventFilter === "Vie courante" && !operation.event),
+            operation.event === eventFilter,
         )
         .map((operation) => operation.eventDetail)
         .filter((value): value is string => Boolean(value)),
@@ -116,10 +155,14 @@ export function AnalysisDashboard({
           (category === "Toutes" || operation.category === category) &&
           (person === "Toutes" || operation.person === person) &&
           (accountId === "Tous" || operation.accountId === accountId) &&
+          (importanceFilter === "Toutes" ||
+            operation.importance === importanceFilter) &&
           (status === "Tous" || operation.status === status) &&
+          (expenseScope === "all" ||
+            (expenseScope === "current" && !operation.event) ||
+            (expenseScope === "events" && Boolean(operation.event))) &&
           (eventFilter === "Tous" ||
-            operation.event === eventFilter ||
-            (eventFilter === "Vie courante" && !operation.event)) &&
+            operation.event === eventFilter) &&
           (eventDetailFilter === "Toutes" ||
             operation.eventDetail === eventDetailFilter),
       ),
@@ -128,6 +171,8 @@ export function AnalysisDashboard({
       category,
       eventDetailFilter,
       eventFilter,
+      expenseScope,
+      importanceFilter,
       operations,
       person,
       selectedMonths,
@@ -177,8 +222,69 @@ export function AnalysisDashboard({
     .map((operation) => operation.importMonth)
     .sort();
 
+  function historyHref(patch: Record<string, string | null> = {}) {
+    const params = new URLSearchParams({ start: startMonth, end: endMonth });
+    if (startMonth === endMonth) params.set("month", startMonth);
+    if (category !== "Toutes") params.set("category", category);
+    if (person !== "Toutes") params.set("person", person);
+    if (accountId !== "Tous") params.set("account", accountId);
+    if (importanceFilter !== "Toutes") {
+      params.set("importance", importanceFilter);
+    }
+    if (status !== "Tous") params.set("status", status);
+    if (expenseScope !== "all") params.set("scope", expenseScope);
+    if (eventFilter !== "Tous") params.set("event", eventFilter);
+    if (eventDetailFilter !== "Toutes") {
+      params.set("eventDetail", eventDetailFilter);
+    }
+    for (const [key, value] of Object.entries(patch)) {
+      if (value) params.set(key, value);
+      else params.delete(key);
+    }
+    return `/historique?${params.toString()}`;
+  }
+
+  function replaceHistoryContext(patch: Record<string, string | null>) {
+    router.replace(historyHref(patch));
+  }
+
+  const returnTo = historyHref();
+  const operationsParams = new URLSearchParams({
+    start: startMonth,
+    end: endMonth,
+    returnTo,
+  });
+  if (startMonth === endMonth) operationsParams.set("month", startMonth);
+  if (category !== "Toutes") operationsParams.set("category", category);
+  if (person !== "Toutes") operationsParams.set("person", person);
+  if (accountId !== "Tous") operationsParams.set("account", accountId);
+  if (importanceFilter !== "Toutes") {
+    operationsParams.set("importance", importanceFilter);
+  }
+  if (status !== "Tous") operationsParams.set("status", status);
+  if (expenseScope !== "all") operationsParams.set("scope", expenseScope);
+  if (eventFilter !== "Tous") operationsParams.set("event", eventFilter);
+  if (eventDetailFilter !== "Toutes") {
+    operationsParams.set("eventDetail", eventDetailFilter);
+  }
+  const operationsHref = `/operations?${operationsParams.toString()}`;
+
   return (
     <div>
+      {embedded ? (
+        <div className="mb-5 mt-8 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+          <div>
+            <p className="eyebrow mb-1">Comparer et expliquer</p>
+            <h2 className="text-2xl font-black">Analyse de la période</h2>
+            <p className="mt-1 text-sm text-[var(--color-muted)]">
+              Affinez le contexte sans perdre les règles de calcul centrales.
+            </p>
+          </div>
+          <span className="badge self-start sm:self-auto">
+            <CalendarRange size={14} /> {selectedMonths.length} mois analysés
+          </span>
+        </div>
+      ) : (
       <PageHeader
         eyebrow="Tendances"
         title="Analyse"
@@ -190,13 +296,46 @@ export function AnalysisDashboard({
           </span>
         }
       />
+      )}
+
+      <section className="card mb-5 flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between sm:p-5">
+        <div>
+          <p className="text-sm font-black">Périmètre des dépenses</p>
+          <p className="mt-0.5 text-xs text-[var(--color-muted)]">
+            Vie courante et événements restent distincts du statut analytique.
+          </p>
+        </div>
+        <div className="flex flex-wrap rounded-[var(--radius-sm)] border border-[var(--color-border)] bg-white p-1">
+          {([
+            ["all", "Toutes les dépenses"],
+            ["current", "Vie courante"],
+            ["events", "Événements"],
+          ] as const).map(([value, label]) => (
+            <button
+              key={value}
+              type="button"
+              className={`rounded-[0.5rem] px-3 py-2 text-xs font-extrabold transition ${
+                expenseScope === value
+                  ? "bg-[var(--color-primary)] text-white"
+                  : "text-[var(--color-muted)] hover:bg-[var(--color-surface-soft)]"
+              }`}
+              onClick={() => {
+                setExpenseScope(value);
+                replaceHistoryContext({ scope: value === "all" ? null : value });
+              }}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+      </section>
 
       <section className="card mb-5 p-4 sm:p-5">
         <div className="mb-4 flex items-center gap-2">
           <SlidersHorizontal size={17} className="text-[var(--color-primary)]" />
           <h2 className="font-black">Filtres de l’analyse</h2>
         </div>
-        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-8">
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-9">
           <label className="text-xs font-bold text-[var(--color-muted)]">
             Du mois
             <select
@@ -206,6 +345,11 @@ export function AnalysisDashboard({
                 const value = event.target.value as MonthKey;
                 setStartMonth(value);
                 if (value > endMonth) setEndMonth(value);
+                replaceHistoryContext({
+                  start: value,
+                  end: value > endMonth ? value : endMonth,
+                  month: value === endMonth ? value : null,
+                });
               }}
             >
               {months.map((month) => (
@@ -224,6 +368,11 @@ export function AnalysisDashboard({
                 const value = event.target.value as MonthKey;
                 setEndMonth(value);
                 if (value < startMonth) setStartMonth(value);
+                replaceHistoryContext({
+                  start: value < startMonth ? value : startMonth,
+                  end: value,
+                  month: value === startMonth ? value : null,
+                });
               }}
             >
               {months.map((month) => (
@@ -238,7 +387,13 @@ export function AnalysisDashboard({
             <select
               className="field mt-1 w-full text-sm"
               value={category}
-              onChange={(event) => setCategory(event.target.value)}
+              onChange={(event) => {
+                const value = event.target.value;
+                setCategory(value);
+                replaceHistoryContext({
+                  category: value === "Toutes" ? null : value,
+                });
+              }}
             >
               <option>Toutes</option>
               {categories
@@ -253,9 +408,11 @@ export function AnalysisDashboard({
             <select
               className="field mt-1 w-full text-sm"
               value={person}
-              onChange={(event) =>
-                setPerson(event.target.value as Person | "Toutes")
-              }
+              onChange={(event) => {
+                const value = event.target.value as Person | "Toutes";
+                setPerson(value);
+                replaceHistoryContext({ person: value === "Toutes" ? null : value });
+              }}
             >
               <option>Toutes</option>
               {people.map((entry) => (
@@ -268,7 +425,11 @@ export function AnalysisDashboard({
             <select
               className="field mt-1 w-full text-sm"
               value={accountId}
-              onChange={(event) => setAccountId(event.target.value)}
+              onChange={(event) => {
+                const value = event.target.value;
+                setAccountId(value);
+                replaceHistoryContext({ account: value === "Tous" ? null : value });
+              }}
             >
               <option value="Tous">Tous</option>
               {accounts.map((account) => (
@@ -279,13 +440,35 @@ export function AnalysisDashboard({
             </select>
           </label>
           <label className="text-xs font-bold text-[var(--color-muted)]">
+            Importance
+            <select
+              className="field mt-1 w-full text-sm"
+              value={importanceFilter}
+              onChange={(event) => {
+                const value = event.target.value as Importance | "Toutes";
+                setImportanceFilter(value);
+                replaceHistoryContext({
+                  importance: value === "Toutes" ? null : value,
+                });
+              }}
+            >
+              <option>Toutes</option>
+              <option>Indispensable</option>
+              <option>Contrainte</option>
+              <option>Ajustable</option>
+              <option>Optionnelle</option>
+            </select>
+          </label>
+          <label className="text-xs font-bold text-[var(--color-muted)]">
             Statut
             <select
               className="field mt-1 w-full text-sm"
               value={status}
-              onChange={(event) =>
-                setStatus(event.target.value as AnalyticalStatus | "Tous")
-              }
+              onChange={(event) => {
+                const value = event.target.value as AnalyticalStatus | "Tous";
+                setStatus(value);
+                replaceHistoryContext({ status: value === "Tous" ? null : value });
+              }}
             >
               <option>Tous</option>
               <option>Habituel</option>
@@ -302,6 +485,10 @@ export function AnalysisDashboard({
               onChange={(event) => {
                 setEventFilter(event.target.value);
                 setEventDetailFilter("Toutes");
+                replaceHistoryContext({
+                  event: event.target.value === "Tous" ? null : event.target.value,
+                  eventDetail: null,
+                });
               }}
             >
               <option>Tous</option>
@@ -315,7 +502,13 @@ export function AnalysisDashboard({
             <select
               className="field mt-1 w-full text-sm"
               value={eventDetailFilter}
-              onChange={(event) => setEventDetailFilter(event.target.value)}
+              onChange={(event) => {
+                const value = event.target.value;
+                setEventDetailFilter(value);
+                replaceHistoryContext({
+                  eventDetail: value === "Toutes" ? null : value,
+                });
+              }}
             >
               <option>Toutes</option>
               {eventDetails.map((entry) => (
@@ -514,9 +707,14 @@ export function AnalysisDashboard({
           </div>
           <div className="grid grid-cols-2 gap-2">
             {importance.map((entry, index) => (
-              <div
+              <button
+                type="button"
                 key={entry.name}
-                className="rounded-xl bg-[var(--color-surface-soft)] p-3"
+                className="rounded-xl bg-[var(--color-surface-soft)] p-3 text-left transition hover:ring-2 hover:ring-[var(--color-primary-soft)]"
+                onClick={() => {
+                  setImportanceFilter(entry.name as Importance);
+                  replaceHistoryContext({ importance: entry.name });
+                }}
               >
                 <div className="flex items-center gap-2">
                   <span
@@ -528,7 +726,7 @@ export function AnalysisDashboard({
                 <p className="mt-1 font-black">
                   {formatPercent(total ? entry.value / total : 0)}
                 </p>
-              </div>
+              </button>
             ))}
           </div>
         </div>
@@ -546,6 +744,15 @@ export function AnalysisDashboard({
                 data={categoryRanking}
                 layout="vertical"
                 margin={{ left: 14, right: 15 }}
+                onClick={(event) => {
+                  const row = event?.activePayload?.[0]?.payload as
+                    | { category?: string }
+                    | undefined;
+                  if (row?.category) {
+                    setCategory(row.category);
+                    replaceHistoryContext({ category: row.category });
+                  }
+                }}
               >
                 <CartesianGrid horizontal={false} strokeDasharray="3 3" />
                 <XAxis
@@ -566,7 +773,12 @@ export function AnalysisDashboard({
                 <Tooltip
                   formatter={(value) => formatCurrency(Number(value))}
                 />
-                <Bar dataKey="amount" radius={[0, 7, 7, 0]} maxBarSize={24}>
+                <Bar
+                  dataKey="amount"
+                  radius={[0, 7, 7, 0]}
+                  maxBarSize={24}
+                  cursor="pointer"
+                >
                   {categoryRanking.map((entry) => (
                     <Cell key={entry.category} fill={entry.color} />
                   ))}
@@ -589,7 +801,15 @@ export function AnalysisDashboard({
           </div>
           <div className="space-y-4">
             {statuses.map((entry, index) => (
-              <div key={entry.name}>
+              <button
+                type="button"
+                key={entry.name}
+                className="block w-full rounded-xl p-2 text-left transition hover:bg-[var(--color-surface-soft)]"
+                onClick={() => {
+                  setStatus(entry.name as AnalyticalStatus);
+                  replaceHistoryContext({ status: entry.name });
+                }}
+              >
                 <div className="mb-1.5 flex items-center justify-between gap-3">
                   <span className="flex items-center gap-2 text-sm font-extrabold">
                     <span
@@ -617,11 +837,25 @@ export function AnalysisDashboard({
                 <p className="mt-1 text-right text-xs text-[var(--color-muted)]">
                   {formatPercent(total ? entry.value / total : 0)}
                 </p>
-              </div>
+              </button>
             ))}
           </div>
         </div>
       </section>
+
+      <Link
+        href={operationsHref}
+        className="card group mt-5 flex items-center justify-between p-5 transition hover:border-[var(--color-primary)] hover:shadow-[var(--shadow-md)]"
+      >
+        <span>
+          <span className="eyebrow mb-1 block">Expliquer</span>
+          <span className="block text-lg font-black">Voir les opérations</span>
+          <span className="mt-1 block text-sm text-[var(--color-muted)]">
+            Ouvrir les lignes correspondant exactement à ce contexte
+          </span>
+        </span>
+        <span className="font-black text-[var(--color-primary)]">→</span>
+      </Link>
     </div>
   );
 }

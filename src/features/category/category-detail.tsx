@@ -128,12 +128,12 @@ export function CategoryDetail({
         className="mb-5 flex flex-wrap items-center gap-1.5 text-sm text-[var(--color-muted)]"
         aria-label="Fil d’Ariane"
       >
-        <Link href="/" className="hover:text-[var(--color-ink)]">
-          Accueil
+        <Link href="/historique" className="hover:text-[var(--color-ink)]">
+          Historique
         </Link>
         <ChevronRight size={14} />
         <Link
-          href={`/?month=${month}`}
+          href={`/historique?month=${month}&start=${month}&end=${month}`}
           className="capitalize hover:text-[var(--color-ink)]"
         >
           {formatMonth(month)}
@@ -145,11 +145,11 @@ export function CategoryDetail({
       <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <Link
-            href={`/?month=${month}`}
+            href={`/historique?month=${month}&start=${month}&end=${month}`}
             className="mb-3 inline-flex items-center gap-1.5 text-sm font-bold text-[var(--color-primary)]"
           >
             <ArrowLeft size={15} />
-            Retour au bilan
+            Retour à l’historique
           </Link>
           <h1 className="text-[clamp(1.9rem,3.6vw,3rem)] font-black leading-none tracking-[-0.05em]">
             {title}

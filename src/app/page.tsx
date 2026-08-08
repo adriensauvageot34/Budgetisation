@@ -1,45 +1,83 @@
 import { getBudgetRepository } from "@/data";
-import type { MonthKey } from "@/domain/budget";
-import { HomeDashboard } from "@/features/home/home-dashboard";
+import { ImportTrigger } from "@/features/imports/import-trigger";
+import { formatMonth, titleCase } from "@/lib/format";
 
 export const dynamic = "force-dynamic";
 
-export default async function HomePage({
-  searchParams,
-}: {
-  searchParams: Promise<{ month?: string }>;
-}) {
-  const query = await searchParams;
+export default async function HomePage() {
   const repository = await getBudgetRepository();
-  const [months, operations, categories, accounts] = await Promise.all([
+  const [months, operations, batches] = await Promise.all([
     repository.getMonths(),
     repository.getOperations(),
-    repository.getCategories(),
-    repository.getAccounts(),
+    repository.getImportBatches(),
   ]);
-  const requestedMonth = query.month as MonthKey | undefined;
-  const initialMonth = months.includes(requestedMonth ?? "")
-    ? requestedMonth!
-    : months.at(-1);
-
-  if (!initialMonth) {
-    return (
-      <section className="card p-6">
-        <h1 className="text-2xl font-black">Aucune opération disponible</h1>
-        <p className="mt-2 text-[var(--color-muted)]">
-          Exécutez le bootstrap Supabase ou utilisez la page Imports.
-        </p>
-      </section>
-    );
-  }
+  const currentMonth = new Date().toISOString().slice(0, 7);
+  const currentOperationCount = operations.filter(
+    (operation) => operation.importMonth === currentMonth,
+  ).length;
+  const latestBatch = batches[0];
+  const latestAvailableMonth = months.at(-1);
 
   return (
-    <HomeDashboard
-      months={months}
-      operations={operations}
-      categories={categories}
-      accounts={accounts}
-      initialMonth={initialMonth}
-    />
+    <div className="mx-auto max-w-5xl">
+      <header className="mb-6">
+        <p className="eyebrow mb-2">Mois en cours</p>
+        <h1 className="text-[clamp(2rem,4vw,3.2rem)] font-black leading-none tracking-[-0.05em]">
+          Bonjour Adrien et Manon
+        </h1>
+        <p className="mt-3 text-[var(--color-muted)]">
+          Cet espace accueillera la gestion du présent. Les analyses des mois
+          passés sont maintenant regroupées dans Historique.
+        </p>
+      </header>
+
+      <section className="card overflow-hidden">
+        <div className="grid sm:grid-cols-3">
+          <div className="bg-[var(--color-primary)] p-6 text-white">
+            <p className="text-sm font-bold text-white/70">Mois actuel</p>
+            <p className="mt-2 text-2xl font-black capitalize">
+              {titleCase(formatMonth(currentMonth))}
+            </p>
+          </div>
+          <div className="border-b border-[var(--color-border)] p-6 sm:border-b-0 sm:border-r">
+            <p className="text-sm font-bold text-[var(--color-muted)]">
+              Opérations du mois
+            </p>
+            <p className="mt-2 text-2xl font-black">{currentOperationCount}</p>
+          </div>
+          <div className="p-6">
+            <p className="text-sm font-bold text-[var(--color-muted)]">
+              Dernières données disponibles
+            </p>
+            <p className="mt-2 text-lg font-black capitalize">
+              {latestAvailableMonth
+                ? titleCase(formatMonth(latestAvailableMonth))
+                : "Aucune donnée"}
+            </p>
+            {latestBatch ? (
+              <p className="mt-1 truncate text-xs text-[var(--color-muted)]">
+                Dernier import : {latestBatch.filename} ·{" "}
+                {new Intl.DateTimeFormat("fr-FR", {
+                  day: "2-digit",
+                  month: "short",
+                  year: "numeric",
+                }).format(new Date(latestBatch.importedAt))}
+              </p>
+            ) : null}
+          </div>
+        </div>
+      </section>
+
+      <section className="card mt-5 flex flex-col gap-4 p-5 sm:flex-row sm:items-center sm:justify-between sm:p-6">
+        <div>
+          <p className="eyebrow mb-1">Mettre les données à jour</p>
+          <h2 className="text-xl font-black">Ajouter un nouveau relevé</h2>
+          <p className="mt-1 text-sm text-[var(--color-muted)]">
+            Prévisualisez et contrôlez les lignes avant leur insertion.
+          </p>
+        </div>
+        <ImportTrigger />
+      </section>
+    </div>
   );
 }

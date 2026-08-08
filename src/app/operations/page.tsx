@@ -1,7 +1,14 @@
 import type { Metadata } from "next";
 import { getBudgetRepository } from "@/data";
-import type { MonthKey } from "@/domain/budget";
-import { OperationsTable } from "@/features/operations/operations-table";
+import type {
+  AnalyticalStatus,
+  Importance,
+  MonthKey,
+} from "@/domain/budget";
+import {
+  OperationsTable,
+  type OperationsInitialFilters,
+} from "@/features/operations/operations-table";
 
 export const metadata: Metadata = { title: "Opérations" };
 export const dynamic = "force-dynamic";
@@ -9,7 +16,20 @@ export const dynamic = "force-dynamic";
 export default async function OperationsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ month?: string }>;
+  searchParams: Promise<{
+    month?: string;
+    start?: string;
+    end?: string;
+    category?: string;
+    person?: string;
+    account?: string;
+    importance?: string;
+    status?: string;
+    event?: string;
+    eventDetail?: string;
+    scope?: string;
+    returnTo?: string;
+  }>;
 }) {
   const query = await searchParams;
   const repository = await getBudgetRepository();
@@ -23,6 +43,30 @@ export default async function OperationsPage({
   const initialMonth = months.includes(requestedMonth ?? "")
     ? requestedMonth!
     : months.at(-1);
+  const initialFilters: OperationsInitialFilters = {
+    month: months.includes(query.month ?? "")
+      ? (query.month as MonthKey)
+      : undefined,
+    startMonth: months.includes(query.start ?? "")
+      ? (query.start as MonthKey)
+      : undefined,
+    endMonth: months.includes(query.end ?? "")
+      ? (query.end as MonthKey)
+      : undefined,
+    category: query.category,
+    person: query.person,
+    accountId: query.account,
+    importance: query.importance as Importance | undefined,
+    status: query.status as AnalyticalStatus | undefined,
+    event: query.event,
+    eventDetail: query.eventDetail,
+    scope: ["all", "current", "events"].includes(query.scope ?? "")
+      ? (query.scope as "all" | "current" | "events")
+      : undefined,
+  };
+  const returnTo = query.returnTo?.startsWith("/historique")
+    ? query.returnTo
+    : undefined;
 
   if (!initialMonth) {
     return <p className="card p-6">Aucune opération disponible.</p>;
@@ -35,6 +79,8 @@ export default async function OperationsPage({
       categories={categories}
       accounts={accounts}
       initialMonth={initialMonth}
+      initialFilters={initialFilters}
+      returnTo={returnTo}
     />
   );
 }

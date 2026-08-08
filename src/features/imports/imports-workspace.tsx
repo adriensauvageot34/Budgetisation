@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
@@ -43,7 +44,15 @@ async function existingFingerprints(rows: PreviewRow[]) {
   return found;
 }
 
-export function ImportsWorkspace({ batches }: { batches: ImportBatch[] }) {
+export function ImportsWorkspace({
+  batches,
+  embedded = false,
+  onNavigate,
+}: {
+  batches: ImportBatch[];
+  embedded?: boolean;
+  onNavigate?: () => void;
+}) {
   const router = useRouter();
   const inputRef = useRef<HTMLInputElement>(null);
   const [file, setFile] = useState<File | null>(null);
@@ -132,21 +141,30 @@ export function ImportsWorkspace({ batches }: { batches: ImportBatch[] }) {
 
   return (
     <div>
-      <PageHeader
-        eyebrow="Données"
-        title="Imports"
-        description="Lisez un relevé CSV ou XLSX, contrôlez les données et confirmez son insertion dans Supabase."
-        action={
-          <button
-            type="button"
-            className="button-primary"
-            onClick={() => inputRef.current?.click()}
-          >
-            <FileUp size={17} />
-            Nouvel import
-          </button>
-        }
-      />
+      {embedded ? (
+        <div className="mb-5">
+          <p className="text-sm leading-6 text-[var(--color-muted)]">
+            Lisez un relevé CSV ou XLSX, contrôlez les données puis confirmez
+            son insertion dans Supabase.
+          </p>
+        </div>
+      ) : (
+        <PageHeader
+          eyebrow="Données"
+          title="Imports"
+          description="Lisez un relevé CSV ou XLSX, contrôlez les données et confirmez son insertion dans Supabase."
+          action={
+            <button
+              type="button"
+              className="button-primary"
+              onClick={() => inputRef.current?.click()}
+            >
+              <FileUp size={17} />
+              Nouvel import
+            </button>
+          }
+        />
+      )}
 
       <div className="mb-5 flex gap-3 rounded-[var(--radius-md)] border border-[#cfded8] bg-[#e9f1ee] p-4">
         <Info size={19} className="mt-0.5 shrink-0 text-[var(--color-primary)]" />
@@ -314,6 +332,17 @@ export function ImportsWorkspace({ batches }: { batches: ImportBatch[] }) {
         </div>
       </section>
 
+      {embedded ? (
+        <div className="mt-5 flex justify-end">
+          <Link
+            href="/imports"
+            className="button-secondary"
+            onClick={onNavigate}
+          >
+            Voir les imports précédents
+          </Link>
+        </div>
+      ) : (
       <section className="card mt-5 overflow-hidden">
         <div className="border-b border-[var(--color-border)] px-4 py-4 sm:px-6">
           <p className="eyebrow mb-2">Traçabilité</p>
@@ -366,6 +395,7 @@ export function ImportsWorkspace({ batches }: { batches: ImportBatch[] }) {
           </table>
         </div>
       </section>
+      )}
     </div>
   );
 }
