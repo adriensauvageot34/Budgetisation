@@ -1,12 +1,14 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
   ArrowDown,
   ArrowUp,
   ChevronLeft,
   ChevronRight,
+  CornerUpLeft,
   Filter,
   RotateCcw,
   Search,
@@ -46,6 +48,22 @@ type ViewMode = "Compacte" | "Standard" | "Complète";
 type SortKey = "date" | "label" | "amount" | "category" | "accountId";
 type SortDirection = "asc" | "desc";
 type PanelMode = "read" | "edit" | "delete";
+
+type ExpenseScope = "all" | "current" | "events";
+
+export type OperationsInitialFilters = {
+  month?: MonthKey;
+  startMonth?: MonthKey;
+  endMonth?: MonthKey;
+  category?: string;
+  person?: Person;
+  accountId?: string;
+  importance?: Importance;
+  status?: AnalyticalStatus;
+  event?: string;
+  eventDetail?: string;
+  scope?: ExpenseScope;
+};
 
 type OperationDraft = {
   date: string;
@@ -182,25 +200,55 @@ export function OperationsTable({
   categories,
   accounts,
   initialMonth,
+  initialFilters = {},
+  returnTo,
 }: {
   months: MonthKey[];
   operations: Operation[];
   categories: CategoryDefinition[];
   accounts: Account[];
   initialMonth: MonthKey;
+  initialFilters?: OperationsInitialFilters;
+  returnTo?: string;
 }) {
   const router = useRouter();
   const [operationRows, setOperationRows] = useState(operations);
   const [view, setView] = useState<ViewMode>("Standard");
   const [query, setQuery] = useState("");
-  const [month, setMonth] = useState<MonthKey | "Tous">(initialMonth);
-  const [category, setCategory] = useState("Toutes");
-  const [accountId, setAccountId] = useState("Tous");
+  const hasInitialPeriod = Boolean(
+    initialFilters.startMonth || initialFilters.endMonth,
+  );
+  const [month, setMonth] = useState<MonthKey | "Tous">(
+    initialFilters.month ?? (hasInitialPeriod ? "Tous" : initialMonth),
+  );
+  const [startMonth, setStartMonth] = useState<MonthKey | "">(
+    initialFilters.startMonth ?? "",
+  );
+  const [endMonth, setEndMonth] = useState<MonthKey | "">(
+    initialFilters.endMonth ?? "",
+  );
+  const [category, setCategory] = useState(
+    initialFilters.category ?? "Toutes",
+  );
+  const [accountId, setAccountId] = useState(initialFilters.accountId ?? "Tous");
   const [flow, setFlow] = useState<FlowType | "Tous">("Tous");
-  const [person, setPerson] = useState<Person | "Toutes">("Toutes");
-  const [importance, setImportance] = useState<Importance | "Toutes">("Toutes");
+  const [person, setPerson] = useState<Person | "Toutes">(
+    initialFilters.person ?? "Toutes",
+  );
+  const [importance, setImportance] = useState<Importance | "Toutes">(
+    initialFilters.importance ?? "Toutes",
+  );
   const [recurrence, setRecurrence] = useState<Recurrence | "Toutes">("Toutes");
-  const [status, setStatus] = useState<AnalyticalStatus | "Tous">("Tous");
+  const [status, setStatus] = useState<AnalyticalStatus | "Tous">(
+    initialFilters.status ?? "Tous",
+  );
+  const [expenseScope, setExpenseScope] = useState<ExpenseScope>(
+    initialFilters.scope ?? "all",
+  );
+  const [eventFilter, setEventFilter] = useState(initialFilters.event ?? "Tous");
+  const [eventDetailFilter, setEventDetailFilter] = useState(
+    initialFilters.eventDetail ?? "Toutes",
+  );
   const [advancedOpen, setAdvancedOpen] = useState(false);
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
   const [sortKey, setSortKey] = useState<SortKey>("date");
@@ -226,13 +274,39 @@ export function OperationsTable({
         .filter((value): value is string => Boolean(value)),
     ),
   ].sort((a, b) => a.localeCompare(b, "fr"));
+  const events = [
+    ...new Set(
+      operationRows
+        .map((operation) => operation.event)
+        .filter((value): value is string => Boolean(value)),
+    ),
+  ].sort((a, b) => a.localeCompare(b, "fr"));
+  const eventDetails = [
+    ...new Set(
+      operationRows
+        .filter(
+          (operation) =>
+            eventFilter === "Tous" || operation.event === eventFilter,
+        )
+        .map((operation) => operation.eventDetail)
+        .filter((value): value is string => Boolean(value)),
+    ),
+  ].sort((a, b) => a.localeCompare(b, "fr"));
 
   const filtered = useMemo(() => {
     const normalizedQuery = query.trim().toLocaleLowerCase("fr-FR");
     return operationRows
       .filter(
-        (operation) =>
-          (month === "Tous" || operation.importMonth === month) &&
+        (operation) => {
+          const contextMonth = returnTo
+            ? isConsumptionExpense(operation)
+              ? operation.importMonth
+              : operationAnalysisMonth(operation)
+            : operation.importMonth;
+          return (
+          (month === "Tous" || contextMonth === month) &&
+          (!startMonth || contextMonth >= startMonth) &&
+          (!endMonth || contextMonth <= endMonth) &&
           (category === "Toutes" || operation.category === category) &&
           (accountId === "Tous" || operation.accountId === accountId) &&
           (flow === "Tous" || operation.flow === flow) &&
@@ -240,6 +314,12 @@ export function OperationsTable({
           (importance === "Toutes" || operation.importance === importance) &&
           (recurrence === "Toutes" || operation.recurrence === recurrence) &&
           (status === "Tous" || operation.status === status) &&
+          (expenseScope === "all" ||
+            (expenseScope === "current" && !operation.event) ||
+            (expenseScope === "events" && Boolean(operation.event))) &&
+          (eventFilter === "Tous" || operation.event === eventFilter) &&
+          (eventDetailFilter === "Toutes" ||
+            operation.eventDetail === eventDetailFilter) &&
           (!normalizedQuery ||
             [
               operation.label,
@@ -254,7 +334,9 @@ export function OperationsTable({
             ]
               .join(" ")
               .toLocaleLowerCase("fr-FR")
-              .includes(normalizedQuery)),
+              .includes(normalizedQuery))
+          );
+        },
       )
       .sort((a, b) => {
         const aValue =
@@ -277,6 +359,10 @@ export function OperationsTable({
     accountId,
     accounts,
     category,
+    endMonth,
+    eventDetailFilter,
+    eventFilter,
+    expenseScope,
     flow,
     importance,
     month,
@@ -284,9 +370,11 @@ export function OperationsTable({
     person,
     query,
     recurrence,
+    returnTo,
     sortDirection,
     sortKey,
     status,
+    startMonth,
   ]);
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize));
@@ -309,23 +397,38 @@ export function OperationsTable({
   function resetFilters() {
     setView("Standard");
     setQuery("");
-    setMonth(initialMonth);
-    setCategory("Toutes");
-    setAccountId("Tous");
+    setMonth(initialFilters.month ?? (hasInitialPeriod ? "Tous" : initialMonth));
+    setStartMonth(initialFilters.startMonth ?? "");
+    setEndMonth(initialFilters.endMonth ?? "");
+    setCategory(initialFilters.category ?? "Toutes");
+    setAccountId(initialFilters.accountId ?? "Tous");
     setFlow("Tous");
-    setPerson("Toutes");
-    setImportance("Toutes");
+    setPerson(initialFilters.person ?? "Toutes");
+    setImportance(initialFilters.importance ?? "Toutes");
     setRecurrence("Toutes");
-    setStatus("Tous");
+    setStatus(initialFilters.status ?? "Tous");
+    setExpenseScope(initialFilters.scope ?? "all");
+    setEventFilter(initialFilters.event ?? "Tous");
+    setEventDetailFilter(initialFilters.eventDetail ?? "Toutes");
     setAdvancedOpen(false);
     setSortKey("date");
     setSortDirection("desc");
     setPage(1);
   }
 
-  const activeAdvanced = [person, importance, recurrence, status].filter(
+  const activeAdvanced = [
+    person,
+    importance,
+    recurrence,
+    status,
+    startMonth,
+    endMonth,
+    eventFilter,
+    eventDetailFilter,
+    expenseScope,
+  ].filter(
     (value) => value !== "Toutes" && value !== "Tous",
-  ).length;
+  ).filter((value) => value !== "" && value !== "all").length;
   const accountName = (id: string | null) =>
     accounts.find((account) => account.id === id)?.name ?? "Non renseigné";
   const selectedDraftCategory = categories.find(
@@ -519,6 +622,8 @@ export function OperationsTable({
           value={month}
           onChange={(event) => {
             setMonth(event.target.value as MonthKey | "Tous");
+            setStartMonth("");
+            setEndMonth("");
             setPage(1);
           }}
         >
@@ -588,6 +693,15 @@ export function OperationsTable({
 
   return (
     <div>
+      {returnTo ? (
+        <Link
+          href={returnTo}
+          className="mb-4 inline-flex items-center gap-1.5 text-sm font-bold text-[var(--color-primary)]"
+        >
+          <CornerUpLeft size={16} />
+          Retour à l’analyse
+        </Link>
+      ) : null}
       <PageHeader
         eyebrow="Recherche détaillée"
         title="Opérations"
@@ -678,6 +792,40 @@ export function OperationsTable({
         {advancedOpen ? (
           <div className="mt-4 grid gap-3 border-t border-[var(--color-border)] pt-4 sm:grid-cols-2 lg:grid-cols-4">
             <label className="text-xs font-bold text-[var(--color-muted)]">
+              Du mois
+              <select
+                className="field mt-1 w-full capitalize text-sm"
+                value={startMonth}
+                onChange={(event) => {
+                  setStartMonth(event.target.value as MonthKey | "");
+                  setMonth("Tous");
+                  setPage(1);
+                }}
+              >
+                <option value="">Non limité</option>
+                {months.map((entry) => (
+                  <option key={entry} value={entry}>{formatMonth(entry)}</option>
+                ))}
+              </select>
+            </label>
+            <label className="text-xs font-bold text-[var(--color-muted)]">
+              Au mois
+              <select
+                className="field mt-1 w-full capitalize text-sm"
+                value={endMonth}
+                onChange={(event) => {
+                  setEndMonth(event.target.value as MonthKey | "");
+                  setMonth("Tous");
+                  setPage(1);
+                }}
+              >
+                <option value="">Non limité</option>
+                {months.map((entry) => (
+                  <option key={entry} value={entry}>{formatMonth(entry)}</option>
+                ))}
+              </select>
+            </label>
+            <label className="text-xs font-bold text-[var(--color-muted)]">
               Personne
               <select
                 className="field mt-1 w-full text-sm"
@@ -740,6 +888,50 @@ export function OperationsTable({
                 <option>Exceptionnel</option>
                 <option>Hors budget</option>
                 <option>À ventiler</option>
+              </select>
+            </label>
+            <label className="text-xs font-bold text-[var(--color-muted)]">
+              Contexte
+              <select
+                className="field mt-1 w-full text-sm"
+                value={expenseScope}
+                onChange={(event) => {
+                  setExpenseScope(event.target.value as ExpenseScope);
+                  setPage(1);
+                }}
+              >
+                <option value="all">Toutes les dépenses</option>
+                <option value="current">Vie courante</option>
+                <option value="events">Événements</option>
+              </select>
+            </label>
+            <label className="text-xs font-bold text-[var(--color-muted)]">
+              Événement
+              <select
+                className="field mt-1 w-full text-sm"
+                value={eventFilter}
+                onChange={(event) => {
+                  setEventFilter(event.target.value);
+                  setEventDetailFilter("Toutes");
+                  setPage(1);
+                }}
+              >
+                <option>Tous</option>
+                {events.map((entry) => <option key={entry}>{entry}</option>)}
+              </select>
+            </label>
+            <label className="text-xs font-bold text-[var(--color-muted)]">
+              Détail événement
+              <select
+                className="field mt-1 w-full text-sm"
+                value={eventDetailFilter}
+                onChange={(event) => {
+                  setEventDetailFilter(event.target.value);
+                  setPage(1);
+                }}
+              >
+                <option>Toutes</option>
+                {eventDetails.map((entry) => <option key={entry}>{entry}</option>)}
               </select>
             </label>
           </div>

@@ -37,7 +37,7 @@ export default async function SettingsPage() {
   const categories = await repository.getCategories();
 
   return (
-    <div>
+    <div id="regles-classement">
       <PageHeader
         eyebrow="Structure de classement"
         title="Paramètres"
