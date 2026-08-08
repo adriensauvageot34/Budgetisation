@@ -76,39 +76,63 @@ class SupabaseBudgetRepository implements BudgetRepository {
     return this.snapshotPromise;
   }
 
+  private async loadAllOperations() {
+    const pageSize = 1000;
+    const operationRows: Array<Record<string, unknown>> = [];
+
+    for (let from = 0; ; from += pageSize) {
+      const operationsResult = await this.supabase
+        .from("operations")
+        .select(
+          [
+            "id",
+            "date",
+            "import_month",
+            "amount",
+            "source_label",
+            "normalized_merchant",
+            "flow",
+            "recurrence",
+            "importance",
+            "analytical_status",
+            "note",
+            "event",
+            "uncertain",
+            "fingerprint",
+            "source_metadata",
+            "account:accounts!operations_account_id_fkey(id,name)",
+            "person:household_members!operations_person_member_id_fkey(display_name)",
+            "category:categories!operations_category_id_fkey(name,slug,color,included_in_consumption)",
+            "subcategory:subcategories!operations_subcategory_id_fkey(name)",
+            "precise_type:precise_types!operations_precise_type_id_fkey(name)",
+            "import_batch:import_batches!operations_import_batch_id_fkey(id)",
+          ].join(","),
+        )
+        .eq("household_id", this.householdId)
+        .order("date", { ascending: false })
+        .order("created_at", { ascending: false })
+        .range(from, from + pageSize - 1);
+
+      const operationBatch = checkResult(
+        operationsResult as {
+          data: Array<Record<string, unknown>> | null;
+          error: { message: string } | null;
+        },
+        "Lecture des opérations impossible",
+      );
+
+      operationRows.push(...operationBatch);
+
+      if (operationBatch.length < pageSize) {
+        return operationRows;
+      }
+    }
+  }
+
   private async loadSnapshot(): Promise<Snapshot> {
-    const [operationsResult, categoriesResult, accountsResult, batchesResult] =
+    const [operationRows, categoriesResult, accountsResult, batchesResult] =
       await Promise.all([
-        this.supabase
-          .from("operations")
-          .select(
-            [
-              "id",
-              "date",
-              "import_month",
-              "amount",
-              "source_label",
-              "normalized_merchant",
-              "flow",
-              "recurrence",
-              "importance",
-              "analytical_status",
-              "note",
-              "event",
-              "uncertain",
-              "fingerprint",
-              "source_metadata",
-              "account:accounts!operations_account_id_fkey(id,name)",
-              "person:household_members!operations_person_member_id_fkey(display_name)",
-              "category:categories!operations_category_id_fkey(name,slug,color,included_in_consumption)",
-              "subcategory:subcategories!operations_subcategory_id_fkey(name)",
-              "precise_type:precise_types!operations_precise_type_id_fkey(name)",
-              "import_batch:import_batches!operations_import_batch_id_fkey(id)",
-            ].join(","),
-          )
-          .eq("household_id", this.householdId)
-          .order("date", { ascending: false })
-          .order("created_at", { ascending: false }),
+        this.loadAllOperations(),
         this.supabase
           .from("categories")
           .select(
@@ -132,10 +156,6 @@ class SupabaseBudgetRepository implements BudgetRepository {
           .order("imported_at", { ascending: false }),
       ]);
 
-    const operationRows = checkResult(
-      operationsResult as { data: Array<Record<string, unknown>> | null; error: { message: string } | null },
-      "Lecture des opérations impossible",
-    );
     const categoryRows = checkResult(
       categoriesResult as { data: Array<Record<string, unknown>> | null; error: { message: string } | null },
       "Lecture de la taxonomie impossible",
