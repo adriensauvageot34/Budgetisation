@@ -34,9 +34,15 @@ type Snapshot = {
   batches: ImportBatch[];
 };
 
-function related<T>(value: T | T[] | null | undefined): T | null {
-  if (Array.isArray(value)) return value[0] ?? null;
-  return value ?? null;
+type AccountRelation = { id?: unknown };
+type MemberRelation = { display_name?: unknown };
+type CategoryRelation = { name?: unknown };
+type NamedRelation = { name?: unknown };
+type ImportBatchRelation = { id?: unknown };
+
+function related<T extends object>(value: unknown): T | null {
+  const candidate = Array.isArray(value) ? value[0] : value;
+  return candidate && typeof candidate === "object" ? (candidate as T) : null;
 }
 
 function monthKey(value: unknown): MonthKey | null {
@@ -165,18 +171,12 @@ class SupabaseBudgetRepository implements BudgetRepository {
     });
 
     const operations = operationRows.map((row) => {
-      const account = related(row.account as Record<string, unknown> | null);
-      const person = related(row.person as Record<string, unknown> | null);
-      const category = related(row.category as Record<string, unknown> | null);
-      const subcategory = related(
-        row.subcategory as Record<string, unknown> | null,
-      );
-      const preciseType = related(
-        row.precise_type as Record<string, unknown> | null,
-      );
-      const importBatch = related(
-        row.import_batch as Record<string, unknown> | null,
-      );
+      const account = related<AccountRelation>(row.account);
+      const person = related<MemberRelation>(row.person);
+      const category = related<CategoryRelation>(row.category);
+      const subcategory = related<NamedRelation>(row.subcategory);
+      const preciseType = related<NamedRelation>(row.precise_type);
+      const importBatch = related<ImportBatchRelation>(row.import_batch);
       const fallbackCategory = "Non renseigné";
 
       return {
@@ -237,7 +237,7 @@ class SupabaseBudgetRepository implements BudgetRepository {
     });
 
     const accounts = accountRows.map((row) => {
-      const owner = related(row.owner as Record<string, unknown> | null);
+      const owner = related<MemberRelation>(row.owner);
       return {
         id: String(row.id),
         name: String(row.name),
