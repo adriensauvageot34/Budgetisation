@@ -356,7 +356,7 @@ declare
   current_household_id uuid;
   created_batch_id uuid;
   imported_count integer;
-  warning_count integer;
+  calculated_warning_count integer;
   first_month date;
   last_month date;
 begin
@@ -389,7 +389,7 @@ begin
         or nullif(row_data ->> 'category', '') is null
         or nullif(row_data ->> 'source_label', '') is null
     )
-  into first_month, last_month, warning_count
+  into first_month, last_month, calculated_warning_count
   from jsonb_array_elements(source_rows) as rows(row_data);
 
   insert into public.import_batches (
@@ -409,7 +409,7 @@ begin
     source_filename,
     'processing',
     0,
-    warning_count,
+    calculated_warning_count,
     first_month,
     last_month,
     jsonb_build_object('source', 'application_import')
@@ -553,7 +553,7 @@ begin
   update public.import_batches
   set row_count = imported_count,
       status = case
-        when warning_count > 0 then 'completed_with_warnings'
+        when calculated_warning_count > 0 then 'completed_with_warnings'
         else 'completed'
       end
   where id = created_batch_id;
@@ -561,7 +561,7 @@ begin
   return jsonb_build_object(
     'batch_id', created_batch_id,
     'inserted', imported_count,
-    'warnings', warning_count
+    'warnings', calculated_warning_count
   );
 exception
   when others then
