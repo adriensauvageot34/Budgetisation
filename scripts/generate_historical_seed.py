@@ -120,7 +120,7 @@ def row_fingerprint(row: dict[str, object]) -> str:
     return hashlib.sha256(stable.encode("utf-8")).hexdigest()
 
 
-def transform(source_path: Path) -> tuple[list[dict[str, object]], int]:
+def transform(source_path: Path) -> tuple[list[dict[str, object]], int, int]:
     workbook = pd.ExcelFile(source_path)
     if workbook.sheet_names != ["Opérations"]:
         raise ValueError(f"Feuilles inattendues : {workbook.sheet_names}")
@@ -131,15 +131,12 @@ def transform(source_path: Path) -> tuple[list[dict[str, object]], int]:
     if len(frame) != 481:
         raise ValueError(f"Nombre de lignes source inattendu : {len(frame)}")
 
-    deduplicated = frame.drop_duplicates(keep="first").copy()
-    removed = len(frame) - len(deduplicated)
-    if len(deduplicated) != 418 or removed != 63:
-        raise ValueError(
-            f"Déduplication stricte inattendue : {len(deduplicated)} lignes, {removed} retirées"
-        )
+    duplicate_mask = frame.duplicated(keep=False)
+    potential_duplicate_rows = int(duplicate_mask.sum())
+    potential_duplicate_groups = len(frame.loc[duplicate_mask].drop_duplicates())
 
     transformed: list[dict[str, object]] = []
-    for _, source in deduplicated.iterrows():
+    for _, source in frame.iterrows():
         source_date = pd.to_datetime(source["Date"], errors="raise").date().isoformat()
         month = pd.to_datetime(source["Mois"], errors="raise").strftime("%Y-%m-01")
         family = text(source["Famille"])
@@ -182,10 +179,15 @@ def transform(source_path: Path) -> tuple[list[dict[str, object]], int]:
         row["fingerprint"] = row_fingerprint(row)
         transformed.append(row)
 
-    return transformed, removed
+    return transformed, potential_duplicate_groups, potential_duplicate_rows
 
 
-def seed_sql(rows: list[dict[str, object]], removed: int, source_name: str) -> str:
+def seed_sql(
+    rows: list[dict[str, object]],
+    potential_duplicate_groups: int,
+    potential_duplicate_rows: int,
+    source_name: str,
+) -> str:
     rows_json = json.dumps(rows, ensure_ascii=False, separators=(",", ":"))
     return f"""begin;
 
@@ -262,7 +264,10 @@ with inserted_batch as (
     jsonb_build_object(
       'source', 'historical_xlsx',
       'source_rows', 481,
-      'strict_duplicates_removed', {removed}
+      'historical_rows_preserved', {len(rows)},
+      'automatic_deduplication', false,
+      'potential_duplicate_groups', {potential_duplicate_groups},
+      'potential_duplicate_rows', {potential_duplicate_rows}
     )
   )
   on conflict (id) do nothing
@@ -334,8 +339,13 @@ def main() -> None:
     parser.add_argument("--bootstrap", type=Path, required=True)
     args = parser.parse_args()
 
-    rows, removed = transform(args.source)
-    generated_seed = seed_sql(rows, removed, args.source.name)
+    rows, potential_duplicate_groups, potential_duplicate_rows = transform(args.source)
+    generated_seed = seed_sql(
+        rows,
+        potential_duplicate_groups,
+        potential_duplicate_rows,
+        args.source.name,
+    )
     args.seed.parent.mkdir(parents=True, exist_ok=True)
     args.seed.write_text(generated_seed, encoding="utf-8")
 
@@ -351,7 +361,9 @@ def main() -> None:
         json.dumps(
             {
                 "source_rows": 481,
-                "strict_duplicates_removed": removed,
+                "automatic_deduplication": False,
+                "potential_duplicate_groups": potential_duplicate_groups,
+                "potential_duplicate_rows": potential_duplicate_rows,
                 "operations": len(rows),
                 "household_id": str(HOUSEHOLD_ID),
                 "batch_id": str(BATCH_ID),

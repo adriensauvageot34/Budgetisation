@@ -63,7 +63,8 @@ export function ImportsWorkspace({ batches }: { batches: ImportBatch[] }) {
       const result = await parseImportFile(selected);
       const fingerprints = await existingFingerprints(result.rows);
       result.rows.forEach((row) => {
-        row.potentialDuplicate = fingerprints.has(row.fingerprint);
+        row.potentialDuplicate =
+          row.potentialDuplicate || fingerprints.has(row.fingerprint);
       });
       setParsed(result);
     } catch (caught) {
@@ -79,7 +80,6 @@ export function ImportsWorkspace({ batches }: { batches: ImportBatch[] }) {
     if (!file || !parsed) return;
     const rows = parsed.rows.filter(
       (row) =>
-        !row.potentialDuplicate &&
         !row.missing.some((field) =>
           ["Date", "Mois", "Montant net", "Libellé bancaire"].includes(field),
         ),
@@ -128,7 +128,7 @@ export function ImportsWorkspace({ batches }: { batches: ImportBatch[] }) {
       ),
     ).length ?? 0;
   const insertable =
-    (parsed?.rows.length ?? 0) - potentialDuplicates - blockingRows;
+    (parsed?.rows.length ?? 0) - blockingRows;
 
   return (
     <div>
@@ -226,7 +226,7 @@ export function ImportsWorkspace({ batches }: { batches: ImportBatch[] }) {
                 <div className="rounded-[var(--radius-md)] bg-[#f7dfda] p-3">
                   <p className="text-xs font-bold text-[#9a463c]">Doublons</p>
                   <p className="mt-1 text-xl font-black">
-                    {potentialDuplicates + parsed.strictDuplicatesRemoved}
+                    {potentialDuplicates}
                   </p>
                 </div>
                 <div className="soft-card p-3">
@@ -234,6 +234,13 @@ export function ImportsWorkspace({ batches }: { batches: ImportBatch[] }) {
                   <p className="mt-1 text-xl font-black">{parsed.missingRows}</p>
                 </div>
               </div>
+
+              {potentialDuplicates > 0 ? (
+                <p className="mb-4 text-sm text-[var(--color-muted)]">
+                  Les doublons potentiels sont signalés, mais ne sont pas
+                  exclus : ils seront insérés si vous confirmez l’import.
+                </p>
+              ) : null}
 
               <div className="table-shell">
                 <div className="overflow-x-auto">

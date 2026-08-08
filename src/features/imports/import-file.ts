@@ -44,7 +44,7 @@ export type PreviewRow = ImportOperationRow & {
 export type ParsedImport = {
   rows: PreviewRow[];
   sourceRows: number;
-  strictDuplicatesRemoved: number;
+  potentialDuplicatesWithinFile: number;
   missingRows: number;
   uncertainRows: number;
 };
@@ -136,15 +136,6 @@ function serializableRaw(row: Record<string, unknown>) {
   );
 }
 
-function strictKey(row: Record<string, unknown>, headers: string[]) {
-  return JSON.stringify(
-    headers.map((header) => {
-      const value = row[header];
-      return value instanceof Date ? isoDate(value) : value ?? null;
-    }),
-  );
-}
-
 async function sha256(value: string) {
   const bytes = new TextEncoder().encode(value);
   const hash = await crypto.subtle.digest("SHA-256", bytes);
@@ -195,16 +186,8 @@ export async function parseImportFile(file: File): Promise<ParsedImport> {
     throw new Error(`Colonnes obligatoires absentes : ${missingHeaders.join(", ")}.`);
   }
 
-  const seen = new Set<string>();
-  const uniqueRows = rows.filter((row) => {
-    const key = strictKey(row, headers);
-    if (seen.has(key)) return false;
-    seen.add(key);
-    return true;
-  });
-
   const transformed = await Promise.all(
-    uniqueRows.map(async (source, index): Promise<PreviewRow> => {
+    rows.map(async (source, index): Promise<PreviewRow> => {
       const date = isoDate(source["Date"]);
       const month = importMonth(source["Mois"], date);
       const amount = asMoney(source["Montant net"]);
@@ -263,10 +246,23 @@ export async function parseImportFile(file: File): Promise<ParsedImport> {
     }),
   );
 
+  const fingerprintCounts = new Map<string, number>();
+  transformed.forEach((row) =>
+    fingerprintCounts.set(
+      row.fingerprint,
+      (fingerprintCounts.get(row.fingerprint) ?? 0) + 1,
+    ),
+  );
+  transformed.forEach((row) => {
+    row.potentialDuplicate = (fingerprintCounts.get(row.fingerprint) ?? 0) > 1;
+  });
+
   return {
     rows: transformed,
     sourceRows: rows.length,
-    strictDuplicatesRemoved: rows.length - uniqueRows.length,
+    potentialDuplicatesWithinFile: transformed.filter(
+      (row) => row.potentialDuplicate,
+    ).length,
     missingRows: transformed.filter((row) => row.missing.length > 0).length,
     uncertainRows: transformed.filter((row) => row.uncertain).length,
   };

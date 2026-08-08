@@ -23,8 +23,10 @@ Ne jamais ajouter de clé `service_role` au navigateur.
 ## Initialisation Supabase
 
 Exécuter une seule fois `supabase/bootstrap.sql` dans Supabase SQL Editor. Ce
-fichier crée le schéma, les politiques RLS, le foyer `Budgetisation` et les 418
-opérations historiques uniques issues du XLSX fourni.
+fichier crée le schéma, les politiques RLS, le foyer `Budgetisation` et les 481
+opérations historiques issues du XLSX fourni. Aucune ligne n’est supprimée sur
+la seule base de valeurs identiques ; les fingerprints servent uniquement à
+signaler des doublons potentiels.
 
 Dans **Authentication > Users**, créer ensuite les deux utilisateurs avec leur
 e-mail et leur mot de passe. Copier leurs UUID, puis exécuter dans SQL Editor :
