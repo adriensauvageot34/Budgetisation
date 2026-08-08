@@ -32,6 +32,7 @@ export interface CategoryDefinition {
   slug: string;
   color: string;
   subcategories: string[];
+  preciseTypesBySubcategory?: Record<string, string[]>;
   includedInConsumption: boolean;
 }
 
