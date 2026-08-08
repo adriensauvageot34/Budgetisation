@@ -136,7 +136,8 @@ def transform(source_path: Path) -> tuple[list[dict[str, object]], int, int]:
     potential_duplicate_groups = len(frame.loc[duplicate_mask].drop_duplicates())
 
     transformed: list[dict[str, object]] = []
-    for _, source in frame.iterrows():
+    for source_index, source in frame.iterrows():
+        source_row_number = int(source_index) + 2
         source_date = pd.to_datetime(source["Date"], errors="raise").date().isoformat()
         month = pd.to_datetime(source["Mois"], errors="raise").strftime("%Y-%m-01")
         family = text(source["Famille"])
@@ -153,7 +154,9 @@ def transform(source_path: Path) -> tuple[list[dict[str, object]], int, int]:
             column: scalar(source[column])
             for column in EXPECTED_COLUMNS
         }
+        source_metadata["source_row_number"] = source_row_number
         row: dict[str, object] = {
+            "id": str(uuid.uuid5(BATCH_ID, f"source-row:{source_row_number}")),
             "date": source_date,
             "import_month": month,
             "amount": amount,
@@ -191,17 +194,30 @@ def seed_sql(
     rows_json = json.dumps(rows, ensure_ascii=False, separators=(",", ":"))
     return f"""begin;
 
-insert into public.households (id, name)
-values ('{HOUSEHOLD_ID}', 'Budgetisation')
-on conflict (id) do update set name = excluded.name;
+do $budgetisation_seed$
+declare
+  seed_household_id uuid;
+  inserted_operation_count integer;
+  historical_rows jsonb :=
+    $historical_rows${rows_json}$historical_rows$::jsonb;
+begin
+  insert into public.households (id, name)
+  select '{HOUSEHOLD_ID}', 'Budgetisation'
+  where not exists (
+    select 1
+    from public.households
+    where name = 'Budgetisation'
+  )
+  on conflict (id) do update set name = excluded.name;
 
-create temporary table budgetisation_historical_rows (
-  row_data jsonb not null
-) on commit drop;
+  select id
+  into seed_household_id
+  from public.households
+  where name = 'Budgetisation';
 
-insert into budgetisation_historical_rows (row_data)
-select value
-from jsonb_array_elements($historical_rows${rows_json}$historical_rows$::jsonb);
+  if seed_household_id is null then
+    raise exception 'Le foyer Budgetisation n''a pas pu être initialisé';
+  end if;
 
 insert into public.categories (
   household_id,
@@ -210,11 +226,11 @@ insert into public.categories (
   included_in_consumption
 )
 select
-  '{HOUSEHOLD_ID}'::uuid,
+  seed_household_id,
   row_data ->> 'category',
   private.slugify(row_data ->> 'category'),
   bool_or(row_data ->> 'flow' = 'Dépense')
-from budgetisation_historical_rows
+from jsonb_array_elements(historical_rows) as rows(row_data)
 where nullif(row_data ->> 'category', '') is not null
 group by row_data ->> 'category'
 on conflict (household_id, name) do update
@@ -229,51 +245,61 @@ insert into public.subcategories (
   slug
 )
 select distinct
-  '{HOUSEHOLD_ID}'::uuid,
+  seed_household_id,
   category.id,
   row_data ->> 'subcategory',
   private.slugify(row_data ->> 'subcategory')
-from budgetisation_historical_rows
+from jsonb_array_elements(historical_rows) as rows(row_data)
 join public.categories category
-  on category.household_id = '{HOUSEHOLD_ID}'::uuid
+  on category.household_id = seed_household_id
  and category.name = row_data ->> 'category'
 where nullif(row_data ->> 'subcategory', '') is not null
 on conflict (category_id, name) do nothing;
 
-with inserted_batch as (
-  insert into public.import_batches (
-    id,
-    household_id,
-    filename,
-    status,
-    row_count,
-    warning_count,
-    month_start,
-    month_end,
-    source_metadata
-  )
-  values (
-    '{BATCH_ID}',
-    '{HOUSEHOLD_ID}',
-    '{source_name.replace("'", "''")}',
-    'completed_with_warnings',
-    {len(rows)},
-    {sum(1 for row in rows if row["uncertain"])},
-    '2026-04-01',
-    '2026-07-01',
-    jsonb_build_object(
-      'source', 'historical_xlsx',
-      'source_rows', 481,
-      'historical_rows_preserved', {len(rows)},
-      'automatic_deduplication', false,
-      'potential_duplicate_groups', {potential_duplicate_groups},
-      'potential_duplicate_rows', {potential_duplicate_rows}
-    )
-  )
-  on conflict (id) do nothing
-  returning id
+insert into public.import_batches (
+  id,
+  household_id,
+  filename,
+  status,
+  row_count,
+  warning_count,
+  month_start,
+  month_end,
+  source_metadata
 )
+values (
+  '{BATCH_ID}',
+  seed_household_id,
+  '{source_name.replace("'", "''")}',
+  'completed_with_warnings',
+  {len(rows)},
+  {sum(1 for row in rows if row["uncertain"])},
+  '2026-04-01',
+  '2026-07-01',
+  jsonb_build_object(
+    'source', 'historical_xlsx',
+    'source_rows', 481,
+    'historical_rows_preserved', {len(rows)},
+    'automatic_deduplication', false,
+    'potential_duplicate_groups', {potential_duplicate_groups},
+    'potential_duplicate_rows', {potential_duplicate_rows}
+  )
+)
+on conflict (id) do update
+set household_id = excluded.household_id,
+    filename = excluded.filename,
+    status = excluded.status,
+    row_count = excluded.row_count,
+    warning_count = excluded.warning_count,
+    month_start = excluded.month_start,
+    month_end = excluded.month_end,
+    source_metadata = excluded.source_metadata;
+
+delete from public.operations
+where import_batch_id = '{BATCH_ID}'::uuid;
+
 insert into public.operations (
+  id,
   household_id,
   import_batch_id,
   date,
@@ -297,8 +323,9 @@ insert into public.operations (
   source_metadata
 )
 select
-  '{HOUSEHOLD_ID}'::uuid,
-  inserted_batch.id,
+  (row_data ->> 'id')::uuid,
+  seed_household_id,
+  '{BATCH_ID}'::uuid,
   (row_data ->> 'date')::date,
   (row_data ->> 'import_month')::date,
   (row_data ->> 'amount')::numeric(14, 2),
@@ -318,14 +345,24 @@ select
   coalesce((row_data ->> 'uncertain')::boolean, false),
   row_data ->> 'fingerprint',
   coalesce(row_data -> 'source_metadata', '{{}}'::jsonb)
-from inserted_batch
-cross join budgetisation_historical_rows
+from jsonb_array_elements(historical_rows) as rows(row_data)
 left join public.categories category
-  on category.household_id = '{HOUSEHOLD_ID}'::uuid
+  on category.household_id = seed_household_id
  and category.name = row_data ->> 'category'
 left join public.subcategories subcategory
   on subcategory.category_id = category.id
  and subcategory.name = row_data ->> 'subcategory';
+
+get diagnostics inserted_operation_count = row_count;
+
+if inserted_operation_count <> {len(rows)} then
+  raise exception 'Import historique incomplet : % operations inserees sur % attendues',
+    inserted_operation_count,
+    {len(rows)};
+end if;
+
+end;
+$budgetisation_seed$;
 
 commit;
 """

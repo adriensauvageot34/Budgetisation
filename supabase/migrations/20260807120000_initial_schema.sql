@@ -194,6 +194,21 @@ alter table public.subcategories enable row level security;
 alter table public.precise_types enable row level security;
 alter table public.operations enable row level security;
 
+drop policy if exists "Members can read their household" on public.households;
+drop policy if exists "Members can read household members" on public.household_members;
+drop policy if exists "Members can read accounts" on public.accounts;
+drop policy if exists "Members can read import batches" on public.import_batches;
+drop policy if exists "Members can create import batches" on public.import_batches;
+drop policy if exists "Members can update import batches" on public.import_batches;
+drop policy if exists "Members can read categories" on public.categories;
+drop policy if exists "Members can create categories" on public.categories;
+drop policy if exists "Members can read subcategories" on public.subcategories;
+drop policy if exists "Members can create subcategories" on public.subcategories;
+drop policy if exists "Members can read precise types" on public.precise_types;
+drop policy if exists "Members can create precise types" on public.precise_types;
+drop policy if exists "Members can read operations" on public.operations;
+drop policy if exists "Members can create operations" on public.operations;
+
 create policy "Members can read their household"
   on public.households for select to authenticated
   using (private.is_household_member(id));
