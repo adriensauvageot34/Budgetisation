@@ -16,10 +16,7 @@ import {
 } from "lucide-react";
 import { SignOutButton } from "@/features/auth/sign-out-button";
 import { ImportsWorkspace } from "@/features/imports/imports-workspace";
-import {
-  ImportTrigger,
-  openImportEvent,
-} from "@/features/imports/import-trigger";
+import { openImportEvent } from "@/features/imports/import-trigger";
 
 const navigation = [
   { href: "/", label: "Accueil", icon: LayoutDashboard },
@@ -167,12 +164,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       </aside>
 
       <div className="min-w-0">
-        <header className="sticky top-0 z-30 hidden h-16 items-center justify-end border-b border-[var(--color-border)] bg-[color:var(--color-canvas)]/95 px-[var(--space-page)] backdrop-blur md:flex">
-          <ImportTrigger />
-        </header>
-        <header className="sticky top-0 z-30 flex h-15 items-center justify-between border-b border-[var(--color-border)] bg-[color:var(--color-canvas)]/95 px-3 backdrop-blur md:hidden">
+        <header className="sticky top-0 z-30 flex h-15 items-center border-b border-[var(--color-border)] bg-[color:var(--color-canvas)]/95 px-3 backdrop-blur md:hidden">
           <HouseholdMenu compact />
-          <ImportTrigger className="button-primary min-h-10 px-3 text-xs" label="Importer" />
         </header>
 
         <main className="mx-auto min-h-screen max-w-[1540px] px-[var(--space-page)] pb-24 pt-6 md:pb-10 md:pt-8">
