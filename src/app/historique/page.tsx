@@ -3,6 +3,7 @@ import { getBudgetRepository } from "@/data";
 import type {
   AnalyticalStatus,
   Importance,
+  LifeLayer,
   MonthKey,
   Recurrence,
   ResourceType,
@@ -36,6 +37,9 @@ type HistoryQuery = {
   contexts?: string;
   events?: string;
   eventDetails?: string;
+  moments?: string;
+  momentTypes?: string;
+  lifeLayers?: string;
   resourceTypes?: string;
   importances?: string;
   recurrences?: string;
@@ -72,6 +76,7 @@ const importanceValues: Importance[] = [
   "Optionnelle",
 ];
 const recurrenceValues: Recurrence[] = ["Fixe", "Variable"];
+const lifeLayerValues: LifeLayer[] = ["Routine", "Moment", "Ponctuel", "Imprévu", "À confirmer"];
 
 function list(value?: string) {
   return value?.split(",").map((entry) => entry.trim()).filter(Boolean) ?? [];
@@ -93,9 +98,11 @@ export default async function HistoryPage({
 }) {
   const query = await searchParams;
   const repository = await getBudgetRepository();
-  const [months, operations] = await Promise.all([
+  const [months, operations, moments, allocations] = await Promise.all([
     repository.getMonths(),
     repository.getOperations(),
+    repository.getMoments(),
+    repository.getOperationAllocations(),
   ]);
 
   let start = months.includes(query.start ?? "")
@@ -130,6 +137,9 @@ export default async function HistoryPage({
     resourceTypes: enumList(query.resourceTypes, resourceTypeValues),
     importances: enumList(query.importances ?? query.importance, importanceValues),
     recurrences: enumList(query.recurrences ?? query.recurrence, recurrenceValues),
+    moments: list(query.moments),
+    momentTypes: list(query.momentTypes),
+    lifeLayers: enumList(query.lifeLayers, lifeLayerValues),
   };
   const context: HistoryRangeContext = {
     start,
@@ -144,6 +154,8 @@ export default async function HistoryPage({
       key={JSON.stringify(context)}
       months={months}
       operations={operations}
+      moments={moments}
+      allocations={allocations}
       initialContext={context}
     />
   );

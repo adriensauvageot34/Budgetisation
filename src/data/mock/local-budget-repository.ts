@@ -31,4 +31,12 @@ export class LocalBudgetRepository implements BudgetRepository {
   async getImportBatches() {
     return mockImportBatches;
   }
+
+  async getMoments() {
+    return [];
+  }
+
+  async getOperationAllocations() {
+    return [];
+  }
 }

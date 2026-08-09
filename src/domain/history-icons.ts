@@ -1,4 +1,5 @@
 import type { LucideIcon } from "lucide-react";
+import type { LifeLayer } from "@/domain/budget";
 import {
   BadgeEuro,
   Banknote,
@@ -158,6 +159,14 @@ export function getHistoryIcon(
   if (kind === "event") return getEventIcon(value);
   if (kind === "category") return getCategoryIcon(value, family);
   return getFamilyIcon(value);
+}
+
+export function getLifeLayerIcon(layer: LifeLayer): LucideIcon {
+  if (layer === "Routine") return House;
+  if (layer === "Moment") return Sparkles;
+  if (layer === "Ponctuel") return Package;
+  if (layer === "Imprévu") return Wrench;
+  return CircleHelp;
 }
 
 export const historyPresentationIcons = {

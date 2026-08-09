@@ -1,13 +1,15 @@
-import type { Operation } from "@/domain/budget";
+import type { Operation, OperationAllocation } from "@/domain/budget";
 import { isConsumptionExpense } from "@/domain/calculations";
-import { getSpendingContext } from "@/domain/spending-context";
+import { getEffectiveLifeContext } from "@/domain/life-analysis";
+import { buildAnalyticalEntries } from "@/domain/analytical-entries";
 
 export type OperationIssueKind =
   | "resource_type"
   | "refund_link"
   | "category"
   | "spending_context"
-  | "event";
+  | "event"
+  | "allocation";
 
 export type OperationIssue = {
   kind: OperationIssueKind;
@@ -47,17 +49,7 @@ export function getOperationIssues(operation: Operation): OperationIssue[] {
   }
   if (
     isConsumptionExpense(operation) &&
-    operation.spendingContext === "Événement" &&
-    !operation.event?.trim()
-  ) {
-    issues.push({
-      kind: "event",
-      level: "correction",
-      label: "Événement à renseigner",
-    });
-  } else if (
-    isConsumptionExpense(operation) &&
-    getSpendingContext(operation) === "À confirmer"
+    getEffectiveLifeContext(operation) === "À confirmer"
   ) {
     issues.push({
       kind: "spending_context",
@@ -87,9 +79,24 @@ export function isRentExpense(operation: Operation) {
     .includes("loyer");
 }
 
-export function getDataQualityWorkflow(operations: Operation[]) {
+export function getDataQualityWorkflow(
+  operations: Operation[],
+  allocations: OperationAllocation[] = [],
+) {
+  const problems = new Map(
+    buildAnalyticalEntries(operations, [], allocations).allocationProblems.map((problem) => [problem.operationId, problem]),
+  );
   const rows = operations
-    .map((operation) => ({ operation, issues: getOperationIssues(operation) }))
+    .map((operation) => {
+      const issues = getOperationIssues(operation);
+      const problem = problems.get(operation.id);
+      if (problem) issues.push({
+        kind: "allocation",
+        level: "correction",
+        label: `Ventilation incohérente : ${problem.allocated.toFixed(2)} € ventilés pour ${problem.available.toFixed(2)} € disponibles`,
+      });
+      return { operation, issues };
+    })
     .filter((entry) => entry.issues.length)
     .sort((a, b) => b.operation.date.localeCompare(a.operation.date));
   const corrections = rows.filter((entry) =>
@@ -101,5 +108,14 @@ export function getDataQualityWorkflow(operations: Operation[]) {
     )
     .slice(0, maximumEnrichmentsInWorkflow);
   return [...corrections, ...enrichments];
+}
+
+export function getDataQualityCounts(operations: Operation[], allocations: OperationAllocation[] = []) {
+  const workflow = getDataQualityWorkflow(operations, allocations);
+  return {
+    workflow,
+    correctionCount: workflow.filter((entry) => entry.issues.some((issue) => issue.level === "correction")).length,
+    enrichmentCount: workflow.filter((entry) => entry.issues.every((issue) => issue.level === "enrichment")).length,
+  };
 }
 

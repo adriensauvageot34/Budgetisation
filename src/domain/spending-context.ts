@@ -72,7 +72,9 @@ export function getSpendingContext(
   operation: Operation,
 ): EffectiveSpendingContext {
   if (!isConsumptionExpense(operation)) return "Non applicable";
-  if (operation.event) return "Événement";
+  if (operation.lifeContext === "Vie courante") return "Vie courante";
+  if (operation.lifeContext === "Hors quotidien" || operation.momentId) return "Événement";
+  if (operation.event || operation.eventDetail) return "Événement";
   if (operation.spendingContext === "Événement") return "Événement";
   if (operation.spendingContext === "Vie courante") return "Vie courante";
 

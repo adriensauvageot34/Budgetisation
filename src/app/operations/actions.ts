@@ -4,6 +4,7 @@ import type {
   AnalyticalStatus,
   FlowType,
   Importance,
+  LifeContext,
   MonthKey,
   Recurrence,
   ResourceType,
@@ -26,6 +27,8 @@ export type OperationUpdateInput = {
   event: string | null;
   eventDetail: string | null;
   spendingContext: SpendingContext | null;
+  lifeContext: LifeContext | null;
+  momentId: string | null;
   resourceType: ResourceType | null;
   resourceContext: string | null;
   analysisMonthOverride: MonthKey | null;
@@ -65,6 +68,7 @@ const resourceTypes: ResourceType[] = [
   "À qualifier",
 ];
 const spendingContexts: SpendingContext[] = ["Vie courante", "Événement"];
+const lifeContexts: LifeContext[] = ["Vie courante", "Hors quotidien"];
 
 function optionalText(value: string | null) {
   const normalized = value?.trim();
@@ -111,7 +115,7 @@ async function currentHouseholdId(supabase: SupabaseServerClient) {
 async function resolveTaxonomyIds(
   supabase: SupabaseServerClient,
   householdId: string,
-  input: OperationUpdateInput,
+  input: { category: string | null; subcategory: string | null; preciseType: string | null },
 ) {
   const categoryName = optionalText(input.category);
   const subcategoryName = optionalText(input.subcategory);
@@ -203,6 +207,12 @@ export async function updateOperation(
   ) {
     throw new Error("Contexte de dépense invalide.");
   }
+  if (input.lifeContext && !lifeContexts.includes(input.lifeContext)) {
+    throw new Error("Contexte de vie invalide.");
+  }
+  if (input.momentId && input.lifeContext === "Vie courante") {
+    throw new Error("Une dépense rattachée à un moment est hors quotidien.");
+  }
   if (input.spendingContext === "Événement" && !optionalText(input.event)) {
     throw new Error("Renseignez l’événement associé à cette dépense.");
   }
@@ -216,6 +226,18 @@ export async function updateOperation(
     await resolveTaxonomyIds(supabase, householdId, input);
   const roundedAmount = Math.round((amount + Number.EPSILON) * 100) / 100;
   const analysisMonthOverride = validatedMonth(input.analysisMonthOverride);
+  let momentId: string | null = null;
+  if (input.momentId) {
+    const { data: moment, error: momentError } = await supabase
+      .from("moments")
+      .select("id")
+      .eq("household_id", householdId)
+      .eq("id", input.momentId)
+      .maybeSingle();
+    if (momentError) throw new Error(momentError.message);
+    if (!moment) throw new Error("Moment introuvable.");
+    momentId = String(moment.id);
+  }
   let reimbursesOperationId: string | null = null;
 
   if (input.reimbursesOperationId) {
@@ -261,6 +283,8 @@ export async function updateOperation(
       event: optionalText(input.event),
       event_detail: optionalText(input.eventDetail),
       spending_context: input.spendingContext,
+      life_context: input.lifeContext,
+      moment_id: momentId,
       resource_type: input.resourceType,
       resource_context: optionalText(input.resourceContext),
       analysis_month_override: analysisMonthOverride,
@@ -274,6 +298,117 @@ export async function updateOperation(
 
   if (error) throw new Error(error.message);
   if (!data) throw new Error("Opération introuvable ou non autorisée.");
+}
+
+export type MomentInput = {
+  name: string;
+  type: string;
+  startDate: string | null;
+  endDate: string | null;
+  note: string | null;
+};
+
+export async function createMoment(input: MomentInput) {
+  const name = optionalText(input.name);
+  const type = optionalText(input.type);
+  if (!name || !type) throw new Error("Renseignez le nom et le type du moment.");
+  const startDate = input.startDate ? validatedDate(input.startDate) : null;
+  const endDate = input.endDate ? validatedDate(input.endDate) : null;
+  if (startDate && endDate && endDate < startDate) {
+    throw new Error("La date de fin doit suivre la date de début.");
+  }
+  const supabase = await createClient();
+  const householdId = await currentHouseholdId(supabase);
+  const slug = `${taxonomySlug(name)}-${crypto.randomUUID().slice(0, 8)}`;
+  const { data, error } = await supabase.from("moments").insert({
+    household_id: householdId,
+    slug,
+    name,
+    type,
+    start_date: startDate,
+    end_date: endDate,
+    note: optionalText(input.note),
+  }).select("id,slug,name,type,start_date,end_date,note,created_at").single();
+  if (error) throw new Error(error.message);
+  return {
+    id: String(data.id), slug: String(data.slug), name: String(data.name), type: String(data.type),
+    startDate: data.start_date ? String(data.start_date) : null,
+    endDate: data.end_date ? String(data.end_date) : null,
+    note: data.note ? String(data.note) : null,
+    createdAt: String(data.created_at),
+  };
+}
+
+export type OperationAllocationInput = {
+  amount: number;
+  lifeContext: LifeContext | null;
+  momentId: string | null;
+  category: string | null;
+  subcategory: string | null;
+  preciseType: string | null;
+  importance: Importance | null;
+  recurrence: Recurrence | null;
+  status: AnalyticalStatus | null;
+  note: string | null;
+};
+
+export async function createOperationAllocation(operationId: string, input: OperationAllocationInput) {
+  const amountCents = Math.round(Number(input.amount) * 100);
+  if (!Number.isInteger(amountCents) || amountCents <= 0) throw new Error("Montant de ventilation invalide.");
+  if (input.lifeContext && !lifeContexts.includes(input.lifeContext)) throw new Error("Contexte de vie invalide.");
+  if (input.momentId && input.lifeContext === "Vie courante") throw new Error("Un moment implique un contexte hors quotidien.");
+  if (input.importance && !importances.includes(input.importance)) throw new Error("Importance invalide.");
+  if (input.recurrence && !recurrences.includes(input.recurrence)) throw new Error("Nature invalide.");
+  if (input.status && !statuses.includes(input.status)) throw new Error("Statut invalide.");
+
+  const supabase = await createClient();
+  const householdId = await currentHouseholdId(supabase);
+  const { data: operation, error: operationError } = await supabase.from("operations")
+    .select("id,amount").eq("id", operationId).eq("household_id", householdId).eq("flow", "Dépense").lt("amount", 0).maybeSingle();
+  if (operationError) throw new Error(operationError.message);
+  if (!operation) throw new Error("Dépense introuvable.");
+
+  const [{ data: refunds, error: refundError }, { data: existing, error: allocationsError }] = await Promise.all([
+    supabase.from("operations").select("amount").eq("household_id", householdId).eq("reimburses_operation_id", operationId),
+    supabase.from("operation_allocations").select("amount").eq("household_id", householdId).eq("operation_id", operationId),
+  ]);
+  if (refundError) throw new Error(refundError.message);
+  if (allocationsError) throw new Error(allocationsError.message);
+  const availableCents = Math.max(0, Math.round(Math.abs(Number(operation.amount)) * 100) - (refunds ?? []).reduce((sum, row) => sum + Math.round(Number(row.amount) * 100), 0));
+  const allocatedCents = (existing ?? []).reduce((sum, row) => sum + Math.round(Number(row.amount) * 100), 0);
+  if (allocatedCents + amountCents > availableCents) throw new Error("La ventilation dépasse le coût net disponible.");
+
+  if (input.momentId) {
+    const { data: moment, error } = await supabase.from("moments").select("id").eq("household_id", householdId).eq("id", input.momentId).maybeSingle();
+    if (error) throw new Error(error.message);
+    if (!moment) throw new Error("Moment introuvable.");
+  }
+  const taxonomy = await resolveTaxonomyIds(supabase, householdId, input);
+  const { data, error } = await supabase.from("operation_allocations").insert({
+    household_id: householdId,
+    operation_id: operationId,
+    amount: amountCents / 100,
+    life_context: input.lifeContext,
+    moment_id: input.momentId,
+    category_id: taxonomy.categoryId,
+    subcategory_id: taxonomy.subcategoryId,
+    precise_type_id: taxonomy.preciseTypeId,
+    importance: input.importance,
+    recurrence: input.recurrence,
+    analytical_status: input.status,
+    note: optionalText(input.note),
+  }).select("id,created_at").single();
+  if (error) throw new Error(error.message);
+  return { id: String(data.id), createdAt: String(data.created_at) };
+}
+
+export async function deleteOperationAllocation(allocationId: string) {
+  const supabase = await createClient();
+  const householdId = await currentHouseholdId(supabase);
+  const { count, error } = await supabase.from("operation_allocations").delete({ count: "exact" })
+    .eq("id", allocationId).eq("household_id", householdId);
+  if (error) throw new Error(error.message);
+  if (count !== 1) throw new Error("Ventilation introuvable.");
 }
 
 export async function deleteOperation(operationId: string) {

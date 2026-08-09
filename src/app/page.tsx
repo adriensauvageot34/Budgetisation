@@ -12,11 +12,12 @@ export default async function HomePage({
 }) {
   const query = await searchParams;
   const repository = await getBudgetRepository();
-  const [months, operations, batches, categories] = await Promise.all([
+  const [months, operations, batches, categories, allocations] = await Promise.all([
     repository.getMonths(),
     repository.getOperations(),
     repository.getImportBatches(),
     repository.getCategories(),
+    repository.getOperationAllocations(),
   ]);
   const currentMonth = new Date().toISOString().slice(0, 7);
   const currentOperationCount = operations.filter(
@@ -33,6 +34,7 @@ export default async function HomePage({
           <DataQualityCenter
             operations={operations}
             categories={categories}
+            allocations={allocations}
             initialOpen={query.complete === "1"}
             initialAssociationSuccess={query.association === "success"}
           />

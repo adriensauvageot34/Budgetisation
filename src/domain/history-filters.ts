@@ -5,10 +5,11 @@ import type {
   Operation,
   Recurrence,
   ResourceType,
+  LifeLayer,
 } from "@/domain/budget";
 import { isConsumptionExpense, netExpenseAmount } from "@/domain/calculations";
 import { effectiveResourceType, operationAnalysisMonth } from "@/domain/inflow-analysis";
-import { getSpendingContext } from "@/domain/spending-context";
+import { getEffectiveLifeContext, getLifeLayer } from "@/domain/life-analysis";
 
 export type HistoryFlow = "expenses" | "inflows";
 export type HistoryContext = "current" | "events" | "unconfirmed";
@@ -25,6 +26,9 @@ export type HistoryFilters = {
   events: string[];
   eventDetails: string[];
   resourceTypes: ResourceType[];
+  moments: string[];
+  momentTypes: string[];
+  lifeLayers: LifeLayer[];
 };
 
 export const defaultHistoryFilters: HistoryFilters = {
@@ -39,6 +43,9 @@ export const defaultHistoryFilters: HistoryFilters = {
   events: [],
   eventDetails: [],
   resourceTypes: [],
+  moments: [],
+  momentTypes: [],
+  lifeLayers: [],
 };
 
 export function operationHistoryFlow(operation: Operation): HistoryFlow | null {
@@ -65,9 +72,9 @@ export function operationHistoryResourceType(operation: Operation): ResourceType
 }
 
 function contextKey(operation: Operation): HistoryContext | null {
-  const context = getSpendingContext(operation);
+  const context = getEffectiveLifeContext(operation);
   if (context === "Vie courante") return "current";
-  if (context === "Événement") return "events";
+  if (context === "Hors quotidien") return "events";
   if (context === "À confirmer") return "unconfirmed";
   return null;
 }
@@ -107,6 +114,13 @@ export function filterHistoryOperations(
           Boolean(contextKey(operation) && filters.contexts.includes(contextKey(operation)!))) &&
         matchesAny(operation.event, filters.events) &&
         matchesAny(operation.eventDetail, filters.eventDetails)
+        && matchesAny(operation.event, filters.moments)
+        && matchesAny(operation.eventDetail, filters.momentTypes)
+        && (!filters.lifeLayers.length || filters.lifeLayers.includes(getLifeLayer({
+          lifeContext: getEffectiveLifeContext(operation),
+          momentId: operation.momentId ?? null,
+          status: operation.status,
+        })))
       );
     }
 
@@ -137,7 +151,7 @@ export function historyFacetOptions(
     matchesAny(operation.subcategory, draft.categories),
   );
   const eventRows = byCategory.filter(
-    (operation) => getSpendingContext(operation) === "Événement",
+    (operation) => getEffectiveLifeContext(operation) === "Hors quotidien",
   );
   const byEvent = eventRows.filter((operation) =>
     matchesAny(operation.event, draft.events),
@@ -156,6 +170,13 @@ export function historyFacetOptions(
     events: unique(eventRows.map((operation) => operation.event)),
     eventDetails: unique(byEvent.map((operation) => operation.eventDetail)),
     resourceTypes: unique(inflowRows.map(operationHistoryResourceType)) as ResourceType[],
+    moments: unique(eventRows.map((operation) => operation.event)),
+    momentTypes: unique(eventRows.map((operation) => operation.eventDetail)),
+    lifeLayers: unique(byCategory.map((operation) => getLifeLayer({
+      lifeContext: getEffectiveLifeContext(operation),
+      momentId: operation.momentId ?? null,
+      status: operation.status,
+    }))) as LifeLayer[],
   };
 }
 
@@ -184,6 +205,13 @@ export function cleanHistoryFilters(
       resourceTypes: cleaned.resourceTypes.filter((value) =>
         options.resourceTypes.includes(value),
       ),
+      moments: cleaned.contexts.includes("events")
+        ? cleaned.moments.filter((value) => options.moments.includes(value))
+        : [],
+      momentTypes: cleaned.contexts.includes("events")
+        ? cleaned.momentTypes.filter((value) => options.momentTypes.includes(value))
+        : [],
+      lifeLayers: cleaned.lifeLayers.filter((value) => options.lifeLayers.includes(value)),
     };
   }
   return cleaned;

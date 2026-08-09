@@ -17,6 +17,9 @@ import {
 } from "lucide-react";
 import {
   deleteOperation,
+  createMoment,
+  createOperationAllocation,
+  deleteOperationAllocation,
   linkRefundOperation,
   updateOperation,
   type OperationUpdateInput,
@@ -27,8 +30,11 @@ import type {
   CategoryDefinition,
   FlowType,
   Importance,
+  LifeContext,
   MonthKey,
+  Moment,
   Operation,
+  OperationAllocation,
   Person,
   Recurrence,
   ResourceType,
@@ -38,7 +44,7 @@ import {
   applyInflowAnalysis,
   operationAnalysisMonth,
 } from "@/domain/inflow-analysis";
-import { isConsumptionExpense } from "@/domain/calculations";
+import { isConsumptionExpense, netExpenseAmount } from "@/domain/calculations";
 import { isRentExpense } from "@/domain/data-quality";
 import {
   filterHistoryOperations,
@@ -74,6 +80,7 @@ export type OperationsInitialFilters = {
   eventDetail?: string;
   scope?: ExpenseScope;
   historyFilters?: HistoryFilters;
+  operationIds?: string[];
 };
 
 type OperationDraft = {
@@ -91,6 +98,8 @@ type OperationDraft = {
   event: string;
   eventDetail: string;
   spendingContext: SpendingContext | "";
+  lifeContext: LifeContext | "";
+  momentId: string;
   resourceType: ResourceType | "";
   resourceContext: string;
   analysisMonthOverride: MonthKey | "";
@@ -149,6 +158,8 @@ function operationDraft(operation: Operation): OperationDraft {
     event: operation.event ?? "",
     eventDetail: operation.eventDetail ?? "",
     spendingContext: operation.spendingContext ?? "",
+    lifeContext: operation.lifeContext ?? "",
+    momentId: operation.momentId ?? "",
     resourceType: operation.resourceType ?? "",
     resourceContext: operation.resourceContext ?? "",
     analysisMonthOverride: operation.analysisMonthOverride ?? "",
@@ -212,6 +223,8 @@ export function OperationsTable({
   operations,
   categories,
   accounts,
+  moments,
+  allocations,
   initialMonth,
   initialFilters = {},
   returnTo,
@@ -221,6 +234,8 @@ export function OperationsTable({
   operations: Operation[];
   categories: CategoryDefinition[];
   accounts: Account[];
+  moments: Moment[];
+  allocations: OperationAllocation[];
   initialMonth: MonthKey;
   initialFilters?: OperationsInitialFilters;
   returnTo?: string;
@@ -228,6 +243,8 @@ export function OperationsTable({
 }) {
   const router = useRouter();
   const [operationRows, setOperationRows] = useState(operations);
+  const [momentRows, setMomentRows] = useState(moments);
+  const [allocationRows, setAllocationRows] = useState(allocations);
   const [view, setView] = useState<ViewMode>("Standard");
   const [query, setQuery] = useState("");
   const hasInitialPeriod = Boolean(
@@ -295,6 +312,10 @@ export function OperationsTable({
   const [associationSuccess, setAssociationSuccess] = useState<string | null>(
     null,
   );
+  const [allocationDraft, setAllocationDraft] = useState({ amount: "", lifeContext: "" as LifeContext | "", momentId: "", category: "", subcategory: "", preciseType: "", importance: "" as Importance | "", recurrence: "" as Recurrence | "", status: "" as AnalyticalStatus | "", note: "" });
+  const [momentDraft, setMomentDraft] = useState({ name: "", type: "Autre", startDate: "", endDate: "", note: "" });
+  const [showAllocationForm, setShowAllocationForm] = useState(false);
+  const [showMomentForm, setShowMomentForm] = useState(false);
 
   useEffect(() => {
     setOperationRows(operations);
@@ -352,10 +373,11 @@ export function OperationsTable({
               : operationAnalysisMonth(operation)
             : operation.importMonth;
           return (
+          (!initialFilters.operationIds?.length || initialFilters.operationIds.includes(operation.id)) &&
           (!selectForRefund ||
             (isConsumptionExpense(operation) &&
               (showAllSelectionExpenses || !isRentExpense(operation)))) &&
-          (!historyFilters ||
+          (!historyFilters || initialFilters.operationIds?.length ||
             filterHistoryOperations([operation], historyFilters).length > 0) &&
           (month === "Tous" || contextMonth === month) &&
           (!startMonth || contextMonth >= startMonth) &&
@@ -423,6 +445,7 @@ export function OperationsTable({
     expenseScope,
     flow,
     importance,
+    initialFilters.operationIds,
     historyFilters,
     month,
     operationRows,
@@ -521,7 +544,7 @@ export function OperationsTable({
     : [];
   const historyFilterChips = historyFilterGroups.flatMap((group) =>
     group.values.map((value) => ({
-      label: `${group.prefix} : ${value === "expenses" ? "Dépenses" : value === "inflows" ? "Rentrées d’argent" : value === "current" ? "Vie courante" : value === "events" ? "Événement" : value === "unconfirmed" ? "À confirmer" : value}`,
+      label: `${group.prefix} : ${value === "expenses" ? "Dépenses" : value === "inflows" ? "Rentrées d’argent" : value === "current" ? "Vie courante" : value === "events" ? "Hors quotidien" : value === "unconfirmed" ? "À confirmer" : value}`,
       clear: () =>
         setHistoryFilters((current) =>
           current
@@ -547,7 +570,7 @@ export function OperationsTable({
     recurrence !== "Toutes" ? { label: recurrence, clear: () => setRecurrence("Toutes") } : null,
     status !== "Tous" ? { label: status, clear: () => setStatus("Tous") } : null,
     expenseScope !== "all" ? {
-      label: expenseScope === "current" ? "Vie courante" : expenseScope === "events" ? "Événements" : "À confirmer",
+      label: expenseScope === "current" ? "Vie courante" : expenseScope === "events" ? "Hors quotidien" : "À confirmer",
       clear: () => setExpenseScope("all"),
     } : null,
     eventFilter !== "Tous" ? { label: eventFilter, clear: () => setEventFilter("Tous") } : null,
@@ -589,6 +612,18 @@ export function OperationsTable({
         (operation) => operation.id === selectedOperation.reimbursesOperationId,
       )
     : null;
+  const selectedAllocations = selectedOperation
+    ? allocationRows.filter((allocation) => allocation.operationId === selectedOperation.id)
+    : [];
+  const selectedAvailable = selectedOperation && isConsumptionExpense(selectedOperation)
+    ? netExpenseAmount(selectedOperation, operationRows)
+    : 0;
+  const selectedAllocated = selectedAllocations.reduce((sum, allocation) => sum + allocation.amount, 0);
+  const allocationCategory = categories.find((entry) => entry.name === allocationDraft.category);
+  const allocationSubcategories = allocationCategory?.subcategories ?? [];
+  const allocationPreciseTypes = allocationDraft.subcategory
+    ? allocationCategory?.preciseTypesBySubcategory?.[allocationDraft.subcategory] ?? []
+    : [];
 
   function openOperation(operation: Operation) {
     setSelectedOperation(operation);
@@ -622,6 +657,92 @@ export function OperationsTable({
     setDraft((current) => (current ? { ...current, [key]: value } : current));
   }
 
+  async function confirmMomentCreation() {
+    if (actionPending) return;
+    setActionPending(true);
+    setActionError(null);
+    try {
+      const moment = await createMoment({
+        name: momentDraft.name,
+        type: momentDraft.type,
+        startDate: momentDraft.startDate || null,
+        endDate: momentDraft.endDate || null,
+        note: momentDraft.note || null,
+      });
+      setMomentRows((rows) => [...rows, moment]);
+      if (draft) updateDraft("momentId", moment.id);
+      setAllocationDraft((current) => ({ ...current, momentId: moment.id, lifeContext: "Hors quotidien" }));
+      setShowMomentForm(false);
+      setMomentDraft({ name: "", type: "Autre", startDate: "", endDate: "", note: "" });
+    } catch (caught) {
+      setActionError(caught instanceof Error ? caught.message : "La création du moment a échoué.");
+    } finally {
+      setActionPending(false);
+    }
+  }
+
+  async function confirmAllocationCreation() {
+    if (!selectedOperation || actionPending) return;
+    const amount = Number(allocationDraft.amount.replace(",", "."));
+    if (!Number.isFinite(amount) || amount <= 0) {
+      setActionError("Renseignez un montant de ventilation valide.");
+      return;
+    }
+    setActionPending(true);
+    setActionError(null);
+    try {
+      const created = await createOperationAllocation(selectedOperation.id, {
+        amount,
+        lifeContext: allocationDraft.lifeContext || null,
+        momentId: allocationDraft.momentId || null,
+        category: allocationDraft.category || null,
+        subcategory: allocationDraft.subcategory || null,
+        preciseType: allocationDraft.preciseType || null,
+        importance: allocationDraft.importance || null,
+        recurrence: allocationDraft.recurrence || null,
+        status: allocationDraft.status || null,
+        note: allocationDraft.note || null,
+      });
+      setAllocationRows((rows) => [...rows, {
+        id: created.id,
+        operationId: selectedOperation.id,
+        amount,
+        lifeContext: allocationDraft.lifeContext || null,
+        momentId: allocationDraft.momentId || null,
+        category: allocationDraft.category || null,
+        subcategory: allocationDraft.subcategory || null,
+        preciseType: allocationDraft.preciseType || null,
+        importance: allocationDraft.importance || null,
+        recurrence: allocationDraft.recurrence || null,
+        status: allocationDraft.status || null,
+        note: allocationDraft.note.trim() || null,
+        createdAt: created.createdAt,
+      }]);
+      setAllocationDraft({ amount: "", lifeContext: "", momentId: "", category: "", subcategory: "", preciseType: "", importance: "", recurrence: "", status: "", note: "" });
+      setShowAllocationForm(false);
+      router.refresh();
+    } catch (caught) {
+      setActionError(caught instanceof Error ? caught.message : "La ventilation a échoué.");
+    } finally {
+      setActionPending(false);
+    }
+  }
+
+  async function removeAllocation(allocationId: string) {
+    if (actionPending) return;
+    setActionPending(true);
+    setActionError(null);
+    try {
+      await deleteOperationAllocation(allocationId);
+      setAllocationRows((rows) => rows.filter((allocation) => allocation.id !== allocationId));
+      router.refresh();
+    } catch (caught) {
+      setActionError(caught instanceof Error ? caught.message : "La suppression a échoué.");
+    } finally {
+      setActionPending(false);
+    }
+  }
+
   async function confirmUpdate() {
     if (!selectedOperation || !draft || actionPending) return;
     const parsedAmount = Number(draft.amount.replace(",", "."));
@@ -647,6 +768,8 @@ export function OperationsTable({
       event: draft.event || null,
       eventDetail: draft.eventDetail || null,
       spendingContext: draft.spendingContext || null,
+      lifeContext: draft.lifeContext || null,
+      momentId: draft.momentId || null,
       resourceType: draft.resourceType || null,
       resourceContext: draft.resourceContext || null,
       analysisMonthOverride:
@@ -681,6 +804,8 @@ export function OperationsTable({
         event: draft.event.trim() || null,
         eventDetail: draft.eventDetail.trim() || null,
         spendingContext: draft.spendingContext || null,
+        lifeContext: draft.lifeContext || null,
+        momentId: draft.momentId || null,
         resourceType: draft.resourceType || null,
         resourceContext: draft.resourceContext.trim() || null,
         analysisMonthOverride:
@@ -1144,7 +1269,7 @@ export function OperationsTable({
               >
                 <option value="all">Toutes les dépenses</option>
                 <option value="current">Vie courante</option>
-                <option value="events">Événements</option>
+                <option value="events">Hors quotidien</option>
                 <option value="unconfirmed">À confirmer</option>
               </select>
             </label>
@@ -1632,6 +1757,58 @@ export function OperationsTable({
               </p>
             ) : null}
 
+            {isConsumptionExpense(selectedOperation) ? (
+              <section className="mt-4 rounded-[var(--radius-md)] border border-[var(--color-border)] p-4">
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                  <div>
+                    <p className="text-xs font-black uppercase tracking-[0.12em] text-[var(--color-muted)]">Ventilation analytique</p>
+                    <p className="mt-1 text-sm text-[var(--color-muted)]">
+                      Net disponible {formatCurrency(selectedAvailable)} · ventilé {formatCurrency(selectedAllocated)} · reste {formatCurrency(Math.max(0, selectedAvailable - selectedAllocated))}
+                    </p>
+                  </div>
+                  <button type="button" className="button-secondary text-sm" onClick={() => setShowAllocationForm((value) => !value)}>
+                    {showAllocationForm ? "Fermer" : "Ventiler l’opération"}
+                  </button>
+                </div>
+                {selectedAllocations.length ? (
+                  <div className="mt-3 space-y-2">
+                    {selectedAllocations.map((allocation) => {
+                      const moment = momentRows.find((entry) => entry.id === allocation.momentId);
+                      return <div key={allocation.id} className="flex items-center justify-between gap-3 rounded-xl bg-[var(--color-surface-soft)] p-3 text-sm">
+                        <span><strong>{formatCurrency(allocation.amount)}</strong> · {allocation.category ?? "Catégorie héritée"}{moment ? ` · ${moment.name}` : ""}</span>
+                        <button type="button" className="font-bold text-[#a83d35]" disabled={actionPending} onClick={() => void removeAllocation(allocation.id)}>Supprimer</button>
+                      </div>;
+                    })}
+                  </div>
+                ) : <p className="mt-3 text-sm text-[var(--color-muted)]">Aucune ventilation : l’opération entière conserve son classement.</p>}
+                {showAllocationForm ? (
+                  <div className="mt-4 grid gap-3 border-t border-[var(--color-border)] pt-4 sm:grid-cols-2">
+                    <input className="field text-sm" inputMode="decimal" placeholder="Montant" value={allocationDraft.amount} onChange={(event) => setAllocationDraft((current) => ({ ...current, amount: event.target.value }))} />
+                    <select className="field text-sm" value={allocationDraft.lifeContext} onChange={(event) => setAllocationDraft((current) => ({ ...current, lifeContext: event.target.value as LifeContext | "", momentId: event.target.value === "Vie courante" ? "" : current.momentId }))}>
+                      <option value="">Contexte hérité</option><option>Vie courante</option><option>Hors quotidien</option>
+                    </select>
+                    <select className="field text-sm" value={allocationDraft.momentId} onChange={(event) => setAllocationDraft((current) => ({ ...current, momentId: event.target.value, lifeContext: event.target.value ? "Hors quotidien" : current.lifeContext }))}>
+                      <option value="">Aucun moment / hérité</option>{momentRows.map((moment) => <option key={moment.id} value={moment.id}>{moment.name} · {moment.type}</option>)}
+                    </select>
+                    <select className="field text-sm" value={allocationDraft.category} onChange={(event) => setAllocationDraft((current) => ({ ...current, category: event.target.value, subcategory: "", preciseType: "" }))}>
+                      <option value="">Catégorie héritée</option>{categories.map((entry) => <option key={entry.slug}>{entry.name}</option>)}
+                    </select>
+                    <select className="field text-sm" disabled={!allocationDraft.category} value={allocationDraft.subcategory} onChange={(event) => setAllocationDraft((current) => ({ ...current, subcategory: event.target.value, preciseType: "" }))}>
+                      <option value="">Sous-catégorie héritée</option>{allocationSubcategories.map((entry) => <option key={entry}>{entry}</option>)}
+                    </select>
+                    <select className="field text-sm" disabled={!allocationDraft.subcategory} value={allocationDraft.preciseType} onChange={(event) => setAllocationDraft((current) => ({ ...current, preciseType: event.target.value }))}>
+                      <option value="">Type précis hérité</option>{allocationPreciseTypes.map((entry) => <option key={entry}>{entry}</option>)}
+                    </select>
+                    <select className="field text-sm" value={allocationDraft.importance} onChange={(event) => setAllocationDraft((current) => ({ ...current, importance: event.target.value as Importance | "" }))}><option value="">Importance héritée</option>{importanceOptions.map((entry) => <option key={entry}>{entry}</option>)}</select>
+                    <select className="field text-sm" value={allocationDraft.recurrence} onChange={(event) => setAllocationDraft((current) => ({ ...current, recurrence: event.target.value as Recurrence | "" }))}><option value="">Nature héritée</option><option>Fixe</option><option>Variable</option></select>
+                    <select className="field text-sm" value={allocationDraft.status} onChange={(event) => setAllocationDraft((current) => ({ ...current, status: event.target.value as AnalyticalStatus | "" }))}><option value="">Statut hérité</option>{statusOptions.map((entry) => <option key={entry}>{entry}</option>)}</select>
+                    <input className="field text-sm" placeholder="Note optionnelle" value={allocationDraft.note} onChange={(event) => setAllocationDraft((current) => ({ ...current, note: event.target.value }))} />
+                    <button type="button" className="button-primary sm:col-span-2" disabled={actionPending || selectedAllocated >= selectedAvailable} onClick={() => void confirmAllocationCreation()}>{actionPending ? "Enregistrement…" : "Ajouter la ventilation"}</button>
+                  </div>
+                ) : null}
+              </section>
+            ) : null}
+
             <div className="mt-6 flex justify-end">
               <button
                 type="button"
@@ -1901,6 +2078,53 @@ export function OperationsTable({
                         </option>
                       ))}
                     </select>
+                  </div>
+                ) : null}
+
+                <div className="mt-4 grid gap-4 sm:grid-cols-2">
+                  <label className="text-xs font-bold text-[var(--color-muted)]">
+                    Contexte de vie
+                    <select
+                      className="field mt-1 w-full text-sm"
+                      value={draft.lifeContext}
+                      onChange={(event) => {
+                        const value = event.target.value as LifeContext | "";
+                        updateDraft("lifeContext", value);
+                        if (value === "Vie courante") updateDraft("momentId", "");
+                      }}
+                    >
+                      <option value="">Automatique / à confirmer</option>
+                      <option>Vie courante</option>
+                      <option>Hors quotidien</option>
+                    </select>
+                  </label>
+                  <label className="text-xs font-bold text-[var(--color-muted)]">
+                    Moment
+                    <select
+                      className="field mt-1 w-full text-sm"
+                      value={draft.momentId}
+                      onChange={(event) => {
+                        updateDraft("momentId", event.target.value);
+                        if (event.target.value) updateDraft("lifeContext", "Hors quotidien");
+                      }}
+                    >
+                      <option value="">Aucun moment</option>
+                      {momentRows.map((moment) => <option key={moment.id} value={moment.id}>{moment.name} · {moment.type}</option>)}
+                    </select>
+                  </label>
+                </div>
+                <button type="button" className="mt-2 text-sm font-bold text-[var(--color-primary)]" onClick={() => setShowMomentForm((value) => !value)}>
+                  {showMomentForm ? "Fermer la création" : "Créer un moment simple"}
+                </button>
+                {showMomentForm ? (
+                  <div className="mt-3 grid gap-3 rounded-[var(--radius-sm)] bg-[var(--color-surface-soft)] p-3 sm:grid-cols-2">
+                    <input className="field text-sm" placeholder="Nom" value={momentDraft.name} onChange={(event) => setMomentDraft((current) => ({ ...current, name: event.target.value }))} />
+                    <input list="budgetisation-moment-types" className="field text-sm" placeholder="Type" value={momentDraft.type} onChange={(event) => setMomentDraft((current) => ({ ...current, type: event.target.value }))} />
+                    <datalist id="budgetisation-moment-types">{[...new Set(["Voyage", "Anniversaire", "Soirée", "Activité", "Festival", "Weekend", "Shopping", "Projet / achat", "Cadeau", "Autre", ...momentRows.map((moment) => moment.type)])].map((type) => <option key={type} value={type} />)}</datalist>
+                    <input type="date" className="field text-sm" value={momentDraft.startDate} onChange={(event) => setMomentDraft((current) => ({ ...current, startDate: event.target.value }))} />
+                    <input type="date" className="field text-sm" value={momentDraft.endDate} onChange={(event) => setMomentDraft((current) => ({ ...current, endDate: event.target.value }))} />
+                    <input className="field text-sm sm:col-span-2" placeholder="Note optionnelle" value={momentDraft.note} onChange={(event) => setMomentDraft((current) => ({ ...current, note: event.target.value }))} />
+                    <button type="button" className="button-secondary text-sm sm:col-span-2" disabled={actionPending} onClick={() => void confirmMomentCreation()}>Créer le moment</button>
                   </div>
                 ) : null}
 

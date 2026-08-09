@@ -154,6 +154,8 @@ function operationUpdateInput(
     event: operation.event,
     eventDetail: operation.eventDetail ?? null,
     spendingContext: operation.spendingContext ?? null,
+    lifeContext: operation.lifeContext ?? null,
+    momentId: operation.momentId ?? null,
     resourceType: operation.resourceType ?? null,
     resourceContext: operation.resourceContext ?? null,
     analysisMonthOverride: operation.analysisMonthOverride ?? null,
