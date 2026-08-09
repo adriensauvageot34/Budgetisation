@@ -288,7 +288,13 @@ export function OperationsTable({
   );
   const [showAllSelectionExpenses, setShowAllSelectionExpenses] = useState(false);
   const [associationPending, setAssociationPending] = useState(false);
+  const [associatingExpenseId, setAssociatingExpenseId] = useState<string | null>(
+    null,
+  );
   const [associationError, setAssociationError] = useState<string | null>(null);
+  const [associationSuccess, setAssociationSuccess] = useState<string | null>(
+    null,
+  );
 
   useEffect(() => {
     setOperationRows(operations);
@@ -734,23 +740,29 @@ export function OperationsTable({
   async function associateExpense(operation: Operation) {
     if (!selectForRefund || associationPending) return;
     setAssociationPending(true);
+    setAssociatingExpenseId(operation.id);
     setAssociationError(null);
+    setAssociationSuccess(null);
     try {
       const result = await linkRefundOperation(selectForRefund, operation.id);
       if (!result.ok) throw new Error(result.error);
       const destination = returnTo ?? "/?complete=1";
-      router.push(
-        `${destination}${destination.includes("?") ? "&" : "?"}association=success`,
+      setAssociationSuccess(
+        `Association enregistrée avec ${operation.label}. Retour à l’accueil…`,
       );
-      router.refresh();
+      window.setTimeout(() => {
+        window.location.assign(
+          `${destination}${destination.includes("?") ? "&" : "?"}association=success`,
+        );
+      }, 900);
     } catch (caught) {
       setAssociationError(
         caught instanceof Error
           ? caught.message
           : "L’association du remboursement a échoué.",
       );
-    } finally {
       setAssociationPending(false);
+      setAssociatingExpenseId(null);
     }
   }
 
@@ -918,6 +930,14 @@ export function OperationsTable({
           {associationError ? (
             <p className="mt-3 rounded-xl bg-[#f7dfda] p-3 text-sm font-bold text-[#9a463c]">
               Association impossible : {associationError}
+            </p>
+          ) : null}
+          {associationSuccess ? (
+            <p
+              className="mt-3 rounded-xl bg-[#dce8e3] p-3 text-sm font-bold text-[#2f6f60]"
+              role="status"
+            >
+              {associationSuccess}
             </p>
           ) : null}
         </section>
@@ -1311,7 +1331,11 @@ export function OperationsTable({
                           void associateExpense(operation);
                         }}
                       >
-                        Associer
+                        {associatingExpenseId === operation.id
+                          ? associationSuccess
+                            ? "Associé"
+                            : "Association…"
+                          : "Associer"}
                       </button>
                     </td>
                   ) : null}
@@ -1372,7 +1396,11 @@ export function OperationsTable({
                 disabled={associationPending}
                 onClick={() => void associateExpense(operation)}
               >
-                Associer
+                {associatingExpenseId === operation.id
+                  ? associationSuccess
+                    ? "Associé"
+                    : "Association…"
+                  : "Associer"}
               </button>
             ) : null}
           </article>
