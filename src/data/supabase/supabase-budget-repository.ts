@@ -178,7 +178,7 @@ class SupabaseBudgetRepository implements BudgetRepository {
       if (isMissingSchemaError(result.error, [table])) return [];
       throw new Error(`Lecture de ${table} impossible : ${result.error.message}`);
     }
-    return (result.data ?? []) as Array<Record<string, unknown>>;
+    return (result.data ?? []) as unknown as Array<Record<string, unknown>>;
   }
 
   private async loadSnapshot(): Promise<Snapshot> {
