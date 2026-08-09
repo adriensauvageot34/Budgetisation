@@ -31,12 +31,14 @@ import type {
   Person,
   Recurrence,
   ResourceType,
+  SpendingContext,
 } from "@/domain/budget";
 import {
   applyInflowAnalysis,
   operationAnalysisMonth,
 } from "@/domain/inflow-analysis";
 import { isConsumptionExpense } from "@/domain/calculations";
+import { getSpendingContext } from "@/domain/spending-context";
 import {
   formatCurrency,
   formatDate,
@@ -49,16 +51,18 @@ type SortKey = "date" | "label" | "amount" | "category" | "accountId";
 type SortDirection = "asc" | "desc";
 type PanelMode = "read" | "edit" | "delete";
 
-type ExpenseScope = "all" | "current" | "events";
+type ExpenseScope = "all" | "current" | "events" | "unconfirmed";
 
 export type OperationsInitialFilters = {
   month?: MonthKey;
   startMonth?: MonthKey;
   endMonth?: MonthKey;
   category?: string;
+  subcategory?: string;
   person?: Person;
   accountId?: string;
   importance?: Importance;
+  recurrence?: Recurrence;
   status?: AnalyticalStatus;
   event?: string;
   eventDetail?: string;
@@ -79,6 +83,7 @@ type OperationDraft = {
   note: string;
   event: string;
   eventDetail: string;
+  spendingContext: SpendingContext | "";
   resourceType: ResourceType | "";
   resourceContext: string;
   analysisMonthOverride: MonthKey | "";
@@ -136,6 +141,7 @@ function operationDraft(operation: Operation): OperationDraft {
     note: operation.note ?? "",
     event: operation.event ?? "",
     eventDetail: operation.eventDetail ?? "",
+    spendingContext: operation.spendingContext ?? "",
     resourceType: operation.resourceType ?? "",
     resourceContext: operation.resourceContext ?? "",
     analysisMonthOverride: operation.analysisMonthOverride ?? "",
@@ -230,6 +236,9 @@ export function OperationsTable({
   const [category, setCategory] = useState(
     initialFilters.category ?? "Toutes",
   );
+  const [subcategory, setSubcategory] = useState(
+    initialFilters.subcategory ?? "Toutes",
+  );
   const [accountId, setAccountId] = useState(initialFilters.accountId ?? "Tous");
   const [flow, setFlow] = useState<FlowType | "Tous">("Tous");
   const [person, setPerson] = useState<Person | "Toutes">(
@@ -238,7 +247,9 @@ export function OperationsTable({
   const [importance, setImportance] = useState<Importance | "Toutes">(
     initialFilters.importance ?? "Toutes",
   );
-  const [recurrence, setRecurrence] = useState<Recurrence | "Toutes">("Toutes");
+  const [recurrence, setRecurrence] = useState<Recurrence | "Toutes">(
+    initialFilters.recurrence ?? "Toutes",
+  );
   const [status, setStatus] = useState<AnalyticalStatus | "Tous">(
     initialFilters.status ?? "Tous",
   );
@@ -292,6 +303,17 @@ export function OperationsTable({
         .filter((value): value is string => Boolean(value)),
     ),
   ].sort((a, b) => a.localeCompare(b, "fr"));
+  const subcategories = [
+    ...new Set(
+      operationRows
+        .filter(
+          (operation) =>
+            category === "Toutes" || operation.category === category,
+        )
+        .map((operation) => operation.subcategory)
+        .filter((value) => value && value !== "Non renseigné"),
+    ),
+  ].sort((a, b) => a.localeCompare(b, "fr"));
 
   const filtered = useMemo(() => {
     const normalizedQuery = query.trim().toLocaleLowerCase("fr-FR");
@@ -308,6 +330,7 @@ export function OperationsTable({
           (!startMonth || contextMonth >= startMonth) &&
           (!endMonth || contextMonth <= endMonth) &&
           (category === "Toutes" || operation.category === category) &&
+          (subcategory === "Toutes" || operation.subcategory === subcategory) &&
           (accountId === "Tous" || operation.accountId === accountId) &&
           (flow === "Tous" || operation.flow === flow) &&
           (person === "Toutes" || operation.person === person) &&
@@ -315,8 +338,12 @@ export function OperationsTable({
           (recurrence === "Toutes" || operation.recurrence === recurrence) &&
           (status === "Tous" || operation.status === status) &&
           (expenseScope === "all" ||
-            (expenseScope === "current" && !operation.event) ||
-            (expenseScope === "events" && Boolean(operation.event))) &&
+            (expenseScope === "current" &&
+              getSpendingContext(operation) === "Vie courante") ||
+            (expenseScope === "events" &&
+              getSpendingContext(operation) === "Événement") ||
+            (expenseScope === "unconfirmed" &&
+              getSpendingContext(operation) === "À confirmer")) &&
           (eventFilter === "Tous" || operation.event === eventFilter) &&
           (eventDetailFilter === "Toutes" ||
             operation.eventDetail === eventDetailFilter) &&
@@ -375,6 +402,7 @@ export function OperationsTable({
     sortKey,
     status,
     startMonth,
+    subcategory,
   ]);
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize));
@@ -401,11 +429,12 @@ export function OperationsTable({
     setStartMonth(initialFilters.startMonth ?? "");
     setEndMonth(initialFilters.endMonth ?? "");
     setCategory(initialFilters.category ?? "Toutes");
+    setSubcategory(initialFilters.subcategory ?? "Toutes");
     setAccountId(initialFilters.accountId ?? "Tous");
     setFlow("Tous");
     setPerson(initialFilters.person ?? "Toutes");
     setImportance(initialFilters.importance ?? "Toutes");
-    setRecurrence("Toutes");
+    setRecurrence(initialFilters.recurrence ?? "Toutes");
     setStatus(initialFilters.status ?? "Tous");
     setExpenseScope(initialFilters.scope ?? "all");
     setEventFilter(initialFilters.event ?? "Tous");
@@ -421,6 +450,7 @@ export function OperationsTable({
     importance,
     recurrence,
     status,
+    subcategory,
     startMonth,
     endMonth,
     eventFilter,
@@ -431,6 +461,24 @@ export function OperationsTable({
   ).filter((value) => value !== "" && value !== "all").length;
   const accountName = (id: string | null) =>
     accounts.find((account) => account.id === id)?.name ?? "Non renseigné";
+  const activeFilterChips = [
+    month !== "Tous" ? { label: formatMonth(month), clear: () => setMonth("Tous") } : null,
+    startMonth ? { label: `Depuis ${formatMonth(startMonth)}`, clear: () => setStartMonth("") } : null,
+    endMonth ? { label: `Jusqu’à ${formatMonth(endMonth)}`, clear: () => setEndMonth("") } : null,
+    person !== "Toutes" ? { label: person, clear: () => setPerson("Toutes") } : null,
+    accountId !== "Tous" ? { label: accountName(accountId), clear: () => setAccountId("Tous") } : null,
+    category !== "Toutes" ? { label: category, clear: () => setCategory("Toutes") } : null,
+    subcategory !== "Toutes" ? { label: subcategory, clear: () => setSubcategory("Toutes") } : null,
+    importance !== "Toutes" ? { label: importance, clear: () => setImportance("Toutes") } : null,
+    recurrence !== "Toutes" ? { label: recurrence, clear: () => setRecurrence("Toutes") } : null,
+    status !== "Tous" ? { label: status, clear: () => setStatus("Tous") } : null,
+    expenseScope !== "all" ? {
+      label: expenseScope === "current" ? "Vie courante" : expenseScope === "events" ? "Événements" : "À confirmer",
+      clear: () => setExpenseScope("all"),
+    } : null,
+    eventFilter !== "Tous" ? { label: eventFilter, clear: () => setEventFilter("Tous") } : null,
+    eventDetailFilter !== "Toutes" ? { label: eventDetailFilter, clear: () => setEventDetailFilter("Toutes") } : null,
+  ].filter((entry): entry is { label: string; clear: () => void } => Boolean(entry));
   const selectedDraftCategory = categories.find(
     (entry) => entry.name === draft?.category,
   );
@@ -524,6 +572,7 @@ export function OperationsTable({
       note: draft.note || null,
       event: draft.event || null,
       eventDetail: draft.eventDetail || null,
+      spendingContext: draft.spendingContext || null,
       resourceType: draft.resourceType || null,
       resourceContext: draft.resourceContext || null,
       analysisMonthOverride:
@@ -557,6 +606,7 @@ export function OperationsTable({
         note: draft.note.trim() || null,
         event: draft.event.trim() || null,
         eventDetail: draft.eventDetail.trim() || null,
+        spendingContext: draft.spendingContext || null,
         resourceType: draft.resourceType || null,
         resourceContext: draft.resourceContext.trim() || null,
         analysisMonthOverride:
@@ -642,6 +692,7 @@ export function OperationsTable({
           value={category}
           onChange={(event) => {
             setCategory(event.target.value);
+            setSubcategory("Toutes");
             setPage(1);
           }}
         >
@@ -842,6 +893,20 @@ export function OperationsTable({
               </select>
             </label>
             <label className="text-xs font-bold text-[var(--color-muted)]">
+              Sous-catégorie
+              <select
+                className="field mt-1 w-full text-sm"
+                value={subcategory}
+                onChange={(event) => {
+                  setSubcategory(event.target.value);
+                  setPage(1);
+                }}
+              >
+                <option>Toutes</option>
+                {subcategories.map((entry) => <option key={entry}>{entry}</option>)}
+              </select>
+            </label>
+            <label className="text-xs font-bold text-[var(--color-muted)]">
               Importance
               <select
                 className="field mt-1 w-full text-sm"
@@ -903,6 +968,7 @@ export function OperationsTable({
                 <option value="all">Toutes les dépenses</option>
                 <option value="current">Vie courante</option>
                 <option value="events">Événements</option>
+                <option value="unconfirmed">À confirmer</option>
               </select>
             </label>
             <label className="text-xs font-bold text-[var(--color-muted)]">
@@ -934,6 +1000,24 @@ export function OperationsTable({
                 {eventDetails.map((entry) => <option key={entry}>{entry}</option>)}
               </select>
             </label>
+          </div>
+        ) : null}
+
+        {activeFilterChips.length ? (
+          <div className="mt-4 flex flex-wrap gap-2 border-t border-[var(--color-border)] pt-4">
+            {activeFilterChips.map((entry) => (
+              <button
+                key={entry.label}
+                type="button"
+                className="badge transition hover:text-[var(--color-ink)]"
+                onClick={() => {
+                  entry.clear();
+                  setPage(1);
+                }}
+              >
+                {entry.label} <X size={12} />
+              </button>
+            ))}
           </div>
         ) : null}
       </section>
@@ -1613,6 +1697,23 @@ export function OperationsTable({
                     value={draft.event}
                     onChange={(event) => updateDraft("event", event.target.value)}
                   />
+                </label>
+                <label className="mt-4 block text-xs font-bold text-[var(--color-muted)]">
+                  Contexte de dépense confirmé
+                  <select
+                    className="field mt-1 w-full text-sm"
+                    value={draft.spendingContext}
+                    onChange={(event) =>
+                      updateDraft(
+                        "spendingContext",
+                        event.target.value as SpendingContext | "",
+                      )
+                    }
+                  >
+                    <option value="">Automatique / à confirmer</option>
+                    <option>Vie courante</option>
+                    <option>Événement</option>
+                  </select>
                 </label>
                 <label className="mt-4 block text-xs font-bold text-[var(--color-muted)]">
                   Spécification de l’événement
