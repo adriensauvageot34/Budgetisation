@@ -13,6 +13,7 @@ export type Importance =
   | "Ajustable"
   | "Optionnelle";
 export type Recurrence = "Fixe" | "Variable";
+export type SpendingContext = "Vie courante" | "Événement";
 export type ResourceType =
   | "Revenu"
   | "Entrée d'argent"
@@ -64,6 +65,7 @@ export interface Operation {
   note: string | null;
   event: string | null;
   eventDetail?: string | null;
+  spendingContext?: SpendingContext | null;
   resourceType?: ResourceType | null;
   resourceContext?: string | null;
   analysisMonthOverride?: MonthKey | null;
