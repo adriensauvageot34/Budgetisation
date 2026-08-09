@@ -754,7 +754,7 @@ export function OperationsTable({
         window.location.assign(
           `${destination}${destination.includes("?") ? "&" : "?"}association=success`,
         );
-      }, 900);
+      }, 2200);
     } catch (caught) {
       setAssociationError(
         caught instanceof Error
@@ -847,6 +847,19 @@ export function OperationsTable({
 
   return (
     <div>
+      {selectForRefund && associationPending ? (
+        <div
+          className={`fixed bottom-24 left-1/2 z-[80] w-[calc(100%-2rem)] max-w-md -translate-x-1/2 rounded-2xl border p-4 text-center text-sm font-bold shadow-lg lg:bottom-6 ${
+            associationSuccess
+              ? "border-[#b8d3c8] bg-[#dce8e3] text-[#2f6f60]"
+              : "border-[var(--color-border)] bg-white text-[var(--color-primary)]"
+          }`}
+          role="status"
+          aria-live="polite"
+        >
+          {associationSuccess ?? "Association en cours…"}
+        </div>
+      ) : null}
       {returnTo ? (
         <Link
           href={returnTo}
