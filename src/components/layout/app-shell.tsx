@@ -5,7 +5,6 @@ import { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
 import {
   ChevronDown,
-  CircleUserRound,
   History,
   Landmark,
   LayoutDashboard,
@@ -145,22 +144,6 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           })}
         </nav>
 
-        <div className="mt-auto rounded-[var(--radius-md)] border border-[var(--color-border)] bg-white/70 p-3">
-          <div className="flex items-center gap-2.5">
-            <CircleUserRound size={20} className="text-[var(--color-primary)]" />
-            <div className="min-w-0">
-              <p className="truncate text-sm font-extrabold">
-                Foyer Budgetisation
-              </p>
-              <p className="text-xs text-[var(--color-muted)]">
-                Données privées
-              </p>
-            </div>
-          </div>
-          <p className="mt-2 text-xs leading-5 text-[var(--color-muted)]">
-            Profil, paramètres et déconnexion sont accessibles depuis le logo du foyer.
-          </p>
-        </div>
       </aside>
 
       <div className="min-w-0">
@@ -235,3 +218,4 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     </div>
   );
 }
+
