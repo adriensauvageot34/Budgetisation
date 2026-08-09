@@ -17,6 +17,17 @@ export type HistoryDimension =
   | "recurrence"
   | "status";
 
+export type HistoryStability = {
+  label: "Très stable" | "Stable" | "Variable" | "Très variable";
+  coefficient: number;
+};
+
+export type ObservedFrequency = {
+  label: "Très récurrent" | "Régulier" | "Occasionnel";
+  ratio: number;
+  activeMonths: number;
+};
+
 export function spendingContextBreakdown(
   operations: Operation[],
   allOperations: Operation[],
@@ -60,6 +71,116 @@ function dimensionValue(operation: Operation, dimension: HistoryDimension) {
   if (dimension === "importance") return operation.importance ?? "Non renseigné";
   if (dimension === "recurrence") return operation.recurrence ?? "Non renseigné";
   return operation.status;
+}
+
+export function classifyHistoryStability(
+  values: number[],
+): HistoryStability | null {
+  if (values.length < 4) return null;
+  const average = mean(values);
+  if (average <= 1) return null;
+  const variance = mean(values.map((value) => (value - average) ** 2));
+  const coefficient = Math.sqrt(variance) / average;
+  const label =
+    coefficient <= 0.1
+      ? "Très stable"
+      : coefficient <= 0.25
+        ? "Stable"
+        : coefficient <= 0.5
+          ? "Variable"
+          : "Très variable";
+  return { label, coefficient };
+}
+
+export function observedHistoryFrequency(
+  values: number[],
+): ObservedFrequency | null {
+  if (!values.length) return null;
+  const activeMonths = values.filter((value) => value > 0).length;
+  const ratio = activeMonths / values.length;
+  const label =
+    ratio >= 0.85
+      ? "Très récurrent"
+      : ratio >= 0.5
+        ? "Régulier"
+        : "Occasionnel";
+  return { label, ratio, activeMonths };
+}
+
+export function historySeriesProfile(
+  operations: Operation[],
+  months: MonthKey[],
+  allOperations: Operation[],
+) {
+  const values = months.map((month) =>
+    totalExpenses(
+      operations.filter((operation) => operation.importMonth === month),
+      allOperations,
+    ),
+  );
+  return {
+    values,
+    total: values.reduce((sum, value) => sum + value, 0),
+    average: mean(values),
+    stability: classifyHistoryStability(values),
+    frequency: observedHistoryFrequency(values),
+  };
+}
+
+export function dimensionHistoryProfiles(
+  operations: Operation[],
+  months: MonthKey[],
+  dimension: HistoryDimension,
+  allOperations: Operation[],
+) {
+  const names = [
+    ...new Set(
+      operations.filter(isConsumptionExpense).map((operation) =>
+        dimensionValue(operation, dimension),
+      ),
+    ),
+  ];
+  return names
+    .map((name) => {
+      const profile = historySeriesProfile(
+        operations.filter(
+          (operation) => dimensionValue(operation, dimension) === name,
+        ),
+        months,
+        allOperations,
+      );
+      return { name, ...profile };
+    })
+    .filter((entry) => entry.total > 0)
+    .sort((a, b) => b.total - a.total);
+}
+
+export function historyVariationGrid(
+  operations: Operation[],
+  months: MonthKey[],
+  allOperations: Operation[],
+) {
+  return dimensionHistoryProfiles(
+    operations,
+    months,
+    "category",
+    allOperations,
+  ).map((profile) => ({
+    name: profile.name,
+    reference: profile.average,
+    cells: months.map((month, index) => {
+      const value = profile.values[index];
+      const delta = value - profile.average;
+      return {
+        month,
+        value,
+        delta,
+        intensity: profile.average
+          ? Math.max(-1, Math.min(1, delta / profile.average))
+          : 0,
+      };
+    }),
+  }));
 }
 
 export function dimensionBreakdown(
