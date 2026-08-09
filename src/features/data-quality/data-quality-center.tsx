@@ -134,7 +134,8 @@ export function DataQualityCenter({
     setSavingId(refundId);
     setError(null);
     try {
-      await linkRefundOperation(refundId, expenseId);
+      const result = await linkRefundOperation(refundId, expenseId);
+      if (!result.ok) throw new Error(result.error);
       router.refresh();
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : "Le remboursement n’a pas pu être rattaché.");
@@ -255,7 +256,7 @@ export function DataQualityCenter({
                           ))}
                         </div>
                         <Link
-                          href={`/operations?selectForRefund=${encodeURIComponent(operation.id)}&returnTo=${encodeURIComponent("/?complete=1")}`}
+                          href={`/operations?selectForRefund=${encodeURIComponent(operation.id)}&month=${encodeURIComponent(operation.importMonth)}&returnTo=${encodeURIComponent("/?complete=1")}`}
                           className="button-ghost mt-2 text-sm"
                         >
                           Explorer les dépenses

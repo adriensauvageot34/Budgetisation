@@ -293,50 +293,14 @@ export async function linkRefundOperation(
   refundOperationId: string,
   expenseOperationId: string,
 ) {
-  if (refundOperationId === expenseOperationId) {
-    throw new Error("Une opération ne peut pas se rembourser elle-même.");
-  }
   const supabase = await createClient();
-  const householdId = await currentHouseholdId(supabase);
-  const [{ data: refund, error: refundError }, { data: expense, error: expenseError }] =
-    await Promise.all([
-      supabase
-        .from("operations")
-        .select("id,amount,resource_type")
-        .eq("id", refundOperationId)
-        .eq("household_id", householdId)
-        .maybeSingle(),
-      supabase
-        .from("operations")
-        .select("id,amount,flow,resource_type")
-        .eq("id", expenseOperationId)
-        .eq("household_id", householdId)
-        .maybeSingle(),
-    ]);
-  if (refundError) throw new Error(refundError.message);
-  if (expenseError) throw new Error(expenseError.message);
-  if (!refund || refund.resource_type !== "Remboursement" || Number(refund.amount) <= 0) {
-    throw new Error("Le flux sélectionné n’est pas un remboursement entrant.");
-  }
-  if (
-    !expense ||
-    expense.flow !== "Dépense" ||
-    Number(expense.amount) >= 0 ||
-    expense.resource_type === "Transfert interne" ||
-    expense.resource_type === "Flux technique"
-  ) {
-    throw new Error("La cible doit être une dépense bancaire.");
-  }
-
-  const { data, error } = await supabase
-    .from("operations")
-    .update({ reimburses_operation_id: expenseOperationId })
-    .eq("id", refundOperationId)
-    .eq("household_id", householdId)
-    .select("id")
-    .maybeSingle();
-  if (error) throw new Error(error.message);
-  if (!data) throw new Error("Remboursement introuvable ou non autorisé.");
+  const { error } = await supabase.rpc("link_refund_operation", {
+    refund_operation_id: refundOperationId,
+    expense_operation_id: expenseOperationId,
+  });
+  return error
+    ? { ok: false as const, error: error.message }
+    : { ok: true as const };
 }
 
 function taxonomySlug(value: string) {
