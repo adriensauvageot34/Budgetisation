@@ -75,15 +75,20 @@ export function DataQualityCenter({
   operations,
   categories,
   initialOpen = false,
+  initialAssociationSuccess = false,
 }: {
   operations: Operation[];
   categories: CategoryDefinition[];
   initialOpen?: boolean;
+  initialAssociationSuccess?: boolean;
 }) {
   const router = useRouter();
   const [open, setOpen] = useState(initialOpen);
   const [savingId, setSavingId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState<string | null>(
+    initialAssociationSuccess ? "Le remboursement a bien été associé à la dépense." : null,
+  );
   const [drafts, setDrafts] = useState<Record<string, Draft>>({});
   const workflow = getDataQualityWorkflow(operations);
   const knownEvents = [...new Set(operations.map((operation) => operation.event).filter(Boolean))]
@@ -133,9 +138,11 @@ export function DataQualityCenter({
   async function linkRefund(refundId: string, expenseId: string) {
     setSavingId(refundId);
     setError(null);
+    setSuccess(null);
     try {
       const result = await linkRefundOperation(refundId, expenseId);
       if (!result.ok) throw new Error(result.error);
+      setSuccess("Le remboursement a bien été associé à la dépense.");
       router.refresh();
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : "Le remboursement n’a pas pu être rattaché.");
@@ -178,6 +185,7 @@ export function DataQualityCenter({
             </div>
 
             <div className="space-y-3 p-4 sm:p-6">
+              {success ? <p className="rounded-xl bg-[#dce8e3] p-3 text-sm font-bold text-[var(--color-primary-deep)]">{success}</p> : null}
               {error ? <p className="rounded-xl bg-[#f7dfda] p-3 text-sm font-bold text-[#9a463c]">{error}</p> : null}
               {!workflow.length ? (
                 <div className="card p-8 text-center">
