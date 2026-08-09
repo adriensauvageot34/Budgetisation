@@ -9,6 +9,7 @@ import {
   getSpendingContext,
   type EffectiveSpendingContext,
 } from "@/domain/spending-context";
+import { mad, median } from "@/domain/history-reference";
 
 export type HistoryDimension =
   | "category"
@@ -76,7 +77,7 @@ function dimensionValue(operation: Operation, dimension: HistoryDimension) {
 export function classifyHistoryStability(
   values: number[],
 ): HistoryStability | null {
-  if (values.length < 4) return null;
+  if (values.length < 3) return null;
   const average = mean(values);
   if (average <= 1) return null;
   const variance = mean(values.map((value) => (value - average) ** 2));
@@ -118,11 +119,14 @@ export function historySeriesProfile(
       allOperations,
     ),
   );
+  const activeValues = values.filter((value) => value > 0);
   return {
     values,
     total: values.reduce((sum, value) => sum + value, 0),
     average: mean(values),
-    stability: classifyHistoryStability(values),
+    medianAcrossMonths: median(values),
+    medianWhenActive: median(activeValues),
+    stability: classifyHistoryStability(activeValues),
     frequency: observedHistoryFrequency(values),
   };
 }
@@ -167,16 +171,18 @@ export function historyVariationGrid(
     allOperations,
   ).map((profile) => ({
     name: profile.name,
-    reference: profile.average,
+    reference: median(profile.values),
     cells: months.map((month, index) => {
       const value = profile.values[index];
-      const delta = value - profile.average;
+      const reference = median(profile.values);
+      const dispersion = mad(profile.values);
+      const delta = value - reference;
       return {
         month,
         value,
         delta,
-        intensity: profile.average
-          ? Math.max(-1, Math.min(1, delta / profile.average))
+        intensity: reference || dispersion
+          ? Math.max(-1, Math.min(1, delta / (dispersion > 0 ? dispersion * 2 : Math.max(reference, 1))))
           : 0,
       };
     }),

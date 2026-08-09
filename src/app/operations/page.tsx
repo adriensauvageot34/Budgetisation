@@ -3,6 +3,7 @@ import { getBudgetRepository } from "@/data";
 import type {
   AnalyticalStatus,
   Importance,
+  LifeLayer,
   MonthKey,
   Recurrence,
   ResourceType,
@@ -47,8 +48,12 @@ type OperationsQuery = {
   resourceTypes?: string;
   importances?: string;
   recurrences?: string;
+  moments?: string;
+  momentTypes?: string;
+  lifeLayers?: string;
   returnTo?: string;
   selectForRefund?: string;
+  operationIds?: string;
 };
 
 const flowValues: HistoryFlow[] = ["expenses", "inflows"];
@@ -57,6 +62,7 @@ const contextValues: HistoryContext[] = ["current", "events", "unconfirmed"];
 const resourceTypeValues: ResourceType[] = ["Revenu", "Entrée d'argent", "Remboursement", "Transfert interne", "Flux technique", "À qualifier"];
 const importanceValues: Importance[] = ["Indispensable", "Contrainte", "Ajustable", "Optionnelle"];
 const recurrenceValues: Recurrence[] = ["Fixe", "Variable"];
+const lifeLayerValues: LifeLayer[] = ["Routine", "Moment", "Ponctuel", "Imprévu", "À confirmer"];
 
 function list(value?: string) {
   return value?.split(",").map((entry) => entry.trim()).filter(Boolean) ?? [];
@@ -73,11 +79,13 @@ export default async function OperationsPage({
 }) {
   const query = await searchParams;
   const repository = await getBudgetRepository();
-  const [months, operations, categories, accounts] = await Promise.all([
+  const [months, operations, categories, accounts, moments, allocations] = await Promise.all([
     repository.getMonths(),
     repository.getOperations(),
     repository.getCategories(),
     repository.getAccounts(),
+    repository.getMoments(),
+    repository.getOperationAllocations(),
   ]);
   const requestedMonth = query.month as MonthKey | undefined;
   const initialMonth = months.includes(requestedMonth ?? "")
@@ -86,7 +94,8 @@ export default async function OperationsPage({
   const hasHistoryContext = Boolean(
     query.start || query.end || query.flux || query.families || query.categories ||
     query.merchants || query.statuses || query.contexts || query.events ||
-    query.eventDetails || query.resourceTypes || query.importances || query.recurrences,
+    query.eventDetails || query.resourceTypes || query.importances || query.recurrences ||
+    query.moments || query.momentTypes || query.lifeLayers,
   );
   const flows = enumList(query.flux, flowValues);
   const historyFilters: HistoryFilters | undefined = hasHistoryContext
@@ -103,6 +112,9 @@ export default async function OperationsPage({
         resourceTypes: enumList(query.resourceTypes, resourceTypeValues),
         importances: enumList(query.importances, importanceValues),
         recurrences: enumList(query.recurrences, recurrenceValues),
+        moments: list(query.moments),
+        momentTypes: list(query.momentTypes),
+        lifeLayers: enumList(query.lifeLayers, lifeLayerValues),
       }
     : undefined;
   const initialFilters: OperationsInitialFilters = {
@@ -122,6 +134,7 @@ export default async function OperationsPage({
       ? ((query.context ?? query.scope) as "all" | "current" | "events" | "unconfirmed")
       : undefined,
     historyFilters,
+    operationIds: list(query.operationIds),
   };
   const returnTo = query.returnTo?.startsWith("/historique") || query.returnTo?.startsWith("/?")
     ? query.returnTo
@@ -137,6 +150,8 @@ export default async function OperationsPage({
       operations={operations}
       categories={categories}
       accounts={accounts}
+      moments={moments}
+      allocations={allocations}
       initialMonth={initialMonth}
       initialFilters={initialFilters}
       returnTo={returnTo}

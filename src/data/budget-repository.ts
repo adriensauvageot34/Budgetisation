@@ -3,7 +3,9 @@ import type {
   CategoryDefinition,
   ImportBatch,
   MonthKey,
+  Moment,
   Operation,
+  OperationAllocation,
 } from "@/domain/budget";
 
 export interface BudgetRepository {
@@ -13,4 +15,6 @@ export interface BudgetRepository {
   getAccounts(): Promise<Account[]>;
   getCategories(): Promise<CategoryDefinition[]>;
   getImportBatches(): Promise<ImportBatch[]>;
+  getMoments(): Promise<Moment[]>;
+  getOperationAllocations(): Promise<OperationAllocation[]>;
 }

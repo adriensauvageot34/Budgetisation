@@ -7,8 +7,11 @@ import type {
   FlowType,
   Importance,
   ImportBatch,
+  LifeContext,
   MonthKey,
+  Moment,
   Operation,
+  OperationAllocation,
   Recurrence,
   ResourceType,
   SpendingContext,
@@ -35,6 +38,8 @@ type Snapshot = {
   accounts: Account[];
   categories: CategoryDefinition[];
   batches: ImportBatch[];
+  moments: Moment[];
+  allocations: OperationAllocation[];
 };
 
 type AccountRelation = { id?: unknown };
@@ -62,6 +67,15 @@ function checkResult<T>(
     throw new Error(`${label} : ${result.error.message}`);
   }
   return result.data ?? ([] as T);
+}
+
+function isMissingSchemaError(error: unknown, names: string[]) {
+  if (!error || typeof error !== "object") return false;
+  const record = error as Record<string, unknown>;
+  const code = typeof record.code === "string" ? record.code : "";
+  const message = typeof record.message === "string" ? record.message.toLowerCase() : "";
+  return ["42P01", "42703", "PGRST204", "PGRST205"].includes(code) &&
+    names.some((name) => message.includes(name.toLowerCase()));
 }
 
 class SupabaseBudgetRepository implements BudgetRepository {
@@ -95,6 +109,8 @@ class SupabaseBudgetRepository implements BudgetRepository {
             "event",
             "event_detail",
             "spending_context",
+            "life_context",
+            "moment_id",
             "resource_type",
             "resource_context",
             "analysis_month_override",
@@ -133,21 +149,40 @@ class SupabaseBudgetRepository implements BudgetRepository {
       }
     };
 
-    try {
-      return await load(fields);
-    } catch (caught) {
-      if (
-        caught instanceof Error &&
-        caught.message.toLocaleLowerCase("fr-FR").includes("spending_context")
-      ) {
-        return load(fields.filter((field) => field !== "spending_context"));
+    let selectedFields = fields;
+    const optionalFields = ["life_context", "moment_id", "spending_context"];
+    for (let attempt = 0; attempt <= optionalFields.length; attempt += 1) {
+      try {
+        return await load(selectedFields);
+      } catch (caught) {
+        const missingField = caught instanceof Error
+          ? optionalFields.find((field) => caught.message.toLowerCase().includes(field))
+          : undefined;
+        if (missingField && selectedFields.includes(missingField)) {
+          selectedFields = selectedFields.filter((field) => field !== missingField);
+          continue;
+        }
+        throw caught;
       }
-      throw caught;
     }
+    return load(selectedFields);
+  }
+
+  private async loadOptionalTable(table: "moments" | "operation_allocations", fields: string) {
+    const result = await this.supabase
+      .from(table)
+      .select(fields)
+      .eq("household_id", this.householdId)
+      .order("created_at", { ascending: true });
+    if (result.error) {
+      if (isMissingSchemaError(result.error, [table])) return [];
+      throw new Error(`Lecture de ${table} impossible : ${result.error.message}`);
+    }
+    return (result.data ?? []) as Array<Record<string, unknown>>;
   }
 
   private async loadSnapshot(): Promise<Snapshot> {
-    const [operationRows, categoriesResult, accountsResult, batchesResult] =
+    const [operationRows, categoriesResult, accountsResult, batchesResult, momentRows, allocationRows] =
       await Promise.all([
         this.loadAllOperations(),
         this.supabase
@@ -171,6 +206,14 @@ class SupabaseBudgetRepository implements BudgetRepository {
           )
           .eq("household_id", this.householdId)
           .order("imported_at", { ascending: false }),
+        this.loadOptionalTable(
+          "moments",
+          "id,slug,name,type,start_date,end_date,note,created_at",
+        ),
+        this.loadOptionalTable(
+          "operation_allocations",
+          "id,operation_id,amount,life_context,moment_id,importance,recurrence,analytical_status,note,created_at,category:categories!operation_allocations_category_id_fkey(name),subcategory:subcategories!operation_allocations_subcategory_id_fkey(name),precise_type:precise_types!operation_allocations_precise_type_id_fkey(name)",
+        ),
       ]);
 
     const categoryRows = checkResult(
@@ -291,6 +334,11 @@ class SupabaseBudgetRepository implements BudgetRepository {
           typeof row.spending_context === "string"
             ? (row.spending_context as SpendingContext)
             : null,
+        lifeContext:
+          typeof row.life_context === "string"
+            ? (row.life_context as LifeContext)
+            : null,
+        momentId: typeof row.moment_id === "string" ? row.moment_id : null,
         resourceType:
           typeof row.resource_type === "string"
             ? (row.resource_type as ResourceType)
@@ -358,7 +406,39 @@ class SupabaseBudgetRepository implements BudgetRepository {
       ),
     ].sort();
 
-    return { months, operations, accounts, categories, batches };
+    const moments = momentRows.map((row) => ({
+      id: String(row.id),
+      slug: String(row.slug),
+      name: String(row.name),
+      type: String(row.type),
+      startDate: typeof row.start_date === "string" ? row.start_date : null,
+      endDate: typeof row.end_date === "string" ? row.end_date : null,
+      note: typeof row.note === "string" ? row.note : null,
+      createdAt: String(row.created_at),
+    } satisfies Moment));
+
+    const allocations = allocationRows.map((row) => {
+      const category = related<NamedRelation>(row.category);
+      const subcategory = related<NamedRelation>(row.subcategory);
+      const preciseType = related<NamedRelation>(row.precise_type);
+      return {
+        id: String(row.id),
+        operationId: String(row.operation_id),
+        amount: Number(row.amount),
+        lifeContext: typeof row.life_context === "string" ? row.life_context as LifeContext : null,
+        momentId: typeof row.moment_id === "string" ? row.moment_id : null,
+        category: category && typeof category.name === "string" ? category.name : null,
+        subcategory: subcategory && typeof subcategory.name === "string" ? subcategory.name : null,
+        preciseType: preciseType && typeof preciseType.name === "string" ? preciseType.name : null,
+        importance: typeof row.importance === "string" ? row.importance as Importance : null,
+        recurrence: typeof row.recurrence === "string" ? row.recurrence as Recurrence : null,
+        status: typeof row.analytical_status === "string" ? row.analytical_status as AnalyticalStatus : null,
+        note: typeof row.note === "string" ? row.note : null,
+        createdAt: String(row.created_at),
+      } satisfies OperationAllocation;
+    });
+
+    return { months, operations, accounts, categories, batches, moments, allocations };
   }
 
   async getMonths() {
@@ -385,6 +465,14 @@ class SupabaseBudgetRepository implements BudgetRepository {
 
   async getImportBatches() {
     return (await this.snapshot()).batches;
+  }
+
+  async getMoments() {
+    return (await this.snapshot()).moments;
+  }
+
+  async getOperationAllocations() {
+    return (await this.snapshot()).allocations;
   }
 }
 

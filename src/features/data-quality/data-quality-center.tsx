@@ -13,10 +13,11 @@ import {
 import type {
   CategoryDefinition,
   Operation,
+  OperationAllocation,
   ResourceType,
 } from "@/domain/budget";
 import {
-  getDataQualityWorkflow,
+  getDataQualityCounts,
   isRentExpense,
 } from "@/domain/data-quality";
 import { isConsumptionExpense } from "@/domain/calculations";
@@ -53,6 +54,8 @@ function updateInput(
     event: operation.event,
     eventDetail: operation.eventDetail ?? null,
     spendingContext: operation.spendingContext ?? null,
+    lifeContext: operation.lifeContext ?? null,
+    momentId: operation.momentId ?? null,
     resourceType: operation.resourceType ?? null,
     resourceContext: operation.resourceContext ?? null,
     analysisMonthOverride: operation.analysisMonthOverride ?? null,
@@ -74,11 +77,13 @@ type Draft = {
 export function DataQualityCenter({
   operations,
   categories,
+  allocations,
   initialOpen = false,
   initialAssociationSuccess = false,
 }: {
   operations: Operation[];
   categories: CategoryDefinition[];
+  allocations: OperationAllocation[];
   initialOpen?: boolean;
   initialAssociationSuccess?: boolean;
 }) {
@@ -90,7 +95,7 @@ export function DataQualityCenter({
     initialAssociationSuccess ? "Le remboursement a bien été associé à la dépense." : null,
   );
   const [drafts, setDrafts] = useState<Record<string, Draft>>({});
-  const workflow = getDataQualityWorkflow(operations);
+  const { workflow, correctionCount, enrichmentCount } = getDataQualityCounts(operations, allocations);
   const knownEvents = [...new Set(operations.map((operation) => operation.event).filter(Boolean))]
     .map(String)
     .sort((a, b) => a.localeCompare(b, "fr"));
@@ -156,7 +161,7 @@ export function DataQualityCenter({
       <button type="button" className="button-secondary" onClick={() => setOpen(true)}>
         <CircleAlert size={17} /> À compléter
         <span className="ml-1 flex min-w-6 items-center justify-center rounded-full bg-[#bd4f45] px-1.5 py-0.5 text-xs font-black text-white">
-          {workflow.length}
+          {correctionCount}
         </span>
       </button>
 
@@ -174,7 +179,8 @@ export function DataQualityCenter({
             <div className="sticky top-0 z-10 flex items-center justify-between border-b border-[var(--color-border)] bg-white px-4 py-4 sm:px-6">
               <div>
                 <p className="eyebrow">Qualité des données</p>
-                <h2 className="text-xl font-black">À compléter · {workflow.length}</h2>
+                <h2 className="text-xl font-black">À corriger · {correctionCount}</h2>
+                <p className="text-sm text-[var(--color-muted)]">À enrichir · {enrichmentCount}</p>
                 <p className="mt-1 text-sm text-[var(--color-muted)]">
                   Corrigez les informations qui influencent réellement l’analyse.
                 </p>

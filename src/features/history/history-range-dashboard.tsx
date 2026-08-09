@@ -22,7 +22,6 @@ import {
 } from "recharts";
 import {
   ArrowRight,
-  BadgeAlert,
   CalendarRange,
   ChartNoAxesCombined,
   ChevronRight,
@@ -43,13 +42,14 @@ import {
 import type {
   AnalyticalStatus,
   MonthKey,
+  Moment,
   Operation,
+  OperationAllocation,
   ResourceType,
 } from "@/domain/budget";
 import {
   descriptiveStats,
   importanceBreakdown,
-  mean,
   monthlySummaries,
   statusBreakdown,
   totalExpenses,
@@ -87,6 +87,13 @@ import {
   type HistoryFlow,
 } from "@/domain/history-filters";
 import {
+  analyticalEntriesAsOperations,
+  buildAnalyticalEntries,
+  type AnalyticalEntry,
+} from "@/domain/analytical-entries";
+import { buildHistoryReference, historicalReferenceMonths, mainVariationDriver, robustSeriesProfile } from "@/domain/history-reference";
+import { aggregateMoments } from "@/domain/moments";
+import {
   formatCompactCurrency,
   formatCurrency,
   formatDate,
@@ -108,7 +115,7 @@ type DetailHref = (
   label: string,
 ) => string;
 
-type MoneyMeasure = "average" | "total" | "share";
+type MoneyMeasure = "typical" | "total" | "share";
 type NatureView = "importance" | "status";
 
 const colors = ["#52766f", "#d69a3c", "#d36e53", "#806da5", "#5b8eaa", "#b65f82"];
@@ -124,6 +131,9 @@ const filterParams: Array<[keyof HistoryFilters, string]> = [
   ["events", "events"],
   ["eventDetails", "eventDetails"],
   ["resourceTypes", "resourceTypes"],
+  ["moments", "moments"],
+  ["momentTypes", "momentTypes"],
+  ["lifeLayers", "lifeLayers"],
 ];
 
 function sameFilters(a: HistoryFilters, b: HistoryFilters) {
@@ -156,12 +166,14 @@ function operationsHref(
   end: MonthKey,
   filters: HistoryFilters,
   returnTo: string,
+  operationIds: string[] = [],
 ) {
   const params = new URLSearchParams({ start, end, returnTo });
   for (const [key, param] of filterParams) {
     const values = filters[key] as string[];
     if (values.length) params.set(param, values.join(","));
   }
+  if (operationIds.length) params.set("operationIds", [...new Set(operationIds)].join(","));
   return `/operations?${params.toString()}`;
 }
 
@@ -256,10 +268,10 @@ function DetailBreadcrumb({
   filters: HistoryFilters;
   label: string;
 }) {
-  const eventLabel = filters.eventDetails[0] ?? filters.events[0];
+  const eventLabel = filters.eventDetails[0] ?? filters.moments[0] ?? filters.events[0];
   const family = filters.families[0];
   const category = filters.categories[0];
-  const EventIcon = getEventIcon(filters.events[0]);
+  const EventIcon = getEventIcon(filters.moments[0] ?? filters.events[0]);
   const FamilyIcon = getFamilyIcon(family);
   const CategoryIcon = getCategoryIcon(category, family);
   const eventOverviewFilters: HistoryFilters = {
@@ -269,6 +281,8 @@ function DetailBreadcrumb({
     contexts: ["events"],
     events: [],
     eventDetails: [],
+    moments: [],
+    momentTypes: [],
   };
   const periodLabel = start === end
     ? formatMonth(start)
@@ -331,14 +345,29 @@ function DetailBreadcrumb({
 
 export function HistoryRangeDashboard({
   months,
-  operations,
+  operations: sourceOperations,
+  moments,
+  allocations,
   initialContext,
 }: {
   months: MonthKey[];
   operations: Operation[];
+  moments: Moment[];
+  allocations: OperationAllocation[];
   initialContext: HistoryRangeContext;
 }) {
   const router = useRouter();
+  const analyticalResult = useMemo(
+    () => buildAnalyticalEntries(sourceOperations, moments, allocations),
+    [sourceOperations, moments, allocations],
+  );
+  const operations = useMemo(
+    () => [
+      ...analyticalEntriesAsOperations(analyticalResult.entries, sourceOperations),
+      ...sourceOperations.filter((operation) => operation.amount >= 0),
+    ],
+    [analyticalResult.entries, sourceOperations],
+  );
   const [pendingStart, setPendingStart] = useState<MonthKey | undefined>();
   const [draft, setDraft] = useState<HistoryFilters>(initialContext.filters);
   const start = initialContext.start;
@@ -415,6 +444,14 @@ export function HistoryRangeDashboard({
   const filtered = complete
     ? filterHistoryOperations(periodOperations, applied)
     : [];
+  const filteredIds = new Set(filtered.map((operation) => operation.id));
+  const filteredEntries = analyticalResult.entries.filter((entry) =>
+    filteredIds.has(entry.id),
+  );
+  const referenceIds = new Set(
+    filterHistoryOperations(operations, applied).map((operation) => operation.id),
+  );
+  const referenceEntries = analyticalResult.entries.filter((entry) => referenceIds.has(entry.id));
   const hasExpenses = applied.flows.includes("expenses");
   const hasInflows = applied.flows.includes("inflows");
   const currentHref = complete
@@ -428,7 +465,13 @@ export function HistoryRangeDashboard({
       )
     : "/historique";
   const operationLink = complete
-    ? operationsHref(start!, end!, applied, currentHref)
+    ? operationsHref(
+        start!,
+        end!,
+        applied,
+        currentHref,
+        filtered.map((operation) => operation.analyticalSourceOperationId ?? operation.id),
+      )
     : "/operations";
 
   function detailHref(patch: Partial<HistoryFilters>, label: string) {
@@ -455,6 +498,7 @@ export function HistoryRangeDashboard({
       ...baseFilters,
       contexts: ["events" as const],
       events: [marker.event],
+      moments: [marker.event],
       eventDetails: eventDetail,
     };
     router.replace(
@@ -555,7 +599,7 @@ export function HistoryRangeDashboard({
                     options={facets.contexts}
                     labels={{
                       current: "Vie courante",
-                      events: "Événement",
+                      events: "Hors quotidien",
                       unconfirmed: "À confirmer",
                     }}
                     onChange={(values) =>
@@ -564,21 +608,29 @@ export function HistoryRangeDashboard({
                   />
                   {draft.contexts.includes("events") ? (
                     <Facet
-                      label="Événement"
-                      values={draft.events}
-                      options={facets.events}
+                      label="Moment"
+                      values={draft.moments}
+                      options={facets.moments}
                       iconFor={getEventIcon}
-                      onChange={(values) => changeDraft("events", values)}
+                      onChange={(values) => changeDraft("moments", values)}
+                    />
+                  ) : null}
+                  {draft.contexts.includes("events") ? (
+                    <Facet
+                      label="Life Layer"
+                      values={draft.lifeLayers}
+                      options={facets.lifeLayers}
+                      onChange={(values) => changeDraft("lifeLayers", values as HistoryFilters["lifeLayers"])}
                     />
                   ) : null}
                   {draft.contexts.includes("events") &&
-                  draft.events.length &&
+                  draft.moments.length &&
                   facets.eventDetails.length ? (
                     <Facet
                       label="Spécification"
                       values={draft.eventDetails}
                       options={facets.eventDetails}
-                      iconFor={() => getEventIcon(draft.events[0])}
+                      iconFor={() => getEventIcon(draft.moments[0])}
                       onChange={(values) =>
                         changeDraft("eventDetails", values)
                       }
@@ -662,6 +714,9 @@ export function HistoryRangeDashboard({
               hasInflows={hasInflows}
               detailHref={detailHref}
               operationsHref={operationLink}
+              entries={filteredEntries}
+              allEntries={referenceEntries}
+              moments={moments}
             />
           ) : (
             <MultiMonthAnalysis
@@ -672,6 +727,8 @@ export function HistoryRangeDashboard({
               detailHref={detailHref}
               monthDetailHref={monthDetailHref}
               operationsHref={operationLink}
+              entries={filteredEntries}
+              moments={moments}
             />
           )}
         </>
@@ -700,6 +757,7 @@ function EvolutionChart({
   const [granularity, setGranularity] = useState<"month" | "week">(
     monthlyChoice ? "month" : "week",
   );
+  const [trajectory, setTrajectory] = useState<"level" | "balance" | "composition">("level");
   const monthly = monthlySummaries(operations, months, allOperations).map(
     (entry) => ({ ...entry, label: formatShortMonth(entry.month) }),
   );
@@ -712,6 +770,7 @@ function EvolutionChart({
     ...entry,
     label: formatWeekLabel(entry.weekStart, entry.weekEnd),
   }));
+  const composition = monthlySpendingContexts(operations, months, allOperations).map((entry) => ({ ...entry, label: formatShortMonth(entry.month) }));
   return (
     <section className="card mb-5 p-4 sm:p-6">
       <div className="flex flex-wrap items-end justify-between gap-3">
@@ -726,6 +785,12 @@ function EvolutionChart({
           </h2>
         </div>
         {monthlyChoice ? (
+          <div className="flex flex-wrap gap-2">
+          <div className="flex rounded-lg border border-[var(--color-border)] bg-white p-1">
+            {(["level", "balance", "composition"] as const).map((value) => <button key={value} type="button" onClick={() => { setTrajectory(value); setGranularity("month"); }} className={`rounded-md px-3 py-2 text-xs font-black ${trajectory === value && granularity === "month" ? "bg-[var(--color-primary)] text-white" : "text-[var(--color-muted)]"}`}>
+              {value === "level" ? "Niveau de vie" : value === "balance" ? "Équilibre" : "Composition"}
+            </button>)}
+          </div>
           <div className="flex rounded-lg border border-[var(--color-border)] bg-white p-1">
             {(["month", "week"] as const).map((value) => (
               <button
@@ -742,11 +807,22 @@ function EvolutionChart({
               </button>
             ))}
           </div>
+          </div>
         ) : null}
       </div>
       <div className="mt-4 h-[320px]">
         <ResponsiveContainer width="100%" height="100%">
-          {granularity === "month" ? (
+          {granularity === "month" && trajectory === "composition" ? (
+            <BarChart data={composition}>
+              <CartesianGrid vertical={false} strokeDasharray="3 3" />
+              <XAxis dataKey="label" axisLine={false} tickLine={false} />
+              <YAxis width={58} axisLine={false} tickLine={false} tickFormatter={formatCompactCurrency} />
+              <Tooltip formatter={(value) => formatCurrency(Number(value))} /><Legend />
+              <Bar dataKey="current" name="Vie courante" stackId="life" fill="#52766f" />
+              <Bar dataKey="events" name="Hors quotidien" stackId="life" fill="#d69a3c" />
+              <Bar dataKey="unconfirmed" name="À confirmer" stackId="life" fill="#d36e53" />
+            </BarChart>
+          ) : granularity === "month" ? (
             <AreaChart data={monthly}>
               <CartesianGrid vertical={false} strokeDasharray="3 3" />
               <XAxis dataKey="label" axisLine={false} tickLine={false} />
@@ -759,12 +835,12 @@ function EvolutionChart({
               <Tooltip formatter={(value) => formatCurrency(Number(value))} />
               <Legend />
               <Area
-                dataKey="expenses"
-                name="Dépenses nettes"
-                stroke="#d36e53"
-                fill="#f6dfd8"
+                dataKey={trajectory === "balance" ? "net" : "expenses"}
+                name={trajectory === "balance" ? "Équilibre" : "Dépenses nettes"}
+                stroke={trajectory === "balance" ? "#52766f" : "#d36e53"}
+                fill={trajectory === "balance" ? "#dce8e3" : "#f6dfd8"}
               />
-              {hasInflows ? (
+              {hasInflows && trajectory === "level" ? (
                 <>
                   <Area
                     dataKey="income"
@@ -927,7 +1003,7 @@ function MoneyDestinationModule({
 }) {
   const [dimension, setDimension] = useState<HistoryDimension>("category");
   const [measure, setMeasure] = useState<MoneyMeasure>(
-    monthly ? "total" : "average",
+    monthly ? "total" : "typical",
   );
   const profiles = dimensionHistoryProfiles(
     operations,
@@ -937,15 +1013,15 @@ function MoneyDestinationModule({
   );
   const total = profiles.reduce((sum, entry) => sum + entry.total, 0);
   const metric = (entry: (typeof profiles)[number]) => {
-    if (measure === "average") return entry.average;
+    if (measure === "typical") return entry.medianAcrossMonths;
     if (measure === "share") return total ? entry.total / total : 0;
     return entry.total;
   };
   const max = Math.max(...profiles.map(metric), 1);
   const filterKey = dimensionFilterKey(dimension);
   const measureLabel =
-    measure === "average"
-      ? "Moyenne mensuelle"
+    measure === "typical"
+      ? "Typique / mois"
       : measure === "total"
         ? "Total période"
         : "Part des dépenses";
@@ -982,7 +1058,7 @@ function MoneyDestinationModule({
               value={measure}
               onChange={(event) => setMeasure(event.target.value as MoneyMeasure)}
             >
-              <option value="average">Moyenne mensuelle</option>
+              <option value="typical">Typique / mois</option>
               <option value="total">Total période</option>
               <option value="share">Part des dépenses</option>
             </select>
@@ -1000,7 +1076,7 @@ function MoneyDestinationModule({
           const valueLabel =
             measure === "share"
               ? formatPercent(value)
-              : `${formatCurrency(value)}${measure === "average" ? "/mois" : ""}`;
+              : `${formatCurrency(value)}${measure === "typical" ? "/mois" : ""}`;
           const tooltip = [
             entry.name,
             `${measureLabel} : ${valueLabel}`,
@@ -1303,6 +1379,65 @@ function VariationHeatmap({
   );
 }
 
+function PredictabilityModule({ operations, months, allOperations }: {
+  operations: Operation[];
+  months: MonthKey[];
+  allOperations: Operation[];
+}) {
+  const rows = [...new Set(operations.filter((operation) => operation.amount < 0).map((operation) => operation.category))]
+    .map((category) => {
+      const values = months.map((month) => totalExpenses(
+        operations.filter((operation) => operation.category === category && operation.importMonth === month),
+        allOperations,
+      ));
+      return { category, ...robustSeriesProfile(values) };
+    })
+    .sort((a, b) => b.medianAcrossMonths - a.medianAcrossMonths)
+    .slice(0, 8);
+  if (!rows.length) return null;
+  return <section className="card mb-5 p-4 sm:p-6">
+    <p className="eyebrow mb-1">Prévisibilité</p>
+    <h2 className="text-xl font-black">Fréquence et variabilité sont deux choses différentes</h2>
+    <div className="mt-4 grid gap-2 sm:grid-cols-2">
+      {rows.map((row) => <div key={row.category} className="rounded-xl bg-[var(--color-surface-soft)] p-3">
+        <p className="font-black">{row.category}</p>
+        <p className="mt-1 text-sm text-[var(--color-muted)]">
+          {row.activeMonths}/{months.length} mois actifs · médiane active {formatCurrency(row.medianWhenActive)}
+          {row.variability === null ? " · variabilité non estimable" : ` · variabilité MAD ${formatPercent(row.variability)}`}
+        </p>
+      </div>)}
+    </div>
+  </section>;
+}
+
+function LifeMomentsModule({ entries, moments, detailHref }: {
+  entries: AnalyticalEntry[];
+  moments: Moment[];
+  detailHref: DetailHref;
+}) {
+  const layers = (["Routine", "Moment", "Ponctuel", "Imprévu", "À confirmer"] as const)
+    .map((layer) => ({ layer, amount: entries.filter((entry) => entry.lifeLayer === layer).reduce((sum, entry) => sum + entry.amount, 0) }))
+    .filter((entry) => entry.amount > 0);
+  const momentRows = aggregateMoments(entries, moments);
+  return <section className="card mb-5 p-4 sm:p-6">
+    <p className="eyebrow mb-1">Quotidien et moments de vie</p>
+    <h2 className="text-xl font-black">Ce qui constitue notre socle et ce qui l’a ponctué</h2>
+    <div className="mt-4 grid gap-2 sm:grid-cols-2 lg:grid-cols-5">
+      {layers.map((entry) => <Link key={entry.layer} href={detailHref({ lifeLayers: [entry.layer] }, entry.layer)} className="rounded-xl border border-[var(--color-border)] p-3 transition hover:border-[var(--color-primary)]">
+        <p className="text-sm font-bold text-[var(--color-muted)]">{entry.layer === "Routine" ? "Quotidien" : entry.layer}</p>
+        <p className="mt-1 text-xl font-black">{formatCurrency(entry.amount)}</p>
+      </Link>)}
+    </div>
+    {momentRows.length ? <div className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+      {momentRows.map((moment) => <Link key={moment.id} href={detailHref({ contexts: ["events"], events: [moment.name], moments: [moment.name] }, moment.name)} className="rounded-xl bg-[#f6ead2] p-4 transition hover:-translate-y-0.5">
+        <p className="text-xs font-black uppercase tracking-[0.12em] text-[#8a6021]">{moment.type}</p>
+        <p className="mt-1 text-lg font-black">{moment.name}</p>
+        <p className="mt-2 text-sm">{formatCurrency(moment.amount)} · {moment.operationCount} opération{moment.operationCount > 1 ? "s" : ""}</p>
+      </Link>)}
+    </div> : <p className="mt-4 text-sm text-[var(--color-muted)]">Aucun Moment explicite sur cette période. Les événements historiques restent visibles via le fallback legacy.</p>}
+  </section>;
+}
+
 function MultiMonthAnalysis({
   months,
   operations,
@@ -1311,6 +1446,8 @@ function MultiMonthAnalysis({
   detailHref,
   monthDetailHref,
   operationsHref,
+  entries,
+  moments,
 }: {
   months: MonthKey[];
   operations: Operation[];
@@ -1323,70 +1460,57 @@ function MultiMonthAnalysis({
     label: string,
   ) => string;
   operationsHref: string;
+  entries: AnalyticalEntry[];
+  moments: Moment[];
 }) {
   const summaries = monthlySummaries(operations, months, allOperations);
   const stats = descriptiveStats(summaries);
-  const contextByMonth = monthlySpendingContexts(operations, months, allOperations);
-  const currentAverage = mean(contextByMonth.map((entry) => entry.current));
-  const eventTotal = contextByMonth.reduce((sum, entry) => sum + entry.events, 0);
-  const exceptional = totalExpenses(
-    operations.filter((operation) => operation.status === "Exceptionnel"),
-    allOperations,
-  );
-  const variableProfile = dimensionHistoryProfiles(
-    operations,
-    months,
-    "category",
-    allOperations,
-  )
-    .filter((entry) => entry.stability)
-    .sort(
-      (a, b) =>
-        (b.stability?.coefficient ?? 0) - (a.stability?.coefficient ?? 0),
-    )[0];
+  const reference = buildHistoryReference(entries, months);
+  const driver = mainVariationDriver(entries, months);
   return (
     <>
       <section className="card mb-5 overflow-hidden">
         <div className="border-b border-[var(--color-border)] p-5">
-          <p className="eyebrow mb-1">Portrait</p>
-          <h2 className="text-2xl font-black">Votre période en un coup d’œil</h2>
+          <p className="eyebrow mb-1">Référence</p>
+          <h2 className="text-2xl font-black">Combien notre vie nous coûte-t-elle normalement ?</h2>
         </div>
         <div className="grid sm:grid-cols-2 xl:grid-cols-3">
           <PortraitCard
             icon={CircleDollarSign}
-            label="Dépenses moyennes"
-            value={`${formatCurrency(stats.average)}/mois`}
-            detail={`Médiane : ${formatCurrency(stats.median)}`}
+            label="Mois typique"
+            value={`${formatCurrency(reference.medianTotal)}/mois`}
+            detail={`Moyenne observée : ${formatCurrency(reference.meanTotal)}`}
           />
           <PortraitCard
             icon={House}
-            label="Vie courante moyenne"
-            value={`${formatCurrency(currentAverage)}/mois`}
+            label="Vie courante typique"
+            value={`${formatCurrency(reference.medianRoutine)}/mois`}
+            detail={reference.routineQ1 !== null && reference.routineQ3 !== null ? `Zone habituelle : ${formatCurrency(reference.routineQ1)} – ${formatCurrency(reference.routineQ3)}` : "4 mois nécessaires pour la zone habituelle"}
           />
           <PortraitCard
             icon={Sparkles}
-            label="Événements"
-            value={formatCurrency(eventTotal)}
+            label="Hors quotidien"
+            value={formatCurrency(reference.outsideRoutine)}
             detail="Total réel sur la période"
           />
           <PortraitCard
-            icon={BadgeAlert}
-            label="Exceptionnel"
-            value={formatCurrency(exceptional)}
-            detail="Total réel sur la période"
+            icon={reference.recentTrend !== null && reference.recentTrend <= 0 ? TrendingDown : ChartNoAxesCombined}
+            label="Tendance récente"
+            value={reference.recentTrend === null ? "Pas assez de recul" : formatCurrency(reference.recentTrend, true)}
+            detail={reference.recentTrend === null ? "6 mois nécessaires" : "Médiane des 3 derniers mois vs 3 précédents"}
           />
           <PortraitCard
             icon={TrendingDown}
-            label="Mois le plus léger"
-            value={formatMonth(stats.best.month)}
-            detail={formatCurrency(stats.best.expenses)}
+            label="Zone habituelle"
+            value={reference.routineQ1 !== null && reference.routineQ3 !== null ? `${formatCompactCurrency(reference.routineQ1)} – ${formatCompactCurrency(reference.routineQ3)}` : "Historique insuffisant"}
+            detail="Moitié centrale des mois de vie courante"
           />
-          {variableProfile ? (
+          {driver ? (
             <PortraitCard
-              icon={getFamilyIcon(variableProfile.name)}
-              label="Poste le plus variable"
-              value={variableProfile.name}
-              detail={variableProfile.stability?.label}
+              icon={getFamilyIcon(driver.category)}
+              label="Principal moteur des écarts"
+              value={driver.category}
+              detail={`${formatCurrency(driver.contribution)} d’écarts cumulés à sa médiane`}
             />
           ) : (
             <PortraitCard
@@ -1406,27 +1530,19 @@ function MultiMonthAnalysis({
         end={months.at(-1)!}
         hasInflows={hasInflows}
       />
-      <SpendingContextChart
-        operations={operations}
-        months={months}
-        allOperations={allOperations}
-      />
       <MoneyDestinationModule
         operations={operations}
         months={months}
         allOperations={allOperations}
         detailHref={detailHref}
       />
+      <PredictabilityModule operations={operations} months={months} allOperations={allOperations} />
       <NatureModule
         operations={operations}
         allOperations={allOperations}
         detailHref={detailHref}
       />
-      <EventGallery
-        operations={operations}
-        allOperations={allOperations}
-        detailHref={detailHref}
-      />
+      <LifeMomentsModule entries={entries} moments={moments} detailHref={detailHref} />
       <VariationHeatmap
         operations={operations}
         months={months}
@@ -1449,6 +1565,9 @@ function SingleMonthAnalysis({
   hasInflows,
   detailHref,
   operationsHref,
+  entries,
+  allEntries,
+  moments,
 }: {
   month: MonthKey;
   months: MonthKey[];
@@ -1458,16 +1577,23 @@ function SingleMonthAnalysis({
   hasInflows: boolean;
   detailHref: DetailHref;
   operationsHref: string;
+  entries: AnalyticalEntry[];
+  allEntries: AnalyticalEntry[];
+  moments: Moment[];
 }) {
   const [showAllDeltas, setShowAllDeltas] = useState(false);
   const summary = monthlySummaries(operations, [month], allOperations)[0];
-  const references = monthlySummaries(referenceOperations, months, allOperations);
-  const average = mean(references.map((entry) => entry.expenses));
-  const previous = references[months.indexOf(month) - 1]?.expenses ?? summary.expenses;
+  const referenceMonths = historicalReferenceMonths(months, month);
+  const reference = buildHistoryReference(
+    allEntries.filter((entry) => referenceMonths.includes(entry.analysisMonth)),
+    referenceMonths,
+  );
+  const routineAmount = entries.filter((entry) => entry.lifeLayer === "Routine").reduce((sum, entry) => sum + entry.amount, 0);
+  const outsideAmount = entries.filter((entry) => entry.lifeLayer !== "Routine").reduce((sum, entry) => sum + entry.amount, 0);
   const deltas = categoryReferenceDeltas(
     referenceOperations,
     month,
-    months,
+    [...referenceMonths, month],
     allOperations,
   );
   const events = eventGroups(operations, allOperations);
@@ -1507,16 +1633,16 @@ function SingleMonthAnalysis({
       <section className="card mb-5 overflow-hidden">
         <div className={`grid ${hasInflows ? "lg:grid-cols-[1.35fr_1fr]" : ""}`}>
           <div className="bg-[var(--color-primary)] p-6 text-white sm:p-8">
-            <p className="text-sm font-bold text-white/70">Dépenses nettes</p>
+            <p className="text-sm font-bold text-white/70">Ce mois était-il normal ?</p>
             <p className="mt-2 text-5xl font-black">
-              {formatCurrency(summary.expenses)}
+              {referenceMonths.length ? (routineAmount <= reference.medianRoutine * 1.1 ? "Dans le rythme" : "Au-dessus du rythme") : "Référence à construire"}
             </p>
             <div className="mt-5 flex flex-wrap gap-4 border-t border-white/20 pt-4 text-sm">
               <span>
-                vs moyenne {formatPercent(average ? (summary.expenses - average) / average : 0, true)}
+                Vie courante {formatCurrency(routineAmount)} · typique {formatCurrency(reference.medianRoutine)}
               </span>
               <span>
-                vs mois précédent {formatPercent(previous ? (summary.expenses - previous) / previous : 0, true)}
+                Hors quotidien {formatCurrency(outsideAmount)}
               </span>
             </div>
           </div>
@@ -1648,6 +1774,7 @@ function SingleMonthAnalysis({
         allOperations={allOperations}
         detailHref={detailHref}
       />
+      <LifeMomentsModule entries={entries} moments={moments} detailHref={detailHref} />
       <EventGallery
         operations={operations}
         allOperations={allOperations}

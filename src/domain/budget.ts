@@ -14,6 +14,8 @@ export type Importance =
   | "Optionnelle";
 export type Recurrence = "Fixe" | "Variable";
 export type SpendingContext = "Vie courante" | "Événement";
+export type LifeContext = "Vie courante" | "Hors quotidien";
+export type LifeLayer = "Routine" | "Moment" | "Ponctuel" | "Imprévu" | "À confirmer";
 export type ResourceType =
   | "Revenu"
   | "Entrée d'argent"
@@ -66,6 +68,8 @@ export interface Operation {
   event: string | null;
   eventDetail?: string | null;
   spendingContext?: SpendingContext | null;
+  lifeContext?: LifeContext | null;
+  momentId?: string | null;
   resourceType?: ResourceType | null;
   resourceContext?: string | null;
   analysisMonthOverride?: MonthKey | null;
@@ -75,6 +79,34 @@ export interface Operation {
   uncertain: boolean;
   fingerprint: string;
   sourceMetadata: Record<string, unknown>;
+  analyticalSourceOperationId?: string;
+}
+
+export interface Moment {
+  id: string;
+  slug: string;
+  name: string;
+  type: string;
+  startDate: string | null;
+  endDate: string | null;
+  note: string | null;
+  createdAt: string;
+}
+
+export interface OperationAllocation {
+  id: string;
+  operationId: string;
+  amount: number;
+  lifeContext: LifeContext | null;
+  momentId: string | null;
+  category: string | null;
+  subcategory: string | null;
+  preciseType: string | null;
+  importance: Importance | null;
+  recurrence: Recurrence | null;
+  status: AnalyticalStatus | null;
+  note: string | null;
+  createdAt: string;
 }
 
 export interface ImportBatch {
