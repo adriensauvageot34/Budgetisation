@@ -11,6 +11,7 @@ import type {
   Operation,
   Recurrence,
   ResourceType,
+  SpendingContext,
 } from "@/domain/budget";
 import { applyInflowAnalysis } from "@/domain/inflow-analysis";
 import { createClient } from "@/lib/supabase/server";
@@ -79,14 +80,7 @@ class SupabaseBudgetRepository implements BudgetRepository {
   }
 
   private async loadAllOperations() {
-    const pageSize = 1000;
-    const operationRows: Array<Record<string, unknown>> = [];
-
-    for (let from = 0; ; from += pageSize) {
-      const operationsResult = await this.supabase
-        .from("operations")
-        .select(
-          [
+    const fields = [
             "id",
             "date",
             "import_month",
@@ -100,6 +94,7 @@ class SupabaseBudgetRepository implements BudgetRepository {
             "note",
             "event",
             "event_detail",
+            "spending_context",
             "resource_type",
             "resource_context",
             "analysis_month_override",
@@ -113,26 +108,41 @@ class SupabaseBudgetRepository implements BudgetRepository {
             "subcategory:subcategories!operations_subcategory_id_fkey(name)",
             "precise_type:precise_types!operations_precise_type_id_fkey(name)",
             "import_batch:import_batches!operations_import_batch_id_fkey(id)",
-          ].join(","),
-        )
-        .eq("household_id", this.householdId)
-        .order("date", { ascending: false })
-        .order("created_at", { ascending: false })
-        .range(from, from + pageSize - 1);
+    ];
 
-      const operationBatch = checkResult(
-        operationsResult as {
-          data: Array<Record<string, unknown>> | null;
-          error: { message: string } | null;
-        },
-        "Lecture des opérations impossible",
-      );
-
-      operationRows.push(...operationBatch);
-
-      if (operationBatch.length < pageSize) {
-        return operationRows;
+    const load = async (selectedFields: string[]) => {
+      const pageSize = 1000;
+      const operationRows: Array<Record<string, unknown>> = [];
+      for (let from = 0; ; from += pageSize) {
+        const operationsResult = await this.supabase
+          .from("operations")
+          .select(selectedFields.join(","))
+          .eq("household_id", this.householdId)
+          .order("date", { ascending: false })
+          .order("created_at", { ascending: false })
+          .range(from, from + pageSize - 1);
+        const operationBatch = checkResult(
+          operationsResult as {
+            data: Array<Record<string, unknown>> | null;
+            error: { message: string } | null;
+          },
+          "Lecture des opérations impossible",
+        );
+        operationRows.push(...operationBatch);
+        if (operationBatch.length < pageSize) return operationRows;
       }
+    };
+
+    try {
+      return await load(fields);
+    } catch (caught) {
+      if (
+        caught instanceof Error &&
+        caught.message.toLocaleLowerCase("fr-FR").includes("spending_context")
+      ) {
+        return load(fields.filter((field) => field !== "spending_context"));
+      }
+      throw caught;
     }
   }
 
@@ -277,6 +287,10 @@ class SupabaseBudgetRepository implements BudgetRepository {
         event: typeof row.event === "string" ? row.event : null,
         eventDetail:
           typeof row.event_detail === "string" ? row.event_detail : null,
+        spendingContext:
+          typeof row.spending_context === "string"
+            ? (row.spending_context as SpendingContext)
+            : null,
         resourceType:
           typeof row.resource_type === "string"
             ? (row.resource_type as ResourceType)
