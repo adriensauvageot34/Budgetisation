@@ -21,13 +21,16 @@ export default async function OperationsPage({
     start?: string;
     end?: string;
     category?: string;
+    subcategory?: string;
     person?: string;
     account?: string;
     importance?: string;
+    recurrence?: string;
     status?: string;
     event?: string;
     eventDetail?: string;
     scope?: string;
+    context?: string;
     returnTo?: string;
   }>;
 }) {
@@ -54,14 +57,22 @@ export default async function OperationsPage({
       ? (query.end as MonthKey)
       : undefined,
     category: query.category,
+    subcategory: query.subcategory,
     person: query.person,
     accountId: query.account,
     importance: query.importance as Importance | undefined,
+    recurrence: query.recurrence as "Fixe" | "Variable" | undefined,
     status: query.status as AnalyticalStatus | undefined,
     event: query.event,
     eventDetail: query.eventDetail,
-    scope: ["all", "current", "events"].includes(query.scope ?? "")
-      ? (query.scope as "all" | "current" | "events")
+    scope: ["all", "current", "events", "unconfirmed"].includes(
+      query.context ?? query.scope ?? "",
+    )
+      ? ((query.context ?? query.scope) as
+          | "all"
+          | "current"
+          | "events"
+          | "unconfirmed")
       : undefined,
   };
   const returnTo = query.returnTo?.startsWith("/historique")
