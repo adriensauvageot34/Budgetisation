@@ -21,6 +21,9 @@ export default async function HomePage() {
   return (
     <div className="mx-auto max-w-5xl">
       <header className="mb-6">
+        <div className="mb-5">
+          <ImportTrigger />
+        </div>
         <p className="eyebrow mb-2">Mois en cours</p>
         <h1 className="text-[clamp(2rem,4vw,3.2rem)] font-black leading-none tracking-[-0.05em]">
           Bonjour Adrien et Manon
@@ -68,16 +71,6 @@ export default async function HomePage() {
         </div>
       </section>
 
-      <section className="card mt-5 flex flex-col gap-4 p-5 sm:flex-row sm:items-center sm:justify-between sm:p-6">
-        <div>
-          <p className="eyebrow mb-1">Mettre les données à jour</p>
-          <h2 className="text-xl font-black">Ajouter un nouveau relevé</h2>
-          <p className="mt-1 text-sm text-[var(--color-muted)]">
-            Prévisualisez et contrôlez les lignes avant leur insertion.
-          </p>
-        </div>
-        <ImportTrigger />
-      </section>
     </div>
   );
 }
