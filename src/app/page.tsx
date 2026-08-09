@@ -1,15 +1,22 @@
 import { getBudgetRepository } from "@/data";
 import { ImportTrigger } from "@/features/imports/import-trigger";
+import { DataQualityCenter } from "@/features/data-quality/data-quality-center";
 import { formatMonth, titleCase } from "@/lib/format";
 
 export const dynamic = "force-dynamic";
 
-export default async function HomePage() {
+export default async function HomePage({
+  searchParams,
+}: {
+  searchParams: Promise<{ complete?: string }>;
+}) {
+  const query = await searchParams;
   const repository = await getBudgetRepository();
-  const [months, operations, batches] = await Promise.all([
+  const [months, operations, batches, categories] = await Promise.all([
     repository.getMonths(),
     repository.getOperations(),
     repository.getImportBatches(),
+    repository.getCategories(),
   ]);
   const currentMonth = new Date().toISOString().slice(0, 7);
   const currentOperationCount = operations.filter(
@@ -21,8 +28,13 @@ export default async function HomePage() {
   return (
     <div className="mx-auto max-w-5xl">
       <header className="mb-6">
-        <div className="mb-5">
+        <div className="mb-5 flex flex-wrap gap-3">
           <ImportTrigger />
+          <DataQualityCenter
+            operations={operations}
+            categories={categories}
+            initialOpen={query.complete === "1"}
+          />
         </div>
         <p className="eyebrow mb-2">Mois en cours</p>
         <h1 className="text-[clamp(2rem,4vw,3.2rem)] font-black leading-none tracking-[-0.05em]">
@@ -74,3 +86,4 @@ export default async function HomePage() {
     </div>
   );
 }
+
