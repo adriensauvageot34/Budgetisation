@@ -288,3 +288,107 @@ export async function deleteOperation(operationId: string) {
   if (error) throw new Error(error.message);
   if (count !== 1) throw new Error("Opération introuvable ou non autorisée.");
 }
+
+export async function linkRefundOperation(
+  refundOperationId: string,
+  expenseOperationId: string,
+) {
+  if (refundOperationId === expenseOperationId) {
+    throw new Error("Une opération ne peut pas se rembourser elle-même.");
+  }
+  const supabase = await createClient();
+  const householdId = await currentHouseholdId(supabase);
+  const [{ data: refund, error: refundError }, { data: expense, error: expenseError }] =
+    await Promise.all([
+      supabase
+        .from("operations")
+        .select("id,amount,resource_type")
+        .eq("id", refundOperationId)
+        .eq("household_id", householdId)
+        .maybeSingle(),
+      supabase
+        .from("operations")
+        .select("id,amount,flow,resource_type")
+        .eq("id", expenseOperationId)
+        .eq("household_id", householdId)
+        .maybeSingle(),
+    ]);
+  if (refundError) throw new Error(refundError.message);
+  if (expenseError) throw new Error(expenseError.message);
+  if (!refund || refund.resource_type !== "Remboursement" || Number(refund.amount) <= 0) {
+    throw new Error("Le flux sélectionné n’est pas un remboursement entrant.");
+  }
+  if (
+    !expense ||
+    expense.flow !== "Dépense" ||
+    Number(expense.amount) >= 0 ||
+    expense.resource_type === "Transfert interne" ||
+    expense.resource_type === "Flux technique"
+  ) {
+    throw new Error("La cible doit être une dépense bancaire.");
+  }
+
+  const { data, error } = await supabase
+    .from("operations")
+    .update({ reimburses_operation_id: expenseOperationId })
+    .eq("id", refundOperationId)
+    .eq("household_id", householdId)
+    .select("id")
+    .maybeSingle();
+  if (error) throw new Error(error.message);
+  if (!data) throw new Error("Remboursement introuvable ou non autorisé.");
+}
+
+function taxonomySlug(value: string) {
+  return value
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLocaleLowerCase("fr-FR")
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/(^-|-$)/g, "") || "categorie";
+}
+
+export async function createTaxonomySubcategory(
+  familyName: string,
+  subcategoryName: string,
+) {
+  const family = optionalText(familyName);
+  const subcategory = optionalText(subcategoryName);
+  if (!family || !subcategory) {
+    throw new Error("Renseignez la famille et la nouvelle catégorie.");
+  }
+  const supabase = await createClient();
+  const householdId = await currentHouseholdId(supabase);
+  const { data: category, error: categoryError } = await supabase
+    .from("categories")
+    .select("id")
+    .eq("household_id", householdId)
+    .eq("name", family)
+    .maybeSingle();
+  if (categoryError) throw new Error(categoryError.message);
+  if (!category) throw new Error("Famille de dépense introuvable.");
+
+  const { data: existing, error: existingError } = await supabase
+    .from("subcategories")
+    .select("name")
+    .eq("category_id", category.id)
+    .eq("name", subcategory)
+    .maybeSingle();
+  if (existingError) throw new Error(existingError.message);
+  if (existing) return String(existing.name);
+
+  const slug = `${taxonomySlug(subcategory)}-${crypto.randomUUID().slice(0, 8)}`;
+  const { data, error } = await supabase
+    .from("subcategories")
+    .insert({
+      household_id: householdId,
+      category_id: category.id,
+      name: subcategory,
+      slug,
+    })
+    .select("name")
+    .single();
+  if (error) throw new Error(error.message);
+  return String(data.name);
+}
+

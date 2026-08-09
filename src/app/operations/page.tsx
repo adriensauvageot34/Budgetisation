@@ -4,7 +4,15 @@ import type {
   AnalyticalStatus,
   Importance,
   MonthKey,
+  Recurrence,
+  ResourceType,
 } from "@/domain/budget";
+import {
+  defaultHistoryFilters,
+  type HistoryContext,
+  type HistoryFilters,
+  type HistoryFlow,
+} from "@/domain/history-filters";
 import {
   OperationsTable,
   type OperationsInitialFilters,
@@ -13,26 +21,55 @@ import {
 export const metadata: Metadata = { title: "Opérations" };
 export const dynamic = "force-dynamic";
 
+type OperationsQuery = {
+  month?: string;
+  start?: string;
+  end?: string;
+  category?: string;
+  subcategory?: string;
+  person?: string;
+  account?: string;
+  importance?: string;
+  recurrence?: string;
+  status?: string;
+  event?: string;
+  eventDetail?: string;
+  scope?: string;
+  context?: string;
+  flux?: string;
+  families?: string;
+  categories?: string;
+  merchants?: string;
+  statuses?: string;
+  contexts?: string;
+  events?: string;
+  eventDetails?: string;
+  resourceTypes?: string;
+  importances?: string;
+  recurrences?: string;
+  returnTo?: string;
+  selectForRefund?: string;
+};
+
+const flowValues: HistoryFlow[] = ["expenses", "inflows"];
+const statusValues: AnalyticalStatus[] = ["Habituel", "Exceptionnel", "Hors budget", "À ventiler"];
+const contextValues: HistoryContext[] = ["current", "events", "unconfirmed"];
+const resourceTypeValues: ResourceType[] = ["Revenu", "Entrée d'argent", "Remboursement", "Transfert interne", "Flux technique", "À qualifier"];
+const importanceValues: Importance[] = ["Indispensable", "Contrainte", "Ajustable", "Optionnelle"];
+const recurrenceValues: Recurrence[] = ["Fixe", "Variable"];
+
+function list(value?: string) {
+  return value?.split(",").map((entry) => entry.trim()).filter(Boolean) ?? [];
+}
+
+function enumList<T extends string>(value: string | undefined, allowed: T[]) {
+  return list(value).filter((entry): entry is T => allowed.includes(entry as T));
+}
+
 export default async function OperationsPage({
   searchParams,
 }: {
-  searchParams: Promise<{
-    month?: string;
-    start?: string;
-    end?: string;
-    category?: string;
-    subcategory?: string;
-    person?: string;
-    account?: string;
-    importance?: string;
-    recurrence?: string;
-    status?: string;
-    event?: string;
-    eventDetail?: string;
-    scope?: string;
-    context?: string;
-    returnTo?: string;
-  }>;
+  searchParams: Promise<OperationsQuery>;
 }) {
   const query = await searchParams;
   const repository = await getBudgetRepository();
@@ -46,36 +83,47 @@ export default async function OperationsPage({
   const initialMonth = months.includes(requestedMonth ?? "")
     ? requestedMonth!
     : months.at(-1);
+  const hasHistoryContext = Boolean(
+    query.start || query.end || query.flux || query.families || query.categories ||
+    query.merchants || query.statuses || query.contexts || query.events ||
+    query.eventDetails || query.resourceTypes || query.importances || query.recurrences,
+  );
+  const flows = enumList(query.flux, flowValues);
+  const historyFilters: HistoryFilters | undefined = hasHistoryContext
+    ? {
+        ...defaultHistoryFilters,
+        flows: flows.length ? flows : defaultHistoryFilters.flows,
+        families: list(query.families),
+        categories: list(query.categories),
+        merchants: list(query.merchants),
+        statuses: enumList(query.statuses, statusValues),
+        contexts: enumList(query.contexts, contextValues),
+        events: list(query.events),
+        eventDetails: list(query.eventDetails),
+        resourceTypes: enumList(query.resourceTypes, resourceTypeValues),
+        importances: enumList(query.importances, importanceValues),
+        recurrences: enumList(query.recurrences, recurrenceValues),
+      }
+    : undefined;
   const initialFilters: OperationsInitialFilters = {
-    month: months.includes(query.month ?? "")
-      ? (query.month as MonthKey)
-      : undefined,
-    startMonth: months.includes(query.start ?? "")
-      ? (query.start as MonthKey)
-      : undefined,
-    endMonth: months.includes(query.end ?? "")
-      ? (query.end as MonthKey)
-      : undefined,
+    month: months.includes(query.month ?? "") ? (query.month as MonthKey) : undefined,
+    startMonth: months.includes(query.start ?? "") ? (query.start as MonthKey) : undefined,
+    endMonth: months.includes(query.end ?? "") ? (query.end as MonthKey) : undefined,
     category: query.category,
     subcategory: query.subcategory,
     person: query.person,
     accountId: query.account,
     importance: query.importance as Importance | undefined,
-    recurrence: query.recurrence as "Fixe" | "Variable" | undefined,
+    recurrence: query.recurrence as Recurrence | undefined,
     status: query.status as AnalyticalStatus | undefined,
     event: query.event,
     eventDetail: query.eventDetail,
-    scope: ["all", "current", "events", "unconfirmed"].includes(
-      query.context ?? query.scope ?? "",
-    )
-      ? ((query.context ?? query.scope) as
-          | "all"
-          | "current"
-          | "events"
-          | "unconfirmed")
+    scope: ["all", "current", "events", "unconfirmed"].includes(query.context ?? query.scope ?? "")
+      ? ((query.context ?? query.scope) as "all" | "current" | "events" | "unconfirmed")
       : undefined,
+    historyFilters,
   };
-  const returnTo = query.returnTo?.startsWith("/historique")
+  const returnTo = query.returnTo?.startsWith("/historique") || query.returnTo?.startsWith("/?")
     ? query.returnTo
     : undefined;
 
@@ -92,6 +140,8 @@ export default async function OperationsPage({
       initialMonth={initialMonth}
       initialFilters={initialFilters}
       returnTo={returnTo}
+      selectForRefund={query.selectForRefund}
     />
   );
 }
+

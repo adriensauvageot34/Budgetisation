@@ -5,23 +5,40 @@ import type {
   Importance,
   MonthKey,
   Recurrence,
+  ResourceType,
 } from "@/domain/budget";
 import {
-  HistoryDashboard,
-  type HistoryInitialContext,
-} from "@/features/history/history-dashboard";
+  defaultHistoryFilters,
+  type HistoryContext,
+  type HistoryFilters,
+  type HistoryFlow,
+} from "@/domain/history-filters";
+import {
+  HistoryRangeDashboard,
+  type HistoryRangeContext,
+} from "@/features/history/history-range-dashboard";
 
 export const metadata: Metadata = { title: "Historique" };
 export const dynamic = "force-dynamic";
 
 type HistoryQuery = {
   detail?: string;
+  detailLabel?: string;
   view?: string;
   month?: string;
   start?: string;
   end?: string;
-  person?: string;
-  account?: string;
+  flux?: string;
+  families?: string;
+  categories?: string;
+  merchants?: string;
+  statuses?: string;
+  contexts?: string;
+  events?: string;
+  eventDetails?: string;
+  resourceTypes?: string;
+  importances?: string;
+  recurrences?: string;
   category?: string;
   subcategory?: string;
   importance?: string;
@@ -32,6 +49,43 @@ type HistoryQuery = {
   eventDetail?: string;
 };
 
+const flowValues: HistoryFlow[] = ["expenses", "inflows"];
+const statusValues: AnalyticalStatus[] = [
+  "Habituel",
+  "Exceptionnel",
+  "Hors budget",
+  "À ventiler",
+];
+const contextValues: HistoryContext[] = ["current", "events", "unconfirmed"];
+const resourceTypeValues: ResourceType[] = [
+  "Revenu",
+  "Entrée d'argent",
+  "Remboursement",
+  "Transfert interne",
+  "Flux technique",
+  "À qualifier",
+];
+const importanceValues: Importance[] = [
+  "Indispensable",
+  "Contrainte",
+  "Ajustable",
+  "Optionnelle",
+];
+const recurrenceValues: Recurrence[] = ["Fixe", "Variable"];
+
+function list(value?: string) {
+  return value?.split(",").map((entry) => entry.trim()).filter(Boolean) ?? [];
+}
+
+function enumList<T extends string>(value: string | undefined, allowed: T[]) {
+  return list(value).filter((entry): entry is T => allowed.includes(entry as T));
+}
+
+function legacyValue(current: string | undefined, legacy: string | undefined) {
+  const values = list(current);
+  return values.length ? values : legacy ? [legacy] : [];
+}
+
 export default async function HistoryPage({
   searchParams,
 }: {
@@ -39,56 +93,59 @@ export default async function HistoryPage({
 }) {
   const query = await searchParams;
   const repository = await getBudgetRepository();
-  const [months, operations, categories, accounts] = await Promise.all([
+  const [months, operations] = await Promise.all([
     repository.getMonths(),
     repository.getOperations(),
-    repository.getCategories(),
-    repository.getAccounts(),
   ]);
-  if (!months.length) {
-    return <p className="card p-6">Aucune opération disponible.</p>;
-  }
 
-  const context: HistoryInitialContext = {
+  let start = months.includes(query.start ?? "")
+    ? (query.start as MonthKey)
+    : undefined;
+  let end = months.includes(query.end ?? "")
+    ? (query.end as MonthKey)
+    : undefined;
+  if ((!start || !end) && months.includes(query.month ?? "")) {
+    start = query.month as MonthKey;
+    end = query.month as MonthKey;
+  } else if ((!start || !end) && query.view === "period" && months.length) {
+    start = months[0];
+    end = months.at(-1);
+  } else if ((!start || !end) && query.view === "month" && months.length) {
+    start = months.at(-1);
+    end = months.at(-1);
+  }
+  if (start && end && start > end) [start, end] = [end, start];
+
+  const explicitFlows = enumList(query.flux, flowValues);
+  const filters: HistoryFilters = {
+    ...defaultHistoryFilters,
+    flows: explicitFlows.length ? explicitFlows : defaultHistoryFilters.flows,
+    families: legacyValue(query.families, query.category),
+    categories: legacyValue(query.categories, query.subcategory),
+    merchants: list(query.merchants),
+    statuses: enumList(query.statuses ?? query.status, statusValues),
+    contexts: enumList(query.contexts ?? query.context, contextValues),
+    events: legacyValue(query.events, query.event),
+    eventDetails: legacyValue(query.eventDetails, query.eventDetail),
+    resourceTypes: enumList(query.resourceTypes, resourceTypeValues),
+    importances: enumList(query.importances ?? query.importance, importanceValues),
+    recurrences: enumList(query.recurrences ?? query.recurrence, recurrenceValues),
+  };
+  const context: HistoryRangeContext = {
+    start,
+    end,
     detail: query.detail === "1",
-    view: query.view === "month" ? "month" : "period",
-    month: months.includes(query.month ?? "")
-      ? (query.month as MonthKey)
-      : months.at(-1),
-    start: months.includes(query.start ?? "")
-      ? (query.start as MonthKey)
-      : months[0],
-    end: months.includes(query.end ?? "")
-      ? (query.end as MonthKey)
-      : months.at(-1),
-    person: query.person,
-    account: query.account,
-    category: query.category,
-    subcategory: query.subcategory,
-    importance: ["Indispensable", "Contrainte", "Ajustable", "Optionnelle"].includes(query.importance ?? "")
-      ? (query.importance as Importance)
-      : undefined,
-    recurrence: ["Fixe", "Variable"].includes(query.recurrence ?? "")
-      ? (query.recurrence as Recurrence)
-      : undefined,
-    status: ["Habituel", "Exceptionnel", "Hors budget", "À ventiler"].includes(query.status ?? "")
-      ? (query.status as AnalyticalStatus)
-      : undefined,
-    context: ["current", "events", "unconfirmed"].includes(query.context ?? "")
-      ? (query.context as "current" | "events" | "unconfirmed")
-      : undefined,
-    event: query.event,
-    eventDetail: query.eventDetail,
+    detailLabel: query.detailLabel,
+    filters,
   };
 
   return (
-    <HistoryDashboard
+    <HistoryRangeDashboard
       key={JSON.stringify(context)}
       months={months}
       operations={operations}
-      categories={categories}
-      accounts={accounts}
       initialContext={context}
     />
   );
 }
+

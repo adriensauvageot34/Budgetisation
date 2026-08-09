@@ -17,6 +17,7 @@ import {
 } from "lucide-react";
 import {
   deleteOperation,
+  linkRefundOperation,
   updateOperation,
   type OperationUpdateInput,
 } from "@/app/operations/actions";
@@ -38,6 +39,11 @@ import {
   operationAnalysisMonth,
 } from "@/domain/inflow-analysis";
 import { isConsumptionExpense } from "@/domain/calculations";
+import { isRentExpense } from "@/domain/data-quality";
+import {
+  filterHistoryOperations,
+  type HistoryFilters,
+} from "@/domain/history-filters";
 import { getSpendingContext } from "@/domain/spending-context";
 import {
   formatCurrency,
@@ -67,6 +73,7 @@ export type OperationsInitialFilters = {
   event?: string;
   eventDetail?: string;
   scope?: ExpenseScope;
+  historyFilters?: HistoryFilters;
 };
 
 type OperationDraft = {
@@ -208,6 +215,7 @@ export function OperationsTable({
   initialMonth,
   initialFilters = {},
   returnTo,
+  selectForRefund,
 }: {
   months: MonthKey[];
   operations: Operation[];
@@ -216,6 +224,7 @@ export function OperationsTable({
   initialMonth: MonthKey;
   initialFilters?: OperationsInitialFilters;
   returnTo?: string;
+  selectForRefund?: string;
 }) {
   const router = useRouter();
   const [operationRows, setOperationRows] = useState(operations);
@@ -225,7 +234,9 @@ export function OperationsTable({
     initialFilters.startMonth || initialFilters.endMonth,
   );
   const [month, setMonth] = useState<MonthKey | "Tous">(
-    initialFilters.month ?? (hasInitialPeriod ? "Tous" : initialMonth),
+    selectForRefund
+      ? "Tous"
+      : initialFilters.month ?? (hasInitialPeriod ? "Tous" : initialMonth),
   );
   const [startMonth, setStartMonth] = useState<MonthKey | "">(
     initialFilters.startMonth ?? "",
@@ -273,6 +284,12 @@ export function OperationsTable({
   const [actionPending, setActionPending] = useState(false);
   const [actionError, setActionError] = useState<string | null>(null);
   const [reimbursementQuery, setReimbursementQuery] = useState("");
+  const [historyFilters, setHistoryFilters] = useState(
+    initialFilters.historyFilters,
+  );
+  const [showAllSelectionExpenses, setShowAllSelectionExpenses] = useState(false);
+  const [associationPending, setAssociationPending] = useState(false);
+  const [associationError, setAssociationError] = useState<string | null>(null);
 
   useEffect(() => {
     setOperationRows(operations);
@@ -320,12 +337,17 @@ export function OperationsTable({
     return operationRows
       .filter(
         (operation) => {
-          const contextMonth = returnTo
+          const contextMonth = returnTo?.startsWith("/historique")
             ? isConsumptionExpense(operation)
               ? operation.importMonth
               : operationAnalysisMonth(operation)
             : operation.importMonth;
           return (
+          (!selectForRefund ||
+            (isConsumptionExpense(operation) &&
+              (showAllSelectionExpenses || !isRentExpense(operation)))) &&
+          (!historyFilters ||
+            filterHistoryOperations([operation], historyFilters).length > 0) &&
           (month === "Tous" || contextMonth === month) &&
           (!startMonth || contextMonth >= startMonth) &&
           (!endMonth || contextMonth <= endMonth) &&
@@ -392,12 +414,15 @@ export function OperationsTable({
     expenseScope,
     flow,
     importance,
+    historyFilters,
     month,
     operationRows,
     person,
     query,
     recurrence,
     returnTo,
+    selectForRefund,
+    showAllSelectionExpenses,
     sortDirection,
     sortKey,
     status,
@@ -425,7 +450,11 @@ export function OperationsTable({
   function resetFilters() {
     setView("Standard");
     setQuery("");
-    setMonth(initialFilters.month ?? (hasInitialPeriod ? "Tous" : initialMonth));
+    setMonth(
+      selectForRefund
+        ? "Tous"
+        : initialFilters.month ?? (hasInitialPeriod ? "Tous" : initialMonth),
+    );
     setStartMonth(initialFilters.startMonth ?? "");
     setEndMonth(initialFilters.endMonth ?? "");
     setCategory(initialFilters.category ?? "Toutes");
@@ -439,6 +468,8 @@ export function OperationsTable({
     setExpenseScope(initialFilters.scope ?? "all");
     setEventFilter(initialFilters.event ?? "Tous");
     setEventDetailFilter(initialFilters.eventDetail ?? "Toutes");
+    setHistoryFilters(initialFilters.historyFilters);
+    setShowAllSelectionExpenses(false);
     setAdvancedOpen(false);
     setSortKey("date");
     setSortDirection("desc");
@@ -461,6 +492,41 @@ export function OperationsTable({
   ).filter((value) => value !== "" && value !== "all").length;
   const accountName = (id: string | null) =>
     accounts.find((account) => account.id === id)?.name ?? "Non renseigné";
+  const historyFilterGroups: Array<{
+    key: keyof HistoryFilters;
+    prefix: string;
+    values: string[];
+  }> = historyFilters
+    ? [
+        { key: "flows", prefix: "Flux", values: historyFilters.flows },
+        { key: "families", prefix: "Famille", values: historyFilters.families },
+        { key: "categories", prefix: "Catégorie", values: historyFilters.categories },
+        { key: "merchants", prefix: "Tiers", values: historyFilters.merchants },
+        { key: "statuses", prefix: "Statut", values: historyFilters.statuses },
+        { key: "contexts", prefix: "Contexte", values: historyFilters.contexts },
+        { key: "events", prefix: "Événement", values: historyFilters.events },
+        { key: "eventDetails", prefix: "Spécification", values: historyFilters.eventDetails },
+        { key: "resourceTypes", prefix: "Type", values: historyFilters.resourceTypes },
+        { key: "importances", prefix: "Importance", values: historyFilters.importances },
+        { key: "recurrences", prefix: "Nature", values: historyFilters.recurrences },
+      ]
+    : [];
+  const historyFilterChips = historyFilterGroups.flatMap((group) =>
+    group.values.map((value) => ({
+      label: `${group.prefix} : ${value === "expenses" ? "Dépenses" : value === "inflows" ? "Rentrées d’argent" : value === "current" ? "Vie courante" : value === "events" ? "Événement" : value === "unconfirmed" ? "À confirmer" : value}`,
+      clear: () =>
+        setHistoryFilters((current) =>
+          current
+            ? ({
+                ...current,
+                [group.key]: (current[group.key] as string[]).filter(
+                  (entry) => entry !== value,
+                ),
+              } as HistoryFilters)
+            : current,
+        ),
+    })),
+  );
   const activeFilterChips = [
     month !== "Tous" ? { label: formatMonth(month), clear: () => setMonth("Tous") } : null,
     startMonth ? { label: `Depuis ${formatMonth(startMonth)}`, clear: () => setStartMonth("") } : null,
@@ -478,7 +544,7 @@ export function OperationsTable({
     } : null,
     eventFilter !== "Tous" ? { label: eventFilter, clear: () => setEventFilter("Tous") } : null,
     eventDetailFilter !== "Toutes" ? { label: eventDetailFilter, clear: () => setEventDetailFilter("Toutes") } : null,
-  ].filter((entry): entry is { label: string; clear: () => void } => Boolean(entry));
+  ].filter((entry): entry is { label: string; clear: () => void } => Boolean(entry)).concat(historyFilterChips);
   const selectedDraftCategory = categories.find(
     (entry) => entry.name === draft?.category,
   );
@@ -663,6 +729,25 @@ export function OperationsTable({
     }
   }
 
+  async function associateExpense(operation: Operation) {
+    if (!selectForRefund || associationPending) return;
+    setAssociationPending(true);
+    setAssociationError(null);
+    try {
+      await linkRefundOperation(selectForRefund, operation.id);
+      router.push(returnTo ?? "/?complete=1");
+      router.refresh();
+    } catch (caught) {
+      setAssociationError(
+        caught instanceof Error
+          ? caught.message
+          : "L’association du remboursement a échoué.",
+      );
+    } finally {
+      setAssociationPending(false);
+    }
+  }
+
   const filterFields = (
     <>
       <label className="text-xs font-bold text-[var(--color-muted)]">
@@ -755,8 +840,12 @@ export function OperationsTable({
       ) : null}
       <PageHeader
         eyebrow="Recherche détaillée"
-        title="Opérations"
-        description="Retrouvez une transaction, vérifiez son classement et corrigez-la si nécessaire."
+        title={selectForRefund ? "Associer une dépense" : "Opérations"}
+        description={
+          selectForRefund
+            ? "Choisissez la dépense bancaire que ce remboursement doit réduire analytiquement."
+            : "Retrouvez une transaction, vérifiez son classement et corrigez-la si nécessaire."
+        }
         action={
           <div className="flex rounded-[var(--radius-sm)] border border-[var(--color-border)] bg-white p-1">
             {(["Compacte", "Standard", "Complète"] as ViewMode[]).map(
@@ -778,6 +867,33 @@ export function OperationsTable({
           </div>
         }
       />
+
+      {selectForRefund ? (
+        <section className="card mb-4 flex flex-wrap items-center justify-between gap-3 p-4 sm:p-5">
+          <div>
+            <p className="font-black">Mode sélection de dépense</p>
+            <p className="mt-1 text-sm text-[var(--color-muted)]">
+              Seules les dépenses de consommation sont proposées. Les loyers sont masqués par défaut.
+            </p>
+            {associationError ? (
+              <p className="mt-2 text-sm font-bold text-[var(--color-negative)]">
+                {associationError}
+              </p>
+            ) : null}
+          </div>
+          <label className="flex cursor-pointer items-center gap-2 text-sm font-bold">
+            <input
+              type="checkbox"
+              checked={showAllSelectionExpenses}
+              onChange={(event) => {
+                setShowAllSelectionExpenses(event.target.checked);
+                setPage(1);
+              }}
+            />
+            Afficher toutes les dépenses
+          </label>
+        </section>
+      ) : null}
 
       <section className="card mb-4 p-4 sm:p-5">
         <div className="flex flex-col gap-3 lg:flex-row lg:items-end">
@@ -1103,17 +1219,19 @@ export function OperationsTable({
                     <th>Statut</th>
                   </>
                 ) : null}
+                {selectForRefund ? <th className="w-[118px]">Action</th> : null}
               </tr>
             </thead>
             <tbody>
               {pageOperations.map((operation) => (
                 <tr
                   key={operation.id}
-                  role="button"
-                  tabIndex={0}
-                  className="cursor-pointer"
-                  onClick={() => openOperation(operation)}
+                  role={selectForRefund ? undefined : "button"}
+                  tabIndex={selectForRefund ? undefined : 0}
+                  className={selectForRefund ? undefined : "cursor-pointer"}
+                  onClick={selectForRefund ? undefined : () => openOperation(operation)}
                   onKeyDown={(event) => {
+                    if (selectForRefund) return;
                     if (event.key === "Enter" || event.key === " ") {
                       event.preventDefault();
                       openOperation(operation);
@@ -1154,6 +1272,21 @@ export function OperationsTable({
                       </td>
                     </>
                   ) : null}
+                  {selectForRefund ? (
+                    <td>
+                      <button
+                        type="button"
+                        className="button-primary"
+                        disabled={associationPending}
+                        onClick={(event) => {
+                          event.stopPropagation();
+                          void associateExpense(operation);
+                        }}
+                      >
+                        Associer
+                      </button>
+                    </td>
+                  ) : null}
                 </tr>
               ))}
             </tbody>
@@ -1163,10 +1296,20 @@ export function OperationsTable({
 
       <section className="space-y-3 md:hidden">
         {pageOperations.map((operation) => (
-          <button
+          <article
             key={operation.id}
-            type="button"
-            onClick={() => openOperation(operation)}
+            role={selectForRefund ? undefined : "button"}
+            tabIndex={selectForRefund ? undefined : 0}
+            onClick={selectForRefund ? undefined : () => openOperation(operation)}
+            onKeyDown={(event) => {
+              if (
+                !selectForRefund &&
+                (event.key === "Enter" || event.key === " ")
+              ) {
+                event.preventDefault();
+                openOperation(operation);
+              }
+            }}
             className="card w-full p-4 text-left"
           >
             <div className="flex items-start justify-between gap-3">
@@ -1194,7 +1337,17 @@ export function OperationsTable({
                 ) : null}
               </div>
             ) : null}
-          </button>
+            {selectForRefund ? (
+              <button
+                type="button"
+                className="button-primary mt-3 w-full"
+                disabled={associationPending}
+                onClick={() => void associateExpense(operation)}
+              >
+                Associer
+              </button>
+            ) : null}
+          </article>
         ))}
       </section>
 
@@ -1816,3 +1969,4 @@ export function OperationsTable({
     </div>
   );
 }
+
