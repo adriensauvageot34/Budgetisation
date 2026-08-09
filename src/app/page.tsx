@@ -8,7 +8,7 @@ export const dynamic = "force-dynamic";
 export default async function HomePage({
   searchParams,
 }: {
-  searchParams: Promise<{ complete?: string }>;
+  searchParams: Promise<{ complete?: string; association?: string }>;
 }) {
   const query = await searchParams;
   const repository = await getBudgetRepository();
@@ -34,6 +34,7 @@ export default async function HomePage({
             operations={operations}
             categories={categories}
             initialOpen={query.complete === "1"}
+            initialAssociationSuccess={query.association === "success"}
           />
         </div>
         <p className="eyebrow mb-2">Mois en cours</p>

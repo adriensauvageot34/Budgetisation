@@ -242,6 +242,7 @@ as $$
 declare
   refund_household_id uuid;
   refund_amount numeric;
+  refund_flow text;
   refund_resource_type text;
   expense_household_id uuid;
   expense_amount numeric;
@@ -252,8 +253,8 @@ begin
     raise exception 'Une opération ne peut pas se rembourser elle-même.';
   end if;
 
-  select operation.household_id, operation.amount, operation.resource_type
-  into refund_household_id, refund_amount, refund_resource_type
+  select operation.household_id, operation.amount, operation.flow, operation.resource_type
+  into refund_household_id, refund_amount, refund_flow, refund_resource_type
   from public.operations operation
   where operation.id = refund_operation_id;
 
@@ -264,7 +265,13 @@ begin
     raise exception 'Remboursement introuvable ou non autorisé.';
   end if;
 
-  if refund_resource_type is distinct from 'Remboursement' or refund_amount <= 0 then
+  if
+    refund_amount <= 0
+    or (
+      refund_resource_type is distinct from 'Remboursement'
+      and refund_flow is distinct from 'Remboursement'
+    )
+  then
     raise exception 'Le flux sélectionné n’est pas un remboursement entrant.';
   end if;
 
@@ -294,7 +301,9 @@ begin
   end if;
 
   update public.operations operation
-  set reimburses_operation_id = expense_operation_id
+  set
+    resource_type = 'Remboursement',
+    reimburses_operation_id = expense_operation_id
   where operation.id = refund_operation_id;
 
   return refund_operation_id;

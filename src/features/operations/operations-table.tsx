@@ -294,6 +294,10 @@ export function OperationsTable({
     setOperationRows(operations);
   }, [operations]);
 
+  const refundToAssociate = selectForRefund
+    ? operationRows.find((operation) => operation.id === selectForRefund) ?? null
+    : null;
+
   const people = [
     ...new Set(
       operationRows
@@ -734,7 +738,10 @@ export function OperationsTable({
     try {
       const result = await linkRefundOperation(selectForRefund, operation.id);
       if (!result.ok) throw new Error(result.error);
-      router.push(returnTo ?? "/?complete=1");
+      const destination = returnTo ?? "/?complete=1";
+      router.push(
+        `${destination}${destination.includes("?") ? "&" : "?"}association=success`,
+      );
       router.refresh();
     } catch (caught) {
       setAssociationError(
@@ -868,29 +875,51 @@ export function OperationsTable({
       />
 
       {selectForRefund ? (
-        <section className="card mb-4 flex flex-wrap items-center justify-between gap-3 p-4 sm:p-5">
-          <div>
-            <p className="font-black">Mode sélection de dépense</p>
-            <p className="mt-1 text-sm text-[var(--color-muted)]">
-              Seules les dépenses de consommation sont proposées. Les loyers sont masqués par défaut.
-            </p>
-            {associationError ? (
-              <p className="mt-2 text-sm font-bold text-[var(--color-negative)]">
-                {associationError}
+        <section className="card mb-4 p-4 sm:p-5">
+          <div className="flex flex-wrap items-start justify-between gap-3">
+            <div>
+              <p className="font-black">Mode sélection de dépense</p>
+              <p className="mt-1 text-sm text-[var(--color-muted)]">
+                Seules les dépenses de consommation sont proposées. Les loyers sont masqués par défaut.
               </p>
-            ) : null}
+            </div>
+            <label className="flex cursor-pointer items-center gap-2 text-sm font-bold">
+              <input
+                type="checkbox"
+                checked={showAllSelectionExpenses}
+                onChange={(event) => {
+                  setShowAllSelectionExpenses(event.target.checked);
+                  setPage(1);
+                }}
+              />
+              Afficher toutes les dépenses
+            </label>
           </div>
-          <label className="flex cursor-pointer items-center gap-2 text-sm font-bold">
-            <input
-              type="checkbox"
-              checked={showAllSelectionExpenses}
-              onChange={(event) => {
-                setShowAllSelectionExpenses(event.target.checked);
-                setPage(1);
-              }}
-            />
-            Afficher toutes les dépenses
-          </label>
+          {refundToAssociate ? (
+            <div className="mt-4 flex flex-col justify-between gap-3 rounded-xl bg-[var(--color-surface-soft)] p-4 sm:flex-row sm:items-center">
+              <div className="min-w-0">
+                <p className="text-xs font-black uppercase tracking-[0.08em] text-[var(--color-muted)]">
+                  Remboursement à associer
+                </p>
+                <p className="mt-1 text-lg font-black">{refundToAssociate.label}</p>
+                <p className="mt-1 text-sm text-[var(--color-muted)]">
+                  {formatDate(refundToAssociate.date)} · {refundToAssociate.sourceLabel}
+                </p>
+              </div>
+              <p className="shrink-0 text-2xl font-black positive">
+                +{formatCurrency(refundToAssociate.amount, true)}
+              </p>
+            </div>
+          ) : (
+            <p className="mt-4 text-sm font-bold text-[var(--color-negative)]">
+              Le remboursement à associer est introuvable dans les opérations chargées.
+            </p>
+          )}
+          {associationError ? (
+            <p className="mt-3 rounded-xl bg-[#f7dfda] p-3 text-sm font-bold text-[#9a463c]">
+              Association impossible : {associationError}
+            </p>
+          ) : null}
         </section>
       ) : null}
 
