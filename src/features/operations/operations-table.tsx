@@ -234,9 +234,8 @@ export function OperationsTable({
     initialFilters.startMonth || initialFilters.endMonth,
   );
   const [month, setMonth] = useState<MonthKey | "Tous">(
-    selectForRefund
-      ? "Tous"
-      : initialFilters.month ?? (hasInitialPeriod ? "Tous" : initialMonth),
+    initialFilters.month ??
+      (selectForRefund ? "Tous" : hasInitialPeriod ? "Tous" : initialMonth),
   );
   const [startMonth, setStartMonth] = useState<MonthKey | "">(
     initialFilters.startMonth ?? "",
@@ -451,9 +450,8 @@ export function OperationsTable({
     setView("Standard");
     setQuery("");
     setMonth(
-      selectForRefund
-        ? "Tous"
-        : initialFilters.month ?? (hasInitialPeriod ? "Tous" : initialMonth),
+      initialFilters.month ??
+        (selectForRefund ? "Tous" : hasInitialPeriod ? "Tous" : initialMonth),
     );
     setStartMonth(initialFilters.startMonth ?? "");
     setEndMonth(initialFilters.endMonth ?? "");
@@ -734,7 +732,8 @@ export function OperationsTable({
     setAssociationPending(true);
     setAssociationError(null);
     try {
-      await linkRefundOperation(selectForRefund, operation.id);
+      const result = await linkRefundOperation(selectForRefund, operation.id);
+      if (!result.ok) throw new Error(result.error);
       router.push(returnTo ?? "/?complete=1");
       router.refresh();
     } catch (caught) {
