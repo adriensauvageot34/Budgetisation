@@ -127,6 +127,12 @@ create table if not exists public.operations (
   note text,
   event text,
   event_detail text,
+  spending_context text
+    constraint operations_spending_context_check
+    check (
+      spending_context is null
+      or spending_context in ('Vie courante', 'Événement')
+    ),
   resource_type text
     constraint operations_resource_type_check
     check (

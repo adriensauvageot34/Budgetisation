@@ -7,6 +7,7 @@ import type {
   MonthKey,
   Recurrence,
   ResourceType,
+  SpendingContext,
 } from "@/domain/budget";
 import { createClient } from "@/lib/supabase/server";
 
@@ -24,6 +25,7 @@ export type OperationUpdateInput = {
   note: string | null;
   event: string | null;
   eventDetail: string | null;
+  spendingContext: SpendingContext | null;
   resourceType: ResourceType | null;
   resourceContext: string | null;
   analysisMonthOverride: MonthKey | null;
@@ -62,6 +64,7 @@ const resourceTypes: ResourceType[] = [
   "Flux technique",
   "À qualifier",
 ];
+const spendingContexts: SpendingContext[] = ["Vie courante", "Événement"];
 
 function optionalText(value: string | null) {
   const normalized = value?.trim();
@@ -194,6 +197,15 @@ export async function updateOperation(
   if (input.resourceType && !resourceTypes.includes(input.resourceType)) {
     throw new Error("Type de ressource invalide.");
   }
+  if (
+    input.spendingContext &&
+    !spendingContexts.includes(input.spendingContext)
+  ) {
+    throw new Error("Contexte de dépense invalide.");
+  }
+  if (input.spendingContext === "Événement" && !optionalText(input.event)) {
+    throw new Error("Renseignez l’événement associé à cette dépense.");
+  }
   if (amount <= 0 && input.analysisMonthOverride) {
     throw new Error("Le mois analytique manuel est réservé aux flux entrants.");
   }
@@ -248,6 +260,7 @@ export async function updateOperation(
       note: optionalText(input.note),
       event: optionalText(input.event),
       event_detail: optionalText(input.eventDetail),
+      spending_context: input.spendingContext,
       resource_type: input.resourceType,
       resource_context: optionalText(input.resourceContext),
       analysis_month_override: analysisMonthOverride,
