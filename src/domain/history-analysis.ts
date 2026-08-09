@@ -243,7 +243,7 @@ export function categoryReferenceDeltas(
         ),
         allOperations,
       );
-      const reference = mean(
+      const reference = median(
         comparisonMonths.map((month) =>
           totalExpenses(
             operations.filter(

@@ -200,8 +200,8 @@ export function analyticalEntriesAsOperations(
           : entry.lifeContext === "Hors quotidien"
             ? "Événement"
             : null,
-      event: entry.momentName ?? parent.event,
-      eventDetail: entry.momentType ?? parent.eventDetail,
+      event: entry.momentType ?? parent.event,
+      eventDetail: entry.momentName ?? parent.eventDetail,
       reimbursesOperationId: null,
       fingerprint: `${parent.fingerprint}:${entry.id}`,
     };
