@@ -1,92 +1,100 @@
-import { getBudgetRepository } from "@/data";
-import { ImportTrigger } from "@/features/imports/import-trigger";
-import { DataQualityCenter } from "@/features/data-quality/data-quality-center";
-import { formatMonth, titleCase } from "@/lib/format";
+import { redirect } from "next/navigation";
+import { getBootstrapContext } from "@/server/bootstrap/context";
+import {
+  AmbiguousHouseholdError,
+  BootstrapAuthenticationRequiredError,
+} from "@/server/bootstrap/errors";
 
 export const dynamic = "force-dynamic";
 
-export default async function HomePage({
-  searchParams,
-}: {
-  searchParams: Promise<{ complete?: string; association?: string }>;
-}) {
-  const query = await searchParams;
-  const repository = await getBudgetRepository();
-  const [months, operations, batches, categories, allocations] = await Promise.all([
-    repository.getMonths(),
-    repository.getOperations(),
-    repository.getImportBatches(),
-    repository.getCategories(),
-    repository.getOperationAllocations(),
-  ]);
-  const currentMonth = new Date().toISOString().slice(0, 7);
-  const currentOperationCount = operations.filter(
-    (operation) => operation.importMonth === currentMonth,
-  ).length;
-  const latestBatch = batches[0];
-  const latestAvailableMonth = months.at(-1);
-
+function AmbiguousHouseholdState({ message }: { message: string }) {
   return (
-    <div className="mx-auto max-w-5xl">
-      <header className="mb-6">
-        <div className="mb-5 flex flex-wrap gap-3">
-          <ImportTrigger />
-          <DataQualityCenter
-            operations={operations}
-            categories={categories}
-            allocations={allocations}
-            initialOpen={query.complete === "1"}
-            initialAssociationSuccess={query.association === "success"}
-          />
-        </div>
-        <p className="eyebrow mb-2">Mois en cours</p>
-        <h1 className="text-[clamp(2rem,4vw,3.2rem)] font-black leading-none tracking-[-0.05em]">
-          Bonjour Adrien et Manon
-        </h1>
-        <p className="mt-3 text-[var(--color-muted)]">
-          Cet espace accueillera la gestion du présent. Les analyses des mois
-          passés sont maintenant regroupées dans Historique.
-        </p>
-      </header>
-
-      <section className="card overflow-hidden">
-        <div className="grid sm:grid-cols-3">
-          <div className="bg-[var(--color-primary)] p-6 text-white">
-            <p className="text-sm font-bold text-white/70">Mois actuel</p>
-            <p className="mt-2 text-2xl font-black capitalize">
-              {titleCase(formatMonth(currentMonth))}
-            </p>
-          </div>
-          <div className="border-b border-[var(--color-border)] p-6 sm:border-b-0 sm:border-r">
-            <p className="text-sm font-bold text-[var(--color-muted)]">
-              Opérations du mois
-            </p>
-            <p className="mt-2 text-2xl font-black">{currentOperationCount}</p>
-          </div>
-          <div className="p-6">
-            <p className="text-sm font-bold text-[var(--color-muted)]">
-              Dernières données disponibles
-            </p>
-            <p className="mt-2 text-lg font-black capitalize">
-              {latestAvailableMonth
-                ? titleCase(formatMonth(latestAvailableMonth))
-                : "Aucune donnée"}
-            </p>
-            {latestBatch ? (
-              <p className="mt-1 truncate text-xs text-[var(--color-muted)]">
-                Dernier import : {latestBatch.filename} ·{" "}
-                {new Intl.DateTimeFormat("fr-FR", {
-                  day: "2-digit",
-                  month: "short",
-                  year: "numeric",
-                }).format(new Date(latestBatch.importedAt))}
-              </p>
-            ) : null}
-          </div>
-        </div>
-      </section>
-
-    </div>
+    <section className="card mx-auto max-w-2xl p-8 text-center">
+      <p className="eyebrow">Bootstrap V2 — état ambigu</p>
+      <h1 className="mt-2 text-2xl font-black">Contexte Household non déterminé</h1>
+      <p className="mt-3 text-[var(--color-muted)]">{message}</p>
+    </section>
   );
 }
 
+export default async function HomePage() {
+  let context: Awaited<ReturnType<typeof getBootstrapContext>>;
+
+  try {
+    context = await getBootstrapContext();
+  } catch (error) {
+    if (error instanceof BootstrapAuthenticationRequiredError) {
+      redirect("/connexion");
+    }
+    if (error instanceof AmbiguousHouseholdError) {
+      return <AmbiguousHouseholdState message={error.message} />;
+    }
+    throw error;
+  }
+
+  if (!context.household) redirect("/acces-refuse");
+
+  const firstPeriod = context.periods.at(0)?.month;
+  const lastPeriod = context.periods.at(-1)?.month;
+
+  return (
+    <div className="space-y-6">
+      <header>
+        <span className="badge" data-tone="warning">
+          Bootstrap V2 — validation technique
+        </span>
+        <h1 className="mt-3 text-[clamp(2rem,5vw,3.5rem)] font-black tracking-[-0.05em]">
+          Connexion Supabase V2
+        </h1>
+        <p className="mt-3 max-w-2xl text-[var(--color-muted)]">
+          Page provisoire de vérification Auth, RLS et lectures serveur. Elle ne
+          constitue pas l’accueil final de Budgetisation V2.
+        </p>
+      </header>
+
+      <section className="card p-6">
+        <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+          <div>
+            <p className="text-sm font-bold text-[var(--color-muted)]">Household</p>
+            <p className="mt-1 text-xl font-black">{context.household.name}</p>
+          </div>
+          <div>
+            <p className="text-sm font-bold text-[var(--color-muted)]">Timezone</p>
+            <p className="mt-1 text-xl font-black">{context.household.timezone}</p>
+          </div>
+          <div>
+            <p className="text-sm font-bold text-[var(--color-muted)]">Persons</p>
+            <p className="mt-1 text-xl font-black">
+              {context.persons.length
+                ? context.persons.map((person) => person.displayName).join(", ")
+                : "Aucune"}
+            </p>
+          </div>
+          <div>
+            <p className="text-sm font-bold text-[var(--color-muted)]">
+              Analysis Periods
+            </p>
+            <p className="mt-1 text-xl font-black">{context.periods.length}</p>
+            <p className="mt-1 text-sm text-[var(--color-muted)]">
+              {firstPeriod ?? "—"} → {lastPeriod ?? "—"}
+            </p>
+          </div>
+          <div>
+            <p className="text-sm font-bold text-[var(--color-muted)]">data_revision</p>
+            <p className="mt-1 text-xl font-black">
+              {context.revision?.dataRevision ?? "—"}
+            </p>
+          </div>
+          <div>
+            <p className="text-sm font-bold text-[var(--color-muted)]">
+              analytics_revision
+            </p>
+            <p className="mt-1 text-xl font-black">
+              {context.revision?.analyticsRevision ?? "—"}
+            </p>
+          </div>
+        </div>
+      </section>
+    </div>
+  );
+}

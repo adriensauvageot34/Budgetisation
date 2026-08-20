@@ -1,5 +1,7 @@
-import { redirect } from "next/navigation";
+import { ModuleComingSoon } from "@/components/layout/module-coming-soon";
+
+export const metadata = { title: "Analyse" };
 
 export default function AnalysisPage() {
-  redirect("/historique");
+  return <ModuleComingSoon name="Analyse" />;
 }

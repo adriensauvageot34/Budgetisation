@@ -1,56 +1,32 @@
-# Budgetisation
+# Budgetisation V2
 
-Application Next.js privée pour analyser le budget historique d’un foyer partagé.
-
-## Architecture
-
-Les pages utilisent `SupabaseBudgetRepository`, qui lit PostgreSQL via Supabase. Le
-schéma relationnel couvre le foyer, ses membres, les comptes, les imports, la
-taxonomie et les opérations. Supabase Auth protège les routes et les politiques
-RLS limitent chaque lecture/écriture aux membres du foyer concerné.
+Application privée construite avec Next.js 16, React 19, TypeScript, App Router,
+Supabase SSR, Tailwind CSS et Recharts.
 
 ## Configuration
 
-Copier `.env.example` vers `.env.local`, puis renseigner :
+Copier `.env.example` vers `.env.local`, puis renseigner uniquement les valeurs
+publiques du projet distant :
 
 ```dotenv
 NEXT_PUBLIC_SUPABASE_URL=
 NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=
 ```
 
-Ne jamais ajouter de clé `service_role` au navigateur.
+Ne jamais ajouter de clé `service_role` au navigateur ou au dépôt.
 
-## Initialisation Supabase
+## État du projet
 
-Exécuter une seule fois `supabase/bootstrap.sql` dans Supabase SQL Editor. Ce
-fichier crée le schéma, les politiques RLS, le foyer `Budgetisation` et les 481
-opérations historiques issues du XLSX fourni. Aucune ligne n’est supprimée sur
-la seule base de valeurs identiques ; les fingerprints servent uniquement à
-signaler des doublons potentiels.
+Étape 0 — legacy V1 nettoyé, bootstrap technique V2 en cours de validation.
+Ce bootstrap vérifie uniquement Auth, RLS et les lectures minimales du contexte
+Household. Il ne constitue pas l’Architecture Core de l’application.
 
-Un seul compte Supabase Auth partagé est actuellement utilisé par Adrien et
-Manon. Dans **Authentication > Users**, créer ou sélectionner cet utilisateur,
-copier son UUID, puis exécuter dans SQL Editor :
-
-```sql
-select public.attach_user_to_budgetisation(
-  '<UUID_COMPTE_PARTAGE>',
-  'Adrien et Manon',
-  'owner'
-);
-```
-
-Le rattachement utilise les UUID Auth, jamais les e-mails. L’architecture Auth
-et RLS reste compatible avec plusieurs membres : un second utilisateur pourra
-être créé et rattaché plus tard avec la même fonction et le rôle `member`.
-
-## Démarrage local
+La Supabase distante est déjà initialisée et validée en V2. Ne jamais exécuter
+les anciens scripts V1 ni lancer de reset automatique.
 
 ```bash
 npm install
 npm run dev
 ```
 
-Les migrations versionnées se trouvent dans `supabase/migrations`. Le script
-`scripts/generate_historical_seed.py` permet de régénérer le seed à partir du
-fichier source, sans déduire de compte ni de personne.
+Prochaine grande étape après validation humaine du Gate 0 : Architecture Core V2.

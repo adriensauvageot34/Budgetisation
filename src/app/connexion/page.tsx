@@ -12,10 +12,10 @@ export default function LoginPage() {
           <Landmark size={23} />
         </span>
         <h1 className="mt-5 text-3xl font-black tracking-[-0.04em]">
-          Budgetisation
+          Budgetisation V2
         </h1>
         <p className="mt-2 text-sm text-[var(--color-muted)]">
-          Accès privé au budget du foyer.
+          Connexion au bootstrap technique V2.
         </p>
         <Suspense fallback={null}>
           <LoginForm />

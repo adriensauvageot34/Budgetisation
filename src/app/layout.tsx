@@ -7,7 +7,7 @@ export const metadata: Metadata = {
     default: "Budgetisation",
     template: "%s · Budgetisation",
   },
-  description: "Analyse privée du budget historique du foyer.",
+  description: "Bootstrap technique provisoire de Budgetisation V2.",
 };
 
 export default function RootLayout({

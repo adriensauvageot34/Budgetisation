@@ -1,11 +1,7 @@
-import type { Metadata } from "next";
-import { getBudgetRepository } from "@/data";
-import { ImportsWorkspace } from "@/features/imports/imports-workspace";
+import { ModuleComingSoon } from "@/components/layout/module-coming-soon";
 
-export const metadata: Metadata = { title: "Imports" };
-export const dynamic = "force-dynamic";
+export const metadata = { title: "Imports" };
 
-export default async function ImportsPage() {
-  const repository = await getBudgetRepository();
-  return <ImportsWorkspace batches={await repository.getImportBatches()} />;
+export default function ImportsPage() {
+  return <ModuleComingSoon name="Imports" />;
 }
