@@ -96,6 +96,8 @@ function classifyImportViolation(sourcePath, specifier, isClient) {
   const inQueryApi = isWithin(sourcePath, "src/query-api");
   const inQueryApiServer = isWithin(sourcePath, "src/query-api/server");
   const inServer = isWithin(sourcePath, "src/server");
+  const inUi = isWithin(sourcePath, "src/ui");
+  const inNavigation = isWithin(sourcePath, "src/navigation");
   const sourceFeature = featureName(sourcePath);
   const inSharedUi = isWithin(sourcePath, "src/shared/ui");
 
@@ -116,6 +118,7 @@ function classifyImportViolation(sourcePath, specifier, isClient) {
         "src/server",
         "src/features",
         "src/shared/ui",
+        "src/ui",
         "src/components",
         "src/lib/supabase",
       ].some((prefix) => isWithin(target, prefix))
@@ -138,6 +141,7 @@ function classifyImportViolation(sourcePath, specifier, isClient) {
         "src/app",
         "src/features",
         "src/shared/ui",
+        "src/ui",
         "src/components",
         "src/navigation",
       ].some((prefix) => isWithin(target, prefix))
@@ -164,12 +168,40 @@ function classifyImportViolation(sourcePath, specifier, isClient) {
         "src/app",
         "src/features",
         "src/shared/ui",
+        "src/ui",
         "src/components",
         "src/navigation",
       ].some((prefix) => isWithin(target, prefix))
     ) {
       return "Query API ne peut pas importer UI, pages ou Navigation";
     }
+  }
+
+  if (inUi) {
+    if (
+      specifier === "server-only" ||
+      specifier.startsWith("@supabase/")
+    ) {
+      return "UI Foundations ne peut pas importer server-only ou Supabase";
+    }
+    if (
+      target &&
+      [
+        "src/analytics",
+        "src/server",
+        "src/query-api/server",
+        "src/lib/supabase",
+        "src/app",
+        "src/features",
+        "src/components",
+      ].some((prefix) => isWithin(target, prefix))
+    ) {
+      return "UI Foundations ne peut pas importer Analytics, server, pages, features ou Supabase";
+    }
+  }
+
+  if (inNavigation && target && isWithin(target, "src/ui")) {
+    return "Navigation ne peut pas persister ou importer des DTO UI/media";
   }
 
   if (sourceFeature || isClient) {
@@ -258,6 +290,12 @@ function selfCheckRules() {
     ["src/analytics/example.ts", "@/query-api", false],
     ["src/query-api/example.ts", "react", false],
     ["src/query-api/example.ts", "@/components/example", false],
+    ["src/ui/example.tsx", "@/analytics/production", true],
+    ["src/ui/example.tsx", "@/query-api/server", true],
+    ["src/ui/example.tsx", "@supabase/supabase-js", true],
+    ["src/core/example.ts", "@/ui", false],
+    ["src/query-api/example.ts", "@/ui", false],
+    ["src/navigation/example.ts", "@/ui/media", false],
     ["src/features/example/client.ts", "@/query-api/server", true],
     ["src/features/example/client.ts", "@/server/example", true],
     ["src/server/example.ts", "@/features/example/client", false],
@@ -298,7 +336,7 @@ for (const filePath of sourceFiles) {
   }
 
   if (
-    (metadata.isClient || featureName(sourcePath)) &&
+    (metadata.isClient || featureName(sourcePath) || isWithin(sourcePath, "src/ui")) &&
     /process\.env\.(?!NEXT_PUBLIC_)[A-Z0-9_]+/.test(metadata.text)
   ) {
     violations.push(`${sourcePath}:1 variable serveur utilisée dans du code client/feature`);
