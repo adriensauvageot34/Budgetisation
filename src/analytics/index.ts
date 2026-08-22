@@ -3,5 +3,7 @@ export * from "./comparisons";
 export * from "./context";
 export * from "./facts";
 export * from "./provenance";
+export * from "./production";
+export * from "./publication";
 export * from "./references";
 export * from "./support";

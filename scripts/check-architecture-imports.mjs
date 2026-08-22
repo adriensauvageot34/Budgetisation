@@ -92,6 +92,9 @@ function featureName(sourcePath) {
 function classifyImportViolation(sourcePath, specifier, isClient) {
   const target = resolveInternalTarget(sourcePath, specifier);
   const inCore = isWithin(sourcePath, "src/core");
+  const inAnalytics = isWithin(sourcePath, "src/analytics");
+  const inQueryApi = isWithin(sourcePath, "src/query-api");
+  const inQueryApiServer = isWithin(sourcePath, "src/query-api/server");
   const inServer = isWithin(sourcePath, "src/server");
   const sourceFeature = featureName(sourcePath);
   const inSharedUi = isWithin(sourcePath, "src/shared/ui");
@@ -121,6 +124,54 @@ function classifyImportViolation(sourcePath, specifier, isClient) {
     }
   }
 
+  if (inAnalytics) {
+    if (
+      specifier === "react" ||
+      specifier.startsWith("react/") ||
+      specifier === "next/navigation"
+    ) {
+      return "analytics ne peut pas importer React ou la navigation client";
+    }
+    if (
+      target &&
+      [
+        "src/app",
+        "src/features",
+        "src/shared/ui",
+        "src/components",
+        "src/navigation",
+      ].some((prefix) => isWithin(target, prefix))
+    ) {
+      return "analytics ne peut pas importer UI, pages ou Navigation";
+    }
+    if (target && isWithin(target, "src/query-api")) {
+      return "analytics ne peut pas dépendre de Query API";
+    }
+  }
+
+  if (inQueryApi) {
+    if (
+      specifier === "react" ||
+      specifier.startsWith("react/") ||
+      specifier === "next" ||
+      specifier.startsWith("next/")
+    ) {
+      return "Query API ne peut pas importer React ou Next";
+    }
+    if (
+      target &&
+      [
+        "src/app",
+        "src/features",
+        "src/shared/ui",
+        "src/components",
+        "src/navigation",
+      ].some((prefix) => isWithin(target, prefix))
+    ) {
+      return "Query API ne peut pas importer UI, pages ou Navigation";
+    }
+  }
+
   if (sourceFeature || isClient) {
     if (
       target &&
@@ -132,6 +183,15 @@ function classifyImportViolation(sourcePath, specifier, isClient) {
     ) {
       return "une feature ou un module client ne peut pas importer server";
     }
+  }
+
+  if (
+    target &&
+    isWithin(target, "src/query-api/server") &&
+    !inQueryApiServer &&
+    !inServer
+  ) {
+    return "query-api/server ne peut être importé que depuis une frontière serveur";
   }
 
   if (inServer) {
@@ -181,7 +241,10 @@ function requiresServerOnlyMarker(sourcePath) {
   ) {
     return true;
   }
-  if (!isWithin(sourcePath, "src/server")) return false;
+  if (
+    !isWithin(sourcePath, "src/server") &&
+    !isWithin(sourcePath, "src/query-api/server")
+  ) return false;
   return !/(?:^|\/)(?:types|errors)\.ts$/.test(sourcePath);
 }
 
@@ -190,6 +253,12 @@ function selfCheckRules() {
     ["src/core/example.ts", "react", false],
     ["src/core/example.ts", "@/server/example", false],
     ["src/core/example.ts", "@supabase/supabase-js", false],
+    ["src/analytics/example.ts", "@/navigation", false],
+    ["src/analytics/example.ts", "react", false],
+    ["src/analytics/example.ts", "@/query-api", false],
+    ["src/query-api/example.ts", "react", false],
+    ["src/query-api/example.ts", "@/components/example", false],
+    ["src/features/example/client.ts", "@/query-api/server", true],
     ["src/features/example/client.ts", "@/server/example", true],
     ["src/server/example.ts", "@/features/example/client", false],
   ];
@@ -233,6 +302,14 @@ for (const filePath of sourceFiles) {
     /process\.env\.(?!NEXT_PUBLIC_)[A-Z0-9_]+/.test(metadata.text)
   ) {
     violations.push(`${sourcePath}:1 variable serveur utilisée dans du code client/feature`);
+  }
+
+  if (
+    (isWithin(sourcePath, "src/analytics") ||
+      isWithin(sourcePath, "src/query-api")) &&
+    /\b(?:globalThis\.(?:window|document|navigator|localStorage|sessionStorage)|window\.(?:location|history|document|navigator|localStorage|sessionStorage)|document\.(?:cookie|body|querySelector|getElementById)|navigator\.(?:userAgent|language)|(?:localStorage|sessionStorage)\.(?:getItem|setItem|removeItem|clear))/.test(metadata.text)
+  ) {
+    violations.push(`${sourcePath}:1 Analytics/Query API utilise une API navigateur`);
   }
 }
 
