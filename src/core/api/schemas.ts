@@ -1,0 +1,150 @@
+import { parseInstant } from "../time";
+import {
+  createRuntimeSchema,
+  parseStrictRecord,
+  parseStringLiteral,
+  requireProperty,
+  validationFailure,
+  withValidationPath,
+  type RuntimeSchema,
+} from "../validation";
+import {
+  parseAnalyticsRevision,
+  parseDataRevision,
+} from "../versions";
+import { parseSupportedContractVersion } from "./contract-version";
+import type {
+  ApiError,
+  ApiErrorCode,
+  ApiMeta,
+  ApiResponse,
+} from "./types";
+
+const apiErrorCodes: ReadonlySet<string> = new Set<ApiErrorCode>([
+  "NOT_FOUND",
+  "PERMISSION_DENIED",
+  "INVALID_SCOPE",
+  "CONTRACT_MISMATCH",
+  "COMPUTATION_FAILED",
+  "TEMPORARY_UNAVAILABLE",
+]);
+const nonRetryableErrorCodes: ReadonlySet<ApiErrorCode> = new Set([
+  "NOT_FOUND",
+  "PERMISSION_DENIED",
+  "INVALID_SCOPE",
+  "CONTRACT_MISMATCH",
+]);
+
+function parseNonEmptyString(value: unknown, fieldName: string): string {
+  if (typeof value !== "string" || value.trim().length === 0) {
+    validationFailure({
+      path: [],
+      code: "invalid_string",
+      message: `${fieldName} doit être une chaîne non vide.`,
+    });
+  }
+  return value;
+}
+
+function parseBoolean(value: unknown, fieldName: string): boolean {
+  if (typeof value !== "boolean") {
+    validationFailure({
+      path: [],
+      code: "invalid_type",
+      message: `${fieldName} doit être un booléen.`,
+    });
+  }
+  return value;
+}
+
+function parseApiErrorCode(value: unknown): ApiErrorCode {
+  return parseStringLiteral<ApiErrorCode>(
+    value,
+    apiErrorCodes,
+    "ApiError.code",
+  );
+}
+
+function parseApiError(value: unknown): ApiError {
+  const record = parseStrictRecord(
+    value,
+    ["code", "message", "retryable", "requestId"],
+    "ApiError",
+  );
+  const rawCode = requireProperty(record, "code", "ApiError");
+  const rawMessage = requireProperty(record, "message", "ApiError");
+  const rawRetryable = requireProperty(record, "retryable", "ApiError");
+  const rawRequestId = requireProperty(record, "requestId", "ApiError");
+
+  const code = withValidationPath("code", () => parseApiErrorCode(rawCode));
+  const message = withValidationPath("message", () =>
+    parseNonEmptyString(rawMessage, "ApiError.message"),
+  );
+  const retryable = withValidationPath("retryable", () =>
+    parseBoolean(rawRetryable, "ApiError.retryable"),
+  );
+  const requestId = withValidationPath("requestId", () =>
+    parseNonEmptyString(rawRequestId, "ApiError.requestId"),
+  );
+  if (retryable && nonRetryableErrorCodes.has(code)) {
+    validationFailure({
+      path: ["retryable"],
+      code: "invalid_combination",
+      message: `${code} n'est pas retryable.`,
+    });
+  }
+
+  return { code, message, retryable, requestId };
+}
+
+function parseApiMeta(value: unknown): ApiMeta {
+  const record = parseStrictRecord(
+    value,
+    ["dataRevision", "analyticsRevision", "contractVersion", "computedAt"],
+    "ApiMeta",
+  );
+  const rawDataRevision = requireProperty(record, "dataRevision", "ApiMeta");
+  const rawAnalyticsRevision = requireProperty(
+    record,
+    "analyticsRevision",
+    "ApiMeta",
+  );
+  const rawContractVersion = requireProperty(
+    record,
+    "contractVersion",
+    "ApiMeta",
+  );
+  const rawComputedAt = requireProperty(record, "computedAt", "ApiMeta");
+
+  return {
+    dataRevision: withValidationPath("dataRevision", () =>
+      parseDataRevision(rawDataRevision),
+    ),
+    analyticsRevision: withValidationPath("analyticsRevision", () =>
+      parseAnalyticsRevision(rawAnalyticsRevision),
+    ),
+    contractVersion: withValidationPath("contractVersion", () =>
+      parseSupportedContractVersion(rawContractVersion),
+    ),
+    computedAt: withValidationPath("computedAt", () =>
+      parseInstant(rawComputedAt),
+    ),
+  };
+}
+
+export const apiErrorSchema = createRuntimeSchema<ApiError>(parseApiError);
+export const apiMetaSchema = createRuntimeSchema<ApiMeta>(parseApiMeta);
+
+export function createApiResponseSchema<T>(
+  dataSchema: RuntimeSchema<T>,
+): RuntimeSchema<ApiResponse<T>> {
+  return createRuntimeSchema((value: unknown) => {
+    const record = parseStrictRecord(value, ["data", "meta"], "ApiResponse");
+    const rawData = requireProperty(record, "data", "ApiResponse");
+    const rawMeta = requireProperty(record, "meta", "ApiResponse");
+    return {
+      data: withValidationPath("data", () => dataSchema.parse(rawData)),
+      meta: withValidationPath("meta", () => apiMetaSchema.parse(rawMeta)),
+    };
+  });
+}

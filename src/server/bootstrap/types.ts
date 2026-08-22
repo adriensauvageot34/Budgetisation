@@ -1,13 +1,17 @@
+import type { HouseholdId, PersonId } from "@/core/identity";
+import type { HouseholdTimeZone, Instant, LocalDate } from "@/core/time";
+import type { AnalyticsRevision, DataRevision } from "@/core/versions";
+
 /** Types strictement provisoires utilisés par la page de validation technique. */
 export type BootstrapHousehold = {
-  householdId: string;
+  householdId: HouseholdId;
   name: string;
-  timezone: string;
+  timezone: HouseholdTimeZone;
 };
 
 export type BootstrapPerson = {
-  personId: string;
-  householdId: string;
+  personId: PersonId;
+  householdId: HouseholdId;
   displayName: string;
   status: string | null;
 };
@@ -20,19 +24,19 @@ export type BootstrapAnalysisStatus =
 
 export type BootstrapAnalysisPeriod = {
   analysisPeriodId: string;
-  householdId: string;
-  month: string;
+  householdId: HouseholdId;
+  month: LocalDate;
   financeStatus: BootstrapAnalysisStatus;
   lifeStatus: BootstrapAnalysisStatus;
   locationStatus: BootstrapAnalysisStatus;
   calendarStatus: BootstrapAnalysisStatus;
   isClosed: boolean;
-  sourceRevision: number | null;
+  sourceRevision: DataRevision | null;
 };
 
 export type BootstrapHouseholdRevision = {
-  householdId: string;
-  dataRevision: number;
-  analyticsRevision: number;
-  updatedAt: string;
+  householdId: HouseholdId;
+  dataRevision: DataRevision;
+  analyticsRevision: AnalyticsRevision;
+  updatedAt: Instant;
 };

@@ -9,11 +9,11 @@ import {
 } from "@/server/bootstrap/queries";
 
 export async function getBootstrapContext() {
-  const { supabase, user } = await getAuthenticatedBootstrapClient();
+  const { supabase } = await getAuthenticatedBootstrapClient();
   const household = await getCurrentHousehold(supabase);
 
   if (!household) {
-    return { user, household: null, persons: [], periods: [], revision: null };
+    return { household: null, persons: [], periods: [], revision: null };
   }
 
   const [persons, periods, revision] = await Promise.all([
@@ -22,5 +22,5 @@ export async function getBootstrapContext() {
     getHouseholdRevision(supabase, household.householdId),
   ]);
 
-  return { user, household, persons, periods, revision };
+  return { household, persons, periods, revision };
 }
