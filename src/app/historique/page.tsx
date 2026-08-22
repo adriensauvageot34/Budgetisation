@@ -1,7 +1,5 @@
-import { ModuleComingSoon } from "@/components/layout/module-coming-soon";
-
-export const metadata = { title: "Historique" };
+import { redirect } from "next/navigation";
 
 export default function HistoryPage() {
-  return <ModuleComingSoon name="Historique" />;
+  redirect("/historique/calendrier");
 }

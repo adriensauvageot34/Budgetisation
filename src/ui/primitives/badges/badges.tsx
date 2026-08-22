@@ -1,10 +1,11 @@
-export const statusBadgeStates = ["active", "inactive", "pending", "confirmed"] as const;
+export const statusBadgeStates = ["active", "inactive", "pending", "confirmed", "deduced"] as const;
 export const qualityBadgeStates = [
   "partial",
   "conflict",
   "limited_support",
   "insufficient_support",
   "estimated",
+  "incomplete",
 ] as const;
 export const stabilityBadgeStates = ["stable", "variable", "insufficient_support"] as const;
 export type StatusBadgeState = (typeof statusBadgeStates)[number];
@@ -16,6 +17,7 @@ const statusLabels: Readonly<Record<StatusBadgeState, string>> = {
   inactive: "Inactif",
   pending: "En attente",
   confirmed: "Confirmé",
+  deduced: "Déduit",
 };
 const qualityLabels: Readonly<Record<QualityBadgeState, string>> = {
   partial: "Partiel",
@@ -23,6 +25,7 @@ const qualityLabels: Readonly<Record<QualityBadgeState, string>> = {
   limited_support: "Support limité",
   insufficient_support: "Support insuffisant",
   estimated: "Estimé",
+  incomplete: "Période incomplète",
 };
 const stabilityLabels: Readonly<Record<StabilityBadgeState, string>> = {
   stable: "Stable",

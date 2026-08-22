@@ -45,6 +45,7 @@ import type {
 } from "../contracts/restoration";
 import {
   rootNavigationContextSchema,
+  type CalendarWeekRef,
   type HistoryRootContext,
   type RootNavigationContext,
 } from "../contracts/routes";
@@ -241,6 +242,71 @@ class DefaultNavigationController implements NavigationController {
     const state = this.isStarted() ? this.requireState() : null;
     const day = state === null ? null : getRootNavigationDay(state.root);
     return day === null ? noop("no_day") : this.openDay(getNextDay(day));
+  }
+
+  openCalendarMonth(month: YearMonth): NavigationCommandResult {
+    if (!this.isStarted()) return noop("not_started");
+    const targetMonth = parseYearMonth(month);
+    const current = this.requireState();
+    if (
+      current.exploration === null &&
+      "area" in current.root &&
+      current.root.area === "calendar" &&
+      current.root.context.kind === "calendar_month" &&
+      current.root.context.month === targetMonth &&
+      current.root.context.day === undefined
+    ) {
+      return noop("same_target");
+    }
+
+    this.beginNavigation();
+    this.captureCurrentSnapshot();
+    this.closeActiveGeneration();
+    const target: HistoryRootContext = {
+      area: "calendar",
+      context: { kind: "calendar_month", month: targetMonth },
+    };
+    this.commitRoot(target, "push");
+    this.deps.surface.applyScope(null);
+    this.deps.surface.applySubview(null);
+    this.rememberRoot(target);
+    return applied;
+  }
+
+  openCalendarWeek(
+    month: YearMonth,
+    week: CalendarWeekRef,
+  ): NavigationCommandResult {
+    if (!this.isStarted()) return noop("not_started");
+    const targetMonth = parseYearMonth(month);
+    const target = rootNavigationContextSchema.parse({
+      area: "calendar",
+      context: {
+        kind: "calendar_week",
+        month: targetMonth,
+        week,
+      },
+    }) as HistoryRootContext;
+    const current = this.requireState();
+    if (
+      current.exploration === null &&
+      "area" in current.root &&
+      current.root.area === "calendar" &&
+      current.root.context.kind === "calendar_week" &&
+      current.root.context.month === targetMonth &&
+      current.root.context.week === week
+    ) {
+      return noop("same_target");
+    }
+
+    this.beginNavigation();
+    this.captureCurrentSnapshot();
+    this.closeActiveGeneration();
+    this.commitRoot(target, "push");
+    this.deps.surface.applyScope(null);
+    this.deps.surface.applySubview(null);
+    this.rememberRoot(target);
+    return applied;
   }
 
   openExploration(node: ExplorationNode): NavigationCommandResult {

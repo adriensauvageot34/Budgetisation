@@ -1,0 +1,34 @@
+.frame { display: grid; gap: var(--ui-layout-section-gap); }
+.pageHeader { display: grid; gap: var(--ui-space-3); }
+.pageHeader h1 { margin: 0; font-size: var(--ui-font-size-page); }
+.pageHeader p { margin: 0; color: var(--ui-color-text-secondary); }
+.eyebrow { color: var(--ui-color-text-secondary); font-size: var(--ui-font-size-metadata); font-weight: var(--ui-font-weight-strong); letter-spacing: .08em; text-transform: uppercase; }
+.titleRow { display: grid; grid-template-columns: auto minmax(12rem, 1fr) auto; align-items: center; gap: var(--ui-space-4); text-align: center; }
+.titleRow h1 { min-width: 0; }
+.headerActions { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: var(--ui-space-3); }
+.monthCard { display: grid; gap: var(--ui-space-3); min-height: 11rem; }
+.monthFacts, .counts { display: flex; flex-wrap: wrap; gap: var(--ui-space-2) var(--ui-space-4); color: var(--ui-color-text-secondary); font-size: var(--ui-font-size-metadata); }
+.monthTotal { display: flex; align-items: baseline; gap: var(--ui-space-3); }
+.calendarGrid { display: grid; grid-template-columns: 4.5rem repeat(7, minmax(0, 1fr)); gap: var(--ui-space-2); align-items: stretch; }
+.weekHeading, .weekday { display: grid; place-items: center; min-height: 2.5rem; color: var(--ui-color-text-secondary); font-size: var(--ui-font-size-metadata); font-weight: var(--ui-font-weight-strong); }
+.weekButton { align-self: stretch; }
+.dayCard { display: grid; gap: var(--ui-space-2); min-height: 8.5rem; padding: var(--ui-space-3); }
+.dayHeading { display: flex; align-items: start; justify-content: space-between; gap: var(--ui-space-2); }
+.dayMeta { color: var(--ui-color-text-secondary); font-size: var(--ui-font-size-metadata); }
+.badges { display: flex; flex-wrap: wrap; gap: var(--ui-space-1); }
+.padding { border-radius: var(--ui-radius-md); background: var(--ui-color-surface-subtle); opacity: .45; }
+.weekCards { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: var(--ui-space-2); }
+.drawerContent, .drawerSections { display: grid; gap: var(--ui-layout-module-gap); }
+.drawerNavigation, .previewHeader, .previewActions { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: var(--ui-space-2); }
+.financeGrid, .contexts { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--ui-space-3); }
+.financeGrid > *, .contexts > * { display: grid; gap: var(--ui-space-2); }
+.cleanList, .timelineList { display: grid; gap: var(--ui-space-2); margin: 0; padding: 0; list-style: none; }
+.cleanList li { display: flex; justify-content: space-between; gap: var(--ui-space-3); }
+.timelineList :global(.ui-surface) { display: grid; gap: var(--ui-space-2); }
+@media (max-width: 64rem) {
+  .titleRow { grid-template-columns: 1fr 1fr; }
+  .titleRow h1 { grid-column: 1 / -1; grid-row: 1; }
+  .calendarGrid { min-width: 70rem; }
+  .weekCards { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .financeGrid, .contexts { grid-template-columns: 1fr; }
+}

@@ -18,6 +18,7 @@ import type { NavigationHistoryState } from "./history";
 import type { OperationsNavigationFilters } from "./operations";
 import type { RestorationReadiness } from "./restoration";
 import type { NavigationSubviewRef } from "./subviews";
+import type { CalendarWeekRef } from "./routes";
 
 export type NavigationCommandResult =
   | { readonly kind: "applied" }
@@ -84,6 +85,12 @@ export interface NavigationController {
   closeDay(): NavigationCommandResult;
   previousDay(): NavigationCommandResult;
   nextDay(): NavigationCommandResult;
+
+  openCalendarMonth(month: YearMonth): NavigationCommandResult;
+  openCalendarWeek(
+    month: YearMonth,
+    week: CalendarWeekRef,
+  ): NavigationCommandResult;
 
   openExploration(node: ExplorationNode): NavigationCommandResult;
   push(node: ExplorationNode): NavigationCommandResult;
