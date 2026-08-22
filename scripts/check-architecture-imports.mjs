@@ -98,6 +98,11 @@ function classifyImportViolation(sourcePath, specifier, isClient) {
   const inServer = isWithin(sourcePath, "src/server");
   const inUi = isWithin(sourcePath, "src/ui");
   const inUiFoundations = isWithin(sourcePath, "src/ui/foundations");
+  const inUiAccessibility = isWithin(sourcePath, "src/ui/accessibility");
+  const inUiInteraction = isWithin(sourcePath, "src/ui/interaction");
+  const inUiLayout = isWithin(sourcePath, "src/ui/layout");
+  const inUiScroll = isWithin(sourcePath, "src/ui/scroll");
+  const inUiOverlays = isWithin(sourcePath, "src/ui/overlays");
   const inUiPrimitives = isWithin(sourcePath, "src/ui/primitives");
   const inUiComposites = isWithin(sourcePath, "src/ui/composites");
   const inUiCharts = isWithin(sourcePath, "src/ui/charts");
@@ -215,6 +220,11 @@ function classifyImportViolation(sourcePath, specifier, isClient) {
         "src/ui/metrics",
         "src/ui/media",
         "src/ui/feedback",
+        "src/ui/accessibility",
+        "src/ui/interaction",
+        "src/ui/layout",
+        "src/ui/scroll",
+        "src/ui/overlays",
       ].some((prefix) => isWithin(target, prefix))
     ) {
       return "UI Foundations/tokens ne peut pas dépendre de Query, Navigation ou d’une couche UI supérieure";
@@ -222,9 +232,54 @@ function classifyImportViolation(sourcePath, specifier, isClient) {
   }
 
   if (
+    (inUiAccessibility || inUiInteraction || inUiLayout) &&
+    target &&
+    [
+      "src/query-api",
+      "src/navigation",
+      "src/ui/primitives",
+      "src/ui/composites",
+      "src/ui/charts",
+      "src/ui/media",
+      "src/ui/metrics",
+      "src/ui/feedback",
+      "src/ui/overlays",
+      "src/ui/scroll",
+    ].some((prefix) => isWithin(target, prefix))
+  ) {
+    return "UI accessibility/interaction/layout doit rester une mécanique UI pure";
+  }
+
+  if (
+    inUiScroll &&
+    target &&
+    ((isWithin(target, "src/navigation") && target !== "src/navigation") ||
+      [
+        "src/query-api",
+        "src/ui/primitives",
+        "src/ui/composites",
+        "src/ui/charts",
+        "src/ui/overlays",
+      ].some((prefix) => isWithin(target, prefix)))
+  ) {
+    return "UI Scroll ne peut utiliser que l’API publique Navigation et les couches UI basses";
+  }
+
+  if (
+    inUiOverlays &&
+    target &&
+    ((isWithin(target, "src/navigation") && target !== "src/navigation") ||
+      ["src/query-api", "src/ui/composites", "src/ui/charts"].some((prefix) =>
+        isWithin(target, prefix),
+      ))
+  ) {
+    return "UI Overlays ne peut utiliser que l’API publique Navigation et les primitives UI";
+  }
+
+  if (
     inUiPrimitives &&
     target &&
-    ["src/ui/composites", "src/ui/charts"].some((prefix) =>
+    ["src/ui/composites", "src/ui/charts", "src/ui/overlays"].some((prefix) =>
       isWithin(target, prefix),
     )
   ) {
@@ -348,8 +403,11 @@ function selfCheckRules() {
     ["src/ui/foundations/example.ts", "@/query-api", false],
     ["src/ui/foundations/example.ts", "@/ui/primitives", false],
     ["src/ui/primitives/example.tsx", "@/ui/composites", true],
+    ["src/ui/primitives/example.tsx", "@/ui/overlays", true],
     ["src/ui/composites/example.tsx", "@/ui/charts", true],
     ["src/ui/charts/example.tsx", "@/navigation/contracts/exploration", true],
+    ["src/ui/scroll/example.ts", "@/navigation/contracts/checkpoint", true],
+    ["src/ui/overlays/example.tsx", "@/navigation/controller/navigation-controller", true],
     ["src/features/example/client.ts", "@/query-api/server", true],
     ["src/features/example/client.ts", "@/server/example", true],
     ["src/server/example.ts", "@/features/example/client", false],
@@ -394,6 +452,13 @@ for (const filePath of sourceFiles) {
     /process\.env\.(?!NEXT_PUBLIC_)[A-Z0-9_]+/.test(metadata.text)
   ) {
     violations.push(`${sourcePath}:1 variable serveur utilisée dans du code client/feature`);
+  }
+
+  if (
+    isWithin(sourcePath, "src/ui") &&
+    /\b(?:history\.pushState|history\.replaceState|history\.back|window\.history|globalThis\.history)\b/.test(metadata.text)
+  ) {
+    violations.push(`${sourcePath}:1 UI appelle Browser History directement`);
   }
 
   if (

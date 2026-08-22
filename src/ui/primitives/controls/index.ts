@@ -10,8 +10,10 @@ export {
 } from "./segmented-control";
 export {
   SecondaryTabs,
+  TabPanel,
   Tabs,
   type SecondaryTabsProps,
   type TabOption,
+  type TabPanelProps,
   type TabsProps,
 } from "./tabs";

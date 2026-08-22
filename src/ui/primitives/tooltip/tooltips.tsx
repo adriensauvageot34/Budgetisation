@@ -1,4 +1,8 @@
-import type { ReactNode } from "react";
+"use client";
+
+import { useRef, type KeyboardEvent, type ReactNode } from "react";
+import { requireAccessibleName } from "../../accessibility";
+import { closeTooltipOnEscape } from "../../interaction";
 
 export type InfoTooltipProps = {
   readonly label: string;
@@ -6,10 +10,17 @@ export type InfoTooltipProps = {
 };
 
 export function InfoTooltip({ label, children }: InfoTooltipProps) {
+  const ref = useRef<HTMLDetailsElement>(null);
+  const accessibleLabel = requireAccessibleName(label, "InfoTooltip");
+  const onKeyDown = (event: KeyboardEvent<HTMLDetailsElement>) => {
+    if (closeTooltipOnEscape(event.key, () => {
+      if (ref.current) ref.current.open = false;
+    })) event.stopPropagation();
+  };
   return (
-    <details className="ui-info-tooltip">
-      <summary className="ui-focusable">{label}</summary>
-      <div>{children}</div>
+    <details ref={ref} className="ui-info-tooltip" onKeyDown={onKeyDown}>
+      <summary className="ui-focusable">{accessibleLabel}</summary>
+      <div role="tooltip">{children}</div>
     </details>
   );
 }
@@ -17,17 +28,29 @@ export function InfoTooltip({ label, children }: InfoTooltipProps) {
 export type ChartTooltipProps = {
   readonly label: string;
   readonly children: ReactNode;
+  readonly onDismiss?: () => void;
 };
 
-export function ChartTooltip({ label, children }: ChartTooltipProps) {
+export function ChartTooltip({ label, children, onDismiss }: ChartTooltipProps) {
+  const accessibleLabel = requireAccessibleName(label, "ChartTooltip");
   return (
-    <div className="ui-chart-tooltip" role="status" aria-label={label}>
-      <strong>{label}</strong>
+    <div
+      className="ui-chart-tooltip ui-focusable"
+      role="tooltip"
+      aria-label={accessibleLabel}
+      tabIndex={0}
+      onKeyDown={(event) => {
+        if (onDismiss && closeTooltipOnEscape(event.key, onDismiss)) {
+          event.stopPropagation();
+        }
+      }}
+    >
+      <strong>{accessibleLabel}</strong>
       <div>{children}</div>
     </div>
   );
 }
 
-export function DisabledReason({ children }: { readonly children: ReactNode }) {
-  return <p className="ui-disabled-reason">{children}</p>;
+export function DisabledReason({ id, children }: { readonly id: string; readonly children: ReactNode }) {
+  return <p id={id} className="ui-disabled-reason">{children}</p>;
 }

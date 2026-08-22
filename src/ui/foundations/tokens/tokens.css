@@ -28,8 +28,8 @@
   --ui-color-surface-raised: #fafaf8;
   --ui-color-surface-overlay: #ffffff;
   --ui-color-text-primary: #24322f;
-  --ui-color-text-secondary: #697673;
-  --ui-color-text-muted: #8c9794;
+  --ui-color-text-secondary: #53625e;
+  --ui-color-text-muted: #5f6e6a;
   --ui-color-text-on-action: #ffffff;
   --ui-color-border-subtle: #e8e8e2;
   --ui-color-border-default: #dedfd8;
@@ -85,6 +85,15 @@
   --ui-icon-size-md: 1.25rem;
   --ui-icon-size-lg: 1.5rem;
   --ui-icon-stroke: 1.8;
+  --ui-layout-max-width: 87.5rem;
+  --ui-layout-gutter: clamp(1rem, 2.4vw, 2rem);
+  --ui-layout-module-gap: clamp(1.5rem, 2.2vw, 2rem);
+  --ui-control-target-size: 2.5rem;
+  --ui-overlay-safe-margin: clamp(1rem, 3vw, 2.5rem);
+  --ui-overlay-width-exploration: 68.75rem;
+  --ui-overlay-width-day-drawer: 38.75rem;
+  --ui-overlay-width-operation-root: 33.75rem;
+  --ui-color-overlay-backdrop: rgb(21 31 29 / 0.46);
 
   --color-ink: var(--ui-color-text-primary);
   --color-muted: var(--ui-color-text-secondary);

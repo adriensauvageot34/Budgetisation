@@ -130,6 +130,19 @@ export const designTokens = {
     },
     stroke: token("ui-icon-stroke"),
   },
+  layout: {
+    maxWidth: token("ui-layout-max-width"),
+    gutter: token("ui-layout-gutter"),
+    moduleGap: token("ui-layout-module-gap"),
+  },
+  control: { targetSize: token("ui-control-target-size") },
+  overlay: {
+    safeMargin: token("ui-overlay-safe-margin"),
+    explorationWidth: token("ui-overlay-width-exploration"),
+    dayDrawerWidth: token("ui-overlay-width-day-drawer"),
+    operationRootWidth: token("ui-overlay-width-operation-root"),
+    backdrop: token("ui-color-overlay-backdrop"),
+  },
 } as const;
 
 export type DesignTokens = typeof designTokens;

@@ -5,10 +5,11 @@ export type UiAction<NavigationIntent = never> =
       readonly intent: NavigationIntent;
       readonly onNavigate: (intent: NavigationIntent) => void;
     }
-  | { readonly kind: "disabled"; readonly reason?: string };
+  | { readonly kind: "disabled"; readonly reason?: string }
+  | { readonly kind: "loading"; readonly label?: string };
 
 export function invokeUiAction<NavigationIntent>(
-  action: Exclude<UiAction<NavigationIntent>, { readonly kind: "disabled" }>,
+  action: Extract<UiAction<NavigationIntent>, { readonly kind: "callback" | "navigation" }>,
 ): void {
   if (action.kind === "callback") action.onAction();
   else action.onNavigate(action.intent);
