@@ -109,6 +109,7 @@ function classifyImportViolation(sourcePath, specifier, isClient) {
   const inNavigation = isWithin(sourcePath, "src/navigation");
   const sourceFeature = featureName(sourcePath);
   const inCalendarFeature = sourceFeature === "calendar";
+  const inExplorationFeature = sourceFeature === "exploration";
   const inSharedUi = isWithin(sourcePath, "src/shared/ui");
 
   if (inCore) {
@@ -335,6 +336,28 @@ function classifyImportViolation(sourcePath, specifier, isClient) {
     return "Calendar ne peut importer que l’API publique Navigation";
   }
 
+  if (
+    inExplorationFeature &&
+    target &&
+    [
+      "src/analytics",
+      "src/server",
+      "src/query-api/server",
+      "src/lib/supabase",
+    ].some((prefix) => isWithin(target, prefix))
+  ) {
+    return "Exploration ne peut pas importer Analytics, server ou Supabase";
+  }
+
+  if (
+    inExplorationFeature &&
+    target &&
+    isWithin(target, "src/navigation") &&
+    target !== "src/navigation"
+  ) {
+    return "Exploration ne peut importer que l'API publique Navigation";
+  }
+
   if (sourceFeature || isClient) {
     if (
       target &&
@@ -430,6 +453,8 @@ function selfCheckRules() {
     ["src/navigation/example.ts", "@/features/calendar", false],
     ["src/features/calendar/example.tsx", "@/analytics/production", true],
     ["src/features/calendar/example.tsx", "@/navigation/contracts/routes", true],
+    ["src/features/exploration/example.tsx", "@/analytics/production", true],
+    ["src/features/exploration/example.tsx", "@/navigation/exploration/stack", true],
     ["src/ui/foundations/example.ts", "@/query-api", false],
     ["src/ui/foundations/example.ts", "@/ui/primitives", false],
     ["src/ui/primitives/example.tsx", "@/ui/composites", true],
@@ -496,6 +521,20 @@ for (const filePath of sourceFiles) {
     /\.(?:reduce|groupBy)\s*\(/.test(metadata.text)
   ) {
     violations.push(`${sourcePath}:1 Calendar ne doit pas agréger des faits dans React`);
+  }
+
+  if (
+    isWithin(sourcePath, "src/features/exploration") &&
+    /\.(?:reduce|groupBy)\s*\(/.test(metadata.text)
+  ) {
+    violations.push(`${sourcePath}:1 Exploration ne doit pas agreger des faits dans React`);
+  }
+
+  if (
+    isWithin(sourcePath, "src/features/exploration") &&
+    /\b(?:history\.pushState|history\.replaceState|history\.back|window\.history|globalThis\.history)\b/.test(metadata.text)
+  ) {
+    violations.push(`${sourcePath}:1 Exploration appelle Browser History directement`);
   }
 
   if (

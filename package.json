@@ -5,6 +5,7 @@
   "scripts": {
     "check:architecture": "node scripts/check-architecture-imports.mjs",
     "check:calendar-day": "node scripts/check-calendar-day.mjs",
+    "check:exploration-entities": "node scripts/check-exploration-entities.mjs",
     "dev": "next dev",
     "build": "next build",
     "start": "next start"
