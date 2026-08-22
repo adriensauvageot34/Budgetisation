@@ -97,6 +97,10 @@ function classifyImportViolation(sourcePath, specifier, isClient) {
   const inQueryApiServer = isWithin(sourcePath, "src/query-api/server");
   const inServer = isWithin(sourcePath, "src/server");
   const inUi = isWithin(sourcePath, "src/ui");
+  const inUiFoundations = isWithin(sourcePath, "src/ui/foundations");
+  const inUiPrimitives = isWithin(sourcePath, "src/ui/primitives");
+  const inUiComposites = isWithin(sourcePath, "src/ui/composites");
+  const inUiCharts = isWithin(sourcePath, "src/ui/charts");
   const inNavigation = isWithin(sourcePath, "src/navigation");
   const sourceFeature = featureName(sourcePath);
   const inSharedUi = isWithin(sourcePath, "src/shared/ui");
@@ -200,6 +204,51 @@ function classifyImportViolation(sourcePath, specifier, isClient) {
     }
   }
 
+  if (inUiFoundations && target) {
+    if (
+      isWithin(target, "src/query-api") ||
+      isWithin(target, "src/navigation") ||
+      [
+        "src/ui/primitives",
+        "src/ui/composites",
+        "src/ui/charts",
+        "src/ui/metrics",
+        "src/ui/media",
+        "src/ui/feedback",
+      ].some((prefix) => isWithin(target, prefix))
+    ) {
+      return "UI Foundations/tokens ne peut pas dépendre de Query, Navigation ou d’une couche UI supérieure";
+    }
+  }
+
+  if (
+    inUiPrimitives &&
+    target &&
+    ["src/ui/composites", "src/ui/charts"].some((prefix) =>
+      isWithin(target, prefix),
+    )
+  ) {
+    return "UI Primitives ne peut pas dépendre des Composites ou Charts";
+  }
+
+  if (
+    inUiComposites &&
+    target &&
+    (isWithin(target, "src/ui/charts") ||
+      (isWithin(target, "src/navigation") && target !== "src/navigation"))
+  ) {
+    return "UI Composites ne peut pas dépendre des Charts ou des internals Navigation";
+  }
+
+  if (
+    inUiCharts &&
+    target &&
+    isWithin(target, "src/navigation") &&
+    target !== "src/navigation"
+  ) {
+    return "UI Charts ne peut importer que les types publics Navigation";
+  }
+
   if (inNavigation && target && isWithin(target, "src/ui")) {
     return "Navigation ne peut pas persister ou importer des DTO UI/media";
   }
@@ -296,6 +345,11 @@ function selfCheckRules() {
     ["src/core/example.ts", "@/ui", false],
     ["src/query-api/example.ts", "@/ui", false],
     ["src/navigation/example.ts", "@/ui/media", false],
+    ["src/ui/foundations/example.ts", "@/query-api", false],
+    ["src/ui/foundations/example.ts", "@/ui/primitives", false],
+    ["src/ui/primitives/example.tsx", "@/ui/composites", true],
+    ["src/ui/composites/example.tsx", "@/ui/charts", true],
+    ["src/ui/charts/example.tsx", "@/navigation/contracts/exploration", true],
     ["src/features/example/client.ts", "@/query-api/server", true],
     ["src/features/example/client.ts", "@/server/example", true],
     ["src/server/example.ts", "@/features/example/client", false],

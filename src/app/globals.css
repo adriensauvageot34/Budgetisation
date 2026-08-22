@@ -1,34 +1,6 @@
+@import "../ui/foundations/tokens/tokens.css";
+@import "../ui/foundations/foundations.css";
 @import "tailwindcss";
-
-:root {
-  --color-ink: #24322f;
-  --color-muted: #697673;
-  --color-faint: #8c9794;
-  --color-canvas: #f5f4ef;
-  --color-surface: #ffffff;
-  --color-surface-soft: #efeee8;
-  --color-border: #dedfd8;
-  --color-primary: #466f67;
-  --color-primary-deep: #31564f;
-  --color-primary-soft: #dce8e3;
-  --color-accent: #d56f52;
-  --color-accent-soft: #f6dfd8;
-  --color-positive: #397a5b;
-  --color-negative: #b64d43;
-  --color-warning: #b9802c;
-  --chart-1: #52766f;
-  --chart-2: #d69a3c;
-  --chart-3: #d36e53;
-  --chart-4: #648ca4;
-  --chart-5: #806da5;
-  --radius-sm: 0.65rem;
-  --radius-md: 1rem;
-  --radius-lg: 1.4rem;
-  --space-page: clamp(1rem, 2.4vw, 2rem);
-  --shadow-sm: 0 1px 2px rgb(36 50 47 / 0.05);
-  --shadow-md: 0 12px 35px rgb(36 50 47 / 0.08);
-  --font-sans: "Aptos", "Segoe UI Variable", "Segoe UI", sans-serif;
-}
 
 * {
   box-sizing: border-box;
