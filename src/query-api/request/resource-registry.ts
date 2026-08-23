@@ -53,13 +53,18 @@ import {
 import {
   parseAnalysisBreakdownParams,
   parseAnalysisEvolutionParams,
+  parseAnalysisMonthStructureParams,
+  parseAnalysisTargetParams,
   parseEmptyQueryParams,
   parseHistoryDayDetailParams,
   type AnalysisBreakdownParams,
   type AnalysisEvolutionParams,
+  type AnalysisMonthStructureParams,
+  type AnalysisTargetParams,
   type EmptyQueryParams,
   type HistoryDayDetailParams,
   type NormalizedAnalysisBreakdownParams,
+  type NormalizedAnalysisMonthStructureParams,
 } from "./read-model-params";
 
 const queryResourceNames = [
@@ -72,6 +77,10 @@ const queryResourceNames = [
   "analysis_month_initial",
   "analysis_month_breakdown",
   "analysis_month_evolution",
+  "analysis_month_structure",
+  "analysis_month_lived",
+  "analysis_month_moments",
+  "analysis_target",
   "analysis_month_contexts",
   "analysis_global_initial",
   "analysis_global_breakdown",
@@ -124,6 +133,14 @@ export const queryResourceKeys = Object.freeze({
     parseQueryResourceKeySyntax<"analysis_month_evolution">(
       "analysis_month_evolution",
     ),
+  analysisMonthStructure:
+    parseQueryResourceKeySyntax<"analysis_month_structure">("analysis_month_structure"),
+  analysisMonthLived:
+    parseQueryResourceKeySyntax<"analysis_month_lived">("analysis_month_lived"),
+  analysisMonthMoments:
+    parseQueryResourceKeySyntax<"analysis_month_moments">("analysis_month_moments"),
+  analysisTarget:
+    parseQueryResourceKeySyntax<"analysis_target">("analysis_target"),
   analysisMonthContexts:
     parseQueryResourceKeySyntax<"analysis_month_contexts">(
       "analysis_month_contexts",
@@ -173,7 +190,11 @@ export type QueryParamsByResource = {
   readonly history_day_detail: HistoryDayDetailParams;
   readonly analysis_month_initial: EmptyQueryParams;
   readonly analysis_month_breakdown: AnalysisBreakdownParams;
-  readonly analysis_month_evolution: AnalysisEvolutionParams;
+  readonly analysis_month_evolution: EmptyQueryParams;
+  readonly analysis_month_structure: AnalysisMonthStructureParams;
+  readonly analysis_month_lived: EmptyQueryParams;
+  readonly analysis_month_moments: EmptyQueryParams;
+  readonly analysis_target: AnalysisTargetParams;
   readonly analysis_month_contexts: EmptyQueryParams;
   readonly analysis_global_initial: EmptyQueryParams;
   readonly analysis_global_breakdown: AnalysisBreakdownParams;
@@ -200,7 +221,11 @@ export type NormalizedQueryParamsByResource = {
   readonly history_day_detail: HistoryDayDetailParams;
   readonly analysis_month_initial: EmptyQueryParams;
   readonly analysis_month_breakdown: NormalizedAnalysisBreakdownParams;
-  readonly analysis_month_evolution: AnalysisEvolutionParams;
+  readonly analysis_month_evolution: EmptyQueryParams;
+  readonly analysis_month_structure: NormalizedAnalysisMonthStructureParams;
+  readonly analysis_month_lived: EmptyQueryParams;
+  readonly analysis_month_moments: EmptyQueryParams;
+  readonly analysis_target: AnalysisTargetParams;
   readonly analysis_month_contexts: EmptyQueryParams;
   readonly analysis_global_initial: EmptyQueryParams;
   readonly analysis_global_breakdown: NormalizedAnalysisBreakdownParams;
@@ -232,7 +257,11 @@ export type QueryResourceDefinition<Name extends QueryResourceName> = {
     | "initial"
     | "breakdown"
     | "evolution"
-    | "contexts";
+    | "contexts"
+    | "structure"
+    | "lived"
+    | "moments"
+    | "target";
   readonly allowedTimeKinds: readonly NormalizedAnalysisScope["time"]["kind"][];
   readonly validateRequest?: (
     scope: NormalizedAnalysisScope,
@@ -343,11 +372,38 @@ export const queryResourceRegistry = Object.freeze({
   },
   analysis_month_evolution: {
     key: queryResourceKeys.analysisMonthEvolution,
-    paramsSchema: createRuntimeSchema(parseAnalysisEvolutionParams),
+    paramsSchema: emptyParamsSchema("AnalysisMonthEvolutionParams"),
     normalizeParams: freezeCanonicalParams,
     projection: "evolution",
     allowedTimeKinds: ["month"],
-    validateRequest: assertEvolutionMetricTime,
+  },
+  analysis_month_structure: {
+    key: queryResourceKeys.analysisMonthStructure,
+    paramsSchema: createRuntimeSchema(parseAnalysisMonthStructureParams),
+    normalizeParams: freezeCanonicalParams,
+    projection: "structure",
+    allowedTimeKinds: ["month"],
+  },
+  analysis_month_lived: {
+    key: queryResourceKeys.analysisMonthLived,
+    paramsSchema: emptyParamsSchema("AnalysisMonthLivedParams"),
+    normalizeParams: freezeCanonicalParams,
+    projection: "lived",
+    allowedTimeKinds: ["month"],
+  },
+  analysis_month_moments: {
+    key: queryResourceKeys.analysisMonthMoments,
+    paramsSchema: emptyParamsSchema("AnalysisMonthMomentsParams"),
+    normalizeParams: freezeCanonicalParams,
+    projection: "moments",
+    allowedTimeKinds: ["month"],
+  },
+  analysis_target: {
+    key: queryResourceKeys.analysisTarget,
+    paramsSchema: createRuntimeSchema(parseAnalysisTargetParams),
+    normalizeParams: freezeCanonicalParams,
+    projection: "target",
+    allowedTimeKinds: ["month"],
   },
   analysis_month_contexts: {
     key: queryResourceKeys.analysisMonthContexts,

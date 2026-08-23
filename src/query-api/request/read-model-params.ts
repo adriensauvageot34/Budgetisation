@@ -4,6 +4,7 @@ import {
   type ActiveMetricId,
 } from "../../analytics/production";
 import { parseLocalDate, type LocalDate } from "../../core/time";
+import { parseAnalysisTargetSubject, type AnalysisTargetSubject } from "../../core/scope";
 import {
   hasOwn,
   parseStrictRecord,
@@ -44,6 +45,21 @@ export type NormalizedAnalysisBreakdownParams = {
 export type AnalysisEvolutionParams = {
   readonly metricId: ActiveMetricId;
 };
+
+export type AnalysisMonthStructureViewParam = "destination" | "nature" | "life_context";
+export type AnalysisMonthStructureDimensionParam = "family" | "category" | "activity" | "merchant" | "place";
+export type AnalysisMonthStructureMeasureParam = "amount" | "share" | "occurrences" | "cost_per_occurrence";
+export type AnalysisMonthStructureParams = {
+  readonly view?: AnalysisMonthStructureViewParam;
+  readonly dimension?: AnalysisMonthStructureDimensionParam;
+  readonly measure?: AnalysisMonthStructureMeasureParam;
+};
+export type NormalizedAnalysisMonthStructureParams = {
+  readonly view: AnalysisMonthStructureViewParam;
+  readonly dimension: AnalysisMonthStructureDimensionParam;
+  readonly measure: AnalysisMonthStructureMeasureParam;
+};
+export type AnalysisTargetParams = { readonly target: AnalysisTargetSubject };
 
 const dimensions: ReadonlySet<string> = new Set<AnalysisBreakdownDimension>([
   "category",
@@ -151,4 +167,24 @@ export function parseAnalysisEvolutionParams(
   }
   getMetricRegistryEntry(metricId);
   return { metricId };
+}
+
+const structureViews = new Set<AnalysisMonthStructureViewParam>(["destination", "nature", "life_context"]);
+const structureDimensions = new Set<AnalysisMonthStructureDimensionParam>(["family", "category", "activity", "merchant", "place"]);
+const structureMeasures = new Set<AnalysisMonthStructureMeasureParam>(["amount", "share", "occurrences", "cost_per_occurrence"]);
+
+export function parseAnalysisMonthStructureParams(
+  value: unknown,
+): NormalizedAnalysisMonthStructureParams {
+  const record = parseStrictRecord(value, ["view", "dimension", "measure"], "AnalysisMonthStructureParams");
+  return {
+    view: hasOwn(record, "view") ? parseStringLiteral(record.view, structureViews, "Structure view") : "destination",
+    dimension: hasOwn(record, "dimension") ? parseStringLiteral(record.dimension, structureDimensions, "Structure dimension") : "category",
+    measure: hasOwn(record, "measure") ? parseStringLiteral(record.measure, structureMeasures, "Structure measure") : "amount",
+  };
+}
+
+export function parseAnalysisTargetParams(value: unknown): AnalysisTargetParams {
+  const record = parseStrictRecord(value, ["target"], "AnalysisTargetParams");
+  return { target: parseAnalysisTargetSubject(requireProperty(record, "target", "AnalysisTargetParams")) };
 }

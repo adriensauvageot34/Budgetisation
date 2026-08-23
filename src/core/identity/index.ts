@@ -1,6 +1,7 @@
 export type { Brand } from "./brand";
 export type {
   ActivityId,
+  AnalysisFamilyId,
   CategoryId,
   HouseholdId,
   LifeEventId,
@@ -14,6 +15,7 @@ export type {
 } from "./ids";
 export {
   parseActivityId,
+  parseAnalysisFamilyId,
   parseCategoryId,
   parseHouseholdId,
   parseLifeEventId,

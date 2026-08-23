@@ -14,6 +14,7 @@ import {
   type EntityOperationReadModel,
   type EntityPersonaReadModel,
   type EntityPlaceReadModel,
+  type AnalysisTargetReadModel,
   type GalleryMerchantsReadModel,
   type GalleryMomentsReadModel,
   type GalleryPlacesReadModel,
@@ -117,7 +118,7 @@ function asOfForScope(scope: AnalysisScope): YearMonth {
 function requestForNode(node: ExplorationNode, scope: AnalysisScope, gallerySession: GallerySession | null): unknown | null {
   switch (node.kind) {
     case "analysis":
-      return null;
+      return { resource: queryResourceKeys.analysisTarget, scope: node.scope, params: { target: node.target } };
     case "moment":
       return { resource: queryResourceKeys.entityMoment, scope, params: { momentId: node.id } };
     case "place":
@@ -159,7 +160,7 @@ function nodeTransport(
   transport: UiTransportState<unknown>,
 ): ExplorationNodeTransport {
   switch (node.kind) {
-    case "analysis": return { kind: "analysis", node };
+    case "analysis": return { kind: "analysis", node, transport: transport as UiTransportState<AnalysisTargetReadModel> };
     case "moment": return { kind: "moment", node, transport: transport as UiTransportState<EntityMomentReadModel> };
     case "place": return { kind: "place", node, transport: transport as UiTransportState<EntityPlaceReadModel> };
     case "merchant": return { kind: "merchant", node, transport: transport as UiTransportState<EntityMerchantReadModel> };
@@ -214,7 +215,6 @@ export function ExplorationRuntimeHost() {
   const [transport, setTransport] = useState<UiTransportState<unknown>>({ status: "idle" });
 
   useEffect(() => {
-    if (currentNode?.kind === "analysis") return;
     if (request === undefined || scope === null) {
       setTransport({
         status: "error",
@@ -283,7 +283,7 @@ export function ExplorationRuntimeHost() {
   useLayoutEffect(() => {
     const root = runtime.snapshot?.history.root;
     if (root === undefined || currentNode === undefined) return;
-    if (currentNode.kind === "analysis" || transport.status === "success" || (transport.status === "error" && transport.previousData !== undefined)) {
+    if (transport.status === "success" || (transport.status === "error" && transport.previousData !== undefined)) {
       runtime.readinessRegistry.markReady(root);
     } else if (transport.status === "error") {
       runtime.readinessRegistry.markTerminalWithoutAnchor(root);

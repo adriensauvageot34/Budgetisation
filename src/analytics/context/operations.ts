@@ -61,6 +61,11 @@ function matchesEconomicDimensions(
       !filters.categoryIds.includes(component.category.id))
   ) return false;
   if (
+    filters.activityIds.length > 0 &&
+    (component.activity.kind !== "resolved" ||
+      !filters.activityIds.includes(component.activity.id))
+  ) return false;
+  if (
     filters.merchantIds.length > 0 &&
     (component.merchant.kind !== "resolved" ||
       !filters.merchantIds.includes(component.merchant.id))

@@ -28,6 +28,27 @@ export class ProductSurfaceRegistry implements NavigationSurfaceAdapter {
   private activeKey: string | null = null;
   private readonly surfaces = new Map<string, MutableSurface>();
   private readonly desired = new Map<string, DesiredSurfaceState>();
+  private readonly listeners = new Map<string, Set<() => void>>();
+
+  subscribe(route: RootNavigationContext, listener: () => void): () => void {
+    const key = routeKey(route);
+    const listeners = this.listeners.get(key) ?? new Set<() => void>();
+    listeners.add(listener);
+    this.listeners.set(key, listeners);
+    return () => {
+      listeners.delete(listener);
+      if (listeners.size === 0) this.listeners.delete(key);
+    };
+  }
+
+  readSubviewForRoute(route: RootNavigationContext): NavigationSubviewRef | null {
+    const key = routeKey(route);
+    return this.surfaces.get(key)?.subview ?? this.desired.get(key)?.subview ?? null;
+  }
+
+  private notify(key: string): void {
+    for (const listener of this.listeners.get(key) ?? []) listener();
+  }
 
   activateRoute(route: RootNavigationContext): void {
     this.activeKey = routeKey(route);
@@ -42,6 +63,7 @@ export class ProductSurfaceRegistry implements NavigationSurfaceAdapter {
     };
     this.surfaces.set(key, surface);
     this.desired.delete(key);
+    this.notify(key);
     return () => {
       if (this.surfaces.get(key) === surface) this.surfaces.delete(key);
     };
@@ -71,5 +93,6 @@ export class ProductSurfaceRegistry implements NavigationSurfaceAdapter {
     const surface = this.surfaces.get(this.activeKey);
     if (surface) surface.subview = parsed;
     else this.desired.set(this.activeKey, { ...this.desired.get(this.activeKey), subview: parsed });
+    this.notify(this.activeKey);
   }
 }

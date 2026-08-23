@@ -16,9 +16,9 @@ import {
 } from "../../core/identity";
 import {
   parseAnalysisScope,
-  parseAnalysisSubject,
+  parseAnalysisTargetSubject,
   type AnalysisScope,
-  type AnalysisSubject,
+  type AnalysisTargetSubject,
 } from "../../core/scope";
 import {
   createRuntimeSchema,
@@ -35,7 +35,7 @@ import {
 export type NonGalleryExplorationNode =
   | {
       readonly kind: "analysis";
-      readonly subject: AnalysisSubject;
+      readonly target: AnalysisTargetSubject;
       readonly scope: AnalysisScope;
     }
   | {
@@ -97,14 +97,14 @@ function parseNonGalleryByKind(
   if (kind === "analysis") {
     const record = parseStrictRecord(
       value,
-      ["kind", "subject", "scope"],
+      ["kind", "target", "scope"],
       "AnalysisExplorationNode",
     );
     return {
       kind,
-      subject: withValidationPath("subject", () =>
-        parseAnalysisSubject(
-          requireProperty(record, "subject", "AnalysisExplorationNode"),
+      target: withValidationPath("target", () =>
+        parseAnalysisTargetSubject(
+          requireProperty(record, "target", "AnalysisExplorationNode"),
         ),
       ),
       scope: withValidationPath("scope", () =>
@@ -161,7 +161,7 @@ export function parseNonGalleryExplorationNode(
 ): NonGalleryExplorationNode {
   const candidate = parseStrictRecord(
     value,
-    ["kind", "subject", "scope", "id", "metricId"],
+    ["kind", "target", "scope", "id", "metricId"],
     "NonGalleryExplorationNode",
   );
   const kind = withValidationPath("kind", () =>
@@ -181,7 +181,7 @@ export const nonGalleryExplorationNodeSchema = createRuntimeSchema(
 export function parseExplorationNode(value: unknown): ExplorationNode {
   const candidate = parseStrictRecord(
     value,
-    ["kind", "subject", "scope", "id", "gallery", "filters", "metricId"],
+    ["kind", "target", "scope", "id", "gallery", "filters", "metricId"],
     "ExplorationNode",
   );
   const kind = withValidationPath("kind", () =>

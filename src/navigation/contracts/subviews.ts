@@ -5,11 +5,28 @@ import {
   requireProperty,
   withValidationPath,
 } from "../../core/validation";
+import { parseActivityId, type ActivityId } from "../../core/identity";
+import { parseYearMonth, type YearMonth } from "../../core/time";
+
+export type AnalysisMonthStructureSubview = {
+  readonly view: "destination" | "nature" | "life_context";
+  readonly dimension: "family" | "category" | "activity" | "merchant" | "place";
+  readonly measure: "amount" | "share" | "occurrences" | "cost_per_occurrence";
+  readonly selectedBucketId?: string;
+};
+
+export type AnalysisMonthLivedSubview = {
+  readonly activeSubview: "summary" | "rhythm" | "contexts" | "frequency_cost";
+  readonly selectedActivityId?: ActivityId;
+};
 
 export type NavigationSubviewRef =
   | {
       readonly kind: "analysis-month";
       readonly view: "summary" | "money" | "life" | "moments";
+      readonly selectedPoint?: YearMonth;
+      readonly structure?: AnalysisMonthStructureSubview;
+      readonly lived?: AnalysisMonthLivedSubview;
     }
   | {
       readonly kind: "analysis-global";
@@ -44,7 +61,7 @@ export function parseNavigationSubviewRef(
 ): NavigationSubviewRef {
   const record = parseStrictRecord(
     value,
-    ["kind", "view"],
+    ["kind", "view", "selectedPoint", "structure", "lived"],
     "NavigationSubviewRef",
   );
   const kind = withValidationPath("kind", () =>
@@ -56,6 +73,34 @@ export function parseNavigationSubviewRef(
   );
 
   if (kind === "analysis-month") {
+    const monthRecord = parseStrictRecord(
+      value,
+      ["kind", "view", "selectedPoint", "structure", "lived"],
+      "AnalysisMonthSubviewRef",
+    );
+    const structure = "structure" in monthRecord
+      ? (() => {
+          const record = parseStrictRecord(monthRecord.structure, ["view", "dimension", "measure", "selectedBucketId"], "AnalysisMonthStructureSubview");
+          const selectedBucketId = "selectedBucketId" in record
+            ? (() => { if (typeof record.selectedBucketId !== "string" || record.selectedBucketId.trim().length === 0) throw new TypeError("selectedBucketId invalide."); return record.selectedBucketId; })()
+            : undefined;
+          return {
+            view: parseStringLiteral(requireProperty(record, "view", "AnalysisMonthStructureSubview"), new Set(["destination", "nature", "life_context"]), "Structure subview view"),
+            dimension: parseStringLiteral(requireProperty(record, "dimension", "AnalysisMonthStructureSubview"), new Set(["family", "category", "activity", "merchant", "place"]), "Structure subview dimension"),
+            measure: parseStringLiteral(requireProperty(record, "measure", "AnalysisMonthStructureSubview"), new Set(["amount", "share", "occurrences", "cost_per_occurrence"]), "Structure subview measure"),
+            ...(selectedBucketId === undefined ? {} : { selectedBucketId }),
+          } as AnalysisMonthStructureSubview;
+        })()
+      : undefined;
+    const lived = "lived" in monthRecord
+      ? (() => {
+          const record = parseStrictRecord(monthRecord.lived, ["activeSubview", "selectedActivityId"], "AnalysisMonthLivedSubview");
+          return {
+            activeSubview: parseStringLiteral(requireProperty(record, "activeSubview", "AnalysisMonthLivedSubview"), new Set(["summary", "rhythm", "contexts", "frequency_cost"]), "Lived activeSubview"),
+            ...("selectedActivityId" in record ? { selectedActivityId: parseActivityId(record.selectedActivityId) } : {}),
+          } as AnalysisMonthLivedSubview;
+        })()
+      : undefined;
     return {
       kind,
       view: withValidationPath("view", () =>
@@ -65,15 +110,19 @@ export function parseNavigationSubviewRef(
           "NavigationSubviewRef.view",
         ),
       ),
+      ...("selectedPoint" in monthRecord ? { selectedPoint: parseYearMonth(monthRecord.selectedPoint) } : {}),
+      ...(structure === undefined ? {} : { structure }),
+      ...(lived === undefined ? {} : { lived }),
     };
   }
+  const globalRecord = parseStrictRecord(value, ["kind", "view"], "AnalysisGlobalSubviewRef");
   return {
     kind,
     view: withValidationPath("view", () =>
       parseStringLiteral<
         "overview" | "baseline" | "habits" | "profiles" | "universe"
       >(
-        requireProperty(record, "view", "NavigationSubviewRef"),
+        requireProperty(globalRecord, "view", "NavigationSubviewRef"),
         analysisGlobalViews,
         "NavigationSubviewRef.view",
       ),

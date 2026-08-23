@@ -10,6 +10,7 @@ export type {
   AnalysisFilters,
   AnalysisScope,
   AnalysisSubject,
+  AnalysisTargetSubject,
   AnalysisTime,
   NormalizedAnalysisFilters,
   NormalizedAnalysisScope,
@@ -19,5 +20,6 @@ export {
   parseAnalysisFilters,
   parseAnalysisScope,
   parseAnalysisSubject,
+  parseAnalysisTargetSubject,
   parseAnalysisTime,
 } from "./validation";

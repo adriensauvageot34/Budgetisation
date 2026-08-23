@@ -7,6 +7,10 @@ import {
   analysisMonthContextsReadModelSchema,
   analysisMonthEvolutionReadModelSchema,
   analysisMonthInitialReadModelSchema,
+  analysisMonthLivedReadModelSchema,
+  analysisMonthMomentsReadModelSchema,
+  analysisMonthStructureReadModelSchema,
+  analysisTargetReadModelSchema,
   type AnalysisGlobalBreakdownReadModel,
   type AnalysisGlobalContextsReadModel,
   type AnalysisGlobalEvolutionReadModel,
@@ -15,6 +19,10 @@ import {
   type AnalysisMonthContextsReadModel,
   type AnalysisMonthEvolutionReadModel,
   type AnalysisMonthInitialReadModel,
+  type AnalysisMonthLivedReadModel,
+  type AnalysisMonthMomentsReadModel,
+  type AnalysisMonthStructureReadModel,
+  type AnalysisTargetReadModel,
 } from "./analysis";
 import {
   historyCalendarMonthReadModelSchema,
@@ -70,6 +78,10 @@ export type QueryDataByResource = {
   readonly analysis_month_initial: AnalysisMonthInitialReadModel;
   readonly analysis_month_breakdown: AnalysisMonthBreakdownReadModel;
   readonly analysis_month_evolution: AnalysisMonthEvolutionReadModel;
+  readonly analysis_month_structure: AnalysisMonthStructureReadModel;
+  readonly analysis_month_lived: AnalysisMonthLivedReadModel;
+  readonly analysis_month_moments: AnalysisMonthMomentsReadModel;
+  readonly analysis_target: AnalysisTargetReadModel;
   readonly analysis_month_contexts: AnalysisMonthContextsReadModel;
   readonly analysis_global_initial: AnalysisGlobalInitialReadModel;
   readonly analysis_global_breakdown: AnalysisGlobalBreakdownReadModel;
@@ -97,6 +109,10 @@ export const queryDataSchemaByResource = Object.freeze({
   analysis_month_initial: analysisMonthInitialReadModelSchema,
   analysis_month_breakdown: analysisMonthBreakdownReadModelSchema,
   analysis_month_evolution: analysisMonthEvolutionReadModelSchema,
+  analysis_month_structure: analysisMonthStructureReadModelSchema,
+  analysis_month_lived: analysisMonthLivedReadModelSchema,
+  analysis_month_moments: analysisMonthMomentsReadModelSchema,
+  analysis_target: analysisTargetReadModelSchema,
   analysis_month_contexts: analysisMonthContextsReadModelSchema,
   analysis_global_initial: analysisGlobalInitialReadModelSchema,
   analysis_global_breakdown: analysisGlobalBreakdownReadModelSchema,
@@ -125,6 +141,10 @@ export const queryLotBReadModelSchemas = Object.freeze({
   [queryResourceKeys.analysisMonthInitial]: analysisMonthInitialReadModelSchema,
   [queryResourceKeys.analysisMonthBreakdown]: analysisMonthBreakdownReadModelSchema,
   [queryResourceKeys.analysisMonthEvolution]: analysisMonthEvolutionReadModelSchema,
+  [queryResourceKeys.analysisMonthStructure]: analysisMonthStructureReadModelSchema,
+  [queryResourceKeys.analysisMonthLived]: analysisMonthLivedReadModelSchema,
+  [queryResourceKeys.analysisMonthMoments]: analysisMonthMomentsReadModelSchema,
+  [queryResourceKeys.analysisTarget]: analysisTargetReadModelSchema,
   [queryResourceKeys.analysisMonthContexts]: analysisMonthContextsReadModelSchema,
   [queryResourceKeys.analysisGlobalInitial]: analysisGlobalInitialReadModelSchema,
   [queryResourceKeys.analysisGlobalBreakdown]: analysisGlobalBreakdownReadModelSchema,

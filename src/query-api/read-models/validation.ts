@@ -14,6 +14,7 @@ import type {
   PeriodCompleteness,
   ReadModelSubject,
   ScopedMetricReadModel,
+  ScopedCountMetricReadModel,
   ScopedMoneyMetricReadModel,
 } from "./types";
 
@@ -131,4 +132,14 @@ export function parseScopedMoneyMetricReadModel(
     throw new TypeError("Une métrique monétaire était attendue.");
   }
   return metric as ScopedMoneyMetricReadModel;
+}
+
+export function parseScopedCountMetricReadModel(
+  value: unknown,
+): ScopedCountMetricReadModel {
+  const metric = parseScopedMetricReadModel(value);
+  if (getMetricRegistryEntry(metric.metricId).outputKind !== "count") {
+    throw new TypeError("Une métrique de comptage était attendue.");
+  }
+  return metric as ScopedCountMetricReadModel;
 }

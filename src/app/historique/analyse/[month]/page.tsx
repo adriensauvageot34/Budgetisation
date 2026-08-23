@@ -1,17 +1,11 @@
 import { notFound } from "next/navigation";
-import { parsePersonId } from "@/core/identity";
-import { parseYearMonth } from "@/core/time";
+import { normalizeAnalysisScope } from "@/core/scope";
 import { AnalysisMonthPage } from "@/features/analysis";
-import type {
-  AnalysisMonthBreakdownReadModel,
-  AnalysisMonthContextsReadModel,
-  AnalysisMonthEvolutionReadModel,
-  AnalysisMonthInitialReadModel,
-  GalleryMomentsReadModel,
-} from "@/query-api";
+import type { AnalysisMonthInitialReadModel } from "@/query-api";
 import { queryResourceKeys } from "@/query-api";
+import { parseRootNavigation } from "@/navigation";
 import { getBootstrapContext } from "@/server/bootstrap/context";
-import { executeAuthenticatedQueries } from "@/server/query/runtime";
+import { executeAuthenticatedQuery } from "@/server/query/runtime";
 import { queryResultToState, withProductAuthentication } from "@/app/product-query";
 
 export const metadata = { title: "Analyse du mois" };
@@ -22,49 +16,50 @@ export default async function AnalysisMonthRoute({
   searchParams,
 }: {
   readonly params: Promise<{ readonly month: string }>;
-  readonly searchParams: Promise<{ readonly personId?: string | string[] }>;
+  readonly searchParams: Promise<Readonly<Record<string, string | string[] | undefined>>>;
 }) {
   const { month: rawMonth } = await params;
-  const { personId: rawPersonId } = await searchParams;
-  let month;
-  let personId;
+  const rawSearch = await searchParams;
+  let route;
+  let scope;
   try {
-    month = parseYearMonth(rawMonth);
-    personId = typeof rawPersonId === "string" && rawPersonId.length > 0
-      ? parsePersonId(rawPersonId)
-      : undefined;
+    const query = new URLSearchParams();
+    for (const [key, rawValue] of Object.entries(rawSearch)) {
+      for (const value of Array.isArray(rawValue) ? rawValue : rawValue === undefined ? [] : [rawValue]) {
+        query.append(key, value);
+      }
+    }
+    const suffix = query.size === 0 ? "" : `?${query.toString()}`;
+    const parsed = parseRootNavigation(`/historique/analyse/${rawMonth}${suffix}`);
+    if (!("area" in parsed) || parsed.area !== "analysis" || parsed.context.kind !== "analysis_month") notFound();
+    route = parsed;
+    scope = normalizeAnalysisScope({
+      subject: parsed.context.personId
+        ? { kind: "person", personId: parsed.context.personId }
+        : { kind: "household" },
+      time: { kind: "month", month: parsed.context.month },
+      filters: parsed.context.filters,
+    });
   } catch {
     notFound();
   }
 
   const context = await withProductAuthentication(() => getBootstrapContext());
   if (context.household === null) notFound();
-  if (personId && !context.persons.some((person) => person.personId === personId)) notFound();
-  const subject = personId
-    ? { kind: "person" as const, personId }
-    : { kind: "household" as const };
-  const scope = { subject, time: { kind: "month" as const, month } };
-  const results = await withProductAuthentication(() =>
-    executeAuthenticatedQueries([
-      { resource: queryResourceKeys.analysisMonthInitial, scope, params: {} },
-      { resource: queryResourceKeys.analysisMonthBreakdown, scope, params: { dimension: "category", measure: "category_amount", limit: 3 } },
-      { resource: queryResourceKeys.analysisMonthEvolution, scope, params: { metricId: "economic_consumption_net_attributable" } },
-      { resource: queryResourceKeys.analysisMonthContexts, scope, params: {} },
-      { resource: queryResourceKeys.galleryMoments, scope, params: {} },
-    ]),
-  );
+  const selectedPersonId = scope.subject.kind === "person" ? scope.subject.personId : undefined;
+  if (selectedPersonId && !context.persons.some((person) => person.personId === selectedPersonId)) notFound();
+  const result = await withProductAuthentication(() => executeAuthenticatedQuery({
+    resource: queryResourceKeys.analysisMonthInitial,
+    scope,
+    params: {},
+  }));
 
   return (
     <AnalysisMonthPage
-      month={month}
-      {...(personId ? { personId } : {})}
+      route={route}
+      scope={scope}
       persons={context.persons.map((person) => ({ id: person.personId, label: person.displayName }))}
-      initial={queryResultToState<AnalysisMonthInitialReadModel>(results[0]!)}
-      marked={queryResultToState<AnalysisMonthBreakdownReadModel>(results[1]!)}
-      evolution={queryResultToState<AnalysisMonthEvolutionReadModel>(results[2]!)}
-      contexts={queryResultToState<AnalysisMonthContextsReadModel>(results[3]!)}
-      moments={queryResultToState<GalleryMomentsReadModel>(results[4]!)}
-      manualSummary={null}
+      initialState={queryResultToState<AnalysisMonthInitialReadModel>(result)}
     />
   );
 }

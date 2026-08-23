@@ -92,6 +92,28 @@ function metricScopeReason(
     request.resource === "analysis_global_breakdown"
       ? (request.params as { readonly dimension: string }).dimension
       : null;
+  const structureDimension = request.resource === "analysis_month_structure"
+    ? (() => {
+        const dimension = (request.params as { readonly dimension: string }).dimension;
+        return dimension === "category" || dimension === "activity" || dimension === "merchant" || dimension === "place"
+          ? dimension
+          : null;
+      })()
+    : null;
+  const targetDimension = request.resource === "analysis_target"
+    ? (() => {
+        const target = (request.params as { readonly target: { readonly kind: string } }).target;
+        return target.kind === "category" || target.kind === "activity"
+          ? target.kind
+          : target.kind === "context"
+            ? "life_scope"
+            : null;
+      })()
+    : null;
+  const fixedEvolutionDimension =
+    request.resource === "analysis_month_evolution" && metricId === "life_scope_amount"
+      ? "life_scope"
+      : null;
   const contextDimension =
     (request.resource === "analysis_month_contexts" ||
       request.resource === "analysis_global_contexts") &&
@@ -106,7 +128,7 @@ function metricScopeReason(
         ? "merchant"
         : null;
   const groupedDimension =
-    breakdownDimension ?? contextDimension ?? entityOrGalleryDimension;
+    breakdownDimension ?? structureDimension ?? targetDimension ?? fixedEvolutionDimension ?? contextDimension ?? entityOrGalleryDimension;
   const metricTimeKind =
     request.resource === "analysis_global_evolution" ||
     (request.resource === "analysis_global_initial" &&

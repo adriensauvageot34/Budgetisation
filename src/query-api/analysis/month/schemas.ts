@@ -4,6 +4,10 @@ import {
   parseAnalysisMonthContextsReadModel,
   parseAnalysisMonthEvolutionReadModel,
   parseAnalysisMonthInitialReadModel,
+  parseAnalysisMonthLivedReadModel,
+  parseAnalysisMonthMomentsReadModel,
+  parseAnalysisMonthStructureReadModel,
+  parseAnalysisTargetReadModel,
 } from "./validation";
 
 export const analysisMonthInitialReadModelSchema = createRuntimeSchema(
@@ -18,3 +22,7 @@ export const analysisMonthEvolutionReadModelSchema = createRuntimeSchema(
 export const analysisMonthContextsReadModelSchema = createRuntimeSchema(
   parseAnalysisMonthContextsReadModel,
 );
+export const analysisMonthStructureReadModelSchema = createRuntimeSchema(parseAnalysisMonthStructureReadModel);
+export const analysisMonthLivedReadModelSchema = createRuntimeSchema(parseAnalysisMonthLivedReadModel);
+export const analysisMonthMomentsReadModelSchema = createRuntimeSchema(parseAnalysisMonthMomentsReadModel);
+export const analysisTargetReadModelSchema = createRuntimeSchema(parseAnalysisTargetReadModel);

@@ -70,6 +70,10 @@ export type QueryReadModelSources = {
   readonly readAnalysisMonthInitial: QueryReadModelSource<"analysis_month_initial">;
   readonly readAnalysisMonthBreakdown: QueryReadModelSource<"analysis_month_breakdown">;
   readonly readAnalysisMonthEvolution: QueryReadModelSource<"analysis_month_evolution">;
+  readonly readAnalysisMonthStructure: QueryReadModelSource<"analysis_month_structure">;
+  readonly readAnalysisMonthLived: QueryReadModelSource<"analysis_month_lived">;
+  readonly readAnalysisMonthMoments: QueryReadModelSource<"analysis_month_moments">;
+  readonly readAnalysisTarget: QueryReadModelSource<"analysis_target">;
   readonly readAnalysisMonthContexts: QueryReadModelSource<"analysis_month_contexts">;
   readonly readAnalysisGlobalInitial: QueryReadModelSource<"analysis_global_initial">;
   readonly readAnalysisGlobalBreakdown: QueryReadModelSource<"analysis_global_breakdown">;

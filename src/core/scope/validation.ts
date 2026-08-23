@@ -1,5 +1,6 @@
 import {
   parseActivityId,
+  parseAnalysisFamilyId,
   parseCategoryId,
   parseMerchantId,
   parsePersonId,
@@ -21,6 +22,7 @@ import type {
   AnalysisFilters,
   AnalysisScope,
   AnalysisSubject,
+  AnalysisTargetSubject,
   AnalysisTime,
 } from "./types";
 
@@ -197,4 +199,32 @@ export function parseAnalysisScope(value: unknown): AnalysisScope {
     time,
     ...(filters === undefined ? {} : { filters }),
   };
+}
+
+export function parseAnalysisTargetSubject(
+  value: unknown,
+): AnalysisTargetSubject {
+  const candidate = parseStrictRecord(
+    value,
+    ["kind", "familyId", "categoryId", "activityId", "context"],
+    "AnalysisTargetSubject",
+  );
+  const kind = requireProperty(candidate, "kind", "AnalysisTargetSubject");
+  if (kind === "family") {
+    const record = parseStrictRecord(value, ["kind", "familyId"], "AnalysisFamilyTarget");
+    return { kind, familyId: parseAnalysisFamilyId(requireProperty(record, "familyId", "AnalysisFamilyTarget")) };
+  }
+  if (kind === "category") {
+    const record = parseStrictRecord(value, ["kind", "categoryId"], "AnalysisCategoryTarget");
+    return { kind, categoryId: parseCategoryId(requireProperty(record, "categoryId", "AnalysisCategoryTarget")) };
+  }
+  if (kind === "activity") {
+    const record = parseStrictRecord(value, ["kind", "activityId"], "AnalysisActivityTarget");
+    return { kind, activityId: parseActivityId(requireProperty(record, "activityId", "AnalysisActivityTarget")) };
+  }
+  if (kind === "context") {
+    const record = parseStrictRecord(value, ["kind", "context"], "AnalysisContextTarget");
+    return { kind, context: parseLifeScopeContext(requireProperty(record, "context", "AnalysisContextTarget")) };
+  }
+  throw new TypeError("AnalysisTargetSubject.kind est invalide.");
 }

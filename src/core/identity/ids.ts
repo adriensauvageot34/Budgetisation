@@ -11,4 +11,5 @@ export type SubcategoryId = Brand<string, "SubcategoryId">;
 export type LifeEventId = Brand<string, "LifeEventId">;
 
 export type ActivityId = Brand<string, "ActivityId">;
+export type AnalysisFamilyId = Brand<string, "AnalysisFamilyId">;
 export type MetricId = Brand<string, "MetricId">;

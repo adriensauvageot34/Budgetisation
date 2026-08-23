@@ -1,5 +1,6 @@
 import type {
   ActivityId,
+  AnalysisFamilyId,
   Brand,
   CategoryId,
   MerchantId,
@@ -58,5 +59,11 @@ export type NormalizedAnalysisScope = {
   readonly time: AnalysisTime;
   readonly filters: NormalizedAnalysisFilters;
 };
+
+export type AnalysisTargetSubject =
+  | { readonly kind: "family"; readonly familyId: AnalysisFamilyId }
+  | { readonly kind: "category"; readonly categoryId: CategoryId }
+  | { readonly kind: "activity"; readonly activityId: ActivityId }
+  | { readonly kind: "context"; readonly context: LifeScopeContext };
 
 export type ScopeHash = Brand<string, "ScopeHash">;

@@ -161,3 +161,4 @@ export { InMemoryNavigationSessionStore } from "./controller/session-store";
 export { ProductSurfaceRegistry } from "./controller/product-surface-registry";
 export type { ProductSurfaceRegistration } from "./controller/product-surface-registry";
 export { ProductReadinessRegistry } from "./restoration/product-readiness-registry";
+export type { ProductReadinessModule } from "./restoration/product-readiness-registry";

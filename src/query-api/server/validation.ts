@@ -53,6 +53,8 @@ export function assertQueryDataMatchesRequest<Name extends QueryResourceName>(
       break;
     case "analysis_month_initial":
     case "analysis_month_contexts":
+    case "analysis_month_lived":
+    case "analysis_month_moments":
       assertSame((data as QueryDataByResource["analysis_month_initial"]).month, scope.time.kind === "month" ? scope.time.month : null, "Analysis month");
       break;
     case "analysis_month_breakdown": {
@@ -66,7 +68,21 @@ export function assertQueryDataMatchesRequest<Name extends QueryResourceName>(
     case "analysis_month_evolution": {
       const output = data as QueryDataByResource["analysis_month_evolution"];
       assertSame(output.month, scope.time.kind === "month" ? scope.time.month : null, "Analysis month");
-      assertSame(output.metricId, (request.params as { readonly metricId: unknown }).metricId, "Evolution MetricId");
+      break;
+    }
+    case "analysis_month_structure": {
+      const output = data as QueryDataByResource["analysis_month_structure"];
+      const params = request.params as { readonly view: unknown; readonly dimension: unknown; readonly measure: unknown };
+      assertSame(output.month, scope.time.kind === "month" ? scope.time.month : null, "Analysis month");
+      assertSame(output.activeView, params.view, "Structure view");
+      assertSame(output.activeDimension, params.dimension, "Structure dimension");
+      assertSame(output.activeMeasure, params.measure, "Structure measure");
+      break;
+    }
+    case "analysis_target": {
+      const output = data as QueryDataByResource["analysis_target"];
+      assertSame(output.month, scope.time.kind === "month" ? scope.time.month : null, "Analysis month");
+      assertSame(output.target, (request.params as { readonly target: unknown }).target, "Analysis target");
       break;
     }
     case "analysis_global_initial":

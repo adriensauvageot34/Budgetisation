@@ -102,6 +102,10 @@ export interface NavigationController {
 
   goToMonth(month: YearMonth): Promise<NavigationCommandResult>;
   goToGlobal(window: GlobalWindow): Promise<NavigationCommandResult>;
+  updateAnalysisScope(
+    scope: NormalizedAnalysisScope,
+    mode?: "push" | "replace",
+  ): NavigationCommandResult;
   goToOperations(
     filters: OperationsNavigationFilters,
   ): NavigationCommandResult;

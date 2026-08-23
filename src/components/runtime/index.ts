@@ -1,7 +1,9 @@
 export {
   ProductRuntimeProvider,
+  useProductModuleReadiness,
   useProductRuntime,
   useProductSurface,
+  useRestorableSubview,
   useSemanticAnchor,
 } from "./product-runtime-provider";
 export {

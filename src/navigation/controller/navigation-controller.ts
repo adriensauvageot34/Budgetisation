@@ -605,6 +605,29 @@ class DefaultNavigationController implements NavigationController {
     return this.restoreScroll({ kind: "analysis_mode_switch" });
   }
 
+  updateAnalysisScope(
+    scopeInput: NormalizedAnalysisScope,
+    mode: "push" | "replace" = "push",
+  ): NavigationCommandResult {
+    if (!this.isStarted()) return noop("not_started");
+    const current = this.requireState();
+    if (!("area" in current.root) || current.root.area !== "analysis") {
+      return rejected("not_analysis_context");
+    }
+    const scope = parseNormalizedAnalysisScope(scopeInput);
+    const target = rootFromAnalysisScope(scope);
+    if (serializeRootNavigation(target) === serializeRootNavigation(current.root)) {
+      return noop("same_target");
+    }
+    this.beginNavigation();
+    this.captureCurrentSnapshot();
+    this.closeActiveGeneration();
+    this.commitRoot(target, mode);
+    this.deps.surface.applyScope(scope);
+    this.deps.surface.applySubview(null);
+    return applied;
+  }
+
   goToOperations(
     filters: OperationsNavigationFilters,
   ): NavigationCommandResult {

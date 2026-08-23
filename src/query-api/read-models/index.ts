@@ -13,5 +13,6 @@ export {
   parsePeriodCompleteness,
   parseReadModelSubject,
   parseScopedMetricReadModel,
+  parseScopedCountMetricReadModel,
   parseScopedMoneyMetricReadModel,
 } from "./validation";

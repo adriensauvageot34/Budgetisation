@@ -32,7 +32,12 @@ export function parseYearMonth(value: unknown): YearMonth {
 }
 
 export function formatYearMonth(value: YearMonth): string {
-  return value;
+  const parsed = parseYearMonth(value);
+  const monthNames = [
+    "Janvier", "Février", "Mars", "Avril", "Mai", "Juin",
+    "Juillet", "Août", "Septembre", "Octobre", "Novembre", "Décembre",
+  ] as const;
+  return `${monthNames[Number(parsed.slice(5, 7)) - 1]} ${parsed.slice(0, 4)}`;
 }
 
 export function compareYearMonth(a: YearMonth, b: YearMonth): -1 | 0 | 1 {

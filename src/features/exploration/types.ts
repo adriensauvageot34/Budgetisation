@@ -14,6 +14,7 @@ import type {
   EntityOperationReadModel,
   EntityPersonaReadModel,
   EntityPlaceReadModel,
+  AnalysisTargetReadModel,
   GalleryMerchantsReadModel,
   GalleryMomentsReadModel,
   GalleryPlacesReadModel,
@@ -95,7 +96,7 @@ export type ExplorationNodeTransport =
   | {
       readonly kind: "analysis";
       readonly node: Extract<ExplorationNode, { readonly kind: "analysis" }>;
-      readonly transport?: never;
+      readonly transport: UiTransportState<AnalysisTargetReadModel>;
     };
 
 export type ExplorationPanelState = {

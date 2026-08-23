@@ -7,12 +7,7 @@ import type {
   AnalysisGlobalContextsReadModel,
   AnalysisGlobalEvolutionReadModel,
   AnalysisGlobalInitialReadModel,
-  AnalysisMonthBreakdownReadModel,
-  AnalysisMonthContextsReadModel,
-  AnalysisMonthEvolutionReadModel,
-  AnalysisMonthInitialReadModel,
   EntityPersonaReadModel,
-  GalleryMomentsReadModel,
   GalleryPlacesReadModel,
 } from "@/query-api";
 import type { GlobalWindow, YearMonth } from "@/core/time";
@@ -82,136 +77,6 @@ function SubjectSelector({
       </label>
       <button type="submit" className="button-secondary">Afficher</button>
     </form>
-  );
-}
-
-function AnalysisModeNav({ month, personId }: { readonly month: YearMonth; readonly personId?: PersonId }) {
-  const runtime = useProductRuntime();
-  return (
-    <nav className={styles.modeNav} aria-label="Mode Historique">
-      <button type="button" onClick={() => runtime.run((controller) => controller.goToCalendar())}>Calendrier</button>
-      <span className={styles.active}>Analyse</span>
-      <span aria-hidden="true">·</span>
-      <span className={styles.active}>Mois</span>
-      <button type="button" onClick={() => runtime.run((controller) => controller.goToGlobal("last_12_months"))}>Global</button>
-    </nav>
-  );
-}
-
-export function AnalysisMonthPage({
-  month,
-  personId,
-  persons,
-  initial,
-  marked,
-  evolution,
-  contexts,
-  moments,
-  manualSummary,
-}: {
-  readonly month: YearMonth;
-  readonly personId?: PersonId;
-  readonly persons: readonly PersonOption[];
-  readonly initial: UiTransportState<AnalysisMonthInitialReadModel>;
-  readonly marked: UiTransportState<AnalysisMonthBreakdownReadModel>;
-  readonly evolution: UiTransportState<AnalysisMonthEvolutionReadModel>;
-  readonly contexts: UiTransportState<AnalysisMonthContextsReadModel>;
-  readonly moments: UiTransportState<GalleryMomentsReadModel>;
-  readonly manualSummary?: string | null;
-}) {
-  const runtime = useProductRuntime();
-  const runtimeAnalysisRoot = runtime.snapshot?.history.root;
-  const navigationContext = runtimeAnalysisRoot && "area" in runtimeAnalysisRoot && runtimeAnalysisRoot.area === "analysis" && runtimeAnalysisRoot.context.kind === "analysis_month" && runtimeAnalysisRoot.context.month === month
-    ? runtimeAnalysisRoot.context
-    : { kind: "analysis_month" as const, month, ...(personId ? { personId } : {}) };
-  const scope = normalizeAnalysisScope({
-    subject: navigationContext.personId ? { kind: "person", personId: navigationContext.personId } : { kind: "household" },
-    time: { kind: "month", month },
-    filters: navigationContext.filters,
-  });
-  useProductSurface({
-    route: { area: "analysis", context: navigationContext },
-    scope,
-    readiness: initial.status === "idle" || initial.status === "loading" ? "pending" : initial.status === "error" && initial.previousData === undefined ? "terminal_without_anchor" : "ready",
-  });
-  return (
-    <div className={styles.page} data-product-surface="analysis-month">
-      <header className={styles.heroHeader}>
-        <span className="eyebrow">Historique · Analyse mensuelle</span>
-        <h1>{month}</h1>
-        <AnalysisModeNav month={month} personId={personId} />
-        <div className={styles.globalControls}>
-          <SubjectSelector action={`/historique/analyse/${month}`} selected={personId ?? ""} persons={persons} />
-          <button
-            type="button"
-            className="button-secondary"
-            onClick={() => runtime.run((controller) => controller.goToOperations({
-              timeKind: "economic_month",
-              month,
-              ...(personId ? { personId } : {}),
-            }))}
-          >
-            Voir les opérations du mois
-          </button>
-        </div>
-      </header>
-
-      <SectionLayout title="1. Résumé du mois" description="Réel, référence typique et structure sont fournis par Analytics.">
-        <Boundary state={initial}>{(model) => (
-          <div className={styles.summaryGrid}>
-            <Surface variant="raised" className={styles.primaryMetric}>
-              <span className="eyebrow">Réel</span>
-              <MetricDisplay metric={model.actual.envelope} variant="hero" />
-              <button className="button-ghost" type="button" onClick={() => runtime.run((controller) => controller.openExploration({ kind: "methodology", metricId: model.actual.metricId }))}>Voir la méthode</button>
-            </Surface>
-            <Surface variant="subtle">
-              <span className="eyebrow">Typique</span>
-              {model.typical ? <MetricDisplay metric={model.typical.envelope} /> : <NoReferenceState value="—" />}
-            </Surface>
-            <Surface variant="subtle">
-              <span className="eyebrow">Minimal</span>
-              <NoReferenceState value="—" message="Le socle minimal n’est pas publié par le read model actuel." />
-            </Surface>
-            {manualSummary?.trim() ? <p className={styles.manualSummary}>{manualSummary.trim()}</p> : null}
-          </div>
-        )}</Boundary>
-      </SectionLayout>
-
-      <SectionLayout title="2. Ce qui a marqué le mois">
-        <Boundary state={marked}>{(model) => model.breakdown.rows.length === 0
-          ? <NoDataState title="Un mois dans le rythme" description="Aucun fait matériel n’est publié pour ce scope." />
-          : <div className={styles.cards}>{model.breakdown.rows.map((row) => <Surface key={`${row.bucket.kind}-${row.label}`} variant="outlined"><strong>{row.label}</strong><AnyMetricDisplay metric={row.metric.envelope} /></Surface>)}</div>}
-        </Boundary>
-      </SectionLayout>
-
-      <SectionLayout title="3. Évolution">
-        <Boundary state={evolution}>{(model) => model.points.length === 0
-          ? <NoDataState description="Aucun point mensuel n’est publié." />
-          : <ol className={styles.timeline}>{model.points.map((point) => <li key={point.period}><span>{point.period}</span><AnyMetricDisplay metric={point.metric.envelope} /></li>)}</ol>}
-        </Boundary>
-      </SectionLayout>
-
-      <SectionLayout title="4. Structure de consommation">
-        <Boundary state={initial}>{(model) => model.structure.axes.length === 0
-          ? <NoDataState description="La structure économique n’est pas exposée par la couche de lecture actuelle." />
-          : <div className={styles.cards}>{model.structure.axes.map((axis) => <Surface key={axis.axis} variant="outlined"><strong>{axis.axis}</strong><AnyMetricDisplay metric={axis.metric.envelope} /></Surface>)}</div>}
-        </Boundary>
-      </SectionLayout>
-
-      <SectionLayout title="5. Comment avons-nous vécu ?">
-        <Boundary state={contexts}>{(model) => model.contexts.sections.length === 0
-          ? <NoDataState description="Aucun contexte analytique publiable pour cette période." />
-          : <div className={styles.cards}>{model.contexts.sections.map((section) => <Surface key={section.capabilityId} variant="outlined"><strong>{section.capabilityId}</strong><span>{section.kind === "available" ? `${section.rows.length} lignes` : section.reason}</span></Surface>)}</div>}
-        </Boundary>
-      </SectionLayout>
-
-      <SectionLayout title="6. Moments du mois">
-        <Boundary state={moments}>{(model) => model.page.items.length === 0
-          ? <NoDataState description="Aucun Moment n’est publié pour ce scope." />
-          : <div className={styles.cards}>{model.page.items.map((moment) => <Surface key={moment.momentId} variant="outlined" action={{ kind: "callback", onAction: () => runtime.run((controller) => controller.openExploration({ kind: "moment", id: moment.momentId })) }}><strong>{moment.title}</strong></Surface>)}</div>}
-        </Boundary>
-      </SectionLayout>
-    </div>
   );
 }
 

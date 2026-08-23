@@ -22,6 +22,7 @@ import {
 import { MerchantsGallery, MomentsGallery, PlacesGallery } from "./galleries";
 import { MethodologySurface } from "./methodology";
 import { OperationEvidenceSurface } from "./operation-evidence";
+import { TargetedAnalysisSurface } from "./targeted-analysis";
 import type {
   ExplorationNavigation,
   ExplorationNodeTransport,
@@ -77,12 +78,7 @@ export function ExplorationNodeRenderer({
 }) {
   switch (current.kind) {
     case "analysis":
-      return (
-        <article className={styles.analysisDestination}>
-          <h2 data-exploration-heading="" tabIndex={-1}>Analyse ciblée</h2>
-          <p>Le scope analytique est conservé par Navigation. Les surfaces Analysis restent hors de ce lot.</p>
-        </article>
-      );
+      return <TransportView transport={current.transport} onRetry={onRetry}>{(model) => <TargetedAnalysisSurface model={model} navigation={navigation} />}</TransportView>;
     case "moment":
       return <TransportView transport={current.transport} onRetry={onRetry}>{(model) => <MomentSurface model={model} navigation={navigation} />}</TransportView>;
     case "place":

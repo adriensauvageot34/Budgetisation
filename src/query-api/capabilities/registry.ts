@@ -29,6 +29,10 @@ export const querySectionKeys = Object.freeze({
   structure: "structure" as QuerySectionKey<"structure">,
   breakdown: "breakdown" as QuerySectionKey<"breakdown">,
   evolution: "evolution" as QuerySectionKey<"evolution">,
+  marked_facts: "marked_facts" as QuerySectionKey<"marked_facts">,
+  lived: "lived" as QuerySectionKey<"lived">,
+  moments: "moments" as QuerySectionKey<"moments">,
+  target: "target" as QuerySectionKey<"target">,
   identity: "identity" as QuerySectionKey<"identity">,
   spatial: "spatial" as QuerySectionKey<"spatial">,
   headline: "headline" as QuerySectionKey<"headline">,
@@ -61,6 +65,10 @@ export type QuerySectionName =
   | "structure"
   | "breakdown"
   | "evolution"
+  | "marked_facts"
+  | "lived"
+  | "moments"
+  | "target"
   | "identity"
   | "spatial"
   | "headline"
@@ -91,6 +99,7 @@ export function parseQuerySectionKey(
 
 const allActiveMeasures = Object.freeze([...activeMetricIds]);
 const allCoreFilters = Object.freeze([...queryFilterKeys]);
+const momentFilters = Object.freeze(allCoreFilters.filter((filter) => filter !== "dayContext"));
 const noFilters = Object.freeze([]);
 const calendarMeasures = Object.freeze([
   "economic_consumption_net_attributable",
@@ -228,10 +237,10 @@ export const queryCapabilityRegistry = Object.freeze({
       querySectionKeys.actual,
       querySectionKeys.typical,
       querySectionKeys.comparisons,
-      querySectionKeys.structure,
+      querySectionKeys.marked_facts,
     ]),
-    measures: monthInitialMeasures,
-    filters: noFilters,
+    measures: Object.freeze(["economic_consumption_net_attributable", "typical_month_cost"]),
+    filters: allCoreFilters,
   },
   analysis_month_breakdown: {
     resource: queryResourceKeys.analysisMonthBreakdown,
@@ -242,7 +251,31 @@ export const queryCapabilityRegistry = Object.freeze({
   analysis_month_evolution: {
     resource: queryResourceKeys.analysisMonthEvolution,
     sections: Object.freeze([querySectionKeys.evolution]),
-    measures: evolutionMeasures,
+    measures: Object.freeze(["economic_consumption_net_attributable", "typical_month_cost", "life_scope_amount"]),
+    filters: allCoreFilters,
+  },
+  analysis_month_structure: {
+    resource: queryResourceKeys.analysisMonthStructure,
+    sections: Object.freeze([querySectionKeys.structure]),
+    measures: breakdownMeasures,
+    filters: allCoreFilters,
+  },
+  analysis_month_lived: {
+    resource: queryResourceKeys.analysisMonthLived,
+    sections: Object.freeze([querySectionKeys.lived, querySectionKeys.contexts, querySectionKeys.activities]),
+    measures: contextMeasures,
+    filters: allCoreFilters,
+  },
+  analysis_month_moments: {
+    resource: queryResourceKeys.analysisMonthMoments,
+    sections: Object.freeze([querySectionKeys.moments]),
+    measures: noFilters,
+    filters: momentFilters,
+  },
+  analysis_target: {
+    resource: queryResourceKeys.analysisTarget,
+    sections: Object.freeze([querySectionKeys.target, querySectionKeys.headline]),
+    measures: Object.freeze(["category_amount", "activity_frequency", "life_scope_amount"]),
     filters: allCoreFilters,
   },
   analysis_month_contexts: {

@@ -1,5 +1,6 @@
 import type {
   ActivityId,
+  AnalysisFamilyId,
   CategoryId,
   HouseholdId,
   LifeEventId,
@@ -67,6 +68,10 @@ export function parseLifeEventId(value: unknown): LifeEventId {
 
 export function parseActivityId(value: unknown): ActivityId {
   return parseOpaqueId<ActivityId>(value, "ActivityId");
+}
+
+export function parseAnalysisFamilyId(value: unknown): AnalysisFamilyId {
+  return parseOpaqueId<AnalysisFamilyId>(value, "AnalysisFamilyId");
 }
 
 export function parseMetricId(value: unknown): MetricId {

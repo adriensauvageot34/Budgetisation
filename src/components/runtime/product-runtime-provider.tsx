@@ -21,6 +21,7 @@ import type {
   NavigationControllerSnapshot,
   NavigationSubviewRef,
   ProductReadinessRegistry,
+  ProductReadinessModule,
   ProductSurfaceRegistry,
   RootNavigationContext,
   ScrollAdapter,
@@ -236,4 +237,35 @@ export function useSemanticAnchor(anchor: SemanticAnchor): RefCallback<HTMLEleme
     cleanup.current?.();
     cleanup.current = element === null ? null : anchors.register(anchor, element);
   }, [anchors, identity]);
+}
+
+export function useProductModuleReadiness(
+  route: RootNavigationContext,
+  module: ProductReadinessModule,
+  readiness: "pending" | "ready" | "terminal_without_anchor",
+): void {
+  const runtime = useProductRuntime();
+  const routeIdentity = serializeRootNavigation(route);
+  const navigationEntryId = runtime.snapshot?.history.entryId ?? null;
+  useLayoutEffect(() => {
+    if (readiness === "pending") runtime.readinessRegistry.markPending(route, module);
+    else if (readiness === "ready") runtime.readinessRegistry.markReady(route, module);
+    else runtime.readinessRegistry.markTerminalWithoutAnchor(route, module);
+  }, [module, navigationEntryId, readiness, routeIdentity, runtime.readinessRegistry]);
+}
+
+export function useRestorableSubview(
+  route: RootNavigationContext,
+  onRestore: (subview: NavigationSubviewRef | null) => void,
+): void {
+  const runtime = useProductRuntime();
+  const routeIdentity = serializeRootNavigation(route);
+  const callbackRef = useRef(onRestore);
+  callbackRef.current = onRestore;
+  useEffect(() => {
+    const apply = () => callbackRef.current(runtime.surfaceRegistry.readSubviewForRoute(route));
+    const unsubscribe = runtime.surfaceRegistry.subscribe(route, apply);
+    apply();
+    return unsubscribe;
+  }, [routeIdentity, runtime.surfaceRegistry]);
 }
