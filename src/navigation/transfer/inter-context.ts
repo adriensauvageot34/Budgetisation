@@ -136,19 +136,27 @@ export function transferAnalysisToCalendar(
 export function buildShowDayIntent(
   day: unknown,
   checkpointInput: NavigationCheckpoint,
-  placeNodeInput: ExplorationNode,
+  stackInput: readonly ExplorationNode[],
 ): ShowDayNavigationIntent {
   const checkpoint = navigationCheckpointSchema.parse(checkpointInput);
-  const node = explorationNodeSchema.parse(placeNodeInput);
-  if (node.kind !== "place") {
+  const stack = stackInput.map((node) => explorationNodeSchema.parse(node));
+  const node = stack.at(-1);
+  if (node === undefined || node.kind !== "place") {
     validationFailure({
       path: ["placeNode"],
       code: "invalid_exploration_node",
       message: "Voir cette journée depuis un Lieu exige un nœud place.",
     });
   }
+  const targetRoot = buildOpenDayRoot(day);
+  const personId = checkpoint.scope?.subject.kind === "person"
+    ? checkpoint.scope.subject.personId
+    : undefined;
   return showDayNavigationIntentSchema.parse({
-    targetRoot: buildOpenDayRoot(day),
-    returnDestination: { kind: "exploration", checkpoint, node },
+    targetRoot: {
+      ...targetRoot,
+      context: { ...targetRoot.context, ...(personId ? { personId } : {}) },
+    },
+    returnDestination: { kind: "exploration", checkpoint, stack },
   });
 }

@@ -18,12 +18,29 @@ import type {
   NormalizedQueryRequest,
   QueryResourceIdentity,
 } from "./request";
+import { computeOperationsScopeHash, normalizeOperationsExecutionScope } from "./operations-scope";
 
 function normalizeForResource<Name extends QueryResourceName>(
   resource: import("./resource-key").QueryResourceKey<Name>,
   rawScope: unknown,
   rawParams: unknown,
 ): NormalizedQueryRequest<Name> {
+  if (resource === "operations_browse") {
+    const scope = normalizeOperationsExecutionScope(rawScope);
+    const definition = getQueryResourceDefinition(resource);
+    const parsedParams = definition.paramsSchema.parse(rawParams);
+    const params = definition.normalizeParams(parsedParams) as import("./operations-params").NormalizedOperationsBrowseParams;
+    if (canonicalSerializeQueryParams(scope.time) !== canonicalSerializeQueryParams(params.time)) {
+      throw new TypeError("OperationsExecutionScope.time doit correspondre à OperationsBrowseParams.time.");
+    }
+    canonicalSerializeQueryParams(params);
+    return {
+      resource,
+      scope,
+      scopeHash: computeOperationsScopeHash(scope),
+      params,
+    } as NormalizedQueryRequest<Name>;
+  }
   const scope = normalizeAnalysisScope(rawScope as import("../../core/scope").AnalysisScope);
   const definition = getQueryResourceDefinition(resource);
   if (!definition.allowedTimeKinds.includes(scope.time.kind)) {
@@ -38,7 +55,7 @@ function normalizeForResource<Name extends QueryResourceName>(
     scope,
     scopeHash: computeScopeHash(scope),
     params,
-  };
+  } as NormalizedQueryRequest<Name>;
 }
 
 export class QueryResourceScopeError extends TypeError {

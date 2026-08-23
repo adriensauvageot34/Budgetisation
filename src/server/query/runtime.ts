@@ -164,3 +164,13 @@ export async function executeAuthenticatedQueries(
     ),
   );
 }
+
+export async function resolveLatestBankOperationMonth() {
+  const bootstrap = await getBootstrapContext();
+  const context = createAuthorizedRuntimeContext(
+    bootstrap,
+    parseInstant(new Date().toISOString()),
+  );
+  const repository = new CanonicalRepository(createCanonicalReadClient(), context);
+  return repository.loadLatestBankOperationMonth();
+}

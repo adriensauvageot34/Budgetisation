@@ -9,16 +9,22 @@ import type {
   QueryResourceName,
 } from "./resource-registry";
 import type { QueryResourceKey } from "./resource-key";
+import type { OperationsExecutionScope, NormalizedOperationsExecutionScope } from "./operations-scope";
+
+export type QueryScopeByResource<Name extends QueryResourceName> =
+  Name extends "operations_browse" ? OperationsExecutionScope : AnalysisScope;
+export type NormalizedQueryScopeByResource<Name extends QueryResourceName> =
+  Name extends "operations_browse" ? NormalizedOperationsExecutionScope : NormalizedAnalysisScope;
 
 export type QueryRequest<Name extends QueryResourceName> = {
   readonly resource: QueryResourceKey<Name>;
-  readonly scope: AnalysisScope;
+  readonly scope: QueryScopeByResource<Name>;
   readonly params: QueryParamsByResource[Name];
 };
 
 export type NormalizedQueryRequest<Name extends QueryResourceName> = {
   readonly resource: QueryResourceKey<Name>;
-  readonly scope: NormalizedAnalysisScope;
+  readonly scope: NormalizedQueryScopeByResource<Name>;
   readonly scopeHash: ScopeHash;
   readonly params: NormalizedQueryParamsByResource[Name];
 };

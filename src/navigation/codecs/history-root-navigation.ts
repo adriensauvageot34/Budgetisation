@@ -24,6 +24,14 @@ import {
 
 const relativeUrlBase = "https://budgetisation.invalid";
 const defaultGlobalWindow = "last_12_months" as const;
+const analysisFilterKeys = [
+  "categoryIds",
+  "activityIds",
+  "merchantIds",
+  "placeIds",
+  "lifeScopeContext",
+  "dayContext",
+] as const;
 
 function rejectUrl(message: string, path: readonly string[] = []): never {
   validationFailure({
@@ -104,6 +112,13 @@ function readOptionalSingleSearchParam(
   return candidates[0];
 }
 
+function analysisFiltersFromUrl(url: URL) {
+  const filters = Object.fromEntries(
+    analysisFilterKeys.map((key) => [key, url.searchParams.getAll(key)]),
+  ) as Record<(typeof analysisFilterKeys)[number], string[]>;
+  return analysisFilterKeys.some((key) => filters[key].length > 0) ? filters : undefined;
+}
+
 function parseOperationsNavigation(url: URL): RootNavigationContext {
   const allowedKeys = [
     "month",
@@ -114,9 +129,21 @@ function parseOperationsNavigation(url: URL): RootNavigationContext {
     "asOf",
     "personId",
     "categoryIds",
+    "subcategoryIds",
     "activityIds",
+    "momentIds",
+    "lifeEventIds",
     "merchantIds",
     "placeIds",
+    "accountIds",
+    "preciseTypes",
+    "necessity",
+    "fixedVariable",
+    "lifeScope",
+    "dayContext",
+    "quality",
+    "amountMin",
+    "amountMax",
     "search",
     "sort",
     "mode",
@@ -133,9 +160,21 @@ function parseOperationsNavigation(url: URL): RootNavigationContext {
   const rawPersonId = readOptionalSingleSearchParam(url, "personId");
   const personId = rawPersonId === "household" ? undefined : rawPersonId;
   const categoryIds = url.searchParams.getAll("categoryIds");
+  const subcategoryIds = url.searchParams.getAll("subcategoryIds");
   const activityIds = url.searchParams.getAll("activityIds");
+  const momentIds = url.searchParams.getAll("momentIds");
+  const lifeEventIds = url.searchParams.getAll("lifeEventIds");
   const merchantIds = url.searchParams.getAll("merchantIds");
   const placeIds = url.searchParams.getAll("placeIds");
+  const accountIds = url.searchParams.getAll("accountIds");
+  const preciseTypes = url.searchParams.getAll("preciseTypes");
+  const necessity = url.searchParams.getAll("necessity");
+  const fixedVariable = url.searchParams.getAll("fixedVariable");
+  const lifeScope = url.searchParams.getAll("lifeScope");
+  const dayContext = url.searchParams.getAll("dayContext");
+  const quality = url.searchParams.getAll("quality");
+  const amountMin = readOptionalSingleSearchParam(url, "amountMin");
+  const amountMax = readOptionalSingleSearchParam(url, "amountMax");
   const rawSearch = readOptionalSingleSearchParam(url, "search");
   const search = rawSearch === "" ? undefined : rawSearch;
   const sort = readOptionalSingleSearchParam(url, "sort");
@@ -153,9 +192,21 @@ function parseOperationsNavigation(url: URL): RootNavigationContext {
       ...(asOf === undefined ? {} : { asOf }),
       ...(personId === undefined ? {} : { personId }),
       ...(categoryIds.length === 0 ? {} : { categoryIds }),
+      ...(subcategoryIds.length === 0 ? {} : { subcategoryIds }),
       ...(activityIds.length === 0 ? {} : { activityIds }),
+      ...(momentIds.length === 0 ? {} : { momentIds }),
+      ...(lifeEventIds.length === 0 ? {} : { lifeEventIds }),
       ...(merchantIds.length === 0 ? {} : { merchantIds }),
       ...(placeIds.length === 0 ? {} : { placeIds }),
+      ...(accountIds.length === 0 ? {} : { accountIds }),
+      ...(preciseTypes.length === 0 ? {} : { preciseTypes }),
+      ...(necessity.length === 0 ? {} : { necessity }),
+      ...(fixedVariable.length === 0 ? {} : { fixedVariable }),
+      ...(lifeScope.length === 0 ? {} : { lifeScope }),
+      ...(dayContext.length === 0 ? {} : { dayContext }),
+      ...(quality.length === 0 ? {} : { quality }),
+      ...(amountMin === undefined ? {} : { amountMin }),
+      ...(amountMax === undefined ? {} : { amountMax }),
       ...(search === undefined ? {} : { search }),
       ...(sort === undefined ? {} : { sort }),
       ...(mode === undefined ? {} : { mode }),
@@ -240,10 +291,10 @@ function parseHistoryRootNavigation(url: URL): HistoryRootContext {
     segments[2] === "analyse"
   ) {
     if (segments[3] === "global") {
-      const searchParams = readSearchParams(url, ["window", "asOf", "personId"]);
-      const windowValue = searchParams.get("window") ?? defaultGlobalWindow;
-      const asOfValue = searchParams.get("asOf");
-      const rawPersonId = searchParams.get("personId");
+      assertAllowedSearchParams(url, ["window", "asOf", "personId", ...analysisFilterKeys]);
+      const windowValue = readOptionalSingleSearchParam(url, "window") ?? defaultGlobalWindow;
+      const asOfValue = readOptionalSingleSearchParam(url, "asOf");
+      const rawPersonId = readOptionalSingleSearchParam(url, "personId");
       const personId = rawPersonId === undefined || rawPersonId === ""
         ? undefined
         : withValidationPath("personId", () => parsePersonId(rawPersonId));
@@ -264,12 +315,13 @@ function parseHistoryRootNavigation(url: URL): HistoryRootContext {
           ...(personId === undefined
             ? {}
             : { personId }),
+          ...(analysisFiltersFromUrl(url) === undefined ? {} : { filters: analysisFiltersFromUrl(url) as never }),
         },
       };
     }
 
-    const searchParams = readSearchParams(url, ["personId"]);
-    const rawPersonId = searchParams.get("personId");
+    assertAllowedSearchParams(url, ["personId", ...analysisFilterKeys]);
+    const rawPersonId = readOptionalSingleSearchParam(url, "personId");
     const personId = rawPersonId === undefined || rawPersonId === ""
       ? undefined
       : withValidationPath("personId", () => parsePersonId(rawPersonId));
@@ -281,6 +333,7 @@ function parseHistoryRootNavigation(url: URL): HistoryRootContext {
           parseYearMonth(segments[3]),
         ),
         ...(personId === undefined ? {} : { personId }),
+        ...(analysisFiltersFromUrl(url) === undefined ? {} : { filters: analysisFiltersFromUrl(url) as never }),
       },
     };
   }
@@ -314,10 +367,11 @@ function serializeHistoryRootNavigation(
   }
 
   if (route.context.kind === "analysis_month") {
-    if (route.context.personId === undefined) {
-      return `/historique/analyse/${route.context.month}`;
-    }
-    return `/historique/analyse/${route.context.month}?${new URLSearchParams({ personId: route.context.personId }).toString()}`;
+    const params = new URLSearchParams();
+    if (route.context.personId !== undefined) params.set("personId", route.context.personId);
+    appendAnalysisFilters(params, route.context.filters);
+    const query = params.toString();
+    return `/historique/analyse/${route.context.month}${query.length === 0 ? "" : `?${query}`}`;
   }
 
   const params = new URLSearchParams({
@@ -329,7 +383,18 @@ function serializeHistoryRootNavigation(
   if (route.context.personId !== undefined) {
     params.set("personId", route.context.personId);
   }
+  appendAnalysisFilters(params, route.context.filters);
   return `/historique/analyse/global?${params.toString()}`;
+}
+
+function appendAnalysisFilters(
+  params: URLSearchParams,
+  filters: import("../../core/scope").NormalizedAnalysisFilters | undefined,
+): void {
+  if (filters === undefined) return;
+  for (const key of analysisFilterKeys) {
+    for (const value of filters[key]) params.append(key, value);
+  }
 }
 
 export function parseRootNavigation(value: unknown): RootNavigationContext {
@@ -369,9 +434,21 @@ function serializeOperationsNavigation(
     params.set("personId", normalized.personId);
   }
   appendIdFilters(params, "categoryIds", normalized.categoryIds);
+  appendIdFilters(params, "subcategoryIds", normalized.subcategoryIds);
   appendIdFilters(params, "activityIds", normalized.activityIds);
+  appendIdFilters(params, "momentIds", normalized.momentIds);
+  appendIdFilters(params, "lifeEventIds", normalized.lifeEventIds);
   appendIdFilters(params, "merchantIds", normalized.merchantIds);
   appendIdFilters(params, "placeIds", normalized.placeIds);
+  appendIdFilters(params, "accountIds", normalized.accountIds);
+  appendIdFilters(params, "preciseTypes", normalized.preciseTypes);
+  appendIdFilters(params, "necessity", normalized.necessity);
+  appendIdFilters(params, "fixedVariable", normalized.fixedVariable);
+  appendIdFilters(params, "lifeScope", normalized.lifeScope);
+  appendIdFilters(params, "dayContext", normalized.dayContext);
+  appendIdFilters(params, "quality", normalized.quality);
+  if (normalized.amountMin !== undefined) params.set("amountMin", normalized.amountMin);
+  if (normalized.amountMax !== undefined) params.set("amountMax", normalized.amountMax);
   if (normalized.search !== undefined) params.set("search", normalized.search);
   if (normalized.sort !== undefined) params.set("sort", normalized.sort);
   if (normalized.mode !== undefined) params.set("mode", normalized.mode);

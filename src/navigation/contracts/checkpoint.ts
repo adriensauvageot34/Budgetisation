@@ -33,7 +33,7 @@ import {
   type NavigationSubviewRef,
 } from "./subviews";
 
-export const navigationCheckpointVersion = "navigation-checkpoint:v1" as const;
+export const navigationCheckpointVersion = "navigation-checkpoint:v2" as const;
 
 export type NavigationFilterSnapshot =
   | {

@@ -1,6 +1,8 @@
 "use client";
 
 import type { ReactNode } from "react";
+import { useSemanticAnchor } from "@/components/runtime";
+import type { ExplorationNode, SemanticAnchor } from "@/navigation";
 import type { EntityOperationReadModel } from "@/query-api";
 import {
   Button,
@@ -20,6 +22,32 @@ function ExactMoney({ value }: { readonly value: EntityOperationReadModel["bankT
 
 function EvidenceRow({ label, children }: { readonly label: string; readonly children: ReactNode }) {
   return <div className={styles.evidenceRow}><dt>{label}</dt><dd>{children}</dd></div>;
+}
+
+function EvidenceEntityAction({
+  label,
+  node,
+  anchor,
+  navigation,
+}: {
+  readonly label: string;
+  readonly node: ExplorationNode;
+  readonly anchor: SemanticAnchor;
+  readonly navigation: ExplorationNavigation;
+}) {
+  const anchorRef = useSemanticAnchor(anchor);
+  return (
+    <span ref={anchorRef} data-semantic-anchor="exploration">
+      <Button tone="quiet" action={{ kind: "callback", onAction: () => navigation.push(node, anchor) }}>{label}</Button>
+    </span>
+  );
+}
+
+function officialNecessityLabel(value: string): string {
+  if (["Indispensable", "necessary"].includes(value)) return "Indispensable";
+  if (["Contraint", "Contrainte"].includes(value)) return "Contraint";
+  if (["Optionnel", "Optionnelle", "Ajustable", "discretionary"].includes(value)) return "Optionnel";
+  return value;
 }
 
 function CompositionList({
@@ -105,7 +133,7 @@ export function OperationEvidenceSurface({
       <SectionLayout title="Classification">
         <dl className={styles.evidenceList}>
           <EvidenceRow label="Catégorie">{model.classification.category.state === "resolved" ? model.classification.category.categoryId : model.classification.category.state}</EvidenceRow>
-          {model.classification.necessity ? <EvidenceRow label="Nécessité">{model.classification.necessity}</EvidenceRow> : null}
+          {model.classification.necessity ? <EvidenceRow label="Nécessité">{officialNecessityLabel(model.classification.necessity)}</EvidenceRow> : null}
           {model.classification.behavior ? <EvidenceRow label="Comportement">{model.classification.behavior}</EvidenceRow> : null}
           {model.classification.lifeScope ? <EvidenceRow label="LifeScope">{model.classification.lifeScope}</EvidenceRow> : null}
         </dl>
@@ -113,10 +141,10 @@ export function OperationEvidenceSurface({
 
       <SectionLayout title="Liens canoniques">
         <div className={styles.relationActions}>
-          {merchantId ? <Button tone="quiet" action={{ kind: "callback", onAction: () => navigation.push({ kind: "merchant", id: merchantId }) }}>Marchand</Button> : null}
-          {placeId ? <Button tone="quiet" action={{ kind: "callback", onAction: () => navigation.push({ kind: "place", id: placeId }) }}>Lieu</Button> : null}
-          {model.links.lifeEvents.map((id) => <Button key={id} tone="quiet" action={{ kind: "callback", onAction: () => navigation.push({ kind: "life_event", id }) }}>Life Event</Button>)}
-          {model.links.moments.map((id) => <Button key={id} tone="quiet" action={{ kind: "callback", onAction: () => navigation.push({ kind: "moment", id }) }}>Moment direct</Button>)}
+          {merchantId ? <EvidenceEntityAction label="Marchand" node={{ kind: "merchant", id: merchantId }} anchor={{ moduleId: "exploration", item: { kind: "merchant", id: merchantId } }} navigation={navigation} /> : null}
+          {placeId ? <EvidenceEntityAction label="Lieu" node={{ kind: "place", id: placeId }} anchor={{ moduleId: "exploration", item: { kind: "place", id: placeId } }} navigation={navigation} /> : null}
+          {model.links.lifeEvents.map((id) => <EvidenceEntityAction key={id} label="Life Event" node={{ kind: "life_event", id }} anchor={{ moduleId: "exploration", item: { kind: "life_event", id } }} navigation={navigation} />)}
+          {model.links.moments.map((id) => <EvidenceEntityAction key={id} label="Moment direct" node={{ kind: "moment", id }} anchor={{ moduleId: "exploration", item: { kind: "moment", id } }} navigation={navigation} />)}
         </div>
       </SectionLayout>
 

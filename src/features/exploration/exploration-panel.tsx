@@ -127,6 +127,7 @@ export function ExplorationPanel({
   backgroundRootRef,
   restoreFocusRef,
   semanticFallbackRef,
+  operationRoot = false,
 }: {
   readonly state: ExplorationPanelState;
   readonly navigation: ExplorationNavigation;
@@ -136,6 +137,7 @@ export function ExplorationPanel({
   readonly backgroundRootRef?: RefObject<HTMLElement | null>;
   readonly restoreFocusRef?: RefObject<HTMLElement | null>;
   readonly semanticFallbackRef?: RefObject<HTMLElement | null>;
+  readonly operationRoot?: boolean;
 }) {
   const canPop = canPopExploration(state.exploration);
   const currentNode = state.exploration.stack[state.exploration.stack.length - 1]!;
@@ -143,8 +145,8 @@ export function ExplorationPanel({
     <OverlayFrame
       title={nodeLabels[currentNode.kind]}
       subtitle={`Exploration · niveau ${state.exploration.stack.length}`}
-      kind="exploration"
-      className={styles.panel}
+      kind={operationRoot ? "operation_root" : "exploration"}
+      className={operationRoot ? styles.operationRootPanel : styles.panel}
       open={open}
       topmost
       closeAction={{ kind: "callback", onAction: () => navigation.close() }}

@@ -2,14 +2,15 @@
 
 import { useMemo, useRef } from "react";
 import type { LocalDate, YearMonth } from "@/core/time";
-import type { CalendarWeekRef } from "@/navigation";
+import { normalizeAnalysisScope } from "@/core/scope";
+import { type CalendarWeekRef, type RootNavigationContext } from "@/navigation";
 import type {
   HistoryCalendarMonthReadModel,
   HistoryCalendarMonthSummaryReadModel,
   HistoryDayDetailReadModel,
 } from "@/query-api";
 import type { UiTransportState } from "@/ui";
-import { useProductRuntime } from "@/components/runtime";
+import { useProductRuntime, useProductSurface } from "@/components/runtime";
 import { CalendarMonth, CalendarTwelveMonths, CalendarWeek } from "./calendar-view";
 import { DayDetailDrawer } from "./day-drawer";
 
@@ -46,6 +47,25 @@ export function CalendarClientPage(props: CalendarClientPageProps) {
     goToAnalysis: () => runtime.run((value) => value.goToAnalysis()) as Promise<Awaited<ReturnType<typeof controller.goToAnalysis>>>,
   }, [controller, runtime]);
   const rootRef = useRef<HTMLDivElement>(null);
+  const route: RootNavigationContext = props.kind === "overview"
+    ? { area: "calendar", context: { kind: "calendar_overview" } }
+    : props.kind === "week"
+      ? { area: "calendar", context: { kind: "calendar_week", month: props.month, week: props.week } }
+      : { area: "calendar", context: { kind: "calendar_month", month: props.month, ...(props.day ? { day: props.day } : {}) } };
+  const scope = props.kind === "overview" ? null : normalizeAnalysisScope({
+    subject: { kind: "household" },
+    time: { kind: "month", month: props.month },
+  });
+  const pageState = props.kind === "month" && props.dayState ? props.dayState : props.state;
+  useProductSurface({
+    route,
+    scope,
+    readiness: pageState.status === "idle" || pageState.status === "loading"
+      ? "pending"
+      : pageState.status === "error" && pageState.previousData === undefined
+        ? "terminal_without_anchor"
+        : "ready",
+  });
   if (props.kind === "overview") {
     return <CalendarTwelveMonths state={props.state} navigation={navigation} />;
   }
@@ -63,6 +83,8 @@ export function CalendarClientPage(props: CalendarClientPageProps) {
           state={props.dayState}
           navigation={navigation ?? controller}
           backgroundRootRef={rootRef}
+          topmost={runtime.overlays.topmost === "day_drawer"}
+          suspended={runtime.overlays.daySuspended}
         />
       ) : null}
     </>

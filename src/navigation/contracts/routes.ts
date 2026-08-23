@@ -1,4 +1,5 @@
 import { parsePersonId, type Brand, type PersonId } from "../../core/identity";
+import { normalizeAnalysisFilters, type NormalizedAnalysisFilters } from "../../core/scope";
 import type { GlobalWindow, LocalDate, YearMonth } from "../../core/time";
 import {
   parseGlobalWindow,
@@ -45,12 +46,14 @@ export type AnalysisRouteContext =
       readonly kind: "analysis_month";
       readonly month: YearMonth;
       readonly personId?: PersonId;
+      readonly filters?: NormalizedAnalysisFilters;
     }
   | {
       readonly kind: "analysis_global";
       readonly observationWindow: GlobalWindow;
       readonly asOf?: YearMonth;
       readonly personId?: PersonId;
+      readonly filters?: NormalizedAnalysisFilters;
     };
 
 export type HistoryRootContext =
@@ -174,7 +177,7 @@ function parseCalendarRouteContext(value: unknown): CalendarRouteContext {
 function parseAnalysisRouteContext(value: unknown): AnalysisRouteContext {
   const candidate = parseStrictRecord(
     value,
-    ["kind", "month", "observationWindow", "asOf", "personId"],
+    ["kind", "month", "observationWindow", "asOf", "personId", "filters"],
     "AnalysisRouteContext",
   );
   const kind = withValidationPath("kind", () =>
@@ -188,7 +191,7 @@ function parseAnalysisRouteContext(value: unknown): AnalysisRouteContext {
   if (kind === "analysis_month") {
     const record = parseStrictRecord(
       value,
-      ["kind", "month", "personId"],
+      ["kind", "month", "personId", "filters"],
       "AnalysisRouteContext",
     );
     const personId = hasOwn(record, "personId")
@@ -200,12 +203,13 @@ function parseAnalysisRouteContext(value: unknown): AnalysisRouteContext {
         parseYearMonth(requireProperty(record, "month", "AnalysisRouteContext")),
       ),
       ...(personId === undefined ? {} : { personId }),
+      ...(hasOwn(record, "filters") ? { filters: normalizeAnalysisFilters(record.filters as never) } : {}),
     };
   }
 
   const record = parseStrictRecord(
     value,
-    ["kind", "observationWindow", "asOf", "personId"],
+    ["kind", "observationWindow", "asOf", "personId", "filters"],
     "AnalysisRouteContext",
   );
   const observationWindow = withValidationPath("observationWindow", () =>
@@ -225,6 +229,7 @@ function parseAnalysisRouteContext(value: unknown): AnalysisRouteContext {
     observationWindow,
     ...(asOf === undefined ? {} : { asOf }),
     ...(personId === undefined ? {} : { personId }),
+    ...(hasOwn(record, "filters") ? { filters: normalizeAnalysisFilters(record.filters as never) } : {}),
   };
 }
 

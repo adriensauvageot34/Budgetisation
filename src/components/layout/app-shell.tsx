@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Landmark } from "lucide-react";
 import { SignOutButton } from "@/features/auth/sign-out-button";
+import { useProductRuntime } from "@/components/runtime";
 
 const modules = [
   { href: "/historique", label: "Historique" },
@@ -12,6 +13,7 @@ const modules = [
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
+  const runtime = useProductRuntime();
 
   if (pathname === "/connexion" || pathname === "/acces-refuse") {
     return children;
@@ -59,7 +61,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         </div>
       </header>
 
-      <main className="mx-auto min-h-[calc(100vh-73px)] max-w-6xl px-[var(--space-page)] py-8">
+      <main ref={runtime.backgroundRootRef} className="mx-auto min-h-[calc(100vh-73px)] max-w-6xl px-[var(--space-page)] py-8">
         {children}
       </main>
     </div>

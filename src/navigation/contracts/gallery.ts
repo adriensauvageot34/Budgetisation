@@ -9,16 +9,15 @@ import {
 export type GalleryKind = "moments" | "places" | "merchants";
 
 export type MomentsGalleryFilters = {
-  readonly sort: "recent" | "cost" | "duration";
+  readonly sort: "recent";
 };
 
 export type PlacesGalleryFilters = {
-  readonly sort: "frequent" | "spend" | "new" | "recent";
+  readonly sort: "frequent" | "spent" | "recent";
 };
 
 export type MerchantsGalleryFilters = {
-  readonly sort: "spend" | "frequent" | "ticket" | "recent";
-  readonly channel?: "physical" | "online";
+  readonly sort: "spent" | "frequent" | "recent";
 };
 
 export type GalleryFiltersByKind = {
@@ -51,24 +50,17 @@ const galleryKinds = new Set<GalleryKind>([
 ]);
 const momentSorts = new Set<MomentsGalleryFilters["sort"]>([
   "recent",
-  "cost",
-  "duration",
 ]);
 const placeSorts = new Set<PlacesGalleryFilters["sort"]>([
   "frequent",
-  "spend",
-  "new",
+  "spent",
   "recent",
 ]);
 const merchantSorts = new Set<MerchantsGalleryFilters["sort"]>([
-  "spend",
+  "spent",
   "frequent",
-  "ticket",
   "recent",
 ]);
-const merchantChannels = new Set<
-  NonNullable<MerchantsGalleryFilters["channel"]>
->(["physical", "online"]);
 
 export function parseGalleryKind(value: unknown): GalleryKind {
   return parseStringLiteral<GalleryKind>(value, galleryKinds, "GalleryKind");
@@ -109,7 +101,7 @@ export function parseMerchantsGalleryFilters(
 ): MerchantsGalleryFilters {
   const record = parseStrictRecord(
     value,
-    ["sort", "channel"],
+    ["sort"],
     "MerchantsGalleryFilters",
   );
   const sort = withValidationPath("sort", () =>
@@ -119,16 +111,7 @@ export function parseMerchantsGalleryFilters(
       "MerchantsGalleryFilters.sort",
     ),
   );
-  const channel = Object.prototype.hasOwnProperty.call(record, "channel")
-    ? withValidationPath("channel", () =>
-        parseStringLiteral<NonNullable<MerchantsGalleryFilters["channel"]>>(
-          record.channel,
-          merchantChannels,
-          "MerchantsGalleryFilters.channel",
-        ),
-      )
-    : undefined;
-  return { sort, ...(channel === undefined ? {} : { channel }) };
+  return { sort };
 }
 
 export function parseGalleryNavigationFilters(

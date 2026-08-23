@@ -9,7 +9,8 @@ function createAnchorKey(anchor: SemanticAnchor): string {
   const parsed = semanticAnchorSchema.parse(anchor);
   return JSON.stringify([
     parsed.moduleId,
-    parsed.entityId ?? null,
+    parsed.item?.kind ?? null,
+    parsed.item?.id ?? null,
     parsed.itemKey ?? null,
   ]);
 }

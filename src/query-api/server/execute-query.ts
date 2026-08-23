@@ -67,7 +67,10 @@ function normalizeAtServerBoundary(
 ): AnyNormalizedQueryRequest {
   const record = parseStrictRecord(value, ["resource", "scope", "params"], "QueryRequest");
   const resource = parseQueryResourceKey(requireProperty(record, "resource", "QueryRequest"));
-  const scope = parseScopeInput(requireProperty(record, "scope", "QueryRequest"), { requestId });
+  const rawScope = requireProperty(record, "scope", "QueryRequest");
+  const scope = resource === "operations_browse"
+    ? rawScope
+    : parseScopeInput(rawScope, { requestId });
   return normalizeQueryRequest({
     resource,
     scope,

@@ -2,7 +2,8 @@
 
 import type { ReactNode } from "react";
 import type { MetricId } from "@/core/identity";
-import type { ExplorationNode } from "@/navigation";
+import type { ExplorationNode, SemanticAnchor } from "@/navigation";
+import { useSemanticAnchor } from "@/components/runtime";
 import {
   querySectionKeys,
   type EntityIdentity,
@@ -54,6 +55,19 @@ export function semanticRefToNode(ref: SemanticEntityRef): ExplorationNode {
       return { kind: "persona", id: "ensemble" };
     case "methodology":
       return { kind: "methodology", metricId: ref.id };
+  }
+}
+
+function semanticRefToAnchor(ref: SemanticEntityRef): SemanticAnchor {
+  switch (ref.kind) {
+    case "moment": return { moduleId: "exploration", item: { kind: "moment", id: ref.id } };
+    case "place": return { moduleId: "exploration", item: { kind: "place", id: ref.id } };
+    case "merchant": return { moduleId: "exploration", item: { kind: "merchant", id: ref.id } };
+    case "life_event": return { moduleId: "exploration", item: { kind: "life_event", id: ref.id } };
+    case "operation": return { moduleId: "exploration", item: { kind: "operation", id: ref.id } };
+    case "person": return { moduleId: "exploration", item: { kind: "person", id: ref.id } };
+    case "ensemble": return { moduleId: "exploration", itemKey: "persona:ensemble" };
+    case "methodology": return { moduleId: "exploration", itemKey: `methodology:${ref.id}` };
   }
 }
 
@@ -163,16 +177,38 @@ export function RelationPreviewCard({
   readonly relation: SemanticEntityRef;
   readonly navigation: ExplorationNavigation;
 }) {
+  const anchor = semanticRefToAnchor(relation);
+  const anchorRef = useSemanticAnchor(anchor);
   return (
-    <Surface
-      variant="outlined"
-      className={styles.previewCard}
-      action={{ kind: "callback", onAction: () => navigation.push(semanticRefToNode(relation)) }}
-      ariaLabel={`Explorer ${relation.label ?? relation.kind}`}
-    >
-      <span className={styles.eyebrow}>{relation.kind}</span>
-      <strong>{relation.label ?? "Entité liée"}</strong>
-    </Surface>
+    <div ref={anchorRef} data-semantic-anchor="exploration">
+      <Surface
+        variant="outlined"
+        className={styles.previewCard}
+        action={{ kind: "callback", onAction: () => navigation.push(semanticRefToNode(relation), anchor) }}
+        ariaLabel={`Explorer ${relation.label ?? relation.kind}`}
+      >
+        <span className={styles.eyebrow}>{relation.kind}</span>
+        <strong>{relation.label ?? "Entité liée"}</strong>
+      </Surface>
+    </div>
+  );
+}
+
+function GalleryTrigger({
+  node,
+  navigation,
+}: {
+  readonly node: Extract<ExplorationNode, { readonly kind: "gallery" }>;
+  readonly navigation: ExplorationNavigation;
+}) {
+  const anchor: SemanticAnchor = { moduleId: "exploration", itemKey: `gallery:${node.gallery}` };
+  const anchorRef = useSemanticAnchor(anchor);
+  return (
+    <span ref={anchorRef} data-semantic-anchor="exploration">
+      <Button tone="quiet" size="sm" action={{ kind: "callback", onAction: () => navigation.push(node, anchor) }}>
+        Voir tout
+      </Button>
+    </span>
   );
 }
 
@@ -197,9 +233,7 @@ export function RelatedRail({
     <SectionLayout
       title={title}
       actions={seeAll ? (
-        <Button tone="quiet" size="sm" action={{ kind: "callback", onAction: () => navigation.push(seeAll) }}>
-          Voir tout
-        </Button>
+        <GalleryTrigger node={seeAll} navigation={navigation} />
       ) : undefined}
     >
       <ContentRail
@@ -222,13 +256,21 @@ export function MethodologyTrigger({
   readonly navigation: ExplorationNavigation;
 }) {
   if (metricId === undefined) return null;
+  return <MethodologyAction metricId={metricId} navigation={navigation} />;
+}
+
+function MethodologyAction({ metricId, navigation }: { readonly metricId: MetricId; readonly navigation: ExplorationNavigation }) {
+  const anchor: SemanticAnchor = { moduleId: "exploration", itemKey: `methodology:${metricId}` };
+  const anchorRef = useSemanticAnchor(anchor);
   return (
-    <Button
-      tone="quiet"
-      size="sm"
-      action={{ kind: "callback", onAction: () => navigation.push({ kind: "methodology", metricId }) }}
-    >
-      Méthodologie
-    </Button>
+    <span ref={anchorRef} data-semantic-anchor="exploration">
+      <Button
+        tone="quiet"
+        size="sm"
+        action={{ kind: "callback", onAction: () => navigation.push({ kind: "methodology", metricId }, anchor) }}
+      >
+        Méthodologie
+      </Button>
+    </span>
   );
 }

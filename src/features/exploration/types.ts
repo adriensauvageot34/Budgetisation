@@ -6,6 +6,7 @@ import type {
   ExplorationNode,
   NavigationCommandResult,
 } from "@/navigation";
+import type { OperationsNavigationFilters } from "@/navigation";
 import type {
   EntityLifeEventReadModel,
   EntityMerchantReadModel,
@@ -27,9 +28,11 @@ import type {
 import type { UiTransportState } from "@/ui";
 
 export type ExplorationNavigation = {
-  push(node: ExplorationNode): NavigationCommandResult;
+  push(node: ExplorationNode, anchor?: import("@/navigation").SemanticAnchor): NavigationCommandResult;
   pop(): NavigationCommandResult;
   close(): NavigationCommandResult;
+  openOperations(filters: OperationsNavigationFilters): NavigationCommandResult;
+  showDay(day: LocalDate): NavigationCommandResult;
 };
 
 export type OperationPreviewModel = {

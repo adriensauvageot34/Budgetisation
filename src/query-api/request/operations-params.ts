@@ -77,7 +77,7 @@ export type OperationsBrowseFilters = {
   readonly placeIds: readonly PlaceId[];
   readonly accountIds: readonly string[];
   readonly preciseTypes: readonly string[];
-  readonly necessity: readonly ("necessary" | "discretionary" | "unknown")[];
+  readonly necessity: readonly ("Indispensable" | "Contraint" | "Optionnel")[];
   readonly fixedVariable: readonly ("fixed" | "variable" | "unknown")[];
   readonly lifeScope: readonly ("Vie courante" | "Hors quotidien")[];
   readonly dayContext: readonly (
@@ -122,7 +122,7 @@ const qualityValues = new Set<OperationQualityFilter>([
   "conflict",
   "unknown",
 ]);
-const necessityValues = new Set(["necessary", "discretionary", "unknown"] as const);
+const necessityValues = new Set(["Indispensable", "Contraint", "Optionnel"] as const);
 const fixedVariableValues = new Set(["fixed", "variable", "unknown"] as const);
 const lifeScopeValues = new Set(["Vie courante", "Hors quotidien"] as const);
 const dayContextValues = new Set([

@@ -1,8 +1,11 @@
 import { parseAnalysisScope } from "./validation";
 import type {
+  AnalysisFilters,
   AnalysisScope,
+  NormalizedAnalysisFilters,
   NormalizedAnalysisScope,
 } from "./types";
+import { parseAnalysisFilters } from "./validation";
 
 function normalizeCollection<T extends string>(
   values: readonly T[] | undefined,
@@ -21,13 +24,18 @@ export function normalizeAnalysisScope(
   return {
     subject: parsed.subject,
     time: parsed.time,
-    filters: {
-      categoryIds: normalizeCollection(filters?.categoryIds),
-      activityIds: normalizeCollection(filters?.activityIds),
-      merchantIds: normalizeCollection(filters?.merchantIds),
-      placeIds: normalizeCollection(filters?.placeIds),
-      lifeScopeContext: normalizeCollection(filters?.lifeScopeContext),
-      dayContext: normalizeCollection(filters?.dayContext),
-    },
+    filters: normalizeAnalysisFilters(filters),
+  };
+}
+
+export function normalizeAnalysisFilters(filters?: AnalysisFilters): NormalizedAnalysisFilters {
+  const parsed = filters === undefined ? undefined : parseAnalysisFilters(filters);
+  return {
+    categoryIds: normalizeCollection(parsed?.categoryIds),
+    activityIds: normalizeCollection(parsed?.activityIds),
+    merchantIds: normalizeCollection(parsed?.merchantIds),
+    placeIds: normalizeCollection(parsed?.placeIds),
+    lifeScopeContext: normalizeCollection(parsed?.lifeScopeContext),
+    dayContext: normalizeCollection(parsed?.dayContext),
   };
 }

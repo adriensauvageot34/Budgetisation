@@ -24,7 +24,7 @@ import type {
   OperationId,
   PersonId,
 } from "@/core/identity";
-import { addDays, type LocalDate } from "@/core/time";
+import { addDays, parseLocalDate, yearMonthOf, type LocalDate, type YearMonth } from "@/core/time";
 import type { AuthorizedRuntimeContext } from "./context";
 import {
   initiallyAvailableCanonicalSources,
@@ -180,6 +180,22 @@ export class CanonicalRepository {
           .order("date_bancaire", { ascending: true })
           .order("operation_id", { ascending: true }),
     );
+  }
+
+  async loadLatestBankOperationMonth(): Promise<YearMonth | null> {
+    const rows = await this.readRows("operations:latest-bank-month", "operations", () =>
+      this.client
+        .from("operations")
+        .select("operation_id,date_bancaire")
+        .eq("household_id", this.context.householdId)
+        .order("date_bancaire", { ascending: false })
+        .order("operation_id", { ascending: false })
+        .limit(1),
+    );
+    const row = rows[0];
+    return row === undefined
+      ? null
+      : yearMonthOf(parseLocalDate(canonicalString(row, ["date_bancaire"], "operations")));
   }
 
   loadOperationsByIds(

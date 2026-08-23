@@ -1,7 +1,7 @@
 "use client";
 
-import Link from "next/link";
 import { parseMetricId, type PersonId } from "@/core/identity";
+import { normalizeAnalysisScope } from "@/core/scope";
 import type {
   AnalysisGlobalBreakdownReadModel,
   AnalysisGlobalContextsReadModel,
@@ -27,7 +27,7 @@ import {
   Surface,
   type UiTransportState,
 } from "@/ui";
-import { useProductRuntime } from "@/components/runtime";
+import { useProductRuntime, useProductSurface } from "@/components/runtime";
 import styles from "./analysis.module.css";
 
 type PersonOption = { readonly id: string; readonly label: string };
@@ -86,16 +86,14 @@ function SubjectSelector({
 }
 
 function AnalysisModeNav({ month, personId }: { readonly month: YearMonth; readonly personId?: PersonId }) {
-  const subject = personId ? `?personId=${encodeURIComponent(personId)}` : "";
-  const globalParams = new URLSearchParams({ window: "last_12_months", asOf: month });
-  if (personId) globalParams.set("personId", personId);
+  const runtime = useProductRuntime();
   return (
     <nav className={styles.modeNav} aria-label="Mode Historique">
-      <Link href={`/historique/calendrier/${month}${subject}`}>Calendrier</Link>
-      <Link className={styles.active} href={`/historique/analyse/${month}${subject}`}>Analyse</Link>
+      <button type="button" onClick={() => runtime.run((controller) => controller.goToCalendar())}>Calendrier</button>
+      <span className={styles.active}>Analyse</span>
       <span aria-hidden="true">·</span>
-      <Link className={styles.active} href={`/historique/analyse/${month}${subject}`}>Mois</Link>
-      <Link href={`/historique/analyse/global?${globalParams.toString()}`}>Global</Link>
+      <span className={styles.active}>Mois</span>
+      <button type="button" onClick={() => runtime.run((controller) => controller.goToGlobal("last_12_months"))}>Global</button>
     </nav>
   );
 }
@@ -122,6 +120,20 @@ export function AnalysisMonthPage({
   readonly manualSummary?: string | null;
 }) {
   const runtime = useProductRuntime();
+  const runtimeAnalysisRoot = runtime.snapshot?.history.root;
+  const navigationContext = runtimeAnalysisRoot && "area" in runtimeAnalysisRoot && runtimeAnalysisRoot.area === "analysis" && runtimeAnalysisRoot.context.kind === "analysis_month" && runtimeAnalysisRoot.context.month === month
+    ? runtimeAnalysisRoot.context
+    : { kind: "analysis_month" as const, month, ...(personId ? { personId } : {}) };
+  const scope = normalizeAnalysisScope({
+    subject: navigationContext.personId ? { kind: "person", personId: navigationContext.personId } : { kind: "household" },
+    time: { kind: "month", month },
+    filters: navigationContext.filters,
+  });
+  useProductSurface({
+    route: { area: "analysis", context: navigationContext },
+    scope,
+    readiness: initial.status === "idle" || initial.status === "loading" ? "pending" : initial.status === "error" && initial.previousData === undefined ? "terminal_without_anchor" : "ready",
+  });
   return (
     <div className={styles.page} data-product-surface="analysis-month">
       <header className={styles.heroHeader}>
@@ -234,18 +246,31 @@ export function AnalysisGlobalPage({
   readonly universe: UiTransportState<GalleryPlacesReadModel>;
 }) {
   const runtime = useProductRuntime();
-  const monthSubject = personId ? `?personId=${encodeURIComponent(personId)}` : "";
+  const runtimeAnalysisRoot = runtime.snapshot?.history.root;
+  const navigationContext = runtimeAnalysisRoot && "area" in runtimeAnalysisRoot && runtimeAnalysisRoot.area === "analysis" && runtimeAnalysisRoot.context.kind === "analysis_global" && runtimeAnalysisRoot.context.observationWindow === window && runtimeAnalysisRoot.context.asOf === asOf
+    ? runtimeAnalysisRoot.context
+    : { kind: "analysis_global" as const, observationWindow: window, asOf, ...(personId ? { personId } : {}) };
+  const scope = normalizeAnalysisScope({
+    subject: navigationContext.personId ? { kind: "person", personId: navigationContext.personId } : { kind: "household" },
+    time: { kind: "global", observationWindow: window, asOf },
+    filters: navigationContext.filters,
+  });
+  useProductSurface({
+    route: { area: "analysis", context: navigationContext },
+    scope,
+    readiness: initial.status === "idle" || initial.status === "loading" ? "pending" : initial.status === "error" && initial.previousData === undefined ? "terminal_without_anchor" : "ready",
+  });
   return (
     <div className={styles.page} data-product-surface="analysis-global">
       <header className={styles.heroHeader}>
         <span className="eyebrow">Historique</span>
         <h1>Analyse globale</h1>
         <nav className={styles.modeNav} aria-label="Mode Historique">
-          <Link href={`/historique/calendrier/${asOf}${monthSubject}`}>Calendrier</Link>
-          <Link className={styles.active} href={`/historique/analyse/${asOf}${monthSubject}`}>Analyse</Link>
+          <button type="button" onClick={() => runtime.run((controller) => controller.goToCalendar())}>Calendrier</button>
+          <span className={styles.active}>Analyse</span>
           <span aria-hidden="true">·</span>
-          <Link href={`/historique/analyse/${asOf}${monthSubject}`}>Mois</Link>
-          <Link className={styles.active} href={`/historique/analyse/global?window=${window}&asOf=${asOf}${personId ? `&personId=${encodeURIComponent(personId)}` : ""}`}>Global</Link>
+          <button type="button" onClick={() => runtime.run((controller) => controller.goToMonth(asOf))}>Mois</button>
+          <span className={styles.active}>Global</span>
         </nav>
         <div className={styles.globalControls}>
           <form className={styles.selector} method="get" action="/historique/analyse/global">

@@ -128,6 +128,53 @@ function scrollMemoryFromCheckpoint(
   };
 }
 
+function scrollContainerForCheckpoint(checkpoint: NavigationCheckpoint): ScrollContainerRef {
+  return checkpoint.anchor?.moduleId === "exploration"
+    ? { kind: "exploration" }
+    : scrollContainerFor(checkpoint.route);
+}
+
+function compatibleAnalysisFilters(
+  scope: NormalizedAnalysisScope,
+  compatibility: NavigationControllerDeps["compatibility"],
+): NormalizedAnalysisScope["filters"] {
+  return {
+    categoryIds: compatibility.categoryIds ? scope.filters.categoryIds : [],
+    activityIds: compatibility.activityIds ? scope.filters.activityIds : [],
+    merchantIds: compatibility.merchantIds ? scope.filters.merchantIds : [],
+    placeIds: compatibility.placeIds ? scope.filters.placeIds : [],
+    lifeScopeContext: compatibility.lifeScopeContext ? scope.filters.lifeScopeContext : [],
+    dayContext: compatibility.dayContext ? scope.filters.dayContext : [],
+  };
+}
+
+function compactOperationsNavigationFilters(
+  filters: OperationsNavigationFilters,
+): OperationsNavigationFilters {
+  return Object.fromEntries(
+    Object.entries(filters).filter(([, value]) => value !== undefined),
+  ) as OperationsNavigationFilters;
+}
+
+function rootFromAnalysisScope(scope: NormalizedAnalysisScope): HistoryRootContext {
+  const personId = scope.subject.kind === "person" ? scope.subject.personId : undefined;
+  return scope.time.kind === "month"
+    ? {
+        area: "analysis",
+        context: { kind: "analysis_month", month: scope.time.month, ...(personId ? { personId } : {}), filters: scope.filters },
+      }
+    : {
+        area: "analysis",
+        context: {
+          kind: "analysis_global",
+          observationWindow: scope.time.observationWindow,
+          asOf: scope.time.asOf,
+          ...(personId ? { personId } : {}),
+          filters: scope.filters,
+        },
+      };
+}
+
 class DefaultNavigationController implements NavigationController {
   private currentState: NavigationHistoryState | null = null;
   private unsubscribeHistory: (() => void) | null = null;
@@ -140,6 +187,7 @@ class DefaultNavigationController implements NavigationController {
     if (this.unsubscribeHistory !== null) return noop("already_started");
 
     const root = rootNavigationContextSchema.parse(this.deps.router.read());
+    this.activateRoute(root);
     const resolution = resolveNavigationHistoryState(
       this.deps.history.state,
       this.deps.session.getClosedGenerations(),
@@ -197,6 +245,22 @@ class DefaultNavigationController implements NavigationController {
       contextMemory: this.deps.session.getContextMemory(),
       returnDestination: this.deps.session.getReturnDestination(),
     };
+  }
+
+  reconcileExternalRoot(): NavigationCommandResult {
+    if (!this.isStarted()) return noop("not_started");
+    const root = rootNavigationContextSchema.parse(this.deps.router.read());
+    if (serializeRootNavigation(root) === serializeRootNavigation(this.requireState().root)) {
+      return noop("same_target");
+    }
+    this.beginNavigation();
+    this.closeActiveGeneration();
+    const state = this.createRootState(root);
+    this.deps.history.replace(state, serializeRootNavigation(root));
+    this.currentState = state;
+    this.activateRoute(root);
+    this.rememberRoot(root);
+    return applied;
   }
 
   openDay(date: LocalDate): NavigationCommandResult {
@@ -331,13 +395,13 @@ class DefaultNavigationController implements NavigationController {
     return applied;
   }
 
-  openExploration(node: ExplorationNode): NavigationCommandResult {
+  openExploration(node: ExplorationNode, anchor?: SemanticAnchor): NavigationCommandResult {
     if (!this.isStarted()) return noop("not_started");
     const current = this.requireState();
-    if (current.exploration !== null) return this.push(node);
+    if (current.exploration !== null) return this.push(node, anchor);
 
     this.beginNavigation();
-    const checkpoint = this.captureCurrentSnapshot();
+    const checkpoint = this.captureCurrentSnapshot(anchor);
     const state = createOpenExplorationHistoryState({
       current: this.requireState(),
       entryId: this.nextEntryId(),
@@ -350,14 +414,20 @@ class DefaultNavigationController implements NavigationController {
     return applied;
   }
 
-  push(node: ExplorationNode): NavigationCommandResult {
+  push(node: ExplorationNode, anchor?: SemanticAnchor): NavigationCommandResult {
     if (!this.isStarted()) return noop("not_started");
     const current = this.requireState();
-    if (current.exploration === null) return this.openExploration(node);
+    if (current.exploration === null) return this.openExploration(node, anchor);
 
     this.beginNavigation();
+    if (anchor !== undefined) {
+      const checkpoint = this.createCheckpoint(anchor);
+      const parent = navigationHistoryStateSchema.parse({ ...current, checkpoint });
+      this.deps.history.replace(parent, serializeRootNavigation(parent.root));
+      this.currentState = parent;
+    }
     const state = createPushedExplorationHistoryState(
-      current,
+      this.requireState(),
       this.nextEntryId(),
       explorationNodeSchema.parse(node),
     );
@@ -438,16 +508,7 @@ class DefaultNavigationController implements NavigationController {
         subject: sourceScope.subject,
         time: { kind: "month", month: targetMonth },
         filters: {
-          categoryIds: this.deps.compatibility.categoryIds
-            ? sourceScope.filters.categoryIds
-            : [],
-          activityIds: this.deps.compatibility.activityIds
-            ? sourceScope.filters.activityIds
-            : [],
-          merchantIds: [],
-          placeIds: [],
-          lifeScopeContext: [],
-          dayContext: [],
+          ...compatibleAnalysisFilters(sourceScope, this.deps.compatibility),
         },
       });
       memory = navigationContextMemorySchema.parse({
@@ -464,10 +525,18 @@ class DefaultNavigationController implements NavigationController {
     this.beginNavigation();
     this.captureCurrentSnapshot();
     this.closeActiveGeneration();
-    const target: HistoryRootContext = {
-      area: "analysis",
-      context: { kind: "analysis_month", month: targetMonth },
-    };
+    const target: HistoryRootContext = targetScope === null
+      ? {
+          area: "analysis",
+          context: {
+            kind: "analysis_month",
+            month: targetMonth,
+            ...("area" in current.root && current.root.area === "analysis" && current.root.context.personId
+              ? { personId: current.root.context.personId }
+              : {}),
+          },
+        }
+      : rootFromAnalysisScope(targetScope);
     this.commitRoot(target, "push");
     this.deps.surface.applyScope(targetScope);
     this.deps.surface.applySubview(null);
@@ -516,26 +585,10 @@ class DefaultNavigationController implements NavigationController {
           asOf: sourceScope.time.asOf,
         },
         filters: {
-          categoryIds: this.deps.compatibility.categoryIds
-            ? sourceScope.filters.categoryIds
-            : [],
-          activityIds: this.deps.compatibility.activityIds
-            ? sourceScope.filters.activityIds
-            : [],
-          merchantIds: [],
-          placeIds: [],
-          lifeScopeContext: [],
-          dayContext: [],
+          ...compatibleAnalysisFilters(sourceScope, this.deps.compatibility),
         },
       });
-      targetRoot = {
-        area: "analysis",
-        context: {
-          kind: "analysis_global",
-          observationWindow: targetWindow,
-          asOf: sourceScope.time.asOf,
-        },
-      };
+      targetRoot = rootFromAnalysisScope(targetScope);
       memory = navigationContextMemorySchema.parse({
         ...currentMemory,
         lastGlobalWindow: targetWindow,
@@ -556,10 +609,44 @@ class DefaultNavigationController implements NavigationController {
     filters: OperationsNavigationFilters,
   ): NavigationCommandResult {
     if (!this.isStarted()) return noop("not_started");
-    const parsedFilters = operationsNavigationFiltersSchema.safeParse(filters);
+    const current = this.requireState();
+    const operationsBase: OperationsNavigationFilters = "kind" in current.root
+      ? compactOperationsNavigationFilters({ ...current.root.filters, cursor: undefined })
+      : {};
+    const sourceScope = this.readScope();
+    const compatible = sourceScope === null
+      ? null
+      : compatibleAnalysisFilters(sourceScope, this.deps.compatibility);
+    const enrichedFilters: OperationsNavigationFilters = {
+      ...operationsBase,
+      ...filters,
+      ...(filters.personId === undefined && sourceScope?.subject.kind === "person"
+        ? { personId: sourceScope.subject.personId }
+        : {}),
+      ...(filters.categoryIds === undefined && compatible?.categoryIds.length
+        ? { categoryIds: compatible.categoryIds }
+        : {}),
+      ...(filters.activityIds === undefined && compatible?.activityIds.length
+        ? { activityIds: compatible.activityIds }
+        : {}),
+      ...(filters.merchantIds === undefined && compatible?.merchantIds.length
+        ? { merchantIds: compatible.merchantIds }
+        : {}),
+      ...(filters.placeIds === undefined && compatible?.placeIds.length
+        ? { placeIds: compatible.placeIds }
+        : {}),
+      ...(filters.lifeScope === undefined && compatible?.lifeScopeContext.length
+        ? { lifeScope: compatible.lifeScopeContext }
+        : {}),
+      ...(filters.dayContext === undefined && compatible?.dayContext.length
+        ? { dayContext: compatible.dayContext }
+        : {}),
+    };
+    const parsedFilters = operationsNavigationFiltersSchema.safeParse(
+      compactOperationsNavigationFilters(enrichedFilters),
+    );
     if (!parsedFilters.success) return rejected("invalid_operations_filters");
 
-    const current = this.requireState();
     const checkpoint = this.createCheckpoint();
     const returnDestination: ReturnDestination =
       current.exploration === null
@@ -567,7 +654,7 @@ class DefaultNavigationController implements NavigationController {
         : {
             kind: "exploration",
             checkpoint,
-            node: getCurrentNode(current.exploration),
+            stack: current.exploration.stack,
           };
     const intent = buildOperationsIntent(
       parsedFilters.data,
@@ -588,11 +675,34 @@ class DefaultNavigationController implements NavigationController {
     return applied;
   }
 
+  updateOperations(
+    filters: OperationsNavigationFilters,
+    mode: "push" | "replace" = "push",
+  ): NavigationCommandResult {
+    if (!this.isStarted()) return noop("not_started");
+    if (!("kind" in this.requireState().root)) return rejected("invalid_operations_filters");
+    const parsed = operationsNavigationFiltersSchema.safeParse(
+      compactOperationsNavigationFilters(filters),
+    );
+    if (!parsed.success) return rejected("invalid_operations_filters");
+    const target = { kind: "operations" as const, filters: parsed.data };
+    if (serializeRootNavigation(target) === serializeRootNavigation(this.requireState().root)) {
+      return noop("same_target");
+    }
+    this.beginNavigation();
+    this.commitRoot(target, mode);
+    this.deps.surface.applyScope(null);
+    this.deps.surface.applySubview(null);
+    return applied;
+  }
+
   createCheckpoint(anchor?: SemanticAnchor): NavigationCheckpoint {
     const current = this.requireState();
     const parsedAnchor =
       anchor === undefined ? undefined : semanticAnchorSchema.parse(anchor);
-    const container = scrollContainerFor(current.root);
+    const container = parsedAnchor?.moduleId === "exploration"
+      ? { kind: "exploration" as const }
+      : scrollContainerFor(current.root);
     const scrollY = this.deps.scroll.getScrollY(container);
     let anchorOffset: number | undefined;
 
@@ -646,7 +756,7 @@ class DefaultNavigationController implements NavigationController {
     if (node.kind !== "place") return rejected("missing_place_origin");
 
     const checkpoint = this.createCheckpoint();
-    const intent = buildShowDayIntent(day, checkpoint, node);
+    const intent = buildShowDayIntent(day, checkpoint, current.exploration.stack);
     this.beginNavigation();
     this.persistCurrentCheckpoint(checkpoint);
     this.closeActiveGeneration();
@@ -677,17 +787,21 @@ class DefaultNavigationController implements NavigationController {
       destination.checkpoint,
     );
     this.applyCheckpointState(destination.checkpoint);
-    const state = createOpenExplorationHistoryState({
+    let state = createOpenExplorationHistoryState({
       current: this.requireState(),
       entryId: this.nextEntryId(),
       generation: this.nextGeneration(),
       rootCheckpoint: destination.checkpoint,
-      node: destination.node,
+      node: destination.stack[0],
     });
     this.deps.history.push(state, serializeRootNavigation(state.root));
+    for (const node of destination.stack.slice(1)) {
+      state = createPushedExplorationHistoryState(state, this.nextEntryId(), node);
+      this.deps.history.push(state, serializeRootNavigation(state.root));
+    }
     this.currentState = state;
     this.deps.session.setReturnDestination(null);
-    return applied;
+    return this.restoreScroll({ kind: "checkpoint_restore" }, destination.checkpoint);
   }
 
   async goToAnalysis(): Promise<NavigationCommandResult> {
@@ -794,6 +908,7 @@ class DefaultNavigationController implements NavigationController {
     checkpoint?: NavigationCheckpoint,
   ): NavigationHistoryState {
     const root = rootNavigationContextSchema.parse(rootInput);
+    this.activateRoute(root);
     if (mode === "push") this.deps.router.push(root);
     else this.deps.router.replace(root);
     const state = this.createRootState(root, checkpoint);
@@ -815,10 +930,15 @@ class DefaultNavigationController implements NavigationController {
     return state;
   }
 
-  private captureCurrentSnapshot(): NavigationCheckpoint {
-    const checkpoint = this.createCheckpoint();
+  private captureCurrentSnapshot(anchor?: SemanticAnchor): NavigationCheckpoint {
+    const checkpoint = this.createCheckpoint(anchor);
     this.persistCurrentCheckpoint(checkpoint);
     return checkpoint;
+  }
+
+  private activateRoute(root: RootNavigationContext): void {
+    this.deps.surface.activateRoute(root);
+    this.deps.readiness.activateRoute(root);
   }
 
   private closeActiveGeneration(): void {
@@ -916,7 +1036,7 @@ class DefaultNavigationController implements NavigationController {
 
     const outcome = await this.deps.restoration.restore({
       checkpoint,
-      container: scrollContainerFor(root),
+      container: scrollContainerForCheckpoint(checkpoint),
       readiness: this.deps.readiness.wait(checkpoint),
     });
     return outcome.kind === "cancelled"
@@ -934,6 +1054,7 @@ class DefaultNavigationController implements NavigationController {
     try {
       this.beginNavigation();
       const root = rootNavigationContextSchema.parse(this.deps.router.read());
+      this.activateRoute(root);
       const resolution = resolveNavigationHistoryState(
         rawState,
         this.deps.session.getClosedGenerations(),

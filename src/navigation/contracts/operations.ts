@@ -1,15 +1,22 @@
 import {
   parseActivityId,
   parseCategoryId,
+  parseLifeEventId,
   parseMerchantId,
+  parseMomentId,
   parsePersonId,
   parsePlaceId,
+  parseSubcategoryId,
   type ActivityId,
   type CategoryId,
+  type LifeEventId,
   type MerchantId,
+  type MomentId,
   type PersonId,
   type PlaceId,
+  type SubcategoryId,
 } from "../../core/identity";
+import { compareMoney, parseMoney, type Money } from "../../core/money";
 import {
   parseGlobalWindow,
   parseLocalDate,
@@ -41,9 +48,21 @@ export type OperationsNavigationFilters = {
   readonly asOf?: YearMonth;
   readonly personId?: PersonId;
   readonly categoryIds?: readonly CategoryId[];
+  readonly subcategoryIds?: readonly SubcategoryId[];
   readonly activityIds?: readonly ActivityId[];
+  readonly momentIds?: readonly MomentId[];
+  readonly lifeEventIds?: readonly LifeEventId[];
   readonly merchantIds?: readonly MerchantId[];
   readonly placeIds?: readonly PlaceId[];
+  readonly accountIds?: readonly string[];
+  readonly preciseTypes?: readonly string[];
+  readonly necessity?: readonly ("Indispensable" | "Contraint" | "Optionnel")[];
+  readonly fixedVariable?: readonly ("Fixe" | "Variable")[];
+  readonly lifeScope?: readonly ("Vie courante" | "Hors quotidien")[];
+  readonly dayContext?: readonly ("work_onsite" | "remote" | "weekend_home" | "leave_home")[];
+  readonly quality?: readonly ("complete" | "partial" | "conflict" | "unknown")[];
+  readonly amountMin?: Money;
+  readonly amountMax?: Money;
   readonly search?: string;
   readonly sort?:
     | "bank_date_desc"
@@ -54,6 +73,24 @@ export type OperationsNavigationFilters = {
   readonly mode?: "compact" | "standard" | "complete";
   readonly cursor?: string;
 };
+
+export type OperationsQuestion = Omit<OperationsNavigationFilters, "mode" | "cursor">;
+export type OperationsLocalDisplayState = Pick<OperationsNavigationFilters, "mode" | "cursor">;
+
+export function splitOperationsNavigationState(filters: OperationsNavigationFilters): {
+  readonly question: OperationsQuestion;
+  readonly display: OperationsLocalDisplayState;
+} {
+  const normalized = parseOperationsNavigationFilters(filters);
+  const { mode, cursor, ...question } = normalized;
+  return {
+    question,
+    display: {
+      ...(mode === undefined ? {} : { mode }),
+      ...(cursor === undefined ? {} : { cursor }),
+    },
+  };
+}
 
 type IdParser<Id extends string> = (value: unknown) => Id;
 
@@ -104,9 +141,21 @@ export function parseOperationsNavigationFilters(
       "asOf",
       "personId",
       "categoryIds",
+      "subcategoryIds",
       "activityIds",
+      "momentIds",
+      "lifeEventIds",
       "merchantIds",
       "placeIds",
+      "accountIds",
+      "preciseTypes",
+      "necessity",
+      "fixedVariable",
+      "lifeScope",
+      "dayContext",
+      "quality",
+      "amountMin",
+      "amountMax",
       "search",
       "sort",
       "mode",
@@ -204,17 +253,44 @@ export function parseOperationsNavigationFilters(
     "categoryIds",
     parseCategoryId,
   );
+  const subcategoryIds = parseOptionalIdCollection(record, "subcategoryIds", parseSubcategoryId);
   const activityIds = parseOptionalIdCollection(
     record,
     "activityIds",
     parseActivityId,
   );
+  const momentIds = parseOptionalIdCollection(record, "momentIds", parseMomentId);
+  const lifeEventIds = parseOptionalIdCollection(record, "lifeEventIds", parseLifeEventId);
   const merchantIds = parseOptionalIdCollection(
     record,
     "merchantIds",
     parseMerchantId,
   );
   const placeIds = parseOptionalIdCollection(record, "placeIds", parsePlaceId);
+  const uuidPattern = /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/;
+  const parseTextCollection = (key: string, allowed?: ReadonlySet<string>) => {
+    if (!hasOwn(record, key)) return undefined;
+    if (!Array.isArray(record[key])) validationFailure({ path: [key], code: "invalid_type", message: `${key} doit être un tableau.` });
+    const values = [...new Set((record[key] as unknown[]).map((value) => {
+      if (typeof value !== "string" || value.trim().length === 0 || (allowed && !allowed.has(value.trim()))) {
+        validationFailure({ path: [key], code: "invalid_value", message: `${key} contient une valeur invalide.` });
+      }
+      return value.trim();
+    }))].sort();
+    return values.length === 0 ? undefined : values;
+  };
+  const accountIds = parseTextCollection("accountIds")?.map((id) => uuidPattern.test(id) ? id : validationFailure({ path: ["accountIds"], code: "invalid_format", message: "accountIds doit contenir des UUID." }));
+  const preciseTypes = parseTextCollection("preciseTypes");
+  const necessity = parseTextCollection("necessity", new Set(["Indispensable", "Contraint", "Optionnel"])) as OperationsNavigationFilters["necessity"];
+  const fixedVariable = parseTextCollection("fixedVariable", new Set(["Fixe", "Variable"])) as OperationsNavigationFilters["fixedVariable"];
+  const lifeScope = parseTextCollection("lifeScope", new Set(["Vie courante", "Hors quotidien"])) as OperationsNavigationFilters["lifeScope"];
+  const dayContext = parseTextCollection("dayContext", new Set(["work_onsite", "remote", "weekend_home", "leave_home"])) as OperationsNavigationFilters["dayContext"];
+  const quality = parseTextCollection("quality", new Set(["complete", "partial", "conflict", "unknown"])) as OperationsNavigationFilters["quality"];
+  const amountMin = hasOwn(record, "amountMin") ? withValidationPath("amountMin", () => parseMoney(record.amountMin)) : undefined;
+  const amountMax = hasOwn(record, "amountMax") ? withValidationPath("amountMax", () => parseMoney(record.amountMax)) : undefined;
+  if (amountMin !== undefined && amountMax !== undefined && compareMoney(amountMin, amountMax) > 0) {
+    validationFailure({ path: ["amountMax"], code: "invalid_range", message: "amountMax doit être supérieur ou égal à amountMin." });
+  }
   const search = hasOwn(record, "search")
     ? typeof record.search === "string" && record.search.trim().length > 0 && record.search.length <= 120
       ? record.search.trim()
@@ -251,9 +327,21 @@ export function parseOperationsNavigationFilters(
     ...(globalWindow === undefined ? {} : { globalWindow, asOf }),
     ...(personId === undefined ? {} : { personId }),
     ...(categoryIds === undefined ? {} : { categoryIds }),
+    ...(subcategoryIds === undefined ? {} : { subcategoryIds }),
     ...(activityIds === undefined ? {} : { activityIds }),
+    ...(momentIds === undefined ? {} : { momentIds }),
+    ...(lifeEventIds === undefined ? {} : { lifeEventIds }),
     ...(merchantIds === undefined ? {} : { merchantIds }),
     ...(placeIds === undefined ? {} : { placeIds }),
+    ...(accountIds === undefined ? {} : { accountIds }),
+    ...(preciseTypes === undefined ? {} : { preciseTypes }),
+    ...(necessity === undefined ? {} : { necessity }),
+    ...(fixedVariable === undefined ? {} : { fixedVariable }),
+    ...(lifeScope === undefined ? {} : { lifeScope }),
+    ...(dayContext === undefined ? {} : { dayContext }),
+    ...(quality === undefined ? {} : { quality }),
+    ...(amountMin === undefined ? {} : { amountMin }),
+    ...(amountMax === undefined ? {} : { amountMax }),
     ...(search === undefined ? {} : { search }),
     ...(sort === undefined ? {} : { sort }),
     ...(mode === undefined ? {} : { mode }),

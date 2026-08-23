@@ -35,11 +35,13 @@ export {
 } from "./contracts/subviews";
 
 export type {
+  NavigationAnchorItem,
   NavigationEntityId,
   NavigationModuleId,
   SemanticAnchor,
 } from "./contracts/anchors";
 export {
+  parseNavigationAnchorItem,
   parseSemanticAnchor,
   semanticAnchorSchema,
 } from "./contracts/anchors";
@@ -82,10 +84,15 @@ export {
 export type { BrowserHistoryAdapter } from "./history/browser-history-adapter";
 export { WebBrowserHistoryAdapter } from "./history/browser-history-adapter";
 
-export type { OperationsNavigationFilters } from "./contracts/operations";
+export type {
+  OperationsLocalDisplayState,
+  OperationsNavigationFilters,
+  OperationsQuestion,
+} from "./contracts/operations";
 export {
   operationsNavigationFiltersSchema,
   parseOperationsNavigationFilters,
+  splitOperationsNavigationState,
 } from "./contracts/operations";
 export type {
   GalleryFilters,
@@ -151,3 +158,6 @@ export type { RootRouterAdapter } from "./controller/root-router-adapter";
 export { WebRootRouterAdapter } from "./controller/root-router-adapter";
 export type { NavigationSessionStore } from "./controller/session-store";
 export { InMemoryNavigationSessionStore } from "./controller/session-store";
+export { ProductSurfaceRegistry } from "./controller/product-surface-registry";
+export type { ProductSurfaceRegistration } from "./controller/product-surface-registry";
+export { ProductReadinessRegistry } from "./restoration/product-readiness-registry";

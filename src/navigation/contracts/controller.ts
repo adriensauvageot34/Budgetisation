@@ -53,6 +53,7 @@ export type NavigationControllerSnapshot = {
 };
 
 export interface NavigationSurfaceAdapter {
+  activateRoute(route: import("./routes").RootNavigationContext): void;
   readScope(): NormalizedAnalysisScope | null;
   applyScope(scope: NormalizedAnalysisScope | null): void;
   readSubview(): NavigationSubviewRef | null;
@@ -60,6 +61,7 @@ export interface NavigationSurfaceAdapter {
 }
 
 export interface RestorationReadinessAdapter {
+  activateRoute(route: import("./routes").RootNavigationContext): void;
   wait(checkpoint: NavigationCheckpoint): Promise<RestorationReadiness>;
 }
 
@@ -92,8 +94,9 @@ export interface NavigationController {
     week: CalendarWeekRef,
   ): NavigationCommandResult;
 
-  openExploration(node: ExplorationNode): NavigationCommandResult;
-  push(node: ExplorationNode): NavigationCommandResult;
+  reconcileExternalRoot(): NavigationCommandResult;
+  openExploration(node: ExplorationNode, anchor?: SemanticAnchor): NavigationCommandResult;
+  push(node: ExplorationNode, anchor?: SemanticAnchor): NavigationCommandResult;
   pop(): NavigationCommandResult;
   close(): NavigationCommandResult;
 
@@ -101,6 +104,10 @@ export interface NavigationController {
   goToGlobal(window: GlobalWindow): Promise<NavigationCommandResult>;
   goToOperations(
     filters: OperationsNavigationFilters,
+  ): NavigationCommandResult;
+  updateOperations(
+    filters: OperationsNavigationFilters,
+    mode?: "push" | "replace",
   ): NavigationCommandResult;
 
   createCheckpoint(anchor?: SemanticAnchor): NavigationCheckpoint;

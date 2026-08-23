@@ -1,4 +1,6 @@
 .panel { width: min(68.75rem, 85vw); }
+.operationRootPanel { width: min(32rem, 85vw); }
+.anchorCard { min-width: 0; }
 .entitySurface, .methodologySurface, .operationSurface, .gallerySurface, .analysisDestination { display: grid; gap: var(--ui-layout-module-gap); min-width: 0; }
 .identity { display: grid; grid-template-columns: minmax(14rem, 2fr) minmax(18rem, 3fr); gap: var(--ui-layout-gutter); align-items: center; }
 .identity[data-entity-profile="moment"] { align-items: end; }

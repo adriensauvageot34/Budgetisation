@@ -94,10 +94,10 @@ function transferFilters(
   return {
     categoryIds: compatibility.categoryIds ? source.categoryIds : [],
     activityIds: compatibility.activityIds ? source.activityIds : [],
-    merchantIds: [],
-    placeIds: [],
-    lifeScopeContext: [],
-    dayContext: [],
+    merchantIds: compatibility.merchantIds ? source.merchantIds : [],
+    placeIds: compatibility.placeIds ? source.placeIds : [],
+    lifeScopeContext: compatibility.lifeScopeContext ? source.lifeScopeContext : [],
+    dayContext: compatibility.dayContext ? source.dayContext : [],
   };
 }
 
@@ -139,6 +139,7 @@ export function transferMonthToGlobal(
         ...(source.subject.kind === "person"
           ? { personId: source.subject.personId }
           : {}),
+        filters: targetScope.filters,
       },
     },
     targetScope,
@@ -181,6 +182,7 @@ export function transferGlobalToMonth(
         ...(source.subject.kind === "person"
           ? { personId: source.subject.personId }
           : {}),
+        filters: transferFilters(source.filters, compatibility),
       },
     },
     targetScope: {

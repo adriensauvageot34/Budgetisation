@@ -74,9 +74,6 @@ export function createPushedExplorationHistoryState(
     root: current.root,
     exploration: pushExplorationNode(current.exploration, node),
     day: current.day,
-    ...(current.checkpoint === undefined
-      ? {}
-      : { checkpoint: current.checkpoint }),
     generation: current.generation,
   };
 }

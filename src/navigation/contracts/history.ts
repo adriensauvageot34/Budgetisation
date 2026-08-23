@@ -27,7 +27,7 @@ import {
   type RootNavigationContext,
 } from "./routes";
 
-export const navigationHistoryVersion = "navigation-history:v1" as const;
+export const navigationHistoryVersion = "navigation-history:v2" as const;
 
 export type NavigationHistoryEntryId = Brand<
   string,

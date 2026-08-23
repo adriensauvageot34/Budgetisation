@@ -6,6 +6,7 @@ import {
 import { createApiError } from "../../core/api";
 import type { MetricId } from "../../core/identity";
 import type { NormalizedAnalysisScope } from "../../core/scope";
+import type { NormalizedOperationsExecutionScope } from "../request/operations-scope";
 import type { AnalyticFilterDimension } from "../../analytics/aggregation";
 import { getContextCapability } from "../../analytics/context";
 import type { AnyNormalizedQueryRequest } from "../request";
@@ -61,7 +62,7 @@ function selectionContains<T extends string>(
 }
 
 function activeScopeFilters(
-  scope: NormalizedAnalysisScope,
+  scope: NormalizedAnalysisScope | NormalizedOperationsExecutionScope,
 ): readonly QueryFilterKey[] {
   return (Object.keys(filterDimensions) as QueryFilterKey[]).filter(
     (filter) => scope.filters[filter].length > 0,
@@ -82,6 +83,9 @@ function metricScopeReason(
   request: AnyNormalizedQueryRequest,
   activeFilters: readonly QueryFilterKey[],
 ): UnavailableReason | null {
+  if (request.scope.time.kind !== "month" && request.scope.time.kind !== "global") {
+    return "scope_incompatible";
+  }
   const metric = getMetricRegistryEntry(metricId);
   const breakdownDimension =
     request.resource === "analysis_month_breakdown" ||

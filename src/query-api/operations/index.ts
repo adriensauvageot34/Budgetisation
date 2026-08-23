@@ -1,4 +1,5 @@
 export { operationsBrowseReadModelSchema } from "./schemas";
+export type { OperationsFilterCapability } from "./types";
 export type {
   OperationReference,
   OperationRowReadModel,

@@ -94,6 +94,14 @@ export type {
 } from "./request";
 export { normalizedQueryRequestSchema } from "./validation";
 export {
+  computeOperationsScopeHash,
+  normalizeOperationsExecutionScope,
+} from "./operations-scope";
+export type {
+  OperationsExecutionScope,
+  NormalizedOperationsExecutionScope,
+} from "./operations-scope";
+export {
   parseOperationsBrowseParams,
   type NormalizedOperationsBrowseParams,
   type OperationQualityFilter,

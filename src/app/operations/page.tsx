@@ -1,12 +1,12 @@
-import { notFound } from "next/navigation";
-import { parsePersonId } from "@/core/identity";
+import { notFound, redirect } from "next/navigation";
+import { yearMonthOf } from "@/core/time";
+import { OperationsPage } from "@/features/operations";
 import {
-  parseGlobalWindow,
-  parseLocalDate,
-  parseYearMonth,
-  yearMonthOf,
-} from "@/core/time";
-import { OperationsPage, type OperationsDisplayMode } from "@/features/operations";
+  parseRootNavigation,
+  serializeRootNavigation,
+  splitOperationsNavigationState,
+  type OperationsNavigationFilters,
+} from "@/navigation";
 import type {
   OperationsBrowseReadModel,
   OperationsBrowseSortKey,
@@ -14,14 +14,50 @@ import type {
 } from "@/query-api";
 import { queryResourceKeys } from "@/query-api";
 import { getBootstrapContext } from "@/server/bootstrap/context";
-import { executeAuthenticatedQuery } from "@/server/query/runtime";
+import {
+  executeAuthenticatedQuery,
+  resolveLatestBankOperationMonth,
+} from "@/server/query/runtime";
 import { queryResultToState, withProductAuthentication } from "@/app/product-query";
 
 export const metadata = { title: "Opérations" };
 export const dynamic = "force-dynamic";
 
-function one(value: string | string[] | undefined): string | undefined {
-  return typeof value === "string" ? value : undefined;
+function relativeUrl(params: Record<string, string | string[] | undefined>): string {
+  const search = new URLSearchParams();
+  for (const [key, value] of Object.entries(params)) {
+    if (Array.isArray(value)) for (const item of value) search.append(key, item);
+    else if (value !== undefined) search.set(key, value);
+  }
+  const query = search.toString();
+  return query.length === 0 ? "/operations" : `/operations?${query}`;
+}
+
+function timeFrom(filters: OperationsNavigationFilters): OperationsTimeFilter {
+  switch (filters.timeKind) {
+    case "bank_month":
+    case "economic_month":
+      if (filters.month === undefined) throw new TypeError("Mois Operations absent.");
+      return { kind: filters.timeKind, month: filters.month };
+    case "bank_range":
+    case "economic_range":
+      if (filters.startDate === undefined || filters.endExclusive === undefined) throw new TypeError("Range Operations absent.");
+      return { kind: filters.timeKind, start: filters.startDate, endExclusive: filters.endExclusive };
+    case "global_window":
+      if (filters.globalWindow === undefined || filters.asOf === undefined) throw new TypeError("Global Operations absent.");
+      return { kind: filters.timeKind, window: filters.globalWindow, asOf: filters.asOf };
+    default:
+      throw new TypeError("Période Operations absente.");
+  }
+}
+
+function sortFrom(value: OperationsNavigationFilters["sort"]): {
+  readonly key: OperationsBrowseSortKey;
+  readonly direction: "asc" | "desc";
+} {
+  const match = /^(bank_date|economic_timing|bank_amount|economic_net)_(asc|desc)$/.exec(value ?? "bank_date_desc");
+  if (match === null) throw new TypeError("Tri Operations invalide.");
+  return { key: match[1] as OperationsBrowseSortKey, direction: match[2] as "asc" | "desc" };
 }
 
 export default async function OperationsRoute({
@@ -31,113 +67,83 @@ export default async function OperationsRoute({
 }) {
   const context = await withProductAuthentication(() => getBootstrapContext());
   if (context.household === null) notFound();
-  const params = await searchParams;
-  const availableMonths = context.periods
-    .map((period) => yearMonthOf(period.month))
-    .reverse();
-  const fallbackMonth = availableMonths[0];
-  if (fallbackMonth === undefined) notFound();
-
-  let month;
-  let subject: "household" | ReturnType<typeof parsePersonId>;
-  let mode: OperationsDisplayMode;
-  let sortKey: OperationsBrowseSortKey;
-  let sortDirection: "asc" | "desc";
-  let time: OperationsTimeFilter;
+  const rawParams = await searchParams;
+  let parsedRoot;
   try {
-    const rawTimeKind = one(params.timeKind) ?? (
-      one(params.globalWindow) ? "global_window" :
-      one(params.startDate) ? "bank_range" :
-      "bank_month"
-    );
-    if (rawTimeKind === "bank_month" || rawTimeKind === "economic_month") {
-      month = parseYearMonth(one(params.month) ?? fallbackMonth);
-      time = { kind: rawTimeKind, month };
-    } else if (rawTimeKind === "bank_range" || rawTimeKind === "economic_range") {
-      const start = parseLocalDate(one(params.startDate));
-      const endExclusive = parseLocalDate(one(params.endExclusive));
-      if (start >= endExclusive) throw new TypeError();
-      month = parseYearMonth(start.slice(0, 7));
-      time = { kind: rawTimeKind, start, endExclusive };
-    } else if (rawTimeKind === "global_window") {
-      const asOf = parseYearMonth(one(params.asOf) ?? fallbackMonth);
-      time = {
-        kind: "global_window",
-        window: parseGlobalWindow(one(params.globalWindow) ?? "last_12_months"),
-        asOf,
-      };
-      month = asOf;
-    } else {
-      throw new TypeError();
-    }
-    const rawSubject = one(params.personId) ?? "household";
-    subject = rawSubject === "household" ? "household" : parsePersonId(rawSubject);
-    const rawMode = one(params.mode) ?? "standard";
-    if (!(rawMode === "compact" || rawMode === "standard" || rawMode === "complete")) throw new TypeError();
-    mode = rawMode;
-    const match = /^(bank_date|economic_timing|bank_amount|economic_net)_(asc|desc)$/.exec(
-      one(params.sort) ?? "bank_date_desc",
-    );
-    if (match === null) throw new TypeError();
-    sortKey = match[1] as OperationsBrowseSortKey;
-    sortDirection = match[2] as "asc" | "desc";
+    parsedRoot = parseRootNavigation(relativeUrl(rawParams));
   } catch {
     notFound();
   }
-  if (
-    subject !== "household" &&
-    !context.persons.some((person) => person.personId === subject)
-  ) {
-    notFound();
+  if (!("kind" in parsedRoot)) notFound();
+  let filters = parsedRoot.filters;
+
+  if (filters.timeKind === undefined) {
+    const latestMonth = await withProductAuthentication(resolveLatestBankOperationMonth);
+    if (latestMonth === null) {
+      return (
+        <OperationsPage
+          initialState={null}
+          initialFilters={filters}
+          months={[]}
+          persons={context.persons.map((person) => ({ id: person.personId, label: person.displayName }))}
+          noData
+        />
+      );
+    }
+    filters = { ...filters, timeKind: "bank_month", month: latestMonth };
+    redirect(serializeRootNavigation({ kind: "operations", filters }));
   }
 
-  const search = one(params.search)?.trim() ?? "";
-  const queryScope = time.kind === "global_window"
-    ? {
-        subject: subject === "household"
-          ? { kind: "household" as const }
-          : { kind: "person" as const, personId: subject },
-        time: {
-          kind: "global" as const,
-          observationWindow: time.window,
-          asOf: time.asOf,
-        },
-      }
-    : {
-        subject: subject === "household"
-          ? { kind: "household" as const }
-          : { kind: "person" as const, personId: subject },
-        time: { kind: "month" as const, month },
-      };
+  const time = timeFrom(filters);
+  const { question, display } = splitOperationsNavigationState(filters);
+  const subject = question.personId
+    ? { kind: "person" as const, personId: question.personId }
+    : { kind: "household" as const };
+  if (filters.personId && !context.persons.some((person) => person.personId === filters.personId)) notFound();
+  const sort = sortFrom(filters.sort);
   const result = await withProductAuthentication(() =>
     executeAuthenticatedQuery<"operations_browse">({
       resource: queryResourceKeys.operationsBrowse,
-      scope: queryScope,
+      scope: { kind: "operations", subject, time },
       params: {
         time,
-        search,
-        sort: { key: sortKey, direction: sortDirection },
-        filters: {},
-        cursor: one(params.cursor) ?? null,
+        search: question.search ?? null,
+        sort,
+        filters: {
+          categoryIds: question.categoryIds,
+          subcategoryIds: question.subcategoryIds,
+          activityIds: question.activityIds,
+          momentIds: question.momentIds,
+          lifeEventIds: question.lifeEventIds,
+          merchantIds: question.merchantIds,
+          placeIds: question.placeIds,
+          accountIds: question.accountIds,
+          preciseTypes: question.preciseTypes,
+          necessity: question.necessity,
+          fixedVariable: question.fixedVariable?.map((value) => value === "Fixe" ? "fixed" as const : "variable" as const),
+          lifeScope: question.lifeScope,
+          dayContext: question.dayContext,
+          quality: question.quality,
+          amountMin: question.amountMin,
+          amountMax: question.amountMax,
+        },
+        cursor: display.cursor ?? null,
         limit: 50,
       },
     }),
   );
+  const latestMonth = time.kind === "bank_month" ? time.month : null;
+  const months = [...new Set([
+    ...(latestMonth === null ? [] : [latestMonth]),
+    ...context.periods.map((period) => yearMonthOf(period.month)),
+  ])].sort().reverse();
 
   return (
     <OperationsPage
-      state={queryResultToState<OperationsBrowseReadModel>(result)}
-      mode={mode}
-      time={time}
-      search={search}
-      sort={`${sortKey}_${sortDirection}`}
-      cursor={one(params.cursor) ?? null}
-      subject={subject}
-      months={availableMonths}
-      persons={context.persons.map((person) => ({
-        id: person.personId,
-        label: person.displayName,
-      }))}
+      initialState={queryResultToState<OperationsBrowseReadModel>(result)}
+      initialFilters={filters}
+      months={months}
+      persons={context.persons.map((person) => ({ id: person.personId, label: person.displayName }))}
     />
   );
 }

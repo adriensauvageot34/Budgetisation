@@ -1,8 +1,8 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { createApiError, type ApiResponse } from "@/core/api";
-import type { AnalysisScope } from "@/core/scope";
+import { normalizeAnalysisScope, type AnalysisScope, type NormalizedAnalysisScope } from "@/core/scope";
 import type { YearMonth } from "@/core/time";
 import { ExplorationPanel, type ExplorationNodeTransport } from "@/features/exploration";
 import type { ExplorationNode, RootNavigationContext } from "@/navigation";
@@ -17,6 +17,9 @@ import {
   type GalleryMerchantsReadModel,
   type GalleryMomentsReadModel,
   type GalleryPlacesReadModel,
+  type MerchantsGalleryFilters,
+  type MomentsGalleryFilters,
+  type PlacesGalleryFilters,
   type MetricMethodologyReadModel,
 } from "@/query-api";
 import type { UiTransportState } from "@/ui";
@@ -26,40 +29,84 @@ import {
   executeCachedClientQuery,
 } from "./query-client";
 import { useProductRuntime } from "./product-runtime-provider";
+import type { GalleryRuntime } from "@/features/exploration";
 
-function scopeForRoot(root: RootNavigationContext): AnalysisScope | null {
+type GallerySession = {
+  readonly key: string;
+  readonly gallery: "moments" | "places" | "merchants";
+  readonly search: string;
+  readonly sort: "recent" | "frequent" | "spent";
+  readonly filters: MomentsGalleryFilters | PlacesGalleryFilters | MerchantsGalleryFilters;
+  readonly cursor: string | null;
+};
+
+function initialGallerySession(node: Extract<ExplorationNode, { readonly kind: "gallery" }>, key: string): GallerySession {
+  return node.gallery === "moments"
+    ? { key, gallery: node.gallery, search: "", sort: "recent", filters: { activityIds: [], placeIds: [] }, cursor: null }
+    : node.gallery === "places"
+      ? { key, gallery: node.gallery, search: "", sort: node.filters.sort, filters: { activityIds: [] }, cursor: null }
+      : { key, gallery: node.gallery, search: "", sort: node.filters.sort, filters: { activityIds: [], placeIds: [] }, cursor: null };
+}
+
+function scopeForRoot(root: RootNavigationContext): NormalizedAnalysisScope | null {
   if ("kind" in root) {
-    if (root.filters.month === undefined) return null;
-    return {
+    const subject = root.filters.personId
+      ? { kind: "person" as const, personId: root.filters.personId }
+      : { kind: "household" as const };
+    if (root.filters.timeKind === "global_window" && root.filters.globalWindow && root.filters.asOf) {
+      return normalizeAnalysisScope({
+        subject,
+        time: { kind: "global", observationWindow: root.filters.globalWindow, asOf: root.filters.asOf },
+        filters: {
+          categoryIds: root.filters.categoryIds,
+          activityIds: root.filters.activityIds,
+          merchantIds: root.filters.merchantIds,
+          placeIds: root.filters.placeIds,
+          lifeScopeContext: root.filters.lifeScope,
+          dayContext: root.filters.dayContext,
+        },
+      });
+    }
+    if ((root.filters.timeKind === "bank_month" || root.filters.timeKind === "economic_month") && root.filters.month) return normalizeAnalysisScope({
       subject: root.filters.personId
         ? { kind: "person", personId: root.filters.personId }
         : { kind: "household" },
       time: { kind: "month", month: root.filters.month },
-    };
+      filters: {
+        categoryIds: root.filters.categoryIds,
+        activityIds: root.filters.activityIds,
+        merchantIds: root.filters.merchantIds,
+        placeIds: root.filters.placeIds,
+        lifeScopeContext: root.filters.lifeScope,
+        dayContext: root.filters.dayContext,
+      },
+    });
+    return null;
   }
   if (root.area === "calendar") {
     if (root.context.kind === "calendar_overview") return null;
-    return {
+    return normalizeAnalysisScope({
       subject: root.context.personId
         ? { kind: "person", personId: root.context.personId }
         : { kind: "household" },
       time: { kind: "month", month: root.context.month },
-    };
+    });
   }
   const subject = root.context.personId
     ? { kind: "person" as const, personId: root.context.personId }
     : { kind: "household" as const };
   return root.context.kind === "analysis_month"
-    ? { subject, time: { kind: "month", month: root.context.month } }
+    ? normalizeAnalysisScope({ subject, time: { kind: "month", month: root.context.month }, filters: root.context.filters })
     : root.context.asOf
-      ? {
+      ? normalizeAnalysisScope({
           subject,
           time: {
             kind: "global",
             observationWindow: root.context.observationWindow,
             asOf: root.context.asOf,
           },
-        }
+          filters: root.context.filters,
+        })
       : null;
 }
 
@@ -67,7 +114,7 @@ function asOfForScope(scope: AnalysisScope): YearMonth {
   return scope.time.kind === "month" ? scope.time.month : scope.time.asOf;
 }
 
-function requestForNode(node: ExplorationNode, scope: AnalysisScope): unknown | null {
+function requestForNode(node: ExplorationNode, scope: AnalysisScope, gallerySession: GallerySession | null): unknown | null {
   switch (node.kind) {
     case "analysis":
       return null;
@@ -86,16 +133,23 @@ function requestForNode(node: ExplorationNode, scope: AnalysisScope): unknown | 
     case "methodology":
       return { resource: queryResourceKeys.metricMethodology, scope, params: { metricId: node.metricId, asOf: asOfForScope(scope) } };
     case "gallery": {
-      if (node.gallery === "moments" && node.filters.sort === "recent") {
-        return { resource: queryResourceKeys.galleryMoments, scope, params: {} };
-      }
-      if (node.gallery === "places" && (node.filters.sort === "frequent" || node.filters.sort === "recent")) {
-        return { resource: queryResourceKeys.galleryPlaces, scope, params: { sort: { key: node.filters.sort, direction: "desc" } } };
-      }
-      if (node.gallery === "merchants" && (node.filters.sort === "frequent" || node.filters.sort === "recent")) {
-        return { resource: queryResourceKeys.galleryMerchants, scope, params: { sort: { key: node.filters.sort, direction: "desc" } } };
-      }
-      return undefined;
+      if (gallerySession === null || gallerySession.gallery !== node.gallery) return undefined;
+      const params = {
+        search: gallerySession.search,
+        sort: { key: gallerySession.sort, direction: "desc" as const },
+        filters: gallerySession.filters,
+        cursor: gallerySession.cursor,
+        limit: 24,
+      };
+      return {
+        resource: node.gallery === "moments"
+          ? queryResourceKeys.galleryMoments
+          : node.gallery === "places"
+            ? queryResourceKeys.galleryPlaces
+            : queryResourceKeys.galleryMerchants,
+        scope,
+        params,
+      };
     }
   }
 }
@@ -126,13 +180,33 @@ export function ExplorationRuntimeHost() {
   const runtime = useProductRuntime();
   const exploration = runtime.snapshot?.history.exploration ?? null;
   const currentNode = exploration?.stack.at(-1);
+  const galleryNodeKey = currentNode?.kind === "gallery"
+    ? `${runtime.snapshot?.history.generation ?? "none"}:${exploration?.stack.length ?? 0}:${JSON.stringify(currentNode)}`
+    : null;
+  const [storedGallery, setStoredGallery] = useState<GallerySession | null>(null);
+  const gallerySession = currentNode?.kind === "gallery" && galleryNodeKey !== null
+    ? storedGallery?.key === galleryNodeKey
+      ? storedGallery
+      : initialGallerySession(currentNode, galleryNodeKey)
+    : null;
+  const accumulatedGallery = useRef<ApiResponse<unknown> | null>(null);
+  const [retryGeneration, setRetryGeneration] = useState(0);
+
+  useEffect(() => {
+    if (gallerySession !== null && storedGallery?.key !== gallerySession.key) {
+      accumulatedGallery.current = null;
+      setStoredGallery(gallerySession);
+    }
+  }, [gallerySession, storedGallery?.key]);
   const scope = useMemo(
-    () => runtime.snapshot ? scopeForRoot(runtime.snapshot.history.root) : null,
+    () => runtime.snapshot
+      ? runtime.surfaceRegistry.readScope() ?? scopeForRoot(runtime.snapshot.history.root)
+      : null,
     [runtime.snapshot],
   );
   const request = useMemo(
-    () => currentNode && scope ? requestForNode(currentNode, scope) : null,
-    [currentNode, scope],
+    () => currentNode && scope ? requestForNode(currentNode, scope, gallerySession) : null,
+    [currentNode, gallerySession, scope],
   );
   const requestKey = request === null || request === undefined
     ? null
@@ -162,8 +236,28 @@ export function ExplorationRuntimeHost() {
     void executeCachedClientQuery(request as never)
       .then((result) => {
         if (!active) return;
+        const rawResponse = result.ok ? result.response as ApiResponse<unknown> : null;
+        let response = rawResponse;
+        if (rawResponse !== null && currentNode?.kind === "gallery") {
+          const rawData = rawResponse.data as { readonly page: { readonly items: readonly unknown[] } };
+          const previous = gallerySession?.cursor === null ? null : accumulatedGallery.current;
+          if (previous !== null) {
+            const previousData = previous.data as { readonly page: { readonly items: readonly unknown[] } };
+            response = {
+              ...rawResponse,
+              data: {
+                ...(rawResponse.data as object),
+                page: {
+                  ...rawData.page,
+                  items: [...previousData.page.items, ...rawData.page.items],
+                },
+              },
+            };
+          }
+          accumulatedGallery.current = response;
+        }
         setTransport(result.ok
-          ? { status: "success", response: result.response as ApiResponse<unknown>, refreshing: false }
+          ? { status: "success", response: response!, refreshing: false }
           : {
               status: "error",
               error: result.error,
@@ -184,17 +278,69 @@ export function ExplorationRuntimeHost() {
         });
       });
     return () => { active = false; };
-  }, [currentNode?.kind, requestKey, scope]);
+  }, [currentNode?.kind, requestKey, retryGeneration, scope]);
+
+  useLayoutEffect(() => {
+    const root = runtime.snapshot?.history.root;
+    if (root === undefined || currentNode === undefined) return;
+    if (currentNode.kind === "analysis" || transport.status === "success" || (transport.status === "error" && transport.previousData !== undefined)) {
+      runtime.readinessRegistry.markReady(root);
+    } else if (transport.status === "error") {
+      runtime.readinessRegistry.markTerminalWithoutAnchor(root);
+    } else {
+      runtime.readinessRegistry.markPending(root);
+    }
+  }, [currentNode, runtime.readinessRegistry, runtime.snapshot, transport]);
+
+  const galleryRuntime: GalleryRuntime | undefined = gallerySession === null ? undefined : {
+    gallery: gallerySession.gallery,
+    query: {
+      search: gallerySession.search,
+      sort: gallerySession.sort,
+      filters: gallerySession.filters,
+    },
+    actions: {
+      onSearch: (search: string) => {
+        accumulatedGallery.current = null;
+        setStoredGallery({ ...gallerySession, search, cursor: null });
+      },
+      onSort: (sort: "recent" | "frequent" | "spent") => {
+        accumulatedGallery.current = null;
+        setStoredGallery({ ...gallerySession, sort, cursor: null });
+      },
+      onRemoveFilter: (filter: "activityIds" | "placeIds") => {
+        if (!(filter in gallerySession.filters)) return;
+        accumulatedGallery.current = null;
+        setStoredGallery({
+          ...gallerySession,
+          filters: { ...gallerySession.filters, [filter]: [] },
+          cursor: null,
+        });
+      },
+      onLoadMore: (cursor: string) => setStoredGallery({ ...gallerySession, cursor }),
+      onRetry: () => setRetryGeneration((value) => value + 1),
+    },
+  } as GalleryRuntime;
 
   if (exploration === null || currentNode === undefined) return null;
   return (
     <ExplorationPanel
       state={{ exploration, current: nodeTransport(currentNode, transport) }}
       navigation={{
-        push: (node) => runtime.run((controller) => controller.push(node)) as ReturnType<NonNullable<typeof runtime.controller>["push"]>,
+        push: (node, anchor) => runtime.run((controller) => controller.push(node, anchor)) as ReturnType<NonNullable<typeof runtime.controller>["push"]>,
         pop: () => runtime.run((controller) => controller.pop()) as ReturnType<NonNullable<typeof runtime.controller>["pop"]>,
         close: () => runtime.run((controller) => controller.close()) as ReturnType<NonNullable<typeof runtime.controller>["close"]>,
+        openOperations: (filters) => runtime.run((controller) => controller.goToOperations(filters)) as ReturnType<NonNullable<typeof runtime.controller>["goToOperations"]>,
+        showDay: (day) => runtime.run((controller) => controller.showDayFromExploration(day)) as ReturnType<NonNullable<typeof runtime.controller>["showDayFromExploration"]>,
       }}
+      backgroundRootRef={runtime.backgroundRootRef}
+      operationRoot={
+        runtime.snapshot !== null && "kind" in runtime.snapshot.history.root &&
+        exploration.stack.length === 1 &&
+        currentNode.kind === "operation"
+      }
+      galleryRuntime={galleryRuntime}
+      onRetry={() => setRetryGeneration((value) => value + 1)}
     />
   );
 }

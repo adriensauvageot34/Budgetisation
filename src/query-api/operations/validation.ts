@@ -16,12 +16,16 @@ import { parseQueryCapabilities } from "../capabilities";
 import { parseCursorPage } from "../collections";
 import { parseMoneyEnvelope, parseReadModelSubject } from "../read-models";
 import { parseOperationsBrowseParams, queryResourceKeys } from "../request";
-import type { OperationReference, OperationRowReadModel, OperationsBrowseReadModel } from "./types";
+import type { OperationReference, OperationRowReadModel, OperationsBrowseReadModel, OperationsFilterCapability } from "./types";
 
 const quality = new Set(["complete", "partial", "conflict", "unknown"] as const);
-const necessity = new Set(["necessary", "discretionary", "unknown"] as const);
+const necessity = new Set(["Indispensable", "Contraint", "Optionnel"] as const);
 const fixedVariable = new Set(["fixed", "variable", "unknown"] as const);
 const lifeScope = new Set(["Vie courante", "Hors quotidien"] as const);
+const filterCapabilities = new Set([
+  "category", "subcategory", "merchant", "place", "account", "precise_type",
+  "necessity", "fixed_variable", "life_scope", "quality", "economic_amount",
+] as const);
 
 function label(value: unknown, name: string): string {
   if (typeof value !== "string" || value.trim().length === 0) {
@@ -110,7 +114,7 @@ function parseOperationRow(value: unknown): OperationRowReadModel {
 export function parseOperationsBrowseReadModel(value: unknown): OperationsBrowseReadModel {
   const record = parseStrictRecord(
     value,
-    ["subject", "page", "appliedQuery", "capabilities"],
+    ["subject", "page", "appliedQuery", "capabilities", "filterCapabilities"],
     "OperationsBrowseReadModel",
   );
   return {
@@ -121,5 +125,10 @@ export function parseOperationsBrowseReadModel(value: unknown): OperationsBrowse
       requireProperty(record, "capabilities", "OperationsBrowseReadModel"),
       queryResourceKeys.operationsBrowse,
     ),
+    filterCapabilities: (() => {
+      const values = requireProperty(record, "filterCapabilities", "OperationsBrowseReadModel");
+      if (!Array.isArray(values)) throw new TypeError("filterCapabilities doit être un tableau.");
+      return [...new Set(values.map((value) => parseStringLiteral<OperationsFilterCapability>(value, filterCapabilities, "OperationsFilterCapability")))].sort();
+    })(),
   };
 }

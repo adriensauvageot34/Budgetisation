@@ -8,6 +8,22 @@ import {
 import type { AnchorRegistry } from "./anchor-registry";
 import type { ScrollAdapter } from "./scroll-adapter";
 
+const focusableAnchorTarget = [
+  "a[href]",
+  "button:not([disabled])",
+  "input:not([disabled])",
+  "select:not([disabled])",
+  "textarea:not([disabled])",
+  "[tabindex]:not([tabindex='-1'])",
+].join(",");
+
+function restoreAnchorFocus(anchor: HTMLElement): void {
+  const target = anchor.matches(focusableAnchorTarget)
+    ? anchor
+    : anchor.querySelector<HTMLElement>(focusableAnchorTarget);
+  if (target?.isConnected) target.focus({ preventScroll: true });
+}
+
 export class RestorationCoordinator {
   private restorationGeneration = 0;
 
@@ -44,6 +60,7 @@ export class RestorationCoordinator {
             return { kind: "cancelled" };
           }
           this.scroll.scrollTo(container, target);
+          restoreAnchorFocus(element);
           return { kind: "anchor", scrollY: target };
         }
       }

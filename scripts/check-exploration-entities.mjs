@@ -82,19 +82,20 @@ const controller = navigation.createNavigationController({
   history,
   session: new navigation.InMemoryNavigationSessionStore(),
   surface: {
+    activateRoute: () => undefined,
     readScope: () => null,
     applyScope: () => undefined,
     readSubview: () => null,
     applySubview: () => undefined,
   },
   restoration: { cancel: () => undefined, restore: async () => ({ kind: "top", scrollY: 0 }) },
-  readiness: { wait: async () => ({ kind: "ready" }) },
+  readiness: { activateRoute: () => undefined, wait: async () => ({ kind: "ready" }) },
   scroll: {
     getScrollY: () => 120,
     scrollTo: () => undefined,
     getAnchorTop: () => 0,
   },
-  compatibility: { categoryIds: true, activityIds: true },
+  compatibility: { categoryIds: true, activityIds: true, merchantIds: true, placeIds: true, lifeScopeContext: true, dayContext: true },
 });
 
 assert.equal(controller.start().kind, "applied");

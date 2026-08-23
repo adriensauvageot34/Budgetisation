@@ -15,7 +15,8 @@ import type { NavigationCheckpoint } from "./checkpoint";
 
 export type ScrollContainerRef =
   | { readonly kind: "root" }
-  | { readonly kind: "day_drawer" };
+  | { readonly kind: "day_drawer" }
+  | { readonly kind: "exploration" };
 
 export type RestorationReadiness =
   | { readonly kind: "ready" }
@@ -67,6 +68,7 @@ export type ScrollRestorationSelection =
 const scrollContainerKinds = new Set<ScrollContainerRef["kind"]>([
   "root",
   "day_drawer",
+  "exploration",
 ]);
 const readinessKinds = new Set<RestorationReadiness["kind"]>([
   "ready",

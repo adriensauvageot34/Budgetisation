@@ -16,6 +16,19 @@ export type OperationReference<Id extends string> = {
   readonly label: string;
 };
 
+export type OperationsFilterCapability =
+  | "category"
+  | "subcategory"
+  | "merchant"
+  | "place"
+  | "account"
+  | "precise_type"
+  | "necessity"
+  | "fixed_variable"
+  | "life_scope"
+  | "quality"
+  | "economic_amount";
+
 export type OperationRowReadModel = {
   readonly operationId: OperationId;
   readonly bankDate: LocalDate;
@@ -30,7 +43,7 @@ export type OperationRowReadModel = {
   readonly category?: OperationReference<CategoryId>;
   readonly subcategory?: OperationReference<SubcategoryId>;
   readonly preciseType?: string;
-  readonly necessity?: "necessary" | "discretionary" | "unknown";
+  readonly necessity?: "Indispensable" | "Contraint" | "Optionnel";
   readonly fixedVariable?: "fixed" | "variable" | "unknown";
   readonly lifeScope?: "Vie courante" | "Hors quotidien";
   readonly canonicalPlace?: OperationReference<PlaceId>;
@@ -42,4 +55,5 @@ export type OperationsBrowseReadModel = {
   readonly page: CursorPage<OperationRowReadModel>;
   readonly appliedQuery: NormalizedOperationsBrowseParams;
   readonly capabilities: QueryCapabilities;
+  readonly filterCapabilities: readonly OperationsFilterCapability[];
 };

@@ -59,6 +59,10 @@ export function buildAnalysisOperationsIntent(
       ...(compatibility.activityIds
         ? { activityIds: source.filters.activityIds }
         : {}),
+      ...(compatibility.merchantIds ? { merchantIds: source.filters.merchantIds } : {}),
+      ...(compatibility.placeIds ? { placeIds: source.filters.placeIds } : {}),
+      ...(compatibility.lifeScopeContext ? { lifeScope: source.filters.lifeScopeContext } : {}),
+      ...(compatibility.dayContext ? { dayContext: source.filters.dayContext } : {}),
     },
     returnDestination,
   );

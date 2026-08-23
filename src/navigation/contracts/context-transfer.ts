@@ -20,9 +20,12 @@ import {
   type NavigationCheckpoint,
 } from "./checkpoint";
 import {
-  explorationNodeSchema,
   type ExplorationNode,
 } from "./exploration";
+import {
+  activeExplorationStateSchema,
+  type ExplorationStack,
+} from "./exploration-state";
 import {
   operationsNavigationFiltersSchema,
   type OperationsNavigationFilters,
@@ -43,6 +46,10 @@ export type NavigationContextMemory = {
 export type AnalysisTransferCompatibility = {
   readonly categoryIds: boolean;
   readonly activityIds: boolean;
+  readonly merchantIds: boolean;
+  readonly placeIds: boolean;
+  readonly lifeScopeContext: boolean;
+  readonly dayContext: boolean;
 };
 
 export type TransferDecision = "preserve" | "remember" | "transform" | "drop";
@@ -55,7 +62,7 @@ export type ReturnDestination =
   | {
       readonly kind: "exploration";
       readonly checkpoint: NavigationCheckpoint;
-      readonly node: ExplorationNode;
+      readonly stack: ExplorationStack;
     };
 
 export type ExplorationReturnDestination = Extract<
@@ -66,7 +73,7 @@ export type ExplorationReturnDestination = Extract<
 export type PlaceReturnDestination = {
   readonly kind: "exploration";
   readonly checkpoint: NavigationCheckpoint;
-  readonly node: Extract<ExplorationNode, { readonly kind: "place" }>;
+  readonly stack: ExplorationStack;
 };
 
 export type OperationsNavigationIntent = {
@@ -131,33 +138,25 @@ export function parseAnalysisTransferCompatibility(
 ): AnalysisTransferCompatibility {
   const record = parseStrictRecord(
     value,
-    ["categoryIds", "activityIds"],
+    ["categoryIds", "activityIds", "merchantIds", "placeIds", "lifeScopeContext", "dayContext"],
     "AnalysisTransferCompatibility",
   );
-  const categoryIds = requireProperty(
-    record,
-    "categoryIds",
-    "AnalysisTransferCompatibility",
-  );
-  const activityIds = requireProperty(
-    record,
-    "activityIds",
-    "AnalysisTransferCompatibility",
-  );
-  if (typeof categoryIds !== "boolean" || typeof activityIds !== "boolean") {
+  const keys = ["categoryIds", "activityIds", "merchantIds", "placeIds", "lifeScopeContext", "dayContext"] as const;
+  const values = Object.fromEntries(keys.map((key) => [key, requireProperty(record, key, "AnalysisTransferCompatibility")])) as Record<(typeof keys)[number], unknown>;
+  if (keys.some((key) => typeof values[key] !== "boolean")) {
     validationFailure({
       path: [],
       code: "invalid_type",
-      message: "Les compatibilités categoryIds/activityIds doivent être booléennes.",
+      message: "Les compatibilités Analysis doivent être booléennes.",
     });
   }
-  return { categoryIds, activityIds };
+  return values as AnalysisTransferCompatibility;
 }
 
 export function parseReturnDestination(value: unknown): ReturnDestination {
   const candidate = parseStrictRecord(
     value,
-    ["kind", "checkpoint", "node"],
+    ["kind", "checkpoint", "stack"],
     "ReturnDestination",
   );
   const kind = parseStringLiteral<ReturnDestination["kind"]>(
@@ -174,14 +173,16 @@ export function parseReturnDestination(value: unknown): ReturnDestination {
     parseStrictRecord(value, ["kind", "checkpoint"], "ReturnDestination");
     return { kind, checkpoint };
   }
+  const stack = withValidationPath("stack", () =>
+    activeExplorationStateSchema.parse({
+      rootCheckpoint: checkpoint,
+      stack: requireProperty(candidate, "stack", "ReturnDestination"),
+    }).stack,
+  );
   return {
     kind,
     checkpoint,
-    node: withValidationPath("node", () =>
-      explorationNodeSchema.parse(
-        requireProperty(candidate, "node", "ReturnDestination"),
-      ),
-    ),
+    stack,
   };
 }
 
@@ -270,9 +271,10 @@ export function parseShowDayNavigationIntent(
       message: "ShowDayNavigationIntent exige un retour Exploration.",
     });
   }
-  if (returnDestination.node.kind !== "place") {
+  const placeNode = returnDestination.stack.at(-1);
+  if (placeNode?.kind !== "place") {
     validationFailure({
-      path: ["returnDestination", "node"],
+      path: ["returnDestination", "stack"],
       code: "invalid_exploration_node",
       message: "ShowDayNavigationIntent exige un retour vers un Lieu.",
     });
@@ -289,7 +291,7 @@ export function parseShowDayNavigationIntent(
     returnDestination: {
       kind: "exploration",
       checkpoint: returnDestination.checkpoint,
-      node: returnDestination.node,
+      stack: returnDestination.stack as PlaceReturnDestination["stack"],
     },
   };
 }

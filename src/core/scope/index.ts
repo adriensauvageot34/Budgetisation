@@ -4,7 +4,7 @@ export {
   canonicalSerializeScope,
   computeScopeHash,
 } from "./hash";
-export { normalizeAnalysisScope } from "./normalize";
+export { normalizeAnalysisFilters, normalizeAnalysisScope } from "./normalize";
 export { analysisScopeSchema } from "./schema";
 export type {
   AnalysisFilters,

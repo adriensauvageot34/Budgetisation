@@ -37,7 +37,6 @@ import type {
 import {
   moneyEnvelope,
   operationFromCanonicalRow,
-  scopeRange,
   type CanonicalOperation,
 } from "./shared";
 
@@ -57,7 +56,6 @@ const operationsCursorPolicyVersion = "operations_browse_v1";
 
 function rangeForParams(
   params: NormalizedOperationsBrowseParams,
-  scope: Parameters<typeof scopeRange>[0],
 ): CanonicalDateRange {
   switch (params.time.kind) {
     case "bank_month":
@@ -77,7 +75,6 @@ function rangeForParams(
       };
     }
   }
-  return scopeRange(scope);
 }
 
 function groupFactsByOperation(
@@ -167,9 +164,10 @@ function economicTimingState(
 
 function normalizeNecessity(value: string | undefined) {
   if (value === undefined) return undefined;
-  if (["Indispensable", "Contrainte", "necessary"].includes(value)) return "necessary" as const;
-  if (["Ajustable", "Optionnelle", "discretionary"].includes(value)) return "discretionary" as const;
-  return "unknown" as const;
+  if (["Indispensable", "necessary"].includes(value)) return "Indispensable" as const;
+  if (["Contraint", "Contrainte"].includes(value)) return "Contraint" as const;
+  if (["Optionnel", "Optionnelle", "Ajustable", "discretionary"].includes(value)) return "Optionnel" as const;
+  return undefined;
 }
 
 function normalizeFixedVariable(value: string | undefined) {
@@ -275,6 +273,7 @@ function matchesList<Value>(
 function assertRepresentableFilters(params: NormalizedOperationsBrowseParams): void {
   if (
     params.filters.activityIds.length > 0 ||
+    params.filters.momentIds.length > 0 ||
     params.filters.lifeEventIds.length > 0 ||
     params.filters.dayContext.length > 0
   ) {
@@ -428,7 +427,7 @@ export function createOperationsQuerySource(
           "L'attribution Person des opérations n'est pas projetée par le canonique actuel.",
         );
       }
-      const range = rangeForParams(request.params, request.scope);
+      const range = rangeForParams(request.params);
       const economicFacts = await dependencies.repository.loadEconomicFacts(range);
       const economicOperationIds = [
         ...new Set(
@@ -492,6 +491,19 @@ export function createOperationsQuerySource(
         }),
         appliedQuery: request.params,
         capabilities: context.capabilities,
+        filterCapabilities: [
+          "account",
+          "category",
+          "economic_amount",
+          "fixed_variable",
+          "life_scope",
+          "merchant",
+          "necessity",
+          "place",
+          "precise_type",
+          "quality",
+          "subcategory",
+        ],
       };
     },
   };

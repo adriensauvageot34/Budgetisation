@@ -141,14 +141,14 @@ export function PlaceSurface({
     sections.push({ id: "activities", label: "Activités", content: <PreviewLabels labels={model.activityPreview.items.map((item) => item.label)} emptyTitle="Aucune activité exposée" /> });
   }
   if (hasCapabilitySection(model.capabilities, "merchants")) {
-    sections.push({ id: "merchants", label: "Marchands", content: <RelatedRail title="Marchands liés" relations={merchantRefs} navigation={navigation} seeAll={{ kind: "gallery", gallery: "merchants", filters: { sort: "spend" } }} /> });
+    sections.push({ id: "merchants", label: "Marchands", content: <RelatedRail title="Marchands liés" relations={merchantRefs} navigation={navigation} seeAll={{ kind: "gallery", gallery: "merchants", filters: { sort: "spent" } }} /> });
   }
   if (hasCapabilitySection(model.capabilities, "places")) {
     sections.push({
       id: "visits",
       label: "Visites",
       content: model.visitPreview.items.length === 0 ? <EmptyState title="Aucune visite exposée" /> : (
-        <ul className={styles.factList}>{model.visitPreview.items.map((visit) => <li key={visit.visitKey}>{visit.localDate} · {visit.state}</li>)}</ul>
+        <ul className={styles.factList}>{model.visitPreview.items.map((visit) => <li key={visit.visitKey}><span>{visit.localDate} · {visit.state}</span><button className="button-ghost" type="button" onClick={() => navigation.showDay(visit.localDate)}>Voir cette journée</button></li>)}</ul>
       ),
     });
   }
@@ -158,6 +158,7 @@ export function PlaceSurface({
         <span className={styles.spatialState}>Géolocalisation : {model.spatial.state}</span>
       </EntityIdentityRegion>
       <HeadlineMetrics metrics={metrics} />
+      <button className="button-secondary" type="button" onClick={() => navigation.openOperations({ placeIds: [model.id] })}>Voir les opérations de ce lieu</button>
       <EntitySections label="Sections du lieu" sections={sections} />
     </article>
   );
@@ -185,7 +186,7 @@ export function MerchantSurface({
   }
   if (hasCapabilitySection(model.capabilities, "places") && model.placePreview.state === "available") {
     const placeRefs: SemanticEntityRef[] = model.placePreview.value.items.map((item) => ({ kind: "place", id: item.placeId, label: item.label }));
-    sections.push({ id: "places", label: "Lieux", content: <RelatedRail title="Lieux canoniques" relations={placeRefs} navigation={navigation} seeAll={{ kind: "gallery", gallery: "places", filters: { sort: "spend" } }} /> });
+    sections.push({ id: "places", label: "Lieux", content: <RelatedRail title="Lieux canoniques" relations={placeRefs} navigation={navigation} seeAll={{ kind: "gallery", gallery: "places", filters: { sort: "spent" } }} /> });
   }
   if (hasCapabilitySection(model.capabilities, "operations")) {
     sections.push({
@@ -202,6 +203,7 @@ export function MerchantSurface({
         <span className={styles.spatialState}>Canal spatial : {model.spatialMode}</span>
       </EntityIdentityRegion>
       <HeadlineMetrics metrics={metrics} />
+      <button className="button-secondary" type="button" onClick={() => navigation.openOperations({ merchantIds: [model.id] })}>Voir les opérations de ce marchand</button>
       <EntitySections label="Sections du marchand" sections={sections} />
     </article>
   );
@@ -224,7 +226,7 @@ export function PersonaSurface({
     sections.push({ id: "places", label: "Lieux", content: <RelatedRail title="Lieux" relations={placeRefs} navigation={navigation} seeAll={{ kind: "gallery", gallery: "places", filters: { sort: "frequent" } }} /> });
   }
   if (hasCapabilitySection(model.capabilities, "merchants")) {
-    sections.push({ id: "merchants", label: "Marchands", content: <RelatedRail title="Marchands" relations={merchantRefs} navigation={navigation} seeAll={{ kind: "gallery", gallery: "merchants", filters: { sort: "spend" } }} /> });
+    sections.push({ id: "merchants", label: "Marchands", content: <RelatedRail title="Marchands" relations={merchantRefs} navigation={navigation} seeAll={{ kind: "gallery", gallery: "merchants", filters: { sort: "spent" } }} /> });
   }
   return (
     <article className={styles.entitySurface} data-entity-surface="persona">
