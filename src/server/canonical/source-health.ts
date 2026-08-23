@@ -11,15 +11,16 @@ export type CanonicalSourceHealth = Readonly<
   Record<CanonicalSourceName, CanonicalSourceHealthStatus>
 >;
 
-export const initiallyAvailableCanonicalSources: CanonicalSourceHealth =
-  Object.freeze({
-    economic: "AVAILABLE",
-    timing: "AVAILABLE",
-    places: "AVAILABLE",
-    person_days: "AVAILABLE",
-    life_events: "AVAILABLE",
-    purchase_events: "AVAILABLE",
-    financial_links: "AVAILABLE",
-    operations: "AVAILABLE",
-    entities: "AVAILABLE",
-  });
+export function unavailableCanonicalSourceHealth(): CanonicalSourceHealth {
+  return {
+    economic: "UNAVAILABLE",
+    timing: "UNAVAILABLE",
+    places: "UNAVAILABLE",
+    person_days: "UNAVAILABLE",
+    life_events: "UNAVAILABLE",
+    purchase_events: "UNAVAILABLE",
+    financial_links: "UNAVAILABLE",
+    operations: "UNAVAILABLE",
+    entities: "UNAVAILABLE",
+  };
+}

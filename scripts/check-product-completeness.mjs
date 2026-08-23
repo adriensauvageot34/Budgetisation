@@ -70,12 +70,24 @@ const authProxy = fs.readFileSync(path.join(repositoryRoot, "src/lib/supabase/pr
 const queryClient = fs.readFileSync(path.join(repositoryRoot, "src/components/runtime/query-client.ts"), "utf8");
 const globalPage = fs.readFileSync(path.join(repositoryRoot, "src/features/analysis/global/analysis-global-page.tsx"), "utf8");
 const globalSources = fs.readFileSync(path.join(repositoryRoot, "src/server/query/sources/analysis.ts"), "utf8");
+const canonicalRepository = fs.readFileSync(
+  path.join(repositoryRoot, "src/server/canonical/repository.ts"),
+  "utf8",
+);
 for (const [condition, reason] of [
   [/PERMISSION_DENIED/.test(apiRoute) && /status:\s*authenticationRequired\s*\?\s*401/.test(apiRoute), "/api/query ne garantit pas le 401 JSON"],
   [/startsWith\(\"\/api\/\"\)/.test(authProxy) && /if \(isApi\) return response/.test(authProxy), "le proxy peut encore rediriger /api/*"],
   [/content-type/.test(queryClient) && /contenu non JSON/.test(queryClient), "le client Query ne défend pas le contenu non JSON"],
   [!/\bas never\b/.test(globalPage), "renderer Analysis Global contient encore un cast never"],
   [/request\.scope\.time\.kind === \"global\"[\s\S]{0,120}\"activity_causal_cost\"/.test(globalSources), "Activity ciblée Global n'a pas de métrique agrégable"],
+  [!/\.from\("operations"\)[\s\S]{0,240}\.eq\("household_id"/.test(canonicalRepository), "une lecture operations dépend encore de operations.household_id"],
+  [/canonical_household_scope_control/.test(canonicalRepository) && /parseCanonicalHouseholdScope/.test(canonicalRepository), "le scope Household canonique n'est pas validé avant les lectures Operations"],
+  [/loadOperationsByBankRange\([\s\S]{0,220}await this\.assertAuthorizedCanonicalHouseholdScope\(\)/.test(canonicalRepository), "loadOperationsByBankRange ne valide pas le scope Household canonique"],
+  [/loadLatestBankOperationMonth\([\s\S]{0,220}await this\.assertAuthorizedCanonicalHouseholdScope\(\)/.test(canonicalRepository), "loadLatestBankOperationMonth ne valide pas le scope Household canonique"],
+  [/loadOperationsByIds\([\s\S]{0,240}await this\.assertAuthorizedCanonicalHouseholdScope\(\)/.test(canonicalRepository), "loadOperationsByIds ne valide pas le scope Household canonique"],
+  [/probeCanonicalSource\("operations"[\s\S]{0,180}await this\.assertAuthorizedCanonicalHouseholdScope\(\)/.test(canonicalRepository), "le health check Operations ne valide pas le scope Household canonique"],
+  [/loadOperation\(operationId[\s\S]{0,220}loadOperationsByIds\(\[operationId\]\)/.test(canonicalRepository), "loadOperation ne délègue plus à loadOperationsByIds"],
+  [/canonical_read_error/.test(canonicalRepository), "la journalisation sûre canonical_read_error est absente"],
 ]) {
   if (!condition) violations.push(reason);
 }

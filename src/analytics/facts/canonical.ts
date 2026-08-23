@@ -215,10 +215,9 @@ function idDimension<Id extends string>(value: Id | null) {
     : ({ kind: "resolved", id: value } as const);
 }
 
-export function parseCanonicalHouseholdContext(
+export function parseCanonicalHouseholdScope(
   scopeValue: unknown,
-  householdValue: unknown,
-): CanonicalHouseholdContext {
+): HouseholdId {
   const scope = parseStrictRecord(
     scopeValue,
     ["household_count", "household_id", "status"],
@@ -240,6 +239,14 @@ export function parseCanonicalHouseholdContext(
   if (status !== "READY" || householdCount !== 1 || scopeHouseholdId === null) {
     throw new TypeError("Le scope canonique Household n'est pas READY et univoque.");
   }
+  return scopeHouseholdId;
+}
+
+export function parseCanonicalHouseholdContext(
+  scopeValue: unknown,
+  householdValue: unknown,
+): CanonicalHouseholdContext {
+  const scopeHouseholdId = parseCanonicalHouseholdScope(scopeValue);
 
   const household = parseStrictRecord(
     householdValue,

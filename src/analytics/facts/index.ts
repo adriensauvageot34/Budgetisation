@@ -90,6 +90,7 @@ export {
   canonicalFactSources,
   parseActivityOccurrenceCanonicalCandidate,
   parseCanonicalHouseholdContext,
+  parseCanonicalHouseholdScope,
   parsePurchaseEventCanonicalSources,
   projectActivityOccurrenceFact,
   projectEconomicComponentFact,

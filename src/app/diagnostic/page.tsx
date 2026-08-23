@@ -38,6 +38,9 @@ export default async function DiagnosticPage() {
     .at(-1);
   const month = latestPeriod === undefined ? null : yearMonthOf(latestPeriod.month);
   const asOf = resolveDefaultGlobalAsOf(context.periods);
+  const completeClosedPeriodCount = context.periods.filter(
+    ({ financeStatus, isClosed }) => financeStatus === "complete" && isClosed,
+  ).length;
   const monthScope = month === null
     ? null
     : normalizeAnalysisScope({
@@ -113,6 +116,7 @@ export default async function DiagnosticPage() {
         <div><span className="eyebrow">Timezone</span><p className="text-xl font-black">{context.household.timezone}</p></div>
         <div><span className="eyebrow">Persons</span><p className="text-xl font-black">{context.persons.map((person) => person.displayName).join(", ") || "Aucune"}</p></div>
         <div><span className="eyebrow">Analysis periods</span><p className="text-xl font-black">{context.periods.length}</p></div>
+        <div><span className="eyebrow">Finance complete + closed</span><p className="text-xl font-black">{completeClosedPeriodCount}</p></div>
         <div><span className="eyebrow">DataRevision</span><p className="text-xl font-black">{context.revision?.dataRevision ?? "—"}</p></div>
         <div><span className="eyebrow">AnalyticsRevision</span><p className="text-xl font-black">{context.revision?.analyticsRevision ?? "—"}</p></div>
       </section>

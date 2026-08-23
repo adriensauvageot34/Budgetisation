@@ -27,8 +27,8 @@ import {
 import { CanonicalReadError } from "@/server/canonical/errors";
 import { CanonicalRepository } from "@/server/canonical/repository";
 import {
-  initiallyAvailableCanonicalSources,
   type CanonicalSourceHealth,
+  unavailableCanonicalSourceHealth,
 } from "@/server/canonical/source-health";
 import { createRealQuerySources } from "./sources";
 
@@ -115,8 +115,8 @@ function baseServices(
       ? {}
       : {
           resolveApplicability: async ({ request }) => {
-            const health = await repository.sourceHealth();
-            if (health.purchase_events === "AVAILABLE") return {};
+            const purchaseEventHealth = await repository.purchaseEventSourceHealth();
+            if (purchaseEventHealth === "AVAILABLE") return {};
             const maximum = getQueryCapabilityMaximum(request.resource);
             return {
               measures: maximum.measures.filter(
@@ -201,11 +201,6 @@ export async function readAuthenticatedCanonicalSourceHealth(): Promise<Canonica
     ).sourceHealth();
   } catch (error) {
     if (!(error instanceof CanonicalReadError)) throw error;
-    return Object.fromEntries(
-      Object.keys(initiallyAvailableCanonicalSources).map((source) => [
-        source,
-        "UNAVAILABLE",
-      ]),
-    ) as CanonicalSourceHealth;
+    return unavailableCanonicalSourceHealth();
   }
 }

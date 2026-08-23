@@ -7,6 +7,7 @@ import {
   dedupePersonDays,
   dedupePlaceVisits,
   dedupePurchaseEvents,
+  parseCanonicalHouseholdScope,
   projectActivityOccurrenceFact,
   projectEconomicComponentFact,
   projectPersonDayFact,
@@ -27,8 +28,8 @@ import type {
 import { addDays, parseLocalDate, yearMonthOf, type LocalDate, type YearMonth } from "@/core/time";
 import type { AuthorizedRuntimeContext } from "./context";
 import {
-  initiallyAvailableCanonicalSources,
   type CanonicalSourceHealth,
+  type CanonicalSourceHealthStatus,
 } from "./source-health";
 import {
   CanonicalMissingMigrationError,
@@ -51,6 +52,44 @@ type CanonicalQueryResult = {
   readonly data: unknown;
   readonly error: CanonicalQueryError | null;
 };
+
+const canonicalLogUuidPattern =
+  /\b[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}\b/gi;
+const canonicalLogJwtPattern =
+  /\beyJ[A-Za-z0-9_-]*\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\b/g;
+
+function safeCanonicalErrorMessage(message: string | undefined): string {
+  const normalized = message?.replace(/\s+/g, " ").trim();
+  if (!normalized) return "Supabase canonical read failed.";
+  return normalized
+    .replace(/\bBearer\s+\S+/gi, "Bearer [redacted]")
+    .replace(canonicalLogJwtPattern, "[redacted-token]")
+    .replace(/\b(?:sb_secret_|sk-)[A-Za-z0-9._-]+\b/gi, "[redacted-key]")
+    .replace(/(https?:\/\/[^\s?]+)\?\S+/gi, "$1?[redacted]")
+    .replace(canonicalLogUuidPattern, "[redacted-id]")
+    .slice(0, 300);
+}
+
+function logCanonicalReadError(
+  source: CanonicalSourceName,
+  error: CanonicalQueryError,
+): void {
+  console.error({
+    event: "canonical_read_error",
+    source,
+    ...(error.code === undefined ? {} : { errorCode: error.code }),
+    message: safeCanonicalErrorMessage(error.message),
+  });
+}
+
+function isMissingPurchaseRelationError(error: CanonicalQueryError): boolean {
+  if (error.code === "42P01" || error.code === "PGRST205") return true;
+  const message = error.message ?? "";
+  return (
+    /\brelation\b.{0,180}\bdoes not exist\b/i.test(message) ||
+    /\bcould not find the table\b.{0,180}\bin the schema cache\b/i.test(message)
+  );
+}
 
 export type CanonicalDateRange = {
   readonly start: LocalDate;
@@ -148,10 +187,8 @@ export class CanonicalRepository {
     return this.cached(key, async () => {
       const { data, error } = await query();
       if (error !== null) {
-        if (
-          source === "purchase_events" &&
-          (error.code === "42P01" || error.message?.includes("does not exist"))
-        ) {
+        logCanonicalReadError(source, error);
+        if (source === "purchase_events" && isMissingPurchaseRelationError(error)) {
           throw new CanonicalMissingMigrationError("purchase_events");
         }
         throw new CanonicalReadError(
@@ -164,9 +201,46 @@ export class CanonicalRepository {
     });
   }
 
-  loadOperationsByBankRange(
+  private assertAuthorizedCanonicalHouseholdScope(): Promise<void> {
+    return this.cached("authorization:canonical-household-scope", async () => {
+      const rows = await this.readRows(
+        "scope:canonical-household-control",
+        "operations",
+        () =>
+          this.client
+            .from("canonical_household_scope_control")
+            .select("household_count,household_id,status")
+            .limit(2),
+      );
+      if (rows.length !== 1) {
+        throw new CanonicalReadError(
+          "operations",
+          "Le scope canonique Household doit produire exactement une ligne.",
+        );
+      }
+      let scopeHouseholdId: HouseholdId;
+      try {
+        scopeHouseholdId = parseCanonicalHouseholdScope(rows[0]);
+      } catch (error) {
+        throw new CanonicalReadError(
+          "operations",
+          "Le scope canonique Household n'est pas READY et univoque.",
+          { cause: error },
+        );
+      }
+      if (scopeHouseholdId !== this.context.householdId) {
+        throw new CanonicalReadError(
+          "operations",
+          "Le scope canonique Household ne correspond pas au contexte autorisé.",
+        );
+      }
+    });
+  }
+
+  async loadOperationsByBankRange(
     range: CanonicalDateRange,
   ): Promise<readonly CanonicalRecord[]> {
+    await this.assertAuthorizedCanonicalHouseholdScope();
     return this.readRows(
       `operations:bank:${range.start}:${range.endExclusive}`,
       "operations",
@@ -174,7 +248,6 @@ export class CanonicalRepository {
         this.client
           .from("operations")
           .select("*,montant_bancaire_exact:montant_bancaire::text")
-          .eq("household_id", this.context.householdId)
           .gte("date_bancaire", range.start)
           .lt("date_bancaire", range.endExclusive)
           .order("date_bancaire", { ascending: true })
@@ -183,11 +256,11 @@ export class CanonicalRepository {
   }
 
   async loadLatestBankOperationMonth(): Promise<YearMonth | null> {
+    await this.assertAuthorizedCanonicalHouseholdScope();
     const rows = await this.readRows("operations:latest-bank-month", "operations", () =>
       this.client
         .from("operations")
         .select("operation_id,date_bancaire")
-        .eq("household_id", this.context.householdId)
         .order("date_bancaire", { ascending: false })
         .order("operation_id", { ascending: false })
         .limit(1),
@@ -198,11 +271,12 @@ export class CanonicalRepository {
       : yearMonthOf(parseLocalDate(canonicalString(row, ["date_bancaire"], "operations")));
   }
 
-  loadOperationsByIds(
+  async loadOperationsByIds(
     operationIds: readonly string[],
   ): Promise<readonly CanonicalRecord[]> {
     const ids = unique(operationIds);
-    if (ids.length === 0) return Promise.resolve([]);
+    if (ids.length === 0) return [];
+    await this.assertAuthorizedCanonicalHouseholdScope();
     return this.readRows(
       `operations:ids:${ids.join(",")}`,
       "operations",
@@ -210,7 +284,6 @@ export class CanonicalRepository {
         this.client
           .from("operations")
           .select("*,montant_bancaire_exact:montant_bancaire::text")
-          .eq("household_id", this.context.householdId)
           .in("operation_id", ids)
           .order("operation_id", { ascending: true }),
     );
@@ -645,31 +718,186 @@ export class CanonicalRepository {
     });
   }
 
-  async sourceHealth(): Promise<CanonicalSourceHealth> {
+  private async probeCanonicalSource(
+    source: CanonicalSourceName,
+    probe: () => Promise<void>,
+  ): Promise<CanonicalSourceHealthStatus> {
     try {
-      await this.readRows("health:purchase-events", "purchase_events", () =>
-        this.client
-          .from("purchase_events")
-          .select("purchase_event_id")
-          .eq("household_id", this.context.householdId)
-          .limit(1),
-      );
-      return initiallyAvailableCanonicalSources;
+      await probe();
+      return "AVAILABLE";
     } catch (error) {
-      if (error instanceof CanonicalMissingMigrationError) {
-        return {
-          ...initiallyAvailableCanonicalSources,
-          purchase_events: "MISSING_MIGRATION",
-        };
+      if (
+        source === "purchase_events" &&
+        error instanceof CanonicalMissingMigrationError
+      ) {
+        return "MISSING_MIGRATION";
       }
       if (error instanceof CanonicalReadError) {
-        return {
-          ...initiallyAvailableCanonicalSources,
-          purchase_events: "UNAVAILABLE",
-        };
+        return "UNAVAILABLE";
       }
       throw error;
     }
+  }
+
+  purchaseEventSourceHealth(): Promise<CanonicalSourceHealthStatus> {
+    return this.cached("health-status:purchase-events", () =>
+      this.probeCanonicalSource("purchase_events", async () => {
+        await this.readRows("health:purchase-events", "purchase_events", () =>
+          this.client
+            .from("purchase_events")
+            .select("purchase_event_id")
+            .eq("household_id", this.context.householdId)
+            .limit(1));
+        await this.readRows(
+          "health:purchase-event-sources",
+          "purchase_events",
+          () =>
+            this.client
+              .from("purchase_event_sources")
+              .select("purchase_event_id")
+              .limit(1),
+        );
+      }),
+    );
+  }
+
+  sourceHealth(): Promise<CanonicalSourceHealth> {
+    return this.cached("health-status:all", async () => {
+      const [
+        operations,
+        economic,
+        timing,
+        places,
+        personDays,
+        lifeEvents,
+        financialLinks,
+        entities,
+        purchaseEvents,
+      ] = await Promise.all([
+        this.probeCanonicalSource("operations", async () => {
+          await this.assertAuthorizedCanonicalHouseholdScope();
+          await this.readRows("health:operations", "operations", () =>
+            this.client
+              .from("operations")
+              .select("operation_id")
+              .limit(1));
+        }),
+        this.probeCanonicalSource("economic", async () => {
+          await Promise.all([
+            this.readRows("health:economic-cost", "economic", () =>
+              this.client
+                .from("financial_economic_cost_canonical")
+                .select("canonical_component_key")
+                .limit(1)),
+            this.readRows("health:economic-reconciliation", "economic", () =>
+              this.client
+                .from("financial_canonical_reconciliation_control")
+                .select("operation_id")
+                .limit(1)),
+          ]);
+        }),
+        this.probeCanonicalSource("timing", async () => {
+          await Promise.all([
+            this.readRows("health:timing", "timing", () =>
+              this.client
+                .from("financial_economic_timing_canonical")
+                .select("economic_segment_id")
+                .eq("household_id", this.context.householdId)
+                .limit(1)),
+            this.readRows("health:timing-control", "timing", () =>
+              this.client
+                .from("financial_economic_timing_control")
+                .select("canonical_component_key")
+                .limit(1)),
+          ]);
+        }),
+        this.probeCanonicalSource("places", async () => {
+          await Promise.all([
+            this.readRows("health:operation-places", "places", () =>
+              this.client
+                .from("operation_place_canonical")
+                .select("canonical_component_key")
+                .limit(1)),
+            this.readRows("health:location-occurrences", "places", () =>
+              this.client
+                .from("location_occurrences")
+                .select("localization_id")
+                .limit(1)),
+          ]);
+        }),
+        this.probeCanonicalSource("person_days", async () => {
+          await this.readRows("health:person-days", "person_days", () => {
+            const query = this.client
+              .from("person_days")
+              .select("person_day_id");
+            return this.context.personIds.length === 0
+              ? query.limit(1)
+              : query.in("person_id", this.context.personIds).limit(1);
+          });
+        }),
+        this.probeCanonicalSource("life_events", async () => {
+          await Promise.all([
+            this.readRows("health:life-events", "life_events", () =>
+              this.client
+                .from("life_events")
+                .select("life_event_id")
+                .eq("household_id", this.context.householdId)
+                .limit(1)),
+            this.readRows("health:life-event-types", "life_events", () =>
+              this.client
+                .from("life_event_types")
+                .select("life_event_type_id")
+                .limit(1)),
+            this.readRows("health:life-event-participations", "life_events", () =>
+              this.client
+                .from("life_event_participations")
+                .select("life_event_id")
+                .limit(1)),
+          ]);
+        }),
+        this.probeCanonicalSource("financial_links", async () => {
+          await this.readRows("health:financial-links", "financial_links", () =>
+            this.client
+              .from("life_event_financial_links")
+              .select("financial_link_id")
+              .limit(1));
+        }),
+        this.probeCanonicalSource("entities", async () => {
+          await Promise.all([
+            this.readRows("health:entities:places", "entities", () =>
+              this.client
+                .from("places")
+                .select("place_id")
+                .eq("household_id", this.context.householdId)
+                .limit(1)),
+            this.readRows("health:entities:merchants", "entities", () =>
+              this.client
+                .from("merchants")
+                .select("merchant_id")
+                .eq("household_id", this.context.householdId)
+                .limit(1)),
+            this.readRows("health:entities:moments", "entities", () =>
+              this.client
+                .from("moments")
+                .select("moment_id")
+                .eq("household_id", this.context.householdId)
+                .limit(1)),
+          ]);
+        }),
+        this.purchaseEventSourceHealth(),
+      ]);
+      return {
+        economic,
+        timing,
+        places,
+        person_days: personDays,
+        life_events: lifeEvents,
+        purchase_events: purchaseEvents,
+        financial_links: financialLinks,
+        operations,
+        entities,
+      };
+    });
   }
 
   async loadOperationBundle(
