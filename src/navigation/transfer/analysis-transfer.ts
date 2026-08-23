@@ -136,6 +136,9 @@ export function transferMonthToGlobal(
         kind: "analysis_global",
         observationWindow: targetWindow,
         asOf,
+        ...(source.subject.kind === "person"
+          ? { personId: source.subject.personId }
+          : {}),
       },
     },
     targetScope,
@@ -172,7 +175,13 @@ export function transferGlobalToMonth(
     kind: "success",
     targetRoot: {
       area: "analysis",
-      context: { kind: "analysis_month", month },
+      context: {
+        kind: "analysis_month",
+        month,
+        ...(source.subject.kind === "person"
+          ? { personId: source.subject.personId }
+          : {}),
+      },
     },
     targetScope: {
       subject: source.subject,

@@ -1,96 +1,67 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useMemo, useRef } from "react";
 import type { LocalDate, YearMonth } from "@/core/time";
-import type { CalendarWeekRef, NavigationController, ScrollAdapter, ScrollContainerRef } from "@/navigation";
-import {
-  BrowserAnchorRegistry,
-  InMemoryNavigationSessionStore,
-  RestorationCoordinator,
-  WebBrowserHistoryAdapter,
-  WebRootRouterAdapter,
-  createNavigationController,
-} from "@/navigation";
+import type { CalendarWeekRef } from "@/navigation";
+import type {
+  HistoryCalendarMonthReadModel,
+  HistoryCalendarMonthSummaryReadModel,
+  HistoryDayDetailReadModel,
+} from "@/query-api";
+import type { UiTransportState } from "@/ui";
+import { useProductRuntime } from "@/components/runtime";
 import { CalendarMonth, CalendarTwelveMonths, CalendarWeek } from "./calendar-view";
 import { DayDetailDrawer } from "./day-drawer";
 
-class CalendarBrowserScrollAdapter implements ScrollAdapter {
-  private element(container: ScrollContainerRef): HTMLElement | null {
-    return container.kind === "day_drawer"
-      ? document.querySelector<HTMLElement>("[data-overlay-kind='day_drawer'] [data-overlay-content]")
-      : document.scrollingElement as HTMLElement | null;
-  }
-
-  getScrollY(container: ScrollContainerRef): number {
-    const element = this.element(container);
-    return element?.scrollTop ?? window.scrollY;
-  }
-
-  scrollTo(container: ScrollContainerRef, y: number): void {
-    const element = this.element(container);
-    if (element) element.scrollTo({ top: y });
-    else window.scrollTo({ top: y });
-  }
-
-  getAnchorTop(container: ScrollContainerRef, element: HTMLElement): number {
-    const scroller = this.element(container);
-    const scrollerTop = scroller?.getBoundingClientRect().top ?? 0;
-    return element.getBoundingClientRect().top - scrollerTop + (scroller?.scrollTop ?? window.scrollY);
-  }
-}
-
-function useCalendarController(): NavigationController | null {
-  const [controller, setController] = useState<NavigationController | null>(null);
-  useEffect(() => {
-    const scroll = new CalendarBrowserScrollAdapter();
-    const anchors = new BrowserAnchorRegistry();
-    const next = createNavigationController({
-      router: new WebRootRouterAdapter(window),
-      history: new WebBrowserHistoryAdapter(window),
-      session: new InMemoryNavigationSessionStore(),
-      surface: {
-        readScope: () => null,
-        applyScope: () => undefined,
-        readSubview: () => null,
-        applySubview: () => undefined,
-      },
-      restoration: new RestorationCoordinator(anchors, scroll),
-      readiness: { wait: async () => ({ kind: "ready" }) },
-      scroll,
-      anchors,
-      compatibility: { categoryIds: true, activityIds: true },
-    });
-    next.start();
-    setController(next);
-    return () => next.dispose();
-  }, []);
-  return controller;
-}
-
 export type CalendarClientPageProps =
-  | { readonly kind: "overview" }
-  | { readonly kind: "month"; readonly month: YearMonth; readonly day?: LocalDate }
-  | { readonly kind: "week"; readonly month: YearMonth; readonly week: CalendarWeekRef };
+  | {
+      readonly kind: "overview";
+      readonly state: UiTransportState<readonly HistoryCalendarMonthSummaryReadModel[]>;
+    }
+  | {
+      readonly kind: "month";
+      readonly month: YearMonth;
+      readonly day?: LocalDate;
+      readonly state: UiTransportState<HistoryCalendarMonthReadModel>;
+      readonly dayState?: UiTransportState<HistoryDayDetailReadModel>;
+    }
+  | {
+      readonly kind: "week";
+      readonly month: YearMonth;
+      readonly week: CalendarWeekRef;
+      readonly state: UiTransportState<readonly HistoryCalendarMonthReadModel[]>;
+    };
 
 export function CalendarClientPage(props: CalendarClientPageProps) {
-  const controller = useCalendarController();
+  const runtime = useProductRuntime();
+  const controller = runtime.controller;
+  const navigation = useMemo(() => controller === null ? undefined : {
+    openCalendarMonth: (month: YearMonth) => runtime.run((value) => value.openCalendarMonth(month)) as ReturnType<typeof controller.openCalendarMonth>,
+    openCalendarWeek: (month: YearMonth, week: CalendarWeekRef) => runtime.run((value) => value.openCalendarWeek(month, week)) as ReturnType<typeof controller.openCalendarWeek>,
+    openDay: (date: LocalDate) => runtime.run((value) => value.openDay(date)) as ReturnType<typeof controller.openDay>,
+    closeDay: () => runtime.run((value) => value.closeDay()) as ReturnType<typeof controller.closeDay>,
+    previousDay: () => runtime.run((value) => value.previousDay()) as ReturnType<typeof controller.previousDay>,
+    nextDay: () => runtime.run((value) => value.nextDay()) as ReturnType<typeof controller.nextDay>,
+    openExploration: (node: Parameters<typeof controller.openExploration>[0]) => runtime.run((value) => value.openExploration(node)) as ReturnType<typeof controller.openExploration>,
+    goToAnalysis: () => runtime.run((value) => value.goToAnalysis()) as Promise<Awaited<ReturnType<typeof controller.goToAnalysis>>>,
+  }, [controller, runtime]);
   const rootRef = useRef<HTMLDivElement>(null);
   if (props.kind === "overview") {
-    return <CalendarTwelveMonths state={{ status: "loading" }} navigation={controller ?? undefined} />;
+    return <CalendarTwelveMonths state={props.state} navigation={navigation} />;
   }
   if (props.kind === "week") {
-    return <CalendarWeek month={props.month} week={props.week} state={{ status: "loading" }} navigation={controller ?? undefined} />;
+    return <CalendarWeek month={props.month} week={props.week} state={props.state} navigation={navigation} />;
   }
   return (
     <>
       <div ref={rootRef} data-focus-restoration-fallback="">
-        <CalendarMonth state={{ status: "loading" }} navigation={controller ?? undefined} />
+        <CalendarMonth state={props.state} navigation={navigation} />
       </div>
-      {props.day && controller ? (
+      {props.day && controller && props.dayState ? (
         <DayDetailDrawer
           date={props.day}
-          state={{ status: "loading" }}
-          navigation={controller}
+          state={props.dayState}
+          navigation={navigation ?? controller}
           backgroundRootRef={rootRef}
         />
       ) : null}

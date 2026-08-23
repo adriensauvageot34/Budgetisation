@@ -117,6 +117,13 @@ export function assertQueryDataMatchesRequest<Name extends QueryResourceName>(
       assertSame(methodology.asOf, params.asOf, "Methodology asOf");
       break;
     }
+    case "operations_browse":
+      assertSame(
+        (data as QueryDataByResource["operations_browse"]).appliedQuery,
+        request.params,
+        "Operations applied query",
+      );
+      break;
   }
   if (scope.subject !== undefined && "subject" in (data as object)) {
     assertSame((data as { readonly subject: unknown }).subject, scope.subject, "Read model subject");

@@ -6,8 +6,6 @@ import { Landmark } from "lucide-react";
 import { SignOutButton } from "@/features/auth/sign-out-button";
 
 const modules = [
-  { href: "/", label: "Validation technique" },
-  { href: "/analyse", label: "Analyse" },
   { href: "/historique", label: "Historique" },
   { href: "/operations", label: "Opérations" },
 ];
@@ -23,14 +21,14 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     <div className="min-h-screen">
       <header className="border-b border-[var(--color-border)] bg-white">
         <div className="mx-auto flex max-w-6xl flex-wrap items-center gap-4 px-[var(--space-page)] py-4">
-          <Link href="/" className="mr-auto flex items-center gap-3">
+          <Link href="/historique" className="mr-auto flex items-center gap-3">
             <span className="flex size-10 items-center justify-center rounded-xl bg-[var(--color-primary)] text-white">
               <Landmark size={20} />
             </span>
             <span>
               <span className="block font-black">Budgetisation V2</span>
               <span className="block text-xs text-[var(--color-muted)]">
-                Bootstrap technique provisoire
+                Historique · Analyse · Opérations
               </span>
             </span>
           </Link>
@@ -38,9 +36,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           <nav className="flex flex-wrap gap-1" aria-label="Navigation principale">
             {modules.map((module) => {
               const active =
-                module.href === "/"
-                  ? pathname === "/"
-                  : pathname.startsWith(module.href);
+                pathname.startsWith(module.href);
               return (
                 <Link
                   key={module.href}
@@ -56,6 +52,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               );
             })}
           </nav>
+
+          <Link href="/diagnostic" className="button-ghost text-xs">Diagnostic</Link>
 
           <SignOutButton compact />
         </div>

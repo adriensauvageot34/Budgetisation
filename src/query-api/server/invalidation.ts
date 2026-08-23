@@ -23,6 +23,7 @@ const monthResources = [
   queryResourceKeys.galleryMoments,
   queryResourceKeys.galleryPlaces,
   queryResourceKeys.galleryMerchants,
+  queryResourceKeys.operationsBrowse,
 ] as const;
 
 const globalReferenceResources = [
@@ -40,26 +41,30 @@ const entityResources = Object.freeze({
     queryResourceKeys.entityPlace,
     queryResourceKeys.entityPersona,
     queryResourceKeys.galleryMerchants,
+    queryResourceKeys.operationsBrowse,
   ],
   place: [
     queryResourceKeys.entityPlace,
     queryResourceKeys.entityMerchant,
     queryResourceKeys.entityPersona,
     queryResourceKeys.galleryPlaces,
+    queryResourceKeys.operationsBrowse,
   ],
   life_event: [
     queryResourceKeys.entityLifeEvent,
     queryResourceKeys.entityMoment,
     queryResourceKeys.entityOperation,
     queryResourceKeys.galleryMoments,
+    queryResourceKeys.operationsBrowse,
   ],
   moment: [
     queryResourceKeys.entityMoment,
     queryResourceKeys.entityLifeEvent,
     queryResourceKeys.entityOperation,
     queryResourceKeys.galleryMoments,
+    queryResourceKeys.operationsBrowse,
   ],
-  category: [queryResourceKeys.analysisMonthBreakdown, queryResourceKeys.analysisGlobalBreakdown],
+  category: [queryResourceKeys.analysisMonthBreakdown, queryResourceKeys.analysisGlobalBreakdown, queryResourceKeys.operationsBrowse],
   activity: [queryResourceKeys.entityPersona, queryResourceKeys.galleryMoments],
 } as const);
 
@@ -73,6 +78,7 @@ export function queryResourcesInvalidatedByImpact(
       queryResourceKeys.entityMoment,
       queryResourceKeys.entityLifeEvent,
       queryResourceKeys.galleryMoments,
+      queryResourceKeys.operationsBrowse,
     ];
   }
   return impact.reason === "method_version_changed"

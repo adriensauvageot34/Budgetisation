@@ -373,6 +373,17 @@ export const queryCapabilityRegistry = Object.freeze({
     measures: galleryMerchantMeasures,
     filters: noFilters,
   },
+  operations_browse: {
+    resource: queryResourceKeys.operationsBrowse,
+    sections: Object.freeze([
+      querySectionKeys.operations,
+      querySectionKeys.finance,
+      querySectionKeys.classification,
+      querySectionKeys.traceability,
+    ]),
+    measures: noFilters,
+    filters: allCoreFilters,
+  },
 } as const satisfies Record<QueryResourceName, QueryCapabilityMaximum>);
 
 export function getQueryCapabilityMaximum(

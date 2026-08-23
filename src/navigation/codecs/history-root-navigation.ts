@@ -1,4 +1,7 @@
 import {
+  parsePersonId,
+} from "../../core/identity";
+import {
   parseGlobalWindow,
   parseLocalDate,
   parseYearMonth,
@@ -106,34 +109,57 @@ function parseOperationsNavigation(url: URL): RootNavigationContext {
     "month",
     "startDate",
     "endExclusive",
+    "timeKind",
+    "globalWindow",
+    "asOf",
     "personId",
     "categoryIds",
     "activityIds",
     "merchantIds",
     "placeIds",
+    "search",
+    "sort",
+    "mode",
+    "cursor",
   ] as const;
   assertAllowedSearchParams(url, allowedKeys);
 
   const month = readOptionalSingleSearchParam(url, "month");
   const startDate = readOptionalSingleSearchParam(url, "startDate");
   const endExclusive = readOptionalSingleSearchParam(url, "endExclusive");
-  const personId = readOptionalSingleSearchParam(url, "personId");
+  const timeKind = readOptionalSingleSearchParam(url, "timeKind");
+  const globalWindow = readOptionalSingleSearchParam(url, "globalWindow");
+  const asOf = readOptionalSingleSearchParam(url, "asOf");
+  const rawPersonId = readOptionalSingleSearchParam(url, "personId");
+  const personId = rawPersonId === "household" ? undefined : rawPersonId;
   const categoryIds = url.searchParams.getAll("categoryIds");
   const activityIds = url.searchParams.getAll("activityIds");
   const merchantIds = url.searchParams.getAll("merchantIds");
   const placeIds = url.searchParams.getAll("placeIds");
+  const rawSearch = readOptionalSingleSearchParam(url, "search");
+  const search = rawSearch === "" ? undefined : rawSearch;
+  const sort = readOptionalSingleSearchParam(url, "sort");
+  const mode = readOptionalSingleSearchParam(url, "mode");
+  const cursor = readOptionalSingleSearchParam(url, "cursor");
 
   return {
     kind: "operations",
     filters: operationsNavigationFiltersSchema.parse({
+      ...(timeKind === undefined ? {} : { timeKind }),
       ...(month === undefined ? {} : { month }),
       ...(startDate === undefined ? {} : { startDate }),
       ...(endExclusive === undefined ? {} : { endExclusive }),
+      ...(globalWindow === undefined ? {} : { globalWindow }),
+      ...(asOf === undefined ? {} : { asOf }),
       ...(personId === undefined ? {} : { personId }),
       ...(categoryIds.length === 0 ? {} : { categoryIds }),
       ...(activityIds.length === 0 ? {} : { activityIds }),
       ...(merchantIds.length === 0 ? {} : { merchantIds }),
       ...(placeIds.length === 0 ? {} : { placeIds }),
+      ...(search === undefined ? {} : { search }),
+      ...(sort === undefined ? {} : { sort }),
+      ...(mode === undefined ? {} : { mode }),
+      ...(cursor === undefined ? {} : { cursor }),
     }),
   };
 }
@@ -148,15 +174,21 @@ function parseHistoryRootNavigation(url: URL): HistoryRootContext {
     segments[2] === "calendrier"
   ) {
     if (segments.length === 3) {
-      readSearchParams(url, []);
+      const searchParams = readSearchParams(url, ["personId"]);
+      const rawPersonId = searchParams.get("personId");
       return {
         area: "calendar",
-        context: { kind: "calendar_overview" },
+        context: {
+          kind: "calendar_overview",
+          ...(rawPersonId === undefined || rawPersonId === ""
+            ? {}
+            : { personId: withValidationPath("personId", () => parsePersonId(rawPersonId)) }),
+        },
       };
     }
 
     if (segments.length === 4) {
-      const searchParams = readSearchParams(url, ["day"]);
+      const searchParams = readSearchParams(url, ["day", "personId"]);
       const month = withValidationPath("month", () =>
         parseYearMonth(segments[3]),
       );
@@ -165,6 +197,7 @@ function parseHistoryRootNavigation(url: URL): HistoryRootContext {
         dayValue === undefined
           ? undefined
           : withValidationPath("day", () => parseLocalDate(dayValue));
+      const rawPersonId = searchParams.get("personId");
 
       return historyRootContextSchema.parse({
         area: "calendar",
@@ -172,12 +205,16 @@ function parseHistoryRootNavigation(url: URL): HistoryRootContext {
           kind: "calendar_month",
           month,
           ...(day === undefined ? {} : { day }),
+          ...(rawPersonId === undefined || rawPersonId === ""
+            ? {}
+            : { personId: withValidationPath("personId", () => parsePersonId(rawPersonId)) }),
         },
       });
     }
 
     if (segments.length === 5) {
-      readSearchParams(url, []);
+      const searchParams = readSearchParams(url, ["personId"]);
+      const rawPersonId = searchParams.get("personId");
       return {
         area: "calendar",
         context: {
@@ -188,6 +225,9 @@ function parseHistoryRootNavigation(url: URL): HistoryRootContext {
           week: withValidationPath("week", () =>
             parseCalendarWeekRef(segments[4]),
           ),
+          ...(rawPersonId === undefined || rawPersonId === ""
+            ? {}
+            : { personId: withValidationPath("personId", () => parsePersonId(rawPersonId)) }),
         },
       };
     }
@@ -200,9 +240,13 @@ function parseHistoryRootNavigation(url: URL): HistoryRootContext {
     segments[2] === "analyse"
   ) {
     if (segments[3] === "global") {
-      const searchParams = readSearchParams(url, ["window", "asOf"]);
+      const searchParams = readSearchParams(url, ["window", "asOf", "personId"]);
       const windowValue = searchParams.get("window") ?? defaultGlobalWindow;
       const asOfValue = searchParams.get("asOf");
+      const rawPersonId = searchParams.get("personId");
+      const personId = rawPersonId === undefined || rawPersonId === ""
+        ? undefined
+        : withValidationPath("personId", () => parsePersonId(rawPersonId));
       return {
         area: "analysis",
         context: {
@@ -217,11 +261,18 @@ function parseHistoryRootNavigation(url: URL): HistoryRootContext {
                   parseYearMonth(asOfValue),
                 ),
               }),
+          ...(personId === undefined
+            ? {}
+            : { personId }),
         },
       };
     }
 
-    readSearchParams(url, []);
+    const searchParams = readSearchParams(url, ["personId"]);
+    const rawPersonId = searchParams.get("personId");
+    const personId = rawPersonId === undefined || rawPersonId === ""
+      ? undefined
+      : withValidationPath("personId", () => parsePersonId(rawPersonId));
     return {
       area: "analysis",
       context: {
@@ -229,6 +280,7 @@ function parseHistoryRootNavigation(url: URL): HistoryRootContext {
         month: withValidationPath("month", () =>
           parseYearMonth(segments[3]),
         ),
+        ...(personId === undefined ? {} : { personId }),
       },
     };
   }
@@ -243,21 +295,29 @@ function serializeHistoryRootNavigation(
 
   if (route.area === "calendar") {
     if (route.context.kind === "calendar_overview") {
-      return "/historique/calendrier";
+      return route.context.personId === undefined
+        ? "/historique/calendrier"
+        : `/historique/calendrier?${new URLSearchParams({ personId: route.context.personId }).toString()}`;
     }
 
     const root = `/historique/calendrier/${route.context.month}`;
     if (route.context.kind === "calendar_week") {
-      return `${root}/${route.context.week}`;
+      if (route.context.personId === undefined) return `${root}/${route.context.week}`;
+      return `${root}/${route.context.week}?${new URLSearchParams({ personId: route.context.personId }).toString()}`;
     }
 
-    if (route.context.day === undefined) return root;
-    const params = new URLSearchParams({ day: route.context.day });
+    if (route.context.day === undefined && route.context.personId === undefined) return root;
+    const params = new URLSearchParams();
+    if (route.context.day !== undefined) params.set("day", route.context.day);
+    if (route.context.personId !== undefined) params.set("personId", route.context.personId);
     return `${root}?${params.toString()}`;
   }
 
   if (route.context.kind === "analysis_month") {
-    return `/historique/analyse/${route.context.month}`;
+    if (route.context.personId === undefined) {
+      return `/historique/analyse/${route.context.month}`;
+    }
+    return `/historique/analyse/${route.context.month}?${new URLSearchParams({ personId: route.context.personId }).toString()}`;
   }
 
   const params = new URLSearchParams({
@@ -265,6 +325,9 @@ function serializeHistoryRootNavigation(
   });
   if (route.context.asOf !== undefined) {
     params.set("asOf", route.context.asOf);
+  }
+  if (route.context.personId !== undefined) {
+    params.set("personId", route.context.personId);
   }
   return `/historique/analyse/global?${params.toString()}`;
 }
@@ -289,6 +352,7 @@ function serializeOperationsNavigation(
 ): string {
   const normalized = operationsNavigationFiltersSchema.parse(filters);
   const params = new URLSearchParams();
+  if (normalized.timeKind !== undefined) params.set("timeKind", normalized.timeKind);
   if (normalized.month !== undefined) params.set("month", normalized.month);
   if (
     normalized.startDate !== undefined &&
@@ -297,6 +361,10 @@ function serializeOperationsNavigation(
     params.set("startDate", normalized.startDate);
     params.set("endExclusive", normalized.endExclusive);
   }
+  if (normalized.globalWindow !== undefined && normalized.asOf !== undefined) {
+    params.set("globalWindow", normalized.globalWindow);
+    params.set("asOf", normalized.asOf);
+  }
   if (normalized.personId !== undefined) {
     params.set("personId", normalized.personId);
   }
@@ -304,6 +372,10 @@ function serializeOperationsNavigation(
   appendIdFilters(params, "activityIds", normalized.activityIds);
   appendIdFilters(params, "merchantIds", normalized.merchantIds);
   appendIdFilters(params, "placeIds", normalized.placeIds);
+  if (normalized.search !== undefined) params.set("search", normalized.search);
+  if (normalized.sort !== undefined) params.set("sort", normalized.sort);
+  if (normalized.mode !== undefined) params.set("mode", normalized.mode);
+  if (normalized.cursor !== undefined) params.set("cursor", normalized.cursor);
 
   const query = params.toString();
   return query.length === 0 ? "/operations" : `/operations?${query}`;
