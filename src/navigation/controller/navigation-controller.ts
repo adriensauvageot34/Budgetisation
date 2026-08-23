@@ -201,7 +201,18 @@ class DefaultNavigationController implements NavigationController {
 
   openDay(date: LocalDate): NavigationCommandResult {
     if (!this.isStarted()) return noop("not_started");
-    const target = buildOpenDayRoot(date);
+    const current = this.requireState().root;
+    const personId = "area" in current && current.area === "calendar"
+      ? current.context.personId
+      : undefined;
+    const dayRoot = buildOpenDayRoot(date);
+    const target: HistoryRootContext = {
+      ...dayRoot,
+      context: {
+        ...dayRoot.context,
+        ...(personId === undefined ? {} : { personId }),
+      },
+    };
     this.beginNavigation();
     this.captureCurrentSnapshot();
     this.closeActiveGeneration();
@@ -248,6 +259,9 @@ class DefaultNavigationController implements NavigationController {
     if (!this.isStarted()) return noop("not_started");
     const targetMonth = parseYearMonth(month);
     const current = this.requireState();
+    const personId = "area" in current.root && current.root.area === "calendar"
+      ? current.root.context.personId
+      : undefined;
     if (
       current.exploration === null &&
       "area" in current.root &&
@@ -264,7 +278,11 @@ class DefaultNavigationController implements NavigationController {
     this.closeActiveGeneration();
     const target: HistoryRootContext = {
       area: "calendar",
-      context: { kind: "calendar_month", month: targetMonth },
+      context: {
+        kind: "calendar_month",
+        month: targetMonth,
+        ...(personId === undefined ? {} : { personId }),
+      },
     };
     this.commitRoot(target, "push");
     this.deps.surface.applyScope(null);
@@ -279,15 +297,19 @@ class DefaultNavigationController implements NavigationController {
   ): NavigationCommandResult {
     if (!this.isStarted()) return noop("not_started");
     const targetMonth = parseYearMonth(month);
+    const current = this.requireState();
+    const personId = "area" in current.root && current.root.area === "calendar"
+      ? current.root.context.personId
+      : undefined;
     const target = rootNavigationContextSchema.parse({
       area: "calendar",
       context: {
         kind: "calendar_week",
         month: targetMonth,
         week,
+        ...(personId === undefined ? {} : { personId }),
       },
     }) as HistoryRootContext;
-    const current = this.requireState();
     if (
       current.exploration === null &&
       "area" in current.root &&

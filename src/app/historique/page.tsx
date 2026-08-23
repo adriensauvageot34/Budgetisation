@@ -1,5 +1,13 @@
 import { redirect } from "next/navigation";
+import { yearMonthOf } from "@/core/time";
+import { getBootstrapContext } from "@/server/bootstrap/context";
+import { withProductAuthentication } from "@/app/product-query";
 
-export default function HistoryPage() {
-  redirect("/historique/calendrier");
+export const dynamic = "force-dynamic";
+
+export default async function HistoryPage() {
+  const context = await withProductAuthentication(() => getBootstrapContext());
+  const latest = context.periods.at(-1);
+  if (latest === undefined) redirect("/diagnostic");
+  redirect(`/historique/calendrier/${yearMonthOf(latest.month)}`);
 }

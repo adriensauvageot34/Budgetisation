@@ -89,7 +89,11 @@ export function transferCalendarToAnalysis(
     kind: "success",
     targetRoot: {
       area: "analysis",
-      context: { kind: "analysis_month", month: source.month },
+      context: {
+        kind: "analysis_month",
+        month: source.month,
+        ...(source.personId === undefined ? {} : { personId: source.personId }),
+      },
     },
     memory,
   };
@@ -117,6 +121,7 @@ export function transferAnalysisToCalendar(
   const calendarContext: CalendarRouteContext = {
     kind: "calendar_month",
     month: source.month,
+    ...(source.personId === undefined ? {} : { personId: source.personId }),
   };
   return {
     kind: "success",

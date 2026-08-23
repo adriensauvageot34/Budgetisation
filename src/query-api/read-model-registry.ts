@@ -51,6 +51,10 @@ import {
   type MetricMethodologyReadModel,
 } from "./exploration";
 import {
+  operationsBrowseReadModelSchema,
+  type OperationsBrowseReadModel,
+} from "./operations";
+import {
   queryResourceKeys,
   registeredQueryResourceKeys,
   type QueryResourceName,
@@ -80,6 +84,7 @@ export type QueryDataByResource = {
   readonly gallery_moments: GalleryMomentsReadModel;
   readonly gallery_places: GalleryPlacesReadModel;
   readonly gallery_merchants: GalleryMerchantsReadModel;
+  readonly operations_browse: OperationsBrowseReadModel;
 };
 
 export const queryDataSchemaByResource = Object.freeze({
@@ -106,6 +111,7 @@ export const queryDataSchemaByResource = Object.freeze({
   gallery_moments: galleryMomentsReadModelSchema,
   gallery_places: galleryPlacesReadModelSchema,
   gallery_merchants: galleryMerchantsReadModelSchema,
+  operations_browse: operationsBrowseReadModelSchema,
 } as const satisfies {
   readonly [Name in QueryResourceName]: import("../core/validation").RuntimeSchema<
     QueryDataByResource[Name]

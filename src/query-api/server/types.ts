@@ -84,6 +84,7 @@ export type QueryReadModelSources = {
   readonly readGalleryMoments: QueryReadModelSource<"gallery_moments">;
   readonly readGalleryPlaces: QueryReadModelSource<"gallery_places">;
   readonly readGalleryMerchants: QueryReadModelSource<"gallery_merchants">;
+  readonly readOperationsBrowse: QueryReadModelSource<"operations_browse">;
 };
 
 export type QueryServerAdapter<Name extends QueryResourceName> = {

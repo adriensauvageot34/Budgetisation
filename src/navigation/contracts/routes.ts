@@ -1,4 +1,4 @@
-import type { Brand } from "../../core/identity";
+import { parsePersonId, type Brand, type PersonId } from "../../core/identity";
 import type { GlobalWindow, LocalDate, YearMonth } from "../../core/time";
 import {
   parseGlobalWindow,
@@ -25,27 +25,32 @@ export type CalendarWeekRef = Brand<string, "CalendarWeekRef">;
 export type CalendarRouteContext =
   | {
       readonly kind: "calendar_overview";
+      readonly personId?: PersonId;
     }
   | {
       readonly kind: "calendar_month";
       readonly month: YearMonth;
       readonly day?: LocalDate;
+      readonly personId?: PersonId;
     }
   | {
       readonly kind: "calendar_week";
       readonly month: YearMonth;
       readonly week: CalendarWeekRef;
+      readonly personId?: PersonId;
     };
 
 export type AnalysisRouteContext =
   | {
       readonly kind: "analysis_month";
       readonly month: YearMonth;
+      readonly personId?: PersonId;
     }
   | {
       readonly kind: "analysis_global";
       readonly observationWindow: GlobalWindow;
       readonly asOf?: YearMonth;
+      readonly personId?: PersonId;
     };
 
 export type HistoryRootContext =
@@ -95,7 +100,7 @@ export function parseCalendarWeekRef(value: unknown): CalendarWeekRef {
 function parseCalendarRouteContext(value: unknown): CalendarRouteContext {
   const candidate = parseStrictRecord(
     value,
-    ["kind", "month", "day", "week"],
+    ["kind", "month", "day", "week", "personId"],
     "CalendarRouteContext",
   );
   const kind = withValidationPath("kind", () =>
@@ -107,14 +112,17 @@ function parseCalendarRouteContext(value: unknown): CalendarRouteContext {
   );
 
   if (kind === "calendar_overview") {
-    parseStrictRecord(value, ["kind"], "CalendarRouteContext");
-    return { kind };
+    const record = parseStrictRecord(value, ["kind", "personId"], "CalendarRouteContext");
+    const personId = hasOwn(record, "personId")
+      ? withValidationPath("personId", () => parsePersonId(record.personId))
+      : undefined;
+    return { kind, ...(personId === undefined ? {} : { personId }) };
   }
 
   if (kind === "calendar_week") {
     const record = parseStrictRecord(
       value,
-      ["kind", "month", "week"],
+      ["kind", "month", "week", "personId"],
       "CalendarRouteContext",
     );
     return {
@@ -127,12 +135,15 @@ function parseCalendarRouteContext(value: unknown): CalendarRouteContext {
           requireProperty(record, "week", "CalendarRouteContext"),
         ),
       ),
+      ...(hasOwn(record, "personId")
+        ? { personId: withValidationPath("personId", () => parsePersonId(record.personId)) }
+        : {}),
     };
   }
 
   const record = parseStrictRecord(
     value,
-    ["kind", "month", "day"],
+    ["kind", "month", "day", "personId"],
     "CalendarRouteContext",
   );
   const month = withValidationPath("month", () =>
@@ -150,13 +161,20 @@ function parseCalendarRouteContext(value: unknown): CalendarRouteContext {
     });
   }
 
-  return { kind, month, ...(day === undefined ? {} : { day }) };
+  return {
+    kind,
+    month,
+    ...(day === undefined ? {} : { day }),
+    ...(hasOwn(record, "personId")
+      ? { personId: withValidationPath("personId", () => parsePersonId(record.personId)) }
+      : {}),
+  };
 }
 
 function parseAnalysisRouteContext(value: unknown): AnalysisRouteContext {
   const candidate = parseStrictRecord(
     value,
-    ["kind", "month", "observationWindow", "asOf"],
+    ["kind", "month", "observationWindow", "asOf", "personId"],
     "AnalysisRouteContext",
   );
   const kind = withValidationPath("kind", () =>
@@ -170,20 +188,24 @@ function parseAnalysisRouteContext(value: unknown): AnalysisRouteContext {
   if (kind === "analysis_month") {
     const record = parseStrictRecord(
       value,
-      ["kind", "month"],
+      ["kind", "month", "personId"],
       "AnalysisRouteContext",
     );
+    const personId = hasOwn(record, "personId")
+      ? withValidationPath("personId", () => parsePersonId(record.personId))
+      : undefined;
     return {
       kind,
       month: withValidationPath("month", () =>
         parseYearMonth(requireProperty(record, "month", "AnalysisRouteContext")),
       ),
+      ...(personId === undefined ? {} : { personId }),
     };
   }
 
   const record = parseStrictRecord(
     value,
-    ["kind", "observationWindow", "asOf"],
+    ["kind", "observationWindow", "asOf", "personId"],
     "AnalysisRouteContext",
   );
   const observationWindow = withValidationPath("observationWindow", () =>
@@ -194,11 +216,15 @@ function parseAnalysisRouteContext(value: unknown): AnalysisRouteContext {
   const asOf = hasOwn(record, "asOf")
     ? withValidationPath("asOf", () => parseYearMonth(record.asOf))
     : undefined;
+  const personId = hasOwn(record, "personId")
+    ? withValidationPath("personId", () => parsePersonId(record.personId))
+    : undefined;
 
   return {
     kind,
     observationWindow,
     ...(asOf === undefined ? {} : { asOf }),
+    ...(personId === undefined ? {} : { personId }),
   };
 }
 

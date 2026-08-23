@@ -33,6 +33,7 @@ export const queryAdapterRegistry = Object.freeze({
   gallery_moments: defineQueryServerAdapter(queryResourceKeys.galleryMoments, (sources) => sources.readGalleryMoments),
   gallery_places: defineQueryServerAdapter(queryResourceKeys.galleryPlaces, (sources) => sources.readGalleryPlaces),
   gallery_merchants: defineQueryServerAdapter(queryResourceKeys.galleryMerchants, (sources) => sources.readGalleryMerchants),
+  operations_browse: defineQueryServerAdapter(queryResourceKeys.operationsBrowse, (sources) => sources.readOperationsBrowse),
 } as const satisfies {
   readonly [Name in QueryResourceName]: QueryServerAdapter<Name>;
 });

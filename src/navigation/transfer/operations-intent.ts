@@ -48,6 +48,7 @@ export function buildAnalysisOperationsIntent(
   );
   return buildOperationsIntent(
     {
+      timeKind: "economic_month",
       month: source.time.month,
       ...(source.subject.kind === "person"
         ? { personId: source.subject.personId }

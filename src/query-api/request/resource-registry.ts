@@ -46,6 +46,11 @@ import {
   type QueryResourceKey,
 } from "./resource-key";
 import {
+  parseOperationsBrowseParams,
+  type NormalizedOperationsBrowseParams,
+  type OperationsBrowseParams,
+} from "./operations-params";
+import {
   parseAnalysisBreakdownParams,
   parseAnalysisEvolutionParams,
   parseEmptyQueryParams,
@@ -81,6 +86,7 @@ const queryResourceNames = [
   "gallery_moments",
   "gallery_places",
   "gallery_merchants",
+  "operations_browse",
 ] as const;
 
 export type QueryResourceName = (typeof queryResourceNames)[number];
@@ -154,6 +160,8 @@ export const queryResourceKeys = Object.freeze({
     parseQueryResourceKeySyntax<"gallery_places">("gallery_places"),
   galleryMerchants:
     parseQueryResourceKeySyntax<"gallery_merchants">("gallery_merchants"),
+  operationsBrowse:
+    parseQueryResourceKeySyntax<"operations_browse">("operations_browse"),
 });
 
 export type QueryParamsByResource = {
@@ -180,6 +188,7 @@ export type QueryParamsByResource = {
   readonly gallery_moments: GalleryMomentsParams;
   readonly gallery_places: GalleryPlacesParams;
   readonly gallery_merchants: GalleryMerchantsParams;
+  readonly operations_browse: OperationsBrowseParams;
 };
 
 export type NormalizedQueryParamsByResource = {
@@ -206,6 +215,7 @@ export type NormalizedQueryParamsByResource = {
   readonly gallery_moments: NormalizedGalleryMomentsParams;
   readonly gallery_places: NormalizedGalleryPlacesParams;
   readonly gallery_merchants: NormalizedGalleryMerchantsParams;
+  readonly operations_browse: NormalizedOperationsBrowseParams;
 };
 
 export type QueryResourceDefinition<Name extends QueryResourceName> = {
@@ -436,6 +446,13 @@ export const queryResourceRegistry = Object.freeze({
   gallery_merchants: {
     key: queryResourceKeys.galleryMerchants,
     paramsSchema: createRuntimeSchema(parseGalleryMerchantsParams),
+    normalizeParams: freezeCanonicalParams,
+    projection: "collection",
+    allowedTimeKinds: ["month", "global"],
+  },
+  operations_browse: {
+    key: queryResourceKeys.operationsBrowse,
+    paramsSchema: createRuntimeSchema(parseOperationsBrowseParams),
     normalizeParams: freezeCanonicalParams,
     projection: "collection",
     allowedTimeKinds: ["month", "global"],

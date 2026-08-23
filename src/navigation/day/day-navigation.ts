@@ -54,7 +54,13 @@ export function buildCloseDayRoot(
   }
   return {
     area: "calendar",
-    context: { kind: "calendar_month", month: parsed.context.month },
+    context: {
+      kind: "calendar_month",
+      month: parsed.context.month,
+      ...(parsed.context.personId === undefined
+        ? {}
+        : { personId: parsed.context.personId }),
+    },
   };
 }
 
