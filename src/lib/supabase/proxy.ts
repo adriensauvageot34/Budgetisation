@@ -35,8 +35,10 @@ export async function updateSession(request: NextRequest) {
 
   if (!authenticated && !isLogin) {
     const url = request.nextUrl.clone();
+    const returnDestination = `${request.nextUrl.pathname}${request.nextUrl.search}`;
     url.pathname = "/connexion";
-    url.searchParams.set("retour", request.nextUrl.pathname);
+    url.search = "";
+    url.searchParams.set("retour", returnDestination);
     return NextResponse.redirect(url, { headers: response.headers });
   }
 
