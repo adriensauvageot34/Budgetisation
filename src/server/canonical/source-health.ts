@@ -19,6 +19,7 @@ export const initiallyAvailableCanonicalSources: CanonicalSourceHealth =
     person_days: "AVAILABLE",
     life_events: "AVAILABLE",
     purchase_events: "AVAILABLE",
+    financial_links: "AVAILABLE",
     operations: "AVAILABLE",
     entities: "AVAILABLE",
   });

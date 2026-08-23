@@ -305,6 +305,85 @@ export class CanonicalRepository {
     );
   }
 
+  private async projectEconomicComponentRows(
+    components: readonly CanonicalRecord[],
+  ): Promise<readonly EconomicComponentFact[]> {
+    const componentKeys = components.map((row) =>
+      canonicalString(row, ["canonical_component_key"], "economic"),
+    );
+    const operationIds = unique(
+      components.map((row) => canonicalString(row, ["operation_id"], "economic")),
+    );
+    if (componentKeys.length === 0) return [];
+
+    const [operations, places, timingRows, timingControls, reconciliations] =
+      await Promise.all([
+        this.loadOperationsByIds(operationIds),
+        this.readRows(`places:keys:${componentKeys.join(",")}`, "places", () =>
+          this.client
+            .from("operation_place_canonical")
+            .select("canonical_component_key,operation_id,place_id,resolution_state")
+            .in("canonical_component_key", componentKeys)
+            .order("canonical_component_key", { ascending: true })),
+        this.loadTimingRowsByKeys(componentKeys),
+        this.readRows(`timing-controls:${componentKeys.join(",")}`, "timing", () =>
+          this.client
+            .from("financial_economic_timing_control")
+            .select("canonical_component_key,canonical_economic_net::text,segment_count,known_count,partial_count,unknown_count,household_count,household_mismatch_count,segment_amount_sum::text,amount_delta::text,status")
+            .in("canonical_component_key", componentKeys)
+            .order("canonical_component_key", { ascending: true })),
+        this.readRows(`reconciliation:${operationIds.join(",")}`, "economic", () =>
+          this.client
+            .from("financial_canonical_reconciliation_control")
+            .select("operation_id,economic_gross_delta::text,economic_refund_resolution,economic_status")
+            .in("operation_id", operationIds)
+            .order("operation_id", { ascending: true })),
+      ]);
+
+    const operationById = byUniqueKey(operations, "operation_id", "operations");
+    const placeByKey = byUniqueKey(places, "canonical_component_key", "places");
+    const timingByKey = groupBy(timingRows, "canonical_component_key");
+    const timingControlByKey = byUniqueKey(timingControls, "canonical_component_key", "timing");
+    const reconciliationByOperation = byUniqueKey(reconciliations, "operation_id", "economic");
+
+    return dedupeEconomicComponents(components.map((component) => {
+      const componentKey = canonicalString(component, ["canonical_component_key"], "economic");
+      const operationId = canonicalString(component, ["operation_id"], "economic");
+      const operation = operationById.get(operationId);
+      const place = placeByKey.get(componentKey);
+      const timingControl = timingControlByKey.get(componentKey);
+      const reconciliation = reconciliationByOperation.get(operationId);
+      if (operation === undefined || place === undefined || timingControl === undefined || reconciliation === undefined) {
+        throw new CanonicalReadError("economic", "Une dépendance canonique du composant économique est absente.");
+      }
+      return projectEconomicComponentFact({
+        household: this.household,
+        economicComponent: component,
+        operation: {
+          operation_id: operation.operation_id,
+          date_bancaire: operation.date_bancaire,
+          merchant_id: operation.merchant_id,
+          importance: operation.importance,
+          nature_fixe_variable: operation.nature_fixe_variable,
+          contexte_vie: operation.contexte_vie,
+        },
+        place,
+        timingRows: timingByKey.get(componentKey) ?? [],
+        timingControl,
+        reconciliationControl: reconciliation,
+      });
+    }));
+  }
+
+  loadEconomicFactsByComponentKeys(
+    componentKeys: readonly string[],
+  ): Promise<readonly EconomicComponentFact[]> {
+    const keys = unique(componentKeys);
+    if (keys.length === 0) return Promise.resolve([]);
+    return this.cached(`facts:economic:keys:${keys.join(",")}`, async () =>
+      this.projectEconomicComponentRows(await this.loadEconomicComponentRowsByKeys(keys)));
+  }
+
   async loadEconomicFacts(
     range: CanonicalDateRange,
   ): Promise<readonly EconomicComponentFact[]> {
@@ -329,114 +408,24 @@ export class CanonicalRepository {
         "canonical_component_key",
         "economic",
       );
-      const componentKeys = components.map((row) =>
-        canonicalString(row, ["canonical_component_key"], "economic"),
-      );
-      const operationIds = unique(
-        components.map((row) => canonicalString(row, ["operation_id"], "economic")),
-      );
-      if (componentKeys.length === 0) return [];
-
-      const [operations, places, timingRows, timingControls, reconciliations] =
-        await Promise.all([
-          this.loadOperationsByIds(operationIds),
-          this.readRows(
-            `places:keys:${componentKeys.join(",")}`,
-            "places",
-            () =>
-              this.client
-                .from("operation_place_canonical")
-                .select("canonical_component_key,operation_id,place_id,resolution_state")
-                .in("canonical_component_key", componentKeys)
-                .order("canonical_component_key", { ascending: true }),
-          ),
-          this.loadTimingRowsByKeys(componentKeys),
-          this.readRows(
-            `timing-controls:${componentKeys.join(",")}`,
-            "timing",
-            () =>
-              this.client
-                .from("financial_economic_timing_control")
-                .select(
-                  "canonical_component_key,canonical_economic_net::text,segment_count,known_count,partial_count,unknown_count,household_count,household_mismatch_count,segment_amount_sum::text,amount_delta::text,status",
-                )
-                .in("canonical_component_key", componentKeys)
-                .order("canonical_component_key", { ascending: true }),
-          ),
-          this.readRows(
-            `reconciliation:${operationIds.join(",")}`,
-            "economic",
-            () =>
-              this.client
-                .from("financial_canonical_reconciliation_control")
-                .select(
-                  "operation_id,economic_gross_delta::text,economic_refund_resolution,economic_status",
-                )
-                .in("operation_id", operationIds)
-                .order("operation_id", { ascending: true }),
-          ),
-        ]);
-
-      const operationById = byUniqueKey(operations, "operation_id", "operations");
-      const placeByKey = byUniqueKey(places, "canonical_component_key", "places");
-      const timingByKey = groupBy(timingRows, "canonical_component_key");
-      const timingControlByKey = byUniqueKey(
-        timingControls,
-        "canonical_component_key",
-        "timing",
-      );
-      const reconciliationByOperation = byUniqueKey(
-        reconciliations,
-        "operation_id",
-        "economic",
-      );
-
-      return dedupeEconomicComponents(
-        components.map((component) => {
-          const componentKey = canonicalString(
-            component,
-            ["canonical_component_key"],
-            "economic",
-          );
-          const operationId = canonicalString(
-            component,
-            ["operation_id"],
-            "economic",
-          );
-          const operation = operationById.get(operationId);
-          const place = placeByKey.get(componentKey);
-          const timingControl = timingControlByKey.get(componentKey);
-          const reconciliation = reconciliationByOperation.get(operationId);
-          if (
-            operation === undefined ||
-            place === undefined ||
-            timingControl === undefined ||
-            reconciliation === undefined
-          ) {
-            throw new CanonicalReadError(
-              "economic",
-              "Une dépendance canonique du composant économique est absente.",
-            );
-          }
-          return projectEconomicComponentFact({
-            household: this.household,
-            economicComponent: component,
-            operation: {
-              operation_id: operation.operation_id,
-              date_bancaire: operation.date_bancaire,
-              merchant_id: operation.merchant_id,
-              importance: operation.importance,
-              nature_fixe_variable: operation.nature_fixe_variable,
-              contexte_vie: operation.contexte_vie,
-            },
-            place,
-            timingRows: timingByKey.get(componentKey) ?? [],
-            timingControl,
-            reconciliationControl: reconciliation,
-          });
-        }),
-      );
+      return this.projectEconomicComponentRows(components);
     });
+  }
+
+  loadActivityCausalFinancialLinkRows(
+    lifeEventIds: readonly string[],
+  ): Promise<readonly CanonicalRecord[]> {
+    const ids = unique(lifeEventIds);
+    if (ids.length === 0) return Promise.resolve([]);
+    return this.readRows(`financial-links:events:${ids.join(",")}`, "financial_links", () =>
+      this.client
+        .from("life_event_financial_links")
+        .select("financial_link_id,life_event_id,source_kind,operation_id,allocation_id,item_id,cash_use_id,relation_type,economic_amount_linked::text,validation_status")
+        .in("life_event_id", ids)
+        .eq("validation_status", "Confirmé")
+        .in("relation_type", ["Paiement_activite", "Cause_par_evenement", "Preparation"])
+        .order("life_event_id", { ascending: true })
+        .order("financial_link_id", { ascending: true }));
   }
 
   async loadPersonDays(

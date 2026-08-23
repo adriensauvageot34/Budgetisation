@@ -1,4 +1,5 @@
 export * from "./aggregation";
+export * from "./baseline";
 export * from "./comparisons";
 export * from "./context";
 export * from "./facts";
@@ -7,3 +8,4 @@ export * from "./production";
 export * from "./publication";
 export * from "./references";
 export * from "./support";
+export * from "./insights";

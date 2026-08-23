@@ -17,9 +17,14 @@ import {
 } from "@/analytics/context";
 import type {
   ActivityOccurrenceFact,
+  ActivityOccurrenceCostFact,
   EconomicComponentFact,
   PersonDayFact,
   PlaceVisitFact,
+} from "@/analytics/facts";
+import {
+  buildActivityOccurrenceCostFacts,
+  parseActivityCausalFinancialLinks,
 } from "@/analytics/facts";
 import {
   computeScopeHash,
@@ -27,7 +32,7 @@ import {
   type AnalysisScope,
   type NormalizedAnalysisScope,
 } from "@/core/scope";
-import type { Availability, Coverage } from "@/core/metrics";
+import { parseSupport, type Availability, type Coverage, type SupportUnit } from "@/core/metrics";
 import {
   addMonths,
   parseLocalDate,
@@ -130,6 +135,10 @@ function economicSourceAvailability(input: {
   };
 }
 
+function sourceSupport(n: number, unit: SupportUnit) {
+  return parseSupport({ n, unit, level: n === 0 ? "insufficient" : "sufficient" });
+}
+
 export class FactSourceResolver {
   constructor(private readonly repository: CanonicalRepository) {}
 
@@ -151,6 +160,26 @@ export class FactSourceResolver {
     return this.repository.loadActivityOccurrences(canonicalRangeForScope(scope));
   }
 
+  async loadActivityOccurrenceCosts(
+    scope: AnalysisScope,
+  ): Promise<readonly ActivityOccurrenceCostFact[]> {
+    const normalized = normalizeAnalysisScope(scope);
+    const occurrences = selectedActivities(
+      await this.loadActivityOccurrences(normalized),
+      normalized,
+    );
+    if (occurrences.length === 0) return [];
+    const links = parseActivityCausalFinancialLinks(
+      await this.repository.loadActivityCausalFinancialLinkRows(
+        occurrences.map(({ lifeEventId }) => lifeEventId),
+      ),
+    );
+    const components = await this.repository.loadEconomicFactsByComponentKeys(
+      links.map(({ canonicalComponentKey }) => canonicalComponentKey),
+    );
+    return buildActivityOccurrenceCostFacts({ occurrences, components, links });
+  }
+
   async resolve(
     metricId: ActiveMetricId,
     rawScope: AnalysisScope,
@@ -159,6 +188,14 @@ export class FactSourceResolver {
     const scope = normalizeAnalysisScope(rawScope);
     const scopeHash = computeScopeHash(scope);
     const sourceFact = definition.sourceFact[0];
+
+    if (definition.productionStrategy === "minimal_month") {
+      return {
+        kind: "minimal_month",
+        scopeHash,
+        availability: "unknown",
+      };
+    }
 
     if (definition.productionStrategy === "typical_month") {
       if (scope.time.kind !== "month") {
@@ -214,6 +251,7 @@ export class FactSourceResolver {
     switch (sourceFact) {
       case "fct_economic_component": {
         const facts = await this.loadEconomicFacts(scope);
+        const selectedFacts = selectEconomicComponentsForScope(facts, scope);
         const state = economicSourceAvailability({ facts, scope });
         return state.availability === "known"
           ? {
@@ -221,6 +259,7 @@ export class FactSourceResolver {
               scopeHash,
               availability: "known",
               facts,
+              support: sourceSupport(selectedFacts.length, "transaction"),
               ...(state.coverage === undefined ? {} : { coverage: state.coverage }),
             }
           : {
@@ -237,6 +276,7 @@ export class FactSourceResolver {
           scopeHash,
           availability: "known",
           facts,
+          support: sourceSupport(facts.length, "person_day"),
           coverage: facts.some(({ locationObservability }) =>
             locationObservability !== "observable")
             ? { level: "partial" }
@@ -250,6 +290,7 @@ export class FactSourceResolver {
           scopeHash,
           availability: "known",
           facts,
+          support: sourceSupport(facts.length, "place_visit"),
         };
       }
       case "fct_activity_occurrence": {
@@ -262,6 +303,24 @@ export class FactSourceResolver {
           scopeHash,
           availability: "known",
           facts,
+          support: sourceSupport(facts.length, "occurrence"),
+        };
+      }
+      case "fct_activity_occurrence_cost": {
+        const incompatible = scope.subject.kind === "person" ||
+          scope.filters.categoryIds.length > 0 ||
+          scope.filters.merchantIds.length > 0 ||
+          scope.filters.placeIds.length > 0 ||
+          scope.filters.lifeScopeContext.length > 0 ||
+          scope.filters.dayContext.length > 0;
+        if (incompatible) {
+          return { kind: "activity_occurrence_costs", scopeHash, availability: "unknown" };
+        }
+        return {
+          kind: "activity_occurrence_costs",
+          scopeHash,
+          availability: "known",
+          facts: await this.loadActivityOccurrenceCosts(scope),
         };
       }
       case "fct_purchase_event":

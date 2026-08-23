@@ -113,6 +113,7 @@ const calendarSummaryMeasures = Object.freeze([
 const monthInitialMeasures = Object.freeze([
   "economic_consumption_net_attributable",
   "typical_month_cost",
+  "minimal_month_cost",
   "category_amount",
   "life_scope_amount",
 ] as const);
@@ -124,6 +125,7 @@ const breakdownMeasures = Object.freeze([
   "place_visit_count",
   "distinct_visit_days",
   "life_scope_amount",
+  "fixed_variable_amount",
 ] as const);
 const evolutionMeasures = Object.freeze([
   "economic_consumption_net_attributable",
@@ -144,7 +146,10 @@ const contextMeasures = Object.freeze([
   "merchant_net_amount",
   "localized_spend",
   "life_scope_amount",
+  "fixed_variable_amount",
   "place_visit_count",
+  "activity_causal_cost",
+  "activity_causal_median_cost_per_occurrence",
 ] as const);
 const globalInitialMeasures = Object.freeze([
   "typical_month_cost",
@@ -239,7 +244,7 @@ export const queryCapabilityRegistry = Object.freeze({
       querySectionKeys.comparisons,
       querySectionKeys.marked_facts,
     ]),
-    measures: Object.freeze(["economic_consumption_net_attributable", "typical_month_cost"]),
+    measures: Object.freeze(["economic_consumption_net_attributable", "typical_month_cost", "minimal_month_cost", "category_amount"]),
     filters: allCoreFilters,
   },
   analysis_month_breakdown: {

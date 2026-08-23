@@ -39,30 +39,38 @@ import type {
   MonthReferenceWindow,
   MonthlyEconomicObservation,
 } from "../references";
+import type { MinimalMonthComponent } from "../baseline";
 
 export type ActiveMetricId =
   | "economic_consumption_net_attributable"
   | "typical_month_cost"
+  | "minimal_month_cost"
   | "localized_spend"
   | "category_amount"
   | "merchant_net_amount"
   | "life_scope_amount"
+  | "fixed_variable_amount"
   | "purchase_count"
   | "person_day_count"
   | "place_visit_count"
   | "distinct_visit_days"
   | "activity_frequency"
+  | "activity_causal_cost"
+  | "activity_causal_median_cost_per_occurrence"
   | "fuel_trip_estimate";
 
 export type MetricProductionStrategy =
   | "sum_economic_net"
   | "typical_month"
+  | "minimal_month"
   | "localized_spend"
   | "count_purchase_events"
   | "count_person_days"
   | "count_place_visits"
   | "count_distinct_visit_days"
   | "count_activity_occurrences"
+  | "sum_activity_causal_cost"
+  | "median_activity_causal_cost"
   | "fuel_trip_estimate";
 
 export type MetricAvailabilityRule =
@@ -135,6 +143,20 @@ export type MetricProductionSource =
   | ScopedFactSource<"person_days">
   | ScopedFactSource<"place_visits">
   | ScopedFactSource<"activity_occurrences">
+  | ScopedFactSource<"activity_occurrence_costs">
+  | ({
+      readonly kind: "minimal_month";
+      readonly scopeHash: ScopeHash;
+      readonly coverage?: Coverage;
+      readonly support?: Support;
+    } & (
+      | { readonly availability: Exclude<Availability, "known"> }
+      | {
+          readonly availability: "known";
+          readonly neutralVariableComponents: readonly MinimalMonthComponent[];
+          readonly mandatoryMonthlyObligationsAndProvisions: readonly MinimalMonthComponent[];
+        }
+    ))
   | {
       readonly kind: "typical_month";
       readonly scopeHash: ScopeHash;

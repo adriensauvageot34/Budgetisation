@@ -5,9 +5,18 @@ import {
   getMetricRegistryEntry,
   MetricProductionContractError,
 } from "@/analytics/production";
+import {
+  MARKED_FACTS_METHOD_VERSION,
+  selectMarkedFacts,
+  type MarkedFactCandidate,
+} from "@/analytics/insights";
+import { compareMoneyMetrics, type MoneyComparisonResult } from "@/analytics/comparisons";
+import { partitionEconomicComponentsForStructure } from "@/analytics/facts";
 import Big from "big.js";
 import { compareMoney } from "@/core/money";
-import { selectEconomicComponentsForScope } from "@/analytics/context";
+import { selectEconomicComponentsForScope, sumEconomicNetForScope } from "@/analytics/context";
+import { parseSupport } from "@/core/metrics";
+import { computeScopeHash } from "@/core/scope";
 import type {
   AnalysisScope,
   LifeScopeContext,
@@ -307,6 +316,8 @@ const structureCombinations = Object.freeze([
   { view: "destination", dimension: "activity", measures: ["occurrences"] },
   { view: "destination", dimension: "merchant", measures: ["amount"] },
   { view: "destination", dimension: "place", measures: ["amount", "occurrences"] },
+  { view: "nature", dimension: "fixed_variable", measures: ["amount"] },
+  { view: "life_context", dimension: "life_context", measures: ["amount"] },
 ] as const satisfies readonly {
   readonly view: AnalysisStructureView;
   readonly dimension: AnalysisStructureDimension;
@@ -322,6 +333,8 @@ function structureMetricId(
   if (dimension === "merchant" && measure === "amount") return "merchant_net_amount";
   if (dimension === "place" && measure === "amount") return "localized_spend";
   if (dimension === "place" && measure === "occurrences") return "place_visit_count";
+  if (dimension === "fixed_variable" && measure === "amount") return "fixed_variable_amount";
+  if (dimension === "life_context" && measure === "amount") return "life_scope_amount";
   return null;
 }
 
@@ -338,6 +351,9 @@ function structureBucket(dimension: AnalysisStructureDimension, id: string) {
     case "merchant": return { kind: "merchant" as const, merchantId: id as import("@/core/identity").MerchantId };
     case "place": return { kind: "place" as const, placeId: id as import("@/core/identity").PlaceId };
     case "family": return { kind: "family" as const, familyId: id };
+    case "fixed_variable":
+    case "life_context":
+    case "necessity": return id === "À déterminer" ? { kind: "undetermined" as const } : { kind: "canonical" as const, key: id };
   }
 }
 
@@ -348,7 +364,152 @@ function structureDestination(dimension: AnalysisStructureDimension, id: string)
     case "merchant": return { kind: "merchant" as const, merchantId: id as import("@/core/identity").MerchantId };
     case "place": return { kind: "place" as const, placeId: id as import("@/core/identity").PlaceId };
     case "family": return undefined;
+    case "fixed_variable":
+    case "life_context":
+    case "necessity": return undefined;
   }
+}
+
+function axisMetric(input: {
+  readonly metricId: "category_amount" | "fixed_variable_amount" | "life_scope_amount";
+  readonly scope: NormalizedAnalysisScope;
+  readonly facts: readonly import("@/analytics/facts").EconomicComponentFact[];
+}): ScopedMetricReadModel {
+  const known = input.facts.filter(({ economicTiming }) => economicTiming.kind === "known" || economicTiming.kind === "partial");
+  const uncertain = input.facts.length - known.length;
+  const definition = getMetricRegistryEntry(input.metricId);
+  const unavailable = input.facts.length > 0 && known.length === 0;
+  return {
+    metricId: definition.metricId,
+    scopeHash: computeScopeHash(input.scope),
+    envelope: {
+      availability: unavailable ? "unknown" : "known",
+      value: unavailable ? null : sumEconomicNetForScope(known, input.scope),
+      unit: definition.unit,
+      coverage: uncertain === 0 ? { level: "complete" } : { level: "partial" },
+      support: parseSupport({
+        n: known.length,
+        eligibleN: input.facts.length,
+        observableN: input.facts.length,
+        excludedN: uncertain,
+        unit: "transaction",
+        level: known.length === 0 ? "insufficient" : "sufficient",
+      }),
+      provenance: definition.provenanceRule,
+      methodVersion: definition.methodVersion,
+    },
+  } as ScopedMetricReadModel;
+}
+
+async function categoryStructure(input: {
+  readonly scope: NormalizedAnalysisScope;
+  readonly capabilities: import("@/query-api").QueryCapabilities;
+  readonly dependencies: AnalysisDependencies;
+}): Promise<AnalysisMonthStructureReadModel> {
+  const facts = selectEconomicComponentsForScope(
+    await input.dependencies.facts.loadEconomicFacts(input.scope),
+    input.scope,
+  );
+  const ranked = partitionEconomicComponentsForStructure(facts, "category").map((partition) => ({
+    key: partition.key,
+    metric: axisMetric({ metricId: "category_amount", scope: input.scope, facts: partition.facts }),
+  })).sort((left, right) => {
+    const leftValue = metricMagnitude(left.metric);
+    const rightValue = metricMagnitude(right.metric);
+    if (leftValue === null) return rightValue === null ? left.key.localeCompare(right.key) : 1;
+    if (rightValue === null) return -1;
+    const comparison = rightValue.cmp(leftValue);
+    return comparison !== 0 ? comparison : left.key.localeCompare(right.key);
+  });
+  const maximum = ranked.map(({ metric }) => metricMagnitude(metric)).filter((value): value is Big => value !== null)
+    .reduce<Big | null>((current, value) => current === null || value.gt(current) ? value : current, null);
+  const rows = ranked.map(({ key, metric }, index) => {
+    const magnitude = metricMagnitude(metric);
+    const destination = key === "À déterminer" ? undefined : structureDestination("category", key);
+    return {
+      bucket: key === "À déterminer" ? { kind: "undetermined" as const } : { kind: "category" as const, categoryId: key as import("@/core/identity").CategoryId },
+      label: key,
+      metric,
+      rank: index + 1,
+      ...(magnitude === null || maximum === null ? {} : { barPercent: maximum.eq(0) ? 0 : Number(magnitude.div(maximum).times(100).toFixed(2)) }),
+      ...(destination === undefined ? {} : { destination }),
+    };
+  });
+  const total = axisMetric({ metricId: "category_amount", scope: input.scope, facts });
+  const exact = rows.every(({ metric }) => metric.envelope.availability === "known" && metric.envelope.coverage?.level === "complete") &&
+    total.envelope.availability === "known" && total.envelope.coverage?.level === "complete";
+  return {
+    month: input.scope.time.kind === "month" ? input.scope.time.month : (() => { throw new TypeError("Structure exige Month."); })(),
+    subject: input.scope.subject,
+    activeView: "destination",
+    activeDimension: "category",
+    activeMeasure: "amount",
+    availableViews: ["destination", "nature", "life_context"],
+    availableDimensions: ["category", "activity", "merchant", "place"],
+    availableMeasures: ["amount"],
+    supportedCombinations: structureCombinations,
+    unavailableDimensions: [{ dimension: "family", reason: "BLOCKED_CONTRACT" }, { dimension: "necessity", reason: "BLOCKED_CONTRACT" }],
+    rows,
+    total,
+    reconciliation: exact ? "exact" : "partial",
+    capabilities: input.capabilities,
+  };
+}
+
+async function canonicalAxisStructure(input: {
+  readonly axis: "fixed_variable" | "life_context";
+  readonly scope: NormalizedAnalysisScope;
+  readonly capabilities: import("@/query-api").QueryCapabilities;
+  readonly dependencies: AnalysisDependencies;
+}): Promise<AnalysisMonthStructureReadModel> {
+  const facts = selectEconomicComponentsForScope(
+    await input.dependencies.facts.loadEconomicFacts(input.scope),
+    input.scope,
+  );
+  const metricId = input.axis === "fixed_variable" ? "fixed_variable_amount" : "life_scope_amount";
+  const ranked = partitionEconomicComponentsForStructure(facts, input.axis).map((partition) => ({
+    key: partition.key,
+    metric: axisMetric({ metricId, scope: input.scope, facts: partition.facts }),
+  })).sort((left, right) => {
+    const leftValue = metricMagnitude(left.metric);
+    const rightValue = metricMagnitude(right.metric);
+    if (leftValue === null) return rightValue === null ? left.key.localeCompare(right.key) : 1;
+    if (rightValue === null) return -1;
+    const comparison = rightValue.cmp(leftValue);
+    return comparison !== 0 ? comparison : left.key.localeCompare(right.key);
+  });
+  const maximum = ranked.map(({ metric }) => metricMagnitude(metric)).filter((value): value is Big => value !== null)
+    .reduce<Big | null>((current, value) => current === null || value.gt(current) ? value : current, null);
+  const rows = ranked.map(({ key, metric }, index) => {
+    const magnitude = metricMagnitude(metric);
+    return {
+      bucket: key === "À déterminer" ? { kind: "undetermined" as const } : { kind: "canonical" as const, key },
+      label: key,
+      metric,
+      rank: index + 1,
+      ...(magnitude === null || maximum === null ? {} : { barPercent: maximum.eq(0) ? 0 : Number(magnitude.div(maximum).times(100).toFixed(2)) }),
+    };
+  });
+  const total = axisMetric({ metricId, scope: input.scope, facts });
+  const exact = rows.every(({ metric }) => metric.envelope.availability === "known" && metric.envelope.coverage?.level === "complete") &&
+    total.envelope.availability === "known" && total.envelope.coverage?.level === "complete";
+  const view = input.axis === "fixed_variable" ? "nature" as const : "life_context" as const;
+  return {
+    month: input.scope.time.kind === "month" ? input.scope.time.month : (() => { throw new TypeError("Structure exige Month."); })(),
+    subject: input.scope.subject,
+    activeView: view,
+    activeDimension: input.axis,
+    activeMeasure: "amount",
+    availableViews: ["destination", "nature", "life_context"],
+    availableDimensions: [input.axis],
+    availableMeasures: ["amount"],
+    supportedCombinations: structureCombinations,
+    unavailableDimensions: [{ dimension: "family", reason: "BLOCKED_CONTRACT" }, { dimension: "necessity", reason: "BLOCKED_CONTRACT" }],
+    rows,
+    total,
+    reconciliation: exact ? "exact" : "partial",
+    capabilities: input.capabilities,
+  };
 }
 
 async function monthStructure(input: {
@@ -369,6 +530,17 @@ async function monthStructure(input: {
   );
   if (active === undefined) {
     throw new MetricProductionContractError("La combinaison Structure demandée n'est pas disponible pour ce scope.");
+  }
+  if (input.params.dimension === "fixed_variable" || input.params.dimension === "life_context") {
+    return canonicalAxisStructure({
+      axis: input.params.dimension,
+      scope: input.scope,
+      capabilities: input.capabilities,
+      dependencies: input.dependencies,
+    });
+  }
+  if (input.params.dimension === "category") {
+    return categoryStructure({ scope: input.scope, capabilities: input.capabilities, dependencies: input.dependencies });
   }
   const metricId = structureMetricId(input.params.dimension, input.params.measure);
   if (metricId === null) throw new MetricProductionContractError("La mesure Structure n'est pas contractée.");
@@ -413,6 +585,7 @@ async function monthStructure(input: {
     availableDimensions,
     availableMeasures,
     supportedCombinations: available,
+    unavailableDimensions: [{ dimension: "family", reason: "BLOCKED_CONTRACT" }, { dimension: "necessity", reason: "BLOCKED_CONTRACT" }],
     rows,
     reconciliation: reconciliationForMetric(metricId),
     capabilities: input.capabilities,
@@ -467,6 +640,28 @@ function recordLabel(record: CanonicalRecord, fallback: string): string {
   return optionalCanonicalString(record, ["title", "name", "label", "titre", "nom", "display_name"]) ?? fallback;
 }
 
+function comparisonCandidate(input: {
+  readonly id: string;
+  readonly kind: "total" | "category";
+  readonly phenomenonKey: string;
+  readonly evidenceKeys: readonly string[];
+  readonly comparison: MoneyComparisonResult;
+}): MarkedFactCandidate | null {
+  const absolute = input.comparison.absoluteDelta;
+  const relative = input.comparison.relativeDelta;
+  if (!absolute.publishable || !relative.publishable || absolute.value === null || relative.value === null) return null;
+  const relativeValue = new Big(relative.value.numerator).div(relative.value.denominator).toFixed();
+  return {
+    id: input.id,
+    kind: input.kind,
+    absoluteDelta: absolute.value,
+    relativeDelta: relativeValue,
+    supportLevel: input.comparison.comparisonSupport?.level,
+    phenomenonKey: input.phenomenonKey,
+    evidenceKeys: input.evidenceKeys,
+  };
+}
+
 export function createAnalysisQuerySources(
   dependencies: AnalysisDependencies,
 ): Pick<
@@ -493,6 +688,74 @@ export function createAnalysisQuerySources(
       const typical = bundle.typical.envelope.reference === undefined
         ? undefined
         : bundle.typical;
+      const minimal = await dependencies.metrics.produce("minimal_month_cost", request.scope);
+      const typicalVsMinimal = typical?.envelope.availability === "known" && minimal.envelope.availability === "known"
+        ? compareMoneyMetrics({
+            capabilityId: "typical_vs_minimal",
+            target: {
+              metricId: typical.metricId,
+              semantic: "typical_month",
+              scopeHash: typical.scopeHash,
+              envelope: typical.envelope as import("@/core/metrics").MetricEnvelope<import("@/core/money").Money, import("@/core/money").MonetaryMetricUnit>,
+            },
+            reference: {
+              metricId: minimal.metricId,
+              semantic: "minimal",
+              scopeHash: minimal.scopeHash,
+              envelope: minimal.envelope as import("@/core/metrics").MetricEnvelope<import("@/core/money").Money, import("@/core/money").MonetaryMetricUnit>,
+            },
+            referenceAuthorization: { kind: "same_period" },
+          })
+        : undefined;
+      const categoryGroups = context.capabilities.availableMeasures.includes("category_amount")
+        ? await groupsForDimension("category", request.scope, dependencies.facts)
+        : [];
+      const categoryBundles = await Promise.all(categoryGroups.map(async (group) => ({
+        group,
+        bundle: await dependencies.metrics.produceActualWithTypical(group.scope),
+      })));
+      const projected = new Map<string, {
+        readonly title: string;
+        readonly kind: "category" | "structure";
+        readonly current: ScopedMetricReadModel;
+        readonly reference: ScopedMetricReadModel;
+        readonly comparison: MoneyComparisonResult;
+        readonly destination?: import("@/query-api").AnalysisDestination;
+      }>();
+      projected.set("total", {
+        title: "Le total du mois s’écarte de la référence",
+        kind: "structure",
+        current: bundle.actual,
+        reference: bundle.typical,
+        comparison: bundle.comparison,
+      });
+      for (const { group, bundle: categoryBundle } of categoryBundles) {
+        projected.set(`category:${group.key}`, {
+          title: `Catégorie ${group.label}`,
+          kind: "category",
+          current: categoryBundle.actual,
+          reference: categoryBundle.typical,
+          comparison: categoryBundle.comparison,
+          destination: { kind: "target", target: { kind: "category", categoryId: group.key as import("@/core/identity").CategoryId } },
+        });
+      }
+      const candidates = [
+        comparisonCandidate({
+          id: "total",
+          kind: "total",
+          phenomenonKey: "monthly-economic-total",
+          evidenceKeys: ["economic-total"],
+          comparison: bundle.comparison,
+        }),
+        ...categoryBundles.map(({ group, bundle: categoryBundle }) => comparisonCandidate({
+          id: `category:${group.key}`,
+          kind: "category",
+          phenomenonKey: `category:${group.key}`,
+          evidenceKeys: [`category:${group.key}`],
+          comparison: categoryBundle.comparison,
+        })),
+      ].filter((candidate): candidate is MarkedFactCandidate => candidate !== null);
+      const selected = selectMarkedFacts(candidates);
       return {
         month: request.scope.time.month,
         subject: request.scope.subject,
@@ -502,10 +765,30 @@ export function createAnalysisQuerySources(
         ),
         actual: bundle.actual as never,
         ...(typical === undefined ? {} : { typical: typical as never, actualVsTypical: bundle.comparison }),
-        markedFacts: [],
+        minimal: minimal as never,
+        ...(typicalVsMinimal === undefined ? {} : { typicalVsMinimal }),
+        markedFacts: selected.map((selection) => {
+          const value = projected.get(selection.id)!;
+          const delta = value.comparison.absoluteDelta;
+          const deltaValue = delta.publishable ? delta.value : null;
+          return {
+            id: selection.id,
+            kind: value.kind,
+            title: value.title,
+            description: deltaValue !== null
+              ? `${value.comparison.relation === "above" ? "Au-dessus" : value.comparison.relation === "below" ? "En dessous" : "Au niveau"} de la référence de ${new Big(deltaValue).abs().toFixed(2)} €.`
+              : undefined,
+            primaryMetric: value.current,
+            secondaryMetric: value.reference,
+            comparison: value.comparison,
+            qualification: selection.qualification,
+            evidence: [{ kind: "comparison", targetMetricId: value.current.metricId, referenceMetricId: value.reference.metricId }],
+            ...(value.destination === undefined ? {} : { destination: value.destination }),
+          };
+        }),
         markedFactsSelection: {
-          kind: "unavailable" as const,
-          reason: "materiality_rules_missing" as const,
+          kind: "available" as const,
+          methodVersion: MARKED_FACTS_METHOD_VERSION,
         },
         manualSummary: null,
         capabilities: context.capabilities,
@@ -607,10 +890,31 @@ export function createAnalysisQuerySources(
           destination: { kind: "target" as const, target: { kind: "activity" as const, activityId } },
         };
       });
+      const canReadFrequencyCost = context.capabilities.availableMeasures.includes("activity_causal_median_cost_per_occurrence") &&
+        context.capabilities.availableMeasures.includes("activity_causal_cost");
+      const frequencyCostPoints = canReadFrequencyCost
+        ? await Promise.all(activityGroups.map(async (group) => {
+            const [occurrences, medianCausalCostPerOccurrence, totalCausalCost] = await Promise.all([
+              dependencies.metrics.produce("activity_frequency", group.scope),
+              dependencies.metrics.produce("activity_causal_median_cost_per_occurrence", group.scope),
+              dependencies.metrics.produce("activity_causal_cost", group.scope),
+            ]);
+            const activityId = group.key as import("@/core/identity").ActivityId;
+            return {
+              activityId,
+              label: group.label,
+              occurrences: occurrences as import("@/query-api").ScopedCountMetricReadModel,
+              medianCausalCostPerOccurrence: medianCausalCostPerOccurrence as import("@/query-api").ScopedMoneyMetricReadModel,
+              totalCausalCost: totalCausalCost as import("@/query-api").ScopedMoneyMetricReadModel,
+              destination: { kind: "target" as const, target: { kind: "activity" as const, activityId } },
+            };
+          }))
+        : [];
       const availableSubviews = [
         "summary" as const,
         ...(activities.length === 0 ? [] : ["rhythm" as const]),
         ...(sections.length === 0 ? [] : ["contexts" as const]),
+        ...(frequencyCostPoints.length === 0 ? [] : ["frequency_cost" as const]),
       ];
       return {
         month: request.scope.time.month,
@@ -618,7 +922,9 @@ export function createAnalysisQuerySources(
         availableSubviews,
         activities,
         contexts: { sections, capabilities: context.capabilities },
-        frequencyCost: { kind: "unavailable" as const, reason: "median_causal_cost_metric_missing" as const },
+        frequencyCost: canReadFrequencyCost
+          ? { kind: "available" as const, points: frequencyCostPoints }
+          : { kind: "unavailable" as const, reason: "causal_mapping_unavailable" as const },
         capabilities: context.capabilities,
       };
     },
@@ -680,7 +986,7 @@ export function createAnalysisQuerySources(
       if (request.scope.time.kind !== "month") throw new TypeError("Analysis Target exige un scope month.");
       const target = request.params.target;
       if (target.kind === "family") {
-        return { month: request.scope.time.month, subject: request.scope.subject, target, status: "unsupported" as const, headlineMetrics: [], capabilities: context.capabilities };
+        return { month: request.scope.time.month, subject: request.scope.subject, target, status: "blocked_contract" as const, headlineMetrics: [], capabilities: context.capabilities };
       }
       const outsideScope = target.kind === "category"
         ? request.scope.filters.categoryIds.length > 0 && !request.scope.filters.categoryIds.includes(target.categoryId)

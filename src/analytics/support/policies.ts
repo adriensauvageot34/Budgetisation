@@ -10,6 +10,7 @@ export type SupportPolicyId =
   | "neutral_day"
   | "independent_28d_block"
   | "median_ticket"
+  | "activity_causal_cost"
   | "seasonality";
 
 type ReliableSupportCounts = {
@@ -23,6 +24,7 @@ const policyUnits = {
   neutral_day: "day",
   independent_28d_block: "independent_28d_block",
   median_ticket: "purchase_event",
+  activity_causal_cost: "occurrence",
   seasonality: "year",
 } as const satisfies Record<SupportPolicyId, SupportUnit>;
 
@@ -41,6 +43,7 @@ export function supportLevelForPolicy(
     case "independent_28d_block":
       return n >= 9 ? "sufficient" : n >= 6 ? "limited" : "insufficient";
     case "median_ticket":
+    case "activity_causal_cost":
       return n >= 8 ? "sufficient" : n >= 5 ? "limited" : "insufficient";
     case "seasonality":
       return n >= 3 ? "sufficient" : n === 2 ? "limited" : "insufficient";

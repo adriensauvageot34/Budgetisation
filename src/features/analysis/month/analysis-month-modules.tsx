@@ -24,6 +24,7 @@ import type {
 import {
   CardSurface,
   ContentRail,
+  FrequencyCostScatter,
   MediaSurface,
   MetricDisplay,
   MultiSeriesMonetaryEvolution,
@@ -67,6 +68,7 @@ function Anchored({ anchor, children, className }: { readonly anchor: SemanticAn
 
 export function SummaryModule({ model, runtime, scope }: { readonly model: AnalysisMonthInitialReadModel; readonly runtime: ProductRuntimeValue; readonly scope: NormalizedAnalysisScope }) {
   const delta = model.actualVsTypical?.absoluteDelta;
+  const minimalDelta = model.typicalVsMinimal?.absoluteDelta;
   return (
     <div className={styles.summaryGrid}>
       <Surface variant="raised" className={styles.actualMetric}>
@@ -86,6 +88,12 @@ export function SummaryModule({ model, runtime, scope }: { readonly model: Analy
         <div className={styles.comparison}>
           <span>Écart au fonctionnement habituel</span>
           <MetricDisplay metric={delta} variant="compact" />
+        </div>
+      ) : null}
+      {minimalDelta?.publishable ? (
+        <div className={styles.comparison}>
+          <span>Écart de fonctionnement habituel au socle minimal</span>
+          <MetricDisplay metric={minimalDelta} variant="compact" />
         </div>
       ) : null}
       {model.manualSummary?.text.trim() ? <p className={styles.manualSummary}>{model.manualSummary.text.trim()}</p> : null}
@@ -178,7 +186,7 @@ export function EvolutionModule({
 }
 
 const viewLabels: Record<AnalysisStructureView, string> = { destination: "Destination", nature: "Nature", life_context: "Contexte de vie" };
-const dimensionLabels: Record<AnalysisStructureDimension, string> = { family: "Familles", category: "Catégories", activity: "Activités", merchant: "Marchands", place: "Lieux" };
+const dimensionLabels: Record<AnalysisStructureDimension, string> = { family: "Familles", category: "Catégories", activity: "Activités", merchant: "Marchands", place: "Lieux", fixed_variable: "Fixe / Variable", life_context: "Contexte de vie", necessity: "Nécessité" };
 const measureLabels: Record<AnalysisStructureMeasure, string> = { amount: "Montant", share: "Part", occurrences: "Occurrences", cost_per_occurrence: "Coût par occurrence" };
 
 function structureIdentity(row: AnalysisMonthStructureReadModel["rows"][number]): string {
@@ -188,6 +196,7 @@ function structureIdentity(row: AnalysisMonthStructureReadModel["rows"][number])
     case "activity": return row.bucket.activityId;
     case "merchant": return row.bucket.merchantId;
     case "place": return row.bucket.placeId;
+    case "canonical": return row.bucket.key;
     case "undetermined": return "undetermined";
   }
 }
@@ -263,6 +272,7 @@ export function StructureModule({ model, selectedBucketId, onChange, onSelectBuc
         </button>
       ) : null}
       <p className={styles.reconciliation}>Réconciliation : {model.reconciliation === "partial" ? "partielle — aucune catégorie Autres inventée" : model.reconciliation}</p>
+      {model.unavailableDimensions.length > 0 ? <p className={styles.localCapability}>Familles et Nécessité restent indisponibles : contrat canonique manquant, aucune taxonomie ou correspondance inventée.</p> : null}
     </div>
   );
 }
@@ -280,7 +290,28 @@ export function LivedModule({ model, activeSubview, onChange, runtime, scope }: 
   return (
     <div className={styles.livedLayout}>
       <SecondaryTabs label="Sous-vues de la vie du mois" value={resolvedSubview} tabs={model.availableSubviews.map((value) => ({ value, label: livedLabels[value] }))} onChange={onChange} />
-      {resolvedSubview === "contexts" ? (
+      {resolvedSubview === "frequency_cost" ? (
+        model.frequencyCost.kind === "available" ? (
+          <FrequencyCostScatter
+            frame={{
+              title: "Fréquence × coût causal médian",
+              description: "X = occurrences canoniques ; Y = coût économique causal net médian par occurrence.",
+              state: { kind: "ready" },
+              summary: "Les activités sans coût causal suffisamment supporté restent listées avec une valeur inconnue.",
+              methodologyAction: { kind: "navigation", intent: { kind: "methodology", metricId: parseMetricId("activity_causal_median_cost_per_occurrence") }, onNavigate: (intent) => { void runtime.run((controller) => controller.openExploration(intent, { moduleId: "analysis-month", itemKey: "frequency-cost" })); } },
+            }}
+            points={model.frequencyCost.points.map((point) => ({
+              identity: point.activityId,
+              label: point.label,
+              occurrences: point.occurrences.envelope as import("@/core/metrics").MetricEnvelope<number, "count" | "count/month">,
+              medianCausalCostPerOccurrence: point.medianCausalCostPerOccurrence.envelope as import("@/core/metrics").MetricEnvelope<import("@/core/money").Money, "EUR/occurrence">,
+              totalCausalCost: point.totalCausalCost.envelope as import("@/core/metrics").MetricEnvelope<import("@/core/money").Money, "EUR">,
+              navigationIntent: { kind: "analysis", target: { kind: "activity", activityId: point.activityId }, scope },
+            }))}
+            onNavigate={(intent) => { void runtime.run((controller) => controller.openExploration(intent, { moduleId: "analysis-month", itemKey: "frequency-cost" })); }}
+          />
+        ) : <Surface variant="subtle">Coût causal indisponible pour ce scope.</Surface>
+      ) : resolvedSubview === "contexts" ? (
         model.contexts.sections.length === 0 ? <Surface variant="subtle">Aucun contexte analytique publiable.</Surface> : (
           <div className={styles.contextGrid}>{model.contexts.sections.map((section) => section.kind === "available" ? (
             <Surface key={section.capabilityId} variant="outlined">
@@ -307,7 +338,7 @@ export function LivedModule({ model, activeSubview, onChange, runtime, scope }: 
           })}</div>
         )
       )}
-      {model.frequencyCost.kind === "unavailable" ? <p className={styles.localCapability}>Fréquence × coût indisponible : la médiane causale par occurrence n’est pas une métrique active.</p> : null}
+      {model.frequencyCost.kind === "unavailable" ? <p className={styles.localCapability}>Fréquence × coût indisponible : la relation causale canonique n’est pas exploitable pour ce scope.</p> : null}
     </div>
   );
 }

@@ -14,7 +14,9 @@ import {
   countPlaceVisits,
   countPersonDays,
   countPurchaseEvents,
+  medianKnownActivityCausalCost,
 } from "../facts";
+import type { ActivityOccurrenceCostFact } from "../facts";
 import {
   createContextAnalysisPlan,
   sumEconomicNetForScope,
@@ -24,6 +26,9 @@ import {
   type EstimationTrace,
 } from "../provenance";
 import { calculateTypicalMonthCost } from "../references";
+import { calculateMinimalMonthCost } from "../baseline";
+import { supportForPolicy } from "../support";
+import { addMoney, parseMoney } from "../../core/money";
 import {
   MetricComputationError,
   MetricProductionContractError,
@@ -100,6 +105,8 @@ function expectedSourceKind(
       return "economic_components";
     case "typical_month":
       return "typical_month";
+    case "minimal_month":
+      return "minimal_month";
     case "count_purchase_events":
       return "purchase_events";
     case "count_person_days":
@@ -109,6 +116,9 @@ function expectedSourceKind(
       return "place_visits";
     case "count_activity_occurrences":
       return "activity_occurrences";
+    case "sum_activity_causal_cost":
+    case "median_activity_causal_cost":
+      return "activity_occurrence_costs";
     case "fuel_trip_estimate":
       return "fuel_trip_estimate";
   }
@@ -175,7 +185,7 @@ function observedMetric(input: {
   readonly definition: MetricRegistryEntry;
   readonly scopeHash: ScopeHash;
   readonly value: import("../../core/money").Money | number;
-  readonly source: Extract<MetricProductionSource, { readonly availability: "known" }>;
+  readonly source: Extract<MetricProductionSource, { readonly availability: "known"; readonly facts: readonly unknown[] }>;
 }): ProducedMetric {
   return validateProducedMetric({
     metricId: input.definition.metricId,
@@ -219,7 +229,7 @@ function produceKnownFactMetric(input: {
   readonly request: MetricProductionRequest;
   readonly normalizedScope: NormalizedAnalysisScope;
   readonly scopeHash: ScopeHash;
-  readonly source: Extract<MetricProductionSource, { readonly availability: "known" }>;
+  readonly source: Extract<MetricProductionSource, { readonly availability: "known"; readonly facts: readonly unknown[] }>;
 }): ProducedMetric {
   assertRegisteredPlans(input.definition, input.request.scope);
   switch (input.definition.productionStrategy) {
@@ -266,11 +276,83 @@ function produceKnownFactMetric(input: {
         value: countActivityOccurrences(input.source.facts),
       });
     case "typical_month":
+    case "minimal_month":
+    case "sum_activity_causal_cost":
+    case "median_activity_causal_cost":
     case "fuel_trip_estimate":
       throw new MetricProductionContractError(
         "La stratégie enregistrée n’utilise pas une source de faits.",
       );
   }
+}
+
+function produceActivityCausalMetric(input: {
+  readonly definition: MetricRegistryEntry;
+  readonly source: Extract<MetricProductionSource, { readonly kind: "activity_occurrence_costs"; readonly availability: "known" }>;
+  readonly scopeHash: ScopeHash;
+}): ProducedMetric {
+  const facts = input.source.facts as readonly ActivityOccurrenceCostFact[];
+  const known = facts.filter(({ causalCost }) => causalCost.availability === "known");
+  const support = supportForPolicy("activity_causal_cost", known.length, {
+    eligibleN: facts.length,
+    observableN: facts.length,
+    excludedN: facts.length - known.length,
+  });
+  const coverage = known.length === facts.length
+    ? { level: "complete" as const }
+    : { level: "partial" as const };
+  if (input.definition.productionStrategy === "sum_activity_causal_cost") {
+    const value = known.reduce(
+      (sum, fact) => addMoney(sum, fact.causalCost.availability === "known" ? fact.causalCost.value : parseMoney("0")),
+      parseMoney("0"),
+    );
+    return validateProducedMetric({
+      metricId: input.definition.metricId,
+      scopeHash: input.scopeHash,
+      availability: known.length === 0 && facts.length > 0 ? "unknown" : "known",
+      value: known.length === 0 && facts.length > 0 ? null : value,
+      unit: input.definition.unit,
+      provenance: input.definition.provenanceRule,
+      methodVersion: input.definition.methodVersion,
+      support,
+      coverage,
+    } as ProducedMetric);
+  }
+  const median = medianKnownActivityCausalCost(facts);
+  const available = median !== null && known.length >= 5;
+  return validateProducedMetric({
+    metricId: input.definition.metricId,
+    scopeHash: input.scopeHash,
+    availability: available ? "known" : "unknown",
+    value: available ? median : null,
+    unit: input.definition.unit,
+    provenance: input.definition.provenanceRule,
+    methodVersion: input.definition.methodVersion,
+    support,
+    coverage,
+  } as ProducedMetric);
+}
+
+function produceMinimalMonth(input: {
+  readonly definition: MetricRegistryEntry;
+  readonly source: Extract<MetricProductionSource, { readonly kind: "minimal_month"; readonly availability: "known" }>;
+  readonly scopeHash: ScopeHash;
+}): ProducedMetric {
+  const metric = calculateMinimalMonthCost({
+    neutralVariableComponents: input.source.neutralVariableComponents,
+    mandatoryMonthlyObligationsAndProvisions: input.source.mandatoryMonthlyObligationsAndProvisions,
+  });
+  return validateProducedMetric({
+    metricId: input.definition.metricId,
+    scopeHash: input.scopeHash,
+    availability: "known",
+    value: metric.value,
+    unit: input.definition.unit,
+    coverage: metric.coverage,
+    ...(metric.support === undefined ? {} : { support: metric.support }),
+    provenance: input.definition.provenanceRule,
+    methodVersion: input.definition.methodVersion,
+  } as ProducedMetric);
 }
 
 function produceTypicalMonth(input: {
@@ -386,12 +468,21 @@ export function produceMetric(
         scopeHash,
       });
     }
+    if (request.source.kind === "minimal_month" && request.source.availability === "known") {
+      return produceMinimalMonth({ definition, source: request.source, scopeHash });
+    }
+    if (request.source.kind === "activity_occurrence_costs" && request.source.availability === "known") {
+      return produceActivityCausalMetric({ definition, source: request.source, scopeHash });
+    }
     if (request.source.availability !== "known") {
       return metricFromBusinessAvailability({
         definition,
         scopeHash,
         source: request.source,
       });
+    }
+    if (!("facts" in request.source)) {
+      throw new MetricProductionContractError("La source connue ne fournit pas les faits attendus.");
     }
     return produceKnownFactMetric({
       definition,

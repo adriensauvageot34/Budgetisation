@@ -1,5 +1,8 @@
 export type {
   ActivityOccurrenceFact,
+  ActivityOccurrenceCostFact,
+  ActivityCausalFinancialLink,
+  ActivityCausalRelationType,
   ActivityOccurrenceValidationStatus,
   AnalyticCategoryValue,
   AnalyticDateValue,
@@ -28,6 +31,16 @@ export type {
   PurchaseEventKey,
   PurchaseEventSource,
 } from "./types";
+export {
+  buildActivityOccurrenceCostFacts,
+  isCausalActivityRelation,
+  medianKnownActivityCausalCost,
+  parseActivityCausalFinancialLinks,
+} from "./activity-cost";
+export {
+  partitionEconomicComponentsForStructure,
+  type CanonicalStructurePartition,
+} from "./structure";
 export {
   activityOccurrenceFactSchema,
   analyticFactSchema,

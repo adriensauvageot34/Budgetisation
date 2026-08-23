@@ -47,7 +47,7 @@ export type AnalysisEvolutionParams = {
 };
 
 export type AnalysisMonthStructureViewParam = "destination" | "nature" | "life_context";
-export type AnalysisMonthStructureDimensionParam = "family" | "category" | "activity" | "merchant" | "place";
+export type AnalysisMonthStructureDimensionParam = "family" | "category" | "activity" | "merchant" | "place" | "fixed_variable" | "life_context" | "necessity";
 export type AnalysisMonthStructureMeasureParam = "amount" | "share" | "occurrences" | "cost_per_occurrence";
 export type AnalysisMonthStructureParams = {
   readonly view?: AnalysisMonthStructureViewParam;
@@ -170,7 +170,7 @@ export function parseAnalysisEvolutionParams(
 }
 
 const structureViews = new Set<AnalysisMonthStructureViewParam>(["destination", "nature", "life_context"]);
-const structureDimensions = new Set<AnalysisMonthStructureDimensionParam>(["family", "category", "activity", "merchant", "place"]);
+const structureDimensions = new Set<AnalysisMonthStructureDimensionParam>(["family", "category", "activity", "merchant", "place", "fixed_variable", "life_context", "necessity"]);
 const structureMeasures = new Set<AnalysisMonthStructureMeasureParam>(["amount", "share", "occurrences", "cost_per_occurrence"]);
 
 export function parseAnalysisMonthStructureParams(

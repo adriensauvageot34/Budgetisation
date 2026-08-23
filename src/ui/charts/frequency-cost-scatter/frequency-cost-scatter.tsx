@@ -24,7 +24,7 @@ import {
 export type FrequencyCostScatterPoint = {
   readonly identity: string;
   readonly label: string;
-  readonly occurrences: MetricEnvelope<number, "count">;
+  readonly occurrences: MetricEnvelope<number, "count" | "count/month">;
   readonly medianCausalCostPerOccurrence: MetricEnvelope<Money, "EUR/occurrence">;
   readonly totalCausalCost?: MetricEnvelope<Money, "EUR">;
   readonly navigationIntent?: ExplorationNode;

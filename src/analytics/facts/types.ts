@@ -125,6 +125,38 @@ export type ActivityOccurrenceFact = {
   readonly participantIds: readonly PersonId[];
 };
 
+export type ActivityCausalRelationType =
+  | "Paiement_activite"
+  | "Cause_par_evenement"
+  | "Preparation";
+
+export type ActivityCausalFinancialLink = {
+  readonly financialLinkId: string;
+  readonly lifeEventId: LifeEventId;
+  readonly canonicalComponentKey: CanonicalComponentKey;
+  readonly relationType: ActivityCausalRelationType;
+  readonly economicAmountLinked: Money | null;
+};
+
+export type ActivityOccurrenceCostFact = {
+  readonly fact: "fct_activity_occurrence_cost";
+  readonly householdId: HouseholdId;
+  readonly householdTimeZone: HouseholdTimeZone;
+  readonly occurrenceId: LifeEventId;
+  readonly activityId: ActivityId;
+  readonly causalCost:
+    | { readonly availability: "known"; readonly value: Money }
+    | { readonly availability: "unknown"; readonly value: null };
+  readonly coverage: import("../../core/metrics").Coverage;
+  readonly support: import("../../core/metrics").Support;
+  readonly evidence: readonly {
+    readonly financialLinkId: string;
+    readonly canonicalComponentKey: CanonicalComponentKey;
+    readonly relationType: ActivityCausalRelationType;
+  }[];
+  readonly provenance: "derived";
+};
+
 export type PersonDayObservability =
   | "observable"
   | "partial"
@@ -195,6 +227,7 @@ export type PlaceVisitFact = {
 export type AnalyticFact =
   | EconomicComponentFact
   | ActivityOccurrenceFact
+  | ActivityOccurrenceCostFact
   | PersonDayFact
   | PurchaseEventFact
   | PlaceVisitFact;
@@ -204,6 +237,7 @@ export type AnalyticFactSource = AnalyticFact["fact"];
 export type AnalyticGrain =
   | "canonical_economic_component"
   | "activity_occurrence"
+  | "activity_occurrence_cost"
   | "person_local_date"
   | "purchase_event"
   | "person_place_visit_interval";

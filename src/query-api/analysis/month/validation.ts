@@ -34,7 +34,7 @@ function text(value: unknown, name: string): string {
 
 const qualifications = new Set<ComparisonQualification>(["statistically_qualified", "descriptive_only", "not_assessed"]);
 const views = new Set<AnalysisStructureView>(["destination", "nature", "life_context"]);
-const dimensions = new Set<AnalysisStructureDimension>(["family", "category", "activity", "merchant", "place"]);
+const dimensions = new Set<AnalysisStructureDimension>(["family", "category", "activity", "merchant", "place", "fixed_variable", "life_context", "necessity"]);
 const measures = new Set<AnalysisStructureMeasure>(["amount", "share", "occurrences", "cost_per_occurrence"]);
 const livedSubviews = new Set<AnalysisLivedSubview>(["summary", "rhythm", "contexts", "frequency_cost"]);
 
@@ -106,7 +106,11 @@ export function parseAnalysisMonthInitialReadModel(value: unknown): AnalysisMont
   return {
     month: parseYearMonth(requireProperty(record, "month", "AnalysisMonthInitialReadModel")), subject: parseReadModelSubject(requireProperty(record, "subject", "AnalysisMonthInitialReadModel")), periodCompleteness: parsePeriodCompleteness(requireProperty(record, "periodCompleteness", "AnalysisMonthInitialReadModel")), actual,
     ...(typical ? { typical } : {}),
-    ...(hasOwn(record, "minimal") ? { minimal: parseScopedMoneyMetricReadModel(record.minimal) } : {}),
+    ...(hasOwn(record, "minimal") ? (() => {
+      const minimal = parseScopedMoneyMetricReadModel(record.minimal);
+      if (minimal.metricId !== "minimal_month_cost") throw new TypeError("Minimal MetricId invalide.");
+      return { minimal };
+    })() : {}),
     ...(hasOwn(record, "actualVsTypical") ? { actualVsTypical: parseMoneyComparisonResult(record.actualVsTypical) } : {}),
     ...(hasOwn(record, "typicalVsMinimal") ? { typicalVsMinimal: parseMoneyComparisonResult(record.typicalVsMinimal) } : {}),
     ...(hasOwn(record, "economicRevenue") ? { economicRevenue: parseScopedMoneyMetricReadModel(record.economicRevenue) } : {}),
@@ -146,13 +150,14 @@ export function parseAnalysisMonthEvolutionReadModel(value: unknown): AnalysisMo
 
 function parseStructureRow(value: unknown) {
   const record = parseStrictRecord(value, ["bucket", "label", "metric", "rank", "barPercent", "destination"], "AnalysisMonthStructureRow");
-  const bucketRecord = parseStrictRecord(requireProperty(record, "bucket", "AnalysisMonthStructureRow"), ["kind", "familyId", "categoryId", "activityId", "merchantId", "placeId"], "AnalysisStructureBucket");
+  const bucketRecord = parseStrictRecord(requireProperty(record, "bucket", "AnalysisMonthStructureRow"), ["kind", "familyId", "categoryId", "activityId", "merchantId", "placeId", "key"], "AnalysisStructureBucket");
   const kind = requireProperty(bucketRecord, "kind", "AnalysisStructureBucket");
   const bucket = kind === "family" ? { kind, familyId: text(requireProperty(bucketRecord, "familyId", "AnalysisStructureBucket"), "familyId") } as const
     : kind === "category" ? { kind, categoryId: parseCategoryId(requireProperty(bucketRecord, "categoryId", "AnalysisStructureBucket")) } as const
     : kind === "activity" ? { kind, activityId: parseActivityId(requireProperty(bucketRecord, "activityId", "AnalysisStructureBucket")) } as const
     : kind === "merchant" ? { kind, merchantId: parseMerchantId(requireProperty(bucketRecord, "merchantId", "AnalysisStructureBucket")) } as const
     : kind === "place" ? { kind, placeId: parsePlaceId(requireProperty(bucketRecord, "placeId", "AnalysisStructureBucket")) } as const
+    : kind === "canonical" ? { kind, key: text(requireProperty(bucketRecord, "key", "AnalysisStructureBucket"), "canonical key") } as const
     : kind === "undetermined" ? { kind } as const
     : (() => { throw new TypeError("AnalysisStructureBucket.kind invalide."); })();
   const rank = requireProperty(record, "rank", "AnalysisMonthStructureRow");
@@ -163,7 +168,7 @@ function parseStructureRow(value: unknown) {
 }
 
 export function parseAnalysisMonthStructureReadModel(value: unknown): AnalysisMonthStructureReadModel {
-  const record = parseStrictRecord(value, ["month", "subject", "activeView", "activeDimension", "activeMeasure", "availableViews", "availableDimensions", "availableMeasures", "supportedCombinations", "rows", "remainder", "total", "reconciliation", "capabilities"], "AnalysisMonthStructureReadModel");
+  const record = parseStrictRecord(value, ["month", "subject", "activeView", "activeDimension", "activeMeasure", "availableViews", "availableDimensions", "availableMeasures", "supportedCombinations", "unavailableDimensions", "rows", "remainder", "total", "reconciliation", "capabilities"], "AnalysisMonthStructureReadModel");
   const activeView = parseStringLiteral<AnalysisStructureView>(requireProperty(record, "activeView", "AnalysisMonthStructureReadModel"), views, "activeView");
   const activeDimension = parseStringLiteral<AnalysisStructureDimension>(requireProperty(record, "activeDimension", "AnalysisMonthStructureReadModel"), dimensions, "activeDimension");
   const activeMeasure = parseStringLiteral<AnalysisStructureMeasure>(requireProperty(record, "activeMeasure", "AnalysisMonthStructureReadModel"), measures, "activeMeasure");
@@ -173,14 +178,35 @@ export function parseAnalysisMonthStructureReadModel(value: unknown): AnalysisMo
   const supportedCombinations = array(requireProperty(record, "supportedCombinations", "AnalysisMonthStructureReadModel"), (item) => { const combo = parseStrictRecord(item, ["view", "dimension", "measures"], "StructureCombination"); return { view: parseStringLiteral<AnalysisStructureView>(requireProperty(combo, "view", "StructureCombination"), views, "combo view"), dimension: parseStringLiteral<AnalysisStructureDimension>(requireProperty(combo, "dimension", "StructureCombination"), dimensions, "combo dimension"), measures: array(requireProperty(combo, "measures", "StructureCombination"), (measure) => parseStringLiteral<AnalysisStructureMeasure>(measure, measures, "combo measure"), "combo measures") }; }, "supportedCombinations");
   if (!supportedCombinations.some((combo) => combo.view === activeView && combo.dimension === activeDimension && combo.measures.includes(activeMeasure))) throw new TypeError("Structure active combination indisponible.");
   const reconciliation = parseStringLiteral<AnalysisMonthStructureReadModel["reconciliation"]>(requireProperty(record, "reconciliation", "AnalysisMonthStructureReadModel"), new Set(["exact", "partial", "not_applicable"]), "Structure reconciliation");
-  return { month: parseYearMonth(requireProperty(record, "month", "AnalysisMonthStructureReadModel")), subject: parseReadModelSubject(requireProperty(record, "subject", "AnalysisMonthStructureReadModel")), activeView, activeDimension, activeMeasure, availableViews, availableDimensions, availableMeasures, supportedCombinations, rows: array(requireProperty(record, "rows", "AnalysisMonthStructureReadModel"), parseStructureRow, "Structure rows"), ...(hasOwn(record, "remainder") ? { remainder: parseStructureRow(record.remainder) } : {}), ...(hasOwn(record, "total") ? { total: parseScopedMetricReadModel(record.total) } : {}), reconciliation, capabilities: parseQueryCapabilities(requireProperty(record, "capabilities", "AnalysisMonthStructureReadModel"), queryResourceKeys.analysisMonthStructure) };
+  const unavailableDimensions = array(requireProperty(record, "unavailableDimensions", "AnalysisMonthStructureReadModel"), (item) => { const value = parseStrictRecord(item, ["dimension", "reason"], "UnavailableStructureDimension"); const dimension = parseStringLiteral<"family" | "necessity">(requireProperty(value, "dimension", "UnavailableStructureDimension"), new Set(["family", "necessity"]), "Unavailable structure dimension"); if (value.reason !== "BLOCKED_CONTRACT") throw new TypeError("Unavailable structure reason invalide."); return { dimension, reason: "BLOCKED_CONTRACT" as const }; }, "unavailableDimensions");
+  return { month: parseYearMonth(requireProperty(record, "month", "AnalysisMonthStructureReadModel")), subject: parseReadModelSubject(requireProperty(record, "subject", "AnalysisMonthStructureReadModel")), activeView, activeDimension, activeMeasure, availableViews, availableDimensions, availableMeasures, supportedCombinations, unavailableDimensions, rows: array(requireProperty(record, "rows", "AnalysisMonthStructureReadModel"), parseStructureRow, "Structure rows"), ...(hasOwn(record, "remainder") ? { remainder: parseStructureRow(record.remainder) } : {}), ...(hasOwn(record, "total") ? { total: parseScopedMetricReadModel(record.total) } : {}), reconciliation, capabilities: parseQueryCapabilities(requireProperty(record, "capabilities", "AnalysisMonthStructureReadModel"), queryResourceKeys.analysisMonthStructure) };
 }
 
 export function parseAnalysisMonthLivedReadModel(value: unknown): AnalysisMonthLivedReadModel {
   const record = parseStrictRecord(value, ["month", "subject", "availableSubviews", "activities", "contexts", "frequencyCost", "capabilities"], "AnalysisMonthLivedReadModel");
   const activities = array(requireProperty(record, "activities", "AnalysisMonthLivedReadModel"), (item) => { const activity = parseStrictRecord(item, ["activityId", "label", "frequency", "cost", "comparison", "qualification", "destination"], "AnalysisLivedActivity"); return { activityId: parseActivityId(requireProperty(activity, "activityId", "AnalysisLivedActivity")), label: text(requireProperty(activity, "label", "AnalysisLivedActivity"), "Activity label"), frequency: parseScopedCountMetricReadModel(requireProperty(activity, "frequency", "AnalysisLivedActivity")), ...(hasOwn(activity, "cost") ? { cost: parseScopedMoneyMetricReadModel(activity.cost) } : {}), ...(hasOwn(activity, "comparison") ? { comparison: parseMoneyComparisonResult(activity.comparison) } : {}), qualification: parseStringLiteral<ComparisonQualification>(requireProperty(activity, "qualification", "AnalysisLivedActivity"), qualifications, "Activity qualification"), destination: parseDestination(requireProperty(activity, "destination", "AnalysisLivedActivity")) }; }, "Lived activities");
   const frequencyCost = parseStrictRecord(requireProperty(record, "frequencyCost", "AnalysisMonthLivedReadModel"), ["kind", "points", "reason"], "FrequencyCostCapability");
-  const frequencyCostValue: AnalysisMonthLivedReadModel["frequencyCost"] = frequencyCost.kind === "available" ? { kind: "available", points: array(requireProperty(frequencyCost, "points", "FrequencyCostCapability"), () => { throw new TypeError("Frequency-cost points non contractés."); }, "FrequencyCost points") as readonly never[] } : frequencyCost.kind === "unavailable" && frequencyCost.reason === "median_causal_cost_metric_missing" ? { kind: "unavailable", reason: "median_causal_cost_metric_missing" } : (() => { throw new TypeError("FrequencyCost capability invalide."); })();
+  const frequencyCostValue: AnalysisMonthLivedReadModel["frequencyCost"] = frequencyCost.kind === "available"
+    ? { kind: "available", points: array(requireProperty(frequencyCost, "points", "FrequencyCostCapability"), (item) => {
+        const point = parseStrictRecord(item, ["activityId", "label", "occurrences", "medianCausalCostPerOccurrence", "totalCausalCost", "destination"], "AnalysisFrequencyCostPoint");
+        const occurrences = parseScopedCountMetricReadModel(requireProperty(point, "occurrences", "AnalysisFrequencyCostPoint"));
+        const median = parseScopedMoneyMetricReadModel(requireProperty(point, "medianCausalCostPerOccurrence", "AnalysisFrequencyCostPoint"));
+        const total = parseScopedMoneyMetricReadModel(requireProperty(point, "totalCausalCost", "AnalysisFrequencyCostPoint"));
+        if (occurrences.metricId !== "activity_frequency" || median.metricId !== "activity_causal_median_cost_per_occurrence" || total.metricId !== "activity_causal_cost") {
+          throw new TypeError("Frequency-cost MetricIds incohérentes.");
+        }
+        return {
+          activityId: parseActivityId(requireProperty(point, "activityId", "AnalysisFrequencyCostPoint")),
+          label: text(requireProperty(point, "label", "AnalysisFrequencyCostPoint"), "Frequency-cost label"),
+          occurrences,
+          medianCausalCostPerOccurrence: median,
+          totalCausalCost: total,
+          destination: parseDestination(requireProperty(point, "destination", "AnalysisFrequencyCostPoint")),
+        };
+      }, "FrequencyCost points") }
+    : frequencyCost.kind === "unavailable" && frequencyCost.reason === "causal_mapping_unavailable"
+      ? { kind: "unavailable", reason: "causal_mapping_unavailable" }
+      : (() => { throw new TypeError("FrequencyCost capability invalide."); })();
   return { month: parseYearMonth(requireProperty(record, "month", "AnalysisMonthLivedReadModel")), subject: parseReadModelSubject(requireProperty(record, "subject", "AnalysisMonthLivedReadModel")), availableSubviews: array(requireProperty(record, "availableSubviews", "AnalysisMonthLivedReadModel"), (item) => parseStringLiteral(item, livedSubviews, "Lived subview"), "availableSubviews"), activities, contexts: parseAnalysisContextsBase(requireProperty(record, "contexts", "AnalysisMonthLivedReadModel"), queryResourceKeys.analysisMonthLived), frequencyCost: frequencyCostValue, capabilities: parseQueryCapabilities(requireProperty(record, "capabilities", "AnalysisMonthLivedReadModel"), queryResourceKeys.analysisMonthLived) };
 }
 
@@ -197,7 +223,7 @@ export function parseAnalysisMonthMomentsReadModel(value: unknown): AnalysisMont
 
 export function parseAnalysisTargetReadModel(value: unknown): AnalysisTargetReadModel {
   const record = parseStrictRecord(value, ["month", "subject", "target", "status", "headlineMetrics", "capabilities"], "AnalysisTargetReadModel");
-  return { month: parseYearMonth(requireProperty(record, "month", "AnalysisTargetReadModel")), subject: parseReadModelSubject(requireProperty(record, "subject", "AnalysisTargetReadModel")), target: parseAnalysisTargetSubject(requireProperty(record, "target", "AnalysisTargetReadModel")), status: parseStringLiteral(requireProperty(record, "status", "AnalysisTargetReadModel"), new Set(["available", "outside_scope", "unsupported"]), "AnalysisTarget status"), headlineMetrics: array(requireProperty(record, "headlineMetrics", "AnalysisTargetReadModel"), parseScopedMetricReadModel, "Target headline metrics"), capabilities: parseQueryCapabilities(requireProperty(record, "capabilities", "AnalysisTargetReadModel"), queryResourceKeys.analysisTarget) };
+  return { month: parseYearMonth(requireProperty(record, "month", "AnalysisTargetReadModel")), subject: parseReadModelSubject(requireProperty(record, "subject", "AnalysisTargetReadModel")), target: parseAnalysisTargetSubject(requireProperty(record, "target", "AnalysisTargetReadModel")), status: parseStringLiteral(requireProperty(record, "status", "AnalysisTargetReadModel"), new Set(["available", "outside_scope", "unsupported", "blocked_contract"]), "AnalysisTarget status"), headlineMetrics: array(requireProperty(record, "headlineMetrics", "AnalysisTargetReadModel"), parseScopedMetricReadModel, "Target headline metrics"), capabilities: parseQueryCapabilities(requireProperty(record, "capabilities", "AnalysisTargetReadModel"), queryResourceKeys.analysisTarget) };
 }
 
 export function parseAnalysisMonthContextsReadModel(value: unknown): AnalysisMonthContextsReadModel {

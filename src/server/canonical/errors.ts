@@ -7,6 +7,7 @@ export type CanonicalSourceName =
   | "person_days"
   | "life_events"
   | "purchase_events"
+  | "financial_links"
   | "operations"
   | "entities";
 

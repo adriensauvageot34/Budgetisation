@@ -31,6 +31,7 @@ export type {
   AnalysisStructureView,
   MarkedFactReadModel,
   MarkedFactsSelection,
+  AnalysisFrequencyCostPoint,
   MomentPreview,
 } from "./types";
 export {

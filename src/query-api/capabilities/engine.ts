@@ -97,7 +97,9 @@ function metricScopeReason(
         const dimension = (request.params as { readonly dimension: string }).dimension;
         return dimension === "category" || dimension === "activity" || dimension === "merchant" || dimension === "place"
           ? dimension
-          : null;
+          : dimension === "life_context"
+            ? "life_scope"
+            : null;
       })()
     : null;
   const targetDimension = request.resource === "analysis_target"

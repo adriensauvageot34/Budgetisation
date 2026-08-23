@@ -61,12 +61,12 @@ export const aggregationCapabilities = {
   },
   activity_month_causal_cost: {
     id: "activity_month_causal_cost",
-    sourceFact: "fct_economic_component",
-    sourceGrain: "canonical_economic_component",
-    dateBasis: "economic_timing",
-    dedupeRule: "canonical_component_key",
+    sourceFact: "fct_activity_occurrence_cost",
+    sourceGrain: "activity_occurrence_cost",
+    dateBasis: "activity_occurrence_date",
+    dedupeRule: "activity_occurrence_key",
     allowedDimensions: ["activity", "month"],
-    allowedFilters: economicFilters,
+    allowedFilters: activityFilters,
     measure: "activity_causal_cost",
     method: "sum_net",
     additivity: {
@@ -77,8 +77,8 @@ export const aggregationCapabilities = {
   },
   activity_month_median_cost_per_occurrence: {
     id: "activity_month_median_cost_per_occurrence",
-    sourceFact: "fct_activity_occurrence",
-    sourceGrain: "activity_occurrence",
+    sourceFact: "fct_activity_occurrence_cost",
+    sourceGrain: "activity_occurrence_cost",
     dateBasis: "activity_occurrence_date",
     dedupeRule: "activity_occurrence_key",
     allowedDimensions: ["activity", "month"],

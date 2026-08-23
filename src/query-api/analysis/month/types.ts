@@ -66,7 +66,7 @@ export type AnalysisMonthEvolutionSeries = { readonly id: AnalysisMonthEvolution
 export type AnalysisMonthEvolutionReadModel = { readonly month: YearMonth; readonly subject: ReadModelSubject; readonly series: readonly AnalysisMonthEvolutionSeries[]; readonly capabilities: QueryCapabilities };
 
 export type AnalysisStructureView = "destination" | "nature" | "life_context";
-export type AnalysisStructureDimension = "family" | "category" | "activity" | "merchant" | "place";
+export type AnalysisStructureDimension = "family" | "category" | "activity" | "merchant" | "place" | "fixed_variable" | "life_context" | "necessity";
 export type AnalysisStructureMeasure = "amount" | "share" | "occurrences" | "cost_per_occurrence";
 export type AnalysisStructureCombination = { readonly view: AnalysisStructureView; readonly dimension: AnalysisStructureDimension; readonly measures: readonly AnalysisStructureMeasure[] };
 export type AnalysisMonthStructureRow = {
@@ -76,6 +76,7 @@ export type AnalysisMonthStructureRow = {
     | { readonly kind: "activity"; readonly activityId: ActivityId }
     | { readonly kind: "merchant"; readonly merchantId: MerchantId }
     | { readonly kind: "place"; readonly placeId: PlaceId }
+    | { readonly kind: "canonical"; readonly key: string }
     | { readonly kind: "undetermined" };
   readonly label: string;
   readonly metric: ScopedMetricReadModel;
@@ -93,6 +94,10 @@ export type AnalysisMonthStructureReadModel = {
   readonly availableDimensions: readonly AnalysisStructureDimension[];
   readonly availableMeasures: readonly AnalysisStructureMeasure[];
   readonly supportedCombinations: readonly AnalysisStructureCombination[];
+  readonly unavailableDimensions: readonly {
+    readonly dimension: "family" | "necessity";
+    readonly reason: "BLOCKED_CONTRACT";
+  }[];
   readonly rows: readonly AnalysisMonthStructureRow[];
   readonly remainder?: AnalysisMonthStructureRow;
   readonly total?: ScopedMetricReadModel;
@@ -110,6 +115,14 @@ export type AnalysisLivedActivity = {
   readonly qualification: ComparisonQualification;
   readonly destination: AnalysisDestination;
 };
+export type AnalysisFrequencyCostPoint = {
+  readonly activityId: ActivityId;
+  readonly label: string;
+  readonly occurrences: ScopedCountMetricReadModel;
+  readonly medianCausalCostPerOccurrence: ScopedMoneyMetricReadModel;
+  readonly totalCausalCost: ScopedMoneyMetricReadModel;
+  readonly destination: AnalysisDestination;
+};
 export type AnalysisMonthLivedReadModel = {
   readonly month: YearMonth;
   readonly subject: ReadModelSubject;
@@ -117,8 +130,8 @@ export type AnalysisMonthLivedReadModel = {
   readonly activities: readonly AnalysisLivedActivity[];
   readonly contexts: AnalysisContextsReadModelBase;
   readonly frequencyCost:
-    | { readonly kind: "available"; readonly points: readonly never[] }
-    | { readonly kind: "unavailable"; readonly reason: "median_causal_cost_metric_missing" };
+    | { readonly kind: "available"; readonly points: readonly AnalysisFrequencyCostPoint[] }
+    | { readonly kind: "unavailable"; readonly reason: "causal_mapping_unavailable" };
   readonly capabilities: QueryCapabilities;
 };
 
@@ -140,7 +153,7 @@ export type AnalysisTargetReadModel = {
   readonly month: YearMonth;
   readonly subject: ReadModelSubject;
   readonly target: AnalysisTargetSubject;
-  readonly status: "available" | "outside_scope" | "unsupported";
+  readonly status: "available" | "outside_scope" | "unsupported" | "blocked_contract";
   readonly headlineMetrics: readonly ScopedMetricReadModel[];
   readonly capabilities: QueryCapabilities;
 };

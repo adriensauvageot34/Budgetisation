@@ -10,7 +10,7 @@ import { parseYearMonth, type YearMonth } from "../../core/time";
 
 export type AnalysisMonthStructureSubview = {
   readonly view: "destination" | "nature" | "life_context";
-  readonly dimension: "family" | "category" | "activity" | "merchant" | "place";
+  readonly dimension: "family" | "category" | "activity" | "merchant" | "place" | "fixed_variable" | "life_context" | "necessity";
   readonly measure: "amount" | "share" | "occurrences" | "cost_per_occurrence";
   readonly selectedBucketId?: string;
 };
@@ -86,7 +86,7 @@ export function parseNavigationSubviewRef(
             : undefined;
           return {
             view: parseStringLiteral(requireProperty(record, "view", "AnalysisMonthStructureSubview"), new Set(["destination", "nature", "life_context"]), "Structure subview view"),
-            dimension: parseStringLiteral(requireProperty(record, "dimension", "AnalysisMonthStructureSubview"), new Set(["family", "category", "activity", "merchant", "place"]), "Structure subview dimension"),
+            dimension: parseStringLiteral(requireProperty(record, "dimension", "AnalysisMonthStructureSubview"), new Set(["family", "category", "activity", "merchant", "place", "fixed_variable", "life_context", "necessity"]), "Structure subview dimension"),
             measure: parseStringLiteral(requireProperty(record, "measure", "AnalysisMonthStructureSubview"), new Set(["amount", "share", "occurrences", "cost_per_occurrence"]), "Structure subview measure"),
             ...(selectedBucketId === undefined ? {} : { selectedBucketId }),
           } as AnalysisMonthStructureSubview;

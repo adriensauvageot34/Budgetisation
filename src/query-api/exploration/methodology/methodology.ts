@@ -28,30 +28,38 @@ import type {
 const descriptions: Record<ActiveMetricId, string> = {
   economic_consumption_net_attributable: "Consommation économique nette attribuable au périmètre demandé.",
   typical_month_cost: "Valeur mensuelle typique issue de la fenêtre de référence Analytics.",
+  minimal_month_cost: "Référence mensuelle composite : variable neutre éligible plus obligations et provisions officielles.",
   localized_spend: "Dépense économique nette attribuée à un lieu transactionnel canonique.",
   category_amount: "Montant économique net attribué à une catégorie canonique.",
   merchant_net_amount: "Montant économique net attribué à un marchand canonique.",
   life_scope_amount: "Montant économique net attribué à un contexte de vie canonique.",
+  fixed_variable_amount: "Montant économique net réparti selon la nature Fixe / Variable canonique.",
   purchase_count: "Nombre d'actes d'achat canoniques distincts.",
   person_day_count: "Nombre de jours-personnes observés selon le Fact Layer.",
   place_visit_count: "Nombre de visites canoniques de lieu.",
   distinct_visit_days: "Nombre de jours civils distincts portant une visite canonique.",
   activity_frequency: "Nombre d'occurrences d'activité admissibles.",
+  activity_causal_cost: "Somme économique nette canoniquement attribuée aux occurrences d'activité.",
+  activity_causal_median_cost_per_occurrence: "Médiane des coûts causaux nets par occurrence qualifiée.",
   fuel_trip_estimate: "Estimation distincte du coût carburant selon les entrées disponibles.",
 };
 
 const formulas: Record<ActiveMetricId, string> = {
   economic_consumption_net_attributable: "Somme autoritaire des composantes économiques nettes dédupliquées.",
   typical_month_cost: "Médiane Analytics des mois admissibles de la fenêtre de référence.",
+  minimal_month_cost: "neutral_variable_month_cost + mandatory_monthly_obligations_and_provisions, sans double compte.",
   localized_spend: "Agrégation des composantes nettes portant une attribution canonique de lieu.",
   category_amount: "Agrégation des composantes nettes portant la catégorie demandée.",
   merchant_net_amount: "Agrégation des composantes nettes portant le marchand demandé.",
   life_scope_amount: "Agrégation des composantes nettes portant le contexte de vie demandé.",
+  fixed_variable_amount: "Agrégation exhaustive des composantes nettes par nature_fixe_variable ; les inconnues restent À déterminer.",
   purchase_count: "Comptage dédupliqué des fct_purchase_event.",
   person_day_count: "Comptage dédupliqué des fct_person_day.",
   place_visit_count: "Comptage dédupliqué des fct_place_visit.",
   distinct_visit_days: "Comptage distinct des dates civiles de fct_place_visit.",
   activity_frequency: "Comptage dédupliqué des fct_activity_occurrence admissibles.",
+  activity_causal_cost: "Somme des coûts causaux qualifiés après déduplication par canonical_component_key.",
+  activity_causal_median_cost_per_occurrence: "Médiane des coûts causaux nets connus ; indisponible sous 5 occurrences qualifiées.",
   fuel_trip_estimate: "Application de la méthode d'estimation Analytics publiée, sans dépense observée inventée.",
 };
 
