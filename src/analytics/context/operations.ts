@@ -1,5 +1,5 @@
 import { parseMetricId } from "../../core/identity";
-import type { Money } from "../../core/money";
+import { addMoney, parseMoney, type Money } from "../../core/money";
 import {
   parseSupport,
   type Availability,
@@ -9,9 +9,13 @@ import {
 import {
   parseAnalysisSubject,
   parseLifeScopeContext,
+  normalizeAnalysisScope,
   type AnalysisSubject,
+  type AnalysisScope,
+  type NormalizedAnalysisScope,
   type LifeScopeContext,
 } from "../../core/scope";
+import { resolveGlobalWindowMonths } from "../../core/time";
 import {
   aggregateEconomicNetByCategory,
   dedupeEconomicComponents,
@@ -44,6 +48,81 @@ export function sumEconomicNetForSubject(
   subject: AnalysisSubject,
 ): Money {
   return sumEconomicNet(selectEconomicComponentsForSubject(values, subject));
+}
+
+function matchesEconomicDimensions(
+  component: EconomicComponentFact,
+  scope: NormalizedAnalysisScope,
+): boolean {
+  const filters = scope.filters;
+  if (
+    filters.categoryIds.length > 0 &&
+    (component.category.kind !== "resolved" ||
+      !filters.categoryIds.includes(component.category.id))
+  ) return false;
+  if (
+    filters.merchantIds.length > 0 &&
+    (component.merchant.kind !== "resolved" ||
+      !filters.merchantIds.includes(component.merchant.id))
+  ) return false;
+  if (
+    filters.placeIds.length > 0 &&
+    (component.canonicalPlace.kind !== "resolved" ||
+      !filters.placeIds.includes(component.canonicalPlace.placeId))
+  ) return false;
+  if (
+    filters.lifeScopeContext.length > 0 &&
+    (component.lifeScope.kind !== "resolved" ||
+      !filters.lifeScopeContext.includes(
+        parseLifeScopeContext(component.lifeScope.value),
+      ))
+  ) return false;
+  return true;
+}
+
+function economicMonths(scope: NormalizedAnalysisScope): ReadonlySet<string> {
+  return new Set(
+    scope.time.kind === "month"
+      ? [scope.time.month]
+      : resolveGlobalWindowMonths(
+          scope.time.observationWindow,
+          scope.time.asOf,
+        ),
+  );
+}
+
+export function selectEconomicComponentsForScope(
+  values: readonly unknown[],
+  scope: AnalysisScope,
+): readonly EconomicComponentFact[] {
+  const normalized = normalizeAnalysisScope(scope);
+  return selectEconomicComponentsForSubject(values, normalized.subject).filter(
+    (component) => matchesEconomicDimensions(component, normalized),
+  );
+}
+
+export function sumEconomicNetForScope(
+  values: readonly unknown[],
+  scope: AnalysisScope,
+): Money {
+  const normalized = normalizeAnalysisScope(scope);
+  const months = economicMonths(normalized);
+  return selectEconomicComponentsForScope(values, normalized).reduce(
+    (total, component) => {
+      if (
+        component.economicTiming.kind !== "known" &&
+        component.economicTiming.kind !== "partial"
+      ) return total;
+      return component.economicTiming.segments.reduce(
+        (componentTotal, segment) =>
+          segment.economicMonth !== null && months.has(segment.economicMonth)
+            ? addMoney(componentTotal, segment.amount)
+            : componentTotal,
+        total,
+      );
+    },
+    parseMoney("0"),
+  );
 }
 
 export function sumSharedContextEconomicNet(

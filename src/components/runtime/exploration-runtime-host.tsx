@@ -20,7 +20,11 @@ import {
   type MetricMethodologyReadModel,
 } from "@/query-api";
 import type { UiTransportState } from "@/ui";
-import { executeClientQuery } from "./query-client";
+import {
+  cachedClientQueryResponse,
+  createClientQueryIdentity,
+  executeCachedClientQuery,
+} from "./query-client";
 import { useProductRuntime } from "./product-runtime-provider";
 
 function scopeForRoot(root: RootNavigationContext): AnalysisScope | null {
@@ -130,7 +134,9 @@ export function ExplorationRuntimeHost() {
     () => currentNode && scope ? requestForNode(currentNode, scope) : null,
     [currentNode, scope],
   );
-  const requestKey = request === null ? null : JSON.stringify(request);
+  const requestKey = request === null || request === undefined
+    ? null
+    : createClientQueryIdentity(request);
   const [transport, setTransport] = useState<UiTransportState<unknown>>({ status: "idle" });
 
   useEffect(() => {
@@ -148,14 +154,24 @@ export function ExplorationRuntimeHost() {
       return;
     }
     if (request === null) return;
-    const controller = new AbortController();
-    setTransport({ status: "loading" });
-    void executeClientQuery(request as never, controller.signal)
-      .then((result) => setTransport(result.ok
-        ? { status: "success", response: result.response as ApiResponse<unknown>, refreshing: false }
-        : { status: "error", error: result.error }))
+    let active = true;
+    const cached = cachedClientQueryResponse(request);
+    setTransport(cached === undefined
+      ? { status: "loading" }
+      : { status: "success", response: cached, refreshing: true });
+    void executeCachedClientQuery(request as never)
+      .then((result) => {
+        if (!active) return;
+        setTransport(result.ok
+          ? { status: "success", response: result.response as ApiResponse<unknown>, refreshing: false }
+          : {
+              status: "error",
+              error: result.error,
+              ...(cached === undefined ? {} : { previousData: cached }),
+            });
+      })
       .catch((error: unknown) => {
-        if (controller.signal.aborted) return;
+        if (!active) return;
         setTransport({
           status: "error",
           error: createApiError({
@@ -164,9 +180,10 @@ export function ExplorationRuntimeHost() {
             retryable: true,
             requestId: "exploration-transport",
           }),
+          ...(cached === undefined ? {} : { previousData: cached }),
         });
       });
-    return () => controller.abort();
+    return () => { active = false; };
   }, [currentNode?.kind, requestKey, scope]);
 
   if (exploration === null || currentNode === undefined) return null;

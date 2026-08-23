@@ -5,15 +5,18 @@ Supabase SSR, Tailwind CSS et Recharts.
 
 ## Configuration
 
-Copier `.env.example` vers `.env.local`, puis renseigner uniquement les valeurs
-publiques du projet distant :
+Copier `.env.example` vers `.env.local`, puis renseigner les valeurs publiques
+du client session et les valeurs strictement serveur du lecteur canonique :
 
 ```dotenv
 NEXT_PUBLIC_SUPABASE_URL=
 NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=
+SUPABASE_URL=
+SUPABASE_SECRET_KEY=
 ```
 
-Ne jamais ajouter de clé `service_role` au navigateur ou au dépôt.
+`SUPABASE_URL` et `SUPABASE_SECRET_KEY` sont server-only. Ne jamais exposer de
+clé secrète/service role au navigateur ou au dépôt.
 
 ## État du projet
 

@@ -4,13 +4,11 @@ import {
   type NormalizedAnalysisScope,
   type ScopeHash,
 } from "../../core/scope";
-import { parseMoney } from "../../core/money";
 import {
   createAggregationPlan,
   type AnalyticFilterDimension,
 } from "../aggregation";
 import {
-  aggregateLocalizedSpend,
   countActivityOccurrences,
   countDistinctVisitDays,
   countPlaceVisits,
@@ -19,7 +17,7 @@ import {
 } from "../facts";
 import {
   createContextAnalysisPlan,
-  sumEconomicNetForSubject,
+  sumEconomicNetForScope,
 } from "../context";
 import {
   calculateFuelTripEstimate,
@@ -228,17 +226,18 @@ function produceKnownFactMetric(input: {
     case "sum_economic_net":
       return observedMetric({
         ...input,
-        value: sumEconomicNetForSubject(
+        value: sumEconomicNetForScope(
           input.source.facts,
-          input.normalizedScope.subject,
+          input.normalizedScope,
         ),
       });
     case "localized_spend": {
-      const placeId = input.normalizedScope.filters.placeIds[0];
-      const localized = aggregateLocalizedSpend(input.source.facts).get(placeId);
       return observedMetric({
         ...input,
-        value: localized === undefined ? parseMoney("0") : localized,
+        value: sumEconomicNetForScope(
+          input.source.facts,
+          input.normalizedScope,
+        ),
       });
     }
     case "count_purchase_events":

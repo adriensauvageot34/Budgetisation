@@ -1,5 +1,7 @@
 import "server-only";
 
+import { createHash } from "node:crypto";
+
 import {
   ContractValidationError,
   InvalidScopeValidationError,
@@ -8,7 +10,10 @@ import {
   type ApiError,
 } from "../../core/api";
 import { createPublicationApiMeta } from "../../analytics/publication";
-import { MetricComputationError } from "../../analytics/production";
+import {
+  MetricComputationError,
+  MetricProductionContractError,
+} from "../../analytics/production";
 import {
   parseStrictRecord,
   requireProperty,
@@ -90,6 +95,7 @@ function mapExecutionError(error: unknown, requestId: string): ApiError {
     error instanceof QueryIncompatibleFilterError
   ) return queryApiError("INVALID_SCOPE", requestId);
   if (error instanceof ContractValidationError) return queryApiError("CONTRACT_MISMATCH", requestId);
+  if (error instanceof MetricProductionContractError) return queryApiError("CONTRACT_MISMATCH", requestId);
   if (error instanceof QueryNotFoundError) return queryApiError("NOT_FOUND", requestId);
   if (error instanceof QueryTemporaryUnavailableError) return queryApiError("TEMPORARY_UNAVAILABLE", requestId);
   if (error instanceof MetricComputationError) return queryApiError("COMPUTATION_FAILED", requestId);
@@ -102,6 +108,12 @@ function emitTrace(services: QueryServerServices, trace: QueryTrace): void {
   } catch {
     // La télémétrie légère ne modifie jamais le résultat de la query.
   }
+}
+
+function normalizedParamSignature(params: unknown): string {
+  return createHash("sha256")
+    .update(canonicalSerializeQueryParams(params))
+    .digest("hex");
 }
 
 export async function executeQuery(
@@ -193,7 +205,7 @@ export async function executeQuery(
       requestId,
       resource: request.resource,
       scopeHash: request.scopeHash,
-      normalizedParamSignature: canonicalSerializeQueryParams(request.params),
+      normalizedParamSignature: normalizedParamSignature(request.params),
       dataRevision,
       analyticsRevision,
       durationMs: Math.max(0, Date.now() - startedAt),
@@ -207,7 +219,7 @@ export async function executeQuery(
       ...(request === undefined ? {} : {
         resource: request.resource,
         scopeHash: request.scopeHash,
-        normalizedParamSignature: canonicalSerializeQueryParams(request.params),
+        normalizedParamSignature: normalizedParamSignature(request.params),
       }),
       ...(dataRevision === undefined ? {} : { dataRevision }),
       ...(analyticsRevision === undefined ? {} : { analyticsRevision }),

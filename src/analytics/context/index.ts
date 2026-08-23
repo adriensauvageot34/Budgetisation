@@ -29,6 +29,8 @@ export {
   localizedMetricAvailability,
   selectEconomicComponentsByLifeScope,
   selectEconomicComponentsForSubject,
+  selectEconomicComponentsForScope,
+  sumEconomicNetForScope,
   sumEconomicNetForSubject,
   sumSharedContextEconomicNet,
 } from "./operations";
