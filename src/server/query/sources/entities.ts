@@ -55,6 +55,7 @@ type EntityDependencies = {
 function entityLabel(row: CanonicalRecord, fallbackId: string): string {
   return (
     optionalCanonicalString(row, [
+      "nom_canonique",
       "display_name",
       "title",
       "name",
@@ -99,16 +100,10 @@ function compositionEntry(
 ): EntityOperationReadModel["composition"]["allocations"][number] {
   const id = canonicalString(row, idKeys, "operations");
   const label = optionalCanonicalString(row, ["label", "libelle", "name", "nom"]);
-  let amount: Money | undefined;
-  for (const key of ["amount", "montant", "economic_amount", "allocated_amount"]) {
-    if (row[key] === undefined || row[key] === null) continue;
-    try {
-      amount = canonicalMoney(row, [key], "operations");
-    } catch {
-      amount = undefined;
-    }
-    break;
-  }
+  const amount: Money | undefined = row.composition_amount_exact === undefined ||
+    row.composition_amount_exact === null
+    ? undefined
+    : canonicalMoney(row, ["composition_amount_exact"], "operations");
   return {
     id,
     ...(label === undefined ? {} : { label }),
@@ -206,7 +201,6 @@ async function operationEntity(input: {
       bankDate: operation.bankDate,
       label: operation.label,
       amount: operation.bankAmount,
-      ...(operation.accountId === undefined ? {} : { accountRef: operation.accountId }),
     },
     economicTruth: operationEconomicTruth(facts),
     classification: {
@@ -220,7 +214,7 @@ async function operationEntity(input: {
                 ? {}
                 : { subcategoryId: row.subcategory.id }),
             },
-      ...(operation.necessity === undefined ? {} : { necessity: operation.necessity }),
+      ...(row.necessity === undefined ? {} : { necessity: row.necessity }),
       ...(operation.fixedVariable === undefined ? {} : { behavior: operation.fixedVariable }),
       ...(operation.lifeScope === undefined ? {} : { lifeScope: operation.lifeScope }),
     },
@@ -250,12 +244,17 @@ async function operationEntity(input: {
 }
 
 function coordinates(row: CanonicalRecord) {
-  const latitude = row.latitude;
-  const longitude = row.longitude;
-  return typeof latitude === "number" &&
-    Number.isFinite(latitude) &&
-    typeof longitude === "number" &&
-    Number.isFinite(longitude)
+  const coordinate = (value: unknown): number | undefined => {
+    const parsed = typeof value === "number"
+      ? value
+      : typeof value === "string" && value.trim().length > 0
+        ? Number(value)
+        : Number.NaN;
+    return Number.isFinite(parsed) ? parsed : undefined;
+  };
+  const latitude = coordinate(row.latitude_canonique);
+  const longitude = coordinate(row.longitude_canonique);
+  return latitude !== undefined && longitude !== undefined
     ? { latitude, longitude }
     : undefined;
 }
@@ -373,20 +372,17 @@ async function merchantEntity(input: {
   const operations = operationRows
     .map(operationFromCanonicalRow)
     .filter(({ operationId }) => operationIds.has(operationId));
-  const spatialMode = optionalCanonicalString(merchant, ["spatial_mode"]);
+  const spatialMode = optionalCanonicalString(merchant, ["location_behavior"]);
   const parsedSpatialMode = [
     "physical_single",
     "physical_multi",
-    "online",
     "non_spatial",
+    "intermediary",
+    "mixed",
     "unknown",
   ].includes(spatialMode ?? "")
     ? (spatialMode as EntityMerchantReadModel["spatialMode"])
-    : placeIds.length > 1
-      ? "physical_multi"
-      : placeIds.length === 1
-        ? "physical_single"
-        : "unknown";
+    : "unknown";
   return {
     id: input.merchantId,
     identity: { title: entityLabel(merchant, input.merchantId) },

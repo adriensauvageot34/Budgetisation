@@ -26,6 +26,8 @@ export type MerchantSpatialMode =
   | "physical_multi"
   | "online"
   | "non_spatial"
+  | "intermediary"
+  | "mixed"
   | "unknown";
 
 export type MerchantPlacePreviewItem = {
@@ -95,7 +97,8 @@ function parseOperationItem(value: unknown): MerchantOperationPreviewItem {
 function parseSpatialMode(value: unknown): MerchantSpatialMode {
   if (
     value === "physical_single" || value === "physical_multi" || value === "online" ||
-    value === "non_spatial" || value === "unknown"
+    value === "non_spatial" || value === "intermediary" || value === "mixed" ||
+    value === "unknown"
   ) return value;
   throw new TypeError("MerchantSpatialMode est invalide.");
 }

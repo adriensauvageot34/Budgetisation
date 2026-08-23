@@ -34,6 +34,7 @@ import {
 import {
   CanonicalMissingMigrationError,
   CanonicalReadError,
+  type CanonicalHealthSourceName,
   type CanonicalSourceName,
 } from "./errors";
 import {
@@ -104,6 +105,58 @@ export type CanonicalOperationBundle = {
   readonly paymentComponents: readonly CanonicalRecord[];
   readonly cashUses: readonly CanonicalRecord[];
 };
+
+type CompositionTable =
+  | "operation_allocations"
+  | "operation_items"
+  | "payment_components"
+  | "cash_economic_uses";
+
+const compositionMappings = {
+  operation_allocations: {
+    foreignOperationKey: "operation_id",
+    operationIdSelection: null,
+    stableId: "allocation_id",
+    moneyColumn: "montant",
+  },
+  operation_items: {
+    foreignOperationKey: "operation_id",
+    operationIdSelection: null,
+    stableId: "item_id",
+    moneyColumn: "montant_economique",
+  },
+  payment_components: {
+    foreignOperationKey: "operation_id",
+    operationIdSelection: null,
+    stableId: "payment_component_id",
+    moneyColumn: "montant",
+  },
+  cash_economic_uses: {
+    foreignOperationKey: "withdrawal_operation_id",
+    operationIdSelection: "operation_id:withdrawal_operation_id",
+    stableId: "cash_use_id",
+    moneyColumn: "montant_economique",
+  },
+} as const satisfies Record<
+  CompositionTable,
+  {
+    readonly foreignOperationKey: string;
+    readonly operationIdSelection: string | null;
+    readonly stableId: string;
+    readonly moneyColumn: string;
+  }
+>;
+
+type EntityTable = "places" | "merchants" | "moments";
+
+const entityMappings = {
+  places: { physicalTable: "referentiel_lieu", idColumn: "place_id" },
+  merchants: { physicalTable: "merchants", idColumn: "merchant_id" },
+  moments: { physicalTable: "moments", idColumn: "moment_id" },
+} as const satisfies Record<
+  EntityTable,
+  { readonly physicalTable: string; readonly idColumn: string }
+>;
 
 function unique(values: readonly string[]): readonly string[] {
   return [...new Set(values)].sort();
@@ -205,7 +258,7 @@ export class CanonicalRepository {
     return this.cached("authorization:canonical-household-scope", async () => {
       const rows = await this.readRows(
         "scope:canonical-household-control",
-        "operations",
+        "household_scope",
         () =>
           this.client
             .from("canonical_household_scope_control")
@@ -214,7 +267,7 @@ export class CanonicalRepository {
       );
       if (rows.length !== 1) {
         throw new CanonicalReadError(
-          "operations",
+          "household_scope",
           "Le scope canonique Household doit produire exactement une ligne.",
         );
       }
@@ -223,14 +276,14 @@ export class CanonicalRepository {
         scopeHouseholdId = parseCanonicalHouseholdScope(rows[0]);
       } catch (error) {
         throw new CanonicalReadError(
-          "operations",
+          "household_scope",
           "Le scope canonique Household n'est pas READY et univoque.",
           { cause: error },
         );
       }
       if (scopeHouseholdId !== this.context.householdId) {
         throw new CanonicalReadError(
-          "operations",
+          "household_scope",
           "Le scope canonique Household ne correspond pas au contexte autorisé.",
         );
       }
@@ -247,7 +300,7 @@ export class CanonicalRepository {
       () =>
         this.client
           .from("operations")
-          .select("*,montant_bancaire_exact:montant_bancaire::text")
+          .select("*,montant_bancaire_exact:montant::text")
           .gte("date_bancaire", range.start)
           .lt("date_bancaire", range.endExclusive)
           .order("date_bancaire", { ascending: true })
@@ -283,7 +336,7 @@ export class CanonicalRepository {
       () =>
         this.client
           .from("operations")
-          .select("*,montant_bancaire_exact:montant_bancaire::text")
+          .select("*,montant_bancaire_exact:montant::text")
           .in("operation_id", ids)
           .order("operation_id", { ascending: true }),
     );
@@ -614,6 +667,7 @@ export class CanonicalRepository {
     range: CanonicalDateRange,
   ): Promise<readonly ActivityOccurrenceFact[]> {
     return this.cached(`facts:activities:${range.start}:${range.endExclusive}`, async () => {
+      await this.assertAuthorizedCanonicalHouseholdScope();
       const lifeEvents = await this.readRows(
         `life-events:${range.start}:${range.endExclusive}`,
         "life_events",
@@ -623,7 +677,6 @@ export class CanonicalRepository {
             .select(
               "life_event_id,life_event_type_id,life_event_series_id,parent_life_event_id,start_date,end_date,validation_status",
             )
-            .eq("household_id", this.context.householdId)
             .lte("start_date", addDays(range.endExclusive, -1))
             .gte("end_date", range.start)
             .order("start_date", { ascending: true })
@@ -719,7 +772,7 @@ export class CanonicalRepository {
   }
 
   private async probeCanonicalSource(
-    source: CanonicalSourceName,
+    source: CanonicalHealthSourceName,
     probe: () => Promise<void>,
   ): Promise<CanonicalSourceHealthStatus> {
     try {
@@ -836,12 +889,12 @@ export class CanonicalRepository {
           });
         }),
         this.probeCanonicalSource("life_events", async () => {
+          await this.assertAuthorizedCanonicalHouseholdScope();
           await Promise.all([
             this.readRows("health:life-events", "life_events", () =>
               this.client
                 .from("life_events")
                 .select("life_event_id")
-                .eq("household_id", this.context.householdId)
                 .limit(1)),
             this.readRows("health:life-event-types", "life_events", () =>
               this.client
@@ -863,18 +916,17 @@ export class CanonicalRepository {
               .limit(1));
         }),
         this.probeCanonicalSource("entities", async () => {
+          await this.assertAuthorizedCanonicalHouseholdScope();
           await Promise.all([
             this.readRows("health:entities:places", "entities", () =>
               this.client
-                .from("places")
+                .from("referentiel_lieu")
                 .select("place_id")
-                .eq("household_id", this.context.householdId)
                 .limit(1)),
             this.readRows("health:entities:merchants", "entities", () =>
               this.client
                 .from("merchants")
                 .select("merchant_id")
-                .eq("household_id", this.context.householdId)
                 .limit(1)),
             this.readRows("health:entities:moments", "entities", () =>
               this.client
@@ -911,14 +963,10 @@ export class CanonicalRepository {
       const [economicFacts, allocations, items, paymentComponents, cashUses] =
         await Promise.all([
           this.loadEconomicFacts(range),
-          this.loadComposition("operation_allocations", "allocation_id", operationIds),
-          this.loadComposition("operation_items", "item_id", operationIds),
-          this.loadComposition(
-            "payment_components",
-            "payment_component_id",
-            operationIds,
-          ),
-          this.loadComposition("cash_economic_uses", "cash_use_id", operationIds),
+          this.loadComposition("operation_allocations", operationIds),
+          this.loadComposition("operation_items", operationIds),
+          this.loadComposition("payment_components", operationIds),
+          this.loadComposition("cash_economic_uses", operationIds),
         ]);
       return {
         operations,
@@ -932,41 +980,54 @@ export class CanonicalRepository {
   }
 
   private loadComposition(
-    table:
-      | "operation_allocations"
-      | "operation_items"
-      | "payment_components"
-      | "cash_economic_uses",
-    stableId: string,
+    table: CompositionTable,
     operationIds: readonly string[],
   ): Promise<readonly CanonicalRecord[]> {
     const ids = unique(operationIds);
     if (ids.length === 0) return Promise.resolve([]);
+    const mapping = compositionMappings[table];
+    const operationIdSelection = mapping.operationIdSelection === null
+      ? ""
+      : `,${mapping.operationIdSelection}`;
     return this.readRows(`composition:${table}:${ids.join(",")}`, "operations", () =>
       this.client
         .from(table)
-        .select("*")
-        .in("operation_id", ids)
-        .order("operation_id", { ascending: true })
-        .order(stableId, { ascending: true }),
+        .select(
+          `*${operationIdSelection},composition_amount_exact:${mapping.moneyColumn}::text`,
+        )
+        .in(mapping.foreignOperationKey, ids)
+        .order(mapping.foreignOperationKey, { ascending: true })
+        .order(mapping.stableId, { ascending: true }),
     );
   }
 
-  loadEntityRows(
-    table: "places" | "merchants" | "moments",
+  async loadEntityRows(
+    table: EntityTable,
     idColumn: "place_id" | "merchant_id" | "moment_id",
     ids?: readonly string[],
   ): Promise<readonly CanonicalRecord[]> {
     const normalizedIds = ids === undefined ? undefined : unique(ids);
-    if (normalizedIds?.length === 0) return Promise.resolve([]);
+    if (normalizedIds?.length === 0) return [];
+    const mapping = entityMappings[table];
+    if (idColumn !== mapping.idColumn) {
+      throw new CanonicalReadError(
+        "entities",
+        `Le mapping logique ${table}.${idColumn} est invalide.`,
+      );
+    }
+    if (table !== "moments") {
+      await this.assertAuthorizedCanonicalHouseholdScope();
+    }
     return this.readRows(
       `entities:${table}:${normalizedIds?.join(",") ?? "all"}`,
       "entities",
       () => {
         let query = this.client
-          .from(table)
-          .select("*")
-          .eq("household_id", this.context.householdId);
+          .from(mapping.physicalTable)
+          .select("*");
+        if (table === "moments") {
+          query = query.eq("household_id", this.context.householdId);
+        }
         if (normalizedIds !== undefined) query = query.in(idColumn, normalizedIds);
         return query.order(idColumn, { ascending: true });
       },
@@ -974,11 +1035,11 @@ export class CanonicalRepository {
   }
 
   async loadLifeEventRecord(lifeEventId: string): Promise<CanonicalRecord | null> {
+    await this.assertAuthorizedCanonicalHouseholdScope();
     const rows = await this.readRows(`life-event-record:${lifeEventId}`, "life_events", () =>
       this.client
         .from("life_events")
         .select("*")
-        .eq("household_id", this.context.householdId)
         .eq("life_event_id", lifeEventId)
         .limit(2),
     );
@@ -989,7 +1050,7 @@ export class CanonicalRepository {
   }
 
   async loadEntityRow(
-    table: "places" | "merchants" | "moments",
+    table: EntityTable,
     idColumn: "place_id" | "merchant_id" | "moment_id",
     id: string,
   ): Promise<CanonicalRecord | null> {

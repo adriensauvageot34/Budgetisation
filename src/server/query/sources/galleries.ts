@@ -52,7 +52,7 @@ type Sortable<Card> = {
 function label(row: CanonicalRecord, fallback: string): string {
   return optionalCanonicalString(
     row,
-    ["title", "name", "label", "titre", "nom", "display_name"],
+    ["nom_canonique", "title", "name", "label", "titre", "nom", "display_name"],
   ) ?? fallback;
 }
 

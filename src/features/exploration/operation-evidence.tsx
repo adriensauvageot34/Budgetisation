@@ -46,7 +46,7 @@ function EvidenceEntityAction({
 function officialNecessityLabel(value: string): string {
   if (["Indispensable", "necessary"].includes(value)) return "Indispensable";
   if (["Contraint", "Contrainte"].includes(value)) return "Contraint";
-  if (["Optionnel", "Optionnelle", "Ajustable", "discretionary"].includes(value)) return "Optionnel";
+  if (["Optionnel", "Optionnelle", "discretionary"].includes(value)) return "Optionnel";
   return value;
 }
 

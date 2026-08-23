@@ -216,12 +216,12 @@ function parseFilters(value: unknown): OperationsBrowseFilters {
     ],
     "OperationsBrowseFilters",
   );
-  const amountMin = hasOwn(record, "amountMin") && record.amountMin !== null
-    ? parseMoney(record.amountMin)
-    : null;
-  const amountMax = hasOwn(record, "amountMax") && record.amountMax !== null
-    ? parseMoney(record.amountMax)
-    : null;
+  const amountMin = record.amountMin === undefined || record.amountMin === null
+    ? null
+    : parseMoney(record.amountMin);
+  const amountMax = record.amountMax === undefined || record.amountMax === null
+    ? null
+    : parseMoney(record.amountMax);
   return {
     categoryIds: list(record.categoryIds, parseCategoryId, "categoryIds"),
     subcategoryIds: list(record.subcategoryIds, parseSubcategoryId, "subcategoryIds"),

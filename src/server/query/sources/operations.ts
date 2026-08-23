@@ -166,7 +166,7 @@ function normalizeNecessity(value: string | undefined) {
   if (value === undefined) return undefined;
   if (["Indispensable", "necessary"].includes(value)) return "Indispensable" as const;
   if (["Contraint", "Contrainte"].includes(value)) return "Contraint" as const;
-  if (["Optionnel", "Optionnelle", "Ajustable", "discretionary"].includes(value)) return "Optionnel" as const;
+  if (["Optionnel", "Optionnelle", "discretionary"].includes(value)) return "Optionnel" as const;
   return undefined;
 }
 
@@ -216,9 +216,6 @@ export function buildOperationRow(
     ...(merchantId === undefined
       ? {}
       : { merchant: { id: merchantId, label: merchantId } }),
-    ...(operation.accountId === undefined
-      ? {}
-      : { account: { id: operation.accountId, label: operation.accountId } }),
     bankAmount: moneyEnvelope(operation.bankAmount),
     economicNet:
       facts.length === 0
@@ -275,10 +272,12 @@ function assertRepresentableFilters(params: NormalizedOperationsBrowseParams): v
     params.filters.activityIds.length > 0 ||
     params.filters.momentIds.length > 0 ||
     params.filters.lifeEventIds.length > 0 ||
-    params.filters.dayContext.length > 0
+    params.filters.dayContext.length > 0 ||
+    params.filters.accountIds.length > 0 ||
+    params.filters.necessity.length > 0
   ) {
     throw new MetricProductionContractError(
-      "Les liens Activity/LifeEvent/DayContext des opérations ne sont pas projetés par le canonique actuel.",
+      "Un filtre demandé n'est pas projeté par le canonique Operations actuel.",
     );
   }
 }
@@ -492,13 +491,11 @@ export function createOperationsQuerySource(
         appliedQuery: request.params,
         capabilities: context.capabilities,
         filterCapabilities: [
-          "account",
           "category",
           "economic_amount",
           "fixed_variable",
           "life_scope",
           "merchant",
-          "necessity",
           "place",
           "precise_type",
           "quality",

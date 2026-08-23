@@ -46,7 +46,6 @@ export type CanonicalOperation = {
   readonly merchantId?: MerchantId;
   readonly categoryId?: CategoryId;
   readonly subcategoryId?: SubcategoryId;
-  readonly accountId?: string;
   readonly preciseType?: string;
   readonly necessity?: string;
   readonly fixedVariable?: string;
@@ -72,7 +71,6 @@ export function operationFromCanonicalRow(
       row,
       [
         "montant_bancaire_exact",
-        "montant_bancaire",
         "bank_amount",
         "amount",
         "montant",
@@ -88,9 +86,6 @@ export function operationFromCanonicalRow(
     ...(optionalId(["subcategory_id"]) === undefined
       ? {}
       : { subcategoryId: optionalId(["subcategory_id"]) as SubcategoryId }),
-    ...(optionalId(["account_id", "compte_id"]) === undefined
-      ? {}
-      : { accountId: optionalId(["account_id", "compte_id"]) }),
     ...(optionalId(["type_precis", "precise_type", "precise_type_label"]) === undefined
       ? {}
       : { preciseType: optionalId(["type_precis", "precise_type", "precise_type_label"]) }),
