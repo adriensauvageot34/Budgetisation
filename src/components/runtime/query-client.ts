@@ -92,7 +92,21 @@ export async function executeClientQuery<Name extends QueryResourceName>(
     body: JSON.stringify(request),
     signal,
   });
-  return parseClientQueryResult(request.resource, await response.json());
+  const contentType = response.headers.get("content-type")?.toLowerCase() ?? "";
+  if (!contentType.includes("application/json")) {
+    throw new TypeError(
+      `Le transport Query a répondu ${response.status} avec un contenu non JSON.`,
+    );
+  }
+  let payload: unknown;
+  try {
+    payload = await response.json();
+  } catch {
+    throw new TypeError(
+      `Le transport Query a répondu ${response.status} avec un JSON illisible.`,
+    );
+  }
+  return parseClientQueryResult(request.resource, payload);
 }
 
 export function cachedClientQueryResponse<Name extends QueryResourceName>(

@@ -6,6 +6,13 @@ import { getSupabaseConfig } from "@/lib/supabase/config";
 
 export async function updateSession(request: NextRequest) {
   let response = NextResponse.next({ request });
+  const isApi = request.nextUrl.pathname.startsWith("/api/");
+
+  // Les routes API lisent et renouvellent elles-mêmes leur session via le
+  // client SSR. Elles doivent surtout rester propriétaires de leur réponse
+  // d'erreur JSON, y compris quand la configuration locale est absente.
+  if (isApi) return response;
+
   const { url, publishableKey } = getSupabaseConfig();
 
   const supabase = createServerClient(

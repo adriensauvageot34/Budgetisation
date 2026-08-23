@@ -109,7 +109,10 @@ function classifyImportViolation(sourcePath, specifier, isClient) {
   const inNavigation = isWithin(sourcePath, "src/navigation");
   const sourceFeature = featureName(sourcePath);
   const inCalendarFeature = sourceFeature === "calendar";
+  const inAnalysisFeature = sourceFeature === "analysis";
+  const inOperationsFeature = sourceFeature === "operations";
   const inExplorationFeature = sourceFeature === "exploration";
+  const inProductRuntime = isWithin(sourcePath, "src/components/runtime");
   const inSharedUi = isWithin(sourcePath, "src/shared/ui");
 
   if (inCore) {
@@ -314,6 +317,10 @@ function classifyImportViolation(sourcePath, specifier, isClient) {
     return "Navigation ne peut pas dépendre d’une feature";
   }
 
+  if (inNavigation && target && isWithin(target, "src/query-api")) {
+    return "Navigation ne peut pas dépendre des DTO Query";
+  }
+
   if (
     inCalendarFeature &&
     target &&
@@ -347,6 +354,38 @@ function classifyImportViolation(sourcePath, specifier, isClient) {
     ].some((prefix) => isWithin(target, prefix))
   ) {
     return "Exploration ne peut pas importer Analytics, server ou Supabase";
+  }
+
+  if (
+    (inAnalysisFeature || inOperationsFeature) &&
+    target &&
+    [
+      "src/analytics",
+      "src/server",
+      "src/query-api/server",
+      "src/lib/supabase",
+    ].some((prefix) => isWithin(target, prefix))
+  ) {
+    return `${inAnalysisFeature ? "Analysis" : "Operations"} React ne peut pas importer Analytics, server ou Supabase`;
+  }
+
+  if (
+    (metadataClientOrFeature(isClient, sourceFeature) || inProductRuntime) &&
+    specifier.startsWith("@supabase/")
+  ) {
+    return "un module React/runtime ne peut pas importer un client Supabase privilégié";
+  }
+
+  if (
+    inProductRuntime &&
+    target &&
+    (isWithin(target, "src/analytics") ||
+      isWithin(target, "src/server") ||
+      isWithin(target, "src/lib/supabase") ||
+      (isWithin(target, "src/query-api") && target !== "src/query-api") ||
+      (isWithin(target, "src/navigation") && target !== "src/navigation"))
+  ) {
+    return "Product Runtime ne peut utiliser que les API publiques Query et Navigation";
   }
 
   if (
@@ -420,6 +459,10 @@ function classifyImportViolation(sourcePath, specifier, isClient) {
   return null;
 }
 
+function metadataClientOrFeature(isClient, sourceFeature) {
+  return isClient || sourceFeature !== null;
+}
+
 function requiresServerOnlyMarker(sourcePath) {
   if (
     sourcePath === "src/lib/supabase/server.ts" ||
@@ -451,10 +494,16 @@ function selfCheckRules() {
     ["src/query-api/example.ts", "@/ui", false],
     ["src/navigation/example.ts", "@/ui/media", false],
     ["src/navigation/example.ts", "@/features/calendar", false],
+    ["src/navigation/example.ts", "@/query-api/read-model-registry", false],
     ["src/features/calendar/example.tsx", "@/analytics/production", true],
     ["src/features/calendar/example.tsx", "@/navigation/contracts/routes", true],
     ["src/features/exploration/example.tsx", "@/analytics/production", true],
     ["src/features/exploration/example.tsx", "@/navigation/exploration/stack", true],
+    ["src/features/analysis/example.tsx", "@/analytics/production", true],
+    ["src/features/operations/example.tsx", "@/server/query/runtime", true],
+    ["src/features/operations/example.tsx", "@supabase/supabase-js", true],
+    ["src/components/runtime/example.tsx", "@/query-api/server", true],
+    ["src/components/runtime/example.tsx", "@/navigation/contracts/routes", true],
     ["src/ui/foundations/example.ts", "@/query-api", false],
     ["src/ui/foundations/example.ts", "@/ui/primitives", false],
     ["src/ui/primitives/example.tsx", "@/ui/composites", true],

@@ -5,7 +5,28 @@ import { executeAuthenticatedQuery } from "@/server/query/runtime";
 
 export const dynamic = "force-dynamic";
 
+function unauthenticatedResponse() {
+  return NextResponse.json(
+    {
+      ok: false,
+      error: createApiError({
+        code: "PERMISSION_DENIED",
+        message: "Une session authentifiée est requise.",
+        retryable: false,
+        requestId: crypto.randomUUID(),
+      }),
+    },
+    { status: 401 },
+  );
+}
+
 export async function POST(request: Request) {
+  // L'application s'authentifie par cookies Supabase. Ce garde évite tout
+  // accès aux dépendances de données pour une requête manifestement anonyme.
+  const cookieHeader = request.headers.get("cookie") ?? "";
+  const hasSupabaseSessionCookie = /(?:^|;\s*)sb-[^=;]+-auth-token(?:\.\d+)?=/.test(cookieHeader);
+  if (!hasSupabaseSessionCookie) return unauthenticatedResponse();
+
   let body: unknown;
   try {
     body = await request.json();

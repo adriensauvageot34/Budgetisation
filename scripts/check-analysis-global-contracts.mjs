@@ -43,6 +43,7 @@ for (const heading of headings) {
 assert.doesNotMatch(page, /goToMonth\(.*asOf/);
 assert.doesNotMatch(page, /@\/server|@\/analytics/);
 assert.doesNotMatch(page, /\.reduce\(|groupBy\(/, "React Global ne doit pas agréger des faits");
+assert.doesNotMatch(page, /\bas never\b/, "React Global ne doit pas contourner ses destinations typées");
 
 const types = read("src/query-api/analysis/global/types.ts");
 assert.match(types, /availableViews/);
@@ -61,5 +62,10 @@ assert.match(targetRegistry, /"global"/);
 
 const subviews = read("src/navigation/contracts/subviews.ts");
 for (const state of ["baselineView", "evolutionView", "selectedMonth", "habitsView", "profileTarget", "selectedHeatmapCell"]) assert.match(subviews, new RegExp(state));
+
+const controller = read("src/navigation/controller/navigation-controller.ts");
+assert.match(controller, /resolveGlobalWindowMonths/);
+assert.match(controller, /preservedSubview/);
+assert.match(sources, /request\.scope\.time\.kind === "global"[\s\S]{0,120}"activity_causal_cost"/);
 
 console.log("ANALYSIS_GLOBAL_CONTRACTS=PASS");

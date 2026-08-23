@@ -2,6 +2,7 @@ import type { NormalizedAnalysisScope } from "../../core/scope";
 import {
   parseGlobalWindow,
   parseYearMonth,
+  resolveGlobalWindowMonths,
   type GlobalWindow,
   type LocalDate,
   type YearMonth,
@@ -561,6 +562,7 @@ class DefaultNavigationController implements NavigationController {
     }
     const sourceScope = this.readScope();
     if (sourceScope === null) return rejected("missing_analysis_scope");
+    const sourceSubview = this.deps.surface.readSubview();
 
     const currentMemory = this.deps.session.getContextMemory();
     let targetScope: NormalizedAnalysisScope;
@@ -608,7 +610,21 @@ class DefaultNavigationController implements NavigationController {
     this.closeActiveGeneration();
     this.commitRoot(targetRoot, "push");
     this.deps.surface.applyScope(targetScope);
-    this.deps.surface.applySubview(null);
+    const retainedMonths = targetScope.time.kind === "global"
+      ? new Set(resolveGlobalWindowMonths(targetScope.time.observationWindow, targetScope.time.asOf))
+      : new Set<YearMonth>();
+    const preservedSubview = sourceScope.time.kind === "global" && sourceSubview?.kind === "analysis-global"
+      ? {
+          ...sourceSubview,
+          ...(sourceSubview.selectedMonth !== undefined && !retainedMonths.has(sourceSubview.selectedMonth)
+            ? { selectedMonth: undefined }
+            : {}),
+          ...(sourceSubview.selectedHeatmapCell !== undefined && !retainedMonths.has(sourceSubview.selectedHeatmapCell.month)
+            ? { selectedHeatmapCell: undefined }
+            : {}),
+        }
+      : null;
+    this.deps.surface.applySubview(preservedSubview);
     this.deps.session.setContextMemory(memory);
     return this.restoreScroll({ kind: "analysis_mode_switch" });
   }

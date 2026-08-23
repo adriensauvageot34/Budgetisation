@@ -280,7 +280,7 @@ export const queryCapabilityRegistry = Object.freeze({
   analysis_target: {
     resource: queryResourceKeys.analysisTarget,
     sections: Object.freeze([querySectionKeys.target, querySectionKeys.headline]),
-    measures: Object.freeze(["category_amount", "activity_frequency", "life_scope_amount"]),
+    measures: Object.freeze(["category_amount", "activity_frequency", "activity_causal_cost", "life_scope_amount"]),
     filters: allCoreFilters,
   },
   analysis_month_contexts: {

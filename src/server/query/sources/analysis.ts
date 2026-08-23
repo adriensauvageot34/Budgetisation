@@ -1171,7 +1171,13 @@ export function createAnalysisQuerySources(
         : target.kind === "activity"
           ? { ...request.scope, filters: { ...request.scope.filters, activityIds: [target.activityId] } }
           : { ...request.scope, filters: { ...request.scope.filters, lifeScopeContext: [target.context] } };
-      const metricId = target.kind === "category" ? "category_amount" : target.kind === "activity" ? "activity_frequency" : "life_scope_amount";
+      const metricId = target.kind === "category"
+        ? "category_amount"
+        : target.kind === "activity"
+          ? request.scope.time.kind === "global"
+            ? "activity_causal_cost"
+            : "activity_frequency"
+          : "life_scope_amount";
       const metric = await dependencies.metrics.produce(metricId, targetScope);
       return {
         time: request.scope.time,

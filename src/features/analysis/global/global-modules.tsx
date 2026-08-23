@@ -11,6 +11,7 @@ import type {
   MoneyMetricEnvelope,
 } from "@/query-api";
 import type { YearMonth } from "@/core/time";
+import type { ExplorationNode } from "@/navigation";
 import { MetricDisplay, NoDataState, NoReferenceState, Surface } from "@/ui";
 import styles from "./global.module.css";
 
@@ -126,11 +127,40 @@ export function GlobalProfilesModule({ model, onExplore }: { readonly model: Ana
   );
 }
 
-export function GlobalUniverseModule({ model, onOpen, onSeeAll }: { readonly model: AnalysisGlobalUniverseReadModel; readonly onOpen: (kind: "moment" | "place" | "merchant", id: string) => void; readonly onSeeAll: (gallery: "moments" | "places" | "merchants", sort: "recent" | "frequent" | "spent") => void }) {
-  const groups = [
-    { key: "moments" as const, title: "Moments", sort: model.moments.sort, data: model.moments, kind: "moment" as const, id: (item: (typeof model.moments.items)[number]) => item.momentId, label: (item: (typeof model.moments.items)[number]) => item.title },
-    { key: "places" as const, title: "Lieux", sort: model.places.sort, data: model.places, kind: "place" as const, id: (item: (typeof model.places.items)[number]) => item.placeId, label: (item: (typeof model.places.items)[number]) => item.label },
-    { key: "merchants" as const, title: "Marchands", sort: model.merchants.sort, data: model.merchants, kind: "merchant" as const, id: (item: (typeof model.merchants.items)[number]) => item.merchantId, label: (item: (typeof model.merchants.items)[number]) => item.label },
-  ];
-  return <div className={styles.universe}>{groups.map((group) => <section key={group.key}><div className={styles.moduleHeader}><h3>{group.title}</h3><button type="button" className="button-ghost" onClick={() => onSeeAll(group.key, group.sort)}>Voir tous</button></div>{group.data.items.length === 0 ? <NoDataState /> : <div className={styles.rows}>{group.data.items.map((item) => <Surface key={group.id(item as never)} variant="outlined" action={{ kind: "callback", onAction: () => onOpen(group.kind, group.id(item as never)) }}><strong>{group.label(item as never)}</strong></Surface>)}</div>}</section>)}</div>;
+type UniverseEntityDestination = Extract<ExplorationNode, { readonly kind: "moment" | "place" | "merchant" }>;
+type UniverseGalleryDestination = Extract<ExplorationNode, { readonly kind: "gallery" }>;
+
+function UniverseSection<Item>({
+  title,
+  items,
+  itemKey,
+  itemLabel,
+  onOpen,
+  onSeeAll,
+}: {
+  readonly title: string;
+  readonly items: readonly Item[];
+  readonly itemKey: (item: Item) => string;
+  readonly itemLabel: (item: Item) => string;
+  readonly onOpen: (item: Item) => void;
+  readonly onSeeAll: () => void;
+}) {
+  return (
+    <section>
+      <div className={styles.moduleHeader}><h3>{title}</h3><button type="button" className="button-ghost" onClick={onSeeAll}>Voir tous</button></div>
+      {items.length === 0
+        ? <NoDataState />
+        : <div className={styles.rows}>{items.map((item) => <Surface key={itemKey(item)} variant="outlined" action={{ kind: "callback", onAction: () => onOpen(item) }}><strong>{itemLabel(item)}</strong></Surface>)}</div>}
+    </section>
+  );
+}
+
+export function GlobalUniverseModule({ model, onOpen, onSeeAll }: { readonly model: AnalysisGlobalUniverseReadModel; readonly onOpen: (destination: UniverseEntityDestination) => void; readonly onSeeAll: (destination: UniverseGalleryDestination) => void }) {
+  return (
+    <div className={styles.universe}>
+      <UniverseSection title="Moments" items={model.moments.items} itemKey={(item) => item.momentId} itemLabel={(item) => item.title} onOpen={(item) => onOpen({ kind: "moment", id: item.momentId })} onSeeAll={() => onSeeAll({ kind: "gallery", gallery: "moments", filters: { sort: model.moments.sort } })} />
+      <UniverseSection title="Lieux" items={model.places.items} itemKey={(item) => item.placeId} itemLabel={(item) => item.label} onOpen={(item) => onOpen({ kind: "place", id: item.placeId })} onSeeAll={() => onSeeAll({ kind: "gallery", gallery: "places", filters: { sort: model.places.sort } })} />
+      <UniverseSection title="Marchands" items={model.merchants.items} itemKey={(item) => item.merchantId} itemLabel={(item) => item.label} onOpen={(item) => onOpen({ kind: "merchant", id: item.merchantId })} onSeeAll={() => onSeeAll({ kind: "gallery", gallery: "merchants", filters: { sort: model.merchants.sort } })} />
+    </div>
+  );
 }

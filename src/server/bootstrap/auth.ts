@@ -17,6 +17,7 @@ export async function getAuthenticatedBootstrapClient(): Promise<{
     error,
   } = await supabase.auth.getUser();
 
+  if (error && !user) throw new BootstrapAuthenticationRequiredError();
   if (error) {
     throw new BootstrapDataError("Impossible de vérifier la session Supabase.", {
       cause: error,

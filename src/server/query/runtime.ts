@@ -26,6 +26,10 @@ import {
 } from "@/server/canonical/context";
 import { CanonicalReadError } from "@/server/canonical/errors";
 import { CanonicalRepository } from "@/server/canonical/repository";
+import {
+  initiallyAvailableCanonicalSources,
+  type CanonicalSourceHealth,
+} from "@/server/canonical/source-health";
 import { createRealQuerySources } from "./sources";
 
 function unavailable(): never {
@@ -182,4 +186,26 @@ export async function resolveLatestBankOperationMonth() {
   );
   const repository = new CanonicalRepository(createCanonicalReadClient(), context);
   return repository.loadLatestBankOperationMonth();
+}
+
+export async function readAuthenticatedCanonicalSourceHealth(): Promise<CanonicalSourceHealth> {
+  const bootstrap = await getBootstrapContext();
+  const context = createAuthorizedRuntimeContext(
+    bootstrap,
+    parseInstant(new Date().toISOString()),
+  );
+  try {
+    return await new CanonicalRepository(
+      createCanonicalReadClient(),
+      context,
+    ).sourceHealth();
+  } catch (error) {
+    if (!(error instanceof CanonicalReadError)) throw error;
+    return Object.fromEntries(
+      Object.keys(initiallyAvailableCanonicalSources).map((source) => [
+        source,
+        "UNAVAILABLE",
+      ]),
+    ) as CanonicalSourceHealth;
+  }
 }

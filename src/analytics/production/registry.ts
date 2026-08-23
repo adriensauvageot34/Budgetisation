@@ -333,7 +333,7 @@ export const metricRegistry = {
     methodVersion: metricMethodVersions.activity_causal_cost,
     unit: "EUR",
     outputKind: "money",
-    allowedTimeKinds: ["month"],
+    allowedTimeKinds: ["month", "global"],
     aggregationCapabilityId: "activity_month_causal_cost",
   },
   activity_causal_median_cost_per_occurrence: {

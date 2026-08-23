@@ -3,7 +3,7 @@
 import { useMemo, useState } from "react";
 import { parseActivityId, parseCategoryId, parseMerchantId, parseMetricId, parsePlaceId, type PersonId } from "@/core/identity";
 import { normalizeAnalysisScope, parseDayContext, parseLifeScopeContext, type NormalizedAnalysisScope } from "@/core/scope";
-import { addMonths, formatYearMonth, parseGlobalWindow } from "@/core/time";
+import { addMonths, formatYearMonth, parseGlobalWindow, resolveGlobalWindowMonths } from "@/core/time";
 import { useProductRuntime, useProductSurface, useQueryRuntime, useRestorableSubview, useSemanticAnchor } from "@/components/runtime";
 import type { HistoryRootContext, NavigationSubviewRef, SemanticAnchor } from "@/navigation";
 import type { AnalysisGlobalInitialReadModel, PersonaTarget } from "@/query-api";
@@ -74,12 +74,16 @@ export function AnalysisGlobalPage({
   }, [currentRoute, serverScope]);
   if (currentScope.time.kind !== "global") throw new TypeError("AnalysisGlobalPage exige un scope Global.");
   const globalTime = currentScope.time;
+  const defaultSelectedMonth = resolveGlobalWindowMonths(
+    globalTime.observationWindow,
+    globalTime.asOf,
+  ).at(-1)!;
 
   const defaultProfileTarget: PersonaTarget = currentScope.subject.kind === "person" ? { kind: "person", personId: currentScope.subject.personId } : { kind: "ensemble" };
   const [currentView, setCurrentView] = useState<Extract<NavigationSubviewRef, { kind: "analysis-global" }>["view"]>("overview");
   const [baselineView, setBaselineView] = useState<"day" | "week" | "month">("month");
   const [evolutionView, setEvolutionView] = useState<"money" | "behavior">("money");
-  const [selectedMonth, setSelectedMonth] = useState(addMonths(currentScope.time.asOf, -1));
+  const [selectedMonth, setSelectedMonth] = useState(defaultSelectedMonth);
   const [habitsView, setHabitsView] = useState<"contexts" | "heatmap">("contexts");
   const [profileTarget, setProfileTarget] = useState<PersonaTarget>(defaultProfileTarget);
   const [selectedHeatmapCell, setSelectedHeatmapCell] = useState<{ readonly activityId: ReturnType<typeof parseActivityId>; readonly month: typeof selectedMonth } | undefined>();
@@ -91,10 +95,10 @@ export function AnalysisGlobalPage({
     setCurrentView(restored.view);
     if (restored.baselineView) setBaselineView(restored.baselineView);
     if (restored.evolutionView) setEvolutionView(restored.evolutionView);
-    if (restored.selectedMonth) setSelectedMonth(restored.selectedMonth);
+    setSelectedMonth(restored.selectedMonth ?? defaultSelectedMonth);
     if (restored.habitsView) setHabitsView(restored.habitsView);
     if (restored.profileTarget) setProfileTarget(restored.profileTarget);
-    if (restored.selectedHeatmapCell) setSelectedHeatmapCell(restored.selectedHeatmapCell);
+    setSelectedHeatmapCell(restored.selectedHeatmapCell);
   });
 
   const subview: NavigationSubviewRef = useMemo(() => ({
@@ -164,11 +168,11 @@ export function AnalysisGlobalPage({
 
       <div className={styles.act}><span>Acte 2</span><h2>Comprendre</h2></div>
       <SectionAnchor anchor={{ moduleId: "analysis-global", itemKey: "evolution" }}><SectionLayout title="4. Comment notre vie évolue"><div className={styles.tabs} role="tablist" aria-label="Vue de l’évolution"><button type="button" role="tab" aria-selected={evolutionView === "money"} onClick={() => setEvolutionView("money")}>Argent</button><button type="button" role="tab" aria-selected={evolutionView === "behavior"} onClick={() => setEvolutionView("behavior")}>Comportement</button></div><AnalysisGlobalModuleBoundary route={currentRoute} module="evolution" state={evolution}>{(model) => <GlobalEvolutionModule model={model} selectedMonth={selectedMonth} onSelectMonth={setSelectedMonth} onAnalyze={(month) => runtime.run((controller) => controller.goToMonth(month))} onMethodology={(metricId) => runtime.run((controller) => controller.openExploration({ kind: "methodology", metricId: parseMetricId(metricId) }))} />}</AnalysisGlobalModuleBoundary></SectionLayout></SectionAnchor>
-      <SectionAnchor anchor={{ moduleId: "analysis-global", itemKey: "habits" }}><SectionLayout title="5. Nos habitudes"><div className={styles.tabs} role="tablist" aria-label="Vue des habitudes"><button type="button" role="tab" aria-selected={habitsView === "contexts"} onClick={() => setHabitsView("contexts")}>Contextes</button><button type="button" role="tab" aria-selected={habitsView === "heatmap"} onClick={() => setHabitsView("heatmap")}>Heatmap</button></div><AnalysisGlobalModuleBoundary route={currentRoute} module="habits" state={habits}>{(model) => <GlobalHabitsModule model={model} selectedCell={selectedHeatmapCell ? `${selectedHeatmapCell.activityId}:${selectedHeatmapCell.month}` : undefined} onSelectCell={(activityId, month) => setSelectedHeatmapCell({ activityId: parseActivityId(activityId), month })} />}</AnalysisGlobalModuleBoundary></SectionLayout></SectionAnchor>
+      <SectionAnchor anchor={{ moduleId: "analysis-global", itemKey: "habits" }}><SectionLayout title="5. Nos habitudes"><AnalysisGlobalModuleBoundary route={currentRoute} module="habits" state={habits}>{(model) => <><div className={styles.tabs} role="tablist" aria-label="Vue des habitudes">{model.availableViews.map((view) => <button key={view} type="button" role="tab" aria-selected={habitsView === view} onClick={() => setHabitsView(view)}>{view === "contexts" ? "Contextes" : "Heatmap"}</button>)}</div><GlobalHabitsModule model={model} selectedCell={selectedHeatmapCell ? `${selectedHeatmapCell.activityId}:${selectedHeatmapCell.month}` : undefined} onSelectCell={(activityId, month) => setSelectedHeatmapCell({ activityId: parseActivityId(activityId), month })} /></>}</AnalysisGlobalModuleBoundary></SectionLayout></SectionAnchor>
 
       <div className={styles.act}><span>Acte 3</span><h2>Nous</h2></div>
       <SectionAnchor anchor={{ moduleId: "analysis-global", itemKey: "profiles" }}><SectionLayout title="6. Nos profils"><label className={styles.profileSelect}><span>Profil local</span><select value={profileTarget.kind === "person" ? profileTarget.personId : "ensemble"} onChange={(event) => { const person = persons.find(({ id }) => id === event.currentTarget.value); setProfileTarget(person ? { kind: "person", personId: person.id } : { kind: "ensemble" }); }}><option value="ensemble">Ensemble</option>{persons.map(({ id, label }) => <option key={id} value={id}>{label}</option>)}</select></label><AnalysisGlobalModuleBoundary route={currentRoute} module="profiles" state={profiles}>{(model) => <GlobalProfilesModule model={model} onExplore={() => runtime.run((controller) => controller.openExploration({ kind: "persona", id: model.target.kind === "person" ? model.target.personId : "ensemble" }))} />}</AnalysisGlobalModuleBoundary></SectionLayout></SectionAnchor>
-      <SectionAnchor anchor={{ moduleId: "analysis-global", itemKey: "universe" }}><SectionLayout title="7. Notre univers"><AnalysisGlobalModuleBoundary route={currentRoute} module="universe" state={universe}>{(model) => <GlobalUniverseModule model={model} onOpen={(kind, id) => runtime.run((controller) => controller.openExploration(kind === "moment" ? { kind, id: id as never } : kind === "place" ? { kind, id: id as never } : { kind, id: id as never }))} onSeeAll={(gallery, sort) => runtime.run((controller) => controller.openExploration({ kind: "gallery", gallery, filters: { sort } } as never))} />}</AnalysisGlobalModuleBoundary></SectionLayout></SectionAnchor>
+      <SectionAnchor anchor={{ moduleId: "analysis-global", itemKey: "universe" }}><SectionLayout title="7. Notre univers"><AnalysisGlobalModuleBoundary route={currentRoute} module="universe" state={universe}>{(model) => <GlobalUniverseModule model={model} onOpen={(destination) => runtime.run((controller) => controller.openExploration(destination))} onSeeAll={(destination) => runtime.run((controller) => controller.openExploration(destination))} />}</AnalysisGlobalModuleBoundary></SectionLayout></SectionAnchor>
     </main>
   );
 }
