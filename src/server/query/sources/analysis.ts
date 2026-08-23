@@ -16,6 +16,7 @@ import Big from "big.js";
 import { compareMoney } from "@/core/money";
 import { selectEconomicComponentsForScope, sumEconomicNetForScope } from "@/analytics/context";
 import { parseSupport } from "@/core/metrics";
+import { supportForPolicy } from "@/analytics/support";
 import { computeScopeHash } from "@/core/scope";
 import type {
   AnalysisScope,
@@ -34,14 +35,24 @@ import type {
   AnalysisStructureMeasure,
   AnalysisStructureView,
   AnalysisMonthEvolutionPoint,
+  CountMetricEnvelope,
+  PersonaTarget,
+} from "@/query-api";
+import {
+  parseGalleryMerchantsParams,
+  parseGalleryMomentsParams,
+  parseGalleryPlacesParams,
+  queryResourceKeys,
 } from "@/query-api";
 import type { QueryReadModelSources } from "@/query-api/server";
 import type { FactSourceResolver } from "@/server/analytics/fact-source-resolver";
+import { canonicalRangeForScope } from "@/server/analytics/fact-source-resolver";
 import type { MetricQueryService } from "@/server/analytics/metric-query-service";
 import type { AuthorizedRuntimeContext } from "@/server/canonical/context";
 import type { CanonicalRepository } from "@/server/canonical/repository";
 import { optionalCanonicalString, type CanonicalRecord } from "@/server/canonical/record";
 import { countEnvelope, periodCompleteness } from "./shared";
+import { createGalleryQuerySources } from "./galleries";
 
 type AnalysisDependencies = {
   readonly context: AuthorizedRuntimeContext;
@@ -640,6 +651,161 @@ function recordLabel(record: CanonicalRecord, fallback: string): string {
   return optionalCanonicalString(record, ["title", "name", "label", "titre", "nom", "display_name"]) ?? fallback;
 }
 
+function unavailableCount(availability: "unknown" | "not_applicable" = "unknown"): CountMetricEnvelope {
+  return { availability, value: null, unit: "count", provenance: "observed" };
+}
+
+function documentedGlobalMonths(
+  scope: NormalizedAnalysisScope,
+  context: AuthorizedRuntimeContext,
+): number {
+  if (scope.time.kind !== "global") return 0;
+  const months = new Set(resolveGlobalWindowMonths(scope.time.observationWindow, scope.time.asOf));
+  const documented = (status: string) => status === "complete" || status === "partial";
+  return context.periods.filter((period) => {
+    if (!period.isClosed || !months.has(yearMonthOf(period.month))) return false;
+    if (!documented(period.financeStatus)) return false;
+    if (scope.filters.activityIds.length > 0 && !documented(period.lifeStatus)) return false;
+    if (scope.filters.placeIds.length > 0 && !documented(period.locationStatus)) return false;
+    if (scope.filters.dayContext.length > 0 && !documented(period.calendarStatus)) return false;
+    return true;
+  }).length;
+}
+
+function selectedActivityOccurrences(
+  facts: readonly import("@/analytics/facts").ActivityOccurrenceFact[],
+  scope: NormalizedAnalysisScope,
+) {
+  return facts.filter((fact) =>
+    (scope.subject.kind === "household" || fact.participantIds.includes(scope.subject.personId)) &&
+    (scope.filters.activityIds.length === 0 || scope.filters.activityIds.includes(fact.activityId)),
+  );
+}
+
+function selectedPlaceVisits(
+  facts: readonly import("@/analytics/facts").PlaceVisitFact[],
+  scope: NormalizedAnalysisScope,
+) {
+  return facts.filter((fact) =>
+    (scope.subject.kind === "household" || fact.personId === scope.subject.personId) &&
+    (scope.filters.placeIds.length === 0 || scope.filters.placeIds.includes(fact.placeId)),
+  );
+}
+
+function momentRowsInScope(
+  rows: readonly CanonicalRecord[],
+  scope: NormalizedAnalysisScope,
+  eligibleMomentIds: ReadonlySet<string> | null,
+): readonly CanonicalRecord[] {
+  if (scope.time.kind !== "global") return [];
+  const months = resolveGlobalWindowMonths(scope.time.observationWindow, scope.time.asOf);
+  const start = `${months[0]}-01`;
+  const endExclusive = `${addMonths(months[months.length - 1], 1)}-01`;
+  return rows.filter((row) => {
+    const momentId = optionalCanonicalString(row, ["moment_id"]);
+    const rawStart = optionalCanonicalString(row, ["start_date", "starts_on"]);
+    const rawEnd = optionalCanonicalString(row, ["end_date", "ends_on"]) ?? rawStart;
+    if (momentId === undefined || rawStart === undefined || rawEnd === undefined) return false;
+    if (rawStart >= endExclusive || rawEnd < start) return false;
+    if (eligibleMomentIds !== null && !eligibleMomentIds.has(momentId)) return false;
+    const participants = recordStringArray(row, ["participant_ids", "person_ids"]);
+    return scope.subject.kind === "household" || participants.includes(scope.subject.personId);
+  });
+}
+
+async function scopedMomentRows(
+  scope: NormalizedAnalysisScope,
+  dependencies: AnalysisDependencies,
+): Promise<readonly CanonicalRecord[]> {
+  const rows = await dependencies.repository.loadEntityRows("moments", "moment_id");
+  const hasEconomicFilters = scope.filters.categoryIds.length > 0 ||
+    scope.filters.activityIds.length > 0 || scope.filters.merchantIds.length > 0 ||
+    scope.filters.placeIds.length > 0 || scope.filters.lifeScopeContext.length > 0;
+  const eligibleMomentIds = hasEconomicFilters
+    ? new Set(selectEconomicComponentsForScope(await dependencies.facts.loadEconomicFacts(scope), scope)
+        .flatMap(({ moment }) => moment.kind === "resolved" ? [moment.id as string] : []))
+    : null;
+  return momentRowsInScope(rows, scope, eligibleMomentIds);
+}
+
+async function globalOperationsCount(
+  scope: NormalizedAnalysisScope,
+  dependencies: AnalysisDependencies,
+): Promise<CountMetricEnvelope> {
+  if (scope.subject.kind === "person" || scope.filters.activityIds.length > 0 || scope.filters.dayContext.length > 0) {
+    return unavailableCount();
+  }
+  const bundle = await dependencies.repository.loadOperationBundle(canonicalRangeForScope(scope));
+  const hasEconomicFilters = scope.filters.categoryIds.length > 0 || scope.filters.merchantIds.length > 0 ||
+    scope.filters.placeIds.length > 0 || scope.filters.lifeScopeContext.length > 0;
+  if (!hasEconomicFilters) return countEnvelope(bundle.operations.length);
+  const selected = selectEconomicComponentsForScope(bundle.economicFacts, scope);
+  return countEnvelope(new Set(selected.flatMap(({ sourceOperation }) =>
+    sourceOperation.kind === "resolved" ? [sourceOperation.id] : [],
+  )).size);
+}
+
+function median(values: readonly number[]): number | null {
+  if (values.length === 0) return null;
+  const sorted = [...values].sort((left, right) => left - right);
+  const middle = Math.floor(sorted.length / 2);
+  return sorted.length % 2 === 0 ? (sorted[middle - 1] + sorted[middle]) / 2 : sorted[middle];
+}
+
+async function globalTypicalBehaviorRows(
+  scope: NormalizedAnalysisScope,
+  dependencies: AnalysisDependencies,
+) {
+  if (scope.time.kind !== "global") return [];
+  const allowedMonths = new Set(resolveGlobalWindowMonths(scope.time.observationWindow, scope.time.asOf));
+  const observableMonths = dependencies.context.periods
+    .filter(({ month, lifeStatus, isClosed }) => isClosed && lifeStatus === "complete" && allowedMonths.has(yearMonthOf(month)))
+    .map(({ month }) => yearMonthOf(month))
+    .sort();
+  const occurrences = selectedActivityOccurrences(await dependencies.facts.loadActivityOccurrences(scope), scope);
+  const activityIds = [...new Set(occurrences.map(({ activityId }) => activityId))].sort();
+  return activityIds.map((activityId) => {
+    const counts = observableMonths.map((month) => occurrences.filter((fact) => fact.activityId === activityId && yearMonthOf(fact.startDate) === month).length);
+    const activePeriodCount = counts.filter((value) => value > 0).length;
+    const support = supportForPolicy("typical_month", observableMonths.length, {
+      eligibleN: observableMonths.length,
+      observableN: observableMonths.length,
+    });
+    return {
+      activityId,
+      label: activityId,
+      activePeriodCount,
+      observablePeriodCount: observableMonths.length,
+      activityRate: observableMonths.length === 0 ? null : activePeriodCount / observableMonths.length,
+      habitualFrequency: support.level === "sufficient" ? median(counts) : null,
+      support,
+      variability: { status: "unavailable" as const, reason: "missing_contract" as const },
+      destination: { kind: "target" as const, target: { kind: "activity" as const, activityId } },
+    };
+  }).sort((left, right) => right.activePeriodCount - left.activePeriodCount || left.activityId.localeCompare(right.activityId));
+}
+
+function rankedRef<Id extends string>(
+  values: readonly Id[],
+  unit: import("@/core/metrics").SupportUnit,
+  label?: (id: Id) => string,
+) {
+  const counts = new Map<Id, number>();
+  for (const value of values) counts.set(value, (counts.get(value) ?? 0) + 1);
+  const winner = [...counts.entries()].sort((left, right) => right[1] - left[1] || left[0].localeCompare(right[0]))[0];
+  if (winner === undefined) return undefined;
+  return {
+    id: winner[0],
+    label: label?.(winner[0]) ?? winner[0],
+    count: winner[1],
+    support: parseSupport({ n: winner[1], unit, level: winner[1] >= 5 ? "sufficient" : winner[1] >= 2 ? "limited" : "insufficient" }),
+  };
+}
+
+function profileScope(scope: NormalizedAnalysisScope, target: PersonaTarget): NormalizedAnalysisScope {
+  return { ...scope, subject: target.kind === "person" ? { kind: "person", personId: target.personId } : { kind: "household" } };
+}
+
 function comparisonCandidate(input: {
   readonly id: string;
   readonly kind: "total" | "category";
@@ -675,9 +841,14 @@ export function createAnalysisQuerySources(
   | "readAnalysisTarget"
   | "readAnalysisMonthContexts"
   | "readAnalysisGlobalInitial"
+  | "readAnalysisGlobalBaseline"
+  | "readAnalysisGlobalTypical"
   | "readAnalysisGlobalBreakdown"
   | "readAnalysisGlobalEvolution"
   | "readAnalysisGlobalContexts"
+  | "readAnalysisGlobalHabits"
+  | "readAnalysisGlobalProfiles"
+  | "readAnalysisGlobalUniverse"
 > {
   return {
     async readAnalysisMonthInitial({ request, context }) {
@@ -983,10 +1154,9 @@ export function createAnalysisQuerySources(
     },
 
     async readAnalysisTarget({ request, context }) {
-      if (request.scope.time.kind !== "month") throw new TypeError("Analysis Target exige un scope month.");
       const target = request.params.target;
       if (target.kind === "family") {
-        return { month: request.scope.time.month, subject: request.scope.subject, target, status: "blocked_contract" as const, headlineMetrics: [], capabilities: context.capabilities };
+        return { time: request.scope.time, subject: request.scope.subject, target, status: "blocked_contract" as const, headlineMetrics: [], capabilities: context.capabilities };
       }
       const outsideScope = target.kind === "category"
         ? request.scope.filters.categoryIds.length > 0 && !request.scope.filters.categoryIds.includes(target.categoryId)
@@ -994,7 +1164,7 @@ export function createAnalysisQuerySources(
           ? request.scope.filters.activityIds.length > 0 && !request.scope.filters.activityIds.includes(target.activityId)
           : request.scope.filters.lifeScopeContext.length > 0 && !request.scope.filters.lifeScopeContext.includes(target.context);
       if (outsideScope) {
-        return { month: request.scope.time.month, subject: request.scope.subject, target, status: "outside_scope" as const, headlineMetrics: [], capabilities: context.capabilities };
+        return { time: request.scope.time, subject: request.scope.subject, target, status: "outside_scope" as const, headlineMetrics: [], capabilities: context.capabilities };
       }
       const targetScope = target.kind === "category"
         ? { ...request.scope, filters: { ...request.scope.filters, categoryIds: [target.categoryId] } }
@@ -1004,7 +1174,7 @@ export function createAnalysisQuerySources(
       const metricId = target.kind === "category" ? "category_amount" : target.kind === "activity" ? "activity_frequency" : "life_scope_amount";
       const metric = await dependencies.metrics.produce(metricId, targetScope);
       return {
-        month: request.scope.time.month,
+        time: request.scope.time,
         subject: request.scope.subject,
         target,
         status: "available" as const,
@@ -1035,32 +1205,78 @@ export function createAnalysisQuerySources(
       if (request.scope.time.kind !== "global") {
         throw new TypeError("Analysis Global exige un scope global.");
       }
-      const months = new Set(
-        resolveGlobalWindowMonths(
-          request.scope.time.observationWindow,
-          request.scope.time.asOf,
-        ),
-      );
-      const observedPeriodCount = dependencies.context.periods.filter(
-        (period) =>
-          months.has(yearMonthOf(period.month)) &&
-          period.financeStatus !== "unknown" &&
-          period.financeStatus !== "not_applicable",
-      ).length;
-      const monthlyTypical = await dependencies.metrics.produce(
-        "typical_month_cost",
-        {
-          ...request.scope,
-          time: { kind: "month", month: request.scope.time.asOf },
-        },
-      );
+      const [activityFacts, placeFacts, moments, operationsCount, economic] = await Promise.all([
+        dependencies.facts.loadActivityOccurrences(request.scope),
+        dependencies.facts.loadPlaceVisits(request.scope),
+        scopedMomentRows(request.scope, dependencies),
+        globalOperationsCount(request.scope, dependencies),
+        dependencies.metrics.produce("economic_consumption_net_attributable", request.scope),
+      ]);
+      const activityCountRepresentable = request.scope.filters.categoryIds.length === 0 &&
+        request.scope.filters.merchantIds.length === 0 && request.scope.filters.placeIds.length === 0 &&
+        request.scope.filters.lifeScopeContext.length === 0 && request.scope.filters.dayContext.length === 0;
+      const placeCountRepresentable = request.scope.filters.categoryIds.length === 0 &&
+        request.scope.filters.activityIds.length === 0 && request.scope.filters.merchantIds.length === 0 &&
+        request.scope.filters.lifeScopeContext.length === 0 && request.scope.filters.dayContext.length === 0;
       return {
         observationWindow: request.scope.time.observationWindow,
         asOf: request.scope.time.asOf,
         subject: request.scope.subject,
-        observedPeriodCount: countEnvelope(observedPeriodCount),
-        monthlyTypical: monthlyTypical as never,
-        structure: { axes: [] },
+        documentedMonths: countEnvelope(documentedGlobalMonths(request.scope, dependencies.context)),
+        documentedActivities: activityCountRepresentable
+          ? countEnvelope(new Set(selectedActivityOccurrences(activityFacts, request.scope).map(({ activityId }) => activityId)).size)
+          : unavailableCount(),
+        momentsCount: request.scope.filters.dayContext.length === 0 ? countEnvelope(moments.length) : unavailableCount(),
+        observedPlacesCount: placeCountRepresentable
+          ? countEnvelope(new Set(selectedPlaceVisits(placeFacts, request.scope).map(({ placeId }) => placeId)).size)
+          : unavailableCount(),
+        operationsCount,
+        economicConsumptionNetAttributable: economic as import("@/query-api").ScopedMoneyMetricReadModel,
+        capabilities: context.capabilities,
+      };
+    },
+
+    async readAnalysisGlobalBaseline({ request, context }) {
+      if (request.scope.time.kind !== "global") throw new TypeError("Analysis Global Baseline exige un scope global.");
+      const minimal = await dependencies.metrics.produce("minimal_month_cost", {
+        ...request.scope,
+        time: { kind: "month", month: request.scope.time.asOf },
+      });
+      const missingSource = { status: "unavailable" as const, reason: "missing_source" as const };
+      return {
+        observationWindow: request.scope.time.observationWindow,
+        asOf: request.scope.time.asOf,
+        subject: request.scope.subject,
+        defaultView: "month" as const,
+        day: { neutral: missingSource, typical: missingSource },
+        week: { neutral: missingSource, calendarAdjustedNeutral: missingSource },
+        month: {
+          minimal: minimal.envelope.availability === "known"
+            ? { status: "available" as const, metric: minimal as import("@/query-api").ScopedMoneyMetricReadModel }
+            : { status: "unavailable" as const, reason: "blocked_data" as const },
+          calendarAdjustedNeutral: missingSource,
+        },
+        capabilities: context.capabilities,
+      };
+    },
+
+    async readAnalysisGlobalTypical({ request, context }) {
+      if (request.scope.time.kind !== "global") throw new TypeError("Analysis Global Typical exige un scope global.");
+      const monthlyTypical = request.scope.subject.kind === "person"
+        ? { status: "unavailable" as const, reason: "missing_source" as const }
+        : {
+            status: "available" as const,
+            metric: await dependencies.metrics.produce("typical_month_cost", {
+              ...request.scope,
+              time: { kind: "month", month: request.scope.time.asOf },
+            }) as import("@/query-api").ScopedMoneyMetricReadModel,
+          };
+      return {
+        observationWindow: request.scope.time.observationWindow,
+        asOf: request.scope.time.asOf,
+        subject: request.scope.subject,
+        monthlyTypical,
+        behaviorRows: await globalTypicalBehaviorRows(request.scope, dependencies),
         capabilities: context.capabilities,
       };
     },
@@ -1102,17 +1318,33 @@ export function createAnalysisQuerySources(
         request.scope.time.observationWindow,
         request.scope.time.asOf,
       );
+      const metricId = request.params.view === "money"
+        ? "economic_consumption_net_attributable" as const
+        : "activity_frequency" as const;
+      const points = request.params.view === "money" && request.scope.subject.kind === "household"
+        ? await Promise.all(periods.map(async (period) => {
+            const point = await economicEvolutionPoint(period, request.scope, dependencies);
+            return {
+              period: point.period,
+              metric: point.metric,
+              ...(point.comparison === undefined ? {} : { comparison: point.comparison }),
+              periodCompleteness: point.periodCompleteness,
+            };
+          }))
+        : await evolutionPoints({ periods, scope: request.scope, metricId, dependencies });
       return {
         observationWindow: request.scope.time.observationWindow,
         asOf: request.scope.time.asOf,
         subject: request.scope.subject,
-        metricId: request.params.metricId,
-        points: await evolutionPoints({
-          periods,
-          scope: request.scope,
-          metricId: request.params.metricId,
-          dependencies,
-        }),
+        view: request.params.view,
+        series: [{
+          seriesId: request.params.view === "money" ? "economic_total" : "activity_occurrences",
+          label: request.params.view === "money" ? "Total économique net" : "Occurrences d’activité",
+          metricId,
+          unit: getMetricRegistryEntry(metricId).unit,
+          points,
+        }],
+        smallMultiplesRecommended: false,
         capabilities: context.capabilities,
       };
     },
@@ -1133,6 +1365,120 @@ export function createAnalysisQuerySources(
           }),
           capabilities: context.capabilities,
         },
+      };
+    },
+
+    async readAnalysisGlobalHabits({ request, context }) {
+      if (request.scope.time.kind !== "global") throw new TypeError("Analysis Global Habits exige un scope global.");
+      const availableViews = ["contexts", "heatmap"] as const;
+      let content: import("@/query-api").AnalysisGlobalHabitsReadModel["content"];
+      if (request.params.view === "contexts") {
+        content = {
+          kind: "contexts",
+          contexts: {
+            sections: await contextSections({
+              scope: request.scope,
+              availableMeasures: context.capabilities.availableMeasures.filter((metricId) => metricId !== "activity_frequency"),
+              dependencies,
+            }),
+            capabilities: context.capabilities,
+          },
+        };
+      } else if (request.params.view === "heatmap") {
+        const columns = resolveGlobalWindowMonths(request.scope.time.observationWindow, request.scope.time.asOf);
+        const occurrences = selectedActivityOccurrences(await dependencies.facts.loadActivityOccurrences(request.scope), request.scope);
+        const rows = [...new Set(occurrences.map(({ activityId }) => activityId))]
+          .sort()
+          .slice(0, 12)
+          .map((activityId) => ({ id: activityId, label: activityId }));
+        content = {
+          kind: "heatmap",
+          heatmap: {
+            contract: "activity_month_frequency",
+            unit: "count/month",
+            palette: "sequential",
+            rows,
+            columns,
+            cells: rows.flatMap(({ id }) => columns.map((columnId) => {
+              const observable = dependencies.context.periods.some(({ month, lifeStatus, isClosed }) =>
+                yearMonthOf(month) === columnId && isClosed && lifeStatus === "complete",
+              );
+              return observable
+                ? { rowId: id, columnId, state: "known" as const, value: occurrences.filter((fact) => fact.activityId === id && yearMonthOf(fact.startDate) === columnId).length }
+                : { rowId: id, columnId, state: "unknown" as const, value: null };
+            })),
+          },
+        };
+      } else {
+        content = { kind: "unavailable", reason: "missing_method_or_source" };
+      }
+      return {
+        observationWindow: request.scope.time.observationWindow,
+        asOf: request.scope.time.asOf,
+        subject: request.scope.subject,
+        view: request.params.view,
+        availableViews,
+        content,
+        capabilities: context.capabilities,
+      };
+    },
+
+    async readAnalysisGlobalProfiles({ request, context }) {
+      if (request.scope.time.kind !== "global") throw new TypeError("Analysis Global Profiles exige un scope global.");
+      const target = request.params.target;
+      const person = target.kind === "person" ? dependencies.repository.authorizedPerson(target.personId) : null;
+      if (target.kind === "person" && person === null) throw new TypeError("La personne du profil est hors du Household autorisé.");
+      const scoped = profileScope(request.scope, target);
+      const [activityFacts, placeFacts, economicFacts] = await Promise.all([
+        dependencies.facts.loadActivityOccurrences(scoped),
+        dependencies.facts.loadPlaceVisits(scoped),
+        dependencies.facts.loadEconomicFacts(scoped),
+      ]);
+      const activities = selectedActivityOccurrences(activityFacts, scoped);
+      const places = selectedPlaceVisits(placeFacts, scoped);
+      const economics = selectEconomicComponentsForScope(economicFacts, scoped);
+      const dominantActivity = rankedRef(activities.map(({ activityId }) => activityId), "occurrence");
+      const frequentPlace = rankedRef(places.map(({ placeId }) => placeId), "place_visit");
+      const dominantContext = rankedRef(economics.flatMap(({ lifeScope }) => lifeScope.kind === "resolved" ? [lifeScope.value] : []), "transaction");
+      return {
+        observationWindow: request.scope.time.observationWindow,
+        asOf: request.scope.time.asOf,
+        subject: request.scope.subject,
+        target,
+        label: target.kind === "person" ? recordLabel(person!, target.personId) : "Ensemble du foyer",
+        ...(dominantActivity === undefined ? {} : { dominantActivity }),
+        ...(frequentPlace === undefined ? {} : { frequentPlace }),
+        ...(dominantContext === undefined ? {} : { dominantContext }),
+        destination: { kind: "persona" as const, target },
+        capabilities: context.capabilities,
+      };
+    },
+
+    async readAnalysisGlobalUniverse({ request, context }) {
+      if (request.scope.time.kind !== "global") throw new TypeError("Analysis Global Universe exige un scope global.");
+      const gallery = createGalleryQuerySources(dependencies);
+      const [moments, places, merchants] = await Promise.all([
+        gallery.readGalleryMoments({
+          request: { resource: queryResourceKeys.galleryMoments, scope: request.scope, scopeHash: request.scopeHash, params: parseGalleryMomentsParams({ sort: { key: "recent", direction: "desc" }, limit: 4 }) },
+          context,
+        }),
+        gallery.readGalleryPlaces({
+          request: { resource: queryResourceKeys.galleryPlaces, scope: request.scope, scopeHash: request.scopeHash, params: parseGalleryPlacesParams({ sort: { key: "frequent", direction: "desc" }, limit: 6 }) },
+          context,
+        }),
+        gallery.readGalleryMerchants({
+          request: { resource: queryResourceKeys.galleryMerchants, scope: request.scope, scopeHash: request.scopeHash, params: parseGalleryMerchantsParams({ sort: { key: "spent", direction: "desc" }, limit: 6 }) },
+          context,
+        }),
+      ]);
+      return {
+        observationWindow: request.scope.time.observationWindow,
+        asOf: request.scope.time.asOf,
+        subject: request.scope.subject,
+        moments: { sort: "recent" as const, items: moments.page.items, hasMore: moments.page.pageInfo.hasMore },
+        places: { sort: "frequent" as const, items: places.page.items, hasMore: places.page.pageInfo.hasMore },
+        merchants: { sort: "spent" as const, items: merchants.page.items, hasMore: merchants.page.pageInfo.hasMore },
+        capabilities: context.capabilities,
       };
     },
   };

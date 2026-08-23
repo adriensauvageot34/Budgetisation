@@ -53,7 +53,7 @@ export const metricRegistry = {
       metricMethodVersions.economic_consumption_net_attributable,
     unit: "EUR/month",
     outputKind: "money",
-    allowedTimeKinds: ["month"],
+    allowedTimeKinds: ["month", "global"],
     aggregationCapabilityId: "economic_net_total",
   },
   typical_month_cost: {

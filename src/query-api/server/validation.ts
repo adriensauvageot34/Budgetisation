@@ -81,11 +81,13 @@ export function assertQueryDataMatchesRequest<Name extends QueryResourceName>(
     }
     case "analysis_target": {
       const output = data as QueryDataByResource["analysis_target"];
-      assertSame(output.month, scope.time.kind === "month" ? scope.time.month : null, "Analysis month");
+      assertSame(output.time, scope.time, "Analysis target time");
       assertSame(output.target, (request.params as { readonly target: unknown }).target, "Analysis target");
       break;
     }
     case "analysis_global_initial":
+    case "analysis_global_baseline":
+    case "analysis_global_typical":
     case "analysis_global_contexts": {
       const globalData = data as QueryDataByResource["analysis_global_initial"];
       assertSame(globalData.observationWindow, scope.time.kind === "global" ? scope.time.observationWindow : null, "GlobalWindow");
@@ -105,7 +107,27 @@ export function assertQueryDataMatchesRequest<Name extends QueryResourceName>(
       const output = data as QueryDataByResource["analysis_global_evolution"];
       assertSame(output.observationWindow, scope.time.kind === "global" ? scope.time.observationWindow : null, "GlobalWindow");
       assertSame(output.asOf, scope.time.kind === "global" ? scope.time.asOf : null, "Global asOf");
-      assertSame(output.metricId, (request.params as { readonly metricId: unknown }).metricId, "Evolution MetricId");
+      assertSame(output.view, (request.params as { readonly view: unknown }).view, "Evolution view");
+      break;
+    }
+    case "analysis_global_habits": {
+      const output = data as QueryDataByResource["analysis_global_habits"];
+      assertSame(output.observationWindow, scope.time.kind === "global" ? scope.time.observationWindow : null, "GlobalWindow");
+      assertSame(output.asOf, scope.time.kind === "global" ? scope.time.asOf : null, "Global asOf");
+      assertSame(output.view, (request.params as { readonly view: unknown }).view, "Habits view");
+      break;
+    }
+    case "analysis_global_profiles": {
+      const output = data as QueryDataByResource["analysis_global_profiles"];
+      assertSame(output.observationWindow, scope.time.kind === "global" ? scope.time.observationWindow : null, "GlobalWindow");
+      assertSame(output.asOf, scope.time.kind === "global" ? scope.time.asOf : null, "Global asOf");
+      assertSame(output.target, (request.params as { readonly target: unknown }).target, "Profile target");
+      break;
+    }
+    case "analysis_global_universe": {
+      const output = data as QueryDataByResource["analysis_global_universe"];
+      assertSame(output.observationWindow, scope.time.kind === "global" ? scope.time.observationWindow : null, "GlobalWindow");
+      assertSame(output.asOf, scope.time.kind === "global" ? scope.time.asOf : null, "Global asOf");
       break;
     }
     case "entity_place":

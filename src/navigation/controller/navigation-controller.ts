@@ -544,6 +544,14 @@ class DefaultNavigationController implements NavigationController {
     return this.restoreScroll(cause);
   }
 
+  async goToAnalysisMonthFromGlobal(selectedMonth?: YearMonth): Promise<NavigationCommandResult> {
+    if (!this.isStarted()) return noop("not_started");
+    const scope = this.readScope();
+    if (scope?.time.kind !== "global") return rejected("not_analysis_context");
+    const target = selectedMonth ?? this.deps.session.getContextMemory().lastAnalysedMonth;
+    return target === undefined ? rejected("missing_analysis_scope") : this.goToMonth(target);
+  }
+
   async goToGlobal(window: GlobalWindow): Promise<NavigationCommandResult> {
     if (!this.isStarted()) return noop("not_started");
     const targetWindow = parseGlobalWindow(window);

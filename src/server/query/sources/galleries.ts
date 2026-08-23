@@ -1,8 +1,11 @@
 import "server-only";
 
 import { MetricProductionContractError } from "@/analytics/production";
+import { selectEconomicComponentsForScope } from "@/analytics/context";
 import { compareMoney, type Money } from "@/core/money";
 import type { ScopeHash } from "@/core/scope";
+import type { NormalizedAnalysisScope } from "@/core/scope";
+import { addMonths, resolveGlobalWindowMonths } from "@/core/time";
 import {
   createCursorPage,
   decodeCursor,
@@ -61,6 +64,39 @@ function recordIds(row: CanonicalRecord, keys: readonly string[]): readonly stri
     }
   }
   return [];
+}
+
+function momentDateRange(scope: NormalizedAnalysisScope) {
+  const months = scope.time.kind === "month"
+    ? [scope.time.month]
+    : resolveGlobalWindowMonths(scope.time.observationWindow, scope.time.asOf);
+  return { start: `${months[0]}-01`, endExclusive: `${addMonths(months[months.length - 1], 1)}-01` };
+}
+
+async function scopedMomentRows(
+  rows: readonly CanonicalRecord[],
+  scope: NormalizedAnalysisScope,
+  dependencies: GalleryDependencies,
+) {
+  if (scope.filters.dayContext.length > 0) {
+    throw new MetricProductionContractError("Le lien Moment/DayContext n'est pas projeté par le canonique actuel.");
+  }
+  const hasEconomicFilters = scope.filters.categoryIds.length > 0 || scope.filters.activityIds.length > 0 ||
+    scope.filters.merchantIds.length > 0 || scope.filters.placeIds.length > 0 || scope.filters.lifeScopeContext.length > 0;
+  const eligibleIds = hasEconomicFilters
+    ? new Set(selectEconomicComponentsForScope(await dependencies.facts.loadEconomicFacts(scope), scope)
+        .flatMap(({ moment }) => moment.kind === "resolved" ? [moment.id as string] : []))
+    : null;
+  const range = momentDateRange(scope);
+  return rows.filter((row) => {
+    const id = optionalCanonicalString(row, ["moment_id"]);
+    const start = optionalCanonicalString(row, ["start_date", "starts_on"]);
+    const end = optionalCanonicalString(row, ["end_date", "ends_on"]) ?? start;
+    if (id === undefined || start === undefined || end === undefined || start >= range.endExclusive || end < range.start) return false;
+    if (eligibleIds !== null && !eligibleIds.has(id)) return false;
+    const participantIds = recordIds(row, ["participant_ids", "person_ids"]);
+    return scope.subject.kind === "household" || participantIds.includes(scope.subject.personId);
+  });
 }
 
 function compareValues(
@@ -189,10 +225,11 @@ export function createGalleryQuerySources(
           "Les relations Activity/Place des Moments ne sont pas projetées par le canonique actuel.",
         );
       }
-      const rows = await dependencies.repository.loadEntityRows(
+      const canonicalRows = await dependencies.repository.loadEntityRows(
         "moments",
         "moment_id",
       );
+      const rows = await scopedMomentRows(canonicalRows, request.scope, dependencies);
       const search = request.params.search?.toLocaleLowerCase("fr") ?? null;
       const candidates = rows.flatMap((row): readonly Sortable<MomentGalleryCard>[] => {
         const momentId = optionalCanonicalString(row, ["moment_id"]);

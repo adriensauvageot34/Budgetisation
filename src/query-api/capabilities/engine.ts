@@ -118,7 +118,8 @@ function metricScopeReason(
       : null;
   const contextDimension =
     (request.resource === "analysis_month_contexts" ||
-      request.resource === "analysis_global_contexts") &&
+      request.resource === "analysis_global_contexts" ||
+      request.resource === "analysis_global_habits") &&
     metric.contextCapabilityId !== undefined
       ? getContextCapability(metric.contextCapabilityId).dimension
       : null;
@@ -133,8 +134,13 @@ function metricScopeReason(
     breakdownDimension ?? structureDimension ?? targetDimension ?? fixedEvolutionDimension ?? contextDimension ?? entityOrGalleryDimension;
   const metricTimeKind =
     request.resource === "analysis_global_evolution" ||
-    (request.resource === "analysis_global_initial" &&
-      metricId === "typical_month_cost")
+    ((request.resource === "analysis_global_typical" ||
+      request.resource === "analysis_global_baseline" ||
+      request.resource === "analysis_global_profiles" ||
+      request.resource === "analysis_global_habits") &&
+      (metricId === "typical_month_cost" ||
+        metricId === "minimal_month_cost" ||
+        metricId === "activity_frequency"))
       ? "month"
       : request.scope.time.kind;
   if (!metric.allowedTimeKinds.includes(metricTimeKind)) {

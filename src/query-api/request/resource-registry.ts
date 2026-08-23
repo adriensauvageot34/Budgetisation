@@ -53,17 +53,23 @@ import {
 import {
   parseAnalysisBreakdownParams,
   parseAnalysisEvolutionParams,
+  parseAnalysisGlobalHabitsParams,
+  parseAnalysisGlobalProfilesParams,
   parseAnalysisMonthStructureParams,
   parseAnalysisTargetParams,
   parseEmptyQueryParams,
   parseHistoryDayDetailParams,
   type AnalysisBreakdownParams,
   type AnalysisEvolutionParams,
+  type AnalysisGlobalHabitsParams,
+  type AnalysisGlobalProfilesParams,
   type AnalysisMonthStructureParams,
   type AnalysisTargetParams,
   type EmptyQueryParams,
   type HistoryDayDetailParams,
   type NormalizedAnalysisBreakdownParams,
+  type NormalizedAnalysisEvolutionParams,
+  type NormalizedAnalysisGlobalHabitsParams,
   type NormalizedAnalysisMonthStructureParams,
 } from "./read-model-params";
 
@@ -83,9 +89,14 @@ const queryResourceNames = [
   "analysis_target",
   "analysis_month_contexts",
   "analysis_global_initial",
+  "analysis_global_baseline",
+  "analysis_global_typical",
   "analysis_global_breakdown",
   "analysis_global_evolution",
   "analysis_global_contexts",
+  "analysis_global_habits",
+  "analysis_global_profiles",
+  "analysis_global_universe",
   "entity_place",
   "entity_merchant",
   "entity_moment",
@@ -149,6 +160,10 @@ export const queryResourceKeys = Object.freeze({
     parseQueryResourceKeySyntax<"analysis_global_initial">(
       "analysis_global_initial",
     ),
+  analysisGlobalBaseline:
+    parseQueryResourceKeySyntax<"analysis_global_baseline">("analysis_global_baseline"),
+  analysisGlobalTypical:
+    parseQueryResourceKeySyntax<"analysis_global_typical">("analysis_global_typical"),
   analysisGlobalBreakdown:
     parseQueryResourceKeySyntax<"analysis_global_breakdown">(
       "analysis_global_breakdown",
@@ -161,6 +176,12 @@ export const queryResourceKeys = Object.freeze({
     parseQueryResourceKeySyntax<"analysis_global_contexts">(
       "analysis_global_contexts",
     ),
+  analysisGlobalHabits:
+    parseQueryResourceKeySyntax<"analysis_global_habits">("analysis_global_habits"),
+  analysisGlobalProfiles:
+    parseQueryResourceKeySyntax<"analysis_global_profiles">("analysis_global_profiles"),
+  analysisGlobalUniverse:
+    parseQueryResourceKeySyntax<"analysis_global_universe">("analysis_global_universe"),
   entityPlace: parseQueryResourceKeySyntax<"entity_place">("entity_place"),
   entityMerchant:
     parseQueryResourceKeySyntax<"entity_merchant">("entity_merchant"),
@@ -197,9 +218,14 @@ export type QueryParamsByResource = {
   readonly analysis_target: AnalysisTargetParams;
   readonly analysis_month_contexts: EmptyQueryParams;
   readonly analysis_global_initial: EmptyQueryParams;
+  readonly analysis_global_baseline: EmptyQueryParams;
+  readonly analysis_global_typical: EmptyQueryParams;
   readonly analysis_global_breakdown: AnalysisBreakdownParams;
   readonly analysis_global_evolution: AnalysisEvolutionParams;
   readonly analysis_global_contexts: EmptyQueryParams;
+  readonly analysis_global_habits: AnalysisGlobalHabitsParams;
+  readonly analysis_global_profiles: AnalysisGlobalProfilesParams;
+  readonly analysis_global_universe: EmptyQueryParams;
   readonly entity_place: EntityPlaceParams;
   readonly entity_merchant: EntityMerchantParams;
   readonly entity_moment: EntityMomentParams;
@@ -228,9 +254,14 @@ export type NormalizedQueryParamsByResource = {
   readonly analysis_target: AnalysisTargetParams;
   readonly analysis_month_contexts: EmptyQueryParams;
   readonly analysis_global_initial: EmptyQueryParams;
+  readonly analysis_global_baseline: EmptyQueryParams;
+  readonly analysis_global_typical: EmptyQueryParams;
   readonly analysis_global_breakdown: NormalizedAnalysisBreakdownParams;
-  readonly analysis_global_evolution: AnalysisEvolutionParams;
+  readonly analysis_global_evolution: NormalizedAnalysisEvolutionParams;
   readonly analysis_global_contexts: EmptyQueryParams;
+  readonly analysis_global_habits: NormalizedAnalysisGlobalHabitsParams;
+  readonly analysis_global_profiles: AnalysisGlobalProfilesParams;
+  readonly analysis_global_universe: EmptyQueryParams;
   readonly entity_place: EntityPlaceParams;
   readonly entity_merchant: EntityMerchantParams;
   readonly entity_moment: EntityMomentParams;
@@ -255,8 +286,13 @@ export type QueryResourceDefinition<Name extends QueryResourceName> = {
     | "collection"
     | "summary"
     | "initial"
+    | "baseline"
+    | "typical"
     | "breakdown"
     | "evolution"
+    | "habits"
+    | "profiles"
+    | "universe"
     | "contexts"
     | "structure"
     | "lived"
@@ -298,15 +334,6 @@ function assertBreakdownMetricTime(
 ): void {
   if (!getMetricRegistryEntry(params.measure).allowedTimeKinds.includes(expectedTimeKind)) {
     throw new TypeError("Breakdown MetricId est incompatible avec le scope.");
-  }
-}
-
-function assertEvolutionMetricTime(
-  _scope: NormalizedAnalysisScope,
-  params: AnalysisEvolutionParams,
-): void {
-  if (!getMetricRegistryEntry(params.metricId).allowedTimeKinds.includes("month")) {
-    throw new TypeError("Evolution MetricId doit être une métrique mensuelle.");
   }
 }
 
@@ -403,7 +430,7 @@ export const queryResourceRegistry = Object.freeze({
     paramsSchema: createRuntimeSchema(parseAnalysisTargetParams),
     normalizeParams: freezeCanonicalParams,
     projection: "target",
-    allowedTimeKinds: ["month"],
+    allowedTimeKinds: ["month", "global"],
   },
   analysis_month_contexts: {
     key: queryResourceKeys.analysisMonthContexts,
@@ -417,6 +444,20 @@ export const queryResourceRegistry = Object.freeze({
     paramsSchema: emptyParamsSchema("AnalysisGlobalInitialParams"),
     normalizeParams: freezeCanonicalParams,
     projection: "initial",
+    allowedTimeKinds: ["global"],
+  },
+  analysis_global_baseline: {
+    key: queryResourceKeys.analysisGlobalBaseline,
+    paramsSchema: emptyParamsSchema("AnalysisGlobalBaselineParams"),
+    normalizeParams: freezeCanonicalParams,
+    projection: "baseline",
+    allowedTimeKinds: ["global"],
+  },
+  analysis_global_typical: {
+    key: queryResourceKeys.analysisGlobalTypical,
+    paramsSchema: emptyParamsSchema("AnalysisGlobalTypicalParams"),
+    normalizeParams: freezeCanonicalParams,
+    projection: "typical",
     allowedTimeKinds: ["global"],
   },
   analysis_global_breakdown: {
@@ -434,13 +475,33 @@ export const queryResourceRegistry = Object.freeze({
     normalizeParams: freezeCanonicalParams,
     projection: "evolution",
     allowedTimeKinds: ["global"],
-    validateRequest: assertEvolutionMetricTime,
   },
   analysis_global_contexts: {
     key: queryResourceKeys.analysisGlobalContexts,
     paramsSchema: emptyParamsSchema("AnalysisGlobalContextsParams"),
     normalizeParams: freezeCanonicalParams,
     projection: "contexts",
+    allowedTimeKinds: ["global"],
+  },
+  analysis_global_habits: {
+    key: queryResourceKeys.analysisGlobalHabits,
+    paramsSchema: createRuntimeSchema(parseAnalysisGlobalHabitsParams),
+    normalizeParams: freezeCanonicalParams,
+    projection: "habits",
+    allowedTimeKinds: ["global"],
+  },
+  analysis_global_profiles: {
+    key: queryResourceKeys.analysisGlobalProfiles,
+    paramsSchema: createRuntimeSchema(parseAnalysisGlobalProfilesParams),
+    normalizeParams: freezeCanonicalParams,
+    projection: "profiles",
+    allowedTimeKinds: ["global"],
+  },
+  analysis_global_universe: {
+    key: queryResourceKeys.analysisGlobalUniverse,
+    paramsSchema: emptyParamsSchema("AnalysisGlobalUniverseParams"),
+    normalizeParams: freezeCanonicalParams,
+    projection: "universe",
     allowedTimeKinds: ["global"],
   },
   entity_place: {

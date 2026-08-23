@@ -36,7 +36,7 @@ export function TargetedAnalysisSurface({
       <header>
         <span className="eyebrow">Analyse ciblée · {targetKind(model.target)}</span>
         <h2 data-exploration-heading="" tabIndex={-1}>{targetIdentity(model.target)}</h2>
-        <p>Le mois, le sujet et les filtres d’origine sont conservés.</p>
+        <p>La période, le sujet et les filtres d’origine sont conservés.</p>
       </header>
       {model.status === "blocked_contract" ? (
         <Surface variant="subtle">Analyse Famille bloquée par contrat : aucune taxonomie financière Family n’est inventée.</Surface>

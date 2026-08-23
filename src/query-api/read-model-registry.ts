@@ -1,8 +1,13 @@
 import {
   analysisGlobalBreakdownReadModelSchema,
+  analysisGlobalBaselineReadModelSchema,
   analysisGlobalContextsReadModelSchema,
   analysisGlobalEvolutionReadModelSchema,
+  analysisGlobalHabitsReadModelSchema,
   analysisGlobalInitialReadModelSchema,
+  analysisGlobalProfilesReadModelSchema,
+  analysisGlobalTypicalReadModelSchema,
+  analysisGlobalUniverseReadModelSchema,
   analysisMonthBreakdownReadModelSchema,
   analysisMonthContextsReadModelSchema,
   analysisMonthEvolutionReadModelSchema,
@@ -12,9 +17,14 @@ import {
   analysisMonthStructureReadModelSchema,
   analysisTargetReadModelSchema,
   type AnalysisGlobalBreakdownReadModel,
+  type AnalysisGlobalBaselineReadModel,
   type AnalysisGlobalContextsReadModel,
   type AnalysisGlobalEvolutionReadModel,
+  type AnalysisGlobalHabitsReadModel,
   type AnalysisGlobalInitialReadModel,
+  type AnalysisGlobalProfilesReadModel,
+  type AnalysisGlobalTypicalReadModel,
+  type AnalysisGlobalUniverseReadModel,
   type AnalysisMonthBreakdownReadModel,
   type AnalysisMonthContextsReadModel,
   type AnalysisMonthEvolutionReadModel,
@@ -84,9 +94,14 @@ export type QueryDataByResource = {
   readonly analysis_target: AnalysisTargetReadModel;
   readonly analysis_month_contexts: AnalysisMonthContextsReadModel;
   readonly analysis_global_initial: AnalysisGlobalInitialReadModel;
+  readonly analysis_global_baseline: AnalysisGlobalBaselineReadModel;
+  readonly analysis_global_typical: AnalysisGlobalTypicalReadModel;
   readonly analysis_global_breakdown: AnalysisGlobalBreakdownReadModel;
   readonly analysis_global_evolution: AnalysisGlobalEvolutionReadModel;
   readonly analysis_global_contexts: AnalysisGlobalContextsReadModel;
+  readonly analysis_global_habits: AnalysisGlobalHabitsReadModel;
+  readonly analysis_global_profiles: AnalysisGlobalProfilesReadModel;
+  readonly analysis_global_universe: AnalysisGlobalUniverseReadModel;
   readonly entity_place: EntityPlaceReadModel;
   readonly entity_merchant: EntityMerchantReadModel;
   readonly entity_moment: EntityMomentReadModel;
@@ -115,9 +130,14 @@ export const queryDataSchemaByResource = Object.freeze({
   analysis_target: analysisTargetReadModelSchema,
   analysis_month_contexts: analysisMonthContextsReadModelSchema,
   analysis_global_initial: analysisGlobalInitialReadModelSchema,
+  analysis_global_baseline: analysisGlobalBaselineReadModelSchema,
+  analysis_global_typical: analysisGlobalTypicalReadModelSchema,
   analysis_global_breakdown: analysisGlobalBreakdownReadModelSchema,
   analysis_global_evolution: analysisGlobalEvolutionReadModelSchema,
   analysis_global_contexts: analysisGlobalContextsReadModelSchema,
+  analysis_global_habits: analysisGlobalHabitsReadModelSchema,
+  analysis_global_profiles: analysisGlobalProfilesReadModelSchema,
+  analysis_global_universe: analysisGlobalUniverseReadModelSchema,
   entity_place: entityPlaceReadModelSchema,
   entity_merchant: entityMerchantReadModelSchema,
   entity_moment: entityMomentReadModelSchema,
@@ -147,9 +167,14 @@ export const queryLotBReadModelSchemas = Object.freeze({
   [queryResourceKeys.analysisTarget]: analysisTargetReadModelSchema,
   [queryResourceKeys.analysisMonthContexts]: analysisMonthContextsReadModelSchema,
   [queryResourceKeys.analysisGlobalInitial]: analysisGlobalInitialReadModelSchema,
+  [queryResourceKeys.analysisGlobalBaseline]: analysisGlobalBaselineReadModelSchema,
+  [queryResourceKeys.analysisGlobalTypical]: analysisGlobalTypicalReadModelSchema,
   [queryResourceKeys.analysisGlobalBreakdown]: analysisGlobalBreakdownReadModelSchema,
   [queryResourceKeys.analysisGlobalEvolution]: analysisGlobalEvolutionReadModelSchema,
   [queryResourceKeys.analysisGlobalContexts]: analysisGlobalContextsReadModelSchema,
+  [queryResourceKeys.analysisGlobalHabits]: analysisGlobalHabitsReadModelSchema,
+  [queryResourceKeys.analysisGlobalProfiles]: analysisGlobalProfilesReadModelSchema,
+  [queryResourceKeys.analysisGlobalUniverse]: analysisGlobalUniverseReadModelSchema,
 });
 
 export function findSchemaRegistryOrphans(): readonly QueryResourceName[] {

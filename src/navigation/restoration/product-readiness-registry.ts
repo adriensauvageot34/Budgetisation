@@ -6,7 +6,7 @@ import type { RootNavigationContext } from "../contracts/routes";
 import type { AnchorRegistry } from "./anchor-registry";
 
 type ReadinessState = "pending" | "ready" | "terminal_without_anchor";
-export type ProductReadinessModule = "initial" | "evolution" | "structure" | "lived" | "moments";
+export type ProductReadinessModule = "initial" | "evolution" | "structure" | "lived" | "moments" | "baseline" | "typical" | "habits" | "profiles" | "universe";
 type Waiter = { readonly checkpoint: NavigationCheckpoint; readonly resolve: (value: RestorationReadiness) => void };
 
 function keyFor(route: RootNavigationContext): string { return serializeRootNavigation(route); }
@@ -14,6 +14,16 @@ function stateKey(routeKey: string, module: ProductReadinessModule): string { re
 
 function moduleForCheckpoint(checkpoint: NavigationCheckpoint): ProductReadinessModule {
   const anchor = checkpoint.anchor;
+  if (anchor?.moduleId === "analysis-global") {
+    const key = anchor.itemKey ?? "";
+    if (key.startsWith("baseline")) return "baseline";
+    if (key.startsWith("typical")) return "typical";
+    if (key.startsWith("evolution")) return "evolution";
+    if (key.startsWith("habits")) return "habits";
+    if (key.startsWith("profiles")) return "profiles";
+    if (key.startsWith("universe")) return "universe";
+    return "initial";
+  }
   if (anchor?.moduleId !== "analysis-month") return "initial";
   if (anchor.item?.kind === "moment") return "moments";
   if (anchor.item?.kind === "category") return "structure";
@@ -37,7 +47,7 @@ export class ProductReadinessRegistry implements RestorationReadinessAdapter {
     const key = keyFor(route);
     if (this.activeKey !== null && this.activeKey !== key) this.cancelWaiters(this.activeKey);
     this.activeKey = key;
-    for (const module of ["initial", "evolution", "structure", "lived", "moments"] as const) {
+    for (const module of ["initial", "evolution", "structure", "lived", "moments", "baseline", "typical", "habits", "profiles", "universe"] as const) {
       this.states.delete(stateKey(key, module));
     }
     this.states.set(stateKey(key, "initial"), "pending");

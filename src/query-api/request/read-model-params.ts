@@ -1,10 +1,7 @@
-import {
-  getMetricRegistryEntry,
-  isActiveMetricId,
-  type ActiveMetricId,
-} from "../../analytics/production";
+import { isActiveMetricId, type ActiveMetricId } from "../../analytics/production";
 import { parseLocalDate, type LocalDate } from "../../core/time";
 import { parseAnalysisTargetSubject, type AnalysisTargetSubject } from "../../core/scope";
+import { parsePersonaTarget, type PersonaTarget } from "./exploration-params";
 import {
   hasOwn,
   parseStrictRecord,
@@ -42,9 +39,12 @@ export type NormalizedAnalysisBreakdownParams = {
   readonly limit: number;
 };
 
-export type AnalysisEvolutionParams = {
-  readonly metricId: ActiveMetricId;
-};
+export type AnalysisEvolutionParams = { readonly view?: "money" | "behavior" };
+export type NormalizedAnalysisEvolutionParams = { readonly view: "money" | "behavior" };
+export type AnalysisGlobalHabitsView = "contexts" | "heatmap" | "relationships" | "patterns";
+export type AnalysisGlobalHabitsParams = { readonly view?: AnalysisGlobalHabitsView };
+export type NormalizedAnalysisGlobalHabitsParams = { readonly view: AnalysisGlobalHabitsView };
+export type AnalysisGlobalProfilesParams = { readonly target: PersonaTarget };
 
 export type AnalysisMonthStructureViewParam = "destination" | "nature" | "life_context";
 export type AnalysisMonthStructureDimensionParam = "family" | "category" | "activity" | "merchant" | "place" | "fixed_variable" | "life_context" | "necessity";
@@ -149,24 +149,27 @@ export function parseAnalysisBreakdownParams(
   return { dimension, measure, limit };
 }
 
-export function parseAnalysisEvolutionParams(
-  value: unknown,
-): AnalysisEvolutionParams {
-  const record = parseStrictRecord(
-    value,
-    ["metricId"],
-    "AnalysisEvolutionParams",
-  );
-  const metricId = requireProperty(
-    record,
-    "metricId",
-    "AnalysisEvolutionParams",
-  );
-  if (!isActiveMetricId(metricId)) {
-    throw new TypeError("AnalysisEvolutionParams.metricId n'est pas actif.");
-  }
-  getMetricRegistryEntry(metricId);
-  return { metricId };
+export function parseAnalysisEvolutionParams(value: unknown): NormalizedAnalysisEvolutionParams {
+  const record = parseStrictRecord(value, ["view"], "AnalysisEvolutionParams");
+  return {
+    view: hasOwn(record, "view")
+      ? parseStringLiteral(record.view, new Set(["money", "behavior"]), "AnalysisEvolutionParams.view")
+      : "money",
+  };
+}
+
+export function parseAnalysisGlobalHabitsParams(value: unknown): NormalizedAnalysisGlobalHabitsParams {
+  const record = parseStrictRecord(value, ["view"], "AnalysisGlobalHabitsParams");
+  return {
+    view: hasOwn(record, "view")
+      ? parseStringLiteral(record.view, new Set(["contexts", "heatmap", "relationships", "patterns"]), "AnalysisGlobalHabitsParams.view")
+      : "contexts",
+  };
+}
+
+export function parseAnalysisGlobalProfilesParams(value: unknown): AnalysisGlobalProfilesParams {
+  const record = parseStrictRecord(value, ["target"], "AnalysisGlobalProfilesParams");
+  return { target: parsePersonaTarget(requireProperty(record, "target", "AnalysisGlobalProfilesParams")) };
 }
 
 const structureViews = new Set<AnalysisMonthStructureViewParam>(["destination", "nature", "life_context"]);

@@ -5,7 +5,7 @@ import {
   requireProperty,
   withValidationPath,
 } from "../../core/validation";
-import { parseActivityId, type ActivityId } from "../../core/identity";
+import { parseActivityId, parsePersonId, type ActivityId, type PersonId } from "../../core/identity";
 import { parseYearMonth, type YearMonth } from "../../core/time";
 
 export type AnalysisMonthStructureSubview = {
@@ -33,9 +33,17 @@ export type NavigationSubviewRef =
       readonly view:
         | "overview"
         | "baseline"
+        | "typical"
+        | "evolution"
         | "habits"
         | "profiles"
         | "universe";
+      readonly baselineView?: "day" | "week" | "month";
+      readonly evolutionView?: "money" | "behavior";
+      readonly selectedMonth?: YearMonth;
+      readonly habitsView?: "contexts" | "heatmap";
+      readonly profileTarget?: { readonly kind: "ensemble" } | { readonly kind: "person"; readonly personId: PersonId };
+      readonly selectedHeatmapCell?: { readonly activityId: ActivityId; readonly month: YearMonth };
     };
 
 const subviewKinds = new Set<NavigationSubviewRef["kind"]>([
@@ -51,6 +59,8 @@ const analysisMonthViews = new Set([
 const analysisGlobalViews = new Set([
   "overview",
   "baseline",
+  "typical",
+  "evolution",
   "habits",
   "profiles",
   "universe",
@@ -61,7 +71,7 @@ export function parseNavigationSubviewRef(
 ): NavigationSubviewRef {
   const record = parseStrictRecord(
     value,
-    ["kind", "view", "selectedPoint", "structure", "lived"],
+    ["kind", "view", "selectedPoint", "structure", "lived", "baselineView", "evolutionView", "selectedMonth", "habitsView", "profileTarget", "selectedHeatmapCell"],
     "NavigationSubviewRef",
   );
   const kind = withValidationPath("kind", () =>
@@ -115,18 +125,35 @@ export function parseNavigationSubviewRef(
       ...(lived === undefined ? {} : { lived }),
     };
   }
-  const globalRecord = parseStrictRecord(value, ["kind", "view"], "AnalysisGlobalSubviewRef");
+  const globalRecord = parseStrictRecord(value, ["kind", "view", "baselineView", "evolutionView", "selectedMonth", "habitsView", "profileTarget", "selectedHeatmapCell"], "AnalysisGlobalSubviewRef");
+  const profileTarget = "profileTarget" in globalRecord
+    ? (() => {
+        const target = parseStrictRecord(globalRecord.profileTarget, ["kind", "personId"], "GlobalProfileTarget");
+        if (target.kind === "ensemble") return { kind: "ensemble" as const };
+        if (target.kind !== "person") throw new TypeError("GlobalProfileTarget.kind est invalide.");
+        return { kind: "person" as const, personId: parsePersonId(requireProperty(target, "personId", "GlobalProfileTarget")) };
+      })()
+    : undefined;
+  const selectedHeatmapCell = "selectedHeatmapCell" in globalRecord
+    ? (() => { const cell = parseStrictRecord(globalRecord.selectedHeatmapCell, ["activityId", "month"], "SelectedHeatmapCell"); return { activityId: parseActivityId(requireProperty(cell, "activityId", "SelectedHeatmapCell")), month: parseYearMonth(requireProperty(cell, "month", "SelectedHeatmapCell")) }; })()
+    : undefined;
   return {
     kind,
     view: withValidationPath("view", () =>
       parseStringLiteral<
-        "overview" | "baseline" | "habits" | "profiles" | "universe"
+        "overview" | "baseline" | "typical" | "evolution" | "habits" | "profiles" | "universe"
       >(
         requireProperty(globalRecord, "view", "NavigationSubviewRef"),
         analysisGlobalViews,
         "NavigationSubviewRef.view",
       ),
     ),
+    ...(globalRecord.baselineView === undefined ? {} : { baselineView: parseStringLiteral<"day" | "week" | "month">(globalRecord.baselineView, new Set(["day", "week", "month"]), "Global baseline view") }),
+    ...(globalRecord.evolutionView === undefined ? {} : { evolutionView: parseStringLiteral<"money" | "behavior">(globalRecord.evolutionView, new Set(["money", "behavior"]), "Global evolution view") }),
+    ...(globalRecord.selectedMonth === undefined ? {} : { selectedMonth: parseYearMonth(globalRecord.selectedMonth) }),
+    ...(globalRecord.habitsView === undefined ? {} : { habitsView: parseStringLiteral<"contexts" | "heatmap">(globalRecord.habitsView, new Set(["contexts", "heatmap"]), "Global habits view") }),
+    ...(profileTarget === undefined ? {} : { profileTarget }),
+    ...(selectedHeatmapCell === undefined ? {} : { selectedHeatmapCell }),
   };
 }
 

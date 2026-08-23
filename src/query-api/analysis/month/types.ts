@@ -150,7 +150,7 @@ export type MomentPreview = {
 export type AnalysisMonthMomentsReadModel = { readonly month: YearMonth; readonly subject: ReadModelSubject; readonly moments: readonly MomentPreview[]; readonly capabilities: QueryCapabilities };
 
 export type AnalysisTargetReadModel = {
-  readonly month: YearMonth;
+  readonly time: import("../../../core/scope").AnalysisTime;
   readonly subject: ReadModelSubject;
   readonly target: AnalysisTargetSubject;
   readonly status: "available" | "outside_scope" | "unsupported" | "blocked_contract";

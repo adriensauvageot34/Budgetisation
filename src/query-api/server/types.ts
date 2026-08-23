@@ -76,9 +76,14 @@ export type QueryReadModelSources = {
   readonly readAnalysisTarget: QueryReadModelSource<"analysis_target">;
   readonly readAnalysisMonthContexts: QueryReadModelSource<"analysis_month_contexts">;
   readonly readAnalysisGlobalInitial: QueryReadModelSource<"analysis_global_initial">;
+  readonly readAnalysisGlobalBaseline: QueryReadModelSource<"analysis_global_baseline">;
+  readonly readAnalysisGlobalTypical: QueryReadModelSource<"analysis_global_typical">;
   readonly readAnalysisGlobalBreakdown: QueryReadModelSource<"analysis_global_breakdown">;
   readonly readAnalysisGlobalEvolution: QueryReadModelSource<"analysis_global_evolution">;
   readonly readAnalysisGlobalContexts: QueryReadModelSource<"analysis_global_contexts">;
+  readonly readAnalysisGlobalHabits: QueryReadModelSource<"analysis_global_habits">;
+  readonly readAnalysisGlobalProfiles: QueryReadModelSource<"analysis_global_profiles">;
+  readonly readAnalysisGlobalUniverse: QueryReadModelSource<"analysis_global_universe">;
   readonly readEntityPlace: QueryReadModelSource<"entity_place">;
   readonly readEntityMerchant: QueryReadModelSource<"entity_merchant">;
   readonly readEntityMoment: QueryReadModelSource<"entity_moment">;

@@ -32,9 +32,14 @@ const monthResources = [
 
 const globalReferenceResources = [
   queryResourceKeys.analysisGlobalInitial,
+  queryResourceKeys.analysisGlobalBaseline,
+  queryResourceKeys.analysisGlobalTypical,
   queryResourceKeys.analysisGlobalBreakdown,
   queryResourceKeys.analysisGlobalEvolution,
   queryResourceKeys.analysisGlobalContexts,
+  queryResourceKeys.analysisGlobalHabits,
+  queryResourceKeys.analysisGlobalProfiles,
+  queryResourceKeys.analysisGlobalUniverse,
   queryResourceKeys.analysisMonthInitial,
   queryResourceKeys.analysisMonthEvolution,
 ] as const;

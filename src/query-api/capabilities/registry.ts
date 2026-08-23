@@ -25,6 +25,10 @@ export const querySectionKeys = Object.freeze({
   operations: "operations" as QuerySectionKey<"operations">,
   actual: "actual" as QuerySectionKey<"actual">,
   typical: "typical" as QuerySectionKey<"typical">,
+  baseline: "baseline" as QuerySectionKey<"baseline">,
+  habits: "habits" as QuerySectionKey<"habits">,
+  profiles: "profiles" as QuerySectionKey<"profiles">,
+  universe: "universe" as QuerySectionKey<"universe">,
   comparisons: "comparisons" as QuerySectionKey<"comparisons">,
   structure: "structure" as QuerySectionKey<"structure">,
   breakdown: "breakdown" as QuerySectionKey<"breakdown">,
@@ -61,6 +65,10 @@ export type QuerySectionName =
   | "operations"
   | "actual"
   | "typical"
+  | "baseline"
+  | "habits"
+  | "profiles"
+  | "universe"
   | "comparisons"
   | "structure"
   | "breakdown"
@@ -152,15 +160,7 @@ const contextMeasures = Object.freeze([
   "activity_causal_median_cost_per_occurrence",
 ] as const);
 const globalInitialMeasures = Object.freeze([
-  "typical_month_cost",
-  "category_amount",
-  "merchant_net_amount",
-  "localized_spend",
-  "life_scope_amount",
-  "purchase_count",
-  "person_day_count",
-  "place_visit_count",
-  "distinct_visit_days",
+  "economic_consumption_net_attributable",
 ] as const);
 const placeEntityMeasures = Object.freeze([
   "place_visit_count",
@@ -291,12 +291,21 @@ export const queryCapabilityRegistry = Object.freeze({
   },
   analysis_global_initial: {
     resource: queryResourceKeys.analysisGlobalInitial,
-    sections: Object.freeze([
-      querySectionKeys.typical,
-      querySectionKeys.structure,
-    ]),
+    sections: Object.freeze([querySectionKeys.summary]),
     measures: globalInitialMeasures,
-    filters: noFilters,
+    filters: allCoreFilters,
+  },
+  analysis_global_baseline: {
+    resource: queryResourceKeys.analysisGlobalBaseline,
+    sections: Object.freeze([querySectionKeys.baseline]),
+    measures: Object.freeze(["minimal_month_cost"]),
+    filters: allCoreFilters,
+  },
+  analysis_global_typical: {
+    resource: queryResourceKeys.analysisGlobalTypical,
+    sections: Object.freeze([querySectionKeys.typical, querySectionKeys.activities]),
+    measures: Object.freeze(["typical_month_cost", "activity_frequency"]),
+    filters: allCoreFilters,
   },
   analysis_global_breakdown: {
     resource: queryResourceKeys.analysisGlobalBreakdown,
@@ -315,6 +324,24 @@ export const queryCapabilityRegistry = Object.freeze({
     sections: Object.freeze([querySectionKeys.contexts]),
     measures: contextMeasures,
     filters: noFilters,
+  },
+  analysis_global_habits: {
+    resource: queryResourceKeys.analysisGlobalHabits,
+    sections: Object.freeze([querySectionKeys.habits, querySectionKeys.contexts]),
+    measures: contextMeasures,
+    filters: allCoreFilters,
+  },
+  analysis_global_profiles: {
+    resource: queryResourceKeys.analysisGlobalProfiles,
+    sections: Object.freeze([querySectionKeys.profiles]),
+    measures: Object.freeze(["activity_frequency", "place_visit_count", "life_scope_amount"]),
+    filters: allCoreFilters,
+  },
+  analysis_global_universe: {
+    resource: queryResourceKeys.analysisGlobalUniverse,
+    sections: Object.freeze([querySectionKeys.universe, querySectionKeys.moments, querySectionKeys.places, querySectionKeys.merchants]),
+    measures: Object.freeze(["place_visit_count", "localized_spend", "merchant_net_amount"]),
+    filters: allCoreFilters,
   },
   entity_place: {
     resource: queryResourceKeys.entityPlace,

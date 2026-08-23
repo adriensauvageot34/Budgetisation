@@ -1,7 +1,7 @@
 import { isActiveMetricId } from "../../../analytics/production";
 import type { ComparisonQualification } from "../../../analytics/comparisons";
 import { parseActivityId, parseCategoryId, parseMerchantId, parseMetricId, parseMomentId, parseOperationId, parsePersonId, parsePlaceId } from "../../../core/identity";
-import { parseAnalysisTargetSubject } from "../../../core/scope";
+import { parseAnalysisTargetSubject, parseAnalysisTime } from "../../../core/scope";
 import { compareYearMonth, parseInstant, parseLocalDate, parseYearMonth } from "../../../core/time";
 import { hasOwn, parseStrictRecord, parseStringLiteral, requireProperty } from "../../../core/validation";
 import { parseQueryCapabilities } from "../../capabilities";
@@ -222,8 +222,8 @@ export function parseAnalysisMonthMomentsReadModel(value: unknown): AnalysisMont
 }
 
 export function parseAnalysisTargetReadModel(value: unknown): AnalysisTargetReadModel {
-  const record = parseStrictRecord(value, ["month", "subject", "target", "status", "headlineMetrics", "capabilities"], "AnalysisTargetReadModel");
-  return { month: parseYearMonth(requireProperty(record, "month", "AnalysisTargetReadModel")), subject: parseReadModelSubject(requireProperty(record, "subject", "AnalysisTargetReadModel")), target: parseAnalysisTargetSubject(requireProperty(record, "target", "AnalysisTargetReadModel")), status: parseStringLiteral(requireProperty(record, "status", "AnalysisTargetReadModel"), new Set(["available", "outside_scope", "unsupported", "blocked_contract"]), "AnalysisTarget status"), headlineMetrics: array(requireProperty(record, "headlineMetrics", "AnalysisTargetReadModel"), parseScopedMetricReadModel, "Target headline metrics"), capabilities: parseQueryCapabilities(requireProperty(record, "capabilities", "AnalysisTargetReadModel"), queryResourceKeys.analysisTarget) };
+  const record = parseStrictRecord(value, ["time", "subject", "target", "status", "headlineMetrics", "capabilities"], "AnalysisTargetReadModel");
+  return { time: parseAnalysisTime(requireProperty(record, "time", "AnalysisTargetReadModel")), subject: parseReadModelSubject(requireProperty(record, "subject", "AnalysisTargetReadModel")), target: parseAnalysisTargetSubject(requireProperty(record, "target", "AnalysisTargetReadModel")), status: parseStringLiteral(requireProperty(record, "status", "AnalysisTargetReadModel"), new Set(["available", "outside_scope", "unsupported", "blocked_contract"]), "AnalysisTarget status"), headlineMetrics: array(requireProperty(record, "headlineMetrics", "AnalysisTargetReadModel"), parseScopedMetricReadModel, "Target headline metrics"), capabilities: parseQueryCapabilities(requireProperty(record, "capabilities", "AnalysisTargetReadModel"), queryResourceKeys.analysisTarget) };
 }
 
 export function parseAnalysisMonthContextsReadModel(value: unknown): AnalysisMonthContextsReadModel {
