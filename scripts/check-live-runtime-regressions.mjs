@@ -91,6 +91,14 @@ const { normalizeAnalysisScope } = require(path.join(
   repositoryRoot,
   "src/core/scope/index.ts",
 ));
+const {
+  operationsAnalysisFilters,
+  prepareExplorationScope,
+  scopeForRoot,
+} = require(path.join(
+  repositoryRoot,
+  "src/navigation/transfer/root-scope.ts",
+));
 const { useQueryRuntime } = require(path.join(
   repositoryRoot,
   "src/components/runtime/query-client.ts",
@@ -203,6 +211,122 @@ assert.equal(
   ),
   runtimeOperationsFilters,
 );
+
+const defaultOperationsRoot = {
+  kind: "operations",
+  filters: { timeKind: "bank_month", month: "2026-05" },
+};
+assert.equal(operationsAnalysisFilters(defaultOperationsRoot), undefined);
+const defaultOperationsScope = scopeForRoot(defaultOperationsRoot);
+assert.notEqual(defaultOperationsScope, null);
+assert.deepEqual(defaultOperationsScope.filters, {
+  categoryIds: [],
+  activityIds: [],
+  merchantIds: [],
+  placeIds: [],
+  lifeScopeContext: [],
+  dayContext: [],
+});
+
+const merchantId = "11111111-1111-4111-8111-111111111111";
+const merchantOperationsRoot = {
+  kind: "operations",
+  filters: {
+    timeKind: "economic_month",
+    month: "2026-05",
+    merchantIds: [merchantId],
+  },
+};
+const rawMerchantFilters = operationsAnalysisFilters(merchantOperationsRoot);
+assert.deepEqual(rawMerchantFilters, { merchantIds: [merchantId] });
+for (const absentKey of [
+  "categoryIds",
+  "activityIds",
+  "placeIds",
+  "lifeScopeContext",
+  "dayContext",
+]) {
+  assert.equal(Object.hasOwn(rawMerchantFilters, absentKey), false);
+}
+assert.deepEqual(scopeForRoot(merchantOperationsRoot).filters.merchantIds, [merchantId]);
+
+const globalOperationsScope = scopeForRoot({
+  kind: "operations",
+  filters: {
+    timeKind: "global_window",
+    globalWindow: "last_6_months",
+    asOf: "2026-07",
+  },
+});
+assert.equal(globalOperationsScope.time.kind, "global");
+assert.equal(globalOperationsScope.time.observationWindow, "last_6_months");
+
+const analysisMonthRoot = {
+  area: "analysis",
+  context: { kind: "analysis_month", month: "2026-05" },
+};
+assert.doesNotThrow(() => scopeForRoot(analysisMonthRoot));
+assert.deepEqual(scopeForRoot(analysisMonthRoot).filters, defaultOperationsScope.filters);
+
+const normalizedRouteFilters = normalizeAnalysisScope({
+  subject: { kind: "household" },
+  time: { kind: "month", month: "2026-05" },
+  filters: { merchantIds: [merchantId] },
+}).filters;
+const filteredMonthScope = scopeForRoot({
+  area: "analysis",
+  context: {
+    kind: "analysis_month",
+    month: "2026-05",
+    filters: normalizedRouteFilters,
+  },
+});
+assert.deepEqual(filteredMonthScope.filters, normalizedRouteFilters);
+
+const analysisGlobalRoot = {
+  area: "analysis",
+  context: {
+    kind: "analysis_global",
+    observationWindow: "last_12_months",
+    asOf: "2026-07",
+  },
+};
+assert.doesNotThrow(() => scopeForRoot(analysisGlobalRoot));
+assert.deepEqual(scopeForRoot(analysisGlobalRoot).filters, defaultOperationsScope.filters);
+const filteredGlobalScope = scopeForRoot({
+  ...analysisGlobalRoot,
+  context: { ...analysisGlobalRoot.context, filters: normalizedRouteFilters },
+});
+assert.deepEqual(filteredGlobalScope.filters, normalizedRouteFilters);
+
+for (const calendarRoot of [
+  { area: "calendar", context: { kind: "calendar_month", month: "2026-05" } },
+  { area: "calendar", context: { kind: "calendar_week", month: "2026-05", week: "semaine-18" } },
+]) {
+  assert.doesNotThrow(() => scopeForRoot(calendarRoot));
+  assert.equal(scopeForRoot(calendarRoot).time.month, "2026-05");
+}
+
+const inactiveSnapshot = {
+  history: { root: defaultOperationsRoot, exploration: null },
+};
+assert.deepEqual(prepareExplorationScope({
+  root: inactiveSnapshot.history.root,
+  registeredScope: null,
+  explorationRequested: inactiveSnapshot.history.exploration !== null,
+}), { kind: "inactive" });
+const activePreparation = prepareExplorationScope({
+  root: merchantOperationsRoot,
+  registeredScope: null,
+  explorationRequested: true,
+});
+assert.equal(activePreparation.kind, "ready");
+assert.deepEqual(activePreparation.scope.filters.merchantIds, [merchantId]);
+assert.deepEqual(prepareExplorationScope({
+  root: { kind: "operations", filters: {} },
+  registeredScope: null,
+  explorationRequested: true,
+}), { kind: "invalid_scope" });
 
 const monthScope = normalizeAnalysisScope({
   subject: { kind: "household" },

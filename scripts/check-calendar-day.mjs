@@ -8,28 +8,42 @@ import ts from "typescript";
 const require = createRequire(import.meta.url);
 const repositoryRoot = process.cwd();
 const originalResolveFilename = Module._resolveFilename;
+const originalLoad = Module._load;
+Module._load = function loadCalendarModule(request, parent, isMain) {
+  if (request.endsWith(".module.css")) return {};
+  return originalLoad.call(this, request, parent, isMain);
+};
 Module._resolveFilename = function resolveCalendarModule(request, parent, isMain, options) {
   const resolvedRequest = request.startsWith("@/")
     ? path.join(repositoryRoot, "src", request.slice(2))
     : request;
   return originalResolveFilename.call(this, resolvedRequest, parent, isMain, options);
 };
-require.extensions[".ts"] = (module, filename) => {
-  const source = fs.readFileSync(filename, "utf8");
-  const output = ts.transpileModule(source, {
-    compilerOptions: {
-      module: ts.ModuleKind.CommonJS,
-      target: ts.ScriptTarget.ES2022,
-      esModuleInterop: true,
-    },
-    fileName: filename,
-  }).outputText;
-  module._compile(output, filename);
-};
+for (const extension of [".ts", ".tsx"]) {
+  require.extensions[extension] = (module, filename) => {
+    const source = fs.readFileSync(filename, "utf8");
+    const output = ts.transpileModule(source, {
+      compilerOptions: {
+        module: ts.ModuleKind.CommonJS,
+        target: ts.ScriptTarget.ES2022,
+        esModuleInterop: true,
+        jsx: ts.JsxEmit.ReactJSX,
+      },
+      fileName: filename,
+    }).outputText;
+    module._compile(output, filename);
+  };
+}
 
 const model = require(path.join(repositoryRoot, "src/features/calendar/model.ts"));
 const query = require(path.join(repositoryRoot, "src/query-api/index.ts"));
 const navigation = require(path.join(repositoryRoot, "src/navigation/index.ts"));
+const React = require("react");
+const { renderToStaticMarkup } = require("react-dom/server");
+const { CalendarMonth, CalendarWeek } = require(path.join(
+  repositoryRoot,
+  "src/features/calendar/calendar-view.tsx",
+));
 
 function metric(value, availability = "known") {
   return {
@@ -127,6 +141,40 @@ const decemberJanuaryRange = model.calendarWeekRange(
 assert.equal(decemberJanuaryRange.start, "2026-12-28");
 assert.equal(decemberJanuaryRange.end, "2027-01-03");
 assert.deepEqual(decemberJanuaryRange.months, ["2026-12", "2027-01"]);
+
+const computationErrorState = {
+  status: "error",
+  error: {
+    code: "COMPUTATION_FAILED",
+    message: "Ce résultat n’a pas pu être calculé.",
+    retryable: true,
+    requestId: "calendar-error-controls",
+  },
+};
+const errorMonthMarkup = renderToStaticMarkup(
+  React.createElement(CalendarMonth, {
+    month: "2026-04",
+    state: computationErrorState,
+  }),
+);
+assert.match(errorMonthMarkup, /Mois précédent/);
+assert.match(errorMonthMarkup, /avril 2026/);
+assert.match(errorMonthMarkup, /Mois suivant/);
+assert.match(errorMonthMarkup, /Ce résultat n’a pas pu être calculé/);
+assert.doesNotMatch(errorMonthMarkup, /role="grid"/);
+
+const errorWeekMarkup = renderToStaticMarkup(
+  React.createElement(CalendarWeek, {
+    month: "2026-05",
+    week: model.calendarWeekRefFor("2026-05-01"),
+    state: computationErrorState,
+  }),
+);
+assert.match(errorWeekMarkup, /Semaine précédente/);
+assert.match(errorWeekMarkup, /Semaine suivante/);
+assert.match(errorWeekMarkup, /Retour au mois/);
+assert.match(errorWeekMarkup, /Ce résultat n’a pas pu être calculé/);
+assert.doesNotMatch(errorWeekMarkup, /Dépense économique par jour/);
 
 const pushedRoots = [];
 let historyState = null;

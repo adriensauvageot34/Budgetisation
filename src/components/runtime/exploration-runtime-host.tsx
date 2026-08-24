@@ -2,10 +2,10 @@
 
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { createApiError, type ApiResponse } from "@/core/api";
-import { normalizeAnalysisScope, type AnalysisScope, type NormalizedAnalysisScope } from "@/core/scope";
+import type { AnalysisScope } from "@/core/scope";
 import type { YearMonth } from "@/core/time";
 import { ExplorationPanel, type ExplorationNodeTransport } from "@/features/exploration";
-import type { ExplorationNode, RootNavigationContext } from "@/navigation";
+import { prepareExplorationScope, type ExplorationNode } from "@/navigation";
 import {
   queryResourceKeys,
   type EntityLifeEventReadModel,
@@ -47,68 +47,6 @@ function initialGallerySession(node: Extract<ExplorationNode, { readonly kind: "
     : node.gallery === "places"
       ? { key, gallery: node.gallery, search: "", sort: node.filters.sort, filters: { activityIds: [] }, cursor: null }
       : { key, gallery: node.gallery, search: "", sort: node.filters.sort, filters: { activityIds: [], placeIds: [] }, cursor: null };
-}
-
-function scopeForRoot(root: RootNavigationContext): NormalizedAnalysisScope | null {
-  if ("kind" in root) {
-    const subject = root.filters.personId
-      ? { kind: "person" as const, personId: root.filters.personId }
-      : { kind: "household" as const };
-    if (root.filters.timeKind === "global_window" && root.filters.globalWindow && root.filters.asOf) {
-      return normalizeAnalysisScope({
-        subject,
-        time: { kind: "global", observationWindow: root.filters.globalWindow, asOf: root.filters.asOf },
-        filters: {
-          categoryIds: root.filters.categoryIds,
-          activityIds: root.filters.activityIds,
-          merchantIds: root.filters.merchantIds,
-          placeIds: root.filters.placeIds,
-          lifeScopeContext: root.filters.lifeScope,
-          dayContext: root.filters.dayContext,
-        },
-      });
-    }
-    if ((root.filters.timeKind === "bank_month" || root.filters.timeKind === "economic_month") && root.filters.month) return normalizeAnalysisScope({
-      subject: root.filters.personId
-        ? { kind: "person", personId: root.filters.personId }
-        : { kind: "household" },
-      time: { kind: "month", month: root.filters.month },
-      filters: {
-        categoryIds: root.filters.categoryIds,
-        activityIds: root.filters.activityIds,
-        merchantIds: root.filters.merchantIds,
-        placeIds: root.filters.placeIds,
-        lifeScopeContext: root.filters.lifeScope,
-        dayContext: root.filters.dayContext,
-      },
-    });
-    return null;
-  }
-  if (root.area === "calendar") {
-    if (root.context.kind === "calendar_overview") return null;
-    return normalizeAnalysisScope({
-      subject: root.context.personId
-        ? { kind: "person", personId: root.context.personId }
-        : { kind: "household" },
-      time: { kind: "month", month: root.context.month },
-    });
-  }
-  const subject = root.context.personId
-    ? { kind: "person" as const, personId: root.context.personId }
-    : { kind: "household" as const };
-  return root.context.kind === "analysis_month"
-    ? normalizeAnalysisScope({ subject, time: { kind: "month", month: root.context.month }, filters: root.context.filters })
-    : root.context.asOf
-      ? normalizeAnalysisScope({
-          subject,
-          time: {
-            kind: "global",
-            observationWindow: root.context.observationWindow,
-            asOf: root.context.asOf,
-          },
-          filters: root.context.filters,
-        })
-      : null;
 }
 
 function asOfForScope(scope: AnalysisScope): YearMonth {
@@ -199,12 +137,16 @@ export function ExplorationRuntimeHost() {
       setStoredGallery(gallerySession);
     }
   }, [gallerySession, storedGallery?.key]);
-  const scope = useMemo(
-    () => runtime.snapshot
-      ? runtime.surfaceRegistry.readScope() ?? scopeForRoot(runtime.snapshot.history.root)
-      : null,
-    [runtime.snapshot],
-  );
+  const scopePreparation = useMemo(() => runtime.snapshot === null
+    ? { kind: "inactive" as const }
+    : prepareExplorationScope({
+        root: runtime.snapshot.history.root,
+        registeredScope: runtime.surfaceRegistry.readScope(),
+        explorationRequested: currentNode !== undefined,
+      }), [currentNode, runtime.snapshot, runtime.surfaceRegistry]);
+  const scope = scopePreparation.kind === "ready"
+    ? scopePreparation.scope
+    : null;
   const request = useMemo(
     () => currentNode && scope ? requestForNode(currentNode, scope, gallerySession) : null,
     [currentNode, gallerySession, scope],
@@ -215,7 +157,8 @@ export function ExplorationRuntimeHost() {
   const [transport, setTransport] = useState<UiTransportState<unknown>>({ status: "idle" });
 
   useEffect(() => {
-    if (request === undefined || scope === null) {
+    if (currentNode === undefined) return;
+    if (request === undefined || scopePreparation.kind === "invalid_scope") {
       setTransport({
         status: "error",
         error: createApiError({
@@ -227,7 +170,7 @@ export function ExplorationRuntimeHost() {
       });
       return;
     }
-    if (request === null) return;
+    if (request === null || scope === null) return;
     let active = true;
     const cached = cachedClientQueryResponse(request);
     setTransport(cached === undefined
@@ -278,7 +221,7 @@ export function ExplorationRuntimeHost() {
         });
       });
     return () => { active = false; };
-  }, [currentNode?.kind, requestKey, retryGeneration, scope]);
+  }, [currentNode?.kind, requestKey, retryGeneration, scope, scopePreparation.kind]);
 
   useLayoutEffect(() => {
     const root = runtime.snapshot?.history.root;

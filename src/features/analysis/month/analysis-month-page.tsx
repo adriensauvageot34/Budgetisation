@@ -5,7 +5,7 @@ import { parseActivityId, parseCategoryId, parseMerchantId, parsePlaceId, type P
 import { normalizeAnalysisScope, parseDayContext, parseLifeScopeContext, type NormalizedAnalysisScope } from "@/core/scope";
 import { formatYearMonth } from "@/core/time";
 import { useProductRuntime, useProductSurface, useQueryRuntime, useRestorableSubview, useSemanticAnchor } from "@/components/runtime";
-import type { HistoryRootContext, NavigationSubviewRef, SemanticAnchor } from "@/navigation";
+import { scopeForRoot, type HistoryRootContext, type NavigationSubviewRef, type SemanticAnchor } from "@/navigation";
 import type {
   AnalysisLivedSubview,
   AnalysisMonthInitialReadModel,
@@ -69,13 +69,8 @@ export function AnalysisMonthPage({
     ? runtimeRoot
     : route;
   const currentScope = useMemo(() => {
-    const context = currentRoute.context;
-    if (context.kind !== "analysis_month") return serverScope;
-    return normalizeAnalysisScope({
-      subject: context.personId ? { kind: "person", personId: context.personId } : { kind: "household" },
-      time: { kind: "month", month: context.month },
-      filters: context.filters,
-    });
+    const runtimeScope = scopeForRoot(currentRoute);
+    return runtimeScope?.time.kind === "month" ? runtimeScope : serverScope;
   }, [currentRoute, serverScope]);
   if (currentScope.time.kind !== "month") throw new TypeError("AnalysisMonthPage exige un scope Month.");
   const month = currentScope.time.month;

@@ -2,9 +2,8 @@
 
 import { useMemo, useRef } from "react";
 import type { LocalDate, YearMonth } from "@/core/time";
-import { normalizeAnalysisScope } from "@/core/scope";
 import type { AnalysisSubject } from "@/core/scope";
-import { type CalendarWeekRef, type RootNavigationContext } from "@/navigation";
+import { scopeForRoot, type CalendarWeekRef, type RootNavigationContext } from "@/navigation";
 import type {
   HistoryCalendarMonthReadModel,
   HistoryCalendarMonthSummaryReadModel,
@@ -56,10 +55,7 @@ export function CalendarClientPage(props: CalendarClientPageProps) {
     : props.kind === "week"
       ? { area: "calendar", context: { kind: "calendar_week", month: props.month, week: props.week, ...(props.subject.kind === "person" ? { personId: props.subject.personId } : {}) } }
       : { area: "calendar", context: { kind: "calendar_month", month: props.month, ...(props.day ? { day: props.day } : {}), ...(props.subject.kind === "person" ? { personId: props.subject.personId } : {}) } };
-  const scope = props.kind === "overview" ? null : normalizeAnalysisScope({
-    subject: props.subject,
-    time: { kind: "month", month: props.month },
-  });
+  const scope = props.kind === "overview" ? null : scopeForRoot(route);
   const pageState = props.kind === "month" && props.dayState ? props.dayState : props.state;
   useProductSurface({
     route,
@@ -79,7 +75,7 @@ export function CalendarClientPage(props: CalendarClientPageProps) {
   return (
     <>
       <div ref={rootRef} data-focus-restoration-fallback="">
-        <CalendarMonth state={props.state} navigation={navigation} />
+        <CalendarMonth month={props.month} state={props.state} navigation={navigation} />
       </div>
       {props.day && controller && props.dayState ? (
         <DayDetailDrawer

@@ -29,6 +29,7 @@ import {
 import {
   adjacentWeek,
   buildMonthGrid,
+  calendarWeekRange,
   calendarWeekRefFor,
   monthGridWeekRefs,
   selectCalendarWeek,
@@ -202,56 +203,72 @@ export function CalendarTwelveMonths({
 }
 
 export function CalendarMonth({
+  month,
   state,
   navigation,
   onRetry,
 }: {
+  readonly month: YearMonth;
   readonly state: UiTransportState<HistoryCalendarMonthReadModel>;
   readonly navigation?: CalendarNavigation;
   readonly onRetry?: () => void;
 }) {
+  const response = state.status === "success"
+    ? state.response
+    : state.status === "error"
+      ? state.previousData
+      : undefined;
+  const model = response?.data;
+  if (model !== undefined && model.month !== month) {
+    throw new TypeError("Le read model Calendar ne correspond pas au mois de la route.");
+  }
+  let content: React.ReactNode;
   if (state.status === "idle" || state.status === "loading") {
-    return <DesktopFrame label="Calendrier mensuel" className={styles.frame}><SectionSkeleton /></DesktopFrame>;
+    content = <SectionSkeleton />;
+  } else if (state.status === "error" && model === undefined) {
+    content = <ErrorState error={state.error} onRetry={onRetry} />;
+  } else if (model === undefined) {
+    throw new TypeError("Réponse mensuelle Calendar indisponible.");
+  } else {
+    const slots = buildMonthGrid(model);
+    const weeks = monthGridWeekRefs(model);
+    content = (
+      <>
+        <div className={styles.calendarGrid} role="grid" aria-label={`Jours de ${monthLabel(month)}`}>
+          <span className={styles.weekHeading}>Sem.</span>
+          {weekdayNames.map((name) => <span key={name} className={styles.weekday} role="columnheader">{name}</span>)}
+          {Array.from({ length: slots.length / 7 }, (_, row) => {
+            const firstSlot = slots[row * 7];
+            const week = weeks[row] ?? (firstSlot?.kind === "day" ? calendarWeekRefFor(firstSlot.day.date) : undefined);
+            return [
+              <Button key={`week-${row}`} tone="quiet" size="sm" action={navigation && week ? { kind: "callback", onAction: () => navigation.openCalendarWeek(month, week) } : { kind: "disabled" }} className={styles.weekButton}>{week?.replace("semaine-", "S") ?? "—"}</Button>,
+              ...slots.slice(row * 7, row * 7 + 7).map((slot) => slot.kind === "padding"
+                ? <span key={slot.key} className={styles.padding} aria-hidden="true" />
+                : <CalendarDayCard key={slot.key} day={slot.day} navigation={navigation ?? disabledNavigation} />),
+            ];
+          })}
+        </div>
+        {state.status === "success" && state.refreshing ? <RefreshIndicator announce /> : null}
+        {state.status === "error" ? <RefreshIndicator failed announce /> : null}
+      </>
+    );
   }
-  const response = state.status === "success" ? state.response : state.previousData;
-  if (state.status === "error" && response === undefined) {
-    return <DesktopFrame label="Calendrier mensuel" className={styles.frame}><ErrorState error={state.error} onRetry={onRetry} /></DesktopFrame>;
-  }
-  if (response === undefined) throw new TypeError("Réponse mensuelle Calendar indisponible.");
-  const model = response.data;
-  const slots = buildMonthGrid(model);
-  const weeks = monthGridWeekRefs(model);
   return (
-    <DesktopFrame label={`Calendrier ${monthLabel(model.month)}`} className={styles.frame}>
+    <DesktopFrame label={`Calendrier ${monthLabel(month)}`} className={styles.frame}>
       <header className={styles.pageHeader}>
         <span className={styles.eyebrow}>Calendar · mois</span>
         <div className={styles.titleRow}>
-          <Button tone="secondary" action={navigation ? { kind: "callback", onAction: () => navigation.openCalendarMonth(addMonths(model.month, -1)) } : { kind: "disabled" }}>Mois précédent</Button>
-          <h1>{monthLabel(model.month)}</h1>
-          <Button tone="secondary" action={navigation ? { kind: "callback", onAction: () => navigation.openCalendarMonth(addMonths(model.month, 1)) } : { kind: "disabled" }}>Mois suivant</Button>
+          <Button tone="secondary" action={navigation ? { kind: "callback", onAction: () => navigation.openCalendarMonth(addMonths(month, -1)) } : { kind: "disabled" }}>Mois précédent</Button>
+          <h1>{monthLabel(month)}</h1>
+          <Button tone="secondary" action={navigation ? { kind: "callback", onAction: () => navigation.openCalendarMonth(addMonths(month, 1)) } : { kind: "disabled" }}>Mois suivant</Button>
         </div>
         <div className={styles.headerActions}>
-          <span className={styles.dayMeta}>Sujet : {model.subject.kind === "household" ? "foyer" : "personne"}</span>
+          {model === undefined ? null : <span className={styles.dayMeta}>Sujet : {model.subject.kind === "household" ? "foyer" : "personne"}</span>}
           <Button tone="quiet" size="sm" action={navigation ? { kind: "callback", onAction: () => { void navigation.goToAnalysis(); } } : { kind: "disabled" }}>Passer à l’analyse</Button>
         </div>
-        <div className={styles.monthTotal}><span>Dépense économique</span><MetricDisplay metric={model.summary.economicAmount} /></div>
+        {model === undefined ? null : <div className={styles.monthTotal}><span>Dépense économique</span><MetricDisplay metric={model.summary.economicAmount} /></div>}
       </header>
-      <div className={styles.calendarGrid} role="grid" aria-label={`Jours de ${monthLabel(model.month)}`}>
-        <span className={styles.weekHeading}>Sem.</span>
-        {weekdayNames.map((name) => <span key={name} className={styles.weekday} role="columnheader">{name}</span>)}
-        {Array.from({ length: slots.length / 7 }, (_, row) => {
-          const firstSlot = slots[row * 7];
-          const week = weeks[row] ?? (firstSlot?.kind === "day" ? calendarWeekRefFor(firstSlot.day.date) : undefined);
-          return [
-            <Button key={`week-${row}`} tone="quiet" size="sm" action={navigation && week ? { kind: "callback", onAction: () => navigation.openCalendarWeek(model.month, week) } : { kind: "disabled" }} className={styles.weekButton}>{week?.replace("semaine-", "S") ?? "—"}</Button>,
-            ...slots.slice(row * 7, row * 7 + 7).map((slot) => slot.kind === "padding"
-              ? <span key={slot.key} className={styles.padding} aria-hidden="true" />
-              : <CalendarDayCard key={slot.key} day={slot.day} navigation={navigation ?? disabledNavigation} />),
-          ];
-        })}
-      </div>
-      {state.status === "success" && state.refreshing ? <RefreshIndicator announce /> : null}
-      {state.status === "error" ? <RefreshIndicator failed announce /> : null}
+      {content}
     </DesktopFrame>
   );
 }
@@ -280,32 +297,52 @@ export function CalendarWeek({
   readonly navigation?: CalendarNavigation;
   readonly onRetry?: () => void;
 }) {
-  if (state.status === "idle" || state.status === "loading") {
-    return <DesktopFrame label="Semaine Calendar" className={styles.frame}><SectionSkeleton /></DesktopFrame>;
-  }
-  const response = state.status === "success" ? state.response : state.previousData;
-  if (state.status === "error" && response === undefined) {
-    return <DesktopFrame label="Semaine Calendar" className={styles.frame}><ErrorState error={state.error} onRetry={onRetry} /></DesktopFrame>;
-  }
-  if (response === undefined) throw new TypeError("Réponse hebdomadaire Calendar indisponible.");
-  const selection = selectCalendarWeek(month, week, response.data);
-  const previous = adjacentWeek(selection.start, -1);
-  const next = adjacentWeek(selection.start, 1);
+  const range = calendarWeekRange(month, week);
+  const previous = adjacentWeek(range.start, -1);
+  const next = adjacentWeek(range.start, 1);
   const controller = navigation ?? disabledNavigation;
-  const point = (day: CalendarDayCell) => ({
-    date: day.date,
-    label: dayLabel(day.date),
-    metric: day.economicAmount,
-  });
-  const points: SevenDayPoints<Money, MonetaryMetricUnit> = [
-    point(selection.days[0]),
-    point(selection.days[1]),
-    point(selection.days[2]),
-    point(selection.days[3]),
-    point(selection.days[4]),
-    point(selection.days[5]),
-    point(selection.days[6]),
-  ];
+  const response = state.status === "success"
+    ? state.response
+    : state.status === "error"
+      ? state.previousData
+      : undefined;
+  let content: React.ReactNode;
+  if (state.status === "idle" || state.status === "loading") {
+    content = <SectionSkeleton />;
+  } else if (state.status === "error" && response === undefined) {
+    content = <ErrorState error={state.error} onRetry={onRetry} />;
+  } else if (response === undefined) {
+    throw new TypeError("Réponse hebdomadaire Calendar indisponible.");
+  } else {
+    const selection = selectCalendarWeek(month, week, response.data);
+    const point = (day: CalendarDayCell) => ({
+      date: day.date,
+      label: dayLabel(day.date),
+      metric: day.economicAmount,
+    });
+    const points: SevenDayPoints<Money, MonetaryMetricUnit> = [
+      point(selection.days[0]),
+      point(selection.days[1]),
+      point(selection.days[2]),
+      point(selection.days[3]),
+      point(selection.days[4]),
+      point(selection.days[5]),
+      point(selection.days[6]),
+    ];
+    content = (
+      <>
+        <WeekBars
+          unit={selection.days[0].economicAmount.unit}
+          points={points}
+          frame={{ title: "Dépense économique par jour", state: { kind: "ready", refreshing: state.status === "success" && state.refreshing }, summary: "Sept jours civils, sans total recalculé côté UI." }}
+        />
+        <div className={styles.weekCards}>
+          {selection.days.map((day) => <CalendarDayCard key={day.date} day={day} navigation={controller} compact />)}
+        </div>
+        {state.status === "error" ? <RefreshIndicator failed announce /> : null}
+      </>
+    );
+  }
   return (
     <DesktopFrame label={`Semaine ${week}`} className={styles.frame}>
       <header className={styles.pageHeader}>
@@ -316,19 +353,11 @@ export function CalendarWeek({
           <Button tone="secondary" action={{ kind: "callback", onAction: () => controller.openCalendarWeek(next.month, next.week) }}>Semaine suivante</Button>
         </div>
         <div className={styles.headerActions}>
-          <Button tone="quiet" size="sm" action={{ kind: "callback", onAction: () => controller.openCalendarMonth(selection.month) }}>Retour au mois</Button>
+          <Button tone="quiet" size="sm" action={{ kind: "callback", onAction: () => controller.openCalendarMonth(month) }}>Retour au mois</Button>
         </div>
-        <p>Du {dayLabel(selection.start, true)} au {dayLabel(selection.end, true)}</p>
+        <p>Du {dayLabel(range.start, true)} au {dayLabel(range.end, true)}</p>
       </header>
-      <WeekBars
-        unit={selection.days[0].economicAmount.unit}
-        points={points}
-        frame={{ title: "Dépense économique par jour", state: { kind: "ready", refreshing: state.status === "success" && state.refreshing }, summary: "Sept jours civils, sans total recalculé côté UI." }}
-      />
-      <div className={styles.weekCards}>
-        {selection.days.map((day) => <CalendarDayCard key={day.date} day={day} navigation={controller} compact />)}
-      </div>
-      {state.status === "error" ? <RefreshIndicator failed announce /> : null}
+      {content}
     </DesktopFrame>
   );
 }

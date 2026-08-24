@@ -1,9 +1,8 @@
 import { notFound, redirect } from "next/navigation";
-import { normalizeAnalysisScope } from "@/core/scope";
 import { AnalysisGlobalPage } from "@/features/analysis";
 import type { AnalysisGlobalInitialReadModel } from "@/query-api";
 import { queryResourceKeys } from "@/query-api";
-import { parseRootNavigation, serializeRootNavigation } from "@/navigation";
+import { parseRootNavigation, scopeForRoot, serializeRootNavigation } from "@/navigation";
 import type { HistoryRootContext } from "@/navigation";
 import { getBootstrapContext } from "@/server/bootstrap/context";
 import { isAllowedGlobalAsOf, resolveDefaultGlobalAsOf } from "@/server/bootstrap/global-as-of";
@@ -45,11 +44,8 @@ export default async function AnalysisGlobalRoute({
   if (globalContext.asOf === undefined) redirect(serializeRootNavigation(canonicalRoute));
   const selectedPersonId = globalContext.personId;
   if (selectedPersonId && !context.persons.some(({ personId }) => personId === selectedPersonId)) notFound();
-  const scope = normalizeAnalysisScope({
-    subject: selectedPersonId ? { kind: "person", personId: selectedPersonId } : { kind: "household" },
-    time: { kind: "global", observationWindow: globalContext.observationWindow, asOf },
-    filters: globalContext.filters,
-  });
+  const scope = scopeForRoot(canonicalRoute);
+  if (scope === null || scope.time.kind !== "global") notFound();
   const result = await withProductAuthentication(() => executeAuthenticatedQuery({
     resource: queryResourceKeys.analysisGlobalInitial,
     scope,
