@@ -22,6 +22,7 @@ import {
 } from "@/analytics/facts";
 import type {
   HouseholdId,
+  LifeEventId,
   OperationId,
   PersonId,
 } from "@/core/identity";
@@ -702,56 +703,84 @@ export class CanonicalRepository {
             .order("start_date", { ascending: true })
             .order("life_event_id", { ascending: true }),
       );
-      if (lifeEvents.length === 0) return [];
-      const eventIds = lifeEvents.map((row) =>
-        canonicalString(row, ["life_event_id"], "life_events"),
-      );
-      const typeIds = unique(
-        lifeEvents.map((row) =>
-          canonicalString(row, ["life_event_type_id"], "life_events"),
-        ),
-      );
-      const [eventTypes, participations] = await Promise.all([
-        this.readRows(`life-event-types:${typeIds.join(",")}`, "life_events", () =>
-          this.client
-            .from("life_event_types")
-            .select(activityOccurrenceLifeEventTypeSelection)
-            .in("life_event_type_id", typeIds)
-            .order("life_event_type_id", { ascending: true }),
-        ),
-        this.readRows(`life-event-participations:${eventIds.join(",")}`, "life_events", () =>
-          this.client
-            .from("life_event_participations")
-            .select("life_event_id,person_day_id,person_id,participation_status")
-            .in("life_event_id", eventIds)
-            .order("life_event_id", { ascending: true })
-            .order("person_id", { ascending: true }),
-        ),
-      ]);
-      const typeById = byUniqueKey(eventTypes, "life_event_type_id", "life_events");
-      const participationsByEvent = groupBy(participations, "life_event_id");
-      return dedupeActivityOccurrences(
-        lifeEvents.flatMap((lifeEvent) => {
-          const typeId = canonicalString(
-            lifeEvent,
-            ["life_event_type_id"],
-            "life_events",
-          );
-          const eventId = canonicalString(lifeEvent, ["life_event_id"], "life_events");
-          const lifeEventType = typeById.get(typeId);
-          if (lifeEventType === undefined) {
-            throw new CanonicalReadError("life_events", "Life_event_type est absent.");
-          }
-          const fact = projectActivityOccurrenceFact({
-            household: this.household,
-            lifeEvent,
-            lifeEventType,
-            participations: participationsByEvent.get(eventId) ?? [],
-          });
-          return fact === null ? [] : [fact];
-        }),
-      );
+      return this.projectActivityOccurrenceRows(lifeEvents);
     });
+  }
+
+  async loadActivityOccurrenceById(
+    lifeEventId: LifeEventId,
+  ): Promise<ActivityOccurrenceFact | null> {
+    return this.cached(`facts:activity:${lifeEventId}`, async () => {
+      await this.assertAuthorizedCanonicalHouseholdScope();
+      const lifeEvents = await this.readRows(
+        `life-event-fact:${lifeEventId}`,
+        "life_events",
+        () =>
+          this.client
+            .from("life_events")
+            .select(
+              "life_event_id,life_event_type_id,life_event_series_id,parent_life_event_id,start_date,end_date,validation_status",
+            )
+            .eq("life_event_id", lifeEventId)
+            .limit(1),
+      );
+      const projected = await this.projectActivityOccurrenceRows(lifeEvents);
+      return projected[0] ?? null;
+    });
+  }
+
+  private async projectActivityOccurrenceRows(
+    lifeEvents: readonly CanonicalRecord[],
+  ): Promise<readonly ActivityOccurrenceFact[]> {
+    if (lifeEvents.length === 0) return [];
+    const eventIds = lifeEvents.map((row) =>
+      canonicalString(row, ["life_event_id"], "life_events"),
+    );
+    const typeIds = unique(
+      lifeEvents.map((row) =>
+        canonicalString(row, ["life_event_type_id"], "life_events"),
+      ),
+    );
+    const [eventTypes, participations] = await Promise.all([
+      this.readRows(`life-event-types:${typeIds.join(",")}`, "life_events", () =>
+        this.client
+          .from("life_event_types")
+          .select(activityOccurrenceLifeEventTypeSelection)
+          .in("life_event_type_id", typeIds)
+          .order("life_event_type_id", { ascending: true }),
+      ),
+      this.readRows(`life-event-participations:${eventIds.join(",")}`, "life_events", () =>
+        this.client
+          .from("life_event_participations")
+          .select("life_event_id,person_day_id,person_id,participation_status")
+          .in("life_event_id", eventIds)
+          .order("life_event_id", { ascending: true })
+          .order("person_id", { ascending: true }),
+      ),
+    ]);
+    const typeById = byUniqueKey(eventTypes, "life_event_type_id", "life_events");
+    const participationsByEvent = groupBy(participations, "life_event_id");
+    return dedupeActivityOccurrences(
+      lifeEvents.flatMap((lifeEvent) => {
+        const typeId = canonicalString(
+          lifeEvent,
+          ["life_event_type_id"],
+          "life_events",
+        );
+        const eventId = canonicalString(lifeEvent, ["life_event_id"], "life_events");
+        const lifeEventType = typeById.get(typeId);
+        if (lifeEventType === undefined) {
+          throw new CanonicalReadError("life_events", "Life_event_type est absent.");
+        }
+        const fact = projectActivityOccurrenceFact({
+          household: this.household,
+          lifeEvent,
+          lifeEventType,
+          participations: participationsByEvent.get(eventId) ?? [],
+        });
+        return fact === null ? [] : [fact];
+      }),
+    );
   }
 
   async loadPurchaseEvents(): Promise<readonly PurchaseEventFact[]> {

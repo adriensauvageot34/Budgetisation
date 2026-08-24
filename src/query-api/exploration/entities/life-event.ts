@@ -14,6 +14,10 @@ import {
 } from "../shared";
 
 export type LifeEventValidationStatus = "Confirmé" | "Déduit" | "À valider";
+export type LifeEventParticipant = {
+  readonly personId: PersonId;
+  readonly label: string;
+};
 export type EntityLifeEventReadModel = {
   readonly id: LifeEventId;
   readonly identity: EntityIdentity;
@@ -22,7 +26,7 @@ export type EntityLifeEventReadModel = {
   readonly startsOn: LocalDate;
   readonly endsOn: LocalDate;
   readonly validationStatus: LifeEventValidationStatus;
-  readonly participantIds: readonly PersonId[];
+  readonly participants: readonly LifeEventParticipant[];
   readonly places: EntityPreview<SemanticEntityRef>;
   readonly relatedMoments: EntityPreview<SemanticEntityRef>;
   readonly headline: Record<string, never>;
@@ -40,19 +44,29 @@ function parseRefKind(value: unknown, expected: "place" | "moment") {
   return ref;
 }
 
+function parseParticipant(value: unknown): LifeEventParticipant {
+  const record = parseStrictRecord(value, ["personId", "label"], "LifeEventParticipant");
+  return {
+    personId: parsePersonId(requireProperty(record, "personId", "LifeEventParticipant")),
+    label: parseDisplayText(requireProperty(record, "label", "LifeEventParticipant"), "participant label"),
+  };
+}
+
 export function parseEntityLifeEventReadModel(value: unknown): EntityLifeEventReadModel {
   const record = parseStrictRecord(
     value,
-    ["id", "identity", "type", "activityId", "startsOn", "endsOn", "validationStatus", "participantIds", "places", "relatedMoments", "headline", "capabilities"],
+    ["id", "identity", "type", "activityId", "startsOn", "endsOn", "validationStatus", "participants", "places", "relatedMoments", "headline", "capabilities"],
     "EntityLifeEventReadModel",
   );
   const startsOn = parseLocalDate(requireProperty(record, "startsOn", "EntityLifeEventReadModel"));
   const endsOn = parseLocalDate(requireProperty(record, "endsOn", "EntityLifeEventReadModel"));
   if (endsOn < startsOn) throw new TypeError("Life Event endsOn précède startsOn.");
-  const participantIds = requireProperty(record, "participantIds", "EntityLifeEventReadModel");
-  if (!Array.isArray(participantIds)) throw new TypeError("participantIds doit être un tableau.");
-  const parsedParticipants = participantIds.map(parsePersonId);
-  if (new Set(parsedParticipants).size !== parsedParticipants.length) throw new TypeError("participantIds contient un doublon.");
+  const participants = requireProperty(record, "participants", "EntityLifeEventReadModel");
+  if (!Array.isArray(participants)) throw new TypeError("participants doit être un tableau.");
+  const parsedParticipants = participants.map(parseParticipant);
+  if (new Set(parsedParticipants.map(({ personId }) => personId)).size !== parsedParticipants.length) {
+    throw new TypeError("participants contient un doublon.");
+  }
   parseStrictRecord(requireProperty(record, "headline", "EntityLifeEventReadModel"), [], "LifeEventHeadline");
   return {
     id: parseLifeEventId(requireProperty(record, "id", "EntityLifeEventReadModel")),
@@ -62,7 +76,7 @@ export function parseEntityLifeEventReadModel(value: unknown): EntityLifeEventRe
     startsOn,
     endsOn,
     validationStatus: parseStatus(requireProperty(record, "validationStatus", "EntityLifeEventReadModel")),
-    participantIds: parsedParticipants,
+    participants: parsedParticipants,
     places: parseEntityPreview(requireProperty(record, "places", "EntityLifeEventReadModel"), (item) => parseRefKind(item, "place")),
     relatedMoments: parseEntityPreview(requireProperty(record, "relatedMoments", "EntityLifeEventReadModel"), (item) => parseRefKind(item, "moment")),
     headline: {},

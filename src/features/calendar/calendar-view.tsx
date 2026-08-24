@@ -88,20 +88,19 @@ export function CalendarDayCard({
   readonly compact?: boolean;
 }) {
   const metric = resolveMetricDisplay(day.economicAmount, { variant: "compact" });
+  const contextLabel = day.dayContext.kind === "known"
+    ? day.dayContext.values.map(dayContextLabel).join(" · ") || null
+    : day.dayContext.kind === "conflict"
+      ? "Contexte à vérifier"
+      : null;
   const contents = (
     <>
       <span className={styles.dayHeading}>
         <strong>{dayLabel(day.date, compact)}</strong>
         <PeriodQuality day={day} />
       </span>
+      {contextLabel === null ? null : <span className={styles.dayMeta}>{contextLabel}</span>}
       <MetricDisplay metric={day.economicAmount} variant="compact" />
-      <span className={styles.dayMeta}>
-        {day.dayContext.kind === "known"
-          ? day.dayContext.values.map(dayContextLabel).join(" · ") || "Contexte non renseigné"
-          : day.dayContext.kind === "conflict"
-            ? "Contexte à vérifier"
-            : "Contexte inconnu"}
-      </span>
       <span className={styles.counts}>
         {day.activityOccurrenceCount ? (
           <span>Activités <MetricDisplay metric={day.activityOccurrenceCount} variant="compact" /></span>

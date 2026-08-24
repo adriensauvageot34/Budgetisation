@@ -38,6 +38,7 @@ import styles from "./operations.module.css";
 import {
   operationDisplayModel,
   operationQueryHasLocalError,
+  operationsFiltersForRuntimeRoot,
 } from "./query-state";
 
 export type OperationsDisplayMode = "compact" | "standard" | "complete";
@@ -200,7 +201,7 @@ export function OperationsPage({
 }) {
   const runtime = useProductRuntime();
   const runtimeRoot = runtime.snapshot?.history.root;
-  const filters = runtimeRoot && "kind" in runtimeRoot ? runtimeRoot.filters : initialFilters;
+  const filters = operationsFiltersForRuntimeRoot(runtimeRoot, initialFilters);
   const route: RootNavigationContext = { kind: "operations", filters };
   const request = useMemo(() => noData ? null : queryRequest(filters), [filters, noData]);
   const state = useQueryRuntime<"operations_browse">(request, initialState ?? undefined);

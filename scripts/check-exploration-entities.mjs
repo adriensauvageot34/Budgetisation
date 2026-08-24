@@ -30,6 +30,7 @@ require.extensions[".ts"] = (module, filename) => {
 const navigation = require(path.join(repositoryRoot, "src/navigation/index.ts"));
 const query = require(path.join(repositoryRoot, "src/query-api/index.ts"));
 const explorationTypes = require(path.join(repositoryRoot, "src/features/exploration/types.ts"));
+const { normalizeAnalysisScope } = require(path.join(repositoryRoot, "src/core/scope/index.ts"));
 
 const entries = [];
 let entryIndex = -1;
@@ -135,6 +136,69 @@ history.forward();
 assert.equal(controller.getSnapshot().history.exploration, null);
 controller.dispose();
 
+function assertEntityOperationsTransfer(kind, id, filterKey) {
+  const requestedRoots = [];
+  let transferHistoryState = null;
+  const transferController = navigation.createNavigationController({
+    router: {
+      read: () => root,
+      push: (nextRoot) => requestedRoots.push(nextRoot),
+      replace: (nextRoot) => requestedRoots.push(nextRoot),
+    },
+    history: {
+      get state() { return transferHistoryState; },
+      push: (state) => { transferHistoryState = state; },
+      replace: (state) => { transferHistoryState = state; },
+      back: () => undefined,
+      forward: () => undefined,
+      subscribe: () => () => undefined,
+    },
+    session: new navigation.InMemoryNavigationSessionStore(),
+    surface: {
+      activateRoute: () => undefined,
+      readScope: () => normalizeAnalysisScope({
+        subject: { kind: "household" },
+        time: { kind: "month", month: "2026-08" },
+      }),
+      applyScope: () => undefined,
+      readSubview: () => null,
+      applySubview: () => undefined,
+    },
+    restoration: { cancel: () => undefined, restore: async () => ({ kind: "top", scrollY: 0 }) },
+    readiness: { activateRoute: () => undefined, wait: async () => ({ kind: "ready" }) },
+    scroll: {
+      getScrollY: () => 0,
+      scrollTo: () => undefined,
+      getAnchorTop: () => 0,
+    },
+    compatibility: { categoryIds: true, activityIds: true, merchantIds: true, placeIds: true, lifeScopeContext: true, dayContext: true },
+  });
+  assert.equal(transferController.start().kind, "applied");
+  assert.equal(transferController.openExploration({ kind, id }).kind, "applied");
+  assert.equal(transferController.goToOperations({ [filterKey]: [id] }).kind, "applied");
+  const operationsRoot = requestedRoots.at(-1);
+  assert.equal(operationsRoot.kind, "operations");
+  assert.equal(operationsRoot.filters.timeKind, "economic_month");
+  assert.equal(operationsRoot.filters.month, "2026-08");
+  assert.deepEqual(operationsRoot.filters[filterKey], [id]);
+  assert.deepEqual(
+    navigation.parseRootNavigation(navigation.serializeRootNavigation(operationsRoot)),
+    operationsRoot,
+  );
+  transferController.dispose();
+}
+
+assertEntityOperationsTransfer(
+  "merchant",
+  "22222222-2222-4222-8222-222222222222",
+  "merchantIds",
+);
+assertEntityOperationsTransfer(
+  "place",
+  "11111111-1111-4111-8111-111111111111",
+  "placeIds",
+);
+
 const momentsParams = query.parseGalleryMomentsParams({
   search: "  anniversaire  ",
   sort: { key: "recent" },
@@ -163,6 +227,35 @@ assert.deepEqual(
   navigation.parseRootNavigation(navigation.serializeRootNavigation(operationsNavigation)),
   operationsNavigation,
 );
+
+const lifeEventModel = query.parseEntityLifeEventReadModel({
+  id: "33333333-3333-4333-8333-333333333333",
+  identity: { title: "Repas / restaurant" },
+  type: "Repas / restaurant",
+  startsOn: "2026-08-23",
+  endsOn: "2026-08-23",
+  validationStatus: "Confirmé",
+  participants: [
+    { personId: "44444444-4444-4444-8444-444444444444", label: "Adrien" },
+    { personId: "55555555-5555-4555-8555-555555555555", label: "Manon" },
+  ],
+  places: { items: [], hasMore: false, totalCount: 0 },
+  relatedMoments: { items: [], hasMore: false, totalCount: 0 },
+  headline: {},
+  capabilities: {
+    resource: "entity_life_event",
+    availableSections: ["identity", "participants", "places", "timeline", "headline"],
+    availableMeasures: [],
+    compatibleFilters: [],
+    unavailable: [],
+  },
+});
+assert.deepEqual(lifeEventModel.participants.map(({ label }) => label), ["Adrien", "Manon"]);
+assert.throws(() => query.parseEntityLifeEventReadModel({
+  ...lifeEventModel,
+  participants: undefined,
+  participantIds: ["44444444-4444-4444-8444-444444444444"],
+}));
 
 const revision = {
   dataRevision: "data-1",
@@ -218,6 +311,9 @@ assert.match(operationsSource, /state === "unknown"\s*\? "partial"/);
 assert.match(operationsSource, /economicTiming:\s*state === "unknown"[\s\S]*?\{ kind: "unknown" \}/);
 assert.match(entitiesSource, /loadFinancialLinkRowsByOperationIds/);
 assert.match(entitiesSource, /primary_place_id/);
+assert.match(entitiesSource, /loadActivityOccurrenceById/);
+assert.match(entitiesSource, /eventTitle[\s\S]*?typeLabel/);
+assert.match(entitiesSource, /person\.displayName/);
 assert.match(canonicalRelationsSource, /loadMomentLifeEventRowsByMomentIds/);
 assert.match(canonicalRelationsSource, /loadLifeEventParticipationRows/);
 assert.match(repositorySource, /moment_life_events/);

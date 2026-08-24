@@ -1,12 +1,14 @@
 export {
   adjacentWeek,
   buildMonthGrid,
+  calendarWeekRange,
   calendarWeekRefFor,
   monthGridWeekRefs,
   planTwelveMonthSummaries,
   selectCalendarWeek,
   selectTwelveCompleteMonthSummaries,
   type CalendarResourcePlan,
+  type CalendarWeekRange,
   type CalendarWeekSelection,
   type MonthGridSlot,
 } from "./model";

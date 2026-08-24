@@ -80,7 +80,10 @@ import {
   transferAnalysisToCalendar,
   transferCalendarToAnalysis,
 } from "../transfer/inter-context";
-import { buildOperationsIntent } from "../transfer/operations-intent";
+import {
+  buildOperationsIntent,
+  operationsPeriodFromScope,
+} from "../transfer/operations-intent";
 import { serializeRootNavigation } from "../codecs/history-root-navigation";
 
 const applied: NavigationCommandResult = { kind: "applied" };
@@ -683,10 +686,10 @@ class DefaultNavigationController implements NavigationController {
   ): NavigationCommandResult {
     if (!this.isStarted()) return noop("not_started");
     const current = this.requireState();
+    const sourceScope = this.readScope();
     const operationsBase: OperationsNavigationFilters = "kind" in current.root
       ? compactOperationsNavigationFilters({ ...current.root.filters, cursor: undefined })
-      : {};
-    const sourceScope = this.readScope();
+      : operationsPeriodFromScope(sourceScope);
     const compatible = sourceScope === null
       ? null
       : compatibleAnalysisFilters(sourceScope, this.deps.compatibility);

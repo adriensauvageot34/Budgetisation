@@ -77,7 +77,20 @@ const { diagnosticOperationsRequest } = require(path.join(
 const {
   operationDisplayModel,
   operationQueryHasLocalError,
+  operationsFiltersForRuntimeRoot,
 } = require(path.join(repositoryRoot, "src/features/operations/query-state.ts"));
+const { exactEconomicAmountForDate } = require(path.join(
+  repositoryRoot,
+  "src/server/query/sources/shared.ts",
+));
+const { operationsPeriodFromScope } = require(path.join(
+  repositoryRoot,
+  "src/navigation/transfer/operations-intent.ts",
+));
+const { normalizeAnalysisScope } = require(path.join(
+  repositoryRoot,
+  "src/core/scope/index.ts",
+));
 const { useQueryRuntime } = require(path.join(
   repositoryRoot,
   "src/components/runtime/query-client.ts",
@@ -169,6 +182,53 @@ assert.equal(diagnosticOperationsRequest({
   latestBankMonth: null,
   completeClosedFinancePeriodCount: 4,
 }), null);
+
+const initialFilters = { timeKind: "bank_month", month: "2026-07" };
+const calendarRuntimeRoot = {
+  area: "calendar",
+  context: { kind: "calendar_month", month: "2026-07" },
+};
+assert.equal(
+  operationsFiltersForRuntimeRoot(calendarRuntimeRoot, initialFilters),
+  initialFilters,
+);
+const runtimeOperationsFilters = {
+  timeKind: "economic_month",
+  month: "2026-06",
+};
+assert.equal(
+  operationsFiltersForRuntimeRoot(
+    { kind: "operations", filters: runtimeOperationsFilters },
+    initialFilters,
+  ),
+  runtimeOperationsFilters,
+);
+
+const monthScope = normalizeAnalysisScope({
+  subject: { kind: "household" },
+  time: { kind: "month", month: "2026-07" },
+});
+assert.deepEqual(operationsPeriodFromScope(monthScope), {
+  timeKind: "economic_month",
+  month: "2026-07",
+});
+const globalScope = normalizeAnalysisScope({
+  subject: { kind: "household" },
+  time: { kind: "global", observationWindow: "last_12_months", asOf: "2026-07" },
+});
+assert.deepEqual(operationsPeriodFromScope(globalScope), {
+  timeKind: "global_window",
+  globalWindow: "last_12_months",
+  asOf: "2026-07",
+});
+
+assert.equal(
+  exactEconomicAmountForDate([], "2026-07-01", "partial").envelope.availability,
+  "unknown",
+);
+const qualifiedZero = exactEconomicAmountForDate([], "2026-07-01", "complete").envelope;
+assert.equal(qualifiedZero.availability, "known");
+assert.equal(qualifiedZero.value, "0");
 
 const error = {
   code: "TEMPORARY_UNAVAILABLE",

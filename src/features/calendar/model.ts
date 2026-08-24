@@ -49,6 +49,14 @@ export type CalendarWeekSelection = {
   readonly resourcePlan: CalendarResourcePlan;
 };
 
+export type CalendarWeekRange = {
+  readonly week: CalendarWeekRef;
+  readonly month: YearMonth;
+  readonly start: LocalDate;
+  readonly end: LocalDate;
+  readonly months: readonly [YearMonth] | readonly [YearMonth, YearMonth];
+};
+
 export function selectTwelveCompleteMonthSummaries(
   summaries: readonly HistoryCalendarMonthSummaryReadModel[],
 ): readonly HistoryCalendarMonthSummaryReadModel[] {
@@ -121,6 +129,34 @@ export function monthGridWeekRefs(
   return refs;
 }
 
+export function calendarWeekRange(
+  month: YearMonth,
+  week: CalendarWeekRef,
+): CalendarWeekRange {
+  const parsedMonth = parseYearMonth(month);
+  let anchor: LocalDate | undefined;
+  for (const date of listCivilMonthDates(parsedMonth)) {
+    if (calendarWeekRefFor(date) === week) {
+      anchor = date;
+      break;
+    }
+  }
+  if (anchor === undefined) {
+    throw new TypeError(`${week} n'appartient pas au mois ${parsedMonth}.`);
+  }
+  const start = addDays(anchor, -(Temporal.PlainDate.from(anchor).dayOfWeek - 1));
+  const end = addDays(start, 6);
+  const startMonth = yearMonthOf(start);
+  const endMonth = yearMonthOf(end);
+  return {
+    week,
+    month: parsedMonth,
+    start,
+    end,
+    months: startMonth === endMonth ? [startMonth] : [startMonth, endMonth],
+  };
+}
+
 export function selectCalendarWeek(
   month: YearMonth,
   week: CalendarWeekRef,
@@ -133,20 +169,10 @@ export function selectCalendarWeek(
   for (const model of models) {
     for (const day of model.days) sourceByDate.set(day.date, day);
   }
-  let anchor: LocalDate | undefined;
-  for (const date of listCivilMonthDates(parseYearMonth(month))) {
-    if (calendarWeekRefFor(date) === week) {
-      anchor = date;
-      break;
-    }
-  }
-  if (anchor === undefined) {
-    throw new TypeError(`${week} n'appartient pas au mois ${month}.`);
-  }
-  const start = addDays(anchor, -(Temporal.PlainDate.from(anchor).dayOfWeek - 1));
+  const range = calendarWeekRange(month, week);
   const selected: CalendarDayCell[] = [];
   for (let index = 0; index < 7; index += 1) {
-    const date = addDays(start, index);
+    const date = addDays(range.start, index);
     const day = sourceByDate.get(date);
     if (day === undefined) {
       throw new TypeError(`Le jour ${date} manque au read model de la semaine.`);
@@ -162,9 +188,9 @@ export function selectCalendarWeek(
   if (selected.length !== 7) throw new RangeError("Une semaine Calendar exige exactement sept jours.");
   return {
     week,
-    month: parseYearMonth(month),
-    start,
-    end: addDays(start, 6),
+    month: range.month,
+    start: range.start,
+    end: range.end,
     days: [
       selected[0]!,
       selected[1]!,

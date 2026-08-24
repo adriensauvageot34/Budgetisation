@@ -183,6 +183,7 @@ export function sumMoney(values: readonly Money[]): Money {
 export function exactEconomicAmountForDate(
   facts: readonly EconomicComponentFact[],
   date: LocalDate,
+  periodStatus: BootstrapAnalysisStatus,
 ): {
   readonly envelope: MoneyMetricEnvelope;
   readonly contributions: readonly {
@@ -224,13 +225,15 @@ export function exactEconomicAmountForDate(
     return { envelope: unavailableMoneyEnvelope("conflict"), contributions: [] };
   }
   const amount = sumMoney(contributions.map(({ amount: value }) => value));
-  if (contributions.length === 0 && ambiguous) {
+  if (contributions.length === 0 && (ambiguous || periodStatus !== "complete")) {
     return { envelope: unavailableMoneyEnvelope("unknown"), contributions: [] };
   }
   return {
     envelope: moneyEnvelope(
       amount,
-      ambiguous ? { level: "partial" } : { level: "complete" },
+      ambiguous || periodStatus !== "complete"
+        ? { level: "partial" }
+        : { level: "complete" },
     ),
     contributions,
   };

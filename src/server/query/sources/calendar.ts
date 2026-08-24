@@ -222,9 +222,10 @@ function buildDayCell(
 ): CalendarDayCell {
   const scopedEconomicFacts =
     snapshot.scope.subject.kind === "household" ? snapshot.economicFacts : [];
+  const completeness = periodCompleteness(context, snapshot.month);
   const economic =
     snapshot.scope.subject.kind === "household"
-      ? exactEconomicAmountForDate(scopedEconomicFacts, date)
+      ? exactEconomicAmountForDate(scopedEconomicFacts, date, completeness)
       : { envelope: unavailableMoneyEnvelope("unknown"), contributions: [] };
   const activities = activityItems(snapshot, date);
   const places = placeItems(snapshot, date);
@@ -236,7 +237,6 @@ function buildDayCell(
       : economic.envelope.availability,
   );
   const observability = observabilityForDate(snapshot, date, context);
-  const completeness = periodCompleteness(context, snapshot.month);
   return {
     date,
     observability,
@@ -380,9 +380,13 @@ export function createCalendarQuerySources(
       const snapshot = await loadSnapshot(request.scope.time.month, request.scope);
       const date = request.params.date;
       const cell = buildDayCell(snapshot, date, dependencies.context);
+      const completeness = periodCompleteness(
+        dependencies.context,
+        request.scope.time.month,
+      );
       const economic =
         request.scope.subject.kind === "household"
-          ? exactEconomicAmountForDate(snapshot.economicFacts, date)
+          ? exactEconomicAmountForDate(snapshot.economicFacts, date, completeness)
           : { envelope: unavailableMoneyEnvelope("unknown"), contributions: [] };
       const activities = activityItems(snapshot, date);
       const places = placeItems(snapshot, date);
@@ -401,10 +405,7 @@ export function createCalendarQuerySources(
           date,
           observability: cell.observability,
           dayContext: cell.dayContext,
-          periodCompleteness: periodCompleteness(
-            dependencies.context,
-            request.scope.time.month,
-          ),
+          periodCompleteness: completeness,
         },
         finance: {
           economicAmount: economic.envelope,

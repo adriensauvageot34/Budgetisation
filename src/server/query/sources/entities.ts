@@ -631,8 +631,9 @@ export function createEntityQuerySources(
           "Life Event validation_status ne respecte pas le contrat.",
         );
       }
-      const activity = (await dependencies.facts.loadActivityOccurrences(request.scope))
-        .find(({ lifeEventId }) => lifeEventId === request.params.lifeEventId);
+      const activity = await dependencies.repository.loadActivityOccurrenceById(
+        request.params.lifeEventId,
+      );
       const typeId = canonicalString(event, ["life_event_type_id"], "life_events");
       const primaryPlaceId = optionalCanonicalString(event, ["primary_place_id"]);
       const [typeRows, participationRows, momentLinks, placeRows] = await Promise.all([
@@ -648,21 +649,36 @@ export function createEntityQuerySources(
         throw new QueryTemporaryUnavailableError("Le type canonique du Life Event est absent.");
       }
       const typeKey = canonicalString(typeRow, ["type_key"], "life_events");
+      const typeLabel = canonicalHumanLabel(typeRow, typeKey);
+      const eventTitle = optionalCanonicalString(event, ["title"])?.trim();
       const participantIds = [...new Set(participationRows
         .map((row) => canonicalString(row, ["person_id"], "life_events") as PersonId)
         .filter((personId) => dependencies.context.personIds.includes(personId)))].sort();
+      const peopleById = new Map(
+        dependencies.context.persons.map((person) => [person.personId, person] as const),
+      );
+      const participants = participantIds.flatMap((personId) => {
+        const person = peopleById.get(personId);
+        return person === undefined
+          ? []
+          : [{ personId, label: person.displayName }];
+      });
       const momentIds = [...new Set(momentLinks.map((row) =>
         canonicalString(row, ["moment_id"], "life_events") as MomentId,
       ))].sort();
       return {
         id: request.params.lifeEventId,
-        identity: { title: entityLabel(event, request.params.lifeEventId) },
-        type: canonicalHumanLabel(typeRow, typeKey),
+        identity: {
+          title: eventTitle && eventTitle !== request.params.lifeEventId
+            ? eventTitle
+            : typeLabel,
+        },
+        type: typeLabel,
         activityId: (activity?.activityId ?? typeKey) as import("@/core/identity").ActivityId,
         startsOn,
         endsOn,
         validationStatus: validationStatus as "Confirmé" | "Déduit" | "À valider",
-        participantIds,
+        participants,
         places: preview(
           placeRows.map((row) => ({
             kind: "place" as const,

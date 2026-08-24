@@ -104,6 +104,30 @@ assert.equal(week.days[3].economicAmount, zero);
 assert.equal(week.days[4].economicAmount, unknown);
 assert.notEqual(week.days[4].economicAmount.availability, "known");
 
+const juneOnlyRange = model.calendarWeekRange(
+  "2026-06",
+  model.calendarWeekRefFor("2026-06-10"),
+);
+assert.equal(juneOnlyRange.start, "2026-06-08");
+assert.equal(juneOnlyRange.end, "2026-06-14");
+assert.deepEqual(juneOnlyRange.months, ["2026-06"]);
+
+const juneJulyRange = model.calendarWeekRange(
+  "2026-06",
+  model.calendarWeekRefFor("2026-06-29"),
+);
+assert.equal(juneJulyRange.start, "2026-06-29");
+assert.equal(juneJulyRange.end, "2026-07-05");
+assert.deepEqual(juneJulyRange.months, ["2026-06", "2026-07"]);
+
+const decemberJanuaryRange = model.calendarWeekRange(
+  "2026-12",
+  model.calendarWeekRefFor("2026-12-31"),
+);
+assert.equal(decemberJanuaryRange.start, "2026-12-28");
+assert.equal(decemberJanuaryRange.end, "2027-01-03");
+assert.deepEqual(decemberJanuaryRange.months, ["2026-12", "2027-01"]);
+
 const pushedRoots = [];
 let historyState = null;
 let activeRoot = { area: "calendar", context: { kind: "calendar_month", month: "2026-07", day: "2026-07-31" } };

@@ -1,10 +1,10 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { addMonths, parseYearMonth } from "@/core/time";
+import { parseYearMonth } from "@/core/time";
 import { parseCalendarWeekRef } from "@/navigation";
 import { parsePersonId } from "@/core/identity";
 import { getBootstrapContext } from "@/server/bootstrap/context";
-import { CalendarClientPage } from "@/features/calendar";
+import { CalendarClientPage, calendarWeekRange } from "@/features/calendar";
 import type { HistoryCalendarMonthReadModel } from "@/query-api";
 import { queryResourceKeys } from "@/query-api";
 import { executeAuthenticatedQueries } from "@/server/query/runtime";
@@ -39,10 +39,11 @@ export default async function CalendarWeekRoute({
   const subject = personId
     ? { kind: "person" as const, personId }
     : { kind: "household" as const };
+  const requestedRange = calendarWeekRange(month, week);
   const state = await withProductAuthentication(async () =>
     combineQueryResults<HistoryCalendarMonthReadModel>(
         await executeAuthenticatedQueries(
-          [addMonths(month, -1), month, addMonths(month, 1)].map((candidate) => ({
+          requestedRange.months.map((candidate) => ({
             resource: queryResourceKeys.historyCalendarMonth,
             scope: {
               subject,

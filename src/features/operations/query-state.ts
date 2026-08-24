@@ -1,5 +1,15 @@
 import type { OperationsBrowseReadModel } from "@/query-api";
+import type { OperationsNavigationFilters, RootNavigationContext } from "@/navigation";
 import type { UiTransportState } from "@/ui";
+
+export function operationsFiltersForRuntimeRoot(
+  runtimeRoot: RootNavigationContext | undefined,
+  initialFilters: OperationsNavigationFilters,
+): OperationsNavigationFilters {
+  return runtimeRoot !== undefined && "kind" in runtimeRoot && runtimeRoot.kind === "operations"
+    ? runtimeRoot.filters
+    : initialFilters;
+}
 
 export function operationDisplayModel(
   state: UiTransportState<OperationsBrowseReadModel>,
