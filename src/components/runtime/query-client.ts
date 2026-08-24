@@ -150,45 +150,45 @@ export function useQueryRuntime<Name extends QueryResourceName>(
     () => (request === null ? null : createClientQueryIdentity(request)),
     [request],
   );
-  const [state, setState] = useState<UiTransportState<QueryDataByResource[Name]>>(
-    initial ?? { status: "idle" },
-  );
+  const [stored, setStored] = useState<{
+    readonly key: string | null;
+    readonly state: UiTransportState<QueryDataByResource[Name]>;
+  }>({ key, state: initial ?? { status: "idle" } });
   const requestRef = useRef(request);
   requestRef.current = request;
-  const initialRef = useRef(initial);
 
   useEffect(() => {
     const currentRequest = requestRef.current;
     if (currentRequest === null || key === null) return;
-    const seeded = initialRef.current;
-    initialRef.current = undefined;
-    if (seeded?.status === "success" && !clientQueryCache.has(key)) {
-      storeSuccessfulResponse(key, seeded.response);
+    if (initial !== undefined) {
+      if (initial.status === "success") storeSuccessfulResponse(key, initial.response);
+      setStored({ key, state: initial });
+      return;
     }
     const cached = cachedClientQueryResponse<Name>(currentRequest);
-    setState((current) => cached !== undefined
+    setStored((current) => ({ key, state: cached !== undefined
       ? { status: "success", response: cached, refreshing: true }
-      : current.status === "success"
-        ? { ...current, refreshing: true }
-        : { status: "loading" });
+      : current.key === key && current.state.status === "success"
+        ? { ...current.state, refreshing: true }
+        : { status: "loading" } }));
     let active = true;
     void executeCachedClientQuery(currentRequest)
       .then((result) => {
         if (!active) return;
         if (result.ok) {
-          setState({ status: "success", response: result.response, refreshing: false });
+          setStored({ key, state: { status: "success", response: result.response, refreshing: false } });
         } else {
-          setState((current) => ({
+          setStored((current) => ({ key, state: {
             status: "error",
             error: result.error,
-            ...(current.status === "success" ? { previousData: current.response } : {}),
-          }));
+            ...(current.key === key && current.state.status === "success" ? { previousData: current.state.response } : {}),
+          } }));
         }
       })
       .catch((error: unknown) => {
         if (!active) return;
         const previousData = cachedClientQueryResponse<Name>(currentRequest);
-        setState({
+        setStored({ key, state: {
           status: "error",
           error: {
             code: "TEMPORARY_UNAVAILABLE",
@@ -197,10 +197,15 @@ export function useQueryRuntime<Name extends QueryResourceName>(
             requestId: "client-query-transport",
           },
           ...(previousData === undefined ? {} : { previousData }),
-        });
+        } });
       });
     return () => { active = false; };
-  }, [key]);
+  }, [initial, key]);
 
-  return state;
+  if (stored.key === key) return stored.state;
+  if (initial !== undefined) return initial;
+  const cached = request === null ? undefined : cachedClientQueryResponse<Name>(request);
+  return cached === undefined
+    ? { status: "loading" as const }
+    : { status: "success" as const, response: cached, refreshing: true };
 }

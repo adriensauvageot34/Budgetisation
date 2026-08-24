@@ -30,22 +30,36 @@ export function produceMoneyComparison(
   const reference = validateProducedMetric(
     input.reference,
   ) as ProducedMoneyMetric;
+  const {
+    metricId: targetMetricId,
+    scopeHash: targetScopeHash,
+    referenceWindow: _targetReferenceWindow,
+    estimationTrace: _targetEstimationTrace,
+    ...targetEnvelope
+  } = target;
+  const {
+    metricId: referenceMetricId,
+    scopeHash: referenceScopeHash,
+    referenceWindow: _referenceWindow,
+    estimationTrace: _referenceEstimationTrace,
+    ...referenceEnvelope
+  } = reference;
   return compareMoneyMetrics({
     capabilityId: input.capabilityId,
     target: {
-      metricId: target.metricId,
+      metricId: targetMetricId,
       semantic: input.targetSemantic,
-      scopeHash: target.scopeHash,
-      envelope: target as import("../../core/metrics").MetricEnvelope<
+      scopeHash: targetScopeHash,
+      envelope: targetEnvelope as import("../../core/metrics").MetricEnvelope<
         Money,
         MonetaryMetricUnit
       >,
     },
     reference: {
-      metricId: reference.metricId,
+      metricId: referenceMetricId,
       semantic: input.referenceSemantic,
-      scopeHash: reference.scopeHash,
-      envelope: reference as import("../../core/metrics").MetricEnvelope<
+      scopeHash: referenceScopeHash,
+      envelope: referenceEnvelope as import("../../core/metrics").MetricEnvelope<
         Money,
         MonetaryMetricUnit
       >,

@@ -18,7 +18,7 @@ export default async function CalendarOverviewPage({
 }: {
   readonly searchParams: Promise<{ readonly personId?: string | string[] }>;
 }) {
-  const state = await withProductAuthentication(async () => {
+  const { state, subject } = await withProductAuthentication(async () => {
     const context = await getBootstrapContext();
     const rawPersonId = (await searchParams).personId;
     let personId;
@@ -43,7 +43,12 @@ export default async function CalendarOverviewPage({
         params: {},
       })),
     );
-    return combineQueryResults<HistoryCalendarMonthSummaryReadModel>(results);
+    return {
+      state: combineQueryResults<HistoryCalendarMonthSummaryReadModel>(results),
+      subject: personId
+        ? { kind: "person" as const, personId }
+        : { kind: "household" as const },
+    };
   });
-  return <CalendarClientPage kind="overview" state={state} />;
+  return <CalendarClientPage kind="overview" subject={subject} state={state} />;
 }

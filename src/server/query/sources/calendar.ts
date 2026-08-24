@@ -35,6 +35,7 @@ import {
   selectFactsForSubject,
   unavailableMoneyEnvelope,
 } from "./shared";
+import { canonicalLabelMap } from "./canonical-relations";
 
 type CalendarMonthDataSnapshot = {
   readonly month: YearMonth;
@@ -42,6 +43,7 @@ type CalendarMonthDataSnapshot = {
   readonly economicFacts: Awaited<ReturnType<FactSourceResolver["loadEconomicFacts"]>>;
   readonly personDays: Awaited<ReturnType<FactSourceResolver["loadPersonDays"]>>;
   readonly activities: Awaited<ReturnType<FactSourceResolver["loadActivityOccurrences"]>>;
+  readonly activityLabels: ReadonlyMap<string, string>;
   readonly places: Awaited<ReturnType<FactSourceResolver["loadPlaceVisits"]>>;
   readonly operations: readonly ReturnType<typeof operationFromCanonicalRow>[];
   readonly monthMetric: Awaited<ReturnType<MetricQueryService["produce"]>>;
@@ -117,7 +119,7 @@ function activityItems(
     .map((fact) => ({
       lifeEventId: fact.lifeEventId,
       activityId: fact.activityId,
-      label: fact.activityId,
+      label: snapshot.activityLabels.get(fact.activityId) ?? fact.activityId,
       startsOn: fact.startDate,
       endsOn: fact.endDate,
       validationStatus: fact.validationStatus,
@@ -325,12 +327,19 @@ export function createCalendarQuerySources(
             scope,
           ),
         ]);
+      const activityLabels = canonicalLabelMap(
+        await dependencies.repository.loadLifeEventTypeRowsByTypeKeys(
+          activities.map(({ activityId }) => activityId),
+        ),
+        ["type_key"],
+      );
       return {
         month,
         scope,
         economicFacts,
         personDays,
         activities,
+        activityLabels,
         places,
         operations: operationRows.map(operationFromCanonicalRow),
         monthMetric,

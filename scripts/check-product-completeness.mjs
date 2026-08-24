@@ -86,6 +86,14 @@ const operationsParams = fs.readFileSync(
   path.join(repositoryRoot, "src/query-api/request/operations-params.ts"),
   "utf8",
 );
+const runtimeEnvironment = fs.readFileSync(
+  path.join(repositoryRoot, "src/server/runtime-environment.ts"),
+  "utf8",
+);
+const diagnosticPage = fs.readFileSync(
+  path.join(repositoryRoot, "src/app/diagnostic/page.tsx"),
+  "utf8",
+);
 for (const [condition, reason] of [
   [/PERMISSION_DENIED/.test(apiRoute) && /status:\s*authenticationRequired\s*\?\s*401/.test(apiRoute), "/api/query ne garantit pas le 401 JSON"],
   [/startsWith\(\"\/api\/\"\)/.test(authProxy) && /if \(isApi\) return response/.test(authProxy), "le proxy peut encore rediriger /api/*"],
@@ -108,8 +116,10 @@ for (const [condition, reason] of [
   [/referentiel_lieu/.test(canonicalRepository), "Place n'est pas mappé sur referentiel_lieu"],
   [/withdrawal_operation_id/.test(canonicalRepository) && /operation_id:withdrawal_operation_id/.test(canonicalRepository), "Cash composition n'utilise pas withdrawal_operation_id avec alias logique"],
   [/composition_amount_exact/.test(canonicalRepository), "les montants de composition ne sont pas projetés comme texte exact"],
-  [!/Ajustable/.test(operationsSource) && !/Ajustable/.test(operationEvidence), "Ajustable est encore fusionné vers Optionnel"],
+  [/value === "Ajustable"[^\n]+return "Ajustable"/.test(operationsSource) && /value === "Ajustable"[^\n]+return "Ajustable"/.test(operationEvidence), "Ajustable est encore fusionné vers Optionnel"],
   [/record\.amountMin === undefined \|\| record\.amountMin === null/.test(operationsParams) && /record\.amountMax === undefined \|\| record\.amountMax === null/.test(operationsParams), "amountMin/amountMax ne neutralisent pas undefined et null"],
+  [/SUPABASE_ENVIRONMENT_MISMATCH/.test(runtimeEnvironment) && /\.supabase\\\.co/.test(runtimeEnvironment), "le garde de project ref Supabase est absent"],
+  [/publicSupabaseProjectRef/.test(diagnosticPage) && /sameSupabaseProject/.test(diagnosticPage) && !/SUPABASE_(?:SECRET|SERVICE_ROLE|PUBLISHABLE|ANON)_KEY/.test(diagnosticPage), "Diagnostic expose une configuration Supabase non sûre"],
 ]) {
   if (!condition) violations.push(reason);
 }

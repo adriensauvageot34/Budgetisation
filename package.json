@@ -12,7 +12,7 @@
     "dev": "next dev",
     "typecheck": "tsc --noEmit",
     "build": "next build",
-    "verify": "node scripts/check-architecture-imports.mjs && node scripts/check-product-completeness.mjs && node node_modules/typescript/bin/tsc --noEmit && node node_modules/next/dist/bin/next build",
+    "verify": "npm run check:architecture && npm run check:product-completeness && npm run check:analysis-month-contracts && npm run check:analysis-global-contracts && npm run check:calendar-day && npm run check:exploration-entities && npm run typecheck && npm run build",
     "start": "next start"
   },
   "dependencies": {

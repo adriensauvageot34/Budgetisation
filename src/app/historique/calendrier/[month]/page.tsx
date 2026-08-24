@@ -76,6 +76,7 @@ export default async function CalendarMonthRoute({
   return (
     <CalendarClientPage
       kind="month"
+      subject={subject}
       month={month}
       state={monthState}
       {...(day && dayState ? { day, dayState } : {})}

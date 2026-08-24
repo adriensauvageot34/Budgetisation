@@ -2,6 +2,8 @@ import "server-only";
 
 import {
   getMetricRegistryEntry,
+  economicSourceAvailability,
+  isFinanceScopeCompleteAndClosed,
   MetricProductionContractError,
   type ActiveMetricId,
   type MetricProductionSource,
@@ -32,7 +34,7 @@ import {
   type AnalysisScope,
   type NormalizedAnalysisScope,
 } from "@/core/scope";
-import { parseSupport, type Availability, type Coverage, type SupportUnit } from "@/core/metrics";
+import { parseSupport, type SupportUnit } from "@/core/metrics";
 import {
   addMonths,
   parseLocalDate,
@@ -101,38 +103,6 @@ function selectedActivities(
       (scope.filters.activityIds.length === 0 ||
         scope.filters.activityIds.includes(fact.activityId)),
   );
-}
-
-function economicSourceAvailability(input: {
-  readonly facts: readonly EconomicComponentFact[];
-  readonly scope: NormalizedAnalysisScope;
-}): { readonly availability: Availability; readonly coverage?: Coverage } {
-  if (input.scope.subject.kind === "person") {
-    return { availability: "unknown" };
-  }
-  if (input.scope.filters.activityIds.length > 0) {
-    return { availability: "unknown" };
-  }
-  const selected = selectEconomicComponentsForScope(input.facts, input.scope);
-  if (selected.some(({ economicTiming }) => economicTiming.kind === "conflict")) {
-    return { availability: "conflict" };
-  }
-  const uncertain = selected.filter(
-    ({ economicTiming }) =>
-      economicTiming.kind === "unknown" || economicTiming.kind === "partial",
-  );
-  const hasKnown = selected.some(
-    ({ economicTiming }) =>
-      economicTiming.kind === "known" || economicTiming.kind === "partial",
-  );
-  if (!hasKnown && uncertain.length > 0) return { availability: "unknown" };
-  return {
-    availability: "known",
-    coverage:
-      uncertain.length === 0
-        ? { level: "complete" }
-        : { level: "partial" },
-  };
 }
 
 function sourceSupport(n: number, unit: SupportUnit) {
@@ -252,7 +222,14 @@ export class FactSourceResolver {
       case "fct_economic_component": {
         const facts = await this.loadEconomicFacts(scope);
         const selectedFacts = selectEconomicComponentsForScope(facts, scope);
-        const state = economicSourceAvailability({ facts, scope });
+        const state = economicSourceAvailability({
+          facts,
+          scope,
+          emptyPeriodQualified: isFinanceScopeCompleteAndClosed(
+            this.repository.context.periods,
+            scope,
+          ),
+        });
         return state.availability === "known"
           ? {
               kind: "economic_components",

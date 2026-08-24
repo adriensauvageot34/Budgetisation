@@ -3,6 +3,7 @@
 import { useMemo, useRef } from "react";
 import type { LocalDate, YearMonth } from "@/core/time";
 import { normalizeAnalysisScope } from "@/core/scope";
+import type { AnalysisSubject } from "@/core/scope";
 import { type CalendarWeekRef, type RootNavigationContext } from "@/navigation";
 import type {
   HistoryCalendarMonthReadModel,
@@ -17,10 +18,12 @@ import { DayDetailDrawer } from "./day-drawer";
 export type CalendarClientPageProps =
   | {
       readonly kind: "overview";
+      readonly subject: AnalysisSubject;
       readonly state: UiTransportState<readonly HistoryCalendarMonthSummaryReadModel[]>;
     }
   | {
       readonly kind: "month";
+      readonly subject: AnalysisSubject;
       readonly month: YearMonth;
       readonly day?: LocalDate;
       readonly state: UiTransportState<HistoryCalendarMonthReadModel>;
@@ -28,6 +31,7 @@ export type CalendarClientPageProps =
     }
   | {
       readonly kind: "week";
+      readonly subject: AnalysisSubject;
       readonly month: YearMonth;
       readonly week: CalendarWeekRef;
       readonly state: UiTransportState<readonly HistoryCalendarMonthReadModel[]>;
@@ -48,12 +52,12 @@ export function CalendarClientPage(props: CalendarClientPageProps) {
   }, [controller, runtime]);
   const rootRef = useRef<HTMLDivElement>(null);
   const route: RootNavigationContext = props.kind === "overview"
-    ? { area: "calendar", context: { kind: "calendar_overview" } }
+    ? { area: "calendar", context: { kind: "calendar_overview", ...(props.subject.kind === "person" ? { personId: props.subject.personId } : {}) } }
     : props.kind === "week"
-      ? { area: "calendar", context: { kind: "calendar_week", month: props.month, week: props.week } }
-      : { area: "calendar", context: { kind: "calendar_month", month: props.month, ...(props.day ? { day: props.day } : {}) } };
+      ? { area: "calendar", context: { kind: "calendar_week", month: props.month, week: props.week, ...(props.subject.kind === "person" ? { personId: props.subject.personId } : {}) } }
+      : { area: "calendar", context: { kind: "calendar_month", month: props.month, ...(props.day ? { day: props.day } : {}), ...(props.subject.kind === "person" ? { personId: props.subject.personId } : {}) } };
   const scope = props.kind === "overview" ? null : normalizeAnalysisScope({
-    subject: { kind: "household" },
+    subject: props.subject,
     time: { kind: "month", month: props.month },
   });
   const pageState = props.kind === "month" && props.dayState ? props.dayState : props.state;

@@ -91,7 +91,7 @@ export function parseAnalysisMonthInitialReadModel(value: unknown): AnalysisMont
   const selectionKind = requireProperty(selectionRecord, "kind", "MarkedFactsSelection");
   const markedFactsSelection = selectionKind === "available"
     ? { kind: selectionKind, methodVersion: text(requireProperty(selectionRecord, "methodVersion", "MarkedFactsSelection"), "MarkedFacts methodVersion") } as const
-    : selectionKind === "unavailable" && selectionRecord.reason === "materiality_rules_missing"
+    : selectionKind === "unavailable" && (selectionRecord.reason === "materiality_rules_missing" || selectionRecord.reason === "insufficient_data")
       ? { kind: selectionKind, reason: selectionRecord.reason } as const
       : (() => { throw new TypeError("MarkedFactsSelection invalide."); })();
   let manualSummary: AnalysisMonthInitialReadModel["manualSummary"];

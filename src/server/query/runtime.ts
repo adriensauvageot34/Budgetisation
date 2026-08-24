@@ -31,6 +31,7 @@ import {
   unavailableCanonicalSourceHealth,
 } from "@/server/canonical/source-health";
 import { createRealQuerySources } from "./sources";
+import { safeRuntimeEnvironment } from "@/server/runtime-environment";
 
 function unavailable(): never {
   throw new QueryTemporaryUnavailableError(
@@ -75,6 +76,7 @@ function unavailableCanonicalSources(): QueryReadModelSources {
 }
 
 function traceQuery(trace: QueryTrace): void {
+  const build = safeRuntimeEnvironment();
   console.info("query_trace", {
     requestId: trace.requestId,
     resource: trace.resource,
@@ -84,6 +86,8 @@ function traceQuery(trace: QueryTrace): void {
     analyticsRevision: trace.analyticsRevision,
     durationMs: trace.durationMs,
     outcome: trace.outcome,
+    environment: build.environment,
+    commitSha: build.commitSha,
   });
 }
 

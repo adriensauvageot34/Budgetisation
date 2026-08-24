@@ -106,9 +106,10 @@ assert.notEqual(week.days[4].economicAmount.availability, "known");
 
 const pushedRoots = [];
 let historyState = null;
+let activeRoot = { area: "calendar", context: { kind: "calendar_month", month: "2026-07", day: "2026-07-31" } };
 const controller = navigation.createNavigationController({
   router: {
-    read: () => ({ area: "calendar", context: { kind: "calendar_month", month: "2026-07", day: "2026-07-31" } }),
+    read: () => activeRoot,
     push: (root) => pushedRoots.push(root),
     replace: () => undefined,
   },
@@ -139,12 +140,18 @@ const controller = navigation.createNavigationController({
 });
 assert.equal(controller.start().kind, "applied");
 assert.equal(controller.nextDay().kind, "applied");
+assert.equal(controller.getSnapshot().history.day, "2026-07-31", "La requête Next ne doit pas être publiée avant son commit");
+activeRoot = pushedRoots.at(-1);
+assert.equal(controller.reconcileExternalRoot().kind, "applied");
 const augustRoot = controller.getSnapshot().history.root;
 assert.deepEqual(augustRoot, {
   area: "calendar",
   context: { kind: "calendar_month", month: "2026-08", day: "2026-08-01" },
 });
 assert.equal(controller.previousDay().kind, "applied");
+assert.equal(controller.getSnapshot().history.day, "2026-08-01");
+activeRoot = pushedRoots.at(-1);
+assert.equal(controller.reconcileExternalRoot().kind, "applied");
 assert.equal(controller.getSnapshot().history.day, "2026-07-31");
 controller.dispose();
 

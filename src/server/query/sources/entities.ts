@@ -37,8 +37,14 @@ import {
 import type { CanonicalRepository } from "@/server/canonical/repository";
 import {
   buildOperationRow,
+  loadOperationReferenceLabels,
   operationEconomicTruth,
 } from "./operations";
+import {
+  canonicalHumanLabel,
+  canonicalLabelMap,
+  loadMomentParticipantsByMomentId,
+} from "./canonical-relations";
 import {
   monthRange,
   operationFromCanonicalRow,
@@ -64,16 +70,6 @@ function entityLabel(row: CanonicalRecord, fallbackId: string): string {
       "titre",
     ]) ?? fallbackId
   );
-}
-
-function stringArray(record: CanonicalRecord, keys: readonly string[]): readonly string[] {
-  for (const key of keys) {
-    const value = record[key];
-    if (Array.isArray(value) && value.every((item) => typeof item === "string")) {
-      return [...new Set(value)].sort() as string[];
-    }
-  }
-  return [];
 }
 
 function preview<T>(items: readonly T[], limit = 6) {
@@ -161,8 +157,20 @@ async function operationEntity(input: {
   const range = monthRange(yearMonthOf(operation.bankDate));
   const bundle = await input.dependencies.repository.loadOperationBundle(range);
   const facts = factsForOperation(bundle.economicFacts, input.operationId);
-  const row = buildOperationRow(operation, facts);
+  const labels = await loadOperationReferenceLabels(
+    input.dependencies.repository,
+    [operation],
+    facts,
+  );
+  const row = buildOperationRow(operation, facts, labels);
   const relations = relationsFromFacts(facts);
+  const financialLinks = await input.dependencies.repository.loadFinancialLinkRowsByOperationIds([
+    input.operationId,
+  ]);
+  const lifeEventIds = [...new Set(financialLinks.map((link) =>
+    canonicalString(link, ["life_event_id"], "financial_links"),
+  ))];
+  const lifeEvents = await input.dependencies.repository.loadLifeEventRecords(lifeEventIds);
   const selectComposition = (values: readonly CanonicalRecord[]) =>
     values.filter(
       (value) =>
@@ -221,7 +229,10 @@ async function operationEntity(input: {
     links: {
       merchant: relations.merchant,
       place: relations.place,
-      lifeEvents: [],
+      lifeEvents: lifeEvents.map((event) => {
+        const id = canonicalString(event, ["life_event_id"], "life_events") as import("@/core/identity").LifeEventId;
+        return { id, label: canonicalHumanLabel(event, id) };
+      }),
       moments: relations.moments,
     },
     composition: {
@@ -295,6 +306,14 @@ async function placeEntity(input: {
       ),
     ),
   ];
+  const merchantLabels = canonicalLabelMap(
+    await input.dependencies.repository.loadEntityRows(
+      "merchants",
+      "merchant_id",
+      merchantIds,
+    ),
+    ["merchant_id", "id"],
+  );
   const geo = coordinates(place);
   return {
     id: input.placeId,
@@ -307,7 +326,7 @@ async function placeEntity(input: {
     },
     activityPreview: preview([]),
     merchantPreview: preview(
-      merchantIds.map((merchantId) => ({ merchantId, label: merchantId })),
+      merchantIds.map((merchantId) => ({ merchantId, label: merchantLabels.get(merchantId) ?? merchantId })),
     ),
     visitPreview: preview(
       placeVisits.map((visit) => ({
@@ -372,6 +391,10 @@ async function merchantEntity(input: {
   const operations = operationRows
     .map(operationFromCanonicalRow)
     .filter(({ operationId }) => operationIds.has(operationId));
+  const placeLabels = canonicalLabelMap(
+    await input.dependencies.repository.loadEntityRows("places", "place_id", placeIds),
+    ["place_id", "id"],
+  );
   const spatialMode = optionalCanonicalString(merchant, ["location_behavior"]);
   const parsedSpatialMode = [
     "physical_single",
@@ -394,7 +417,7 @@ async function merchantEntity(input: {
         : {
             state: "available",
             value: preview(
-              placeIds.map((placeId) => ({ placeId, label: placeId })),
+              placeIds.map((placeId) => ({ placeId, label: placeLabels.get(placeId) ?? placeId })),
             ),
             ...(merchantFacts.some(({ canonicalPlace }) =>
               canonicalPlace.kind !== "resolved")
@@ -461,6 +484,14 @@ async function personaEntity(input: {
   const activityIds = [
     ...new Set(selectedActivities.map(({ activityId }) => activityId)),
   ];
+  const merchantLabels = canonicalLabelMap(
+    await input.dependencies.repository.loadEntityRows("merchants", "merchant_id", merchantIds),
+    ["merchant_id", "id"],
+  );
+  const activityLabels = canonicalLabelMap(
+    await input.dependencies.repository.loadLifeEventTypeRowsByTypeKeys(activityIds),
+    ["type_key"],
+  );
   return {
     id: input.target.kind === "person" ? input.target.personId : "ensemble",
     identity: {
@@ -472,7 +503,7 @@ async function personaEntity(input: {
     target: input.target,
     headlineMetrics: [economic, personDays],
     activityPreview: preview(
-      activityIds.map((activityId) => ({ activityId, label: activityId })),
+      activityIds.map((activityId) => ({ activityId, label: activityLabels.get(activityId) ?? activityId })),
     ),
     placePreview: preview(
       placeIds.map((placeId) => ({ kind: "place" as const, id: placeId })),
@@ -538,9 +569,11 @@ export function createEntityQuerySources(
         request.params.momentId,
       );
       if (moment === null) throw new QueryNotFoundError();
-      const participants = stringArray(moment, ["participant_ids", "person_ids"])
-        .filter((id) => dependencies.context.personIds.includes(id as PersonId))
-        .map((personId) => ({ personId: personId as PersonId }));
+      const participants = (await loadMomentParticipantsByMomentId({
+        repository: dependencies.repository,
+        context: dependencies.context,
+        momentIds: [request.params.momentId],
+      })).get(request.params.momentId) ?? [];
       const rawStartsOn = optionalCanonicalString(moment, ["start_date", "starts_on"]);
       const rawEndsOn = optionalCanonicalString(moment, ["end_date", "ends_on"]);
       const startsOn = rawStartsOn === undefined ? undefined : parseLocalDate(rawStartsOn);
@@ -600,29 +633,46 @@ export function createEntityQuerySources(
       }
       const activity = (await dependencies.facts.loadActivityOccurrences(request.scope))
         .find(({ lifeEventId }) => lifeEventId === request.params.lifeEventId);
-      const participantIds = activity?.participantIds ??
-        stringArray(event, ["participant_ids"]).map((id) => id as PersonId);
+      const typeId = canonicalString(event, ["life_event_type_id"], "life_events");
+      const primaryPlaceId = optionalCanonicalString(event, ["primary_place_id"]);
+      const [typeRows, participationRows, momentLinks, placeRows] = await Promise.all([
+        dependencies.repository.loadLifeEventTypeRowsByIds([typeId]),
+        dependencies.repository.loadLifeEventParticipationRows([request.params.lifeEventId]),
+        dependencies.repository.loadMomentLifeEventRowsByLifeEventIds([request.params.lifeEventId]),
+        primaryPlaceId === undefined
+          ? Promise.resolve([])
+          : dependencies.repository.loadEntityRows("places", "place_id", [primaryPlaceId]),
+      ]);
+      const typeRow = typeRows[0];
+      if (typeRow === undefined) {
+        throw new QueryTemporaryUnavailableError("Le type canonique du Life Event est absent.");
+      }
+      const typeKey = canonicalString(typeRow, ["type_key"], "life_events");
+      const participantIds = [...new Set(participationRows
+        .map((row) => canonicalString(row, ["person_id"], "life_events") as PersonId)
+        .filter((personId) => dependencies.context.personIds.includes(personId)))].sort();
+      const momentIds = [...new Set(momentLinks.map((row) =>
+        canonicalString(row, ["moment_id"], "life_events") as MomentId,
+      ))].sort();
       return {
         id: request.params.lifeEventId,
         identity: { title: entityLabel(event, request.params.lifeEventId) },
-        type:
-          optionalCanonicalString(event, ["type_label", "type", "life_event_type_id"]) ??
-          "Life Event",
-        ...(activity === undefined ? {} : { activityId: activity.activityId }),
+        type: canonicalHumanLabel(typeRow, typeKey),
+        activityId: (activity?.activityId ?? typeKey) as import("@/core/identity").ActivityId,
         startsOn,
         endsOn,
         validationStatus: validationStatus as "Confirmé" | "Déduit" | "À valider",
         participantIds,
         places: preview(
-          stringArray(event, ["place_ids"]).map((id) => ({
+          placeRows.map((row) => ({
             kind: "place" as const,
-            id: id as PlaceId,
+            id: canonicalString(row, ["place_id"], "entities") as PlaceId,
           })),
         ),
         relatedMoments: preview(
-          stringArray(event, ["moment_ids"]).map((id) => ({
+          momentIds.map((id) => ({
             kind: "moment" as const,
-            id: id as MomentId,
+            id,
           })),
         ),
         headline: {},

@@ -73,11 +73,12 @@ const root = {
   area: "calendar",
   context: { kind: "calendar_month", month: "2026-08", day: "2026-08-23" },
 };
+let rootRouteRequests = 0;
 const controller = navigation.createNavigationController({
   router: {
     read: () => root,
-    push: () => undefined,
-    replace: () => undefined,
+    push: () => { rootRouteRequests += 1; },
+    replace: () => { rootRouteRequests += 1; },
   },
   history,
   session: new navigation.InMemoryNavigationSessionStore(),
@@ -99,13 +100,21 @@ const controller = navigation.createNavigationController({
 });
 
 assert.equal(controller.start().kind, "applied");
+const nextState = { __NA: true, __PRIVATE_NEXTJS_INTERNALS_TREE: ["root"] };
+const mergedState = navigation.mergeBudgetisationHistoryState(nextState, controller.getSnapshot().history);
+assert.equal(mergedState.__NA, true);
+assert.deepEqual(mergedState.__PRIVATE_NEXTJS_INTERNALS_TREE, ["root"]);
+assert.deepEqual(navigation.extractBudgetisationHistoryState(mergedState), controller.getSnapshot().history);
+assert.equal(navigation.resolveNavigationHistoryState(navigation.extractBudgetisationHistoryState(mergedState), []).kind, "restore");
 assert.equal(controller.openExploration({ kind: "place", id: "11111111-1111-4111-8111-111111111111" }).kind, "applied");
 let active = controller.getSnapshot().history.exploration;
 assert.notEqual(active, null);
+assert.equal(rootRouteRequests, 0, "Une Exploration same-URL ne doit pas demander de navigation Next");
 assert.equal(navigation.getExplorationDepth(active), 1);
 assert.equal(navigation.canPopExploration(active), false);
 assert.equal(navigation.isDayDrawerSuspended(controller.getSnapshot().history), true);
 const origin = navigation.getExplorationOrigin(active);
+assert.deepEqual(active.rootCheckpoint.route, root);
 
 assert.equal(controller.push({ kind: "merchant", id: "22222222-2222-4222-8222-222222222222" }).kind, "applied");
 active = controller.getSnapshot().history.exploration;
@@ -136,6 +145,24 @@ assert.equal(momentsParams.sort.key, "recent");
 assert.throws(() => query.parseGalleryMomentsParams({ sort: { key: "spent" }, filters: {} }));
 assert.equal(query.parseGalleryPlacesParams({ sort: { key: "spent" }, filters: {} }).sort.key, "spent");
 assert.equal(query.parseGalleryMerchantsParams({ sort: { key: "frequent" }, filters: {} }).sort.key, "frequent");
+const adjustableBrowse = query.parseOperationsBrowseParams({
+  time: { kind: "bank_month", month: "2026-07" },
+  filters: { necessity: ["Ajustable"] },
+  sort: { key: "bank_date", direction: "desc" },
+});
+assert.deepEqual(adjustableBrowse.filters.necessity, ["Ajustable"]);
+const operationsNavigation = {
+  kind: "operations",
+  filters: {
+    necessity: ["Ajustable"],
+    cursor: "page-two",
+    cursorTrail: ["first", "page-one"],
+  },
+};
+assert.deepEqual(
+  navigation.parseRootNavigation(navigation.serializeRootNavigation(operationsNavigation)),
+  operationsNavigation,
+);
 
 const revision = {
   dataRevision: "data-1",
@@ -158,6 +185,13 @@ const source = collectSources(featureRoot).join("\n");
 const galleriesSource = fs.readFileSync(path.join(featureRoot, "galleries.tsx"), "utf8");
 const panelSource = fs.readFileSync(path.join(featureRoot, "exploration-panel.tsx"), "utf8");
 const operationSource = fs.readFileSync(path.join(featureRoot, "operation-evidence.tsx"), "utf8");
+const serverQueryRoot = path.join(repositoryRoot, "src/server/query/sources");
+const entitiesSource = fs.readFileSync(path.join(serverQueryRoot, "entities.ts"), "utf8");
+const operationsSource = fs.readFileSync(path.join(serverQueryRoot, "operations.ts"), "utf8");
+const canonicalRelationsSource = fs.readFileSync(path.join(serverQueryRoot, "canonical-relations.ts"), "utf8");
+const repositorySource = fs.readFileSync(path.join(repositoryRoot, "src/server/canonical/repository.ts"), "utf8");
+const calendarSource = fs.readFileSync(path.join(serverQueryRoot, "calendar.ts"), "utf8");
+const analysisSource = fs.readFileSync(path.join(serverQueryRoot, "analysis.ts"), "utf8");
 
 assert.equal(/\.(?:reduce|groupBy)\s*\(/.test(source), false);
 assert.equal(/\b(?:history\.pushState|history\.replaceState|history\.back|window\.history|globalThis\.history)\b/.test(source), false);
@@ -179,5 +213,18 @@ for (const section of ["Vérité bancaire", "Vérité économique", "Temporalit�
 for (const group of ["Allocations", "Items", "Payment components", "Cash uses"]) {
   assert.match(operationSource, new RegExp(group));
 }
+assert.match(operationsSource, /value === "Ajustable"/);
+assert.match(operationsSource, /state === "unknown"\s*\? "partial"/);
+assert.match(operationsSource, /economicTiming:\s*state === "unknown"[\s\S]*?\{ kind: "unknown" \}/);
+assert.match(entitiesSource, /loadFinancialLinkRowsByOperationIds/);
+assert.match(entitiesSource, /primary_place_id/);
+assert.match(canonicalRelationsSource, /loadMomentLifeEventRowsByMomentIds/);
+assert.match(canonicalRelationsSource, /loadLifeEventParticipationRows/);
+assert.match(repositorySource, /moment_life_events/);
+assert.match(repositorySource, /life_event_participations/);
+assert.match(calendarSource, /canonicalLabelMap/);
+assert.match(analysisSource, /canonicalHumanLabel|canonicalLabelMap/);
+assert.doesNotMatch(entitiesSource, /\b(?:participant_ids|person_ids|place_ids|moment_ids)\b/);
+assert.doesNotMatch(entitiesSource, /lifeEvents:\s*\[\]/);
 
 console.log("Exploration / Entities targeted checks: PASS");

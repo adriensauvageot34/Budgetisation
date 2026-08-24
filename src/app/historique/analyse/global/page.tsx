@@ -6,7 +6,7 @@ import { queryResourceKeys } from "@/query-api";
 import { parseRootNavigation, serializeRootNavigation } from "@/navigation";
 import type { HistoryRootContext } from "@/navigation";
 import { getBootstrapContext } from "@/server/bootstrap/context";
-import { resolveDefaultGlobalAsOf } from "@/server/bootstrap/global-as-of";
+import { isAllowedGlobalAsOf, resolveDefaultGlobalAsOf } from "@/server/bootstrap/global-as-of";
 import { executeAuthenticatedQuery } from "@/server/query/runtime";
 import { queryResultToState, withProductAuthentication } from "@/app/product-query";
 
@@ -36,6 +36,7 @@ export default async function AnalysisGlobalRoute({
   if (route.context.kind !== "analysis_global") notFound();
   const globalContext = route.context;
   const defaultAsOf = resolveDefaultGlobalAsOf(context.periods);
+  if (globalContext.asOf !== undefined && !isAllowedGlobalAsOf(context.periods, globalContext.asOf)) notFound();
   const asOf = globalContext.asOf ?? defaultAsOf;
   if (asOf === null) notFound();
   const canonicalRoute: HistoryRootContext = globalContext.asOf === undefined

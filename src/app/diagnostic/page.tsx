@@ -13,6 +13,7 @@ import {
   executeAuthenticatedQuery,
   readAuthenticatedCanonicalSourceHealth,
 } from "@/server/query/runtime";
+import { safeRuntimeEnvironment } from "@/server/runtime-environment";
 
 export const metadata = { title: "Diagnostic technique" };
 export const dynamic = "force-dynamic";
@@ -22,6 +23,7 @@ function resultLabel(result: { readonly ok: boolean; readonly error?: { readonly
 }
 
 export default async function DiagnosticPage() {
+  const runtimeEnvironment = safeRuntimeEnvironment();
   let context: Awaited<ReturnType<typeof getBootstrapContext>>;
   try {
     context = await getBootstrapContext();
@@ -119,6 +121,11 @@ export default async function DiagnosticPage() {
         <div><span className="eyebrow">Finance complete + closed</span><p className="text-xl font-black">{completeClosedPeriodCount}</p></div>
         <div><span className="eyebrow">DataRevision</span><p className="text-xl font-black">{context.revision?.dataRevision ?? "—"}</p></div>
         <div><span className="eyebrow">AnalyticsRevision</span><p className="text-xl font-black">{context.revision?.analyticsRevision ?? "—"}</p></div>
+        <div><span className="eyebrow">Supabase public ref</span><p className="text-xl font-black">{runtimeEnvironment.publicSupabaseProjectRef ?? "—"}</p></div>
+        <div><span className="eyebrow">Supabase server ref</span><p className="text-xl font-black">{runtimeEnvironment.serverSupabaseProjectRef ?? "—"}</p></div>
+        <div><span className="eyebrow">Même projet Supabase</span><p className="text-xl font-black">{runtimeEnvironment.sameSupabaseProject ? "YES" : "NO"}</p></div>
+        <div><span className="eyebrow">Vercel environment</span><p className="text-xl font-black">{runtimeEnvironment.environment ?? "—"}</p></div>
+        <div><span className="eyebrow">Commit SHA</span><p className="text-xl font-black">{runtimeEnvironment.commitSha ?? "—"}</p></div>
       </section>
       <section className="card p-6">
         <span className="eyebrow">Query Runtime réel</span>

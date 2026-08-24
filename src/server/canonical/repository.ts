@@ -43,6 +43,7 @@ import {
   canonicalString,
   type CanonicalRecord,
 } from "./record";
+import { safeRuntimeEnvironment } from "@/server/runtime-environment";
 
 type CanonicalQueryError = {
   readonly code?: string;
@@ -75,11 +76,14 @@ function logCanonicalReadError(
   source: CanonicalSourceName,
   error: CanonicalQueryError,
 ): void {
+  const build = safeRuntimeEnvironment();
   console.error({
     event: "canonical_read_error",
     source,
     ...(error.code === undefined ? {} : { errorCode: error.code }),
     message: safeCanonicalErrorMessage(error.message),
+    environment: build.environment,
+    commitSha: build.commitSha,
   });
 }
 
@@ -148,6 +152,7 @@ const compositionMappings = {
 >;
 
 type EntityTable = "places" | "merchants" | "moments";
+type TaxonomyTable = "categories" | "subcategories";
 
 const entityMappings = {
   places: { physicalTable: "referentiel_lieu", idColumn: "place_id" },
@@ -695,7 +700,7 @@ export class CanonicalRepository {
         this.readRows(`life-event-types:${typeIds.join(",")}`, "life_events", () =>
           this.client
             .from("life_event_types")
-            .select("life_event_type_id,type_key,can_span_days,active")
+            .select("life_event_type_id,type_key,label,can_span_days,active")
             .in("life_event_type_id", typeIds)
             .order("life_event_type_id", { ascending: true }),
         ),
@@ -1032,6 +1037,118 @@ export class CanonicalRepository {
         return query.order(idColumn, { ascending: true });
       },
     );
+  }
+
+  async loadTaxonomyRows(
+    table: TaxonomyTable,
+    ids: readonly string[],
+  ): Promise<readonly CanonicalRecord[]> {
+    const normalizedIds = unique(ids);
+    if (normalizedIds.length === 0) return [];
+    await this.assertAuthorizedCanonicalHouseholdScope();
+    return this.readRows(`taxonomy:${table}:${normalizedIds.join(",")}`, "entities", () =>
+      this.client
+        .from(table)
+        .select("*")
+        .in("id", normalizedIds)
+        .order("id", { ascending: true }));
+  }
+
+  loadLifeEventTypeRowsByIds(
+    ids: readonly string[],
+  ): Promise<readonly CanonicalRecord[]> {
+    const normalizedIds = unique(ids);
+    if (normalizedIds.length === 0) return Promise.resolve([]);
+    return this.readRows(`life-event-types:ids:${normalizedIds.join(",")}`, "life_events", () =>
+      this.client
+        .from("life_event_types")
+        .select("life_event_type_id,type_key,label,can_span_days,active")
+        .in("life_event_type_id", normalizedIds)
+        .order("life_event_type_id", { ascending: true }));
+  }
+
+  loadLifeEventTypeRowsByTypeKeys(
+    typeKeys: readonly string[],
+  ): Promise<readonly CanonicalRecord[]> {
+    const keys = unique(typeKeys);
+    if (keys.length === 0) return Promise.resolve([]);
+    return this.readRows(`life-event-types:keys:${keys.join(",")}`, "life_events", () =>
+      this.client
+        .from("life_event_types")
+        .select("life_event_type_id,type_key,label,can_span_days,active")
+        .in("type_key", keys)
+        .order("type_key", { ascending: true }));
+  }
+
+  loadLifeEventParticipationRows(
+    lifeEventIds: readonly string[],
+  ): Promise<readonly CanonicalRecord[]> {
+    const ids = unique(lifeEventIds);
+    if (ids.length === 0) return Promise.resolve([]);
+    return this.readRows(`life-event-participations:entities:${ids.join(",")}`, "life_events", () =>
+      this.client
+        .from("life_event_participations")
+        .select("life_event_id,person_day_id,person_id,participation_status")
+        .in("life_event_id", ids)
+        .order("life_event_id", { ascending: true })
+        .order("person_id", { ascending: true }));
+  }
+
+  loadMomentLifeEventRowsByMomentIds(
+    momentIds: readonly string[],
+  ): Promise<readonly CanonicalRecord[]> {
+    const ids = unique(momentIds);
+    if (ids.length === 0) return Promise.resolve([]);
+    return this.readRows(`moment-life-events:moments:${ids.join(",")}`, "life_events", () =>
+      this.client
+        .from("moment_life_events")
+        .select("moment_id,life_event_id")
+        .in("moment_id", ids)
+        .order("moment_id", { ascending: true })
+        .order("life_event_id", { ascending: true }));
+  }
+
+  loadMomentLifeEventRowsByLifeEventIds(
+    lifeEventIds: readonly string[],
+  ): Promise<readonly CanonicalRecord[]> {
+    const ids = unique(lifeEventIds);
+    if (ids.length === 0) return Promise.resolve([]);
+    return this.readRows(`moment-life-events:events:${ids.join(",")}`, "life_events", () =>
+      this.client
+        .from("moment_life_events")
+        .select("moment_id,life_event_id")
+        .in("life_event_id", ids)
+        .order("life_event_id", { ascending: true })
+        .order("moment_id", { ascending: true }));
+  }
+
+  loadFinancialLinkRowsByOperationIds(
+    operationIds: readonly string[],
+  ): Promise<readonly CanonicalRecord[]> {
+    const ids = unique(operationIds);
+    if (ids.length === 0) return Promise.resolve([]);
+    return this.readRows(`financial-links:operations:${ids.join(",")}`, "financial_links", () =>
+      this.client
+        .from("life_event_financial_links")
+        .select("financial_link_id,life_event_id,operation_id,relation_type,validation_status")
+        .in("operation_id", ids)
+        .in("validation_status", ["Confirmé", "Déduit"])
+        .order("operation_id", { ascending: true })
+        .order("financial_link_id", { ascending: true }));
+  }
+
+  async loadLifeEventRecords(
+    lifeEventIds: readonly string[],
+  ): Promise<readonly CanonicalRecord[]> {
+    const ids = unique(lifeEventIds);
+    if (ids.length === 0) return [];
+    await this.assertAuthorizedCanonicalHouseholdScope();
+    return this.readRows(`life-event-records:${ids.join(",")}`, "life_events", () =>
+      this.client
+        .from("life_events")
+        .select("*")
+        .in("life_event_id", ids)
+        .order("life_event_id", { ascending: true }));
   }
 
   async loadLifeEventRecord(lifeEventId: string): Promise<CanonicalRecord | null> {

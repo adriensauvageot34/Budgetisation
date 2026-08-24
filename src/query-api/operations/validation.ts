@@ -19,7 +19,7 @@ import { parseOperationsBrowseParams, queryResourceKeys } from "../request";
 import type { OperationReference, OperationRowReadModel, OperationsBrowseReadModel, OperationsFilterCapability } from "./types";
 
 const quality = new Set(["complete", "partial", "conflict", "unknown"] as const);
-const necessity = new Set(["Indispensable", "Contraint", "Optionnel"] as const);
+const necessity = new Set(["Indispensable", "Contraint", "Ajustable", "Optionnel"] as const);
 const fixedVariable = new Set(["fixed", "variable", "unknown"] as const);
 const lifeScope = new Set(["Vie courante", "Hors quotidien"] as const);
 const filterCapabilities = new Set([

@@ -36,3 +36,5 @@ export {
   produceMoneyComparison,
 } from "./comparison";
 export { validateProducedMetric } from "./validation";
+export { isFinanceScopeCompleteAndClosed } from "./period-qualification";
+export { economicSourceAvailability } from "./economic-availability";

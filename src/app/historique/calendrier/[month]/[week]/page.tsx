@@ -36,15 +36,16 @@ export default async function CalendarWeekRoute({
   }
   const context = await withProductAuthentication(() => getBootstrapContext());
   if (personId && !context.persons.some((person) => person.personId === personId)) notFound();
+  const subject = personId
+    ? { kind: "person" as const, personId }
+    : { kind: "household" as const };
   const state = await withProductAuthentication(async () =>
     combineQueryResults<HistoryCalendarMonthReadModel>(
         await executeAuthenticatedQueries(
           [addMonths(month, -1), month, addMonths(month, 1)].map((candidate) => ({
             resource: queryResourceKeys.historyCalendarMonth,
             scope: {
-              subject: personId
-                ? { kind: "person" as const, personId }
-                : { kind: "household" as const },
+              subject,
               time: { kind: "month" as const, month: candidate },
             },
             params: {},
@@ -55,6 +56,7 @@ export default async function CalendarWeekRoute({
   return (
     <CalendarClientPage
       kind="week"
+      subject={subject}
       month={month}
       week={week}
       state={state}

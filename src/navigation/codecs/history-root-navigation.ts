@@ -148,6 +148,7 @@ function parseOperationsNavigation(url: URL): RootNavigationContext {
     "sort",
     "mode",
     "cursor",
+    "cursorTrail",
   ] as const;
   assertAllowedSearchParams(url, allowedKeys);
 
@@ -180,6 +181,7 @@ function parseOperationsNavigation(url: URL): RootNavigationContext {
   const sort = readOptionalSingleSearchParam(url, "sort");
   const mode = readOptionalSingleSearchParam(url, "mode");
   const cursor = readOptionalSingleSearchParam(url, "cursor");
+  const cursorTrail = url.searchParams.getAll("cursorTrail");
 
   return {
     kind: "operations",
@@ -211,6 +213,7 @@ function parseOperationsNavigation(url: URL): RootNavigationContext {
       ...(sort === undefined ? {} : { sort }),
       ...(mode === undefined ? {} : { mode }),
       ...(cursor === undefined ? {} : { cursor }),
+      ...(cursorTrail.length === 0 ? {} : { cursorTrail }),
     }),
   };
 }
@@ -453,6 +456,7 @@ function serializeOperationsNavigation(
   if (normalized.sort !== undefined) params.set("sort", normalized.sort);
   if (normalized.mode !== undefined) params.set("mode", normalized.mode);
   if (normalized.cursor !== undefined) params.set("cursor", normalized.cursor);
+  appendIdFilters(params, "cursorTrail", normalized.cursorTrail);
 
   const query = params.toString();
   return query.length === 0 ? "/operations" : `/operations?${query}`;

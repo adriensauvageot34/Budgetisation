@@ -23,12 +23,22 @@ registerHooks({
   },
 });
 
-const [markedFacts, activityCost, structure, minimalMonth, production, scopeModule] = await Promise.all([
+const [markedFacts, activityCost, structure, minimalMonth, production, comparisonProduction, periodQualification, economicAvailability, comparisonValidation, monthValidation, globalValidation, capabilityEngine, requestNormalization, apiSchemas, runtimeValidation, scopeModule] = await Promise.all([
   import("../src/analytics/insights/marked-facts.ts"),
   import("../src/analytics/facts/activity-cost.ts"),
   import("../src/analytics/facts/structure.ts"),
   import("../src/analytics/baseline/minimal-month.ts"),
   import("../src/analytics/production/producer.ts"),
+  import("../src/analytics/production/comparison.ts"),
+  import("../src/analytics/production/period-qualification.ts"),
+  import("../src/analytics/production/economic-availability.ts"),
+  import("../src/query-api/analysis/shared/validation.ts"),
+  import("../src/query-api/analysis/month/validation.ts"),
+  import("../src/query-api/analysis/global/validation.ts"),
+  import("../src/query-api/capabilities/engine.ts"),
+  import("../src/query-api/request/normalize.ts"),
+  import("../src/core/api/schemas.ts"),
+  import("../src/core/validation/index.ts"),
   import("../src/core/scope/index.ts"),
 ]);
 
@@ -46,7 +56,187 @@ const {
   weakestMaterialSupport,
 } = minimalMonth;
 const { produceMetric } = production;
+const { produceMoneyComparison } = comparisonProduction;
+const { isFinanceScopeCompleteAndClosed } = periodQualification;
+const { economicSourceAvailability } = economicAvailability;
+const { parseMoneyComparisonResult } = comparisonValidation;
+const {
+  parseAnalysisMonthEvolutionReadModel,
+  parseAnalysisMonthInitialReadModel,
+} = monthValidation;
+const { parseAnalysisGlobalEvolutionReadModel } = globalValidation;
+const { evaluateQueryCapabilities } = capabilityEngine;
+const { normalizeQueryRequest } = requestNormalization;
+const { createApiResponseSchema } = apiSchemas;
+const { createRuntimeSchema } = runtimeValidation;
 const { computeScopeHash, normalizeAnalysisScope } = scopeModule;
+
+const comparisonScopeHash = "a".repeat(64);
+const referenceWindow = {
+  family: "comparison",
+  householdId: "00000000-0000-4000-8000-000000000001",
+  householdTimeZone: "Europe/Paris",
+  asOf: "2026-07",
+  targetPeriod: "2026-07",
+  requestedPeriodCount: 12,
+  includedPeriods: ["2026-04", "2026-05", "2026-06"],
+  excludedPeriods: [],
+  effectivePeriodCount: 3,
+  firstIncluded: "2026-04",
+  lastIncluded: "2026-06",
+};
+const actualMetric = (availability, value) => ({
+  metricId: "economic_consumption_net_attributable",
+  scopeHash: comparisonScopeHash,
+  availability,
+  value: availability === "known" ? value : null,
+  unit: "EUR/month",
+  provenance: "observed",
+  methodVersion: "economic_consumption_net_attributable@v1",
+  ...(availability === "known" ? { support: { n: 1, unit: "transaction", level: "sufficient" } } : {}),
+});
+const typicalMetric = (availability, value, window = referenceWindow) => ({
+  metricId: "typical_month_cost",
+  scopeHash: comparisonScopeHash,
+  referenceWindow: window,
+  availability,
+  value: availability === "known" ? value : null,
+  unit: "EUR/month",
+  provenance: "derived",
+  methodVersion: "typical_month_cost@v1",
+  support: { n: 3, unit: "month", level: "limited" },
+  reference: { family: "comparison", asOf: window.asOf, target: { kind: "month", month: window.targetPeriod } },
+});
+const compareProduced = (actual, typical, window = referenceWindow) => parseMoneyComparisonResult(produceMoneyComparison({
+  capabilityId: "actual_vs_typical_month",
+  targetSemantic: "actual",
+  referenceSemantic: "typical_month",
+  referenceAuthorization: { kind: "rolling_comparison", window },
+  target: actual,
+  reference: typical,
+}));
+for (const [actual, typical] of [
+  [actualMetric("unknown"), typicalMetric("unknown")],
+  [actualMetric("known", "10"), typicalMetric("unknown")],
+  [actualMetric("known", "10"), typicalMetric("known", "8")],
+  [actualMetric("known", "10"), typicalMetric("known", "0")],
+]) {
+  const comparison = compareProduced(actual, typical);
+  for (const comparable of [comparison.target, comparison.reference]) {
+    assert.equal("metricId" in comparable.envelope, false);
+    assert.equal("scopeHash" in comparable.envelope, false);
+    assert.equal("referenceWindow" in comparable.envelope, false);
+    assert.equal("estimationTrace" in comparable.envelope, false);
+  }
+}
+assert.equal(compareProduced(actualMetric("unknown"), typicalMetric("unknown")).relation, "not_comparable");
+assert.equal(compareProduced(actualMetric("known", "10"), typicalMetric("unknown")).relation, "not_comparable");
+assert.equal(compareProduced(actualMetric("known", "10"), typicalMetric("known", "8")).relation, "above");
+assert.equal(compareProduced(actualMetric("known", "10"), typicalMetric("known", "0")).relativeDelta.publishable, false);
+
+const unknownComparison = compareProduced(
+  actualMetric("unknown"),
+  typicalMetric("unknown"),
+);
+const scopedActual = {
+  metricId: unknownComparison.target.metricId,
+  scopeHash: unknownComparison.target.scopeHash,
+  envelope: unknownComparison.target.envelope,
+};
+const scopedTypical = {
+  metricId: unknownComparison.reference.metricId,
+  scopeHash: unknownComparison.reference.scopeHash,
+  envelope: unknownComparison.reference.envelope,
+};
+function capabilitiesFor(resource, scope, params) {
+  const result = evaluateQueryCapabilities(normalizeQueryRequest({
+    resource,
+    scope,
+    params,
+  }), {
+    requestId: `contract-check:${resource}`,
+    permission: { granted: true },
+  });
+  assert.equal(result.ok, true);
+  return result.capabilities;
+}
+const rawMonthScope = {
+  subject: { kind: "household" },
+  time: { kind: "month", month: "2026-07" },
+};
+const monthInitial = parseAnalysisMonthInitialReadModel({
+  month: "2026-07",
+  subject: { kind: "household" },
+  periodCompleteness: "unknown",
+  actual: scopedActual,
+  typical: scopedTypical,
+  actualVsTypical: unknownComparison,
+  markedFacts: [],
+  markedFactsSelection: { kind: "unavailable", reason: "insufficient_data" },
+  capabilities: capabilitiesFor("analysis_month_initial", rawMonthScope, {}),
+});
+parseAnalysisMonthEvolutionReadModel({
+  month: "2026-07",
+  subject: { kind: "household" },
+  series: [{
+    id: "economic_total",
+    label: "Dépenses économiques",
+    metricId: scopedActual.metricId,
+    points: [{
+      period: "2026-07",
+      metric: scopedActual,
+      comparison: unknownComparison,
+      periodCompleteness: "unknown",
+    }],
+  }],
+  capabilities: capabilitiesFor("analysis_month_evolution", rawMonthScope, {}),
+});
+const rawGlobalScope = {
+  subject: { kind: "household" },
+  time: { kind: "global", observationWindow: "last_12_months", asOf: "2026-07" },
+};
+const globalReferenceWindow = {
+  ...referenceWindow,
+  asOf: "2026-06",
+  targetPeriod: "2026-06",
+  includedPeriods: ["2026-03", "2026-04", "2026-05"],
+  firstIncluded: "2026-03",
+  lastIncluded: "2026-05",
+};
+const globalComparison = compareProduced(
+  actualMetric("unknown"),
+  typicalMetric("unknown", undefined, globalReferenceWindow),
+  globalReferenceWindow,
+);
+parseAnalysisGlobalEvolutionReadModel({
+  observationWindow: "last_12_months",
+  asOf: "2026-07",
+  subject: { kind: "household" },
+  view: "money",
+  series: [{
+    seriesId: "economic_total",
+    label: "Dépenses économiques",
+    metricId: scopedActual.metricId,
+    unit: scopedActual.envelope.unit,
+    points: [{
+      period: "2026-06",
+      metric: scopedActual,
+      comparison: globalComparison,
+      periodCompleteness: "unknown",
+    }],
+  }],
+  smallMultiplesRecommended: true,
+  capabilities: capabilitiesFor("analysis_global_evolution", rawGlobalScope, { view: "money" }),
+});
+createApiResponseSchema(createRuntimeSchema(parseAnalysisMonthInitialReadModel)).parse({
+  data: monthInitial,
+  meta: {
+    dataRevision: "1",
+    analyticsRevision: "1",
+    contractVersion: "v1",
+    computedAt: "2026-08-24T10:00:00Z",
+  },
+});
 
 const candidate = (kind, absoluteDelta, relativeDelta, id = `${kind}:${absoluteDelta}:${relativeDelta}`) => ({
   id,
@@ -137,6 +327,27 @@ assert.equal(parseActivityCausalFinancialLinks([{
 assert.equal(medianKnownActivityCausalCost([]), null);
 
 const scope = normalizeAnalysisScope({ subject: { kind: "household" }, time: { kind: "month", month: "2026-07" } });
+assert.equal(isFinanceScopeCompleteAndClosed([], scope), false);
+assert.equal(isFinanceScopeCompleteAndClosed([{
+  month: "2026-07-01",
+  financeStatus: "unknown",
+  isClosed: false,
+}], scope), false);
+assert.equal(isFinanceScopeCompleteAndClosed([{
+  month: "2026-07-01",
+  financeStatus: "complete",
+  isClosed: true,
+}], scope), true);
+assert.deepEqual(economicSourceAvailability({
+  facts: [],
+  scope,
+  emptyPeriodQualified: false,
+}), { availability: "unknown" });
+assert.deepEqual(economicSourceAvailability({
+  facts: [],
+  scope,
+  emptyPeriodQualified: true,
+}), { availability: "known", coverage: { level: "complete" } });
 const insufficientFacts = ["1", "2", "3", "4"].map((value, index) => ({
   ...costFacts[0],
   occurrenceId: `00000000-0000-4000-8000-00000000001${index}`,

@@ -122,7 +122,7 @@ export function applyExplorationClose(
   adapter: BrowserHistoryAdapter,
   plan: ExplorationClosePlan,
 ): void {
-  adapter.replace(plan.state, plan.url);
+  adapter.replace(plan.state);
 }
 
 export function pushNavigationHistoryEntry(

@@ -36,6 +36,7 @@ import {
   type CanonicalRecord,
 } from "@/server/canonical/record";
 import type { CanonicalRepository } from "@/server/canonical/repository";
+import { loadMomentParticipantsByMomentId } from "./canonical-relations";
 
 type GalleryDependencies = {
   readonly repository: CanonicalRepository;
@@ -56,16 +57,6 @@ function label(row: CanonicalRecord, fallback: string): string {
   ) ?? fallback;
 }
 
-function recordIds(row: CanonicalRecord, keys: readonly string[]): readonly string[] {
-  for (const key of keys) {
-    const value = row[key];
-    if (Array.isArray(value) && value.every((item) => typeof item === "string")) {
-      return [...new Set(value)].sort() as string[];
-    }
-  }
-  return [];
-}
-
 function momentDateRange(scope: NormalizedAnalysisScope) {
   const months = scope.time.kind === "month"
     ? [scope.time.month]
@@ -77,6 +68,7 @@ async function scopedMomentRows(
   rows: readonly CanonicalRecord[],
   scope: NormalizedAnalysisScope,
   dependencies: GalleryDependencies,
+  participantsByMoment: ReadonlyMap<string, readonly { readonly personId: string }[]>,
 ) {
   if (scope.filters.dayContext.length > 0) {
     throw new MetricProductionContractError("Le lien Moment/DayContext n'est pas projeté par le canonique actuel.");
@@ -94,7 +86,7 @@ async function scopedMomentRows(
     const end = optionalCanonicalString(row, ["end_date", "ends_on"]) ?? start;
     if (id === undefined || start === undefined || end === undefined || start >= range.endExclusive || end < range.start) return false;
     if (eligibleIds !== null && !eligibleIds.has(id)) return false;
-    const participantIds = recordIds(row, ["participant_ids", "person_ids"]);
+    const participantIds = (participantsByMoment.get(id) ?? []).map(({ personId }) => personId);
     return scope.subject.kind === "household" || participantIds.includes(scope.subject.personId);
   });
 }
@@ -229,7 +221,21 @@ export function createGalleryQuerySources(
         "moments",
         "moment_id",
       );
-      const rows = await scopedMomentRows(canonicalRows, request.scope, dependencies);
+      const momentIds = canonicalRows.flatMap((row) => {
+        const id = optionalCanonicalString(row, ["moment_id"]);
+        return id === undefined ? [] : [id];
+      });
+      const participantsByMoment = await loadMomentParticipantsByMomentId({
+        repository: dependencies.repository,
+        context: dependencies.repository.context,
+        momentIds,
+      });
+      const rows = await scopedMomentRows(
+        canonicalRows,
+        request.scope,
+        dependencies,
+        participantsByMoment,
+      );
       const search = request.params.search?.toLocaleLowerCase("fr") ?? null;
       const candidates = rows.flatMap((row): readonly Sortable<MomentGalleryCard>[] => {
         const momentId = optionalCanonicalString(row, ["moment_id"]);
