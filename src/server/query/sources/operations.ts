@@ -295,8 +295,8 @@ export async function loadOperationReferenceLabels(
     repository.loadEntityRows("places", "place_id", placeIds),
   ]);
   return {
-    categories: canonicalLabelMap(categories, ["id", "category_id"]),
-    subcategories: canonicalLabelMap(subcategories, ["id", "subcategory_id"]),
+    categories: canonicalLabelMap(categories, ["category_id"]),
+    subcategories: canonicalLabelMap(subcategories, ["subcategory_id"]),
     merchants: canonicalLabelMap(merchants, ["merchant_id", "id"]),
     places: canonicalLabelMap(places, ["place_id", "id"]),
   };

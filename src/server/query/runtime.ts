@@ -32,6 +32,7 @@ import {
 } from "@/server/canonical/source-health";
 import { createRealQuerySources } from "./sources";
 import { safeRuntimeEnvironment } from "@/server/runtime-environment";
+import { recoverQueryRuntimeError } from "./recoverable-error";
 
 function unavailable(): never {
   throw new QueryTemporaryUnavailableError(
@@ -164,20 +165,35 @@ export async function executeAuthenticatedQuery<Name extends QueryResourceName>(
   request: QueryRequest<Name> | unknown,
   requestId = randomUUID(),
 ): Promise<QueryExecutionResult<Name>> {
-  const services = await createQueryServices();
-  return executeQuery(
-    { requestId, request },
-    services,
-  ) as Promise<QueryExecutionResult<Name>>;
+  try {
+    const services = await createQueryServices();
+    return executeQuery(
+      { requestId, request },
+      services,
+    ) as Promise<QueryExecutionResult<Name>>;
+  } catch (error) {
+    const recovered = recoverQueryRuntimeError(error, requestId);
+    if (recovered === null) throw error;
+    return recovered as QueryExecutionResult<Name>;
+  }
 }
 
 export async function executeAuthenticatedQueries(
   requests: readonly unknown[],
 ): Promise<readonly QueryExecutionResult<QueryResourceName>[]> {
-  const services = await createQueryServices();
+  const requestIds = requests.map(() => randomUUID());
+  let services: QueryServerServices;
+  try {
+    services = await createQueryServices();
+  } catch (error) {
+    const recovered = requestIds.map((requestId) =>
+      recoverQueryRuntimeError(error, requestId));
+    if (recovered.some((result) => result === null)) throw error;
+    return recovered as readonly QueryExecutionResult<QueryResourceName>[];
+  }
   return Promise.all(
-    requests.map((request) =>
-      executeQuery({ requestId: randomUUID(), request }, services),
+    requests.map((request, index) =>
+      executeQuery({ requestId: requestIds[index]!, request }, services),
     ),
   );
 }

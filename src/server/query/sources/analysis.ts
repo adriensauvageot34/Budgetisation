@@ -100,7 +100,7 @@ async function groupsForDimension(
       const categoryIds = values.flatMap(({ category }) => category.kind === "resolved" ? [category.id] : []);
       const labels = canonicalLabelMap(
         await repository.loadTaxonomyRows("categories", categoryIds),
-        ["id", "category_id"],
+        ["category_id"],
       );
       return uniqueGroups(
         values.flatMap(({ category }) =>
@@ -459,7 +459,7 @@ async function categoryStructure(input: {
   const categoryKeys = ranked.map(({ key }) => key).filter((key) => key !== "À déterminer");
   const categoryLabels = canonicalLabelMap(
     await input.dependencies.repository.loadTaxonomyRows("categories", categoryKeys),
-    ["id", "category_id"],
+    ["category_id"],
   );
   const rows = ranked.map(({ key, metric }, index) => {
     const magnitude = metricMagnitude(metric);

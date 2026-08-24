@@ -35,6 +35,10 @@ import {
   type UiTransportState,
 } from "@/ui";
 import styles from "./operations.module.css";
+import {
+  operationDisplayModel,
+  operationQueryHasLocalError,
+} from "./query-state";
 
 export type OperationsDisplayMode = "compact" | "standard" | "complete";
 type PersonOption = { readonly id: string; readonly label: string };
@@ -94,10 +98,6 @@ function queryRequest(filters: OperationsNavigationFilters) {
       limit: 50,
     },
   };
-}
-
-function displayModel(state: UiTransportState<OperationsBrowseReadModel>): OperationsBrowseReadModel | undefined {
-  return state.status === "success" ? state.response.data : state.status === "error" ? state.previousData?.data : undefined;
 }
 
 function splitIds<Id extends string>(value: FormDataEntryValue | null, parser: (value: unknown) => Id): readonly Id[] | undefined {
@@ -204,7 +204,7 @@ export function OperationsPage({
   const route: RootNavigationContext = { kind: "operations", filters };
   const request = useMemo(() => noData ? null : queryRequest(filters), [filters, noData]);
   const state = useQueryRuntime<"operations_browse">(request, initialState ?? undefined);
-  const model = displayModel(state);
+  const model = operationDisplayModel(state);
   const mode = filters.mode ?? "standard";
   const time = timeFrom(filters);
   const [selectedOperationId, setSelectedOperationId] = useState<OperationId | null>(null);
@@ -335,7 +335,7 @@ export function OperationsPage({
           </details>
 
           {state.status === "idle" || state.status === "loading" ? <SectionSkeleton /> : null}
-          {state.status === "error" && model === undefined ? <ErrorState error={state.error} /> : null}
+          {operationQueryHasLocalError(state) && state.status === "error" ? <ErrorState error={state.error} /> : null}
           {model?.page.state === "empty" ? <EmptyState title="Aucune opération" description="Le périmètre bancaire autoritaire ne contient aucune opération." /> : null}
           {model?.page.state === "filtered_empty" ? <FilteredEmptyState onClearFilters={filtered ? () => changeQuestion({ timeKind: filters.timeKind, month: filters.month, startDate: filters.startDate, endExclusive: filters.endExclusive, globalWindow: filters.globalWindow, asOf: filters.asOf, mode }) : undefined} /> : null}
           {model && model.page.items.length > 0 ? (

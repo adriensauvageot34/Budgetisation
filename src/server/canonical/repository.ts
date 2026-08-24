@@ -38,6 +38,16 @@ import {
   type CanonicalSourceName,
 } from "./errors";
 import {
+  activityOccurrenceLifeEventTypeSelection,
+  taxonomyPhysicalMappings,
+  taxonomySelection,
+  type TaxonomyTable,
+} from "./physical-contracts";
+import {
+  isMissingPurchaseRelationError,
+  type CanonicalQueryErrorShape,
+} from "./read-error-policy";
+import {
   canonicalRecord,
   canonicalRecords,
   canonicalString,
@@ -45,14 +55,9 @@ import {
 } from "./record";
 import { safeRuntimeEnvironment } from "@/server/runtime-environment";
 
-type CanonicalQueryError = {
-  readonly code?: string;
-  readonly message?: string;
-};
-
 type CanonicalQueryResult = {
   readonly data: unknown;
-  readonly error: CanonicalQueryError | null;
+  readonly error: CanonicalQueryErrorShape | null;
 };
 
 const canonicalLogUuidPattern =
@@ -74,7 +79,7 @@ function safeCanonicalErrorMessage(message: string | undefined): string {
 
 function logCanonicalReadError(
   source: CanonicalSourceName,
-  error: CanonicalQueryError,
+  error: CanonicalQueryErrorShape,
 ): void {
   const build = safeRuntimeEnvironment();
   console.error({
@@ -87,13 +92,23 @@ function logCanonicalReadError(
   });
 }
 
-function isMissingPurchaseRelationError(error: CanonicalQueryError): boolean {
-  if (error.code === "42P01" || error.code === "PGRST205") return true;
-  const message = error.message ?? "";
-  return (
-    /\brelation\b.{0,180}\bdoes not exist\b/i.test(message) ||
-    /\bcould not find the table\b.{0,180}\bin the schema cache\b/i.test(message)
-  );
+let purchaseMigrationAbsenceLogged = false;
+
+function logExpectedPurchaseMigrationAbsence(
+  error: CanonicalQueryErrorShape,
+): void {
+  if (purchaseMigrationAbsenceLogged) return;
+  purchaseMigrationAbsenceLogged = true;
+  const build = safeRuntimeEnvironment();
+  console.info({
+    event: "canonical_expected_deferred",
+    signal: "EXPECTED_DEFERRED_SIGNAL",
+    source: "purchase_events",
+    ...(error.code === undefined ? {} : { errorCode: error.code }),
+    message: safeCanonicalErrorMessage(error.message),
+    environment: build.environment,
+    commitSha: build.commitSha,
+  });
 }
 
 export type CanonicalDateRange = {
@@ -152,7 +167,6 @@ const compositionMappings = {
 >;
 
 type EntityTable = "places" | "merchants" | "moments";
-type TaxonomyTable = "categories" | "subcategories";
 
 const entityMappings = {
   places: { physicalTable: "referentiel_lieu", idColumn: "place_id" },
@@ -245,10 +259,11 @@ export class CanonicalRepository {
     return this.cached(key, async () => {
       const { data, error } = await query();
       if (error !== null) {
-        logCanonicalReadError(source, error);
         if (source === "purchase_events" && isMissingPurchaseRelationError(error)) {
+          logExpectedPurchaseMigrationAbsence(error);
           throw new CanonicalMissingMigrationError("purchase_events");
         }
+        logCanonicalReadError(source, error);
         throw new CanonicalReadError(
           source,
           `Lecture canonique ${source} indisponible.`,
@@ -700,7 +715,7 @@ export class CanonicalRepository {
         this.readRows(`life-event-types:${typeIds.join(",")}`, "life_events", () =>
           this.client
             .from("life_event_types")
-            .select("life_event_type_id,type_key,label,can_span_days,active")
+            .select(activityOccurrenceLifeEventTypeSelection)
             .in("life_event_type_id", typeIds)
             .order("life_event_type_id", { ascending: true }),
         ),
@@ -830,6 +845,7 @@ export class CanonicalRepository {
         lifeEvents,
         financialLinks,
         entities,
+        taxonomy,
         purchaseEvents,
       ] = await Promise.all([
         this.probeCanonicalSource("operations", async () => {
@@ -941,6 +957,22 @@ export class CanonicalRepository {
                 .limit(1)),
           ]);
         }),
+        this.probeCanonicalSource("taxonomy", async () => {
+          await this.assertAuthorizedCanonicalHouseholdScope();
+          await Promise.all(
+            (Object.keys(taxonomyPhysicalMappings) as TaxonomyTable[]).map(
+              (table) => {
+                const mapping = taxonomyPhysicalMappings[table];
+                return this.readRows(`health:taxonomy:${table}`, "taxonomy", () =>
+                  this.client
+                    .from(mapping.physicalTable)
+                    .select(taxonomySelection(table))
+                    .order(mapping.idColumn, { ascending: true })
+                    .limit(1));
+              },
+            ),
+          );
+        }),
         this.purchaseEventSourceHealth(),
       ]);
       return {
@@ -953,6 +985,7 @@ export class CanonicalRepository {
         financial_links: financialLinks,
         operations,
         entities,
+        taxonomy,
       };
     });
   }
@@ -1046,12 +1079,13 @@ export class CanonicalRepository {
     const normalizedIds = unique(ids);
     if (normalizedIds.length === 0) return [];
     await this.assertAuthorizedCanonicalHouseholdScope();
-    return this.readRows(`taxonomy:${table}:${normalizedIds.join(",")}`, "entities", () =>
+    const mapping = taxonomyPhysicalMappings[table];
+    return this.readRows(`taxonomy:${table}:${normalizedIds.join(",")}`, "taxonomy", () =>
       this.client
-        .from(table)
-        .select("*")
-        .in("id", normalizedIds)
-        .order("id", { ascending: true }));
+        .from(mapping.physicalTable)
+        .select(taxonomySelection(table))
+        .in(mapping.idColumn, normalizedIds)
+        .order(mapping.idColumn, { ascending: true }));
   }
 
   loadLifeEventTypeRowsByIds(

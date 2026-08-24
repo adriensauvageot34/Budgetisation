@@ -9,10 +9,11 @@
     "check:analysis-global-contracts": "node scripts/check-analysis-global-contracts.mjs",
     "check:calendar-day": "node scripts/check-calendar-day.mjs",
     "check:exploration-entities": "node scripts/check-exploration-entities.mjs",
+    "check:live-runtime-regressions": "node scripts/check-live-runtime-regressions.mjs",
     "dev": "next dev",
     "typecheck": "tsc --noEmit",
     "build": "next build",
-    "verify": "npm run check:architecture && npm run check:product-completeness && npm run check:analysis-month-contracts && npm run check:analysis-global-contracts && npm run check:calendar-day && npm run check:exploration-entities && npm run typecheck && npm run build",
+    "verify": "npm run check:architecture && npm run check:product-completeness && npm run check:analysis-month-contracts && npm run check:analysis-global-contracts && npm run check:calendar-day && npm run check:exploration-entities && npm run check:live-runtime-regressions && npm run typecheck && npm run build",
     "start": "next start"
   },
   "dependencies": {

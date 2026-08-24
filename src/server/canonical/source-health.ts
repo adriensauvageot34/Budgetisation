@@ -22,5 +22,6 @@ export function unavailableCanonicalSourceHealth(): CanonicalSourceHealth {
     financial_links: "UNAVAILABLE",
     operations: "UNAVAILABLE",
     entities: "UNAVAILABLE",
+    taxonomy: "UNAVAILABLE",
   };
 }

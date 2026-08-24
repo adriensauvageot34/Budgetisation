@@ -9,7 +9,8 @@ export type CanonicalHealthSourceName =
   | "purchase_events"
   | "financial_links"
   | "operations"
-  | "entities";
+  | "entities"
+  | "taxonomy";
 
 export type CanonicalSourceName =
   | CanonicalHealthSourceName
