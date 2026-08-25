@@ -1,6 +1,7 @@
 import "server-only";
 
 export const CANONICAL_IN_BATCH_SIZE = 100;
+export const CANONICAL_IN_MAX_CONCURRENCY = 3;
 
 export function normalizeCanonicalInValues(
   values: readonly string[],
@@ -20,8 +21,9 @@ export type CanonicalInBatchReadOptions<Row> = {
 };
 
 /**
- * Executes one logical canonical `.in(...)` read as deterministic sequential
- * physical requests. Results are only returned after every batch succeeds.
+ * Executes one logical canonical `.in(...)` read with bounded physical
+ * concurrency. Results are only returned after every batch succeeds and are
+ * merged in canonical batch order, independently from completion order.
  */
 export async function readCanonicalInBatches<Row>({
   values,
@@ -35,11 +37,23 @@ export async function readCanonicalInBatches<Row>({
   }
 
   const normalizedValues = normalizeCanonicalInValues(values);
-  const rows: Row[] = [];
+  const batches: (readonly string[])[] = [];
   for (let offset = 0; offset < normalizedValues.length; offset += batchSize) {
-    const batch = normalizedValues.slice(offset, offset + batchSize);
-    rows.push(...await executeBatch(batch, offset / batchSize));
+    batches.push(normalizedValues.slice(offset, offset + batchSize));
   }
+
+  const rowsByBatch: (readonly Row[])[] = new Array(batches.length);
+  let nextBatchIndex = 0;
+  async function worker(): Promise<void> {
+    while (nextBatchIndex < batches.length) {
+      const batchIndex = nextBatchIndex;
+      nextBatchIndex += 1;
+      rowsByBatch[batchIndex] = await executeBatch(batches[batchIndex], batchIndex);
+    }
+  }
+  const workerCount = Math.min(CANONICAL_IN_MAX_CONCURRENCY, batches.length);
+  await Promise.all(Array.from({ length: workerCount }, () => worker()));
+  const rows = rowsByBatch.flat();
 
   const rowsByIdentity = new Map<string, Row>();
   for (const row of rows) {

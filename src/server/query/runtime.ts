@@ -20,8 +20,10 @@ import { FactSourceResolver } from "@/server/analytics/fact-source-resolver";
 import type { MinimalSourceHealth } from "@/server/analytics/minimal-source-resolver";
 import type { AnalysisScope } from "@/core/scope";
 import { MetricQueryService } from "@/server/analytics/metric-query-service";
+import { SupabaseAnalyticsMaterializationStore } from "@/server/analytics/materialization";
 import { getBootstrapContext } from "@/server/bootstrap/context";
 import { createCanonicalReadClient } from "@/server/canonical/client";
+import type { SupabaseClient } from "@supabase/supabase-js";
 import {
   createAuthorizedRuntimeContext,
   type AuthorizedRuntimeContext,
@@ -89,6 +91,7 @@ function traceQuery(trace: QueryTrace): void {
     analyticsRevision: trace.analyticsRevision,
     durationMs: trace.durationMs,
     outcome: trace.outcome,
+    materialization: trace.materialization,
     environment: build.environment,
     commitSha: build.commitSha,
   });
@@ -98,6 +101,7 @@ function baseServices(
   context: AuthorizedRuntimeContext,
   sources: QueryReadModelSources,
   repository?: CanonicalRepository,
+  materialization?: SupabaseAnalyticsMaterializationStore,
 ): QueryServerServices {
   return {
     resolveContext: () => ({
@@ -133,8 +137,32 @@ function baseServices(
           },
         }),
     sources,
+    ...(materialization === undefined ? {} : { materialization }),
     onTrace: traceQuery,
   };
+}
+
+export function createQueryServicesForContext(input: {
+  readonly context: AuthorizedRuntimeContext;
+  readonly client: SupabaseClient;
+  readonly materialization?: SupabaseAnalyticsMaterializationStore;
+}): QueryServerServices {
+  const repository = new CanonicalRepository(input.client, input.context);
+  const materialization = input.materialization
+    ?? new SupabaseAnalyticsMaterializationStore(input.client, input.context);
+  const facts = new FactSourceResolver(repository, materialization);
+  const metrics = new MetricQueryService(facts, materialization);
+  return baseServices(
+    input.context,
+    createRealQuerySources({
+      context: input.context,
+      repository,
+      facts,
+      metrics,
+    }),
+    repository,
+    materialization,
+  );
 }
 
 async function createQueryServices(): Promise<QueryServerServices> {
@@ -144,17 +172,8 @@ async function createQueryServices(): Promise<QueryServerServices> {
     parseInstant(new Date().toISOString()),
   );
   try {
-    const repository = new CanonicalRepository(
-      createCanonicalReadClient(),
-      context,
-    );
-    const facts = new FactSourceResolver(repository);
-    const metrics = new MetricQueryService(facts);
-    return baseServices(
-      context,
-      createRealQuerySources({ context, repository, facts, metrics }),
-      repository,
-    );
+    const client = createCanonicalReadClient();
+    return createQueryServicesForContext({ context, client });
   } catch (error) {
     if (error instanceof CanonicalReadError) {
       return baseServices(context, unavailableCanonicalSources());

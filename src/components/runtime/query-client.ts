@@ -8,7 +8,6 @@ import {
   type ApiResponse,
 } from "@/core/api";
 import type { RuntimeSchema } from "@/core/validation";
-import type { AnalyticsRevision, DataRevision } from "@/core/versions";
 import type { QueryDataByResource, QueryRequest, QueryResourceName } from "@/query-api";
 import {
   canonicalSerializeQueryParams,
@@ -24,8 +23,6 @@ type ClientQueryResult<Name extends QueryResourceName> =
 
 type ClientCacheEntry = {
   response?: ApiResponse<unknown>;
-  dataRevision?: DataRevision;
-  analyticsRevision?: AnalyticsRevision;
   inFlight?: Promise<ClientQueryResult<QueryResourceName>>;
 };
 
@@ -35,26 +32,15 @@ function storeSuccessfulResponse(
   key: string,
   response: ApiResponse<unknown>,
 ): void {
-  for (const [candidateKey, candidate] of clientQueryCache) {
-    if (
-      candidateKey !== key &&
-      candidate.response !== undefined &&
-      (candidate.dataRevision !== response.meta.dataRevision ||
-        candidate.analyticsRevision !== response.meta.analyticsRevision)
-    ) {
-      if (candidate.inFlight === undefined) clientQueryCache.delete(candidateKey);
-      else {
-        delete candidate.response;
-        delete candidate.dataRevision;
-        delete candidate.analyticsRevision;
-      }
-    }
-  }
   const entry = clientQueryCache.get(key) ?? {};
   entry.response = response;
-  entry.dataRevision = response.meta.dataRevision;
-  entry.analyticsRevision = response.meta.analyticsRevision;
   clientQueryCache.set(key, entry);
+}
+
+export function shouldAutomaticallyRevalidateClientQuery(
+  response: ApiResponse<unknown>,
+): boolean {
+  return response.meta.cachePolicy?.revalidate !== "never";
 }
 
 export function createClientQueryIdentity(request: unknown): string {
@@ -166,11 +152,14 @@ export function useQueryRuntime<Name extends QueryResourceName>(
       return;
     }
     const cached = cachedClientQueryResponse<Name>(currentRequest);
+    const shouldRevalidate = cached === undefined
+      || shouldAutomaticallyRevalidateClientQuery(cached);
     setStored((current) => ({ key, state: cached !== undefined
-      ? { status: "success", response: cached, refreshing: true }
+      ? { status: "success", response: cached, refreshing: shouldRevalidate }
       : current.key === key && current.state.status === "success"
         ? { ...current.state, refreshing: true }
         : { status: "loading" } }));
+    if (!shouldRevalidate) return;
     let active = true;
     void executeCachedClientQuery(currentRequest)
       .then((result) => {
@@ -207,5 +196,9 @@ export function useQueryRuntime<Name extends QueryResourceName>(
   const cached = request === null ? undefined : cachedClientQueryResponse<Name>(request);
   return cached === undefined
     ? { status: "loading" as const }
-    : { status: "success" as const, response: cached, refreshing: true };
+    : {
+        status: "success" as const,
+        response: cached,
+        refreshing: shouldAutomaticallyRevalidateClientQuery(cached),
+      };
 }

@@ -50,6 +50,7 @@ import {
   type MinimalPlanningResolution,
   type MinimalSourceHealth,
 } from "./minimal-source-resolver";
+import type { SupabaseAnalyticsMaterializationStore } from "./materialization";
 
 function monthsForScope(scope: NormalizedAnalysisScope): readonly YearMonth[] {
   return scope.time.kind === "month"
@@ -115,7 +116,10 @@ function sourceSupport(n: number, unit: SupportUnit) {
 }
 
 export class FactSourceResolver {
-  constructor(private readonly repository: CanonicalRepository) {}
+  constructor(
+    private readonly repository: CanonicalRepository,
+    private readonly materialization?: SupabaseAnalyticsMaterializationStore,
+  ) {}
 
   loadEconomicFacts(scope: AnalysisScope): Promise<readonly EconomicComponentFact[]> {
     return this.repository.loadEconomicFacts(canonicalRangeForScope(scope));
@@ -278,12 +282,33 @@ export class FactSourceResolver {
         requestedPeriodCount: TYPICAL_MONTH_REQUESTED_PERIOD_COUNT,
         candidates,
       });
+      const monthlyScopes = window.includedPeriods.map((period) => ({
+        ...scope,
+        time: { kind: "month" as const, month: period },
+      }));
+      let materializedByScope: ReadonlyMap<string, import("@/analytics/production").ProducedMetric> = new Map();
+      if (this.materialization !== undefined) {
+        try {
+          materializedByScope = await this.materialization.readMonthlyMetrics(
+            "economic_consumption_net_attributable",
+            monthlyScopes,
+          );
+        } catch {
+          // La référence brute reste le fallback strict.
+        }
+      }
       const monthlyObservations = await Promise.all(
-        window.includedPeriods.map(async (period) => {
-          const monthlyScope: AnalysisScope = {
-            ...scope,
-            time: { kind: "month", month: period },
-          };
+        window.includedPeriods.map(async (period, index) => {
+          const monthlyScope = monthlyScopes[index];
+          const materialized = materializedByScope.get(
+            computeScopeHash(normalizeAnalysisScope(monthlyScope)),
+          );
+          if (
+            materialized?.availability === "known"
+            && typeof materialized.value === "string"
+          ) {
+            return { period, value: materialized.value };
+          }
           const facts = await this.loadEconomicFacts(monthlyScope);
           return {
             period,

@@ -279,16 +279,19 @@ async function evolutionPoints(input: {
   readonly metricId: Parameters<MetricQueryService["produce"]>[0];
   readonly dependencies: AnalysisDependencies;
 }): Promise<readonly AnalysisSeriesPoint[]> {
-  return Promise.all(
-    input.periods.map(async (period) => ({
-      period,
-      metric: await input.dependencies.metrics.produce(input.metricId, {
-        ...input.scope,
-        time: { kind: "month", month: period },
-      }),
-      periodCompleteness: periodCompleteness(input.dependencies.context, period),
-    })),
+  const scopes = input.periods.map((period) => ({
+    ...input.scope,
+    time: { kind: "month" as const, month: period },
+  }));
+  const metrics = await input.dependencies.metrics.produceMany(
+    input.metricId,
+    scopes,
   );
+  return input.periods.map((period, index) => ({
+    period,
+    metric: metrics[index],
+    periodCompleteness: periodCompleteness(input.dependencies.context, period),
+  }));
 }
 
 const contextDefinitions = [

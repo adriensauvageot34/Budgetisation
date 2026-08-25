@@ -19,9 +19,15 @@ import type {
 } from "./types";
 
 export const analyticsMaterializationStrategy = {
-  physicalSnapshots: "NOT_REQUIRED_YET",
-  reason: "no_profiled_performance_bottleneck",
-  reusableTruth: ["views", "functions", "indexes", "rpc", "analytics_code"],
+  physicalSnapshots: "REQUIRED",
+  reason: "profiled_runtime_recomputation_bottleneck",
+  reusableTruth: [
+    "canonical",
+    "facts",
+    "analytics_code",
+    "validated_artifacts",
+    "validated_query_read_models",
+  ],
   prohibitedTruth: ["page_json"],
 } as const;
 
@@ -195,5 +201,6 @@ export function createPublicationApiMeta(
     analyticsRevision: state.analyticsRevision,
     contractVersion: input.contractVersion,
     computedAt: input.computedAt,
+    ...(input.cachePolicy === undefined ? {} : { cachePolicy: input.cachePolicy }),
   });
 }

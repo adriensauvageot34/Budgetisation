@@ -29,3 +29,14 @@ Relationnel
 
 Une doctrine métier possède un seul endroit faisant autorité. React présente
 les résultats reçus et ne recalcule pas la doctrine financière ou statistique.
+
+## Matérialisation analytique
+
+`analytics_artifacts` et `analytics_query_snapshots` sont des caches persistants
+reconstructibles. Ils accélèrent la chaîne sans modifier son ordre d’autorité :
+un hit reste soumis à l’autorisation, aux capabilities, au scope et aux schémas
+Query. Leur payload n’est ni une vérité canonique, ni du JSON de page React.
+
+Le cycle autoritaire reste : Canonical → Facts → Analytics → Query. Une
+materialization incompatible ou stale est ignorée puis reconstruite par ce
+cycle.

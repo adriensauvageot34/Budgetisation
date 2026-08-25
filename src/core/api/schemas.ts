@@ -1,6 +1,7 @@
 import { parseInstant } from "../time";
 import {
   createRuntimeSchema,
+  hasOwn,
   parseStrictRecord,
   parseStringLiteral,
   requireProperty,
@@ -100,7 +101,7 @@ function parseApiError(value: unknown): ApiError {
 function parseApiMeta(value: unknown): ApiMeta {
   const record = parseStrictRecord(
     value,
-    ["dataRevision", "analyticsRevision", "contractVersion", "computedAt"],
+    ["dataRevision", "analyticsRevision", "contractVersion", "computedAt", "cachePolicy"],
     "ApiMeta",
   );
   const rawDataRevision = requireProperty(record, "dataRevision", "ApiMeta");
@@ -115,6 +116,13 @@ function parseApiMeta(value: unknown): ApiMeta {
     "ApiMeta",
   );
   const rawComputedAt = requireProperty(record, "computedAt", "ApiMeta");
+  const rawCachePolicy = hasOwn(record, "cachePolicy")
+    ? parseStrictRecord(
+        record.cachePolicy,
+        ["source", "revalidate", "sourceRevision"],
+        "ApiMeta.cachePolicy",
+      )
+    : undefined;
 
   return {
     dataRevision: withValidationPath("dataRevision", () =>
@@ -129,6 +137,31 @@ function parseApiMeta(value: unknown): ApiMeta {
     computedAt: withValidationPath("computedAt", () =>
       parseInstant(rawComputedAt),
     ),
+    ...(rawCachePolicy === undefined
+      ? {}
+      : {
+          cachePolicy: {
+            source: withValidationPath("cachePolicy.source", () =>
+              parseStringLiteral<"materialized" | "computed">(
+                requireProperty(rawCachePolicy, "source", "ApiMeta.cachePolicy"),
+                new Set(["materialized", "computed"]),
+                "ApiMeta.cachePolicy.source",
+              ),
+            ),
+            revalidate: withValidationPath("cachePolicy.revalidate", () =>
+              parseStringLiteral<"never" | "stale_while_revalidate">(
+                requireProperty(rawCachePolicy, "revalidate", "ApiMeta.cachePolicy"),
+                new Set(["never", "stale_while_revalidate"]),
+                "ApiMeta.cachePolicy.revalidate",
+              ),
+            ),
+            sourceRevision: withValidationPath("cachePolicy.sourceRevision", () =>
+              parseDataRevision(
+                requireProperty(rawCachePolicy, "sourceRevision", "ApiMeta.cachePolicy"),
+              ),
+            ),
+          },
+        }),
   };
 }
 

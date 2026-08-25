@@ -59,6 +59,7 @@ for (const extension of [".ts", ".tsx"]) {
 
 const {
   CANONICAL_IN_BATCH_SIZE,
+  CANONICAL_IN_MAX_CONCURRENCY,
   readCanonicalInBatches,
 } = require(path.join(repositoryRoot, "src/server/canonical/in-batches.ts"));
 const { CanonicalRepository } = require(path.join(
@@ -67,6 +68,7 @@ const { CanonicalRepository } = require(path.join(
 ));
 
 assert.equal(CANONICAL_IN_BATCH_SIZE, 100);
+assert.equal(CANONICAL_IN_MAX_CONCURRENCY, 3);
 
 const realisticIds = Array.from(
   { length: 237 },
@@ -91,6 +93,40 @@ assert.equal(genericRows.length, realisticIds.length);
 assert.equal(new Set(genericRows.map(({ id }) => id)).size, realisticIds.length);
 assert.deepEqual(genericRows.map(({ id }) => id), realisticIds);
 
+const concurrencyIds = Array.from(
+  { length: 437 },
+  (_, index) => `concurrency-${String(index).padStart(4, "0")}`,
+);
+const releases = [];
+let activeBatchCount = 0;
+let maximumActiveBatchCount = 0;
+let startedBatchCount = 0;
+const boundedRead = readCanonicalInBatches({
+  values: concurrencyIds,
+  executeBatch: async (batch) => {
+    startedBatchCount += 1;
+    activeBatchCount += 1;
+    maximumActiveBatchCount = Math.max(maximumActiveBatchCount, activeBatchCount);
+    await new Promise((resolve) => releases.push(resolve));
+    activeBatchCount -= 1;
+    return batch.map((id) => ({ id }));
+  },
+  rowIdentity: ({ id }) => id,
+  compareRows: (left, right) => left.id.localeCompare(right.id),
+});
+while (startedBatchCount < CANONICAL_IN_MAX_CONCURRENCY) await Promise.resolve();
+assert.equal(startedBatchCount, CANONICAL_IN_MAX_CONCURRENCY);
+assert.equal(activeBatchCount, CANONICAL_IN_MAX_CONCURRENCY);
+for (let expectedStarted = 4; expectedStarted <= 5; expectedStarted += 1) {
+  releases.shift()();
+  while (startedBatchCount < expectedStarted) await Promise.resolve();
+  assert.ok(activeBatchCount <= CANONICAL_IN_MAX_CONCURRENCY);
+}
+while (releases.length > 0) releases.shift()();
+const boundedRows = await boundedRead;
+assert.equal(maximumActiveBatchCount, CANONICAL_IN_MAX_CONCURRENCY);
+assert.deepEqual(boundedRows.map(({ id }) => id), concurrencyIds);
+
 const expectedBatchError = new Error("physical batch unavailable");
 let failedGenericCalls = 0;
 await assert.rejects(
@@ -106,7 +142,7 @@ await assert.rejects(
   }),
   expectedBatchError,
 );
-assert.equal(failedGenericCalls, 2);
+assert.equal(failedGenericCalls, 3);
 
 function economicClient({ failBatchIndex } = {}) {
   const calls = [];
@@ -197,6 +233,6 @@ try {
 } finally {
   console.error = originalConsoleError;
 }
-assert.equal(failingEconomic.calls.length, 2);
+assert.equal(failingEconomic.calls.length, 3);
 
 console.log("Canonical .in batching checks: PASS");
