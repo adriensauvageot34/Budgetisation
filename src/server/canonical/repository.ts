@@ -55,6 +55,9 @@ import {
   type CanonicalRecord,
 } from "./record";
 import { safeRuntimeEnvironment } from "@/server/runtime-environment";
+import {
+  readCanonicalInBatches,
+} from "./in-batches";
 
 type CanonicalQueryResult = {
   readonly data: unknown;
@@ -246,6 +249,41 @@ function mergeRows(
   return [...merged.values()];
 }
 
+function canonicalBatchRowIdentity(
+  row: CanonicalRecord,
+  columns: readonly string[],
+  source: CanonicalSourceName,
+): string {
+  for (const column of columns) {
+    if (!Object.hasOwn(row, column)) {
+      throw new CanonicalReadError(
+        source,
+        `Lecture canonique batchée sans colonne d'identité ${column}.`,
+      );
+    }
+  }
+  return JSON.stringify(columns.map((column) => row[column]));
+}
+
+function compareCanonicalBatchRows(
+  left: CanonicalRecord,
+  right: CanonicalRecord,
+  columns: readonly string[],
+): number {
+  for (const column of columns) {
+    const leftValue = left[column];
+    const rightValue = right[column];
+    if (typeof leftValue === "number" && typeof rightValue === "number") {
+      if (leftValue !== rightValue) return leftValue < rightValue ? -1 : 1;
+      continue;
+    }
+    const leftText = String(leftValue ?? "");
+    const rightText = String(rightValue ?? "");
+    if (leftText !== rightText) return leftText < rightText ? -1 : 1;
+  }
+  return 0;
+}
+
 export class CanonicalRepository {
   private readonly cache = new Map<string, Promise<unknown>>();
   private readonly household: CanonicalHouseholdContext;
@@ -268,27 +306,52 @@ export class CanonicalRepository {
     return promise;
   }
 
+  private async queryRows(
+    source: CanonicalSourceName,
+    query: () => PromiseLike<CanonicalQueryResult>,
+  ): Promise<readonly CanonicalRecord[]> {
+    const { data, error } = await query();
+    if (error !== null) {
+      if (source === "purchase_events" && isMissingPurchaseRelationError(error)) {
+        logExpectedPurchaseMigrationAbsence(error);
+        throw new CanonicalMissingMigrationError("purchase_events");
+      }
+      logCanonicalReadError(source, error);
+      throw new CanonicalReadError(
+        source,
+        `Lecture canonique ${source} indisponible.`,
+        { cause: error },
+      );
+    }
+    return canonicalRecords(data ?? [], source);
+  }
+
   private readRows(
     key: string,
     source: CanonicalSourceName,
     query: () => PromiseLike<CanonicalQueryResult>,
   ): Promise<readonly CanonicalRecord[]> {
-    return this.cached(key, async () => {
-      const { data, error } = await query();
-      if (error !== null) {
-        if (source === "purchase_events" && isMissingPurchaseRelationError(error)) {
-          logExpectedPurchaseMigrationAbsence(error);
-          throw new CanonicalMissingMigrationError("purchase_events");
-        }
-        logCanonicalReadError(source, error);
-        throw new CanonicalReadError(
-          source,
-          `Lecture canonique ${source} indisponible.`,
-          { cause: error },
-        );
-      }
-      return canonicalRecords(data ?? [], source);
-    });
+    return this.cached(key, () => this.queryRows(source, query));
+  }
+
+  private readRowsByInBatches(
+    key: string,
+    source: CanonicalSourceName,
+    values: readonly string[],
+    identityColumns: readonly string[],
+    orderColumns: readonly string[],
+    query: (batch: readonly string[]) => PromiseLike<CanonicalQueryResult>,
+  ): Promise<readonly CanonicalRecord[]> {
+    return this.cached(key, () => readCanonicalInBatches({
+      values,
+      executeBatch: (batch) => this.queryRows(source, () => query(batch)),
+      rowIdentity: (row) => canonicalBatchRowIdentity(row, identityColumns, source),
+      compareRows: (left, right) => compareCanonicalBatchRows(
+        left,
+        right,
+        [...orderColumns, ...identityColumns],
+      ),
+    }));
   }
 
   private assertAuthorizedCanonicalHouseholdScope(): Promise<void> {
@@ -403,14 +466,17 @@ export class CanonicalRepository {
     const ids = unique(operationIds);
     if (ids.length === 0) return [];
     await this.assertAuthorizedCanonicalHouseholdScope();
-    return this.readRows(
+    return this.readRowsByInBatches(
       `operations:ids:${ids.join(",")}`,
       "operations",
-      () =>
+      ids,
+      ["operation_id"],
+      ["operation_id"],
+      (batch) =>
         this.client
           .from("operations")
           .select("*,montant_bancaire_exact:montant::text")
-          .in("operation_id", ids)
+          .in("operation_id", batch)
           .order("operation_id", { ascending: true }),
     );
   }
@@ -430,16 +496,19 @@ export class CanonicalRepository {
   ): Promise<readonly CanonicalRecord[]> {
     const ids = unique(operationIds);
     if (ids.length === 0) return Promise.resolve([]);
-    return this.readRows(
+    return this.readRowsByInBatches(
       `economic:operations:${ids.join(",")}`,
       "economic",
-      () =>
+      ids,
+      ["canonical_component_key"],
+      ["canonical_component_key"],
+      (batch) =>
         this.client
           .from("financial_economic_cost_canonical")
           .select(
             "operation_id,cash_use_id,source_layer,component_id,canonical_economic_gross::text,refund_applied::text,canonical_economic_net::text,category_id,subcategory_id,moment_id,canonical_economic_amount::text,canonical_component_key,source_kind",
           )
-          .in("operation_id", ids)
+          .in("operation_id", batch)
           .order("canonical_component_key", { ascending: true }),
     );
   }
@@ -449,16 +518,19 @@ export class CanonicalRepository {
   ): Promise<readonly CanonicalRecord[]> {
     const keys = unique(componentKeys);
     if (keys.length === 0) return Promise.resolve([]);
-    return this.readRows(
+    return this.readRowsByInBatches(
       `economic:keys:${keys.join(",")}`,
       "economic",
-      () =>
+      keys,
+      ["canonical_component_key"],
+      ["canonical_component_key"],
+      (batch) =>
         this.client
           .from("financial_economic_cost_canonical")
           .select(
             "operation_id,cash_use_id,source_layer,component_id,canonical_economic_gross::text,refund_applied::text,canonical_economic_net::text,category_id,subcategory_id,moment_id,canonical_economic_amount::text,canonical_component_key,source_kind",
           )
-          .in("canonical_component_key", keys)
+          .in("canonical_component_key", batch)
           .order("canonical_component_key", { ascending: true }),
     );
   }
@@ -488,17 +560,20 @@ export class CanonicalRepository {
   ): Promise<readonly CanonicalRecord[]> {
     const keys = unique(componentKeys);
     if (keys.length === 0) return Promise.resolve([]);
-    return this.readRows(
+    return this.readRowsByInBatches(
       `timing:keys:${keys.join(",")}`,
       "timing",
-      () =>
+      keys,
+      ["canonical_component_key", "economic_segment_id"],
+      ["canonical_component_key", "economic_segment_id"],
+      (batch) =>
         this.client
           .from("financial_economic_timing_canonical")
           .select(
             "household_id,canonical_component_key,economic_segment_id,timing_state,period_start,period_end,economic_month,economic_amount::text,attribution_method,method_version",
           )
           .eq("household_id", this.context.householdId)
-          .in("canonical_component_key", keys)
+          .in("canonical_component_key", batch)
           .order("canonical_component_key", { ascending: true })
           .order("economic_segment_id", { ascending: true }),
     );
@@ -518,24 +593,42 @@ export class CanonicalRepository {
     const [operations, places, timingRows, timingControls, reconciliations] =
       await Promise.all([
         this.loadOperationsByIds(operationIds),
-        this.readRows(`places:keys:${componentKeys.join(",")}`, "places", () =>
+        this.readRowsByInBatches(
+          `places:keys:${componentKeys.join(",")}`,
+          "places",
+          componentKeys,
+          ["canonical_component_key"],
+          ["canonical_component_key"],
+          (batch) =>
           this.client
             .from("operation_place_canonical")
             .select("canonical_component_key,operation_id,place_id,resolution_state")
-            .in("canonical_component_key", componentKeys)
+            .in("canonical_component_key", batch)
             .order("canonical_component_key", { ascending: true })),
         this.loadTimingRowsByKeys(componentKeys),
-        this.readRows(`timing-controls:${componentKeys.join(",")}`, "timing", () =>
+        this.readRowsByInBatches(
+          `timing-controls:${componentKeys.join(",")}`,
+          "timing",
+          componentKeys,
+          ["canonical_component_key"],
+          ["canonical_component_key"],
+          (batch) =>
           this.client
             .from("financial_economic_timing_control")
             .select("canonical_component_key,canonical_economic_net::text,segment_count,known_count,partial_count,unknown_count,household_count,household_mismatch_count,segment_amount_sum::text,amount_delta::text,status")
-            .in("canonical_component_key", componentKeys)
+            .in("canonical_component_key", batch)
             .order("canonical_component_key", { ascending: true })),
-        this.readRows(`reconciliation:${operationIds.join(",")}`, "economic", () =>
+        this.readRowsByInBatches(
+          `reconciliation:${operationIds.join(",")}`,
+          "economic",
+          operationIds,
+          ["operation_id"],
+          ["operation_id"],
+          (batch) =>
           this.client
             .from("financial_canonical_reconciliation_control")
             .select("operation_id,economic_gross_delta::text,economic_refund_resolution,economic_status")
-            .in("operation_id", operationIds)
+            .in("operation_id", batch)
             .order("operation_id", { ascending: true })),
       ]);
 
@@ -626,11 +719,17 @@ export class CanonicalRepository {
   ): Promise<readonly CanonicalRecord[]> {
     const ids = unique(lifeEventIds);
     if (ids.length === 0) return Promise.resolve([]);
-    return this.readRows(`financial-links:events:${ids.join(",")}`, "financial_links", () =>
+    return this.readRowsByInBatches(
+      `financial-links:events:${ids.join(",")}`,
+      "financial_links",
+      ids,
+      ["financial_link_id"],
+      ["life_event_id", "financial_link_id"],
+      (batch) =>
       this.client
         .from("life_event_financial_links")
         .select("financial_link_id,life_event_id,source_kind,operation_id,allocation_id,item_id,cash_use_id,relation_type,economic_amount_linked::text,validation_status")
-        .in("life_event_id", ids)
+        .in("life_event_id", batch)
         .eq("validation_status", "Confirmé")
         .in("relation_type", ["Paiement_activite", "Cause_par_evenement", "Preparation"])
         .order("life_event_id", { ascending: true })
@@ -642,14 +741,17 @@ export class CanonicalRepository {
   ): Promise<readonly PersonDayFact[]> {
     return this.cached(`facts:person-days:${range.start}:${range.endExclusive}`, async () => {
       if (this.context.personIds.length === 0) return [];
-      const rows = await this.readRows(
+      const rows = await this.readRowsByInBatches(
         `person-days:${range.start}:${range.endExclusive}`,
         "person_days",
-        () =>
+        this.context.personIds,
+        ["person_day_id"],
+        ["date", "person_id", "person_day_id"],
+        (batch) =>
           this.client
             .from("person_days")
             .select("person_day_id,person_id,date,couverture_localisation")
-            .in("person_id", this.context.personIds)
+            .in("person_id", batch)
             .gte("date", range.start)
             .lt("date", range.endExclusive)
             .order("date", { ascending: true })
@@ -688,16 +790,19 @@ export class CanonicalRepository {
       const personDays = await this.loadPersonDays(range);
       if (personDays.length === 0) return [];
       const personDayIds = personDays.map(({ personDayId }) => personDayId);
-      const occurrences = await this.readRows(
+      const occurrences = await this.readRowsByInBatches(
         `location-occurrences:${personDayIds.join(",")}`,
         "places",
-        () =>
+        personDayIds,
+        ["localization_id"],
+        ["person_day_id", "sequence_index", "localization_id"],
+        (batch) =>
           this.client
             .from("location_occurrences")
             .select(
               "localization_id,person_day_id,person_id,place_id,start_at,end_at,time_precision,sequence_index,occurrence_type",
             )
-            .in("person_day_id", personDayIds)
+            .in("person_day_id", batch)
             .eq("occurrence_type", "Présence")
             .order("person_day_id", { ascending: true })
             .order("sequence_index", { ascending: true }),
@@ -804,18 +909,30 @@ export class CanonicalRepository {
       ),
     );
     const [eventTypes, participations] = await Promise.all([
-      this.readRows(`life-event-types:${typeIds.join(",")}`, "life_events", () =>
+      this.readRowsByInBatches(
+        `life-event-types:${typeIds.join(",")}`,
+        "life_events",
+        typeIds,
+        ["life_event_type_id"],
+        ["life_event_type_id"],
+        (batch) =>
         this.client
           .from("life_event_types")
           .select(activityOccurrenceLifeEventTypeSelection)
-          .in("life_event_type_id", typeIds)
+          .in("life_event_type_id", batch)
           .order("life_event_type_id", { ascending: true }),
       ),
-      this.readRows(`life-event-participations:${eventIds.join(",")}`, "life_events", () =>
+      this.readRowsByInBatches(
+        `life-event-participations:${eventIds.join(",")}`,
+        "life_events",
+        eventIds,
+        ["life_event_id", "person_day_id", "person_id"],
+        ["life_event_id", "person_id", "person_day_id"],
+        (batch) =>
         this.client
           .from("life_event_participations")
           .select("life_event_id,person_day_id,person_id,participation_status")
-          .in("life_event_id", eventIds)
+          .in("life_event_id", batch)
           .order("life_event_id", { ascending: true })
           .order("person_id", { ascending: true }),
       ),
@@ -858,14 +975,17 @@ export class CanonicalRepository {
       const ids = events.map((row) =>
         canonicalString(row, ["purchase_event_id"], "purchase_events"),
       );
-      const sources = await this.readRows(
+      const sources = await this.readRowsByInBatches(
         `purchase-event-sources:${ids.join(",")}`,
         "purchase_events",
-        () =>
+        ids,
+        ["purchase_event_id", "operation_id", "cash_use_id"],
+        ["purchase_event_id", "operation_id", "cash_use_id"],
+        (batch) =>
           this.client
             .from("purchase_event_sources")
             .select("purchase_event_id,operation_id,cash_use_id")
-            .in("purchase_event_id", ids)
+            .in("purchase_event_id", batch)
             .order("purchase_event_id", { ascending: true }),
       );
       const sourcesByEvent = groupBy(sources, "purchase_event_id");
@@ -995,9 +1115,10 @@ export class CanonicalRepository {
             const query = this.client
               .from("person_days")
               .select("person_day_id");
-            return this.context.personIds.length === 0
+            const personId = this.context.personIds[0];
+            return personId === undefined
               ? query.limit(1)
-              : query.in("person_id", this.context.personIds).limit(1);
+              : query.eq("person_id", personId).limit(1);
           });
         }),
         this.probeCanonicalSource("life_events", async () => {
@@ -1198,13 +1319,19 @@ export class CanonicalRepository {
     const operationIdSelection = mapping.operationIdSelection === null
       ? ""
       : `,${mapping.operationIdSelection}`;
-    return this.readRows(`composition:${table}:${ids.join(",")}`, "operations", () =>
+    return this.readRowsByInBatches(
+      `composition:${table}:${ids.join(",")}`,
+      "operations",
+      ids,
+      [mapping.stableId],
+      [mapping.foreignOperationKey, mapping.stableId],
+      (batch) =>
       this.client
         .from(table)
         .select(
           `*${operationIdSelection},composition_amount_exact:${mapping.moneyColumn}::text`,
         )
-        .in(mapping.foreignOperationKey, ids)
+        .in(mapping.foreignOperationKey, batch)
         .order(mapping.foreignOperationKey, { ascending: true })
         .order(mapping.stableId, { ascending: true }),
     );
@@ -1227,18 +1354,32 @@ export class CanonicalRepository {
     if (table !== "moments") {
       await this.assertAuthorizedCanonicalHouseholdScope();
     }
-    return this.readRows(
-      `entities:${table}:${normalizedIds?.join(",") ?? "all"}`,
-      "entities",
-      () => {
+    const key = `entities:${table}:${normalizedIds?.join(",") ?? "all"}`;
+    if (normalizedIds === undefined) {
+      return this.readRows(key, "entities", () => {
         let query = this.client
           .from(mapping.physicalTable)
           .select("*");
         if (table === "moments") {
           query = query.eq("household_id", this.context.householdId);
         }
-        if (normalizedIds !== undefined) query = query.in(idColumn, normalizedIds);
         return query.order(idColumn, { ascending: true });
+      });
+    }
+    return this.readRowsByInBatches(
+      key,
+      "entities",
+      normalizedIds,
+      [idColumn],
+      [idColumn],
+      (batch) => {
+        let query = this.client
+          .from(mapping.physicalTable)
+          .select("*");
+        if (table === "moments") {
+          query = query.eq("household_id", this.context.householdId);
+        }
+        return query.in(idColumn, batch).order(idColumn, { ascending: true });
       },
     );
   }
@@ -1251,11 +1392,17 @@ export class CanonicalRepository {
     if (normalizedIds.length === 0) return [];
     await this.assertAuthorizedCanonicalHouseholdScope();
     const mapping = taxonomyPhysicalMappings[table];
-    return this.readRows(`taxonomy:${table}:${normalizedIds.join(",")}`, "taxonomy", () =>
+    return this.readRowsByInBatches(
+      `taxonomy:${table}:${normalizedIds.join(",")}`,
+      "taxonomy",
+      normalizedIds,
+      [mapping.idColumn],
+      [mapping.idColumn],
+      (batch) =>
       this.client
         .from(mapping.physicalTable)
         .select(taxonomySelection(table))
-        .in(mapping.idColumn, normalizedIds)
+        .in(mapping.idColumn, batch)
         .order(mapping.idColumn, { ascending: true }));
   }
 
@@ -1264,11 +1411,17 @@ export class CanonicalRepository {
   ): Promise<readonly CanonicalRecord[]> {
     const normalizedIds = unique(ids);
     if (normalizedIds.length === 0) return Promise.resolve([]);
-    return this.readRows(`life-event-types:ids:${normalizedIds.join(",")}`, "life_events", () =>
+    return this.readRowsByInBatches(
+      `life-event-types:ids:${normalizedIds.join(",")}`,
+      "life_events",
+      normalizedIds,
+      ["life_event_type_id"],
+      ["life_event_type_id"],
+      (batch) =>
       this.client
         .from("life_event_types")
         .select("life_event_type_id,type_key,label,can_span_days,active")
-        .in("life_event_type_id", normalizedIds)
+        .in("life_event_type_id", batch)
         .order("life_event_type_id", { ascending: true }));
   }
 
@@ -1277,11 +1430,17 @@ export class CanonicalRepository {
   ): Promise<readonly CanonicalRecord[]> {
     const keys = unique(typeKeys);
     if (keys.length === 0) return Promise.resolve([]);
-    return this.readRows(`life-event-types:keys:${keys.join(",")}`, "life_events", () =>
+    return this.readRowsByInBatches(
+      `life-event-types:keys:${keys.join(",")}`,
+      "life_events",
+      keys,
+      ["life_event_type_id"],
+      ["type_key", "life_event_type_id"],
+      (batch) =>
       this.client
         .from("life_event_types")
         .select("life_event_type_id,type_key,label,can_span_days,active")
-        .in("type_key", keys)
+        .in("type_key", batch)
         .order("type_key", { ascending: true }));
   }
 
@@ -1290,11 +1449,17 @@ export class CanonicalRepository {
   ): Promise<readonly CanonicalRecord[]> {
     const ids = unique(lifeEventIds);
     if (ids.length === 0) return Promise.resolve([]);
-    return this.readRows(`life-event-participations:entities:${ids.join(",")}`, "life_events", () =>
+    return this.readRowsByInBatches(
+      `life-event-participations:entities:${ids.join(",")}`,
+      "life_events",
+      ids,
+      ["life_event_id", "person_day_id", "person_id"],
+      ["life_event_id", "person_id", "person_day_id"],
+      (batch) =>
       this.client
         .from("life_event_participations")
         .select("life_event_id,person_day_id,person_id,participation_status")
-        .in("life_event_id", ids)
+        .in("life_event_id", batch)
         .order("life_event_id", { ascending: true })
         .order("person_id", { ascending: true }));
   }
@@ -1304,11 +1469,17 @@ export class CanonicalRepository {
   ): Promise<readonly CanonicalRecord[]> {
     const ids = unique(momentIds);
     if (ids.length === 0) return Promise.resolve([]);
-    return this.readRows(`moment-life-events:moments:${ids.join(",")}`, "life_events", () =>
+    return this.readRowsByInBatches(
+      `moment-life-events:moments:${ids.join(",")}`,
+      "life_events",
+      ids,
+      ["moment_id", "life_event_id"],
+      ["moment_id", "life_event_id"],
+      (batch) =>
       this.client
         .from("moment_life_events")
         .select("moment_id,life_event_id")
-        .in("moment_id", ids)
+        .in("moment_id", batch)
         .order("moment_id", { ascending: true })
         .order("life_event_id", { ascending: true }));
   }
@@ -1318,11 +1489,17 @@ export class CanonicalRepository {
   ): Promise<readonly CanonicalRecord[]> {
     const ids = unique(lifeEventIds);
     if (ids.length === 0) return Promise.resolve([]);
-    return this.readRows(`moment-life-events:events:${ids.join(",")}`, "life_events", () =>
+    return this.readRowsByInBatches(
+      `moment-life-events:events:${ids.join(",")}`,
+      "life_events",
+      ids,
+      ["moment_id", "life_event_id"],
+      ["life_event_id", "moment_id"],
+      (batch) =>
       this.client
         .from("moment_life_events")
         .select("moment_id,life_event_id")
-        .in("life_event_id", ids)
+        .in("life_event_id", batch)
         .order("life_event_id", { ascending: true })
         .order("moment_id", { ascending: true }));
   }
@@ -1332,11 +1509,17 @@ export class CanonicalRepository {
   ): Promise<readonly CanonicalRecord[]> {
     const ids = unique(operationIds);
     if (ids.length === 0) return Promise.resolve([]);
-    return this.readRows(`financial-links:operations:${ids.join(",")}`, "financial_links", () =>
+    return this.readRowsByInBatches(
+      `financial-links:operations:${ids.join(",")}`,
+      "financial_links",
+      ids,
+      ["financial_link_id"],
+      ["operation_id", "financial_link_id"],
+      (batch) =>
       this.client
         .from("life_event_financial_links")
         .select("financial_link_id,life_event_id,operation_id,relation_type,validation_status")
-        .in("operation_id", ids)
+        .in("operation_id", batch)
         .in("validation_status", ["Confirmé", "Déduit"])
         .order("operation_id", { ascending: true })
         .order("financial_link_id", { ascending: true }));
@@ -1348,11 +1531,17 @@ export class CanonicalRepository {
     const ids = unique(lifeEventIds);
     if (ids.length === 0) return [];
     await this.assertAuthorizedCanonicalHouseholdScope();
-    return this.readRows(`life-event-records:${ids.join(",")}`, "life_events", () =>
+    return this.readRowsByInBatches(
+      `life-event-records:${ids.join(",")}`,
+      "life_events",
+      ids,
+      ["life_event_id"],
+      ["life_event_id"],
+      (batch) =>
       this.client
         .from("life_events")
         .select("*")
-        .in("life_event_id", ids)
+        .in("life_event_id", batch)
         .order("life_event_id", { ascending: true }));
   }
 
