@@ -80,6 +80,12 @@ export {
   sumEconomicNet,
 } from "./operations";
 export type {
+  HistoricalEconomicTimingInput,
+  HistoricalEconomicTimingResolution,
+  HistoricalEconomicTimingSource,
+} from "./economic-timing";
+export { resolveHistoricalEconomicTiming } from "./economic-timing";
+export type {
   ActivityOccurrenceCanonicalCandidate,
   CanonicalHouseholdContext,
   EconomicComponentProjectionInput,

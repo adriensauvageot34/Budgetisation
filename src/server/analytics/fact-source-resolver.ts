@@ -45,6 +45,11 @@ import type {
   CanonicalDateRange,
   CanonicalRepository,
 } from "@/server/canonical/repository";
+import {
+  resolveMinimalPlanningSource,
+  type MinimalPlanningResolution,
+  type MinimalSourceHealth,
+} from "./minimal-source-resolver";
 
 function monthsForScope(scope: NormalizedAnalysisScope): readonly YearMonth[] {
   return scope.time.kind === "month"
@@ -150,6 +155,67 @@ export class FactSourceResolver {
     return buildActivityOccurrenceCostFacts({ occurrences, components, links });
   }
 
+  private async resolveMinimalMonth(
+    scope: NormalizedAnalysisScope,
+  ): Promise<MinimalPlanningResolution> {
+    if (scope.time.kind !== "month" || scope.subject.kind !== "household") {
+      return {
+        availability: "unknown",
+        neutralVariableComponents: [],
+        mandatoryMonthlyObligationsAndProvisions: [],
+        health: {
+          neutralVariable: "MISSING_SOURCE",
+          obligationsAndProvisions: "MISSING_SOURCE",
+          unresolvedNeutralSourceCount: 0,
+          unresolvedObligationSourceCount: 0,
+        },
+      };
+    }
+    const targetMonth = scope.time.month;
+    const referenceMonths = this.repository.context.periods
+      .filter(({ month, financeStatus, isClosed }) =>
+        financeStatus === "complete" && isClosed && month.slice(0, 7) < targetMonth)
+      .map(({ month }) => month.slice(0, 7) as YearMonth)
+      .sort()
+      .slice(-TYPICAL_MONTH_REQUESTED_PERIOD_COUNT);
+    const firstMonth = referenceMonths[0];
+    const lastMonth = referenceMonths.at(-1);
+    if (firstMonth === undefined || lastMonth === undefined) {
+      return resolveMinimalPlanningSource({
+        bundle: {
+          economicFacts: [],
+          operations: [],
+          allocations: [],
+          items: [],
+          paymentComponents: [],
+          cashUses: [],
+          baselineRules: [],
+          needs: [],
+          provisionPools: [],
+          recurrenceSeries: [],
+          annualEvents: [],
+          worksiteActivityTypeIds: [],
+          activityOccurrences: [],
+        },
+        targetMonth,
+        referenceMonths,
+      });
+    }
+    const bundle = await this.repository.loadMinimalPlanningBundle({
+      start: parseLocalDate(`${firstMonth}-01`),
+      endExclusive: parseLocalDate(`${addMonths(lastMonth, 1)}-01`),
+    });
+    return resolveMinimalPlanningSource({
+      bundle,
+      targetMonth,
+      referenceMonths,
+    });
+  }
+
+  async minimalSourceHealth(rawScope: AnalysisScope): Promise<MinimalSourceHealth> {
+    return (await this.resolveMinimalMonth(normalizeAnalysisScope(rawScope))).health;
+  }
+
   async resolve(
     metricId: ActiveMetricId,
     rawScope: AnalysisScope,
@@ -160,11 +226,26 @@ export class FactSourceResolver {
     const sourceFact = definition.sourceFact[0];
 
     if (definition.productionStrategy === "minimal_month") {
-      return {
-        kind: "minimal_month",
-        scopeHash,
-        availability: "unknown",
-      };
+      const resolution = await this.resolveMinimalMonth(scope);
+      return resolution.availability === "known"
+        ? {
+            kind: "minimal_month",
+            scopeHash,
+            availability: "known",
+            neutralVariableComponents: resolution.neutralVariableComponents,
+            mandatoryMonthlyObligationsAndProvisions:
+              resolution.mandatoryMonthlyObligationsAndProvisions,
+            coverage:
+              resolution.health.neutralVariable === "AVAILABLE" &&
+              resolution.health.obligationsAndProvisions === "AVAILABLE"
+                ? { level: "complete" }
+                : { level: "partial" },
+          }
+        : {
+            kind: "minimal_month",
+            scopeHash,
+            availability: "unknown",
+          };
     }
 
     if (definition.productionStrategy === "typical_month") {

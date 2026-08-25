@@ -12,6 +12,7 @@ import {
   executeAuthenticatedQueries,
   executeAuthenticatedQuery,
   readAuthenticatedCanonicalSourceHealth,
+  readAuthenticatedMinimalSourceHealth,
   resolveLatestBankOperationMonth,
 } from "@/server/query/runtime";
 import { safeRuntimeEnvironment } from "@/server/runtime-environment";
@@ -45,6 +46,17 @@ export default async function DiagnosticPage() {
   const completeClosedPeriodCount = context.periods.filter(
     ({ financeStatus, isClosed }) => financeStatus === "complete" && isClosed,
   ).length;
+  const completeClosedMonths = context.periods
+    .filter(({ financeStatus, isClosed }) => financeStatus === "complete" && isClosed)
+    .map(({ month }) => yearMonthOf(month))
+    .sort();
+  const historicalCompleteRange = completeClosedMonths.length === 0
+    ? "—"
+    : `${completeClosedMonths[0]} → ${completeClosedMonths.at(-1)}`;
+  const currentOpenMonths = context.periods
+    .filter(({ financeStatus, isClosed }) => financeStatus !== "complete" || !isClosed)
+    .map(({ month }) => yearMonthOf(month))
+    .sort();
   const monthScope = month === null
     ? null
     : normalizeAnalysisScope({
@@ -116,7 +128,10 @@ export default async function DiagnosticPage() {
         : "NON APPLICABLE · aucune opération disponible",
     });
   }
-  const sourceHealth = await readAuthenticatedCanonicalSourceHealth();
+  const [sourceHealth, minimalSourceHealth] = await Promise.all([
+    readAuthenticatedCanonicalSourceHealth(),
+    monthScope === null ? Promise.resolve(null) : readAuthenticatedMinimalSourceHealth(monthScope),
+  ]);
   const monthInitial = resultByLabel.get("Analysis Month Initial");
   const minimalStatus = monthInitial?.ok
     ? (() => {
@@ -134,6 +149,8 @@ export default async function DiagnosticPage() {
         <div><span className="eyebrow">Persons</span><p className="text-xl font-black">{context.persons.map((person) => person.displayName).join(", ") || "Aucune"}</p></div>
         <div><span className="eyebrow">Analysis periods</span><p className="text-xl font-black">{context.periods.length}</p></div>
         <div><span className="eyebrow">Finance complete + closed</span><p className="text-xl font-black">{completeClosedPeriodCount}</p></div>
+        <div><span className="eyebrow">Historical complete range</span><p className="text-xl font-black">{historicalCompleteRange}</p></div>
+        <div><span className="eyebrow">Current / open</span><p className="text-xl font-black">{currentOpenMonths.join(", ") || "—"}</p></div>
         <div><span className="eyebrow">DataRevision</span><p className="text-xl font-black">{context.revision?.dataRevision ?? "—"}</p></div>
         <div><span className="eyebrow">AnalyticsRevision</span><p className="text-xl font-black">{context.revision?.analyticsRevision ?? "—"}</p></div>
         <div><span className="eyebrow">Supabase public ref</span><p className="text-xl font-black">{runtimeEnvironment.publicSupabaseProjectRef ?? "—"}</p></div>
@@ -152,8 +169,9 @@ export default async function DiagnosticPage() {
         <span className="eyebrow">Source Health</span>
         <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {Object.entries(sourceHealth).map(([source, status]) => <div key={source}><strong>{source}</strong><p>{status}</p></div>)}
-          <div><strong>minimal_neutral_variable</strong><p>{minimalStatus}</p></div>
-          <div><strong>minimal_obligations_provisions</strong><p>{minimalStatus}</p></div>
+          <div><strong>minimal_neutral_variable</strong><p>{minimalSourceHealth?.neutralVariable ?? "MISSING_SOURCE"}</p><small>{minimalSourceHealth?.unresolvedNeutralSourceCount ?? 0} source(s) non résolue(s)</small></div>
+          <div><strong>minimal_obligations_provisions</strong><p>{minimalSourceHealth?.obligationsAndProvisions ?? "MISSING_SOURCE"}</p><small>{minimalSourceHealth?.unresolvedObligationSourceCount ?? 0} source(s) non résolue(s)</small></div>
+          <div><strong>minimal_metric</strong><p>{minimalStatus}</p></div>
         </div>
       </section>
     </div>

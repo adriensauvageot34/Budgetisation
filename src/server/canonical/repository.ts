@@ -126,6 +126,22 @@ export type CanonicalOperationBundle = {
   readonly cashUses: readonly CanonicalRecord[];
 };
 
+export type CanonicalMinimalPlanningBundle = {
+  readonly economicFacts: readonly EconomicComponentFact[];
+  readonly operations: readonly CanonicalRecord[];
+  readonly allocations: readonly CanonicalRecord[];
+  readonly items: readonly CanonicalRecord[];
+  readonly paymentComponents: readonly CanonicalRecord[];
+  readonly cashUses: readonly CanonicalRecord[];
+  readonly baselineRules: readonly CanonicalRecord[];
+  readonly needs: readonly CanonicalRecord[];
+  readonly provisionPools: readonly CanonicalRecord[];
+  readonly recurrenceSeries: readonly CanonicalRecord[];
+  readonly annualEvents: readonly CanonicalRecord[];
+  readonly worksiteActivityTypeIds: readonly string[];
+  readonly activityOccurrences: readonly ActivityOccurrenceFact[];
+};
+
 type CompositionTable =
   | "operation_allocations"
   | "operation_items"
@@ -329,6 +345,42 @@ export class CanonicalRepository {
     );
   }
 
+  private async loadOperationsByHistoricalTimingRange(
+    range: CanonicalDateRange,
+  ): Promise<readonly CanonicalRecord[]> {
+    await this.assertAuthorizedCanonicalHouseholdScope();
+    const startMonth = yearMonthOf(range.start);
+    const endMonth = yearMonthOf(range.endExclusive);
+    const [byRealDate, byForcedMonth] = await Promise.all([
+      this.readRows(
+        `operations:real-date:${range.start}:${range.endExclusive}`,
+        "operations",
+        () =>
+          this.client
+            .from("operations")
+            .select("*,montant_bancaire_exact:montant::text")
+            .gte("date_transaction_reelle", range.start)
+            .lt("date_transaction_reelle", range.endExclusive)
+            .eq("date_transaction_precision", "Jour exact")
+            .order("date_transaction_reelle", { ascending: true })
+            .order("operation_id", { ascending: true }),
+      ),
+      this.readRows(
+        `operations:forced-month:${startMonth}:${endMonth}`,
+        "operations",
+        () =>
+          this.client
+            .from("operations")
+            .select("*,montant_bancaire_exact:montant::text")
+            .gte("mois_analytique_force", startMonth)
+            .lt("mois_analytique_force", endMonth)
+            .order("mois_analytique_force", { ascending: true })
+            .order("operation_id", { ascending: true }),
+      ),
+    ]);
+    return mergeRows(byRealDate, byForcedMonth, "operation_id", "operations");
+  }
+
   async loadLatestBankOperationMonth(): Promise<YearMonth | null> {
     await this.assertAuthorizedCanonicalHouseholdScope();
     const rows = await this.readRows("operations:latest-bank-month", "operations", () =>
@@ -509,6 +561,9 @@ export class CanonicalRepository {
         operation: {
           operation_id: operation.operation_id,
           date_bancaire: operation.date_bancaire,
+          mois_analytique_force: operation.mois_analytique_force,
+          date_transaction_reelle: operation.date_transaction_reelle,
+          date_transaction_precision: operation.date_transaction_precision,
           merchant_id: operation.merchant_id,
           importance: operation.importance,
           nature_fixe_variable: operation.nature_fixe_variable,
@@ -535,18 +590,25 @@ export class CanonicalRepository {
     range: CanonicalDateRange,
   ): Promise<readonly EconomicComponentFact[]> {
     return this.cached(`facts:economic:${range.start}:${range.endExclusive}`, async () => {
-      const [bankOperations, rangeTiming] = await Promise.all([
+      const [bankOperations, historicalTimingOperations, rangeTiming] = await Promise.all([
         this.loadOperationsByBankRange(range),
+        this.loadOperationsByHistoricalTimingRange(range),
         this.loadTimingRowsForRange(range),
       ]);
-      const bankOperationIds = bankOperations.map((row) =>
+      const rangeOperations = mergeRows(
+        bankOperations,
+        historicalTimingOperations,
+        "operation_id",
+        "operations",
+      );
+      const rangeOperationIds = rangeOperations.map((row) =>
         canonicalString(row, ["operation_id"], "operations"),
       );
       const rangeComponentKeys = rangeTiming.map((row) =>
         canonicalString(row, ["canonical_component_key"], "timing"),
       );
       const [byOperation, byTiming] = await Promise.all([
-        this.loadEconomicComponentRowsByOperations(bankOperationIds),
+        this.loadEconomicComponentRowsByOperations(rangeOperationIds),
         this.loadEconomicComponentRowsByKeys(rangeComponentKeys),
       ]);
       const components = mergeRows(
@@ -1042,6 +1104,86 @@ export class CanonicalRepository {
         items,
         paymentComponents,
         cashUses,
+      };
+    });
+  }
+
+  async loadMinimalPlanningBundle(
+    range: CanonicalDateRange,
+  ): Promise<CanonicalMinimalPlanningBundle> {
+    return this.cached(`minimal-planning:${range.start}:${range.endExclusive}`, async () => {
+      const economicFacts = await this.loadEconomicFacts(range);
+      const operationIds = unique(economicFacts.flatMap(({ sourceOperation }) =>
+        sourceOperation.kind === "resolved" ? [sourceOperation.id] : []));
+      const [
+        operations,
+        allocations,
+        items,
+        paymentComponents,
+        cashUses,
+        baselineRules,
+        needs,
+        provisionPools,
+        recurrenceSeries,
+        annualEvents,
+        worksiteActivityTypes,
+        activityOccurrences,
+      ] = await Promise.all([
+        this.loadOperationsByIds(operationIds),
+        this.loadComposition("operation_allocations", operationIds),
+        this.loadComposition("operation_items", operationIds),
+        this.loadComposition("payment_components", operationIds),
+        this.loadComposition("cash_economic_uses", operationIds),
+        this.readRows("minimal:rules", "taxonomy", () =>
+          this.client
+            .from("minimal_baseline_rules")
+            .select("baseline_rule_id,category_id,subcategory_id,type_precis,eligibility,condition_code,valid_from,valid_to,method_version")
+            .eq("method_version", "minimal_baseline_v1")
+            .order("baseline_rule_id", { ascending: true })),
+        this.readRows("minimal:needs", "operations", () =>
+          this.client
+            .from("needs")
+            .select("need_id,role_budgetaire,mode_prevision,actif,source_prevision_canonique")
+            .order("need_id", { ascending: true })),
+        this.readRows("minimal:provision-pools", "operations", () =>
+          this.client
+            .from("provision_pools")
+            .select("provision_pool_id,methode,application_auto,mode_prevision,need_source_id,source_prevision_canonique")
+            .order("provision_pool_id", { ascending: true })),
+        this.readRows("minimal:recurrence-series", "operations", () =>
+          this.client
+            .from("recurrence_series")
+            .select("recurrence_series_id,cadence_estimee,statut_serie,role_budgetaire,mode_prevision,actif_prevision,source_prevision_canonique")
+            .order("recurrence_series_id", { ascending: true })),
+        this.readRows("minimal:annual-events", "operations", () =>
+          this.client
+            .from("annual_events")
+            .select("annual_event_id,recurrence,provision_auto,methode_budget_reference,source_prevision_canonique")
+            .order("annual_event_id", { ascending: true })),
+        this.readRows("minimal:worksite-activity-types", "life_events", () =>
+          this.client
+            .from("life_event_types")
+            .select("life_event_type_id,type_key,active")
+            .eq("type_key", "travail_site")
+            .eq("active", true)
+            .order("life_event_type_id", { ascending: true })),
+        this.loadActivityOccurrences(range),
+      ]);
+      return {
+        economicFacts,
+        operations,
+        allocations,
+        items,
+        paymentComponents,
+        cashUses,
+        baselineRules,
+        needs,
+        provisionPools,
+        recurrenceSeries,
+        annualEvents,
+        worksiteActivityTypeIds: worksiteActivityTypes.map((row) =>
+          canonicalString(row, ["life_event_type_id"], "life_events")),
+        activityOccurrences,
       };
     });
   }

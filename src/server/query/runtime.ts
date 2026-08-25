@@ -17,6 +17,8 @@ import {
   type QueryTrace,
 } from "@/query-api/server";
 import { FactSourceResolver } from "@/server/analytics/fact-source-resolver";
+import type { MinimalSourceHealth } from "@/server/analytics/minimal-source-resolver";
+import type { AnalysisScope } from "@/core/scope";
 import { MetricQueryService } from "@/server/analytics/metric-query-service";
 import { getBootstrapContext } from "@/server/bootstrap/context";
 import { createCanonicalReadClient } from "@/server/canonical/client";
@@ -222,5 +224,28 @@ export async function readAuthenticatedCanonicalSourceHealth(): Promise<Canonica
   } catch (error) {
     if (!(error instanceof CanonicalReadError)) throw error;
     return unavailableCanonicalSourceHealth();
+  }
+}
+
+export async function readAuthenticatedMinimalSourceHealth(
+  scope: AnalysisScope,
+): Promise<MinimalSourceHealth> {
+  const missing: MinimalSourceHealth = {
+    neutralVariable: "MISSING_SOURCE",
+    obligationsAndProvisions: "MISSING_SOURCE",
+    unresolvedNeutralSourceCount: 0,
+    unresolvedObligationSourceCount: 0,
+  };
+  const bootstrap = await getBootstrapContext();
+  const context = createAuthorizedRuntimeContext(
+    bootstrap,
+    parseInstant(new Date().toISOString()),
+  );
+  try {
+    const repository = new CanonicalRepository(createCanonicalReadClient(), context);
+    return await new FactSourceResolver(repository).minimalSourceHealth(scope);
+  } catch (error) {
+    if (!(error instanceof CanonicalReadError)) throw error;
+    return missing;
   }
 }

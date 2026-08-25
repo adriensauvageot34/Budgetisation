@@ -27,6 +27,7 @@ import {
   parseYearMonth,
   type HouseholdTimeZone,
   type LocalDate,
+  type YearMonth,
 } from "../../core/time";
 import {
   parseStrictRecord,
@@ -61,6 +62,7 @@ import {
   parsePurchaseEventFact,
   parsePurchaseEventId,
 } from "./validation";
+import { resolveHistoricalEconomicTiming } from "./economic-timing";
 
 export const canonicalFactSources = {
   economicComponent: "financial_economic_cost_canonical",
@@ -115,6 +117,9 @@ type ParsedEconomicComponentRow = {
 type ParsedOperationContextRow = {
   readonly operationId: ReturnType<typeof parseOperationId>;
   readonly bankDate: LocalDate;
+  readonly forcedAnalyticMonth: YearMonth | null;
+  readonly realTransactionDate: LocalDate | null;
+  readonly realTransactionDateReliable: boolean;
   readonly merchantId: ReturnType<typeof parseMerchantId> | null;
   readonly necessity: string | null;
   readonly behavior: string | null;
@@ -406,6 +411,9 @@ function parseOperationContextRow(value: unknown): ParsedOperationContextRow {
     [
       "operation_id",
       "date_bancaire",
+      "mois_analytique_force",
+      "date_transaction_reelle",
+      "date_transaction_precision",
       "merchant_id",
       "importance",
       "nature_fixe_variable",
@@ -413,9 +421,22 @@ function parseOperationContextRow(value: unknown): ParsedOperationContextRow {
     ],
     "operations",
   );
+  const transactionPrecision = parseNullableText(
+    requireProperty(row, "date_transaction_precision", "operations"),
+    "operations.date_transaction_precision",
+  );
   return {
     operationId: parseOperationId(requireProperty(row, "operation_id", "operations")),
     bankDate: parseLocalDate(requireProperty(row, "date_bancaire", "operations")),
+    forcedAnalyticMonth: parseNullable(
+      requireProperty(row, "mois_analytique_force", "operations"),
+      parseYearMonth,
+    ),
+    realTransactionDate: parseNullable(
+      requireProperty(row, "date_transaction_reelle", "operations"),
+      parseLocalDate,
+    ),
+    realTransactionDateReliable: transactionPrecision === "Jour exact",
     merchantId: parseNullable(
       requireProperty(row, "merchant_id", "operations"),
       parseMerchantId,
@@ -780,12 +801,21 @@ export function projectEconomicComponentFact(
     throw new TypeError("L'opération ne correspond pas au composant économique.");
   }
   parseEconomicReconciliation(input.reconciliationControl, component);
-  const timing = projectEconomicTiming(
+  const explicitTiming = projectEconomicTiming(
     input.timingRows,
     input.timingControl,
     component,
     input.household,
   );
+  const timing = resolveHistoricalEconomicTiming({
+    explicitTiming,
+    canonicalComponentKey: component.canonicalComponentKey,
+    canonicalEconomicNet: component.net,
+    forcedAnalyticMonth: operation.forcedAnalyticMonth,
+    realTransactionDate: operation.realTransactionDate,
+    realTransactionDateReliable: operation.realTransactionDateReliable,
+    bankDate: operation.bankDate,
+  }).timing;
   return parseEconomicComponentFact({
     fact: "fct_economic_component",
     householdId: input.household.householdId,
