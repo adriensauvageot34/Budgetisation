@@ -125,6 +125,22 @@ export type QueryServerServices = {
   > | (QueryCapabilitySelection & { readonly resourceApplicable?: boolean });
   readonly contractSupport?: QueryCapabilitySelection;
   readonly sources: QueryReadModelSources;
+  readonly materialization?: {
+    readonly readQuery: (
+      request: AnyNormalizedQueryRequest,
+    ) => Promise<{
+      readonly data: unknown;
+      readonly cachePolicy: NonNullable<ApiResponse<unknown>["meta"]["cachePolicy"]>;
+    } | null>;
+    readonly writeQuery: (
+      request: AnyNormalizedQueryRequest,
+      payload: unknown,
+    ) => Promise<void>;
+    readonly queryCachePolicy: (
+      request: AnyNormalizedQueryRequest,
+      source: "materialized" | "computed",
+    ) => ApiResponse<unknown>["meta"]["cachePolicy"];
+  };
   readonly onTrace?: (trace: QueryTrace) => void;
 };
 
@@ -146,6 +162,7 @@ export type QueryTrace = {
   readonly analyticsRevision?: AnalyticsRevision;
   readonly durationMs: number;
   readonly outcome: QueryTraceOutcome;
+  readonly materialization?: "hit" | "miss" | "bypass";
 };
 
 export type QueryExecutionResult<Name extends QueryResourceName> =

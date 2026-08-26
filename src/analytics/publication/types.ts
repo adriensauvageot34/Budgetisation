@@ -147,6 +147,7 @@ export type AnalyticsPublicationStore = {
 export type PublicationApiMetaInput = {
   readonly contractVersion: ContractVersion;
   readonly computedAt: Instant;
+  readonly cachePolicy?: ApiMeta["cachePolicy"];
 };
 
 export type PublishedApiMeta = ApiMeta;

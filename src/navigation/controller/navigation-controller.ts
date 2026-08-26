@@ -74,14 +74,16 @@ import {
 import { selectScrollRestoration } from "../restoration/policies";
 import {
   transferGlobalToMonth,
-  transferMonthToGlobal,
 } from "../transfer/analysis-transfer";
 import {
   buildShowDayIntent,
   transferAnalysisToCalendar,
   transferCalendarToAnalysis,
 } from "../transfer/inter-context";
-import { buildOperationsIntent } from "../transfer/operations-intent";
+import {
+  buildOperationsIntent,
+  operationsPeriodFromScope,
+} from "../transfer/operations-intent";
 import { serializeRootNavigation } from "../codecs/history-root-navigation";
 
 const applied: NavigationCommandResult = { kind: "applied" };
@@ -178,6 +180,10 @@ function rootFromAnalysisScope(scope: NormalizedAnalysisScope): HistoryRootConte
 
 class DefaultNavigationController implements NavigationController {
   private currentState: NavigationHistoryState | null = null;
+  private pendingRoot: {
+    readonly state: NavigationHistoryState;
+    readonly mode: "push" | "replace";
+  } | null = null;
   private unsubscribeHistory: (() => void) | null = null;
   private entrySequence = 0;
   private latestGeneration: ExplorationGeneration | null = null;
@@ -211,8 +217,7 @@ class DefaultNavigationController implements NavigationController {
       }
     } else if (resolution.reason === "closed-generation") {
       const state = this.createRootState(resolution.root, resolution.checkpoint);
-      this.deps.router.replace(resolution.root);
-      this.deps.history.replace(state, serializeRootNavigation(resolution.root));
+      this.deps.history.replace(state);
       this.currentState = state;
       this.syncLatestGeneration(state);
       this.applyCheckpointState(resolution.checkpoint);
@@ -221,7 +226,7 @@ class DefaultNavigationController implements NavigationController {
       );
     } else {
       const state = this.createRootState(root);
-      this.deps.history.replace(state, serializeRootNavigation(root));
+      this.deps.history.replace(state);
       this.currentState = state;
       this.syncLatestGeneration(state);
       this.rememberRoot(root);
@@ -236,6 +241,7 @@ class DefaultNavigationController implements NavigationController {
   dispose(): void {
     this.unsubscribeHistory?.();
     this.unsubscribeHistory = null;
+    this.pendingRoot = null;
     this.deps.restoration.cancel();
   }
 
@@ -251,13 +257,28 @@ class DefaultNavigationController implements NavigationController {
   reconcileExternalRoot(): NavigationCommandResult {
     if (!this.isStarted()) return noop("not_started");
     const root = rootNavigationContextSchema.parse(this.deps.router.read());
-    if (serializeRootNavigation(root) === serializeRootNavigation(this.requireState().root)) {
+    const activeUrl = serializeRootNavigation(root);
+    const pending = this.pendingRoot;
+    if (pending !== null && activeUrl === serializeRootNavigation(pending.state.root)) {
+      // Next has committed the destination and installed its own Router Tree state.
+      // Attach only our namespaced metadata to that exact browser entry now.
+      this.deps.history.replace(pending.state);
+      this.currentState = pending.state;
+      this.pendingRoot = null;
+      this.activateRoute(root);
+      this.rememberRoot(root);
+      return applied;
+    }
+    if (activeUrl === serializeRootNavigation(this.requireState().root)) {
       return noop("same_target");
     }
+    // A different committed URL superseded a pending request (Link, back/forward,
+    // redirect). Treat the committed App Router location as authoritative.
+    this.pendingRoot = null;
     this.beginNavigation();
     this.closeActiveGeneration();
     const state = this.createRootState(root);
-    this.deps.history.replace(state, serializeRootNavigation(root));
+    this.deps.history.replace(state);
     this.currentState = state;
     this.activateRoute(root);
     this.rememberRoot(root);
@@ -410,7 +431,7 @@ class DefaultNavigationController implements NavigationController {
       rootCheckpoint: checkpoint,
       node: explorationNodeSchema.parse(node),
     });
-    this.deps.history.push(state, serializeRootNavigation(state.root));
+    this.deps.history.push(state);
     this.currentState = state;
     return applied;
   }
@@ -424,7 +445,7 @@ class DefaultNavigationController implements NavigationController {
     if (anchor !== undefined) {
       const checkpoint = this.createCheckpoint(anchor);
       const parent = navigationHistoryStateSchema.parse({ ...current, checkpoint });
-      this.deps.history.replace(parent, serializeRootNavigation(parent.root));
+      this.deps.history.replace(parent);
       this.currentState = parent;
     }
     const state = createPushedExplorationHistoryState(
@@ -432,7 +453,7 @@ class DefaultNavigationController implements NavigationController {
       this.nextEntryId(),
       explorationNodeSchema.parse(node),
     );
-    this.deps.history.push(state, serializeRootNavigation(state.root));
+    this.deps.history.push(state);
     this.currentState = state;
     return applied;
   }
@@ -456,7 +477,6 @@ class DefaultNavigationController implements NavigationController {
       this.deps.session.getClosedGenerations(),
     );
     this.deps.session.setClosedGenerations(plan.closedGenerations);
-    this.deps.router.replace(plan.state.root);
     applyExplorationClose(this.deps.history, plan);
     this.currentState = plan.state;
     this.applyCheckpointState(plan.checkpoint);
@@ -565,21 +585,29 @@ class DefaultNavigationController implements NavigationController {
     const sourceSubview = this.deps.surface.readSubview();
 
     const currentMemory = this.deps.session.getContextMemory();
-    let targetScope: NormalizedAnalysisScope;
+    let targetScope: NormalizedAnalysisScope | null;
     let targetRoot: HistoryRootContext;
     let memory: NavigationContextMemory;
+    const switchingFromMonth = sourceScope.time.kind === "month";
 
     if (sourceScope.time.kind === "month") {
-      const transfer = transferMonthToGlobal({
-        sourceScope,
-        targetWindow,
-        asOf: sourceScope.time.month,
-        compatibility: this.deps.compatibility,
-        memory: currentMemory,
+      // The server alone resolves and validates Global's admissible asOf.
+      // Navigating without asOf prevents a Month client from manufacturing a gate bypass.
+      targetScope = null;
+      targetRoot = {
+        area: "analysis",
+        context: {
+          kind: "analysis_global",
+          observationWindow: targetWindow,
+          ...(sourceScope.subject.kind === "person" ? { personId: sourceScope.subject.personId } : {}),
+          filters: compatibleAnalysisFilters(sourceScope, this.deps.compatibility),
+        },
+      };
+      memory = navigationContextMemorySchema.parse({
+        ...currentMemory,
+        lastAnalysedMonth: sourceScope.time.month,
+        lastGlobalWindow: targetWindow,
       });
-      targetScope = transfer.targetScope;
-      targetRoot = transfer.targetRoot;
-      memory = transfer.memory;
     } else {
       if (
         sourceScope.time.observationWindow === targetWindow &&
@@ -610,7 +638,7 @@ class DefaultNavigationController implements NavigationController {
     this.closeActiveGeneration();
     this.commitRoot(targetRoot, "push");
     this.deps.surface.applyScope(targetScope);
-    const retainedMonths = targetScope.time.kind === "global"
+    const retainedMonths = targetScope?.time.kind === "global"
       ? new Set(resolveGlobalWindowMonths(targetScope.time.observationWindow, targetScope.time.asOf))
       : new Set<YearMonth>();
     const preservedSubview = sourceScope.time.kind === "global" && sourceSubview?.kind === "analysis-global"
@@ -626,6 +654,7 @@ class DefaultNavigationController implements NavigationController {
       : null;
     this.deps.surface.applySubview(preservedSubview);
     this.deps.session.setContextMemory(memory);
+    if (switchingFromMonth) return applied;
     return this.restoreScroll({ kind: "analysis_mode_switch" });
   }
 
@@ -657,10 +686,10 @@ class DefaultNavigationController implements NavigationController {
   ): NavigationCommandResult {
     if (!this.isStarted()) return noop("not_started");
     const current = this.requireState();
+    const sourceScope = this.readScope();
     const operationsBase: OperationsNavigationFilters = "kind" in current.root
       ? compactOperationsNavigationFilters({ ...current.root.filters, cursor: undefined })
-      : {};
-    const sourceScope = this.readScope();
+      : operationsPeriodFromScope(sourceScope);
     const compatible = sourceScope === null
       ? null
       : compatibleAnalysisFilters(sourceScope, this.deps.compatibility);
@@ -841,10 +870,10 @@ class DefaultNavigationController implements NavigationController {
       rootCheckpoint: destination.checkpoint,
       node: destination.stack[0],
     });
-    this.deps.history.push(state, serializeRootNavigation(state.root));
+    this.deps.history.push(state);
     for (const node of destination.stack.slice(1)) {
       state = createPushedExplorationHistoryState(state, this.nextEntryId(), node);
-      this.deps.history.push(state, serializeRootNavigation(state.root));
+      this.deps.history.push(state);
     }
     this.currentState = state;
     this.deps.session.setReturnDestination(null);
@@ -956,11 +985,17 @@ class DefaultNavigationController implements NavigationController {
   ): NavigationHistoryState {
     const root = rootNavigationContextSchema.parse(rootInput);
     this.activateRoute(root);
+    const state = this.createRootState(root, checkpoint);
+    if (serializeRootNavigation(root) === serializeRootNavigation(this.deps.router.read())) {
+      if (mode === "push") this.deps.history.push(state);
+      else this.deps.history.replace(state);
+      this.pendingRoot = null;
+      this.currentState = state;
+      return state;
+    }
+    this.pendingRoot = { state, mode };
     if (mode === "push") this.deps.router.push(root);
     else this.deps.router.replace(root);
-    const state = this.createRootState(root, checkpoint);
-    this.deps.history.replace(state, serializeRootNavigation(root));
-    this.currentState = state;
     return state;
   }
 
@@ -971,7 +1006,7 @@ class DefaultNavigationController implements NavigationController {
       ...this.requireState(),
       checkpoint,
     });
-    this.deps.history.replace(state, serializeRootNavigation(state.root));
+    this.deps.history.replace(state);
     this.currentState = state;
     this.rememberScroll(checkpoint);
     return state;
@@ -1056,7 +1091,7 @@ class DefaultNavigationController implements NavigationController {
     cause: NavigationRestorationCause,
     snapshot?: NavigationCheckpoint,
   ): Promise<NavigationCommandResult> {
-    const root = snapshot?.route ?? this.requireState().root;
+    const root = snapshot?.route ?? this.pendingRoot?.state.root ?? this.requireState().root;
     let checkpoint: NavigationCheckpoint;
 
     if (cause.kind === "checkpoint_restore" && snapshot !== undefined) {
@@ -1100,6 +1135,7 @@ class DefaultNavigationController implements NavigationController {
   private handlePopState(rawState: unknown): void {
     try {
       this.beginNavigation();
+      this.pendingRoot = null;
       const root = rootNavigationContextSchema.parse(this.deps.router.read());
       this.activateRoute(root);
       const resolution = resolveNavigationHistoryState(
@@ -1130,11 +1166,7 @@ class DefaultNavigationController implements NavigationController {
           resolution.root,
           resolution.checkpoint,
         );
-        this.deps.router.replace(resolution.root);
-        this.deps.history.replace(
-          state,
-          serializeRootNavigation(resolution.root),
-        );
+        this.deps.history.replace(state);
         this.currentState = state;
         this.applyCheckpointState(resolution.checkpoint);
         this.scheduleRestoration(
@@ -1147,7 +1179,7 @@ class DefaultNavigationController implements NavigationController {
       }
 
       const state = this.createRootState(root);
-      this.deps.history.replace(state, serializeRootNavigation(root));
+      this.deps.history.replace(state);
       this.currentState = state;
       this.deps.surface.applyScope(null);
       this.deps.surface.applySubview(null);

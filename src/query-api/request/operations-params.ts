@@ -77,7 +77,7 @@ export type OperationsBrowseFilters = {
   readonly placeIds: readonly PlaceId[];
   readonly accountIds: readonly string[];
   readonly preciseTypes: readonly string[];
-  readonly necessity: readonly ("Indispensable" | "Contraint" | "Optionnel")[];
+  readonly necessity: readonly ("Indispensable" | "Contraint" | "Ajustable" | "Optionnel")[];
   readonly fixedVariable: readonly ("fixed" | "variable" | "unknown")[];
   readonly lifeScope: readonly ("Vie courante" | "Hors quotidien")[];
   readonly dayContext: readonly (
@@ -122,7 +122,7 @@ const qualityValues = new Set<OperationQualityFilter>([
   "conflict",
   "unknown",
 ]);
-const necessityValues = new Set(["Indispensable", "Contraint", "Optionnel"] as const);
+const necessityValues = new Set(["Indispensable", "Contraint", "Ajustable", "Optionnel"] as const);
 const fixedVariableValues = new Set(["fixed", "variable", "unknown"] as const);
 const lifeScopeValues = new Set(["Vie courante", "Hors quotidien"] as const);
 const dayContextValues = new Set([
@@ -216,12 +216,12 @@ function parseFilters(value: unknown): OperationsBrowseFilters {
     ],
     "OperationsBrowseFilters",
   );
-  const amountMin = hasOwn(record, "amountMin") && record.amountMin !== null
-    ? parseMoney(record.amountMin)
-    : null;
-  const amountMax = hasOwn(record, "amountMax") && record.amountMax !== null
-    ? parseMoney(record.amountMax)
-    : null;
+  const amountMin = record.amountMin === undefined || record.amountMin === null
+    ? null
+    : parseMoney(record.amountMin);
+  const amountMax = record.amountMax === undefined || record.amountMax === null
+    ? null
+    : parseMoney(record.amountMax);
   return {
     categoryIds: list(record.categoryIds, parseCategoryId, "categoryIds"),
     subcategoryIds: list(record.subcategoryIds, parseSubcategoryId, "subcategoryIds"),

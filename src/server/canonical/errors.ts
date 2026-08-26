@@ -1,6 +1,6 @@
 import { QueryTemporaryUnavailableError } from "@/query-api/server";
 
-export type CanonicalSourceName =
+export type CanonicalHealthSourceName =
   | "economic"
   | "timing"
   | "places"
@@ -9,7 +9,12 @@ export type CanonicalSourceName =
   | "purchase_events"
   | "financial_links"
   | "operations"
-  | "entities";
+  | "entities"
+  | "taxonomy";
+
+export type CanonicalSourceName =
+  | CanonicalHealthSourceName
+  | "household_scope";
 
 export class CanonicalReadError extends QueryTemporaryUnavailableError {
   readonly source: CanonicalSourceName;

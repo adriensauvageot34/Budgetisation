@@ -74,6 +74,26 @@ const canonicalRepository = fs.readFileSync(
   path.join(repositoryRoot, "src/server/canonical/repository.ts"),
   "utf8",
 );
+const operationsSource = fs.readFileSync(
+  path.join(repositoryRoot, "src/server/query/sources/operations.ts"),
+  "utf8",
+);
+const operationEvidence = fs.readFileSync(
+  path.join(repositoryRoot, "src/features/exploration/operation-evidence.tsx"),
+  "utf8",
+);
+const operationsParams = fs.readFileSync(
+  path.join(repositoryRoot, "src/query-api/request/operations-params.ts"),
+  "utf8",
+);
+const runtimeEnvironment = fs.readFileSync(
+  path.join(repositoryRoot, "src/server/runtime-environment.ts"),
+  "utf8",
+);
+const diagnosticPage = fs.readFileSync(
+  path.join(repositoryRoot, "src/app/diagnostic/page.tsx"),
+  "utf8",
+);
 for (const [condition, reason] of [
   [/PERMISSION_DENIED/.test(apiRoute) && /status:\s*authenticationRequired\s*\?\s*401/.test(apiRoute), "/api/query ne garantit pas le 401 JSON"],
   [/startsWith\(\"\/api\/\"\)/.test(authProxy) && /if \(isApi\) return response/.test(authProxy), "le proxy peut encore rediriger /api/*"],
@@ -88,6 +108,18 @@ for (const [condition, reason] of [
   [/probeCanonicalSource\("operations"[\s\S]{0,180}await this\.assertAuthorizedCanonicalHouseholdScope\(\)/.test(canonicalRepository), "le health check Operations ne valide pas le scope Household canonique"],
   [/loadOperation\(operationId[\s\S]{0,220}loadOperationsByIds\(\[operationId\]\)/.test(canonicalRepository), "loadOperation ne délègue plus à loadOperationsByIds"],
   [/canonical_read_error/.test(canonicalRepository), "la journalisation sûre canonical_read_error est absente"],
+  [!/\.from\("places"\)/.test(canonicalRepository), "le runtime lit encore la fausse table physique places"],
+  [!/\.from\("life_events"\)[\s\S]{0,260}\.eq\("household_id"/.test(canonicalRepository), "life_events dépend encore d'un household_id physique"],
+  [!/\.from\("merchants"\)[\s\S]{0,220}\.eq\("household_id"/.test(canonicalRepository), "merchants dépend encore d'un household_id physique"],
+  [!/montant_bancaire::text/.test(canonicalRepository), "Operations sélectionne encore montant_bancaire inexistant"],
+  [/montant_bancaire_exact:montant::text/.test(canonicalRepository), "Operations ne projette pas montant comme Money exact"],
+  [/referentiel_lieu/.test(canonicalRepository), "Place n'est pas mappé sur referentiel_lieu"],
+  [/withdrawal_operation_id/.test(canonicalRepository) && /operation_id:withdrawal_operation_id/.test(canonicalRepository), "Cash composition n'utilise pas withdrawal_operation_id avec alias logique"],
+  [/composition_amount_exact/.test(canonicalRepository), "les montants de composition ne sont pas projetés comme texte exact"],
+  [/value === "Ajustable"[^\n]+return "Ajustable"/.test(operationsSource) && /value === "Ajustable"[^\n]+return "Ajustable"/.test(operationEvidence), "Ajustable est encore fusionné vers Optionnel"],
+  [/record\.amountMin === undefined \|\| record\.amountMin === null/.test(operationsParams) && /record\.amountMax === undefined \|\| record\.amountMax === null/.test(operationsParams), "amountMin/amountMax ne neutralisent pas undefined et null"],
+  [/SUPABASE_ENVIRONMENT_MISMATCH/.test(runtimeEnvironment) && /\.supabase\\\.co/.test(runtimeEnvironment), "le garde de project ref Supabase est absent"],
+  [/publicSupabaseProjectRef/.test(diagnosticPage) && /sameSupabaseProject/.test(diagnosticPage) && !/SUPABASE_(?:SECRET|SERVICE_ROLE|PUBLISHABLE|ANON)_KEY/.test(diagnosticPage), "Diagnostic expose une configuration Supabase non sûre"],
 ]) {
   if (!condition) violations.push(reason);
 }

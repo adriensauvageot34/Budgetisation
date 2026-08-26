@@ -128,6 +128,7 @@ export async function executeQuery(
   let request: AnyNormalizedQueryRequest | undefined;
   let dataRevision: import("../../core/versions").DataRevision | undefined;
   let analyticsRevision: import("../../core/versions").AnalyticsRevision | undefined;
+  let materialization: QueryTrace["materialization"] = "bypass";
   try {
     requestId = requireRequestId(input.requestId);
     try {
@@ -179,17 +180,54 @@ export async function executeQuery(
       requestId,
       capabilities: capabilityResult.capabilities,
     };
-    const rawData = await adapter.execute(request as never, adapterContext, services.sources);
-    let data: QueryDataByResource[QueryResourceName];
-    try {
-      data = validateQueryData(
-        request,
-        rawData,
-        capabilityResult.capabilities,
-        requestId,
+    let materialized: Awaited<ReturnType<NonNullable<QueryServerServices["materialization"]>["readQuery"]>> = null;
+    if (services.materialization !== undefined) {
+      try {
+        materialized = await services.materialization.readQuery(request);
+      } catch {
+        materialized = null;
+      }
+      materialization = materialized === null ? "miss" : "hit";
+    }
+    const validatedData = (rawData: unknown): QueryDataByResource[QueryResourceName] => {
+      try {
+        return validateQueryData(
+          request!,
+          rawData,
+          capabilityResult.capabilities,
+          requestId,
+        );
+      } catch (error) {
+        throw new QueryExecutionError(
+          queryApiError("CONTRACT_MISMATCH", requestId),
+          { cause: error },
+        );
+      }
+    };
+    let data: QueryDataByResource[QueryResourceName] | undefined;
+    if (materialized !== null) {
+      try {
+        data = validatedData(materialized.data);
+      } catch {
+        materialized = null;
+        materialization = "miss";
+      }
+    }
+    if (materialized === null) {
+      data = validatedData(
+        await adapter.execute(request as never, adapterContext, services.sources),
       );
-    } catch (error) {
-      throw new QueryExecutionError(queryApiError("CONTRACT_MISMATCH", requestId), { cause: error });
+    }
+    if (data === undefined) {
+      throw new QueryExecutionError(queryApiError("CONTRACT_MISMATCH", requestId));
+    }
+
+    if (materialized === null && services.materialization !== undefined) {
+      try {
+        await services.materialization.writeQuery(request, data);
+      } catch {
+        // Une écriture de cache reconstructible ne modifie jamais le résultat Query.
+      }
     }
 
     const meta = createPublicationApiMeta(
@@ -198,7 +236,16 @@ export async function executeQuery(
         dataRevision: context.revisions.dataRevision,
         analyticsRevision: context.revisions.analyticsRevision,
       },
-      { contractVersion: context.contractVersion, computedAt: context.now },
+      {
+        contractVersion: context.contractVersion,
+        computedAt: context.now,
+        ...(services.materialization === undefined
+          ? {}
+          : {
+              cachePolicy: materialized?.cachePolicy
+                ?? services.materialization.queryCachePolicy(request, "computed"),
+            }),
+      },
     );
     const responseSchema = createApiResponseSchema(
       queryDataSchemaByResource[request.resource as QueryResourceName] as RuntimeSchema<QueryDataByResource[QueryResourceName]>,
@@ -213,6 +260,7 @@ export async function executeQuery(
       analyticsRevision,
       durationMs: Math.max(0, Date.now() - startedAt),
       outcome: "success",
+      materialization,
     });
     return { ok: true, response };
   } catch (error) {
@@ -228,6 +276,7 @@ export async function executeQuery(
       ...(analyticsRevision === undefined ? {} : { analyticsRevision }),
       durationMs: Math.max(0, Date.now() - startedAt),
       outcome: outcomeFromError(apiError),
+      materialization,
     });
     return { ok: false, error: apiError };
   }

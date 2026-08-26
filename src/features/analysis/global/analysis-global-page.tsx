@@ -5,7 +5,7 @@ import { parseActivityId, parseCategoryId, parseMerchantId, parseMetricId, parse
 import { normalizeAnalysisScope, parseDayContext, parseLifeScopeContext, type NormalizedAnalysisScope } from "@/core/scope";
 import { addMonths, formatYearMonth, parseGlobalWindow, resolveGlobalWindowMonths } from "@/core/time";
 import { useProductRuntime, useProductSurface, useQueryRuntime, useRestorableSubview, useSemanticAnchor } from "@/components/runtime";
-import type { HistoryRootContext, NavigationSubviewRef, SemanticAnchor } from "@/navigation";
+import { scopeForRoot, type HistoryRootContext, type NavigationSubviewRef, type SemanticAnchor } from "@/navigation";
 import type { AnalysisGlobalInitialReadModel, PersonaTarget } from "@/query-api";
 import { queryResourceKeys } from "@/query-api";
 import { ErrorState, FilterTrigger, RefreshIndicator, SectionLayout, SectionSkeleton, type UiTransportState } from "@/ui";
@@ -64,13 +64,8 @@ export function AnalysisGlobalPage({
   const runtimeRoot = runtime.snapshot?.history.root;
   const currentRoute: HistoryRootContext = runtimeRoot && "area" in runtimeRoot && runtimeRoot.area === "analysis" && runtimeRoot.context.kind === "analysis_global" ? runtimeRoot : route;
   const currentScope = useMemo(() => {
-    const context = currentRoute.context;
-    if (context.kind !== "analysis_global" || context.asOf === undefined) return serverScope;
-    return normalizeAnalysisScope({
-      subject: context.personId ? { kind: "person", personId: context.personId } : { kind: "household" },
-      time: { kind: "global", observationWindow: context.observationWindow, asOf: context.asOf },
-      filters: context.filters,
-    });
+    const runtimeScope = scopeForRoot(currentRoute);
+    return runtimeScope?.time.kind === "global" ? runtimeScope : serverScope;
   }, [currentRoute, serverScope]);
   if (currentScope.time.kind !== "global") throw new TypeError("AnalysisGlobalPage exige un scope Global.");
   const globalTime = currentScope.time;

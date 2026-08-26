@@ -21,3 +21,18 @@ export function resolveDefaultGlobalAsOf(
     .at(-1);
   return latestComplete === undefined ? null : addMonths(latestComplete, 1);
 }
+
+export function isAllowedGlobalAsOf(
+  periods: readonly Pick<
+    BootstrapAnalysisPeriod,
+    "month" | "financeStatus" | "isClosed"
+  >[],
+  asOf: YearMonth,
+): boolean {
+  return periods.some(
+    ({ month, financeStatus, isClosed }) =>
+      financeStatus === "complete" &&
+      isClosed &&
+      addMonths(yearMonthOf(month), 1) === asOf,
+  );
+}

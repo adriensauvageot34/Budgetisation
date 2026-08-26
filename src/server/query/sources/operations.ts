@@ -39,6 +39,7 @@ import {
   operationFromCanonicalRow,
   type CanonicalOperation,
 } from "./shared";
+import { canonicalLabelMap } from "./canonical-relations";
 
 type OperationsDependencies = {
   readonly context: AuthorizedRuntimeContext;
@@ -162,11 +163,12 @@ function economicTimingState(
   return "known";
 }
 
-function normalizeNecessity(value: string | undefined) {
+export function normalizeNecessity(value: string | undefined) {
   if (value === undefined) return undefined;
   if (["Indispensable", "necessary"].includes(value)) return "Indispensable" as const;
   if (["Contraint", "Contrainte"].includes(value)) return "Contraint" as const;
-  if (["Optionnel", "Optionnelle", "Ajustable", "discretionary"].includes(value)) return "Optionnel" as const;
+  if (value === "Ajustable") return "Ajustable" as const;
+  if (["Optionnel", "Optionnelle", "discretionary"].includes(value)) return "Optionnel" as const;
   return undefined;
 }
 
@@ -186,6 +188,12 @@ function normalizeLifeScope(value: string | undefined) {
 export function buildOperationRow(
   operation: CanonicalOperation,
   facts: readonly EconomicComponentFact[],
+  labels: {
+    readonly categories?: ReadonlyMap<string, string>;
+    readonly subcategories?: ReadonlyMap<string, string>;
+    readonly merchants?: ReadonlyMap<string, string>;
+    readonly places?: ReadonlyMap<string, string>;
+  } = {},
 ): OperationRowReadModel {
   const state = economicTimingState(facts);
   const categoryId = uniqueResolved<CategoryId>(
@@ -215,10 +223,7 @@ export function buildOperationRow(
     bankLabel: operation.label,
     ...(merchantId === undefined
       ? {}
-      : { merchant: { id: merchantId, label: merchantId } }),
-    ...(operation.accountId === undefined
-      ? {}
-      : { account: { id: operation.accountId, label: operation.accountId } }),
+      : { merchant: { id: merchantId, label: labels.merchants?.get(merchantId) ?? merchantId } }),
     bankAmount: moneyEnvelope(operation.bankAmount),
     economicNet:
       facts.length === 0
@@ -235,10 +240,10 @@ export function buildOperationRow(
     economicTiming: operationTiming(facts),
     ...(categoryId === undefined
       ? {}
-      : { category: { id: categoryId, label: categoryId } }),
+      : { category: { id: categoryId, label: labels.categories?.get(categoryId) ?? categoryId } }),
     ...(subcategoryId === undefined
       ? {}
-      : { subcategory: { id: subcategoryId, label: subcategoryId } }),
+      : { subcategory: { id: subcategoryId, label: labels.subcategories?.get(subcategoryId) ?? subcategoryId } }),
     ...(operation.preciseType === undefined ? {} : { preciseType: operation.preciseType }),
     ...(normalizeNecessity(operation.necessity) === undefined
       ? {}
@@ -251,7 +256,7 @@ export function buildOperationRow(
       : { lifeScope: normalizeLifeScope(operation.lifeScope) }),
     ...(placeId === undefined
       ? {}
-      : { canonicalPlace: { id: placeId, label: placeId } }),
+      : { canonicalPlace: { id: placeId, label: labels.places?.get(placeId) ?? placeId } }),
     quality:
       state === "conflict"
         ? "conflict"
@@ -260,6 +265,40 @@ export function buildOperationRow(
           : state === "unknown" && facts.length === 0
             ? "unknown"
             : "partial",
+  };
+}
+
+export async function loadOperationReferenceLabels(
+  repository: CanonicalRepository,
+  operations: readonly CanonicalOperation[],
+  facts: readonly EconomicComponentFact[],
+) {
+  const categoryIds = [...new Set([
+    ...operations.flatMap(({ categoryId }) => categoryId === undefined ? [] : [categoryId]),
+    ...facts.flatMap(({ category }) => category.kind === "resolved" ? [category.id] : []),
+  ])];
+  const subcategoryIds = [...new Set([
+    ...operations.flatMap(({ subcategoryId }) => subcategoryId === undefined ? [] : [subcategoryId]),
+    ...facts.flatMap(({ subcategory }) => subcategory.kind === "resolved" ? [subcategory.id] : []),
+  ])];
+  const merchantIds = [...new Set([
+    ...operations.flatMap(({ merchantId }) => merchantId === undefined ? [] : [merchantId]),
+    ...facts.flatMap(({ merchant }) => merchant.kind === "resolved" ? [merchant.id] : []),
+  ])];
+  const placeIds = [...new Set(facts.flatMap(({ canonicalPlace }) =>
+    canonicalPlace.kind === "resolved" ? [canonicalPlace.placeId] : [],
+  ))];
+  const [categories, subcategories, merchants, places] = await Promise.all([
+    repository.loadTaxonomyRows("categories", categoryIds),
+    repository.loadTaxonomyRows("subcategories", subcategoryIds),
+    repository.loadEntityRows("merchants", "merchant_id", merchantIds),
+    repository.loadEntityRows("places", "place_id", placeIds),
+  ]);
+  return {
+    categories: canonicalLabelMap(categories, ["category_id"]),
+    subcategories: canonicalLabelMap(subcategories, ["subcategory_id"]),
+    merchants: canonicalLabelMap(merchants, ["merchant_id", "id"]),
+    places: canonicalLabelMap(places, ["place_id", "id"]),
   };
 }
 
@@ -275,10 +314,11 @@ function assertRepresentableFilters(params: NormalizedOperationsBrowseParams): v
     params.filters.activityIds.length > 0 ||
     params.filters.momentIds.length > 0 ||
     params.filters.lifeEventIds.length > 0 ||
-    params.filters.dayContext.length > 0
+    params.filters.dayContext.length > 0 ||
+    params.filters.accountIds.length > 0
   ) {
     throw new MetricProductionContractError(
-      "Les liens Activity/LifeEvent/DayContext des opérations ne sont pas projetés par le canonique actuel.",
+      "Un filtre demandé n'est pas projeté par le canonique Operations actuel.",
     );
   }
 }
@@ -447,10 +487,16 @@ export function createOperationsQuerySource(
         : await dependencies.repository.loadOperationsByBankRange(range);
       const operations = operationRows.map(operationFromCanonicalRow);
       const factsByOperation = groupFactsByOperation(economicFacts);
+      const labels = await loadOperationReferenceLabels(
+        dependencies.repository,
+        operations,
+        economicFacts,
+      );
       const candidates = operations.map((operation) =>
         buildOperationRow(
           operation,
           factsByOperation.get(operation.operationId) ?? [],
+          labels,
         ),
       );
       const filtered = [...filterRows(candidates, request.params)].sort((left, right) =>
@@ -492,7 +538,6 @@ export function createOperationsQuerySource(
         appliedQuery: request.params,
         capabilities: context.capabilities,
         filterCapabilities: [
-          "account",
           "category",
           "economic_amount",
           "fixed_variable",
@@ -519,19 +564,21 @@ export function operationEconomicTruth(
   readonly economicTiming?: EconomicTiming;
 } {
   const state = economicTimingState(facts);
-  if (facts.length === 0 || state === "unknown") return { state: "unknown" };
+  if (facts.length === 0) return { state: "unknown" };
   const segments = facts.flatMap((fact) =>
     fact.economicTiming.kind === "known" || fact.economicTiming.kind === "partial"
       ? fact.economicTiming.segments
       : [],
   );
   return {
-    state,
+    state: state === "unknown" ? "partial" : state,
     gross: sumFactMoney(facts, "gross"),
     refundApplied: sumFactMoney(facts, "refundApplied"),
     net: sumFactMoney(facts, "net"),
     economicTiming:
-      state === "conflict"
+      state === "unknown"
+        ? { kind: "unknown" }
+        : state === "conflict"
         ? { kind: "conflict" }
         : state === "partial"
           ? { kind: "partial", segments }

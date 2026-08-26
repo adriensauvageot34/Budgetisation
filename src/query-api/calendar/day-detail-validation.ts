@@ -1,9 +1,8 @@
 import {
-  parseActivityId,
   parseCategoryId,
-  parseLifeEventId,
   parseMerchantId,
   parseOperationId,
+  parsePersonId,
   parsePlaceId,
 } from "../../core/identity";
 import { parseMoney } from "../../core/money";
@@ -28,33 +27,28 @@ import {
   parseReadModelSubject,
 } from "../read-models";
 import type {
-  BoundedPreview,
-  DayActivityPreviewItem,
   DayContextsReadModel,
   DayFinanceReadModel,
   DayHeaderReadModel,
+  DayJournalMoment,
   DayObservability,
   DayOperationPreviewItem,
-  DayPlaceVisitPreviewItem,
   HistoryDayDetailReadModel,
 } from "./types";
 import {
+  parseCalendarDayMarker,
+  parseCalendarExplorationTarget,
+  parseCalendarLabel,
+  parseCalendarMarkerKind,
+  parseCalendarPlaceRef,
   parseDayContextReadModel,
   parseLifeScopeSummary,
 } from "./validation";
 
-const observabilityValues: ReadonlySet<string> = new Set<DayObservability>([
+const observabilityValues = new Set<DayObservability>([
   "observable",
   "partial",
   "unobserved",
-]);
-const validationStatuses: ReadonlySet<string> = new Set(["Confirmé", "Déduit"]);
-const visitStates: ReadonlySet<string> = new Set(["known", "partial", "unknown"]);
-const timePrecisions: ReadonlySet<string> = new Set([
-  "exact",
-  "approximate",
-  "time_range",
-  "unknown",
 ]);
 
 function parseBoolean(value: unknown, name: string): boolean {
@@ -62,256 +56,99 @@ function parseBoolean(value: unknown, name: string): boolean {
   return value;
 }
 
-function parseLabel(value: unknown, name: string): string {
-  if (typeof value !== "string" || value.trim().length === 0 || value !== value.trim()) {
-    throw new TypeError(`${name} doit être une chaîne non vide normalisée.`);
-  }
-  return value;
-}
-
-function parseObservability(value: unknown): DayObservability {
-  return parseStringLiteral<DayObservability>(
-    value,
-    observabilityValues,
-    "DayObservability",
-  );
-}
-
 function parseDayHeader(value: unknown): DayHeaderReadModel {
-  const record = parseStrictRecord(
-    value,
-    ["date", "observability", "dayContext", "periodCompleteness"],
-    "DayHeaderReadModel",
-  );
+  const record = parseStrictRecord(value, ["date", "observability", "dayContext", "periodCompleteness"], "DayHeaderReadModel");
   return {
     date: parseLocalDate(requireProperty(record, "date", "DayHeaderReadModel")),
-    observability: parseObservability(
-      requireProperty(record, "observability", "DayHeaderReadModel"),
-    ),
-    dayContext: parseDayContextReadModel(
-      requireProperty(record, "dayContext", "DayHeaderReadModel"),
-    ),
-    periodCompleteness: parsePeriodCompleteness(
-      requireProperty(record, "periodCompleteness", "DayHeaderReadModel"),
-    ),
+    observability: parseStringLiteral(requireProperty(record, "observability", "DayHeaderReadModel"), observabilityValues, "DayObservability"),
+    dayContext: parseDayContextReadModel(requireProperty(record, "dayContext", "DayHeaderReadModel")),
+    periodCompleteness: parsePeriodCompleteness(requireProperty(record, "periodCompleteness", "DayHeaderReadModel")),
   };
 }
 
 function parseDayFinance(value: unknown): DayFinanceReadModel {
-  const record = parseStrictRecord(
-    value,
-    [
-      "economicAmount",
-      "bankFlowAmount",
-      "causalAmount",
-      "duringAmount",
-      "lifeScopeBreakdown",
-    ],
-    "DayFinanceReadModel",
-  );
+  const record = parseStrictRecord(value, ["economicAmount", "bankFlowAmount", "causalAmount", "duringAmount", "lifeScopeBreakdown"], "DayFinanceReadModel");
   return {
-    economicAmount: parseMoneyEnvelope(
-      requireProperty(record, "economicAmount", "DayFinanceReadModel"),
-    ),
-    ...(hasOwn(record, "bankFlowAmount")
-      ? { bankFlowAmount: parseMoneyEnvelope(record.bankFlowAmount) }
-      : {}),
-    ...(hasOwn(record, "causalAmount")
-      ? { causalAmount: parseMoneyEnvelope(record.causalAmount) }
-      : {}),
-    ...(hasOwn(record, "duringAmount")
-      ? { duringAmount: parseMoneyEnvelope(record.duringAmount) }
-      : {}),
-    lifeScopeBreakdown: parseLifeScopeSummary(
-      requireProperty(record, "lifeScopeBreakdown", "DayFinanceReadModel"),
-    ),
+    economicAmount: parseMoneyEnvelope(requireProperty(record, "economicAmount", "DayFinanceReadModel")),
+    ...(hasOwn(record, "bankFlowAmount") ? { bankFlowAmount: parseMoneyEnvelope(record.bankFlowAmount) } : {}),
+    ...(hasOwn(record, "causalAmount") ? { causalAmount: parseMoneyEnvelope(record.causalAmount) } : {}),
+    ...(hasOwn(record, "duringAmount") ? { duringAmount: parseMoneyEnvelope(record.duringAmount) } : {}),
+    lifeScopeBreakdown: parseLifeScopeSummary(requireProperty(record, "lifeScopeBreakdown", "DayFinanceReadModel")),
   };
 }
 
 function parseDayContexts(value: unknown): DayContextsReadModel {
-  const record = parseStrictRecord(
-    value,
-    ["dayContext", "lifeScopeSummary", "activitiesPresent", "placesPresent"],
-    "DayContextsReadModel",
-  );
+  const record = parseStrictRecord(value, ["dayContext", "lifeScopeSummary", "activitiesPresent", "placesPresent"], "DayContextsReadModel");
   return {
-    dayContext: parseDayContextReadModel(
-      requireProperty(record, "dayContext", "DayContextsReadModel"),
-    ),
-    lifeScopeSummary: parseLifeScopeSummary(
-      requireProperty(record, "lifeScopeSummary", "DayContextsReadModel"),
-    ),
-    activitiesPresent: parseBoolean(
-      requireProperty(record, "activitiesPresent", "DayContextsReadModel"),
-      "DayContextsReadModel.activitiesPresent",
-    ),
-    placesPresent: parseBoolean(
-      requireProperty(record, "placesPresent", "DayContextsReadModel"),
-      "DayContextsReadModel.placesPresent",
-    ),
-  };
-}
-
-function parseDayActivity(value: unknown): DayActivityPreviewItem {
-  const record = parseStrictRecord(
-    value,
-    [
-      "lifeEventId",
-      "activityId",
-      "label",
-      "startsOn",
-      "endsOn",
-      "validationStatus",
-      "causalAmount",
-    ],
-    "DayActivityPreviewItem",
-  );
-  const startsOn = parseLocalDate(requireProperty(record, "startsOn", "DayActivityPreviewItem"));
-  const endsOn = parseLocalDate(requireProperty(record, "endsOn", "DayActivityPreviewItem"));
-  if (endsOn < startsOn) throw new TypeError("Life Event doit respecter startsOn <= endsOn.");
-  return {
-    lifeEventId: parseLifeEventId(
-      requireProperty(record, "lifeEventId", "DayActivityPreviewItem"),
-    ),
-    ...(hasOwn(record, "activityId")
-      ? { activityId: parseActivityId(record.activityId) }
-      : {}),
-    label: parseLabel(
-      requireProperty(record, "label", "DayActivityPreviewItem"),
-      "DayActivityPreviewItem.label",
-    ),
-    startsOn,
-    endsOn,
-    validationStatus: parseStringLiteral(
-      requireProperty(record, "validationStatus", "DayActivityPreviewItem"),
-      validationStatuses,
-      "ActivityOccurrenceValidationStatus",
-    ),
-    ...(hasOwn(record, "causalAmount")
-      ? { causalAmount: parseMoneyEnvelope(record.causalAmount) }
-      : {}),
-  };
-}
-
-function parseDayPlace(value: unknown): DayPlaceVisitPreviewItem {
-  const record = parseStrictRecord(
-    value,
-    [
-      "placeId",
-      "visitStart",
-      "visitEnd",
-      "visitState",
-      "timePrecision",
-      "localizedSpend",
-    ],
-    "DayPlaceVisitPreviewItem",
-  );
-  const visitState = parseStringLiteral<DayPlaceVisitPreviewItem["visitState"]>(
-    requireProperty(record, "visitState", "DayPlaceVisitPreviewItem"),
-    visitStates,
-    "DayPlaceVisitPreviewItem.visitState",
-  );
-  const visitStart = hasOwn(record, "visitStart")
-    ? parseInstant(record.visitStart)
-    : undefined;
-  const visitEnd = hasOwn(record, "visitEnd")
-    ? parseInstant(record.visitEnd)
-    : undefined;
-  if (
-    (visitState === "known" && (visitStart === undefined || visitEnd === undefined)) ||
-    (visitState === "unknown" && (visitStart !== undefined || visitEnd !== undefined))
-  ) {
-    throw new TypeError("Visit state et intervalle sont incohérents.");
-  }
-  return {
-    placeId: parsePlaceId(requireProperty(record, "placeId", "DayPlaceVisitPreviewItem")),
-    ...(visitStart === undefined ? {} : { visitStart }),
-    ...(visitEnd === undefined ? {} : { visitEnd }),
-    visitState,
-    timePrecision: parseStringLiteral(
-      requireProperty(record, "timePrecision", "DayPlaceVisitPreviewItem"),
-      timePrecisions,
-      "PlaceVisitTimePrecision",
-    ),
-    ...(hasOwn(record, "localizedSpend")
-      ? { localizedSpend: parseMoneyEnvelope(record.localizedSpend) }
-      : {}),
+    dayContext: parseDayContextReadModel(requireProperty(record, "dayContext", "DayContextsReadModel")),
+    lifeScopeSummary: parseLifeScopeSummary(requireProperty(record, "lifeScopeSummary", "DayContextsReadModel")),
+    activitiesPresent: parseBoolean(requireProperty(record, "activitiesPresent", "DayContextsReadModel"), "DayContextsReadModel.activitiesPresent"),
+    placesPresent: parseBoolean(requireProperty(record, "placesPresent", "DayContextsReadModel"), "DayContextsReadModel.placesPresent"),
   };
 }
 
 function parseDayOperation(value: unknown): DayOperationPreviewItem {
-  const record = parseStrictRecord(
-    value,
-    [
-      "operationId",
-      "bankDate",
-      "label",
-      "amount",
-      "categoryId",
-      "merchantId",
-      "placeId",
-    ],
-    "DayOperationPreviewItem",
-  );
+  const record = parseStrictRecord(value, ["operationId", "bankDate", "label", "amount", "categoryId", "merchantId", "placeId"], "DayOperationPreviewItem");
   return {
-    operationId: parseOperationId(
-      requireProperty(record, "operationId", "DayOperationPreviewItem"),
-    ),
-    bankDate: parseLocalDate(
-      requireProperty(record, "bankDate", "DayOperationPreviewItem"),
-    ),
-    label: parseLabel(
-      requireProperty(record, "label", "DayOperationPreviewItem"),
-      "DayOperationPreviewItem.label",
-    ),
+    operationId: parseOperationId(requireProperty(record, "operationId", "DayOperationPreviewItem")),
+    bankDate: parseLocalDate(requireProperty(record, "bankDate", "DayOperationPreviewItem")),
+    label: parseCalendarLabel(requireProperty(record, "label", "DayOperationPreviewItem"), "DayOperationPreviewItem.label"),
     amount: parseMoney(requireProperty(record, "amount", "DayOperationPreviewItem")),
-    ...(hasOwn(record, "categoryId")
-      ? { categoryId: parseCategoryId(record.categoryId) }
-      : {}),
-    ...(hasOwn(record, "merchantId")
-      ? { merchantId: parseMerchantId(record.merchantId) }
-      : {}),
+    ...(hasOwn(record, "categoryId") ? { categoryId: parseCategoryId(record.categoryId) } : {}),
+    ...(hasOwn(record, "merchantId") ? { merchantId: parseMerchantId(record.merchantId) } : {}),
     ...(hasOwn(record, "placeId") ? { placeId: parsePlaceId(record.placeId) } : {}),
   };
 }
 
-function parseBoundedPreview<T>(
-  value: unknown,
-  parseItem: (item: unknown) => T,
-  name: string,
-): BoundedPreview<T> {
-  const record = parseStrictRecord(value, ["items", "maxItems", "truncated"], name);
-  const rawItems = requireProperty(record, "items", name);
-  const maxItems = requireProperty(record, "maxItems", name);
-  if (!Array.isArray(rawItems)) throw new TypeError(`${name}.items doit être un tableau.`);
-  if (typeof maxItems !== "number" || !Number.isSafeInteger(maxItems) || maxItems < 1 || maxItems > 50) {
-    throw new TypeError(`${name}.maxItems est invalide.`);
+function parseOperations(value: unknown, name: string): readonly DayOperationPreviewItem[] {
+  if (!Array.isArray(value)) throw new TypeError(`${name} doit être un tableau.`);
+  const operations = value.map(parseDayOperation);
+  if (new Set(operations.map(({ operationId }) => operationId)).size !== operations.length) {
+    throw new TypeError(`${name} contient des opérations dupliquées.`);
   }
-  if (rawItems.length > maxItems) throw new TypeError(`${name} dépasse sa borne.`);
+  return operations;
+}
+
+function parseDayJournalMoment(value: unknown): DayJournalMoment {
+  const record = parseStrictRecord(
+    value,
+    ["id", "kind", "label", "startsOn", "endsOn", "participantIds", "startAt", "endAt", "place", "economicAmount", "operations", "target"],
+    "DayJournalMoment",
+  );
+  const startsOn = parseLocalDate(requireProperty(record, "startsOn", "DayJournalMoment"));
+  const endsOn = parseLocalDate(requireProperty(record, "endsOn", "DayJournalMoment"));
+  if (endsOn < startsOn) throw new TypeError("DayJournalMoment doit respecter startsOn <= endsOn.");
+  const rawParticipants = requireProperty(record, "participantIds", "DayJournalMoment");
+  if (!Array.isArray(rawParticipants)) throw new TypeError("DayJournalMoment.participantIds doit être un tableau.");
+  const participantIds = rawParticipants.map(parsePersonId);
+  if (new Set(participantIds).size !== participantIds.length || participantIds.some((id, index) => index > 0 && participantIds[index - 1]! > id)) {
+    throw new TypeError("DayJournalMoment.participantIds doit être unique et trié.");
+  }
+  const startAt = hasOwn(record, "startAt") ? parseInstant(record.startAt) : undefined;
+  const endAt = hasOwn(record, "endAt") ? parseInstant(record.endAt) : undefined;
+  if (startAt !== undefined && endAt !== undefined && endAt < startAt) {
+    throw new TypeError("DayJournalMoment doit respecter startAt <= endAt.");
+  }
   return {
-    items: rawItems.map(parseItem),
-    maxItems,
-    truncated: parseBoolean(requireProperty(record, "truncated", name), `${name}.truncated`),
+    id: parseCalendarLabel(requireProperty(record, "id", "DayJournalMoment"), "DayJournalMoment.id"),
+    kind: parseCalendarMarkerKind(requireProperty(record, "kind", "DayJournalMoment")),
+    label: parseCalendarLabel(requireProperty(record, "label", "DayJournalMoment"), "DayJournalMoment.label"),
+    startsOn,
+    endsOn,
+    participantIds,
+    ...(startAt === undefined ? {} : { startAt }),
+    ...(endAt === undefined ? {} : { endAt }),
+    ...(hasOwn(record, "place") ? { place: parseCalendarPlaceRef(record.place) } : {}),
+    ...(hasOwn(record, "economicAmount") ? { economicAmount: parseMoneyEnvelope(record.economicAmount) } : {}),
+    operations: parseOperations(requireProperty(record, "operations", "DayJournalMoment"), "DayJournalMoment.operations"),
+    ...(hasOwn(record, "target") ? { target: parseCalendarExplorationTarget(record.target) } : {}),
   };
 }
 
-export function parseHistoryDayDetailReadModel(
-  value: unknown,
-): HistoryDayDetailReadModel {
+export function parseHistoryDayDetailReadModel(value: unknown): HistoryDayDetailReadModel {
   const record = parseStrictRecord(
     value,
-    [
-      "date",
-      "timezone",
-      "subject",
-      "header",
-      "finance",
-      "contexts",
-      "activities",
-      "places",
-      "operations",
-      "capabilities",
-    ],
+    ["date", "timezone", "subject", "header", "finance", "contexts", "markers", "moments", "unlinkedOperations", "capabilities"],
     "HistoryDayDetailReadModel",
   );
   const date = parseLocalDate(requireProperty(record, "date", "HistoryDayDetailReadModel"));
@@ -319,53 +156,46 @@ export function parseHistoryDayDetailReadModel(
   if (header.date !== date) throw new TypeError("Day header date est incohérente.");
   const finance = parseDayFinance(requireProperty(record, "finance", "HistoryDayDetailReadModel"));
   const contexts = parseDayContexts(requireProperty(record, "contexts", "HistoryDayDetailReadModel"));
-  if (
-    JSON.stringify(header.dayContext) !== JSON.stringify(contexts.dayContext) ||
-    JSON.stringify(finance.lifeScopeBreakdown) !== JSON.stringify(contexts.lifeScopeSummary)
-  ) {
+  if (JSON.stringify(header.dayContext) !== JSON.stringify(contexts.dayContext) || JSON.stringify(finance.lifeScopeBreakdown) !== JSON.stringify(contexts.lifeScopeSummary)) {
     throw new TypeError("Day contexts sont incohérents entre les modules.");
   }
-  const activities = parseBoundedPreview(
-    requireProperty(record, "activities", "HistoryDayDetailReadModel"),
-    parseDayActivity,
-    "HistoryDayDetailReadModel.activities",
-  );
-  if (activities.items.some((item) => date < item.startsOn || date > item.endsOn)) {
-    throw new TypeError("Une activité preview doit couvrir la date du Day Drawer.");
+  const rawMarkers = requireProperty(record, "markers", "HistoryDayDetailReadModel");
+  const rawMoments = requireProperty(record, "moments", "HistoryDayDetailReadModel");
+  if (!Array.isArray(rawMarkers) || !Array.isArray(rawMoments)) {
+    throw new TypeError("History Day Detail markers et moments doivent être des tableaux.");
+  }
+  const markers = rawMarkers.map(parseCalendarDayMarker);
+  const moments = rawMoments.map(parseDayJournalMoment);
+  if (moments.some((moment) => date < moment.startsOn || date > moment.endsOn)) {
+    throw new TypeError("Chaque moment du journal doit couvrir sa date.");
+  }
+  if (new Set(markers.map(({ id }) => id)).size !== markers.length || new Set(moments.map(({ id }) => id)).size !== moments.length) {
+    throw new TypeError("History Day Detail contient des identités dupliquées.");
+  }
+  const unlinkedOperations = parseOperations(requireProperty(record, "unlinkedOperations", "HistoryDayDetailReadModel"), "HistoryDayDetailReadModel.unlinkedOperations");
+  const allLinkedOperationIds = moments.flatMap(({ operations }) => operations.map(({ operationId }) => operationId));
+  const linkedOperationIds = new Set(allLinkedOperationIds);
+  if (linkedOperationIds.size !== allLinkedOperationIds.length) {
+    throw new TypeError("Une opération liée ne peut apparaître que dans un seul moment.");
+  }
+  if (unlinkedOperations.some(({ operationId }) => linkedOperationIds.has(operationId))) {
+    throw new TypeError("Une opération ne peut apparaître à la fois liée et non liée.");
   }
   return {
     date,
-    timezone: parseHouseholdTimeZone(
-      requireProperty(record, "timezone", "HistoryDayDetailReadModel"),
-    ),
-    subject: parseReadModelSubject(
-      requireProperty(record, "subject", "HistoryDayDetailReadModel"),
-    ),
+    timezone: parseHouseholdTimeZone(requireProperty(record, "timezone", "HistoryDayDetailReadModel")),
+    subject: parseReadModelSubject(requireProperty(record, "subject", "HistoryDayDetailReadModel")),
     header,
     finance,
     contexts,
-    activities,
-    places: parseBoundedPreview(
-      requireProperty(record, "places", "HistoryDayDetailReadModel"),
-      parseDayPlace,
-      "HistoryDayDetailReadModel.places",
-    ),
-    operations: parseBoundedPreview(
-      requireProperty(record, "operations", "HistoryDayDetailReadModel"),
-      parseDayOperation,
-      "HistoryDayDetailReadModel.operations",
-    ),
-    capabilities: parseQueryCapabilities(
-      requireProperty(record, "capabilities", "HistoryDayDetailReadModel"),
-      queryResourceKeys.historyDayDetail,
-    ),
+    markers,
+    moments,
+    unlinkedOperations,
+    capabilities: parseQueryCapabilities(requireProperty(record, "capabilities", "HistoryDayDetailReadModel"), queryResourceKeys.historyDayDetail),
   };
 }
 
-export function assertDayDetailBelongsToMonth(
-  detail: HistoryDayDetailReadModel,
-  month: unknown,
-): void {
+export function assertDayDetailBelongsToMonth(detail: HistoryDayDetailReadModel, month: unknown): void {
   if (yearMonthOf(detail.date) !== parseYearMonth(month)) {
     throw new TypeError("History Day Detail est hors du mois demandé.");
   }

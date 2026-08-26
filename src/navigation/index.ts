@@ -82,7 +82,16 @@ export {
   parseNavigationHistoryState,
 } from "./contracts/history";
 export type { BrowserHistoryAdapter } from "./history/browser-history-adapter";
-export { WebBrowserHistoryAdapter } from "./history/browser-history-adapter";
+export {
+  WebBrowserHistoryAdapter,
+  budgetisationHistoryStateKey,
+  extractBudgetisationHistoryState,
+  mergeBudgetisationHistoryState,
+} from "./history/browser-history-adapter";
+export {
+  isNavigationHistoryStateCompatibleWithRoot,
+  resolveNavigationHistoryState,
+} from "./history/policies";
 
 export type {
   OperationsLocalDisplayState,
@@ -155,10 +164,20 @@ export type {
 } from "./contracts/controller";
 export { createNavigationController } from "./controller/navigation-controller";
 export type { RootRouterAdapter } from "./controller/root-router-adapter";
-export { WebRootRouterAdapter } from "./controller/root-router-adapter";
+export {
+  NextRootRouterAdapter,
+  WebRootRouterAdapter,
+  type NextRouterNavigation,
+} from "./controller/root-router-adapter";
 export type { NavigationSessionStore } from "./controller/session-store";
 export { InMemoryNavigationSessionStore } from "./controller/session-store";
 export { ProductSurfaceRegistry } from "./controller/product-surface-registry";
 export type { ProductSurfaceRegistration } from "./controller/product-surface-registry";
 export { ProductReadinessRegistry } from "./restoration/product-readiness-registry";
 export type { ProductReadinessModule } from "./restoration/product-readiness-registry";
+export {
+  operationsAnalysisFilters,
+  prepareExplorationScope,
+  scopeForRoot,
+  type ExplorationScopePreparation,
+} from "./transfer/root-scope";

@@ -53,6 +53,7 @@ import type { CanonicalRepository } from "@/server/canonical/repository";
 import { optionalCanonicalString, type CanonicalRecord } from "@/server/canonical/record";
 import { countEnvelope, periodCompleteness } from "./shared";
 import { createGalleryQuerySources } from "./galleries";
+import { canonicalLabelMap, loadMomentParticipantsByMomentId } from "./canonical-relations";
 
 type AnalysisDependencies = {
   readonly context: AuthorizedRuntimeContext;
@@ -88,6 +89,7 @@ async function groupsForDimension(
   dimension: AnalysisBreakdownDimension,
   scope: NormalizedAnalysisScope,
   facts: FactSourceResolver,
+  repository: CanonicalRepository,
 ): Promise<readonly Group[]> {
   switch (dimension) {
     case "category": {
@@ -95,12 +97,17 @@ async function groupsForDimension(
         await facts.loadEconomicFacts(scope),
         scope,
       );
+      const categoryIds = values.flatMap(({ category }) => category.kind === "resolved" ? [category.id] : []);
+      const labels = canonicalLabelMap(
+        await repository.loadTaxonomyRows("categories", categoryIds),
+        ["category_id"],
+      );
       return uniqueGroups(
         values.flatMap(({ category }) =>
           category.kind === "resolved"
             ? [{
                 key: category.id,
-                label: category.id,
+                label: labels.get(category.id) ?? category.id,
                 scope: replaceFilters(scope, { categoryIds: [category.id] }),
               }]
             : [],
@@ -112,12 +119,17 @@ async function groupsForDimension(
         await facts.loadEconomicFacts(scope),
         scope,
       );
+      const merchantIds = values.flatMap(({ merchant }) => merchant.kind === "resolved" ? [merchant.id] : []);
+      const labels = canonicalLabelMap(
+        await repository.loadEntityRows("merchants", "merchant_id", merchantIds),
+        ["merchant_id", "id"],
+      );
       return uniqueGroups(
         values.flatMap(({ merchant }) =>
           merchant.kind === "resolved"
             ? [{
                 key: merchant.id,
-                label: merchant.id,
+                label: labels.get(merchant.id) ?? merchant.id,
                 scope: replaceFilters(scope, { merchantIds: [merchant.id] }),
               }]
             : [],
@@ -141,10 +153,14 @@ async function groupsForDimension(
         ),
         ...selectedVisits.map(({ placeId }) => placeId),
       ];
+      const labels = canonicalLabelMap(
+        await repository.loadEntityRows("places", "place_id", placeIds),
+        ["place_id", "id"],
+      );
       return uniqueGroups(
         placeIds.map((placeId) => ({
           key: placeId,
-          label: placeId,
+          label: labels.get(placeId) ?? placeId,
           scope: replaceFilters(scope, { placeIds: [placeId] }),
         })),
       );
@@ -155,10 +171,15 @@ async function groupsForDimension(
           (scope.subject.kind === "household" || activity.participantIds.includes(scope.subject.personId)) &&
           (scope.filters.activityIds.length === 0 || scope.filters.activityIds.includes(activity.activityId)),
       );
+      const activityIds = values.map(({ activityId }) => activityId);
+      const labels = canonicalLabelMap(
+        await repository.loadLifeEventTypeRowsByTypeKeys(activityIds),
+        ["type_key"],
+      );
       return uniqueGroups(
         values.map(({ activityId }) => ({
           key: activityId,
-          label: activityId,
+          label: labels.get(activityId) ?? activityId,
           scope: replaceFilters(scope, { activityIds: [activityId] }),
         })),
       );
@@ -258,16 +279,19 @@ async function evolutionPoints(input: {
   readonly metricId: Parameters<MetricQueryService["produce"]>[0];
   readonly dependencies: AnalysisDependencies;
 }): Promise<readonly AnalysisSeriesPoint[]> {
-  return Promise.all(
-    input.periods.map(async (period) => ({
-      period,
-      metric: await input.dependencies.metrics.produce(input.metricId, {
-        ...input.scope,
-        time: { kind: "month", month: period },
-      }),
-      periodCompleteness: periodCompleteness(input.dependencies.context, period),
-    })),
+  const scopes = input.periods.map((period) => ({
+    ...input.scope,
+    time: { kind: "month" as const, month: period },
+  }));
+  const metrics = await input.dependencies.metrics.produceMany(
+    input.metricId,
+    scopes,
   );
+  return input.periods.map((period, index) => ({
+    period,
+    metric: metrics[index],
+    periodCompleteness: periodCompleteness(input.dependencies.context, period),
+  }));
 }
 
 const contextDefinitions = [
@@ -295,6 +319,7 @@ async function contextSections(input: {
         dimension,
         input.scope,
         input.dependencies.facts,
+        input.dependencies.repository,
       );
       const rows = await Promise.all(
         groups.map(async (group) => ({
@@ -434,12 +459,17 @@ async function categoryStructure(input: {
   });
   const maximum = ranked.map(({ metric }) => metricMagnitude(metric)).filter((value): value is Big => value !== null)
     .reduce<Big | null>((current, value) => current === null || value.gt(current) ? value : current, null);
+  const categoryKeys = ranked.map(({ key }) => key).filter((key) => key !== "À déterminer");
+  const categoryLabels = canonicalLabelMap(
+    await input.dependencies.repository.loadTaxonomyRows("categories", categoryKeys),
+    ["category_id"],
+  );
   const rows = ranked.map(({ key, metric }, index) => {
     const magnitude = metricMagnitude(metric);
     const destination = key === "À déterminer" ? undefined : structureDestination("category", key);
     return {
       bucket: key === "À déterminer" ? { kind: "undetermined" as const } : { kind: "category" as const, categoryId: key as import("@/core/identity").CategoryId },
-      label: key,
+      label: key === "À déterminer" ? key : categoryLabels.get(key) ?? key,
       metric,
       rank: index + 1,
       ...(magnitude === null || maximum === null ? {} : { barPercent: maximum.eq(0) ? 0 : Number(magnitude.div(maximum).times(100).toFixed(2)) }),
@@ -559,6 +589,7 @@ async function monthStructure(input: {
     input.params.dimension as Exclude<AnalysisBreakdownDimension, "necessity" | "fixed_variable" | "life_scope" | "day_context">,
     input.scope,
     input.dependencies.facts,
+    input.dependencies.repository,
   );
   const ranked = await breakdownRows({
     groups,
@@ -639,14 +670,6 @@ async function lifeScopeEvolutionPoint(
   };
 }
 
-function recordStringArray(record: CanonicalRecord, keys: readonly string[]): readonly string[] {
-  for (const key of keys) {
-    const value = record[key];
-    if (Array.isArray(value) && value.every((item) => typeof item === "string")) return [...new Set(value)].sort();
-  }
-  return [];
-}
-
 function recordLabel(record: CanonicalRecord, fallback: string): string {
   return optionalCanonicalString(record, ["title", "name", "label", "titre", "nom", "display_name"]) ?? fallback;
 }
@@ -696,6 +719,7 @@ function momentRowsInScope(
   rows: readonly CanonicalRecord[],
   scope: NormalizedAnalysisScope,
   eligibleMomentIds: ReadonlySet<string> | null,
+  participantsByMoment: ReadonlyMap<string, readonly { readonly personId: string }[]>,
 ): readonly CanonicalRecord[] {
   if (scope.time.kind !== "global") return [];
   const months = resolveGlobalWindowMonths(scope.time.observationWindow, scope.time.asOf);
@@ -708,7 +732,7 @@ function momentRowsInScope(
     if (momentId === undefined || rawStart === undefined || rawEnd === undefined) return false;
     if (rawStart >= endExclusive || rawEnd < start) return false;
     if (eligibleMomentIds !== null && !eligibleMomentIds.has(momentId)) return false;
-    const participants = recordStringArray(row, ["participant_ids", "person_ids"]);
+    const participants = (participantsByMoment.get(momentId) ?? []).map(({ personId }) => personId);
     return scope.subject.kind === "household" || participants.includes(scope.subject.personId);
   });
 }
@@ -718,6 +742,15 @@ async function scopedMomentRows(
   dependencies: AnalysisDependencies,
 ): Promise<readonly CanonicalRecord[]> {
   const rows = await dependencies.repository.loadEntityRows("moments", "moment_id");
+  const momentIds = rows.flatMap((row) => {
+    const id = optionalCanonicalString(row, ["moment_id"]);
+    return id === undefined ? [] : [id];
+  });
+  const participantsByMoment = await loadMomentParticipantsByMomentId({
+    repository: dependencies.repository,
+    context: dependencies.context,
+    momentIds,
+  });
   const hasEconomicFilters = scope.filters.categoryIds.length > 0 ||
     scope.filters.activityIds.length > 0 || scope.filters.merchantIds.length > 0 ||
     scope.filters.placeIds.length > 0 || scope.filters.lifeScopeContext.length > 0;
@@ -725,7 +758,7 @@ async function scopedMomentRows(
     ? new Set(selectEconomicComponentsForScope(await dependencies.facts.loadEconomicFacts(scope), scope)
         .flatMap(({ moment }) => moment.kind === "resolved" ? [moment.id as string] : []))
     : null;
-  return momentRowsInScope(rows, scope, eligibleMomentIds);
+  return momentRowsInScope(rows, scope, eligibleMomentIds, participantsByMoment);
 }
 
 async function globalOperationsCount(
@@ -764,6 +797,10 @@ async function globalTypicalBehaviorRows(
     .sort();
   const occurrences = selectedActivityOccurrences(await dependencies.facts.loadActivityOccurrences(scope), scope);
   const activityIds = [...new Set(occurrences.map(({ activityId }) => activityId))].sort();
+  const activityLabels = canonicalLabelMap(
+    await dependencies.repository.loadLifeEventTypeRowsByTypeKeys(activityIds),
+    ["type_key"],
+  );
   return activityIds.map((activityId) => {
     const counts = observableMonths.map((month) => occurrences.filter((fact) => fact.activityId === activityId && yearMonthOf(fact.startDate) === month).length);
     const activePeriodCount = counts.filter((value) => value > 0).length;
@@ -773,7 +810,7 @@ async function globalTypicalBehaviorRows(
     });
     return {
       activityId,
-      label: activityId,
+      label: activityLabels.get(activityId) ?? activityId,
       activePeriodCount,
       observablePeriodCount: observableMonths.length,
       activityRate: observableMonths.length === 0 ? null : activePeriodCount / observableMonths.length,
@@ -879,7 +916,7 @@ export function createAnalysisQuerySources(
           })
         : undefined;
       const categoryGroups = context.capabilities.availableMeasures.includes("category_amount")
-        ? await groupsForDimension("category", request.scope, dependencies.facts)
+        ? await groupsForDimension("category", request.scope, dependencies.facts, dependencies.repository)
         : [];
       const categoryBundles = await Promise.all(categoryGroups.map(async (group) => ({
         group,
@@ -927,6 +964,10 @@ export function createAnalysisQuerySources(
         })),
       ].filter((candidate): candidate is MarkedFactCandidate => candidate !== null);
       const selected = selectMarkedFacts(candidates);
+      const hasComparableEvidence = [
+        bundle.comparison,
+        ...categoryBundles.map(({ bundle: categoryBundle }) => categoryBundle.comparison),
+      ].some(({ relation }) => relation !== "not_comparable");
       return {
         month: request.scope.time.month,
         subject: request.scope.subject,
@@ -957,10 +998,15 @@ export function createAnalysisQuerySources(
             ...(value.destination === undefined ? {} : { destination: value.destination }),
           };
         }),
-        markedFactsSelection: {
-          kind: "available" as const,
-          methodVersion: MARKED_FACTS_METHOD_VERSION,
-        },
+        markedFactsSelection: hasComparableEvidence
+          ? {
+              kind: "available" as const,
+              methodVersion: MARKED_FACTS_METHOD_VERSION,
+            }
+          : {
+              kind: "unavailable" as const,
+              reason: "insufficient_data" as const,
+            },
         manualSummary: null,
         capabilities: context.capabilities,
       };
@@ -974,6 +1020,7 @@ export function createAnalysisQuerySources(
         request.params.dimension,
         request.scope,
         dependencies.facts,
+        dependencies.repository,
       );
       const rows = await breakdownRows({
         groups,
@@ -1041,7 +1088,7 @@ export function createAnalysisQuerySources(
       if (request.scope.time.kind !== "month") throw new TypeError("Analysis Month Lived exige un scope month.");
       const canReadActivities = context.capabilities.availableMeasures.includes("activity_frequency");
       const activityGroups = canReadActivities
-        ? await groupsForDimension("activity", request.scope, dependencies.facts)
+        ? await groupsForDimension("activity", request.scope, dependencies.facts, dependencies.repository)
         : [];
       const ranked = activityGroups.length === 0
         ? []
@@ -1103,6 +1150,15 @@ export function createAnalysisQuerySources(
     async readAnalysisMonthMoments({ request, context }) {
       if (request.scope.time.kind !== "month") throw new TypeError("Analysis Month Moments exige un scope month.");
       const rows = await dependencies.repository.loadEntityRows("moments", "moment_id");
+      const momentIds = rows.flatMap((row) => {
+        const id = optionalCanonicalString(row, ["moment_id"]);
+        return id === undefined ? [] : [id];
+      });
+      const participantsByMoment = await loadMomentParticipantsByMomentId({
+        repository: dependencies.repository,
+        context: dependencies.context,
+        momentIds,
+      });
       const monthStart = parseLocalDate(`${request.scope.time.month}-01`);
       const monthEnd = parseLocalDate(`${addMonths(request.scope.time.month, 1)}-01`);
       const hasEconomicFilters = request.scope.filters.categoryIds.length > 0 ||
@@ -1127,15 +1183,9 @@ export function createAnalysisQuerySources(
         const startDate = parseLocalDate(rawStart);
         const endDate = rawEnd === undefined ? startDate : parseLocalDate(rawEnd);
         if (startDate >= monthEnd || endDate < monthStart) return [];
-        const participantIds = recordStringArray(row, ["participant_ids", "person_ids"])
-          .filter((id) => dependencies.context.personIds.includes(id as import("@/core/identity").PersonId));
+        const participantIds = (participantsByMoment.get(momentId) ?? []).map(({ personId }) => personId);
         if (request.scope.subject.kind === "person" && !participantIds.includes(request.scope.subject.personId)) return [];
-        const participants = participantIds.map((personId) => ({
-          personId: personId as import("@/core/identity").PersonId,
-          ...(dependencies.context.persons.find((person) => person.personId === personId)?.displayName === undefined
-            ? {}
-            : { label: dependencies.context.persons.find((person) => person.personId === personId)!.displayName }),
-        }));
+        const participants = participantsByMoment.get(momentId) ?? [];
         return [{
           momentId: momentId as import("@/core/identity").MomentId,
           title: recordLabel(row, momentId),
@@ -1295,6 +1345,7 @@ export function createAnalysisQuerySources(
         request.params.dimension,
         request.scope,
         dependencies.facts,
+        dependencies.repository,
       );
       const rows = await breakdownRows({
         groups,
@@ -1393,10 +1444,17 @@ export function createAnalysisQuerySources(
       } else if (request.params.view === "heatmap") {
         const columns = resolveGlobalWindowMonths(request.scope.time.observationWindow, request.scope.time.asOf);
         const occurrences = selectedActivityOccurrences(await dependencies.facts.loadActivityOccurrences(request.scope), request.scope);
-        const rows = [...new Set(occurrences.map(({ activityId }) => activityId))]
+        const activityIds = [...new Set(occurrences.map(({ activityId }) => activityId))]
           .sort()
-          .slice(0, 12)
-          .map((activityId) => ({ id: activityId, label: activityId }));
+          .slice(0, 12);
+        const activityLabels = canonicalLabelMap(
+          await dependencies.repository.loadLifeEventTypeRowsByTypeKeys(activityIds),
+          ["type_key"],
+        );
+        const rows = activityIds.map((activityId) => ({
+          id: activityId,
+          label: activityLabels.get(activityId) ?? activityId,
+        }));
         content = {
           kind: "heatmap",
           heatmap: {

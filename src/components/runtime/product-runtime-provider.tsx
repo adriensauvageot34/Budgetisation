@@ -13,7 +13,7 @@ import {
   type MutableRefObject,
   type RefCallback,
 } from "react";
-import { usePathname, useSearchParams } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import type { NormalizedAnalysisScope } from "@/core/scope";
 import type {
   NavigationCommandResult,
@@ -36,7 +36,7 @@ import {
   ProductSurfaceRegistry as SurfaceRegistry,
   RestorationCoordinator,
   WebBrowserHistoryAdapter,
-  WebRootRouterAdapter,
+  NextRootRouterAdapter,
   createNavigationController,
   serializeRootNavigation,
 } from "@/navigation";
@@ -110,6 +110,7 @@ function isProductRoute(pathname: string): boolean {
 }
 
 export function ProductRuntimeProvider({ children }: { readonly children: React.ReactNode }) {
+  const nextRouter = useRouter();
   const pathname = usePathname();
   const [search, setSearch] = useState<string | null>(null);
   const session = useRef(new InMemoryNavigationSessionStore());
@@ -141,7 +142,7 @@ export function ProductRuntimeProvider({ children }: { readonly children: React.
     if (controllerRef.current === null) {
       const scroll = new ProductScrollAdapter();
       const next = createNavigationController({
-        router: new WebRootRouterAdapter(window),
+        router: new NextRootRouterAdapter(nextRouter, window),
         history: new WebBrowserHistoryAdapter(window),
         session: session.current,
         surface: surfaceRegistry,
@@ -169,7 +170,7 @@ export function ProductRuntimeProvider({ children }: { readonly children: React.
     }
     controllerRef.current.reconcileExternalRoot();
     setSnapshot(controllerRef.current.getSnapshot());
-  }, [anchors, disposeController, pathname, readinessRegistry, search, surfaceRegistry]);
+  }, [anchors, disposeController, nextRouter, pathname, readinessRegistry, search, surfaceRegistry]);
 
   useEffect(() => disposeController, [disposeController]);
 

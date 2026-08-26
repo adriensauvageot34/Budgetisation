@@ -94,6 +94,17 @@
   --ui-overlay-width-day-drawer: 38.75rem;
   --ui-overlay-width-operation-root: 33.75rem;
   --ui-color-overlay-backdrop: rgb(21 31 29 / 0.46);
+  --ui-color-glass-surface: rgb(255 255 255 / 0.76);
+  --ui-color-glass-border: rgb(255 255 255 / 0.82);
+  --ui-color-calendar-intensity-1: rgb(70 111 103 / 0.06);
+  --ui-color-calendar-intensity-2: rgb(70 111 103 / 0.11);
+  --ui-color-calendar-intensity-3: rgb(70 111 103 / 0.17);
+  --ui-color-calendar-intensity-4: rgb(70 111 103 / 0.24);
+  --ui-color-person-1: #436f75;
+  --ui-color-person-2: #8b6844;
+  --ui-color-person-3: #755d88;
+  --ui-color-person-4: #5f7750;
+  --ui-color-person-5: #8a5d65;
 
   --color-ink: var(--ui-color-text-primary);
   --color-muted: var(--ui-color-text-secondary);

@@ -1,14 +1,14 @@
 import { notFound, redirect } from "next/navigation";
-import { normalizeAnalysisScope } from "@/core/scope";
 import { AnalysisGlobalPage } from "@/features/analysis";
 import type { AnalysisGlobalInitialReadModel } from "@/query-api";
 import { queryResourceKeys } from "@/query-api";
-import { parseRootNavigation, serializeRootNavigation } from "@/navigation";
+import { parseRootNavigation, scopeForRoot, serializeRootNavigation } from "@/navigation";
 import type { HistoryRootContext } from "@/navigation";
 import { getBootstrapContext } from "@/server/bootstrap/context";
-import { resolveDefaultGlobalAsOf } from "@/server/bootstrap/global-as-of";
+import { isAllowedGlobalAsOf, resolveDefaultGlobalAsOf } from "@/server/bootstrap/global-as-of";
 import { executeAuthenticatedQuery } from "@/server/query/runtime";
 import { queryResultToState, withProductAuthentication } from "@/app/product-query";
+import { DesktopFrame } from "@/ui/layout/desktop-frame";
 
 export const metadata = { title: "Analyse globale" };
 export const dynamic = "force-dynamic";
@@ -36,19 +36,29 @@ export default async function AnalysisGlobalRoute({
   if (route.context.kind !== "analysis_global") notFound();
   const globalContext = route.context;
   const defaultAsOf = resolveDefaultGlobalAsOf(context.periods);
+  if (globalContext.asOf !== undefined && !isAllowedGlobalAsOf(context.periods, globalContext.asOf)) notFound();
   const asOf = globalContext.asOf ?? defaultAsOf;
-  if (asOf === null) notFound();
+  if (asOf === null) {
+    return (
+      <DesktopFrame label="Analyse globale indisponible">
+        <section className="card p-8" role="status">
+          <span className="eyebrow">Historique · Analyse globale</span>
+          <h1 className="mt-3 text-4xl font-black">Analyse globale indisponible</h1>
+          <p className="muted mt-3">
+            Aucune période financière complète et fermée ne permet encore de construire cette vue.
+          </p>
+        </section>
+      </DesktopFrame>
+    );
+  }
   const canonicalRoute: HistoryRootContext = globalContext.asOf === undefined
     ? { ...route, context: { ...globalContext, asOf } }
     : route;
   if (globalContext.asOf === undefined) redirect(serializeRootNavigation(canonicalRoute));
   const selectedPersonId = globalContext.personId;
   if (selectedPersonId && !context.persons.some(({ personId }) => personId === selectedPersonId)) notFound();
-  const scope = normalizeAnalysisScope({
-    subject: selectedPersonId ? { kind: "person", personId: selectedPersonId } : { kind: "household" },
-    time: { kind: "global", observationWindow: globalContext.observationWindow, asOf },
-    filters: globalContext.filters,
-  });
+  const scope = scopeForRoot(canonicalRoute);
+  if (scope === null || scope.time.kind !== "global") notFound();
   const result = await withProductAuthentication(() => executeAuthenticatedQuery({
     resource: queryResourceKeys.analysisGlobalInitial,
     scope,

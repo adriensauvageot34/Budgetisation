@@ -34,7 +34,7 @@ export type MarkedFactReadModel = {
 };
 export type MarkedFactsSelection =
   | { readonly kind: "available"; readonly methodVersion: string }
-  | { readonly kind: "unavailable"; readonly reason: "materiality_rules_missing" };
+  | { readonly kind: "unavailable"; readonly reason: "materiality_rules_missing" | "insufficient_data" };
 
 export type AnalysisMonthInitialReadModel = {
   readonly month: YearMonth;

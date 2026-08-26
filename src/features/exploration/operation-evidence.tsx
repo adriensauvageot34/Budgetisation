@@ -46,7 +46,8 @@ function EvidenceEntityAction({
 function officialNecessityLabel(value: string): string {
   if (["Indispensable", "necessary"].includes(value)) return "Indispensable";
   if (["Contraint", "Contrainte"].includes(value)) return "Contraint";
-  if (["Optionnel", "Optionnelle", "Ajustable", "discretionary"].includes(value)) return "Optionnel";
+  if (value === "Ajustable") return "Ajustable";
+  if (["Optionnel", "Optionnelle", "discretionary"].includes(value)) return "Optionnel";
   return value;
 }
 
@@ -143,7 +144,7 @@ export function OperationEvidenceSurface({
         <div className={styles.relationActions}>
           {merchantId ? <EvidenceEntityAction label="Marchand" node={{ kind: "merchant", id: merchantId }} anchor={{ moduleId: "exploration", item: { kind: "merchant", id: merchantId } }} navigation={navigation} /> : null}
           {placeId ? <EvidenceEntityAction label="Lieu" node={{ kind: "place", id: placeId }} anchor={{ moduleId: "exploration", item: { kind: "place", id: placeId } }} navigation={navigation} /> : null}
-          {model.links.lifeEvents.map((id) => <EvidenceEntityAction key={id} label="Life Event" node={{ kind: "life_event", id }} anchor={{ moduleId: "exploration", item: { kind: "life_event", id } }} navigation={navigation} />)}
+          {model.links.lifeEvents.map((event) => <EvidenceEntityAction key={event.id} label={event.label} node={{ kind: "life_event", id: event.id }} anchor={{ moduleId: "exploration", item: { kind: "life_event", id: event.id } }} navigation={navigation} />)}
           {model.links.moments.map((id) => <EvidenceEntityAction key={id} label="Moment direct" node={{ kind: "moment", id }} anchor={{ moduleId: "exploration", item: { kind: "moment", id } }} navigation={navigation} />)}
         </div>
       </SectionLayout>

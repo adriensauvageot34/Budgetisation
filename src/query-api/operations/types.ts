@@ -43,7 +43,7 @@ export type OperationRowReadModel = {
   readonly category?: OperationReference<CategoryId>;
   readonly subcategory?: OperationReference<SubcategoryId>;
   readonly preciseType?: string;
-  readonly necessity?: "Indispensable" | "Contraint" | "Optionnel";
+  readonly necessity?: "Indispensable" | "Contraint" | "Ajustable" | "Optionnel";
   readonly fixedVariable?: "fixed" | "variable" | "unknown";
   readonly lifeScope?: "Vie courante" | "Hors quotidien";
   readonly canonicalPlace?: OperationReference<PlaceId>;

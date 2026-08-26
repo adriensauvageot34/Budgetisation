@@ -2,6 +2,7 @@ import "server-only";
 
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import { CanonicalConfigurationError } from "./errors";
+import { assertSameSupabaseProject } from "@/server/runtime-environment";
 
 export type CanonicalReadClient = SupabaseClient;
 
@@ -20,6 +21,11 @@ function getCanonicalReadConfig(): {
     throw new CanonicalConfigurationError(
       "SUPABASE_SECRET_KEY est requise dans le contexte serveur autorisé.",
     );
+  }
+  try {
+    assertSameSupabaseProject();
+  } catch {
+    throw new CanonicalConfigurationError("SUPABASE_ENVIRONMENT_MISMATCH");
   }
   return { url, secretKey };
 }

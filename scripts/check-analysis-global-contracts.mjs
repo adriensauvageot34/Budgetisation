@@ -29,6 +29,7 @@ for (const reader of ["Initial", "Baseline", "Typical", "Evolution", "Habits", "
 
 const route = read("src/app/historique/analyse/global/page.tsx");
 assert.match(route, /resolveDefaultGlobalAsOf/);
+assert.match(route, /isAllowedGlobalAsOf/);
 assert.match(route, /analysisGlobalInitial/);
 assert.doesNotMatch(route, /analysisGlobal(?:Baseline|Typical|Evolution|Habits|Profiles|Universe)/, "Le serveur Global ne doit charger que initial au premier rendu");
 
@@ -66,6 +67,7 @@ for (const state of ["baselineView", "evolutionView", "selectedMonth", "habitsVi
 const controller = read("src/navigation/controller/navigation-controller.ts");
 assert.match(controller, /resolveGlobalWindowMonths/);
 assert.match(controller, /preservedSubview/);
+assert.match(controller, /server alone resolves and validates Global's admissible asOf/);
 assert.match(sources, /request\.scope\.time\.kind === "global"[\s\S]{0,120}"activity_causal_cost"/);
 
 console.log("ANALYSIS_GLOBAL_CONTRACTS=PASS");

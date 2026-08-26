@@ -1,8 +1,12 @@
 import type { Metadata } from "next";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { parseLocalDate, parseYearMonth, yearMonthOf } from "@/core/time";
-import { parsePersonId } from "@/core/identity";
 import { getBootstrapContext } from "@/server/bootstrap/context";
+import {
+  adjacentEligibleHistoryMonths,
+  eligibleHistoryMonths,
+  resolveEligibleHistoryMonth,
+} from "@/server/bootstrap/history-calendar";
 import { CalendarClientPage } from "@/features/calendar";
 import { queryResourceKeys } from "@/query-api";
 import type {
@@ -29,22 +33,23 @@ export default async function CalendarMonthRoute({
   const { day: rawDay, personId: rawPersonId } = await searchParams;
   let month;
   let day;
-  let personId;
   try {
     month = parseYearMonth(rawMonth);
     day = typeof rawDay === "string" ? parseLocalDate(rawDay) : undefined;
-    personId = typeof rawPersonId === "string" && rawPersonId.length > 0
-      ? parsePersonId(rawPersonId)
-      : undefined;
-    if (day !== undefined && yearMonthOf(day) !== month) notFound();
   } catch {
     notFound();
   }
+  if (day !== undefined && yearMonthOf(day) !== month) notFound();
+  if (rawPersonId !== undefined) {
+    redirect(`/historique/calendrier/${month}${day === undefined ? "" : `?day=${day}`}`);
+  }
   const context = await withProductAuthentication(() => getBootstrapContext());
-  if (personId && !context.persons.some((person) => person.personId === personId)) notFound();
-  const subject = personId
-    ? { kind: "person" as const, personId }
-    : { kind: "household" as const };
+  const eligibleMonths = eligibleHistoryMonths(context.periods);
+  const resolvedMonth = resolveEligibleHistoryMonth(month, eligibleMonths);
+  if (resolvedMonth === null) redirect("/diagnostic");
+  if (resolvedMonth !== month) redirect(`/historique/calendrier/${resolvedMonth}`);
+  const subject = { kind: "household" as const };
+  const adjacentMonths = adjacentEligibleHistoryMonths(month, eligibleMonths);
   const results = await withProductAuthentication(() =>
     executeAuthenticatedQueries([
         {
@@ -76,7 +81,10 @@ export default async function CalendarMonthRoute({
   return (
     <CalendarClientPage
       kind="month"
+      subject={subject}
       month={month}
+      persons={context.persons}
+      adjacentMonths={adjacentMonths}
       state={monthState}
       {...(day && dayState ? { day, dayState } : {})}
     />

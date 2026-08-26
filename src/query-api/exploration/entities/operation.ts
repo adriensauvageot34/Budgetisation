@@ -62,7 +62,7 @@ export type CanonicalRelation<Id extends string> =
 export type OperationLinks = {
   readonly merchant: CanonicalRelation<MerchantId>;
   readonly place: CanonicalRelation<PlaceId>;
-  readonly lifeEvents: readonly LifeEventId[];
+  readonly lifeEvents: readonly { readonly id: LifeEventId; readonly label: string }[];
   readonly moments: readonly MomentId[];
 };
 
@@ -234,10 +234,20 @@ function parseUniqueIds<Id extends string>(value: unknown, parseId: (raw: unknow
 
 function parseLinks(value: unknown): OperationLinks {
   const record = parseStrictRecord(value, ["merchant", "place", "lifeEvents", "moments"], "OperationLinks");
+  const rawLifeEvents = requireProperty(record, "lifeEvents", "OperationLinks");
+  if (!Array.isArray(rawLifeEvents)) throw new TypeError("lifeEvents doit être un tableau.");
+  const lifeEvents = rawLifeEvents.map((value) => {
+    const item = parseStrictRecord(value, ["id", "label"], "OperationLifeEvent");
+    return {
+      id: parseLifeEventId(requireProperty(item, "id", "OperationLifeEvent")),
+      label: parseDisplayText(requireProperty(item, "label", "OperationLifeEvent"), "OperationLifeEvent.label"),
+    };
+  });
+  if (new Set(lifeEvents.map(({ id }) => id)).size !== lifeEvents.length) throw new TypeError("lifeEvents contient un doublon.");
   return {
     merchant: parseRelation(requireProperty(record, "merchant", "OperationLinks"), parseMerchantId),
     place: parseRelation(requireProperty(record, "place", "OperationLinks"), parsePlaceId),
-    lifeEvents: parseUniqueIds(requireProperty(record, "lifeEvents", "OperationLinks"), parseLifeEventId, "lifeEvents"),
+    lifeEvents,
     moments: parseUniqueIds(requireProperty(record, "moments", "OperationLinks"), parseMomentId, "moments"),
   };
 }

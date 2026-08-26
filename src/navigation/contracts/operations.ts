@@ -56,7 +56,7 @@ export type OperationsNavigationFilters = {
   readonly placeIds?: readonly PlaceId[];
   readonly accountIds?: readonly string[];
   readonly preciseTypes?: readonly string[];
-  readonly necessity?: readonly ("Indispensable" | "Contraint" | "Optionnel")[];
+  readonly necessity?: readonly ("Indispensable" | "Contraint" | "Ajustable" | "Optionnel")[];
   readonly fixedVariable?: readonly ("Fixe" | "Variable")[];
   readonly lifeScope?: readonly ("Vie courante" | "Hors quotidien")[];
   readonly dayContext?: readonly ("work_onsite" | "remote" | "weekend_home" | "leave_home")[];
@@ -72,22 +72,24 @@ export type OperationsNavigationFilters = {
     | "economic_net_desc";
   readonly mode?: "compact" | "standard" | "complete";
   readonly cursor?: string;
+  readonly cursorTrail?: readonly string[];
 };
 
-export type OperationsQuestion = Omit<OperationsNavigationFilters, "mode" | "cursor">;
-export type OperationsLocalDisplayState = Pick<OperationsNavigationFilters, "mode" | "cursor">;
+export type OperationsQuestion = Omit<OperationsNavigationFilters, "mode" | "cursor" | "cursorTrail">;
+export type OperationsLocalDisplayState = Pick<OperationsNavigationFilters, "mode" | "cursor" | "cursorTrail">;
 
 export function splitOperationsNavigationState(filters: OperationsNavigationFilters): {
   readonly question: OperationsQuestion;
   readonly display: OperationsLocalDisplayState;
 } {
   const normalized = parseOperationsNavigationFilters(filters);
-  const { mode, cursor, ...question } = normalized;
+  const { mode, cursor, cursorTrail, ...question } = normalized;
   return {
     question,
     display: {
       ...(mode === undefined ? {} : { mode }),
       ...(cursor === undefined ? {} : { cursor }),
+      ...(cursorTrail === undefined ? {} : { cursorTrail }),
     },
   };
 }
@@ -160,6 +162,7 @@ export function parseOperationsNavigationFilters(
       "sort",
       "mode",
       "cursor",
+      "cursorTrail",
     ],
     "OperationsNavigationFilters",
   );
@@ -281,7 +284,7 @@ export function parseOperationsNavigationFilters(
   };
   const accountIds = parseTextCollection("accountIds")?.map((id) => uuidPattern.test(id) ? id : validationFailure({ path: ["accountIds"], code: "invalid_format", message: "accountIds doit contenir des UUID." }));
   const preciseTypes = parseTextCollection("preciseTypes");
-  const necessity = parseTextCollection("necessity", new Set(["Indispensable", "Contraint", "Optionnel"])) as OperationsNavigationFilters["necessity"];
+  const necessity = parseTextCollection("necessity", new Set(["Indispensable", "Contraint", "Ajustable", "Optionnel"])) as OperationsNavigationFilters["necessity"];
   const fixedVariable = parseTextCollection("fixedVariable", new Set(["Fixe", "Variable"])) as OperationsNavigationFilters["fixedVariable"];
   const lifeScope = parseTextCollection("lifeScope", new Set(["Vie courante", "Hors quotidien"])) as OperationsNavigationFilters["lifeScope"];
   const dayContext = parseTextCollection("dayContext", new Set(["work_onsite", "remote", "weekend_home", "leave_home"])) as OperationsNavigationFilters["dayContext"];
@@ -319,6 +322,7 @@ export function parseOperationsNavigationFilters(
       ? record.cursor
       : validationFailure({ path: ["cursor"], code: "invalid_cursor", message: "cursor Opérations est invalide." })
     : undefined;
+  const cursorTrail = parseTextCollection("cursorTrail");
 
   return {
     ...(timeKind === undefined ? {} : { timeKind }),
@@ -346,6 +350,7 @@ export function parseOperationsNavigationFilters(
     ...(sort === undefined ? {} : { sort }),
     ...(mode === undefined ? {} : { mode }),
     ...(cursor === undefined ? {} : { cursor }),
+    ...(cursorTrail === undefined ? {} : { cursorTrail }),
   };
 }
 

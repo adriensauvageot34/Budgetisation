@@ -1,9 +1,8 @@
 import { notFound } from "next/navigation";
-import { normalizeAnalysisScope } from "@/core/scope";
 import { AnalysisMonthPage } from "@/features/analysis";
 import type { AnalysisMonthInitialReadModel } from "@/query-api";
 import { queryResourceKeys } from "@/query-api";
-import { parseRootNavigation } from "@/navigation";
+import { parseRootNavigation, scopeForRoot } from "@/navigation";
 import { getBootstrapContext } from "@/server/bootstrap/context";
 import { executeAuthenticatedQuery } from "@/server/query/runtime";
 import { queryResultToState, withProductAuthentication } from "@/app/product-query";
@@ -33,13 +32,8 @@ export default async function AnalysisMonthRoute({
     const parsed = parseRootNavigation(`/historique/analyse/${rawMonth}${suffix}`);
     if (!("area" in parsed) || parsed.area !== "analysis" || parsed.context.kind !== "analysis_month") notFound();
     route = parsed;
-    scope = normalizeAnalysisScope({
-      subject: parsed.context.personId
-        ? { kind: "person", personId: parsed.context.personId }
-        : { kind: "household" },
-      time: { kind: "month", month: parsed.context.month },
-      filters: parsed.context.filters,
-    });
+    scope = scopeForRoot(parsed);
+    if (scope === null || scope.time.kind !== "month") notFound();
   } catch {
     notFound();
   }

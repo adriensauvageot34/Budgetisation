@@ -35,6 +35,11 @@ import {
   type UiTransportState,
 } from "@/ui";
 import styles from "./operations.module.css";
+import {
+  operationDisplayModel,
+  operationQueryHasLocalError,
+  operationsFiltersForRuntimeRoot,
+} from "./query-state";
 
 export type OperationsDisplayMode = "compact" | "standard" | "complete";
 type PersonOption = { readonly id: string; readonly label: string };
@@ -94,10 +99,6 @@ function queryRequest(filters: OperationsNavigationFilters) {
       limit: 50,
     },
   };
-}
-
-function displayModel(state: UiTransportState<OperationsBrowseReadModel>): OperationsBrowseReadModel | undefined {
-  return state.status === "success" ? state.response.data : state.status === "error" ? state.previousData?.data : undefined;
 }
 
 function splitIds<Id extends string>(value: FormDataEntryValue | null, parser: (value: unknown) => Id): readonly Id[] | undefined {
@@ -200,14 +201,13 @@ export function OperationsPage({
 }) {
   const runtime = useProductRuntime();
   const runtimeRoot = runtime.snapshot?.history.root;
-  const filters = runtimeRoot && "kind" in runtimeRoot ? runtimeRoot.filters : initialFilters;
+  const filters = operationsFiltersForRuntimeRoot(runtimeRoot, initialFilters);
   const route: RootNavigationContext = { kind: "operations", filters };
   const request = useMemo(() => noData ? null : queryRequest(filters), [filters, noData]);
   const state = useQueryRuntime<"operations_browse">(request, initialState ?? undefined);
-  const model = displayModel(state);
+  const model = operationDisplayModel(state);
   const mode = filters.mode ?? "standard";
   const time = timeFrom(filters);
-  const [cursorChain, setCursorChain] = useState<readonly (string | null)[]>([]);
   const [selectedOperationId, setSelectedOperationId] = useState<OperationId | null>(null);
   const filtered = Boolean(
     filters.search || filters.personId || filters.categoryIds?.length || filters.subcategoryIds?.length ||
@@ -228,8 +228,7 @@ export function OperationsPage({
     runtime.run((controller) => controller.updateOperations(next, historyMode));
   };
   const changeQuestion = (next: OperationsNavigationFilters) => {
-    setCursorChain([]);
-    navigate({ ...next, cursor: undefined });
+    navigate({ ...next, cursor: undefined, cursorTrail: undefined });
   };
   const capability = (name: OperationsFilterCapability) => model?.filterCapabilities.includes(name) === true;
 
@@ -327,7 +326,7 @@ export function OperationsPage({
               {capability("place") ? <FilterInput name="placeIds" label="Lieu · ID canonique" value={filters.placeIds} /> : null}
               {capability("account") ? <FilterInput name="accountIds" label="Compte · ID canonique" value={filters.accountIds} /> : null}
               {capability("precise_type") ? <FilterInput name="preciseTypes" label="Type précis" value={filters.preciseTypes} /> : null}
-              {capability("necessity") ? <label><span>Nécessité</span><select className="field" name="necessity" defaultValue={filters.necessity?.[0] ?? ""}><option value="">Toutes</option><option>Indispensable</option><option>Contraint</option><option>Optionnel</option></select></label> : null}
+              {capability("necessity") ? <label><span>Nécessité</span><select className="field" name="necessity" defaultValue={filters.necessity?.[0] ?? ""}><option value="">Toutes</option><option>Indispensable</option><option>Contraint</option><option>Ajustable</option><option>Optionnel</option></select></label> : null}
               {capability("fixed_variable") ? <label><span>Fixe / variable</span><select className="field" name="fixedVariable" defaultValue={filters.fixedVariable?.[0] ?? ""}><option value="">Tous</option><option>Fixe</option><option>Variable</option></select></label> : null}
               {capability("life_scope") ? <label><span>Périmètre de vie</span><select className="field" name="lifeScope" defaultValue={filters.lifeScope?.[0] ?? ""}><option value="">Tous</option><option>Vie courante</option><option>Hors quotidien</option></select></label> : null}
               {capability("quality") ? <label><span>Qualité</span><select className="field" name="quality" defaultValue={filters.quality?.[0] ?? ""}><option value="">Toutes</option><option value="complete">Complète</option><option value="partial">Partielle</option><option value="conflict">Conflit</option><option value="unknown">Inconnue</option></select></label> : null}
@@ -337,7 +336,7 @@ export function OperationsPage({
           </details>
 
           {state.status === "idle" || state.status === "loading" ? <SectionSkeleton /> : null}
-          {state.status === "error" && model === undefined ? <ErrorState error={state.error} /> : null}
+          {operationQueryHasLocalError(state) && state.status === "error" ? <ErrorState error={state.error} /> : null}
           {model?.page.state === "empty" ? <EmptyState title="Aucune opération" description="Le périmètre bancaire autoritaire ne contient aucune opération." /> : null}
           {model?.page.state === "filtered_empty" ? <FilteredEmptyState onClearFilters={filtered ? () => changeQuestion({ timeKind: filters.timeKind, month: filters.month, startDate: filters.startDate, endExclusive: filters.endExclusive, globalWindow: filters.globalWindow, asOf: filters.asOf, mode }) : undefined} /> : null}
           {model && model.page.items.length > 0 ? (
@@ -350,9 +349,9 @@ export function OperationsPage({
           ) : null}
           {state.status === "success" && state.refreshing ? <RefreshIndicator announce /> : state.status === "error" && model ? <RefreshIndicator failed announce /> : null}
           <nav className={styles.pagination} aria-label="Pagination des opérations">
-            <button className="button-secondary" type="button" disabled={cursorChain.length === 0} onClick={() => { const previous = cursorChain.at(-1) ?? null; setCursorChain((chain) => chain.slice(0, -1)); navigate({ ...filters, cursor: previous ?? undefined }); }}>Page précédente</button>
+            <button className="button-secondary" type="button" disabled={!filters.cursorTrail?.length} onClick={() => { const previous = filters.cursorTrail?.at(-1); if (!previous) return; navigate({ ...filters, cursor: previous === "first" ? undefined : previous, cursorTrail: filters.cursorTrail?.slice(0, -1) }); }}>Page précédente</button>
             <span>{model?.page.items.length ?? 0} lignes affichées</span>
-            <button className="button-secondary" type="button" disabled={!model?.page.pageInfo.nextCursor} onClick={() => { if (!model?.page.pageInfo.nextCursor) return; setCursorChain((chain) => [...chain, filters.cursor ?? null]); navigate({ ...filters, cursor: model.page.pageInfo.nextCursor }); }}>Page suivante</button>
+            <button className="button-secondary" type="button" disabled={!model?.page.pageInfo.nextCursor} onClick={() => { if (!model?.page.pageInfo.nextCursor) return; navigate({ ...filters, cursor: model.page.pageInfo.nextCursor, cursorTrail: [...(filters.cursorTrail ?? []), filters.cursor ?? "first"] }); }}>Page suivante</button>
           </nav>
         </>
       )}

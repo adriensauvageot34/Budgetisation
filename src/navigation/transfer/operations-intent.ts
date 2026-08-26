@@ -30,6 +30,22 @@ export function buildOperationsIntent(
   });
 }
 
+export function operationsPeriodFromScope(
+  sourceScope: NormalizedAnalysisScope | null,
+): OperationsNavigationFilters {
+  if (sourceScope === null) return {};
+  return sourceScope.time.kind === "month"
+    ? {
+        timeKind: "economic_month",
+        month: sourceScope.time.month,
+      }
+    : {
+        timeKind: "global_window",
+        globalWindow: sourceScope.time.observationWindow,
+        asOf: sourceScope.time.asOf,
+      };
+}
+
 export function buildAnalysisOperationsIntent(
   sourceScope: NormalizedAnalysisScope,
   compatibilityInput: AnalysisTransferCompatibility,

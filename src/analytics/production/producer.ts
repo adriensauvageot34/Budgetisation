@@ -348,7 +348,9 @@ function produceMinimalMonth(input: {
     availability: "known",
     value: metric.value,
     unit: input.definition.unit,
-    coverage: metric.coverage,
+    coverage: input.source.coverage?.level === "partial"
+      ? { level: "partial" }
+      : metric.coverage,
     ...(metric.support === undefined ? {} : { support: metric.support }),
     provenance: input.definition.provenanceRule,
     methodVersion: input.definition.methodVersion,

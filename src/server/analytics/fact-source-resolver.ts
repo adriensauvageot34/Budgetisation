@@ -2,6 +2,8 @@ import "server-only";
 
 import {
   getMetricRegistryEntry,
+  economicSourceAvailability,
+  isFinanceScopeCompleteAndClosed,
   MetricProductionContractError,
   type ActiveMetricId,
   type MetricProductionSource,
@@ -32,7 +34,7 @@ import {
   type AnalysisScope,
   type NormalizedAnalysisScope,
 } from "@/core/scope";
-import { parseSupport, type Availability, type Coverage, type SupportUnit } from "@/core/metrics";
+import { parseSupport, type SupportUnit } from "@/core/metrics";
 import {
   addMonths,
   parseLocalDate,
@@ -43,6 +45,12 @@ import type {
   CanonicalDateRange,
   CanonicalRepository,
 } from "@/server/canonical/repository";
+import {
+  resolveMinimalPlanningSource,
+  type MinimalPlanningResolution,
+  type MinimalSourceHealth,
+} from "./minimal-source-resolver";
+import type { SupabaseAnalyticsMaterializationStore } from "./materialization";
 
 function monthsForScope(scope: NormalizedAnalysisScope): readonly YearMonth[] {
   return scope.time.kind === "month"
@@ -103,44 +111,15 @@ function selectedActivities(
   );
 }
 
-function economicSourceAvailability(input: {
-  readonly facts: readonly EconomicComponentFact[];
-  readonly scope: NormalizedAnalysisScope;
-}): { readonly availability: Availability; readonly coverage?: Coverage } {
-  if (input.scope.subject.kind === "person") {
-    return { availability: "unknown" };
-  }
-  if (input.scope.filters.activityIds.length > 0) {
-    return { availability: "unknown" };
-  }
-  const selected = selectEconomicComponentsForScope(input.facts, input.scope);
-  if (selected.some(({ economicTiming }) => economicTiming.kind === "conflict")) {
-    return { availability: "conflict" };
-  }
-  const uncertain = selected.filter(
-    ({ economicTiming }) =>
-      economicTiming.kind === "unknown" || economicTiming.kind === "partial",
-  );
-  const hasKnown = selected.some(
-    ({ economicTiming }) =>
-      economicTiming.kind === "known" || economicTiming.kind === "partial",
-  );
-  if (!hasKnown && uncertain.length > 0) return { availability: "unknown" };
-  return {
-    availability: "known",
-    coverage:
-      uncertain.length === 0
-        ? { level: "complete" }
-        : { level: "partial" },
-  };
-}
-
 function sourceSupport(n: number, unit: SupportUnit) {
   return parseSupport({ n, unit, level: n === 0 ? "insufficient" : "sufficient" });
 }
 
 export class FactSourceResolver {
-  constructor(private readonly repository: CanonicalRepository) {}
+  constructor(
+    private readonly repository: CanonicalRepository,
+    private readonly materialization?: SupabaseAnalyticsMaterializationStore,
+  ) {}
 
   loadEconomicFacts(scope: AnalysisScope): Promise<readonly EconomicComponentFact[]> {
     return this.repository.loadEconomicFacts(canonicalRangeForScope(scope));
@@ -180,6 +159,67 @@ export class FactSourceResolver {
     return buildActivityOccurrenceCostFacts({ occurrences, components, links });
   }
 
+  private async resolveMinimalMonth(
+    scope: NormalizedAnalysisScope,
+  ): Promise<MinimalPlanningResolution> {
+    if (scope.time.kind !== "month" || scope.subject.kind !== "household") {
+      return {
+        availability: "unknown",
+        neutralVariableComponents: [],
+        mandatoryMonthlyObligationsAndProvisions: [],
+        health: {
+          neutralVariable: "MISSING_SOURCE",
+          obligationsAndProvisions: "MISSING_SOURCE",
+          unresolvedNeutralSourceCount: 0,
+          unresolvedObligationSourceCount: 0,
+        },
+      };
+    }
+    const targetMonth = scope.time.month;
+    const referenceMonths = this.repository.context.periods
+      .filter(({ month, financeStatus, isClosed }) =>
+        financeStatus === "complete" && isClosed && month.slice(0, 7) < targetMonth)
+      .map(({ month }) => month.slice(0, 7) as YearMonth)
+      .sort()
+      .slice(-TYPICAL_MONTH_REQUESTED_PERIOD_COUNT);
+    const firstMonth = referenceMonths[0];
+    const lastMonth = referenceMonths.at(-1);
+    if (firstMonth === undefined || lastMonth === undefined) {
+      return resolveMinimalPlanningSource({
+        bundle: {
+          economicFacts: [],
+          operations: [],
+          allocations: [],
+          items: [],
+          paymentComponents: [],
+          cashUses: [],
+          baselineRules: [],
+          needs: [],
+          provisionPools: [],
+          recurrenceSeries: [],
+          annualEvents: [],
+          worksiteActivityTypeIds: [],
+          activityOccurrences: [],
+        },
+        targetMonth,
+        referenceMonths,
+      });
+    }
+    const bundle = await this.repository.loadMinimalPlanningBundle({
+      start: parseLocalDate(`${firstMonth}-01`),
+      endExclusive: parseLocalDate(`${addMonths(lastMonth, 1)}-01`),
+    });
+    return resolveMinimalPlanningSource({
+      bundle,
+      targetMonth,
+      referenceMonths,
+    });
+  }
+
+  async minimalSourceHealth(rawScope: AnalysisScope): Promise<MinimalSourceHealth> {
+    return (await this.resolveMinimalMonth(normalizeAnalysisScope(rawScope))).health;
+  }
+
   async resolve(
     metricId: ActiveMetricId,
     rawScope: AnalysisScope,
@@ -190,11 +230,26 @@ export class FactSourceResolver {
     const sourceFact = definition.sourceFact[0];
 
     if (definition.productionStrategy === "minimal_month") {
-      return {
-        kind: "minimal_month",
-        scopeHash,
-        availability: "unknown",
-      };
+      const resolution = await this.resolveMinimalMonth(scope);
+      return resolution.availability === "known"
+        ? {
+            kind: "minimal_month",
+            scopeHash,
+            availability: "known",
+            neutralVariableComponents: resolution.neutralVariableComponents,
+            mandatoryMonthlyObligationsAndProvisions:
+              resolution.mandatoryMonthlyObligationsAndProvisions,
+            coverage:
+              resolution.health.neutralVariable === "AVAILABLE" &&
+              resolution.health.obligationsAndProvisions === "AVAILABLE"
+                ? { level: "complete" }
+                : { level: "partial" },
+          }
+        : {
+            kind: "minimal_month",
+            scopeHash,
+            availability: "unknown",
+          };
     }
 
     if (definition.productionStrategy === "typical_month") {
@@ -227,12 +282,33 @@ export class FactSourceResolver {
         requestedPeriodCount: TYPICAL_MONTH_REQUESTED_PERIOD_COUNT,
         candidates,
       });
+      const monthlyScopes = window.includedPeriods.map((period) => ({
+        ...scope,
+        time: { kind: "month" as const, month: period },
+      }));
+      let materializedByScope: ReadonlyMap<string, import("@/analytics/production").ProducedMetric> = new Map();
+      if (this.materialization !== undefined) {
+        try {
+          materializedByScope = await this.materialization.readMonthlyMetrics(
+            "economic_consumption_net_attributable",
+            monthlyScopes,
+          );
+        } catch {
+          // La référence brute reste le fallback strict.
+        }
+      }
       const monthlyObservations = await Promise.all(
-        window.includedPeriods.map(async (period) => {
-          const monthlyScope: AnalysisScope = {
-            ...scope,
-            time: { kind: "month", month: period },
-          };
+        window.includedPeriods.map(async (period, index) => {
+          const monthlyScope = monthlyScopes[index];
+          const materialized = materializedByScope.get(
+            computeScopeHash(normalizeAnalysisScope(monthlyScope)),
+          );
+          if (
+            materialized?.availability === "known"
+            && typeof materialized.value === "string"
+          ) {
+            return { period, value: materialized.value };
+          }
           const facts = await this.loadEconomicFacts(monthlyScope);
           return {
             period,
@@ -252,7 +328,14 @@ export class FactSourceResolver {
       case "fct_economic_component": {
         const facts = await this.loadEconomicFacts(scope);
         const selectedFacts = selectEconomicComponentsForScope(facts, scope);
-        const state = economicSourceAvailability({ facts, scope });
+        const state = economicSourceAvailability({
+          facts,
+          scope,
+          emptyPeriodQualified: isFinanceScopeCompleteAndClosed(
+            this.repository.context.periods,
+            scope,
+          ),
+        });
         return state.availability === "known"
           ? {
               kind: "economic_components",

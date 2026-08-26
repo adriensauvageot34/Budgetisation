@@ -12,7 +12,11 @@ import {
   executeAuthenticatedQueries,
   executeAuthenticatedQuery,
   readAuthenticatedCanonicalSourceHealth,
+  readAuthenticatedMinimalSourceHealth,
+  resolveLatestBankOperationMonth,
 } from "@/server/query/runtime";
+import { safeRuntimeEnvironment } from "@/server/runtime-environment";
+import { diagnosticOperationsRequest } from "./operations-plan";
 
 export const metadata = { title: "Diagnostic technique" };
 export const dynamic = "force-dynamic";
@@ -22,6 +26,7 @@ function resultLabel(result: { readonly ok: boolean; readonly error?: { readonly
 }
 
 export default async function DiagnosticPage() {
+  const runtimeEnvironment = safeRuntimeEnvironment();
   let context: Awaited<ReturnType<typeof getBootstrapContext>>;
   try {
     context = await getBootstrapContext();
@@ -41,6 +46,17 @@ export default async function DiagnosticPage() {
   const completeClosedPeriodCount = context.periods.filter(
     ({ financeStatus, isClosed }) => financeStatus === "complete" && isClosed,
   ).length;
+  const completeClosedMonths = context.periods
+    .filter(({ financeStatus, isClosed }) => financeStatus === "complete" && isClosed)
+    .map(({ month }) => yearMonthOf(month))
+    .sort();
+  const historicalCompleteRange = completeClosedMonths.length === 0
+    ? "—"
+    : `${completeClosedMonths[0]} → ${completeClosedMonths.at(-1)}`;
+  const currentOpenMonths = context.periods
+    .filter(({ financeStatus, isClosed }) => financeStatus !== "complete" || !isClosed)
+    .map(({ month }) => yearMonthOf(month))
+    .sort();
   const monthScope = month === null
     ? null
     : normalizeAnalysisScope({
@@ -53,54 +69,70 @@ export default async function DiagnosticPage() {
         subject: { kind: "household" },
         time: { kind: "global", observationWindow: "last_12_months", asOf },
       });
-  const operationResult = globalScope === null
+  const latestBankMonth = await resolveLatestBankOperationMonth();
+  const operationRequest = diagnosticOperationsRequest({
+    latestBankMonth,
+    completeClosedFinancePeriodCount: completeClosedPeriodCount,
+  });
+  const operationResult = operationRequest === null
     ? null
-    : await executeAuthenticatedQuery<"operations_browse">({
-        resource: queryResourceKeys.operationsBrowse,
-        scope: globalScope,
-        params: {
-          time: { kind: "global_window", window: "last_12_months", asOf },
-          limit: 1,
-        },
-      });
+    : await executeAuthenticatedQuery<"operations_browse">(operationRequest);
   const firstOperationId = operationResult?.ok
     ? operationResult.response.data.page.items[0]?.operationId
     : undefined;
-  const requests = [
+  const operationEntityScope = latestBankMonth === null
+    ? null
+    : normalizeAnalysisScope({
+        subject: { kind: "household" },
+        time: { kind: "month", month: latestBankMonth },
+      });
+  const plannedQueries = [
     ...(monthScope === null || month === null
       ? []
       : [
-          { resource: queryResourceKeys.historyCalendarMonth, scope: monthScope, params: {} },
-          { resource: queryResourceKeys.historyDayDetail, scope: monthScope, params: { date: parseLocalDate(`${month}-01`) } },
-          { resource: queryResourceKeys.analysisMonthInitial, scope: monthScope, params: {} },
+          { label: "Calendar", request: { resource: queryResourceKeys.historyCalendarMonth, scope: monthScope, params: {} } },
+          { label: "Day", request: { resource: queryResourceKeys.historyDayDetail, scope: monthScope, params: { date: parseLocalDate(`${month}-01`) } } },
+          { label: "Analysis Month Initial", request: { resource: queryResourceKeys.analysisMonthInitial, scope: monthScope, params: {} } },
         ]),
     ...(globalScope === null || asOf === null
       ? []
       : [
-          { resource: queryResourceKeys.analysisGlobalInitial, scope: globalScope, params: {} },
-          { resource: queryResourceKeys.metricMethodology, scope: globalScope, params: { metricId: "economic_consumption_net_attributable", asOf } },
-          ...(firstOperationId === undefined
-            ? []
-            : [{ resource: queryResourceKeys.entityOperation, scope: globalScope, params: { operationId: firstOperationId } }]),
+          { label: "Analysis Global Initial", request: { resource: queryResourceKeys.analysisGlobalInitial, scope: globalScope, params: {} } },
+          { label: "Metric Methodology", request: { resource: queryResourceKeys.metricMethodology, scope: globalScope, params: { metricId: "economic_consumption_net_attributable", asOf } } },
         ]),
+    ...(operationEntityScope === null || firstOperationId === undefined
+      ? []
+      : [{ label: "Entity Operation", request: { resource: queryResourceKeys.entityOperation, scope: operationEntityScope, params: { operationId: firstOperationId } } }]),
   ];
-  const queryResults = await executeAuthenticatedQueries(requests);
-  const labels = [
-    ...(monthScope === null ? [] : ["Calendar", "Day", "Analysis Month Initial"]),
-    ...(globalScope === null ? [] : ["Analysis Global Initial", "Metric Methodology"]),
-    ...(firstOperationId === undefined ? [] : ["Entity Operation"]),
-  ];
-  const queryHealth = labels.map((label, index) => ({ label, status: resultLabel(queryResults[index]!) }));
-  queryHealth.splice(globalScope === null ? queryHealth.length : 5, 0, {
+  const queryResults = await executeAuthenticatedQueries(
+    plannedQueries.map(({ request }) => request),
+  );
+  const resultByLabel = new Map(
+    plannedQueries.map(({ label }, index) => [label, queryResults[index]!] as const),
+  );
+  const queryHealth = plannedQueries.map(({ label }, index) => ({
+    label,
+    status: resultLabel(queryResults[index]!),
+  }));
+  queryHealth.splice(monthScope === null ? 0 : 3, 0, {
     label: "Operations Browse",
-    status: operationResult === null ? "NON APPLICABLE · aucune fenêtre complète" : resultLabel(operationResult),
+    status: operationResult === null
+      ? "NON APPLICABLE · aucune opération bancaire disponible"
+      : resultLabel(operationResult),
   });
   if (firstOperationId === undefined) {
-    queryHealth.push({ label: "Entity", status: "NON APPLICABLE · aucune opération disponible" });
+    queryHealth.push({
+      label: "Entity Operation",
+      status: operationResult !== null && !operationResult.ok
+        ? `NON APPLICABLE · Operations Browse ${operationResult.error.code}`
+        : "NON APPLICABLE · aucune opération disponible",
+    });
   }
-  const sourceHealth = await readAuthenticatedCanonicalSourceHealth();
-  const monthInitialIndex = monthScope === null ? -1 : 2;
-  const monthInitial = monthInitialIndex < 0 ? undefined : queryResults[monthInitialIndex];
+  const [sourceHealth, minimalSourceHealth] = await Promise.all([
+    readAuthenticatedCanonicalSourceHealth(),
+    monthScope === null ? Promise.resolve(null) : readAuthenticatedMinimalSourceHealth(monthScope),
+  ]);
+  const monthInitial = resultByLabel.get("Analysis Month Initial");
   const minimalStatus = monthInitial?.ok
     ? (() => {
         const data = monthInitial.response.data;
@@ -117,8 +149,15 @@ export default async function DiagnosticPage() {
         <div><span className="eyebrow">Persons</span><p className="text-xl font-black">{context.persons.map((person) => person.displayName).join(", ") || "Aucune"}</p></div>
         <div><span className="eyebrow">Analysis periods</span><p className="text-xl font-black">{context.periods.length}</p></div>
         <div><span className="eyebrow">Finance complete + closed</span><p className="text-xl font-black">{completeClosedPeriodCount}</p></div>
+        <div><span className="eyebrow">Historical complete range</span><p className="text-xl font-black">{historicalCompleteRange}</p></div>
+        <div><span className="eyebrow">Current / open</span><p className="text-xl font-black">{currentOpenMonths.join(", ") || "—"}</p></div>
         <div><span className="eyebrow">DataRevision</span><p className="text-xl font-black">{context.revision?.dataRevision ?? "—"}</p></div>
         <div><span className="eyebrow">AnalyticsRevision</span><p className="text-xl font-black">{context.revision?.analyticsRevision ?? "—"}</p></div>
+        <div><span className="eyebrow">Supabase public ref</span><p className="text-xl font-black">{runtimeEnvironment.publicSupabaseProjectRef ?? "—"}</p></div>
+        <div><span className="eyebrow">Supabase server ref</span><p className="text-xl font-black">{runtimeEnvironment.serverSupabaseProjectRef ?? "—"}</p></div>
+        <div><span className="eyebrow">Même projet Supabase</span><p className="text-xl font-black">{runtimeEnvironment.sameSupabaseProject ? "YES" : "NO"}</p></div>
+        <div><span className="eyebrow">Vercel environment</span><p className="text-xl font-black">{runtimeEnvironment.environment ?? "—"}</p></div>
+        <div><span className="eyebrow">Commit SHA</span><p className="text-xl font-black">{runtimeEnvironment.commitSha ?? "—"}</p></div>
       </section>
       <section className="card p-6">
         <span className="eyebrow">Query Runtime réel</span>
@@ -130,8 +169,9 @@ export default async function DiagnosticPage() {
         <span className="eyebrow">Source Health</span>
         <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {Object.entries(sourceHealth).map(([source, status]) => <div key={source}><strong>{source}</strong><p>{status}</p></div>)}
-          <div><strong>minimal_neutral_variable</strong><p>{minimalStatus}</p></div>
-          <div><strong>minimal_obligations_provisions</strong><p>{minimalStatus}</p></div>
+          <div><strong>minimal_neutral_variable</strong><p>{minimalSourceHealth?.neutralVariable ?? "MISSING_SOURCE"}</p><small>{minimalSourceHealth?.unresolvedNeutralSourceCount ?? 0} source(s) non résolue(s)</small></div>
+          <div><strong>minimal_obligations_provisions</strong><p>{minimalSourceHealth?.obligationsAndProvisions ?? "MISSING_SOURCE"}</p><small>{minimalSourceHealth?.unresolvedObligationSourceCount ?? 0} source(s) non résolue(s)</small></div>
+          <div><strong>minimal_metric</strong><p>{minimalStatus}</p></div>
         </div>
       </section>
     </div>

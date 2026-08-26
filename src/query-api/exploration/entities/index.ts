@@ -2,6 +2,7 @@ export {
   entityLifeEventReadModelSchema,
   parseEntityLifeEventReadModel,
   type EntityLifeEventReadModel,
+  type LifeEventParticipant,
   type LifeEventValidationStatus,
 } from "./life-event";
 export {

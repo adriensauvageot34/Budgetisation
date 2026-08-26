@@ -1,6 +1,6 @@
 import "server-only";
 
-import type { CanonicalSourceName } from "./errors";
+import type { CanonicalHealthSourceName } from "./errors";
 
 export type CanonicalSourceHealthStatus =
   | "AVAILABLE"
@@ -8,7 +8,7 @@ export type CanonicalSourceHealthStatus =
   | "UNAVAILABLE";
 
 export type CanonicalSourceHealth = Readonly<
-  Record<CanonicalSourceName, CanonicalSourceHealthStatus>
+  Record<CanonicalHealthSourceName, CanonicalSourceHealthStatus>
 >;
 
 export function unavailableCanonicalSourceHealth(): CanonicalSourceHealth {
@@ -22,5 +22,6 @@ export function unavailableCanonicalSourceHealth(): CanonicalSourceHealth {
     financial_links: "UNAVAILABLE",
     operations: "UNAVAILABLE",
     entities: "UNAVAILABLE",
+    taxonomy: "UNAVAILABLE",
   };
 }

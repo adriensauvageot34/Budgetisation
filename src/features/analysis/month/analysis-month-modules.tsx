@@ -104,10 +104,11 @@ export function SummaryModule({ model, runtime, scope }: { readonly model: Analy
 export function MarkedFactsModule({ model, runtime, scope }: { readonly model: AnalysisMonthInitialReadModel; readonly runtime: ProductRuntimeValue; readonly scope: NormalizedAnalysisScope }) {
   if (model.markedFacts.length === 0) {
     const unavailable = model.markedFactsSelection.kind === "unavailable";
+    const insufficient = unavailable && model.markedFactsSelection.reason === "insufficient_data";
     return (
       <Surface variant="subtle" className={styles.inRhythm}>
-        <strong>{unavailable ? "Faits marquants indisponibles" : "Un mois dans le rythme"}</strong>
-        <span>{unavailable ? "Aucun fait n’est affirmé sans doctrine de matérialité versionnée." : "Aucun fait matériel retenu pour ce scope."}</span>
+        <strong>{insufficient ? "Mois non qualifiable" : unavailable ? "Faits marquants indisponibles" : "Un mois dans le rythme"}</strong>
+        <span>{insufficient ? "Les données disponibles ne permettent pas de comparer ce mois à une référence." : unavailable ? "Aucun fait n’est affirmé sans doctrine de matérialité versionnée." : "Aucun fait matériel retenu pour ce scope."}</span>
       </Surface>
     );
   }

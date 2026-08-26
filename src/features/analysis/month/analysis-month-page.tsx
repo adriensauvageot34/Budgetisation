@@ -5,7 +5,7 @@ import { parseActivityId, parseCategoryId, parseMerchantId, parsePlaceId, type P
 import { normalizeAnalysisScope, parseDayContext, parseLifeScopeContext, type NormalizedAnalysisScope } from "@/core/scope";
 import { formatYearMonth } from "@/core/time";
 import { useProductRuntime, useProductSurface, useQueryRuntime, useRestorableSubview, useSemanticAnchor } from "@/components/runtime";
-import type { HistoryRootContext, NavigationSubviewRef, SemanticAnchor } from "@/navigation";
+import { scopeForRoot, type HistoryRootContext, type NavigationSubviewRef, type SemanticAnchor } from "@/navigation";
 import type {
   AnalysisLivedSubview,
   AnalysisMonthInitialReadModel,
@@ -69,13 +69,8 @@ export function AnalysisMonthPage({
     ? runtimeRoot
     : route;
   const currentScope = useMemo(() => {
-    const context = currentRoute.context;
-    if (context.kind !== "analysis_month") return serverScope;
-    return normalizeAnalysisScope({
-      subject: context.personId ? { kind: "person", personId: context.personId } : { kind: "household" },
-      time: { kind: "month", month: context.month },
-      filters: context.filters,
-    });
+    const runtimeScope = scopeForRoot(currentRoute);
+    return runtimeScope?.time.kind === "month" ? runtimeScope : serverScope;
   }, [currentRoute, serverScope]);
   if (currentScope.time.kind !== "month") throw new TypeError("AnalysisMonthPage exige un scope Month.");
   const month = currentScope.time.month;
@@ -107,10 +102,11 @@ export function AnalysisMonthPage({
   const initial = useQueryRuntime(initialRequest, initialState);
   useProductSurface({ route: currentRoute, scope: currentScope, subview, readiness: readinessFrom(initial) });
 
-  const evolution = useQueryRuntime(useMemo(() => ({ resource: queryResourceKeys.analysisMonthEvolution, scope: currentScope, params: {} }), [currentScope]));
-  const structureTransport = useQueryRuntime(useMemo(() => ({ resource: queryResourceKeys.analysisMonthStructure, scope: currentScope, params: { view: structure.view, dimension: structure.dimension, measure: structure.measure } }), [currentScope, structure.dimension, structure.measure, structure.view]));
-  const lived = useQueryRuntime(useMemo(() => ({ resource: queryResourceKeys.analysisMonthLived, scope: currentScope, params: {} }), [currentScope]));
-  const moments = useQueryRuntime(useMemo(() => ({ resource: queryResourceKeys.analysisMonthMoments, scope: currentScope, params: {} }), [currentScope]));
+  const moneyActive = currentView === "money";
+  const evolution = useQueryRuntime<"analysis_month_evolution">(useMemo(() => moneyActive ? ({ resource: queryResourceKeys.analysisMonthEvolution, scope: currentScope, params: {} }) : null, [currentScope, moneyActive]));
+  const structureTransport = useQueryRuntime<"analysis_month_structure">(useMemo(() => moneyActive ? ({ resource: queryResourceKeys.analysisMonthStructure, scope: currentScope, params: { view: structure.view, dimension: structure.dimension, measure: structure.measure } }) : null, [currentScope, moneyActive, structure.dimension, structure.measure, structure.view]));
+  const lived = useQueryRuntime<"analysis_month_lived">(useMemo(() => currentView === "life" ? ({ resource: queryResourceKeys.analysisMonthLived, scope: currentScope, params: {} }) : null, [currentScope, currentView]));
+  const moments = useQueryRuntime<"analysis_month_moments">(useMemo(() => currentView === "moments" ? ({ resource: queryResourceKeys.analysisMonthMoments, scope: currentScope, params: {} }) : null, [currentScope, currentView]));
   const initialModel = dataFrom(initial);
   const activeFilterCount = currentScope.filters.categoryIds.length
     + currentScope.filters.activityIds.length

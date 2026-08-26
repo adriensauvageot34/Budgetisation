@@ -25,6 +25,11 @@ export interface ApiMeta {
   analyticsRevision: AnalyticsRevision;
   contractVersion: ContractVersion;
   computedAt: Instant;
+  cachePolicy?: {
+    readonly source: "materialized" | "computed";
+    readonly revalidate: "never" | "stale_while_revalidate";
+    readonly sourceRevision: DataRevision;
+  };
 }
 
 export interface ApiResponse<T> {

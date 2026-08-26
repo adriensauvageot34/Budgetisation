@@ -250,9 +250,9 @@ export function LifeEventSurface({
     sections.push({
       id: "participants",
       label: "Participants",
-      content: model.participantIds.length === 0 ? <EmptyState title="Aucun participant exposé" /> : (
-        <div className={styles.previewGrid}>{model.participantIds.map((personId) => (
-          <Surface key={personId} variant="subtle" action={{ kind: "callback", onAction: () => navigation.push({ kind: "persona", id: personId }) }}>Participant</Surface>
+      content: model.participants.length === 0 ? <EmptyState title="Aucun participant exposé" /> : (
+        <div className={styles.previewGrid}>{model.participants.map(({ personId, label }) => (
+          <Surface key={personId} variant="subtle" action={{ kind: "callback", onAction: () => navigation.push({ kind: "persona", id: personId }) }}>{label}</Surface>
         ))}</div>
       ),
     });
