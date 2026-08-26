@@ -89,6 +89,9 @@ export function analyticsMethodSignature(): string {
     methods: Object.fromEntries(
       activeMetricIds.map((metricId) => [metricId, metricMethodVersions[metricId]]),
     ),
+    queryContracts: {
+      historyCalendar: "history-calendar@v2",
+    },
   });
 }
 
@@ -198,7 +201,8 @@ export function querySnapshotIdentity(
 }
 
 export function isQueryMaterializationResource(resource: QueryResourceKey): boolean {
-  return resource.startsWith("analysis_month_")
+  return resource.startsWith("history_")
+    || resource.startsWith("analysis_month_")
     || resource.startsWith("analysis_global_")
     || resource === "analysis_target";
 }

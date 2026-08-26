@@ -2,188 +2,127 @@
 
 import type { RefObject } from "react";
 import type { LocalDate } from "@/core/time";
-import type { HistoryDayDetailReadModel } from "@/query-api";
+import type { DayJournalMoment, DayOperationPreviewItem, HistoryDayDetailReadModel } from "@/query-api";
 import {
   Button,
+  EmptyState,
   ErrorState,
   MetricDisplay,
   OverlayFrame,
   OverlaySkeleton,
-  QualityBadge,
   RefreshIndicator,
-  SectionLayout,
-  StatusBadge,
   Surface,
   formatMetricValue,
   type UiTransportState,
 } from "@/ui";
-import type { CalendarNavigation } from "./types";
+import { CalendarIcon } from "./calendar-icon";
+import { PersonAvatarCluster } from "./person-avatar";
+import type { CalendarNavigation, CalendarPerson } from "./types";
 import styles from "./calendar.module.css";
 
 function fullDateLabel(date: LocalDate): string {
-  const [year, month, day] = date.split("-");
-  return `${day}/${month}/${year}`;
+  return new Intl.DateTimeFormat("fr-FR", {
+    dateStyle: "full",
+    timeZone: "UTC",
+  }).format(new Date(`${date}T12:00:00Z`));
 }
 
-function ContextSummary({ model }: { readonly model: HistoryDayDetailReadModel }) {
+function timeLabel(instant: string, timezone: string): string {
+  return new Intl.DateTimeFormat("fr-FR", {
+    hour: "2-digit",
+    minute: "2-digit",
+    timeZone: timezone,
+  }).format(new Date(instant));
+}
+
+function OperationLine({ operation, navigation }: { readonly operation: DayOperationPreviewItem; readonly navigation: CalendarNavigation }) {
+  const amount = formatMetricValue(operation.amount, "EUR");
   return (
-    <div className={styles.contexts}>
-      <Surface variant="subtle">
-        <strong>Contexte du jour</strong>
-        <p>
-          {model.contexts.dayContext.kind === "known"
-            ? model.contexts.dayContext.values.join(" · ") || "Non renseigné"
-            : model.contexts.dayContext.kind === "conflict"
-              ? "À vérifier"
-              : "Inconnu"}
-        </p>
-      </Surface>
-      <Surface variant="subtle">
-        <strong>Périmètres de vie</strong>
-        {model.contexts.lifeScopeSummary.availability === "known" ? (
-          <ul className={styles.cleanList}>
-            {model.contexts.lifeScopeSummary.entries.map((entry) => (
-              <li key={entry.context}><span>{entry.context}</span><MetricDisplay metric={entry.economicAmount} variant="compact" /></li>
-            ))}
+    <li className={styles.operationLine}>
+      <button type="button" onClick={() => navigation.openExploration({ kind: "operation", id: operation.operationId })}>
+        <span>{operation.label}</span>
+        <strong aria-label={amount.accessibleValueText}>{amount.primaryText}</strong>
+      </button>
+    </li>
+  );
+}
+
+function MomentCard({ moment, model, persons, navigation }: {
+  readonly moment: DayJournalMoment;
+  readonly model: HistoryDayDetailReadModel;
+  readonly persons: readonly CalendarPerson[];
+  readonly navigation: CalendarNavigation;
+}) {
+  const time = moment.startAt === undefined
+    ? null
+    : moment.endAt === undefined
+      ? timeLabel(moment.startAt, model.timezone)
+      : `${timeLabel(moment.startAt, model.timezone)} — ${timeLabel(moment.endAt, model.timezone)}`;
+  return (
+    <li>
+      <Surface variant="outlined" className={styles.momentCard}>
+        <div className={styles.momentHeader}>
+          <span className={styles.momentIcon}><CalendarIcon kind={moment.kind} /></span>
+          <span className={styles.momentIdentity}>
+            {time === null ? null : <small>{time}</small>}
+            <strong>{moment.label}</strong>
+          </span>
+          <PersonAvatarCluster participantIds={moment.participantIds} persons={persons} />
+        </div>
+        <div className={styles.momentMeta}>
+          {moment.place ? (
+            <button type="button" onClick={() => navigation.openExploration({ kind: "place", id: moment.place!.placeId })}>
+              <CalendarIcon kind="place" />
+              <span>{moment.place.label}</span>
+            </button>
+          ) : null}
+          {moment.economicAmount ? <MetricDisplay metric={moment.economicAmount} variant="compact" /> : null}
+        </div>
+        {moment.operations.length > 0 ? (
+          <ul className={styles.embeddedOperations} aria-label={`Mouvements liés à ${moment.label}`}>
+            {moment.operations.map((operation) => <OperationLine key={operation.operationId} operation={operation} navigation={navigation} />)}
           </ul>
-        ) : (
-          <p>{model.contexts.lifeScopeSummary.availability === "conflict" ? "À vérifier" : "Inconnu"}</p>
-        )}
+        ) : null}
+        {moment.target ? (
+          <Button tone="quiet" size="sm" action={{ kind: "callback", onAction: () => navigation.openExploration(moment.target!) }}>
+            Explorer ce repère
+          </Button>
+        ) : null}
       </Surface>
+    </li>
+  );
+}
+
+function Journal({ model, persons, navigation }: {
+  readonly model: HistoryDayDetailReadModel;
+  readonly persons: readonly CalendarPerson[];
+  readonly navigation: CalendarNavigation;
+}) {
+  if (model.moments.length === 0 && model.unlinkedOperations.length === 0) {
+    return <EmptyState title="Journée sans entrée documentée" description="Le journal reste vide lorsqu’aucun fait canonique n’est disponible." />;
+  }
+  return (
+    <div className={styles.journal}>
+      {model.moments.length > 0 ? (
+        <ol className={styles.journalTimeline}>
+          {model.moments.map((moment) => <MomentCard key={moment.id} moment={moment} model={model} persons={persons} navigation={navigation} />)}
+        </ol>
+      ) : null}
+      {model.unlinkedOperations.length > 0 ? (
+        <section className={styles.unlinkedMovements}>
+          <h3>Mouvements sans moment associé</h3>
+          <ul className={styles.embeddedOperations}>
+            {model.unlinkedOperations.map((operation) => <OperationLine key={operation.operationId} operation={operation} navigation={navigation} />)}
+          </ul>
+        </section>
+      ) : null}
     </div>
-  );
-}
-
-function FinanceSummary({ model }: { readonly model: HistoryDayDetailReadModel }) {
-  const entries = [
-    ["Dépense économique", model.finance.economicAmount],
-    ["Flux bancaire", model.finance.bankFlowAmount],
-    ["Montant causal", model.finance.causalAmount],
-    ["Montant pendant", model.finance.duringAmount],
-  ] as const;
-  return (
-    <div className={styles.financeGrid}>
-      {entries.map(([label, metric]) => metric ? (
-        <Surface key={label} variant={label === "Dépense économique" ? "outlined" : "subtle"}>
-          <span className={styles.dayMeta}>{label}</span>
-          <MetricDisplay metric={metric} qualifierMode="full" />
-        </Surface>
-      ) : null)}
-    </div>
-  );
-}
-
-function ActivityPreview({
-  model,
-  navigation,
-}: {
-  readonly model: HistoryDayDetailReadModel;
-  readonly navigation: CalendarNavigation;
-}) {
-  if (model.activities.items.length === 0) return null;
-  return (
-    <SectionLayout title="Activités" headingLevel={3}>
-      <ul className={styles.timelineList}>
-        {model.activities.items.map((activity) => (
-          <li key={activity.lifeEventId}>
-            <Surface variant="outlined">
-              <span className={styles.previewHeader}>
-                <strong>{activity.label}</strong>
-                <StatusBadge state={activity.validationStatus === "Confirmé" ? "confirmed" : "deduced"} />
-              </span>
-              <span className={styles.dayMeta}>Du {fullDateLabel(activity.startsOn)} au {fullDateLabel(activity.endsOn)}</span>
-              {activity.causalAmount ? <MetricDisplay metric={activity.causalAmount} variant="compact" /> : null}
-              <Button tone="quiet" size="sm" action={{ kind: "callback", onAction: () => navigation.openExploration({ kind: "life_event", id: activity.lifeEventId }) }}>
-                Explorer le Life Event
-              </Button>
-            </Surface>
-          </li>
-        ))}
-      </ul>
-      {model.activities.truncated ? <p className={styles.dayMeta}>Aperçu limité à {model.activities.maxItems} activités.</p> : null}
-    </SectionLayout>
-  );
-}
-
-function PlacePreview({
-  model,
-  navigation,
-}: {
-  readonly model: HistoryDayDetailReadModel;
-  readonly navigation: CalendarNavigation;
-}) {
-  if (model.places.items.length === 0) return null;
-  return (
-    <SectionLayout title="Lieux" headingLevel={3}>
-      <ul className={styles.timelineList}>
-        {model.places.items.map((place) => (
-          <li key={place.placeId}>
-            <Surface variant="outlined">
-              <span className={styles.previewHeader}>
-                <strong>Visite de lieu</strong>
-                {place.visitState === "partial" ? <QualityBadge state="partial" /> : null}
-              </span>
-              <span className={styles.dayMeta}>Précision : {place.timePrecision}</span>
-              {place.localizedSpend ? <MetricDisplay metric={place.localizedSpend} variant="compact" /> : null}
-              <Button tone="quiet" size="sm" action={{ kind: "callback", onAction: () => navigation.openExploration({ kind: "place", id: place.placeId }) }}>
-                Explorer le lieu
-              </Button>
-            </Surface>
-          </li>
-        ))}
-      </ul>
-      {model.places.truncated ? <p className={styles.dayMeta}>Aperçu limité à {model.places.maxItems} lieux.</p> : null}
-    </SectionLayout>
-  );
-}
-
-function OperationPreview({
-  model,
-  navigation,
-}: {
-  readonly model: HistoryDayDetailReadModel;
-  readonly navigation: CalendarNavigation;
-}) {
-  if (model.operations.items.length === 0) return null;
-  return (
-    <SectionLayout title="Opérations" headingLevel={3}>
-      <ul className={styles.timelineList}>
-        {model.operations.items.map((operation) => {
-          const amount = formatMetricValue(operation.amount, "EUR");
-          return (
-            <li key={operation.operationId}>
-              <Surface variant="outlined">
-                <span className={styles.previewHeader}>
-                  <strong>{operation.label}</strong>
-                  <span aria-label={amount.accessibleValueText}>{amount.primaryText}</span>
-                </span>
-                <span className={styles.previewActions}>
-                  <Button tone="quiet" size="sm" action={{ kind: "callback", onAction: () => navigation.openExploration({ kind: "operation", id: operation.operationId }) }}>
-                    Explorer l’opération
-                  </Button>
-                  {operation.merchantId ? (
-                    <Button tone="quiet" size="sm" action={{ kind: "callback", onAction: () => navigation.openExploration({ kind: "merchant", id: operation.merchantId! }) }}>
-                      Explorer le marchand
-                    </Button>
-                  ) : null}
-                  {operation.placeId ? (
-                    <Button tone="quiet" size="sm" action={{ kind: "callback", onAction: () => navigation.openExploration({ kind: "place", id: operation.placeId! }) }}>
-                      Explorer le lieu
-                    </Button>
-                  ) : null}
-                </span>
-              </Surface>
-            </li>
-          );
-        })}
-      </ul>
-      {model.operations.truncated ? <p className={styles.dayMeta}>Aperçu limité à {model.operations.maxItems} opérations.</p> : null}
-    </SectionLayout>
   );
 }
 
 export function DayDetailDrawer({
   date,
+  persons,
   state,
   navigation,
   open = true,
@@ -194,6 +133,7 @@ export function DayDetailDrawer({
   onRetry,
 }: {
   readonly date: LocalDate;
+  readonly persons: readonly CalendarPerson[];
   readonly state: UiTransportState<HistoryDayDetailReadModel>;
   readonly navigation: CalendarNavigation;
   readonly open?: boolean;
@@ -210,19 +150,11 @@ export function DayDetailDrawer({
   else if (state.status === "error" && model === undefined) content = <ErrorState error={state.error} onRetry={onRetry} />;
   else if (model !== undefined) content = (
     <div className={styles.drawerContent}>
-      <span className={styles.badges}>
-        {model.header.observability === "partial" || model.header.periodCompleteness === "partial" ? <QualityBadge state="partial" /> : null}
-        {model.header.dayContext.kind === "conflict" ? <QualityBadge state="conflict" /> : null}
-      </span>
-      <SectionLayout title="Finance"><FinanceSummary model={model} /></SectionLayout>
-      <SectionLayout title="Contextes"><ContextSummary model={model} /></SectionLayout>
-      <SectionLayout title="Repères du jour" description="Aperçus canoniques, sans recomposition locale.">
-        <div className={styles.drawerSections}>
-          <ActivityPreview model={model} navigation={navigation} />
-          <PlacePreview model={model} navigation={navigation} />
-          <OperationPreview model={model} navigation={navigation} />
-        </div>
-      </SectionLayout>
+      <section className={styles.dayPulse} aria-label="Pouls financier du jour">
+        <span>Dépense économique</span>
+        <MetricDisplay metric={model.finance.economicAmount} />
+      </section>
+      <Journal model={model} persons={persons} navigation={navigation} />
       {state.status === "success" && state.refreshing ? <RefreshIndicator announce /> : null}
       {state.status === "error" ? <RefreshIndicator failed announce /> : null}
     </div>
@@ -230,8 +162,8 @@ export function DayDetailDrawer({
   else throw new TypeError("Réponse Day Detail indisponible.");
   return (
     <OverlayFrame
-      title={`Journée du ${fullDateLabel(model?.date ?? date)}`}
-      subtitle="Détail fourni par history_day_detail"
+      title="Journal du jour"
+      subtitle={fullDateLabel(model?.date ?? date)}
       kind="day_drawer"
       open={open}
       topmost={topmost}

@@ -1420,7 +1420,7 @@ export class CanonicalRepository {
       (batch) =>
       this.client
         .from("life_event_types")
-        .select("life_event_type_id,type_key,label,can_span_days,active")
+        .select("life_event_type_id,type_key,label,can_span_days,active,default_calendar_mode,calendar_priority,calendar_public_label,calendar_default_role,calendar_role_if_parent,calendar_is_fallback,calendar_can_dominate,calendar_title_pattern,calendar_title_fallback,calendar_child_render")
         .in("life_event_type_id", batch)
         .order("life_event_type_id", { ascending: true }));
   }
@@ -1439,7 +1439,7 @@ export class CanonicalRepository {
       (batch) =>
       this.client
         .from("life_event_types")
-        .select("life_event_type_id,type_key,label,can_span_days,active")
+        .select("life_event_type_id,type_key,label,can_span_days,active,default_calendar_mode,calendar_priority,calendar_public_label,calendar_default_role,calendar_role_if_parent,calendar_is_fallback,calendar_can_dominate,calendar_title_pattern,calendar_title_fallback,calendar_child_render")
         .in("type_key", batch)
         .order("type_key", { ascending: true }));
   }
@@ -1458,7 +1458,7 @@ export class CanonicalRepository {
       (batch) =>
       this.client
         .from("life_event_participations")
-        .select("life_event_id,person_day_id,person_id,participation_status")
+        .select("life_event_id,person_day_id,person_id,start_at,end_at,time_precision,participation_role,participation_status")
         .in("life_event_id", batch)
         .order("life_event_id", { ascending: true })
         .order("person_id", { ascending: true }));
@@ -1478,8 +1478,9 @@ export class CanonicalRepository {
       (batch) =>
       this.client
         .from("moment_life_events")
-        .select("moment_id,life_event_id")
+        .select("moment_id,life_event_id,relation_type,validation_status")
         .in("moment_id", batch)
+        .in("validation_status", ["Confirmé", "Déduit"])
         .order("moment_id", { ascending: true })
         .order("life_event_id", { ascending: true }));
   }
@@ -1498,8 +1499,9 @@ export class CanonicalRepository {
       (batch) =>
       this.client
         .from("moment_life_events")
-        .select("moment_id,life_event_id")
+        .select("moment_id,life_event_id,relation_type,validation_status")
         .in("life_event_id", batch)
+        .in("validation_status", ["Confirmé", "Déduit"])
         .order("life_event_id", { ascending: true })
         .order("moment_id", { ascending: true }));
   }
@@ -1518,7 +1520,7 @@ export class CanonicalRepository {
       (batch) =>
       this.client
         .from("life_event_financial_links")
-        .select("financial_link_id,life_event_id,operation_id,relation_type,validation_status")
+        .select("financial_link_id,life_event_id,operation_id,relation_type,temporal_relation,economic_amount_linked_exact:economic_amount_linked::text,amount_precision,transaction_date_used,moment_id_context,validation_status")
         .in("operation_id", batch)
         .in("validation_status", ["Confirmé", "Déduit"])
         .order("operation_id", { ascending: true })

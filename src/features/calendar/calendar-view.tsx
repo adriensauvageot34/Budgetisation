@@ -1,41 +1,42 @@
 "use client";
 
-import { addDays, addMonths, type LocalDate, type YearMonth } from "@/core/time";
+import type { CSSProperties, ReactNode } from "react";
+import { addDays, type LocalDate, type YearMonth } from "@/core/time";
 import type { MonetaryMetricUnit, Money } from "@/core/money";
 import type {
   CalendarDayCell,
+  CalendarDayMarker,
+  CalendarMonthHighlight,
   HistoryCalendarMonthReadModel,
-  HistoryCalendarMonthSummaryReadModel,
 } from "@/query-api";
 import type { CalendarWeekRef } from "@/navigation";
 import {
   Button,
-  CardSurface,
   DesktopFrame,
-  EmptyState,
   ErrorState,
   MetricDisplay,
-  QualityBadge,
   RefreshIndicator,
-  ResponsiveCardGrid,
-  SectionLayout,
   SectionSkeleton,
   Surface,
   WeekBars,
   resolveMetricDisplay,
-  type UiTransportState,
   type SevenDayPoints,
+  type UiTransportState,
 } from "@/ui";
+import { CalendarIcon } from "./calendar-icon";
 import {
   adjacentWeek,
   buildMonthGrid,
   calendarWeekRange,
   calendarWeekRefFor,
+  knownMonthSpendMaximum,
+  layoutCalendarRibbons,
   monthGridWeekRefs,
   selectCalendarWeek,
-  selectTwelveCompleteMonthSummaries,
+  spendIntensityLevel,
 } from "./model";
-import type { CalendarNavigation } from "./types";
+import { PersonAvatarCluster } from "./person-avatar";
+import type { CalendarNavigation, CalendarPerson } from "./types";
 import styles from "./calendar.module.css";
 
 const monthNames = [
@@ -43,6 +44,7 @@ const monthNames = [
   "juillet", "août", "septembre", "octobre", "novembre", "décembre",
 ] as const;
 const weekdayNames = ["Lun", "Mar", "Mer", "Jeu", "Ven", "Sam", "Dim"] as const;
+const visibleMarkerCount = 4;
 
 function monthLabel(month: YearMonth): string {
   const [year, rawMonth] = month.split("-");
@@ -50,223 +52,243 @@ function monthLabel(month: YearMonth): string {
 }
 
 function dayLabel(date: LocalDate, long = false): string {
-  const plain = date.split("-");
-  const day = Number(plain[2]);
-  const month = monthNames[Number(plain[1]) - 1];
-  return long ? `${day} ${month} ${plain[0]}` : String(day);
+  const [year, rawMonth, rawDay] = date.split("-");
+  const day = Number(rawDay);
+  return long ? `${day} ${monthNames[Number(rawMonth) - 1]} ${year}` : String(day);
 }
 
-function dayContextLabel(value: string): string {
-  const labels: Readonly<Record<string, string>> = {
-    work_onsite: "Travail sur site",
-    remote: "Télétravail",
-    weekend_home: "Week-end à domicile",
-    leave_home: "Congé à domicile",
-  };
-  return labels[value] ?? value;
-}
-
-function PeriodQuality({ day }: { readonly day: CalendarDayCell }) {
-  const partial = day.flags.includes("partial_data");
-  const incomplete = day.flags.includes("incomplete_period");
-  const conflict = day.flags.includes("conflict");
+function MarkerLine({ marker, persons }: { readonly marker: CalendarDayMarker; readonly persons: readonly CalendarPerson[] }) {
   return (
-    <span className={styles.badges}>
-      {partial ? <QualityBadge state="partial" /> : null}
-      {incomplete ? <QualityBadge state="incomplete" /> : null}
-      {conflict ? <QualityBadge state="conflict" /> : null}
+    <span className={styles.markerLine}>
+      <CalendarIcon kind={marker.kind} className={styles.markerIcon} />
+      <span className={styles.markerLabel}>{marker.label}</span>
+      <PersonAvatarCluster participantIds={marker.participantIds} persons={persons} />
     </span>
   );
 }
 
 export function CalendarDayCard({
   day,
+  persons,
   navigation,
+  maximumSpend,
   compact = false,
 }: {
   readonly day: CalendarDayCell;
+  readonly persons: readonly CalendarPerson[];
   readonly navigation: CalendarNavigation;
+  readonly maximumSpend: number;
   readonly compact?: boolean;
 }) {
   const metric = resolveMetricDisplay(day.economicAmount, { variant: "compact" });
-  const contextLabel = day.dayContext.kind === "known"
-    ? day.dayContext.values.map(dayContextLabel).join(" · ") || null
-    : day.dayContext.kind === "conflict"
-      ? "Contexte à vérifier"
-      : null;
+  const visibleMarkers = day.markers.slice(0, visibleMarkerCount);
+  const hiddenCount = day.markers.length - visibleMarkers.length;
+  const intensity = spendIntensityLevel(day.economicAmount, maximumSpend);
   const contents = (
     <>
       <span className={styles.dayHeading}>
         <strong>{dayLabel(day.date, compact)}</strong>
-        <PeriodQuality day={day} />
+        <MetricDisplay metric={day.economicAmount} variant="compact" />
       </span>
-      {contextLabel === null ? null : <span className={styles.dayMeta}>{contextLabel}</span>}
-      <MetricDisplay metric={day.economicAmount} variant="compact" />
-      <span className={styles.counts}>
-        {day.activityOccurrenceCount ? (
-          <span>Activités <MetricDisplay metric={day.activityOccurrenceCount} variant="compact" /></span>
-        ) : null}
-        {day.placeVisitCount ? (
-          <span>Lieux <MetricDisplay metric={day.placeVisitCount} variant="compact" /></span>
-        ) : null}
-        {day.operationCount ? (
-          <span>Opérations <MetricDisplay metric={day.operationCount} variant="compact" /></span>
-        ) : null}
+      <span className={styles.markerList}>
+        {visibleMarkers.map((marker) => <MarkerLine key={marker.id} marker={marker} persons={persons} />)}
+        {hiddenCount > 0 ? <span className={styles.moreMarkers}>+{hiddenCount}</span> : null}
+      </span>
+      <span className={styles.daySummary} aria-hidden="true">
+        <strong>{dayLabel(day.date, true)}</strong>
+        <span>{metric.accessibleText ?? "Dépense non disponible"}</span>
+        {day.markers.map((marker) => <span key={marker.id}>{marker.label}</span>)}
       </span>
     </>
   );
-  if (!day.hasDetail) {
-    return (
-      <Surface variant="subtle" action={{ kind: "disabled", reason: "Aucun détail disponible pour ce jour." }} className={styles.dayCard}>
-        {contents}
-      </Surface>
-    );
-  }
   return (
     <Surface
-      variant="outlined"
-      action={{ kind: "callback", onAction: () => navigation.openDay(day.date) }}
-      className={styles.dayCard}
-      ariaLabel={`Ouvrir le ${dayLabel(day.date, true)}, ${metric.accessibleText ?? "montant non disponible"}`}
+      variant={day.hasDetail ? "outlined" : "subtle"}
+      action={day.hasDetail
+        ? { kind: "callback", onAction: () => navigation.openDay(day.date) }
+        : { kind: "disabled", reason: "Aucun journal disponible pour ce jour." }}
+      className={`${styles.dayCard} ${styles[`intensity${intensity}`]}`}
+      ariaLabel={`Ouvrir le journal du ${dayLabel(day.date, true)}, ${metric.accessibleText ?? "dépense non disponible"}${day.markers.length === 0 ? "" : `. Repères : ${day.markers.map(({ label }) => label).join(", ")}`}`}
     >
       {contents}
     </Surface>
   );
 }
 
-export function CalendarTwelveMonths({
-  state,
-  navigation,
-  onRetry,
-}: {
-  readonly state: UiTransportState<readonly HistoryCalendarMonthSummaryReadModel[]>;
-  readonly navigation?: Pick<CalendarNavigation, "openCalendarMonth">;
-  readonly onRetry?: () => void;
+function ViewSwitch({ navigation }: { readonly navigation?: CalendarNavigation }) {
+  return (
+    <div className={styles.viewSwitch} role="group" aria-label="Vue de l’historique">
+      <span className={styles.viewSwitchCurrent} aria-current="page">Calendrier</span>
+      <Button
+        tone="quiet"
+        size="sm"
+        action={navigation ? { kind: "callback", onAction: () => { void navigation.goToAnalysis(); } } : { kind: "disabled" }}
+      >
+        Analyse
+      </Button>
+    </div>
+  );
+}
+
+function Highlight({ highlight, persons, navigation }: {
+  readonly highlight: CalendarMonthHighlight;
+  readonly persons: readonly CalendarPerson[];
+  readonly navigation?: CalendarNavigation;
 }) {
-  let content;
-  if (state.status === "idle" || state.status === "loading") content = <SectionSkeleton />;
-  else if (state.status === "error" && state.previousData === undefined) {
-    content = <ErrorState error={state.error} onRetry={onRetry} />;
-  } else {
-    const response = state.status === "success" ? state.response : state.previousData;
-    const months = selectTwelveCompleteMonthSummaries(response?.data ?? []);
-    content = months.length === 0 ? (
-      <EmptyState
-        title="Aucun mois complet disponible"
-        description="La vue annuelle n’invente aucune période manquante."
-      />
-    ) : (
-      <>
-        {months.length < 12 ? <p className={styles.dayMeta}>Seuls {months.length} mois complets sont actuellement disponibles.</p> : null}
-        <ResponsiveCardGrid label="Douze derniers mois complets">
-          {months.map((model) => (
-            <CardSurface
-              key={model.month}
-              variant="outlined"
-              action={navigation
-                ? { kind: "callback", onAction: () => navigation.openCalendarMonth(model.month) }
-                : { kind: "disabled", reason: "Navigation Calendar indisponible." }}
-              ariaLabel={`Ouvrir ${monthLabel(model.month)}`}
-              className={styles.monthCard}
-            >
-              <span className={styles.eyebrow}>Mois complet</span>
-              <strong>{monthLabel(model.month)}</strong>
-              <MetricDisplay metric={model.summary.economicAmount} />
-              <span className={styles.monthFacts}>
-                {model.summary.daysWithActivity ? (
-                  <span>Jours avec activité <MetricDisplay metric={model.summary.daysWithActivity} variant="compact" /></span>
-                ) : null}
-                {model.summary.daysWithPlaceVisit ? (
-                  <span>Jours avec lieu <MetricDisplay metric={model.summary.daysWithPlaceVisit} variant="compact" /></span>
-                ) : null}
-              </span>
-            </CardSurface>
-          ))}
-        </ResponsiveCardGrid>
-        {state.status === "success" && state.refreshing ? <RefreshIndicator announce /> : null}
-        {state.status === "error" ? <RefreshIndicator failed announce /> : null}
-      </>
+  const contents = (
+    <>
+      <CalendarIcon kind={highlight.kind} className={styles.highlightIcon} />
+      <span>
+        <strong>{highlight.label}</strong>
+        <small>{highlight.startsOn === highlight.endsOn ? dayLabel(highlight.startsOn, true) : `${dayLabel(highlight.startsOn, true)} — ${dayLabel(highlight.endsOn, true)}`}</small>
+      </span>
+      <PersonAvatarCluster participantIds={highlight.participantIds} persons={persons} />
+    </>
+  );
+  return highlight.target !== undefined && navigation !== undefined ? (
+    <button type="button" className={styles.highlight} onClick={() => navigation.openExploration(highlight.target!)}>{contents}</button>
+  ) : <div className={styles.highlight}>{contents}</div>;
+}
+
+function MonthlyPulse({ model, persons, navigation }: {
+  readonly model: HistoryCalendarMonthReadModel;
+  readonly persons: readonly CalendarPerson[];
+  readonly navigation?: CalendarNavigation;
+}) {
+  return (
+    <section className={styles.monthPulse} aria-label="Pouls financier et temps forts du mois">
+      <div className={styles.financialPulse}>
+        <span>Dépense économique</span>
+        <MetricDisplay metric={model.summary.economicAmount} />
+      </div>
+      {model.highlights.length > 0 ? (
+        <div className={styles.highlights}>
+          <span className={styles.sectionLabel}>Temps forts</span>
+          <div className={styles.highlightList}>
+            {model.highlights.map((highlight) => <Highlight key={highlight.id} highlight={highlight} persons={persons} navigation={navigation} />)}
+          </div>
+        </div>
+      ) : (
+        <p className={styles.dataNote}>Aucun temps fort canonique n’est documenté pour ce mois.</p>
+      )}
+    </section>
+  );
+}
+
+function MonthGrid({ model, persons, navigation }: {
+  readonly model: HistoryCalendarMonthReadModel;
+  readonly persons: readonly CalendarPerson[];
+  readonly navigation?: CalendarNavigation;
+}) {
+  const slots = buildMonthGrid(model);
+  const weeks = monthGridWeekRefs(model);
+  const ribbons = layoutCalendarRibbons(model.month, model.spanningEvents);
+  const maximumSpend = knownMonthSpendMaximum(model.days);
+  const controller = navigation ?? disabledNavigation;
+  const rows: ReactNode[] = [];
+  for (let row = 0; row < slots.length / 7; row += 1) {
+    const weekSlots = slots.slice(row * 7, row * 7 + 7);
+    const firstDay = weekSlots.find((slot) => slot.kind === "day");
+    const week = weeks[row] ?? (firstDay?.kind === "day" ? calendarWeekRefFor(firstDay.day.date) : undefined);
+    const weekSegments = ribbons.segments.filter(({ weekIndex }) => weekIndex === row);
+    const hidden = ribbons.hiddenByWeek.get(row) ?? 0;
+    rows.push(
+      <div className={styles.calendarWeekRow} key={`week-${row}`}>
+        <Button
+          tone="quiet"
+          size="sm"
+          action={navigation && week ? { kind: "callback", onAction: () => navigation.openCalendarWeek(model.month, week) } : { kind: "disabled" }}
+          className={styles.weekButton}
+        >
+          {week?.replace("semaine-", "S") ?? "—"}
+        </Button>
+        <div className={styles.weekCanvas}>
+          {weekSegments.length > 0 || hidden > 0 ? (
+            <div className={styles.ribbonGrid} style={{ "--ribbon-lanes": ribbons.laneCount } as CSSProperties}>
+              {weekSegments.map((segment) => (
+                <button
+                  type="button"
+                  key={segment.id}
+                  className={styles.ribbon}
+                  data-kind={segment.event.kind}
+                  style={{ gridColumn: `${segment.startColumn} / span ${segment.span}`, gridRow: segment.lane + 1 }}
+                  onClick={() => navigation?.openExploration(segment.event.target!)}
+                  disabled={navigation === undefined || segment.event.target === undefined}
+                  aria-label={`${segment.event.label}, du ${dayLabel(segment.event.startsOn, true)} au ${dayLabel(segment.event.endsOn, true)}`}
+                >
+                  {segment.continuesBefore ? <span aria-hidden="true">‹</span> : null}
+                  <CalendarIcon kind={segment.event.kind} />
+                  <span>{segment.event.label}</span>
+                  {segment.continuesAfter ? <span aria-hidden="true">›</span> : null}
+                </button>
+              ))}
+              {hidden > 0 ? <span className={styles.ribbonOverflow} style={{ gridRow: ribbons.laneCount + 1 }}>+{hidden} repère{hidden > 1 ? "s" : ""}</span> : null}
+            </div>
+          ) : null}
+          <div className={styles.weekDayGrid}>
+            {weekSlots.map((slot) => slot.kind === "padding"
+              ? <span key={slot.key} className={styles.padding} aria-hidden="true" />
+              : <CalendarDayCard key={slot.key} day={slot.day} persons={persons} navigation={controller} maximumSpend={maximumSpend} />)}
+          </div>
+        </div>
+      </div>,
     );
   }
   return (
-    <DesktopFrame label="Historique Calendar" className={styles.frame}>
-      <header className={styles.pageHeader}>
-        <span className={styles.eyebrow}>Historique</span>
-        <h1>Calendar</h1>
-        <p>Les douze derniers mois complets, sans recomposition locale des métriques.</p>
-      </header>
-      <SectionLayout title="12 mois" description="Synthèses fournies par history_calendar_month_summary.">
-        {content}
-      </SectionLayout>
-    </DesktopFrame>
+    <div className={styles.calendarTable} role="grid" aria-label={`Jours de ${monthLabel(model.month)}`}>
+      <div className={styles.calendarHead}>
+        <span className={styles.weekHeading}>Sem.</span>
+        <div className={styles.weekdayGrid}>
+          {weekdayNames.map((name) => <span key={name} className={styles.weekday} role="columnheader">{name}</span>)}
+        </div>
+      </div>
+      {rows}
+    </div>
   );
 }
 
 export function CalendarMonth({
   month,
+  persons,
+  adjacentMonths,
   state,
   navigation,
   onRetry,
 }: {
   readonly month: YearMonth;
+  readonly persons: readonly CalendarPerson[];
+  readonly adjacentMonths: { readonly previous?: YearMonth; readonly next?: YearMonth };
   readonly state: UiTransportState<HistoryCalendarMonthReadModel>;
   readonly navigation?: CalendarNavigation;
   readonly onRetry?: () => void;
 }) {
-  const response = state.status === "success"
-    ? state.response
-    : state.status === "error"
-      ? state.previousData
-      : undefined;
+  const response = state.status === "success" ? state.response : state.status === "error" ? state.previousData : undefined;
   const model = response?.data;
-  if (model !== undefined && model.month !== month) {
-    throw new TypeError("Le read model Calendar ne correspond pas au mois de la route.");
-  }
-  let content: React.ReactNode;
-  if (state.status === "idle" || state.status === "loading") {
-    content = <SectionSkeleton />;
-  } else if (state.status === "error" && model === undefined) {
-    content = <ErrorState error={state.error} onRetry={onRetry} />;
-  } else if (model === undefined) {
-    throw new TypeError("Réponse mensuelle Calendar indisponible.");
-  } else {
-    const slots = buildMonthGrid(model);
-    const weeks = monthGridWeekRefs(model);
-    content = (
-      <>
-        <div className={styles.calendarGrid} role="grid" aria-label={`Jours de ${monthLabel(month)}`}>
-          <span className={styles.weekHeading}>Sem.</span>
-          {weekdayNames.map((name) => <span key={name} className={styles.weekday} role="columnheader">{name}</span>)}
-          {Array.from({ length: slots.length / 7 }, (_, row) => {
-            const firstSlot = slots[row * 7];
-            const week = weeks[row] ?? (firstSlot?.kind === "day" ? calendarWeekRefFor(firstSlot.day.date) : undefined);
-            return [
-              <Button key={`week-${row}`} tone="quiet" size="sm" action={navigation && week ? { kind: "callback", onAction: () => navigation.openCalendarWeek(month, week) } : { kind: "disabled" }} className={styles.weekButton}>{week?.replace("semaine-", "S") ?? "—"}</Button>,
-              ...slots.slice(row * 7, row * 7 + 7).map((slot) => slot.kind === "padding"
-                ? <span key={slot.key} className={styles.padding} aria-hidden="true" />
-                : <CalendarDayCard key={slot.key} day={slot.day} navigation={navigation ?? disabledNavigation} />),
-            ];
-          })}
-        </div>
-        {state.status === "success" && state.refreshing ? <RefreshIndicator announce /> : null}
-        {state.status === "error" ? <RefreshIndicator failed announce /> : null}
-      </>
-    );
-  }
+  if (model !== undefined && model.month !== month) throw new TypeError("Le read model Calendar ne correspond pas au mois de la route.");
+  let content: ReactNode;
+  if (state.status === "idle" || state.status === "loading") content = <SectionSkeleton />;
+  else if (state.status === "error" && model === undefined) content = <ErrorState error={state.error} onRetry={onRetry} />;
+  else if (model === undefined) throw new TypeError("Réponse mensuelle Calendar indisponible.");
+  else content = (
+    <>
+      <MonthlyPulse model={model} persons={persons} navigation={navigation} />
+      <MonthGrid model={model} persons={persons} navigation={navigation} />
+      {state.status === "success" && state.refreshing ? <RefreshIndicator announce /> : null}
+      {state.status === "error" ? <RefreshIndicator failed announce /> : null}
+    </>
+  );
   return (
     <DesktopFrame label={`Calendrier ${monthLabel(month)}`} className={styles.frame}>
       <header className={styles.pageHeader}>
-        <span className={styles.eyebrow}>Calendar · mois</span>
+        <div className={styles.historyIdentity}>
+          <span className={styles.eyebrow}>Historique</span>
+          <ViewSwitch navigation={navigation} />
+        </div>
         <div className={styles.titleRow}>
-          <Button tone="secondary" action={navigation ? { kind: "callback", onAction: () => navigation.openCalendarMonth(addMonths(month, -1)) } : { kind: "disabled" }}>Mois précédent</Button>
+          <Button tone="secondary" action={navigation && adjacentMonths.previous ? { kind: "callback", onAction: () => navigation.openCalendarMonth(adjacentMonths.previous!) } : { kind: "disabled", reason: "Aucun mois historique précédent." }}>Mois précédent</Button>
           <h1>{monthLabel(month)}</h1>
-          <Button tone="secondary" action={navigation ? { kind: "callback", onAction: () => navigation.openCalendarMonth(addMonths(month, 1)) } : { kind: "disabled" }}>Mois suivant</Button>
+          <Button tone="secondary" action={navigation && adjacentMonths.next ? { kind: "callback", onAction: () => navigation.openCalendarMonth(adjacentMonths.next!) } : { kind: "disabled", reason: "Aucun mois historique suivant." }}>Mois suivant</Button>
         </div>
-        <div className={styles.headerActions}>
-          {model === undefined ? null : <span className={styles.dayMeta}>Sujet : {model.subject.kind === "household" ? "foyer" : "personne"}</span>}
-          <Button tone="quiet" size="sm" action={navigation ? { kind: "callback", onAction: () => { void navigation.goToAnalysis(); } } : { kind: "disabled" }}>Passer à l’analyse</Button>
-        </div>
-        {model === undefined ? null : <div className={styles.monthTotal}><span>Dépense économique</span><MetricDisplay metric={model.summary.economicAmount} /></div>}
       </header>
       {content}
     </DesktopFrame>
@@ -284,15 +306,10 @@ const disabledNavigation: CalendarNavigation = {
   goToAnalysis: async () => ({ kind: "noop", reason: "not_started" }),
 };
 
-export function CalendarWeek({
-  month,
-  week,
-  state,
-  navigation,
-  onRetry,
-}: {
+export function CalendarWeek({ month, week, persons, state, navigation, onRetry }: {
   readonly month: YearMonth;
   readonly week: CalendarWeekRef;
+  readonly persons: readonly CalendarPerson[];
   readonly state: UiTransportState<readonly HistoryCalendarMonthReadModel[]>;
   readonly navigation?: CalendarNavigation;
   readonly onRetry?: () => void;
@@ -301,43 +318,24 @@ export function CalendarWeek({
   const previous = adjacentWeek(range.start, -1);
   const next = adjacentWeek(range.start, 1);
   const controller = navigation ?? disabledNavigation;
-  const response = state.status === "success"
-    ? state.response
-    : state.status === "error"
-      ? state.previousData
-      : undefined;
-  let content: React.ReactNode;
-  if (state.status === "idle" || state.status === "loading") {
-    content = <SectionSkeleton />;
-  } else if (state.status === "error" && response === undefined) {
-    content = <ErrorState error={state.error} onRetry={onRetry} />;
-  } else if (response === undefined) {
-    throw new TypeError("Réponse hebdomadaire Calendar indisponible.");
-  } else {
+  const response = state.status === "success" ? state.response : state.status === "error" ? state.previousData : undefined;
+  let content: ReactNode;
+  if (state.status === "idle" || state.status === "loading") content = <SectionSkeleton />;
+  else if (state.status === "error" && response === undefined) content = <ErrorState error={state.error} onRetry={onRetry} />;
+  else if (response === undefined) throw new TypeError("Réponse hebdomadaire Calendar indisponible.");
+  else {
     const selection = selectCalendarWeek(month, week, response.data);
-    const point = (day: CalendarDayCell) => ({
-      date: day.date,
-      label: dayLabel(day.date),
-      metric: day.economicAmount,
-    });
+    const point = (day: CalendarDayCell) => ({ date: day.date, label: dayLabel(day.date), metric: day.economicAmount });
     const points: SevenDayPoints<Money, MonetaryMetricUnit> = [
-      point(selection.days[0]),
-      point(selection.days[1]),
-      point(selection.days[2]),
-      point(selection.days[3]),
-      point(selection.days[4]),
-      point(selection.days[5]),
-      point(selection.days[6]),
+      point(selection.days[0]), point(selection.days[1]), point(selection.days[2]), point(selection.days[3]),
+      point(selection.days[4]), point(selection.days[5]), point(selection.days[6]),
     ];
+    const maximumSpend = knownMonthSpendMaximum(selection.days);
     content = (
       <>
-        <WeekBars
-          unit={selection.days[0].economicAmount.unit}
-          points={points}
-          frame={{ title: "Dépense économique par jour", state: { kind: "ready", refreshing: state.status === "success" && state.refreshing }, summary: "Sept jours civils, sans total recalculé côté UI." }}
-        />
+        <WeekBars unit={selection.days[0].economicAmount.unit} points={points} frame={{ title: "Dépense économique par jour", state: { kind: "ready", refreshing: state.status === "success" && state.refreshing }, summary: "Sept jours civils." }} />
         <div className={styles.weekCards}>
-          {selection.days.map((day) => <CalendarDayCard key={day.date} day={day} navigation={controller} compact />)}
+          {selection.days.map((day) => <CalendarDayCard key={day.date} day={day} persons={persons} navigation={controller} maximumSpend={maximumSpend} compact />)}
         </div>
         {state.status === "error" ? <RefreshIndicator failed announce /> : null}
       </>
@@ -346,16 +344,16 @@ export function CalendarWeek({
   return (
     <DesktopFrame label={`Semaine ${week}`} className={styles.frame}>
       <header className={styles.pageHeader}>
-        <span className={styles.eyebrow}>Calendar · semaine</span>
+        <div className={styles.historyIdentity}><span className={styles.eyebrow}>Historique · semaine</span></div>
         <div className={styles.titleRow}>
           <Button tone="secondary" action={{ kind: "callback", onAction: () => controller.openCalendarWeek(previous.month, previous.week) }}>Semaine précédente</Button>
           <h1>{week.replace("semaine-", "Semaine ")}</h1>
           <Button tone="secondary" action={{ kind: "callback", onAction: () => controller.openCalendarWeek(next.month, next.week) }}>Semaine suivante</Button>
         </div>
-        <div className={styles.headerActions}>
+        <div className={styles.weekSubhead}>
+          <p>Du {dayLabel(range.start, true)} au {dayLabel(range.end, true)}</p>
           <Button tone="quiet" size="sm" action={{ kind: "callback", onAction: () => controller.openCalendarMonth(month) }}>Retour au mois</Button>
         </div>
-        <p>Du {dayLabel(range.start, true)} au {dayLabel(range.end, true)}</p>
       </header>
       {content}
     </DesktopFrame>
