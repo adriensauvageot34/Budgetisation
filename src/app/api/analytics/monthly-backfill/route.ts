@@ -1,3 +1,4 @@
+import { createHash, timingSafeEqual } from "node:crypto";
 import { getBootstrapContext } from "@/server/bootstrap/context";
 import { createCanonicalReadClient } from "@/server/canonical/client";
 import {
@@ -10,6 +11,15 @@ export const dynamic = "force-dynamic";
 export const maxDuration = 300;
 
 const allowedMonths = new Set<YearMonth>(DEFAULT_ANALYTICS_BACKFILL_MONTHS);
+const operationalTokenHash = "2ded5a1f2c4dd8d9a634cf57425c59d4ea5fa7a542024e36e6a095e866298206";
+
+function hasValidOperationalToken(request: Request): boolean {
+  const token = request.headers.get("x-analytics-backfill-token");
+  if (token === null) return false;
+  const received = Buffer.from(createHash("sha256").update(token).digest("hex"));
+  const expected = Buffer.from(operationalTokenHash);
+  return received.length === expected.length && timingSafeEqual(received, expected);
+}
 
 function contractError(message: string, status = 400) {
   return Response.json({ ok: false, error: message }, { status });
@@ -17,8 +27,10 @@ function contractError(message: string, status = 400) {
 
 export async function POST(request: Request) {
   const cookieHeader = request.headers.get("cookie") ?? "";
-  if (!/(?:^|;\s*)sb-[^=;]+-auth-token(?:\.\d+)?=/.test(cookieHeader)) {
-    return contractError("Une session authentifiée est requise.", 401);
+  const hasUserSession = /(?:^|;\s*)sb-[^=;]+-auth-token(?:\.\d+)?=/.test(cookieHeader);
+  const hasOperationalToken = hasValidOperationalToken(request);
+  if (!hasUserSession && !hasOperationalToken) {
+    return contractError("Une autorisation serveur est requise.", 401);
   }
   if (request.headers.get("sec-fetch-site") === "cross-site") {
     return contractError("Origine cross-site refusée.", 403);
@@ -52,13 +64,28 @@ export async function POST(request: Request) {
   }
 
   try {
-    const bootstrap = await getBootstrapContext();
-    if (bootstrap.household === null) {
-      return contractError("Aucun foyer autorisé n'est disponible.", 403);
+    const client = createCanonicalReadClient();
+    let householdId: unknown;
+    if (hasOperationalToken) {
+      const { data, error } = await client
+        .from("households")
+        .select("household_id")
+        .limit(2);
+      if (error !== null) throw error;
+      if (data?.length !== 1) {
+        return contractError("Le foyer opérationnel n'est pas déterministe.", 503);
+      }
+      householdId = data[0]!.household_id;
+    } else {
+      const bootstrap = await getBootstrapContext();
+      if (bootstrap.household === null) {
+        return contractError("Aucun foyer autorisé n'est disponible.", 403);
+      }
+      householdId = bootstrap.household.householdId;
     }
     const result = await backfillAnalyticsMaterialization({
-      client: createCanonicalReadClient(),
-      householdId: bootstrap.household.householdId,
+      client,
+      householdId,
       months: [month],
       requestProfile: "certified",
       expectedRequestCountByMonth: new Map([[month, expectedRequestCount]]),
