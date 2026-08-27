@@ -67,6 +67,14 @@ const { FactSourceResolver } = require(path.join(
   repositoryRoot,
   "src/server/analytics/fact-source-resolver.ts",
 ));
+const { toBoundaryQueryRequest } = require(path.join(
+  repositoryRoot,
+  "src/server/analytics/materialization/backfill.ts",
+));
+const { executeQuery } = require(path.join(
+  repositoryRoot,
+  "src/query-api/server/execute-query.ts",
+));
 assert.equal(isQueryMaterializationResource("history_calendar_month"), true);
 assert.equal(isQueryMaterializationResource("history_day_detail"), true);
 assert.match(fs.readFileSync(path.join(repositoryRoot, "src/server/analytics/materialization/identity.ts"), "utf8"), /history-calendar@v2/);
@@ -130,6 +138,34 @@ const augustScope = normalizeAnalysisScope({
   subject: { kind: "household" },
   time: { kind: "month", month: "2026-08" },
 });
+const normalizedAugustInitial = normalizeQueryRequest({
+  resource: "analysis_month_initial",
+  scope: {
+    subject: { kind: "household" },
+    time: { kind: "month", month: "2025-08" },
+  },
+  params: {},
+});
+assert.equal(Object.hasOwn(normalizedAugustInitial, "scopeHash"), true);
+const boundaryAugustInitial = toBoundaryQueryRequest(normalizedAugustInitial);
+assert.equal(Object.hasOwn(boundaryAugustInitial, "scopeHash"), false);
+assert.deepEqual(Object.keys(boundaryAugustInitial).sort(), ["params", "resource", "scope"]);
+const boundaryExecution = await executeQuery({
+  requestId: "backfill-boundary-2025-08-initial",
+  request: boundaryAugustInitial,
+}, {
+  resolveContext: async () => ({
+    actor: { actorId: "backfill-boundary-test" },
+    household: { householdId: householdA },
+    revisions: { dataRevision: "1", analyticsRevision: "1", dependencies: [] },
+    contractVersion: "v1",
+    now: "2026-08-27T00:00:00Z",
+  }),
+  authorize: async () => ({ granted: false, errorCode: "PERMISSION_DENIED" }),
+  sources: {},
+});
+assert.equal(boundaryExecution.ok, false);
+assert.equal(boundaryExecution.error.code, "PERMISSION_DENIED");
 
 assert.equal(isScopedMaterializationFresh({
   rowSourceRevision: BigInt(1),

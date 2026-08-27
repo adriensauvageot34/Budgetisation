@@ -1,6 +1,6 @@
 import "server-only";
 
-import { randomUUID } from "node:crypto";
+import { createHash, randomUUID } from "node:crypto";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { parseHouseholdId, type CategoryId, type HouseholdId } from "@/core/identity";
 import {
@@ -41,6 +41,35 @@ export const DEFAULT_ANALYTICS_BACKFILL_MONTHS = Object.freeze([
   "2025-08", "2025-09", "2025-10", "2025-11", "2025-12", "2026-01",
   "2026-02", "2026-03", "2026-04", "2026-05", "2026-06", "2026-07",
 ].map(parseYearMonth));
+
+export function toBoundaryQueryRequest(
+  request: AnyNormalizedQueryRequest,
+) {
+  return {
+    resource: request.resource,
+    scope: request.scope,
+    params: request.params,
+  };
+}
+
+function stablePayload(value: unknown): unknown {
+  if (Array.isArray(value)) return value.map(stablePayload);
+  if (value !== null && typeof value === "object") {
+    return Object.fromEntries(
+      Object.keys(value).sort().map((key) => [
+        key,
+        stablePayload((value as Record<string, unknown>)[key]),
+      ]),
+    );
+  }
+  return value;
+}
+
+export function certifiedPayloadSha256(value: unknown): string {
+  return createHash("sha256")
+    .update(JSON.stringify(stablePayload(value)))
+    .digest("hex");
+}
 
 export function hotMonthQueryRequests(month: YearMonth): readonly AnyNormalizedQueryRequest[] {
   const scope = normalizeAnalysisScope({
@@ -142,7 +171,10 @@ async function readStructureForBackfill(
   services: ReturnType<typeof createReadOnlyQueryServicesForContext>,
 ): Promise<AnalysisMonthStructureReadModel> {
   const request = monthRequest(month, "analysis_month_structure", { kind: "household" }, params);
-  const execution = await executeQuery({ requestId: randomUUID(), request }, services);
+  const execution = await executeQuery({
+    requestId: randomUUID(),
+    request: toBoundaryQueryRequest(request),
+  }, services);
   if (!execution.ok) {
     throw new Error(`Découverte ${month}/analysis_month_structure refusée: ${execution.error.code}.`);
   }
@@ -233,9 +265,27 @@ async function runtimeContext(
   }, parseInstant(new Date().toISOString()));
 }
 
+export async function executeReadOnlyBackfillQuery(input: {
+  readonly client: SupabaseClient;
+  readonly householdId: unknown;
+  readonly request: AnyNormalizedQueryRequest;
+}) {
+  const context = await runtimeContext(input.client, parseHouseholdId(input.householdId));
+  const services = createReadOnlyQueryServicesForContext({
+    context,
+    client: input.client,
+    onTrace: () => {},
+  });
+  return executeQuery({
+    requestId: randomUUID(),
+    request: toBoundaryQueryRequest(input.request),
+  }, services);
+}
+
 export type AnalyticsBackfillResult = {
   readonly month: YearMonth;
   readonly status: "published" | "already_fresh";
+  readonly hashMatches: number;
 };
 
 export async function backfillAnalyticsMaterialization(input: {
@@ -245,6 +295,7 @@ export async function backfillAnalyticsMaterialization(input: {
   readonly requestsByMonth?: ReadonlyMap<YearMonth, readonly AnyNormalizedQueryRequest[]>;
   readonly requestProfile?: "hot" | "certified";
   readonly expectedRequestCountByMonth?: ReadonlyMap<YearMonth, number>;
+  readonly expectedPayloadHashesByMonth?: ReadonlyMap<YearMonth, readonly string[]>;
   readonly force?: boolean;
   readonly onProgress?: (result: AnalyticsBackfillResult) => void;
 }): Promise<readonly AnalyticsBackfillResult[]> {
@@ -271,10 +322,24 @@ export async function backfillAnalyticsMaterialization(input: {
         `Le lot ${month} contient ${requests.length} Queries au lieu de ${expectedRequestCount}.`,
       );
     }
+    const expectedPayloadHashes = input.expectedPayloadHashesByMonth?.get(month);
+    if (expectedPayloadHashes !== undefined && expectedPayloadHashes.length !== requests.length) {
+      throw new TypeError(`Le lot ${month} ne contient pas tous les hashes certifiés.`);
+    }
     const readStore = new SupabaseAnalyticsMaterializationStore(input.client, context);
     const hits = await Promise.all(requests.map((request) => readStore.readQuery(request)));
     if (input.force !== true && hits.every((hit) => hit !== null)) {
-      const result = { month, status: "already_fresh" as const };
+      let hashMatches = 0;
+      for (const [index, hit] of hits.entries()) {
+        const expectedHash = expectedPayloadHashes?.[index];
+        if (expectedHash === undefined) continue;
+        const actualHash = certifiedPayloadSha256(hit!.data);
+        if (actualHash !== expectedHash) {
+          throw new TypeError(`Le hash certifié ${month}/${requests[index]!.resource} ne correspond pas.`);
+        }
+        hashMatches += 1;
+      }
+      const result = { month, status: "already_fresh" as const, hashMatches };
       results.push(result);
       input.onProgress?.(result);
       continue;
@@ -292,9 +357,13 @@ export async function backfillAnalyticsMaterialization(input: {
         client: input.client,
         materialization: publicationStore,
       });
-      for (const request of requests) {
+      let hashMatches = 0;
+      for (const [index, request] of requests.entries()) {
         const execution = await executeQuery(
-          { requestId: randomUUID(), request },
+          {
+            requestId: randomUUID(),
+            request: toBoundaryQueryRequest(request),
+          },
           services,
         );
         if (!execution.ok) {
@@ -302,9 +371,19 @@ export async function backfillAnalyticsMaterialization(input: {
             `Backfill ${month}/${request.resource} refusé: ${execution.error.code}.`,
           );
         }
+        const expectedHash = expectedPayloadHashes?.[index];
+        if (expectedHash !== undefined) {
+          const actualHash = certifiedPayloadSha256(execution.response.data);
+          if (actualHash !== expectedHash) {
+            throw new TypeError(
+              `Le hash certifié ${month}/${request.resource} ne correspond pas.`,
+            );
+          }
+          hashMatches += 1;
+        }
       }
       await publicationStore.publishPrepared(publicationId);
-      const result = { month, status: "published" as const };
+      const result = { month, status: "published" as const, hashMatches };
       results.push(result);
       input.onProgress?.(result);
     } catch (error) {
