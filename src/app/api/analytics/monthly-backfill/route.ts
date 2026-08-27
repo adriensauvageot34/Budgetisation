@@ -5,6 +5,7 @@ import {
   backfillAnalyticsMaterialization,
   DEFAULT_ANALYTICS_BACKFILL_MONTHS,
 } from "@/server/analytics/materialization/backfill";
+import { normalizeQueryRequest, type AnyNormalizedQueryRequest } from "@/query-api";
 import { parseYearMonth, type YearMonth } from "@/core/time";
 
 export const dynamic = "force-dynamic";
@@ -48,6 +49,7 @@ export async function POST(request: Request) {
   const record = body as Record<string, unknown>;
   let month: YearMonth;
   let expectedRequestCount: number;
+  let requests: readonly AnyNormalizedQueryRequest[];
   try {
     month = parseYearMonth(record.month);
     if (!allowedMonths.has(month)) {
@@ -59,6 +61,17 @@ export async function POST(request: Request) {
       throw new TypeError("Le nombre de Queries certifiées est invalide.");
     }
     expectedRequestCount = Number(record.expectedRequestCount);
+    if (!Array.isArray(record.requests)) {
+      throw new TypeError("Le lot certifié de Queries est absent.");
+    }
+    requests = record.requests.map(normalizeQueryRequest);
+    if (requests.length !== expectedRequestCount) {
+      throw new TypeError("Le lot certifié ne correspond pas au cardinal attendu.");
+    }
+    if (requests.some(({ scope }) =>
+      scope.time.kind !== "month" || scope.time.month !== month)) {
+      throw new TypeError("Le lot certifié contient une Query hors mois.");
+    }
   } catch (error) {
     return contractError(error instanceof Error ? error.message : "Lot certifié invalide.");
   }
@@ -87,7 +100,7 @@ export async function POST(request: Request) {
       client,
       householdId,
       months: [month],
-      requestProfile: "certified",
+      requestsByMonth: new Map([[month, requests]]),
       expectedRequestCountByMonth: new Map([[month, expectedRequestCount]]),
     });
     return Response.json({
