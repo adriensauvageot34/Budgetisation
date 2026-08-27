@@ -10,7 +10,7 @@ import {
 import { createCanonicalReadClient } from "@/server/canonical/client";
 
 export const dynamic = "force-dynamic";
-export const maxDuration = 300;
+export const maxDuration = 800;
 
 const allowedMonths = new Set<YearMonth>(DEFAULT_ANALYTICS_BACKFILL_MONTHS);
 const operationalTokenHash = "47651591a74632aec28c473e7fe5a03c7bafa121f16315cae92814556581a279";
