@@ -32,4 +32,3 @@ export function PersonAvatarCluster({ participantIds, persons }: { readonly part
     </span>
   );
 }
-

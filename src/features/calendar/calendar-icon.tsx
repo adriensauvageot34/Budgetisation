@@ -46,4 +46,3 @@ export function CalendarIcon({ kind, className }: { readonly kind: CalendarMarke
   const Icon = iconByKind[kind];
   return <Icon aria-hidden="true" className={className} focusable="false" />;
 }
-

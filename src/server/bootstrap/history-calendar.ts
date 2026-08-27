@@ -57,4 +57,3 @@ export function adjacentEligibleHistoryMonths(
     ...(next === undefined ? {} : { next }),
   };
 }
-

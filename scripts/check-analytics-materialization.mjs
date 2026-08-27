@@ -67,6 +67,9 @@ const { FactSourceResolver } = require(path.join(
   repositoryRoot,
   "src/server/analytics/fact-source-resolver.ts",
 ));
+assert.equal(isQueryMaterializationResource("history_calendar_month"), true);
+assert.equal(isQueryMaterializationResource("history_day_detail"), true);
+assert.match(fs.readFileSync(path.join(repositoryRoot, "src/server/analytics/materialization/identity.ts"), "utf8"), /history-calendar@v2/);
 const { MetricQueryService } = require(path.join(
   repositoryRoot,
   "src/server/analytics/metric-query-service.ts",
