@@ -81,6 +81,7 @@ export async function backfillAnalyticsMaterialization(input: {
   readonly client: SupabaseClient;
   readonly householdId: unknown;
   readonly months?: readonly YearMonth[];
+  readonly requestsByMonth?: ReadonlyMap<YearMonth, readonly AnyNormalizedQueryRequest[]>;
   readonly force?: boolean;
   readonly onProgress?: (result: AnalyticsBackfillResult) => void;
 }): Promise<readonly AnalyticsBackfillResult[]> {
@@ -94,7 +95,10 @@ export async function backfillAnalyticsMaterialization(input: {
     if (period === undefined || !period.isClosed || period.financeStatus !== "complete") {
       throw new TypeError(`Le mois ${month} n'est pas un mois Finance fermé complet.`);
     }
-    const requests = hotMonthQueryRequests(month);
+    const requests = input.requestsByMonth?.get(month) ?? hotMonthQueryRequests(month);
+    if (requests.length === 0) {
+      throw new TypeError(`Le mois ${month} ne contient aucune Query à matérialiser.`);
+    }
     const readStore = new SupabaseAnalyticsMaterializationStore(input.client, context);
     const hits = await Promise.all(requests.map((request) => readStore.readQuery(request)));
     if (input.force !== true && hits.every((hit) => hit !== null)) {

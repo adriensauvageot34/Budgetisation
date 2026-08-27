@@ -245,6 +245,5 @@ export function isQueryMaterializationResource(resource: QueryResourceKey): bool
   return resource.startsWith("history_")
     || resource.startsWith("analysis_month_")
     || resource.startsWith("analysis_global_")
-    || resource.startsWith("history_")
     || resource === "analysis_target";
 }
