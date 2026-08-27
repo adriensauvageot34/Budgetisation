@@ -100,7 +100,11 @@ export async function POST(request: Request) {
     console.error("monthly_analytics_backfill_failed", {
       month,
       error: error instanceof Error ? error.name : "UnknownError",
+      message: error instanceof Error ? error.message : "Unknown failure",
     });
-    return contractError("Le backfill mensuel a échoué.", 503);
+    return contractError(
+      error instanceof Error ? error.message : "Le backfill mensuel a échoué.",
+      503,
+    );
   }
 }
