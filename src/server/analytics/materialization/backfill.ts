@@ -5,6 +5,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { parseHouseholdId, type CategoryId, type HouseholdId } from "@/core/identity";
 import {
   normalizeAnalysisScope,
+  type AnalysisScope,
   type AnalysisSubject,
   type AnalysisTargetSubject,
 } from "@/core/scope";
@@ -31,6 +32,7 @@ import {
   type AuthorizedRuntimeContext,
 } from "@/server/canonical/context";
 import { CanonicalRepository } from "@/server/canonical/repository";
+import { FactSourceResolver } from "@/server/analytics/fact-source-resolver";
 import {
   createQueryServicesForContext,
   createReadOnlyQueryServicesForContext,
@@ -280,6 +282,55 @@ export async function executeReadOnlyBackfillQuery(input: {
     requestId: randomUUID(),
     request: toBoundaryQueryRequest(input.request),
   }, services);
+}
+
+export async function executeReadOnlyBackfillDiagnostics(input: {
+  readonly client: SupabaseClient;
+  readonly householdId: unknown;
+  readonly request: AnyNormalizedQueryRequest;
+}) {
+  const context = await runtimeContext(input.client, parseHouseholdId(input.householdId));
+  const facts = new FactSourceResolver(new CanonicalRepository(input.client, context));
+  const scope = input.request.scope as AnalysisScope;
+  const [actual, minimal] = await Promise.all([
+    facts.resolve("economic_consumption_net_attributable", scope),
+    facts.resolve("minimal_month_cost", scope),
+  ]);
+  const actualSource = actual as unknown as {
+    readonly kind: string;
+    readonly availability?: string;
+    readonly support?: unknown;
+    readonly facts?: readonly { readonly canonicalComponentKey: string; readonly netAmount: string }[];
+  };
+  const minimalSource = minimal as unknown as {
+    readonly kind: string;
+    readonly availability?: string;
+    readonly neutralVariableComponents?: readonly { readonly canonicalComponentKey: string; readonly amount: string }[];
+    readonly mandatoryMonthlyObligationsAndProvisions?: readonly { readonly canonicalComponentKey: string; readonly amount: string }[];
+  };
+  return {
+    actual: actualSource.kind === "economic_components" && actualSource.availability === "known"
+      ? {
+          support: actualSource.support,
+          components: (actualSource.facts ?? []).map((fact) => ({
+            key: fact.canonicalComponentKey,
+            netAmount: fact.netAmount,
+          })),
+        }
+      : { kind: actualSource.kind, availability: actualSource.availability },
+    minimal: minimalSource.kind === "minimal_month" && minimalSource.availability === "known"
+      ? {
+          neutral: (minimalSource.neutralVariableComponents ?? []).map((component) => ({
+            key: component.canonicalComponentKey,
+            amount: component.amount,
+          })),
+          obligations: (minimalSource.mandatoryMonthlyObligationsAndProvisions ?? []).map((component) => ({
+            key: component.canonicalComponentKey,
+            amount: component.amount,
+          })),
+        }
+      : { kind: minimalSource.kind, availability: minimalSource.availability },
+  };
 }
 
 export async function beginAnalyticsBackfillPublication(input: {

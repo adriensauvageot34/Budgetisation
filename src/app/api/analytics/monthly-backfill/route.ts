@@ -6,6 +6,7 @@ import {
   beginAnalyticsBackfillPublication,
   certifiedPayloadSha256,
   DEFAULT_ANALYTICS_BACKFILL_MONTHS,
+  executeReadOnlyBackfillDiagnostics,
   executeReadOnlyBackfillQuery,
   failAnalyticsBackfillPublication,
   finalizeAnalyticsBackfillPublication,
@@ -147,6 +148,11 @@ export async function POST(request: Request) {
         throw new Error(`READ_ONLY:${execution.error.code}:${execution.error.message}`);
       }
       const actualHash = certifiedPayloadSha256(execution.response.data);
+      const diagnostics = await executeReadOnlyBackfillDiagnostics({
+        client,
+        householdId,
+        request: requests[0]!,
+      });
       const dataModel = execution.response.data as {
         readonly actual?: { readonly envelope?: { readonly value?: unknown; readonly support?: { readonly n?: unknown } } };
         readonly typical?: { readonly envelope?: { readonly value?: unknown } };
@@ -163,6 +169,7 @@ export async function POST(request: Request) {
         actualSupportN: dataModel.actual?.envelope?.support?.n ?? null,
         typical: dataModel.typical?.envelope?.value ?? null,
         minimal: dataModel.minimal?.envelope?.value ?? null,
+        diagnostics,
       });
     }
 
