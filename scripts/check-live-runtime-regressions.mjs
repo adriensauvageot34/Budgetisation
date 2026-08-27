@@ -70,6 +70,10 @@ const { projectActivityOccurrenceFact } = require(path.join(
   repositoryRoot,
   "src/analytics/facts/canonical.ts",
 ));
+const { sourceAwareEconomicDimensions } = require(path.join(
+  repositoryRoot,
+  "src/server/canonical/repository.ts",
+));
 const { diagnosticOperationsRequest } = require(path.join(
   repositoryRoot,
   "src/app/diagnostic/operations-plan.ts",
@@ -99,7 +103,11 @@ const { resolveMinimalPlanningSource } = require(path.join(
   repositoryRoot,
   "src/server/analytics/minimal-source-resolver.ts",
 ));
-const { FactSourceResolver } = require(path.join(
+const {
+  FactSourceResolver,
+  distinctEconomicTransactionCount,
+  economicTransactionIdentity,
+} = require(path.join(
   repositoryRoot,
   "src/server/analytics/fact-source-resolver.ts",
 ));
@@ -439,6 +447,54 @@ assert.equal(isMissingPurchaseRelationError({ code: "42P01" }), true);
 assert.equal(isMissingPurchaseRelationError({ code: "42501" }), false);
 
 const componentKey = "operation:00000000-0000-4000-8000-000000000100";
+const operationDimensions = {
+  importance: "Contrainte",
+  nature_fixe_variable: "Fixe",
+  contexte_vie: "Vie courante",
+};
+assert.deepEqual(
+  sourceAwareEconomicDimensions(operationDimensions),
+  operationDimensions,
+);
+assert.deepEqual(
+  sourceAwareEconomicDimensions(operationDimensions, {
+    importance: "Optionnelle",
+    nature_fixe_variable: "Variable",
+    contexte_vie: "Hors quotidien",
+  }),
+  {
+    importance: "Optionnelle",
+    nature_fixe_variable: "Variable",
+    contexte_vie: "Hors quotidien",
+  },
+);
+assert.deepEqual(
+  sourceAwareEconomicDimensions(operationDimensions, {
+    importance: null,
+    nature_fixe_variable: undefined,
+    contexte_vie: "Hors quotidien",
+  }),
+  {
+    importance: "Contrainte",
+    nature_fixe_variable: "Fixe",
+    contexte_vie: "Hors quotidien",
+  },
+);
+
+const sharedOperationId = "00000000-0000-4000-8000-000000000110";
+const transactionFacts = [
+  { canonicalComponentKey: `operation:${sharedOperationId}`, sourceOperation: { kind: "resolved", id: sharedOperationId } },
+  { canonicalComponentKey: "allocation:00000000-0000-4000-8000-000000000111", sourceOperation: { kind: "resolved", id: sharedOperationId } },
+  { canonicalComponentKey: "item:00000000-0000-4000-8000-000000000112", sourceOperation: { kind: "resolved", id: sharedOperationId } },
+  { canonicalComponentKey: "payment_component:00000000-0000-4000-8000-000000000113", sourceOperation: { kind: "resolved", id: sharedOperationId } },
+  { canonicalComponentKey: "cash_use:00000000-0000-4000-8000-000000000114", sourceOperation: { kind: "resolved", id: sharedOperationId } },
+  { canonicalComponentKey: "cash_use:00000000-0000-4000-8000-000000000115", sourceOperation: { kind: "resolved", id: sharedOperationId } },
+];
+assert.equal(economicTransactionIdentity(transactionFacts[1]), `operation:${sharedOperationId}`);
+assert.equal(economicTransactionIdentity(transactionFacts[4]), transactionFacts[4].canonicalComponentKey);
+assert.equal(distinctEconomicTransactionCount(transactionFacts.slice(0, 4)), 1);
+assert.equal(distinctEconomicTransactionCount(transactionFacts), 3);
+
 const timingInput = {
   canonicalComponentKey: componentKey,
   canonicalEconomicNet: "120",

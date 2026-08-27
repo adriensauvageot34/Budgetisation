@@ -115,11 +115,18 @@ function sourceSupport(n: number, unit: SupportUnit) {
   return parseSupport({ n, unit, level: n === 0 ? "insufficient" : "sufficient" });
 }
 
-function distinctEconomicTransactionCount(facts: readonly EconomicComponentFact[]) {
-  return new Set(facts.map((fact) =>
-    fact.sourceOperation.kind === "resolved"
-      ? `operation:${fact.sourceOperation.id}`
-      : `component:${fact.canonicalComponentKey}`)).size;
+export function economicTransactionIdentity(fact: EconomicComponentFact): string {
+  const componentKey = String(fact.canonicalComponentKey);
+  if (componentKey.startsWith("cash_use:")) return componentKey;
+  return fact.sourceOperation.kind === "resolved"
+    ? `operation:${fact.sourceOperation.id}`
+    : componentKey;
+}
+
+export function distinctEconomicTransactionCount(
+  facts: readonly EconomicComponentFact[],
+): number {
+  return new Set(facts.map(economicTransactionIdentity)).size;
 }
 
 function economicSupport(n: number) {
@@ -372,7 +379,7 @@ export class FactSourceResolver {
               availability: "known",
               facts,
               support: economicSupport(
-                metricId === "localized_spend"
+                definition.supportPolicy.unit === "transaction"
                   ? distinctEconomicTransactionCount(selectedFacts)
                   : selectedFacts.length,
               ),

@@ -46,7 +46,10 @@ import {
 } from "@/query-api";
 import type { QueryReadModelSources } from "@/query-api/server";
 import type { FactSourceResolver } from "@/server/analytics/fact-source-resolver";
-import { canonicalRangeForScope } from "@/server/analytics/fact-source-resolver";
+import {
+  canonicalRangeForScope,
+  distinctEconomicTransactionCount,
+} from "@/server/analytics/fact-source-resolver";
 import type { MetricQueryService } from "@/server/analytics/metric-query-service";
 import type { AuthorizedRuntimeContext } from "@/server/canonical/context";
 import type { CanonicalRepository } from "@/server/canonical/repository";
@@ -443,9 +446,9 @@ function axisMetric(input: {
     } as ScopedMetricReadModel;
   }
   const known = input.facts.filter(({ economicTiming }) => economicTiming.kind === "known" || economicTiming.kind === "partial");
-  const knownN = known.length;
-  const eligibleN = input.facts.length;
-  const uncertain = input.facts.length - known.length;
+  const knownN = distinctEconomicTransactionCount(known);
+  const eligibleN = distinctEconomicTransactionCount(input.facts);
+  const uncertain = Math.max(eligibleN - knownN, 0);
   const unavailable = input.facts.length > 0 && known.length === 0;
   return {
     metricId: definition.metricId,

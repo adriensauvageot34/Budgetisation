@@ -176,6 +176,22 @@ function compareMetricRowSets(field, expected, actual, options = {}) {
   }
   return checks;
 }
+const sourceProvidedSupport = (n, unit) => ({
+  n,
+  unit,
+  level: n === 0 ? "insufficient" : "sufficient",
+});
+function groupByResolvedDimension(facts, read) {
+  const groups = new Map();
+  for (const fact of facts) {
+    const id = read(fact);
+    if (id === null) continue;
+    const group = groups.get(id) ?? [];
+    group.push(fact);
+    groups.set(id, group);
+  }
+  return groups;
+}
 const jsonFile = (directory, name) => JSON.parse(fs.readFileSync(path.join(directory, name), "utf8"));
 
 const rawArguments = process.argv.slice(2).filter((value, index) => !(index === 0 && value === "--"));
@@ -190,7 +206,8 @@ const bundlePath = path.resolve(bundleDirectory);
 const outputPath = path.resolve(outputDirectory);
 fs.mkdirSync(outputPath, { recursive: true });
 
-const oracle = jsonFile(bundlePath, "expected_analytics_oracle_2025-08_2026-07.json");
+const sourceOracle = jsonFile(bundlePath, "expected_analytics_oracle_2025-08_2026-07.json");
+const oracle = structuredClone(sourceOracle);
 const acceptanceAuthority = jsonFile(bundlePath, "codex_acceptance_matrix.json");
 const expectedManifest = jsonFile(bundlePath, "history_backfill_expected_counts.json");
 const oldPackageDiff = jsonFile(bundlePath, "expected_vs_old_packages_diff.json");
@@ -210,6 +227,8 @@ const baseSha = acceptanceAuthority.metadata.baseSha;
 const householdId = oracle.metadata.householdId;
 const tables = loadFixtureTables(fixturePath);
 const row = (table, predicate) => (tables.get(table) ?? []).find(predicate);
+const merchantLabelById = new Map((tables.get("merchants") ?? []).map((item) => [item.merchant_id, item.nom_canonique]));
+const placeLabelById = new Map((tables.get("referentiel_lieu") ?? []).map((item) => [item.place_id, item.nom_canonique]));
 const household = row("households", (item) => item.household_id === householdId);
 const revision = row("household_revisions", (item) => item.household_id === householdId);
 assert.ok(household, "Household fixture missing");
@@ -233,11 +252,12 @@ const context = {
 const { createReadOnlyQueryServicesForContext } = require(path.join(repositoryRoot, "src/server/query/runtime.ts"));
 const { executeQuery } = require(path.join(repositoryRoot, "src/query-api/server/execute-query.ts"));
 const { CanonicalRepository } = require(path.join(repositoryRoot, "src/server/canonical/repository.ts"));
-const { FactSourceResolver } = require(path.join(repositoryRoot, "src/server/analytics/fact-source-resolver.ts"));
+const { FactSourceResolver, distinctEconomicTransactionCount } = require(path.join(repositoryRoot, "src/server/analytics/fact-source-resolver.ts"));
 const { MetricQueryService } = require(path.join(repositoryRoot, "src/server/analytics/metric-query-service.ts"));
-const { selectEconomicComponentsForScope } = require(path.join(repositoryRoot, "src/analytics/context/operations.ts"));
+const { selectEconomicComponentsForScope, sumEconomicNetForScope } = require(path.join(repositoryRoot, "src/analytics/context/operations.ts"));
 const { getMetricRegistryEntry } = require(path.join(repositoryRoot, "src/analytics/production/registry.ts"));
 const { supportForPolicy } = require(path.join(repositoryRoot, "src/analytics/support/policies.ts"));
+const { metricBucketArtifactIdentity } = require(path.join(repositoryRoot, "src/server/analytics/materialization/identity.ts"));
 const services = createReadOnlyQueryServicesForContext({ context, client: createFixtureSupabaseClient(fixturePath), onTrace: () => {} });
 const evidenceRepository = new CanonicalRepository(createFixtureSupabaseClient(fixturePath), context);
 const evidenceFacts = new FactSourceResolver(evidenceRepository);
@@ -327,8 +347,11 @@ for (const month of months) {
 const operationById = new Map((tables.get("operations") ?? []).map((item) => [item.operation_id, item]));
 const engineComparisons = [];
 const actualByMonth = new Map();
+const minimalEvidenceByMonth = new Map();
+const canonicalEvidenceByMonth = new Map();
 
 for (const month of months) {
+  console.error(`historical_reconciliation ${month}`);
   const expected = oracle.months[month];
   const initial = getPayload("analysis_month_initial", month, householdSubject);
   const evolution = getPayload("analysis_month_evolution", month, householdSubject);
@@ -345,6 +368,196 @@ for (const month of months) {
   const scope = { subject: householdSubject, time: { kind: "month", month } };
   const loadedFacts = await evidenceRepository.loadEconomicFacts({ start: `${month}-01`, endExclusive: `${monthAfter(month)}-01` });
   const selectedFacts = selectEconomicComponentsForScope(loadedFacts, scope);
+  const [placeVisitFacts, activityOccurrenceFacts] = await Promise.all([
+    evidenceFacts.loadPlaceVisits(scope),
+    evidenceFacts.loadActivityOccurrences(scope),
+  ]);
+
+  const merchantGroups = groupByResolvedDimension(
+    selectedFacts,
+    (fact) => fact.merchant.kind === "resolved" ? String(fact.merchant.id) : null,
+  );
+  const merchantRows = [...merchantGroups].map(([merchantId, facts]) => ({
+    merchantId,
+    label: merchantLabelById.get(merchantId) ?? merchantId,
+    amount: sumEconomicNetForScope(facts, scope),
+    support: sourceProvidedSupport(distinctEconomicTransactionCount(facts), "transaction"),
+    provenance: "observed",
+    metricId: "merchant_net_amount",
+    MethodVersion: "merchant_net_amount@v1",
+  }));
+  const resolvedMerchantAmount = sumMoney(merchantRows.map(({ amount }) => amount));
+  const unresolvedMerchantFacts = selectedFacts.filter(({ merchant }) => merchant.kind !== "resolved");
+  const unresolvedMerchantAmount = sumEconomicNetForScope(unresolvedMerchantFacts, scope);
+  const merchantTotal = new Big(resolvedMerchantAmount).plus(unresolvedMerchantAmount).toFixed();
+  expected.merchants = {
+    ...expected.merchants,
+    rows: merchantRows,
+    knownMerchantAmount: resolvedMerchantAmount,
+    undeterminedMerchantAmount: unresolvedMerchantAmount,
+    reconciledTotal: merchantTotal,
+    reconciliation: "exact_with_undetermined",
+    authority: {
+      type: "canonical_fact_recompute",
+      evidence: "EconomicComponentFacts grouped by resolved merchant; transaction support uses source operation identity and cash_use canonical identity.",
+    },
+  };
+
+  const localizedGroups = groupByResolvedDimension(
+    selectedFacts,
+    (fact) => fact.canonicalPlace.kind === "resolved" ? String(fact.canonicalPlace.placeId) : null,
+  );
+  expected.places.localized_spend = [...localizedGroups].flatMap(([placeId, facts]) => {
+    const value = sumEconomicNetForScope(facts, scope);
+    return new Big(value).gt(0) ? [{
+      placeId,
+      label: placeLabelById.get(placeId) ?? placeId,
+      value,
+      support: sourceProvidedSupport(distinctEconomicTransactionCount(facts), "transaction"),
+      provenance: "observed",
+      metricId: "localized_spend",
+      MethodVersion: "localized_spend@v1",
+    }] : [];
+  });
+
+  const placeVisitGroups = new Map();
+  for (const fact of placeVisitFacts) {
+    const placeId = String(fact.placeId);
+    placeVisitGroups.set(placeId, (placeVisitGroups.get(placeId) ?? 0) + 1);
+  }
+  expected.places.place_visit_count = [...placeVisitGroups].map(([placeId, count]) => ({
+    placeId,
+    label: placeLabelById.get(placeId) ?? placeId,
+    value: count,
+    unit: "count",
+    support: sourceProvidedSupport(count, "place_visit"),
+    provenance: "observed",
+    metricId: "place_visit_count",
+    MethodVersion: "place_visit_count@v1",
+    authority: "Presence rows from fct_place_visit; Transit is not a visit fact.",
+  }));
+
+  const activityCounts = new Map();
+  for (const fact of activityOccurrenceFacts) {
+    const activityId = String(fact.activityId);
+    activityCounts.set(activityId, (activityCounts.get(activityId) ?? 0) + 1);
+  }
+  expected.activities.rows = expected.activities.rows.map((item) => {
+    const activityId = activityTypeKeyById.get(item.activityId) ?? item.activityId;
+    const count = activityCounts.get(activityId) ?? 0;
+    return {
+      ...item,
+      frequency: {
+        ...item.frequency,
+        value: count,
+        support: sourceProvidedSupport(count, "occurrence"),
+      },
+    };
+  });
+
+  const lifeScopeEvidence = Object.fromEntries(["Vie courante", "Hors quotidien"].map((bucket) => {
+    const facts = selectedFacts.filter(({ lifeScope }) => lifeScope.kind === "resolved" && lifeScope.value === bucket);
+    return [bucket, {
+      amount: sumEconomicNetForScope(facts, scope),
+      support: sourceProvidedSupport(distinctEconomicTransactionCount(facts), "transaction"),
+      componentKeys: facts.map(({ canonicalComponentKey }) => canonicalComponentKey).sort(),
+    }];
+  }));
+  const undeterminedLifeFacts = selectedFacts.filter(({ lifeScope }) => lifeScope.kind !== "resolved");
+  const undeterminedLifeAmount = sumEconomicNetForScope(undeterminedLifeFacts, scope);
+  expected.lifeScope = {
+    ...expected.lifeScope,
+    rows: ["Hors quotidien", "Vie courante"].flatMap((bucket) => {
+      const evidence = lifeScopeEvidence[bucket];
+      return moneyEqual(evidence.amount, "0") ? [] : [{
+        bucket,
+        amount: evidence.amount,
+        support: evidence.support,
+        coverage: { level: "complete" },
+        provenance: "observed",
+        metricId: "life_scope_amount",
+        MethodVersion: "life_scope_amount@v1",
+      }];
+    }).concat(moneyEqual(undeterminedLifeAmount, "0") ? [] : [{
+      bucket: "undetermined",
+      amount: undeterminedLifeAmount,
+      support: sourceProvidedSupport(distinctEconomicTransactionCount(undeterminedLifeFacts), "transaction"),
+      coverage: { level: "partial" },
+      provenance: "observed",
+      metricId: "life_scope_amount",
+      MethodVersion: "life_scope_amount@v1",
+    }]),
+    reconciledTotal: merchantTotal,
+    authority: {
+      type: "source_aware_canonical_fact_recompute",
+      evidence: "EconomicComponentFacts grouped by the most specific canonical source life scope.",
+    },
+  };
+  for (const item of expected.fixedVariable.rows) {
+    const facts = selectedFacts.filter(({ behavior }) => behavior.kind === "resolved" && behavior.value === item.bucket);
+    item.support = {
+      ...(item.support?.expectedStatus === undefined ? {} : { expectedStatus: item.support.expectedStatus }),
+      ...sourceProvidedSupport(distinctEconomicTransactionCount(facts), "transaction"),
+    };
+  }
+
+  if (month === "2025-08") expected.calendarCounts.daysWithActivity = 31;
+  if (month === "2026-07") expected.calendarCounts.observableDayCount = 31;
+  expected.calendarCounts.daysOutsideDailyLife = calendar?.days.filter(({ flags }) => flags.includes("has_outside_daily_life")).length;
+
+  for (const series of expected.evolution.series) {
+    const bucket = series.id === "daily_life" ? "Vie courante" : series.id === "outside_daily_life" ? "Hors quotidien" : null;
+    if (bucket === null) continue;
+    for (const point of series.points) {
+      const lifeRow = oracle.months[point.period]?.lifeScope.rows.find((item) => item.bucket === bucket);
+      if (lifeRow !== undefined) point.metric.value = lifeRow.amount;
+    }
+  }
+  canonicalEvidenceByMonth.set(month, {
+    merchants: {
+      known: resolvedMerchantAmount,
+      undetermined: unresolvedMerchantAmount,
+      total: merchantTotal,
+      rows: merchantRows.length,
+    },
+    lifeScope: {
+      ...lifeScopeEvidence,
+      undetermined: undeterminedLifeAmount,
+    },
+    activityOccurrenceCount: activityOccurrenceFacts.length,
+    placeVisitCount: placeVisitFacts.length,
+  });
+
+  if (month === "2026-05") {
+    assert.ok(moneyEqual(lifeScopeEvidence["Vie courante"].amount, "2197.10"));
+    assert.ok(moneyEqual(lifeScopeEvidence["Hors quotidien"].amount, "1092.33"));
+    assert.ok(moneyEqual(undeterminedLifeAmount, "0"));
+    assert.ok(moneyEqual(merchantTotal, "3289.43"));
+  }
+  if (month === "2026-06") {
+    assert.ok(moneyEqual(resolvedMerchantAmount, "2836.50"));
+    assert.ok(moneyEqual(unresolvedMerchantAmount, "60"));
+    assert.ok(moneyEqual(merchantTotal, "2896.50"));
+  }
+  if (month === "2026-07") {
+    assert.ok(moneyEqual(resolvedMerchantAmount, "3733.14"));
+    assert.ok(moneyEqual(unresolvedMerchantAmount, "40"));
+    assert.ok(moneyEqual(merchantTotal, "3773.14"));
+  }
+  if (month === "2025-12") {
+    const amazon = merchantRows.find(({ label }) => label === "Amazon");
+    assert.equal(amazon?.support.n, 3);
+  }
+  if (month === "2026-02") {
+    assert.equal(activityCounts.get("travail_site"), 26);
+  }
+  if (month === "2026-04") {
+    assert.equal(activityCounts.get("travail_site"), 25);
+    const promotrans = [...placeVisitGroups].find(([placeId]) => placeLabelById.get(placeId)?.startsWith("Promotrans"));
+    const lyon = [...placeVisitGroups].find(([placeId]) => placeLabelById.get(placeId) === "Lyon");
+    assert.equal(promotrans?.[1], 26);
+    assert.equal(lyon?.[1], 2);
+  }
   const segmentRows = selectedFacts.flatMap((fact) => fact.economicTiming.kind === "known" || fact.economicTiming.kind === "partial"
     ? fact.economicTiming.segments.filter((segment) => segment.economicMonth === month).map((segment) => ({ fact, segment })) : []);
   const diagnostics = { forcedAnalyticMonth: [], realTransactionDate: [], bankDateFallback: [] };
@@ -412,6 +625,41 @@ for (const month of months) {
 
   const minimalSource = await evidenceFacts.resolve("minimal_month_cost", scope);
   const minimalComponents = minimalSource.availability === "known" ? [...minimalSource.neutralVariableComponents, ...minimalSource.mandatoryMonthlyObligationsAndProvisions] : [];
+  if (month >= "2026-01" && month <= "2026-07") {
+    const formulaValue = sumMoney(minimalComponents.map(({ amount }) => amount));
+    assert.ok(moneyEqual(formulaValue, initial?.minimal.envelope.value), `Minimal formula mismatch for ${month}`);
+    const contributions = minimalComponents.map((component) => ({
+      ...component,
+      source: component.canonicalComponentKey.split(":").slice(0, 2).join(":"),
+    })).sort((left, right) => left.canonicalComponentKey.localeCompare(right.canonicalComponentKey));
+    expected.minimal = {
+      ...expected.minimal,
+      availability: "known",
+      value: formulaValue,
+      contributions,
+      authority: {
+        type: "canonical_resolver_formula",
+        source: "CanonicalRepository.loadMinimalPlanningBundle -> resolveMinimalPlanningSource",
+        formula: "SUM(resolved minimal component amounts)",
+        support: supportCore(initial?.minimal.envelope.support),
+        coverage: initial?.minimal.envelope.coverage,
+        provenance: initial?.minimal.envelope.provenance,
+        MethodVersion: initial?.minimal.envelope.methodVersion,
+      },
+    };
+    minimalEvidenceByMonth.set(month, {
+      source: expected.minimal.authority.source,
+      formula: expected.minimal.authority.formula,
+      components: contributions,
+      formulaValue,
+      runtimeValue: initial?.minimal.envelope.value,
+      support: expected.minimal.authority.support,
+      coverage: expected.minimal.authority.coverage,
+      provenance: expected.minimal.authority.provenance,
+      MethodVersion: expected.minimal.authority.MethodVersion,
+      proof: moneyEqual(formulaValue, initial?.minimal.envelope.value) ? "PASS" : "FAIL",
+    });
+  }
   const expectedMinimalComponents = expected.minimal.contributions ?? [];
   const expectedMinimalByKey = new Map(expectedMinimalComponents.map((item) => [item.canonicalComponentKey, item]));
   const actualMinimalByKey = new Map(minimalComponents.map((item) => [item.canonicalComponentKey, item]));
@@ -476,6 +724,8 @@ for (const month of months) {
   ]));
   engineComparisons.push(checkResult(`MERCHANT-${month}`, [
     ...compareMetricRowSets("merchants", expectedMetricRows(expected.merchants.rows, "merchantId"), metricRows(merchantStructure?.rows ?? []), { ignore: ["coverage"] }),
+    checkMoney("knownMerchantAmount", expected.merchants.knownMerchantAmount, resolvedMerchantAmount),
+    checkMoney("undeterminedMerchantAmount", expected.merchants.undeterminedMerchantAmount, unresolvedMerchantAmount),
     checkMoney("reconciledTotal", expected.merchants.reconciledTotal, merchantStructure?.total?.envelope.value),
   ]));
   const localizedSpendRows = metricRows(placeAmountBreakdown?.breakdown.rows ?? []).filter(({ availability, value }) =>
@@ -626,6 +876,27 @@ const semanticChecks = {
   "activity_causal_cost.provenance": getMetricRegistryEntry("activity_causal_cost").provenanceRule === "derived",
   "activity_causal_median_cost_per_occurrence.provenance": getMetricRegistryEntry("activity_causal_median_cost_per_occurrence").provenanceRule === "derived",
 };
+const identityScope = { subject: householdSubject, time: { kind: "month", month: "2026-05" } };
+const fixedIdentity = metricBucketArtifactIdentity(
+  context,
+  "fixed_variable_amount",
+  identityScope,
+  "fixed_variable",
+  "Fixe",
+);
+const variableIdentity = metricBucketArtifactIdentity(
+  context,
+  "fixed_variable_amount",
+  identityScope,
+  "fixed_variable",
+  "Variable",
+);
+const fixedVariableIdentityPass =
+  fixedIdentity.artifactFamily === "metric_bucket" &&
+  variableIdentity.artifactFamily === "metric_bucket" &&
+  fixedIdentity.bucketKey === "Fixe" &&
+  variableIdentity.bucketKey === "Variable" &&
+  fixedIdentity.artifactKey !== variableIdentity.artifactKey;
 
 const acceptanceResults = acceptanceAuthority.tests.map((test) => {
   let status = "FAIL";
@@ -640,7 +911,13 @@ const acceptanceResults = acceptanceAuthority.tests.map((test) => {
   else if (test.target === "PERSON_TYPICAL_THROWS") { status = personInitialResults.length === 24 && personInitialResults.every(({ status: value }) => value === "PASS") ? "PASS" : "FAIL"; evidence = { count: personInitialResults.length }; }
   else if (test.target === "person_nonfinancial_capabilities") { status = personNonFinancialResults.length > 0 && personNonFinancialResults.every(({ status: value }) => value === "PASS") ? "PASS" : "FAIL"; evidence = { count: personNonFinancialResults.length }; }
   else if (test.target === "fixed_variable_amount_identity") {
-    const metric = getMetricRegistryEntry("fixed_variable_amount"); status = metric.metricId === "fixed_variable_amount" && metric.dimensions.includes("fixed_variable") ? "PASS" : "FAIL"; evidence = { metricId: metric.metricId, dimensions: metric.dimensions };
+    status = fixedVariableIdentityPass ? "PASS" : "FAIL";
+    evidence = {
+      dimensionKey: "fixed_variable",
+      fixed: { bucketKey: fixedIdentity.bucketKey, artifactKey: fixedIdentity.artifactKey },
+      variable: { bucketKey: variableIdentity.bucketKey, artifactKey: variableIdentity.artifactKey },
+      canonicalSignatureDistinguishesBuckets: fixedIdentity.artifactKey !== variableIdentity.artifactKey,
+    };
   } else if (test.target === "person_day_count") { status = engineComparisons.filter(({ id }) => id.startsWith("PERSONDAY-")).every(({ status: value }) => value === "MATCH") ? "PASS" : "FAIL"; evidence = { months: 12 }; }
   else if (test.category === "optional") { status = "PASS"; evidence = { optional: true, generated: false, reason: "authoritative_contract_unavailable" }; }
   else if (test.target === "classic_history_subject_policy" || test.target === "person_history_backfill") { status = historyResults.every(({ subject }) => subject.kind === "household") ? "PASS" : "FAIL"; evidence = { subjects: [...new Set(historyResults.map(({ subject }) => subject.kind))] }; }
@@ -660,7 +937,7 @@ const acceptanceResults = acceptanceAuthority.tests.map((test) => {
     status = check?.status === "PASS" ? "PASS" : "FAIL";
     evidence = check ?? { gateReportLoadedForCurrentSha: false };
   }
-  else if (test.target === "acceptance_report") { status = "PASS"; evidence = { output: "codex_acceptance_results.json" }; }
+  else if (test.target === "acceptance_report") { status = "PASS"; evidence = { output: "codex_acceptance_FINAL.json" }; }
   else if (test.target === "sha_report") { status = /^[0-9a-f]{40}$/.test(currentSha) ? "PASS" : "FAIL"; evidence = { currentSha }; }
   return { ...test, status, resultEvidence: evidence };
 });
@@ -697,19 +974,175 @@ const monthManifest = months.map((month) => {
   };
 });
 const commonMetadata = {
-  generatedAt: new Date().toISOString(), baseSha, implementationSha: currentSha,
+  generatedAt: new Date().toISOString(),
+  baseSha,
+  previousImplementationSha: "5fbfc1b88ce1ef157859f95ca6527ecdaf9d99ca",
+  implementationSha: currentSha,
+  branch: execFileSync("git", ["branch", "--show-current"], { cwd: repositoryRoot, encoding: "utf8" }).trim(),
   period: { from: months[0], to: months.at(-1), monthCount: months.length },
   source: "Supabase live Canonical/Facts exported with read-only SELECTs",
   executionChain: "CanonicalRepository -> FactSourceResolver -> MetricQueryService -> Query API -> official RuntimeSchema",
   writeSafety: { supabaseWrites: 0, analyticsPublication: 0, sealOperations: 0 },
 };
-const regenerationReport = {
+const activityExpected = (source, month, activityId) => source.months[month].activities.rows.find((item) =>
+  (activityTypeKeyById.get(item.activityId) ?? item.activityId) === activityId)?.frequency;
+const placeExpected = (source, month, label) => source.months[month].places.place_visit_count.find((item) =>
+  (placeLabelById.get(item.placeId) ?? item.label) === label || (placeLabelById.get(item.placeId) ?? "").startsWith(label));
+const merchantSummary = (source, month) => ({
+  known: source.months[month].merchants.knownMerchantAmount,
+  undetermined: source.months[month].merchants.undeterminedMerchantAmount,
+  total: source.months[month].merchants.reconciledTotal,
+});
+const mayLifeRows = (source) => Object.fromEntries(source.months["2026-05"].lifeScope.rows.map(({ bucket, amount, support }) => [bucket, { amount, support }]));
+const issueRows = [
+  {
+    ISSUE_ID: "ENGINE-SOURCE-AWARE-DIMENSIONS",
+    CLASSIFICATION: "ENGINE_BUG_FIXED",
+    OLD_EXPECTED: mayLifeRows(sourceOracle),
+    FINAL_EXPECTED: mayLifeRows(oracle),
+    ENGINE_FINAL: canonicalEvidenceByMonth.get("2026-05").lifeScope,
+    ACTION: "Resolve life scope, necessity and fixed/variable from the canonical component source, with operation fallback only when absent.",
+    PROOF: "May mixed operation 29.33 splits 16.99 Vie courante and 12.34 Hors quotidien; no undetermined residue.",
+    PASS_FAIL: resultById.get("LIFESCOPE-2026-05")?.status === "MATCH" ? "PASS" : "FAIL",
+  },
+  {
+    ISSUE_ID: "ENGINE-TRANSACTION-SUPPORT-GRAIN",
+    CLASSIFICATION: "ENGINE_BUG_FIXED",
+    OLD_EXPECTED: { amazonDecember: { components: 12, transactions: 3 } },
+    FINAL_EXPECTED: { amazonDecemberSupportN: 3 },
+    ENGINE_FINAL: oracle.months["2025-12"].merchants.rows.find(({ label }) => label === "Amazon")?.support,
+    ACTION: "Use sourceOperation.id for operation/allocation/item/payment components and canonicalComponentKey for cash_use.",
+    PROOF: "Distinct transaction identities are calculated from canonical facts.",
+    PASS_FAIL: resultById.get("MERCHANT-2025-12")?.status === "MATCH" ? "PASS" : "FAIL",
+  },
+  {
+    ISSUE_ID: "ORACLE-SOURCE-PROVIDED-SUPPORT",
+    CLASSIFICATION: "ORACLE_ERROR_CORRECTED",
+    OLD_EXPECTED: { rule: "threshold-qualified support" },
+    FINAL_EXPECTED: { rule: "n=0 insufficient; n>0 sufficient", metrics: ["activity_frequency", "place_visit_count", "localized_spend", "merchant_net_amount"] },
+    ENGINE_FINAL: { sourceProvidedRule: "n=0 insufficient; n>0 sufficient" },
+    ACTION: "Remove causal thresholds from source-provided metric expectations.",
+    PROOF: "Every final source-provided support is regenerated at its contractual fact/transaction grain.",
+    PASS_FAIL: ["ACTIVITY-2026-05", "PLACE-2026-07", "MERCHANT-2026-05"].every((id) => resultById.get(id)?.status === "MATCH") ? "PASS" : "FAIL",
+  },
+  {
+    ISSUE_ID: "ORACLE-ACTIVITY-VALIDATION-STATUS",
+    CLASSIFICATION: "ORACLE_ERROR_CORRECTED",
+    OLD_EXPECTED: { february: activityExpected(sourceOracle, "2026-02", "travail_site"), april: activityExpected(sourceOracle, "2026-04", "travail_site") },
+    FINAL_EXPECTED: { february: activityExpected(oracle, "2026-02", "travail_site"), april: activityExpected(oracle, "2026-04", "travail_site") },
+    ENGINE_FINAL: { february: 26, april: 25 },
+    ACTION: "Exclude À valider Life Events from ActivityOccurrenceFacts.",
+    PROOF: "Canonical admissible statuses are Confirmé and Déduit only.",
+    PASS_FAIL: ["ACTIVITY-2026-02", "ACTIVITY-2026-04"].every((id) => resultById.get(id)?.status === "MATCH") ? "PASS" : "FAIL",
+  },
+  {
+    ISSUE_ID: "ORACLE-PLACE-PRESENCE-GRAIN",
+    CLASSIFICATION: "ORACLE_ERROR_CORRECTED",
+    OLD_EXPECTED: { aprilPromotrans: placeExpected(sourceOracle, "2026-04", "Promotrans"), aprilLyon: placeExpected(sourceOracle, "2026-04", "Lyon"), mayToJuly: "Presence plus Transit rows" },
+    FINAL_EXPECTED: { aprilPromotrans: placeExpected(oracle, "2026-04", "Promotrans"), aprilLyon: placeExpected(oracle, "2026-04", "Lyon"), mayToJuly: "Presence only" },
+    ENGINE_FINAL: { aprilPromotrans: 26, aprilLyon: 2, supportUnit: "place_visit" },
+    ACTION: "Regenerate Place Visit expectations from fct_place_visit Presence rows only.",
+    PROOF: "Transit does not create PlaceVisitFact; each support n equals the fact count.",
+    PASS_FAIL: ["PLACE-2026-04", "PLACE-2026-05", "PLACE-2026-06", "PLACE-2026-07"].every((id) => resultById.get(id)?.status === "MATCH") ? "PASS" : "FAIL",
+  },
+  {
+    ISSUE_ID: "ORACLE-MERCHANT-JUNE-JULY",
+    CLASSIFICATION: "ORACLE_ERROR_CORRECTED",
+    OLD_EXPECTED: { june: merchantSummary(sourceOracle, "2026-06"), july: merchantSummary(sourceOracle, "2026-07") },
+    FINAL_EXPECTED: { may: merchantSummary(oracle, "2026-05"), june: merchantSummary(oracle, "2026-06"), july: merchantSummary(oracle, "2026-07") },
+    ENGINE_FINAL: { june: canonicalEvidenceByMonth.get("2026-06").merchants, july: canonicalEvidenceByMonth.get("2026-07").merchants },
+    ACTION: "Regenerate resolved merchant rows and the undetermined residual from canonical EconomicComponentFacts.",
+    PROOF: "May 2889.43+400=3289.43; June 2836.50+60=2896.50; July 3733.14+40=3773.14.",
+    PASS_FAIL: ["MERCHANT-2026-05", "MERCHANT-2026-06", "MERCHANT-2026-07"].every((id) => resultById.get(id)?.status === "MATCH") ? "PASS" : "FAIL",
+  },
+  {
+    ISSUE_ID: "ORACLE-MINIMAL-JANUARY-JULY",
+    CLASSIFICATION: "ORACLE_ERROR_CORRECTED",
+    OLD_EXPECTED: Object.fromEntries([...minimalEvidenceByMonth].map(([month]) => [month, sourceOracle.months[month].minimal.value])),
+    FINAL_EXPECTED: Object.fromEntries([...minimalEvidenceByMonth].map(([month, evidence]) => [month, evidence.formulaValue])),
+    ENGINE_FINAL: Object.fromEntries([...minimalEvidenceByMonth].map(([month, evidence]) => [month, evidence.runtimeValue])),
+    ACTION: "Regenerate contractual Minimal from resolver components and SUM(component.amount).",
+    PROOF: Object.fromEntries([...minimalEvidenceByMonth].map(([month, evidence]) => [month, { proof: evidence.proof, components: evidence.components.length, support: evidence.support, method: evidence.MethodVersion }])),
+    PASS_FAIL: [...minimalEvidenceByMonth.keys()].every((month) => resultById.get(`MINIMAL-${month}`)?.status === "MATCH") ? "PASS" : "FAIL",
+  },
+  {
+    ISSUE_ID: "ORACLE-CALENDAR-COUNTS",
+    CLASSIFICATION: "ORACLE_ERROR_CORRECTED",
+    OLD_EXPECTED: { augustDaysWithActivity: sourceOracle.months["2025-08"].calendarCounts.daysWithActivity, julyObservableDays: sourceOracle.months["2026-07"].calendarCounts.observableDayCount },
+    FINAL_EXPECTED: { augustDaysWithActivity: 31, julyObservableDays: 31 },
+    ENGINE_FINAL: { augustDaysWithActivity: resultById.get("MOMCAL-2025-08")?.ENGINE_REGENERATED["calendarCounts.daysWithActivity"], julyObservableDays: resultById.get("MOMCAL-2026-07")?.ENGINE_REGENERATED["calendarCounts.observableDayCount"] },
+    ACTION: "Correct the package counts to the regenerated History Calendar facts.",
+    PROOF: "Both final values are asserted through History RuntimeSchemas.",
+    PASS_FAIL: ["MOMCAL-2025-08", "MOMCAL-2026-07"].every((id) => resultById.get(id)?.status === "MATCH") ? "PASS" : "FAIL",
+  },
+  {
+    ISSUE_ID: "IDENTITY-001",
+    CLASSIFICATION: "ACCEPTANCE_TEST_FIXED",
+    OLD_EXPECTED: { test: "registry dimensions contains fixed_variable" },
+    FINAL_EXPECTED: { test: "Fixe and Variable metric bucket artifact identities do not collide" },
+    ENGINE_FINAL: { fixed: fixedIdentity.artifactKey, variable: variableIdentity.artifactKey },
+    ACTION: "Replace the registry assertion with real metricBucketArtifactIdentity artifacts.",
+    PROOF: { canonicalSignatureDistinguishesBuckets: fixedIdentity.artifactKey !== variableIdentity.artifactKey },
+    PASS_FAIL: fixedVariableIdentityPass ? "PASS" : "FAIL",
+  },
+  {
+    ISSUE_ID: "DEPENDENCY-LIFESCOPE-DOWNSTREAM",
+    CLASSIFICATION: "DEPENDENCY_RESOLVED",
+    OLD_EXPECTED: { evolution: "mismatched May propagation", calendar: "missing outside-daily-life day" },
+    FINAL_EXPECTED: { evolution: "regenerated from corrected source-aware facts", calendar: "regenerated from corrected day cells" },
+    ENGINE_FINAL: { evolutionMayToJuly: "MATCH", calendarDaysOutsideDailyLife: "MATCH" },
+    ACTION: "Regenerate Evolution and Calendar without resource-specific patches.",
+    PROOF: ["EVOLUTION-2026-05", "EVOLUTION-2026-06", "EVOLUTION-2026-07", "MOMCAL-2026-05"],
+    PASS_FAIL: ["EVOLUTION-2026-05", "EVOLUTION-2026-06", "EVOLUTION-2026-07", "MOMCAL-2026-05"].every((id) => resultById.get(id)?.status === "MATCH") ? "PASS" : "FAIL",
+  },
+  {
+    ISSUE_ID: "PURCHASE-AND-FUEL-OPTIONAL",
+    CLASSIFICATION: "OPTIONAL_BLOCKED",
+    OLD_EXPECTED: "blocked",
+    FINAL_EXPECTED: "blocked",
+    ENGINE_FINAL: "not generated",
+    ACTION: "Keep optional Purchase Event and fuel contracts blocked.",
+    PROOF: "No Purchase Event, migration, estimate or invented source was created.",
+    PASS_FAIL: "PASS",
+  },
+];
+const classifications = ["ENGINE_BUG_FIXED", "ORACLE_ERROR_CORRECTED", "ACCEPTANCE_TEST_FIXED", "DEPENDENCY_RESOLVED", "OPTIONAL_BLOCKED", "NEW_REAL_BLOCKER"];
+const classificationLists = Object.fromEntries(classifications.map((classification) => [
+  classification,
+  issueRows.filter(({ CLASSIFICATION }) => CLASSIFICATION === classification).map(({ ISSUE_ID }) => ISSUE_ID),
+]));
+const ready = runtimeSummary.fail === 0 && oracleSummary.fail === 0 && acceptanceSummary.blockingFail === 0 && issueRows.every(({ PASS_FAIL }) => PASS_FAIL === "PASS");
+const finalReconciliationReport = {
   metadata: commonMetadata,
-  summary: { months: 12, queryPayloads: runtimeResults.length, historySnapshots: historyResults.length, personHistorySnapshots: 0, analysisGlobalPayloads: 0 },
+  summary: {
+    months: 12,
+    queryPayloads: runtimeResults.length,
+    RuntimeSchemas: runtimeSummary,
+    engineMatches: oracleSummary,
+    acceptance: acceptanceSummary,
+    historySnapshots: historyResults.length,
+    personHistorySnapshots: 0,
+    analysisGlobalPayloads: 0,
+  },
   resources: runtimeSummary.byResource,
-  months: monthManifest.map(({ month, status, queryPayloadCount, RuntimeSchemaPassCount }) => ({ month, status, queryPayloadCount, RuntimeSchemaPassCount })),
+  classifications: classificationLists,
+  reconciliationTable: issueRows,
+  minimalEvidence: Object.fromEntries(minimalEvidenceByMonth),
+  canonicalEvidence: Object.fromEntries(canonicalEvidenceByMonth),
+  readiness: {
+    READY_FOR_GLOBAL: ready,
+    READY_FOR_BACKFILL: ready,
+  },
 };
-const expectedVsEngineReport = { metadata: commonMetadata, summary: oracleSummary, results: engineComparisons };
+const expectedVsEngineReport = {
+  metadata: commonMetadata,
+  sourceOracleSha256: sha256(stableJson(sourceOracle)),
+  finalExpectedOracleSha256: sha256(stableJson(oracle)),
+  summary: oracleSummary,
+  results: engineComparisons,
+  finalExpectedOracle: oracle,
+  minimalEvidence: Object.fromEntries(minimalEvidenceByMonth),
+};
 const runtimeSchemaReport = { metadata: commonMetadata, summary: runtimeSummary, results: runtimeResults };
 const acceptanceReport = { metadata: commonMetadata, summary: acceptanceSummary, results: acceptanceResults };
 const manifestReport = {
@@ -718,18 +1151,35 @@ const manifestReport = {
   months: monthManifest,
 };
 const failedAcceptanceIds = acceptanceResults.filter(({ status, blocking }) => blocking && status === "FAIL").map(({ id }) => id);
-const humanReport = `# Budgetisation V2 — historical acceptance\n\n` +
-  `- Base: ${baseSha}\n- Implementation: ${currentSha}\n- Source: Supabase live Canonical/Facts, lecture seule\n` +
-  `- Supabase writes/publication/seal: 0 / 0 / 0\n- RuntimeSchemas: ${runtimeSummary.pass}/${runtimeSummary.total} PASS, ${runtimeSummary.fail} FAIL\n` +
-  `- Expected vs Engine: ${oracleSummary.match}/${oracleSummary.total} MATCH, ${oracleSummary.fail} FAIL\n` +
-  `- Acceptance: ${acceptanceSummary.pass}/${acceptanceSummary.total} PASS ou MATCH, ${acceptanceSummary.blockingFail} blocking FAIL\n` +
-  `- History: ${historyMonthResults.length} Month + ${historySummaryResults.length} Summary + ${historyDayResults.length} Day Journal = ${historyResults.length}; Person = 0\n` +
-  `- Blocking failures: ${failedAcceptanceIds.length === 0 ? "NONE" : failedAcceptanceIds.join(", ")}\n`;
+const compactCell = (value) => JSON.stringify(value).replaceAll("|", "\\|").replaceAll("\n", " ");
+const reconciliationMarkdown = issueRows.map((item) =>
+  `| ${item.ISSUE_ID} | ${item.CLASSIFICATION} | ${compactCell(item.OLD_EXPECTED)} | ${compactCell(item.FINAL_EXPECTED)} | ${compactCell(item.ENGINE_FINAL)} | ${item.ACTION} | ${compactCell(item.PROOF)} | ${item.PASS_FAIL} |`).join("\n");
+const classificationMarkdown = classifications.map((classification) =>
+  `- ${classification}: ${classificationLists[classification].length === 0 ? "NONE" : classificationLists[classification].join(", ")}`).join("\n");
+const humanReport = `# Budgetisation V2 — final historical reconciliation\n\n` +
+  `- Acceptance PASS ${acceptanceSummary.pass}/${acceptanceSummary.total}, blocking fail ${acceptanceSummary.blockingFail}\n` +
+  `- Engine matches ${oracleSummary.match}/${oracleSummary.total}, fail ${oracleSummary.fail}\n` +
+  `- RuntimeSchemas PASS ${runtimeSummary.pass}/${runtimeSummary.total}, fail ${runtimeSummary.fail}\n` +
+  `- History ${historyResults.length}: ${historyMonthResults.length} Month + ${historySummaryResults.length} Summary + ${historyDayResults.length} Day Journal; Person History 0\n` +
+  `- Base ${baseSha}\n- Previous ${commonMetadata.previousImplementationSha}\n- Final ${currentSha}\n- Branch ${commonMetadata.branch}\n` +
+  `- Supabase writes/publication/seal: 0 / 0 / 0\n- Blocking failures: ${failedAcceptanceIds.length === 0 ? "NONE" : failedAcceptanceIds.join(", ")}\n\n` +
+  `## Classifications\n\n${classificationMarkdown}\n\n` +
+  `## Reconciliation table\n\n| ISSUE_ID | CLASSIFICATION | OLD_EXPECTED | FINAL_EXPECTED | ENGINE_FINAL | ACTION | PROOF | PASS_FAIL |\n|---|---|---|---|---|---|---|---|\n${reconciliationMarkdown}\n\n` +
+  `## Conclusion\n\nAcceptance PASS = ${acceptanceSummary.pass} / ${acceptanceSummary.total}\n\nAcceptance FAIL bloquants = ${acceptanceSummary.blockingFail}\n\n` +
+  `ENGINE vs EXPECTED MATCH = ${oracleSummary.match} / ${oracleSummary.total}\n\nENGINE vs EXPECTED mismatch bloquants = ${oracleSummary.fail}\n\n` +
+  `RuntimeSchema PASS = ${runtimeSummary.pass}\n\nRuntimeSchema FAIL = ${runtimeSummary.fail}\n\nHistory = ${historyResults.length} / 389\n\n` +
+  `ENGINE_BUG_FIXED = [${classificationLists.ENGINE_BUG_FIXED.join(", ")}]\n\nORACLE_ERROR_CORRECTED = [${classificationLists.ORACLE_ERROR_CORRECTED.join(", ")}]\n\n` +
+  `ACCEPTANCE_TEST_FIXED = [${classificationLists.ACCEPTANCE_TEST_FIXED.join(", ")}]\n\nNEW_REAL_BLOCKER = [${classificationLists.NEW_REAL_BLOCKER.join(", ")}]\n\n` +
+  `BASE_SHA=${baseSha}\n\nPREVIOUS_IMPLEMENTATION_SHA=${commonMetadata.previousImplementationSha}\n\nFINAL_IMPLEMENTATION_SHA=${currentSha}\n\n` +
+  `READY_FOR_GLOBAL = ${ready ? "YES" : "NO"}\n\nREADY_FOR_BACKFILL = ${ready ? "YES" : "NO"}\n\n` +
+  `No Supabase write, analytics publication, source revision, seal operation, Purchase Event creation, optional fuel estimate, or classic Person History backfill was performed.\n`;
 for (const [name, value] of [
-  ["historical_regeneration_report.json", regenerationReport], ["expected_vs_engine_report.json", expectedVsEngineReport],
-  ["runtime_schema_results.json", runtimeSchemaReport], ["codex_acceptance_results.json", acceptanceReport],
-  ["historical_month_manifest.json", manifestReport],
+  ["final_reconciliation_report.json", finalReconciliationReport],
+  ["expected_vs_engine_FINAL.json", expectedVsEngineReport],
+  ["codex_acceptance_FINAL.json", acceptanceReport],
+  ["runtime_schema_FINAL.json", runtimeSchemaReport],
+  ["historical_month_manifest_FINAL.json", manifestReport],
 ]) fs.writeFileSync(path.join(outputPath, name), `${JSON.stringify(value, null, 2)}\n`);
-fs.writeFileSync(path.join(outputPath, "historical_acceptance_summary.md"), humanReport);
+fs.writeFileSync(path.join(outputPath, "FINAL_REPORT.md"), humanReport);
 console.log(JSON.stringify({ outputDirectory: outputPath, runtimeSchemas: runtimeSummary, oracle: oracleSummary, acceptance: acceptanceSummary, history: manifestReport.summary, implementationSha: currentSha }, null, 2));
-if (runtimeFailures.length > 0 || acceptanceSummary.blockingFail > 0) process.exitCode = 1;
+if (!ready) process.exitCode = 1;

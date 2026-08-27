@@ -249,6 +249,30 @@ function mergeRows(
   return [...merged.values()];
 }
 
+const economicDimensionKeys = [
+  "importance",
+  "nature_fixe_variable",
+  "contexte_vie",
+] as const;
+
+type EconomicDimensionKey = (typeof economicDimensionKeys)[number];
+
+/**
+ * Economic components carry the classification of their most specific
+ * canonical source. A missing source value inherits the operation value, but
+ * a source value must never be discarded merely because the operation is not
+ * flagged as mixed.
+ */
+export function sourceAwareEconomicDimensions(
+  operation: CanonicalRecord,
+  componentSource?: CanonicalRecord,
+): Readonly<Record<EconomicDimensionKey, unknown>> {
+  return Object.fromEntries(economicDimensionKeys.map((key) => [
+    key,
+    componentSource?.[key] ?? operation[key],
+  ])) as Readonly<Record<EconomicDimensionKey, unknown>>;
+}
+
 function canonicalBatchRowIdentity(
   row: CanonicalRecord,
   columns: readonly string[],
@@ -667,9 +691,7 @@ export class CanonicalRepository {
         throw new CanonicalReadError("economic", "Une dépendance canonique du composant économique est absente.");
       }
       const componentSource = componentSourceByKey.get(componentKey);
-      const componentValue = (key: string) => operation.operation_mixte === true
-        ? componentSource?.[key] ?? operation[key]
-        : operation[key];
+      const dimensions = sourceAwareEconomicDimensions(operation, componentSource);
       return projectEconomicComponentFact({
         household: this.household,
         economicComponent: component,
@@ -680,9 +702,9 @@ export class CanonicalRepository {
           date_transaction_reelle: operation.date_transaction_reelle,
           date_transaction_precision: operation.date_transaction_precision,
           merchant_id: operation.merchant_id,
-          importance: componentValue("importance"),
-          nature_fixe_variable: componentValue("nature_fixe_variable"),
-          contexte_vie: operation.contexte_vie,
+          importance: dimensions.importance,
+          nature_fixe_variable: dimensions.nature_fixe_variable,
+          contexte_vie: dimensions.contexte_vie,
         },
         place,
         timingRows: timingByKey.get(componentKey) ?? [],
