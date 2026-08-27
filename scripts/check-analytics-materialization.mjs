@@ -58,9 +58,15 @@ const {
   isScopedMaterializationFresh,
 } = require(path.join(repositoryRoot, "src/server/analytics/materialization/freshness.ts"));
 const {
+  isQueryMaterializationResource,
   metricArtifactIdentity,
+  metricBucketArtifactIdentity,
   querySnapshotIdentity,
 } = require(path.join(repositoryRoot, "src/server/analytics/materialization/identity.ts"));
+const { FactSourceResolver } = require(path.join(
+  repositoryRoot,
+  "src/server/analytics/fact-source-resolver.ts",
+));
 const { MetricQueryService } = require(path.join(
   repositoryRoot,
   "src/server/analytics/metric-query-service.ts",
@@ -76,6 +82,21 @@ const { computeScopeHash, normalizeAnalysisScope } = require(path.join(
 const { normalizeQueryRequest } = require(path.join(
   repositoryRoot,
   "src/query-api/request/index.ts",
+));
+const { evaluateQueryCapabilities } = require(path.join(
+  repositoryRoot,
+  "src/query-api/capabilities/engine.ts",
+));
+const {
+  parseAnalysisMonthInitialReadModel,
+  parseAnalysisMonthStructureReadModel,
+} = require(path.join(
+  repositoryRoot,
+  "src/query-api/analysis/month/validation.ts",
+));
+const { createAnalysisQuerySources } = require(path.join(
+  repositoryRoot,
+  "src/server/query/sources/analysis.ts",
 ));
 const {
   shouldAutomaticallyRevalidateClientQuery,
@@ -184,6 +205,9 @@ const queryKeyContractV2 = querySnapshotIdentity(
 ).queryKey;
 assert.notEqual(queryKeyA, queryKeyB, "query snapshots must never cross households");
 assert.notEqual(queryKeyA, queryKeyContractV2, "contract changes must miss the snapshot");
+assert.equal(isQueryMaterializationResource("history_calendar_month"), true);
+assert.equal(isQueryMaterializationResource("history_calendar_month_summary"), true);
+assert.equal(isQueryMaterializationResource("history_day_detail"), true);
 
 function moneyMetric(scope, value, n, coverage = { level: "complete" }) {
   return validateProducedMetric({
@@ -259,6 +283,212 @@ const materializedObservationTypical = produceMetric({
   source: { ...typicalSource, monthlyObservations: [...observations] },
 });
 assert.deepEqual(materializedObservationTypical, rawTypical);
+
+const personId = "00000000-0000-4000-8000-000000000003";
+const personScope = normalizeAnalysisScope({
+  subject: { kind: "person", personId },
+  time: { kind: "month", month: "2026-07" },
+});
+const personRepository = {
+  context: {
+    householdId: householdA,
+    timezone: "Europe/Paris",
+    periods: [
+      "2026-04", "2026-05", "2026-06", "2026-07",
+    ].map((month) => ({
+      householdId: householdA,
+      month: `${month}-01`,
+      financeStatus: "complete",
+      isClosed: true,
+    })),
+  },
+  async loadEconomicFacts() { return []; },
+  async loadPersonDays() {
+    return [{
+      fact: "fct_person_day",
+      householdId: householdA,
+      householdTimeZone: "Europe/Paris",
+      personDayId: "00000000-0000-4000-8000-000000000004",
+      personId,
+      localDate: "2026-07-01",
+      locationObservability: "observable",
+    }];
+  },
+  async loadPlaceVisits() { return [{ personId, placeId: "place:test" }]; },
+  async loadActivityOccurrences() {
+    return [{ participantIds: [personId], activityId: "activity:test" }];
+  },
+};
+const personFacts = new FactSourceResolver(personRepository);
+const personBundle = await new MetricQueryService(personFacts).produceActualWithTypical(
+  personScope,
+);
+assert.equal(personBundle.actual.envelope.availability, "unknown");
+assert.equal(personBundle.actual.envelope.value, null);
+assert.equal(personBundle.typical.envelope.availability, "unknown");
+assert.equal(personBundle.typical.envelope.value, null);
+assert.equal(personBundle.comparison.relation, "not_comparable");
+assert.equal(personBundle.comparison.absoluteDelta.publishable, false);
+assert.equal(personBundle.comparison.relativeDelta.publishable, false);
+for (const metricId of [
+  "person_day_count",
+  "place_visit_count",
+  "activity_frequency",
+]) {
+  const source = await personFacts.resolve(metricId, personScope);
+  assert.equal(source.availability, "known", `${metricId} Person must remain productible`);
+  assert.equal(source.facts.length, 1, `${metricId} Person must keep its canonical facts`);
+}
+
+const personAvailableMeasures = [
+  "person_day_count",
+  "place_visit_count",
+  "distinct_visit_days",
+  "activity_frequency",
+];
+const personAnalysisSources = createAnalysisQuerySources({
+  context: personRepository.context,
+  facts: personFacts,
+  metrics: new MetricQueryService(personFacts),
+  repository: {
+    async loadTaxonomyRows() { return []; },
+    async loadEntityRows() { return []; },
+    async loadLifeEventTypeRowsByTypeKeys() { return []; },
+  },
+});
+const personInitialRequest = normalizeQueryRequest({
+  resource: "analysis_month_initial",
+  scope: personScope,
+  params: {},
+});
+const personInitialCapabilities = evaluateQueryCapabilities(personInitialRequest, {
+  requestId: "person-initial",
+  permission: { granted: true },
+  applicability: { measures: personAvailableMeasures },
+});
+assert.equal(personInitialCapabilities.ok, true);
+const personInitial = parseAnalysisMonthInitialReadModel(
+  await personAnalysisSources.readAnalysisMonthInitial({
+    request: personInitialRequest,
+    context: { capabilities: personInitialCapabilities.capabilities },
+  }),
+);
+assert.equal(personInitial.actual.envelope.availability, "unknown");
+assert.equal(personInitial.typical.envelope.availability, "unknown");
+assert.equal(personInitial.minimal.envelope.availability, "unknown");
+assert.equal(personInitial.actualVsTypical.relation, "not_comparable");
+assert.deepEqual(personInitial.markedFacts, []);
+assert.deepEqual(personInitial.markedFactsSelection, {
+  kind: "unavailable",
+  reason: "insufficient_data",
+});
+for (const params of [
+  { view: "destination", dimension: "category", measure: "amount" },
+  { view: "nature", dimension: "fixed_variable", measure: "amount" },
+  { view: "life_context", dimension: "life_context", measure: "amount" },
+]) {
+  const request = normalizeQueryRequest({
+    resource: "analysis_month_structure",
+    scope: personScope,
+    params,
+  });
+  const capabilityResult = evaluateQueryCapabilities(request, {
+    requestId: `person-structure:${params.dimension}`,
+    permission: { granted: true },
+    applicability: { measures: personAvailableMeasures },
+  });
+  assert.equal(capabilityResult.ok, true);
+  const model = parseAnalysisMonthStructureReadModel(
+    await personAnalysisSources.readAnalysisMonthStructure({
+      request,
+      context: { capabilities: capabilityResult.capabilities },
+    }),
+  );
+  assert.equal(model.total.envelope.availability, "unknown");
+  assert.equal(model.total.envelope.value, null);
+  assert.equal(model.rows.length, 0);
+  assert.equal(
+    model.capabilities.availableMeasures.includes(
+      params.dimension === "category"
+        ? "category_amount"
+        : params.dimension === "fixed_variable"
+          ? "fixed_variable_amount"
+          : "life_scope_amount",
+    ),
+    false,
+  );
+}
+
+const atomicMetricWrites = [];
+const atomicBucketWrites = [];
+const atomicMaterialization = {
+  async readMetric() { return null; },
+  async readGlobalAdditiveMetric() { return null; },
+  async writeMetric(metricId, scope, metric) {
+    atomicMetricWrites.push({ metricId, scope, metric });
+  },
+  async writeMetricBucket(metricId, scope, dimensionKey, bucketKey, metric) {
+    atomicBucketWrites.push({ metricId, scope, dimensionKey, bucketKey, metric });
+  },
+};
+const atomicMetrics = new MetricQueryService(personFacts, atomicMaterialization);
+const personDayMetric = await atomicMetrics.produce("person_day_count", personScope);
+assert.equal(personDayMetric.envelope.availability, "known");
+assert.equal(personDayMetric.envelope.value, 1);
+assert.equal(atomicMetricWrites.length, 1);
+assert.equal(atomicMetricWrites[0].metricId, "person_day_count");
+
+const householdAnalysisSources = createAnalysisQuerySources({
+  context: personRepository.context,
+  facts: personFacts,
+  metrics: atomicMetrics,
+  repository: {
+    async loadTaxonomyRows() { return []; },
+    async loadEntityRows() { return []; },
+    async loadLifeEventTypeRowsByTypeKeys() { return []; },
+  },
+});
+const fixedVariableRequest = normalizeQueryRequest({
+  resource: "analysis_month_structure",
+  scope: julyScope,
+  params: { view: "nature", dimension: "fixed_variable", measure: "amount" },
+});
+const fixedVariableCapabilities = evaluateQueryCapabilities(fixedVariableRequest, {
+  requestId: "household-fixed-variable",
+  permission: { granted: true },
+  applicability: { measures: ["fixed_variable_amount"] },
+});
+assert.equal(fixedVariableCapabilities.ok, true);
+parseAnalysisMonthStructureReadModel(
+  await householdAnalysisSources.readAnalysisMonthStructure({
+    request: fixedVariableRequest,
+    context: { capabilities: fixedVariableCapabilities.capabilities },
+  }),
+);
+assert.deepEqual(
+  atomicBucketWrites.map(({ dimensionKey, bucketKey }) => ({ dimensionKey, bucketKey })),
+  [
+    { dimensionKey: "fixed_variable", bucketKey: "Fixe" },
+    { dimensionKey: "fixed_variable", bucketKey: "Variable" },
+  ],
+);
+const fixedIdentity = metricBucketArtifactIdentity(
+  baseContext,
+  "fixed_variable_amount",
+  julyScope,
+  "fixed_variable",
+  "Fixe",
+);
+const variableIdentity = metricBucketArtifactIdentity(
+  baseContext,
+  "fixed_variable_amount",
+  julyScope,
+  "fixed_variable",
+  "Variable",
+);
+assert.notEqual(fixedIdentity.artifactKey, variableIdentity.artifactKey);
+assert.equal(fixedIdentity.dimensionKey, "fixed_variable");
+assert.equal(fixedIdentity.bucketKey, "Fixe");
 
 let storedMetric = null;
 let coldComputations = 0;

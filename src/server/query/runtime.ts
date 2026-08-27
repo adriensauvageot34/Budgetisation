@@ -20,6 +20,7 @@ import { FactSourceResolver } from "@/server/analytics/fact-source-resolver";
 import type { MinimalSourceHealth } from "@/server/analytics/minimal-source-resolver";
 import type { AnalysisScope } from "@/core/scope";
 import { MetricQueryService } from "@/server/analytics/metric-query-service";
+import type { ActiveMetricId } from "@/analytics/production";
 import { SupabaseAnalyticsMaterializationStore } from "@/server/analytics/materialization";
 import { getBootstrapContext } from "@/server/bootstrap/context";
 import { createCanonicalReadClient } from "@/server/canonical/client";
@@ -37,6 +38,21 @@ import {
 import { createRealQuerySources } from "./sources";
 import { safeRuntimeEnvironment } from "@/server/runtime-environment";
 import { recoverQueryRuntimeError } from "./recoverable-error";
+
+const personFinancialMetrics = new Set<ActiveMetricId>([
+  "economic_consumption_net_attributable",
+  "typical_month_cost",
+  "minimal_month_cost",
+  "localized_spend",
+  "category_amount",
+  "merchant_net_amount",
+  "life_scope_amount",
+  "fixed_variable_amount",
+  "purchase_count",
+  "activity_causal_cost",
+  "activity_causal_median_cost_per_occurrence",
+  "fuel_trip_estimate",
+]);
 
 function unavailable(): never {
   throw new QueryTemporaryUnavailableError(
@@ -102,6 +118,7 @@ function baseServices(
   sources: QueryReadModelSources,
   repository?: CanonicalRepository,
   materialization?: SupabaseAnalyticsMaterializationStore,
+  onTrace: QueryServerServices["onTrace"] = traceQuery,
 ): QueryServerServices {
   return {
     resolveContext: () => ({
@@ -127,18 +144,22 @@ function baseServices(
       : {
           resolveApplicability: async ({ request }) => {
             const purchaseEventHealth = await repository.purchaseEventSourceHealth();
-            if (purchaseEventHealth === "AVAILABLE") return {};
             const maximum = getQueryCapabilityMaximum(request.resource);
+            const personScope = request.scope.subject.kind === "person";
+            const measures = maximum.measures.filter(
+              (metricId) =>
+                (!personScope || !personFinancialMetrics.has(metricId))
+                && (purchaseEventHealth === "AVAILABLE" || metricId !== "purchase_count"),
+            );
+            if (measures.length === maximum.measures.length) return {};
             return {
-              measures: maximum.measures.filter(
-                (metricId) => metricId !== "purchase_count",
-              ),
+              measures,
             };
           },
         }),
     sources,
     ...(materialization === undefined ? {} : { materialization }),
-    onTrace: traceQuery,
+    onTrace,
   };
 }
 
@@ -162,6 +183,33 @@ export function createQueryServicesForContext(input: {
     }),
     repository,
     materialization,
+  );
+}
+
+/**
+ * Builds the official Canonical → Facts → Analytics → Query chain without any
+ * materialization store. Historical validation uses this boundary so a
+ * read-only regeneration cannot write artifacts or query snapshots.
+ */
+export function createReadOnlyQueryServicesForContext(input: {
+  readonly context: AuthorizedRuntimeContext;
+  readonly client: SupabaseClient;
+  readonly onTrace?: QueryServerServices["onTrace"];
+}): QueryServerServices {
+  const repository = new CanonicalRepository(input.client, input.context);
+  const facts = new FactSourceResolver(repository);
+  const metrics = new MetricQueryService(facts);
+  return baseServices(
+    input.context,
+    createRealQuerySources({
+      context: input.context,
+      repository,
+      facts,
+      metrics,
+    }),
+    repository,
+    undefined,
+    input.onTrace,
   );
 }
 

@@ -23,6 +23,7 @@ export const querySectionKeys = Object.freeze({
   places: "places" as QuerySectionKey<"places">,
   merchants: "merchants" as QuerySectionKey<"merchants">,
   operations: "operations" as QuerySectionKey<"operations">,
+  journal: "journal" as QuerySectionKey<"journal">,
   actual: "actual" as QuerySectionKey<"actual">,
   typical: "typical" as QuerySectionKey<"typical">,
   baseline: "baseline" as QuerySectionKey<"baseline">,
@@ -63,6 +64,7 @@ export type QuerySectionName =
   | "places"
   | "merchants"
   | "operations"
+  | "journal"
   | "actual"
   | "typical"
   | "baseline"
@@ -229,9 +231,7 @@ export const queryCapabilityRegistry = Object.freeze({
       querySectionKeys.header,
       querySectionKeys.finance,
       querySectionKeys.contexts,
-      querySectionKeys.activities,
-      querySectionKeys.places,
-      querySectionKeys.operations,
+      querySectionKeys.journal,
     ]),
     measures: calendarSummaryMeasures,
     filters: noFilters,

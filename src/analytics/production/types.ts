@@ -89,6 +89,7 @@ export type MetricProvenanceRule = Extract<
 export type MetricSupportPolicy =
   | { readonly kind: "source_provided"; readonly unit: SupportUnit }
   | { readonly kind: "typical_month"; readonly unit: "month" }
+  | { readonly kind: "activity_causal_cost"; readonly unit: "occurrence" }
   | { readonly kind: "optional"; readonly unit: SupportUnit };
 
 export type MetricRegistryEntry = {

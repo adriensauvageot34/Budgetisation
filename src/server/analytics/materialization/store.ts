@@ -18,6 +18,7 @@ import {
   isQueryMaterializationResource,
   materializationPeriod,
   metricArtifactIdentity,
+  metricBucketArtifactIdentity,
   querySnapshotIdentity,
   type MaterializationPeriodIdentity,
   type MetricArtifactIdentity,
@@ -240,15 +241,13 @@ export class SupabaseAnalyticsMaterializationStore {
     }
   }
 
-  async writeMetric(
-    metricId: ActiveMetricId,
-    scope: AnalysisScope,
+  private async writeMetricIdentity(
+    identity: MetricArtifactIdentity,
     metric: ProducedMetric,
     publicationId?: string,
   ): Promise<void> {
     if (this.unavailable) return;
     const selectedPublicationId = publicationId ?? this.options.publicationId;
-    const identity = metricArtifactIdentity(this.context, metricId, scope, "current");
     const validated = validateProducedMetric(metric);
     const startedAt = Date.now();
     const { error } = await this.client.from("analytics_artifacts").upsert({
@@ -257,10 +256,10 @@ export class SupabaseAnalyticsMaterializationStore {
       household_id: identity.householdId,
       ...subjectColumns(identity.subject),
       ...periodColumns(identity.period),
-      artifact_family: "metric",
+      artifact_family: identity.artifactFamily,
       metric_id: identity.metricId,
-      dimension_key: null,
-      bucket_key: null,
+      dimension_key: identity.dimensionKey,
+      bucket_key: identity.bucketKey,
       scope_hash: identity.scopeHash,
       filter_signature: identity.filterSignature,
       method_version: identity.methodVersion,
@@ -285,6 +284,41 @@ export class SupabaseAnalyticsMaterializationStore {
       durationMs: Date.now() - startedAt,
       sourceRevision: identity.period.sourceRevision,
     });
+  }
+
+  async writeMetric(
+    metricId: ActiveMetricId,
+    scope: AnalysisScope,
+    metric: ProducedMetric,
+    publicationId?: string,
+  ): Promise<void> {
+    return this.writeMetricIdentity(
+      metricArtifactIdentity(this.context, metricId, scope, "current"),
+      metric,
+      publicationId,
+    );
+  }
+
+  async writeMetricBucket(
+    metricId: ActiveMetricId,
+    scope: AnalysisScope,
+    dimensionKey: string,
+    bucketKey: string,
+    metric: ProducedMetric,
+    publicationId?: string,
+  ): Promise<void> {
+    return this.writeMetricIdentity(
+      metricBucketArtifactIdentity(
+        this.context,
+        metricId,
+        scope,
+        dimensionKey,
+        bucketKey,
+        "current",
+      ),
+      metric,
+      publicationId,
+    );
   }
 
   async readMonthlyMetrics(

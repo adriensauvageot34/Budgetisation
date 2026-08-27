@@ -165,7 +165,14 @@ function sourceKey(
   activeRecurrences: ReadonlySet<string>,
   activeNeeds: ReadonlySet<string>,
   activeAnnualEvents: ReadonlySet<string>,
+  structuralRecurrenceIds: ReadonlySet<string>,
 ): string | null {
+  if (
+    metadata.recurrenceSeriesId !== null &&
+    structuralRecurrenceIds.has(metadata.recurrenceSeriesId)
+  ) {
+    return `structural-rule:${rule.baselineRuleId}:${rule.preciseType ?? "category"}`;
+  }
   if (metadata.recurrenceSeriesId !== null) {
     return activeRecurrences.has(metadata.recurrenceSeriesId)
       ? `recurrence:${metadata.recurrenceSeriesId}`
@@ -240,16 +247,19 @@ export function resolveMinimalPlanningSource(input: {
   const rules = parseRules(bundle.baselineRules);
   const operations = rowsById(bundle.operations, "operation_id");
   const components = sourceRows(bundle);
-  const activeRecurrences = new Set(bundle.recurrenceSeries.flatMap((row) =>
+  const declaredActiveRecurrences = new Set(bundle.recurrenceSeries.flatMap((row) =>
     optionalBoolean(row, "actif_prevision") === true
       ? [optionalText(row, "recurrence_series_id")].filter((id): id is string => id !== null)
       : []));
   const activeNeeds = new Set(bundle.needs.flatMap((row) =>
-    optionalBoolean(row, "actif") === true
+    optionalBoolean(row, "actif") === true && optionalText(row, "person_id") === null
       ? [optionalText(row, "need_id")].filter((id): id is string => id !== null)
       : []));
-  const activeAnnualEvents = new Set(bundle.annualEvents.flatMap((row) =>
-    [optionalText(row, "annual_event_id")].filter((id): id is string => id !== null)));
+  // Une Annual_event n'est activable qu'après preuve que sa règle
+  // anti-doublon n'entre pas en concurrence avec un Moment futur concret.
+  // Ce bundle ne contient pas ce producteur futur : l'absence de preuve ne
+  // devient donc jamais une provision inventée.
+  const activeAnnualEvents = new Set<string>();
   const activePools = rowsById(
     bundle.provisionPools.filter((row) => optionalBoolean(row, "application_auto") === true),
     "provision_pool_id",
@@ -261,6 +271,56 @@ export function resolveMinimalPlanningSource(input: {
   const resolvedObligationSources = new Set<string>();
   const unresolvedObligationSources = new Set<string>();
   const commuteRuleIds = new Set<string>();
+  const recurrenceMonths = new Map<string, Set<YearMonth>>();
+  const recurrenceRule = new Map<string, string>();
+
+  for (const fact of bundle.economicFacts) {
+    if (fact.category.kind !== "resolved") continue;
+    const metadata = componentMetadata(fact, components, operations);
+    if (
+      metadata.recurrenceSeriesId === null ||
+      !isStructural(metadata)
+    ) continue;
+    const rule = selectMinimalBaselineRule(rules, {
+      categoryId: fact.category.id,
+      subcategoryId: fact.subcategory.kind === "resolved" ? fact.subcategory.id : null,
+      preciseType: metadata.preciseType,
+      asOf: `${targetMonth}-01`,
+    });
+    if (rule === null || minimalBaselineEligibilityDecision(rule).kind !== "eligible") continue;
+    const months = recurrenceMonths.get(metadata.recurrenceSeriesId) ?? new Set<YearMonth>();
+    if (fact.economicTiming.kind === "known" || fact.economicTiming.kind === "partial") {
+      for (const segment of fact.economicTiming.segments) {
+        if (segment.timingState === "known" && segment.economicMonth !== null && referenceSet.has(segment.economicMonth)) {
+          months.add(segment.economicMonth);
+        }
+      }
+    }
+    recurrenceMonths.set(metadata.recurrenceSeriesId, months);
+    recurrenceRule.set(metadata.recurrenceSeriesId, rule.baselineRuleId);
+  }
+  const establishedInactiveByRule = new Map<string, Set<string>>();
+  for (const [seriesId, observedMonths] of recurrenceMonths) {
+    if (declaredActiveRecurrences.has(seriesId) || observedMonths.size < 3) continue;
+    const ruleId = recurrenceRule.get(seriesId);
+    if (ruleId === undefined) continue;
+    const ids = establishedInactiveByRule.get(ruleId) ?? new Set<string>();
+    ids.add(seriesId);
+    establishedInactiveByRule.set(ruleId, ids);
+  }
+  const structuralRecurrenceIds = new Set<string>();
+  for (const [ruleId, inactiveIds] of establishedInactiveByRule) {
+    const historicalMonths = new Set([...inactiveIds].flatMap((id) => [...(recurrenceMonths.get(id) ?? [])]));
+    for (const id of inactiveIds) structuralRecurrenceIds.add(id);
+    for (const [seriesId, observedMonths] of recurrenceMonths) {
+      if (
+        recurrenceRule.get(seriesId) === ruleId &&
+        declaredActiveRecurrences.has(seriesId) &&
+        [...observedMonths].every((month) => !historicalMonths.has(month))
+      ) structuralRecurrenceIds.add(seriesId);
+    }
+  }
+  const activeRecurrences = declaredActiveRecurrences;
 
   for (const fact of bundle.economicFacts) {
     if (fact.category.kind !== "resolved") continue;
@@ -304,7 +364,14 @@ export function resolveMinimalPlanningSource(input: {
       continue;
     }
     const bucket = isStructural(metadata) ? "obligation" : "neutral";
-    const key = sourceKey(metadata, rule, activeRecurrences, activeNeeds, activeAnnualEvents);
+    const key = sourceKey(
+      metadata,
+      rule,
+      activeRecurrences,
+      activeNeeds,
+      activeAnnualEvents,
+      structuralRecurrenceIds,
+    );
     if (key === null || metadata.forecastMode === null) {
       (bucket === "obligation" ? unresolvedObligationSources : unresolvedNeutralSources)
         .add(`rule:${rule.baselineRuleId}`);

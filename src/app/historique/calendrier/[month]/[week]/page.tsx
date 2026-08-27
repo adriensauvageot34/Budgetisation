@@ -1,9 +1,12 @@
 import type { Metadata } from "next";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { parseYearMonth } from "@/core/time";
 import { parseCalendarWeekRef } from "@/navigation";
-import { parsePersonId } from "@/core/identity";
 import { getBootstrapContext } from "@/server/bootstrap/context";
+import {
+  eligibleHistoryMonths,
+  resolveEligibleHistoryMonth,
+} from "@/server/bootstrap/history-calendar";
 import { CalendarClientPage, calendarWeekRange } from "@/features/calendar";
 import type { HistoryCalendarMonthReadModel } from "@/query-api";
 import { queryResourceKeys } from "@/query-api";
@@ -24,21 +27,21 @@ export default async function CalendarWeekRoute({
   const { personId: rawPersonId } = await searchParams;
   let month;
   let week;
-  let personId;
   try {
     month = parseYearMonth(rawMonth);
     week = parseCalendarWeekRef(rawWeek);
-    personId = typeof rawPersonId === "string" && rawPersonId.length > 0
-      ? parsePersonId(rawPersonId)
-      : undefined;
   } catch {
     notFound();
   }
+  if (rawPersonId !== undefined) {
+    redirect(`/historique/calendrier/${month}/${week}`);
+  }
   const context = await withProductAuthentication(() => getBootstrapContext());
-  if (personId && !context.persons.some((person) => person.personId === personId)) notFound();
-  const subject = personId
-    ? { kind: "person" as const, personId }
-    : { kind: "household" as const };
+  const eligibleMonths = eligibleHistoryMonths(context.periods);
+  const resolvedMonth = resolveEligibleHistoryMonth(month, eligibleMonths);
+  if (resolvedMonth === null) redirect("/diagnostic");
+  if (resolvedMonth !== month) redirect(`/historique/calendrier/${resolvedMonth}`);
+  const subject = { kind: "household" as const };
   const requestedRange = calendarWeekRange(month, week);
   const state = await withProductAuthentication(async () =>
     combineQueryResults<HistoryCalendarMonthReadModel>(
@@ -58,6 +61,7 @@ export default async function CalendarWeekRoute({
     <CalendarClientPage
       kind="week"
       subject={subject}
+      persons={context.persons}
       month={month}
       week={week}
       state={state}

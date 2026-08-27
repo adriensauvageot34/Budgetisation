@@ -140,6 +140,34 @@ export class MetricQueryService {
     }
   }
 
+  async materializeBucket(
+    metricId: ActiveMetricId,
+    scope: AnalysisScope,
+    dimensionKey: string,
+    bucketKey: string,
+    metric: ScopedMetricReadModel,
+  ): Promise<void> {
+    if (this.materialization === undefined) return;
+    if (metric.metricId !== metricId) {
+      throw new TypeError("La métrique atomique ne correspond pas à son identité.");
+    }
+    try {
+      await this.materialization.writeMetricBucket(
+        metricId,
+        scope,
+        dimensionKey,
+        bucketKey,
+        {
+          metricId: metric.metricId,
+          scopeHash: metric.scopeHash,
+          ...metric.envelope,
+        } as ProducedMetric,
+      );
+    } catch {
+      // Une écriture d'artefact atomique ne change jamais le read model produit.
+    }
+  }
+
   async produceActualWithTypical(scope: AnalysisScope): Promise<{
     readonly actual: ScopedMetricReadModel;
     readonly typical: ScopedMetricReadModel;

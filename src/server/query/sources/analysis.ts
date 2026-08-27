@@ -377,7 +377,24 @@ function structureMetricId(
 function metricMagnitude(metric: ScopedMetricReadModel): Big | null {
   if (metric.envelope.availability !== "known") return null;
   const value = metric.envelope.value;
-  return typeof value === "number" || typeof value === "string" ? new Big(value) : null;
+  return typeof value === "number" || typeof value === "string" ? new Big(value).abs() : null;
+}
+
+function additiveRowsReconcile(
+  rows: readonly { readonly metric: ScopedMetricReadModel }[],
+  total: ScopedMetricReadModel,
+): boolean {
+  if (total.envelope.availability !== "known") return false;
+  const totalValue = total.envelope.value;
+  if (typeof totalValue !== "number" && typeof totalValue !== "string") return false;
+  let sum = new Big(0);
+  for (const { metric } of rows) {
+    if (metric.envelope.availability !== "known") return false;
+    const value = metric.envelope.value;
+    if (typeof value !== "number" && typeof value !== "string") return false;
+    sum = sum.plus(value);
+  }
+  return sum.eq(totalValue);
 }
 
 function structureBucket(dimension: AnalysisStructureDimension, id: string) {
@@ -407,13 +424,28 @@ function structureDestination(dimension: AnalysisStructureDimension, id: string)
 }
 
 function axisMetric(input: {
-  readonly metricId: "category_amount" | "fixed_variable_amount" | "life_scope_amount";
+  readonly metricId: "category_amount" | "merchant_net_amount" | "localized_spend" | "fixed_variable_amount" | "life_scope_amount";
   readonly scope: NormalizedAnalysisScope;
   readonly facts: readonly import("@/analytics/facts").EconomicComponentFact[];
 }): ScopedMetricReadModel {
-  const known = input.facts.filter(({ economicTiming }) => economicTiming.kind === "known" || economicTiming.kind === "partial");
-  const uncertain = input.facts.length - known.length;
   const definition = getMetricRegistryEntry(input.metricId);
+  if (input.scope.subject.kind === "person") {
+    return {
+      metricId: definition.metricId,
+      scopeHash: computeScopeHash(input.scope),
+      envelope: {
+        availability: "unknown",
+        value: null,
+        unit: definition.unit,
+        provenance: definition.provenanceRule,
+        methodVersion: definition.methodVersion,
+      },
+    } as ScopedMetricReadModel;
+  }
+  const known = input.facts.filter(({ economicTiming }) => economicTiming.kind === "known" || economicTiming.kind === "partial");
+  const knownN = known.length;
+  const eligibleN = input.facts.length;
+  const uncertain = input.facts.length - known.length;
   const unavailable = input.facts.length > 0 && known.length === 0;
   return {
     metricId: definition.metricId,
@@ -424,12 +456,12 @@ function axisMetric(input: {
       unit: definition.unit,
       coverage: uncertain === 0 ? { level: "complete" } : { level: "partial" },
       support: parseSupport({
-        n: known.length,
-        eligibleN: input.facts.length,
-        observableN: input.facts.length,
-        excludedN: uncertain,
+        n: knownN,
+        eligibleN,
+        observableN: eligibleN,
+        excludedN: Math.max(eligibleN - knownN, 0),
         unit: "transaction",
-        level: known.length === 0 ? "insufficient" : "sufficient",
+        level: knownN === 0 ? "insufficient" : "sufficient",
       }),
       provenance: definition.provenanceRule,
       methodVersion: definition.methodVersion,
@@ -476,9 +508,16 @@ async function categoryStructure(input: {
       ...(destination === undefined ? {} : { destination }),
     };
   });
+  await Promise.all(ranked.map(({ key, metric }) =>
+    input.dependencies.metrics.materializeBucket(
+      "category_amount",
+      input.scope,
+      "category",
+      key,
+      metric,
+    )));
   const total = axisMetric({ metricId: "category_amount", scope: input.scope, facts });
-  const exact = rows.every(({ metric }) => metric.envelope.availability === "known" && metric.envelope.coverage?.level === "complete") &&
-    total.envelope.availability === "known" && total.envelope.coverage?.level === "complete";
+  const exact = additiveRowsReconcile(rows, total);
   return {
     month: input.scope.time.kind === "month" ? input.scope.time.month : (() => { throw new TypeError("Structure exige Month."); })(),
     subject: input.scope.subject,
@@ -508,10 +547,23 @@ async function canonicalAxisStructure(input: {
     input.scope,
   );
   const metricId = input.axis === "fixed_variable" ? "fixed_variable_amount" : "life_scope_amount";
-  const ranked = partitionEconomicComponentsForStructure(facts, input.axis).map((partition) => ({
-    key: partition.key,
-    metric: axisMetric({ metricId, scope: input.scope, facts: partition.facts }),
-  })).sort((left, right) => {
+  const ranked = partitionEconomicComponentsForStructure(facts, input.axis).map((partition) => {
+    const metric = axisMetric({ metricId, scope: input.scope, facts: partition.facts });
+    const qualifiedMetric: ScopedMetricReadModel =
+      partition.undetermined && metric.envelope.availability === "known"
+        ? ({
+            ...metric,
+            envelope: {
+              ...metric.envelope,
+              coverage: { level: "partial" as const },
+            },
+          } as ScopedMetricReadModel)
+        : metric;
+    return {
+      key: partition.key,
+      metric: qualifiedMetric,
+    };
+  }).sort((left, right) => {
     const leftValue = metricMagnitude(left.metric);
     const rightValue = metricMagnitude(right.metric);
     if (leftValue === null) return rightValue === null ? left.key.localeCompare(right.key) : 1;
@@ -531,9 +583,16 @@ async function canonicalAxisStructure(input: {
       ...(magnitude === null || maximum === null ? {} : { barPercent: maximum.eq(0) ? 0 : Number(magnitude.div(maximum).times(100).toFixed(2)) }),
     };
   });
+  await Promise.all(ranked.map(({ key, metric }) =>
+    input.dependencies.metrics.materializeBucket(
+      metricId,
+      input.scope,
+      input.axis,
+      key,
+      metric,
+    )));
   const total = axisMetric({ metricId, scope: input.scope, facts });
-  const exact = rows.every(({ metric }) => metric.envelope.availability === "known" && metric.envelope.coverage?.level === "complete") &&
-    total.envelope.availability === "known" && total.envelope.coverage?.level === "complete";
+  const exact = additiveRowsReconcile(rows, total);
   const view = input.axis === "fixed_variable" ? "nature" as const : "life_context" as const;
   return {
     month: input.scope.time.kind === "month" ? input.scope.time.month : (() => { throw new TypeError("Structure exige Month."); })(),
@@ -569,8 +628,35 @@ async function monthStructure(input: {
   const active = available.find(
     (combination) => combination.view === input.params.view && combination.dimension === input.params.dimension && combination.measures.includes(input.params.measure as never),
   );
-  if (active === undefined) {
+  const registered = structureCombinations.find(
+    (combination) => combination.view === input.params.view && combination.dimension === input.params.dimension && combination.measures.includes(input.params.measure as never),
+  );
+  const metricId = structureMetricId(input.params.dimension, input.params.measure);
+  const personFinanceMetricId = metricId === "category_amount" || metricId === "merchant_net_amount" || metricId === "localized_spend" ||
+    metricId === "fixed_variable_amount" || metricId === "life_scope_amount"
+    ? metricId
+    : null;
+  const unavailablePersonFinance = input.scope.subject.kind === "person" && personFinanceMetricId !== null;
+  if (registered === undefined || (active === undefined && !unavailablePersonFinance)) {
     throw new MetricProductionContractError("La combinaison Structure demandée n'est pas disponible pour ce scope.");
+  }
+  if (unavailablePersonFinance && personFinanceMetricId !== null) {
+    return {
+      month: input.scope.time.kind === "month" ? input.scope.time.month : (() => { throw new TypeError("Structure exige Month."); })(),
+      subject: input.scope.subject,
+      activeView: input.params.view,
+      activeDimension: input.params.dimension,
+      activeMeasure: input.params.measure,
+      availableViews: [...new Set(available.map(({ view }) => view))],
+      availableDimensions: [...new Set(available.filter(({ view }) => view === input.params.view).map(({ dimension }) => dimension))],
+      availableMeasures: [],
+      supportedCombinations: structureCombinations,
+      unavailableDimensions: [{ dimension: "family", reason: "BLOCKED_CONTRACT" }, { dimension: "necessity", reason: "BLOCKED_CONTRACT" }],
+      rows: [],
+      total: axisMetric({ metricId: personFinanceMetricId, scope: input.scope, facts: [] }),
+      reconciliation: "partial",
+      capabilities: input.capabilities,
+    };
   }
   if (input.params.dimension === "fixed_variable" || input.params.dimension === "life_context") {
     return canonicalAxisStructure({
@@ -583,7 +669,6 @@ async function monthStructure(input: {
   if (input.params.dimension === "category") {
     return categoryStructure({ scope: input.scope, capabilities: input.capabilities, dependencies: input.dependencies });
   }
-  const metricId = structureMetricId(input.params.dimension, input.params.measure);
   if (metricId === null) throw new MetricProductionContractError("La mesure Structure n'est pas contractée.");
   const groups = await groupsForDimension(
     input.params.dimension as Exclude<AnalysisBreakdownDimension, "necessity" | "fixed_variable" | "life_scope" | "day_context">,
@@ -591,12 +676,19 @@ async function monthStructure(input: {
     input.dependencies.facts,
     input.dependencies.repository,
   );
-  const ranked = await breakdownRows({
-    groups,
-    metricId,
-    limit: Math.max(1, groups.length),
-    metrics: input.dependencies.metrics,
-  });
+  const totalMetricId = input.params.measure === "amount" &&
+    (input.params.dimension === "merchant" || input.params.dimension === "place")
+    ? "economic_consumption_net_attributable"
+    : metricId;
+  const [ranked, total] = await Promise.all([
+    breakdownRows({
+      groups,
+      metricId,
+      limit: Math.max(1, groups.length),
+      metrics: input.dependencies.metrics,
+    }),
+    input.dependencies.metrics.produce(totalMetricId, input.scope),
+  ]);
   const magnitudes = ranked.map(({ metric }) => metricMagnitude(metric)).filter((value): value is Big => value !== null);
   const maximum = magnitudes.reduce<Big | null>((current, value) => current === null || value.gt(current) ? value : current, null);
   const rows = ranked.map((row) => {
@@ -616,7 +708,7 @@ async function monthStructure(input: {
   });
   const availableViews = [...new Set(available.map(({ view }) => view))];
   const availableDimensions = [...new Set(available.filter(({ view }) => view === input.params.view).map(({ dimension }) => dimension))];
-  const availableMeasures = active.measures;
+  const availableMeasures = active?.measures ?? registered.measures;
   return {
     month: input.scope.time.kind === "month" ? input.scope.time.month : (() => { throw new TypeError("Structure exige Month."); })(),
     subject: input.scope.subject,
@@ -629,6 +721,7 @@ async function monthStructure(input: {
     supportedCombinations: available,
     unavailableDimensions: [{ dimension: "family", reason: "BLOCKED_CONTRACT" }, { dimension: "necessity", reason: "BLOCKED_CONTRACT" }],
     rows,
+    total,
     reconciliation: reconciliationForMetric(metricId),
     capabilities: input.capabilities,
   };

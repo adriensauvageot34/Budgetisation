@@ -1,28 +1,22 @@
 "use client";
 
 import { useMemo, useRef } from "react";
-import type { LocalDate, YearMonth } from "@/core/time";
 import type { AnalysisSubject } from "@/core/scope";
-import { scopeForRoot, type CalendarWeekRef, type RootNavigationContext } from "@/navigation";
-import type {
-  HistoryCalendarMonthReadModel,
-  HistoryCalendarMonthSummaryReadModel,
-  HistoryDayDetailReadModel,
-} from "@/query-api";
-import type { UiTransportState } from "@/ui";
+import type { LocalDate, YearMonth } from "@/core/time";
 import { useProductRuntime, useProductSurface } from "@/components/runtime";
-import { CalendarMonth, CalendarTwelveMonths, CalendarWeek } from "./calendar-view";
+import { scopeForRoot, type CalendarWeekRef, type RootNavigationContext } from "@/navigation";
+import type { HistoryCalendarMonthReadModel, HistoryDayDetailReadModel } from "@/query-api";
+import type { UiTransportState } from "@/ui";
+import { CalendarMonth, CalendarWeek } from "./calendar-view";
 import { DayDetailDrawer } from "./day-drawer";
+import type { CalendarPerson } from "./types";
 
 export type CalendarClientPageProps =
   | {
-      readonly kind: "overview";
-      readonly subject: AnalysisSubject;
-      readonly state: UiTransportState<readonly HistoryCalendarMonthSummaryReadModel[]>;
-    }
-  | {
       readonly kind: "month";
       readonly subject: AnalysisSubject;
+      readonly persons: readonly CalendarPerson[];
+      readonly adjacentMonths: { readonly previous?: YearMonth; readonly next?: YearMonth };
       readonly month: YearMonth;
       readonly day?: LocalDate;
       readonly state: UiTransportState<HistoryCalendarMonthReadModel>;
@@ -31,6 +25,7 @@ export type CalendarClientPageProps =
   | {
       readonly kind: "week";
       readonly subject: AnalysisSubject;
+      readonly persons: readonly CalendarPerson[];
       readonly month: YearMonth;
       readonly week: CalendarWeekRef;
       readonly state: UiTransportState<readonly HistoryCalendarMonthReadModel[]>;
@@ -50,12 +45,10 @@ export function CalendarClientPage(props: CalendarClientPageProps) {
     goToAnalysis: () => runtime.run((value) => value.goToAnalysis()) as Promise<Awaited<ReturnType<typeof controller.goToAnalysis>>>,
   }, [controller, runtime]);
   const rootRef = useRef<HTMLDivElement>(null);
-  const route: RootNavigationContext = props.kind === "overview"
-    ? { area: "calendar", context: { kind: "calendar_overview", ...(props.subject.kind === "person" ? { personId: props.subject.personId } : {}) } }
-    : props.kind === "week"
-      ? { area: "calendar", context: { kind: "calendar_week", month: props.month, week: props.week, ...(props.subject.kind === "person" ? { personId: props.subject.personId } : {}) } }
-      : { area: "calendar", context: { kind: "calendar_month", month: props.month, ...(props.day ? { day: props.day } : {}), ...(props.subject.kind === "person" ? { personId: props.subject.personId } : {}) } };
-  const scope = props.kind === "overview" ? null : scopeForRoot(route);
+  const route: RootNavigationContext = props.kind === "week"
+    ? { area: "calendar", context: { kind: "calendar_week", month: props.month, week: props.week } }
+    : { area: "calendar", context: { kind: "calendar_month", month: props.month, ...(props.day ? { day: props.day } : {}) } };
+  const scope = scopeForRoot(route);
   const pageState = props.kind === "month" && props.dayState ? props.dayState : props.state;
   useProductSurface({
     route,
@@ -66,20 +59,24 @@ export function CalendarClientPage(props: CalendarClientPageProps) {
         ? "terminal_without_anchor"
         : "ready",
   });
-  if (props.kind === "overview") {
-    return <CalendarTwelveMonths state={props.state} navigation={navigation} />;
-  }
   if (props.kind === "week") {
-    return <CalendarWeek month={props.month} week={props.week} state={props.state} navigation={navigation} />;
+    return <CalendarWeek month={props.month} week={props.week} persons={props.persons} state={props.state} navigation={navigation} />;
   }
   return (
     <>
       <div ref={rootRef} data-focus-restoration-fallback="">
-        <CalendarMonth month={props.month} state={props.state} navigation={navigation} />
+        <CalendarMonth
+          month={props.month}
+          persons={props.persons}
+          adjacentMonths={props.adjacentMonths}
+          state={props.state}
+          navigation={navigation}
+        />
       </div>
       {props.day && controller && props.dayState ? (
         <DayDetailDrawer
           date={props.day}
+          persons={props.persons}
           state={props.dayState}
           navigation={navigation ?? controller}
           backgroundRootRef={rootRef}

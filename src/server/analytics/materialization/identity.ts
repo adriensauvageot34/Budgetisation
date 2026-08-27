@@ -60,6 +60,9 @@ export type MaterializationSubjectIdentity =
 
 export type MetricArtifactIdentity = {
   readonly artifactKey: string;
+  readonly artifactFamily: "metric" | "metric_bucket";
+  readonly dimensionKey: string | null;
+  readonly bucketKey: string | null;
   readonly householdId: HouseholdId;
   readonly subject: MaterializationSubjectIdentity;
   readonly period: MaterializationPeriodIdentity;
@@ -148,6 +151,9 @@ export function metricArtifactIdentity(
   });
   return {
     artifactKey,
+    artifactFamily: "metric",
+    dimensionKey: null,
+    bucketKey: null,
     householdId: context.householdId,
     subject,
     period,
@@ -157,6 +163,41 @@ export function metricArtifactIdentity(
     methodVersion: definition.methodVersion,
     contractVersion: context.contractVersion,
     analyticsRevision: context.analyticsRevision,
+  };
+}
+
+export function metricBucketArtifactIdentity(
+  context: AuthorizedRuntimeContext,
+  metricId: ActiveMetricId,
+  scope: AnalysisScope,
+  dimensionKey: string,
+  bucketKey: string,
+  revisionPolicy: MaterializationRevisionPolicy = "published",
+): MetricArtifactIdentity {
+  if (dimensionKey.length === 0 || bucketKey.length === 0) {
+    throw new TypeError("Une identité d'artefact atomique exige dimension et bucket.");
+  }
+  const base = metricArtifactIdentity(context, metricId, scope, revisionPolicy);
+  return {
+    ...base,
+    artifactKey: canonicalHash({
+      householdId: base.householdId,
+      subject: base.subject,
+      period: base.period.kind === "month"
+        ? { kind: base.period.kind, month: base.period.month }
+        : { kind: base.period.kind, asOf: base.period.asOf },
+      artifactFamily: "metric_bucket",
+      metricId,
+      scopeHash: base.scopeHash,
+      filterSignature: base.filterSignature,
+      dimensionKey,
+      bucketKey,
+      methodVersion: base.methodVersion,
+      contractVersion: base.contractVersion,
+    }),
+    artifactFamily: "metric_bucket",
+    dimensionKey,
+    bucketKey,
   };
 }
 
@@ -200,5 +241,6 @@ export function querySnapshotIdentity(
 export function isQueryMaterializationResource(resource: QueryResourceKey): boolean {
   return resource.startsWith("analysis_month_")
     || resource.startsWith("analysis_global_")
+    || resource.startsWith("history_")
     || resource === "analysis_target";
 }

@@ -5,6 +5,7 @@ export {
   isQueryMaterializationResource,
   materializationPeriod,
   metricArtifactIdentity,
+  metricBucketArtifactIdentity,
   querySnapshotIdentity,
   type MaterializationPeriodIdentity,
   type MaterializationRevisionPolicy,

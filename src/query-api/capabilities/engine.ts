@@ -116,6 +116,10 @@ function metricScopeReason(
     request.resource === "analysis_month_evolution" && metricId === "life_scope_amount"
       ? "life_scope"
       : null;
+  const markedFactsDimension =
+    request.resource === "analysis_month_initial" && metricId === "category_amount"
+      ? "category"
+      : null;
   const contextDimension =
     (request.resource === "analysis_month_contexts" ||
       request.resource === "analysis_global_contexts" ||
@@ -131,7 +135,7 @@ function metricScopeReason(
         ? "merchant"
         : null;
   const groupedDimension =
-    breakdownDimension ?? structureDimension ?? targetDimension ?? fixedEvolutionDimension ?? contextDimension ?? entityOrGalleryDimension;
+    breakdownDimension ?? structureDimension ?? targetDimension ?? fixedEvolutionDimension ?? markedFactsDimension ?? contextDimension ?? entityOrGalleryDimension;
   const metricTimeKind =
     request.resource === "analysis_global_evolution" ||
     ((request.resource === "analysis_global_typical" ||

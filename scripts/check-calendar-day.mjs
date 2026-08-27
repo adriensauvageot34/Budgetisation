@@ -10,6 +10,7 @@ const repositoryRoot = process.cwd();
 const originalResolveFilename = Module._resolveFilename;
 const originalLoad = Module._load;
 Module._load = function loadCalendarModule(request, parent, isMain) {
+  if (request === "server-only") return {};
   if (request.endsWith(".module.css")) return {};
   return originalLoad.call(this, request, parent, isMain);
 };
@@ -36,6 +37,7 @@ for (const extension of [".ts", ".tsx"]) {
 }
 
 const model = require(path.join(repositoryRoot, "src/features/calendar/model.ts"));
+const historyPolicy = require(path.join(repositoryRoot, "src/server/bootstrap/history-calendar.ts"));
 const query = require(path.join(repositoryRoot, "src/query-api/index.ts"));
 const navigation = require(path.join(repositoryRoot, "src/navigation/index.ts"));
 const React = require("react");
@@ -61,6 +63,7 @@ function day(date, economicAmount = metric("1")) {
     dayContext: { kind: "unknown" },
     lifeScopeSummary: { availability: "unknown", entries: [] },
     economicAmount,
+    markers: [],
     hasDetail: true,
     flags: [],
   };
@@ -71,11 +74,40 @@ function monthReadModel(month, economicByDate = new Map()) {
     month,
     timezone: "Europe/Paris",
     subject: { kind: "household" },
+    navigation: {},
     summary: { economicAmount: metric("1"), periodCompleteness: "complete" },
+    highlights: [],
+    spanningEvents: [],
     days: query.listCivilMonthDates(month).map((date) => day(date, economicByDate.get(date) ?? metric("1"))),
-    capabilities: { available: [] },
+    capabilities: capabilities(
+      "history_calendar_month",
+      ["calendar", "summary"],
+      ["economic_consumption_net_attributable", "activity_frequency", "place_visit_count"],
+    ),
   };
 }
+
+function capabilities(resource, availableSections, availableMeasures) {
+  return {
+    resource,
+    availableSections,
+    availableMeasures,
+    compatibleFilters: [],
+    unavailable: [],
+  };
+}
+
+const periods = [
+  { month: "2026-03-01", isClosed: true, financeStatus: "complete", lifeStatus: "complete", locationStatus: "complete", calendarStatus: "complete" },
+  { month: "2026-04-01", isClosed: true, financeStatus: "partial", lifeStatus: "complete", locationStatus: "complete", calendarStatus: "complete" },
+  { month: "2026-05-01", isClosed: false, financeStatus: "complete", lifeStatus: "complete", locationStatus: "complete", calendarStatus: "complete" },
+  { month: "2026-06-01", isClosed: true, financeStatus: "unknown", lifeStatus: "complete", locationStatus: "complete", calendarStatus: "complete" },
+];
+const eligible = historyPolicy.eligibleHistoryMonths(periods);
+assert.deepEqual(eligible, ["2026-03", "2026-04"]);
+assert.equal(historyPolicy.resolveEligibleHistoryMonth("2026-05", eligible), "2026-04");
+assert.equal(historyPolicy.resolveEligibleHistoryMonth("2026-01", eligible), "2026-04");
+assert.deepEqual(historyPolicy.adjacentEligibleHistoryMonths("2026-04", eligible), { previous: "2026-03" });
 
 const summaries = [];
 for (let index = 0; index < 13; index += 1) {
@@ -85,7 +117,11 @@ for (let index = 0; index < 13; index += 1) {
     timezone: "Europe/Paris",
     subject: { kind: "household" },
     summary: { economicAmount: metric("1"), periodCompleteness: "complete" },
-    capabilities: { available: [] },
+    capabilities: capabilities(
+      "history_calendar_month",
+      ["calendar", "summary"],
+      ["economic_consumption_net_attributable", "activity_frequency", "place_visit_count"],
+    ),
   });
 }
 summaries.push({
@@ -102,6 +138,62 @@ const mayGrid = model.buildMonthGrid(monthReadModel("2026-05"));
 assert.equal(mayGrid.length % 7, 0);
 assert.equal(mayGrid.slice(0, 4).every((slot) => slot.kind === "padding" && !("day" in slot)), true);
 assert.equal(mayGrid.filter((slot) => slot.kind === "day").length, 31);
+
+const participantId = "11111111-1111-4111-8111-111111111111";
+const lifeEventId = "22222222-2222-4222-8222-222222222222";
+const operationId = "33333333-3333-4333-8333-333333333333";
+const ribbonLayout = model.layoutCalendarRibbons("2026-05", [
+  { id: "trip", kind: "travel", label: "Voyage", priority: 95, startsOn: "2026-04-30", endsOn: "2026-05-05", participantIds: [participantId], target: { kind: "life_event", id: lifeEventId } },
+  { id: "work", kind: "work", label: "Travail", priority: 70, startsOn: "2026-05-04", endsOn: "2026-05-08", participantIds: [participantId], target: { kind: "life_event", id: lifeEventId } },
+]);
+assert.equal(ribbonLayout.segments.some((segment) => segment.event.id === "trip" && segment.continuesBefore), true);
+assert.equal(ribbonLayout.segments.some((segment) => segment.event.id === "trip" && segment.continuesAfter), true);
+assert.equal(ribbonLayout.segments.every((segment) => segment.startColumn >= 1 && segment.startColumn + segment.span <= 8), true);
+
+const overflowLayout = model.layoutCalendarRibbons("2026-05", [
+  { id: "one", kind: "travel", label: "Un", priority: 3, startsOn: "2026-05-04", endsOn: "2026-05-08", participantIds: [] },
+  { id: "two", kind: "family", label: "Deux", priority: 2, startsOn: "2026-05-04", endsOn: "2026-05-08", participantIds: [] },
+  { id: "three", kind: "culture", label: "Trois", priority: 1, startsOn: "2026-05-04", endsOn: "2026-05-08", participantIds: [] },
+], 2);
+assert.equal([...overflowLayout.hiddenByWeek.values()].some((count) => count > 0), true);
+
+const strictMonthFixture = monthReadModel("2026-05");
+strictMonthFixture.navigation = { previous: "2026-04" };
+strictMonthFixture.highlights = [{ id: "trip", kind: "travel", label: "Voyage", startsOn: "2026-05-02", endsOn: "2026-05-05", participantIds: [participantId], target: { kind: "life_event", id: lifeEventId } }];
+strictMonthFixture.spanningEvents = [{ id: "trip", kind: "travel", label: "Voyage", priority: 95, startsOn: "2026-05-02", endsOn: "2026-05-05", participantIds: [participantId], target: { kind: "life_event", id: lifeEventId } }];
+strictMonthFixture.days[1].markers = [{ id: "trip", kind: "travel", label: "Voyage", priority: 95, participantIds: [participantId], target: { kind: "life_event", id: lifeEventId } }];
+assert.equal(query.parseHistoryCalendarMonthReadModel(strictMonthFixture).highlights.length, 1);
+
+const strictDayFixture = {
+  date: "2026-05-02",
+  timezone: "Europe/Paris",
+  subject: { kind: "household" },
+  header: { date: "2026-05-02", observability: "observable", dayContext: { kind: "unknown" }, periodCompleteness: "complete" },
+  finance: { economicAmount: metric("12"), lifeScopeBreakdown: { availability: "unknown", entries: [] } },
+  contexts: { dayContext: { kind: "unknown" }, lifeScopeSummary: { availability: "unknown", entries: [] }, activitiesPresent: true, placesPresent: false },
+  markers: strictMonthFixture.days[1].markers,
+  moments: [{
+    id: "life-event:trip",
+    kind: "travel",
+    label: "Voyage",
+    startsOn: "2026-05-02",
+    endsOn: "2026-05-05",
+    participantIds: [participantId],
+    operations: [{ operationId, bankDate: "2026-05-02", label: "Train", amount: "12" }],
+    target: { kind: "life_event", id: lifeEventId },
+  }],
+  unlinkedOperations: [],
+  capabilities: capabilities(
+    "history_day_detail",
+    ["header", "finance", "contexts", "journal"],
+    ["economic_consumption_net_attributable", "activity_frequency", "place_visit_count", "person_day_count"],
+  ),
+};
+assert.equal(query.parseHistoryDayDetailReadModel(strictDayFixture).moments.length, 1);
+assert.throws(() => query.parseHistoryDayDetailReadModel({
+  ...strictDayFixture,
+  unlinkedOperations: strictDayFixture.moments[0].operations,
+}), /à la fois liée et non liée/);
 
 const zero = metric("0");
 const unknown = metric(null, "unknown");
@@ -154,6 +246,8 @@ const computationErrorState = {
 const errorMonthMarkup = renderToStaticMarkup(
   React.createElement(CalendarMonth, {
     month: "2026-04",
+    persons: [],
+    adjacentMonths: { previous: "2026-03", next: "2026-05" },
     state: computationErrorState,
   }),
 );
@@ -167,6 +261,7 @@ const errorWeekMarkup = renderToStaticMarkup(
   React.createElement(CalendarWeek, {
     month: "2026-05",
     week: model.calendarWeekRefFor("2026-05-01"),
+    persons: [],
     state: computationErrorState,
   }),
 );
@@ -234,11 +329,15 @@ const source = fs.readdirSync(calendarSourceRoot, { withFileTypes: true })
   .join("\n");
 assert.equal(/\.(?:reduce|groupBy)\s*\(/.test(source), false);
 assert.equal(/\b\w*[Aa]mount\s*\?\?\s*0\b/.test(source), false);
-assert.match(source, /operationCount/);
-assert.match(source, /activityOccurrenceCount/);
-assert.match(source, /placeVisitCount/);
+assert.doesNotMatch(source, />Activités\s*</);
+assert.doesNotMatch(source, />Lieux\s*</);
+assert.doesNotMatch(source, />Opérations\s*</);
+assert.doesNotMatch(source, /Partiel/);
 assert.match(source, /openDay\(day\.date\)/);
-assert.match(source, /history_day_detail/);
+assert.match(source, /Journal du jour/);
+assert.match(source, /layoutCalendarRibbons/);
+assert.match(source, /CalendarIcon/);
+assert.match(source, /PersonAvatarCluster/);
 assert.match(source, /openExploration/);
 assert.match(source, /OverlaySkeleton/);
 assert.match(source, /previousData/);

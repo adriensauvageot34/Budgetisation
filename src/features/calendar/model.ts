@@ -13,8 +13,10 @@ import {
   listCivilMonthDates,
   queryResourceKeys,
   type CalendarDayCell,
+  type CalendarSpanningEvent,
   type HistoryCalendarMonthReadModel,
   type HistoryCalendarMonthSummaryReadModel,
+  type MoneyMetricEnvelope,
 } from "@/query-api";
 import {
   parseCalendarWeekRef,
@@ -55,6 +57,23 @@ export type CalendarWeekRange = {
   readonly start: LocalDate;
   readonly end: LocalDate;
   readonly months: readonly [YearMonth] | readonly [YearMonth, YearMonth];
+};
+
+export type CalendarRibbonSegment = {
+  readonly id: string;
+  readonly event: CalendarSpanningEvent;
+  readonly weekIndex: number;
+  readonly startColumn: number;
+  readonly span: number;
+  readonly lane: number;
+  readonly continuesBefore: boolean;
+  readonly continuesAfter: boolean;
+};
+
+export type CalendarRibbonLayout = {
+  readonly segments: readonly CalendarRibbonSegment[];
+  readonly hiddenByWeek: ReadonlyMap<number, number>;
+  readonly laneCount: number;
 };
 
 export function selectTwelveCompleteMonthSummaries(
@@ -103,6 +122,109 @@ export function buildMonthGrid(
     slots.push({ kind: "padding", key: `trailing-${index}` });
   }
   return slots;
+}
+
+function daysBetween(start: LocalDate, end: LocalDate): number {
+  return Temporal.PlainDate.from(end).since(Temporal.PlainDate.from(start), {
+    largestUnit: "day",
+  }).days;
+}
+
+export function layoutCalendarRibbons(
+  month: YearMonth,
+  events: readonly CalendarSpanningEvent[],
+  laneCount = 3,
+): CalendarRibbonLayout {
+  if (!Number.isSafeInteger(laneCount) || laneCount < 1 || laneCount > 6) {
+    throw new RangeError("Calendar ribbons exige entre une et six lignes.");
+  }
+  const dates = listCivilMonthDates(parseYearMonth(month));
+  const monthStart = dates[0];
+  const monthEnd = dates.at(-1);
+  if (monthStart === undefined || monthEnd === undefined) {
+    return { segments: [], hiddenByWeek: new Map(), laneCount };
+  }
+  const leading = Temporal.PlainDate.from(monthStart).dayOfWeek - 1;
+  const gridStart = addDays(monthStart, -leading);
+  const sorted = [...events].sort((left, right) =>
+    right.priority - left.priority ||
+    left.startsOn.localeCompare(right.startsOn) ||
+    left.id.localeCompare(right.id),
+  );
+  const occupiedByWeek = new Map<number, number[]>();
+  const preferredLaneByEvent = new Map<string, number>();
+  const hiddenByWeek = new Map<number, number>();
+  const segments: CalendarRibbonSegment[] = [];
+  for (const event of sorted) {
+    let segmentStart = event.startsOn < monthStart ? monthStart : event.startsOn;
+    const clippedEnd = event.endsOn > monthEnd ? monthEnd : event.endsOn;
+    if (segmentStart > clippedEnd) continue;
+    while (segmentStart <= clippedEnd) {
+      const weekIndex = Math.floor(daysBetween(gridStart, segmentStart) / 7);
+      const weekStart = addDays(gridStart, weekIndex * 7);
+      const weekEnd = addDays(weekStart, 6);
+      const segmentEnd = clippedEnd < weekEnd ? clippedEnd : weekEnd;
+      const startColumn = daysBetween(weekStart, segmentStart) + 1;
+      const endColumn = daysBetween(weekStart, segmentEnd) + 1;
+      const occupied = occupiedByWeek.get(weekIndex) ?? [];
+      const preferred = preferredLaneByEvent.get(event.id);
+      let lane: number | undefined;
+      if (preferred !== undefined && (occupied[preferred] ?? 0) < startColumn) lane = preferred;
+      if (lane === undefined) {
+        for (let candidate = 0; candidate < laneCount; candidate += 1) {
+          if ((occupied[candidate] ?? 0) < startColumn) {
+            lane = candidate;
+            break;
+          }
+        }
+      }
+      if (lane === undefined) {
+        hiddenByWeek.set(weekIndex, (hiddenByWeek.get(weekIndex) ?? 0) + 1);
+      } else {
+        occupied[lane] = endColumn;
+        occupiedByWeek.set(weekIndex, occupied);
+        preferredLaneByEvent.set(event.id, lane);
+        segments.push({
+          id: `${event.id}:${weekIndex}`,
+          event,
+          weekIndex,
+          startColumn,
+          span: endColumn - startColumn + 1,
+          lane,
+          continuesBefore: segmentStart > event.startsOn,
+          continuesAfter: segmentEnd < event.endsOn,
+        });
+      }
+      segmentStart = addDays(segmentEnd, 1);
+    }
+  }
+  return { segments, hiddenByWeek, laneCount };
+}
+
+export function knownMonthSpendMaximum(
+  days: readonly CalendarDayCell[],
+): number {
+  let maximum = 0;
+  for (const day of days) {
+    if (day.economicAmount.availability !== "known") continue;
+    const numeric = Math.abs(Number(day.economicAmount.value));
+    if (Number.isFinite(numeric) && numeric > maximum) maximum = numeric;
+  }
+  return maximum;
+}
+
+export function spendIntensityLevel(
+  metric: MoneyMetricEnvelope,
+  maximum: number,
+): 0 | 1 | 2 | 3 | 4 {
+  if (metric.availability !== "known" || maximum <= 0) return 0;
+  const value = Math.abs(Number(metric.value));
+  if (!Number.isFinite(value) || value <= 0) return 0;
+  const ratio = Math.sqrt(Math.min(1, value / maximum));
+  if (ratio <= 0.25) return 1;
+  if (ratio <= 0.5) return 2;
+  if (ratio <= 0.75) return 3;
+  return 4;
 }
 
 function weekNumber(date: LocalDate): number {

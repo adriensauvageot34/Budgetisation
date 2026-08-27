@@ -9,6 +9,7 @@
     "check:analysis-global-contracts": "node scripts/check-analysis-global-contracts.mjs",
     "check:canonical-in-batching": "node scripts/check-canonical-in-batching.mjs",
     "check:analytics-materialization": "node scripts/check-analytics-materialization.mjs",
+    "check:historical-live": "node scripts/check-live-historical-regeneration.mjs",
     "check:calendar-day": "node scripts/check-calendar-day.mjs",
     "check:exploration-entities": "node scripts/check-exploration-entities.mjs",
     "check:live-runtime-regressions": "node scripts/check-live-runtime-regressions.mjs",

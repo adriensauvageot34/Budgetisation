@@ -1,14 +1,11 @@
 import type {
-  ActivityOccurrenceValidationStatus,
-  PlaceVisitTimePrecision,
-} from "../../analytics/facts";
-import type {
-  ActivityId,
-  CategoryId,
   LifeEventId,
   MerchantId,
+  MomentId,
   OperationId,
+  PersonId,
   PlaceId,
+  CategoryId,
 } from "../../core/identity";
 import type { Money } from "../../core/money";
 import type { DayContext, LifeScopeContext } from "../../core/scope";
@@ -29,10 +26,7 @@ import type {
 export type DayObservability = "observable" | "partial" | "unobserved";
 
 export type DayContextReadModel =
-  | {
-      readonly kind: "known";
-      readonly values: readonly DayContext[];
-    }
+  | { readonly kind: "known"; readonly values: readonly DayContext[] }
   | { readonly kind: "unknown" }
   | { readonly kind: "conflict" };
 
@@ -48,6 +42,70 @@ export type LifeScopeSummary =
       readonly availability: "unknown" | "conflict";
       readonly entries: readonly [];
     };
+
+export type CalendarMarkerKind =
+  | "work"
+  | "remote_work"
+  | "travel"
+  | "driving"
+  | "health"
+  | "meal"
+  | "shopping"
+  | "culture"
+  | "family"
+  | "celebration"
+  | "administrative"
+  | "home"
+  | "place"
+  | "moment"
+  | "activity"
+  | "finance"
+  | "other";
+
+export type CalendarExplorationTarget =
+  | { readonly kind: "moment"; readonly id: MomentId }
+  | { readonly kind: "life_event"; readonly id: LifeEventId }
+  | { readonly kind: "place"; readonly id: PlaceId }
+  | { readonly kind: "operation"; readonly id: OperationId };
+
+export type CalendarPlaceRef = {
+  readonly placeId: PlaceId;
+  readonly label: string;
+};
+
+export type CalendarDayMarker = {
+  readonly id: string;
+  readonly kind: CalendarMarkerKind;
+  readonly label: string;
+  readonly priority: number;
+  readonly participantIds: readonly PersonId[];
+  readonly startAt?: Instant;
+  readonly endAt?: Instant;
+  readonly place?: CalendarPlaceRef;
+  readonly economicAmount?: MoneyMetricEnvelope;
+  readonly target?: CalendarExplorationTarget;
+};
+
+export type CalendarSpanningEvent = {
+  readonly id: string;
+  readonly kind: CalendarMarkerKind;
+  readonly label: string;
+  readonly priority: number;
+  readonly startsOn: LocalDate;
+  readonly endsOn: LocalDate;
+  readonly participantIds: readonly PersonId[];
+  readonly target?: CalendarExplorationTarget;
+};
+
+export type CalendarMonthHighlight = {
+  readonly id: string;
+  readonly kind: CalendarMarkerKind;
+  readonly label: string;
+  readonly startsOn: LocalDate;
+  readonly endsOn: LocalDate;
+  readonly participantIds: readonly PersonId[];
+  readonly target?: CalendarExplorationTarget;
+};
 
 export type CalendarFlag =
   | "has_operations"
@@ -67,6 +125,7 @@ export type CalendarDayCell = {
   readonly operationCount?: CountMetricEnvelope;
   readonly activityOccurrenceCount?: CountMetricEnvelope;
   readonly placeVisitCount?: CountMetricEnvelope;
+  readonly markers: readonly CalendarDayMarker[];
   readonly hasDetail: boolean;
   readonly flags: readonly CalendarFlag[];
 };
@@ -84,11 +143,19 @@ export type CalendarMonthSummary = {
   readonly periodCompleteness: PeriodCompleteness;
 };
 
+export type CalendarMonthNavigation = {
+  readonly previous?: YearMonth;
+  readonly next?: YearMonth;
+};
+
 export type HistoryCalendarMonthReadModel = {
   readonly month: YearMonth;
   readonly timezone: HouseholdTimeZone;
   readonly subject: ReadModelSubject;
+  readonly navigation: CalendarMonthNavigation;
   readonly summary: CalendarMonthSummary;
+  readonly highlights: readonly CalendarMonthHighlight[];
+  readonly spanningEvents: readonly CalendarSpanningEvent[];
   readonly days: readonly CalendarDayCell[];
   readonly capabilities: QueryCapabilities;
 };
@@ -99,12 +166,6 @@ export type HistoryCalendarMonthSummaryReadModel = {
   readonly subject: ReadModelSubject;
   readonly summary: CalendarMonthSummary;
   readonly capabilities: QueryCapabilities;
-};
-
-export type BoundedPreview<T> = {
-  readonly items: readonly T[];
-  readonly maxItems: number;
-  readonly truncated: boolean;
 };
 
 export type DayHeaderReadModel = {
@@ -129,25 +190,6 @@ export type DayContextsReadModel = {
   readonly placesPresent: boolean;
 };
 
-export type DayActivityPreviewItem = {
-  readonly lifeEventId: LifeEventId;
-  readonly activityId?: ActivityId;
-  readonly label: string;
-  readonly startsOn: LocalDate;
-  readonly endsOn: LocalDate;
-  readonly validationStatus: ActivityOccurrenceValidationStatus;
-  readonly causalAmount?: MoneyMetricEnvelope;
-};
-
-export type DayPlaceVisitPreviewItem = {
-  readonly placeId: PlaceId;
-  readonly visitStart?: Instant;
-  readonly visitEnd?: Instant;
-  readonly visitState: "known" | "partial" | "unknown";
-  readonly timePrecision: PlaceVisitTimePrecision;
-  readonly localizedSpend?: MoneyMetricEnvelope;
-};
-
 export type DayOperationPreviewItem = {
   readonly operationId: OperationId;
   readonly bankDate: LocalDate;
@@ -158,6 +200,21 @@ export type DayOperationPreviewItem = {
   readonly placeId?: PlaceId;
 };
 
+export type DayJournalMoment = {
+  readonly id: string;
+  readonly kind: CalendarMarkerKind;
+  readonly label: string;
+  readonly startsOn: LocalDate;
+  readonly endsOn: LocalDate;
+  readonly participantIds: readonly PersonId[];
+  readonly startAt?: Instant;
+  readonly endAt?: Instant;
+  readonly place?: CalendarPlaceRef;
+  readonly economicAmount?: MoneyMetricEnvelope;
+  readonly operations: readonly DayOperationPreviewItem[];
+  readonly target?: CalendarExplorationTarget;
+};
+
 export type HistoryDayDetailReadModel = {
   readonly date: LocalDate;
   readonly timezone: HouseholdTimeZone;
@@ -165,8 +222,8 @@ export type HistoryDayDetailReadModel = {
   readonly header: DayHeaderReadModel;
   readonly finance: DayFinanceReadModel;
   readonly contexts: DayContextsReadModel;
-  readonly activities: BoundedPreview<DayActivityPreviewItem>;
-  readonly places: BoundedPreview<DayPlaceVisitPreviewItem>;
-  readonly operations: BoundedPreview<DayOperationPreviewItem>;
+  readonly markers: readonly CalendarDayMarker[];
+  readonly moments: readonly DayJournalMoment[];
+  readonly unlinkedOperations: readonly DayOperationPreviewItem[];
   readonly capabilities: QueryCapabilities;
 };

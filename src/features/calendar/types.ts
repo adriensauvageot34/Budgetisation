@@ -1,3 +1,4 @@
+import type { PersonId } from "@/core/identity";
 import type { LocalDate, YearMonth } from "@/core/time";
 import type {
   CalendarWeekRef,
@@ -14,4 +15,9 @@ export type CalendarNavigation = {
   nextDay(): NavigationCommandResult;
   openExploration(node: ExplorationNode): NavigationCommandResult;
   goToAnalysis(): Promise<NavigationCommandResult>;
+};
+
+export type CalendarPerson = {
+  readonly personId: PersonId;
+  readonly displayName: string;
 };

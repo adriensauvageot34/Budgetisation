@@ -96,13 +96,32 @@ function economicMonths(scope: NormalizedAnalysisScope): ReadonlySet<string> {
   );
 }
 
+function matchesEconomicTime(
+  component: EconomicComponentFact,
+  months: ReadonlySet<string>,
+): boolean {
+  if (
+    component.economicTiming.kind === "known" ||
+    component.economicTiming.kind === "partial"
+  ) {
+    return component.economicTiming.segments.some(
+      ({ economicMonth }) => economicMonth !== null && months.has(economicMonth),
+    );
+  }
+  return component.bankDate.kind === "known" &&
+    months.has(component.bankDate.date.slice(0, 7));
+}
+
 export function selectEconomicComponentsForScope(
   values: readonly unknown[],
   scope: AnalysisScope,
 ): readonly EconomicComponentFact[] {
   const normalized = normalizeAnalysisScope(scope);
+  const months = economicMonths(normalized);
   return selectEconomicComponentsForSubject(values, normalized.subject).filter(
-    (component) => matchesEconomicDimensions(component, normalized),
+    (component) =>
+      matchesEconomicTime(component, months) &&
+      matchesEconomicDimensions(component, normalized),
   );
 }
 

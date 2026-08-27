@@ -115,6 +115,21 @@ function sourceSupport(n: number, unit: SupportUnit) {
   return parseSupport({ n, unit, level: n === 0 ? "insufficient" : "sufficient" });
 }
 
+function distinctEconomicTransactionCount(facts: readonly EconomicComponentFact[]) {
+  return new Set(facts.map((fact) =>
+    fact.sourceOperation.kind === "resolved"
+      ? `operation:${fact.sourceOperation.id}`
+      : `component:${fact.canonicalComponentKey}`)).size;
+}
+
+function economicSupport(n: number) {
+  return parseSupport({
+    n,
+    unit: "transaction",
+    level: n === 0 ? "insufficient" : "sufficient",
+  });
+}
+
 export class FactSourceResolver {
   constructor(
     private readonly repository: CanonicalRepository,
@@ -249,6 +264,12 @@ export class FactSourceResolver {
             kind: "minimal_month",
             scopeHash,
             availability: "unknown",
+            support: parseSupport({
+              n: 0,
+              unit: "month",
+              level: "insufficient",
+            }),
+            coverage: { level: "partial" },
           };
     }
 
@@ -258,11 +279,7 @@ export class FactSourceResolver {
           "Typical Month exige un target month.",
         );
       }
-      if (scope.subject.kind === "person") {
-        throw new MetricProductionContractError(
-          "L'attribution économique Person n'est pas projetée par le canonique actuel.",
-        );
-      }
+      const personFinanceUnavailable = scope.subject.kind === "person";
       const candidates = this.repository.context.periods.map((period) =>
         financialReferenceCandidateFromAnalysisPeriod({
           analysisPeriod: {
@@ -271,7 +288,11 @@ export class FactSourceResolver {
             financeStatus: period.financeStatus,
             isClosed: period.isClosed,
           },
-          isComparable: true,
+          // Une fenêtre Person ne peut pas réutiliser les observations Finance
+          // Household tant que l'attribution économique Person n'est pas
+          // projetée. Une fenêtre vide produit l'enveloppe unknown attendue,
+          // sans exception et sans transformer l'absence en zéro.
+          isComparable: !personFinanceUnavailable,
           isMethodExcluded: false,
         }),
       );
@@ -282,6 +303,14 @@ export class FactSourceResolver {
         requestedPeriodCount: TYPICAL_MONTH_REQUESTED_PERIOD_COUNT,
         candidates,
       });
+      if (personFinanceUnavailable) {
+        return {
+          kind: "typical_month",
+          scopeHash,
+          window,
+          monthlyObservations: [],
+        };
+      }
       const monthlyScopes = window.includedPeriods.map((period) => ({
         ...scope,
         time: { kind: "month" as const, month: period },
@@ -342,7 +371,11 @@ export class FactSourceResolver {
               scopeHash,
               availability: "known",
               facts,
-              support: sourceSupport(selectedFacts.length, "transaction"),
+              support: economicSupport(
+                metricId === "localized_spend"
+                  ? distinctEconomicTransactionCount(selectedFacts)
+                  : selectedFacts.length,
+              ),
               ...(state.coverage === undefined ? {} : { coverage: state.coverage }),
             }
           : {
@@ -353,14 +386,15 @@ export class FactSourceResolver {
             };
       }
       case "fct_person_day": {
-        const facts = selectedPersonDays(await this.loadPersonDays(scope), scope);
+        const householdFacts = await this.loadPersonDays(scope);
+        const facts = selectedPersonDays(householdFacts, scope);
         return {
           kind: "person_days",
           scopeHash,
           availability: "known",
           facts,
           support: sourceSupport(facts.length, "person_day"),
-          coverage: facts.some(({ locationObservability }) =>
+          coverage: householdFacts.some(({ locationObservability }) =>
             locationObservability !== "observable")
             ? { level: "partial" }
             : { level: "complete" },

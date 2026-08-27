@@ -590,7 +590,7 @@ export class CanonicalRepository {
     );
     if (componentKeys.length === 0) return [];
 
-    const [operations, places, timingRows, timingControls, reconciliations] =
+    const [operations, places, timingRows, timingControls, reconciliations, allocations, items, paymentComponents, cashUses] =
       await Promise.all([
         this.loadOperationsByIds(operationIds),
         this.readRowsByInBatches(
@@ -630,6 +630,10 @@ export class CanonicalRepository {
             .select("operation_id,economic_gross_delta::text,economic_refund_resolution,economic_status")
             .in("operation_id", batch)
             .order("operation_id", { ascending: true })),
+        this.loadComposition("operation_allocations", operationIds),
+        this.loadComposition("operation_items", operationIds),
+        this.loadComposition("payment_components", operationIds),
+        this.loadComposition("cash_economic_uses", operationIds),
       ]);
 
     const operationById = byUniqueKey(operations, "operation_id", "operations");
@@ -637,6 +641,20 @@ export class CanonicalRepository {
     const timingByKey = groupBy(timingRows, "canonical_component_key");
     const timingControlByKey = byUniqueKey(timingControls, "canonical_component_key", "timing");
     const reconciliationByOperation = byUniqueKey(reconciliations, "operation_id", "economic");
+    const componentSourceByKey = new Map<string, CanonicalRecord>();
+    for (const [prefix, rows, idKey] of [
+      ["allocation", allocations, "allocation_id"],
+      ["item", items, "item_id"],
+      ["payment_component", paymentComponents, "payment_component_id"],
+      ["cash_use", cashUses, "cash_use_id"],
+    ] as const) {
+      for (const row of rows) {
+        componentSourceByKey.set(
+          `${prefix}:${canonicalString(row, [idKey], "economic")}`,
+          row,
+        );
+      }
+    }
 
     return dedupeEconomicComponents(components.map((component) => {
       const componentKey = canonicalString(component, ["canonical_component_key"], "economic");
@@ -648,6 +666,10 @@ export class CanonicalRepository {
       if (operation === undefined || place === undefined || timingControl === undefined || reconciliation === undefined) {
         throw new CanonicalReadError("economic", "Une dépendance canonique du composant économique est absente.");
       }
+      const componentSource = componentSourceByKey.get(componentKey);
+      const componentValue = (key: string) => operation.operation_mixte === true
+        ? componentSource?.[key] ?? operation[key]
+        : operation[key];
       return projectEconomicComponentFact({
         household: this.household,
         economicComponent: component,
@@ -658,8 +680,8 @@ export class CanonicalRepository {
           date_transaction_reelle: operation.date_transaction_reelle,
           date_transaction_precision: operation.date_transaction_precision,
           merchant_id: operation.merchant_id,
-          importance: operation.importance,
-          nature_fixe_variable: operation.nature_fixe_variable,
+          importance: componentValue("importance"),
+          nature_fixe_variable: componentValue("nature_fixe_variable"),
           contexte_vie: operation.contexte_vie,
         },
         place,
@@ -1264,7 +1286,7 @@ export class CanonicalRepository {
         this.readRows("minimal:needs", "operations", () =>
           this.client
             .from("needs")
-            .select("need_id,role_budgetaire,mode_prevision,actif,source_prevision_canonique")
+            .select("need_id,person_id,role_budgetaire,mode_prevision,actif,source_prevision_canonique")
             .order("need_id", { ascending: true })),
         this.readRows("minimal:provision-pools", "operations", () =>
           this.client
@@ -1303,7 +1325,7 @@ export class CanonicalRepository {
         recurrenceSeries,
         annualEvents,
         worksiteActivityTypeIds: worksiteActivityTypes.map((row) =>
-          canonicalString(row, ["life_event_type_id"], "life_events")),
+          canonicalString(row, ["type_key"], "life_events")),
         activityOccurrences,
       };
     });
@@ -1420,7 +1442,7 @@ export class CanonicalRepository {
       (batch) =>
       this.client
         .from("life_event_types")
-        .select("life_event_type_id,type_key,label,can_span_days,active")
+        .select("life_event_type_id,type_key,label,can_span_days,active,default_calendar_mode,calendar_priority,calendar_public_label,calendar_default_role,calendar_role_if_parent,calendar_is_fallback,calendar_can_dominate,calendar_title_pattern,calendar_title_fallback,calendar_child_render")
         .in("life_event_type_id", batch)
         .order("life_event_type_id", { ascending: true }));
   }
@@ -1439,7 +1461,7 @@ export class CanonicalRepository {
       (batch) =>
       this.client
         .from("life_event_types")
-        .select("life_event_type_id,type_key,label,can_span_days,active")
+        .select("life_event_type_id,type_key,label,can_span_days,active,default_calendar_mode,calendar_priority,calendar_public_label,calendar_default_role,calendar_role_if_parent,calendar_is_fallback,calendar_can_dominate,calendar_title_pattern,calendar_title_fallback,calendar_child_render")
         .in("type_key", batch)
         .order("type_key", { ascending: true }));
   }
@@ -1458,7 +1480,7 @@ export class CanonicalRepository {
       (batch) =>
       this.client
         .from("life_event_participations")
-        .select("life_event_id,person_day_id,person_id,participation_status")
+        .select("life_event_id,person_day_id,person_id,start_at,end_at,time_precision,participation_role,participation_status")
         .in("life_event_id", batch)
         .order("life_event_id", { ascending: true })
         .order("person_id", { ascending: true }));
@@ -1478,8 +1500,9 @@ export class CanonicalRepository {
       (batch) =>
       this.client
         .from("moment_life_events")
-        .select("moment_id,life_event_id")
+        .select("moment_id,life_event_id,relation_type,validation_status")
         .in("moment_id", batch)
+        .in("validation_status", ["Confirmé", "Déduit"])
         .order("moment_id", { ascending: true })
         .order("life_event_id", { ascending: true }));
   }
@@ -1498,8 +1521,9 @@ export class CanonicalRepository {
       (batch) =>
       this.client
         .from("moment_life_events")
-        .select("moment_id,life_event_id")
+        .select("moment_id,life_event_id,relation_type,validation_status")
         .in("life_event_id", batch)
+        .in("validation_status", ["Confirmé", "Déduit"])
         .order("life_event_id", { ascending: true })
         .order("moment_id", { ascending: true }));
   }
@@ -1518,7 +1542,7 @@ export class CanonicalRepository {
       (batch) =>
       this.client
         .from("life_event_financial_links")
-        .select("financial_link_id,life_event_id,operation_id,relation_type,validation_status")
+        .select("financial_link_id,life_event_id,operation_id,relation_type,temporal_relation,economic_amount_linked_exact:economic_amount_linked::text,amount_precision,transaction_date_used,moment_id_context,validation_status")
         .in("operation_id", batch)
         .in("validation_status", ["Confirmé", "Déduit"])
         .order("operation_id", { ascending: true })
