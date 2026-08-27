@@ -282,6 +282,80 @@ export async function executeReadOnlyBackfillQuery(input: {
   }, services);
 }
 
+export async function beginAnalyticsBackfillPublication(input: {
+  readonly client: SupabaseClient;
+  readonly householdId: unknown;
+  readonly month: YearMonth;
+  readonly requests: readonly AnyNormalizedQueryRequest[];
+}): Promise<string> {
+  const householdId = parseHouseholdId(input.householdId);
+  const context = await runtimeContext(input.client, householdId);
+  return new SupabaseAnalyticsMaterializationStore(input.client, context)
+    .beginMonthPublication(input.month, input.requests);
+}
+
+export async function stageAnalyticsBackfillPublication(input: {
+  readonly client: SupabaseClient;
+  readonly householdId: unknown;
+  readonly publicationId: string;
+  readonly requests: readonly AnyNormalizedQueryRequest[];
+  readonly expectedPayloadHashes: readonly string[];
+}): Promise<number> {
+  if (input.requests.length !== input.expectedPayloadHashes.length) {
+    throw new TypeError("Le lot draft ne contient pas tous ses hashes certifiés.");
+  }
+  const householdId = parseHouseholdId(input.householdId);
+  const context = await runtimeContext(input.client, householdId);
+  const publicationStore = new SupabaseAnalyticsMaterializationStore(
+    input.client,
+    context,
+    { publicationId: input.publicationId, readMode: "bypass" },
+  );
+  const services = createQueryServicesForContext({
+    context,
+    client: input.client,
+    materialization: publicationStore,
+  });
+  let hashMatches = 0;
+  for (const [index, request] of input.requests.entries()) {
+    const execution = await executeQuery({
+      requestId: randomUUID(),
+      request: toBoundaryQueryRequest(request),
+    }, services);
+    if (!execution.ok) {
+      throw new Error(`Draft ${request.resource} refusé: ${execution.error.code}.`);
+    }
+    if (certifiedPayloadSha256(execution.response.data) !== input.expectedPayloadHashes[index]) {
+      throw new TypeError(`Le hash certifié draft/${request.resource} ne correspond pas.`);
+    }
+    hashMatches += 1;
+  }
+  return hashMatches;
+}
+
+export async function finalizeAnalyticsBackfillPublication(input: {
+  readonly client: SupabaseClient;
+  readonly householdId: unknown;
+  readonly publicationId: string;
+}) {
+  const householdId = parseHouseholdId(input.householdId);
+  const context = await runtimeContext(input.client, householdId);
+  return new SupabaseAnalyticsMaterializationStore(input.client, context)
+    .publishPrepared(input.publicationId);
+}
+
+export async function failAnalyticsBackfillPublication(input: {
+  readonly client: SupabaseClient;
+  readonly publicationId: string;
+}): Promise<void> {
+  const { error } = await input.client
+    .from("analytics_publications")
+    .update({ status: "failed" })
+    .eq("publication_id", input.publicationId)
+    .eq("status", "draft");
+  if (error !== null) throw error;
+}
+
 export type AnalyticsBackfillResult = {
   readonly month: YearMonth;
   readonly status: "published" | "already_fresh";

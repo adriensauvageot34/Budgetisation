@@ -3,14 +3,18 @@ import { normalizeQueryRequest, type AnyNormalizedQueryRequest } from "@/query-a
 import { parseYearMonth, type YearMonth } from "@/core/time";
 import {
   backfillAnalyticsMaterialization,
+  beginAnalyticsBackfillPublication,
   certifiedPayloadSha256,
   DEFAULT_ANALYTICS_BACKFILL_MONTHS,
   executeReadOnlyBackfillQuery,
+  failAnalyticsBackfillPublication,
+  finalizeAnalyticsBackfillPublication,
+  stageAnalyticsBackfillPublication,
 } from "@/server/analytics/materialization/backfill";
 import { createCanonicalReadClient } from "@/server/canonical/client";
 
 export const dynamic = "force-dynamic";
-export const maxDuration = 800;
+export const maxDuration = 300;
 
 const allowedMonths = new Set<YearMonth>(DEFAULT_ANALYTICS_BACKFILL_MONTHS);
 const operationalTokenHash = "47651591a74632aec28c473e7fe5a03c7bafa121f16315cae92814556581a279";
@@ -44,29 +48,42 @@ export async function POST(request: Request) {
   }
 
   const record = body as Record<string, unknown>;
-  let operation: "read_only" | "publish";
+  let operation: "read_only" | "publish" | "begin" | "stage" | "finalize";
   let month: YearMonth;
-  let requests: readonly AnyNormalizedQueryRequest[];
-  let hashes: readonly string[];
+  let requests: readonly AnyNormalizedQueryRequest[] = [];
+  let hashes: readonly string[] = [];
+  let publicationId: string | undefined;
   try {
     operation = record.operation === "read_only" ? "read_only"
       : record.operation === "publish" ? "publish"
+        : record.operation === "begin" ? "begin"
+          : record.operation === "stage" ? "stage"
+            : record.operation === "finalize" ? "finalize"
         : (() => { throw new TypeError("Opération inconnue."); })();
     month = parseYearMonth(record.month);
     if (!allowedMonths.has(month)) throw new TypeError("Mois hors fenêtre certifiée.");
-    if (!Array.isArray(record.requests) || record.requests.length < 1 || record.requests.length > 256) {
-      throw new TypeError("Queries certifiées absentes.");
+    if (operation !== "finalize") {
+      if (!Array.isArray(record.requests) || record.requests.length < 1 || record.requests.length > 256) {
+        throw new TypeError("Queries certifiées absentes.");
+      }
+      requests = record.requests.map(normalizeQueryRequest);
+      if (requests.some(({ scope }) => scope.time.kind !== "month" || scope.time.month !== month)) {
+        throw new TypeError("Query hors mois certifié.");
+      }
+      if (!Array.isArray(record.hashes)
+        || record.hashes.length !== requests.length
+        || record.hashes.some((hash) => typeof hash !== "string" || !/^[a-f0-9]{64}$/.test(hash))) {
+        throw new TypeError("Hashes certifiés invalides.");
+      }
+      hashes = record.hashes as readonly string[];
     }
-    requests = record.requests.map(normalizeQueryRequest);
-    if (requests.some(({ scope }) => scope.time.kind !== "month" || scope.time.month !== month)) {
-      throw new TypeError("Query hors mois certifié.");
+    if (operation === "stage" || operation === "finalize") {
+      if (typeof record.publicationId !== "string"
+        || !/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(record.publicationId)) {
+        throw new TypeError("Publication draft invalide.");
+      }
+      publicationId = record.publicationId;
     }
-    if (!Array.isArray(record.hashes)
-      || record.hashes.length !== requests.length
-      || record.hashes.some((hash) => typeof hash !== "string" || !/^[a-f0-9]{64}$/.test(hash))) {
-      throw new TypeError("Hashes certifiés invalides.");
-    }
-    hashes = record.hashes as readonly string[];
     if (operation === "read_only" && (
       requests.length !== 1
       || requests[0]!.resource !== "analysis_month_initial"
@@ -84,6 +101,41 @@ export async function POST(request: Request) {
     if (error !== null) throw error;
     if (data?.length !== 1) throw new TypeError("Foyer opérationnel non déterministe.");
     const householdId = data[0]!.household_id;
+
+    if (operation === "begin") {
+      const createdPublicationId = await beginAnalyticsBackfillPublication({
+        client,
+        householdId,
+        month,
+        requests,
+      });
+      return Response.json({ ok: true, operation, month, publicationId: createdPublicationId });
+    }
+
+    if (operation === "stage") {
+      try {
+        const hashMatches = await stageAnalyticsBackfillPublication({
+          client,
+          householdId,
+          publicationId: publicationId!,
+          requests,
+          expectedPayloadHashes: hashes,
+        });
+        return Response.json({ ok: true, operation, month, hashMatches });
+      } catch (error) {
+        await failAnalyticsBackfillPublication({ client, publicationId: publicationId! });
+        throw error;
+      }
+    }
+
+    if (operation === "finalize") {
+      const result = await finalizeAnalyticsBackfillPublication({
+        client,
+        householdId,
+        publicationId: publicationId!,
+      });
+      return Response.json({ ok: true, operation, month, result });
+    }
 
     if (operation === "read_only") {
       const execution = await executeReadOnlyBackfillQuery({
