@@ -67,6 +67,14 @@ const { FactSourceResolver } = require(path.join(
   repositoryRoot,
   "src/server/analytics/fact-source-resolver.ts",
 ));
+const { resolveMinimalPlanningSource } = require(path.join(
+  repositoryRoot,
+  "src/server/analytics/minimal-source-resolver.ts",
+));
+const { projectActivityOccurrenceFact } = require(path.join(
+  repositoryRoot,
+  "src/analytics/facts/index.ts",
+));
 const { toBoundaryQueryRequest } = require(path.join(
   repositoryRoot,
   "src/server/analytics/materialization/backfill.ts",
@@ -115,6 +123,127 @@ const {
 
 const householdA = "00000000-0000-4000-8000-000000000001";
 const householdB = "00000000-0000-4000-8000-000000000002";
+const minimalOperationId = "00000000-0000-4000-8000-000000000101";
+const minimalNeedId = "00000000-0000-4000-8000-000000000102";
+const minimalRuleId = "00000000-0000-4000-8000-000000000103";
+const minimalCategoryId = "00000000-0000-4000-8000-000000000104";
+function minimalFact(amount) {
+  return {
+    canonicalComponentKey: `operation:${minimalOperationId}`,
+    sourceOperation: { kind: "resolved", id: minimalOperationId },
+    category: { kind: "resolved", id: minimalCategoryId },
+    subcategory: { kind: "unknown" },
+    economicTiming: {
+      kind: "known",
+      segments: [{
+        timingState: "known",
+        economicMonth: "2025-08",
+        amount,
+      }],
+    },
+  };
+}
+function minimalBundle(overrides = {}) {
+  return {
+    economicFacts: [],
+    operations: [],
+    allocations: [],
+    items: [],
+    paymentComponents: [],
+    cashUses: [],
+    baselineRules: [],
+    needs: [],
+    provisionPools: [],
+    recurrenceSeries: [],
+    annualEvents: [],
+    worksiteActivityTypeIds: [],
+    plannedActivityDays: [],
+    ...overrides,
+  };
+}
+const needBeforeCategoryExclusion = resolveMinimalPlanningSource({
+  targetMonth: "2025-09",
+  referenceMonths: ["2025-08"],
+  bundle: minimalBundle({
+    economicFacts: [minimalFact("10")],
+    operations: [{
+      operation_id: minimalOperationId,
+      need_id: minimalNeedId,
+      mode_prevision: "Référence mensuelle",
+    }],
+    needs: [{ need_id: minimalNeedId, person_id: null, actif: true }],
+    baselineRules: [{
+      baseline_rule_id: minimalRuleId,
+      category_id: minimalCategoryId,
+      subcategory_id: null,
+      type_precis: null,
+      eligibility: "Excluded",
+      condition_code: null,
+      valid_from: null,
+      valid_to: null,
+      method_version: "minimal_baseline_v1",
+    }],
+  }),
+});
+assert.deepEqual(
+  needBeforeCategoryExclusion.neutralVariableComponents.map(({ canonicalComponentKey, amount }) => ({
+    canonicalComponentKey,
+    amount: String(amount),
+  })),
+  [{ canonicalComponentKey: `minimal:need:${minimalNeedId}`, amount: "10" }],
+  "an active household Need must take precedence over a generic category exclusion",
+);
+
+const pendingWorksiteOccurrence = projectActivityOccurrenceFact({
+  household: { householdId: householdA, householdTimeZone: "Europe/Paris" },
+  lifeEvent: {
+    life_event_id: "00000000-0000-4000-8000-000000000105",
+    life_event_type_id: "00000000-0000-4000-8000-000000000106",
+    life_event_series_id: null,
+    parent_life_event_id: null,
+    start_date: "2025-08-04",
+    end_date: "2025-08-04",
+    validation_status: "À valider",
+  },
+  lifeEventType: {
+    life_event_type_id: "00000000-0000-4000-8000-000000000106",
+    type_key: "travail_site",
+    can_span_days: false,
+    active: true,
+  },
+  participations: [],
+});
+assert.equal(pendingWorksiteOccurrence, null, "À valider must remain excluded from ActivityOccurrence");
+const commuteFromPlannedWorksite = resolveMinimalPlanningSource({
+  targetMonth: "2025-09",
+  referenceMonths: ["2025-08"],
+  bundle: minimalBundle({
+    economicFacts: [minimalFact("10")],
+    operations: [{ operation_id: minimalOperationId, mode_prevision: "Référence mensuelle" }],
+    baselineRules: [{
+      baseline_rule_id: minimalRuleId,
+      category_id: minimalCategoryId,
+      subcategory_id: null,
+      type_precis: null,
+      eligibility: "Conditional",
+      condition_code: "WORK_COMMUTE_FUEL_ONLY",
+      valid_from: null,
+      valid_to: null,
+      method_version: "minimal_baseline_v1",
+    }],
+    worksiteActivityTypeIds: ["travail_site"],
+    plannedActivityDays: [{
+      activityId: "travail_site",
+      startDate: "2025-08-04",
+      validationStatus: "À valider",
+    }],
+  }),
+});
+assert.equal(
+  String(commuteFromPlannedWorksite.neutralVariableComponents[0]?.amount),
+  "1.7",
+  "a planned À valider worksite day must feed only the Minimal commute estimate",
+);
 const baseContext = {
   userId: "test-actor",
   householdId: householdA,

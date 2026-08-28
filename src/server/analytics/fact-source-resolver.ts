@@ -221,7 +221,7 @@ export class FactSourceResolver {
           recurrenceSeries: [],
           annualEvents: [],
           worksiteActivityTypeIds: [],
-          activityOccurrences: [],
+          plannedActivityDays: [],
         },
         targetMonth,
         referenceMonths,

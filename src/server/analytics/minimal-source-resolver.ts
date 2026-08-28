@@ -344,6 +344,24 @@ export function resolveMinimalPlanningSource(input: {
       continue;
     }
 
+    if (
+      metadata.needId !== null &&
+      activeNeeds.has(metadata.needId) &&
+      metadata.forecastMode !== null
+    ) {
+      const key = `need:${metadata.needId}`;
+      const group = groups.get(key) ?? {
+        key,
+        mode: metadata.forecastMode,
+        bucket: "neutral" as const,
+        observations: [],
+      };
+      group.observations.push(...observations);
+      groups.set(key, group);
+      resolvedNeutralSources.add(key);
+      continue;
+    }
+
     const rule = selectMinimalBaselineRule(rules, {
       categoryId: fact.category.id,
       subcategoryId: fact.subcategory.kind === "resolved" ? fact.subcategory.id : null,
@@ -419,9 +437,9 @@ export function resolveMinimalPlanningSource(input: {
   if (commuteRuleIds.size > 0) {
     const activityTypeIds = new Set(bundle.worksiteActivityTypeIds);
     const counts = new Map<YearMonth, number>(referenceMonths.map((month) => [month, 0]));
-    for (const occurrence of bundle.activityOccurrences) {
-      const month = yearMonthOf(occurrence.startDate);
-      if (activityTypeIds.has(occurrence.activityId) && referenceSet.has(month)) {
+    for (const plannedDay of bundle.plannedActivityDays) {
+      const month = yearMonthOf(plannedDay.startDate);
+      if (activityTypeIds.has(plannedDay.activityId) && referenceSet.has(month)) {
         counts.set(month, (counts.get(month) ?? 0) + 1);
       }
     }

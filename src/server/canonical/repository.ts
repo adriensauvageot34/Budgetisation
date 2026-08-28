@@ -142,7 +142,11 @@ export type CanonicalMinimalPlanningBundle = {
   readonly recurrenceSeries: readonly CanonicalRecord[];
   readonly annualEvents: readonly CanonicalRecord[];
   readonly worksiteActivityTypeIds: readonly string[];
-  readonly activityOccurrences: readonly ActivityOccurrenceFact[];
+  readonly plannedActivityDays: readonly {
+    readonly activityId: string;
+    readonly startDate: LocalDate;
+    readonly validationStatus: "Confirmé" | "Déduit" | "À valider";
+  }[];
 };
 
 type CompositionTable =
@@ -1292,7 +1296,7 @@ export class CanonicalRepository {
         recurrenceSeries,
         annualEvents,
         worksiteActivityTypes,
-        activityOccurrences,
+        plannedActivityRows,
       ] = await Promise.all([
         this.loadOperationsByIds(operationIds),
         this.loadComposition("operation_allocations", operationIds),
@@ -1332,8 +1336,23 @@ export class CanonicalRepository {
             .eq("type_key", "travail_site")
             .eq("active", true)
             .order("life_event_type_id", { ascending: true })),
-        this.loadActivityOccurrences(range),
+        this.readRows(
+          `minimal:planned-activities:${range.start}:${range.endExclusive}`,
+          "life_events",
+          () =>
+            this.client
+              .from("life_events")
+              .select("life_event_id,life_event_type_id,start_date,end_date,validation_status")
+              .lte("start_date", addDays(range.endExclusive, -1))
+              .gte("end_date", range.start)
+              .order("start_date", { ascending: true })
+              .order("life_event_id", { ascending: true }),
+        ),
       ]);
+      const worksiteActivityTypeById = new Map(worksiteActivityTypes.map((row) => [
+        canonicalString(row, ["life_event_type_id"], "life_events"),
+        canonicalString(row, ["type_key"], "life_events"),
+      ]));
       return {
         economicFacts,
         operations,
@@ -1348,7 +1367,34 @@ export class CanonicalRepository {
         annualEvents,
         worksiteActivityTypeIds: worksiteActivityTypes.map((row) =>
           canonicalString(row, ["type_key"], "life_events")),
-        activityOccurrences,
+        plannedActivityDays: plannedActivityRows.flatMap((row) => {
+          const activityId = worksiteActivityTypeById.get(
+            canonicalString(row, ["life_event_type_id"], "life_events"),
+          );
+          if (activityId === undefined) return [];
+          const validationStatus = canonicalString(
+            row,
+            ["validation_status"],
+            "life_events",
+          );
+          if (
+            validationStatus !== "Confirmé" &&
+            validationStatus !== "Déduit" &&
+            validationStatus !== "À valider"
+          ) {
+            throw new CanonicalReadError(
+              "life_events",
+              "Le statut d'un jour planifié Minimal est invalide.",
+            );
+          }
+          return [{
+            activityId,
+            startDate: parseLocalDate(
+              canonicalString(row, ["start_date"], "life_events"),
+            ),
+            validationStatus,
+          }];
+        }),
       };
     });
   }
