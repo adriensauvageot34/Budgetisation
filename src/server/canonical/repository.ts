@@ -149,6 +149,8 @@ export type CanonicalMinimalPlanningBundle = {
   }[];
 };
 
+const CANONICAL_PAGE_SIZE = 1_000;
+
 type CompositionTable =
   | "operation_allocations"
   | "operation_items"
@@ -362,6 +364,24 @@ export class CanonicalRepository {
     return this.cached(key, () => this.queryRows(source, query));
   }
 
+  private readRowsPaginated(
+    key: string,
+    source: CanonicalSourceName,
+    query: (from: number, to: number) => PromiseLike<CanonicalQueryResult>,
+  ): Promise<readonly CanonicalRecord[]> {
+    return this.cached(key, async () => {
+      const rows: CanonicalRecord[] = [];
+      for (let from = 0; ; from += CANONICAL_PAGE_SIZE) {
+        const page = await this.queryRows(
+          source,
+          () => query(from, from + CANONICAL_PAGE_SIZE - 1),
+        );
+        rows.push(...page);
+        if (page.length < CANONICAL_PAGE_SIZE) return rows;
+      }
+    });
+  }
+
   private readRowsByInBatches(
     key: string,
     source: CanonicalSourceName,
@@ -422,17 +442,18 @@ export class CanonicalRepository {
     range: CanonicalDateRange,
   ): Promise<readonly CanonicalRecord[]> {
     await this.assertAuthorizedCanonicalHouseholdScope();
-    return this.readRows(
+    return this.readRowsPaginated(
       `operations:bank:${range.start}:${range.endExclusive}`,
       "operations",
-      () =>
+      (from, to) =>
         this.client
           .from("operations")
           .select("*,montant_bancaire_exact:montant::text")
           .gte("date_bancaire", range.start)
           .lt("date_bancaire", range.endExclusive)
           .order("date_bancaire", { ascending: true })
-          .order("operation_id", { ascending: true }),
+          .order("operation_id", { ascending: true })
+          .range(from, to),
     );
   }
 
