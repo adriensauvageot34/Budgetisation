@@ -124,14 +124,17 @@ const {
 const householdA = "00000000-0000-4000-8000-000000000001";
 const householdB = "00000000-0000-4000-8000-000000000002";
 const minimalOperationId = "00000000-0000-4000-8000-000000000101";
+const minimalExcludedOperationId = "00000000-0000-4000-8000-000000000107";
 const minimalNeedId = "00000000-0000-4000-8000-000000000102";
 const minimalRuleId = "00000000-0000-4000-8000-000000000103";
+const minimalExcludedRuleId = "00000000-0000-4000-8000-000000000108";
 const minimalCategoryId = "00000000-0000-4000-8000-000000000104";
-function minimalFact(amount) {
+const minimalExcludedCategoryId = "00000000-0000-4000-8000-000000000109";
+function minimalFact(amount, operationId = minimalOperationId, categoryId = minimalCategoryId) {
   return {
-    canonicalComponentKey: `operation:${minimalOperationId}`,
-    sourceOperation: { kind: "resolved", id: minimalOperationId },
-    category: { kind: "resolved", id: minimalCategoryId },
+    canonicalComponentKey: `operation:${operationId}`,
+    sourceOperation: { kind: "resolved", id: operationId },
+    category: { kind: "resolved", id: categoryId },
     subcategory: { kind: "unknown" },
     economicTiming: {
       kind: "known",
@@ -165,24 +168,40 @@ const needBeforeCategoryExclusion = resolveMinimalPlanningSource({
   targetMonth: "2025-09",
   referenceMonths: ["2025-08"],
   bundle: minimalBundle({
-    economicFacts: [minimalFact("10")],
-    operations: [{
-      operation_id: minimalOperationId,
+    economicFacts: [
+      minimalFact("10"),
+      minimalFact("20", minimalExcludedOperationId, minimalExcludedCategoryId),
+    ],
+    operations: [minimalOperationId, minimalExcludedOperationId].map((operation_id) => ({
+      operation_id,
       need_id: minimalNeedId,
       mode_prevision: "Référence mensuelle",
-    }],
+    })),
     needs: [{ need_id: minimalNeedId, person_id: null, actif: true }],
-    baselineRules: [{
-      baseline_rule_id: minimalRuleId,
-      category_id: minimalCategoryId,
-      subcategory_id: null,
-      type_precis: null,
-      eligibility: "Excluded",
-      condition_code: null,
-      valid_from: null,
-      valid_to: null,
-      method_version: "minimal_baseline_v1",
-    }],
+    baselineRules: [
+      {
+        baseline_rule_id: minimalRuleId,
+        category_id: minimalCategoryId,
+        subcategory_id: null,
+        type_precis: null,
+        eligibility: "Eligible",
+        condition_code: null,
+        valid_from: null,
+        valid_to: null,
+        method_version: "minimal_baseline_v1",
+      },
+      {
+        baseline_rule_id: minimalExcludedRuleId,
+        category_id: minimalExcludedCategoryId,
+        subcategory_id: null,
+        type_precis: null,
+        eligibility: "Excluded",
+        condition_code: null,
+        valid_from: null,
+        valid_to: null,
+        method_version: "minimal_baseline_v1",
+      },
+    ],
   }),
 });
 assert.deepEqual(
@@ -190,7 +209,7 @@ assert.deepEqual(
     canonicalComponentKey,
     amount: String(amount),
   })),
-  [{ canonicalComponentKey: `minimal:need:${minimalNeedId}`, amount: "10" }],
+  [{ canonicalComponentKey: `minimal:need:${minimalNeedId}`, amount: "30" }],
   "an active household Need must take precedence over a generic category exclusion",
 );
 
