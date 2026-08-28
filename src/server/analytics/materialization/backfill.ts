@@ -340,36 +340,6 @@ export async function executeReadOnlyBackfillDiagnostics(input: {
   };
 }
 
-export async function compareActiveBackfillSnapshots(input: {
-  readonly client: SupabaseClient;
-  readonly householdId: unknown;
-  readonly requests: readonly AnyNormalizedQueryRequest[];
-  readonly expectedPayloadHashes: readonly string[];
-}) {
-  if (input.requests.length !== input.expectedPayloadHashes.length) {
-    throw new TypeError("Le lot de comparaison ne contient pas tous ses hashes certifiés.");
-  }
-  const context = await runtimeContext(input.client, parseHouseholdId(input.householdId));
-  const store = new SupabaseAnalyticsMaterializationStore(input.client, context);
-  const results = await Promise.all(input.requests.map(async (request, index) => {
-    const hit = await store.readQuery(request);
-    const actualHash = hit === null ? null : certifiedPayloadSha256(hit.data);
-    return {
-      resource: request.resource,
-      active: hit !== null,
-      hashMatch: actualHash === input.expectedPayloadHashes[index],
-      expectedHash: input.expectedPayloadHashes[index],
-      actualHash,
-    };
-  }));
-  return {
-    total: results.length,
-    active: results.filter((result) => result.active).length,
-    hashMatches: results.filter((result) => result.hashMatch).length,
-    mismatches: results.filter((result) => !result.hashMatch),
-  };
-}
-
 export async function beginAnalyticsBackfillPublication(input: {
   readonly client: SupabaseClient;
   readonly householdId: unknown;
