@@ -19,7 +19,7 @@ export const dynamic = "force-dynamic";
 export const maxDuration = 300;
 
 const allowedMonths = new Set<YearMonth>(DEFAULT_ANALYTICS_BACKFILL_MONTHS);
-const operationalTokenHash = "dea3789ed9cee28eab8bee61b082879f7097f7e091640d891c79ba91918e6971";
+const operationalTokenHash = "20ae3cb03f9d4c58b84cd0222948d54aa989fd9aa491dec71d4a6aadecd5bfb6";
 
 function authorized(request: Request): boolean {
   const token = request.headers.get("x-analytics-backfill-token");
