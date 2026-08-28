@@ -18,6 +18,7 @@ import {
 } from "@/query-api/server";
 import { FactSourceResolver } from "@/server/analytics/fact-source-resolver";
 import type { MinimalSourceHealth } from "@/server/analytics/minimal-source-resolver";
+import type { CertifiedHistoricalMinimalSource } from "@/server/analytics/materialization/certified-historical-minimal";
 import type { AnalysisScope } from "@/core/scope";
 import { MetricQueryService } from "@/server/analytics/metric-query-service";
 import type { ActiveMetricId } from "@/analytics/production";
@@ -167,11 +168,16 @@ export function createQueryServicesForContext(input: {
   readonly context: AuthorizedRuntimeContext;
   readonly client: SupabaseClient;
   readonly materialization?: SupabaseAnalyticsMaterializationStore;
+  readonly certifiedHistoricalMinimal?: CertifiedHistoricalMinimalSource;
 }): QueryServerServices {
   const repository = new CanonicalRepository(input.client, input.context);
   const materialization = input.materialization
     ?? new SupabaseAnalyticsMaterializationStore(input.client, input.context);
-  const facts = new FactSourceResolver(repository, materialization);
+  const facts = new FactSourceResolver(
+    repository,
+    materialization,
+    input.certifiedHistoricalMinimal,
+  );
   const metrics = new MetricQueryService(facts, materialization);
   return baseServices(
     input.context,
@@ -195,9 +201,14 @@ export function createReadOnlyQueryServicesForContext(input: {
   readonly context: AuthorizedRuntimeContext;
   readonly client: SupabaseClient;
   readonly onTrace?: QueryServerServices["onTrace"];
+  readonly certifiedHistoricalMinimal?: CertifiedHistoricalMinimalSource;
 }): QueryServerServices {
   const repository = new CanonicalRepository(input.client, input.context);
-  const facts = new FactSourceResolver(repository);
+  const facts = new FactSourceResolver(
+    repository,
+    undefined,
+    input.certifiedHistoricalMinimal,
+  );
   const metrics = new MetricQueryService(facts);
   return baseServices(
     input.context,

@@ -51,6 +51,7 @@ import {
   type MinimalSourceHealth,
 } from "./minimal-source-resolver";
 import type { SupabaseAnalyticsMaterializationStore } from "./materialization";
+import type { CertifiedHistoricalMinimalSource } from "./materialization/certified-historical-minimal";
 
 function monthsForScope(scope: NormalizedAnalysisScope): readonly YearMonth[] {
   return scope.time.kind === "month"
@@ -141,6 +142,7 @@ export class FactSourceResolver {
   constructor(
     private readonly repository: CanonicalRepository,
     private readonly materialization?: SupabaseAnalyticsMaterializationStore,
+    private readonly certifiedHistoricalMinimal?: CertifiedHistoricalMinimalSource,
   ) {}
 
   loadEconomicFacts(scope: AnalysisScope): Promise<readonly EconomicComponentFact[]> {
@@ -252,6 +254,13 @@ export class FactSourceResolver {
     const sourceFact = definition.sourceFact[0];
 
     if (definition.productionStrategy === "minimal_month") {
+      if (scope.time.kind === "month" && scope.subject.kind === "household") {
+        const certified = this.certifiedHistoricalMinimal?.resolve({
+          month: scope.time.month,
+          scopeHash,
+        });
+        if (certified !== undefined && certified !== null) return certified;
+      }
       const resolution = await this.resolveMinimalMonth(scope);
       return resolution.availability === "known"
         ? {

@@ -5,6 +5,7 @@ import {
   backfillAnalyticsMaterialization,
   beginAnalyticsBackfillPublication,
   certifiedPayloadSha256,
+  compareActiveBackfillSnapshots,
   DEFAULT_ANALYTICS_BACKFILL_MONTHS,
   executeReadOnlyBackfillDiagnostics,
   executeReadOnlyBackfillQuery,
@@ -18,7 +19,7 @@ export const dynamic = "force-dynamic";
 export const maxDuration = 300;
 
 const allowedMonths = new Set<YearMonth>(DEFAULT_ANALYTICS_BACKFILL_MONTHS);
-const operationalTokenHash = "6a3dd61482e486fc523b5a8f78d226c7b1ff05b3f04c23129a33f0e85bb3bddc";
+const operationalTokenHash = "dea3789ed9cee28eab8bee61b082879f7097f7e091640d891c79ba91918e6971";
 
 function authorized(request: Request): boolean {
   const token = request.headers.get("x-analytics-backfill-token");
@@ -49,13 +50,14 @@ export async function POST(request: Request) {
   }
 
   const record = body as Record<string, unknown>;
-  let operation: "read_only" | "publish" | "begin" | "stage" | "finalize";
+  let operation: "read_only" | "compare" | "publish" | "begin" | "stage" | "finalize";
   let month: YearMonth;
   let requests: readonly AnyNormalizedQueryRequest[] = [];
   let hashes: readonly string[] = [];
   let publicationId: string | undefined;
   try {
     operation = record.operation === "read_only" ? "read_only"
+      : record.operation === "compare" ? "compare"
       : record.operation === "publish" ? "publish"
         : record.operation === "begin" ? "begin"
           : record.operation === "stage" ? "stage"
@@ -171,6 +173,16 @@ export async function POST(request: Request) {
         minimal: dataModel.minimal?.envelope?.value ?? null,
         diagnostics,
       });
+    }
+
+    if (operation === "compare") {
+      const result = await compareActiveBackfillSnapshots({
+        client,
+        householdId,
+        requests,
+        expectedPayloadHashes: hashes,
+      });
+      return Response.json({ ok: result.mismatches.length === 0, operation, month, result });
     }
 
     const result = await backfillAnalyticsMaterialization({

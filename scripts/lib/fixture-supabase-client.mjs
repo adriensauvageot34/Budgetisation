@@ -12,6 +12,7 @@ class FixtureQuery {
   #filters = [];
   #orders = [];
   #limit;
+  #range;
   #selection = "*";
 
   constructor(tables, table) {
@@ -73,6 +74,11 @@ class FixtureQuery {
     return this;
   }
 
+  range(from, to) {
+    this.#range = { from, to };
+    return this;
+  }
+
   async execute() {
     const source = this.tables.get(this.table);
     if (source === undefined) {
@@ -94,6 +100,7 @@ class FixtureQuery {
         return 0;
       });
     }
+    if (this.#range !== undefined) rows = rows.slice(this.#range.from, this.#range.to + 1);
     if (this.#limit !== undefined) rows = rows.slice(0, this.#limit);
     return { data: rows.map((row) => this.#project(row)), error: null };
   }

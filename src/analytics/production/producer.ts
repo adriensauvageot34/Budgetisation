@@ -346,7 +346,7 @@ function produceMinimalMonth(input: {
     metricId: input.definition.metricId,
     scopeHash: input.scopeHash,
     availability: "known",
-    value: metric.value,
+    value: input.source.certifiedHistoricalValue ?? metric.value,
     unit: input.definition.unit,
     coverage: input.source.coverage?.level === "partial"
       ? { level: "partial" }

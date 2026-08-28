@@ -152,11 +152,12 @@ export type MetricProductionSource =
       readonly support?: Support;
     } & (
       | { readonly availability: Exclude<Availability, "known"> }
-      | {
-          readonly availability: "known";
-          readonly neutralVariableComponents: readonly MinimalMonthComponent[];
-          readonly mandatoryMonthlyObligationsAndProvisions: readonly MinimalMonthComponent[];
-        }
+       | {
+           readonly availability: "known";
+           readonly neutralVariableComponents: readonly MinimalMonthComponent[];
+           readonly mandatoryMonthlyObligationsAndProvisions: readonly MinimalMonthComponent[];
+           readonly certifiedHistoricalValue?: Money;
+         }
     ))
   | {
       readonly kind: "typical_month";

@@ -235,4 +235,59 @@ try {
 }
 assert.equal(failingEconomic.calls.length, 3);
 
+const paginatedOperationRows = Array.from({ length: 1_505 }, (_, index) => ({
+  operation_id: `paged-operation-${String(index).padStart(4, "0")}`,
+  date_bancaire: "2026-01-15",
+  montant: "1",
+}));
+const operationRanges = [];
+const paginationClient = {
+  from(table) {
+    if (table === "canonical_household_scope_control") {
+      const query = {
+        select() { return query; },
+        limit() { return query; },
+        then(resolve, reject) {
+          return Promise.resolve({
+            data: [{ household_count: 1, household_id: runtimeContext.householdId, status: "READY" }],
+            error: null,
+          }).then(resolve, reject);
+        },
+      };
+      return query;
+    }
+    assert.equal(table, "operations");
+    let range = [0, paginatedOperationRows.length - 1];
+    const query = {
+      select() { return query; },
+      gte() { return query; },
+      lt() { return query; },
+      order() { return query; },
+      range(from, to) {
+        range = [from, to];
+        operationRanges.push(range);
+        return query;
+      },
+      then(resolve, reject) {
+        return Promise.resolve({
+          data: paginatedOperationRows.slice(range[0], range[1] + 1),
+          error: null,
+        }).then(resolve, reject);
+      },
+    };
+    return query;
+  },
+};
+const paginationRepository = new CanonicalRepository(paginationClient, runtimeContext);
+const paginatedOperations = await paginationRepository.loadOperationsByBankRange({
+  start: "2026-01-01",
+  endExclusive: "2026-02-01",
+});
+assert.equal(paginatedOperations.length, 1_505);
+assert.deepEqual(operationRanges, [[0, 999], [1000, 1999]]);
+assert.deepEqual(
+  paginatedOperations.map(({ operation_id: operationId }) => operationId),
+  paginatedOperationRows.map(({ operation_id: operationId }) => operationId),
+);
+
 console.log("Canonical .in batching checks: PASS");

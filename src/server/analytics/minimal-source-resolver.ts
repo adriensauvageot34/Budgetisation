@@ -321,35 +321,6 @@ export function resolveMinimalPlanningSource(input: {
     }
   }
   const activeRecurrences = declaredActiveRecurrences;
-  const eligibleActiveNeeds = new Set<string>();
-  for (const fact of bundle.economicFacts) {
-    if (fact.category.kind !== "resolved") continue;
-    const metadata = componentMetadata(fact, components, operations);
-    if (
-      metadata.needId === null ||
-      !activeNeeds.has(metadata.needId) ||
-      metadata.forecastMode === null ||
-      metadata.provisionPoolId !== null
-    ) continue;
-    const rule = selectMinimalBaselineRule(rules, {
-      categoryId: fact.category.id,
-      subcategoryId: fact.subcategory.kind === "resolved" ? fact.subcategory.id : null,
-      preciseType: metadata.preciseType,
-      asOf: `${targetMonth}-01`,
-    });
-    if (
-      rule !== null &&
-      minimalBaselineEligibilityDecision(rule).kind === "eligible" &&
-      sourceKey(
-        metadata,
-        rule,
-        activeRecurrences,
-        activeNeeds,
-        activeAnnualEvents,
-        structuralRecurrenceIds,
-      ) === `need:${metadata.needId}`
-    ) eligibleActiveNeeds.add(metadata.needId);
-  }
 
   for (const fact of bundle.economicFacts) {
     if (fact.category.kind !== "resolved") continue;
@@ -370,24 +341,6 @@ export function resolveMinimalPlanningSource(input: {
       } else {
         unresolvedObligationSources.add(`provision:${metadata.provisionPoolId}`);
       }
-      continue;
-    }
-
-    if (
-      metadata.needId !== null &&
-      eligibleActiveNeeds.has(metadata.needId) &&
-      metadata.forecastMode !== null
-    ) {
-      const key = `need:${metadata.needId}`;
-      const group = groups.get(key) ?? {
-        key,
-        mode: metadata.forecastMode,
-        bucket: "neutral" as const,
-        observations: [],
-      };
-      group.observations.push(...observations);
-      groups.set(key, group);
-      resolvedNeutralSources.add(key);
       continue;
     }
 

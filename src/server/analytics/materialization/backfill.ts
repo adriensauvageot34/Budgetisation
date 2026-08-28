@@ -38,6 +38,7 @@ import {
   createReadOnlyQueryServicesForContext,
 } from "@/server/query/runtime";
 import { SupabaseAnalyticsMaterializationStore } from "./store";
+import { certifiedHistoricalMinimalSource } from "./certified-historical-minimal";
 
 export const DEFAULT_ANALYTICS_BACKFILL_MONTHS = Object.freeze([
   "2025-08", "2025-09", "2025-10", "2025-11", "2025-12", "2026-01",
@@ -217,6 +218,7 @@ async function certifiedMonthQueryRequests(
     context,
     client,
     onTrace: () => {},
+    certifiedHistoricalMinimal: certifiedHistoricalMinimalSource,
   });
   const [categoryIds, categoryStructure, activityStructure, lifeStructure] = await Promise.all([
     certifiedCategoryIds(client, context),
@@ -277,6 +279,7 @@ export async function executeReadOnlyBackfillQuery(input: {
     context,
     client: input.client,
     onTrace: () => {},
+    certifiedHistoricalMinimal: certifiedHistoricalMinimalSource,
   });
   return executeQuery({
     requestId: randomUUID(),
@@ -290,7 +293,11 @@ export async function executeReadOnlyBackfillDiagnostics(input: {
   readonly request: AnyNormalizedQueryRequest;
 }) {
   const context = await runtimeContext(input.client, parseHouseholdId(input.householdId));
-  const facts = new FactSourceResolver(new CanonicalRepository(input.client, context));
+  const facts = new FactSourceResolver(
+    new CanonicalRepository(input.client, context),
+    undefined,
+    certifiedHistoricalMinimalSource,
+  );
   const scope = input.request.scope as AnalysisScope;
   const [actual, minimal] = await Promise.all([
     facts.resolve("economic_consumption_net_attributable", scope),
@@ -333,6 +340,36 @@ export async function executeReadOnlyBackfillDiagnostics(input: {
   };
 }
 
+export async function compareActiveBackfillSnapshots(input: {
+  readonly client: SupabaseClient;
+  readonly householdId: unknown;
+  readonly requests: readonly AnyNormalizedQueryRequest[];
+  readonly expectedPayloadHashes: readonly string[];
+}) {
+  if (input.requests.length !== input.expectedPayloadHashes.length) {
+    throw new TypeError("Le lot de comparaison ne contient pas tous ses hashes certifiés.");
+  }
+  const context = await runtimeContext(input.client, parseHouseholdId(input.householdId));
+  const store = new SupabaseAnalyticsMaterializationStore(input.client, context);
+  const results = await Promise.all(input.requests.map(async (request, index) => {
+    const hit = await store.readQuery(request);
+    const actualHash = hit === null ? null : certifiedPayloadSha256(hit.data);
+    return {
+      resource: request.resource,
+      active: hit !== null,
+      hashMatch: actualHash === input.expectedPayloadHashes[index],
+      expectedHash: input.expectedPayloadHashes[index],
+      actualHash,
+    };
+  }));
+  return {
+    total: results.length,
+    active: results.filter((result) => result.active).length,
+    hashMatches: results.filter((result) => result.hashMatch).length,
+    mismatches: results.filter((result) => !result.hashMatch),
+  };
+}
+
 export async function beginAnalyticsBackfillPublication(input: {
   readonly client: SupabaseClient;
   readonly householdId: unknown;
@@ -366,6 +403,7 @@ export async function stageAnalyticsBackfillPublication(input: {
     context,
     client: input.client,
     materialization: publicationStore,
+    certifiedHistoricalMinimal: certifiedHistoricalMinimalSource,
   });
   let hashMatches = 0;
   for (const [index, request] of input.requests.entries()) {
@@ -481,6 +519,7 @@ export async function backfillAnalyticsMaterialization(input: {
         context,
         client: input.client,
         materialization: publicationStore,
+        certifiedHistoricalMinimal: certifiedHistoricalMinimalSource,
       });
       let hashMatches = 0;
       for (const [index, request] of requests.entries()) {

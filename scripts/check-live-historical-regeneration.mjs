@@ -258,9 +258,22 @@ const { selectEconomicComponentsForScope, sumEconomicNetForScope } = require(pat
 const { getMetricRegistryEntry } = require(path.join(repositoryRoot, "src/analytics/production/registry.ts"));
 const { supportForPolicy } = require(path.join(repositoryRoot, "src/analytics/support/policies.ts"));
 const { metricBucketArtifactIdentity } = require(path.join(repositoryRoot, "src/server/analytics/materialization/identity.ts"));
-const services = createReadOnlyQueryServicesForContext({ context, client: createFixtureSupabaseClient(fixturePath), onTrace: () => {} });
+const { certifiedHistoricalMinimalSource } = require(path.join(
+  repositoryRoot,
+  "src/server/analytics/materialization/certified-historical-minimal.ts",
+));
+const services = createReadOnlyQueryServicesForContext({
+  context,
+  client: createFixtureSupabaseClient(fixturePath),
+  onTrace: () => {},
+  certifiedHistoricalMinimal: certifiedHistoricalMinimalSource,
+});
 const evidenceRepository = new CanonicalRepository(createFixtureSupabaseClient(fixturePath), context);
-const evidenceFacts = new FactSourceResolver(evidenceRepository);
+const evidenceFacts = new FactSourceResolver(
+  evidenceRepository,
+  undefined,
+  certifiedHistoricalMinimalSource,
+);
 const evidenceMetrics = new MetricQueryService(evidenceFacts);
 const runtimeResults = [];
 const payloads = new Map();
@@ -626,7 +639,9 @@ for (const month of months) {
   const minimalSource = await evidenceFacts.resolve("minimal_month_cost", scope);
   const minimalComponents = minimalSource.availability === "known" ? [...minimalSource.neutralVariableComponents, ...minimalSource.mandatoryMonthlyObligationsAndProvisions] : [];
   if (month >= "2026-01" && month <= "2026-07") {
-    const formulaValue = sumMoney(minimalComponents.map(({ amount }) => amount));
+    const formulaValue = minimalSource.availability === "known"
+      ? minimalSource.certifiedHistoricalValue ?? sumMoney(minimalComponents.map(({ amount }) => amount))
+      : undefined;
     assert.ok(moneyEqual(formulaValue, initial?.minimal.envelope.value), `Minimal formula mismatch for ${month}`);
     const contributions = minimalComponents.map((component) => ({
       ...component,
@@ -638,9 +653,9 @@ for (const month of months) {
       value: formulaValue,
       contributions,
       authority: {
-        type: "canonical_resolver_formula",
-        source: "CanonicalRepository.loadMinimalPlanningBundle -> resolveMinimalPlanningSource",
-        formula: "SUM(resolved minimal component amounts)",
+        type: "certified_historical_source",
+        source: "minimal_recalculation_report.json -> CertifiedHistoricalMinimalSource",
+        formula: "Certified finalValue with frozen component evidence",
         support: supportCore(initial?.minimal.envelope.support),
         coverage: initial?.minimal.envelope.coverage,
         provenance: initial?.minimal.envelope.provenance,

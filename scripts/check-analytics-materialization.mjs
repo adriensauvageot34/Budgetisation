@@ -79,6 +79,10 @@ const { toBoundaryQueryRequest } = require(path.join(
   repositoryRoot,
   "src/server/analytics/materialization/backfill.ts",
 ));
+const { certifiedHistoricalMinimalSource } = require(path.join(
+  repositoryRoot,
+  "src/server/analytics/materialization/certified-historical-minimal.ts",
+));
 const { executeQuery } = require(path.join(
   repositoryRoot,
   "src/query-api/server/execute-query.ts",
@@ -125,14 +129,20 @@ const householdA = "00000000-0000-4000-8000-000000000001";
 const householdB = "00000000-0000-4000-8000-000000000002";
 const minimalOperationId = "00000000-0000-4000-8000-000000000101";
 const minimalExcludedOperationId = "00000000-0000-4000-8000-000000000107";
+const minimalCashUseId = "00000000-0000-4000-8000-000000000110";
 const minimalNeedId = "00000000-0000-4000-8000-000000000102";
 const minimalRuleId = "00000000-0000-4000-8000-000000000103";
 const minimalExcludedRuleId = "00000000-0000-4000-8000-000000000108";
 const minimalCategoryId = "00000000-0000-4000-8000-000000000104";
 const minimalExcludedCategoryId = "00000000-0000-4000-8000-000000000109";
-function minimalFact(amount, operationId = minimalOperationId, categoryId = minimalCategoryId) {
+function minimalFact(
+  amount,
+  operationId = minimalOperationId,
+  categoryId = minimalCategoryId,
+  canonicalComponentKey = `operation:${operationId}`,
+) {
   return {
-    canonicalComponentKey: `operation:${operationId}`,
+    canonicalComponentKey,
     sourceOperation: { kind: "resolved", id: operationId },
     category: { kind: "resolved", id: categoryId },
     subcategory: { kind: "unknown" },
@@ -171,6 +181,12 @@ const needBeforeCategoryExclusion = resolveMinimalPlanningSource({
     economicFacts: [
       minimalFact("10"),
       minimalFact("20", minimalExcludedOperationId, minimalExcludedCategoryId),
+      minimalFact(
+        "30",
+        minimalOperationId,
+        minimalExcludedCategoryId,
+        `cash_use:${minimalCashUseId}`,
+      ),
     ],
     operations: [minimalOperationId, minimalExcludedOperationId].map((operation_id) => ({
       operation_id,
@@ -178,6 +194,11 @@ const needBeforeCategoryExclusion = resolveMinimalPlanningSource({
       mode_prevision: "Référence mensuelle",
     })),
     needs: [{ need_id: minimalNeedId, person_id: null, actif: true }],
+    cashUses: [{
+      cash_use_id: minimalCashUseId,
+      withdrawal_operation_id: minimalOperationId,
+      type_precis: "Cash sans sous-catégorie canonique",
+    }],
     baselineRules: [
       {
         baseline_rule_id: minimalRuleId,
@@ -209,8 +230,77 @@ assert.deepEqual(
     canonicalComponentKey,
     amount: String(amount),
   })),
-  [{ canonicalComponentKey: `minimal:need:${minimalNeedId}`, amount: "30" }],
-  "an active household Need must take precedence over a generic category exclusion",
+  [{ canonicalComponentKey: `minimal:need:${minimalNeedId}`, amount: "10" }],
+  "a Need may group an eligible fact but must not override categorical exclusions",
+);
+
+const nonEligibleNeed = resolveMinimalPlanningSource({
+  targetMonth: "2025-09",
+  referenceMonths: ["2025-08"],
+  bundle: minimalBundle({
+    economicFacts: [minimalFact("20", minimalExcludedOperationId, minimalExcludedCategoryId)],
+    operations: [{
+      operation_id: minimalExcludedOperationId,
+      need_id: minimalNeedId,
+      mode_prevision: "Référence mensuelle",
+    }],
+    needs: [{ need_id: minimalNeedId, person_id: null, actif: true }],
+    baselineRules: [{
+      baseline_rule_id: minimalExcludedRuleId,
+      category_id: minimalExcludedCategoryId,
+      subcategory_id: null,
+      type_precis: null,
+      eligibility: "Excluded",
+      condition_code: null,
+      valid_from: null,
+      valid_to: null,
+      method_version: "minimal_baseline_v1",
+    }],
+  }),
+});
+assert.deepEqual(
+  nonEligibleNeed.neutralVariableComponents,
+  [],
+  "a non-eligible Need fact must remain outside Minimal",
+);
+
+const frozenMinimalValues = new Map([
+  ["2025-08", null],
+  ["2025-09", "1508.41"],
+  ["2025-10", "1619.635"],
+  ["2025-11", "1692.27333333333333333332"],
+  ["2025-12", "1680.2975"],
+  ["2026-01", "1713.194"],
+  ["2026-02", "1741.095"],
+  ["2026-03", "1733.67"],
+  ["2026-04", "1699.0725"],
+  ["2026-05", "1669.8233333333333333333333333333333333333333333332"],
+  ["2026-06", "1631.587"],
+  ["2026-07", "1636.62727272727272727273"],
+]);
+for (const [month, expected] of frozenMinimalValues) {
+  const scope = normalizeAnalysisScope({
+    subject: { kind: "household" },
+    time: { kind: "month", month },
+  });
+  const source = certifiedHistoricalMinimalSource.resolve({
+    month,
+    scopeHash: computeScopeHash(scope),
+  });
+  assert.ok(source, `frozen Minimal source missing for ${month}`);
+  const metric = produceMetric({ metricId: "minimal_month_cost", scope, source });
+  assert.equal(metric.value, expected, `frozen Minimal value mismatch for ${month}`);
+}
+assert.equal(
+  certifiedHistoricalMinimalSource.resolve({
+    month: "2026-08",
+    scopeHash: computeScopeHash(normalizeAnalysisScope({
+      subject: { kind: "household" },
+      time: { kind: "month", month: "2026-08" },
+    })),
+  }),
+  null,
+  "the frozen source must never become a current-month fallback",
 );
 
 const pendingWorksiteOccurrence = projectActivityOccurrenceFact({
