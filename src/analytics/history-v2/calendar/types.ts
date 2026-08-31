@@ -132,9 +132,20 @@ export type CalendarRibbonSegment = {
   readonly lane: 1 | 2 | 3 | 4;
 };
 
+export type CalendarRibbonOverflowSegment = {
+  readonly ribbonItemId: string;
+  readonly weekStart: LocalDate;
+  readonly segmentStart: LocalDate;
+  readonly segmentEnd: LocalDate;
+  readonly originalStart: LocalDate;
+  readonly originalEnd: LocalDate;
+};
+
 export type CalendarRibbonWeek = {
   readonly weekStart: LocalDate;
   readonly segments: readonly CalendarRibbonSegment[];
+  /** Exact server-ordered candidates that could not be assigned to lanes 1-4. */
+  readonly overflowSegments: readonly CalendarRibbonOverflowSegment[];
   readonly ribbonOverflow: number;
 };
 

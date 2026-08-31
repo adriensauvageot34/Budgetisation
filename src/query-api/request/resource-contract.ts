@@ -6,7 +6,7 @@ import {
   historyV2PolicyIds,
   type HistoryV2PolicyId,
 } from "../../core/history-v2";
-import type { ContractVersion } from "../../core/versions";
+import { parseMethodVersion, type ContractVersion, type MethodVersion } from "../../core/versions";
 import type { QueryResourceKey } from "./resource-key";
 import {
   isQueryResourceName,
@@ -23,6 +23,8 @@ export type HistoryV2ResourceContract = {
   readonly family: "history_v2";
   readonly policyIds: readonly HistoryV2PolicyId[];
   readonly metricIds: readonly string[];
+  /** Optional per-resource payload evolution; absent preserves the certified v1 signature. */
+  readonly readModelVersion?: MethodVersion;
 };
 
 export type QueryResourceContract =
@@ -51,6 +53,7 @@ function sortedUniqueNonEmpty(
 export function defineHistoryV2ResourceContract(input: {
   readonly policyIds: readonly HistoryV2PolicyId[];
   readonly metricIds?: readonly string[];
+  readonly readModelVersion?: string;
 }): HistoryV2ResourceContract {
   const knownPolicies = new Set<string>(historyV2PolicyIds);
   if (input.policyIds.some((policyId) => !knownPolicies.has(policyId))) {
@@ -76,6 +79,9 @@ export function defineHistoryV2ResourceContract(input: {
       input.metricIds ?? [],
       "HistoryV2ResourceContract.metricIds",
     ),
+    ...(input.readModelVersion === undefined
+      ? {}
+      : { readModelVersion: parseMethodVersion(input.readModelVersion) }),
   });
 }
 
@@ -89,6 +95,7 @@ export const queryResourceContractRegistry = Object.freeze({
   history_calendar_month_summary: legacyV1ResourceContract,
   history_day_detail: legacyV1ResourceContract,
   history_month_calendar: defineHistoryV2ResourceContract({
+    readModelVersion: "history_month_calendar@v2",
     policyIds: [
       "canonical_continuity",
       "canonical_purchase_event_timing",
@@ -101,6 +108,7 @@ export const queryResourceContractRegistry = Object.freeze({
     metricIds: ["economic_consumption_net_attributable"],
   }),
   history_week: defineHistoryV2ResourceContract({
+    readModelVersion: "history_week@v2",
     policyIds: [
       "canonical_continuity",
       "canonical_purchase_event_timing",
@@ -113,6 +121,7 @@ export const queryResourceContractRegistry = Object.freeze({
     metricIds: ["economic_consumption_net_attributable"],
   }),
   history_day_journal: defineHistoryV2ResourceContract({
+    readModelVersion: "history_day_journal@v2",
     policyIds: [
       "canonical_continuity",
       "canonical_purchase_event_timing",
@@ -149,8 +158,9 @@ export const queryResourceContractRegistry = Object.freeze({
     metricIds: ["economic_consumption_net_attributable", "typical_month_cost", "category_amount"],
   }),
   history_category_detail: defineHistoryV2ResourceContract({
-    policyIds: ["canonical_purchase_event_timing", "category_explanation", "facts_hash", "quality_visibility"],
-    metricIds: ["category_amount", "merchant_net_amount", "purchase_count", "activity_frequency", "activity_causal_median_cost_per_occurrence"],
+    readModelVersion: "history_category_detail@v2",
+    policyIds: ["canonical_component_classification", "canonical_purchase_event_timing", "category_explanation", "facts_hash", "quality_visibility", "spending_nature"],
+    metricIds: ["category_amount", "fixed_variable_amount", "life_scope_amount", "merchant_net_amount", "purchase_count", "activity_frequency", "activity_causal_median_cost_per_occurrence"],
   }),
   history_month_spending_nature: defineHistoryV2ResourceContract({
     policyIds: ["canonical_component_classification", "facts_hash", "quality_visibility", "spending_nature"],

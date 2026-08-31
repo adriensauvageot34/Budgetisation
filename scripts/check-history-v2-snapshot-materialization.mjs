@@ -221,6 +221,24 @@ const spending = balance.buildSpendingAxes({
     },
   ],
 });
+const categorySpending = balance.buildSpendingAxes({
+  actual: "70",
+  components: [
+    {
+      componentKey: "category-component:known",
+      amount: "60",
+      necessity: "OPTIONAL",
+      behavior: "VARIABLE",
+      lifeScope: "CURRENT_LIFE",
+      nonNegative: true,
+    },
+    {
+      componentKey: "category-component:unknown",
+      amount: "10",
+      nonNegative: true,
+    },
+  ],
+});
 const minimalPreview = balance.buildMinimalPreview({
   minimal: "100",
   components: [
@@ -341,6 +359,7 @@ function buildBalanceReadModel(request) {
         frequencyTicket,
         merchantAndPurchaseDrivers: [],
         lifecycleBadges: [],
+        classifications: categorySpending,
       });
     case "history_month_spending_nature":
       return historyQuery.buildMonthSpendingNatureReadModel({

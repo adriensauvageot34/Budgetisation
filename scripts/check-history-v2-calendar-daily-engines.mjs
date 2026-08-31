@@ -167,8 +167,19 @@ check(() => {
   const week = ribbons.ribbonWeeks.find(({ weekStart }) => weekStart === "2026-05-04");
   assert.equal(week.segments.length, 4);
   assert.equal(week.ribbonOverflow, 1);
+  assert.equal(week.overflowSegments.length, 1);
+  assert.equal(week.overflowSegments[0].ribbonItemId, `life_event:${uuid("64")}`);
+  assert.deepEqual(week.overflowSegments.map(({ ribbonItemId }) => ribbonItemId), [
+    `life_event:${uuid("64")}`,
+  ], "l'overflow conserve l'ordre serveur et l'identité exacte");
   assert.equal(ribbons.days.find(({ date }) => date === "2026-05-04").hiddenMarkerGroupCount, 0, "overflow Ribbon et Marker sont distincts");
 });
+check(() => assert.throws(() => calendar.calendarSemanticMonthArtifactSchema.parse({
+  ...ribbons,
+  ribbonWeeks: ribbons.ribbonWeeks.map((week) => week.ribbonOverflow === 0
+    ? week
+    : { ...week, ribbonOverflow: week.ribbonOverflow + 1 }),
+}), (error) => error.issues?.some(({ message }) => /overflowSegments.length/.test(message))));
 
 const explicitNoQualifier = calendar.buildCalendarSemanticMonthArtifact(calendarInput({
   lifeEvents: [life({ id: "70", typeKey: "deplacement_pro", startDate: "2026-05-04", endDate: "2026-05-05" })],

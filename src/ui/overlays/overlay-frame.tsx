@@ -37,6 +37,7 @@ export type OverlayFrameProps<NavigationIntent = never> = {
   readonly initialFocusRef?: RefObject<HTMLElement | null>;
   readonly restoreFocusRef?: RefObject<HTMLElement | null>;
   readonly semanticFallbackRef?: RefObject<HTMLElement | null>;
+  readonly closeOnBackdrop?: boolean;
 };
 
 export function OverlayFrame<NavigationIntent = never>({
@@ -55,6 +56,7 @@ export function OverlayFrame<NavigationIntent = never>({
   initialFocusRef,
   restoreFocusRef,
   semanticFallbackRef,
+  closeOnBackdrop = false,
 }: OverlayFrameProps<NavigationIntent>) {
   const generatedTitleId = useId();
   const titleId = `ui-overlay-title-${generatedTitleId}`;
@@ -114,6 +116,10 @@ export function OverlayFrame<NavigationIntent = never>({
       data-overlay-layer=""
       data-topmost={topmost || undefined}
       data-suspended={suspended || undefined}
+      onMouseDown={(event) => {
+        if (!closeOnBackdrop || event.target !== event.currentTarget || unavailableClose) return;
+        if (closeAction.kind === "callback" || closeAction.kind === "navigation") invokeUiAction(closeAction);
+      }}
     >
       <section
         ref={frameRef}

@@ -524,6 +524,16 @@ function spendingState(data) {
   });
   return data.spendingState;
 }
+function categoryClassificationState(data, categoryId) {
+  const components = spendingComponents(data.facts).filter((component) =>
+    categoryId === "__UNCLASSIFIED__"
+      ? component.categoryId === undefined
+      : component.categoryId === categoryId);
+  return balance.buildSpendingAxes({
+    actual: sumMoney(components.map(({ amount }) => amount)),
+    components,
+  });
+}
 function minimalState(data) {
   if (data.minimalState !== undefined) return data.minimalState;
   const source = data.oracle.minimal;
@@ -936,6 +946,7 @@ function buildReadModel(data, request) {
       const summary = categoryState(data).summaries.find((value) => value.categoryId === request.params.categoryId);
       if (summary === undefined) throw new TypeError(`Category ${request.params.categoryId} absente.`);
       const composition = categoryComposition(data, summary.categoryId);
+      const classifications = categoryClassificationState(data, summary.categoryId);
       return historyQuery.buildCategoryDetailReadModel({
         context,
         category: summary,
@@ -944,6 +955,7 @@ function buildReadModel(data, request) {
         frequencyTicket: frequencyTicketUnknown(),
         merchantAndPurchaseDrivers: [],
         lifecycleBadges: [],
+        classifications,
       });
     }
     case "history_month_spending_nature": {
@@ -1094,6 +1106,10 @@ function assertMonthInvariants(data, preflight, deterministic) {
     return day.hiddenMarkerCount.status !== "KNOWN" || day.hiddenMarkerCount.value === expected;
   }), "+N compte les groupes ordonnés, pas les sources");
   check("C07_RIBBON_OVERFLOW_DISTINCT", monthCalendar.ribbonSegments !== monthCalendar.ribbonOverflow, "collections Ribbon et overflow distinctes");
+  check("C08_RIBBON_OVERFLOW_IDENTITIES", (monthCalendar.ribbonOverflow.status !== "KNOWN" && monthCalendar.ribbonOverflow.status !== "PARTIAL") || monthCalendar.ribbonOverflow.items.every((overflow) =>
+    overflow.count === overflow.items.length
+    && new Set(overflow.items.map(({ calendarItemId }) => calendarItemId)).size === overflow.items.length
+    && overflow.items.every(({ segmentStart, targetRef }) => targetRef.resource === "history_day_journal" && targetRef.params.date === segmentStart)), "overflowCount, identités et cibles Journal exactes");
 
   const categoryTotal = sumMoney([...categoryState(data).actualByCategory.values()]);
   check("K01_CATEGORY_RECONCILIATION", moneyClose(categoryTotal, ledger.actualMonthAmount), `categories=${categoryTotal}; actual=${ledger.actualMonthAmount}`);
@@ -1101,6 +1117,12 @@ function assertMonthInvariants(data, preflight, deterministic) {
   for (const [axis, value] of [["necessity", spending.necessity], ["behavior", spending.behavior], ["lifeScope", spending.lifeScope]]) {
     check(`N_${axis.toUpperCase()}_RECONCILIATION`, moneyClose(sumMoney([value.classifiedAmount, value.unclassifiedAmount]), ledger.actualMonthAmount), `${axis} classified + gap = Actual`);
   }
+  const categoryDetails = preflight.queries.filter(({ request }) => request.resource === "history_category_detail").map(({ data: value }) => value);
+  check("K02_CATEGORY_CLASSIFICATION_TABS", categoryDetails.every((detail) => ["necessity", "behavior", "lifeScope"].every((axis) => {
+    const view = detail.classificationViews[axis];
+    if (view.visibility !== "VISIBLE") return false;
+    return moneyClose(sumMoney([view.data.classifiedAmount, view.data.unclassifiedAmount]), detail.category.actual.value);
+  })), "les trois axes serveur se réconcilient séparément avec le total catégorie");
   const minimal = minimalState(data);
   check("N_MINIMAL_ADDITIVE", !minimal.available || moneyClose(minimal.preview.total, minimal.value), minimal.available ? `minimal=${minimal.value}` : "Minimal DATA_MISSING autorisé");
   const bridge = bridgeFor(data.month, data.facts, data.operations, ledger.actualMonthAmount);

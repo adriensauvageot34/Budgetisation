@@ -18,7 +18,7 @@ import type {
 } from "../../core/history-v2";
 import type { ResourceInputHash } from "../../analytics/history-v2";
 import type { HouseholdId } from "../../core/identity";
-import type { Money } from "../../core/money";
+import { addMoney, compareMoney, type Money } from "../../core/money";
 import type { YearMonth } from "../../core/time";
 import type { QueryCapabilities } from "../capabilities";
 import type { ScopedMoneyMetricReadModel } from "../read-models";
@@ -129,11 +129,40 @@ export function buildMonthCategoriesReadModel(input: { readonly context: MonthBa
   return { ...base(input.context), categories: knownCollection(input.categories), otherAmount: input.otherAmount, unclassifiedAmount: input.unclassifiedAmount };
 }
 
-export function buildCategoryDetailReadModel(input: { readonly context: MonthBalanceBuilderContext; readonly category: CategoryMonthSummary; readonly typicalComposition: TypicalCompositionBaseline; readonly explanation: CategoryExplanation; readonly frequencyTicket: FrequencyTicketExplanation; readonly merchantAndPurchaseDrivers: readonly MerchantPurchaseExplanation[]; readonly lifecycleBadges: CategoryDetailReadModel["lifecycleBadges"] }): CategoryDetailReadModel {
+export function buildCategoryDetailReadModel(input: { readonly context: MonthBalanceBuilderContext; readonly category: CategoryMonthSummary; readonly typicalComposition: TypicalCompositionBaseline; readonly explanation: CategoryExplanation; readonly frequencyTicket: FrequencyTicketExplanation; readonly merchantAndPurchaseDrivers: readonly MerchantPurchaseExplanation[]; readonly lifecycleBadges: CategoryDetailReadModel["lifecycleBadges"]; readonly classifications: { readonly necessity: SpendingAxis; readonly behavior: SpendingAxis; readonly lifeScope: SpendingAxis; readonly matrix: SpendingNatureMatrix } }): CategoryDetailReadModel {
   if (input.merchantAndPurchaseDrivers.length > 3) throw new TypeError("Merchant + Purchase explanations sont limitées à trois.");
   const purchaseIds = input.merchantAndPurchaseDrivers.flatMap((driver) => driver.purchaseEventId === undefined ? [] : [driver.purchaseEventId]);
   if (new Set(purchaseIds).size !== purchaseIds.length) throw new TypeError("Un Purchase Event ne peut expliquer deux fois une catégorie.");
-  return { ...base(input.context), category: input.category, typicalComposition: visible(input.typicalComposition), explanation: input.explanation.visible ? visible(input.explanation) : { visibility: "HIDDEN" }, frequencyTicket: visible(input.frequencyTicket), merchantAndPurchaseDrivers: knownCollection(input.merchantAndPurchaseDrivers), lifecycleBadges: input.lifecycleBadges };
+  const categoryActual = input.category.actual.status === "KNOWN" || input.category.actual.status === "PARTIAL"
+    ? input.category.actual.value
+    : undefined;
+  for (const [axis, value] of Object.entries({
+    necessity: input.classifications.necessity,
+    behavior: input.classifications.behavior,
+    lifeScope: input.classifications.lifeScope,
+  })) {
+    if (
+      categoryActual !== undefined
+      && compareMoney(addMoney(value.classifiedAmount, value.unclassifiedAmount), categoryActual) !== 0
+    ) {
+      throw new TypeError(`La vue ${axis} doit se réconcilier avec le total de catégorie.`);
+    }
+  }
+  return {
+    ...base(input.context),
+    category: input.category,
+    typicalComposition: visible(input.typicalComposition),
+    explanation: input.explanation.visible ? visible(input.explanation) : { visibility: "HIDDEN" },
+    frequencyTicket: visible(input.frequencyTicket),
+    merchantAndPurchaseDrivers: knownCollection(input.merchantAndPurchaseDrivers),
+    lifecycleBadges: input.lifecycleBadges,
+    classificationViews: {
+      necessity: visible(input.classifications.necessity),
+      behavior: visible(input.classifications.behavior),
+      lifeScope: visible(input.classifications.lifeScope),
+      matrix: visible(input.classifications.matrix),
+    },
+  };
 }
 
 export function buildMonthSpendingNatureReadModel(input: { readonly context: MonthBalanceBuilderContext; readonly actual: MetricNode<Money>; readonly necessity: SpendingAxis; readonly behavior: SpendingAxis; readonly lifeScope: SpendingAxis; readonly matrix: SpendingNatureMatrix }): MonthSpendingNatureReadModel {

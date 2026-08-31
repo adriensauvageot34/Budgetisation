@@ -106,7 +106,7 @@ function ProductLocationObserver({ onSearchChange }: { readonly onSearchChange: 
 }
 
 function isProductRoute(pathname: string): boolean {
-  return pathname.startsWith("/historique") || pathname === "/operations";
+  return pathname === "/historique" || pathname.startsWith("/historique/") || pathname === "/operations";
 }
 
 export function ProductRuntimeProvider({ children }: { readonly children: React.ReactNode }) {

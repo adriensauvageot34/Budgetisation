@@ -297,9 +297,13 @@ function activeRibbonItems(
   const byId = new Map(artifact.items.items.map((item) => [item.calendarItemId, item]));
   const row = artifact.ribbonWeeks.find(({ weekStart }) => weekStart === mondayOf(date));
   if (row === undefined) return [];
-  return row.segments
+  return [...row.segments, ...row.overflowSegments]
     .filter(({ segmentStart, segmentEnd }) => segmentStart <= date && date <= segmentEnd)
-    .sort((left, right) => left.lane - right.lane || left.ribbonItemId.localeCompare(right.ribbonItemId))
+    .sort((left, right) => {
+      const leftLane = "lane" in left && typeof left.lane === "number" ? left.lane : 5;
+      const rightLane = "lane" in right && typeof right.lane === "number" ? right.lane : 5;
+      return leftLane - rightLane || left.ribbonItemId.localeCompare(right.ribbonItemId);
+    })
     .flatMap(({ ribbonItemId }) => {
       const item = byId.get(ribbonItemId);
       return item === undefined ? [] : [item];
@@ -665,8 +669,33 @@ function ribbonProjection(
         });
       }
     }
-    const observedOverflow = candidates.reduce((value, { row }) => Math.max(value, row.ribbonOverflow), 0);
-    overflows.push({ weekStart, count: observedOverflow });
+    const overflowItems: RibbonOverflowReadModel["items"][number][] = [];
+    const seenOverflow = new Set<string>();
+    for (const { artifact, row } of candidates) {
+      const itemById = new Map(
+        artifact.items.status === "KNOWN" || artifact.items.status === "PARTIAL"
+          ? artifact.items.items.map((item) => [item.calendarItemId, item]) : [],
+      );
+      for (const segment of row.overflowSegments) {
+        if (seenItems.has(segment.ribbonItemId) || seenOverflow.has(segment.ribbonItemId)) continue;
+        const item = itemById.get(segment.ribbonItemId);
+        if (item === undefined) {
+          partial = true;
+          continue;
+        }
+        seenOverflow.add(segment.ribbonItemId);
+        overflowItems.push({
+          calendarItemId: item.calendarItemId,
+          title: item.title,
+          iconKey: item.iconKey,
+          segmentStart: segment.segmentStart,
+          segmentEnd: segment.segmentEnd,
+          targetRef: target(queryResourceKeys.historyDayJournal, { date: segment.segmentStart }),
+          sourceRefs: sourceRefsForItem(item),
+        });
+      }
+    }
+    overflows.push({ weekStart, count: overflowItems.length, items: overflowItems });
   }
   const status = missing || partial ? "PARTIAL" as const : "KNOWN" as const;
   return {

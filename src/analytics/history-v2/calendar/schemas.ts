@@ -121,6 +121,25 @@ function parseRibbonSegment(value: unknown): CalendarRibbonSegment {
   };
 }
 
+function parseRibbonOverflowSegment(value: unknown) {
+  const record = parseStrictRecord(value, [
+    "ribbonItemId", "weekStart", "segmentStart", "segmentEnd", "originalStart", "originalEnd",
+  ], "CalendarRibbonOverflowSegment");
+  const segmentStart = parseLocalDate(requireProperty(record, "segmentStart", "CalendarRibbonOverflowSegment"));
+  const segmentEnd = parseLocalDate(requireProperty(record, "segmentEnd", "CalendarRibbonOverflowSegment"));
+  if (segmentEnd < segmentStart) {
+    throw new TypeError("CalendarRibbonOverflowSegment.segmentEnd doit être >= segmentStart.");
+  }
+  return {
+    ribbonItemId: stringValue(requireProperty(record, "ribbonItemId", "CalendarRibbonOverflowSegment"), "ribbonItemId"),
+    weekStart: parseLocalDate(requireProperty(record, "weekStart", "CalendarRibbonOverflowSegment")),
+    segmentStart,
+    segmentEnd,
+    originalStart: parseLocalDate(requireProperty(record, "originalStart", "CalendarRibbonOverflowSegment")),
+    originalEnd: parseLocalDate(requireProperty(record, "originalEnd", "CalendarRibbonOverflowSegment")),
+  };
+}
+
 export const calendarSemanticMonthArtifactSchema = createRuntimeSchema((value: unknown): CalendarSemanticMonthArtifact => {
   const record = parseStrictRecord(value, ["artifactFamily", "householdId", "month", "items", "days", "ribbonWeeks", "semanticIssues", "sourceScope", "dependencyPolicies", "artifactInputHash"], "CalendarSemanticMonthArtifact");
   if (requireProperty(record, "artifactFamily", "CalendarSemanticMonthArtifact") !== "calendar_semantic_month") throw new TypeError("artifactFamily calendrier invalide.");
@@ -159,10 +178,21 @@ export const calendarSemanticMonthArtifactSchema = createRuntimeSchema((value: u
     };
   });
   const parsedWeeks = weeks.map((week) => {
-    const row = parseStrictRecord(week, ["weekStart", "segments", "ribbonOverflow"], "CalendarRibbonWeek");
+    const row = parseStrictRecord(week, ["weekStart", "segments", "overflowSegments", "ribbonOverflow"], "CalendarRibbonWeek");
     const segments = requireProperty(row, "segments", "CalendarRibbonWeek");
-    if (!Array.isArray(segments)) throw new TypeError("segments doit être un tableau.");
-    return { weekStart: parseLocalDate(requireProperty(row, "weekStart", "CalendarRibbonWeek")), segments: segments.map(parseRibbonSegment), ribbonOverflow: integer(requireProperty(row, "ribbonOverflow", "CalendarRibbonWeek"), "ribbonOverflow") };
+    const overflowSegments = requireProperty(row, "overflowSegments", "CalendarRibbonWeek");
+    if (!Array.isArray(segments) || !Array.isArray(overflowSegments)) throw new TypeError("segments/overflowSegments doivent être des tableaux.");
+    const parsedOverflow = overflowSegments.map(parseRibbonOverflowSegment);
+    const ribbonOverflow = integer(requireProperty(row, "ribbonOverflow", "CalendarRibbonWeek"), "ribbonOverflow");
+    if (ribbonOverflow !== parsedOverflow.length) throw new TypeError("ribbonOverflow doit égaler overflowSegments.length.");
+    const overflowIds = parsedOverflow.map(({ ribbonItemId }) => ribbonItemId);
+    if (new Set(overflowIds).size !== overflowIds.length) throw new TypeError("overflowSegments contient un Ribbon dupliqué.");
+    return {
+      weekStart: parseLocalDate(requireProperty(row, "weekStart", "CalendarRibbonWeek")),
+      segments: segments.map(parseRibbonSegment),
+      overflowSegments: parsedOverflow,
+      ribbonOverflow,
+    };
   });
   // Remaining strict substructures are produced by the engine and JSON-safe; validate their required discriminants.
   const month = parseYearMonth(requireProperty(record, "month", "CalendarSemanticMonthArtifact"));

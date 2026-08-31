@@ -92,6 +92,13 @@ export type CategoryDetailReadModel = HistoryV2MonthlyBase & {
   readonly frequencyTicket: DisplayNode<FrequencyTicketExplanation>;
   readonly merchantAndPurchaseDrivers: CollectionNode<MerchantPurchaseExplanation>;
   readonly lifecycleBadges: readonly { readonly stableId: string; readonly lifecycle: "NEW" | "REAPPEARED" }[];
+  /** Server-prepared M3 projections for the three independent category tabs. */
+  readonly classificationViews: {
+    readonly necessity: DisplayNode<SpendingAxis>;
+    readonly behavior: DisplayNode<SpendingAxis>;
+    readonly lifeScope: DisplayNode<SpendingAxis>;
+    readonly matrix: DisplayNode<SpendingNatureMatrix>;
+  };
 };
 
 export type MonthSpendingNatureReadModel = HistoryV2MonthlyBase & {

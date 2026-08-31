@@ -14,6 +14,7 @@ import type {
   CalendarDayProjection,
   CalendarLifeEventSource,
   CalendarMomentSource,
+  CalendarRibbonOverflowSegment,
   CalendarRibbonSegment,
   CalendarRibbonWeek,
   CalendarSemanticEngineInput,
@@ -505,7 +506,7 @@ function buildRibbonWeeks(
         || left.item.calendarItemId.localeCompare(right.item.calendarItemId));
     const laneEnds = new Map<number, LocalDate>();
     const segments: CalendarRibbonSegment[] = [];
-    let ribbonOverflow = 0;
+    const overflowSegments: CalendarRibbonOverflowSegment[] = [];
     for (const candidate of candidates) {
       const preferred = previousLane.get(candidate.item.calendarItemId);
       const laneChoices = sortedUnique([
@@ -517,7 +518,14 @@ function buildRibbonWeeks(
         return last === undefined || last < candidate.segmentStart;
       });
       if (lane === undefined) {
-        ribbonOverflow += 1;
+        overflowSegments.push({
+          ribbonItemId: candidate.item.calendarItemId,
+          weekStart,
+          segmentStart: candidate.segmentStart,
+          segmentEnd: candidate.segmentEnd,
+          originalStart: candidate.item.startDate!,
+          originalEnd: candidate.item.endDate!,
+        });
         continue;
       }
       laneEnds.set(lane, candidate.segmentEnd);
@@ -534,7 +542,12 @@ function buildRibbonWeeks(
         lane,
       });
     }
-    return { weekStart, segments, ribbonOverflow };
+    return {
+      weekStart,
+      segments,
+      overflowSegments,
+      ribbonOverflow: overflowSegments.length,
+    };
   });
 }
 

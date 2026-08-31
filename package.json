@@ -20,12 +20,13 @@
     "check:history-v2-month-balance": "node --experimental-strip-types scripts/check-history-v2-month-balance.mjs",
     "check:history-v2-snapshot-materialization": "node scripts/check-history-v2-snapshot-materialization.mjs",
     "check:history-v2-certification-12-months": "node scripts/check-history-v2-certification-12-months.mjs",
+    "check:history-v2-frontend": "node scripts/check-history-v2-frontend.mjs",
     "prepare:history-v2-live-publication": "node scripts/prepare-history-v2-live-publication.mjs",
     "backfill:analytics": "node scripts/backfill-analytics-materialization.mjs",
     "dev": "next dev",
     "typecheck": "tsc --noEmit",
     "build": "next build",
-    "verify": "npm run check:architecture && npm run check:product-completeness && npm run check:analysis-month-contracts && npm run check:analysis-global-contracts && npm run check:canonical-in-batching && npm run check:analytics-materialization && npm run check:calendar-day && npm run check:exploration-entities && npm run check:live-runtime-regressions && npm run check:history-v2-canonical && npm run check:history-v2-transversal && npm run check:history-v2-calendar-daily && npm run check:history-v2-readmodels && npm run check:history-v2-month-balance && npm run check:history-v2-snapshot-materialization && npm run typecheck && npm run build",
+    "verify": "npm run check:architecture && npm run check:product-completeness && npm run check:analysis-month-contracts && npm run check:analysis-global-contracts && npm run check:canonical-in-batching && npm run check:analytics-materialization && npm run check:calendar-day && npm run check:exploration-entities && npm run check:live-runtime-regressions && npm run check:history-v2-canonical && npm run check:history-v2-transversal && npm run check:history-v2-calendar-daily && npm run check:history-v2-readmodels && npm run check:history-v2-month-balance && npm run check:history-v2-snapshot-materialization && npm run check:history-v2-frontend && npm run typecheck && npm run build",
     "start": "next start"
   },
   "dependencies": {

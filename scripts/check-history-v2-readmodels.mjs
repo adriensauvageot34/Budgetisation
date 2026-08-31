@@ -209,7 +209,14 @@ check(() => {
   const ribbonSegments = monthModel.ribbonSegments.items.filter(({ weekStart }) => weekStart === "2026-05-04");
   assert.equal(ribbonSegments.length, 4);
   assert.deepEqual(ribbonSegments.map(({ lane }) => lane), [1, 2, 3, 4]);
-  assert.equal(monthModel.ribbonOverflow.items.find(({ weekStart }) => weekStart === "2026-05-04").count, 1);
+  const overflow = monthModel.ribbonOverflow.items.find(({ weekStart }) => weekStart === "2026-05-04");
+  assert.equal(overflow.count, 1);
+  assert.equal(overflow.items.length, 1);
+  assert.equal(overflow.items[0].calendarItemId, `life_event:${uuid(34)}`);
+  assert.equal(overflow.items[0].title, "Ribbon 4");
+  assert.deepEqual(overflow.items[0].targetRef, { resource: "history_day_journal", params: { date: "2026-05-04" } });
+  assert.equal(new Set(overflow.items.map(({ calendarItemId }) => calendarItemId)).size, overflow.items.length);
+  assert.equal(monthModel.daysByDate["2026-05-04"].activeRibbonItemIds.length, 5, "aucun Ribbon n'est perdu dans le jour");
   assert.equal(monthModel.daysByDate["2026-05-04"].hiddenMarkerCount.value, 0, "overflow Ribbon et Marker restent distincts");
 });
 check(() => {
@@ -253,6 +260,15 @@ const journal = readmodels.buildJournalDayReadModel({
   capabilities: capability(request.queryResourceKeys.historyDayJournal),
 }, "2026-05-12", journalSupplement);
 check(() => readmodels.journalDayReadModelSchema.parse(journal));
+check(() => {
+  const ribbonJournal = readmodels.buildJournalDayReadModel({
+    ...baseContext,
+    capabilities: capability(request.queryResourceKeys.historyDayJournal),
+  }, "2026-05-04", journalSupplement);
+  const ids = ribbonJournal.activeContinuousEvents.data.items.map(({ calendarItemId }) => calendarItemId);
+  assert.equal(ids.length, 5);
+  assert.ok(ids.includes(`life_event:${uuid(34)}`), "la cible Journal expose aussi le Ribbon masqué");
+});
 check(() => {
   const timed = journal.timedTimeline.data.items;
   const untimed = journal.untimedEvents.data.items;

@@ -138,6 +138,17 @@ export type RibbonSegmentReadModel = {
 export type RibbonOverflowReadModel = {
   readonly weekStart: LocalDate;
   readonly count: number;
+  readonly items: readonly RibbonOverflowItemReadModel[];
+};
+
+export type RibbonOverflowItemReadModel = {
+  readonly calendarItemId: string;
+  readonly title: string;
+  readonly iconKey: string;
+  readonly segmentStart: LocalDate;
+  readonly segmentEnd: LocalDate;
+  readonly targetRef: QueryTargetRef;
+  readonly sourceRefs: readonly SourceRef[];
 };
 
 export type MonthCalendarReadModel = HistoryV2ReadModelMeta & {

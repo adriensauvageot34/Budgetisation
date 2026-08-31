@@ -182,6 +182,9 @@ export function historyV2ResourceMethodSignature(
     contractVersion: resourceContract.contractVersion,
     metricMethods: Object.fromEntries(metricIds),
     policies: scopedPolicies,
+    ...(resourceContract.readModelVersion === undefined
+      ? {}
+      : { readModelVersion: resourceContract.readModelVersion }),
   });
 }
 
@@ -309,7 +312,11 @@ export function historyV2SharedArtifactIdentity(
     throw new TypeError("Un artifact History V2 partagé doit être mensuel.");
   }
   const scopeHash = computeScopeHash(scope);
-  const methodVersion = parseMethodVersion(`${artifactFamily}@v1`);
+  const methodVersion = parseMethodVersion(
+    artifactFamily === "calendar_semantic_month"
+      ? "calendar_semantic_month@v2"
+      : `${artifactFamily}@v1`,
+  );
   const contractVersion = parseContractVersion("v2");
   const metricId = `history_v2:${artifactFamily}`;
   const filterSignature = canonicalHash({ filters: scope.filters });

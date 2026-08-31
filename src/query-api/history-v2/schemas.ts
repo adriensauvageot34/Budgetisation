@@ -295,8 +295,36 @@ function parseRibbonSegment(value: unknown): RibbonSegmentReadModel {
 }
 
 function parseRibbonOverflow(value: unknown): RibbonOverflowReadModel {
-  const record = parseStrictRecord(value, ["weekStart", "count"], "RibbonOverflowReadModel");
-  return { weekStart: parseLocalDate(requireProperty(record, "weekStart", "RibbonOverflow")), count: integer(requireProperty(record, "count", "RibbonOverflow"), "count") };
+  const record = parseStrictRecord(value, ["weekStart", "count", "items"], "RibbonOverflowReadModel");
+  const weekStart = parseLocalDate(requireProperty(record, "weekStart", "RibbonOverflow"));
+  const items = array(requireProperty(record, "items", "RibbonOverflow"), (entry) => {
+    const item = parseStrictRecord(entry, [
+      "calendarItemId", "title", "iconKey", "segmentStart", "segmentEnd", "targetRef", "sourceRefs",
+    ], "RibbonOverflowItemReadModel");
+    const segmentStart = parseLocalDate(requireProperty(item, "segmentStart", "RibbonOverflowItem"));
+    const segmentEnd = parseLocalDate(requireProperty(item, "segmentEnd", "RibbonOverflowItem"));
+    if (segmentEnd < segmentStart) throw new TypeError("RibbonOverflowItem.segmentEnd doit être >= segmentStart.");
+    const targetRef = parseQueryTargetRef(requireProperty(item, "targetRef", "RibbonOverflowItem"));
+    if (
+      targetRef.resource !== queryResourceKeys.historyDayJournal
+      || targetRef.params.date !== segmentStart
+    ) {
+      throw new TypeError("RibbonOverflowItem.targetRef doit viser son Journal de segmentStart.");
+    }
+    return {
+      calendarItemId: nonEmpty(requireProperty(item, "calendarItemId", "RibbonOverflowItem"), "calendarItemId"),
+      title: nonEmpty(requireProperty(item, "title", "RibbonOverflowItem"), "title"),
+      iconKey: nonEmpty(requireProperty(item, "iconKey", "RibbonOverflowItem"), "iconKey"),
+      segmentStart,
+      segmentEnd,
+      targetRef,
+      sourceRefs: sourceRefs(requireProperty(item, "sourceRefs", "RibbonOverflowItem"), "sourceRefs"),
+    };
+  }, "RibbonOverflow.items");
+  assertUnique(items.map(({ calendarItemId }) => calendarItemId), "RibbonOverflow.items");
+  const count = integer(requireProperty(record, "count", "RibbonOverflow"), "count");
+  if (count !== items.length) throw new TypeError("RibbonOverflow.count doit égaler items.length.");
+  return { weekStart, count, items };
 }
 
 const ribbonSegmentCollectionSchema = createCollectionValueSchema(createRuntimeSchema(parseRibbonSegment));

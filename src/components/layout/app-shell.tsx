@@ -14,6 +14,7 @@ const modules = [
 export function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const runtime = useProductRuntime();
+  const historyV2 = pathname.startsWith("/historique-v2");
 
   if (pathname === "/connexion" || pathname === "/acces-refuse") {
     return children;
@@ -61,7 +62,12 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         </div>
       </header>
 
-      <main ref={runtime.backgroundRootRef} className="mx-auto min-h-[calc(100vh-73px)] max-w-6xl px-[var(--space-page)] py-8">
+      <main
+        ref={runtime.backgroundRootRef}
+        className={historyV2
+          ? "min-h-[calc(100vh-73px)] py-6"
+          : "mx-auto min-h-[calc(100vh-73px)] max-w-6xl px-[var(--space-page)] py-8"}
+      >
         {children}
       </main>
     </div>

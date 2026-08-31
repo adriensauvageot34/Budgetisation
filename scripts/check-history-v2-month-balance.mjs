@@ -118,6 +118,52 @@ check(() => assert.equal(query.monthBalanceSummaryReadModelSchema.parse(summary)
 check(() => assert.equal(summary.actualVsTypical.data.value.delta, money(200)));
 check(() => assert.throws(() => query.monthBalanceSummaryReadModelSchema.parse({ ...summary, rogue: true }), (error) => error.issues?.some(({ code }) => code === "unrecognized_key")));
 check(() => assert.throws(() => query.monthBalanceSummaryReadModelSchema.parse({ ...summary, importedSummary: { freshness: undefined } }), (error) => error.issues?.some(({ message }) => /undefined/.test(message))));
+const categoryResource = query.queryResourceKeys.historyCategoryDetail;
+const categoryContract = query.getQueryResourceContract(categoryResource);
+const categoryContext = {
+  ...context,
+  policyVersions: history.resolvePolicyVersions(categoryContract.policyIds),
+  capabilities: capabilities(categoryResource),
+};
+const categorySummary = {
+  categoryId: "food",
+  label: "Alimentation",
+  actual: { status: "KNOWN", value: money(100) },
+  shareOfActual: { status: "KNOWN", value: 1 },
+  typical: { status: "KNOWN", value: money(100) },
+  delta: { status: "KNOWN", value: money(0) },
+  material: false,
+  detailRef: { resource: categoryResource, params: { categoryId: "food" } },
+  sourceRefs: [{ kind: "category", id: "food" }],
+};
+const categoryDetail = query.buildCategoryDetailReadModel({
+  context: categoryContext,
+  category: categorySummary,
+  typicalComposition: typical,
+  explanation,
+  frequencyTicket: engine.explainFrequencyTicket({ currentFrequency: 1, referenceFrequency: 1, currentMedianTicket: money(10), referenceMedianTicket: money(10), referenceMonths: 8, ticketSupport: 8, currentCoverage: 1 }),
+  merchantAndPurchaseDrivers: [],
+  lifecycleBadges: [],
+  classifications: partialSpending,
+});
+check(() => assert.equal(query.categoryDetailReadModelSchema.parse(categoryDetail).classificationViews.necessity.data.result.status, "PARTIAL"));
+check(() => {
+  for (const axis of ["necessity", "behavior", "lifeScope"]) {
+    const view = categoryDetail.classificationViews[axis].data;
+    assert.equal(Number(view.classifiedAmount) + Number(view.unclassifiedAmount), 100);
+  }
+  assert.equal(categoryDetail.classificationViews.necessity.data.unclassifiedAmount, money(30), "UNKNOWN reste explicitement non classé");
+});
+check(() => assert.throws(() => query.buildCategoryDetailReadModel({
+  context: categoryContext,
+  category: { ...categorySummary, actual: { status: "KNOWN", value: money(101) } },
+  typicalComposition: typical,
+  explanation,
+  frequencyTicket: engine.explainFrequencyTicket({ currentFrequency: 1, referenceFrequency: 1, currentMedianTicket: money(10), referenceMedianTicket: money(10), referenceMonths: 8, ticketSupport: 8, currentCoverage: 1 }),
+  merchantAndPurchaseDrivers: [],
+  lifecycleBadges: [],
+  classifications: partialSpending,
+}), /réconcilier/));
 check(() => assert.equal(registry.findSchemaRegistryOrphans().length, 0));
 
 console.log(`History V2 Month Balance: ${checks}/${checks} PASS`);
