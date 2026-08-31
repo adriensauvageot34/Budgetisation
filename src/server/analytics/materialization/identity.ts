@@ -7,6 +7,10 @@ import {
   metricMethodVersions,
   type ActiveMetricId,
 } from "@/analytics/production";
+import {
+  resolvePolicyVersions,
+  type PolicyVersions,
+} from "@/core/history-v2";
 import type { HouseholdId, PersonId } from "@/core/identity";
 import {
   computeScopeHash,
@@ -23,8 +27,13 @@ import type {
   MethodVersion,
 } from "@/core/versions";
 import {
+  parseContractVersion,
+  parseMethodVersion,
+} from "@/core/versions";
+import {
   canonicalSerializeQueryParams,
   createQueryCacheKey,
+  getQueryResourceContract,
   type AnyNormalizedQueryRequest,
   type QueryResourceKey,
 } from "@/query-api";
@@ -74,6 +83,28 @@ export type MetricArtifactIdentity = {
   readonly analyticsRevision: AnalyticsRevision;
 };
 
+export const historyV2SharedArtifactFamilies = Object.freeze([
+  "calendar_semantic_month",
+  "daily_economic_ledger_month",
+] as const);
+
+export type HistoryV2SharedArtifactFamily =
+  (typeof historyV2SharedArtifactFamilies)[number];
+
+export type HistoryV2SharedArtifactIdentity = {
+  readonly artifactKey: string;
+  readonly artifactFamily: HistoryV2SharedArtifactFamily;
+  readonly metricId: string;
+  readonly householdId: HouseholdId;
+  readonly subject: { readonly kind: "household" };
+  readonly period: Extract<MaterializationPeriodIdentity, { readonly kind: "month" }>;
+  readonly scopeHash: ScopeHash;
+  readonly filterSignature: string;
+  readonly methodVersion: MethodVersion;
+  readonly contractVersion: ContractVersion;
+  readonly analyticsRevision: AnalyticsRevision;
+};
+
 export type QuerySnapshotIdentity = {
   readonly queryKey: string;
   readonly householdId: HouseholdId;
@@ -87,7 +118,7 @@ export type QuerySnapshotIdentity = {
   readonly analyticsRevision: AnalyticsRevision;
 };
 
-export function analyticsMethodSignature(): string {
+function legacyV1AnalyticsMethodSignature(): string {
   return canonicalHash({
     methods: Object.fromEntries(
       activeMetricIds.map((metricId) => [metricId, metricMethodVersions[metricId]]),
@@ -95,6 +126,62 @@ export function analyticsMethodSignature(): string {
     queryContracts: {
       historyCalendar: "history-calendar@v2",
     },
+  });
+}
+
+export function analyticsMethodSignature(
+  resource?: QueryResourceKey,
+): string {
+  if (resource === undefined) {
+    return legacyV1AnalyticsMethodSignature();
+  }
+  const resourceContract = getQueryResourceContract(resource);
+  if (resourceContract.family === "legacy_v1") {
+    return legacyV1AnalyticsMethodSignature();
+  }
+  return historyV2ResourceMethodSignature(
+    resource,
+    resolvePolicyVersions(resourceContract.policyIds),
+  );
+}
+
+export function historyV2ResourceMethodSignature(
+  resource: QueryResourceKey,
+  policyVersions: PolicyVersions,
+): string {
+  const resourceContract = getQueryResourceContract(resource);
+  if (resourceContract.family !== "history_v2") {
+    throw new TypeError(
+      `La ressource ${resource} n'est pas une ressource History V2.`,
+    );
+  }
+  const metricIds = resourceContract.metricIds.map((metricId) => {
+    if (!activeMetricIds.includes(metricId as ActiveMetricId)) {
+      throw new TypeError(
+        `La ressource ${resource} dépend d'un MetricId inactif: ${metricId}.`,
+      );
+    }
+    const activeMetricId = metricId as ActiveMetricId;
+    return [
+      activeMetricId,
+      getMetricRegistryEntry(activeMetricId).methodVersion,
+    ] as const;
+  });
+  const scopedPolicies = Object.fromEntries(
+    resourceContract.policyIds.map((policyId) => {
+      const version = policyVersions[policyId];
+      if (version === undefined) {
+        throw new TypeError(
+          `La signature ${resource} requiert la policy ${policyId}.`,
+        );
+      }
+      return [policyId, version] as const;
+    }),
+  );
+  return canonicalHash({
+    contractVersion: resourceContract.contractVersion,
+    metricMethods: Object.fromEntries(metricIds),
+    policies: scopedPolicies,
   });
 }
 
@@ -204,6 +291,54 @@ export function metricBucketArtifactIdentity(
   };
 }
 
+export function historyV2SharedArtifactIdentity(
+  context: AuthorizedRuntimeContext,
+  month: YearMonth,
+  artifactFamily: HistoryV2SharedArtifactFamily,
+  revisionPolicy: MaterializationRevisionPolicy = "published",
+): HistoryV2SharedArtifactIdentity {
+  if (!historyV2SharedArtifactFamilies.includes(artifactFamily)) {
+    throw new TypeError(`Famille d'artifact History V2 inconnue: ${artifactFamily}.`);
+  }
+  const scope = normalizeAnalysisScope({
+    subject: { kind: "household" },
+    time: { kind: "month", month },
+  });
+  const period = materializationPeriod(context, scope, revisionPolicy);
+  if (period.kind !== "month") {
+    throw new TypeError("Un artifact History V2 partagé doit être mensuel.");
+  }
+  const scopeHash = computeScopeHash(scope);
+  const methodVersion = parseMethodVersion(`${artifactFamily}@v1`);
+  const contractVersion = parseContractVersion("v2");
+  const metricId = `history_v2:${artifactFamily}`;
+  const filterSignature = canonicalHash({ filters: scope.filters });
+  const artifactKey = canonicalHash({
+    householdId: context.householdId,
+    subject: { kind: "household" },
+    period: { kind: "month", month },
+    artifactFamily,
+    metricId,
+    scopeHash,
+    filterSignature,
+    methodVersion,
+    contractVersion,
+  });
+  return {
+    artifactKey,
+    artifactFamily,
+    metricId,
+    householdId: context.householdId,
+    subject: { kind: "household" },
+    period,
+    scopeHash,
+    filterSignature,
+    methodVersion,
+    contractVersion,
+    analyticsRevision: context.analyticsRevision,
+  };
+}
+
 export function querySnapshotIdentity(
   context: AuthorizedRuntimeContext,
   request: AnyNormalizedQueryRequest,
@@ -214,7 +349,8 @@ export function querySnapshotIdentity(
   const subject = scope.subject.kind === "household"
     ? { kind: "household" as const }
     : { kind: "person" as const, personId: scope.subject.personId };
-  const methodSignature = analyticsMethodSignature();
+  const resourceContract = getQueryResourceContract(request.resource);
+  const methodSignature = analyticsMethodSignature(request.resource);
   const normalizedParamSignature = canonicalHash({ params: request.params });
   const logicalKey = createQueryCacheKey({
     resource: request.resource,
@@ -224,7 +360,7 @@ export function querySnapshotIdentity(
   const queryKey = canonicalHash({
     householdId: context.householdId,
     logicalKey,
-    contractVersion: context.contractVersion,
+    contractVersion: resourceContract.contractVersion,
     methodSignature,
   });
   return {
@@ -236,7 +372,7 @@ export function querySnapshotIdentity(
     scopeHash: request.scopeHash,
     normalizedParamSignature,
     methodSignature,
-    contractVersion: context.contractVersion,
+    contractVersion: resourceContract.contractVersion,
     analyticsRevision: context.analyticsRevision,
   };
 }

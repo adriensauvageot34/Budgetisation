@@ -16,6 +16,7 @@ import {
   type PersonId,
 } from "../../core/identity";
 import {
+  addMoney,
   compareMoney,
   parseMoney,
   type Money,
@@ -63,6 +64,10 @@ import {
   parsePurchaseEventId,
 } from "./validation";
 import { resolveHistoricalEconomicTiming } from "./economic-timing";
+import {
+  resolvePurchaseEventTiming,
+  type PurchaseEventTimingAssertion,
+} from "./purchase-event";
 
 export const canonicalFactSources = {
   economicComponent: "financial_economic_cost_canonical",
@@ -78,7 +83,11 @@ export const canonicalFactSources = {
     "life_event_types",
     "life_event_participations",
   ],
-  purchaseEvent: ["purchase_events", "purchase_event_sources"],
+  purchaseEvent: [
+    "purchase_events",
+    "purchase_event_memberships",
+    "purchase_event_timing_assertions",
+  ],
 } as const;
 
 type CanonicalSourceKind =
@@ -1191,8 +1200,12 @@ export function projectActivityOccurrenceFact(input: {
 
 export type PurchaseEventCanonicalSource = {
   readonly purchaseEventId: PurchaseEventId;
-  readonly operationId: OperationId | null;
-  readonly cashUseId: ReturnType<typeof parseCashUseId> | null;
+  readonly membershipKind: "CONSUMPTION_COMPONENT" | "EVIDENCE_SOURCE";
+  readonly kind: "operation" | "allocation" | "item" | "payment_component" | "cash_use";
+  readonly sourceId: string;
+  readonly canonicalComponentKey: CanonicalComponentKey;
+  readonly evidenceRefs: readonly string[];
+  readonly provenance: "EXPLICIT_USER_ASSERTION" | "STRUCTURED_CANONICAL_SOURCE" | "CONTROLLED_BACKFILL";
 };
 
 function parsePurchaseEventCanonicalSource(
@@ -1200,69 +1213,78 @@ function parsePurchaseEventCanonicalSource(
 ): PurchaseEventCanonicalSource {
   const row = parseStrictRecord(
     value,
-    ["purchase_event_id", "operation_id", "cash_use_id"],
-    "purchase_event_sources",
+    [
+      "purchase_event_id", "membership_kind", "operation_id", "allocation_id",
+      "item_id", "payment_component_id", "cash_use_id", "canonical_component_key",
+      "evidence_refs", "provenance",
+    ],
+    "purchase_event_memberships",
   );
-  const operationId = parseNullable(
-    requireProperty(row, "operation_id", "purchase_event_sources"),
-    parseOperationId,
+  const sources = [
+    ["operation", "operation_id"],
+    ["allocation", "allocation_id"],
+    ["item", "item_id"],
+    ["payment_component", "payment_component_id"],
+    ["cash_use", "cash_use_id"],
+  ] as const;
+  const present = sources.flatMap(([kind, column]) => {
+    const sourceId = requireProperty(row, column, "purchase_event_memberships");
+    return sourceId === null ? [] : [{ kind, sourceId: String(sourceId) }];
+  });
+  if (present.length !== 1) {
+    throw new TypeError("purchase_event_memberships exige exactement une source canonique.");
+  }
+  const canonicalComponentKey = parseCanonicalComponentKey(
+    requireProperty(row, "canonical_component_key", "purchase_event_memberships"),
   );
-  const cashUseId = parseNullable(
-    requireProperty(row, "cash_use_id", "purchase_event_sources"),
-    parseCashUseId,
-  );
-  if ((operationId === null) === (cashUseId === null)) {
-    throw new TypeError(
-      "purchase_event_sources exige exactement une source operation XOR cash_use.",
-    );
+  if (canonicalComponentKey !== `${present[0].kind}:${present[0].sourceId}`) {
+    throw new TypeError("purchase_event_memberships.canonical_component_key ne correspond pas à sa source.");
+  }
+  const evidenceRefs = requireProperty(row, "evidence_refs", "purchase_event_memberships");
+  if (!Array.isArray(evidenceRefs) || evidenceRefs.some((ref) => typeof ref !== "string" || ref.length === 0)) {
+    throw new TypeError("purchase_event_memberships.evidence_refs est invalide.");
   }
   return {
     purchaseEventId: parsePurchaseEventId(
-      requireProperty(row, "purchase_event_id", "purchase_event_sources"),
+      requireProperty(row, "purchase_event_id", "purchase_event_memberships"),
     ),
-    operationId,
-    cashUseId,
+    membershipKind: parseStringLiteral(
+      requireProperty(row, "membership_kind", "purchase_event_memberships"),
+      new Set(["CONSUMPTION_COMPONENT", "EVIDENCE_SOURCE"] as const),
+      "purchase_event_memberships.membership_kind",
+    ),
+    kind: present[0].kind,
+    sourceId: present[0].sourceId,
+    canonicalComponentKey,
+    evidenceRefs: [...evidenceRefs].sort(),
+    provenance: parseStringLiteral(
+      requireProperty(row, "provenance", "purchase_event_memberships"),
+      new Set(["EXPLICIT_USER_ASSERTION", "STRUCTURED_CANONICAL_SOURCE", "CONTROLLED_BACKFILL"] as const),
+      "purchase_event_memberships.provenance",
+    ),
   };
 }
 
 export function parsePurchaseEventCanonicalSources(
   values: readonly unknown[],
 ): readonly PurchaseEventCanonicalSource[] {
-  const operationIds = new Set<OperationId>();
-  const cashUseIds = new Set<ReturnType<typeof parseCashUseId>>();
+  const membershipKeys = new Set<string>();
   const sources = values.map((value, index) =>
     withValidationPath(index, () => {
       const source = parsePurchaseEventCanonicalSource(value);
-      if (source.operationId !== null) {
-        if (operationIds.has(source.operationId)) {
-          throw new TypeError(
-            "Une operation_id ne peut appartenir qu'à un Purchase Event.",
-          );
-        }
-        operationIds.add(source.operationId);
+      const key = `${source.purchaseEventId}:${source.membershipKind}:${source.canonicalComponentKey}`;
+      if (membershipKeys.has(key)) {
+        throw new TypeError("Un membership Purchase Event est dupliqué.");
       }
-      if (source.cashUseId !== null) {
-        if (cashUseIds.has(source.cashUseId)) {
-          throw new TypeError(
-            "Une cash_use_id ne peut appartenir qu'à un Purchase Event.",
-          );
-        }
-        cashUseIds.add(source.cashUseId);
-      }
+      membershipKeys.add(key);
       return source;
     }),
   );
   return [...sources].sort((left, right) => {
     const eventOrder = left.purchaseEventId.localeCompare(right.purchaseEventId);
     if (eventOrder !== 0) return eventOrder;
-    const leftKey =
-      left.operationId === null
-        ? `cash_use:${left.cashUseId}`
-        : `operation:${left.operationId}`;
-    const rightKey =
-      right.operationId === null
-        ? `cash_use:${right.cashUseId}`
-        : `operation:${right.operationId}`;
+    const leftKey = `${left.membershipKind}:${left.canonicalComponentKey}`;
+    const rightKey = `${right.membershipKind}:${right.canonicalComponentKey}`;
     return leftKey.localeCompare(rightKey);
   });
 }
@@ -1271,10 +1293,12 @@ export function projectPurchaseEventFact(input: {
   readonly household: CanonicalHouseholdContext;
   readonly purchaseEvent: unknown;
   readonly sources: readonly unknown[];
+  readonly timingAssertions: readonly unknown[];
+  readonly economicComponents: readonly EconomicComponentFact[];
 }): PurchaseEventFact {
   const event = parseStrictRecord(
     input.purchaseEvent,
-    ["purchase_event_id", "household_id"],
+    ["purchase_event_id", "household_id", "provenance"],
     "purchase_events",
   );
   const purchaseEventId = parsePurchaseEventId(
@@ -1300,15 +1324,72 @@ export function projectPurchaseEventFact(input: {
     );
   }
 
+  const consumptionSources = canonicalSources.filter(({ membershipKind }) =>
+    membershipKind === "CONSUMPTION_COMPONENT");
+  if (consumptionSources.length === 0) {
+    throw new TypeError("Un Purchase Event doit posséder au moins un composant de consommation.");
+  }
+  const componentByKey = new Map(input.economicComponents.map((component) =>
+    [component.canonicalComponentKey, component]));
+  const economicAmount = consumptionSources.reduce((total, source) => {
+    const component = componentByKey.get(source.canonicalComponentKey);
+    if (component === undefined) {
+      throw new TypeError("Un composant économique du Purchase Event est absent.");
+    }
+    if (component.householdId !== householdId) {
+      throw new TypeError("Un composant économique du Purchase Event appartient à un autre Household.");
+    }
+    return addMoney(total, component.net);
+  }, parseMoney("0"));
+
+  const timingAssertions = input.timingAssertions.map((value) => {
+    const row = parseStrictRecord(value, [
+      "purchase_event_id", "timing_authority", "timing_precision", "economic_date",
+      "economic_month", "evidence_refs",
+    ], "purchase_event_timing_assertions");
+    if (parsePurchaseEventId(requireProperty(row, "purchase_event_id", "purchase_event_timing_assertions")) !== purchaseEventId) {
+      throw new TypeError("Une assertion temporelle appartient à un autre Purchase Event.");
+    }
+    const refs = requireProperty(row, "evidence_refs", "purchase_event_timing_assertions");
+    if (!Array.isArray(refs) || refs.some((ref) => typeof ref !== "string" || ref.length === 0)) {
+      throw new TypeError("purchase_event_timing_assertions.evidence_refs est invalide.");
+    }
+    return {
+      authority: parseStringLiteral(
+        requireProperty(row, "timing_authority", "purchase_event_timing_assertions"),
+        new Set(["EXPLICIT_EVENT", "EXPLICIT_CONSUMPTION_SOURCE", "TRUSTED_PURCHASE_SOURCE", "ECONOMIC_MONTH"] as const),
+        "purchase_event_timing_assertions.timing_authority",
+      ),
+      precision: parseStringLiteral(
+        requireProperty(row, "timing_precision", "purchase_event_timing_assertions"),
+        new Set(["DAY", "MONTH"] as const),
+        "purchase_event_timing_assertions.timing_precision",
+      ),
+      economicDate: requireProperty(row, "economic_date", "purchase_event_timing_assertions") as string | null,
+      economicMonth: String(requireProperty(row, "economic_month", "purchase_event_timing_assertions")),
+      evidenceRefs: [...refs],
+    } satisfies PurchaseEventTimingAssertion;
+  });
+
   return parsePurchaseEventFact({
     fact: "fct_purchase_event",
     householdId,
     householdTimeZone: input.household.householdTimeZone,
     purchaseEventId,
-    sources: canonicalSources.map((source) =>
-      source.operationId !== null
-        ? { kind: "operation", operationId: source.operationId }
-        : { kind: "cash_use", cashUseId: source.cashUseId },
+    sources: canonicalSources.map((source) => ({
+      membershipKind: source.membershipKind,
+      kind: source.kind,
+      sourceId: source.sourceId,
+      canonicalComponentKey: source.canonicalComponentKey,
+      evidenceRefs: source.evidenceRefs,
+      provenance: source.provenance,
+    })),
+    economicAmount,
+    timing: resolvePurchaseEventTiming(timingAssertions),
+    provenance: parseStringLiteral(
+      requireProperty(event, "provenance", "purchase_events"),
+      new Set(["EXPLICIT_USER_ASSERTION", "STRUCTURED_CANONICAL_SOURCE", "CONTROLLED_BACKFILL"] as const),
+      "purchase_events.provenance",
     ),
   });
 }

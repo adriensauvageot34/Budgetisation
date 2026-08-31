@@ -722,11 +722,11 @@ const minimalBundle = {
   recurrenceSeries: [{ recurrence_series_id: "series-fixed", actif_prevision: true }],
   annualEvents: [],
   worksiteActivityTypeIds: ["worksite-type"],
-  activityOccurrences: minimalMonths.flatMap((month, monthIndex) =>
+  plannedActivityDays: minimalMonths.flatMap((month) =>
     Array.from({ length: 2 }, (_, index) => ({
       activityId: "worksite-type",
       startDate: `${month}-0${index + 1}`,
-      lifeEventId: `work-${monthIndex}-${index}`,
+      validationStatus: "Confirmé",
     }))),
 };
 const minimalResolution = resolveMinimalPlanningSource({
@@ -761,7 +761,7 @@ assert.equal(new Set([
 minimalResolution.neutralVariableComponents.length + minimalResolution.mandatoryMonthlyObligationsAndProvisions.length);
 
 const partialMinimal = resolveMinimalPlanningSource({
-  bundle: { ...minimalBundle, worksiteActivityTypeIds: [], activityOccurrences: [] },
+  bundle: { ...minimalBundle, worksiteActivityTypeIds: [], plannedActivityDays: [] },
   targetMonth: "2026-08",
   referenceMonths: minimalMonths,
 });

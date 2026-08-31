@@ -73,6 +73,38 @@ import {
   type OperationsBrowseReadModel,
 } from "./operations";
 import {
+  journalDayReadModelSchema,
+  monthCalendarReadModelSchema,
+  monthQuickOverviewReadModelSchema,
+  weekReadModelSchema,
+  activityDetailReadModelSchema,
+  bankEconomyBridgeReadModelSchema,
+  categoryDetailReadModelSchema,
+  minimalPreviewReadModelSchema,
+  momentDetailReadModelSchema,
+  monthBalanceSummaryReadModelSchema,
+  monthCategoriesReadModelSchema,
+  monthLifeMoneyReadModelSchema,
+  monthSpendingNatureReadModelSchema,
+  placeDetailReadModelSchema,
+  spendingSegmentDetailReadModelSchema,
+  type ActivityDetailReadModel,
+  type BankEconomyBridgeReadModel,
+  type CategoryDetailReadModel,
+  type JournalDayReadModel,
+  type MinimalPreviewReadModel,
+  type MomentDetailReadModel,
+  type MonthBalanceSummaryReadModel,
+  type MonthCalendarReadModel,
+  type MonthCategoriesReadModel,
+  type MonthLifeMoneyReadModel,
+  type MonthQuickOverviewReadModel,
+  type MonthSpendingNatureReadModel,
+  type PlaceDetailReadModel,
+  type SpendingSegmentDetailReadModel,
+  type WeekReadModel,
+} from "./history-v2";
+import {
   queryResourceKeys,
   registeredQueryResourceKeys,
   type QueryResourceName,
@@ -85,6 +117,21 @@ export type QueryDataByResource = {
   readonly history_calendar_month: HistoryCalendarMonthReadModel;
   readonly history_calendar_month_summary: HistoryCalendarMonthSummaryReadModel;
   readonly history_day_detail: HistoryDayDetailReadModel;
+  readonly history_month_calendar: MonthCalendarReadModel;
+  readonly history_week: WeekReadModel;
+  readonly history_day_journal: JournalDayReadModel;
+  readonly history_month_overview: MonthQuickOverviewReadModel;
+  readonly history_month_balance_summary: MonthBalanceSummaryReadModel;
+  readonly history_bank_economy_bridge: BankEconomyBridgeReadModel;
+  readonly history_month_categories: MonthCategoriesReadModel;
+  readonly history_category_detail: CategoryDetailReadModel;
+  readonly history_month_spending_nature: MonthSpendingNatureReadModel;
+  readonly history_spending_segment_detail: SpendingSegmentDetailReadModel;
+  readonly history_minimal_preview: MinimalPreviewReadModel;
+  readonly history_month_life_money: MonthLifeMoneyReadModel;
+  readonly history_activity_detail: ActivityDetailReadModel;
+  readonly history_moment_detail: MomentDetailReadModel;
+  readonly history_place_detail: PlaceDetailReadModel;
   readonly analysis_month_initial: AnalysisMonthInitialReadModel;
   readonly analysis_month_breakdown: AnalysisMonthBreakdownReadModel;
   readonly analysis_month_evolution: AnalysisMonthEvolutionReadModel;
@@ -121,6 +168,21 @@ export const queryDataSchemaByResource = Object.freeze({
   history_calendar_month: historyCalendarMonthReadModelSchema,
   history_calendar_month_summary: historyCalendarMonthSummaryReadModelSchema,
   history_day_detail: historyDayDetailReadModelSchema,
+  history_month_calendar: monthCalendarReadModelSchema,
+  history_week: weekReadModelSchema,
+  history_day_journal: journalDayReadModelSchema,
+  history_month_overview: monthQuickOverviewReadModelSchema,
+  history_month_balance_summary: monthBalanceSummaryReadModelSchema,
+  history_bank_economy_bridge: bankEconomyBridgeReadModelSchema,
+  history_month_categories: monthCategoriesReadModelSchema,
+  history_category_detail: categoryDetailReadModelSchema,
+  history_month_spending_nature: monthSpendingNatureReadModelSchema,
+  history_spending_segment_detail: spendingSegmentDetailReadModelSchema,
+  history_minimal_preview: minimalPreviewReadModelSchema,
+  history_month_life_money: monthLifeMoneyReadModelSchema,
+  history_activity_detail: activityDetailReadModelSchema,
+  history_moment_detail: momentDetailReadModelSchema,
+  history_place_detail: placeDetailReadModelSchema,
   analysis_month_initial: analysisMonthInitialReadModelSchema,
   analysis_month_breakdown: analysisMonthBreakdownReadModelSchema,
   analysis_month_evolution: analysisMonthEvolutionReadModelSchema,

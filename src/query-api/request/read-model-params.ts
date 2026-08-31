@@ -17,6 +17,18 @@ export type HistoryDayDetailParams = {
   readonly date: LocalDate;
 };
 
+export type HistoryWeekParams = {
+  readonly weekStart: LocalDate;
+};
+
+export type HistoryCategoryDetailParams = { readonly categoryId: string };
+export type HistoryActivityDetailParams = { readonly activityTypeKey: string };
+export type HistoryMomentDetailParams = { readonly momentId: string };
+export type HistoryPlaceDetailParams = { readonly placeId: string };
+export type HistorySpendingSegmentDetailParams =
+  | { readonly axis: "necessity" | "behavior" | "lifeScope"; readonly bucket: string }
+  | { readonly necessity: "INDISPENSABLE" | "CONSTRAINED" | "OPTIONAL"; readonly behavior: "FIXED" | "VARIABLE" };
+
 export type AnalysisBreakdownDimension =
   | "category"
   | "activity"
@@ -110,6 +122,59 @@ export function parseHistoryDayDetailParams(
     date: parseLocalDate(
       requireProperty(record, "date", "HistoryDayDetailParams"),
     ),
+  };
+}
+
+export function parseHistoryWeekParams(value: unknown): HistoryWeekParams {
+  const record = parseStrictRecord(value, ["weekStart"], "HistoryWeekParams");
+  return {
+    weekStart: parseLocalDate(
+      requireProperty(record, "weekStart", "HistoryWeekParams"),
+    ),
+  };
+}
+
+function nonEmptyParam(value: unknown, field: string): string {
+  if (typeof value !== "string" || value.trim().length === 0 || value !== value.trim()) {
+    throw new TypeError(`${field} doit être une chaîne stable non vide.`);
+  }
+  return value;
+}
+
+export function parseHistoryCategoryDetailParams(value: unknown): HistoryCategoryDetailParams {
+  const record = parseStrictRecord(value, ["categoryId"], "HistoryCategoryDetailParams");
+  return { categoryId: nonEmptyParam(requireProperty(record, "categoryId", "HistoryCategoryDetailParams"), "categoryId") };
+}
+
+export function parseHistoryActivityDetailParams(value: unknown): HistoryActivityDetailParams {
+  const record = parseStrictRecord(value, ["activityTypeKey"], "HistoryActivityDetailParams");
+  return { activityTypeKey: nonEmptyParam(requireProperty(record, "activityTypeKey", "HistoryActivityDetailParams"), "activityTypeKey") };
+}
+
+export function parseHistoryMomentDetailParams(value: unknown): HistoryMomentDetailParams {
+  const record = parseStrictRecord(value, ["momentId"], "HistoryMomentDetailParams");
+  return { momentId: nonEmptyParam(requireProperty(record, "momentId", "HistoryMomentDetailParams"), "momentId") };
+}
+
+export function parseHistoryPlaceDetailParams(value: unknown): HistoryPlaceDetailParams {
+  const record = parseStrictRecord(value, ["placeId"], "HistoryPlaceDetailParams");
+  return { placeId: nonEmptyParam(requireProperty(record, "placeId", "HistoryPlaceDetailParams"), "placeId") };
+}
+
+export function parseHistorySpendingSegmentDetailParams(value: unknown): HistorySpendingSegmentDetailParams {
+  const record = parseStrictRecord(value, ["axis", "bucket", "necessity", "behavior"], "HistorySpendingSegmentDetailParams");
+  const hasAxis = hasOwn(record, "axis") || hasOwn(record, "bucket");
+  const hasMatrix = hasOwn(record, "necessity") || hasOwn(record, "behavior");
+  if (hasAxis === hasMatrix) throw new TypeError("Spending segment exige exactement un axe ou une cellule Necessity×Behavior.");
+  if (hasAxis) {
+    return {
+      axis: parseStringLiteral(requireProperty(record, "axis", "HistorySpendingSegmentDetailParams"), new Set(["necessity", "behavior", "lifeScope"]), "segment.axis"),
+      bucket: nonEmptyParam(requireProperty(record, "bucket", "HistorySpendingSegmentDetailParams"), "segment.bucket"),
+    };
+  }
+  return {
+    necessity: parseStringLiteral(requireProperty(record, "necessity", "HistorySpendingSegmentDetailParams"), new Set(["INDISPENSABLE", "CONSTRAINED", "OPTIONAL"]), "segment.necessity"),
+    behavior: parseStringLiteral(requireProperty(record, "behavior", "HistorySpendingSegmentDetailParams"), new Set(["FIXED", "VARIABLE"]), "segment.behavior"),
   };
 }
 

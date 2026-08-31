@@ -688,43 +688,47 @@ export function parseCashUseId(value: unknown): CashUseId {
 }
 
 function parsePurchaseEventSource(value: unknown): PurchaseEventSource {
-  const candidate = parseStrictRecord(
-    value,
-    ["kind", "operationId", "cashUseId"],
-    "PurchaseEventSource",
-  );
+  const candidate = parseStrictRecord(value, [
+    "membershipKind",
+    "kind",
+    "sourceId",
+    "canonicalComponentKey",
+    "evidenceRefs",
+    "provenance",
+  ], "PurchaseEventSource");
+  const evidenceRefs = requireProperty(candidate, "evidenceRefs", "PurchaseEventSource");
+  if (!Array.isArray(evidenceRefs) || evidenceRefs.some((ref) => typeof ref !== "string" || ref.length === 0)) {
+    throw new TypeError("PurchaseEventSource.evidenceRefs doit être un tableau de chaînes non vides.");
+  }
   const kind = parseStringLiteral<PurchaseEventSource["kind"]>(
     requireProperty(candidate, "kind", "PurchaseEventSource"),
-    new Set(["operation", "cash_use"]),
+    new Set(["operation", "allocation", "item", "payment_component", "cash_use"] as const),
     "PurchaseEventSource.kind",
   );
-  if (kind === "operation") {
-    const operation = parseStrictRecord(
-      value,
-      ["kind", "operationId"],
-      "PurchaseEventOperationSource",
-    );
-    return {
-      kind,
-      operationId: parseOperationId(
-        requireProperty(
-          operation,
-          "operationId",
-          "PurchaseEventOperationSource",
-        ),
-      ),
-    };
-  }
-
-  const cashUse = parseStrictRecord(
-    value,
-    ["kind", "cashUseId"],
-    "PurchaseEventCashUseSource",
+  const sourceId = parseOpaqueKey<string>(
+    requireProperty(candidate, "sourceId", "PurchaseEventSource"),
+    "PurchaseEventSource.sourceId",
   );
+  const canonicalComponentKey = parseCanonicalComponentKey(
+    requireProperty(candidate, "canonicalComponentKey", "PurchaseEventSource"),
+  );
+  if (canonicalComponentKey !== `${kind}:${sourceId}`) {
+    throw new TypeError("PurchaseEventSource ne correspond pas à canonicalComponentKey.");
+  }
   return {
+    membershipKind: parseStringLiteral(
+      requireProperty(candidate, "membershipKind", "PurchaseEventSource"),
+      new Set(["CONSUMPTION_COMPONENT", "EVIDENCE_SOURCE"] as const),
+      "PurchaseEventSource.membershipKind",
+    ),
     kind,
-    cashUseId: parseCashUseId(
-      requireProperty(cashUse, "cashUseId", "PurchaseEventCashUseSource"),
+    sourceId,
+    canonicalComponentKey,
+    evidenceRefs: [...evidenceRefs].sort(),
+    provenance: parseStringLiteral(
+      requireProperty(candidate, "provenance", "PurchaseEventSource"),
+      new Set(["EXPLICIT_USER_ASSERTION", "STRUCTURED_CANONICAL_SOURCE", "CONTROLLED_BACKFILL"] as const),
+      "PurchaseEventSource.provenance",
     ),
   };
 }
@@ -739,22 +743,16 @@ function normalizePurchaseEventSources(
     withValidationPath(index, () => parsePurchaseEventSource(source)),
   );
   const keys = sources.map((source) =>
-    source.kind === "operation"
-      ? `operation:${source.operationId}`
-      : `cash_use:${source.cashUseId}`,
-  );
+    `${source.membershipKind}:${source.canonicalComponentKey}`);
   if (new Set(keys).size !== keys.length) {
     throw new TypeError("PurchaseEventFact.sources contient une source dupliquée.");
   }
+  if (!sources.some(({ membershipKind }) => membershipKind === "CONSUMPTION_COMPONENT")) {
+    throw new TypeError("PurchaseEventFact.sources exige un composant de consommation.");
+  }
   return [...sources].sort((left, right) => {
-    const leftKey =
-      left.kind === "operation"
-        ? `operation:${left.operationId}`
-        : `cash_use:${left.cashUseId}`;
-    const rightKey =
-      right.kind === "operation"
-        ? `operation:${right.operationId}`
-        : `cash_use:${right.cashUseId}`;
+    const leftKey = `${left.membershipKind}:${left.canonicalComponentKey}`;
+    const rightKey = `${right.membershipKind}:${right.canonicalComponentKey}`;
     return leftKey.localeCompare(rightKey);
   });
 }
@@ -768,6 +766,9 @@ export function parsePurchaseEventFact(value: unknown): PurchaseEventFact {
       "householdTimeZone",
       "purchaseEventId",
       "sources",
+      "economicAmount",
+      "timing",
+      "provenance",
     ],
     "PurchaseEventFact",
   );
@@ -788,6 +789,61 @@ export function parsePurchaseEventFact(value: unknown): PurchaseEventFact {
     ),
     sources: normalizePurchaseEventSources(
       requireProperty(record, "sources", "PurchaseEventFact"),
+    ),
+    economicAmount: parseMoney(
+      requireProperty(record, "economicAmount", "PurchaseEventFact"),
+    ),
+    timing: (() => {
+      const timing = parseStrictRecord(
+        requireProperty(record, "timing", "PurchaseEventFact"),
+        ["status", "precision", "economicDate", "economicMonth", "authority", "evidenceRefs"],
+        "PurchaseEventFact.timing",
+      );
+      const refs = requireProperty(timing, "evidenceRefs", "PurchaseEventFact.timing");
+      if (!Array.isArray(refs) || refs.some((ref) => typeof ref !== "string" || ref.length === 0)) {
+        throw new TypeError("PurchaseEventFact.timing.evidenceRefs est invalide.");
+      }
+      const status = parseStringLiteral<PurchaseEventFact["timing"]["status"]>(
+        requireProperty(timing, "status", "PurchaseEventFact.timing"),
+        new Set(["KNOWN", "PARTIAL", "UNKNOWN", "CONFLICT"] as const),
+        "PurchaseEventFact.timing.status",
+      );
+      const precision = parseStringLiteral<PurchaseEventFact["timing"]["precision"]>(
+        requireProperty(timing, "precision", "PurchaseEventFact.timing"),
+        new Set(["DAY", "MONTH", "NONE"] as const),
+        "PurchaseEventFact.timing.precision",
+      );
+      const dateValue = requireProperty(timing, "economicDate", "PurchaseEventFact.timing");
+      const monthValue = requireProperty(timing, "economicMonth", "PurchaseEventFact.timing");
+      const authorityValue = requireProperty(timing, "authority", "PurchaseEventFact.timing");
+      const result: PurchaseEventFact["timing"] = {
+        status,
+        precision,
+        economicDate: dateValue === null ? null : parseLocalDate(dateValue),
+        economicMonth: monthValue === null ? null : parseYearMonth(monthValue),
+        authority: authorityValue === null ? null : parseStringLiteral<Exclude<PurchaseEventFact["timing"]["authority"], null>>(
+          authorityValue,
+          new Set(["EXPLICIT_EVENT", "EXPLICIT_CONSUMPTION_SOURCE", "TRUSTED_PURCHASE_SOURCE", "ECONOMIC_MONTH"] as const),
+          "PurchaseEventFact.timing.authority",
+        ),
+        evidenceRefs: [...refs].sort(),
+      };
+      const validShape =
+        (result.status === "KNOWN" && result.precision === "DAY" && result.economicDate !== null && result.economicMonth !== null && result.authority !== null) ||
+        (result.status === "PARTIAL" && result.precision === "MONTH" && result.economicDate === null && result.economicMonth !== null && result.authority !== null) ||
+        (result.status === "UNKNOWN" && result.precision === "NONE" && result.economicDate === null && result.economicMonth === null && result.authority === null) ||
+        (result.status === "CONFLICT" && result.economicDate === null && result.authority !== null &&
+          ((result.precision === "MONTH" && result.economicMonth !== null) ||
+            (result.precision === "NONE" && result.economicMonth === null)));
+      if (!validShape) {
+        throw new TypeError("PurchaseEventFact.timing porte une combinaison incohérente.");
+      }
+      return result;
+    })(),
+    provenance: parseStringLiteral(
+      requireProperty(record, "provenance", "PurchaseEventFact"),
+      new Set(["EXPLICIT_USER_ASSERTION", "STRUCTURED_CANONICAL_SOURCE", "CONTROLLED_BACKFILL"] as const),
+      "PurchaseEventFact.provenance",
     ),
   };
 }

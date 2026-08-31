@@ -114,20 +114,31 @@ class FixtureQuery {
         ? field.slice(0, separator)
         : field.replace(/::text$/u, "");
       const sourceExpression = hasAlias ? field.slice(separator + 1) : field;
-      return [alias, sourceExpression.replace(/::text$/u, "")];
+      return [
+        alias,
+        sourceExpression.replace(/::text$/u, ""),
+        sourceExpression.endsWith("::text"),
+      ];
     };
     if (fields.includes("*")) {
       const projected = { ...row };
       for (const field of fields) {
         if (field === "*") continue;
-        const [alias, source] = projection(field);
-        projected[alias] = row[source];
+        const [alias, source, castToText] = projection(field);
+        projected[alias] = castToText && row[source] !== null && row[source] !== undefined
+          ? String(row[source])
+          : row[source];
       }
       return projected;
     }
     return Object.fromEntries(fields.map((field) => {
-      const [alias, source] = projection(field);
-      return [alias, row[source]];
+      const [alias, source, castToText] = projection(field);
+      return [
+        alias,
+        castToText && row[source] !== null && row[source] !== undefined
+          ? String(row[source])
+          : row[source],
+      ];
     }));
   }
 

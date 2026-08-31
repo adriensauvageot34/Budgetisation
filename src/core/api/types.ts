@@ -1,4 +1,5 @@
 import type { Instant } from "../time";
+import type { PublicationMeta } from "../history-v2";
 import type {
   AnalyticsRevision,
   ContractVersion,
@@ -25,6 +26,7 @@ export interface ApiMeta {
   analyticsRevision: AnalyticsRevision;
   contractVersion: ContractVersion;
   computedAt: Instant;
+  publication?: PublicationMeta;
   cachePolicy?: {
     readonly source: "materialized" | "computed";
     readonly revalidate: "never" | "stale_while_revalidate";

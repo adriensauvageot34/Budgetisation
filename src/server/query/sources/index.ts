@@ -11,6 +11,7 @@ import { createCalendarQuerySources } from "./calendar";
 import { createEntityQuerySources } from "./entities";
 import { createGalleryQuerySources } from "./galleries";
 import { createOperationsQuerySource } from "./operations";
+import { createHistoryV2QuerySources } from "./history-v2";
 
 export function createRealQuerySources(input: {
   readonly context: AuthorizedRuntimeContext;
@@ -21,6 +22,7 @@ export function createRealQuerySources(input: {
   return {
     ...metricRegistryQuerySources,
     ...createCalendarQuerySources(input),
+    ...createHistoryV2QuerySources(),
     ...createAnalysisQuerySources(input),
     ...createEntityQuerySources(input),
     ...createGalleryQuerySources(input),

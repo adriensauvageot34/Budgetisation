@@ -6,7 +6,7 @@ import {
   type RuntimeSchema,
 } from "../../core/validation";
 import type { NormalizedAnalysisScope } from "../../core/scope";
-import { yearMonthOf } from "../../core/time";
+import { addDays, yearMonthOf } from "../../core/time";
 import { canonicalSerializeQueryParams } from "./cache-key";
 import {
   parseMetricCatalogCollectionParams,
@@ -59,6 +59,12 @@ import {
   parseAnalysisTargetParams,
   parseEmptyQueryParams,
   parseHistoryDayDetailParams,
+  parseHistoryActivityDetailParams,
+  parseHistoryCategoryDetailParams,
+  parseHistoryMomentDetailParams,
+  parseHistoryPlaceDetailParams,
+  parseHistorySpendingSegmentDetailParams,
+  parseHistoryWeekParams,
   type AnalysisBreakdownParams,
   type AnalysisEvolutionParams,
   type AnalysisGlobalHabitsParams,
@@ -67,6 +73,12 @@ import {
   type AnalysisTargetParams,
   type EmptyQueryParams,
   type HistoryDayDetailParams,
+  type HistoryActivityDetailParams,
+  type HistoryCategoryDetailParams,
+  type HistoryMomentDetailParams,
+  type HistoryPlaceDetailParams,
+  type HistorySpendingSegmentDetailParams,
+  type HistoryWeekParams,
   type NormalizedAnalysisBreakdownParams,
   type NormalizedAnalysisEvolutionParams,
   type NormalizedAnalysisGlobalHabitsParams,
@@ -80,6 +92,21 @@ const queryResourceNames = [
   "history_calendar_month",
   "history_calendar_month_summary",
   "history_day_detail",
+  "history_month_calendar",
+  "history_week",
+  "history_day_journal",
+  "history_month_overview",
+  "history_month_balance_summary",
+  "history_bank_economy_bridge",
+  "history_month_categories",
+  "history_category_detail",
+  "history_month_spending_nature",
+  "history_spending_segment_detail",
+  "history_minimal_preview",
+  "history_month_life_money",
+  "history_activity_detail",
+  "history_moment_detail",
+  "history_place_detail",
   "analysis_month_initial",
   "analysis_month_breakdown",
   "analysis_month_evolution",
@@ -132,6 +159,35 @@ export const queryResourceKeys = Object.freeze({
     ),
   historyDayDetail:
     parseQueryResourceKeySyntax<"history_day_detail">("history_day_detail"),
+  historyMonthCalendar:
+    parseQueryResourceKeySyntax<"history_month_calendar">("history_month_calendar"),
+  historyWeek: parseQueryResourceKeySyntax<"history_week">("history_week"),
+  historyDayJournal:
+    parseQueryResourceKeySyntax<"history_day_journal">("history_day_journal"),
+  historyMonthOverview:
+    parseQueryResourceKeySyntax<"history_month_overview">("history_month_overview"),
+  historyMonthBalanceSummary:
+    parseQueryResourceKeySyntax<"history_month_balance_summary">("history_month_balance_summary"),
+  historyBankEconomyBridge:
+    parseQueryResourceKeySyntax<"history_bank_economy_bridge">("history_bank_economy_bridge"),
+  historyMonthCategories:
+    parseQueryResourceKeySyntax<"history_month_categories">("history_month_categories"),
+  historyCategoryDetail:
+    parseQueryResourceKeySyntax<"history_category_detail">("history_category_detail"),
+  historyMonthSpendingNature:
+    parseQueryResourceKeySyntax<"history_month_spending_nature">("history_month_spending_nature"),
+  historySpendingSegmentDetail:
+    parseQueryResourceKeySyntax<"history_spending_segment_detail">("history_spending_segment_detail"),
+  historyMinimalPreview:
+    parseQueryResourceKeySyntax<"history_minimal_preview">("history_minimal_preview"),
+  historyMonthLifeMoney:
+    parseQueryResourceKeySyntax<"history_month_life_money">("history_month_life_money"),
+  historyActivityDetail:
+    parseQueryResourceKeySyntax<"history_activity_detail">("history_activity_detail"),
+  historyMomentDetail:
+    parseQueryResourceKeySyntax<"history_moment_detail">("history_moment_detail"),
+  historyPlaceDetail:
+    parseQueryResourceKeySyntax<"history_place_detail">("history_place_detail"),
   analysisMonthInitial:
     parseQueryResourceKeySyntax<"analysis_month_initial">(
       "analysis_month_initial",
@@ -209,6 +265,21 @@ export type QueryParamsByResource = {
   readonly history_calendar_month: EmptyQueryParams;
   readonly history_calendar_month_summary: EmptyQueryParams;
   readonly history_day_detail: HistoryDayDetailParams;
+  readonly history_month_calendar: EmptyQueryParams;
+  readonly history_week: HistoryWeekParams;
+  readonly history_day_journal: HistoryDayDetailParams;
+  readonly history_month_overview: EmptyQueryParams;
+  readonly history_month_balance_summary: EmptyQueryParams;
+  readonly history_bank_economy_bridge: EmptyQueryParams;
+  readonly history_month_categories: EmptyQueryParams;
+  readonly history_category_detail: HistoryCategoryDetailParams;
+  readonly history_month_spending_nature: EmptyQueryParams;
+  readonly history_spending_segment_detail: HistorySpendingSegmentDetailParams;
+  readonly history_minimal_preview: EmptyQueryParams;
+  readonly history_month_life_money: EmptyQueryParams;
+  readonly history_activity_detail: HistoryActivityDetailParams;
+  readonly history_moment_detail: HistoryMomentDetailParams;
+  readonly history_place_detail: HistoryPlaceDetailParams;
   readonly analysis_month_initial: EmptyQueryParams;
   readonly analysis_month_breakdown: AnalysisBreakdownParams;
   readonly analysis_month_evolution: EmptyQueryParams;
@@ -245,6 +316,21 @@ export type NormalizedQueryParamsByResource = {
   readonly history_calendar_month: EmptyQueryParams;
   readonly history_calendar_month_summary: EmptyQueryParams;
   readonly history_day_detail: HistoryDayDetailParams;
+  readonly history_month_calendar: EmptyQueryParams;
+  readonly history_week: HistoryWeekParams;
+  readonly history_day_journal: HistoryDayDetailParams;
+  readonly history_month_overview: EmptyQueryParams;
+  readonly history_month_balance_summary: EmptyQueryParams;
+  readonly history_bank_economy_bridge: EmptyQueryParams;
+  readonly history_month_categories: EmptyQueryParams;
+  readonly history_category_detail: HistoryCategoryDetailParams;
+  readonly history_month_spending_nature: EmptyQueryParams;
+  readonly history_spending_segment_detail: HistorySpendingSegmentDetailParams;
+  readonly history_minimal_preview: EmptyQueryParams;
+  readonly history_month_life_money: EmptyQueryParams;
+  readonly history_activity_detail: HistoryActivityDetailParams;
+  readonly history_moment_detail: HistoryMomentDetailParams;
+  readonly history_place_detail: HistoryPlaceDetailParams;
   readonly analysis_month_initial: EmptyQueryParams;
   readonly analysis_month_breakdown: NormalizedAnalysisBreakdownParams;
   readonly analysis_month_evolution: EmptyQueryParams;
@@ -327,6 +413,20 @@ function assertDayBelongsToScope(
   }
 }
 
+function assertWeekBelongsToScope(
+  scope: NormalizedAnalysisScope,
+  params: HistoryWeekParams,
+): void {
+  if (
+    scope.time.kind !== "month"
+    || yearMonthOf(addDays(params.weekStart, 3)) !== scope.time.month
+  ) {
+    throw new TypeError(
+      "HistoryWeekParams.weekStart doit référencer un jeudi dans le mois du scope.",
+    );
+  }
+}
+
 function assertBreakdownMetricTime(
   expectedTimeKind: NormalizedAnalysisScope["time"]["kind"],
   _scope: NormalizedAnalysisScope,
@@ -380,6 +480,113 @@ export const queryResourceRegistry = Object.freeze({
     projection: "detail",
     allowedTimeKinds: ["month"],
     validateRequest: assertDayBelongsToScope,
+  },
+  history_month_calendar: {
+    key: queryResourceKeys.historyMonthCalendar,
+    paramsSchema: emptyParamsSchema("HistoryMonthCalendarParams"),
+    normalizeParams: freezeCanonicalParams,
+    projection: "detail",
+    allowedTimeKinds: ["month"],
+  },
+  history_week: {
+    key: queryResourceKeys.historyWeek,
+    paramsSchema: createRuntimeSchema(parseHistoryWeekParams),
+    normalizeParams: freezeCanonicalParams,
+    projection: "detail",
+    allowedTimeKinds: ["month"],
+    validateRequest: assertWeekBelongsToScope,
+  },
+  history_day_journal: {
+    key: queryResourceKeys.historyDayJournal,
+    paramsSchema: createRuntimeSchema(parseHistoryDayDetailParams),
+    normalizeParams: freezeCanonicalParams,
+    projection: "detail",
+    allowedTimeKinds: ["month"],
+    validateRequest: assertDayBelongsToScope,
+  },
+  history_month_overview: {
+    key: queryResourceKeys.historyMonthOverview,
+    paramsSchema: emptyParamsSchema("HistoryMonthOverviewParams"),
+    normalizeParams: freezeCanonicalParams,
+    projection: "summary",
+    allowedTimeKinds: ["month"],
+  },
+  history_month_balance_summary: {
+    key: queryResourceKeys.historyMonthBalanceSummary,
+    paramsSchema: emptyParamsSchema("HistoryMonthBalanceSummaryParams"),
+    normalizeParams: freezeCanonicalParams,
+    projection: "summary",
+    allowedTimeKinds: ["month"],
+  },
+  history_bank_economy_bridge: {
+    key: queryResourceKeys.historyBankEconomyBridge,
+    paramsSchema: emptyParamsSchema("HistoryBankEconomyBridgeParams"),
+    normalizeParams: freezeCanonicalParams,
+    projection: "detail",
+    allowedTimeKinds: ["month"],
+  },
+  history_month_categories: {
+    key: queryResourceKeys.historyMonthCategories,
+    paramsSchema: emptyParamsSchema("HistoryMonthCategoriesParams"),
+    normalizeParams: freezeCanonicalParams,
+    projection: "collection",
+    allowedTimeKinds: ["month"],
+  },
+  history_category_detail: {
+    key: queryResourceKeys.historyCategoryDetail,
+    paramsSchema: createRuntimeSchema(parseHistoryCategoryDetailParams),
+    normalizeParams: freezeCanonicalParams,
+    projection: "detail",
+    allowedTimeKinds: ["month"],
+  },
+  history_month_spending_nature: {
+    key: queryResourceKeys.historyMonthSpendingNature,
+    paramsSchema: emptyParamsSchema("HistoryMonthSpendingNatureParams"),
+    normalizeParams: freezeCanonicalParams,
+    projection: "summary",
+    allowedTimeKinds: ["month"],
+  },
+  history_spending_segment_detail: {
+    key: queryResourceKeys.historySpendingSegmentDetail,
+    paramsSchema: createRuntimeSchema(parseHistorySpendingSegmentDetailParams),
+    normalizeParams: freezeCanonicalParams,
+    projection: "detail",
+    allowedTimeKinds: ["month"],
+  },
+  history_minimal_preview: {
+    key: queryResourceKeys.historyMinimalPreview,
+    paramsSchema: emptyParamsSchema("HistoryMinimalPreviewParams"),
+    normalizeParams: freezeCanonicalParams,
+    projection: "preview",
+    allowedTimeKinds: ["month"],
+  },
+  history_month_life_money: {
+    key: queryResourceKeys.historyMonthLifeMoney,
+    paramsSchema: emptyParamsSchema("HistoryMonthLifeMoneyParams"),
+    normalizeParams: freezeCanonicalParams,
+    projection: "summary",
+    allowedTimeKinds: ["month"],
+  },
+  history_activity_detail: {
+    key: queryResourceKeys.historyActivityDetail,
+    paramsSchema: createRuntimeSchema(parseHistoryActivityDetailParams),
+    normalizeParams: freezeCanonicalParams,
+    projection: "detail",
+    allowedTimeKinds: ["month"],
+  },
+  history_moment_detail: {
+    key: queryResourceKeys.historyMomentDetail,
+    paramsSchema: createRuntimeSchema(parseHistoryMomentDetailParams),
+    normalizeParams: freezeCanonicalParams,
+    projection: "detail",
+    allowedTimeKinds: ["month"],
+  },
+  history_place_detail: {
+    key: queryResourceKeys.historyPlaceDetail,
+    paramsSchema: createRuntimeSchema(parseHistoryPlaceDetailParams),
+    normalizeParams: freezeCanonicalParams,
+    projection: "detail",
+    allowedTimeKinds: ["month"],
   },
   analysis_month_initial: {
     key: queryResourceKeys.analysisMonthInitial,

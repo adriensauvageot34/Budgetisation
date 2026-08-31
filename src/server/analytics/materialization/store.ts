@@ -7,6 +7,7 @@ import {
   type ProducedMetric,
 } from "@/analytics/production";
 import type { ApiMeta } from "@/core/api";
+import type { YearMonth } from "@/core/time";
 import { normalizeAnalysisScope, type AnalysisScope } from "@/core/scope";
 import { resolveGlobalWindowMonths } from "@/core/time";
 import type { DataRevision } from "@/core/versions";
@@ -19,11 +20,17 @@ import {
   materializationPeriod,
   metricArtifactIdentity,
   metricBucketArtifactIdentity,
+  historyV2SharedArtifactIdentity,
   querySnapshotIdentity,
+  type HistoryV2SharedArtifactFamily,
   type MaterializationPeriodIdentity,
   type MetricArtifactIdentity,
   type QuerySnapshotIdentity,
 } from "./identity";
+import {
+  historyV2StagedArtifactEnvelopeSchema,
+  type HistoryV2StagedArtifactEnvelope,
+} from "./history-v2";
 import { aggregateAdditiveMonthlyMetrics } from "./global-planner";
 import { isScopedMaterializationFresh } from "./freshness";
 
@@ -321,6 +328,91 @@ export class SupabaseAnalyticsMaterializationStore {
     );
   }
 
+  async readHistoryV2Artifact(
+    artifactFamily: HistoryV2SharedArtifactFamily,
+    month: YearMonth,
+  ): Promise<HistoryV2StagedArtifactEnvelope | null> {
+    if (this.unavailable || this.options.readMode === "bypass") return null;
+    const identity = historyV2SharedArtifactIdentity(
+      this.context,
+      month,
+      artifactFamily,
+    );
+    const { data, error } = await this.client
+      .from("analytics_artifacts")
+      .select("payload,source_revision::text")
+      .eq("household_id", identity.householdId)
+      .eq("artifact_key", identity.artifactKey)
+      .eq("artifact_family", identity.artifactFamily)
+      .eq("method_version", identity.methodVersion)
+      .eq("contract_version", identity.contractVersion)
+      .eq("is_active", true)
+      .is("invalidated_at", null)
+      .order("source_revision", { ascending: false })
+      .limit(1);
+    if (error !== null) {
+      if (this.materializationUnavailable(error)) return null;
+      return null;
+    }
+    const row = data?.[0];
+    if (
+      row === undefined
+      || !await this.isFresh(row.source_revision, identity.period, false)
+    ) return null;
+    try {
+      const envelope = historyV2StagedArtifactEnvelopeSchema.parse(row.payload);
+      return envelope.artifactFamily === artifactFamily ? envelope : null;
+    } catch {
+      return null;
+    }
+  }
+
+  async writeHistoryV2Artifact(
+    envelopeInput: unknown,
+    publicationId: string,
+  ): Promise<void> {
+    if (this.unavailable) return;
+    const envelope = historyV2StagedArtifactEnvelopeSchema.parse(envelopeInput);
+    if (
+      publicationId.trim().length === 0
+      || envelope.publicationMeta.publicationId !== publicationId
+    ) {
+      throw new TypeError("L'artifact History V2 doit appartenir à la DRAFT indiquée.");
+    }
+    const identity = historyV2SharedArtifactIdentity(
+      this.context,
+      envelope.payload.month,
+      envelope.artifactFamily,
+      "current",
+    );
+    const { error } = await this.client.from("analytics_artifacts").upsert({
+      artifact_key: identity.artifactKey,
+      generation_key: publicationId,
+      household_id: identity.householdId,
+      ...subjectColumns(identity.subject),
+      ...periodColumns(identity.period),
+      artifact_family: identity.artifactFamily,
+      metric_id: identity.metricId,
+      dimension_key: null,
+      bucket_key: null,
+      scope_hash: identity.scopeHash,
+      filter_signature: identity.filterSignature,
+      method_version: identity.methodVersion,
+      contract_version: identity.contractVersion,
+      source_revision: identity.period.sourceRevision,
+      analytics_revision: identity.analyticsRevision,
+      payload: envelope,
+      computed_at: envelope.publicationMeta.generatedAt,
+      publication_id: publicationId,
+      is_active: false,
+      invalidated_at: null,
+      invalidation_revision: null,
+    }, {
+      onConflict: "artifact_key,source_revision,method_version,contract_version,generation_key",
+    });
+    if (error !== null) throw error;
+  }
+
   async readMonthlyMetrics(
     metricId: ActiveMetricId,
     scopes: readonly AnalysisScope[],
@@ -562,16 +654,19 @@ export class SupabaseAnalyticsMaterializationStore {
     );
   }
 
-  async beginMonthPublication(
-    month: import("@/core/time").YearMonth,
-    requiredRequests: readonly AnyNormalizedQueryRequest[],
-  ): Promise<string> {
+  async beginMonthPublicationProfile(input: {
+    readonly month: YearMonth;
+    readonly requiredArtifactKeys: readonly string[];
+    readonly requiredRequests: readonly AnyNormalizedQueryRequest[];
+    readonly baseAnalyticsRevision?: import("@/core/versions").AnalyticsRevision;
+  }): Promise<string> {
+    const { month, requiredArtifactKeys, requiredRequests } = input;
     const period = materializationPeriod(this.context, normalizeAnalysisScope({
       subject: { kind: "household" },
       time: { kind: "month", month },
     }), "current");
     const requiredQueryKeys = requiredRequests.map((request) => {
-      const identity = querySnapshotIdentity(this.context, request);
+      const identity = querySnapshotIdentity(this.context, request, "current");
       if (identity.period.kind !== "month" || identity.period.month !== month) {
         throw new TypeError("Une publication mensuelle contient une Query hors période.");
       }
@@ -580,6 +675,43 @@ export class SupabaseAnalyticsMaterializationStore {
     if (new Set(requiredQueryKeys).size !== requiredQueryKeys.length) {
       throw new TypeError("Une publication mensuelle contient une Query dupliquée.");
     }
+    if (
+      requiredArtifactKeys.length === 0
+      || new Set(requiredArtifactKeys).size !== requiredArtifactKeys.length
+      || requiredArtifactKeys.some((artifactKey) => artifactKey.length === 0)
+    ) {
+      throw new TypeError("Une publication mensuelle exige des artifacts uniques et non vides.");
+    }
+    if (requiredQueryKeys.length === 0) {
+      throw new TypeError("Une publication mensuelle exige au moins une Query.");
+    }
+    const { data, error } = await this.client
+      .from("analytics_publications")
+      .insert({
+        household_id: this.context.householdId,
+        scope_kind: "month",
+        period_month: `${month}-01`,
+        as_of_month: null,
+        source_revision: period.sourceRevision,
+        base_analytics_revision:
+          input.baseAnalyticsRevision ?? this.context.analyticsRevision,
+        required_artifact_keys: [...requiredArtifactKeys],
+        required_query_keys: requiredQueryKeys,
+        status: "draft",
+      })
+      .select("publication_id")
+      .single();
+    if (error !== null) throw error;
+    if (typeof data?.publication_id !== "string") {
+      throw new TypeError("La publication analytique créée ne porte aucun identifiant.");
+    }
+    return data.publication_id;
+  }
+
+  async beginMonthPublication(
+    month: YearMonth,
+    requiredRequests: readonly AnyNormalizedQueryRequest[],
+  ): Promise<string> {
     const defaultScope = requiredRequests.find(({ resource }) =>
       resource === "analysis_month_initial")?.scope;
     if (defaultScope === undefined) {
@@ -594,29 +726,17 @@ export class SupabaseAnalyticsMaterializationStore {
       metricId as ActiveMetricId,
       defaultScope as AnalysisScope,
     ).artifactKey);
-    const { data, error } = await this.client
-      .from("analytics_publications")
-      .insert({
-        household_id: this.context.householdId,
-        scope_kind: "month",
-        period_month: `${month}-01`,
-        as_of_month: null,
-        source_revision: period.sourceRevision,
-        base_analytics_revision: this.context.analyticsRevision,
-        required_artifact_keys: requiredArtifactKeys,
-        required_query_keys: requiredQueryKeys,
-        status: "draft",
-      })
-      .select("publication_id")
-      .single();
-    if (error !== null) throw error;
-    if (typeof data?.publication_id !== "string") {
-      throw new TypeError("La publication analytique créée ne porte aucun identifiant.");
-    }
-    return data.publication_id;
+    return this.beginMonthPublicationProfile({
+      month,
+      requiredArtifactKeys,
+      requiredRequests,
+    });
   }
 
-  async publishPrepared(publicationId: string): Promise<{
+  async publishPrepared(
+    publicationId: string,
+    expectedAnalyticsRevision = this.context.analyticsRevision,
+  ): Promise<{
     readonly analyticsRevision: string;
     readonly sourceRevision: string;
   }> {
@@ -630,7 +750,7 @@ export class SupabaseAnalyticsMaterializationStore {
       "publish_analytics_materialization",
       {
         p_publication_id: publicationId,
-        p_expected_analytics_revision: this.context.analyticsRevision,
+        p_expected_analytics_revision: expectedAnalyticsRevision,
       },
     );
     if (error !== null) throw error;
@@ -649,5 +769,54 @@ export class SupabaseAnalyticsMaterializationStore {
       sourceRevision: this.context.dataRevision,
     });
     return { analyticsRevision, sourceRevision };
+  }
+
+  async restoreHistoryV2Publication(input: {
+    readonly currentPublicationId: string | null;
+    readonly targetPublicationId: string | null;
+    readonly householdId: string;
+    readonly month: YearMonth;
+    readonly expectedAnalyticsRevision: import("@/core/versions").AnalyticsRevision;
+  }): Promise<{
+    readonly analyticsRevision: string;
+    readonly sourceRevision: string;
+    readonly activePublicationId: string | null;
+  }> {
+    const { data, error } = await this.client.rpc(
+      "restore_history_v2_publication",
+      {
+        p_current_publication_id: input.currentPublicationId,
+        p_target_publication_id: input.targetPublicationId,
+        p_household_id: input.householdId,
+        p_period_month: `${input.month}-01`,
+        p_expected_analytics_revision: input.expectedAnalyticsRevision,
+      },
+    );
+    if (error !== null) throw error;
+    const row = Array.isArray(data) ? data[0] : data;
+    if (row === undefined || row === null) {
+      throw new TypeError("Le rollback History V2 n'a retourné aucune révision.");
+    }
+    const result = row as {
+      analytics_revision?: unknown;
+      source_revision?: unknown;
+      active_publication_id?: unknown;
+    };
+    const analyticsRevision = String(result.analytics_revision);
+    const sourceRevision = String(result.source_revision);
+    revisionNumber(analyticsRevision);
+    revisionNumber(sourceRevision);
+    if (
+      result.active_publication_id !== null
+      && result.active_publication_id !== undefined
+      && typeof result.active_publication_id !== "string"
+    ) {
+      throw new TypeError("Identifiant de publication restaurée invalide.");
+    }
+    return {
+      analyticsRevision,
+      sourceRevision,
+      activePublicationId: result.active_publication_id ?? null,
+    };
   }
 }

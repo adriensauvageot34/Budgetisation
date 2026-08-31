@@ -66,6 +66,12 @@ export {
   parseAnalysisTargetParams,
   parseEmptyQueryParams,
   parseHistoryDayDetailParams,
+  parseHistoryCategoryDetailParams,
+  parseHistoryActivityDetailParams,
+  parseHistoryMomentDetailParams,
+  parseHistoryPlaceDetailParams,
+  parseHistorySpendingSegmentDetailParams,
+  parseHistoryWeekParams,
   type AnalysisBreakdownDimension,
   type AnalysisBreakdownParams,
   type AnalysisEvolutionParams,
@@ -81,6 +87,12 @@ export {
   type AnalysisTargetParams,
   type EmptyQueryParams,
   type HistoryDayDetailParams,
+  type HistoryCategoryDetailParams,
+  type HistoryActivityDetailParams,
+  type HistoryMomentDetailParams,
+  type HistoryPlaceDetailParams,
+  type HistorySpendingSegmentDetailParams,
+  type HistoryWeekParams,
   type NormalizedAnalysisBreakdownParams,
 } from "./read-model-params";
 export {
@@ -95,6 +107,14 @@ export {
   type QueryResourceDefinition,
   type QueryResourceName,
 } from "./resource-registry";
+export {
+  defineHistoryV2ResourceContract,
+  getQueryResourceContract,
+  queryResourceContractRegistry,
+  type HistoryV2ResourceContract,
+  type LegacyV1ResourceContract,
+  type QueryResourceContract,
+} from "./resource-contract";
 export {
   parseQueryResourceKeySyntax,
   type QueryResourceKey,

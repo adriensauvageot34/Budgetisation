@@ -31,6 +31,7 @@ import {
 import {
   QueryResourceScopeError,
   canonicalSerializeQueryParams,
+  getQueryResourceContract,
   normalizeQueryRequest,
   parseQueryResourceKey,
   type AnyNormalizedQueryRequest,
@@ -175,8 +176,10 @@ export async function executeQuery(
 
     assertQueryRevisionCoherence(context.revisions);
     const adapter = getQueryServerAdapter(request.resource);
+    const resourceContract = getQueryResourceContract(request.resource);
     const adapterContext = {
       ...context,
+      contractVersion: resourceContract.contractVersion,
       requestId,
       capabilities: capabilityResult.capabilities,
     };
@@ -237,8 +240,17 @@ export async function executeQuery(
         analyticsRevision: context.revisions.analyticsRevision,
       },
       {
-        contractVersion: context.contractVersion,
+        contractVersion: resourceContract.contractVersion,
         computedAt: context.now,
+        ...(resourceContract.family === "history_v2"
+          && "publicationMeta" in (data as object)
+          && (data as { readonly publicationMeta?: unknown }).publicationMeta !== undefined
+          ? {
+              publication: (data as {
+                readonly publicationMeta: import("../../core/history-v2").PublicationMeta;
+              }).publicationMeta,
+            }
+          : {}),
         ...(services.materialization === undefined
           ? {}
           : {

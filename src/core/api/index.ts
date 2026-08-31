@@ -5,6 +5,8 @@ export {
 } from "./contract";
 export {
   CURRENT_CONTRACT_VERSION,
+  HISTORY_V2_CONTRACT_VERSION,
+  LEGACY_CONTRACT_VERSION,
   parseSupportedContractVersion,
 } from "./contract-version";
 export {

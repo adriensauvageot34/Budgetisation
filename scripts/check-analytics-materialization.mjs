@@ -62,6 +62,7 @@ const {
   metricArtifactIdentity,
   metricBucketArtifactIdentity,
   querySnapshotIdentity,
+  historyV2ResourceMethodSignature,
 } = require(path.join(repositoryRoot, "src/server/analytics/materialization/identity.ts"));
 const { FactSourceResolver } = require(path.join(
   repositoryRoot,
@@ -90,6 +91,26 @@ const { executeQuery } = require(path.join(
 assert.equal(isQueryMaterializationResource("history_calendar_month"), true);
 assert.equal(isQueryMaterializationResource("history_day_detail"), true);
 assert.match(fs.readFileSync(path.join(repositoryRoot, "src/server/analytics/materialization/identity.ts"), "utf8"), /history-calendar@v2/);
+const lifeMoneyPoliciesV1 = {
+  calendar_semantics: "v1",
+  canonical_purchase_event_timing: "v1",
+  facts_hash: "v1",
+  life_money_selection: "v1",
+  quality_visibility: "v1",
+};
+const lifeMoneySignatureV1 = historyV2ResourceMethodSignature(
+  "history_month_life_money",
+  lifeMoneyPoliciesV1,
+);
+const lifeMoneySignatureV2 = historyV2ResourceMethodSignature(
+  "history_month_life_money",
+  { ...lifeMoneyPoliciesV1, life_money_selection: "v2" },
+);
+assert.notEqual(
+  lifeMoneySignatureV1,
+  lifeMoneySignatureV2,
+  "C: a policy-only change must invalidate the resource method signature",
+);
 const { MetricQueryService } = require(path.join(
   repositoryRoot,
   "src/server/analytics/metric-query-service.ts",
@@ -481,7 +502,16 @@ const queryKeyContractV2 = querySnapshotIdentity(
   normalizedInitial,
 ).queryKey;
 assert.notEqual(queryKeyA, queryKeyB, "query snapshots must never cross households");
-assert.notEqual(queryKeyA, queryKeyContractV2, "contract changes must miss the snapshot");
+assert.equal(
+  queryKeyA,
+  queryKeyContractV2,
+  "a global context must not silently bump a certified V1 resource",
+);
+assert.equal(
+  querySnapshotIdentity(baseContext, normalizedInitial).contractVersion,
+  "v1",
+  "snapshot contractVersion must be resolved by resource",
+);
 assert.equal(isQueryMaterializationResource("history_calendar_month"), true);
 assert.equal(isQueryMaterializationResource("history_calendar_month_summary"), true);
 assert.equal(isQueryMaterializationResource("history_day_detail"), true);

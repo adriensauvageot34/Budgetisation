@@ -8,6 +8,7 @@ import type {
   PlaceId,
 } from "../../core/identity";
 import type { ApiMeta } from "../../core/api";
+import type { PublicationMeta } from "../../core/history-v2";
 import type { Instant, YearMonth } from "../../core/time";
 import type {
   AnalyticsRevision,
@@ -147,6 +148,7 @@ export type AnalyticsPublicationStore = {
 export type PublicationApiMetaInput = {
   readonly contractVersion: ContractVersion;
   readonly computedAt: Instant;
+  readonly publication?: PublicationMeta;
   readonly cachePolicy?: ApiMeta["cachePolicy"];
 };
 

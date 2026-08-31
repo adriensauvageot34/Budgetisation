@@ -21,6 +21,8 @@ import type {
   ActivityOccurrenceFact,
   ActivityOccurrenceCostFact,
   EconomicComponentFact,
+  EconomicComponentClassificationFact,
+  LifeEventContinuityFact,
   PersonDayFact,
   PlaceVisitFact,
 } from "@/analytics/facts";
@@ -147,6 +149,18 @@ export class FactSourceResolver {
 
   loadEconomicFacts(scope: AnalysisScope): Promise<readonly EconomicComponentFact[]> {
     return this.repository.loadEconomicFacts(canonicalRangeForScope(scope));
+  }
+
+  loadEconomicComponentClassifications(
+    scope: AnalysisScope,
+  ): Promise<readonly EconomicComponentClassificationFact[]> {
+    return this.repository.loadEconomicComponentClassifications(canonicalRangeForScope(scope));
+  }
+
+  loadLifeEventContinuity(
+    scope: AnalysisScope,
+  ): Promise<readonly LifeEventContinuityFact[]> {
+    return this.repository.loadLifeEventContinuity(canonicalRangeForScope(scope));
   }
 
   loadPersonDays(scope: AnalysisScope): Promise<readonly PersonDayFact[]> {
@@ -456,11 +470,31 @@ export class FactSourceResolver {
           facts: await this.loadActivityOccurrenceCosts(scope),
         };
       }
-      case "fct_purchase_event":
-        await this.repository.loadPurchaseEvents();
-        throw new MetricProductionContractError(
-          "PurchaseEventFact ne projette pas encore une date canonique permettant le scope temporel.",
-        );
+      case "fct_purchase_event": {
+        const incompatible = scope.subject.kind === "person" ||
+          scope.filters.categoryIds.length > 0 ||
+          scope.filters.activityIds.length > 0 ||
+          scope.filters.merchantIds.length > 0 ||
+          scope.filters.placeIds.length > 0 ||
+          scope.filters.lifeScopeContext.length > 0 ||
+          scope.filters.dayContext.length > 0;
+        if (incompatible) {
+          return { kind: "purchase_events", scopeHash, availability: "unknown" };
+        }
+        const months = new Set(monthsForScope(scope));
+        const allFacts = await this.repository.loadPurchaseEvents();
+        const facts = allFacts.filter(({ timing }) =>
+          timing.economicMonth !== null && months.has(timing.economicMonth));
+        const hasUnscopedFacts = allFacts.some(({ timing }) => timing.economicMonth === null);
+        return {
+          kind: "purchase_events",
+          scopeHash,
+          availability: "known",
+          facts,
+          support: sourceSupport(facts.length, "purchase_event"),
+          coverage: { level: hasUnscopedFacts ? "partial" : "complete" },
+        };
+      }
       case undefined:
         throw new MetricProductionContractError(
           `La stratégie ${definition.productionStrategy} n'expose aucune source Fact résoluble.`,

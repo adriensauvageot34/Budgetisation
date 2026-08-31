@@ -51,6 +51,43 @@ export function assertQueryDataMatchesRequest<Name extends QueryResourceName>(
     case "history_day_detail":
       assertSame((data as QueryDataByResource["history_day_detail"]).date, (request.params as { readonly date: unknown }).date, "Day detail date");
       break;
+    case "history_month_calendar":
+    case "history_month_overview":
+    case "history_month_balance_summary":
+    case "history_bank_economy_bridge":
+    case "history_month_categories":
+    case "history_month_spending_nature":
+    case "history_minimal_preview":
+    case "history_month_life_money":
+      assertSame((data as QueryDataByResource["history_month_calendar"]).month, scope.time.kind === "month" ? scope.time.month : null, "History V2 month");
+      break;
+    case "history_category_detail":
+      assertSame((data as QueryDataByResource["history_category_detail"]).month, scope.time.kind === "month" ? scope.time.month : null, "History V2 month");
+      assertSame((data as QueryDataByResource["history_category_detail"]).category.categoryId, (request.params as { readonly categoryId: unknown }).categoryId, "History V2 CategoryId");
+      break;
+    case "history_spending_segment_detail":
+      assertSame((data as QueryDataByResource["history_spending_segment_detail"]).month, scope.time.kind === "month" ? scope.time.month : null, "History V2 month");
+      assertSame((data as QueryDataByResource["history_spending_segment_detail"]).segment, request.params, "History V2 spending segment");
+      break;
+    case "history_activity_detail":
+      assertSame((data as QueryDataByResource["history_activity_detail"]).month, scope.time.kind === "month" ? scope.time.month : null, "History V2 month");
+      assertSame((data as QueryDataByResource["history_activity_detail"]).activity.activityTypeKey, (request.params as { readonly activityTypeKey: unknown }).activityTypeKey, "History V2 activityTypeKey");
+      break;
+    case "history_moment_detail":
+      assertSame((data as QueryDataByResource["history_moment_detail"]).month, scope.time.kind === "month" ? scope.time.month : null, "History V2 month");
+      assertSame((data as QueryDataByResource["history_moment_detail"]).moment.momentId, (request.params as { readonly momentId: unknown }).momentId, "History V2 MomentId");
+      break;
+    case "history_place_detail":
+      assertSame((data as QueryDataByResource["history_place_detail"]).month, scope.time.kind === "month" ? scope.time.month : null, "History V2 month");
+      assertSame((data as QueryDataByResource["history_place_detail"]).place.placeId, (request.params as { readonly placeId: unknown }).placeId, "History V2 PlaceId");
+      break;
+    case "history_week":
+      assertSame((data as QueryDataByResource["history_week"]).weekStart, (request.params as { readonly weekStart: unknown }).weekStart, "History V2 weekStart");
+      assertSame((data as QueryDataByResource["history_week"]).referenceMonth, scope.time.kind === "month" ? scope.time.month : null, "History V2 referenceMonth");
+      break;
+    case "history_day_journal":
+      assertSame((data as QueryDataByResource["history_day_journal"]).date, (request.params as { readonly date: unknown }).date, "History V2 journal date");
+      break;
     case "analysis_month_initial":
     case "analysis_month_contexts":
     case "analysis_month_lived":

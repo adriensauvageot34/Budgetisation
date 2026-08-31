@@ -7,15 +7,23 @@ import {
   dedupePersonDays,
   dedupePlaceVisits,
   dedupePurchaseEvents,
+  normalizeComponentClassificationValue,
   parseCanonicalHouseholdScope,
   projectActivityOccurrenceFact,
   projectEconomicComponentFact,
   projectPersonDayFact,
   projectPlaceVisitFact,
   projectPurchaseEventFact,
+  resolveEconomicComponentClassifications,
   type ActivityOccurrenceFact,
   type CanonicalHouseholdContext,
   type EconomicComponentFact,
+  type EconomicComponentClassificationFact,
+  type ComponentClassificationAssertion,
+  type ComponentClassificationAxis,
+  type ComponentClassificationCandidate,
+  type ComponentClassificationValue,
+  type LifeEventContinuityFact,
   type PersonDayFact,
   type PlaceVisitFact,
   type PurchaseEventFact,
@@ -52,6 +60,7 @@ import {
   canonicalRecord,
   canonicalRecords,
   canonicalString,
+  optionalCanonicalString,
   type CanonicalRecord,
 } from "./record";
 import { safeRuntimeEnvironment } from "@/server/runtime-environment";
@@ -128,6 +137,16 @@ export type CanonicalOperationBundle = {
   readonly paymentComponents: readonly CanonicalRecord[];
   readonly cashUses: readonly CanonicalRecord[];
 };
+
+const classificationAxes = ["NECESSITY", "BEHAVIOR", "LIFE_SCOPE"] as const;
+
+function classificationAxisColumn(axis: ComponentClassificationAxis): EconomicDimensionKey {
+  return axis === "NECESSITY"
+    ? "importance"
+    : axis === "BEHAVIOR"
+      ? "nature_fixe_variable"
+      : "contexte_vie";
+}
 
 export type CanonicalMinimalPlanningBundle = {
   readonly economicFacts: readonly EconomicComponentFact[];
@@ -783,6 +802,120 @@ export class CanonicalRepository {
     });
   }
 
+  async loadEconomicComponentClassifications(
+    range: CanonicalDateRange,
+  ): Promise<readonly EconomicComponentClassificationFact[]> {
+    return this.cached(`facts:economic-classification:${range.start}:${range.endExclusive}`, async () => {
+      const facts = await this.loadEconomicFacts(range);
+      if (facts.length === 0) return [];
+      const componentKeys = facts.map(({ canonicalComponentKey }) => String(canonicalComponentKey));
+      const operationIds = unique(facts.flatMap(({ sourceOperation }) =>
+        sourceOperation.kind === "resolved" ? [String(sourceOperation.id)] : []));
+      const [operations, allocations, items, paymentComponents, cashUses, assertionRows] =
+        await Promise.all([
+          this.loadOperationsByIds(operationIds),
+          this.loadComposition("operation_allocations", operationIds),
+          this.loadComposition("operation_items", operationIds),
+          this.loadComposition("payment_components", operationIds),
+          this.loadComposition("cash_economic_uses", operationIds),
+          this.readRowsByInBatches(
+            `economic-classifications:${componentKeys.join(",")}`,
+            "economic",
+            componentKeys,
+            ["canonical_component_key", "axis"],
+            ["canonical_component_key", "axis"],
+            (batch) => this.client
+              .from("economic_component_classifications")
+              .select("household_id,canonical_component_key,axis,status,value,authority,evidence_refs,provenance")
+              .eq("household_id", this.context.householdId)
+              .in("canonical_component_key", batch)
+              .order("canonical_component_key", { ascending: true })
+              .order("axis", { ascending: true }),
+          ),
+        ]);
+      const operationById = byUniqueKey(operations, "operation_id", "operations");
+      const sourceByKey = new Map<string, CanonicalRecord>();
+      for (const [prefix, rows, idColumn] of [
+        ["allocation", allocations, "allocation_id"],
+        ["item", items, "item_id"],
+        ["payment_component", paymentComponents, "payment_component_id"],
+        ["cash_use", cashUses, "cash_use_id"],
+      ] as const) {
+        for (const row of rows) {
+          sourceByKey.set(`${prefix}:${canonicalString(row, [idColumn], "economic")}`, row);
+        }
+      }
+      const candidates: ComponentClassificationCandidate[] = facts.map((fact) => {
+        if (fact.sourceOperation.kind !== "resolved") {
+          throw new CanonicalReadError("economic", "Une classification V2 exige une operation source résolue.");
+        }
+        const operation = operationById.get(String(fact.sourceOperation.id));
+        if (operation === undefined) {
+          throw new CanonicalReadError("economic", "L'operation source de classification est absente.");
+        }
+        const key = String(fact.canonicalComponentKey);
+        const source = key.startsWith("operation:") ? operation : sourceByKey.get(key);
+        return {
+          householdId: this.context.householdId,
+          canonicalComponentKey: fact.canonicalComponentKey,
+          sourceOperationId: fact.sourceOperation.id,
+          operationMixed: operation.operation_mixte === true,
+          sourceValues: Object.fromEntries(classificationAxes.map((axis) => [
+            axis,
+            source?.[classificationAxisColumn(axis)],
+          ])) as Readonly<Record<ComponentClassificationAxis, unknown>>,
+          operationValues: Object.fromEntries(classificationAxes.map((axis) => [
+            axis,
+            operation[classificationAxisColumn(axis)],
+          ])) as Readonly<Record<ComponentClassificationAxis, unknown>>,
+        };
+      });
+      const assertions: ComponentClassificationAssertion[] = assertionRows.map((row) => {
+        const axis = canonicalString(row, ["axis"], "economic") as ComponentClassificationAxis;
+        if (!classificationAxes.includes(axis)) {
+          throw new CanonicalReadError("economic", "Un axe de classification V2 est invalide.");
+        }
+        const status = canonicalString(row, ["status"], "economic") as "KNOWN" | "UNKNOWN" | "CONFLICT";
+        if (!["KNOWN", "UNKNOWN", "CONFLICT"].includes(status)) {
+          throw new CanonicalReadError("economic", "Un statut de classification V2 est invalide.");
+        }
+        const rawValue = optionalCanonicalString(row, ["value"]);
+        const value = rawValue === undefined ? null : normalizeComponentClassificationValue(axis, rawValue);
+        if (status === "KNOWN" && value === null) {
+          throw new CanonicalReadError("economic", "Une classification V2 KNOWN porte une valeur invalide.");
+        }
+        const refs = row.evidence_refs;
+        if (!Array.isArray(refs) || refs.some((ref) => typeof ref !== "string")) {
+          throw new CanonicalReadError("economic", "Les preuves de classification V2 sont invalides.");
+        }
+        const authority = optionalCanonicalString(row, ["authority"]);
+        if (authority !== undefined && ![
+          "EXPLICIT_COMPONENT_OVERRIDE",
+          "AUTHORITATIVE_COMPONENT_SOURCE",
+          "OPERATION_FALLBACK",
+        ].includes(authority)) {
+          throw new CanonicalReadError("economic", "Une autorité de classification V2 est invalide.");
+        }
+        const provenance = canonicalString(row, ["provenance"], "economic");
+        if (!["EXPLICIT_USER_ASSERTION", "STRUCTURED_CANONICAL_SOURCE", "CONTROLLED_BACKFILL"].includes(provenance)) {
+          throw new CanonicalReadError("economic", "Une provenance de classification V2 est invalide.");
+        }
+        return {
+          canonicalComponentKey: canonicalString(row, ["canonical_component_key"], "economic") as ComponentClassificationCandidate["canonicalComponentKey"],
+          axis,
+          resolution: {
+            status,
+            value: status === "KNOWN" ? value as ComponentClassificationValue : null,
+            authority: authority as ComponentClassificationAssertion["resolution"]["authority"] ?? null,
+            evidenceRefs: [...refs].sort(),
+            provenance: provenance as ComponentClassificationAssertion["resolution"]["provenance"],
+          },
+        };
+      });
+      return resolveEconomicComponentClassifications({ candidates, assertions });
+    });
+  }
+
   loadActivityCausalFinancialLinkRows(
     lifeEventIds: readonly string[],
   ): Promise<readonly CanonicalRecord[]> {
@@ -943,6 +1076,77 @@ export class CanonicalRepository {
     });
   }
 
+  async loadLifeEventContinuity(
+    range: CanonicalDateRange,
+  ): Promise<readonly LifeEventContinuityFact[]> {
+    return this.cached(`facts:continuity:${range.start}:${range.endExclusive}`, async () => {
+      await this.assertAuthorizedCanonicalHouseholdScope();
+      const events = await this.readRows(
+        `continuity-events:${range.start}:${range.endExclusive}`,
+        "life_events",
+        () => this.client
+          .from("life_events")
+          .select("life_event_id")
+          .lte("start_date", addDays(range.endExclusive, -1))
+          .gte("end_date", range.start)
+          .order("life_event_id", { ascending: true }),
+      );
+      const eventIds = events.map((row) => canonicalString(row, ["life_event_id"], "life_events"));
+      if (eventIds.length === 0) return [];
+      const rows = await this.readRowsByInBatches(
+        `continuity-assertions:${eventIds.join(",")}`,
+        "life_events",
+        eventIds,
+        ["life_event_id"],
+        ["life_event_id"],
+        (batch) => this.client
+          .from("life_event_continuity_assertions")
+          .select("life_event_id,household_id,status,continuity_qualifier,authority,evidence_refs,provenance")
+          .eq("household_id", this.context.householdId)
+          .in("life_event_id", batch)
+          .order("life_event_id", { ascending: true }),
+      );
+      const rowByEvent = byUniqueKey(rows, "life_event_id", "life_events");
+      return eventIds.map((lifeEventId) => {
+        const row = rowByEvent.get(lifeEventId);
+        if (row === undefined) {
+          return {
+            fact: "fct_life_event_continuity",
+            householdId: this.context.householdId,
+            lifeEventId: lifeEventId as LifeEventId,
+            status: "UNKNOWN",
+            continuityQualifier: null,
+            authority: null,
+            evidenceRefs: [],
+            provenance: null,
+          };
+        }
+        const status = canonicalString(row, ["status"], "life_events") as LifeEventContinuityFact["status"];
+        if (!["KNOWN", "UNKNOWN", "CONFLICT"].includes(status)) {
+          throw new CanonicalReadError("life_events", "Un statut continuityQualifier est invalide.");
+        }
+        const qualifier = optionalCanonicalString(row, ["continuity_qualifier"]);
+        if (status === "KNOWN" && qualifier !== "CONTINUOUS" && qualifier !== "NOT_CONTINUOUS") {
+          throw new CanonicalReadError("life_events", "Un continuityQualifier KNOWN est invalide.");
+        }
+        const refs = row.evidence_refs;
+        if (!Array.isArray(refs) || refs.some((ref) => typeof ref !== "string")) {
+          throw new CanonicalReadError("life_events", "Les preuves continuityQualifier sont invalides.");
+        }
+        return {
+          fact: "fct_life_event_continuity",
+          householdId: this.context.householdId,
+          lifeEventId: lifeEventId as LifeEventId,
+          status,
+          continuityQualifier: status === "KNOWN" ? qualifier as "CONTINUOUS" | "NOT_CONTINUOUS" : null,
+          authority: optionalCanonicalString(row, ["authority"]) ?? null,
+          evidenceRefs: [...refs].sort(),
+          provenance: canonicalString(row, ["provenance"], "life_events") as LifeEventContinuityFact["provenance"],
+        };
+      });
+    });
+  }
+
   async loadActivityOccurrenceById(
     lifeEventId: LifeEventId,
   ): Promise<ActivityOccurrenceFact | null> {
@@ -1036,7 +1240,7 @@ export class CanonicalRepository {
       const events = await this.readRows("purchase-events", "purchase_events", () =>
         this.client
           .from("purchase_events")
-          .select("purchase_event_id,household_id")
+          .select("purchase_event_id,household_id,provenance")
           .eq("household_id", this.context.householdId)
           .order("purchase_event_id", { ascending: true }),
       );
@@ -1044,20 +1248,43 @@ export class CanonicalRepository {
       const ids = events.map((row) =>
         canonicalString(row, ["purchase_event_id"], "purchase_events"),
       );
-      const sources = await this.readRowsByInBatches(
-        `purchase-event-sources:${ids.join(",")}`,
-        "purchase_events",
-        ids,
-        ["purchase_event_id", "operation_id", "cash_use_id"],
-        ["purchase_event_id", "operation_id", "cash_use_id"],
-        (batch) =>
-          this.client
-            .from("purchase_event_sources")
-            .select("purchase_event_id,operation_id,cash_use_id")
+      const [sources, timingAssertions] = await Promise.all([
+        this.readRowsByInBatches(
+          `purchase-event-memberships:${ids.join(",")}`,
+          "purchase_events",
+          ids,
+          ["purchase_event_id", "membership_kind", "canonical_component_key"],
+          ["purchase_event_id", "membership_kind", "canonical_component_key"],
+          (batch) => this.client
+            .from("purchase_event_memberships")
+            .select("purchase_event_id,membership_kind,operation_id,allocation_id,item_id,payment_component_id,cash_use_id,canonical_component_key,evidence_refs,provenance")
             .in("purchase_event_id", batch)
-            .order("purchase_event_id", { ascending: true }),
-      );
+            .order("purchase_event_id", { ascending: true })
+            .order("membership_kind", { ascending: true })
+            .order("canonical_component_key", { ascending: true }),
+        ),
+        this.readRowsByInBatches(
+          `purchase-event-timing:${ids.join(",")}`,
+          "purchase_events",
+          ids,
+          ["purchase_event_id", "purchase_event_timing_assertion_id"],
+          ["purchase_event_id", "purchase_event_timing_assertion_id"],
+          (batch) => this.client
+            .from("purchase_event_timing_assertions")
+            .select("purchase_event_timing_assertion_id,purchase_event_id,timing_authority,timing_precision,economic_date,economic_month,evidence_refs")
+            .in("purchase_event_id", batch)
+            .eq("is_active", true)
+            .order("purchase_event_id", { ascending: true })
+            .order("purchase_event_timing_assertion_id", { ascending: true }),
+        ),
+      ]);
       const sourcesByEvent = groupBy(sources, "purchase_event_id");
+      const timingByEvent = groupBy(timingAssertions, "purchase_event_id");
+      const consumptionKeys = sources.flatMap((row) =>
+        row.membership_kind === "CONSUMPTION_COMPONENT"
+          ? [canonicalString(row, ["canonical_component_key"], "purchase_events")]
+          : []);
+      const economicComponents = await this.loadEconomicFactsByComponentKeys(consumptionKeys);
       return dedupePurchaseEvents(
         events.map((event) => {
           const id = canonicalString(event, ["purchase_event_id"], "purchase_events");
@@ -1065,6 +1292,8 @@ export class CanonicalRepository {
             household: this.household,
             purchaseEvent: event,
             sources: sourcesByEvent.get(id) ?? [],
+            timingAssertions: timingByEvent.get(id) ?? [],
+            economicComponents,
           });
         }),
       );
@@ -1102,13 +1331,21 @@ export class CanonicalRepository {
             .eq("household_id", this.context.householdId)
             .limit(1));
         await this.readRows(
-          "health:purchase-event-sources",
+          "health:purchase-event-memberships",
           "purchase_events",
           () =>
             this.client
-              .from("purchase_event_sources")
+              .from("purchase_event_memberships")
               .select("purchase_event_id")
               .limit(1),
+        );
+        await this.readRows(
+          "health:purchase-event-timing",
+          "purchase_events",
+          () => this.client
+            .from("purchase_event_timing_assertions")
+            .select("purchase_event_id")
+            .limit(1),
         );
       }),
     );
@@ -1135,6 +1372,14 @@ export class CanonicalRepository {
               .from("operations")
               .select("operation_id")
               .limit(1));
+        await this.readRows(
+          "health:purchase-event-timing",
+          "purchase_events",
+          () => this.client
+            .from("purchase_event_timing_assertions")
+            .select("purchase_event_id")
+            .eq("household_id", this.context.householdId)
+            .limit(1));
         }),
         this.probeCanonicalSource("economic", async () => {
           await Promise.all([

@@ -1,4 +1,5 @@
 import { parseInstant } from "../time";
+import { publicationMetaSchema } from "../history-v2";
 import {
   createRuntimeSchema,
   hasOwn,
@@ -101,7 +102,14 @@ function parseApiError(value: unknown): ApiError {
 function parseApiMeta(value: unknown): ApiMeta {
   const record = parseStrictRecord(
     value,
-    ["dataRevision", "analyticsRevision", "contractVersion", "computedAt", "cachePolicy"],
+    [
+      "dataRevision",
+      "analyticsRevision",
+      "contractVersion",
+      "computedAt",
+      "publication",
+      "cachePolicy",
+    ],
     "ApiMeta",
   );
   const rawDataRevision = requireProperty(record, "dataRevision", "ApiMeta");
@@ -116,6 +124,9 @@ function parseApiMeta(value: unknown): ApiMeta {
     "ApiMeta",
   );
   const rawComputedAt = requireProperty(record, "computedAt", "ApiMeta");
+  const rawPublication = hasOwn(record, "publication")
+    ? record.publication
+    : undefined;
   const rawCachePolicy = hasOwn(record, "cachePolicy")
     ? parseStrictRecord(
         record.cachePolicy,
@@ -124,6 +135,38 @@ function parseApiMeta(value: unknown): ApiMeta {
       )
     : undefined;
 
+  const contractVersion = withValidationPath("contractVersion", () =>
+    parseSupportedContractVersion(rawContractVersion),
+  );
+  if (contractVersion === "v2" && rawPublication === undefined) {
+    validationFailure({
+      path: ["publication"],
+      code: "missing_property",
+      message: "ApiMeta v2 exige PublicationMeta.",
+    });
+  }
+  if (contractVersion === "v1" && rawPublication !== undefined) {
+    validationFailure({
+      path: ["publication"],
+      code: "invalid_combination",
+      message: "ApiMeta v1 ne peut pas transporter PublicationMeta V2.",
+    });
+  }
+  const publication = rawPublication === undefined
+    ? undefined
+    : withValidationPath("publication", () =>
+      publicationMetaSchema.parse(rawPublication));
+  if (
+    publication !== undefined
+    && publication.contractVersion !== contractVersion
+  ) {
+    validationFailure({
+      path: ["publication", "contractVersion"],
+      code: "invalid_combination",
+      message: "PublicationMeta doit partager la version du contrat API.",
+    });
+  }
+
   return {
     dataRevision: withValidationPath("dataRevision", () =>
       parseDataRevision(rawDataRevision),
@@ -131,12 +174,11 @@ function parseApiMeta(value: unknown): ApiMeta {
     analyticsRevision: withValidationPath("analyticsRevision", () =>
       parseAnalyticsRevision(rawAnalyticsRevision),
     ),
-    contractVersion: withValidationPath("contractVersion", () =>
-      parseSupportedContractVersion(rawContractVersion),
-    ),
+    contractVersion,
     computedAt: withValidationPath("computedAt", () =>
       parseInstant(rawComputedAt),
     ),
+    ...(publication === undefined ? {} : { publication }),
     ...(rawCachePolicy === undefined
       ? {}
       : {

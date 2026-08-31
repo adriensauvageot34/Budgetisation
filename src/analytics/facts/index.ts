@@ -30,7 +30,29 @@ export type {
   PurchaseEventId,
   PurchaseEventKey,
   PurchaseEventSource,
+  PurchaseEventSourceKind,
+  PurchaseEventTiming,
 } from "./types";
+export type {
+  ComponentAxisClassification,
+  ComponentClassificationAssertion,
+  ComponentClassificationAuthority,
+  ComponentClassificationAxis,
+  ComponentClassificationCandidate,
+  ComponentClassificationValue,
+  EconomicComponentClassificationFact,
+} from "./component-classification";
+export {
+  normalizeComponentClassificationValue,
+  resolveEconomicComponentClassifications,
+} from "./component-classification";
+export type {
+  ContinuityQualifier,
+  LifeEventContinuityFact,
+} from "./continuity";
+export { continuityForSpanBehavior } from "./continuity";
+export type { PurchaseEventTimingAssertion } from "./purchase-event";
+export { resolvePurchaseEventTiming } from "./purchase-event";
 export {
   buildActivityOccurrenceCostFacts,
   isCausalActivityRelation,

@@ -192,15 +192,38 @@ export type PlaceVisitTimePrecision =
   | "time_range"
   | "unknown";
 
-export type PurchaseEventSource =
-  | {
-      readonly kind: "operation";
-      readonly operationId: OperationId;
-    }
-  | {
-      readonly kind: "cash_use";
-      readonly cashUseId: CashUseId;
-    };
+export type PurchaseEventSourceKind =
+  | "operation"
+  | "allocation"
+  | "item"
+  | "payment_component"
+  | "cash_use";
+
+export type PurchaseEventSource = {
+  readonly membershipKind: "CONSUMPTION_COMPONENT" | "EVIDENCE_SOURCE";
+  readonly kind: PurchaseEventSourceKind;
+  readonly sourceId: string;
+  readonly canonicalComponentKey: CanonicalComponentKey;
+  readonly evidenceRefs: readonly string[];
+  readonly provenance:
+    | "EXPLICIT_USER_ASSERTION"
+    | "STRUCTURED_CANONICAL_SOURCE"
+    | "CONTROLLED_BACKFILL";
+};
+
+export type PurchaseEventTiming = {
+  readonly status: "KNOWN" | "PARTIAL" | "UNKNOWN" | "CONFLICT";
+  readonly precision: "DAY" | "MONTH" | "NONE";
+  readonly economicDate: LocalDate | null;
+  readonly economicMonth: YearMonth | null;
+  readonly authority:
+    | "EXPLICIT_EVENT"
+    | "EXPLICIT_CONSUMPTION_SOURCE"
+    | "TRUSTED_PURCHASE_SOURCE"
+    | "ECONOMIC_MONTH"
+    | null;
+  readonly evidenceRefs: readonly string[];
+};
 
 export type PurchaseEventFact = {
   readonly fact: "fct_purchase_event";
@@ -208,6 +231,12 @@ export type PurchaseEventFact = {
   readonly householdTimeZone: HouseholdTimeZone;
   readonly purchaseEventId: PurchaseEventId;
   readonly sources: readonly PurchaseEventSource[];
+  readonly economicAmount: Money;
+  readonly timing: PurchaseEventTiming;
+  readonly provenance:
+    | "EXPLICIT_USER_ASSERTION"
+    | "STRUCTURED_CANONICAL_SOURCE"
+    | "CONTROLLED_BACKFILL";
 };
 
 export type PlaceVisitFact = {

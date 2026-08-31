@@ -201,6 +201,9 @@ export function createPublicationApiMeta(
     analyticsRevision: state.analyticsRevision,
     contractVersion: input.contractVersion,
     computedAt: input.computedAt,
+    ...(input.publication === undefined
+      ? {}
+      : { publication: input.publication }),
     ...(input.cachePolicy === undefined ? {} : { cachePolicy: input.cachePolicy }),
   });
 }

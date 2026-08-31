@@ -245,7 +245,7 @@ const periods = (tables.get("analysis_periods") ?? []).filter((item) => item.hou
 const context = {
   userId: "historical-read-only-validation", householdId, persons,
   personIds: persons.map(({ personId }) => personId), timezone: household.timezone, periods,
-  dataRevision: revision.data_revision, analyticsRevision: revision.analytics_revision,
+  dataRevision: String(revision.data_revision), analyticsRevision: String(revision.analytics_revision),
   contractVersion: "v1", asOf: "2026-08-26T18:00:00Z",
 };
 
@@ -294,6 +294,7 @@ async function runRequest(resource, month, subject, params = {}, filters) {
     return result.response.data;
   }
   runtimeResults.push({ resource, month, subject, params, ...(filters === undefined ? {} : { filters }), status: "FAIL", RuntimeSchema: "EXECUTED", error: result.error });
+  console.error(`historical_request_failed ${resource} ${month} ${JSON.stringify(result.error)}`);
   return undefined;
 }
 const getPayload = (resource, month, subject, params = {}, filters) => payloads.get(requestKey(resource, month, subject, { params, ...(filters === undefined ? {} : { filters }) }));
@@ -642,7 +643,10 @@ for (const month of months) {
     const formulaValue = minimalSource.availability === "known"
       ? minimalSource.certifiedHistoricalValue ?? sumMoney(minimalComponents.map(({ amount }) => amount))
       : undefined;
-    assert.ok(moneyEqual(formulaValue, initial?.minimal.envelope.value), `Minimal formula mismatch for ${month}`);
+    assert.ok(
+      moneyEqual(formulaValue, initial?.minimal.envelope.value),
+      `Minimal formula mismatch for ${month}: certified=${String(formulaValue)} runtime=${JSON.stringify({ keys: Object.keys(initial ?? {}), minimal: initial?.minimal })}`,
+    );
     const contributions = minimalComponents.map((component) => ({
       ...component,
       source: component.canonicalComponentKey.split(":").slice(0, 2).join(":"),
