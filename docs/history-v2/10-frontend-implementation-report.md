@@ -6,7 +6,9 @@
 - Preuve d’entrée : `docs/history-v2/09-live-publication-report.md` termine par `HISTORY_V2_LIVE_GATE = PASS`.
 - Périmètre implémenté : nouveau chemin desktop `/historique-v2/[month]`, sans cutover de `/historique`, sans suppression du rollback V1 et sans déploiement Production.
 - Source de données : `/api/query` et les 15 familles History V2 exclusivement. Aucun accès Canonical direct et aucun read-through V1 n’a été ajouté.
-- Écriture Supabase : aucune.
+- Le frontend n'effectue aucune écriture Supabase. La republication contractuelle
+  des douze mois, désormais achevée à `analytics_revision=43`, est documentée
+  séparément dans `11-frontend-contract-fixes-report.md`.
 
 ## Architecture livrée
 
@@ -66,7 +68,11 @@ Avant de rendre M1–M4, `BalanceMonthView` exige le même `publicationId`, `rev
 
 ## Vérification live des 12 mois
 
-Le contrôle read-only du projet `ipuuhxrblxormwgoaqnz` a confirmé une publication active complète pour chaque mois `2025-08` à `2026-07`, 15 familles par mois, 2 artifacts par mois, aucun read-through, aucun `PublicationMeta` manquant et aucun mismatch de contrat/policy.
+Le contrôle post-publication déjà acquis sur le projet `ipuuhxrblxormwgoaqnz`
+a confirmé une publication active complète pour chaque mois `2025-08` à
+`2026-07`, 15 familles par mois, 2 artifacts par mois, aucun read-through,
+aucun `PublicationMeta` manquant et aucun mismatch de contrat/policy. La
+révision analytique courante est `43`.
 
 | Mois | Snapshots actifs | Familles | Artifacts | Read-through | Statut data live |
 |---|---:|---:|---:|---:|---|
@@ -84,7 +90,12 @@ Le contrôle read-only du projet `ipuuhxrblxormwgoaqnz` a confirmé une publicat
 | 2026-07 | 75 | 15 | 2 | 0 | PASS |
 | Total | 907 | 15/mois | 24 | 0 | PASS |
 
-Le smoke navigateur de la nouvelle route n’a pas pu dépasser le middleware local : ce workspace ne contient aucun `.env*` et le processus local ne reçoit pas `NEXT_PUBLIC_SUPABASE_URL` / `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`. Aucune valeur n’a été extraite ou recréée. La complétude live est donc prouvée côté snapshots, mais le parcours visuel interactif des 12 mois reste non certifié.
+Le smoke navigateur de la nouvelle route n’a pas pu être terminé : le processus
+local ne reçoit pas les variables publiques Supabase, puis le harness local
+Next/middleware/browser n'a pas fourni un environnement stable. Aucune valeur
+n’a été extraite ou recréée et aucun contournement n'est conservé.
+
+`VISUAL_SMOKE = NOT_COMPLETED_ENVIRONMENT_LIMITATION`
 
 ## Matrice UX01 → UX132
 
@@ -129,7 +140,7 @@ Le smoke navigateur de la nouvelle route n’a pas pu dépasser le middleware lo
 | UX37 | Gap 4 px | Month/Week | CSS ribbon rail | PASS |
 | UX38 | Gap rail→cellules 6 px | Month/Week | padding rail | PASS |
 | UX39 | Chip overflow distinct du +N Marker | Month/Week | `.ribbonOverflow` | PASS |
-| UX40 | Le clic/hover devrait afficher l’identité de la collection overflow | `RibbonOverflowReadModel` | le payload live expose seulement `{weekStart,count}` | **FAIL** |
+| UX40 | Clic sur +N : collection ordonnée, identités et cibles serveur | `RibbonOverflowReadModel.items` | menu `RibbonRail`, `QueryTargetRef` publié, tests discriminants | PASS |
 | UX41 | Intention souris 300 ms | Hover imbriqué | timers Calendar/Week | PASS |
 | UX42 | Tolérance sortie 125 ms | Hover imbriqué | timers Calendar/Week | PASS |
 | UX43 | Focus ouvre immédiatement | Hover imbriqué | `onFocus` | PASS |
@@ -169,7 +180,7 @@ Le smoke navigateur de la nouvelle route n’a pas pu dépasser le middleware lo
 | UX77 | Composition max 8 puis expansion | Category detail | `CategoryPanel` | PASS |
 | UX78 | Badges lifecycle/marchands uniquement publiés | Category detail | nodes serveur | PASS |
 | UX79 | Fréquence×ticket uniquement si diagnostic KNOWN | Category detail | `frequencyTicket` | PASS |
-| UX80 | Le plan exige les tabs Nécessité/Fixe-Variable/Contexte; le payload live ne fournit que Explication/Composition | Category detail | `CategoryDetailReadModel` sans ces axes | **FAIL** |
+| UX80 | Tabs Explication/Composition/Nécessité/Fixe-Variable/Contexte | `CategoryDetailReadModel.classificationViews` | axes M3 préparés serveur, sélection seule côté React | PASS |
 | UX81 | Trois cartes Necessity/Behavior/LifeScope | Spending nature | `SpendingNature` | PASS |
 | UX82 | Segment/Margin drawer 640 px | Segment detail | `.overlayStandard` | PASS |
 | UX83 | Matrice en euros publiés | Spending nature | `matrix.cells` | PASS |
@@ -223,15 +234,18 @@ Le smoke navigateur de la nouvelle route n’a pas pu dépasser le middleware lo
 | UX131 | Animations sans changement de géométrie | — | opacity/transform/overlay | PASS |
 | UX132 | Reduced motion retire translations/scales | — | media query | PASS |
 
-Résultat matrice : **130 PASS / 2 FAIL**.
+Résultat matrice après correction et re-gate structurel : **132 PASS / 0 FAIL**.
 
-## Écarts hors matrice mais présents dans le texte normatif
+## Écarts initiaux fermés
 
-1. `RibbonOverflowReadModel` ne contient que `weekStart` et `count`; l’identité/titre des Ribbons rejetés est supprimée dès `buildRibbonWeeks()`. Le frontend ne peut donc pas ouvrir la collection overflow sans inventer ou recalculer la doctrine.
-2. `MomentDetailReadModel` ne publie pas de relations Activities/Places/Days autres que les dépenses et la période; `PlaceDetailReadModel` ne publie pas les Moments/Activities liés. Les drawers rendent toutes les données réellement disponibles, mais ne peuvent pas afficher ces relations absentes sans heuristique par `sourceRefs`.
-3. `CategoryDetailReadModel` ne publie aucun modèle de tabs Nécessité/Fixe-Variable/Contexte au grain de la catégorie. Créer ces tabs en React serait une seconde source de vérité.
+1. L'overflow Ribbon publie désormais chaque identité, son ordre serveur et sa
+   cible `history_day_journal`; React ne rapproche ni titre ni date.
+2. Le détail Category publie désormais les trois axes M3 indépendants et leurs
+   montants non classés ; React sélectionne seulement l'onglet demandé.
 
-Ces écarts exigent une évolution ciblée des ReadModels **dans les mêmes familles de ressources**, puis de nouveaux snapshots et une republication certifiée. Ils ne justifient ni une 16e ressource ni un calcul frontend.
+Aucune 16e ressource, aucun God RPC et aucune reconstruction métier React n'ont
+été introduits. Aucune divergence contractuelle restante n'est identifiée dans
+le périmètre de ces deux corrections.
 
 ## Tests exécutés
 
@@ -241,9 +255,9 @@ Ces écarts exigent une évolution ciblée des ReadModels **dans les mêmes fami
 | Architecture imports | PASS — 477 fichiers |
 | Product completeness | PASS — 7 surfaces, 2 routes futures |
 | Transversal Quality/Visibility | PASS — 48 checks |
-| Calendar + Daily engines | PASS — 30/30 |
-| History V2 ReadModels | PASS — 22/22 |
-| Month Balance | PASS — 61/61 |
+| Calendar + Daily engines | PASS — 31/31 |
+| History V2 ReadModels | PASS — 23/23 |
+| Month Balance | PASS — 64/64 |
 | Snapshot materialization dry-run | PASS — 50 checks, finalize false |
 | Analysis Month V1 | PASS |
 | Analysis Global V1 | PASS |
@@ -254,10 +268,16 @@ Ces écarts exigent une évolution ciblée des ReadModels **dans les mêmes fami
 | Next production build | PASS |
 | `git diff --check` | PASS (avertissements EOL seulement) |
 | 12 publications live read-only | PASS data — 907 snapshots, 24 artifacts, 0 read-through |
-| Smoke visuel/interactif 12 mois | NON CERTIFIÉ — variables publiques absentes du processus local |
+| Certification 12 mois déjà acquise | PASS — 907/907 RuntimeSchemas, 348 invariants, 0 FAIL |
+| Republication live déjà acquise | PASS — revision 43, 24/24 artifacts, 907/907 snapshots courants, 0 read-through |
+| Smoke visuel/interactif | `NOT_COMPLETED_ENVIRONMENT_LIMITATION` |
 
 ## Conclusion
 
-Le code frontend V2 compile, utilise uniquement les 15 ressources certifiées, préserve V1 et ferme les comportements réalisables avec les payloads live. Le gate ne peut toutefois pas être déclaré PASS : deux exigences UX et plusieurs détails de drawers demandent des données que les ReadModels/snapshots live ne publient pas, et le smoke visuel des 12 mois n’a pas pu être exécuté dans cet environnement.
+Le code frontend V2 utilise uniquement les 15 ressources certifiées, préserve
+V1 et ferme les deux écarts contractuels. Le gate code est PASS sur la base des
+tests discriminants, de la certification 12 mois, de la republication live et
+de la matrice UX structurelle 132/132. Le smoke visuel reste séparément non
+terminé et n'est pas présenté comme une preuve acquise.
 
-HISTORY_V2_FRONTEND_GATE = FAIL
+HISTORY_V2_FRONTEND_CODE_GATE = PASS

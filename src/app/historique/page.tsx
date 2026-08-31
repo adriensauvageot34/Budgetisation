@@ -11,5 +11,5 @@ export default async function HistoryPage() {
     return eligibleHistoryMonths(context.periods).at(-1) ?? null;
   });
   if (latestMonth === null) redirect("/diagnostic");
-  redirect(`/historique/calendrier/${latestMonth}`);
+  redirect(`/historique/${latestMonth}?view=calendar`);
 }

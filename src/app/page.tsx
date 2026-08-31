@@ -10,5 +10,5 @@ export default async function HomePage() {
   if (!context.household) redirect("/acces-refuse");
   const latest = context.periods.at(-1);
   if (latest === undefined) redirect("/diagnostic");
-  redirect(`/historique/calendrier/${yearMonthOf(latest.month)}`);
+  redirect(`/historique/${yearMonthOf(latest.month)}?view=calendar`);
 }

@@ -14,7 +14,7 @@ const modules = [
 export function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const runtime = useProductRuntime();
-  const historyV2 = pathname.startsWith("/historique-v2");
+  const historyV2 = pathname.startsWith("/historique-v2") || /^\/historique\/\d{4}-\d{2}$/.test(pathname);
 
   if (pathname === "/connexion" || pathname === "/acces-refuse") {
     return children;

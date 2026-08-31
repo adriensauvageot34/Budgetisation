@@ -79,7 +79,7 @@ export function historyV2Href(input: {
       }
     }
   }
-  return `/historique-v2/${input.month}?${query.toString()}`;
+  return `/historique/${input.month}?${query.toString()}`;
 }
 
 export function overlayTargetKey(target: HistoryOverlayTarget): string {

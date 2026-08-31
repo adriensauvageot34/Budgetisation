@@ -5,8 +5,8 @@ import { join } from "node:path";
 const root = process.cwd();
 const read = (path) => readFileSync(join(root, path), "utf8");
 const featureFiles = [
-  "src/app/historique-v2/[month]/page.tsx",
-  "src/app/historique-v2/[month]/loading.tsx",
+  "src/app/historique/[month]/page.tsx",
+  "src/app/historique/[month]/loading.tsx",
   "src/features/history-v2/index.ts",
   "src/features/history-v2/history-v2-page.tsx",
   "src/features/history-v2/history-shell.tsx",
@@ -31,6 +31,21 @@ for (const resource of resources) assert.match(all, new RegExp(`queryResourceKey
 assert.equal(resources.length, 15);
 assert.doesNotMatch(all, /queryResourceKeys\.(historyCalendarMonth|historyDayDetail|analysisMonthInitial)/, "Le chemin V2 ne doit pas lire un ReadModel legacy.");
 assert.doesNotMatch(sources["src/features/history-v2/route-state.ts"], /snapshotId|publicationId/, "Les identifiants techniques ne doivent pas entrer dans l’URL.");
+
+const canonicalRoute = sources["src/app/historique/[month]/page.tsx"];
+const routeState = sources["src/features/history-v2/route-state.ts"];
+const mainNavigation = read("src/components/layout/app-shell.tsx");
+const rootHistoryRoute = read("src/app/historique/page.tsx");
+const v2AliasRoute = read("src/app/historique-v2/[month]/page.tsx");
+const legacyCalendarRoute = read("src/app/historique/calendrier/[month]/page.tsx");
+assert.match(canonicalRoute, /<HistoryV2Page\b/, "La route canonique /historique/[month] doit rendre History V2.");
+assert.doesNotMatch(canonicalRoute, /@\/features\/calendar|historyCalendarMonth|historyDayDetail/, "La route canonique ne doit importer aucun frontend/ReadModel History V1.");
+assert.match(routeState, /return `\/historique\/\$\{input\.month\}/, "Les deep links V2 doivent utiliser /historique.");
+assert.match(mainNavigation, /href: "\/historique", label: "Historique"/, "La navigation principale doit viser /historique.");
+assert.match(rootHistoryRoute, /`\/historique\/\$\{latestMonth\}\?view=calendar`/, "L'index Historique doit entrer dans V2.");
+assert.match(v2AliasRoute, /redirect\(`\/historique\/\$\{month\}/, "L'ancienne URL /historique-v2 doit rediriger vers la route canonique.");
+assert.match(legacyCalendarRoute, /redirect\(`\/historique\/\$\{month\}/, "L'ancienne route Calendar doit rediriger vers V2.");
+assert.doesNotMatch(legacyCalendarRoute, /CalendarClientPage|historyCalendarMonth|historyDayDetail/, "L'ancienne route Calendar ne doit plus rendre V1.");
 
 const calendar = sources["src/features/history-v2/calendar-view.tsx"];
 const shell = sources["src/features/history-v2/history-shell.tsx"];
