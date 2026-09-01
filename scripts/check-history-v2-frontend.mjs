@@ -13,6 +13,7 @@ const featureFiles = [
   "src/features/history-v2/history-shell.tsx",
   "src/features/history-v2/calendar-view.tsx",
   "src/features/history-v2/semantic-icon.tsx",
+  "src/features/history-v2/presentation.ts",
   "src/features/history-v2/balance-view.tsx",
   "src/features/history-v2/overlay-host.tsx",
   "src/features/history-v2/renderers.tsx",
@@ -29,6 +30,38 @@ const coherenceJavaScript = ts.transpileModule(
 ).outputText;
 new Function("module", "exports", coherenceJavaScript)(coherenceModule, coherenceModule.exports);
 const { publicationMetasAreCoherent } = coherenceModule.exports;
+
+const presentationModule = { exports: {} };
+const presentationJavaScript = ts.transpileModule(
+  read("src/features/history-v2/presentation.ts"),
+  { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 } },
+).outputText;
+new Function("module", "exports", presentationJavaScript)(presentationModule, presentationModule.exports);
+const {
+  expenseDisplayTitle,
+  formatCalendarDay,
+  formatFrenchDate,
+  formatFrenchDateRange,
+  formatHistoricalRank,
+  formatLifeMarkerCount,
+  spendingPresentationLabel,
+} = presentationModule.exports;
+
+assert.equal(formatCalendarDay("2026-07-03", false), "3");
+assert.equal(formatCalendarDay("2026-06-30", true), "30 juin");
+assert.equal(formatFrenchDate("2026-07-18"), "18 juillet 2026");
+assert.equal(formatFrenchDateRange("2026-07-03", "2026-07-05"), "3–5 juillet 2026");
+assert.equal(formatFrenchDateRange("2026-07-18", "2026-07-18", false), "18 juillet");
+assert.equal(formatLifeMarkerCount("IMPORTANT_VISITS", 1), "1 visite");
+assert.equal(formatLifeMarkerCount("IMPORTANT_VISITS", 6), "6 visites");
+assert.equal(formatLifeMarkerCount("DRIVING", 5), "5 séances");
+assert.equal(formatLifeMarkerCount("WORK_RHYTHM", 21), "21 jours");
+assert.equal(formatHistoricalRank(1, 12), "1er mois le plus dépensier sur 12");
+assert.equal(formatHistoricalRank(3, 12), "3e mois le plus dépensier sur 12");
+assert.equal(spendingPresentationLabel("CONSTRAINED__VARIABLE"), "Contraintes variables");
+assert.equal(expenseDisplayTitle({ label: "Paiement par carte", merchantLabel: "Super U", placeLabel: "Montpellier" }), "Super U");
+assert.equal(expenseDisplayTitle({ label: "Paiement par carte", merchantLabel: " ", placeLabel: "Montpellier" }), "Montpellier");
+assert.equal(expenseDisplayTitle({ label: "Paiement par carte" }), "Paiement par carte");
 
 const publicationMeta = {
   publicationId: "08ac77f3-ad31-4455-921b-be6e175be65a",
@@ -122,7 +155,8 @@ assert.match(shell, /setInterval\([^,]+, 7000\)/s);
 assert.match(css, /animation: hover-in 150ms/);
 assert.match(css, /animation-duration: 210ms/);
 assert.match(css, /grid-template-columns: repeat\(7/);
-assert.match(css, /grid-template-rows: repeat\(4, 20px\)/);
+assert.match(css, /grid-auto-rows: 20px/);
+assert.match(css, /ribbonRail:empty[^}]+display: none/s, "Une semaine sans Ribbon ne doit pas réserver quatre lanes.");
 assert.match(css, /overlayJournal[^}]+700px/s);
 assert.match(css, /overlayStandard[^}]+640px/s);
 assert.match(css, /overlayMoment[^}]+680px/s);
@@ -137,6 +171,45 @@ assert.match(calendar, /onTarget\(item\.targetRef\)/, "La navigation Ribbon doit
 assert.doesNotMatch(calendar, /overflow\.items[^\n]+(?:title|segmentStart)[^\n]+(?:find|filter)/, "React ne doit pas reconstruire l'identité Ribbon par titre/date.");
 assert.doesNotMatch(all, /\.sort\(/, "Aucun tri métier client n’est autorisé.");
 assert.doesNotMatch(all, /gaspillage|économie possible/i);
+
+const balance = sources["src/features/history-v2/balance-view.tsx"];
+const presentation = sources["src/features/history-v2/presentation.ts"];
+assert.doesNotMatch(calendar, /Partiel|Observé :/, "Les cellules mensuelles ne doivent pas répéter la qualité technique.");
+assert.match(calendar, /formatCalendarDay\(day\.date, !day\.inSelectedMonth\)/, "Le mois courant affiche le jour seul et les jours externes gardent le mois.");
+assert.match(calendar, /partialDisplay="value-only"/, "Le montant Calendar doit conserver PARTIAL sans badge dans la cellule.");
+assert.match(calendar, /<PartialDataNote metric=\{metric\}/, "Le Hover doit conserver une note de qualité humaine.");
+assert.match(renderers, /Date précise inconnue/, "La temporalité non affectée doit recevoir un libellé humain.");
+
+assert.doesNotMatch(overlay, /Niveau \$\{|Niveau 1 sur 6|subtitle=\{`Niveau/, "La profondeur logique ne doit pas être visible.");
+assert.match(overlay, /expenseDisplayTitle\(item\)/, "Le titre de dépense doit utiliser la hiérarchie de présentation.");
+assert.match(overlay, /Voir le libellé bancaire/, "Le libellé brut doit rester secondaire et accessible.");
+assert.doesNotMatch(overlay, /item\.label\.(?:split|match|replace)|new RegExp\([^)]*item\.label/, "Le frontend ne doit pas parser le libellé bancaire.");
+assert.match(overlay, /Dépenses du jour/, "La collection otherExpenses doit avoir un titre humain.");
+assert.match(overlay, /Données partielles|PartialDataNote/, "Le Journal doit conserver une note PARTIAL secondaire.");
+
+for (const label of ["Habituel", "Minimum estimé", "Zone habituelle", "Comprendre l’écart avec mon compte"]) assert.match(balance, new RegExp(label));
+assert.doesNotMatch(balance, /<span className="eyebrow">M[1-4]<\/span>/, "M1–M4 ne doivent plus être visibles.");
+assert.match(balance, /freshness === "MISSING"\) return null/, "Le résumé IA absent ne doit produire aucun placeholder.");
+assert.doesNotMatch(balance, /category\.material/, "Le badge Significatif ne doit plus être rendu.");
+assert.match(balance, /shouldShowMoneyNode\(model\.unclassifiedAmount\)/, "Un montant non classé KNOWN(0) doit être masqué.");
+
+for (const label of ["CONSTRAINED", "INDISPENSABLE", "OPTIONAL", "FIXED", "VARIABLE", "CURRENT_LIFE", "OUT_OF_DAILY"]) {
+  assert.match(presentation, new RegExp(`${label}:`), `Traduction M3 absente pour ${label}.`);
+}
+assert.match(balance, /spendingPresentationLabel\(bucket\.key\)/, "Les buckets M3 doivent passer par le dictionnaire de présentation.");
+assert.doesNotMatch(balance, />\{bucket\.key\}</, "Aucun enum M3 brut ne doit être rendu.");
+assert.match(balance, /className=\{styles\.contributorList\}[\s\S]+<div key=/, "Les contributeurs doivent être présentés en lignes.");
+assert.match(balance, /% du mois/, "La part M3 doit utiliser un vocabulaire humain.");
+assert.doesNotMatch(balance, /bucket\.amount\s*\/|Number\(bucket\.amount\)/, "React ne doit pas recalculer la part M3.");
+assert.match(balance, /matrixOpen/, "La matrice M3 doit être repliable avec un état local.");
+assert.match(balance, /Marge ajustable maintenant/);
+assert.match(balance, /Marge ajustable à moyen terme/);
+
+assert.doesNotMatch(balance, /item\.score|place\.score|highlightRank|occurrence\(s\)|Aucun coût qualifié/, "M4 ne doit plus afficher ses métadonnées techniques.");
+assert.match(balance, /fois ce mois/, "Les occurrences M4 doivent utiliser une formulation naturelle.");
+assert.match(balance, /formatFrenchDateRange\(moment\.startDate/, "Les dates Moment doivent être françaises.");
+assert.match(balance, /HistorySemanticIcon iconKey=\{moment\.fallbackIconKey\}/, "Le fallback Moment doit être sémantique.");
+assert.doesNotMatch(balance, /place\.momentCount/, "Les cartes Lieux ne doivent plus afficher 0 moment(s).");
 
 assert.match(page, /\.slice\(-6\)/, "La pile logique est bornée à six niveaux.");
 assert.match(page, /findIndex\(\(entry\) => overlayTargetKey/, "Les cycles doivent être repliés.");

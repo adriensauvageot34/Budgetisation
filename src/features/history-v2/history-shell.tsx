@@ -8,6 +8,7 @@ import type { MonthQuickOverviewReadModel } from "@/query-api";
 import { queryResourceKeys } from "@/query-api";
 import { useQueryRuntime } from "@/components/runtime/query-client";
 import { CollectionState, DisplayState, MetricState, MoneyMetric, StateBoundary, formatMoney } from "./renderers";
+import { formatFrenchDateRange, formatLifeMarkerCount } from "./presentation";
 import { historyTransientDismissEvent, type HistoryV2View } from "./types";
 import styles from "./history-v2.module.css";
 
@@ -83,12 +84,12 @@ function OverviewContent({ model, view, onView, onClose }: { readonly model: Mon
   return (
     <div className={styles.overviewContent}>
       <div className={styles.overviewFlows}>
-        <OverviewFlow label="Sorties bancaires" node={model.flows.bankOutflows} />
-        <OverviewFlow label="Dépenses économiques" node={model.flows.economicActual} />
-        <OverviewFlow label="Entrées bancaires" node={model.flows.bankInflows} />
+        <OverviewFlow label="Débits du compte" node={model.flows.bankOutflows} />
+        <OverviewFlow label="Dépenses du mois" node={model.flows.economicActual} />
+        <OverviewFlow label="Entrées sur le compte" node={model.flows.bankInflows} />
       </div>
       <DisplayState node={model.lifeMarkers}>
-        {(collection) => <CollectionState collection={collection}>{(items) => <ul className={styles.lifeMarkers}>{items.map((item) => <li key={item.family}><span>{item.label}</span><DisplayState node={item.primaryValue}>{(metric) => <MetricState metric={metric} format={(value) => `${value} ${item.unit === "DAY" ? "jour(s)" : "session(s)"}`} />}</DisplayState></li>)}</ul>}</CollectionState>}
+        {(collection) => <CollectionState collection={collection}>{(items) => <ul className={styles.lifeMarkers}>{items.map((item) => <li key={item.family}><span>{item.label}</span><DisplayState node={item.primaryValue}>{(metric) => <MetricState metric={metric} format={(value) => formatLifeMarkerCount(item.family, value)} />}</DisplayState></li>)}</ul>}</CollectionState>}
       </DisplayState>
       <DisplayState node={model.highlights}>
         {(collection) => <CollectionState collection={collection}>{(items) => <OverviewHighlights items={items} />}</CollectionState>}
@@ -117,8 +118,8 @@ function OverviewHighlights({ items }: { readonly items: MonthQuickOverviewReadM
   return (
     <section className={styles.highlightCarousel} aria-roledescription="carrousel" onMouseEnter={() => setPaused(true)} onMouseLeave={() => setPaused(false)}>
       <article key={item.highlightId} className={styles.highlightCard}>
-        <div><span className="eyebrow">Temps fort</span><h3>{item.title}</h3><p>{item.dateLabel}{item.placeLabel ? ` · ${item.placeLabel}` : ""}</p></div>
-        <div><span>Coût causal</span><DisplayState node={item.causalCost}>{(metric) => <MoneyMetric metric={metric} />}</DisplayState></div>
+        <div><span className="eyebrow">Temps fort</span><h3>{item.title}</h3><p>{formatFrenchDateRange(item.startDate, item.endDate)}{item.placeLabel ? ` · ${item.placeLabel}` : ""}</p></div>
+        <div><span>Dépenses liées</span><DisplayState node={item.causalCost}>{(metric) => <MoneyMetric metric={metric} />}</DisplayState></div>
       </article>
       {items.length > 1 ? <div className={styles.carouselControls}><button className={styles.iconButton} aria-label="Temps fort précédent" onClick={() => select(safeIndex - 1)}><ChevronLeft aria-hidden size={18} /></button><div role="tablist" aria-label="Temps forts">{items.map((entry, itemIndex) => <button key={entry.highlightId} role="tab" aria-selected={itemIndex === safeIndex} aria-label={`Temps fort ${itemIndex + 1}`} onClick={() => select(itemIndex)} />)}</div><button className={styles.iconButton} aria-label="Temps fort suivant" onClick={() => select(safeIndex + 1)}><ChevronRight aria-hidden size={18} /></button></div> : null}
     </section>

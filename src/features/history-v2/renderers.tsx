@@ -15,7 +15,7 @@ import styles from "./history-v2.module.css";
 const reasonLabels: Readonly<Record<string, string>> = {
   DATA_NO_SOURCE: "Indisponible",
   DATA_PARTIAL_SOURCE: "Données partielles",
-  DATA_UNASSIGNED_TIMING: "Temporalité non affectée",
+  DATA_UNASSIGNED_TIMING: "Date précise inconnue",
   DATA_UNCLASSIFIED_COMPONENT: "Classification incomplète",
   DATA_NO_PURCHASE_EVENT: "Achat non identifié",
   DATA_NO_CONTINUITY_ASSERTION: "Continuité non établie",
@@ -60,15 +60,20 @@ export function MetricState<T>({
   metric,
   format,
   className,
+  partialDisplay = "full",
 }: {
   readonly metric: MetricValue<T>;
   readonly format: (value: T) => ReactNode;
   readonly className?: string;
+  readonly partialDisplay?: "full" | "value-only";
 }) {
   if (metric.status === "KNOWN") {
     return <span className={className}>{format(metric.value)}<QualityMark quality={metric.quality} /></span>;
   }
   if (metric.status === "PARTIAL") {
+    if (partialDisplay === "value-only") {
+      return <span className={className} data-quality="partial">{format(metric.value)}</span>;
+    }
     return (
       <span className={className} data-quality="partial">
         {metric.partialMeaning === "LOWER_BOUND" ? "Au moins " : "Observé : "}
@@ -84,18 +89,26 @@ export function MetricState<T>({
   return <span className={[styles.unavailable, className].filter(Boolean).join(" ")}>{label}<QualityMark quality={metric.quality} /></span>;
 }
 
-export function MoneyMetric({ metric, className }: { readonly metric: MetricValue<Money>; readonly className?: string }) {
-  return <MetricState metric={metric} format={formatMoney} className={className} />;
+export function MoneyMetric({ metric, className, partialDisplay }: { readonly metric: MetricValue<Money>; readonly className?: string; readonly partialDisplay?: "full" | "value-only" }) {
+  return <MetricState metric={metric} format={formatMoney} className={className} {...(partialDisplay === undefined ? {} : { partialDisplay })} />;
+}
+
+export function PartialDataNote({ metric }: { readonly metric: MetricValue<unknown> }) {
+  return metric.status === "PARTIAL"
+    ? <p className={styles.qualityNote}>Données partielles · certaines informations peuvent manquer</p>
+    : null;
 }
 
 export function CollectionState<T>({
   collection,
   children,
   emptyLabel = "Aucun élément pour ce mois",
+  showPartialNote = true,
 }: {
   readonly collection: CollectionValue<T>;
   readonly children: (items: readonly T[]) => ReactNode;
   readonly emptyLabel?: string;
+  readonly showPartialNote?: boolean;
 }) {
   if (collection.status === "KNOWN") {
     return collection.items.length === 0
@@ -103,7 +116,7 @@ export function CollectionState<T>({
       : <>{children(collection.items)}</>;
   }
   if (collection.status === "PARTIAL") {
-    return <><div className={styles.inlineStatus}><QualityBadge state="partial" /> Éléments observés uniquement</div>{children(collection.items)}</>;
+    return <>{showPartialNote ? <div className={styles.inlineStatus}>Données partielles · certaines informations peuvent manquer</div> : null}{children(collection.items)}</>;
   }
   return <p className={styles.emptyState}>{collection.status === "NOT_APPLICABLE" ? "Non applicable" : collection.status === "CONFLICT" ? "Données à vérifier" : "Indisponible"}</p>;
 }

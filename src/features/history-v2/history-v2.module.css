@@ -62,7 +62,7 @@
 .loadingSegmented { width: 260px; height: 42px; }
 .loadingMonth { width: 220px; height: 38px; }
 .loadingCalendar { display: grid; width: min(1780px, calc(100vw - 48px)); grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 1px; margin: 0 auto; background: var(--color-border); }
-.loadingCalendar > div { min-height: 150px; border-radius: 0; }
+.loadingCalendar > div { min-height: 112px; border-radius: 0; }
 .loadingCalendar > div:nth-child(-n+7) { min-height: 38px; }
 
 .calendarSurface { width: min(1780px, calc(100vw - 48px)); margin: 0 auto; overflow: visible; }
@@ -74,7 +74,8 @@
 .weekLink { position: absolute; z-index: 4; top: 5px; left: 5px; display: grid; width: 26px; height: 26px; place-items: center; border: 1px solid var(--color-border); border-radius: 8px; background: white; color: var(--color-muted); cursor: pointer; opacity: 0; transition: opacity 150ms ease; }
 .calendarWeek:hover .weekLink, .weekLink:focus-visible { opacity: 1; }
 
-.ribbonRail { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); grid-template-rows: repeat(4, 20px); gap: 4px 0; min-height: 94px; padding: 4px 8px 6px; border-top: 1px solid var(--color-border); background: #fafaf7; }
+.ribbonRail { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); grid-auto-rows: 20px; gap: 4px 0; min-height: 0; padding: 3px 8px 4px; border-top: 1px solid var(--color-border); background: #fafaf7; }
+.ribbonRail:empty { display: none; }
 .ribbon { z-index: 2; display: flex; min-width: 0; height: 19px; align-items: center; align-self: center; gap: 4px; margin-inline: 2px; overflow: hidden; border-radius: 6px; padding: 1px 8px; background: #dce8e3; color: #31564f; font-size: 12px; font-weight: 750; line-height: 17px; white-space: nowrap; }
 .ribbon > svg { flex: 0 0 14px; }
 .ribbon > span { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
@@ -87,7 +88,7 @@
 .ribbonOverflowMenu strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .ribbonOverflowMenu small { color: var(--color-muted); }
 
-.dayCell, .weekDay { position: relative; min-width: 0; min-height: 148px; border-top: 1px solid var(--color-border); border-right: 1px solid var(--color-border); background: white; padding: 9px; transition: background 150ms ease, opacity 150ms ease, box-shadow 150ms ease; }
+.dayCell, .weekDay { position: relative; min-width: 0; min-height: 112px; border-top: 1px solid var(--color-border); border-right: 1px solid var(--color-border); background: white; padding: 7px 8px; transition: background 150ms ease, opacity 150ms ease, box-shadow 150ms ease; }
 .dayCell:last-child, .weekDay:last-child { border-right: 0; }
 .dayCell[data-outside], .weekDay[data-outside] { background: #f7f7f3; opacity: .62; }
 .dayCell[data-hover-open] { z-index: 6; opacity: 1; box-shadow: 0 0 0 2px var(--color-primary), var(--shadow-md); }
@@ -95,9 +96,9 @@
 .dayButton:focus-visible { outline: 2px solid var(--color-primary); outline-offset: 3px; border-radius: 7px; }
 .dayHeading { display: flex; min-height: 26px; align-items: baseline; justify-content: space-between; gap: 8px; font-size: 13px; }
 .dayHeading > span:last-child, .weekDay .dayButton > span:last-child { color: var(--color-muted); font-size: 12px; font-weight: 750; }
-.contextRow { display: flex; gap: 4px; margin: 8px 0; }
+.contextRow { display: flex; gap: 4px; margin: 5px 0; }
 .contextRow > span { display: grid; width: 22px; height: 22px; place-items: center; border-radius: 999px; background: #dce8e3; color: #31564f; font-size: 10px; font-weight: 900; }
-.markerList { display: grid; gap: 4px; }
+.markerList { display: grid; gap: 3px; }
 .markerList > div { display: grid; grid-template-columns: 16px minmax(0, 1fr); gap: 4px; min-width: 0; max-width: 100%; overflow: hidden; font-size: 12px; line-height: 1.25; }
 .markerList > div > svg { width: 14px; height: 14px; flex: none; }
 .markerList > div > span:last-child { display: -webkit-box; min-width: 0; max-width: 100%; overflow: hidden; overflow-wrap: anywhere; -webkit-box-orient: vertical; -webkit-line-clamp: 2; }
@@ -121,7 +122,7 @@
 
 .balanceSurface { display: grid; width: min(1560px, calc(100vw - 64px)); gap: 28px; margin: 0 auto; }
 .balanceModule { display: grid; gap: 18px; border: 1px solid var(--color-border); border-radius: var(--history-card-radius); padding: 24px; background: white; box-shadow: var(--shadow-sm); }
-.balanceModule > header h2 { margin: 4px 0 0; font-size: 23px; }
+.balanceModule > header h2 { margin: 0; font-size: 23px; }
 .summaryGrid { display: grid; gap: 16px; }
 .actualCard { display: grid; gap: 8px; border-radius: var(--history-card-radius); padding: 22px; background: #e6efeb; }
 .actualValue { font-size: clamp(32px, 4vw, 52px); font-weight: 850; letter-spacing: -.03em; }
@@ -131,6 +132,8 @@
 .referenceCards strong { font-size: 22px; }
 .comparisonRow { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
 .comparisonRow > * { display: flex; flex-wrap: wrap; gap: 5px; border-radius: 10px; padding: 12px; background: var(--color-surface-soft); }
+.comparisonMetric { display: grid !important; gap: 5px !important; }
+.comparisonMetric > span:first-child { color: var(--color-muted); font-size: 12px; font-weight: 750; }
 .importedSummary, .placeholder { border: 1px dashed var(--color-border); border-radius: 10px; padding: 14px; color: var(--color-muted); }
 .importedSummary > div { display: flex; align-items: center; gap: 8px; }
 .categoryList { display: grid; margin-top: 14px; }
@@ -142,18 +145,24 @@
 .axisCards { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; }
 .axisCard, .marginMatrix { border: 1px solid var(--color-border); border-radius: 12px; padding: 16px; }
 .axisCard h3, .marginMatrix h3 { margin-top: 0; }
-.axisCard button, .marginMatrix button { display: flex; width: 100%; align-items: center; justify-content: space-between; border: 0; border-bottom: 1px solid var(--color-border); padding: 9px 0; background: transparent; color: inherit; cursor: pointer; }
-.axisCard button > span:last-child, .marginMatrix button > span:last-child { display: grid; justify-items: end; gap: 2px; }
-.axisCard button small, .marginMatrix button small { color: var(--color-muted); font-size: 11px; font-weight: 650; }
+.axisCard button, .matrixGrid button { display: flex; width: 100%; align-items: center; justify-content: space-between; border: 0; border-bottom: 1px solid var(--color-border); padding: 9px 0; background: transparent; color: inherit; cursor: pointer; }
+.axisCard button > span:last-child, .matrixGrid button > span:last-child { display: grid; justify-items: end; gap: 2px; }
+.axisCard button small, .matrixGrid button small { color: var(--color-muted); font-size: 11px; font-weight: 650; }
 .spendingBucket { border-bottom: 1px solid var(--color-border); }
 .spendingBucket > button { border-bottom: 0; }
-.contributorList { display: flex; flex-wrap: wrap; gap: 5px; padding: 0 0 8px; }
-.contributorList > span { border-radius: 999px; padding: 3px 7px; background: var(--color-surface-soft); color: var(--color-muted); font-size: 11px; }
+.contributorList { display: grid; gap: 3px; padding: 0 0 9px; }
+.contributorList > div { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: baseline; gap: 10px; color: var(--color-muted); font-size: 11px; }
+.contributorList > div span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.contributorList > div strong { color: var(--color-ink); font-size: 11px; }
 .axisCard p { margin-bottom: 0; color: var(--color-muted); font-size: 13px; }
 .marginMatrix { margin-top: 14px; }
-.marginMatrix > div:first-of-type { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
-.marginMatrix > div:first-of-type button { display: grid; gap: 4px; border: 1px solid var(--color-border); border-radius: 10px; padding: 10px; text-align: left; }
-.marginValues { display: flex; gap: 24px; margin-top: 14px; }
+.matrixGrid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; margin-top: 12px; }
+.matrixGrid button { display: grid; gap: 4px; border: 1px solid var(--color-border); border-radius: 10px; padding: 10px; text-align: left; }
+.matrixToggle { width: auto; margin-top: 12px; border: 0; padding: 7px 0; background: transparent; color: var(--color-primary); font-weight: 750; cursor: pointer; }
+.marginValues { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+.marginMetric { display: grid; gap: 6px; border-radius: 12px; padding: 18px; background: #e6efeb; }
+.marginMetric > span:first-child { color: #31564f; font-size: 13px; font-weight: 750; }
+.marginMetric strong { display: block; font-size: 23px; }
 .lifeMoney { display: grid; gap: 28px; }
 .lifeMoney h3 { margin: 0 0 12px; font-size: 20px; }
 .activityGrid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
@@ -163,7 +172,8 @@
 .momentRow, .placeRow { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
 .singleMoment { display: grid; grid-template-columns: minmax(0, 1fr); }
 .singleMoment .momentCard { min-height: 220px; }
-.momentMedia { display: grid; min-height: 100px; place-items: center; overflow: hidden; border-radius: 9px; background: linear-gradient(135deg, #dce8e3, #f6ead2); background-position: center; background-size: cover; color: var(--color-muted); }
+.momentMedia { display: grid; min-height: 100px; place-items: center; overflow: hidden; border-radius: 9px; background-position: center; background-size: cover; color: var(--color-muted); }
+.momentMedia[data-fallback] { min-height: 76px; background: linear-gradient(135deg, #dce8e3, #f6ead2); color: #31564f; }
 .momentMedia span { max-width: 100%; overflow: hidden; padding: 10px; text-overflow: ellipsis; white-space: nowrap; }
 .placeRail { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(230px, 1fr); gap: 12px; overflow-x: auto; padding-bottom: 8px; scroll-snap-type: x proximity; }
 .placeRail > * { scroll-snap-align: start; }
@@ -203,6 +213,7 @@
 .journal { display: grid; gap: 16px; overflow-x: hidden; }
 .journal > header { display: flex; align-items: start; justify-content: space-between; gap: 16px; }
 .journalAmount { display: block; margin-top: 6px; font-size: 30px; font-weight: 850; }
+.qualityNote { margin: 5px 0 0; color: var(--color-muted); font-size: 12px; font-weight: 500; }
 .participants, .badgeRow { display: flex; flex-wrap: wrap; gap: 6px; }
 .participants span { border-radius: 999px; padding: 5px 9px; background: var(--color-surface-soft); font-size: 12px; }
 .journalNavigation { display: flex; justify-content: space-between; }
@@ -214,6 +225,11 @@
 .journalSections article span { color: var(--color-muted); font-size: 13px; }
 .otherMovements { display: grid; gap: 14px; margin-top: 12px; }
 .otherMovements section > div { display: flex; justify-content: space-between; gap: 12px; padding: 7px 0; border-bottom: 1px solid var(--color-border); }
+.expenseRow { align-items: start; }
+.expenseIdentity { display: grid; min-width: 0; gap: 3px; }
+.rawLabelDisclosure { color: var(--color-muted); font-size: 11px; }
+.rawLabelDisclosure summary { width: max-content; cursor: pointer; }
+.rawLabelDisclosure p { max-width: 480px; margin: 5px 0 0; overflow-wrap: anywhere; line-height: 1.35; }
 .activityOccurrence { display: grid; gap: 6px; border-bottom: 1px solid var(--color-border); padding: 8px 0; }
 .activityOccurrence > button { display: flex; justify-content: space-between; }
 .relatedTargets { display: flex; flex-wrap: wrap; gap: 6px; }
