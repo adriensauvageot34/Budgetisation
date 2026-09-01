@@ -89,15 +89,11 @@ assert.equal(publicationMetasAreCoherent([
 ]), false, "Deux factsHash différents doivent être incompatibles.");
 assert.equal(publicationMetasAreCoherent([publicationMeta, undefined]), false, "PublicationMeta manquant doit être incompatible.");
 
-const resources = [
+const surfaceResources = [
   "historyMonthCalendar", "historyWeek", "historyDayJournal", "historyMonthOverview",
-  "historyMonthBalanceSummary", "historyBankEconomyBridge", "historyMonthCategories",
-  "historyCategoryDetail", "historyMonthSpendingNature", "historySpendingSegmentDetail",
-  "historyMinimalPreview", "historyMonthLifeMoney", "historyActivityDetail",
-  "historyMomentDetail", "historyPlaceDetail",
+  "historyActivityDetail", "historyMomentDetail", "historyPlaceDetail",
 ];
-for (const resource of resources) assert.match(all, new RegExp(`queryResourceKeys\\.${resource}\\b`), `${resource} doit être consommée.`);
-assert.equal(resources.length, 15);
+for (const resource of surfaceResources) assert.match(all, new RegExp(`queryResourceKeys\\.${resource}\\b`), `${resource} doit être consommée.`);
 assert.doesNotMatch(all, /queryResourceKeys\.(historyCalendarMonth|historyDayDetail|analysisMonthInitial)/, "Le chemin V2 ne doit pas lire un ReadModel legacy.");
 assert.doesNotMatch(sources["src/features/history-v2/route-state.ts"], /snapshotId|publicationId/, "Les identifiants techniques ne doivent pas entrer dans l’URL.");
 
@@ -112,7 +108,7 @@ assert.match(canonicalRoute, /<HistoryV2Page\b/, "La route canonique /historique
 assert.doesNotMatch(canonicalRoute, /@\/features\/calendar|historyCalendarMonth|historyDayDetail/, "La route canonique ne doit importer aucun frontend/ReadModel History V1.");
 assert.match(routeState, /return `\/historique\/\$\{input\.month\}/, "Les deep links V2 doivent utiliser /historique.");
 assert.match(mainNavigation, /href: "\/historique", label: "Historique"/, "La navigation principale doit viser /historique.");
-assert.match(rootHistoryRoute, /`\/historique\/\$\{latestMonth\}\?view=calendar`/, "L'index Historique doit entrer dans V2.");
+assert.match(rootHistoryRoute, /`\/historique\/\$\{latestMonth\}`/, "L'index Historique doit entrer dans la route canonique V2.");
 assert.match(rootHistoryRoute, /resolveLatestPublishedHistoryV2Month/, "L'index Historique doit utiliser la publication V2 active.");
 assert.match(rootRoute, /resolveLatestPublishedHistoryV2Month/, "La racine produit doit utiliser la même publication V2 active.");
 assert.doesNotMatch(`${rootHistoryRoute}\n${rootRoute}`, /eligibleHistoryMonths|periods\.at\(-1\)/, "Les routes sans mois ne doivent plus utiliser la dernière période Bootstrap.");
@@ -138,6 +134,9 @@ for (const retiredPath of [
   "src/query-api/calendar/index.ts",
 ]) assert.equal(existsSync(join(root, retiredPath)), false, `${retiredPath} doit être retiré physiquement.`);
 const registry = read("src/query-api/request/resource-registry.ts");
+const contracts = read("src/query-api/request/resource-contract.ts");
+const retainedHistoryV2Resources = (contracts.match(/history_[a-z_]+:\s*defineHistoryV2ResourceContract/g) ?? []);
+assert.equal(retainedHistoryV2Resources.length, 15, "Les 15 familles History V2, dont M1–M4, doivent rester enregistrées.");
 for (const retiredResource of ["history_calendar_month", "history_calendar_month_summary", "history_day_detail"]) {
   assert.equal(registry.includes(`\"${retiredResource}\"`), false, `${retiredResource} doit sortir du registre actif.`);
 }
@@ -151,7 +150,11 @@ const css = sources["src/features/history-v2/history-v2.module.css"];
 
 assert.match(calendar, /setTimeout\(\(\) => \{[^}]+setHoverOpen\(true\); \}, 300\)/);
 assert.match(calendar, /setTimeout\(\(\) => setHoverOpen\(false\), 125\)/);
-assert.match(shell, /setInterval\([^,]+, 7000\)/s);
+assert.match(shell, /narrativeCarousel/);
+assert.match(shell, /model\.highlights[\s\S]+legacy-event/, "Le code NEW doit continuer à présenter les highlights d'un snapshot OLD sans parser permissif.");
+assert.match(shell, /calendarFilterPresetRegistry/);
+assert.match(shell, /Débits/);
+assert.match(shell, /Dépenses/);
 assert.match(css, /animation: hover-in 150ms/);
 assert.match(css, /animation-duration: 210ms/);
 assert.match(css, /grid-template-columns: repeat\(7/);
@@ -162,12 +165,18 @@ assert.match(css, /overlayStandard[^}]+640px/s);
 assert.match(css, /overlayMoment[^}]+680px/s);
 assert.match(css, /overlayPlace[^}]+600px/s);
 assert.match(css, /prefers-reduced-motion: reduce/);
-assert.match(calendar, /items=\{day\.visibleMarkers\}/, "Month et Week doivent rendre l’ordre serveur sans retri.");
+assert.doesNotMatch(calendar, /items=\{day\.visibleMarkers\}/, "Le filtre ne doit jamais partir du préfixe visibleMarkers déjà tronqué.");
+assert.match(calendar, /day\.orderedMarkerGroups/);
+assert.match(calendar, /ordered\.filter/);
+assert.match(calendar, /filtered\.slice\(0, limit\)/, "React filtre l'ordre publié puis prend le préfixe Month/Week.");
+assert.doesNotMatch(calendar, /\.sort\(/, "React ne doit pas re-trier les Markers.");
+assert.match(calendar, /hidden\.status === "PARTIAL"[\s\S]+observés/, "Un overflow PARTIAL doit rester explicitement observé, jamais présenté comme total exact.");
 assert.match(calendar, /HistorySemanticIcon/, "Les iconKey Calendar doivent être projetées en icônes UI.");
 assert.doesNotMatch(calendar, />\s*\{(?:item|segment)\.iconKey\}\s*</, "Aucun iconKey ne doit être rendu comme texte visible.");
 assert.match(css, /-webkit-line-clamp: 2/, "Les titres Marker doivent être limités à deux lignes.");
 assert.match(calendar, /overflow\.items\.map/, "Le menu Ribbon doit rendre directement la collection serveur.");
 assert.match(calendar, /onTarget\(item\.targetRef\)/, "La navigation Ribbon doit consommer la cible serveur exacte.");
+assert.match(calendar, /onTarget\(segment\.targetRef\)/, "Les Ribbons visibles doivent eux aussi consommer targetRef.");
 assert.doesNotMatch(calendar, /overflow\.items[^\n]+(?:title|segmentStart)[^\n]+(?:find|filter)/, "React ne doit pas reconstruire l'identité Ribbon par titre/date.");
 assert.doesNotMatch(all, /\.sort\(/, "Aucun tri métier client n’est autorisé.");
 assert.doesNotMatch(all, /gaspillage|économie possible/i);
@@ -222,7 +231,15 @@ assert.match(overlay, /Ouvrir le Journal/, "Une occurrence d’activité datée 
 for (const label of ["Nécessité", "Fixe-Variable", "Contexte"]) assert.match(overlay, new RegExp(label));
 assert.match(overlay, /model\.classificationViews\[tab\]/, "Les tabs Category doivent rendre la projection serveur.");
 assert.doesNotMatch(overlay, /classificationViews[^\n]+(?:reduce|groupBy|sort)/, "React ne doit ni regrouper ni renormaliser les classifications.");
-assert.match(shell, /Ouvrir le Bilan du mois/, "Overview doit proposer le CTA Bilan uniquement depuis Calendar.");
+assert.doesNotMatch(shell, /Bilan du mois/, "La surface Calendar-centric ne doit plus exposer le Bilan.");
+assert.doesNotMatch(page, /BalanceMonthView|historyMinimalPreview/, "Le chargement initial ne doit plus monter le Bilan M1–M4.");
+assert.doesNotMatch(canonicalRoute, /historyMonthBalanceSummary|historyMonthCategories|historyMonthSpendingNature|historyMonthLifeMoney/, "La route Month ne doit charger que Calendar et Overview.");
+assert.match(canonicalRoute, /historyMonthOverview/);
+assert.match(canonicalRoute, /results\[1\]/);
+assert.match(routeState, /calendarFilterPresetRegistry/);
+assert.match(routeState, /parseHistoryCalendarFilters/);
+assert.match(page, /router\.replace/);
+assert.match(page, /scroll: false/);
 assert.match(sources["src/features/history-v2/balance-view.tsx"], /Publication incompatible/);
 assert.match(sources["src/features/history-v2/balance-view.tsx"], /publicationMetasAreCoherent/);
 assert.match(sources["src/features/history-v2/balance-view.tsx"], /bucket\.shareOfActual/, "M3 doit afficher shareOfActual publié par le serveur.");
@@ -238,26 +255,28 @@ assert.match(renderers, /status === "CONFLICT"/);
 assert.match(renderers, /visibility === "HIDDEN"/);
 assert.match(renderers, /visibility === "PLACEHOLDER"/);
 
-const uxIds = Array.from({ length: 132 }, (_, index) => `UX${String(index + 1).padStart(2, "0")}`);
-assert.equal(new Set(uxIds).size, 132);
-
-const groups = [
-  [1, 15, ["history-v2-page", "history-shell", "history-v2.module.css"]],
-  [16, 25, ["history-shell", "historyMonthOverview", "7000"]],
-  [26, 48, ["calendar-view", "historyMonthCalendar", "300", "125"]],
-  [49, 55, ["WeekView", "historyWeek", "weekStart"]],
-  [56, 65, ["JournalPanel", "historyDayJournal", "OverlayFrame"]],
-  [66, 73, ["BalanceMonthView", "historyMonthBalanceSummary", "historyMinimalPreview"]],
-  [74, 80, ["CategoryAnalysis", "historyMonthCategories", "historyCategoryDetail"]],
-  [81, 86, ["SpendingNature", "historyMonthSpendingNature", "historySpendingSegmentDetail"]],
-  [87, 106, ["LifeMoney", "historyMonthLifeMoney", "historyActivityDetail", "historyMomentDetail", "historyPlaceDetail"]],
-  [107, 121, ["HistoryOverlayHost", "historyV2Href", "aria-"]],
-  [122, 132, ["MetricState", "CollectionState", "DisplayState", "prefers-reduced-motion"]],
+const filterContract = read("src/core/history-v2/calendar-filter.ts");
+const calendarCentricRequirements = [
+  ["canonical route", canonicalRoute, /historyMonthCalendar[\s\S]+historyMonthOverview/],
+  ["week resources", canonicalRoute, /historyWeek[\s\S]+historyMonthOverview/],
+  ["single calendar surface", page, /initialState\.kind === "calendar"[\s\S]+initialState\.kind === "week"/],
+  ["Bilan absent from shell", shell, /narrativeCarousel/],
+  ["bank/economic header", shell, /Débits[\s\S]+Dépenses/],
+  ["manual and timed narrative carousel", shell, /setInterval[\s\S]+7_000/],
+  ["five presets", filterContract, /all:[\s\S]+daily:[\s\S]+highlights:[\s\S]+"exclude-fixed":[\s\S]+expenses:/],
+  ["ten authoritative tags", filterContract, /UNASSIGNED_TIMING/],
+  ["URL filters", routeState, /preset[\s\S]+show[\s\S]+amount/],
+  ["filter then prefix", calendar, /ordered\.filter[\s\S]+filtered\.slice\(0, limit\)/],
+  ["generic overlay", routeState, /historyDayJournal[\s\S]+historyMomentDetail[\s\S]+historyActivityDetail[\s\S]+historyPlaceDetail/],
+  ["one physical overlay", page, /<HistoryOverlayHost\b/],
+  ["month unassigned timing", calendar, /unassignedTiming/],
+  ["reduced motion", css, /prefers-reduced-motion: reduce/],
 ];
-for (const [from, to, proofs] of groups) {
-  for (const proof of proofs) assert.ok(all.includes(proof), `Preuve absente pour UX${from}–UX${to}: ${proof}`);
+for (const [label, source, proof] of calendarCentricRequirements) {
+  assert.match(source, proof, `Contrat Calendar-centric absent: ${label}.`);
 }
 
-console.log(`History V2 frontend resources: ${resources.length}/15`);
-console.log(`History V2 UX contracts: ${uxIds.length}/132`);
+console.log(`History V2 active Calendar-centric resources: ${surfaceResources.length}/7`);
+console.log(`History V2 retained logical resource contracts: ${retainedHistoryV2Resources.length}/15`);
+console.log(`History V2 Calendar-centric frontend contracts: ${calendarCentricRequirements.length}/${calendarCentricRequirements.length}`);
 console.log("HISTORY_V2_FRONTEND_CONTRACT_CHECK=PASS");

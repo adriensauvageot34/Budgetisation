@@ -354,18 +354,20 @@ function serializeHistoryRootNavigation(
       return "/historique";
     }
 
-    const params = new URLSearchParams({ view: "calendar" });
+    const params = new URLSearchParams();
     if (route.context.personId !== undefined) params.set("personId", route.context.personId);
     if (route.context.kind === "calendar_week") {
-      return `/historique/${route.context.month}?${params.toString()}`;
+      const query = params.toString();
+      return `/historique/${route.context.month}${query.length === 0 ? "" : `?${query}`}`;
     }
 
     if (route.context.day !== undefined) params.set("journal", route.context.day);
-    return `/historique/${route.context.month}?${params.toString()}`;
+    const query = params.toString();
+    return `/historique/${route.context.month}${query.length === 0 ? "" : `?${query}`}`;
   }
 
   if (route.context.kind === "analysis_month") {
-    return `/historique/${route.context.month}?view=bilan`;
+    return `/historique/${route.context.month}`;
   }
 
   const params = new URLSearchParams({

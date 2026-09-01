@@ -4,6 +4,7 @@ import type { ResourceInputHash } from "../../analytics/history-v2";
 import type { HouseholdId } from "../../core/identity";
 import type {
   CollectionValue,
+  CalendarFilterTag,
   DisplayNode,
   MetricValue,
   PolicyVersions,
@@ -65,6 +66,9 @@ export type CalendarItemSummary = {
   readonly participantIds: readonly string[];
   readonly externalParticipants: readonly string[];
   readonly sourceRefs: readonly SourceRef[];
+  readonly filterTags: readonly CalendarFilterTag[];
+  readonly itemKind: "LIFE" | "ECONOMIC";
+  readonly targetRef?: QueryTargetRef;
   readonly quality?: QualityEnvelope;
 };
 
@@ -82,9 +86,12 @@ export type EconomicExpenseSummary = {
   readonly quality?: QualityEnvelope;
 };
 
+export type UnassignedEconomicExpenseSummary = Omit<EconomicExpenseSummary, "economicDate">;
+
 export type DayHoverReadModel = {
   readonly date: LocalDate;
   readonly economicAmount: MetricNode<Money>;
+  readonly economicAmountExcludingFixed: MetricNode<Money>;
   readonly contexts: CollectionNode<PersonContextSummary>;
   readonly calendarEvents: CollectionNode<CalendarItemSummary>;
   readonly activeRibbons: CollectionNode<CalendarItemSummary>;
@@ -113,6 +120,7 @@ export type MonthCalendarDayReadModel = {
   readonly inSelectedMonth: boolean;
   readonly targetMonth: YearMonth;
   readonly economicAmount: MetricNode<Money>;
+  readonly economicAmountExcludingFixed: MetricNode<Money>;
   readonly personContexts: Readonly<Record<string, DisplayNode<PersonContextSummary>>>;
   readonly orderedMarkerGroups: CollectionValue<CalendarItemSummary>;
   readonly visibleMarkers: readonly CalendarItemSummary[];
@@ -132,6 +140,9 @@ export type RibbonSegmentReadModel = {
   readonly lane: 1 | 2 | 3 | 4;
   readonly title: string;
   readonly iconKey: string;
+  readonly eventStartDate: LocalDate;
+  readonly eventEndDate: LocalDate;
+  readonly targetRef: QueryTargetRef;
   readonly sourceRefs: readonly SourceRef[];
 };
 
@@ -161,10 +172,19 @@ export type MonthCalendarReadModel = HistoryV2ReadModelMeta & {
   readonly daysByDate: Readonly<Record<string, MonthCalendarDayReadModel>>;
   readonly ribbonSegments: CollectionValue<RibbonSegmentReadModel>;
   readonly ribbonOverflow: CollectionValue<RibbonOverflowReadModel>;
+  readonly unassignedTiming: DisplayNode<MonthUnassignedTimingSummary>;
   readonly quickOverviewRef: QueryTargetRef;
   readonly sourceRefs: readonly SourceRef[];
   readonly capabilities: QueryCapabilities;
   readonly quality?: QualityEnvelope;
+};
+
+export type MonthUnassignedTimingSummary = {
+  readonly count: MetricValue<number>;
+  readonly amount: MetricNode<Money>;
+  readonly topExpenses: CollectionNode<UnassignedEconomicExpenseSummary>;
+  readonly hiddenCount: MetricValue<number>;
+  readonly sourceRefs: readonly SourceRef[];
 };
 
 export type WeekDayReadModel = Omit<
@@ -327,12 +347,44 @@ export type MonthHighlightReadModel = {
   readonly quality?: QualityEnvelope;
 };
 
+export type EventNarrativeCard = {
+  readonly cardId: string;
+  readonly kind: "EVENT";
+  readonly title: string;
+  readonly startDate: LocalDate;
+  readonly endDate?: LocalDate;
+  readonly placeLabel?: string;
+  readonly iconKey: string;
+  readonly imageRef?: string;
+  readonly causalCost: MetricNode<Money>;
+  readonly targetRef: QueryTargetRef;
+  readonly sourceRefs: readonly SourceRef[];
+  readonly quality?: QualityEnvelope;
+};
+
+export type PlaceNarrativeCard = {
+  readonly cardId: string;
+  readonly kind: "PLACE";
+  readonly title: string;
+  readonly presenceDays?: number;
+  readonly visitCount?: number;
+  readonly localizedAmount: MetricNode<Money>;
+  readonly iconKey: string;
+  readonly imageRef?: string;
+  readonly targetRef: QueryTargetRef;
+  readonly sourceRefs: readonly SourceRef[];
+  readonly quality?: QualityEnvelope;
+};
+
+export type MonthNarrativeCard = EventNarrativeCard | PlaceNarrativeCard;
+
 export type MonthQuickOverviewReadModel = HistoryV2ReadModelMeta & {
   readonly householdId: HouseholdId;
   readonly month: YearMonth;
   readonly flows: MonthOverviewFlows;
   readonly lifeMarkers: CollectionNode<LifeMarkerReadModel>;
   readonly highlights: CollectionNode<MonthHighlightReadModel>;
+  readonly narrativeCarousel: CollectionNode<MonthNarrativeCard>;
   readonly totalEligibleHighlights: MetricValue<number>;
   readonly sourceRefs: readonly SourceRef[];
   readonly capabilities: QueryCapabilities;

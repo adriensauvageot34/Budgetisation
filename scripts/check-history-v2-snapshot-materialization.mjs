@@ -626,6 +626,44 @@ check(() => assert.deepEqual(legacySignatures, {
   history_month_spending_nature: "eff62c4ef7fbcbefe71c464fbad70e3c5bd21fcb8dabc905958ae9aef221e58c",
   history_spending_segment_detail: "550a1a06485319de31f22ed2f53b22c35ebd8213b1d1c18347619aa60cdc7f30",
 }));
+const calendarCentricOldSignatures = Object.fromEntries([
+  "history_month_calendar",
+  "history_week",
+  "history_day_journal",
+  "history_month_overview",
+  "history_month_life_money",
+  "history_activity_detail",
+  "history_moment_detail",
+  "history_place_detail",
+].map((resource) => [
+  resource,
+  identity.historyV2AcceptedMethodSignatures(resource).find(({ contractVariant }) => contractVariant === "history_v2_calendar_centric_old")?.methodSignature,
+]));
+check(() => assert.deepEqual(calendarCentricOldSignatures, {
+  history_activity_detail: "73cd3766389ff6b7256c01a598e448ef72c98be84856609e1b1a991c86e0c416",
+  history_day_journal: "5072f04a7cfa455073d823f5b1737a03a930f7282fc023b5ae3215160a0137c0",
+  history_moment_detail: "e89ff71e251d902fae4619822b0aa4ac6543f79124daa415811a5b497f1f88a4",
+  history_month_calendar: "62416a0294ce7e8bb08b1f92a2083854322404cf495a3682f214cfc52beee44c",
+  history_month_life_money: "fe3bf74c367562f6dcc9b14fad0627c323d0a22d7db69f2658b8b3b3ba4934b8",
+  history_month_overview: "d089ff6d4d3aab473e30fe2b6b4c4aa4c0c3332813db3f9f59b8fc0ca0dcf675",
+  history_place_detail: "f4726916eac3956838912135bc22280e092e555fb899c0c23ad7cd94a51eb3c8",
+  history_week: "488a70d46bac6b6cd0bf657eb616e00b56d6a8f38a83094dc4b3e01d430b946b",
+}));
+const calendarCentricCurrentSignatures = Object.fromEntries(
+  materialization.historyV2QueryResources.map((resource) => [
+    resource,
+    identity.historyV2AcceptedMethodSignatures(resource).find(({ contractVariant }) => contractVariant === "current")?.methodSignature,
+  ]),
+);
+check(() => {
+  assert.ok(Object.values(calendarCentricCurrentSignatures).every((signature) => /^[0-9a-f]{64}$/u.test(signature)));
+  for (const [resource, oldSignature] of Object.entries(calendarCentricOldSignatures)) {
+    assert.notEqual(calendarCentricCurrentSignatures[resource], oldSignature, `${resource} doit changer de signature avec calendar_semantics@v3.`);
+  }
+});
+if (process.env.HISTORY_CC_PRINT_SIGNATURES === "1") {
+  console.log(JSON.stringify({ old: calendarCentricOldSignatures, current: calendarCentricCurrentSignatures }, null, 2));
+}
 
 const transitionContext = {
   ...runtimeContext,

@@ -1,10 +1,13 @@
 import { Temporal } from "@js-temporal/polyfill";
 
 import { computeArtifactInputHash } from "../facts-hash";
+import { emptyCalendarEconomicProjection } from "../calendar-economic/engine";
 import { addDays, addMonths, parseLocalDate } from "../../../core/time";
 import type { LocalDate } from "../../../core/time";
 import {
   assertCalendarCatalogsExhaustive,
+  lifeEventFilterTags,
+  momentFilterTags,
   requireLifeEventCatalogEntry,
   requireMomentCatalogEntry,
   type CalendarCatalogEntry,
@@ -34,9 +37,9 @@ type InternalItem = {
 
 const defaultAuthority = Object.freeze({
   kind: "DERIVED" as const,
-  authority: "calendar_semantics@v2",
+  authority: "calendar_semantics@v3",
   methodId: "calendar-semantic-engine",
-  methodVersion: "v2",
+  methodVersion: "v3",
 });
 
 function sortedUnique<T extends string>(values: readonly T[]): readonly T[] {
@@ -146,6 +149,8 @@ function lifeEventItem(
     calendarItemId: sourceRef,
     sourceKind: "life_event",
     sourceRefs: [sourceRef],
+    filterTags: lifeEventFilterTags(source.typeKey as import("./catalog").LifeEventActivityTypeKey),
+    itemKind: "LIFE",
     semanticTypeKey: source.typeKey,
     ...resolvedTitle,
     iconKey: catalog.iconKey,
@@ -203,6 +208,8 @@ function momentItem(source: CalendarMomentSource, issues: string[]): InternalIte
       calendarItemId: sourceRef,
       sourceKind: "moment",
       sourceRefs: [sourceRef],
+      filterTags: momentFilterTags(catalog.normalizedKey as import("./catalog").MomentNormalizedKey),
+      itemKind: "LIFE",
       semanticTypeKey: catalog.normalizedKey,
       ...title,
       iconKey: catalog.iconKey,
@@ -579,6 +586,10 @@ function contextItems(input: CalendarSemanticEngineInput): InternalItem[] {
         calendarItemId: sourceRef,
         sourceKind: "context" as const,
         sourceRefs: [sourceRef],
+        filterTags: source.typeKey === "travail_site" || source.typeKey === "teletravail" || source.typeKey === "deplacement_pro"
+          ? ["WORK"]
+          : [],
+        itemKind: "LIFE" as const,
         semanticTypeKey: source.typeKey,
         title: source.title ?? source.typeKey,
         titleKind: source.title === undefined ? "GENERIC_FALLBACK" as const : "EXPLICIT_HUMAN" as const,
@@ -622,9 +633,10 @@ export function buildCalendarSemanticMonthArtifact(
       days: [],
       ribbonWeeks: [],
       semanticIssues: ["DATA_NO_SOURCE"],
+      economicProjection: emptyCalendarEconomicProjection({ householdId: input.householdId, month: input.month }),
       sourceScope: { monthStart, monthEnd, includesItemsIntersectingMonth: true },
       dependencyPolicies: {
-        canonical_continuity: "v1", calendar_semantics: "v1",
+        canonical_continuity: "v1", calendar_semantics: "v3", calendar_amount_views: "v1",
         quality_visibility: "v1", facts_hash: "v1",
       },
       artifactInputHash: computeArtifactInputHash({ identity: `calendar_semantic_month:${input.householdId}:${input.month}`, facts: [] }),
@@ -663,9 +675,10 @@ export function buildCalendarSemanticMonthArtifact(
     days: buildDays(normalized, monthStart, monthEnd, input.sourceCompleteness),
     ribbonWeeks: buildRibbonWeeks(items, monthStart, monthEnd),
     semanticIssues: sortedUnique(issues),
+    economicProjection: emptyCalendarEconomicProjection({ householdId: input.householdId, month: input.month }),
     sourceScope: { monthStart, monthEnd, includesItemsIntersectingMonth: true },
     dependencyPolicies: {
-      canonical_continuity: "v1", calendar_semantics: "v1",
+      canonical_continuity: "v1", calendar_semantics: "v3", calendar_amount_views: "v1",
       quality_visibility: "v1", facts_hash: "v1",
     },
     artifactInputHash: computeArtifactInputHash({

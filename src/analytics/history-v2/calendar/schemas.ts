@@ -1,6 +1,7 @@
 import {
   createCollectionValueSchema,
   createMetricValueSchema,
+  parseCalendarFilterTag,
   parseProvenance,
   parseQualityEnvelope,
 } from "../../../core/history-v2";
@@ -13,6 +14,8 @@ import {
   type UnknownRecord,
 } from "../../../core/validation";
 import { parseLocalDate, parseYearMonth } from "../../../core/time";
+import { parseMoney } from "../../../core/money";
+import { parseHouseholdId } from "../../../core/identity";
 import { parseArtifactInputHash } from "../facts-hash";
 import type {
   CalendarRibbonSegment,
@@ -22,7 +25,7 @@ import type {
 } from "./types";
 
 const renderModes = new Set(["Context", "Marker", "Ribbon", "DetailOnly"]);
-const sourceKinds = new Set(["life_event", "moment", "fused", "context", "aggregate"]);
+const sourceKinds = new Set(["life_event", "moment", "fused", "context", "aggregate", "economic"]);
 const titleKinds = new Set(["EXPLICIT_HUMAN", "GENERATED_WITH_PLACE", "GENERIC_FALLBACK"]);
 const markerTiers = new Set(["Dominant", "Standard", "Secondary"]);
 const spanBehaviors = new Set(["POINT", "DAILY_CONTEXT", "AUTO_CONTINUOUS", "EXPLICIT_CONTINUITY", "PROJECT_PERIOD", "INCIDENT_PERIOD"]);
@@ -53,10 +56,11 @@ function optionalDate(record: UnknownRecord, key: string) {
 
 const continuitySchema = createMetricValueSchema(createRuntimeSchema((value) =>
   parseStringLiteral<ContinuityQualifier>(value, qualifiers, "ContinuityQualifier")));
+const moneyMetricSchema = createMetricValueSchema(createRuntimeSchema(parseMoney));
 
 export const calendarSemanticItemSchema = createRuntimeSchema((value: unknown): CalendarSemanticItem => {
   const record = parseStrictRecord(value, [
-    "calendarItemId", "sourceKind", "sourceRefs", "semanticTypeKey", "title", "titleKind",
+    "calendarItemId", "sourceKind", "sourceRefs", "filterTags", "itemKind", "semanticTypeKey", "title", "titleKind",
     "iconKey", "renderMode", "markerTier", "priorityBand", "priorityWeight", "spanBehavior",
     "continuityQualifier", "anchorDate", "startDate", "endDate", "startTime",
     "householdParticipants", "externalParticipants", "parentItemId", "memberSourceIds",
@@ -80,6 +84,14 @@ export const calendarSemanticItemSchema = createRuntimeSchema((value: unknown): 
     calendarItemId: stringValue(requireProperty(record, "calendarItemId", "CalendarSemanticItem"), "calendarItemId"),
     sourceKind: parseStringLiteral(requireProperty(record, "sourceKind", "CalendarSemanticItem"), sourceKinds, "sourceKind"),
     sourceRefs: stringArray(requireProperty(record, "sourceRefs", "CalendarSemanticItem"), "sourceRefs"),
+    filterTags: (() => {
+      const tags = requireProperty(record, "filterTags", "CalendarSemanticItem");
+      if (!Array.isArray(tags)) throw new TypeError("CalendarSemanticItem.filterTags doit être un tableau.");
+      const parsed = tags.map(parseCalendarFilterTag);
+      if (new Set(parsed).size !== parsed.length) throw new TypeError("CalendarSemanticItem.filterTags contient un doublon.");
+      return parsed;
+    })(),
+    itemKind: parseStringLiteral(requireProperty(record, "itemKind", "CalendarSemanticItem"), new Set(["LIFE", "ECONOMIC"]), "itemKind"),
     semanticTypeKey: stringValue(requireProperty(record, "semanticTypeKey", "CalendarSemanticItem"), "semanticTypeKey"),
     title: stringValue(requireProperty(record, "title", "CalendarSemanticItem"), "title"),
     titleKind: parseStringLiteral(requireProperty(record, "titleKind", "CalendarSemanticItem"), titleKinds, "titleKind"),
@@ -141,7 +153,7 @@ function parseRibbonOverflowSegment(value: unknown) {
 }
 
 export const calendarSemanticMonthArtifactSchema = createRuntimeSchema((value: unknown): CalendarSemanticMonthArtifact => {
-  const record = parseStrictRecord(value, ["artifactFamily", "householdId", "month", "items", "days", "ribbonWeeks", "semanticIssues", "sourceScope", "dependencyPolicies", "artifactInputHash"], "CalendarSemanticMonthArtifact");
+  const record = parseStrictRecord(value, ["artifactFamily", "householdId", "month", "items", "days", "ribbonWeeks", "semanticIssues", "economicProjection", "sourceScope", "dependencyPolicies", "artifactInputHash"], "CalendarSemanticMonthArtifact");
   if (requireProperty(record, "artifactFamily", "CalendarSemanticMonthArtifact") !== "calendar_semantic_month") throw new TypeError("artifactFamily calendrier invalide.");
   const days = requireProperty(record, "days", "CalendarSemanticMonthArtifact");
   const weeks = requireProperty(record, "ribbonWeeks", "CalendarSemanticMonthArtifact");
@@ -194,15 +206,60 @@ export const calendarSemanticMonthArtifactSchema = createRuntimeSchema((value: u
       ribbonOverflow,
     };
   });
+  const projectionRecord = parseStrictRecord(
+    requireProperty(record, "economicProjection", "CalendarSemanticMonthArtifact"),
+    ["householdId", "month", "markers", "days", "unassignedComponentKeys", "issues", "dependencyPolicies", "projectionInputHash"],
+    "CalendarEconomicProjection",
+  );
+  const projectionDays = requireProperty(projectionRecord, "days", "CalendarEconomicProjection");
+  const unassignedComponentKeys = requireProperty(projectionRecord, "unassignedComponentKeys", "CalendarEconomicProjection");
+  const projectionIssues = requireProperty(projectionRecord, "issues", "CalendarEconomicProjection");
+  if (!Array.isArray(projectionDays) || !Array.isArray(unassignedComponentKeys) || !Array.isArray(projectionIssues)) {
+    throw new TypeError("Collections CalendarEconomicProjection invalides.");
+  }
+  const projectionPoliciesRecord = parseStrictRecord(
+    requireProperty(projectionRecord, "dependencyPolicies", "CalendarEconomicProjection"),
+    ["calendar_amount_views", "canonical_component_classification", "daily_economic_allocation", "quality_visibility", "facts_hash"],
+    "CalendarEconomicProjection.dependencyPolicies",
+  );
+  const projectionPolicies = {
+    calendar_amount_views: parseStringLiteral<"v1">(requireProperty(projectionPoliciesRecord, "calendar_amount_views", "CalendarEconomicProjection.dependencyPolicies"), new Set(["v1"]), "calendar_amount_views"),
+    canonical_component_classification: parseStringLiteral<"v1">(requireProperty(projectionPoliciesRecord, "canonical_component_classification", "CalendarEconomicProjection.dependencyPolicies"), new Set(["v1"]), "canonical_component_classification"),
+    daily_economic_allocation: parseStringLiteral<"v1">(requireProperty(projectionPoliciesRecord, "daily_economic_allocation", "CalendarEconomicProjection.dependencyPolicies"), new Set(["v1"]), "daily_economic_allocation"),
+    quality_visibility: parseStringLiteral<"v1">(requireProperty(projectionPoliciesRecord, "quality_visibility", "CalendarEconomicProjection.dependencyPolicies"), new Set(["v1"]), "quality_visibility"),
+    facts_hash: parseStringLiteral<"v1">(requireProperty(projectionPoliciesRecord, "facts_hash", "CalendarEconomicProjection.dependencyPolicies"), new Set(["v1"]), "facts_hash"),
+  } as const;
+  const economicProjection = {
+    householdId: parseHouseholdId(requireProperty(projectionRecord, "householdId", "CalendarEconomicProjection")),
+    month: parseYearMonth(requireProperty(projectionRecord, "month", "CalendarEconomicProjection")),
+    markers: calendarSemanticItemsSchema.parse(requireProperty(projectionRecord, "markers", "CalendarEconomicProjection")),
+    days: projectionDays.map((entry) => {
+      const day = parseStrictRecord(entry, ["date", "economicAmountExcludingFixed"], "CalendarEconomicDayProjection");
+      return {
+        date: parseLocalDate(requireProperty(day, "date", "CalendarEconomicDayProjection")),
+        economicAmountExcludingFixed: moneyMetricSchema.parse(requireProperty(day, "economicAmountExcludingFixed", "CalendarEconomicDayProjection")),
+      };
+    }),
+    unassignedComponentKeys: stringArray(unassignedComponentKeys, "unassignedComponentKeys"),
+    issues: stringArray(projectionIssues, "issues"),
+    dependencyPolicies: projectionPolicies,
+    projectionInputHash: parseArtifactInputHash(requireProperty(projectionRecord, "projectionInputHash", "CalendarEconomicProjection")),
+  };
   // Remaining strict substructures are produced by the engine and JSON-safe; validate their required discriminants.
   const month = parseYearMonth(requireProperty(record, "month", "CalendarSemanticMonthArtifact"));
+  const householdId = parseHouseholdId(requireProperty(record, "householdId", "CalendarSemanticMonthArtifact"));
+  if (economicProjection.month !== month || economicProjection.householdId !== householdId) {
+    throw new TypeError("CalendarEconomicProjection doit appartenir au même foyer et au même mois que l'artifact Calendar.");
+  }
   const artifact = value as CalendarSemanticMonthArtifact;
   return {
     ...artifact,
+    householdId,
     month,
     items: parsedItems,
     days: parsedDays,
     ribbonWeeks: parsedWeeks,
+    economicProjection,
     artifactInputHash: parseArtifactInputHash(
       requireProperty(record, "artifactInputHash", "CalendarSemanticMonthArtifact"),
     ),

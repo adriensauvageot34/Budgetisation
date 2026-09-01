@@ -1,18 +1,15 @@
 import type { Metadata } from "next";
-import { notFound } from "next/navigation";
-import { parseLocalDate, parseYearMonth, type YearMonth } from "@/core/time";
+import { notFound, redirect } from "next/navigation";
+import { addDays, parseLocalDate, parseYearMonth, yearMonthOf, type YearMonth } from "@/core/time";
 import type {
   MonthCalendarReadModel,
+  MonthQuickOverviewReadModel,
   WeekReadModel,
-  MonthBalanceSummaryReadModel,
-  MonthCategoriesReadModel,
-  MonthSpendingNatureReadModel,
-  MonthLifeMoneyReadModel,
 } from "@/query-api";
 import { queryResourceKeys } from "@/query-api";
 import { executeAuthenticatedQueries } from "@/server/query/runtime";
 import { queryResultToState, withProductAuthentication } from "@/app/product-query";
-import { HistoryV2Page, parseHistoryOverlaySearch, type HistoryV2InitialState, type HistoryV2View } from "@/features/history-v2";
+import { HistoryV2Page, parseHistoryCalendarFilters, parseHistoryOverlaySearch, type HistoryV2InitialState } from "@/features/history-v2";
 
 export const metadata: Metadata = { title: "Historique" };
 export const dynamic = "force-dynamic";
@@ -39,37 +36,29 @@ export default async function HistoryMonthRoute({
   } catch {
     notFound();
   }
-  const view: HistoryV2View = first(rawSearch.view) === "balance" ? "balance" : "calendar";
-  const scope = { subject: { kind: "household" as const }, time: { kind: "month" as const, month } };
-  let initialState: HistoryV2InitialState;
-
-  if (view === "calendar") {
-    const resource = weekStart === undefined
-      ? queryResourceKeys.historyMonthCalendar
-      : queryResourceKeys.historyWeek;
-    const [result] = await withProductAuthentication(() => executeAuthenticatedQueries([{
-      resource,
-      scope,
-      params: weekStart === undefined ? {} : { weekStart },
-    }]));
-    initialState = weekStart === undefined
-      ? { kind: "calendar", state: queryResultToState<MonthCalendarReadModel>(result!) }
-      : { kind: "week", weekStart, state: queryResultToState<WeekReadModel>(result!) };
-  } else {
-    const results = await withProductAuthentication(() => executeAuthenticatedQueries([
-      { resource: queryResourceKeys.historyMonthBalanceSummary, scope, params: {} },
-      { resource: queryResourceKeys.historyMonthCategories, scope, params: {} },
-      { resource: queryResourceKeys.historyMonthSpendingNature, scope, params: {} },
-      { resource: queryResourceKeys.historyMonthLifeMoney, scope, params: {} },
-    ]));
-    initialState = {
-      kind: "balance",
-      summary: queryResultToState<MonthBalanceSummaryReadModel>(results[0]!),
-      categories: queryResultToState<MonthCategoriesReadModel>(results[1]!),
-      spendingNature: queryResultToState<MonthSpendingNatureReadModel>(results[2]!),
-      lifeMoney: queryResultToState<MonthLifeMoneyReadModel>(results[3]!),
-    };
+  if (first(rawSearch.view) !== undefined) {
+    const canonical = new URLSearchParams();
+    for (const [key, rawValue] of Object.entries(rawSearch)) {
+      if (key === "view" || rawValue === undefined) continue;
+      for (const value of Array.isArray(rawValue) ? rawValue : [rawValue]) canonical.append(key, value);
+    }
+    const suffix = canonical.toString();
+    redirect(`/historique/${month}${suffix.length === 0 ? "" : `?${suffix}`}`);
   }
+  const referenceMonth = weekStart === undefined ? month : yearMonthOf(addDays(weekStart, 3));
+  const scope = { subject: { kind: "household" as const }, time: { kind: "month" as const, month: referenceMonth } };
+  let initialState: HistoryV2InitialState;
+  const resource = weekStart === undefined
+    ? queryResourceKeys.historyMonthCalendar
+    : queryResourceKeys.historyWeek;
+  const results = await withProductAuthentication(() => executeAuthenticatedQueries([
+    { resource, scope, params: weekStart === undefined ? {} : { weekStart } },
+    { resource: queryResourceKeys.historyMonthOverview, scope, params: {} },
+  ]));
+  const overview = queryResultToState<MonthQuickOverviewReadModel>(results[1]!);
+  initialState = weekStart === undefined
+    ? { kind: "calendar", state: queryResultToState<MonthCalendarReadModel>(results[0]!), overview }
+    : { kind: "week", weekStart, state: queryResultToState<WeekReadModel>(results[0]!), overview };
 
-  return <HistoryV2Page month={month} view={view} initialState={initialState} initialOverlay={parseHistoryOverlaySearch(rawSearch)} />;
+  return <HistoryV2Page month={referenceMonth} view="calendar" filters={parseHistoryCalendarFilters(rawSearch)} initialState={initialState} initialOverlay={parseHistoryOverlaySearch(rawSearch)} />;
 }

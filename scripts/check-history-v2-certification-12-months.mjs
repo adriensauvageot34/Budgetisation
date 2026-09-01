@@ -202,8 +202,9 @@ const calendarArtifacts = [];
 const dailyArtifacts = [];
 for (const month of artifactMonths) {
   console.error(`history_v2_artifacts ${month}`);
-  calendarArtifacts.push(await monthlyEngines.buildCalendarSemanticMonthFromCanonical(repository, month));
-  dailyArtifacts.push(await monthlyEngines.buildDailyEconomicLedgerMonthFromCanonical(repository, month));
+  const ledger = await monthlyEngines.buildDailyEconomicLedgerMonthFromCanonical(repository, month);
+  dailyArtifacts.push(ledger);
+  calendarArtifacts.push(await monthlyEngines.buildCalendarCentricMonthFromCanonical(repository, month, ledger));
 }
 const calendarByMonth = new Map(calendarArtifacts.map((artifact) => [artifact.month, artifact]));
 const dailyByMonth = new Map(dailyArtifacts.map((artifact) => [artifact.month, artifact]));
@@ -972,6 +973,14 @@ function buildReadModel(data, request) {
         bankInflows: { status: "KNOWN", value: journalSupplement(data).bankInflows },
         causalCostByCalendarItemId: causalCostByCalendarItem(data),
         explicitIncidentHighlights: [],
+        narrativePlaces: placeState(data).summaries.slice(0, 4).map((place) => ({
+          placeId: place.placeId,
+          title: place.label,
+          ...(place.presenceDays === undefined ? {} : { presenceDays: place.presenceDays }),
+          localizedAmount: place.localizedAmount,
+          iconKey: "place",
+          sourceRefs: place.sourceRefs,
+        })),
       });
     }
     case "history_month_balance_summary": {

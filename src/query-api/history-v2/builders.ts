@@ -59,6 +59,8 @@ import type {
   MonthCalendarReadModel,
   MonthHighlightReadModel,
   MonthQuickOverviewReadModel,
+  MonthNarrativeCard,
+  MonthUnassignedTimingSummary,
   MonthWeekRow,
   ParticipantSummary,
   PersonContextSummary,
@@ -68,6 +70,7 @@ import type {
   RibbonSegmentReadModel,
   SourceRef,
   TechnicalMovementSummary,
+  UnassignedEconomicExpenseSummary,
   WeekDayReadModel,
   WeekReadModel,
 } from "./types";
@@ -138,6 +141,16 @@ export type MonthOverviewSupplement = {
   readonly imageRefByCalendarItemId?: Readonly<Record<string, string>>;
   readonly placeByCalendarItemId?: Readonly<Record<string, string>>;
   readonly explicitIncidentHighlights: readonly ExplicitIncidentHighlight[];
+  readonly narrativePlaces?: readonly {
+    readonly placeId: string;
+    readonly title: string;
+    readonly presenceDays?: number;
+    readonly visitCount?: number;
+    readonly localizedAmount: MetricValue<Money>;
+    readonly iconKey: string;
+    readonly imageRef?: string;
+    readonly sourceRefs: readonly SourceRef[];
+  }[];
 };
 
 function uniqueStrings(values: readonly string[]): readonly string[] {
@@ -161,6 +174,19 @@ function sourceRefsForItem(item: CalendarSemanticItem): readonly SourceRef[] {
   return uniqueSourceRefs(item.sourceRefs.map(parseArtifactSourceRef));
 }
 
+function targetForCalendarItem(item: CalendarSemanticItem): QueryTargetRef | undefined {
+  const momentId = item.sourceRefs.map(parseArtifactSourceRef).find(({ kind }) => kind === "moment")?.id;
+  if (momentId !== undefined) return target(queryResourceKeys.historyMomentDetail, { momentId });
+  if (item.itemKind === "ECONOMIC" && item.anchorDate !== undefined) {
+    return target(queryResourceKeys.historyDayJournal, { date: item.anchorDate });
+  }
+  if (item.itemKind === "LIFE" && item.semanticTypeKey.length > 0) {
+    return target(queryResourceKeys.historyActivityDetail, { activityTypeKey: item.semanticTypeKey });
+  }
+  const date = item.anchorDate ?? item.startDate;
+  return date === undefined ? undefined : target(queryResourceKeys.historyDayJournal, { date });
+}
+
 function calendarSummary(item: CalendarSemanticItem): CalendarItemSummary {
   return {
     calendarItemId: item.calendarItemId,
@@ -182,6 +208,9 @@ function calendarSummary(item: CalendarSemanticItem): CalendarItemSummary {
     participantIds: item.householdParticipants,
     externalParticipants: item.externalParticipants ?? [],
     sourceRefs: sourceRefsForItem(item),
+    filterTags: item.filterTags,
+    itemKind: item.itemKind,
+    ...(targetForCalendarItem(item) === undefined ? {} : { targetRef: targetForCalendarItem(item)! }),
     ...(item.quality === undefined ? {} : { quality: item.quality }),
   };
 }
@@ -280,6 +309,15 @@ function dailyAmount(
     status: "UNKNOWN",
     quality: { reasonCode: "DATA_NO_SOURCE" },
   };
+}
+
+function dailyAmountExcludingFixed(
+  artifacts: ReadonlyMap<YearMonth, CalendarSemanticMonthArtifact>,
+  date: LocalDate,
+): MetricValue<Money> {
+  return artifacts.get(yearMonthOf(date))?.economicProjection.days
+    .find((candidate) => candidate.date === date)?.economicAmountExcludingFixed
+    ?? { status: "UNKNOWN", quality: { reasonCode: "DATA_NO_SOURCE" } };
 }
 
 function itemCovers(item: CalendarSemanticItem, date: LocalDate): boolean {
@@ -455,6 +493,7 @@ function target(resource: QueryTargetRef["resource"], params: Record<string, str
 function hoverForDay(input: {
   readonly date: LocalDate;
   readonly amount: MetricValue<Money>;
+  readonly amountExcludingFixed: MetricValue<Money>;
   readonly contexts: CollectionValue<PersonContextSummary>;
   readonly markers: CollectionValue<CalendarItemSummary>;
   readonly ribbons: CollectionValue<CalendarItemSummary>;
@@ -474,6 +513,7 @@ function hoverForDay(input: {
   return {
     date: input.date,
     economicAmount: metricNode(input.amount, "CORE"),
+    economicAmountExcludingFixed: metricNode(input.amountExcludingFixed, "CORE"),
     contexts: collectionNode(input.contexts, "DETAIL"),
     calendarEvents: collectionNode(input.markers, "DETAIL"),
     activeRibbons: collectionNode(input.ribbons, "DETAIL"),
@@ -514,6 +554,7 @@ function dayReadModel(
         }
       : { status: "KNOWN", items: ribbons.map(calendarSummary), totalCount: ribbons.length };
   const amount = dailyAmount(daily, date);
+  const amountExcludingFixed = dailyAmountExcludingFixed(calendars, date);
   const expenses = expenseSummariesForDate(daily.get(yearMonthOf(date)), date, descriptors);
   const personContexts = Object.fromEntries(
     (contexts.status === "KNOWN" || contexts.status === "PARTIAL" ? contexts.items : [])
@@ -534,6 +575,7 @@ function dayReadModel(
     inSelectedMonth: yearMonthOf(date) === selectedMonth,
     targetMonth: yearMonthOf(date),
     economicAmount: metricNode(amount, "CORE"),
+    economicAmountExcludingFixed: metricNode(amountExcludingFixed, "CORE"),
     personContexts,
     orderedMarkerGroups: orderedMarkers,
     visibleMarkers,
@@ -544,6 +586,7 @@ function dayReadModel(
       data: hoverForDay({
         date,
         amount,
+        amountExcludingFixed,
         contexts,
         markers: orderedMarkers,
         ribbons: ribbonCollection,
@@ -665,6 +708,9 @@ function ribbonProjection(
           lane: segment.lane,
           title: item.title,
           iconKey: item.iconKey,
+          eventStartDate: item.startDate ?? item.anchorDate ?? weekStart,
+          eventEndDate: item.endDate ?? item.anchorDate ?? weekStart,
+          targetRef: targetForCalendarItem(item) ?? target(queryResourceKeys.historyDayJournal, { date: segment.segmentStart }),
           sourceRefs: sourceRefsForItem(item),
         });
       }
@@ -690,7 +736,7 @@ function ribbonProjection(
           iconKey: item.iconKey,
           segmentStart: segment.segmentStart,
           segmentEnd: segment.segmentEnd,
-          targetRef: target(queryResourceKeys.historyDayJournal, { date: segment.segmentStart }),
+          targetRef: targetForCalendarItem(item) ?? target(queryResourceKeys.historyDayJournal, { date: segment.segmentStart }),
           sourceRefs: sourceRefsForItem(item),
         });
       }
@@ -708,6 +754,59 @@ function ribbonProjection(
   };
 }
 
+function buildUnassignedTimingSummary(
+  context: HistoryV2ReadModelBuilderContext,
+  ledger: DailyEconomicLedgerMonthArtifact | undefined,
+): MonthUnassignedTimingSummary {
+  if (ledger === undefined) {
+    return {
+      count: { status: "UNKNOWN", quality: { reasonCode: "DATA_NO_SOURCE" } },
+      amount: metricNode({ status: "UNKNOWN", quality: { reasonCode: "DATA_NO_SOURCE" } }, "DETAIL"),
+      topExpenses: collectionNode({ status: "UNKNOWN", quality: { reasonCode: "DATA_NO_SOURCE" } }, "DETAIL"),
+      hiddenCount: { status: "UNKNOWN", quality: { reasonCode: "DATA_NO_SOURCE" } },
+      sourceRefs: [],
+    };
+  }
+  const descriptors = new Map(context.expenseDescriptors.map((entry) => [entry.expenseEventId, entry]));
+  let missingDescriptor = false;
+  const expenses = ledger.expenseEvents.flatMap((event): UnassignedEconomicExpenseSummary[] => {
+    if (event.effectiveEconomicDate.status === "KNOWN" || compareMoney(event.economicAmount, zero) <= 0) return [];
+    const descriptor = descriptors.get(event.expenseEventId);
+    if (descriptor === undefined) {
+      missingDescriptor = true;
+      return [];
+    }
+    return [{
+      expenseEventId: event.expenseEventId,
+      label: descriptor.label,
+      eventKind: event.kind === "CANONICAL_CHARGE" ? "ECONOMIC_CHARGE" : event.kind,
+      amount: event.economicAmount,
+      sourceRefs: uniqueSourceRefs([
+        ...descriptor.sourceRefs,
+        ...event.componentKeys.map((id) => ({ kind: "economic_component", id })),
+      ]),
+      ...(descriptor.merchantLabel === undefined ? {} : { merchantLabel: descriptor.merchantLabel }),
+      ...(descriptor.placeLabel === undefined ? {} : { placeLabel: descriptor.placeLabel }),
+      ...(descriptor.narrativeOwnerId === undefined ? {} : { narrativeOwnerId: descriptor.narrativeOwnerId }),
+      ...(event.effectiveEconomicDate.quality === undefined ? {} : { quality: event.effectiveEconomicDate.quality }),
+    }];
+  }).sort((left, right) => compareMoney(right.amount, left.amount) || left.expenseEventId.localeCompare(right.expenseEventId));
+  const totalCount = ledger.expenseEvents.filter((event) => event.effectiveEconomicDate.status !== "KNOWN" && compareMoney(event.economicAmount, zero) > 0).length;
+  const top = expenses.slice(0, 3);
+  const collection: CollectionValue<UnassignedEconomicExpenseSummary> = missingDescriptor
+    ? { status: "PARTIAL", items: top, partialMeaning: "OBSERVED_ONLY", knownCount: top.length, quality: { reasonCode: "DATA_PARTIAL_SOURCE" } }
+    : { status: "KNOWN", items: top, totalCount: top.length };
+  return {
+    count: { status: "KNOWN", value: totalCount },
+    amount: metricNode(ledger.unassignedEconomicAmount, "DETAIL"),
+    topExpenses: collectionNode(collection, "DETAIL"),
+    hiddenCount: missingDescriptor
+      ? { status: "PARTIAL", value: Math.max(0, expenses.length - top.length), partialMeaning: "OBSERVED_ONLY", quality: { reasonCode: "DATA_PARTIAL_SOURCE" } }
+      : { status: "KNOWN", value: Math.max(0, totalCount - top.length) },
+    sourceRefs: uniqueSourceRefs(expenses.flatMap(({ sourceRefs }) => sourceRefs)),
+  };
+}
+
 export function buildMonthCalendarReadModel(
   context: HistoryV2ReadModelBuilderContext,
   month: YearMonth,
@@ -717,6 +816,8 @@ export function buildMonthCalendarReadModel(
   const months = uniqueStrings(dates.map(yearMonthOf)) as readonly YearMonth[];
   const days = dates.map((date) => dayReadModel(context, date, month, 3));
   const ribbon = ribbonProjection(context, grid.weeks.map(({ weekStart }) => weekStart));
+  const ledger = dailyByMonth(context).get(month);
+  const unassignedTiming = buildUnassignedTimingSummary(context, ledger);
   return {
     householdId: context.householdId,
     month,
@@ -727,6 +828,7 @@ export function buildMonthCalendarReadModel(
     daysByDate: Object.freeze(Object.fromEntries(days.map((day) => [day.date, day]))),
     ribbonSegments: ribbon.segments,
     ribbonOverflow: ribbon.overflow,
+    unassignedTiming: { visibility: "VISIBLE", data: unassignedTiming },
     quickOverviewRef: target(queryResourceKeys.historyMonthOverview, {}),
     sourceRefs: uniqueSourceRefs(days.flatMap(({ sourceRefs }) => sourceRefs)),
     capabilities: context.capabilities,
@@ -734,7 +836,7 @@ export function buildMonthCalendarReadModel(
       context,
       resourceId: "history_month_calendar",
       months,
-      directPolicies: ["week_journal_projection", "quality_visibility", "facts_hash"],
+      directPolicies: ["calendar_amount_views", "week_journal_projection", "quality_visibility", "facts_hash"],
     }),
   };
 }
@@ -769,7 +871,7 @@ export function buildWeekReadModel(
       context,
       resourceId: "history_week",
       months,
-      directPolicies: ["week_journal_projection", "quality_visibility", "facts_hash"],
+      directPolicies: ["calendar_amount_views", "week_journal_projection", "quality_visibility", "facts_hash"],
     }),
   };
 }
@@ -1183,6 +1285,53 @@ function highlightComparator(month: YearMonth, byItem: ReadonlyMap<string, Calen
   };
 }
 
+function narrativeCarousel(
+  events: readonly MonthHighlightReadModel[],
+  places: NonNullable<MonthOverviewSupplement["narrativePlaces"]>,
+  byItem: ReadonlyMap<string, CalendarSemanticItem>,
+  partial: boolean,
+): CollectionValue<MonthNarrativeCard> {
+  const eventCards = events.flatMap((event): MonthNarrativeCard[] => {
+    const item = event.calendarItemId === undefined ? undefined : byItem.get(event.calendarItemId);
+    const targetRef = item === undefined ? undefined : targetForCalendarItem(item);
+    if (targetRef === undefined) return [];
+    return [{
+      cardId: `event:${event.highlightId}`,
+      kind: "EVENT",
+      title: event.title,
+      startDate: event.startDate,
+      ...(event.endDate === undefined ? {} : { endDate: event.endDate }),
+      ...(event.placeLabel === undefined ? {} : { placeLabel: event.placeLabel }),
+      iconKey: event.iconKey,
+      ...(event.imageRef === undefined ? {} : { imageRef: event.imageRef }),
+      causalCost: event.causalCost,
+      targetRef,
+      sourceRefs: event.sourceRefs,
+      ...(event.quality === undefined ? {} : { quality: event.quality }),
+    }];
+  });
+  const placeCards = places.map((place): MonthNarrativeCard => ({
+    cardId: `place:${place.placeId}`,
+    kind: "PLACE",
+    title: place.title,
+    ...(place.presenceDays === undefined ? {} : { presenceDays: place.presenceDays }),
+    ...(place.visitCount === undefined ? {} : { visitCount: place.visitCount }),
+    localizedAmount: metricNode(place.localizedAmount, "DETAIL"),
+    iconKey: place.iconKey,
+    ...(place.imageRef === undefined ? {} : { imageRef: place.imageRef }),
+    targetRef: target(queryResourceKeys.historyPlaceDetail, { placeId: place.placeId }),
+    sourceRefs: place.sourceRefs,
+  }));
+  const woven: MonthNarrativeCard[] = [];
+  for (let index = 0; woven.length < 8 && (index < eventCards.length || index < placeCards.length); index += 1) {
+    if (eventCards[index] !== undefined) woven.push(eventCards[index]!);
+    if (woven.length < 8 && placeCards[index] !== undefined) woven.push(placeCards[index]!);
+  }
+  return partial
+    ? { status: "PARTIAL", items: woven, partialMeaning: "OBSERVED_ONLY", knownCount: woven.length, quality: { reasonCode: "DATA_PARTIAL_SOURCE" } }
+    : { status: "KNOWN", items: woven, totalCount: woven.length };
+}
+
 export function buildMonthQuickOverviewReadModel(
   context: HistoryV2ReadModelBuilderContext,
   month: YearMonth,
@@ -1249,6 +1398,12 @@ export function buildMonthQuickOverviewReadModel(
       ? { status: "PARTIAL", value: deduped.length, partialMeaning: "OBSERVED_ONLY", quality: artifact.items.quality }
       : { status: "KNOWN", value: deduped.length };
   const lifeMarkers = buildLifeMarkers(artifact, month);
+  const narrative = narrativeCarousel(
+    deduped.slice(0, 5),
+    supplement.narrativePlaces ?? [],
+    byItem,
+    artifact === undefined || artifact.items.status !== "KNOWN",
+  );
   const economicActual: MetricValue<Money> = ledger === undefined
     ? { status: "UNKNOWN", quality: { reasonCode: "DATA_NO_SOURCE" } }
     : { status: "KNOWN", value: ledger.actualMonthAmount };
@@ -1262,6 +1417,7 @@ export function buildMonthQuickOverviewReadModel(
     },
     lifeMarkers: collectionNode(lifeMarkers, "DETAIL"),
     highlights: collectionNode(highlights, "DETAIL"),
+    narrativeCarousel: collectionNode(narrative, "DETAIL"),
     totalEligibleHighlights,
     sourceRefs: uniqueSourceRefs([
       ...(artifact?.items.status === "KNOWN" || artifact?.items.status === "PARTIAL" ? artifact.items.items.flatMap(sourceRefsForItem) : []),

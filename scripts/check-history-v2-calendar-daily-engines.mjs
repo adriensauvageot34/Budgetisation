@@ -16,7 +16,9 @@ registerHooks({
 });
 
 const calendar = await import("../src/analytics/history-v2/calendar/index.ts");
+const economic = await import("../src/analytics/history-v2/calendar-economic/index.ts");
 const daily = await import("../src/analytics/history-v2/daily-finance/index.ts");
+const filters = await import("../src/core/history-v2/calendar-filter.ts");
 
 const uuid = (suffix) => `00000000-0000-4000-8000-${suffix.padStart(12, "0")}`;
 const householdId = uuid("1");
@@ -24,6 +26,25 @@ const authority = { kind: "OBSERVED_CANONICAL", authority: "test", sourceRefs: [
 const knownContinuous = { status: "KNOWN", value: "CONTINUOUS" };
 let checks = 0;
 const check = (callback) => { callback(); checks += 1; };
+
+check(() => assert.deepEqual(filters.calendarFilterTags, [
+  "EVENT_VISIT", "ACTIVITY_OUTING", "GROCERY", "DINING", "TRANSPORT",
+  "WORK", "HEALTH_CARE", "FIXED_CHARGE", "SUBSCRIPTION", "UNASSIGNED_TIMING",
+]));
+check(() => {
+  assert.deepEqual(Object.keys(filters.calendarFilterPresetRegistry), ["all", "daily", "highlights", "exclude-fixed", "expenses"]);
+  assert.equal(filters.calendarFilterPresetRegistry["exclude-fixed"].amount, "EXCLUDE_FIXED");
+  assert.deepEqual(filters.calendarFilterPresetRegistry.highlights.tags, ["EVENT_VISIT", "ACTIVITY_OUTING"]);
+});
+check(() => assert.deepEqual(filters.parseCalendarFilterSelection({ preset: "highlights" }), {
+  preset: "highlights", tags: ["EVENT_VISIT", "ACTIVITY_OUTING"], amount: "ALL",
+}));
+check(() => assert.deepEqual(filters.parseCalendarFilterSelection({ preset: "daily", show: "GROCERY,GROCERY,UNKNOWN", amount: "EXCLUDE_FIXED" }), {
+  preset: "daily", tags: ["GROCERY"], amount: "EXCLUDE_FIXED",
+}));
+check(() => assert.deepEqual(filters.parseCalendarFilterSelection({ preset: "unknown", show: "" }), {
+  preset: "all", tags: [], amount: "ALL",
+}));
 
 check(() => {
   calendar.assertCalendarCatalogsExhaustive();
@@ -161,7 +182,7 @@ check(() => assert.deepEqual(Object.fromEntries(humanFallbackTitles.items.items.
   pharmacie: "Pharmacie",
   rdv_medical: "Consultation cardiologue",
 }));
-check(() => assert.ok(humanFallbackTitles.items.items.every(({ authority }) => authority.authority === "calendar_semantics@v2" && authority.methodVersion === "v2")));
+check(() => assert.ok(humanFallbackTitles.items.items.every(({ authority }) => authority.authority === "calendar_semantics@v3" && authority.methodVersion === "v3")));
 
 const topThree = calendar.buildCalendarSemanticMonthArtifact(calendarInput({
   lifeEvents: [life({ id: "50", typeKey: "demarche_admin" })],
@@ -334,6 +355,74 @@ const duplicateMembership = daily.buildDailyEconomicLedgerMonthArtifact({
 check(() => assert.equal(duplicateMembership.allocationEntries[0].effectiveEconomicDate.status, "CONFLICT"));
 
 check(() => daily.dailyEconomicLedgerMonthArtifactSchema.parse(ledgerKnown));
+
+const julyLedger = daily.buildDailyEconomicLedgerMonthArtifact({
+  householdId, month: "2026-07", currency: "EUR", actualMonthAmount: "45",
+  components: [
+    component({ key: "bakery-08", amount: "5", month: "2026-07", timingEvidence: [{ kind: "TRUSTED_PURCHASE_SOURCE", date: "2026-07-08", evidenceRef: "receipt:bakery" }] }),
+    component({ key: "grocery-09", amount: "10", month: "2026-07", timingEvidence: [{ kind: "TRUSTED_PURCHASE_SOURCE", date: "2026-07-09", evidenceRef: "receipt:intermarche" }] }),
+    component({ key: "grocery-13-a", amount: "12", month: "2026-07", timingEvidence: [{ kind: "TRUSTED_PURCHASE_SOURCE", date: "2026-07-13", evidenceRef: "receipt:carrefour-a" }] }),
+    component({ key: "grocery-13-b", amount: "8", month: "2026-07", timingEvidence: [{ kind: "TRUSTED_PURCHASE_SOURCE", date: "2026-07-13", evidenceRef: "receipt:carrefour-b" }] }),
+    component({ key: "qobuz-13", amount: "10", month: "2026-07", timingEvidence: [{ kind: "TRUSTED_PURCHASE_SOURCE", date: "2026-07-13", evidenceRef: "subscription:qobuz" }] }),
+  ],
+  purchaseEvents: [],
+});
+const julyQualifications = [
+  { componentKey: "bakery-08", categoryKey: "alimentation", subcategoryKey: "alimentation__boulangerie", behavior: "NON_FIXED", recurrence: "NONE", sourceRefs: ["subcategory:bakery"] },
+  { componentKey: "grocery-09", categoryKey: "alimentation", subcategoryKey: "alimentation__courses_alimentaires", behavior: "NON_FIXED", recurrence: "NONE", sourceRefs: ["subcategory:grocery"] },
+  { componentKey: "grocery-13-a", categoryKey: "alimentation", subcategoryKey: "alimentation__courses_alimentaires", behavior: "NON_FIXED", recurrence: "NONE", sourceRefs: ["subcategory:grocery"] },
+  { componentKey: "grocery-13-b", categoryKey: "alimentation", subcategoryKey: "alimentation__courses_alimentaires", behavior: "NON_FIXED", recurrence: "NONE", sourceRefs: ["subcategory:grocery"] },
+  { componentKey: "qobuz-13", categoryKey: "numerique", subcategoryKey: "numerique__streaming_musical", behavior: "FIXED", recurrence: "CONFIRMED", sourceRefs: ["recurrence:qobuz"] },
+];
+const julyProjection = economic.buildCalendarEconomicProjection({
+  householdId, month: "2026-07", ledger: julyLedger,
+  facts: julyQualifications.map(({ componentKey }) => ({ canonicalComponentKey: componentKey })),
+  qualifications: julyQualifications,
+});
+check(() => {
+  assert.equal(julyProjection.markers.status, "KNOWN");
+  const markers = julyProjection.markers.items;
+  assert.equal(markers.find(({ anchorDate }) => anchorDate === "2026-07-08")?.semanticTypeKey, "BAKERY_MEAL");
+  assert.equal(markers.find(({ anchorDate }) => anchorDate === "2026-07-09")?.semanticTypeKey, "GROCERY");
+  const july13 = markers.filter(({ anchorDate }) => anchorDate === "2026-07-13");
+  assert.equal(july13.find(({ semanticTypeKey }) => semanticTypeKey === "GROCERY")?.rawOccurrenceCount, 2);
+  assert.equal(july13.find(({ semanticTypeKey }) => semanticTypeKey === "SUBSCRIPTION")?.title, "Abonnement musique");
+  assert.equal(julyProjection.days.find(({ date }) => date === "2026-07-13")?.economicAmountExcludingFixed.value, "20");
+});
+const calendarCentric = economic.attachCalendarEconomicProjection(
+  calendar.buildCalendarSemanticMonthArtifact({ ...calendarInput(), month: "2026-07" }),
+  julyProjection,
+);
+check(() => {
+  assert.equal(calendarCentric.economicProjection.projectionInputHash, julyProjection.projectionInputHash);
+  assert.equal(calendarCentric.dependencyPolicies.calendar_semantics, "v3");
+  assert.equal(calendarCentric.dependencyPolicies.calendar_amount_views, "v1");
+  assert.ok(calendarCentric.days.find(({ date }) => date === "2026-07-13")?.orderedMarkerGroups.items.some(({ semanticTypeKey }) => semanticTypeKey === "SUBSCRIPTION"));
+  calendar.calendarSemanticMonthArtifactSchema.parse(calendarCentric);
+});
+check(() => {
+  const invalid = structuredClone(calendarCentric);
+  invalid.economicProjection.dependencyPolicies.calendar_amount_views = "v2";
+  assert.throws(
+    () => calendar.calendarSemanticMonthArtifactSchema.parse(invalid),
+    (error) => Array.isArray(error?.issues) && error.issues.some(({ message }) => message.includes("calendar_amount_views")),
+  );
+});
+
+const partialProjection = economic.buildCalendarEconomicProjection({
+  householdId, month: "2026-05", ledger: ledgerKnown,
+  facts: [{ canonicalComponentKey: "a" }, { canonicalComponentKey: "b" }],
+  qualifications: [
+    { componentKey: "a", categoryKey: "alimentation", subcategoryKey: "alimentation__courses_alimentaires", behavior: "NON_FIXED", recurrence: "NONE", sourceRefs: [] },
+    { componentKey: "b", categoryKey: "alimentation", subcategoryKey: "alimentation__courses_alimentaires", behavior: "UNKNOWN", recurrence: "NONE", sourceRefs: [] },
+  ],
+});
+check(() => {
+  const day = partialProjection.days.find(({ date }) => date === "2026-05-12");
+  assert.equal(day.economicAmountExcludingFixed.status, "PARTIAL");
+  assert.equal(day.economicAmountExcludingFixed.value, "10", "UNKNOWN reste hors somme affirmable");
+});
+
 check(() => assert.throws(() => daily.buildDailyEconomicLedgerMonthArtifact({
   householdId, month: "2026-05", currency: "EUR", actualMonthAmount: "31",
   components: [component({ key: "mismatch", amount: "30" })], purchaseEvents: [],

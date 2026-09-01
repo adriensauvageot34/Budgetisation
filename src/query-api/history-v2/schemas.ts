@@ -3,6 +3,7 @@ import {
   createDisplayNodeSchema,
   createMetricValueSchema,
   parsePolicyVersions,
+  parseCalendarFilterTag,
   parsePublicationMeta,
   parseQualityEnvelope,
   policyVersionsEqual,
@@ -48,6 +49,8 @@ import type {
   MonthCalendarDayReadModel,
   MonthCalendarReadModel,
   MonthHighlightReadModel,
+  MonthNarrativeCard,
+  MonthUnassignedTimingSummary,
   MonthQuickOverviewReadModel,
   ParticipantSummary,
   PersonContextSummary,
@@ -57,6 +60,7 @@ import type {
   RibbonSegmentReadModel,
   SourceRef,
   TechnicalMovementSummary,
+  UnassignedEconomicExpenseSummary,
   WeekDayReadModel,
   WeekReadModel,
 } from "./types";
@@ -132,11 +136,27 @@ function parseQueryTargetRef(value: unknown): QueryTargetRef {
   return { resource, params };
 }
 
-function parseCalendarItemSummary(value: unknown): CalendarItemSummary {
+const calendarOverlayResources = new Set<QueryTargetRef["resource"]>([
+  queryResourceKeys.historyDayJournal,
+  queryResourceKeys.historyMomentDetail,
+  queryResourceKeys.historyActivityDetail,
+  queryResourceKeys.historyPlaceDetail,
+]);
+
+function parseCalendarOverlayTarget(value: unknown): QueryTargetRef {
+  const parsed = parseQueryTargetRef(value);
+  if (!calendarOverlayResources.has(parsed.resource)) {
+    throw new TypeError("La cible Calendar doit viser Journal, Moment, Activity ou Place.");
+  }
+  return parsed;
+}
+
+function parseCalendarItemSummary(value: unknown, legacy = false): CalendarItemSummary {
   const record = parseStrictRecord(value, [
     "calendarItemId", "semanticTypeKey", "title", "iconKey", "renderMode",
     "markerTier", "priorityBand", "priorityWeight", "dateLabel", "startTime",
-    "participantIds", "externalParticipants", "sourceRefs", "quality",
+    "participantIds", "externalParticipants", "sourceRefs",
+    ...(legacy ? [] : ["filterTags", "itemKind", "targetRef"]), "quality",
   ], "CalendarItemSummary");
   const renderMode = parseStringLiteral<CalendarItemSummary["renderMode"]>(
     requireProperty(record, "renderMode", "CalendarItemSummary"),
@@ -153,6 +173,17 @@ function parseCalendarItemSummary(value: unknown): CalendarItemSummary {
   const external = array(requireProperty(record, "externalParticipants", "CalendarItemSummary"), (entry) => nonEmpty(entry, "externalParticipant"), "externalParticipants");
   assertUnique(participants, "participantIds");
   assertUnique(external, "externalParticipants");
+  const currentFields = legacy ? {} : (() => {
+    const rawTags = requireProperty(record, "filterTags", "CalendarItemSummary");
+    if (!Array.isArray(rawTags)) throw new TypeError("filterTags doit être un tableau.");
+    const filterTags = rawTags.map(parseCalendarFilterTag);
+    assertUnique(filterTags, "filterTags");
+    return {
+      filterTags,
+      itemKind: parseStringLiteral(requireProperty(record, "itemKind", "CalendarItemSummary"), new Set(["LIFE", "ECONOMIC"]), "itemKind"),
+      ...(hasOwn(record, "targetRef") ? { targetRef: parseQueryTargetRef(record.targetRef) } : {}),
+    };
+  })();
   return {
     calendarItemId: nonEmpty(requireProperty(record, "calendarItemId", "CalendarItemSummary"), "calendarItemId"),
     semanticTypeKey: nonEmpty(requireProperty(record, "semanticTypeKey", "CalendarItemSummary"), "semanticTypeKey"),
@@ -167,12 +198,15 @@ function parseCalendarItemSummary(value: unknown): CalendarItemSummary {
     participantIds: participants,
     externalParticipants: external,
     sourceRefs: sourceRefs(requireProperty(record, "sourceRefs", "CalendarItemSummary"), "sourceRefs"),
+    ...currentFields,
     ...(optionalQuality(record) === undefined ? {} : { quality: optionalQuality(record)! }),
-  };
+  } as CalendarItemSummary;
 }
 
 const calendarItemSchema = createRuntimeSchema(parseCalendarItemSummary);
+const oldCalendarItemSchema = createRuntimeSchema((value) => parseCalendarItemSummary(value, true));
 const calendarItemCollectionSchema = createCollectionValueSchema(calendarItemSchema);
+const oldCalendarItemCollectionSchema = createCollectionValueSchema(oldCalendarItemSchema);
 
 function parsePersonContext(value: unknown): PersonContextSummary {
   const record = parseStrictRecord(value, ["personId", "displayInitial", "contextTypeKey", "label", "iconKey", "sourceRefs", "quality"], "PersonContextSummary");
@@ -215,22 +249,25 @@ function parseExpense(value: unknown): EconomicExpenseSummary {
 const expenseSchema = createRuntimeSchema(parseExpense);
 const expenseCollectionNodeSchema = createDisplayNodeSchema(createCollectionValueSchema(expenseSchema));
 
-function parseHover(value: unknown): DayHoverReadModel {
-  const record = parseStrictRecord(value, ["date", "economicAmount", "contexts", "calendarEvents", "activeRibbons", "economicExpenses", "hiddenExpenseCount", "sourceRefs", "quality"], "DayHoverReadModel");
+function parseHover(value: unknown, legacy = false): DayHoverReadModel {
+  const record = parseStrictRecord(value, ["date", "economicAmount", ...(legacy ? [] : ["economicAmountExcludingFixed"]), "contexts", "calendarEvents", "activeRibbons", "economicExpenses", "hiddenExpenseCount", "sourceRefs", "quality"], "DayHoverReadModel");
+  const itemCollection = legacy ? oldCalendarItemCollectionSchema : calendarItemCollectionSchema;
   return {
     date: parseLocalDate(requireProperty(record, "date", "DayHoverReadModel")),
     economicAmount: metricMoneyNodeSchema.parse(requireProperty(record, "economicAmount", "DayHoverReadModel")),
+    ...(legacy ? {} : { economicAmountExcludingFixed: metricMoneyNodeSchema.parse(requireProperty(record, "economicAmountExcludingFixed", "DayHoverReadModel")) }),
     contexts: personContextCollectionNodeSchema.parse(requireProperty(record, "contexts", "DayHoverReadModel")),
-    calendarEvents: createDisplayNodeSchema(calendarItemCollectionSchema).parse(requireProperty(record, "calendarEvents", "DayHoverReadModel")),
-    activeRibbons: createDisplayNodeSchema(calendarItemCollectionSchema).parse(requireProperty(record, "activeRibbons", "DayHoverReadModel")),
+    calendarEvents: createDisplayNodeSchema(itemCollection).parse(requireProperty(record, "calendarEvents", "DayHoverReadModel")),
+    activeRibbons: createDisplayNodeSchema(itemCollection).parse(requireProperty(record, "activeRibbons", "DayHoverReadModel")),
     economicExpenses: expenseCollectionNodeSchema.parse(requireProperty(record, "economicExpenses", "DayHoverReadModel")),
     hiddenExpenseCount: metricCountSchema.parse(requireProperty(record, "hiddenExpenseCount", "DayHoverReadModel")),
     sourceRefs: sourceRefs(requireProperty(record, "sourceRefs", "DayHoverReadModel"), "sourceRefs"),
     ...(optionalQuality(record) === undefined ? {} : { quality: optionalQuality(record)! }),
-  };
+  } as DayHoverReadModel;
 }
 
 const hoverNodeSchema = createDisplayNodeSchema(createRuntimeSchema(parseHover));
+const oldHoverNodeSchema = createDisplayNodeSchema(createRuntimeSchema((value) => parseHover(value, true)));
 
 function parsePersonContextRecord(value: unknown) {
   if (typeof value !== "object" || value === null || Array.isArray(value)) throw new TypeError("personContexts doit être un objet.");
@@ -240,15 +277,16 @@ function parsePersonContextRecord(value: unknown) {
   ]));
 }
 
-function parseDay(value: unknown, markerLimit: 3 | 6, week: boolean): MonthCalendarDayReadModel | WeekDayReadModel {
+function parseDay(value: unknown, markerLimit: 3 | 6, week: boolean, legacy = false): MonthCalendarDayReadModel | WeekDayReadModel {
   const keys = [
     "date", week ? "inReferenceMonth" : "inSelectedMonth", ...(week ? [] : ["targetMonth"]),
-    "economicAmount", "personContexts", "orderedMarkerGroups", "visibleMarkers",
+    "economicAmount", ...(legacy ? [] : ["economicAmountExcludingFixed"]), "personContexts", "orderedMarkerGroups", "visibleMarkers",
     "hiddenMarkerCount", "activeRibbonItemIds", "hover", "journalRef", "sourceRefs", "quality",
   ];
   const record = parseStrictRecord(value, keys, week ? "WeekDayReadModel" : "MonthCalendarDayReadModel");
-  const ordered = calendarItemCollectionSchema.parse(requireProperty(record, "orderedMarkerGroups", "CalendarDay"));
-  const visible = array(requireProperty(record, "visibleMarkers", "CalendarDay"), parseCalendarItemSummary, "visibleMarkers");
+  const itemCollection = legacy ? oldCalendarItemCollectionSchema : calendarItemCollectionSchema;
+  const ordered = itemCollection.parse(requireProperty(record, "orderedMarkerGroups", "CalendarDay"));
+  const visible = array(requireProperty(record, "visibleMarkers", "CalendarDay"), (entry) => parseCalendarItemSummary(entry, legacy), "visibleMarkers");
   if (visible.length > markerLimit) throw new TypeError(`visibleMarkers est limité à ${markerLimit}.`);
   if (ordered.status === "KNOWN" || ordered.status === "PARTIAL") {
     const expected = ordered.items.slice(0, markerLimit).map(({ calendarItemId }) => calendarItemId);
@@ -258,27 +296,28 @@ function parseDay(value: unknown, markerLimit: 3 | 6, week: boolean): MonthCalen
   const common = {
     date: parseLocalDate(requireProperty(record, "date", "CalendarDay")),
     economicAmount: metricMoneyNodeSchema.parse(requireProperty(record, "economicAmount", "CalendarDay")),
+    ...(legacy ? {} : { economicAmountExcludingFixed: metricMoneyNodeSchema.parse(requireProperty(record, "economicAmountExcludingFixed", "CalendarDay")) }),
     personContexts: parsePersonContextRecord(requireProperty(record, "personContexts", "CalendarDay")),
     orderedMarkerGroups: ordered,
     visibleMarkers: visible,
     hiddenMarkerCount: metricCountSchema.parse(requireProperty(record, "hiddenMarkerCount", "CalendarDay")),
     activeRibbonItemIds: array(requireProperty(record, "activeRibbonItemIds", "CalendarDay"), (entry) => nonEmpty(entry, "activeRibbonItemId"), "activeRibbonItemIds"),
-    hover: hoverNodeSchema.parse(requireProperty(record, "hover", "CalendarDay")),
+    hover: (legacy ? oldHoverNodeSchema : hoverNodeSchema).parse(requireProperty(record, "hover", "CalendarDay")),
     journalRef: parseQueryTargetRef(requireProperty(record, "journalRef", "CalendarDay")),
     sourceRefs: sourceRefs(requireProperty(record, "sourceRefs", "CalendarDay"), "sourceRefs"),
     ...(optionalQuality(record) === undefined ? {} : { quality: optionalQuality(record)! }),
   };
   return week
-    ? { ...common, inReferenceMonth: booleanValue(requireProperty(record, "inReferenceMonth", "WeekDay"), "inReferenceMonth") }
-    : {
+    ? ({ ...common, inReferenceMonth: booleanValue(requireProperty(record, "inReferenceMonth", "WeekDay"), "inReferenceMonth") } as WeekDayReadModel)
+    : ({
         ...common,
         inSelectedMonth: booleanValue(requireProperty(record, "inSelectedMonth", "MonthDay"), "inSelectedMonth"),
         targetMonth: parseYearMonth(requireProperty(record, "targetMonth", "MonthDay")),
-      };
+      } as MonthCalendarDayReadModel);
 }
 
-function parseRibbonSegment(value: unknown): RibbonSegmentReadModel {
-  const record = parseStrictRecord(value, ["calendarItemId", "weekStart", "startColumn", "endColumn", "lane", "title", "iconKey", "sourceRefs"], "RibbonSegmentReadModel");
+function parseRibbonSegment(value: unknown, legacy = false): RibbonSegmentReadModel {
+  const record = parseStrictRecord(value, ["calendarItemId", "weekStart", "startColumn", "endColumn", "lane", "title", "iconKey", ...(legacy ? [] : ["eventStartDate", "eventEndDate", "targetRef"]), "sourceRefs"], "RibbonSegmentReadModel");
   const startColumn = integer(requireProperty(record, "startColumn", "RibbonSegment"), "startColumn", 1, 7);
   const endColumn = integer(requireProperty(record, "endColumn", "RibbonSegment"), "endColumn", 1, 7);
   if (endColumn < startColumn) throw new TypeError("RibbonSegment endColumn doit être >= startColumn.");
@@ -290,8 +329,13 @@ function parseRibbonSegment(value: unknown): RibbonSegmentReadModel {
     lane: integer(requireProperty(record, "lane", "RibbonSegment"), "lane", 1, 4) as 1 | 2 | 3 | 4,
     title: nonEmpty(requireProperty(record, "title", "RibbonSegment"), "title"),
     iconKey: nonEmpty(requireProperty(record, "iconKey", "RibbonSegment"), "iconKey"),
+    ...(legacy ? {} : {
+      eventStartDate: parseLocalDate(requireProperty(record, "eventStartDate", "RibbonSegment")),
+      eventEndDate: parseLocalDate(requireProperty(record, "eventEndDate", "RibbonSegment")),
+      targetRef: parseCalendarOverlayTarget(requireProperty(record, "targetRef", "RibbonSegment")),
+    }),
     sourceRefs: sourceRefs(requireProperty(record, "sourceRefs", "RibbonSegment"), "sourceRefs"),
-  };
+  } as RibbonSegmentReadModel;
 }
 
 function parseRibbonOverflow(value: unknown): RibbonOverflowReadModel {
@@ -304,13 +348,7 @@ function parseRibbonOverflow(value: unknown): RibbonOverflowReadModel {
     const segmentStart = parseLocalDate(requireProperty(item, "segmentStart", "RibbonOverflowItem"));
     const segmentEnd = parseLocalDate(requireProperty(item, "segmentEnd", "RibbonOverflowItem"));
     if (segmentEnd < segmentStart) throw new TypeError("RibbonOverflowItem.segmentEnd doit être >= segmentStart.");
-    const targetRef = parseQueryTargetRef(requireProperty(item, "targetRef", "RibbonOverflowItem"));
-    if (
-      targetRef.resource !== queryResourceKeys.historyDayJournal
-      || targetRef.params.date !== segmentStart
-    ) {
-      throw new TypeError("RibbonOverflowItem.targetRef doit viser son Journal de segmentStart.");
-    }
+    const targetRef = parseCalendarOverlayTarget(requireProperty(item, "targetRef", "RibbonOverflowItem"));
     return {
       calendarItemId: nonEmpty(requireProperty(item, "calendarItemId", "RibbonOverflowItem"), "calendarItemId"),
       title: nonEmpty(requireProperty(item, "title", "RibbonOverflowItem"), "title"),
@@ -328,7 +366,38 @@ function parseRibbonOverflow(value: unknown): RibbonOverflowReadModel {
 }
 
 const ribbonSegmentCollectionSchema = createCollectionValueSchema(createRuntimeSchema(parseRibbonSegment));
+const oldRibbonSegmentCollectionSchema = createCollectionValueSchema(createRuntimeSchema((value) => parseRibbonSegment(value, true)));
 const ribbonOverflowCollectionSchema = createCollectionValueSchema(createRuntimeSchema(parseRibbonOverflow));
+
+function parseUnassignedExpense(value: unknown): UnassignedEconomicExpenseSummary {
+  const record = parseStrictRecord(value, [
+    "expenseEventId", "label", "eventKind", "amount", "sourceRefs",
+    "merchantLabel", "effectiveTime", "placeLabel", "narrativeOwnerId", "quality",
+  ], "UnassignedEconomicExpenseSummary");
+  return {
+    expenseEventId: nonEmpty(requireProperty(record, "expenseEventId", "UnassignedEconomicExpenseSummary"), "expenseEventId"),
+    label: nonEmpty(requireProperty(record, "label", "UnassignedEconomicExpenseSummary"), "label"),
+    eventKind: parseStringLiteral<UnassignedEconomicExpenseSummary["eventKind"]>(requireProperty(record, "eventKind", "UnassignedEconomicExpenseSummary"), new Set(["PURCHASE_EVENT", "CASH_USE", "ECONOMIC_CHARGE"]), "eventKind"),
+    amount: parseMoney(requireProperty(record, "amount", "UnassignedEconomicExpenseSummary")),
+    sourceRefs: sourceRefs(requireProperty(record, "sourceRefs", "UnassignedEconomicExpenseSummary"), "sourceRefs"),
+    ...(hasOwn(record, "merchantLabel") ? { merchantLabel: nonEmpty(record.merchantLabel, "merchantLabel") } : {}),
+    ...(hasOwn(record, "effectiveTime") ? { effectiveTime: nonEmpty(record.effectiveTime, "effectiveTime") } : {}),
+    ...(hasOwn(record, "placeLabel") ? { placeLabel: nonEmpty(record.placeLabel, "placeLabel") } : {}),
+    ...(hasOwn(record, "narrativeOwnerId") ? { narrativeOwnerId: nonEmpty(record.narrativeOwnerId, "narrativeOwnerId") } : {}),
+    ...(optionalQuality(record) === undefined ? {} : { quality: optionalQuality(record)! }),
+  };
+}
+
+function parseUnassignedTiming(value: unknown): MonthUnassignedTimingSummary {
+  const record = parseStrictRecord(value, ["count", "amount", "topExpenses", "hiddenCount", "sourceRefs"], "MonthUnassignedTimingSummary");
+  return {
+    count: metricCountSchema.parse(requireProperty(record, "count", "MonthUnassignedTimingSummary")),
+    amount: metricMoneyNodeSchema.parse(requireProperty(record, "amount", "MonthUnassignedTimingSummary")),
+    topExpenses: createDisplayNodeSchema(createCollectionValueSchema(createRuntimeSchema(parseUnassignedExpense))).parse(requireProperty(record, "topExpenses", "MonthUnassignedTimingSummary")),
+    hiddenCount: metricCountSchema.parse(requireProperty(record, "hiddenCount", "MonthUnassignedTimingSummary")),
+    sourceRefs: sourceRefs(requireProperty(record, "sourceRefs", "MonthUnassignedTimingSummary"), "sourceRefs"),
+  };
+}
 
 function parseMeta(record: UnknownRecord) {
   const resourceInputHash = parseResourceInputHash(requireProperty(record, "resourceInputHash", "HistoryV2ReadModel"));
@@ -338,10 +407,10 @@ function parseMeta(record: UnknownRecord) {
   return { resourceInputHash, policyVersions, ...(publicationMeta === undefined ? {} : { publicationMeta }) };
 }
 
-function parseMonthCalendar(value: unknown): MonthCalendarReadModel {
+function parseMonthCalendar(value: unknown, legacy = false): MonthCalendarReadModel {
   const record = parseStrictRecord(value, [
     "householdId", "month", "timeZone", "gridStartDate", "gridEndDate", "weeks", "daysByDate",
-    "ribbonSegments", "ribbonOverflow", "quickOverviewRef", "sourceRefs", "capabilities",
+    "ribbonSegments", "ribbonOverflow", ...(legacy ? [] : ["unassignedTiming"]), "quickOverviewRef", "sourceRefs", "capabilities",
     "resourceInputHash", "policyVersions", "publicationMeta", "quality",
   ], "MonthCalendarReadModel");
   const month = parseYearMonth(requireProperty(record, "month", "MonthCalendarReadModel"));
@@ -358,7 +427,7 @@ function parseMonthCalendar(value: unknown): MonthCalendarReadModel {
   if (typeof rawDays !== "object" || rawDays === null || Array.isArray(rawDays)) throw new TypeError("daysByDate doit être un objet.");
   const daysByDate = Object.fromEntries(Object.entries(rawDays).map(([date, day]) => {
     const parsedDate = parseLocalDate(date);
-    const parsedDay = parseDay(day, 3, false) as MonthCalendarDayReadModel;
+    const parsedDay = parseDay(day, 3, false, legacy) as MonthCalendarDayReadModel;
     if (parsedDay.date !== parsedDate) throw new TypeError("daysByDate key/date incohérent.");
     return [date, parsedDay];
   }));
@@ -372,24 +441,25 @@ function parseMonthCalendar(value: unknown): MonthCalendarReadModel {
     gridEndDate: parseLocalDate(requireProperty(record, "gridEndDate", "MonthCalendarReadModel")),
     weeks,
     daysByDate,
-    ribbonSegments: ribbonSegmentCollectionSchema.parse(requireProperty(record, "ribbonSegments", "MonthCalendarReadModel")),
+    ribbonSegments: (legacy ? oldRibbonSegmentCollectionSchema : ribbonSegmentCollectionSchema).parse(requireProperty(record, "ribbonSegments", "MonthCalendarReadModel")),
     ribbonOverflow: ribbonOverflowCollectionSchema.parse(requireProperty(record, "ribbonOverflow", "MonthCalendarReadModel")),
+    ...(legacy ? {} : { unassignedTiming: createDisplayNodeSchema(createRuntimeSchema(parseUnassignedTiming)).parse(requireProperty(record, "unassignedTiming", "MonthCalendarReadModel")) }),
     quickOverviewRef: parseQueryTargetRef(requireProperty(record, "quickOverviewRef", "MonthCalendarReadModel")),
     sourceRefs: sourceRefs(requireProperty(record, "sourceRefs", "MonthCalendarReadModel"), "sourceRefs"),
     capabilities: parseQueryCapabilities(requireProperty(record, "capabilities", "MonthCalendarReadModel"), queryResourceKeys.historyMonthCalendar),
     ...parseMeta(record),
     ...(optionalQuality(record) === undefined ? {} : { quality: optionalQuality(record)! }),
-  };
+  } as MonthCalendarReadModel;
 }
 
-function parseWeek(value: unknown): WeekReadModel {
+function parseWeek(value: unknown, legacy = false): WeekReadModel {
   const record = parseStrictRecord(value, [
     "householdId", "weekStart", "weekEnd", "referenceMonth", "days", "ribbonSegments", "ribbonOverflow",
     "sourceRefs", "capabilities", "resourceInputHash", "policyVersions", "publicationMeta", "quality",
   ], "WeekReadModel");
   const weekStart = parseLocalDate(requireProperty(record, "weekStart", "WeekReadModel"));
   if (Temporal.PlainDate.from(weekStart).dayOfWeek !== 1) throw new TypeError("WeekReadModel.weekStart doit être lundi.");
-  const days = array(requireProperty(record, "days", "WeekReadModel"), (entry) => parseDay(entry, 6, true) as WeekDayReadModel, "days");
+  const days = array(requireProperty(record, "days", "WeekReadModel"), (entry) => parseDay(entry, 6, true, legacy) as WeekDayReadModel, "days");
   if (days.length !== 7 || days.some((day, index) => day.date !== addDays(weekStart, index))) throw new TypeError("WeekReadModel exige exactement 7 jours contigus.");
   const referenceMonth = parseYearMonth(requireProperty(record, "referenceMonth", "WeekReadModel"));
   if (referenceMonth !== yearMonthOf(days[3].date)) throw new TypeError("referenceMonth doit être le mois du jeudi.");
@@ -399,7 +469,7 @@ function parseWeek(value: unknown): WeekReadModel {
     weekEnd: parseLocalDate(requireProperty(record, "weekEnd", "WeekReadModel")),
     referenceMonth,
     days: days as unknown as WeekReadModel["days"],
-    ribbonSegments: ribbonSegmentCollectionSchema.parse(requireProperty(record, "ribbonSegments", "WeekReadModel")),
+    ribbonSegments: (legacy ? oldRibbonSegmentCollectionSchema : ribbonSegmentCollectionSchema).parse(requireProperty(record, "ribbonSegments", "WeekReadModel")),
     ribbonOverflow: ribbonOverflowCollectionSchema.parse(requireProperty(record, "ribbonOverflow", "WeekReadModel")),
     sourceRefs: sourceRefs(requireProperty(record, "sourceRefs", "WeekReadModel"), "sourceRefs"),
     capabilities: parseQueryCapabilities(requireProperty(record, "capabilities", "WeekReadModel"), queryResourceKeys.historyWeek),
@@ -558,8 +628,59 @@ function parseHighlight(value: unknown): MonthHighlightReadModel {
   };
 }
 
-function parseOverview(value: unknown): MonthQuickOverviewReadModel {
-  const record = parseStrictRecord(value, ["householdId", "month", "flows", "lifeMarkers", "highlights", "totalEligibleHighlights", "sourceRefs", "capabilities", "resourceInputHash", "policyVersions", "publicationMeta", "quality"], "MonthQuickOverviewReadModel");
+function parseNarrativeCard(value: unknown): MonthNarrativeCard {
+  const discriminant = parseStrictRecord(value, [
+    "cardId", "kind", "title", "startDate", "endDate", "placeLabel",
+    "presenceDays", "visitCount", "localizedAmount", "iconKey", "imageRef",
+    "causalCost", "targetRef", "sourceRefs", "quality",
+  ], "MonthNarrativeCard");
+  const kind = parseStringLiteral<MonthNarrativeCard["kind"]>(
+    requireProperty(discriminant, "kind", "MonthNarrativeCard"),
+    new Set(["EVENT", "PLACE"]),
+    "MonthNarrativeCard.kind",
+  );
+  const common = {
+    cardId: nonEmpty(requireProperty(discriminant, "cardId", "MonthNarrativeCard"), "cardId"),
+    title: nonEmpty(requireProperty(discriminant, "title", "MonthNarrativeCard"), "title"),
+    iconKey: nonEmpty(requireProperty(discriminant, "iconKey", "MonthNarrativeCard"), "iconKey"),
+    ...(hasOwn(discriminant, "imageRef") ? { imageRef: nonEmpty(discriminant.imageRef, "imageRef") } : {}),
+    targetRef: parseCalendarOverlayTarget(requireProperty(discriminant, "targetRef", "MonthNarrativeCard")),
+    sourceRefs: sourceRefs(requireProperty(discriminant, "sourceRefs", "MonthNarrativeCard"), "sourceRefs"),
+    ...(optionalQuality(discriminant) === undefined ? {} : { quality: optionalQuality(discriminant)! }),
+  };
+  if (kind === "EVENT") {
+    if (hasOwn(discriminant, "presenceDays") || hasOwn(discriminant, "visitCount") || hasOwn(discriminant, "localizedAmount")) {
+      throw new TypeError("Une narrative EVENT refuse les propriétés PLACE.");
+    }
+    const startDate = parseLocalDate(requireProperty(discriminant, "startDate", "EventNarrativeCard"));
+    const endDate = hasOwn(discriminant, "endDate") ? parseLocalDate(discriminant.endDate) : undefined;
+    if (endDate !== undefined && endDate < startDate) throw new TypeError("EventNarrativeCard intervalle invalide.");
+    return {
+      ...common,
+      kind,
+      startDate,
+      ...(endDate === undefined ? {} : { endDate }),
+      ...(hasOwn(discriminant, "placeLabel") ? { placeLabel: nonEmpty(discriminant.placeLabel, "placeLabel") } : {}),
+      causalCost: metricMoneyNodeSchema.parse(requireProperty(discriminant, "causalCost", "EventNarrativeCard")),
+    };
+  }
+  if (hasOwn(discriminant, "startDate") || hasOwn(discriminant, "endDate") || hasOwn(discriminant, "placeLabel") || hasOwn(discriminant, "causalCost")) {
+    throw new TypeError("Une narrative PLACE refuse les propriétés EVENT.");
+  }
+  if (common.targetRef.resource !== queryResourceKeys.historyPlaceDetail) {
+    throw new TypeError("Une narrative PLACE doit viser history_place_detail.");
+  }
+  return {
+    ...common,
+    kind,
+    ...(hasOwn(discriminant, "presenceDays") ? { presenceDays: integer(discriminant.presenceDays, "presenceDays") } : {}),
+    ...(hasOwn(discriminant, "visitCount") ? { visitCount: integer(discriminant.visitCount, "visitCount") } : {}),
+    localizedAmount: metricMoneyNodeSchema.parse(requireProperty(discriminant, "localizedAmount", "PlaceNarrativeCard")),
+  };
+}
+
+function parseOverview(value: unknown, legacy = false): MonthQuickOverviewReadModel {
+  const record = parseStrictRecord(value, ["householdId", "month", "flows", "lifeMarkers", "highlights", ...(legacy ? [] : ["narrativeCarousel"]), "totalEligibleHighlights", "sourceRefs", "capabilities", "resourceInputHash", "policyVersions", "publicationMeta", "quality"], "MonthQuickOverviewReadModel");
   const flows = parseStrictRecord(requireProperty(record, "flows", "MonthQuickOverviewReadModel"), ["bankOutflows", "economicActual", "bankInflows"], "MonthOverviewFlows");
   return {
     householdId: parseHouseholdId(requireProperty(record, "householdId", "MonthQuickOverviewReadModel")),
@@ -571,12 +692,17 @@ function parseOverview(value: unknown): MonthQuickOverviewReadModel {
     },
     lifeMarkers: createDisplayNodeSchema(createCollectionValueSchema(createRuntimeSchema(parseLifeMarker))).parse(requireProperty(record, "lifeMarkers", "MonthQuickOverviewReadModel")),
     highlights: createDisplayNodeSchema(createCollectionValueSchema(createRuntimeSchema(parseHighlight))).parse(requireProperty(record, "highlights", "MonthQuickOverviewReadModel")),
+    ...(legacy ? {} : {
+      narrativeCarousel: createDisplayNodeSchema(
+        createCollectionValueSchema(createRuntimeSchema(parseNarrativeCard)),
+      ).parse(requireProperty(record, "narrativeCarousel", "MonthQuickOverviewReadModel")),
+    }),
     totalEligibleHighlights: metricCountSchema.parse(requireProperty(record, "totalEligibleHighlights", "MonthQuickOverviewReadModel")),
     sourceRefs: sourceRefs(requireProperty(record, "sourceRefs", "MonthQuickOverviewReadModel"), "sourceRefs"),
     capabilities: parseQueryCapabilities(requireProperty(record, "capabilities", "MonthQuickOverviewReadModel"), queryResourceKeys.historyMonthOverview),
     ...parseMeta(record),
     ...(optionalQuality(record) === undefined ? {} : { quality: optionalQuality(record)! }),
-  };
+  } as MonthQuickOverviewReadModel;
 }
 
 export const sourceRefRuntimeSchema = sourceRefSchema;
@@ -588,6 +714,9 @@ export const monthCalendarReadModelSchema = createRuntimeSchema(parseMonthCalend
 export const weekReadModelSchema = createRuntimeSchema(parseWeek);
 export const journalDayReadModelSchema = createRuntimeSchema(parseJournal);
 export const monthQuickOverviewReadModelSchema = createRuntimeSchema(parseOverview);
+export const oldMonthCalendarReadModelSchema = createRuntimeSchema((value) => parseMonthCalendar(value, true));
+export const oldWeekReadModelSchema = createRuntimeSchema((value) => parseWeek(value, true));
+export const oldMonthQuickOverviewReadModelSchema = createRuntimeSchema((value) => parseOverview(value, true));
 
 export const historyV2ReadModelSchemas = Object.freeze({
   history_month_calendar: monthCalendarReadModelSchema,

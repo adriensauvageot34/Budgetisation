@@ -160,6 +160,7 @@ export type QueryServerServices = {
 
 export type QuerySnapshotContractVariant =
   | "current"
+  | "history_v2_calendar_centric_old"
   | "history_v2_visible_gaps_legacy";
 
 export type QueryTraceOutcome =

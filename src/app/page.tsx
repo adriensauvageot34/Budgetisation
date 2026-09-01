@@ -9,5 +9,5 @@ export default async function HomePage() {
     resolveLatestPublishedHistoryV2Month,
   );
   if (latestMonth === null) redirect("/diagnostic");
-  redirect(`/historique/${latestMonth}?view=calendar`);
+  redirect(`/historique/${latestMonth}`);
 }

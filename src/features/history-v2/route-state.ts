@@ -1,5 +1,10 @@
+import {
+  calendarFilterPresetRegistry,
+  parseCalendarFilterSelection,
+} from "@/core/history-v2";
 import { parseLocalDate, type LocalDate, type YearMonth } from "@/core/time";
-import type { HistoryOverlayTarget, HistoryV2View } from "./types";
+import { queryResourceKeys, type QueryTargetRef } from "@/query-api";
+import type { HistoryCalendarFilterState, HistoryOverlayTarget, HistoryV2View } from "./types";
 
 type RawSearch = Readonly<Record<string, string | string[] | undefined>>;
 
@@ -53,14 +58,44 @@ export function parseHistoryOverlaySearch(search: RawSearch): HistoryOverlayTarg
   }
 }
 
+export function parseHistoryCalendarFilters(search: RawSearch): HistoryCalendarFilterState {
+  return parseCalendarFilterSelection({
+    ...(first(search.preset) === undefined ? {} : { preset: first(search.preset)! }),
+    ...(first(search.show) === undefined ? {} : { show: first(search.show)! }),
+    ...(first(search.amount) === undefined ? {} : { amount: first(search.amount)! }),
+  });
+}
+
+export function overlayTargetFromQueryTarget(target: QueryTargetRef): HistoryOverlayTarget | undefined {
+  switch (target.resource) {
+    case queryResourceKeys.historyDayJournal:
+      try { return target.params.date === undefined ? undefined : { kind: "journal", date: parseLocalDate(target.params.date) }; } catch { return undefined; }
+    case queryResourceKeys.historyMomentDetail:
+      return nonEmpty(target.params.momentId) === undefined ? undefined : { kind: "moment", momentId: target.params.momentId! };
+    case queryResourceKeys.historyActivityDetail:
+      return nonEmpty(target.params.activityTypeKey) === undefined ? undefined : { kind: "activity", activityTypeKey: target.params.activityTypeKey! };
+    case queryResourceKeys.historyPlaceDetail:
+      return nonEmpty(target.params.placeId) === undefined ? undefined : { kind: "place", placeId: target.params.placeId! };
+    default:
+      return undefined;
+  }
+}
+
 export function historyV2Href(input: {
   readonly month: YearMonth;
   readonly view: HistoryV2View;
   readonly weekStart?: LocalDate;
   readonly overlay?: HistoryOverlayTarget;
+  readonly filters?: HistoryCalendarFilterState;
 }): string {
-  const query = new URLSearchParams({ view: input.view });
+  const query = new URLSearchParams();
   if (input.weekStart !== undefined && input.view === "calendar") query.set("week", input.weekStart);
+  if (input.filters !== undefined) {
+    if (input.filters.preset !== "all") query.set("preset", input.filters.preset);
+    const presetTags = calendarFilterPresetRegistry[input.filters.preset].tags;
+    if (input.filters.tags.join(",") !== presetTags.join(",")) query.set("show", input.filters.tags.join(","));
+    if (input.filters.amount !== calendarFilterPresetRegistry[input.filters.preset].amount) query.set("amount", input.filters.amount);
+  }
   const target = input.overlay;
   if (target?.kind === "journal") query.set("journal", target.date);
   else if (target !== undefined) {
@@ -79,7 +114,8 @@ export function historyV2Href(input: {
       }
     }
   }
-  return `/historique/${input.month}?${query.toString()}`;
+  const suffix = query.toString();
+  return `/historique/${input.month}${suffix.length === 0 ? "" : `?${suffix}`}`;
 }
 
 export function overlayTargetKey(target: HistoryOverlayTarget): string {

@@ -1740,6 +1740,24 @@ export class CanonicalRepository {
     );
   }
 
+  /** Canonical closure for the Calendar-centric economic projection. */
+  async loadCalendarEconomicTaxonomy(): Promise<{
+    readonly categories: readonly CanonicalRecord[];
+    readonly subcategories: readonly CanonicalRecord[];
+    readonly recurrenceSeries: readonly CanonicalRecord[];
+  }> {
+    await this.assertAuthorizedCanonicalHouseholdScope();
+    const [categories, subcategories, recurrenceSeries] = await Promise.all([
+      this.readRows("calendar-economic:categories", "taxonomy", () =>
+        this.client.from("categories").select("category_id,category_key,nom_canonique").order("category_id", { ascending: true })),
+      this.readRows("calendar-economic:subcategories", "taxonomy", () =>
+        this.client.from("subcategories").select("subcategory_id,subcategory_key,nom_canonique").order("subcategory_id", { ascending: true })),
+      this.readRows("calendar-economic:recurrence-series", "operations", () =>
+        this.client.from("recurrence_series").select("recurrence_series_id,cadence_estimee,statut_serie").order("recurrence_series_id", { ascending: true })),
+    ]);
+    return { categories, subcategories, recurrenceSeries };
+  }
+
   async loadTaxonomyRows(
     table: TaxonomyTable,
     ids: readonly string[],

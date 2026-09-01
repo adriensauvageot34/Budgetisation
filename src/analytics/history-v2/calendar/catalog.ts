@@ -4,6 +4,7 @@ import type {
   MarkerTier,
   SpanBehavior,
 } from "./types";
+import type { CalendarFilterTag } from "../../../core/history-v2";
 
 export type MonthVisibilityPolicy = "YES" | "NO" | "CONTEXT_BAND" | "IF_SPECIFIC";
 export type CalendarCatalogEntry = {
@@ -51,6 +52,38 @@ export const LIFE_EVENT_ACTIVITY_CATALOG = Object.freeze({
 
 export type LifeEventActivityTypeKey = keyof typeof LIFE_EVENT_ACTIVITY_CATALOG;
 
+const LIFE_EVENT_FILTER_TAGS = Object.freeze({
+  shopping_commerce: ["ACTIVITY_OUTING"],
+  courses_alimentaires: ["GROCERY"],
+  demarche_admin: ["ACTIVITY_OUTING"],
+  retrait_banque: [],
+  celebration: ["EVENT_VISIT", "ACTIVITY_OUTING"],
+  journee_maison: [],
+  spectacle_culture: ["ACTIVITY_OUTING"],
+  sortie_soiree: ["ACTIVITY_OUTING", "DINING"],
+  activite_loisir: ["ACTIVITY_OUTING"],
+  examen_permis: ["ACTIVITY_OUTING", "TRANSPORT"],
+  lecon_conduite: ["ACTIVITY_OUTING", "TRANSPORT"],
+  livraison_repas: ["DINING"],
+  repas_restaurant: ["DINING"],
+  rdv_medical: ["HEALTH_CARE"],
+  pharmacie: ["HEALTH_CARE"],
+  visite_famille: ["EVENT_VISIT"],
+  visite_ami: ["EVENT_VISIT"],
+  soin_personnel: ["HEALTH_CARE"],
+  voyage_sejour: ["EVENT_VISIT", "ACTIVITY_OUTING", "TRANSPORT"],
+  entretien_voiture: ["TRANSPORT"],
+  carburant: ["TRANSPORT"],
+  deplacement_pro: ["TRANSPORT", "WORK"],
+  travail_site: ["WORK"],
+  teletravail: ["WORK"],
+  funeraire: ["EVENT_VISIT"],
+} as const satisfies Record<LifeEventActivityTypeKey, readonly CalendarFilterTag[]>);
+
+export function lifeEventFilterTags(typeKey: LifeEventActivityTypeKey): readonly CalendarFilterTag[] {
+  return LIFE_EVENT_FILTER_TAGS[typeKey];
+}
+
 const moment = (normalizedKey: string, value: CalendarCatalogEntry) =>
   Object.freeze({ normalizedKey, ...value });
 
@@ -79,6 +112,35 @@ export const MOMENT_CATALOG = Object.freeze({
 } satisfies Record<string, CalendarCatalogEntry & { readonly normalizedKey: string }>);
 
 export type MomentCatalogLabel = keyof typeof MOMENT_CATALOG;
+
+const MOMENT_FILTER_TAGS = Object.freeze({
+  anniversaire: ["EVENT_VISIT"],
+  "boite-de-nuit": ["ACTIVITY_OUTING", "DINING"],
+  "concert-spectacle": ["ACTIVITY_OUTING"],
+  "deplacement-professionnel": ["TRANSPORT", "WORK"],
+  "entretien-controle-vehicule": ["TRANSPORT"],
+  "evenement-familial-deplacement": ["EVENT_VISIT", "TRANSPORT"],
+  "fete-celebration": ["EVENT_VISIT", "ACTIVITY_OUTING"],
+  "projet-achat-maison": [],
+  "projet-seance-photo": ["ACTIVITY_OUTING"],
+  "projet-personnel": [],
+  "reparation-imprevu": [],
+  soiree: ["ACTIVITY_OUTING", "DINING"],
+  "soiree-techno": ["ACTIVITY_OUTING", "DINING"],
+  "sortie-activite": ["ACTIVITY_OUTING"],
+  "sortie-evenement": ["EVENT_VISIT", "ACTIVITY_OUTING"],
+  "sortie-excursion": ["ACTIVITY_OUTING", "TRANSPORT"],
+  "sortie-plage": ["ACTIVITY_OUTING"],
+  "visite-familiale": ["EVENT_VISIT"],
+  voyage: ["EVENT_VISIT", "ACTIVITY_OUTING", "TRANSPORT"],
+  "week-end-escapade": ["EVENT_VISIT", "ACTIVITY_OUTING", "TRANSPORT"],
+} as const satisfies Record<(typeof MOMENT_CATALOG)[MomentCatalogLabel]["normalizedKey"], readonly CalendarFilterTag[]>);
+
+export type MomentNormalizedKey = keyof typeof MOMENT_FILTER_TAGS;
+
+export function momentFilterTags(normalizedKey: MomentNormalizedKey): readonly CalendarFilterTag[] {
+  return MOMENT_FILTER_TAGS[normalizedKey];
+}
 
 const momentByPublicLabel = new Map(
   Object.entries(MOMENT_CATALOG).map(([publicLabel, value]) => [

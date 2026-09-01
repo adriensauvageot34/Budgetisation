@@ -9,6 +9,7 @@ import {
 } from "@/analytics/production";
 import {
   resolvePolicyVersions,
+  type HistoryV2PolicyId,
   type PolicyVersions,
 } from "@/core/history-v2";
 import type { HouseholdId, PersonId } from "@/core/identity";
@@ -122,6 +123,7 @@ export type QuerySnapshotIdentity = {
 
 export type QuerySnapshotContractVariant =
   | "current"
+  | "history_v2_calendar_centric_old"
   | "history_v2_visible_gaps_legacy";
 
 export type QuerySnapshotReadIdentity = QuerySnapshotIdentity & {
@@ -173,7 +175,10 @@ export function analyticsMethodSignature(
 export function historyV2ResourceMethodSignature(
   resource: QueryResourceKey,
   policyVersions: PolicyVersions,
-  options: { readonly readModelVersion?: MethodVersion | null } = {},
+  options: {
+    readonly readModelVersion?: MethodVersion | null;
+    readonly policyIds?: readonly HistoryV2PolicyId[];
+  } = {},
 ): string {
   const resourceContract = getQueryResourceContract(resource);
   if (resourceContract.family !== "history_v2") {
@@ -193,8 +198,9 @@ export function historyV2ResourceMethodSignature(
       getMetricRegistryEntry(activeMetricId).methodVersion,
     ] as const;
   });
+  const policyIds = options.policyIds ?? resourceContract.policyIds;
   const scopedPolicies = Object.fromEntries(
-    resourceContract.policyIds.map((policyId) => {
+    policyIds.map((policyId) => {
       const version = policyVersions[policyId];
       if (version === undefined) {
         throw new TypeError(
@@ -224,32 +230,69 @@ export function historyV2AcceptedMethodSignatures(
   readonly contractVariant: QuerySnapshotContractVariant;
 }[] {
   const current = analyticsMethodSignature(resource);
-  if (!historyV2VisibleGapsMigratedResources.has(resource)) {
-    return [{ methodSignature: current, contractVariant: "current" }];
-  }
   const contract = getQueryResourceContract(resource);
   if (contract.family !== "history_v2") {
     return [{ methodSignature: current, contractVariant: "current" }];
   }
+  const preCalendarPolicyIds = contract.policyIds.filter(
+    (policyId) => policyId !== "calendar_amount_views",
+  );
+  const preCalendarReadModelVersion = resource === queryResourceKeys.historyMonthCalendar
+    ? parseMethodVersion("history_month_calendar@v2")
+    : resource === queryResourceKeys.historyWeek
+      ? parseMethodVersion("history_week@v2")
+      : resource === queryResourceKeys.historyMonthOverview
+        ? null
+        : contract.readModelVersion;
+  const preCalendarPolicies = Object.freeze(Object.fromEntries(
+    preCalendarPolicyIds.map((policyId) => [
+      policyId,
+      policyId === "calendar_semantics"
+        ? parsePolicyVersion("v2")
+        : policyId === "month_overview_selection"
+          ? parsePolicyVersion("v1")
+          : resolvePolicyVersions([policyId])[policyId],
+    ]),
+  )) as PolicyVersions;
+  const preCalendar = historyV2ResourceMethodSignature(resource, preCalendarPolicies, {
+    policyIds: preCalendarPolicyIds,
+    ...(preCalendarReadModelVersion === undefined
+      ? {}
+      : { readModelVersion: preCalendarReadModelVersion }),
+  });
+  const accepted: {
+    readonly methodSignature: string;
+    readonly contractVariant: QuerySnapshotContractVariant;
+  }[] = [{ methodSignature: current, contractVariant: "current" }];
+  if (preCalendar !== current) {
+    accepted.push({
+      methodSignature: preCalendar,
+      contractVariant: "history_v2_calendar_centric_old",
+    });
+  }
+  if (!historyV2VisibleGapsMigratedResources.has(resource)) return accepted;
   const legacyPolicies = Object.freeze(Object.fromEntries(
-    contract.policyIds.map((policyId) => [policyId, parsePolicyVersion("v1")]),
+    preCalendarPolicyIds.map((policyId) => [policyId, parsePolicyVersion("v1")]),
   )) as PolicyVersions;
   const legacy = historyV2ResourceMethodSignature(
     resource,
     legacyPolicies,
-    resource === "history_month_spending_nature"
-      ? { readModelVersion: null }
-      : {},
+    {
+      policyIds: preCalendarPolicyIds,
+      ...(resource === "history_month_spending_nature" || resource === queryResourceKeys.historyMonthOverview
+        ? { readModelVersion: null }
+        : preCalendarReadModelVersion === undefined
+          ? {}
+          : { readModelVersion: preCalendarReadModelVersion }),
+    },
   );
-  return legacy === current
-    ? [{ methodSignature: current, contractVariant: "current" }]
-    : [
-        { methodSignature: current, contractVariant: "current" },
-        {
-          methodSignature: legacy,
-          contractVariant: "history_v2_visible_gaps_legacy",
-        },
-      ];
+  if (!accepted.some(({ methodSignature }) => methodSignature === legacy)) {
+    accepted.push({
+      methodSignature: legacy,
+      contractVariant: "history_v2_visible_gaps_legacy",
+    });
+  }
+  return accepted;
 }
 
 export function materializationPeriod(
@@ -378,7 +421,7 @@ export function historyV2SharedArtifactIdentity(
   const scopeHash = computeScopeHash(scope);
   const methodVersion = parseMethodVersion(
     artifactFamily === "calendar_semantic_month"
-      ? "calendar_semantic_month@v3"
+      ? "calendar_semantic_month@v4"
       : `${artifactFamily}@v1`,
   );
   const contractVersion = parseContractVersion("v2");

@@ -214,7 +214,10 @@ check(() => {
   assert.equal(overflow.items.length, 1);
   assert.equal(overflow.items[0].calendarItemId, `life_event:${uuid(34)}`);
   assert.equal(overflow.items[0].title, "Ribbon 4");
-  assert.deepEqual(overflow.items[0].targetRef, { resource: "history_day_journal", params: { date: "2026-05-04" } });
+  assert.deepEqual(overflow.items[0].targetRef, { resource: "history_activity_detail", params: { activityTypeKey: "voyage_sejour" } });
+  assert.equal(ribbonSegments[0].eventStartDate, "2026-05-04");
+  assert.equal(ribbonSegments[0].eventEndDate, "2026-05-10");
+  assert.equal(ribbonSegments[0].targetRef.resource, "history_activity_detail");
   assert.equal(new Set(overflow.items.map(({ calendarItemId }) => calendarItemId)).size, overflow.items.length);
   assert.equal(monthModel.daysByDate["2026-05-04"].activeRibbonItemIds.length, 5, "aucun Ribbon n'est perdu dans le jour");
   assert.equal(monthModel.daysByDate["2026-05-04"].hiddenMarkerCount.value, 0, "overflow Ribbon et Marker restent distincts");
@@ -424,8 +427,64 @@ const overview = readmodels.buildMonthQuickOverviewReadModel({
     sourceRefs: [{ kind: "incident", id: "1" }],
     causalCost: { status: "KNOWN", value: "8" },
   }],
+  narrativePlaces: [{
+    placeId: uuid(90), title: "Lieu narratif", presenceDays: 3,
+    localizedAmount: { status: "KNOWN", value: "12" }, iconKey: "place",
+    sourceRefs: [{ kind: "place", id: uuid(90) }],
+  }],
 });
 check(() => readmodels.monthQuickOverviewReadModelSchema.parse(overview));
+check(() => {
+  assert.equal(overview.narrativeCarousel.visibility, "VISIBLE");
+  assert.deepEqual(overview.narrativeCarousel.data.items.slice(0, 2).map(({ kind }) => kind), ["EVENT", "PLACE"]);
+  assert.equal(overview.narrativeCarousel.data.items[1].targetRef.resource, "history_place_detail");
+});
+
+function stripOldCalendarItem(item) {
+  const clone = structuredClone(item);
+  delete clone.filterTags;
+  delete clone.itemKind;
+  delete clone.targetRef;
+  return clone;
+}
+function stripOldCollectionItems(node) {
+  if (node?.status === "KNOWN" || node?.status === "PARTIAL") node.items = node.items.map(stripOldCalendarItem);
+}
+function stripOldDay(day) {
+  delete day.economicAmountExcludingFixed;
+  stripOldCollectionItems(day.orderedMarkerGroups);
+  day.visibleMarkers = day.visibleMarkers.map(stripOldCalendarItem);
+  if (day.hover?.visibility === "VISIBLE") {
+    delete day.hover.data.economicAmountExcludingFixed;
+    if (day.hover.data.calendarEvents?.visibility === "VISIBLE") stripOldCollectionItems(day.hover.data.calendarEvents.data);
+    if (day.hover.data.activeRibbons?.visibility === "VISIBLE") stripOldCollectionItems(day.hover.data.activeRibbons.data);
+  }
+}
+function stripOldRibbons(collection) {
+  if (collection.status !== "KNOWN" && collection.status !== "PARTIAL") return;
+  for (const segment of collection.items) {
+    delete segment.eventStartDate;
+    delete segment.eventEndDate;
+    delete segment.targetRef;
+  }
+}
+const oldMonthPayload = structuredClone(monthModel);
+delete oldMonthPayload.unassignedTiming;
+Object.values(oldMonthPayload.daysByDate).forEach(stripOldDay);
+stripOldRibbons(oldMonthPayload.ribbonSegments);
+const oldWeekPayload = structuredClone(weekModel);
+oldWeekPayload.days.forEach(stripOldDay);
+stripOldRibbons(oldWeekPayload.ribbonSegments);
+const oldOverviewPayload = structuredClone(overview);
+delete oldOverviewPayload.narrativeCarousel;
+check(() => {
+  readmodels.oldMonthCalendarReadModelSchema.parse(oldMonthPayload);
+  readmodels.oldWeekReadModelSchema.parse(oldWeekPayload);
+  readmodels.oldMonthQuickOverviewReadModelSchema.parse(oldOverviewPayload);
+  assert.throws(() => readmodels.monthCalendarReadModelSchema.parse(oldMonthPayload));
+  assert.throws(() => readmodels.weekReadModelSchema.parse(oldWeekPayload));
+  assert.throws(() => readmodels.monthQuickOverviewReadModelSchema.parse(oldOverviewPayload));
+});
 check(() => {
   const serialized = JSON.stringify(overview);
   assert.equal(/typical|minimal|rank|rang|aiSummary/i.test(serialized), false, "Overview n'expose ni Typical, Minimal, rang, ni résumé IA");
@@ -442,6 +501,11 @@ check(() => {
       highlightId: "incident:1", calendarItemId: `life_event:${uuid(14)}`, title: "Incident explicite",
       dateLabel: "2026-05-12", iconKey: "incident", startDate: "2026-05-12",
       sourceRefs: [{ kind: "incident", id: "1" }], causalCost: { status: "KNOWN", value: "8" },
+    }],
+    narrativePlaces: [{
+      placeId: uuid(90), title: "Lieu narratif", presenceDays: 3,
+      localizedAmount: { status: "KNOWN", value: "12" }, iconKey: "place",
+      sourceRefs: [{ kind: "place", id: uuid(90) }],
     }],
   });
   assert.deepEqual(

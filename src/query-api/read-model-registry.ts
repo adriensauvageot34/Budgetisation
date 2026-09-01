@@ -68,6 +68,9 @@ import {
   journalDayReadModelSchema,
   monthCalendarReadModelSchema,
   monthQuickOverviewReadModelSchema,
+  oldMonthCalendarReadModelSchema,
+  oldMonthQuickOverviewReadModelSchema,
+  oldWeekReadModelSchema,
   weekReadModelSchema,
   activityDetailReadModelSchema,
   bankEconomyBridgeReadModelSchema,
@@ -206,14 +209,17 @@ export const queryDataSchemaByResource = Object.freeze({
 
 export function queryDataSchemaForContractVariant(
   resource: QueryResourceName,
-  contractVariant: "current" | "history_v2_visible_gaps_legacy",
+  contractVariant: import("./server/types").QuerySnapshotContractVariant,
 ): import("../core/validation").RuntimeSchema<unknown> {
-  if (resource !== queryResourceKeys.historyMonthSpendingNature) {
-    return queryDataSchemaByResource[resource];
+  if (contractVariant === "history_v2_calendar_centric_old") {
+    if (resource === queryResourceKeys.historyMonthCalendar) return oldMonthCalendarReadModelSchema;
+    if (resource === queryResourceKeys.historyWeek) return oldWeekReadModelSchema;
+    if (resource === queryResourceKeys.historyMonthOverview) return oldMonthQuickOverviewReadModelSchema;
   }
-  return contractVariant === "history_v2_visible_gaps_legacy"
+  if (resource === queryResourceKeys.historyMonthSpendingNature) return contractVariant === "history_v2_visible_gaps_legacy"
     ? oldMonthSpendingNatureReadModelSchema
     : newMonthSpendingNatureReadModelSchema;
+  return queryDataSchemaByResource[resource];
 }
 
 export const queryLotBReadModelSchemas = Object.freeze({

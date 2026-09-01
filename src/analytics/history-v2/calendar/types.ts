@@ -1,5 +1,6 @@
 import type { HouseholdId } from "../../../core/identity";
 import type {
+  CalendarFilterTag,
   CollectionValue,
   MetricValue,
   Provenance,
@@ -18,7 +19,7 @@ export type SpanBehavior =
   | "PROJECT_PERIOD"
   | "INCIDENT_PERIOD";
 export type ContinuityQualifier = "CONTINUOUS" | "NOT_CONTINUOUS";
-export type CalendarSourceKind = "life_event" | "moment" | "fused" | "context" | "aggregate";
+export type CalendarSourceKind = "life_event" | "moment" | "fused" | "context" | "aggregate" | "economic";
 export type CalendarTitleKind =
   | "EXPLICIT_HUMAN"
   | "GENERATED_WITH_PLACE"
@@ -29,6 +30,8 @@ export type CalendarSemanticItem = {
   readonly calendarItemId: string;
   readonly sourceKind: CalendarSourceKind;
   readonly sourceRefs: readonly string[];
+  readonly filterTags: readonly CalendarFilterTag[];
+  readonly itemKind: "LIFE" | "ECONOMIC";
   readonly semanticTypeKey: string;
   readonly title: string;
   readonly titleKind: CalendarTitleKind;
@@ -157,6 +160,7 @@ export type CalendarSemanticMonthArtifact = {
   readonly days: readonly CalendarDayProjection[];
   readonly ribbonWeeks: readonly CalendarRibbonWeek[];
   readonly semanticIssues: readonly string[];
+  readonly economicProjection: import("../calendar-economic").CalendarEconomicProjection;
   readonly sourceScope: {
     readonly monthStart: LocalDate;
     readonly monthEnd: LocalDate;
@@ -164,7 +168,8 @@ export type CalendarSemanticMonthArtifact = {
   };
   readonly dependencyPolicies: {
     readonly canonical_continuity: "v1";
-    readonly calendar_semantics: "v1";
+    readonly calendar_semantics: "v3";
+    readonly calendar_amount_views: "v1";
     readonly quality_visibility: "v1";
     readonly facts_hash: "v1";
   };

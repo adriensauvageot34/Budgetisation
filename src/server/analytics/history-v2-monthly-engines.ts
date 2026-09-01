@@ -11,6 +11,11 @@ import {
   type DailyEconomicComponentSource,
   type DailyTimingEvidence,
 } from "@/analytics/history-v2/daily-finance";
+import {
+  attachCalendarEconomicProjection,
+  buildCalendarEconomicProjection,
+  type CalendarEconomicComponentQualification,
+} from "@/analytics/history-v2/calendar-economic";
 import { selectEconomicComponentsForScope, sumEconomicNetForScope } from "@/analytics/context";
 import type { EconomicComponentFact, LifeEventContinuityFact } from "@/analytics/facts";
 import { addMoney, parseMoney, type Money } from "@/core/money";
@@ -151,6 +156,95 @@ export async function buildCalendarSemanticMonthFromCanonical(
     momentLifeEvents: relationSources,
     sourceCompleteness: "KNOWN",
   });
+}
+
+function dimensionId(value: EconomicComponentFact["category"] | EconomicComponentFact["subcategory"]): string | undefined {
+  return value.kind === "resolved" ? String(value.id) : undefined;
+}
+
+function behaviorQualification(value: EconomicComponentFact["behavior"]): CalendarEconomicComponentQualification["behavior"] {
+  if (value.kind === "conflict") return "CONFLICT";
+  if (value.kind !== "resolved") return "UNKNOWN";
+  if (value.value === "Fixe") return "FIXED";
+  if (value.value === "Variable") return "NON_FIXED";
+  return "UNKNOWN";
+}
+
+/**
+ * Canonical closure used by CalendarEconomicProjection. The projection never
+ * reads operations, labels or recurrence tables itself.
+ */
+export async function loadCalendarEconomicQualificationsFromCanonical(
+  repository: CanonicalRepository,
+  range: { readonly start: LocalDate; readonly endExclusive: LocalDate },
+): Promise<readonly CalendarEconomicComponentQualification[]> {
+  const facts = await repository.loadEconomicFacts(range);
+  const operationIds = [...new Set(facts.flatMap(({ sourceOperation }) =>
+    sourceOperation.kind === "resolved" ? [String(sourceOperation.id)] : []))];
+  const [operations, taxonomy] = await Promise.all([
+    repository.loadOperationsByIds(operationIds),
+    repository.loadCalendarEconomicTaxonomy(),
+  ]);
+  const { categories, subcategories, recurrenceSeries: recurrenceRows } = taxonomy;
+  const operationById = new Map(operations.map((row) => [requiredString(row, "operation_id", "operations"), row]));
+  const categoryById = new Map(categories.map((row) => [requiredString(row, "category_id", "categories"), row]));
+  const subcategoryById = new Map(subcategories.map((row) => [requiredString(row, "subcategory_id", "subcategories"), row]));
+  const recurrenceById = new Map(recurrenceRows.map((row) => [requiredString(row, "recurrence_series_id", "recurrence_series"), row]));
+  return facts.map((fact) => {
+    const componentKey = String(fact.canonicalComponentKey);
+    const operation = fact.sourceOperation.kind === "resolved"
+      ? operationById.get(String(fact.sourceOperation.id))
+      : undefined;
+    const recurrenceId = operation === undefined ? undefined : optionalString(operation, "recurrence_series_id");
+    const recurrence = recurrenceId === undefined ? "NONE" as const : recurrenceById.get(recurrenceId);
+    const recurrenceQualification: CalendarEconomicComponentQualification["recurrence"] = recurrence === "NONE"
+      ? "NONE"
+      : recurrence === undefined
+        ? "UNKNOWN"
+        : optionalString(recurrence, "statut_serie") === "Active" && optionalString(recurrence, "cadence_estimee") !== undefined
+          ? "CONFIRMED"
+          : optionalString(recurrence, "statut_serie") === "Inactive"
+            ? "NONE"
+            : "CONFLICT";
+    const category = dimensionId(fact.category);
+    const subcategory = dimensionId(fact.subcategory);
+    const categoryRow = category === undefined ? undefined : categoryById.get(category);
+    const subcategoryRow = subcategory === undefined ? undefined : subcategoryById.get(subcategory);
+    return {
+      componentKey,
+      ...(categoryRow === undefined ? {} : { categoryKey: requiredString(categoryRow, "category_key", "categories") }),
+      ...(subcategoryRow === undefined ? {} : {
+        subcategoryKey: requiredString(subcategoryRow, "subcategory_key", "subcategories"),
+        subcategoryLabel: requiredString(subcategoryRow, "nom_canonique", "subcategories"),
+      }),
+      behavior: behaviorQualification(fact.behavior),
+      recurrence: recurrenceQualification,
+      sourceRefs: [
+        `economic_component:${componentKey}`,
+        ...(recurrenceId === undefined ? [] : [`recurrence_series:${recurrenceId}`]),
+      ],
+    };
+  });
+}
+
+export async function buildCalendarCentricMonthFromCanonical(
+  repository: CanonicalRepository,
+  month: YearMonth,
+  ledger: Awaited<ReturnType<typeof buildDailyEconomicLedgerMonthFromCanonical>>,
+) {
+  const range = calendarRange(month);
+  const [calendarArtifact, facts, qualifications] = await Promise.all([
+    buildCalendarSemanticMonthFromCanonical(repository, month),
+    repository.loadEconomicFacts(range),
+    loadCalendarEconomicQualificationsFromCanonical(repository, range),
+  ]);
+  return attachCalendarEconomicProjection(calendarArtifact, buildCalendarEconomicProjection({
+    householdId: repository.householdId(),
+    month,
+    facts,
+    ledger,
+    qualifications,
+  }));
 }
 
 function evidenceForFact(

@@ -14,6 +14,7 @@ export const historyV2PolicyIds = [
   "canonical_continuity",
   "quality_visibility",
   "calendar_semantics",
+  "calendar_amount_views",
   "daily_economic_allocation",
   "week_journal_projection",
   "month_overview_selection",
@@ -32,16 +33,18 @@ export type PolicyVersions = Readonly<
 const policyIds: ReadonlySet<string> = new Set(historyV2PolicyIds);
 const v1 = parsePolicyVersion("v1");
 const v2 = parsePolicyVersion("v2");
+const v3 = parsePolicyVersion("v3");
 
 export const historyV2PolicyRegistry = Object.freeze({
   canonical_purchase_event_timing: v1,
   canonical_component_classification: v1,
   canonical_continuity: v1,
   quality_visibility: v1,
-  calendar_semantics: v2,
+  calendar_semantics: v3,
+  calendar_amount_views: v1,
   daily_economic_allocation: v1,
   week_journal_projection: v1,
-  month_overview_selection: v1,
+  month_overview_selection: v2,
   month_balance_summary: v1,
   category_explanation: v1,
   spending_nature: v2,

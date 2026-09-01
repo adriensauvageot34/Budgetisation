@@ -50,6 +50,7 @@ import { assertQueryRevisionCoherence } from "./revision-coherence";
 import type {
   QueryExecutionResult,
   QueryServerServices,
+  QuerySnapshotContractVariant,
   QueryTrace,
   QueryTraceOutcome,
 } from "./types";
@@ -194,7 +195,7 @@ export async function executeQuery(
     }
     const validatedData = (
       rawData: unknown,
-      contractVariant: "current" | "history_v2_visible_gaps_legacy" = "current",
+      contractVariant: QuerySnapshotContractVariant = "current",
     ): QueryDataByResource[QueryResourceName] => {
       try {
         return validateQueryData(
@@ -212,7 +213,7 @@ export async function executeQuery(
       }
     };
     let data: QueryDataByResource[QueryResourceName] | undefined;
-    let selectedContractVariant: "current" | "history_v2_visible_gaps_legacy" = "current";
+    let selectedContractVariant: QuerySnapshotContractVariant = "current";
     if (materialized !== null) {
       try {
         selectedContractVariant = materialized.contractVariant;

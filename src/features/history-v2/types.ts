@@ -1,29 +1,22 @@
 import type { LocalDate, YearMonth } from "@/core/time";
+import type { CalendarFilterSelection } from "@/core/history-v2";
 import type {
   MonthCalendarReadModel,
+  MonthQuickOverviewReadModel,
   WeekReadModel,
-  MonthBalanceSummaryReadModel,
-  MonthCategoriesReadModel,
-  MonthSpendingNatureReadModel,
-  MonthLifeMoneyReadModel,
   HistorySpendingSegmentDetailParams,
 } from "@/query-api";
 import type { UiTransportState } from "@/ui";
 
-export type HistoryV2View = "calendar" | "balance";
+export type HistoryV2View = "calendar";
+
+export type HistoryCalendarFilterState = CalendarFilterSelection;
 
 export const historyTransientDismissEvent = "history-v2:dismiss-transient";
 
 export type HistoryV2InitialState =
-  | { readonly kind: "calendar"; readonly state: UiTransportState<MonthCalendarReadModel> }
-  | { readonly kind: "week"; readonly weekStart: LocalDate; readonly state: UiTransportState<WeekReadModel> }
-  | {
-      readonly kind: "balance";
-      readonly summary: UiTransportState<MonthBalanceSummaryReadModel>;
-      readonly categories: UiTransportState<MonthCategoriesReadModel>;
-      readonly spendingNature: UiTransportState<MonthSpendingNatureReadModel>;
-      readonly lifeMoney: UiTransportState<MonthLifeMoneyReadModel>;
-    };
+  | { readonly kind: "calendar"; readonly state: UiTransportState<MonthCalendarReadModel>; readonly overview: UiTransportState<MonthQuickOverviewReadModel> }
+  | { readonly kind: "week"; readonly weekStart: LocalDate; readonly state: UiTransportState<WeekReadModel>; readonly overview: UiTransportState<MonthQuickOverviewReadModel> };
 
 export type HistoryOverlayTarget =
   | { readonly kind: "journal"; readonly date: LocalDate }

@@ -92,11 +92,12 @@ export const queryResourceContractRegistry = Object.freeze({
   metric_catalog_preview: legacyV1ResourceContract,
   metric_catalog_collection: legacyV1ResourceContract,
   history_month_calendar: defineHistoryV2ResourceContract({
-    readModelVersion: "history_month_calendar@v2",
+    readModelVersion: "history_month_calendar@v3",
     policyIds: [
       "canonical_continuity",
       "canonical_purchase_event_timing",
       "calendar_semantics",
+      "calendar_amount_views",
       "daily_economic_allocation",
       "facts_hash",
       "quality_visibility",
@@ -105,11 +106,12 @@ export const queryResourceContractRegistry = Object.freeze({
     metricIds: ["economic_consumption_net_attributable"],
   }),
   history_week: defineHistoryV2ResourceContract({
-    readModelVersion: "history_week@v2",
+    readModelVersion: "history_week@v3",
     policyIds: [
       "canonical_continuity",
       "canonical_purchase_event_timing",
       "calendar_semantics",
+      "calendar_amount_views",
       "daily_economic_allocation",
       "facts_hash",
       "quality_visibility",
@@ -131,6 +133,7 @@ export const queryResourceContractRegistry = Object.freeze({
     metricIds: ["economic_consumption_net_attributable"],
   }),
   history_month_overview: defineHistoryV2ResourceContract({
+    readModelVersion: "history_month_overview@v2",
     policyIds: [
       "canonical_continuity",
       "canonical_purchase_event_timing",
