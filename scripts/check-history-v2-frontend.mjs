@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
+import ts from "typescript";
 
 const root = process.cwd();
 const read = (path) => readFileSync(join(root, path), "utf8");
@@ -19,6 +20,40 @@ const featureFiles = [
 ];
 const sources = Object.fromEntries(featureFiles.map((path) => [path, read(path)]));
 const all = Object.values(sources).join("\n");
+
+const coherenceModule = { exports: {} };
+const coherenceJavaScript = ts.transpileModule(
+  read("src/features/history-v2/publication-coherence.ts"),
+  { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 } },
+).outputText;
+new Function("module", "exports", coherenceJavaScript)(coherenceModule, coherenceModule.exports);
+const { publicationMetasAreCoherent } = coherenceModule.exports;
+
+const publicationMeta = {
+  publicationId: "08ac77f3-ad31-4455-921b-be6e175be65a",
+  revision: 43,
+  factsHash: "feb8aae3a1f688703d99b2804c1f45d027720d56b5fcbf8e16ce5e0d26d6168c",
+  contractVersion: "v2",
+  generatedAt: "2026-08-31T12:00:00Z",
+  policyVersions: { month_balance_summary: "v2", daily_economic_allocation: "v2" },
+};
+assert.equal(publicationMetasAreCoherent([
+  publicationMeta,
+  { ...publicationMeta, policyVersions: { category_explanation: "v2" } },
+]), true, "Des policyVersions propres aux ressources doivent rester cohérentes dans une même publication.");
+assert.equal(publicationMetasAreCoherent([
+  publicationMeta,
+  { ...publicationMeta, publicationId: "another-publication" },
+]), false, "Deux publicationId différents doivent être incompatibles.");
+assert.equal(publicationMetasAreCoherent([
+  publicationMeta,
+  { ...publicationMeta, revision: 44 },
+]), false, "Deux revisions différentes doivent être incompatibles.");
+assert.equal(publicationMetasAreCoherent([
+  publicationMeta,
+  { ...publicationMeta, factsHash: "a".repeat(64) },
+]), false, "Deux factsHash différents doivent être incompatibles.");
+assert.equal(publicationMetasAreCoherent([publicationMeta, undefined]), false, "PublicationMeta manquant doit être incompatible.");
 
 const resources = [
   "historyMonthCalendar", "historyWeek", "historyDayJournal", "historyMonthOverview",
@@ -112,6 +147,7 @@ assert.match(overlay, /model\.classificationViews\[tab\]/, "Les tabs Category do
 assert.doesNotMatch(overlay, /classificationViews[^\n]+(?:reduce|groupBy|sort)/, "React ne doit ni regrouper ni renormaliser les classifications.");
 assert.match(shell, /Ouvrir le Bilan du mois/, "Overview doit proposer le CTA Bilan uniquement depuis Calendar.");
 assert.match(sources["src/features/history-v2/balance-view.tsx"], /Publication incompatible/);
+assert.match(sources["src/features/history-v2/balance-view.tsx"], /publicationMetasAreCoherent/);
 assert.match(renderers, /Impossible de charger/);
 assert.match(renderers, /Réessayer/);
 assert.match(renderers, /status === "KNOWN"/);

@@ -13,6 +13,7 @@ import type {
   PlaceLifeMoneySummary,
 } from "@/query-api";
 import type { UiTransportState } from "@/ui";
+import { publicationMetasAreCoherent } from "./publication-coherence";
 import { CollectionState, DisplayState, MetricState, MoneyMetric, StateBoundary, formatMoney } from "./renderers";
 import type { HistoryOverlayTarget } from "./types";
 import styles from "./history-v2.module.css";
@@ -36,16 +37,10 @@ export function BalanceMonthView({
     const data = state.status === "success" ? state.response.data : state.status === "error" ? state.previousData?.data : undefined;
     return data === undefined ? [] : [data];
   });
-  const hasMissingPublicationMeta = moduleData.some((data) => data.publicationMeta === undefined);
-  const publicationIdentities = new Set(moduleData.flatMap((data) => data.publicationMeta === undefined ? [] : [
-    JSON.stringify({
-      publicationId: data.publicationMeta.publicationId,
-      revision: data.publicationMeta.revision,
-      factsHash: data.publicationMeta.factsHash,
-      policyVersions: data.publicationMeta.policyVersions,
-    }),
-  ]));
-  if (moduleData.length > 0 && (hasMissingPublicationMeta || publicationIdentities.size !== 1)) {
+  const publicationCoherent = publicationMetasAreCoherent(
+    moduleData.map((data) => data.publicationMeta),
+  );
+  if (moduleData.length > 0 && !publicationCoherent) {
     return <div className={styles.errorState} role="alert"><strong>Publication incompatible</strong><p>Les quatre modules du Bilan ne proviennent pas de la même publication History V2. Rechargez la page.</p><button type="button" className="button-secondary" onClick={() => window.location.reload()}>Réessayer</button></div>;
   }
   return (
