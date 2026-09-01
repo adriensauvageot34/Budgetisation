@@ -84,6 +84,8 @@ export {
   monthCategoriesReadModelSchema,
   monthLifeMoneyReadModelSchema,
   monthSpendingNatureReadModelSchema,
+  newMonthSpendingNatureReadModelSchema,
+  oldMonthSpendingNatureReadModelSchema,
   placeDetailReadModelSchema,
   spendingSegmentDetailReadModelSchema,
 } from "./month-balance-schemas";

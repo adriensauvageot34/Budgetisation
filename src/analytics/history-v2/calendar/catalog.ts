@@ -7,6 +7,7 @@ import type {
 
 export type MonthVisibilityPolicy = "YES" | "NO" | "CONTEXT_BAND" | "IF_SPECIFIC";
 export type CalendarCatalogEntry = {
+  readonly publicLabel?: string;
   readonly renderMode: CalendarRenderMode;
   readonly markerTier?: MarkerTier;
   readonly priorityBand: 1 | 2 | 3 | 4 | 5;
@@ -17,36 +18,36 @@ export type CalendarCatalogEntry = {
   readonly aggregationPolicy: CalendarAggregationPolicy;
 };
 
-const entry = (value: CalendarCatalogEntry): CalendarCatalogEntry => Object.freeze(value);
+const entry = <T extends CalendarCatalogEntry>(value: T): Readonly<T> => Object.freeze(value);
 
 /** Exhaustive 25-entry catalog from the FINAL CIBLE Brief. */
 export const LIFE_EVENT_ACTIVITY_CATALOG = Object.freeze({
-  shopping_commerce: entry({ renderMode: "Marker", markerTier: "Secondary", priorityBand: 2, priorityWeight: 40, iconKey: "shopping", monthVisibility: "IF_SPECIFIC", spanBehavior: "POINT", aggregationPolicy: "SAME_TYPE_DAY" }),
-  courses_alimentaires: entry({ renderMode: "Marker", markerTier: "Secondary", priorityBand: 2, priorityWeight: 30, iconKey: "groceries", monthVisibility: "IF_SPECIFIC", spanBehavior: "POINT", aggregationPolicy: "SAME_TYPE_DAY" }),
-  demarche_admin: entry({ renderMode: "Marker", markerTier: "Standard", priorityBand: 3, priorityWeight: 55, iconKey: "administrative", monthVisibility: "YES", spanBehavior: "POINT", aggregationPolicy: "NONE" }),
-  retrait_banque: entry({ renderMode: "DetailOnly", priorityBand: 1, priorityWeight: 25, iconKey: "bank_cash", monthVisibility: "NO", spanBehavior: "POINT", aggregationPolicy: "NONE" }),
-  celebration: entry({ renderMode: "Marker", markerTier: "Dominant", priorityBand: 5, priorityWeight: 90, iconKey: "celebration", monthVisibility: "YES", spanBehavior: "EXPLICIT_CONTINUITY", aggregationPolicy: "NONE" }),
-  journee_maison: entry({ renderMode: "Context", priorityBand: 1, priorityWeight: 35, iconKey: "home", monthVisibility: "CONTEXT_BAND", spanBehavior: "DAILY_CONTEXT", aggregationPolicy: "NONE" }),
-  spectacle_culture: entry({ renderMode: "Marker", markerTier: "Dominant", priorityBand: 4, priorityWeight: 90, iconKey: "culture", monthVisibility: "YES", spanBehavior: "EXPLICIT_CONTINUITY", aggregationPolicy: "NONE" }),
-  sortie_soiree: entry({ renderMode: "Marker", markerTier: "Dominant", priorityBand: 4, priorityWeight: 80, iconKey: "nightlife", monthVisibility: "YES", spanBehavior: "POINT", aggregationPolicy: "NONE" }),
-  activite_loisir: entry({ renderMode: "Marker", markerTier: "Standard", priorityBand: 3, priorityWeight: 75, iconKey: "leisure", monthVisibility: "YES", spanBehavior: "EXPLICIT_CONTINUITY", aggregationPolicy: "NONE" }),
-  examen_permis: entry({ renderMode: "Marker", markerTier: "Dominant", priorityBand: 5, priorityWeight: 80, iconKey: "permit_exam", monthVisibility: "YES", spanBehavior: "POINT", aggregationPolicy: "NONE" }),
-  lecon_conduite: entry({ renderMode: "Marker", markerTier: "Standard", priorityBand: 3, priorityWeight: 65, iconKey: "driving_lesson", monthVisibility: "YES", spanBehavior: "POINT", aggregationPolicy: "SAME_TYPE_DAY" }),
-  livraison_repas: entry({ renderMode: "Marker", markerTier: "Secondary", priorityBand: 2, priorityWeight: 45, iconKey: "food_delivery", monthVisibility: "IF_SPECIFIC", spanBehavior: "POINT", aggregationPolicy: "SAME_TYPE_DAY" }),
-  repas_restaurant: entry({ renderMode: "Marker", markerTier: "Secondary", priorityBand: 2, priorityWeight: 45, iconKey: "restaurant", monthVisibility: "IF_SPECIFIC", spanBehavior: "POINT", aggregationPolicy: "SAME_TYPE_DAY" }),
-  rdv_medical: entry({ renderMode: "Marker", markerTier: "Standard", priorityBand: 3, priorityWeight: 60, iconKey: "medical", monthVisibility: "YES", spanBehavior: "POINT", aggregationPolicy: "NONE" }),
-  pharmacie: entry({ renderMode: "Marker", markerTier: "Secondary", priorityBand: 2, priorityWeight: 35, iconKey: "pharmacy", monthVisibility: "YES", spanBehavior: "POINT", aggregationPolicy: "SAME_TYPE_DAY" }),
-  visite_famille: entry({ renderMode: "Marker", markerTier: "Standard", priorityBand: 4, priorityWeight: 65, iconKey: "family", monthVisibility: "YES", spanBehavior: "AUTO_CONTINUOUS", aggregationPolicy: "NONE" }),
-  visite_ami: entry({ renderMode: "Marker", markerTier: "Standard", priorityBand: 4, priorityWeight: 60, iconKey: "friends", monthVisibility: "YES", spanBehavior: "AUTO_CONTINUOUS", aggregationPolicy: "NONE" }),
-  soin_personnel: entry({ renderMode: "Marker", markerTier: "Standard", priorityBand: 2, priorityWeight: 50, iconKey: "personal_care", monthVisibility: "YES", spanBehavior: "POINT", aggregationPolicy: "NONE" }),
-  voyage_sejour: entry({ renderMode: "Marker", markerTier: "Dominant", priorityBand: 5, priorityWeight: 95, iconKey: "travel", monthVisibility: "YES", spanBehavior: "AUTO_CONTINUOUS", aggregationPolicy: "NONE" }),
-  entretien_voiture: entry({ renderMode: "Marker", markerTier: "Standard", priorityBand: 3, priorityWeight: 55, iconKey: "vehicle_service", monthVisibility: "YES", spanBehavior: "POINT", aggregationPolicy: "NONE" }),
-  carburant: entry({ renderMode: "DetailOnly", priorityBand: 1, priorityWeight: 25, iconKey: "fuel", monthVisibility: "NO", spanBehavior: "POINT", aggregationPolicy: "NONE" }),
-  deplacement_pro: entry({ renderMode: "Marker", markerTier: "Standard", priorityBand: 4, priorityWeight: 75, iconKey: "business_trip", monthVisibility: "YES", spanBehavior: "EXPLICIT_CONTINUITY", aggregationPolicy: "NONE" }),
-  travail_site: entry({ renderMode: "Context", priorityBand: 1, priorityWeight: 70, iconKey: "work_site", monthVisibility: "CONTEXT_BAND", spanBehavior: "DAILY_CONTEXT", aggregationPolicy: "NONE" }),
-  teletravail: entry({ renderMode: "Context", priorityBand: 1, priorityWeight: 70, iconKey: "remote_work", monthVisibility: "CONTEXT_BAND", spanBehavior: "DAILY_CONTEXT", aggregationPolicy: "NONE" }),
-  funeraire: entry({ renderMode: "Marker", markerTier: "Dominant", priorityBand: 5, priorityWeight: 100, iconKey: "funeral", monthVisibility: "YES", spanBehavior: "EXPLICIT_CONTINUITY", aggregationPolicy: "NONE" }),
-} satisfies Record<string, CalendarCatalogEntry>);
+  shopping_commerce: entry({ publicLabel: "Shopping / commerce", renderMode: "Marker", markerTier: "Secondary", priorityBand: 2, priorityWeight: 40, iconKey: "shopping", monthVisibility: "IF_SPECIFIC", spanBehavior: "POINT", aggregationPolicy: "SAME_TYPE_DAY" }),
+  courses_alimentaires: entry({ publicLabel: "Courses alimentaires", renderMode: "Marker", markerTier: "Secondary", priorityBand: 2, priorityWeight: 30, iconKey: "groceries", monthVisibility: "IF_SPECIFIC", spanBehavior: "POINT", aggregationPolicy: "SAME_TYPE_DAY" }),
+  demarche_admin: entry({ publicLabel: "Démarche administrative", renderMode: "Marker", markerTier: "Standard", priorityBand: 3, priorityWeight: 55, iconKey: "administrative", monthVisibility: "YES", spanBehavior: "POINT", aggregationPolicy: "NONE" }),
+  retrait_banque: entry({ publicLabel: "Retrait bancaire", renderMode: "DetailOnly", priorityBand: 1, priorityWeight: 25, iconKey: "bank_cash", monthVisibility: "NO", spanBehavior: "POINT", aggregationPolicy: "NONE" }),
+  celebration: entry({ publicLabel: "Célébration", renderMode: "Marker", markerTier: "Dominant", priorityBand: 5, priorityWeight: 90, iconKey: "celebration", monthVisibility: "YES", spanBehavior: "EXPLICIT_CONTINUITY", aggregationPolicy: "NONE" }),
+  journee_maison: entry({ publicLabel: "Journée à la maison", renderMode: "Context", priorityBand: 1, priorityWeight: 35, iconKey: "home", monthVisibility: "CONTEXT_BAND", spanBehavior: "DAILY_CONTEXT", aggregationPolicy: "NONE" }),
+  spectacle_culture: entry({ publicLabel: "Spectacle / culture", renderMode: "Marker", markerTier: "Dominant", priorityBand: 4, priorityWeight: 90, iconKey: "culture", monthVisibility: "YES", spanBehavior: "EXPLICIT_CONTINUITY", aggregationPolicy: "NONE" }),
+  sortie_soiree: entry({ publicLabel: "Sortie / soirée", renderMode: "Marker", markerTier: "Dominant", priorityBand: 4, priorityWeight: 80, iconKey: "nightlife", monthVisibility: "YES", spanBehavior: "POINT", aggregationPolicy: "NONE" }),
+  activite_loisir: entry({ publicLabel: "Activité de loisir", renderMode: "Marker", markerTier: "Standard", priorityBand: 3, priorityWeight: 75, iconKey: "leisure", monthVisibility: "YES", spanBehavior: "EXPLICIT_CONTINUITY", aggregationPolicy: "NONE" }),
+  examen_permis: entry({ publicLabel: "Examen du permis", renderMode: "Marker", markerTier: "Dominant", priorityBand: 5, priorityWeight: 80, iconKey: "permit_exam", monthVisibility: "YES", spanBehavior: "POINT", aggregationPolicy: "NONE" }),
+  lecon_conduite: entry({ publicLabel: "Leçon de conduite", renderMode: "Marker", markerTier: "Standard", priorityBand: 3, priorityWeight: 65, iconKey: "driving_lesson", monthVisibility: "YES", spanBehavior: "POINT", aggregationPolicy: "SAME_TYPE_DAY" }),
+  livraison_repas: entry({ publicLabel: "Livraison de repas", renderMode: "Marker", markerTier: "Secondary", priorityBand: 2, priorityWeight: 45, iconKey: "food_delivery", monthVisibility: "IF_SPECIFIC", spanBehavior: "POINT", aggregationPolicy: "SAME_TYPE_DAY" }),
+  repas_restaurant: entry({ publicLabel: "Repas au restaurant", renderMode: "Marker", markerTier: "Secondary", priorityBand: 2, priorityWeight: 45, iconKey: "restaurant", monthVisibility: "IF_SPECIFIC", spanBehavior: "POINT", aggregationPolicy: "SAME_TYPE_DAY" }),
+  rdv_medical: entry({ publicLabel: "Rendez-vous médical", renderMode: "Marker", markerTier: "Standard", priorityBand: 3, priorityWeight: 60, iconKey: "medical", monthVisibility: "YES", spanBehavior: "POINT", aggregationPolicy: "NONE" }),
+  pharmacie: entry({ publicLabel: "Pharmacie", renderMode: "Marker", markerTier: "Secondary", priorityBand: 2, priorityWeight: 35, iconKey: "pharmacy", monthVisibility: "YES", spanBehavior: "POINT", aggregationPolicy: "SAME_TYPE_DAY" }),
+  visite_famille: entry({ publicLabel: "Visite familiale", renderMode: "Marker", markerTier: "Standard", priorityBand: 4, priorityWeight: 65, iconKey: "family", monthVisibility: "YES", spanBehavior: "AUTO_CONTINUOUS", aggregationPolicy: "NONE" }),
+  visite_ami: entry({ publicLabel: "Visite amicale", renderMode: "Marker", markerTier: "Standard", priorityBand: 4, priorityWeight: 60, iconKey: "friends", monthVisibility: "YES", spanBehavior: "AUTO_CONTINUOUS", aggregationPolicy: "NONE" }),
+  soin_personnel: entry({ publicLabel: "Soin personnel", renderMode: "Marker", markerTier: "Standard", priorityBand: 2, priorityWeight: 50, iconKey: "personal_care", monthVisibility: "YES", spanBehavior: "POINT", aggregationPolicy: "NONE" }),
+  voyage_sejour: entry({ publicLabel: "Voyage / séjour", renderMode: "Marker", markerTier: "Dominant", priorityBand: 5, priorityWeight: 95, iconKey: "travel", monthVisibility: "YES", spanBehavior: "AUTO_CONTINUOUS", aggregationPolicy: "NONE" }),
+  entretien_voiture: entry({ publicLabel: "Entretien du véhicule", renderMode: "Marker", markerTier: "Standard", priorityBand: 3, priorityWeight: 55, iconKey: "vehicle_service", monthVisibility: "YES", spanBehavior: "POINT", aggregationPolicy: "NONE" }),
+  carburant: entry({ publicLabel: "Carburant", renderMode: "DetailOnly", priorityBand: 1, priorityWeight: 25, iconKey: "fuel", monthVisibility: "NO", spanBehavior: "POINT", aggregationPolicy: "NONE" }),
+  deplacement_pro: entry({ publicLabel: "Déplacement professionnel", renderMode: "Marker", markerTier: "Standard", priorityBand: 4, priorityWeight: 75, iconKey: "business_trip", monthVisibility: "YES", spanBehavior: "EXPLICIT_CONTINUITY", aggregationPolicy: "NONE" }),
+  travail_site: entry({ publicLabel: "Travail sur site", renderMode: "Context", priorityBand: 1, priorityWeight: 70, iconKey: "work_site", monthVisibility: "CONTEXT_BAND", spanBehavior: "DAILY_CONTEXT", aggregationPolicy: "NONE" }),
+  teletravail: entry({ publicLabel: "Télétravail", renderMode: "Context", priorityBand: 1, priorityWeight: 70, iconKey: "remote_work", monthVisibility: "CONTEXT_BAND", spanBehavior: "DAILY_CONTEXT", aggregationPolicy: "NONE" }),
+  funeraire: entry({ publicLabel: "Événement funéraire", renderMode: "Marker", markerTier: "Dominant", priorityBand: 5, priorityWeight: 100, iconKey: "funeral", monthVisibility: "YES", spanBehavior: "EXPLICIT_CONTINUITY", aggregationPolicy: "NONE" }),
+} satisfies Record<string, CalendarCatalogEntry & { readonly publicLabel: string }>);
 
 export type LifeEventActivityTypeKey = keyof typeof LIFE_EVENT_ACTIVITY_CATALOG;
 
@@ -79,18 +80,24 @@ export const MOMENT_CATALOG = Object.freeze({
 
 export type MomentCatalogLabel = keyof typeof MOMENT_CATALOG;
 
+const momentByPublicLabel = new Map(
+  Object.entries(MOMENT_CATALOG).map(([publicLabel, value]) => [
+    publicLabel,
+    Object.freeze({ publicLabel, ...value }),
+  ]),
+);
 const momentByNormalizedKey = new Map(
-  Object.values(MOMENT_CATALOG).map((value) => [value.normalizedKey, value]),
+  [...momentByPublicLabel.values()].map((value) => [value.normalizedKey, value]),
 );
 
-export function requireLifeEventCatalogEntry(typeKey: string): CalendarCatalogEntry {
+export function requireLifeEventCatalogEntry(typeKey: string): CalendarCatalogEntry & { readonly publicLabel: string } {
   const value = LIFE_EVENT_ACTIVITY_CATALOG[typeKey as LifeEventActivityTypeKey];
   if (value === undefined) throw new TypeError(`Type Life Event/Activity non contractuel: ${typeKey}.`);
   return value;
 }
 
-export function requireMomentCatalogEntry(type: string): CalendarCatalogEntry & { readonly normalizedKey: string } {
-  const value = MOMENT_CATALOG[type as MomentCatalogLabel] ?? momentByNormalizedKey.get(type);
+export function requireMomentCatalogEntry(type: string): CalendarCatalogEntry & { readonly normalizedKey: string; readonly publicLabel: string } {
+  const value = momentByPublicLabel.get(type) ?? momentByNormalizedKey.get(type);
   if (value === undefined) throw new TypeError(`Type Moment non contractuel: ${type}.`);
   return value;
 }

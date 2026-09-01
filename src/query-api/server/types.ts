@@ -143,6 +143,8 @@ export type QueryServerServices = {
     ) => Promise<{
       readonly data: unknown;
       readonly cachePolicy: NonNullable<ApiResponse<unknown>["meta"]["cachePolicy"]>;
+      readonly methodSignature: string;
+      readonly contractVariant: QuerySnapshotContractVariant;
     } | null>;
     readonly writeQuery: (
       request: AnyNormalizedQueryRequest,
@@ -155,6 +157,10 @@ export type QueryServerServices = {
   };
   readonly onTrace?: (trace: QueryTrace) => void;
 };
+
+export type QuerySnapshotContractVariant =
+  | "current"
+  | "history_v2_visible_gaps_legacy";
 
 export type QueryTraceOutcome =
   | "success"

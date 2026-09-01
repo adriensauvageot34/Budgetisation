@@ -34,9 +34,9 @@ type InternalItem = {
 
 const defaultAuthority = Object.freeze({
   kind: "DERIVED" as const,
-  authority: "calendar_semantics@v1",
+  authority: "calendar_semantics@v2",
   methodId: "calendar-semantic-engine",
-  methodVersion: "v1",
+  methodVersion: "v2",
 });
 
 function sortedUnique<T extends string>(values: readonly T[]): readonly T[] {
@@ -60,10 +60,16 @@ function titleFor(
   explicit: string | undefined,
   generatedPlaceTitle: string | undefined,
   fallback: string,
+  technicalAliases: readonly string[],
   suppliedKind?: CalendarTitleKind,
 ): { title: string; titleKind: CalendarTitleKind } {
-  if (explicit !== undefined && explicit.trim().length > 0) {
-    return { title: explicit.trim(), titleKind: suppliedKind ?? "EXPLICIT_HUMAN" };
+  const normalizedExplicit = explicit?.trim();
+  if (
+    normalizedExplicit !== undefined
+    && normalizedExplicit.length > 0
+    && !technicalAliases.includes(normalizedExplicit)
+  ) {
+    return { title: normalizedExplicit, titleKind: suppliedKind ?? "EXPLICIT_HUMAN" };
   }
   if (generatedPlaceTitle !== undefined && generatedPlaceTitle.trim().length > 0) {
     return { title: generatedPlaceTitle.trim(), titleKind: "GENERATED_WITH_PLACE" };
@@ -122,7 +128,8 @@ function lifeEventItem(
   const resolvedTitle = titleFor(
     source.title,
     source.generatedPlaceTitle,
-    source.typeKey,
+    catalog.publicLabel,
+    [source.typeKey],
     source.titleKind,
   );
   const sourceRef = `life_event:${source.lifeEventId}`;
@@ -180,7 +187,13 @@ function lifeEventItem(
 function momentItem(source: CalendarMomentSource, issues: string[]): InternalItem {
   const catalog = requireMomentCatalogEntry(source.type);
   const sourceRef = `moment:${source.momentId}`;
-  const title = titleFor(source.title, undefined, catalog.normalizedKey, source.titleKind);
+  const title = titleFor(
+    source.title,
+    undefined,
+    catalog.publicLabel,
+    [source.type, catalog.normalizedKey],
+    source.titleKind,
+  );
   // A standalone Moment has no continuity assertion of its own. Keep the safe
   // non-ribbon mode here; fusion may later import the principal Life Event's
   // explicit continuity authority.

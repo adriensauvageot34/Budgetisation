@@ -26,11 +26,14 @@ import {
   metricBucketArtifactIdentity,
   historyV2SharedArtifactIdentity,
   analyticsMethodSignature,
+  historyV2AcceptedMethodSignatures,
   querySnapshotIdentity,
+  querySnapshotReadIdentities,
   type HistoryV2SharedArtifactFamily,
   type MaterializationPeriodIdentity,
   type MetricArtifactIdentity,
   type QuerySnapshotIdentity,
+  type QuerySnapshotContractVariant,
 } from "./identity";
 import {
   historyV2StagedArtifactEnvelopeSchema,
@@ -90,6 +93,8 @@ function subjectColumns(subject: MetricArtifactIdentity["subject"]) {
 export type QueryMaterializationHit = {
   readonly data: unknown;
   readonly cachePolicy: NonNullable<ApiMeta["cachePolicy"]>;
+  readonly methodSignature: string;
+  readonly contractVariant: QuerySnapshotContractVariant;
 };
 
 export type AnalyticsMaterializationStoreOptions = {
@@ -210,7 +215,10 @@ export class SupabaseAnalyticsMaterializationStore {
       .is("subject_id", null)
       .eq("period_kind", "month")
       .eq("contract_version", contract.contractVersion)
-      .eq("method_signature", analyticsMethodSignature(resource))
+      .in(
+        "method_signature",
+        historyV2AcceptedMethodSignatures(resource).map(({ methodSignature }) => methodSignature),
+      )
       .eq("is_active", true)
       .is("invalidated_at", null)
       .is("expires_at", null)
@@ -582,28 +590,38 @@ export class SupabaseAnalyticsMaterializationStore {
       || this.options.readMode === "bypass"
       || !isQueryMaterializationResource(request.resource)
     ) return null;
-    const identity = querySnapshotIdentity(this.context, request);
+    const identities = querySnapshotReadIdentities(this.context, request);
+    const identity = identities[0]!;
     const startedAt = Date.now();
     const { data, error } = await this.client
       .from("analytics_query_snapshots")
-      .select("payload,source_revision::text,expires_at")
+      .select("query_key,payload,source_revision::text,expires_at,method_signature,publication_id,analytics_publications!inner(publication_id,status)")
       .eq("household_id", identity.householdId)
-      .eq("query_key", identity.queryKey)
+      .in("query_key", identities.map(({ queryKey }) => queryKey))
       .eq("contract_version", identity.contractVersion)
-      .eq("method_signature", identity.methodSignature)
+      .in("method_signature", identities.map(({ methodSignature }) => methodSignature))
       .eq("is_active", true)
       .is("invalidated_at", null)
+      .not("publication_id", "is", null)
+      .eq("analytics_publications.status", "published")
       .order("source_revision", { ascending: false })
-      .limit(1);
+      .limit(2);
     if (error !== null) {
       if (this.materializationUnavailable(error)) return null;
       return null;
     }
-    const row = data?.[0];
+    const rows = data ?? [];
+    const row = rows.length === 1 ? rows[0] : undefined;
+    const matchedIdentity = row === undefined
+      ? undefined
+      : identities.find((candidate) =>
+          candidate.queryKey === row.query_key
+          && candidate.methodSignature === row.method_signature);
     const includeGlobalReference = identity.period.kind === "global"
       || identity.resource === "analysis_month_initial"
       || identity.resource === "analysis_month_evolution";
     const fresh = row !== undefined
+      && matchedIdentity !== undefined
       && (row.expires_at === null || new Date(row.expires_at).getTime() > Date.now())
       && await this.isFresh(row.source_revision, identity.period, includeGlobalReference);
     if (!fresh) {
@@ -625,6 +643,8 @@ export class SupabaseAnalyticsMaterializationStore {
     });
     return {
       data: row.payload,
+      methodSignature: matchedIdentity!.methodSignature,
+      contractVariant: matchedIdentity!.contractVariant,
       cachePolicy: this.cachePolicy({
         ...identity.period,
         sourceRevision: parseDataRevision(String(row.source_revision)),

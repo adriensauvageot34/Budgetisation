@@ -1,4 +1,7 @@
 import {
+  createCollectionValueSchema,
+  createDisplayNodeSchema,
+  createMetricValueSchema,
   parsePolicyVersions,
   parsePublicationMeta,
   parseQualityEnvelope,
@@ -7,6 +10,7 @@ import {
 } from "../../core/history-v2";
 import { parseResourceInputHash } from "../../analytics/history-v2";
 import { parseHouseholdId } from "../../core/identity";
+import { parseMoney } from "../../core/money";
 import { parseYearMonth } from "../../core/time";
 import {
   createRuntimeSchema,
@@ -27,11 +31,14 @@ import type {
   MonthCategoriesReadModel,
   MonthLifeMoneyReadModel,
   MonthSpendingNatureReadModel,
+  NewMonthSpendingNatureReadModel,
+  OldMonthSpendingNatureReadModel,
   PlaceDetailReadModel,
   SpendingSegmentDetailReadModel,
 } from "./month-balance-types";
 import { assertReadModelPublicationCompatibility } from "./builders";
-import { sourceRefRuntimeSchema } from "./schemas";
+import { parseHistorySpendingSegmentDetailParams } from "../request";
+import { queryTargetRefRuntimeSchema, sourceRefRuntimeSchema } from "./schemas";
 
 const baseKeys = [
   "householdId",
@@ -105,7 +112,56 @@ export const monthBalanceSummaryReadModelSchema = monthlySchema<MonthBalanceSumm
 export const bankEconomyBridgeReadModelSchema = monthlySchema<BankEconomyBridgeReadModel>(queryResourceKeys.historyBankEconomyBridge, ["bridge"], "BankEconomyBridgeReadModel");
 export const monthCategoriesReadModelSchema = monthlySchema<MonthCategoriesReadModel>(queryResourceKeys.historyMonthCategories, ["categories", "otherAmount", "unclassifiedAmount"], "MonthCategoriesReadModel");
 export const categoryDetailReadModelSchema = monthlySchema<CategoryDetailReadModel>(queryResourceKeys.historyCategoryDetail, ["category", "typicalComposition", "explanation", "frequencyTicket", "merchantAndPurchaseDrivers", "lifecycleBadges", "classificationViews"], "CategoryDetailReadModel");
-export const monthSpendingNatureReadModelSchema = monthlySchema<MonthSpendingNatureReadModel>(queryResourceKeys.historyMonthSpendingNature, ["actual", "necessity", "behavior", "lifeScope", "matrix"], "MonthSpendingNatureReadModel");
+export const oldMonthSpendingNatureReadModelSchema = monthlySchema<OldMonthSpendingNatureReadModel>(queryResourceKeys.historyMonthSpendingNature, ["actual", "necessity", "behavior", "lifeScope", "matrix"], "OldMonthSpendingNatureReadModel");
+
+const spendingContributorSchema = createRuntimeSchema((value: unknown) => {
+  const record = parseStrictRecord(value, ["contributorId", "grain", "label", "amount", "sourceRefs"], "SpendingContributor");
+  const contributorId = requireProperty(record, "contributorId", "SpendingContributor");
+  const grain = requireProperty(record, "grain", "SpendingContributor");
+  const label = requireProperty(record, "label", "SpendingContributor");
+  if (typeof contributorId !== "string" || contributorId.trim().length === 0) throw new TypeError("SpendingContributor.contributorId invalide.");
+  if (grain !== "SUBCATEGORY" && grain !== "CATEGORY") throw new TypeError("SpendingContributor.grain invalide.");
+  if (typeof label !== "string" || label.trim().length === 0) throw new TypeError("SpendingContributor.label invalide.");
+  return {
+    contributorId,
+    grain,
+    label,
+    amount: parseMoney(requireProperty(record, "amount", "SpendingContributor")),
+    sourceRefs: parseSourceRefs(requireProperty(record, "sourceRefs", "SpendingContributor")),
+  };
+});
+
+const metricMoneyNodeSchema = createDisplayNodeSchema(
+  createMetricValueSchema(createRuntimeSchema(parseMoney)),
+);
+const contributorCollectionNodeSchema = createDisplayNodeSchema(
+  createCollectionValueSchema(spendingContributorSchema),
+);
+const spendingNatureBucketProjectionSchema = createRuntimeSchema((value: unknown) => {
+  const record = parseStrictRecord(value, ["segment", "amount", "shareOfActual", "contributors", "otherAmount", "detailRef", "quality"], "SpendingNatureBucketProjection");
+  const shareOfActual = hasOwn(record, "shareOfActual") ? record.shareOfActual : undefined;
+  if (shareOfActual !== undefined && (typeof shareOfActual !== "number" || !Number.isFinite(shareOfActual))) {
+    throw new TypeError("SpendingNatureBucketProjection.shareOfActual invalide.");
+  }
+  return {
+    segment: parseHistorySpendingSegmentDetailParams(requireProperty(record, "segment", "SpendingNatureBucketProjection")),
+    amount: parseMoney(requireProperty(record, "amount", "SpendingNatureBucketProjection")),
+    ...(shareOfActual === undefined ? {} : { shareOfActual }),
+    contributors: contributorCollectionNodeSchema.parse(requireProperty(record, "contributors", "SpendingNatureBucketProjection")),
+    otherAmount: metricMoneyNodeSchema.parse(requireProperty(record, "otherAmount", "SpendingNatureBucketProjection")),
+    detailRef: queryTargetRefRuntimeSchema.parse(requireProperty(record, "detailRef", "SpendingNatureBucketProjection")),
+    ...(hasOwn(record, "quality") ? { quality: parseQualityEnvelope(record.quality) } : {}),
+  };
+});
+const spendingNatureSegmentsSchema = createDisplayNodeSchema(
+  createCollectionValueSchema(spendingNatureBucketProjectionSchema),
+);
+const newMonthSpendingNatureBaseSchema = monthlySchema<NewMonthSpendingNatureReadModel>(queryResourceKeys.historyMonthSpendingNature, ["actual", "necessity", "behavior", "lifeScope", "matrix", "segments"], "NewMonthSpendingNatureReadModel");
+export const newMonthSpendingNatureReadModelSchema = createRuntimeSchema((value: unknown) => {
+  const parsed = newMonthSpendingNatureBaseSchema.parse(value);
+  return { ...parsed, segments: spendingNatureSegmentsSchema.parse(parsed.segments) };
+});
+export const monthSpendingNatureReadModelSchema: RuntimeSchema<MonthSpendingNatureReadModel> = newMonthSpendingNatureReadModelSchema;
 export const spendingSegmentDetailReadModelSchema = monthlySchema<SpendingSegmentDetailReadModel>(queryResourceKeys.historySpendingSegmentDetail, ["segment", "amount", "contributors", "otherAmount"], "SpendingSegmentDetailReadModel");
 export const minimalPreviewReadModelSchema = monthlySchema<MinimalPreviewReadModel>(queryResourceKeys.historyMinimalPreview, ["minimalValue", "preview"], "MinimalPreviewReadModel");
 export const monthLifeMoneyReadModelSchema = monthlySchema<MonthLifeMoneyReadModel>(queryResourceKeys.historyMonthLifeMoney, ["activities", "moments", "places"], "MonthLifeMoneyReadModel");

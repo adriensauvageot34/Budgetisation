@@ -18,6 +18,7 @@ import { queryResourceKeys } from "@/query-api";
 import type { LocalDate } from "@/core/time";
 import { addDays, parseLocalDate, yearMonthOf, type YearMonth } from "@/core/time";
 import { CollectionState, DisplayState, MetricState, MoneyMetric } from "./renderers";
+import { HistorySemanticIcon } from "./semantic-icon";
 import { historyTransientDismissEvent, type HistoryOverlayTarget } from "./types";
 import styles from "./history-v2.module.css";
 
@@ -110,8 +111,8 @@ function RibbonRail({ segments, overflow, onTarget }: { readonly segments: reado
         closeAndRestoreFocus();
       }
     }}>
-      {segments.map((segment) => <div key={`${segment.calendarItemId}-${segment.weekStart}`} className={styles.ribbon} style={{ gridColumn: `${segment.startColumn + 1} / ${segment.endColumn + 2}`, gridRow: segment.lane }} title={segment.title}><span>{segment.iconKey}</span>{segment.title}</div>)}
-      {overflow !== undefined && overflow.count > 0 ? <div className={styles.ribbonOverflowAnchor} style={{ gridRow: 4 }}><button ref={triggerRef} type="button" className={styles.ribbonOverflow} aria-label={`${overflow.count} groupes continus supplémentaires`} aria-expanded={open} aria-controls={menuId} onClick={() => { if (open) setOpen(false); else { window.dispatchEvent(new Event(historyTransientDismissEvent)); setOpen(true); } }}>+{overflow.count}</button>{open ? <div id={menuId} className={styles.ribbonOverflowMenu} role="menu" aria-label="Événements continus supplémentaires">{overflow.items.map((item) => <button key={item.calendarItemId} type="button" role="menuitem" onClick={() => { setOpen(false); onTarget(item.targetRef); }}><span aria-hidden>{item.iconKey}</span><span><strong>{item.title}</strong><small>{item.segmentStart} → {item.segmentEnd}</small></span></button>)}</div> : null}</div> : null}
+      {segments.map((segment) => <div key={`${segment.calendarItemId}-${segment.weekStart}`} className={styles.ribbon} style={{ gridColumn: `${segment.startColumn + 1} / ${segment.endColumn + 2}`, gridRow: segment.lane }} title={segment.title}><HistorySemanticIcon iconKey={segment.iconKey} /> <span>{segment.title}</span></div>)}
+      {overflow !== undefined && overflow.count > 0 ? <div className={styles.ribbonOverflowAnchor} style={{ gridRow: 4 }}><button ref={triggerRef} type="button" className={styles.ribbonOverflow} aria-label={`${overflow.count} groupes continus supplémentaires`} aria-expanded={open} aria-controls={menuId} onClick={() => { if (open) setOpen(false); else { window.dispatchEvent(new Event(historyTransientDismissEvent)); setOpen(true); } }}>+{overflow.count}</button>{open ? <div id={menuId} className={styles.ribbonOverflowMenu} role="menu" aria-label="Événements continus supplémentaires">{overflow.items.map((item) => <button key={item.calendarItemId} type="button" role="menuitem" onClick={() => { setOpen(false); onTarget(item.targetRef); }}><HistorySemanticIcon iconKey={item.iconKey} /><span><strong>{item.title}</strong><small>{item.segmentStart} → {item.segmentEnd}</small></span></button>)}</div> : null}</div> : null}
     </div>
   );
 }
@@ -166,7 +167,7 @@ function ContextRow({ contexts }: { readonly contexts: MonthCalendarDayReadModel
 }
 
 function MarkerList({ items, hidden }: { readonly items: readonly CalendarItemSummary[]; readonly hidden: MonthCalendarDayReadModel["hiddenMarkerCount"] }) {
-  return <div className={styles.markerList}>{items.map((item) => <div key={item.calendarItemId} data-tier={item.markerTier}><span aria-hidden>{item.iconKey}</span><span>{item.title}</span></div>)}{(hidden.status === "KNOWN" || hidden.status === "PARTIAL") && hidden.value > 0 ? <button type="button" aria-label={`${hidden.value} groupes supplémentaires`}>+{hidden.value}</button> : null}</div>;
+  return <div className={styles.markerList}>{items.map((item) => <div key={item.calendarItemId} data-tier={item.markerTier}><HistorySemanticIcon iconKey={item.iconKey} /><span>{item.title}</span></div>)}{(hidden.status === "KNOWN" || hidden.status === "PARTIAL") && hidden.value > 0 ? <button type="button" aria-label={`${hidden.value} groupes supplémentaires`}>+{hidden.value}</button> : null}</div>;
 }
 
 function DayHoverPopover({ anchor, open, hover, onEnter, onLeave, onOpenJournal }: { readonly anchor: HTMLElement | null; readonly open: boolean; readonly hover: DayHoverReadModel; readonly onEnter: () => void; readonly onLeave: () => void; readonly onOpenJournal: () => void }) {
@@ -179,8 +180,8 @@ function DayHoverPopover({ anchor, open, hover, onEnter, onLeave, onOpenJournal 
   return <>{createPortal(<div className={styles.hoverScrim} aria-hidden />, document.body)}{createPortal(
     <section className={styles.dayHover} style={style} role="dialog" aria-label={`Aperçu du ${dayLabel(hover.date, true)}`} onMouseEnter={onEnter} onMouseLeave={onLeave}>
       <div className={styles.dayHoverHeader}><strong>{dayLabel(hover.date, true)}</strong><DisplayState node={hover.economicAmount}>{(metric) => <MoneyMetric metric={metric} />}</DisplayState></div>
-      <DisplayState node={hover.calendarEvents}>{(collection) => <CollectionState collection={collection}>{(items) => <ul>{items.slice(0, 3).map((item) => <li key={item.calendarItemId}>{item.iconKey} {item.title}</li>)}</ul>}</CollectionState>}</DisplayState>
-      <DisplayState node={hover.activeRibbons}>{(collection) => <CollectionState collection={collection}>{(items) => <ul>{items.map((item) => <li key={item.calendarItemId}>{item.iconKey} {item.title}</li>)}</ul>}</CollectionState>}</DisplayState>
+      <DisplayState node={hover.calendarEvents}>{(collection) => <CollectionState collection={collection}>{(items) => <ul>{items.slice(0, 3).map((item) => <li key={item.calendarItemId} className={styles.semanticListItem}><HistorySemanticIcon iconKey={item.iconKey} /><span>{item.title}</span></li>)}</ul>}</CollectionState>}</DisplayState>
+      <DisplayState node={hover.activeRibbons}>{(collection) => <CollectionState collection={collection}>{(items) => <ul>{items.map((item) => <li key={item.calendarItemId} className={styles.semanticListItem}><HistorySemanticIcon iconKey={item.iconKey} /><span>{item.title}</span></li>)}</ul>}</CollectionState>}</DisplayState>
       <DisplayState node={hover.contexts}>{(collection) => <CollectionState collection={collection}>{(items) => <div className={styles.participants}>{items.map((context) => <span key={`${context.personId}-${context.contextTypeKey}`}>{context.label}</span>)}</div>}</CollectionState>}</DisplayState>
       <DisplayState node={hover.economicExpenses}>{(collection) => <CollectionState collection={collection}>{(items) => <ul>{items.slice(0, 3).map((expense) => <li key={expense.expenseEventId}><span>{expense.label}</span><strong>{formatMoneyValue(expense.amount)}</strong></li>)}</ul>}</CollectionState>}</DisplayState>
       {(hover.hiddenExpenseCount.status === "KNOWN" || hover.hiddenExpenseCount.status === "PARTIAL") && hover.hiddenExpenseCount.value > 0 ? <p>+{hover.hiddenExpenseCount.value} dépenses</p> : null}

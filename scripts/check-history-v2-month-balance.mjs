@@ -80,6 +80,16 @@ const partialSpending = engine.buildSpendingAxes({ actual: money(100), component
 check(() => assert.equal(partialSpending.necessity.result.partialMeaning, "OBSERVED_ONLY"));
 check(() => assert.equal(partialSpending.matrix.immediateMargin.partialMeaning, "LOWER_BOUND"));
 check(() => assert.equal(partialSpending.necessity.gapMaterial, true));
+const contributorSelection = engine.selectSpendingContributors([
+  { componentKey: "1", amount: money(40), categoryId: "food", subcategoryId: "groceries" },
+  { componentKey: "2", amount: money(20), categoryId: "food", subcategoryId: "groceries" },
+  { componentKey: "3", amount: money(20), categoryId: "transport" },
+  { componentKey: "4", amount: money(15), categoryId: "home", subcategoryId: "energy" },
+  { componentKey: "5", amount: money(5), categoryId: "health" },
+]);
+check(() => assert.deepEqual(contributorSelection.contributors.map(({ contributorId, grain }) => [contributorId, grain]), [["groceries", "SUBCATEGORY"], ["transport", "CATEGORY"], ["energy", "SUBCATEGORY"]]));
+check(() => assert.equal(contributorSelection.contributors.length, 3));
+check(() => assert.equal(contributorSelection.otherAmount, money(5)));
 
 const minimal = engine.buildMinimalPreview({ minimal: money(100), components: [{ componentId: "1", label: "Loyer", family: "OBLIGATIONS", amount: money(50) }, { componentId: "2", label: "Courses", family: "VARIABLES_INDISPENSABLES", amount: money(20) }, { componentId: "3", label: "Provision", family: "PROVISIONS", amount: money(20) }, { componentId: "4", label: "Santé", family: "BESOINS_CONDITIONNELS", amount: money(10) }] });
 check(() => assert.equal(minimal.families.length, 4));
@@ -89,6 +99,13 @@ check(() => assert.throws(() => engine.buildMinimalPreview({ minimal: money(101)
 const activities = engine.rankActivities([{ activityTypeKey: "cinema", occurrences: 6, referenceOccurrences: 3, hasOtherNarrativeMoment: false, priorityBand: 2, qualifiedCostShare: 0.05, qualifiedCost: money(50) }, { activityTypeKey: "sport", occurrences: 2, referenceOccurrences: 2, bestHighlightRank: 1, hasOtherNarrativeMoment: false, priorityBand: 3, qualifiedCostShare: 0 }]);
 check(() => assert.equal(activities[0].activityTypeKey, "cinema"));
 check(() => assert.equal(activities[0].score, 64));
+const activityEligibility = engine.rankActivities([
+  { activityTypeKey: "zero-narrative", occurrences: 0, bestHighlightRank: 1, hasOtherNarrativeMoment: true, priorityBand: 4 },
+  { activityTypeKey: "zero-cost", occurrences: 0, hasOtherNarrativeMoment: false, priorityBand: 4, qualifiedCostShare: 0.5, qualifiedCost: money(500) },
+  { activityTypeKey: "one", occurrences: 1, hasOtherNarrativeMoment: false, priorityBand: 1 },
+]);
+check(() => assert.deepEqual(activityEligibility.map(({ activityTypeKey }) => activityTypeKey), ["one"]));
+check(() => assert.equal(engine.rankActivities([1, 2, 3, 4].map((occurrences) => ({ activityTypeKey: `a${occurrences}`, occurrences, hasOtherNarrativeMoment: false, priorityBand: 1 }))).length, 4));
 check(() => assert.throws(() => engine.computeActivityInterestScore({ activityTypeKey: "bad", occurrences: 1, referenceOccurrences: 1, hasOtherNarrativeMoment: false, priorityBand: 5 }), /erreur de contrat/));
 check(() => assert.deepEqual(engine.resolveActivityCost({ causalExpenses: [{ expenseEventId: "e1", amount: money(10) }], associatedExpenses: [{ expenseEventId: "e1", amount: money(10) }, { expenseEventId: "e2", amount: money(20) }] }), { costKind: "CAUSAL", expenseEventIds: ["e1"], amount: money(10) }));
 const moments = engine.rankMoments([{ momentId: "later", highlightRank: 2, priorityBand: 4, priorityWeight: 100, continuous: true, livedDaysInMonth: 10, causalCostComparable: false, startDate: "2026-05-01" }, { momentId: "first", highlightRank: 1, priorityBand: 1, priorityWeight: 1, continuous: false, livedDaysInMonth: 1, causalCostComparable: false, startDate: "2026-05-20" }]);
@@ -164,6 +181,49 @@ check(() => assert.throws(() => query.buildCategoryDetailReadModel({
   lifecycleBadges: [],
   classifications: partialSpending,
 }), /réconcilier/));
+const spendingResource = query.queryResourceKeys.historyMonthSpendingNature;
+const spendingContext = {
+  ...context,
+  policyVersions: history.resolvePolicyVersions(query.getQueryResourceContract(spendingResource).policyIds),
+  capabilities: capabilities(spendingResource),
+};
+const spendingReadModel = query.buildMonthSpendingNatureReadModel({
+  context: spendingContext,
+  actual: metric(money(100)),
+  necessity: spending.necessity,
+  behavior: spending.behavior,
+  lifeScope: spending.lifeScope,
+  matrix: spending.matrix,
+  segments: [{
+    segment: { axis: "necessity", bucket: "OPTIONAL" },
+    amount: money(60),
+    shareOfActual: 0.6,
+    contributors: { visibility: "VISIBLE", data: { status: "KNOWN", items: [{ contributorId: "groceries", grain: "SUBCATEGORY", label: "Courses", amount: money(40), sourceRefs: [{ kind: "subcategory", id: "groceries" }] }], totalCount: 1 } },
+    otherAmount: metric(money(20)),
+    detailRef: { resource: query.queryResourceKeys.historySpendingSegmentDetail, params: { axis: "necessity", bucket: "OPTIONAL" } },
+  }],
+});
+const { segments: _segments, ...oldSpendingReadModel } = spendingReadModel;
+check(() => assert.equal(query.newMonthSpendingNatureReadModelSchema.parse(spendingReadModel).segments.data.items[0].contributors.data.items[0].grain, "SUBCATEGORY"));
+check(() => assert.equal(query.oldMonthSpendingNatureReadModelSchema.parse(oldSpendingReadModel).month, "2026-05"));
+check(() => assert.throws(() => query.oldMonthSpendingNatureReadModelSchema.parse(spendingReadModel), (error) => error.issues?.some(({ code }) => code === "unrecognized_key")));
+check(() => assert.throws(() => query.newMonthSpendingNatureReadModelSchema.parse(oldSpendingReadModel), (error) => error.issues?.some(({ message }) => /segments/.test(message))));
+
+const lifeMoneyResource = query.queryResourceKeys.historyMonthLifeMoney;
+const lifeMoneyContext = {
+  ...context,
+  policyVersions: history.resolvePolicyVersions(query.getQueryResourceContract(lifeMoneyResource).policyIds),
+  capabilities: capabilities(lifeMoneyResource),
+};
+const sevenEligible = engine.rankActivities(Array.from({ length: 7 }, (_, index) => ({ activityTypeKey: `eligible-${index}`, occurrences: index + 1, hasOtherNarrativeMoment: false, priorityBand: 1 }))).map((score) => ({
+  ...score,
+  label: score.activityTypeKey,
+  costKind: "NONE",
+  cost: { status: "NOT_APPLICABLE", quality: { reasonCode: "POLICY_NOT_APPLICABLE" } },
+  detailRef: { resource: query.queryResourceKeys.historyActivityDetail, params: { activityTypeKey: score.activityTypeKey } },
+  sourceRefs: [{ kind: "activity", id: score.activityTypeKey }],
+}));
+check(() => assert.equal(query.buildMonthLifeMoneyReadModel({ context: lifeMoneyContext, activities: sevenEligible, moments: [], places: [] }).activities.data.items.length, 6));
 check(() => assert.equal(registry.findSchemaRegistryOrphans().length, 0));
 
 console.log(`History V2 Month Balance: ${checks}/${checks} PASS`);

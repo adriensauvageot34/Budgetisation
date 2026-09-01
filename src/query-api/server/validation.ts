@@ -4,7 +4,7 @@ import { parseContract } from "../../core/api";
 import type { QueryCapabilities } from "../capabilities";
 import type { RuntimeSchema } from "../../core/validation";
 import {
-  queryDataSchemaByResource,
+  queryDataSchemaForContractVariant,
   type QueryDataByResource,
 } from "../read-model-registry";
 import {
@@ -12,6 +12,7 @@ import {
   type NormalizedQueryRequest,
   type QueryResourceName,
 } from "../request";
+import type { QuerySnapshotContractVariant } from "./types";
 
 function outputCapabilities(
   resource: QueryResourceName,
@@ -203,10 +204,12 @@ export function validateQueryData<Name extends QueryResourceName>(
   rawData: unknown,
   capabilities: QueryCapabilities,
   requestId: string,
+  contractVariant: QuerySnapshotContractVariant = "current",
 ): QueryDataByResource[Name] {
-  const schema = queryDataSchemaByResource[
-    request.resource as QueryResourceName
-  ] as RuntimeSchema<QueryDataByResource[Name]>;
+  const schema = queryDataSchemaForContractVariant(
+    request.resource as QueryResourceName,
+    contractVariant,
+  ) as RuntimeSchema<QueryDataByResource[Name]>;
   const data = parseContract(schema, rawData, {
     contractName: `QueryData:${request.resource}`,
     requestId,

@@ -56,6 +56,7 @@ for (const extension of [".ts", ".tsx"]) {
 }
 
 const [fixtureDirectory, oracleReportFile, outputDirectory] = process.argv.slice(2);
+const publicationOnly = process.argv.slice(5).includes("--publication-only");
 if (fixtureDirectory === undefined || oracleReportFile === undefined || outputDirectory === undefined) {
   throw new Error("Usage: node scripts/check-history-v2-certification-12-months.mjs <fixture-directory> <expected-vs-engine-final.json> <output-directory>");
 }
@@ -803,6 +804,65 @@ function segmentSelection(data, params) {
     return component.necessity === params.necessity && component.behavior === params.behavior;
   });
 }
+function spendingContributorProjection(data, params) {
+  const selected = segmentSelection(data, params);
+  const selection = balance.selectSpendingContributors(selected);
+  return {
+    selected,
+    contributors: selection.contributors.map((contributor) => ({
+      contributorId: contributor.contributorId,
+      grain: contributor.grain,
+      label: contributor.grain === "SUBCATEGORY"
+        ? subcategoryLabels.get(contributor.contributorId) ?? contributor.contributorId
+        : categoryLabels.get(contributor.contributorId) ?? contributor.contributorId,
+      amount: contributor.amount,
+      sourceRefs: [sourceRef(
+        contributor.grain === "SUBCATEGORY" ? "subcategory" : "category",
+        contributor.contributorId,
+      )],
+    })),
+    otherAmount: selection.otherAmount,
+  };
+}
+function spendingNatureSegments(data, spending) {
+  const segments = [];
+  for (const [axis, state] of [
+    ["necessity", spending.necessity],
+    ["behavior", spending.behavior],
+    ["lifeScope", spending.lifeScope],
+  ]) {
+    if (state.result.status !== "KNOWN" && state.result.status !== "PARTIAL") continue;
+    for (const bucket of state.result.value) {
+      const segment = { axis, bucket: bucket.key };
+      const projection = spendingContributorProjection(data, segment);
+      segments.push({
+        segment,
+        amount: bucket.amount,
+        ...(bucket.shareOfActual === undefined ? {} : { shareOfActual: bucket.shareOfActual }),
+        contributors: knownCollection(projection.contributors),
+        otherAmount: visibleKnown(projection.otherAmount),
+        detailRef: target(query.queryResourceKeys.historySpendingSegmentDetail, segment),
+        ...(state.result.status === "PARTIAL" && state.result.quality !== undefined
+          ? { quality: state.result.quality }
+          : {}),
+      });
+    }
+  }
+  for (const cell of spending.matrix.cells) {
+    const [necessity, behavior] = cell.key.split("__");
+    const segment = { necessity, behavior };
+    const projection = spendingContributorProjection(data, segment);
+    segments.push({
+      segment,
+      amount: cell.amount,
+      ...(cell.shareOfActual === undefined ? {} : { shareOfActual: cell.shareOfActual }),
+      contributors: knownCollection(projection.contributors),
+      otherAmount: visibleKnown(projection.otherAmount),
+      detailRef: target(query.queryResourceKeys.historySpendingSegmentDetail, segment),
+    });
+  }
+  return segments;
+}
 function buildActivityDetail(data, context, activityTypeKey) {
   const summary = activityState(data).summaries.find((value) => value.activityTypeKey === activityTypeKey);
   if (summary === undefined) throw new TypeError(`Activity ${activityTypeKey} absente.`);
@@ -967,27 +1027,17 @@ function buildReadModel(data, request) {
         behavior: spending.behavior,
         lifeScope: spending.lifeScope,
         matrix: spending.matrix,
+        segments: spendingNatureSegments(data, spending),
       });
     }
     case "history_spending_segment_detail": {
-      const selected = segmentSelection(data, request.params);
-      const grouped = groupFactsAmount(
-        data.facts.filter((fact) => selected.some(({ componentKey }) => componentKey === String(fact.canonicalComponentKey))),
-        (fact) => categoryOf(fact) ?? "__UNCLASSIFIED__",
-      );
-      const contributors = [...grouped].sort(([, left], [, right]) => new Big(right).abs().cmp(new Big(left).abs())).map(([categoryId, amount]) => ({
-        contributorId: categoryId,
-        grain: "CATEGORY",
-        label: categoryLabels.get(categoryId) ?? "Non classé",
-        amount,
-        sourceRefs: [sourceRef("category", categoryId)],
-      }));
+      const projection = spendingContributorProjection(data, request.params);
       return historyQuery.buildSpendingSegmentDetailReadModel({
         context,
         segment: request.params,
-        amount: visibleKnown(sumMoney(selected.map(({ amount }) => amount))),
-        contributors: knownCollection(contributors),
-        otherAmount: visibleKnown(zero),
+        amount: visibleKnown(sumMoney(projection.selected.map(({ amount }) => amount))),
+        contributors: knownCollection(projection.contributors),
+        otherAmount: visibleKnown(projection.otherAmount),
       });
     }
     case "history_minimal_preview": {
@@ -1192,11 +1242,17 @@ for (const month of months) {
     };
   };
   const preflight = await materialization.buildHistoryV2Preflight({ context: runtimeContext, month, artifacts, buildQuery });
-  const deterministic = await materialization.buildHistoryV2Preflight({ context: runtimeContext, month, artifacts: [...artifacts].reverse(), buildQuery });
-  const checks = assertMonthInvariants(data, preflight, deterministic);
-  const resources = materialization.historyV2QueryResources.map((resource) => resourceResult(preflight, resource));
+  const deterministic = publicationOnly
+    ? preflight
+    : await materialization.buildHistoryV2Preflight({ context: runtimeContext, month, artifacts: [...artifacts].reverse(), buildQuery });
+  const checks = publicationOnly ? [] : assertMonthInvariants(data, preflight, deterministic);
+  const resources = publicationOnly
+    ? materialization.historyV2QueryResources.map((resource) => ({ resource, classification: "PASS", reasons: [] }))
+    : materialization.historyV2QueryResources.map((resource) => resourceResult(preflight, resource));
   let classification = resources.reduce((status, value) => maxClass(status, value.classification), "PASS");
-  const artifactClass = classifyPayload({ calendar: data.calendarArtifact, daily: data.dailyArtifact });
+  const artifactClass = publicationOnly
+    ? { classification: "PASS", reasons: [] }
+    : classifyPayload({ calendar: data.calendarArtifact, daily: data.dailyArtifact });
   classification = maxClass(classification, artifactClass.classification);
   totalQueries += preflight.queries.length;
   if (process.env.HISTORY_V2_PREFLIGHT_BUNDLE_FILE !== undefined) {
@@ -1226,7 +1282,7 @@ const result = {
   gate: monthResults.some(({ classification }) => classification === "FAIL") ? "FAIL" : "PASS",
   implementationSha: process.env.HISTORY_V2_IMPLEMENTATION_SHA ?? "WORKTREE",
   generatedAt: runtimeContext.asOf,
-  mode: "READ_ONLY",
+  mode: publicationOnly ? "READ_ONLY_REPUBLICATION_PREFLIGHT" : "READ_ONLY",
   stageFinalize: "NONE",
   householdId,
   months: monthResults,

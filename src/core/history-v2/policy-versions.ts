@@ -31,20 +31,21 @@ export type PolicyVersions = Readonly<
 
 const policyIds: ReadonlySet<string> = new Set(historyV2PolicyIds);
 const v1 = parsePolicyVersion("v1");
+const v2 = parsePolicyVersion("v2");
 
 export const historyV2PolicyRegistry = Object.freeze({
   canonical_purchase_event_timing: v1,
   canonical_component_classification: v1,
   canonical_continuity: v1,
   quality_visibility: v1,
-  calendar_semantics: v1,
+  calendar_semantics: v2,
   daily_economic_allocation: v1,
   week_journal_projection: v1,
   month_overview_selection: v1,
   month_balance_summary: v1,
   category_explanation: v1,
-  spending_nature: v1,
-  life_money_selection: v1,
+  spending_nature: v2,
+  life_money_selection: v2,
   facts_hash: v1,
 } satisfies Record<HistoryV2PolicyId, PolicyVersion>);
 

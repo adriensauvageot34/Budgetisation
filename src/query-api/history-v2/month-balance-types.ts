@@ -101,7 +101,7 @@ export type CategoryDetailReadModel = HistoryV2MonthlyBase & {
   };
 };
 
-export type MonthSpendingNatureReadModel = HistoryV2MonthlyBase & {
+export type OldMonthSpendingNatureReadModel = HistoryV2MonthlyBase & {
   readonly actual: MetricNode<Money>;
   readonly necessity: DisplayNode<SpendingAxis>;
   readonly behavior: DisplayNode<SpendingAxis>;
@@ -117,13 +117,33 @@ export type SpendingContributor = {
   readonly sourceRefs: readonly SourceRef[];
 };
 
+export type SpendingSegment = {
+  readonly axis?: "necessity" | "behavior" | "lifeScope";
+  readonly bucket?: string;
+  readonly necessity?: string;
+  readonly behavior?: string;
+};
+
+export type SpendingNatureBucketProjection = {
+  readonly segment: SpendingSegment;
+  readonly amount: Money;
+  readonly shareOfActual?: number;
+  readonly contributors: CollectionNode<SpendingContributor>;
+  readonly otherAmount: MetricNode<Money>;
+  readonly detailRef: QueryTargetRef;
+  readonly quality?: QualityEnvelope;
+};
+
+export type NewMonthSpendingNatureReadModel = OldMonthSpendingNatureReadModel & {
+  readonly segments: CollectionNode<SpendingNatureBucketProjection>;
+};
+
+export type MonthSpendingNatureReadModel =
+  | OldMonthSpendingNatureReadModel
+  | NewMonthSpendingNatureReadModel;
+
 export type SpendingSegmentDetailReadModel = HistoryV2MonthlyBase & {
-  readonly segment: {
-    readonly axis?: "necessity" | "behavior" | "lifeScope";
-    readonly bucket?: string;
-    readonly necessity?: string;
-    readonly behavior?: string;
-  };
+  readonly segment: SpendingSegment;
   readonly amount: MetricNode<Money>;
   readonly contributors: CollectionNode<SpendingContributor>;
   readonly otherAmount: MetricNode<Money>;

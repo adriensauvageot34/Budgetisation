@@ -2,6 +2,7 @@ import "server-only";
 
 export {
   analyticsMethodSignature,
+  historyV2AcceptedMethodSignatures,
   isQueryMaterializationResource,
   materializationPeriod,
   metricArtifactIdentity,
@@ -9,12 +10,15 @@ export {
   historyV2SharedArtifactIdentity,
   historyV2SharedArtifactFamilies,
   querySnapshotIdentity,
+  querySnapshotReadIdentities,
   type HistoryV2SharedArtifactFamily,
   type HistoryV2SharedArtifactIdentity,
   type MaterializationPeriodIdentity,
   type MaterializationRevisionPolicy,
   type MetricArtifactIdentity,
   type QuerySnapshotIdentity,
+  type QuerySnapshotContractVariant,
+  type QuerySnapshotReadIdentity,
 } from "./identity";
 export { aggregateAdditiveMonthlyMetrics } from "./global-planner";
 export {

@@ -37,6 +37,7 @@ export type {
   QueryServerAdapter,
   QueryServerContext,
   QueryServerServices,
+  QuerySnapshotContractVariant,
   QueryTrace,
   QueryTraceOutcome,
 } from "./types";

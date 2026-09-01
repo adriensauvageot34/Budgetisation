@@ -78,6 +78,8 @@ import {
   monthCategoriesReadModelSchema,
   monthLifeMoneyReadModelSchema,
   monthSpendingNatureReadModelSchema,
+  newMonthSpendingNatureReadModelSchema,
+  oldMonthSpendingNatureReadModelSchema,
   placeDetailReadModelSchema,
   spendingSegmentDetailReadModelSchema,
   type ActivityDetailReadModel,
@@ -201,6 +203,18 @@ export const queryDataSchemaByResource = Object.freeze({
     QueryDataByResource[Name]
   >;
 });
+
+export function queryDataSchemaForContractVariant(
+  resource: QueryResourceName,
+  contractVariant: "current" | "history_v2_visible_gaps_legacy",
+): import("../core/validation").RuntimeSchema<unknown> {
+  if (resource !== queryResourceKeys.historyMonthSpendingNature) {
+    return queryDataSchemaByResource[resource];
+  }
+  return contractVariant === "history_v2_visible_gaps_legacy"
+    ? oldMonthSpendingNatureReadModelSchema
+    : newMonthSpendingNatureReadModelSchema;
+}
 
 export const queryLotBReadModelSchemas = Object.freeze({
   [queryResourceKeys.analysisMonthInitial]: analysisMonthInitialReadModelSchema,

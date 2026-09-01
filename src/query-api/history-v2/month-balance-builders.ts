@@ -39,6 +39,7 @@ import type {
   MonthSpendingNatureReadModel,
   PlaceDetailReadModel,
   PlaceLifeMoneySummary,
+  SpendingNatureBucketProjection,
   SpendingSegmentDetailReadModel,
 } from "./month-balance-types";
 import type { CollectionNode, EconomicExpenseSummary, MetricNode, SourceRef } from "./types";
@@ -165,8 +166,8 @@ export function buildCategoryDetailReadModel(input: { readonly context: MonthBal
   };
 }
 
-export function buildMonthSpendingNatureReadModel(input: { readonly context: MonthBalanceBuilderContext; readonly actual: MetricNode<Money>; readonly necessity: SpendingAxis; readonly behavior: SpendingAxis; readonly lifeScope: SpendingAxis; readonly matrix: SpendingNatureMatrix }): MonthSpendingNatureReadModel {
-  return { ...base(input.context), actual: input.actual, necessity: visible(input.necessity), behavior: visible(input.behavior), lifeScope: visible(input.lifeScope), matrix: visible(input.matrix) };
+export function buildMonthSpendingNatureReadModel(input: { readonly context: MonthBalanceBuilderContext; readonly actual: MetricNode<Money>; readonly necessity: SpendingAxis; readonly behavior: SpendingAxis; readonly lifeScope: SpendingAxis; readonly matrix: SpendingNatureMatrix; readonly segments: readonly SpendingNatureBucketProjection[] }): MonthSpendingNatureReadModel {
+  return { ...base(input.context), actual: input.actual, necessity: visible(input.necessity), behavior: visible(input.behavior), lifeScope: visible(input.lifeScope), matrix: visible(input.matrix), segments: knownCollection(input.segments) };
 }
 
 export function buildSpendingSegmentDetailReadModel(input: Omit<SpendingSegmentDetailReadModel, keyof ReturnType<typeof base>> & { readonly context: MonthBalanceBuilderContext }): SpendingSegmentDetailReadModel {

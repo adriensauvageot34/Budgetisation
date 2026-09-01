@@ -75,7 +75,9 @@
 .calendarWeek:hover .weekLink, .weekLink:focus-visible { opacity: 1; }
 
 .ribbonRail { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); grid-template-rows: repeat(4, 20px); gap: 4px 0; min-height: 94px; padding: 4px 8px 6px; border-top: 1px solid var(--color-border); background: #fafaf7; }
-.ribbon { z-index: 2; align-self: center; height: 19px; margin-inline: 2px; overflow: hidden; border-radius: 6px; padding: 1px 8px; background: #dce8e3; color: #31564f; font-size: 12px; font-weight: 750; line-height: 17px; text-overflow: ellipsis; white-space: nowrap; }
+.ribbon { z-index: 2; display: flex; min-width: 0; height: 19px; align-items: center; align-self: center; gap: 4px; margin-inline: 2px; overflow: hidden; border-radius: 6px; padding: 1px 8px; background: #dce8e3; color: #31564f; font-size: 12px; font-weight: 750; line-height: 17px; white-space: nowrap; }
+.ribbon > svg { flex: 0 0 14px; }
+.ribbon > span { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
 .ribbonOverflowAnchor { position: relative; z-index: 5; align-self: center; justify-self: end; grid-column: 7; }
 .ribbonOverflow { border: 0; border-radius: 999px; padding: 2px 7px; background: #e8e8e2; color: var(--color-muted); font-size: 11px; font-weight: 800; cursor: pointer; }
 .ribbonOverflowMenu { position: absolute; top: calc(100% + 6px); right: 0; display: grid; width: 280px; max-height: 260px; overflow: auto; border: 1px solid var(--color-border); border-radius: 12px; padding: 6px; background: white; box-shadow: var(--shadow-md); }
@@ -96,8 +98,9 @@
 .contextRow { display: flex; gap: 4px; margin: 8px 0; }
 .contextRow > span { display: grid; width: 22px; height: 22px; place-items: center; border-radius: 999px; background: #dce8e3; color: #31564f; font-size: 10px; font-weight: 900; }
 .markerList { display: grid; gap: 4px; }
-.markerList > div { display: grid; grid-template-columns: 16px minmax(0, 1fr); gap: 4px; min-width: 0; font-size: 12px; line-height: 1.25; }
-.markerList > div > span:last-child { display: -webkit-box; overflow: hidden; -webkit-box-orient: vertical; -webkit-line-clamp: 2; }
+.markerList > div { display: grid; grid-template-columns: 16px minmax(0, 1fr); gap: 4px; min-width: 0; max-width: 100%; overflow: hidden; font-size: 12px; line-height: 1.25; }
+.markerList > div > svg { width: 14px; height: 14px; flex: none; }
+.markerList > div > span:last-child { display: -webkit-box; min-width: 0; max-width: 100%; overflow: hidden; overflow-wrap: anywhere; -webkit-box-orient: vertical; -webkit-line-clamp: 2; }
 .markerList > button { justify-self: start; border: 0; border-radius: 999px; padding: 2px 7px; background: var(--color-surface-soft); color: var(--color-muted); font-size: 11px; font-weight: 850; }
 
 .weekSurface { width: min(1780px, calc(100vw - 48px)); margin: 0 auto; }
@@ -113,6 +116,8 @@
 .dayHoverHeader { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
 .dayHover ul { display: grid; gap: 6px; margin: 0; padding: 0; list-style: none; }
 .dayHover li { display: flex; justify-content: space-between; gap: 10px; font-size: 13px; }
+.dayHover li.semanticListItem { display: grid; grid-template-columns: 16px minmax(0, 1fr); align-items: center; justify-content: initial; }
+.semanticListItem > span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
 .balanceSurface { display: grid; width: min(1560px, calc(100vw - 64px)); gap: 28px; margin: 0 auto; }
 .balanceModule { display: grid; gap: 18px; border: 1px solid var(--color-border); border-radius: var(--history-card-radius); padding: 24px; background: white; box-shadow: var(--shadow-sm); }
@@ -138,6 +143,12 @@
 .axisCard, .marginMatrix { border: 1px solid var(--color-border); border-radius: 12px; padding: 16px; }
 .axisCard h3, .marginMatrix h3 { margin-top: 0; }
 .axisCard button, .marginMatrix button { display: flex; width: 100%; align-items: center; justify-content: space-between; border: 0; border-bottom: 1px solid var(--color-border); padding: 9px 0; background: transparent; color: inherit; cursor: pointer; }
+.axisCard button > span:last-child, .marginMatrix button > span:last-child { display: grid; justify-items: end; gap: 2px; }
+.axisCard button small, .marginMatrix button small { color: var(--color-muted); font-size: 11px; font-weight: 650; }
+.spendingBucket { border-bottom: 1px solid var(--color-border); }
+.spendingBucket > button { border-bottom: 0; }
+.contributorList { display: flex; flex-wrap: wrap; gap: 5px; padding: 0 0 8px; }
+.contributorList > span { border-radius: 999px; padding: 3px 7px; background: var(--color-surface-soft); color: var(--color-muted); font-size: 11px; }
 .axisCard p { margin-bottom: 0; color: var(--color-muted); font-size: 13px; }
 .marginMatrix { margin-top: 14px; }
 .marginMatrix > div:first-of-type { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }

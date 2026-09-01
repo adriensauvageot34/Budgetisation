@@ -147,6 +147,22 @@ check(() => {
   assert.equal(aggregate.items.items[0].memberSourceIds.length, 2);
 });
 
+const humanFallbackTitles = calendar.buildCalendarSemanticMonthArtifact(calendarInput({
+  lifeEvents: [
+    life({ id: "42", typeKey: "lecon_conduite", title: "lecon_conduite", authority: undefined, startDate: "2026-05-02", endDate: "2026-05-02" }),
+    life({ id: "43", typeKey: "deplacement_pro", title: "deplacement_pro", authority: undefined, startDate: "2026-05-03", endDate: "2026-05-03" }),
+    life({ id: "44", typeKey: "pharmacie", title: "pharmacie", authority: undefined, startDate: "2026-05-04", endDate: "2026-05-04" }),
+    life({ id: "45", typeKey: "rdv_medical", title: "Consultation cardiologue", authority: undefined, startDate: "2026-05-05", endDate: "2026-05-05" }),
+  ],
+}));
+check(() => assert.deepEqual(Object.fromEntries(humanFallbackTitles.items.items.map(({ semanticTypeKey, title }) => [semanticTypeKey, title])), {
+  deplacement_pro: "Déplacement professionnel",
+  lecon_conduite: "Leçon de conduite",
+  pharmacie: "Pharmacie",
+  rdv_medical: "Consultation cardiologue",
+}));
+check(() => assert.ok(humanFallbackTitles.items.items.every(({ authority }) => authority.authority === "calendar_semantics@v2" && authority.methodVersion === "v2")));
+
 const topThree = calendar.buildCalendarSemanticMonthArtifact(calendarInput({
   lifeEvents: [life({ id: "50", typeKey: "demarche_admin" })],
   moments: [moment({ id: "51", type: "Anniversaire" }), moment({ id: "52", type: "Soirée techno" }), moment({ id: "53", type: "Sortie / plage" })],

@@ -12,6 +12,7 @@ const featureFiles = [
   "src/features/history-v2/history-v2-page.tsx",
   "src/features/history-v2/history-shell.tsx",
   "src/features/history-v2/calendar-view.tsx",
+  "src/features/history-v2/semantic-icon.tsx",
   "src/features/history-v2/balance-view.tsx",
   "src/features/history-v2/overlay-host.tsx",
   "src/features/history-v2/renderers.tsx",
@@ -87,7 +88,7 @@ assert.match(materializationStore, /async readLatestPublishedHistoryV2Month/, "L
 for (const proof of [
   /resource", resource/,
   /contract_version", contract\.contractVersion/,
-  /method_signature", analyticsMethodSignature\(resource\)/,
+  /method_signature",\s+historyV2AcceptedMethodSignatures\(resource\)/,
   /is_active", true/,
   /invalidated_at", null/,
   /analytics_publications\.status", "published"/,
@@ -128,6 +129,9 @@ assert.match(css, /overlayMoment[^}]+680px/s);
 assert.match(css, /overlayPlace[^}]+600px/s);
 assert.match(css, /prefers-reduced-motion: reduce/);
 assert.match(calendar, /items=\{day\.visibleMarkers\}/, "Month et Week doivent rendre l’ordre serveur sans retri.");
+assert.match(calendar, /HistorySemanticIcon/, "Les iconKey Calendar doivent être projetées en icônes UI.");
+assert.doesNotMatch(calendar, />\s*\{(?:item|segment)\.iconKey\}\s*</, "Aucun iconKey ne doit être rendu comme texte visible.");
+assert.match(css, /-webkit-line-clamp: 2/, "Les titres Marker doivent être limités à deux lignes.");
 assert.match(calendar, /overflow\.items\.map/, "Le menu Ribbon doit rendre directement la collection serveur.");
 assert.match(calendar, /onTarget\(item\.targetRef\)/, "La navigation Ribbon doit consommer la cible serveur exacte.");
 assert.doesNotMatch(calendar, /overflow\.items[^\n]+(?:title|segmentStart)[^\n]+(?:find|filter)/, "React ne doit pas reconstruire l'identité Ribbon par titre/date.");
@@ -148,6 +152,10 @@ assert.doesNotMatch(overlay, /classificationViews[^\n]+(?:reduce|groupBy|sort)/,
 assert.match(shell, /Ouvrir le Bilan du mois/, "Overview doit proposer le CTA Bilan uniquement depuis Calendar.");
 assert.match(sources["src/features/history-v2/balance-view.tsx"], /Publication incompatible/);
 assert.match(sources["src/features/history-v2/balance-view.tsx"], /publicationMetasAreCoherent/);
+assert.match(sources["src/features/history-v2/balance-view.tsx"], /bucket\.shareOfActual/, "M3 doit afficher shareOfActual publié par le serveur.");
+assert.doesNotMatch(sources["src/features/history-v2/balance-view.tsx"], /bucket\.amount\s*\/|Number\(bucket\.amount\)/, "M3 ne doit pas recalculer shareOfActual dans React.");
+assert.match(sources["src/features/history-v2/balance-view.tsx"], /"segments" in model/, "Le frontend de transition doit distinguer M3 OLD et NEW.");
+assert.match(sources["src/features/history-v2/balance-view.tsx"], /projection\.contributors/, "Les contributeurs M3 doivent venir du ReadModel NEW.");
 assert.match(renderers, /Impossible de charger/);
 assert.match(renderers, /Réessayer/);
 assert.match(renderers, /status === "KNOWN"/);

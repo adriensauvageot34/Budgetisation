@@ -163,6 +163,23 @@ export type SpendingComponentInput = {
   readonly nonNegative: boolean;
 };
 
+export type SpendingContributorSelectionInput = {
+  readonly componentKey: string;
+  readonly amount: Money;
+  readonly categoryId?: string;
+  readonly subcategoryId?: string;
+};
+
+export type SpendingContributorSelection = {
+  readonly contributors: readonly {
+    readonly contributorId: string;
+    readonly grain: "SUBCATEGORY" | "CATEGORY";
+    readonly amount: Money;
+    readonly componentKeys: readonly string[];
+  }[];
+  readonly otherAmount: Money;
+};
+
 export type SpendingBucket = {
   readonly key: string;
   readonly amount: Money;

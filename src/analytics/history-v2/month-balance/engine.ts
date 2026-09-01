@@ -37,6 +37,8 @@ import type {
   SpendingAxis,
   SpendingBucket,
   SpendingComponentInput,
+  SpendingContributorSelection,
+  SpendingContributorSelectionInput,
   SpendingNatureMatrix,
   StableIdentityHistory,
   StableIdentityLifecycle,
@@ -418,6 +420,45 @@ export function buildSpendingAxes(input: {
   return { necessity, behavior, lifeScope, matrix: { cells, classifiedAmount: matrixAxis.classifiedAmount, unclassifiedAmount: matrixAxis.unclassifiedAmount, ...(matrixAxis.coverageRatio === undefined ? {} : { coverageRatio: matrixAxis.coverageRatio }), immediateMargin: margin(immediate), mediumMargin: margin(medium) } };
 }
 
+export function selectSpendingContributors(
+  components: readonly SpendingContributorSelectionInput[],
+): SpendingContributorSelection {
+  const grouped = new Map<string, {
+    contributorId: string;
+    grain: "SUBCATEGORY" | "CATEGORY";
+    amount: Money;
+    componentKeys: string[];
+  }>();
+  for (const component of components) {
+    const grain = component.subcategoryId === undefined ? "CATEGORY" : "SUBCATEGORY";
+    const contributorId = component.subcategoryId ?? component.categoryId;
+    if (contributorId === undefined) continue;
+    const groupKey = `${grain}\u0000${contributorId}`;
+    const current = grouped.get(groupKey);
+    grouped.set(groupKey, {
+      contributorId,
+      grain,
+      amount: addMoney(current?.amount ?? ZERO, component.amount),
+      componentKeys: [...(current?.componentKeys ?? []), component.componentKey],
+    });
+  }
+  const ranked = [...grouped.values()].sort((left, right) =>
+    compareMoney(abs(right.amount), abs(left.amount))
+    || (left.grain === right.grain ? 0 : left.grain === "SUBCATEGORY" ? -1 : 1)
+    || left.contributorId.localeCompare(right.contributorId));
+  const contributors = ranked.slice(0, 3).map((value) => ({
+    ...value,
+    componentKeys: [...new Set(value.componentKeys)].sort(),
+  }));
+  return {
+    contributors,
+    otherAmount: subtractMoney(
+      sum(components.map(({ amount }) => amount)),
+      sum(contributors.map(({ amount }) => amount)),
+    ),
+  };
+}
+
 const minimalFamilies: readonly MinimalFamily[] = ["OBLIGATIONS", "VARIABLES_INDISPENSABLES", "PROVISIONS", "BESOINS_CONDITIONNELS"];
 
 export function buildMinimalPreview(input: {
@@ -453,7 +494,10 @@ export function computeActivityInterestScore(input: ActivityInterestInput): Acti
 }
 
 export function rankActivities(inputs: readonly ActivityInterestInput[]): readonly ActivityInterestScore[] {
-  return inputs.map(computeActivityInterestScore).sort((a, b) => b.score - a.score || b.narrativePoints - a.narrativePoints || b.priorityBand - a.priorityBand || b.absoluteFrequencyDelta - a.absoluteFrequencyDelta || b.occurrences - a.occurrences || (a.qualifiedCost !== undefined && b.qualifiedCost !== undefined ? compareMoney(b.qualifiedCost, a.qualifiedCost) : 0) || a.activityTypeKey.localeCompare(b.activityTypeKey));
+  return inputs
+    .filter(({ occurrences }) => occurrences >= 1)
+    .map(computeActivityInterestScore)
+    .sort((a, b) => b.score - a.score || b.narrativePoints - a.narrativePoints || b.priorityBand - a.priorityBand || b.absoluteFrequencyDelta - a.absoluteFrequencyDelta || b.occurrences - a.occurrences || (a.qualifiedCost !== undefined && b.qualifiedCost !== undefined ? compareMoney(b.qualifiedCost, a.qualifiedCost) : 0) || a.activityTypeKey.localeCompare(b.activityTypeKey));
 }
 
 export function resolveActivityCost(input: {

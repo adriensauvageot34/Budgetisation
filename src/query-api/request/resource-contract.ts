@@ -160,6 +160,7 @@ export const queryResourceContractRegistry = Object.freeze({
     metricIds: ["category_amount", "fixed_variable_amount", "life_scope_amount", "merchant_net_amount", "purchase_count", "activity_frequency", "activity_causal_median_cost_per_occurrence"],
   }),
   history_month_spending_nature: defineHistoryV2ResourceContract({
+    readModelVersion: "history_month_spending_nature@v2",
     policyIds: ["canonical_component_classification", "facts_hash", "quality_visibility", "spending_nature"],
     metricIds: ["economic_consumption_net_attributable", "fixed_variable_amount", "life_scope_amount"],
   }),

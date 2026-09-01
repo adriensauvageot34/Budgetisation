@@ -25,7 +25,7 @@ import {
   evaluateQueryCapabilities,
 } from "../capabilities";
 import {
-  queryDataSchemaByResource,
+  queryDataSchemaForContractVariant,
   type QueryDataByResource,
 } from "../read-model-registry";
 import {
@@ -192,13 +192,17 @@ export async function executeQuery(
       }
       materialization = materialized === null ? "miss" : "hit";
     }
-    const validatedData = (rawData: unknown): QueryDataByResource[QueryResourceName] => {
+    const validatedData = (
+      rawData: unknown,
+      contractVariant: "current" | "history_v2_visible_gaps_legacy" = "current",
+    ): QueryDataByResource[QueryResourceName] => {
       try {
         return validateQueryData(
           request!,
           rawData,
           capabilityResult.capabilities,
           requestId,
+          contractVariant,
         );
       } catch (error) {
         throw new QueryExecutionError(
@@ -208,15 +212,23 @@ export async function executeQuery(
       }
     };
     let data: QueryDataByResource[QueryResourceName] | undefined;
+    let selectedContractVariant: "current" | "history_v2_visible_gaps_legacy" = "current";
     if (materialized !== null) {
       try {
-        data = validatedData(materialized.data);
-      } catch {
+        selectedContractVariant = materialized.contractVariant;
+        data = validatedData(materialized.data, materialized.contractVariant);
+      } catch (error) {
+        if (resourceContract.family === "history_v2") throw error;
         materialized = null;
         materialization = "miss";
       }
     }
     if (materialized === null) {
+      if (resourceContract.family === "history_v2" && services.materialization !== undefined) {
+        throw new QueryTemporaryUnavailableError(
+          "Aucun snapshot History V2 publié avec une signature explicitement compatible.",
+        );
+      }
       data = validatedData(
         await adapter.execute(request as never, adapterContext, services.sources),
       );
@@ -260,7 +272,10 @@ export async function executeQuery(
       },
     );
     const responseSchema = createApiResponseSchema(
-      queryDataSchemaByResource[request.resource as QueryResourceName] as RuntimeSchema<QueryDataByResource[QueryResourceName]>,
+      queryDataSchemaForContractVariant(
+        request.resource as QueryResourceName,
+        selectedContractVariant,
+      ) as RuntimeSchema<QueryDataByResource[QueryResourceName]>,
     );
     const response = responseSchema.parse({ data, meta });
     emitTrace(services, {

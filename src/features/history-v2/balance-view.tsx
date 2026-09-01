@@ -98,14 +98,30 @@ function CategoryRow({ category, mode, onClick }: { readonly category: CategoryM
   return <button type="button" className={styles.categoryRow} onClick={onClick}><span><strong>{category.label}</strong>{category.material ? <small>Significatif</small> : null}</span>{mode === "amount" ? <><MoneyMetric metric={category.actual} /><MetricState metric={category.shareOfActual} format={(value) => `${Math.round(value * 100)} %`} /></> : <MoneyMetric metric={category.delta} />}<ArrowRight aria-hidden size={16} /></button>;
 }
 
+function spendingSegmentKey(segment: import("@/query-api").HistorySpendingSegmentDetailParams): string {
+  return "axis" in segment
+    ? `${segment.axis}:${segment.bucket}`
+    : `matrix:${segment.necessity}:${segment.behavior}`;
+}
+
 function SpendingNature({ model, onSegment }: { readonly model: MonthSpendingNatureReadModel; readonly onSegment: (params: import("@/query-api").HistorySpendingSegmentDetailParams) => void }) {
   const axes = [["Nécessité", "necessity", model.necessity], ["Comportement", "behavior", model.behavior], ["Périmètre de vie", "lifeScope", model.lifeScope]] as const;
+  const projections = "segments" in model
+    && model.segments.visibility === "VISIBLE"
+    && (model.segments.data.status === "KNOWN" || model.segments.data.status === "PARTIAL")
+    ? new Map(model.segments.data.items.map((projection) => [spendingSegmentKey(projection.segment as import("@/query-api").HistorySpendingSegmentDetailParams), projection]))
+    : new Map();
   return (
     <div className={styles.spendingNature}>
-      <div className={styles.axisCards}>{axes.map(([label, axis, node]) => <DisplayState key={axis} node={node}>{(data) => <article className={styles.axisCard}><h3>{label}</h3><MetricState metric={data.result} format={(buckets) => <div>{buckets.map((bucket) => <button key={bucket.key} type="button" onClick={() => onSegment({ axis, bucket: bucket.key })}><span>{bucket.key}</span><strong>{formatMoney(bucket.amount)}</strong></button>)}</div>} /><p>{formatMoney(data.unclassifiedAmount)} non classés</p></article>}</DisplayState>)}</div>
-      <DisplayState node={model.matrix}>{(matrix) => <article className={styles.marginMatrix}><h3>Nécessité × comportement</h3><div>{matrix.cells.map((cell) => { const [necessity, behavior] = cell.key.split("__"); return <button key={cell.key} type="button" onClick={() => onSegment({ necessity: necessity as "INDISPENSABLE" | "CONSTRAINED" | "OPTIONAL", behavior: behavior as "FIXED" | "VARIABLE" })}><span>{cell.key}</span><strong>{formatMoney(cell.amount)}</strong></button>; })}</div><div className={styles.marginValues}><span>Marge immédiate <MoneyMetric metric={matrix.immediateMargin} /></span><span>Marge à moyen terme <MoneyMetric metric={matrix.mediumMargin} /></span></div></article>}</DisplayState>
+      <div className={styles.axisCards}>{axes.map(([label, axis, node]) => <DisplayState key={axis} node={node}>{(data) => <article className={styles.axisCard}><h3>{label}</h3><MetricState metric={data.result} format={(buckets) => <div>{buckets.map((bucket) => { const segment = { axis, bucket: bucket.key } as const; const projection = projections.get(spendingSegmentKey(segment)); return <div key={bucket.key} className={styles.spendingBucket}><button type="button" onClick={() => onSegment(segment)}><span>{bucket.key}</span><span><strong>{formatMoney(bucket.amount)}</strong><small>{bucket.shareOfActual === undefined ? "Part indisponible" : `${Math.round(bucket.shareOfActual * 100)} % d’Actual`}</small></span></button><SpendingContributors projection={projection} /></div>; })}</div>} /><p>{formatMoney(data.unclassifiedAmount)} non classés</p></article>}</DisplayState>)}</div>
+      <DisplayState node={model.matrix}>{(matrix) => <article className={styles.marginMatrix}><h3>Nécessité × comportement</h3><div>{matrix.cells.map((cell) => { const [necessity, behavior] = cell.key.split("__"); const segment = { necessity: necessity as "INDISPENSABLE" | "CONSTRAINED" | "OPTIONAL", behavior: behavior as "FIXED" | "VARIABLE" }; const projection = projections.get(spendingSegmentKey(segment)); return <div key={cell.key} className={styles.spendingBucket}><button type="button" onClick={() => onSegment(segment)}><span>{cell.key}</span><span><strong>{formatMoney(cell.amount)}</strong><small>{cell.shareOfActual === undefined ? "Part indisponible" : `${Math.round(cell.shareOfActual * 100)} % d’Actual`}</small></span></button><SpendingContributors projection={projection} /></div>; })}</div><div className={styles.marginValues}><span>Marge immédiate <MoneyMetric metric={matrix.immediateMargin} /></span><span>Marge à moyen terme <MoneyMetric metric={matrix.mediumMargin} /></span></div></article>}</DisplayState>
     </div>
   );
+}
+
+function SpendingContributors({ projection }: { readonly projection?: import("@/query-api").SpendingNatureBucketProjection }) {
+  if (projection === undefined) return null;
+  return <DisplayState node={projection.contributors}>{(collection) => <CollectionState collection={collection}>{(items) => <div className={styles.contributorList}>{items.map((contributor) => <span key={`${contributor.grain}-${contributor.contributorId}`}>{contributor.label} · {formatMoney(contributor.amount)}</span>)}<DisplayState node={projection.otherAmount}>{(metric) => metric.status === "KNOWN" && Number(metric.value) !== 0 ? <span>Autres · {formatMoney(metric.value)}</span> : null}</DisplayState></div>}</CollectionState>}</DisplayState>;
 }
 
 function LifeMoney({ model, onOverlay }: { readonly model: MonthLifeMoneyReadModel; readonly onOverlay: (target: HistoryOverlayTarget) => void }) {

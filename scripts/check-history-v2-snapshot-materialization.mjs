@@ -83,6 +83,7 @@ const balance = require(path.join(
 const historyCore = require(path.join(repositoryRoot, "src/core/history-v2/index.ts"));
 const historyQuery = require(path.join(repositoryRoot, "src/query-api/history-v2/index.ts"));
 const query = require(path.join(repositoryRoot, "src/query-api/index.ts"));
+const { executeQuery } = require(path.join(repositoryRoot, "src/query-api/server/execute-query.ts"));
 
 const uuid = (suffix) => `00000000-0000-4000-8000-${String(suffix).padStart(12, "0")}`;
 const householdId = uuid(1);
@@ -369,6 +370,7 @@ function buildBalanceReadModel(request) {
         behavior: spending.behavior,
         lifeScope: spending.lifeScope,
         matrix: spending.matrix,
+        segments: [],
       });
     case "history_spending_segment_detail":
       return historyQuery.buildSpendingSegmentDetailReadModel({
@@ -549,6 +551,7 @@ function latestMonthFakeClient(periodMonth) {
   const builder = {
     select(columns) { calls.push(["select", columns]); return this; },
     eq(column, value) { calls.push(["eq", column, value]); return this; },
+    in(column, value) { calls.push(["in", column, value]); return this; },
     is(column, value) { calls.push(["is", column, value]); return this; },
     not(column, operator, value) { calls.push(["not", column, operator, value]); return this; },
     order(column, options) { calls.push(["order", column, options]); return this; },
@@ -608,6 +611,137 @@ await checkAsync(async () => assert.equal(
   ).readLatestPublishedHistoryV2Month(),
   null,
 ));
+const legacySignatures = Object.fromEntries([
+  "history_month_calendar",
+  "history_month_spending_nature",
+  "history_spending_segment_detail",
+  "history_month_life_money",
+].map((resource) => [
+  resource,
+  identity.historyV2AcceptedMethodSignatures(resource).find(({ contractVariant }) => contractVariant === "history_v2_visible_gaps_legacy")?.methodSignature,
+]));
+check(() => assert.deepEqual(legacySignatures, {
+  history_month_calendar: "12d5d82c863f2cbb3ff17e19f0f3e27ce11e7a0fceb44180e6d377c5287c1449",
+  history_month_life_money: "52b34c4790f8e510077a1abfff99ce99775b95621eacb5189db7ad6e2c96ca79",
+  history_month_spending_nature: "eff62c4ef7fbcbefe71c464fbad70e3c5bd21fcb8dabc905958ae9aef221e58c",
+  history_spending_segment_detail: "550a1a06485319de31f22ed2f53b22c35ebd8213b1d1c18347619aa60cdc7f30",
+}));
+
+const transitionContext = {
+  ...runtimeContext,
+  periods: [{
+    ...runtimeContext.periods[0],
+    analysisPeriodId: uuid(700),
+    month: "2026-08-01",
+    isClosed: false,
+    sourceRevision: "7",
+  }],
+};
+const transitionRequest = query.normalizeQueryRequest({
+  resource: "history_month_spending_nature",
+  scope: { subject: { kind: "household" }, time: { kind: "month", month: "2026-08" } },
+  params: {},
+});
+const transitionIdentities = identity.querySnapshotReadIdentities(transitionContext, transitionRequest);
+const transitionRow = (selectedIdentity, payload = { version: selectedIdentity.contractVariant }) => ({
+  query_key: selectedIdentity.queryKey,
+  payload,
+  source_revision: "7",
+  expires_at: null,
+  method_signature: selectedIdentity.methodSignature,
+  publication_id: uuid(701),
+  analytics_publications: { publication_id: uuid(701), status: "published" },
+});
+function transitionFakeClient(rows) {
+  const calls = [];
+  const builder = {
+    select(columns) { calls.push(["select", columns]); return this; },
+    eq(column, value) { calls.push(["eq", column, value]); return this; },
+    in(column, value) { calls.push(["in", column, value]); return this; },
+    is(column, value) { calls.push(["is", column, value]); return this; },
+    not(column, operator, value) { calls.push(["not", column, operator, value]); return this; },
+    order(column, options) { calls.push(["order", column, options]); return this; },
+    async limit(value) { calls.push(["limit", value]); return { data: rows, error: null }; },
+  };
+  return { calls, client: { from(table) { calls.push(["from", table]); return builder; } } };
+}
+const currentTransitionIdentity = transitionIdentities.find(({ contractVariant }) => contractVariant === "current");
+const legacyTransitionIdentity = transitionIdentities.find(({ contractVariant }) => contractVariant === "history_v2_visible_gaps_legacy");
+await checkAsync(async () => {
+  const fake = transitionFakeClient([transitionRow(legacyTransitionIdentity)]);
+  const hit = await new SupabaseAnalyticsMaterializationStore(fake.client, transitionContext).readQuery(transitionRequest);
+  assert.equal(hit.contractVariant, "history_v2_visible_gaps_legacy");
+  assert.ok(fake.calls.some((call) => call[0] === "eq" && call[1] === "analytics_publications.status" && call[2] === "published"));
+});
+await checkAsync(async () => {
+  const hit = await new SupabaseAnalyticsMaterializationStore(
+    transitionFakeClient([transitionRow(currentTransitionIdentity)]).client,
+    transitionContext,
+  ).readQuery(transitionRequest);
+  assert.equal(hit.contractVariant, "current");
+});
+await checkAsync(async () => {
+  const unknown = { ...transitionRow(currentTransitionIdentity), query_key: "f".repeat(64), method_signature: "e".repeat(64) };
+  assert.equal(await new SupabaseAnalyticsMaterializationStore(transitionFakeClient([unknown]).client, transitionContext).readQuery(transitionRequest), null);
+});
+await checkAsync(async () => assert.equal(
+  await new SupabaseAnalyticsMaterializationStore(
+    transitionFakeClient([transitionRow(currentTransitionIdentity), transitionRow(legacyTransitionIdentity)]).client,
+    transitionContext,
+  ).readQuery(transitionRequest),
+  null,
+));
+
+let historyV2ReadThroughCalls = 0;
+const transitionBoundaryRequest = {
+  resource: "history_month_spending_nature",
+  scope: { subject: { kind: "household" }, time: { kind: "month", month: "2026-08" } },
+  params: {},
+};
+const transitionServices = (readQuery) => ({
+  resolveContext: async () => ({
+    actor: { actorId: "history-v2-transition-test" },
+    household: { householdId },
+    revisions: { dataRevision: "7", analyticsRevision: "11", dependencies: [] },
+    contractVersion: "v2",
+    now: "2026-08-31T12:00:00Z",
+  }),
+  authorize: async () => ({ granted: true }),
+  sources: {
+    readHistoryMonthSpendingNature() {
+      historyV2ReadThroughCalls += 1;
+      throw new Error("read-through interdit");
+    },
+  },
+  materialization: {
+    readQuery,
+    async writeQuery() {},
+    queryCachePolicy() { return undefined; },
+  },
+});
+await checkAsync(async () => {
+  const result = await executeQuery(
+    { requestId: "history-v2-invalid-snapshot", request: transitionBoundaryRequest },
+    transitionServices(async () => ({
+      data: { invalid: true },
+      cachePolicy: { source: "materialized" },
+      methodSignature: currentTransitionIdentity.methodSignature,
+      contractVariant: "current",
+    })),
+  );
+  assert.equal(result.ok, false);
+  assert.equal(result.error.code, "CONTRACT_MISMATCH");
+  assert.equal(historyV2ReadThroughCalls, 0);
+});
+await checkAsync(async () => {
+  const result = await executeQuery(
+    { requestId: "history-v2-unknown-signature", request: transitionBoundaryRequest },
+    transitionServices(async () => null),
+  );
+  assert.equal(result.ok, false);
+  assert.equal(result.error.code, "TEMPORARY_UNAVAILABLE");
+  assert.equal(historyV2ReadThroughCalls, 0);
+});
 
 const theoretical = materialization.createHistoryV2TheoreticalManifest(selectedMonth);
 check(() => assert.equal(theoretical.resourceFamilies.length, 15));
@@ -723,6 +857,48 @@ check(() => assert.equal(
   true,
   "les signatures restent propres aux ressources",
 ));
+const stagedSpendingNature = stage.queries.find(({ request }) => request.resource === "history_month_spending_nature");
+const { segments: _legacySegments, ...legacySpendingNatureBase } = stagedSpendingNature.data;
+const legacySpendingPolicyVersions = Object.freeze(Object.fromEntries(
+  Object.keys(legacySpendingNatureBase.policyVersions).map((policyId) => [policyId, "v1"]),
+));
+const legacySpendingNature = {
+  ...legacySpendingNatureBase,
+  policyVersions: legacySpendingPolicyVersions,
+  publicationMeta: {
+    ...legacySpendingNatureBase.publicationMeta,
+    policyVersions: legacySpendingPolicyVersions,
+  },
+};
+const selectedMonthBoundaryRequest = {
+  resource: "history_month_spending_nature",
+  scope: { subject: { kind: "household" }, time: { kind: "month", month: selectedMonth } },
+  params: {},
+};
+const transitionHit = (data, selectedIdentity) => ({
+  data,
+  cachePolicy: { source: "materialized", revalidate: "never", sourceRevision: "7" },
+  methodSignature: selectedIdentity.methodSignature,
+  contractVariant: selectedIdentity.contractVariant,
+});
+await checkAsync(async () => {
+  const result = await executeQuery(
+    { requestId: "history-v2-new-snapshot", request: selectedMonthBoundaryRequest },
+    transitionServices(async () => transitionHit(stagedSpendingNature.data, currentTransitionIdentity)),
+  );
+  assert.equal(result.ok, true);
+  assert.equal("segments" in result.response.data, true);
+  assert.equal(historyV2ReadThroughCalls, 0);
+});
+await checkAsync(async () => {
+  const result = await executeQuery(
+    { requestId: "history-v2-old-snapshot", request: selectedMonthBoundaryRequest },
+    transitionServices(async () => transitionHit(legacySpendingNature, legacyTransitionIdentity)),
+  );
+  assert.equal(result.ok, true);
+  assert.equal("segments" in result.response.data, false);
+  assert.equal(historyV2ReadThroughCalls, 0);
+});
 check(() => assert.throws(() => materialization.stageHistoryV2GenerationInMemory({
   preflight,
   publicationId: "",

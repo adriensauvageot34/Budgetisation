@@ -29,11 +29,13 @@ import type {
 import {
   parseContractVersion,
   parseMethodVersion,
+  parsePolicyVersion,
 } from "@/core/versions";
 import {
   canonicalSerializeQueryParams,
   createQueryCacheKey,
   getQueryResourceContract,
+  queryResourceKeys,
   type AnyNormalizedQueryRequest,
   type QueryResourceKey,
 } from "@/query-api";
@@ -118,6 +120,29 @@ export type QuerySnapshotIdentity = {
   readonly analyticsRevision: AnalyticsRevision;
 };
 
+export type QuerySnapshotContractVariant =
+  | "current"
+  | "history_v2_visible_gaps_legacy";
+
+export type QuerySnapshotReadIdentity = QuerySnapshotIdentity & {
+  readonly contractVariant: QuerySnapshotContractVariant;
+};
+
+const historyV2VisibleGapsMigratedResources = new Set<QueryResourceKey>([
+  queryResourceKeys.historyMonthCalendar,
+  queryResourceKeys.historyWeek,
+  queryResourceKeys.historyDayJournal,
+  queryResourceKeys.historyMonthOverview,
+  queryResourceKeys.historyCategoryDetail,
+  queryResourceKeys.historyMonthSpendingNature,
+  queryResourceKeys.historySpendingSegmentDetail,
+  queryResourceKeys.historyMinimalPreview,
+  queryResourceKeys.historyMonthLifeMoney,
+  queryResourceKeys.historyActivityDetail,
+  queryResourceKeys.historyMomentDetail,
+  queryResourceKeys.historyPlaceDetail,
+]);
+
 function legacyV1AnalyticsMethodSignature(): string {
   return canonicalHash({
     methods: Object.fromEntries(
@@ -148,6 +173,7 @@ export function analyticsMethodSignature(
 export function historyV2ResourceMethodSignature(
   resource: QueryResourceKey,
   policyVersions: PolicyVersions,
+  options: { readonly readModelVersion?: MethodVersion | null } = {},
 ): string {
   const resourceContract = getQueryResourceContract(resource);
   if (resourceContract.family !== "history_v2") {
@@ -178,14 +204,52 @@ export function historyV2ResourceMethodSignature(
       return [policyId, version] as const;
     }),
   );
+  const readModelVersion = options.readModelVersion === null
+    ? undefined
+    : options.readModelVersion ?? resourceContract.readModelVersion;
   return canonicalHash({
     contractVersion: resourceContract.contractVersion,
     metricMethods: Object.fromEntries(metricIds),
     policies: scopedPolicies,
-    ...(resourceContract.readModelVersion === undefined
+    ...(readModelVersion === undefined
       ? {}
-      : { readModelVersion: resourceContract.readModelVersion }),
+      : { readModelVersion }),
   });
+}
+
+export function historyV2AcceptedMethodSignatures(
+  resource: QueryResourceKey,
+): readonly {
+  readonly methodSignature: string;
+  readonly contractVariant: QuerySnapshotContractVariant;
+}[] {
+  const current = analyticsMethodSignature(resource);
+  if (!historyV2VisibleGapsMigratedResources.has(resource)) {
+    return [{ methodSignature: current, contractVariant: "current" }];
+  }
+  const contract = getQueryResourceContract(resource);
+  if (contract.family !== "history_v2") {
+    return [{ methodSignature: current, contractVariant: "current" }];
+  }
+  const legacyPolicies = Object.freeze(Object.fromEntries(
+    contract.policyIds.map((policyId) => [policyId, parsePolicyVersion("v1")]),
+  )) as PolicyVersions;
+  const legacy = historyV2ResourceMethodSignature(
+    resource,
+    legacyPolicies,
+    resource === "history_month_spending_nature"
+      ? { readModelVersion: null }
+      : {},
+  );
+  return legacy === current
+    ? [{ methodSignature: current, contractVariant: "current" }]
+    : [
+        { methodSignature: current, contractVariant: "current" },
+        {
+          methodSignature: legacy,
+          contractVariant: "history_v2_visible_gaps_legacy",
+        },
+      ];
 }
 
 export function materializationPeriod(
@@ -314,7 +378,7 @@ export function historyV2SharedArtifactIdentity(
   const scopeHash = computeScopeHash(scope);
   const methodVersion = parseMethodVersion(
     artifactFamily === "calendar_semantic_month"
-      ? "calendar_semantic_month@v2"
+      ? "calendar_semantic_month@v3"
       : `${artifactFamily}@v1`,
   );
   const contractVersion = parseContractVersion("v2");
@@ -346,9 +410,10 @@ export function historyV2SharedArtifactIdentity(
   };
 }
 
-export function querySnapshotIdentity(
+function querySnapshotIdentityForMethodSignature(
   context: AuthorizedRuntimeContext,
   request: AnyNormalizedQueryRequest,
+  methodSignature: string,
   revisionPolicy: MaterializationRevisionPolicy = "published",
 ): QuerySnapshotIdentity {
   const scope = request.scope as NormalizedAnalysisScope;
@@ -357,7 +422,6 @@ export function querySnapshotIdentity(
     ? { kind: "household" as const }
     : { kind: "person" as const, personId: scope.subject.personId };
   const resourceContract = getQueryResourceContract(request.resource);
-  const methodSignature = analyticsMethodSignature(request.resource);
   const normalizedParamSignature = canonicalHash({ params: request.params });
   const logicalKey = createQueryCacheKey({
     resource: request.resource,
@@ -382,6 +446,35 @@ export function querySnapshotIdentity(
     contractVersion: resourceContract.contractVersion,
     analyticsRevision: context.analyticsRevision,
   };
+}
+
+export function querySnapshotIdentity(
+  context: AuthorizedRuntimeContext,
+  request: AnyNormalizedQueryRequest,
+  revisionPolicy: MaterializationRevisionPolicy = "published",
+): QuerySnapshotIdentity {
+  return querySnapshotIdentityForMethodSignature(
+    context,
+    request,
+    analyticsMethodSignature(request.resource),
+    revisionPolicy,
+  );
+}
+
+export function querySnapshotReadIdentities(
+  context: AuthorizedRuntimeContext,
+  request: AnyNormalizedQueryRequest,
+  revisionPolicy: MaterializationRevisionPolicy = "published",
+): readonly QuerySnapshotReadIdentity[] {
+  return historyV2AcceptedMethodSignatures(request.resource).map((accepted) => ({
+    ...querySnapshotIdentityForMethodSignature(
+      context,
+      request,
+      accepted.methodSignature,
+      revisionPolicy,
+    ),
+    contractVariant: accepted.contractVariant,
+  }));
 }
 
 export function isQueryMaterializationResource(resource: QueryResourceKey): boolean {
