@@ -58,7 +58,6 @@ const {
   isScopedMaterializationFresh,
 } = require(path.join(repositoryRoot, "src/server/analytics/materialization/freshness.ts"));
 const {
-  isQueryMaterializationResource,
   metricArtifactIdentity,
   metricBucketArtifactIdentity,
   querySnapshotIdentity,
@@ -88,8 +87,6 @@ const { executeQuery } = require(path.join(
   repositoryRoot,
   "src/query-api/server/execute-query.ts",
 ));
-assert.equal(isQueryMaterializationResource("history_calendar_month"), true);
-assert.equal(isQueryMaterializationResource("history_day_detail"), true);
 assert.match(fs.readFileSync(path.join(repositoryRoot, "src/server/analytics/materialization/identity.ts"), "utf8"), /history-calendar@v2/);
 const lifeMoneyPoliciesV1 = {
   calendar_semantics: "v1",
@@ -512,9 +509,13 @@ assert.equal(
   "v1",
   "snapshot contractVersion must be resolved by resource",
 );
-assert.equal(isQueryMaterializationResource("history_calendar_month"), true);
-assert.equal(isQueryMaterializationResource("history_calendar_month_summary"), true);
-assert.equal(isQueryMaterializationResource("history_day_detail"), true);
+const activeResourceRegistry = fs.readFileSync(
+  path.join(repositoryRoot, "src/query-api/request/resource-registry.ts"),
+  "utf8",
+);
+for (const retiredResource of ["history_calendar_month", "history_calendar_month_summary", "history_day_detail"]) {
+  assert.equal(activeResourceRegistry.includes(`\"${retiredResource}\"`), false);
+}
 
 function moneyMetric(scope, value, n, coverage = { level: "complete" }) {
   return validateProducedMetric({

@@ -64,9 +64,6 @@ function unavailable(): never {
 function unavailableCanonicalSources(): QueryReadModelSources {
   return {
     ...metricRegistryQuerySources,
-    readHistoryCalendarMonth: unavailable,
-    readHistoryCalendarMonthSummary: unavailable,
-    readHistoryDayDetail: unavailable,
     readHistoryMonthCalendar: unavailable,
     readHistoryWeek: unavailable,
     readHistoryDayJournal: unavailable,

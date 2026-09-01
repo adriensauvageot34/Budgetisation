@@ -91,9 +91,6 @@ export const queryResourceContractRegistry = Object.freeze({
   metric_methodology: legacyV1ResourceContract,
   metric_catalog_preview: legacyV1ResourceContract,
   metric_catalog_collection: legacyV1ResourceContract,
-  history_calendar_month: legacyV1ResourceContract,
-  history_calendar_month_summary: legacyV1ResourceContract,
-  history_day_detail: legacyV1ResourceContract,
   history_month_calendar: defineHistoryV2ResourceContract({
     readModelVersion: "history_month_calendar@v2",
     policyIds: [

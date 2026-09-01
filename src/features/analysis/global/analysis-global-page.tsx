@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
 import { parseActivityId, parseCategoryId, parseMerchantId, parseMetricId, parsePlaceId, type PersonId } from "@/core/identity";
 import { normalizeAnalysisScope, parseDayContext, parseLifeScopeContext, type NormalizedAnalysisScope } from "@/core/scope";
 import { addMonths, formatYearMonth, parseGlobalWindow, resolveGlobalWindowMonths } from "@/core/time";
@@ -60,6 +61,7 @@ export function AnalysisGlobalPage({
   readonly persons: readonly PersonOption[];
   readonly initialState: UiTransportState<AnalysisGlobalInitialReadModel>;
 }) {
+  const router = useRouter();
   const runtime = useProductRuntime();
   const runtimeRoot = runtime.snapshot?.history.root;
   const currentRoute: HistoryRootContext = runtimeRoot && "area" in runtimeRoot && runtimeRoot.area === "analysis" && runtimeRoot.context.kind === "analysis_global" ? runtimeRoot : route;
@@ -136,7 +138,7 @@ export function AnalysisGlobalPage({
       <header className={styles.header}>
         <div><span className="eyebrow">Historique · Analyse globale</span><h1>Notre vie dans le temps</h1><p>{windowLabels[currentScope.time.observationWindow]} · jusqu’à {formatYearMonth(addMonths(currentScope.time.asOf, -1))}</p></div>
         <nav className={styles.modeNav} aria-label="Mode Historique">
-          <button type="button" onClick={() => runtime.run((controller) => controller.goToCalendar())}>Calendrier</button>
+          <button type="button" onClick={() => router.push(`/historique/${selectedMonth}?view=calendar`)}>Calendrier</button>
           <span aria-current="page">Analyse</span><span aria-hidden="true">·</span>
           <button type="button" onClick={() => runtime.run((controller) => controller.goToAnalysisMonthFromGlobal(selectedMonth))}>Mois</button>
           <span aria-current="page">Global</span>
@@ -162,7 +164,7 @@ export function AnalysisGlobalPage({
       <SectionAnchor anchor={{ moduleId: "analysis-global", itemKey: "typical" }}><SectionLayout title="3. Notre vie habituelle"><AnalysisGlobalModuleBoundary route={currentRoute} module="typical" state={typical}>{(model) => <GlobalTypicalModule model={model} onTarget={(activityId) => runtime.run((controller) => controller.openExploration({ kind: "analysis", target: { kind: "activity", activityId: parseActivityId(activityId) }, scope: currentScope }))} />}</AnalysisGlobalModuleBoundary></SectionLayout></SectionAnchor>
 
       <div className={styles.act}><span>Acte 2</span><h2>Comprendre</h2></div>
-      <SectionAnchor anchor={{ moduleId: "analysis-global", itemKey: "evolution" }}><SectionLayout title="4. Comment notre vie évolue"><div className={styles.tabs} role="tablist" aria-label="Vue de l’évolution"><button type="button" role="tab" aria-selected={evolutionView === "money"} onClick={() => setEvolutionView("money")}>Argent</button><button type="button" role="tab" aria-selected={evolutionView === "behavior"} onClick={() => setEvolutionView("behavior")}>Comportement</button></div><AnalysisGlobalModuleBoundary route={currentRoute} module="evolution" state={evolution}>{(model) => <GlobalEvolutionModule model={model} selectedMonth={selectedMonth} onSelectMonth={setSelectedMonth} onAnalyze={(month) => runtime.run((controller) => controller.goToMonth(month))} onMethodology={(metricId) => runtime.run((controller) => controller.openExploration({ kind: "methodology", metricId: parseMetricId(metricId) }))} />}</AnalysisGlobalModuleBoundary></SectionLayout></SectionAnchor>
+      <SectionAnchor anchor={{ moduleId: "analysis-global", itemKey: "evolution" }}><SectionLayout title="4. Comment notre vie évolue"><div className={styles.tabs} role="tablist" aria-label="Vue de l’évolution"><button type="button" role="tab" aria-selected={evolutionView === "money"} onClick={() => setEvolutionView("money")}>Argent</button><button type="button" role="tab" aria-selected={evolutionView === "behavior"} onClick={() => setEvolutionView("behavior")}>Comportement</button></div><AnalysisGlobalModuleBoundary route={currentRoute} module="evolution" state={evolution}>{(model) => <GlobalEvolutionModule model={model} selectedMonth={selectedMonth} onSelectMonth={setSelectedMonth} onAnalyze={(month) => router.push(`/historique/${month}?view=bilan`)} onMethodology={(metricId) => runtime.run((controller) => controller.openExploration({ kind: "methodology", metricId: parseMetricId(metricId) }))} />}</AnalysisGlobalModuleBoundary></SectionLayout></SectionAnchor>
       <SectionAnchor anchor={{ moduleId: "analysis-global", itemKey: "habits" }}><SectionLayout title="5. Nos habitudes"><AnalysisGlobalModuleBoundary route={currentRoute} module="habits" state={habits}>{(model) => <><div className={styles.tabs} role="tablist" aria-label="Vue des habitudes">{model.availableViews.map((view) => <button key={view} type="button" role="tab" aria-selected={habitsView === view} onClick={() => setHabitsView(view)}>{view === "contexts" ? "Contextes" : "Heatmap"}</button>)}</div><GlobalHabitsModule model={model} selectedCell={selectedHeatmapCell ? `${selectedHeatmapCell.activityId}:${selectedHeatmapCell.month}` : undefined} onSelectCell={(activityId, month) => setSelectedHeatmapCell({ activityId: parseActivityId(activityId), month })} /></>}</AnalysisGlobalModuleBoundary></SectionLayout></SectionAnchor>
 
       <div className={styles.act}><span>Acte 3</span><h2>Nous</h2></div>

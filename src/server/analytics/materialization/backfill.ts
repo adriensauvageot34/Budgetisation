@@ -117,14 +117,6 @@ const personBreakdownRequests = breakdownRequests.filter(({ measure }) =>
   ["activity_frequency", "place_visit_count", "distinct_visit_days"].includes(measure));
 const certifiedCategoryIdsByRevision = new Map<string, Promise<readonly CategoryId[]>>();
 
-function datesInMonth(month: YearMonth): readonly string[] {
-  const [year, number] = month.split("-").map(Number);
-  return Array.from(
-    { length: new Date(Date.UTC(year!, number!, 0)).getUTCDate() },
-    (_, index) => `${month}-${String(index + 1).padStart(2, "0")}`,
-  );
-}
-
 function monthRequest(
   month: YearMonth,
   resource: string,
@@ -208,10 +200,6 @@ async function certifiedMonthQueryRequests(
       monthRequest(month, "analysis_month_lived", subject),
       monthRequest(month, "analysis_month_moments", subject),
     ]),
-    monthRequest(month, "history_calendar_month", household),
-    monthRequest(month, "history_calendar_month_summary", household),
-    ...datesInMonth(month).map((date) =>
-      monthRequest(month, "history_day_detail", household, { date })),
   ];
 
   const discoveryServices = createReadOnlyQueryServicesForContext({

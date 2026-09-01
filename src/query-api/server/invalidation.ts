@@ -7,9 +7,6 @@ import {
 } from "../request";
 
 const monthResources = [
-  queryResourceKeys.historyCalendarMonth,
-  queryResourceKeys.historyCalendarMonthSummary,
-  queryResourceKeys.historyDayDetail,
   queryResourceKeys.historyMonthCalendar,
   queryResourceKeys.historyWeek,
   queryResourceKeys.historyDayJournal,

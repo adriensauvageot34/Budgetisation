@@ -108,7 +108,6 @@ function classifyImportViolation(sourcePath, specifier, isClient) {
   const inUiCharts = isWithin(sourcePath, "src/ui/charts");
   const inNavigation = isWithin(sourcePath, "src/navigation");
   const sourceFeature = featureName(sourcePath);
-  const inCalendarFeature = sourceFeature === "calendar";
   const inAnalysisFeature = sourceFeature === "analysis";
   const inOperationsFeature = sourceFeature === "operations";
   const inExplorationFeature = sourceFeature === "exploration";
@@ -322,28 +321,6 @@ function classifyImportViolation(sourcePath, specifier, isClient) {
   }
 
   if (
-    inCalendarFeature &&
-    target &&
-    [
-      "src/analytics",
-      "src/server",
-      "src/query-api/server",
-      "src/lib/supabase",
-    ].some((prefix) => isWithin(target, prefix))
-  ) {
-    return "Calendar ne peut pas importer Analytics, server ou Supabase";
-  }
-
-  if (
-    inCalendarFeature &&
-    target &&
-    isWithin(target, "src/navigation") &&
-    target !== "src/navigation"
-  ) {
-    return "Calendar ne peut importer que l’API publique Navigation";
-  }
-
-  if (
     inExplorationFeature &&
     target &&
     [
@@ -495,8 +472,6 @@ function selfCheckRules() {
     ["src/navigation/example.ts", "@/ui/media", false],
     ["src/navigation/example.ts", "@/features/calendar", false],
     ["src/navigation/example.ts", "@/query-api/read-model-registry", false],
-    ["src/features/calendar/example.tsx", "@/analytics/production", true],
-    ["src/features/calendar/example.tsx", "@/navigation/contracts/routes", true],
     ["src/features/exploration/example.tsx", "@/analytics/production", true],
     ["src/features/exploration/example.tsx", "@/navigation/exploration/stack", true],
     ["src/features/analysis/example.tsx", "@/analytics/production", true],
@@ -563,13 +538,6 @@ for (const filePath of sourceFiles) {
     /\b(?:history\.pushState|history\.replaceState|history\.back|window\.history|globalThis\.history)\b/.test(metadata.text)
   ) {
     violations.push(`${sourcePath}:1 UI appelle Browser History directement`);
-  }
-
-  if (
-    isWithin(sourcePath, "src/features/calendar") &&
-    /\.(?:reduce|groupBy)\s*\(/.test(metadata.text)
-  ) {
-    violations.push(`${sourcePath}:1 Calendar ne doit pas agréger des faits dans React`);
   }
 
   if (

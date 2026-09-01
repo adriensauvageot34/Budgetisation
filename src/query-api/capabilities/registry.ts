@@ -111,15 +111,6 @@ const allActiveMeasures = Object.freeze([...activeMetricIds]);
 const allCoreFilters = Object.freeze([...queryFilterKeys]);
 const momentFilters = Object.freeze(allCoreFilters.filter((filter) => filter !== "dayContext"));
 const noFilters = Object.freeze([]);
-const calendarMeasures = Object.freeze([
-  "economic_consumption_net_attributable",
-  "activity_frequency",
-  "place_visit_count",
-] as const);
-const calendarSummaryMeasures = Object.freeze([
-  ...calendarMeasures,
-  "person_day_count",
-] as const);
 const monthInitialMeasures = Object.freeze([
   "economic_consumption_net_attributable",
   "typical_month_cost",
@@ -208,32 +199,6 @@ export const queryCapabilityRegistry = Object.freeze({
     resource: queryResourceKeys.metricCatalogCollection,
     sections: Object.freeze([querySectionKeys.catalog]),
     measures: allActiveMeasures,
-    filters: noFilters,
-  },
-  history_calendar_month: {
-    resource: queryResourceKeys.historyCalendarMonth,
-    sections: Object.freeze([
-      querySectionKeys.calendar,
-      querySectionKeys.summary,
-    ]),
-    measures: calendarMeasures,
-    filters: noFilters,
-  },
-  history_calendar_month_summary: {
-    resource: queryResourceKeys.historyCalendarMonthSummary,
-    sections: Object.freeze([querySectionKeys.summary]),
-    measures: calendarSummaryMeasures,
-    filters: noFilters,
-  },
-  history_day_detail: {
-    resource: queryResourceKeys.historyDayDetail,
-    sections: Object.freeze([
-      querySectionKeys.header,
-      querySectionKeys.finance,
-      querySectionKeys.contexts,
-      querySectionKeys.journal,
-    ]),
-    measures: calendarSummaryMeasures,
     filters: noFilters,
   },
   history_month_calendar: {

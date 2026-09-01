@@ -1,5 +1,4 @@
 export * from "./analysis";
-export * from "./calendar";
 export * from "./capabilities";
 export * from "./collections";
 export * from "./exploration";

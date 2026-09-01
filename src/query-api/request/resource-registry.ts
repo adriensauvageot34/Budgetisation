@@ -89,9 +89,6 @@ const queryResourceNames = [
   "metric_methodology",
   "metric_catalog_preview",
   "metric_catalog_collection",
-  "history_calendar_month",
-  "history_calendar_month_summary",
-  "history_day_detail",
   "history_month_calendar",
   "history_week",
   "history_day_journal",
@@ -149,16 +146,6 @@ export const queryResourceKeys = Object.freeze({
     parseQueryResourceKeySyntax<"metric_catalog_collection">(
       "metric_catalog_collection",
     ),
-  historyCalendarMonth:
-    parseQueryResourceKeySyntax<"history_calendar_month">(
-      "history_calendar_month",
-    ),
-  historyCalendarMonthSummary:
-    parseQueryResourceKeySyntax<"history_calendar_month_summary">(
-      "history_calendar_month_summary",
-    ),
-  historyDayDetail:
-    parseQueryResourceKeySyntax<"history_day_detail">("history_day_detail"),
   historyMonthCalendar:
     parseQueryResourceKeySyntax<"history_month_calendar">("history_month_calendar"),
   historyWeek: parseQueryResourceKeySyntax<"history_week">("history_week"),
@@ -262,9 +249,6 @@ export type QueryParamsByResource = {
   readonly metric_methodology: MetricMethodologyParams;
   readonly metric_catalog_preview: MetricCatalogPreviewParams;
   readonly metric_catalog_collection: MetricCatalogCollectionParams;
-  readonly history_calendar_month: EmptyQueryParams;
-  readonly history_calendar_month_summary: EmptyQueryParams;
-  readonly history_day_detail: HistoryDayDetailParams;
   readonly history_month_calendar: EmptyQueryParams;
   readonly history_week: HistoryWeekParams;
   readonly history_day_journal: HistoryDayDetailParams;
@@ -313,9 +297,6 @@ export type NormalizedQueryParamsByResource = {
   readonly metric_methodology: MetricMethodologyParams;
   readonly metric_catalog_preview: NormalizedMetricCatalogPreviewParams;
   readonly metric_catalog_collection: NormalizedMetricCatalogCollectionParams;
-  readonly history_calendar_month: EmptyQueryParams;
-  readonly history_calendar_month_summary: EmptyQueryParams;
-  readonly history_day_detail: HistoryDayDetailParams;
   readonly history_month_calendar: EmptyQueryParams;
   readonly history_week: HistoryWeekParams;
   readonly history_day_journal: HistoryDayDetailParams;
@@ -458,28 +439,6 @@ export const queryResourceRegistry = Object.freeze({
     normalizeParams: freezeCanonicalParams,
     projection: "collection",
     allowedTimeKinds: ["month", "global"],
-  },
-  history_calendar_month: {
-    key: queryResourceKeys.historyCalendarMonth,
-    paramsSchema: emptyParamsSchema("HistoryCalendarMonthParams"),
-    normalizeParams: freezeCanonicalParams,
-    projection: "detail",
-    allowedTimeKinds: ["month"],
-  },
-  history_calendar_month_summary: {
-    key: queryResourceKeys.historyCalendarMonthSummary,
-    paramsSchema: emptyParamsSchema("HistoryCalendarMonthSummaryParams"),
-    normalizeParams: freezeCanonicalParams,
-    projection: "summary",
-    allowedTimeKinds: ["month"],
-  },
-  history_day_detail: {
-    key: queryResourceKeys.historyDayDetail,
-    paramsSchema: createRuntimeSchema(parseHistoryDayDetailParams),
-    normalizeParams: freezeCanonicalParams,
-    projection: "detail",
-    allowedTimeKinds: ["month"],
-    validateRequest: assertDayBelongsToScope,
   },
   history_month_calendar: {
     key: queryResourceKeys.historyMonthCalendar,

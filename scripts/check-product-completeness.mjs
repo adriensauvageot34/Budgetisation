@@ -5,7 +5,6 @@ const repositoryRoot = process.cwd();
 const completedRoots = [
   "src/app/historique",
   "src/app/operations",
-  "src/features/calendar",
   "src/features/analysis",
   "src/features/operations",
   "src/features/exploration",

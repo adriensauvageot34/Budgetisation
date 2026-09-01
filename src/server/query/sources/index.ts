@@ -7,7 +7,6 @@ import type { MetricQueryService } from "@/server/analytics/metric-query-service
 import type { AuthorizedRuntimeContext } from "@/server/canonical/context";
 import type { CanonicalRepository } from "@/server/canonical/repository";
 import { createAnalysisQuerySources } from "./analysis";
-import { createCalendarQuerySources } from "./calendar";
 import { createEntityQuerySources } from "./entities";
 import { createGalleryQuerySources } from "./galleries";
 import { createOperationsQuerySource } from "./operations";
@@ -21,7 +20,6 @@ export function createRealQuerySources(input: {
 }): QueryReadModelSources {
   return {
     ...metricRegistryQuerySources,
-    ...createCalendarQuerySources(input),
     ...createHistoryV2QuerySources(),
     ...createAnalysisQuerySources(input),
     ...createEntityQuerySources(input),

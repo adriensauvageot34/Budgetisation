@@ -64,9 +64,6 @@ export type QueryReadModelSources = {
   readonly readMetricMethodology: QueryReadModelSource<"metric_methodology">;
   readonly readMetricCatalogPreview: QueryReadModelSource<"metric_catalog_preview">;
   readonly readMetricCatalogCollection: QueryReadModelSource<"metric_catalog_collection">;
-  readonly readHistoryCalendarMonth: QueryReadModelSource<"history_calendar_month">;
-  readonly readHistoryCalendarMonthSummary: QueryReadModelSource<"history_calendar_month_summary">;
-  readonly readHistoryDayDetail: QueryReadModelSource<"history_day_detail">;
   readonly readHistoryMonthCalendar: QueryReadModelSource<"history_month_calendar">;
   readonly readHistoryWeek: QueryReadModelSource<"history_week">;
   readonly readHistoryDayJournal: QueryReadModelSource<"history_day_journal">;

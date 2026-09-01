@@ -351,30 +351,21 @@ function serializeHistoryRootNavigation(
 
   if (route.area === "calendar") {
     if (route.context.kind === "calendar_overview") {
-      return route.context.personId === undefined
-        ? "/historique/calendrier"
-        : `/historique/calendrier?${new URLSearchParams({ personId: route.context.personId }).toString()}`;
+      return "/historique";
     }
 
-    const root = `/historique/calendrier/${route.context.month}`;
-    if (route.context.kind === "calendar_week") {
-      if (route.context.personId === undefined) return `${root}/${route.context.week}`;
-      return `${root}/${route.context.week}?${new URLSearchParams({ personId: route.context.personId }).toString()}`;
-    }
-
-    if (route.context.day === undefined && route.context.personId === undefined) return root;
-    const params = new URLSearchParams();
-    if (route.context.day !== undefined) params.set("day", route.context.day);
+    const params = new URLSearchParams({ view: "calendar" });
     if (route.context.personId !== undefined) params.set("personId", route.context.personId);
-    return `${root}?${params.toString()}`;
+    if (route.context.kind === "calendar_week") {
+      return `/historique/${route.context.month}?${params.toString()}`;
+    }
+
+    if (route.context.day !== undefined) params.set("journal", route.context.day);
+    return `/historique/${route.context.month}?${params.toString()}`;
   }
 
   if (route.context.kind === "analysis_month") {
-    const params = new URLSearchParams();
-    if (route.context.personId !== undefined) params.set("personId", route.context.personId);
-    appendAnalysisFilters(params, route.context.filters);
-    const query = params.toString();
-    return `/historique/analyse/${route.context.month}${query.length === 0 ? "" : `?${query}`}`;
+    return `/historique/${route.context.month}?view=bilan`;
   }
 
   const params = new URLSearchParams({

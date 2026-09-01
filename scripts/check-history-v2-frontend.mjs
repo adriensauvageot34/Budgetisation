@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 
 const root = process.cwd();
@@ -36,16 +36,26 @@ const canonicalRoute = sources["src/app/historique/[month]/page.tsx"];
 const routeState = sources["src/features/history-v2/route-state.ts"];
 const mainNavigation = read("src/components/layout/app-shell.tsx");
 const rootHistoryRoute = read("src/app/historique/page.tsx");
-const v2AliasRoute = read("src/app/historique-v2/[month]/page.tsx");
-const legacyCalendarRoute = read("src/app/historique/calendrier/[month]/page.tsx");
 assert.match(canonicalRoute, /<HistoryV2Page\b/, "La route canonique /historique/[month] doit rendre History V2.");
 assert.doesNotMatch(canonicalRoute, /@\/features\/calendar|historyCalendarMonth|historyDayDetail/, "La route canonique ne doit importer aucun frontend/ReadModel History V1.");
 assert.match(routeState, /return `\/historique\/\$\{input\.month\}/, "Les deep links V2 doivent utiliser /historique.");
 assert.match(mainNavigation, /href: "\/historique", label: "Historique"/, "La navigation principale doit viser /historique.");
 assert.match(rootHistoryRoute, /`\/historique\/\$\{latestMonth\}\?view=calendar`/, "L'index Historique doit entrer dans V2.");
-assert.match(v2AliasRoute, /redirect\(`\/historique\/\$\{month\}/, "L'ancienne URL /historique-v2 doit rediriger vers la route canonique.");
-assert.match(legacyCalendarRoute, /redirect\(`\/historique\/\$\{month\}/, "L'ancienne route Calendar doit rediriger vers V2.");
-assert.doesNotMatch(legacyCalendarRoute, /CalendarClientPage|historyCalendarMonth|historyDayDetail/, "L'ancienne route Calendar ne doit plus rendre V1.");
+for (const retiredPath of [
+  "src/app/historique-v2/page.tsx",
+  "src/app/historique-v2/[month]/page.tsx",
+  "src/app/historique/calendrier/page.tsx",
+  "src/app/historique/calendrier/[month]/page.tsx",
+  "src/app/historique/calendrier/[month]/[week]/page.tsx",
+  "src/app/historique/analyse/[month]/page.tsx",
+  "src/features/calendar/index.ts",
+  "src/features/analysis/month/analysis-month-page.tsx",
+  "src/query-api/calendar/index.ts",
+]) assert.equal(existsSync(join(root, retiredPath)), false, `${retiredPath} doit être retiré physiquement.`);
+const registry = read("src/query-api/request/resource-registry.ts");
+for (const retiredResource of ["history_calendar_month", "history_calendar_month_summary", "history_day_detail"]) {
+  assert.equal(registry.includes(`\"${retiredResource}\"`), false, `${retiredResource} doit sortir du registre actif.`);
+}
 
 const calendar = sources["src/features/history-v2/calendar-view.tsx"];
 const shell = sources["src/features/history-v2/history-shell.tsx"];

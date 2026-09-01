@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 import { normalizeAnalysisScope } from "@/core/scope";
-import { parseLocalDate, yearMonthOf } from "@/core/time";
+import { yearMonthOf } from "@/core/time";
 import { queryResourceKeys } from "@/query-api";
 import { getBootstrapContext } from "@/server/bootstrap/context";
 import {
@@ -90,8 +90,6 @@ export default async function DiagnosticPage() {
     ...(monthScope === null || month === null
       ? []
       : [
-          { label: "Calendar", request: { resource: queryResourceKeys.historyCalendarMonth, scope: monthScope, params: {} } },
-          { label: "Day", request: { resource: queryResourceKeys.historyDayDetail, scope: monthScope, params: { date: parseLocalDate(`${month}-01`) } } },
           { label: "Analysis Month Initial", request: { resource: queryResourceKeys.analysisMonthInitial, scope: monthScope, params: {} } },
         ]),
     ...(globalScope === null || asOf === null
@@ -114,7 +112,7 @@ export default async function DiagnosticPage() {
     label,
     status: resultLabel(queryResults[index]!),
   }));
-  queryHealth.splice(monthScope === null ? 0 : 3, 0, {
+  queryHealth.splice(monthScope === null ? 0 : 1, 0, {
     label: "Operations Browse",
     status: operationResult === null
       ? "NON APPLICABLE · aucune opération bancaire disponible"

@@ -736,9 +736,9 @@ check(() => {
   assert.equal(ledgerIdentity.contractVersion, "v2");
 });
 check(() => assert.equal(
-  query.getQueryResourceContract(query.queryResourceKeys.historyCalendarMonth).family,
-  "legacy_v1",
-  "le contrat V1 certifié reste parallèle au profil History V2",
+  query.registeredQueryResourceKeys.includes("history_calendar_month"),
+  false,
+  "la ressource History V1 retirée ne doit plus rester active dans le registre",
 ));
 
 console.log(JSON.stringify({

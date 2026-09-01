@@ -35,14 +35,6 @@ import {
   type AnalysisTargetReadModel,
 } from "./analysis";
 import {
-  historyCalendarMonthReadModelSchema,
-  historyCalendarMonthSummaryReadModelSchema,
-  historyDayDetailReadModelSchema,
-  type HistoryCalendarMonthReadModel,
-  type HistoryCalendarMonthSummaryReadModel,
-  type HistoryDayDetailReadModel,
-} from "./calendar";
-import {
   entityLifeEventReadModelSchema,
   entityMerchantReadModelSchema,
   entityMomentReadModelSchema,
@@ -114,9 +106,6 @@ export type QueryDataByResource = {
   readonly metric_methodology: MetricMethodologyReadModel;
   readonly metric_catalog_preview: MetricCatalogPreviewReadModel;
   readonly metric_catalog_collection: MetricCatalogCollectionReadModel;
-  readonly history_calendar_month: HistoryCalendarMonthReadModel;
-  readonly history_calendar_month_summary: HistoryCalendarMonthSummaryReadModel;
-  readonly history_day_detail: HistoryDayDetailReadModel;
   readonly history_month_calendar: MonthCalendarReadModel;
   readonly history_week: WeekReadModel;
   readonly history_day_journal: JournalDayReadModel;
@@ -165,9 +154,6 @@ export const queryDataSchemaByResource = Object.freeze({
   metric_methodology: metricMethodologyReadModelSchema,
   metric_catalog_preview: metricCatalogPreviewReadModelSchema,
   metric_catalog_collection: metricCatalogCollectionReadModelSchema,
-  history_calendar_month: historyCalendarMonthReadModelSchema,
-  history_calendar_month_summary: historyCalendarMonthSummaryReadModelSchema,
-  history_day_detail: historyDayDetailReadModelSchema,
   history_month_calendar: monthCalendarReadModelSchema,
   history_week: weekReadModelSchema,
   history_day_journal: journalDayReadModelSchema,
@@ -217,9 +203,6 @@ export const queryDataSchemaByResource = Object.freeze({
 });
 
 export const queryLotBReadModelSchemas = Object.freeze({
-  [queryResourceKeys.historyCalendarMonth]: historyCalendarMonthReadModelSchema,
-  [queryResourceKeys.historyCalendarMonthSummary]: historyCalendarMonthSummaryReadModelSchema,
-  [queryResourceKeys.historyDayDetail]: historyDayDetailReadModelSchema,
   [queryResourceKeys.analysisMonthInitial]: analysisMonthInitialReadModelSchema,
   [queryResourceKeys.analysisMonthBreakdown]: analysisMonthBreakdownReadModelSchema,
   [queryResourceKeys.analysisMonthEvolution]: analysisMonthEvolutionReadModelSchema,

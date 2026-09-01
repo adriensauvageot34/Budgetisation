@@ -44,13 +44,6 @@ export function assertQueryDataMatchesRequest<Name extends QueryResourceName>(
 ): void {
   const scope = request.scope;
   switch (request.resource as QueryResourceName) {
-    case "history_calendar_month":
-    case "history_calendar_month_summary":
-      assertSame((data as QueryDataByResource["history_calendar_month"]).month, scope.time.kind === "month" ? scope.time.month : null, "Calendar month");
-      break;
-    case "history_day_detail":
-      assertSame((data as QueryDataByResource["history_day_detail"]).date, (request.params as { readonly date: unknown }).date, "Day detail date");
-      break;
     case "history_month_calendar":
     case "history_month_overview":
     case "history_month_balance_summary":
