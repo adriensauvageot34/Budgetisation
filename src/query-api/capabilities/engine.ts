@@ -134,8 +134,41 @@ function metricScopeReason(
           request.resource === "gallery_merchants"
         ? "merchant"
         : null;
-  const groupedDimension =
-    breakdownDimension ?? structureDimension ?? targetDimension ?? fixedEvolutionDimension ?? markedFactsDimension ?? contextDimension ?? entityOrGalleryDimension;
+  const groupedDimensions = new Set<string>([
+    breakdownDimension,
+    structureDimension,
+    targetDimension,
+    fixedEvolutionDimension,
+    markedFactsDimension,
+    contextDimension,
+    entityOrGalleryDimension,
+  ].filter((dimension): dimension is string => dimension !== null));
+  switch (request.resource) {
+    case "history_month_categories":
+      groupedDimensions.add("category");
+      break;
+    case "history_category_detail":
+      groupedDimensions.add("category");
+      groupedDimensions.add("merchant");
+      break;
+    case "history_month_spending_nature":
+      groupedDimensions.add("life_scope");
+      break;
+    case "history_spending_segment_detail":
+      groupedDimensions.add("category");
+      groupedDimensions.add("life_scope");
+      break;
+    case "history_month_life_money":
+      groupedDimensions.add("activity");
+      groupedDimensions.add("place");
+      break;
+    case "history_activity_detail":
+      groupedDimensions.add("activity");
+      break;
+    case "history_place_detail":
+      groupedDimensions.add("place");
+      break;
+  }
   const metricTimeKind =
     request.resource === "analysis_global_evolution" ||
     ((request.resource === "analysis_global_typical" ||
@@ -160,16 +193,16 @@ function metricScopeReason(
   if (
     (metric.availabilityRules.includes("required_place_filter") &&
       request.scope.filters.placeIds.length !== 1 &&
-      groupedDimension !== "place") ||
+      !groupedDimensions.has("place")) ||
     (metric.availabilityRules.includes("required_category_filter") &&
       request.scope.filters.categoryIds.length === 0 &&
-      groupedDimension !== "category") ||
+      !groupedDimensions.has("category")) ||
     (metric.availabilityRules.includes("required_merchant_filter") &&
       request.scope.filters.merchantIds.length === 0 &&
-      groupedDimension !== "merchant") ||
+      !groupedDimensions.has("merchant")) ||
     (metric.availabilityRules.includes("required_life_scope_filter") &&
       request.scope.filters.lifeScopeContext.length === 0 &&
-      groupedDimension !== "life_scope")
+      !groupedDimensions.has("life_scope"))
   ) {
     return "not_applicable";
   }

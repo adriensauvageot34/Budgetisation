@@ -7,12 +7,16 @@ import {
   type ProducedMetric,
 } from "@/analytics/production";
 import type { ApiMeta } from "@/core/api";
-import type { YearMonth } from "@/core/time";
+import { parseYearMonth, type YearMonth } from "@/core/time";
 import { normalizeAnalysisScope, type AnalysisScope } from "@/core/scope";
 import { resolveGlobalWindowMonths } from "@/core/time";
 import type { DataRevision } from "@/core/versions";
 import { parseDataRevision } from "@/core/versions";
-import type { AnyNormalizedQueryRequest } from "@/query-api";
+import {
+  getQueryResourceContract,
+  queryResourceKeys,
+  type AnyNormalizedQueryRequest,
+} from "@/query-api";
 import type { AuthorizedRuntimeContext } from "@/server/canonical/context";
 import { safeRuntimeEnvironment } from "@/server/runtime-environment";
 import {
@@ -21,6 +25,7 @@ import {
   metricArtifactIdentity,
   metricBucketArtifactIdentity,
   historyV2SharedArtifactIdentity,
+  analyticsMethodSignature,
   querySnapshotIdentity,
   type HistoryV2SharedArtifactFamily,
   type MaterializationPeriodIdentity,
@@ -190,6 +195,41 @@ export class SupabaseAnalyticsMaterializationStore {
     if (!isMissingMaterialization(error)) return false;
     this.unavailable = true;
     return true;
+  }
+
+  async readLatestPublishedHistoryV2Month(): Promise<YearMonth | null> {
+    if (this.unavailable) return null;
+    const resource = queryResourceKeys.historyMonthCalendar;
+    const contract = getQueryResourceContract(resource);
+    const { data, error } = await this.client
+      .from("analytics_query_snapshots")
+      .select("period_month,analytics_publications!inner(publication_id)")
+      .eq("household_id", this.context.householdId)
+      .eq("resource", resource)
+      .eq("subject_kind", "household")
+      .is("subject_id", null)
+      .eq("period_kind", "month")
+      .eq("contract_version", contract.contractVersion)
+      .eq("method_signature", analyticsMethodSignature(resource))
+      .eq("is_active", true)
+      .is("invalidated_at", null)
+      .is("expires_at", null)
+      .not("publication_id", "is", null)
+      .eq("analytics_publications.status", "published")
+      .eq("analytics_publications.scope_kind", "month")
+      .order("period_month", { ascending: false })
+      .limit(1);
+    if (error !== null) {
+      this.materializationUnavailable(error);
+      return null;
+    }
+    const periodMonth = data?.[0]?.period_month;
+    if (typeof periodMonth !== "string") return null;
+    try {
+      return parseYearMonth(periodMonth.slice(0, 7));
+    } catch {
+      return null;
+    }
   }
 
   async readMetric(

@@ -499,6 +499,116 @@ const checkAsync = async (callback) => {
   checks += 1;
 };
 
+const monthScope = {
+  subject: { kind: "household" },
+  time: { kind: "month", month: selectedMonth },
+};
+
+function evaluatedCapabilities(resource, params) {
+  const request = query.normalizeQueryRequest({ resource, scope: monthScope, params });
+  const result = query.evaluateQueryCapabilities(request, {
+    requestId: `capabilities-${resource}`,
+    permission: { granted: true },
+  });
+  assert.equal(result.ok, true, `${resource} doit être autorisée.`);
+  return result.capabilities;
+}
+
+function assertMaximumCapabilities(resource, params = {}) {
+  const maximum = query.getQueryCapabilityMaximum(resource);
+  const actual = evaluatedCapabilities(resource, params);
+  assert.deepEqual(actual.availableSections, maximum.sections, `${resource}: sections`);
+  assert.deepEqual(actual.availableMeasures, maximum.measures, `${resource}: mesures`);
+  assert.deepEqual(actual.compatibleFilters, maximum.filters, `${resource}: filtres`);
+  assert.deepEqual(actual.unavailable, [], `${resource}: aucune capability implicite ne doit être rejetée.`);
+}
+
+check(() => assertMaximumCapabilities("history_month_balance_summary"));
+check(() => assertMaximumCapabilities("history_month_categories"));
+check(() => assertMaximumCapabilities("history_category_detail", { categoryId: "food" }));
+check(() => assertMaximumCapabilities("history_month_spending_nature"));
+check(() => assertMaximumCapabilities("history_spending_segment_detail", { axis: "lifeScope", bucket: "HOUSEHOLD" }));
+check(() => assertMaximumCapabilities("history_spending_segment_detail", { necessity: "INDISPENSABLE", behavior: "FIXED" }));
+check(() => assertMaximumCapabilities("history_month_life_money"));
+check(() => assertMaximumCapabilities("history_activity_detail", { activityTypeKey: "sport" }));
+check(() => assertMaximumCapabilities("history_place_detail", { placeId: uuid(501) }));
+check(() => {
+  const guard = evaluatedCapabilities("analysis_target", {
+    target: { kind: "activity", activityId: "sport" },
+  });
+  assert.equal(guard.availableMeasures.includes("category_amount"), false);
+  assert.equal(
+    guard.unavailable.some(({ kind, reason }) => kind === "measure" && reason === "not_applicable"),
+    true,
+    "Une ressource sans agrégation Category doit toujours exiger le filtre canonique.",
+  );
+});
+
+function latestMonthFakeClient(periodMonth) {
+  const calls = [];
+  const builder = {
+    select(columns) { calls.push(["select", columns]); return this; },
+    eq(column, value) { calls.push(["eq", column, value]); return this; },
+    is(column, value) { calls.push(["is", column, value]); return this; },
+    not(column, operator, value) { calls.push(["not", column, operator, value]); return this; },
+    order(column, options) { calls.push(["order", column, options]); return this; },
+    async limit(value) {
+      calls.push(["limit", value]);
+      return {
+        data: periodMonth === null ? [] : [{ period_month: `${periodMonth}-01` }],
+        error: null,
+      };
+    },
+  };
+  return {
+    calls,
+    client: {
+      from(table) {
+        calls.push(["from", table]);
+        return builder;
+      },
+    },
+  };
+}
+
+const latestMonthContext = {
+  ...runtimeContext,
+  periods: ["2026-07", "2026-08"].map((month, index) => ({
+    ...runtimeContext.periods[0],
+    analysisPeriodId: uuid(600 + index),
+    month: `${month}-01`,
+  })),
+};
+const julyPublication = latestMonthFakeClient("2026-07");
+const augustPublication = latestMonthFakeClient("2026-08");
+const noPublication = latestMonthFakeClient(null);
+await checkAsync(async () => {
+  const result = await new SupabaseAnalyticsMaterializationStore(
+    julyPublication.client,
+    latestMonthContext,
+  ).readLatestPublishedHistoryV2Month();
+  assert.equal(result, "2026-07");
+  assert.ok(latestMonthContext.periods.some(({ month }) => month === "2026-08-01"));
+  assert.ok(julyPublication.calls.some((call) => call[0] === "eq" && call[1] === "resource" && call[2] === "history_month_calendar"));
+  assert.ok(julyPublication.calls.some((call) => call[0] === "eq" && call[1] === "analytics_publications.status" && call[2] === "published"));
+  assert.ok(julyPublication.calls.some((call) => call[0] === "eq" && call[1] === "is_active" && call[2] === true));
+  assert.ok(julyPublication.calls.some((call) => call[0] === "is" && call[1] === "invalidated_at" && call[2] === null));
+});
+await checkAsync(async () => assert.equal(
+  await new SupabaseAnalyticsMaterializationStore(
+    augustPublication.client,
+    latestMonthContext,
+  ).readLatestPublishedHistoryV2Month(),
+  "2026-08",
+));
+await checkAsync(async () => assert.equal(
+  await new SupabaseAnalyticsMaterializationStore(
+    noPublication.client,
+    latestMonthContext,
+  ).readLatestPublishedHistoryV2Month(),
+  null,
+));
+
 const theoretical = materialization.createHistoryV2TheoreticalManifest(selectedMonth);
 check(() => assert.equal(theoretical.resourceFamilies.length, 15));
 check(() => assert.deepEqual(materialization.historyV2MaterializationProfile, {

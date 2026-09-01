@@ -1,15 +1,13 @@
 import { redirect } from "next/navigation";
-import { getBootstrapContext } from "@/server/bootstrap/context";
-import { eligibleHistoryMonths } from "@/server/bootstrap/history-calendar";
 import { withProductAuthentication } from "@/app/product-query";
+import { resolveLatestPublishedHistoryV2Month } from "@/server/query/runtime";
 
 export const dynamic = "force-dynamic";
 
 export default async function HistoryPage() {
-  const latestMonth = await withProductAuthentication(async () => {
-    const context = await getBootstrapContext();
-    return eligibleHistoryMonths(context.periods).at(-1) ?? null;
-  });
+  const latestMonth = await withProductAuthentication(
+    resolveLatestPublishedHistoryV2Month,
+  );
   if (latestMonth === null) redirect("/diagnostic");
   redirect(`/historique/${latestMonth}?view=calendar`);
 }

@@ -300,6 +300,19 @@ export async function resolveLatestBankOperationMonth() {
   return repository.loadLatestBankOperationMonth();
 }
 
+export async function resolveLatestPublishedHistoryV2Month() {
+  const bootstrap = await getBootstrapContext();
+  const context = createAuthorizedRuntimeContext(
+    bootstrap,
+    parseInstant(new Date().toISOString()),
+  );
+  const store = new SupabaseAnalyticsMaterializationStore(
+    createCanonicalReadClient(),
+    context,
+  );
+  return store.readLatestPublishedHistoryV2Month();
+}
+
 export async function readAuthenticatedCanonicalSourceHealth(): Promise<CanonicalSourceHealth> {
   const bootstrap = await getBootstrapContext();
   const context = createAuthorizedRuntimeContext(

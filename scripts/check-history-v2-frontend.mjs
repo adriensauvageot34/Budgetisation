@@ -36,11 +36,27 @@ const canonicalRoute = sources["src/app/historique/[month]/page.tsx"];
 const routeState = sources["src/features/history-v2/route-state.ts"];
 const mainNavigation = read("src/components/layout/app-shell.tsx");
 const rootHistoryRoute = read("src/app/historique/page.tsx");
+const rootRoute = read("src/app/page.tsx");
+const queryRuntime = read("src/server/query/runtime.ts");
+const materializationStore = read("src/server/analytics/materialization/store.ts");
 assert.match(canonicalRoute, /<HistoryV2Page\b/, "La route canonique /historique/[month] doit rendre History V2.");
 assert.doesNotMatch(canonicalRoute, /@\/features\/calendar|historyCalendarMonth|historyDayDetail/, "La route canonique ne doit importer aucun frontend/ReadModel History V1.");
 assert.match(routeState, /return `\/historique\/\$\{input\.month\}/, "Les deep links V2 doivent utiliser /historique.");
 assert.match(mainNavigation, /href: "\/historique", label: "Historique"/, "La navigation principale doit viser /historique.");
 assert.match(rootHistoryRoute, /`\/historique\/\$\{latestMonth\}\?view=calendar`/, "L'index Historique doit entrer dans V2.");
+assert.match(rootHistoryRoute, /resolveLatestPublishedHistoryV2Month/, "L'index Historique doit utiliser la publication V2 active.");
+assert.match(rootRoute, /resolveLatestPublishedHistoryV2Month/, "La racine produit doit utiliser la même publication V2 active.");
+assert.doesNotMatch(`${rootHistoryRoute}\n${rootRoute}`, /eligibleHistoryMonths|periods\.at\(-1\)/, "Les routes sans mois ne doivent plus utiliser la dernière période Bootstrap.");
+assert.match(queryRuntime, /export async function resolveLatestPublishedHistoryV2Month/, "Le resolver authentifié doit être partagé.");
+assert.match(materializationStore, /async readLatestPublishedHistoryV2Month/, "La matérialisation doit porter la lecture du dernier mois publié.");
+for (const proof of [
+  /resource", resource/,
+  /contract_version", contract\.contractVersion/,
+  /method_signature", analyticsMethodSignature\(resource\)/,
+  /is_active", true/,
+  /invalidated_at", null/,
+  /analytics_publications\.status", "published"/,
+]) assert.match(materializationStore, proof, "Le resolver doit sélectionner uniquement un snapshot History V2 publié et servable.");
 for (const retiredPath of [
   "src/app/historique-v2/page.tsx",
   "src/app/historique-v2/[month]/page.tsx",
