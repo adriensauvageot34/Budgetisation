@@ -82,6 +82,11 @@ const mayCalendar = calendarArtifact("2026-05", {
       startDate: "2026-05-04",
       endDate: "2026-05-10",
     })),
+    life(35, "voyage_sejour", {
+      title: "Ribbon source mai",
+      startDate: "2026-05-01",
+      endDate: "2026-05-03",
+    }),
   ],
   moments: [{
     momentId: uuid(50),
@@ -107,7 +112,20 @@ const mayCalendar = calendarArtifact("2026-05", {
     authority,
   }],
 });
-const aprilCalendar = calendarArtifact("2026-04");
+const aprilCalendar = calendarArtifact("2026-04", {
+  lifeEvents: [
+    life(100, "pharmacie", {
+      title: "Pharmacie bord avril",
+      startDate: "2026-04-27",
+      endDate: "2026-04-27",
+    }),
+    ...Array.from({ length: 5 }, (_, index) => life(110 + index, "voyage_sejour", {
+      title: `Ribbon bord avril ${index}`,
+      startDate: "2026-04-27",
+      endDate: "2026-05-03",
+    })),
+  ],
+});
 const juneCalendar = calendarArtifact("2026-06");
 
 function component(key, amount) {
@@ -204,6 +222,17 @@ check(() => {
   assert.equal(outside.targetMonth, "2026-04");
   assert.equal(outside.journalRef.params.date, "2026-04-27");
   assert.equal(outside.journalRef.resource, "history_day_journal");
+  const adjacentMarker = outside.orderedMarkerGroups.items.find(({ semanticTypeKey }) => semanticTypeKey === "pharmacie");
+  assert.deepEqual(adjacentMarker.targetRef, {
+    resource: "history_day_journal",
+    params: { date: "2026-04-27" },
+  }, "un Marker provenant d'un artifact adjacent doit viser le Journal de sa date réelle");
+  const localMarker = monthModel.daysByDate["2026-05-12"].orderedMarkerGroups.items
+    .find(({ semanticTypeKey }) => semanticTypeKey === "pharmacie");
+  assert.deepEqual(localMarker.targetRef, {
+    resource: "history_activity_detail",
+    params: { activityTypeKey: "pharmacie" },
+  }, "un Marker provenant de l'artifact propriétaire conserve sa cible Activity");
 });
 check(() => {
   const ribbonSegments = monthModel.ribbonSegments.items.filter(({ weekStart }) => weekStart === "2026-05-04");
@@ -223,6 +252,19 @@ check(() => {
   assert.equal(monthModel.daysByDate["2026-05-04"].hiddenMarkerCount.value, 0, "overflow Ribbon et Marker restent distincts");
 });
 check(() => {
+  const adjacentSegments = monthModel.ribbonSegments.items.filter(({ weekStart, title }) =>
+    weekStart === "2026-04-27" && title.startsWith("Ribbon bord avril"));
+  const adjacentOverflow = monthModel.ribbonOverflow.items.find(({ weekStart }) => weekStart === "2026-04-27");
+  assert.equal(adjacentSegments.length, 4);
+  assert.equal(adjacentOverflow.count, 1);
+  assert.equal(adjacentSegments.every(({ targetRef }) => targetRef.resource === "history_day_journal"
+    && targetRef.params.date === "2026-04-27"), true, "les Ribbons adjacents normaux doivent viser le Journal réel");
+  assert.deepEqual(adjacentOverflow.items[0].targetRef, {
+    resource: "history_day_journal",
+    params: { date: "2026-04-27" },
+  }, "le Ribbon overflow adjacent doit suivre la même doctrine Journal");
+});
+check(() => {
   const hover = monthModel.daysByDate["2026-05-12"].hover.data;
   assert.equal(hover.economicExpenses.data.items.length, 1, "Hover reste au grain acte économique humain");
   assert.equal(hover.economicExpenses.data.items[0].expenseEventId, expenseEventId);
@@ -239,6 +281,20 @@ check(() => {
   const weekDay = weekModel.days.find(({ date }) => date === "2026-05-12");
   assert.deepEqual(weekDay.visibleMarkers.map(({ calendarItemId }) => calendarItemId), monthOrder.slice(0, 6));
   assert.equal(weekModel.referenceMonth, "2026-05");
+});
+
+const crossMonthWeek = readmodels.buildWeekReadModel({
+  ...baseContext,
+  capabilities: capability(request.queryResourceKeys.historyWeek),
+}, "2026-04-27");
+check(() => {
+  const adjacentRibbon = crossMonthWeek.ribbonSegments.items
+    .find(({ calendarItemId }) => calendarItemId === `life_event:${uuid(35)}`);
+  assert.equal(crossMonthWeek.referenceMonth, "2026-04");
+  assert.deepEqual(adjacentRibbon.targetRef, {
+    resource: "history_day_journal",
+    params: { date: "2026-05-01" },
+  }, "Week utilise le mois du jeudi et externalise les Ribbons de l'artifact adjacent");
 });
 
 const journalSupplement = {

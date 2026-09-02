@@ -174,7 +174,22 @@ function sourceRefsForItem(item: CalendarSemanticItem): readonly SourceRef[] {
   return uniqueSourceRefs(item.sourceRefs.map(parseArtifactSourceRef));
 }
 
-function targetForCalendarItem(item: CalendarSemanticItem): QueryTargetRef | undefined {
+type CalendarTargetProjectionContext = {
+  readonly ownerMonth: YearMonth;
+  readonly sourceArtifactMonth: YearMonth;
+  readonly fallbackDate?: LocalDate;
+};
+
+function targetForCalendarItem(
+  item: CalendarSemanticItem,
+  projection?: CalendarTargetProjectionContext,
+): QueryTargetRef | undefined {
+  const realDate = item.anchorDate ?? item.startDate ?? projection?.fallbackDate;
+  if (projection !== undefined && projection.sourceArtifactMonth !== projection.ownerMonth) {
+    return realDate === undefined
+      ? undefined
+      : target(queryResourceKeys.historyDayJournal, { date: realDate });
+  }
   const momentId = item.sourceRefs.map(parseArtifactSourceRef).find(({ kind }) => kind === "moment")?.id;
   if (momentId !== undefined) return target(queryResourceKeys.historyMomentDetail, { momentId });
   if (item.itemKind === "ECONOMIC" && item.anchorDate !== undefined) {
@@ -183,11 +198,15 @@ function targetForCalendarItem(item: CalendarSemanticItem): QueryTargetRef | und
   if (item.itemKind === "LIFE" && item.semanticTypeKey.length > 0) {
     return target(queryResourceKeys.historyActivityDetail, { activityTypeKey: item.semanticTypeKey });
   }
-  const date = item.anchorDate ?? item.startDate;
+  const date = realDate;
   return date === undefined ? undefined : target(queryResourceKeys.historyDayJournal, { date });
 }
 
-function calendarSummary(item: CalendarSemanticItem): CalendarItemSummary {
+function calendarSummary(
+  item: CalendarSemanticItem,
+  projection: CalendarTargetProjectionContext,
+): CalendarItemSummary {
+  const targetRef = targetForCalendarItem(item, projection);
   return {
     calendarItemId: item.calendarItemId,
     semanticTypeKey: item.semanticTypeKey,
@@ -210,7 +229,7 @@ function calendarSummary(item: CalendarSemanticItem): CalendarItemSummary {
     sourceRefs: sourceRefsForItem(item),
     filterTags: item.filterTags,
     itemKind: item.itemKind,
-    ...(targetForCalendarItem(item) === undefined ? {} : { targetRef: targetForCalendarItem(item)! }),
+    ...(targetRef === undefined ? {} : { targetRef }),
     ...(item.quality === undefined ? {} : { quality: item.quality }),
   };
 }
@@ -532,11 +551,16 @@ function dayReadModel(
   const calendars = calendarByMonth(context);
   const daily = dailyByMonth(context);
   const { artifact, day } = artifactDay(calendars, date);
+  const targetProjection = {
+    ownerMonth: selectedMonth,
+    sourceArtifactMonth: artifact?.month ?? yearMonthOf(date),
+    fallbackDate: date,
+  } satisfies CalendarTargetProjectionContext;
   const directory = new Map(context.personDirectory.map((entry) => [entry.personId, entry]));
   const descriptors = new Map(context.expenseDescriptors.map((entry) => [entry.expenseEventId, entry]));
   const orderedMarkers: CollectionValue<CalendarItemSummary> = day === undefined
     ? { status: "UNKNOWN", quality: { reasonCode: "DATA_NO_SOURCE" } }
-    : mapCollection(day.orderedMarkerGroups, calendarSummary);
+    : mapCollection(day.orderedMarkerGroups, (item) => calendarSummary(item, targetProjection));
   const visibleMarkers = orderedMarkers.status === "KNOWN" || orderedMarkers.status === "PARTIAL"
     ? orderedMarkers.items.slice(0, markerLimit)
     : [];
@@ -547,12 +571,12 @@ function dayReadModel(
     : artifact.items.status === "PARTIAL"
       ? {
           status: "PARTIAL",
-          items: ribbons.map(calendarSummary),
+          items: ribbons.map((item) => calendarSummary(item, targetProjection)),
           partialMeaning: "OBSERVED_ONLY",
           knownCount: ribbons.length,
           quality: artifact.items.quality,
         }
-      : { status: "KNOWN", items: ribbons.map(calendarSummary), totalCount: ribbons.length };
+      : { status: "KNOWN", items: ribbons.map((item) => calendarSummary(item, targetProjection)), totalCount: ribbons.length };
   const amount = dailyAmount(daily, date);
   const amountExcludingFixed = dailyAmountExcludingFixed(calendars, date);
   const expenses = expenseSummariesForDate(daily.get(yearMonthOf(date)), date, descriptors);
@@ -656,6 +680,7 @@ function meta(input: {
 function ribbonProjection(
   context: HistoryV2ReadModelBuilderContext,
   weekStarts: readonly LocalDate[],
+  ownerMonth: YearMonth,
 ): {
   readonly segments: CollectionValue<RibbonSegmentReadModel>;
   readonly overflow: CollectionValue<RibbonOverflowReadModel>;
@@ -710,7 +735,11 @@ function ribbonProjection(
           iconKey: item.iconKey,
           eventStartDate: item.startDate ?? item.anchorDate ?? weekStart,
           eventEndDate: item.endDate ?? item.anchorDate ?? weekStart,
-          targetRef: targetForCalendarItem(item) ?? target(queryResourceKeys.historyDayJournal, { date: segment.segmentStart }),
+          targetRef: targetForCalendarItem(item, {
+            ownerMonth,
+            sourceArtifactMonth: artifact.month,
+            fallbackDate: segment.segmentStart,
+          }) ?? target(queryResourceKeys.historyDayJournal, { date: segment.segmentStart }),
           sourceRefs: sourceRefsForItem(item),
         });
       }
@@ -736,7 +765,11 @@ function ribbonProjection(
           iconKey: item.iconKey,
           segmentStart: segment.segmentStart,
           segmentEnd: segment.segmentEnd,
-          targetRef: targetForCalendarItem(item) ?? target(queryResourceKeys.historyDayJournal, { date: segment.segmentStart }),
+          targetRef: targetForCalendarItem(item, {
+            ownerMonth,
+            sourceArtifactMonth: artifact.month,
+            fallbackDate: segment.segmentStart,
+          }) ?? target(queryResourceKeys.historyDayJournal, { date: segment.segmentStart }),
           sourceRefs: sourceRefsForItem(item),
         });
       }
@@ -815,7 +848,7 @@ export function buildMonthCalendarReadModel(
   const dates = grid.weeks.flatMap(({ dayDates }) => dayDates);
   const months = uniqueStrings(dates.map(yearMonthOf)) as readonly YearMonth[];
   const days = dates.map((date) => dayReadModel(context, date, month, 3));
-  const ribbon = ribbonProjection(context, grid.weeks.map(({ weekStart }) => weekStart));
+  const ribbon = ribbonProjection(context, grid.weeks.map(({ weekStart }) => weekStart), month);
   const ledger = dailyByMonth(context).get(month);
   const unassignedTiming = buildUnassignedTimingSummary(context, ledger);
   return {
@@ -855,7 +888,7 @@ export function buildWeekReadModel(
     const { inSelectedMonth: _inSelectedMonth, targetMonth: _targetMonth, ...rest } = base;
     return { ...rest, inReferenceMonth: yearMonthOf(date) === referenceMonth };
   }) as unknown as WeekReadModel["days"];
-  const ribbon = ribbonProjection(context, [weekStart]);
+  const ribbon = ribbonProjection(context, [weekStart], referenceMonth);
   const months = uniqueStrings(dates.map(yearMonthOf)) as readonly YearMonth[];
   return {
     householdId: context.householdId,

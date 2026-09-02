@@ -169,8 +169,8 @@ n'a été ajouté.
 |---|---:|
 | catalogues 25 + 20 et filtres URL/presets | PASS |
 | Calendar/Daily/Projection, juillet et strict artifact | 42/42 PASS |
-| Calendar/Week/Overview ReadModels, OLD/NEW | 25/25 PASS |
-| matérialisation/signatures/compatibilité | 74 checks PASS |
+| Calendar/Week/Overview ReadModels, OLD/NEW | 27/27 PASS |
+| matérialisation/signatures/compatibilité | 76 checks PASS |
 | frontend Calendar-centric | 7/7 resources, 15/15 contrats, 14/14 checks PASS |
 | architecture imports | 459 fichiers PASS |
 | `tsc --noEmit` | PASS |
@@ -216,3 +216,50 @@ HISTORY_CC_NARRATIVE_GATE = PASS
 HISTORY_CC_COMPAT_GATE = PASS
 HISTORY_CC_CODE_GATE = PASS
 ```
+
+## 8. Cross-month target scope correction
+
+### Cause racine et reproduction
+
+Le premier préflight live du code Calendar-centric, lancé sans aucune écriture,
+s'est arrêté sur la grille de novembre 2025 : le jour de bord `2025-10-27`
+provenait de l'artifact octobre et portait un item LIFE `pharmacie`. La projection
+créait pourtant `history_activity_detail(activityTypeKey=pharmacie)` dans le
+mois propriétaire novembre. Le détail est légitimement absent de novembre : ce
+n'était ni une donnée manquante ni une raison de fabriquer un détail cross-month.
+
+### Doctrine appliquée
+
+`targetForCalendarItem()` reçoit désormais explicitement `ownerMonth`,
+`sourceArtifactMonth` et `fallbackDate`. Lorsque source et propriétaire sont
+identiques, la hiérarchie sémantique existante reste inchangée. Lorsqu'ils
+diffèrent, Marker, Hover, Ribbon normal et Ribbon overflow projettent un
+`history_day_journal` à la date réelle, résolue strictement dans l'ordre
+`anchorDate`, `startDate`, date du caller. Aucune date bancaire, heuristique,
+extension de `QueryTargetRef`, nouvelle ressource, policy ou version n'a été
+introduite.
+
+Le Month transmet le mois sélectionné comme propriétaire. La Week transmet le
+mois du jeudi. Chaque candidate Ribbon conserve `artifact.month` comme mois
+source. `JournalPanel` continue de requêter avec `yearMonthOf(date)` ; aucun
+changement frontend n'est nécessaire.
+
+### Tests discriminants
+
+- Marker adjacent `2026-04-27` visible dans mai : Journal du 27 avril ;
+- Marker local `pharmacie` : cible Activity conservée ;
+- Ribbon adjacent normal et overflow : Journal de la date réelle ;
+- Ribbon local : cible Activity conservée ;
+- Week cross-month : ownerMonth du jeudi et Journal pour l'artifact adjacent ;
+- manifest : aucun détail `pharmacie` local créé par le jour de bord et
+  `externalQueryRef` Journal propriétaire avril présent ;
+- frontend : preuve statique `JournalPanel → scope(yearMonthOf(date))`.
+
+Résultats avant second commit : Calendar/Daily `42/42`, ReadModels `27/27`,
+matérialisation `76 checks`, frontend `14/14`, `tsc --noEmit`, build Next 16 et
+`git diff --check` : PASS.
+
+Le SHA du second commit, son état Production READY, le préflight global et la
+publication finale sont nécessairement attestés dans le rapport terminal du run :
+un fichier ne peut contenir le SHA cryptographique du commit qui le contient,
+et aucun troisième commit documentaire n'est autorisé après publication.

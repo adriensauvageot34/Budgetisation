@@ -148,6 +148,9 @@ const overlay = sources["src/features/history-v2/overlay-host.tsx"];
 const renderers = sources["src/features/history-v2/renderers.tsx"];
 const css = sources["src/features/history-v2/history-v2.module.css"];
 
+assert.match(overlay, /function JournalPanel[\s\S]+scope: scope\(yearMonthOf\(date\)\)[\s\S]+params: \{ date \}/,
+  "JournalPanel doit continuer à résoudre le scope depuis la date réelle du Journal externe.");
+
 assert.match(calendar, /setTimeout\(\(\) => \{[^}]+setHoverOpen\(true\); \}, 300\)/);
 assert.match(calendar, /setTimeout\(\(\) => setHoverOpen\(false\), 125\)/);
 assert.match(shell, /narrativeCarousel/);

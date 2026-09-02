@@ -134,7 +134,20 @@ function calendarArtifact(month) {
   return calendar.buildCalendarSemanticMonthArtifact({
     householdId,
     month,
-    lifeEvents: [],
+    lifeEvents: month === "2026-04" ? [{
+      lifeEventId: uuid(500),
+      typeKey: "pharmacie",
+      title: "Pharmacie bord avril",
+      startDate: "2026-04-27",
+      endDate: "2026-04-27",
+      validationStatus: "Confirmé",
+      participantIds: [],
+      authority: {
+        kind: "OBSERVED_CANONICAL",
+        authority: "fixture",
+        sourceRefs: ["fixture:cross-month-pharmacie"],
+      },
+    }] : [],
     moments: [],
     contexts: [],
     momentLifeEvents: [],
@@ -838,6 +851,11 @@ check(() => assert.ok(preflight.queries.filter(({ request }) =>
   request.resource === "history_spending_segment_detail").length >= 5));
 check(() => assert.ok(preflight.manifest.externalQueryRefs.some(({ ownerMonth, resource }) =>
   ownerMonth === "2026-04" && resource === "history_day_journal")));
+check(() => assert.ok(preflight.manifest.externalQueryRefs.some(({ ownerMonth, resource, params }) =>
+  ownerMonth === "2026-04" && resource === "history_day_journal" && params.date === "2026-04-27")));
+check(() => assert.equal(preflight.queries.some(({ request }) =>
+  request.resource === "history_activity_detail" && request.params.activityTypeKey === "pharmacie"), false,
+"un Marker adjacent ne doit pas créer un détail Activity local au mois propriétaire"));
 check(() => assert.ok(preflight.manifest.externalQueryRefs.some(({ ownerMonth, resource }) =>
   ownerMonth === "2026-06" && resource === "history_day_journal")));
 check(() => assert.match(preflight.manifest.manifestHash, /^[0-9a-f]{64}$/));
