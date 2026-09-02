@@ -51,7 +51,6 @@ export function CalendarMonthView({
 }) {
   return (
     <section className={styles.calendarSurface} aria-label="Calendrier mensuel">
-      <UnassignedTiming model={model} filters={filters} />
       <div className={styles.weekdayHeader}>{weekdayLabels.map((label) => <div key={label}>{label}</div>)}</div>
       {model.weeks.map((week) => {
         const segments = model.ribbonSegments.status === "KNOWN" || model.ribbonSegments.status === "PARTIAL"
@@ -201,14 +200,6 @@ function hoverAmountNode(hover: DayHoverReadModel, filters: HistoryCalendarFilte
   return "economicAmountExcludingFixed" in hover && hover.economicAmountExcludingFixed !== undefined
     ? hover.economicAmountExcludingFixed
     : { visibility: "PLACEHOLDER", reasonCode: "PUBLICATION_CONTRACT_MISMATCH" };
-}
-
-function UnassignedTiming({ model, filters }: { readonly model: MonthCalendarReadModel; readonly filters: HistoryCalendarFilterState }) {
-  if (!filters.tags.includes("UNASSIGNED_TIMING") || !("unassignedTiming" in model) || model.unassignedTiming === undefined) return null;
-  return <DisplayState node={model.unassignedTiming}>{(summary) => {
-    if ((summary.count.status !== "KNOWN" && summary.count.status !== "PARTIAL") || summary.count.value === 0) return null;
-    return <aside className={styles.unassignedTiming} aria-label="Dépenses sans date précise"><strong>Date précise inconnue</strong><span>{summary.count.value} dépense{summary.count.value > 1 ? "s" : ""}</span><DisplayState node={summary.amount}>{(metric) => <MoneyMetric metric={metric} partialDisplay="value-only" />}</DisplayState></aside>;
-  }}</DisplayState>;
 }
 
 function DayHoverPopover({ anchor, open, hover, filters, onEnter, onLeave, onOpenJournal }: { readonly anchor: HTMLElement | null; readonly open: boolean; readonly hover: DayHoverReadModel; readonly filters: HistoryCalendarFilterState; readonly onEnter: () => void; readonly onLeave: () => void; readonly onOpenJournal: () => void }) {

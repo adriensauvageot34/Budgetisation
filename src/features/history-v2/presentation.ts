@@ -46,6 +46,13 @@ export function formatFrenchDateRange(startDate: LocalDate, endDate?: LocalDate,
   return `${formatFrenchDate(startDate, includeYear)} – ${formatFrenchDate(endDate, includeYear)}`;
 }
 
+export function compactNarrativeTitle(title: string, startDate: LocalDate, endDate?: LocalDate): string {
+  const exactTemporalSuffix = ` – ${formatFrenchDateRange(startDate, endDate)}`;
+  if (!title.endsWith(exactTemporalSuffix)) return title;
+  const compact = title.slice(0, -exactTemporalSuffix.length).trimEnd();
+  return compact.length === 0 ? title : compact;
+}
+
 export function formatCount(value: number, singular: string, plural = `${singular}s`): string {
   return `${value} ${value === 1 ? singular : plural}`;
 }

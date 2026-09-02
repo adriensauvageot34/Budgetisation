@@ -1,12 +1,18 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
+import { X } from "lucide-react";
 import { useRouter } from "next/navigation";
+import type { MinimalPreviewReadModel } from "@/query-api";
+import { queryResourceKeys } from "@/query-api";
+import { useQueryRuntime } from "@/components/runtime/query-client";
 import type { YearMonth } from "@/core/time";
+import { BalanceMonthView } from "./balance-view";
 import { CalendarMonthView, WeekView } from "./calendar-view";
 import { HistoryShell } from "./history-shell";
 import { HistoryOverlayHost } from "./overlay-host";
-import { StateBoundary } from "./renderers";
+import { DisplayState, StateBoundary, formatMoney } from "./renderers";
 import { historyV2Href, overlayTargetKey } from "./route-state";
 import { historyTransientDismissEvent, type HistoryCalendarFilterState, type HistoryOverlayTarget, type HistoryV2InitialState, type HistoryV2View } from "./types";
 import styles from "./history-v2.module.css";
@@ -27,6 +33,8 @@ export function HistoryV2Page({
   const router = useRouter();
   const weekStart = initialState.kind === "week" ? initialState.weekStart : undefined;
   const [stack, setStack] = useState<readonly HistoryOverlayTarget[]>(() => initialOverlay === undefined ? [] : [initialOverlay]);
+  const [minimalOpen, setMinimalOpen] = useState(false);
+  const minimalInvoker = useRef<HTMLElement | null>(null);
   const focusByTarget = useRef(new Map<string, HTMLElement>());
   const overlayScrollByTarget = useRef(new Map<string, number>());
   const referenceMonth = initialState.kind === "week" && initialState.state.status === "success"
@@ -92,17 +100,38 @@ export function HistoryV2Page({
     <div className={styles.page} data-history-v2="">
       <HistoryShell
         month={referenceMonth}
+        view={view}
         overview={initialState.overview}
         filters={filters}
         onFilters={(nextFilters) => navigate(referenceMonth, view, weekStart, stack.at(-1), true, nextFilters)}
         onOverlay={openOverlay}
-        onMonth={(nextMonth) => { window.dispatchEvent(new Event(historyTransientDismissEvent)); setStack([]); navigate(nextMonth, view); }}
+        onMonth={(nextMonth) => { window.dispatchEvent(new Event(historyTransientDismissEvent)); setStack([]); setMinimalOpen(false); navigate(nextMonth, view); }}
+        onView={(nextView) => { window.dispatchEvent(new Event(historyTransientDismissEvent)); setStack([]); setMinimalOpen(false); navigate(referenceMonth, nextView); }}
       />
       <div className={styles.viewTransition} key={`${view}-${weekStart ?? "month"}`}>
         {initialState.kind === "calendar" ? <StateBoundary state={initialState.state}>{(model) => <CalendarMonthView model={model} filters={filters} onOverlay={openOverlay} onWeek={(nextWeek) => navigate(month, "calendar", nextWeek)} />}</StateBoundary> : null}
         {initialState.kind === "week" ? <StateBoundary state={initialState.state}>{(model) => <WeekView model={model} filters={filters} onOverlay={openOverlay} onMonth={() => navigate(month, "calendar")} onWeek={(nextWeek, nextReferenceMonth) => navigate(nextReferenceMonth, "calendar", nextWeek)} />}</StateBoundary> : null}
+        {initialState.kind === "balance" ? <BalanceMonthView {...initialState} onOverlay={openOverlay} onMinimal={() => { window.dispatchEvent(new Event(historyTransientDismissEvent)); minimalInvoker.current = document.activeElement instanceof HTMLElement ? document.activeElement : null; setMinimalOpen(true); }} /> : null}
       </div>
       <HistoryOverlayHost month={month} stack={stack} onClose={closeOverlay} onBack={backOverlay} onPush={openOverlay} onReplace={(target) => { setStack((current) => [...current.slice(0, -1), target]); navigate(month, view, weekStart, target, true); }} />
+      <MinimalPreviewPopover month={month} open={minimalOpen} onClose={() => { setMinimalOpen(false); requestAnimationFrame(() => minimalInvoker.current?.focus()); }} />
     </div>
   );
+}
+
+function MinimalPreviewPopover({ month, open, onClose }: { readonly month: YearMonth; readonly open: boolean; readonly onClose: () => void }) {
+  const state = useQueryRuntime(open ? { resource: queryResourceKeys.historyMinimalPreview, scope: { subject: { kind: "household" as const }, time: { kind: "month" as const, month } }, params: {} } : null);
+  useEffect(() => {
+    if (!open) return;
+    const onKey = (event: KeyboardEvent) => { if (event.key === "Escape") { event.preventDefault(); onClose(); } };
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  }, [open, onClose]);
+  useEffect(() => {
+    const dismiss = () => { if (open) onClose(); };
+    window.addEventListener(historyTransientDismissEvent, dismiss);
+    return () => window.removeEventListener(historyTransientDismissEvent, dismiss);
+  }, [open, onClose]);
+  if (!open || typeof document === "undefined") return null;
+  return createPortal(<div className={styles.minimalBackdrop} onMouseDown={(event) => { if (event.target === event.currentTarget) onClose(); }}><section className={styles.minimalPopover} role="dialog" aria-modal="true" aria-label="Composition du minimum estimé"><header className={styles.popoverHeader}><h2>Composition du minimum estimé</h2><button type="button" className={styles.iconButton} aria-label="Fermer" onClick={onClose}><X aria-hidden size={20} /></button></header><StateBoundary state={state}>{(model: MinimalPreviewReadModel) => <div><DisplayState node={model.minimalValue}>{(metric) => <div className={styles.actualCard}><span>Minimum estimé</span><span className={styles.actualValue}>{metric.status === "KNOWN" || metric.status === "PARTIAL" ? formatMoney(metric.value) : "Indisponible"}</span></div>}</DisplayState><DisplayState node={model.preview}>{(preview) => <div className={styles.minimalFamilies}>{preview.families.map((family) => <article key={family.family}><strong>{family.family}</strong><span>{formatMoney(family.amount)}</span><p>{family.examples.slice(0, 3).map((item) => item.label).join(" · ")}</p></article>)}</div>}</DisplayState></div>}</StateBoundary></section></div>, document.body);
 }

@@ -59,11 +59,12 @@ export function parseHistoryOverlaySearch(search: RawSearch): HistoryOverlayTarg
 }
 
 export function parseHistoryCalendarFilters(search: RawSearch): HistoryCalendarFilterState {
-  return parseCalendarFilterSelection({
+  const selection = parseCalendarFilterSelection({
     ...(first(search.preset) === undefined ? {} : { preset: first(search.preset)! }),
     ...(first(search.show) === undefined ? {} : { show: first(search.show)! }),
     ...(first(search.amount) === undefined ? {} : { amount: first(search.amount)! }),
   });
+  return first(search.show) === undefined ? selection : { ...selection, customSelection: true };
 }
 
 export function overlayTargetFromQueryTarget(target: QueryTargetRef): HistoryOverlayTarget | undefined {
@@ -89,11 +90,12 @@ export function historyV2Href(input: {
   readonly filters?: HistoryCalendarFilterState;
 }): string {
   const query = new URLSearchParams();
+  if (input.view === "balance") query.set("view", "balance");
   if (input.weekStart !== undefined && input.view === "calendar") query.set("week", input.weekStart);
   if (input.filters !== undefined) {
     if (input.filters.preset !== "all") query.set("preset", input.filters.preset);
     const presetTags = calendarFilterPresetRegistry[input.filters.preset].tags;
-    if (input.filters.tags.join(",") !== presetTags.join(",")) query.set("show", input.filters.tags.join(","));
+    if (input.filters.customSelection === true || input.filters.tags.join(",") !== presetTags.join(",")) query.set("show", input.filters.tags.join(","));
     if (input.filters.amount !== calendarFilterPresetRegistry[input.filters.preset].amount) query.set("amount", input.filters.amount);
   }
   const target = input.overlay;

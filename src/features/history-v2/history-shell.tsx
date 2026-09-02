@@ -1,55 +1,45 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { ChevronLeft, ChevronRight, Filter, MapPin } from "lucide-react";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 import {
   calendarFilterPresetRegistry,
-  calendarFilterTags,
   type CalendarFilterPreset,
-  type CalendarFilterTag,
 } from "@/core/history-v2";
 import { addMonths, formatYearMonth, type YearMonth } from "@/core/time";
 import type { MonthHighlightReadModel, MonthNarrativeCard, MonthQuickOverviewReadModel } from "@/query-api";
 import type { UiTransportState } from "@/ui";
 import { DisplayState, MoneyMetric, StateBoundary } from "./renderers";
-import { formatFrenchDateRange } from "./presentation";
+import { compactNarrativeTitle, formatFrenchDateRange } from "./presentation";
 import { overlayTargetFromQueryTarget } from "./route-state";
-import { historyTransientDismissEvent, type HistoryCalendarFilterState, type HistoryOverlayTarget } from "./types";
+import { HistorySemanticIcon } from "./semantic-icon";
+import { historyTransientDismissEvent, type HistoryCalendarFilterState, type HistoryOverlayTarget, type HistoryV2View } from "./types";
 import styles from "./history-v2.module.css";
 
 const presetLabels: Readonly<Record<CalendarFilterPreset, string>> = {
   all: "Tout",
   daily: "Quotidien",
   highlights: "Temps forts",
-  "exclude-fixed": "Hors fixe",
+  "exclude-fixed": "Sans charges fixes",
   expenses: "Dépenses",
-};
-
-const tagLabels: Readonly<Record<CalendarFilterTag, string>> = {
-  EVENT_VISIT: "Événements / visites",
-  ACTIVITY_OUTING: "Activités / sorties",
-  GROCERY: "Courses",
-  DINING: "Repas",
-  TRANSPORT: "Transport",
-  WORK: "Travail",
-  HEALTH_CARE: "Santé",
-  FIXED_CHARGE: "Charges fixes",
-  SUBSCRIPTION: "Abonnements",
-  UNASSIGNED_TIMING: "Date exacte inconnue",
 };
 
 export function HistoryShell({
   month,
+  view,
   overview,
   filters,
   onMonth,
+  onView,
   onFilters,
   onOverlay,
 }: {
   readonly month: YearMonth;
+  readonly view: HistoryV2View;
   readonly overview: UiTransportState<MonthQuickOverviewReadModel>;
   readonly filters: HistoryCalendarFilterState;
   readonly onMonth: (month: YearMonth) => void;
+  readonly onView: (view: HistoryV2View) => void;
   readonly onFilters: (filters: HistoryCalendarFilterState) => void;
   readonly onOverlay: (target: HistoryOverlayTarget) => void;
 }) {
@@ -58,7 +48,10 @@ export function HistoryShell({
   const filterTriggerRef = useRef<HTMLButtonElement>(null);
   useEffect(() => {
     if (!filtersOpen) return undefined;
-    const dismiss = () => setFiltersOpen(false);
+    const dismiss = () => {
+      setFiltersOpen(false);
+      requestAnimationFrame(() => filterTriggerRef.current?.focus());
+    };
     const onPointerDown = (event: PointerEvent) => {
       if (!(event.target instanceof Node) || !filterRegionRef.current?.contains(event.target)) dismiss();
     };
@@ -77,20 +70,29 @@ export function HistoryShell({
       document.removeEventListener("keydown", onKeyDown);
     };
   }, [filtersOpen]);
-  const choosePreset = (preset: CalendarFilterPreset) => onFilters({
-    preset,
-    tags: calendarFilterPresetRegistry[preset].tags,
-    amount: calendarFilterPresetRegistry[preset].amount,
-  });
-  const toggleTag = (tag: CalendarFilterTag) => {
-    const selected = filters.tags.includes(tag)
-      ? filters.tags.filter((candidate) => candidate !== tag)
-      : [...filters.tags, tag];
-    const tags = calendarFilterTags.filter((candidate) => selected.includes(candidate));
-    onFilters({ ...filters, tags });
+  const choosePreset = (preset: CalendarFilterPreset) => {
+    onFilters({
+      preset,
+      tags: calendarFilterPresetRegistry[preset].tags,
+      amount: calendarFilterPresetRegistry[preset].amount,
+    });
+    setFiltersOpen(false);
+    requestAnimationFrame(() => filterTriggerRef.current?.focus());
   };
+  const configuredPreset = calendarFilterPresetRegistry[filters.preset];
+  const selectedPreset = filters.customSelection === true
+    || filters.amount !== configuredPreset.amount
+    || filters.tags.join(",") !== configuredPreset.tags.join(",")
+    ? undefined
+    : filters.preset;
+  const monthLabel = formatYearMonth(month);
+  const accessibleMonthLabel = `${monthLabel[0]!.toLocaleLowerCase("fr-FR")}${monthLabel.slice(1)}`;
   return (
     <header className={styles.shell} data-focus-restoration-fallback="">
+      <div className={styles.segmented} data-view={view} role="tablist" aria-label="Vue de l’historique">
+        <button type="button" role="tab" aria-selected={view === "calendar"} onClick={() => { if (view !== "calendar") onView("calendar"); }}>Calendrier</button>
+        <button type="button" role="tab" aria-selected={view === "balance"} onClick={() => { if (view !== "balance") onView("balance"); }}>Bilan</button>
+      </div>
       <StateBoundary state={overview} skeleton={<div className={styles.headerSkeleton} />}>
         {(model) => <div className={styles.shellFlows}>
           <HeaderFlow label="Débits" node={model.flows.bankOutflows} />
@@ -99,13 +101,12 @@ export function HistoryShell({
       </StateBoundary>
       <div ref={filterRegionRef} className={styles.monthNavigation}>
         <button type="button" className={styles.iconButton} aria-label="Mois précédent" onClick={() => onMonth(addMonths(month, -1))}><ChevronLeft aria-hidden size={20} /></button>
-        <strong className={styles.monthTitle}>{formatYearMonth(month)}</strong>
-        <button ref={filterTriggerRef} type="button" className={styles.filterButton} aria-expanded={filtersOpen} aria-haspopup="dialog" onClick={() => { if (!filtersOpen) window.dispatchEvent(new Event(historyTransientDismissEvent)); setFiltersOpen((open) => !open); }}><Filter aria-hidden size={16} /> Filtres</button>
+        {view === "calendar"
+          ? <button ref={filterTriggerRef} type="button" className={styles.monthFilterTrigger} aria-label={`Ouvrir les filtres de ${accessibleMonthLabel}`} aria-expanded={filtersOpen} aria-haspopup="dialog" onClick={() => { if (!filtersOpen) window.dispatchEvent(new Event(historyTransientDismissEvent)); setFiltersOpen((open) => !open); }}>{monthLabel}</button>
+          : <strong className={styles.monthTitle}>{monthLabel}</strong>}
         <button type="button" className={styles.iconButton} aria-label="Mois suivant" onClick={() => onMonth(addMonths(month, 1))}><ChevronRight aria-hidden size={20} /></button>
-        {filtersOpen ? <div className={styles.filterPanel} role="dialog" aria-label="Filtres du calendrier">
-          <div className={styles.filterPresets}>{(Object.keys(presetLabels) as CalendarFilterPreset[]).map((preset) => <button type="button" key={preset} aria-pressed={filters.preset === preset} onClick={() => choosePreset(preset)}>{presetLabels[preset]}</button>)}</div>
-          <fieldset><legend>Afficher</legend>{calendarFilterTags.map((tag) => <label key={tag}><input type="checkbox" checked={filters.tags.includes(tag)} onChange={() => toggleTag(tag)} />{tagLabels[tag]}</label>)}</fieldset>
-          <fieldset><legend>Montant journalier</legend><label><input type="radio" name="history-amount" checked={filters.amount === "ALL"} onChange={() => onFilters({ ...filters, amount: "ALL" })} />Toutes les dépenses</label><label><input type="radio" name="history-amount" checked={filters.amount === "EXCLUDE_FIXED"} onChange={() => onFilters({ ...filters, amount: "EXCLUDE_FIXED" })} />Hors fixe</label></fieldset>
+        {view === "calendar" && filtersOpen ? <div className={styles.filterPanel} role="dialog" aria-label={`Filtres de ${accessibleMonthLabel}`}>
+          <div className={styles.filterPresets}>{(Object.keys(presetLabels) as CalendarFilterPreset[]).map((preset) => <button type="button" key={preset} aria-pressed={selectedPreset === preset} onClick={() => choosePreset(preset)}>{presetLabels[preset]}</button>)}</div>
         </div> : null}
       </div>
       <StateBoundary state={overview} skeleton={<div className={styles.headerSkeleton} />}>
@@ -141,15 +142,23 @@ function NarrativeCarousel({ model, onOverlay }: { readonly model: MonthQuickOve
   const safeIndex = index % published.length;
   const card = published[safeIndex]!;
   const target = "targetRef" in card ? overlayTargetFromQueryTarget(card.targetRef) : undefined;
-  return <section className={styles.headerNarrative} aria-roledescription="carrousel" aria-label="Temps forts et lieux du mois" onMouseEnter={() => setPaused(true)} onMouseLeave={() => setPaused(false)} onFocus={() => setPaused(true)} onBlur={() => setPaused(false)}>
-    <button type="button" className={styles.iconButton} aria-label="Carte précédente" disabled={published.length < 2} onClick={() => setIndex((safeIndex - 1 + published.length) % published.length)}><ChevronLeft aria-hidden size={18} /></button>
+  return <section className={styles.headerNarrative} aria-roledescription="carrousel" aria-label="Temps forts et lieux du mois" onMouseEnter={() => setPaused(true)} onMouseLeave={() => setPaused(false)} onFocus={() => setPaused(true)} onBlur={(event) => { if (!(event.relatedTarget instanceof Node) || !event.currentTarget.contains(event.relatedTarget)) setPaused(false); }}>
+    <button type="button" className={`${styles.iconButton} ${styles.carouselControl}`} aria-label="Carte précédente" disabled={published.length < 2} onClick={() => setIndex((safeIndex - 1 + published.length) % published.length)}><ChevronLeft aria-hidden size={18} /></button>
     <button type="button" className={styles.narrativeCard} disabled={target === undefined} onClick={() => { if (target !== undefined) onOverlay(target); }}>
-      {card.kind === "PLACE" ? <MapPin aria-hidden size={17} /> : null}
-      <span><strong>{card.title}</strong><small>{narrativeSubtitle(card)}</small></span>
-      <DisplayState node={card.kind === "EVENT" ? card.causalCost : card.localizedAmount}>{(metric) => <MoneyMetric metric={metric} partialDisplay="value-only" />}</DisplayState>
+      <span className={styles.narrativeVisual}><HistorySemanticIcon iconKey={card.iconKey} /></span>
+      <span className={styles.narrativeCopy}><strong>{card.kind === "EVENT" ? compactNarrativeTitle(card.title, card.startDate, card.endDate) : card.title}</strong><small>{narrativeSubtitle(card)}</small></span>
+      <NarrativeAmount card={card} />
     </button>
-    <button type="button" className={styles.iconButton} aria-label="Carte suivante" disabled={published.length < 2} onClick={() => setIndex((safeIndex + 1) % published.length)}><ChevronRight aria-hidden size={18} /></button>
+    <button type="button" className={`${styles.iconButton} ${styles.carouselControl}`} aria-label="Carte suivante" disabled={published.length < 2} onClick={() => setIndex((safeIndex + 1) % published.length)}><ChevronRight aria-hidden size={18} /></button>
   </section>;
+}
+
+function NarrativeAmount({ card }: { readonly card: MonthNarrativeCard | (MonthHighlightReadModel & { readonly kind: "EVENT" }) }) {
+  const node = card.kind === "EVENT" ? card.causalCost : card.localizedAmount;
+  if (node.visibility !== "VISIBLE") return null;
+  const metric = node.data;
+  if (metric.status !== "KNOWN" && metric.status !== "PARTIAL") return null;
+  return <span className={styles.narrativeAmount}><MoneyMetric metric={metric} partialDisplay="value-only" /></span>;
 }
 
 function narrativeSubtitle(card: MonthNarrativeCard | (MonthHighlightReadModel & { readonly kind: "EVENT" })): string {
