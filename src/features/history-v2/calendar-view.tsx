@@ -21,6 +21,7 @@ import type { Money } from "@/core/money";
 import { CollectionState, DisplayState, MetricState, MoneyMetric, PartialDataNote } from "./renderers";
 import { expenseDisplayTitle, formatCalendarDay, formatFrenchDate, formatFrenchDateRange } from "./presentation";
 import { HistorySemanticIcon } from "./semantic-icon";
+import { projectFilteredMarkers } from "./marker-projection";
 import { overlayTargetFromQueryTarget } from "./route-state";
 import { historyTransientDismissEvent, type HistoryCalendarFilterState, type HistoryOverlayTarget } from "./types";
 import styles from "./history-v2.module.css";
@@ -162,7 +163,7 @@ function CalendarDayCell({ day, filters, onOpen, onOverlay }: { readonly day: Mo
         <span className={styles.dayHeading}><strong>{formatCalendarDay(day.date, !day.inSelectedMonth)}</strong><DisplayState node={amountNode(day, filters)}>{(metric) => <MoneyMetric metric={metric} partialDisplay="value-only" />}</DisplayState></span>
       </button>
       <ContextRow contexts={day.personContexts} />
-      <FilteredMarkerList day={day} limit={3} filters={filters} onOverlay={onOverlay} />
+      <FilteredMarkerList day={day} limit={6} filters={filters} onOverlay={onOverlay} />
       <DisplayState node={day.hover}>{(hover) => <DayHoverPopover anchor={buttonRef.current} open={hoverOpen} hover={hover} filters={filters} onEnter={() => window.clearTimeout(exitTimer.current)} onLeave={pointerLeave} onOpenJournal={onOpen} />}</DisplayState>
     </article>
   );
@@ -173,20 +174,9 @@ function ContextRow({ contexts }: { readonly contexts: MonthCalendarDayReadModel
   return visible.length === 0 ? null : <div className={styles.contextRow} aria-label="Contextes personnels">{visible.map((context) => <span key={`${context.personId}-${context.contextTypeKey}`} title={context.label}>{context.displayInitial}</span>)}</div>;
 }
 
-function FilteredMarkerList({ day, limit, filters, onOverlay }: { readonly day: MonthCalendarDayReadModel | WeekDayReadModel; readonly limit: 3 | 6; readonly filters: HistoryCalendarFilterState; readonly onOverlay: (target: HistoryOverlayTarget) => void }) {
-  const source = day.orderedMarkerGroups;
-  const ordered = source.status === "KNOWN" || source.status === "PARTIAL" ? source.items : [];
-  const allTagsSelected = filters.tags.length === calendarFilterTags.length && calendarFilterTags.every((tag) => filters.tags.includes(tag));
-  const filtered = ordered.filter((item) => {
-    if (!("filterTags" in item) || !Array.isArray(item.filterTags)) return allTagsSelected;
-    return item.filterTags.some((tag) => filters.tags.includes(tag));
-  });
-  const hidden: MetricValue<number> = source.status === "KNOWN"
-    ? { status: "KNOWN", value: Math.max(0, filtered.length - limit) }
-    : source.status === "PARTIAL"
-      ? { status: "PARTIAL", value: Math.max(0, filtered.length - limit), partialMeaning: "OBSERVED_ONLY", ...(source.quality === undefined ? {} : { quality: source.quality }) }
-      : { status: "UNKNOWN", ...(source.quality === undefined ? { quality: { reasonCode: "DATA_NO_SOURCE" } } : { quality: source.quality }) };
-  return <MarkerList items={filtered.slice(0, limit)} hidden={hidden} onOverlay={onOverlay} />;
+function FilteredMarkerList({ day, limit, filters, onOverlay }: { readonly day: MonthCalendarDayReadModel | WeekDayReadModel; readonly limit: 6; readonly filters: HistoryCalendarFilterState; readonly onOverlay: (target: HistoryOverlayTarget) => void }) {
+  const projection = projectFilteredMarkers(day.orderedMarkerGroups, filters, limit);
+  return <MarkerList items={projection.items} hidden={projection.hidden} onOverlay={onOverlay} />;
 }
 
 function MarkerList({ items, hidden, onOverlay }: { readonly items: readonly CalendarItemSummary[]; readonly hidden: MetricValue<number>; readonly onOverlay: (target: HistoryOverlayTarget) => void }) {

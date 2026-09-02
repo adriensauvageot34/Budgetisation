@@ -19,6 +19,7 @@ import {
 } from "@/query-api";
 import type { AuthorizedRuntimeContext } from "@/server/canonical/context";
 import { safeRuntimeEnvironment } from "@/server/runtime-environment";
+import { QueryTemporaryUnavailableError } from "@/query-api/server/errors";
 import {
   isQueryMaterializationResource,
   materializationPeriod,
@@ -62,6 +63,7 @@ function safeMaterializationLog(
   event: string,
   input: {
     readonly resource?: string;
+    readonly compatibleCount?: number;
     readonly scopeKind: "month" | "global";
     readonly durationMs: number;
     readonly sourceRevision: DataRevision;
@@ -70,6 +72,7 @@ function safeMaterializationLog(
   const build = safeRuntimeEnvironment();
   console.info(event, {
     ...(input.resource === undefined ? {} : { resource: input.resource }),
+    ...(input.compatibleCount === undefined ? {} : { compatibleCount: input.compatibleCount }),
     scopeKind: input.scopeKind,
     durationMs: input.durationMs,
     sourceRevision: input.sourceRevision,
@@ -611,6 +614,18 @@ export class SupabaseAnalyticsMaterializationStore {
       return null;
     }
     const rows = data ?? [];
+    if (rows.length > 1) {
+      safeMaterializationLog("analytics_query_snapshot_ambiguous", {
+        resource: identity.resource,
+        compatibleCount: rows.length,
+        scopeKind: identity.period.kind,
+        durationMs: Date.now() - startedAt,
+        sourceRevision: identity.period.sourceRevision,
+      });
+      throw new QueryTemporaryUnavailableError(
+        "Plusieurs snapshots Analytics actifs sont compatibles avec la même Query logique.",
+      );
+    }
     const row = rows.length === 1 ? rows[0] : undefined;
     const matchedIdentity = row === undefined
       ? undefined

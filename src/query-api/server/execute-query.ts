@@ -188,7 +188,8 @@ export async function executeQuery(
     if (services.materialization !== undefined) {
       try {
         materialized = await services.materialization.readQuery(request);
-      } catch {
+      } catch (error) {
+        if (error instanceof QueryTemporaryUnavailableError) throw error;
         materialized = null;
       }
       materialization = materialized === null ? "miss" : "hit";

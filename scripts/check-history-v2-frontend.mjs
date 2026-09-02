@@ -12,6 +12,7 @@ const featureFiles = [
   "src/features/history-v2/history-v2-page.tsx",
   "src/features/history-v2/history-shell.tsx",
   "src/features/history-v2/calendar-view.tsx",
+  "src/features/history-v2/marker-projection.ts",
   "src/features/history-v2/semantic-icon.tsx",
   "src/features/history-v2/presentation.ts",
   "src/features/history-v2/balance-view.tsx",
@@ -46,6 +47,67 @@ const {
   formatLifeMarkerCount,
   spendingPresentationLabel,
 } = presentationModule.exports;
+
+const markerProjectionModule = { exports: {} };
+const markerProjectionJavaScript = ts.transpileModule(
+  read("src/features/history-v2/marker-projection.ts"),
+  { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 } },
+).outputText;
+new Function("module", "exports", "require", markerProjectionJavaScript)(
+  markerProjectionModule,
+  markerProjectionModule.exports,
+  (request) => {
+    if (request === "@/core/history-v2") {
+      return {
+        calendarFilterTags: [
+          "EVENT_VISIT", "ACTIVITY_OUTING", "GROCERY", "DINING", "TRANSPORT",
+          "WORK", "HEALTH_CARE", "FIXED_CHARGE", "SUBSCRIPTION", "UNASSIGNED_TIMING",
+        ],
+      };
+    }
+    throw new Error(`Import inattendu dans marker-projection: ${request}`);
+  },
+);
+const { projectFilteredMarkers } = markerProjectionModule.exports;
+
+const marker = (index, filterTag = "GROCERY") => ({
+  calendarItemId: `marker-${index}`,
+  title: `Marker ${index}`,
+  filterTags: [filterTag],
+});
+const allFilters = {
+  preset: "all",
+  tags: [
+    "EVENT_VISIT", "ACTIVITY_OUTING", "GROCERY", "DINING", "TRANSPORT",
+    "WORK", "HEALTH_CARE", "FIXED_CHARGE", "SUBSCRIPTION", "UNASSIGNED_TIMING",
+  ],
+  amount: "ALL",
+};
+for (const [inputCount, visibleCount, hiddenCount] of [
+  [0, 0, 0],
+  [1, 1, 0],
+  [3, 3, 0],
+  [6, 6, 0],
+  [7, 6, 1],
+  [10, 6, 4],
+]) {
+  const result = projectFilteredMarkers({
+    status: "KNOWN",
+    items: Array.from({ length: inputCount }, (_, index) => marker(index)),
+    totalCount: inputCount,
+  }, allFilters, 6);
+  assert.equal(result.items.length, visibleCount, `${inputCount} Markers: préfixe visible incorrect.`);
+  assert.equal(result.hidden.status, "KNOWN");
+  assert.equal(result.hidden.value, hiddenCount, `${inputCount} Markers: overflow incorrect.`);
+}
+const filteredTen = projectFilteredMarkers({
+  status: "KNOWN",
+  items: Array.from({ length: 10 }, (_, index) => marker(index, index < 2 ? "GROCERY" : "WORK")),
+  totalCount: 10,
+}, { ...allFilters, tags: ["GROCERY"] }, 6);
+assert.equal(filteredTen.items.length, 2, "Le filtre doit réduire dix Markers à deux avant le préfixe.");
+assert.deepEqual(filteredTen.items.map(({ calendarItemId }) => calendarItemId), ["marker-0", "marker-1"]);
+assert.equal(filteredTen.hidden.value, 0, "L'overflow doit être calculé après filtrage.");
 
 assert.equal(formatCalendarDay("2026-07-03", false), "3");
 assert.equal(formatCalendarDay("2026-06-30", true), "30 juin");
@@ -170,13 +232,19 @@ assert.match(css, /overlayPlace[^}]+600px/s);
 assert.match(css, /prefers-reduced-motion: reduce/);
 assert.doesNotMatch(calendar, /items=\{day\.visibleMarkers\}/, "Le filtre ne doit jamais partir du préfixe visibleMarkers déjà tronqué.");
 assert.match(calendar, /day\.orderedMarkerGroups/);
-assert.match(calendar, /ordered\.filter/);
-assert.match(calendar, /filtered\.slice\(0, limit\)/, "React filtre l'ordre publié puis prend le préfixe Month/Week.");
+assert.match(calendar, /projectFilteredMarkers\(day\.orderedMarkerGroups, filters, limit\)/, "Month/Week doivent utiliser la projection filtrée déterministe.");
+assert.match(sources["src/features/history-v2/marker-projection.ts"], /ordered\.filter/);
+assert.match(sources["src/features/history-v2/marker-projection.ts"], /filtered\.slice\(0, limit\)/, "La projection filtre l'ordre publié puis prend le préfixe Month/Week.");
+assert.equal((calendar.match(/<FilteredMarkerList day=\{day\} limit=\{6\}/g) ?? []).length, 2, "Month et Week doivent afficher jusqu'à six Markers.");
 assert.doesNotMatch(calendar, /\.sort\(/, "React ne doit pas re-trier les Markers.");
-assert.match(calendar, /hidden\.status === "PARTIAL"[\s\S]+observés/, "Un overflow PARTIAL doit rester explicitement observé, jamais présenté comme total exact.");
+assert.match(all, /hidden\.status === "PARTIAL"[\s\S]+observés/, "Un overflow PARTIAL doit rester explicitement observé, jamais présenté comme total exact.");
 assert.match(calendar, /HistorySemanticIcon/, "Les iconKey Calendar doivent être projetées en icônes UI.");
 assert.doesNotMatch(calendar, />\s*\{(?:item|segment)\.iconKey\}\s*</, "Aucun iconKey ne doit être rendu comme texte visible.");
 assert.match(css, /-webkit-line-clamp: 2/, "Les titres Marker doivent être limités à deux lignes.");
+const dayCellRule = css.match(/\.dayCell, \.weekDay \{([^}]+)\}/s)?.[1] ?? "";
+assert.match(dayCellRule, /min-height:\s*112px/, "Les cellules doivent conserver une hauteur minimale.");
+assert.doesNotMatch(dayCellRule, /(?:^|;)\s*(?:height|max-height|overflow)\s*:/, "La cellule ne doit pas empêcher sa croissance verticale.");
+assert.doesNotMatch(css, /\.calendarGridRow[^}]*grid-auto-rows\s*:/s, "Une ligne Calendar ne doit pas imposer de hauteur fixe.");
 assert.match(calendar, /overflow\.items\.map/, "Le menu Ribbon doit rendre directement la collection serveur.");
 assert.match(calendar, /onTarget\(item\.targetRef\)/, "La navigation Ribbon doit consommer la cible serveur exacte.");
 assert.match(calendar, /onTarget\(segment\.targetRef\)/, "Les Ribbons visibles doivent eux aussi consommer targetRef.");
@@ -269,7 +337,7 @@ const calendarCentricRequirements = [
   ["five presets", filterContract, /all:[\s\S]+daily:[\s\S]+highlights:[\s\S]+"exclude-fixed":[\s\S]+expenses:/],
   ["ten authoritative tags", filterContract, /UNASSIGNED_TIMING/],
   ["URL filters", routeState, /preset[\s\S]+show[\s\S]+amount/],
-  ["filter then prefix", calendar, /ordered\.filter[\s\S]+filtered\.slice\(0, limit\)/],
+  ["filter then prefix", sources["src/features/history-v2/marker-projection.ts"], /ordered\.filter[\s\S]+filtered\.slice\(0, limit\)/],
   ["generic overlay", routeState, /historyDayJournal[\s\S]+historyMomentDetail[\s\S]+historyActivityDetail[\s\S]+historyPlaceDetail/],
   ["one physical overlay", page, /<HistoryOverlayHost\b/],
   ["month unassigned timing", calendar, /unassignedTiming/],

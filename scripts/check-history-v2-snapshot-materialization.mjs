@@ -514,6 +514,45 @@ const checkAsync = async (callback) => {
   checks += 1;
 };
 
+const activeGenerationMigration = fs.readFileSync(path.join(
+  repositoryRoot,
+  "supabase/migrations/20260902105811_enforce_single_active_analytics_generation.sql",
+), "utf8");
+const rollbackMigration = fs.readFileSync(path.join(
+  repositoryRoot,
+  "supabase/migrations/20260831150000_history_v2_publication_rollback.sql",
+), "utf8");
+check(() => {
+  for (const queryIdentityColumn of [
+    "fresh.household_id = old.household_id",
+    "fresh.resource = old.resource",
+    "fresh.scope_hash = old.scope_hash",
+    "fresh.normalized_param_signature = old.normalized_param_signature",
+    "fresh.subject_kind = old.subject_kind",
+    "fresh.subject_id is not distinct from old.subject_id",
+    "fresh.period_kind = old.period_kind",
+    "fresh.period_month is not distinct from old.period_month",
+    "fresh.as_of_month is not distinct from old.as_of_month",
+    "fresh.contract_version = old.contract_version",
+  ]) assert.match(activeGenerationMigration, new RegExp(queryIdentityColumn.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "u"));
+  for (const artifactIdentityColumn of [
+    "fresh.artifact_family = old.artifact_family",
+    "fresh.metric_id is not distinct from old.metric_id",
+    "fresh.dimension_key is not distinct from old.dimension_key",
+    "fresh.bucket_key is not distinct from old.bucket_key",
+    "fresh.filter_signature = old.filter_signature",
+  ]) assert.match(activeGenerationMigration, new RegExp(artifactIdentityColumn.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "u"));
+  assert.doesNotMatch(activeGenerationMigration, /delete\s+from|set\s+payload\s*=|set\s+invalidated_at\s*=/iu);
+  assert.match(activeGenerationMigration, /security definer[\s\S]+set search_path = ''/u);
+  assert.match(activeGenerationMigration, /revoke all[\s\S]+from public, anon, authenticated/iu);
+  assert.match(activeGenerationMigration, /grant execute[\s\S]+to service_role/iu);
+});
+check(() => {
+  assert.doesNotMatch(activeGenerationMigration, /restore_history_v2_publication/u);
+  assert.match(rollbackMigration, /set is_active = false[\s\S]+set is_active = true/iu);
+  assert.match(rollbackMigration, /where aqs\.publication_id = p_target_publication_id[\s\S]+aqs\.query_key = any\(v_target\.required_query_keys\)/u);
+});
+
 const monthScope = {
   subject: { kind: "household" },
   time: { kind: "month", month: selectedMonth },
@@ -735,13 +774,25 @@ await checkAsync(async () => {
   const unknown = { ...transitionRow(currentTransitionIdentity), query_key: "f".repeat(64), method_signature: "e".repeat(64) };
   assert.equal(await new SupabaseAnalyticsMaterializationStore(transitionFakeClient([unknown]).client, transitionContext).readQuery(transitionRequest), null);
 });
-await checkAsync(async () => assert.equal(
-  await new SupabaseAnalyticsMaterializationStore(
-    transitionFakeClient([transitionRow(currentTransitionIdentity), transitionRow(legacyTransitionIdentity)]).client,
-    transitionContext,
-  ).readQuery(transitionRequest),
-  null,
-));
+await checkAsync(async () => {
+  const messages = [];
+  const originalInfo = console.info;
+  console.info = (...input) => messages.push(input);
+  try {
+    await assert.rejects(
+      new SupabaseAnalyticsMaterializationStore(
+        transitionFakeClient([transitionRow(currentTransitionIdentity), transitionRow(legacyTransitionIdentity)]).client,
+        transitionContext,
+      ).readQuery(transitionRequest),
+      { name: "QueryTemporaryUnavailableError" },
+    );
+  } finally {
+    console.info = originalInfo;
+  }
+  assert.equal(messages[0]?.[0], "analytics_query_snapshot_ambiguous");
+  assert.equal(messages[0]?.[1]?.resource, transitionRequest.resource);
+  assert.equal(messages[0]?.[1]?.compatibleCount, 2);
+});
 
 let historyV2ReadThroughCalls = 0;
 const transitionBoundaryRequest = {
@@ -782,6 +833,19 @@ await checkAsync(async () => {
   );
   assert.equal(result.ok, false);
   assert.equal(result.error.code, "CONTRACT_MISMATCH");
+  assert.equal(historyV2ReadThroughCalls, 0);
+});
+await checkAsync(async () => {
+  const ambiguousStore = new SupabaseAnalyticsMaterializationStore(
+    transitionFakeClient([transitionRow(currentTransitionIdentity), transitionRow(legacyTransitionIdentity)]).client,
+    transitionContext,
+  );
+  const result = await executeQuery(
+    { requestId: "history-v2-ambiguous-snapshots", request: transitionBoundaryRequest },
+    transitionServices((request) => ambiguousStore.readQuery(request)),
+  );
+  assert.equal(result.ok, false);
+  assert.equal(result.error.code, "TEMPORARY_UNAVAILABLE");
   assert.equal(historyV2ReadThroughCalls, 0);
 });
 await checkAsync(async () => {
