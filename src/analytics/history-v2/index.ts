@@ -19,6 +19,14 @@ export {
   type ArtifactInputHash,
 } from "./facts-hash";
 export {
+  resolveHistoryV2BalanceAnalyticsAuthority,
+  type HistoryV2BalanceAnalyticsAuthority,
+  type HistoryV2MetricSourceResolver,
+  type OfficialCategoryTypicalAuthority,
+  type OfficialMinimalMonthAuthority,
+  type OfficialTypicalMonthAuthority,
+} from "./balance-authority";
+export {
   qualityVisibilityPolicyVersion,
   resolveHistoryV2DisplayNode,
   type VisibilityEligibility,
@@ -30,3 +38,4 @@ export * from "./calendar-economic";
 export * as dailyEconomicFinanceEngine from "./daily-finance";
 export * as monthBalanceEngine from "./month-balance";
 export * from "./month-balance";
+export * from "./shared-doctrines";

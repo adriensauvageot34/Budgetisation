@@ -43,12 +43,12 @@ export const historyV2PolicyRegistry = Object.freeze({
   calendar_semantics: v3,
   calendar_amount_views: v1,
   daily_economic_allocation: v1,
-  week_journal_projection: v1,
-  month_overview_selection: v2,
+  week_journal_projection: v2,
+  month_overview_selection: v3,
   month_balance_summary: v1,
   category_explanation: v1,
-  spending_nature: v2,
-  life_money_selection: v2,
+  spending_nature: v3,
+  life_money_selection: v3,
   facts_hash: v1,
 } satisfies Record<HistoryV2PolicyId, PolicyVersion>);
 

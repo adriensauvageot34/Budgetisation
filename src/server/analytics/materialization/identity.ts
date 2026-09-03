@@ -251,6 +251,10 @@ export function historyV2AcceptedMethodSignatures(
         ? parsePolicyVersion("v2")
         : policyId === "month_overview_selection"
           ? parsePolicyVersion("v1")
+          : policyId === "week_journal_projection"
+            ? parsePolicyVersion("v1")
+            : policyId === "spending_nature" || policyId === "life_money_selection"
+              ? parsePolicyVersion("v2")
           : resolvePolicyVersions([policyId])[policyId],
     ]),
   )) as PolicyVersions;

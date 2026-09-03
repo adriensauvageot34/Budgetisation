@@ -767,6 +767,26 @@ export class CanonicalRepository {
       this.projectEconomicComponentRows(await this.loadEconomicComponentRowsByKeys(keys)));
   }
 
+  /** Causal Moment costs are not bounded by the Moment's calendar month. */
+  async loadEconomicFactsByMomentIds(
+    momentIds: readonly string[],
+  ): Promise<readonly EconomicComponentFact[]> {
+    const ids = unique(momentIds);
+    if (ids.length === 0) return [];
+    await this.assertAuthorizedCanonicalHouseholdScope();
+    return this.cached(`facts:economic:moments:${ids.join(",")}`, async () => {
+      const rows = await this.readRowsByInBatches(
+        `economic:moments:${ids.join(",")}`, "economic", ids,
+        ["canonical_component_key"], ["canonical_component_key"],
+        (batch) => this.client.from("financial_economic_cost_canonical")
+          .select("operation_id,cash_use_id,source_layer,component_id,canonical_economic_gross::text,refund_applied::text,canonical_economic_net::text,category_id,subcategory_id,moment_id,canonical_economic_amount::text,canonical_component_key,source_kind")
+          .in("moment_id", batch)
+          .order("canonical_component_key", { ascending: true }),
+      );
+      return this.projectEconomicComponentRows(rows);
+    });
+  }
+
   async loadEconomicFacts(
     range: CanonicalDateRange,
   ): Promise<readonly EconomicComponentFact[]> {

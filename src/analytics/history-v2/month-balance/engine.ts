@@ -372,16 +372,22 @@ function spendingAxis(
   actual: Money,
   components: readonly SpendingComponentInput[],
   selector: (component: SpendingComponentInput) => string | undefined,
+  axes: readonly ("necessity" | "behavior" | "lifeScope")[],
 ): SpendingAxis {
   const grouped = new Map<string, Money>();
   let classifiedAmount = ZERO;
   let unclassifiedAmount = ZERO;
   let classifiedAbs = new Big(0);
   let totalAbs = new Big(0);
+  let missingCount = 0;
+  let conflict = false;
   for (const component of components) {
     totalAbs = totalAbs.plus(new Big(component.amount).abs());
-    const key = selector(component);
+    const states = axes.map((axis) => component.classificationStates?.[axis] ?? (component[axis] === undefined ? "UNKNOWN" : "KNOWN"));
+    conflict ||= states.includes("CONFLICT");
+    const key = states.every((state) => state === "KNOWN") ? selector(component) : undefined;
     if (key === undefined) {
+      missingCount += 1;
       unclassifiedAmount = addMoney(unclassifiedAmount, component.amount);
       continue;
     }
@@ -391,10 +397,16 @@ function spendingAxis(
   }
   const coverageRatio = totalAbs.eq(0) ? undefined : Number(classifiedAbs.div(totalAbs).toString());
   const buckets: SpendingBucket[] = [...grouped].sort(([a], [b]) => a.localeCompare(b)).map(([key, amount]) => ({ key, amount, ...(new Big(actual).eq(0) ? {} : { shareOfActual: Number(new Big(amount).div(actual).toString()) }) }));
-  const complete = compareMoney(unclassifiedAmount, ZERO) === 0;
+  if (compareMoney(addMoney(classifiedAmount, unclassifiedAmount), actual) !== 0) throw new TypeError("Les axes M3 doivent se réconcilier avec Actual.");
+  const complete = missingCount === 0;
+  const notApplicable = components.length === 0 || components.every((component) => axes.some((axis) => component.classificationStates?.[axis] === "NOT_APPLICABLE"));
   const gapThreshold = money(maxBig(new Big("25"), new Big(actual).abs().times("0.02")));
   return {
-    result: complete ? { status: "KNOWN", value: buckets } : { status: "PARTIAL", value: buckets, partialMeaning: "OBSERVED_ONLY", quality: { reasonCode: "COVERAGE_PARTIAL", ...(coverageRatio === undefined ? {} : { coverage: { ratio: coverageRatio, basis: "classified_absolute_amount" } }) } },
+    result: conflict ? { status: "CONFLICT", quality: { reasonCode: "DATA_CONFLICTING_AUTHORITIES" } }
+      : notApplicable ? { status: "NOT_APPLICABLE", quality: { reasonCode: "POLICY_NOT_APPLICABLE" } }
+        : complete ? { status: "KNOWN", value: buckets }
+          : grouped.size === 0 ? { status: "UNKNOWN", quality: { reasonCode: "DATA_UNCLASSIFIED_COMPONENT" } }
+            : { status: "PARTIAL", value: buckets, partialMeaning: "OBSERVED_ONLY", quality: { reasonCode: "COVERAGE_PARTIAL", ...(coverageRatio === undefined ? {} : { coverage: { ratio: coverageRatio, basis: "classified_absolute_amount" } }) } },
     classifiedAmount,
     unclassifiedAmount,
     ...(coverageRatio === undefined ? {} : { coverageRatio }),
@@ -406,17 +418,19 @@ export function buildSpendingAxes(input: {
   readonly actual: Money;
   readonly components: readonly SpendingComponentInput[];
 }): { readonly necessity: SpendingAxis; readonly behavior: SpendingAxis; readonly lifeScope: SpendingAxis; readonly matrix: SpendingNatureMatrix } {
-  const necessity = spendingAxis(input.actual, input.components, ({ necessity: key }) => key);
-  const behavior = spendingAxis(input.actual, input.components, ({ behavior: key }) => key);
-  const lifeScope = spendingAxis(input.actual, input.components, ({ lifeScope: key }) => key);
-  const matrixAxis = spendingAxis(input.actual, input.components, (component) => component.necessity === undefined || component.behavior === undefined ? undefined : `${component.necessity}__${component.behavior}`);
+  if (new Set(input.components.map(({ componentKey }) => componentKey)).size !== input.components.length) throw new TypeError("Les axes M3 refusent une composante dupliquée.");
+  const necessity = spendingAxis(input.actual, input.components, ({ necessity: key }) => key, ["necessity"]);
+  const behavior = spendingAxis(input.actual, input.components, ({ behavior: key }) => key, ["behavior"]);
+  const lifeScope = spendingAxis(input.actual, input.components, ({ lifeScope: key }) => key, ["lifeScope"]);
+  const matrixAxis = spendingAxis(input.actual, input.components, (component) => component.necessity === undefined || component.behavior === undefined ? undefined : `${component.necessity}__${component.behavior}`, ["necessity", "behavior"]);
   const cells = matrixAxis.result.status === "KNOWN" || matrixAxis.result.status === "PARTIAL" ? matrixAxis.result.value : [];
   const immediate = cells.find(({ key }) => key === "OPTIONAL__VARIABLE")?.amount ?? ZERO;
   const medium = cells.find(({ key }) => key === "OPTIONAL__FIXED")?.amount ?? ZERO;
   const allNonNegative = input.components.every(({ nonNegative }) => nonNegative);
   const margin = (value: Money): MetricValue<Money> => matrixAxis.result.status === "KNOWN"
     ? { status: "KNOWN", value }
-    : { status: "PARTIAL", value, partialMeaning: allNonNegative ? "LOWER_BOUND" : "OBSERVED_ONLY", quality: { reasonCode: "COVERAGE_PARTIAL" } };
+    : matrixAxis.result.status === "PARTIAL" ? { status: "PARTIAL", value, partialMeaning: allNonNegative ? "LOWER_BOUND" : "OBSERVED_ONLY", quality: { reasonCode: "COVERAGE_PARTIAL" } }
+      : matrixAxis.result;
   return { necessity, behavior, lifeScope, matrix: { cells, classifiedAmount: matrixAxis.classifiedAmount, unclassifiedAmount: matrixAxis.unclassifiedAmount, ...(matrixAxis.coverageRatio === undefined ? {} : { coverageRatio: matrixAxis.coverageRatio }), immediateMargin: margin(immediate), mediumMargin: margin(medium) } };
 }
 
@@ -501,9 +515,14 @@ export function rankActivities(inputs: readonly ActivityInterestInput[]): readon
 }
 
 export function resolveActivityCost(input: {
-  readonly causalExpenses: readonly { readonly expenseEventId: string; readonly amount: Money }[];
-  readonly associatedExpenses: readonly { readonly expenseEventId: string; readonly amount: Money }[];
+  readonly causalExpenses: readonly { readonly expenseEventId: string; readonly amount: Money; readonly authority: "CANONICAL_CAUSAL_LINK"; readonly evidenceRefs: readonly string[] }[];
+  readonly associatedExpenses: readonly { readonly expenseEventId: string; readonly amount: Money; readonly authority: "CANONICAL_ASSOCIATION"; readonly evidenceRefs: readonly string[] }[];
 }): ActivityCostResolution {
+  for (const [expenses, authority] of [[input.causalExpenses, "CANONICAL_CAUSAL_LINK"], [input.associatedExpenses, "CANONICAL_ASSOCIATION"]] as const) {
+    if (expenses.some((expense) => expense.authority !== authority || !Array.isArray(expense.evidenceRefs) || expense.evidenceRefs.length === 0 || expense.evidenceRefs.some((ref) => !ref.trim()))) {
+      throw new TypeError("Activity exige une autorité explicite et des preuves pour chaque relation financière.");
+    }
+  }
   const unique = (values: readonly { readonly expenseEventId: string; readonly amount: Money }[]) => {
     const byId = new Map<string, Money>();
     for (const value of values) {
@@ -539,20 +558,23 @@ export function selectMomentMedia(input: {
 
 export function computePlaceSignificanceScore(input: PlaceSignificanceInput): PlaceSignificanceScore {
   const narrativePoints = input.bestHighlightRank === undefined
-    ? input.momentCount === 0 ? 0 : input.momentCount === 1 ? 18 : input.momentCount === 2 ? 21 : 24
+    ? input.momentCount === undefined || input.momentCount === 0 ? 0 : input.momentCount === 1 ? 18 : input.momentCount === 2 ? 21 : 24
     : ({ 1: 40, 2: 36, 3: 32, 4: 28, 5: 24 } as const)[input.bestHighlightRank];
   const presencePoints = input.presenceDays === 0 ? 0 : input.presenceDays === 1 ? 5 : input.presenceDays === 2 ? 9 : input.presenceDays <= 4 ? 13 : input.presenceDays <= 7 ? 17 : input.presenceDays <= 14 ? 21 : 25;
-  const activityPoints = input.activityTypeCount === 0 ? 0 : input.activityTypeCount === 1 ? 5 : input.activityTypeCount === 2 ? 10 : 15;
+  const activityPoints = input.activityTypeCount === undefined || input.activityTypeCount === 0 ? 0 : input.activityTypeCount === 1 ? 5 : input.activityTypeCount === 2 ? 10 : 15;
   const localizedComparable = input.localizedCoverage !== undefined && input.localizedCoverage >= 0.8 && input.localizedShare !== undefined;
   const financePoints = !localizedComparable ? 0 : input.localizedShare! >= 0.05 ? 10 : input.localizedShare! >= 0.02 ? 7 : input.localizedShare! >= 0.01 ? 4 : input.localizedShare! > 0 ? 2 : 0;
   const semanticBonus = input.semanticKind === "TRAVEL_STAY" || input.semanticKind === "FAMILY_FRIEND" ? 10 : input.semanticKind === "LEISURE_EVENT" || input.semanticKind === "HEALTH" ? 6 : 0;
   const routinePenalty = input.routineKind === "HOME" ? 35 : input.routineKind === "REGULAR_WORK" ? 30 : input.routineKind === "OTHER_ROUTINE" ? 15 : 0;
   const score = narrativePoints + presencePoints + activityPoints + financePoints + semanticBonus - routinePenalty;
-  return { placeId: input.placeId, score, narrativePoints, presencePoints, activityPoints, financePoints, semanticBonus, routinePenalty, candidate: score >= 20, ...(input.bestHighlightRank === undefined ? {} : { bestHighlightRank: input.bestHighlightRank }), momentCount: input.momentCount, presenceDays: input.presenceDays, ...(input.localizedAmount === undefined ? {} : { localizedAmount: input.localizedAmount }), localizedComparable };
+  const missingInputs = (["momentCount", "activityTypeCount", "semanticKind", "routineKind"] as const).filter((key) => input[key] === undefined);
+  return { placeId: input.placeId, score, narrativePoints, presencePoints, activityPoints, financePoints, semanticBonus, routinePenalty, candidate: score >= 20, ...(input.bestHighlightRank === undefined ? {} : { bestHighlightRank: input.bestHighlightRank }), ...(input.momentCount === undefined ? {} : { momentCount: input.momentCount }), presenceDays: input.presenceDays, ...(input.localizedAmount === undefined ? {} : { localizedAmount: input.localizedAmount }), localizedComparable,
+    ...(missingInputs.length === 0 ? {} : { missingInputs, quality: { reasonCode: "DATA_PARTIAL_SOURCE", badges: ["RANKING_INPUTS_INCOMPLETE"] } }),
+  };
 }
 
 export function rankPlaces(inputs: readonly PlaceSignificanceInput[]): readonly PlaceSignificanceScore[] {
-  return inputs.map(computePlaceSignificanceScore).filter(({ candidate }) => candidate).sort((a, b) => b.score - a.score || (a.bestHighlightRank ?? 99) - (b.bestHighlightRank ?? 99) || b.momentCount - a.momentCount || b.presenceDays - a.presenceDays || (a.localizedComparable && b.localizedComparable && a.localizedAmount !== undefined && b.localizedAmount !== undefined ? compareMoney(b.localizedAmount, a.localizedAmount) : 0) || a.placeId.localeCompare(b.placeId)).slice(0, 6);
+  return inputs.map(computePlaceSignificanceScore).filter(({ candidate }) => candidate).sort((a, b) => b.score - a.score || (a.bestHighlightRank ?? 99) - (b.bestHighlightRank ?? 99) || (a.momentCount !== undefined && b.momentCount !== undefined ? b.momentCount - a.momentCount : 0) || b.presenceDays - a.presenceDays || (a.localizedComparable && b.localizedComparable && a.localizedAmount !== undefined && b.localizedAmount !== undefined ? compareMoney(b.localizedAmount, a.localizedAmount) : 0) || a.placeId.localeCompare(b.placeId)).slice(0, 6);
 }
 
 export function selectDisplayPlaceCandidate(proofs: readonly PlaceCandidateProof[]): string | undefined {
@@ -579,11 +601,14 @@ export function resolveLocalizedAmountVisibility(input: {
   readonly allLocalizableAbsoluteAmount: Money;
   readonly monotoneNonNegative: boolean;
 }): LocalizedAmountVisibility {
+  if (compareMoney(input.allLocalizableAbsoluteAmount, ZERO) < 0 || compareMoney(input.authoritativeLocalizableAbsoluteAmount, ZERO) < 0 || compareMoney(input.authoritativeLocalizableAbsoluteAmount, input.allLocalizableAbsoluteAmount) > 0) {
+    throw new TypeError("La couverture localisée exige 0 <= montant autoritaire <= montant localisable.");
+  }
   if (compareMoney(input.allLocalizableAbsoluteAmount, ZERO) === 0) {
     return { cardAmount: { status: "NOT_APPLICABLE", quality: { reasonCode: "POLICY_NOT_APPLICABLE" } }, detailAmount: { status: "NOT_APPLICABLE", quality: { reasonCode: "POLICY_NOT_APPLICABLE" } } };
   }
   const coverage = Number(new Big(input.authoritativeLocalizableAbsoluteAmount).div(input.allLocalizableAbsoluteAmount).toString());
-  const quality = { coverage: { ratio: coverage, basis: "authoritative_localized_absolute_amount" } } as const;
+  const quality = { coverage: { ratio: coverage, basis: "localizable_spend_scope" } } as const;
   if (coverage >= 0.8) return { localizedCoverage: coverage, cardAmount: { status: "KNOWN", value: input.localizedAmount, quality }, detailAmount: { status: "KNOWN", value: input.localizedAmount, quality } };
   if (coverage >= 0.6) return { localizedCoverage: coverage, cardAmount: { status: "UNKNOWN", quality: { ...quality, reasonCode: "COVERAGE_INSUFFICIENT" } }, detailAmount: { status: "PARTIAL", value: input.localizedAmount, partialMeaning: input.monotoneNonNegative ? "LOWER_BOUND" : "OBSERVED_ONLY", quality: { ...quality, reasonCode: "COVERAGE_PARTIAL" } } };
   return { localizedCoverage: coverage, cardAmount: { status: "UNKNOWN", quality: { ...quality, reasonCode: "COVERAGE_INSUFFICIENT" } }, detailAmount: { status: "UNKNOWN", quality: { ...quality, reasonCode: "COVERAGE_INSUFFICIENT" } } };
