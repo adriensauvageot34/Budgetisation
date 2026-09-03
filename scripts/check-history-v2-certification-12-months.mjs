@@ -69,6 +69,11 @@ const materialization = require(path.join(repositoryRoot, "src/server/analytics/
 const monthlyEngines = require(path.join(repositoryRoot, "src/server/analytics/history-v2-monthly-engines.ts"));
 const { CanonicalRepository } = require(path.join(repositoryRoot, "src/server/canonical/repository.ts"));
 const { FactSourceResolver } = require(path.join(repositoryRoot, "src/server/analytics/fact-source-resolver.ts"));
+const { execFileSync } = require("node:child_process");
+const implementationFiles = [...new Set(execFileSync("git", ["ls-files", "--cached", "--others", "--exclude-standard", "--",
+  "src/analytics", "src/core", "src/query-api", "src/server/analytics", "src/server/canonical", "scripts/check-history-v2-certification-12-months.mjs",
+  "package.json", "package-lock.json", "pnpm-lock.yaml", "tsconfig.json",
+], { cwd: repositoryRoot, encoding: "utf8" }).trim().split(/\r?\n/u))].filter((file) => fs.existsSync(path.join(repositoryRoot, file))).sort();
 const { scopedMetricReadModel } = require(path.join(repositoryRoot, "src/server/analytics/metric-query-service.ts"));
 const { parseActivityCausalFinancialLinks } = require(path.join(repositoryRoot, "src/analytics/facts/index.ts"));
 const calendar = require(path.join(repositoryRoot, "src/analytics/history-v2/calendar/index.ts"));
@@ -149,6 +154,11 @@ const stable = (value) => Array.isArray(value)
     ? Object.fromEntries(Object.keys(value).sort().map((key) => [key, stable(value[key])]))
     : value;
 const stableJson = (value) => JSON.stringify(stable(value));
+const implementation = {
+  status: "KNOWN",
+  gitSha: execFileSync("git", ["rev-parse", "HEAD"], { cwd: repositoryRoot, encoding: "utf8" }).trim(),
+  digest: sha256(stableJson(implementationFiles.map((file) => ({ file, digest: sha256(fs.readFileSync(path.join(repositoryRoot, file), "utf8").replaceAll("\r\n", "\n")) })))),
+};
 const sourceRef = (kind, id) => ({ kind, id: String(id) });
 const target = (resource, params) => ({ resource, params });
 const visibleKnown = (value) => ({ visibility: "VISIBLE", data: { status: "KNOWN", value } });
@@ -361,6 +371,7 @@ for (const month of months) {
     causalLinks,
     activityCosts,
     momentRelations,
+    canonicalMomentIds: momentIds,
     calendarArtifact,
     dailyArtifact,
     expenseDescriptors: expenseDescriptorsFor(month, facts, dailyArtifact, operations, momentRelations, calendarArtifact),
@@ -380,24 +391,6 @@ function metricValue(value, reasonCode = "DATA_NO_SOURCE") {
 function officialMetricNode(metric) {
   return historyQuery.projectAnalysisMoneyMetric(scopedMetricReadModel(metric));
 }
-function balanceAuthorityDigest(data) {
-  return sha256(stableJson({
-    calendarArtifactInputHash: data.calendarArtifact.artifactInputHash,
-    dailyArtifactInputHash: data.dailyArtifact.artifactInputHash,
-    analyticsAuthority: data.analyticsAuthority,
-    sharedDoctrinesVersion: historyAnalytics.historySharedDoctrinesVersion,
-    classifications: data.classifications,
-    momentRelations: data.momentRelations,
-    economicFacts: data.facts,
-    operations: data.operations,
-    occurrences: data.occurrences,
-    visits: data.visits,
-    primaryPlaces: data.primaryPlaces,
-    moments: data.moments,
-    causalLinks: data.causalLinks,
-    activityCosts: data.activityCosts,
-  }));
-}
 function balanceContext(data, resource, params) {
   const contract = query.getQueryResourceContract(resource);
   const identity = `${resource}:${data.month}:${stableJson(params)}`;
@@ -406,17 +399,9 @@ function balanceContext(data, resource, params) {
     month: data.month,
     resourceInputHash: historyAnalytics.computeResourceInputHash({
       identity,
-      facts: [{
-        factType: "history_v2_live_resource_input",
-        identity,
-        value: {
-          resource,
-          params,
-          calendarArtifactInputHash: data.calendarArtifact.artifactInputHash,
-          dailyArtifactInputHash: data.dailyArtifact.artifactInputHash,
-          authorityDigest: balanceAuthorityDigest(data),
-        },
-      }],
+      // Builder placeholder, bound to the declared inputs by the preflight seal.
+      // This provisional metadata is never written to a snapshot.
+      facts: [],
     }),
     policyVersions: historyCore.resolvePolicyVersions(contract.policyIds),
     capabilities: capabilities(resource),
@@ -822,6 +807,97 @@ function segmentSelection(data, params) {
     return component.necessity === params.necessity && component.behavior === params.behavior;
   });
 }
+
+function historyQueryDependencies(data, request, readModel) {
+  const resource = request.resource;
+  const requestedMonths = resource === "history_month_calendar"
+    ? [readModel.gridStartDate.slice(0, 7), data.month, readModel.gridEndDate.slice(0, 7)]
+    : resource === "history_week" ? [readModel.weekStart.slice(0, 7), readModel.weekEnd.slice(0, 7)]
+      : resource === "history_day_journal" ? dailyArtifacts.map(({ month }) => month) : [data.month];
+  const selectedMonths = [...new Set(requestedMonths)].sort();
+  const clean = (value) => JSON.parse(JSON.stringify(value, (key, child) =>
+    ["generatedAt", "publicationMeta", "policyVersions", "contractVersion", "revision"].includes(key) ? undefined : child));
+  const set = (values) => historyAnalytics.historyDependencySet(clean(values));
+  const selectedLedgers = dailyArtifacts.filter(({ month }) => selectedMonths.includes(month));
+  const eventIds = new Set(selectedLedgers.flatMap(({ expenseEvents }) => expenseEvents.map(({ expenseEventId }) => expenseEventId)));
+  const sources = {
+    calendar_artifacts: () => set(calendarArtifacts.filter(({ month }) => selectedMonths.includes(month))),
+    daily_ledgers: () => set(selectedLedgers),
+    persons: () => set(personDirectory),
+    expenses: () => set(allExpenseDescriptors.filter(({ expenseEventId }) => eventIds.has(expenseEventId))),
+    local_expenses: () => set(data.expenseDescriptors),
+    typical: () => clean(data.analyticsAuthority.typical),
+    minimal: () => clean(data.analyticsAuthority.minimal),
+    category_typical: () => set(data.analyticsAuthority.categoryTypicals),
+    actual_history: () => set(months.filter((month) => month <= data.month).map((month) => ({ month, actual: dailyByMonth.get(month).actualMonthAmount }))),
+    category_history: () => {
+      const typical = categoryState(data).typicalRows.get(request.params.categoryId);
+      return set(typical?.availability !== "known" ? [] : pivotMonthIds(typical).map((month) => ({
+        month, sourceAvailable: monthData.has(month),
+        facts: set(monthData.get(month)?.facts.filter((fact) => categoryOf(fact) === request.params.categoryId) ?? []),
+      })));
+    },
+    economic_components: () => set(data.facts),
+    classifications: () => set(data.classifications),
+    operations: () => set(data.operations.map((row) => Object.fromEntries([
+      "operation_id", "date_bancaire", "montant_bancaire_depense", "description_precise", "libelle_bancaire",
+      "flux", "role_budgetaire", "type_precis", "type_ressource", "date_transaction_reelle", "montant",
+    ].filter((key) => row[key] !== undefined).map((key) => [key, row[key]])))),
+    activity_occurrences: () => set(data.occurrences),
+    activity_costs: () => set(data.activityCosts),
+    activity_links: () => set(data.causalLinks),
+    moment_relations: () => set(data.momentRelations),
+    place_visits: () => set(data.visits),
+    primary_places: () => set(data.primaryPlaces),
+    // HC2 absence is explicit; no new semantic role or hierarchy is inferred.
+    place_authorities: () => ({ semanticRoles: "UNKNOWN", routineRoles: "UNKNOWN", momentMembership: "UNKNOWN", hierarchy: "UNKNOWN" }),
+    reference_labels: () => ({ categories: set([...categoryLabels]), subcategories: set([...subcategoryLabels]), merchants: set([...merchantLabels]), places: set([...placeLabels]) }),
+    journal_supplement: () => clean(journalSupplement(data)),
+    overview_supplement: () => clean(overviewSupplement(data)),
+  };
+  const identityFor = (name) => {
+    const selector = { householdId, ownerMonth: data.month };
+    if (["calendar_artifacts", "daily_ledgers", "expenses"].includes(name)) selector.sourceMonths = selectedMonths;
+    if (name === "actual_history") selector.sourceMonths = months.filter((month) => month <= data.month);
+    if (name === "category_history") {
+      const typical = categoryState(data).typicalRows.get(request.params.categoryId);
+      selector.categoryId = request.params.categoryId;
+      selector.sourceMonths = typical?.availability === "known" ? [...pivotMonthIds(typical)].sort() : [];
+    }
+    if (name === "typical" || name === "category_typical") {
+      const authorities = name === "typical" ? [data.analyticsAuthority.typical] : data.analyticsAuthority.categoryTypicals;
+      selector.referenceWindows = authorities.map((authority) => ({
+        ...(authority.categoryId === undefined ? {} : { categoryId: authority.categoryId }),
+        includedPeriods: [...(authority.window?.includedPeriods ?? [])].sort(),
+        excludedPeriods: [...(authority.window?.excludedPeriods ?? [])].map(({ period }) => period).sort(),
+      })).sort((a, b) => (a.categoryId ?? "").localeCompare(b.categoryId ?? ""));
+    }
+    if (name === "moment_relations") selector.momentIds = [...new Set(data.canonicalMomentIds)].sort();
+    // A logical source selector + its content digest remains interpretable after
+    // canonical data changes; no financial rows are copied into the manifest.
+    return stableJson(selector);
+  };
+  return historyAnalytics.historyResourceDependencyClosure({ resource, groups: Object.fromEntries(
+    [...new Set(historyAnalytics.historyV2ResourceDependencyGroups[resource])].map((name) => [name, {
+      identity: identityFor(name),
+      value: sources[name](),
+    }]),
+  ) });
+}
+
+function overviewSupplement(data) {
+  const bridge = bridgeFor(data.month, data.facts, data.operations, data.dailyArtifact.actualMonthAmount);
+  return {
+    bankOutflows: { status: "KNOWN", value: bridge.bankOutflows },
+    bankInflows: { status: "KNOWN", value: journalSupplement(data).bankInflows },
+    causalCostByCalendarItemId: causalCostByCalendarItem(data), explicitIncidentHighlights: [],
+    narrativePlaces: placeState(data).summaries.slice(0, 4).map((place) => ({
+      placeId: place.placeId, title: place.label,
+      ...(place.presenceDays === undefined ? {} : { presenceDays: place.presenceDays }),
+      localizedAmount: place.localizedAmount, iconKey: "place", sourceRefs: place.sourceRefs,
+    })),
+  };
+}
 function spendingContributorProjection(data, params) {
   const selected = segmentSelection(data, params);
   const selection = balance.selectSpendingContributors(selected);
@@ -1002,21 +1078,7 @@ function buildReadModel(data, request) {
     case "history_day_journal":
       return historyQuery.buildJournalDayReadModel(calendarContext(request.resource), request.params.date, journalSupplement(data));
     case "history_month_overview": {
-      const bridge = bridgeFor(data.month, data.facts, data.operations, data.dailyArtifact.actualMonthAmount);
-      return historyQuery.buildMonthQuickOverviewReadModel(calendarContext(request.resource), data.month, {
-        bankOutflows: { status: "KNOWN", value: bridge.bankOutflows },
-        bankInflows: { status: "KNOWN", value: journalSupplement(data).bankInflows },
-        causalCostByCalendarItemId: causalCostByCalendarItem(data),
-        explicitIncidentHighlights: [],
-        narrativePlaces: placeState(data).summaries.slice(0, 4).map((place) => ({
-          placeId: place.placeId,
-          title: place.label,
-          ...(place.presenceDays === undefined ? {} : { presenceDays: place.presenceDays }),
-          localizedAmount: place.localizedAmount,
-          iconKey: "place",
-          sourceRefs: place.sourceRefs,
-        })),
-      });
+      return historyQuery.buildMonthQuickOverviewReadModel(calendarContext(request.resource), data.month, overviewSupplement(data));
     }
     case "history_month_balance_summary": {
       const typical = data.analyticsAuthority.typical.metric;
@@ -1304,21 +1366,13 @@ for (const month of months) {
     const readModel = buildReadModel(data, request);
     return {
       data: readModel,
-      facts: [{
-        factType: "history_v2_query_input",
-        identity: `${request.resource}:${month}:${stableJson(request.params)}`,
-        value: {
-          resource: request.resource,
-          params: request.params,
-          resourceInputHash: readModel.resourceInputHash,
-        },
-      }],
+      ...historyQueryDependencies(data, request, readModel),
     };
   };
-  const preflight = await materialization.buildHistoryV2Preflight({ context: runtimeContext, month, artifacts, buildQuery });
+  const preflight = await materialization.buildHistoryV2Preflight({ context: runtimeContext, month, artifacts, buildQuery, implementation });
   const deterministic = publicationOnly
     ? preflight
-    : await materialization.buildHistoryV2Preflight({ context: runtimeContext, month, artifacts: [...artifacts].reverse(), buildQuery });
+    : await materialization.buildHistoryV2Preflight({ context: runtimeContext, month, artifacts: [...artifacts].reverse(), buildQuery, implementation });
   const checks = publicationOnly ? [] : assertMonthInvariants(data, preflight, deterministic, oracleMonths[month]);
   const resources = publicationOnly
     ? materialization.historyV2QueryResources.map((resource) => ({ resource, classification: "PASS", reasons: [] }))
@@ -1356,7 +1410,7 @@ for (const month of months) {
 
 const result = {
   gate: monthResults.some(({ classification }) => classification === "FAIL") ? "FAIL" : "PASS",
-  implementationSha: process.env.HISTORY_V2_IMPLEMENTATION_SHA ?? "WORKTREE",
+  implementationSha: implementation.gitSha,
   generatedAt: runtimeContext.asOf,
   mode: publicationOnly ? "READ_ONLY_REPUBLICATION_PREFLIGHT" : "READ_ONLY",
   stageFinalize: "NONE",

@@ -4,6 +4,11 @@ import { createHash } from "node:crypto";
 
 import {
   computeHistoryV2PublicationFactsHash,
+  computeResourceInputHash,
+  historyContentDigest,
+  historyReadModelContent,
+  historyV2ResourceDependencyGroups,
+  type HistoryDependencyResource,
   type FactsHashFact,
   type HashDependency,
 } from "@/analytics/history-v2";
@@ -22,7 +27,7 @@ import {
   type PolicyVersions,
   type PublicationMeta,
 } from "@/core/history-v2";
-import type { HouseholdId } from "@/core/identity";
+import { parseHouseholdId, type HouseholdId } from "@/core/identity";
 import {
   addDays,
   parseInstant,
@@ -125,8 +130,8 @@ export type HistoryV2QueryBuildResult = {
 
 export type HistoryV2ManifestFactDependency = {
   readonly closureId: string;
-  readonly factIdentities: readonly string[];
-  readonly dependencyIds: readonly string[];
+  readonly facts: readonly { readonly factType: string; readonly identity: string; readonly factHash: string }[];
+  readonly dependencies: readonly HashDependency[];
 };
 
 export type HistoryV2ExternalQueryRef = {
@@ -147,6 +152,7 @@ export type HistoryV2ManifestQuery = {
 };
 
 export type HistoryV2MonthManifest = {
+  readonly formatVersion: "history-v2-dependency-manifest@v2";
   readonly profileId: typeof historyV2PublicationProfileId;
   readonly householdId: HouseholdId;
   readonly month: YearMonth;
@@ -157,6 +163,9 @@ export type HistoryV2MonthManifest = {
   readonly factDependencies: readonly HistoryV2ManifestFactDependency[];
   readonly manifestHash: string;
   readonly publicationFactsHash: import("@/core/history-v2").FactsHash;
+  readonly implementation: { readonly status: "UNKNOWN" } | { readonly status: "KNOWN"; readonly digest: string; readonly gitSha: string };
+  readonly queryVersions: readonly { readonly queryKey: string; readonly inputIdentity: string; readonly contractVersion: "v2"; readonly methodSignature: string; readonly policyVersions: PolicyVersions; readonly resourceInputHash: string }[];
+  readonly artifactVersions: readonly { readonly artifactKey: string; readonly contractVersion: "v2"; readonly policyVersions: PolicyVersions; readonly artifactInputHash: string }[];
 };
 
 export type HistoryV2PreflightResult = {
@@ -395,28 +404,150 @@ function factDependency(
 ): HistoryV2ManifestFactDependency {
   return {
     closureId,
-    factIdentities: stableUnique(facts.map(({ factType, identity }) => `${factType}:${identity}`)),
-    dependencyIds: stableUnique(dependencies.map(({ dependencyId }) => dependencyId)),
+    facts: [...new Map(facts.map((fact) => [JSON.stringify([fact.factType, fact.identity]), {
+      factType: fact.factType, identity: fact.identity,
+      factHash: historyContentDigest(JSON.stringify([fact.factType, fact.identity]), fact.value),
+    }])).values()].sort((a, b) => a.factType.localeCompare(b.factType) || a.identity.localeCompare(b.identity)),
+    dependencies: [...new Map(dependencies.map((dependency) => [dependency.dependencyId, dependency])).values()]
+      .sort((a, b) => a.dependencyId.localeCompare(b.dependencyId)),
   };
 }
 
-function manifestDigest(input: {
-  readonly householdId: HouseholdId;
-  readonly month: YearMonth;
-  readonly artifactKeys: readonly string[];
-  readonly queryKeys: readonly string[];
-  readonly externalRefs: readonly HistoryV2ExternalQueryRef[];
-}): string {
-  return sha256(canonicalSerializeQueryParams({
-    profileId: historyV2PublicationProfileId,
-    householdId: input.householdId,
-    month: input.month,
-    requiredArtifactKeys: [...input.artifactKeys].sort(),
-    requiredQueryKeys: [...input.queryKeys].sort(),
-    externalQueryRefs: [...input.externalRefs]
-      .map(({ ownerMonth, queryKey, resource, params }) => ({ ownerMonth, queryKey, resource, params }))
-      .sort((left, right) => left.queryKey.localeCompare(right.queryKey)),
-  }));
+export function historyV2ManifestDigest(input: Omit<HistoryV2MonthManifest, "manifestHash">): string {
+  return sha256(canonicalSerializeQueryParams(input));
+}
+
+export function historyV2ManifestFactsHash(input: Pick<HistoryV2MonthManifest, "householdId" | "month" | "factDependencies">) {
+  return computeHistoryV2PublicationFactsHash({
+    householdId: input.householdId, month: input.month,
+    closures: input.factDependencies.map((closure) => ({
+      closureId: closure.closureId,
+      facts: closure.facts.map(({ factType, identity, factHash }) => ({ factType, identity, value: { contentDigest: factHash } })),
+      dependencies: closure.dependencies,
+    })),
+  });
+}
+
+function resourceHashForClosure(identity: string, closure: HistoryV2ManifestFactDependency) {
+  return computeResourceInputHash({ identity,
+    facts: closure.facts.map(({ factType, identity: factIdentity, factHash }) => ({ factType, identity: factIdentity, value: { contentDigest: factHash } })),
+    dependencies: closure.dependencies,
+  });
+}
+
+function resourceInputIdentity(request: AnyNormalizedQueryRequest): string {
+  return canonicalSerializeQueryParams({ resource: request.resource, scope: request.scope, params: request.params });
+}
+
+/** Durable manifest: identities/digests only. Never invents evidence for legacy rows. */
+export function parseHistoryV2DependencyManifest(value: unknown): HistoryV2MonthManifest {
+  const object = (input: unknown, keys: readonly string[]) => {
+    const record = parseStrictRecord(input, keys, "HistoryV2DependencyManifest");
+    keys.forEach((key) => requireProperty(record, key, "HistoryV2DependencyManifest"));
+    return record;
+  };
+  const string = (input: unknown): string => {
+    if (typeof input !== "string" || input.length === 0) throw new TypeError("Manifest string missing.");
+    return input;
+  };
+  const digest = (input: unknown): string => {
+    const result = string(input);
+    if (!/^[0-9a-f]{64}$/.test(result)) throw new TypeError("Manifest digest invalid.");
+    return result;
+  };
+  const array = <T>(input: unknown, parse: (item: unknown) => T): T[] => {
+    if (!Array.isArray(input)) throw new TypeError("Manifest array missing.");
+    return input.map(parse);
+  };
+  const unique = (values: readonly string[]) => {
+    if (new Set(values).size !== values.length) throw new TypeError("Duplicate manifest identity.");
+  };
+  const sameKeys = (a: readonly string[], b: readonly string[]) => {
+    unique(a); unique(b);
+    if (JSON.stringify([...a].sort()) !== JSON.stringify([...b].sort())) throw new TypeError("Manifest closure incomplete.");
+  };
+  const record = object(value, ["formatVersion", "profileId", "householdId", "month", "resourceFamilies", "requiredArtifactKeys", "requiredQueryKeys", "externalQueryRefs", "factDependencies", "manifestHash", "publicationFactsHash", "implementation", "queryVersions", "artifactVersions"]);
+  if (record.formatVersion !== "history-v2-dependency-manifest@v2" || record.profileId !== historyV2PublicationProfileId) throw new TypeError("Unsupported manifest format/profile.");
+  parseHouseholdId(record.householdId);
+  const month = parseYearMonth(record.month);
+  sameKeys(array(record.resourceFamilies, string), historyV2QueryResources);
+  const artifactKeys = array(record.requiredArtifactKeys, string);
+  const queryKeys = array(record.requiredQueryKeys, string);
+  if (artifactKeys.length !== 2 || queryKeys.length === 0) throw new TypeError("Incomplete History manifest.");
+  const implementationRecord = parseStrictRecord(record.implementation, ["status", "digest", "gitSha"], "ManifestImplementation");
+  if (implementationRecord.status === "KNOWN") {
+    digest(implementationRecord.digest);
+    if (!/^[0-9a-f]{40}$/.test(string(implementationRecord.gitSha))) throw new TypeError("Manifest Git identity invalid.");
+  } else if (implementationRecord.status !== "UNKNOWN" || Object.keys(implementationRecord).length !== 1) throw new TypeError("Manifest implementation invalid.");
+  const factDependencies = array(record.factDependencies, (entry) => {
+    const closure = object(entry, ["closureId", "facts", "dependencies"]);
+    const facts = array(closure.facts, (item) => {
+      const fact = object(item, ["factType", "identity", "factHash"]);
+      return { factType: string(fact.factType), identity: string(fact.identity), factHash: digest(fact.factHash) };
+    });
+    const dependencies = array(closure.dependencies, (item) => {
+      const dependency = object(item, ["dependencyId", "dependencyHash"]);
+      return { dependencyId: string(dependency.dependencyId), dependencyHash: digest(dependency.dependencyHash) };
+    });
+    unique(facts.map(({ factType, identity }) => JSON.stringify([factType, identity])));
+    unique(dependencies.map(({ dependencyId }) => dependencyId));
+    if (facts.length + dependencies.length === 0) throw new TypeError("Empty manifest dependency closure.");
+    return { closureId: string(closure.closureId), facts, dependencies };
+  });
+  sameKeys(factDependencies.map(({ closureId }) => closureId), [...artifactKeys.map((key) => `artifact:${key}`), ...queryKeys.map((key) => `query:${key}`)]);
+  const queryVersions = array(record.queryVersions, (item) => {
+    const version = object(item, ["queryKey", "inputIdentity", "contractVersion", "methodSignature", "policyVersions", "resourceInputHash"]);
+    if (version.contractVersion !== "v2") throw new TypeError("Non-V2 manifest resource.");
+    string(version.methodSignature); parsePolicyVersions(version.policyVersions); digest(version.resourceInputHash);
+    const inputIdentity = string(version.inputIdentity);
+    const input = object(JSON.parse(inputIdentity), ["resource", "scope", "params"]);
+    if (!historyV2ResourceSet.has(input.resource as QueryResourceKey)
+      || canonicalSerializeQueryParams(input) !== inputIdentity) throw new TypeError("Invalid manifest resource identity.");
+    if (resourceInputIdentity(requestFor(month, input.resource as QueryResourceKey, input.params as Readonly<Record<string, unknown>>)) !== inputIdentity) {
+      throw new TypeError("Manifest input scope does not match its household month.");
+    }
+    const closure = factDependencies.find(({ closureId }) => closureId === `query:${version.queryKey}`);
+    if (closure === undefined || resourceHashForClosure(inputIdentity, closure) !== version.resourceInputHash) throw new TypeError("Manifest resourceInputHash mismatch.");
+    for (const group of historyV2ResourceDependencyGroups[input.resource as HistoryDependencyResource]) {
+      if (!closure.facts.some(({ factType }) => factType === `history_input:${group}`)) throw new TypeError("Manifest resource dependency missing.");
+    }
+    return string(version.queryKey);
+  });
+  sameKeys(queryVersions, queryKeys);
+  const artifactVersions = array(record.artifactVersions, (item) => {
+    const version = object(item, ["artifactKey", "contractVersion", "policyVersions", "artifactInputHash"]);
+    if (version.contractVersion !== "v2") throw new TypeError("Non-V2 manifest artifact.");
+    parsePolicyVersions(version.policyVersions); digest(version.artifactInputHash);
+    return string(version.artifactKey);
+  });
+  sameKeys(artifactVersions, artifactKeys);
+  const externalKeys = array(record.externalQueryRefs, (item) => {
+    const ref = object(item, ["ownerMonth", "queryKey", "resource", "params"]);
+    const owner = parseYearMonth(ref.ownerMonth);
+    if (owner === month || !historyV2ResourceSet.has(ref.resource as QueryResourceKey)) throw new TypeError("Invalid external History reference.");
+    requestFor(owner, ref.resource as QueryResourceKey, ref.params as Readonly<Record<string, unknown>>);
+    return string(ref.queryKey);
+  });
+  unique(externalKeys);
+  const manifest = record as unknown as HistoryV2MonthManifest;
+  if (digest(manifest.publicationFactsHash) !== historyV2ManifestFactsHash(manifest)) throw new TypeError("Manifest publicationFactsHash mismatch.");
+  const { manifestHash, ...body } = manifest;
+  if (digest(manifestHash) !== historyV2ManifestDigest(body)) throw new TypeError("Manifest checksum mismatch.");
+  if (Buffer.byteLength(canonicalSerializeQueryParams(manifest), "utf8") > 2_000_000) throw new TypeError("Manifest exceeds compact storage limit.");
+  return manifest;
+}
+
+export const historyV2DependencyManifestSchema = createRuntimeSchema(parseHistoryV2DependencyManifest);
+
+/** Final input binding for newly built ReadModels only; never patches a stored snapshot. */
+export function sealHistoryV2QueryBuild(request: AnyNormalizedQueryRequest, built: HistoryV2QueryBuildResult): HistoryV2QueryBuildResult {
+  const identity = resourceInputIdentity(request);
+  const contentDependency = { dependencyId: `readmodel:${identity}`, dependencyHash: historyContentDigest(identity, historyReadModelContent(built.data)) };
+  const dependencies = [...(built.dependencies ?? []), contentDependency];
+  // Validate conflicting duplicates before compacting; identical repeats are harmless.
+  computeResourceInputHash({ identity, facts: built.facts, dependencies });
+  const resourceInputHash = resourceHashForClosure(identity, factDependency(identity, built.facts, dependencies));
+  return { facts: built.facts, dependencies, data: { ...(built.data as Record<string, unknown>), resourceInputHash } };
 }
 
 export function createHistoryV2TheoreticalManifest(monthInput: unknown) {
@@ -444,6 +575,7 @@ export async function buildHistoryV2Preflight(input: {
   readonly context: AuthorizedRuntimeContext;
   readonly month: YearMonth;
   readonly artifacts: readonly HistoryV2PreflightArtifact[];
+  readonly implementation?: HistoryV2MonthManifest["implementation"];
   readonly buildQuery: (
     request: AnyNormalizedQueryRequest,
   ) => Promise<HistoryV2QueryBuildResult> | HistoryV2QueryBuildResult;
@@ -486,7 +618,14 @@ export async function buildHistoryV2Preflight(input: {
       .find(([queryKey]) => !queries.has(queryKey));
     if (next === undefined) break;
     const [queryKey, request] = next;
-    const built = await input.buildQuery(request);
+    const rawBuild = await input.buildQuery(request);
+    const inputGroups = historyV2ResourceDependencyGroups[request.resource as HistoryDependencyResource];
+    for (const group of inputGroups) {
+      if (!rawBuild.facts.some(({ factType }) => factType === `history_input:${group}`)) {
+        throw new TypeError(`Undeclared History input: ${request.resource}/${group}.`);
+      }
+    }
+    const built = sealHistoryV2QueryBuild(request, rawBuild);
     const data = parseQueryData(request, built.data);
     const rawPolicyVersions = (data as { readonly policyVersions?: unknown }).policyVersions;
     if (rawPolicyVersions === undefined || typeof rawPolicyVersions !== "object") {
@@ -543,7 +682,10 @@ export async function buildHistoryV2Preflight(input: {
     ...artifactEntries.map(({ artifact, identity }) => ({
       closureId: `artifact:${identity.artifactKey}`,
       facts: artifact.facts,
-      dependencies: artifact.dependencies,
+      dependencies: [...(artifact.dependencies ?? []), {
+        dependencyId: `artifact-content:${artifact.artifactFamily}:${month}`,
+        dependencyHash: historyContentDigest(`${artifact.artifactFamily}:${month}`, historyReadModelContent(artifact.payload)),
+      }],
     })),
     ...queryEntries.map(({ queryKey }) => {
       const closure = queryClosures.get(queryKey)!;
@@ -556,32 +698,32 @@ export async function buildHistoryV2Preflight(input: {
   ];
   const requiredArtifactKeys = artifactEntries.map(({ identity }) => identity.artifactKey);
   const requiredQueryKeys = queryEntries.map(({ queryKey }) => queryKey);
-  const publicationFactsHash = computeHistoryV2PublicationFactsHash({
+  // Reject inconsistent duplicates before compacting values into persisted digests.
+  computeHistoryV2PublicationFactsHash({
     householdId: input.context.householdId,
     month,
     closures,
   });
   const factDependencies = closures.map((closure) =>
     factDependency(closure.closureId, closure.facts, closure.dependencies));
-  const manifestHash = manifestDigest({
+  const publicationFactsHash = historyV2ManifestFactsHash({ householdId: input.context.householdId, month, factDependencies });
+  const manifestBody: Omit<HistoryV2MonthManifest, "manifestHash"> = {
+    formatVersion: "history-v2-dependency-manifest@v2",
+    profileId: historyV2PublicationProfileId,
     householdId: input.context.householdId,
     month,
-    artifactKeys: requiredArtifactKeys,
-    queryKeys: requiredQueryKeys,
-    externalRefs: externalQueryRefs,
-  });
+    resourceFamilies: historyV2QueryResources,
+    requiredArtifactKeys, requiredQueryKeys, externalQueryRefs, factDependencies, publicationFactsHash,
+    implementation: input.implementation ?? { status: "UNKNOWN" },
+    queryVersions: queryEntries.map(({ queryKey, request, contractVersion, methodSignature, policyVersions, data }) => ({
+      queryKey, inputIdentity: resourceInputIdentity(request), contractVersion, methodSignature, policyVersions, resourceInputHash: (data as { resourceInputHash: string }).resourceInputHash,
+    })),
+    artifactVersions: artifactEntries.map(({ artifact, identity }) => ({ artifactKey: identity.artifactKey, contractVersion: "v2", policyVersions: parsePolicyVersions(artifact.payload.dependencyPolicies), artifactInputHash: artifact.payload.artifactInputHash })),
+  };
   return {
     manifest: {
-      profileId: historyV2PublicationProfileId,
-      householdId: input.context.householdId,
-      month,
-      resourceFamilies: historyV2QueryResources,
-      requiredArtifactKeys,
-      requiredQueryKeys,
-      externalQueryRefs,
-      factDependencies,
-      manifestHash,
-      publicationFactsHash,
+      ...manifestBody,
+      manifestHash: historyV2ManifestDigest(manifestBody),
     },
     artifacts: input.artifacts,
     queries: queryEntries,
@@ -636,6 +778,7 @@ export function stageHistoryV2GenerationInMemory(input: {
   readonly revision: number;
   readonly generatedAt: Instant;
 }): HistoryV2InMemoryStage {
+  historyV2DependencyManifestSchema.parse(input.preflight.manifest);
   if (input.publicationId.trim().length === 0) {
     throw new TypeError("Le stage de test exige un publicationId de DRAFT non vide.");
   }
@@ -644,6 +787,20 @@ export function stageHistoryV2GenerationInMemory(input: {
   const stagedQueries = input.preflight.manifest.requiredQueryKeys.map((queryKey) => {
     const query = queryByKey.get(queryKey);
     if (query === undefined) throw new TypeError(`Snapshot requis non construit: ${queryKey}.`);
+    const version = input.preflight.manifest.queryVersions.find((entry) => entry.queryKey === queryKey)!;
+    if (version.resourceInputHash !== (query.data as { resourceInputHash: string }).resourceInputHash
+      || version.inputIdentity !== resourceInputIdentity(query.request)
+      || version.methodSignature !== query.methodSignature
+      || version.contractVersion !== query.contractVersion
+      || !policyVersionsEqual(version.policyVersions, query.policyVersions)) {
+      throw new TypeError("Snapshot does not match its manifest version.");
+    }
+    const contentDependency = input.preflight.manifest.factDependencies
+      .find(({ closureId }) => closureId === `query:${queryKey}`)!
+      .dependencies.find(({ dependencyId }) => dependencyId === `readmodel:${version.inputIdentity}`);
+    if (contentDependency?.dependencyHash !== historyContentDigest(version.inputIdentity, historyReadModelContent(query.data))) {
+      throw new TypeError("Snapshot content does not match certified dependency evidence.");
+    }
     const publicationMeta = parsePublicationMeta({
       publicationId: input.publicationId,
       revision: input.revision,
@@ -666,6 +823,18 @@ export function stageHistoryV2GenerationInMemory(input: {
     const artifact = artifactByFamily.get(artifactFamily);
     if (artifact === undefined) throw new TypeError(`Artifact requis non construit: ${artifactFamily}.`);
     const payload = artifactPayload(artifact);
+    const version = input.preflight.manifest.artifactVersions.find((entry) =>
+      entry.artifactInputHash === payload.artifactInputHash);
+    if (version === undefined || !policyVersionsEqual(version.policyVersions, parsePolicyVersions(payload.dependencyPolicies))) {
+      throw new TypeError("Artifact does not match its manifest version.");
+    }
+    const contentIdentity = `${artifactFamily}:${input.preflight.manifest.month}`;
+    const contentDependency = input.preflight.manifest.factDependencies
+      .find(({ closureId }) => closureId === `artifact:${version.artifactKey}`)!
+      .dependencies.find(({ dependencyId }) => dependencyId === `artifact-content:${contentIdentity}`);
+    if (contentDependency?.dependencyHash !== historyContentDigest(contentIdentity, historyReadModelContent(payload))) {
+      throw new TypeError("Artifact content does not match certified dependency evidence.");
+    }
     return historyV2StagedArtifactEnvelopeSchema.parse({
       artifactFamily,
       artifactInputHash: payload.artifactInputHash,

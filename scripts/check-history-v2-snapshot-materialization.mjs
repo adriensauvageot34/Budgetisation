@@ -479,15 +479,17 @@ function buildReadModel(request) {
 function queryBuildResult(request, mutation = "base") {
   return {
     data: buildReadModel(request),
-    facts: [{
-      factType: "fixture_query",
-      identity: `${request.resource}:${JSON.stringify(request.params)}`,
-      value: {
+    ...historyAnalytics.historyResourceDependencyClosure({
+      resource: request.resource,
+      groups: Object.fromEntries(historyAnalytics.historyV2ResourceDependencyGroups[request.resource].map((group) => [group, {
+        identity: `${request.resource}:${JSON.stringify(request.params)}`,
+        value: {
         resource: request.resource,
         params: request.params,
         mutation: request.resource === "history_place_detail" ? mutation : "base",
-      },
-    }],
+        },
+      }])),
+    }),
   };
 }
 
@@ -949,7 +951,7 @@ const changedPlaceFact = await materialization.buildHistoryV2Preflight({
   artifacts: artifactInputs,
   buildQuery: (request) => queryBuildResult(request, "place-fact-changed"),
 });
-check(() => assert.equal(changedPlaceFact.manifest.manifestHash, preflight.manifest.manifestHash));
+check(() => assert.notEqual(changedPlaceFact.manifest.manifestHash, preflight.manifest.manifestHash));
 check(() => assert.notEqual(
   changedPlaceFact.manifest.publicationFactsHash,
   preflight.manifest.publicationFactsHash,
@@ -1147,9 +1149,13 @@ check(() => assert.equal(
   "la ressource History V1 retirée ne doit plus rester active dans le registre",
 ));
 
+const { checkHistoryDependencyManifest } = await import("./check-history-v2-dependency-manifest.mjs");
+const hc3 = await checkHistoryDependencyManifest({ materialization, historyAnalytics, preflight, runtimeContext, artifactInputs, require });
+
 console.log(JSON.stringify({
   gate: "PASS",
   checks,
+  hc3,
   profileId: preflight.manifest.profileId,
   resourceFamilies: preflight.manifest.resourceFamilies.length,
   queryInstances: preflight.queries.length,

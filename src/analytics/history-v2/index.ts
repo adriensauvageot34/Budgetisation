@@ -39,3 +39,4 @@ export * as dailyEconomicFinanceEngine from "./daily-finance";
 export * as monthBalanceEngine from "./month-balance";
 export * from "./month-balance";
 export * from "./shared-doctrines";
+export * from "./dependency-graph";

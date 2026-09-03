@@ -26,9 +26,11 @@ export {
   isScopedMaterializationFresh,
 } from "./freshness";
 export { SupabaseAnalyticsPublicationStore } from "./publication-store";
+export { SupabaseHistoryManifestStore, type HistoryManifestRead } from "./history-manifest-store";
 export { recordAnalyticsMutation } from "./mutation";
 export {
   buildHistoryV2Preflight,
+  historyV2DependencyManifestSchema,
   createHistoryV2TheoreticalManifest,
   discoverHistoryV2QueryTargets,
   historyV2PublicationProfileId,
