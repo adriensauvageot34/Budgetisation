@@ -27,6 +27,8 @@ export {
 } from "./freshness";
 export { SupabaseAnalyticsPublicationStore } from "./publication-store";
 export { SupabaseHistoryManifestStore, type HistoryManifestRead } from "./history-manifest-store";
+export { buildHistoryMonth, finalizeHistoryPublication, validateHistoryMonthBuild,
+  type CertifiedHistoryMonth, type HistoryMonthCertification, type HistoryMonthGeneration } from "./history-rebuild";
 export { recordAnalyticsMutation } from "./mutation";
 export {
   buildHistoryV2Preflight,

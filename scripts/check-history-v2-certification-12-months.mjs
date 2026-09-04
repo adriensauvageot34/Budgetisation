@@ -57,6 +57,8 @@ for (const extension of [".ts", ".tsx"]) {
 
 const [fixtureDirectory, oracleReportFile, outputDirectory] = process.argv.slice(2);
 const publicationOnly = process.argv.slice(5).includes("--publication-only");
+const selectedMonth = process.argv.slice(5).find((arg) => arg.startsWith("--month="))?.slice(8);
+if (selectedMonth !== undefined && publicationOnly) throw new Error("Single-month rebuild requires full invariant certification.");
 if (fixtureDirectory === undefined || oracleReportFile === undefined || outputDirectory === undefined) {
   throw new Error("Usage: node scripts/check-history-v2-certification-12-months.mjs <fixture-directory> <expected-vs-engine-final.json> <output-directory>");
 }
@@ -99,6 +101,7 @@ assert.deepEqual(months, [
   "2026-02", "2026-03", "2026-04", "2026-05", "2026-06", "2026-07",
 ]);
 assert.deepEqual(Object.keys(oracleMonths).sort(), months, "L'oracle EXPECTED doit couvrir exactement la fenêtre certifiée.");
+if (selectedMonth !== undefined) assert.ok(months.includes(selectedMonth), "Month outside the supported certified History window.");
 const fixtureHouseholds = tables.get("households") ?? [];
 assert.equal(fixtureHouseholds.length, 1, "La fixture History V2 doit contenir un unique Household cible.");
 const householdId = fixtureHouseholds[0].household_id;
@@ -110,6 +113,10 @@ assert.equal(
 const household = one("households", (row) => row.household_id === householdId);
 const revision = one("household_revisions", (row) => row.household_id === householdId);
 assert.ok(household && revision, "Household/revision fixture absente.");
+for (const [option, actual] of [["--household=", householdId], ["--source-revision=", String(revision.data_revision)]]) {
+  const expected = process.argv.slice(5).find((arg) => arg.startsWith(option))?.slice(option.length);
+  if (selectedMonth !== undefined) assert.equal(expected, actual, `Single-month producer ${option} mismatch`);
+}
 const persons = (tables.get("persons") ?? [])
   .filter((row) => row.household_id === householdId)
   .map((row) => ({
@@ -1347,7 +1354,7 @@ function assertMonthInvariants(data, preflight, deterministic, expectedOracle) {
 const monthResults = [];
 const publicationBundleMonths = [];
 let totalQueries = 0;
-for (const month of months) {
+for (const month of selectedMonth === undefined ? months : [selectedMonth]) {
   console.error(`history_v2_preflight ${month}`);
   const data = monthData.get(month);
   const artifacts = [
@@ -1416,6 +1423,7 @@ const result = {
   stageFinalize: "NONE",
   householdId,
   months: monthResults,
+  sourceRevision: runtimeContext.dataRevision,
   summary: {
     monthCount: monthResults.length,
     resourceFamilies: materialization.historyV2QueryResources.length,

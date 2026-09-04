@@ -1043,6 +1043,13 @@ const rpcCalls = [];
 const fakeClient = {
   from(table) {
     return {
+      select() { return this; },
+      eq() { return this; },
+      async single() {
+        return { data: { status: "draft", published_at: null, published_analytics_revision: null,
+          dependency_manifest: null, source_revision: runtimeContext.dataRevision,
+          base_analytics_revision: runtimeContext.analyticsRevision }, error: null };
+      },
       insert(row) {
         assert.equal(table, "analytics_publications");
         publicationInsert = row;
@@ -1151,11 +1158,14 @@ check(() => assert.equal(
 
 const { checkHistoryDependencyManifest } = await import("./check-history-v2-dependency-manifest.mjs");
 const hc3 = await checkHistoryDependencyManifest({ materialization, historyAnalytics, preflight, runtimeContext, artifactInputs, require });
+const { checkHistoryFrozenPublication } = await import("./check-history-v2-frozen-publication.mjs");
+const hc4 = await checkHistoryFrozenPublication({ materialization, preflight, runtimeContext, identity, require });
 
 console.log(JSON.stringify({
   gate: "PASS",
   checks,
   hc3,
+  hc4,
   profileId: preflight.manifest.profileId,
   resourceFamilies: preflight.manifest.resourceFamilies.length,
   queryInstances: preflight.queries.length,
