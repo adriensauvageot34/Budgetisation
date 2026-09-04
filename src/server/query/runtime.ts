@@ -39,6 +39,8 @@ import {
 import { createRealQuerySources } from "./sources";
 import { safeRuntimeEnvironment } from "@/server/runtime-environment";
 import { recoverQueryRuntimeError } from "./recoverable-error";
+import { readHistoryGenerationSignal } from "./history-generation";
+import { parseHistoryGenerationRequest } from "@/query-api/history-v2/generation-signal";
 
 const personFinancialMetrics = new Set<ActiveMetricId>([
   "economic_consumption_net_attributable",
@@ -298,6 +300,14 @@ export async function resolveLatestBankOperationMonth() {
   );
   const repository = new CanonicalRepository(createCanonicalReadClient(), context);
   return repository.loadLatestBankOperationMonth();
+}
+
+export async function readAuthenticatedHistoryGeneration(value: unknown) {
+  const month = parseHistoryGenerationRequest(value);
+  const context = createAuthorizedRuntimeContext(
+    await getBootstrapContext(), parseInstant(new Date().toISOString()),
+  );
+  return readHistoryGenerationSignal(createCanonicalReadClient(), context, month);
 }
 
 export async function resolveLatestPublishedHistoryV2Month() {

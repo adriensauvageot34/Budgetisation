@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { createApiError } from "@/core/api";
 import { BootstrapAuthenticationRequiredError } from "@/server/bootstrap/errors";
-import { executeAuthenticatedQuery } from "@/server/query/runtime";
+import { executeAuthenticatedQuery, readAuthenticatedHistoryGeneration } from "@/server/query/runtime";
 
 export const dynamic = "force-dynamic";
 
@@ -47,6 +47,11 @@ export async function POST(request: Request) {
 
   let result;
   try {
+    if (request.headers.get("x-history-generation") === "1") {
+      return NextResponse.json(await readAuthenticatedHistoryGeneration(body), {
+        headers: { "Cache-Control": "private, no-store", Vary: "Cookie" },
+      });
+    }
     result = await executeAuthenticatedQuery(body);
   } catch (error) {
     const requestId = crypto.randomUUID();
@@ -76,5 +81,5 @@ export async function POST(request: Request) {
             result.error.code === "CONTRACT_MISMATCH"
           ? 400
           : 503;
-  return NextResponse.json(result, { status });
+  return NextResponse.json(result, { status, headers: { "Cache-Control": "private, no-store", Vary: "Cookie" } });
 }

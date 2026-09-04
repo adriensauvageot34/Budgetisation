@@ -16,12 +16,13 @@ import { DisplayState, StateBoundary, formatMoney } from "./renderers";
 import { historyV2Href, overlayTargetKey } from "./route-state";
 import { historyTransientDismissEvent, type HistoryCalendarFilterState, type HistoryOverlayTarget, type HistoryV2InitialState, type HistoryV2View } from "./types";
 import styles from "./history-v2.module.css";
+import { useHistoryPageState } from "./use-history-page-state";
 
 export function HistoryV2Page({
   month,
   view,
   filters,
-  initialState,
+  initialState: serverInitialState,
   initialOverlay,
 }: {
   readonly month: YearMonth;
@@ -30,6 +31,7 @@ export function HistoryV2Page({
   readonly initialState: HistoryV2InitialState;
   readonly initialOverlay?: HistoryOverlayTarget;
 }) {
+  const initialState = useHistoryPageState(month, serverInitialState);
   const router = useRouter();
   const weekStart = initialState.kind === "week" ? initialState.weekStart : undefined;
   const [stack, setStack] = useState<readonly HistoryOverlayTarget[]>(() => initialOverlay === undefined ? [] : [initialOverlay]);
