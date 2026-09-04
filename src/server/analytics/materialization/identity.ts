@@ -123,6 +123,7 @@ export type QuerySnapshotIdentity = {
 
 export type QuerySnapshotContractVariant =
   | "current"
+  | "history_v2_calendar_centric_pre_hc2"
   | "history_v2_calendar_centric_old"
   | "history_v2_visible_gaps_legacy";
 
@@ -234,6 +235,24 @@ export function historyV2AcceptedMethodSignatures(
   if (contract.family !== "history_v2") {
     return [{ methodSignature: current, contractVariant: "current" }];
   }
+  // Calendar-centric snapshots published before HC2 used the current RM
+  // contracts with the four doctrine policies below at their prior versions.
+  const calendarCentricPreHc2Policies = Object.freeze(Object.fromEntries(
+    contract.policyIds.map((policyId) => [
+      policyId,
+      policyId === "week_journal_projection"
+        ? parsePolicyVersion("v1")
+        : policyId === "month_overview_selection"
+          || policyId === "spending_nature"
+          || policyId === "life_money_selection"
+          ? parsePolicyVersion("v2")
+          : resolvePolicyVersions([policyId])[policyId],
+    ]),
+  )) as PolicyVersions;
+  const calendarCentricPreHc2 = historyV2ResourceMethodSignature(
+    resource,
+    calendarCentricPreHc2Policies,
+  );
   const preCalendarPolicyIds = contract.policyIds.filter(
     (policyId) => policyId !== "calendar_amount_views",
   );
@@ -268,11 +287,19 @@ export function historyV2AcceptedMethodSignatures(
     readonly methodSignature: string;
     readonly contractVariant: QuerySnapshotContractVariant;
   }[] = [{ methodSignature: current, contractVariant: "current" }];
-  if (preCalendar !== current) {
+  if (calendarCentricPreHc2 !== current) {
     accepted.push({
-      methodSignature: preCalendar,
-      contractVariant: "history_v2_calendar_centric_old",
+      methodSignature: calendarCentricPreHc2,
+      contractVariant: "history_v2_calendar_centric_pre_hc2",
     });
+  }
+  if (preCalendar !== current) {
+    if (!accepted.some(({ methodSignature }) => methodSignature === preCalendar)) {
+      accepted.push({
+        methodSignature: preCalendar,
+        contractVariant: "history_v2_calendar_centric_old",
+      });
+    }
   }
   if (!historyV2VisibleGapsMigratedResources.has(resource)) return accepted;
   const legacyPolicies = Object.freeze(Object.fromEntries(

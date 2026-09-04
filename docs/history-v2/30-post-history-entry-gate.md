@@ -805,3 +805,149 @@ CLI_LINKED_PROOF = NOT_AVAILABLE_IN_SESSION
 LIVE MIGRATION HISTORY MUTATION BY THIS REPRISE = NONE
 
 STOP
+
+## 11. HC6 B2A-R1 — ACTIVE SIGNATURE COMPATIBILITY
+
+Date de contrôle : 2026-09-04. Projet live lu :
+`ipuuhxrblxormwgoaqnz`. Baseline code : branche `main`, HEAD
+`60b5671b5998b332232d08c4a2bc2a6e0c5fc5f1`. Toutes les requêtes live de ce
+lot sont des `SELECT`. Aucun rebuild, stage, finalize, backfill, changement
+Canonical ou write Supabase n'a été exécuté.
+
+### 11.1 Diagnostic et classification
+
+Le défaut est un **COMPATIBILITY_GAP** réel dans le runtime, et non un simple
+`HARNESS_BUG` :
+
+1. `SupabaseAnalyticsMaterializationStore.readQuery()` appelle
+   `querySnapshotReadIdentities()` puis filtre SQL simultanément sur les
+   `query_key` et `method_signature` acceptés ; une signature absente est donc
+   rejetée avant lecture du payload.
+2. L'identité sélectionnée transporte son `contractVariant`.
+3. `executeQuery()` transmet ce variant à
+   `queryDataSchemaForContractVariant()` et refuse en fail-closed un payload
+   incompatible. Pour History V2, aucun miss ou échec de parse ne déclenche de
+   read-through vers les sources.
+
+Les 627 snapshots initialement bloqués sont légitimes. Leur signature est
+reproductible depuis le commit Calendar-centric
+`d4b70ca0c9b3e8c9214c0d1e7de51a8a57751d11` : mêmes contrats de ressources,
+mêmes méthodes métriques et mêmes versions de ReadModels que la branche
+actuelle, avec les versions de politiques effectivement publiées avant HC2 :
+
+- `calendar_semantics@v3` et `calendar_amount_views@v1` déjà actifs ;
+- `week_journal_projection@v1` au lieu de `v2` ;
+- `month_overview_selection@v2` au lieu de `v3` ;
+- `spending_nature@v2` au lieu de `v3` ;
+- `life_money_selection@v2` au lieu de `v3` ;
+- toutes les autres policies à leur version encore courante.
+
+Le variant préexistant `history_v2_calendar_centric_old` représente une époque
+plus ancienne : il retire `calendar_amount_views`, utilise
+`calendar_semantics@v2` et, selon la ressource, un ancien ReadModel. Il ne doit
+donc pas être élargi pour représenter cette génération. Le correctif introduit
+le variant déterministe nommé
+`history_v2_calendar_centric_pre_hc2`, calculé depuis les contrats et versions
+ci-dessus. Aucun hash live n'est codé en dur dans le runtime ; les hashes exacts
+ne sont figés que dans le test de non-régression.
+
+Classification finale :
+
+| Classe | Verdict | Preuve |
+| --- | --- | --- |
+| `HARNESS_BUG` | NO | le filtre réel du store refusait les signatures absentes |
+| `COMPATIBILITY_GAP` | YES, CORRIGÉ | variant historique nommé et dérivé des versions |
+| `PAYLOAD_SCHEMA_GAP` | NO | 927/927 payloads passent leur RuntimeSchema de variant |
+| `AUTHORITY_OR_DOCTRINE_GAP` | NO | provenance Git et policy registry déterministes |
+
+### 11.2 Inventaire live exhaustif
+
+Les lignes ci-dessous sont les snapshots actifs, non invalidés, `contract=v2`,
+rattachés à une publication `published`, sur `2025-08 → 2026-07`.
+
+| Ressource | Lignes | Signature live | Avant R1 | Après R1 / schema |
+| --- | ---: | --- | --- | --- |
+| `history_activity_detail` | 92 | `125ef8f7b40441717179bba63de74cfb879e8c7e54d4b9e8bc4c87da3e0094b6` | REJECTED | `pre_hc2`, PASS |
+| `history_bank_economy_bridge` | 12 | `4d9fc4e300f241e91805dbf2364ec8a5eff79ce9081059548c1059aa07ce860a` | ACCEPTED | `current`, PASS |
+| `history_category_detail` | 96 | `ed84263e57c20f516f169fd195accc5a40238514df78d2739fa74ab6f19f9140` | ACCEPTED | `pre_hc2`, PASS |
+| `history_day_journal` | 365 | `016163bec744441c3aa93ae0db4ddd80adb54157f2e1c9e6951d6f63ea66a16f` | REJECTED | `pre_hc2`, PASS |
+| `history_minimal_preview` | 12 | `3b25abf864250763ca7f8796b3a3f5946ef9134d566b55fbd2ff86f37640f9a0` | ACCEPTED | `pre_hc2`, PASS |
+| `history_moment_detail` | 43 | `6e93cf5253d7497ce9ef605c6ef4dbc6d7fb298f0200bd6a97f06738f7928763` | REJECTED | `pre_hc2`, PASS |
+| `history_month_balance_summary` | 12 | `544efc60513f4d926877aebf7d6c78151a2c37ec981363ba634f848e4da72f05` | ACCEPTED | `current`, PASS |
+| `history_month_calendar` | 12 | `e22d35bf87bcd5ffc91a0c4a68b8509c09854344eaa1787b155d4c600e3e1176` | REJECTED | `pre_hc2`, PASS |
+| `history_month_categories` | 12 | `860deebcb0664bce7691f8f2de6193f8fd633e92a4052d3e048024c7cd82348c` | ACCEPTED | `current`, PASS |
+| `history_month_life_money` | 12 | `1e2e2c091ebe0582943245bc01c221809a612caf8aa5dfd935bc0f8ce9089500` | REJECTED | `pre_hc2`, PASS |
+| `history_month_overview` | 12 | `79e1539ac970be724807e6a49aed89762cd80a1319a32d4a604691a216ec603a` | REJECTED | `pre_hc2`, PASS |
+| `history_month_spending_nature` | 12 | `465ac1eaa14fc54339ce4cdbdc8d46cd40606bae988a21c71e4bcf041fba706a` | ACCEPTED | `pre_hc2`, PASS |
+| `history_place_detail` | 39 | `541363d7dcfe1a0263448b75983e40e6aed0b9e21ce26cc96bc9943cd699a28d` | REJECTED | `pre_hc2`, PASS |
+| `history_spending_segment_detail` | 144 | `de6260311627fb1ae98d05eb39074153bca967f978226c1d927e8fdb8b2be80b` | ACCEPTED | `pre_hc2`, PASS |
+| `history_week` | 52 | `feabe7baef95d9b7929ebd0bfaf526cf379e8e9c6238cb6631e8452e3e4a14a7` | REJECTED | `pre_hc2`, PASS |
+
+Totaux après correction :
+
+- signatures explicitement acceptées : **927/927** ;
+- RuntimeSchemas Query exécutés sur les payloads live : **927/927** ;
+- variant `history_v2_calendar_centric_pre_hc2` : **891** ;
+- variant `current` : **36** ;
+- artifacts partagés actifs parsés : **24/24** ;
+- familles Query présentes et valides : **15/15** ;
+- erreurs de signature ou de payload : **0**.
+
+Les payloads pré-HC2 utilisent les schémas Calendar-centric actuels : aucune
+forme alternative ni coercition n'est requise. Le variant le déclare
+explicitement dans `queryDataSchemaForContractVariant()`.
+
+### 11.3 Garde-fous permanents
+
+Le gate Snapshot Materialization vérifie désormais les huit hashes qui étaient
+bloqués, leur reconstruction sous le variant nommé, l'absence de signature
+dupliquée sur les 15 ressources et la résolution déterministe de chaque
+signature vers un seul variant. Le chemin store/runtime prouve en plus :
+
+- snapshot actif, non invalidé, `contract_version=v2`, publication `published`
+  et signature acceptée : HIT ;
+- signature inconnue : MISS fail-closed ;
+- mauvais contrat : refus par le prédicat strict `contract_version` ;
+- snapshot inactif ou invalidé : refus par `is_active=true` et
+  `invalidated_at IS NULL` ;
+- payload invalide : `CONTRACT_MISMATCH` ;
+- plusieurs snapshots acceptés pour une même Query :
+  `TEMPORARY_UNAVAILABLE` ;
+- absence de snapshot compatible ou payload invalide : aucun read-through
+  History V2.
+
+### 11.4 Contrôles exécutés
+
+| Contrôle | Résultat |
+| --- | --- |
+| Analytics identity/materialization | PASS |
+| Snapshot Materialization + signatures R1 | PASS — 82 contrôles |
+| HC3 dependency manifest | PASS |
+| HC4 frozen publications, PostgreSQL local | PASS |
+| HC5 correction/republish/cache, PostgreSQL local | PASS — 160 contrôles |
+| Frontend snapshot-only | PASS — 15/15 |
+| Live Query RuntimeSchemas | PASS — 927/927 |
+| Live artifact RuntimeSchemas | PASS — 24/24 |
+| Architecture imports | PASS — 470 fichiers |
+| `tsc --noEmit` | PASS |
+| Next production build | PASS — Next.js 16.2.6 |
+| `git diff --check` | PASS |
+
+Le harness live temporaire n'a écrit aucun payload sur disque et a été supprimé
+après validation. Aucun fichier temporaire ne reste dans le working tree.
+
+### 11.5 État d'arrêt R1
+
+- B2A-R1 : terminé.
+- B2A full certification : non reprise dans ce lot.
+- B2B : non commencée et interdite.
+- Live writes : NONE.
+- Rebuild / stage / finalize : NONE.
+- `POST_HISTORY_ENTRY_GATE` : NON ÉMIS.
+
+HC6 B2A-R1 = PASS
+
+STOP
+
+B2A FULL CERTIFICATION = TO_RESUME
+B2B = FORBIDDEN
