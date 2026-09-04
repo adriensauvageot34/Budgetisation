@@ -8,6 +8,7 @@ import Big from "big.js";
 import ts from "typescript";
 
 import { createFixtureSupabaseClient, loadFixtureTables } from "./lib/fixture-supabase-client.mjs";
+import { assertCurrentMinimalCertification } from "./lib/history-v2-current-minimal-evidence.mjs";
 
 const require = createRequire(import.meta.url);
 const repositoryRoot = process.cwd();
@@ -1228,7 +1229,7 @@ function displayCollectionItems(node) {
   return node?.visibility === "VISIBLE" && (node.data.status === "KNOWN" || node.data.status === "PARTIAL")
     ? node.data.items : [];
 }
-function assertMonthInvariants(data, preflight, deterministic, expectedOracle) {
+async function assertMonthInvariants(data, preflight, deterministic, expectedOracle) {
   const ledger = data.dailyArtifact;
   const calendarArtifact = data.calendarArtifact;
   const checks = [];
@@ -1299,12 +1300,24 @@ function assertMonthInvariants(data, preflight, deterministic, expectedOracle) {
       : officialTypical.availability !== "known",
     `Analytics=${officialTypical.availability === "known" ? officialTypical.value : officialTypical.availability}; EXPECTED=${expectedTypical.availability === "known" ? expectedTypical.value : expectedTypical.availability}`,
   );
+  // Compare-only evidence is read AFTER Canonical production/preflight, never by builders.
+  const currentMinimalProof = data.month === "2026-01"
+    ? await assertCurrentMinimalCertification({
+      month: data.month, repository, repositoryRoot,
+      source: await factResolver.resolve("minimal_month_cost", { subject: { kind: "household" }, time: { kind: "month", month: data.month } }),
+      metric: data.analyticsAuthority.minimal.metric, components: data.analyticsAuthority.minimal.components,
+    }) : null;
   check(
     "X03_MINIMAL_EXPECTED",
-    expectedOracle.minimal.availability === "known"
-      ? minimal.available && moneyClose(minimal.value, expectedOracle.minimal.value)
-      : !minimal.available,
-    `Analytics=${minimal.value ?? "UNKNOWN"}; EXPECTED=${expectedOracle.minimal.value ?? expectedOracle.minimal.availability}`,
+    currentMinimalProof !== null
+      ? currentMinimalProof.status === "PASS" && minimal.available
+        && minimal.value === data.analyticsAuthority.minimal.metric.value
+      : expectedOracle.minimal.availability === "known"
+        ? minimal.available && moneyClose(minimal.value, expectedOracle.minimal.value)
+        : !minimal.available,
+    currentMinimalProof !== null
+      ? stableJson({ authority: "COMPARE_ONLY", ...currentMinimalProof, canonicalValue: minimal.value })
+      : `Analytics=${minimal.value ?? "UNKNOWN"}; EXPECTED=${expectedOracle.minimal.value ?? expectedOracle.minimal.availability}`,
   );
   const expectedCategoryTypicals = new Map((expectedOracle.typicalCategories?.rows ?? []).map((row) => [row.categoryId, row]));
   check(
@@ -1380,7 +1393,7 @@ for (const month of selectedMonth === undefined ? months : [selectedMonth]) {
   const deterministic = publicationOnly
     ? preflight
     : await materialization.buildHistoryV2Preflight({ context: runtimeContext, month, artifacts: [...artifacts].reverse(), buildQuery, implementation });
-  const checks = publicationOnly ? [] : assertMonthInvariants(data, preflight, deterministic, oracleMonths[month]);
+  const checks = publicationOnly ? [] : await assertMonthInvariants(data, preflight, deterministic, oracleMonths[month]);
   const resources = publicationOnly
     ? materialization.historyV2QueryResources.map((resource) => ({ resource, classification: "PASS", reasons: [] }))
     : materialization.historyV2QueryResources.map((resource) => resourceResult(preflight, resource));

@@ -951,3 +951,405 @@ STOP
 
 B2A FULL CERTIFICATION = TO_RESUME
 B2B = FORBIDDEN
+
+## 12. HC6 B2A — FULL 12-MONTH CERTIFICATION
+
+Date : 2026-09-04. Checkout : branche main, HEAD
+90f75fdcdd6126514f2bd51bd02d168fc2ec33bc, working tree propre au lancement.
+B2A-R1 et ses preuves acquises restent PASS. Aucun moteur, parser, test permanent,
+ReadModel, migration ou contrat n'a été modifié dans cette reprise.
+
+**Résultat : FAIL, arrêt au premier écart inattendu Minimal en janvier 2026.**
+Il ne s'agit plus d'un blocage de connexion. Supabase et GitHub sont accessibles ;
+le projet Supabase lu est bien ipuuhxrblxormwgoaqnz / Budgetisation /
+ACTIVE_HEALTHY.
+
+### 12.1 Baseline live relue, uniquement par SELECT
+
+Lectures le 4 septembre 2026, dont contrôle complet à 14:55:07 UTC et
+contrôle final après arrêt à 15:01:03 UTC :
+
+| Contrôle | Départ / fin |
+| --- | --- |
+| dataRevision | 1 / 1 |
+| analyticsRevision | 67 / 67 |
+| HC3 dans l'historique live | 20260904110151 history_v2_dependency_manifest |
+| HC4 dans l'historique live | 20260904110402 history_v2_frozen_publications |
+| Handshake | history-frozen-month@v1 |
+| Guards HC3/HC4 | 4 présents, activés (O) |
+| Publications History courantes | 12 / 12, toutes published |
+| Artifacts History actifs | 24 / 24 |
+| Query snapshots History actifs | 927 / 927 |
+| Familles actives | 15 / 15 |
+| Artifacts / snapshots actifs invalidés | 0 / 0 |
+| Doublons logiques Query / artifact | 0 / 0 |
+| Manifests non-NULL des publications courantes | 0 / 0 : LEGACY_UNKNOWN |
+
+Les douze publicationIds sont ceux de la baseline B1/R1 ; aucune nouvelle
+publication n'a été créée. Les artifacts sont sélectionnés par artifact_family :
+calendar_semantic_month et daily_economic_ledger_month (12 chacun).
+Leur metric_id physique porte le préfixe history_v2:.
+
+La validation exhaustive des **927 anciens payloads et 24 anciens artifacts**
+acquise sur ce HEAD n'a pas été rejouée. Les lectures de cette reprise portent
+sur la baseline, les métadonnées d'instances et les 48 modules M1–M4 nécessaires
+à la comparaison ; elles ne constituent pas une nouvelle certification des
+RuntimeSchemas legacy.
+
+### 12.2 Source Canonical et provenance de l'exécution
+
+Un **nouvel export live read-only** a été constitué, au lieu de réutiliser
+silencieusement une ancienne fixture :
+
+- 37 tables/vues Canonical nécessaires au Repository et au FactSourceResolver ;
+- 15 715 lignes, toutes les pages décodées et leurs cardinalités contrôlées ;
+- mêmes comptages et empreintes de contenu sur **37/37 sources avant/après export** ;
+- household_revisions exporté réellement à dataRevision=1 / analyticsRevision=67 ;
+- vue économique, contrôles de timing/réconciliation, operations/composantes,
+  activités, Moments, lieux/visites, personnes/jours, périodes et sources Minimal ;
+- purchase_events, purchase_event_memberships, purchase_event_timing_assertions,
+  economic_component_classifications et life_event_continuity_assertions :
+  présentes et vides, jamais remplacées par des données synthétiques.
+
+Recette d'empreinte source : COUNT(*) et
+MD5(string_agg(to_jsonb(row)::text, newline ORDER BY to_jsonb(row)::text)).
+Ces empreintes servent uniquement à détecter une dérive durant l'export ;
+ce ne sont ni des resourceInputHash ni des publicationFactsHash.
+
+Le connecteur a renvoyé une limitation temporaire 429 avec retry_after=60.
+Après attente, seules les pages manquantes ont été relues. Les comptages finaux
+et les empreintes avant/après ont été contrôlés ; aucune page partielle ou
+tronquée n'a été acceptée.
+
+Dossier de preuve privé, **hors dépôt Git** :
+C:/Users/Manon/AppData/Local/Temp/hc6-b2a-90f75fd-a3cd9ae0874e490ca952e2ca10a419dc
+
+Il contient l'export canonical/, canonical-proof-final.json, les inventaires
+courants, live-baseline.json, live-after-certification.json et
+certification-failure.json. Aucun export bancaire/personnel n'est ajouté à Git.
+
+Oracle de comparaison : fichier existant
+../work/certified-history-frozen-minimal-pass2/expected_vs_engine_FINAL.json.
+Ce fichier original n'a pas été modifié. Sa copie privée expected-compare-only.json
+a uniquement perdu le suffixe littéral backslash-n situé après la fermeture JSON,
+qui rendait le fichier original non parseable tel quel. Une assertion deepEqual
+établit l'identité du document JSON complet avant/après cette correction de transport.
+SHA-256 du JSON.stringify(finalExpectedOracle) de cette copie :
+5533e5236301ce85d47bbabc06a603f1b5afe3d0d6d56fa5408d7b183bbfaba0.
+Aucune valeur métier, aucun EXPECTED et aucun hash attendu n'ont été ajustés.
+
+Le chemin exécuté est celui de HC1 :
+CanonicalRepository → FactSourceResolver → Analytics officiels → builders History.
+Dans check-history-v2-certification-12-months.mjs, EXPECTED intervient dans
+assertMonthInvariants(), pas dans les valeurs produites. Aucune injection de
+l'oracle pour combler cet écart. La date technique asOf du runner officiel reste
+2026-08-31T12:00:00Z ; elle n'est pas présentée comme date du contrôle live.
+
+### 12.3 Gate officiel exécuté et point d'arrêt
+
+Commande exécutée, avec les chemins privés ci-dessus :
+
+    node scripts/check-history-v2-certification-12-months.mjs <canonical> <expected-compare-only.json> <certification>
+
+HISTORY_V2_PREFLIGHT_BUNDLE_FILE désignait candidate-bundle.json dans le même
+dossier privé. Aucun --publication-only, aucun --month, aucune simulation de
+Canonical, aucun Begin, stage, attach manifest, finalize ou rollback.
+
+Le runner a construit les deux artifacts sur les mois de support
+2025-07 → 2026-08, puis les intrants des douze cibles 2025-08 → 2026-07.
+Les preflights déterministes des cinq premiers mois ont franchi leurs assertions.
+La sixième cible s'est arrêtée exactement sur :
+
+    AssertionError [ERR_ASSERTION]:
+    X03_MINIMAL_EXPECTED 2026-01:
+    Analytics=1709.194; EXPECTED=1713.194
+
+Preuves code :
+scripts/check-history-v2-certification-12-months.mjs,
+assertMonthInvariants(), contrôle X03_MINIMAL_EXPECTED (ligne 1302 à ce HEAD),
+appel depuis la boucle de certification (ligne 1383).
+Exit code du runner : 1.
+
+| Mesure janvier 2026 | Valeur |
+| --- | ---: |
+| Minimal calculé par Analytics sur le Canonical live | 1709.194 |
+| Minimal de l'oracle certifié conservé | 1713.194 |
+| Minimal du snapshot History actif | 1713.194 |
+| Écart candidat moins oracle / actif | -4 |
+
+Classification : **UNEXPECTED**. La cause interne détaillée de cet écart n'est
+pas établie par cette certification. Aucun diagnostic métier élargi ni correctif
+n'est engagé après ce STOP. Il faut expliquer la différence dans le calcul
+Minimal officiel avant de pouvoir reprendre la certification. Le simple accord
+du snapshot actif avec EXPECTED ne rend pas le candidat conforme.
+
+### 12.4 Résultats par mois, candidats et comparaison
+
+« Invariants franchis » ci-dessous vient de l'exécution séquentielle du runner :
+le mois suivant n'est annoncé qu'après les assertions du précédent.
+Cela ne remplace pas le reçu final de certification, qui n'a pas été émis.
+
+| Mois | Snapshots actifs | Artifacts actifs | Certification candidate | Comparaison / classification |
+| --- | ---: | ---: | --- | --- |
+| 2025-08 | 75 | 2 | Invariants franchis | comparaison détaillée non finalisée |
+| 2025-09 | 72 | 2 | Invariants franchis | comparaison détaillée non finalisée |
+| 2025-10 | 78 | 2 | Invariants franchis | comparaison détaillée non finalisée |
+| 2025-11 | 77 | 2 | Invariants franchis | comparaison détaillée non finalisée |
+| 2025-12 | 78 | 2 | Invariants franchis | comparaison détaillée non finalisée |
+| 2026-01 | 81 | 2 | FAIL — X03_MINIMAL_EXPECTED | UNEXPECTED — Minimal -4 |
+| 2026-02 | 75 | 2 | Non atteinte après STOP | non comparé |
+| 2026-03 | 77 | 2 | Non atteinte après STOP | non comparé |
+| 2026-04 | 79 | 2 | Non atteinte après STOP | non comparé |
+| 2026-05 | 79 | 2 | Non atteinte après STOP | non comparé |
+| 2026-06 | 79 | 2 | Non atteinte après STOP | non comparé |
+| 2026-07 | 77 | 2 | Non atteinte après STOP | non comparé |
+| Total | 927 | 24 | **Pas de PASS 12/12** | un écart bloquant confirmé |
+
+Les 15 familles configurées ont été contrôlées dans les preflights achevés,
+mais **15/15 familles certifiées sur les 12 mois n'est pas acquis**.
+
+Le runner n'écrit son rapport JSON final et son bundle qu'à la fin de la boucle.
+Après cet arrêt, ni history-v2-certification-12-months.json ni candidate-bundle.json
+n'ont été émis. Les comptages exacts des instances candidates, leurs
+resourceInputHashes, publicationFactsHash, manifestHash, policyVersions et
+closures ne sont donc **pas livrés comme preuves certifiées**. Ils ne sont pas
+reconstruits depuis les snapshots actifs ni obtenus par un contournement
+--publication-only.
+
+L'inventaire actuel des hashes est conservé hors Git dans
+current-publications-summary.json ; le manifest de ces générations est
+LEGACY_UNKNOWN. Il ne faut pas inventer une closure rétrospective ni affirmer
+l'égalité ancien factsHash / nouveau publicationFactsHash.
+Les différences de méthodes/policies pré-HC2 connues en section 11 ne suffisent
+pas à expliquer automatiquement l'écart de valeur Minimal détecté ici.
+
+### 12.5 État des familles de preuves
+
+| Exigence | État de cette reprise |
+| --- | --- |
+| Source Canonical actuelle et export cohérent | PASS — 37/37 sources, révisions 1/67 |
+| Absence d'oracle comme autorité de production | chemin HC1 conservé ; EXPECTED compare-only |
+| Calendar / Daily, Actual et Daily reconciliation | assertions franchies sur les cinq premiers mois, gate 12 mois non émis |
+| Catégories et réconciliations M3 | assertions franchies sur les cinq premiers mois, gate 12 mois non émis |
+| M1 / Typical / Minimal | FAIL en janvier sur Minimal |
+| M2 / M3 / M4 / Activity / Moment / Place sur douze mois | certification complète non acquise |
+| RuntimeSchemas candidats 12 mois | non acquis |
+| resourceInputHash closure / publicationFactsHash / manifestHash | validations dans les preflights achevés ; aucun manifest final livré |
+| 12 générations candidates prêtes | NO |
+| Écarts inattendus | UNEXPECTED : janvier Minimal -4 |
+| Anciennes preuves R1 | conservées, non rejouées |
+| HC3 / HC4 / HC5 / typecheck / build / architecture | non rejoués : aucun code modifié |
+| git diff --check | PASS après ajout documentaire |
+| Écritures live B2A | NONE |
+
+### 12.6 Plan B2B préparé, non autorisé et non exécutable à ce stade
+
+Prérequis bloquant : expliquer/corriger l'écart Minimal dans un périmètre
+autorisé, puis reprendre le gate exhaustif 12 mois sur le checkout réellement
+enregistré et le Canonical actuel. Ne pas modifier EXPECTED pour masquer l'écart.
+Aucune autorisation B2B n'est demandée sur les candidats de cette exécution.
+
+Après certification complète et autorisation humaine explicite seulement,
+réutiliser le parcours existant de history-rebuild.ts, un mois après l'autre :
+
+1. Relire contexte, dataRevision, analyticsRevision, handshake et actif du mois.
+   Si la source a changé, recapturer les intrants et recertifier.
+2. Produire / valider le candidat du mois avec produceCertifiedHistoryMonth
+   et validateHistoryMonthBuild, lié au contexte courant. Ne pas restamper
+   silencieusement un DRAFT ou son manifest scellé.
+3. Begin du mois uniquement ; stage des deux artifacts puis des snapshots
+   par petites écritures inactives, avec required artifact/query keys exactes.
+4. Attacher le manifest versionné ; read-back intégral de la génération inactive.
+   Vérifier complétude, unicité, RuntimeSchemas, contractVersion, méthodes,
+   policies, PublicationMeta, factsHash, implementation digest et manifestHash.
+5. Finalize atomique du mois via finalizeHistoryPublication ; aucun switch
+   si validation ou CAS de révision échoue.
+6. Read-back actif : ID/révision, ensemble logique complet, aucun ancien
+   reliquat de clé, aucun doublon, aucune ligne active invalidée.
+7. Seulement ensuite relire les révisions et passer au mois suivant.
+
+Atomicité **par mois**, jamais pour les douze mois ensemble.
+Ne pas créer douze DRAFT partageant la même analyticsRevision.
+Aucune de ces opérations n'a été exécutée dans B2A.
+
+### 12.7 Verdict et arrêt
+
+Seul ce rapport est modifié dans le dépôt. Aucun commit, push, déploiement,
+write Supabase, publication, Global ou travail UI.
+Le helper privé de comparaison non exécuté a été retiré ; les preuves d'échec
+et l'export privé cohérent sont conservés hors Git pour une reprise explicite.
+
+HC6 PHASE B2A = FAIL
+12-MONTH CERTIFICATION = FAIL
+15/15 QUERY FAMILIES = NOT_CERTIFIED_OVER_12_MONTHS
+CANDIDATE GENERATIONS = NOT_READY
+UNEXPECTED DIFFERENCES = 2026-01 MINIMAL -4
+LIVE WRITES B2A = NONE
+
+STOP
+HC6 PHASE B2B = NOT_STARTED / FORBIDDEN
+
+## 13. HC6 B2A-R2 FIX — preuve Minimal actuelle, janvier uniquement
+
+### 13.1 Entrée et autorité
+
+L'arbitrage humain de cette reprise est acquis : ROOT_CAUSE =
+CERTIFIED_ORACLE_STALE ; Canonical janvier = 1709.194 ; preuve/history legacy =
+1713.194. L'audit R2 n'est pas rejoué et aucune autre différence n'est corrigée.
+
+Baseline : main, HEAD 90f75fdcdd6126514f2bd51bd02d168fc2ec33bc.
+La section 12, déjà présente dans le working tree avant ce correctif, est
+conservée comme preuve chronologique de l'arrêt B2A.
+
+La nouvelle autorité EXPECTED est une preuve **COMPARE_ONLY** distincte :
+scripts/certification/history-v2-current-minimal/2026-01.json.
+Elle ne remplace pas certified-historical-minimal.json et ne devient jamais
+un MetricProductionSource. Aucun remplacement global de 1713.194.
+
+Le seul branchement modifié est X03_MINIMAL_EXPECTED dans
+assertMonthInvariants(), appelé après construction des ReadModels et des deux
+preflights déterministes. Pour janvier, cette assertion contrôle la nouvelle
+preuve, les composantes effectivement produites, les digests Canonical et
+l'empreinte d'implémentation. Pour les autres mois, la comparaison EXPECTED
+existante reste inchangée. Aucun résultat attendu n'est assigné à monthData,
+analyticsAuthority, un builder ou un payload.
+
+### 13.2 Contenu et reproductibilité
+
+Identité : hc6-b2a-r2-current-minimal-2026-01-v1 ; schemaVersion=1.
+Date de certification de la preuve : 2026-09-04T15:42:04Z.
+MethodVersion : minimal_month_cost@v1 ; sourceRevision=1.
+Source : même export Canonical privé B2A, précédemment vérifié read-only,
+projet ipuuhxrblxormwgoaqnz. Aucun nouvel export ni appel live dans ce correctif.
+
+La preuve versionne les 17 composantes additives avec clés, montants, support,
+coverage et provenance ; aucun libellé bancaire, mouvement individuel, personne,
+compte, CSV ou export Canonical n'est ajouté dans Git.
+
+| Partie | Valeur actuelle | Legacy conservée |
+| --- | ---: | ---: |
+| neutralVariableComponents | 532.540 | 536.540 |
+| mandatoryMonthlyObligationsAndProvisions | 1176.654 | 1176.654 |
+| Minimal final | 1709.194 | 1713.194 |
+| Need ae28d8ba-a1b3-5f6e-9b46-cb39b415e4ea | 12 | 16 |
+
+Les références sont exactement 2025-08, 2025-09, 2025-10, 2025-11, 2025-12.
+Le résolveur officiel est exécuté sans injection de source certifiée. La
+preuve vérifie aussi l'égalité des composantes de l'autorité History avec cette
+source Canonical indépendamment résolue.
+
+implementationSha = 90f75fdcdd6126514f2bd51bd02d168fc2ec33bc identifie le moteur
+audité puis recalculé. Ce correctif ne modifie aucun fichier de ce moteur.
+Une empreinte des sources Analytics/Core/Canonical, des deux résolveurs et
+des dépendances package, normalisées LF, vérifie cette continuité même après
+le nouveau commit de certification :
+
+minimal-source-tree-sha256-lf-v1 =
+c2fb8140bdb41a4bea22152514f9318b780c63828a5f4e0533181d3f29778f58.
+
+Le format minimal-canonical-projections-sha256-v1 conserve uniquement les
+comptages et SHA-256 de projections d'intrants, jamais les lignes sources :
+
+| Projection | Nombre |
+| --- | ---: |
+| scopeAndPeriods | 1 |
+| economicFacts | 609 |
+| operations | 591 |
+| allocations | 15 |
+| items | 44 |
+| paymentComponents | 1 |
+| cashUses | 20 |
+| baselineRules | 40 |
+| needs | 24 |
+| recurrenceSeries | 35 |
+| provisionPools | 3 |
+| annualEvents | 5 |
+| worksiteActivityTypeIds | 1 |
+| plannedActivityDays | 118 |
+
+Les SHA-256 individuels sont dans la preuve JSON. Digest composé des intrants :
+ce89619333395fdfe96e3dd1377e529004973c2fba4425e8709e7e5b931db562.
+L'ordre des objets et des lignes ne change pas ces empreintes. Une mutation
+d'une règle, d'un digest, d'une composante ou du code attendu provoque un échec,
+pas une régénération automatique de la preuve.
+
+Digest canonique de la preuve :
+2bab178f1383b4377754424cf4857b44176193953d5f0234dbec812e125e20fa.
+SHA-256 byte-for-byte du fichier legacy, inchangé :
+301615f3f3228eff44cc7f698927165c509fa48f40483e07c399ffd74ffe4f9d.
+
+### 13.3 Fichiers du correctif
+
+- scripts/certification/history-v2-current-minimal/2026-01.json : nouvelle
+  preuve compare-only, séparée du legacy ;
+- scripts/lib/history-v2-current-minimal-evidence.mjs : projections/digests et
+  assertions ; ne retourne que le statut et l'identité de preuve ;
+- scripts/check-history-v2-current-minimal-evidence.mjs : tests ciblés sur
+  export privé et frontière d'autorité ;
+- scripts/check-history-v2-certification-12-months.mjs : comparaison janvier
+  dans la phase d'assertion seulement ;
+- docs/history-v2/30-post-history-entry-gate.md : présent compte rendu.
+
+Moteur, source legacy, schéma, migrations, materialization store, frontend et
+snapshots live : inchangés.
+
+### 13.4 Tests et certification ciblée
+
+Commandes, avec chemins privés fournis par l'opérateur :
+
+```text
+node scripts/check-history-v2-current-minimal-evidence.mjs <fixture-canonical-B2A>
+node node_modules/typescript/bin/tsc --noEmit --incremental false
+node scripts/check-history-v2-certification-12-months.mjs <fixture-canonical-B2A> <oracle-legacy-compare-only> <sortie-privee> --month=2026-01 --household=<household-fixture> --source-revision=1
+git diff --check
+```
+
+| Contrôle | Résultat |
+| --- | --- |
+| Tests ciblés de preuve | PASS — 20/20 |
+| Legacy January via source historique/producer | PASS — 1713.194 |
+| Recalcul Canonical January | PASS — 1709.194 |
+| Comparaison actuelle / 17 composantes / Need=12 | PASS |
+| Altération du montant/composante/digest/implémentation | rejetée |
+| Réordonnancement des intrants | digest identique |
+| Séparation compare-only / production | PASS — appel uniquement dans assertMonthInvariants ; aucun import dans src ; preuve sans valeur de payload |
+| Typecheck | PASS |
+| Gate officiel janvier | PASS — 1 mois, 15 familles, 83/83 RuntimeSchemas, 32/32 invariants, 2 artifacts |
+| git diff --check | PASS, avertissements LF/CRLF uniquement |
+
+Le mode --month existant prépare ses dépendances privées sur la fenêtre
+historique, mais ne certifie et ne produit un preflight que pour janvier.
+Aucun gate août–décembre, HC3/HC4/HC5, 927 payloads legacy ou build complet n'est
+rejoué. Les compteurs V1 éventuellement rappelés par le JSON du runner sont
+des acquis antérieurs, pas des tests exécutés dans cette mission.
+
+Résultat janvier : Minimal=1709.194, X03_MINIMAL_EXPECTED=PASS, preuve
+hc6-b2a-r2-current-minimal-2026-01-v1. Classification de disponibilité du mois :
+DATA_MISSING (absences Canonical explicites), aucun invariant FAIL. Ce statut
+ne signifie ni que toutes les données existent, ni que les douze mois sont
+certifiés.
+
+Manifest du preflight janvier :
+921d0f5a4be702d5fd12bafe0abe284f03789add2bd8fac547f08cb414a6276b.
+publicationFactsHash candidat :
+dc87acbbd7d5620ba46ec71071ddf0de17ee3794dfabb2ff102b1ebf9e23e2a9.
+Digest déterministe du résultat :
+93bc5e171a403bbdfd82a8b56bb89bff9f3703aa3e47f091fea64361657b72fc.
+Le rapport JSON détaillé est conservé dans la sortie privée
+january-current-certification/history-v2-certification-12-months.json.
+Il ne s'agit pas d'un manifest attaché à une publication live.
+
+### 13.5 Limites et arrêt
+
+Aucun Begin, Stage, attachement de manifest, Finalize, rollback, publication,
+push ou déploiement. Aucune écriture Supabase. Les preuves privées restent hors Git.
+La certification complète B2A reste à reprendre explicitement ; le correctif
+janvier ne constitue pas un PASS des onze autres mois.
+
+JAN 2026 CURRENT MINIMAL CERTIFICATION = PASS
+LEGACY MINIMAL EVIDENCE = PRESERVED
+PRODUCTION AUTHORITY = CANONICAL
+ORACLE = COMPARE_ONLY
+LIVE WRITES = NONE
+B2A FULL CERTIFICATION = TO_RESUME
+B2B = FORBIDDEN
