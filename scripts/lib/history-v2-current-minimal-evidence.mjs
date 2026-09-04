@@ -6,7 +6,11 @@ import path from "node:path";
 import { createRequire } from "node:module";
 import Big from "big.js";
 
-export const currentMinimalEvidenceFile = "scripts/certification/history-v2-current-minimal/2026-01.json";
+export const currentMinimalEvidenceMonths = Object.freeze([
+  "2026-01", "2026-02", "2026-03", "2026-04", "2026-05", "2026-06", "2026-07",
+]);
+export const currentMinimalEvidenceFile = (month) => currentMinimalEvidenceMonths.includes(month)
+  ? `scripts/certification/history-v2-current-minimal/${month}.json` : null;
 const groups = ["neutralVariableComponents", "mandatoryMonthlyObligationsAndProvisions"];
 const stable = (value) => Array.isArray(value) ? value.map(stable)
   : value !== null && typeof value === "object"
@@ -56,19 +60,21 @@ export function minimalInputDigests(bundle, context, month) {
   return { format: "minimal-canonical-projections-sha256-v1", dependencies, digest: evidenceDigest(dependencies) };
 }
 
-export async function observeCurrentMinimal({ repository, source, metric, repositoryRoot }) {
+export async function observeCurrentMinimal({ month, repository, source, metric, repositoryRoot }) {
+  assert.ok(currentMinimalEvidenceMonths.includes(month), "No current Minimal evidence registered for month");
   assert.equal(source.kind, "minimal_month");
   assert.equal(source.availability, "known");
   assert.ok(!("certifiedHistoricalValue" in source), "Canonical recompute must not inject frozen evidence");
   assert.equal(metric.availability, "known");
-  const month = "2026-01";
   const require = createRequire(path.join(repositoryRoot, "package.json"));
   const { TYPICAL_MONTH_REQUESTED_PERIOD_COUNT } = require(path.join(repositoryRoot, "src/analytics/references/index.ts"));
   const referencePeriods = repository.context.periods
     .filter(({ month: period, financeStatus, isClosed }) => financeStatus === "complete" && isClosed && period.slice(0, 7) < month)
     .map(({ month: period }) => period.slice(0, 7)).sort().slice(-TYPICAL_MONTH_REQUESTED_PERIOD_COUNT);
-  assert.deepEqual(referencePeriods, ["2025-08", "2025-09", "2025-10", "2025-11", "2025-12"]);
-  const bundle = await repository.loadMinimalPlanningBundle({ start: "2025-08-01", endExclusive: "2026-01-01" });
+  assert.ok(referencePeriods.length > 0, "Current Minimal evidence requires closed reference months");
+  const bundle = await repository.loadMinimalPlanningBundle({
+    start: `${referencePeriods[0]}-01`, endExclusive: `${month}-01`,
+  });
   return {
     month, availability: "known", finalValue: metric.value, MethodVersion: metric.methodVersion,
     referencePeriods, sourceRevision: repository.context.dataRevision,
@@ -80,28 +86,33 @@ export async function observeCurrentMinimal({ repository, source, metric, reposi
 }
 
 export function assertMinimalEvidence(evidence, observed) {
+  assert.ok(currentMinimalEvidenceMonths.includes(observed.month));
   assert.equal(evidence.schemaVersion, 1);
   assert.equal(evidence.authority, "COMPARE_ONLY");
-  assert.equal(evidence.certificationId, "hc6-b2a-r2-current-minimal-2026-01-v1");
+  const revision = observed.month === "2026-01" ? "r2" : "r3";
+  assert.equal(evidence.certificationId, `hc6-b2a-${revision}-current-minimal-${observed.month}-v1`);
   assert.match(evidence.implementationSha, /^[0-9a-f]{40}$/);
   assert.ok(Number.isFinite(Date.parse(evidence.certifiedAt)));
   assert.equal(evidence.source, "CanonicalRepository -> FactSourceResolver -> produceMetric(minimal_month_cost); B2A read-only export");
   const expected = Object.fromEntries(Object.keys(observed).map((key) => [key, evidence[key]]));
   assert.deepEqual(observed, expected, "Current Minimal evidence differs from Canonical/implementation inputs");
   const components = groups.flatMap((group) => evidence[group]);
-  assert.equal(components.length, 17);
-  assert.equal(new Set(components.map((row) => row.canonicalComponentKey)).size, 17);
+  assert.ok(components.length > 0);
+  assert.equal(new Set(components.map((row) => row.canonicalComponentKey)).size, components.length);
   assert.equal(components.reduce((sum, row) => sum.plus(row.amount), new Big(0)).toFixed(), evidence.finalValue);
-  assert.equal(evidence.finalValue, "1709.194");
-  assert.equal(components.find((row) => row.canonicalComponentKey === "minimal:need:ae28d8ba-a1b3-5f6e-9b46-cb39b415e4ea")?.amount, "12");
   // Return proof metadata, never an expected amount or components for a payload.
-  return { status: "PASS", certificationId: evidence.certificationId, evidenceHash: evidenceDigest(evidence), componentCount: 17 };
+  return { status: "PASS", certificationId: evidence.certificationId, evidenceHash: evidenceDigest(evidence), componentCount: components.length };
 }
 
 export async function assertCurrentMinimalCertification({ month, repository, source, metric, components, repositoryRoot }) {
-  if (month !== "2026-01") return null; // Other months retain their existing compare-only oracle.
-  const evidence = JSON.parse(fs.readFileSync(path.join(repositoryRoot, currentMinimalEvidenceFile), "utf8"));
-  const observed = await observeCurrentMinimal({ repository, source, metric, repositoryRoot });
+  const file = currentMinimalEvidenceFile(month);
+  if (file === null) return null; // Unregistered months retain their existing compare-only oracle.
+  // A registered but absent/invalid evidence file fails closed; never fall back to legacy.
+  const evidence = JSON.parse(fs.readFileSync(path.join(repositoryRoot, file), "utf8"));
+  const observed = await observeCurrentMinimal({ month, repository, source, metric, repositoryRoot });
+  assert.equal(createHash("sha256").update(fs.readFileSync(path.join(repositoryRoot,
+    "src/server/analytics/materialization/certified-historical-minimal.json"))).digest("hex"), evidence.legacyEvidenceSha256,
+    "Legacy Minimal evidence must stay byte-for-byte intact");
   assert.deepEqual(ordered(components), ordered(groups.flatMap((group) => observed[group])),
     "History authority components must equal the independently resolved Canonical source");
   return assertMinimalEvidence(evidence, observed);

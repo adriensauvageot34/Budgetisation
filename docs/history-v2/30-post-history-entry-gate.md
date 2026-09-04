@@ -1353,3 +1353,236 @@ ORACLE = COMPARE_ONLY
 LIVE WRITES = NONE
 B2A FULL CERTIFICATION = TO_RESUME
 B2B = FORBIDDEN
+
+## 14. HC6 B2A RESUME AFTER R2 — février à juillet, arrêt en février
+
+### 14.1 Baseline et réutilisation de la source
+
+Reprise du 4 septembre 2026 sur main, HEAD
+268dbe98f8bcabb2b764f162499903c76bb1786c ; working tree propre au départ.
+Les acquis août 2025 à janvier 2026, HC1–HC5, B1, B2A-R1 et les 927
+RuntimeSchemas legacy ne sont pas rejoués. La preuve actuelle janvier et la
+preuve historique legacy sont inchangées.
+
+Contrôles Supabase uniquement SELECT sur ipuuhxrblxormwgoaqnz :
+
+- dataRevision=1, analyticsRevision=67 ;
+- 37/37 comptages et empreintes live identiques à canonical-proof-final.json ;
+- 37/37 ensembles de lignes de l'export privé cohérent correspondent au live.
+
+La recette des empreintes live d'origine est
+MD5(string_agg(to_jsonb(row)::text, newline ORDER BY to_jsonb(row)::text)).
+Pour vérifier les fichiers locaux indépendamment de l'ordre/collation,
+la comparaison utilise aussi le MD5 des empreintes de lignes triées,
+séparées par newline. Pour les quatre vues financières, les zéros finaux
+des nombres PostgreSQL sont normalisés avec trim_scale dans le SELECT de
+comparaison : aucune valeur n'est arrondie, aucun fichier source n'est réécrit.
+Cette normalisation ne modifie pas les empreintes de référence conservées.
+
+Preuve privée : remaining-source-revalidation.json, dans le même répertoire
+temporaire B2A que l'export canonical/ décrit en section 12.
+Aucun nouvel export complet n'est nécessaire. Aucune donnée privée n'est ajoutée
+dans le repository.
+
+### 14.2 Premier contrôle février : invariant officiel Minimal
+
+Le mode --month du runner enregistré prépare encore les intrants de toute
+la fenêtre historique. Afin de respecter l'interdiction de recalculer les
+mois acquis, cette reprise vérifie d'abord l'invariant M1 Minimal de février
+avant ce préchargement.
+
+Le helper privé certify-february-minimal-preflight.cjs :
+
+1. reprend le bootstrap read-only du test courant enregistré ;
+2. appelle CanonicalRepository -> FactSourceResolver -> produceMetric pour le
+   scope Household / 2026-02 uniquement, sans source certifiée injectée ;
+3. extrait par AST l'appel exact check("X03_MINIMAL_EXPECTED", ...) du runner
+   officiel et l'exécute avec le résultat réel et l'oracle compare-only ;
+4. arrête l'exécution dès cette assertion FAIL.
+
+Les observations Canonical des mois de référence sont lues pour calculer le
+Minimal de février, mais aucun Minimal, artifact, candidat ou gate
+août–janvier n'est recalculé.
+Un premier essai du helper privé a échoué sur une liaison d'import fs avant
+l'assertion ; seul ce helper hors Git a été corrigé, sans modification du
+runner officiel ni du moteur.
+
+| Mois | Assertion | Canonical | EXPECTED | Delta Canonical - EXPECTED | Statut |
+| --- | --- | ---: | ---: | ---: | --- |
+| 2026-02 | X03_MINIMAL_EXPECTED | 1737.76166666666666666668 | 1741.095 | -3.33333333333333333332 | UNEXPECTED / FAIL |
+
+Le delta dépasse la tolérance 0.01 de l'assertion officielle.
+La preuve actuelle janvier n'est pas étendue implicitement à février.
+Aucune conclusion CERTIFIED_ORACLE_STALE, CANONICAL_ENGINE_BUG ou autre cause
+n'est attribuée à février dans cette mission : ce serait un nouvel audit.
+Aucun attendu, certificat, moteur, règle ou Canonical n'est corrigé.
+
+### 14.3 État des étapes et arrêt
+
+Le contrôle précoce a échoué avant construction du preflight complet de février.
+Les RuntimeSchemas candidats, les 15 familles, les invariants restants,
+les hashes/manifests et le déterminisme de février ne sont donc pas déclarés
+PASS. Aucun candidat publiable ni bundle février n'est livré.
+
+| Mois restant | Résultat de cette reprise |
+| --- | --- |
+| 2026-02 | FAIL — premier invariant Minimal, arrêt immédiat |
+| 2026-03 | NOT_STARTED |
+| 2026-04 | NOT_STARTED |
+| 2026-05 | NOT_STARTED |
+| 2026-06 | NOT_STARTED |
+| 2026-07 | NOT_STARTED |
+
+Preuve d'échec privée : february-first-invariant-result.json.
+Le tableau consolidé de douze mois n'est pas produit comme certification :
+la condition février–juillet PASS n'est pas satisfaite. Les preuves déjà
+acquises août–janvier restent conservées sans rejeu.
+
+Seul ce rapport est modifié dans Git. git diff --check : PASS.
+Aucun test HC3/HC4/HC5, aucune validation legacy, aucun build, aucune passe
+finale douze mois, aucun Begin/Stage/Finalize, aucune publication et aucune
+écriture Supabase. Aucun commit ni push dans cette reprise.
+
+B2A REMAINING MONTHS = FAIL
+FIRST UNEXPECTED = 2026-02 X03_MINIMAL_EXPECTED
+2026-03 -> 2026-07 = NOT_STARTED
+LIVE WRITES = NONE
+FINAL 12-MONTH CONSOLIDATED RUN = NOT_STARTED / BLOCKED_BY_FEBRUARY
+B2B = FORBIDDEN
+
+STOP
++
+## 15. HC6 B2A-R3 FIX — CURRENT MINIMAL EVIDENCE FEB→JUL
+
+### 15.1 Périmètre et source
+
+Reprise du 4 septembre 2026 sur main, HEAD
+268dbe98f8bcabb2b764f162499903c76bb1786c. La section 14, produite par la
+reprise interrompue, est conservée intégralement avant ce correctif pour garder
+la chronologie de preuve.
+
+Les résultats R3 acquis ne sont pas réaudités : les six écarts Minimal de
+février à juillet sont CERTIFIED_ORACLE_STALE et OTHER_ROOT_CAUSE=0. L'export
+Canonical privé est réutilisé avec dataRevision/sourceRevision=1 et ses 37/37
+digests validés. Aucun accès en écriture à Supabase n'est effectué.
+
+La source de production reste :
+
+CanonicalRepository -> FactSourceResolver sans CertifiedHistoricalMinimalSource
+-> produceMetric(minimal_month_cost).
+
+Les preuves EXPECTED sont lues seulement dans assertMonthInvariants(), après la
+construction Canonical, des deux artifacts, des ReadModels et du preflight.
+Elles ne sont ni MetricProductionSource, ni FactSource, ni intrant de builder,
+ReadModel ou payload.
+
+### 15.2 Preuves current compare-only
+
+Six fichiers versionnés complètent la preuve janvier inchangée :
+
+| Mois | Minimal current exact | Composantes | Références | evidenceHash |
+| --- | ---: | ---: | ---: | --- |
+| 2026-02 | 1737.76166666666666666668 | 17 | 6 | cbe41355a0b70a87cd67870e0ea265eaaf9aa412335666e1a70811a026b3a6c3 |
+| 2026-03 | 1710.52714285714285714286 | 17 | 7 | 1f59e4ab1b76ae9c12ecf5502b59b00377b7a8369d8b1ee9d0479fce7527bffe |
+| 2026-04 | 1676.3225 | 17 | 8 | 22dd50dff40cc6d2bca1d24d31a8c49b764b498f5d3ecc76542ed7002987cf2b |
+| 2026-05 | 1649.79222222222222222221 | 18 | 9 | f01e4b8fbbcdc827a569a88334ccf0e2e4a7dc904670f70ce2c753834498ffa1 |
+| 2026-06 | 1623.097 | 18 | 10 | f31655bdd9bbd93e5bdd4146162eeea6042304554bee455e56bfab74439ba0c2 |
+| 2026-07 | 1636.76636363636363636364 | 18 | 11 | da1f636417046750095dff0fa5e0e27497fc365f35dc1c247153036f5d86b222 |
+
+Chaque preuve contient schemaVersion=1, authority=COMPARE_ONLY, finalValue,
+MethodVersion, referencePeriods, les deux groupes de composantes complets avec
+support/coverage/provenance, sourceRevision, l'identité SHA/digest de
+l'implémentation et les digests détaillés des intrants Canonical.
+
+Les composantes correspondent exactement au recalcul : Need N sur les six mois,
+récurrence R à partir de mai, structure S en juin/juillet et structure T en
+juillet. Aucun résidu de sérialisation legacy n'est converti en composante.
+Les résidus exacts de février, mars et mai restent une propriété documentée de
+l'ancienne preuve seulement.
+
+Le sélecteur current est strictement borné à janvier→juillet. Un mois non
+enregistré retourne null ; une preuve enregistrée absente, altérée ou
+incompatible échoue fermée sans repli vers le legacy.
+
+### 15.3 Legacy et séparation d'autorité
+
+Le fichier certified-historical-minimal.json est inchangé octet pour octet :
+SHA-256
+301615f3f3228eff44cc7f698927165c509fa48f40483e07c399ffd74ffe4f9d.
+La preuve current janvier reste également inchangée : SHA-256
+127f3a7fe46eda83794ae663bd29c56d5df96b525a65ef59e81d6a40c41a5393.
+
+Les douze valeurs legacy continuent à être vérifiées via la source historique et
+le producer. Les tests refusent une preuve current ou le petit objet résultat de
+son assertion comme MetricProductionSource. Aucun module sous src/ n'importe le
+mécanisme compare-only. L'autorité de payload est donc Canonical ; l'oracle est
+COMPARE_ONLY.
+
+### 15.4 Tests ciblés des preuves
+
+Le gate check-history-v2-current-minimal-evidence.mjs exécute 227 contrôles :
+
+- janvier current PASS et preuve inchangée ;
+- février→juillet exacts et recomputés depuis Canonical ;
+- 17/18 composantes exactes, y compris N/R/S/T ;
+- toutes les valeurs legacy préservées ;
+- altérations finalValue, amount, componentKey, digest global, digest d'une
+  dépendance, implementation digest/SHA, authority, sourceRevision et références
+  rejetées ;
+- preuve enregistrée manquante fail-closed ;
+- réordonnancement non métier des intrants sans faux changement de digest ;
+- preuve/résultat d'assertion inutilisables comme source de production ;
+- appel compare-only localisé uniquement dans assertMonthInvariants(), après
+  production.
+
+Résultat : 227/227 PASS. Typecheck PASS. Aucun build complet, aucune suite
+HC3/HC4/HC5 et aucun rejeu des 927 anciens RuntimeSchemas.
+
+### 15.5 Gates officiels ciblés
+
+Les six gates sont lancés l'un après l'autre avec --month. Le préchargement des
+dépendances historiques du runner ne certifie aucun mois acquis. Chaque sortie
+privée contient son preflight bundle et son résultat détaillé.
+
+| Mois | Gate | Familles | RuntimeSchemas | Invariants | Artifacts | manifestHash | publicationFactsHash |
+| --- | --- | ---: | ---: | ---: | ---: | --- | --- |
+| 2026-02 | PASS | 15/15 | 76/76 | 32/32 | 2/2 | c3075ac4c1c9202bdf50b6bcafb71b0c95a101954a4ebcce8e4e6a14c82fefb9 | 4cd9f279780233104ca397a50dff32390c58b24c5df1393ef6e85e2dd6ee77c5 |
+| 2026-03 | PASS | 15/15 | 80/80 | 32/32 | 2/2 | 1b9839e9ee61e401e85c6f8b8b95b87c992c8b8880528745b324896f43da7edf | abef819698f18aa53b3edf5c4b87b2a4f88333ec78a226d08aaba2a09ade02c6 |
+| 2026-04 | PASS | 15/15 | 81/81 | 32/32 | 2/2 | 949a042b9b4fd0d0f6469f9542b7c3b9b4f7d52c6eee58da8cd83f322bc9307e | 9f5950a1f39886abe6d7b82f9ab5a4627e4bf1f9cd9203bf13639be9c991f890 |
+| 2026-05 | PASS | 15/15 | 78/78 | 32/32 | 2/2 | 172f84c466ed38046684c348a2d0982e9d9ac16347e171a947e5ff898cdc92de | f0bd76d29a11ea7ce0233b4da3d6c17979bc6dbafab826ed90aefbba431757af |
+| 2026-06 | PASS | 15/15 | 80/80 | 32/32 | 2/2 | c7ce3c75fddff8fd23c0e700ccef0e40cba2a06039c098fb5cfa6cce6e88ed45 | 698a737e7274285a526491788b5e803ce042c1a902eaa1170416d319c2654ced |
+| 2026-07 | PASS | 15/15 | 78/78 | 32/32 | 2/2 | 73d8c1edbb33053f9b7bee4261571ed6f58c3fc8f28c37cac1685708c2c4a0a1 | 10747c20f81bf7363527d78212db5bcb076684eb66dc366a0cfc3eea1afa3f65 |
+
+Les six manifests sont history-v2-dependency-manifest@v2, complets en
+requiredQueryKeys/requiredArtifactKeys, factDependencies, implementation,
+policy/method versions et externalQueryRefs. Deux constructions READ-ONLY par
+mois donnent les mêmes manifestHash et publicationFactsHash. Aucun invariant
+FAIL et aucun nouvel écart non-Minimal.
+
+La classification globale de chaque mois reste DATA_MISSING du fait d'absences
+Canonical explicites déjà autorisées ; elle ne contient aucun FAIL et ne remet
+pas en cause les 32 invariants PASS.
+
+### 15.6 État de sortie
+
+Aucun Begin, Stage, attach manifest live, Finalize, rollback, publication,
+push ou déploiement. Aucune écriture Supabase. La passe consolidée douze mois
+n'est pas lancée dans ce lot.
+
+CURRENT MINIMAL EVIDENCE JAN→JUL = PASS
+
+2026-02 CERTIFICATION = PASS
+2026-03 CERTIFICATION = PASS
+2026-04 CERTIFICATION = PASS
+2026-05 CERTIFICATION = PASS
+2026-06 CERTIFICATION = PASS
+2026-07 CERTIFICATION = PASS
+
+LEGACY MINIMAL EVIDENCE = PRESERVED
+PRODUCTION AUTHORITY = CANONICAL
+ORACLE = COMPARE_ONLY
+LIVE WRITES = NONE
+FINAL 12-MONTH CONSOLIDATED RUN = REQUIRED NEXT
+B2B = FORBIDDEN
+
+STOP

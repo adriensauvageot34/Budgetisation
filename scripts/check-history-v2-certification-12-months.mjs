@@ -8,7 +8,7 @@ import Big from "big.js";
 import ts from "typescript";
 
 import { createFixtureSupabaseClient, loadFixtureTables } from "./lib/fixture-supabase-client.mjs";
-import { assertCurrentMinimalCertification } from "./lib/history-v2-current-minimal-evidence.mjs";
+import { assertCurrentMinimalCertification, currentMinimalEvidenceFile } from "./lib/history-v2-current-minimal-evidence.mjs";
 
 const require = createRequire(import.meta.url);
 const repositoryRoot = process.cwd();
@@ -1301,7 +1301,7 @@ async function assertMonthInvariants(data, preflight, deterministic, expectedOra
     `Analytics=${officialTypical.availability === "known" ? officialTypical.value : officialTypical.availability}; EXPECTED=${expectedTypical.availability === "known" ? expectedTypical.value : expectedTypical.availability}`,
   );
   // Compare-only evidence is read AFTER Canonical production/preflight, never by builders.
-  const currentMinimalProof = data.month === "2026-01"
+  const currentMinimalProof = currentMinimalEvidenceFile(data.month) !== null
     ? await assertCurrentMinimalCertification({
       month: data.month, repository, repositoryRoot,
       source: await factResolver.resolve("minimal_month_cost", { subject: { kind: "household" }, time: { kind: "month", month: data.month } }),

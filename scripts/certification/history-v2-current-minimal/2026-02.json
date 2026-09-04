@@ -1,0 +1,313 @@
+{
+  "schemaVersion": 1,
+  "authority": "COMPARE_ONLY",
+  "certificationId": "hc6-b2a-r3-current-minimal-2026-02-v1",
+  "implementationSha": "268dbe98f8bcabb2b764f162499903c76bb1786c",
+  "certifiedAt": "2026-09-04T16:25:37.947Z",
+  "source": "CanonicalRepository -> FactSourceResolver -> produceMetric(minimal_month_cost); B2A read-only export",
+  "legacyEvidenceSha256": "301615f3f3228eff44cc7f698927165c509fa48f40483e07c399ffd74ffe4f9d",
+  "month": "2026-02",
+  "availability": "known",
+  "finalValue": "1737.76166666666666666668",
+  "MethodVersion": "minimal_month_cost@v1",
+  "referencePeriods": [
+    "2025-08",
+    "2025-09",
+    "2025-10",
+    "2025-11",
+    "2025-12",
+    "2026-01"
+  ],
+  "sourceRevision": "1",
+  "implementation": {
+    "format": "minimal-source-tree-sha256-lf-v1",
+    "digest": "c2fb8140bdb41a4bea22152514f9318b780c63828a5f4e0533181d3f29778f58"
+  },
+  "inputs": {
+    "format": "minimal-canonical-projections-sha256-v1",
+    "dependencies": {
+      "scopeAndPeriods": {
+        "count": 1,
+        "digest": "effc654db0e025aa3292d71c4e405c80071f801dd5e5ba2164e1d2a8d147da6e"
+      },
+      "economicFacts": {
+        "count": 739,
+        "digest": "7d7a5bdfd5e7297b493b5eb3189c451fb6867d0d7d404520990de70e7e2d1218"
+      },
+      "operations": {
+        "count": 717,
+        "digest": "909fdc7891440f2431c898d7246f3cbacf5e08a5c8bac2c19fdfbeccedf9e7d9"
+      },
+      "allocations": {
+        "count": 15,
+        "digest": "0959fa0627dd1f2ce5ac91205fe35a1c35219ceff9283917cca636e05ee5d779"
+      },
+      "items": {
+        "count": 48,
+        "digest": "8ceec8c77fadf52de82e0af0b9aaa9cf12facf4a0cf8e4ae9b551f3f9ee276d7"
+      },
+      "paymentComponents": {
+        "count": 2,
+        "digest": "5f55510fa3bb01536fa5d2f2073ea88ce81c4f398b7ce8f12fefb6a4e267206f"
+      },
+      "cashUses": {
+        "count": 23,
+        "digest": "dc5f1b16111cbfbcede188616cef852c3b078d8da9198fbdbcb8605acdf711e2"
+      },
+      "baselineRules": {
+        "count": 40,
+        "digest": "7e62b7fe6c78a536c839c771596405f4dac711c439dd840b41e698a305e8b021"
+      },
+      "needs": {
+        "count": 24,
+        "digest": "0b2585eaa33014353593d3a73008bc7c7b92501c471bba6693340e2e710b9105"
+      },
+      "recurrenceSeries": {
+        "count": 35,
+        "digest": "fecc5db9c6cf71e3fa41e4c02cf3c0df413a0c2db4125f799f868483dfa20f43"
+      },
+      "provisionPools": {
+        "count": 3,
+        "digest": "1c49e180b04c2c6b975e7cd5b5e89a4641e8ce9e23e85f01ba42dc305432135c"
+      },
+      "annualEvents": {
+        "count": 5,
+        "digest": "247be3632271ba9fda3f7ea4b3f6e0693f145500f0572dd1c63b65b60a09d772"
+      },
+      "worksiteActivityTypeIds": {
+        "count": 1,
+        "digest": "974bfc145d77f42efa2267abbd05970e5b19faae3a7378ef1214176ed0776ab0"
+      },
+      "plannedActivityDays": {
+        "count": 147,
+        "digest": "bea7563bcbbda365c11f9157c17cb8a6538937c338f098ff91f351d5dca868ac"
+      }
+    },
+    "digest": "2d821366b29596f4754257ff3ea9d97641f47a4e76a20ca5d9f37d632e67b446"
+  },
+  "neutralVariableComponents": [
+    {
+      "amount": "10",
+      "canonicalComponentKey": "minimal:need:ae28d8ba-a1b3-5f6e-9b46-cb39b415e4ea",
+      "coverage": {
+        "level": "complete"
+      },
+      "provenance": "derived",
+      "support": {
+        "level": "sufficient",
+        "n": 6,
+        "unit": "month"
+      }
+    },
+    {
+      "amount": "43.35",
+      "canonicalComponentKey": "minimal:conditional:work-commute-fuel",
+      "coverage": {
+        "level": "complete"
+      },
+      "provenance": "estimated",
+      "support": {
+        "level": "sufficient",
+        "n": 6,
+        "unit": "month"
+      }
+    },
+    {
+      "amount": "497.15",
+      "canonicalComponentKey": "minimal:need:ea74a040-0bdb-50c9-b6f0-74fb6b73f2d0",
+      "coverage": {
+        "level": "complete"
+      },
+      "provenance": "derived",
+      "support": {
+        "level": "sufficient",
+        "n": 6,
+        "unit": "month"
+      }
+    }
+  ],
+  "mandatoryMonthlyObligationsAndProvisions": [
+    {
+      "amount": "15.10166666666666666667",
+      "canonicalComponentKey": "minimal:recurrence:e57d31b3-4dcb-5bc9-a52b-686f296bebac",
+      "coverage": {
+        "level": "complete"
+      },
+      "provenance": "derived",
+      "support": {
+        "level": "sufficient",
+        "n": 6,
+        "unit": "month"
+      }
+    },
+    {
+      "amount": "16.35666666666666666667",
+      "canonicalComponentKey": "minimal:recurrence:5079d3ae-7839-58c5-b0f8-4fcb1aabbada",
+      "coverage": {
+        "level": "complete"
+      },
+      "provenance": "derived",
+      "support": {
+        "level": "sufficient",
+        "n": 6,
+        "unit": "month"
+      }
+    },
+    {
+      "amount": "3",
+      "canonicalComponentKey": "minimal:structural-rule:1668d247-38dd-529a-ba7f-e5c8c33b5b63:category",
+      "coverage": {
+        "level": "complete"
+      },
+      "provenance": "derived",
+      "support": {
+        "level": "sufficient",
+        "n": 6,
+        "unit": "month"
+      }
+    },
+    {
+      "amount": "36.98",
+      "canonicalComponentKey": "minimal:recurrence:4010830d-bcf3-557c-af7f-8ac186ab2d0f",
+      "coverage": {
+        "level": "complete"
+      },
+      "provenance": "derived",
+      "support": {
+        "level": "sufficient",
+        "n": 6,
+        "unit": "month"
+      }
+    },
+    {
+      "amount": "37.18",
+      "canonicalComponentKey": "minimal:recurrence:5f1707aa-60f0-5ed6-86e7-ac67bbae2aef",
+      "coverage": {
+        "level": "complete"
+      },
+      "provenance": "derived",
+      "support": {
+        "level": "sufficient",
+        "n": 6,
+        "unit": "month"
+      }
+    },
+    {
+      "amount": "45.50666666666666666667",
+      "canonicalComponentKey": "minimal:provision:9c3fd311-333c-53be-8de8-1c8071fd3f0d",
+      "coverage": {
+        "level": "complete"
+      },
+      "provenance": "derived",
+      "support": {
+        "level": "sufficient",
+        "n": 6,
+        "unit": "month"
+      }
+    },
+    {
+      "amount": "47.18",
+      "canonicalComponentKey": "minimal:recurrence:d95e85e2-a2ab-5cd5-a8f1-64ba3ee56ed0",
+      "coverage": {
+        "level": "complete"
+      },
+      "provenance": "derived",
+      "support": {
+        "level": "sufficient",
+        "n": 6,
+        "unit": "month"
+      }
+    },
+    {
+      "amount": "5.62833333333333333333",
+      "canonicalComponentKey": "minimal:recurrence:85178ac7-ac64-554a-abd7-42c7c154304f",
+      "coverage": {
+        "level": "complete"
+      },
+      "provenance": "derived",
+      "support": {
+        "level": "sufficient",
+        "n": 6,
+        "unit": "month"
+      }
+    },
+    {
+      "amount": "6.46666666666666666667",
+      "canonicalComponentKey": "minimal:recurrence:62961690-4690-51a8-867d-abee35294e2d",
+      "coverage": {
+        "level": "complete"
+      },
+      "provenance": "derived",
+      "support": {
+        "level": "sufficient",
+        "n": 6,
+        "unit": "month"
+      }
+    },
+    {
+      "amount": "776.04666666666666666667",
+      "canonicalComponentKey": "minimal:recurrence:5b4640d7-aab4-5d53-8ceb-2126584c3448",
+      "coverage": {
+        "level": "complete"
+      },
+      "provenance": "derived",
+      "support": {
+        "level": "sufficient",
+        "n": 6,
+        "unit": "month"
+      }
+    },
+    {
+      "amount": "8.5",
+      "canonicalComponentKey": "minimal:recurrence:d1235129-9c4a-5673-961e-1c0e2b80cad8",
+      "coverage": {
+        "level": "complete"
+      },
+      "provenance": "derived",
+      "support": {
+        "level": "sufficient",
+        "n": 6,
+        "unit": "month"
+      }
+    },
+    {
+      "amount": "80.42333333333333333333",
+      "canonicalComponentKey": "minimal:recurrence:0716e2b2-7227-5358-b80c-9e054d0b9cbf",
+      "coverage": {
+        "level": "complete"
+      },
+      "provenance": "derived",
+      "support": {
+        "level": "sufficient",
+        "n": 6,
+        "unit": "month"
+      }
+    },
+    {
+      "amount": "9",
+      "canonicalComponentKey": "minimal:recurrence:d7f56f4f-baeb-5659-a89d-0d225c090441",
+      "coverage": {
+        "level": "complete"
+      },
+      "provenance": "derived",
+      "support": {
+        "level": "sufficient",
+        "n": 6,
+        "unit": "month"
+      }
+    },
+    {
+      "amount": "99.89166666666666666667",
+      "canonicalComponentKey": "minimal:structural-rule:12caff0a-8f3f-5a05-81c5-4a2d9169e9d1:category",
+      "coverage": {
+        "level": "complete"
+      },
+      "provenance": "derived",
+      "support": {
+        "level": "sufficient",
+        "n": 6,
+        "unit": "month"
+      }
+    }
+  ]
+}
