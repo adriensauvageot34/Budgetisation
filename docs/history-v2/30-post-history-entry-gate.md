@@ -1808,3 +1808,220 @@ LIVE WRITES B2A = NONE
 STOP
 
 HUMAN AUTHORIZATION REQUIRED FOR HC6 PHASE B2B
+
+## 17. HC6 B2B — LIVE 12-MONTH CUTOVER — ARRÊT CONTRÔLÉ
+
+### 17.1 Autorisation et préflight
+
+L'autorisation humaine B2B a été reçue pour le seul workflow
+Begin → stage inactif → attach manifest → Finalize atomique des douze mois.
+Avant la première écriture, le projet `ipuuhxrblxormwgoaqnz` a été relu :
+`dataRevision=1`, `analyticsRevision=67`, handshake
+`history-frozen-month@v1`, 12 mois actifs, 927 snapshots History actifs,
+24 artifacts actifs, aucun DRAFT, doublon ou contenu actif invalidé. Les 37/37
+digests Canonical correspondaient toujours à la source certifiée B2A.
+
+Chaque mois a été traité isolément. Avant chaque Begin, la révision, le
+handshake, l'ancien actif, les doublons et les invalidations ont été relus.
+Avant chaque Finalize réussi, le read-back a vérifié les 15 familles, les
+required keys, l'unicité, les méthodes, policies, resource/artifact input
+hashes, PublicationMeta, publicationFactsHash et manifestHash. Les lignes
+étaient toutes inactives et non invalidées. Après Finalize, les mêmes contrôles
+ont été rejoués sur les lignes actives et l'ancienne génération a été retrouvée
+intacte mais inactive.
+
+### 17.2 Cutovers atomiques terminés
+
+| Mois | Ancien actif → nouvel actif | Révision | Snapshots / artifacts | publicationFactsHash | manifestHash | Résultat |
+| --- | --- | ---: | ---: | --- | --- | --- |
+| 2025-08 | `be9f14c3-4ca6-46ca-a091-e83726d29052` → `d86b5fa6-3849-4651-9751-79d60dd49e57` | 67 → 68 | 77 / 2 | `42ef555ada8d94cf2c948ff63b8c7d3aca7b4ec919481ae7f564b82b2b0f25b6` | `01fdc1ccb287ce5a5294a35b845cf95e54b63c5b24e47f89186dbeacb1a077df` | PASS |
+| 2025-09 | `57b2070e-b8ae-478c-ba90-4c56abd9a974` → `ab01a5e5-2c1e-4114-9f23-dc494ead4663` | 68 → 69 | 76 / 2 | `4bca5d4c84af775d19292cf1e54c0b70858c63fe98b203f489515b1cacbb6c57` | `9419743db2adec1d26a494294fb7168a2703ecd494da4ef1e96252d7bd1d49db` | PASS |
+| 2025-10 | `792754b5-4413-48b1-84f2-56f1918a3c5b` → `002b1c63-e3dd-498d-9c6c-b2528b830487` | 69 → 70 | 80 / 2 | `1a259e82d8aaa634aa2bcb1f9750d9fdcc982b958fb349e5e9075a02c78b61c2` | `40787212916ee41240ec488f39ed314bcdb67e2153715c3c664945205da0ab24` | PASS |
+| 2025-11 | `056f1cfe-333c-4789-8d68-f655af912f35` → `dc1616d1-8859-432f-82d9-428b78d6d753` | 70 → 71 | 77 / 2 | `a679686a37eadf97641ffb23dce0711a89d83da1e7128b7349b7fe9f008ef3c9` | `080881892b0298c80748c5fb449935582aaec15cc23d6affd77d6ffe3fb12ed9` | PASS |
+| 2025-12 | `8fbaec50-0c78-4404-9e32-94bad3a1072d` → `d5475ba1-d8dc-4581-9c5f-feea1182455a` | 71 → 72 | 81 / 2 | `f620d01ccdca21a9d3cd1ad51c00dbebea179717c03cc61333671bc91bb86869` | `52d894567aedc804a72b18573d9fabbf7ec55d000a32711c80406e886424ac6b` | PASS |
+| 2026-01 | `da8bfdfb-ba89-4bef-b88e-47f50b0ebf12` → `06909cd9-605f-4e62-831f-cce8767c4b94` | 72 → 73 | 83 / 2 | `dc87acbbd7d5620ba46ec71071ddf0de17ee3794dfabb2ff102b1ebf9e23e2a9` | `e7bedddb2c5b4e4124fedb5d640006bad035a272072622081d83b00e21cde160` | PASS |
+| 2026-02 | `8bc54f7d-c0cb-4e8f-8172-32b02370b47b` → `69ec71ec-8d8d-462f-8aa7-fe86f1ae59eb` | 73 → 74 | 76 / 2 | `4cd9f279780233104ca397a50dff32390c58b24c5df1393ef6e85e2dd6ee77c5` | `39a54ffcdca0ddce285ed16f4bc72b258d3ed78efd1c68afb99ee2a5845433c7` | PASS |
+
+Ces sept Finalize sont atomiques. Chacun a laissé exactement une génération
+History active pour le mois, zéro clé active résiduelle, zéro doublon et zéro
+invalidation. Les anciennes publications et leurs contenus sont conservés.
+
+### 17.3 Arrêt au staging de mars
+
+Le DRAFT mars `6a8ee13f-b65d-4389-9d27-068777ff592c` a été créé avec
+`baseAnalyticsRevision=74`. Les deux artifacts et les dix premiers batches,
+soit 50/80 snapshots, ont été staged correctement, tous inactifs et non
+invalidés. Le batch `2026-03-queries-11.sql` a ensuite échoué.
+
+La cause observée est le transport du SQL, pas un mismatch du candidat :
+
+- le fichier local certifié fait 802 352 octets et ne contient pas le texte
+  `Warning` ;
+- le log PostgreSQL enregistre `syntax error at or near "Warning"` ;
+- la lecture intermédiaire du fichier a dépassé sa limite de sortie et a
+  injecté son avertissement de troncature dans le SQL transmis ;
+- la transaction du batch a été annulée : le DRAFT reste à 50 snapshots,
+  exactement le total des dix batches précédents.
+
+Conformément à la règle d'arrêt au premier échec, aucun retry, aucune réparation
+manuelle, aucun attach manifest et aucun Finalize mars n'ont été tentés. Avril
+à juillet n'ont pas été commencés.
+
+### 17.4 État live après arrêt
+
+| Contrôle | État |
+| --- | --- |
+| dataRevision / analyticsRevision | `1 / 74` |
+| Mois possédant exactement un actif History | 12/12 |
+| Snapshots / artifacts History actifs | 941 / 24 |
+| Générations actives avec manifest durable | 7 |
+| Doublons actifs Query / artifact | 0 / 0 |
+| Contenus actifs invalidés | 0 |
+| Actif mars préexistant | `93a252d7-6754-4b08-a38a-9158dee3bcbc`, 77 snapshots / 2 artifacts |
+| DRAFT mars incomplet | 50 snapshots / 2 artifacts, manifest absent, 0 ligne active |
+| Écriture Canonical | AUCUNE ; `dataRevision` reste 1 |
+
+Le service continue donc de lire une génération complète pour chacun des douze
+mois. Le DRAFT incomplet n'est pas visible par les lectures actives. Le
+checkpoint de reprise doit repartir de cet état explicite et obtenir une
+nouvelle autorisation humaine avant tout retry ou abandon opérationnel du
+DRAFT. Aucun test de rollback live, Global, UI ou Vercel n'a été exécuté.
+
+### 17.5 Verdict
+
+HC6 PHASE B2B = PARTIAL — STOPPED ON FIRST STAGE FAILURE
+
+7/12 LIVE CUTOVERS = PASS
+SINGLE ACTIVE GENERATION = PASS
+DURABLE MANIFESTS = PASS FOR 7 ACTIVE CANDIDATE GENERATIONS
+LIVE RUNTIMESCHEMAS = PASS FOR 7 FINALIZED CANDIDATE GENERATIONS
+RESIDUAL ACTIVE KEYS = NONE
+CANONICAL WRITES = NONE
+
+STOP
+
+HUMAN AUTHORIZATION REQUIRED TO RESUME HC6 PHASE B2B
+
+### 17.6 Reprise transport-safe autorisée
+
+L'arrêt décrit en 17.3–17.5 reste la trace historique du premier passage. Une
+nouvelle autorisation humaine explicite a ensuite permis de reprendre le même
+DRAFT mars, puis de traiter avril à juillet. Aucun DRAFT mars supplémentaire
+n'a été créé, aucun DRAFT n'a été supprimé et aucun payload métier n'a été
+réparé manuellement.
+
+Le nouveau transport a été préparé hors repository à partir du bundle B2A
+certifié. Chaque fragment contenait au maximum trois snapshots et moins de
+380 000 octets. Avant envoi, son cardinal, sa taille, l'absence de texte
+`Warning` et sa provenance certifiée ont été contrôlés. Ce changement concerne
+uniquement le transport SQL : les payloads candidats sont restés inchangés.
+
+Le preflight de reprise a retrouvé exactement `dataRevision=1`,
+`analyticsRevision=74`, le handshake `history-frozen-month@v1`, douze mois
+ayant chacun un seul actif, zéro doublon et zéro contenu actif invalidé. La
+source B2A est restée cohérente sur 37/37 digests : 35/35 sources Canonical et
+métier étaient identiques ; les deux empreintes opérationnelles
+`household_revisions` et `analysis_periods` reflétaient uniquement les sept
+Finalize déjà autorisés. `dataRevision` est restée à 1 : aucune dérive
+Canonical n'a été constatée.
+
+### 17.7 Reprise exacte du DRAFT mars
+
+Le DRAFT existant `6a8ee13f-b65d-4389-9d27-068777ff592c`, scellé sur la
+révision analytique 74, a été relu avant toute écriture. Les 50 snapshots et
+deux artifacts présents correspondaient exactement au candidat B2A : clés,
+signatures, policies, contrats, PublicationMeta, resource/artifact input
+hashes, factsHash et identité d'implémentation. Ils étaient tous inactifs et
+non invalidés ; aucun doublon n'était présent et le manifest était absent.
+
+La différence entre les 80 clés attendues et les 50 clés staged contenait
+exactement 30 clés. Ces 30 snapshots ont été staged en deux groupes de quinze,
+eux-mêmes transportés par petits fragments bornés. Après staging : 80/80
+snapshots, 2/2 artifacts, 15/15 familles, zéro doublon, zéro ligne active et
+zéro ligne invalidée. La comparaison SHA-256 des payloads complets a donné
+0 mismatch.
+
+Le manifest certifié a ensuite été attaché et relu :
+
+- `publicationFactsHash` :
+  `abef819698f18aa53b3edf5c4b87b2a4f88333ec78a226d08aaba2a09ade02c6` ;
+- `manifestHash` :
+  `c6d0658c9198cf4879104cb9ec4f340bc708bf63ffe280f3eeb5ffc3d8e26ccb` ;
+- closure : 82/82 dépendances ;
+- RuntimeSchemas : 80/80, par identité exacte avec le candidat certifié.
+
+Le Finalize atomique a fait passer la révision 74 → 75. La publication est
+devenue l'unique actif mars avec 80 snapshots et deux artifacts. L'ancien
+actif `93a252d7-6754-4b08-a38a-9158dee3bcbc` est conservé, intégral et inactif.
+Il ne reste aucune clé active résiduelle, aucun doublon ni invalidation.
+
+### 17.8 Cutovers avril à juillet
+
+Après mars, chaque mois a suivi séparément le protocole relire les révisions →
+Begin → staging transport-safe inactif → audit complet → attach manifest →
+read-back → Finalize atomique → read-back actif → contrôle résiduel. Aucun
+mois suivant n'a été commencé avant le PASS du mois courant.
+
+| Mois | Ancien actif → nouvel actif | Révision | Snapshots / artifacts | publicationFactsHash | manifestHash | Résultat |
+| --- | --- | ---: | ---: | --- | --- | --- |
+| 2026-03 | `93a252d7-6754-4b08-a38a-9158dee3bcbc` → `6a8ee13f-b65d-4389-9d27-068777ff592c` | 74 → 75 | 80 / 2 | `abef819698f18aa53b3edf5c4b87b2a4f88333ec78a226d08aaba2a09ade02c6` | `c6d0658c9198cf4879104cb9ec4f340bc708bf63ffe280f3eeb5ffc3d8e26ccb` | PASS |
+| 2026-04 | `354e78be-7a7f-442e-b21a-8217be3359b0` → `37492074-6045-4102-b041-6d34057abf3a` | 75 → 76 | 81 / 2 | `9f5950a1f39886abe6d7b82f9ab5a4627e4bf1f9cd9203bf13639be9c991f890` | `feba2d920202c69bb881edeb2604f113498f389439d4e8da8ebb55fb6080404b` | PASS |
+| 2026-05 | `ff0a6983-c77d-444a-aafe-580eb8d0d0e0` → `d9fb5856-c49e-45fb-91b6-5c52ec36b894` | 76 → 77 | 78 / 2 | `f0bd76d29a11ea7ce0233b4da3d6c17979bc6dbafab826ed90aefbba431757af` | `a5bf35dd58afd3de3e0c8d71136f1615b9d2099e19a3bbb08f492a11fa72e8dd` | PASS |
+| 2026-06 | `f986d524-0c89-48ea-a6a3-62693c26e7f5` → `190c6998-0d2f-4c51-87c6-fdfb1169b9ae` | 77 → 78 | 80 / 2 | `698a737e7274285a526491788b5e803ce042c1a902eaa1170416d319c2654ced` | `cf4f34b6be8975fc8126fce420067aab361073aed31843fd0f87cd25f2e891da` | PASS |
+| 2026-07 | `ecff5327-2a15-4e27-b247-3a4a91bcc4d1` → `cbdc7407-697b-4aec-abb4-062300eb3cd3` | 78 → 79 | 78 / 2 | `10747c20f81bf7363527d78212db5bcb076684eb66dc366a0cfc3eea1afa3f65` | `0f2e620ceb826ce6573845e53d055cac253785dff4f58fd9ebca9ea2bcf5adb6` | PASS |
+
+Les quatre nouveaux DRAFT avril–juillet ont chacun été audités intégralement
+avant Finalize. Leurs required keys, 15 familles, méthodes, policies,
+PublicationMeta, resource/artifact input hashes, publicationFactsHash,
+manifestHash et identité d'implémentation correspondaient au bundle certifié.
+Chaque Finalize a conservé l'ancienne génération inactive et n'a laissé aucune
+clé active résiduelle.
+
+### 17.9 Contrôle live agrégé après juillet
+
+La lecture finale read-only du projet `ipuuhxrblxormwgoaqnz` établit :
+
+| Contrôle | Résultat |
+| --- | --- |
+| dataRevision / analyticsRevision | `1 / 79` |
+| Handshake HC3/HC4 | `history-frozen-month@v1` |
+| Mois avec exactement un actif History | 12/12 |
+| Familles Query | 15/15 pour chacun des 12 mois |
+| Snapshots actifs | 947 |
+| Artifacts actifs | 24 |
+| Manifests durables et manifestHash valides | 12/12 |
+| Dependency closures | 971/971 |
+| RuntimeSchemas live | 947/947, par égalité exacte des payloads avec le bundle B2A certifié |
+| Payload hashes Query / artifact divergents | 0 / 0 |
+| Required Query/artifact manquants | 0 / 0 |
+| Clés actives résiduelles Query/artifact | 0 / 0 |
+| Doublons actifs Query/artifact | 0 / 0 |
+| Contenus actifs invalidés Query/artifact | 0 / 0 |
+| DRAFT restant | 0 |
+| Anciennes publications conservées | 12/12, avec 0 contenu actif |
+
+Les douze générations actives portent `sourceRevision=1`, les révisions
+publiées 68 à 79 et les publicationFactsHash/manifestHash certifiés en 16.3.
+Une régénération locale à partir du bundle B2A, paramétrée avec les identités
+et révisions live, a été comparée aux lignes actives : les 947 payloads Query
+et 24 payloads artifact ont des hashes canoniques strictement identiques. Ce
+contrôle démontre que le transport n'a altéré aucun payload et transporte les
+RuntimeSchemas déjà certifiés sans mutation.
+
+Aucune donnée Canonical n'a été écrite, aucun rollback live de test n'a été
+lancé et aucun travail Global, UI, déploiement ou smoke runtime n'a commencé.
+La prochaine étape reste la certification post-cutover et nécessite une
+instruction distincte.
+
+HC6 PHASE B2B = PASS
+
+12/12 LIVE CUTOVERS = PASS
+SINGLE ACTIVE GENERATION = PASS
+DURABLE MANIFESTS = PASS
+LIVE RUNTIMESCHEMAS = PASS
+RESIDUAL ACTIVE KEYS = NONE
+CANONICAL WRITES = NONE
+
+STOP
+
+POST-CUTOVER CERTIFICATION = REQUIRED NEXT
