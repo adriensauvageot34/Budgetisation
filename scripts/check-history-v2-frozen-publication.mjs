@@ -39,7 +39,7 @@ export async function checkHistoryFrozenPublication({ materialization, preflight
   await rejects(() => store.writeQuery(testStage.queries[0].request, testStage.queries[0].data, "frozen"), /never-published/);
   await rejects(() => store.writeQuery(testStage.queries[0].request, testStage.queries[0].data), /without a draft/);
 
-  const sql = fs.readFileSync("supabase/migrations/20260904180000_history_v2_frozen_publications.sql", "utf8");
+  const sql = fs.readFileSync("supabase/migrations/20260904110402_history_v2_frozen_publications.sql", "utf8");
   for (const fragment of ["security invoker", "for update", "v_new - v_technical", "published_at is not null",
     "unsealed, never-published", "revoke truncate", "History retry changed", "create trigger"]) {
     check(() => assert.ok(sql.includes(fragment), fragment));
@@ -88,7 +88,7 @@ export async function checkHistoryFrozenPublication({ materialization, preflight
       subject_kind,period_kind,period_month,source_revision,analytics_revision,contract_version,method_signature,payload,computed_at,publication_id,is_active)
       values ('retired-detail',$1::uuid::text,$2,'history_moment_detail',$4,$4,'household','month',$3,7,9,'v2',$4,'{"legacy":true}',now(),$1::uuid,true)`,
       [legacyId,runtimeContext.householdId,`${receipt.month}-01`,"a".repeat(64)]);
-    await db.exec(read("20260904120000_history_v2_dependency_manifest.sql"));
+    await db.exec(read("20260904110151_history_v2_dependency_manifest.sql"));
     await db.exec(sql);
     await db.exec("set role service_role;");
     const client = postgresClient(raw);

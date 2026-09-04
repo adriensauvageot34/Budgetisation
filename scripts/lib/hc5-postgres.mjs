@@ -118,8 +118,8 @@ export async function createHc5Postgres(moduleFile, householdId, month) {
   for (const migration of ["20260825105100_analytics_materialization.sql",
     "20260831150000_history_v2_publication_rollback.sql",
     "20260902105811_enforce_single_active_analytics_generation.sql",
-    "20260904120000_history_v2_dependency_manifest.sql",
-    "20260904180000_history_v2_frozen_publications.sql"]) await db.exec(read(migration));
+    "20260904110151_history_v2_dependency_manifest.sql",
+    "20260904110402_history_v2_frozen_publications.sql"]) await db.exec(read(migration));
   await raw("insert into households values ($1)", [householdId]);
   await raw("insert into household_revisions(household_id,data_revision,analytics_revision) values ($1,7,11)", [householdId]);
   await raw("insert into analysis_periods values ($1,$2,7,now())", [householdId, `${month}-01`]);

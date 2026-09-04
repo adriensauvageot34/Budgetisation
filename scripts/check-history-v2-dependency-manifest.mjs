@@ -152,7 +152,7 @@ export async function checkHistoryDependencyManifest({ materialization, historyA
   await assert.rejects(() => store.read(runtimeContext.householdId, "pub")); checks += 1;
   await assert.rejects(() => store.attach("pub", resign({ ...manifest, implementation: { status: "UNKNOWN" } }))); checks += 1;
 
-  const sql = fs.readFileSync(path.join(root, "supabase/migrations/20260904120000_history_v2_dependency_manifest.sql"), "utf8");
+  const sql = fs.readFileSync(path.join(root, "supabase/migrations/20260904110151_history_v2_dependency_manifest.sql"), "utf8");
   for (const fragment of ["add column dependency_manifest jsonb", "History dependency manifest is immutable", "Cannot retrofit evidence", "History Finalize requires a dependency manifest", "checksum mismatch", "History staged payload/manifest mismatch", "before insert or update", "for update", "from public, anon, authenticated", "to service_role", "security definer set search_path = ''", "publicationMeta,factsHash", "publicationMeta,revision", "methodSignature", "contractVersion", "policyVersions", "2000000"]) {
     check(() => assert.ok(sql.includes(fragment), `SQL contract: ${fragment}`));
   }
