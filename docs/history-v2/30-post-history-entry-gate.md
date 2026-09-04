@@ -1586,3 +1586,225 @@ FINAL 12-MONTH CONSOLIDATED RUN = REQUIRED NEXT
 B2B = FORBIDDEN
 
 STOP
+
+## 16. HC6 B2A — FINAL CONSOLIDATED 12-MONTH RUN
+
+### 16.1 Baseline live et source Canonical
+
+Exécution du 4 septembre 2026 sur `main`, HEAD
+`f940710ec5da6dbb793b28155ab5227d7d6f29d8`, working tree propre au
+lancement. Le projet lu est `ipuuhxrblxormwgoaqnz`. Toutes les opérations
+Supabase de cette reprise sont des `SELECT`.
+
+| Contrôle initial | Résultat |
+| --- | --- |
+| dataRevision / analyticsRevision | `1` / `67` |
+| Migrations HC3 / HC4 | `20260904110151` / `20260904110402`, présentes |
+| Handshake | `history-frozen-month@v1` |
+| Guards HC3/HC4 | 4/4 présents et activés (`O`) |
+| Publications History V2 courantes | 12 |
+| Snapshots actifs / familles | 927 / 15 |
+| Artifacts actifs | 24 |
+| Invalidation active Query / artifact | 0 / 0 |
+| Doublons actifs Query / artifact | 0 / 0 |
+| Manifests des générations actives legacy | 0 non-NULL, état `LEGACY_UNKNOWN` préservé |
+
+La sélection live emploie explicitement les quinze ressources History V2 ; elle
+ne mélange pas les anciennes familles History. Les 37 comptages et empreintes
+de contenu live sont identiques aux 37 empreintes de la baseline B2A. Les 37
+jeux de lignes de l'export Canonical privé ont également les mêmes cardinalités
+et row-set digests que la preuve de cet export. `dataRevision=1` est donc restée
+valide ; aucune fixture obsolète n'a été utilisée et aucun nouvel export n'était
+nécessaire.
+
+Le bundle est produit hors Git, dans le dossier de preuve privé B2A déjà décrit
+en section 12. La commande officielle a été lancée une seule fois, sans
+`--month` et sans `--publication-only` :
+
+```text
+node scripts/check-history-v2-certification-12-months.mjs \
+  <canonical-read-only> <expected-compare-only> <sortie-privee>
+```
+
+`HISTORY_V2_PREFLIGHT_BUNDLE_FILE` désignait le bundle candidat privé. Aucun
+Begin, Stage, attach manifest live, Finalize, rollback ou rebuild n'a été
+appelé.
+
+La relecture post-run retrouve exactement `dataRevision=1`,
+`analyticsRevision=67`, 12 publications, 927 snapshots et 24 artifacts actifs.
+Le run consolidé n'a donc modifié aucun état live.
+
+### 16.2 Résultat consolidé officiel
+
+Le processus termine avec exit code 0 et le reçu suivant :
+
+| Preuve | Résultat |
+| --- | --- |
+| Gate officiel | PASS |
+| Mois | 12/12 |
+| Familles Query | 15/15 |
+| Instances Query / RuntimeSchemas | 947 / 947 |
+| Artifacts | 24/24, soit 2 par mois |
+| Invariants | 384/384, soit 32/32 par mois |
+| Invariants FAIL | 0 |
+| Determinism | PASS, deux constructions identiques |
+| Digest déterministe | `642a00aa9bbcb5d922fc24f1e5eb0a118876ca98c241c0952c04bbd311b12816` |
+
+Les douze classifications de disponibilité globales restent `DATA_MISSING` à
+cause des absences Canonical explicites déjà qualifiées dans les lots
+précédents. Elles ne contiennent aucun invariant FAIL : Calendar Semantic,
+Daily Economic Ledger, Actual, réconciliation quotidienne, catégories, M3,
+M1/M2/M3/M4, Activity, Moment et Place passent pour les douze mois.
+
+La matrice officielle prouve également : topologies Calendar/Week/Journal,
+absence de bank-date fallback quotidien, remboursements selon temporalité
+économique, réconciliations nécessité/comportement/life-scope, RuntimeSchemas,
+contractVersion v2, PublicationMeta simulées, hashes SHA-256, déterminisme et
+absence d'oracle comme autorité de production.
+
+### 16.3 Générations candidates complètes
+
+`P-HC2` désigne le même jeu de versions sur les douze mois :
+
+- `canonical_purchase_event_timing@v1`, `canonical_continuity@v1`,
+  `canonical_component_classification@v1` ;
+- `quality_visibility@v1`, `facts_hash@v1` ;
+- `calendar_semantics@v3`, `calendar_amount_views@v1`,
+  `daily_economic_allocation@v1`, `week_journal_projection@v2` ;
+- `month_overview_selection@v3`, `month_balance_summary@v1`,
+  `category_explanation@v1`, `spending_nature@v3`,
+  `life_money_selection@v3`.
+
+Chaque mois expose une signature déterministe pour chacune des quinze familles.
+Les signatures courantes, identiques entre mois pour une même famille, sont :
+
+| Ressource | methodSignature candidate |
+| --- | --- |
+| `history_activity_detail` | `245c732f893b78903f0c94096cc4d8a0c179c7fc936caca1cc9272db9601bc49` |
+| `history_bank_economy_bridge` | `4d9fc4e300f241e91805dbf2364ec8a5eff79ce9081059548c1059aa07ce860a` |
+| `history_category_detail` | `053abcabaa56b7ecbf1949cbaf561f6869a3ebc60a51a524a4fff5c45e2e89e8` |
+| `history_day_journal` | `770aefb89dfdac6893309ecbb25b70994ffb59faa986cd0559eff68ad11ca849` |
+| `history_minimal_preview` | `6e625385fb4cd10ef7c98cc7bfd7d03b2f9a3061299a19bdc0d8042ebddfa768` |
+| `history_moment_detail` | `e2486d2a71be227ddec1a1a22fd0c54802636229e8e37d95e34602f19c91af54` |
+| `history_month_balance_summary` | `544efc60513f4d926877aebf7d6c78151a2c37ec981363ba634f848e4da72f05` |
+| `history_month_calendar` | `37eeb237a57d4be209f88856a160b87715ada2ccfb0f2df18ab087f293855e01` |
+| `history_month_categories` | `860deebcb0664bce7691f8f2de6193f8fd633e92a4052d3e048024c7cd82348c` |
+| `history_month_life_money` | `8d3885b92a97363e414f59b6c9f9c61e51921ca26a5e0c7005652892b4ec2092` |
+| `history_month_overview` | `dc21a115657195bead9b99ee63436c36d582a5bf111f10a512c2ec2e7ef8297a` |
+| `history_month_spending_nature` | `80bdf9584cfb374f909b75c246c339da8c7e125161b9cd64a7feee741b5811d1` |
+| `history_place_detail` | `4c7ecd5530e63fabedc51e1ff8302e48243742e7334abfe858d0b67acb63a2a9` |
+| `history_spending_segment_detail` | `edc0bd8b4c4c8ce0f3196ef2680ded77e7f0e4a14bf0666c158c96c2941fe69c` |
+| `history_week` | `7f13c9fed8cba0b45185901bb6898bc8733269ec6e3cdf8c8dbc0f8b032d2d10` |
+
+Format de manifest : `history-v2-dependency-manifest@v2`. Profil :
+`history-v2-month@v1`. Identité d'implémentation : SHA Git
+`f940710ec5da6dbb793b28155ab5227d7d6f29d8`, digest
+`61ce73eaae0fc009cbd83bcb96fbb6564323b964b97f417c4518bbdd7804230c`.
+
+| Mois | Snapshots candidat | Artifacts | publicationFactsHash | manifestHash | required Query / artifacts | Méthodes / policies |
+| --- | ---: | ---: | --- | --- | ---: | --- |
+| 2025-08 | 77 | 2 | `42ef555ada8d94cf2c948ff63b8c7d3aca7b4ec919481ae7f564b82b2b0f25b6` | `01fdc1ccb287ce5a5294a35b845cf95e54b63c5b24e47f89186dbeacb1a077df` | 77 / 2 | 15 current / P-HC2 |
+| 2025-09 | 76 | 2 | `4bca5d4c84af775d19292cf1e54c0b70858c63fe98b203f489515b1cacbb6c57` | `9419743db2adec1d26a494294fb7168a2703ecd494da4ef1e96252d7bd1d49db` | 76 / 2 | 15 current / P-HC2 |
+| 2025-10 | 80 | 2 | `1a259e82d8aaa634aa2bcb1f9750d9fdcc982b958fb349e5e9075a02c78b61c2` | `40787212916ee41240ec488f39ed314bcdb67e2153715c3c664945205da0ab24` | 80 / 2 | 15 current / P-HC2 |
+| 2025-11 | 77 | 2 | `a679686a37eadf97641ffb23dce0711a89d83da1e7128b7349b7fe9f008ef3c9` | `080881892b0298c80748c5fb449935582aaec15cc23d6affd77d6ffe3fb12ed9` | 77 / 2 | 15 current / P-HC2 |
+| 2025-12 | 81 | 2 | `f620d01ccdca21a9d3cd1ad51c00dbebea179717c03cc61333671bc91bb86869` | `52d894567aedc804a72b18573d9fabbf7ec55d000a32711c80406e886424ac6b` | 81 / 2 | 15 current / P-HC2 |
+| 2026-01 | 83 | 2 | `dc87acbbd7d5620ba46ec71071ddf0de17ee3794dfabb2ff102b1ebf9e23e2a9` | `e7bedddb2c5b4e4124fedb5d640006bad035a272072622081d83b00e21cde160` | 83 / 2 | 15 current / P-HC2 |
+| 2026-02 | 76 | 2 | `4cd9f279780233104ca397a50dff32390c58b24c5df1393ef6e85e2dd6ee77c5` | `39a54ffcdca0ddce285ed16f4bc72b258d3ed78efd1c68afb99ee2a5845433c7` | 76 / 2 | 15 current / P-HC2 |
+| 2026-03 | 80 | 2 | `abef819698f18aa53b3edf5c4b87b2a4f88333ec78a226d08aaba2a09ade02c6` | `c6d0658c9198cf4879104cb9ec4f340bc708bf63ffe280f3eeb5ffc3d8e26ccb` | 80 / 2 | 15 current / P-HC2 |
+| 2026-04 | 81 | 2 | `9f5950a1f39886abe6d7b82f9ab5a4627e4bf1f9cd9203bf13639be9c991f890` | `feba2d920202c69bb881edeb2604f113498f389439d4e8da8ebb55fb6080404b` | 81 / 2 | 15 current / P-HC2 |
+| 2026-05 | 78 | 2 | `f0bd76d29a11ea7ce0233b4da3d6c17979bc6dbafab826ed90aefbba431757af` | `a5bf35dd58afd3de3e0c8d71136f1615b9d2099e19a3bbb08f492a11fa72e8dd` | 78 / 2 | 15 current / P-HC2 |
+| 2026-06 | 80 | 2 | `698a737e7274285a526491788b5e803ce042c1a902eaa1170416d319c2654ced` | `cf4f34b6be8975fc8126fce420067aab361073aed31843fd0f87cd25f2e891da` | 80 / 2 | 15 current / P-HC2 |
+| 2026-07 | 78 | 2 | `10747c20f81bf7363527d78212db5bcb076684eb66dc366a0cfc3eea1afa3f65` | `0f2e620ceb826ce6573845e53d055cac253785dff4f58fd9ebca9ea2bcf5adb6` | 78 / 2 | 15 current / P-HC2 |
+
+Les required keys correspondent exactement aux lignes candidates. Les manifests
+contiennent 971 closures relisibles : 947 Query et 24 artifacts. Chaque
+`resourceInputHash`, `artifactInputHash`, `publicationFactsHash`, `manifestHash`,
+signature et digest d'implémentation respecte le format SHA-256. Le bundle ne
+contient aucune source CertifiedHistoricalMinimal ni preuve compare-only : les
+preuves current interviennent uniquement après production dans les assertions
+de certification.
+
+### 16.4 Comparaison génération active / candidat
+
+| Mois | Snapshots actif → candidat | Artifacts | factsHash actif → candidat | Classifications |
+| --- | ---: | ---: | --- | --- |
+| 2025-08 | 75 → 77 | 2 → 2 | `02643f576b3609132841feddf70ab9cf6843e2d910db16304d89f4a37f9aae2f` → `42ef555ada8d94cf2c948ff63b8c7d3aca7b4ec919481ae7f564b82b2b0f25b6` | `INSTANCE_SET_CHANGE`, `POLICY_VERSION_CHANGE`, `METHOD_SIGNATURE_CHANGE`, `EXPECTED_BY_HC1_HC2` |
+| 2025-09 | 72 → 76 | 2 → 2 | `e641fd6d3ccac647193ede51ac30f890e8cd360da9c01e0f55a130a5083210ff` → `4bca5d4c84af775d19292cf1e54c0b70858c63fe98b203f489515b1cacbb6c57` | idem |
+| 2025-10 | 78 → 80 | 2 → 2 | `10284031bc82c4858687e3ca88826153e3763c075508b129c3e9640fc3a3b5a5` → `1a259e82d8aaa634aa2bcb1f9750d9fdcc982b958fb349e5e9075a02c78b61c2` | idem |
+| 2025-11 | 77 → 77 | 2 → 2 | `f5afc3ad9fa2ed8d9f9fbfaa15b878b1d213059bc20f821d203076311823d759` → `a679686a37eadf97641ffb23dce0711a89d83da1e7128b7349b7fe9f008ef3c9` | idem ; cardinalité égale mais ensemble de clés différent |
+| 2025-12 | 78 → 81 | 2 → 2 | `a6ae9c79907ae39a384cb730785656b9d2ac103e8dd89148ab1789431e22020c` → `f620d01ccdca21a9d3cd1ad51c00dbebea179717c03cc61333671bc91bb86869` | idem |
+| 2026-01 | 81 → 83 | 2 → 2 | `55470f505800658b0b1b5ddfc023cab4123fd07093f6035c3be856650c2098f8` → `dc87acbbd7d5620ba46ec71071ddf0de17ee3794dfabb2ff102b1ebf9e23e2a9` | idem |
+| 2026-02 | 75 → 76 | 2 → 2 | `96f958694ea090d9f1d0dd620630c706a0c2121e66de226ee18ffdf5a06b0d00` → `4cd9f279780233104ca397a50dff32390c58b24c5df1393ef6e85e2dd6ee77c5` | idem |
+| 2026-03 | 77 → 80 | 2 → 2 | `3625d600a22d5e64a77675cab7ca5aac8d68cb0e22b4c9153d448340df77a595` → `abef819698f18aa53b3edf5c4b87b2a4f88333ec78a226d08aaba2a09ade02c6` | idem |
+| 2026-04 | 79 → 81 | 2 → 2 | `7431a2812cdd7bb0628a5384f4eb93e739217043bf2283d55f04ec697f1863ee` → `9f5950a1f39886abe6d7b82f9ab5a4627e4bf1f9cd9203bf13639be9c991f890` | idem |
+| 2026-05 | 79 → 78 | 2 → 2 | `27666c46e526d7c46311e369a5e5c8c1678f7c353362847d8b17d31026c348f0` → `f0bd76d29a11ea7ce0233b4da3d6c17979bc6dbafab826ed90aefbba431757af` | idem |
+| 2026-06 | 79 → 80 | 2 → 2 | `c2e62d85eac400d572fb50585c06eafeab5857ff1eb968e29181637db2bdb806` → `698a737e7274285a526491788b5e803ce042c1a902eaa1170416d319c2654ced` | idem |
+| 2026-07 | 77 → 78 | 2 → 2 | `966ed51aec64161a86da0d0378b1b57792cf62590c8c8a964600144c5b1c95e0` → `10747c20f81bf7363527d78212db5bcb076684eb66dc366a0cfc3eea1afa3f65` | idem |
+
+Les quatre changements de policy sont exactement ceux déjà documentés par HC2 :
+`week_journal_projection v1→v2`, `month_overview_selection v2→v3`,
+`spending_nature v2→v3` et `life_money_selection v2→v3`. Ils entraînent les
+signatures courantes de douze ressources ; Bank/Economy Bridge, Month Categories
+et Month Balance Summary conservent leur signature. Les ensembles de clés Query
+changent sur les douze mois ; les ensembles de deux clés artifact restent
+inchangés.
+
+Les différences de `publicationFactsHash` sont attendues par les corrections
+d'autorité HC1/HC2 et leur closure HC3, et non par une mutation des données :
+les 37/37 empreintes Canonical sont identiques et sourceRevision reste 1.
+L'absence de manifest sur l'actif reste explicitement `LEGACY_UNKNOWN` ; aucun
+manifest rétroactif n'est fabriqué. Le candidat apporte son manifest v2 réel.
+
+Synthèse des classes autorisées :
+
+- `EXPECTED_BY_HC1_HC2` : 12 mois ;
+- `INSTANCE_SET_CHANGE` : 12 mois ;
+- `POLICY_VERSION_CHANGE` : 12 mois ;
+- `METHOD_SIGNATURE_CHANGE` : 12 mois ;
+- `DATA_CHANGE` : 0 mois ;
+- `UNEXPECTED` : 0 mois.
+
+### 16.5 Plan séquentiel HC6 B2B — préparé, non exécuté
+
+Ordre strict : `2025-08`, `2025-09`, `2025-10`, `2025-11`, `2025-12`,
+`2026-01`, `2026-02`, `2026-03`, `2026-04`, `2026-05`, `2026-06`,
+`2026-07`.
+
+Pour **chaque mois seulement**, et uniquement après une nouvelle autorisation
+humaine explicite :
+
+1. relire `dataRevision`, `analyticsRevision`, handshake et génération active ;
+2. reconstruire/valider le candidat si les révisions ou la source ont changé ;
+3. Begin d'un unique DRAFT lié aux révisions relues ;
+4. stage inactive des deux artifacts puis des snapshots attendus ;
+5. attacher le manifest v2 du mois ;
+6. read-back inactif intégral, complétude et unicité des required keys ;
+7. reparsing de tous les RuntimeSchemas et contrôle contracts, methods,
+   policies, PublicationMeta, facts/manifest hashes et implementation digest ;
+8. Finalize atomique avec CAS de révision ;
+9. read-back de la nouvelle génération active ;
+10. contrôle des clés résiduelles, doublons, invalidations et ancien actif ;
+11. relire les révisions, puis seulement passer au mois suivant.
+
+Ne jamais préparer douze DRAFT scellés avec la même analyticsRevision. Un échec
+avant Finalize laisse le mois courant inactif et interdit le passage au mois
+suivant. Ce plan n'a déclenché aucune opération B2B.
+
+### 16.6 Verdict et arrêt
+
+`git diff --check` est le seul contrôle Git demandé après l'ajout de cette
+section. Aucun code, test, moteur, oracle, donnée Canonical, snapshot live ou
+publication n'est modifié.
+
+HC6 PHASE B2A = PASS
+
+12-MONTH CERTIFICATION = PASS
+12/12 MONTHS = PASS
+15/15 QUERY FAMILIES = PASS
+CANDIDATE GENERATIONS = READY
+UNEXPECTED DIFFERENCES = NONE
+LIVE WRITES B2A = NONE
+
+STOP
+
+HUMAN AUTHORIZATION REQUIRED FOR HC6 PHASE B2B
