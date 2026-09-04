@@ -2025,3 +2025,164 @@ CANONICAL WRITES = NONE
 STOP
 
 POST-CUTOVER CERTIFICATION = REQUIRED NEXT
+
+## 18. HC6 — POST-CUTOVER FINAL CERTIFICATION
+
+### 18.1 Périmètre et méthode read-only
+
+Cette certification ferme le gate Core après le cutover décrit en section 17.
+Elle n'a exécuté aucun Begin, stage, attach, Finalize, rollback, rebuild,
+backfill ou changement Canonical. Les contrôles live ont été exclusivement des
+lectures sur le projet `ipuuhxrblxormwgoaqnz`.
+
+La preuve Query ne repose pas uniquement sur les hashes SQL. Les 947 lignes
+actives dont l'égalité byte-for-byte avec le read-back live est établie en
+17.9 ont été rejouées dans le code de production :
+`executeQuery` → `SupabaseAnalyticsMaterializationStore.readQuery` → sélection
+de l'identité publiée → signature acceptée → RuntimeSchema de la ressource →
+schema de réponse API. Les requests sont les requests normalisées du bundle
+B2A certifié et les identités de publication sont celles du cutover live.
+
+Un accès navigateur sans session utilisateur a, conformément au garde
+d'authentification, été redirigé vers `/connexion`. Il n'a pas été utilisé
+comme preuve de données. Le smoke de navigation ci-dessous est le chemin
+serveur autorisé et le Query runtime réellement câblé, alimenté par les lignes
+actives read-back ; aucune session artificielle ni aucun secret utilisateur
+n'a été créé.
+
+### 18.2 Baseline live finale
+
+| Contrôle | Résultat |
+| --- | --- |
+| dataRevision / analyticsRevision | `1 / 79` |
+| Handshake HC3/HC4 | `history-frozen-month@v1` — PASS |
+| Publications History actives | 12/12 |
+| Snapshots actifs | 947 |
+| Artifacts actifs | 24 |
+| Familles Query par mois | 15/15 sur 12/12 mois |
+| Manifests durables valides | 12/12 |
+| Dependency closures | 971/971 |
+| DRAFT | 0 |
+| Clés requises manquantes ou résiduelles | 0 / 0 |
+| Doublons actifs Query / artifact | 0 / 0 |
+| Contenus actifs invalidés Query / artifact | 0 / 0 |
+
+Les douze publications actives et leurs cardinalités restent exactement celles
+de 17.8–17.9 : révisions publiées 68 à 79, 947 snapshots et 24 artifacts. La
+relecture post-cutover n'a détecté aucune dérive de données ou de génération.
+
+### 18.3 Query runtime live-compatible
+
+Le run post-cutover a exécuté les **947/947** requests History actives dans la
+frontière Query de production. Résultats :
+
+| Preuve | Résultat |
+| --- | --- |
+| Familles exécutées | 15/15 |
+| `contractVersion` | `v2` pour 947/947 |
+| `methodSignature` | signature `current` reconnue pour 947/947 |
+| Ambiguïté de signature | 0 |
+| Hits `SupabaseAnalyticsMaterializationStore` | 947/947 |
+| RuntimeSchemas des payloads | 947/947 PASS |
+| Schemas des réponses API | 947/947 PASS |
+| PublicationMeta / publicationId | actif du mois pour 947/947 |
+| Appels à une source dynamique History | 0 |
+| Tentatives d'écriture Query/cache | 0 |
+
+Les quinze ressources couvertes sont : Month Calendar, Week, Day Journal,
+Month Overview, Month Balance Summary, Bank/Economy Bridge, Month Categories,
+Category Detail, Month Spending Nature, Spending Segment Detail, Minimal
+Preview, Month Life & Money, Activity Detail, Moment Detail et Place Detail.
+
+Un snapshot volontairement absent a ensuite été soumis au même runtime : le
+résultat est `TEMPORARY_UNAVAILABLE`, avec `materialization=miss`, zéro appel à
+`CanonicalRepository`, Facts ou Analytics et zéro write-through. Le runtime
+History est donc fail-closed et snapshot-only ; une absence ou incompatibilité
+ne déclenche aucun calcul financier.
+
+### 18.4 Navigation serveur et routes atteignables
+
+`resolveLatestPublishedHistoryV2Month` via le store retourne `2026-07` ; la
+route `/historique` conserve donc sa redirection canonique vers
+`/historique/2026-07`.
+
+Les couples Month Calendar + Overview ont été exécutés avec succès pour :
+
+- `/historique/2025-08` → publication
+  `d86b5fa6-3849-4651-9751-79d60dd49e57` ;
+- `/historique/2026-01` → publication
+  `06909cd9-605f-4e62-831f-cce8767c4b94` ;
+- `/historique/2026-07` → publication
+  `cbdc7407-697b-4aec-abb4-062300eb3cd3`.
+
+Le run exhaustif des 947 requests exerce également les parcours réellement
+câblés dans `HistoryMonthRoute`, `useHistoryPageState` et `HistoryOverlayHost` :
+Week, Journal, Bilan/Overview, Categories, Spending Nature, Life & Money,
+Activity, Moment et Place. Chaque réponse conserve le mois demandé et le
+publicationId actif, sans `CONTRACT_MISMATCH` et sans sélection d'une ancienne
+génération. Les anciennes générations possèdent zéro contenu actif et ne sont
+donc pas éligibles dans la requête du store.
+
+### 18.5 Signal de génération et cache HC5
+
+Le signal live-compatible a été relu via `readHistoryGenerationSignal` avec la
+baseline `1 / 79` :
+
+| Mois | publicationId courant |
+| --- | --- |
+| 2025-08 | `d86b5fa6-3849-4651-9751-79d60dd49e57` |
+| 2026-01 | `06909cd9-605f-4e62-831f-cce8767c4b94` |
+| 2026-07 | `cbdc7407-697b-4aec-abb4-062300eb3cd3` |
+
+Le signal exige la génération unique, les required Query/artifact keys, la
+fraîcheur de source et les révisions relues. La clé client contient
+`householdId + month + publicationId + query key`.
+
+Le gate HC5 inchangé a été rejoué sur ce code : **160/160 PASS**. Il couvre le
+coalescing, le rejet d'un ancien RSC, l'éviction ciblée par mois, le fail-closed
+offline, le rejet d'une réponse P1 tardive après P2 et l'absence de
+PublicationMeta. Résultat complémentaire : `dynamicCalls=0`,
+`navigationWrites=0`. Aucun changement live n'a été provoqué pour ce test.
+
+### 18.6 Frozen / immutabilité
+
+La lecture ciblée des douze publicationIds remplacés établit :
+
+- 12/12 anciennes publications toujours présentes ;
+- 927 anciens snapshots et 24 anciens artifacts toujours conservés ;
+- 0 ancien snapshot actif et 0 ancien artifact actif ;
+- 0 ancien `dependency_manifest` non NULL ;
+- aucun retrofit de preuve legacy.
+
+Les douze nouvelles publications sont `published`, actives et seules porteuses
+des douze manifests HC3. Les guards HC4 et le handshake ont déjà certifié le
+refus de mutation ; aucune tentative destructive n'a été répétée en live.
+
+### 18.7 Cohérence finale et verdict
+
+| Exigence | Statut |
+| --- | --- |
+| 12/12 mois | PASS |
+| 15/15 familles | PASS |
+| 947/947 payloads Query live compatibles | PASS |
+| 24/24 artifacts compatibles | PASS |
+| 12/12 manifests | PASS |
+| 971/971 closures | PASS |
+| Single active generation | PASS |
+| Snapshot-only / no read-through | PASS |
+| Cache generation | PASS |
+| Frozen / immutabilité | PASS |
+| Écritures Canonical/Supabase pendant cette certification | NONE |
+
+`docs/history-v2/HISTORY-POLISH-BACKLOG.md` reste inchangé : il identifie déjà
+explicitement les finitions UI/UX comme backlog indépendant du Core.
+
+POST_HISTORY_ENTRY_GATE = PASS
+
+“La fondation History déterministe, Analytics, Facts, snapshots,
+publications, correction et Query runtime est suffisamment stable pour
+commencer l’audit post-History de l’Analyse Globale.
+Les finitions UI/UX History restent un backlog indépendant.”
+
+HC6 = CLOSED
+HISTORY CORE = READY FOR POST-HISTORY GLOBAL AUDIT
