@@ -29,3 +29,31 @@ export {
   type GlobalTemporalSupportPolicy,
   type GlobalTemporalUnitCandidate,
 } from "./temporal-boundary";
+export {
+  GLOBAL_M2_METHOD_VERSION,
+  buildGlobalCategoryNeeds,
+  createGlobalM2DependencyDeclaration,
+  decomposeGlobalPurchaseFrequencyTicket,
+  globalM2Policies,
+  projectGlobalM2Month,
+  resolveGlobalM2NeedDimension,
+  type GlobalCategoryNeedsResult,
+  type GlobalM2Axis,
+  type GlobalM2Contributor,
+  type GlobalM2DimensionValue,
+  type GlobalM2Group,
+  type GlobalM2MonthlyComponent,
+  type GlobalM2SeriesPoint,
+  type GlobalPurchaseEventAmount,
+  type GlobalPurchaseFrequencyTicketResult,
+} from "./category-needs";
+export {
+  GLOBAL_MATERIALITY_METHOD_VERSION,
+  GlobalMaterialityEngine,
+  globalMaterialityPolicies,
+  type GlobalMaterialityEvaluation,
+  type GlobalMaterialityEvaluationInput,
+  type GlobalMaterialityPolicy,
+  type GlobalMaterialityPolicyId,
+  type GlobalMaterialityStatus,
+} from "./materiality";

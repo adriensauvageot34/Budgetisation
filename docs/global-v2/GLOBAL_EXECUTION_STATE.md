@@ -4,7 +4,7 @@
 
 | Champ | Valeur |
 |---|---|
-| Prompt | P02 — Autorité temporelle et fonctionnement économique |
+| Prompt | P03 — Catégories, Needs et matérialité partagée |
 | Branche | `main` |
 | Baseline | `f27aa4780f73da64b36463d996ab57d37bcfa2f9` |
 | Checkpoint | `SELF` — résoudre par `git log -1 --format=%H -- docs/global-v2/GLOBAL_EXECUTION_STATE.md` |
@@ -15,9 +15,14 @@
 | P02 implementation | PASS — resolver temporel et M1 économique |
 | P02 contract | PASS — B2 fermé ; sorties temporelles P04 explicitement différées |
 | P02 tests | PASS — 65/65, regressions ciblées, typecheck, architecture et build |
+| P03 implementation | PASS — M2 core et GlobalMaterialityEngine |
+| B3 Category/Needs core | PASS |
+| B4 Global Materiality | PASS |
+| GLOBAL_PHASE_B_CORE | PASS |
+| M1 final | PENDING_P04_P05 — Trend/Stability/Recent Change |
 | Live gate | NOT_RUN — non requis et interdit pour P02 |
 | Live writes | NONE |
-| Prochain prompt autorisé | P03 uniquement |
+| Prochain prompt autorisé | P04 uniquement |
 
 ## Références et digests
 
@@ -80,3 +85,15 @@ Elles restent des contrats de compatibilité, pas une autorité V2.
 - Trend, Stability et Recent Change restent `PENDING_P04`; aucune valeur de substitution n'est produite.
 - Rapport : `docs/global-v2/execution/P02-report.md`.
 - Écritures live : NONE. Publication/migration/Query/React : NONE.
+
+## P03 — catégories, Needs et matérialité
+
+- M2 réutilise Actual, category amount et Typical officiels; Category/Need se réconcilient à Actual avec UNKNOWN/CONFLICT conservés.
+- Need ne vient que d'un `need_id` Canonical explicite ou du repli opération unicomposant; aucun label ne produit une classification.
+- Necessity/Behavior/LifeScope proviennent des `EconomicComponentClassificationFact` et restent orthogonaux.
+- Fréquence × ticket est conditionnelle à un vrai PurchaseEvent entièrement couvert; l'absence d'autorité produit `UNAVAILABLE`, jamais une heuristique.
+- `GlobalMaterialityEngine` centralise `materiality_v1`, support, coverage, apparition/disparition et tie-breakers; il ne sélectionne aucune carte.
+- P10/M8 reste un hook optionnel unidirectionnel. Aucune publication ou persistance Global n'est créée.
+- Rapport : `docs/global-v2/execution/P03-report.md`.
+- Gates : P03 49/49, M1 65/65, fondations 107/107, régressions ciblées, typecheck, architecture et build PASS.
+- Écritures live : NONE. Prochain prompt : P04.

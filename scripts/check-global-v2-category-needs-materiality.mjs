@@ -1,0 +1,194 @@
+import assert from "node:assert/strict";
+import fs from "node:fs";
+import { registerHooks } from "node:module";
+
+registerHooks({
+  resolve(specifier, context, nextResolve) {
+    try { return nextResolve(specifier, context); } catch (originalError) {
+      if (!specifier.startsWith(".") || /\.[cm]?[jt]sx?$/.test(specifier)) throw originalError;
+      for (const candidate of [`${specifier}.ts`, `${specifier}/index.ts`]) {
+        try { return nextResolve(candidate, context); } catch { /* continue */ }
+      }
+      throw originalError;
+    }
+  },
+});
+
+const globalCore = await import("../src/core/global-v2/index.ts");
+const globalAnalytics = await import("../src/analytics/global-v2/index.ts");
+const identity = await import("../src/core/identity/index.ts");
+const money = await import("../src/core/money/index.ts");
+const time = await import("../src/core/time/index.ts");
+
+let checks = 0;
+const check = (fn) => { fn(); checks += 1; };
+const rejects = (fn, pattern) => check(() => assert.throws(fn, pattern));
+const m = money.parseMoney;
+const ym = time.parseYearMonth;
+const uuid = (suffix) => `00000000-0000-4000-8000-${String(suffix).padStart(12, "0")}`;
+const categoryA = identity.parseCategoryId(uuid(101));
+const subcategoryA = identity.parseSubcategoryId(uuid(201));
+const subcategoryB = identity.parseSubcategoryId(uuid(202));
+const known = (id, ref) => ({ status: "KNOWN", id, evidenceRefs: [ref] });
+const state = (status, ref = []) => ({ status, evidenceRefs: ref });
+const references = ["2026-01", "2026-02", "2026-03", "2026-04", "2026-05", "2026-06"].map(ym);
+const target = ym("2026-07");
+
+const component = (month, key, amount, category, subcategory, need) => ({
+  month: ym(month),
+  canonicalComponentKey: key,
+  amount: m(amount),
+  category,
+  subcategory,
+  need,
+  necessity: known("Indispensable", "classification:necessity"),
+  behavior: known("Variable", "classification:behavior"),
+  lifeScope: key.startsWith("u-") || key === "refund-target" ? state("CONFLICT", ["classification:conflict"]) : known("Vie courante", "classification:life-scope"),
+  economicIdentityRefs: [`economic-component:${key}`],
+  evidenceRefs: [`fact:${key}`],
+});
+
+const monthly = references.flatMap((month, index) => [
+  component(month, `a-${month}`, String(60 + index), known(categoryA, `category:${categoryA}`), known(subcategoryA, `subcategory:${subcategoryA}`), known("need-home", "need:home")),
+  component(month, `b-${month}`, String(20 + index), known(categoryA, `category:${categoryA}`), known(subcategoryB, `subcategory:${subcategoryB}`), state("UNKNOWN")),
+  component(month, `u-${month}`, "-5", state("UNKNOWN"), state("UNKNOWN"), state("UNKNOWN")),
+]);
+const targetComponents = [
+  component(target, "a-target", "70", known(categoryA, `category:${categoryA}`), known(subcategoryA, `subcategory:${subcategoryA}`), known("need-home", "need:home")),
+  component(target, "b-target", "30", known(categoryA, `category:${categoryA}`), known(subcategoryB, `subcategory:${subcategoryB}`), state("UNKNOWN")),
+  component(target, "refund-target", "-20", state("UNKNOWN"), state("NOT_APPLICABLE"), state("UNKNOWN")),
+];
+
+const result = globalAnalytics.buildGlobalCategoryNeeds({
+  targetMonth: target,
+  referenceMonths: references,
+  components: [...monthly, ...targetComponents],
+  actual: m("80"),
+  officialTypicalTotal: m("80"),
+  officialCategoryCurrentAmounts: { [categoryA]: m("100") },
+  officialCategoryTypicalAmounts: { [categoryA]: m("85") },
+});
+check(() => assert.equal(globalAnalytics.resolveGlobalM2NeedDimension({ sourceNeedId: "need-a", operationComponentCount: 2, knownNeedIds: new Set(["need-a"]), evidenceRefs: ["need:a"] }).status, "KNOWN"));
+check(() => assert.equal(globalAnalytics.resolveGlobalM2NeedDimension({ operationNeedId: "need-a", operationComponentCount: 2, knownNeedIds: new Set(["need-a"]), evidenceRefs: ["operation:a"] }).status, "UNKNOWN"));
+check(() => assert.equal(globalAnalytics.resolveGlobalM2NeedDimension({ operationNeedId: "need-a", operationComponentCount: 1, knownNeedIds: new Set(["need-a"]), evidenceRefs: ["operation:a"] }).status, "KNOWN"));
+check(() => assert.equal(globalAnalytics.resolveGlobalM2NeedDimension({ sourceNeedId: "need-a", operationNeedId: "need-b", operationComponentCount: 1, knownNeedIds: new Set(["need-a", "need-b"]), evidenceRefs: ["source:a", "operation:b"] }).status, "CONFLICT"));
+check(() => assert.equal(globalAnalytics.resolveGlobalM2NeedDimension({ sourceNeedId: "need-label-only", operationComponentCount: 1, knownNeedIds: new Set(), evidenceRefs: ["text:repetition"] }).status, "CONFLICT"));
+check(() => assert.equal(result.categories.reconcilesToActual, true));
+check(() => assert.equal(result.needs.reconcilesToActual, true));
+check(() => assert.equal(result.categories.currentTotal, "80"));
+check(() => assert.equal(result.needs.currentTotal, "80"));
+check(() => assert.equal(result.categories.groups.find(({ key }) => key === "__UNKNOWN__").monthlyAmount, "-20"));
+check(() => assert.equal(result.categories.groups.find(({ key }) => key === categoryA).contributors.reduce((total, item) => money.addMoney(total, item.amount), m("0")), "100"));
+check(() => assert.equal(result.categories.groups.find(({ key }) => key === "__UNKNOWN__").classificationBreakdown.lifeScope[0].key, "__CONFLICT__"));
+check(() => assert.equal(result.categories.coverage.effective, 2 / 3));
+check(() => assert.equal(result.needs.coverage.effective, 1 / 3));
+check(() => assert.equal(result.categories.shareSumIsExhaustive, false));
+check(() => assert.equal(result.purchaseFrequencyTicket.reasonCode, "PURCHASE_EVENT_AUTHORITY_UNAVAILABLE"));
+check(() => assert.ok(result.materialityCandidates.some(({ phenomenonId }) => phenomenonId === `category:${categoryA}`)));
+check(() => assert.deepEqual(result.categories.groups.find(({ key }) => key === categoryA).historicalSeries.map(({ month }) => month), [...references, target]));
+const reordered = globalAnalytics.buildGlobalCategoryNeeds({
+  targetMonth: target,
+  referenceMonths: [...references].reverse(),
+  components: [...targetComponents, ...monthly].reverse(),
+  actual: m("80"),
+  officialTypicalTotal: m("80"),
+  officialCategoryCurrentAmounts: { [categoryA]: m("100") },
+  officialCategoryTypicalAmounts: { [categoryA]: m("85") },
+});
+check(() => assert.equal(reordered.inputHash, result.inputHash));
+rejects(() => globalAnalytics.buildGlobalCategoryNeeds({
+  targetMonth: target,
+  referenceMonths: references,
+  components: [...monthly, ...targetComponents, targetComponents[0]],
+  actual: m("150"), officialTypicalTotal: m("80"),
+  officialCategoryCurrentAmounts: { [categoryA]: m("170") },
+  officialCategoryTypicalAmounts: { [categoryA]: m("85") },
+}), /dupliquée/);
+rejects(() => globalAnalytics.buildGlobalCategoryNeeds({
+  targetMonth: target, referenceMonths: references, components: [...monthly, ...targetComponents],
+  actual: m("81"), officialTypicalTotal: m("80"),
+  officialCategoryCurrentAmounts: { [categoryA]: m("100") },
+  officialCategoryTypicalAmounts: { [categoryA]: m("85") },
+}), /Actual/);
+rejects(() => globalAnalytics.buildGlobalCategoryNeeds({
+  targetMonth: target, referenceMonths: references, components: [...monthly, ...targetComponents],
+  actual: m("80"), officialTypicalTotal: m("80"),
+  officialCategoryCurrentAmounts: { [categoryA]: m("99") },
+  officialCategoryTypicalAmounts: { [categoryA]: m("85") },
+}), /category_amount officiel/);
+rejects(() => globalAnalytics.buildGlobalCategoryNeeds({
+  targetMonth: target, referenceMonths: [...references, target], components: [...monthly, ...targetComponents],
+  actual: m("80"), officialTypicalTotal: m("80"),
+  officialCategoryCurrentAmounts: { [categoryA]: m("100") },
+  officialCategoryTypicalAmounts: { [categoryA]: m("85") },
+}), /strictement antérieures/);
+
+const purchase = globalAnalytics.decomposeGlobalPurchaseFrequencyTicket({
+  authorityAvailable: true,
+  purchaseCoverage: 1,
+  reference: [{ purchaseEventId: "p1", amount: m("20") }, { purchaseEventId: "p2", amount: m("40") }],
+  current: [{ purchaseEventId: "p3", amount: m("30") }, { purchaseEventId: "p4", amount: m("40") }, { purchaseEventId: "p5", amount: m("50") }],
+});
+check(() => assert.equal(purchase.status, "KNOWN"));
+check(() => assert.equal(purchase.frequencyEffect, "35"));
+check(() => assert.equal(purchase.ticketEffect, "25"));
+check(() => assert.equal(purchase.deltaSpend, "60"));
+check(() => assert.equal(purchase.reconciles, true));
+check(() => assert.equal(globalAnalytics.decomposeGlobalPurchaseFrequencyTicket({ authorityAvailable: false, purchaseCoverage: 1, reference: [], current: [] }).reasonCode, "PURCHASE_EVENT_AUTHORITY_UNAVAILABLE"));
+check(() => assert.equal(globalAnalytics.decomposeGlobalPurchaseFrequencyTicket({ authorityAvailable: true, purchaseCoverage: 0.9, reference: [], current: [] }).reasonCode, "PURCHASE_EVENT_COVERAGE_INCOMPLETE"));
+rejects(() => globalAnalytics.decomposeGlobalPurchaseFrequencyTicket({ authorityAvailable: true, purchaseCoverage: 1, reference: [{ purchaseEventId: "p1", amount: m("1") }, { purchaseEventId: "p1", amount: m("2") }], current: [{ purchaseEventId: "p2", amount: m("3") }] }), /dupliqué/);
+
+const support = (status = "SUFFICIENT", grain = "MONTH") => globalCore.parseGlobalSupport({
+  naturalGrain: grain, eligibleUnits: 6, observedUnits: 6, includedUnits: 6,
+  excludedObservedUnits: 0, minimumRequired: 6, supportStatus: status, policyRef: "test-support@v1",
+});
+const coverage = (ratio = 1, status = "KNOWN") => globalCore.parseGlobalCoverageSet({
+  dimensions: [{ dimension: "CLASSIFICATION", status, numerator: ratio, denominator: 1, ratio, unit: "component", basis: "test", evidenceRefs: ["proof:coverage"], policyRef: "test-coverage@v1" }],
+  requiredDimensions: ["CLASSIFICATION"], effective: ratio, aggregation: "MIN_REQUIRED_DIMENSIONS",
+});
+const candidate = (overrides = {}) => globalCore.parseGlobalMaterialityCandidate({
+  candidateId: "candidate:a", phenomenonId: "category:a", metricRef: "metric:category-amount",
+  effect: { absolute: "20", relative: "0.2" }, knowledgeState: "KNOWN",
+  support: support(), coverage: coverage(), evidenceRefs: ["proof:a"], entityRefs: ["category:a"],
+  methodVersion: "global_category_need@v1", materialityPolicy: globalAnalytics.globalMaterialityPolicies.CATEGORY_NEED.ref,
+  ...overrides,
+});
+const engine = new globalAnalytics.GlobalMaterialityEngine();
+check(() => assert.equal(engine.evaluate({ candidate: candidate(), policyId: "CATEGORY_NEED" }).status, "MATERIAL"));
+check(() => assert.equal(engine.evaluate({ candidate: candidate({ effect: { absolute: "14", relative: "2" } }), policyId: "CATEGORY_NEED" }).status, "NOT_MATERIAL"));
+check(() => assert.equal(engine.evaluate({ candidate: candidate({ support: support("INSUFFICIENT") }), policyId: "CATEGORY_NEED" }).status, "INELIGIBLE"));
+check(() => assert.equal(engine.evaluate({ candidate: candidate({ support: support("PARTIAL_SUPPORT") }), policyId: "CATEGORY_NEED" }).status, "QUALIFIED_PARTIAL"));
+check(() => assert.equal(engine.evaluate({ candidate: candidate({ coverage: coverage(0.5, "PARTIAL"), knowledgeState: "PARTIAL" }), policyId: "CATEGORY_NEED" }).status, "QUALIFIED_PARTIAL"));
+check(() => assert.equal(engine.evaluate({ candidate: candidate({ effect: { absolute: "1", relative: "0.01" }, coverage: coverage(0.5, "PARTIAL"), knowledgeState: "PARTIAL" }), policyId: "CATEGORY_NEED" }).status, "QUALIFIED_PARTIAL"));
+check(() => assert.equal(engine.evaluate({ candidate: candidate({ knowledgeState: "UNKNOWN" }), policyId: "CATEGORY_NEED" }).status, "INELIGIBLE"));
+check(() => assert.equal(engine.evaluate({ candidate: candidate({ effect: { absolute: "15", relative: "0.01" } }), policyId: "CATEGORY_NEED", shareDeltaPoints: "2" }).status, "MATERIAL"));
+rejects(() => engine.evaluate({ candidate: candidate({ materialityPolicy: { id: "global-materiality-category-need", version: "v2" } }), policyId: "CATEGORY_NEED" }), /ne correspond pas/);
+const duplicate = candidate({ candidateId: "candidate:b" });
+const distinctGrain = candidate({ candidateId: "candidate:c", support: support("SUFFICIENT", "OCCURRENCE") });
+const evaluated = engine.evaluateAll([
+  { candidate: duplicate, policyId: "CATEGORY_NEED" },
+  { candidate: candidate(), policyId: "CATEGORY_NEED" },
+  { candidate: distinctGrain, policyId: "CATEGORY_NEED" },
+]);
+check(() => assert.equal(evaluated.length, 2));
+check(() => assert.deepEqual(evaluated.map(({ candidateId }) => candidateId), ["candidate:a", "candidate:c"]));
+
+const declaration = globalAnalytics.createGlobalM2DependencyDeclaration({ personScope: { kind: "HOUSEHOLD" }, authorizedPersonIds: [] });
+check(() => assert.ok(declaration.factDependencies.some(({ id, requirement }) => id === "fct_purchase_event" && requirement === "OPTIONAL")));
+check(() => assert.ok(declaration.otherModuleDependencies.some(({ id, requirement }) => id.includes("P10") && requirement === "OPTIONAL")));
+check(() => assert.ok(!declaration.factDependencies.some(({ id, requirement }) => id === "fct_purchase_event" && requirement === "REQUIRED")));
+check(() => globalCore.assertGlobalDependencyClosure(declaration, {
+  factDependencyIds: ["fct_economic_component", "fct_economic_component_classification", "fct_purchase_event"],
+  entityDependencyIds: ["categories", "subcategories", "needs"],
+  upstreamAnalyticsIds: ["economic_consumption_net_attributable", "category_amount", "typical_month_cost"],
+  otherModuleDependencyIds: ["global-v2:m1-economic-function", "GlobalMaterialityEngine", "global-v2:m8-purchase-enrichment:P10"],
+  policyIds: ["global-category-need-reference", "global-category-need-support", "global-category-need-coverage", "global-materiality-category-need", "reference", "support", "coverage", "materiality", "purchaseEnrichment"],
+}));
+
+const source = fs.readFileSync(new URL("../src/analytics/global-v2/category-needs.ts", import.meta.url), "utf8");
+check(() => assert.doesNotMatch(source, /CertifiedHistorical|EXPECTED|oracle/i));
+check(() => assert.doesNotMatch(source, /merchant_label|description|libell[eé]/i));
+const markedFacts = fs.readFileSync(new URL("../src/analytics/insights/marked-facts.ts", import.meta.url), "utf8");
+check(() => assert.match(markedFacts, /markedFactsMaterialityPolicy/));
+
+console.log(`Global V2 category/Needs/materiality: ${checks}/${checks} checks PASS`);
