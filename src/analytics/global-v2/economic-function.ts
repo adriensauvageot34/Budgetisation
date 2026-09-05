@@ -34,7 +34,7 @@ import type { HouseholdTimeZone, LocalDate, YearMonth } from "../../core/time";
 import { parseMethodVersion, type MethodVersion } from "../../core/versions";
 
 const ZERO = parseMoney("0");
-const GLOBAL_M1_METHOD = parseMethodVersion("global_economic_function@v1");
+const GLOBAL_M1_METHOD = parseMethodVersion("global_economic_function@v2");
 
 export const globalM1Policies = {
   timeWindow: "global-economic-month-window@v1",
@@ -552,6 +552,7 @@ export function createGlobalM1DependencyDeclaration(input: {
       { kind: "ANALYTICS", id: "minimal_month_cost", requirement: "REQUIRED", scopeRelation: "canonical-source-aware-target-month", corpusAuthority: "CERTIFIED_HISTORY" },
     ],
     otherModuleDependencies: [
+      { kind: "MODULE", id: "global-temporal-analysis@v1", requirement: "REQUIRED", scopeRelation: "official-certified-monthly-actual" },
       { kind: "MODULE", id: "GlobalTemporalBoundaryResolver", requirement: "REQUIRED", scopeRelation: "resolved-before-engine" },
       { kind: "MODULE", id: "history-v2:bank-economy-bridge", requirement: "REQUIRED", scopeRelation: "pure-authority-reuse" },
     ],
@@ -564,6 +565,9 @@ export function createGlobalM1DependencyDeclaration(input: {
     coveragePolicy: { id: "global-economic-coverage", version: "v1" },
     methodVersion: GLOBAL_M1_METHOD,
     policyVersions: {
+      temporalAnalysis: "v1",
+      temporalFinancialCoverage: "v1",
+      temporalMateriality: "v1",
       timeWindow: "v1",
       typicalSupport: "v1",
       classificationCoverage: "v1",

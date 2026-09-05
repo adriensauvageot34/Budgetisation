@@ -314,6 +314,19 @@ check(() => assert.deepEqual(globalEconomic.globalM1DeferredTemporalOutputs, {
 }));
 
 const declaration = globalEconomic.createGlobalM1DependencyDeclaration({ personScope: { kind: "HOUSEHOLD" }, authorizedPersonIds: [personA, personB] });
+const temporalMonths = Array.from({ length: 12 }, (_, i) => ({
+  month: month(`2025-${String(i + 1).padStart(2, "0")}`),
+  actual: produced("economic_consumption_net_attributable", String(100 + i * 20), { month: `2025-${String(i + 1).padStart(2, "0")}` }),
+  isComplete: true, isComparable: true, isMethodExcluded: false, dependencyRefs: [`synthetic:actual:${i}`],
+}));
+const temporalM1 = globalEconomic.buildGlobalM1Temporal({ certifiedThroughMonth: month("2025-12"), months: temporalMonths });
+check(() => assert.equal(temporalM1.trend.slopePerMonth, "20"));
+check(() => assert.equal(temporalM1.recentChange.delta, "60"));
+check(() => assert.equal(temporalM1.stability.classification.status, "UNKNOWN"));
+check(() => assert.equal(temporalM1.trend.driftMateriality.status, "INELIGIBLE"));
+check(() => assert.equal(temporalM1.inputHash, globalEconomic.buildGlobalM1Temporal({ certifiedThroughMonth: month("2025-12"), months: [...temporalMonths].reverse() }).inputHash));
+check(() => assert.equal(temporalM1.inputHash, globalEconomic.buildGlobalM1Temporal({ certifiedThroughMonth: month("2025-12"), months: [...temporalMonths, { ...temporalMonths[0], month: month("2026-01") }] }).inputHash));
+check(() => assert.notEqual(temporalM1.inputHash, globalEconomic.buildGlobalM1Temporal({ certifiedThroughMonth: month("2025-12"), months: temporalMonths.map((m, i) => i === 0 ? { ...m, actual: { ...m.actual, value: asMoney("101") } } : m) }).inputHash));
 check(() => assert.equal(declaration.publicationOutputs.length, 0));
 check(() => assert.ok(declaration.factDependencies.some(({ id }) => id === "fct_economic_component")));
 check(() => assert.ok(declaration.entityDependencies.some(({ id }) => id === "financial_source_person_links")));
@@ -323,8 +336,8 @@ check(() => globalCore.assertGlobalDependencyClosure(declaration, {
   factDependencyIds: ["fct_economic_component", "fct_economic_component_classification"],
   entityDependencyIds: ["analysis_periods", "minimal_baseline_rules", "recurrence_series", "financial_source_person_links"],
   upstreamAnalyticsIds: ["economic_consumption_net_attributable", "typical_month_cost", "minimal_month_cost"],
-  otherModuleDependencyIds: ["GlobalTemporalBoundaryResolver", "history-v2:bank-economy-bridge"],
-  policyIds: ["global-economic-month-window", "global-typical-support", "global-economic-coverage", "timeWindow", "typicalSupport", "classificationCoverage", "recurrence"],
+  otherModuleDependencyIds: ["GlobalTemporalBoundaryResolver", "history-v2:bank-economy-bridge", "global-temporal-analysis@v1"],
+  policyIds: ["global-economic-month-window", "global-typical-support", "global-economic-coverage", "timeWindow", "typicalSupport", "classificationCoverage", "recurrence", "temporalAnalysis", "temporalFinancialCoverage", "temporalMateriality"],
 }));
 
 const resolverSource = fs.readFileSync(new URL("../src/server/analytics/fact-source-resolver.ts", import.meta.url), "utf8");

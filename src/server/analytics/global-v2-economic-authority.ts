@@ -5,6 +5,7 @@ import {
   adaptGlobalMinimal,
   buildGlobalEconomicStructure,
   buildGlobalTypicalPair,
+  buildGlobalM1Temporal,
   createGlobalM1DependencyDeclaration,
   projectGlobalEconomicStructureMonth,
 } from "@/analytics/global-v2";
@@ -105,6 +106,7 @@ export async function resolveGlobalM1HouseholdAuthority(input: {
       months: monthlyAuthorities,
     }),
     minimal,
+    temporal: buildGlobalM1Temporal({ certifiedThroughMonth: targetMonth, months: monthlyAuthorities }),
     structure: buildGlobalEconomicStructure(structureComponents),
     facts,
     classifications,

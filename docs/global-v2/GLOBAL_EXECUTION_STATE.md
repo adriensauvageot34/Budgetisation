@@ -4,9 +4,9 @@
 
 | Champ | Valeur |
 |---|---|
-| Prompt | P03 — Catégories, Needs et matérialité partagée |
+| Prompt | P04 — PASS, C1/C2 certifiés après arbitrages |
 | Branche | `main` |
-| Baseline | `f27aa4780f73da64b36463d996ab57d37bcfa2f9` |
+| Baseline | `3f358ed55f9d2c8d7b5fd88f493532702139d808` |
 | Checkpoint | `SELF` — résoudre par `git log -1 --format=%H -- docs/global-v2/GLOBAL_EXECUTION_STATE.md` |
 | GLOBAL_PHASE_A1 | PASS — freeze préexistant |
 | GLOBAL_PHASE_A2 | PASS |
@@ -19,10 +19,13 @@
 | B3 Category/Needs core | PASS |
 | B4 Global Materiality | PASS |
 | GLOBAL_PHASE_B_CORE | PASS |
-| M1 final | PENDING_P04_P05 — Trend/Stability/Recent Change |
-| Live gate | NOT_RUN — non requis et interdit pour P02 |
+| P04 CONTRACT_GATE | PASS |
+| P04 IMPLEMENTATION_GATE | PASS |
+| P04 TEST_GATE | PASS — 317 assertions, typecheck, architecture, build, diff-check |
+| M1 final | Raccordement temporel et replay B2 PASS; recertification supplémentaire P05 selon ses dépendances |
+| Live gate | NOT_RUN — non requis, aucune écriture autorisée dans P04 |
 | Live writes | NONE |
-| Prochain prompt autorisé | P04 uniquement |
+| Prochain prompt autorisé | P05 — non démarré |
 
 ## Références et digests
 
@@ -97,3 +100,51 @@ Elles restent des contrats de compatibilité, pas une autorité V2.
 - Rapport : `docs/global-v2/execution/P03-report.md`.
 - Gates : P03 49/49, M1 65/65, fondations 107/107, régressions ciblées, typecheck, architecture et build PASS.
 - Écritures live : NONE. Prochain prompt : P04.
+
+## P04 — reprise en attente d'autorité
+
+- Baseline : `3f358ed55f9d2c8d7b5fd88f493532702139d808`, main propre au départ.
+- Master inchangé (digest ci-dessus); sections et annexes temporelles consultées.
+- C1 BLOCKED : StabilityPolicy et critère de plateau non précisés; propositions concrètes dans `execution/P04-report.md`.
+- C2 PARTIAL : primitives descriptives Theil–Sen / recent 3+3 / médiane-MAD créées; pas de raccordement M1 ni confirmation de transformation.
+- Aucun commit PASS, aucun push, aucune écriture live. P05 non autorisé.
+
+## P04 — arbitrage humain accepté et reprise
+
+- Les sept décisions humaines remplacent le blocage d'autorité précédent, sans réécrire son historique. Aucun nouvel arbitrage de stabilité n'est demandé.
+- Descriptif et matérialité sont séparés : médiane/MAD/Theil–Sen restent disponibles; aucune classe de stabilité n'est déduite d'une dérive non matérielle.
+- Diagnostics exécutables 6+6 / 6+4 et persistance 5/6 / 3/4 : les plateaux exactement constants ont une preuve factuelle; les autres restent non confirmés, même si l'amplitude est matérielle.
+- Ces diagnostics ne sont pas encore des transformations sémantiques : chapitres/retour, fusion/ancrage, CURRENT_REGIME et raccordement M1 restent à implémenter et certifier. Ne pas assimiler leurs candidats à des sorties M3 finales.
+- Rapport et commandes : `execution/P04-report.md`, section Reprise après arbitrage.
+- IMPLEMENTATION_GATE = PARTIAL; TEST_GATE complet = PARTIAL; NEXT_PERMITTED_PROMPT = P04. Aucun checkpoint PASS ni autorisation P05.
+
+## P04 — reprise suivante : lifecycle, fusion, M1
+
+- `temporal-lifecycle.ts` : chapitres constants ≥3 mois, retour ≥3 mois consécutifs avec double matérialité, troisième régime distinct, CURRENT_REGIME médian max12/min6 avec qualification informative préalable. Aucun faux terme à la fin des données.
+- `temporal-fusion.ts` : domaines séparés, proximité ET sémantique, relation Canonical pour délai >31 jours, catalogue explicite pour groupe sans ancre ≥3 signaux / ≥2 domaines. Groupes déterministes, sans chaîne transitive arbitraire.
+- `economic-temporal.ts` est appelé par l'autorité serveur M1 existante. Méthode M1 v2 et déclaration de dépendance adaptées; aucune identité History/V1 modifiée. Finance P02/P03 rejouée.
+- Tests : descriptif 17/17, temporel 76/76, M1 72/72, M2/matérialité 49/49; typecheck et architecture PASS.
+- Nouveau point contractuel à arbitrer : choix de `primaryDriver` inter-domaines (GLO-M03-052–054, P2927–2937). Le code expose un représentant technique stable distinct d'un driver narratif UNKNOWN; il ne prétend pas produire un TransformationArtifact final conforme.
+- CONTRACT_GATE = BLOCKED pour cette sélection; IMPLEMENTATION_GATE / TEST_GATE exhaustif = PARTIAL. Voir le dernier ajout au rapport P04 pour la décision exacte et les autres fermetures restantes.
+- Aucun commit, push, live write ou démarrage P05.
+
+## P04 — arbitrage primaryDriver appliqué
+
+- Le fallback UNKNOWN a été retiré. Choix : désignation autoritaire, lien direct à l'ancre, début certifié le plus ancien, identité canonique pour départager. Provenance du choix et `causalEvidence=false` conservés.
+- `transformations.ts` assemble les fenêtres/chaptres/fusion/régime courant; `temporal-projection.ts` qualifie les taux mensuels avec exposition explicite; `temporal-dependencies.ts` déclare l'amont requis et les enrichissements optionnels.
+- La convention IQR descriptive est explicitement versionnée (interpolation linéaire type 7), sans seuil de classification; robustShift est diagnostique uniquement et reste UNKNOWN avec un dénominateur nul.
+- Suites : temporel 122/122 + descriptif 17/17, M1 72/72, M2 49/49, typecheck/architecture PASS.
+- L'arbitrage de dominance est fermé. P04 reste PARTIAL tant que les clauses résiduelles et la matrice exhaustive C1/C2 ne sont pas certifiées; aucun nouveau choix humain n'est demandé à ce stade. Détail dans le dernier ajout au rapport P04.
+- Aucun checkpoint PASS. P05 reste interdit.
+
+- Complément de reprise : dispersion brute/ordinaire désormais distincte avec preuves d'exclusion obligatoires; 131/131 tests temporels +17 descriptifs,72 M1,49 M2. La matrice GLO-M03 dans le rapport explicite les fermetures restantes (GRADUAL_TRANSITION positif, statuts internes et variantes du catalogue). PRIMARY_DRIVER_GATE=PASS; P04 intégral reste PARTIAL, sans nouvelle demande d'arbitrage.
+
+## P04 — clôture finale C1/C2
+
+- Les statuts partiels ci-dessus sont historiques. État courant : les trois gates P04 sont PASS.
+- GRADUAL_TRANSITION possède un chemin positif conservateur (plateaux exacts 6+6, transition monotone observée); les cas bruyants sans preuve restent candidats, sans seuil inventé. CURRENT_REGIME démarre au nouveau plateau.
+- Statuts internes REJECTED/CANDIDATE/CONFIRMED_ONGOING/CONFIRMED_CLOSED et comparaison RECLASSIFIED testés. Aucun artifact publié n'est muté.
+- Catalogue 31 entrées et projections aux grains humains : tests d'absence d'autorité sur toutes les entrées et projections explicites; enrichissements futurs M4/M6/M7/M8 optionnels, avec replay par closure à leur intégration.
+- Tests finaux : 179 temporels/assemblage +17 descriptifs +72 M1 +49 M2 =317 PASS. Typecheck, architecture491, build Next final et diff-check PASS.
+- Rapport autoritaire du lot : dernière section « Clôture C1/C2 — état final après les deux arbitrages » de `execution/P04-report.md`.
+- `NEXT_PERMITTED_PROMPT = P05`, sans le démarrer. Checkpoint local uniquement, aucun push, aucun live write.
