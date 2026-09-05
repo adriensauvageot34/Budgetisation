@@ -262,13 +262,37 @@ export class FactSourceResolver {
     metricId: ActiveMetricId,
     rawScope: AnalysisScope,
   ): Promise<MetricProductionSource> {
+    return this.resolveInternal(metricId, rawScope, true);
+  }
+
+  /**
+   * Canonical-only authority path for new computations. In particular, a
+   * compare-only certified Minimal value can remain readable by legacy
+   * History without ever becoming a Global production input.
+   */
+  async resolveCanonical(
+    metricId: ActiveMetricId,
+    rawScope: AnalysisScope,
+  ): Promise<MetricProductionSource> {
+    return this.resolveInternal(metricId, rawScope, false);
+  }
+
+  private async resolveInternal(
+    metricId: ActiveMetricId,
+    rawScope: AnalysisScope,
+    allowCertifiedHistoricalMinimal: boolean,
+  ): Promise<MetricProductionSource> {
     const definition = getMetricRegistryEntry(metricId);
     const scope = normalizeAnalysisScope(rawScope);
     const scopeHash = computeScopeHash(scope);
     const sourceFact = definition.sourceFact[0];
 
     if (definition.productionStrategy === "minimal_month") {
-      if (scope.time.kind === "month" && scope.subject.kind === "household") {
+      if (
+        allowCertifiedHistoricalMinimal &&
+        scope.time.kind === "month" &&
+        scope.subject.kind === "household"
+      ) {
         const certified = this.certifiedHistoricalMinimal?.resolve({
           month: scope.time.month,
           scopeHash,

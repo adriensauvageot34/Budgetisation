@@ -4,17 +4,20 @@
 
 | Champ | Valeur |
 |---|---|
-| Prompt | P01 — Fondations partagées et certification |
+| Prompt | P02 — Autorité temporelle et fonctionnement économique |
 | Branche | `main` |
-| Baseline | `9a70f9b1643747f8d60214cf66c94f58d193112c` |
+| Baseline | `f27aa4780f73da64b36463d996ab57d37bcfa2f9` |
 | Checkpoint | `SELF` — résoudre par `git log -1 --format=%H -- docs/global-v2/GLOBAL_EXECUTION_STATE.md` |
 | GLOBAL_PHASE_A1 | PASS — freeze préexistant |
 | GLOBAL_PHASE_A2 | PASS |
 | GLOBAL_PHASE_A3 | PASS |
 | B1 | ABSORBED_BY_A1 — non réexécuté |
-| Live gate | NOT_RUN — non requis et interdit pour P01 |
+| P02 implementation | PASS — resolver temporel et M1 économique |
+| P02 contract | PASS — B2 fermé ; sorties temporelles P04 explicitement différées |
+| P02 tests | PASS — 65/65, regressions ciblées, typecheck, architecture et build |
+| Live gate | NOT_RUN — non requis et interdit pour P02 |
 | Live writes | NONE |
-| Prochain prompt autorisé | P02 uniquement |
+| Prochain prompt autorisé | P03 uniquement |
 
 ## Références et digests
 
@@ -66,3 +69,14 @@ Elles restent des contrats de compatibilité, pas une autorité V2.
 - `InsightSelectionEngine` est propriété P14.
 - Les futurs consommateurs person-scoped devront versionner leur méthode/policy avant d’exposer l’enrichissement ECF ; les totaux Household restent inchangés.
 - Un lien direct `Payment_component → Person` exige une autorité Canonical future ; en son absence le résultat reste UNKNOWN.
+
+## P02 — autorité temporelle et M1 économique
+
+- `GlobalTemporalBoundaryResolver` est désormais exécutable : CH/LT disjoints, gaps préservés, fenêtres naturelles/lookbacks, support et hash déterministe.
+- Actual/Typical/Minimal réutilisent les producteurs officiels ; la nouvelle voie `FactSourceResolver.resolveCanonical()` exclut les certificats Minimal compare-only sans casser `resolve()` legacy.
+- TypicalReference utilise `< M`; TypicalState utilise `<= M`; 0–5 mois est non publiable, 6–11 SUFFICIENT, ≥12 STRONG.
+- Bridge/residual délègue à la primitive History autoritaire ; structure, classification et équivalents mensuels sont exposés sans ReadModel History.
+- Person Finance est bornée aux bénéficiaires/parts P01 prouvés, avec reste et coverage explicites.
+- Trend, Stability et Recent Change restent `PENDING_P04`; aucune valeur de substitution n'est produite.
+- Rapport : `docs/global-v2/execution/P02-report.md`.
+- Écritures live : NONE. Publication/migration/Query/React : NONE.
