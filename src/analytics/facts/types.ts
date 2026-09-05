@@ -11,7 +11,7 @@ import type {
   PlaceId,
   SubcategoryId,
 } from "../../core/identity";
-import type { Money } from "../../core/money";
+import type { DecimalString, Money } from "../../core/money";
 import type {
   HouseholdTimeZone,
   Instant,
@@ -51,6 +51,70 @@ export type AnalyticTextDimensionValue =
   | { readonly kind: "unknown" }
   | { readonly kind: "not_applicable" }
   | { readonly kind: "conflict" };
+
+export type EconomicPersonAttributionReason =
+  | "NO_EXPLICIT_BENEFICIARY"
+  | "UNSUPPORTED_SOURCE_KIND"
+  | "MULTIPLE_UNALLOCATED_BENEFICIARIES"
+  | "MIXED_BENEFICIARY_RELATIONS"
+  | "OUT_OF_HOUSEHOLD_PERSON"
+  | "INVALID_SHARE_TOTAL";
+
+export type EconomicPersonShare = {
+  readonly personId: PersonId;
+  readonly share: DecimalString;
+  readonly evidenceRefs: readonly string[];
+};
+
+export type EconomicPersonAttribution =
+  | {
+      readonly kind: "resolved";
+      readonly id: PersonId;
+      readonly attribution?: "explicit_beneficiary";
+      readonly evidenceRefs?: readonly string[];
+      readonly payerEvidenceRefs?: readonly string[];
+    }
+  | {
+      readonly kind: "shared";
+      readonly shares: readonly EconomicPersonShare[];
+      readonly evidenceRefs: readonly string[];
+      readonly payerEvidenceRefs: readonly string[];
+    }
+  | {
+      readonly kind: "partial";
+      readonly shares: readonly EconomicPersonShare[];
+      readonly unattributedShare: DecimalString;
+      readonly evidenceRefs: readonly string[];
+      readonly payerEvidenceRefs: readonly string[];
+    }
+  | {
+      readonly kind: "unknown";
+      readonly reasonCode?: Extract<
+        EconomicPersonAttributionReason,
+        "NO_EXPLICIT_BENEFICIARY" | "UNSUPPORTED_SOURCE_KIND"
+      >;
+      readonly evidenceRefs?: readonly string[];
+      readonly payerEvidenceRefs?: readonly string[];
+    }
+  | { readonly kind: "not_applicable" }
+  | {
+      readonly kind: "conflict";
+      readonly reasonCode?: Exclude<
+        EconomicPersonAttributionReason,
+        "NO_EXPLICIT_BENEFICIARY" | "UNSUPPORTED_SOURCE_KIND"
+      >;
+      readonly evidenceRefs?: readonly string[];
+      readonly payerEvidenceRefs?: readonly string[];
+    };
+
+export type FinancialSourcePersonLink = {
+  readonly sourceKind: "Operation" | "Allocation" | "Item" | "Cash_use";
+  readonly sourceId: string;
+  readonly personId: PersonId;
+  readonly relationType: "payer" | "beneficiary" | "beneficiary_share";
+  readonly share: DecimalString | null;
+  readonly evidenceRef: string;
+};
 
 export type AnalyticDateValue =
   | { readonly kind: "known"; readonly date: LocalDate }
@@ -99,7 +163,7 @@ export type EconomicComponentFact = {
   readonly net: Money;
   readonly bankDate: AnalyticDateValue;
   readonly economicTiming: EconomicTiming;
-  readonly person: AnalyticDimensionValue<PersonId>;
+  readonly person: EconomicPersonAttribution;
   readonly category: AnalyticCategoryValue;
   readonly subcategory: AnalyticDimensionValue<SubcategoryId>;
   readonly activity: AnalyticDimensionValue<ActivityId>;

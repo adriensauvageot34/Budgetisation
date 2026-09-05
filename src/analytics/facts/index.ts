@@ -15,6 +15,9 @@ export type {
   CanonicalPlaceValue,
   CashUseId,
   EconomicComponentFact,
+  EconomicPersonAttribution,
+  EconomicPersonAttributionReason,
+  EconomicPersonShare,
   EconomicTiming,
   EconomicTimingSegment,
   EconomicTimingSegmentKey,
@@ -32,6 +35,7 @@ export type {
   PurchaseEventSource,
   PurchaseEventSourceKind,
   PurchaseEventTiming,
+  FinancialSourcePersonLink,
 } from "./types";
 export type {
   ComponentAxisClassification,
@@ -125,4 +129,5 @@ export {
   projectPersonDayFact,
   projectPlaceVisitFact,
   projectPurchaseEventFact,
+  resolveEconomicPersonAttribution,
 } from "./canonical";

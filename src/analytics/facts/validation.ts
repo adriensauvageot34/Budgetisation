@@ -13,10 +13,12 @@ import {
 import {
   addMoney,
   compareMoney,
+  parseDecimalString,
   parseMoney,
   subtractMoney,
   type Money,
 } from "../../core/money";
+import Big from "big.js";
 import {
   parseHouseholdTimeZone,
   parseInstant,
@@ -42,6 +44,9 @@ import type {
   CanonicalPlaceValue,
   CashUseId,
   EconomicComponentFact,
+  EconomicPersonAttribution,
+  EconomicPersonAttributionReason,
+  EconomicPersonShare,
   EconomicTiming,
   EconomicTimingSegment,
   EconomicTimingSegmentKey,
@@ -163,6 +168,138 @@ function parseDimensionValue<Id extends string>(
   }
   parseStrictRecord(value, ["kind"], typeName);
   return { kind };
+}
+
+function parseEvidenceRefs(value: unknown, typeName: string): readonly string[] {
+  if (!Array.isArray(value)) throw new TypeError(`${typeName} doit être un tableau.`);
+  const refs = value.map((entry, index) => {
+    if (typeof entry !== "string" || entry.trim().length === 0) {
+      throw new TypeError(`${typeName}[${index}] doit être une chaîne non vide.`);
+    }
+    return entry;
+  });
+  const normalized = [...new Set(refs)].sort();
+  if (normalized.length !== refs.length) throw new TypeError(`${typeName} contient un doublon.`);
+  return normalized;
+}
+
+function parseEconomicPersonShare(value: unknown): EconomicPersonShare {
+  const record = parseStrictRecord(
+    value,
+    ["personId", "share", "evidenceRefs"],
+    "EconomicPersonShare",
+  );
+  const share = parseDecimalString(requireProperty(record, "share", "EconomicPersonShare"));
+  if (new Big(share).lte(0) || new Big(share).gt(1)) {
+    throw new TypeError("EconomicPersonShare.share doit appartenir à ]0,1].");
+  }
+  return {
+    personId: parsePersonId(requireProperty(record, "personId", "EconomicPersonShare")),
+    share,
+    evidenceRefs: parseEvidenceRefs(
+      requireProperty(record, "evidenceRefs", "EconomicPersonShare"),
+      "EconomicPersonShare.evidenceRefs",
+    ),
+  };
+}
+
+function parseEconomicPersonAttribution(value: unknown): EconomicPersonAttribution {
+  const candidate = parseStrictRecord(
+    value,
+    ["kind", "id", "attribution", "shares", "unattributedShare", "reasonCode", "evidenceRefs", "payerEvidenceRefs"],
+    "EconomicPersonAttribution",
+  );
+  const kind = parseStringLiteral<EconomicPersonAttribution["kind"]>(
+    requireProperty(candidate, "kind", "EconomicPersonAttribution"),
+    new Set(["resolved", "shared", "partial", "unknown", "not_applicable", "conflict"]),
+    "EconomicPersonAttribution.kind",
+  );
+  if (kind === "resolved") {
+    const record = parseStrictRecord(
+      value,
+      ["kind", "id", "attribution", "evidenceRefs", "payerEvidenceRefs"],
+      "EconomicPersonAttribution",
+    );
+    const attribution = Object.hasOwn(record, "attribution")
+      ? parseStringLiteral<"explicit_beneficiary">(
+          requireProperty(record, "attribution", "EconomicPersonAttribution"),
+          new Set(["explicit_beneficiary"] as const),
+          "EconomicPersonAttribution.attribution",
+        )
+      : undefined;
+    const evidenceRefs = Object.hasOwn(record, "evidenceRefs")
+      ? parseEvidenceRefs(requireProperty(record, "evidenceRefs", "EconomicPersonAttribution"), "EconomicPersonAttribution.evidenceRefs")
+      : undefined;
+    const payerEvidenceRefs = Object.hasOwn(record, "payerEvidenceRefs")
+      ? parseEvidenceRefs(requireProperty(record, "payerEvidenceRefs", "EconomicPersonAttribution"), "EconomicPersonAttribution.payerEvidenceRefs")
+      : undefined;
+    return {
+      kind,
+      id: parsePersonId(requireProperty(record, "id", "EconomicPersonAttribution")),
+      ...(attribution === undefined ? {} : { attribution }),
+      ...(evidenceRefs === undefined ? {} : { evidenceRefs }),
+      ...(payerEvidenceRefs === undefined ? {} : { payerEvidenceRefs }),
+    };
+  }
+  if (kind === "shared" || kind === "partial") {
+    const allowed = kind === "partial"
+      ? ["kind", "shares", "unattributedShare", "evidenceRefs", "payerEvidenceRefs"]
+      : ["kind", "shares", "evidenceRefs", "payerEvidenceRefs"];
+    const record = parseStrictRecord(value, allowed, "EconomicPersonAttribution");
+    const rawShares = requireProperty(record, "shares", "EconomicPersonAttribution");
+    if (!Array.isArray(rawShares) || rawShares.length === 0) {
+      throw new TypeError("EconomicPersonAttribution.shares doit être non vide.");
+    }
+    const shares = rawShares.map(parseEconomicPersonShare).sort((left, right) => left.personId.localeCompare(right.personId));
+    if (new Set(shares.map(({ personId }) => personId)).size !== shares.length) {
+      throw new TypeError("EconomicPersonAttribution.shares duplique une Person.");
+    }
+    const total = shares.reduce((sum, entry) => sum.plus(entry.share), new Big(0));
+    const evidenceRefs = parseEvidenceRefs(requireProperty(record, "evidenceRefs", "EconomicPersonAttribution"), "EconomicPersonAttribution.evidenceRefs");
+    const payerEvidenceRefs = parseEvidenceRefs(requireProperty(record, "payerEvidenceRefs", "EconomicPersonAttribution"), "EconomicPersonAttribution.payerEvidenceRefs");
+    if (kind === "shared") {
+      if (!total.eq(1)) throw new TypeError("Une attribution shared doit totaliser 1.");
+      return { kind, shares, evidenceRefs, payerEvidenceRefs };
+    }
+    const unattributedShare = parseDecimalString(requireProperty(record, "unattributedShare", "EconomicPersonAttribution"));
+    if (new Big(unattributedShare).lte(0) || !total.plus(unattributedShare).eq(1)) {
+      throw new TypeError("Une attribution partial doit réconcilier exactement 1.");
+    }
+    return { kind, shares, unattributedShare, evidenceRefs, payerEvidenceRefs };
+  }
+  if (kind === "not_applicable") {
+    parseStrictRecord(value, ["kind"], "EconomicPersonAttribution");
+    return { kind };
+  }
+  const record = parseStrictRecord(
+    value,
+    ["kind", "reasonCode", "evidenceRefs", "payerEvidenceRefs"],
+    "EconomicPersonAttribution",
+  );
+  const reasonCode = Object.hasOwn(record, "reasonCode")
+    ? parseStringLiteral<EconomicPersonAttributionReason>(
+        requireProperty(record, "reasonCode", "EconomicPersonAttribution"),
+        new Set(["NO_EXPLICIT_BENEFICIARY", "UNSUPPORTED_SOURCE_KIND", "MULTIPLE_UNALLOCATED_BENEFICIARIES", "MIXED_BENEFICIARY_RELATIONS", "OUT_OF_HOUSEHOLD_PERSON", "INVALID_SHARE_TOTAL"]),
+        "EconomicPersonAttribution.reasonCode",
+      )
+    : undefined;
+  const evidenceRefs = Object.hasOwn(record, "evidenceRefs")
+    ? parseEvidenceRefs(requireProperty(record, "evidenceRefs", "EconomicPersonAttribution"), "EconomicPersonAttribution.evidenceRefs")
+    : undefined;
+  const payerEvidenceRefs = Object.hasOwn(record, "payerEvidenceRefs")
+    ? parseEvidenceRefs(requireProperty(record, "payerEvidenceRefs", "EconomicPersonAttribution"), "EconomicPersonAttribution.payerEvidenceRefs")
+    : undefined;
+  const unknownReasons: readonly EconomicPersonAttributionReason[] = ["NO_EXPLICIT_BENEFICIARY", "UNSUPPORTED_SOURCE_KIND"];
+  if (
+    (kind === "unknown" && reasonCode !== undefined && !unknownReasons.includes(reasonCode)) ||
+    (kind === "conflict" && reasonCode !== undefined && unknownReasons.includes(reasonCode))
+  ) throw new TypeError(`reasonCode est incompatible avec ${kind}.`);
+  return {
+    kind,
+    ...(reasonCode === undefined ? {} : { reasonCode }),
+    ...(evidenceRefs === undefined ? {} : { evidenceRefs }),
+    ...(payerEvidenceRefs === undefined ? {} : { payerEvidenceRefs }),
+  } as EconomicPersonAttribution;
 }
 
 function parseCategoryValue(value: unknown): AnalyticCategoryValue {
@@ -513,10 +650,8 @@ export function parseEconomicComponentFact(
       requireProperty(record, "economicTiming", "EconomicComponentFact"),
       net,
     ),
-    person: parseDimensionValue(
+    person: parseEconomicPersonAttribution(
       requireProperty(record, "person", "EconomicComponentFact"),
-      parsePersonId,
-      "EconomicComponentFact.person",
     ),
     category: parseCategoryValue(
       requireProperty(record, "category", "EconomicComponentFact"),

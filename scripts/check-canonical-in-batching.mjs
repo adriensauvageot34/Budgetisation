@@ -235,6 +235,60 @@ try {
 }
 assert.equal(failingEconomic.calls.length, 3);
 
+const personLinkCalls = [];
+const personLinkClient = {
+  from(table) {
+    assert.equal(table, "financial_source_person_links");
+    const state = { sourceKind: undefined, idColumn: undefined, ids: [] };
+    const query = {
+      select(selection) {
+        assert.match(selection, /share_exact:share::text/);
+        return query;
+      },
+      eq(column, value) {
+        assert.equal(column, "source_kind");
+        state.sourceKind = value;
+        return query;
+      },
+      in(column, values) {
+        state.idColumn = column;
+        state.ids = [...values];
+        personLinkCalls.push({ sourceKind: state.sourceKind, idColumn: column, ids: [...values] });
+        return query;
+      },
+      order() { return query; },
+      then(resolve, reject) {
+        const data = state.ids.map((sourceId) => ({
+          source_kind: state.sourceKind,
+          operation_id: state.idColumn === "operation_id" ? sourceId : null,
+          allocation_id: state.idColumn === "allocation_id" ? sourceId : null,
+          item_id: state.idColumn === "item_id" ? sourceId : null,
+          cash_use_id: state.idColumn === "cash_use_id" ? sourceId : null,
+          person_id: runtimeContext.householdId,
+          relation_type: "beneficiary",
+          share_exact: null,
+        }));
+        return Promise.resolve({ data, error: null }).then(resolve, reject);
+      },
+    };
+    return query;
+  },
+};
+const personLinkRepository = new CanonicalRepository(personLinkClient, runtimeContext);
+const personLinkComponents = [
+  ...Array.from({ length: 101 }, (_, index) => ({ source_kind: "Operation", component_id: `operation-${index}` })),
+  { source_kind: "Allocation", component_id: "allocation-1" },
+  { source_kind: "Payment_component", component_id: "payment-ignored" },
+];
+const personLinkRows = await personLinkRepository.loadPersonLinkRowsForComponents(personLinkComponents);
+assert.deepEqual(personLinkCalls.map(({ sourceKind, idColumn, ids }) => [sourceKind, idColumn, ids.length]), [
+  ["Operation", "operation_id", 100],
+  ["Operation", "operation_id", 1],
+  ["Allocation", "allocation_id", 1],
+]);
+assert.equal(personLinkRows.length, 102);
+assert.equal(personLinkCalls.some(({ sourceKind }) => sourceKind === "Payment_component"), false);
+
 const paginatedOperationRows = Array.from({ length: 1_505 }, (_, index) => ({
   operation_id: `paged-operation-${String(index).padStart(4, "0")}`,
   date_bancaire: "2026-01-15",

@@ -1,5 +1,5 @@
-import type { MetricId } from "../../core/identity";
-import type { Money } from "../../core/money";
+import type { MetricId, PersonId } from "../../core/identity";
+import type { DecimalString, Money } from "../../core/money";
 import type { Provenance, SupportUnit } from "../../core/metrics";
 import type {
   AnalysisScope,
@@ -143,4 +143,38 @@ export type ContextCostAggregate = {
   readonly value: Money;
   readonly provenance: Provenance;
   readonly overlappingContextsAdditivity: "non_additive";
+};
+
+export type PersonEconomicAttributionContribution = {
+  readonly canonicalComponentKey: string;
+  readonly personId: PersonId;
+  readonly share: DecimalString;
+  readonly amount: Money;
+};
+
+export type UnattributedEconomicContribution = {
+  readonly canonicalComponentKey: string;
+  readonly share: DecimalString;
+  readonly amount: Money;
+  readonly reason: "UNKNOWN" | "PARTIAL" | "CONFLICT" | "NOT_APPLICABLE";
+};
+
+export type PersonEconomicAttributionCoverage = {
+  readonly attributedContributions: readonly PersonEconomicAttributionContribution[];
+  readonly unattributedContributions: readonly UnattributedEconomicContribution[];
+  readonly eligibleComponentCount: number;
+  readonly fullyAttributedComponentCount: number;
+  readonly eligibleAbsoluteAmount: Money;
+  readonly attributedAbsoluteAmount: Money;
+  readonly attributableNet: Money;
+  readonly unattributableNet: Money;
+  readonly componentCoverageRatio?: DecimalString;
+  readonly amountCoverageRatio?: DecimalString;
+  readonly conflictComponentKeys: readonly string[];
+};
+
+export type PersonEconomicSelection = PersonEconomicAttributionCoverage & {
+  readonly personId: PersonId;
+  readonly selectedContributions: readonly PersonEconomicAttributionContribution[];
+  readonly selectedNet: Money;
 };

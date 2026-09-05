@@ -18,9 +18,11 @@ import {
 import {
   addMoney,
   compareMoney,
+  parseDecimalString,
   parseMoney,
   type Money,
 } from "../../core/money";
+import Big from "big.js";
 import {
   parseHouseholdTimeZone,
   parseInstant,
@@ -41,6 +43,8 @@ import type {
   CanonicalComponentKey,
   CanonicalPlaceValue,
   EconomicComponentFact,
+  EconomicPersonAttribution,
+  FinancialSourcePersonLink,
   EconomicTiming,
   EconomicTimingSegment,
   LifeEventSeriesId,
@@ -799,7 +803,143 @@ export type EconomicComponentProjectionInput = {
   readonly timingRows: readonly unknown[];
   readonly timingControl: unknown;
   readonly reconciliationControl: unknown;
+  readonly personLinks?: readonly unknown[];
+  readonly authorizedPersonIds?: readonly PersonId[];
 };
+
+function parseFinancialSourcePersonLink(value: unknown): FinancialSourcePersonLink {
+  const row = parseStrictRecord(
+    value,
+    [
+      "source_kind",
+      "operation_id",
+      "allocation_id",
+      "item_id",
+      "cash_use_id",
+      "person_id",
+      "relation_type",
+      "share_exact",
+    ],
+    "financial_source_person_links",
+  );
+  const sourceKind = parseStringLiteral<FinancialSourcePersonLink["sourceKind"]>(
+    requireProperty(row, "source_kind", "financial_source_person_links"),
+    new Set(["Operation", "Allocation", "Item", "Cash_use"]),
+    "financial_source_person_links.source_kind",
+  );
+  const sourceColumn = sourceKind === "Operation"
+    ? "operation_id"
+    : sourceKind === "Allocation"
+      ? "allocation_id"
+      : sourceKind === "Item"
+        ? "item_id"
+        : "cash_use_id";
+  const sourceId = parseUuid(
+    requireProperty(row, sourceColumn, "financial_source_person_links"),
+    `financial_source_person_links.${sourceColumn}`,
+  );
+  for (const column of ["operation_id", "allocation_id", "item_id", "cash_use_id"] as const) {
+    if (column !== sourceColumn && requireProperty(row, column, "financial_source_person_links") !== null) {
+      throw new TypeError("financial_source_person_links doit cibler une source exacte unique.");
+    }
+  }
+  const personId = parsePersonId(
+    requireProperty(row, "person_id", "financial_source_person_links"),
+  );
+  const relationType = parseStringLiteral<FinancialSourcePersonLink["relationType"]>(
+    requireProperty(row, "relation_type", "financial_source_person_links"),
+    new Set(["payer", "beneficiary", "beneficiary_share"]),
+    "financial_source_person_links.relation_type",
+  );
+  const shareValue = requireProperty(row, "share_exact", "financial_source_person_links");
+  const share = shareValue === null ? null : parseDecimalString(shareValue);
+  if ((relationType === "beneficiary_share") !== (share !== null)) {
+    throw new TypeError("Seul beneficiary_share porte une part explicite.");
+  }
+  if (share !== null && (new Big(share).lte(0) || new Big(share).gt(1))) {
+    throw new TypeError("Une part bénéficiaire doit appartenir à ]0,1].");
+  }
+  return {
+    sourceKind,
+    sourceId,
+    personId,
+    relationType,
+    share,
+    evidenceRef: `financial_source_person_link:${sourceKind}:${sourceId}:${personId}:${relationType}`,
+  };
+}
+
+export function resolveEconomicPersonAttribution(input: {
+  readonly sourceKind: CanonicalSourceKind;
+  readonly sourceId: string;
+  readonly personLinks: readonly unknown[];
+  readonly authorizedPersonIds: readonly PersonId[];
+}): EconomicPersonAttribution {
+  if (input.sourceKind === "Payment_component") {
+    if (input.personLinks.length > 0) {
+      throw new TypeError("Payment_component ne peut pas recevoir un lien personne non autorisé.");
+    }
+    return { kind: "unknown", reasonCode: "UNSUPPORTED_SOURCE_KIND", evidenceRefs: [], payerEvidenceRefs: [] };
+  }
+  const links = input.personLinks.map(parseFinancialSourcePersonLink);
+  if (links.some((link) => link.sourceKind !== input.sourceKind || link.sourceId !== input.sourceId)) {
+    throw new TypeError("Un lien personne ne correspond pas au grain exact du composant.");
+  }
+  const identities = links.map((link) => `${link.personId}:${link.relationType}`);
+  if (new Set(identities).size !== identities.length) {
+    throw new TypeError("Les liens personne contiennent un doublon exact.");
+  }
+  const allEvidenceRefs = [...links.map(({ evidenceRef }) => evidenceRef)].sort();
+  const payerEvidenceRefs = links.filter(({ relationType }) => relationType === "payer").map(({ evidenceRef }) => evidenceRef).sort();
+  const beneficiaryLinks = links.filter(({ relationType }) => relationType === "beneficiary");
+  const shareLinks = links.filter(({ relationType }) => relationType === "beneficiary_share");
+  const authorized = new Set(input.authorizedPersonIds.map(parsePersonId));
+  if (links.some(({ personId }) => !authorized.has(personId))) {
+    return { kind: "conflict", reasonCode: "OUT_OF_HOUSEHOLD_PERSON", evidenceRefs: allEvidenceRefs, payerEvidenceRefs };
+  }
+  if (beneficiaryLinks.length > 0 && shareLinks.length > 0) {
+    return { kind: "conflict", reasonCode: "MIXED_BENEFICIARY_RELATIONS", evidenceRefs: allEvidenceRefs, payerEvidenceRefs };
+  }
+  if (beneficiaryLinks.length === 1) {
+    const beneficiary = beneficiaryLinks[0];
+    return {
+      kind: "resolved",
+      id: beneficiary.personId,
+      attribution: "explicit_beneficiary",
+      evidenceRefs: [beneficiary.evidenceRef],
+      payerEvidenceRefs,
+    };
+  }
+  if (beneficiaryLinks.length > 1) {
+    return { kind: "conflict", reasonCode: "MULTIPLE_UNALLOCATED_BENEFICIARIES", evidenceRefs: allEvidenceRefs, payerEvidenceRefs };
+  }
+  if (shareLinks.length > 0) {
+    const total = shareLinks.reduce((sum, { share }) => sum.plus(share as NonNullable<typeof share>), new Big(0));
+    if (total.gt(1)) {
+      return { kind: "conflict", reasonCode: "INVALID_SHARE_TOTAL", evidenceRefs: allEvidenceRefs, payerEvidenceRefs };
+    }
+    const shares = shareLinks.map((link) => ({
+      personId: link.personId,
+      share: link.share as NonNullable<typeof link.share>,
+      evidenceRefs: [link.evidenceRef],
+    })).sort((left, right) => left.personId.localeCompare(right.personId));
+    return total.eq(1)
+      ? { kind: "shared", shares, evidenceRefs: allEvidenceRefs, payerEvidenceRefs }
+      : {
+          kind: "partial",
+          shares,
+          unattributedShare: parseDecimalString(new Big(1).minus(total).toFixed()),
+          evidenceRefs: allEvidenceRefs,
+          payerEvidenceRefs,
+        };
+  }
+  return {
+    kind: "unknown",
+    reasonCode: "NO_EXPLICIT_BENEFICIARY",
+    evidenceRefs: allEvidenceRefs,
+    payerEvidenceRefs,
+  };
+}
 
 export function projectEconomicComponentFact(
   input: EconomicComponentProjectionInput,
@@ -825,6 +965,15 @@ export function projectEconomicComponentFact(
     realTransactionDateReliable: operation.realTransactionDateReliable,
     bankDate: operation.bankDate,
   }).timing;
+  const person: EconomicPersonAttribution =
+    input.personLinks === undefined && input.authorizedPersonIds === undefined
+      ? { kind: "unknown" }
+      : resolveEconomicPersonAttribution({
+          sourceKind: component.sourceKind,
+          sourceId: component.componentId,
+          personLinks: input.personLinks ?? [],
+          authorizedPersonIds: input.authorizedPersonIds ?? [],
+        });
   return parseEconomicComponentFact({
     fact: "fct_economic_component",
     householdId: input.household.householdId,
@@ -836,7 +985,7 @@ export function projectEconomicComponentFact(
     net: component.net,
     bankDate: { kind: "known", date: operation.bankDate },
     economicTiming: timing,
-    person: { kind: "unknown" },
+    person,
     category:
       component.categoryId === null
         ? { kind: "undetermined" }

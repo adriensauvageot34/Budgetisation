@@ -647,6 +647,39 @@ export class CanonicalRepository {
     );
   }
 
+  private async loadPersonLinkRowsForComponents(
+    components: readonly CanonicalRecord[],
+  ): Promise<readonly CanonicalRecord[]> {
+    const sourceSpecs = [
+      ["Operation", "operation_id"],
+      ["Allocation", "allocation_id"],
+      ["Item", "item_id"],
+      ["Cash_use", "cash_use_id"],
+    ] as const;
+    const rowsBySource = await Promise.all(sourceSpecs.map(([sourceKind, idColumn]) => {
+      const ids = unique(components
+        .filter((row) => canonicalString(row, ["source_kind"], "economic") === sourceKind)
+        .map((row) => canonicalString(row, ["component_id"], "economic")));
+      if (ids.length === 0) return Promise.resolve([] as readonly CanonicalRecord[]);
+      return this.readRowsByInBatches(
+        `person-links:${sourceKind}:${ids.join(",")}`,
+        "person_links",
+        ids,
+        ["source_kind", idColumn, "person_id", "relation_type"],
+        [idColumn, "person_id", "relation_type"],
+        (batch) => this.client
+          .from("financial_source_person_links")
+          .select("source_kind,operation_id,allocation_id,item_id,cash_use_id,person_id,relation_type,share_exact:share::text")
+          .eq("source_kind", sourceKind)
+          .in(idColumn, batch)
+          .order(idColumn, { ascending: true })
+          .order("person_id", { ascending: true })
+          .order("relation_type", { ascending: true }),
+      );
+    }));
+    return rowsBySource.flat();
+  }
+
   private async projectEconomicComponentRows(
     components: readonly CanonicalRecord[],
   ): Promise<readonly EconomicComponentFact[]> {
@@ -658,7 +691,7 @@ export class CanonicalRepository {
     );
     if (componentKeys.length === 0) return [];
 
-    const [operations, places, timingRows, timingControls, reconciliations, allocations, items, paymentComponents, cashUses] =
+    const [operations, places, timingRows, timingControls, reconciliations, allocations, items, paymentComponents, cashUses, personLinks] =
       await Promise.all([
         this.loadOperationsByIds(operationIds),
         this.readRowsByInBatches(
@@ -702,6 +735,7 @@ export class CanonicalRepository {
         this.loadComposition("operation_items", operationIds),
         this.loadComposition("payment_components", operationIds),
         this.loadComposition("cash_economic_uses", operationIds),
+        this.loadPersonLinkRowsForComponents(components),
       ]);
 
     const operationById = byUniqueKey(operations, "operation_id", "operations");
@@ -709,6 +743,26 @@ export class CanonicalRepository {
     const timingByKey = groupBy(timingRows, "canonical_component_key");
     const timingControlByKey = byUniqueKey(timingControls, "canonical_component_key", "timing");
     const reconciliationByOperation = byUniqueKey(reconciliations, "operation_id", "economic");
+    const personLinksBySource = new Map<string, CanonicalRecord[]>();
+    for (const link of personLinks) {
+      const sourceKind = canonicalString(link, ["source_kind"], "person_links");
+      const sourceIdColumn = sourceKind === "Operation"
+        ? "operation_id"
+        : sourceKind === "Allocation"
+          ? "allocation_id"
+          : sourceKind === "Item"
+            ? "item_id"
+            : sourceKind === "Cash_use"
+              ? "cash_use_id"
+              : undefined;
+      if (sourceIdColumn === undefined) {
+        throw new CanonicalReadError("person_links", "Un source_kind personne n'est pas autorisé.");
+      }
+      const key = `${sourceKind}:${canonicalString(link, [sourceIdColumn], "person_links")}`;
+      const current = personLinksBySource.get(key) ?? [];
+      current.push(link);
+      personLinksBySource.set(key, current);
+    }
     const componentSourceByKey = new Map<string, CanonicalRecord>();
     for (const [prefix, rows, idKey] of [
       ["allocation", allocations, "allocation_id"],
@@ -736,6 +790,8 @@ export class CanonicalRepository {
       }
       const componentSource = componentSourceByKey.get(componentKey);
       const dimensions = sourceAwareEconomicDimensions(operation, componentSource);
+      const sourceKind = canonicalString(component, ["source_kind"], "economic");
+      const sourceId = canonicalString(component, ["component_id"], "economic");
       return projectEconomicComponentFact({
         household: this.household,
         economicComponent: component,
@@ -754,6 +810,8 @@ export class CanonicalRepository {
         timingRows: timingByKey.get(componentKey) ?? [],
         timingControl,
         reconciliationControl: reconciliation,
+        personLinks: personLinksBySource.get(`${sourceKind}:${sourceId}`) ?? [],
+        authorizedPersonIds: this.context.personIds,
       });
     }));
   }
