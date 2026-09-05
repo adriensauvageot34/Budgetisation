@@ -63,3 +63,30 @@ export { buildGlobalTemporalChapters, buildGlobalCurrentRegime } from "./tempora
 export { fuseGlobalTemporalSignals } from "./temporal-fusion";
 export { buildGlobalTransformations, transformationSignalCatalog } from "./transformations";
 export { projectGlobalTemporalRate } from "./temporal-projection";
+export {
+  GLOBAL_M4_METHOD_VERSION,
+  buildGlobalActivityRhythm,
+  buildGlobalM4ActivityTransformations,
+  buildGlobalM4RoutineTransformations,
+  buildGlobalDayTypeAnalysis,
+  buildGlobalRoutineCosts,
+  discoverGlobalRoutinePatterns,
+  globalRoutinePatternPolicy,
+  projectPlaceVisitRoutineRole,
+  projectGlobalRoutineDay,
+  projectRoutineTemporalSeries,
+  type GlobalDayContextAssertion,
+  type GlobalDayEconomicCost,
+  type GlobalRoutineDay,
+  type GlobalRoutineInstance,
+  type GlobalRoutineElementAssertion,
+  type GlobalRoutineSemanticToken,
+  type GlobalRoutineTokenAuthority,
+} from "./routines";
+export {
+  buildGlobalSeasonalPattern,
+  globalCycleSeasonalityPolicy,
+  type GlobalCycleObservation,
+  type GlobalSeasonalKind,
+} from "./seasonality";
+export { createGlobalM4DependencyDeclaration, globalM4PlaceRoleCapability } from "./routine-dependencies";

@@ -73,3 +73,4 @@ export {
   type GlobalAuthorityGate,
   type GlobalAuthorityGateId,
 } from "./authority-gates";
+export { globalDayPartCatalog, parseGlobalDayPartKey, type GlobalDayPartKey } from "./day-parts";

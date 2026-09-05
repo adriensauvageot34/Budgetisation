@@ -4,7 +4,7 @@
 
 | Champ | Valeur |
 |---|---|
-| Prompt | P04 — PASS, C1/C2 certifiés après arbitrages |
+| Prompt | P05 — PASS, M4 et C3/C4 certifiés |
 | Branche | `main` |
 | Baseline | `3f358ed55f9d2c8d7b5fd88f493532702139d808` |
 | Checkpoint | `SELF` — résoudre par `git log -1 --format=%H -- docs/global-v2/GLOBAL_EXECUTION_STATE.md` |
@@ -22,10 +22,15 @@
 | P04 CONTRACT_GATE | PASS |
 | P04 IMPLEMENTATION_GATE | PASS |
 | P04 TEST_GATE | PASS — 317 assertions, typecheck, architecture, build, diff-check |
-| M1 final | Raccordement temporel et replay B2 PASS; recertification supplémentaire P05 selon ses dépendances |
-| Live gate | NOT_RUN — non requis, aucune écriture autorisée dans P04 |
+| P05 CONTRACT_GATE | PASS |
+| P05 IMPLEMENTATION_GATE | PASS |
+| P05 TEST_GATE | PASS — M4 ciblé, C1–C4 et Finance recertifiés |
+| M1 final | PASS — outputs temporels raccordés et recertifiés avec les consommateurs M4/M3 |
+| GLOBAL_PHASE_B | PASS |
+| GLOBAL_PHASE_C | PASS |
+| Live gate | NOT_RUN — non requis, aucune écriture autorisée dans P05 |
 | Live writes | NONE |
-| Prochain prompt autorisé | P05 — non démarré |
+| Prochain prompt autorisé | P06 — non démarré |
 
 ## Références et digests
 
@@ -148,3 +153,14 @@ Elles restent des contrats de compatibilité, pas une autorité V2.
 - Tests finaux : 179 temporels/assemblage +17 descriptifs +72 M1 +49 M2 =317 PASS. Typecheck, architecture491, build Next final et diff-check PASS.
 - Rapport autoritaire du lot : dernière section « Clôture C1/C2 — état final après les deux arbitrages » de `execution/P04-report.md`.
 - `NEXT_PERMITTED_PROMPT = P05`, sans le démarrer. Checkpoint local uniquement, aucun push, aucun live write.
+
+## P05 — cadences, routines et fermeture temporelle
+
+- Activity : fréquence par exposition `PersonDayFact`, cadence à partir de trois occurrences, gaps visibles et multijour compté une fois.
+- Routines : DAY_ROUTINE, tokens sémantiques, CORE/OPTIONAL, prévalence, scope et preuve de participation. Un label Place, une visite ou une dépense commune ne crée aucun rôle/routine.
+- Coûts : `CAUSAL_ROUTINE_COST` séparé de `ASSOCIATED_DAY_COST`; coût typique 4–6 indicatif, >=7 suffisant; équivalent mensuel dérivé et non additif.
+- Cycles : quatre familles, exposition normalisée, 8 semaines ou 3 cycles selon le type, réplication >=75 %, matérialité et régime. Un lifecycle disparu/affaibli exige une preuve longitudinale explicite.
+- M4 alimente M3 de manière unidirectionnelle; C1–C4, M1 et Finance ont été rejoués. `GLOBAL_PHASE_B=PASS`, `GLOBAL_PHASE_C=PASS`.
+- Place routine reste M09 `AUTHORITY_GATED`/UNAVAILABLE tant qu'aucun rôle canonique daté n'est présent; le core M4 reste certifié sans heuristique.
+- Rapport : `docs/global-v2/execution/P05-report.md`.
+- Aucun push, aucune écriture live, aucune publication/Query/React. Prochain prompt : P06.
