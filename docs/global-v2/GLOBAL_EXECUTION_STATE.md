@@ -264,3 +264,16 @@ Elles restent des contrats de compatibilité, pas une autorité V2.
 - Aucun Query, ReadModel, React, snapshot, publication, migration, push ou live write.
 - `IMPLEMENTATION_GATE=PASS`; `CONTRACT_GATE=PASS`; `TEST_GATE=PASS`; `GLOBAL_PHASE_G1_G2=PASS`.
 - `LIVE_GATE=NOT_RUN`; `LIVE_WRITES=NONE`; `NEXT_PERMITTED_PROMPT=P12`.
+
+## P12 — participation partagée et Nous deux
+
+- Baseline : `c0d5e708dfc4517687862bcf73ffab2b87b77698`, branche main, état propre à l'entrée; P11 acquis.
+- G3/M10 : `SharedParticipationResolver` versionné, quatre états par personne, six résolutions partagées et cinq niveaux de preuve. Aucune liste positive non exhaustive ne prouve une absence.
+- Co-présence : STOP/STAY, temps précis, résolution Place admissible et recouvrement normatif; catalogues exacts 14 `COPRESENCE_ALLOWED` et 12 `EXPLICIT_ONLY`.
+- Moments multijours, SharedPlaceVisit, support/rate aux bons dénominateurs, exclusivité et participants externes sont séparés. Participation, coûts et attribution financière restent indépendants; aucun faux Couple ou partage 50/50.
+- G4/Social : analytics d'occurrence disponible; Contact/Alias/Relation/Group restent `AUTHORITY_GATED`. Participants et contacts ont des coverages distinctes; social graph, score relationnel et cost-per-contact sont interdits.
+- Chaîne Facts → M10 et closure explicites. M3/M4/M5/M9 n'ont aucun edge entrant depuis M10 et leurs régressions sont rejouées; Persona n'est jamais une source de participation.
+- Validations : M10 54/54, M9 85/85, M5 266/266, M4 67/67, P04 179/179 +17/17, M6 75/75, M7 58/58, typecheck, architecture, build Next et diff-check PASS.
+- Rapport : `execution/P12-report.md`. Aucun push, live write, publication, migration, Query, ReadModel ou React.
+- `IMPLEMENTATION_GATE=PASS`; `CONTRACT_GATE=PASS`; `TEST_GATE=PASS`; `GLOBAL_PHASE_G3_G4=PASS`; `GLOBAL_PHASE_G=PASS`; `SOCIAL_GATE=PASS_WITH_AUTHORITY_GATED_CAPABILITIES`.
+- `LIVE_GATE=NOT_RUN`; `LIVE_WRITES=NONE`; `NEXT_PERMITTED_PROMPT=P13`.

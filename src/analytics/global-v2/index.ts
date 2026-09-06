@@ -190,3 +190,31 @@ export {
   type GlobalPersonalReferenceCost,
 } from "./persona";
 export { createGlobalM9DependencyDeclaration } from "./persona-dependencies";
+export {
+  GLOBAL_M10_METHOD_VERSION,
+  SharedParticipationResolver,
+  buildGlobalSharedAnalysis,
+  buildGlobalSharedObservableSupport,
+  computeGlobalSharedInputHash,
+  globalSharedInferenceCatalog,
+  globalSharedPolicies,
+  projectSharedPlaceVisits,
+  requiredSharedOverlapMinutes,
+  type GlobalParticipantRoster,
+  type GlobalParticipationAssertion,
+  type GlobalParticipationState,
+  type GlobalSharedEconomicContext,
+  type GlobalSharedEvidenceLevel,
+  type GlobalSharedParticipationInput,
+  type GlobalSharedParticipationResult,
+  type GlobalSharedResolution,
+} from "./shared-participation";
+export { projectGlobalSharedActivitiesFromFacts } from "./shared-fact-adapter";
+export {
+  GLOBAL_SOCIAL_CONTEXT_METHOD_VERSION,
+  buildGlobalSocialContextSummary,
+  type GlobalSocialContextSummary,
+  type GlobalSocialOccurrence,
+} from "./social-context";
+export { createGlobalM10DependencyDeclaration } from "./shared-dependencies";
+export { globalM10CapabilityStates, recertifyGlobalSharedDownstreamClosure } from "./shared-capabilities";
