@@ -126,3 +126,17 @@ export {
 } from "./places";
 export { createGlobalM7DependencyDeclaration } from "./place-dependencies";
 export { recertifyGlobalCDForPlaceAndMoment } from "./place-recertification";
+export {
+  GLOBAL_M8_METHOD_VERSION,
+  buildGlobalPurchaseMerchant,
+  decomposeGlobalMerchantFrequencyTicket,
+  globalM8Policies,
+  type GlobalPurchaseAdjustmentInput,
+  type GlobalPurchaseAdjustmentType,
+  type GlobalPurchaseEligibilityUniverse,
+  type GlobalPurchaseKind,
+  type GlobalPurchaseMerchantInput,
+  type GlobalPurchaseMetadataAuthority,
+  type GlobalPurchaseOutcome,
+} from "./purchases";
+export { createGlobalM8DependencyDeclaration } from "./purchase-dependencies";

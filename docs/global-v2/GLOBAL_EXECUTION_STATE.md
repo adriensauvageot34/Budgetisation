@@ -220,3 +220,14 @@ Elles restent des contrats de compatibilité, pas une autorité V2.
 - Rapport : `docs/global-v2/execution/P08-report.md`. Aucun push, live write, publication, migration, Query, ReadModel ou React.
 - `IMPLEMENTATION_GATE=PASS`; `CONTRACT_GATE=PASS`; `TEST_GATE=PASS`; `GLOBAL_PHASE_E3_E4=PASS`.
 - `LIVE_GATE=NOT_RUN`; `LIVE_WRITES=NONE`; `NEXT_PERMITTED_PROMPT=P09`.
+
+## P09 — achats humains et marchands
+
+- Baseline : `4551c103c98432181982c351bb3ab256e3cf4b43`, branche main, état propre à l’entrée ; P08 acquis.
+- F1 distingue schéma Purchase présent, Fact/repository raccordés et données live historiquement certifiées vides. Aucune opération n’est convertie universellement en achat ; `purchaseAt` et l’univers purchase-eligible restent gated.
+- F2 : moteur `global_purchase_merchant@v1`, outcomes/adjustments, checkout/retained, fréquence, tickets, Merchant, channel/intermédiaires distincts, évolution P04, coverages et drill-down. Les euros restent ceux des `EconomicComponentFact`.
+- Chaîne read-only `CanonicalRepository → PurchaseEventFact/EconomicComponentFact → GlobalTemporalBoundaryResolver → M8`; contributions unidirectionnelles vers M2/M5.
+- Product/price/cadence/substitution/inflation restent explicitement `DEFERRED_P10`; aucun Swile/Edenred, backfill, migration, publication, Query ou React.
+- Tests : M8 66/66, autorité 29/29, History Canonical, M2 49/49, P04 179/179, typecheck, architecture 519, build Next et diff-check PASS.
+- Rapport : `docs/global-v2/execution/P09-report.md`. `IMPLEMENTATION_GATE=PASS`, `CONTRACT_GATE=PASS`, `TEST_GATE=PASS`, `GLOBAL_PHASE_F1_F2_CORE=PASS`.
+- `LIVE_GATE=NOT_RUN`; `LIVE_WRITES=NONE`; `NEXT_PERMITTED_PROMPT=P10`.
