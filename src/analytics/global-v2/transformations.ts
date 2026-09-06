@@ -6,6 +6,7 @@ import { buildGlobalTemporalChangeCandidates, type GlobalTemporalChangeInput } f
 import { buildGlobalTemporalChapters, buildGlobalCurrentRegime, buildGlobalGradualTransitions } from "./temporal-lifecycle";
 import { fuseGlobalTemporalSignals, type GlobalSemanticChange, type GlobalSemanticRelation, type TransformationDomain, type GlobalDriverAuthority } from "./temporal-fusion";
 import { createGlobalTemporalDependencyDeclaration } from "./temporal-dependencies";
+import { validateGlobalM5TransformationFeed, type GlobalRelationshipEvolution } from "./relationship-m3";
 
 /** Master P2940–3042. No arbitrary column, transaction count or UI rank is a signal. */
 export const transformationSignalCatalog = {
@@ -46,6 +47,7 @@ export function buildGlobalTransformations(input: {
   readonly series: readonly GlobalTransformationSeries[];
   readonly relations: readonly GlobalSemanticRelation[];
   readonly driverAuthorities?: readonly GlobalDriverAuthority[];
+  readonly relationshipEvolution?: readonly GlobalRelationshipEvolution[];
   readonly anchors?: readonly {
     readonly anchorRef: string;
     readonly signalId: string;
@@ -54,6 +56,7 @@ export function buildGlobalTransformations(input: {
     readonly dependencyRefs: readonly string[];
   }[];
 }) {
+  const relationshipChanges = input.relationshipEvolution === undefined ? undefined : validateGlobalM5TransformationFeed(input.relationshipEvolution);
   const ids = new Set<string>();
   const analyses = [...input.series].sort((a, b) => a.signalId.localeCompare(b.signalId)).map((series) => {
     if (!Object.hasOwn(transformationSignalCatalog, series.catalogKey) || !series.signalId || !series.subjectRef || ids.has(series.signalId)) throw new TypeError("Invalid or duplicate transformation catalog signal.");
@@ -122,10 +125,11 @@ export function buildGlobalTransformations(input: {
     };
   });
   return {
-    dependencyDeclaration: createGlobalTemporalDependencyDeclaration(),
+    dependencyDeclaration: createGlobalTemporalDependencyDeclaration({ includeRelationships: relationshipChanges !== undefined }),
+    ...(relationshipChanges === undefined ? {} : { relationshipChanges, relationshipEnrichmentHash: digest(relationshipChanges), relationshipEnrichmentAffectsRegime: false as const }),
     transformations,
     diagnostics: analyses.map((a) => ({ signalId: a.series.signalId, changes: a.changes, chapters: a.chapters, gradual: a.gradual })),
-    methodVersion: "global_transformations@v1",
-    inputHash: digest({ fusion: fusion.inputHash, transformations, analyses: analyses.map((a) => ({ signalId: a.series.signalId, catalogKey: a.series.catalogKey, changes: a.changes.inputHash, chapters: a.chapters })), catalog: transformationSignalCatalog, method: "global_transformations@v1" }),
+    methodVersion: relationshipChanges === undefined ? "global_transformations@v1" : "global_transformations_with_relationships@v1",
+    inputHash: digest({ fusion: fusion.inputHash, transformations, analyses: analyses.map((a) => ({ signalId: a.series.signalId, catalogKey: a.series.catalogKey, changes: a.changes.inputHash, chapters: a.chapters })), catalog: transformationSignalCatalog, method: "global_transformations@v1", ...(relationshipChanges === undefined ? {} : { relationshipChanges, relationshipEvolutionMethod: "global_m5_m3_evolution@v1" }) }),
   };
 }

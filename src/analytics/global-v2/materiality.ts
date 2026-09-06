@@ -19,6 +19,7 @@ export type GlobalMaterialityPolicyId =
   | "ACTIVITY_FREQUENCY"
   | "PERSONA_MONEY"
   | "PERSONA_FREQUENCY"
+  | "RELATIONSHIP_PROBABILITY"
   | "MERCHANT";
 
 export type GlobalMaterialityPolicy = {
@@ -29,6 +30,7 @@ export type GlobalMaterialityPolicy = {
   readonly minimumShareDeltaPoints?: string;
   readonly relativeOrShare: boolean;
   readonly appearanceDisappearanceAllowed: boolean;
+  readonly absoluteOnlyAlternative?: string;
 };
 
 /** The only V1 threshold registry. Later modules consume it instead of copying numbers. */
@@ -41,6 +43,8 @@ export const globalMaterialityPolicies: Readonly<Record<GlobalMaterialityPolicyI
   PERSONA_MONEY: { id: "PERSONA_MONEY", ref: { id: "global-materiality-persona-money", version: V1 }, minimumAbsolute: "10", minimumRelative: "0.15", relativeOrShare: false, appearanceDisappearanceAllowed: false },
   PERSONA_FREQUENCY: { id: "PERSONA_FREQUENCY", ref: { id: "global-materiality-persona-frequency", version: V1 }, minimumAbsolute: "1", relativeOrShare: false, appearanceDisappearanceAllowed: true },
   MERCHANT: { id: "MERCHANT", ref: { id: "global-materiality-merchant", version: V1 }, minimumAbsolute: "15", minimumRelative: "0.15", relativeOrShare: false, appearanceDisappearanceAllowed: false },
+  // Master M5 P3983–P3991: (10 percentage points AND 20%) OR 15 points.
+  RELATIONSHIP_PROBABILITY: { id: "RELATIONSHIP_PROBABILITY", ref: { id: "global-materiality-relationship-probability", version: V1 }, minimumAbsolute: "0.10", minimumRelative: "0.20", absoluteOnlyAlternative: "0.15", relativeOrShare: false, appearanceDisappearanceAllowed: false },
 });
 
 export type GlobalMaterialityStatus =
@@ -136,7 +140,8 @@ export class GlobalMaterialityEngine {
     );
     const frequencyAlternative = input.policyId === "MERCHANT" && input.materialFrequencyChange === true;
     const personaFrequencyAlternative = input.policyId === "PERSONA_FREQUENCY" && input.structuralEquivalent === true;
-    const effectPass = effectGate || frequencyAlternative || personaFrequencyAlternative;
+    const absoluteOnlyAlternative = policy.absoluteOnlyAlternative !== undefined && absAtLeast(candidate.effect.absolute, policy.absoluteOnlyAlternative);
+    const effectPass = effectGate || frequencyAlternative || personaFrequencyAlternative || absoluteOnlyAlternative;
     const reasonCodes = [
       ...(authority === "FAIL" ? ["MISSING_AUTHORITY"] : []),
       ...(support === "FAIL" ? ["INSUFFICIENT_SUPPORT"] : support === "PARTIAL" ? ["PARTIAL_SUPPORT"] : []),

@@ -164,3 +164,33 @@ Elles restent des contrats de compatibilité, pas une autorité V2.
 - Place routine reste M09 `AUTHORITY_GATED`/UNAVAILABLE tant qu'aucun rôle canonique daté n'est présent; le core M4 reste certifié sans heuristique.
 - Rapport : `docs/global-v2/execution/P05-report.md`.
 - Aucun push, aucune écriture live, aucune publication/Query/React. Prochain prompt : P06.
+
+## P06 — préflight D1 : comparateurs à arbitrer
+
+- Baseline P05 : `a83dc2debaba942878798b15bd976cf89e7545df`, main propre à l'entrée ; B/C acquis.
+- Lecture ciblée complète M5 et recherches complémentaires dans les sections ultérieures et les tables du Master. Matching, support, tests, FDR et LOMO sont définis ; leurs paramètres ne font pas l'objet d'une demande d'arbitrage supplémentaire.
+- D1 bloque sur la population de comparaison LEAVE/REST et WEEKEND, non désignée contrairement à ONSITE vs REMOTE. Le choix modifie le sens métier de l'effet et ne peut pas être une convention implicite. Décision précise et proposition non appliquée dans `execution/P06-report.md`.
+- Aucune implémentation modifiée, aucun checkpoint PASS. `GLOBAL_PHASE_D_CORE=BLOCKED`; `NEXT_PERMITTED_PROMPT=P06`. Aucun push, aucune écriture live, aucun P07.
+
+## P06 — arbitrage journalier appliqué ; D2/D3 en cours
+
+- Le blocage précédent des comparateurs est levé. Policies LEAVE/REST et WEEKEND versionnées selon la décision humaine ; ONSITE/REMOTE inchangés.
+- Matching outcome-blind 1:1 sans remplacement, primitives statistiques et pipeline journalier partiel enregistrés ; matérialité binaire ajoutée dans le moteur partagé P03.
+- 84/84 tests P06 ciblés PASS ; régressions M2 49, M1 72, P04 179, P05 67 PASS. Typecheck et architecture499 PASS.
+- Pas de certification M5 exhaustive : adapters officiels, catalogue restant, scope partagé/foyer, statistiques hebdomadaires/FDR commun, états temporels complets et recertification M3 restent P06. Détail dans la dernière section de `execution/P06-report.md`.
+- `COMPARATOR_AUTHORITY_GATE=PASS`; les trois gates P06 restent `PARTIAL`. Aucun nouvel arbitrage demandé. Aucun checkpoint PASS, push ou live write ; `NEXT_PERMITTED_PROMPT=P06`.
+
+- Reprise suivante P06 : hebdomadaire Spearman inférentiel, FDR commun avec plan complet obligatoire, adaptateurs PersonDay/ActivityOccurrence, helper des états temporels et déclaration partagée des dépendances ajoutés. 118/118 tests ciblés, typecheck et architecture503 PASS. Deux lectures live de métadonnées seulement, aucune écriture. Le raccordement Canonical/contextes, l'orchestration P02/scopes, les fenêtres 6+6/feed M3 et la certification exhaustive restent ouverts ; voir la dernière matrice du rapport P06. Toujours PARTIAL, pas de checkpoint ni de P07.
+
+## P06 — clôture D1–D3 core
+
+- Baseline inchangée : `a83dc2debaba942878798b15bd976cf89e7545df`, branche main. Les blocages et résultats intermédiaires ci-dessus sont conservés comme chronologie.
+- Matrice finale : 118 exigences et 125 tests conceptuels dans `execution/P06-report.md`, sources réutilisées depuis l'index Master; capacités futures/absentes explicitement distinguées.
+- Catalogue : 31 entrées examinées dans FDR; 10 DAY exécutables sous autorité, 2 WEEK, 19 exclusions. Aucun mining, aucune causalité ou participation inférée.
+- CanonicalRepository → FactSourceResolver → P02 → M5 raccordé pour Restaurant personnel; contextes et finance quotidienne sans autorité restent fermés. Aucune preuve live positive inventée.
+- Fenêtres indépendantement recalculées, LOMO, FDR commun, corpus hebdomadaire lié à la preuve, feed M3 sans cycle, RelationshipInsight et accès Analytics.
+- Dernier état enregistré : M5 **266/266**, intégration **20/20**, M1 **72/72**, matérialité/M2 **49/49**, P04 **179/179 +17/17**, P05 **67/67**, fondations **108/108** PASS. Typecheck, architecture **508**, build Next production, diff-check et contrôle des 21 fichiers PASS.
+- Régressions B/C rejouées dans cette clôture; la dernière correction des enveloppes M5 a été suivie des suites M5/serveur/typecheck/architecture/build.
+- `IMPLEMENTATION_GATE=PASS`; `CONTRACT_GATE=PASS`; `TEST_GATE=PASS`; `GLOBAL_PHASE_D_CORE=PASS`, avec la portée core et les exclusions autorisées détaillées dans le rapport.
+- `LIVE_GATE=NOT_RUN`; `LIVE_WRITES=NONE`. Aucun push, publication, migration ou P07.
+- `NEXT_PERMITTED_PROMPT=P07`. Le SHA du checkpoint est celui du commit local de clôture; il n'est pas injecté récursivement dans son propre contenu.
