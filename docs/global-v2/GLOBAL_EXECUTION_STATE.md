@@ -252,3 +252,15 @@ Elles restent des contrats de compatibilité, pas une autorité V2.
 - `IMPLEMENTATION_GATE=PASS`; `CONTRACT_GATE=PASS`; `TEST_GATE=PASS`; `GLOBAL_PHASE_F3_F4=PASS`.
 - `LIVE_GATE=NOT_RUN`; `LIVE_WRITES=NONE`; aucune migration, publication ou push.
 - `NEXT_PERMITTED_PROMPT=P11`.
+
+## P11 — profils personnels comparables
+
+- Baseline : `02f0c8197eac8bf602e5bc6abc7c0c9aa8b55422`, branche main, état propre à l'entrée; P10 acquis.
+- G1 réutilise l'attribution P01 et les producteurs B–F : payer seul, finance Household commune et montants non attribuables ne deviennent jamais personnels.
+- G2/M9 sépare PersonaMetric sur support propre et PersonaDifference sur intersection exacte. Brut/habituel/exceptionnel, cinq états temporels, coverage 85/60 %, matérialité P03, ranking/diversité/hystérésis sont versionnés.
+- Catalogue : 10 familles; index Master P11 = 107 exigences, 17 capabilities, 127 tests conceptuels. Les observations contradictoires au même grain échouent fermées.
+- ObservedPersonalTypicalCost : médiane max12, support >=6, finance 100 % et attribution >=85 % pour headline. PersonalReferenceCost reste `AUTHORITY_GATED` sous AG022; l'assembleur contractuel ne permet ni overlap ni supplément inventé.
+- Validations ciblées : M9 85/85, P01 108/108, M1 72/72, M2 49/49, P04 179/179, P05 67/67, P06 266/266, P07 75/75, P08 58/58, P09 66/66, P10 56/56 PASS. Typecheck, architecture (524 fichiers) et diff-check PASS.
+- Aucun Query, ReadModel, React, snapshot, publication, migration, push ou live write.
+- `IMPLEMENTATION_GATE=PASS`; `CONTRACT_GATE=PASS`; `TEST_GATE=PASS`; `GLOBAL_PHASE_G1_G2=PASS`.
+- `LIVE_GATE=NOT_RUN`; `LIVE_WRITES=NONE`; `NEXT_PERMITTED_PROMPT=P12`.

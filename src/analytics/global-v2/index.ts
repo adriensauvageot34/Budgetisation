@@ -166,3 +166,27 @@ export {
   buildGlobalM2PurchaseEnrichment,
   recertifyGlobalBCDForPurchases,
 } from "./purchase-convergence";
+export {
+  GLOBAL_M9_METHOD_VERSION,
+  buildGlobalPersonaMetrics,
+  buildGlobalPersonaDifferences,
+  selectGlobalPersonaTopDifferences,
+  buildObservedPersonalTypicalCost,
+  adaptObservedPersonalMonthsFromP01,
+  buildGlobalPersonalReferenceCost,
+  computeGlobalPersonaInputHash,
+  globalPersonaPolicies,
+  globalPersonaFamilyCatalog,
+  type GlobalPersonaDefinition,
+  type GlobalPersonaObservation,
+  type GlobalPersonaMetric,
+  type GlobalPersonaDifference,
+  type GlobalPersonaFamily,
+  type GlobalPersonaTemporalStatus,
+  type GlobalPersonaDataNature,
+  type GlobalObservedPersonalMonth,
+  type GlobalObservedPersonalTypicalCost,
+  type GlobalPersonalReferenceContribution,
+  type GlobalPersonalReferenceCost,
+} from "./persona";
+export { createGlobalM9DependencyDeclaration } from "./persona-dependencies";
