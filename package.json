@@ -23,6 +23,7 @@
     "check:global-v2-persona": "node --experimental-strip-types scripts/check-global-v2-persona.mjs",
     "check:global-v2-shared": "node --experimental-strip-types scripts/check-global-v2-shared-participation.mjs",
     "check:global-v2-publication": "node --experimental-strip-types scripts/check-global-v2-publication-infrastructure.mjs",
+    "check:global-v2-primary-readmodels": "node --experimental-strip-types scripts/check-global-v2-primary-readmodels.mjs",
     "check:canonical-in-batching": "node scripts/check-canonical-in-batching.mjs",
     "check:analytics-materialization": "node scripts/check-analytics-materialization.mjs",
     "check:exploration-entities": "node scripts/check-exploration-entities.mjs",

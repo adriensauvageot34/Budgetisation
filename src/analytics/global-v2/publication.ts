@@ -1,5 +1,10 @@
 export const GLOBAL_PUBLICATION_METHOD_VERSION = "global_publication_engine@v1" as const;
 export const GLOBAL_PUBLICATION_POLICY_VERSION = "global-publication-policy@v1" as const;
+export const globalPublicationGateOrder = Object.freeze([
+  "capability", "applicability", "semanticValidity", "knowledge", "corpusCertification",
+  "support", "coverage", "provenance", "baseCompatibility", "materiality",
+  "statisticalRobustness", "temporalRobustness", "editorialSelection", "publication",
+] as const);
 
 export type GlobalPublicationVisibility = "VISIBLE" | "PLACEHOLDER" | "HIDDEN";
 export type GlobalPublicationSurface = "AUTO_GLOBAL" | "MODULE_DETAIL" | "EXPLICIT_EXPLORATION";
@@ -8,6 +13,7 @@ export type GlobalPublicationQualification = "NONE" | "PARTIAL_COVERAGE" | "PART
 export type GlobalPublicationReasonCode =
   | "NOT_APPLICABLE" | "NO_ELIGIBLE_UNIVERSE" | "CAPABILITY_NOT_AVAILABLE" | "CAPABILITY_DISABLED_BY_POLICY"
   | "SEMANTICALLY_INVALID" | "UNKNOWN_REQUIRED_VALUE" | "BLOCKING_CONFLICT" | "MISSING_REQUIRED_LINKAGE"
+  | "MISSING_PROVENANCE" | "INCOMPATIBLE_BASE" | "INCOMPLETE_PUBLICATION_EVIDENCE"
   | "INSUFFICIENT_CERTIFIED_HISTORY" | "UNCERTIFIED_REQUIRED_PERIOD"
   | "INSUFFICIENT_SUPPORT" | "PARTIAL_SUPPORT_ONLY" | "INSUFFICIENT_COMPARABLE_PEERS" | "INSUFFICIENT_MATCHED_PAIRS" | "INSUFFICIENT_CYCLES" | "INSUFFICIENT_REPETITIONS"
   | "INSUFFICIENT_COVERAGE" | "PARTIAL_COVERAGE_ONLY"
@@ -35,10 +41,13 @@ export type GlobalPublicationGateInput = {
   readonly certification?: boolean;
   readonly support?: "INSUFFICIENT" | "PARTIAL_SUPPORT" | "SUFFICIENT" | "STRONG";
   readonly coverage?: number;
+  readonly provenance?: boolean;
+  readonly baseCompatible?: boolean;
   readonly materiality?: boolean;
   readonly statistics?: boolean;
   readonly temporalRobustness?: boolean;
   readonly editorialSelection?: boolean;
+  readonly publicationReady?: boolean;
   readonly recoverableReason?: GlobalPublicationReasonCode;
   readonly qualification?: GlobalPublicationQualification;
   readonly progress?: { readonly current: number; readonly required: number; readonly unit: string };
@@ -69,8 +78,10 @@ function gateMap(gates: GlobalPublicationGateInput): Readonly<Record<string, boo
     certification: gates.certification !== false,
     support: gates.support === undefined || gates.support === "SUFFICIENT" || gates.support === "STRONG",
     coverage: gates.coverage === undefined || gates.coverage >= 0.85,
+    provenance: gates.provenance !== false, baseCompatibility: gates.baseCompatible !== false,
     materiality: gates.materiality !== false, statistics: gates.statistics !== false,
     temporalRobustness: gates.temporalRobustness !== false, editorialSelection: gates.editorialSelection !== false,
+    publication: gates.publicationReady !== false,
   };
 }
 
@@ -103,10 +114,13 @@ export class GlobalPublicationEngine {
       }
       return hidden(input, input.gates.recoverableReason ?? (coverageMissing ? "INSUFFICIENT_COVERAGE" : supportMissing ? "INSUFFICIENT_SUPPORT" : certificationMissing ? "INSUFFICIENT_CERTIFIED_HISTORY" : "UNKNOWN_REQUIRED_VALUE"));
     }
+    if (input.gates.provenance === false) return hidden(input, "MISSING_PROVENANCE");
+    if (input.gates.baseCompatible === false) return hidden(input, "INCOMPATIBLE_BASE");
     if (input.policy.requireMateriality && input.gates.materiality !== true) return hidden(input, "BELOW_MATERIALITY");
     if (input.policy.requireStatistics && input.gates.statistics !== true && !(input.surface === "EXPLICIT_EXPLORATION" && input.gates.explicitNeutralResultAllowed)) return hidden(input, "STATISTICAL_GATE_FAILED");
     if (input.policy.requireTemporalRobustness && input.gates.temporalRobustness !== true) return hidden(input, "TEMPORAL_ROBUSTNESS_FAILED");
     if (input.gates.editorialSelection === false) return hidden(input, "NOT_SELECTED_FOR_SURFACE");
+    if (input.gates.publicationReady === false) return hidden(input, "INCOMPLETE_PUBLICATION_EVIDENCE");
     return { sectionKey: input.sectionKey, sectionClass: input.policy.sectionClass, surface: input.surface, visibility: "VISIBLE", ...(input.gates.qualification === undefined || input.gates.qualification === "NONE" ? {} : { qualification: input.gates.qualification }), gateResults: gateMap(input.gates), analyticsRevision: input.analyticsRevision, publicationPolicyVersion: GLOBAL_PUBLICATION_POLICY_VERSION };
   }
 }

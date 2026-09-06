@@ -292,3 +292,15 @@ Elles restent des contrats de compatibilité, pas une autorité V2.
 - Rapport : `execution/P12-report.md`. Aucun push, live write, publication, migration, Query, ReadModel ou React.
 - `IMPLEMENTATION_GATE=PASS`; `CONTRACT_GATE=PASS`; `TEST_GATE=PASS`; `GLOBAL_PHASE_G3_G4=PASS`; `GLOBAL_PHASE_G=PASS`; `SOCIAL_GATE=PASS_WITH_AUTHORITY_GATED_CAPABILITIES`.
 - `LIVE_GATE=NOT_RUN`; `LIVE_WRITES=NONE`; `NEXT_PERMITTED_PROMPT=P13`.
+
+## P14 — ReadModels principaux et sélection
+
+- Baseline : `a2591c991855b2a7e6ee545826318a90467f9ccb`, branche main, état propre à l'entrée ; P13 acquis.
+- H3 : dix ressources COMPACT principales, ressource initiale/manifest légère, parsers stricts, RuntimeSchemas, builders de projection et budgets mesurés.
+- `GlobalPublicationEngine` ferme l'ordre complet des hard gates ; `InsightSelectionEngine` intervient ensuite pour ranking 30/20/15/15/10/10, diversité, anti-redondance et limites de surface.
+- Les KPI restent rattachés au phénomène principal ; un module peut rester visible sans insight narratif. Scores éditoriaux et grands payloads de détail ne sont pas publiés.
+- Cohérence page : champs publication-scoped communs obligatoires ; policies, contrats, signatures et input hashes restent resource-specific.
+- Tests : P14 83/83, 10/10 schémas principaux + initiale et transport distinct, P13 52/52, typecheck, architecture et build Next PASS ; payload COMPACT max 1 671 octets ; diff-check PASS.
+- Aucun React, snapshot, publication, migration, push ou live write. Détails, résumé IA et instances finales restent P15.
+- `IMPLEMENTATION_GATE=PASS`; `CONTRACT_GATE=PASS`; `TEST_GATE=PASS`; `GLOBAL_PHASE_H3=PASS`.
+- `LIVE_GATE=NOT_RUN`; `LIVE_WRITES=NONE`; `NEXT_PERMITTED_PROMPT=P15`.

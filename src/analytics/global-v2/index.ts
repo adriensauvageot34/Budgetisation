@@ -220,7 +220,7 @@ export { createGlobalM10DependencyDeclaration } from "./shared-dependencies";
 export { globalM10CapabilityStates, recertifyGlobalSharedDownstreamClosure } from "./shared-capabilities";
 export {
   GLOBAL_PUBLICATION_METHOD_VERSION, GLOBAL_PUBLICATION_POLICY_VERSION,
-  GlobalPublicationEngine, aggregateGlobalModuleVisibility,
+  GlobalPublicationEngine, aggregateGlobalModuleVisibility, globalPublicationGateOrder,
   type GlobalPublicationDecision, type GlobalPublicationGateInput, type GlobalPublicationPolicy,
   type GlobalPublicationQualification, type GlobalPublicationReasonCode, type GlobalPublicationSurface,
   type GlobalPublicationVisibility, type GlobalSectionClass,
@@ -230,3 +230,16 @@ export {
   type GlobalDependencyDescriptor, type GlobalInvalidationAction, type GlobalInvalidationCause,
   type GlobalInvalidationEvent, type GlobalInvalidationPlan,
 } from "./invalidation";
+export {
+  GLOBAL_INSIGHT_SELECTION_METHOD_VERSION,
+  GLOBAL_INSIGHT_SELECTION_POLICY_VERSION,
+  InsightSelectionEngine,
+  globalInsightSelectionWeights,
+  type GlobalInsightCandidate,
+  type GlobalInsightDomain,
+  type GlobalInsightSelectionEntry,
+  type GlobalInsightSelectionResult,
+  type GlobalInsightSupportingContext,
+  type GlobalInsightTemporalClass,
+  type GlobalSelectedInsight,
+} from "./insight-selection";

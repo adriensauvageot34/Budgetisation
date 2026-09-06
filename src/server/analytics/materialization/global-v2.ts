@@ -16,6 +16,21 @@ export const globalV2ResourceFamilies = Object.freeze([
   "global_methodology",
 ] as const);
 
+/** Exact P14 primary query contracts. P15 appends detail and exploration instances. */
+export const globalV2PrimaryQueryResources = Object.freeze([
+  "analysis_global_manifest",
+  "analysis_global_economic",
+  "analysis_global_categories_needs",
+  "analysis_global_transformations",
+  "analysis_global_rhythm",
+  "analysis_global_relationships",
+  "analysis_global_moments",
+  "analysis_global_geo_mobility",
+  "analysis_global_consumption",
+  "analysis_global_personas",
+  "analysis_global_together",
+] as const);
+
 export const globalV2MaterializationProfile = Object.freeze({
   profileId: globalV2PublicationProfileId,
   scope: "household_global" as const,
