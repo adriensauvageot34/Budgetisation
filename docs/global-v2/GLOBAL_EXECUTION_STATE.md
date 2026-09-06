@@ -4,9 +4,9 @@
 
 | Champ | Valeur |
 |---|---|
-| Prompt | P05 — PASS, M4 et C3/C4 certifiés |
+| Prompt | P08 — PASS, M7 core et E3/E4 certifiés |
 | Branche | `main` |
-| Baseline | `3f358ed55f9d2c8d7b5fd88f493532702139d808` |
+| Baseline | `6f8be504ba78279bd0ede91e777823806aed4dad` |
 | Checkpoint | `SELF` — résoudre par `git log -1 --format=%H -- docs/global-v2/GLOBAL_EXECUTION_STATE.md` |
 | GLOBAL_PHASE_A1 | PASS — freeze préexistant |
 | GLOBAL_PHASE_A2 | PASS |
@@ -28,9 +28,9 @@
 | M1 final | PASS — outputs temporels raccordés et recertifiés avec les consommateurs M4/M3 |
 | GLOBAL_PHASE_B | PASS |
 | GLOBAL_PHASE_C | PASS |
-| Live gate | NOT_RUN — non requis, aucune écriture autorisée dans P05 |
+| Live gate | NOT_RUN — non requis, aucune écriture autorisée dans P08 |
 | Live writes | NONE |
-| Prochain prompt autorisé | P06 — non démarré |
+| Prochain prompt autorisé | P09 — non démarré |
 
 ## Références et digests
 
@@ -207,3 +207,16 @@ Elles restent des contrats de compatibilité, pas une autorité V2.
 - Aucun push, accès/écriture live, publication, migration, Query, ReadModel ou React.
 - `IMPLEMENTATION_GATE=PASS`; `CONTRACT_GATE=PASS`; `TEST_GATE=PASS`; `GLOBAL_PHASE_E2=PASS`.
 - `LIVE_GATE=NOT_RUN`; `LIVE_WRITES=NONE`; `NEXT_PERMITTED_PROMPT=P08`.
+
+## P08 — lieux et mobilité prouvable
+
+- Baseline : `6f8be504ba78279bd0ede91e777823806aed4dad`, branche main, état propre à l’entrée.
+- M7 core consomme `PlaceVisitFact`, `PersonDayFact`, `EconomicComponentFact`, `PurchaseEventFact` et la hiérarchie Place via un adaptateur Canonical read-only.
+- Visites, séjours, transitions OD, rôles Place et finance localisée restent des objets séparés. Seules les autorités directes/établissement prouvé/lieu causal déclaré/attribution Canonical sont admissibles.
+- `localizedAmountCoverage` et `localizedEventCoverage` sont distinctes ; seuils de ranking 60 %/85 %, allocations source-bound et roll-ups sans double compte.
+- Les rôles datés, MobilityLeg, RouteDefinition, distances, consommation/prix carburant et shared trips restent explicitement `AUTHORITY_GATED`; aucune heuristique n’est introduite.
+- Replay C/D : 15 définitions P08 relues, aucune nouvelle éligible ; univers FDR et q-values inchangés, absence de cycle prouvée.
+- Validations : M7 58/58, autorité 22/22, M6 75/75 +17/17, M5 266/266 +20/20, M4 67/67, M3 179/179 +17/17, matérialité 49/49, HC2 Month Balance 99/99, typecheck, architecture 516, build Next et diff-check PASS.
+- Rapport : `docs/global-v2/execution/P08-report.md`. Aucun push, live write, publication, migration, Query, ReadModel ou React.
+- `IMPLEMENTATION_GATE=PASS`; `CONTRACT_GATE=PASS`; `TEST_GATE=PASS`; `GLOBAL_PHASE_E3_E4=PASS`.
+- `LIVE_GATE=NOT_RUN`; `LIVE_WRITES=NONE`; `NEXT_PERMITTED_PROMPT=P09`.
