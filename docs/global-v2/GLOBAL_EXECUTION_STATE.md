@@ -231,3 +231,12 @@ Elles restent des contrats de compatibilité, pas une autorité V2.
 - Tests : M8 66/66, autorité 29/29, History Canonical, M2 49/49, P04 179/179, typecheck, architecture 519, build Next et diff-check PASS.
 - Rapport : `docs/global-v2/execution/P09-report.md`. `IMPLEMENTATION_GATE=PASS`, `CONTRACT_GATE=PASS`, `TEST_GATE=PASS`, `GLOBAL_PHASE_F1_F2_CORE=PASS`.
 - `LIVE_GATE=NOT_RUN`; `LIVE_WRITES=NONE`; `NEXT_PERMITTED_PROMPT=P10`.
+
+## P10A — freeze Produits et convergence B/C/D
+
+- Baseline : `3c09ea111f84d87a6bb95a82f49885cf3488d522`, main propre ; P09 acquis. Master SHA vérifié identique au registre.
+- Freeze : `execution/P10-ASTRA-FREEZE.md`. Lecture ciblée M8, Scope V1 final, AG et consommateurs réels. Aucun code produit modifié, aucune lecture/écriture live.
+- Merchant substitution est DATA_GATED_IMPLEMENTABLE ; ses tests positifs et d'absence sont exigibles P10B. Produit/unité/acquisition/cadence/lifecycle/indice restent AUTHORITY_GATED_UNAVAILABLE ; leur fermeture explicite est exigible, leur activation exige T01.
+- Plan P10B : enrichissement M8 vers M2, séries autorisées vers C, examen de la définition M5 visite/achat localisé et replay FDR commun/no-op prouvé. Les déclarations downstream M2/M5 de M8 doivent être distinguées des inputs pour éviter un faux cycle.
+- Questions humaines restantes dans ce périmètre : 0. Les suites d'implémentation P10B ne sont pas déclarées exécutées par ce freeze.
+- `P10A_FREEZE_GATE=PASS`; `IMPLEMENTATION_GATE=NOT_RUN_P10B`; `LIVE_GATE=NOT_RUN`; `LIVE_WRITES=NONE`; `NEXT_PERMITTED_PROMPT=P10B`.
