@@ -22,6 +22,7 @@
     "check:global-v2-purchase-convergence": "node --experimental-strip-types scripts/check-global-v2-purchase-convergence.mjs",
     "check:global-v2-persona": "node --experimental-strip-types scripts/check-global-v2-persona.mjs",
     "check:global-v2-shared": "node --experimental-strip-types scripts/check-global-v2-shared-participation.mjs",
+    "check:global-v2-publication": "node --experimental-strip-types scripts/check-global-v2-publication-infrastructure.mjs",
     "check:canonical-in-batching": "node scripts/check-canonical-in-batching.mjs",
     "check:analytics-materialization": "node scripts/check-analytics-materialization.mjs",
     "check:exploration-entities": "node scripts/check-exploration-entities.mjs",

@@ -218,3 +218,15 @@ export {
 } from "./social-context";
 export { createGlobalM10DependencyDeclaration } from "./shared-dependencies";
 export { globalM10CapabilityStates, recertifyGlobalSharedDownstreamClosure } from "./shared-capabilities";
+export {
+  GLOBAL_PUBLICATION_METHOD_VERSION, GLOBAL_PUBLICATION_POLICY_VERSION,
+  GlobalPublicationEngine, aggregateGlobalModuleVisibility,
+  type GlobalPublicationDecision, type GlobalPublicationGateInput, type GlobalPublicationPolicy,
+  type GlobalPublicationQualification, type GlobalPublicationReasonCode, type GlobalPublicationSurface,
+  type GlobalPublicationVisibility, type GlobalSectionClass,
+} from "./publication";
+export {
+  GLOBAL_DEPENDENCY_REGISTRY_VERSION, planGlobalInvalidation,
+  type GlobalDependencyDescriptor, type GlobalInvalidationAction, type GlobalInvalidationCause,
+  type GlobalInvalidationEvent, type GlobalInvalidationPlan,
+} from "./invalidation";

@@ -27,6 +27,25 @@ export {
 } from "./freshness";
 export { SupabaseAnalyticsPublicationStore } from "./publication-store";
 export { SupabaseHistoryManifestStore, type HistoryManifestRead } from "./history-manifest-store";
+export { SupabaseGlobalManifestStore, type GlobalManifestRead } from "./global-manifest-store";
+export {
+  buildGlobalV2PublicationManifest,
+  globalV2ManifestFormatVersion,
+  globalV2MaterializationProfile,
+  globalV2PublicationContractVersion,
+  globalV2PublicationProfileId,
+  globalV2ResourceFamilies,
+  parseGlobalV2PublicationManifest,
+  stageGlobalV2GenerationInMemory,
+  type GlobalV2Closure,
+  type GlobalV2ManifestInput,
+  type GlobalV2PublicationManifest,
+  type GlobalV2PublicationMeta,
+  type GlobalV2ResolvedDependency,
+  type GlobalV2ResourceVersion,
+  type GlobalV2StagedResource,
+} from "./global-v2";
+export { InMemoryGlobalPublicationCoordinator } from "./global-session";
 export { buildHistoryMonth, finalizeHistoryPublication, validateHistoryMonthBuild,
   type CertifiedHistoryMonth, type HistoryMonthCertification, type HistoryMonthGeneration } from "./history-rebuild";
 export { recordAnalyticsMutation } from "./mutation";

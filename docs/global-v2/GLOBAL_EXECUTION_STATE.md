@@ -4,9 +4,9 @@
 
 | Champ | Valeur |
 |---|---|
-| Prompt | P08 — PASS, M7 core et E3/E4 certifiés |
+| Prompt | P13 — PASS, infrastructure de publication Global certifiée localement |
 | Branche | `main` |
-| Baseline | `6f8be504ba78279bd0ede91e777823806aed4dad` |
+| Baseline | `9e9d69e78456060fd58beaa9d7a24911676133ce` |
 | Checkpoint | `SELF` — résoudre par `git log -1 --format=%H -- docs/global-v2/GLOBAL_EXECUTION_STATE.md` |
 | GLOBAL_PHASE_A1 | PASS — freeze préexistant |
 | GLOBAL_PHASE_A2 | PASS |
@@ -28,9 +28,9 @@
 | M1 final | PASS — outputs temporels raccordés et recertifiés avec les consommateurs M4/M3 |
 | GLOBAL_PHASE_B | PASS |
 | GLOBAL_PHASE_C | PASS |
-| Live gate | NOT_RUN — non requis, aucune écriture autorisée dans P08 |
+| Live gate | NOT_RUN — migration P13 préparée, non appliquée |
 | Live writes | NONE |
-| Prochain prompt autorisé | P09 — non démarré |
+| Prochain prompt autorisé | P14 — non démarré |
 
 ## Références et digests
 
@@ -82,6 +82,21 @@ Elles restent des contrats de compatibilité, pas une autorité V2.
 - `InsightSelectionEngine` est propriété P14.
 - Les futurs consommateurs person-scoped devront versionner leur méthode/policy avant d’exposer l’enrichissement ECF ; les totaux Household restent inchangés.
 - Un lien direct `Payment_component → Person` exige une autorité Canonical future ; en son absence le résultat reste UNKNOWN.
+
+## P13 — infrastructure de publication Global
+
+- P12/G est la baseline certifiée; les outputs A–G ne sont pas recalculés dans ce lot.
+- Profil : `global-v2-household@v1`, une génération Household Global, `FULL_RESTAGE`, aucune référence intergénération.
+- Manifeste : `global-v2-publication-manifest@v1`, compact et versionné, avec closures, versions, `resourceInputHash`, `publicationFactsHash`, `manifestHash` et identité d'implémentation.
+- Persistance : réutilisation des trois tables Analytics; colonne nullable `global_manifest` préparée. `NULL = LEGACY_UNKNOWN`, aucun retrofit.
+- Workflow : stage inactif, seal/attach, read-back, Finalize atomique, single-active, residual-key check, immutabilité, retry transport et rollback non invalidé.
+- Runtime : snapshots compatibles uniquement, sans read-through; génération épinglée et réponses tardives rejetées.
+- Publication/visibility et invalidation field-aware sont centralisées dans `src/analytics/global-v2` et ne sont pas recalculées par React.
+- Migration `20260906120000_global_v2_publication_infrastructure.sql` : préparée et testée sur PostgreSQL synthétique, jamais appliquée live.
+- Tests : P13 54/54; HC3 100; HC4 83; HC5 160; typecheck, architecture 535 fichiers, build et diff-check PASS.
+- Rapport : `docs/global-v2/execution/P13-report.md`.
+- Gates : H1 PASS; H2 infrastructure PASS; instances/payload schemas exacts P14/P15; live schema PENDING.
+- Écritures live : NONE. Prochain prompt : P14.
 
 ## P02 — autorité temporelle et M1 économique
 
