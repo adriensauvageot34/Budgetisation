@@ -90,3 +90,23 @@ export {
   type GlobalSeasonalKind,
 } from "./seasonality";
 export { createGlobalM4DependencyDeclaration, globalM4PlaceRoleCapability } from "./routine-dependencies";
+export {
+  assertGlobalMomentCatalogExhaustive,
+  momentComparisonCatalogV1,
+  momentComparisonProfiles,
+  resolveGlobalMomentType,
+  type GlobalMomentComparisonProfile,
+  type GlobalMomentComparisonTier,
+  type GlobalMomentFacetKey,
+  type GlobalMomentFamily,
+} from "./moment-catalog";
+export {
+  GLOBAL_M6_METHOD_VERSION,
+  buildGlobalMomentExperiences,
+  type GlobalMomentComponentAuthority,
+  type GlobalMomentExperienceInput,
+  type GlobalMomentFacetValue,
+  type GlobalMomentInput,
+  type GlobalMomentUnitCostAuthority,
+} from "./moments";
+export { createGlobalM6DependencyDeclaration } from "./moment-dependencies";

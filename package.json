@@ -13,6 +13,8 @@
     "check:global-v2-routines": "node --experimental-strip-types scripts/check-global-v2-routines.mjs",
     "check:global-v2-relationships": "node --experimental-strip-types scripts/check-global-v2-relationships.mjs",
     "check:global-v2-relationship-authority": "node scripts/check-global-v2-relationship-authority.mjs",
+    "check:global-v2-moments": "node --experimental-strip-types scripts/check-global-v2-moments.mjs",
+    "check:global-v2-moment-authority": "node scripts/check-global-v2-moment-authority.mjs",
     "check:canonical-in-batching": "node scripts/check-canonical-in-batching.mjs",
     "check:analytics-materialization": "node scripts/check-analytics-materialization.mjs",
     "check:exploration-entities": "node scripts/check-exploration-entities.mjs",

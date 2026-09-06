@@ -194,3 +194,16 @@ Elles restent des contrats de compatibilité, pas une autorité V2.
 - `IMPLEMENTATION_GATE=PASS`; `CONTRACT_GATE=PASS`; `TEST_GATE=PASS`; `GLOBAL_PHASE_D_CORE=PASS`, avec la portée core et les exclusions autorisées détaillées dans le rapport.
 - `LIVE_GATE=NOT_RUN`; `LIVE_WRITES=NONE`. Aucun push, publication, migration ou P07.
 - `NEXT_PERMITTED_PROMPT=P07`. Le SHA du checkpoint est celui du commit local de clôture; il n'est pas injecté récursivement dans son propre contenu.
+
+## P07 — Moments et expériences
+
+- Baseline : `d29ba09176a7d0726c6e67a5f0b1f7f9bd380418`, branche main, état propre à l'entrée.
+- E1 borné : identité/type/dates/série depuis `moments`; membership via `moment_life_events`; participants uniquement explicites; causalité via les Facts et doctrines HC2. Les facettes Place non prouvées restent `AUTHORITY_GATED`.
+- E2 : catalogue exact de 20 types et 7 familles, comparaisons SAME_SERIES/SAME_TYPE/SAME_FAMILY, facettes et support 0–2/3–4/5–7/8+, coûts causal/pendant, rôles et paiements séparés, statistiques robustes, matérialité par famille, importance non monétaire et séries.
+- Chaîne read-only `CanonicalRepository → producteurs EconomicComponentFact → GlobalTemporalBoundaryResolver → M6`; closure, source hash et execution hash sensibles aux intrants déclarés.
+- 133 exigences, 13 capacités et 134 tests Master attribués à P07 sont indexés dans `execution/P07-report.md`.
+- Signaux nouveaux M6 vers M3/M5 déclarés; replay et recertification C/D réservés à P08 et non exécutés.
+- Validations : M6 75/75, autorité 17/17, régressions HC2/P03/P06, typecheck, architecture, build Next et diff-check PASS.
+- Aucun push, accès/écriture live, publication, migration, Query, ReadModel ou React.
+- `IMPLEMENTATION_GATE=PASS`; `CONTRACT_GATE=PASS`; `TEST_GATE=PASS`; `GLOBAL_PHASE_E2=PASS`.
+- `LIVE_GATE=NOT_RUN`; `LIVE_WRITES=NONE`; `NEXT_PERMITTED_PROMPT=P08`.

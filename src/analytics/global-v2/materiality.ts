@@ -20,6 +20,9 @@ export type GlobalMaterialityPolicyId =
   | "PERSONA_MONEY"
   | "PERSONA_FREQUENCY"
   | "RELATIONSHIP_PROBABILITY"
+  | "MOMENT_SHORT"
+  | "MOMENT_TRAVEL"
+  | "MOMENT_PROJECT"
   | "MERCHANT";
 
 export type GlobalMaterialityPolicy = {
@@ -31,6 +34,7 @@ export type GlobalMaterialityPolicy = {
   readonly relativeOrShare: boolean;
   readonly appearanceDisappearanceAllowed: boolean;
   readonly absoluteOnlyAlternative?: string;
+  readonly zeroBaselineUsesAbsolute?: boolean;
 };
 
 /** The only V1 threshold registry. Later modules consume it instead of copying numbers. */
@@ -45,6 +49,9 @@ export const globalMaterialityPolicies: Readonly<Record<GlobalMaterialityPolicyI
   MERCHANT: { id: "MERCHANT", ref: { id: "global-materiality-merchant", version: V1 }, minimumAbsolute: "15", minimumRelative: "0.15", relativeOrShare: false, appearanceDisappearanceAllowed: false },
   // Master M5 P3983–P3991: (10 percentage points AND 20%) OR 15 points.
   RELATIONSHIP_PROBABILITY: { id: "RELATIONSHIP_PROBABILITY", ref: { id: "global-materiality-relationship-probability", version: V1 }, minimumAbsolute: "0.10", minimumRelative: "0.20", absoluteOnlyAlternative: "0.15", relativeOrShare: false, appearanceDisappearanceAllowed: false },
+  MOMENT_SHORT: { id: "MOMENT_SHORT", ref: { id: "global-materiality-moment-short", version: V1 }, minimumAbsolute: "15", minimumRelative: "0.15", relativeOrShare: false, appearanceDisappearanceAllowed: false, zeroBaselineUsesAbsolute: true },
+  MOMENT_TRAVEL: { id: "MOMENT_TRAVEL", ref: { id: "global-materiality-moment-travel", version: V1 }, minimumAbsolute: "50", minimumRelative: "0.10", relativeOrShare: false, appearanceDisappearanceAllowed: false, zeroBaselineUsesAbsolute: true },
+  MOMENT_PROJECT: { id: "MOMENT_PROJECT", ref: { id: "global-materiality-moment-project", version: V1 }, minimumAbsolute: "50", minimumRelative: "0.15", relativeOrShare: false, appearanceDisappearanceAllowed: false, zeroBaselineUsesAbsolute: true },
 });
 
 export type GlobalMaterialityStatus =
@@ -80,6 +87,7 @@ export type GlobalMaterialityEvaluationInput = {
   readonly lifecycle?: "CONTINUING" | "APPEARED" | "DISAPPEARED";
   readonly structuralEquivalent?: boolean;
   readonly materialFrequencyChange?: boolean;
+  readonly zeroBaseline?: boolean;
 };
 
 function absAtLeast(value: string | undefined, threshold: string): boolean {
@@ -140,7 +148,8 @@ export class GlobalMaterialityEngine {
     );
     const frequencyAlternative = input.policyId === "MERCHANT" && input.materialFrequencyChange === true;
     const personaFrequencyAlternative = input.policyId === "PERSONA_FREQUENCY" && input.structuralEquivalent === true;
-    const absoluteOnlyAlternative = policy.absoluteOnlyAlternative !== undefined && absAtLeast(candidate.effect.absolute, policy.absoluteOnlyAlternative);
+    const absoluteOnlyAlternative = policy.absoluteOnlyAlternative !== undefined && absAtLeast(candidate.effect.absolute, policy.absoluteOnlyAlternative)
+      || policy.zeroBaselineUsesAbsolute === true && input.zeroBaseline === true && absolute === "PASS";
     const effectPass = effectGate || frequencyAlternative || personaFrequencyAlternative || absoluteOnlyAlternative;
     const reasonCodes = [
       ...(authority === "FAIL" ? ["MISSING_AUTHORITY"] : []),
