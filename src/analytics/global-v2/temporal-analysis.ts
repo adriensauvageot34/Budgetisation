@@ -15,6 +15,7 @@ export function buildGlobalTemporalAnalysis(input: GlobalTemporalChangeInput) {
     const absolute = new Big(after).minus(before).toFixed();
     return engine.evaluate({
       policyId: input.policyId,
+      ...(input.materialFrequencyChange === undefined ? {} : { materialFrequencyChange: input.materialFrequencyChange }),
       candidate: parseGlobalMaterialityCandidate({
         ...input.evidence,
         candidateId: `${input.evidence.phenomenonId}:${id}`,

@@ -240,3 +240,15 @@ Elles restent des contrats de compatibilité, pas une autorité V2.
 - Plan P10B : enrichissement M8 vers M2, séries autorisées vers C, examen de la définition M5 visite/achat localisé et replay FDR commun/no-op prouvé. Les déclarations downstream M2/M5 de M8 doivent être distinguées des inputs pour éviter un faux cycle.
 - Questions humaines restantes dans ce périmètre : 0. Les suites d'implémentation P10B ne sont pas déclarées exécutées par ce freeze.
 - `P10A_FREEZE_GATE=PASS`; `IMPLEMENTATION_GATE=NOT_RUN_P10B`; `LIVE_GATE=NOT_RUN`; `LIVE_WRITES=NONE`; `NEXT_PERMITTED_PROMPT=P10B`.
+
+## P10B — produits fermés et convergence B/C/D
+
+- Baseline : `32213755dc3473683edaf96a9243fc0a16a26922`, branche main, état propre à l'entrée ; freeze P10A appliqué sans réaudit.
+- Gates produit AG002–004/012–022 fermés avec raisons typées. Les données brutes n'ouvrent aucune identité, unité, acquisition, cadence, lifecycle, substitution produit ou inflation ; activation positive sous T01 uniquement.
+- Merchant Substitution conditionnel implémenté sur catalogue versionné et PurchaseEvents couverts : axes dépense/fréquence séparés, fenêtres P04 6+6/6+4, supports et seuils exacts, résultat associatif `SPEND_SHIFT`/`FREQUENCY_SHIFT`/`BOTH`.
+- M8 → M2 réellement raccordé via l'adaptateur serveur et la décomposition P03; séries M8 autorisées → C. M1 reste invariant à autorité économique identique.
+- Définition M5 P10 examinée parmi les 31 : autorité achat localisé absente, exclusion sans p-value, univers FDR et q-values inchangés. Aucun cycle M2↔M8, M5↔M8 ou M3→M5→M3.
+- Validations ciblées : P10 56, P09 66+29, M2 49, M1 72, P04 179+17, M5 266+20 PASS; typecheck, architecture, build et diff-check documentés dans `execution/P10-report.md`.
+- `IMPLEMENTATION_GATE=PASS`; `CONTRACT_GATE=PASS`; `TEST_GATE=PASS`; `GLOBAL_PHASE_F3_F4=PASS`.
+- `LIVE_GATE=NOT_RUN`; `LIVE_WRITES=NONE`; aucune migration, publication ou push.
+- `NEXT_PERMITTED_PROMPT=P11`.

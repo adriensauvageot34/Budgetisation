@@ -32,6 +32,8 @@ export type GlobalTemporalChangeInput = {
   /** Coverage and authority are supplied by the official signal producer, never inferred from amounts. */
   readonly evidence: Omit<GlobalMaterialityCandidate, "effect" | "candidateId">;
   readonly policyId: GlobalMaterialityPolicyId;
+  /** Certified upstream frequency materiality; used only by policies that explicitly allow this alternative. */
+  readonly materialFrequencyChange?: boolean;
 };
 
 /** Window diagnostics, not editorial selection or a claim of a semantic transformation. */
@@ -63,6 +65,7 @@ export function buildGlobalTemporalChangeCandidates(input: GlobalTemporalChangeI
     const id = `${evidence.phenomenonId}:${after[0].month}:${full ? "6+6" : "6+4"}`;
     const evaluation = materiality.evaluate({
       policyId: input.policyId,
+      ...(input.materialFrequencyChange === undefined ? {} : { materialFrequencyChange: input.materialFrequencyChange }),
       candidate: {
         ...evidence,
         candidateId: id,
@@ -114,6 +117,7 @@ export function buildGlobalTemporalChangeCandidates(input: GlobalTemporalChangeI
     dependencyRefs: [...new Set(ordered.flatMap((p) => p.dependencyRefs))].sort(),
     inputHash: bytesToHex(sha256(utf8ToBytes(canonicalSerializeGlobal({
       boundary: input.certifiedThroughMonth, points: ordered, evidence,
+      ...(input.materialFrequencyChange === undefined ? {} : { materialFrequencyChange: input.materialFrequencyChange }),
       policy: globalTemporalChangePolicy, materiality: globalMaterialityPolicies[input.policyId],
     })))),
   };

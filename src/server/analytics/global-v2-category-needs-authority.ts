@@ -2,10 +2,12 @@ import "server-only";
 
 import {
   buildGlobalCategoryNeeds,
+  buildGlobalM2PurchaseEnrichment,
   createGlobalM2DependencyDeclaration,
   projectGlobalM2Month,
   resolveGlobalM2NeedDimension,
   type GlobalM2DimensionValue,
+  type GlobalPurchaseMerchantResult,
 } from "@/analytics/global-v2";
 import { produceMetric } from "@/analytics/production";
 import { parseCategoryId } from "@/core/identity";
@@ -81,6 +83,7 @@ export async function resolveGlobalM2HouseholdAuthority(input: {
   readonly repository: CanonicalRepository;
   readonly resolver?: FactSourceResolver;
   readonly targetMonth: YearMonth;
+  readonly purchaseAuthority?: GlobalPurchaseMerchantResult;
 }) {
   const targetMonth = parseYearMonth(input.targetMonth);
   const resolver = input.resolver ?? new FactSourceResolver(input.repository);
@@ -129,20 +132,33 @@ export async function resolveGlobalM2HouseholdAuthority(input: {
     }
     return { categoryId, current: parseMoney(current.value), typical: parseMoney(typical.value) };
   }));
+  const purchaseEnrichment = input.purchaseAuthority === undefined
+    ? undefined
+    : buildGlobalM2PurchaseEnrichment({
+        purchase: input.purchaseAuthority,
+        targetMonth,
+        referenceMonths: m1.typical.referenceMonths,
+      });
+  if (purchaseEnrichment !== undefined && purchaseEnrichment.sourceRevision !== input.repository.context.dataRevision) {
+    throw new TypeError("P10_M2_PURCHASE_SOURCE_REVISION_MISMATCH");
+  }
+  const result = buildGlobalCategoryNeeds({
+    targetMonth,
+    referenceMonths: m1.typical.referenceMonths,
+    components,
+    actual: m1.actual.value.value,
+    officialTypicalTotal: m1.typical.reference.value,
+    officialCategoryCurrentAmounts: Object.fromEntries(categoryAuthorities.map(({ categoryId, current }) => [categoryId, current])),
+    officialCategoryTypicalAmounts: Object.fromEntries(categoryAuthorities.map(({ categoryId, typical }) => [categoryId, typical])),
+    ...(purchaseEnrichment === undefined ? {} : { purchaseFrequencyTicket: purchaseEnrichment.frequencyTicket }),
+  });
   return {
-    result: buildGlobalCategoryNeeds({
-      targetMonth,
-      referenceMonths: m1.typical.referenceMonths,
-      components,
-      actual: m1.actual.value.value,
-      officialTypicalTotal: m1.typical.reference.value,
-      officialCategoryCurrentAmounts: Object.fromEntries(categoryAuthorities.map(({ categoryId, current }) => [categoryId, current])),
-      officialCategoryTypicalAmounts: Object.fromEntries(categoryAuthorities.map(({ categoryId, typical }) => [categoryId, typical])),
-    }),
+    result,
     dependencyDeclaration: createGlobalM2DependencyDeclaration({
       personScope: { kind: "HOUSEHOLD" },
       authorizedPersonIds: input.repository.context.personIds,
     }),
     m1,
+    ...(purchaseEnrichment === undefined ? {} : { purchaseEnrichment }),
   };
 }

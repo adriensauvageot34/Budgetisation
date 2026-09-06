@@ -136,7 +136,33 @@ export {
   type GlobalPurchaseEligibilityUniverse,
   type GlobalPurchaseKind,
   type GlobalPurchaseMerchantInput,
+  type GlobalPurchaseMerchantResult,
   type GlobalPurchaseMetadataAuthority,
   type GlobalPurchaseOutcome,
 } from "./purchases";
 export { createGlobalM8DependencyDeclaration } from "./purchase-dependencies";
+export {
+  GLOBAL_PRODUCT_CAPABILITY_FREEZE_VERSION,
+  buildGlobalProductCapabilityClosure,
+  globalProductGateCatalog,
+  type GlobalProductCapabilityClass,
+} from "./product-capabilities";
+export {
+  GLOBAL_MERCHANT_SUBSTITUTION_METHOD_VERSION,
+  GLOBAL_MERCHANT_SUBSTITUTION_POLICY_VERSION,
+  areGlobalMerchantChangeOnsetsCompatible,
+  buildGlobalMerchantSubstitution,
+  meetsGlobalMerchantCounterbalanceThreshold,
+  meetsGlobalMerchantEventSupport,
+  meetsGlobalMerchantShareShiftThreshold,
+  type GlobalMerchantFrequencyMaterialityProof,
+  type GlobalMerchantSubstitutionCatalog,
+  type GlobalMerchantSubstitutionEvent,
+  type GlobalMerchantSubstitutionSignal,
+  type GlobalPurchaseCoverageAuthority,
+} from "./merchant-substitution";
+export {
+  GLOBAL_PURCHASE_CONVERGENCE_METHOD_VERSION,
+  buildGlobalM2PurchaseEnrichment,
+  recertifyGlobalBCDForPurchases,
+} from "./purchase-convergence";

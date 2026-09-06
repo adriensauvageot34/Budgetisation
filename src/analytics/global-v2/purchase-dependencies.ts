@@ -24,13 +24,10 @@ export function createGlobalM8DependencyDeclaration(input: {
     ],
     upstreamAnalytics: [
       { kind: "ANALYTICS", id: "economic_consumption_net_attributable", requirement: "REQUIRED", scopeRelation: "same-owned-components", corpusAuthority: "CERTIFIED_HISTORY" },
-      { kind: "ANALYTICS", id: "global-v2:m3-transformations", requirement: "OPTIONAL", scopeRelation: "shared-temporal-engine-consumer-only", corpusAuthority: "CERTIFIED_HISTORY" },
     ],
     otherModuleDependencies: [
       { kind: "MODULE", id: "GlobalTemporalBoundaryResolver", requirement: "REQUIRED", scopeRelation: "purchase-event-certified-corpus" },
       { kind: "MODULE", id: "GlobalMaterialityEngine", requirement: "REQUIRED", scopeRelation: "merchant-temporal-significance" },
-      { kind: "MODULE", id: "global-v2:m2-category-needs", requirement: "OPTIONAL", scopeRelation: "downstream-enrichment-only-no-return-edge" },
-      { kind: "MODULE", id: "global-v2:m5-relationships", requirement: "OPTIONAL", scopeRelation: "downstream-enrichment-only-no-return-edge" },
     ],
     naturalGrain: "PURCHASE_EVENT",
     timeWindowPolicy: { id: "global-purchase-certified-corpus", version: "v1" },

@@ -417,6 +417,8 @@ export function buildGlobalPurchaseMerchant(input: GlobalPurchaseMerchantInput) 
     status,
     reasonCodes: unique([...(status === "UNKNOWN" ? [input.eligibilityUniverse.status === "UNKNOWN" ? input.eligibilityUniverse.reasonCode : "DATA_GATED"] : []), ...(partial ? ["PARTIAL_AUTHORITY_COVERAGE"] : [])]),
     methodVersion: GLOBAL_M8_METHOD_VERSION,
+    sourceRevision: input.sourceRevision,
+    certifiedThroughMonth,
     policies: globalM8Policies,
     checkoutPurchaseCount: eventRows.length,
     retainedPurchaseCount: retained.length,
@@ -428,8 +430,8 @@ export function buildGlobalPurchaseMerchant(input: GlobalPurchaseMerchantInput) 
     coverage: { purchaseCoverage, merchantCoverage, beneficiaryCoverage, establishmentCoverage },
     capabilities,
     contributions: {
-      m2PurchaseEvents: retained.map(({ purchaseEventId, netRetainedValue }) => ({ purchaseEventId, amount: netRetainedValue })),
-      m5MerchantSignals: merchants.map(({ merchantId }) => merchantId),
+      m2PurchaseEvents: retained.map(({ purchaseEventId, purchaseAt, netRetainedValue, evidenceRefs }) => ({ purchaseEventId, purchaseAt, amount: netRetainedValue, evidenceRefs })),
+      m5MerchantSignals: merchants.map(({ merchantId, detailRefs, coverage, support }) => ({ merchantId, detailRefs, coverage, support })),
       direction: "M8_TO_M2_M5_ONLY" as const,
     },
     dependencyClosure,
@@ -452,3 +454,5 @@ export function buildGlobalPurchaseMerchant(input: GlobalPurchaseMerchantInput) 
     publicationEligible: false as const,
   };
 }
+
+export type GlobalPurchaseMerchantResult = ReturnType<typeof buildGlobalPurchaseMerchant>;
