@@ -158,8 +158,8 @@ check(() => assert.equal("kpis" in initial, false));
 check(() => assert.ok(Buffer.byteLength(JSON.stringify(initial), "utf8") <= query.GLOBAL_INITIAL_PAYLOAD_BUDGET_BYTES));
 rejects(() => query.globalInitialReadModelSchema.parse({ ...initial, navigation: initial.navigation.slice(0, 9) }), /payload/);
 
-check(() => assert.deepEqual(materialization.globalV2PrimaryQueryResources, ["analysis_global_manifest", ...query.globalPrimaryModuleCatalog.map(({ resource }) => resource)]));
-check(() => assert.equal(new Set(materialization.globalV2PrimaryQueryResources).size, 11));
+check(() => assert.deepEqual(materialization.globalV2PrimaryQueryResources, ["analysis_global_manifest", "analysis_global_summary_ai", ...query.globalPrimaryModuleCatalog.map(({ resource }) => resource)]));
+check(() => assert.equal(new Set(materialization.globalV2PrimaryQueryResources).size, 12));
 
 console.log(`Global V2 primary ReadModels: ${checks}/${checks} PASS`);
 console.log(`Primary module schemas: ${modules.length}/10 PASS`);

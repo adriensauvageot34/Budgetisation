@@ -304,3 +304,16 @@ Elles restent des contrats de compatibilité, pas une autorité V2.
 - Aucun React, snapshot, publication, migration, push ou live write. Détails, résumé IA et instances finales restent P15.
 - `IMPLEMENTATION_GATE=PASS`; `CONTRACT_GATE=PASS`; `TEST_GATE=PASS`; `GLOBAL_PHASE_H3=PASS`.
 - `LIVE_GATE=NOT_RUN`; `LIVE_WRITES=NONE`; `NEXT_PERMITTED_PROMPT=P15`.
+
+## P15 — détails Query et fermeture des instances
+
+- Baseline : `71b21f555a2cbd3d090616424b0bb110541a5b12`, branche main, état propre à l'entrée ; P14 acquis.
+- H4 : 34 contrats Query V2 ciblés, dont 12 ressources de tête, 10 sections EXPANDED, 9 détails analytiques disponibles, 2 détails authority-gated Product/Route et 1 méthodologie ciblée.
+- Le plan synthétique exhaustif instancie 32 ressources disponibles, ferme 32/32 RuntimeSchemas, required keys, versions, closures, navigation interne et external refs History/Operations/Entity.
+- Runtime snapshot-only strict : scope/params/génération épinglés, cache par paramètres, erreurs locales, une lecture snapshot et zéro producteur/read-through dans le test.
+- Manifest P13 effectivement assemblé avec resourceInputHash, signatures, policies et closures ; génération commune imposée, suppression de clé et contrôle de résidu testés.
+- Mesures : 42 716 octets pour 32 payloads, zéro payload strictement dupliqué, listes et séries bornées ; aucun God RPC ou micro-query par ligne.
+- Validations : P15 52/52, P14 83/83, P13 52/52, typecheck, architecture, build Next et diff-check consignés dans `execution/P15-report.md`.
+- Aucun React, push, live write, publication ou migration. `PENDING_LIVE_SCHEMA` reste inchangé.
+- `GLOBAL_PHASE_H2_EXACT_RESOURCE_INSTANCES=PASS`; `GLOBAL_PHASE_H4=PASS`; `IMPLEMENTATION_GATE=PASS`; `CONTRACT_GATE=PASS`; `TEST_GATE=PASS`.
+- `LIVE_GATE=NOT_RUN`; `LIVE_WRITES=NONE`; `NEXT_PERMITTED_PROMPT=P16`.

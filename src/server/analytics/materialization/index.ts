@@ -46,6 +46,17 @@ export {
   type GlobalV2StagedResource,
 } from "./global-v2";
 export { InMemoryGlobalPublicationCoordinator } from "./global-session";
+export {
+  assertGlobalV2NoResidualKeys,
+  attachGlobalV2QueryPlanToManifest,
+  buildGlobalV2QueryPlan,
+  globalV2QueryInstanceKey,
+  globalV2QueryMethodSignature,
+  globalV2QueryResourceInputHash,
+  type GlobalV2QueryInstance,
+  type GlobalV2QueryInstanceInput,
+  type GlobalV2QueryPlan,
+} from "./global-query-plan";
 export { buildHistoryMonth, finalizeHistoryPublication, validateHistoryMonthBuild,
   type CertifiedHistoryMonth, type HistoryMonthCertification, type HistoryMonthGeneration } from "./history-rebuild";
 export { recordAnalyticsMutation } from "./mutation";

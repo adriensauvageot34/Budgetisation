@@ -19,6 +19,7 @@ export const globalV2ResourceFamilies = Object.freeze([
 /** Exact P14 primary query contracts. P15 appends detail and exploration instances. */
 export const globalV2PrimaryQueryResources = Object.freeze([
   "analysis_global_manifest",
+  "analysis_global_summary_ai",
   "analysis_global_economic",
   "analysis_global_categories_needs",
   "analysis_global_transformations",
@@ -113,7 +114,7 @@ function sha256(value: string): string {
 
 function stableUnique(values: readonly string[], label: string): readonly string[] {
   if (values.some((value) => value.length === 0)) throw new TypeError(`${label}: empty key`);
-  const ordered = [...values].sort();
+  const ordered = [...values].sort((left, right) => left.localeCompare(right));
   if (new Set(ordered).size !== ordered.length) throw new TypeError(`${label}: duplicate key`);
   return ordered;
 }
@@ -166,13 +167,18 @@ export function buildGlobalV2PublicationManifest(input: GlobalV2ManifestInput): 
   const requiredArtifactKeys = stableUnique(input.requiredArtifactKeys, "artifact keys");
   const requiredQueryKeys = stableUnique(input.requiredQueryKeys, "query keys");
   if (requiredArtifactKeys.length === 0 || requiredQueryKeys.length === 0) throw new TypeError("GLOBAL_MANIFEST_EMPTY_GENERATION");
-  const allKeys = [...requiredArtifactKeys, ...requiredQueryKeys].sort();
+  const allKeys = [...requiredArtifactKeys, ...requiredQueryKeys].sort((left, right) => left.localeCompare(right));
   if (new Set(allKeys).size !== allKeys.length) throw new TypeError("GLOBAL_MANIFEST_CROSS_KIND_KEY_COLLISION");
 
   const resourceFamilies = stableUnique(input.resourceFamilies, "resource families");
   if (canonicalSerializeGlobal(resourceFamilies) !== canonicalSerializeGlobal([...globalV2ResourceFamilies].sort())) throw new TypeError("GLOBAL_MANIFEST_RESOURCE_FAMILIES_INCOMPLETE");
   const closures = input.closures.map(canonicalClosure).sort((a, b) => a.outputKey.localeCompare(b.outputKey));
-  if (canonicalSerializeGlobal(closures.map((entry) => entry.outputKey)) !== canonicalSerializeGlobal(allKeys)) throw new TypeError("GLOBAL_MANIFEST_CLOSURE_INCOMPLETE");
+  const closureKeys = closures.map((entry) => entry.outputKey);
+  if (canonicalSerializeGlobal(closureKeys) !== canonicalSerializeGlobal(allKeys)) {
+    const missing = allKeys.filter((key) => !closureKeys.includes(key));
+    const extra = closureKeys.filter((key) => !allKeys.includes(key));
+    throw new TypeError(`GLOBAL_MANIFEST_CLOSURE_INCOMPLETE:missing=${missing.join(",")}:extra=${extra.join(",")}`);
+  }
 
   const artifactVersions = input.artifactVersions.map(canonicalVersion).sort((a, b) => a.key.localeCompare(b.key));
   const queryVersions = input.queryVersions.map(canonicalVersion).sort((a, b) => a.key.localeCompare(b.key));
