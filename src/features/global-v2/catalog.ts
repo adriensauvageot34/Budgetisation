@@ -18,15 +18,15 @@ export type GlobalModulePresentation = {
 };
 
 export const globalModulePresentations = Object.freeze([
-  { key: "ECONOMIC", resource: "analysis_global_economic", expandedResource: "analysis_global_economic_expanded", order: 1, shortLabel: "Économie", title: "Fonctionnement économique", eyebrow: "M1", description: "Ce qui structure les dépenses et leur évolution." },
-  { key: "CATEGORIES_NEEDS", resource: "analysis_global_categories_needs", expandedResource: "analysis_global_categories_needs_expanded", detailResource: "analysis_global_category_need_detail", order: 2, shortLabel: "Besoins", title: "Catégories et besoins", eyebrow: "M2", description: "Les postes qui composent réellement le quotidien." },
-  { key: "TRANSFORMATIONS", resource: "analysis_global_transformations", expandedResource: "analysis_global_transformations_expanded", detailResource: "analysis_global_transformation_detail", order: 3, shortLabel: "Chapitres", title: "Chapitres et transformations", eyebrow: "M3", description: "Les changements durables, sans confondre signal et causalité." },
-  { key: "RHYTHM", resource: "analysis_global_rhythm", expandedResource: "analysis_global_rhythm_expanded", detailResource: "analysis_global_routine_detail", order: 4, shortLabel: "Rythmes", title: "Rythmes et habitudes", eyebrow: "M4", description: "Les cadences observables et leurs limites de couverture." },
-  { key: "RELATIONSHIPS", resource: "analysis_global_relationships", expandedResource: "analysis_global_relationships_expanded", detailResource: "analysis_global_relationship_detail", order: 5, shortLabel: "Vie ↔ argent", title: "Relations vie et argent", eyebrow: "M5", description: "Des associations mesurées, jamais présentées comme causalité." },
-  { key: "MOMENTS", resource: "analysis_global_moments", expandedResource: "analysis_global_moments_expanded", detailResource: "analysis_global_moment_experience_detail", order: 6, shortLabel: "Moments", title: "Moments et expériences", eyebrow: "M6", description: "Les expériences significatives, coûteuses ou non." },
-  { key: "GEO_MOBILITY", resource: "analysis_global_geo_mobility", expandedResource: "analysis_global_geo_mobility_expanded", detailResource: "analysis_global_place_mobility_detail", order: 7, shortLabel: "Lieux", title: "Lieux et mobilité", eyebrow: "M7", description: "Présences, visites et finance localisée restent distinctes." },
-  { key: "CONSUMPTION", resource: "analysis_global_consumption", expandedResource: "analysis_global_consumption_expanded", detailResource: "analysis_global_purchase_merchant_detail", order: 8, shortLabel: "Achats", title: "Consommation", eyebrow: "M8", description: "Achats et marchands quand leur identité est prouvée." },
-  { key: "PERSONAS", resource: "analysis_global_personas", expandedResource: "analysis_global_personas_expanded", detailResource: "analysis_global_persona_detail", order: 9, shortLabel: "Profils", title: "Profils personnels", eyebrow: "M9", description: "Des comparaisons sur des univers personnels réellement observables." },
+  { key: "ECONOMIC", resource: "analysis_global_economic", expandedResource: "analysis_global_economic_expanded", order: 1, shortLabel: "Économie", title: "Votre économie", eyebrow: "M1", description: "Votre niveau de dépenses, sa structure et son évolution." },
+  { key: "CATEGORIES_NEEDS", resource: "analysis_global_categories_needs", expandedResource: "analysis_global_categories_needs_expanded", detailResource: "analysis_global_category_need_detail", order: 2, shortLabel: "Catégories", title: "Catégories et besoins", eyebrow: "M2", description: "Les postes qui composent réellement votre quotidien." },
+  { key: "TRANSFORMATIONS", resource: "analysis_global_transformations", expandedResource: "analysis_global_transformations_expanded", detailResource: "analysis_global_transformation_detail", order: 3, shortLabel: "Changements", title: "Changements durables", eyebrow: "M3", description: "Les évolutions qui dépassent une variation isolée." },
+  { key: "RHYTHM", resource: "analysis_global_rhythm", expandedResource: "analysis_global_rhythm_expanded", detailResource: "analysis_global_routine_detail", order: 4, shortLabel: "Rythmes", title: "Vos rythmes", eyebrow: "M4", description: "Les activités et habitudes observées pour chaque personne." },
+  { key: "RELATIONSHIPS", resource: "analysis_global_relationships", expandedResource: "analysis_global_relationships_expanded", detailResource: "analysis_global_relationship_detail", order: 5, shortLabel: "Vie et argent", title: "Vie et argent", eyebrow: "M5", description: "Les relations mesurables entre vos contextes de vie et vos dépenses." },
+  { key: "MOMENTS", resource: "analysis_global_moments", expandedResource: "analysis_global_moments_expanded", detailResource: "analysis_global_moment_experience_detail", order: 6, shortLabel: "Moments", title: "Moments marquants", eyebrow: "M6", description: "Les expériences qui ressortent du récit de l’année." },
+  { key: "GEO_MOBILITY", resource: "analysis_global_geo_mobility", expandedResource: "analysis_global_geo_mobility_expanded", detailResource: "analysis_global_place_mobility_detail", order: 7, shortLabel: "Lieux", title: "Vos lieux", eyebrow: "M7", description: "Les lieux réellement visités et ce qu’ils racontent." },
+  { key: "CONSUMPTION", resource: "analysis_global_consumption", expandedResource: "analysis_global_consumption_expanded", detailResource: "analysis_global_purchase_merchant_detail", order: 8, shortLabel: "Achats", title: "Achats et consommation", eyebrow: "M8", description: "Vos achats lorsque leur identité est suffisamment établie." },
+  { key: "PERSONAS", resource: "analysis_global_personas", expandedResource: "analysis_global_personas_expanded", detailResource: "analysis_global_persona_detail", order: 9, shortLabel: "Profils", title: "Vos profils", eyebrow: "M9", description: "Des repères factuels par personne, sur des données comparables." },
   { key: "TOGETHER", resource: "analysis_global_together", expandedResource: "analysis_global_together_expanded", detailResource: "analysis_global_participation_detail", order: 10, shortLabel: "Nous deux", title: "Nous deux", eyebrow: "M10", description: "La participation partagée sans inventer de faux profil Couple." },
 ] as const satisfies readonly GlobalModulePresentation[]);
 
@@ -86,5 +86,8 @@ const copy: Readonly<Record<string, string>> = Object.freeze({
 });
 
 export function globalUiCopy(key: string): string {
-  return copy[key] ?? key.replaceAll("_", " ").replaceAll(".", " · ");
+  const known = copy[key];
+  if (known !== undefined) return known;
+  if (/^(global\.|activity:|place:|relationship:|[0-9a-f]{8}-[0-9a-f-]{27,})/iu.test(key)) return "Information disponible";
+  return key.replaceAll("_", " ");
 }

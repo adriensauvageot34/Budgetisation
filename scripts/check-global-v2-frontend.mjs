@@ -113,12 +113,12 @@ await checkAsync(async () => assert.equal((await failingTransport({ resource: "a
 
 const pageSource = fs.readFileSync(path.join(root, "src/features/global-v2/global-v2-page.tsx"), "utf8");
 const cssSource = fs.readFileSync(path.join(root, "src/features/global-v2/global-v2.module.css"), "utf8");
+const catalogSource = fs.readFileSync(path.join(root, "src/features/global-v2/catalog.ts"), "utf8");
+const shellSource = fs.readFileSync(path.join(root, "src/components/layout/app-shell.tsx"), "utf8");
 const routeSource = fs.readFileSync(path.join(root, "src/app/analyse-globale/page.tsx"), "utf8");
 const fixturePageSource = fs.readFileSync(path.join(root, "src/features/global-v2/global-v2-fixture-page.tsx"), "utf8");
 const overlaySource = fs.readFileSync(path.join(root, "src/ui/overlays/overlay-frame.tsx"), "utf8");
 check(() => assert.match(pageSource, /IntersectionObserver/u));
-check(() => assert.match(pageSource, /aria-expanded/u));
-check(() => assert.match(pageSource, /aria-controls/u));
 check(() => assert.match(pageSource, /Alternative textuelle/u));
 check(() => assert.match(pageSource, /global_module_viewed/u));
 check(() => assert.match(pageSource, /global_module_expanded/u));
@@ -140,6 +140,36 @@ check(() => assert.match(pageSource, /restoreFocusRef=\{overlayInvokerRef\}/u));
 check(() => assert.match(pageSource, /kind: "ENTITY_DETAIL"/u));
 check(() => assert.doesNotMatch(pageSource, /ANALYTICAL_DETAIL|Ouvrir la fiche entité/u));
 check(() => assert.match(pageSource, /window\.location\.reload\(\)/u));
+
+// P2: human narrative, module-aware composition and overlay-only details.
+check(() => assert.match(shellSource, /Historique[\s\S]*Analyse globale[\s\S]*Opérations/u));
+check(() => assert.match(pageSource, /Notre vie, dans son ensemble/u));
+check(() => assert.match(pageSource, /Août 2025 → juillet 2026 · 12 mois analysés/u));
+check(() => assert.match(pageSource, /Méthode & fiabilité/u));
+check(() => assert.doesNotMatch(pageSource, /ANALYSE GLOBALE · NOUVELLE ARCHITECTURE|synthèse non importée|Non importée/u));
+check(() => assert.match(pageSource, /Synthèse[\s\S]*Économie[\s\S]*Catégories[\s\S]*Rythmes[\s\S]*Moments[\s\S]*Lieux[\s\S]*Profils[\s\S]*Nous deux[\s\S]*Autres analyses/u));
+check(() => assert.match(pageSource, /slot: "S1"[\s\S]*slot: "S2"[\s\S]*slot: "S3"[\s\S]*slot: "S4"[\s\S]*slot: "S5"[\s\S]*slot: "S6"[\s\S]*slot: "S7"/u));
+check(() => assert.match(pageSource, /RankingBar/u));
+check(() => assert.match(pageSource, /MultiSeriesMonetaryEvolution/u));
+check(() => assert.match(pageSource, /Aucun changement durable clairement identifié/u));
+check(() => assert.match(pageSource, /Pas encore assez d’éléments pour établir une relation fiable/u));
+check(() => assert.match(pageSource, /Analyse pas encore disponible/u));
+check(() => assert.doesNotMatch(pageSource, /0 achat|0 €/u));
+check(() => assert.match(pageSource, /Aucune différence nette à mettre en avant entre vos profils/u));
+check(() => assert.match(pageSource, /Ce que les données vous voient explicitement faire ensemble/u));
+check(() => assert.doesNotMatch(pageSource, /toujours ensemble/iu));
+check(() => assert.match(pageSource, /Voir le détail/u));
+check(() => assert.doesNotMatch(pageSource, />Développer<|data-expanded=|aria-expanded=/u));
+check(() => assert.match(pageSource, /MODULE_DETAIL[\s\S]*OverlayFrame/u));
+check(() => assert.match(pageSource, /Analyse partielle/u));
+check(() => assert.doesNotMatch(pageSource, /global\.placeholder\.unknown_required_value/u));
+check(() => assert.match(catalogSource, /return "Information disponible"/u));
+check(() => assert.match(cssSource, /grid-template-columns:\s*repeat\(12/u));
+check(() => assert.match(cssSource, /data-module="RHYTHM"[\s\S]*span 8/u));
+check(() => assert.match(cssSource, /data-module="TRANSFORMATIONS"[\s\S]*span 4/u));
+check(() => assert.match(cssSource, /data-module="TOGETHER"[\s\S]*span 7/u));
+check(() => assert.match(cssSource, /data-module="PERSONAS"[\s\S]*span 5/u));
+check(() => assert.match(cssSource, /@media \(max-width: 1024px\)/u));
 
 const masterIndex = JSON.parse(fs.readFileSync(path.join(root, "docs/global-v2/GLOBAL_MASTER_INDEX.json"), "utf8"));
 const p16Requirements = masterIndex.requirements.filter(({ owner }) => owner === "P16");

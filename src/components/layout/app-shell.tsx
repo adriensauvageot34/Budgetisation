@@ -8,6 +8,7 @@ import { useProductRuntime } from "@/components/runtime";
 
 const modules = [
   { href: "/historique", label: "Historique" },
+  { href: "/analyse-globale", label: "Analyse globale" },
   { href: "/operations", label: "Opérations" },
 ];
 
