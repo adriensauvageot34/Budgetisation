@@ -219,9 +219,16 @@ function GlobalDetailOverlay({ target, runtime, mobile, restoreFocusRef, onRepla
   const [section, setSection] = useState<GlobalExpandedSectionKey>(target.initialSection ?? tabs[0]?.key ?? "METHODOLOGY");
   useEffect(() => setSection(target.initialSection ?? tabs[0]?.key ?? "METHODOLOGY"), [target, tabs]);
   const params = useMemo<Readonly<Record<string, string>>>(() => {
-    if (target.kind === "METHODOLOGY") return { moduleKey: target.moduleKey, methodRef: target.entityRef };
-    if (target.kind === "ENTITY_DETAIL") return { entityRef: target.entityRef };
-    return { sectionKey: section };
+    const next: Record<string, string> = {};
+    if (target.kind === "METHODOLOGY") {
+      next.moduleKey = target.moduleKey;
+      next.methodRef = target.entityRef;
+    } else if (target.kind === "ENTITY_DETAIL") {
+      next.entityRef = target.entityRef;
+    } else {
+      next.sectionKey = section;
+    }
+    return next;
   }, [section, target]);
   const request = useMemo(() => ({ resource: target.resource, params }), [params, target.resource]);
   const result = useGlobalV2Resource<GlobalExpandedReadModel>(runtime, request, true, "DIRECT");
