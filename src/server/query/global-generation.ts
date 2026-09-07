@@ -7,6 +7,8 @@ export type GlobalSnapshotReadState =
 export type GlobalSnapshotCandidate = {
   readonly publicationId: string;
   readonly analyticsRevision: number;
+  readonly factsHash: string;
+  readonly manifestHash: string;
   readonly active: boolean;
   readonly invalidated: boolean;
   readonly manifestComplete: boolean;
@@ -16,7 +18,7 @@ export type GlobalSnapshotCandidate = {
 
 /** Session pin: a visit never mixes modules from different Global generations. */
 export class GlobalGenerationPin {
-  private pin?: { readonly publicationId: string; readonly analyticsRevision: number };
+  private pin?: { readonly publicationId: string; readonly analyticsRevision: number; readonly factsHash: string; readonly manifestHash: string };
 
   reset(): void { this.pin = undefined; }
 
@@ -26,9 +28,9 @@ export class GlobalGenerationPin {
     if (candidate.invalidated) return { status: "INVALIDATED", reason: "Snapshot has been invalidated." };
     if (!candidate.manifestComplete) return { status: "MANIFEST_INCOMPLETE", reason: "Active generation manifest is incomplete." };
     if (!candidate.signatureCompatible) return { status: "SIGNATURE_INCOMPATIBLE", reason: "Snapshot contract or method signature is incompatible." };
-    const identity = { publicationId: candidate.publicationId, analyticsRevision: candidate.analyticsRevision };
-    if (this.pin !== undefined && (this.pin.publicationId !== identity.publicationId || this.pin.analyticsRevision !== identity.analyticsRevision)) return { status: "GENERATION_MISMATCH", reason: "Late response belongs to another generation." };
+    const identity = { publicationId: candidate.publicationId, analyticsRevision: candidate.analyticsRevision, factsHash: candidate.factsHash, manifestHash: candidate.manifestHash };
+    if (this.pin !== undefined && (this.pin.publicationId !== identity.publicationId || this.pin.analyticsRevision !== identity.analyticsRevision || this.pin.factsHash !== identity.factsHash || this.pin.manifestHash !== identity.manifestHash)) return { status: "GENERATION_MISMATCH", reason: "Late response belongs to another generation." };
     this.pin = identity;
-    return { status: "READY", ...identity, data: candidate.data };
+    return { status: "READY", publicationId: identity.publicationId, analyticsRevision: identity.analyticsRevision, data: candidate.data };
   }
 }

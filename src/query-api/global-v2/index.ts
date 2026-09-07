@@ -63,6 +63,7 @@ export {
 export {
   assertGlobalV2QueryRegistryComplete,
   globalV2QueryCacheKey,
+  globalV2ExpectedQueryMethodSignature,
   globalV2QueryRegistry,
   globalV2RequestHasPresentUndefined,
   globalV2TopLevelResources,

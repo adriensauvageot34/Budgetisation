@@ -12,8 +12,8 @@ returns boolean language sql stable security invoker set search_path = '' as $$
     select 1 from public.analytics_publications p
     where p.publication_id = p_id and p.scope_kind = 'global'
       and (p.global_manifest is not null
-        or exists (select 1 from public.analytics_query_snapshots q where q.publication_id = p_id and q.resource like 'global\_v2\_%' escape '\')
-        or exists (select 1 from public.analytics_artifacts a where a.publication_id = p_id and a.artifact_family like 'global\_v2\_%' escape '\'))
+        or exists (select 1 from public.analytics_query_snapshots q where q.publication_id = p_id and q.resource like 'analysis\_global\_%' escape '\')
+        or exists (select 1 from public.analytics_artifacts a where a.publication_id = p_id and a.artifact_family like 'global\_%' escape '\'))
   );
 $$;
 
@@ -115,8 +115,8 @@ begin
   if tg_op <> 'INSERT' then v_old := pg_catalog.to_jsonb(old); end if;
   if tg_op <> 'DELETE' then v_new := pg_catalog.to_jsonb(new); end if;
   v_row := coalesce(v_old,v_new);
-  v_global := (v_row->>'contract_version' = 'v2' and v_row->>'period_kind' = 'global' and
-    (v_row->>'resource' like 'global\_v2\_%' escape '\' or v_row->>'artifact_family' like 'global\_v2\_%' escape '\'))
+  v_global := (v_row->>'period_kind' = 'global' and
+    (v_row->>'resource' like 'analysis\_global\_%' escape '\' or v_row->>'artifact_family' like 'global\_%' escape '\'))
     or public.is_global_v2_publication((v_row->>'publication_id')::uuid);
   if not coalesce(v_global,false) then
     if tg_op = 'DELETE' then return old; end if;
@@ -137,7 +137,7 @@ begin
      or v_new->>'as_of_month' is distinct from v_publication.as_of_month::text
      or v_new->>'source_revision' is distinct from v_publication.source_revision::text
      or v_new->>'analytics_revision' is distinct from v_publication.base_analytics_revision::text
-     or v_new->>'contract_version' is distinct from 'v2'
+     or coalesce(v_new->>'contract_version','') = ''
      or v_new#>>'{payload,publicationMeta,publicationId}' is distinct from v_publication.publication_id::text
      or v_new#>>'{payload,publicationMeta,revision}' is distinct from (v_publication.base_analytics_revision + 1)::text
      or v_new->>'is_active' is distinct from 'false' or v_new->>'invalidated_at' is not null then
@@ -190,7 +190,7 @@ begin
     return query select v_publication.published_analytics_revision,v_publication.source_revision; return;
   end if;
   if v_publication.status <> 'draft' or v_publication.scope_kind <> 'global' or v_publication.global_manifest is null then raise exception 'Global V2 Finalize requires sealed global draft' using errcode = '23514'; end if;
-  select data_revision,analytics_revision into v_data_revision,v_analytics_revision from public.household_revisions where household_id = v_publication.household_id for update;
+  select r.data_revision,r.analytics_revision into v_data_revision,v_analytics_revision from public.household_revisions r where r.household_id = v_publication.household_id for update;
   if v_analytics_revision is distinct from p_expected_analytics_revision or v_analytics_revision is distinct from v_publication.base_analytics_revision then raise exception 'Concurrent analytics revision' using errcode = '40001'; end if;
   if v_data_revision is distinct from v_publication.source_revision then raise exception 'Superseded Global V2 source revision' using errcode = '40001'; end if;
   select count(*) into v_query_count from public.analytics_query_snapshots where publication_id = p_publication_id and invalidated_at is null;
@@ -200,27 +200,27 @@ begin
     select 1 from pg_catalog.jsonb_array_elements(v_publication.global_manifest->'queryVersions') v
     left join public.analytics_query_snapshots q on q.publication_id=p_publication_id and q.query_key=v->>'key'
     where q.query_key is null or q.invalidated_at is not null or q.contract_version is distinct from v->>'contractVersion'
-      or q.method_signature is distinct from v->>'methodSignature' or q.payload->>'resourceInputHash' is distinct from v->>'resourceInputHash'
-      or q.payload->'policyVersions' is distinct from v->'policyVersions' or q.payload#>>'{publicationMeta,manifestHash}' is distinct from v_publication.global_manifest->>'manifestHash'
+      or q.method_signature is distinct from v->>'methodSignature' or q.payload#>>'{resourceMeta,resourceInputHash}' is distinct from v->>'resourceInputHash'
+      or q.payload#>'{resourceMeta,policyVersions}' is distinct from v->'policyVersions' or q.payload#>>'{publicationMeta,manifestHash}' is distinct from v_publication.global_manifest->>'manifestHash'
       or q.payload#>>'{publicationMeta,factsHash}' is distinct from v_publication.global_manifest->>'publicationFactsHash'
   ) or exists (
     select 1 from pg_catalog.jsonb_array_elements(v_publication.global_manifest->'artifactVersions') v
     left join public.analytics_artifacts a on a.publication_id=p_publication_id and a.artifact_key=v->>'key'
     where a.artifact_key is null or a.invalidated_at is not null or a.contract_version is distinct from v->>'contractVersion'
-      or a.payload->>'resourceInputHash' is distinct from v->>'resourceInputHash' or a.payload->>'methodSignature' is distinct from v->>'methodSignature'
-      or a.payload->'policyVersions' is distinct from v->'policyVersions' or a.payload#>>'{publicationMeta,manifestHash}' is distinct from v_publication.global_manifest->>'manifestHash'
+      or a.payload#>>'{resourceMeta,resourceInputHash}' is distinct from v->>'resourceInputHash' or a.payload#>>'{resourceMeta,methodSignature}' is distinct from v->>'methodSignature'
+      or a.payload#>'{resourceMeta,policyVersions}' is distinct from v->'policyVersions' or a.payload#>>'{publicationMeta,manifestHash}' is distinct from v_publication.global_manifest->>'manifestHash'
       or a.payload#>>'{publicationMeta,factsHash}' is distinct from v_publication.global_manifest->>'publicationFactsHash'
   ) then raise exception 'Global V2 staged payload/manifest mismatch' using errcode = '23514'; end if;
 
-  update public.analytics_artifacts a set is_active=false where a.household_id=v_publication.household_id and a.period_kind='global' and a.contract_version='v2' and a.is_active and a.publication_id is distinct from p_publication_id and (a.artifact_family like 'global\_v2\_%' escape '\' or public.is_global_v2_publication(a.publication_id));
-  update public.analytics_query_snapshots q set is_active=false where q.household_id=v_publication.household_id and q.period_kind='global' and q.contract_version='v2' and q.is_active and q.publication_id is distinct from p_publication_id and (q.resource like 'global\_v2\_%' escape '\' or public.is_global_v2_publication(q.publication_id));
+  update public.analytics_artifacts a set is_active=false where a.household_id=v_publication.household_id and a.period_kind='global' and a.is_active and a.publication_id is distinct from p_publication_id and public.is_global_v2_publication(a.publication_id);
+  update public.analytics_query_snapshots q set is_active=false where q.household_id=v_publication.household_id and q.period_kind='global' and q.is_active and q.publication_id is distinct from p_publication_id and public.is_global_v2_publication(q.publication_id);
   update public.analytics_artifacts set is_active=true where publication_id=p_publication_id;
   update public.analytics_query_snapshots set is_active=true where publication_id=p_publication_id;
   v_next := v_analytics_revision + 1;
   update public.household_revisions set analytics_revision=v_next,updated_at=now() where household_id=v_publication.household_id;
   update public.analytics_publications set status='published',published_analytics_revision=v_next,published_at=now() where publication_id=p_publication_id;
-  if exists (select 1 from public.analytics_query_snapshots q where q.household_id=v_publication.household_id and q.period_kind='global' and q.contract_version='v2' and q.is_active and q.publication_id is distinct from p_publication_id and (q.resource like 'global\_v2\_%' escape '\' or public.is_global_v2_publication(q.publication_id)))
-     or exists (select 1 from public.analytics_artifacts a where a.household_id=v_publication.household_id and a.period_kind='global' and a.contract_version='v2' and a.is_active and a.publication_id is distinct from p_publication_id and (a.artifact_family like 'global\_v2\_%' escape '\' or public.is_global_v2_publication(a.publication_id))) then raise exception 'Global V2 residual active key' using errcode='23514'; end if;
+  if exists (select 1 from public.analytics_query_snapshots q where q.household_id=v_publication.household_id and q.period_kind='global' and q.is_active and q.publication_id is distinct from p_publication_id and public.is_global_v2_publication(q.publication_id))
+     or exists (select 1 from public.analytics_artifacts a where a.household_id=v_publication.household_id and a.period_kind='global' and a.is_active and a.publication_id is distinct from p_publication_id and public.is_global_v2_publication(a.publication_id)) then raise exception 'Global V2 residual active key' using errcode='23514'; end if;
   return query select v_next,v_publication.source_revision;
 end;
 $$;
@@ -230,18 +230,18 @@ returns table(analytics_revision bigint,publication_id uuid)
 language plpgsql security definer set search_path='' as $$
 declare v_current public.analytics_publications%rowtype; v_target public.analytics_publications%rowtype; v_current_revision bigint; v_next bigint;
 begin
-  select analytics_revision into v_current_revision from public.household_revisions where household_id=p_household_id for update;
+  select r.analytics_revision into v_current_revision from public.household_revisions r where r.household_id=p_household_id for update;
   if v_current_revision is distinct from p_expected_analytics_revision then raise exception 'Concurrent analytics revision' using errcode='40001'; end if;
-  select * into v_current from public.analytics_publications where publication_id=p_current_publication_id and household_id=p_household_id for update;
-  select * into v_target from public.analytics_publications where publication_id=p_target_publication_id and household_id=p_household_id for update;
+  select p.* into v_current from public.analytics_publications p where p.publication_id=p_current_publication_id and p.household_id=p_household_id for update;
+  select p.* into v_target from public.analytics_publications p where p.publication_id=p_target_publication_id and p.household_id=p_household_id for update;
   if v_current.global_manifest is null or v_target.global_manifest is null or v_current.status <> 'published' or v_target.status <> 'published' then raise exception 'Invalid Global V2 rollback identity' using errcode='23514'; end if;
-  if not exists (select 1 from public.analytics_query_snapshots where publication_id=p_current_publication_id and is_active) then raise exception 'Current Global V2 generation is not active' using errcode='23514'; end if;
-  if exists (select 1 from public.analytics_query_snapshots where publication_id=p_target_publication_id and invalidated_at is not null) or exists (select 1 from public.analytics_artifacts where publication_id=p_target_publication_id and invalidated_at is not null) then raise exception 'Invalidated Global V2 rollback target' using errcode='23514'; end if;
-  if (select count(*) from public.analytics_query_snapshots where publication_id=p_target_publication_id) <> cardinality(v_target.required_query_keys) or (select count(*) from public.analytics_artifacts where publication_id=p_target_publication_id) <> cardinality(v_target.required_artifact_keys) then raise exception 'Incomplete Global V2 rollback target' using errcode='23514'; end if;
-  update public.analytics_query_snapshots set is_active=false where household_id=p_household_id and period_kind='global' and contract_version='v2' and is_active and (resource like 'global\_v2\_%' escape '\' or public.is_global_v2_publication(publication_id));
-  update public.analytics_artifacts set is_active=false where household_id=p_household_id and period_kind='global' and contract_version='v2' and is_active and (artifact_family like 'global\_v2\_%' escape '\' or public.is_global_v2_publication(publication_id));
-  update public.analytics_query_snapshots set is_active=true where publication_id=p_target_publication_id;
-  update public.analytics_artifacts set is_active=true where publication_id=p_target_publication_id;
+  if not exists (select 1 from public.analytics_query_snapshots q where q.publication_id=p_current_publication_id and q.is_active) then raise exception 'Current Global V2 generation is not active' using errcode='23514'; end if;
+  if exists (select 1 from public.analytics_query_snapshots q where q.publication_id=p_target_publication_id and q.invalidated_at is not null) or exists (select 1 from public.analytics_artifacts a where a.publication_id=p_target_publication_id and a.invalidated_at is not null) then raise exception 'Invalidated Global V2 rollback target' using errcode='23514'; end if;
+  if (select count(*) from public.analytics_query_snapshots q where q.publication_id=p_target_publication_id) <> cardinality(v_target.required_query_keys) or (select count(*) from public.analytics_artifacts a where a.publication_id=p_target_publication_id) <> cardinality(v_target.required_artifact_keys) then raise exception 'Incomplete Global V2 rollback target' using errcode='23514'; end if;
+  update public.analytics_query_snapshots q set is_active=false where q.household_id=p_household_id and q.period_kind='global' and q.is_active and public.is_global_v2_publication(q.publication_id);
+  update public.analytics_artifacts a set is_active=false where a.household_id=p_household_id and a.period_kind='global' and a.is_active and public.is_global_v2_publication(a.publication_id);
+  update public.analytics_query_snapshots q set is_active=true where q.publication_id=p_target_publication_id;
+  update public.analytics_artifacts a set is_active=true where a.publication_id=p_target_publication_id;
   v_next:=v_current_revision+1; update public.household_revisions set analytics_revision=v_next,updated_at=now() where household_id=p_household_id;
   return query select v_next,p_target_publication_id;
 end;

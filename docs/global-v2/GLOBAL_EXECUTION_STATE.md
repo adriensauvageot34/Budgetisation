@@ -328,3 +328,41 @@ Elles restent des contrats de compatibilité, pas une autorité V2.
 - Browser local : `PENDING_ENVIRONMENT`, middleware bloqué par les variables Supabase absentes ; aucun bypass ou changement d’environnement. Live smoke réservé à P17/P19.
 - Aucun push, live write, publication ou migration. `GLOBAL_PHASE_H5_LOCAL=PASS`; `IMPLEMENTATION_GATE=PASS`; `CONTRACT_GATE=PASS`; `TEST_GATE=PASS`.
 - `LIVE_GATE=NOT_RUN`; `LIVE_WRITES=NONE`; `NEXT_PERMITTED_PROMPT=P17`.
+
+## P17A — audit de preuve / freeze de certification (2026-09-07)
+
+- Baseline : `13d2f01291b544250191ac2a9b6a88223788cb14`, main, worktree propre à l'entrée. Aucun code modifié.
+- Dossier : `execution/P17-ASTRA-CERTIFICATION-FREEZE.md`. Inventaire confirmé : 2 047 exigences, 364 capacités, 2 302 tests conceptuels ; digest Master inchangé. Les deux namespaces Capability n'ont pas de jointure directe et la correspondance individuelle vers les assertions n'est pas complètement prouvée.
+- Les PASS historiques restent consignés, mais leurs limites sont désormais explicites : fixtures/compteurs P16 ne démontrent pas H5 complet ; frontières manifest/Query et SQL/payload incompatibles identifiées ; no-op FDR à démontrer depuis les vrais inputs. Aucun ancien PASS n'est transformé rétroactivement en preuve GC1.
+- Probes synthétiques courts uniquement : enum/type de dependency acceptés à tort ; digest de dépendance modifié sans changement imposé de publicationFactsHash ; Query READY avec signature/policies non attendues par le registre. Aucun correctif produit effectué dans ce lot stratégique.
+- Plan candidats, RuntimeSchemas, mutations, closure/FDR, réutilisation, performance, suites et P18/P19 documenté. Matrice individuelle et fermeture des preuves d'entrée/réutilisation restent ouvertes : `P17A_FREEZE_GATE=PARTIAL`, pas PASS par comptage.
+- Le séquencement opérationnel est corrigé : P17A/P17B read-only et synthétique seulement ; schéma live P18 et publication/cutover P19 nécessitent leurs autorisations humaines distinctes. Les formulations antérieures attribuant le live à P17 sont superseded.
+- `IMPLEMENTATION_GATE=NOT_RUN_P17B`; `CONTRACT_GATE=PARTIAL_TRACEABILITY_AND_ENTRY_PROOF`; `TEST_GATE=NOT_RUN_P17B`; `LIVE_GATE=NOT_RUN`; `LIVE_WRITES=NONE`; aucune migration/publication/cutover/push.
+- `NEXT_PERMITTED_PROMPT=P17A_CLOSURE_ONLY`. Aucun checkpoint produit ou passage automatique à P17B. La stratégie ne requiert actuellement aucun nouvel arbitrage métier.
+
+### P17A_CLOSURE_ONLY — reprise documentaire
+
+- Seuls le freeze et cet état sont modifiés. §15 du freeze établit les namespaces séparés REQ/SEM_CAP/CAT_CAP/TEST, les arêtes déclarées A/D, les futurs caseId et les slots d'assertion ; 2 302/2 302 lignes de tests sont retrouvées à leur table/row source, aucune Requirement sans test référencé.
+- Les 364 fiches B inspectées ne portent pas de Requirement ID explicite ; la table d'invariants 452 utilise le namespace sémantique, pas le catalogue B. Les 364 gaps CAT_CAP sont listés individuellement avec owner/table dans le freeze. Aucune jointure lexicale ou par ordre n'est fabriquée. Le binding des renvois génériques d'assertions n'est pas déclaré complet.
+- Classification des preuves fermée conservativement : anciennes exécutions REPLAY_REQUIRED ou INSUFFICIENT_FOR_GC1 selon le tableau, live réservé ; protocole exact de fermeture/digest avant toute réutilisation. Aucun PASS historique effacé.
+- Entrée P16 qualifiée : checkpoint historique valide mais INSUFFICIENT_FOR_GC1 ; R13–R15 sont des corrections P17B sous owner P16, sans exiger un re-PASS P16 préalable. R02–R15 possèdent owner, futur test rouge, correction et closure explicités. Ces défauts techniques ne bloquent pas à eux seuls le handoff.
+- `P17A_FREEZE_GATE=PARTIAL`; `CONTRACT_GATE=PARTIAL_TRACEABILITY_ONLY`. Seule la traçabilité non démontrée empêche encore de déclarer le freeze PASS. Questions humaines métier identifiées : 0.
+- Aucun test produit, GC1, build, live, migration, publication, cutover, commit ou push. `IMPLEMENTATION_GATE=NOT_RUN_P17B`; `TEST_GATE=NOT_RUN_P17B`; `LIVE_GATE=NOT_RUN`; `LIVE_WRITES=NONE`; `NEXT_PERMITTED_PROMPT=P17A_CLOSURE_ONLY`.
+
+## P17B — exécution partielle GC1 (2026-09-07)
+
+- R02–R10 corrigés et prouvés de façon ciblée : parser/dependency hashes, publicationFactsHash, signatures/policies Query, request binding, metadata/version SQL, manifest et invalidation transitive.
+- PGlite exécute la migration locale et valide guards/grants/handshake (`SQL=PASS`) sans connexion réelle. Les owners P01–P16 ont été rejoués et sont verts.
+- Le navigateur local a révélé puis fermé un crash Server→Client, la borne codée en dur et Escape/focus de l'overlay ; build et architecture passent.
+- GC1 reste `PARTIAL` : ledger individuel, candidat analytique intégré, no-op FDR dérivé, cycle SQL complet avec vrais payloads et smoke mobile/réseau/détails restent ouverts. Aucun checkpoint.
+- Rapport : `execution/P17-report.md`. `LIVE_WRITES=NONE`; `LIVE_PUBLICATION=NOT_STARTED`; `NEXT_PERMITTED_PROMPT=P17B`.
+
+### P17B — clôture GC1 prépublication (2026-09-07)
+
+- Le handoff P17A est mécaniquement fermé par `execution/P17-evidence-ledger.json` : 2 047 Requirements, 2 302 tests conceptuels, 364 CAT_CAP, 2 350 arêtes Requirement→Test explicites et zéro crosswalk inventé. Digest : `e60340c0747371c011f16f1f44a5c5df5875d3474a82d632e7ab1c539a37ab96`.
+- Un candidat intégré unique traverse dix outputs Analytics qualifiés, P14/P15, 32 instances Query, 1 artifact, 33 closures et le manifest. Certification C-A→C-E : 28/28 PASS ; R11 FDR et R12 source commune PASS.
+- C-F : cycle PGlite complet sur les vrais payloads P14/P15, avec stage/retry/seal/finalize/immutabilité/génération suivante/résidu/rollback/isolation : 69/69 PASS, SQL PASS. Aucune connexion Supabase réelle.
+- C-G : détails Entity distincts, mobile mono-expanded, snapshot-only, génération épinglée/refresh, réponse tardive rejetée, overlay/focus/état de visite : 286/286 PASS ; fixtures 71/71. Le smoke Production reste P19.
+- Query : 57/57, 32/32 RuntimeSchemas, 42 716 octets, zéro duplication, 1 lecture snapshot et 0 producteur. Typecheck, architecture 555, build Next et diff-check PASS.
+- Rapport final : `execution/P17-report.md`. `P17A_HANDOFF_CLOSURE=PASS`; `IMPLEMENTATION_GATE=PASS`; `CONTRACT_GATE=PASS`; `TEST_GATE=PASS`; `GLOBAL_PREPUBLICATION_GATE=PASS`; `FRONTEND_LOCAL_GATE=PASS`.
+- `PENDING_LIVE_SCHEMA=YES`; `PENDING_PRODUCTION_SMOKE=YES`; `LIVE_PUBLICATION=NOT_STARTED`; `LIVE_WRITES=NONE`; `NEXT_PERMITTED_PROMPT=P18`; autorisation humaine distincte requise.

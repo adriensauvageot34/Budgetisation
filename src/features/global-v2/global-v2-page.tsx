@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type RefObject } from "react";
 import { ArrowUp, BarChart3, ChevronDown, ExternalLink, Info, RefreshCw, Sparkles } from "lucide-react";
 import { OverlayFrame } from "@/ui";
 import type {
@@ -9,18 +9,26 @@ import type {
   GlobalDetailRow,
   GlobalExpandedReadModel,
   GlobalExpandedSectionKey,
+  GlobalInitialReadModel,
+  ImportedGlobalSummaryReadModel,
   GlobalModuleCompactReadModel,
   GlobalPrimaryModuleKey,
+  GlobalReadModelPublicationMeta,
   GlobalReadModelTransportState,
   GlobalV2ExpandedResourceName,
 } from "@/query-api/global-v2";
 import { globalExpandedSections, globalModulePresentation, globalModulePresentations, globalUiCopy } from "./catalog";
-import { createGlobalV2FixtureTransport, type GlobalV2FixtureBundle, type GlobalV2FixtureScenario } from "./fixture-data";
 import { emitGlobalV2UxEvent } from "./instrumentation";
 import { GlobalModuleBoundary } from "./module-boundary";
 import { useGlobalV2Resource, useMobileGlobalLayout, useNearViewport } from "./use-global-resource";
-import { GlobalV2VisitRuntime, parseGlobalDeepLink, updateExpandedModules } from "./visit-runtime";
+import { GlobalV2VisitRuntime, parseGlobalDeepLink, updateExpandedModules, type GlobalV2UiTransport } from "./visit-runtime";
 import styles from "./global-v2.module.css";
+
+export type GlobalV2PageBundle = {
+  readonly initial: GlobalInitialReadModel;
+  readonly summary: ImportedGlobalSummaryReadModel;
+  readonly newerPublication?: GlobalReadModelPublicationMeta;
+};
 
 const moduleSlugs: Readonly<Record<GlobalPrimaryModuleKey, string>> = Object.freeze({
   ECONOMIC: "economie",
@@ -68,7 +76,7 @@ function QualityLine({ quality }: { readonly quality: GlobalCompactQuality }) {
 }
 
 type OverlayTarget = {
-  readonly kind: "ANALYTICAL_DETAIL" | "ENTITY_DETAIL" | "METHODOLOGY";
+  readonly kind: "ENTITY_DETAIL" | "METHODOLOGY";
   readonly title: string;
   readonly resource: GlobalV2ExpandedResourceName;
   readonly entityRef: string;
@@ -152,12 +160,12 @@ function GlobalModulePanel({
     </div> : null}
     {expanded && compactModel?.visibility === "VISIBLE" ? <div id={`${moduleSlugs[moduleKey]}-expanded`} className={styles.expanded}>
       <div className={styles.sectionTabs} role="tablist" aria-label={`Sections de ${presentation.title}`}>{globalExpandedSections.map((item) => <button key={item.key} type="button" role="tab" aria-selected={section === item.key} onClick={() => { setSection(item.key); emitGlobalV2UxEvent("global_section_expanded", { moduleKey, sectionKey: item.key }); window.history.replaceState(window.history.state, "", `#${moduleSlugs[moduleKey]}-${item.key.toLowerCase()}`); }}>{item.label}</button>)}</div>
-      {detail.state.status === "IDLE" || detail.state.status === "LOADING" ? <LoadingCard label={`${presentation.title} · ${section.toLowerCase()}`} /> : detail.state.status === "ERROR" && expandedModel === undefined ? <LocalError code={detail.state.errorCode} retry={detail.retry} /> : expandedModel === undefined ? null : <GlobalExpandedContent model={expandedModel} onDetail={(row) => presentation.detailResource === undefined ? undefined : onOverlay({ kind: "ANALYTICAL_DETAIL", title: globalUiCopy(row.labelKey), resource: presentation.detailResource, entityRef: row.entityRef!, moduleKey })} onMethodology={() => onOverlay({ kind: "METHODOLOGY", title: `Méthode · ${presentation.title}`, resource: "analysis_global_methodology", entityRef: `method:${moduleKey.toLowerCase()}`, moduleKey })} />}
+      {detail.state.status === "IDLE" || detail.state.status === "LOADING" ? <LoadingCard label={`${presentation.title} · ${section.toLowerCase()}`} /> : detail.state.status === "ERROR" && expandedModel === undefined ? <LocalError code={detail.state.errorCode} retry={detail.retry} /> : expandedModel === undefined ? null : <GlobalExpandedContent model={expandedModel} onDetail={(row) => presentation.detailResource === undefined ? undefined : onOverlay({ kind: "ENTITY_DETAIL", title: globalUiCopy(row.labelKey), resource: presentation.detailResource, entityRef: row.entityRef!, moduleKey })} onMethodology={() => onOverlay({ kind: "METHODOLOGY", title: `Méthode · ${presentation.title}`, resource: "analysis_global_methodology", entityRef: `method:${moduleKey.toLowerCase()}`, moduleKey })} />}
     </div> : null}
   </section>;
 }
 
-function GlobalDetailOverlay({ target, runtime, mobile, onClose, onEntity }: { readonly target: OverlayTarget; readonly runtime: GlobalV2VisitRuntime; readonly mobile: boolean; readonly onClose: () => void; readonly onEntity: () => void }) {
+function GlobalDetailOverlay({ target, runtime, mobile, restoreFocusRef, onClose }: { readonly target: OverlayTarget; readonly runtime: GlobalV2VisitRuntime; readonly mobile: boolean; readonly restoreFocusRef: RefObject<HTMLElement | null>; readonly onClose: () => void }) {
   const params = useMemo<Readonly<Record<string, string>>>(() => {
     if (target.kind === "METHODOLOGY") return { moduleKey: target.moduleKey, methodRef: target.entityRef } as Readonly<Record<string, string>>;
     return { entityRef: target.entityRef } as Readonly<Record<string, string>>;
@@ -165,21 +173,21 @@ function GlobalDetailOverlay({ target, runtime, mobile, onClose, onEntity }: { r
   const request = useMemo(() => ({ resource: target.resource, params }), [params, target.resource]);
   const result = useGlobalV2Resource<GlobalExpandedReadModel>(runtime, request, true, "DIRECT");
   const model = transportData(result.state);
-  return <OverlayFrame kind="exploration" title={target.title} subtitle={target.kind === "ENTITY_DETAIL" ? "Fiche entité" : target.kind === "METHODOLOGY" ? "Preuve et méthode" : "Détail analytique"} closeAction={{ kind: "callback", onAction: onClose }} closeOnBackdrop className={`${styles.detailOverlay} ${mobile ? styles.mobileOverlay : ""}`}>
+  return <OverlayFrame kind="exploration" title={target.title} subtitle={target.kind === "ENTITY_DETAIL" ? "Fiche entité" : target.kind === "METHODOLOGY" ? "Preuve et méthode" : "Détail analytique"} closeAction={{ kind: "callback", onAction: onClose }} restoreFocusRef={restoreFocusRef} closeOnBackdrop className={`${styles.detailOverlay} ${mobile ? styles.mobileOverlay : ""}`}>
     {result.state.status === "IDLE" || result.state.status === "LOADING" ? <LoadingCard label={target.title} /> : result.state.status === "ERROR" && model === undefined ? <LocalError code={result.state.errorCode} retry={result.retry} /> : model === undefined ? null : <GlobalExpandedContent model={model} onDetail={() => undefined} onMethodology={() => undefined} />}
-    {target.kind === "ANALYTICAL_DETAIL" ? <button type="button" className="button-primary" onClick={onEntity}><ExternalLink aria-hidden size={16} /> Ouvrir la fiche entité</button> : null}
   </OverlayFrame>;
 }
 
-export function GlobalV2Page({ bundle, scenario = "contract" }: { readonly bundle: GlobalV2FixtureBundle; readonly scenario?: GlobalV2FixtureScenario }) {
+export function GlobalV2Page({ bundle, transport, certifiedThrough }: { readonly bundle: GlobalV2PageBundle; readonly transport: GlobalV2UiTransport; readonly certifiedThrough: string }) {
   const mobile = useMobileGlobalLayout();
-  const runtime = useMemo(() => new GlobalV2VisitRuntime(bundle.initial.publicationMeta, createGlobalV2FixtureTransport(bundle, scenario), 2), [bundle, scenario]);
+  const runtime = useMemo(() => new GlobalV2VisitRuntime(bundle.initial.publicationMeta, transport, 2), [bundle.initial.publicationMeta, transport]);
   const navigation = useMemo(() => bundle.initial.navigation.filter((entry) => entry.visibility !== "HIDDEN"), [bundle.initial.navigation]);
   const [expanded, setExpanded] = useState<ReadonlySet<string>>(new Set());
   const [directModule, setDirectModule] = useState<GlobalPrimaryModuleKey | undefined>();
   const [requestedSection, setRequestedSection] = useState<GlobalExpandedSectionKey | undefined>();
   const [activeAnchor, setActiveAnchor] = useState("synthese");
   const [overlay, setOverlay] = useState<OverlayTarget | null>(null);
+  const overlayInvokerRef = useRef<HTMLElement | null>(null);
   const deepLinkApplied = useRef(false);
 
   useEffect(() => {
@@ -217,7 +225,7 @@ export function GlobalV2Page({ bundle, scenario = "contract" }: { readonly bundl
   return <div className={styles.page} data-global-v2="" data-publication-id={bundle.initial.publicationMeta.publicationId}>
     <header className={styles.hero}>
       <div><span className="eyebrow">Analyse globale · nouvelle architecture</span><h1>Notre vie, dans son ensemble</h1><p>Une lecture continue de l’économie, des rythmes, des expériences et du partagé — sans filtre temporel artificiel.</p></div>
-      <div className={styles.certification}><span>Données certifiées jusqu’au</span><strong>31 juillet 2026</strong><small>Publication générée le {formatCertifiedDate(bundle.initial.publicationMeta.generatedAt)}</small></div>
+      <div className={styles.certification}><span>Données certifiées jusqu’au</span><strong>{formatCertifiedDate(`${certifiedThrough}T12:00:00Z`)}</strong><small>Publication générée le {formatCertifiedDate(bundle.initial.publicationMeta.generatedAt)}</small></div>
     </header>
     {bundle.newerPublication === undefined ? null : <aside className={styles.generationBanner} role="status" aria-live="polite"><div><strong>Une version plus récente est disponible.</strong><span>La page reste épinglée à la publication en cours jusqu’à votre décision.</span></div><button type="button" className="button-primary" onClick={() => window.location.reload()}><RefreshCw aria-hidden size={16} /> Actualiser</button></aside>}
     <nav className={styles.stickyNav} aria-label="Navigation dans l’analyse globale"><button type="button" aria-current={activeAnchor === "synthese" ? "location" : undefined} onClick={() => goTo()}>Synthèse</button>{navigation.map(({ moduleKey }) => <button key={moduleKey} type="button" aria-current={activeAnchor === moduleSlugs[moduleKey] ? "location" : undefined} onClick={() => goTo(moduleKey)}>{globalModulePresentation(moduleKey).shortLabel}</button>)}</nav>
@@ -227,10 +235,10 @@ export function GlobalV2Page({ bundle, scenario = "contract" }: { readonly bundl
       <small>Ce texte résume les ReadModels publiés ; il ne produit aucun calcul Analytics.</small>
     </section>
     <main className={styles.story}>
-      {navigation.map(({ moduleKey }, index) => <GlobalModuleBoundary key={moduleKey}><GlobalModulePanel moduleKey={moduleKey} runtime={runtime} expanded={expanded.has(moduleKey)} eager={index === 0} direct={directModule === moduleKey} requestedSection={directModule === moduleKey ? requestedSection : undefined} onToggle={() => { setExpanded((current) => updateExpandedModules(current, moduleKey, mobile)); emitGlobalV2UxEvent("global_module_expanded", { moduleKey, state: expanded.has(moduleKey) ? "compact" : "expanded" }); }} onOverlay={(target) => { setOverlay(target); emitGlobalV2UxEvent(target.kind === "METHODOLOGY" ? "global_methodology_opened" : "global_entity_opened", { moduleKey, target: target.entityRef }); }} /></GlobalModuleBoundary>)}
+      {navigation.map(({ moduleKey }, index) => <GlobalModuleBoundary key={moduleKey}><GlobalModulePanel moduleKey={moduleKey} runtime={runtime} expanded={expanded.has(moduleKey)} eager={index === 0} direct={directModule === moduleKey} requestedSection={directModule === moduleKey ? requestedSection : undefined} onToggle={() => { setExpanded((current) => updateExpandedModules(current, moduleKey, mobile)); emitGlobalV2UxEvent("global_module_expanded", { moduleKey, state: expanded.has(moduleKey) ? "compact" : "expanded" }); }} onOverlay={(target) => { overlayInvokerRef.current = document.activeElement instanceof HTMLElement ? document.activeElement : null; setOverlay(target); emitGlobalV2UxEvent(target.kind === "METHODOLOGY" ? "global_methodology_opened" : "global_entity_opened", { moduleKey, target: target.entityRef }); }} /></GlobalModuleBoundary>)}
     </main>
     <button type="button" className={styles.backToTop} onClick={() => goTo()}><ArrowUp aria-hidden size={17} /> Retour au sommet</button>
-    {overlay === null ? null : <GlobalDetailOverlay target={overlay} runtime={runtime} mobile={mobile} onClose={() => setOverlay(null)} onEntity={() => { setOverlay({ ...overlay, kind: "ENTITY_DETAIL", title: `Fiche · ${overlay.title}` }); emitGlobalV2UxEvent("global_entity_opened", { moduleKey: overlay.moduleKey, target: overlay.entityRef }); }} />}
+    {overlay === null ? null : <GlobalDetailOverlay target={overlay} runtime={runtime} mobile={mobile} restoreFocusRef={overlayInvokerRef} onClose={() => setOverlay(null)} />}
   </div>;
 }
 

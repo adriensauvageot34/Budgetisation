@@ -48,8 +48,11 @@ for (const presentation of catalog.globalModulePresentations) {
   }
 }
 for (const presentation of catalog.globalModulePresentations.filter(({ detailResource }) => detailResource !== undefined)) {
-  const result = await transport({ resource: presentation.detailResource, params: { entityRef: `entity:${presentation.key}` } });
+  const entityRef = `entity:${presentation.key}`;
+  const result = await transport({ resource: presentation.detailResource, params: { entityRef } });
   await checkAsync(() => assert.equal(query.globalExpandedReadModelSchema.safeParse(result.data).success, true));
+  check(() => assert.equal(result.data.resource, presentation.detailResource));
+  check(() => assert.ok(result.data.rows.every(({ rowId }) => rowId.startsWith(entityRef))));
 }
 const methodology = await transport({ resource: "analysis_global_methodology", params: { moduleKey: "ECONOMIC", methodRef: "method:economic" } });
 await checkAsync(() => assert.equal(query.globalExpandedReadModelSchema.safeParse(methodology.data).success, true));
@@ -96,6 +99,12 @@ await cachedRuntime.request(requestA);
 check(() => assert.equal(reads, 1));
 const lateRuntime = new visit.GlobalV2VisitRuntime(contract.initial.publicationMeta, async () => ({ data: {}, publicationMeta: { ...contract.initial.publicationMeta, publicationId: "late" } }));
 await checkAsync(async () => assert.rejects(() => lateRuntime.request(requestA), /LATE_GENERATION_REJECTED/));
+const nextGeneration = fixtures.createGlobalV2FixtureBundle("new-generation").newerPublication;
+check(() => assert.ok(nextGeneration !== undefined));
+const pinnedOld = new visit.GlobalV2VisitRuntime(contract.initial.publicationMeta, async () => ({ data: { generation: "new" }, publicationMeta: nextGeneration }));
+await checkAsync(async () => assert.rejects(() => pinnedOld.request(requestA), /LATE_GENERATION_REJECTED/));
+const refreshed = new visit.GlobalV2VisitRuntime(nextGeneration, async () => ({ data: { generation: "new" }, publicationMeta: nextGeneration }));
+await checkAsync(async () => assert.deepEqual((await refreshed.request(requestA)).data, { generation: "new" }));
 
 const failingBundle = fixtures.createGlobalV2FixtureBundle("local-error");
 const failingTransport = fixtures.createGlobalV2FixtureTransport(failingBundle, "local-error");
@@ -105,6 +114,8 @@ await checkAsync(async () => assert.equal((await failingTransport({ resource: "a
 const pageSource = fs.readFileSync(path.join(root, "src/features/global-v2/global-v2-page.tsx"), "utf8");
 const cssSource = fs.readFileSync(path.join(root, "src/features/global-v2/global-v2.module.css"), "utf8");
 const routeSource = fs.readFileSync(path.join(root, "src/app/analyse-globale/page.tsx"), "utf8");
+const fixturePageSource = fs.readFileSync(path.join(root, "src/features/global-v2/global-v2-fixture-page.tsx"), "utf8");
+const overlaySource = fs.readFileSync(path.join(root, "src/ui/overlays/overlay-frame.tsx"), "utf8");
 check(() => assert.match(pageSource, /IntersectionObserver/u));
 check(() => assert.match(pageSource, /aria-expanded/u));
 check(() => assert.match(pageSource, /aria-controls/u));
@@ -121,6 +132,14 @@ check(() => assert.match(cssSource, /@media \(max-width: 767px\)/u));
 check(() => assert.match(routeSource, /NODE_ENV === "production"/u));
 check(() => assert.match(routeSource, /GlobalV2ActivationPending/u));
 check(() => assert.doesNotMatch(pageSource, /@\/analytics|@\/server|CanonicalRepository|FactSourceResolver/u));
+check(() => assert.doesNotMatch(pageSource, /fixture-data|createGlobalV2FixtureTransport|31 juillet 2026/u));
+check(() => assert.match(pageSource, /certifiedThrough/u));
+check(() => assert.match(fixturePageSource, /Development\/browser-test adapter/u));
+check(() => assert.match(overlaySource, /document\.addEventListener\("keydown", closeOnEscape, true\)/u));
+check(() => assert.match(pageSource, /restoreFocusRef=\{overlayInvokerRef\}/u));
+check(() => assert.match(pageSource, /kind: "ENTITY_DETAIL"/u));
+check(() => assert.doesNotMatch(pageSource, /ANALYTICAL_DETAIL|Ouvrir la fiche entité/u));
+check(() => assert.match(pageSource, /window\.location\.reload\(\)/u));
 
 const masterIndex = JSON.parse(fs.readFileSync(path.join(root, "docs/global-v2/GLOBAL_MASTER_INDEX.json"), "utf8"));
 const p16Requirements = masterIndex.requirements.filter(({ owner }) => owner === "P16");

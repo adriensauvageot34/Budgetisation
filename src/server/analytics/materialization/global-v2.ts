@@ -133,8 +133,29 @@ function assertExactKeys(value: object, allowed: readonly string[], label: strin
 
 function canonicalDependency(input: GlobalV2ResolvedDependency): GlobalV2ResolvedDependency {
   assertExactKeys(input, ["authority", "family", "identity", "digest", "required"], "GLOBAL_MANIFEST_DEPENDENCY");
-  if (!input.family || !input.identity || !SHA256.test(input.digest)) throw new TypeError("GLOBAL_MANIFEST_DEPENDENCY_INVALID");
+  if (!["CANONICAL", "FACT", "METRIC", "ARTIFACT"].includes(input.authority)
+    || typeof input.required !== "boolean"
+    || typeof input.family !== "string" || input.family.length === 0
+    || typeof input.identity !== "string" || input.identity.length === 0
+    || typeof input.digest !== "string" || !SHA256.test(input.digest)) {
+    throw new TypeError("GLOBAL_MANIFEST_DEPENDENCY_INVALID");
+  }
   return { ...input };
+}
+
+function canonicalDependencies(input: readonly GlobalV2ResolvedDependency[]): readonly GlobalV2ResolvedDependency[] {
+  const dependencies = input.map(canonicalDependency).sort((a, b) => `${a.authority}:${a.family}:${a.identity}`.localeCompare(`${b.authority}:${b.family}:${b.identity}`));
+  const identities = dependencies.map((item) => `${item.authority}:${item.family}:${item.identity}`);
+  if (new Set(identities).size !== identities.length) throw new TypeError("GLOBAL_MANIFEST_DEPENDENCY_DUPLICATE");
+  return dependencies;
+}
+
+export function globalV2ClosureDeclarationDigest(dependencies: readonly GlobalV2ResolvedDependency[]): string {
+  return sha256(canonicalSerializeGlobal(canonicalDependencies(dependencies).map(({ authority, family, identity, required }) => ({ authority, family, identity, required }))));
+}
+
+export function globalV2ClosureInputDigest(dependencies: readonly GlobalV2ResolvedDependency[]): string {
+  return sha256(canonicalSerializeGlobal(canonicalDependencies(dependencies).map(({ authority, family, identity, digest }) => ({ authority, family, identity, digest }))));
 }
 
 function canonicalVersion(input: GlobalV2ResourceVersion): GlobalV2ResourceVersion {
@@ -148,10 +169,37 @@ function canonicalVersion(input: GlobalV2ResourceVersion): GlobalV2ResourceVersi
 function canonicalClosure(input: GlobalV2Closure): GlobalV2Closure {
   assertExactKeys(input, ["outputKey", "declarationDigest", "inputDigest", "dependencies"], "GLOBAL_MANIFEST_CLOSURE");
   if (!input.outputKey || !SHA256.test(input.declarationDigest) || !SHA256.test(input.inputDigest)) throw new TypeError("GLOBAL_MANIFEST_CLOSURE_INVALID");
-  const dependencies = input.dependencies.map(canonicalDependency).sort((a, b) => `${a.authority}:${a.family}:${a.identity}`.localeCompare(`${b.authority}:${b.family}:${b.identity}`));
-  const identities = dependencies.map((item) => `${item.authority}:${item.family}:${item.identity}`);
-  if (new Set(identities).size !== identities.length) throw new TypeError("GLOBAL_MANIFEST_DEPENDENCY_DUPLICATE");
+  const dependencies = canonicalDependencies(input.dependencies);
+  if (input.declarationDigest !== globalV2ClosureDeclarationDigest(dependencies)
+    || input.inputDigest !== globalV2ClosureInputDigest(dependencies)) {
+    throw new TypeError("GLOBAL_MANIFEST_CLOSURE_DIGEST_MISMATCH");
+  }
   return { ...input, dependencies };
+}
+
+export function globalV2PublicationFactsHash(input: Pick<GlobalV2ManifestInput,
+  "householdId" | "asOf" | "certifiedThrough" | "liveThrough" | "sourceRevision" | "closures"
+>): string {
+  const dependencies = new Map<string, GlobalV2ResolvedDependency>();
+  for (const closure of input.closures.map(canonicalClosure)) {
+    for (const dependency of closure.dependencies) {
+      const key = `${dependency.authority}:${dependency.family}:${dependency.identity}`;
+      const current = dependencies.get(key);
+      if (current !== undefined && canonicalSerializeGlobal(current) !== canonicalSerializeGlobal(dependency)) {
+        throw new TypeError("GLOBAL_MANIFEST_FACT_DEPENDENCY_CONFLICT");
+      }
+      dependencies.set(key, dependency);
+    }
+  }
+  return sha256(canonicalSerializeGlobal({
+    format: "global-v2-publication-facts@v1",
+    householdId: input.householdId,
+    asOf: input.asOf,
+    certifiedThrough: input.certifiedThrough,
+    ...(input.liveThrough === undefined ? {} : { liveThrough: input.liveThrough }),
+    sourceRevision: input.sourceRevision,
+    dependencies: [...dependencies.values()].sort((a, b) => `${a.authority}:${a.family}:${a.identity}`.localeCompare(`${b.authority}:${b.family}:${b.identity}`)),
+  }));
 }
 
 export function buildGlobalV2PublicationManifest(input: GlobalV2ManifestInput): GlobalV2PublicationManifest {
@@ -184,6 +232,14 @@ export function buildGlobalV2PublicationManifest(input: GlobalV2ManifestInput): 
   const queryVersions = input.queryVersions.map(canonicalVersion).sort((a, b) => a.key.localeCompare(b.key));
   if (canonicalSerializeGlobal(artifactVersions.map((entry) => entry.key)) !== canonicalSerializeGlobal(requiredArtifactKeys)) throw new TypeError("GLOBAL_MANIFEST_ARTIFACT_VERSIONS_INCOMPLETE");
   if (canonicalSerializeGlobal(queryVersions.map((entry) => entry.key)) !== canonicalSerializeGlobal(requiredQueryKeys)) throw new TypeError("GLOBAL_MANIFEST_QUERY_VERSIONS_INCOMPLETE");
+  if (input.publicationFactsHash !== globalV2PublicationFactsHash({
+    householdId: input.householdId,
+    asOf: input.asOf,
+    certifiedThrough: input.certifiedThrough,
+    ...(input.liveThrough === undefined ? {} : { liveThrough: input.liveThrough }),
+    sourceRevision: input.sourceRevision,
+    closures,
+  })) throw new TypeError("GLOBAL_MANIFEST_PUBLICATION_FACTS_HASH_MISMATCH");
 
   const withoutHash: GlobalV2ManifestInput = {
     ...input,

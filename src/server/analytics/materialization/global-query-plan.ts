@@ -3,8 +3,8 @@ import "server-only";
 import { createHash } from "node:crypto";
 
 import { canonicalSerializeGlobal, computeGlobalAnalysisScopeV2Hash, type NormalizedGlobalAnalysisScopeV2 } from "@/core/global-v2";
-import { globalV2QueryRegistry, parseGlobalV2QueryParams, type GlobalExpandedReadModel, type GlobalInitialReadModel, type GlobalModuleCompactReadModel, type GlobalV2QueryParams, type GlobalV2QueryResourceName } from "@/query-api/global-v2";
-import { buildGlobalV2PublicationManifest, type GlobalV2Closure, type GlobalV2ManifestInput, type GlobalV2PublicationManifest, type GlobalV2ResolvedDependency, type GlobalV2ResourceVersion } from "./global-v2";
+import { globalV2ExpectedQueryMethodSignature, globalV2QueryRegistry, parseGlobalV2QueryParams, type GlobalExpandedReadModel, type GlobalInitialReadModel, type GlobalModuleCompactReadModel, type GlobalV2QueryParams, type GlobalV2QueryResourceName } from "@/query-api/global-v2";
+import { buildGlobalV2PublicationManifest, globalV2ClosureDeclarationDigest, globalV2ClosureInputDigest, globalV2PublicationFactsHash, type GlobalV2Closure, type GlobalV2ManifestInput, type GlobalV2PublicationManifest, type GlobalV2ResolvedDependency, type GlobalV2ResourceVersion } from "./global-v2";
 
 export type GlobalV2QueryInstanceInput = {
   readonly resource: GlobalV2QueryResourceName;
@@ -47,8 +47,7 @@ export function globalV2QueryInstanceKey(resource: GlobalV2QueryResourceName, sc
 }
 
 export function globalV2QueryMethodSignature(resource: GlobalV2QueryResourceName): string {
-  const contract = globalV2QueryRegistry[resource];
-  return sha256({ resource, contractVersion: contract.contractVersion, methodVersion: contract.methodVersion, policyVersions: contract.policyVersions });
+  return globalV2ExpectedQueryMethodSignature(resource);
 }
 
 export function globalV2QueryResourceInputHash(input: Pick<GlobalV2QueryInstanceInput, "resource" | "scope" | "params" | "dependencies">): string {
@@ -132,8 +131,8 @@ export function buildGlobalV2QueryPlan(input: {
   });
   const closures = instances.map((instance): GlobalV2Closure => ({
     outputKey: instance.key,
-    declarationDigest: sha256(instance.dependencies.map(({ authority, family, identity, required }) => ({ authority, family, identity, required }))),
-    inputDigest: sha256(instance.dependencies.map(({ authority, family, identity, digest }) => ({ authority, family, identity, digest }))),
+    declarationDigest: globalV2ClosureDeclarationDigest(instance.dependencies),
+    inputDigest: globalV2ClosureInputDigest(instance.dependencies),
     dependencies: instance.dependencies,
   }));
   const payloadSerializations = instances.map(({ payload }) => canonicalSerializeGlobal(payload));
@@ -151,19 +150,28 @@ export function buildGlobalV2QueryPlan(input: {
 }
 
 export function attachGlobalV2QueryPlanToManifest(input: {
-  readonly base: Omit<GlobalV2ManifestInput, "requiredQueryKeys" | "queryVersions" | "externalDependencyRefs" | "closures"> & {
+  readonly base: Omit<GlobalV2ManifestInput, "requiredQueryKeys" | "queryVersions" | "externalDependencyRefs" | "closures" | "publicationFactsHash"> & {
     readonly artifactClosures: readonly GlobalV2Closure[];
     readonly externalDependencyRefs?: readonly string[];
   };
   readonly plan: GlobalV2QueryPlan;
 }): GlobalV2PublicationManifest {
   const { artifactClosures, externalDependencyRefs = [], ...base } = input.base;
+  const closures = [...artifactClosures, ...input.plan.closures];
   return buildGlobalV2PublicationManifest({
     ...base,
     requiredQueryKeys: input.plan.requiredQueryKeys,
     queryVersions: input.plan.queryVersions,
-    closures: [...artifactClosures, ...input.plan.closures],
+    closures,
     externalDependencyRefs: [...externalDependencyRefs, ...input.plan.externalQueryRefs],
+    publicationFactsHash: globalV2PublicationFactsHash({
+      householdId: base.householdId,
+      asOf: base.asOf,
+      certifiedThrough: base.certifiedThrough,
+      ...(base.liveThrough === undefined ? {} : { liveThrough: base.liveThrough }),
+      sourceRevision: base.sourceRevision,
+      closures,
+    }),
   });
 }
 

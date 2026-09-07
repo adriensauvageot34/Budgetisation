@@ -1,10 +1,11 @@
 import "server-only";
 
-import { globalV2QueryCacheKey, globalV2QueryRegistry, parseGlobalV2QueryRequest, type GlobalV2QueryRequest, type NormalizedGlobalV2QueryRequest } from "@/query-api/global-v2";
+import { globalV2ExpectedQueryMethodSignature, globalV2QueryCacheKey, globalV2QueryRegistry, parseGlobalV2QueryRequest, type GlobalV2QueryRequest, type NormalizedGlobalV2QueryRequest } from "@/query-api/global-v2";
 import { canonicalSerializeGlobal, type GlobalScopeValidationContext } from "@/core/global-v2";
 import { GlobalGenerationPin, type GlobalSnapshotCandidate } from "./global-generation";
 
 export type GlobalV2StoredSnapshot = GlobalSnapshotCandidate & {
+  readonly queryKey: string;
   readonly resource: NormalizedGlobalV2QueryRequest["resource"];
   readonly contractVersion: string;
   readonly methodVersion: string;
@@ -24,7 +25,8 @@ export type GlobalV2QueryRuntimeErrorCode =
   | "SIGNATURE_INCOMPATIBLE"
   | "GENERATION_MISMATCH"
   | "CONTRACT_MISMATCH"
-  | "INVALID_SNAPSHOT";
+  | "INVALID_SNAPSHOT"
+  | "SNAPSHOT_READ_FAILED";
 
 export type GlobalV2QueryRuntimeResult =
   | {
@@ -63,17 +65,29 @@ export async function executeGlobalV2SnapshotQuery(
   } catch (caught) {
     return error("INVALID_REQUEST", caught instanceof Error ? caught.message : "Invalid Global V2 request.");
   }
-  if (!(await services.authorize(request))) return error("PERMISSION_DENIED", "Global V2 scope is not authorized.");
+  try {
+    if (!(await services.authorize(request))) return error("PERMISSION_DENIED", "Global V2 scope is not authorized.");
+  } catch (caught) {
+    return error("PERMISSION_DENIED", caught instanceof Error ? caught.message : "Global V2 authorization failed.");
+  }
 
   const contract = globalV2QueryRegistry[request.resource];
   if (contract.availability !== "AVAILABLE") return error("SNAPSHOT_MISS", "The requested capability has no authoritative instance.");
   const cacheKey = globalV2QueryCacheKey(request);
-  const candidate = await services.readSnapshot(request, cacheKey);
+  let candidate: GlobalV2StoredSnapshot | undefined;
+  try {
+    candidate = await services.readSnapshot(request, cacheKey);
+  } catch (caught) {
+    return error("SNAPSHOT_READ_FAILED", caught instanceof Error ? caught.message : "Global V2 snapshot read failed.");
+  }
   if (candidate !== undefined) {
-    if (candidate.resource !== request.resource || candidate.publicationId !== request.expectedGeneration.publicationId || candidate.analyticsRevision !== request.expectedGeneration.analyticsRevision) {
+    if (candidate.queryKey !== cacheKey || candidate.resource !== request.resource || candidate.publicationId !== request.expectedGeneration.publicationId || candidate.analyticsRevision !== request.expectedGeneration.analyticsRevision) {
       return error("GENERATION_MISMATCH", "Snapshot identity does not match the pinned deep link.");
     }
-    if (candidate.contractVersion !== contract.contractVersion || candidate.methodVersion !== contract.methodVersion) {
+    if (candidate.contractVersion !== contract.contractVersion
+      || candidate.methodVersion !== contract.methodVersion
+      || candidate.methodSignature !== globalV2ExpectedQueryMethodSignature(request.resource)
+      || canonicalSerializeGlobal(candidate.policyVersions) !== canonicalSerializeGlobal(contract.policyVersions)) {
       return error("CONTRACT_MISMATCH", "Snapshot resource contract is incompatible.");
     }
   }

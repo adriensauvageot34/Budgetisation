@@ -8,6 +8,8 @@ import {
 } from "../../core/global-v2";
 import { hasOwn, parseStrictRecord, parseStringLiteral, requireProperty } from "../../core/validation";
 import type { RuntimeSchema } from "../../core/validation";
+import { sha256 } from "@noble/hashes/sha2.js";
+import { bytesToHex, utf8ToBytes } from "@noble/hashes/utils.js";
 import { globalExpandedReadModelSchemas, globalExpandedSectionKeys, globalV2ExpandedResourceCatalog, importedGlobalSummaryReadModelSchema, type GlobalExpandedSectionKey, type GlobalV2ExpandedResourceName } from "./details";
 import { globalInitialReadModelSchema, globalPrimaryReadModelSchemas } from "./schemas";
 import { globalPrimaryModuleCatalog, type GlobalPrimaryModuleKey, type GlobalPrimaryResourceName } from "./types";
@@ -125,6 +127,16 @@ export const globalV2QueryRegistry = Object.freeze(Object.fromEntries(
     return [resource, Object.freeze(contract)] as const;
   }),
 ) as Readonly<Record<GlobalV2QueryResourceName, GlobalV2QueryContract>>);
+
+export function globalV2ExpectedQueryMethodSignature(resource: GlobalV2QueryResourceName): string {
+  const contract = globalV2QueryRegistry[resource];
+  return bytesToHex(sha256(utf8ToBytes(canonicalSerializeGlobal({
+    resource,
+    contractVersion: contract.contractVersion,
+    methodVersion: contract.methodVersion,
+    policyVersions: contract.policyVersions,
+  }))));
+}
 
 export function parseGlobalV2QueryRequest(value: unknown, context: GlobalScopeValidationContext): NormalizedGlobalV2QueryRequest {
   const record = parseStrictRecord(value, ["resource", "scope", "params", "expectedGeneration"], "GlobalV2QueryRequest");

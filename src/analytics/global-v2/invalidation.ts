@@ -1,5 +1,3 @@
-import { canonicalSerializeGlobal } from "../../core/global-v2";
-
 export const GLOBAL_DEPENDENCY_REGISTRY_VERSION = "global-dependency-registry@v1" as const;
 export type GlobalInvalidationCause = "DATA_CHANGE" | "SEMANTIC_LINK_CHANGE" | "CERTIFICATION_CHANGE" | "METHOD_CHANGE" | "POLICY_CHANGE" | "REFERENCE_CHANGE" | "MANUAL_REVIEW" | "UI_ONLY_CHANGE";
 export type GlobalInvalidationAction = "NO_ACTION" | "RECOMPUTE" | "REPUBLISH_ONLY" | "MARK_STALE";
@@ -11,14 +9,20 @@ export function planGlobalInvalidation(event: GlobalInvalidationEvent, registry:
   if (!event.invalidationId || !event.sourceType || !event.newRevision || !event.createdAt) throw new TypeError("GLOBAL_INVALIDATION_EVENT_INVALID");
   if (event.cause === "UI_ONLY_CHANGE") return { invalidationId: event.invalidationId, affectedOutputs: [], dependencyRegistryVersion: GLOBAL_DEPENDENCY_REGISTRY_VERSION };
   const changed = new Set(event.changedFields ?? []), selected = new Map<string, GlobalInvalidationPlan["affectedOutputs"][number]>();
-  for (const descriptor of registry) {
-    const matching = descriptor.consumes.filter((input) => input.family === event.sourceType && (input.dimensions === undefined || changed.size === 0 || input.dimensions.some((field) => changed.has(field))));
-    if (matching.length === 0) continue;
-    const action: GlobalInvalidationAction = event.cause === "POLICY_CHANGE" ? "REPUBLISH_ONLY" : "RECOMPUTE";
-    const output = { outputFamily: descriptor.outputFamily, action, reason: `${event.cause}:${descriptor.consumerKey}`, ...(event.affectedSubjects === undefined ? {} : { subjectRefs: [...new Set(event.affectedSubjects)].sort() }), ...(event.sourceTimeRange === undefined ? {} : { affectedRange: event.sourceTimeRange }) };
-    const previous = selected.get(output.outputFamily);
-    if (previous !== undefined && canonicalSerializeGlobal(previous) !== canonicalSerializeGlobal(output)) throw new TypeError("GLOBAL_INVALIDATION_CONTRADICTORY_OUTPUT_PLAN");
-    selected.set(output.outputFamily, output);
+  const pending = [event.sourceType];
+  const examined = new Set<string>();
+  while (pending.length > 0) {
+    const sourceFamily = pending.shift()!;
+    if (examined.has(sourceFamily)) continue;
+    examined.add(sourceFamily);
+    for (const descriptor of registry) {
+      const matching = descriptor.consumes.filter((input) => input.family === sourceFamily && (sourceFamily !== event.sourceType || input.dimensions === undefined || changed.size === 0 || input.dimensions.some((field) => changed.has(field))));
+      if (matching.length === 0) continue;
+      const action: GlobalInvalidationAction = "RECOMPUTE";
+      const output = { outputFamily: descriptor.outputFamily, action, reason: `${event.cause}:${descriptor.consumerKey}`, ...(event.affectedSubjects === undefined ? {} : { subjectRefs: [...new Set(event.affectedSubjects)].sort() }), ...(event.sourceTimeRange === undefined ? {} : { affectedRange: event.sourceTimeRange }) };
+      if (!selected.has(output.outputFamily)) selected.set(output.outputFamily, output);
+      pending.push(output.outputFamily);
+    }
   }
   return { invalidationId: event.invalidationId, affectedOutputs: [...selected.values()].sort((a, b) => a.outputFamily.localeCompare(b.outputFamily)), dependencyRegistryVersion: GLOBAL_DEPENDENCY_REGISTRY_VERSION };
 }

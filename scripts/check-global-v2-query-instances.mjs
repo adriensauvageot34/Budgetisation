@@ -143,8 +143,12 @@ const manifest = planApi.attachGlobalV2QueryPlanToManifest({
     resourceFamilies: [...materialization.globalV2ResourceFamilies],
     requiredArtifactKeys: ["global-artifact:certified-outputs"],
     artifactVersions: [{ key: "global-artifact:certified-outputs", family: "global_certified_outputs", contractVersion: "v1", methodSignature: h("d"), policyVersions: { production: "v1" }, resourceInputHash: h("e") }],
-    artifactClosures: [{ outputKey: "global-artifact:certified-outputs", declarationDigest: h("f"), inputDigest: h("1"), dependencies }],
-    publicationFactsHash: h("2"),
+    artifactClosures: [{
+      outputKey: "global-artifact:certified-outputs",
+      declarationDigest: materialization.globalV2ClosureDeclarationDigest(dependencies),
+      inputDigest: materialization.globalV2ClosureInputDigest(dependencies),
+      dependencies,
+    }],
     implementation: { status: "KNOWN", digest: h("3"), gitSha: "4".repeat(40) },
   },
   plan,
@@ -171,6 +175,7 @@ check(() => assert.equal(plan.requiredQueryKeys.length - nextPlan.requiredQueryK
 const runtimeInstance = plan.instances.find(({ resource }) => resource === validRequest.resource);
 const candidate = {
   publicationId: publicationMeta.publicationId, analyticsRevision: 81, active: true, invalidated: false, manifestComplete: true, signatureCompatible: true,
+  queryKey: query.globalV2QueryCacheKey(parsedRequest),
   data: runtimeInstance.payload, resource: runtimeInstance.resource, contractVersion: query.globalV2QueryRegistry[runtimeInstance.resource].contractVersion,
   methodVersion: query.globalV2QueryRegistry[runtimeInstance.resource].methodVersion, methodSignature: runtimeInstance.methodSignature,
   resourceInputHash: runtimeInstance.resourceInputHash, policyVersions: query.globalV2QueryRegistry[runtimeInstance.resource].policyVersions,
@@ -189,7 +194,12 @@ await checkAsync(async () => assert.equal((await runtime.executeGlobalV2Snapshot
 await checkAsync(async () => assert.equal((await runtime.executeGlobalV2SnapshotQuery(validRequest, { ...services, readSnapshot: () => undefined })).errorCode, "SNAPSHOT_MISS"));
 await checkAsync(async () => assert.equal((await runtime.executeGlobalV2SnapshotQuery(validRequest, { ...services, readSnapshot: () => ({ ...candidate, signatureCompatible: false }) })).errorCode, "SIGNATURE_INCOMPATIBLE"));
 await checkAsync(async () => assert.equal((await runtime.executeGlobalV2SnapshotQuery(validRequest, { ...services, readSnapshot: () => ({ ...candidate, methodVersion: "old@v1" }) })).errorCode, "CONTRACT_MISMATCH"));
+await checkAsync(async () => assert.equal((await runtime.executeGlobalV2SnapshotQuery(validRequest, { ...services, readSnapshot: () => ({ ...candidate, methodSignature: h("0") }) })).errorCode, "CONTRACT_MISMATCH"));
+await checkAsync(async () => assert.equal((await runtime.executeGlobalV2SnapshotQuery(validRequest, { ...services, readSnapshot: () => ({ ...candidate, policyVersions: { fake: "v1" } }) })).errorCode, "CONTRACT_MISMATCH"));
+await checkAsync(async () => assert.equal((await runtime.executeGlobalV2SnapshotQuery(validRequest, { ...services, readSnapshot: () => ({ ...candidate, queryKey: `${candidate.queryKey}:wrong` }) })).errorCode, "GENERATION_MISMATCH"));
 await checkAsync(async () => assert.equal((await runtime.executeGlobalV2SnapshotQuery(validRequest, { ...services, readSnapshot: () => ({ ...candidate, publicationId: "other" }) })).errorCode, "GENERATION_MISMATCH"));
+await checkAsync(async () => assert.equal((await runtime.executeGlobalV2SnapshotQuery(validRequest, { ...services, authorize: () => { throw new Error("auth failed"); } })).errorCode, "PERMISSION_DENIED"));
+await checkAsync(async () => assert.equal((await runtime.executeGlobalV2SnapshotQuery(validRequest, { ...services, readSnapshot: () => { throw new Error("transport failed"); } })).errorCode, "SNAPSHOT_READ_FAILED"));
 await checkAsync(async () => assert.equal((await runtime.executeGlobalV2SnapshotQuery({ ...validRequest, resource: "analysis_global_product_detail", params: { entityRef: "product:x" } }, services)).errorCode, "SNAPSHOT_MISS"));
 
 const oversized = { ...expandedInputs[0].payload, rows: Array.from({ length: query.GLOBAL_MAX_SECTION_ROWS + 1 }, (_, index) => ({ rowId: `row-${String(index).padStart(2, "0")}`, labelKey: "row", knowledgeState: "KNOWN", evidenceRefs: [] })) };
