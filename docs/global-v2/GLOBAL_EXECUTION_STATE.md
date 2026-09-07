@@ -366,3 +366,11 @@ Elles restent des contrats de compatibilité, pas une autorité V2.
 - Query : 57/57, 32/32 RuntimeSchemas, 42 716 octets, zéro duplication, 1 lecture snapshot et 0 producteur. Typecheck, architecture 555, build Next et diff-check PASS.
 - Rapport final : `execution/P17-report.md`. `P17A_HANDOFF_CLOSURE=PASS`; `IMPLEMENTATION_GATE=PASS`; `CONTRACT_GATE=PASS`; `TEST_GATE=PASS`; `GLOBAL_PREPUBLICATION_GATE=PASS`; `FRONTEND_LOCAL_GATE=PASS`.
 - `PENDING_LIVE_SCHEMA=YES`; `PENDING_PRODUCTION_SMOKE=YES`; `LIVE_PUBLICATION=NOT_STARTED`; `LIVE_WRITES=NONE`; `NEXT_PERMITTED_PROMPT=P18`; autorisation humaine distincte requise.
+
+## P18 — preflight read-only (2026-09-07)
+
+- Baseline code `3230f8de411d972193a799081b4d688dfdffba16`, main propre à l'entrée. Projet live Budgetisation `ipuuhxrblxormwgoaqnz` confirmé ; révisions 1/79, HC3/HC4 et handshake History présents.
+- Migration Global absente ; fichier P17 inchangé, SHA-256 `B5C60AD3FB47EBC56DAC23E61E081B0502556674A2B8D59C90D687BE6F6BF085`. Aucun DDL exécuté.
+- Baseline V2 : 947 snapshots, 15 familles, 12 publications, 24 artifacts actifs ; aucune invalidation/doublon. V1 coexiste séparément. RLS/grants/contraintes/index et empreintes documentés dans `execution/P18-report.md`.
+- Autorisation humaine projet/fichier/digest non encore donnée. SHA du déploiement Production non attesté ; compatibilité additive locale établie, attestation du déploiement requise avant exécution.
+- `GLOBAL_SCHEMA_LIVE_GATE=BLOCKED`; `GLOBAL_PUBLICATION=NOT_STARTED`; `LIVE_WRITES=NONE`; `NEXT_PERMITTED_PROMPT=P18`. Aucun P19.
