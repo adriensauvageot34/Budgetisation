@@ -317,3 +317,14 @@ Elles restent des contrats de compatibilité, pas une autorité V2.
 - Aucun React, push, live write, publication ou migration. `PENDING_LIVE_SCHEMA` reste inchangé.
 - `GLOBAL_PHASE_H2_EXACT_RESOURCE_INSTANCES=PASS`; `GLOBAL_PHASE_H4=PASS`; `IMPLEMENTATION_GATE=PASS`; `CONTRACT_GATE=PASS`; `TEST_GATE=PASS`.
 - `LIVE_GATE=NOT_RUN`; `LIVE_WRITES=NONE`; `NEXT_PERMITTED_PROMPT=P16`.
+
+## P16 — frontend Analyse Globale
+
+- Baseline : `f4653000ce16c15a945b5de37ca46c27680f4985`, branche main, état propre à l’entrée ; P15 acquis.
+- Nouveau chemin parallèle `/analyse-globale` : Synthèse puis M1–M10, COMPACT/EXPANDED, sections et détails ciblés, navigation sticky, deep links, desktop/mobile, qualité, erreurs locales, focus et reduced motion.
+- Runtime de visite snapshot-only : génération épinglée, cache publication/ressource/paramètres, deux lectures de fond, priorité directe et rejet des réponses tardives. Aucun import Analytics dans React.
+- Cutover Production différé : l’ancienne route et ses neuf ressources restent intactes ; le build Production affiche un état sûr jusqu’à P17.
+- Validations : P16 257/257, fixtures RuntimeSchemas 71/71, matrice Master 150 exigences/29 capabilities/168 tests, typecheck, architecture 554 et build Next PASS.
+- Browser local : `PENDING_ENVIRONMENT`, middleware bloqué par les variables Supabase absentes ; aucun bypass ou changement d’environnement. Live smoke réservé à P17/P19.
+- Aucun push, live write, publication ou migration. `GLOBAL_PHASE_H5_LOCAL=PASS`; `IMPLEMENTATION_GATE=PASS`; `CONTRACT_GATE=PASS`; `TEST_GATE=PASS`.
+- `LIVE_GATE=NOT_RUN`; `LIVE_WRITES=NONE`; `NEXT_PERMITTED_PROMPT=P17`.

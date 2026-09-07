@@ -25,6 +25,7 @@
     "check:global-v2-publication": "node --experimental-strip-types scripts/check-global-v2-publication-infrastructure.mjs",
     "check:global-v2-primary-readmodels": "node --experimental-strip-types scripts/check-global-v2-primary-readmodels.mjs",
     "check:global-v2-query-instances": "node --experimental-strip-types scripts/check-global-v2-query-instances.mjs",
+    "check:global-v2-frontend": "node --experimental-strip-types scripts/check-global-v2-frontend.mjs",
     "check:canonical-in-batching": "node scripts/check-canonical-in-batching.mjs",
     "check:analytics-materialization": "node scripts/check-analytics-materialization.mjs",
     "check:exploration-entities": "node scripts/check-exploration-entities.mjs",
