@@ -160,8 +160,11 @@ export function loadFixtureTables(directory) {
   return tables;
 }
 
-export function createFixtureSupabaseClient(directory) {
+export function createFixtureSupabaseClient(directory, options = {}) {
   const tables = loadFixtureTables(directory);
+  for (const table of options.emptyTables ?? []) {
+    if (!tables.has(table)) tables.set(table, []);
+  }
   return {
     from(table) {
       return new FixtureQuery(tables, table);

@@ -127,7 +127,7 @@ export async function resolveGlobalM2HouseholdAuthority(input: {
     ]);
     const current = produceMetric({ metricId: "category_amount", scope, source: currentSource });
     const typical = produceMetric({ metricId: "typical_month_cost", scope, source: typicalSource });
-    if (current.unit !== "EUR" || typical.unit !== "EUR" || current.availability !== "known" || typical.availability !== "known") {
+    if (current.unit !== "EUR" || typical.unit !== "EUR/month" || current.availability !== "known" || typical.availability !== "known") {
       throw new TypeError(`Les autorités category_amount/Typical sont indisponibles pour ${categoryId}.`);
     }
     return { categoryId, current: parseMoney(current.value), typical: parseMoney(typical.value) };

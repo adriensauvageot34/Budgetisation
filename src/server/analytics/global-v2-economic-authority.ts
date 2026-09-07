@@ -51,8 +51,8 @@ export async function resolveGlobalM1HouseholdAuthority(input: {
     scope,
     source: minimalSource,
   });
-  if (actualMetric.unit !== "EUR" || minimalMetric.unit !== "EUR") {
-    throw new TypeError("M1 exige des autorités monétaires EUR.");
+  if (actualMetric.unit !== "EUR/month" || minimalMetric.unit !== "EUR/month") {
+    throw new TypeError("M1 exige des autorités monétaires mensuelles EUR/month.");
   }
 
   const eligiblePeriods = input.repository.context.periods
@@ -73,7 +73,7 @@ export async function resolveGlobalM1HouseholdAuthority(input: {
       scope: monthScope,
       source,
     });
-    if (metric.unit !== "EUR") throw new TypeError("Actual mensuel officiel doit être monétaire.");
+    if (metric.unit !== "EUR/month") throw new TypeError("Actual mensuel officiel doit être en EUR/month.");
     return {
       month,
       actual: metric,

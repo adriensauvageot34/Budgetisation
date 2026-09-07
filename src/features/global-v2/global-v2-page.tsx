@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useRef, useState, type RefObject } from "react";
-import { ArrowUp, BarChart3, ChevronDown, ExternalLink, Info, RefreshCw, Sparkles } from "lucide-react";
+import { AlertTriangle, ArrowUp, BarChart3, ChevronDown, ExternalLink, Info, RefreshCw, Sparkles } from "lucide-react";
 import { OverlayFrame } from "@/ui";
 import type {
   GlobalCompactQuality,
@@ -244,4 +244,8 @@ export function GlobalV2Page({ bundle, transport, certifiedThrough }: { readonly
 
 export function GlobalV2ActivationPending() {
   return <section className={styles.activationPending}><BarChart3 aria-hidden size={28} /><span className="eyebrow">Analyse globale V2</span><h1>Interface prête pour le cutover</h1><p>La nouvelle expérience reste volontairement inactive tant que le schéma et les publications Global V2 n’ont pas été certifiés en production.</p><Link className="button-primary" href="/historique/analyse/global">Ouvrir l’analyse actuellement active</Link></section>;
+}
+
+export function GlobalV2Unavailable() {
+  return <section className={styles.activationPending} role="alert"><AlertTriangle aria-hidden size={28} /><span className="eyebrow">Analyse globale V2</span><h1>Publication indisponible</h1><p>La génération publiée n’est pas complète ou compatible. Aucun calcul de remplacement n’a été lancé.</p><Link className="button-primary" href="/historique/analyse/global">Ouvrir l’analyse actuellement active</Link></section>;
 }

@@ -226,8 +226,14 @@ function dimensionByKey(components: readonly GlobalM2MonthlyComponent[], axis: D
     const value = dimensionOf(component, axis);
     const key = dimensionKey(value);
     const previous = result.get(key);
-    if (previous !== undefined && canonicalSerializeGlobal(previous) !== canonicalSerializeGlobal(value)) {
-      throw new TypeError(`Deux dimensions contradictoires partagent la clé ${key}.`);
+    if (previous !== undefined) {
+      const previousIdentity = previous.status === "KNOWN" ? { status: previous.status, id: previous.id } : { status: previous.status };
+      const valueIdentity = value.status === "KNOWN" ? { status: value.status, id: value.id } : { status: value.status };
+      if (canonicalSerializeGlobal(previousIdentity) !== canonicalSerializeGlobal(valueIdentity)) {
+        throw new TypeError(`Deux dimensions contradictoires partagent la clé ${key}.`);
+      }
+      result.set(key, { ...previous, evidenceRefs: canonicalRefs([...previous.evidenceRefs, ...value.evidenceRefs]) } as GlobalM2DimensionValue);
+      continue;
     }
     result.set(key, value);
   }
