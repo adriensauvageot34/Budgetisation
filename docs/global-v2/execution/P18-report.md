@@ -107,3 +107,55 @@ NEXT_PERMITTED_PROMPT = P18
 HUMAN_AUTHORIZATION_REQUIRED = YES
 
 P19 reste interdit jusqu'au PASS live de P18 et à son autorisation de publication distincte.
+
+## Tentative autorisée — STOP pré-DDL sur compatibilité Production
+
+L'autorisation humaine reçue cible exactement :
+
+- projet `ipuuhxrblxormwgoaqnz` ;
+- fichier `supabase/migrations/20260906120000_global_v2_publication_infrastructure.sql` ;
+- SHA-256 `B5C60AD3FB47EBC56DAC23E61E081B0502556674A2B8D59C90D687BE6F6BF085` ;
+- Vercel Production `budgetisation`, READY, ref `main`, Git SHA `22ef278109f8c06ad01d99b51aed54d1a4e97964`, déploiement `dpl_fv3CRbjCb2YzvDmbwmmPDSwd62w6`.
+
+Le projet et le digest ont été reconfirmés. Le remote GitHub confirme que `main` pointe sur ce SHA ; l'objet a été récupéré en lecture seule pour auditer le code réellement attesté. HC3/HC4 restent présentes et la migration Global reste absente.
+
+Le contrôle de compatibilité a révélé un hard stop avant DDL : le commit Production contient encore les neuf ressources Global legacy `analysis_global_*`. Sur un miss, `execute-query.ts` calcule puis appelle `materialization.writeQuery()`. `SupabaseAnalyticsMaterializationStore.writeQuery()` tente alors un UPSERT actif avec :
+
+- `period_kind = 'global'` ;
+- `resource = 'analysis_global_*'` ;
+- `generation_key = 'read_through'` ;
+- `publication_id = NULL`.
+
+La migration autorisée installe `guard_global_v2_frozen_content()`. Sa détection considère comme Global V2 toute ligne `period_kind='global'` dont `resource LIKE 'analysis_global_%'`. Elle exige ensuite une publication DRAFT et un manifeste. Le write-through legacy actuellement servi serait donc refusé par `Global V2 requires a publication; read-through writes are forbidden`. L'appelant masque volontairement l'échec de cache, ce qui évite probablement un échec de réponse Query, mais supprime la persistance du cache legacy et modifie le comportement opérationnel actuel.
+
+Cette collision de namespace est une incompatibilité de transition explicitement interdite par P18. Elle ne peut pas être ignorée en comptant sur P19. Le SQL n'a pas été modifié pour contourner le digest autorisé et aucun correctif opportuniste n'a été appliqué.
+
+Résultat transactionnel : `NOT_STARTED`. L'outil de migration n'a pas été invoqué. Historique après : inchangé, aucune version Global enregistrée. Baseline live inchangée par cette tentative ; seules des lectures SELECT ont été exécutées.
+
+Pour reprendre P18, il faut une opération distincte et reviewable qui ferme la collision avant DDL, par exemple un déploiement Production compatible qui n'émet plus ces écritures legacy ou une nouvelle migration dont le prédicat distingue explicitement V2 du legacy. Un SQL différent exige un nouveau digest et une nouvelle autorisation nominative. Ce rapport ne choisit pas entre ces options.
+
+CURRENT_PROMPT = P18
+
+P18_PREFLIGHT = FAIL_DEPLOYMENT_COMPATIBILITY
+
+GLOBAL_SCHEMA_LIVE_GATE = BLOCKED
+
+GLOBAL_PUBLICATION = NOT_STARTED
+
+LIVE_WRITES = NONE
+
+GLOBAL_GENERATION_COUNT = 0
+
+P19_AUTHORIZATION = NOT_GRANTED
+
+HUMAN_AUTHORIZATION_REQUIRED = YES
+
+NEXT_PERMITTED_PROMPT = P18
+
+## Suite locale P18T — collision corrigée, déploiement requis
+
+Une mission P18T séparée a corrigé localement le producteur d'écriture incompatible, sans changer cette migration ni son digest. Les ressources dont le contrat est `legacy_v1`, exclusivement Global dans le registre et sans `publicationId` restent calculées et validées mais ne sont plus persistées en read-through. Les writes mensuels, History et explicitement publiés restent actifs.
+
+Le correctif est certifié localement dans `P18T-report.md`. Il ne rend pas encore le déploiement Production compatible : le SHA actuellement servi reste `22ef278109f8c06ad01d99b51aed54d1a4e97964`. P18 ne peut reprendre qu'après autorisation, push fast-forward, déploiement de compatibilité et attestation du nouveau SHA Production.
+
+`P18T_CODE_COMPATIBILITY_FIX=PASS_LOCAL`; `P18T_DEPLOYMENT_COMPATIBILITY=PENDING_DEPLOYMENT`; `GLOBAL_SCHEMA_LIVE_GATE=BLOCKED_PENDING_P18T_DEPLOYMENT`; `LIVE_WRITES=NONE`; P18/P19 interdits.

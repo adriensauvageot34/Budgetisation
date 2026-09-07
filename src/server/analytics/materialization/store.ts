@@ -30,6 +30,7 @@ import {
   historyV2AcceptedMethodSignatures,
   querySnapshotIdentity,
   querySnapshotReadIdentities,
+  shouldSkipLegacyGlobalReadThroughWrite,
   type HistoryV2SharedArtifactFamily,
   type MaterializationPeriodIdentity,
   type MetricArtifactIdentity,
@@ -690,6 +691,7 @@ export class SupabaseAnalyticsMaterializationStore {
   ): Promise<void> {
     if (this.unavailable || !isQueryMaterializationResource(request.resource)) return;
     const selectedPublicationId = publicationId ?? this.options.publicationId;
+    if (shouldSkipLegacyGlobalReadThroughWrite(request, selectedPublicationId)) return;
     const isHistory = historyV2QueryResources.includes(request.resource);
     let historyGeneratedAt: string | undefined;
     if (isHistory) {

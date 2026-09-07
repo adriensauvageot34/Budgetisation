@@ -7,6 +7,7 @@
     "check:product-completeness": "node scripts/check-product-completeness.mjs",
     "check:analysis-month-contracts": "node --experimental-strip-types scripts/check-analysis-month-contracts.mjs",
     "check:analysis-global-contracts": "node scripts/check-analysis-global-contracts.mjs",
+    "check:global-legacy-read-through": "node scripts/check-global-legacy-read-through.mjs",
     "check:global-v2-foundations": "node --experimental-strip-types scripts/check-global-v2-foundations.mjs",
     "check:global-v2-economic-function": "node --experimental-strip-types scripts/check-global-v2-economic-function.mjs",
     "check:global-v2-category-needs-materiality": "node --experimental-strip-types scripts/check-global-v2-category-needs-materiality.mjs",
@@ -43,7 +44,7 @@
     "dev": "next dev",
     "typecheck": "tsc --noEmit",
     "build": "next build",
-    "verify": "npm run check:architecture && npm run check:product-completeness && npm run check:analysis-month-contracts && npm run check:analysis-global-contracts && npm run check:canonical-in-batching && npm run check:analytics-materialization && npm run check:exploration-entities && npm run check:live-runtime-regressions && npm run check:history-v2-canonical && npm run check:history-v2-transversal && npm run check:history-v2-calendar-daily && npm run check:history-v2-readmodels && npm run check:history-v2-month-balance && npm run check:history-v2-snapshot-materialization && npm run check:history-v2-frontend && npm run typecheck && npm run build",
+    "verify": "npm run check:architecture && npm run check:product-completeness && npm run check:analysis-month-contracts && npm run check:analysis-global-contracts && npm run check:global-legacy-read-through && npm run check:canonical-in-batching && npm run check:analytics-materialization && npm run check:exploration-entities && npm run check:live-runtime-regressions && npm run check:history-v2-canonical && npm run check:history-v2-transversal && npm run check:history-v2-calendar-daily && npm run check:history-v2-readmodels && npm run check:history-v2-month-balance && npm run check:history-v2-snapshot-materialization && npm run check:history-v2-frontend && npm run typecheck && npm run build",
     "start": "next start"
   },
   "dependencies": {

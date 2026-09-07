@@ -374,3 +374,27 @@ Elles restent des contrats de compatibilité, pas une autorité V2.
 - Baseline V2 : 947 snapshots, 15 familles, 12 publications, 24 artifacts actifs ; aucune invalidation/doublon. V1 coexiste séparément. RLS/grants/contraintes/index et empreintes documentés dans `execution/P18-report.md`.
 - Autorisation humaine projet/fichier/digest non encore donnée. SHA du déploiement Production non attesté ; compatibilité additive locale établie, attestation du déploiement requise avant exécution.
 - `GLOBAL_SCHEMA_LIVE_GATE=BLOCKED`; `GLOBAL_PUBLICATION=NOT_STARTED`; `LIVE_WRITES=NONE`; `NEXT_PERMITTED_PROMPT=P18`. Aucun P19.
+
+### P18 — autorisation reçue, hard stop pré-DDL
+
+- Autorisation exacte projet/fichier/SHA reçue et Vercel Production attesté READY au commit `22ef278109f8c06ad01d99b51aed54d1a4e97964`. Projet, remote main, digest, historique et absence de migration Global reconfirmés.
+- Le code Production écrit encore en read-through les neuf ressources legacy `analysis_global_*` avec `period_kind=global`, `publication_id=NULL` et `generation_key=read_through`.
+- Le guard du SQL autorisé intercepterait ces lignes comme Global V2 et exigerait publication/manifeste. La persistance legacy serait refusée : incompatibilité de transition confirmée avant DDL.
+- Migration non invoquée, historique live inchangé, aucune écriture. Reprise P18 requise après fermeture reviewable de la collision ; tout SQL différent exige nouveau SHA et nouvelle autorisation.
+- `P18_PREFLIGHT=FAIL_DEPLOYMENT_COMPATIBILITY`; `GLOBAL_SCHEMA_LIVE_GATE=BLOCKED`; `GLOBAL_PUBLICATION=NOT_STARTED`; `LIVE_WRITES=NONE`; `GLOBAL_GENERATION_COUNT=0`; `NEXT_PERMITTED_PROMPT=P18`. P19 interdit.
+
+## P18T — audit du déploiement de compatibilité (2026-09-07)
+
+- Produit P17 `3230f8d` byte-identique au HEAD `ea6aa79` hors docs ; implementation identity inchangée. `/analyse-globale` retourne ActivationPending en Production et ne déclenche aucun workflow V2.
+- Le chemin legacy `/historique/analyse/global` reste actif. Ses neuf contrats `legacy_v1` `analysis_global_*` calculent au miss puis appellent `writeQuery`, qui UPSERT en read-through sans publication.
+- Les futurs guards P18 intercepteraient ces writes par leur préfixe/période et les refuseraient. Le cache legacy changerait pendant la transition : P17 n'est pas compatible tel quel.
+- Correctif requis : exclure explicitement ces neuf contrats legacy du write-through global sans supprimer leur calcul, puis recertifier Query/materialization, isolation P17, frontend, typecheck, architecture et build. Aucun code modifié dans cet audit.
+- `P18T=BLOCKED_CODE_COMPATIBILITY`; `P18T_DEPLOYMENT_COMPATIBILITY=BLOCKED`; `GLOBAL_PUBLICATION=NOT_STARTED`; `GLOBAL_GENERATION_COUNT=0`; `LIVE_WRITES=NONE`; `NEXT_PERMITTED_PROMPT=P18T_CODE_COMPATIBILITY_FIX`. Aucun push, déploiement, DDL ou P19.
+
+### P18T — correctif de compatibilité local certifié
+
+- La politique de matérialisation dérive le corpus depuis `family=legacy_v1` et `allowedTimeKinds=[global]`, exige un scope Global et l'absence de `publicationId`, puis retourne avant tout UPSERT. Le corpus courant est asserté à neuf ressources.
+- Preuve Query 9/9 : adapter appelé, RuntimeSchema valide, payload/réponse conservés, frontière write atteinte, zéro appel Supabase. Les writes mensuels, History et explicitement publiés restent actifs.
+- Query/materialization/History/Global V2/frontend/runtime legacy, TypeScript, architecture et build Production sont PASS. M1–M10/Facts/FDR restent `REUSABLE_UNCHANGED`; `GLOBAL_ANALYTIC_CANDIDATE=REUSABLE_UNCHANGED`.
+- SQL P18 inchangé, SHA-256 `B5C60AD3FB47EBC56DAC23E61E081B0502556674A2B8D59C90D687BE6F6BF085`. Aucune écriture live, migration, publication, génération, push ou déploiement.
+- `P18T_CODE_COMPATIBILITY_FIX=PASS_LOCAL`; `P18T_DEPLOYMENT_COMPATIBILITY=PENDING_DEPLOYMENT`; `GLOBAL_ROUTE_V2=INACTIVE`; `GLOBAL_SCHEMA_LIVE_GATE=BLOCKED_PENDING_P18T_DEPLOYMENT`; `NEXT_PERMITTED_PROMPT=P18T_PUSH_AND_COMPATIBILITY_DEPLOYMENT_AFTER_AUTHORIZATION`. P18/P19 interdits.

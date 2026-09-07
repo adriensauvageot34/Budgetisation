@@ -36,6 +36,7 @@ import {
   canonicalSerializeQueryParams,
   createQueryCacheKey,
   getQueryResourceContract,
+  queryResourceRegistry,
   queryResourceKeys,
   type AnyNormalizedQueryRequest,
   type QueryResourceKey,
@@ -556,4 +557,33 @@ export function isQueryMaterializationResource(resource: QueryResourceKey): bool
     || resource.startsWith("analysis_month_")
     || resource.startsWith("analysis_global_")
     || resource === "analysis_target";
+}
+
+/**
+ * Legacy Global resources remain computed on demand during the Global V2
+ * transition, but their reconstructible cache entries cannot share the frozen
+ * Global V2 SQL namespace. Derive the corpus from the two authoritative
+ * registries so a newly registered legacy/global-only resource is covered
+ * automatically.
+ */
+export const legacyGlobalReadThroughResources = Object.freeze(
+  Object.values(queryResourceRegistry)
+    .filter(({ key, allowedTimeKinds }) => {
+      const contract = getQueryResourceContract(key);
+      return contract.family === "legacy_v1"
+        && allowedTimeKinds.length === 1
+        && allowedTimeKinds[0] === "global";
+    })
+    .map(({ key }) => key as QueryResourceKey)
+    .sort(),
+);
+
+export function shouldSkipLegacyGlobalReadThroughWrite(
+  request: AnyNormalizedQueryRequest,
+  publicationId: string | undefined,
+): boolean {
+  if (publicationId !== undefined) return false;
+  if (!legacyGlobalReadThroughResources.includes(request.resource)) return false;
+  if (!("time" in request.scope)) return false;
+  return request.scope.time.kind === "global";
 }
