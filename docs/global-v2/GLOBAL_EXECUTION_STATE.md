@@ -407,3 +407,12 @@ Elles restent des contrats de compatibilité, pas une autorité V2.
 - Post-DDL : `global_manifest` nullable sans défaut, huit fonctions, quatre triggers actifs et handshake `global-v2-publication@v1` présents. RLS/grants ciblés conformes ; aucun accès navigateur nouveau.
 - Révisions inchangées `1/79`. History reste à `947` snapshots V2, `15` familles et `24` artifacts ; empreintes pré/post identiques, aucun doublon/invalidation actif. Global reste à `0` publication, `0` snapshot et `0` artifact.
 - `P18T_CODE_COMPATIBILITY_FIX=PASS`; `P18T_PUSH=PASS`; `P18T_DEPLOYMENT_COMPATIBILITY=PASS`; `GLOBAL_ROUTE_V2=INACTIVE`; `GLOBAL_SCHEMA_LIVE_GATE=PASS`; `GLOBAL_PUBLICATION=NOT_STARTED`; `GLOBAL_GENERATION_COUNT=0`; `P19_AUTHORIZATION=NOT_GRANTED`; `NEXT_PERMITTED_PROMPT=P19_AWAITING_HUMAN_AUTHORIZATION`.
+
+## P19A — pont candidat live et loader Production (2026-09-07)
+
+- Le blocker P19 est fermé localement : un orchestrateur serveur relie Canonical/Facts aux dix owners certifiés, aux ReadModels, 140 instances Query, 1 artifact et au manifest. Le candidat P17 synthétique reste test-only et n'est importé par aucun chemin Production.
+- Dry-run read-only au projet `ipuuhxrblxormwgoaqnz`, révisions `1/79`, asOf `2026-09-07T12:00:00Z`, implementation `11906d2f1debde669497a931cb5e85c412d83fb5` : candidate `8a7a512a-9440-5e24-a3eb-e14c404cdd83`, factsHash `bc43a863976f70a72e10d6b3e706dbad4f0f5f9342b74f8d07da1f7d591520e2`, manifestHash `255dfa42eb656a5e4c44d19eead410e86cbca826fd48bcf0a066973e39d57664`, 22 capabilities disponibles et 2 gated.
+- Le loader Production et `/api/global-v2/query` sont snapshot-only, manifest-bound et épinglés à une génération. Miss/incompatibilité/invalidation/révision mélangée échouent localement, sans legacy ni recompute.
+- La route Production reste OFF par défaut via `GLOBAL_V2_ROUTE_ACTIVE`; aucun environnement n'a été changé. Tests ciblés, RuntimeSchemas, publication/manifest local, frontend, typecheck, architecture 561, build Next et diff-check PASS.
+- Aucun secret/export privé commité, aucune migration, aucun Begin/Stage/Attach/Seal/Finalize, aucune publication et aucune écriture live.
+- `P19A_LIVE_CANDIDATE_ORCHESTRATOR=PASS`; `P19A_PRODUCTION_SNAPSHOT_LOADER=PASS`; `P19A_LOCAL_IMPLEMENTATION=PASS`; `GLOBAL_ANALYTIC_CANDIDATE=LIVE_DERIVABLE`; `GLOBAL_ROUTE_V2=INACTIVE_READY_FOR_P19`; `GLOBAL_SCHEMA_LIVE_GATE=PASS`; `GLOBAL_PUBLICATION=NOT_STARTED`; `SUPABASE_LIVE_WRITES=NONE`; `P19_PREAUTHORIZATION=READY_AFTER_CODE_DEPLOYMENT`.
