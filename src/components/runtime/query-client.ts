@@ -16,6 +16,8 @@ import {
   queryDataSchemaByResource,
 } from "@/query-api";
 import type { UiTransportState } from "@/ui";
+import { getQueryResourceContract } from "@/query-api";
+import { useHistoryQuery } from "./use-history-query";
 
 type ClientQueryResult<Name extends QueryResourceName> =
   | { readonly ok: true; readonly response: ApiResponse<QueryDataByResource[Name]> }
@@ -136,6 +138,18 @@ export function useQueryRuntime<Name extends QueryResourceName>(
     () => (request === null ? null : createClientQueryIdentity(request)),
     [request],
   );
+  const isHistory = request !== null && getQueryResourceContract(request.resource).family === "history_v2";
+  const historyState = useHistoryQuery<QueryDataByResource[Name]>(
+    isHistory && request.scope.time.kind === "month" && key !== null ? {
+      month: request.scope.time.month, key,
+      ...(initial === undefined ? {} : { initial }),
+      fetchPayload: async () => {
+        const result = await executeClientQuery(request);
+        if (!result.ok) throw new Error(result.error.message);
+        return result.response;
+      },
+    } : null,
+  );
   const [stored, setStored] = useState<{
     readonly key: string | null;
     readonly state: UiTransportState<QueryDataByResource[Name]>;
@@ -145,7 +159,7 @@ export function useQueryRuntime<Name extends QueryResourceName>(
 
   useEffect(() => {
     const currentRequest = requestRef.current;
-    if (currentRequest === null || key === null) return;
+    if (currentRequest === null || key === null || isHistory) return;
     if (initial !== undefined) {
       if (initial.status === "success") storeSuccessfulResponse(key, initial.response);
       setStored({ key, state: initial });
@@ -189,8 +203,9 @@ export function useQueryRuntime<Name extends QueryResourceName>(
         } });
       });
     return () => { active = false; };
-  }, [initial, key]);
+  }, [initial, key, isHistory]);
 
+  if (isHistory) return historyState;
   if (stored.key === key) return stored.state;
   if (initial !== undefined) return initial;
   const cached = request === null ? undefined : cachedClientQueryResponse<Name>(request);

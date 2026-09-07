@@ -1113,10 +1113,12 @@ function journalMoment(
 ): JournalMomentSummary | undefined {
   const momentRef = sourceRefsForItem(item).find(({ kind }) => kind === "moment");
   if (momentRef === undefined && item.sourceKind !== "fused") return undefined;
-  const causal = selectCausalExpenses(expenses, item.calendarItemId);
-  const visible = prefixCollection(causal, 3);
   const causalCost = supplement.causalCostByCalendarItemId[item.calendarItemId]
     ?? { status: "UNKNOWN" as const, quality: { reasonCode: "DATA_NO_SOURCE" as const } };
+  const causal = causalCost.status === "UNKNOWN" || causalCost.status === "CONFLICT"
+    ? { status: causalCost.status, ...(causalCost.quality === undefined ? {} : { quality: causalCost.quality }) }
+    : selectCausalExpenses(expenses, item.calendarItemId);
+  const visible = prefixCollection(causal, 3);
   const spentDuring = computeSpentDuring({
     expenses,
     window: {

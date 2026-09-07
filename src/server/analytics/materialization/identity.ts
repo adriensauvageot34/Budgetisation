@@ -36,6 +36,7 @@ import {
   canonicalSerializeQueryParams,
   createQueryCacheKey,
   getQueryResourceContract,
+  queryResourceRegistry,
   queryResourceKeys,
   type AnyNormalizedQueryRequest,
   type QueryResourceKey,
@@ -123,6 +124,7 @@ export type QuerySnapshotIdentity = {
 
 export type QuerySnapshotContractVariant =
   | "current"
+  | "history_v2_calendar_centric_pre_hc2"
   | "history_v2_calendar_centric_old"
   | "history_v2_visible_gaps_legacy";
 
@@ -234,6 +236,24 @@ export function historyV2AcceptedMethodSignatures(
   if (contract.family !== "history_v2") {
     return [{ methodSignature: current, contractVariant: "current" }];
   }
+  // Calendar-centric snapshots published before HC2 used the current RM
+  // contracts with the four doctrine policies below at their prior versions.
+  const calendarCentricPreHc2Policies = Object.freeze(Object.fromEntries(
+    contract.policyIds.map((policyId) => [
+      policyId,
+      policyId === "week_journal_projection"
+        ? parsePolicyVersion("v1")
+        : policyId === "month_overview_selection"
+          || policyId === "spending_nature"
+          || policyId === "life_money_selection"
+          ? parsePolicyVersion("v2")
+          : resolvePolicyVersions([policyId])[policyId],
+    ]),
+  )) as PolicyVersions;
+  const calendarCentricPreHc2 = historyV2ResourceMethodSignature(
+    resource,
+    calendarCentricPreHc2Policies,
+  );
   const preCalendarPolicyIds = contract.policyIds.filter(
     (policyId) => policyId !== "calendar_amount_views",
   );
@@ -251,6 +271,10 @@ export function historyV2AcceptedMethodSignatures(
         ? parsePolicyVersion("v2")
         : policyId === "month_overview_selection"
           ? parsePolicyVersion("v1")
+          : policyId === "week_journal_projection"
+            ? parsePolicyVersion("v1")
+            : policyId === "spending_nature" || policyId === "life_money_selection"
+              ? parsePolicyVersion("v2")
           : resolvePolicyVersions([policyId])[policyId],
     ]),
   )) as PolicyVersions;
@@ -264,11 +288,19 @@ export function historyV2AcceptedMethodSignatures(
     readonly methodSignature: string;
     readonly contractVariant: QuerySnapshotContractVariant;
   }[] = [{ methodSignature: current, contractVariant: "current" }];
-  if (preCalendar !== current) {
+  if (calendarCentricPreHc2 !== current) {
     accepted.push({
-      methodSignature: preCalendar,
-      contractVariant: "history_v2_calendar_centric_old",
+      methodSignature: calendarCentricPreHc2,
+      contractVariant: "history_v2_calendar_centric_pre_hc2",
     });
+  }
+  if (preCalendar !== current) {
+    if (!accepted.some(({ methodSignature }) => methodSignature === preCalendar)) {
+      accepted.push({
+        methodSignature: preCalendar,
+        contractVariant: "history_v2_calendar_centric_old",
+      });
+    }
   }
   if (!historyV2VisibleGapsMigratedResources.has(resource)) return accepted;
   const legacyPolicies = Object.freeze(Object.fromEntries(
@@ -525,4 +557,33 @@ export function isQueryMaterializationResource(resource: QueryResourceKey): bool
     || resource.startsWith("analysis_month_")
     || resource.startsWith("analysis_global_")
     || resource === "analysis_target";
+}
+
+/**
+ * Legacy Global resources remain computed on demand during the Global V2
+ * transition, but their reconstructible cache entries cannot share the frozen
+ * Global V2 SQL namespace. Derive the corpus from the two authoritative
+ * registries so a newly registered legacy/global-only resource is covered
+ * automatically.
+ */
+export const legacyGlobalReadThroughResources = Object.freeze(
+  Object.values(queryResourceRegistry)
+    .filter(({ key, allowedTimeKinds }) => {
+      const contract = getQueryResourceContract(key);
+      return contract.family === "legacy_v1"
+        && allowedTimeKinds.length === 1
+        && allowedTimeKinds[0] === "global";
+    })
+    .map(({ key }) => key as QueryResourceKey)
+    .sort(),
+);
+
+export function shouldSkipLegacyGlobalReadThroughWrite(
+  request: AnyNormalizedQueryRequest,
+  publicationId: string | undefined,
+): boolean {
+  if (publicationId !== undefined) return false;
+  if (!legacyGlobalReadThroughResources.includes(request.resource)) return false;
+  if (!("time" in request.scope)) return false;
+  return request.scope.time.kind === "global";
 }

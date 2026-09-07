@@ -158,6 +158,7 @@ export type SpendingComponentInput = {
   readonly necessity?: NecessityClass;
   readonly behavior?: BehaviorClass;
   readonly lifeScope?: LifeScopeClass;
+  readonly classificationStates?: Readonly<Record<"necessity" | "behavior" | "lifeScope", "KNOWN" | "UNKNOWN" | "NOT_APPLICABLE" | "CONFLICT">>;
   readonly categoryId?: string;
   readonly subcategoryId?: string;
   readonly nonNegative: boolean;
@@ -288,14 +289,14 @@ export type MomentMediaSelection =
 export type PlaceSignificanceInput = {
   readonly placeId: string;
   readonly bestHighlightRank?: 1 | 2 | 3 | 4 | 5;
-  readonly momentCount: number;
+  readonly momentCount?: number;
   readonly presenceDays: number;
-  readonly activityTypeCount: number;
+  readonly activityTypeCount?: number;
   readonly localizedAmount?: Money;
   readonly localizedShare?: number;
   readonly localizedCoverage?: number;
-  readonly semanticKind: "TRAVEL_STAY" | "FAMILY_FRIEND" | "LEISURE_EVENT" | "HEALTH" | "OTHER";
-  readonly routineKind: "HOME" | "REGULAR_WORK" | "OTHER_ROUTINE" | "NONE";
+  readonly semanticKind?: "TRAVEL_STAY" | "FAMILY_FRIEND" | "LEISURE_EVENT" | "HEALTH" | "OTHER";
+  readonly routineKind?: "HOME" | "REGULAR_WORK" | "OTHER_ROUTINE" | "NONE";
 };
 
 export type PlaceSignificanceScore = {
@@ -309,10 +310,12 @@ export type PlaceSignificanceScore = {
   readonly routinePenalty: number;
   readonly candidate: boolean;
   readonly bestHighlightRank?: 1 | 2 | 3 | 4 | 5;
-  readonly momentCount: number;
+  readonly momentCount?: number;
   readonly presenceDays: number;
   readonly localizedAmount?: Money;
   readonly localizedComparable: boolean;
+  readonly missingInputs?: readonly ("momentCount" | "activityTypeCount" | "semanticKind" | "routineKind")[];
+  readonly quality?: QualityEnvelope;
 };
 
 export type PlaceCandidateProof = {

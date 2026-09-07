@@ -479,15 +479,17 @@ function buildReadModel(request) {
 function queryBuildResult(request, mutation = "base") {
   return {
     data: buildReadModel(request),
-    facts: [{
-      factType: "fixture_query",
-      identity: `${request.resource}:${JSON.stringify(request.params)}`,
-      value: {
+    ...historyAnalytics.historyResourceDependencyClosure({
+      resource: request.resource,
+      groups: Object.fromEntries(historyAnalytics.historyV2ResourceDependencyGroups[request.resource].map((group) => [group, {
+        identity: `${request.resource}:${JSON.stringify(request.params)}`,
+        value: {
         resource: request.resource,
         params: request.params,
         mutation: request.resource === "history_place_detail" ? mutation : "base",
-      },
-    }],
+        },
+      }])),
+    }),
   };
 }
 
@@ -701,6 +703,46 @@ check(() => assert.deepEqual(calendarCentricOldSignatures, {
   history_place_detail: "f4726916eac3956838912135bc22280e092e555fb899c0c23ad7cd94a51eb3c8",
   history_week: "488a70d46bac6b6cd0bf657eb616e00b56d6a8f38a83094dc4b3e01d430b946b",
 }));
+const calendarCentricPreHc2Signatures = Object.fromEntries([
+  "history_month_calendar",
+  "history_week",
+  "history_day_journal",
+  "history_month_overview",
+  "history_month_life_money",
+  "history_activity_detail",
+  "history_moment_detail",
+  "history_place_detail",
+].map((resource) => [
+  resource,
+  identity.historyV2AcceptedMethodSignatures(resource).find(
+    ({ contractVariant }) => contractVariant === "history_v2_calendar_centric_pre_hc2",
+  )?.methodSignature,
+]));
+check(() => assert.deepEqual(calendarCentricPreHc2Signatures, {
+  history_activity_detail: "125ef8f7b40441717179bba63de74cfb879e8c7e54d4b9e8bc4c87da3e0094b6",
+  history_day_journal: "016163bec744441c3aa93ae0db4ddd80adb54157f2e1c9e6951d6f63ea66a16f",
+  history_moment_detail: "6e93cf5253d7497ce9ef605c6ef4dbc6d7fb298f0200bd6a97f06738f7928763",
+  history_month_calendar: "e22d35bf87bcd5ffc91a0c4a68b8509c09854344eaa1787b155d4c600e3e1176",
+  history_month_life_money: "1e2e2c091ebe0582943245bc01c221809a612caf8aa5dfd935bc0f8ce9089500",
+  history_month_overview: "79e1539ac970be724807e6a49aed89762cd80a1319a32d4a604691a216ec603a",
+  history_place_detail: "541363d7dcfe1a0263448b75983e40e6aed0b9e21ce26cc96bc9943cd699a28d",
+  history_week: "feabe7baef95d9b7929ebd0bfaf526cf379e8e9c6238cb6631e8452e3e4a14a7",
+}));
+check(() => {
+  for (const resource of materialization.historyV2QueryResources) {
+    const accepted = identity.historyV2AcceptedMethodSignatures(resource);
+    assert.equal(
+      new Set(accepted.map(({ methodSignature }) => methodSignature)).size,
+      accepted.length,
+      `${resource} ne doit publier aucune methodSignature dupliquée.`,
+    );
+    assert.deepEqual(
+      identity.historyV2AcceptedMethodSignatures(resource),
+      accepted,
+      `${resource} doit résoudre chaque signature vers un contractVariant déterministe.`,
+    );
+  }
+});
 const calendarCentricCurrentSignatures = Object.fromEntries(
   materialization.historyV2QueryResources.map((resource) => [
     resource,
@@ -757,6 +799,26 @@ function transitionFakeClient(rows) {
 }
 const currentTransitionIdentity = transitionIdentities.find(({ contractVariant }) => contractVariant === "current");
 const legacyTransitionIdentity = transitionIdentities.find(({ contractVariant }) => contractVariant === "history_v2_visible_gaps_legacy");
+const liveCalendarRequest = query.normalizeQueryRequest({
+  resource: "history_month_calendar",
+  scope: { subject: { kind: "household" }, time: { kind: "month", month: "2026-08" } },
+  params: {},
+});
+const liveCalendarIdentity = identity.querySnapshotReadIdentities(
+  transitionContext,
+  liveCalendarRequest,
+).find(({ contractVariant }) => contractVariant === "history_v2_calendar_centric_pre_hc2");
+await checkAsync(async () => {
+  const fake = transitionFakeClient([transitionRow(liveCalendarIdentity)]);
+  const hit = await new SupabaseAnalyticsMaterializationStore(
+    fake.client,
+    transitionContext,
+  ).readQuery(liveCalendarRequest);
+  assert.equal(hit.contractVariant, "history_v2_calendar_centric_pre_hc2");
+  assert.ok(fake.calls.some((call) => call[0] === "eq" && call[1] === "contract_version" && call[2] === "v2"));
+  assert.ok(fake.calls.some((call) => call[0] === "eq" && call[1] === "is_active" && call[2] === true));
+  assert.ok(fake.calls.some((call) => call[0] === "is" && call[1] === "invalidated_at" && call[2] === null));
+});
 await checkAsync(async () => {
   const fake = transitionFakeClient([transitionRow(legacyTransitionIdentity)]);
   const hit = await new SupabaseAnalyticsMaterializationStore(fake.client, transitionContext).readQuery(transitionRequest);
@@ -949,7 +1011,7 @@ const changedPlaceFact = await materialization.buildHistoryV2Preflight({
   artifacts: artifactInputs,
   buildQuery: (request) => queryBuildResult(request, "place-fact-changed"),
 });
-check(() => assert.equal(changedPlaceFact.manifest.manifestHash, preflight.manifest.manifestHash));
+check(() => assert.notEqual(changedPlaceFact.manifest.manifestHash, preflight.manifest.manifestHash));
 check(() => assert.notEqual(
   changedPlaceFact.manifest.publicationFactsHash,
   preflight.manifest.publicationFactsHash,
@@ -1041,6 +1103,13 @@ const rpcCalls = [];
 const fakeClient = {
   from(table) {
     return {
+      select() { return this; },
+      eq() { return this; },
+      async single() {
+        return { data: { status: "draft", published_at: null, published_analytics_revision: null,
+          dependency_manifest: null, source_revision: runtimeContext.dataRevision,
+          base_analytics_revision: runtimeContext.analyticsRevision }, error: null };
+      },
       insert(row) {
         assert.equal(table, "analytics_publications");
         publicationInsert = row;
@@ -1147,9 +1216,16 @@ check(() => assert.equal(
   "la ressource History V1 retirée ne doit plus rester active dans le registre",
 ));
 
+const { checkHistoryDependencyManifest } = await import("./check-history-v2-dependency-manifest.mjs");
+const hc3 = await checkHistoryDependencyManifest({ materialization, historyAnalytics, preflight, runtimeContext, artifactInputs, require });
+const { checkHistoryFrozenPublication } = await import("./check-history-v2-frozen-publication.mjs");
+const hc4 = await checkHistoryFrozenPublication({ materialization, preflight, runtimeContext, identity, require });
+
 console.log(JSON.stringify({
   gate: "PASS",
   checks,
+  hc3,
+  hc4,
   profileId: preflight.manifest.profileId,
   resourceFamilies: preflight.manifest.resourceFamilies.length,
   queryInstances: preflight.queries.length,

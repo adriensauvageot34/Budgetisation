@@ -30,6 +30,7 @@ import {
   historyV2AcceptedMethodSignatures,
   querySnapshotIdentity,
   querySnapshotReadIdentities,
+  shouldSkipLegacyGlobalReadThroughWrite,
   type HistoryV2SharedArtifactFamily,
   type MaterializationPeriodIdentity,
   type MetricArtifactIdentity,
@@ -38,6 +39,7 @@ import {
 } from "./identity";
 import {
   historyV2StagedArtifactEnvelopeSchema,
+  historyV2QueryResources,
   type HistoryV2StagedArtifactEnvelope,
 } from "./history-v2";
 import { aggregateAdditiveMonthlyMetrics } from "./global-planner";
@@ -114,6 +116,20 @@ export class SupabaseAnalyticsMaterializationStore {
     readonly context: AuthorizedRuntimeContext,
     private readonly options: AnalyticsMaterializationStoreOptions = {},
   ) {}
+
+  /** Diagnostic boundary; the SQL row lock/trigger is the authoritative race-safe guard. */
+  async assertHistoryDraft(publicationId: string): Promise<void> {
+    const { data, error } = await this.client.from("analytics_publications")
+      .select("status,published_at,published_analytics_revision,dependency_manifest,source_revision,base_analytics_revision")
+      .eq("household_id", this.context.householdId).eq("publication_id", publicationId).single();
+    if (error !== null) throw error;
+    if (data?.status !== "draft" || data.published_at !== null || data.published_analytics_revision !== null
+      || data.dependency_manifest !== null
+      || String(data.source_revision) !== this.context.dataRevision
+      || String(data.base_analytics_revision) !== this.context.analyticsRevision) {
+      throw new TypeError("History staging requires an unsealed, never-published draft at the captured revisions.");
+    }
+  }
 
   private cachePolicy(
     period: MaterializationPeriodIdentity,
@@ -422,7 +438,7 @@ export class SupabaseAnalyticsMaterializationStore {
     envelopeInput: unknown,
     publicationId: string,
   ): Promise<void> {
-    if (this.unavailable) return;
+    if (this.unavailable) throw new TypeError("History materialization unavailable.");
     const envelope = historyV2StagedArtifactEnvelopeSchema.parse(envelopeInput);
     if (
       publicationId.trim().length === 0
@@ -430,6 +446,7 @@ export class SupabaseAnalyticsMaterializationStore {
     ) {
       throw new TypeError("L'artifact History V2 doit appartenir à la DRAFT indiquée.");
     }
+    await this.assertHistoryDraft(publicationId);
     const identity = historyV2SharedArtifactIdentity(
       this.context,
       envelope.payload.month,
@@ -674,6 +691,18 @@ export class SupabaseAnalyticsMaterializationStore {
   ): Promise<void> {
     if (this.unavailable || !isQueryMaterializationResource(request.resource)) return;
     const selectedPublicationId = publicationId ?? this.options.publicationId;
+    if (shouldSkipLegacyGlobalReadThroughWrite(request, selectedPublicationId)) return;
+    const isHistory = historyV2QueryResources.includes(request.resource);
+    let historyGeneratedAt: string | undefined;
+    if (isHistory) {
+      if (selectedPublicationId === undefined) throw new TypeError("History cannot write through without a draft.");
+      await this.assertHistoryDraft(selectedPublicationId);
+      const meta = (payload as { publicationMeta?: { publicationId?: string; generatedAt?: string } })?.publicationMeta;
+      if (meta?.publicationId !== selectedPublicationId || typeof meta.generatedAt !== "string") {
+        throw new TypeError("History snapshot PublicationMeta does not match its draft.");
+      }
+      historyGeneratedAt = meta.generatedAt;
+    }
     const identity = querySnapshotIdentity(this.context, request, "current");
     const startedAt = Date.now();
     const expiresAt = identity.period.kind === "month" && identity.period.isClosed
@@ -693,8 +722,8 @@ export class SupabaseAnalyticsMaterializationStore {
       contract_version: identity.contractVersion,
       method_signature: identity.methodSignature,
       payload,
-      computed_at: new Date().toISOString(),
-      expires_at: expiresAt,
+      computed_at: historyGeneratedAt ?? new Date().toISOString(),
+      expires_at: isHistory ? null : expiresAt,
       publication_id: selectedPublicationId ?? null,
       is_active: selectedPublicationId === undefined,
       invalidated_at: null,

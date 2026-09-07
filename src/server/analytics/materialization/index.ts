@@ -4,6 +4,7 @@ export {
   analyticsMethodSignature,
   historyV2AcceptedMethodSignatures,
   isQueryMaterializationResource,
+  legacyGlobalReadThroughResources,
   materializationPeriod,
   metricArtifactIdentity,
   metricBucketArtifactIdentity,
@@ -11,6 +12,7 @@ export {
   historyV2SharedArtifactFamilies,
   querySnapshotIdentity,
   querySnapshotReadIdentities,
+  shouldSkipLegacyGlobalReadThroughWrite,
   type HistoryV2SharedArtifactFamily,
   type HistoryV2SharedArtifactIdentity,
   type MaterializationPeriodIdentity,
@@ -26,9 +28,43 @@ export {
   isScopedMaterializationFresh,
 } from "./freshness";
 export { SupabaseAnalyticsPublicationStore } from "./publication-store";
+export { SupabaseHistoryManifestStore, type HistoryManifestRead } from "./history-manifest-store";
+export { SupabaseGlobalManifestStore, type GlobalManifestRead } from "./global-manifest-store";
+export {
+  buildGlobalV2PublicationManifest,
+  globalV2ManifestFormatVersion,
+  globalV2MaterializationProfile,
+  globalV2PublicationContractVersion,
+  globalV2PublicationProfileId,
+  globalV2ResourceFamilies,
+  parseGlobalV2PublicationManifest,
+  stageGlobalV2GenerationInMemory,
+  type GlobalV2Closure,
+  type GlobalV2ManifestInput,
+  type GlobalV2PublicationManifest,
+  type GlobalV2PublicationMeta,
+  type GlobalV2ResolvedDependency,
+  type GlobalV2ResourceVersion,
+  type GlobalV2StagedResource,
+} from "./global-v2";
+export { InMemoryGlobalPublicationCoordinator } from "./global-session";
+export {
+  assertGlobalV2NoResidualKeys,
+  attachGlobalV2QueryPlanToManifest,
+  buildGlobalV2QueryPlan,
+  globalV2QueryInstanceKey,
+  globalV2QueryMethodSignature,
+  globalV2QueryResourceInputHash,
+  type GlobalV2QueryInstance,
+  type GlobalV2QueryInstanceInput,
+  type GlobalV2QueryPlan,
+} from "./global-query-plan";
+export { buildHistoryMonth, finalizeHistoryPublication, validateHistoryMonthBuild,
+  type CertifiedHistoryMonth, type HistoryMonthCertification, type HistoryMonthGeneration } from "./history-rebuild";
 export { recordAnalyticsMutation } from "./mutation";
 export {
   buildHistoryV2Preflight,
+  historyV2DependencyManifestSchema,
   createHistoryV2TheoreticalManifest,
   discoverHistoryV2QueryTargets,
   historyV2PublicationProfileId,

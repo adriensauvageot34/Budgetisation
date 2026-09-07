@@ -13,6 +13,10 @@ export type {
   ContextHeatmapCapabilityId,
   ContextMetric,
   ContextMetricId,
+  PersonEconomicAttributionContribution,
+  PersonEconomicAttributionCoverage,
+  PersonEconomicSelection,
+  UnattributedEconomicContribution,
 } from "./types";
 export {
   contextCapabilities,
@@ -27,8 +31,10 @@ export {
   aggregateContextCost,
   createDayContextSupport,
   localizedMetricAvailability,
+  resolveEconomicComponentPersonCoverage,
   selectEconomicComponentsByLifeScope,
   selectEconomicComponentsForSubject,
+  selectEconomicComponentsForPersonWithCoverage,
   selectEconomicComponentsForScope,
   sumEconomicNetForScope,
   sumEconomicNetForSubject,

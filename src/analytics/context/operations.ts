@@ -1,5 +1,7 @@
 import { parseMetricId } from "../../core/identity";
-import { addMoney, parseMoney, type Money } from "../../core/money";
+import { parsePersonId } from "../../core/identity";
+import { addMoney, parseDecimalString, parseMoney, type Money } from "../../core/money";
+import Big from "big.js";
 import {
   parseSupport,
   type Availability,
@@ -27,7 +29,107 @@ import {
 import type {
   ContextCostAggregate,
   ContextCostSelection,
+  PersonEconomicAttributionContribution,
+  PersonEconomicAttributionCoverage,
+  PersonEconomicSelection,
+  UnattributedEconomicContribution,
 } from "./types";
+
+const asMoney = (value: Big): Money => parseMoney(value.toFixed());
+
+export function resolveEconomicComponentPersonCoverage(
+  values: readonly unknown[],
+): PersonEconomicAttributionCoverage {
+  const components = dedupeEconomicComponents(values);
+  const attributedContributions: PersonEconomicAttributionContribution[] = [];
+  const unattributedContributions: UnattributedEconomicContribution[] = [];
+  const conflicts: string[] = [];
+  let eligibleAbsoluteAmount = new Big(0);
+  let attributedAbsoluteAmount = new Big(0);
+  let attributableNet = new Big(0);
+  let unattributableNet = new Big(0);
+  let fullyAttributedComponentCount = 0;
+
+  for (const component of components) {
+    const amount = new Big(component.net);
+    eligibleAbsoluteAmount = eligibleAbsoluteAmount.plus(amount.abs());
+    const person = component.person;
+    const shares = person.kind === "resolved"
+      ? [{ personId: person.id, share: parseDecimalString("1") }]
+      : person.kind === "shared" || person.kind === "partial"
+        ? person.shares
+        : [];
+    const coveredShare = shares.reduce((sum, entry) => sum.plus(entry.share), new Big(0));
+    for (const share of shares) {
+      const contributionAmount = amount.times(share.share);
+      attributedContributions.push({
+        canonicalComponentKey: component.canonicalComponentKey,
+        personId: share.personId,
+        share: share.share,
+        amount: asMoney(contributionAmount),
+      });
+      attributableNet = attributableNet.plus(contributionAmount);
+      attributedAbsoluteAmount = attributedAbsoluteAmount.plus(amount.abs().times(share.share));
+    }
+    if (coveredShare.eq(1)) {
+      fullyAttributedComponentCount += 1;
+      continue;
+    }
+    const remainder = new Big(1).minus(coveredShare);
+    const remainderAmount = amount.times(remainder);
+    const reason = person.kind === "partial"
+      ? "PARTIAL"
+      : person.kind === "conflict"
+        ? "CONFLICT"
+        : person.kind === "not_applicable"
+          ? "NOT_APPLICABLE"
+          : "UNKNOWN";
+    unattributedContributions.push({
+      canonicalComponentKey: component.canonicalComponentKey,
+      share: parseDecimalString(remainder.toFixed()),
+      amount: asMoney(remainderAmount),
+      reason,
+    });
+    unattributableNet = unattributableNet.plus(remainderAmount);
+    if (reason === "CONFLICT") conflicts.push(component.canonicalComponentKey);
+  }
+
+  const componentCoverageRatio = components.length === 0
+    ? undefined
+    : parseDecimalString(new Big(fullyAttributedComponentCount).div(components.length).toFixed());
+  const amountCoverageRatio = eligibleAbsoluteAmount.eq(0)
+    ? undefined
+    : parseDecimalString(attributedAbsoluteAmount.div(eligibleAbsoluteAmount).toFixed());
+  return {
+    attributedContributions,
+    unattributedContributions,
+    eligibleComponentCount: components.length,
+    fullyAttributedComponentCount,
+    eligibleAbsoluteAmount: asMoney(eligibleAbsoluteAmount),
+    attributedAbsoluteAmount: asMoney(attributedAbsoluteAmount),
+    attributableNet: asMoney(attributableNet),
+    unattributableNet: asMoney(unattributableNet),
+    ...(componentCoverageRatio === undefined ? {} : { componentCoverageRatio }),
+    ...(amountCoverageRatio === undefined ? {} : { amountCoverageRatio }),
+    conflictComponentKeys: [...new Set(conflicts)].sort(),
+  };
+}
+
+export function selectEconomicComponentsForPersonWithCoverage(
+  values: readonly unknown[],
+  personIdValue: unknown,
+): PersonEconomicSelection {
+  const personId = parsePersonId(personIdValue);
+  const coverage = resolveEconomicComponentPersonCoverage(values);
+  const selectedContributions = coverage.attributedContributions.filter(
+    (contribution) => contribution.personId === personId,
+  );
+  const selectedNet = selectedContributions.reduce(
+    (sum, contribution) => addMoney(sum, contribution.amount),
+    parseMoney("0"),
+  );
+  return { ...coverage, personId, selectedContributions, selectedNet };
+}
 
 export function selectEconomicComponentsForSubject(
   values: readonly unknown[],

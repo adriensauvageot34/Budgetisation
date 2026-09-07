@@ -4,7 +4,7 @@ import {
   useEffect,
   useId,
   useRef,
-  type KeyboardEvent,
+  type KeyboardEvent as ReactKeyboardEvent,
   type ReactNode,
   type RefObject,
 } from "react";
@@ -98,9 +98,21 @@ export function OverlayFrame<NavigationIntent = never>({
     return releaseTrap;
   }, [open, topmost, suspended, initialFocusRef]);
 
-  if (!open) return null;
   const unavailableClose = closeAction.kind === "disabled" || closeAction.kind === "loading";
-  const onKeyDown = (event: KeyboardEvent<HTMLElement>) => {
+  useEffect(() => {
+    if (!open || !topmost || suspended || unavailableClose) return;
+    const closeOnEscape = (event: globalThis.KeyboardEvent) => {
+      if (event.key !== "Escape") return;
+      event.preventDefault();
+      event.stopPropagation();
+      if (closeAction.kind === "callback" || closeAction.kind === "navigation") invokeUiAction(closeAction);
+    };
+    document.addEventListener("keydown", closeOnEscape, true);
+    return () => document.removeEventListener("keydown", closeOnEscape, true);
+  }, [closeAction, open, suspended, topmost, unavailableClose]);
+
+  if (!open) return null;
+  const onKeyDown = (event: ReactKeyboardEvent<HTMLElement>) => {
     if (event.key !== "Escape" || !topmost || suspended) return;
     if (unavailableClose) return;
     event.preventDefault();

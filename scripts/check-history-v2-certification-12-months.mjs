@@ -8,6 +8,7 @@ import Big from "big.js";
 import ts from "typescript";
 
 import { createFixtureSupabaseClient, loadFixtureTables } from "./lib/fixture-supabase-client.mjs";
+import { assertCurrentMinimalCertification, currentMinimalEvidenceFile } from "./lib/history-v2-current-minimal-evidence.mjs";
 
 const require = createRequire(import.meta.url);
 const repositoryRoot = process.cwd();
@@ -57,6 +58,8 @@ for (const extension of [".ts", ".tsx"]) {
 
 const [fixtureDirectory, oracleReportFile, outputDirectory] = process.argv.slice(2);
 const publicationOnly = process.argv.slice(5).includes("--publication-only");
+const selectedMonth = process.argv.slice(5).find((arg) => arg.startsWith("--month="))?.slice(8);
+if (selectedMonth !== undefined && publicationOnly) throw new Error("Single-month rebuild requires full invariant certification.");
 if (fixtureDirectory === undefined || oracleReportFile === undefined || outputDirectory === undefined) {
   throw new Error("Usage: node scripts/check-history-v2-certification-12-months.mjs <fixture-directory> <expected-vs-engine-final.json> <output-directory>");
 }
@@ -69,6 +72,13 @@ const materialization = require(path.join(repositoryRoot, "src/server/analytics/
 const monthlyEngines = require(path.join(repositoryRoot, "src/server/analytics/history-v2-monthly-engines.ts"));
 const { CanonicalRepository } = require(path.join(repositoryRoot, "src/server/canonical/repository.ts"));
 const { FactSourceResolver } = require(path.join(repositoryRoot, "src/server/analytics/fact-source-resolver.ts"));
+const { execFileSync } = require("node:child_process");
+const implementationFiles = [...new Set(execFileSync("git", ["ls-files", "--cached", "--others", "--exclude-standard", "--",
+  "src/analytics", "src/core", "src/query-api", "src/server/analytics", "src/server/canonical", "scripts/check-history-v2-certification-12-months.mjs",
+  "package.json", "package-lock.json", "pnpm-lock.yaml", "tsconfig.json",
+], { cwd: repositoryRoot, encoding: "utf8" }).trim().split(/\r?\n/u))].filter((file) => fs.existsSync(path.join(repositoryRoot, file))).sort();
+const { scopedMetricReadModel } = require(path.join(repositoryRoot, "src/server/analytics/metric-query-service.ts"));
+const { parseActivityCausalFinancialLinks } = require(path.join(repositoryRoot, "src/analytics/facts/index.ts"));
 const calendar = require(path.join(repositoryRoot, "src/analytics/history-v2/calendar/index.ts"));
 const daily = require(path.join(repositoryRoot, "src/analytics/history-v2/daily-finance/index.ts"));
 const historyAnalytics = require(path.join(repositoryRoot, "src/analytics/history-v2/index.ts"));
@@ -83,15 +93,31 @@ const tables = loadFixtureTables(fixturePath);
 const one = (table, predicate) => (tables.get(table) ?? []).find(predicate);
 const oracleReport = JSON.parse(fs.readFileSync(oraclePath, "utf8"));
 const oracleMonths = oracleReport.finalExpectedOracle.months;
-const months = Object.keys(oracleMonths).sort();
+const months = Object.freeze([
+  "2025-08", "2025-09", "2025-10", "2025-11", "2025-12", "2026-01",
+  "2026-02", "2026-03", "2026-04", "2026-05", "2026-06", "2026-07",
+]);
 assert.deepEqual(months, [
   "2025-08", "2025-09", "2025-10", "2025-11", "2025-12", "2026-01",
   "2026-02", "2026-03", "2026-04", "2026-05", "2026-06", "2026-07",
 ]);
-const householdId = oracleReport.finalExpectedOracle.metadata.householdId;
+assert.deepEqual(Object.keys(oracleMonths).sort(), months, "L'oracle EXPECTED doit couvrir exactement la fenêtre certifiée.");
+if (selectedMonth !== undefined) assert.ok(months.includes(selectedMonth), "Month outside the supported certified History window.");
+const fixtureHouseholds = tables.get("households") ?? [];
+assert.equal(fixtureHouseholds.length, 1, "La fixture History V2 doit contenir un unique Household cible.");
+const householdId = fixtureHouseholds[0].household_id;
+assert.equal(
+  oracleReport.finalExpectedOracle.metadata.householdId,
+  householdId,
+  "L'oracle EXPECTED doit décrire le Household de la fixture, sans le sélectionner.",
+);
 const household = one("households", (row) => row.household_id === householdId);
 const revision = one("household_revisions", (row) => row.household_id === householdId);
 assert.ok(household && revision, "Household/revision fixture absente.");
+for (const [option, actual] of [["--household=", householdId], ["--source-revision=", String(revision.data_revision)]]) {
+  const expected = process.argv.slice(5).find((arg) => arg.startsWith(option))?.slice(option.length);
+  if (selectedMonth !== undefined) assert.equal(expected, actual, `Single-month producer ${option} mismatch`);
+}
 const persons = (tables.get("persons") ?? [])
   .filter((row) => row.household_id === householdId)
   .map((row) => ({
@@ -136,6 +162,11 @@ const stable = (value) => Array.isArray(value)
     ? Object.fromEntries(Object.keys(value).sort().map((key) => [key, stable(value[key])]))
     : value;
 const stableJson = (value) => JSON.stringify(stable(value));
+const implementation = {
+  status: "KNOWN",
+  gitSha: execFileSync("git", ["rev-parse", "HEAD"], { cwd: repositoryRoot, encoding: "utf8" }).trim(),
+  digest: sha256(stableJson(implementationFiles.map((file) => ({ file, digest: sha256(fs.readFileSync(path.join(repositoryRoot, file), "utf8").replaceAll("\r\n", "\n")) })))),
+};
 const sourceRef = (kind, id) => ({ kind, id: String(id) });
 const target = (resource, params) => ({ resource, params });
 const visibleKnown = (value) => ({ visibility: "VISIBLE", data: { status: "KNOWN", value } });
@@ -163,29 +194,6 @@ function capabilities(resource) {
     unavailable: [],
   };
 }
-function normalizeToken(value) {
-  return String(value ?? "").normalize("NFD").replace(/[\u0300-\u036f]/gu, "").toLowerCase();
-}
-function necessity(value) {
-  const token = normalizeToken(value);
-  if (token.includes("indispens")) return "INDISPENSABLE";
-  if (token.includes("contraint") || token.includes("oblig")) return "CONSTRAINED";
-  if (token.includes("option") || token.includes("facultat")) return "OPTIONAL";
-  return undefined;
-}
-function behavior(value) {
-  const token = normalizeToken(value);
-  if (token.includes("fix")) return "FIXED";
-  if (token.includes("vari")) return "VARIABLE";
-  return undefined;
-}
-function lifeScope(value) {
-  const token = normalizeToken(value);
-  if (token.includes("courante") || token.includes("daily") || token.includes("quotid")) return "CURRENT_LIFE";
-  if (token.includes("hors") || token.includes("out")) return "OUT_OF_DAILY";
-  return undefined;
-}
-
 const categoryLabels = new Map((tables.get("categories") ?? []).map((row) => [row.category_id, row.nom_canonique]));
 const subcategoryLabels = new Map((tables.get("subcategories") ?? []).map((row) => [row.subcategory_id, row.nom_canonique]));
 const merchantLabels = new Map((tables.get("merchants") ?? []).map((row) => [row.merchant_id, row.nom_canonique]));
@@ -233,23 +241,24 @@ function calendarMomentItemId(artifact, momentId) {
   if (artifact.items.status !== "KNOWN" && artifact.items.status !== "PARTIAL") return undefined;
   return artifact.items.items.find((item) => item.sourceRefs.includes(`moment:${momentId}`))?.calendarItemId;
 }
-function expenseDescriptorsFor(month, facts, ledger, operations) {
+function expenseDescriptorsFor(month, facts, ledger, operations, momentRelations, calendarArtifact) {
   const operationById = new Map(operations.map((row) => [String(row.operation_id), row]));
-  const artifact = calendarByMonth.get(month);
+  const momentCosts = [...new Set(momentRelations.map(({ momentId }) => momentId))].map((momentId) => ({
+    owner: calendarMomentItemId(calendarArtifact, momentId),
+    resolved: historyAnalytics.resolveMomentFinancialCost({ householdId, momentId, relations: momentRelations }),
+  }));
   return ledger.expenseEvents.map((event) => {
     const componentFacts = facts.filter((fact) => event.componentKeys.includes(String(fact.canonicalComponentKey)));
     const operation = componentFacts.map(sourceOperationOf).flatMap((id) => id === undefined ? [] : [operationById.get(id)]).find(Boolean);
     const merchantId = componentFacts.map((fact) => factValue(fact, "merchant")).find(Boolean);
-    const momentId = componentFacts.map((fact) => factValue(fact, "moment")).find(Boolean);
-    const narrativeOwnerId = momentId === undefined || artifact === undefined
-      ? undefined
-      : calendarMomentItemId(artifact, String(momentId));
+    const owners = momentCosts.filter(({ owner, resolved }) => owner !== undefined
+      && historyAnalytics.isWhollyCausalMomentExpense({ componentKeys: event.componentKeys, amount: event.economicAmount }, resolved));
     return {
       expenseEventId: event.expenseEventId,
       label: String(operation?.description_precise ?? operation?.libelle_bancaire ?? "Dépense économique"),
       sourceRefs: event.componentKeys.map((id) => sourceRef("economic_component", id)),
+      ...(owners.length !== 1 ? {} : { narrativeOwnerId: owners[0].owner }),
       ...(merchantId === undefined ? {} : { merchantLabel: merchantLabels.get(String(merchantId)) ?? String(merchantId) }),
-      ...(narrativeOwnerId === undefined ? {} : { narrativeOwnerId }),
     };
   });
 }
@@ -262,17 +271,8 @@ function groupFactsAmount(facts, readKey) {
   }
   return result;
 }
-function spendingComponents(facts) {
-  return facts.map((fact) => ({
-    componentKey: String(fact.canonicalComponentKey),
-    amount: fact.net,
-    ...(necessity(factValue(fact, "necessity")) === undefined ? {} : { necessity: necessity(factValue(fact, "necessity")) }),
-    ...(behavior(factValue(fact, "behavior")) === undefined ? {} : { behavior: behavior(factValue(fact, "behavior")) }),
-    ...(lifeScope(factValue(fact, "lifeScope")) === undefined ? {} : { lifeScope: lifeScope(factValue(fact, "lifeScope")) }),
-    ...(categoryOf(fact) === undefined ? {} : { categoryId: categoryOf(fact) }),
-    ...(subcategoryOf(fact) === "__UNDETERMINED__" ? {} : { subcategoryId: subcategoryOf(fact) }),
-    nonNegative: new Big(fact.net).gte(0),
-  }));
+function spendingComponents(data) {
+  return historyAnalytics.projectHistorySpendingComponents(data.facts, data.classifications);
 }
 function bridgeFor(month, facts, operations, actual) {
   const bankByOperation = new Map();
@@ -325,16 +325,21 @@ const monthData = new Map();
 for (const month of months) {
   console.error(`history_v2_sources ${month}`);
   const range = rangeFor(month);
-  const [loadedFacts, operations, occurrences, visits, moments] = await Promise.all([
+  const [loadedFacts, operations, occurrences, visits, moments, classifications] = await Promise.all([
     repository.loadEconomicFacts(range),
     repository.loadOperationsByBankRange(range),
     repository.loadActivityOccurrences(range),
     repository.loadPlaceVisits(range),
     repository.loadEntityRows("moments", "moment_id"),
+    repository.loadEconomicComponentClassifications(range),
   ]);
-  const causalLinks = await repository.loadActivityCausalFinancialLinkRows(
-    occurrences.map(({ lifeEventId }) => String(lifeEventId)),
-  );
+  const occurrenceIds = occurrences.map(({ lifeEventId }) => String(lifeEventId));
+  const [causalLinks, lifeEventRecords] = await Promise.all([
+    repository.loadActivityCausalFinancialLinkRows(occurrenceIds),
+    repository.loadLifeEventRecords(occurrenceIds),
+  ]);
+  const primaryPlaces = lifeEventRecords.flatMap((row) => typeof row.primary_place_id === "string"
+    ? [{ lifeEventId: String(row.life_event_id), placeId: row.primary_place_id }] : []);
   const activityCosts = await factResolver.loadActivityOccurrenceCosts({
     subject: { kind: "household" },
     time: { kind: "month", month },
@@ -342,25 +347,42 @@ for (const month of months) {
   const calendarArtifact = calendarByMonth.get(month);
   const dailyArtifact = dailyByMonth.get(month);
   assert.ok(calendarArtifact && dailyArtifact);
+  const momentIds = calendarArtifact.items.status === "KNOWN" || calendarArtifact.items.status === "PARTIAL"
+    ? [...new Set(calendarArtifact.items.items.flatMap(({ sourceRefs }) => sourceRefs
+      .filter((ref) => ref.startsWith("moment:")).map((ref) => ref.slice("moment:".length))))] : [];
+  // Causal net is not a Daily allocation: retain before/after-period components.
+  const momentRelations = historyAnalytics.projectCanonicalMomentRelations(await repository.loadEconomicFactsByMomentIds(momentIds));
   const scope = { subject: { kind: "household" }, time: { kind: "month", month } };
   const amountByComponent = new Map(dailyArtifact.allocationEntries.map(({ componentKey, amount }) => [componentKey, amount]));
   const facts = selectEconomicComponentsForScope(loadedFacts, scope).map((fact) => ({
     ...fact,
     net: amountByComponent.get(String(fact.canonicalComponentKey)) ?? zero,
   }));
+  const analyticsAuthority = await historyAnalytics.resolveHistoryV2BalanceAnalyticsAuthority({
+    resolver: factResolver,
+    month,
+    categoryIds: facts.flatMap((fact) => {
+      const categoryId = categoryOf(fact);
+      return categoryId === undefined ? [] : [categoryId];
+    }),
+  });
   monthData.set(month, {
     month,
-    oracle: oracleMonths[month],
+    analyticsAuthority,
+    classifications,
     facts,
     operations,
     occurrences,
     visits,
+    primaryPlaces,
     moments,
     causalLinks,
     activityCosts,
+    momentRelations,
+    canonicalMomentIds: momentIds,
     calendarArtifact,
     dailyArtifact,
-    expenseDescriptors: expenseDescriptorsFor(month, facts, dailyArtifact, operations),
+    expenseDescriptors: expenseDescriptorsFor(month, facts, dailyArtifact, operations, momentRelations, calendarArtifact),
   });
 }
 
@@ -374,10 +396,8 @@ function metricValue(value, reasonCode = "DATA_NO_SOURCE") {
     ? { status: "UNKNOWN", quality: { reasonCode } }
     : { status: "KNOWN", value: money(value) };
 }
-function metricNode(value, reasonCode = "DATA_NO_SOURCE") {
-  return value === undefined || value === null
-    ? { visibility: "PLACEHOLDER", reasonCode }
-    : visibleKnown(money(value));
+function officialMetricNode(metric) {
+  return historyQuery.projectAnalysisMoneyMetric(scopedMetricReadModel(metric));
 }
 function balanceContext(data, resource, params) {
   const contract = query.getQueryResourceContract(resource);
@@ -387,17 +407,9 @@ function balanceContext(data, resource, params) {
     month: data.month,
     resourceInputHash: historyAnalytics.computeResourceInputHash({
       identity,
-      facts: [{
-        factType: "history_v2_live_resource_input",
-        identity,
-        value: {
-          resource,
-          params,
-          calendarArtifactInputHash: data.calendarArtifact.artifactInputHash,
-          dailyArtifactInputHash: data.dailyArtifact.artifactInputHash,
-          actual: data.oracle.actual.net,
-        },
-      }],
+      // Builder placeholder, bound to the declared inputs by the preflight seal.
+      // This provisional metadata is never written to a snapshot.
+      facts: [],
     }),
     policyVersions: historyCore.resolvePolicyVersions(contract.policyIds),
     capabilities: capabilities(resource),
@@ -422,7 +434,12 @@ function categoryState(data) {
   if (data.categoryState !== undefined) return data.categoryState;
   const actual = data.dailyArtifact.actualMonthAmount;
   const actualByCategory = groupFactsAmount(data.facts, (fact) => categoryOf(fact) ?? "__UNCLASSIFIED__");
-  const typicalRows = new Map((data.oracle.typicalCategories?.rows ?? []).map((row) => [row.categoryId, row]));
+  const typicalRows = new Map(data.analyticsAuthority.categoryTypicals.map((authority) => [authority.categoryId, {
+    categoryId: authority.categoryId,
+    availability: authority.metric.availability,
+    typicalCategoryValue: authority.metric.value,
+    monthlyObservations: authority.monthlyObservations,
+  }]));
   const candidates = [...actualByCategory].map(([categoryId, amount]) => {
     const typical = typicalRows.get(categoryId);
     const delta = typical?.availability === "known"
@@ -522,12 +539,12 @@ function spendingState(data) {
   if (data.spendingState !== undefined) return data.spendingState;
   data.spendingState = balance.buildSpendingAxes({
     actual: data.dailyArtifact.actualMonthAmount,
-    components: spendingComponents(data.facts),
+    components: spendingComponents(data),
   });
   return data.spendingState;
 }
 function categoryClassificationState(data, categoryId) {
-  const components = spendingComponents(data.facts).filter((component) =>
+  const components = spendingComponents(data).filter((component) =>
     categoryId === "__UNCLASSIFIED__"
       ? component.categoryId === undefined
       : component.categoryId === categoryId);
@@ -538,10 +555,10 @@ function categoryClassificationState(data, categoryId) {
 }
 function minimalState(data) {
   if (data.minimalState !== undefined) return data.minimalState;
-  const source = data.oracle.minimal;
-  const available = source.availability === "known" && source.value !== null;
+  const source = data.analyticsAuthority.minimal;
+  const available = source.metric.availability === "known" && source.metric.value !== null;
   const components = available
-    ? source.contributions.map((entry) => ({
+    ? source.components.map((entry) => ({
         componentId: entry.canonicalComponentKey,
         label: entry.canonicalComponentKey,
         family: minimalFamily(entry.canonicalComponentKey),
@@ -550,8 +567,8 @@ function minimalState(data) {
     : [];
   data.minimalState = {
     available,
-    value: available ? money(source.value) : undefined,
-    preview: balance.buildMinimalPreview({ minimal: available ? money(source.value) : zero, components }),
+    value: available ? money(source.metric.value) : undefined,
+    preview: balance.buildMinimalPreview({ minimal: available ? money(source.metric.value) : zero, components }),
   };
   return data.minimalState;
 }
@@ -588,33 +605,25 @@ function activityState(data) {
     group.push(item);
     itemByActivity.set(item.semanticTypeKey, group);
   }
-  const costsByActivity = new Map();
-  const occurrenceById = new Map(data.occurrences.map((value) => [String(value.lifeEventId), value]));
-  for (const cost of data.activityCosts) {
-    const occurrence = occurrenceById.get(String(cost.occurrenceId));
-    if (occurrence === undefined || cost.causalCost.availability !== "known") continue;
-    const activityId = String(occurrence.activityId);
-    costsByActivity.set(activityId, sumMoney([costsByActivity.get(activityId) ?? zero, cost.causalCost.value]));
-  }
+  const costsByActivity = new Map([...itemByActivity.keys()].map((activityId) => [activityId,
+    historyAnalytics.resolveHistoryActivityCost(data.activityCosts.filter((cost) => String(cost.activityId) === activityId)),
+  ]));
   const scoreInputs = [...itemByActivity].map(([activityTypeKey, items]) => ({
     activityTypeKey,
     occurrences: data.occurrences.filter((value) => String(value.activityId) === activityTypeKey).length,
     hasOtherNarrativeMoment: items.some((item) => item.sourceKind === "fused"),
     priorityBand: Math.min(4, Math.max(...items.map(({ priorityBand }) => priorityBand))),
-    ...(costsByActivity.get(activityTypeKey) === undefined ? {} : {
-      qualifiedCost: costsByActivity.get(activityTypeKey),
+    ...(costsByActivity.get(activityTypeKey)?.cost.status !== "KNOWN" ? {} : {
+      qualifiedCost: costsByActivity.get(activityTypeKey).cost.value,
       qualifiedCostShare: new Big(data.dailyArtifact.actualMonthAmount).eq(0)
-        ? 0 : Number(new Big(costsByActivity.get(activityTypeKey)).div(data.dailyArtifact.actualMonthAmount).abs().toString()),
+        ? 0 : Number(new Big(costsByActivity.get(activityTypeKey).cost.value).div(data.dailyArtifact.actualMonthAmount).abs().toString()),
     }),
   }));
   const scores = balance.rankActivities(scoreInputs);
   const summaries = scores.map((score) => ({
     ...score,
     label: itemByActivity.get(score.activityTypeKey)?.[0]?.title ?? score.activityTypeKey,
-    costKind: costsByActivity.has(score.activityTypeKey) ? "CAUSAL" : "NONE",
-    cost: costsByActivity.has(score.activityTypeKey)
-      ? { status: "KNOWN", value: costsByActivity.get(score.activityTypeKey) }
-      : { status: "NOT_APPLICABLE", quality: { reasonCode: "POLICY_NOT_APPLICABLE" } },
+    ...costsByActivity.get(score.activityTypeKey),
     detailRef: target(query.queryResourceKeys.historyActivityDetail, { activityTypeKey: score.activityTypeKey }),
     sourceRefs: [...new Set(itemByActivity.get(score.activityTypeKey).flatMap(({ sourceRefs }) => sourceRefs))]
       .map((ref) => historyQuery.parseArtifactSourceRef(ref)),
@@ -626,7 +635,7 @@ function momentState(data) {
   if (data.momentState !== undefined) return data.momentState;
   const items = data.calendarArtifact.items.status === "KNOWN" || data.calendarArtifact.items.status === "PARTIAL"
     ? data.calendarArtifact.items.items.filter((item) => item.sourceKind === "moment" || item.sourceKind === "fused") : [];
-  const amountByMoment = groupFactsAmount(data.facts, (fact) => factValue(fact, "moment"));
+  const costForMoment = (momentId) => historyAnalytics.resolveMomentFinancialCost({ householdId, momentId, relations: data.momentRelations });
   const candidates = items.flatMap((item) => {
     const ref = item.sourceRefs.find((value) => value.startsWith("moment:"));
     const startDate = item.startDate ?? item.anchorDate;
@@ -638,8 +647,8 @@ function momentState(data) {
       priorityWeight: item.priorityWeight,
       continuous: item.continuityQualifier?.status === "KNOWN" && item.continuityQualifier.value === "CONTINUOUS",
       livedDaysInMonth: item.endDate === undefined ? 1 : Math.max(1, daysBetween(startDate, item.endDate) + 1),
-      ...(amountByMoment.get(momentId) === undefined ? {} : { causalCost: amountByMoment.get(momentId) }),
-      causalCostComparable: amountByMoment.has(momentId),
+      ...(costForMoment(momentId).causalCost.status !== "KNOWN" ? {} : { causalCost: costForMoment(momentId).causalCost.value }),
+      causalCostComparable: costForMoment(momentId).causalCost.status === "KNOWN",
       startDate,
     }];
   });
@@ -652,15 +661,13 @@ function momentState(data) {
       startDate: candidate.startDate,
       ...(item?.endDate === undefined ? {} : { endDate: item.endDate }),
       highlightRank: Math.min(5, index + 1),
-      causalCost: amountByMoment.has(candidate.momentId)
-        ? { status: "KNOWN", value: amountByMoment.get(candidate.momentId) }
-        : { status: "UNKNOWN", quality: { reasonCode: "DATA_NO_SOURCE" } },
+      causalCost: costForMoment(candidate.momentId).causalCost,
       fallbackIconKey: item?.iconKey ?? "moment",
       detailRef: target(query.queryResourceKeys.historyMomentDetail, { momentId: candidate.momentId }),
       sourceRefs: [sourceRef("moment", candidate.momentId)],
     };
   });
-  data.momentState = { summaries, amountByMoment, items };
+  data.momentState = { summaries, costForMoment, items };
   return data.momentState;
 }
 function placeState(data) {
@@ -673,38 +680,39 @@ function placeState(data) {
     visitGroups.set(placeId, group);
   }
   const amountByPlace = groupFactsAmount(data.facts, canonicalPlaceOf);
-  const inputs = [...new Set([...visitGroups.keys(), ...amountByPlace.keys()])].map((placeId) => {
+  const activityTypes = historyAnalytics.historyPlaceActivityTypes(data.occurrences, data.primaryPlaces);
+  const placeIds = [...new Set([...visitGroups.keys(), ...amountByPlace.keys(), ...activityTypes.keys()])];
+  const financeByPlace = new Map(placeIds.map((placeId) => [placeId,
+    historyAnalytics.resolveHistoryPlaceFinance(data.facts, placeId),
+  ]));
+  const inputs = placeIds.map((placeId) => {
     const visits = visitGroups.get(placeId) ?? [];
-    const localizedAmount = amountByPlace.get(placeId);
-    const label = placeLabels.get(placeId) ?? placeId;
-    const routineToken = normalizeToken(label);
+    const finance = financeByPlace.get(placeId);
+    const localizedAmount = finance.cardAmount.status === "KNOWN" ? finance.cardAmount.value : undefined;
     return {
       placeId,
-      momentCount: 0,
       presenceDays: new Set(visits.map(({ localDate }) => String(localDate))).size,
-      activityTypeCount: 0,
+      ...(activityTypes.has(placeId) ? { activityTypeCount: activityTypes.get(placeId).size } : {}),
       ...(localizedAmount === undefined ? {} : {
         localizedAmount,
-        localizedShare: new Big(data.dailyArtifact.actualMonthAmount).eq(0)
-          ? 0 : Number(new Big(localizedAmount).div(data.dailyArtifact.actualMonthAmount).abs().toString()),
-        localizedCoverage: 1,
+        ...(new Big(data.dailyArtifact.actualMonthAmount).lte(0) ? {} : {
+          localizedShare: Number(new Big(localizedAmount).div(data.dailyArtifact.actualMonthAmount).toString()),
+        }),
+        ...(finance.localizedCoverage === undefined ? {} : { localizedCoverage: finance.localizedCoverage }),
       }),
-      semanticKind: "OTHER",
-      routineKind: routineToken.includes("domicile") || routineToken.includes("maison")
-        ? "HOME" : routineToken.includes("travail") ? "REGULAR_WORK" : "NONE",
+      // Normative roles exist; their Canonical inputs are absent here (DATA_MISSING).
+      // Never substitute a label, visit frequency or causal-finance place for them.
     };
   });
   const scores = balance.rankPlaces(inputs);
   const summaries = scores.map((score) => ({
     ...score,
     label: placeLabels.get(score.placeId) ?? score.placeId,
-    localizedAmount: amountByPlace.has(score.placeId)
-      ? { status: "KNOWN", value: amountByPlace.get(score.placeId) }
-      : { status: "NOT_APPLICABLE", quality: { reasonCode: "POLICY_NOT_APPLICABLE" } },
+    localizedAmount: financeByPlace.get(score.placeId).cardAmount,
     detailRef: target(query.queryResourceKeys.historyPlaceDetail, { placeId: score.placeId }),
     sourceRefs: [sourceRef("place", score.placeId)],
   }));
-  data.placeState = { summaries, visitGroups, amountByPlace };
+  data.placeState = { summaries, visitGroups, amountByPlace, financeByPlace };
   return data.placeState;
 }
 function causalCostByCalendarItem(data) {
@@ -720,6 +728,8 @@ function unknownCollection(reasonCode = "DATA_NO_SOURCE") {
 }
 function journalSupplement(data) {
   if (data.journalSupplement !== undefined) return data.journalSupplement;
+  // Existing Journal movement parsing is outside HC2; never reused for M3/Place.
+  const normalizeToken = (value) => String(value ?? "").normalize("NFD").replace(/[\u0300-\u036f]/gu, "").toLowerCase();
   const refunds = [];
   let refundTimingMissing = false;
   for (const fact of data.facts) {
@@ -800,10 +810,101 @@ function expenseCollectionValue(data) {
     : { status: "PARTIAL", items, partialMeaning: "OBSERVED_ONLY", knownCount: items.length, quality: { reasonCode: "DATA_UNASSIGNED_TIMING" } };
 }
 function segmentSelection(data, params) {
-  return spendingComponents(data.facts).filter((component) => {
+  return spendingComponents(data).filter((component) => {
     if (params.axis !== undefined) return component[params.axis] === params.bucket;
     return component.necessity === params.necessity && component.behavior === params.behavior;
   });
+}
+
+function historyQueryDependencies(data, request, readModel) {
+  const resource = request.resource;
+  const requestedMonths = resource === "history_month_calendar"
+    ? [readModel.gridStartDate.slice(0, 7), data.month, readModel.gridEndDate.slice(0, 7)]
+    : resource === "history_week" ? [readModel.weekStart.slice(0, 7), readModel.weekEnd.slice(0, 7)]
+      : resource === "history_day_journal" ? dailyArtifacts.map(({ month }) => month) : [data.month];
+  const selectedMonths = [...new Set(requestedMonths)].sort();
+  const clean = (value) => JSON.parse(JSON.stringify(value, (key, child) =>
+    ["generatedAt", "publicationMeta", "policyVersions", "contractVersion", "revision"].includes(key) ? undefined : child));
+  const set = (values) => historyAnalytics.historyDependencySet(clean(values));
+  const selectedLedgers = dailyArtifacts.filter(({ month }) => selectedMonths.includes(month));
+  const eventIds = new Set(selectedLedgers.flatMap(({ expenseEvents }) => expenseEvents.map(({ expenseEventId }) => expenseEventId)));
+  const sources = {
+    calendar_artifacts: () => set(calendarArtifacts.filter(({ month }) => selectedMonths.includes(month))),
+    daily_ledgers: () => set(selectedLedgers),
+    persons: () => set(personDirectory),
+    expenses: () => set(allExpenseDescriptors.filter(({ expenseEventId }) => eventIds.has(expenseEventId))),
+    local_expenses: () => set(data.expenseDescriptors),
+    typical: () => clean(data.analyticsAuthority.typical),
+    minimal: () => clean(data.analyticsAuthority.minimal),
+    category_typical: () => set(data.analyticsAuthority.categoryTypicals),
+    actual_history: () => set(months.filter((month) => month <= data.month).map((month) => ({ month, actual: dailyByMonth.get(month).actualMonthAmount }))),
+    category_history: () => {
+      const typical = categoryState(data).typicalRows.get(request.params.categoryId);
+      return set(typical?.availability !== "known" ? [] : pivotMonthIds(typical).map((month) => ({
+        month, sourceAvailable: monthData.has(month),
+        facts: set(monthData.get(month)?.facts.filter((fact) => categoryOf(fact) === request.params.categoryId) ?? []),
+      })));
+    },
+    economic_components: () => set(data.facts),
+    classifications: () => set(data.classifications),
+    operations: () => set(data.operations.map((row) => Object.fromEntries([
+      "operation_id", "date_bancaire", "montant_bancaire_depense", "description_precise", "libelle_bancaire",
+      "flux", "role_budgetaire", "type_precis", "type_ressource", "date_transaction_reelle", "montant",
+    ].filter((key) => row[key] !== undefined).map((key) => [key, row[key]])))),
+    activity_occurrences: () => set(data.occurrences),
+    activity_costs: () => set(data.activityCosts),
+    activity_links: () => set(data.causalLinks),
+    moment_relations: () => set(data.momentRelations),
+    place_visits: () => set(data.visits),
+    primary_places: () => set(data.primaryPlaces),
+    // HC2 absence is explicit; no new semantic role or hierarchy is inferred.
+    place_authorities: () => ({ semanticRoles: "UNKNOWN", routineRoles: "UNKNOWN", momentMembership: "UNKNOWN", hierarchy: "UNKNOWN" }),
+    reference_labels: () => ({ categories: set([...categoryLabels]), subcategories: set([...subcategoryLabels]), merchants: set([...merchantLabels]), places: set([...placeLabels]) }),
+    journal_supplement: () => clean(journalSupplement(data)),
+    overview_supplement: () => clean(overviewSupplement(data)),
+  };
+  const identityFor = (name) => {
+    const selector = { householdId, ownerMonth: data.month };
+    if (["calendar_artifacts", "daily_ledgers", "expenses"].includes(name)) selector.sourceMonths = selectedMonths;
+    if (name === "actual_history") selector.sourceMonths = months.filter((month) => month <= data.month);
+    if (name === "category_history") {
+      const typical = categoryState(data).typicalRows.get(request.params.categoryId);
+      selector.categoryId = request.params.categoryId;
+      selector.sourceMonths = typical?.availability === "known" ? [...pivotMonthIds(typical)].sort() : [];
+    }
+    if (name === "typical" || name === "category_typical") {
+      const authorities = name === "typical" ? [data.analyticsAuthority.typical] : data.analyticsAuthority.categoryTypicals;
+      selector.referenceWindows = authorities.map((authority) => ({
+        ...(authority.categoryId === undefined ? {} : { categoryId: authority.categoryId }),
+        includedPeriods: [...(authority.window?.includedPeriods ?? [])].sort(),
+        excludedPeriods: [...(authority.window?.excludedPeriods ?? [])].map(({ period }) => period).sort(),
+      })).sort((a, b) => (a.categoryId ?? "").localeCompare(b.categoryId ?? ""));
+    }
+    if (name === "moment_relations") selector.momentIds = [...new Set(data.canonicalMomentIds)].sort();
+    // A logical source selector + its content digest remains interpretable after
+    // canonical data changes; no financial rows are copied into the manifest.
+    return stableJson(selector);
+  };
+  return historyAnalytics.historyResourceDependencyClosure({ resource, groups: Object.fromEntries(
+    [...new Set(historyAnalytics.historyV2ResourceDependencyGroups[resource])].map((name) => [name, {
+      identity: identityFor(name),
+      value: sources[name](),
+    }]),
+  ) });
+}
+
+function overviewSupplement(data) {
+  const bridge = bridgeFor(data.month, data.facts, data.operations, data.dailyArtifact.actualMonthAmount);
+  return {
+    bankOutflows: { status: "KNOWN", value: bridge.bankOutflows },
+    bankInflows: { status: "KNOWN", value: journalSupplement(data).bankInflows },
+    causalCostByCalendarItemId: causalCostByCalendarItem(data), explicitIncidentHighlights: [],
+    narrativePlaces: placeState(data).summaries.slice(0, 4).map((place) => ({
+      placeId: place.placeId, title: place.label,
+      ...(place.presenceDays === undefined ? {} : { presenceDays: place.presenceDays }),
+      localizedAmount: place.localizedAmount, iconKey: "place", sourceRefs: place.sourceRefs,
+    })),
+  };
 }
 function spendingContributorProjection(data, params) {
   const selected = segmentSelection(data, params);
@@ -884,24 +985,40 @@ function buildActivityDetail(data, context, activityTypeKey) {
     const occurrence = data.occurrences.find((value) => String(value.lifeEventId) === String(cost.occurrenceId));
     return occurrence !== undefined && String(occurrence.activityId) === activityTypeKey;
   });
-  const componentKeys = new Set(costFacts.flatMap(({ evidence }) => evidence.map(({ canonicalComponentKey }) => String(canonicalComponentKey))));
+  const componentKeys = new Set(costFacts.filter((cost) => cost.causalCost.availability === "known").flatMap(({ evidence }) => evidence.map(({ canonicalComponentKey }) => String(canonicalComponentKey))));
+  const knownOccurrenceIds = new Set(costFacts.filter((cost) => cost.causalCost.availability === "known").map((cost) => String(cost.occurrenceId)));
+  const uniqueLinks = new Map(parseActivityCausalFinancialLinks(data.causalLinks)
+    .filter((link) => knownOccurrenceIds.has(String(link.lifeEventId)))
+    .map((link) => [`${link.lifeEventId}:${link.canonicalComponentKey}`, link]));
+  const linkedAmountByComponent = new Map();
+  for (const link of uniqueLinks.values()) {
+    if (link.economicAmountLinked === null) continue;
+    linkedAmountByComponent.set(String(link.canonicalComponentKey), sumMoney([
+      linkedAmountByComponent.get(String(link.canonicalComponentKey)) ?? zero, link.economicAmountLinked,
+    ]));
+  }
   const causalExpenses = expenseSummaries(data).filter((expense) => data.dailyArtifact.expenseEvents.some((event) =>
-    event.expenseEventId === expense.expenseEventId && event.componentKeys.some((key) => componentKeys.has(key))));
+    event.expenseEventId === expense.expenseEventId && event.componentKeys.every((key) => componentKeys.has(key))
+      && new Big(sumMoney(event.componentKeys.map((key) => linkedAmountByComponent.get(key) ?? zero))).eq(expense.amount)));
   return historyQuery.buildActivityDetailReadModel({
     context,
     activity: summary,
     occurrences: knownCollection(occurrences),
     frequencyTicket: { visibility: "VISIBLE", data: frequencyTicketUnknown() },
-    causalExpenses: knownCollection(causalExpenses),
+    causalExpenses: summary.cost.status === "UNKNOWN"
+      ? { visibility: "VISIBLE", data: unknownCollection("DATA_NO_CAUSAL_LINK") }
+      : { visibility: "VISIBLE", data: { status: "PARTIAL", items: causalExpenses, knownCount: causalExpenses.length, partialMeaning: "OBSERVED_ONLY", quality: { reasonCode: "DATA_PARTIAL_SOURCE" } } },
     associatedExpenses: { visibility: "HIDDEN", reasonCode: "POLICY_NOT_APPLICABLE" },
   });
 }
 function buildMomentDetail(data, context, momentId) {
   const summary = momentState(data).summaries.find((value) => value.momentId === momentId);
   if (summary === undefined) throw new TypeError(`Moment ${momentId} absent.`);
-  const item = momentState(data).items.find((value) => value.sourceRefs.includes(`moment:${momentId}`));
-  const ownerId = item?.calendarItemId;
-  const causalExpenses = ownerId === undefined ? [] : expenseSummaries(data).filter(({ narrativeOwnerId }) => narrativeOwnerId === ownerId);
+  const resolved = momentState(data).costForMoment(momentId);
+  const causalExpenses = expenseSummaries(data).filter((expense) => historyAnalytics.isWhollyCausalMomentExpense({
+    componentKeys: expense.sourceRefs.filter((ref) => ref.kind === "economic_component").map(({ id }) => id),
+    amount: expense.amount,
+  }, resolved));
   const spentDuring = historyQuery.computeSpentDuring({
     expenses: expenseCollectionValue(data),
     window: {
@@ -914,7 +1031,11 @@ function buildMomentDetail(data, context, momentId) {
     moment: summary,
     causalCost: displayMetric(summary.causalCost),
     spentDuring: displayMetric(spentDuring),
-    causalExpenses: knownCollection(causalExpenses),
+    causalExpenses: summary.causalCost.status === "UNKNOWN" || summary.causalCost.status === "CONFLICT"
+      ? { visibility: "VISIBLE", data: { status: summary.causalCost.status, quality: summary.causalCost.quality } }
+      // The monthly ledger does not prove a complete human-event breakdown of
+      // all causal components (including outside this month / unassigned dates).
+      : { visibility: "VISIBLE", data: { status: "PARTIAL", items: causalExpenses, knownCount: causalExpenses.length, partialMeaning: "OBSERVED_ONLY", quality: { reasonCode: "DATA_PARTIAL_SOURCE" } } },
     spentDuringExpenses: expenseCollectionValue(data).status === "KNOWN"
       ? knownCollection(expenseSummaries(data).filter(({ economicDate }) => economicDate >= summary.startDate && economicDate <= (summary.endDate ?? summary.startDate)))
       : {
@@ -943,16 +1064,14 @@ function buildPlaceDetail(data, context, placeId) {
     presenceCount,
     sourceRefs: [sourceRef("place", placeId)],
   }));
-  const amount = state.amountByPlace.get(placeId);
+  const finance = state.financeByPlace.get(placeId);
   return historyQuery.buildPlaceDetailReadModel({
     context,
     place: summary,
-    localizedCoverage: amount === undefined
+    localizedCoverage: finance.localizedCoverage === undefined
       ? { status: "NOT_APPLICABLE", quality: { reasonCode: "POLICY_NOT_APPLICABLE" } }
-      : { status: "KNOWN", value: 1 },
-    localizedAmount: amount === undefined
-      ? { visibility: "HIDDEN", reasonCode: "POLICY_NOT_APPLICABLE" }
-      : visibleKnown(amount),
+      : { status: "KNOWN", value: finance.localizedCoverage },
+    localizedAmount: displayMetric(finance.detailAmount),
     presenceDays: knownCollection(presenceDays),
   });
 }
@@ -967,33 +1086,21 @@ function buildReadModel(data, request) {
     case "history_day_journal":
       return historyQuery.buildJournalDayReadModel(calendarContext(request.resource), request.params.date, journalSupplement(data));
     case "history_month_overview": {
-      const bridge = bridgeFor(data.month, data.facts, data.operations, data.dailyArtifact.actualMonthAmount);
-      return historyQuery.buildMonthQuickOverviewReadModel(calendarContext(request.resource), data.month, {
-        bankOutflows: { status: "KNOWN", value: bridge.bankOutflows },
-        bankInflows: { status: "KNOWN", value: journalSupplement(data).bankInflows },
-        causalCostByCalendarItemId: causalCostByCalendarItem(data),
-        explicitIncidentHighlights: [],
-        narrativePlaces: placeState(data).summaries.slice(0, 4).map((place) => ({
-          placeId: place.placeId,
-          title: place.label,
-          ...(place.presenceDays === undefined ? {} : { presenceDays: place.presenceDays }),
-          localizedAmount: place.localizedAmount,
-          iconKey: "place",
-          sourceRefs: place.sourceRefs,
-        })),
-      });
+      return historyQuery.buildMonthQuickOverviewReadModel(calendarContext(request.resource), data.month, overviewSupplement(data));
     }
     case "history_month_balance_summary": {
-      const typical = data.oracle.typicalHousehold;
+      const typical = data.analyticsAuthority.typical.metric;
       const minimal = minimalState(data);
-      const actuals = months.filter((month) => month <= data.month).map((month) => money(oracleMonths[month].actual.net));
+      const actuals = months
+        .filter((month) => month <= data.month)
+        .map((month) => money(dailyByMonth.get(month).actualMonthAmount));
       return historyQuery.buildMonthBalanceSummaryReadModel({
         context,
         actual: visibleKnown(data.dailyArtifact.actualMonthAmount),
-        typical: metricNode(typical.availability === "known" ? typical.value : undefined, "REFERENCE_INSUFFICIENT_SUPPORT"),
-        minimal: metricNode(minimal.value, "REFERENCE_INSUFFICIENT_SUPPORT"),
+        typical: officialMetricNode(typical),
+        minimal: officialMetricNode(data.analyticsAuthority.minimal.metric),
         comparableActualsIncludingCurrent: actuals,
-        typicalSupportMonths: typical.n ?? 0,
+        typicalSupportMonths: typical.support?.n ?? 0,
         importedSummary: { freshness: "MISSING" },
       });
     }
@@ -1053,7 +1160,7 @@ function buildReadModel(data, request) {
       const minimal = minimalState(data);
       return historyQuery.buildMinimalPreviewReadModel({
         context,
-        minimal: metricNode(minimal.value, "REFERENCE_INSUFFICIENT_SUPPORT"),
+        minimal: officialMetricNode(data.analyticsAuthority.minimal.metric),
         preview: minimal.preview,
       });
     }
@@ -1122,7 +1229,7 @@ function displayCollectionItems(node) {
   return node?.visibility === "VISIBLE" && (node.data.status === "KNOWN" || node.data.status === "PARTIAL")
     ? node.data.items : [];
 }
-function assertMonthInvariants(data, preflight, deterministic) {
+async function assertMonthInvariants(data, preflight, deterministic, expectedOracle) {
   const ledger = data.dailyArtifact;
   const calendarArtifact = data.calendarArtifact;
   const checks = [];
@@ -1130,7 +1237,7 @@ function assertMonthInvariants(data, preflight, deterministic) {
     checks.push({ id, status: condition ? "PASS" : "FAIL", evidence });
     assert.ok(condition, `${id} ${data.month}: ${evidence}`);
   };
-  check("F01_ACTUAL_COMMON", moneyClose(ledger.actualMonthAmount, data.oracle.actual.net), `${ledger.actualMonthAmount} == ${data.oracle.actual.net}`);
+  check("F01_ACTUAL_COMMON", moneyClose(ledger.actualMonthAmount, expectedOracle.actual.net), `${ledger.actualMonthAmount} == ${expectedOracle.actual.net}`);
   check("F02_DAILY_RECONCILIATION", moneyClose(ledger.reconciliationResidual, zero), `residual=${ledger.reconciliationResidual}`);
   const dayAmount = sumMoney(ledger.days.flatMap(({ economicAmount }) =>
     economicAmount.status === "KNOWN" || economicAmount.status === "PARTIAL" ? [economicAmount.value] : []));
@@ -1184,6 +1291,46 @@ function assertMonthInvariants(data, preflight, deterministic) {
   })), "les trois axes serveur se réconcilient séparément avec le total catégorie");
   const minimal = minimalState(data);
   check("N_MINIMAL_ADDITIVE", !minimal.available || moneyClose(minimal.preview.total, minimal.value), minimal.available ? `minimal=${minimal.value}` : "Minimal DATA_MISSING autorisé");
+  const officialTypical = data.analyticsAuthority.typical.metric;
+  const expectedTypical = expectedOracle.typicalHousehold;
+  check(
+    "X02_TYPICAL_EXPECTED",
+    expectedTypical.availability === "known"
+      ? officialTypical.availability === "known" && moneyClose(officialTypical.value, expectedTypical.value)
+      : officialTypical.availability !== "known",
+    `Analytics=${officialTypical.availability === "known" ? officialTypical.value : officialTypical.availability}; EXPECTED=${expectedTypical.availability === "known" ? expectedTypical.value : expectedTypical.availability}`,
+  );
+  // Compare-only evidence is read AFTER Canonical production/preflight, never by builders.
+  const currentMinimalProof = currentMinimalEvidenceFile(data.month) !== null
+    ? await assertCurrentMinimalCertification({
+      month: data.month, repository, repositoryRoot,
+      source: await factResolver.resolve("minimal_month_cost", { subject: { kind: "household" }, time: { kind: "month", month: data.month } }),
+      metric: data.analyticsAuthority.minimal.metric, components: data.analyticsAuthority.minimal.components,
+    }) : null;
+  check(
+    "X03_MINIMAL_EXPECTED",
+    currentMinimalProof !== null
+      ? currentMinimalProof.status === "PASS" && minimal.available
+        && minimal.value === data.analyticsAuthority.minimal.metric.value
+      : expectedOracle.minimal.availability === "known"
+        ? minimal.available && moneyClose(minimal.value, expectedOracle.minimal.value)
+        : !minimal.available,
+    currentMinimalProof !== null
+      ? stableJson({ authority: "COMPARE_ONLY", ...currentMinimalProof, canonicalValue: minimal.value })
+      : `Analytics=${minimal.value ?? "UNKNOWN"}; EXPECTED=${expectedOracle.minimal.value ?? expectedOracle.minimal.availability}`,
+  );
+  const expectedCategoryTypicals = new Map((expectedOracle.typicalCategories?.rows ?? []).map((row) => [row.categoryId, row]));
+  check(
+    "K03_CATEGORY_TYPICAL_EXPECTED",
+    categoryState(data).summaries.every((summary) => {
+      const expected = expectedCategoryTypicals.get(summary.categoryId);
+      if (expected === undefined) return summary.typical.status !== "KNOWN";
+      return expected.availability === "known"
+        ? summary.typical.status === "KNOWN" && moneyClose(summary.typical.value, expected.typicalCategoryValue)
+        : summary.typical.status !== "KNOWN";
+    }),
+    "Typical catégorie Analytics comparé à EXPECTED sans alimenter le ReadModel",
+  );
   const bridge = bridgeFor(data.month, data.facts, data.operations, ledger.actualMonthAmount);
   check("K_BRIDGE_RESIDUAL", moneyClose(bridge.residual, zero), `bridge residual=${bridge.residual}`);
 
@@ -1220,7 +1367,7 @@ function assertMonthInvariants(data, preflight, deterministic) {
 const monthResults = [];
 const publicationBundleMonths = [];
 let totalQueries = 0;
-for (const month of months) {
+for (const month of selectedMonth === undefined ? months : [selectedMonth]) {
   console.error(`history_v2_preflight ${month}`);
   const data = monthData.get(month);
   const artifacts = [
@@ -1239,22 +1386,14 @@ for (const month of months) {
     const readModel = buildReadModel(data, request);
     return {
       data: readModel,
-      facts: [{
-        factType: "history_v2_query_input",
-        identity: `${request.resource}:${month}:${stableJson(request.params)}`,
-        value: {
-          resource: request.resource,
-          params: request.params,
-          resourceInputHash: readModel.resourceInputHash,
-        },
-      }],
+      ...historyQueryDependencies(data, request, readModel),
     };
   };
-  const preflight = await materialization.buildHistoryV2Preflight({ context: runtimeContext, month, artifacts, buildQuery });
+  const preflight = await materialization.buildHistoryV2Preflight({ context: runtimeContext, month, artifacts, buildQuery, implementation });
   const deterministic = publicationOnly
     ? preflight
-    : await materialization.buildHistoryV2Preflight({ context: runtimeContext, month, artifacts: [...artifacts].reverse(), buildQuery });
-  const checks = publicationOnly ? [] : assertMonthInvariants(data, preflight, deterministic);
+    : await materialization.buildHistoryV2Preflight({ context: runtimeContext, month, artifacts: [...artifacts].reverse(), buildQuery, implementation });
+  const checks = publicationOnly ? [] : await assertMonthInvariants(data, preflight, deterministic, oracleMonths[month]);
   const resources = publicationOnly
     ? materialization.historyV2QueryResources.map((resource) => ({ resource, classification: "PASS", reasons: [] }))
     : materialization.historyV2QueryResources.map((resource) => resourceResult(preflight, resource));
@@ -1275,7 +1414,9 @@ for (const month of months) {
     manifestHash: preflight.manifest.manifestHash,
     factsHash: preflight.manifest.publicationFactsHash,
     actual: data.dailyArtifact.actualMonthAmount,
-    typical: data.oracle.typicalHousehold.availability === "known" ? data.oracle.typicalHousehold.value : null,
+    typical: data.analyticsAuthority.typical.metric.availability === "known"
+      ? data.analyticsAuthority.typical.metric.value
+      : null,
     minimal: minimalState(data).value ?? null,
     dailyAssigned: data.dailyArtifact.assignedEconomicAmount,
     dailyUnassigned: data.dailyArtifact.unassignedEconomicAmount,
@@ -1289,12 +1430,13 @@ for (const month of months) {
 
 const result = {
   gate: monthResults.some(({ classification }) => classification === "FAIL") ? "FAIL" : "PASS",
-  implementationSha: process.env.HISTORY_V2_IMPLEMENTATION_SHA ?? "WORKTREE",
+  implementationSha: implementation.gitSha,
   generatedAt: runtimeContext.asOf,
   mode: publicationOnly ? "READ_ONLY_REPUBLICATION_PREFLIGHT" : "READ_ONLY",
   stageFinalize: "NONE",
   householdId,
   months: monthResults,
+  sourceRevision: runtimeContext.dataRevision,
   summary: {
     monthCount: monthResults.length,
     resourceFamilies: materialization.historyV2QueryResources.length,

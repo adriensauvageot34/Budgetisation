@@ -6,7 +6,9 @@ const resources = [
   "analysis_global_initial",
   "analysis_global_baseline",
   "analysis_global_typical",
+  "analysis_global_breakdown",
   "analysis_global_evolution",
+  "analysis_global_contexts",
   "analysis_global_habits",
   "analysis_global_profiles",
   "analysis_global_universe",
@@ -22,7 +24,7 @@ for (const resource of resources) {
   assert.match(readModelRegistry, new RegExp(`${resource}:`), `${resource} absent du Read Model Registry`);
   assert.match(adapterRegistry, new RegExp(`${resource}:`), `${resource} absent de l'Adapter Registry`);
 }
-for (const reader of ["Initial", "Baseline", "Typical", "Evolution", "Habits", "Profiles", "Universe"]) {
+for (const reader of ["Initial", "Baseline", "Typical", "Breakdown", "Evolution", "Contexts", "Habits", "Profiles", "Universe"]) {
   assert.match(serverTypes, new RegExp(`readAnalysisGlobal${reader}`));
   assert.match(sources, new RegExp(`readAnalysisGlobal${reader}`));
 }

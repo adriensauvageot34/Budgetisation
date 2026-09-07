@@ -78,8 +78,14 @@ const periodColumns = (period) => period.kind === "month"
   : { period_kind: "global", period_month: null, as_of_month: `${period.asOf}-01` };
 
 function insertSql(table, rows, columns, conflict) {
+  const publicationIds = [...new Set(rows.map((row) => row.publication_id))];
+  assert.equal(publicationIds.length, 1, "Each stage batch belongs to one draft");
   return [
     "begin;",
+    "do $$ begin",
+    `perform 1 from public.analytics_publications where publication_id=${sqlString(publicationIds[0])}::uuid and status='draft' for update;`,
+    "if not found then raise exception 'History staging requires an existing draft'; end if;",
+    "end $$;",
     `insert into public.${table} (${columns.join(",")})`,
     `select ${columns.map((column) => `x.${column}`).join(",")}`,
     `from jsonb_to_recordset(${jsonSql(rows)}) as x(${columns.map((column) => {
@@ -103,6 +109,9 @@ function insertSql(table, rows, columns, conflict) {
 
 const index = [];
 for (const { month, preflight } of bundle.months) {
+  materialization.historyV2DependencyManifestSchema.parse(preflight.manifest);
+  assert.equal(preflight.manifest.implementation.status, "KNOWN", "Manifest implementation evidence required");
+  assert.equal(preflight.manifest.implementation.gitSha, bundle.implementationSha, "Bundle and manifest implementation identities must agree");
   const plan = draftPlan.months.find((candidate) => candidate.month === month);
   assert.ok(plan, `Plan DRAFT absent pour ${month}`);
   assert.deepEqual(preflight.manifest.requiredArtifactKeys, plan.requiredArtifactKeys);
@@ -196,6 +205,14 @@ for (const { month, preflight } of bundle.months) {
     ));
     files.push(file);
   }
+  // Last staging step, before the separately authorized atomic Finalize. No SQL is executed here.
+  const manifestFile = `${month}-dependency-manifest.sql`;
+  fs.writeFileSync(path.join(outputPath, manifestFile), [
+    "select public.attach_history_v2_dependency_manifest(",
+    `${sqlString(plan.publicationId)}::uuid, ${sqlString(preflight.manifest.householdId)}::uuid,`,
+    `${jsonSql(preflight.manifest)});`,
+  ].join("\n"));
+  files.push(manifestFile);
   index.push({
     month,
     publicationId: plan.publicationId,

@@ -8,6 +8,11 @@ export async function updateSession(request: NextRequest) {
   let response = NextResponse.next({ request });
   const isApi = request.nextUrl.pathname.startsWith("/api/");
 
+  // Local P16/P17 browser harness only. Production never bypasses authentication.
+  if (process.env.NODE_ENV !== "production"
+    && request.nextUrl.pathname === "/analyse-globale"
+    && request.nextUrl.searchParams.has("fixture")) return response;
+
   // Les routes API lisent et renouvellent elles-mêmes leur session via le
   // client SSR. Elles doivent surtout rester propriétaires de leur réponse
   // d'erreur JSON, y compris quand la configuration locale est absente.

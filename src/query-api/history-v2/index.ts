@@ -95,3 +95,4 @@ export {
   spendingSegmentDetailReadModelSchema,
 } from "./month-balance-schemas";
 export type * from "./month-balance-types";
+export { historyGenerationSignalSchema, parseHistoryGenerationRequest, type HistoryGenerationSignal } from "./generation-signal";

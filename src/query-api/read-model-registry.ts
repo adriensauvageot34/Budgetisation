@@ -211,6 +211,9 @@ export function queryDataSchemaForContractVariant(
   resource: QueryResourceName,
   contractVariant: import("./server/types").QuerySnapshotContractVariant,
 ): import("../core/validation").RuntimeSchema<unknown> {
+  if (contractVariant === "history_v2_calendar_centric_pre_hc2") {
+    return queryDataSchemaByResource[resource];
+  }
   if (contractVariant === "history_v2_calendar_centric_old") {
     if (resource === queryResourceKeys.historyMonthCalendar) return oldMonthCalendarReadModelSchema;
     if (resource === queryResourceKeys.historyWeek) return oldWeekReadModelSchema;
