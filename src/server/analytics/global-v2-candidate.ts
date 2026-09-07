@@ -2,7 +2,9 @@ import "server-only";
 
 import { createHash } from "node:crypto";
 
+import { LIFE_EVENT_ACTIVITY_CATALOG } from "@/analytics/history-v2/calendar/catalog";
 import {
+  GlobalMaterialityEngine,
   GlobalPublicationEngine,
   type GlobalPublicationDecision,
 } from "@/analytics/global-v2";
@@ -11,6 +13,7 @@ import {
   computeGlobalAnalysisScopeV2Hash,
   normalizeGlobalAnalysisScopeV2,
   type GlobalAnalysisScopeV2,
+  type GlobalMaterialityCandidate,
   type GlobalScopeValidationContext,
 } from "@/core/global-v2";
 import {
@@ -19,11 +22,15 @@ import {
   buildGlobalModuleCompactReadModel,
   buildImportedGlobalSummaryReadModel,
   GLOBAL_MAX_SECTION_ROWS,
-  globalExpandedSectionKeys,
   globalPrimaryModuleCatalog,
   globalV2ExpandedResourceCatalog,
   globalV2QueryRegistry,
+  type GlobalCompactInsight,
+  type GlobalCompactKpi,
   type GlobalCompactQuality,
+  type GlobalDetailMetric,
+  type GlobalDetailRow,
+  type GlobalDetailSeries,
   type GlobalExpandedSectionKey,
   type GlobalModuleCapability,
   type GlobalPrimaryModuleKey,
@@ -86,59 +93,448 @@ export type GlobalV2CandidateInput = {
   readonly analyticsRevision: string;
   readonly implementationIdentity: string;
   readonly ownerOutputs: readonly GlobalV2OwnerOutput[];
+  readonly presentationLabels?: GlobalV2PresentationLabels;
 };
 
-type EntityProjection = { readonly ref: string; readonly labelKey: string };
+export type GlobalV2PresentationLabels = {
+  readonly persons?: Readonly<Record<string, string>>;
+  readonly places?: Readonly<Record<string, string>>;
+  readonly categories?: Readonly<Record<string, string>>;
+  readonly needs?: Readonly<Record<string, string>>;
+};
 
-const entityKeysByModule: Readonly<Record<GlobalPrimaryModuleKey, readonly string[]>> = Object.freeze({
-  ECONOMIC: [],
-  CATEGORIES_NEEDS: ["categoryId", "needId"],
-  TRANSFORMATIONS: ["transformationId"],
-  RHYTHM: ["activityId", "routineId"],
-  RELATIONSHIPS: ["relationshipId"],
-  MOMENTS: ["momentId"],
-  GEO_MOBILITY: ["placeId"],
-  CONSUMPTION: ["purchaseEventId", "merchantId"],
-  PERSONAS: ["personId", "differenceId"],
-  TOGETHER: ["unitId", "universeId"],
-});
+export function globalV2M6HasPresentationContent(value: unknown): boolean {
+  const output = recordOf(value);
+  return output !== undefined
+    && ["summaries", "comparisons", "series", "narrative"].some((key) => arrayOf(output[key]).length > 0);
+}
 
-function entitiesFromOutput(moduleKey: GlobalPrimaryModuleKey, output: unknown): readonly EntityProjection[] {
-  const accepted = new Set(entityKeysByModule[moduleKey]);
-  const refs = new Map<string, EntityProjection>();
-  const visit = (value: unknown, depth: number): void => {
-    if (depth > 8 || value === null || typeof value !== "object") return;
-    if (Array.isArray(value)) {
-      value.forEach((item) => visit(item, depth + 1));
-      return;
-    }
-    for (const [key, item] of Object.entries(value as Record<string, unknown>)) {
-      if (accepted.has(key) && typeof item === "string" && item.trim().length > 0) {
-        const ref = `${key.replace(/Id$/u, "").replace(/[A-Z]/gu, (letter) => `-${letter.toLowerCase()}`)}:${item}`;
-        refs.set(ref, { ref, labelKey: `global.entity.${key}` });
-      }
-      visit(item, depth + 1);
-    }
+type RecordValue = Readonly<Record<string, unknown>>;
+type SectionProjection = {
+  readonly metrics?: readonly GlobalDetailMetric[];
+  readonly series?: readonly GlobalDetailSeries[];
+  readonly rows?: readonly GlobalDetailRow[];
+};
+type ModuleProjection = {
+  readonly primaryInsight?: GlobalCompactInsight;
+  readonly kpis: readonly GlobalCompactKpi[];
+  readonly sections: Readonly<Partial<Record<GlobalExpandedSectionKey, SectionProjection>>>;
+  readonly detailRows: readonly GlobalDetailRow[];
+};
+
+const recordOf = (value: unknown): RecordValue | undefined => value !== null && typeof value === "object" && !Array.isArray(value)
+  ? value as RecordValue
+  : undefined;
+const arrayOf = (value: unknown): readonly unknown[] => Array.isArray(value) ? value : [];
+const at = (value: unknown, ...path: readonly string[]): unknown => path.reduce<unknown>((current, key) => recordOf(current)?.[key], value);
+const stringOf = (value: unknown): string | undefined => typeof value === "string" && value.trim().length > 0 ? value : typeof value === "number" && Number.isFinite(value) ? String(value) : undefined;
+const numberOf = (value: unknown): number | undefined => {
+  const parsed = typeof value === "number" ? value : typeof value === "string" && value.trim().length > 0 ? Number(value) : Number.NaN;
+  return Number.isFinite(parsed) ? parsed : undefined;
+};
+const uniqueSorted = (values: readonly string[]): readonly string[] => [...new Set(values)].sort();
+
+function formatNumber(value: unknown, maximumFractionDigits = 2): string | undefined {
+  const numeric = numberOf(value);
+  return numeric === undefined ? undefined : new Intl.NumberFormat("fr-FR", { maximumFractionDigits }).format(numeric);
+}
+
+function formatMoney(value: unknown): string | undefined {
+  const formatted = formatNumber(value, 2);
+  return formatted === undefined ? undefined : `${formatted} €`;
+}
+
+function formatSignedMoney(value: unknown): string | undefined {
+  const numeric = numberOf(value);
+  const formatted = formatMoney(numeric === undefined ? undefined : Math.abs(numeric));
+  return formatted === undefined ? undefined : `${numeric! > 0 ? "+" : numeric! < 0 ? "−" : ""}${formatted}`;
+}
+
+function activityLabel(activityId: string): string | undefined {
+  return LIFE_EVENT_ACTIVITY_CATALOG[activityId as keyof typeof LIFE_EVENT_ACTIVITY_CATALOG]?.publicLabel;
+}
+
+function personLabel(personId: string, labels: GlobalV2PresentationLabels, personIds: readonly string[]): string {
+  const index = [...personIds].sort().indexOf(personId);
+  return labels.persons?.[personId] ?? (index < 0 ? "Personne non identifiée" : `Personne ${index + 1}`);
+}
+
+function outputEvidence(output: GlobalV2OwnerOutput, ...extra: readonly string[]): readonly string[] {
+  return uniqueSorted([...output.evidenceRefs, ...extra]);
+}
+
+function metric(output: GlobalV2OwnerOutput, metricId: string, labelKey: string, displayValue: string, knowledgeState: GlobalDetailMetric["knowledgeState"] = output.knowledge): GlobalDetailMetric {
+  return {
+    metricId,
+    labelKey,
+    displayValue,
+    knowledgeState,
+    ...(knowledgeState === "PARTIAL" ? { partialMeaning: "OBSERVED_ONLY" as const } : {}),
+    dataNature: "OBSERVED",
+    evidenceRefs: outputEvidence(output),
   };
-  visit(output, 0);
-  return [...refs.values()]
-    .sort((left, right) => left.ref.localeCompare(right.ref))
-    .slice(0, GLOBAL_MAX_SECTION_ROWS);
 }
 
-function countMeaningful(value: unknown): number {
-  if (Array.isArray(value)) return value.length;
-  if (value !== null && typeof value === "object") {
-    const record = value as Record<string, unknown>;
-    for (const key of ["transformations", "relationships", "experiences", "places", "purchases", "metrics", "differences", "universes", "rhythms"] as const) {
-      if (Array.isArray(record[key])) return record[key].length;
-    }
-    return Object.keys(record).length;
+function row(output: GlobalV2OwnerOutput, rank: number, rowId: string, labelKey: string, displayValue: string, entityRef?: string, knowledgeState: GlobalDetailRow["knowledgeState"] = output.knowledge): GlobalDetailRow {
+  return {
+    rowId: `${String(rank).padStart(3, "0")}:${rowId}`,
+    labelKey,
+    displayValue,
+    knowledgeState,
+    ...(entityRef === undefined ? {} : { entityRef }),
+    evidenceRefs: outputEvidence(output),
+  };
+}
+
+function series(output: GlobalV2OwnerOutput, seriesId: string, labelKey: string, unit: string, points: readonly unknown[], unitKey: string, valueKey: string): GlobalDetailSeries {
+  return {
+    seriesId,
+    labelKey,
+    unit,
+    points: points.flatMap((point) => {
+      const pointUnit = stringOf(at(point, unitKey));
+      const value = stringOf(at(point, valueKey));
+      return pointUnit === undefined || value === undefined ? [] : [{ unitKey: pointUnit, displayValue: value, knowledgeState: "KNOWN" as const }];
+    }),
+    evidenceRefs: outputEvidence(output),
+  };
+}
+
+function kpi(output: GlobalV2OwnerOutput, kpiId: string, labelKey: string, displayValue: string, metricRef: string): GlobalCompactKpi {
+  return { kpiId, phenomenonId: `presentation:${output.moduleKey.toLowerCase()}`, labelKey, displayValue, metricRef, evidenceRefs: outputEvidence(output) };
+}
+
+function presentationInsight(
+  output: GlobalV2OwnerOutput,
+  insightId: string,
+  titleKey: string,
+  statementKey: string,
+  options: { readonly primaryMetricRef?: string; readonly entityRefs?: readonly string[] } = {},
+): GlobalCompactInsight {
+  return {
+    insightId: `presentation:${output.moduleKey.toLowerCase()}:${insightId}`,
+    phenomenonId: `presentation:${output.moduleKey.toLowerCase()}`,
+    kind: "DETERMINISTIC_PRESENTATION",
+    titleKey,
+    statementKey,
+    ...(options.primaryMetricRef === undefined ? {} : { primaryMetricRef: options.primaryMetricRef }),
+    entityRefs: uniqueSorted(options.entityRefs ?? []),
+    evidenceRefs: outputEvidence(output),
+    detailRefs: [],
+    editorialRank: 1,
+  };
+}
+
+function completeMonthlySeries(points: readonly unknown[]): readonly unknown[] {
+  const months = points.flatMap((point) => {
+    const month = stringOf(at(point, "month"));
+    return month === undefined ? [] : [month];
+  });
+  return points.length === 12 && new Set(months).size === 12 ? points : [];
+}
+
+function byDescendingNumber(path: readonly string[]) {
+  return (left: unknown, right: unknown): number => (numberOf(at(right, ...path)) ?? Number.NEGATIVE_INFINITY) - (numberOf(at(left, ...path)) ?? Number.NEGATIVE_INFINITY);
+}
+
+function economicProjection(output: GlobalV2OwnerOutput): ModuleProjection {
+  const actualNumber = numberOf(at(output.output, "actual", "value", "value"));
+  const typicalNumber = numberOf(at(output.output, "typical", "reference", "value"));
+  const actual = formatMoney(at(output.output, "actual", "value", "value"));
+  const typical = formatMoney(at(output.output, "typical", "reference", "value"));
+  const minimal = formatMoney(at(output.output, "minimal", "metric", "value"));
+  const targetMonth = stringOf(at(output.output, "targetMonth"));
+  const compact = [
+    ...(actual === undefined ? [] : [kpi(output, "kpi:economic:actual", targetMonth === undefined ? "Dépenses du mois" : `Dépenses en ${targetMonth}`, actual, "global-m1:actual")]),
+    ...(typical === undefined ? [] : [kpi(output, "kpi:economic:typical", "Niveau habituel", typical, "global-m1:typical-reference")]),
+    ...(minimal === undefined ? [] : [kpi(output, "kpi:economic:minimal", "Minimum estimé", minimal, "global-m1:minimal")]),
+  ];
+  const habitualDelta = actualNumber === undefined || typicalNumber === undefined ? undefined : actualNumber - typicalNumber;
+  const deltaAmount = habitualDelta === undefined ? undefined : formatMoney(Math.abs(habitualDelta));
+  const deltaStatement = habitualDelta === undefined || deltaAmount === undefined || typical === undefined
+    ? undefined
+    : habitualDelta > 0
+      ? `${deltaAmount} au-dessus de votre niveau habituel · Habituel : ${typical}/mois`
+      : habitualDelta < 0
+        ? `${deltaAmount} sous votre niveau habituel · Habituel : ${typical}/mois`
+        : `Très proche de votre niveau habituel · Habituel : ${typical}/mois`;
+  const breakdownLabels: Readonly<Record<string, string>> = {
+    Fixe: "Fixe", Variable: "Variable", CURRENT: "Vie courante", NON_CURRENT: "Hors quotidien",
+    Contrainte: "Contrainte", Indispensable: "Indispensable", Optionnelle: "Optionnelle", Ajustable: "Ajustable",
+  };
+  const breakdownRows = [["behavior", "Comportement"], ["lifeScope", "Périmètre de vie"], ["necessity", "Nécessité"]].flatMap(([axis, axisLabel]) => {
+    const amounts = recordOf(at(output.output, "structure", axis, "amounts"));
+    return Object.entries(amounts ?? {}).map(([key, value], index) => row(output, index + 1, `${axis}:${key}`, `${axisLabel} · ${breakdownLabels[key] ?? key}`, formatMoney(value) ?? "Montant indisponible", undefined, "KNOWN"));
+  });
+  const temporalMetrics = [
+    ["trend-start", "Niveau au début", at(output.output, "temporal", "trend", "startLevel")],
+    ["trend-end", "Niveau à la fin", at(output.output, "temporal", "trend", "endLevel")],
+    ["trend-slope", "Évolution mensuelle", at(output.output, "temporal", "trend", "slopePerMonth")],
+    ["recent-previous", "Niveau précédent", at(output.output, "temporal", "recentChange", "previousLevel")],
+    ["recent-current", "Niveau récent", at(output.output, "temporal", "recentChange", "recentLevel")],
+    ["recent-delta", "Variation récente", at(output.output, "temporal", "recentChange", "delta")],
+  ].flatMap(([id, label, value]) => {
+    const formatted = (id as string).includes("delta") || (id as string).includes("slope") ? formatSignedMoney(value) : formatMoney(value);
+    return formatted === undefined ? [] : [metric(output, id as string, label as string, formatted, "KNOWN")];
+  });
+  return {
+    ...(deltaStatement === undefined ? {} : { primaryInsight: presentationInsight(output, "habitual-delta", "Écart à l’habitude", deltaStatement, { primaryMetricRef: "global-m1:actual" }) }),
+    kpis: compact,
+    sections: {
+      OVERVIEW: { metrics: compact.map((entry) => metric(output, entry.kpiId.replace("kpi:", "metric:"), entry.labelKey, entry.displayValue, "KNOWN")) },
+      BREAKDOWN: { rows: breakdownRows },
+      EVOLUTION: { metrics: temporalMetrics },
+    },
+    detailRows: [],
+  };
+}
+
+function categoryNeedProjection(output: GlobalV2OwnerOutput, labels: GlobalV2PresentationLabels): ModuleProjection {
+  const result = recordOf(at(output.output, "result"));
+  const categories = arrayOf(at(result, "categories", "groups"));
+  const needs = arrayOf(at(result, "needs", "groups"));
+  const materiality = new GlobalMaterialityEngine();
+  const candidateCategoryIds = new Set(arrayOf(at(result, "materialityCandidates")).flatMap((candidate) => {
+    const evaluation = materiality.evaluate({ candidate: candidate as GlobalMaterialityCandidate, policyId: "CATEGORY_NEED" });
+    if (evaluation.status !== "MATERIAL") return [];
+    return arrayOf(at(candidate, "entityRefs")).flatMap((ref) => typeof ref === "string" && ref.startsWith("category:") ? [ref.slice("category:".length)] : []);
+  }));
+  const knownCategories = categories.flatMap((group) => {
+    const id = stringOf(at(group, "dimension", "id"));
+    const label = id === undefined ? undefined : labels.categories?.[id];
+    return id === undefined || label === undefined ? [] : [{ group, id, label }];
+  });
+  const rankedCategories = [...knownCategories].sort((left, right) => byDescendingNumber(["monthlyAmount"])(left.group, right.group) || left.id.localeCompare(right.id));
+  const notable = [...knownCategories].filter(({ id }) => candidateCategoryIds.has(id)).sort((left, right) => {
+    const delta = Math.abs(numberOf(at(right.group, "deltaAmount")) ?? Number.NEGATIVE_INFINITY) - Math.abs(numberOf(at(left.group, "deltaAmount")) ?? Number.NEGATIVE_INFINITY);
+    return delta || byDescendingNumber(["monthlyAmount"])(left.group, right.group) || left.id.localeCompare(right.id);
+  })[0];
+  const categoryRows = rankedCategories.slice(0, 5).map(({ group, id, label }, index) => {
+    const current = formatMoney(at(group, "monthlyAmount")) ?? "Montant indisponible";
+    const typical = formatMoney(at(group, "typicalAmount"));
+    const delta = formatSignedMoney(at(group, "deltaAmount"));
+    return row(output, index + 1, `category:${id}`, label, [current, typical === undefined ? undefined : `habituel ${typical}`, delta === undefined ? undefined : `écart ${delta}`].filter(Boolean).join(" · "), `category:${id}`, "KNOWN");
+  });
+  const needRows = needs.flatMap((group) => {
+    const id = stringOf(at(group, "dimension", "id")) ?? stringOf(at(group, "key"));
+    const label = id === "__UNKNOWN__" ? "Besoin non déterminé" : id === undefined ? undefined : labels.needs?.[id];
+    return id === undefined || label === undefined ? [] : [{ group, id, label }];
+  }).sort((left, right) => byDescendingNumber(["monthlyAmount"])(left.group, right.group) || left.id.localeCompare(right.id)).slice(0, 5).map(({ group, id, label }, index) => row(output, index + 1, `need:${id}`, label, formatMoney(at(group, "monthlyAmount")) ?? "Montant indisponible", `need:${id}`, "KNOWN"));
+  const evolution = [...knownCategories].sort((left, right) => byDescendingNumber(["typicalAmount"])(left.group, right.group) || left.id.localeCompare(right.id)).slice(0, 3).flatMap(({ group, id, label }) => {
+    const points = completeMonthlySeries(arrayOf(at(group, "historicalSeries")));
+    return points.length === 0 ? [] : [series(output, `category-series:${id}`, label, "EUR", points, "month", "amount")];
+  });
+  const currentTotal = formatMoney(at(result, "categories", "currentTotal"));
+  const notableDelta = notable === undefined ? undefined : formatSignedMoney(at(notable.group, "deltaAmount"));
+  const notableCurrent = notable === undefined ? undefined : formatMoney(at(notable.group, "monthlyAmount"));
+  const notableTypical = notable === undefined ? undefined : formatMoney(at(notable.group, "typicalAmount"));
+  return {
+    ...(notable === undefined || notableDelta === undefined || notableCurrent === undefined || notableTypical === undefined ? {} : {
+      primaryInsight: presentationInsight(output, "notable-category", notable.label, `${notableDelta} par rapport à votre habitude · ${notableCurrent} ce mois-ci · habituel ${notableTypical}`, { primaryMetricRef: `global-m2:category:${notable.id}`, entityRefs: [`category:${notable.id}`] }),
+    }),
+    kpis: [
+      ...(notable === undefined || notableDelta === undefined || notableCurrent === undefined || notableTypical === undefined ? [] : [kpi(output, "kpi:categories:notable", notable.label, `${notableCurrent} ce mois-ci · habituel ${notableTypical} · écart ${notableDelta}`, `global-m2:category:${notable.id}`)]),
+      ...(currentTotal === undefined ? [] : [kpi(output, "kpi:categories:current-total", "Total des catégories", currentTotal, "global-m2:categories:current-total")]),
+    ].slice(0, 3),
+    sections: {
+      OVERVIEW: { metrics: currentTotal === undefined ? [] : [metric(output, "categories-current-total", "Total du mois", currentTotal, "KNOWN")] },
+      BREAKDOWN: { rows: categoryRows },
+      PATTERNS: { rows: needRows },
+      EVOLUTION: { series: evolution },
+    },
+    detailRows: [...categoryRows, ...needRows].slice(0, GLOBAL_MAX_SECTION_ROWS),
+  };
+}
+
+function rhythmProjection(output: GlobalV2OwnerOutput, labels: GlobalV2PresentationLabels, personIds: readonly string[]): ModuleProjection {
+  const rhythms = arrayOf(at(output.output, "rhythms")).flatMap((rhythm) => {
+    const activityId = stringOf(at(rhythm, "activityId"));
+    const personId = stringOf(at(rhythm, "personId"));
+    const label = activityId === undefined ? undefined : activityLabel(activityId);
+    return activityId === undefined || personId === undefined || label === undefined ? [] : [{ rhythm, activityId, personId, label, person: personLabel(personId, labels, personIds), authoritativePersonLabel: labels.persons?.[personId] }];
+  }).sort((left, right) => byDescendingNumber(["support", "occurrenceCount"])(left.rhythm, right.rhythm) || byDescendingNumber(["rate", "value"])(left.rhythm, right.rhythm) || left.activityId.localeCompare(right.activityId) || left.personId.localeCompare(right.personId));
+  const topRows = uniqueSorted(rhythms.map(({ personId }) => personId)).flatMap((personId) => rhythms.filter((entry) => entry.personId === personId).slice(0, 5)).map(({ rhythm, activityId, personId, label, person }, index) => {
+    const count = formatNumber(at(rhythm, "support", "occurrenceCount"), 0) ?? "0";
+    const median = formatNumber(at(rhythm, "cadence", "medianIntervalDays"), 1);
+    return row(output, index + 1, `rhythm:${personId}:${activityId}`, `${label} · ${person}`, `${count} occurrences${median === undefined ? "" : ` · intervalle médian ${median} jours`}`, `activity:${activityId}`, "KNOWN");
+  });
+  const evolution = rhythms.slice(0, 3).flatMap(({ rhythm, activityId, personId, label, person }) => {
+    const points = completeMonthlySeries(arrayOf(at(rhythm, "monthlyRates")));
+    return points.length === 0 ? [] : [series(output, `rhythm-series:${personId}:${activityId}`, `${label} · ${person}`, "OCCURRENCES_PAR_JOUR_OBSERVÉ", points, "month", "value")];
+  });
+  const headline = rhythms.find(({ rhythm, authoritativePersonLabel }) => authoritativePersonLabel !== undefined && (numberOf(at(rhythm, "support", "occurrenceCount")) ?? 0) > 0);
+  const headlineCount = headline === undefined ? undefined : formatNumber(at(headline.rhythm, "support", "occurrenceCount"), 0);
+  const headlineMedian = headline === undefined ? undefined : formatNumber(at(headline.rhythm, "cadence", "medianIntervalDays"), 1);
+  return {
+    ...(headline === undefined || headlineCount === undefined ? {} : {
+      primaryInsight: presentationInsight(output, "dominant-rhythm", headline.label, `${headlineCount} occurrences pour ${headline.authoritativePersonLabel}${headlineMedian === undefined ? "" : ` · Intervalle médian : ${headlineMedian} jours`}`, { primaryMetricRef: `global-m4:${headline.personId}:${headline.activityId}`, entityRefs: [`activity:${headline.activityId}`, `person:${headline.personId}`] }),
+    }),
+    kpis: rhythms.filter(({ rhythm, authoritativePersonLabel }) => authoritativePersonLabel !== undefined && (numberOf(at(rhythm, "support", "occurrenceCount")) ?? 0) > 0).slice(0, 3).map(({ rhythm, activityId, personId, label, authoritativePersonLabel }, index) => {
+      const median = formatNumber(at(rhythm, "cadence", "medianIntervalDays"), 1);
+      return kpi(output, `kpi:rhythm:${String(index).padStart(2, "0")}`, `${label} · ${authoritativePersonLabel}`, `${formatNumber(at(rhythm, "support", "occurrenceCount"), 0)} occurrences${median === undefined ? "" : ` · intervalle médian ${median} jours`}`, `global-m4:${personId}:${activityId}`);
+    }),
+    sections: { OVERVIEW: { rows: topRows }, EVOLUTION: { series: evolution } },
+    detailRows: topRows,
+  };
+}
+
+function momentProjection(output: GlobalV2OwnerOutput): ModuleProjection {
+  const summaries = arrayOf(at(output.output, "summaries")).flatMap((summary) => {
+    const momentId = stringOf(at(summary, "moment", "momentId"));
+    const label = stringOf(at(summary, "moment", "type", "value"));
+    const amount = at(summary, "causalCost", "value");
+    return momentId === undefined || label === undefined || formatMoney(amount) === undefined ? [] : [{ summary, momentId, label, amount }];
+  }).sort((left, right) => byDescendingNumber(["causalCost", "value"])(left.summary, right.summary) || (stringOf(at(right.summary, "moment", "startDate")) ?? "").localeCompare(stringOf(at(left.summary, "moment", "startDate")) ?? "") || left.momentId.localeCompare(right.momentId));
+  const summaryRows = summaries.slice(0, 5).map(({ summary, momentId, label, amount }, index) => {
+    const start = stringOf(at(summary, "moment", "startDate"));
+    const end = stringOf(at(summary, "moment", "endDate"));
+    const dates = start === undefined ? undefined : end === undefined || end === start ? start : `${start} → ${end}`;
+    return row(output, index + 1, `moment:${momentId}`, label, [formatMoney(amount), dates].filter(Boolean).join(" · "), `moment:${momentId}`, at(summary, "causalCost", "status") === "PARTIAL" ? "PARTIAL" : "KNOWN");
+  });
+  const comparisonRows = arrayOf(at(output.output, "comparisons")).slice(0, 5).flatMap((comparison, index) => {
+    const momentId = stringOf(at(comparison, "momentId"));
+    const subjectCost = formatMoney(at(comparison, "subjectCost"));
+    const peerCount = formatNumber(at(comparison, "peerCount"), 0);
+    return momentId === undefined || subjectCost === undefined ? [] : [row(output, index + 1, `comparison:${momentId}`, summaries.find((entry) => entry.momentId === momentId)?.label ?? "Moment", `${subjectCost}${peerCount === undefined ? "" : ` · ${peerCount} moments comparables`}`, `moment:${momentId}`, "KNOWN")];
+  });
+  const paymentPhaseLabels: Readonly<Record<string, string>> = {
+    PAID_BEFORE: "Payé avant",
+    PAID_DURING: "Payé pendant",
+    PAID_AFTER: "Payé après",
+    UNKNOWN_PAYMENT_PHASE: "Date de paiement non déterminée",
+  };
+  const timelineRows = summaries.slice(0, 5).flatMap(({ summary, momentId, label }) => arrayOf(at(summary, "paymentTimeline")).flatMap((entry) => {
+    const phase = stringOf(at(entry, "paymentPhase"));
+    const amount = formatMoney(at(entry, "amount"));
+    return phase === undefined || amount === undefined ? [] : [{ momentId, label, phase, amount }];
+  })).slice(0, GLOBAL_MAX_SECTION_ROWS).map(({ momentId, label, phase, amount }, index) => row(output, index + 1, `timeline:${momentId}:${phase}`, `${label} · ${paymentPhaseLabels[phase] ?? "Temporalité de paiement"}`, amount, `moment:${momentId}`, "KNOWN"));
+  const headline = summaries.find(({ summary }) => at(summary, "causalCost", "status") === "KNOWN" && stringOf(at(summary, "moment", "startDate")) !== undefined);
+  const headlineDate = headline === undefined ? undefined : stringOf(at(headline.summary, "moment", "startDate"));
+  const headlineEnd = headline === undefined ? undefined : stringOf(at(headline.summary, "moment", "endDate"));
+  const headlineDates = headlineDate === undefined ? undefined : headlineEnd === undefined || headlineEnd === headlineDate ? headlineDate : `${headlineDate} → ${headlineEnd}`;
+  const contextCount = arrayOf(at(output.output, "summaries")).length;
+  return {
+    ...(headline === undefined || headlineDates === undefined ? {} : {
+      primaryInsight: presentationInsight(output, "highest-causal-cost", headline.label, `${formatMoney(headline.amount)} · ${headlineDates} · ${contextCount} moments en contexte · Analyse partielle`, { primaryMetricRef: `global-m6:${headline.momentId}`, entityRefs: [`moment:${headline.momentId}`] }),
+    }),
+    kpis: summaries.slice(0, 3).map(({ momentId, label, amount }, index) => kpi(output, `kpi:moments:${String(index).padStart(2, "0")}`, label, formatMoney(amount)!, `global-m6:${momentId}`)),
+    sections: { OVERVIEW: { rows: summaryRows }, COMPARISONS: { rows: comparisonRows }, ...(timelineRows.length === 0 ? {} : { PATTERNS: { rows: timelineRows } }) },
+    detailRows: summaryRows,
+  };
+}
+
+function placeProjection(output: GlobalV2OwnerOutput, labels: GlobalV2PresentationLabels): ModuleProjection {
+  const places = arrayOf(at(output.output, "places")).flatMap((place) => {
+    const placeId = stringOf(at(place, "placeId"));
+    const label = placeId === undefined ? undefined : labels.places?.[placeId];
+    return placeId === undefined || label === undefined ? [] : [{ place, placeId, label }];
+  }).filter(({ place }) => (numberOf(at(place, "visitCount")) ?? 0) > 0).sort((left, right) => byDescendingNumber(["visitCount"])(left.place, right.place) || byDescendingNumber(["visitDays"])(left.place, right.place) || byDescendingNumber(["medianDuration"])(left.place, right.place) || left.placeId.localeCompare(right.placeId));
+  const placeRows = places.slice(0, 5).map(({ place, placeId, label }, index) => {
+    const visits = formatNumber(at(place, "visitCount"), 0) ?? "0";
+    const duration = formatNumber(at(place, "medianDuration"), 0);
+    return row(output, index + 1, `place:${placeId}`, label, `${visits} visites${duration === undefined ? "" : ` · durée médiane ${duration} min`}`, `place:${placeId}`, "KNOWN");
+  });
+  const amounts = new Map<string, number>();
+  for (const rollup of arrayOf(at(output.output, "finance", "rollups"))) {
+    const placeId = stringOf(at(rollup, "placeId"));
+    const amount = numberOf(at(rollup, "amount"));
+    if (placeId !== undefined && amount !== undefined) amounts.set(placeId, (amounts.get(placeId) ?? 0) + amount);
   }
-  return value === undefined || value === null ? 0 : 1;
+  const financeRows = [...amounts.entries()].flatMap(([placeId, amount]) => labels.places?.[placeId] === undefined ? [] : [{ placeId, amount, label: labels.places[placeId]! }]).sort((left, right) => right.amount - left.amount || left.placeId.localeCompare(right.placeId)).slice(0, 5).map(({ placeId, amount, label }, index) => row(output, index + 1, `place-finance:${placeId}`, label, formatMoney(amount)!, `place:${placeId}`, "KNOWN"));
+  const lifecycleLabels: Readonly<Record<string, string>> = {
+    NEWLY_OBSERVED: "Nouvellement observé",
+    REGULAR: "Fréquentation régulière",
+    NEW_REGULAR: "Nouvelle fréquentation régulière",
+    GROWING: "Fréquentation en hausse",
+    DECLINING: "Fréquentation en baisse",
+    REGULAR_STABLE: "Fréquentation régulière et stable",
+    DORMANT: "Fréquentation en sommeil",
+    ABANDONED: "Fréquentation interrompue",
+    ROLE_ENDED: "Rôle de ce lieu terminé",
+    OBSERVED: "Lieu observé",
+  };
+  const lifecycleRows = places.slice(0, 5).flatMap(({ place, placeId, label }, index) => {
+    const lifecycle = stringOf(at(place, "lifecycle", "status"));
+    return lifecycle === undefined || lifecycleLabels[lifecycle] === undefined ? [] : [row(output, index + 1, `place-lifecycle:${placeId}`, label, lifecycleLabels[lifecycle]!, `place:${placeId}`, "KNOWN")];
+  });
+  const headline = places[0];
+  return {
+    ...(headline === undefined ? {} : {
+      primaryInsight: presentationInsight(output, "primary-place", headline.label, `${formatNumber(at(headline.place, "visitCount"), 0)} visites observées · Votre lieu le plus fréquenté sur la période`, { primaryMetricRef: `global-m7:${headline.placeId}`, entityRefs: [`place:${headline.placeId}`] }),
+    }),
+    kpis: places.slice(0, 3).map(({ place, placeId, label }, index) => kpi(output, `kpi:places:${String(index).padStart(2, "0")}`, label, `${formatNumber(at(place, "visitCount"), 0) ?? "0"} visites`, `global-m7:${placeId}`)),
+    sections: { OVERVIEW: { rows: placeRows }, BREAKDOWN: { rows: financeRows }, EVOLUTION: { rows: lifecycleRows } },
+    detailRows: placeRows,
+  };
 }
 
-function publicationDecision(output: GlobalV2OwnerOutput, revision: number): GlobalPublicationDecision {
+function personaProjection(output: GlobalV2OwnerOutput, labels: GlobalV2PresentationLabels, personIds: readonly string[]): ModuleProjection {
+  const values = arrayOf(at(output.output, "metrics")).flatMap((value) => {
+    const personId = stringOf(at(value, "personId"));
+    const metricId = stringOf(at(value, "metricId"));
+    const rawValue = stringOf(at(value, "rawValue"));
+    if (personId === undefined || metricId === undefined || rawValue === undefined) return [];
+    const activityId = metricId.startsWith("activity-rate:") ? metricId.slice("activity-rate:".length) : undefined;
+    const humanMetric = activityId === undefined ? undefined : activityLabel(activityId);
+    return humanMetric === undefined ? [] : [{ personId, metricId, humanMetric, person: personLabel(personId, labels, personIds), rawValue }];
+  }).sort((left, right) => left.personId.localeCompare(right.personId) || (numberOf(right.rawValue) ?? 0) - (numberOf(left.rawValue) ?? 0) || left.metricId.localeCompare(right.metricId));
+  const rows = uniqueSorted(values.map(({ personId }) => personId)).flatMap((personId) => values.filter((entry) => entry.personId === personId).slice(0, 3)).map(({ personId, metricId, humanMetric, person, rawValue }, index) => row(output, index + 1, `persona:${personId}:${metricId}`, `${person} · ${humanMetric}`, `${formatNumber(rawValue, 3) ?? rawValue} occurrence/jour observé`, `person:${personId}`, "PARTIAL"));
+  return {
+    ...(rows.length === 0 ? {} : { primaryInsight: presentationInsight(output, "neutral-persona-comparison", "Aucune différence nette à mettre en avant entre vos profils", "Les métriques descriptives restent disponibles séparément pour chaque personne, sans conclusion gagnant/perdant.") }),
+    kpis: [],
+    sections: { OVERVIEW: { rows } },
+    detailRows: rows,
+  };
+}
+
+function togetherProjection(output: GlobalV2OwnerOutput): ModuleProjection {
+  const universes = arrayOf(at(output.output, "universes")).flatMap((universe) => {
+    const universeId = stringOf(at(universe, "universeId"));
+    const activityId = universeId?.startsWith("activity:") ? universeId.slice("activity:".length) : universeId;
+    const label = activityId === undefined ? undefined : activityLabel(activityId);
+    const sharedUnits = numberOf(at(universe, "support", "sharedUnits"));
+    const resolvedUnits = numberOf(at(universe, "support", "resolvedUnits"));
+    const eligibleUnits = numberOf(at(universe, "support", "eligibleUnits"));
+    const knowledge = stringOf(at(universe, "support", "knowledgeState"));
+    return universeId === undefined || activityId === undefined || label === undefined || sharedUnits === undefined || sharedUnits <= 0 || resolvedUnits === undefined || resolvedUnits <= 0 || eligibleUnits === undefined || !["KNOWN", "PARTIAL"].includes(knowledge ?? "") ? [] : [{ universe, universeId, activityId, label, sharedUnits, resolvedUnits, eligibleUnits, knowledge: knowledge as "KNOWN" | "PARTIAL" }];
+  }).sort((left, right) => right.sharedUnits - left.sharedUnits || (numberOf(at(right.universe, "support", "sharedObservableCoverage")) ?? 0) - (numberOf(at(left.universe, "support", "sharedObservableCoverage")) ?? 0) || left.universeId.localeCompare(right.universeId));
+  const rows = universes.slice(0, 5).map(({ universeId, label, sharedUnits, resolvedUnits, eligibleUnits, knowledge }, index) => row(output, index + 1, `together:${universeId}`, label, `${sharedUnits} occurrences explicitement partagées · ${resolvedUnits} résolues sur ${eligibleUnits} observables`, `activity:${universeId.replace(/^activity:/u, "")}`, knowledge));
+  const headline = universes[0];
+  return {
+    ...(headline === undefined ? {} : {
+      primaryInsight: presentationInsight(output, "top-shared-activity", headline.label, `${headline.sharedUnits} occurrences explicitement partagées · sur ${headline.eligibleUnits} occurrences observables${headline.knowledge === "PARTIAL" ? " · Analyse partielle" : ""}`, { primaryMetricRef: `global-m10:${headline.universeId}`, entityRefs: [`activity:${headline.activityId}`] }),
+    }),
+    kpis: universes.slice(0, 3).map(({ universeId, label, sharedUnits }, index) => kpi(output, `kpi:together:${String(index).padStart(2, "0")}`, label, `${sharedUnits} occurrences partagées`, `global-m10:${universeId}`)),
+    sections: { OVERVIEW: { rows } },
+    detailRows: rows,
+  };
+}
+
+function neutralProjection(output: GlobalV2OwnerOutput, title: string, message: string): ModuleProjection {
+  return {
+    primaryInsight: presentationInsight(output, "neutral-state", title, message),
+    kpis: [],
+    sections: { OVERVIEW: { rows: [row(output, 1, `state:${output.moduleKey.toLowerCase()}`, title, message, undefined, output.knowledge)] } },
+    detailRows: [],
+  };
+}
+
+function projectModule(output: GlobalV2OwnerOutput, labels: GlobalV2PresentationLabels, personIds: readonly string[]): ModuleProjection {
+  switch (output.moduleKey) {
+    case "ECONOMIC": return economicProjection(output);
+    case "CATEGORIES_NEEDS": return categoryNeedProjection(output, labels);
+    case "TRANSFORMATIONS": return neutralProjection(output, "Aucun changement durable clairement identifié", "Aucun changement suffisamment net et durable n’a été identifié.");
+    case "RHYTHM": return rhythmProjection(output, labels, personIds);
+    case "RELATIONSHIPS": return neutralProjection(output, "Pas encore assez d’éléments pour établir une relation fiable", "Aucune association suffisamment étayée n’est actuellement publiable.");
+    case "MOMENTS": return momentProjection(output);
+    case "GEO_MOBILITY": return placeProjection(output, labels);
+    case "CONSUMPTION": return { kpis: [], sections: {}, detailRows: [] };
+    case "PERSONAS": return personaProjection(output, labels, personIds);
+    case "TOGETHER": return togetherProjection(output);
+  }
+}
+
+function publicationDecision(output: GlobalV2OwnerOutput, revision: number, surface: "AUTO_GLOBAL" | "MODULE_DETAIL" = "AUTO_GLOBAL"): GlobalPublicationDecision {
   return new GlobalPublicationEngine().decide({
     sectionKey: `module:${output.moduleKey}`,
     policy: {
@@ -153,7 +549,7 @@ function publicationDecision(output: GlobalV2OwnerOutput, revision: number): Glo
       placeholderPolicy: "CORE_WHEN_RECOVERABLE",
       methodVersion: "global-v2-owner-projection@v1",
     },
-    surface: "AUTO_GLOBAL",
+    surface,
     analyticsRevision: String(revision),
     gates: {
       capability: output.capabilityState !== "UNAVAILABLE",
@@ -171,8 +567,16 @@ function publicationDecision(output: GlobalV2OwnerOutput, revision: number): Glo
       editorialSelection: true,
       publicationReady: true,
       recoverableReason: output.capabilityState === "UNAVAILABLE" ? "CAPABILITY_NOT_AVAILABLE" : "UNKNOWN_REQUIRED_VALUE",
+      ...(output.knowledge === "PARTIAL" ? { qualification: "PARTIAL_COVERAGE" as const } : {}),
     },
   });
+}
+
+function humanizePlaceholder(output: GlobalV2OwnerOutput, decision: GlobalPublicationDecision): GlobalPublicationDecision {
+  if (decision.visibility !== "PLACEHOLDER") return decision;
+  if (output.moduleKey === "RELATIONSHIPS") return { ...decision, placeholder: { messageKey: "Pas encore assez d’éléments pour établir une relation fiable" } };
+  if (output.moduleKey === "CONSUMPTION") return { ...decision, placeholder: { messageKey: "Analyse pas encore disponible" } };
+  return decision;
 }
 
 function quality(output: GlobalV2OwnerOutput): GlobalCompactQuality {
@@ -218,13 +622,28 @@ export function buildGlobalV2CandidateFromOwnerOutputs(input: GlobalV2CandidateI
   if (outputs.length !== globalPrimaryModuleCatalog.length || new Set(outputs.map(({ moduleKey }) => moduleKey)).size !== globalPrimaryModuleCatalog.length) {
     throw new TypeError("GLOBAL_LIVE_CANDIDATE_OWNER_SET_INCOMPLETE");
   }
+  const sortLabels = (values: Readonly<Record<string, string>> | undefined): Readonly<Record<string, string>> => Object.fromEntries(Object.entries(values ?? {}).sort(([left], [right]) => left.localeCompare(right)));
+  const presentationLabels: GlobalV2PresentationLabels = {
+    persons: sortLabels(input.presentationLabels?.persons),
+    places: sortLabels(input.presentationLabels?.places),
+    categories: sortLabels(input.presentationLabels?.categories),
+    needs: sortLabels(input.presentationLabels?.needs),
+  };
+  const labelInputsFor = (moduleKey: GlobalPrimaryModuleKey): unknown => {
+    if (moduleKey === "CATEGORIES_NEEDS") return { categories: presentationLabels.categories, needs: presentationLabels.needs };
+    if (moduleKey === "RHYTHM" || moduleKey === "PERSONAS") return { persons: presentationLabels.persons };
+    if (moduleKey === "GEO_MOBILITY") return { places: presentationLabels.places };
+    return undefined;
+  };
   const outputDigests = outputs.map((item) => ({ moduleKey: item.moduleKey, owner: item.owner, digest: digest(item.output), knowledge: item.knowledge, capabilityState: item.capabilityState }));
+  const labelDigests = outputs.flatMap(({ moduleKey }) => labelInputsFor(moduleKey) === undefined ? [] : [{ moduleKey, digest: digest(labelInputsFor(moduleKey)) }]);
+  const projections = new Map(outputs.map((output) => [output.moduleKey, projectModule(output, presentationLabels, input.personIds)] as const));
   const implementation = {
     status: "KNOWN" as const,
     gitSha: input.implementationIdentity,
     digest: digest({ format: "global-v2-live-implementation@v1", gitSha: input.implementationIdentity, registry: Object.entries(globalV2QueryRegistry).map(([resource, contract]) => ({ resource, contractVersion: contract.contractVersion, methodVersion: contract.methodVersion, policyVersions: contract.policyVersions })) }),
   };
-  const candidateId = deterministicUuid({ format: "global-v2-live-candidate@v1", project: input.project, householdId: input.householdId, scope, dataRevision: input.dataRevision, analyticsRevision: input.analyticsRevision, implementation, outputDigests });
+  const candidateId = deterministicUuid({ format: "global-v2-live-candidate@v1", project: input.project, householdId: input.householdId, scope, dataRevision: input.dataRevision, analyticsRevision: input.analyticsRevision, implementation, outputDigests, labelDigests });
   const generatedAt = input.asOf;
   const provisionalMeta: GlobalReadModelPublicationMeta = {
     publicationId: candidateId,
@@ -236,7 +655,11 @@ export function buildGlobalV2CandidateFromOwnerOutputs(input: GlobalV2CandidateI
   };
   const dependenciesFor = (moduleKey: GlobalPrimaryModuleKey): readonly GlobalV2ResolvedDependency[] => {
     const output = outputDigests.find((entry) => entry.moduleKey === moduleKey)!;
-    return [{ authority: "METRIC", family: `global_${moduleKey.toLowerCase()}_owner_output`, identity: `${output.owner}:${moduleKey}`, digest: output.digest, required: true }];
+    const labelDigest = labelDigests.find((entry) => entry.moduleKey === moduleKey);
+    return [
+      { authority: "METRIC", family: `global_${moduleKey.toLowerCase()}_owner_output`, identity: `${output.owner}:${moduleKey}`, digest: output.digest, required: true },
+      ...(labelDigest === undefined ? [] : [{ authority: "CANONICAL" as const, family: `global_${moduleKey.toLowerCase()}_presentation_labels`, identity: `presentation-labels:${moduleKey}`, digest: labelDigest.digest, required: true }]),
+    ];
   };
   const metaFor = (resource: GlobalV2QueryResourceName, params: GlobalV2QueryParams, dependencies: readonly GlobalV2ResolvedDependency[]): GlobalReadModelResourceMeta => ({
     contractVersion: globalV2QueryRegistry[resource].contractVersion,
@@ -245,18 +668,15 @@ export function buildGlobalV2CandidateFromOwnerOutputs(input: GlobalV2CandidateI
     resourceInputHash: globalV2QueryResourceInputHash({ resource, scope, params, dependencies }),
   });
   const expandedResourceByModule = new Map(globalV2ExpandedResourceCatalog.slice(0, 10).map(({ moduleKey, resource }) => [moduleKey, resource] as const));
-  const expandedKeysByModule = new Map<GlobalPrimaryModuleKey, Map<GlobalExpandedSectionKey, string>>();
-  for (const { moduleKey } of outputs) {
-    const resource = expandedResourceByModule.get(moduleKey)!;
-    expandedKeysByModule.set(moduleKey, new Map(globalExpandedSectionKeys.map((sectionKey) => [sectionKey, globalV2QueryInstanceKey(resource, scopeHash, { sectionKey })])));
-  }
+  const expandedOverviewKey = (moduleKey: GlobalPrimaryModuleKey): string => globalV2QueryInstanceKey(expandedResourceByModule.get(moduleKey)!, scopeHash, { sectionKey: "OVERVIEW" });
   const moduleInstances: GlobalV2QueryInstanceInput[] = outputs.map((ownerOutput) => {
     const catalog = globalPrimaryModuleCatalog.find(({ moduleKey }) => moduleKey === ownerOutput.moduleKey)!;
     const dependencies = dependenciesFor(ownerOutput.moduleKey);
     const params = {};
-    const decision = publicationDecision(ownerOutput, revision);
+    const projection = projections.get(ownerOutput.moduleKey)!;
+    const hasPresentationContent = projection.kpis.length > 0 || Object.values(projection.sections).some((section) => (section.metrics?.length ?? 0) + (section.series?.length ?? 0) + (section.rows?.length ?? 0) > 0);
+    const decision = humanizePlaceholder(ownerOutput, publicationDecision(ownerOutput, revision, ownerOutput.knowledge === "PARTIAL" && hasPresentationContent ? "MODULE_DETAIL" : "AUTO_GLOBAL"));
     const visible = decision.visibility === "VISIBLE";
-    const count = countMeaningful(ownerOutput.output);
     return {
       resource: catalog.resource,
       scope,
@@ -266,10 +686,11 @@ export function buildGlobalV2CandidateFromOwnerOutputs(input: GlobalV2CandidateI
         moduleKey: ownerOutput.moduleKey,
         publicationDecision: decision,
         insightCandidates: [],
-        kpis: visible ? [{ kpiId: `kpi:${ownerOutput.moduleKey.toLowerCase()}:owner-output`, phenomenonId: `phenomenon:${ownerOutput.moduleKey.toLowerCase()}:owner-output`, labelKey: `global.${ownerOutput.moduleKey.toLowerCase()}`, displayValue: String(count), metricRef: `${ownerOutput.owner}:${ownerOutput.moduleKey}`, evidenceRefs: ownerOutput.evidenceRefs }] : [],
+        ...(visible && projection.primaryInsight !== undefined ? { presentationInsight: projection.primaryInsight } : {}),
+        kpis: visible ? projection.kpis : [],
         quality: quality(ownerOutput),
         capabilities: [capability(ownerOutput)],
-        detailEntries: visible ? [{ entryId: `expanded:${ownerOutput.moduleKey}`, labelKey: "global.detail", targetResource: expandedResourceByModule.get(ownerOutput.moduleKey)!, targetRef: expandedKeysByModule.get(ownerOutput.moduleKey)!.get("OVERVIEW")! }] : [],
+        detailEntries: visible && projection.sections.OVERVIEW !== undefined ? [{ entryId: `expanded:${ownerOutput.moduleKey}`, labelKey: "global.detail", targetResource: expandedResourceByModule.get(ownerOutput.moduleKey)!, targetRef: expandedOverviewKey(ownerOutput.moduleKey) }] : [],
         publicationMeta: provisionalMeta,
         resourceMeta: metaFor(catalog.resource, params, dependencies),
       }),
@@ -277,12 +698,12 @@ export function buildGlobalV2CandidateFromOwnerOutputs(input: GlobalV2CandidateI
   });
   const expandedInstances: GlobalV2QueryInstanceInput[] = [];
   for (const ownerOutput of outputs) {
-    const decision = publicationDecision(ownerOutput, revision);
+    const decision = publicationDecision(ownerOutput, revision, "MODULE_DETAIL");
     if (decision.visibility !== "VISIBLE") continue;
     const resource = expandedResourceByModule.get(ownerOutput.moduleKey)!;
     const dependencies = dependenciesFor(ownerOutput.moduleKey);
-    const entities = entitiesFromOutput(ownerOutput.moduleKey, ownerOutput.output);
-    for (const sectionKey of globalExpandedSectionKeys) {
+    const projection = projections.get(ownerOutput.moduleKey)!;
+    for (const [sectionKey, section] of Object.entries(projection.sections) as Array<[GlobalExpandedSectionKey, SectionProjection]>) {
       const params = { sectionKey };
       expandedInstances.push({
         resource,
@@ -297,9 +718,9 @@ export function buildGlobalV2CandidateFromOwnerOutputs(input: GlobalV2CandidateI
           sectionKey,
           visibility: "VISIBLE",
           secondaryInsights: [],
-          metrics: [{ metricId: `metric:${ownerOutput.moduleKey.toLowerCase()}:owner-output`, labelKey: `global.${ownerOutput.moduleKey.toLowerCase()}`, displayValue: String(countMeaningful(ownerOutput.output)), knowledgeState: ownerOutput.knowledge, ...(ownerOutput.knowledge === "PARTIAL" ? { partialMeaning: "OBSERVED_ONLY" as const } : {}), dataNature: "OBSERVED", evidenceRefs: ownerOutput.evidenceRefs }],
-          series: [],
-          rows: entities.map((entity) => ({ rowId: `row:${entity.ref}`, labelKey: entity.labelKey, displayValue: entity.ref, knowledgeState: "KNOWN" as const, entityRef: entity.ref, evidenceRefs: ownerOutput.evidenceRefs })),
+          metrics: section.metrics ?? [],
+          series: section.series ?? [],
+          rows: section.rows ?? [],
           destinations: [],
           quality: quality(ownerOutput),
           capabilities: [capability(ownerOutput)],
@@ -309,8 +730,9 @@ export function buildGlobalV2CandidateFromOwnerOutputs(input: GlobalV2CandidateI
       });
     }
     const detailResource = detailResourceFor(ownerOutput.moduleKey);
-    if (detailResource !== undefined) for (const entity of entities) {
-      const params = { entityRef: entity.ref };
+    const detailRows = [...new Map(projection.detailRows.flatMap((detailRow) => detailRow.entityRef === undefined ? [] : [[detailRow.entityRef, detailRow] as const])).values()].slice(0, GLOBAL_MAX_SECTION_ROWS);
+    if (detailResource !== undefined) for (const detailRow of detailRows) {
+      const params = { entityRef: detailRow.entityRef! };
       expandedInstances.push({
         resource: detailResource,
         scope,
@@ -318,7 +740,7 @@ export function buildGlobalV2CandidateFromOwnerOutputs(input: GlobalV2CandidateI
         dependencies,
         payload: buildGlobalExpandedReadModel({
           kind: "global_expanded", schemaVersion: "global-expanded@v1", resource: detailResource, moduleKey: ownerOutput.moduleKey, sectionKey: "OVERVIEW", visibility: "VISIBLE", secondaryInsights: [], metrics: [], series: [],
-          rows: [{ rowId: `detail:${entity.ref}`, labelKey: entity.labelKey, displayValue: entity.ref, knowledgeState: "KNOWN", evidenceRefs: ownerOutput.evidenceRefs }], destinations: [], quality: quality(ownerOutput), capabilities: [capability(ownerOutput)], publicationMeta: provisionalMeta, resourceMeta: metaFor(detailResource, params, dependencies),
+          rows: [{ ...detailRow, rowId: `detail:${detailRow.rowId}` }], destinations: [], quality: quality(ownerOutput), capabilities: [capability(ownerOutput)], publicationMeta: provisionalMeta, resourceMeta: metaFor(detailResource, params, dependencies),
         }),
       });
     }
@@ -333,7 +755,7 @@ export function buildGlobalV2CandidateFromOwnerOutputs(input: GlobalV2CandidateI
       }),
     });
   }
-  const allOutputDependencies = outputs.map(({ moduleKey }) => dependenciesFor(moduleKey)[0]!);
+  const allOutputDependencies = outputs.flatMap(({ moduleKey }) => dependenciesFor(moduleKey));
   const initialParams = {};
   const initialPayload = buildGlobalInitialReadModel({
     modules: moduleInstances.map(({ payload }) => payload as never),
@@ -356,7 +778,7 @@ export function buildGlobalV2CandidateFromOwnerOutputs(input: GlobalV2CandidateI
     contractVersion: "global-owner-outputs@v1",
     methodSignature: digest({ method: "global-v2-production-orchestration@v1", implementation }),
     policyVersions: { orchestration: "global-v2-production-orchestration@v1" },
-    resourceInputHash: digest({ scope, outputDigests }),
+    resourceInputHash: digest({ scope, outputDigests, labelDigests }),
   };
   const artifactClosure = { outputKey: artifactKey, declarationDigest: globalV2ClosureDeclarationDigest(artifactDependencies), inputDigest: globalV2ClosureInputDigest(artifactDependencies), dependencies: artifactDependencies };
   const manifestBase = {
@@ -380,7 +802,7 @@ export function buildGlobalV2CandidateFromOwnerOutputs(input: GlobalV2CandidateI
   const plan = buildGlobalV2QueryPlan({ instances });
   const finalManifest = attachGlobalV2QueryPlanToManifest({ base: manifestBase, plan });
   if (manifest.manifestHash !== finalManifest.manifestHash) throw new TypeError("GLOBAL_LIVE_CANDIDATE_NON_DETERMINISTIC");
-  const artifactPayload = { kind: "global_owner_outputs", outputs: outputs.map(({ moduleKey, owner, output, knowledge, capabilityState, reasonCodes, evidenceRefs }) => ({ moduleKey, owner, output, knowledge, capabilityState, reasonCodes: [...reasonCodes].sort(), evidenceRefs: [...evidenceRefs].sort() })), publicationMeta: finalMeta, resourceMeta: { contractVersion: artifactVersion.contractVersion, methodSignature: artifactVersion.methodSignature, policyVersions: artifactVersion.policyVersions, resourceInputHash: artifactVersion.resourceInputHash } };
+  const artifactPayload = { kind: "global_owner_outputs", outputs: outputs.map(({ moduleKey, owner, output, knowledge, capabilityState, reasonCodes, evidenceRefs }) => ({ moduleKey, owner, output, knowledge, capabilityState, reasonCodes: [...reasonCodes].sort(), evidenceRefs: [...evidenceRefs].sort() })), presentationLabels, publicationMeta: finalMeta, resourceMeta: { contractVersion: artifactVersion.contractVersion, methodSignature: artifactVersion.methodSignature, policyVersions: artifactVersion.policyVersions, resourceInputHash: artifactVersion.resourceInputHash } };
   return {
     project: input.project,
     householdScope: input.householdId,

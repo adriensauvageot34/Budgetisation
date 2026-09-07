@@ -8,6 +8,7 @@ import type { GlobalPublicationDecision } from "../../analytics/global-v2/public
 import { parseGlobalInitialReadModel, parseGlobalModuleCompactReadModel } from "./schemas";
 import {
   globalPrimaryModuleCatalog,
+  type GlobalCompactInsight,
   type GlobalCompactKpi,
   type GlobalCompactQuality,
   type GlobalDetailEntry,
@@ -49,6 +50,7 @@ export type GlobalModuleCompactBuilderInput = {
   readonly moduleKey: GlobalPrimaryModuleKey;
   readonly publicationDecision: GlobalPublicationDecision;
   readonly insightCandidates: readonly GlobalInsightCandidate[];
+  readonly presentationInsight?: GlobalCompactInsight;
   readonly kpis: readonly GlobalCompactKpi[];
   readonly quality: GlobalCompactQuality;
   readonly capabilities: readonly GlobalModuleCapability[];
@@ -67,7 +69,14 @@ export function buildGlobalModuleCompactReadModel(input: GlobalModuleCompactBuil
   const moduleCandidates = input.insightCandidates.filter((candidate) => candidate.moduleKey === input.moduleKey);
   if (moduleCandidates.length !== input.insightCandidates.length) throw new TypeError("GLOBAL_MODULE_FOREIGN_INSIGHT");
   const selection = new InsightSelectionEngine().select({ candidates: moduleCandidates, limit: input.publicationDecision.visibility === "VISIBLE" ? 1 : 0 });
-  const primaryInsight = selection.selectedInsights[0] === undefined ? undefined : toCompactInsight(selection.selectedInsights[0]);
+  if (input.presentationInsight !== undefined && selection.selectedInsights.length > 0) throw new TypeError("GLOBAL_MODULE_MULTIPLE_PRIMARY_INSIGHTS");
+  const selectedInsight = selection.selectedInsights[0] === undefined ? undefined : toCompactInsight(selection.selectedInsights[0]);
+  const primaryInsight = input.presentationInsight === undefined ? selectedInsight : {
+    ...input.presentationInsight,
+    entityRefs: canonicalBy(input.presentationInsight.entityRefs, (value) => value, "GLOBAL_PRESENTATION_INSIGHT_ENTITY_REF"),
+    evidenceRefs: canonicalBy(input.presentationInsight.evidenceRefs, (value) => value, "GLOBAL_PRESENTATION_INSIGHT_EVIDENCE_REF"),
+    detailRefs: canonicalBy(input.presentationInsight.detailRefs, (value) => value, "GLOBAL_PRESENTATION_INSIGHT_DETAIL_REF"),
+  };
   const kpis = input.publicationDecision.visibility === "VISIBLE"
     ? canonicalBy(input.kpis, (entry) => entry.kpiId, "GLOBAL_COMPACT_KPI")
     : [];

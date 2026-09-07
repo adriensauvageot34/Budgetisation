@@ -22,6 +22,7 @@ import {
 } from "@/server/bootstrap/queries";
 import { createAuthorizedRuntimeContext, type AuthorizedRuntimeContext } from "@/server/canonical/context";
 import { CanonicalRepository } from "@/server/canonical/repository";
+import { optionalCanonicalString, type CanonicalRecord } from "@/server/canonical/record";
 import { FactSourceResolver } from "./fact-source-resolver";
 import { resolveGlobalM1HouseholdAuthority } from "./global-v2-economic-authority";
 import { resolveGlobalM2HouseholdAuthority } from "./global-v2-category-needs-authority";
@@ -29,7 +30,7 @@ import { resolveGlobalM5PersonAuthority } from "./global-v2-relationship-authori
 import { resolveGlobalM6MomentAuthority } from "./global-v2-moment-authority";
 import { resolveGlobalM7PlaceAuthority } from "./global-v2-place-authority";
 import { resolveGlobalM8PurchaseAuthority } from "./global-v2-purchase-authority";
-import { buildGlobalV2CandidateFromOwnerOutputs, type GlobalV2OwnerOutput } from "./global-v2-candidate";
+import { buildGlobalV2CandidateFromOwnerOutputs, globalV2M6HasPresentationContent, type GlobalV2OwnerOutput, type GlobalV2PresentationLabels } from "./global-v2-candidate";
 
 export const GLOBAL_V2_LIVE_PROJECT = "ipuuhxrblxormwgoaqnz" as const;
 
@@ -41,6 +42,14 @@ function evidence(owner: string, output: unknown): readonly string[] {
 function hasItems(value: unknown, keys: readonly string[]): boolean {
   if (value === null || typeof value !== "object") return false;
   return keys.some((key) => Array.isArray((value as Record<string, unknown>)[key]) && ((value as Record<string, unknown>)[key] as unknown[]).length > 0);
+}
+
+function labelsFromRows(rows: readonly CanonicalRecord[], idColumn: string, labelColumn: string): Readonly<Record<string, string>> {
+  return Object.fromEntries(rows.flatMap((row) => {
+    const id = optionalCanonicalString(row, [idColumn]);
+    const label = optionalCanonicalString(row, [labelColumn]);
+    return id === undefined || label === undefined ? [] : [[id, label] as const];
+  }).sort(([left], [right]) => left.localeCompare(right)));
 }
 
 export async function createGlobalV2CandidateContext(input: {
@@ -135,19 +144,34 @@ export async function resolveGlobalV2ProductionOwnerOutputs(repository: Canonica
     : [];
   const m10 = { units: sharedUnits, universes: buildGlobalSharedAnalysis(sharedUnits), authority: context.personIds.length === 2 ? "CANONICAL_ACTIVITY_PARTICIPATION" : "DATA_GATED_PERSON_PAIR" };
 
+  const categoryIds = m2.result.categories.groups.flatMap(({ dimension }) => dimension.status === "KNOWN" ? [String(dimension.id)] : []);
+  const needIds = m2.result.needs.groups.flatMap(({ dimension }) => dimension.status === "KNOWN" ? [String(dimension.id)] : []);
+  const placeIds = m7.places.map(({ placeId }) => String(placeId));
+  const [categoryRows, needRows, placeRows] = await Promise.all([
+    repository.loadTaxonomyRows("categories", categoryIds),
+    repository.loadNeedRows(needIds),
+    repository.loadEntityRows("places", "place_id", placeIds),
+  ]);
+  const presentationLabels: GlobalV2PresentationLabels = {
+    persons: Object.fromEntries(context.persons.map(({ personId, displayName }) => [String(personId), displayName]).sort(([left], [right]) => left.localeCompare(right))),
+    categories: labelsFromRows(categoryRows, "category_id", "nom_canonique"),
+    needs: labelsFromRows(needRows, "need_id", "name"),
+    places: labelsFromRows(placeRows, "place_id", "nom_canonique"),
+  };
+
   const ownerOutputs: GlobalV2OwnerOutput[] = [
     { moduleKey: "ECONOMIC", owner: "GlobalM1HouseholdAuthority", output: m1, knowledge: m1.actual.value.status, capabilityState: m1.actual.value.status === "KNOWN" ? "AVAILABLE" : "PARTIAL", reasonCodes: [], evidenceRefs: evidence("M1", m1) },
     { moduleKey: "CATEGORIES_NEEDS", owner: "GlobalM2HouseholdAuthority", output: m2, knowledge: "KNOWN", capabilityState: "AVAILABLE", reasonCodes: [], evidenceRefs: evidence("M2", m2) },
     { moduleKey: "TRANSFORMATIONS", owner: "buildGlobalTransformations", output: m3, knowledge: m3.transformations.length > 0 || m3.relationshipChanges !== undefined ? "KNOWN" : "UNKNOWN", capabilityState: m3.transformations.length > 0 || m3.relationshipChanges !== undefined ? "AVAILABLE" : "PARTIAL", reasonCodes: m3.transformations.length > 0 ? [] : ["NO_CERTIFIED_TRANSFORMATION"], evidenceRefs: evidence("M3", m3) },
     { moduleKey: "RHYTHM", owner: "buildGlobalActivityRhythm", output: { rhythms }, knowledge: rhythms.length > 0 ? "KNOWN" : "UNKNOWN", capabilityState: rhythms.length > 0 ? "AVAILABLE" : "PARTIAL", reasonCodes: rhythms.length > 0 ? [] : ["NO_OBSERVABLE_ACTIVITY"], evidenceRefs: evidence("M4", rhythms) },
-    { moduleKey: "RELATIONSHIPS", owner: "GlobalM5PersonAuthority", output: m5, knowledge: m5.some((result) => result.relationships.length > 0) ? "KNOWN" : "UNKNOWN", capabilityState: "PARTIAL", reasonCodes: ["AUTHORITY_GATED_RELATIONSHIP_PROVIDERS"], evidenceRefs: evidence("M5", m5) },
-    { moduleKey: "MOMENTS", owner: "GlobalM6MomentAuthority", output: m6, knowledge: hasItems(m6, ["experiences", "moments"]) ? "KNOWN" : "UNKNOWN", capabilityState: "PARTIAL", reasonCodes: hasItems(m6, ["experiences", "moments"]) ? [] : ["NO_COMPARABLE_MOMENT"], evidenceRefs: evidence("M6", m6) },
+    { moduleKey: "RELATIONSHIPS", owner: "GlobalM5PersonAuthority", output: m5, knowledge: m5.some((result) => result.insights.length > 0) ? "KNOWN" : "UNKNOWN", capabilityState: "PARTIAL", reasonCodes: ["AUTHORITY_GATED_RELATIONSHIP_PROVIDERS"], evidenceRefs: evidence("M5", m5) },
+    { moduleKey: "MOMENTS", owner: "GlobalM6MomentAuthority", output: m6, knowledge: globalV2M6HasPresentationContent(m6) ? "PARTIAL" : "UNKNOWN", capabilityState: "PARTIAL", reasonCodes: globalV2M6HasPresentationContent(m6) ? ["MOMENT_PLACE_FACETS_PARTIAL"] : ["NO_COMPARABLE_MOMENT"], evidenceRefs: evidence("M6", m6) },
     { moduleKey: "GEO_MOBILITY", owner: "GlobalM7PlaceAuthority", output: m7, knowledge: hasItems(m7, ["places", "visits", "placeResults"]) ? "KNOWN" : "UNKNOWN", capabilityState: "PARTIAL", reasonCodes: ["AUTHORITY_GATED_MOBILITY"], evidenceRefs: evidence("M7", m7) },
-    { moduleKey: "CONSUMPTION", owner: "GlobalM8PurchaseAuthority", output: m8, knowledge: hasItems(m8, ["purchases", "purchaseEvents", "merchants"]) ? "PARTIAL" : "UNKNOWN", capabilityState: "PARTIAL", reasonCodes: ["PURCHASE_EVENT_COVERAGE_PARTIAL"], evidenceRefs: evidence("M8", m8) },
+    { moduleKey: "CONSUMPTION", owner: "GlobalM8PurchaseAuthority", output: m8, knowledge: hasItems(m8, ["events", "merchants"]) ? "PARTIAL" : "UNKNOWN", capabilityState: "PARTIAL", reasonCodes: ["PURCHASE_EVENT_COVERAGE_PARTIAL"], evidenceRefs: evidence("M8", m8) },
     { moduleKey: "PERSONAS", owner: "buildGlobalPersonaMetrics", output: m9, knowledge: personaMetrics.length > 0 ? "PARTIAL" : "UNKNOWN", capabilityState: context.personIds.length >= 2 ? "PARTIAL" : "UNAVAILABLE", reasonCodes: personaMetrics.length > 0 ? ["COMPARABLE_INTERSECTION_REQUIRED"] : ["PERSON_PAIR_UNAVAILABLE"], evidenceRefs: evidence("M9", m9) },
     { moduleKey: "TOGETHER", owner: "SharedParticipationResolver", output: m10, knowledge: m10.universes.length > 0 ? "PARTIAL" : "UNKNOWN", capabilityState: context.personIds.length === 2 ? "PARTIAL" : "UNAVAILABLE", reasonCodes: m10.universes.length > 0 ? ["PARTICIPATION_COVERAGE_VISIBLE"] : ["SHARED_UNIVERSE_UNAVAILABLE"], evidenceRefs: evidence("M10", m10) },
   ];
-  return { scope, certifiedThrough, targetMonth, ownerOutputs };
+  return { scope, certifiedThrough, targetMonth, ownerOutputs, presentationLabels };
 }
 
 /** Read-only production bridge: this API exposes no materialization store. */
@@ -171,5 +195,6 @@ export async function prepareGlobalV2LiveCandidate(input: {
     analyticsRevision: String(input.context.analyticsRevision),
     implementationIdentity: input.implementationIdentity,
     ownerOutputs: resolved.ownerOutputs,
+    presentationLabels: resolved.presentationLabels,
   });
 }

@@ -1858,6 +1858,25 @@ export class CanonicalRepository {
         .order(mapping.idColumn, { ascending: true }));
   }
 
+  /** Canonical Need display authority used by server-side presentation projections. */
+  async loadNeedRows(ids: readonly string[]): Promise<readonly CanonicalRecord[]> {
+    const normalizedIds = unique(ids);
+    if (normalizedIds.length === 0) return [];
+    await this.assertAuthorizedCanonicalHouseholdScope();
+    return this.readRowsByInBatches(
+      `taxonomy:needs:${normalizedIds.join(",")}`,
+      "taxonomy",
+      normalizedIds,
+      ["need_id"],
+      ["need_id"],
+      (batch) => this.client
+        .from("needs")
+        .select("need_id,name")
+        .in("need_id", batch)
+        .order("need_id", { ascending: true }),
+    );
+  }
+
   loadLifeEventTypeRowsByIds(
     ids: readonly string[],
   ): Promise<readonly CanonicalRecord[]> {
