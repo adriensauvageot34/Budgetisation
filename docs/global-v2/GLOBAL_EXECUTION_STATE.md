@@ -398,3 +398,12 @@ Elles restent des contrats de compatibilité, pas une autorité V2.
 - Query/materialization/History/Global V2/frontend/runtime legacy, TypeScript, architecture et build Production sont PASS. M1–M10/Facts/FDR restent `REUSABLE_UNCHANGED`; `GLOBAL_ANALYTIC_CANDIDATE=REUSABLE_UNCHANGED`.
 - SQL P18 inchangé, SHA-256 `B5C60AD3FB47EBC56DAC23E61E081B0502556674A2B8D59C90D687BE6F6BF085`. Aucune écriture live, migration, publication, génération, push ou déploiement.
 - `P18T_CODE_COMPATIBILITY_FIX=PASS_LOCAL`; `P18T_DEPLOYMENT_COMPATIBILITY=PENDING_DEPLOYMENT`; `GLOBAL_ROUTE_V2=INACTIVE`; `GLOBAL_SCHEMA_LIVE_GATE=BLOCKED_PENDING_P18T_DEPLOYMENT`; `NEXT_PERMITTED_PROMPT=P18T_PUSH_AND_COMPATIBILITY_DEPLOYMENT_AFTER_AUTHORIZATION`. P18/P19 interdits.
+
+### P18T/P18 — résolution Git, déploiement attesté et schéma live (2026-09-07)
+
+- La divergence documentaire distante a été intégrée par le merge `2ed2cc0dadaef64a6e788cf881b6b40311a9cc2b`, parents `22ef278109f8c06ad01d99b51aed54d1a4e97964` et `ce85f1ee2040fe25bfb96482c4fd0c5b8238df49`. Le produit hors `docs/**` est byte-identique au correctif certifié ; le contrôle ciblé legacy Global reste `9/9 PASS`, avec zéro write-through Supabase.
+- Le merge a été poussé en fast-forward sur `origin/main`, puis son déploiement automatique a été attesté extérieurement par l'utilisateur. Aucun accès Vercel n'a été effectué par l'agent.
+- La migration autorisée `global_v2_publication_infrastructure`, SHA-256 `B5C60AD3FB47EBC56DAC23E61E081B0502556674A2B8D59C90D687BE6F6BF085`, a été appliquée uniquement au projet `ipuuhxrblxormwgoaqnz` et enregistrée sous `20260907123714`.
+- Post-DDL : `global_manifest` nullable sans défaut, huit fonctions, quatre triggers actifs et handshake `global-v2-publication@v1` présents. RLS/grants ciblés conformes ; aucun accès navigateur nouveau.
+- Révisions inchangées `1/79`. History reste à `947` snapshots V2, `15` familles et `24` artifacts ; empreintes pré/post identiques, aucun doublon/invalidation actif. Global reste à `0` publication, `0` snapshot et `0` artifact.
+- `P18T_CODE_COMPATIBILITY_FIX=PASS`; `P18T_PUSH=PASS`; `P18T_DEPLOYMENT_COMPATIBILITY=PASS`; `GLOBAL_ROUTE_V2=INACTIVE`; `GLOBAL_SCHEMA_LIVE_GATE=PASS`; `GLOBAL_PUBLICATION=NOT_STARTED`; `GLOBAL_GENERATION_COUNT=0`; `P19_AUTHORIZATION=NOT_GRANTED`; `NEXT_PERMITTED_PROMPT=P19_AWAITING_HUMAN_AUTHORIZATION`.

@@ -100,6 +100,35 @@ NEXT_PERMITTED_PROMPT = P18T_CODE_COMPATIBILITY_FIX
 
 P18 et P19 restent interdits.
 
+## Fermeture P18T — résolution Git et compatibilité déployée
+
+La divergence Git constatée après la certification locale a été résolue sans réécriture d'historique. Le merge d'intégration `2ed2cc0dadaef64a6e788cf881b6b40311a9cc2b` conserve les deux lignées avec les parents exacts suivants :
+
+- parent distant : `22ef278109f8c06ad01d99b51aed54d1a4e97964` ;
+- parent correctif P18T : `ce85f1ee2040fe25bfb96482c4fd0c5b8238df49`.
+
+Les treize commits absents de la lignée P18T étaient exclusivement documentaires et leurs chemins ne chevauchaient pas les changements locaux. Le diff `ce85f1e..2ed2cc0` hors `docs/**` est vide, y compris `src/**`, `scripts/**`, `supabase/**`, `package.json` et les configurations runtime. Les deux parents sont ancêtres du merge. La sauvegarde locale `backup/p18t-certified-ce85f1e` conserve le commit certifié inchangé.
+
+Le contrôle ciblé après merge a confirmé `GLOBAL_LEGACY_READ_THROUGH=9/9 PASS`, `LEGACY_GLOBAL_SUPABASE_WRITE_THROUGH=0`, les contrôles négatifs mensuel/publication explicite et `ANALYSIS_GLOBAL_CONTRACTS=PASS`. Le SQL P18 est resté byte-identique dans le blob Git, SHA-256 `B5C60AD3FB47EBC56DAC23E61E081B0502556674A2B8D59C90D687BE6F6BF085`.
+
+Après autorisation humaine exacte, le merge a été poussé en fast-forward de `22ef278...` vers `2ed2cc0...`. `origin/main` et `git ls-remote origin refs/heads/main` ont tous deux confirmé `2ed2cc0dadaef64a6e788cf881b6b40311a9cc2b`. Aucun accès Vercel n'a été effectué. L'utilisateur a ensuite fourni l'attestation externe exacte `CONFIRM_P18T_EXTERNAL_DEPLOYMENT_READY 2ed2cc0dadaef64a6e788cf881b6b40311a9cc2b`, ce qui ferme uniquement la compatibilité de déploiement préalable à P18.
+
+`REMOTE_MAIN = 2ed2cc0dadaef64a6e788cf881b6b40311a9cc2b`
+
+`P18T_MERGE_SHA = 2ed2cc0dadaef64a6e788cf881b6b40311a9cc2b`
+
+`P18T_PUSH = PASS`
+
+`P18T_CODE_COMPATIBILITY_FIX = PASS`
+
+`P18T_DEPLOYMENT_COMPATIBILITY = PASS`
+
+`GLOBAL_ROUTE_V2 = INACTIVE`
+
+`GLOBAL_PUBLICATION = NOT_STARTED`
+
+`GLOBAL_GENERATION_COUNT = 0`
+
 ## Fermeture locale — correctif de compatibilité P18T
 
 Le défaut `BLOCKED_CODE_COMPATIBILITY` ci-dessus est conservé comme état historique. Le correctif local ultérieur ne modifie ni le SQL P18 ni une doctrine métier : il ferme uniquement la frontière de persistance Query avant un futur déploiement explicitement autorisé.

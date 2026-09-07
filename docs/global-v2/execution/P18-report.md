@@ -159,3 +159,82 @@ Une mission P18T séparée a corrigé localement le producteur d'écriture incom
 Le correctif est certifié localement dans `P18T-report.md`. Il ne rend pas encore le déploiement Production compatible : le SHA actuellement servi reste `22ef278109f8c06ad01d99b51aed54d1a4e97964`. P18 ne peut reprendre qu'après autorisation, push fast-forward, déploiement de compatibilité et attestation du nouveau SHA Production.
 
 `P18T_CODE_COMPATIBILITY_FIX=PASS_LOCAL`; `P18T_DEPLOYMENT_COMPATIBILITY=PENDING_DEPLOYMENT`; `GLOBAL_SCHEMA_LIVE_GATE=BLOCKED_PENDING_P18T_DEPLOYMENT`; `LIVE_WRITES=NONE`; P18/P19 interdits.
+
+## Fermeture live P18 — migration Global V2 appliquée
+
+L'utilisateur a attesté extérieurement la fin du déploiement automatique du merge `2ed2cc0dadaef64a6e788cf881b6b40311a9cc2b`, après son push fast-forward sur `origin/main`. Aucun accès Vercel n'a été effectué par cette mission. Le préflight Supabase a ensuite été repris uniquement sur le projet autorisé `ipuuhxrblxormwgoaqnz`.
+
+### Preflight final
+
+- HC3 `20260904110151 history_v2_dependency_manifest` et HC4 `20260904110402 history_v2_frozen_publications` : présentes ;
+- migration Global : absente ;
+- `global_manifest` : absent ;
+- huit fonctions Global : absentes ;
+- quatre triggers Global : absents ;
+- handshake History : `history-frozen-month@v1` ;
+- révisions : `dataRevision=1`, `analyticsRevision=79` ;
+- History V2 actif : `947` snapshots, `15` familles et `24` artifacts partagés ;
+- doublons actifs query/artifact : `0/0` ;
+- invalidations actives query/artifact : `0/0` ;
+- publications/snapshots/artifacts Global : `0/0/0` ;
+- RLS active sur les trois tables, aucun grant anon, aucun DML navigateur inattendu et aucun droit `TRIGGER`/`TRUNCATE` de `service_role`.
+
+Le blob Git de `supabase/migrations/20260906120000_global_v2_publication_infrastructure.sql` a été relu depuis `HEAD` et son SHA-256 confirmé à `B5C60AD3FB47EBC56DAC23E61E081B0502556674A2B8D59C90D687BE6F6BF085`. Les empreintes pré-DDL correspondaient à la baseline documentée : publications month `77c9a99d32bd6cc191802329d2172ec3`, artifacts month `3c158fef1c3543cf98b2c2e67e47665e`, snapshots month `e109cb8f5a62d44641e00be76bf0f512`, snapshots History `44a239081731246ed5b7615cd8a413e5`, Calendar Semantic `ac7168a53e2dc46a883c84b48461623d`, Daily Ledger `a59fa5aa5aa0a51de6d97d33d9ace796`.
+
+### Application et certification post-DDL
+
+Une seule migration a été appliquée : `global_v2_publication_infrastructure`, enregistrée live sous la version `20260907123714`. HC3/HC4 n'ont pas été rejouées. Aucun Begin, Stage, Attach, Seal, Finalize, rollback ou publication Global n'a été invoqué.
+
+Après application :
+
+- `analytics_publications.global_manifest` : `jsonb`, nullable, sans défaut ;
+- huit fonctions Global présentes, avec `search_path=''` ;
+- quatre triggers Global présents et activés ;
+- handshake : `global-v2-publication@v1` ;
+- cinq fonctions de service attendues exécutables par `service_role` ;
+- aucune fonction Global exécutable par `anon` ou `authenticated` ;
+- RLS et grants inchangés selon les contrôles ciblés ;
+- `dataRevision=1`, `analyticsRevision=79` ;
+- History V2 : `947` snapshots, `15` familles, `24` artifacts ;
+- doublons actifs : `0/0` ; invalidations actives : `0/0` ;
+- publications/snapshots/artifacts Global : `0/0/0`.
+
+Les empreintes post-DDL sont identiques. Pour `analytics_publications`, la comparaison utilise uniquement `to_jsonb(p) - 'global_manifest'`, conformément au plan : publications month `77c9a99d32bd6cc191802329d2172ec3`, artifacts month `3c158fef1c3543cf98b2c2e67e47665e`, snapshots month `e109cb8f5a62d44641e00be76bf0f512`, snapshots History `44a239081731246ed5b7615cd8a413e5`, Calendar Semantic `ac7168a53e2dc46a883c84b48461623d`, Daily Ledger `a59fa5aa5aa0a51de6d97d33d9ace796`. Le DDL n'a donc modifié aucune donnée History préexistante.
+
+`REMOTE_MAIN = 2ed2cc0dadaef64a6e788cf881b6b40311a9cc2b`
+
+`P18T_MERGE_SHA = 2ed2cc0dadaef64a6e788cf881b6b40311a9cc2b`
+
+`P18T_PUSH = PASS`
+
+`P18T_DEPLOYMENT_COMPATIBILITY = PASS`
+
+`P18_SQL_SHA = B5C60AD3FB47EBC56DAC23E61E081B0502556674A2B8D59C90D687BE6F6BF085`
+
+`P18_MIGRATION_VERSION = 20260907123714`
+
+`DATA_REVISION_BEFORE = 1`
+
+`DATA_REVISION_AFTER = 1`
+
+`ANALYTICS_REVISION_BEFORE = 79`
+
+`ANALYTICS_REVISION_AFTER = 79`
+
+`GLOBAL_GENERATION_COUNT = 0`
+
+`P18T_CODE_COMPATIBILITY_FIX = PASS`
+
+`GLOBAL_ROUTE_V2 = INACTIVE`
+
+`GLOBAL_SCHEMA_LIVE_GATE = PASS`
+
+`GLOBAL_PUBLICATION = NOT_STARTED`
+
+`P19_AUTHORIZATION = NOT_GRANTED`
+
+`LIVE_WRITES = DDL_ONLY_AUTHORIZED_P18_MIGRATION`
+
+`NEXT_PERMITTED_PROMPT = P19_AWAITING_HUMAN_AUTHORIZATION`
+
+P19 n'a pas été commencé.
