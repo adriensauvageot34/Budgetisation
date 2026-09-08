@@ -248,8 +248,13 @@ assert.deepEqual(
     canonicalComponentKey,
     amount: String(amount),
   })),
-  [{ canonicalComponentKey: `minimal:need:${minimalNeedId}`, amount: "10" }],
-  "a Need may group an eligible fact but must not override categorical exclusions",
+  [],
+  "current Need and baseline rows must not become historical Minimal authority",
+);
+assert.equal(
+  needBeforeCategoryExclusion.availability,
+  "unknown",
+  "Minimal must fail closed when the bitemporal historical authority is absent",
 );
 
 const nonEligibleNeed = resolveMinimalPlanningSource({
@@ -367,9 +372,14 @@ const commuteFromPlannedWorksite = resolveMinimalPlanningSource({
   }),
 });
 assert.equal(
-  String(commuteFromPlannedWorksite.neutralVariableComponents[0]?.amount),
-  "1.7",
-  "a planned À valider worksite day must feed only the Minimal commute estimate",
+  commuteFromPlannedWorksite.availability,
+  "unknown",
+  "a current planned worksite must not be projected backward as Minimal authority",
+);
+assert.deepEqual(
+  commuteFromPlannedWorksite.neutralVariableComponents,
+  [],
+  "no commute estimate is invented without a bitemporal historical authority",
 );
 const baseContext = {
   userId: "test-actor",

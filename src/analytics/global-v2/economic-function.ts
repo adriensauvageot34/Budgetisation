@@ -12,6 +12,7 @@ import type {
 import type { ProducedMoneyMetric } from "../production";
 import {
   calculateTypicalMonthCost,
+  medianMoney,
   selectComparisonReferenceWindow,
   selectCurrentReferenceWindow,
   TYPICAL_MONTH_REQUESTED_PERIOD_COUNT,
@@ -34,7 +35,7 @@ import type { HouseholdTimeZone, LocalDate, YearMonth } from "../../core/time";
 import { parseMethodVersion, type MethodVersion } from "../../core/versions";
 
 const ZERO = parseMoney("0");
-const GLOBAL_M1_METHOD = parseMethodVersion("global_economic_function@v2");
+const GLOBAL_M1_METHOD = parseMethodVersion("global_economic_function@v3");
 
 export const globalM1Policies = {
   timeWindow: "global-economic-month-window@v1",
@@ -128,10 +129,17 @@ export type GlobalStructuralRecurrenceCandidate = {
     | "SINGLE_OCCURRENCE";
   readonly minimalEligible: boolean;
   readonly dependencyRefs: readonly string[];
+  /** Eligible observed occurrence costs only; absence is not a zero sample. */
+  readonly eligibleOccurrenceCosts?: readonly Money[];
 };
 
-export type GlobalStructuralRecurrence = GlobalStructuralRecurrenceCandidate & {
+export type GlobalTypicalOccurrenceCost = GlobalKnowledgeValue<Money> & {
+  readonly unit: "EUR/occurrence";
+};
+
+export type GlobalStructuralRecurrence = Omit<GlobalStructuralRecurrenceCandidate, "eligibleOccurrenceCosts"> & {
   readonly monthlyEquivalent: Money;
+  readonly typicalOccurrenceCost: GlobalTypicalOccurrenceCost;
   readonly knowledge: "KNOWN" | "PARTIAL";
 };
 
@@ -453,6 +461,9 @@ function normalizeRecurrences(
     const candidate = {
       ...value,
       expectedOccurrenceAmount: parseMoney(value.expectedOccurrenceAmount),
+      ...(value.eligibleOccurrenceCosts === undefined
+        ? {}
+        : { eligibleOccurrenceCosts: value.eligibleOccurrenceCosts.map(parseMoney).sort((left, right) => new Big(left).cmp(right)) }),
       dependencyRefs: [...new Set(value.dependencyRefs)].sort(),
     };
     if (!activeOn(candidate, date)) continue;
@@ -483,6 +494,31 @@ function monthlyEquivalent(value: GlobalStructuralRecurrenceCandidate): Money {
   return moneyFromBig(new Big(value.expectedOccurrenceAmount).times(value.expectedOccurrencesPerYear).div(12));
 }
 
+export function calculateTypicalOccurrenceCost(
+  eligibleOccurrenceCosts: readonly Money[] | undefined,
+): GlobalTypicalOccurrenceCost {
+  if (eligibleOccurrenceCosts === undefined || eligibleOccurrenceCosts.length === 0) {
+    return { status: "UNKNOWN", unit: "EUR/occurrence" };
+  }
+  const costs = eligibleOccurrenceCosts.map(parseMoney).sort((left, right) => new Big(left).cmp(right));
+  return {
+    status: "KNOWN",
+    value: medianMoney(costs),
+    unit: "EUR/occurrence",
+    support: parseGlobalSupport({
+      naturalGrain: "OCCURRENCE",
+      eligibleUnits: costs.length,
+      observedUnits: costs.length,
+      includedUnits: costs.length,
+      excludedObservedUnits: 0,
+      minimumRequired: 1,
+      supportStatus: costs.length === 1 ? "SUFFICIENT" : "STRONG",
+      occurrenceCount: costs.length,
+      policyRef: "global-typical-occurrence-cost@v1",
+    }),
+  };
+}
+
 /**
  * Converts only declared/qualified cadence to a monthly equivalent. Empirical
  * recurrence is descriptive and never becomes Minimal eligibility by itself.
@@ -495,12 +531,16 @@ export function buildGlobalStructuralChange(input: {
 }): GlobalStructuralChange {
   const current = normalizeRecurrences(input.current, input.asOf);
   const previous = normalizeRecurrences(input.previous, input.previousAsOf);
-  const resolve = (value: GlobalStructuralRecurrenceCandidate): GlobalStructuralRecurrence => ({
-    ...value,
-    monthlyEquivalent: monthlyEquivalent(value),
-    knowledge: value.authority === "SINGLE_OCCURRENCE" ? "PARTIAL" : "KNOWN",
-    minimalEligible: value.kind === "EMPIRICAL" ? false : value.minimalEligible,
-  });
+  const resolve = (value: GlobalStructuralRecurrenceCandidate): GlobalStructuralRecurrence => {
+    const { eligibleOccurrenceCosts, ...identity } = value;
+    return {
+      ...identity,
+      monthlyEquivalent: monthlyEquivalent(value),
+      typicalOccurrenceCost: calculateTypicalOccurrenceCost(eligibleOccurrenceCosts),
+      knowledge: value.authority === "SINGLE_OCCURRENCE" ? "PARTIAL" : "KNOWN",
+      minimalEligible: value.kind === "EMPIRICAL" ? false : value.minimalEligible,
+    };
+  };
   const active = current.map(resolve);
   const former = previous.map(resolve);
   const activeById = new Map(active.map((value) => [value.recurrenceId, value]));
@@ -542,17 +582,19 @@ export function createGlobalM1DependencyDeclaration(input: {
     ],
     entityDependencies: [
       { kind: "ENTITY", id: "analysis_periods", requirement: "REQUIRED", scopeRelation: "same-household" },
-      { kind: "ENTITY", id: "minimal_baseline_rules", requirement: "REQUIRED", scopeRelation: "effective-on-target-date" },
+      { kind: "ENTITY", id: "historical_minimal_rule_authority", requirement: "OPTIONAL", scopeRelation: "effective-on-target-date" },
+      { kind: "ENTITY", id: "historical_recurrence_authority", requirement: "OPTIONAL", scopeRelation: "effective-on-natural-month" },
+      { kind: "ENTITY", id: "historical_declared_minimum_authority", requirement: "OPTIONAL", scopeRelation: "effective-on-target-date" },
       { kind: "ENTITY", id: "recurrence_series", requirement: "OPTIONAL", scopeRelation: "effective-on-natural-month" },
       { kind: "ENTITY", id: "financial_source_person_links", requirement: "OPTIONAL", scopeRelation: "exact-source-grain" },
     ],
     upstreamAnalytics: [
       { kind: "ANALYTICS", id: "economic_consumption_net_attributable", requirement: "REQUIRED", scopeRelation: "same-scope-and-month", corpusAuthority: "CERTIFIED_HISTORY" },
       { kind: "ANALYTICS", id: "typical_month_cost", requirement: "REQUIRED", scopeRelation: "strictly-prior-certified-months", corpusAuthority: "CERTIFIED_HISTORY" },
-      { kind: "ANALYTICS", id: "minimal_month_cost", requirement: "REQUIRED", scopeRelation: "canonical-source-aware-target-month", corpusAuthority: "CERTIFIED_HISTORY" },
+      { kind: "ANALYTICS", id: "minimal_month_cost", requirement: "OPTIONAL", scopeRelation: "canonical-source-aware-target-month", corpusAuthority: "CERTIFIED_HISTORY" },
     ],
     otherModuleDependencies: [
-      { kind: "MODULE", id: "global-temporal-analysis@v1", requirement: "REQUIRED", scopeRelation: "official-certified-monthly-actual" },
+      { kind: "MODULE", id: "global-temporal-analysis@v2", requirement: "REQUIRED", scopeRelation: "official-certified-monthly-actual" },
       { kind: "MODULE", id: "GlobalTemporalBoundaryResolver", requirement: "REQUIRED", scopeRelation: "resolved-before-engine" },
       { kind: "MODULE", id: "history-v2:bank-economy-bridge", requirement: "REQUIRED", scopeRelation: "pure-authority-reuse" },
     ],
@@ -565,7 +607,7 @@ export function createGlobalM1DependencyDeclaration(input: {
     coveragePolicy: { id: "global-economic-coverage", version: "v1" },
     methodVersion: GLOBAL_M1_METHOD,
     policyVersions: {
-      temporalAnalysis: "v1",
+      temporalAnalysis: "v2",
       temporalFinancialCoverage: "v1",
       temporalMateriality: "v1",
       timeWindow: "v1",

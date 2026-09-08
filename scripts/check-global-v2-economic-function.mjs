@@ -334,9 +334,9 @@ check(() => assert.ok(declaration.upstreamAnalytics.some(({ id }) => id === "min
 check(() => globalCore.assertNoLiveTailStructuralDependencies(declaration, "STRUCTURAL"));
 check(() => globalCore.assertGlobalDependencyClosure(declaration, {
   factDependencyIds: ["fct_economic_component", "fct_economic_component_classification"],
-  entityDependencyIds: ["analysis_periods", "minimal_baseline_rules", "recurrence_series", "financial_source_person_links"],
+  entityDependencyIds: ["analysis_periods", "historical_minimal_rule_authority", "historical_recurrence_authority", "historical_declared_minimum_authority", "recurrence_series", "financial_source_person_links"],
   upstreamAnalyticsIds: ["economic_consumption_net_attributable", "typical_month_cost", "minimal_month_cost"],
-  otherModuleDependencyIds: ["GlobalTemporalBoundaryResolver", "history-v2:bank-economy-bridge", "global-temporal-analysis@v1"],
+  otherModuleDependencyIds: ["GlobalTemporalBoundaryResolver", "history-v2:bank-economy-bridge", "global-temporal-analysis@v2"],
   policyIds: ["global-economic-month-window", "global-typical-support", "global-economic-coverage", "timeWindow", "typicalSupport", "classificationCoverage", "recurrence", "temporalAnalysis", "temporalFinancialCoverage", "temporalMateriality"],
 }));
 

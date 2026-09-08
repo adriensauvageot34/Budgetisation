@@ -734,38 +734,18 @@ const minimalResolution = resolveMinimalPlanningSource({
   targetMonth: "2026-08",
   referenceMonths: minimalMonths,
 });
-assert.equal(minimalResolution.availability, "known");
-assert.equal(minimalResolution.health.neutralVariable, "AVAILABLE");
-assert.equal(minimalResolution.health.obligationsAndProvisions, "AVAILABLE");
-assert.equal(minimalResolution.neutralVariableComponents.some(({ amount }) => amount === "999"), false);
-assert.equal(minimalResolution.neutralVariableComponents.some(({ amount }) => amount === "500"), false);
-assert.equal(
-  minimalResolution.neutralVariableComponents.find(({ canonicalComponentKey }) =>
-    canonicalComponentKey === "minimal:conditional:work-commute-fuel")?.amount,
-  "3.4",
-);
-assert.equal(
-  minimalResolution.mandatoryMonthlyObligationsAndProvisions.find(({ canonicalComponentKey }) =>
-    canonicalComponentKey === "minimal:provision:pool-health")?.amount,
-  "40",
-);
-assert.equal(
-  minimalResolution.mandatoryMonthlyObligationsAndProvisions.filter(({ canonicalComponentKey }) =>
-    canonicalComponentKey === "minimal:recurrence:series-fixed").length,
-  1,
-);
-assert.equal(new Set([
-  ...minimalResolution.neutralVariableComponents,
-  ...minimalResolution.mandatoryMonthlyObligationsAndProvisions,
-].map(({ canonicalComponentKey }) => canonicalComponentKey)).size,
-minimalResolution.neutralVariableComponents.length + minimalResolution.mandatoryMonthlyObligationsAndProvisions.length);
+assert.equal(minimalResolution.availability, "unknown");
+assert.equal(minimalResolution.health.neutralVariable, "MISSING_SOURCE");
+assert.equal(minimalResolution.health.obligationsAndProvisions, "MISSING_SOURCE");
+assert.deepEqual(minimalResolution.neutralVariableComponents, []);
+assert.deepEqual(minimalResolution.mandatoryMonthlyObligationsAndProvisions, []);
 
 const partialMinimal = resolveMinimalPlanningSource({
   bundle: { ...minimalBundle, worksiteActivityTypeIds: [], plannedActivityDays: [] },
   targetMonth: "2026-08",
   referenceMonths: minimalMonths,
 });
-assert.equal(partialMinimal.health.neutralVariable, "PARTIAL");
+assert.equal(partialMinimal.health.neutralVariable, "MISSING_SOURCE");
 
 const fakeMinimalRepository = {
   context: {
@@ -781,13 +761,13 @@ const minimalScope = normalizeAnalysisScope({
 });
 const resolvedMinimalSource = await new FactSourceResolver(fakeMinimalRepository)
   .resolve("minimal_month_cost", minimalScope);
-assert.equal(resolvedMinimalSource.availability, "known");
+assert.equal(resolvedMinimalSource.availability, "unknown");
 const producedMinimal = produceMetric({
   metricId: "minimal_month_cost",
   scope: minimalScope,
   source: resolvedMinimalSource,
 });
-assert.equal(producedMinimal.availability, "known");
+assert.equal(producedMinimal.availability, "unknown");
 assert.doesNotThrow(() => parseScopedMoneyMetricReadModel(scopedMetricReadModel(producedMinimal)));
 
 console.log("Live runtime regression checks: PASS");

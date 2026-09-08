@@ -166,6 +166,8 @@ export type CanonicalMinimalPlanningBundle = {
     readonly startDate: LocalDate;
     readonly validationStatus: "Confirmé" | "Déduit" | "À valider";
   }[];
+  /** Absent until an approved historical authority backfill exists. */
+  readonly historicalMinimalAuthority?: import("@/analytics/baseline").HistoricalMinimalAuthorityBundle;
 };
 
 const CANONICAL_PAGE_SIZE = 1_000;

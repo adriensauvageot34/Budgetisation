@@ -416,3 +416,14 @@ Elles restent des contrats de compatibilité, pas une autorité V2.
 - La route Production reste OFF par défaut via `GLOBAL_V2_ROUTE_ACTIVE`; aucun environnement n'a été changé. Tests ciblés, RuntimeSchemas, publication/manifest local, frontend, typecheck, architecture 561, build Next et diff-check PASS.
 - Aucun secret/export privé commité, aucune migration, aucun Begin/Stage/Attach/Seal/Finalize, aucune publication et aucune écriture live.
 - `P19A_LIVE_CANDIDATE_ORCHESTRATOR=PASS`; `P19A_PRODUCTION_SNAPSHOT_LOADER=PASS`; `P19A_LOCAL_IMPLEMENTATION=PASS`; `GLOBAL_ANALYTIC_CANDIDATE=LIVE_DERIVABLE`; `GLOBAL_ROUTE_V2=INACTIVE_READY_FOR_P19`; `GLOBAL_SCHEMA_LIVE_GATE=PASS`; `GLOBAL_PUBLICATION=NOT_STARTED`; `SUPABASE_LIVE_WRITES=NONE`; `P19_PREAUTHORIZATION=READY_AFTER_CODE_DEPLOYMENT`.
+
+## M1-1R — fondations shared sûres (2026-09-08)
+
+- Baseline `7e98d0a8118f6fd1e3d3016057a943c3c553c813`, branche `main`. Les deux livrables H1 non suivis présents à l'entrée sont préservés comme dossier de décision, sans application de backfill.
+- Nouveau contrat bitemporel préparatoire `BITEMPORAL_TYPED_RULE_AND_RECURRENCE_AUTHORITY_V1`; Q25 `VARIABLE_ESSENTIAL` sur douze mois antérieurs maximum, support minimum six, missing distinct de zéro et no-lookahead.
+- Le resolver Canonical refuse désormais `actif_prevision`, règles courantes et zero-fill comme autorités historiques. Sans bundle approuvé, Minimal seul reste `UNKNOWN`; le certificat History legacy `minimal_month_cost@v1` reste lisible séparément.
+- `DECLARED_MINIMUM` exige une autorité explicite. `typicalOccurrenceCost`, `relativeSlope`, support Trend, matérialité Trend et min/max/amplitude sont fermés sans nouvelle StabilityPolicy.
+- Dépendances M1 rendues locales : Minimal et autorités historiques optionnels ; Actual, Typical, structure, récurrences et temporalité restent calculables selon leurs propres preuves.
+- Tests : R1 46/46, fondations 108/108, M1 72/72, descriptif 17/17, arbitrage temporel 179/179, matérialisation PASS, runtime PASS, typecheck PASS, architecture 562 PASS et diff-check PASS.
+- Aucun backfill, migration, write Supabase, snapshot, publication, frontend, déploiement ou push. Rapport : `execution/m1-economy/M1-1R-SHARED-FOUNDATIONS-SAFE.md`.
+- `M1_1R_FOUNDATIONS=PASS`; `HISTORICAL_MINIMAL_BACKFILL_APPLIED=NO`; `MODULE_WIDE_BLOCK_FROM_LOCAL_UNKNOWN=NO`; `LIVE_WRITES=NONE`.

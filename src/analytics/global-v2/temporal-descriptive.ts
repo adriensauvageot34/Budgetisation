@@ -8,7 +8,7 @@ import { medianMoney } from "../references";
 
 /** P04 descriptive primitives only: no unapproved classification thresholds. */
 export const globalTemporalDescriptivePolicy = Object.freeze({
-  version: "global-temporal-descriptive@v1",
+  version: "global-temporal-descriptive@v2",
   trendWindow: 12,
   trendMinimum: 6,
   recentWindow: 3,
@@ -109,8 +109,14 @@ export function buildGlobalTemporalDescriptive(input: {
     return {
       status: "KNOWN" as const,
       slopePerMonth: slope,
+      relativeSlope: new Big(intercept).eq(0)
+        ? { status: "UNKNOWN" as const, reasonCode: "ZERO_START_LEVEL" as const }
+        : { status: "KNOWN" as const, value: new Big(slope).div(new Big(intercept).abs()).toFixed() },
       startLevel: intercept,
       endLevel: new Big(intercept).plus(new Big(slope).times(monthIndex(selected.at(-1)!.month) - startIndex)).toFixed(),
+      support,
+      materiality: { status: "UNKNOWN" as const, reasonCode: "MATERIALITY_EVALUATION_REQUIRED" as const },
+      methodVersion: "global_trend_theil_sen@v2" as const,
       classification: { status: "UNKNOWN" as const, reasonCode: "MATERIALITY_INTEGRATION_PENDING" },
     };
   })();
@@ -129,11 +135,16 @@ export function buildGlobalTemporalDescriptive(input: {
       return new Big(sorted[index]).plus(new Big(sorted[Math.ceil(position)]).minus(sorted[index]).times(position - index)).toFixed();
     };
     const q1 = quantile(0.25), q3 = quantile(0.75);
+    const minimum = sorted[0]!;
+    const maximum = sorted.at(-1)!;
     return {
       status: "KNOWN" as const,
       median: center,
       mad: median(values.map((value) => new Big(value).minus(center).abs().toFixed())),
       q1, q3, iqr: new Big(q3).minus(q1).toFixed(),
+      minimum,
+      maximum,
+      amplitude: new Big(maximum).minus(minimum).toFixed(),
       classification: { status: "UNKNOWN" as const, reasonCode: "STABILITY_POLICY_AUTHORITY_REQUIRED" },
       relativeMad: { status: "UNKNOWN" as const, reasonCode: "NEAR_ZERO_POLICY_AUTHORITY_REQUIRED" },
     };
@@ -150,7 +161,7 @@ export function buildGlobalTemporalDescriptive(input: {
     ordinaryDispersion,
     support,
     dependencyRefs: [...new Set(ordered.flatMap((point) => point.dependencyRefs))].sort(),
-    methodVersion: "global_temporal_descriptive@v1",
+    methodVersion: "global_temporal_descriptive@v2",
     inputHash: bytesToHex(sha256(utf8ToBytes(canonicalSerializeGlobal({ boundary, points: ordered, policy: globalTemporalDescriptivePolicy })))),
   };
 }

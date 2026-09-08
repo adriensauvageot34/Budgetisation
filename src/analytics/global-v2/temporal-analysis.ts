@@ -26,6 +26,7 @@ export function buildGlobalTemporalAnalysis(input: GlobalTemporalChangeInput) {
   const trend = descriptive.trend.status === "KNOWN" ? {
     ...descriptive.trend,
     classification: { status: "UNKNOWN" as const, reasonCode: "STABILITY_CLASS_NOT_INFERRED_FROM_MATERIALITY" },
+    materiality: evaluate("trend", descriptive.trend.startLevel, descriptive.trend.endLevel),
     driftMateriality: evaluate("trend", descriptive.trend.startLevel, descriptive.trend.endLevel),
   } : descriptive.trend;
   const recentChange = descriptive.recentChange.status === "KNOWN" ? {
@@ -37,9 +38,9 @@ export function buildGlobalTemporalAnalysis(input: GlobalTemporalChangeInput) {
     trend,
     recentChange,
     changes,
-    methodVersion: "global_temporal_analysis@v1",
+    methodVersion: "global_temporal_analysis@v2",
     inputHash: bytesToHex(sha256(utf8ToBytes(canonicalSerializeGlobal({
-      methodVersion: "global_temporal_analysis@v1", descriptive: descriptive.inputHash, changes: changes.inputHash,
+      methodVersion: "global_temporal_analysis@v2", descriptive: descriptive.inputHash, changes: changes.inputHash,
     })))),
   };
 }
