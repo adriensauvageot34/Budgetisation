@@ -52,6 +52,7 @@ import {
   type MinimalPlanningResolution,
   type MinimalSourceHealth,
 } from "./minimal-source-resolver";
+import { buildHistoricalMinimalAuthorityBundle } from "./historical-minimal-authority-builder";
 import type { SupabaseAnalyticsMaterializationStore } from "./materialization";
 import type { CertifiedHistoricalMinimalSource } from "./materialization/certified-historical-minimal";
 
@@ -243,12 +244,22 @@ export class FactSourceResolver {
         referenceMonths,
       });
     }
-    const bundle = await this.repository.loadMinimalPlanningBundle({
-      start: parseLocalDate(`${firstMonth}-01`),
-      endExclusive: parseLocalDate(`${addMonths(lastMonth, 1)}-01`),
-    });
+    const [bundle, historicalAuthority] = await Promise.all([
+      this.repository.loadMinimalPlanningBundle({
+        start: parseLocalDate(`${firstMonth}-01`),
+        endExclusive: parseLocalDate(`${addMonths(lastMonth, 1)}-01`),
+      }),
+      this.repository.loadHistoricalMinimalAuthority(targetMonth),
+    ]);
     return resolveMinimalPlanningSource({
-      bundle,
+      bundle: {
+        ...bundle,
+        historicalMinimalAuthority: buildHistoricalMinimalAuthorityBundle({
+          bundle,
+          authority: historicalAuthority,
+          knowledgeAsOf: this.repository.context.asOf,
+        }),
+      },
       targetMonth,
       referenceMonths,
     });

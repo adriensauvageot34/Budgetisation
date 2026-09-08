@@ -3,7 +3,7 @@ import type { DataStatus } from "../../core/history-v2";
 import type { GlobalPhenomenonQuality, GlobalTypedMeasure } from "./types";
 
 const HASH = /^[0-9a-f]{64}$/u;
-const DECIMAL = /^(?:0|-?[1-9]\d*)(?:\.\d+)?$/u;
+const DECIMAL = /^-?(?:0|[1-9]\d*)(?:\.\d+)?$/u;
 const NON_NEGATIVE_INTEGER = /^(?:0|[1-9]\d*)$/u;
 const knowledge = new Set<DataStatus>(["KNOWN", "PARTIAL", "UNKNOWN", "NOT_APPLICABLE", "CONFLICT"]);
 

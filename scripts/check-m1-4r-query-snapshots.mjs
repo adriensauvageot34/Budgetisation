@@ -87,6 +87,7 @@ const comparisons = snapshot("analysis_global_economic_expanded", { sectionKey: 
 const recurrenceDetails = candidate.snapshots.filter(({ resource }) => resource === "analysis_global_economic_recurrence_detail");
 
 check(() => assert.equal(query.parseGlobalTypedMeasure({ kind: "MONEY", value: "210", unit: "EUR/month" }).value, "210"));
+check(() => assert.equal(query.parseGlobalTypedMeasure({ kind: "DECIMAL", value: "-0.01542579595451261247", unit: "ratio/month" }).value, "-0.01542579595451261247"));
 check(() => assert.throws(() => query.parseGlobalTypedMeasure({ kind: "RATIO", value: "2", unit: "ratio" })));
 check(() => assert.throws(() => query.parseGlobalTypedMeasure({ kind: "COUNT", value: "01", unit: "occurrence" })));
 check(() => assert.equal(compact.kpis.length, 3));

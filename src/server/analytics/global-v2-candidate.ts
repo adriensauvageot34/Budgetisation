@@ -165,6 +165,13 @@ function outputEvidence(output: GlobalV2OwnerOutput, ...extra: readonly string[]
   return uniqueSorted([...output.evidenceRefs, ...extra]);
 }
 
+function projectedEvidence(output: GlobalV2OwnerOutput, evidenceRefs: readonly string[]): readonly string[] {
+  const canonical = uniqueSorted(evidenceRefs);
+  return canonical.length <= 32
+    ? outputEvidence(output, ...canonical)
+    : outputEvidence(output, `evidence-set:${digest(canonical)}`);
+}
+
 function metric(output: GlobalV2OwnerOutput, metricId: string, labelKey: string, displayValue: string, knowledgeState: GlobalDetailMetric["knowledgeState"] = output.knowledge): GlobalDetailMetric {
   return {
     metricId,
@@ -250,7 +257,7 @@ function qualifiedMetric(output: GlobalV2OwnerOutput, metricId: string, labelKey
     knowledgeState: status,
     ...(status === "PARTIAL" ? { partialMeaning: "OBSERVED_ONLY" as const } : {}),
     dataNature: phenomenonQuality(value, options.fallbackInputHash ?? at(output.output, "inputHash")).dataNature,
-    evidenceRefs: outputEvidence(output, ...arrayOf(at(value, "provenance", "evidenceRefs")).filter((entry): entry is string => typeof entry === "string")),
+    evidenceRefs: projectedEvidence(output, arrayOf(at(value, "provenance", "evidenceRefs")).filter((entry): entry is string => typeof entry === "string")),
   };
 }
 
@@ -266,7 +273,7 @@ function qualifiedKpi(output: GlobalV2OwnerOutput, kpiId: string, labelKey: stri
     phenomenonRef: metricRef,
     phenomenonQuality: phenomenonQuality(value, at(output.output, "inputHash")),
     metricRef,
-    evidenceRefs: outputEvidence(output, ...arrayOf(at(value, "provenance", "evidenceRefs")).filter((entry): entry is string => typeof entry === "string")),
+    evidenceRefs: projectedEvidence(output, arrayOf(at(value, "provenance", "evidenceRefs")).filter((entry): entry is string => typeof entry === "string")),
   };
 }
 

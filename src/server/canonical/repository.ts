@@ -1809,7 +1809,6 @@ export class CanonicalRepository {
           .select("rule_version_id,baseline_rule_id,master_rule_family,condition_code,effective_from,effective_to,declared_at,source_revision,authority_type,declared_by_ref,validation_ref,method_version,evidence_refs,supersedes_version_id")
           .eq("household_id", this.context.householdId)
           .lte("effective_from", effectiveOn)
-          .or(`effective_to.is.null,effective_to.gt.${effectiveOn}`)
           .lte("declared_at", this.context.asOf)
           .order("baseline_rule_id", { ascending: true })
           .order("source_revision", { ascending: false })
@@ -1823,7 +1822,6 @@ export class CanonicalRepository {
           .select("state_version_id,recurrence_series_id,historical_state,effective_from,effective_to,declared_at,source_revision,authority_type,declared_by_ref,validation_ref,method_version,evidence_refs,supersedes_version_id")
           .eq("household_id", this.context.householdId)
           .lte("effective_from", effectiveOn)
-          .or(`effective_to.is.null,effective_to.gt.${effectiveOn}`)
           .lte("declared_at", this.context.asOf)
           .order("recurrence_series_id", { ascending: true })
           .order("source_revision", { ascending: false })
@@ -1831,7 +1829,10 @@ export class CanonicalRepository {
       ),
     ]);
     return {
-      ruleVersions: ruleRows.map((row) => parseHistoricalMinimalRuleVersion({
+      ruleVersions: ruleRows.filter((row) => {
+        const effectiveTo = optionalCanonicalString(row, ["effective_to"]);
+        return effectiveTo === undefined || effectiveOn < effectiveTo;
+      }).map((row) => parseHistoricalMinimalRuleVersion({
         ruleVersionId: canonicalString(row, ["rule_version_id"], "historical_minimal_authority"),
         baselineRuleId: canonicalString(row, ["baseline_rule_id"], "historical_minimal_authority"),
         masterRuleFamily: canonicalString(row, ["master_rule_family"], "historical_minimal_authority"),
@@ -1840,7 +1841,10 @@ export class CanonicalRepository {
           : { conditionCode: optionalCanonicalString(row, ["condition_code"])! }),
         ...historicalCommon(row),
       })),
-      recurrenceStateVersions: recurrenceRows.map((row) => parseHistoricalRecurrenceStateVersion({
+      recurrenceStateVersions: recurrenceRows.filter((row) => {
+        const effectiveTo = optionalCanonicalString(row, ["effective_to"]);
+        return effectiveTo === undefined || effectiveOn < effectiveTo;
+      }).map((row) => parseHistoricalRecurrenceStateVersion({
         stateVersionId: canonicalString(row, ["state_version_id"], "historical_minimal_authority"),
         recurrenceSeriesId: canonicalString(row, ["recurrence_series_id"], "historical_minimal_authority"),
         historicalState: canonicalString(row, ["historical_state"], "historical_minimal_authority"),

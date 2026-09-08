@@ -116,9 +116,17 @@ check(() => assert.equal(state.componentStates.find(({ status }) => status === "
 const repositorySource = fs.readFileSync(path.join(root, "src/server/canonical/repository.ts"), "utf8");
 check(() => assert.match(repositorySource, /loadHistoricalMinimalAuthority/));
 check(() => assert.match(repositorySource, /\.lte\("declared_at", this\.context\.asOf\)/));
-check(() => assert.match(repositorySource, /effective_to\.is\.null,effective_to\.gt/));
+check(() => assert.match(repositorySource, /effectiveTo === undefined \|\| effectiveOn < effectiveTo/));
 const authorityMethod = repositorySource.slice(repositorySource.indexOf("async loadHistoricalMinimalAuthority"), repositorySource.indexOf("private loadComposition", repositorySource.indexOf("async loadHistoricalMinimalAuthority")));
 check(() => assert.doesNotMatch(authorityMethod, /actif_prevision|minimal_month_cost@v1|history_/));
+const resolverSource = fs.readFileSync(path.join(root, "src/server/analytics/fact-source-resolver.ts"), "utf8");
+check(() => assert.match(resolverSource, /buildHistoricalMinimalAuthorityBundle/));
+check(() => assert.match(resolverSource, /loadHistoricalMinimalAuthority\(targetMonth\)/));
+check(() => assert.doesNotMatch(resolverSource, /history_minimal_preview|history_month_balance_summary/));
+const authorityBuilderSource = fs.readFileSync(path.join(root, "src/server/analytics/historical-minimal-authority-builder.ts"), "utf8");
+check(() => assert.match(authorityBuilderSource, /version\.conditionCode === "WORK_COMMUTE_FUEL_ONLY"\s*\? \[\]/));
+check(() => assert.match(authorityBuilderSource, /cadence === "Mensuelle"\s*\? recurrenceMonthlyEquivalent/));
+check(() => assert.doesNotMatch(authorityBuilderSource, /actif_prevision|minimal_month_cost@v1|history_/));
 
 const migration = fs.readFileSync(path.join(root, "supabase/migrations/20260908160000_m1_historical_minimal_bitemporal_authority.sql"), "utf8");
 check(() => assert.match(migration, /create table public\.minimal_baseline_rule_versions/));
