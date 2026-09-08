@@ -100,10 +100,12 @@ const inputs = [
 ];
 
 query.assertGlobalV2QueryRegistryComplete();
-check(() => assert.equal(Object.keys(query.globalV2QueryRegistry).length, 34));
+check(() => assert.equal(Object.keys(query.globalV2QueryRegistry).length, 35));
 check(() => assert.deepEqual(query.globalV2TopLevelResources.slice(0, 2), ["analysis_global_manifest", "analysis_global_summary_ai"]));
 check(() => assert.equal(query.globalV2QueryRegistry.analysis_global_product_detail.availability, "AUTHORITY_GATED"));
 check(() => assert.equal(query.globalV2QueryRegistry.analysis_global_route_detail.availability, "AUTHORITY_GATED"));
+check(() => assert.equal(query.globalV2QueryRegistry.analysis_global_economic_recurrence_detail.family, "global_entity_detail"));
+check(() => assert.deepEqual(query.parseGlobalV2QueryParams("analysis_global_economic_recurrence_detail", { entityRef: "recurrence:rent" }), { entityRef: "recurrence:rent" }));
 check(() => assert.equal(inputs.some(({ resource }) => resource === "analysis_global_product_detail" || resource === "analysis_global_route_detail"), false));
 
 const validRequest = { resource: "analysis_global_economic_expanded", scope: rawScope, params: { sectionKey: "OVERVIEW" }, expectedGeneration: { publicationId: publicationMeta.publicationId, analyticsRevision: 81 } };
@@ -119,10 +121,10 @@ rejects(() => query.parseGlobalV2QueryRequest({ ...validRequest, invented: true 
 check(() => assert.equal(query.globalV2RequestHasPresentUndefined({ ...validRequest, params: { sectionKey: undefined } }), true));
 
 const plan = planApi.buildGlobalV2QueryPlan({ instances: inputs });
-check(() => assert.equal(plan.instances.length, 32));
-check(() => assert.equal(plan.requiredQueryKeys.length, 32));
-check(() => assert.equal(plan.queryVersions.length, 32));
-check(() => assert.equal(plan.closures.length, 32));
+check(() => assert.equal(plan.instances.length, 33));
+check(() => assert.equal(plan.requiredQueryKeys.length, 33));
+check(() => assert.equal(plan.queryVersions.length, 33));
+check(() => assert.equal(plan.closures.length, 33));
 check(() => assert.equal(new Set(plan.requiredQueryKeys).size, plan.requiredQueryKeys.length));
 check(() => assert.deepEqual(plan.externalQueryRefs, ["ENTITY:entity_merchant:entity-merchant", "HISTORY:history_month_balance_summary:history-month", "OPERATIONS:operations_browse:operations"]));
 check(() => assert.ok(plan.totalPayloadBytes > 0));

@@ -11,16 +11,20 @@ import type { GlobalPublicationReasonCode, GlobalPublicationVisibility } from ".
 import type {
   GlobalCompactInsight,
   GlobalCompactQuality,
+  GlobalPhenomenonQuality,
+  GlobalTypedMeasure,
   GlobalModuleCapability,
   GlobalPrimaryModuleKey,
   GlobalReadModelPublicationMeta,
   GlobalReadModelResourceMeta,
 } from "./types";
+import { parseGlobalPhenomenonQuality, parseGlobalTypedMeasure } from "./typed-values";
 
 export const GLOBAL_EXPANDED_PAYLOAD_BUDGET_BYTES = 96 * 1024;
 export const GLOBAL_MAX_EXPANDED_INSIGHTS = 5;
 export const GLOBAL_MAX_SECONDARY_INSIGHTS = 4;
 export const GLOBAL_MAX_SECTION_METRICS = 12;
+const GLOBAL_MAX_M1_EVOLUTION_METRICS = 16;
 export const GLOBAL_MAX_SECTION_SERIES = 3;
 export const GLOBAL_MAX_SERIES_POINTS = 36;
 export const GLOBAL_MAX_SECTION_ROWS = 50;
@@ -35,6 +39,9 @@ export type GlobalDetailMetric = {
   readonly metricId: string;
   readonly labelKey: string;
   readonly displayValue: string;
+  readonly typedMeasure?: GlobalTypedMeasure;
+  readonly phenomenonRef?: string;
+  readonly phenomenonQuality?: GlobalPhenomenonQuality;
   readonly knowledgeState: DataStatus;
   readonly partialMeaning?: PartialMeaning;
   readonly dataNature: "OBSERVED" | "DECLARED" | "ESTIMATED" | "HYBRID";
@@ -44,6 +51,9 @@ export type GlobalDetailMetric = {
 export type GlobalDetailSeriesPoint = {
   readonly unitKey: string;
   readonly displayValue?: string;
+  readonly typedMeasure?: GlobalTypedMeasure;
+  readonly phenomenonRef?: string;
+  readonly phenomenonQuality?: GlobalPhenomenonQuality;
   readonly knowledgeState: DataStatus;
 };
 
@@ -59,6 +69,9 @@ export type GlobalDetailRow = {
   readonly rowId: string;
   readonly labelKey: string;
   readonly displayValue?: string;
+  readonly typedMeasure?: GlobalTypedMeasure;
+  readonly phenomenonRef?: string;
+  readonly phenomenonQuality?: GlobalPhenomenonQuality;
   readonly knowledgeState: DataStatus;
   readonly entityRef?: string;
   readonly evidenceRefs: readonly string[];
@@ -117,6 +130,7 @@ export const globalV2ExpandedResourceCatalog = Object.freeze([
   { resource: "analysis_global_consumption_expanded", moduleKey: "CONSUMPTION", capabilityId: "GLOBAL_CONSUMPTION" },
   { resource: "analysis_global_personas_expanded", moduleKey: "PERSONAS", capabilityId: "GLOBAL_PERSONAS" },
   { resource: "analysis_global_together_expanded", moduleKey: "TOGETHER", capabilityId: "GLOBAL_TOGETHER" },
+  { resource: "analysis_global_economic_recurrence_detail", moduleKey: "ECONOMIC", capabilityId: "GLOBAL_ECONOMIC_RECURRENCE_DETAIL" },
   { resource: "analysis_global_category_need_detail", moduleKey: "CATEGORIES_NEEDS", capabilityId: "GLOBAL_CATEGORY_NEED_DETAIL" },
   { resource: "analysis_global_transformation_detail", moduleKey: "TRANSFORMATIONS", capabilityId: "GLOBAL_TRANSFORMATION_DETAIL" },
   { resource: "analysis_global_routine_detail", moduleKey: "RHYTHM", capabilityId: "GLOBAL_ROUTINE_DETAIL" },
@@ -215,18 +229,24 @@ function parseInsight(value: unknown): GlobalCompactInsight {
   return { insightId: text(requireProperty(record, "insightId", "GlobalDetailInsight"), "insightId"), phenomenonId: text(requireProperty(record, "phenomenonId", "GlobalDetailInsight"), "phenomenonId"), kind: text(requireProperty(record, "kind", "GlobalDetailInsight"), "kind"), titleKey: text(requireProperty(record, "titleKey", "GlobalDetailInsight"), "titleKey"), statementKey: text(requireProperty(record, "statementKey", "GlobalDetailInsight"), "statementKey"), ...(primaryMetricRef === undefined ? {} : { primaryMetricRef }), ...(comparisonRef === undefined ? {} : { comparisonRef }), entityRefs: strings(requireProperty(record, "entityRefs", "GlobalDetailInsight"), "insightEntities"), evidenceRefs: strings(requireProperty(record, "evidenceRefs", "GlobalDetailInsight"), "insightEvidence"), detailRefs: strings(requireProperty(record, "detailRefs", "GlobalDetailInsight"), "insightDetails"), editorialRank };
 }
 function parseMetric(value: unknown): GlobalDetailMetric {
-  const record = parseStrictRecord(value, ["metricId", "labelKey", "displayValue", "knowledgeState", "partialMeaning", "dataNature", "evidenceRefs"], "GlobalDetailMetric");
+  const record = parseStrictRecord(value, ["metricId", "labelKey", "displayValue", "typedMeasure", "phenomenonRef", "phenomenonQuality", "knowledgeState", "partialMeaning", "dataNature", "evidenceRefs"], "GlobalDetailMetric");
   const knowledgeState = status(requireProperty(record, "knowledgeState", "GlobalDetailMetric"));
   const partialMeaning = optional(record, "partialMeaning", (entry) => parseStringLiteral<PartialMeaning>(entry, new Set(["LOWER_BOUND", "OBSERVED_ONLY"]), "partialMeaning"));
+  const typedMeasure = optional(record, "typedMeasure", parseGlobalTypedMeasure);
+  const phenomenonRef = optional(record, "phenomenonRef", (entry) => text(entry, "phenomenonRef"));
+  const phenomenonQuality = optional(record, "phenomenonQuality", parseGlobalPhenomenonQuality);
   if ((knowledgeState === "PARTIAL") !== (partialMeaning !== undefined)) throw new TypeError("GLOBAL_DETAIL_METRIC_PARTIAL_MISMATCH");
-  return { metricId: text(requireProperty(record, "metricId", "GlobalDetailMetric"), "metricId"), labelKey: text(requireProperty(record, "labelKey", "GlobalDetailMetric"), "labelKey"), displayValue: text(requireProperty(record, "displayValue", "GlobalDetailMetric"), "displayValue"), knowledgeState, ...(partialMeaning === undefined ? {} : { partialMeaning }), dataNature: parseStringLiteral(requireProperty(record, "dataNature", "GlobalDetailMetric"), new Set(["OBSERVED", "DECLARED", "ESTIMATED", "HYBRID"]), "dataNature"), evidenceRefs: strings(requireProperty(record, "evidenceRefs", "GlobalDetailMetric"), "metricEvidence") };
+  return { metricId: text(requireProperty(record, "metricId", "GlobalDetailMetric"), "metricId"), labelKey: text(requireProperty(record, "labelKey", "GlobalDetailMetric"), "labelKey"), displayValue: text(requireProperty(record, "displayValue", "GlobalDetailMetric"), "displayValue"), ...(typedMeasure === undefined ? {} : { typedMeasure }), ...(phenomenonRef === undefined ? {} : { phenomenonRef }), ...(phenomenonQuality === undefined ? {} : { phenomenonQuality }), knowledgeState, ...(partialMeaning === undefined ? {} : { partialMeaning }), dataNature: parseStringLiteral(requireProperty(record, "dataNature", "GlobalDetailMetric"), new Set(["OBSERVED", "DECLARED", "ESTIMATED", "HYBRID"]), "dataNature"), evidenceRefs: strings(requireProperty(record, "evidenceRefs", "GlobalDetailMetric"), "metricEvidence") };
 }
 function parsePoint(value: unknown): GlobalDetailSeriesPoint {
-  const record = parseStrictRecord(value, ["unitKey", "displayValue", "knowledgeState"], "GlobalDetailSeriesPoint");
+  const record = parseStrictRecord(value, ["unitKey", "displayValue", "typedMeasure", "phenomenonRef", "phenomenonQuality", "knowledgeState"], "GlobalDetailSeriesPoint");
   const knowledgeState = status(requireProperty(record, "knowledgeState", "GlobalDetailSeriesPoint"));
   const displayValue = optional(record, "displayValue", (entry) => text(entry, "displayValue"));
+  const typedMeasure = optional(record, "typedMeasure", parseGlobalTypedMeasure);
+  const phenomenonRef = optional(record, "phenomenonRef", (entry) => text(entry, "phenomenonRef"));
+  const phenomenonQuality = optional(record, "phenomenonQuality", parseGlobalPhenomenonQuality);
   if ((knowledgeState === "KNOWN" || knowledgeState === "PARTIAL") !== (displayValue !== undefined)) throw new TypeError("GLOBAL_DETAIL_POINT_VALUE_MISMATCH");
-  return { unitKey: text(requireProperty(record, "unitKey", "GlobalDetailSeriesPoint"), "unitKey"), ...(displayValue === undefined ? {} : { displayValue }), knowledgeState };
+  return { unitKey: text(requireProperty(record, "unitKey", "GlobalDetailSeriesPoint"), "unitKey"), ...(displayValue === undefined ? {} : { displayValue }), ...(typedMeasure === undefined ? {} : { typedMeasure }), ...(phenomenonRef === undefined ? {} : { phenomenonRef }), ...(phenomenonQuality === undefined ? {} : { phenomenonQuality }), knowledgeState };
 }
 function parseSeries(value: unknown): GlobalDetailSeries {
   const record = parseStrictRecord(value, ["seriesId", "labelKey", "unit", "points", "evidenceRefs"], "GlobalDetailSeries");
@@ -235,10 +255,13 @@ function parseSeries(value: unknown): GlobalDetailSeries {
   return { seriesId: text(requireProperty(record, "seriesId", "GlobalDetailSeries"), "seriesId"), labelKey: text(requireProperty(record, "labelKey", "GlobalDetailSeries"), "labelKey"), unit: text(requireProperty(record, "unit", "GlobalDetailSeries"), "unit"), points, evidenceRefs: strings(requireProperty(record, "evidenceRefs", "GlobalDetailSeries"), "seriesEvidence") };
 }
 function parseRow(value: unknown): GlobalDetailRow {
-  const record = parseStrictRecord(value, ["rowId", "labelKey", "displayValue", "knowledgeState", "entityRef", "evidenceRefs"], "GlobalDetailRow");
+  const record = parseStrictRecord(value, ["rowId", "labelKey", "displayValue", "typedMeasure", "phenomenonRef", "phenomenonQuality", "knowledgeState", "entityRef", "evidenceRefs"], "GlobalDetailRow");
   const displayValue = optional(record, "displayValue", (entry) => text(entry, "displayValue"));
   const entityRef = optional(record, "entityRef", (entry) => text(entry, "entityRef"));
-  return { rowId: text(requireProperty(record, "rowId", "GlobalDetailRow"), "rowId"), labelKey: text(requireProperty(record, "labelKey", "GlobalDetailRow"), "labelKey"), ...(displayValue === undefined ? {} : { displayValue }), knowledgeState: status(requireProperty(record, "knowledgeState", "GlobalDetailRow")), ...(entityRef === undefined ? {} : { entityRef }), evidenceRefs: strings(requireProperty(record, "evidenceRefs", "GlobalDetailRow"), "rowEvidence") };
+  const typedMeasure = optional(record, "typedMeasure", parseGlobalTypedMeasure);
+  const phenomenonRef = optional(record, "phenomenonRef", (entry) => text(entry, "phenomenonRef"));
+  const phenomenonQuality = optional(record, "phenomenonQuality", parseGlobalPhenomenonQuality);
+  return { rowId: text(requireProperty(record, "rowId", "GlobalDetailRow"), "rowId"), labelKey: text(requireProperty(record, "labelKey", "GlobalDetailRow"), "labelKey"), ...(displayValue === undefined ? {} : { displayValue }), ...(typedMeasure === undefined ? {} : { typedMeasure }), ...(phenomenonRef === undefined ? {} : { phenomenonRef }), ...(phenomenonQuality === undefined ? {} : { phenomenonQuality }), knowledgeState: status(requireProperty(record, "knowledgeState", "GlobalDetailRow")), ...(entityRef === undefined ? {} : { entityRef }), evidenceRefs: strings(requireProperty(record, "evidenceRefs", "GlobalDetailRow"), "rowEvidence") };
 }
 function parseDestination(value: unknown): GlobalNavigationDestination {
   const record = parseStrictRecord(value, ["targetId", "kind", "resource", "instanceKey", "entityRef", "scopeHash", "sourcePublicationId", "sourceAnalyticsRevision"], "GlobalNavigationDestination");
@@ -263,6 +286,7 @@ export function parseGlobalExpandedReadModel(value: unknown): GlobalExpandedRead
   const moduleKey = parseStringLiteral<GlobalPrimaryModuleKey>(requireProperty(record, "moduleKey", "GlobalExpandedReadModel"), moduleKeys, "moduleKey");
   const catalogModule = globalV2ExpandedResourceCatalog.find((entry) => entry.resource === resource)?.moduleKey;
   if (resource !== "analysis_global_methodology" && catalogModule !== moduleKey) throw new TypeError("GLOBAL_EXPANDED_RESOURCE_MODULE_MISMATCH");
+  const sectionKey = parseStringLiteral<GlobalExpandedSectionKey>(requireProperty(record, "sectionKey", "GlobalExpandedReadModel"), sectionKeys, "sectionKey");
   const visibility = parseStringLiteral<GlobalPublicationVisibility>(requireProperty(record, "visibility", "GlobalExpandedReadModel"), visibilities, "visibility");
   const reasonCode = optional(record, "reasonCode", (entry) => parseStringLiteral<GlobalPublicationReasonCode>(entry, reasons, "reasonCode"));
   const primaryInsight = optional(record, "primaryInsight", parseInsight);
@@ -272,12 +296,13 @@ export function parseGlobalExpandedReadModel(value: unknown): GlobalExpandedRead
   const rows = array(requireProperty(record, "rows", "GlobalExpandedReadModel"), parseRow, "rows");
   const destinations = array(requireProperty(record, "destinations", "GlobalExpandedReadModel"), parseDestination, "destinations");
   if (secondaryInsights.length > GLOBAL_MAX_SECONDARY_INSIGHTS || secondaryInsights.length + (primaryInsight === undefined ? 0 : 1) > GLOBAL_MAX_EXPANDED_INSIGHTS) throw new TypeError("GLOBAL_EXPANDED_INSIGHT_LIMIT");
-  if (metrics.length > GLOBAL_MAX_SECTION_METRICS || series.length > GLOBAL_MAX_SECTION_SERIES || rows.length > GLOBAL_MAX_SECTION_ROWS || destinations.length > GLOBAL_MAX_SECTION_TARGETS) throw new TypeError("GLOBAL_EXPANDED_SECTION_LIMIT");
+  const metricLimit = resource === "analysis_global_economic_expanded" && sectionKey === "EVOLUTION" ? GLOBAL_MAX_M1_EVOLUTION_METRICS : GLOBAL_MAX_SECTION_METRICS;
+  if (metrics.length > metricLimit || series.length > GLOBAL_MAX_SECTION_SERIES || rows.length > GLOBAL_MAX_SECTION_ROWS || destinations.length > GLOBAL_MAX_SECTION_TARGETS) throw new TypeError("GLOBAL_EXPANDED_SECTION_LIMIT");
   if (visibility !== "VISIBLE" && (primaryInsight !== undefined || secondaryInsights.length + metrics.length + series.length + rows.length > 0)) throw new TypeError("GLOBAL_EXPANDED_NON_VISIBLE_CONTENT");
   if (visibility !== "VISIBLE" && reasonCode === undefined) throw new TypeError("GLOBAL_EXPANDED_REASON_REQUIRED");
   const insightIds = [primaryInsight, ...secondaryInsights].filter((entry): entry is GlobalCompactInsight => entry !== undefined).map(({ insightId }) => insightId);
   if (new Set(insightIds).size !== insightIds.length) throw new TypeError("GLOBAL_EXPANDED_INSIGHT_DUPLICATE");
-  return { kind: parseStringLiteral(requireProperty(record, "kind", "GlobalExpandedReadModel"), new Set(["global_expanded"]), "kind"), schemaVersion: parseStringLiteral(requireProperty(record, "schemaVersion", "GlobalExpandedReadModel"), new Set(["global-expanded@v1"]), "schemaVersion"), resource, moduleKey, sectionKey: parseStringLiteral<GlobalExpandedSectionKey>(requireProperty(record, "sectionKey", "GlobalExpandedReadModel"), sectionKeys, "sectionKey"), visibility, ...(reasonCode === undefined ? {} : { reasonCode }), ...(primaryInsight === undefined ? {} : { primaryInsight }), secondaryInsights, metrics, series, rows, destinations, quality: parseQuality(requireProperty(record, "quality", "GlobalExpandedReadModel")), capabilities: array(requireProperty(record, "capabilities", "GlobalExpandedReadModel"), parseCapability, "capabilities"), publicationMeta: parsePublicationMeta(requireProperty(record, "publicationMeta", "GlobalExpandedReadModel")), resourceMeta: parseResourceMeta(requireProperty(record, "resourceMeta", "GlobalExpandedReadModel")) };
+  return { kind: parseStringLiteral(requireProperty(record, "kind", "GlobalExpandedReadModel"), new Set(["global_expanded"]), "kind"), schemaVersion: parseStringLiteral(requireProperty(record, "schemaVersion", "GlobalExpandedReadModel"), new Set(["global-expanded@v1"]), "schemaVersion"), resource, moduleKey, sectionKey, visibility, ...(reasonCode === undefined ? {} : { reasonCode }), ...(primaryInsight === undefined ? {} : { primaryInsight }), secondaryInsights, metrics, series, rows, destinations, quality: parseQuality(requireProperty(record, "quality", "GlobalExpandedReadModel")), capabilities: array(requireProperty(record, "capabilities", "GlobalExpandedReadModel"), parseCapability, "capabilities"), publicationMeta: parsePublicationMeta(requireProperty(record, "publicationMeta", "GlobalExpandedReadModel")), resourceMeta: parseResourceMeta(requireProperty(record, "resourceMeta", "GlobalExpandedReadModel")) };
 }
 
 export function parseImportedGlobalSummaryReadModel(value: unknown): ImportedGlobalSummaryReadModel {

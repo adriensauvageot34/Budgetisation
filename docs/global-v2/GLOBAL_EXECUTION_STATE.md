@@ -438,3 +438,14 @@ Elles restent des contrats de compatibilité, pas une autorité V2.
 - Tests : R2 56/56, R1 46/46, M1 72/72, M2 49/49, P04 179/179, production bridge 66/66, primary RM 83/83, Query 57/57 et 32/32 schemas, typecheck, architecture 563, diff-check PASS.
 - Aucun frontend, backfill, migration, accès/write Supabase, publication, déploiement ou push. Rapport : `execution/m1-economy/M1-2-3R-ENGINE-OWNER-V2.md`.
 - `M1_2_3R_ENGINE_OWNER=PASS`; `M1_HISTORY_MINIMAL=PARTIAL_UNTIL_BACKFILL`; `STRUCTURAL_RECURRING_COST=LOCAL_PARTIAL`; `CONDITIONAL_CAPABILITIES=SAFE_GATED`; `LIVE_WRITES=NONE`.
+
+## M1-4R — Query, ReadModels et snapshots (2026-09-08)
+
+- Baseline `72eefdbb508e4f86461824a8d3a34a53ecf3eb92`, branche `main`; précondition `M1_2_3R_ENGINE_OWNER=PASS` vérifiée.
+- Contrat Query étendu de manière additive avec `GlobalTypedMeasure` et `GlobalPhenomenonQuality`. Les anciens payloads restent lisibles ; les nouveaux M1 portent valeur machine, qualité, méthode et inputHash au phénomène.
+- Compact : Actual, TypicalState et MinimalState, avec comparaison `actualVsTypicalReference` déjà calculée par l'owner. Aucun calcul depuis `displayValue`.
+- Sections M1 fermées : Overview, Evolution 3×12, Breakdown humain, Patterns récurrences, Comparisons qualifiées et Methodology. Les trous Minimal restent `UNKNOWN` sans effacer Actual/Typical.
+- Nouvelle instance ciblée `analysis_global_economic_recurrence_detail`, famille `global_entity_detail`, params `{entityRef}`, payload `GlobalExpandedReadModel` et présence déterministe au manifest.
+- Tests : R3 31/31, primary RM 83/83, Query 59/59 et 33/33 RuntimeSchemas, production bridge 66/66, certification intégrée 28/28, owner R2 56/56, typecheck, architecture 564 et diff-check PASS.
+- Aucun frontend, accès/write Supabase, migration, publication, déploiement ou push. Rapport : `execution/m1-economy/M1-4R-QUERY-SNAPSHOTS.md`.
+- `M1_4R_QUERY=PASS`; `EVOLUTION_MINIMAL=PARTIAL_UNTIL_BACKFILL`; `MANIFEST_CANDIDATE=PASS`; `LIVE_WRITES=NONE`.

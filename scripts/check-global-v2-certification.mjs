@@ -29,11 +29,11 @@ const candidate = await buildIntegratedGlobalV2Candidate({ core, query, planApi,
 const replay = await buildIntegratedGlobalV2Candidate({ core, query, planApi, materialization, analytics });
 
 check(() => assert.equal(candidate.outputs.length, 10));
-check(() => assert.equal(candidate.plan.instances.length, 32));
+check(() => assert.equal(candidate.plan.instances.length, 33));
 check(() => assert.equal(candidate.plan.instances.every(({ resource, payload }) => query.globalV2QueryRegistry[resource].schema.safeParse(payload).success), true));
-check(() => assert.equal(candidate.plan.closures.length, 32));
-check(() => assert.equal(candidate.manifest.closures.length, 33));
-check(() => assert.equal(candidate.manifest.requiredQueryKeys.length, 32));
+check(() => assert.equal(candidate.plan.closures.length, 33));
+check(() => assert.equal(candidate.manifest.closures.length, 34));
+check(() => assert.equal(candidate.manifest.requiredQueryKeys.length, 33));
 check(() => assert.equal(candidate.manifest.requiredArtifactKeys.length, 1));
 check(() => assert.equal(candidate.manifest.manifestHash, replay.manifest.manifestHash));
 check(() => assert.equal(candidate.manifest.publicationFactsHash, replay.manifest.publicationFactsHash));

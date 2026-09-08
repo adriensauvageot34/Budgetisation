@@ -31,6 +31,8 @@ import {
   type GlobalDetailMetric,
   type GlobalDetailRow,
   type GlobalDetailSeries,
+  type GlobalPhenomenonQuality,
+  type GlobalTypedMeasure,
   type GlobalExpandedSectionKey,
   type GlobalModuleCapability,
   type GlobalPrimaryModuleKey,
@@ -204,6 +206,88 @@ function kpi(output: GlobalV2OwnerOutput, kpiId: string, labelKey: string, displ
   return { kpiId, phenomenonId: `presentation:${output.moduleKey.toLowerCase()}`, labelKey, displayValue, metricRef, evidenceRefs: outputEvidence(output) };
 }
 
+function knowledgeOf(value: unknown): GlobalPhenomenonQuality["knowledgeState"] {
+  const status = stringOf(at(value, "status"));
+  return status === "KNOWN" || status === "PARTIAL" || status === "UNKNOWN" || status === "NOT_APPLICABLE" || status === "CONFLICT" ? status : "UNKNOWN";
+}
+
+function typedMeasure(value: unknown, kind: GlobalTypedMeasure["kind"], unit: string): GlobalTypedMeasure | undefined {
+  const textValue = stringOf(value);
+  return textValue === undefined ? undefined : { kind, value: textValue, unit };
+}
+
+function phenomenonQuality(value: unknown, fallbackInputHash: unknown, ...limitations: readonly string[]): GlobalPhenomenonQuality {
+  const status = knowledgeOf(value);
+  const supportStatus = stringOf(at(value, "support", "supportStatus"));
+  const effectiveCoverage = numberOf(at(value, "coverage", "effective"));
+  const materialityStatus = stringOf(at(value, "materiality", "status"));
+  const reasonCode = stringOf(at(value, "reasonCode"));
+  const nature = stringOf(at(value, "provenance", "resultNature"));
+  return {
+    knowledgeState: status,
+    ...(supportStatus === "INSUFFICIENT" || supportStatus === "PARTIAL_SUPPORT" || supportStatus === "SUFFICIENT" || supportStatus === "STRONG" ? { supportStatus } : {}),
+    ...(effectiveCoverage === undefined ? {} : { effectiveCoverage }),
+    ...(materialityStatus === "MATERIAL" || materialityStatus === "NOT_MATERIAL" || materialityStatus === "UNKNOWN" ? { materialityStatus } : {}),
+    limitationCodes: uniqueSorted([...(reasonCode === undefined ? [] : [reasonCode]), ...limitations]),
+    dataNature: nature === "DECLARED" || nature === "ESTIMATED" || nature === "HYBRID" ? nature : "OBSERVED",
+    methodVersion: stringOf(at(value, "methodVersion")) ?? "global-m1-query-projection@v2",
+    inputHash: stringOf(at(value, "inputHash")) ?? stringOf(fallbackInputHash) ?? digest({ phenomenon: value, limitations }),
+  };
+}
+
+function qualifiedMetric(output: GlobalV2OwnerOutput, metricId: string, labelKey: string, value: unknown, options: { readonly kind?: GlobalTypedMeasure["kind"]; readonly unit?: string; readonly signed?: boolean; readonly phenomenonRef?: string; readonly fallbackInputHash?: unknown } = {}): GlobalDetailMetric {
+  const status = knowledgeOf(value);
+  const raw = at(value, "value");
+  const measure = typedMeasure(raw, options.kind ?? "MONEY", options.unit ?? stringOf(at(value, "unit")) ?? "EUR/month");
+  const formatted = options.kind === "RATIO" || options.kind === "DECIMAL" ? formatNumber(raw, 4) : options.signed ? formatSignedMoney(raw) : formatMoney(raw);
+  return {
+    metricId,
+    labelKey,
+    displayValue: formatted ?? "Indisponible",
+    ...(measure === undefined ? {} : { typedMeasure: measure }),
+    phenomenonRef: options.phenomenonRef ?? `global-m1:${metricId}`,
+    phenomenonQuality: phenomenonQuality(value, options.fallbackInputHash ?? at(output.output, "inputHash")),
+    knowledgeState: status,
+    ...(status === "PARTIAL" ? { partialMeaning: "OBSERVED_ONLY" as const } : {}),
+    dataNature: phenomenonQuality(value, options.fallbackInputHash ?? at(output.output, "inputHash")).dataNature,
+    evidenceRefs: outputEvidence(output, ...arrayOf(at(value, "provenance", "evidenceRefs")).filter((entry): entry is string => typeof entry === "string")),
+  };
+}
+
+function qualifiedKpi(output: GlobalV2OwnerOutput, kpiId: string, labelKey: string, value: unknown, metricRef: string): GlobalCompactKpi {
+  const raw = at(value, "value");
+  const measure = typedMeasure(raw, "MONEY", stringOf(at(value, "unit")) ?? "EUR/month");
+  return {
+    kpiId,
+    phenomenonId: "global-m1:economic-state",
+    labelKey,
+    displayValue: formatMoney(raw) ?? "Indisponible pour ce mois",
+    ...(measure === undefined ? {} : { typedMeasure: measure }),
+    phenomenonRef: metricRef,
+    phenomenonQuality: phenomenonQuality(value, at(output.output, "inputHash")),
+    metricRef,
+    evidenceRefs: outputEvidence(output, ...arrayOf(at(value, "provenance", "evidenceRefs")).filter((entry): entry is string => typeof entry === "string")),
+  };
+}
+
+function qualifiedRow(output: GlobalV2OwnerOutput, rank: number, rowId: string, labelKey: string, value: unknown, entityRef?: string): GlobalDetailRow {
+  const raw = at(value, "value") ?? at(value, "amount");
+  const status = stringOf(at(value, "status")) === undefined && raw !== undefined ? "KNOWN" : knowledgeOf(value);
+  const measure = typedMeasure(raw, "MONEY", stringOf(at(value, "unit")) ?? "EUR/month");
+  return {
+    rowId: `${String(rank).padStart(3, "0")}:${rowId}`,
+    labelKey,
+    ...(raw === undefined ? {} : { displayValue: formatMoney(raw) ?? String(raw), typedMeasure: measure! }),
+    phenomenonRef: `global-m1:${rowId}`,
+    phenomenonQuality: status === knowledgeOf(value)
+      ? phenomenonQuality(value, at(output.output, "inputHash"))
+      : { knowledgeState: "KNOWN", limitationCodes: [], dataNature: "OBSERVED", methodVersion: "global-m1-query-projection@v2", inputHash: stringOf(at(output.output, "inputHash")) ?? digest(value) },
+    knowledgeState: status,
+    ...(entityRef === undefined ? {} : { entityRef }),
+    evidenceRefs: outputEvidence(output),
+  };
+}
+
 function presentationInsight(
   output: GlobalV2OwnerOutput,
   insightId: string,
@@ -238,66 +322,208 @@ function byDescendingNumber(path: readonly string[]) {
 }
 
 function economicProjection(output: GlobalV2OwnerOutput): ModuleProjection {
-  // The producer now emits the V2 owner shape. The legacy reads below remain
-  // projection-only compatibility for already-certified owner fixtures.
-  const actualValue = at(output.output, "state", "actual", "value") ?? at(output.output, "actual", "value", "value");
-  const typicalValue = at(output.output, "state", "typicalReference", "value") ?? at(output.output, "typical", "reference", "value");
-  const minimalValue = at(output.output, "state", "minimalState", "value") ?? at(output.output, "minimal", "metric", "value");
-  const actualNumber = numberOf(actualValue);
-  const typicalNumber = numberOf(typicalValue);
-  const actual = formatMoney(actualValue);
-  const typical = formatMoney(typicalValue);
-  const minimal = formatMoney(minimalValue);
-  const targetMonth = stringOf(at(output.output, "targetMonth"));
-  const compact = [
-    ...(actual === undefined ? [] : [kpi(output, "kpi:economic:actual", targetMonth === undefined ? "Dépenses du mois" : `Dépenses en ${targetMonth}`, actual, "global-m1:actual")]),
-    ...(typical === undefined ? [] : [kpi(output, "kpi:economic:typical", "Niveau habituel", typical, "global-m1:typical-reference")]),
-    ...(minimal === undefined ? [] : [kpi(output, "kpi:economic:minimal", "Minimum estimé", minimal, "global-m1:minimal")]),
-  ];
-  const habitualDelta = actualNumber === undefined || typicalNumber === undefined ? undefined : actualNumber - typicalNumber;
-  const deltaAmount = habitualDelta === undefined ? undefined : formatMoney(Math.abs(habitualDelta));
-  const deltaStatement = habitualDelta === undefined || deltaAmount === undefined || typical === undefined
-    ? undefined
-    : habitualDelta > 0
+  const state = recordOf(at(output.output, "state"));
+  if (state === undefined) {
+    const legacyTargetMonth = stringOf(at(output.output, "targetMonth"));
+    const rawActual = at(output.output, "actual", "value", "value");
+    const rawTypical = at(output.output, "typical", "reference", "value");
+    const actual = formatMoney(rawActual);
+    const typical = formatMoney(rawTypical);
+    const minimal = formatMoney(at(output.output, "minimal", "metric", "value"));
+    const compact = [
+      ...(actual === undefined ? [] : [kpi(output, "kpi:economic:actual", legacyTargetMonth === undefined ? "Dépenses du mois" : `Dépenses en ${legacyTargetMonth}`, actual, "global-m1:actual")]),
+      ...(typical === undefined ? [] : [kpi(output, "kpi:economic:typical", "Niveau habituel", typical, "global-m1:typical-reference")]),
+      ...(minimal === undefined ? [] : [kpi(output, "kpi:economic:minimal", "Minimum estimé", minimal, "global-m1:minimal")]),
+    ];
+    const delta = numberOf(rawActual) === undefined || numberOf(rawTypical) === undefined ? undefined : numberOf(rawActual)! - numberOf(rawTypical)!;
+    const deltaAmount = delta === undefined ? undefined : formatMoney(Math.abs(delta));
+    const statement = delta === undefined || deltaAmount === undefined || typical === undefined ? undefined : delta > 0
       ? `${deltaAmount} au-dessus de votre niveau habituel · Habituel : ${typical}/mois`
-      : habitualDelta < 0
-        ? `${deltaAmount} sous votre niveau habituel · Habituel : ${typical}/mois`
-        : `Très proche de votre niveau habituel · Habituel : ${typical}/mois`;
-  const breakdownLabels: Readonly<Record<string, string>> = {
+      : delta < 0 ? `${deltaAmount} sous votre niveau habituel · Habituel : ${typical}/mois` : `Très proche de votre niveau habituel · Habituel : ${typical}/mois`;
+    const legacyLabels: Readonly<Record<string, string>> = { Fixe: "Fixe", Variable: "Variable", CURRENT: "Vie courante", NON_CURRENT: "Hors quotidien", Contraint: "Contraint", Contrainte: "Contraint", Indispensable: "Indispensable", Optionnel: "Optionnel" };
+    const legacyBreakdown = [["behavior", "Comportement"], ["lifeScope", "Périmètre de vie"], ["necessity", "Nécessité"]].flatMap(([axis, axisLabel]) => Object.entries(recordOf(at(output.output, "structure", axis, "amounts")) ?? {}).map(([key, value], index) => row(output, index + 1, `${axis}:${key}`, `${axisLabel} · ${legacyLabels[key] ?? key}`, formatMoney(value) ?? "Montant indisponible", undefined, "KNOWN")));
+    const legacyTemporal = [
+      ["trend-start", "Niveau au début", at(output.output, "temporal", "trend", "startLevel")],
+      ["trend-end", "Niveau à la fin", at(output.output, "temporal", "trend", "endLevel")],
+      ["trend-slope", "Évolution mensuelle", at(output.output, "temporal", "trend", "slopePerMonth")],
+      ["recent-previous", "Niveau précédent", at(output.output, "temporal", "recentChange", "previousLevel")],
+      ["recent-current", "Niveau récent", at(output.output, "temporal", "recentChange", "recentLevel")],
+      ["recent-delta", "Variation récente", at(output.output, "temporal", "recentChange", "delta")],
+    ].flatMap(([id, label, value]) => {
+      const formatted = (id as string).includes("delta") || (id as string).includes("slope") ? formatSignedMoney(value) : formatMoney(value);
+      return formatted === undefined ? [] : [metric(output, id as string, label as string, formatted, "KNOWN")];
+    });
+    return {
+      ...(statement === undefined ? {} : { primaryInsight: presentationInsight(output, "habitual-delta", "Écart à l’habitude", statement, { primaryMetricRef: "global-m1:actual" }) }),
+      kpis: compact,
+      sections: {
+        OVERVIEW: { metrics: compact.map((entry) => metric(output, entry.kpiId, entry.labelKey, entry.displayValue, "KNOWN")) },
+        BREAKDOWN: { rows: legacyBreakdown },
+        EVOLUTION: { metrics: legacyTemporal },
+      },
+      detailRows: [],
+    };
+  }
+
+  const targetMonth = stringOf(at(output.output, "targetMonth"));
+  const actual = at(state, "actual");
+  const typicalReference = at(state, "typicalReference");
+  const typicalState = at(state, "typicalState");
+  const minimalState = at(state, "minimalState");
+  const targetDelta = at(state, "comparisons", "actualVsTypicalReference");
+  const minimalGap = at(state, "comparisons", "typicalStateVsMinimalState");
+  const compact = [
+    qualifiedKpi(output, "kpi:economic:actual", targetMonth === undefined ? "Dépenses du mois" : `Dépenses en ${targetMonth}`, actual, "global-m1:actual"),
+    qualifiedKpi(output, "kpi:economic:typical-state", "État habituel", typicalState, "global-m1:typical-state"),
+    qualifiedKpi(output, "kpi:economic:minimal-state", "Minimum estimé", minimalState, "global-m1:minimal-state"),
+  ];
+  const deltaValue = numberOf(at(targetDelta, "value"));
+  const deltaAmount = deltaValue === undefined ? undefined : formatMoney(Math.abs(deltaValue));
+  const typicalDisplay = formatMoney(at(typicalReference, "value"));
+  const deltaStatement = deltaValue === undefined || deltaAmount === undefined || typicalDisplay === undefined
+    ? undefined
+    : deltaValue > 0
+      ? `${deltaAmount} au-dessus de votre référence habituelle · Référence : ${typicalDisplay}/mois`
+      : deltaValue < 0
+        ? `${deltaAmount} sous votre référence habituelle · Référence : ${typicalDisplay}/mois`
+        : `Au niveau de votre référence habituelle · Référence : ${typicalDisplay}/mois`;
+
+  const overviewMetrics = [
+    qualifiedMetric(output, "typical-state", "État habituel", typicalState),
+    qualifiedMetric(output, "minimal-state", "Minimum estimé", minimalState),
+    qualifiedMetric(output, "typical-minimal-gap", "Écart habituel au minimum", minimalGap, { signed: true }),
+    qualifiedMetric(output, "actual", "Dépenses du mois", actual),
+    qualifiedMetric(output, "typical-reference", "Référence habituelle", typicalReference),
+    qualifiedMetric(output, "actual-reference-delta", "Écart à la référence", targetDelta, { signed: true }),
+  ];
+  const structuralRecurringCost = at(output.output, "recurrences", "structuralRecurringCost");
+  if (knowledgeOf(structuralRecurringCost) === "KNOWN" || knowledgeOf(structuralRecurringCost) === "PARTIAL") {
+    overviewMetrics.push(qualifiedMetric(output, "structural-recurring-cost", "Coût récurrent structurel", structuralRecurringCost));
+  }
+
+  const points = arrayOf(at(output.output, "history", "points")).slice(-12);
+  const historySeries = ([
+    ["actual", "Dépenses réelles", "actual"],
+    ["typical-state", "État habituel", "typicalState"],
+    ["minimal-state", "Minimum estimé", "minimalState"],
+  ] as const).map(([seriesId, labelKey, valueKey]): GlobalDetailSeries => ({
+    seriesId: `economic:${seriesId}`,
+    labelKey,
+    unit: "EUR/month",
+    points: points.map((point) => {
+      const value = at(point, valueKey);
+      const status = knowledgeOf(value);
+      const measure = typedMeasure(at(value, "value"), "MONEY", stringOf(at(value, "unit")) ?? "EUR/month");
+      return {
+        unitKey: stringOf(at(point, "month"))!,
+        ...(measure === undefined ? {} : { displayValue: formatMoney(measure.value), typedMeasure: measure }),
+        phenomenonRef: `global-m1:history:${seriesId}:${stringOf(at(point, "month"))}`,
+        phenomenonQuality: phenomenonQuality(value, at(output.output, "history", "inputHash")),
+        knowledgeState: status,
+      };
+    }),
+    evidenceRefs: outputEvidence(output),
+  }));
+
+  const temporal = at(output.output, "temporal");
+  const temporalHash = at(temporal, "inputHash") ?? at(output.output, "inputHash");
+  const temporalMetric = (id: string, label: string, value: unknown, kind: GlobalTypedMeasure["kind"] = "MONEY", signed = false): GlobalDetailMetric | undefined => {
+    const raw = at(value, "value") ?? value;
+    const rawText = stringOf(raw);
+    if (rawText === undefined) return undefined;
+    const status = stringOf(at(value, "status")) === "UNKNOWN" ? "UNKNOWN" : "KNOWN";
+    const measure = typedMeasure(rawText, kind, kind === "MONEY" ? "EUR/month" : "ratio/month");
+    return {
+      metricId: id, labelKey: label,
+      displayValue: kind === "MONEY" ? (signed ? formatSignedMoney(rawText)! : formatMoney(rawText)!) : formatNumber(rawText, 6)!,
+      typedMeasure: measure!, phenomenonRef: `global-m1:temporal:${id}`,
+      phenomenonQuality: { knowledgeState: status, limitationCodes: [], dataNature: "OBSERVED", methodVersion: stringOf(at(temporal, "methodVersion")) ?? "global_temporal_analysis@v2", inputHash: stringOf(temporalHash) ?? digest(temporal) },
+      knowledgeState: status, dataNature: "OBSERVED", evidenceRefs: outputEvidence(output),
+    };
+  };
+  const temporalMetrics = ([
+    ["recent-previous", "Niveau précédent", at(temporal, "recentChange", "previousLevel"), "MONEY", false],
+    ["recent-current", "Niveau récent", at(temporal, "recentChange", "recentLevel"), "MONEY", false],
+    ["recent-delta", "Variation récente", at(temporal, "recentChange", "delta"), "MONEY", true],
+    ["trend-slope", "Pente mensuelle", at(temporal, "trend", "slopePerMonth"), "MONEY", true],
+    ["trend-relative-slope", "Pente relative", at(temporal, "trend", "relativeSlope"), "DECIMAL", false],
+    ["trend-start", "Niveau au début", at(temporal, "trend", "startLevel"), "MONEY", false],
+    ["trend-end", "Niveau à la fin", at(temporal, "trend", "endLevel"), "MONEY", false],
+    ["dispersion-median", "Médiane", at(temporal, "dispersion", "median"), "MONEY", false],
+    ["dispersion-q1", "Premier quartile", at(temporal, "dispersion", "q1"), "MONEY", false],
+    ["dispersion-q3", "Troisième quartile", at(temporal, "dispersion", "q3"), "MONEY", false],
+    ["dispersion-iqr", "Écart interquartile", at(temporal, "dispersion", "iqr"), "MONEY", false],
+    ["dispersion-mad", "Écart médian absolu", at(temporal, "dispersion", "mad"), "MONEY", false],
+    ["dispersion-min", "Minimum observé", at(temporal, "dispersion", "minimum"), "MONEY", false],
+    ["dispersion-max", "Maximum observé", at(temporal, "dispersion", "maximum"), "MONEY", false],
+    ["dispersion-amplitude", "Amplitude", at(temporal, "dispersion", "amplitude"), "MONEY", false],
+  ] as const).flatMap(([id, label, value, kind, signed]) => {
+    const result = temporalMetric(id, label, value, kind, signed);
+    return result === undefined ? [] : [result];
+  });
+  for (const id of ["trend-slope", "recent-delta", "dispersion-amplitude"] as const) {
+    const summary = temporalMetrics.find(({ metricId }) => metricId === id);
+    if (summary !== undefined) overviewMetrics.push({ ...summary, metricId: `overview-${summary.metricId}` });
+  }
+
+  const labels: Readonly<Record<string, string>> = {
     Fixe: "Fixe", Variable: "Variable", CURRENT: "Vie courante", NON_CURRENT: "Hors quotidien",
     Contraint: "Contraint", Indispensable: "Indispensable", Optionnel: "Optionnel",
   };
-  const breakdownRows = [["behavior", "Comportement"], ["lifeScope", "Périmètre de vie"], ["necessity", "Nécessité"]].flatMap(([axis, axisLabel]) => {
-    const buckets = arrayOf(at(output.output, "structure", axis, "buckets"));
-    const legacyAmounts = recordOf(at(output.output, "structure", axis, "amounts"));
-    if (buckets.length === 0 && legacyAmounts !== undefined) {
-      return Object.entries(legacyAmounts).map(([key, value], index) => row(output, index + 1, `${axis}:${key}`, `${axisLabel} · ${breakdownLabels[key] ?? key}`, formatMoney(value) ?? "Montant indisponible", undefined, "KNOWN"));
-    }
-    return buckets.map((bucket, index) => {
-      const key = stringOf(at(bucket, "key")) ?? "unknown";
-      return row(output, index + 1, `${axis}:${key}`, `${axisLabel} · ${breakdownLabels[key] ?? key}`, formatMoney(at(bucket, "amount")) ?? "Montant indisponible", undefined, "KNOWN");
+  let breakdownRank = 0;
+  const breakdownRows = (["necessity", "behavior", "lifeScope"] as const).flatMap((axis) => {
+    const axisLabel = axis === "necessity" ? "Nécessité" : axis === "behavior" ? "Comportement" : "Périmètre de vie";
+    const axisValue = at(output.output, "structure", axis);
+    const rows = arrayOf(at(axisValue, "buckets")).map((bucket) => {
+      const key = stringOf(at(bucket, "key")) ?? "UNKNOWN";
+      breakdownRank += 1;
+      return qualifiedRow(output, breakdownRank, `${axis}:${key}`, `${axisLabel} · ${labels[key] ?? "Non classé"}`, bucket);
     });
+    for (const [kind, label] of [["unknownAmount", "Non classé"], ["conflictAmount", "Classification en conflit"]] as const) {
+      const amount = at(axisValue, kind);
+      breakdownRank += 1;
+      rows.push(qualifiedRow(output, breakdownRank, `${axis}:${kind}`, `${axisLabel} · ${label}`, { amount }));
+    }
+    breakdownRank += 1;
+    rows.push({ rowId: `${String(breakdownRank).padStart(3, "0")}:${axis}:evolution`, labelKey: `${axisLabel} · Évolution`, displayValue: "Référence compatible indisponible", phenomenonRef: `global-m1:structure:${axis}:evolution`, phenomenonQuality: phenomenonQuality(at(axisValue, "evolution"), at(output.output, "structure", "inputHash")), knowledgeState: "UNKNOWN", evidenceRefs: outputEvidence(output) });
+    return rows;
   });
-  const temporalMetrics = [
-    ["trend-start", "Niveau au début", at(output.output, "temporal", "trend", "startLevel")],
-    ["trend-end", "Niveau à la fin", at(output.output, "temporal", "trend", "endLevel")],
-    ["trend-slope", "Évolution mensuelle", at(output.output, "temporal", "trend", "slopePerMonth")],
-    ["recent-previous", "Niveau précédent", at(output.output, "temporal", "recentChange", "previousLevel")],
-    ["recent-current", "Niveau récent", at(output.output, "temporal", "recentChange", "recentLevel")],
-    ["recent-delta", "Variation récente", at(output.output, "temporal", "recentChange", "delta")],
-  ].flatMap(([id, label, value]) => {
-    const formatted = (id as string).includes("delta") || (id as string).includes("slope") ? formatSignedMoney(value) : formatMoney(value);
-    return formatted === undefined ? [] : [metric(output, id as string, label as string, formatted, "KNOWN")];
+
+  const recurrenceAggregates = ([
+    ["structural", "Coût récurrent structurel", "structuralRecurringCost"],
+    ["new", "Nouvelles récurrences", "newRecurringEquivalent"],
+    ["ended", "Récurrences terminées", "endedRecurringEquivalent"],
+    ["restarted", "Récurrences reprises", "restartedRecurringEquivalent"],
+    ["price-change", "Évolution des prix récurrents", "priceChangeExistingRecurrences"],
+  ] as const).map(([id, label, key]) => qualifiedMetric(output, `recurrence-${id}`, label, at(output.output, "recurrences", key)));
+  const recurrenceRows = arrayOf(at(output.output, "recurrences", "series")).slice(0, 50).map((recurrence, index) => {
+    const entityRef = `recurrence:${stringOf(at(recurrence, "recurrenceId")) ?? index + 1}`;
+    const lifecycle = stringOf(at(recurrence, "lifecycle", "value"));
+    const cadence = numberOf(at(recurrence, "cadence", "expectedOccurrencesPerYear"));
+    const monthly = at(recurrence, "monthlyEquivalent");
+    const measure = typedMeasure(at(monthly, "value"), "MONEY", "EUR/month");
+    return {
+      rowId: `${String(index + 1).padStart(3, "0")}:${entityRef}`,
+      labelKey: `Récurrence ${index + 1}`,
+      displayValue: [measure === undefined ? "Équivalent mensuel indisponible" : formatMoney(measure.value), cadence === undefined ? "Cadence non qualifiée" : `${cadence} occurrence(s)/an`, lifecycle === undefined ? "Cycle de vie non déterminé" : ({ ACTIVE: "Active", ENDED: "Terminée", INTERRUPTED: "Interrompue", RESTARTED: "Reprise" } as const)[lifecycle as "ACTIVE"] ?? lifecycle].join(" · "),
+      ...(measure === undefined ? {} : { typedMeasure: measure }), phenomenonRef: `global-m1:${entityRef}`,
+      phenomenonQuality: phenomenonQuality(monthly, at(recurrence, "inputHash"), ...(lifecycle === undefined ? ["RECURRENCE_LIFECYCLE_UNKNOWN"] : [])),
+      knowledgeState: knowledgeOf(monthly), entityRef, evidenceRefs: outputEvidence(output),
+    } satisfies GlobalDetailRow;
   });
+  const contributorRows = arrayOf(at(output.output, "contributors")).filter((entry) => at(entry, "publicationEligible") === true && ["KNOWN", "PARTIAL"].includes(knowledgeOf(at(entry, "typedDelta")))).slice(0, 50).map((entry, index) => qualifiedRow(output, index + 1, `contributor:${stringOf(at(entry, "contributorId")) ?? index}`, "Contribution qualifiée", at(entry, "typedDelta")));
+
   return {
-    ...(deltaStatement === undefined ? {} : { primaryInsight: presentationInsight(output, "habitual-delta", "Écart à l’habitude", deltaStatement, { primaryMetricRef: "global-m1:actual" }) }),
+    ...(deltaStatement === undefined ? {} : { primaryInsight: { ...presentationInsight(output, "habitual-delta", "Écart à la référence habituelle", deltaStatement, { primaryMetricRef: "global-m1:actual" }), phenomenonId: "global-m1:economic-state" } }),
     kpis: compact,
     sections: {
-      OVERVIEW: { metrics: compact.map((entry) => metric(output, entry.kpiId.replace("kpi:", "metric:"), entry.labelKey, entry.displayValue, "KNOWN")) },
+      OVERVIEW: { metrics: overviewMetrics },
+      EVOLUTION: { metrics: temporalMetrics, series: historySeries },
       BREAKDOWN: { rows: breakdownRows },
-      EVOLUTION: { metrics: temporalMetrics },
+      PATTERNS: { metrics: recurrenceAggregates, rows: recurrenceRows },
+      COMPARISONS: { rows: contributorRows },
     },
-    detailRows: [],
+    detailRows: recurrenceRows,
   };
 }
 
@@ -616,6 +842,45 @@ function detailResourceFor(moduleKey: GlobalPrimaryModuleKey): GlobalV2ExpandedR
     candidate === moduleKey && resource !== "analysis_global_methodology" && globalV2QueryRegistry[resource].availability === "AVAILABLE")?.resource;
 }
 
+function economicRecurrenceDetail(output: GlobalV2OwnerOutput, entityRef: string): SectionProjection | undefined {
+  if (!entityRef.startsWith("recurrence:")) return undefined;
+  const recurrenceId = entityRef.slice("recurrence:".length);
+  const recurrence = arrayOf(at(output.output, "recurrences", "series")).find((entry) => stringOf(at(entry, "recurrenceId")) === recurrenceId);
+  if (recurrence === undefined) return undefined;
+  const metrics = ([
+    ["typical-occurrence-cost", "Coût typique par occurrence", "typicalOccurrenceCost"],
+    ["expected-occurrence-amount", "Montant attendu par occurrence", "expectedOccurrenceAmount"],
+    ["monthly-equivalent", "Équivalent mensuel", "monthlyEquivalent"],
+  ] as const).map(([id, label, key]) => qualifiedMetric(output, `detail:${id}`, label, at(recurrence, key)));
+  const lifecycle = stringOf(at(recurrence, "lifecycle", "value"));
+  const cadence = numberOf(at(recurrence, "cadence", "expectedOccurrencesPerYear"));
+  const rows: GlobalDetailRow[] = [
+    row(output, 1, "first-observed", "Première occurrence observée", stringOf(at(recurrence, "firstObservedAt")) ?? "Indisponible", entityRef, stringOf(at(recurrence, "firstObservedAt")) === undefined ? "UNKNOWN" : "KNOWN"),
+    row(output, 2, "last-observed", "Dernière occurrence observée", stringOf(at(recurrence, "lastObservedAt")) ?? "Indisponible", entityRef, stringOf(at(recurrence, "lastObservedAt")) === undefined ? "UNKNOWN" : "KNOWN"),
+    row(output, 3, "cadence", "Cadence", cadence === undefined ? "Non qualifiée" : `${cadence} occurrence(s)/an`, entityRef, cadence === undefined ? "UNKNOWN" : "KNOWN"),
+    row(output, 4, "lifecycle", "Cycle de vie", lifecycle === undefined ? "Non déterminé" : ({ ACTIVE: "Active", ENDED: "Terminée", INTERRUPTED: "Interrompue", RESTARTED: "Reprise" } as Readonly<Record<string, string>>)[lifecycle] ?? lifecycle, entityRef, lifecycle === undefined ? "UNKNOWN" : "KNOWN"),
+    row(output, 5, "price-evolution", "Évolution du prix", stringOf(at(recurrence, "priceEvolution", "reasonCode")) === undefined ? "Disponible" : "Non qualifiée", entityRef, stringOf(at(recurrence, "priceEvolution", "status")) === "KNOWN" ? "KNOWN" : "UNKNOWN"),
+  ];
+  return { metrics, rows };
+}
+
+function methodologyRows(output: GlobalV2OwnerOutput): readonly GlobalDetailRow[] {
+  if (output.moduleKey !== "ECONOMIC" || recordOf(at(output.output, "methodology")) === undefined) {
+    return [{ rowId: `method:${output.moduleKey}`, labelKey: "Méthode", displayValue: output.owner, knowledgeState: "KNOWN", evidenceRefs: output.evidenceRefs }];
+  }
+  const methodology = at(output.output, "methodology");
+  const values: readonly [string, string, string][] = [
+    ["as-of", "Calcul arrêté au", stringOf(at(methodology, "asOf")) ?? "Indisponible"],
+    ["certified-through", "Données certifiées jusqu’au", stringOf(at(methodology, "certifiedThrough")) ?? "Indisponible"],
+    ["methods", "Méthodes", arrayOf(at(methodology, "methods")).join(", ")],
+    ["support", "Support inclus", String(numberOf(at(methodology, "support", "includedUnits")) ?? "Indisponible")],
+    ["coverage", "Couverture", formatNumber(at(methodology, "coverage", "effective"), 4) ?? "Indisponible"],
+    ["limitations", "Limites", arrayOf(at(methodology, "limitations")).join(", ") || "Aucune"],
+    ["revisions", "Révisions", `data ${stringOf(at(methodology, "revisions", "dataRevision")) ?? "?"} · analytics ${stringOf(at(methodology, "revisions", "analyticsRevision")) ?? "?"}`],
+  ];
+  return values.map(([id, label, value], index) => row(output, index + 1, `method:${id}`, label, value, undefined, value === "Indisponible" ? "UNKNOWN" : "KNOWN"));
+}
+
 export function buildGlobalV2CandidateFromOwnerOutputs(input: GlobalV2CandidateInput) {
   if (!input.project || !input.householdId || !GIT_SHA.test(input.implementationIdentity)) throw new TypeError("GLOBAL_LIVE_CANDIDATE_IDENTITY_INVALID");
   if (!/^\d+$/u.test(input.dataRevision) || !/^\d+$/u.test(input.analyticsRevision)) throw new TypeError("GLOBAL_LIVE_CANDIDATE_REVISION_INVALID");
@@ -745,14 +1010,15 @@ export function buildGlobalV2CandidateFromOwnerOutputs(input: GlobalV2CandidateI
     const detailRows = [...new Map(projection.detailRows.flatMap((detailRow) => detailRow.entityRef === undefined ? [] : [[detailRow.entityRef, detailRow] as const])).values()].slice(0, GLOBAL_MAX_SECTION_ROWS);
     if (detailResource !== undefined) for (const detailRow of detailRows) {
       const params = { entityRef: detailRow.entityRef! };
+      const economicDetail = ownerOutput.moduleKey === "ECONOMIC" ? economicRecurrenceDetail(ownerOutput, detailRow.entityRef!) : undefined;
       expandedInstances.push({
         resource: detailResource,
         scope,
         params,
         dependencies,
         payload: buildGlobalExpandedReadModel({
-          kind: "global_expanded", schemaVersion: "global-expanded@v1", resource: detailResource, moduleKey: ownerOutput.moduleKey, sectionKey: "OVERVIEW", visibility: "VISIBLE", secondaryInsights: [], metrics: [], series: [],
-          rows: [{ ...detailRow, rowId: `detail:${detailRow.rowId}` }], destinations: [], quality: quality(ownerOutput), capabilities: [capability(ownerOutput)], publicationMeta: provisionalMeta, resourceMeta: metaFor(detailResource, params, dependencies),
+          kind: "global_expanded", schemaVersion: "global-expanded@v1", resource: detailResource, moduleKey: ownerOutput.moduleKey, sectionKey: "OVERVIEW", visibility: "VISIBLE", secondaryInsights: [], metrics: economicDetail?.metrics ?? [], series: economicDetail?.series ?? [],
+          rows: economicDetail?.rows ?? [{ ...detailRow, rowId: `detail:${detailRow.rowId}` }], destinations: [], quality: quality(ownerOutput), capabilities: [capability(ownerOutput)], publicationMeta: provisionalMeta, resourceMeta: metaFor(detailResource, params, dependencies),
         }),
       });
     }
@@ -763,7 +1029,7 @@ export function buildGlobalV2CandidateFromOwnerOutputs(input: GlobalV2CandidateI
       params: methodologyParams,
       dependencies,
       payload: buildGlobalExpandedReadModel({
-        kind: "global_expanded", schemaVersion: "global-expanded@v1", resource: "analysis_global_methodology", moduleKey: ownerOutput.moduleKey, sectionKey: "METHODOLOGY", visibility: "VISIBLE", secondaryInsights: [], metrics: [], series: [], rows: [{ rowId: `method:${ownerOutput.moduleKey}`, labelKey: "global.method", displayValue: ownerOutput.owner, knowledgeState: "KNOWN", evidenceRefs: ownerOutput.evidenceRefs }], destinations: [], quality: quality(ownerOutput), capabilities: [{ capabilityId: "GLOBAL_METHODOLOGY", state: "AVAILABLE", reasonCodes: [] }], publicationMeta: provisionalMeta, resourceMeta: metaFor("analysis_global_methodology", methodologyParams, dependencies),
+        kind: "global_expanded", schemaVersion: "global-expanded@v1", resource: "analysis_global_methodology", moduleKey: ownerOutput.moduleKey, sectionKey: "METHODOLOGY", visibility: "VISIBLE", secondaryInsights: [], metrics: [], series: [], rows: methodologyRows(ownerOutput), destinations: [], quality: quality(ownerOutput), capabilities: [{ capabilityId: "GLOBAL_METHODOLOGY", state: "AVAILABLE", reasonCodes: [] }], publicationMeta: provisionalMeta, resourceMeta: metaFor("analysis_global_methodology", methodologyParams, dependencies),
       }),
     });
   }

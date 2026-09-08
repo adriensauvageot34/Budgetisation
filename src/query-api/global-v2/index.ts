@@ -21,6 +21,8 @@ export {
   type GlobalCompactInsight,
   type GlobalCompactKpi,
   type GlobalCompactQuality,
+  type GlobalPhenomenonQuality,
+  type GlobalTypedMeasure,
   type GlobalDetailEntry,
   type GlobalInitialModuleEntry,
   type GlobalInitialReadModel,
@@ -33,6 +35,7 @@ export {
   type GlobalReadModelResourceMeta,
   type GlobalReadModelTransportState,
 } from "./types";
+export { parseGlobalPhenomenonQuality, parseGlobalTypedMeasure } from "./typed-values";
 export {
   GLOBAL_EXPANDED_PAYLOAD_BUDGET_BYTES,
   GLOBAL_MAX_EXPANDED_INSIGHTS,

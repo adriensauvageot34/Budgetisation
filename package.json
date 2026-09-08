@@ -12,6 +12,7 @@
     "check:global-v2-economic-function": "node --experimental-strip-types scripts/check-global-v2-economic-function.mjs",
     "check:m1-1r-shared-foundations": "node scripts/check-m1-1r-shared-foundations.mjs",
     "check:m1-2-3r-engine-owner": "node --experimental-strip-types scripts/check-m1-2-3r-engine-owner.mjs",
+    "check:m1-4r-query-snapshots": "node --experimental-strip-types scripts/check-m1-4r-query-snapshots.mjs",
     "check:global-v2-category-needs-materiality": "node --experimental-strip-types scripts/check-global-v2-category-needs-materiality.mjs",
     "check:global-v2-routines": "node --experimental-strip-types scripts/check-global-v2-routines.mjs",
     "check:global-v2-relationships": "node --experimental-strip-types scripts/check-global-v2-relationships.mjs",

@@ -62,11 +62,33 @@ export type GlobalCompactInsight = {
   readonly editorialRank: number;
 };
 
+/** Machine-readable analytical value. displayValue remains presentation-only. */
+export type GlobalTypedMeasure = {
+  readonly kind: "MONEY" | "DECIMAL" | "RATIO" | "COUNT";
+  readonly value: string;
+  readonly unit: string;
+};
+
+/** Quality belongs to the phenomenon, not only to the enclosing module. */
+export type GlobalPhenomenonQuality = {
+  readonly knowledgeState: DataStatus;
+  readonly supportStatus?: "INSUFFICIENT" | "PARTIAL_SUPPORT" | "SUFFICIENT" | "STRONG";
+  readonly effectiveCoverage?: number;
+  readonly materialityStatus?: "MATERIAL" | "NOT_MATERIAL" | "UNKNOWN";
+  readonly limitationCodes: readonly string[];
+  readonly dataNature: "OBSERVED" | "DECLARED" | "ESTIMATED" | "HYBRID";
+  readonly methodVersion: string;
+  readonly inputHash: string;
+};
+
 export type GlobalCompactKpi = {
   readonly kpiId: string;
   readonly phenomenonId: string;
   readonly labelKey: string;
   readonly displayValue: string;
+  readonly typedMeasure?: GlobalTypedMeasure;
+  readonly phenomenonRef?: string;
+  readonly phenomenonQuality?: GlobalPhenomenonQuality;
   readonly metricRef: string;
   readonly evidenceRefs: readonly string[];
 };

@@ -9,6 +9,8 @@ import type {
   GlobalCompactInsight,
   GlobalCompactKpi,
   GlobalCompactQuality,
+  GlobalPhenomenonQuality,
+  GlobalTypedMeasure,
   GlobalDetailEntry,
   GlobalInitialModuleEntry,
   GlobalInitialReadModel,
@@ -20,6 +22,7 @@ import type {
   GlobalReadModelResourceMeta,
   GlobalReadModelTransportState,
 } from "./types";
+import { parseGlobalPhenomenonQuality, parseGlobalTypedMeasure } from "./typed-values";
 import { globalPrimaryModuleCatalog } from "./types";
 import type { DataStatus, PartialMeaning } from "../../core/history-v2";
 import type { GlobalPublicationQualification, GlobalPublicationReasonCode, GlobalPublicationVisibility } from "../../analytics/global-v2/publication";
@@ -143,12 +146,18 @@ function parseInsight(value: unknown): GlobalCompactInsight {
 }
 
 function parseKpi(value: unknown): GlobalCompactKpi {
-  const record = parseStrictRecord(value, ["kpiId", "phenomenonId", "labelKey", "displayValue", "metricRef", "evidenceRefs"], "GlobalCompactKpi");
+  const record = parseStrictRecord(value, ["kpiId", "phenomenonId", "labelKey", "displayValue", "typedMeasure", "phenomenonRef", "phenomenonQuality", "metricRef", "evidenceRefs"], "GlobalCompactKpi");
+  const typedMeasure = optional<GlobalTypedMeasure>(record, "typedMeasure", parseGlobalTypedMeasure);
+  const phenomenonRef = optional(record, "phenomenonRef", (entry) => text(entry, "phenomenonRef"));
+  const phenomenonQuality = optional<GlobalPhenomenonQuality>(record, "phenomenonQuality", parseGlobalPhenomenonQuality);
   return {
     kpiId: text(requireProperty(record, "kpiId", "GlobalCompactKpi"), "kpiId"),
     phenomenonId: text(requireProperty(record, "phenomenonId", "GlobalCompactKpi"), "phenomenonId"),
     labelKey: text(requireProperty(record, "labelKey", "GlobalCompactKpi"), "labelKey"),
     displayValue: text(requireProperty(record, "displayValue", "GlobalCompactKpi"), "displayValue"),
+    ...(typedMeasure === undefined ? {} : { typedMeasure }),
+    ...(phenomenonRef === undefined ? {} : { phenomenonRef }),
+    ...(phenomenonQuality === undefined ? {} : { phenomenonQuality }),
     metricRef: text(requireProperty(record, "metricRef", "GlobalCompactKpi"), "metricRef"),
     evidenceRefs: strings(requireProperty(record, "evidenceRefs", "GlobalCompactKpi"), "evidenceRefs"),
   };
