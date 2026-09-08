@@ -320,6 +320,27 @@ const officialAfterOracleMutation = await historyAnalytics.resolveHistoryV2Balan
   month: "2026-05",
   categoryIds: [authorityCategoryId],
 });
+let legacyResolveCalls = 0;
+let canonicalResolveCalls = 0;
+const canonicalOnlyResolver = officialAuthorityResolver({ typical: 1000, minimal: 800, categoryTypical: 120 });
+await historyAnalytics.resolveHistoryV2BalanceAnalyticsAuthority({
+  resolver: {
+    async resolve(metricId, requestedScope) {
+      legacyResolveCalls += 1;
+      return canonicalOnlyResolver.resolve(metricId, requestedScope);
+    },
+    async resolveCanonical(metricId, requestedScope) {
+      canonicalResolveCalls += 1;
+      return canonicalOnlyResolver.resolve(metricId, requestedScope);
+    },
+  },
+  month: "2026-05",
+  categoryIds: [authorityCategoryId],
+});
+check(() => {
+  assert.equal(legacyResolveCalls, 0, "History V2 ne doit pas utiliser le fallback certifié legacy lorsqu'un chemin Canonical existe");
+  assert.equal(canonicalResolveCalls, 3);
+});
 const metricReadModel = (produced) => {
   const { metricId, scopeHash, referenceWindow: _referenceWindow, estimationTrace: _estimationTrace, ...envelope } = produced;
   return { metricId, scopeHash, envelope };

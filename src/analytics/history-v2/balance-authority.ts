@@ -18,6 +18,10 @@ export type HistoryV2MetricSourceResolver = {
     metricId: ActiveMetricId,
     scope: AnalysisScope,
   ): Promise<MetricProductionSource>;
+  resolveCanonical?(
+    metricId: ActiveMetricId,
+    scope: AnalysisScope,
+  ): Promise<MetricProductionSource>;
 };
 
 export type OfficialTypicalMonthAuthority = {
@@ -49,7 +53,9 @@ async function resolveProducedMoneyMetric(input: {
   readonly source: MetricProductionSource;
   readonly metric: ProducedMoneyMetric;
 }> {
-  const source = await input.resolver.resolve(input.metricId, input.scope);
+  const source = input.resolver.resolveCanonical === undefined
+    ? await input.resolver.resolve(input.metricId, input.scope)
+    : await input.resolver.resolveCanonical(input.metricId, input.scope);
   return {
     source,
     metric: produceMetric({

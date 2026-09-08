@@ -114,6 +114,7 @@ assert.equal(
 const household = one("households", (row) => row.household_id === householdId);
 const revision = one("household_revisions", (row) => row.household_id === householdId);
 assert.ok(household && revision, "Household/revision fixture absente.");
+assert.equal(typeof revision.updated_at, "string", "La révision Canonical doit exposer son instant de certification.");
 for (const [option, actual] of [["--household=", householdId], ["--source-revision=", String(revision.data_revision)]]) {
   const expected = process.argv.slice(5).find((arg) => arg.startsWith(option))?.slice(option.length);
   if (selectedMonth !== undefined) assert.equal(expected, actual, `Single-month producer ${option} mismatch`);
@@ -150,7 +151,7 @@ const runtimeContext = {
   dataRevision: String(revision.data_revision),
   analyticsRevision: String(revision.analytics_revision),
   contractVersion: "v1",
-  asOf: "2026-08-31T12:00:00Z",
+  asOf: revision.updated_at,
 };
 const repository = new CanonicalRepository(createFixtureSupabaseClient(fixturePath), runtimeContext);
 const factResolver = new FactSourceResolver(repository);
@@ -1301,23 +1302,25 @@ async function assertMonthInvariants(data, preflight, deterministic, expectedOra
     `Analytics=${officialTypical.availability === "known" ? officialTypical.value : officialTypical.availability}; EXPECTED=${expectedTypical.availability === "known" ? expectedTypical.value : expectedTypical.availability}`,
   );
   // Compare-only evidence is read AFTER Canonical production/preflight, never by builders.
-  const currentMinimalProof = currentMinimalEvidenceFile(data.month) !== null
+  const canonicalMinimalSource = await factResolver.resolveCanonical("minimal_month_cost", { subject: { kind: "household" }, time: { kind: "month", month: data.month } });
+  const currentMinimalProof = currentMinimalEvidenceFile(data.month) !== null && canonicalMinimalSource.availability === "known"
     ? await assertCurrentMinimalCertification({
       month: data.month, repository, repositoryRoot,
-      source: await factResolver.resolve("minimal_month_cost", { subject: { kind: "household" }, time: { kind: "month", month: data.month } }),
+      source: canonicalMinimalSource,
       metric: data.analyticsAuthority.minimal.metric, components: data.analyticsAuthority.minimal.components,
     }) : null;
   check(
     "X03_MINIMAL_EXPECTED",
-    currentMinimalProof !== null
-      ? currentMinimalProof.status === "PASS" && minimal.available
+    canonicalMinimalSource.availability !== "known"
+      ? !minimal.available
+      : minimal.available
         && minimal.value === data.analyticsAuthority.minimal.metric.value
-      : expectedOracle.minimal.availability === "known"
-        ? minimal.available && moneyClose(minimal.value, expectedOracle.minimal.value)
-        : !minimal.available,
-    currentMinimalProof !== null
+        && (currentMinimalProof === null || currentMinimalProof.status === "PASS"),
+    canonicalMinimalSource.availability !== "known"
+      ? stableJson({ authority: "CANONICAL", availability: canonicalMinimalSource.availability, health: canonicalMinimalSource.health, readModelAvailable: minimal.available })
+      : currentMinimalProof !== null
       ? stableJson({ authority: "COMPARE_ONLY", ...currentMinimalProof, canonicalValue: minimal.value })
-      : `Analytics=${minimal.value ?? "UNKNOWN"}; EXPECTED=${expectedOracle.minimal.value ?? expectedOracle.minimal.availability}`,
+      : stableJson({ authority: "CANONICAL", canonicalValue: minimal.value, legacyCompareOnlyValue: expectedOracle.minimal.value ?? expectedOracle.minimal.availability }),
   );
   const expectedCategoryTypicals = new Map((expectedOracle.typicalCategories?.rows ?? []).map((row) => [row.categoryId, row]));
   check(
