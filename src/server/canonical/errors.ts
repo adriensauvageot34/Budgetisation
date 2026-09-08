@@ -15,6 +15,7 @@ export type CanonicalHealthSourceName =
 export type CanonicalSourceName =
   | CanonicalHealthSourceName
   | "person_links"
+  | "historical_minimal_authority"
   | "household_scope";
 
 export class CanonicalReadError extends QueryTemporaryUnavailableError {

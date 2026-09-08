@@ -8,6 +8,7 @@ import { parseInstant, parseLocalDate, parseYearMonth, type Instant, type LocalD
 import { hasOwn, parseStrictRecord, parseStringLiteral, requireProperty } from "../../core/validation";
 import { parseMethodVersion, type MethodVersion } from "../../core/versions";
 import type { MinimalMonthComponent } from "./minimal-month";
+import type { HistoricalAuthorityType } from "./historical-authority";
 
 export const HISTORICAL_MINIMAL_AUTHORITY_MODEL =
   "BITEMPORAL_TYPED_RULE_AND_RECURRENCE_AUTHORITY_V1" as const;
@@ -29,6 +30,11 @@ export type HistoricalAuthorityIdentity = {
   readonly effectiveTo?: LocalDate;
   readonly declaredAt: Instant;
   readonly sourceRevision: number;
+  readonly authorityType: HistoricalAuthorityType;
+  readonly declaredByRef: string;
+  readonly validationRef: string;
+  readonly methodVersion: MethodVersion;
+  readonly evidenceRefs: readonly string[];
 };
 
 export type HistoricalMinimalRuleAuthority = HistoricalAuthorityIdentity & {
@@ -36,7 +42,7 @@ export type HistoricalMinimalRuleAuthority = HistoricalAuthorityIdentity & {
 };
 
 export type HistoricalRecurrenceAuthority = HistoricalAuthorityIdentity & {
-  readonly state: "ACTIVE" | "INACTIVE";
+  readonly state: "ACTIVE_FOR_MINIMAL" | "INACTIVE_FOR_MINIMAL";
   readonly monthlyEquivalent: Money;
 };
 
@@ -72,6 +78,7 @@ export type HistoricalMinimalComponentPlan = {
 export type HistoricalMinimalAuthorityBundle = {
   readonly model: typeof HISTORICAL_MINIMAL_AUTHORITY_MODEL;
   readonly completeness: "COMPLETE_FOR_TARGET_MONTH";
+  readonly knowledgeAsOf: Instant;
   readonly components: readonly HistoricalMinimalComponentPlan[];
 };
 
@@ -89,6 +96,7 @@ export type HistoricalMinimalComponentState =
       readonly bucket: HistoricalMinimalComponentPlan["bucket"];
       readonly reasonCode:
         | "RULE_NOT_EFFECTIVE"
+        | "AUTHORITY_NOT_KNOWN_AT_AS_OF"
         | "INSUFFICIENT_ELIGIBLE_OBSERVATIONS"
         | "DECLARED_AUTHORITY_MISSING"
         | "RECURRENCE_AUTHORITY_MISSING_OR_INACTIVE";
@@ -136,16 +144,23 @@ function parseIdentity(record: Readonly<Record<string, unknown>>, typeName: stri
     ...(effectiveTo === undefined ? {} : { effectiveTo }),
     declaredAt: parseInstant(requireProperty(record, "declaredAt", typeName)),
     sourceRevision: nonNegativeInteger(requireProperty(record, "sourceRevision", typeName), `${typeName}.sourceRevision`),
+    authorityType: parseStringLiteral<HistoricalAuthorityType>(requireProperty(record, "authorityType", typeName), new Set([
+      "OBSERVED_ECONOMIC_EVIDENCE", "RETROSPECTIVE_DECLARATION", "DECLARED", "CONTRACTUAL", "ANALYTICS_DERIVED",
+    ]), `${typeName}.authorityType`),
+    declaredByRef: nonEmptyString(requireProperty(record, "declaredByRef", typeName), `${typeName}.declaredByRef`),
+    validationRef: nonEmptyString(requireProperty(record, "validationRef", typeName), `${typeName}.validationRef`),
+    methodVersion: parseMethodVersion(requireProperty(record, "methodVersion", typeName)),
+    evidenceRefs: parseEvidenceRefs(requireProperty(record, "evidenceRefs", typeName)),
   };
-  if (identity.effectiveTo !== undefined && identity.effectiveTo < identity.effectiveFrom) {
-    throw new TypeError(`${typeName}.effectiveTo doit suivre effectiveFrom.`);
+  if (identity.effectiveTo !== undefined && identity.effectiveTo <= identity.effectiveFrom) {
+    throw new TypeError(`${typeName}.effectiveTo doit suivre strictement effectiveFrom pour [from,to).`);
   }
   return identity;
 }
 
 export function parseHistoricalMinimalRuleAuthority(value: unknown): HistoricalMinimalRuleAuthority {
   const typeName = "HistoricalMinimalRuleAuthority";
-  const record = parseStrictRecord(value, ["authorityId", "family", "effectiveFrom", "effectiveTo", "declaredAt", "sourceRevision"], typeName);
+  const record = parseStrictRecord(value, ["authorityId", "family", "effectiveFrom", "effectiveTo", "declaredAt", "sourceRevision", "authorityType", "declaredByRef", "validationRef", "methodVersion", "evidenceRefs"], typeName);
   return {
     ...parseIdentity(record, typeName),
     family: parseStringLiteral(requireProperty(record, "family", typeName), new Set<HistoricalMinimalRuleFamily>([
@@ -156,17 +171,17 @@ export function parseHistoricalMinimalRuleAuthority(value: unknown): HistoricalM
 
 function parseRecurrenceAuthority(value: unknown): HistoricalRecurrenceAuthority {
   const typeName = "HistoricalRecurrenceAuthority";
-  const record = parseStrictRecord(value, ["authorityId", "state", "monthlyEquivalent", "effectiveFrom", "effectiveTo", "declaredAt", "sourceRevision"], typeName);
+  const record = parseStrictRecord(value, ["authorityId", "state", "monthlyEquivalent", "effectiveFrom", "effectiveTo", "declaredAt", "sourceRevision", "authorityType", "declaredByRef", "validationRef", "methodVersion", "evidenceRefs"], typeName);
   return {
     ...parseIdentity(record, typeName),
-    state: parseStringLiteral(requireProperty(record, "state", typeName), new Set(["ACTIVE", "INACTIVE"]), `${typeName}.state`),
+    state: parseStringLiteral(requireProperty(record, "state", typeName), new Set(["ACTIVE_FOR_MINIMAL", "INACTIVE_FOR_MINIMAL"]), `${typeName}.state`),
     monthlyEquivalent: parseMoney(requireProperty(record, "monthlyEquivalent", typeName)),
   };
 }
 
 function parseDeclaredMinimumAuthority(value: unknown): HistoricalDeclaredMinimumAuthority {
   const typeName = "HistoricalDeclaredMinimumAuthority";
-  const record = parseStrictRecord(value, ["authorityId", "authorityType", "amount", "effectiveFrom", "effectiveTo", "declaredAt", "sourceRevision"], typeName);
+  const record = parseStrictRecord(value, ["authorityId", "authorityType", "amount", "effectiveFrom", "effectiveTo", "declaredAt", "sourceRevision", "declaredByRef", "validationRef", "methodVersion", "evidenceRefs"], typeName);
   return {
     ...parseIdentity(record, typeName),
     authorityType: parseStringLiteral(requireProperty(record, "authorityType", typeName), new Set(["DECLARED"]), `${typeName}.authorityType`),
@@ -198,7 +213,7 @@ function parseObservation(value: unknown): HistoricalMinimalObservation {
 
 export function parseHistoricalMinimalAuthorityBundle(value: unknown): HistoricalMinimalAuthorityBundle {
   const typeName = "HistoricalMinimalAuthorityBundle";
-  const record = parseStrictRecord(value, ["model", "completeness", "components"], typeName);
+  const record = parseStrictRecord(value, ["model", "completeness", "knowledgeAsOf", "components"], typeName);
   const rawComponents = requireProperty(record, "components", typeName);
   if (!Array.isArray(rawComponents)) throw new TypeError(`${typeName}.components doit être un tableau.`);
   const components = rawComponents.map((raw) => {
@@ -227,13 +242,23 @@ export function parseHistoricalMinimalAuthorityBundle(value: unknown): Historica
   return {
     model: parseStringLiteral(requireProperty(record, "model", typeName), new Set([HISTORICAL_MINIMAL_AUTHORITY_MODEL]), `${typeName}.model`),
     completeness: parseStringLiteral(requireProperty(record, "completeness", typeName), new Set(["COMPLETE_FOR_TARGET_MONTH"]), `${typeName}.completeness`),
+    knowledgeAsOf: parseInstant(requireProperty(record, "knowledgeAsOf", typeName)),
     components,
   };
 }
 
 function effectiveAt(authority: HistoricalAuthorityIdentity, targetMonth: YearMonth): boolean {
   const date = `${targetMonth}-01` as LocalDate;
-  return authority.effectiveFrom <= date && (authority.effectiveTo === undefined || authority.effectiveTo >= date);
+  return authority.effectiveFrom <= date && (authority.effectiveTo === undefined || date < authority.effectiveTo);
+}
+
+function authorityUnavailableReason(
+  authority: HistoricalAuthorityIdentity,
+  targetMonth: YearMonth,
+  knowledgeAsOf: Instant,
+): "RULE_NOT_EFFECTIVE" | "AUTHORITY_NOT_KNOWN_AT_AS_OF" | undefined {
+  if (!effectiveAt(authority, targetMonth)) return "RULE_NOT_EFFECTIVE";
+  return authority.declaredAt > knowledgeAsOf ? "AUTHORITY_NOT_KNOWN_AT_AS_OF" : undefined;
 }
 
 function digest(label: string, value: unknown): string {
@@ -252,6 +277,7 @@ export function calculateVariableEssentialQ25(input: {
   readonly canonicalComponentKey: string;
   readonly bucket?: HistoricalMinimalComponentPlan["bucket"];
   readonly targetMonth: YearMonth;
+  readonly knowledgeAsOf: Instant;
   readonly observations: readonly HistoricalMinimalObservation[];
   readonly rule: HistoricalMinimalRuleAuthority;
 }): HistoricalMinimalComponentState {
@@ -259,10 +285,11 @@ export function calculateVariableEssentialQ25(input: {
   const bucket = input.bucket ?? "NEUTRAL_VARIABLE";
   const base = { targetMonth, canonicalComponentKey: input.canonicalComponentKey, rule: input.rule };
   if (input.rule.family !== "VARIABLE_ESSENTIAL") throw new TypeError("La règle doit être VARIABLE_ESSENTIAL.");
-  if (!effectiveAt(input.rule, targetMonth)) {
+  const unavailableReason = authorityUnavailableReason(input.rule, targetMonth, input.knowledgeAsOf);
+  if (unavailableReason !== undefined) {
     return {
       status: "UNKNOWN", canonicalComponentKey: input.canonicalComponentKey, bucket,
-      reasonCode: "RULE_NOT_EFFECTIVE", methodVersion: VARIABLE_ESSENTIAL_Q25_METHOD_VERSION,
+      reasonCode: unavailableReason, methodVersion: VARIABLE_ESSENTIAL_Q25_METHOD_VERSION,
       inputHash: digest("minimal-variable-essential-q25-input@v2", base),
     };
   }
@@ -301,13 +328,14 @@ export function calculateVariableEssentialQ25(input: {
   };
 }
 
-function resolveComponent(plan: HistoricalMinimalComponentPlan, targetMonth: YearMonth): HistoricalMinimalComponentState {
+function resolveComponent(plan: HistoricalMinimalComponentPlan, targetMonth: YearMonth, knowledgeAsOf: Instant): HistoricalMinimalComponentState {
   const common = { canonicalComponentKey: plan.canonicalComponentKey, bucket: plan.bucket, methodVersion: MINIMAL_STATE_METHOD_VERSION };
-  if (!effectiveAt(plan.rule, targetMonth)) {
-    return { ...common, status: "UNKNOWN", reasonCode: "RULE_NOT_EFFECTIVE", inputHash: digest("minimal-component-input@v2", { targetMonth, plan }) };
+  const unavailableReason = authorityUnavailableReason(plan.rule, targetMonth, knowledgeAsOf);
+  if (unavailableReason !== undefined) {
+    return { ...common, status: "UNKNOWN", reasonCode: unavailableReason, inputHash: digest("minimal-component-input@v2", { targetMonth, knowledgeAsOf, plan }) };
   }
   if (plan.rule.family === "VARIABLE_ESSENTIAL") {
-    return calculateVariableEssentialQ25({ canonicalComponentKey: plan.canonicalComponentKey, bucket: plan.bucket, targetMonth, observations: plan.observations, rule: plan.rule });
+    return calculateVariableEssentialQ25({ canonicalComponentKey: plan.canonicalComponentKey, bucket: plan.bucket, targetMonth, knowledgeAsOf, observations: plan.observations, rule: plan.rule });
   }
   const known = (amount: Money): HistoricalMinimalComponentState => ({
     status: "KNOWN", bucket: plan.bucket,
@@ -319,19 +347,19 @@ function resolveComponent(plan: HistoricalMinimalComponentPlan, targetMonth: Yea
       provenance: "derived",
     },
     methodVersion: MINIMAL_STATE_METHOD_VERSION,
-    inputHash: digest("minimal-component-input@v2", { targetMonth, plan }),
+    inputHash: digest("minimal-component-input@v2", { targetMonth, knowledgeAsOf, plan }),
   });
   if (plan.rule.family === "EXCLUDED_FROM_MINIMAL") return known(parseMoney("0"));
   if (plan.rule.family === "DECLARED_MINIMUM") {
     const authority = plan.declaredMinimumAuthority;
-    return authority !== undefined && effectiveAt(authority, targetMonth)
+    return authority !== undefined && effectiveAt(authority, targetMonth) && authority.declaredAt <= knowledgeAsOf
       ? known(authority.amount)
-      : { ...common, status: "UNKNOWN", reasonCode: "DECLARED_AUTHORITY_MISSING", inputHash: digest("minimal-component-input@v2", { targetMonth, plan }) };
+      : { ...common, status: "UNKNOWN", reasonCode: "DECLARED_AUTHORITY_MISSING", inputHash: digest("minimal-component-input@v2", { targetMonth, knowledgeAsOf, plan }) };
   }
   const recurrence = plan.recurrenceAuthority;
-  return recurrence !== undefined && effectiveAt(recurrence, targetMonth) && recurrence.state === "ACTIVE"
+  return recurrence !== undefined && effectiveAt(recurrence, targetMonth) && recurrence.declaredAt <= knowledgeAsOf && recurrence.state === "ACTIVE_FOR_MINIMAL"
     ? known(recurrence.monthlyEquivalent)
-    : { ...common, status: "UNKNOWN", reasonCode: "RECURRENCE_AUTHORITY_MISSING_OR_INACTIVE", inputHash: digest("minimal-component-input@v2", { targetMonth, plan }) };
+    : { ...common, status: "UNKNOWN", reasonCode: "RECURRENCE_AUTHORITY_MISSING_OR_INACTIVE", inputHash: digest("minimal-component-input@v2", { targetMonth, knowledgeAsOf, plan }) };
 }
 
 export function resolveHistoricalMinimalState(input: {
@@ -340,7 +368,7 @@ export function resolveHistoricalMinimalState(input: {
 }): HistoricalMinimalState {
   const targetMonth = parseYearMonth(input.targetMonth);
   const authority = parseHistoricalMinimalAuthorityBundle(input.authority);
-  const componentStates = authority.components.map((plan) => resolveComponent(plan, targetMonth));
+  const componentStates = authority.components.map((plan) => resolveComponent(plan, targetMonth, authority.knowledgeAsOf));
   const inputHash = digest("minimal-state-input@v2", { targetMonth, authority, componentHashes: componentStates.map(({ inputHash: hash }) => hash), methodVersion: MINIMAL_STATE_METHOD_VERSION });
   if (componentStates.some(({ status }) => status === "UNKNOWN")) {
     return { status: "UNKNOWN", componentStates, methodVersion: MINIMAL_STATE_METHOD_VERSION, inputHash };

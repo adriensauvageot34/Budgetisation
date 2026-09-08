@@ -28,6 +28,12 @@ import {
   type PlaceVisitFact,
   type PurchaseEventFact,
 } from "@/analytics/facts";
+import {
+  parseHistoricalMinimalRuleVersion,
+  parseHistoricalRecurrenceStateVersion,
+  type HistoricalMinimalRuleVersion,
+  type HistoricalRecurrenceStateVersion,
+} from "@/analytics/baseline";
 import type {
   HouseholdId,
   LifeEventId,
@@ -169,6 +175,44 @@ export type CanonicalMinimalPlanningBundle = {
   /** Absent until an approved historical authority backfill exists. */
   readonly historicalMinimalAuthority?: import("@/analytics/baseline").HistoricalMinimalAuthorityBundle;
 };
+
+export type CanonicalHistoricalMinimalAuthority = {
+  readonly ruleVersions: readonly HistoricalMinimalRuleVersion[];
+  readonly recurrenceStateVersions: readonly HistoricalRecurrenceStateVersion[];
+};
+
+function requiredPositiveInteger(record: CanonicalRecord, key: string): number {
+  const value = record[key];
+  if (!Number.isSafeInteger(value) || (value as number) <= 0) {
+    throw new CanonicalReadError("historical_minimal_authority", `${key} doit être un entier strictement positif.`);
+  }
+  return value as number;
+}
+
+function requiredEvidenceRefs(record: CanonicalRecord): readonly string[] {
+  const value = record.evidence_refs;
+  if (!Array.isArray(value) || value.some((entry) => typeof entry !== "string")) {
+    throw new CanonicalReadError("historical_minimal_authority", "evidence_refs doit être un tableau de références textuelles.");
+  }
+  return value as readonly string[];
+}
+
+function historicalCommon(record: CanonicalRecord) {
+  const effectiveTo = optionalCanonicalString(record, ["effective_to"]);
+  const supersedesVersionId = optionalCanonicalString(record, ["supersedes_version_id"]);
+  return {
+    effectiveFrom: canonicalString(record, ["effective_from"], "historical_minimal_authority"),
+    ...(effectiveTo === undefined ? {} : { effectiveTo }),
+    declaredAt: canonicalString(record, ["declared_at"], "historical_minimal_authority"),
+    sourceRevision: requiredPositiveInteger(record, "source_revision"),
+    authorityType: canonicalString(record, ["authority_type"], "historical_minimal_authority"),
+    declaredByRef: canonicalString(record, ["declared_by_ref"], "historical_minimal_authority"),
+    validationRef: canonicalString(record, ["validation_ref"], "historical_minimal_authority"),
+    methodVersion: canonicalString(record, ["method_version"], "historical_minimal_authority"),
+    evidenceRefs: requiredEvidenceRefs(record),
+    ...(supersedesVersionId === undefined ? {} : { supersedesVersionId }),
+  };
+}
 
 const CANONICAL_PAGE_SIZE = 1_000;
 
@@ -1743,6 +1787,66 @@ export class CanonicalRepository {
         }),
       };
     });
+  }
+
+  /**
+   * Reads only declarations that are both effective for the requested month
+   * and known at the authorized runtime asOf. It is intentionally separate
+   * from loadMinimalPlanningBundle so pre-migration deployments remain
+   * compatible and can keep Minimal locally UNKNOWN during the cutover.
+   */
+  async loadHistoricalMinimalAuthority(
+    targetMonth: YearMonth,
+  ): Promise<CanonicalHistoricalMinimalAuthority> {
+    await this.assertAuthorizedCanonicalHouseholdScope();
+    const effectiveOn = parseLocalDate(`${targetMonth}-01`);
+    const [ruleRows, recurrenceRows] = await Promise.all([
+      this.readRows(
+        `historical-minimal:rules:${targetMonth}:${this.context.asOf}`,
+        "historical_minimal_authority",
+        () => this.client
+          .from("minimal_baseline_rule_versions")
+          .select("rule_version_id,baseline_rule_id,master_rule_family,condition_code,effective_from,effective_to,declared_at,source_revision,authority_type,declared_by_ref,validation_ref,method_version,evidence_refs,supersedes_version_id")
+          .eq("household_id", this.context.householdId)
+          .lte("effective_from", effectiveOn)
+          .or(`effective_to.is.null,effective_to.gt.${effectiveOn}`)
+          .lte("declared_at", this.context.asOf)
+          .order("baseline_rule_id", { ascending: true })
+          .order("source_revision", { ascending: false })
+          .order("declared_at", { ascending: false }),
+      ),
+      this.readRows(
+        `historical-minimal:recurrences:${targetMonth}:${this.context.asOf}`,
+        "historical_minimal_authority",
+        () => this.client
+          .from("recurrence_state_history")
+          .select("state_version_id,recurrence_series_id,historical_state,effective_from,effective_to,declared_at,source_revision,authority_type,declared_by_ref,validation_ref,method_version,evidence_refs,supersedes_version_id")
+          .eq("household_id", this.context.householdId)
+          .lte("effective_from", effectiveOn)
+          .or(`effective_to.is.null,effective_to.gt.${effectiveOn}`)
+          .lte("declared_at", this.context.asOf)
+          .order("recurrence_series_id", { ascending: true })
+          .order("source_revision", { ascending: false })
+          .order("declared_at", { ascending: false }),
+      ),
+    ]);
+    return {
+      ruleVersions: ruleRows.map((row) => parseHistoricalMinimalRuleVersion({
+        ruleVersionId: canonicalString(row, ["rule_version_id"], "historical_minimal_authority"),
+        baselineRuleId: canonicalString(row, ["baseline_rule_id"], "historical_minimal_authority"),
+        masterRuleFamily: canonicalString(row, ["master_rule_family"], "historical_minimal_authority"),
+        ...(optionalCanonicalString(row, ["condition_code"]) === undefined
+          ? {}
+          : { conditionCode: optionalCanonicalString(row, ["condition_code"])! }),
+        ...historicalCommon(row),
+      })),
+      recurrenceStateVersions: recurrenceRows.map((row) => parseHistoricalRecurrenceStateVersion({
+        stateVersionId: canonicalString(row, ["state_version_id"], "historical_minimal_authority"),
+        recurrenceSeriesId: canonicalString(row, ["recurrence_series_id"], "historical_minimal_authority"),
+        historicalState: canonicalString(row, ["historical_state"], "historical_minimal_authority"),
+        ...historicalCommon(row),
+      })),
+    };
   }
 
   private loadComposition(

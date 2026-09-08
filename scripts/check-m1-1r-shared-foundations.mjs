@@ -50,7 +50,13 @@ const authorityIdentity = {
   effectiveFrom: "2025-01-01",
   declaredAt: "2025-01-01T00:00:00Z",
   sourceRevision: 1,
+  authorityType: "RETROSPECTIVE_DECLARATION",
+  declaredByRef: "test:operator",
+  validationRef: "test:validation",
+  methodVersion: "minimal_historical_authority@v1",
+  evidenceRefs: ["test:evidence"],
 };
+const knowledgeAsOf = "2026-02-28T23:59:59Z";
 const rule = (family = "VARIABLE_ESSENTIAL", overrides = {}) => ({ ...authorityIdentity, family, ...overrides });
 const observation = (month, amount, overrides = {}) => ({
   month, status: "KNOWN", amount: String(amount), eligible: true, evidenceRefs: [`fact:${month}`], ...overrides,
@@ -58,7 +64,7 @@ const observation = (month, amount, overrides = {}) => ({
 const months = Array.from({ length: 12 }, (_, index) => `2025-${String(index + 1).padStart(2, "0")}`);
 const twelve = months.map((month, index) => observation(month, index * 10));
 const calculateQ25 = (observations = twelve, ruleOverride = rule()) => baseline.calculateVariableEssentialQ25({
-  canonicalComponentKey: "component:variable", targetMonth, observations, rule: ruleOverride,
+  canonicalComponentKey: "component:variable", targetMonth, knowledgeAsOf, observations, rule: ruleOverride,
 });
 
 const q25 = calculateQ25();
@@ -104,6 +110,7 @@ const variablePlan = {
 const authorityBundle = (components) => ({
   model: "BITEMPORAL_TYPED_RULE_AND_RECURRENCE_AUTHORITY_V1",
   completeness: "COMPLETE_FOR_TARGET_MONTH",
+  knowledgeAsOf,
   components,
 });
 const declaredMissing = baseline.resolveHistoricalMinimalState({ targetMonth, authority: authorityBundle([variablePlan, declaredPlan(false)]) });

@@ -30,3 +30,16 @@ export {
   type HistoricalMinimalState,
   type HistoricalRecurrenceAuthority,
 } from "./historical-minimal";
+export {
+  HISTORICAL_AUTHORITY_METHOD_VERSION,
+  HISTORICAL_RECURRENCE_STATE_METHOD_VERSION,
+  assertHistoricalAuthorityVersionSet,
+  historicalAuthorityVersionSetHash,
+  parseHistoricalMinimalRuleVersion,
+  parseHistoricalRecurrenceStateVersion,
+  selectHistoricalMinimalRuleVersion,
+  selectHistoricalRecurrenceStateVersion,
+  type HistoricalAuthorityType,
+  type HistoricalMinimalRuleVersion,
+  type HistoricalRecurrenceStateVersion,
+} from "./historical-authority";
