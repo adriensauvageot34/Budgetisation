@@ -209,3 +209,20 @@ REPORT = docs/global-v2/execution/m1-economy/M1-H1M-BITEMPORAL-MIGRATION-BACKFIL
 
 STOP.
 ```
+
+## 13. Addendum de cutover live M1-FINAL (2026-09-08)
+
+La clôture M1-FINAL remplace uniquement les mentions « non appliqué live » de la section 12 ; le modèle, les décisions D1–D4 et le plan de replay restent inchangés.
+
+- projet Supabase : `ipuuhxrblxormwgoaqnz` ;
+- migrations additives enregistrées live : `20260908141949`, `20260908142256`, `20260908142406` ;
+- `dataRevision` : `1 → 2` ;
+- 34 versions de règles et 15 versions d'état de récurrence créées ; aucune preuve inconnue transformée en valeur ;
+- deuxième invocation du backfill : zéro insertion et mêmes digests (`IDEMPOTENCE = PASS`) ;
+- anti-drift : 40/40 règles, 35/35 récurrences et planHash `af3e66a745555086dfebb67a9930c8500adde66180e10d8e54d11b0247ff64e5` ;
+- replay 2025-08 → 2026-07 : `PARTIAL_SAFE` sur les douze mois, conformément à `MAXIMUM_SAFE_COVERAGE` ;
+- History V2 reconstruit et publié sur douze générations, `analyticsRevision 80 → 92`, 947 snapshots, 24 artifacts et 12 manifests durables ;
+- Global V2 reconstruit par `FULL_RESTAGE` puis publié à la révision 93, avec 103 snapshots, 1 artifact et zéro reliquat ;
+- aucune ancienne génération n'a été mutée.
+
+Les détails de publication, hashes, tests et déploiement sont consignés dans `M1-FINAL-LIVE-CUTOVER.md`.

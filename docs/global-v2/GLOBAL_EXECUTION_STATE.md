@@ -449,3 +449,13 @@ Elles restent des contrats de compatibilité, pas une autorité V2.
 - Tests : R3 31/31, primary RM 83/83, Query 59/59 et 33/33 RuntimeSchemas, production bridge 66/66, certification intégrée 28/28, owner R2 56/56, typecheck, architecture 564 et diff-check PASS.
 - Aucun frontend, accès/write Supabase, migration, publication, déploiement ou push. Rapport : `execution/m1-economy/M1-4R-QUERY-SNAPSHOTS.md`.
 - `M1_4R_QUERY=PASS`; `EVOLUTION_MINIMAL=PARTIAL_UNTIL_BACKFILL`; `MANIFEST_CANDIDATE=PASS`; `LIVE_WRITES=NONE`.
+
+## M1-FINAL — autorité bitemporelle, History et Global live (2026-09-08)
+
+- MB appliqué sur `ipuuhxrblxormwgoaqnz` : 34 versions de règles, 15 états de récurrence, `dataRevision 1→2`, anti-drift 40/40 + 35/35 et idempotence PASS.
+- Minimal `minimal_month_cost@v2` : maximum safe coverage certifié ; 12 mois `UNKNOWN` locaux, sans contamination d'Actual, Typical, Structure, temporalité ou récurrences.
+- History V2 : 12/12 mois, 15/15 familles, 947/947 RuntimeSchemas, 384/384 invariants et 24/24 artifacts ; douze cutovers atomiques aux révisions 81→92 ; 947 snapshots et 24 artifacts actifs, zéro DRAFT/doublon/reliquat.
+- Global V2 : candidat `bbdfb8a4-c807-56e3-9266-220edaa99aa6`, factsHash `a61591c23b994567407ea296b4b71be2732de4164884c7a191d9cb2ee54daa3f`, manifestHash `846f2c2698833f43677ee16848a19f817e5438ce07ee171f71d34723baceb5d2` ; FULL_RESTAGE et cutover atomique à la révision 93.
+- Global live : une génération active, 103 snapshots, 1 artifact, zéro DRAFT/doublon/reliquat. M1 fournit Actual/Typical, historique, Structure, temporalité, 34 récurrences/détails et méthodologie ; Minimal reste localement indisponible.
+- Gates ciblés M1/Global, History certification, typecheck, architecture et build Production PASS. Rapport : `execution/m1-economy/M1-FINAL-LIVE-CUTOVER.md`.
+- `M1_FINAL_ANALYTICS=PASS`; `HISTORY_LIVE=PASS`; `GLOBAL_LIVE=PASS`; déploiement et smoke navigateur à fermer après checkpoint/push.
