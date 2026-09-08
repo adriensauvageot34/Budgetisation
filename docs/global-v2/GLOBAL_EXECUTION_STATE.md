@@ -427,3 +427,14 @@ Elles restent des contrats de compatibilité, pas une autorité V2.
 - Tests : R1 46/46, fondations 108/108, M1 72/72, descriptif 17/17, arbitrage temporel 179/179, matérialisation PASS, runtime PASS, typecheck PASS, architecture 562 PASS et diff-check PASS.
 - Aucun backfill, migration, write Supabase, snapshot, publication, frontend, déploiement ou push. Rapport : `execution/m1-economy/M1-1R-SHARED-FOUNDATIONS-SAFE.md`.
 - `M1_1R_FOUNDATIONS=PASS`; `HISTORICAL_MINIMAL_BACKFILL_APPLIED=NO`; `MODULE_WIDE_BLOCK_FROM_LOCAL_UNKNOWN=NO`; `LIVE_WRITES=NONE`.
+
+## M1-2/3R — moteur et owner V2 sans backfill (2026-09-08)
+
+- Baseline `7dcda0a11d23bb4f28c4e4fa517a8318deef5eba`, branche `main`, worktree propre à l'entrée ; `M1_1R_FOUNDATIONS=PASS` vérifié.
+- `GlobalM1OwnerOutputV2` est l'unique sortie M1 : state/deltas, historique certifié max12, structure trois axes, temporalité, récurrences, contributeurs, capacités conditionnelles, méthodologie, digests et closure.
+- Le serveur suit Canonical → Facts → producteurs officiels → owner. Aucune History Query, preuve compare-only ou vue courante de récurrence n'est une autorité analytique.
+- Minimal absent reste localement `UNKNOWN`; Actual, Typical, Trend/Recent, structure et faits de récurrence survivent. Les séries restent visibles avec lifecycle `UNKNOWN`.
+- Récurrences dédupliquées au grain opération/date ; coûts typiques factuels séparés des expected amounts et monthly equivalents. Agrégats gated indépendamment.
+- Tests : R2 56/56, R1 46/46, M1 72/72, M2 49/49, P04 179/179, production bridge 66/66, primary RM 83/83, Query 57/57 et 32/32 schemas, typecheck, architecture 563, diff-check PASS.
+- Aucun frontend, backfill, migration, accès/write Supabase, publication, déploiement ou push. Rapport : `execution/m1-economy/M1-2-3R-ENGINE-OWNER-V2.md`.
+- `M1_2_3R_ENGINE_OWNER=PASS`; `M1_HISTORY_MINIMAL=PARTIAL_UNTIL_BACKFILL`; `STRUCTURAL_RECURRING_COST=LOCAL_PARTIAL`; `CONDITIONAL_CAPABILITIES=SAFE_GATED`; `LIVE_WRITES=NONE`.

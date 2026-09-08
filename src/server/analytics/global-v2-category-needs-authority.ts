@@ -88,10 +88,10 @@ export async function resolveGlobalM2HouseholdAuthority(input: {
   const targetMonth = parseYearMonth(input.targetMonth);
   const resolver = input.resolver ?? new FactSourceResolver(input.repository);
   const m1 = await resolveGlobalM1HouseholdAuthority({ repository: input.repository, resolver, targetMonth });
-  if (m1.actual.value.status !== "KNOWN" || m1.typical.reference.status !== "KNOWN") {
+  if (m1.state.actual.status !== "KNOWN" || m1.state.typicalReference.status !== "KNOWN") {
     throw new TypeError("M2 exige Actual et TypicalReference officiels connaissables.");
   }
-  const firstMonth = m1.typical.referenceMonths[0];
+  const firstMonth = m1.state.typicalReferenceMonths[0];
   if (firstMonth === undefined) throw new TypeError("M2 exige une fenêtre TypicalReference non vide.");
   const range = {
     start: parseLocalDate(`${firstMonth}-01`),
@@ -106,7 +106,7 @@ export async function resolveGlobalM2HouseholdAuthority(input: {
     String(classification.canonicalComponentKey),
     classification,
   ]));
-  const months = [...m1.typical.referenceMonths, targetMonth];
+  const months = [...m1.state.typicalReferenceMonths, targetMonth];
   const components = months.flatMap((month) => projectGlobalM2Month({
     month,
     facts: bundle.economicFacts,
@@ -137,17 +137,17 @@ export async function resolveGlobalM2HouseholdAuthority(input: {
     : buildGlobalM2PurchaseEnrichment({
         purchase: input.purchaseAuthority,
         targetMonth,
-        referenceMonths: m1.typical.referenceMonths,
+        referenceMonths: m1.state.typicalReferenceMonths,
       });
   if (purchaseEnrichment !== undefined && purchaseEnrichment.sourceRevision !== input.repository.context.dataRevision) {
     throw new TypeError("P10_M2_PURCHASE_SOURCE_REVISION_MISMATCH");
   }
   const result = buildGlobalCategoryNeeds({
     targetMonth,
-    referenceMonths: m1.typical.referenceMonths,
+    referenceMonths: m1.state.typicalReferenceMonths,
     components,
-    actual: m1.actual.value.value,
-    officialTypicalTotal: m1.typical.reference.value,
+    actual: m1.state.actual.value!,
+    officialTypicalTotal: m1.state.typicalReference.value!,
     officialCategoryCurrentAmounts: Object.fromEntries(categoryAuthorities.map(({ categoryId, current }) => [categoryId, current])),
     officialCategoryTypicalAmounts: Object.fromEntries(categoryAuthorities.map(({ categoryId, typical }) => [categoryId, typical])),
     ...(purchaseEnrichment === undefined ? {} : { purchaseFrequencyTicket: purchaseEnrichment.frequencyTicket }),

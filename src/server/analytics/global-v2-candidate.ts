@@ -238,11 +238,16 @@ function byDescendingNumber(path: readonly string[]) {
 }
 
 function economicProjection(output: GlobalV2OwnerOutput): ModuleProjection {
-  const actualNumber = numberOf(at(output.output, "actual", "value", "value"));
-  const typicalNumber = numberOf(at(output.output, "typical", "reference", "value"));
-  const actual = formatMoney(at(output.output, "actual", "value", "value"));
-  const typical = formatMoney(at(output.output, "typical", "reference", "value"));
-  const minimal = formatMoney(at(output.output, "minimal", "metric", "value"));
+  // The producer now emits the V2 owner shape. The legacy reads below remain
+  // projection-only compatibility for already-certified owner fixtures.
+  const actualValue = at(output.output, "state", "actual", "value") ?? at(output.output, "actual", "value", "value");
+  const typicalValue = at(output.output, "state", "typicalReference", "value") ?? at(output.output, "typical", "reference", "value");
+  const minimalValue = at(output.output, "state", "minimalState", "value") ?? at(output.output, "minimal", "metric", "value");
+  const actualNumber = numberOf(actualValue);
+  const typicalNumber = numberOf(typicalValue);
+  const actual = formatMoney(actualValue);
+  const typical = formatMoney(typicalValue);
+  const minimal = formatMoney(minimalValue);
   const targetMonth = stringOf(at(output.output, "targetMonth"));
   const compact = [
     ...(actual === undefined ? [] : [kpi(output, "kpi:economic:actual", targetMonth === undefined ? "Dépenses du mois" : `Dépenses en ${targetMonth}`, actual, "global-m1:actual")]),
@@ -260,11 +265,18 @@ function economicProjection(output: GlobalV2OwnerOutput): ModuleProjection {
         : `Très proche de votre niveau habituel · Habituel : ${typical}/mois`;
   const breakdownLabels: Readonly<Record<string, string>> = {
     Fixe: "Fixe", Variable: "Variable", CURRENT: "Vie courante", NON_CURRENT: "Hors quotidien",
-    Contrainte: "Contrainte", Indispensable: "Indispensable", Optionnelle: "Optionnelle", Ajustable: "Ajustable",
+    Contraint: "Contraint", Indispensable: "Indispensable", Optionnel: "Optionnel",
   };
   const breakdownRows = [["behavior", "Comportement"], ["lifeScope", "Périmètre de vie"], ["necessity", "Nécessité"]].flatMap(([axis, axisLabel]) => {
-    const amounts = recordOf(at(output.output, "structure", axis, "amounts"));
-    return Object.entries(amounts ?? {}).map(([key, value], index) => row(output, index + 1, `${axis}:${key}`, `${axisLabel} · ${breakdownLabels[key] ?? key}`, formatMoney(value) ?? "Montant indisponible", undefined, "KNOWN"));
+    const buckets = arrayOf(at(output.output, "structure", axis, "buckets"));
+    const legacyAmounts = recordOf(at(output.output, "structure", axis, "amounts"));
+    if (buckets.length === 0 && legacyAmounts !== undefined) {
+      return Object.entries(legacyAmounts).map(([key, value], index) => row(output, index + 1, `${axis}:${key}`, `${axisLabel} · ${breakdownLabels[key] ?? key}`, formatMoney(value) ?? "Montant indisponible", undefined, "KNOWN"));
+    }
+    return buckets.map((bucket, index) => {
+      const key = stringOf(at(bucket, "key")) ?? "unknown";
+      return row(output, index + 1, `${axis}:${key}`, `${axisLabel} · ${breakdownLabels[key] ?? key}`, formatMoney(at(bucket, "amount")) ?? "Montant indisponible", undefined, "KNOWN");
+    });
   });
   const temporalMetrics = [
     ["trend-start", "Niveau au début", at(output.output, "temporal", "trend", "startLevel")],

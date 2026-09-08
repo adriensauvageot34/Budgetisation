@@ -160,7 +160,7 @@ export async function resolveGlobalV2ProductionOwnerOutputs(repository: Canonica
   };
 
   const ownerOutputs: GlobalV2OwnerOutput[] = [
-    { moduleKey: "ECONOMIC", owner: "GlobalM1HouseholdAuthority", output: m1, knowledge: m1.actual.value.status, capabilityState: m1.actual.value.status === "KNOWN" ? "AVAILABLE" : "PARTIAL", reasonCodes: [], evidenceRefs: evidence("M1", m1) },
+    { moduleKey: "ECONOMIC", owner: "GlobalM1HouseholdAuthority", output: m1, knowledge: m1.state.actual.status, capabilityState: m1.state.actual.status === "KNOWN" ? "AVAILABLE" : "PARTIAL", reasonCodes: [], evidenceRefs: evidence("M1", m1) },
     { moduleKey: "CATEGORIES_NEEDS", owner: "GlobalM2HouseholdAuthority", output: m2, knowledge: "KNOWN", capabilityState: "AVAILABLE", reasonCodes: [], evidenceRefs: evidence("M2", m2) },
     { moduleKey: "TRANSFORMATIONS", owner: "buildGlobalTransformations", output: m3, knowledge: m3.transformations.length > 0 || m3.relationshipChanges !== undefined ? "KNOWN" : "UNKNOWN", capabilityState: m3.transformations.length > 0 || m3.relationshipChanges !== undefined ? "AVAILABLE" : "PARTIAL", reasonCodes: m3.transformations.length > 0 ? [] : ["NO_CERTIFIED_TRANSFORMATION"], evidenceRefs: evidence("M3", m3) },
     { moduleKey: "RHYTHM", owner: "buildGlobalActivityRhythm", output: { rhythms }, knowledge: rhythms.length > 0 ? "KNOWN" : "UNKNOWN", capabilityState: rhythms.length > 0 ? "AVAILABLE" : "PARTIAL", reasonCodes: rhythms.length > 0 ? [] : ["NO_OBSERVABLE_ACTIVITY"], evidenceRefs: evidence("M4", rhythms) },

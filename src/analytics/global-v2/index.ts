@@ -60,6 +60,20 @@ export {
   type GlobalMaterialityStatus,
 } from "./materiality";
 export { buildGlobalM1Temporal } from "./economic-temporal";
+export {
+  GLOBAL_M1_OWNER_METHOD_VERSION,
+  buildGlobalM1OwnerV2,
+  minimalComponentsForOwner,
+  type GlobalM1Contributor,
+  type GlobalM1HistoryInput,
+  type GlobalM1HistoryPoint,
+  type GlobalM1OwnerOutputV2,
+  type GlobalM1QualifiedMoney,
+  type GlobalM1RecurrenceAuthority,
+  type GlobalM1RecurrenceObservation,
+  type GlobalM1RecurrenceSeries,
+  type GlobalM1StructureAxis,
+} from "./m1-owner";
 export { buildGlobalTemporalAnalysis } from "./temporal-analysis";
 export { buildGlobalTemporalChapters, buildGlobalCurrentRegime } from "./temporal-lifecycle";
 export { fuseGlobalTemporalSignals } from "./temporal-fusion";
