@@ -35,6 +35,7 @@ export type MonetaryEvolutionProps<U extends MonetaryMetricUnit> = {
   readonly unit: U;
   readonly points: readonly MonetaryEvolutionPoint<U>[];
   readonly onSelectPoint?: (point: MonetaryEvolutionPoint<U>) => void;
+  readonly labels?: Readonly<{ readonly actual: string; readonly typical: string; readonly minimal: string }>;
 };
 
 export type MultiSeriesMonetaryEvolutionSeries = {
@@ -56,6 +57,7 @@ export function MonetaryEvolution<U extends MonetaryMetricUnit>({
   unit,
   points,
   onSelectPoint,
+  labels = { actual: "Réel", typical: "Typique", minimal: "Minimal" },
 }: MonetaryEvolutionProps<U>) {
   assertChronologicalLabels(points.map((point) => point.period), "MonetaryEvolution");
   for (const point of points) {
@@ -88,9 +90,9 @@ export function MonetaryEvolution<U extends MonetaryMetricUnit>({
             <YAxis domain={["auto", "auto"]} tickFormatter={format} />
             <Tooltip formatter={(value) => format(Number(value))} />
             <ReferenceLine y={0} stroke={designTokens.color.border.strong} />
-            <Line dataKey="actual" name="Réel" type="linear" connectNulls={false} stroke={designTokens.color.chart.series[0]} dot />
-            <Line dataKey="typical" name="Typique" type="linear" connectNulls={false} stroke={designTokens.color.chart.series[1]} strokeDasharray="6 4" dot />
-            <Line dataKey="minimal" name="Minimal" type="linear" connectNulls={false} stroke={designTokens.color.chart.series[2]} strokeDasharray="2 4" dot />
+            <Line dataKey="actual" name={labels.actual} type="linear" connectNulls={false} stroke={designTokens.color.chart.series[0]} dot />
+            <Line dataKey="typical" name={labels.typical} type="linear" connectNulls={false} stroke={designTokens.color.chart.series[1]} strokeDasharray="6 4" dot />
+            <Line dataKey="minimal" name={labels.minimal} type="linear" connectNulls={false} stroke={designTokens.color.chart.series[2]} strokeDasharray="2 4" dot />
           </LineChart>
         </ResponsiveContainer>
       </div>

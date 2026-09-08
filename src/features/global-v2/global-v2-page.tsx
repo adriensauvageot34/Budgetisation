@@ -6,12 +6,13 @@ import { AlertTriangle, ArrowUp, BarChart3, ExternalLink, Info, RefreshCw, Spark
 import { parseMetricId } from "@/core/identity";
 import { parseMoney, type Money } from "@/core/money";
 import type { MetricEnvelope } from "@/core/metrics";
-import { MultiSeriesMonetaryEvolution, OverlayFrame, RankingBar } from "@/ui";
+import { MonetaryEvolution, MultiSeriesMonetaryEvolution, OverlayFrame, RankingBar } from "@/ui";
 import type {
   GlobalCompactInsight,
   GlobalCompactKpi,
   GlobalCompactQuality,
   GlobalDetailRow,
+  GlobalDetailMetric,
   GlobalDetailSeries,
   GlobalExpandedReadModel,
   GlobalExpandedSectionKey,
@@ -24,6 +25,7 @@ import type {
   GlobalV2ExpandedResourceName,
 } from "@/query-api/global-v2";
 import { globalModulePresentation, globalUiCopy } from "./catalog";
+import { economicEvolutionPoints, economicMetric, economicStructureGroups, economicStructureLabel, economicValueText } from "./economic-ui";
 import { emitGlobalV2UxEvent } from "./instrumentation";
 import { GlobalModuleBoundary } from "./module-boundary";
 import { useGlobalV2Resource, useMobileGlobalLayout, useNearViewport } from "./use-global-resource";
@@ -67,7 +69,7 @@ const internalNavigation = Object.freeze([
 ] as const);
 
 const moduleTabs: Readonly<Record<GlobalPrimaryModuleKey, readonly { readonly key: GlobalExpandedSectionKey; readonly label: string }[]>> = Object.freeze({
-  ECONOMIC: [{ key: "OVERVIEW", label: "Vue d’ensemble" }, { key: "BREAKDOWN", label: "Structure" }, { key: "EVOLUTION", label: "Tendance" }],
+  ECONOMIC: [{ key: "OVERVIEW", label: "Vue d’ensemble" }, { key: "EVOLUTION", label: "Évolution" }, { key: "BREAKDOWN", label: "Structure" }, { key: "PATTERNS", label: "Charges récurrentes" }],
   CATEGORIES_NEEDS: [{ key: "BREAKDOWN", label: "Catégories" }, { key: "PATTERNS", label: "Besoins" }, { key: "EVOLUTION", label: "Évolution" }],
   TRANSFORMATIONS: [{ key: "OVERVIEW", label: "Vue d’ensemble" }],
   RHYTHM: [{ key: "OVERVIEW", label: "Habitudes" }, { key: "EVOLUTION", label: "Évolution" }],
@@ -169,6 +171,85 @@ function KpiGrid({ kpis, limit = 3 }: { readonly kpis: readonly GlobalCompactKpi
   return <div className={styles.kpis}>{kpis.slice(0, limit).map((kpi) => <div key={kpi.kpiId}><span>{humanLabel(kpi.labelKey)}</span><strong>{kpi.displayValue}</strong></div>)}</div>;
 }
 
+function EconomicMetricValue({ metric, unknownText }: { readonly metric: GlobalDetailMetric | undefined; readonly unknownText?: string }) {
+  if (metric === undefined) return <strong className={styles.unavailableValue}>{unknownText ?? "Information insuffisante"}</strong>;
+  return <strong className={metric.knowledgeState === "UNKNOWN" || metric.knowledgeState === "CONFLICT" ? styles.unavailableValue : undefined}>{economicValueText(metric, unknownText)}</strong>;
+}
+
+function EconomicHero({ model }: { readonly model: GlobalExpandedReadModel }) {
+  const typical = economicMetric(model, "typical-state");
+  const minimal = economicMetric(model, "minimal-state");
+  const gap = economicMetric(model, "typical-minimal-gap");
+  const actual = economicMetric(model, "actual");
+  const reference = economicMetric(model, "typical-reference");
+  const targetDelta = economicMetric(model, "actual-reference-delta");
+  return <div className={styles.economicState}>
+    <div className={styles.economicHero} aria-label="Repères économiques habituels">
+      <article><span>Habituellement</span><EconomicMetricValue metric={typical} /></article>
+      <article><span>Socle minimal estimé</span><EconomicMetricValue metric={minimal} unknownText="Socle non disponible pour cette période" /></article>
+      <article><span>Distance entre les deux</span><EconomicMetricValue metric={gap} unknownText="Écart non calculable sans socle" /></article>
+    </div>
+    <article className={styles.lastMonth}>
+      <div><span>Dernier mois certifié</span><EconomicMetricValue metric={actual} /></div>
+      <div><span>Par rapport à la référence précédente</span><EconomicMetricValue metric={targetDelta} /></div>
+      <div><span>Référence habituelle précédente</span><EconomicMetricValue metric={reference} /></div>
+    </article>
+  </div>;
+}
+
+function EconomicEvolution({ model }: { readonly model: GlobalExpandedReadModel }) {
+  const points = economicEvolutionPoints(model.series);
+  if (points.length === 0) return <p className={styles.qualityNote}>La série économique n’est pas disponible.</p>;
+  return <div className={styles.chartWide}><MonetaryEvolution
+    frame={{ title: "Votre coût de vie sur 12 mois", state: { kind: "ready" }, summary: <span>Coût réel, niveau habituel et socle minimal. Une donnée Minimal inconnue laisse un trou sans interrompre les autres séries.</span> }}
+    unit="EUR/month"
+    labels={{ actual: "Coût réel", typical: "Niveau habituel", minimal: "Socle minimal" }}
+    points={points}
+  /></div>;
+}
+
+function EconomicSignals({ model, expanded = false }: { readonly model: GlobalExpandedReadModel; readonly expanded?: boolean }) {
+  const definitions = [
+    ["trend-slope", "Tendance de fond"],
+    ["recent-delta", "Mouvement récent"],
+    ["dispersion-amplitude", "Variabilité"],
+  ] as const;
+  const metrics = definitions.flatMap(([id, label]) => {
+    const metric = economicMetric(model, id) ?? economicMetric(model, `overview-${id}`);
+    return metric === undefined ? [] : [{ metric, label }];
+  });
+  const descriptive = expanded ? model.metrics.filter(({ metricId }) => ["dispersion-median", "dispersion-q1", "dispersion-q3", "dispersion-iqr", "dispersion-mad", "dispersion-min", "dispersion-max"].includes(metricId)) : [];
+  if (metrics.length === 0 && descriptive.length === 0) return null;
+  return <section className={styles.economicSignals} aria-labelledby={expanded ? "economic-signals-expanded" : "economic-signals-compact"}>
+    <h3 id={expanded ? "economic-signals-expanded" : "economic-signals-compact"}>Signaux sur la période</h3>
+    <div>{metrics.map(({ metric, label }) => <article key={metric.metricId}><span>{label}</span><EconomicMetricValue metric={metric} /></article>)}</div>
+    {descriptive.length === 0 ? null : <details><summary>Voir les mesures descriptives</summary><div className={styles.descriptiveMetrics}>{descriptive.map((metric) => <article key={metric.metricId}><span>{humanLabel(metric.labelKey)}</span><EconomicMetricValue metric={metric} /></article>)}</div></details>}
+    <p className={styles.qualityNote}>Ces mesures décrivent l’évolution observée sans lui attribuer une qualification catégorielle non prouvée.</p>
+  </section>;
+}
+
+function EconomicStructure({ model }: { readonly model: GlobalExpandedReadModel }) {
+  const ids = { "Nécessité": "necessity", "Fixe / variable": "behavior", "Périmètre de vie": "life-scope" } as const;
+  return <div className={styles.structureAxes}>{economicStructureGroups(model.rows).map((group) => <section key={group.axis} aria-labelledby={`economic-axis-${ids[group.axis]}`}>
+    <h3 id={`economic-axis-${ids[group.axis]}`}>{group.axis}</h3>
+    <div className={styles.structureStrip}>{group.rows.map((row) => <article key={row.rowId} data-knowledge-state={row.knowledgeState}><span>{economicStructureLabel(row)}</span><strong>{economicValueText(row, "À classer")}</strong></article>)}</div>
+  </section>)}</div>;
+}
+
+function EconomicRecurrences({ model, onDetail }: { readonly model: GlobalExpandedReadModel; readonly onDetail: (row: GlobalDetailRow) => void }) {
+  return <div className={styles.recurrenceContent}>
+    <div className={styles.recurrenceMetrics}>{model.metrics.map((metric) => <article key={metric.metricId} data-knowledge-state={metric.knowledgeState}><span>{humanLabel(metric.labelKey)}</span><EconomicMetricValue metric={metric} unknownText="Non déterminé sur cette période" /></article>)}</div>
+    <HumanRows rows={model.rows.slice(0, 50)} onDetail={onDetail} />
+    <p className={styles.qualityNote}>Chaque repère est présenté selon sa propre disponibilité. Un cycle de vie inconnu ne masque pas les occurrences, la cadence ou l’équivalent mensuel déjà qualifiés.</p>
+  </div>;
+}
+
+function EconomicContributors({ model }: { readonly model: GlobalExpandedReadModel }) {
+  const qualified = model.rows.filter((row) => row.knowledgeState === "KNOWN" || row.knowledgeState === "PARTIAL").slice(0, 5);
+  if (qualified.length === 0) return null;
+  return <section className={styles.contributors} aria-labelledby="economic-contributors-title"><h3 id="economic-contributors-title">Principaux contributeurs qualifiés</h3><HumanRows rows={qualified} onDetail={() => undefined} /><p className={styles.qualityNote}>Ces contributions décrivent les écarts publiés sans leur attribuer une causalité non prouvée.</p></section>;
+}
+
 type OverlayTarget = {
   readonly kind: "MODULE_DETAIL" | "ENTITY_DETAIL" | "METHODOLOGY";
   readonly title: string;
@@ -202,6 +283,16 @@ function GlobalExpandedContent({ model, onDetail }: { readonly model: GlobalExpa
     <article className={styles.secondaryInsight}><strong>Une lecture fondée sur les données certifiées</strong><p>Chaque résultat est publié avec ses propres conditions de disponibilité, de couverture et de fiabilité. Une information insuffisante reste absente ou explicitement limitée.</p></article>
     <HumanQualityNote quality={model.quality} />
     <p className={styles.qualityNote}>Les calculs sont réalisés côté serveur avant la navigation. Cette page les présente sans recalculer la doctrine dans le navigateur.</p>
+  </div>;
+  if (model.resource === "analysis_global_economic_expanded") return <div className={styles.expandedContent}>
+    {model.sectionKey === "OVERVIEW" ? <>
+      <EconomicHero model={model} />
+      {model.primaryInsight === undefined ? null : <article className={styles.secondaryInsight}><strong>{humanLabel(model.primaryInsight.titleKey)}</strong><p>{humanLabel(model.primaryInsight.statementKey)}</p></article>}
+      <HumanQualityNote quality={model.quality} />
+    </> : null}
+    {model.sectionKey === "EVOLUTION" ? <><EconomicEvolution model={model} /><EconomicSignals model={model} expanded /></> : null}
+    {model.sectionKey === "BREAKDOWN" ? <EconomicStructure model={model} /> : null}
+    {model.sectionKey === "PATTERNS" ? <EconomicRecurrences model={model} onDetail={onDetail} /> : null}
   </div>;
   return <div className={styles.expandedContent}>
     {model.primaryInsight === undefined ? null : <article className={styles.secondaryInsight}><strong>{humanLabel(model.primaryInsight.titleKey)}</strong><p>{humanLabel(model.primaryInsight.statementKey)}</p></article>}
@@ -273,10 +364,12 @@ function ModuleContent({ moduleKey, model, runtime, onDetail, onMethod }: { read
 
   const insight = model.primaryInsight;
   if (moduleKey === "ECONOMIC") return <div className={styles.compact}>
-    <KpiGrid kpis={model.kpis} />
+    <ExpandedPreview runtime={runtime} moduleKey={moduleKey} sectionKey="OVERVIEW">{(expanded) => <EconomicHero model={expanded} />}</ExpandedPreview>
     {insight === undefined ? null : <InsightCard insight={insight} />}
-    <MoneyRanking title="Mois observé, habituel et minimum" rows={model.kpis.map((item) => ({ id: item.kpiId, label: item.labelKey, displayValue: item.displayValue }))} limit={3} />
-    <HumanQualityNote quality={model.quality} /><SeeDetail onClick={onDetail} />
+    <ExpandedPreview runtime={runtime} moduleKey={moduleKey} sectionKey="EVOLUTION">{(expanded) => <><EconomicEvolution model={expanded} /><EconomicSignals model={expanded} /></>}</ExpandedPreview>
+    <ExpandedPreview runtime={runtime} moduleKey={moduleKey} sectionKey="COMPARISONS">{(expanded) => <EconomicContributors model={expanded} />}</ExpandedPreview>
+    <HumanQualityNote quality={model.quality} />
+    <div className={styles.moduleActions}><SeeDetail onClick={onDetail} /><button type="button" className={styles.methodButton} onClick={onMethod}><Info aria-hidden size={16} /> Méthode & fiabilité</button></div>
   </div>;
 
   if (moduleKey === "CATEGORIES_NEEDS") return <div className={styles.compact}>
