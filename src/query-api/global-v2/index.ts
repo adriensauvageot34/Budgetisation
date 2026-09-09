@@ -50,6 +50,7 @@ export {
   globalExpandedReadModelSchemas,
   globalExpandedSectionKeys,
   globalV2ExpandedResourceCatalog,
+  globalV2MethodRef,
   importedGlobalSummaryReadModelSchema,
   parseGlobalExpandedReadModel,
   parseImportedGlobalSummaryReadModel,

@@ -153,7 +153,89 @@ function moduleFromResource(resource: string): GlobalPrimaryModuleKey {
   return resource === "analysis_global_methodology" ? "ECONOMIC" : "ECONOMIC";
 }
 
+function fixtureMoneyMetric(metricId: string, labelKey: string, value: string, knowledgeState: "KNOWN" | "PARTIAL" = "KNOWN", signed = false): GlobalDetailMetric {
+  const numeric = Number(value);
+  const amount = new Intl.NumberFormat("fr-FR", { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(Math.abs(numeric));
+  return {
+    metricId,
+    labelKey,
+    displayValue: `${signed && numeric > 0 ? "+" : numeric < 0 ? "−" : ""}${amount} €`,
+    typedMeasure: { kind: "MONEY", value, unit: "EUR/month" },
+    knowledgeState,
+    ...(knowledgeState === "PARTIAL" ? { partialMeaning: "OBSERVED_ONLY" as const } : {}),
+    dataNature: knowledgeState === "PARTIAL" ? "HYBRID" : "OBSERVED",
+    evidenceRefs: [`evidence:economic:${metricId}`],
+  };
+}
+
+function economicFixtureModel(sectionKey: GlobalExpandedSectionKey): GlobalExpandedReadModel {
+  const overviewMetrics = [
+    fixtureMoneyMetric("typical-state", "État habituel", "3124.235"),
+    fixtureMoneyMetric("minimal-state", "Nos dépenses minimum", "1634.0783333333333", "PARTIAL"),
+    fixtureMoneyMetric("typical-minimal-gap", "Notre marge", "1490.1566666666667", "PARTIAL", true),
+    fixtureMoneyMetric("actual", "Dépenses du mois", "3773.14"),
+    fixtureMoneyMetric("typical-reference", "Référence habituelle", "2977.82"),
+    fixtureMoneyMetric("actual-reference-delta", "Écart à la référence", "795.32", "KNOWN", true),
+    fixtureMoneyMetric("overview-trend-slope", "Pente mensuelle", "-52.87", "KNOWN", true),
+    fixtureMoneyMetric("overview-recent-delta", "Variation récente", "759.68", "KNOWN", true),
+    fixtureMoneyMetric("overview-dispersion-amplitude", "Amplitude", "1707"),
+  ];
+  const temporalMetrics = [
+    fixtureMoneyMetric("trend-slope", "Pente mensuelle", "-52.87", "KNOWN", true),
+    fixtureMoneyMetric("recent-delta", "Variation récente", "759.68", "KNOWN", true),
+    fixtureMoneyMetric("dispersion-median", "Médiane", "3124.235"),
+    fixtureMoneyMetric("dispersion-mad", "Écart médian absolu", "509"),
+    fixtureMoneyMetric("dispersion-min", "Minimum observé", "2441"),
+    fixtureMoneyMetric("dispersion-max", "Maximum observé", "4148.5"),
+    fixtureMoneyMetric("dispersion-amplitude", "Amplitude", "1707"),
+  ];
+  const months = ["2025-08", "2025-09", "2025-10", "2025-11", "2025-12", "2026-01", "2026-02", "2026-03", "2026-04", "2026-05", "2026-06", "2026-07"];
+  const actualValues = ["4148.5", "3570", "3290", "2850", "3210", "3020", "2820", "2441", "2630", "3010", "3510", "3773.14"];
+  const typicalValues = ["4148.5", "3859", "3570", "3430", "3290", "3250", "3210", "3124.235", "3050", "3020", "2977.82", "3124.235"];
+  const point = (unitKey: string, value: string | undefined, knowledgeState: "KNOWN" | "UNKNOWN" = "KNOWN") => ({ unitKey, ...(value === undefined ? {} : { displayValue: `${value} €`, typedMeasure: { kind: "MONEY" as const, value, unit: "EUR/month" } }), knowledgeState });
+  const series: readonly GlobalDetailSeries[] = [
+    { seriesId: "economic:actual", labelKey: "Dépenses réelles", unit: "EUR/month", points: months.map((month, index) => point(month, actualValues[index]!)), evidenceRefs: ["evidence:economic:actual"] },
+    { seriesId: "economic:typical-state", labelKey: "État habituel", unit: "EUR/month", points: months.map((month, index) => point(month, typicalValues[index]!)), evidenceRefs: ["evidence:economic:typical"] },
+    { seriesId: "economic:minimal-state", labelKey: "Minimum History", unit: "EUR/month", points: months.map((month) => point(month, undefined, "UNKNOWN")), evidenceRefs: ["evidence:economic:minimal-history"] },
+  ];
+  const rowsBySection: Partial<Record<GlobalExpandedSectionKey, readonly GlobalDetailRow[]>> = {
+    BREAKDOWN: [
+      ["necessity:constraint", "Nécessité · Contraint", "1730.27", "46"],
+      ["necessity:essential", "Nécessité · Indispensable", "1572.28", "42"],
+      ["necessity:adjustable", "Nécessité · Dépenses ajustables", "148.30", "4"],
+      ["necessity:optional", "Nécessité · Optionnel", "322.29", "8"],
+      ["behavior:fixed", "Comportement · Fixe", "1590.49", "42"],
+      ["behavior:variable", "Comportement · Variable", "2182.65", "58"],
+      ["life:current", "Périmètre de vie · Vie courante", "2343.18", "62"],
+      ["life:outside", "Périmètre de vie · Hors quotidien", "1429.96", "38"],
+    ].map(([rowId, labelKey, value, percentage]) => ({ rowId, labelKey, displayValue: `${value} € · ${percentage} %`, typedMeasure: { kind: "MONEY" as const, value, unit: "EUR/month" }, knowledgeState: "KNOWN" as const, evidenceRefs: [`evidence:${rowId}`] })),
+    PATTERNS: [
+      { rowId: "recurrence:edf", labelKey: "EDF — Électricité", displayValue: "≈ 78 € / paiement · 12 paiements observés · août 2025 → juillet 2026", typedMeasure: { kind: "MONEY", value: "78.20", unit: "EUR/occurrence" }, knowledgeState: "KNOWN", entityRef: "recurrence:edf", evidenceRefs: ["evidence:recurrence:edf"] },
+      { rowId: "recurrence:uber", labelKey: "Uber — Uber One", displayValue: "≈ 60 € / paiement · 10 paiements observés · août 2025 → juillet 2026", typedMeasure: { kind: "MONEY", value: "59.99", unit: "EUR/occurrence" }, knowledgeState: "KNOWN", entityRef: "recurrence:uber", evidenceRefs: ["evidence:recurrence:uber"] },
+      { rowId: "recurrence:max", labelKey: "Max — Abonnement", displayValue: "≈ 10 € / paiement · 12 paiements observés · août 2025 → juillet 2026", typedMeasure: { kind: "MONEY", value: "9.99", unit: "EUR/occurrence" }, knowledgeState: "KNOWN", entityRef: "recurrence:max", evidenceRefs: ["evidence:recurrence:max"] },
+    ],
+  };
+  return {
+    kind: "global_expanded",
+    schemaVersion: "global-expanded@v1",
+    resource: "analysis_global_economic_expanded",
+    moduleKey: "ECONOMIC",
+    sectionKey,
+    visibility: "VISIBLE",
+    secondaryInsights: [],
+    metrics: sectionKey === "OVERVIEW" ? overviewMetrics : sectionKey === "EVOLUTION" ? temporalMetrics : [],
+    series: sectionKey === "EVOLUTION" ? series : [],
+    rows: rowsBySection[sectionKey] ?? [],
+    destinations: [],
+    quality: sectionKey === "OVERVIEW" ? { ...qualityPartial, limitationCodes: ["ECONOMIC_TIMING_PARTIAL"] } : qualityKnown,
+    capabilities: [{ capabilityId: "GLOBAL_ECONOMIC", state: "AVAILABLE", reasonCodes: [] }],
+    publicationMeta,
+    resourceMeta: resourceMeta(20),
+  };
+}
+
 function expandedModel(resource: GlobalV2ExpandedResourceName, sectionKey: GlobalExpandedSectionKey, moduleKey = moduleFromResource(resource)): GlobalExpandedReadModel {
+  if (resource === "analysis_global_economic_expanded") return economicFixtureModel(sectionKey);
   const presentation = globalModulePresentation(moduleKey);
   const suffix = `${moduleKey.toLowerCase()}:${sectionKey.toLowerCase()}`;
   const metrics: readonly GlobalDetailMetric[] = [

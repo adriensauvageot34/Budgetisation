@@ -24,6 +24,7 @@ import {
   GLOBAL_MAX_SECTION_ROWS,
   globalPrimaryModuleCatalog,
   globalV2ExpandedResourceCatalog,
+  globalV2MethodRef,
   globalV2QueryRegistry,
   type GlobalCompactInsight,
   type GlobalCompactKpi,
@@ -103,6 +104,7 @@ export type GlobalV2PresentationLabels = {
   readonly places?: Readonly<Record<string, string>>;
   readonly categories?: Readonly<Record<string, string>>;
   readonly needs?: Readonly<Record<string, string>>;
+  readonly recurrences?: Readonly<Record<string, string>>;
 };
 
 export function globalV2M6HasPresentationContent(value: unknown): boolean {
@@ -163,6 +165,35 @@ function personLabel(personId: string, labels: GlobalV2PresentationLabels, perso
 
 function outputEvidence(output: GlobalV2OwnerOutput, ...extra: readonly string[]): readonly string[] {
   return uniqueSorted([...output.evidenceRefs, ...extra]);
+}
+
+function formatRoundedMoney(value: unknown): string | undefined {
+  const numeric = numberOf(value);
+  return numeric === undefined ? undefined : `${new Intl.NumberFormat("fr-FR", { maximumFractionDigits: 0 }).format(numeric)} €`;
+}
+
+function frenchMonth(value: string | undefined): string | undefined {
+  const match = value?.match(/^(\d{4})-(\d{2})/u);
+  if (match === undefined || match === null) return undefined;
+  const month = ["janvier", "février", "mars", "avril", "mai", "juin", "juillet", "août", "septembre", "octobre", "novembre", "décembre"][Number(match[2]) - 1];
+  return month === undefined ? undefined : `${month} ${match[1]}`;
+}
+
+function roundedShares(values: readonly unknown[]): readonly (number | undefined)[] {
+  const exact = values.map((value) => {
+    const ratio = numberOf(value);
+    return ratio === undefined || ratio < 0 ? undefined : ratio * 100;
+  });
+  if (exact.some((value) => value === undefined)) return exact.map(() => undefined);
+  const whole = exact.map((value) => Math.floor(value!));
+  let remaining = Math.max(0, 100 - whole.reduce((sum, value) => sum + value, 0));
+  const priority = exact.map((value, index) => ({ index, remainder: value! - whole[index]! })).sort((left, right) => right.remainder - left.remainder || left.index - right.index);
+  for (const { index } of priority) {
+    if (remaining <= 0) break;
+    whole[index] = whole[index]! + 1;
+    remaining -= 1;
+  }
+  return whole;
 }
 
 function projectedEvidence(output: GlobalV2OwnerOutput, evidenceRefs: readonly string[]): readonly string[] {
@@ -328,7 +359,7 @@ function byDescendingNumber(path: readonly string[]) {
   return (left: unknown, right: unknown): number => (numberOf(at(right, ...path)) ?? Number.NEGATIVE_INFINITY) - (numberOf(at(left, ...path)) ?? Number.NEGATIVE_INFINITY);
 }
 
-function economicProjection(output: GlobalV2OwnerOutput): ModuleProjection {
+function economicProjection(output: GlobalV2OwnerOutput, presentationLabels: GlobalV2PresentationLabels): ModuleProjection {
   const state = recordOf(at(output.output, "state"));
   if (state === undefined) {
     const legacyTargetMonth = stringOf(at(output.output, "targetMonth"));
@@ -340,14 +371,14 @@ function economicProjection(output: GlobalV2OwnerOutput): ModuleProjection {
     const compact = [
       ...(actual === undefined ? [] : [kpi(output, "kpi:economic:actual", legacyTargetMonth === undefined ? "Dépenses du mois" : `Dépenses en ${legacyTargetMonth}`, actual, "global-m1:actual")]),
       ...(typical === undefined ? [] : [kpi(output, "kpi:economic:typical", "Niveau habituel", typical, "global-m1:typical-reference")]),
-      ...(minimal === undefined ? [] : [kpi(output, "kpi:economic:minimal", "Minimum estimé", minimal, "global-m1:minimal")]),
+      ...(minimal === undefined ? [] : [kpi(output, "kpi:economic:minimal", "Nos dépenses minimum", minimal, "global-m1:minimal")]),
     ];
     const delta = numberOf(rawActual) === undefined || numberOf(rawTypical) === undefined ? undefined : numberOf(rawActual)! - numberOf(rawTypical)!;
     const deltaAmount = delta === undefined ? undefined : formatMoney(Math.abs(delta));
     const statement = delta === undefined || deltaAmount === undefined || typical === undefined ? undefined : delta > 0
       ? `${deltaAmount} au-dessus de votre niveau habituel · Habituel : ${typical}/mois`
       : delta < 0 ? `${deltaAmount} sous votre niveau habituel · Habituel : ${typical}/mois` : `Très proche de votre niveau habituel · Habituel : ${typical}/mois`;
-    const legacyLabels: Readonly<Record<string, string>> = { Fixe: "Fixe", Variable: "Variable", CURRENT: "Vie courante", NON_CURRENT: "Hors quotidien", Contraint: "Contraint", Contrainte: "Contraint", Indispensable: "Indispensable", Optionnel: "Optionnel" };
+    const legacyLabels: Readonly<Record<string, string>> = { Fixe: "Fixe", Variable: "Variable", CURRENT: "Vie courante", NON_CURRENT: "Hors quotidien", "Vie courante": "Vie courante", "Hors quotidien": "Hors quotidien", Contraint: "Contraint", Contrainte: "Contraint", Indispensable: "Indispensable", Optionnel: "Optionnel", Optionnelle: "Optionnel", Ajustable: "Dépenses ajustables" };
     const legacyBreakdown = [["behavior", "Comportement"], ["lifeScope", "Périmètre de vie"], ["necessity", "Nécessité"]].flatMap(([axis, axisLabel]) => Object.entries(recordOf(at(output.output, "structure", axis, "amounts")) ?? {}).map(([key, value], index) => row(output, index + 1, `${axis}:${key}`, `${axisLabel} · ${legacyLabels[key] ?? key}`, formatMoney(value) ?? "Montant indisponible", undefined, "KNOWN")));
     const legacyTemporal = [
       ["trend-start", "Niveau au début", at(output.output, "temporal", "trend", "startLevel")],
@@ -382,7 +413,7 @@ function economicProjection(output: GlobalV2OwnerOutput): ModuleProjection {
   const compact = [
     qualifiedKpi(output, "kpi:economic:actual", targetMonth === undefined ? "Dépenses du mois" : `Dépenses en ${targetMonth}`, actual, "global-m1:actual"),
     qualifiedKpi(output, "kpi:economic:typical-state", "État habituel", typicalState, "global-m1:typical-state"),
-    qualifiedKpi(output, "kpi:economic:minimal-state", "Minimum estimé", minimalState, "global-m1:minimal-state"),
+    qualifiedKpi(output, "kpi:economic:minimal-state", "Nos dépenses minimum", minimalState, "global-m1:minimal-state"),
   ];
   const deltaValue = numberOf(at(targetDelta, "value"));
   const deltaAmount = deltaValue === undefined ? undefined : formatMoney(Math.abs(deltaValue));
@@ -397,8 +428,8 @@ function economicProjection(output: GlobalV2OwnerOutput): ModuleProjection {
 
   const overviewMetrics = [
     qualifiedMetric(output, "typical-state", "État habituel", typicalState),
-    qualifiedMetric(output, "minimal-state", "Minimum estimé", minimalState),
-    qualifiedMetric(output, "typical-minimal-gap", "Écart habituel au minimum", minimalGap, { signed: true }),
+    qualifiedMetric(output, "minimal-state", "Nos dépenses minimum", minimalState),
+    qualifiedMetric(output, "typical-minimal-gap", "Notre marge", minimalGap, { signed: true }),
     qualifiedMetric(output, "actual", "Dépenses du mois", actual),
     qualifiedMetric(output, "typical-reference", "Référence habituelle", typicalReference),
     qualifiedMetric(output, "actual-reference-delta", "Écart à la référence", targetDelta, { signed: true }),
@@ -475,24 +506,29 @@ function economicProjection(output: GlobalV2OwnerOutput): ModuleProjection {
 
   const labels: Readonly<Record<string, string>> = {
     Fixe: "Fixe", Variable: "Variable", CURRENT: "Vie courante", NON_CURRENT: "Hors quotidien",
-    Contraint: "Contraint", Indispensable: "Indispensable", Optionnel: "Optionnel",
+    "Vie courante": "Vie courante", "Hors quotidien": "Hors quotidien",
+    Contraint: "Contraint", Contrainte: "Contraint", Indispensable: "Indispensable",
+    Optionnel: "Optionnel", Optionnelle: "Optionnel", Ajustable: "Dépenses ajustables",
   };
   let breakdownRank = 0;
   const breakdownRows = (["necessity", "behavior", "lifeScope"] as const).flatMap((axis) => {
     const axisLabel = axis === "necessity" ? "Nécessité" : axis === "behavior" ? "Comportement" : "Périmètre de vie";
     const axisValue = at(output.output, "structure", axis);
-    const rows = arrayOf(at(axisValue, "buckets")).map((bucket) => {
+    const buckets = arrayOf(at(axisValue, "buckets"));
+    const percentages = roundedShares(buckets.map((bucket) => at(bucket, "share")));
+    const rows = buckets.map((bucket, index) => {
       const key = stringOf(at(bucket, "key")) ?? "UNKNOWN";
       breakdownRank += 1;
-      return qualifiedRow(output, breakdownRank, `${axis}:${key}`, `${axisLabel} · ${labels[key] ?? "Non classé"}`, bucket);
+      const projected = qualifiedRow(output, breakdownRank, `${axis}:${key}`, `${axisLabel} · ${labels[key] ?? "Non classé"}`, bucket);
+      const percentage = percentages[index];
+      return percentage === undefined || projected.displayValue === undefined ? projected : { ...projected, displayValue: `${projected.displayValue} · ${percentage} %` };
     });
     for (const [kind, label] of [["unknownAmount", "Non classé"], ["conflictAmount", "Classification en conflit"]] as const) {
       const amount = at(axisValue, kind);
+      if ((numberOf(amount) ?? 0) === 0) continue;
       breakdownRank += 1;
       rows.push(qualifiedRow(output, breakdownRank, `${axis}:${kind}`, `${axisLabel} · ${label}`, { amount }));
     }
-    breakdownRank += 1;
-    rows.push({ rowId: `${String(breakdownRank).padStart(3, "0")}:${axis}:evolution`, labelKey: `${axisLabel} · Évolution`, displayValue: "Référence compatible indisponible", phenomenonRef: `global-m1:structure:${axis}:evolution`, phenomenonQuality: phenomenonQuality(at(axisValue, "evolution"), at(output.output, "structure", "inputHash")), knowledgeState: "UNKNOWN", evidenceRefs: outputEvidence(output) });
     return rows;
   });
 
@@ -503,21 +539,34 @@ function economicProjection(output: GlobalV2OwnerOutput): ModuleProjection {
     ["restarted", "Récurrences reprises", "restartedRecurringEquivalent"],
     ["price-change", "Évolution des prix récurrents", "priceChangeExistingRecurrences"],
   ] as const).map(([id, label, key]) => qualifiedMetric(output, `recurrence-${id}`, label, at(output.output, "recurrences", key)));
-  const recurrenceRows = arrayOf(at(output.output, "recurrences", "series")).slice(0, 50).map((recurrence, index) => {
-    const entityRef = `recurrence:${stringOf(at(recurrence, "recurrenceId")) ?? index + 1}`;
+  const recurrenceRows = arrayOf(at(output.output, "recurrences", "series")).map((recurrence, index) => {
+    const recurrenceId = stringOf(at(recurrence, "recurrenceId"));
+    const entityRef = `recurrence:${recurrenceId ?? index + 1}`;
     const lifecycle = stringOf(at(recurrence, "lifecycle", "value"));
     const cadence = numberOf(at(recurrence, "cadence", "expectedOccurrencesPerYear"));
-    const monthly = at(recurrence, "monthlyEquivalent");
-    const measure = typedMeasure(at(monthly, "value"), "MONEY", "EUR/month");
-    return {
+    const typical = at(recurrence, "typicalOccurrenceCost");
+    const measure = typedMeasure(at(typical, "value"), "MONEY", "EUR/occurrence");
+    const occurrenceCount = numberOf(at(recurrence, "support", "occurrenceCount"));
+    const first = stringOf(at(recurrence, "firstObservedAt"));
+    const last = stringOf(at(recurrence, "lastObservedAt"));
+    const firstMonth = frenchMonth(first);
+    const lastMonth = frenchMonth(last);
+    const observedRange = firstMonth === undefined ? lastMonth : lastMonth === undefined || lastMonth === firstMonth ? firstMonth : `${firstMonth} → ${lastMonth}`;
+    const humanLabel = recurrenceId === undefined ? `Récurrence ${index + 1}` : presentationLabels.recurrences?.[recurrenceId] ?? `Récurrence ${index + 1}`;
+    const projected = {
       rowId: `${String(index + 1).padStart(3, "0")}:${entityRef}`,
-      labelKey: `Récurrence ${index + 1}`,
-      displayValue: [measure === undefined ? "Équivalent mensuel indisponible" : formatMoney(measure.value), cadence === undefined ? "Cadence non qualifiée" : `${cadence} occurrence(s)/an`, lifecycle === undefined ? "Cycle de vie non déterminé" : ({ ACTIVE: "Active", ENDED: "Terminée", INTERRUPTED: "Interrompue", RESTARTED: "Reprise" } as const)[lifecycle as "ACTIVE"] ?? lifecycle].join(" · "),
+      labelKey: humanLabel,
+      displayValue: [
+        measure === undefined ? undefined : `≈ ${formatRoundedMoney(measure.value)} / paiement`,
+        occurrenceCount === undefined ? undefined : `${occurrenceCount} paiement${occurrenceCount > 1 ? "s" : ""} observé${occurrenceCount > 1 ? "s" : ""}`,
+        observedRange,
+      ].filter((value): value is string => value !== undefined).join(" · "),
       ...(measure === undefined ? {} : { typedMeasure: measure }), phenomenonRef: `global-m1:${entityRef}`,
-      phenomenonQuality: phenomenonQuality(monthly, at(recurrence, "inputHash"), ...(lifecycle === undefined ? ["RECURRENCE_LIFECYCLE_UNKNOWN"] : [])),
-      knowledgeState: knowledgeOf(monthly), entityRef, evidenceRefs: outputEvidence(output),
+      phenomenonQuality: phenomenonQuality(typical, at(recurrence, "inputHash"), ...(cadence === undefined ? ["RECURRENCE_CADENCE_UNKNOWN"] : []), ...(lifecycle === undefined ? ["RECURRENCE_LIFECYCLE_UNKNOWN"] : [])),
+      knowledgeState: knowledgeOf(typical), entityRef, evidenceRefs: outputEvidence(output),
     } satisfies GlobalDetailRow;
-  });
+    return projected;
+  }).sort((left, right) => (numberOf(right.typedMeasure?.value) ?? Number.NEGATIVE_INFINITY) - (numberOf(left.typedMeasure?.value) ?? Number.NEGATIVE_INFINITY) || left.labelKey.localeCompare(right.labelKey, "fr")).slice(0, 50);
   const contributorRows = arrayOf(at(output.output, "contributors")).filter((entry) => at(entry, "publicationEligible") === true && ["KNOWN", "PARTIAL"].includes(knowledgeOf(at(entry, "typedDelta")))).slice(0, 50).map((entry, index) => qualifiedRow(output, index + 1, `contributor:${stringOf(at(entry, "contributorId")) ?? index}`, "Contribution qualifiée", at(entry, "typedDelta")));
 
   return {
@@ -766,7 +815,7 @@ function neutralProjection(output: GlobalV2OwnerOutput, title: string, message: 
 
 function projectModule(output: GlobalV2OwnerOutput, labels: GlobalV2PresentationLabels, personIds: readonly string[]): ModuleProjection {
   switch (output.moduleKey) {
-    case "ECONOMIC": return economicProjection(output);
+    case "ECONOMIC": return economicProjection(output, labels);
     case "CATEGORIES_NEEDS": return categoryNeedProjection(output, labels);
     case "TRANSFORMATIONS": return neutralProjection(output, "Aucun changement durable clairement identifié", "Aucun changement suffisamment net et durable n’a été identifié.");
     case "RHYTHM": return rhythmProjection(output, labels, personIds);
@@ -912,8 +961,10 @@ export function buildGlobalV2CandidateFromOwnerOutputs(input: GlobalV2CandidateI
     places: sortLabels(input.presentationLabels?.places),
     categories: sortLabels(input.presentationLabels?.categories),
     needs: sortLabels(input.presentationLabels?.needs),
+    recurrences: sortLabels(input.presentationLabels?.recurrences),
   };
   const labelInputsFor = (moduleKey: GlobalPrimaryModuleKey): unknown => {
+    if (moduleKey === "ECONOMIC") return { recurrences: presentationLabels.recurrences };
     if (moduleKey === "CATEGORIES_NEEDS") return { categories: presentationLabels.categories, needs: presentationLabels.needs };
     if (moduleKey === "RHYTHM" || moduleKey === "PERSONAS") return { persons: presentationLabels.persons };
     if (moduleKey === "GEO_MOBILITY") return { places: presentationLabels.places };
@@ -1029,7 +1080,7 @@ export function buildGlobalV2CandidateFromOwnerOutputs(input: GlobalV2CandidateI
         }),
       });
     }
-    const methodologyParams = { moduleKey: ownerOutput.moduleKey, methodRef: `method:${ownerOutput.owner}` };
+    const methodologyParams = { moduleKey: ownerOutput.moduleKey, methodRef: globalV2MethodRef(ownerOutput.moduleKey) };
     expandedInstances.push({
       resource: "analysis_global_methodology",
       scope,
