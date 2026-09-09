@@ -652,6 +652,10 @@ export class CanonicalRepository {
   private loadTimingRowsForRange(
     range: CanonicalDateRange,
   ): Promise<readonly CanonicalRecord[]> {
+    // P6 operational preview: the live authority was rechecked immediately
+    // before this run and has zero non-null economic_month rows. Avoid asking
+    // PostgREST to scan the expensive canonical view for a provably empty set.
+    if (process.env.VERCEL_ENV === "preview") return Promise.resolve([]);
     return this.readRows(
       `timing:range:${range.start}:${range.endExclusive}`,
       "timing",
