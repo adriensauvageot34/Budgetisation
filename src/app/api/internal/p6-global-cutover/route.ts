@@ -2,10 +2,11 @@ import { createClient } from "@supabase/supabase-js";
 
 import { globalV2MethodRef } from "@/query-api/global-v2";
 import {
-  createGlobalV2CandidateContext,
-  GLOBAL_V2_LIVE_PROJECT,
-  prepareGlobalV2LiveCandidate,
-} from "@/server/analytics/global-v2-production-orchestrator";
+  buildGlobalV2CandidateFromOwnerOutputs,
+  type GlobalV2OwnerOutput,
+  type GlobalV2PresentationLabels,
+} from "@/server/analytics/global-v2-candidate";
+import { GLOBAL_V2_LIVE_PROJECT } from "@/server/analytics/global-v2-production-orchestrator";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -64,17 +65,50 @@ function serverClient() {
 
 async function buildCandidate() {
   const client = serverClient();
-  const context = await createGlobalV2CandidateContext({ client, householdId: HOUSEHOLD_ID, asOf: AS_OF });
-  const candidate = await prepareGlobalV2LiveCandidate({
+  const [{ data: household, error: householdError }, { data: persons, error: personsError }, { data: revision, error: revisionError }, { data: artifact, error: artifactError }] = await Promise.all([
+    client.from("households").select("timezone").eq("household_id", HOUSEHOLD_ID).single(),
+    client.from("persons").select("person_id").eq("household_id", HOUSEHOLD_ID).order("person_id"),
+    client.from("household_revisions").select("data_revision,analytics_revision").eq("household_id", HOUSEHOLD_ID).single(),
+    client.from("analytics_artifacts").select("payload,source_revision,analytics_revision,publication_id,computed_at").eq("household_id", HOUSEHOLD_ID).eq("artifact_family", "global_owner_outputs").eq("period_kind", "global").eq("is_active", true).is("invalidated_at", null).single(),
+  ]);
+  if (householdError) throw householdError;
+  if (personsError) throw personsError;
+  if (revisionError) throw revisionError;
+  if (artifactError) throw artifactError;
+  if (Number(artifact.source_revision) !== Number(revision.data_revision)) throw new TypeError("P6_ACTIVE_ARTIFACT_SOURCE_STALE");
+
+  const payload = record(artifact.payload);
+  const ownerOutputs = records(payload.outputs).map((item) => item as GlobalV2OwnerOutput);
+  const economicOwner = ownerOutputs.find(({ moduleKey }) => moduleKey === "ECONOMIC");
+  if (!economicOwner) throw new TypeError("P6_ACTIVE_M1_OWNER_MISSING");
+  const recurrenceIds = records(at(economicOwner.output, "recurrences", "series")).map((item) => String(item.recurrenceId));
+  const { data: recurrenceRows, error: recurrenceError } = recurrenceIds.length === 0
+    ? { data: [], error: null }
+    : await client.from("recurrence_series").select("recurrence_series_id,name").in("recurrence_series_id", recurrenceIds).order("recurrence_series_id");
+  if (recurrenceError) throw recurrenceError;
+  const oldLabels = record(payload.presentationLabels);
+  const presentationLabels = {
+    ...oldLabels,
+    recurrences: Object.fromEntries((recurrenceRows ?? []).map((item) => [item.recurrence_series_id, item.name])),
+  } as GlobalV2PresentationLabels;
+  const publicationMeta = record(payload.publicationMeta);
+  const candidate = buildGlobalV2CandidateFromOwnerOutputs({
     project: GLOBAL_V2_LIVE_PROJECT,
-    client,
-    context,
+    householdId: HOUSEHOLD_ID,
+    householdTimeZone: String(household.timezone),
+    personIds: (persons ?? []).map((item) => String(item.person_id)),
+    asOf: String(publicationMeta.generatedAt ?? artifact.computed_at ?? AS_OF),
+    certifiedThrough: String(at(economicOwner.output, "certifiedThrough")),
+    dataRevision: String(revision.data_revision),
+    analyticsRevision: String(revision.analytics_revision),
     implementationIdentity: IMPLEMENTATION_SHA,
+    ownerOutputs,
+    presentationLabels,
   });
-  return { client, candidate };
+  return { client, candidate, sourcePublicationId: artifact.publication_id };
 }
 
-function proof(candidate: Awaited<ReturnType<typeof prepareGlobalV2LiveCandidate>>) {
+function proof(candidate: ReturnType<typeof buildGlobalV2CandidateFromOwnerOutputs>) {
   const economicOwner = candidate.ownerOutputs.find(({ moduleKey }) => moduleKey === "ECONOMIC");
   if (economicOwner?.owner !== "GlobalM1HouseholdAuthority") throw new TypeError("P6_M1_OWNER_MISMATCH");
   const output = record(economicOwner.output);
@@ -135,7 +169,7 @@ function proof(candidate: Awaited<ReturnType<typeof prepareGlobalV2LiveCandidate
 
 async function publish(
   client: ReturnType<typeof serverClient>,
-  candidate: Awaited<ReturnType<typeof prepareGlobalV2LiveCandidate>>,
+  candidate: ReturnType<typeof buildGlobalV2CandidateFromOwnerOutputs>,
 ) {
   const asOfMonth = `${candidate.asOf.slice(0, 7)}-01`;
   const { data: existing, error: existingError } = await client
@@ -247,8 +281,8 @@ export async function GET(request: Request) {
   const rejected = authorize(request);
   if (rejected) return rejected;
   try {
-    const { candidate } = await buildCandidate();
-    return Response.json({ mode: "DRY_RUN", sourceMode: "LIVE_CANONICAL_CURRENT_CODE", proof: proof(candidate) });
+    const { candidate, sourcePublicationId } = await buildCandidate();
+    return Response.json({ mode: "DRY_RUN", sourceMode: "ACTIVE_IMMUTABLE_OWNER_ARTIFACT_REPROJECTION", sourcePublicationId, proof: proof(candidate) });
   } catch (error) {
     return failure(error);
   }
