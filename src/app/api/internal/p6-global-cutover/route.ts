@@ -225,10 +225,15 @@ async function publish(
 }
 
 function failure(error: unknown): Response {
-  const message = error instanceof Error ? error.message : "P6_UNKNOWN_ERROR";
-  const cause = error instanceof Error && "cause" in error ? record(error.cause) : undefined;
+  const top = error !== null && typeof error === "object" ? error as JsonRecord : undefined;
+  const message = error instanceof Error ? error.message : typeof top?.message === "string" ? top.message : "P6_UNKNOWN_ERROR";
+  const causeValue = error instanceof Error && "cause" in error ? error.cause : undefined;
+  const cause = causeValue !== null && typeof causeValue === "object" && !Array.isArray(causeValue) ? causeValue as JsonRecord : undefined;
   return Response.json({
     error: message,
+    code: top?.code,
+    details: top?.details,
+    hint: top?.hint,
     ...(cause === undefined ? {} : {
       cause: {
         code: cause.code,
