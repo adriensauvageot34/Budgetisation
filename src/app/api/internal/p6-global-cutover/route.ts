@@ -10,7 +10,7 @@ import {
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
 
-const HOUSEHOLD_ID = "0fffacfa-aafc-5a31-99f1-d75c17e5060b";
+const HOUSEHOLD_ID = "955f54ea-6d88-4d71-951f-22aebe8d3c72";
 const IMPLEMENTATION_SHA = "954d14d09f6d5e599ce40fb34729551637c37db9";
 const AS_OF = "2026-09-09T12:00:00.000Z";
 const ONE_TIME_TOKEN = "e78239f6f0f54d03bcc56fdc2311aa65";
