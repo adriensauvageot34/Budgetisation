@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useRef, useState, type RefObject } from "react";
 import { AlertTriangle, ArrowUp, BarChart3, ChevronRight, ExternalLink, Info, RefreshCw, Sparkles } from "lucide-react";
-import { CartesianGrid, Line, LineChart, ReferenceDot, ReferenceLine, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
+import { CartesianGrid, Line, LineChart, ReferenceDot, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { parseMetricId } from "@/core/identity";
 import { parseMoney, type Money } from "@/core/money";
 import type { MetricEnvelope } from "@/core/metrics";
@@ -274,20 +274,18 @@ function EconomicChart({ evolution, overview, certifiedThrough, compact = false 
     return { period: point.unitKey, monthLabel: parts === undefined ? point.unitKey : shortMonths[parts.month - 1], fullLabel: frenchMonth(point.unitKey), actual: economicNumber(point) ?? null, typical: economicNumber(typicalByMonth.get(point.unitKey)) ?? null };
   });
   const period = analysisPeriod(certifiedThrough);
-  const annualMinimum = economicNumber(economicMetric(overview, "minimal-state"));
   const lastPoint = [...data].reverse().find(({ actual: value }) => value !== null);
   const startYear = monthParts(data[0]!.period)?.year;
   const endYear = monthParts(data[data.length - 1]!.period)?.year;
   return <section className={`${styles.economicChart} ${compact ? styles.economicChartCompact : styles.economicChartExpanded}`} aria-labelledby={compact ? undefined : "economic-evolution-title"}>
     {compact ? null : <header><div><h3 id="economic-evolution-title">Nos dépenses sur 12 mois</h3><span>€ / mois</span></div></header>}
-    <div className={styles.chartLegend} aria-label="Légende du graphique"><span><i data-series="actual" />Dépenses réelles</span><span><i data-series="typical" />Niveau habituel</span>{annualMinimum === undefined ? null : <span><i data-series="minimal" />Nos dépenses minimum <small>· référence annuelle</small></span>}</div>
-    <div className={styles.economicChartCanvas} role="img" aria-label={annualMinimum === undefined ? "Dépenses réelles et niveau habituel sur douze mois" : "Dépenses réelles, niveau habituel et dépenses minimum sur douze mois"}>
+    <div className={styles.chartLegend} aria-label="Légende du graphique"><span><i data-series="actual" />Dépenses réelles</span><span><i data-series="typical" />Niveau habituel</span></div>
+    <div className={styles.economicChartCanvas} role="img" aria-label="Dépenses réelles et niveau habituel sur douze mois">
       <ResponsiveContainer width="100%" height="100%"><LineChart data={data} margin={compact ? { top: 14, right: 10, bottom: 0, left: 0 } : { top: 18, right: 18, bottom: 4, left: 4 }}>
         {compact ? null : <CartesianGrid vertical={false} stroke="var(--color-border)" strokeDasharray="3 5" />}
         <XAxis dataKey="monthLabel" axisLine={false} tickLine={false} tick={compact ? false : { fill: "var(--color-muted)", fontSize: 11 }} interval={0} height={compact ? 8 : 34} />
         <YAxis hide={compact} axisLine={false} tickLine={false} tick={{ fill: "var(--color-muted)", fontSize: 11 }} tickCount={5} width={66} tickFormatter={(value: number) => `${integerFormatter.format(value)} €`} domain={["auto", "auto"]} />
         <Tooltip cursor={{ stroke: "var(--color-border)", strokeDasharray: "3 4" }} content={(props) => <EconomicChartTooltip active={props.active} payload={props.payload as readonly { readonly payload?: EconomicChartDatum }[]} overview={overview} targetMonth={period.targetMonth} />} />
-        {annualMinimum === undefined ? null : <ReferenceLine y={annualMinimum} ifOverflow="extendDomain" stroke="var(--color-economic-minimal)" strokeDasharray="2 5" strokeWidth={1.5} label={compact ? { value: "minimum annuel", position: "insideBottomRight", fill: "var(--color-muted)", fontSize: 10 } : undefined} />}
         <Line dataKey="actual" name="Dépenses réelles" type="linear" connectNulls={false} stroke="var(--color-economic-actual)" strokeWidth={compact ? 2.5 : 3} dot={false} activeDot={{ r: compact ? 4 : 5 }} isAnimationActive={false} />
         <Line dataKey="typical" name="Niveau habituel" type="linear" connectNulls={false} stroke="var(--color-economic-typical)" strokeWidth={2} strokeDasharray="7 5" dot={false} activeDot={{ r: 4 }} isAnimationActive={false} />
         {lastPoint === undefined || lastPoint.actual === null ? null : <ReferenceDot x={lastPoint.monthLabel} y={lastPoint.actual} r={compact ? 4 : 5} fill="white" stroke="var(--color-economic-actual)" strokeWidth={3} />}

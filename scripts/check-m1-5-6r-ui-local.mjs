@@ -69,8 +69,9 @@ check(() => assert.match(page, /Résumé[\s\S]*Évolution[\s\S]*Répartition[\s\
 check(() => assert.match(page, /> Méthode</u));
 check(() => assert.match(page, /globalV2MethodRef\(moduleKey\)/u));
 check(() => assert.match(catalog, /analysis_global_economic_recurrence_detail/u));
-check(() => assert.match(page, /<ReferenceLine y=\{annualMinimum\}/u));
-check(() => assert.match(page, /annualMinimum === undefined \? null : <span><i data-series="minimal"/u));
+check(() => assert.doesNotMatch(page, /<ReferenceLine y=\{annualMinimum\}|data-series="minimal"|référence annuelle/u));
+check(() => assert.match(page, /aria-label="Dépenses réelles et niveau habituel sur douze mois"/u));
+check(() => assert.match(page, /<article><span>Nos dépenses minimum[\s\S]*<EconomicMetricValue metric=\{minimal\} perMonth \/>/u));
 check(() => assert.match(page, /`environ \$\{formatMoney\(value, \{ perMonth: true \}\)\}`/u));
 check(() => assert.doesNotMatch(page, /overview-trend-slope[\s\S]{0,180}approximate: true/u));
 check(() => assert.match(page, /<Line dataKey="actual"[\s\S]*connectNulls=\{false\}/u));
@@ -93,4 +94,4 @@ check(() => assert.match(page, /aria-label="Nos trois repères mensuels"/u));
 check(() => assert.doesNotMatch(page, /aria-labelledby="economic-contributors-title"/u));
 
 console.log(`M1 5/6R UI local: ${checks}/${checks} PASS`);
-console.log("Minimal annual is a ReferenceLine; visible amounts are rounded; React financial arithmetic: 0; live writes: 0");
+console.log("Minimal stays in the Hero and Summary but is absent from charts; visible amounts are rounded; React financial arithmetic: 0; live writes: 0");
