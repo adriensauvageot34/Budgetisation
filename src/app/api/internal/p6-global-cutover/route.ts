@@ -226,7 +226,18 @@ async function publish(
 
 function failure(error: unknown): Response {
   const message = error instanceof Error ? error.message : "P6_UNKNOWN_ERROR";
-  return Response.json({ error: message }, { status: 500 });
+  const cause = error instanceof Error && "cause" in error ? record(error.cause) : undefined;
+  return Response.json({
+    error: message,
+    ...(cause === undefined ? {} : {
+      cause: {
+        code: cause.code,
+        message: cause.message,
+        details: cause.details,
+        hint: cause.hint,
+      },
+    }),
+  }, { status: 500 });
 }
 
 export async function GET(request: Request) {
