@@ -145,6 +145,10 @@ export const globalV2ExpandedResourceCatalog = Object.freeze([
   { resource: "analysis_global_methodology", moduleKey: "ECONOMIC", capabilityId: "GLOBAL_METHODOLOGY" },
 ] as const);
 
+export function globalV2MethodRef(moduleKey: GlobalPrimaryModuleKey): string {
+  return `method:global-${moduleKey.toLowerCase().replaceAll("_", "-")}@v1`;
+}
+
 export type GlobalV2ExpandedResourceName = (typeof globalV2ExpandedResourceCatalog)[number]["resource"];
 
 const expandedResources = new Set(globalV2ExpandedResourceCatalog.map(({ resource }) => resource));

@@ -48,6 +48,7 @@ import type {
   CanonicalRepository,
 } from "@/server/canonical/repository";
 import {
+  resolveGlobalRetrospectiveMinimalPlanningSource,
   resolveMinimalPlanningSource,
   type MinimalPlanningResolution,
   type MinimalSourceHealth,
@@ -267,6 +268,62 @@ export class FactSourceResolver {
 
   async minimalSourceHealth(rawScope: AnalysisScope): Promise<MinimalSourceHealth> {
     return (await this.resolveMinimalMonth(normalizeAnalysisScope(rawScope))).health;
+  }
+
+  /**
+   * Annual retrospective Minimal for Analyse Globale only. The monthly
+   * canonical resolver remains no-lookahead and is deliberately not reused as
+   * the period summary authority.
+   */
+  async resolveGlobalRetrospectiveMinimal(
+    rawScope: AnalysisScope,
+  ): Promise<MetricProductionSource> {
+    const scope = normalizeAnalysisScope(rawScope);
+    const scopeHash = computeScopeHash(scope);
+    const unknown = (): MetricProductionSource => ({
+      kind: "minimal_month",
+      scopeHash,
+      availability: "unknown",
+      support: parseSupport({ n: 0, unit: "month", level: "insufficient" }),
+      coverage: { level: "partial" },
+    });
+    if (scope.time.kind !== "month" || scope.subject.kind !== "household") return unknown();
+    const targetMonth = scope.time.month;
+
+    const referenceMonths = this.repository.context.periods
+      .filter(({ month, financeStatus, isClosed }) =>
+        financeStatus === "complete" && isClosed && month.slice(0, 7) <= targetMonth)
+      .map(({ month }) => month.slice(0, 7) as YearMonth)
+      .sort()
+      .slice(-12);
+    const firstMonth = referenceMonths[0];
+    const lastMonth = referenceMonths.at(-1);
+    if (referenceMonths.length !== 12 || firstMonth === undefined || lastMonth === undefined) return unknown();
+
+    const bundle = await this.repository.loadMinimalPlanningBundle({
+      start: parseLocalDate(`${firstMonth}-01`),
+      endExclusive: parseLocalDate(`${addMonths(lastMonth, 1)}-01`),
+    });
+    const resolution = resolveGlobalRetrospectiveMinimalPlanningSource({
+      bundle,
+      targetMonth,
+      referenceMonths,
+    });
+    return resolution.availability === "known"
+      ? {
+          kind: "minimal_month",
+          scopeHash,
+          availability: "known",
+          neutralVariableComponents: resolution.neutralVariableComponents,
+          mandatoryMonthlyObligationsAndProvisions:
+            resolution.mandatoryMonthlyObligationsAndProvisions,
+          coverage:
+            resolution.health.neutralVariable === "AVAILABLE" &&
+            resolution.health.obligationsAndProvisions === "AVAILABLE"
+              ? { level: "complete" }
+              : { level: "partial" },
+        }
+      : unknown();
   }
 
   async resolve(

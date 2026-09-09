@@ -54,13 +54,14 @@ const history = monthly.map((entry, index) => ({
 }));
 const dim = (value) => ({ kind: "resolved", value });
 const structure = analytics.buildGlobalEconomicStructure([
-  { canonicalComponentKey: "component:1", amount: asMoney("70"), necessity: dim("Indispensable"), behavior: dim("Fixe"), lifeScope: dim("Vie courante") },
-  { canonicalComponentKey: "component:2", amount: asMoney("20"), necessity: dim("Contraint"), behavior: dim("Variable"), lifeScope: dim("Hors quotidien") },
-  { canonicalComponentKey: "component:3", amount: asMoney("10"), necessity: { kind: "unknown" }, behavior: dim("Variable"), lifeScope: { kind: "conflict" } },
+  { canonicalComponentKey: "component:1", amount: asMoney("1730.27"), necessity: dim("Contrainte"), behavior: dim("Fixe"), lifeScope: dim("Vie courante") },
+  { canonicalComponentKey: "component:2", amount: asMoney("322.29"), necessity: dim("Optionnelle"), behavior: dim("Variable"), lifeScope: dim("Hors quotidien") },
+  { canonicalComponentKey: "component:3", amount: asMoney("148.30"), necessity: dim("Ajustable"), behavior: dim("Variable"), lifeScope: dim("Vie courante") },
+  { canonicalComponentKey: "component:4", amount: asMoney("1572.28"), necessity: dim("Indispensable"), behavior: dim("Fixe"), lifeScope: dim("Vie courante") },
 ]);
 const owner = analytics.buildGlobalM1OwnerV2({
   targetMonth: month("2025-12"), certifiedThrough: "2025-12-31", asOf: "2026-01-01T00:00:00Z", dataRevision: "1", analyticsRevision: "79",
-  history, structure, temporal: analytics.buildGlobalM1Temporal({ certifiedThroughMonth: month("2025-12"), months: monthly }),
+  history, periodMinimal: minimal(month("2025-12"), true), structure, temporal: analytics.buildGlobalM1Temporal({ certifiedThroughMonth: month("2025-12"), months: monthly }),
   recurrenceObservations: [
     { recurrenceId: "facts-only", occurrenceId: "operation:1", economicDate: "2025-11-02", amount: asMoney("25"), evidenceRefs: ["operation:1"] },
     { recurrenceId: "rent", occurrenceId: "operation:2", economicDate: "2025-11-01", amount: asMoney("600"), evidenceRefs: ["operation:2"] },
@@ -76,6 +77,7 @@ const ownerOutputs = query.globalPrimaryModuleCatalog.map(({ moduleKey }, index)
 const candidate = candidateApi.buildGlobalV2CandidateFromOwnerOutputs({
   project: "local-r3", householdId: uuid(1), householdTimeZone: "Europe/Paris", personIds: [], asOf: "2026-01-01T00:00:00Z", certifiedThrough: "2025-12-31",
   dataRevision: "1", analyticsRevision: "79", implementationIdentity: "72eefdbb508e4f86461824a8d3a34a53ecf3eb92", ownerOutputs,
+  presentationLabels: { recurrences: { "facts-only": "Salle de sport", rent: "Loyer" } },
 });
 const snapshot = (resource, params = {}) => candidate.snapshots.find((entry) => entry.resource === resource && Object.entries(params).every(([key, value]) => entry.params[key] === value));
 const compact = snapshot("analysis_global_economic").payload;
@@ -93,7 +95,7 @@ check(() => assert.throws(() => query.parseGlobalTypedMeasure({ kind: "COUNT", v
 check(() => assert.equal(compact.kpis.length, 3));
 check(() => assert.deepEqual(compact.kpis.map(({ phenomenonRef }) => phenomenonRef), ["global-m1:actual", "global-m1:minimal-state", "global-m1:typical-state"]));
 check(() => assert.equal(compact.kpis.every(({ phenomenonQuality }) => phenomenonQuality !== undefined), true));
-check(() => assert.equal(compact.kpis.find(({ kpiId }) => kpiId.endsWith("minimal-state")).phenomenonQuality.knowledgeState, "UNKNOWN"));
+check(() => assert.equal(compact.kpis.find(({ kpiId }) => kpiId.endsWith("minimal-state")).phenomenonQuality.knowledgeState, "KNOWN"));
 check(() => assert.equal(compact.primaryInsight.statementKey.includes("60"), true));
 check(() => assert.ok(overview.metrics.some(({ metricId }) => metricId === "typical-state")));
 check(() => assert.ok(overview.metrics.some(({ metricId }) => metricId === "actual-reference-delta")));
@@ -102,16 +104,21 @@ check(() => assert.equal(evolution.series.reduce((sum, entry) => sum + entry.poi
 check(() => assert.equal(evolution.series.find(({ seriesId }) => seriesId.endsWith("actual")).points.every(({ typedMeasure }) => typedMeasure !== undefined), true));
 check(() => assert.equal(evolution.series.find(({ seriesId }) => seriesId.endsWith("minimal-state")).points.filter(({ knowledgeState }) => knowledgeState === "UNKNOWN").every((point) => point.typedMeasure === undefined && point.displayValue === undefined), true));
 check(() => assert.deepEqual(["recent-delta", "trend-slope", "trend-relative-slope", "dispersion-median", "dispersion-q1", "dispersion-q3", "dispersion-iqr", "dispersion-mad", "dispersion-min", "dispersion-max", "dispersion-amplitude"].filter((id) => !evolution.metrics.some(({ metricId }) => metricId === id)), []));
-check(() => assert.equal(breakdown.rows.some(({ labelKey }) => /Ajustable|CURRENT|NON_CURRENT/u.test(labelKey)), false));
-check(() => assert.equal(breakdown.rows.filter(({ labelKey }) => labelKey.endsWith("Évolution")).length, 3));
+check(() => assert.ok(breakdown.rows.some(({ labelKey, displayValue }) => labelKey === "Nécessité · Contraint" && displayValue.includes("1 730,27") && /\d+ %/u.test(displayValue))));
+check(() => assert.ok(breakdown.rows.some(({ labelKey }) => labelKey === "Nécessité · Optionnel")));
+check(() => assert.ok(breakdown.rows.some(({ labelKey, displayValue }) => labelKey === "Nécessité · Dépenses ajustables" && displayValue.includes("148,3"))));
+check(() => assert.ok(breakdown.rows.some(({ labelKey }) => labelKey === "Périmètre de vie · Vie courante")));
+check(() => assert.ok(breakdown.rows.some(({ labelKey }) => labelKey === "Périmètre de vie · Hors quotidien")));
+check(() => assert.equal(breakdown.rows.some(({ labelKey }) => /CURRENT|NON_CURRENT|Évolution|Non classé|Classification en conflit/u.test(labelKey)), false));
 check(() => assert.ok(patterns.metrics.some(({ metricId }) => metricId === "recurrence-structural")));
 check(() => assert.equal(patterns.rows.length <= 50, true));
-check(() => assert.ok(patterns.rows.some(({ displayValue }) => displayValue.includes("Cycle de vie non déterminé"))));
+check(() => assert.ok(patterns.rows.some(({ labelKey, displayValue, knowledgeState }) => labelKey === "Salle de sport" && displayValue.includes("≈ 25 € / paiement") && displayValue.includes("1 paiement observé") && displayValue.includes("novembre 2025") && !/Cadence|Cycle de vie/u.test(displayValue) && knowledgeState === "KNOWN")));
 check(() => assert.equal(comparisons.rows.length, 0));
 check(() => assert.equal(recurrenceDetails.length, 2));
 check(() => assert.equal(recurrenceDetails.every(({ params, payload }) => typeof params.entityRef === "string" && payload.kind === "global_expanded"), true));
 check(() => assert.equal(recurrenceDetails.every(({ payload }) => payload.metrics.length === 3 && payload.rows.length === 5), true));
-check(() => assert.ok(snapshot("analysis_global_methodology", { moduleKey: "ECONOMIC" }).payload.rows.some(({ labelKey }) => labelKey === "Données certifiées jusqu’au")));
+check(() => assert.ok(snapshot("analysis_global_methodology", { moduleKey: "ECONOMIC", methodRef: "method:global-economic@v1" }).payload.rows.some(({ labelKey }) => labelKey === "Données certifiées jusqu’au")));
+check(() => assert.equal(snapshot("analysis_global_methodology", { moduleKey: "ECONOMIC" }).params.methodRef, "method:global-economic@v1"));
 check(() => assert.equal(candidate.requiredKeys.queries.some((key) => recurrenceDetails.some((detail) => detail.key === key)), true));
 check(() => assert.equal(candidate.manifest.closures.length, candidate.requiredKeys.queries.length + candidate.requiredKeys.artifacts.length));
 check(() => assert.equal(new Set(candidate.requiredKeys.queries).size, candidate.requiredKeys.queries.length));

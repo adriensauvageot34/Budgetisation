@@ -54,8 +54,9 @@ for (const presentation of catalog.globalModulePresentations.filter(({ detailRes
   check(() => assert.equal(result.data.resource, presentation.detailResource));
   check(() => assert.ok(result.data.rows.every(({ rowId }) => rowId.startsWith(entityRef))));
 }
-const methodology = await transport({ resource: "analysis_global_methodology", params: { moduleKey: "ECONOMIC", methodRef: "method:economic" } });
+const methodology = await transport({ resource: "analysis_global_methodology", params: { moduleKey: "ECONOMIC", methodRef: query.globalV2MethodRef("ECONOMIC") } });
 await checkAsync(() => assert.equal(query.globalExpandedReadModelSchema.safeParse(methodology.data).success, true));
+check(() => assert.equal(query.globalV2MethodRef("ECONOMIC"), "method:global-economic@v1"));
 
 check(() => assert.deepEqual([...visit.updateExpandedModules(new Set(["A"]), "B", false)].sort(), ["A", "B"]));
 check(() => assert.deepEqual([...visit.updateExpandedModules(new Set(["A"]), "B", true)], ["B"]));
@@ -144,10 +145,10 @@ check(() => assert.match(pageSource, /window\.location\.reload\(\)/u));
 // P2: human narrative, module-aware composition and overlay-only details.
 check(() => assert.match(shellSource, /Historique[\s\S]*Analyse globale[\s\S]*Opérations/u));
 check(() => assert.match(pageSource, /Notre vie, dans son ensemble/u));
-check(() => assert.match(pageSource, /Août 2025 → juillet 2026 · 12 mois analysés/u));
-check(() => assert.match(pageSource, /Méthode & fiabilité/u));
+check(() => assert.match(pageSource, /12 mois analysés/u));
+check(() => assert.match(pageSource, /> Méthode</u));
 check(() => assert.doesNotMatch(pageSource, /ANALYSE GLOBALE · NOUVELLE ARCHITECTURE|synthèse non importée|Non importée/u));
-check(() => assert.match(pageSource, /Synthèse[\s\S]*Économie[\s\S]*Catégories[\s\S]*Rythmes[\s\S]*Moments[\s\S]*Lieux[\s\S]*Profils[\s\S]*Nous deux[\s\S]*Autres analyses/u));
+check(() => assert.match(pageSource, /Synthèse[\s\S]*Nos dépenses[\s\S]*Catégories[\s\S]*Rythmes[\s\S]*Moments[\s\S]*Lieux[\s\S]*Profils[\s\S]*Nous deux[\s\S]*Autres analyses/u));
 check(() => assert.match(pageSource, /slot: "S1"[\s\S]*slot: "S2"[\s\S]*slot: "S3"[\s\S]*slot: "S4"[\s\S]*slot: "S5"[\s\S]*slot: "S6"[\s\S]*slot: "S7"/u));
 check(() => assert.match(pageSource, /RankingBar/u));
 check(() => assert.match(pageSource, /MultiSeriesMonetaryEvolution/u));

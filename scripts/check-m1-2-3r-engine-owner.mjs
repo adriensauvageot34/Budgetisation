@@ -38,6 +38,11 @@ const monthly = Array.from({ length: 12 }, (_, index) => {
   return { month: targetMonth, actual: produced("economic_consumption_net_attributable", String(100 + index * 10), targetMonth), isComplete: true, isComparable: true, isMethodExcluded: false, dependencyRefs: [`actual:${targetMonth}`] };
 });
 const minimalUnknown = (targetMonth) => a.adaptGlobalMinimal({ metric: produced("minimal_month_cost", "0", targetMonth, "unknown"), neutralVariableComponents: [], mandatoryMonthlyObligationsAndProvisions: [] });
+const periodMinimal = a.adaptGlobalMinimal({
+  metric: produced("minimal_month_cost", "80", month("2025-12"), "known"),
+  neutralVariableComponents: [{ canonicalComponentKey: "minimal:annual", amount: asMoney("80"), support: { n: 12, unit: "month", level: "sufficient" }, coverage: { level: "complete" }, provenance: "derived" }],
+  mandatoryMonthlyObligationsAndProvisions: [],
+});
 const history = monthly.map((entry) => ({
   month: entry.month,
   actual: a.adaptGlobalActual(entry.actual),
@@ -61,7 +66,7 @@ const recurrenceObservations = [
 const recurrenceAuthorities = [{ recurrenceId: "rent", expectedOccurrenceAmount: asMoney("600"), expectedOccurrencesPerYear: 12, lifecycle: "ACTIVE", change: "NEW", effectiveFrom: "2025-01-01", declaredAt: "2025-01-01T00:00:00Z", sourceRevision: "1", evidenceRefs: ["authority:rent"] }];
 const build = (extra = {}) => a.buildGlobalM1OwnerV2({
   targetMonth: month("2025-12"), certifiedThrough: "2025-12-31", asOf: "2026-01-01T00:00:00Z",
-  dataRevision: "1", analyticsRevision: "79", history, structure, temporal,
+  dataRevision: "1", analyticsRevision: "79", history, periodMinimal, structure, temporal,
   recurrenceObservations, recurrenceAuthorities, dependencyDeclaration: declaration,
   factsDigest: "facts:digest", classificationsDigest: "classifications:digest", ...extra,
 });
@@ -71,9 +76,11 @@ check(() => assert.equal(owner.moduleKey, "ECONOMIC"));
 check(() => assert.equal(owner.state.actual.value, "210"));
 check(() => assert.equal(owner.state.typicalReference.value, "150"));
 check(() => assert.equal(owner.state.typicalState.value, "155"));
-check(() => assert.equal(owner.state.minimalState.status, "UNKNOWN"));
+check(() => assert.equal(owner.state.minimalState.status, "KNOWN"));
+check(() => assert.equal(owner.state.minimalState.value, "80"));
 check(() => assert.equal(owner.state.comparisons.actualVsTypicalReference.value, "60"));
-check(() => assert.equal(owner.state.comparisons.typicalStateVsMinimalState.status, "UNKNOWN"));
+check(() => assert.equal(owner.state.comparisons.typicalStateVsMinimalState.status, "KNOWN"));
+check(() => assert.equal(owner.state.comparisons.typicalStateVsMinimalState.value, "75"));
 check(() => assert.equal(owner.history.points.length, 12));
 check(() => assert.ok(owner.history.points.every((point) => point.actual.status === "KNOWN")));
 check(() => assert.ok(owner.history.points.slice(6).every((point) => point.typicalState.status === "KNOWN")));
@@ -108,7 +115,7 @@ check(() => assert.equal(owner.conditional.currentRegime.status, "UNKNOWN"));
 check(() => assert.equal(owner.conditional.periodicity.status, "UNKNOWN"));
 check(() => assert.equal(owner.temporal.currentRegimeReference.status, "UNKNOWN"));
 check(() => assert.equal(owner.temporal.longTermEvolution.status, "UNKNOWN"));
-check(() => assert.ok(owner.methodology.limitations.includes("HISTORICAL_MINIMAL_AUTHORITY_UNAVAILABLE")));
+check(() => assert.equal(owner.methodology.limitations.includes("GLOBAL_RETROSPECTIVE_MINIMAL_UNAVAILABLE"), false));
 check(() => assert.equal(owner.methodology.revisions.analyticsRevision, "79"));
 check(() => assert.equal(build().inputHash, owner.inputHash));
 check(() => assert.notEqual(build({ factsDigest: "changed" }).inputHash, owner.inputHash));
@@ -122,6 +129,9 @@ check(() => assert.equal(noRecurrenceAuthority.state.actual.status, "KNOWN"));
 check(() => assert.equal(noRecurrenceAuthority.state.typicalState.status, "KNOWN"));
 check(() => assert.equal(noRecurrenceAuthority.temporal.recentChange.status, "KNOWN"));
 check(() => assert.equal(noRecurrenceAuthority.structure.behavior.total, "100"));
+const withoutPeriodMinimal = build({ periodMinimal: undefined });
+check(() => assert.equal(withoutPeriodMinimal.state.minimalState.status, "UNKNOWN"));
+check(() => assert.ok(withoutPeriodMinimal.methodology.limitations.includes("GLOBAL_RETROSPECTIVE_MINIMAL_UNAVAILABLE")));
 
 const source = await import("node:fs").then(({ readFileSync }) => readFileSync("src/server/analytics/global-v2-economic-authority.ts", "utf8"));
 check(() => assert.ok(!source.includes("analytics_query_snapshots")));

@@ -441,6 +441,7 @@ export function buildGlobalM1OwnerV2(input: {
   readonly dataRevision: DataRevision;
   readonly analyticsRevision: AnalyticsRevision;
   readonly history: readonly GlobalM1HistoryInput[];
+  readonly periodMinimal?: GlobalMinimalAuthority;
   readonly structure: GlobalEconomicStructure;
   readonly temporal: Readonly<Record<string, unknown>>;
   readonly recurrenceObservations?: readonly GlobalM1RecurrenceObservation[];
@@ -470,6 +471,16 @@ export function buildGlobalM1OwnerV2(input: {
   const target = points.find(({ month }) => month === input.targetMonth);
   if (target === undefined) throw new TypeError("Le mois cible M1 est absent de l'historique certifié.");
   const targetInput = ordered.find(({ month }) => month === input.targetMonth)!;
+  const periodMinimalState = input.periodMinimal === undefined
+    ? target.minimalState
+    : fromMetric({
+        metric: input.periodMinimal.metric,
+        inputHash: input.periodMinimal.inputHash,
+        support: monthSupport,
+        coverage: monthCoverage,
+        provenance: p,
+        unknownReason: "GLOBAL_RETROSPECTIVE_MINIMAL_UNAVAILABLE",
+      });
   const typicalReference = fromKnowledge({ knowledge: targetInput.typical.reference, unit: "EUR/month", fallbackSupport: monthSupport, fallbackCoverage: monthCoverage, provenance: p, inputHash: targetInput.typical.inputHash, unknownReason: "TYPICAL_REFERENCE_SUPPORT_INSUFFICIENT" });
   const necessity = structureAxis(input.structure.necessity, baseRefs);
   const behavior = structureAxis(input.structure.behavior, baseRefs);
@@ -477,7 +488,7 @@ export function buildGlobalM1OwnerV2(input: {
   const recurrences = buildRecurrences({ observations: input.recurrenceObservations ?? [], authorities: input.recurrenceAuthorities ?? [], targetDate: input.certifiedThrough, asOf: input.asOf, dataRevision: input.dataRevision, analyticsRevision: input.analyticsRevision });
   const conditional = (id: string, reasonCode: string): QualifiedConditional<unknown> => ({ status: "UNKNOWN", reasonCode, methodVersion: GLOBAL_M1_OWNER_METHOD_VERSION, inputHash: digest(`global-m1-${id}@v1`, { targetMonth: input.targetMonth, reasonCode }) });
   const limitations = [
-    ...(target.minimalState.status === "UNKNOWN" ? ["HISTORICAL_MINIMAL_AUTHORITY_UNAVAILABLE"] : []),
+    ...(periodMinimalState.status === "UNKNOWN" ? ["GLOBAL_RETROSPECTIVE_MINIMAL_UNAVAILABLE"] : []),
     ...(recurrences.series.some(({ lifecycle }) => lifecycle.status === "UNKNOWN") ? ["HISTORICAL_RECURRENCE_LIFECYCLE_AUTHORITY_UNAVAILABLE"] : []),
     "STABILITY_CLASS_REQUIRES_APPROVED_POLICY",
     "STRUCTURE_EVOLUTION_REQUIRES_COMPATIBLE_REFERENCE",
@@ -494,10 +505,10 @@ export function buildGlobalM1OwnerV2(input: {
       typicalReferenceMonths: targetInput.typical.referenceMonths,
       typicalState: target.typicalState,
       typicalStateMonths: targetInput.typical.stateMonths,
-      minimalState: target.minimalState,
+      minimalState: periodMinimalState,
       comparisons: {
         actualVsTypicalReference: comparison(target.actual, typicalReference, "actual-vs-typical-reference"),
-        typicalStateVsMinimalState: comparison(target.typicalState, target.minimalState, "typical-state-vs-minimal-state"),
+        typicalStateVsMinimalState: comparison(target.typicalState, periodMinimalState, "typical-state-vs-minimal-state"),
       },
     },
     history: { points, inputHash: historyHash },

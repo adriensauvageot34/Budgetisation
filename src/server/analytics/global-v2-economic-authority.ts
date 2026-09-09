@@ -50,9 +50,10 @@ export async function resolveGlobalM1HouseholdAuthority(input: {
     subject: { kind: "household" as const },
     time: { kind: "month" as const, month: targetMonth },
   };
-  const [actualSource, minimalSource, facts, classifications] = await Promise.all([
+  const [actualSource, monthlyMinimalSource, periodMinimalSource, facts, classifications] = await Promise.all([
     resolver.resolveCanonical("economic_consumption_net_attributable", scope),
     resolver.resolveCanonical("minimal_month_cost", scope),
+    resolver.resolveGlobalRetrospectiveMinimal(scope),
     resolver.loadEconomicFacts(scope),
     resolver.loadEconomicComponentClassifications(scope),
   ]);
@@ -61,12 +62,17 @@ export async function resolveGlobalM1HouseholdAuthority(input: {
     scope,
     source: actualSource,
   });
-  const minimalMetric = produceMetric({
+  const monthlyMinimalMetric = produceMetric({
     metricId: "minimal_month_cost",
     scope,
-    source: minimalSource,
+    source: monthlyMinimalSource,
   });
-  if (actualMetric.unit !== "EUR/month" || minimalMetric.unit !== "EUR/month") {
+  const periodMinimalMetric = produceMetric({
+    metricId: "minimal_month_cost",
+    scope,
+    source: periodMinimalSource,
+  });
+  if (actualMetric.unit !== "EUR/month" || monthlyMinimalMetric.unit !== "EUR/month" || periodMinimalMetric.unit !== "EUR/month") {
     throw new TypeError("M1 exige des autorités monétaires mensuelles EUR/month.");
   }
 
@@ -98,17 +104,26 @@ export async function resolveGlobalM1HouseholdAuthority(input: {
       dependencyRefs: [`analysis-period:${month}`, `metric:actual:${month}`],
     };
   }));
-  if (minimalSource.kind !== "minimal_month") {
+  if (monthlyMinimalSource.kind !== "minimal_month" || periodMinimalSource.kind !== "minimal_month") {
     throw new TypeError("Le resolver Minimal a renvoyé une source incompatible.");
   }
-  const knownMinimal = minimalSource.availability === "known"
-    ? minimalSource as KnownMinimalSource
+  const knownMonthlyMinimal = monthlyMinimalSource.availability === "known"
+    ? monthlyMinimalSource as KnownMinimalSource
     : undefined;
-  const minimal = adaptGlobalMinimal({
-    metric: minimalMetric,
-    neutralVariableComponents: knownMinimal?.neutralVariableComponents ?? [],
+  const monthlyMinimal = adaptGlobalMinimal({
+    metric: monthlyMinimalMetric,
+    neutralVariableComponents: knownMonthlyMinimal?.neutralVariableComponents ?? [],
     mandatoryMonthlyObligationsAndProvisions:
-      knownMinimal?.mandatoryMonthlyObligationsAndProvisions ?? [],
+      knownMonthlyMinimal?.mandatoryMonthlyObligationsAndProvisions ?? [],
+  });
+  const knownPeriodMinimal = periodMinimalSource.availability === "known"
+    ? periodMinimalSource as KnownMinimalSource
+    : undefined;
+  const periodMinimal = adaptGlobalMinimal({
+    metric: periodMinimalMetric,
+    neutralVariableComponents: knownPeriodMinimal?.neutralVariableComponents ?? [],
+    mandatoryMonthlyObligationsAndProvisions:
+      knownPeriodMinimal?.mandatoryMonthlyObligationsAndProvisions ?? [],
   });
   const structureComponents = projectGlobalEconomicStructureMonth({ month: targetMonth, facts });
   const targetActual = adaptGlobalActual(actualMetric);
@@ -121,11 +136,11 @@ export async function resolveGlobalM1HouseholdAuthority(input: {
   const history = await Promise.all(monthlyAuthorities.slice(-12).map(async (authority) => {
     const monthScope = { subject: { kind: "household" as const }, time: { kind: "month" as const, month: authority.month } };
     const source = authority.month === targetMonth
-      ? minimalSource
+      ? monthlyMinimalSource
       : await resolver.resolveCanonical("minimal_month_cost", monthScope);
     if (source.kind !== "minimal_month") throw new TypeError("Le resolver Minimal a renvoyé une source incompatible.");
     const metric = authority.month === targetMonth
-      ? minimalMetric
+      ? monthlyMinimalMetric
       : produceMetric({ metricId: "minimal_month_cost", scope: monthScope, source });
     if (metric.unit !== "EUR/month") throw new TypeError("Minimal mensuel officiel doit être en EUR/month.");
     const known = source.availability === "known" ? source as KnownMinimalSource : undefined;
@@ -138,7 +153,7 @@ export async function resolveGlobalM1HouseholdAuthority(input: {
         targetMonth: authority.month,
         months: monthlyAuthorities.filter(({ month }) => month <= authority.month),
       }),
-      minimal: authority.month === targetMonth ? minimal : adaptGlobalMinimal({
+      minimal: authority.month === targetMonth ? monthlyMinimal : adaptGlobalMinimal({
         metric,
         neutralVariableComponents: known?.neutralVariableComponents ?? [],
         mandatoryMonthlyObligationsAndProvisions: known?.mandatoryMonthlyObligationsAndProvisions ?? [],
@@ -192,6 +207,7 @@ export async function resolveGlobalM1HouseholdAuthority(input: {
     dataRevision: input.repository.context.dataRevision,
     analyticsRevision: input.repository.context.analyticsRevision,
     history,
+    periodMinimal,
     structure: buildGlobalEconomicStructure(structureComponents),
     temporal: buildGlobalM1Temporal({ certifiedThroughMonth: targetMonth, months: monthlyAuthorities }),
     recurrenceObservations: [...occurrenceAmounts.values()].map((value) => ({

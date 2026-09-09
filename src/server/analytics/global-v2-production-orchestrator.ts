@@ -14,7 +14,7 @@ import {
 import { buildGlobalM5TransformationFeed } from "@/analytics/global-v2/relationship-m3";
 import { parseHouseholdId, type PersonId } from "@/core/identity";
 import { normalizeGlobalAnalysisScopeV2 } from "@/core/global-v2";
-import { parseHouseholdTimeZone, parseInstant, parseYearMonth } from "@/core/time";
+import { addMonths, parseHouseholdTimeZone, parseInstant, parseLocalDate, parseYearMonth } from "@/core/time";
 import {
   getAnalysisPeriods,
   getHouseholdPersons,
@@ -147,16 +147,30 @@ export async function resolveGlobalV2ProductionOwnerOutputs(repository: Canonica
   const categoryIds = m2.result.categories.groups.flatMap(({ dimension }) => dimension.status === "KNOWN" ? [String(dimension.id)] : []);
   const needIds = m2.result.needs.groups.flatMap(({ dimension }) => dimension.status === "KNOWN" ? [String(dimension.id)] : []);
   const placeIds = m7.places.map(({ placeId }) => String(placeId));
-  const [categoryRows, needRows, placeRows] = await Promise.all([
+  const recurrenceIds = new Set(m1.recurrences.series.map(({ recurrenceId }) => recurrenceId));
+  const firstEconomicMonth = m1.history.points[0]?.month ?? targetMonth;
+  const [categoryRows, needRows, placeRows, minimalBundle] = await Promise.all([
     repository.loadTaxonomyRows("categories", categoryIds),
     repository.loadNeedRows(needIds),
     repository.loadEntityRows("places", "place_id", placeIds),
+    repository.loadMinimalPlanningBundle({
+      start: parseLocalDate(`${firstEconomicMonth}-01`),
+      endExclusive: parseLocalDate(`${addMonths(targetMonth, 1)}-01`),
+    }),
   ]);
   const presentationLabels: GlobalV2PresentationLabels = {
     persons: Object.fromEntries(context.persons.map(({ personId, displayName }) => [String(personId), displayName]).sort(([left], [right]) => left.localeCompare(right))),
     categories: labelsFromRows(categoryRows, "category_id", "nom_canonique"),
     needs: labelsFromRows(needRows, "need_id", "name"),
     places: labelsFromRows(placeRows, "place_id", "nom_canonique"),
+    recurrences: labelsFromRows(
+      minimalBundle.recurrenceSeries.filter((row) => {
+        const id = optionalCanonicalString(row, ["recurrence_series_id"]);
+        return id !== undefined && recurrenceIds.has(id);
+      }),
+      "recurrence_series_id",
+      "name",
+    ),
   };
 
   const ownerOutputs: GlobalV2OwnerOutput[] = [

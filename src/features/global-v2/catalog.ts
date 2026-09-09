@@ -18,7 +18,7 @@ export type GlobalModulePresentation = {
 };
 
 export const globalModulePresentations = Object.freeze([
-  { key: "ECONOMIC", resource: "analysis_global_economic", expandedResource: "analysis_global_economic_expanded", detailResource: "analysis_global_economic_recurrence_detail", order: 1, shortLabel: "Économie", title: "Votre économie", eyebrow: "M1", description: "Ce que votre vie coûte habituellement, son socle et son évolution sur les 12 mois certifiés." },
+  { key: "ECONOMIC", resource: "analysis_global_economic", expandedResource: "analysis_global_economic_expanded", detailResource: "analysis_global_economic_recurrence_detail", order: 1, shortLabel: "Dépenses", title: "Nos dépenses", eyebrow: "", description: "" },
   { key: "CATEGORIES_NEEDS", resource: "analysis_global_categories_needs", expandedResource: "analysis_global_categories_needs_expanded", detailResource: "analysis_global_category_need_detail", order: 2, shortLabel: "Catégories", title: "Catégories et besoins", eyebrow: "M2", description: "Les postes qui composent réellement votre quotidien." },
   { key: "TRANSFORMATIONS", resource: "analysis_global_transformations", expandedResource: "analysis_global_transformations_expanded", detailResource: "analysis_global_transformation_detail", order: 3, shortLabel: "Changements", title: "Changements durables", eyebrow: "M3", description: "Les évolutions qui dépassent une variation isolée." },
   { key: "RHYTHM", resource: "analysis_global_rhythm", expandedResource: "analysis_global_rhythm_expanded", detailResource: "analysis_global_routine_detail", order: 4, shortLabel: "Rythmes", title: "Vos rythmes", eyebrow: "M4", description: "Les activités et habitudes observées pour chaque personne." },
@@ -45,13 +45,13 @@ export function globalModulePresentation(key: GlobalPrimaryModuleKey): GlobalMod
 }
 const copy: Readonly<Record<string, string>> = Object.freeze({
   "global.detail": "Explorer le module",
-  "global.actual": "Dépenses observées",
+  "global.actual": "Dépenses réelles",
   "global.typical": "Niveau habituel",
-  "global.minimal": "Socle minimal",
+  "global.minimal": "Nos dépenses minimum",
   "global.change": "Évolution récente",
   "global.coverage": "Couverture",
   "global.support": "Support",
-  "global.economic": "Évolution économique certifiée",
+  "global.economic": "Nos dépenses sur 12 mois",
   "global.category": "Catégories principales",
   "global.needs": "Besoins structurants",
   "global.transformation": "Transformation durable",

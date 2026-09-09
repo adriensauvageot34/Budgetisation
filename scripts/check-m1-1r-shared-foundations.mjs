@@ -41,6 +41,8 @@ const baseline = require(path.join(repositoryRoot, "src/analytics/baseline/index
 const globalEconomic = require(path.join(repositoryRoot, "src/analytics/global-v2/economic-function.ts"));
 const temporal = require(path.join(repositoryRoot, "src/analytics/global-v2/temporal-descriptive.ts"));
 const minimalResolver = require(path.join(repositoryRoot, "src/server/analytics/minimal-source-resolver.ts"));
+const production = require(path.join(repositoryRoot, "src/analytics/production/index.ts"));
+const scopeApi = require(path.join(repositoryRoot, "src/core/scope/index.ts"));
 
 let checks = 0;
 const check = (callback) => { callback(); checks += 1; };
@@ -134,6 +136,76 @@ const resolved = minimalResolver.resolveMinimalPlanningSource({ bundle: { ...emp
 check(() => assert.equal(resolved.availability, "known"));
 check(() => assert.equal(resolved.neutralVariableComponents[0].amount, "27.5"));
 
+const retrospectiveFact = (id, categoryId, observations) => ({
+  canonicalComponentKey: `operation:${id}`,
+  sourceOperation: { kind: "resolved", id },
+  category: { kind: "resolved", id: categoryId },
+  subcategory: { kind: "unknown" },
+  economicTiming: { kind: "known", segments: observations.map(({ month, amount }, index) => ({
+    segmentKey: `segment:${id}:${index}`,
+    timingState: "known",
+    periodStart: `${month}-01`,
+    periodEnd: `${month}-01`,
+    economicMonth: month,
+    amount,
+  })) },
+});
+const retrospectiveBundle = {
+  economicFacts: [
+    retrospectiveFact("groceries", "category:groceries", months.map((month) => ({ month, amount: "100" }))),
+    retrospectiveFact("skincare", "category:skincare", [{ month: months[0], amount: "120" }]),
+    retrospectiveFact("rent", "category:rent", months.map((month) => ({ month, amount: "50" }))),
+    retrospectiveFact("fuel", "category:fuel", [{ month: months[0], amount: "999" }]),
+  ],
+  operations: [
+    { operation_id: "groceries", type_precis: "Courses", mode_prevision: "Référence mensuelle" },
+    { operation_id: "skincare", type_precis: "Skincare", mode_prevision: "Cadence de rachat" },
+    { operation_id: "rent", type_precis: "Loyer", mode_prevision: "Échéance fixe" },
+    { operation_id: "fuel", type_precis: "Carburant", mode_prevision: "Référence mensuelle" },
+  ],
+  allocations: [], items: [], paymentComponents: [], cashUses: [], needs: [], provisionPools: [], recurrenceSeries: [], annualEvents: [],
+  baselineRules: [
+    { baseline_rule_id: "rule:groceries", category_id: "category:groceries", type_precis: "Courses", eligibility: "Eligible", method_version: "minimal_baseline_v1" },
+    { baseline_rule_id: "rule:skincare", category_id: "category:skincare", type_precis: "Skincare", eligibility: "Eligible", method_version: "minimal_baseline_v1" },
+    { baseline_rule_id: "rule:rent", category_id: "category:rent", type_precis: "Loyer", eligibility: "Eligible", method_version: "minimal_baseline_v1" },
+    { baseline_rule_id: "rule:fuel", category_id: "category:fuel", type_precis: "Carburant", eligibility: "Conditional", condition_code: "WORK_COMMUTE_FUEL_ONLY", method_version: "minimal_baseline_v1" },
+  ],
+  worksiteActivityTypeIds: ["travail_site"],
+  plannedActivityDays: months.flatMap((month) => Array.from({ length: 10 }, (_, index) => ({ activityId: "travail_site", startDate: `${month}-${String(index + 1).padStart(2, "0")}`, validationStatus: "Confirmé" }))),
+};
+const retrospective = minimalResolver.resolveGlobalRetrospectiveMinimalPlanningSource({ bundle: retrospectiveBundle, targetMonth, referenceMonths: months });
+check(() => assert.equal(retrospective.availability, "known"));
+check(() => assert.equal(retrospective.neutralVariableComponents.find(({ canonicalComponentKey }) => canonicalComponentKey.includes("groceries")).amount, "100"));
+check(() => assert.equal(retrospective.neutralVariableComponents.find(({ canonicalComponentKey }) => canonicalComponentKey.includes("skincare")).amount, "10"));
+check(() => assert.equal(retrospective.neutralVariableComponents.find(({ canonicalComponentKey }) => canonicalComponentKey.includes("work-commute-fuel")).amount, "17"));
+check(() => assert.equal(retrospective.mandatoryMonthlyObligationsAndProvisions[0].amount, "50"));
+const bankFallback = minimalResolver.resolveGlobalRetrospectiveMinimalPlanningSource({
+  bundle: {
+    ...retrospectiveBundle,
+    economicFacts: retrospectiveBundle.economicFacts.map((fact) => fact.canonicalComponentKey === "operation:skincare"
+      ? { ...fact, net: "120", bankDate: { kind: "known", date: `${months[0]}-05` }, economicTiming: { kind: "unknown" } }
+      : fact),
+  },
+  targetMonth,
+  referenceMonths: months,
+});
+check(() => assert.equal(bankFallback.neutralVariableComponents.find(({ canonicalComponentKey }) => canonicalComponentKey.includes("skincare")).amount, "10"));
+check(() => assert.equal(bankFallback.neutralVariableComponents.find(({ canonicalComponentKey }) => canonicalComponentKey.includes("skincare")).coverage.level, "partial"));
+const retrospectiveMetric = production.produceMetric({
+  metricId: "minimal_month_cost",
+  scope: { subject: { kind: "household" }, time: { kind: "month", month: targetMonth } },
+  source: {
+    kind: "minimal_month",
+    scopeHash: scopeApi.computeScopeHash(scopeApi.normalizeAnalysisScope({ subject: { kind: "household" }, time: { kind: "month", month: targetMonth } })),
+    availability: "known",
+    neutralVariableComponents: retrospective.neutralVariableComponents,
+    mandatoryMonthlyObligationsAndProvisions: retrospective.mandatoryMonthlyObligationsAndProvisions,
+    coverage: { level: "complete" },
+  },
+});
+check(() => assert.equal(retrospectiveMetric.value, "177"));
+check(() => assert.equal(minimalResolver.resolveGlobalRetrospectiveMinimalPlanningSource({ bundle: retrospectiveBundle, targetMonth, referenceMonths: months.slice(1) }).availability, "unknown"));
+
 const typicalOccurrence = globalEconomic.calculateTypicalOccurrenceCost(["90", "10", "40"]);
 check(() => assert.equal(typicalOccurrence.status, "KNOWN"));
 check(() => assert.equal(typicalOccurrence.value, "40"));
@@ -200,7 +272,7 @@ check(() => assert.equal(declaration.upstreamAnalytics.find(({ id }) => id === "
 check(() => assert.ok(declaration.entityDependencies.filter(({ id }) => id.startsWith("historical_")).every(({ requirement }) => requirement === "OPTIONAL")));
 
 const resolverSource = fs.readFileSync(path.join(repositoryRoot, "src/server/analytics/minimal-source-resolver.ts"), "utf8");
-check(() => assert.doesNotMatch(resolverSource, /bundle\.recurrenceSeries|parseRules\(bundle\.baselineRules\)|medianMoney\(|\.div\(months\.length\)/));
 check(() => assert.match(resolverSource, /if \(authority === undefined\) return missingResolution\(\)/));
+check(() => assert.match(resolverSource, /resolveGlobalRetrospectiveMinimalPlanningSource/));
 
 console.log(`M1-1R shared safe foundations: ${checks}/${checks} PASS`);

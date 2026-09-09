@@ -120,7 +120,7 @@ check(() => assert.equal(new Set(first.requiredKeys.queries).size, first.require
 check(() => assert.equal(new Set(first.availableCapabilities).size, first.availableCapabilities.length));
 check(() => assert.equal(new Set(first.gatedCapabilities).size, first.gatedCapabilities.length));
 check(() => assert.deepEqual(first.gatedCapabilities, ["GLOBAL_PRODUCT_DETAIL", "GLOBAL_ROUTE_DETAIL"]));
-check(() => assert.deepEqual(compact("analysis_global_economic").kpis.map(({ labelKey }) => labelKey), ["Dépenses en 2026-07", "Minimum estimé", "Niveau habituel"]));
+check(() => assert.deepEqual(compact("analysis_global_economic").kpis.map(({ labelKey }) => labelKey), ["Dépenses en 2026-07", "Nos dépenses minimum", "Niveau habituel"]));
 check(() => assert.equal(compact("analysis_global_economic").kpis.some(({ displayValue }) => displayValue === "9"), false));
 check(() => assert.match(compact("analysis_global_economic").primaryInsight.statementKey, /au-dessus de votre niveau habituel/));
 check(() => assert.deepEqual(snapshot("analysis_global_categories_needs_expanded", "BREAKDOWN").payload.rows.map(({ labelKey }) => labelKey), ["Alimentation", "Maison", "Voyages"]));

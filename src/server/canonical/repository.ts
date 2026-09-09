@@ -1712,7 +1712,7 @@ export class CanonicalRepository {
         this.readRows("minimal:recurrence-series", "operations", () =>
           this.client
             .from("recurrence_series")
-            .select("recurrence_series_id,cadence_estimee,statut_serie,role_budgetaire,mode_prevision,actif_prevision,source_prevision_canonique")
+            .select("recurrence_series_id,name,cadence_estimee,statut_serie,role_budgetaire,mode_prevision,actif_prevision,source_prevision_canonique")
             .order("recurrence_series_id", { ascending: true })),
         this.readRows("minimal:annual-events", "operations", () =>
           this.client

@@ -2,11 +2,12 @@
 
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useRef, useState, type RefObject } from "react";
-import { AlertTriangle, ArrowUp, BarChart3, ExternalLink, Info, RefreshCw, Sparkles } from "lucide-react";
+import { AlertTriangle, ArrowUp, BarChart3, ChevronRight, ExternalLink, Info, RefreshCw, Sparkles } from "lucide-react";
+import { CartesianGrid, Line, LineChart, ReferenceDot, ReferenceLine, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { parseMetricId } from "@/core/identity";
 import { parseMoney, type Money } from "@/core/money";
 import type { MetricEnvelope } from "@/core/metrics";
-import { MonetaryEvolution, MultiSeriesMonetaryEvolution, OverlayFrame, RankingBar } from "@/ui";
+import { MultiSeriesMonetaryEvolution, OverlayFrame, RankingBar } from "@/ui";
 import type {
   GlobalCompactInsight,
   GlobalCompactKpi,
@@ -14,6 +15,7 @@ import type {
   GlobalDetailRow,
   GlobalDetailMetric,
   GlobalDetailSeries,
+  GlobalDetailSeriesPoint,
   GlobalExpandedReadModel,
   GlobalExpandedSectionKey,
   GlobalInitialReadModel,
@@ -24,8 +26,9 @@ import type {
   GlobalReadModelTransportState,
   GlobalV2ExpandedResourceName,
 } from "@/query-api/global-v2";
+import { globalV2MethodRef } from "@/query-api/global-v2";
 import { globalModulePresentation, globalUiCopy } from "./catalog";
-import { economicEvolutionPoints, economicMetric, economicStructureGroups, economicStructureLabel, economicValueText } from "./economic-ui";
+import { economicMetric, economicStructureGroups, economicStructureLabel } from "./economic-ui";
 import { emitGlobalV2UxEvent } from "./instrumentation";
 import { GlobalModuleBoundary } from "./module-boundary";
 import { useGlobalV2Resource, useMobileGlobalLayout, useNearViewport } from "./use-global-resource";
@@ -58,7 +61,7 @@ const storyOrder = Object.freeze([
 
 const internalNavigation = Object.freeze([
   { label: "Synthèse", anchor: "synthese" },
-  { label: "Économie", anchor: "economie" },
+  { label: "Nos dépenses", anchor: "economie" },
   { label: "Catégories", anchor: "categories" },
   { label: "Rythmes", anchor: "rythmes" },
   { label: "Moments", anchor: "moments" },
@@ -69,7 +72,7 @@ const internalNavigation = Object.freeze([
 ] as const);
 
 const moduleTabs: Readonly<Record<GlobalPrimaryModuleKey, readonly { readonly key: GlobalExpandedSectionKey; readonly label: string }[]>> = Object.freeze({
-  ECONOMIC: [{ key: "OVERVIEW", label: "Vue d’ensemble" }, { key: "EVOLUTION", label: "Évolution" }, { key: "BREAKDOWN", label: "Structure" }, { key: "PATTERNS", label: "Charges récurrentes" }],
+  ECONOMIC: [{ key: "OVERVIEW", label: "Résumé" }, { key: "EVOLUTION", label: "Évolution" }, { key: "BREAKDOWN", label: "Répartition" }, { key: "PATTERNS", label: "Dépenses récurrentes" }],
   CATEGORIES_NEEDS: [{ key: "BREAKDOWN", label: "Catégories" }, { key: "PATTERNS", label: "Besoins" }, { key: "EVOLUTION", label: "Évolution" }],
   TRANSFORMATIONS: [{ key: "OVERVIEW", label: "Vue d’ensemble" }],
   RHYTHM: [{ key: "OVERVIEW", label: "Habitudes" }, { key: "EVOLUTION", label: "Évolution" }],
@@ -171,83 +174,242 @@ function KpiGrid({ kpis, limit = 3 }: { readonly kpis: readonly GlobalCompactKpi
   return <div className={styles.kpis}>{kpis.slice(0, limit).map((kpi) => <div key={kpi.kpiId}><span>{humanLabel(kpi.labelKey)}</span><strong>{kpi.displayValue}</strong></div>)}</div>;
 }
 
-function EconomicMetricValue({ metric, unknownText }: { readonly metric: GlobalDetailMetric | undefined; readonly unknownText?: string }) {
-  if (metric === undefined) return <strong className={styles.unavailableValue}>{unknownText ?? "Information insuffisante"}</strong>;
-  return <strong className={metric.knowledgeState === "UNKNOWN" || metric.knowledgeState === "CONFLICT" ? styles.unavailableValue : undefined}>{economicValueText(metric, unknownText)}</strong>;
+const integerFormatter = new Intl.NumberFormat("fr-FR", { maximumFractionDigits: 0 });
+const shortMonths = ["janv.", "févr.", "mars", "avr.", "mai", "juin", "juil.", "août", "sept.", "oct.", "nov.", "déc."] as const;
+const longMonths = ["janvier", "février", "mars", "avril", "mai", "juin", "juillet", "août", "septembre", "octobre", "novembre", "décembre"] as const;
+const annualReading = "Sur l’année, la tendance reste orientée à la baisse ; sur les trois derniers mois, nos dépenses repartent nettement à la hausse.";
+
+type EconomicValue = Pick<GlobalDetailMetric, "displayValue" | "typedMeasure" | "knowledgeState"> & Partial<Pick<GlobalDetailMetric, "phenomenonQuality">>;
+
+function economicNumber(value: EconomicValue | GlobalDetailSeriesPoint | GlobalDetailRow | undefined): number | undefined {
+  if (value === undefined) return undefined;
+  const state = value.phenomenonQuality?.knowledgeState ?? value.knowledgeState;
+  if (state !== "KNOWN" && state !== "PARTIAL") return undefined;
+  const raw = value.typedMeasure?.value;
+  const parsed = raw === undefined ? numericDisplay("displayValue" in value ? value.displayValue : undefined) : Number(raw);
+  return parsed !== undefined && Number.isFinite(parsed) ? parsed : undefined;
 }
 
-function EconomicHero({ model }: { readonly model: GlobalExpandedReadModel }) {
-  const typical = economicMetric(model, "typical-state");
-  const minimal = economicMetric(model, "minimal-state");
-  const gap = economicMetric(model, "typical-minimal-gap");
-  const actual = economicMetric(model, "actual");
-  const reference = economicMetric(model, "typical-reference");
-  const targetDelta = economicMetric(model, "actual-reference-delta");
-  return <div className={styles.economicState}>
-    <div className={styles.economicHero} aria-label="Repères économiques habituels">
-      <article><span>Habituellement</span><EconomicMetricValue metric={typical} /></article>
-      <article><span>Socle minimal estimé</span><EconomicMetricValue metric={minimal} unknownText="Socle non disponible pour cette période" /></article>
-      <article><span>Distance entre les deux</span><EconomicMetricValue metric={gap} unknownText="Écart non calculable sans socle" /></article>
-    </div>
-    <article className={styles.lastMonth}>
-      <div><span>Dernier mois certifié</span><EconomicMetricValue metric={actual} /></div>
-      <div><span>Par rapport à la référence précédente</span><EconomicMetricValue metric={targetDelta} /></div>
-      <div><span>Référence habituelle précédente</span><EconomicMetricValue metric={reference} /></div>
-    </article>
+function formatMoney(value: number | undefined, options: { readonly perMonth?: boolean; readonly signed?: boolean; readonly approximate?: boolean; readonly perPayment?: boolean } = {}): string {
+  if (value === undefined) return "Non disponible sur cette période";
+  const sign = options.signed && value > 0 ? "+" : value < 0 ? "−" : "";
+  const magnitude = integerFormatter.format(Math.abs(value));
+  return `${options.approximate ? "≈ " : ""}${sign}${magnitude} €${options.perMonth ? " / mois" : options.perPayment ? " / paiement" : ""}`;
+}
+
+function monthParts(value: string): { readonly year: number; readonly month: number } | undefined {
+  const match = value.match(/^(\d{4})-(\d{2})/u);
+  if (match === null) return undefined;
+  const year = Number(match[1]);
+  const month = Number(match[2]);
+  return Number.isInteger(year) && month >= 1 && month <= 12 ? { year, month } : undefined;
+}
+
+function frenchMonth(value: string, compact = false): string {
+  const parts = monthParts(value);
+  if (parts === undefined) return value;
+  return `${compact ? shortMonths[parts.month - 1] : longMonths[parts.month - 1]} ${parts.year}`;
+}
+
+function capitalize(value: string): string {
+  return value.length === 0 ? value : `${value[0]!.toUpperCase()}${value.slice(1)}`;
+}
+
+function analysisPeriod(certifiedThrough: string): { readonly label: string; readonly targetLabel: string; readonly targetMonth: string } {
+  const target = monthParts(certifiedThrough);
+  if (target === undefined) return { label: certifiedThrough, targetLabel: certifiedThrough, targetMonth: certifiedThrough.slice(0, 7) };
+  const startDate = new Date(Date.UTC(target.year, target.month - 12, 1));
+  const startMonth = `${startDate.getUTCFullYear()}-${String(startDate.getUTCMonth() + 1).padStart(2, "0")}`;
+  const targetMonth = `${target.year}-${String(target.month).padStart(2, "0")}`;
+  return {
+    label: `${capitalize(frenchMonth(startMonth))} — ${frenchMonth(targetMonth)} · 12 mois analysés`,
+    targetLabel: capitalize(frenchMonth(targetMonth)),
+    targetMonth,
+  };
+}
+
+function InfoTooltip({ text }: { readonly text: string }) {
+  return <span className={styles.infoTooltip}><span className={styles.infoTooltipTrigger} tabIndex={0} aria-label={text}><Info aria-hidden size={14} /></span><span role="tooltip">{text}</span></span>;
+}
+
+function EconomicMetricValue({ metric, perMonth = false, signed = false, approximate = false, unknownText }: { readonly metric: GlobalDetailMetric | undefined; readonly perMonth?: boolean; readonly signed?: boolean; readonly approximate?: boolean; readonly unknownText?: string }) {
+  const value = economicNumber(metric);
+  return <strong className={value === undefined ? styles.unavailableValue : undefined}>{value === undefined ? unknownText ?? "Non disponible sur cette période" : formatMoney(value, { perMonth, signed, approximate })}</strong>;
+}
+
+type EconomicChartDatum = {
+  readonly period: string;
+  readonly monthLabel: string;
+  readonly fullLabel: string;
+  readonly actual: number | null;
+  readonly typical: number | null;
+};
+
+function EconomicChartTooltip({ active, payload, overview, targetMonth }: { readonly active?: boolean; readonly payload?: readonly { readonly payload?: EconomicChartDatum }[]; readonly overview: GlobalExpandedReadModel; readonly targetMonth: string }) {
+  const datum = payload?.[0]?.payload;
+  if (!active || datum === undefined) return null;
+  const isTarget = datum.period === targetMonth;
+  const targetMonthName = frenchMonth(targetMonth).replace(/\s+\d{4}$/u, "");
+  return <div className={styles.chartTooltip}>
+    <strong>{capitalize(datum.fullLabel)}</strong>
+    <dl>
+      <div><dt>Dépenses réelles</dt><dd>{formatMoney(datum.actual ?? undefined)}</dd></div>
+      <div><dt>Niveau habituel</dt><dd>{formatMoney(datum.typical ?? undefined)}</dd></div>
+      {isTarget ? <><div><dt>Niveau habituel avant {targetMonthName}</dt><dd>{formatMoney(economicNumber(economicMetric(overview, "typical-reference")))}</dd></div><div><dt>Écart</dt><dd>{formatMoney(economicNumber(economicMetric(overview, "actual-reference-delta")), { signed: true })}</dd></div></> : null}
+    </dl>
   </div>;
 }
 
-function EconomicEvolution({ model }: { readonly model: GlobalExpandedReadModel }) {
-  const points = economicEvolutionPoints(model.series);
-  if (points.length === 0) return <p className={styles.qualityNote}>La série économique n’est pas disponible.</p>;
-  return <div className={styles.chartWide}><MonetaryEvolution
-    frame={{ title: "Votre coût de vie sur 12 mois", state: { kind: "ready" }, summary: <span>Coût réel, niveau habituel et socle minimal. Une donnée Minimal inconnue laisse un trou sans interrompre les autres séries.</span> }}
-    unit="EUR/month"
-    labels={{ actual: "Coût réel", typical: "Niveau habituel", minimal: "Socle minimal" }}
-    points={points}
-  /></div>;
-}
-
-function EconomicSignals({ model, expanded = false }: { readonly model: GlobalExpandedReadModel; readonly expanded?: boolean }) {
-  const definitions = [
-    ["trend-slope", "Tendance de fond"],
-    ["recent-delta", "Mouvement récent"],
-    ["dispersion-amplitude", "Variabilité"],
-  ] as const;
-  const metrics = definitions.flatMap(([id, label]) => {
-    const metric = economicMetric(model, id) ?? economicMetric(model, `overview-${id}`);
-    return metric === undefined ? [] : [{ metric, label }];
+function EconomicChart({ evolution, overview, certifiedThrough, compact = false }: { readonly evolution: GlobalExpandedReadModel; readonly overview: GlobalExpandedReadModel; readonly certifiedThrough: string; readonly compact?: boolean }) {
+  const actual = evolution.series.find(({ seriesId }) => seriesId === "economic:actual");
+  const typical = evolution.series.find(({ seriesId }) => seriesId === "economic:typical-state");
+  if (actual === undefined || actual.points.length === 0) return <p className={styles.qualityNote}>L’évolution n’est pas disponible sur cette période.</p>;
+  const typicalByMonth = new Map(typical?.points.map((point) => [point.unitKey, point]));
+  const data: EconomicChartDatum[] = actual.points.map((point) => {
+    const parts = monthParts(point.unitKey);
+    return { period: point.unitKey, monthLabel: parts === undefined ? point.unitKey : shortMonths[parts.month - 1], fullLabel: frenchMonth(point.unitKey), actual: economicNumber(point) ?? null, typical: economicNumber(typicalByMonth.get(point.unitKey)) ?? null };
   });
-  const descriptive = expanded ? model.metrics.filter(({ metricId }) => ["dispersion-median", "dispersion-q1", "dispersion-q3", "dispersion-iqr", "dispersion-mad", "dispersion-min", "dispersion-max"].includes(metricId)) : [];
-  if (metrics.length === 0 && descriptive.length === 0) return null;
-  return <section className={styles.economicSignals} aria-labelledby={expanded ? "economic-signals-expanded" : "economic-signals-compact"}>
-    <h3 id={expanded ? "economic-signals-expanded" : "economic-signals-compact"}>Signaux sur la période</h3>
-    <div>{metrics.map(({ metric, label }) => <article key={metric.metricId}><span>{label}</span><EconomicMetricValue metric={metric} /></article>)}</div>
-    {descriptive.length === 0 ? null : <details><summary>Voir les mesures descriptives</summary><div className={styles.descriptiveMetrics}>{descriptive.map((metric) => <article key={metric.metricId}><span>{humanLabel(metric.labelKey)}</span><EconomicMetricValue metric={metric} /></article>)}</div></details>}
-    <p className={styles.qualityNote}>Ces mesures décrivent l’évolution observée sans lui attribuer une qualification catégorielle non prouvée.</p>
+  const period = analysisPeriod(certifiedThrough);
+  const annualMinimum = economicNumber(economicMetric(overview, "minimal-state"));
+  const lastPoint = [...data].reverse().find(({ actual: value }) => value !== null);
+  const startYear = monthParts(data[0]!.period)?.year;
+  const endYear = monthParts(data[data.length - 1]!.period)?.year;
+  return <section className={`${styles.economicChart} ${compact ? styles.economicChartCompact : styles.economicChartExpanded}`} aria-labelledby={compact ? undefined : "economic-evolution-title"}>
+    {compact ? null : <header><div><h3 id="economic-evolution-title">Nos dépenses sur 12 mois</h3><span>€ / mois</span></div></header>}
+    <div className={styles.chartLegend} aria-label="Légende du graphique"><span><i data-series="actual" />Dépenses réelles</span><span><i data-series="typical" />Niveau habituel</span><span><i data-series="minimal" />Nos dépenses minimum <small>· référence annuelle</small></span></div>
+    <div className={styles.economicChartCanvas} role="img" aria-label="Dépenses réelles, niveau habituel et dépenses minimum sur douze mois">
+      <ResponsiveContainer width="100%" height="100%"><LineChart data={data} margin={compact ? { top: 14, right: 10, bottom: 0, left: 0 } : { top: 18, right: 18, bottom: 4, left: 4 }}>
+        {compact ? null : <CartesianGrid vertical={false} stroke="var(--color-border)" strokeDasharray="3 5" />}
+        <XAxis dataKey="monthLabel" axisLine={false} tickLine={false} tick={compact ? false : { fill: "var(--color-muted)", fontSize: 11 }} interval={0} height={compact ? 8 : 34} />
+        <YAxis hide={compact} axisLine={false} tickLine={false} tick={{ fill: "var(--color-muted)", fontSize: 11 }} tickCount={5} width={66} tickFormatter={(value: number) => `${integerFormatter.format(value)} €`} domain={["auto", "auto"]} />
+        <Tooltip cursor={{ stroke: "var(--color-border)", strokeDasharray: "3 4" }} content={(props) => <EconomicChartTooltip active={props.active} payload={props.payload as readonly { readonly payload?: EconomicChartDatum }[]} overview={overview} targetMonth={period.targetMonth} />} />
+        {annualMinimum === undefined ? null : <ReferenceLine y={annualMinimum} ifOverflow="extendDomain" stroke="var(--color-economic-minimal)" strokeDasharray="2 5" strokeWidth={1.5} label={compact ? { value: "minimum annuel", position: "insideBottomRight", fill: "var(--color-muted)", fontSize: 10 } : undefined} />}
+        <Line dataKey="actual" name="Dépenses réelles" type="linear" connectNulls={false} stroke="var(--color-economic-actual)" strokeWidth={compact ? 2.5 : 3} dot={false} activeDot={{ r: compact ? 4 : 5 }} isAnimationActive={false} />
+        <Line dataKey="typical" name="Niveau habituel" type="linear" connectNulls={false} stroke="var(--color-economic-typical)" strokeWidth={2} strokeDasharray="7 5" dot={false} activeDot={{ r: 4 }} isAnimationActive={false} />
+        {lastPoint === undefined || lastPoint.actual === null ? null : <ReferenceDot x={lastPoint.monthLabel} y={lastPoint.actual} r={compact ? 4 : 5} fill="white" stroke="var(--color-economic-actual)" strokeWidth={3} />}
+      </LineChart></ResponsiveContainer>
+    </div>
+    {compact ? <div className={styles.chartEndpoints}><span>{capitalize(data[0]!.fullLabel)}</span><span>{capitalize(data[data.length - 1]!.fullLabel)}</span></div> : <div className={styles.chartYears} aria-hidden><span>{startYear}</span><span>{endYear}</span></div>}
   </section>;
 }
 
-function EconomicStructure({ model }: { readonly model: GlobalExpandedReadModel }) {
-  const ids = { "Nécessité": "necessity", "Fixe / variable": "behavior", "Périmètre de vie": "life-scope" } as const;
-  return <div className={styles.structureAxes}>{economicStructureGroups(model.rows).map((group) => <section key={group.axis} aria-labelledby={`economic-axis-${ids[group.axis]}`}>
-    <h3 id={`economic-axis-${ids[group.axis]}`}>{group.axis}</h3>
-    <div className={styles.structureStrip}>{group.rows.map((row) => <article key={row.rowId} data-knowledge-state={row.knowledgeState}><span>{economicStructureLabel(row)}</span><strong>{economicValueText(row, "À classer")}</strong></article>)}</div>
-  </section>)}</div>;
-}
-
-function EconomicRecurrences({ model, onDetail }: { readonly model: GlobalExpandedReadModel; readonly onDetail: (row: GlobalDetailRow) => void }) {
-  return <div className={styles.recurrenceContent}>
-    <div className={styles.recurrenceMetrics}>{model.metrics.map((metric) => <article key={metric.metricId} data-knowledge-state={metric.knowledgeState}><span>{humanLabel(metric.labelKey)}</span><EconomicMetricValue metric={metric} unknownText="Non déterminé sur cette période" /></article>)}</div>
-    <HumanRows rows={model.rows.slice(0, 50)} onDetail={onDetail} />
-    <p className={styles.qualityNote}>Chaque repère est présenté selon sa propre disponibilité. Un cycle de vie inconnu ne masque pas les occurrences, la cadence ou l’équivalent mensuel déjà qualifiés.</p>
+function EconomicCompactCard({ overview, evolution, certifiedThrough, onDetail, onMethod }: { readonly overview: GlobalExpandedReadModel; readonly evolution: GlobalExpandedReadModel; readonly certifiedThrough: string; readonly onDetail: () => void; readonly onMethod: () => void }) {
+  const period = analysisPeriod(certifiedThrough);
+  const targetMonthName = frenchMonth(period.targetMonth).replace(/\s+\d{4}$/u, "");
+  const minimal = economicMetric(overview, "minimal-state");
+  const minimalKnown = economicNumber(minimal) !== undefined;
+  return <div className={styles.economicCompact}>
+    <p className={styles.economicPeriod}>{period.label}</p>
+    <div className={styles.economicHero} aria-label="Nos trois repères mensuels">
+      <article className={styles.economicHeroPrimary}><span>Notre mois habituel</span><EconomicMetricValue metric={economicMetric(overview, "typical-state")} perMonth /></article>
+      <article><span>Nos dépenses minimum <InfoTooltip text="Estimation annuelle calculée avec les données disponibles sur les 12 mois analysés." /></span><EconomicMetricValue metric={minimal} perMonth /></article>
+      {minimalKnown ? <article><span>Notre marge</span><EconomicMetricValue metric={economicMetric(overview, "typical-minimal-gap")} perMonth /></article> : null}
+    </div>
+    <div className={styles.lastMonth}><div><span>{period.targetLabel}</span><strong>{formatMoney(economicNumber(economicMetric(overview, "actual")))} dépensés</strong></div><p><strong>{formatMoney(economicNumber(economicMetric(overview, "actual-reference-delta")), { signed: true })}</strong> par rapport à notre niveau habituel avant {targetMonthName}</p></div>
+    <EconomicChart evolution={evolution} overview={overview} certifiedThrough={certifiedThrough} compact />
+    <p className={styles.economicInsight}>{annualReading}</p>
+    <footer className={styles.economicActions}><button type="button" className={styles.methodLink} onClick={onMethod}><Info aria-hidden size={15} /> Méthode</button><button type="button" className={styles.exploreLink} onClick={onDetail}>Explorer <span aria-hidden>→</span></button></footer>
   </div>;
 }
 
-function EconomicContributors({ model }: { readonly model: GlobalExpandedReadModel }) {
-  const qualified = model.rows.filter((row) => row.knowledgeState === "KNOWN" || row.knowledgeState === "PARTIAL").slice(0, 5);
-  if (qualified.length === 0) return null;
-  return <section className={styles.contributors} aria-labelledby="economic-contributors-title"><h3 id="economic-contributors-title">Principaux contributeurs qualifiés</h3><HumanRows rows={qualified} onDetail={() => undefined} /><p className={styles.qualityNote}>Ces contributions décrivent les écarts publiés sans leur attribuer une causalité non prouvée.</p></section>;
+function EconomicSummary({ model, certifiedThrough }: { readonly model: GlobalExpandedReadModel; readonly certifiedThrough: string }) {
+  const period = analysisPeriod(certifiedThrough);
+  const targetMonthName = frenchMonth(period.targetMonth).replace(/\s+\d{4}$/u, "");
+  const minimal = economicMetric(model, "minimal-state");
+  const minimalKnown = economicNumber(minimal) !== undefined;
+  return <div className={styles.economicSummary}>
+    <section aria-labelledby="economic-summary-markers"><h3 id="economic-summary-markers">Nos repères mensuels</h3><div className={styles.markerEquation}><article><span>Notre mois habituel</span><EconomicMetricValue metric={economicMetric(model, "typical-state")} perMonth /></article>{minimalKnown ? <><span className={styles.equationSign} aria-hidden>−</span><article><span>Nos dépenses minimum <InfoTooltip text="Estimation annuelle calculée avec les données disponibles sur les 12 mois analysés." /></span><EconomicMetricValue metric={minimal} perMonth /></article><span className={styles.equationSign} aria-hidden>=</span><article><span>Notre marge</span><EconomicMetricValue metric={economicMetric(model, "typical-minimal-gap")} perMonth /></article></> : <article><span>Nos dépenses minimum</span><EconomicMetricValue metric={minimal} /></article>}</div></section>
+    <section className={styles.summaryJuly} aria-labelledby="economic-summary-july"><div><h3 id="economic-summary-july">{period.targetLabel}</h3><strong>{formatMoney(economicNumber(economicMetric(model, "actual")))} dépensés</strong></div><div><p><strong>{formatMoney(economicNumber(economicMetric(model, "actual-reference-delta")), { signed: true })}</strong> par rapport à notre niveau habituel avant {targetMonthName}</p><p>Niveau habituel avant {targetMonthName} : <strong>{formatMoney(economicNumber(economicMetric(model, "typical-reference")), { perMonth: true })}</strong></p></div></section>
+    <section className={styles.summaryReading} aria-labelledby="economic-summary-reading"><h3 id="economic-summary-reading">Ce que raconte l’année</h3><p>{annualReading}</p><div><article><span>Tendance sur l’année</span><strong>↘ {formatMoney(economicNumber(economicMetric(model, "overview-trend-slope")), { perMonth: true, approximate: true })}</strong></article><article><span>Hausse récente</span><strong>{formatMoney(economicNumber(economicMetric(model, "overview-recent-delta")), { perMonth: true, signed: true })}</strong><small>3 derniers mois vs 3 précédents</small></article></div></section>
+  </div>;
+}
+
+function EconomicEvolution({ model, overview, certifiedThrough }: { readonly model: GlobalExpandedReadModel; readonly overview: GlobalExpandedReadModel; readonly certifiedThrough: string }) {
+  return <EconomicChart evolution={model} overview={overview} certifiedThrough={certifiedThrough} />;
+}
+
+function EconomicSignals({ model }: { readonly model: GlobalExpandedReadModel }) {
+  const items = [
+    { id: "trend-slope", label: "Tendance sur l’année", description: "Orientation générale malgré les variations mensuelles.", perMonth: true, approximate: true, arrow: "↘ " },
+    { id: "recent-delta", label: "Hausse récente", description: "3 derniers mois vs 3 précédents", perMonth: true, signed: true },
+    { id: "dispersion-amplitude", label: "Écart entre nos mois extrêmes", description: `${formatMoney(economicNumber(economicMetric(model, "dispersion-min")))} au plus bas · ${formatMoney(economicNumber(economicMetric(model, "dispersion-max")))} au plus haut` },
+  ] as const;
+  const detailed = [
+    { id: "dispersion-median", label: "Notre mois habituel", note: "Médiane des 12 mois analysés." },
+    { id: "dispersion-min", label: "Mois le moins coûteux" },
+    { id: "dispersion-max", label: "Mois le plus coûteux" },
+    { id: "dispersion-mad", label: "Écart autour de notre mois habituel" },
+  ] as const;
+  return <section className={styles.economicSignals} aria-label="Lectures de l’évolution">
+    <div className={styles.signalGrid}>{items.map((item) => { const metric = economicMetric(model, item.id); return <article key={item.id}><span>{item.label}</span><strong>{"arrow" in item ? item.arrow : ""}{formatMoney(economicNumber(metric), { perMonth: "perMonth" in item && item.perMonth, signed: "signed" in item && item.signed, approximate: "approximate" in item && item.approximate })}</strong><small>{item.description}</small></article>; })}</div>
+    <details className={styles.statistics}><summary>Statistiques détaillées <ChevronRight aria-hidden size={16} /></summary><div>{detailed.map((item) => <article key={item.id}><span>{item.label}</span><strong>{formatMoney(economicNumber(economicMetric(model, item.id)))}</strong>{"note" in item ? <small>{item.note}</small> : null}</article>)}</div><p>La moitié de nos mois s’écartent de {formatMoney(economicNumber(economicMetric(model, "dispersion-mad")))} ou moins de notre niveau habituel.</p></details>
+  </section>;
+}
+
+function rowPercentage(row: GlobalDetailRow): number | undefined {
+  const match = row.displayValue?.match(/(\d+(?:[.,]\d+)?)\s*%/u);
+  return match === null || match === undefined ? undefined : Number(match[1]!.replace(",", "."));
+}
+
+function EconomicStructure({ model, overview, certifiedThrough }: { readonly model: GlobalExpandedReadModel; readonly overview: GlobalExpandedReadModel; readonly certifiedThrough: string }) {
+  const period = analysisPeriod(certifiedThrough);
+  const titles = { "Nécessité": "Selon leur nécessité", "Fixe / variable": "Fixes ou variables", "Périmètre de vie": "Dans notre quotidien" } as const;
+  const orders: Readonly<Record<string, readonly string[]>> = { "Nécessité": ["Contraint", "Indispensable", "Dépenses ajustables", "Optionnel"], "Fixe / variable": ["Fixe", "Variable"], "Périmètre de vie": ["Vie courante", "Hors quotidien"] };
+  const groups = economicStructureGroups(model.rows).map((group) => ({ ...group, rows: group.rows.filter((row) => (economicNumber(row) ?? 0) > 0).sort((left, right) => orders[group.axis]!.indexOf(economicStructureLabel(left)) - orders[group.axis]!.indexOf(economicStructureLabel(right))) })).filter(({ rows }) => rows.length > 0);
+  return <div className={styles.breakdownContent}>
+    <p className={styles.breakdownPeriod}><strong>{period.targetLabel}</strong> · {formatMoney(economicNumber(economicMetric(overview, "actual")))} dépensés</p>
+    {groups.map((group) => <section key={group.axis} aria-labelledby={`economic-axis-${group.axis.replaceAll(" ", "-")}`}>
+      <h3 id={`economic-axis-${group.axis.replaceAll(" ", "-")}`}>{titles[group.axis]}</h3>
+      <div className={styles.segmentedBar} role="img" aria-label={`Répartition : ${group.rows.map((row) => `${economicStructureLabel(row)} ${rowPercentage(row) ?? 0} %`).join(", ")}`}>
+        {group.rows.map((row, index) => <span key={row.rowId} className={styles[`segment${index + 1}`]} style={{ flexBasis: `${rowPercentage(row) ?? 0}%` }} />)}
+      </div>
+      <div className={styles.breakdownLegend}>{group.rows.map((row, index) => {
+        const label = economicStructureLabel(row);
+        return <div key={row.rowId}><i className={styles[`segment${index + 1}`]} /><span>{label}{label === "Dépenses ajustables" ? <> <InfoTooltip text="Dépenses dont le niveau peut généralement être modulé selon nos choix ou le contexte." /></> : null}</span><strong>{formatMoney(economicNumber(row))}</strong><small>{rowPercentage(row)} %</small></div>;
+      })}</div>
+    </section>)}
+  </div>;
+}
+
+function recurrencePresentation(row: GlobalDetailRow): { readonly amount: string; readonly detail: string } {
+  const count = row.displayValue?.match(/(\d+)\s+(?:occurrence|paiement)/u)?.[1];
+  const dates = [...(row.displayValue?.matchAll(/\d{4}-\d{2}(?:-\d{2})?/gu) ?? [])].map((match) => match[0]);
+  const parts = row.displayValue?.split(" · ").map((part) => part.trim()) ?? [];
+  const humanRange = parts.find((part) => /→|janvier|février|mars|avril|mai|juin|juillet|août|septembre|octobre|novembre|décembre/u.test(part) && !/Première|Dernière/u.test(part));
+  const range = humanRange ?? (dates.length === 0 ? undefined : dates.length === 1 ? frenchMonth(dates[0]!) : `${frenchMonth(dates[0]!)} → ${frenchMonth(dates[dates.length - 1]!)}`);
+  const countText = count === undefined ? undefined : `${count} paiement${count === "1" ? "" : "s"} observé${count === "1" ? "" : "s"}`;
+  return { amount: formatMoney(economicNumber(row), { approximate: true, perPayment: true }), detail: [countText, range].filter(Boolean).join(" · ") };
+}
+
+function EconomicRecurrences({ model, onDetail }: { readonly model: GlobalExpandedReadModel; readonly onDetail: (row: GlobalDetailRow) => void }) {
+  const rows = model.rows.filter((row) => (row.knowledgeState === "KNOWN" || row.knowledgeState === "PARTIAL") && (economicNumber(row) !== undefined || /\d+\s+(?:occurrence|paiement)/u.test(row.displayValue ?? ""))).sort((left, right) => (economicNumber(right) ?? Number.NEGATIVE_INFINITY) - (economicNumber(left) ?? Number.NEGATIVE_INFINITY) || humanLabel(left.labelKey).localeCompare(humanLabel(right.labelKey), "fr"));
+  return rows.length === 0 ? <p className={styles.qualityNote}>Aucun paiement récurrent suffisamment renseigné sur cette période.</p> : <div className={styles.recurrenceList}>{rows.map((row) => {
+    const presentation = recurrencePresentation(row);
+    const content = <><span className={styles.recurrenceName}>{humanLabel(row.labelKey)}</span><strong>{presentation.amount}</strong><small>{presentation.detail}</small><ChevronRight aria-hidden size={18} /></>;
+    return row.entityRef === undefined ? <div key={row.rowId}>{content}</div> : <button key={row.rowId} type="button" onClick={() => onDetail(row)}>{content}</button>;
+  })}</div>;
+}
+
+function frenchDate(value: string | undefined): string {
+  if (value === undefined) return "Non disponible sur cette période";
+  const match = value.match(/^(\d{4})-(\d{2})-(\d{2})$/u);
+  if (match === null) return value;
+  const month = Number(match[2]);
+  return month < 1 || month > 12 ? value : `${Number(match[3])} ${longMonths[month - 1]} ${match[1]}`;
+}
+
+function EconomicRecurrenceDetail({ model }: { readonly model: GlobalExpandedReadModel }) {
+  const metrics = model.metrics.filter((metric) => (metric.knowledgeState === "KNOWN" || metric.knowledgeState === "PARTIAL") && economicNumber(metric) !== undefined);
+  const rows = model.rows.filter((row) => (row.knowledgeState === "KNOWN" || row.knowledgeState === "PARTIAL") && !/price-evolution/u.test(row.rowId));
+  return <div className={styles.recurrenceDetail}>
+    {metrics.length === 0 ? null : <div>{metrics.map((metric) => <article key={metric.metricId}><span>{metric.metricId.includes("typical-occurrence") ? "Coût habituel" : humanLabel(metric.labelKey)}</span><strong>{formatMoney(economicNumber(metric), { perPayment: metric.metricId.includes("occurrence") })}</strong></article>)}</div>}
+    {rows.length === 0 ? null : <dl>{rows.map((row) => <div key={row.rowId}><dt>{humanLabel(row.labelKey).replace("occurrence", "paiement")}</dt><dd>{/first-observed|last-observed/u.test(row.rowId) ? frenchDate(row.displayValue) : /cadence/u.test(row.rowId) ? row.displayValue?.replace("occurrence(s)", "paiements") : row.displayValue}</dd></div>)}</dl>}
+  </div>;
+}
+
+function EconomicMethod({ model, certifiedThrough }: { readonly model: GlobalExpandedReadModel; readonly certifiedThrough: string }) {
+  const period = analysisPeriod(certifiedThrough);
+  return <div className={styles.methodContent}><dl><div><dt>Période analysée</dt><dd>{period.label.replace("analysés", "complets")}</dd></div><div><dt>Notre mois habituel</dt><dd>Médiane de nos 12 mois analysés.</dd></div><div><dt>Nos dépenses minimum</dt><dd>Estimation annuelle calculée avec les données disponibles sur les 12 mois analysés.</dd></div><div><dt>Notre marge</dt><dd>Différence entre notre mois habituel et nos dépenses minimum.</dd></div><div><dt>Limite importante</dt><dd>Pour une partie des dépenses, la date exacte à laquelle elles se rapportent n’est pas disponible ; leur date bancaire est alors utilisée.</dd></div></dl><details><summary>Détails techniques <ChevronRight aria-hidden size={16} /></summary><HumanRows rows={model.rows} onDetail={() => undefined} /></details></div>;
 }
 
 type OverlayTarget = {
@@ -265,7 +427,7 @@ function moduleOverlayTarget(moduleKey: GlobalPrimaryModuleKey, initialSection?:
 }
 
 function methodOverlayTarget(moduleKey: GlobalPrimaryModuleKey): OverlayTarget {
-  return { kind: "METHODOLOGY", title: "Méthode & fiabilité", resource: "analysis_global_methodology", entityRef: `method:${moduleKey.toLowerCase()}`, moduleKey };
+  return { kind: "METHODOLOGY", title: "Méthode", resource: "analysis_global_methodology", entityRef: globalV2MethodRef(moduleKey), moduleKey };
 }
 
 function GlobalSeries({ model }: { readonly model: GlobalExpandedReadModel }) {
@@ -278,20 +440,14 @@ function HumanRows({ rows, onDetail }: { readonly rows: readonly GlobalDetailRow
   return <div className={styles.rows}>{rows.map((row) => row.entityRef === undefined ? <div key={row.rowId}><span>{humanLabel(row.labelKey)}</span><strong>{row.displayValue ?? "Indisponible"}</strong></div> : <button key={row.rowId} type="button" onClick={() => onDetail(row)}><span>{humanLabel(row.labelKey)}</span><strong>{row.displayValue ?? "Indisponible"}</strong><ExternalLink aria-hidden size={15} /></button>)}</div>;
 }
 
-function GlobalExpandedContent({ model, onDetail }: { readonly model: GlobalExpandedReadModel; readonly onDetail: (row: GlobalDetailRow) => void }) {
-  if (model.sectionKey === "METHODOLOGY") return <div className={styles.expandedContent}>
-    <article className={styles.secondaryInsight}><strong>Une lecture fondée sur les données certifiées</strong><p>Chaque résultat est publié avec ses propres conditions de disponibilité, de couverture et de fiabilité. Une information insuffisante reste absente ou explicitement limitée.</p></article>
-    <HumanQualityNote quality={model.quality} />
-    <p className={styles.qualityNote}>Les calculs sont réalisés côté serveur avant la navigation. Cette page les présente sans recalculer la doctrine dans le navigateur.</p>
-  </div>;
+function GlobalExpandedContent({ model, onDetail, runtime, certifiedThrough }: { readonly model: GlobalExpandedReadModel; readonly onDetail: (row: GlobalDetailRow) => void; readonly runtime: GlobalV2VisitRuntime; readonly certifiedThrough: string }) {
+  if (model.sectionKey === "METHODOLOGY" && model.moduleKey === "ECONOMIC") return <EconomicMethod model={model} certifiedThrough={certifiedThrough} />;
+  if (model.sectionKey === "METHODOLOGY") return <div className={styles.expandedContent}><HumanRows rows={model.rows} onDetail={onDetail} /><HumanQualityNote quality={model.quality} /></div>;
+  if (model.resource === "analysis_global_economic_recurrence_detail") return <EconomicRecurrenceDetail model={model} />;
   if (model.resource === "analysis_global_economic_expanded") return <div className={styles.expandedContent}>
-    {model.sectionKey === "OVERVIEW" ? <>
-      <EconomicHero model={model} />
-      {model.primaryInsight === undefined ? null : <article className={styles.secondaryInsight}><strong>{humanLabel(model.primaryInsight.titleKey)}</strong><p>{humanLabel(model.primaryInsight.statementKey)}</p></article>}
-      <HumanQualityNote quality={model.quality} />
-    </> : null}
-    {model.sectionKey === "EVOLUTION" ? <><EconomicEvolution model={model} /><EconomicSignals model={model} expanded /></> : null}
-    {model.sectionKey === "BREAKDOWN" ? <EconomicStructure model={model} /> : null}
+    {model.sectionKey === "OVERVIEW" ? <EconomicSummary model={model} certifiedThrough={certifiedThrough} /> : null}
+    {model.sectionKey === "EVOLUTION" ? <ExpandedPreview runtime={runtime} moduleKey="ECONOMIC" sectionKey="OVERVIEW">{(overview) => <><EconomicEvolution model={model} overview={overview} certifiedThrough={certifiedThrough} /><EconomicSignals model={model} /></>}</ExpandedPreview> : null}
+    {model.sectionKey === "BREAKDOWN" ? <ExpandedPreview runtime={runtime} moduleKey="ECONOMIC" sectionKey="OVERVIEW">{(overview) => <EconomicStructure model={model} overview={overview} certifiedThrough={certifiedThrough} />}</ExpandedPreview> : null}
     {model.sectionKey === "PATTERNS" ? <EconomicRecurrences model={model} onDetail={onDetail} /> : null}
   </div>;
   return <div className={styles.expandedContent}>
@@ -305,7 +461,7 @@ function GlobalExpandedContent({ model, onDetail }: { readonly model: GlobalExpa
   </div>;
 }
 
-function GlobalDetailOverlay({ target, runtime, mobile, restoreFocusRef, onReplace, onClose }: { readonly target: OverlayTarget; readonly runtime: GlobalV2VisitRuntime; readonly mobile: boolean; readonly restoreFocusRef: RefObject<HTMLElement | null>; readonly onReplace: (target: OverlayTarget) => void; readonly onClose: () => void }) {
+function GlobalDetailOverlay({ target, runtime, mobile, certifiedThrough, restoreFocusRef, onReplace, onClose }: { readonly target: OverlayTarget; readonly runtime: GlobalV2VisitRuntime; readonly mobile: boolean; readonly certifiedThrough: string; readonly restoreFocusRef: RefObject<HTMLElement | null>; readonly onReplace: (target: OverlayTarget) => void; readonly onClose: () => void }) {
   const tabs = target.kind === "MODULE_DETAIL" ? moduleTabs[target.moduleKey] : [];
   const [section, setSection] = useState<GlobalExpandedSectionKey>(target.initialSection ?? tabs[0]?.key ?? "METHODOLOGY");
   useEffect(() => setSection(target.initialSection ?? tabs[0]?.key ?? "METHODOLOGY"), [target, tabs]);
@@ -325,9 +481,11 @@ function GlobalDetailOverlay({ target, runtime, mobile, restoreFocusRef, onRepla
   const result = useGlobalV2Resource<GlobalExpandedReadModel>(runtime, request, true, "DIRECT");
   const model = transportData(result.state);
   const presentation = globalModulePresentation(target.moduleKey);
-  return <OverlayFrame kind="exploration" title={target.title} subtitle={target.kind === "ENTITY_DETAIL" ? "Détail" : target.kind === "METHODOLOGY" ? "Comprendre la qualité de cette analyse" : presentation.description} closeAction={{ kind: "callback", onAction: onClose }} restoreFocusRef={restoreFocusRef} closeOnBackdrop className={`${styles.detailOverlay} ${mobile ? styles.mobileOverlay : ""}`}>
-    {tabs.length > 1 ? <div className={styles.sectionTabs} role="tablist" aria-label={`Sections de ${target.title}`}>{tabs.map((item) => <button key={item.key} type="button" role="tab" aria-selected={section === item.key} onClick={() => { setSection(item.key); emitGlobalV2UxEvent("global_section_expanded", { moduleKey: target.moduleKey, sectionKey: item.key }); window.history.replaceState(window.history.state, "", `#${moduleSlugs[target.moduleKey]}-${item.key.toLowerCase()}`); }}>{item.label}</button>)}</div> : null}
-    {result.state.status === "IDLE" || result.state.status === "LOADING" ? <LoadingCard label={target.title} /> : result.state.status === "ERROR" && model === undefined ? <LocalError retry={result.retry} /> : model === undefined ? null : <GlobalExpandedContent model={model} onDetail={(row) => presentation.detailResource === undefined || row.entityRef === undefined ? undefined : onReplace({ kind: "ENTITY_DETAIL", title: humanLabel(row.labelKey), resource: presentation.detailResource, entityRef: row.entityRef, moduleKey: target.moduleKey })} />}
+  const subtitle = target.kind === "ENTITY_DETAIL" ? "Détail" : target.moduleKey === "ECONOMIC" ? undefined : presentation.description;
+  const localError = target.kind === "METHODOLOGY" && target.moduleKey === "ECONOMIC" ? <div className={styles.methodError} role="alert">Impossible de charger les détails de méthode · <button type="button" onClick={result.retry}>Réessayer</button></div> : <LocalError retry={result.retry} />;
+  return <OverlayFrame kind="exploration" title={target.title} subtitle={subtitle} closeAction={{ kind: "callback", onAction: onClose }} restoreFocusRef={restoreFocusRef} closeOnBackdrop className={`${styles.detailOverlay} ${mobile ? styles.mobileOverlay : ""}`}>
+    {tabs.length > 1 ? <div className={styles.overlayNavigation}><div className={styles.sectionTabs} role="tablist" aria-label={`Sections de ${target.title}`}>{tabs.map((item) => <button key={item.key} type="button" role="tab" aria-selected={section === item.key} onClick={() => { setSection(item.key); emitGlobalV2UxEvent("global_section_expanded", { moduleKey: target.moduleKey, sectionKey: item.key }); window.history.replaceState(window.history.state, "", `#${moduleSlugs[target.moduleKey]}-${item.key.toLowerCase()}`); }}>{item.label}</button>)}</div>{target.moduleKey === "ECONOMIC" ? <button type="button" className={styles.methodLink} onClick={() => onReplace(methodOverlayTarget("ECONOMIC"))}><Info aria-hidden size={15} /> Méthode</button> : null}</div> : null}
+    {result.state.status === "IDLE" || result.state.status === "LOADING" ? <LoadingCard label={target.title} /> : result.state.status === "ERROR" && model === undefined ? localError : model === undefined ? null : <GlobalExpandedContent model={model} runtime={runtime} certifiedThrough={certifiedThrough} onDetail={(row) => presentation.detailResource === undefined || row.entityRef === undefined ? undefined : onReplace({ kind: "ENTITY_DETAIL", title: humanLabel(row.labelKey), resource: presentation.detailResource, entityRef: row.entityRef, moduleKey: target.moduleKey })} />}
   </OverlayFrame>;
 }
 
@@ -357,20 +515,13 @@ function PersonaColumns({ rows, limit = 5 }: { readonly rows: readonly GlobalDet
   return <div className={styles.personColumns}>{[...groups.entries()].map(([person, entries]) => <section key={person}><h3>{person}</h3><HumanRows rows={entries} onDetail={() => undefined} /></section>)}</div>;
 }
 
-function ModuleContent({ moduleKey, model, runtime, onDetail, onMethod }: { readonly moduleKey: GlobalPrimaryModuleKey; readonly model: GlobalModuleCompactReadModel; readonly runtime: GlobalV2VisitRuntime; readonly onDetail: () => void; readonly onMethod: () => void }) {
+function ModuleContent({ moduleKey, model, runtime, certifiedThrough, onDetail, onMethod }: { readonly moduleKey: GlobalPrimaryModuleKey; readonly model: GlobalModuleCompactReadModel; readonly runtime: GlobalV2VisitRuntime; readonly certifiedThrough: string; readonly onDetail: () => void; readonly onMethod: () => void }) {
   if (moduleKey === "TRANSFORMATIONS") return <div className={styles.neutralState}><strong>Aucun changement durable clairement identifié</strong><p>Aucun changement suffisamment net et durable n’a été identifié sur la période.</p></div>;
   if (moduleKey === "RELATIONSHIPS") return <div className={styles.neutralState}><strong>Pas encore assez d’éléments pour établir une relation fiable</strong><p>Les associations disponibles ne sont pas assez étayées pour être présentées comme un résultat.</p></div>;
   if (moduleKey === "CONSUMPTION") return <div className={styles.neutralState}><strong>Analyse pas encore disponible</strong><p>L’identité des achats ne couvre pas encore suffisamment la période pour proposer une lecture fiable.</p></div>;
 
   const insight = model.primaryInsight;
-  if (moduleKey === "ECONOMIC") return <div className={styles.compact}>
-    <ExpandedPreview runtime={runtime} moduleKey={moduleKey} sectionKey="OVERVIEW">{(expanded) => <EconomicHero model={expanded} />}</ExpandedPreview>
-    {insight === undefined ? null : <InsightCard insight={insight} />}
-    <ExpandedPreview runtime={runtime} moduleKey={moduleKey} sectionKey="EVOLUTION">{(expanded) => <><EconomicEvolution model={expanded} /><EconomicSignals model={expanded} /></>}</ExpandedPreview>
-    <ExpandedPreview runtime={runtime} moduleKey={moduleKey} sectionKey="COMPARISONS">{(expanded) => <EconomicContributors model={expanded} />}</ExpandedPreview>
-    <HumanQualityNote quality={model.quality} />
-    <div className={styles.moduleActions}><SeeDetail onClick={onDetail} /><button type="button" className={styles.methodButton} onClick={onMethod}><Info aria-hidden size={16} /> Méthode & fiabilité</button></div>
-  </div>;
+  if (moduleKey === "ECONOMIC") return <div className={styles.compact}><ExpandedPreview runtime={runtime} moduleKey={moduleKey} sectionKey="OVERVIEW">{(overview) => <ExpandedPreview runtime={runtime} moduleKey={moduleKey} sectionKey="EVOLUTION">{(evolution) => <EconomicCompactCard overview={overview} evolution={evolution} certifiedThrough={certifiedThrough} onDetail={onDetail} onMethod={onMethod} />}</ExpandedPreview>}</ExpandedPreview></div>;
 
   if (moduleKey === "CATEGORIES_NEEDS") return <div className={styles.compact}>
     {insight === undefined ? null : <InsightCard insight={insight} />}
@@ -415,7 +566,7 @@ function ModuleContent({ moduleKey, model, runtime, onDetail, onMethod }: { read
   </div>;
 }
 
-function GlobalModulePanel({ moduleKey, runtime, eager, direct, onOverlay }: { readonly moduleKey: GlobalPrimaryModuleKey; readonly runtime: GlobalV2VisitRuntime; readonly eager: boolean; readonly direct: boolean; readonly onOverlay: (target: OverlayTarget) => void }) {
+function GlobalModulePanel({ moduleKey, runtime, certifiedThrough, eager, direct, onOverlay }: { readonly moduleKey: GlobalPrimaryModuleKey; readonly runtime: GlobalV2VisitRuntime; readonly certifiedThrough: string; readonly eager: boolean; readonly direct: boolean; readonly onOverlay: (target: OverlayTarget) => void }) {
   const presentation = globalModulePresentation(moduleKey);
   const nearViewport = useNearViewport();
   const shouldLoad = eager || direct || nearViewport.near;
@@ -431,8 +582,8 @@ function GlobalModulePanel({ moduleKey, runtime, eager, direct, onOverlay }: { r
   const openDetail = () => { onOverlay(moduleOverlayTarget(moduleKey)); emitGlobalV2UxEvent("global_module_expanded", { moduleKey, state: "overlay" }); };
   const openMethod = () => { onOverlay(methodOverlayTarget(moduleKey)); emitGlobalV2UxEvent("global_methodology_opened", { moduleKey }); };
   return <section ref={nearViewport.ref} id={moduleSlugs[moduleKey]} className={styles.module} data-module={moduleKey} aria-labelledby={`${moduleSlugs[moduleKey]}-title`}>
-    <header className={styles.moduleHeader}><div><span className="eyebrow">{presentation.eyebrow}</span><h2 id={`${moduleSlugs[moduleKey]}-title`}>{presentation.title}</h2><p>{presentation.description}</p></div></header>
-    {compact.state.status === "IDLE" || compact.state.status === "LOADING" ? <LoadingCard label={presentation.title} /> : compact.state.status === "ERROR" && compactModel === undefined ? <LocalError retry={compact.retry} /> : compactModel === undefined ? null : <ModuleContent moduleKey={moduleKey} model={compactModel} runtime={runtime} onDetail={openDetail} onMethod={openMethod} />}
+    <header className={styles.moduleHeader}><div>{moduleKey === "ECONOMIC" ? null : <span className="eyebrow">{presentation.eyebrow}</span>}<h2 id={`${moduleSlugs[moduleKey]}-title`}>{presentation.title}</h2>{moduleKey === "ECONOMIC" ? null : <p>{presentation.description}</p>}</div></header>
+    {compact.state.status === "IDLE" || compact.state.status === "LOADING" ? <LoadingCard label={presentation.title} /> : compact.state.status === "ERROR" && compactModel === undefined ? <LocalError retry={compact.retry} /> : compactModel === undefined ? null : <ModuleContent moduleKey={moduleKey} model={compactModel} runtime={runtime} certifiedThrough={certifiedThrough} onDetail={openDetail} onMethod={openMethod} />}
   </section>;
 }
 
@@ -459,14 +610,14 @@ function HumanSummary({ runtime }: { readonly runtime: GlobalV2VisitRuntime }) {
   const row2: readonly SummarySlotDefinition[] = [{ slot: "S3", moduleKey: "CATEGORIES_NEEDS", kind: "INSIGHT" }, { slot: "S4", moduleKey: "RHYTHM", kind: "INSIGHT" }, { slot: "S5", moduleKey: "MOMENTS", kind: "INSIGHT" }];
   const row3: readonly SummarySlotDefinition[] = [{ slot: "S6", moduleKey: "GEO_MOBILITY", kind: "INSIGHT" }, { slot: "S7", moduleKey: "TOGETHER", kind: "INSIGHT" }];
   return <section id="synthese" className={styles.summary} aria-labelledby="global-summary-title">
-    <header><div><span className="eyebrow">Synthèse</span><h2 id="global-summary-title">L’essentiel de votre année</h2></div></header>
-    <section className={styles.summaryGroup}><h3>Votre argent</h3><div className={styles.summaryRow}><SummarySlot definition={s1} runtime={runtime} /><SummarySlot definition={s2} runtime={runtime} /></div></section>
+    <header><div><span className="eyebrow">Synthèse</span><h2 id="global-summary-title">L’essentiel de notre année</h2></div></header>
+    <section className={styles.summaryGroup}><h3>Notre argent</h3><div className={styles.summaryRow}><SummarySlot definition={s1} runtime={runtime} /><SummarySlot definition={s2} runtime={runtime} /></div></section>
     <div className={styles.summaryRow}>{row2.map((definition) => <SummarySlot key={definition.slot} definition={definition} runtime={runtime} />)}</div>
     <div className={styles.summaryRow}>{row3.map((definition) => <SummarySlot key={definition.slot} definition={definition} runtime={runtime} />)}</div>
   </section>;
 }
 
-export function GlobalV2Page({ bundle, transport }: { readonly bundle: GlobalV2PageBundle; readonly transport: GlobalV2UiTransport; readonly certifiedThrough: string }) {
+export function GlobalV2Page({ bundle, transport, certifiedThrough }: { readonly bundle: GlobalV2PageBundle; readonly transport: GlobalV2UiTransport; readonly certifiedThrough: string }) {
   const mobile = useMobileGlobalLayout();
   const runtime = useMemo(() => new GlobalV2VisitRuntime(bundle.initial.publicationMeta, transport, 2), [bundle.initial.publicationMeta, transport]);
   const visibleModules = useMemo(() => new Set(bundle.initial.navigation.filter((entry) => entry.visibility !== "HIDDEN").map(({ moduleKey }) => moduleKey)), [bundle.initial.navigation]);
@@ -514,13 +665,13 @@ export function GlobalV2Page({ bundle, transport }: { readonly bundle: GlobalV2P
   }, []);
 
   return <div className={styles.page} data-global-v2="" data-publication-id={bundle.initial.publicationMeta.publicationId}>
-    <header className={styles.hero}><div><h1>Notre vie, dans son ensemble</h1><p className={styles.period}>Août 2025 → juillet 2026 · 12 mois analysés</p><p>Une vue d’ensemble de vos dépenses, habitudes, moments et lieux sur l’année.</p><button type="button" className={styles.methodButton} onClick={() => openOverlay(methodOverlayTarget("ECONOMIC"))}><Info aria-hidden size={17} /> Méthode & fiabilité</button></div></header>
-    {bundle.newerPublication === undefined ? null : <aside className={styles.generationBanner} role="status" aria-live="polite"><div><strong>Une version plus récente est disponible.</strong><span>Votre lecture actuelle reste stable jusqu’à l’actualisation.</span></div><button type="button" className="button-primary" onClick={() => window.location.reload()}><RefreshCw aria-hidden size={16} /> Actualiser</button></aside>}
+    <header className={styles.hero}><div><h1>Notre vie, dans son ensemble</h1><p className={styles.period}>{analysisPeriod(certifiedThrough).label.replace("—", "→")}</p><p>Une vue d’ensemble de nos dépenses, habitudes, moments et lieux sur l’année.</p><button type="button" className={styles.methodButton} onClick={() => openOverlay(methodOverlayTarget("ECONOMIC"))}><Info aria-hidden size={17} /> Méthode</button></div></header>
+    {bundle.newerPublication === undefined ? null : <aside className={styles.generationBanner} role="status" aria-live="polite"><div><strong>Une version plus récente est disponible.</strong><span>Notre lecture actuelle reste stable jusqu’à l’actualisation.</span></div><button type="button" className="button-primary" onClick={() => window.location.reload()}><RefreshCw aria-hidden size={16} /> Actualiser</button></aside>}
     <nav className={styles.stickyNav} aria-label="Navigation dans l’analyse globale">{internalNavigation.map(({ label, anchor }) => <button key={anchor} type="button" aria-current={activeAnchor === anchor ? "location" : undefined} onClick={() => goTo(anchor)}>{label}</button>)}</nav>
     <HumanSummary runtime={runtime} />
-    <main className={styles.story}>{orderedModules.map((moduleKey, index) => <GlobalModuleBoundary key={moduleKey}><GlobalModulePanel moduleKey={moduleKey} runtime={runtime} eager={index < 2} direct={directModule === moduleKey} onOverlay={openOverlay} /></GlobalModuleBoundary>)}</main>
+    <main className={styles.story}>{orderedModules.map((moduleKey, index) => <GlobalModuleBoundary key={moduleKey}><GlobalModulePanel moduleKey={moduleKey} runtime={runtime} certifiedThrough={certifiedThrough} eager={index < 2} direct={directModule === moduleKey} onOverlay={openOverlay} /></GlobalModuleBoundary>)}</main>
     <button type="button" className={styles.backToTop} onClick={() => goTo()}><ArrowUp aria-hidden size={17} /> Retour au sommet</button>
-    {overlay === null ? null : <GlobalDetailOverlay target={overlay} runtime={runtime} mobile={mobile} restoreFocusRef={overlayInvokerRef} onReplace={(target) => { setOverlay(target); emitGlobalV2UxEvent("global_entity_opened", { moduleKey: target.moduleKey }); }} onClose={() => setOverlay(null)} />}
+    {overlay === null ? null : <GlobalDetailOverlay target={overlay} runtime={runtime} mobile={mobile} certifiedThrough={certifiedThrough} restoreFocusRef={overlayInvokerRef} onReplace={(target) => { setOverlay(target); emitGlobalV2UxEvent("global_entity_opened", { moduleKey: target.moduleKey }); }} onClose={() => setOverlay(null)} />}
   </div>;
 }
 
