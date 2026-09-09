@@ -43,7 +43,9 @@ function at(value: unknown, ...path: string[]): unknown {
 }
 
 function numeric(value: unknown): number {
-  return Number(value);
+  const parsed = Number(value);
+  if (!Number.isFinite(parsed)) throw new TypeError("P6_EXPECTED_NUMBER");
+  return parsed;
 }
 
 function close(actual: unknown, expected: number, tolerance = 0.000001): boolean {
