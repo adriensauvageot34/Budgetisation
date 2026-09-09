@@ -70,6 +70,9 @@ check(() => assert.match(page, /> Méthode</u));
 check(() => assert.match(page, /globalV2MethodRef\(moduleKey\)/u));
 check(() => assert.match(catalog, /analysis_global_economic_recurrence_detail/u));
 check(() => assert.match(page, /<ReferenceLine y=\{annualMinimum\}/u));
+check(() => assert.match(page, /annualMinimum === undefined \? null : <span><i data-series="minimal"/u));
+check(() => assert.match(page, /`environ \$\{formatMoney\(value, \{ perMonth: true \}\)\}`/u));
+check(() => assert.doesNotMatch(page, /overview-trend-slope[\s\S]{0,180}approximate: true/u));
 check(() => assert.match(page, /<Line dataKey="actual"[\s\S]*connectNulls=\{false\}/u));
 check(() => assert.match(page, /<Line dataKey="typical"[\s\S]*connectNulls=\{false\}/u));
 check(() => assert.doesNotMatch(page, /seriesId === "economic:minimal-state"/u));
@@ -77,6 +80,7 @@ check(() => assert.doesNotMatch(helper, /numericDisplay|parseFloat|parseInt|disp
 check(() => assert.doesNotMatch(page, /économies possibles|gaspillage|budget incompressible|Signal principal|Lecture principale|Points à surveiller|Profils récurrents|Principaux contributeurs|Qualité de la donnée|global\.placeholder\./iu));
 check(() => assert.match(page, /Ce que raconte l’année/u));
 check(() => assert.match(page, /Selon leur nécessité[\s\S]*Fixes ou variables[\s\S]*Dans notre quotidien/u));
+check(() => assert.match(page, /<strong>\{formatMoney\(economicNumber\(row\)\)\}\{percentage === undefined \? null : <small>· \{percentage\} %<\/small>\}<\/strong>/u));
 check(() => assert.match(page, /group\.rows\.filter\(\(row\) => \(economicNumber\(row\) \?\? 0\) > 0\)/u));
 check(() => assert.match(page, /paiement[\s\S]*observé/u));
 check(() => assert.match(page, /economicNumber\(right\)[\s\S]*economicNumber\(left\)/u));

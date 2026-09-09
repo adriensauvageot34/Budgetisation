@@ -197,6 +197,10 @@ function formatMoney(value: number | undefined, options: { readonly perMonth?: b
   return `${options.approximate ? "≈ " : ""}${sign}${magnitude} €${options.perMonth ? " / mois" : options.perPayment ? " / paiement" : ""}`;
 }
 
+function formatTrend(value: number | undefined): string {
+  return value === undefined ? formatMoney(value) : `environ ${formatMoney(value, { perMonth: true })}`;
+}
+
 function monthParts(value: string): { readonly year: number; readonly month: number } | undefined {
   const match = value.match(/^(\d{4})-(\d{2})/u);
   if (match === null) return undefined;
@@ -276,8 +280,8 @@ function EconomicChart({ evolution, overview, certifiedThrough, compact = false 
   const endYear = monthParts(data[data.length - 1]!.period)?.year;
   return <section className={`${styles.economicChart} ${compact ? styles.economicChartCompact : styles.economicChartExpanded}`} aria-labelledby={compact ? undefined : "economic-evolution-title"}>
     {compact ? null : <header><div><h3 id="economic-evolution-title">Nos dépenses sur 12 mois</h3><span>€ / mois</span></div></header>}
-    <div className={styles.chartLegend} aria-label="Légende du graphique"><span><i data-series="actual" />Dépenses réelles</span><span><i data-series="typical" />Niveau habituel</span><span><i data-series="minimal" />Nos dépenses minimum <small>· référence annuelle</small></span></div>
-    <div className={styles.economicChartCanvas} role="img" aria-label="Dépenses réelles, niveau habituel et dépenses minimum sur douze mois">
+    <div className={styles.chartLegend} aria-label="Légende du graphique"><span><i data-series="actual" />Dépenses réelles</span><span><i data-series="typical" />Niveau habituel</span>{annualMinimum === undefined ? null : <span><i data-series="minimal" />Nos dépenses minimum <small>· référence annuelle</small></span>}</div>
+    <div className={styles.economicChartCanvas} role="img" aria-label={annualMinimum === undefined ? "Dépenses réelles et niveau habituel sur douze mois" : "Dépenses réelles, niveau habituel et dépenses minimum sur douze mois"}>
       <ResponsiveContainer width="100%" height="100%"><LineChart data={data} margin={compact ? { top: 14, right: 10, bottom: 0, left: 0 } : { top: 18, right: 18, bottom: 4, left: 4 }}>
         {compact ? null : <CartesianGrid vertical={false} stroke="var(--color-border)" strokeDasharray="3 5" />}
         <XAxis dataKey="monthLabel" axisLine={false} tickLine={false} tick={compact ? false : { fill: "var(--color-muted)", fontSize: 11 }} interval={0} height={compact ? 8 : 34} />
@@ -320,7 +324,7 @@ function EconomicSummary({ model, certifiedThrough }: { readonly model: GlobalEx
   return <div className={styles.economicSummary}>
     <section aria-labelledby="economic-summary-markers"><h3 id="economic-summary-markers">Nos repères mensuels</h3><div className={styles.markerEquation}><article><span>Notre mois habituel</span><EconomicMetricValue metric={economicMetric(model, "typical-state")} perMonth /></article>{minimalKnown ? <><span className={styles.equationSign} aria-hidden>−</span><article><span>Nos dépenses minimum <InfoTooltip text="Estimation annuelle calculée avec les données disponibles sur les 12 mois analysés." /></span><EconomicMetricValue metric={minimal} perMonth /></article><span className={styles.equationSign} aria-hidden>=</span><article><span>Notre marge</span><EconomicMetricValue metric={economicMetric(model, "typical-minimal-gap")} perMonth /></article></> : <article><span>Nos dépenses minimum</span><EconomicMetricValue metric={minimal} /></article>}</div></section>
     <section className={styles.summaryJuly} aria-labelledby="economic-summary-july"><div><h3 id="economic-summary-july">{period.targetLabel}</h3><strong>{formatMoney(economicNumber(economicMetric(model, "actual")))} dépensés</strong></div><div><p><strong>{formatMoney(economicNumber(economicMetric(model, "actual-reference-delta")), { signed: true })}</strong> par rapport à notre niveau habituel avant {targetMonthName}</p><p>Niveau habituel avant {targetMonthName} : <strong>{formatMoney(economicNumber(economicMetric(model, "typical-reference")), { perMonth: true })}</strong></p></div></section>
-    <section className={styles.summaryReading} aria-labelledby="economic-summary-reading"><h3 id="economic-summary-reading">Ce que raconte l’année</h3><p>{annualReading}</p><div><article><span>Tendance sur l’année</span><strong>↘ {formatMoney(economicNumber(economicMetric(model, "overview-trend-slope")), { perMonth: true, approximate: true })}</strong></article><article><span>Hausse récente</span><strong>{formatMoney(economicNumber(economicMetric(model, "overview-recent-delta")), { perMonth: true, signed: true })}</strong><small>3 derniers mois vs 3 précédents</small></article></div></section>
+    <section className={styles.summaryReading} aria-labelledby="economic-summary-reading"><h3 id="economic-summary-reading">Ce que raconte l’année</h3><p>{annualReading}</p><div><article><span>Tendance sur l’année</span><strong>↘ {formatTrend(economicNumber(economicMetric(model, "overview-trend-slope")))}</strong></article><article><span>Hausse récente</span><strong>{formatMoney(economicNumber(economicMetric(model, "overview-recent-delta")), { perMonth: true, signed: true })}</strong><small>3 derniers mois vs 3 précédents</small></article></div></section>
   </div>;
 }
 
@@ -330,7 +334,7 @@ function EconomicEvolution({ model, overview, certifiedThrough }: { readonly mod
 
 function EconomicSignals({ model }: { readonly model: GlobalExpandedReadModel }) {
   const items = [
-    { id: "trend-slope", label: "Tendance sur l’année", description: "Orientation générale malgré les variations mensuelles.", perMonth: true, approximate: true, arrow: "↘ " },
+    { id: "trend-slope", label: "Tendance sur l’année", description: "Orientation générale malgré les variations mensuelles.", trend: true, arrow: "↘ " },
     { id: "recent-delta", label: "Hausse récente", description: "3 derniers mois vs 3 précédents", perMonth: true, signed: true },
     { id: "dispersion-amplitude", label: "Écart entre nos mois extrêmes", description: `${formatMoney(economicNumber(economicMetric(model, "dispersion-min")))} au plus bas · ${formatMoney(economicNumber(economicMetric(model, "dispersion-max")))} au plus haut` },
   ] as const;
@@ -341,7 +345,7 @@ function EconomicSignals({ model }: { readonly model: GlobalExpandedReadModel })
     { id: "dispersion-mad", label: "Écart autour de notre mois habituel" },
   ] as const;
   return <section className={styles.economicSignals} aria-label="Lectures de l’évolution">
-    <div className={styles.signalGrid}>{items.map((item) => { const metric = economicMetric(model, item.id); return <article key={item.id}><span>{item.label}</span><strong>{"arrow" in item ? item.arrow : ""}{formatMoney(economicNumber(metric), { perMonth: "perMonth" in item && item.perMonth, signed: "signed" in item && item.signed, approximate: "approximate" in item && item.approximate })}</strong><small>{item.description}</small></article>; })}</div>
+    <div className={styles.signalGrid}>{items.map((item) => { const metric = economicMetric(model, item.id); const value = economicNumber(metric); return <article key={item.id}><span>{item.label}</span><strong>{"arrow" in item ? item.arrow : ""}{"trend" in item ? formatTrend(value) : formatMoney(value, { perMonth: "perMonth" in item && item.perMonth, signed: "signed" in item && item.signed })}</strong><small>{item.description}</small></article>; })}</div>
     <details className={styles.statistics}><summary>Statistiques détaillées <ChevronRight aria-hidden size={16} /></summary><div>{detailed.map((item) => <article key={item.id}><span>{item.label}</span><strong>{formatMoney(economicNumber(economicMetric(model, item.id)))}</strong>{"note" in item ? <small>{item.note}</small> : null}</article>)}</div><p>La moitié de nos mois s’écartent de {formatMoney(economicNumber(economicMetric(model, "dispersion-mad")))} ou moins de notre niveau habituel.</p></details>
   </section>;
 }
@@ -365,7 +369,8 @@ function EconomicStructure({ model, overview, certifiedThrough }: { readonly mod
       </div>
       <div className={styles.breakdownLegend}>{group.rows.map((row, index) => {
         const label = economicStructureLabel(row);
-        return <div key={row.rowId}><i className={styles[`segment${index + 1}`]} /><span>{label}{label === "Dépenses ajustables" ? <> <InfoTooltip text="Dépenses dont le niveau peut généralement être modulé selon nos choix ou le contexte." /></> : null}</span><strong>{formatMoney(economicNumber(row))}</strong><small>{rowPercentage(row)} %</small></div>;
+        const percentage = rowPercentage(row);
+        return <div key={row.rowId}><i className={styles[`segment${index + 1}`]} /><span>{label}{label === "Dépenses ajustables" ? <> <InfoTooltip text="Dépenses dont le niveau peut généralement être modulé selon nos choix ou le contexte." /></> : null}</span><strong>{formatMoney(economicNumber(row))}{percentage === undefined ? null : <small>· {percentage} %</small>}</strong></div>;
       })}</div>
     </section>)}
   </div>;

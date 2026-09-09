@@ -44,7 +44,7 @@
 .module[data-module="ECONOMIC"], .detailOverlay { --color-economic-actual: var(--color-primary-deep); --color-economic-typical: #8a7560; --color-economic-minimal: #5c8f83; }
 .module[data-module="ECONOMIC"] { background: linear-gradient(155deg, #fff 0%, #fff 58%, #f5f8f5 100%); }
 .module[data-module="ECONOMIC"] .moduleHeader { padding-bottom: 8px; }
-.economicCompact { display: grid; gap: 20px; }
+.economicCompact { display: grid; gap: 16px; }
 .economicPeriod { margin: -2px 0 0; color: var(--color-muted); font-size: 14px; font-weight: 700; }
 .economicHero { display: grid; grid-template-columns: 1.15fr 1fr 1fr; overflow: hidden; border-block: 1px solid rgb(36 50 47 / .11); }
 .economicHero article { display: grid; align-content: center; gap: 8px; min-height: 112px; padding: 18px 22px; }
@@ -75,7 +75,7 @@
 .chartLegend i[data-series="typical"] { border-top-color: var(--color-economic-typical); border-top-style: dashed; }
 .chartLegend i[data-series="minimal"] { border-top-color: var(--color-economic-minimal); border-top-style: dotted; }
 .economicChartCanvas { width: 100%; min-width: 0; }
-.economicChartCompact { border-block: 1px solid var(--color-border); padding-block: 13px 8px; }
+.economicChartCompact { border-block: 1px solid var(--color-border); padding-block: 11px 6px; }
 .economicChartCompact .chartLegend { margin-top: 0; }
 .economicChartCompact .economicChartCanvas { height: 145px; }
 .economicChartExpanded .economicChartCanvas { height: clamp(280px, 42vh, 390px); margin-top: 8px; }
@@ -119,17 +119,17 @@
 .summaryReading article small { color: var(--color-muted); }
 .economicSignals { display: grid; gap: 14px; }
 .signalGrid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); border-block: 1px solid var(--color-border); }
-.signalGrid article { display: grid; align-content: start; gap: 8px; padding: 18px; }
+.signalGrid article { display: grid; align-content: start; gap: 5px; padding: 14px 16px; }
 .signalGrid article:first-child { padding-left: 0; }
 .signalGrid article + article { border-left: 1px solid var(--color-border); }
-.signalGrid strong { font-size: clamp(18px, 2.4vw, 24px); letter-spacing: -.02em; }
+.signalGrid strong { font-size: clamp(18px, 2.2vw, 22px); letter-spacing: -.02em; }
 .signalGrid small { color: var(--color-muted); line-height: 1.4; }
 .statistics, .methodContent details { border-top: 1px solid var(--color-border); padding-top: 13px; }
 .statistics summary, .methodContent summary { display: inline-flex; align-items: center; gap: 6px; color: var(--color-primary-deep); font-size: 13px; font-weight: 800; cursor: pointer; list-style: none; }
 .statistics summary::-webkit-details-marker, .methodContent summary::-webkit-details-marker { display: none; }
 .statistics[open] summary svg, .methodContent details[open] summary svg { transform: rotate(90deg); }
-.statistics > div { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 24px; margin-top: 14px; }
-.statistics article { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 4px 16px; border-bottom: 1px solid var(--color-border); padding: 10px 0; }
+.statistics > div { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 20px; margin-top: 12px; }
+.statistics article { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 4px 14px; border-bottom: 1px solid var(--color-border); padding: 8px 0; }
 .statistics article small { grid-column: 1 / -1; color: var(--color-muted); }
 .statistics > p { margin: 13px 0 0; color: var(--color-muted); line-height: 1.5; }
 .breakdownContent { display: grid; gap: 30px; }
@@ -142,11 +142,11 @@
 .segment3 { background: #c4a46d; }
 .segment4 { background: #d8c9ac; }
 .breakdownLegend { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px 28px; }
-.breakdownLegend > div { display: grid; grid-template-columns: 10px minmax(0, 1fr) auto 38px; align-items: center; gap: 9px; padding: 5px 0; }
+.breakdownLegend > div { display: grid; grid-template-columns: 10px minmax(0, 1fr) auto; align-items: center; gap: 9px; padding: 5px 0; }
 .breakdownLegend i { width: 8px; height: 8px; border-radius: 50%; }
 .breakdownLegend span { display: flex; align-items: center; gap: 4px; font-size: 13px; font-weight: 720; }
-.breakdownLegend strong { font-size: 13px; }
-.breakdownLegend small { color: var(--color-muted); text-align: right; }
+.breakdownLegend strong { display: inline-flex; align-items: baseline; gap: 4px; white-space: nowrap; font-size: 13px; }
+.breakdownLegend strong small { color: var(--color-muted); font-weight: 650; }
 .recurrenceList { display: grid; overflow: hidden; border-block: 1px solid var(--color-border); }
 .recurrenceList > div, .recurrenceList > button { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; grid-template-areas: "name amount icon" "detail amount icon"; align-items: center; gap: 4px 16px; min-height: 72px; border: 0; border-bottom: 1px solid var(--color-border); padding: 13px 4px; background: transparent; color: inherit; text-align: left; }
 .recurrenceList > button { cursor: pointer; }
