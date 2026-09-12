@@ -435,6 +435,7 @@ type OverlayTarget = {
   readonly entityRef: string;
   readonly moduleKey: GlobalPrimaryModuleKey;
   readonly initialSection?: GlobalExpandedSectionKey;
+  readonly returnSection?: GlobalExpandedSectionKey;
 };
 
 function moduleOverlayTarget(moduleKey: GlobalPrimaryModuleKey, initialSection?: GlobalExpandedSectionKey): OverlayTarget {
@@ -444,6 +445,11 @@ function moduleOverlayTarget(moduleKey: GlobalPrimaryModuleKey, initialSection?:
 
 function methodOverlayTarget(moduleKey: GlobalPrimaryModuleKey): OverlayTarget {
   return { kind: "METHODOLOGY", title: "Méthode", resource: "analysis_global_methodology", entityRef: globalV2MethodRef(moduleKey), moduleKey };
+}
+
+function entityOverlayTarget(moduleKey: GlobalPrimaryModuleKey, entityRef: string, title: string, returnSection?: GlobalExpandedSectionKey): OverlayTarget | undefined {
+  const resource = globalModulePresentation(moduleKey).detailResource;
+  return resource === undefined ? undefined : { kind: "ENTITY_DETAIL", title, resource, entityRef, moduleKey, ...(returnSection === undefined ? {} : { returnSection }) };
 }
 
 function GlobalSeries({ model }: { readonly model: GlobalExpandedReadModel }) {
@@ -472,7 +478,7 @@ function M2MoneyRows({ rows, onDetail, initialLimit = 9, allowExpansion = true, 
     <div className={styles.m2RankingRows}>{visible.map(({ row, amount }) => {
       const canOpen = interactive && row.entityRef !== undefined;
       const content = <><span><strong>{humanLabel(row.labelKey)}</strong><small>{formatMoney(amount)}</small><i aria-hidden><b style={{ width: `${Math.max(2, Math.abs(amount) / maximum * 100)}%` }} /></i></span>{canOpen ? <ChevronRight aria-hidden size={18} /> : null}</>;
-      return canOpen ? <button key={row.rowId} type="button" onClick={() => onDetail(row)} aria-label={`Explorer ${humanLabel(row.labelKey)}`}>{content}</button> : <div key={row.rowId}>{content}</div>;
+      return canOpen ? <button key={row.rowId} type="button" data-m2-entity-ref={row.entityRef} onClick={() => onDetail(row)} aria-label={`Explorer ${humanLabel(row.labelKey)}`}>{content}</button> : <div key={row.rowId}>{content}</div>;
     })}</div>
     {allowExpansion && typedRows.length > initialLimit ? <button type="button" className={styles.m2ShowAll} onClick={() => setExpanded((value) => !value)}>{expanded ? expansionLabels.fewer : showRemainingCount ? `Voir les ${typedRows.length - initialLimit} autres` : `${expansionLabels.all} (${typedRows.length})`}</button> : null}
   </div>;
@@ -484,14 +490,20 @@ function M2Concentration({ value }: { readonly value: GlobalCompactKpi | GlobalD
   return <p className={styles.m2Concentration}>Nos 5 principaux postes concentrent <strong>{formatM2Ratio(ratio)} de nos dépenses</strong>.</p>;
 }
 
-function M2Comparisons({ model, certifiedThrough }: { readonly model: GlobalExpandedReadModel; readonly certifiedThrough: string }) {
+function M2Comparisons({ model, certifiedThrough, onDetail }: { readonly model: GlobalExpandedReadModel; readonly certifiedThrough: string; readonly onDetail: (row: GlobalDetailRow) => void }) {
+  const [expanded, setExpanded] = useState(false);
   const rows = model.rows.flatMap((row) => {
     const amount = row.typedMeasure?.kind === "MONEY" ? m2TypedNumber(row) : undefined;
     return amount === undefined ? [] : [{ row, amount }];
   });
   const targetLabel = analysisPeriod(certifiedThrough).targetLabel;
   if (rows.length === 0) return <p className={styles.qualityNote}>Aucun écart suffisamment net n’est disponible pour {targetLabel.toLocaleLowerCase("fr-FR")}.</p>;
-  return <section className={styles.m2Changes} aria-labelledby="m2-reference-gaps"><h3 id="m2-reference-gaps">Écarts observés en {targetLabel.toLocaleLowerCase("fr-FR")}</h3><p className={styles.m2ComparisonNote}>Chaque montant compare le dernier mois analysé au niveau de référence de la catégorie.</p><div>{rows.map(({ row, amount }) => <article key={row.rowId} data-direction={amount < 0 ? "down" : "up"}>{amount < 0 ? <ArrowDown aria-hidden size={18} /> : <ArrowUp aria-hidden size={18} />}<span>{humanLabel(row.labelKey).replace(/^(?:Hausse|Baisse|Stable) · /u, "")}</span><strong>{formatMoney(amount, { signed: true })}</strong></article>)}</div></section>;
+  const visibleRows = expanded ? rows : rows.slice(0, 6);
+  return <section className={styles.m2Changes} aria-labelledby="m2-reference-gaps"><h3 id="m2-reference-gaps">Écarts observés en {targetLabel.toLocaleLowerCase("fr-FR")}</h3><p className={styles.m2ComparisonNote}>Chaque montant compare le dernier mois analysé au niveau de référence de la catégorie.</p><div>{visibleRows.map(({ row, amount }) => {
+    const label = humanLabel(row.labelKey).replace(/^(?:Hausse|Baisse|Stable) · /u, "");
+    const content = <>{amount < 0 ? <ArrowDown aria-hidden size={18} /> : <ArrowUp aria-hidden size={18} />}<span>{label}</span><strong>{formatMoney(amount, { signed: true })}</strong>{row.entityRef === undefined ? null : <ChevronRight aria-hidden size={17} />}</>;
+    return row.entityRef === undefined ? <article key={row.rowId} data-direction={amount < 0 ? "down" : "up"}>{content}</article> : <button key={row.rowId} type="button" data-direction={amount < 0 ? "down" : "up"} data-m2-entity-ref={row.entityRef} onClick={() => onDetail(row)} aria-label={`Explorer ${label}`}>{content}</button>;
+  })}</div>{rows.length > 6 ? <button type="button" className={styles.m2ShowAll} onClick={() => setExpanded((value) => !value)}>{expanded ? "Réduire la liste" : `Voir les ${rows.length - 6} autres`}</button> : null}</section>;
 }
 
 function M2NeedsContent({ model, onDetail }: { readonly model: GlobalExpandedReadModel; readonly onDetail: (row: GlobalDetailRow) => void }) {
@@ -510,8 +522,8 @@ function M2NeedsContent({ model, onDetail }: { readonly model: GlobalExpandedRea
 function M2EvolutionContent({ model, runtime, certifiedThrough, onDetail }: { readonly model: GlobalExpandedReadModel; readonly runtime: GlobalV2VisitRuntime; readonly certifiedThrough: string; readonly onDetail: (row: GlobalDetailRow) => void }) {
   return <div className={styles.m2TabContent}>
     <header><h3>Quels postes s’écartent le plus de leur niveau de référence, et comment évoluent-ils ?</h3></header>
-    <ExpandedPreview runtime={runtime} moduleKey="CATEGORIES_NEEDS" sectionKey="COMPARISONS">{(comparisons) => <M2Comparisons model={comparisons} certifiedThrough={certifiedThrough} />}</ExpandedPreview>
-    <M2MonetarySeries title="Évolution des principaux postes annuels" series={model.series} />
+    <ExpandedPreview runtime={runtime} moduleKey="CATEGORIES_NEEDS" sectionKey="COMPARISONS">{(comparisons) => <M2Comparisons model={comparisons} certifiedThrough={certifiedThrough} onDetail={onDetail} />}</ExpandedPreview>
+    <M2MonetarySeries title="Évolution des principaux postes annuels" series={model.series} showSummary={false} />
     <section className={styles.m2ExploreCategories} aria-labelledby="m2-explore-evolution"><h3 id="m2-explore-evolution">Explorer l’évolution d’une catégorie</h3><ExpandedPreview runtime={runtime} moduleKey="CATEGORIES_NEEDS" sectionKey="BREAKDOWN">{(breakdown) => <M2MoneyRows rows={breakdown.rows} onDetail={onDetail} initialLimit={3} allowExpansion={false} />}</ExpandedPreview></section>
   </div>;
 }
@@ -600,6 +612,8 @@ function GlobalExpandedContent({ model, entityRef, onDetail, runtime, certifiedT
 }
 
 function GlobalDetailOverlay({ target, runtime, mobile, certifiedThrough, restoreFocusRef, onReplace, onClose }: { readonly target: OverlayTarget; readonly runtime: GlobalV2VisitRuntime; readonly mobile: boolean; readonly certifiedThrough: string; readonly restoreFocusRef: RefObject<HTMLElement | null>; readonly onReplace: (target: OverlayTarget) => void; readonly onClose: () => void }) {
+  const returnFocusEntityRef = useRef<string | undefined>(target.kind === "ENTITY_DETAIL" ? target.entityRef : undefined);
+  const returnScrollTop = useRef<number | undefined>(undefined);
   const tabs = target.kind === "MODULE_DETAIL" ? moduleTabs[target.moduleKey] : [];
   const [section, setSection] = useState<GlobalExpandedSectionKey>(target.initialSection ?? tabs[0]?.key ?? "METHODOLOGY");
   useEffect(() => setSection(target.initialSection ?? tabs[0]?.key ?? "METHODOLOGY"), [target, tabs]);
@@ -618,16 +632,46 @@ function GlobalDetailOverlay({ target, runtime, mobile, certifiedThrough, restor
   const request = useMemo(() => ({ resource: target.resource, params }), [params, target.resource]);
   const result = useGlobalV2Resource<GlobalExpandedReadModel>(runtime, request, true, "DIRECT");
   const model = transportData(result.state);
+  useEffect(() => {
+    const entityRef = returnFocusEntityRef.current;
+    if (target.kind !== "MODULE_DETAIL" || model === undefined || entityRef === undefined) return;
+    const frame = document.querySelector<HTMLElement>('[data-overlay-shell][data-topmost="true"]');
+    if (frame === null) return;
+    const focusRow = () => {
+      const row = frame.querySelector<HTMLElement>(`[data-m2-entity-ref="${CSS.escape(entityRef)}"]`);
+      if (row === null) return false;
+      const content = frame.querySelector<HTMLElement>("[data-overlay-content]");
+      if (content !== null && returnScrollTop.current !== undefined) content.scrollTop = returnScrollTop.current;
+      row.focus({ preventScroll: true });
+      returnFocusEntityRef.current = undefined;
+      returnScrollTop.current = undefined;
+      return true;
+    };
+    if (focusRow()) return;
+    const observer = new MutationObserver(() => { if (focusRow()) observer.disconnect(); });
+    observer.observe(frame, { childList: true, subtree: true });
+    const timeout = window.setTimeout(() => { observer.disconnect(); returnFocusEntityRef.current = undefined; returnScrollTop.current = undefined; }, 2_000);
+    return () => { observer.disconnect(); window.clearTimeout(timeout); };
+  }, [model, target.kind]);
   const presentation = globalModulePresentation(target.moduleKey);
   const subtitle = target.kind === "ENTITY_DETAIL" ? target.entityRef.startsWith("need:") ? "Besoin renseigné" : "Détail de la catégorie" : target.moduleKey === "ECONOMIC" ? undefined : presentation.description;
   const localError = target.kind === "METHODOLOGY" && target.moduleKey === "ECONOMIC" ? <div className={styles.methodError} role="alert">Impossible de charger les détails de méthode · <button type="button" onClick={result.retry}>Réessayer</button></div> : <LocalError retry={result.retry} />;
   const activeTabId = `${moduleSlugs[target.moduleKey]}-tab-${section.toLowerCase()}`;
   const activePanelId = `${moduleSlugs[target.moduleKey]}-panel-${section.toLowerCase()}`;
-  const returnSection = target.entityRef.startsWith("need:") ? "PATTERNS" : "BREAKDOWN";
+  const returnSection = target.returnSection ?? (target.entityRef.startsWith("need:") ? "PATTERNS" : "BREAKDOWN");
   return <OverlayFrame kind="exploration" title={target.title} subtitle={subtitle} closeAction={{ kind: "callback", onAction: onClose }} {...(target.kind === "ENTITY_DETAIL" && target.moduleKey === "CATEGORIES_NEEDS" ? { backAction: { kind: "callback" as const, onAction: () => onReplace(moduleOverlayTarget("CATEGORIES_NEEDS", returnSection)) } } : {})} restoreFocusRef={restoreFocusRef} closeOnBackdrop className={`${styles.detailOverlay} ${mobile ? styles.mobileOverlay : ""}`}>
-    {tabs.length > 1 ? <div className={styles.overlayNavigation}><div className={`${styles.sectionTabs} ${target.moduleKey === "CATEGORIES_NEEDS" ? styles.m2Tabs : ""}`} role="tablist" aria-label={`Sections de ${target.title}`}>{tabs.map((item) => <button id={`${moduleSlugs[target.moduleKey]}-tab-${item.key.toLowerCase()}`} key={item.key} type="button" role="tab" aria-selected={section === item.key} aria-controls={`${moduleSlugs[target.moduleKey]}-panel-${item.key.toLowerCase()}`} onClick={() => { setSection(item.key); emitGlobalV2UxEvent("global_section_expanded", { moduleKey: target.moduleKey, sectionKey: item.key }); window.history.replaceState(window.history.state, "", `#${moduleSlugs[target.moduleKey]}-${item.key.toLowerCase()}`); }}>{item.label}</button>)}</div>{target.moduleKey === "ECONOMIC" ? <button type="button" className={styles.methodLink} onClick={() => onReplace(methodOverlayTarget("ECONOMIC"))}><Info aria-hidden size={15} /> Méthode</button> : null}</div> : null}
+    {tabs.length > 1 ? <div className={`${styles.overlayNavigation} ${target.moduleKey === "CATEGORIES_NEEDS" ? styles.m2OverlayNavigation : ""}`}><div className={`${styles.sectionTabs} ${target.moduleKey === "CATEGORIES_NEEDS" ? styles.m2Tabs : ""}`} role="tablist" aria-label={`Sections de ${target.title}`}>{tabs.map((item) => <button id={`${moduleSlugs[target.moduleKey]}-tab-${item.key.toLowerCase()}`} key={item.key} type="button" role="tab" aria-selected={section === item.key} aria-controls={`${moduleSlugs[target.moduleKey]}-panel-${item.key.toLowerCase()}`} onClick={() => { setSection(item.key); emitGlobalV2UxEvent("global_section_expanded", { moduleKey: target.moduleKey, sectionKey: item.key }); window.history.replaceState(window.history.state, "", `#${moduleSlugs[target.moduleKey]}-${item.key.toLowerCase()}`); }}>{item.label}</button>)}</div>{target.moduleKey === "ECONOMIC" ? <button type="button" className={styles.methodLink} onClick={() => onReplace(methodOverlayTarget("ECONOMIC"))}><Info aria-hidden size={15} /> Méthode</button> : null}</div> : null}
     {target.moduleKey === "CATEGORIES_NEEDS" ? <p className={styles.m2Period}>{analysisPeriod(certifiedThrough).label.replace("—", "→")}</p> : null}
-    <div {...(tabs.length > 1 ? { id: activePanelId, role: "tabpanel", "aria-labelledby": activeTabId } : {})}>{result.state.status === "IDLE" || result.state.status === "LOADING" ? <LoadingCard label={target.title} /> : result.state.status === "ERROR" && model === undefined ? localError : model === undefined ? null : <GlobalExpandedContent model={model} entityRef={target.entityRef} runtime={runtime} certifiedThrough={certifiedThrough} onDetail={(row) => presentation.detailResource === undefined || row.entityRef === undefined ? undefined : onReplace({ kind: "ENTITY_DETAIL", title: humanLabel(row.labelKey), resource: presentation.detailResource, entityRef: row.entityRef, moduleKey: target.moduleKey })} />}</div>
+    <div {...(tabs.length > 1 ? { id: activePanelId, role: "tabpanel", "aria-labelledby": activeTabId } : {})}>{result.state.status === "IDLE" || result.state.status === "LOADING" ? <LoadingCard label={target.title} /> : result.state.status === "ERROR" && model === undefined ? localError : model === undefined ? null : <GlobalExpandedContent model={model} entityRef={target.entityRef} runtime={runtime} certifiedThrough={certifiedThrough} onDetail={(row) => {
+      if (row.entityRef === undefined) return;
+      const nextTarget = entityOverlayTarget(target.moduleKey, row.entityRef, humanLabel(row.labelKey), section);
+      if (nextTarget === undefined) return;
+      const content = document.querySelector<HTMLElement>('[data-overlay-shell][data-topmost="true"] [data-overlay-content]');
+      returnScrollTop.current = content?.scrollTop;
+      returnFocusEntityRef.current = row.entityRef;
+      onReplace(nextTarget);
+      if (content !== null) content.scrollTop = 0;
+    }} />}</div>
   </OverlayFrame>;
 }
 
@@ -645,7 +689,7 @@ function SeeDetail({ onClick }: { readonly onClick: () => void }) {
   return <button type="button" className={styles.detailButton} onClick={onClick}>Voir le détail <span aria-hidden>→</span></button>;
 }
 
-function M2CompactRecentInsight({ insight, runtime, certifiedThrough }: { readonly insight: GlobalCompactInsight; readonly runtime: GlobalV2VisitRuntime; readonly certifiedThrough: string }) {
+function M2CompactRecentInsight({ insight, runtime, certifiedThrough, onDetail }: { readonly insight: GlobalCompactInsight; readonly runtime: GlobalV2VisitRuntime; readonly certifiedThrough: string; readonly onDetail: (entityRef: string, title: string) => void }) {
   const entityRef = insight.entityRefs[0];
   const request = useMemo<GlobalV2UiRequest>(() => ({ resource: "analysis_global_category_need_detail", params: { entityRef: entityRef ?? "" } }), [entityRef]);
   const result = useGlobalV2Resource<GlobalExpandedReadModel>(runtime, request, entityRef !== undefined, "BACKGROUND");
@@ -658,17 +702,17 @@ function M2CompactRecentInsight({ insight, runtime, certifiedThrough }: { readon
   if (current === undefined || reference === undefined || delta === undefined) return null;
   const targetLabel = analysisPeriod(certifiedThrough).targetLabel.toLocaleLowerCase("fr-FR");
   const comparison = delta === 0 ? "au même niveau que" : `${formatMoney(delta)} ${delta > 0 ? "au-dessus de" : "en dessous de"}`;
-  return <section className={styles.m2CompactChange} aria-labelledby="m2-compact-change"><h3 id="m2-compact-change">Ce qui distingue {targetLabel}</h3><article className={styles.primaryInsight}><Sparkles aria-hidden size={20} /><div><strong>{humanLabel(insight.titleKey)}</strong><p>En {targetLabel} : {formatMoney(current)}, soit {comparison} son niveau de référence de {formatMoney(reference)}.</p></div></article></section>;
+  return <section className={styles.m2CompactChange} aria-labelledby="m2-compact-change"><h3 id="m2-compact-change">Ce qui distingue {targetLabel}</h3><button type="button" className={`${styles.primaryInsight} ${styles.m2InsightButton}`} data-m2-entity-ref={entityRef} onClick={() => onDetail(entityRef, humanLabel(insight.titleKey))} aria-label={`Explorer ${humanLabel(insight.titleKey)}`}><Sparkles aria-hidden size={20} /><span><strong>{humanLabel(insight.titleKey)}</strong><p>En {targetLabel} : {formatMoney(current)}, soit {comparison} son niveau de référence de {formatMoney(reference)}.</p></span></button></section>;
 }
 
-function M2CompactCard({ model, runtime, certifiedThrough, onDetail }: { readonly model: GlobalModuleCompactReadModel; readonly runtime: GlobalV2VisitRuntime; readonly certifiedThrough: string; readonly onDetail: () => void }) {
+function M2CompactCard({ model, runtime, certifiedThrough, onDetail, onEntityDetail }: { readonly model: GlobalModuleCompactReadModel; readonly runtime: GlobalV2VisitRuntime; readonly certifiedThrough: string; readonly onDetail: () => void; readonly onEntityDetail: (entityRef: string, title: string) => void }) {
   const concentration = model.kpis.find(({ kpiId }) => kpiId === "kpi:categories:top-five-concentration");
   const period = analysisPeriod(certifiedThrough);
   return <div className={styles.m2Compact}>
     <p className={styles.m2Period}>{period.label.replace("—", "→")}</p>
     <M2Concentration value={concentration} />
-    <ExpandedPreview runtime={runtime} moduleKey="CATEGORIES_NEEDS" sectionKey="BREAKDOWN">{(breakdown) => <M2MoneyRows rows={breakdown.rows} onDetail={() => undefined} initialLimit={5} allowExpansion={false} interactive={false} />}</ExpandedPreview>
-    {model.primaryInsight === undefined ? null : <M2CompactRecentInsight insight={model.primaryInsight} runtime={runtime} certifiedThrough={certifiedThrough} />}
+    <ExpandedPreview runtime={runtime} moduleKey="CATEGORIES_NEEDS" sectionKey="BREAKDOWN">{(breakdown) => <M2MoneyRows rows={breakdown.rows} onDetail={(row) => row.entityRef === undefined ? undefined : onEntityDetail(row.entityRef, humanLabel(row.labelKey))} initialLimit={5} allowExpansion={false} />}</ExpandedPreview>
+    {model.primaryInsight === undefined ? null : <M2CompactRecentInsight insight={model.primaryInsight} runtime={runtime} certifiedThrough={certifiedThrough} onDetail={onEntityDetail} />}
     <button type="button" className={styles.detailButton} onClick={onDetail}>Explorer l’analyse <span aria-hidden>→</span></button>
   </div>;
 }
@@ -685,7 +729,7 @@ function PersonaColumns({ rows, limit = 5 }: { readonly rows: readonly GlobalDet
   return <div className={styles.personColumns}>{[...groups.entries()].map(([person, entries]) => <section key={person}><h3>{person}</h3><HumanRows rows={entries} onDetail={() => undefined} /></section>)}</div>;
 }
 
-function ModuleContent({ moduleKey, model, runtime, certifiedThrough, onDetail, onMethod }: { readonly moduleKey: GlobalPrimaryModuleKey; readonly model: GlobalModuleCompactReadModel; readonly runtime: GlobalV2VisitRuntime; readonly certifiedThrough: string; readonly onDetail: () => void; readonly onMethod: () => void }) {
+function ModuleContent({ moduleKey, model, runtime, certifiedThrough, onDetail, onEntityDetail, onMethod }: { readonly moduleKey: GlobalPrimaryModuleKey; readonly model: GlobalModuleCompactReadModel; readonly runtime: GlobalV2VisitRuntime; readonly certifiedThrough: string; readonly onDetail: () => void; readonly onEntityDetail: (entityRef: string, title: string) => void; readonly onMethod: () => void }) {
   if (moduleKey === "TRANSFORMATIONS") return <div className={styles.neutralState}><strong>Aucun changement durable clairement identifié</strong><p>Aucun changement suffisamment net et durable n’a été identifié sur la période.</p></div>;
   if (moduleKey === "RELATIONSHIPS") return <div className={styles.neutralState}><strong>Pas encore assez d’éléments pour établir une relation fiable</strong><p>Les associations disponibles ne sont pas assez étayées pour être présentées comme un résultat.</p></div>;
   if (moduleKey === "CONSUMPTION") return <div className={styles.neutralState}><strong>Analyse pas encore disponible</strong><p>L’identité des achats ne couvre pas encore suffisamment la période pour proposer une lecture fiable.</p></div>;
@@ -693,7 +737,7 @@ function ModuleContent({ moduleKey, model, runtime, certifiedThrough, onDetail, 
   const insight = model.primaryInsight;
   if (moduleKey === "ECONOMIC") return <div className={styles.compact}><ExpandedPreview runtime={runtime} moduleKey={moduleKey} sectionKey="OVERVIEW">{(overview) => <ExpandedPreview runtime={runtime} moduleKey={moduleKey} sectionKey="EVOLUTION">{(evolution) => <EconomicCompactCard overview={overview} evolution={evolution} certifiedThrough={certifiedThrough} onDetail={onDetail} onMethod={onMethod} />}</ExpandedPreview>}</ExpandedPreview></div>;
 
-  if (moduleKey === "CATEGORIES_NEEDS") return <M2CompactCard model={model} runtime={runtime} certifiedThrough={certifiedThrough} onDetail={onDetail} />;
+  if (moduleKey === "CATEGORIES_NEEDS") return <M2CompactCard model={model} runtime={runtime} certifiedThrough={certifiedThrough} onDetail={onDetail} onEntityDetail={onEntityDetail} />;
 
   if (moduleKey === "RHYTHM") return <div className={styles.compact}>
     {insight === undefined ? null : <InsightCard insight={insight} />}
@@ -745,10 +789,16 @@ function GlobalModulePanel({ moduleKey, runtime, certifiedThrough, eager, direct
     emitGlobalV2UxEvent("global_module_viewed", { moduleKey });
   }, [compactModel, moduleKey]);
   const openDetail = () => { onOverlay(moduleOverlayTarget(moduleKey)); emitGlobalV2UxEvent("global_module_expanded", { moduleKey, state: "overlay" }); };
+  const openEntityDetail = (entityRef: string, title: string) => {
+    const target = entityOverlayTarget(moduleKey, entityRef, title);
+    if (target === undefined) return;
+    onOverlay(target);
+    emitGlobalV2UxEvent("global_entity_opened", { moduleKey });
+  };
   const openMethod = () => { onOverlay(methodOverlayTarget(moduleKey)); emitGlobalV2UxEvent("global_methodology_opened", { moduleKey }); };
   return <section ref={nearViewport.ref} id={moduleSlugs[moduleKey]} className={styles.module} data-module={moduleKey} aria-labelledby={`${moduleSlugs[moduleKey]}-title`}>
     <header className={styles.moduleHeader}><div>{presentation.eyebrow.length === 0 ? null : <span className="eyebrow">{presentation.eyebrow}</span>}<h2 id={`${moduleSlugs[moduleKey]}-title`}>{presentation.title}</h2>{presentation.description.length === 0 ? null : <p>{presentation.description}</p>}</div></header>
-    {compact.state.status === "IDLE" || compact.state.status === "LOADING" ? <LoadingCard label={presentation.title} /> : compact.state.status === "ERROR" && compactModel === undefined ? <LocalError retry={compact.retry} /> : compactModel === undefined ? null : <ModuleContent moduleKey={moduleKey} model={compactModel} runtime={runtime} certifiedThrough={certifiedThrough} onDetail={openDetail} onMethod={openMethod} />}
+    {compact.state.status === "IDLE" || compact.state.status === "LOADING" ? <LoadingCard label={presentation.title} /> : compact.state.status === "ERROR" && compactModel === undefined ? <LocalError retry={compact.retry} /> : compactModel === undefined ? null : <ModuleContent moduleKey={moduleKey} model={compactModel} runtime={runtime} certifiedThrough={certifiedThrough} onDetail={openDetail} onEntityDetail={openEntityDetail} onMethod={openMethod} />}
   </section>;
 }
 

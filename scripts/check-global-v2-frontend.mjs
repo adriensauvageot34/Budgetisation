@@ -122,8 +122,11 @@ const routeSource = fs.readFileSync(path.join(root, "src/app/analyse-globale/pag
 const fixturePageSource = fs.readFileSync(path.join(root, "src/features/global-v2/global-v2-fixture-page.tsx"), "utf8");
 const overlaySource = fs.readFileSync(path.join(root, "src/ui/overlays/overlay-frame.tsx"), "utf8");
 const monetaryEvolutionSource = fs.readFileSync(path.join(root, "src/ui/charts/monetary-evolution/monetary-evolution.tsx"), "utf8");
+const chartLegendSource = fs.readFileSync(path.join(root, "src/ui/charts/shared/chart-legend.tsx"), "utf8");
 const m2Source = pageSource.slice(pageSource.indexOf("function M2MoneyRows"), pageSource.indexOf("function PersonaColumns"));
 const m2CompactSource = pageSource.slice(pageSource.indexOf("function M2CompactCard"), pageSource.indexOf("function PersonaColumns"));
+const m2InsightSource = pageSource.slice(pageSource.indexOf("function M2CompactRecentInsight"), pageSource.indexOf("function M2CompactCard"));
+const m2ComparisonsSource = pageSource.slice(pageSource.indexOf("function M2Comparisons"), pageSource.indexOf("function M2NeedsContent"));
 const m2ExpandedSource = pageSource.slice(pageSource.indexOf("function M2ExpandedContent"), pageSource.indexOf("function GlobalExpandedContent"));
 const m2DetailSource = pageSource.slice(pageSource.indexOf("function M2EntityDetail"), pageSource.indexOf("function M2ExpandedContent"));
 check(() => assert.match(pageSource, /IntersectionObserver/u));
@@ -197,6 +200,24 @@ check(() => assert.match(m2Source, /Voir les \$\{typedRows\.length - initialLimi
 check(() => assert.doesNotMatch(m2DetailSource, /subcategoryAmount\s*\/|annualShare\s*=|numericDisplay|displayValue\?\.match/u));
 check(() => assert.match(monetaryEvolutionSource, /referenceLine[\s\S]*ReferenceLine y=\{referenceValue\}[\s\S]*ifOverflow="extendDomain"/u));
 check(() => assert.match(monetaryEvolutionSource, /highlightLastPoint[\s\S]*ReferenceDot/u));
+// UX-3: direct exploration, dense comparisons, sticky tabs and non-color chart cues.
+check(() => assert.match(m2CompactSource, /M2MoneyRows[\s\S]*onEntityDetail\(row\.entityRef, humanLabel\(row\.labelKey\)\)/u));
+check(() => assert.doesNotMatch(m2CompactSource, /interactive=\{false\}/u));
+check(() => assert.match(m2InsightSource, /<button[\s\S]*data-m2-entity-ref=\{entityRef\}[\s\S]*onDetail\(entityRef, humanLabel\(insight\.titleKey\)\)/u));
+check(() => assert.match(m2ComparisonsSource, /rows\.slice\(0, 6\)/u));
+check(() => assert.match(m2ComparisonsSource, /Réduire la liste[\s\S]*Voir les \$\{rows\.length - 6\} autres/u));
+check(() => assert.match(m2ComparisonsSource, /<button[\s\S]*data-m2-entity-ref=\{row\.entityRef\}[\s\S]*onDetail\(row\)/u));
+check(() => assert.match(m2Source, /M2MonetarySeries title="Évolution des principaux postes annuels"[\s\S]*showSummary=\{false\}/u));
+check(() => assert.match(chartLegendSource, /aria-label="Légende du graphique"[\s\S]*strokeStyle/u));
+check(() => assert.match(monetaryEvolutionSource, /chartSeriesStrokeStyles[\s\S]*chartSeriesDashPatterns[\s\S]*strokeDasharray=\{chartSeriesDashPatterns/u));
+check(() => assert.match(cssSource, /\.m2OverlayNavigation\s*\{[^}]*position:\s*sticky[^}]*z-index:\s*2[^}]*top:/u));
+check(() => assert.match(cssSource, /\.sectionTabs button:focus-visible/u));
+check(() => assert.match(cssSource, /\.m2Changes > div > button:focus-visible/u));
+check(() => assert.match(cssSource, /\.m2InsightButton:focus-visible/u));
+check(() => assert.match(pageSource, /returnSection\?: GlobalExpandedSectionKey[\s\S]*entityOverlayTarget[\s\S]*returnFocusEntityRef[\s\S]*MutationObserver/u));
+check(() => assert.match(m2Source, /Le besoin associé est suffisamment renseigné/u));
+check(() => assert.match(m2Source, /Analyse partielle/u));
+check(() => assert.doesNotMatch(m2ComparisonsSource, /\.sort\(|Materiality|numericDisplay|displayValue/u));
 check(() => assert.match(pageSource, /role: "tabpanel"[\s\S]*aria-labelledby/u));
 check(() => assert.match(cssSource, /\.m2DetailMetrics[\s\S]*@media \(max-width: 767px\)/u));
 

@@ -58,6 +58,8 @@ export type MultiSeriesMonetaryEvolutionProps = {
 };
 
 const chartSeriesColorIndexes = [0, 1, 2, 3, 4] as const;
+const chartSeriesStrokeStyles = ["solid", "dashed", "dotted", "dashed", "dotted"] as const;
+const chartSeriesDashPatterns = [undefined, "7 4", "2 4", "10 3 2 3", "1 4"] as const;
 
 export function MonetaryEvolution<U extends MonetaryMetricUnit>({
   frame,
@@ -138,7 +140,7 @@ export function MultiSeriesMonetaryEvolution({
   const lastPoint = series.length === 1 ? series[0]?.points.at(-1) : undefined;
   const lastValue = lastPoint === undefined ? null : toTechnicalChartValue(lastPoint.metric).value;
   return (
-    <ChartFrame {...frame} legend={showLegend ? frame.legend ?? <ChartLegend items={series.map((item, index) => ({ id: item.id, label: item.label, colorIndex: chartSeriesColorIndexes[index % chartSeriesColorIndexes.length]! }))} /> : null}>
+    <ChartFrame {...frame} legend={showLegend ? frame.legend ?? <ChartLegend items={series.map((item, index) => ({ id: item.id, label: item.label, colorIndex: chartSeriesColorIndexes[index % chartSeriesColorIndexes.length]!, strokeStyle: chartSeriesStrokeStyles[index % chartSeriesStrokeStyles.length]! }))} /> : null}>
       <div className="ui-chart-renderer" data-chart-kind="monetary_evolution" data-series-count={series.length} data-selected-period={selectedPeriod}>
         <ResponsiveContainer width="100%" height="100%">
           <LineChart data={data} onClick={(state) => {
@@ -154,7 +156,7 @@ export function MultiSeriesMonetaryEvolution({
             {referenceValue === null || referenceLine === undefined ? null : <ReferenceLine y={referenceValue} stroke={designTokens.color.chart.series[1]} strokeDasharray="6 4" ifOverflow="extendDomain" label={{ value: `${referenceLine.label} ${format(referenceValue)}`, position: "insideTopRight", fill: designTokens.color.text.secondary }} />}
             {selectedLabel ? <ReferenceLine x={selectedLabel} stroke={designTokens.color.chart.series[0]} strokeDasharray="3 3" /> : null}
             {series.map((item, index) => (
-              <Line key={item.id} dataKey={item.id} name={item.label} type="linear" connectNulls={false} stroke={designTokens.color.chart.series[index % designTokens.color.chart.series.length]} dot />
+              <Line key={item.id} dataKey={item.id} name={item.label} type="linear" connectNulls={false} stroke={designTokens.color.chart.series[index % designTokens.color.chart.series.length]} strokeDasharray={chartSeriesDashPatterns[index % chartSeriesDashPatterns.length]} dot />
             ))}
             {highlightLastPoint && lastPoint !== undefined && lastValue !== null ? <ReferenceDot x={lastPoint.label} y={lastValue} r={5} fill={designTokens.color.surface.base} stroke={designTokens.color.chart.series[0]} strokeWidth={3} ifOverflow="extendDomain" aria-label="Dernier mois analysé" /> : null}
           </LineChart>
