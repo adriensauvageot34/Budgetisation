@@ -27,6 +27,36 @@ const runtimeApi = await import("../src/server/query/global-v2-runtime.ts");
 const months = Array.from({ length: 12 }, (_, index) => `${index < 5 ? "2025" : "2026"}-${String((index + 7) % 12 + 1).padStart(2, "0")}`);
 const personA = "00000000-0000-4000-8000-000000000002";
 const personB = "00000000-0000-4000-8000-000000000003";
+const strongSupport = { naturalGrain: "MONTH", eligibleUnits: 12, observedUnits: 12, includedUnits: 12, excludedObservedUnits: 0, minimumRequired: 6, supportStatus: "STRONG", policyRef: "global-m2-category-reference-support@v1" };
+const axisCoverage = (dimension, status, effective) => ({ dimensions: [{ dimension, status, numerator: effective * 100, denominator: 100, ratio: effective, unit: "canonical_economic_component", basis: "authoritative-dimension-resolution", evidenceRefs: [`coverage:${dimension.toLowerCase()}`], policyRef: "global-category-need-coverage@v1" }], requiredDimensions: [dimension], effective, aggregation: "MIN_REQUIRED_DIMENSIONS" });
+const annualSeries = (amount) => months.map((month, index) => ({ month, amount: index === months.length - 1 ? amount : "0" }));
+const categoryGroup = ({ key, monthlyAmount, typicalAmount, annualAmount, annualShare, subcategories, shareDeltaPoints }) => ({
+  key,
+  dimension: { status: "KNOWN", id: `cat-${key}`, evidenceRefs: [`category:cat-${key}`] },
+  monthlyAmount,
+  typicalAmount,
+  shareOfTypical: typicalAmount === "0" ? "0" : "0.1",
+  annualAmount,
+  annualShare,
+  activeMonths: 1,
+  currentShare: "0.1",
+  referenceShare: typicalAmount === "0" ? "0" : "0.1",
+  shareDeltaPoints,
+  deltaAmount: String(Number(monthlyAmount) - Number(typicalAmount)),
+  deltaRelative: typicalAmount === "0" ? null : String((Number(monthlyAmount) - Number(typicalAmount)) / Number(typicalAmount)),
+  historicalSeries: annualSeries(annualAmount),
+  annualSubcategoryBreakdown: subcategories,
+  contributors: [],
+  classificationBreakdown: { necessity: [], behavior: [], lifeScope: [] },
+  drillDownRef: { kind: "CATEGORY", id: `cat-${key}` },
+  evidenceRefs: [`category:cat-${key}`],
+});
+const materialityCandidate = ({ key, absolute, relative }) => ({
+  candidateId: `global-m2:category:${key}`, phenomenonId: `category:${key}`, metricRef: "global-m2:category:monthly-amount",
+  effect: { absolute, ...(relative === undefined ? {} : { relative }) }, knowledgeState: "KNOWN", support: strongSupport,
+  coverage: axisCoverage("CLASSIFICATION", "KNOWN", 1), evidenceRefs: [`category:cat-${key}`], entityRefs: [`category:cat-${key}`],
+  methodVersion: "global_category_need@v2", materialityPolicy: { id: "global-materiality-category-need", version: "v1" },
+});
 const outputByModule = {
   ECONOMIC: {
     targetMonth: "2026-07",
@@ -37,22 +67,25 @@ const outputByModule = {
     temporal: { trend: { startLevel: "3427.21", endLevel: "2845.67", slopePerMonth: "-52.86" }, recentChange: { previousLevel: "2529.75", recentLevel: "3289.43", delta: "759.68" } },
   },
   CATEGORIES_NEEDS: { result: {
-    categories: { currentTotal: "3773.14", groups: [
-      { key: "food", dimension: { status: "KNOWN", id: "cat-food" }, monthlyAmount: "1036.96", typicalAmount: "148.88", deltaAmount: "888.08", shareDeltaPoints: "2", historicalSeries: months.map((month, index) => ({ month, amount: String(100 + index) })) },
-      { key: "home", dimension: { status: "KNOWN", id: "cat-home" }, monthlyAmount: "900", typicalAmount: "800", deltaAmount: "100", historicalSeries: months.map((month, index) => ({ month, amount: String(200 + index) })) },
-      { key: "travel", dimension: { status: "KNOWN", id: "cat-travel" }, monthlyAmount: "400", typicalAmount: "300", deltaAmount: "100", historicalSeries: months.map((month, index) => ({ month, amount: String(300 + index) })) },
+    inputHash: "a".repeat(64),
+    categories: { currentTotal: "3773.14", annualTotal: "22000", coverage: axisCoverage("CLASSIFICATION", "KNOWN", 1), support: strongSupport, monetaryCoverage: { status: "KNOWN", knownAmount: "22000", unresolvedAmount: "0", totalAmount: "22000", knownShare: "1" }, groups: [
+      categoryGroup({ key: "food", monthlyAmount: "1036.96", typicalAmount: "0", annualAmount: "5000", annualShare: String(5 / 22), shareDeltaPoints: "27.48", subcategories: [{ key: "sub-food-core", annualAmount: "3000", annualShare: "0.6" }, { key: "sub-food-extra", annualAmount: "2000", annualShare: "0.4" }] }),
+      categoryGroup({ key: "home", monthlyAmount: "900", typicalAmount: "800", annualAmount: "7000", annualShare: String(7 / 22), shareDeltaPoints: "-8", subcategories: [{ key: "sub-home", annualAmount: "7000", annualShare: "1" }] }),
+      categoryGroup({ key: "travel", monthlyAmount: "400", typicalAmount: "600", annualAmount: "4000", annualShare: String(4 / 22), shareDeltaPoints: "-9", subcategories: [{ key: "sub-travel", annualAmount: "4000", annualShare: "1" }] }),
+      categoryGroup({ key: "gifts", monthlyAmount: "200", typicalAmount: "180", annualAmount: "3000", annualShare: String(3 / 22), shareDeltaPoints: "1", subcategories: [{ key: "sub-gifts", annualAmount: "3000", annualShare: "1" }] }),
+      categoryGroup({ key: "health", monthlyAmount: "100", typicalAmount: "90", annualAmount: "2000", annualShare: String(2 / 22), shareDeltaPoints: "1", subcategories: [{ key: "sub-health", annualAmount: "2000", annualShare: "1" }] }),
+      categoryGroup({ key: "misc", monthlyAmount: "1136.18", typicalAmount: "1100", annualAmount: "1000", annualShare: String(1 / 22), shareDeltaPoints: "1", subcategories: [{ key: "sub-misc", annualAmount: "1000", annualShare: "1" }] }),
     ] },
-    needs: { groups: [
-      { key: "need-food", dimension: { status: "KNOWN", id: "need-food" }, monthlyAmount: "439.97" },
-      { key: "__UNKNOWN__", dimension: { status: "UNKNOWN" }, monthlyAmount: "2670.50" },
+    needs: { currentTotal: "3773.14", annualTotal: "10000", coverage: axisCoverage("NEED", "PARTIAL", 0.65), support: strongSupport, monetaryCoverage: { status: "PARTIAL", knownAmount: "6000", unresolvedAmount: "4000", totalAmount: "10000", knownShare: "0.6" }, groups: [
+      { key: "need-food", dimension: { status: "KNOWN", id: "need-food", evidenceRefs: ["need:need-food"] }, monthlyAmount: "439.97", typicalAmount: "400", annualAmount: "4000", annualShare: "0.4", activeMonths: 12, deltaAmount: "39.97", deltaRelative: "0.099925", historicalSeries: annualSeries("4000"), contributors: [{ key: "cat-food", amount: "439.97" }], drillDownRef: { kind: "NEED", id: "need-food" }, evidenceRefs: ["need:need-food"] },
+      { key: "need-home", dimension: { status: "KNOWN", id: "need-home", evidenceRefs: ["need:need-home"] }, monthlyAmount: "662.67", typicalAmount: "600", annualAmount: "2000", annualShare: "0.2", activeMonths: 12, deltaAmount: "62.67", deltaRelative: "0.10445", historicalSeries: annualSeries("2000"), contributors: [{ key: "cat-home", amount: "662.67" }], drillDownRef: { kind: "NEED", id: "need-home" }, evidenceRefs: ["need:need-home"] },
+      { key: "__UNKNOWN__", dimension: { status: "UNKNOWN", evidenceRefs: ["need:unknown"] }, monthlyAmount: "2670.50", typicalAmount: "2000", annualAmount: "4000", annualShare: "0.4", activeMonths: 12, deltaAmount: "670.5", deltaRelative: "0.33525", historicalSeries: annualSeries("4000"), contributors: [], drillDownRef: { kind: "NEED", id: "__UNKNOWN__" }, evidenceRefs: ["need:unknown"] },
     ] },
-    materialityCandidates: [{
-      candidateId: "global-m2:category:food", phenomenonId: "category:food", metricRef: "global-m2:category:monthly-amount",
-      effect: { absolute: "15" }, knowledgeState: "KNOWN",
-      support: { naturalGrain: "MONTH", eligibleUnits: 12, observedUnits: 12, includedUnits: 12, excludedObservedUnits: 0, minimumRequired: 6, supportStatus: "STRONG", policyRef: "global-m2-category-reference-support@v1" },
-      coverage: { dimensions: [{ dimension: "CLASSIFICATION", status: "KNOWN", numerator: 1, denominator: 1, ratio: 1, unit: "component-share", basis: "resolved-over-eligible", evidenceRefs: ["category:cat-food"], policyRef: "global-m2-classification-coverage@v1" }], requiredDimensions: ["CLASSIFICATION"], effective: 1, aggregation: "MIN_REQUIRED_DIMENSIONS" },
-      evidenceRefs: ["category:cat-food"], entityRefs: ["category:cat-food"], methodVersion: "global_category_need@v1", materialityPolicy: { id: "global-materiality-category-need", version: "v1" },
-    }],
+    materialityCandidates: [
+      materialityCandidate({ key: "food", absolute: "15" }),
+      materialityCandidate({ key: "home", absolute: "100", relative: "0.125" }),
+      materialityCandidate({ key: "travel", absolute: "-200", relative: "-0.333333" }),
+    ],
   } },
   TRANSFORMATIONS: { transformations: [], relationshipChanges: [] },
   RHYTHM: { rhythms: [
@@ -96,8 +129,9 @@ const base = {
   ownerOutputs: modules,
   presentationLabels: {
     persons: { [personA]: "Camille", [personB]: "Alex" },
-    categories: { "cat-food": "Alimentation", "cat-home": "Maison", "cat-travel": "Voyages" },
-    needs: { "need-food": "Se nourrir" },
+    categories: { "cat-food": "Alimentation", "cat-home": "Logement", "cat-travel": "Transport", "cat-gifts": "Cadeaux", "cat-health": "Santé", "cat-misc": "Divers" },
+    subcategories: { "sub-food-core": "Courses", "sub-food-extra": "Restaurants", "sub-home": "Loyer", "sub-travel": "Train", "sub-gifts": "Cadeaux", "sub-health": "Santé", "sub-misc": "Divers" },
+    needs: { "need-food": "Se nourrir", "need-home": "Se loger" },
     places: { "place-one": "Maison" },
   },
 };
@@ -108,6 +142,7 @@ const first = candidateApi.buildGlobalV2CandidateFromOwnerOutputs(base);
 const second = candidateApi.buildGlobalV2CandidateFromOwnerOutputs({ ...base, ownerOutputs: [...modules].reverse() });
 const snapshot = (resource, sectionKey) => first.snapshots.find((entry) => entry.resource === resource && (sectionKey === undefined || entry.params.sectionKey === sectionKey));
 const compact = (resource) => snapshot(resource).payload;
+const detail = (entityRef) => first.snapshots.find((entry) => entry.resource === "analysis_global_category_need_detail" && entry.params.entityRef === entityRef)?.payload;
 check(() => assert.equal(first.candidateId, second.candidateId));
 check(() => assert.equal(first.factsHash, second.factsHash));
 check(() => assert.equal(first.manifestHash, second.manifestHash));
@@ -123,10 +158,52 @@ check(() => assert.deepEqual(first.gatedCapabilities, ["GLOBAL_PRODUCT_DETAIL", 
 check(() => assert.deepEqual(compact("analysis_global_economic").kpis.map(({ labelKey }) => labelKey), ["Dépenses en 2026-07", "Nos dépenses minimum", "Niveau habituel"]));
 check(() => assert.equal(compact("analysis_global_economic").kpis.some(({ displayValue }) => displayValue === "9"), false));
 check(() => assert.match(compact("analysis_global_economic").primaryInsight.statementKey, /au-dessus de votre niveau habituel/));
-check(() => assert.deepEqual(snapshot("analysis_global_categories_needs_expanded", "BREAKDOWN").payload.rows.map(({ labelKey }) => labelKey), ["Alimentation", "Maison", "Voyages"]));
+const m2Breakdown = snapshot("analysis_global_categories_needs_expanded", "BREAKDOWN").payload;
+const m2Patterns = snapshot("analysis_global_categories_needs_expanded", "PATTERNS").payload;
+const m2Comparisons = snapshot("analysis_global_categories_needs_expanded", "COMPARISONS").payload;
+check(() => assert.deepEqual(m2Breakdown.rows.map(({ labelKey }) => labelKey), ["Logement", "Alimentation", "Transport", "Cadeaux", "Santé", "Divers"]));
+check(() => assert.deepEqual(m2Breakdown.rows.map(({ typedMeasure }) => typedMeasure?.value), ["7000", "5000", "4000", "3000", "2000", "1000"]));
+check(() => assert.equal(m2Breakdown.rows.every(({ typedMeasure }) => typedMeasure?.kind === "MONEY" && typedMeasure.unit === "EUR"), true));
+check(() => assert.equal(m2Breakdown.rows.length > 5, true));
 check(() => assert.equal(compact("analysis_global_categories_needs").primaryInsight.titleKey, "Alimentation"));
+check(() => assert.match(compact("analysis_global_categories_needs").primaryInsight.statementKey, /référence/u));
+check(() => assert.equal(compact("analysis_global_categories_needs").kpis.find(({ kpiId }) => kpiId.includes("top-five-concentration")).typedMeasure.value, String(21 / 22)));
+check(() => assert.equal(m2Comparisons.rows.length, 3));
+check(() => assert.deepEqual(m2Comparisons.rows.map(({ labelKey }) => labelKey), ["Hausse · Alimentation", "Baisse · Transport", "Hausse · Logement"]));
+check(() => assert.equal(m2Comparisons.secondaryInsights.length, 2));
 check(() => assert.equal(snapshot("analysis_global_categories_needs_expanded", "EVOLUTION").payload.series.length, 3));
+check(() => assert.deepEqual(snapshot("analysis_global_categories_needs_expanded", "EVOLUTION").payload.series.map(({ labelKey }) => labelKey).sort(), ["Alimentation", "Logement", "Transport"]));
 check(() => assert.equal(snapshot("analysis_global_categories_needs_expanded", "EVOLUTION").payload.series.every(({ points }) => points.length === 12), true));
+check(() => assert.equal(snapshot("analysis_global_categories_needs_expanded", "EVOLUTION").payload.series.every(({ points }) => points.every(({ typedMeasure }) => typedMeasure?.kind === "MONEY")), true));
+check(() => assert.equal(m2Patterns.quality.knowledgeState, "PARTIAL"));
+check(() => assert.equal(m2Patterns.quality.effectiveCoverage, 0.65));
+check(() => assert.deepEqual(m2Patterns.rows.map(({ labelKey }) => labelKey), ["Se nourrir", "Se loger"]));
+check(() => assert.equal(m2Patterns.rows.some(({ entityRef }) => entityRef === "need:__UNKNOWN__"), false));
+check(() => assert.equal(m2Patterns.metrics.find(({ metricId }) => metricId === "needs-component-coverage").typedMeasure.value, "0.65"));
+check(() => assert.equal(m2Patterns.metrics.find(({ metricId }) => metricId === "needs-monetary-coverage").typedMeasure.value, "0.6"));
+check(() => assert.equal(m2Patterns.metrics.find(({ metricId }) => metricId === "needs-unclassified-annual-amount").typedMeasure.value, "4000"));
+const categoryDetails = first.snapshots.filter(({ resource, params }) => resource === "analysis_global_category_need_detail" && params.entityRef.startsWith("category:"));
+const needDetails = first.snapshots.filter(({ resource, params }) => resource === "analysis_global_category_need_detail" && params.entityRef.startsWith("need:"));
+const foodDetail = detail("category:cat-food");
+check(() => assert.equal(categoryDetails.length, 6));
+check(() => assert.equal(needDetails.length, 2));
+check(() => assert.equal(detail("need:__UNKNOWN__"), undefined));
+check(() => assert.equal(m2Breakdown.rows.every(({ entityRef }) => detail(entityRef) !== undefined), true));
+check(() => assert.deepEqual(foodDetail.metrics.map(({ metricId }) => metricId), ["detail:active-months", "detail:annual-amount", "detail:annual-share", "detail:current-amount", "detail:delta-amount", "detail:typical-amount"]));
+check(() => assert.equal(foodDetail.metrics.every(({ typedMeasure }) => typedMeasure !== undefined), true));
+check(() => assert.equal(foodDetail.series.length, 1));
+check(() => assert.equal(foodDetail.series[0].points.length, 12));
+check(() => assert.equal(foodDetail.series[0].points.every(({ typedMeasure }) => typedMeasure?.kind === "MONEY"), true));
+check(() => assert.deepEqual(foodDetail.rows.map(({ labelKey }) => labelKey), ["Courses", "Restaurants"]));
+check(() => assert.equal(foodDetail.rows.reduce((sum, { typedMeasure }) => sum + Number(typedMeasure.value), 0), 5000));
+check(() => assert.deepEqual(foodDetail.destinations.map(({ kind }) => kind), ["HISTORY", "OPERATIONS"]));
+check(() => assert.equal(foodDetail.destinations.every(({ entityRef }) => entityRef === "category:cat-food"), true));
+check(() => assert.deepEqual(foodDetail.publicationMeta, m2Breakdown.publicationMeta));
+check(() => assert.equal(detail("need:need-food").quality.knowledgeState, "PARTIAL"));
+check(() => assert.deepEqual(detail("need:need-food").rows.map(({ labelKey }) => labelKey), ["Alimentation"]));
+check(() => assert.equal(compact("analysis_global_categories_needs").kpis.find(({ kpiId }) => kpiId.includes("needs:monetary-coverage")).phenomenonQuality.knowledgeState, "PARTIAL"));
+const legacyM2Snapshot = { ...m2Breakdown, rows: [{ rowId: "001:category:legacy", labelKey: "Ancienne catégorie", displayValue: "900 €", knowledgeState: "KNOWN", entityRef: "category:legacy", evidenceRefs: ["legacy:v1"] }] };
+check(() => assert.equal(query.globalExpandedReadModelSchema.safeParse(legacyM2Snapshot).success, true));
 check(() => assert.equal(snapshot("analysis_global_rhythm_expanded", "OVERVIEW").payload.rows.some(({ labelKey }) => labelKey === "Travail sur site · Camille"), true));
 check(() => assert.equal(snapshot("analysis_global_rhythm_expanded", "EVOLUTION").payload.series.length, 3));
 check(() => assert.equal(snapshot("analysis_global_rhythm_expanded", "EVOLUTION").payload.series.every(({ points }) => points.length === 12), true));

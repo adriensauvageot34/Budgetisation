@@ -30,6 +30,7 @@ import {
   type GlobalCompactKpi,
   type GlobalCompactQuality,
   type GlobalDetailMetric,
+  type GlobalNavigationDestination,
   type GlobalDetailRow,
   type GlobalDetailSeries,
   type GlobalPhenomenonQuality,
@@ -103,6 +104,7 @@ export type GlobalV2PresentationLabels = {
   readonly persons?: Readonly<Record<string, string>>;
   readonly places?: Readonly<Record<string, string>>;
   readonly categories?: Readonly<Record<string, string>>;
+  readonly subcategories?: Readonly<Record<string, string>>;
   readonly needs?: Readonly<Record<string, string>>;
   readonly recurrences?: Readonly<Record<string, string>>;
 };
@@ -118,6 +120,8 @@ type SectionProjection = {
   readonly metrics?: readonly GlobalDetailMetric[];
   readonly series?: readonly GlobalDetailSeries[];
   readonly rows?: readonly GlobalDetailRow[];
+  readonly secondaryInsights?: readonly GlobalCompactInsight[];
+  readonly quality?: GlobalCompactQuality;
 };
 type ModuleProjection = {
   readonly primaryInsight?: GlobalCompactInsight;
@@ -359,6 +363,203 @@ function byDescendingNumber(path: readonly string[]) {
   return (left: unknown, right: unknown): number => (numberOf(at(right, ...path)) ?? Number.NEGATIVE_INFINITY) - (numberOf(at(left, ...path)) ?? Number.NEGATIVE_INFINITY);
 }
 
+const GLOBAL_M2_QUERY_PROJECTION_VERSION = "global-m2-query-projection@v2";
+
+function formatRatio(value: unknown, maximumFractionDigits = 1): string | undefined {
+  const numeric = numberOf(value);
+  return numeric === undefined ? undefined : `${formatNumber(numeric * 100, maximumFractionDigits)} %`;
+}
+
+function m2AxisQuality(output: GlobalV2OwnerOutput, axis: unknown, includeMonetaryCoverage = false): GlobalCompactQuality {
+  const coverageDimensions = arrayOf(at(axis, "coverage", "dimensions"));
+  const componentStatus = stringOf(at(coverageDimensions[0], "status")) ?? "UNKNOWN";
+  const monetaryStatus = includeMonetaryCoverage ? stringOf(at(axis, "monetaryCoverage", "status")) ?? "UNKNOWN" : "KNOWN";
+  const statuses = [componentStatus, monetaryStatus];
+  const knowledgeState: GlobalCompactQuality["knowledgeState"] = statuses.includes("CONFLICT")
+    ? "CONFLICT"
+    : statuses.includes("UNKNOWN")
+      ? "UNKNOWN"
+      : statuses.includes("PARTIAL")
+        ? "PARTIAL"
+        : "KNOWN";
+  const supportStatus = stringOf(at(axis, "support", "supportStatus"));
+  const effectiveCoverage = numberOf(at(axis, "coverage", "effective"));
+  const limitationCodes = uniqueSorted([
+    ...(componentStatus === "KNOWN" ? [] : [`M2_COMPONENT_COVERAGE_${componentStatus}`]),
+    ...(includeMonetaryCoverage && monetaryStatus !== "KNOWN" ? [`M2_MONETARY_COVERAGE_${monetaryStatus}`] : []),
+  ]);
+  const evidenceRefs = coverageDimensions.flatMap((dimension) => arrayOf(at(dimension, "evidenceRefs")))
+    .filter((entry): entry is string => typeof entry === "string");
+  return {
+    knowledgeState,
+    ...(knowledgeState === "PARTIAL" ? { partialMeaning: "OBSERVED_ONLY" as const } : {}),
+    ...(supportStatus === "INSUFFICIENT" || supportStatus === "PARTIAL_SUPPORT" || supportStatus === "SUFFICIENT" || supportStatus === "STRONG" ? { supportStatus } : {}),
+    ...(effectiveCoverage === undefined ? {} : { effectiveCoverage }),
+    dataNature: "OBSERVED",
+    limitationCodes,
+    evidenceRefs: projectedEvidence(output, evidenceRefs),
+  };
+}
+
+function m2PhenomenonQuality(input: {
+  readonly result: unknown;
+  readonly axis: unknown;
+  readonly knowledgeState: GlobalPhenomenonQuality["knowledgeState"];
+  readonly materialityStatus?: GlobalPhenomenonQuality["materialityStatus"];
+  readonly limitations?: readonly string[];
+}): GlobalPhenomenonQuality {
+  const supportStatus = stringOf(at(input.axis, "support", "supportStatus"));
+  const effectiveCoverage = numberOf(at(input.axis, "coverage", "effective"));
+  return {
+    knowledgeState: input.knowledgeState,
+    ...(supportStatus === "INSUFFICIENT" || supportStatus === "PARTIAL_SUPPORT" || supportStatus === "SUFFICIENT" || supportStatus === "STRONG" ? { supportStatus } : {}),
+    ...(effectiveCoverage === undefined ? {} : { effectiveCoverage }),
+    ...(input.materialityStatus === undefined ? {} : { materialityStatus: input.materialityStatus }),
+    limitationCodes: uniqueSorted(input.limitations ?? []),
+    dataNature: "OBSERVED",
+    methodVersion: GLOBAL_M2_QUERY_PROJECTION_VERSION,
+    inputHash: stringOf(at(input.result, "inputHash")) ?? digest(input.result),
+  };
+}
+
+function m2EntityRef(group: unknown, expectedKind: "CATEGORY" | "NEED"): string | undefined {
+  const kind = stringOf(at(group, "drillDownRef", "kind"));
+  const id = stringOf(at(group, "drillDownRef", "id"));
+  return kind === expectedKind && id !== undefined ? `${kind.toLowerCase()}:${id}` : undefined;
+}
+
+function m2Metric(input: {
+  readonly output: GlobalV2OwnerOutput;
+  readonly result: unknown;
+  readonly axis: unknown;
+  readonly metricId: string;
+  readonly labelKey: string;
+  readonly value: unknown;
+  readonly kind: GlobalTypedMeasure["kind"];
+  readonly unit: string;
+  readonly phenomenonRef: string;
+  readonly evidenceRefs: readonly string[];
+  readonly knowledgeState?: GlobalDetailMetric["knowledgeState"];
+  readonly signed?: boolean;
+}): GlobalDetailMetric | undefined {
+  const raw = stringOf(input.value);
+  if (raw === undefined) return undefined;
+  const knowledgeState = input.knowledgeState ?? "KNOWN";
+  const displayValue = input.kind === "RATIO" || input.kind === "DECIMAL" && input.unit === "ratio"
+    ? formatRatio(raw)!
+    : input.kind === "COUNT"
+      ? `${formatNumber(raw, 0)} mois`
+      : input.signed === true
+        ? formatSignedMoney(raw)!
+        : formatMoney(raw)!;
+  return {
+    metricId: input.metricId,
+    labelKey: input.labelKey,
+    displayValue,
+    typedMeasure: { kind: input.kind, value: raw, unit: input.unit },
+    phenomenonRef: input.phenomenonRef,
+    phenomenonQuality: m2PhenomenonQuality({ result: input.result, axis: input.axis, knowledgeState }),
+    knowledgeState,
+    ...(knowledgeState === "PARTIAL" ? { partialMeaning: "OBSERVED_ONLY" as const } : {}),
+    dataNature: "OBSERVED",
+    evidenceRefs: projectedEvidence(input.output, input.evidenceRefs),
+  };
+}
+
+function m2Row(input: {
+  readonly output: GlobalV2OwnerOutput;
+  readonly result: unknown;
+  readonly axis: unknown;
+  readonly rank: number;
+  readonly rowId: string;
+  readonly labelKey: string;
+  readonly value: unknown;
+  readonly kind?: GlobalTypedMeasure["kind"];
+  readonly unit?: string;
+  readonly displayValue?: string;
+  readonly entityRef?: string;
+  readonly phenomenonRef?: string;
+  readonly evidenceRefs: readonly string[];
+  readonly knowledgeState?: GlobalDetailRow["knowledgeState"];
+  readonly materialityStatus?: GlobalPhenomenonQuality["materialityStatus"];
+}): GlobalDetailRow | undefined {
+  const raw = stringOf(input.value);
+  if (raw === undefined) return undefined;
+  const knowledgeState = input.knowledgeState ?? "KNOWN";
+  return {
+    rowId: `${String(input.rank).padStart(3, "0")}:${input.rowId}`,
+    labelKey: input.labelKey,
+    displayValue: input.displayValue ?? (input.kind === "RATIO" ? formatRatio(raw)! : formatMoney(raw)!),
+    typedMeasure: { kind: input.kind ?? "MONEY", value: raw, unit: input.unit ?? "EUR" },
+    phenomenonRef: input.phenomenonRef ?? input.entityRef ?? input.rowId,
+    phenomenonQuality: m2PhenomenonQuality({ result: input.result, axis: input.axis, knowledgeState, materialityStatus: input.materialityStatus }),
+    knowledgeState,
+    ...(input.entityRef === undefined ? {} : { entityRef: input.entityRef }),
+    evidenceRefs: projectedEvidence(input.output, input.evidenceRefs),
+  };
+}
+
+function m2Series(input: {
+  readonly output: GlobalV2OwnerOutput;
+  readonly result: unknown;
+  readonly axis: unknown;
+  readonly seriesId: string;
+  readonly labelKey: string;
+  readonly phenomenonRef: string;
+  readonly points: readonly unknown[];
+  readonly evidenceRefs: readonly string[];
+  readonly knowledgeState?: GlobalPhenomenonQuality["knowledgeState"];
+}): GlobalDetailSeries {
+  const knowledgeState = input.knowledgeState ?? "KNOWN";
+  const pointQuality = m2PhenomenonQuality({ result: input.result, axis: input.axis, knowledgeState });
+  return {
+    seriesId: input.seriesId,
+    labelKey: input.labelKey,
+    unit: "EUR",
+    points: input.points.flatMap((point) => {
+      const month = stringOf(at(point, "month"));
+      const amount = stringOf(at(point, "amount"));
+      return month === undefined || amount === undefined ? [] : [{
+        unitKey: month,
+        displayValue: formatMoney(amount)!,
+        typedMeasure: { kind: "MONEY" as const, value: amount, unit: "EUR" },
+        phenomenonRef: input.phenomenonRef,
+        phenomenonQuality: pointQuality,
+        knowledgeState,
+      }];
+    }),
+    evidenceRefs: projectedEvidence(input.output, input.evidenceRefs),
+  };
+}
+
+function m2Kpi(input: {
+  readonly output: GlobalV2OwnerOutput;
+  readonly result: unknown;
+  readonly axis: unknown;
+  readonly kpiId: string;
+  readonly labelKey: string;
+  readonly value: unknown;
+  readonly kind: GlobalTypedMeasure["kind"];
+  readonly unit: string;
+  readonly displayValue: string;
+  readonly metricRef: string;
+  readonly knowledgeState?: GlobalPhenomenonQuality["knowledgeState"];
+}): GlobalCompactKpi | undefined {
+  const raw = stringOf(input.value);
+  if (raw === undefined) return undefined;
+  return {
+    kpiId: input.kpiId,
+    phenomenonId: `presentation:${input.output.moduleKey.toLowerCase()}`,
+    labelKey: input.labelKey,
+    displayValue: input.displayValue,
+    typedMeasure: { kind: input.kind, value: raw, unit: input.unit },
+    phenomenonRef: input.metricRef,
+    phenomenonQuality: m2PhenomenonQuality({ result: input.result, axis: input.axis, knowledgeState: input.knowledgeState ?? "KNOWN" }),
+    metricRef: input.metricRef,
+    evidenceRefs: outputEvidence(input.output),
+  };
+}
+
 function economicProjection(output: GlobalV2OwnerOutput, presentationLabels: GlobalV2PresentationLabels): ModuleProjection {
   const state = recordOf(at(output.output, "state"));
   if (state === undefined) {
@@ -585,8 +786,27 @@ function economicProjection(output: GlobalV2OwnerOutput, presentationLabels: Glo
 
 function categoryNeedProjection(output: GlobalV2OwnerOutput, labels: GlobalV2PresentationLabels): ModuleProjection {
   const result = recordOf(at(output.output, "result"));
-  const categories = arrayOf(at(result, "categories", "groups"));
-  const needs = arrayOf(at(result, "needs", "groups"));
+  const categoryAxis = at(result, "categories");
+  const needAxis = at(result, "needs");
+  const categories = arrayOf(at(categoryAxis, "groups"));
+  const needs = arrayOf(at(needAxis, "groups"));
+  const categoryQuality = m2AxisQuality(output, categoryAxis);
+  const needQuality = m2AxisQuality(output, needAxis, true);
+  const knownCategories = categories.flatMap((group) => {
+    const id = stringOf(at(group, "dimension", "id"));
+    const label = id === undefined ? undefined : labels.categories?.[id];
+    const entityRef = m2EntityRef(group, "CATEGORY");
+    return id === undefined || label === undefined || entityRef === undefined ? [] : [{ group, id, label, entityRef }];
+  });
+  const rankedCategories = [...knownCategories]
+    .sort((left, right) => byDescendingNumber(["annualAmount"])(left.group, right.group) || left.id.localeCompare(right.id))
+    .slice(0, GLOBAL_MAX_SECTION_ROWS);
+  const knownNeeds = needs.flatMap((group) => {
+    const id = stringOf(at(group, "dimension", "id"));
+    const label = id === undefined ? undefined : labels.needs?.[id];
+    const entityRef = m2EntityRef(group, "NEED");
+    return id === undefined || label === undefined || entityRef === undefined ? [] : [{ group, id, label, entityRef }];
+  }).sort((left, right) => byDescendingNumber(["annualAmount"])(left.group, right.group) || left.id.localeCompare(right.id));
   const materiality = new GlobalMaterialityEngine();
   const shareDeltaPointsByPhenomenon = new Map<string, string>([
     ...categories.flatMap((group) => {
@@ -600,7 +820,8 @@ function categoryNeedProjection(output: GlobalV2OwnerOutput, labels: GlobalV2Pre
       return key === undefined || shareDeltaPoints === undefined ? [] : [[`need:${key}`, shareDeltaPoints] as const];
     }),
   ]);
-  const candidateCategoryIds = new Set(arrayOf(at(result, "materialityCandidates")).flatMap((candidate) => {
+  const categoryById = new Map(knownCategories.map((entry) => [entry.id, entry]));
+  const materialMovements = arrayOf(at(result, "materialityCandidates")).flatMap((candidate) => {
     const phenomenonId = stringOf(at(candidate, "phenomenonId"));
     const shareDeltaPoints = phenomenonId === undefined ? undefined : shareDeltaPointsByPhenomenon.get(phenomenonId);
     const evaluation = materiality.evaluate({
@@ -609,53 +830,134 @@ function categoryNeedProjection(output: GlobalV2OwnerOutput, labels: GlobalV2Pre
       ...(shareDeltaPoints === undefined ? {} : { shareDeltaPoints }),
     });
     if (evaluation.status !== "MATERIAL") return [];
-    return arrayOf(at(candidate, "entityRefs")).flatMap((ref) => typeof ref === "string" && ref.startsWith("category:") ? [ref.slice("category:".length)] : []);
-  }));
-  const knownCategories = categories.flatMap((group) => {
-    const id = stringOf(at(group, "dimension", "id"));
-    const label = id === undefined ? undefined : labels.categories?.[id];
-    return id === undefined || label === undefined ? [] : [{ group, id, label }];
-  });
-  const rankedCategories = [...knownCategories].sort((left, right) => byDescendingNumber(["monthlyAmount"])(left.group, right.group) || left.id.localeCompare(right.id));
-  const notable = [...knownCategories].filter(({ id }) => candidateCategoryIds.has(id)).sort((left, right) => {
+    return arrayOf(at(candidate, "entityRefs")).flatMap((ref) => {
+      if (typeof ref !== "string" || !ref.startsWith("category:")) return [];
+      const entry = categoryById.get(ref.slice("category:".length));
+      return entry === undefined ? [] : [{ ...entry, candidate, evaluation }];
+    });
+  }).sort((left, right) => {
     const delta = Math.abs(numberOf(at(right.group, "deltaAmount")) ?? Number.NEGATIVE_INFINITY) - Math.abs(numberOf(at(left.group, "deltaAmount")) ?? Number.NEGATIVE_INFINITY);
     return delta || byDescendingNumber(["monthlyAmount"])(left.group, right.group) || left.id.localeCompare(right.id);
-  })[0];
-  const categoryRows = rankedCategories.slice(0, 5).map(({ group, id, label }, index) => {
-    const current = formatMoney(at(group, "monthlyAmount")) ?? "Montant indisponible";
-    const typical = formatMoney(at(group, "typicalAmount"));
-    const delta = formatSignedMoney(at(group, "deltaAmount"));
-    return row(output, index + 1, `category:${id}`, label, [current, typical === undefined ? undefined : `habituel ${typical}`, delta === undefined ? undefined : `écart ${delta}`].filter(Boolean).join(" · "), `category:${id}`, "KNOWN");
   });
-  const needRows = needs.flatMap((group) => {
-    const id = stringOf(at(group, "dimension", "id")) ?? stringOf(at(group, "key"));
-    const label = id === "__UNKNOWN__" ? "Besoin non déterminé" : id === undefined ? undefined : labels.needs?.[id];
-    return id === undefined || label === undefined ? [] : [{ group, id, label }];
-  }).sort((left, right) => byDescendingNumber(["monthlyAmount"])(left.group, right.group) || left.id.localeCompare(right.id)).slice(0, 5).map(({ group, id, label }, index) => row(output, index + 1, `need:${id}`, label, formatMoney(at(group, "monthlyAmount")) ?? "Montant indisponible", `need:${id}`, "KNOWN"));
-  const evolution = [...knownCategories].sort((left, right) => byDescendingNumber(["typicalAmount"])(left.group, right.group) || left.id.localeCompare(right.id)).slice(0, 3).flatMap(({ group, id, label }) => {
-    const points = completeMonthlySeries(arrayOf(at(group, "historicalSeries")));
-    return points.length === 0 ? [] : [series(output, `category-series:${id}`, label, "EUR", points, "month", "amount")];
+  const notable = materialMovements[0];
+  const categoryRows = rankedCategories.flatMap(({ group, id, label, entityRef }, index) => {
+    const annualAmount = at(group, "annualAmount");
+    const annualShare = formatRatio(at(group, "annualShare"));
+    const activeMonths = formatNumber(at(group, "activeMonths"), 0);
+    const displayValue = [formatMoney(annualAmount), annualShare, activeMonths === undefined ? undefined : `${activeMonths} mois actifs`].filter(Boolean).join(" · ");
+    const projected = m2Row({ output, result, axis: categoryAxis, rank: index + 1, rowId: `category:${id}`, labelKey: label, value: annualAmount, entityRef, evidenceRefs: arrayOf(at(group, "evidenceRefs")).filter((entry): entry is string => typeof entry === "string"), displayValue });
+    return projected === undefined ? [] : [projected];
   });
-  const currentTotal = formatMoney(at(result, "categories", "currentTotal"));
+  const needRows = knownNeeds.slice(0, GLOBAL_MAX_SECTION_ROWS).flatMap(({ group, id, label, entityRef }, index) => {
+    const annualAmount = at(group, "annualAmount");
+    const annualShare = formatRatio(at(group, "annualShare"));
+    const projected = m2Row({ output, result, axis: needAxis, rank: index + 1, rowId: `need:${id}`, labelKey: label, value: annualAmount, entityRef, evidenceRefs: arrayOf(at(group, "evidenceRefs")).filter((entry): entry is string => typeof entry === "string"), displayValue: [formatMoney(annualAmount), annualShare].filter(Boolean).join(" · ") });
+    return projected === undefined ? [] : [projected];
+  });
+  const evolution = rankedCategories.slice(0, 3).flatMap(({ group, id, label, entityRef }) => {
+    const points = arrayOf(at(group, "historicalSeries"));
+    return points.length === 0 ? [] : [m2Series({ output, result, axis: categoryAxis, seriesId: `category-series:${id}`, labelKey: label, phenomenonRef: entityRef, points, evidenceRefs: arrayOf(at(group, "evidenceRefs")).filter((entry): entry is string => typeof entry === "string") })];
+  });
+  const materialityRows = materialMovements.slice(0, GLOBAL_MAX_SECTION_ROWS).flatMap(({ group, id, label, entityRef }, index) => {
+    const deltaAmount = at(group, "deltaAmount");
+    const delta = numberOf(deltaAmount);
+    const current = formatMoney(at(group, "monthlyAmount"));
+    const reference = formatMoney(at(group, "typicalAmount"));
+    const direction = delta === undefined || delta === 0 ? "Stable" : delta > 0 ? "Hausse" : "Baisse";
+    const projected = m2Row({ output, result, axis: categoryAxis, rank: index + 1, rowId: `materiality:${id}`, labelKey: `${direction} · ${label}`, value: deltaAmount, entityRef, evidenceRefs: arrayOf(at(group, "evidenceRefs")).filter((entry): entry is string => typeof entry === "string"), materialityStatus: "MATERIAL", displayValue: [formatSignedMoney(deltaAmount), current === undefined ? undefined : `mois ${current}`, reference === undefined ? undefined : `référence ${reference}`].filter(Boolean).join(" · ") });
+    return projected === undefined ? [] : [projected];
+  });
+  const secondaryInsights: GlobalCompactInsight[] = materialMovements.slice(1, 5).map(({ group, id, label, entityRef }, index) => {
+    const delta = numberOf(at(group, "deltaAmount"));
+    const direction = delta === undefined || delta === 0 ? "se distingue de sa référence" : delta > 0 ? "est nettement au-dessus de sa référence" : "est nettement en dessous de sa référence";
+    return {
+      insightId: `presentation:categories_needs:material-change:${id}`,
+      phenomenonId: `category:${id}`,
+      kind: "MATERIAL_CHANGE",
+      titleKey: label,
+      statementKey: `${label} ${direction} de ${formatSignedMoney(at(group, "deltaAmount")) ?? "un montant non disponible"}.`,
+      primaryMetricRef: `global-m2:category:${id}:delta`,
+      entityRefs: [entityRef],
+      evidenceRefs: projectedEvidence(output, arrayOf(at(group, "evidenceRefs")).filter((entry): entry is string => typeof entry === "string")),
+      detailRefs: [],
+      editorialRank: index + 2,
+    };
+  });
+  const topFiveConcentration = rankedCategories.slice(0, 5).reduce((total, { group }) => total + (numberOf(at(group, "annualShare")) ?? 0), 0);
+  const annualTotal = at(categoryAxis, "annualTotal");
+  const knownMonetaryShare = at(needAxis, "monetaryCoverage", "knownShare");
+  const annualTotalMetric = m2Metric({ output, result, axis: categoryAxis, metricId: "categories-annual-total", labelKey: "Dépenses sur la période", value: annualTotal, kind: "MONEY", unit: "EUR", phenomenonRef: "global-m2:categories:annual-total", evidenceRefs: output.evidenceRefs });
+  const concentrationMetric = m2Metric({ output, result, axis: categoryAxis, metricId: "categories-top-five-concentration", labelKey: "Part des cinq principaux postes", value: String(topFiveConcentration), kind: "RATIO", unit: "ratio", phenomenonRef: "global-m2:categories:top-five-concentration", evidenceRefs: output.evidenceRefs });
+  const componentCoverageMetric = m2Metric({ output, result, axis: needAxis, metricId: "needs-component-coverage", labelKey: "Composants avec un besoin renseigné", value: at(needAxis, "coverage", "effective"), kind: "RATIO", unit: "ratio", phenomenonRef: "global-m2:needs:component-coverage", evidenceRefs: needQuality.evidenceRefs, knowledgeState: needQuality.knowledgeState });
+  const monetaryCoverageMetric = m2Metric({ output, result, axis: needAxis, metricId: "needs-monetary-coverage", labelKey: "Montant avec un besoin renseigné", value: knownMonetaryShare, kind: "RATIO", unit: "ratio", phenomenonRef: "global-m2:needs:monetary-coverage", evidenceRefs: needQuality.evidenceRefs, knowledgeState: needQuality.knowledgeState });
+  const knownNeedAmountMetric = m2Metric({ output, result, axis: needAxis, metricId: "needs-known-annual-amount", labelKey: "Montant annuel renseigné", value: at(needAxis, "monetaryCoverage", "knownAmount"), kind: "MONEY", unit: "EUR", phenomenonRef: "global-m2:needs:known-annual-amount", evidenceRefs: needQuality.evidenceRefs, knowledgeState: needQuality.knowledgeState });
+  const unresolvedNeedAmountMetric = m2Metric({ output, result, axis: needAxis, metricId: "needs-unclassified-annual-amount", labelKey: "Montant annuel non renseigné", value: at(needAxis, "monetaryCoverage", "unresolvedAmount"), kind: "MONEY", unit: "EUR", phenomenonRef: "global-m2:needs:unclassified-annual-amount", evidenceRefs: needQuality.evidenceRefs, knowledgeState: needQuality.knowledgeState });
   const notableDelta = notable === undefined ? undefined : formatSignedMoney(at(notable.group, "deltaAmount"));
   const notableCurrent = notable === undefined ? undefined : formatMoney(at(notable.group, "monthlyAmount"));
   const notableTypical = notable === undefined ? undefined : formatMoney(at(notable.group, "typicalAmount"));
+  const compactKpis = [
+    m2Kpi({ output, result, axis: categoryAxis, kpiId: "kpi:categories:annual-total", labelKey: "Dépenses sur la période", value: annualTotal, kind: "MONEY", unit: "EUR", displayValue: formatMoney(annualTotal) ?? "Montant indisponible", metricRef: "global-m2:categories:annual-total" }),
+    m2Kpi({ output, result, axis: categoryAxis, kpiId: "kpi:categories:top-five-concentration", labelKey: "Cinq principaux postes", value: String(topFiveConcentration), kind: "RATIO", unit: "ratio", displayValue: `${formatRatio(topFiveConcentration) ?? "Part indisponible"} de nos dépenses`, metricRef: "global-m2:categories:top-five-concentration" }),
+    m2Kpi({ output, result, axis: needAxis, kpiId: "kpi:needs:monetary-coverage", labelKey: "Besoins renseignés", value: knownMonetaryShare, kind: "RATIO", unit: "ratio", displayValue: `${formatRatio(knownMonetaryShare) ?? "Part indisponible"} du montant`, metricRef: "global-m2:needs:monetary-coverage", knowledgeState: needQuality.knowledgeState }),
+  ].filter((entry): entry is GlobalCompactKpi => entry !== undefined);
   return {
     ...(notable === undefined || notableDelta === undefined || notableCurrent === undefined || notableTypical === undefined ? {} : {
-      primaryInsight: presentationInsight(output, "notable-category", notable.label, `${notableDelta} par rapport à votre habitude · ${notableCurrent} ce mois-ci · habituel ${notableTypical}`, { primaryMetricRef: `global-m2:category:${notable.id}`, entityRefs: [`category:${notable.id}`] }),
+      primaryInsight: presentationInsight(output, "notable-category", notable.label, `${notableDelta} par rapport à sa référence · ${notableCurrent} ce mois-ci · référence ${notableTypical}`, { primaryMetricRef: `global-m2:category:${notable.id}`, entityRefs: [notable.entityRef] }),
     }),
-    kpis: [
-      ...(notable === undefined || notableDelta === undefined || notableCurrent === undefined || notableTypical === undefined ? [] : [kpi(output, "kpi:categories:notable", notable.label, `${notableCurrent} ce mois-ci · habituel ${notableTypical} · écart ${notableDelta}`, `global-m2:category:${notable.id}`)]),
-      ...(currentTotal === undefined ? [] : [kpi(output, "kpi:categories:current-total", "Total des catégories", currentTotal, "global-m2:categories:current-total")]),
-    ].slice(0, 3),
+    kpis: compactKpis,
     sections: {
-      OVERVIEW: { metrics: currentTotal === undefined ? [] : [metric(output, "categories-current-total", "Total du mois", currentTotal, "KNOWN")] },
-      BREAKDOWN: { rows: categoryRows },
-      PATTERNS: { rows: needRows },
-      EVOLUTION: { series: evolution },
+      OVERVIEW: { metrics: [annualTotalMetric, concentrationMetric].filter((entry): entry is GlobalDetailMetric => entry !== undefined), quality: categoryQuality },
+      BREAKDOWN: { rows: categoryRows, quality: categoryQuality },
+      PATTERNS: { metrics: [componentCoverageMetric, monetaryCoverageMetric, knownNeedAmountMetric, unresolvedNeedAmountMetric].filter((entry): entry is GlobalDetailMetric => entry !== undefined), rows: needRows, quality: needQuality },
+      EVOLUTION: { series: evolution, quality: categoryQuality },
+      COMPARISONS: { rows: materialityRows, secondaryInsights, quality: categoryQuality },
     },
-    detailRows: [...categoryRows, ...needRows].slice(0, GLOBAL_MAX_SECTION_ROWS),
+    detailRows: [...categoryRows, ...needRows],
   };
+}
+
+function categoryNeedDetailProjection(output: GlobalV2OwnerOutput, labels: GlobalV2PresentationLabels, entityRef: string): (SectionProjection & { readonly quality: GlobalCompactQuality }) | undefined {
+  const result = recordOf(at(output.output, "result"));
+  const isCategory = entityRef.startsWith("category:");
+  const isNeed = entityRef.startsWith("need:");
+  if (!isCategory && !isNeed) return undefined;
+  const axis = isCategory ? at(result, "categories") : at(result, "needs");
+  const expectedKind = isCategory ? "CATEGORY" as const : "NEED" as const;
+  const group = arrayOf(at(axis, "groups")).find((entry) => m2EntityRef(entry, expectedKind) === entityRef);
+  if (group === undefined || stringOf(at(group, "dimension", "status")) !== "KNOWN") return undefined;
+  const evidenceRefs = arrayOf(at(group, "evidenceRefs")).filter((entry): entry is string => typeof entry === "string");
+  const quality = m2AxisQuality(output, axis, isNeed);
+  const metrics = ([
+    ["annual-amount", "Montant annuel", at(group, "annualAmount"), "MONEY", "EUR", false],
+    ["annual-share", "Part annuelle", at(group, "annualShare"), "RATIO", "ratio", false],
+    ["active-months", "Mois actifs", at(group, "activeMonths"), "COUNT", "month", false],
+    ["current-amount", "Montant du mois cible", at(group, "monthlyAmount"), "MONEY", "EUR", false],
+    ["typical-amount", "Référence Typical", at(group, "typicalAmount"), "MONEY", "EUR/month", false],
+    ["delta-amount", "Écart à la référence", at(group, "deltaAmount"), "MONEY", "EUR", true],
+    ["delta-relative", "Écart relatif", at(group, "deltaRelative"), "DECIMAL", "ratio", false],
+  ] as const).flatMap(([id, label, value, kind, unit, signed]) => {
+    const projected = m2Metric({ output, result, axis, metricId: `detail:${id}`, labelKey: label, value, kind, unit, phenomenonRef: `${entityRef}:${id}`, evidenceRefs, signed });
+    return projected === undefined ? [] : [projected];
+  });
+  const series = [m2Series({ output, result, axis, seriesId: `detail:${entityRef}:history`, labelKey: "Évolution mensuelle", phenomenonRef: entityRef, points: arrayOf(at(group, "historicalSeries")), evidenceRefs })];
+  const rows = isCategory
+    ? arrayOf(at(group, "annualSubcategoryBreakdown")).flatMap((item, index) => {
+        const key = stringOf(at(item, "key"));
+        const annualAmount = at(item, "annualAmount");
+        if (key === undefined) return [];
+        const known = !key.startsWith("__");
+        const label = known ? labels.subcategories?.[key] ?? "Sous-catégorie non libellée" : "Sous-catégorie non déterminée";
+        const projected = m2Row({ output, result, axis, rank: index + 1, rowId: `subcategory:${key}`, labelKey: label, value: annualAmount, phenomenonRef: `subcategory:${key}`, evidenceRefs, knowledgeState: known ? "KNOWN" : "UNKNOWN", displayValue: [formatMoney(annualAmount), formatRatio(at(item, "annualShare"))].filter(Boolean).join(" · ") });
+        return projected === undefined ? [] : [projected];
+      })
+    : arrayOf(at(group, "contributors")).flatMap((item, index) => {
+        const key = stringOf(at(item, "key"));
+        if (key === undefined) return [];
+        const known = !key.startsWith("__");
+        const projected = m2Row({ output, result, axis, rank: index + 1, rowId: `category:${key}`, labelKey: known ? labels.categories?.[key] ?? "Catégorie non libellée" : "Catégorie non déterminée", value: at(item, "amount"), phenomenonRef: `category:${key}`, evidenceRefs, knowledgeState: known ? "KNOWN" : "UNKNOWN" });
+        return projected === undefined ? [] : [projected];
+      });
+  return { metrics, series, rows, quality };
 }
 
 function rhythmProjection(output: GlobalV2OwnerOutput, labels: GlobalV2PresentationLabels, personIds: readonly string[]): ModuleProjection {
@@ -978,12 +1280,13 @@ export function buildGlobalV2CandidateFromOwnerOutputs(input: GlobalV2CandidateI
     persons: sortLabels(input.presentationLabels?.persons),
     places: sortLabels(input.presentationLabels?.places),
     categories: sortLabels(input.presentationLabels?.categories),
+    subcategories: sortLabels(input.presentationLabels?.subcategories),
     needs: sortLabels(input.presentationLabels?.needs),
     recurrences: sortLabels(input.presentationLabels?.recurrences),
   };
   const labelInputsFor = (moduleKey: GlobalPrimaryModuleKey): unknown => {
     if (moduleKey === "ECONOMIC") return { recurrences: presentationLabels.recurrences };
-    if (moduleKey === "CATEGORIES_NEEDS") return { categories: presentationLabels.categories, needs: presentationLabels.needs };
+    if (moduleKey === "CATEGORIES_NEEDS") return { categories: presentationLabels.categories, subcategories: presentationLabels.subcategories, needs: presentationLabels.needs };
     if (moduleKey === "RHYTHM" || moduleKey === "PERSONAS") return { persons: presentationLabels.persons };
     if (moduleKey === "GEO_MOBILITY") return { places: presentationLabels.places };
     return undefined;
@@ -1070,12 +1373,12 @@ export function buildGlobalV2CandidateFromOwnerOutputs(input: GlobalV2CandidateI
           moduleKey: ownerOutput.moduleKey,
           sectionKey,
           visibility: "VISIBLE",
-          secondaryInsights: [],
+          secondaryInsights: section.secondaryInsights ?? [],
           metrics: section.metrics ?? [],
           series: section.series ?? [],
           rows: section.rows ?? [],
           destinations: [],
-          quality: quality(ownerOutput),
+          quality: section.quality ?? quality(ownerOutput),
           capabilities: [capability(ownerOutput)],
           publicationMeta: provisionalMeta,
           resourceMeta: metaFor(resource, params, dependencies),
@@ -1087,14 +1390,20 @@ export function buildGlobalV2CandidateFromOwnerOutputs(input: GlobalV2CandidateI
     if (detailResource !== undefined) for (const detailRow of detailRows) {
       const params = { entityRef: detailRow.entityRef! };
       const economicDetail = ownerOutput.moduleKey === "ECONOMIC" ? economicRecurrenceDetail(ownerOutput, detailRow.entityRef!) : undefined;
+      const categoryNeedDetail = ownerOutput.moduleKey === "CATEGORIES_NEEDS" ? categoryNeedDetailProjection(ownerOutput, presentationLabels, detailRow.entityRef!) : undefined;
+      const detail = economicDetail ?? categoryNeedDetail;
+      const destinations: readonly GlobalNavigationDestination[] = detailRow.entityRef!.startsWith("category:") ? [
+        { targetId: `history:${detailRow.entityRef}`, kind: "HISTORY", resource: "history_category_detail", entityRef: detailRow.entityRef!, scopeHash, sourcePublicationId: provisionalMeta.publicationId, sourceAnalyticsRevision: provisionalMeta.revision },
+        { targetId: `operations:${detailRow.entityRef}`, kind: "OPERATIONS", resource: "operations_browse", entityRef: detailRow.entityRef!, scopeHash, sourcePublicationId: provisionalMeta.publicationId, sourceAnalyticsRevision: provisionalMeta.revision },
+      ] : [];
       expandedInstances.push({
         resource: detailResource,
         scope,
         params,
         dependencies,
         payload: buildGlobalExpandedReadModel({
-          kind: "global_expanded", schemaVersion: "global-expanded@v1", resource: detailResource, moduleKey: ownerOutput.moduleKey, sectionKey: "OVERVIEW", visibility: "VISIBLE", secondaryInsights: [], metrics: economicDetail?.metrics ?? [], series: economicDetail?.series ?? [],
-          rows: economicDetail?.rows ?? [{ ...detailRow, rowId: `detail:${detailRow.rowId}` }], destinations: [], quality: quality(ownerOutput), capabilities: [capability(ownerOutput)], publicationMeta: provisionalMeta, resourceMeta: metaFor(detailResource, params, dependencies),
+          kind: "global_expanded", schemaVersion: "global-expanded@v1", resource: detailResource, moduleKey: ownerOutput.moduleKey, sectionKey: "OVERVIEW", visibility: "VISIBLE", secondaryInsights: [], metrics: detail?.metrics ?? [], series: detail?.series ?? [],
+          rows: detail?.rows ?? [{ ...detailRow, rowId: `detail:${detailRow.rowId}` }], destinations, quality: categoryNeedDetail?.quality ?? quality(ownerOutput), capabilities: [capability(ownerOutput)], publicationMeta: provisionalMeta, resourceMeta: metaFor(detailResource, params, dependencies),
         }),
       });
     }

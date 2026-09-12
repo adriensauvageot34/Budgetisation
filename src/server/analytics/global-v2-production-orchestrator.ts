@@ -145,12 +145,15 @@ export async function resolveGlobalV2ProductionOwnerOutputs(repository: Canonica
   const m10 = { units: sharedUnits, universes: buildGlobalSharedAnalysis(sharedUnits), authority: context.personIds.length === 2 ? "CANONICAL_ACTIVITY_PARTICIPATION" : "DATA_GATED_PERSON_PAIR" };
 
   const categoryIds = m2.result.categories.groups.flatMap(({ dimension }) => dimension.status === "KNOWN" ? [String(dimension.id)] : []);
+  const subcategoryIds = [...new Set(m2.result.categories.groups.flatMap(({ annualSubcategoryBreakdown }) =>
+    annualSubcategoryBreakdown?.flatMap(({ key }) => key.startsWith("__") ? [] : [key]) ?? []))].sort();
   const needIds = m2.result.needs.groups.flatMap(({ dimension }) => dimension.status === "KNOWN" ? [String(dimension.id)] : []);
   const placeIds = m7.places.map(({ placeId }) => String(placeId));
   const recurrenceIds = new Set(m1.recurrences.series.map(({ recurrenceId }) => recurrenceId));
   const firstEconomicMonth = m1.history.points[0]?.month ?? targetMonth;
-  const [categoryRows, needRows, placeRows, minimalBundle] = await Promise.all([
+  const [categoryRows, subcategoryRows, needRows, placeRows, minimalBundle] = await Promise.all([
     repository.loadTaxonomyRows("categories", categoryIds),
+    repository.loadTaxonomyRows("subcategories", subcategoryIds),
     repository.loadNeedRows(needIds),
     repository.loadEntityRows("places", "place_id", placeIds),
     repository.loadMinimalPlanningBundle({
@@ -161,6 +164,7 @@ export async function resolveGlobalV2ProductionOwnerOutputs(repository: Canonica
   const presentationLabels: GlobalV2PresentationLabels = {
     persons: Object.fromEntries(context.persons.map(({ personId, displayName }) => [String(personId), displayName]).sort(([left], [right]) => left.localeCompare(right))),
     categories: labelsFromRows(categoryRows, "category_id", "nom_canonique"),
+    subcategories: labelsFromRows(subcategoryRows, "subcategory_id", "nom_canonique"),
     needs: labelsFromRows(needRows, "need_id", "name"),
     places: labelsFromRows(placeRows, "place_id", "nom_canonique"),
     recurrences: labelsFromRows(
