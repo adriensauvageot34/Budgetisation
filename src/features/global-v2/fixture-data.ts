@@ -61,6 +61,31 @@ const qualityPartial: GlobalCompactQuality = Object.freeze({
   evidenceRefs: ["evidence:purchase-observed-only"],
 });
 
+const m2NeedQuality: GlobalCompactQuality = Object.freeze({
+  knowledgeState: "PARTIAL",
+  partialMeaning: "OBSERVED_ONLY",
+  supportStatus: "PARTIAL_SUPPORT",
+  effectiveCoverage: 0.34,
+  dataNature: "OBSERVED",
+  limitationCodes: ["M2_MONETARY_COVERAGE_PARTIAL"],
+  evidenceRefs: ["evidence:m2:needs-coverage"],
+});
+
+const m2Categories = Object.freeze([
+  { id: "00000000-0000-4000-8000-000000000201", label: "Logement", amount: "10148", share: "26,3 %", months: 12 },
+  { id: "00000000-0000-4000-8000-000000000202", label: "Alimentation", amount: "6351", share: "16,5 %", months: 12 },
+  { id: "00000000-0000-4000-8000-000000000203", label: "Transport & voiture", amount: "3822", share: "9,9 %", months: 12 },
+  { id: "00000000-0000-4000-8000-000000000204", label: "Tabac & vape", amount: "3594", share: "9,3 %", months: 12 },
+  { id: "00000000-0000-4000-8000-000000000205", label: "Maison & quotidien", amount: "3073", share: "8 %", months: 12 },
+  { id: "00000000-0000-4000-8000-000000000206", label: "Santé", amount: "1860", share: "4,8 %", months: 9 },
+  { id: "00000000-0000-4000-8000-000000000207", label: "Culture & événements", amount: "1492", share: "3,9 %", months: 8 },
+  { id: "00000000-0000-4000-8000-000000000208", label: "Cadeaux", amount: "1280", share: "3,3 %", months: 5 },
+  { id: "00000000-0000-4000-8000-000000000209", label: "Abonnements", amount: "1118", share: "2,9 %", months: 12 },
+  { id: "00000000-0000-4000-8000-000000000210", label: "Voyages", amount: "985", share: "2,6 %", months: 4 },
+]);
+
+const m2Months = Object.freeze(["2025-08", "2025-09", "2025-10", "2025-11", "2025-12", "2026-01", "2026-02", "2026-03", "2026-04", "2026-05", "2026-06", "2026-07"]);
+
 function insight(moduleKey: GlobalPrimaryModuleKey, index: number): GlobalCompactInsight {
   const id = moduleKey.toLowerCase();
   return {
@@ -93,6 +118,28 @@ function moduleModel(moduleKey: GlobalPrimaryModuleKey, index: number): GlobalMo
       quality: qualityPartial,
       capabilities: [{ capabilityId: "GLOBAL_CONSUMPTION", state: "PARTIAL", reasonCodes: ["DATA_GATED"] }],
       detailEntries: [],
+      publicationMeta,
+      resourceMeta: resourceMeta(index + 1),
+    };
+  }
+  if (moduleKey === "CATEGORIES_NEEDS") {
+    const phenomenonId = "presentation:categories_needs";
+    return {
+      kind: "global_module_compact",
+      schemaVersion: "global-module-compact@v1",
+      moduleKey,
+      resource: presentation.resource,
+      order: presentation.order,
+      visibility: "VISIBLE",
+      primaryInsight: { insightId: "presentation:categories_needs:notable-category", phenomenonId: "category:00000000-0000-4000-8000-000000000203", kind: "DETERMINISTIC_PRESENTATION", titleKey: "Transport & voiture", statementKey: "+888 € par rapport à sa référence · 1 037 € ce mois-ci · référence 149 €", primaryMetricRef: "global-m2:category:transport", entityRefs: ["category:00000000-0000-4000-8000-000000000203"], evidenceRefs: ["evidence:m2:transport"], detailRefs: [], editorialRank: 1 },
+      kpis: [
+        { kpiId: "kpi:categories:annual-total", phenomenonId, labelKey: "Dépenses sur la période", displayValue: "38 610 €", typedMeasure: { kind: "MONEY", value: "38610", unit: "EUR" }, metricRef: "global-m2:categories:annual-total", evidenceRefs: ["evidence:m2:annual"] },
+        { kpiId: "kpi:categories:top-five-concentration", phenomenonId, labelKey: "Cinq principaux postes", displayValue: "70,1 % de nos dépenses", typedMeasure: { kind: "RATIO", value: "0.701", unit: "ratio" }, metricRef: "global-m2:categories:top-five-concentration", evidenceRefs: ["evidence:m2:annual"] },
+        { kpiId: "kpi:needs:monetary-coverage", phenomenonId, labelKey: "Besoins renseignés", displayValue: "31 % du montant", typedMeasure: { kind: "RATIO", value: "0.31", unit: "ratio" }, metricRef: "global-m2:needs:monetary-coverage", evidenceRefs: ["evidence:m2:needs-coverage"] },
+      ],
+      quality: qualityKnown,
+      capabilities: [{ capabilityId: "GLOBAL_CATEGORIES_NEEDS", state: "AVAILABLE", reasonCodes: [] }],
+      detailEntries: [{ entryId: `expanded:${moduleKey}`, labelKey: "global.detail", targetResource: presentation.expandedResource, targetRef: `fixture:${presentation.expandedResource}` }],
       publicationMeta,
       resourceMeta: resourceMeta(index + 1),
     };
@@ -234,8 +281,59 @@ function economicFixtureModel(sectionKey: GlobalExpandedSectionKey): GlobalExpan
   };
 }
 
+function m2Metric(metricId: string, labelKey: string, value: string, kind: "MONEY" | "RATIO" | "COUNT" | "DECIMAL", unit: string, displayValue: string): GlobalDetailMetric {
+  return { metricId, labelKey, displayValue, typedMeasure: { kind, value, unit }, knowledgeState: "KNOWN", dataNature: "OBSERVED", evidenceRefs: [`evidence:m2:${metricId}`] };
+}
+
+function m2CategoryRow(category: (typeof m2Categories)[number], index: number): GlobalDetailRow {
+  return { rowId: `${String(index + 1).padStart(3, "0")}:category:${category.id}`, labelKey: category.label, displayValue: `${new Intl.NumberFormat("fr-FR").format(Number(category.amount))} € · ${category.share} · ${category.months} mois actifs`, typedMeasure: { kind: "MONEY", value: category.amount, unit: "EUR" }, knowledgeState: "KNOWN", entityRef: `category:${category.id}`, evidenceRefs: [`evidence:m2:category:${category.id}`] };
+}
+
+function m2Series(category: (typeof m2Categories)[number], index: number): GlobalDetailSeries {
+  const annual = Number(category.amount);
+  const weights = [0.055, 0.064, 0.071, 0.068, 0.082, 0.077, 0.074, 0.069, 0.081, 0.086, 0.102, 0.171];
+  return { seriesId: `category-series:${category.id}`, labelKey: category.label, unit: "EUR", points: m2Months.map((unitKey, monthIndex) => { const value = String(Math.round(annual * (weights[monthIndex]! + index * 0.001))); return { unitKey, displayValue: `${new Intl.NumberFormat("fr-FR").format(Number(value))} €`, typedMeasure: { kind: "MONEY", value, unit: "EUR" }, knowledgeState: "KNOWN" }; }), evidenceRefs: [`evidence:m2:category:${category.id}`] };
+}
+
+function m2ExpandedFixtureModel(sectionKey: GlobalExpandedSectionKey): GlobalExpandedReadModel {
+  const categoryRows = m2Categories.map(m2CategoryRow);
+  const comparisons: readonly GlobalDetailRow[] = [
+    { rowId: "001:materiality:transport", labelKey: "Hausse · Transport & voiture", displayValue: "+888 € · mois 1 037 € · référence 149 €", typedMeasure: { kind: "MONEY", value: "888", unit: "EUR" }, knowledgeState: "KNOWN", entityRef: `category:${m2Categories[2]!.id}`, evidenceRefs: ["evidence:m2:transport"] },
+    { rowId: "002:materiality:permit", labelKey: "Hausse · Permis de conduire", displayValue: "+437 € · mois 437 € · référence 0 €", typedMeasure: { kind: "MONEY", value: "437", unit: "EUR" }, knowledgeState: "KNOWN", entityRef: `category:${m2Categories[9]!.id}`, evidenceRefs: ["evidence:m2:permit"] },
+    { rowId: "003:materiality:culture", labelKey: "Baisse · Culture & événements", displayValue: "−95 € · mois 41 € · référence 136 €", typedMeasure: { kind: "MONEY", value: "-95", unit: "EUR" }, knowledgeState: "KNOWN", entityRef: `category:${m2Categories[6]!.id}`, evidenceRefs: ["evidence:m2:culture"] },
+    { rowId: "004:materiality:food", labelKey: "Baisse · Restauration", displayValue: "−57 € · mois 91 € · référence 148 €", typedMeasure: { kind: "MONEY", value: "-57", unit: "EUR" }, knowledgeState: "KNOWN", entityRef: `category:${m2Categories[1]!.id}`, evidenceRefs: ["evidence:m2:food"] },
+  ];
+  const needs: readonly GlobalDetailRow[] = [
+    { rowId: "001:need:food", labelKey: "Courses alimentaires du foyer", displayValue: "5 234 € · 13,6 %", typedMeasure: { kind: "MONEY", value: "5234", unit: "EUR" }, knowledgeState: "KNOWN", entityRef: "need:00000000-0000-4000-8000-000000000221", evidenceRefs: ["evidence:m2:need-food"] },
+    { rowId: "002:need:tobacco", labelKey: "Tabac habituel", displayValue: "2 872 € · 7,4 %", typedMeasure: { kind: "MONEY", value: "2872", unit: "EUR" }, knowledgeState: "KNOWN", entityRef: "need:00000000-0000-4000-8000-000000000222", evidenceRefs: ["evidence:m2:need-tobacco"] },
+    { rowId: "003:need:fuel", labelKey: "Carburant du quotidien", displayValue: "1 069 € · 2,8 %", typedMeasure: { kind: "MONEY", value: "1069", unit: "EUR" }, knowledgeState: "KNOWN", entityRef: "need:00000000-0000-4000-8000-000000000223", evidenceRefs: ["evidence:m2:need-fuel"] },
+  ];
+  const metrics = sectionKey === "OVERVIEW" ? [
+    m2Metric("categories-annual-total", "Dépenses sur la période", "38610", "MONEY", "EUR", "38 610 €"),
+    m2Metric("categories-top-five-concentration", "Part des cinq principaux postes", "0.701", "RATIO", "ratio", "70,1 % de nos dépenses"),
+  ] : sectionKey === "PATTERNS" ? [
+    m2Metric("needs-component-coverage", "Composants avec un besoin renseigné", "0.34", "RATIO", "ratio", "34 %"),
+    m2Metric("needs-monetary-coverage", "Montant avec un besoin renseigné", "0.31", "RATIO", "ratio", "31 %"),
+    m2Metric("needs-known-annual-amount", "Montant annuel renseigné", "11969", "MONEY", "EUR", "11 969 €"),
+    m2Metric("needs-unclassified-annual-amount", "Montant annuel non renseigné", "26641", "MONEY", "EUR", "26 641 €"),
+  ] : [];
+  return {
+    kind: "global_expanded", schemaVersion: "global-expanded@v1", resource: "analysis_global_categories_needs_expanded", moduleKey: "CATEGORIES_NEEDS", sectionKey, visibility: "VISIBLE",
+    secondaryInsights: sectionKey === "COMPARISONS" ? [
+      { insightId: "presentation:categories_needs:material-change:permit", phenomenonId: "category:permit", kind: "MATERIAL_CHANGE", titleKey: "Permis de conduire", statementKey: "Permis de conduire est nettement au-dessus de sa référence de +437 €.", primaryMetricRef: "global-m2:category:permit:delta", entityRefs: [`category:${m2Categories[9]!.id}`], evidenceRefs: ["evidence:m2:permit"], detailRefs: [], editorialRank: 2 },
+      { insightId: "presentation:categories_needs:material-change:culture", phenomenonId: "category:culture", kind: "MATERIAL_CHANGE", titleKey: "Culture & événements", statementKey: "Culture & événements est nettement en dessous de sa référence de −95 €.", primaryMetricRef: "global-m2:category:culture:delta", entityRefs: [`category:${m2Categories[6]!.id}`], evidenceRefs: ["evidence:m2:culture"], detailRefs: [], editorialRank: 3 },
+    ] : [],
+    metrics,
+    series: sectionKey === "EVOLUTION" ? m2Categories.slice(0, 3).map(m2Series) : [],
+    rows: sectionKey === "BREAKDOWN" ? categoryRows : sectionKey === "PATTERNS" ? needs : sectionKey === "COMPARISONS" ? comparisons : [],
+    destinations: [], quality: sectionKey === "PATTERNS" ? m2NeedQuality : qualityKnown,
+    capabilities: [{ capabilityId: "GLOBAL_CATEGORIES_NEEDS", state: "AVAILABLE", reasonCodes: [] }], publicationMeta, resourceMeta: resourceMeta(22),
+  };
+}
+
 function expandedModel(resource: GlobalV2ExpandedResourceName, sectionKey: GlobalExpandedSectionKey, moduleKey = moduleFromResource(resource)): GlobalExpandedReadModel {
   if (resource === "analysis_global_economic_expanded") return economicFixtureModel(sectionKey);
+  if (resource === "analysis_global_categories_needs_expanded") return m2ExpandedFixtureModel(sectionKey);
   const presentation = globalModulePresentation(moduleKey);
   const suffix = `${moduleKey.toLowerCase()}:${sectionKey.toLowerCase()}`;
   const metrics: readonly GlobalDetailMetric[] = [
@@ -291,6 +389,36 @@ function expandedModel(resource: GlobalV2ExpandedResourceName, sectionKey: Globa
 function detailModel(resource: GlobalV2ExpandedResourceName, entityRef: string, requestedModuleKey?: GlobalPrimaryModuleKey): GlobalExpandedReadModel {
   const moduleKey = requestedModuleKey ?? moduleFromResource(resource);
   const presentation = globalModulePresentation(moduleKey);
+  if (resource === "analysis_global_category_need_detail") {
+    const isNeed = entityRef.startsWith("need:");
+    const category = m2Categories.find(({ id }) => entityRef === `category:${id}`) ?? m2Categories[2]!;
+    const share = Number(category.share.replace(",", ".").replace(" %", "")) / 100;
+    const detailMetrics = [
+      m2Metric("detail:annual-amount", "Montant annuel", isNeed ? "5234" : category.amount, "MONEY", "EUR", isNeed ? "5 234 €" : `${new Intl.NumberFormat("fr-FR").format(Number(category.amount))} €`),
+      m2Metric("detail:annual-share", "Part annuelle", isNeed ? "0.136" : String(share), "RATIO", "ratio", isNeed ? "13,6 %" : category.share),
+      m2Metric("detail:active-months", "Mois actifs", "12", "COUNT", "month", "12 mois"),
+      m2Metric("detail:current-amount", "Montant du mois cible", isNeed ? "439" : "1037", "MONEY", "EUR", isNeed ? "439 €" : "1 037 €"),
+      m2Metric("detail:typical-amount", "Référence Typical", isNeed ? "400" : "149", "MONEY", "EUR/month", isNeed ? "400 €" : "149 €"),
+      m2Metric("detail:delta-amount", "Écart à la référence", isNeed ? "39" : "888", "MONEY", "EUR", isNeed ? "+39 €" : "+888 €"),
+      m2Metric("detail:delta-relative", "Écart relatif", isNeed ? "0.0975" : "5.9597", "DECIMAL", "ratio", isNeed ? "+9,8 %" : "+596 %"),
+    ];
+    const categoryRows: readonly GlobalDetailRow[] = [
+      ["00000000-0000-4000-8000-000000000231", "Carburant", "1784", "46,7 %"],
+      ["00000000-0000-4000-8000-000000000232", "Entretien automobile", "832", "21,8 %"],
+      ["00000000-0000-4000-8000-000000000233", "Transports en commun", "614", "16,1 %"],
+      ["00000000-0000-4000-8000-000000000234", "Péages", "368", "9,6 %"],
+      ["00000000-0000-4000-8000-000000000235", "Stationnement", "224", "5,8 %"],
+    ].map(([id, labelKey, value, ratio], index) => ({ rowId: `${String(index + 1).padStart(3, "0")}:subcategory:${id}`, labelKey, displayValue: `${new Intl.NumberFormat("fr-FR").format(Number(value))} € · ${ratio}`, typedMeasure: { kind: "MONEY", value, unit: "EUR" }, knowledgeState: "KNOWN", evidenceRefs: [`evidence:m2:subcategory:${id}`] }));
+    const needRows: readonly GlobalDetailRow[] = [{ rowId: "001:category:food", labelKey: "Alimentation", displayValue: "5 234 €", typedMeasure: { kind: "MONEY", value: "5234", unit: "EUR" }, knowledgeState: "KNOWN", evidenceRefs: ["evidence:m2:need-food"] }];
+    return {
+      kind: "global_expanded", schemaVersion: "global-expanded@v1", resource, moduleKey: "CATEGORIES_NEEDS", sectionKey: "OVERVIEW", visibility: "VISIBLE", secondaryInsights: [], metrics: detailMetrics,
+      series: [m2Series(category, 0)], rows: isNeed ? needRows : categoryRows,
+      destinations: isNeed ? [] : [
+        { targetId: `history:${entityRef}`, kind: "HISTORY", resource: "history_category_detail", entityRef, scopeHash: hash("f"), sourcePublicationId: publicationMeta.publicationId, sourceAnalyticsRevision: publicationMeta.revision },
+        { targetId: `operations:${entityRef}`, kind: "OPERATIONS", resource: "operations_browse", entityRef, scopeHash: hash("f"), sourcePublicationId: publicationMeta.publicationId, sourceAnalyticsRevision: publicationMeta.revision },
+      ], quality: isNeed ? m2NeedQuality : qualityKnown, capabilities: [{ capabilityId: "GLOBAL_CATEGORIES_NEEDS_DETAIL", state: "AVAILABLE", reasonCodes: [] }], publicationMeta, resourceMeta: resourceMeta(32),
+    };
+  }
   return {
     ...expandedModel(resource, resource === "analysis_global_methodology" ? "METHODOLOGY" : "OVERVIEW", moduleKey),
     rows: [

@@ -52,7 +52,9 @@ for (const presentation of catalog.globalModulePresentations.filter(({ detailRes
   const result = await transport({ resource: presentation.detailResource, params: { entityRef } });
   await checkAsync(() => assert.equal(query.globalExpandedReadModelSchema.safeParse(result.data).success, true));
   check(() => assert.equal(result.data.resource, presentation.detailResource));
-  check(() => assert.ok(result.data.rows.every(({ rowId }) => rowId.startsWith(entityRef))));
+  check(() => presentation.key === "CATEGORIES_NEEDS"
+    ? assert.deepEqual(result.data.metrics.map(({ metricId }) => metricId), ["detail:annual-amount", "detail:annual-share", "detail:active-months", "detail:current-amount", "detail:typical-amount", "detail:delta-amount", "detail:delta-relative"])
+    : assert.ok(result.data.rows.every(({ rowId }) => rowId.startsWith(entityRef))));
 }
 const methodology = await transport({ resource: "analysis_global_methodology", params: { moduleKey: "ECONOMIC", methodRef: query.globalV2MethodRef("ECONOMIC") } });
 await checkAsync(() => assert.equal(query.globalExpandedReadModelSchema.safeParse(methodology.data).success, true));
@@ -119,6 +121,8 @@ const shellSource = fs.readFileSync(path.join(root, "src/components/layout/app-s
 const routeSource = fs.readFileSync(path.join(root, "src/app/analyse-globale/page.tsx"), "utf8");
 const fixturePageSource = fs.readFileSync(path.join(root, "src/features/global-v2/global-v2-fixture-page.tsx"), "utf8");
 const overlaySource = fs.readFileSync(path.join(root, "src/ui/overlays/overlay-frame.tsx"), "utf8");
+const m2Source = pageSource.slice(pageSource.indexOf("function M2MoneyRows"), pageSource.indexOf("function PersonaColumns"));
+const m2CompactSource = pageSource.slice(pageSource.indexOf("function M2CompactCard"), pageSource.indexOf("function PersonaColumns"));
 check(() => assert.match(pageSource, /IntersectionObserver/u));
 check(() => assert.match(pageSource, /Alternative textuelle/u));
 check(() => assert.match(pageSource, /global_module_viewed/u));
@@ -141,6 +145,34 @@ check(() => assert.match(pageSource, /restoreFocusRef=\{overlayInvokerRef\}/u));
 check(() => assert.match(pageSource, /kind: "ENTITY_DETAIL"/u));
 check(() => assert.doesNotMatch(pageSource, /ANALYTICAL_DETAIL|Ouvrir la fiche entité/u));
 check(() => assert.match(pageSource, /window\.location\.reload\(\)/u));
+
+// R3: annual-first M2 composition, honest Needs and same-overlay Category detail.
+check(() => assert.match(catalogSource, /title: "Où va notre argent \?"/u));
+check(() => assert.match(catalogSource, /structurent nos dépenses sur la période analysée/u));
+check(() => assert.doesNotMatch(catalogSource, /title: "Catégories et besoins"|eyebrow: "M2"/u));
+check(() => assert.match(m2CompactSource, /kpi:categories:top-five-concentration/u));
+check(() => assert.match(m2CompactSource, /initialLimit=\{5\}/u));
+check(() => assert.doesNotMatch(m2CompactSource, /M2MonetarySeries|numericDisplay/u));
+check(() => assert.match(pageSource, />Explorer <span/u));
+check(() => assert.match(pageSource, /label: "Besoins renseignés"/u));
+check(() => assert.match(m2Source, /needs-monetary-coverage/u));
+check(() => assert.match(m2Source, /needs-unclassified-annual-amount/u));
+check(() => assert.match(m2Source, /Analyse partielle/u));
+check(() => assert.match(m2Source, /row\.entityRef !== "need:__UNKNOWN__"/u));
+check(() => assert.doesNotMatch(m2Source, /effectiveCoverage/u));
+check(() => assert.match(m2Source, /sectionKey="COMPARISONS"/u));
+check(() => assert.match(m2Source, /ArrowDown[\s\S]*ArrowUp/u));
+check(() => assert.doesNotMatch(m2Source, /\.reduce\(|annualShare\s*=.*\/|topFive\s*=|group.*Autres/u));
+check(() => assert.doesNotMatch(m2Source, /numericDisplay|displayValue\?\.match|displayValue\.replace/u));
+check(() => assert.match(m2Source, /detail:annual-amount[\s\S]*detail:annual-share[\s\S]*detail:active-months[\s\S]*detail:current-amount[\s\S]*detail:typical-amount/u));
+check(() => assert.match(m2Source, /M2MonetarySeries title="Montant mensuel"/u));
+check(() => assert.match(m2Source, /Ce qui compose ce poste/u));
+check(() => assert.match(m2Source, /Référence mensuelle/u));
+check(() => assert.match(pageSource, /backAction:[\s\S]*moduleOverlayTarget\("CATEGORIES_NEEDS", returnSection\)/u));
+check(() => assert.match(m2Source, /model\.destinations/u));
+check(() => assert.match(m2Source, /destination\.kind === "OPERATIONS"[\s\S]*destination\.resource === "operations_browse"/u));
+check(() => assert.match(pageSource, /role: "tabpanel"[\s\S]*aria-labelledby/u));
+check(() => assert.match(cssSource, /\.m2DetailMetrics[\s\S]*@media \(max-width: 767px\)/u));
 
 // P2: human narrative, module-aware composition and overlay-only details.
 check(() => assert.match(shellSource, /Historique[\s\S]*Analyse globale[\s\S]*Opérations/u));

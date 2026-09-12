@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useRef, useState, type RefObject } from "react";
-import { AlertTriangle, ArrowUp, BarChart3, ChevronRight, ExternalLink, Info, RefreshCw, Sparkles } from "lucide-react";
+import { AlertTriangle, ArrowDown, ArrowUp, BarChart3, ChevronRight, ExternalLink, Info, RefreshCw, Sparkles } from "lucide-react";
 import { CartesianGrid, Line, LineChart, ReferenceDot, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { parseMetricId } from "@/core/identity";
 import { parseMoney, type Money } from "@/core/money";
@@ -19,6 +19,7 @@ import type {
   GlobalExpandedReadModel,
   GlobalExpandedSectionKey,
   GlobalInitialReadModel,
+  GlobalNavigationDestination,
   ImportedGlobalSummaryReadModel,
   GlobalModuleCompactReadModel,
   GlobalPrimaryModuleKey,
@@ -73,7 +74,7 @@ const internalNavigation = Object.freeze([
 
 const moduleTabs: Readonly<Record<GlobalPrimaryModuleKey, readonly { readonly key: GlobalExpandedSectionKey; readonly label: string }[]>> = Object.freeze({
   ECONOMIC: [{ key: "OVERVIEW", label: "Résumé" }, { key: "EVOLUTION", label: "Évolution" }, { key: "BREAKDOWN", label: "Répartition" }, { key: "PATTERNS", label: "Dépenses récurrentes" }],
-  CATEGORIES_NEEDS: [{ key: "BREAKDOWN", label: "Catégories" }, { key: "PATTERNS", label: "Besoins" }, { key: "EVOLUTION", label: "Évolution" }],
+  CATEGORIES_NEEDS: [{ key: "BREAKDOWN", label: "Catégories" }, { key: "PATTERNS", label: "Besoins renseignés" }, { key: "EVOLUTION", label: "Évolution" }],
   TRANSFORMATIONS: [{ key: "OVERVIEW", label: "Vue d’ensemble" }],
   RHYTHM: [{ key: "OVERVIEW", label: "Habitudes" }, { key: "EVOLUTION", label: "Évolution" }],
   RELATIONSHIPS: [{ key: "OVERVIEW", label: "Vue d’ensemble" }],
@@ -157,12 +158,12 @@ function CountRanking({ title, rows, limit = 5 }: { readonly title: string; read
   return <div className={styles.chartCompact}><RankingBar frame={{ title, state: { kind: "ready" }, summary: <span>{values.length} éléments observés.</span> }} activeMeasure={{ metricId, unit: "count" }} sort={{ metricId, direction: "desc" }} rows={values} /></div>;
 }
 
-function MonetarySeries({ title, series }: { readonly title: string; readonly series: readonly GlobalDetailSeries[] }) {
-  const comparable = series.slice(0, 3).filter((item) => item.unit === "EUR" && item.points.length > 0 && item.points.length <= 12);
+function M2MonetarySeries({ title, series }: { readonly title: string; readonly series: readonly GlobalDetailSeries[] }) {
+  const comparable = series.slice(0, 3).filter((item) => item.points.length > 0 && item.points.length <= 12 && item.points.every((point) => point.typedMeasure?.kind === "MONEY"));
   const periods = comparable[0]?.points.map(({ unitKey }) => unitKey) ?? [];
   const aligned = comparable.filter((item) => item.points.length === periods.length && item.points.every((point, index) => point.unitKey === periods[index]));
   if (aligned.length === 0) return null;
-  return <div className={styles.chartWide}><MultiSeriesMonetaryEvolution frame={{ title, state: { kind: "ready" }, summary: <span>Évolution mensuelle des principales catégories publiées.</span> }} unit="EUR" series={aligned.map((item) => ({ id: item.seriesId, label: humanLabel(item.labelKey), points: item.points.map((point) => ({ period: point.unitKey, label: point.unitKey, metric: moneyEnvelope(numericDisplay(point.displayValue)) })) }))} /></div>;
+  return <div className={styles.m2MonetarySeries}><MultiSeriesMonetaryEvolution frame={{ title, state: { kind: "ready" }, summary: <span>{aligned.length === 1 ? "Montants mensuels publiés pour cette catégorie." : "Montants mensuels publiés pour les principaux postes annuels."}</span> }} unit="EUR" series={aligned.map((item) => ({ id: item.seriesId, label: humanLabel(item.labelKey), points: item.points.map((point) => ({ period: point.unitKey, label: capitalize(frenchMonth(point.unitKey)), metric: moneyEnvelope(m2TypedNumber(point)) })) }))} /></div>;
 }
 
 function InsightCard({ insight }: { readonly insight: GlobalCompactInsight }) {
@@ -175,6 +176,7 @@ function KpiGrid({ kpis, limit = 3 }: { readonly kpis: readonly GlobalCompactKpi
 }
 
 const integerFormatter = new Intl.NumberFormat("fr-FR", { maximumFractionDigits: 0 });
+const ratioFormatter = new Intl.NumberFormat("fr-FR", { style: "percent", maximumFractionDigits: 1 });
 const shortMonths = ["janv.", "févr.", "mars", "avr.", "mai", "juin", "juil.", "août", "sept.", "oct.", "nov.", "déc."] as const;
 const longMonths = ["janvier", "février", "mars", "avril", "mai", "juin", "juillet", "août", "septembre", "octobre", "novembre", "décembre"] as const;
 const annualReading = "Sur l’année, la tendance reste orientée à la baisse ; sur les trois derniers mois, nos dépenses repartent nettement à la hausse.";
@@ -195,6 +197,16 @@ function formatMoney(value: number | undefined, options: { readonly perMonth?: b
   const sign = options.signed && value > 0 ? "+" : value < 0 ? "−" : "";
   const magnitude = integerFormatter.format(Math.abs(value));
   return `${options.approximate ? "≈ " : ""}${sign}${magnitude} €${options.perMonth ? " / mois" : options.perPayment ? " / paiement" : ""}`;
+}
+
+function m2TypedNumber(value: { readonly typedMeasure?: { readonly value: string } } | undefined): number | undefined {
+  if (value !== undefined && "knowledgeState" in value && value.knowledgeState !== "KNOWN" && value.knowledgeState !== "PARTIAL") return undefined;
+  const parsed = value?.typedMeasure === undefined ? Number.NaN : Number(value.typedMeasure.value);
+  return Number.isFinite(parsed) ? parsed : undefined;
+}
+
+function formatM2Ratio(value: number | undefined): string {
+  return value === undefined ? "Non disponible sur cette période" : ratioFormatter.format(value);
 }
 
 function formatTrend(value: number | undefined): string {
@@ -443,10 +455,121 @@ function HumanRows({ rows, onDetail }: { readonly rows: readonly GlobalDetailRow
   return <div className={styles.rows}>{rows.map((row) => row.entityRef === undefined ? <div key={row.rowId}><span>{humanLabel(row.labelKey)}</span><strong>{row.displayValue ?? "Indisponible"}</strong></div> : <button key={row.rowId} type="button" onClick={() => onDetail(row)}><span>{humanLabel(row.labelKey)}</span><strong>{row.displayValue ?? "Indisponible"}</strong><ExternalLink aria-hidden size={15} /></button>)}</div>;
 }
 
-function GlobalExpandedContent({ model, onDetail, runtime, certifiedThrough }: { readonly model: GlobalExpandedReadModel; readonly onDetail: (row: GlobalDetailRow) => void; readonly runtime: GlobalV2VisitRuntime; readonly certifiedThrough: string }) {
+function M2MoneyRows({ rows, onDetail, initialLimit = 9, allowExpansion = true, interactive = true }: { readonly rows: readonly GlobalDetailRow[]; readonly onDetail: (row: GlobalDetailRow) => void; readonly initialLimit?: number; readonly allowExpansion?: boolean; readonly interactive?: boolean }) {
+  const [expanded, setExpanded] = useState(false);
+  const typedRows = rows.flatMap((row) => {
+    const amount = row.typedMeasure?.kind === "MONEY" ? m2TypedNumber(row) : undefined;
+    return amount === undefined ? [] : [{ row, amount }];
+  });
+  if (typedRows.length === 0) return <p className={styles.qualityNote}>La structure annuelle sera disponible après l’actualisation de cette analyse.</p>;
+  const visible = expanded ? typedRows : typedRows.slice(0, initialLimit);
+  const maximum = Math.max(...typedRows.map(({ amount }) => Math.abs(amount)), 1);
+  return <div className={styles.m2Ranking}>
+    <div className={styles.m2RankingRows}>{visible.map(({ row, amount }) => {
+      const canOpen = interactive && row.entityRef !== undefined;
+      const content = <><span><strong>{humanLabel(row.labelKey)}</strong><small>{row.displayValue ?? formatMoney(amount)}</small><i aria-hidden><b style={{ width: `${Math.max(2, Math.abs(amount) / maximum * 100)}%` }} /></i></span>{canOpen ? <ChevronRight aria-hidden size={18} /> : null}</>;
+      return canOpen ? <button key={row.rowId} type="button" onClick={() => onDetail(row)} aria-label={`Explorer ${humanLabel(row.labelKey)}`}>{content}</button> : <div key={row.rowId}>{content}</div>;
+    })}</div>
+    {allowExpansion && typedRows.length > initialLimit ? <button type="button" className={styles.m2ShowAll} onClick={() => setExpanded((value) => !value)}>{expanded ? "Réduire la liste" : `Voir toutes les catégories (${typedRows.length})`}</button> : null}
+  </div>;
+}
+
+function M2Concentration({ value }: { readonly value: GlobalCompactKpi | GlobalDetailMetric | undefined }) {
+  if (value?.typedMeasure?.kind !== "RATIO" || m2TypedNumber(value) === undefined) return null;
+  return <p className={styles.m2Concentration}>Nos cinq principaux postes représentent environ <strong>{value.displayValue}</strong> sur la période analysée.</p>;
+}
+
+function M2Comparisons({ model }: { readonly model: GlobalExpandedReadModel }) {
+  const rows = model.rows.flatMap((row) => {
+    const amount = row.typedMeasure?.kind === "MONEY" ? m2TypedNumber(row) : undefined;
+    return amount === undefined ? [] : [{ row, amount }];
+  });
+  if (rows.length === 0) return <p className={styles.qualityNote}>Aucun changement récent suffisamment net n’est publié pour cette période.</p>;
+  return <section className={styles.m2Changes} aria-labelledby="m2-recent-changes"><h3 id="m2-recent-changes">Ce qui change récemment</h3><div>{rows.map(({ row, amount }) => <article key={row.rowId} data-direction={amount < 0 ? "down" : "up"}>{amount < 0 ? <ArrowDown aria-hidden size={18} /> : <ArrowUp aria-hidden size={18} />}<span>{humanLabel(row.labelKey).replace(/^(?:Hausse|Baisse|Stable) · /u, "")}</span><strong>{formatMoney(amount, { signed: true })}</strong></article>)}</div></section>;
+}
+
+function M2NeedsContent({ model, onDetail }: { readonly model: GlobalExpandedReadModel; readonly onDetail: (row: GlobalDetailRow) => void }) {
+  const metric = (id: string) => model.metrics.find(({ metricId }) => metricId === id);
+  const coverage = metric("needs-monetary-coverage");
+  const unresolved = metric("needs-unclassified-annual-amount");
+  const knownRows = model.rows.filter((row) => row.entityRef !== "need:__UNKNOWN__" && !/non déterminé/iu.test(row.labelKey) && (row.knowledgeState === "KNOWN" || row.knowledgeState === "PARTIAL"));
+  return <div className={styles.m2TabContent}>
+    <header><div>{model.quality.knowledgeState === "PARTIAL" ? <span className={styles.m2PartialStatus}>Analyse partielle</span> : null}<h3>À quoi servent les dépenses renseignées ?</h3></div></header>
+    {coverage?.typedMeasure?.kind === "RATIO" ? <p className={styles.m2Coverage}>Un besoin est suffisamment renseigné pour environ <strong>{formatM2Ratio(m2TypedNumber(coverage))}</strong> du montant de nos dépenses.</p> : <HumanQualityNote quality={model.quality} />}
+    <M2MoneyRows rows={knownRows} onDetail={onDetail} initialLimit={8} />
+    {unresolved?.typedMeasure?.kind === "MONEY" ? <section className={styles.m2Unclassified} aria-labelledby="m2-unclassified-title"><h3 id="m2-unclassified-title">Part non suffisamment renseignée</h3><strong>{formatMoney(m2TypedNumber(unresolved))}</strong><p>Cette partie n’est pas répartie artificiellement entre les besoins connus.</p></section> : null}
+  </div>;
+}
+
+function M2EvolutionContent({ model, runtime, onDetail }: { readonly model: GlobalExpandedReadModel; readonly runtime: GlobalV2VisitRuntime; readonly onDetail: (row: GlobalDetailRow) => void }) {
+  return <div className={styles.m2TabContent}>
+    <header><h3>Quels postes ont le plus changé récemment, et comment évoluent-ils ?</h3></header>
+    <ExpandedPreview runtime={runtime} moduleKey="CATEGORIES_NEEDS" sectionKey="COMPARISONS">{(comparisons) => <M2Comparisons model={comparisons} />}</ExpandedPreview>
+    <M2MonetarySeries title="Évolution des principaux postes annuels" series={model.series} />
+    <section className={styles.m2ExploreCategories} aria-labelledby="m2-explore-evolution"><h3 id="m2-explore-evolution">Explorer l’évolution d’une catégorie</h3><ExpandedPreview runtime={runtime} moduleKey="CATEGORIES_NEEDS" sectionKey="BREAKDOWN">{(breakdown) => <M2MoneyRows rows={breakdown.rows} onDetail={onDetail} initialLimit={3} allowExpansion={false} />}</ExpandedPreview></section>
+  </div>;
+}
+
+function destinationHref(destination: GlobalNavigationDestination, certifiedThrough: string): string | undefined {
+  const entityRef = destination.entityRef;
+  if (entityRef === undefined || !entityRef.startsWith("category:")) return undefined;
+  const categoryId = entityRef.slice("category:".length);
+  if (destination.kind === "OPERATIONS" && destination.resource === "operations_browse") return `/operations?categoryIds=${encodeURIComponent(categoryId)}`;
+  if (destination.kind === "HISTORY" && destination.resource === "history_category_detail") {
+    const month = analysisPeriod(certifiedThrough).targetMonth;
+    return `/historique/${month}?view=balance&entity=category&entityId=${encodeURIComponent(categoryId)}`;
+  }
+  return undefined;
+}
+
+function M2EntityDetail({ model, entityRef, certifiedThrough }: { readonly model: GlobalExpandedReadModel; readonly entityRef: string; readonly certifiedThrough: string }) {
+  const metric = (id: string) => model.metrics.find(({ metricId }) => metricId === id);
+  const annualAmount = metric("detail:annual-amount");
+  const isCategory = entityRef.startsWith("category:");
+  if (annualAmount === undefined) return <div className={styles.expandedContent}><HumanRows rows={model.rows} onDetail={() => undefined} /><HumanQualityNote quality={model.quality} /></div>;
+  const detailMetrics = [
+    ["detail:annual-amount", "Sur la période"],
+    ["detail:annual-share", "Part de nos dépenses"],
+    ["detail:active-months", "Présent"],
+    ["detail:current-amount", "Ce mois-ci"],
+    ["detail:typical-amount", "Référence mensuelle"],
+  ] as const;
+  const delta = metric("detail:delta-amount");
+  const deltaRelative = metric("detail:delta-relative");
+  const destinations = model.destinations.flatMap((destination) => {
+    const href = destinationHref(destination, certifiedThrough);
+    return href === undefined ? [] : [{ destination, href }];
+  });
+  return <div className={styles.m2Detail}>
+    {!isCategory && model.quality.knowledgeState === "PARTIAL" ? <span className={styles.m2PartialStatus}>Analyse partielle</span> : null}
+    <section aria-labelledby="m2-detail-markers"><h3 id="m2-detail-markers">Repères</h3><div className={styles.m2DetailMetrics}>{detailMetrics.flatMap(([id, label]) => {
+      const item = metric(id);
+      const value = m2TypedNumber(item);
+      if (item === undefined || value === undefined) return [];
+      const display = item.typedMeasure?.kind === "RATIO" ? formatM2Ratio(value) : item.typedMeasure?.kind === "COUNT" ? `${integerFormatter.format(value)} mois sur la période` : formatMoney(value, { perMonth: id === "detail:typical-amount" });
+      return [<article key={id}><span>{label}</span><strong>{display}</strong></article>];
+    })}</div></section>
+    {model.series.length === 0 ? null : <section aria-labelledby="m2-detail-evolution"><h3 id="m2-detail-evolution">Évolution sur la période</h3><M2MonetarySeries title="Montant mensuel" series={model.series.slice(0, 1)} /></section>}
+    {model.rows.length === 0 ? null : <section aria-labelledby="m2-detail-composition"><h3 id="m2-detail-composition">{isCategory ? "Ce qui compose ce poste" : "Catégories qui contribuent à ce besoin"}</h3><M2MoneyRows rows={model.rows} onDetail={() => undefined} initialLimit={10} /></section>}
+    {delta === undefined || m2TypedNumber(delta) === undefined ? null : <section className={styles.m2DetailChange} aria-labelledby="m2-detail-change"><h3 id="m2-detail-change">Changement récent</h3><p>Ce mois-ci, l’écart à la référence est de <strong>{formatMoney(m2TypedNumber(delta), { signed: true })}</strong>{deltaRelative === undefined || m2TypedNumber(deltaRelative) === undefined ? null : <> ({formatM2Ratio(m2TypedNumber(deltaRelative))})</>}. Cette lecture ne déduit aucune cause.</p></section>}
+    {destinations.length === 0 ? null : <nav className={styles.m2Destinations} aria-label="Continuer l’exploration">{destinations.map(({ destination, href }) => <Link key={destination.targetId} className="button-ghost" href={href}>{destination.kind === "OPERATIONS" ? "Voir les opérations de cette catégorie" : "Voir dans l’Historique"} <ChevronRight aria-hidden size={16} /></Link>)}</nav>}
+    <HumanQualityNote quality={model.quality} />
+  </div>;
+}
+
+function M2ExpandedContent({ model, onDetail, runtime }: { readonly model: GlobalExpandedReadModel; readonly onDetail: (row: GlobalDetailRow) => void; readonly runtime: GlobalV2VisitRuntime }) {
+  if (model.sectionKey === "BREAKDOWN") return <div className={styles.m2TabContent}><header><h3>Quels postes structurent nos dépenses sur la période ?</h3></header><ExpandedPreview runtime={runtime} moduleKey="CATEGORIES_NEEDS" sectionKey="OVERVIEW">{(overview) => <M2Concentration value={overview.metrics.find(({ metricId }) => metricId === "categories-top-five-concentration")} />}</ExpandedPreview><M2MoneyRows rows={model.rows} onDetail={onDetail} /></div>;
+  if (model.sectionKey === "PATTERNS") return <M2NeedsContent model={model} onDetail={onDetail} />;
+  if (model.sectionKey === "EVOLUTION") return <M2EvolutionContent model={model} runtime={runtime} onDetail={onDetail} />;
+  return <div className={styles.expandedContent}><HumanRows rows={model.rows} onDetail={onDetail} /><HumanQualityNote quality={model.quality} /></div>;
+}
+
+function GlobalExpandedContent({ model, entityRef, onDetail, runtime, certifiedThrough }: { readonly model: GlobalExpandedReadModel; readonly entityRef: string; readonly onDetail: (row: GlobalDetailRow) => void; readonly runtime: GlobalV2VisitRuntime; readonly certifiedThrough: string }) {
   if (model.sectionKey === "METHODOLOGY" && model.moduleKey === "ECONOMIC") return <EconomicMethod model={model} certifiedThrough={certifiedThrough} />;
   if (model.sectionKey === "METHODOLOGY") return <div className={styles.expandedContent}><HumanRows rows={model.rows} onDetail={onDetail} /><HumanQualityNote quality={model.quality} /></div>;
   if (model.resource === "analysis_global_economic_recurrence_detail") return <EconomicRecurrenceDetail model={model} />;
+  if (model.resource === "analysis_global_category_need_detail") return <M2EntityDetail model={model} entityRef={entityRef} certifiedThrough={certifiedThrough} />;
+  if (model.resource === "analysis_global_categories_needs_expanded") return <M2ExpandedContent model={model} onDetail={onDetail} runtime={runtime} />;
   if (model.resource === "analysis_global_economic_expanded") return <div className={styles.expandedContent}>
     {model.sectionKey === "OVERVIEW" ? <EconomicSummary model={model} certifiedThrough={certifiedThrough} /> : null}
     {model.sectionKey === "EVOLUTION" ? <ExpandedPreview runtime={runtime} moduleKey="ECONOMIC" sectionKey="OVERVIEW">{(overview) => <><EconomicEvolution model={model} overview={overview} certifiedThrough={certifiedThrough} /><EconomicSignals model={model} /></>}</ExpandedPreview> : null}
@@ -484,11 +607,14 @@ function GlobalDetailOverlay({ target, runtime, mobile, certifiedThrough, restor
   const result = useGlobalV2Resource<GlobalExpandedReadModel>(runtime, request, true, "DIRECT");
   const model = transportData(result.state);
   const presentation = globalModulePresentation(target.moduleKey);
-  const subtitle = target.kind === "ENTITY_DETAIL" ? "Détail" : target.moduleKey === "ECONOMIC" ? undefined : presentation.description;
+  const subtitle = target.kind === "ENTITY_DETAIL" ? target.entityRef.startsWith("need:") ? "Besoin renseigné" : "Détail de la catégorie" : target.moduleKey === "ECONOMIC" ? undefined : presentation.description;
   const localError = target.kind === "METHODOLOGY" && target.moduleKey === "ECONOMIC" ? <div className={styles.methodError} role="alert">Impossible de charger les détails de méthode · <button type="button" onClick={result.retry}>Réessayer</button></div> : <LocalError retry={result.retry} />;
-  return <OverlayFrame kind="exploration" title={target.title} subtitle={subtitle} closeAction={{ kind: "callback", onAction: onClose }} restoreFocusRef={restoreFocusRef} closeOnBackdrop className={`${styles.detailOverlay} ${mobile ? styles.mobileOverlay : ""}`}>
-    {tabs.length > 1 ? <div className={styles.overlayNavigation}><div className={styles.sectionTabs} role="tablist" aria-label={`Sections de ${target.title}`}>{tabs.map((item) => <button key={item.key} type="button" role="tab" aria-selected={section === item.key} onClick={() => { setSection(item.key); emitGlobalV2UxEvent("global_section_expanded", { moduleKey: target.moduleKey, sectionKey: item.key }); window.history.replaceState(window.history.state, "", `#${moduleSlugs[target.moduleKey]}-${item.key.toLowerCase()}`); }}>{item.label}</button>)}</div>{target.moduleKey === "ECONOMIC" ? <button type="button" className={styles.methodLink} onClick={() => onReplace(methodOverlayTarget("ECONOMIC"))}><Info aria-hidden size={15} /> Méthode</button> : null}</div> : null}
-    {result.state.status === "IDLE" || result.state.status === "LOADING" ? <LoadingCard label={target.title} /> : result.state.status === "ERROR" && model === undefined ? localError : model === undefined ? null : <GlobalExpandedContent model={model} runtime={runtime} certifiedThrough={certifiedThrough} onDetail={(row) => presentation.detailResource === undefined || row.entityRef === undefined ? undefined : onReplace({ kind: "ENTITY_DETAIL", title: humanLabel(row.labelKey), resource: presentation.detailResource, entityRef: row.entityRef, moduleKey: target.moduleKey })} />}
+  const activeTabId = `${moduleSlugs[target.moduleKey]}-tab-${section.toLowerCase()}`;
+  const activePanelId = `${moduleSlugs[target.moduleKey]}-panel-${section.toLowerCase()}`;
+  const returnSection = target.entityRef.startsWith("need:") ? "PATTERNS" : "BREAKDOWN";
+  return <OverlayFrame kind="exploration" title={target.title} subtitle={subtitle} closeAction={{ kind: "callback", onAction: onClose }} {...(target.kind === "ENTITY_DETAIL" && target.moduleKey === "CATEGORIES_NEEDS" ? { backAction: { kind: "callback" as const, onAction: () => onReplace(moduleOverlayTarget("CATEGORIES_NEEDS", returnSection)) } } : {})} restoreFocusRef={restoreFocusRef} closeOnBackdrop className={`${styles.detailOverlay} ${mobile ? styles.mobileOverlay : ""}`}>
+    {tabs.length > 1 ? <div className={styles.overlayNavigation}><div className={`${styles.sectionTabs} ${target.moduleKey === "CATEGORIES_NEEDS" ? styles.m2Tabs : ""}`} role="tablist" aria-label={`Sections de ${target.title}`}>{tabs.map((item) => <button id={`${moduleSlugs[target.moduleKey]}-tab-${item.key.toLowerCase()}`} key={item.key} type="button" role="tab" aria-selected={section === item.key} aria-controls={`${moduleSlugs[target.moduleKey]}-panel-${item.key.toLowerCase()}`} onClick={() => { setSection(item.key); emitGlobalV2UxEvent("global_section_expanded", { moduleKey: target.moduleKey, sectionKey: item.key }); window.history.replaceState(window.history.state, "", `#${moduleSlugs[target.moduleKey]}-${item.key.toLowerCase()}`); }}>{item.label}</button>)}</div>{target.moduleKey === "ECONOMIC" ? <button type="button" className={styles.methodLink} onClick={() => onReplace(methodOverlayTarget("ECONOMIC"))}><Info aria-hidden size={15} /> Méthode</button> : null}</div> : null}
+    <div {...(tabs.length > 1 ? { id: activePanelId, role: "tabpanel", "aria-labelledby": activeTabId } : {})}>{result.state.status === "IDLE" || result.state.status === "LOADING" ? <LoadingCard label={target.title} /> : result.state.status === "ERROR" && model === undefined ? localError : model === undefined ? null : <GlobalExpandedContent model={model} entityRef={target.entityRef} runtime={runtime} certifiedThrough={certifiedThrough} onDetail={(row) => presentation.detailResource === undefined || row.entityRef === undefined ? undefined : onReplace({ kind: "ENTITY_DETAIL", title: humanLabel(row.labelKey), resource: presentation.detailResource, entityRef: row.entityRef, moduleKey: target.moduleKey })} />}</div>
   </OverlayFrame>;
 }
 
@@ -504,6 +630,16 @@ function ExpandedPreview({ runtime, moduleKey, sectionKey, children }: { readonl
 
 function SeeDetail({ onClick }: { readonly onClick: () => void }) {
   return <button type="button" className={styles.detailButton} onClick={onClick}>Voir le détail <span aria-hidden>→</span></button>;
+}
+
+function M2CompactCard({ model, runtime, onDetail }: { readonly model: GlobalModuleCompactReadModel; readonly runtime: GlobalV2VisitRuntime; readonly onDetail: () => void }) {
+  const concentration = model.kpis.find(({ kpiId }) => kpiId === "kpi:categories:top-five-concentration");
+  return <div className={styles.m2Compact}>
+    <M2Concentration value={concentration} />
+    <ExpandedPreview runtime={runtime} moduleKey="CATEGORIES_NEEDS" sectionKey="BREAKDOWN">{(breakdown) => <M2MoneyRows rows={breakdown.rows} onDetail={() => undefined} initialLimit={5} allowExpansion={false} interactive={false} />}</ExpandedPreview>
+    {model.primaryInsight === undefined ? null : <section className={styles.m2CompactChange} aria-labelledby="m2-compact-change"><h3 id="m2-compact-change">Ce qui change récemment</h3><InsightCard insight={model.primaryInsight} /></section>}
+    <button type="button" className={styles.detailButton} onClick={onDetail}>Explorer <span aria-hidden>→</span></button>
+  </div>;
 }
 
 function PersonaColumns({ rows, limit = 5 }: { readonly rows: readonly GlobalDetailRow[]; readonly limit?: number }) {
@@ -526,12 +662,7 @@ function ModuleContent({ moduleKey, model, runtime, certifiedThrough, onDetail, 
   const insight = model.primaryInsight;
   if (moduleKey === "ECONOMIC") return <div className={styles.compact}><ExpandedPreview runtime={runtime} moduleKey={moduleKey} sectionKey="OVERVIEW">{(overview) => <ExpandedPreview runtime={runtime} moduleKey={moduleKey} sectionKey="EVOLUTION">{(evolution) => <EconomicCompactCard overview={overview} evolution={evolution} certifiedThrough={certifiedThrough} onDetail={onDetail} onMethod={onMethod} />}</ExpandedPreview>}</ExpandedPreview></div>;
 
-  if (moduleKey === "CATEGORIES_NEEDS") return <div className={styles.compact}>
-    {insight === undefined ? null : <InsightCard insight={insight} />}
-    <ExpandedPreview runtime={runtime} moduleKey={moduleKey} sectionKey="BREAKDOWN">{(expanded) => <MoneyRanking title="Principales catégories" rows={expanded.rows.map((row) => ({ id: row.rowId, label: row.labelKey, displayValue: row.displayValue }))} />}</ExpandedPreview>
-    <ExpandedPreview runtime={runtime} moduleKey={moduleKey} sectionKey="EVOLUTION">{(expanded) => <MonetarySeries title="Évolution sur douze mois" series={expanded.series} />}</ExpandedPreview>
-    <SeeDetail onClick={onDetail} />
-  </div>;
+  if (moduleKey === "CATEGORIES_NEEDS") return <M2CompactCard model={model} runtime={runtime} onDetail={onDetail} />;
 
   if (moduleKey === "RHYTHM") return <div className={styles.compact}>
     {insight === undefined ? null : <InsightCard insight={insight} />}
@@ -585,7 +716,7 @@ function GlobalModulePanel({ moduleKey, runtime, certifiedThrough, eager, direct
   const openDetail = () => { onOverlay(moduleOverlayTarget(moduleKey)); emitGlobalV2UxEvent("global_module_expanded", { moduleKey, state: "overlay" }); };
   const openMethod = () => { onOverlay(methodOverlayTarget(moduleKey)); emitGlobalV2UxEvent("global_methodology_opened", { moduleKey }); };
   return <section ref={nearViewport.ref} id={moduleSlugs[moduleKey]} className={styles.module} data-module={moduleKey} aria-labelledby={`${moduleSlugs[moduleKey]}-title`}>
-    <header className={styles.moduleHeader}><div>{moduleKey === "ECONOMIC" ? null : <span className="eyebrow">{presentation.eyebrow}</span>}<h2 id={`${moduleSlugs[moduleKey]}-title`}>{presentation.title}</h2>{moduleKey === "ECONOMIC" ? null : <p>{presentation.description}</p>}</div></header>
+    <header className={styles.moduleHeader}><div>{presentation.eyebrow.length === 0 ? null : <span className="eyebrow">{presentation.eyebrow}</span>}<h2 id={`${moduleSlugs[moduleKey]}-title`}>{presentation.title}</h2>{presentation.description.length === 0 ? null : <p>{presentation.description}</p>}</div></header>
     {compact.state.status === "IDLE" || compact.state.status === "LOADING" ? <LoadingCard label={presentation.title} /> : compact.state.status === "ERROR" && compactModel === undefined ? <LocalError retry={compact.retry} /> : compactModel === undefined ? null : <ModuleContent moduleKey={moduleKey} model={compactModel} runtime={runtime} certifiedThrough={certifiedThrough} onDetail={openDetail} onMethod={openMethod} />}
   </section>;
 }
