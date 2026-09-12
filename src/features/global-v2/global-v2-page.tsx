@@ -158,12 +158,13 @@ function CountRanking({ title, rows, limit = 5 }: { readonly title: string; read
   return <div className={styles.chartCompact}><RankingBar frame={{ title, state: { kind: "ready" }, summary: <span>{values.length} éléments observés.</span> }} activeMeasure={{ metricId, unit: "count" }} sort={{ metricId, direction: "desc" }} rows={values} /></div>;
 }
 
-function M2MonetarySeries({ title, series }: { readonly title: string; readonly series: readonly GlobalDetailSeries[] }) {
+function M2MonetarySeries({ title, series, reference, showLegend = true, showSummary = true, highlightLastPoint = false }: { readonly title: string; readonly series: readonly GlobalDetailSeries[]; readonly reference?: GlobalDetailMetric; readonly showLegend?: boolean; readonly showSummary?: boolean; readonly highlightLastPoint?: boolean }) {
   const comparable = series.slice(0, 3).filter((item) => item.points.length > 0 && item.points.length <= 12 && item.points.every((point) => point.typedMeasure?.kind === "MONEY"));
   const periods = comparable[0]?.points.map(({ unitKey }) => unitKey) ?? [];
   const aligned = comparable.filter((item) => item.points.length === periods.length && item.points.every((point, index) => point.unitKey === periods[index]));
   if (aligned.length === 0) return null;
-  return <div className={styles.m2MonetarySeries}><MultiSeriesMonetaryEvolution frame={{ title, state: { kind: "ready" }, summary: <span>Évolution mensuelle sur la période analysée.</span> }} unit="EUR" series={aligned.map((item) => ({ id: item.seriesId, label: humanLabel(item.labelKey), points: item.points.map((point) => ({ period: point.unitKey, label: capitalize(frenchMonth(point.unitKey)), metric: moneyEnvelope(m2TypedNumber(point)) })) }))} /></div>;
+  const referenceValue = reference?.typedMeasure?.kind === "MONEY" ? m2TypedNumber(reference) : undefined;
+  return <div className={styles.m2MonetarySeries}><MultiSeriesMonetaryEvolution frame={{ title, state: { kind: "ready" }, summary: showSummary ? <span>Évolution mensuelle sur la période analysée.</span> : null }} unit="EUR" series={aligned.map((item) => ({ id: item.seriesId, label: humanLabel(item.labelKey), points: item.points.map((point) => ({ period: point.unitKey, label: capitalize(frenchMonth(point.unitKey)), metric: moneyEnvelope(m2TypedNumber(point)) })) }))} {...(referenceValue === undefined ? {} : { referenceLine: { label: "Référence", metric: moneyEnvelope(referenceValue) } })} showLegend={showLegend} highlightLastPoint={highlightLastPoint} /></div>;
 }
 
 function InsightCard({ insight }: { readonly insight: GlobalCompactInsight }) {
@@ -458,7 +459,7 @@ function HumanRows({ rows, onDetail }: { readonly rows: readonly GlobalDetailRow
 const m2CategoryExpansionLabels = Object.freeze({ all: "Voir toutes les catégories", fewer: "Voir moins de catégories" });
 const m2NeedExpansionLabels = Object.freeze({ all: "Voir tous les besoins", fewer: "Voir moins de besoins" });
 
-function M2MoneyRows({ rows, onDetail, initialLimit = 9, allowExpansion = true, interactive = true, expansionLabels = m2CategoryExpansionLabels }: { readonly rows: readonly GlobalDetailRow[]; readonly onDetail: (row: GlobalDetailRow) => void; readonly initialLimit?: number; readonly allowExpansion?: boolean; readonly interactive?: boolean; readonly expansionLabels?: { readonly all: string; readonly fewer: string } }) {
+function M2MoneyRows({ rows, onDetail, initialLimit = 9, allowExpansion = true, interactive = true, expansionLabels = m2CategoryExpansionLabels, showRemainingCount = false }: { readonly rows: readonly GlobalDetailRow[]; readonly onDetail: (row: GlobalDetailRow) => void; readonly initialLimit?: number; readonly allowExpansion?: boolean; readonly interactive?: boolean; readonly expansionLabels?: { readonly all: string; readonly fewer: string }; readonly showRemainingCount?: boolean }) {
   const [expanded, setExpanded] = useState(false);
   const typedRows = rows.flatMap((row) => {
     const amount = row.typedMeasure?.kind === "MONEY" ? m2TypedNumber(row) : undefined;
@@ -473,7 +474,7 @@ function M2MoneyRows({ rows, onDetail, initialLimit = 9, allowExpansion = true, 
       const content = <><span><strong>{humanLabel(row.labelKey)}</strong><small>{formatMoney(amount)}</small><i aria-hidden><b style={{ width: `${Math.max(2, Math.abs(amount) / maximum * 100)}%` }} /></i></span>{canOpen ? <ChevronRight aria-hidden size={18} /> : null}</>;
       return canOpen ? <button key={row.rowId} type="button" onClick={() => onDetail(row)} aria-label={`Explorer ${humanLabel(row.labelKey)}`}>{content}</button> : <div key={row.rowId}>{content}</div>;
     })}</div>
-    {allowExpansion && typedRows.length > initialLimit ? <button type="button" className={styles.m2ShowAll} onClick={() => setExpanded((value) => !value)}>{expanded ? expansionLabels.fewer : `${expansionLabels.all} (${typedRows.length})`}</button> : null}
+    {allowExpansion && typedRows.length > initialLimit ? <button type="button" className={styles.m2ShowAll} onClick={() => setExpanded((value) => !value)}>{expanded ? expansionLabels.fewer : showRemainingCount ? `Voir les ${typedRows.length - initialLimit} autres` : `${expansionLabels.all} (${typedRows.length})`}</button> : null}
   </div>;
 }
 
@@ -533,31 +534,36 @@ function M2EntityDetail({ model, entityRef, certifiedThrough }: { readonly model
   const isCategory = entityRef.startsWith("category:");
   if (annualAmount === undefined) return <div className={styles.expandedContent}><HumanRows rows={model.rows} onDetail={() => undefined} /><HumanQualityNote quality={model.quality} /></div>;
   const period = analysisPeriod(certifiedThrough);
-  const detailMetrics = [
-    ["detail:annual-amount", "Sur la période"],
+  const primaryMetrics = [
+    ["detail:annual-amount", "Total sur la période"],
     ["detail:annual-share", "Part de nos dépenses"],
-    ["detail:active-months", "Présent"],
-    ["detail:current-amount", period.targetLabel],
-    ["detail:typical-amount", "Référence mensuelle"],
+    ["detail:active-months", "Mois actifs"],
+    ...(!isCategory ? [["detail:current-amount", period.targetLabel], ["detail:typical-amount", "Référence mensuelle"]] as const : []),
   ] as const;
+  const current = metric("detail:current-amount");
+  const reference = metric("detail:typical-amount");
   const delta = metric("detail:delta-amount");
   const deltaRelative = metric("detail:delta-relative");
+  const currentValue = m2TypedNumber(current);
+  const referenceValue = m2TypedNumber(reference);
+  const deltaValue = m2TypedNumber(delta);
+  const deltaRelativeValue = m2TypedNumber(deltaRelative);
   const destinations = model.destinations.flatMap((destination) => {
     const href = destinationHref(destination, certifiedThrough);
     return href === undefined ? [] : [{ destination, href }];
   });
   return <div className={styles.m2Detail}>
     {!isCategory && model.quality.knowledgeState === "PARTIAL" ? <span className={styles.m2PartialStatus}>Analyse partielle</span> : null}
-    <section aria-labelledby="m2-detail-markers"><h3 id="m2-detail-markers">Repères</h3><div className={styles.m2DetailMetrics}>{detailMetrics.flatMap(([id, label]) => {
+    <section aria-labelledby="m2-detail-markers"><h3 id="m2-detail-markers">Repères</h3><div className={styles.m2DetailMetrics}>{primaryMetrics.flatMap(([id, label]) => {
       const item = metric(id);
       const value = m2TypedNumber(item);
       if (item === undefined || value === undefined) return [];
-      const display = item.typedMeasure?.kind === "RATIO" ? formatM2Ratio(value) : item.typedMeasure?.kind === "COUNT" ? `${integerFormatter.format(value)} mois sur la période` : formatMoney(value, { perMonth: id === "detail:typical-amount" });
+      const display = item.typedMeasure?.kind === "RATIO" ? formatM2Ratio(value) : item.typedMeasure?.kind === "COUNT" ? `${integerFormatter.format(value)} mois` : formatMoney(value);
       return [<article key={id}><span>{label}</span><strong>{display}</strong></article>];
-    })}</div></section>
-    {model.series.length === 0 ? null : <section aria-labelledby="m2-detail-evolution"><h3 id="m2-detail-evolution">Évolution sur la période</h3><M2MonetarySeries title="Montant mensuel" series={model.series.slice(0, 1)} /></section>}
-    {model.rows.length === 0 ? null : <section aria-labelledby="m2-detail-composition"><h3 id="m2-detail-composition">{isCategory ? "Ce qui compose ce poste" : "Catégories qui contribuent à ce besoin"}</h3><M2MoneyRows rows={model.rows} onDetail={() => undefined} initialLimit={10} /></section>}
-    {delta === undefined || m2TypedNumber(delta) === undefined ? null : <section className={styles.m2DetailChange} aria-labelledby="m2-detail-change"><h3 id="m2-detail-change">Écart au niveau de référence</h3><p>En {period.targetLabel.toLocaleLowerCase("fr-FR")}, l’écart au niveau de référence est de <strong>{formatMoney(m2TypedNumber(delta), { signed: true })}</strong>{deltaRelative === undefined || m2TypedNumber(deltaRelative) === undefined ? null : <> ({formatM2Ratio(m2TypedNumber(deltaRelative))})</>}. Cette lecture ne déduit aucune cause.</p></section>}
+    })}</div>{isCategory && currentValue !== undefined && referenceValue !== undefined && deltaValue !== undefined ? <article className={styles.m2ReferenceCard}><header><span>{period.targetLabel}</span><strong>{formatMoney(currentValue)}</strong></header><dl><div><dt>Référence</dt><dd>{formatMoney(referenceValue)}</dd></div><div><dt>Écart</dt><dd>{formatMoney(deltaValue, { signed: true })}{deltaValue === 0 || deltaRelativeValue === undefined ? null : <> · {formatM2Ratio(deltaRelativeValue)}</>}</dd></div></dl></article> : null}</section>
+    {model.series.length === 0 ? null : isCategory ? <M2MonetarySeries title="Évolution mensuelle" series={model.series.slice(0, 1)} reference={reference} showLegend={false} showSummary={false} highlightLastPoint /> : <section aria-labelledby="m2-detail-evolution"><h3 id="m2-detail-evolution">Évolution sur la période</h3><M2MonetarySeries title="Montant mensuel" series={model.series.slice(0, 1)} /></section>}
+    {model.rows.length === 0 ? null : <section aria-labelledby="m2-detail-composition"><h3 id="m2-detail-composition">{isCategory ? "Ce qui compose ce poste" : "Catégories qui contribuent à ce besoin"}</h3><M2MoneyRows rows={model.rows} onDetail={() => undefined} initialLimit={isCategory ? 5 : 10} {...(isCategory ? { expansionLabels: { all: "Voir les autres sous-catégories", fewer: "Réduire la liste" }, showRemainingCount: true } : {})} /></section>}
+    {!isCategory && deltaValue !== undefined ? <section className={styles.m2DetailChange} aria-labelledby="m2-detail-change"><h3 id="m2-detail-change">Écart au niveau de référence</h3><p>En {period.targetLabel.toLocaleLowerCase("fr-FR")}, l’écart au niveau de référence est de <strong>{formatMoney(deltaValue, { signed: true })}</strong>{deltaRelativeValue === undefined ? null : <> ({formatM2Ratio(deltaRelativeValue)})</>}. Cette lecture ne déduit aucune cause.</p></section> : null}
     {destinations.length === 0 ? null : <nav className={styles.m2Destinations} aria-label="Continuer l’exploration">{destinations.map(({ destination, href }) => <Link key={destination.targetId} className="button-ghost" href={href}>{destination.kind === "OPERATIONS" ? "Voir les opérations de cette catégorie" : "Voir dans l’Historique"} <ChevronRight aria-hidden size={16} /></Link>)}</nav>}
     <HumanQualityNote quality={model.quality} />
   </div>;

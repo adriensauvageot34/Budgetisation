@@ -125,6 +125,7 @@ const monetaryEvolutionSource = fs.readFileSync(path.join(root, "src/ui/charts/m
 const m2Source = pageSource.slice(pageSource.indexOf("function M2MoneyRows"), pageSource.indexOf("function PersonaColumns"));
 const m2CompactSource = pageSource.slice(pageSource.indexOf("function M2CompactCard"), pageSource.indexOf("function PersonaColumns"));
 const m2ExpandedSource = pageSource.slice(pageSource.indexOf("function M2ExpandedContent"), pageSource.indexOf("function GlobalExpandedContent"));
+const m2DetailSource = pageSource.slice(pageSource.indexOf("function M2EntityDetail"), pageSource.indexOf("function M2ExpandedContent"));
 check(() => assert.match(pageSource, /IntersectionObserver/u));
 check(() => assert.match(pageSource, /Alternative textuelle/u));
 check(() => assert.match(pageSource, /global_module_viewed/u));
@@ -174,7 +175,7 @@ check(() => assert.match(m2Source, /<small>\{formatMoney\(amount\)\}<\/small>/u)
 check(() => assert.doesNotMatch(m2ExpandedSource, /sectionKey="OVERVIEW"/u));
 check(() => assert.match(monetaryEvolutionSource, /ChartLegend[\s\S]*item\.label/u));
 check(() => assert.match(m2Source, /Ce qui compose ce poste/u));
-check(() => assert.match(m2Source, /Référence mensuelle/u));
+check(() => assert.match(m2DetailSource, /<dt>Référence<\/dt>/u));
 check(() => assert.match(m2Source, /analysis_global_category_need_detail/u));
 check(() => assert.match(m2Source, /detail:current-amount[\s\S]*detail:typical-amount[\s\S]*detail:delta-amount/u));
 check(() => assert.match(m2Source, /Chaque montant compare le dernier mois analysé au niveau de référence/u));
@@ -185,6 +186,17 @@ check(() => assert.doesNotMatch(pageSource, /Montants mensuels publiés/u));
 check(() => assert.match(pageSource, /backAction:[\s\S]*moduleOverlayTarget\("CATEGORIES_NEEDS", returnSection\)/u));
 check(() => assert.match(m2Source, /model\.destinations/u));
 check(() => assert.match(m2Source, /destination\.kind === "OPERATIONS"[\s\S]*destination\.resource === "operations_browse"/u));
+check(() => assert.doesNotMatch(m2DetailSource, /\["detail:active-months", "Présent"\]/u));
+check(() => assert.match(m2DetailSource, /\["detail:annual-amount", "Total sur la période"\][\s\S]*\["detail:annual-share", "Part de nos dépenses"\][\s\S]*\["detail:active-months", "Mois actifs"\]/u));
+check(() => assert.match(m2DetailSource, /detail:current-amount[\s\S]*detail:typical-amount[\s\S]*detail:delta-amount[\s\S]*detail:delta-relative/u));
+check(() => assert.match(m2DetailSource, /deltaValue === 0 \|\| deltaRelativeValue === undefined \? null/u));
+check(() => assert.match(m2DetailSource, /isCategory[\s\S]*M2MonetarySeries title="Évolution mensuelle"[\s\S]*showLegend=\{false\}[\s\S]*showSummary=\{false\}/u));
+check(() => assert.match(m2DetailSource, /reference=\{reference\}[\s\S]*highlightLastPoint/u));
+check(() => assert.match(m2DetailSource, /initialLimit=\{isCategory \? 5 : 10\}[\s\S]*showRemainingCount: true/u));
+check(() => assert.match(m2Source, /Voir les \$\{typedRows\.length - initialLimit\} autres[\s\S]*Réduire la liste/u));
+check(() => assert.doesNotMatch(m2DetailSource, /subcategoryAmount\s*\/|annualShare\s*=|numericDisplay|displayValue\?\.match/u));
+check(() => assert.match(monetaryEvolutionSource, /referenceLine[\s\S]*ReferenceLine y=\{referenceValue\}[\s\S]*ifOverflow="extendDomain"/u));
+check(() => assert.match(monetaryEvolutionSource, /highlightLastPoint[\s\S]*ReferenceDot/u));
 check(() => assert.match(pageSource, /role: "tabpanel"[\s\S]*aria-labelledby/u));
 check(() => assert.match(cssSource, /\.m2DetailMetrics[\s\S]*@media \(max-width: 767px\)/u));
 

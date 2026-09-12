@@ -4,6 +4,7 @@ import {
   CartesianGrid,
   Line,
   LineChart,
+  ReferenceDot,
   ReferenceLine,
   ResponsiveContainer,
   Tooltip,
@@ -51,6 +52,9 @@ export type MultiSeriesMonetaryEvolutionProps = {
   readonly series: readonly MultiSeriesMonetaryEvolutionSeries[];
   readonly selectedPeriod?: string;
   readonly onSelectPeriod?: (period: string) => void;
+  readonly referenceLine?: { readonly label: string; readonly metric: MetricEnvelope<Money, "EUR"> };
+  readonly showLegend?: boolean;
+  readonly highlightLastPoint?: boolean;
 };
 
 const chartSeriesColorIndexes = [0, 1, 2, 3, 4] as const;
@@ -109,6 +113,9 @@ export function MultiSeriesMonetaryEvolution({
   series,
   selectedPeriod,
   onSelectPeriod,
+  referenceLine,
+  showLegend = true,
+  highlightLastPoint = false,
 }: MultiSeriesMonetaryEvolutionProps) {
   const periods = series[0]?.points ?? [];
   assertChronologicalLabels(periods.map(({ period }) => period), "MultiSeriesMonetaryEvolution");
@@ -127,8 +134,11 @@ export function MultiSeriesMonetaryEvolution({
   }));
   const format = chartTickFormatter(unit);
   const selectedLabel = periods.find(({ period }) => period === selectedPeriod)?.label;
+  const referenceValue = referenceLine === undefined ? null : toTechnicalChartValue(referenceLine.metric).value;
+  const lastPoint = series.length === 1 ? series[0]?.points.at(-1) : undefined;
+  const lastValue = lastPoint === undefined ? null : toTechnicalChartValue(lastPoint.metric).value;
   return (
-    <ChartFrame {...frame} legend={frame.legend ?? <ChartLegend items={series.map((item, index) => ({ id: item.id, label: item.label, colorIndex: chartSeriesColorIndexes[index % chartSeriesColorIndexes.length]! }))} />}>
+    <ChartFrame {...frame} legend={showLegend ? frame.legend ?? <ChartLegend items={series.map((item, index) => ({ id: item.id, label: item.label, colorIndex: chartSeriesColorIndexes[index % chartSeriesColorIndexes.length]! }))} /> : null}>
       <div className="ui-chart-renderer" data-chart-kind="monetary_evolution" data-series-count={series.length} data-selected-period={selectedPeriod}>
         <ResponsiveContainer width="100%" height="100%">
           <LineChart data={data} onClick={(state) => {
@@ -140,11 +150,13 @@ export function MultiSeriesMonetaryEvolution({
             <XAxis dataKey="label" />
             <YAxis domain={["auto", "auto"]} tickFormatter={format} />
             <Tooltip formatter={(value) => format(Number(value))} />
-            <ReferenceLine y={0} stroke={designTokens.color.border.strong} />
+            {referenceValue === 0 ? null : <ReferenceLine y={0} stroke={designTokens.color.border.strong} />}
+            {referenceValue === null || referenceLine === undefined ? null : <ReferenceLine y={referenceValue} stroke={designTokens.color.chart.series[1]} strokeDasharray="6 4" ifOverflow="extendDomain" label={{ value: `${referenceLine.label} ${format(referenceValue)}`, position: "insideTopRight", fill: designTokens.color.text.secondary }} />}
             {selectedLabel ? <ReferenceLine x={selectedLabel} stroke={designTokens.color.chart.series[0]} strokeDasharray="3 3" /> : null}
             {series.map((item, index) => (
               <Line key={item.id} dataKey={item.id} name={item.label} type="linear" connectNulls={false} stroke={designTokens.color.chart.series[index % designTokens.color.chart.series.length]} dot />
             ))}
+            {highlightLastPoint && lastPoint !== undefined && lastValue !== null ? <ReferenceDot x={lastPoint.label} y={lastValue} r={5} fill={designTokens.color.surface.base} stroke={designTokens.color.chart.series[0]} strokeWidth={3} ifOverflow="extendDomain" aria-label="Dernier mois analysé" /> : null}
           </LineChart>
         </ResponsiveContainer>
       </div>

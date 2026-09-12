@@ -226,12 +226,20 @@
 .m2Changes article strong { white-space: nowrap; }
 .m2MonetarySeries { min-width: 0; border-top: 1px solid var(--color-border); padding-top: 18px; }
 .m2MonetarySeries :global(.ui-chart-content), .m2MonetarySeries :global(.ui-chart-renderer) { min-height: 280px; height: 280px; }
+.m2Detail .m2MonetarySeries :global(.ui-chart-summary:empty) { display: none; }
 .m2ExploreCategories { display: grid; gap: 10px; }
 .m2Detail > section { display: grid; gap: 12px; }
 .m2DetailMetrics { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
 .m2DetailMetrics article { display: grid; gap: 6px; border: 1px solid var(--color-border); border-radius: 12px; padding: 15px; }
 .m2DetailMetrics span { color: var(--color-muted); font-size: 12px; font-weight: 750; }
 .m2DetailMetrics strong { font-size: 20px; }
+.m2ReferenceCard { display: grid; grid-template-columns: minmax(0, 1fr) minmax(240px, .85fr); align-items: center; gap: 18px; border: 1px solid var(--color-border); border-radius: 14px; padding: 18px; background: var(--color-surface-soft); }
+.m2ReferenceCard header { display: grid; gap: 5px; }
+.m2ReferenceCard header span, .m2ReferenceCard dt { color: var(--color-muted); font-size: 12px; font-weight: 750; }
+.m2ReferenceCard header strong { font-size: clamp(26px, 4vw, 34px); }
+.m2ReferenceCard dl { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; margin: 0; }
+.m2ReferenceCard dl div { display: grid; gap: 5px; border-left: 1px solid var(--color-border); padding-left: 14px; }
+.m2ReferenceCard dd { margin: 0; font-weight: 820; }
 .m2DetailChange { border-top: 1px solid var(--color-border); padding-top: 18px; }
 .m2Destinations { display: flex; flex-wrap: wrap; gap: 8px; border-top: 1px solid var(--color-border); padding-top: 18px; }
 .m2Destinations a { display: inline-flex; align-items: center; gap: 6px; }
@@ -321,12 +329,15 @@
   .m2RankingRows > div > span, .m2RankingRows > button > span { grid-template-columns: 1fr; gap: 3px; }
   .m2RankingRows small { text-align: left; }
   .m2DetailMetrics { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .m2ReferenceCard { grid-template-columns: 1fr; }
+  .m2ReferenceCard dl div:first-child { border-left: 0; padding-left: 0; }
   .m2MonetarySeries :global(.ui-chart-content), .m2MonetarySeries :global(.ui-chart-renderer) { min-height: 240px; height: 240px; }
   .mobileOverlay { width: 100vw !important; max-height: 100vh !important; border-radius: 18px 18px 0 0 !important; }
   .generationBanner { align-items: stretch; flex-direction: column; }
 }
 @media (max-width: 480px) {
-  .kpis, .expandedMetrics, .seriesGrid, .m2DetailMetrics { grid-template-columns: 1fr; }
+  .kpis, .expandedMetrics, .seriesGrid, .m2DetailMetrics, .m2ReferenceCard dl { grid-template-columns: 1fr; }
+  .m2ReferenceCard dl div { border-left: 0; padding-left: 0; }
   .m2Tabs { grid-template-columns: 1fr; }
   .m2Changes article { grid-template-columns: auto minmax(0, 1fr); }
   .m2Changes article strong { grid-column: 2; }
