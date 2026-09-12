@@ -17,6 +17,7 @@ import { designTokens } from "../../foundations";
 import {
   assertChronologicalLabels,
   assertMetricUnit,
+  ChartLegend,
   chartTickFormatter,
   toTechnicalChartValue,
   type ChartFrameConfiguration,
@@ -51,6 +52,8 @@ export type MultiSeriesMonetaryEvolutionProps = {
   readonly selectedPeriod?: string;
   readonly onSelectPeriod?: (period: string) => void;
 };
+
+const chartSeriesColorIndexes = [0, 1, 2, 3, 4] as const;
 
 export function MonetaryEvolution<U extends MonetaryMetricUnit>({
   frame,
@@ -125,7 +128,7 @@ export function MultiSeriesMonetaryEvolution({
   const format = chartTickFormatter(unit);
   const selectedLabel = periods.find(({ period }) => period === selectedPeriod)?.label;
   return (
-    <ChartFrame {...frame}>
+    <ChartFrame {...frame} legend={frame.legend ?? <ChartLegend items={series.map((item, index) => ({ id: item.id, label: item.label, colorIndex: chartSeriesColorIndexes[index % chartSeriesColorIndexes.length]! }))} />}>
       <div className="ui-chart-renderer" data-chart-kind="monetary_evolution" data-series-count={series.length} data-selected-period={selectedPeriod}>
         <ResponsiveContainer width="100%" height="100%">
           <LineChart data={data} onClick={(state) => {

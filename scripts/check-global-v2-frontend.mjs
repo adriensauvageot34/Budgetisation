@@ -121,8 +121,10 @@ const shellSource = fs.readFileSync(path.join(root, "src/components/layout/app-s
 const routeSource = fs.readFileSync(path.join(root, "src/app/analyse-globale/page.tsx"), "utf8");
 const fixturePageSource = fs.readFileSync(path.join(root, "src/features/global-v2/global-v2-fixture-page.tsx"), "utf8");
 const overlaySource = fs.readFileSync(path.join(root, "src/ui/overlays/overlay-frame.tsx"), "utf8");
+const monetaryEvolutionSource = fs.readFileSync(path.join(root, "src/ui/charts/monetary-evolution/monetary-evolution.tsx"), "utf8");
 const m2Source = pageSource.slice(pageSource.indexOf("function M2MoneyRows"), pageSource.indexOf("function PersonaColumns"));
 const m2CompactSource = pageSource.slice(pageSource.indexOf("function M2CompactCard"), pageSource.indexOf("function PersonaColumns"));
+const m2ExpandedSource = pageSource.slice(pageSource.indexOf("function M2ExpandedContent"), pageSource.indexOf("function GlobalExpandedContent"));
 check(() => assert.match(pageSource, /IntersectionObserver/u));
 check(() => assert.match(pageSource, /Alternative textuelle/u));
 check(() => assert.match(pageSource, /global_module_viewed/u));
@@ -166,6 +168,11 @@ check(() => assert.doesNotMatch(m2Source, /\.reduce\(|annualShare\s*=.*\/|topFiv
 check(() => assert.doesNotMatch(m2Source, /numericDisplay|displayValue\?\.match|displayValue\.replace/u));
 check(() => assert.match(m2Source, /detail:annual-amount[\s\S]*detail:annual-share[\s\S]*detail:active-months[\s\S]*detail:current-amount[\s\S]*detail:typical-amount/u));
 check(() => assert.match(m2Source, /M2MonetarySeries title="Montant mensuel"/u));
+check(() => assert.match(pageSource, /m2NeedExpansionLabels[\s\S]*Voir tous les besoins[\s\S]*Voir moins de besoins/u));
+check(() => assert.match(m2Source, /expansionLabels=\{m2NeedExpansionLabels\}/u));
+check(() => assert.match(m2Source, /<small>\{formatMoney\(amount\)\}<\/small>/u));
+check(() => assert.doesNotMatch(m2ExpandedSource, /sectionKey="OVERVIEW"/u));
+check(() => assert.match(monetaryEvolutionSource, /ChartLegend[\s\S]*item\.label/u));
 check(() => assert.match(m2Source, /Ce qui compose ce poste/u));
 check(() => assert.match(m2Source, /Référence mensuelle/u));
 check(() => assert.match(pageSource, /backAction:[\s\S]*moduleOverlayTarget\("CATEGORIES_NEEDS", returnSection\)/u));

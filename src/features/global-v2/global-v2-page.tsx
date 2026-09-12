@@ -455,7 +455,10 @@ function HumanRows({ rows, onDetail }: { readonly rows: readonly GlobalDetailRow
   return <div className={styles.rows}>{rows.map((row) => row.entityRef === undefined ? <div key={row.rowId}><span>{humanLabel(row.labelKey)}</span><strong>{row.displayValue ?? "Indisponible"}</strong></div> : <button key={row.rowId} type="button" onClick={() => onDetail(row)}><span>{humanLabel(row.labelKey)}</span><strong>{row.displayValue ?? "Indisponible"}</strong><ExternalLink aria-hidden size={15} /></button>)}</div>;
 }
 
-function M2MoneyRows({ rows, onDetail, initialLimit = 9, allowExpansion = true, interactive = true }: { readonly rows: readonly GlobalDetailRow[]; readonly onDetail: (row: GlobalDetailRow) => void; readonly initialLimit?: number; readonly allowExpansion?: boolean; readonly interactive?: boolean }) {
+const m2CategoryExpansionLabels = Object.freeze({ all: "Voir toutes les catégories", fewer: "Voir moins de catégories" });
+const m2NeedExpansionLabels = Object.freeze({ all: "Voir tous les besoins", fewer: "Voir moins de besoins" });
+
+function M2MoneyRows({ rows, onDetail, initialLimit = 9, allowExpansion = true, interactive = true, expansionLabels = m2CategoryExpansionLabels }: { readonly rows: readonly GlobalDetailRow[]; readonly onDetail: (row: GlobalDetailRow) => void; readonly initialLimit?: number; readonly allowExpansion?: boolean; readonly interactive?: boolean; readonly expansionLabels?: { readonly all: string; readonly fewer: string } }) {
   const [expanded, setExpanded] = useState(false);
   const typedRows = rows.flatMap((row) => {
     const amount = row.typedMeasure?.kind === "MONEY" ? m2TypedNumber(row) : undefined;
@@ -467,10 +470,10 @@ function M2MoneyRows({ rows, onDetail, initialLimit = 9, allowExpansion = true, 
   return <div className={styles.m2Ranking}>
     <div className={styles.m2RankingRows}>{visible.map(({ row, amount }) => {
       const canOpen = interactive && row.entityRef !== undefined;
-      const content = <><span><strong>{humanLabel(row.labelKey)}</strong><small>{row.displayValue ?? formatMoney(amount)}</small><i aria-hidden><b style={{ width: `${Math.max(2, Math.abs(amount) / maximum * 100)}%` }} /></i></span>{canOpen ? <ChevronRight aria-hidden size={18} /> : null}</>;
+      const content = <><span><strong>{humanLabel(row.labelKey)}</strong><small>{formatMoney(amount)}</small><i aria-hidden><b style={{ width: `${Math.max(2, Math.abs(amount) / maximum * 100)}%` }} /></i></span>{canOpen ? <ChevronRight aria-hidden size={18} /> : null}</>;
       return canOpen ? <button key={row.rowId} type="button" onClick={() => onDetail(row)} aria-label={`Explorer ${humanLabel(row.labelKey)}`}>{content}</button> : <div key={row.rowId}>{content}</div>;
     })}</div>
-    {allowExpansion && typedRows.length > initialLimit ? <button type="button" className={styles.m2ShowAll} onClick={() => setExpanded((value) => !value)}>{expanded ? "Réduire la liste" : `Voir toutes les catégories (${typedRows.length})`}</button> : null}
+    {allowExpansion && typedRows.length > initialLimit ? <button type="button" className={styles.m2ShowAll} onClick={() => setExpanded((value) => !value)}>{expanded ? expansionLabels.fewer : `${expansionLabels.all} (${typedRows.length})`}</button> : null}
   </div>;
 }
 
@@ -496,7 +499,7 @@ function M2NeedsContent({ model, onDetail }: { readonly model: GlobalExpandedRea
   return <div className={styles.m2TabContent}>
     <header><div>{model.quality.knowledgeState === "PARTIAL" ? <span className={styles.m2PartialStatus}>Analyse partielle</span> : null}<h3>À quoi servent les dépenses renseignées ?</h3></div></header>
     {coverage?.typedMeasure?.kind === "RATIO" ? <p className={styles.m2Coverage}>Un besoin est suffisamment renseigné pour environ <strong>{formatM2Ratio(m2TypedNumber(coverage))}</strong> du montant de nos dépenses.</p> : <HumanQualityNote quality={model.quality} />}
-    <M2MoneyRows rows={knownRows} onDetail={onDetail} initialLimit={8} />
+    <M2MoneyRows rows={knownRows} onDetail={onDetail} initialLimit={8} expansionLabels={m2NeedExpansionLabels} />
     {unresolved?.typedMeasure?.kind === "MONEY" ? <section className={styles.m2Unclassified} aria-labelledby="m2-unclassified-title"><h3 id="m2-unclassified-title">Part non suffisamment renseignée</h3><strong>{formatMoney(m2TypedNumber(unresolved))}</strong><p>Cette partie n’est pas répartie artificiellement entre les besoins connus.</p></section> : null}
   </div>;
 }
@@ -558,7 +561,7 @@ function M2EntityDetail({ model, entityRef, certifiedThrough }: { readonly model
 }
 
 function M2ExpandedContent({ model, onDetail, runtime }: { readonly model: GlobalExpandedReadModel; readonly onDetail: (row: GlobalDetailRow) => void; readonly runtime: GlobalV2VisitRuntime }) {
-  if (model.sectionKey === "BREAKDOWN") return <div className={styles.m2TabContent}><header><h3>Quels postes structurent nos dépenses sur la période ?</h3></header><ExpandedPreview runtime={runtime} moduleKey="CATEGORIES_NEEDS" sectionKey="OVERVIEW">{(overview) => <M2Concentration value={overview.metrics.find(({ metricId }) => metricId === "categories-top-five-concentration")} />}</ExpandedPreview><M2MoneyRows rows={model.rows} onDetail={onDetail} /></div>;
+  if (model.sectionKey === "BREAKDOWN") return <div className={styles.m2TabContent}><header><h3>Quels postes structurent nos dépenses sur la période ?</h3></header><M2MoneyRows rows={model.rows} onDetail={onDetail} /></div>;
   if (model.sectionKey === "PATTERNS") return <M2NeedsContent model={model} onDetail={onDetail} />;
   if (model.sectionKey === "EVOLUTION") return <M2EvolutionContent model={model} runtime={runtime} onDetail={onDetail} />;
   return <div className={styles.expandedContent}><HumanRows rows={model.rows} onDetail={onDetail} /><HumanQualityNote quality={model.quality} /></div>;
