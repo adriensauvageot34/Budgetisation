@@ -186,6 +186,7 @@
 .partialBadge { justify-self: start; border-radius: 999px; padding: 7px 10px; background: var(--ui-color-semantic-warning-soft); color: var(--ui-color-semantic-warning); font-size: 12px; }
 .detailButton { justify-self: end; padding: 8px 0 2px; font-size: 14px; }
 .m2Compact { display: grid; align-content: start; gap: 16px; padding: 0 26px 22px; }
+.m2Period { margin: 0 0 2px; color: var(--color-muted); font-size: 13px; font-weight: 750; line-height: 1.4; }
 .m2Concentration { max-width: 760px; margin: 0; color: var(--color-muted); font-size: clamp(16px, 2vw, 20px); line-height: 1.45; }
 .m2Concentration strong { color: var(--color-ink); }
 .m2Ranking { display: grid; gap: 12px; }
@@ -216,6 +217,7 @@
 .m2Unclassified > strong { font-size: 23px; }
 .m2Unclassified p, .m2DetailChange p { max-width: 720px; margin: 0; color: var(--color-muted); line-height: 1.55; }
 .m2Changes { display: grid; gap: 10px; }
+.m2ComparisonNote { max-width: 720px; margin: 0; color: var(--color-muted); font-size: 13px; line-height: 1.5; }
 .m2Changes > div { display: grid; border-block: 1px solid var(--color-border); }
 .m2Changes article { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 10px; padding: 12px 4px; border-bottom: 1px solid var(--color-border); }
 .m2Changes article:last-child { border-bottom: 0; }

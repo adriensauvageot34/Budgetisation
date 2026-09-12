@@ -150,12 +150,12 @@ check(() => assert.match(pageSource, /window\.location\.reload\(\)/u));
 
 // R3: annual-first M2 composition, honest Needs and same-overlay Category detail.
 check(() => assert.match(catalogSource, /title: "Où va notre argent \?"/u));
-check(() => assert.match(catalogSource, /structurent nos dépenses sur la période analysée/u));
+check(() => assert.match(catalogSource, /structurent nos dépenses\./u));
 check(() => assert.doesNotMatch(catalogSource, /title: "Catégories et besoins"|eyebrow: "M2"/u));
 check(() => assert.match(m2CompactSource, /kpi:categories:top-five-concentration/u));
 check(() => assert.match(m2CompactSource, /initialLimit=\{5\}/u));
 check(() => assert.doesNotMatch(m2CompactSource, /M2MonetarySeries|numericDisplay/u));
-check(() => assert.match(pageSource, />Explorer <span/u));
+check(() => assert.match(m2CompactSource, />Explorer l’analyse <span/u));
 check(() => assert.match(pageSource, /label: "Besoins renseignés"/u));
 check(() => assert.match(m2Source, /needs-monetary-coverage/u));
 check(() => assert.match(m2Source, /needs-unclassified-annual-amount/u));
@@ -175,6 +175,13 @@ check(() => assert.doesNotMatch(m2ExpandedSource, /sectionKey="OVERVIEW"/u));
 check(() => assert.match(monetaryEvolutionSource, /ChartLegend[\s\S]*item\.label/u));
 check(() => assert.match(m2Source, /Ce qui compose ce poste/u));
 check(() => assert.match(m2Source, /Référence mensuelle/u));
+check(() => assert.match(m2Source, /analysis_global_category_need_detail/u));
+check(() => assert.match(m2Source, /detail:current-amount[\s\S]*detail:typical-amount[\s\S]*detail:delta-amount/u));
+check(() => assert.match(m2Source, /Chaque montant compare le dernier mois analysé au niveau de référence/u));
+check(() => assert.match(m2Source, /Nous préférons laisser cette part non attribuée plutôt que de la deviner/u));
+check(() => assert.match(m2CompactSource, /period\.label\.replace\("—", "→"\)/u));
+check(() => assert.doesNotMatch(m2Source, /Ce mois-ci|récemment/u));
+check(() => assert.doesNotMatch(pageSource, /Montants mensuels publiés/u));
 check(() => assert.match(pageSource, /backAction:[\s\S]*moduleOverlayTarget\("CATEGORIES_NEEDS", returnSection\)/u));
 check(() => assert.match(m2Source, /model\.destinations/u));
 check(() => assert.match(m2Source, /destination\.kind === "OPERATIONS"[\s\S]*destination\.resource === "operations_browse"/u));
