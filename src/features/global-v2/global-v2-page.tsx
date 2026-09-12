@@ -490,7 +490,7 @@ function M2Concentration({ value }: { readonly value: GlobalCompactKpi | GlobalD
   return <p className={styles.m2Concentration}>Nos 5 principaux postes concentrent <strong>{formatM2Ratio(ratio)} de nos dépenses</strong>.</p>;
 }
 
-function M2Comparisons({ model, certifiedThrough, onDetail }: { readonly model: GlobalExpandedReadModel; readonly certifiedThrough: string; readonly onDetail: (row: GlobalDetailRow) => void }) {
+function M2Comparisons({ model, certifiedThrough, onDetail }: { readonly model: GlobalExpandedReadModel; readonly certifiedThrough: string; readonly onDetail: (row: GlobalDetailRow, title?: string) => void }) {
   const [expanded, setExpanded] = useState(false);
   const rows = model.rows.flatMap((row) => {
     const amount = row.typedMeasure?.kind === "MONEY" ? m2TypedNumber(row) : undefined;
@@ -502,7 +502,7 @@ function M2Comparisons({ model, certifiedThrough, onDetail }: { readonly model: 
   return <section className={styles.m2Changes} aria-labelledby="m2-reference-gaps"><h3 id="m2-reference-gaps">Écarts observés en {targetLabel.toLocaleLowerCase("fr-FR")}</h3><p className={styles.m2ComparisonNote}>Chaque montant compare le dernier mois analysé au niveau de référence de la catégorie.</p><div>{visibleRows.map(({ row, amount }) => {
     const label = humanLabel(row.labelKey).replace(/^(?:Hausse|Baisse|Stable) · /u, "");
     const content = <>{amount < 0 ? <ArrowDown aria-hidden size={18} /> : <ArrowUp aria-hidden size={18} />}<span>{label}</span><strong>{formatMoney(amount, { signed: true })}</strong>{row.entityRef === undefined ? null : <ChevronRight aria-hidden size={17} />}</>;
-    return row.entityRef === undefined ? <article key={row.rowId} data-direction={amount < 0 ? "down" : "up"}>{content}</article> : <button key={row.rowId} type="button" data-direction={amount < 0 ? "down" : "up"} data-m2-entity-ref={row.entityRef} onClick={() => onDetail(row)} aria-label={`Explorer ${label}`}>{content}</button>;
+    return row.entityRef === undefined ? <article key={row.rowId} data-direction={amount < 0 ? "down" : "up"}>{content}</article> : <button key={row.rowId} type="button" data-direction={amount < 0 ? "down" : "up"} data-m2-entity-ref={row.entityRef} onClick={() => onDetail(row, label)} aria-label={`Explorer ${label}`}>{content}</button>;
   })}</div>{rows.length > 6 ? <button type="button" className={styles.m2ShowAll} onClick={() => setExpanded((value) => !value)}>{expanded ? "Réduire la liste" : `Voir les ${rows.length - 6} autres`}</button> : null}</section>;
 }
 
@@ -519,11 +519,11 @@ function M2NeedsContent({ model, onDetail }: { readonly model: GlobalExpandedRea
   </div>;
 }
 
-function M2EvolutionContent({ model, runtime, certifiedThrough, onDetail }: { readonly model: GlobalExpandedReadModel; readonly runtime: GlobalV2VisitRuntime; readonly certifiedThrough: string; readonly onDetail: (row: GlobalDetailRow) => void }) {
+function M2EvolutionContent({ model, runtime, certifiedThrough, onDetail }: { readonly model: GlobalExpandedReadModel; readonly runtime: GlobalV2VisitRuntime; readonly certifiedThrough: string; readonly onDetail: (row: GlobalDetailRow, title?: string) => void }) {
   return <div className={styles.m2TabContent}>
     <header><h3>Quels postes s’écartent le plus de leur niveau de référence, et comment évoluent-ils ?</h3></header>
     <ExpandedPreview runtime={runtime} moduleKey="CATEGORIES_NEEDS" sectionKey="COMPARISONS">{(comparisons) => <M2Comparisons model={comparisons} certifiedThrough={certifiedThrough} onDetail={onDetail} />}</ExpandedPreview>
-    <M2MonetarySeries title="Évolution des principaux postes annuels" series={model.series} showSummary={false} />
+    <M2MonetarySeries title="Évolution mensuelle des principaux postes" series={model.series} showSummary={false} />
     <section className={styles.m2ExploreCategories} aria-labelledby="m2-explore-evolution"><h3 id="m2-explore-evolution">Explorer l’évolution d’une catégorie</h3><ExpandedPreview runtime={runtime} moduleKey="CATEGORIES_NEEDS" sectionKey="BREAKDOWN">{(breakdown) => <M2MoneyRows rows={breakdown.rows} onDetail={onDetail} initialLimit={3} allowExpansion={false} />}</ExpandedPreview></section>
   </div>;
 }
@@ -581,14 +581,14 @@ function M2EntityDetail({ model, entityRef, certifiedThrough }: { readonly model
   </div>;
 }
 
-function M2ExpandedContent({ model, onDetail, runtime, certifiedThrough }: { readonly model: GlobalExpandedReadModel; readonly onDetail: (row: GlobalDetailRow) => void; readonly runtime: GlobalV2VisitRuntime; readonly certifiedThrough: string }) {
+function M2ExpandedContent({ model, onDetail, runtime, certifiedThrough }: { readonly model: GlobalExpandedReadModel; readonly onDetail: (row: GlobalDetailRow, title?: string) => void; readonly runtime: GlobalV2VisitRuntime; readonly certifiedThrough: string }) {
   if (model.sectionKey === "BREAKDOWN") return <div className={styles.m2TabContent}><header><h3>Quels postes structurent nos dépenses sur la période ?</h3></header><M2MoneyRows rows={model.rows} onDetail={onDetail} /></div>;
   if (model.sectionKey === "PATTERNS") return <M2NeedsContent model={model} onDetail={onDetail} />;
   if (model.sectionKey === "EVOLUTION") return <M2EvolutionContent model={model} runtime={runtime} certifiedThrough={certifiedThrough} onDetail={onDetail} />;
   return <div className={styles.expandedContent}><HumanRows rows={model.rows} onDetail={onDetail} /><HumanQualityNote quality={model.quality} /></div>;
 }
 
-function GlobalExpandedContent({ model, entityRef, onDetail, runtime, certifiedThrough }: { readonly model: GlobalExpandedReadModel; readonly entityRef: string; readonly onDetail: (row: GlobalDetailRow) => void; readonly runtime: GlobalV2VisitRuntime; readonly certifiedThrough: string }) {
+function GlobalExpandedContent({ model, entityRef, onDetail, runtime, certifiedThrough }: { readonly model: GlobalExpandedReadModel; readonly entityRef: string; readonly onDetail: (row: GlobalDetailRow, title?: string) => void; readonly runtime: GlobalV2VisitRuntime; readonly certifiedThrough: string }) {
   if (model.sectionKey === "METHODOLOGY" && model.moduleKey === "ECONOMIC") return <EconomicMethod model={model} certifiedThrough={certifiedThrough} />;
   if (model.sectionKey === "METHODOLOGY") return <div className={styles.expandedContent}><HumanRows rows={model.rows} onDetail={onDetail} /><HumanQualityNote quality={model.quality} /></div>;
   if (model.resource === "analysis_global_economic_recurrence_detail") return <EconomicRecurrenceDetail model={model} />;
@@ -662,9 +662,9 @@ function GlobalDetailOverlay({ target, runtime, mobile, certifiedThrough, restor
   return <OverlayFrame kind="exploration" title={target.title} subtitle={subtitle} closeAction={{ kind: "callback", onAction: onClose }} {...(target.kind === "ENTITY_DETAIL" && target.moduleKey === "CATEGORIES_NEEDS" ? { backAction: { kind: "callback" as const, onAction: () => onReplace(moduleOverlayTarget("CATEGORIES_NEEDS", returnSection)) } } : {})} restoreFocusRef={restoreFocusRef} closeOnBackdrop className={`${styles.detailOverlay} ${mobile ? styles.mobileOverlay : ""}`}>
     {tabs.length > 1 ? <div className={`${styles.overlayNavigation} ${target.moduleKey === "CATEGORIES_NEEDS" ? styles.m2OverlayNavigation : ""}`}><div className={`${styles.sectionTabs} ${target.moduleKey === "CATEGORIES_NEEDS" ? styles.m2Tabs : ""}`} role="tablist" aria-label={`Sections de ${target.title}`}>{tabs.map((item) => <button id={`${moduleSlugs[target.moduleKey]}-tab-${item.key.toLowerCase()}`} key={item.key} type="button" role="tab" aria-selected={section === item.key} aria-controls={`${moduleSlugs[target.moduleKey]}-panel-${item.key.toLowerCase()}`} onClick={() => { setSection(item.key); emitGlobalV2UxEvent("global_section_expanded", { moduleKey: target.moduleKey, sectionKey: item.key }); window.history.replaceState(window.history.state, "", `#${moduleSlugs[target.moduleKey]}-${item.key.toLowerCase()}`); }}>{item.label}</button>)}</div>{target.moduleKey === "ECONOMIC" ? <button type="button" className={styles.methodLink} onClick={() => onReplace(methodOverlayTarget("ECONOMIC"))}><Info aria-hidden size={15} /> Méthode</button> : null}</div> : null}
     {target.moduleKey === "CATEGORIES_NEEDS" ? <p className={styles.m2Period}>{analysisPeriod(certifiedThrough).label.replace("—", "→")}</p> : null}
-    <div {...(tabs.length > 1 ? { id: activePanelId, role: "tabpanel", "aria-labelledby": activeTabId } : {})}>{result.state.status === "IDLE" || result.state.status === "LOADING" ? <LoadingCard label={target.title} /> : result.state.status === "ERROR" && model === undefined ? localError : model === undefined ? null : <GlobalExpandedContent model={model} entityRef={target.entityRef} runtime={runtime} certifiedThrough={certifiedThrough} onDetail={(row) => {
+    <div {...(tabs.length > 1 ? { id: activePanelId, role: "tabpanel", "aria-labelledby": activeTabId } : {})}>{result.state.status === "IDLE" || result.state.status === "LOADING" ? <LoadingCard label={target.title} /> : result.state.status === "ERROR" && model === undefined ? localError : model === undefined ? null : <GlobalExpandedContent model={model} entityRef={target.entityRef} runtime={runtime} certifiedThrough={certifiedThrough} onDetail={(row, detailTitle) => {
       if (row.entityRef === undefined) return;
-      const nextTarget = entityOverlayTarget(target.moduleKey, row.entityRef, humanLabel(row.labelKey), section);
+      const nextTarget = entityOverlayTarget(target.moduleKey, row.entityRef, detailTitle ?? humanLabel(row.labelKey), section);
       if (nextTarget === undefined) return;
       const content = document.querySelector<HTMLElement>('[data-overlay-shell][data-topmost="true"] [data-overlay-content]');
       returnScrollTop.current = content?.scrollTop;
