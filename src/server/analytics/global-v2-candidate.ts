@@ -588,8 +588,26 @@ function categoryNeedProjection(output: GlobalV2OwnerOutput, labels: GlobalV2Pre
   const categories = arrayOf(at(result, "categories", "groups"));
   const needs = arrayOf(at(result, "needs", "groups"));
   const materiality = new GlobalMaterialityEngine();
+  const shareDeltaPointsByPhenomenon = new Map<string, string>([
+    ...categories.flatMap((group) => {
+      const key = stringOf(at(group, "key"));
+      const shareDeltaPoints = stringOf(at(group, "shareDeltaPoints"));
+      return key === undefined || shareDeltaPoints === undefined ? [] : [[`category:${key}`, shareDeltaPoints] as const];
+    }),
+    ...needs.flatMap((group) => {
+      const key = stringOf(at(group, "key"));
+      const shareDeltaPoints = stringOf(at(group, "shareDeltaPoints"));
+      return key === undefined || shareDeltaPoints === undefined ? [] : [[`need:${key}`, shareDeltaPoints] as const];
+    }),
+  ]);
   const candidateCategoryIds = new Set(arrayOf(at(result, "materialityCandidates")).flatMap((candidate) => {
-    const evaluation = materiality.evaluate({ candidate: candidate as GlobalMaterialityCandidate, policyId: "CATEGORY_NEED" });
+    const phenomenonId = stringOf(at(candidate, "phenomenonId"));
+    const shareDeltaPoints = phenomenonId === undefined ? undefined : shareDeltaPointsByPhenomenon.get(phenomenonId);
+    const evaluation = materiality.evaluate({
+      candidate: candidate as GlobalMaterialityCandidate,
+      policyId: "CATEGORY_NEED",
+      ...(shareDeltaPoints === undefined ? {} : { shareDeltaPoints }),
+    });
     if (evaluation.status !== "MATERIAL") return [];
     return arrayOf(at(candidate, "entityRefs")).flatMap((ref) => typeof ref === "string" && ref.startsWith("category:") ? [ref.slice("category:".length)] : []);
   }));

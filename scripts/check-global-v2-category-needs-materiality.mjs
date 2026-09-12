@@ -27,8 +27,10 @@ const m = money.parseMoney;
 const ym = time.parseYearMonth;
 const uuid = (suffix) => `00000000-0000-4000-8000-${String(suffix).padStart(12, "0")}`;
 const categoryA = identity.parseCategoryId(uuid(101));
+const categoryB = identity.parseCategoryId(uuid(102));
 const subcategoryA = identity.parseSubcategoryId(uuid(201));
 const subcategoryB = identity.parseSubcategoryId(uuid(202));
+const subcategoryC = identity.parseSubcategoryId(uuid(203));
 const known = (id, ref) => ({ status: "KNOWN", id, evidenceRefs: [ref] });
 const state = (status, ref = []) => ({ status, evidenceRefs: ref });
 const references = ["2026-01", "2026-02", "2026-03", "2026-04", "2026-05", "2026-06"].map(ym);
@@ -77,11 +79,38 @@ check(() => assert.equal(result.categories.reconcilesToActual, true));
 check(() => assert.equal(result.needs.reconcilesToActual, true));
 check(() => assert.equal(result.categories.currentTotal, "80"));
 check(() => assert.equal(result.needs.currentTotal, "80"));
+check(() => assert.equal(result.categories.annualTotal, "560"));
+check(() => assert.equal(result.needs.annualTotal, "560"));
+check(() => assert.equal(result.categories.groups.reduce((total, { annualAmount }) => money.addMoney(total, annualAmount), m("0")), result.categories.annualTotal));
+check(() => assert.equal(result.needs.groups.reduce((total, { annualAmount }) => money.addMoney(total, annualAmount), m("0")), result.needs.annualTotal));
 check(() => assert.equal(result.categories.groups.find(({ key }) => key === "__UNKNOWN__").monthlyAmount, "-20"));
 check(() => assert.equal(result.categories.groups.find(({ key }) => key === categoryA).contributors.reduce((total, item) => money.addMoney(total, item.amount), m("0")), "100"));
+const annualCategoryA = result.categories.groups.find(({ key }) => key === categoryA);
+check(() => assert.equal(annualCategoryA.annualAmount, "610"));
+check(() => assert.equal(annualCategoryA.activeMonths, 7));
+check(() => assert.equal(annualCategoryA.currentShare, "1.25"));
+check(() => assert.equal(annualCategoryA.referenceShare, "1.0625"));
+check(() => assert.equal(annualCategoryA.shareDeltaPoints, "18.75"));
+check(() => assert.ok(Math.abs(Number(annualCategoryA.annualShare) * Number(result.categories.annualTotal) - Number(annualCategoryA.annualAmount)) < 1e-9));
+check(() => assert.equal(annualCategoryA.annualSubcategoryBreakdown.reduce((total, item) => money.addMoney(total, item.annualAmount), m("0")), annualCategoryA.annualAmount));
+check(() => assert.deepEqual(annualCategoryA.annualSubcategoryBreakdown.map(({ key, annualAmount }) => [key, annualAmount]), [[subcategoryA, "445"], [subcategoryB, "165"]]));
 check(() => assert.equal(result.categories.groups.find(({ key }) => key === "__UNKNOWN__").classificationBreakdown.lifeScope[0].key, "__CONFLICT__"));
 check(() => assert.equal(result.categories.coverage.effective, 2 / 3));
 check(() => assert.equal(result.needs.coverage.effective, 1 / 3));
+check(() => assert.deepEqual(result.needs.monetaryCoverage, {
+  status: "PARTIAL", knownAmount: "445", unresolvedAmount: "115", totalAmount: "560", knownShare: "0.79464285714285714286",
+}));
+const conflictCoverage = globalAnalytics.buildGlobalCategoryNeeds({
+  targetMonth: target,
+  referenceMonths: references,
+  components: [...monthly, ...targetComponents.map((item) => item.canonicalComponentKey === "refund-target" ? { ...item, need: state("CONFLICT", ["need:conflict"]) } : item)],
+  actual: m("80"),
+  officialTypicalTotal: m("80"),
+  officialCategoryCurrentAmounts: { [categoryA]: m("100") },
+  officialCategoryTypicalAmounts: { [categoryA]: m("85") },
+});
+check(() => assert.equal(conflictCoverage.needs.monetaryCoverage.status, "CONFLICT"));
+check(() => assert.equal(conflictCoverage.needs.monetaryCoverage.unresolvedAmount, "115"));
 check(() => assert.equal(result.categories.shareSumIsExhaustive, false));
 check(() => assert.equal(result.purchaseFrequencyTicket.reasonCode, "PURCHASE_EVENT_AUTHORITY_UNAVAILABLE"));
 check(() => assert.ok(result.materialityCandidates.some(({ phenomenonId }) => phenomenonId === `category:${categoryA}`)));
@@ -96,6 +125,25 @@ const reordered = globalAnalytics.buildGlobalCategoryNeeds({
   officialCategoryTypicalAmounts: { [categoryA]: m("85") },
 });
 check(() => assert.equal(reordered.inputHash, result.inputHash));
+check(() => assert.deepEqual(reordered.categories, result.categories));
+check(() => assert.deepEqual(reordered.needs, result.needs));
+const twelveReferences = Array.from({ length: 12 }, (_, index) => ym(`2025-${String(index + 1).padStart(2, "0")}`));
+const authoritativeAnnual = globalAnalytics.buildGlobalCategoryNeeds({
+  targetMonth: ym("2026-01"),
+  referenceMonths: twelveReferences,
+  components: [
+    ...twelveReferences.map((month) => component(month, `rolling-${month}`, "10", known(categoryA, `category:${categoryA}`), known(subcategoryA, `subcategory:${subcategoryA}`), known("need-home", "need:home"))),
+    component("2026-01", "rolling-target", "20", known(categoryA, `category:${categoryA}`), known(subcategoryA, `subcategory:${subcategoryA}`), known("need-home", "need:home")),
+  ],
+  actual: m("20"),
+  officialTypicalTotal: m("10"),
+  officialCategoryCurrentAmounts: { [categoryA]: m("20") },
+  officialCategoryTypicalAmounts: { [categoryA]: m("10") },
+});
+check(() => assert.equal(authoritativeAnnual.categories.groups[0].historicalSeries.length, 13));
+check(() => assert.equal(authoritativeAnnual.categories.groups[0].annualAmount, "140"));
+check(() => assert.equal(authoritativeAnnual.categories.groups[0].activeMonths, 13));
+check(() => assert.equal(authoritativeAnnual.categories.annualTotal, "140"));
 rejects(() => globalAnalytics.buildGlobalCategoryNeeds({
   targetMonth: target,
   referenceMonths: references,
@@ -162,6 +210,30 @@ check(() => assert.equal(engine.evaluate({ candidate: candidate({ coverage: cove
 check(() => assert.equal(engine.evaluate({ candidate: candidate({ effect: { absolute: "1", relative: "0.01" }, coverage: coverage(0.5, "PARTIAL"), knowledgeState: "PARTIAL" }), policyId: "CATEGORY_NEED" }).status, "QUALIFIED_PARTIAL"));
 check(() => assert.equal(engine.evaluate({ candidate: candidate({ knowledgeState: "UNKNOWN" }), policyId: "CATEGORY_NEED" }).status, "INELIGIBLE"));
 check(() => assert.equal(engine.evaluate({ candidate: candidate({ effect: { absolute: "15", relative: "0.01" } }), policyId: "CATEGORY_NEED", shareDeltaPoints: "2" }).status, "MATERIAL"));
+const zeroTypical = globalAnalytics.buildGlobalCategoryNeeds({
+  targetMonth: target,
+  referenceMonths: references,
+  components: [
+    ...references.flatMap((month) => [
+      component(month, `stable-${month}`, "100", known(categoryA, `category:${categoryA}`), known(subcategoryA, `subcategory:${subcategoryA}`), known("need-home", "need:home")),
+      component(month, `new-${month}`, "0", known(categoryB, `category:${categoryB}`), known(subcategoryC, `subcategory:${subcategoryC}`), known("need-gifts", "need:gifts")),
+    ]),
+    component(target, "stable-target", "85", known(categoryA, `category:${categoryA}`), known(subcategoryA, `subcategory:${subcategoryA}`), known("need-home", "need:home")),
+    component(target, "new-target", "15", known(categoryB, `category:${categoryB}`), known(subcategoryC, `subcategory:${subcategoryC}`), known("need-gifts", "need:gifts")),
+  ],
+  actual: m("100"),
+  officialTypicalTotal: m("100"),
+  officialCategoryCurrentAmounts: { [categoryA]: m("85"), [categoryB]: m("15") },
+  officialCategoryTypicalAmounts: { [categoryA]: m("100"), [categoryB]: m("0") },
+});
+const appearedGroup = zeroTypical.categories.groups.find(({ key }) => key === categoryB);
+const appearedCandidate = zeroTypical.materialityCandidates.find(({ phenomenonId }) => phenomenonId === `category:${categoryB}`);
+check(() => assert.equal(appearedGroup.referenceShare, "0"));
+check(() => assert.equal(appearedGroup.currentShare, "0.15"));
+check(() => assert.equal(appearedGroup.shareDeltaPoints, "15"));
+check(() => assert.equal(appearedCandidate.effect.relative, undefined));
+check(() => assert.equal(engine.evaluate({ candidate: appearedCandidate, policyId: "CATEGORY_NEED" }).status, "NOT_MATERIAL"));
+check(() => assert.equal(engine.evaluate({ candidate: appearedCandidate, policyId: "CATEGORY_NEED", shareDeltaPoints: appearedGroup.shareDeltaPoints }).status, "MATERIAL"));
 rejects(() => engine.evaluate({ candidate: candidate({ materialityPolicy: { id: "global-materiality-category-need", version: "v2" } }), policyId: "CATEGORY_NEED" }), /ne correspond pas/);
 const duplicate = candidate({ candidateId: "candidate:b" });
 const distinctGrain = candidate({ candidateId: "candidate:c", support: support("SUFFICIENT", "OCCURRENCE") });

@@ -25,7 +25,7 @@ import type { YearMonth } from "../../core/time";
 import { parseMethodVersion, parsePolicyVersion } from "../../core/versions";
 
 const ZERO = parseMoney("0");
-export const GLOBAL_M2_METHOD_VERSION = parseMethodVersion("global_category_need@v1");
+export const GLOBAL_M2_METHOD_VERSION = parseMethodVersion("global_category_need@v2");
 
 export const globalM2Policies = {
   reference: "global-category-need-reference@v1",
@@ -85,15 +85,36 @@ export type GlobalM2Contributor = {
   readonly amount: Money;
 };
 
+export type GlobalM2AnnualBreakdownItem = {
+  readonly key: string;
+  readonly annualAmount: Money;
+  readonly annualShare: string | null;
+};
+
+export type GlobalM2MonetaryCoverage = {
+  readonly status: "KNOWN" | "PARTIAL" | "UNKNOWN" | "CONFLICT";
+  readonly knownAmount: Money;
+  readonly unresolvedAmount: Money;
+  readonly totalAmount: Money;
+  readonly knownShare: string | null;
+};
+
 export type GlobalM2Group = {
   readonly key: string;
   readonly dimension: GlobalM2DimensionValue;
   readonly monthlyAmount: Money;
   readonly typicalAmount: Money | null;
   readonly shareOfTypical: string | null;
+  readonly annualAmount: Money;
+  readonly annualShare: string | null;
+  readonly activeMonths: number;
+  readonly currentShare: string | null;
+  readonly referenceShare: string | null;
+  readonly shareDeltaPoints: string | null;
   readonly deltaAmount: Money | null;
   readonly deltaRelative: string | null;
   readonly historicalSeries: readonly GlobalM2SeriesPoint[];
+  readonly annualSubcategoryBreakdown?: readonly GlobalM2AnnualBreakdownItem[];
   readonly contributors: readonly GlobalM2Contributor[];
   readonly classificationBreakdown: {
     readonly necessity: readonly GlobalM2Contributor[];
@@ -109,6 +130,8 @@ export type GlobalM2Axis = {
   readonly coverage: GlobalCoverageSet;
   readonly support: GlobalSupport;
   readonly currentTotal: Money;
+  readonly annualTotal: Money;
+  readonly monetaryCoverage: GlobalM2MonetaryCoverage;
   readonly reconcilesToActual: boolean;
   readonly shareSumIsExhaustive: boolean;
 };
@@ -278,6 +301,37 @@ function classificationContributorsFor(
     .sort((a, b) => new Big(b.amount).abs().cmp(new Big(a.amount).abs()) || a.key.localeCompare(b.key));
 }
 
+function annualSubcategoryBreakdownFor(
+  components: readonly GlobalM2MonthlyComponent[],
+  months: ReadonlySet<YearMonth>,
+  parentKey: string,
+): readonly GlobalM2AnnualBreakdownItem[] {
+  const totals = new Map<string, Money>();
+  for (const component of components) {
+    if (!months.has(component.month) || dimensionKey(component.category) !== parentKey) continue;
+    const key = dimensionKey(component.subcategory);
+    totals.set(key, addMoney(totals.get(key) ?? ZERO, component.amount));
+  }
+  const annualAmount = sum([...totals.values()]);
+  return [...totals].map(([key, amount]) => ({ key, annualAmount: amount, annualShare: ratio(amount, annualAmount) }))
+    .sort((a, b) => new Big(b.annualAmount).abs().cmp(new Big(a.annualAmount).abs()) || a.key.localeCompare(b.key));
+}
+
+function monetaryCoverage(groups: readonly GlobalM2Group[]): GlobalM2MonetaryCoverage {
+  const knownAmount = sum(groups.flatMap(({ dimension, annualAmount }) => dimension.status === "KNOWN" ? [annualAmount] : []));
+  const unresolvedAmount = sum(groups.flatMap(({ dimension, annualAmount }) => dimension.status === "KNOWN" ? [] : [annualAmount]));
+  const totalAmount = addMoney(knownAmount, unresolvedAmount);
+  const unresolvedGroups = groups.filter(({ dimension, annualAmount }) => dimension.status !== "KNOWN" && !new Big(annualAmount).eq(0));
+  const status = groups.length === 0 || new Big(totalAmount).eq(0)
+    ? "UNKNOWN"
+    : unresolvedGroups.some(({ dimension }) => dimension.status === "CONFLICT")
+      ? "CONFLICT"
+      : unresolvedGroups.length === 0
+        ? "KNOWN"
+        : "PARTIAL";
+  return { status, knownAmount, unresolvedAmount, totalAmount, knownShare: ratio(knownAmount, totalAmount) };
+}
+
 function buildAxis(input: {
   readonly axis: "CATEGORY" | "NEED";
   readonly targetMonth: YearMonth;
@@ -295,6 +349,9 @@ function buildAxis(input: {
   const targetComponents = input.components.filter(({ month }) => month === input.targetMonth);
   const axisCoverage = coverage(targetComponents, input.axis);
   const axisSupport = support(input.referenceMonths);
+  const historyMonths = [...input.referenceMonths, input.targetMonth];
+  const authoritativeMonthSet = new Set(historyMonths);
+  const annualTotal = sum(historyMonths.flatMap((month) => [...(grouped.get(month)?.values() ?? [])]));
   const groups = allKeys.map((key): GlobalM2Group => {
     const monthlyAmount = current.get(key) ?? ZERO;
     const dimension = dimensions.get(key) ?? (() => { throw new TypeError(`Dimension absente pour ${key}.`); })();
@@ -315,15 +372,28 @@ function buildAxis(input: {
       }
     }
     const deltaAmount = typicalAmount === null ? null : parseMoney(new Big(monthlyAmount).minus(typicalAmount).toFixed());
+    const historicalSeries = historyMonths.map((month) => ({ month, amount: grouped.get(month)?.get(key) ?? ZERO }));
+    const annualAmount = sum(historicalSeries.map(({ amount }) => amount));
+    const currentShare = ratio(monthlyAmount, input.actual);
+    const referenceShare = typicalAmount === null ? null : ratio(typicalAmount, input.officialTypicalTotal);
     return {
       key,
       dimension,
       monthlyAmount,
       typicalAmount,
-      shareOfTypical: typicalAmount === null ? null : ratio(typicalAmount, input.officialTypicalTotal),
+      shareOfTypical: referenceShare,
+      annualAmount,
+      annualShare: ratio(annualAmount, annualTotal),
+      activeMonths: historicalSeries.filter(({ amount }) => !new Big(amount).eq(0)).length,
+      currentShare,
+      referenceShare,
+      shareDeltaPoints: currentShare === null || referenceShare === null
+        ? null
+        : new Big(currentShare).minus(referenceShare).times(100).toFixed(),
       deltaAmount,
       deltaRelative: deltaAmount === null || typicalAmount === null ? null : ratio(deltaAmount, typicalAmount),
-      historicalSeries: [...input.referenceMonths, input.targetMonth].map((month) => ({ month, amount: grouped.get(month)?.get(key) ?? ZERO })),
+      historicalSeries,
+      ...(input.axis === "CATEGORY" ? { annualSubcategoryBreakdown: annualSubcategoryBreakdownFor(input.components, authoritativeMonthSet, key) } : {}),
       contributors: contributorsFor(input.components, input.targetMonth, input.axis, key),
       classificationBreakdown: {
         necessity: classificationContributorsFor(input.components, input.targetMonth, input.axis, key, "necessity"),
@@ -343,6 +413,8 @@ function buildAxis(input: {
     coverage: axisCoverage,
     support: axisSupport,
     currentTotal,
+    annualTotal,
+    monetaryCoverage: monetaryCoverage(groups),
     reconcilesToActual,
     shareSumIsExhaustive: axisCoverage.effective === 1 && new Big(typicalSum).eq(input.officialTypicalTotal),
   };

@@ -38,7 +38,7 @@ const outputByModule = {
   },
   CATEGORIES_NEEDS: { result: {
     categories: { currentTotal: "3773.14", groups: [
-      { key: "food", dimension: { status: "KNOWN", id: "cat-food" }, monthlyAmount: "1036.96", typicalAmount: "148.88", deltaAmount: "888.08", historicalSeries: months.map((month, index) => ({ month, amount: String(100 + index) })) },
+      { key: "food", dimension: { status: "KNOWN", id: "cat-food" }, monthlyAmount: "1036.96", typicalAmount: "148.88", deltaAmount: "888.08", shareDeltaPoints: "2", historicalSeries: months.map((month, index) => ({ month, amount: String(100 + index) })) },
       { key: "home", dimension: { status: "KNOWN", id: "cat-home" }, monthlyAmount: "900", typicalAmount: "800", deltaAmount: "100", historicalSeries: months.map((month, index) => ({ month, amount: String(200 + index) })) },
       { key: "travel", dimension: { status: "KNOWN", id: "cat-travel" }, monthlyAmount: "400", typicalAmount: "300", deltaAmount: "100", historicalSeries: months.map((month, index) => ({ month, amount: String(300 + index) })) },
     ] },
@@ -48,7 +48,7 @@ const outputByModule = {
     ] },
     materialityCandidates: [{
       candidateId: "global-m2:category:food", phenomenonId: "category:food", metricRef: "global-m2:category:monthly-amount",
-      effect: { absolute: "888.08", relative: "5.965072" }, knowledgeState: "KNOWN",
+      effect: { absolute: "15" }, knowledgeState: "KNOWN",
       support: { naturalGrain: "MONTH", eligibleUnits: 12, observedUnits: 12, includedUnits: 12, excludedObservedUnits: 0, minimumRequired: 6, supportStatus: "STRONG", policyRef: "global-m2-category-reference-support@v1" },
       coverage: { dimensions: [{ dimension: "CLASSIFICATION", status: "KNOWN", numerator: 1, denominator: 1, ratio: 1, unit: "component-share", basis: "resolved-over-eligible", evidenceRefs: ["category:cat-food"], policyRef: "global-m2-classification-coverage@v1" }], requiredDimensions: ["CLASSIFICATION"], effective: 1, aggregation: "MIN_REQUIRED_DIMENSIONS" },
       evidenceRefs: ["category:cat-food"], entityRefs: ["category:cat-food"], methodVersion: "global_category_need@v1", materialityPolicy: { id: "global-materiality-category-need", version: "v1" },
