@@ -59,6 +59,7 @@ const moduleSet = new Set<string>(globalPrimaryModuleCatalog.map(({ moduleKey })
 const expandedModuleResources = new Set<string>(globalV2ExpandedResourceCatalog.slice(0, 10).map(({ resource }) => resource));
 const authorityGatedResources = new Set<string>(["analysis_global_product_detail", "analysis_global_route_detail"]);
 const m1V2ProjectionResources = new Set<string>(["analysis_global_economic", "analysis_global_economic_expanded", "analysis_global_economic_recurrence_detail"]);
+const lifeSpendingV2ProjectionResources = new Set<string>(["analysis_global_rhythm", "analysis_global_rhythm_expanded", "analysis_global_routine_detail", "analysis_global_moment_experience_detail"]);
 
 function text(value: unknown, label: string): string {
   if (typeof value !== "string" || value.length === 0 || value !== value.trim()) throw new TypeError(`${label}_INVALID`);
@@ -121,8 +122,8 @@ export const globalV2QueryRegistry = Object.freeze(Object.fromEntries(
       capabilityId: globalV2ExpandedResourceCatalog.find((entry) => entry.resource === resource)?.capabilityId ?? (resource === "analysis_global_summary_ai" ? "GLOBAL_IMPORTED_SUMMARY" : resource === "analysis_global_manifest" ? "GLOBAL_MANIFEST" : `GLOBAL_${moduleKey}`),
       availability: authorityGatedResources.has(resource) ? "AUTHORITY_GATED" : "AVAILABLE",
       contractVersion: "global-v2-query@v1",
-      methodVersion: m1V2ProjectionResources.has(resource) ? `${resource}@v2` : `${resource}@v1`,
-      policyVersions: Object.freeze({ projection: m1V2ProjectionResources.has(resource) ? "global-m1-query-projection@v2" : "global-v2-query-projection@v1", transport: "global-v2-snapshot-only@v1" }),
+      methodVersion: m1V2ProjectionResources.has(resource) || lifeSpendingV2ProjectionResources.has(resource) ? `${resource}@v2` : `${resource}@v1`,
+      policyVersions: Object.freeze({ projection: m1V2ProjectionResources.has(resource) ? "global-m1-query-projection@v2" : lifeSpendingV2ProjectionResources.has(resource) ? "global-life-spending-query-projection@v1" : "global-v2-query-projection@v1", transport: "global-v2-snapshot-only@v1" }),
       schema: schemaFor(resource),
     };
     return [resource, Object.freeze(contract)] as const;

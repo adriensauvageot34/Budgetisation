@@ -3,6 +3,7 @@ import "server-only";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import {
   buildGlobalActivityRhythm,
+  buildGlobalActivityCostProfile,
   buildGlobalPersonaDifferences,
   buildGlobalPersonaMetrics,
   buildGlobalSharedAnalysis,
@@ -101,10 +102,14 @@ export async function resolveGlobalV2ProductionOwnerOutputs(repository: Canonica
   const m1 = m2.m1;
 
   const occurrenceMonths = eligiblePeriods.map(({ month }) => parseYearMonth(month.slice(0, 7)));
-  const occurrences = (await Promise.all(occurrenceMonths.map((month) => resolver.loadActivityOccurrences({ subject: { kind: "household" }, time: { kind: "month", month } })))).flat();
-  const personDays = (await Promise.all(context.personIds.flatMap((personId) => occurrenceMonths.map((month) => resolver.loadPersonDays({ subject: { kind: "person", personId }, time: { kind: "month", month } }))))).flat();
+  const [occurrences, activityCosts, personDays] = await Promise.all([
+    Promise.all(occurrenceMonths.map((month) => resolver.loadActivityOccurrences({ subject: { kind: "household" }, time: { kind: "month", month } }))).then((batches) => batches.flat()),
+    Promise.all(occurrenceMonths.map((month) => resolver.loadActivityOccurrenceCosts({ subject: { kind: "household" }, time: { kind: "month", month } }))).then((batches) => batches.flat()),
+    Promise.all(context.personIds.flatMap((personId) => occurrenceMonths.map((month) => resolver.loadPersonDays({ subject: { kind: "person", personId }, time: { kind: "month", month } })))).then((batches) => batches.flat()),
+  ]);
   const activityIds = [...new Set(occurrences.map(({ activityId }) => String(activityId)))].sort();
   const rhythms = context.personIds.flatMap((personId) => activityIds.map((activityId) => buildGlobalActivityRhythm({ activityId, personId: String(personId), occurrences, personDays })));
+  const activityCostProfiles = activityIds.map((activityId) => buildGlobalActivityCostProfile({ activityId, occurrences, activityCosts }));
 
   const relationshipEvolution = m5.flatMap((result) => buildGlobalM5TransformationFeed(result));
   const m3 = buildGlobalTransformations({ series: [], relations: [], relationshipEvolution });
@@ -180,8 +185,8 @@ export async function resolveGlobalV2ProductionOwnerOutputs(repository: Canonica
   const ownerOutputs: GlobalV2OwnerOutput[] = [
     { moduleKey: "ECONOMIC", owner: "GlobalM1HouseholdAuthority", output: m1, knowledge: m1.state.actual.status, capabilityState: m1.state.actual.status === "KNOWN" ? "AVAILABLE" : "PARTIAL", reasonCodes: [], evidenceRefs: evidence("M1", m1) },
     { moduleKey: "CATEGORIES_NEEDS", owner: "GlobalM2HouseholdAuthority", output: m2, knowledge: "KNOWN", capabilityState: "AVAILABLE", reasonCodes: [], evidenceRefs: evidence("M2", m2) },
-    { moduleKey: "TRANSFORMATIONS", owner: "buildGlobalTransformations", output: m3, knowledge: m3.transformations.length > 0 || m3.relationshipChanges !== undefined ? "KNOWN" : "UNKNOWN", capabilityState: m3.transformations.length > 0 || m3.relationshipChanges !== undefined ? "AVAILABLE" : "PARTIAL", reasonCodes: m3.transformations.length > 0 ? [] : ["NO_CERTIFIED_TRANSFORMATION"], evidenceRefs: evidence("M3", m3) },
-    { moduleKey: "RHYTHM", owner: "buildGlobalActivityRhythm", output: { rhythms }, knowledge: rhythms.length > 0 ? "KNOWN" : "UNKNOWN", capabilityState: rhythms.length > 0 ? "AVAILABLE" : "PARTIAL", reasonCodes: rhythms.length > 0 ? [] : ["NO_OBSERVABLE_ACTIVITY"], evidenceRefs: evidence("M4", rhythms) },
+    { moduleKey: "TRANSFORMATIONS", owner: "buildGlobalTransformations", output: m3, knowledge: "UNKNOWN", capabilityState: "UNAVAILABLE", reasonCodes: ["TRANSFORMATION_INPUT_UNIVERSE_NOT_EVALUATED"], evidenceRefs: evidence("M3", m3) },
+    { moduleKey: "RHYTHM", owner: "buildGlobalActivityRhythm", output: { rhythms, activityCostProfiles }, knowledge: rhythms.length > 0 ? "KNOWN" : "UNKNOWN", capabilityState: rhythms.length > 0 ? "AVAILABLE" : "PARTIAL", reasonCodes: rhythms.length > 0 ? [] : ["NO_OBSERVABLE_ACTIVITY"], evidenceRefs: evidence("M4", { rhythms, activityCostProfiles }) },
     { moduleKey: "RELATIONSHIPS", owner: "GlobalM5PersonAuthority", output: m5, knowledge: m5.some((result) => result.insights.length > 0) ? "KNOWN" : "UNKNOWN", capabilityState: "PARTIAL", reasonCodes: ["AUTHORITY_GATED_RELATIONSHIP_PROVIDERS"], evidenceRefs: evidence("M5", m5) },
     { moduleKey: "MOMENTS", owner: "GlobalM6MomentAuthority", output: m6, knowledge: globalV2M6HasPresentationContent(m6) ? "PARTIAL" : "UNKNOWN", capabilityState: "PARTIAL", reasonCodes: globalV2M6HasPresentationContent(m6) ? ["MOMENT_PLACE_FACETS_PARTIAL"] : ["NO_COMPARABLE_MOMENT"], evidenceRefs: evidence("M6", m6) },
     { moduleKey: "GEO_MOBILITY", owner: "GlobalM7PlaceAuthority", output: m7, knowledge: hasItems(m7, ["places", "visits", "placeResults"]) ? "KNOWN" : "UNKNOWN", capabilityState: "PARTIAL", reasonCodes: ["AUTHORITY_GATED_MOBILITY"], evidenceRefs: evidence("M7", m7) },

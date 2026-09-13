@@ -80,7 +80,9 @@ export { fuseGlobalTemporalSignals } from "./temporal-fusion";
 export { buildGlobalTransformations, transformationSignalCatalog } from "./transformations";
 export { projectGlobalTemporalRate } from "./temporal-projection";
 export {
+  GLOBAL_M4_ACTIVITY_COST_PROFILE_METHOD_VERSION,
   GLOBAL_M4_METHOD_VERSION,
+  buildGlobalActivityCostProfile,
   buildGlobalActivityRhythm,
   buildGlobalM4ActivityTransformations,
   buildGlobalM4RoutineTransformations,

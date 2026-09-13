@@ -12,6 +12,7 @@ registerHooks({ resolve(specifier, context, next) {
 } });
 
 const {
+  buildGlobalActivityCostProfile,
   buildGlobalActivityRhythm,
   buildGlobalDayTypeAnalysis,
   buildGlobalM4ActivityTransformations,
@@ -54,6 +55,33 @@ check(() => assert.equal(buildGlobalActivityRhythm({ activityId, personId, occur
 check(() => assert.equal(buildGlobalActivityRhythm({ activityId, personId, occurrences: fiveOccurrences, personDays: tenDays.filter((_, i) => i !== 5) }).rate.status, "PARTIAL"));
 check(() => assert.throws(() => buildGlobalActivityRhythm({ activityId, personId, occurrences: [fiveOccurrences[0], { ...fiveOccurrences[0], endDate: date(9) }], personDays: tenDays }), /contradictoire/));
 check(() => assert.equal(buildGlobalActivityRhythm({ activityId, personId, occurrences: fiveOccurrences.map((fact) => ({ ...fact, participantIds: [] })), personDays: tenDays }).rawOccurrenceCount, 0));
+
+const profileOccurrences = Array.from({ length: 8 }, (_, index) => ({ ...occurrence(100 + index), participantIds: index === 0 ? [personId, uuid(4)] : [personId] }));
+const profileCost = (index, availability = "known") => ({
+  fact: "fct_activity_occurrence_cost", householdId, householdTimeZone: "Europe/Paris", occurrenceId: profileOccurrences[index].lifeEventId, activityId,
+  causalCost: availability === "known" ? { availability: "known", value: parseMoney(String((index + 1) * 10)) } : { availability: "unknown", value: null },
+  coverage: availability === "known" ? { level: "complete" } : { level: "partial" },
+  support: { n: availability === "known" ? 1 : 0, eligibleN: 1, observableN: 1, excludedN: availability === "known" ? 0 : 1, unit: "occurrence", level: "insufficient" },
+  evidence: availability === "known" ? [{ financialLinkId: uuid(7000 + index), canonicalComponentKey: `operation:${uuid(7100 + index)}`, relationType: "Paiement_activite" }] : [],
+  provenance: "derived",
+});
+const profileFor = (knownCount) => buildGlobalActivityCostProfile({ activityId, occurrences: profileOccurrences, activityCosts: [...Array.from({ length: knownCount }, (_, index) => profileCost(index)), ...(knownCount < profileOccurrences.length ? [profileCost(knownCount, "unknown")] : [])] });
+check(() => assert.equal(profileFor(3).causalCostSummary.status, "UNKNOWN"));
+check(() => assert.equal(Object.hasOwn(profileFor(3).causalCostSummary, "median"), false));
+check(() => assert.equal(profileFor(4).causalCostSummary.status, "PARTIAL"));
+check(() => assert.equal(profileFor(4).causalCostSummary.median, "25"));
+check(() => assert.equal(profileFor(6).causalCostSummary.status, "PARTIAL"));
+const activityCostProfile = profileFor(7);
+check(() => assert.equal(activityCostProfile.causalCostSummary.status, "KNOWN"));
+check(() => assert.equal(activityCostProfile.causalCostSummary.median, "40"));
+check(() => assert.deepEqual(activityCostProfile.coverage, { numerator: 7, denominator: 8, ratio: 0.875, basis: "known-causal-household-occurrences" }));
+check(() => assert.equal(activityCostProfile.knownOccurrenceCosts.length, 7));
+check(() => assert.equal(activityCostProfile.knownOccurrenceCosts.some(({ causalCost }) => causalCost === "0"), false));
+check(() => assert.equal(activityCostProfile.scope, "HOUSEHOLD"));
+check(() => assert.equal(JSON.stringify(activityCostProfile).includes("personId"), false));
+check(() => assert.equal(activityCostProfile.nonAdditiveAcrossActivities, true));
+check(() => assert.equal(buildGlobalActivityCostProfile({ activityId, occurrences: [profileOccurrences[0], profileOccurrences[0]], activityCosts: [profileCost(0)] }).totalOccurrenceCount, 1));
+check(() => assert.equal(buildGlobalActivityCostProfile({ activityId, occurrences: [...profileOccurrences].reverse(), activityCosts: [...Array.from({ length: 7 }, (_, index) => profileCost(index)).reverse(), profileCost(7, "unknown")] }).inputHash, activityCostProfile.inputHash));
 
 const authority = (key, index) => ({ semanticKey: key, authority: { kind: "ACTIVITY_OCCURRENCE", factRef: `occurrence:${index}`, evidenceRefs: [`fact:${index}`] } });
 const routineDay = (index, tokenKeys = ["HOME", "WORK", "RESTAURANT", "WORK", "HOME"], observable = true) => ({

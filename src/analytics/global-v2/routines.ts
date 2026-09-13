@@ -2,11 +2,12 @@ import { Temporal } from "@js-temporal/polyfill";
 import Big from "big.js";
 import { sha256 } from "@noble/hashes/sha2.js";
 import { bytesToHex, utf8ToBytes } from "@noble/hashes/utils.js";
-import type {
-  ActivityOccurrenceCostFact,
-  ActivityOccurrenceFact,
-  PersonDayFact,
-  PlaceVisitFact,
+import {
+  medianKnownActivityCausalCost,
+  type ActivityOccurrenceCostFact,
+  type ActivityOccurrenceFact,
+  type PersonDayFact,
+  type PlaceVisitFact,
 } from "../facts";
 import {
   canonicalSerializeGlobal,
@@ -23,6 +24,7 @@ import type { GlobalMaterialityCandidate } from "../../core/global-v2";
 import type { GlobalMaterialityPolicyId } from "./materiality";
 
 export const GLOBAL_M4_METHOD_VERSION = "global_routine_pattern@v1" as const;
+export const GLOBAL_M4_ACTIVITY_COST_PROFILE_METHOD_VERSION = "global_activity_cost_profile@v1" as const;
 
 export const globalRoutinePatternPolicy = Object.freeze({
   version: "global-routine-pattern@v1",
@@ -153,6 +155,73 @@ export function buildGlobalActivityRhythm(input: {
     methodVersion: GLOBAL_M4_METHOD_VERSION,
   };
   return { ...result, inputHash: digest(result) };
+}
+
+export function buildGlobalActivityCostProfile(input: {
+  readonly activityId: string;
+  readonly occurrences: readonly ActivityOccurrenceFact[];
+  readonly activityCosts: readonly ActivityOccurrenceCostFact[];
+}) {
+  if (!input.activityId) throw new TypeError("Activity identity required.");
+  const occurrences = assertUniqueConsistent(input.occurrences, (fact) => String(fact.lifeEventId), "ActivityOccurrenceFact")
+    .filter((fact) => String(fact.activityId) === input.activityId)
+    .sort((left, right) => left.startDate.localeCompare(right.startDate) || String(left.lifeEventId).localeCompare(String(right.lifeEventId)));
+  const occurrenceById = new Map(occurrences.map((fact) => [String(fact.lifeEventId), fact]));
+  const costs = assertUniqueConsistent(input.activityCosts, (fact) => String(fact.occurrenceId), "ActivityOccurrenceCostFact")
+    .filter((fact) => String(fact.activityId) === input.activityId && occurrenceById.has(String(fact.occurrenceId)))
+    .sort((left, right) => String(left.occurrenceId).localeCompare(String(right.occurrenceId)));
+  const householdIds = new Set([...occurrences, ...costs].map((fact) => String(fact.householdId)));
+  if (householdIds.size > 1) throw new TypeError("M4 ActivityCostProfile ne mélange pas plusieurs Households.");
+  for (const cost of costs) {
+    const occurrence = occurrenceById.get(String(cost.occurrenceId));
+    if (occurrence === undefined || String(occurrence.activityId) !== String(cost.activityId)) {
+      throw new TypeError("ActivityOccurrenceCostFact ne correspond pas à son occurrence autoritaire.");
+    }
+  }
+  const knownCosts = costs.flatMap((fact) => fact.causalCost.availability === "known" ? [{ fact, value: fact.causalCost.value }] : []);
+  const knownOccurrenceCosts = knownCosts.map(({ fact, value }) => ({
+    occurrenceId: String(fact.occurrenceId),
+    causalCost: value,
+    causalComponentRefs: [...new Set(fact.evidence.map(({ canonicalComponentKey }) => String(canonicalComponentKey)))].sort(),
+    evidenceRefs: [...new Set(fact.evidence.map(({ financialLinkId }) => `financial-link:${financialLinkId}`))].sort(),
+  }));
+  const knownCausalCostCount = knownOccurrenceCosts.length;
+  const medianKnown = knownCausalCostCount < globalRoutinePatternPolicy.causalCostIndicativeMinimum ? null : medianKnownActivityCausalCost(knownCosts.map(({ fact }) => fact));
+  const causalCostSummary = knownCausalCostCount < globalRoutinePatternPolicy.causalCostIndicativeMinimum
+    ? { status: "UNKNOWN" as const, reasonCode: "INSUFFICIENT_ACTIVITY_COST_SUPPORT" as const }
+    : knownCausalCostCount < globalRoutinePatternPolicy.causalCostSufficientMinimum
+      ? { status: "PARTIAL" as const, median: medianKnown!, partialMeaning: "OBSERVED_ONLY" as const, reasonCode: "INDICATIVE_ACTIVITY_COST_SUPPORT" as const }
+      : { status: "KNOWN" as const, median: medianKnown! };
+  const totalOccurrenceCount = occurrences.length;
+  const result = {
+    activityId: input.activityId,
+    scope: "HOUSEHOLD" as const,
+    totalOccurrenceCount,
+    knownCausalCostCount,
+    causalCostSummary,
+    support: {
+      naturalGrain: "ACTIVITY_OCCURRENCE" as const,
+      eligibleUnits: totalOccurrenceCount,
+      observedUnits: totalOccurrenceCount,
+      includedUnits: knownCausalCostCount,
+      excludedObservedUnits: totalOccurrenceCount - knownCausalCostCount,
+      minimumRequired: globalRoutinePatternPolicy.causalCostIndicativeMinimum,
+      supportStatus: knownCausalCostCount >= globalRoutinePatternPolicy.causalCostSufficientMinimum ? "SUFFICIENT" as const : knownCausalCostCount >= globalRoutinePatternPolicy.causalCostIndicativeMinimum ? "PARTIAL_SUPPORT" as const : "INSUFFICIENT" as const,
+      occurrenceCount: totalOccurrenceCount,
+      gapCount: 0,
+      policyRef: "global-activity-causal-cost-support@v1",
+    },
+    coverage: {
+      numerator: knownCausalCostCount,
+      denominator: totalOccurrenceCount,
+      ratio: totalOccurrenceCount === 0 ? 0 : knownCausalCostCount / totalOccurrenceCount,
+      basis: "known-causal-household-occurrences" as const,
+    },
+    knownOccurrenceCosts,
+    nonAdditiveAcrossActivities: true as const,
+    methodVersion: GLOBAL_M4_ACTIVITY_COST_PROFILE_METHOD_VERSION,
+  };
+  return { ...result, inputHash: digest({ occurrences, costs, result }) };
 }
 
 export type GlobalRoutineTokenAuthority =

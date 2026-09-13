@@ -56,6 +56,8 @@ export {
   parseImportedGlobalSummaryReadModel,
   type GlobalDetailMetric,
   type GlobalDetailRow,
+  type GlobalActivityCostProfileContext,
+  type GlobalMomentComparisonContext,
   type GlobalDetailSeries,
   type GlobalDetailSeriesPoint,
   type GlobalExpandedReadModel,

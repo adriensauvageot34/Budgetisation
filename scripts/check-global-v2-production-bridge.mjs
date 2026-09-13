@@ -92,15 +92,31 @@ const outputByModule = {
     { activityId: "travail_site", personId: personA, support: { occurrenceCount: 181 }, rate: { value: "0.49" }, cadence: { medianIntervalDays: "1" }, monthlyRates: months.map((month) => ({ month, value: "0.49" })) },
     { activityId: "teletravail", personId: personB, support: { occurrenceCount: 90 }, rate: { value: "0.25" }, cadence: { medianIntervalDays: "3" }, monthlyRates: months.map((month) => ({ month, value: "0.25" })) },
     { activityId: "activite_loisir", personId: personA, support: { occurrenceCount: 52 }, rate: { value: "0.14" }, cadence: { medianIntervalDays: "7" }, monthlyRates: months.map((month) => ({ month, value: "0.14" })) },
+  ], activityCostProfiles: [
+    { activityId: "travail_site", scope: "HOUSEHOLD", totalOccurrenceCount: 12, knownCausalCostCount: 8, causalCostSummary: { status: "KNOWN", median: "18.5" }, support: { supportStatus: "SUFFICIENT" }, coverage: { numerator: 8, denominator: 12, ratio: 2 / 3 }, knownOccurrenceCosts: Array.from({ length: 8 }, (_, index) => ({ occurrenceId: `onsite-${index}`, causalCost: String(10 + index), causalComponentRefs: [`component:onsite-${index}`], evidenceRefs: [`financial-link:onsite-${index}`] })), nonAdditiveAcrossActivities: true, methodVersion: "global_activity_cost_profile@v1", inputHash: "b".repeat(64) },
+    { activityId: "teletravail", scope: "HOUSEHOLD", totalOccurrenceCount: 10, knownCausalCostCount: 4, causalCostSummary: { status: "PARTIAL", median: "7.5", partialMeaning: "OBSERVED_ONLY", reasonCode: "INDICATIVE_ACTIVITY_COST_SUPPORT" }, support: { supportStatus: "PARTIAL_SUPPORT" }, coverage: { numerator: 4, denominator: 10, ratio: 0.4 }, knownOccurrenceCosts: Array.from({ length: 4 }, (_, index) => ({ occurrenceId: `remote-${index}`, causalCost: String(5 + index), causalComponentRefs: [`component:remote-${index}`], evidenceRefs: [`financial-link:remote-${index}`] })), nonAdditiveAcrossActivities: true, methodVersion: "global_activity_cost_profile@v1", inputHash: "c".repeat(64) },
   ] },
   RELATIONSHIPS: [{ relationships: [{ relationshipId: "relationship:technical-only" }], insights: [] }],
-  MOMENTS: { summaries: [{ moment: { momentId: "one", type: { value: "Voyage" }, startDate: "2026-07-01", endDate: "2026-07-07" }, causalCost: { status: "KNOWN", value: "1253.90" }, paymentTimeline: [{ paymentPhase: "PAID_BEFORE", amount: "500" }, { paymentPhase: "PAID_DURING", amount: "753.90" }] }], comparisons: [], series: [], narrative: [] },
+  MOMENTS: {
+    methodVersion: "global_moment_experience@v1", inputHash: "d".repeat(64),
+    momentIdentities: [
+      { momentId: "one", canonicalName: { status: "KNOWN", value: "Voyage en Bretagne", evidenceRef: "moment:one" } },
+      { momentId: "two", canonicalName: { status: "KNOWN", value: "Anniversaire de Camille", evidenceRef: "moment:two" } },
+    ],
+    summaries: [
+      { moment: { momentId: "one", type: { value: "Voyage" }, startDate: "2026-07-01", endDate: "2026-07-07" }, causalCost: { status: "KNOWN", value: "1253.90" }, spentDuring: { status: "KNOWN", value: "1800" }, composition: [{ key: "transport", amount: "500", evidenceRefs: ["component:transport"] }], sourceRefs: ["moment:one", "economic-component:transport"], paymentTimeline: [{ paymentPhase: "PAID_BEFORE", amount: "500" }, { paymentPhase: "PAID_DURING", amount: "753.90" }] },
+      { moment: { momentId: "two", type: { value: "Célébration" }, startDate: "2026-06-15", endDate: "2026-06-15" }, causalCost: { status: "KNOWN", value: "240" }, spentDuring: { status: "KNOWN", value: "310" }, composition: [{ key: "food", amount: "240", evidenceRefs: ["component:food"] }], sourceRefs: ["moment:two", "economic-component:food"] },
+    ],
+    comparisons: [{ momentId: "one", status: "KNOWN", comparisonTier: "SAME_FAMILY", comparisonProfileId: "travel-family", peerCount: 6, support: { supportStatus: "SUFFICIENT" }, subjectCost: "1253.90", peerMedianCost: "900", q1: "700", q3: "1100", mad: "150", absoluteDelta: "353.90", relativeDelta: "0.393222", materiality: { status: "MATERIAL" }, evidenceRefs: ["comparison:one"], methodVersion: "global_moment_experience@v1" }],
+    series: [], narrative: [{ momentId: "one", eligible: true, signals: ["UNUSUAL"] }, { momentId: "two", eligible: true, signals: ["DECLARED_IMPORTANCE"] }],
+  },
   GEO_MOBILITY: { places: [{ placeId: "place-one", visitCount: 408, visitDays: 120, medianDuration: 892, lifecycle: { status: "REGULAR_STABLE" } }], finance: { rollups: [{ placeId: "place-one", amount: "300" }] } },
   CONSUMPTION: { events: [], merchants: [], checkoutPurchaseCount: 0, retainedPurchaseCount: 0 },
   PERSONAS: { metrics: [{ personId: personA, metricId: "activity-rate:travail_site", rawValue: "0.49" }, { personId: personB, metricId: "activity-rate:teletravail", rawValue: "0.25" }], differences: [] },
   TOGETHER: { universes: [{ universeId: "activity:journee_maison", support: { sharedUnits: 35, resolvedUnits: 35, eligibleUnits: 73, sharedObservableCoverage: 0.48, knowledgeState: "PARTIAL" } }] },
 };
 const moduleState = {
+  TRANSFORMATIONS: { knowledge: "UNKNOWN", capabilityState: "UNAVAILABLE", reasonCodes: ["TRANSFORMATION_INPUT_UNIVERSE_NOT_EVALUATED"] },
   RELATIONSHIPS: { knowledge: "UNKNOWN", capabilityState: "PARTIAL", reasonCodes: ["AUTHORITY_GATED_RELATIONSHIP_PROVIDERS"] },
   MOMENTS: { knowledge: "PARTIAL", capabilityState: "PARTIAL", reasonCodes: ["MOMENT_PLACE_FACETS_PARTIAL"] },
   CONSUMPTION: { knowledge: "UNKNOWN", capabilityState: "PARTIAL", reasonCodes: ["PURCHASE_EVENT_COVERAGE_PARTIAL"] },
@@ -143,6 +159,7 @@ const second = candidateApi.buildGlobalV2CandidateFromOwnerOutputs({ ...base, ow
 const snapshot = (resource, sectionKey) => first.snapshots.find((entry) => entry.resource === resource && (sectionKey === undefined || entry.params.sectionKey === sectionKey));
 const compact = (resource) => snapshot(resource).payload;
 const detail = (entityRef) => first.snapshots.find((entry) => entry.resource === "analysis_global_category_need_detail" && entry.params.entityRef === entityRef)?.payload;
+const queryDetail = (resource, entityRef) => first.snapshots.find((entry) => entry.resource === resource && entry.params.entityRef === entityRef)?.payload;
 check(() => assert.equal(first.candidateId, second.candidateId));
 check(() => assert.equal(first.factsHash, second.factsHash));
 check(() => assert.equal(first.manifestHash, second.manifestHash));
@@ -204,18 +221,46 @@ check(() => assert.deepEqual(detail("need:need-food").rows.map(({ labelKey }) =>
 check(() => assert.equal(compact("analysis_global_categories_needs").kpis.find(({ kpiId }) => kpiId.includes("needs:monetary-coverage")).phenomenonQuality.knowledgeState, "PARTIAL"));
 const legacyM2Snapshot = { ...m2Breakdown, rows: [{ rowId: "001:category:legacy", labelKey: "Ancienne catégorie", displayValue: "900 €", knowledgeState: "KNOWN", entityRef: "category:legacy", evidenceRefs: ["legacy:v1"] }] };
 check(() => assert.equal(query.globalExpandedReadModelSchema.safeParse(legacyM2Snapshot).success, true));
-check(() => assert.equal(snapshot("analysis_global_rhythm_expanded", "OVERVIEW").payload.rows.some(({ labelKey }) => labelKey === "Travail sur site · Camille"), true));
-check(() => assert.equal(snapshot("analysis_global_rhythm_expanded", "EVOLUTION").payload.series.length, 3));
-check(() => assert.equal(snapshot("analysis_global_rhythm_expanded", "EVOLUTION").payload.series.every(({ points }) => points.length === 12), true));
-check(() => assert.match(compact("analysis_global_rhythm").primaryInsight.statementKey, /181 occurrences pour Camille/));
-check(() => assert.equal(compact("analysis_global_transformations").primaryInsight.titleKey, "Aucun changement durable clairement identifié"));
+const rhythmOverview = snapshot("analysis_global_rhythm_expanded", "OVERVIEW").payload;
+const rhythmPatterns = snapshot("analysis_global_rhythm_expanded", "PATTERNS").payload;
+const rhythmBreakdown = snapshot("analysis_global_rhythm_expanded", "BREAKDOWN").payload;
+const rhythmComparisons = snapshot("analysis_global_rhythm_expanded", "COMPARISONS").payload;
+check(() => assert.equal(rhythmOverview.primaryInsight.titleKey, "Voyage en Bretagne"));
+check(() => assert.deepEqual(rhythmOverview.secondaryInsights.map(({ titleKey }) => titleKey), ["Anniversaire de Camille"]));
+check(() => assert.equal(rhythmOverview.rows.some(({ entityRef }) => entityRef?.startsWith("household-activity:")), false));
+check(() => assert.deepEqual(rhythmPatterns.rows.map(({ entityRef }) => entityRef), ["household-activity:travail_site", "household-activity:teletravail"]));
+check(() => assert.equal(rhythmPatterns.rows.every(({ typedMeasure }) => typedMeasure?.kind === "MONEY" && typedMeasure.unit === "EUR/occurrence"), true));
+check(() => assert.deepEqual(rhythmPatterns.rows.map(({ activityCostProfile }) => [activityCostProfile.knownCausalCostCount.value, activityCostProfile.totalOccurrenceCount.value, activityCostProfile.coverageRatio.value]), [["8", "12", String(2 / 3)], ["4", "10", "0.4"]]));
+check(() => assert.equal(rhythmPatterns.rows.every(({ activityCostProfile }) => activityCostProfile.nonAdditiveAcrossActivities === true), true));
+check(() => assert.deepEqual(rhythmBreakdown.rows.map(({ labelKey }) => labelKey), ["Voyage en Bretagne", "Anniversaire de Camille"]));
+check(() => assert.equal(rhythmBreakdown.rows.every(({ typedMeasure }) => typedMeasure?.kind === "MONEY"), true));
+check(() => assert.equal(rhythmComparisons.rows[0].momentComparison.comparisonTier, "SAME_FAMILY"));
+check(() => assert.deepEqual(Object.fromEntries(Object.entries(rhythmComparisons.rows[0].momentComparison).filter(([, value]) => typeof value === "object").map(([key, value]) => [key, value.kind])), { peerCount: "COUNT", subjectCost: "MONEY", peerMedian: "MONEY", q1: "MONEY", q3: "MONEY", mad: "MONEY", absoluteDelta: "MONEY", relativeDelta: "DECIMAL" }));
+check(() => assert.equal(compact("analysis_global_rhythm").primaryInsight.kind, "M6_MATERIAL_COMPARISON"));
+check(() => assert.equal(compact("analysis_global_transformations").visibility, "HIDDEN"));
+check(() => assert.equal(compact("analysis_global_transformations").primaryInsight, undefined));
 check(() => assert.equal(JSON.stringify(first.snapshots.filter(({ resource }) => resource.includes("relationships"))).includes("relationship:technical-only"), false));
-check(() => assert.equal(compact("analysis_global_relationships").placeholder.messageKey, "Pas encore assez d’éléments pour établir une relation fiable"));
-check(() => assert.equal(compact("analysis_global_moments").visibility, "VISIBLE"));
-check(() => assert.equal(compact("analysis_global_moments").qualification, "PARTIAL_COVERAGE"));
-check(() => assert.match(compact("analysis_global_moments").primaryInsight.statementKey, /1 moments en contexte · Analyse partielle/));
+check(() => assert.equal(compact("analysis_global_relationships").visibility, "HIDDEN"));
+check(() => assert.equal(compact("analysis_global_relationships").placeholder, undefined));
+check(() => assert.equal(compact("analysis_global_moments").visibility, "HIDDEN"));
 check(() => assert.equal(snapshot("analysis_global_moments_expanded", "OVERVIEW").payload.rows[0].labelKey, "Voyage"));
-check(() => assert.equal(snapshot("analysis_global_moments_expanded", "PATTERNS").payload.rows.length, 2));
+check(() => assert.ok(queryDetail("analysis_global_routine_detail", "household-activity:travail_site")));
+check(() => assert.ok(queryDetail("analysis_global_routine_detail", `person-activity:${personA}:travail_site`)));
+check(() => assert.equal(queryDetail("analysis_global_routine_detail", "activity:travail_site"), undefined));
+check(() => assert.notDeepEqual(queryDetail("analysis_global_routine_detail", "household-activity:travail_site"), queryDetail("analysis_global_routine_detail", `person-activity:${personA}:travail_site`)));
+const momentDetail = queryDetail("analysis_global_moment_experience_detail", "moment:one");
+check(() => assert.equal(momentDetail.rows[0].labelKey, "Voyage en Bretagne"));
+check(() => assert.equal(momentDetail.rows[0].momentComparison.comparisonTier, "SAME_FAMILY"));
+check(() => assert.deepEqual(momentDetail.metrics.filter(({ metricId }) => /causal-cost|spent-during/u.test(metricId)).map(({ typedMeasure }) => typedMeasure.value), ["1253.90", "1800"]));
+check(() => assert.equal(momentDetail.metrics.find(({ metricId }) => metricId.endsWith(":peer-count")).typedMeasure.kind, "COUNT"));
+check(() => assert.equal([...rhythmOverview.destinations, ...rhythmPatterns.destinations, ...rhythmBreakdown.destinations, ...rhythmComparisons.destinations].every(({ instanceKey, sourcePublicationId, sourceAnalyticsRevision }) => first.requiredKeys.queries.includes(instanceKey) && sourcePublicationId === first.candidateId && sourceAnalyticsRevision === 80), true));
+const rhythmInstances = first.plan.instances.filter(({ resource }) => ["analysis_global_rhythm", "analysis_global_rhythm_expanded", "analysis_global_routine_detail"].includes(resource));
+const expectedRhythmOwnerFamilies = ["global_moments_owner_output", "global_relationships_owner_output", "global_rhythm_owner_output", "global_transformations_owner_output"];
+check(() => assert.equal(rhythmInstances.every(({ dependencies }) => expectedRhythmOwnerFamilies.every((family) => dependencies.some((dependency) => dependency.family === family))), true));
+check(() => assert.deepEqual(Object.entries(query.globalV2QueryRegistry).filter(([, contract]) => contract.policyVersions.projection === "global-life-spending-query-projection@v1").map(([resource]) => resource).sort(), ["analysis_global_moment_experience_detail", "analysis_global_rhythm", "analysis_global_rhythm_expanded", "analysis_global_routine_detail"]));
+const reachableQueryKeys = new Set(first.snapshots.flatMap(({ payload }) => (payload.destinations ?? []).flatMap(({ kind, instanceKey }) => kind === "GLOBAL_QUERY" ? [instanceKey] : [])).concat(first.snapshots.flatMap(({ payload }) => (payload.detailEntries ?? []).map(({ targetRef }) => targetRef))));
+const generatedLifeDetails = first.snapshots.filter(({ resource }) => ["analysis_global_routine_detail", "analysis_global_moment_experience_detail"].includes(resource));
+check(() => assert.equal(generatedLifeDetails.every(({ key }) => reachableQueryKeys.has(key)), true));
 check(() => assert.equal(compact("analysis_global_consumption").visibility, "PLACEHOLDER"));
 check(() => assert.equal(compact("analysis_global_consumption").placeholder.messageKey, "Analyse pas encore disponible"));
 check(() => assert.deepEqual(compact("analysis_global_consumption").kpis, []));
@@ -240,6 +285,22 @@ const presentationStrings = first.snapshots.flatMap(({ payload }) => [
 check(() => assert.equal(presentationStrings.some((value) => /(?:activity|place|relationship):/u.test(value)), false));
 
 const mutate = (moduleKey, change) => modules.map((entry) => entry.moduleKey === moduleKey ? { ...entry, ...change(entry) } : entry);
+const noForcedFill = candidateApi.buildGlobalV2CandidateFromOwnerOutputs({ ...base, ownerOutputs: mutate("MOMENTS", (entry) => ({ output: { ...entry.output, momentIdentities: [], summaries: [], comparisons: [], narrative: [] } })) });
+const noForcedFillOverview = noForcedFill.snapshots.find(({ resource, params }) => resource === "analysis_global_rhythm_expanded" && params.sectionKey === "OVERVIEW").payload;
+check(() => assert.equal(noForcedFillOverview.primaryInsight, undefined));
+check(() => assert.deepEqual(noForcedFillOverview.secondaryInsights, []));
+check(() => assert.deepEqual(noForcedFillOverview.rows, []));
+const selectorMomentOutput = {
+  ...outputByModule.MOMENTS,
+  momentIdentities: Array.from({ length: 4 }, (_, index) => ({ momentId: `selector-${index}`, canonicalName: { status: "KNOWN", value: `Moment sélection ${index}`, evidenceRef: `moment:selector-${index}` } })),
+  summaries: Array.from({ length: 4 }, (_, index) => ({ moment: { momentId: `selector-${index}`, type: { value: "Voyage" }, startDate: `2026-0${index + 1}-01`, endDate: `2026-0${index + 1}-02` }, causalCost: { status: "KNOWN", value: String(1000 - index * 100) }, sourceRefs: [`moment:selector-${index}`] })),
+  comparisons: Array.from({ length: 4 }, (_, index) => ({ ...outputByModule.MOMENTS.comparisons[0], momentId: `selector-${index}`, comparisonTier: index === 3 ? "SAME_FAMILY" : index === 2 ? "SAME_TYPE" : "SAME_SERIES", peerCount: 8 - index, absoluteDelta: String(400 - index * 20), evidenceRefs: [`comparison:selector-${index}`] })),
+  narrative: Array.from({ length: 4 }, (_, index) => ({ momentId: `selector-${index}`, eligible: true, signals: ["DECLARED_IMPORTANCE"] })),
+};
+const cappedOverviewCandidate = candidateApi.buildGlobalV2CandidateFromOwnerOutputs({ ...base, ownerOutputs: mutate("MOMENTS", () => ({ output: selectorMomentOutput })) });
+const cappedOverview = cappedOverviewCandidate.snapshots.find(({ resource, params }) => resource === "analysis_global_rhythm_expanded" && params.sectionKey === "OVERVIEW").payload;
+check(() => assert.equal((cappedOverview.primaryInsight === undefined ? 0 : 1) + cappedOverview.secondaryInsights.length, 3));
+check(() => assert.equal(cappedOverview.rows.some(({ entityRef }) => entityRef?.startsWith("household-activity:")), false));
 const factChange = candidateApi.buildGlobalV2CandidateFromOwnerOutputs({ ...base, ownerOutputs: mutate("ECONOMIC", (entry) => ({ output: { ...entry.output, current: "changed" } })) });
 check(() => assert.notEqual(factChange.candidateId, first.candidateId));
 check(() => assert.notEqual(factChange.factsHash, first.factsHash));
@@ -247,19 +308,19 @@ check(() => assert.notEqual(factChange.manifestHash, first.manifestHash));
 const capabilityChange = candidateApi.buildGlobalV2CandidateFromOwnerOutputs({ ...base, ownerOutputs: mutate("MOMENTS", () => ({ capabilityState: "UNAVAILABLE", knowledge: "UNKNOWN", reasonCodes: ["AUTHORITY_GATED"] })) });
 check(() => assert.notEqual(capabilityChange.requiredSnapshotCount, first.requiredSnapshotCount));
 check(() => assert.notEqual(capabilityChange.manifestHash, first.manifestHash));
-const instanceChange = candidateApi.buildGlobalV2CandidateFromOwnerOutputs({ ...base, ownerOutputs: mutate("MOMENTS", (entry) => ({ output: { ...entry.output, summaries: [...entry.output.summaries, { moment: { momentId: "two", type: { value: "Anniversaire" }, startDate: "2026-07-15", endDate: "2026-07-15" }, causalCost: { status: "KNOWN", value: "100" } }] } })) });
+const instanceChange = candidateApi.buildGlobalV2CandidateFromOwnerOutputs({ ...base, ownerOutputs: mutate("MOMENTS", (entry) => ({ output: { ...entry.output, momentIdentities: [...entry.output.momentIdentities, { momentId: "three", canonicalName: { status: "KNOWN", value: "Projet cuisine", evidenceRef: "moment:three" } }], summaries: [...entry.output.summaries, { moment: { momentId: "three", type: { value: "Projet maison" }, startDate: "2026-07-15", endDate: "2026-07-15" }, causalCost: { status: "KNOWN", value: "100" }, sourceRefs: ["moment:three"] }] } })) });
 check(() => assert.ok(instanceChange.requiredSnapshotCount > first.requiredSnapshotCount));
 check(() => assert.notEqual(instanceChange.manifestHash, first.manifestHash));
 const boundedMoments = candidateApi.buildGlobalV2CandidateFromOwnerOutputs({
   ...base,
-  ownerOutputs: mutate("MOMENTS", () => ({ output: { summaries: Array.from({ length: 60 }, (_, index) => ({ moment: { momentId: `moment-${String(index).padStart(2, "0")}`, type: { value: "Voyage" }, startDate: "2026-07-01", endDate: "2026-07-01" }, causalCost: { status: "KNOWN", value: String(100 - index) } })), comparisons: [], series: [], narrative: [] } })),
+  ownerOutputs: mutate("MOMENTS", () => ({ output: { inputHash: "e".repeat(64), methodVersion: "global_moment_experience@v1", momentIdentities: Array.from({ length: 60 }, (_, index) => ({ momentId: `moment-${String(index).padStart(2, "0")}`, canonicalName: { status: "KNOWN", value: `Moment ${String(index).padStart(2, "0")}`, evidenceRef: `moment:${String(index).padStart(2, "0")}` } })), summaries: Array.from({ length: 60 }, (_, index) => ({ moment: { momentId: `moment-${String(index).padStart(2, "0")}`, type: { value: "Voyage" }, startDate: "2026-07-01", endDate: "2026-07-01" }, causalCost: { status: "KNOWN", value: String(100 - index) }, sourceRefs: [`moment:${String(index).padStart(2, "0")}`] })), comparisons: [], series: [], narrative: [] } })),
 });
 const momentDetails = boundedMoments.snapshots.filter(({ resource }) => resource === "analysis_global_moment_experience_detail");
-const momentOverview = boundedMoments.snapshots.find(({ resource, params }) => resource === "analysis_global_moments_expanded" && params.sectionKey === "OVERVIEW");
-check(() => assert.equal(momentDetails.length, 5));
-check(() => assert.equal(momentOverview.payload.rows.length, 5));
+const momentBreakdownBounded = boundedMoments.snapshots.find(({ resource, params }) => resource === "analysis_global_rhythm_expanded" && params.sectionKey === "BREAKDOWN");
+check(() => assert.equal(momentDetails.length, 10));
+check(() => assert.equal(momentBreakdownBounded.payload.rows.length, 10));
 check(() => assert.deepEqual(
-  momentOverview.payload.rows.map(({ entityRef }) => entityRef).sort(),
+  momentBreakdownBounded.payload.rows.map(({ entityRef }) => entityRef).sort(),
   momentDetails.map(({ params }) => params.entityRef).sort(),
 ));
 const versionChange = candidateApi.buildGlobalV2CandidateFromOwnerOutputs({ ...base, implementationIdentity: "3ed2cc0dadaef64a6e788cf881b6b40311a9cc2b" });
@@ -279,6 +340,15 @@ const sourcePaths = [
 const productionSources = sourcePaths.map((file) => fs.readFileSync(path.join(root, file), "utf8")).join("\n");
 check(() => assert.equal(productionSources.includes("global-v2-integrated-candidate"), false));
 check(() => assert.equal(productionSources.includes('"1".repeat(40)'), false));
+const candidateSource = fs.readFileSync(path.join(root, "src/server/analytics/global-v2-candidate.ts"), "utf8");
+check(() => assert.doesNotMatch(candidateSource, /1253\.90|travail_site|moment:one/u));
+check(() => assert.equal(first.snapshots.some(({ resource, params }) => resource === "analysis_global_rhythm_expanded" && params.sectionKey === "EVOLUTION"), false));
+check(() => assert.equal(JSON.stringify(first.snapshots.filter(({ resource }) => resource.includes("rhythm"))).includes("Aucun changement"), false));
+check(() => assert.equal(JSON.stringify(first.snapshots.filter(({ resource }) => resource.includes("rhythm"))).includes("Pas encore assez d’éléments pour établir une relation fiable"), false));
+const orchestratorSource = fs.readFileSync(path.join(root, "src/server/analytics/global-v2-production-orchestrator.ts"), "utf8");
+check(() => assert.match(orchestratorSource, /loadActivityOccurrenceCosts[\s\S]*buildGlobalActivityCostProfile[\s\S]*output: \{ rhythms, activityCostProfiles \}/u));
+check(() => assert.match(orchestratorSource, /moduleKey: "TRANSFORMATIONS"[\s\S]*knowledge: "UNKNOWN"[\s\S]*capabilityState: "UNAVAILABLE"[\s\S]*TRANSFORMATION_INPUT_UNIVERSE_NOT_EVALUATED/u));
+check(() => assert.doesNotMatch(orchestratorSource, /moduleKey: "TRANSFORMATIONS"[^\n]*NO_CERTIFIED_TRANSFORMATION/u));
 const routeSource = fs.readFileSync(path.join(root, "src/app/analyse-globale/page.tsx"), "utf8");
 check(() => assert.match(routeSource, /GLOBAL_V2_ROUTE_ACTIVE\s*!==\s*"true"/u));
 check(() => assert.match(routeSource, /catch\s*\{\s*return <GlobalV2Unavailable \/>/u));

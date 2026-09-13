@@ -65,6 +65,26 @@ export type GlobalDetailSeries = {
   readonly evidenceRefs: readonly string[];
 };
 
+export type GlobalActivityCostProfileContext = {
+  readonly knownCausalCostCount: GlobalTypedMeasure;
+  readonly totalOccurrenceCount: GlobalTypedMeasure;
+  readonly coverageRatio: GlobalTypedMeasure;
+  readonly nonAdditiveAcrossActivities: true;
+};
+
+export type GlobalMomentComparisonContext = {
+  readonly comparisonTier: "SAME_SERIES" | "SAME_TYPE" | "SAME_FAMILY";
+  readonly comparisonProfileId: string;
+  readonly peerCount: GlobalTypedMeasure;
+  readonly subjectCost: GlobalTypedMeasure;
+  readonly peerMedian: GlobalTypedMeasure;
+  readonly q1?: GlobalTypedMeasure;
+  readonly q3?: GlobalTypedMeasure;
+  readonly mad?: GlobalTypedMeasure;
+  readonly absoluteDelta: GlobalTypedMeasure;
+  readonly relativeDelta?: GlobalTypedMeasure;
+};
+
 export type GlobalDetailRow = {
   readonly rowId: string;
   readonly labelKey: string;
@@ -74,6 +94,8 @@ export type GlobalDetailRow = {
   readonly phenomenonQuality?: GlobalPhenomenonQuality;
   readonly knowledgeState: DataStatus;
   readonly entityRef?: string;
+  readonly activityCostProfile?: GlobalActivityCostProfileContext;
+  readonly momentComparison?: GlobalMomentComparisonContext;
   readonly evidenceRefs: readonly string[];
 };
 
@@ -258,14 +280,47 @@ function parseSeries(value: unknown): GlobalDetailSeries {
   if (points.length > GLOBAL_MAX_SERIES_POINTS) throw new TypeError("GLOBAL_DETAIL_SERIES_POINT_LIMIT");
   return { seriesId: text(requireProperty(record, "seriesId", "GlobalDetailSeries"), "seriesId"), labelKey: text(requireProperty(record, "labelKey", "GlobalDetailSeries"), "labelKey"), unit: text(requireProperty(record, "unit", "GlobalDetailSeries"), "unit"), points, evidenceRefs: strings(requireProperty(record, "evidenceRefs", "GlobalDetailSeries"), "seriesEvidence") };
 }
+function typedMeasureOfKind(value: unknown, kind: GlobalTypedMeasure["kind"], label: string): GlobalTypedMeasure {
+  const parsed = parseGlobalTypedMeasure(value);
+  if (parsed.kind !== kind) throw new TypeError(`${label}_KIND_INVALID`);
+  return parsed;
+}
+function parseActivityCostProfile(value: unknown): GlobalActivityCostProfileContext {
+  const record = parseStrictRecord(value, ["knownCausalCostCount", "totalOccurrenceCount", "coverageRatio", "nonAdditiveAcrossActivities"], "GlobalActivityCostProfileContext");
+  if (requireProperty(record, "nonAdditiveAcrossActivities", "GlobalActivityCostProfileContext") !== true) throw new TypeError("GLOBAL_ACTIVITY_COST_NON_ADDITIVITY_REQUIRED");
+  return {
+    knownCausalCostCount: typedMeasureOfKind(requireProperty(record, "knownCausalCostCount", "GlobalActivityCostProfileContext"), "COUNT", "GLOBAL_ACTIVITY_COST_KNOWN_COUNT"),
+    totalOccurrenceCount: typedMeasureOfKind(requireProperty(record, "totalOccurrenceCount", "GlobalActivityCostProfileContext"), "COUNT", "GLOBAL_ACTIVITY_COST_TOTAL_COUNT"),
+    coverageRatio: typedMeasureOfKind(requireProperty(record, "coverageRatio", "GlobalActivityCostProfileContext"), "RATIO", "GLOBAL_ACTIVITY_COST_COVERAGE"),
+    nonAdditiveAcrossActivities: true,
+  };
+}
+function parseMomentComparison(value: unknown): GlobalMomentComparisonContext {
+  const record = parseStrictRecord(value, ["comparisonTier", "comparisonProfileId", "peerCount", "subjectCost", "peerMedian", "q1", "q3", "mad", "absoluteDelta", "relativeDelta"], "GlobalMomentComparisonContext");
+  const money = (key: "subjectCost" | "peerMedian" | "q1" | "q3" | "mad" | "absoluteDelta") => typedMeasureOfKind(requireProperty(record, key, "GlobalMomentComparisonContext"), "MONEY", `GLOBAL_MOMENT_COMPARISON_${key.toUpperCase()}`);
+  return {
+    comparisonTier: parseStringLiteral(requireProperty(record, "comparisonTier", "GlobalMomentComparisonContext"), new Set(["SAME_SERIES", "SAME_TYPE", "SAME_FAMILY"]), "comparisonTier"),
+    comparisonProfileId: text(requireProperty(record, "comparisonProfileId", "GlobalMomentComparisonContext"), "comparisonProfileId"),
+    peerCount: typedMeasureOfKind(requireProperty(record, "peerCount", "GlobalMomentComparisonContext"), "COUNT", "GLOBAL_MOMENT_COMPARISON_PEER_COUNT"),
+    subjectCost: money("subjectCost"),
+    peerMedian: money("peerMedian"),
+    ...(hasOwn(record, "q1") ? { q1: money("q1") } : {}),
+    ...(hasOwn(record, "q3") ? { q3: money("q3") } : {}),
+    ...(hasOwn(record, "mad") ? { mad: money("mad") } : {}),
+    absoluteDelta: money("absoluteDelta"),
+    ...(hasOwn(record, "relativeDelta") ? { relativeDelta: typedMeasureOfKind(requireProperty(record, "relativeDelta", "GlobalMomentComparisonContext"), "DECIMAL", "GLOBAL_MOMENT_COMPARISON_RELATIVE_DELTA") } : {}),
+  };
+}
 function parseRow(value: unknown): GlobalDetailRow {
-  const record = parseStrictRecord(value, ["rowId", "labelKey", "displayValue", "typedMeasure", "phenomenonRef", "phenomenonQuality", "knowledgeState", "entityRef", "evidenceRefs"], "GlobalDetailRow");
+  const record = parseStrictRecord(value, ["rowId", "labelKey", "displayValue", "typedMeasure", "phenomenonRef", "phenomenonQuality", "knowledgeState", "entityRef", "activityCostProfile", "momentComparison", "evidenceRefs"], "GlobalDetailRow");
   const displayValue = optional(record, "displayValue", (entry) => text(entry, "displayValue"));
   const entityRef = optional(record, "entityRef", (entry) => text(entry, "entityRef"));
   const typedMeasure = optional(record, "typedMeasure", parseGlobalTypedMeasure);
   const phenomenonRef = optional(record, "phenomenonRef", (entry) => text(entry, "phenomenonRef"));
   const phenomenonQuality = optional(record, "phenomenonQuality", parseGlobalPhenomenonQuality);
-  return { rowId: text(requireProperty(record, "rowId", "GlobalDetailRow"), "rowId"), labelKey: text(requireProperty(record, "labelKey", "GlobalDetailRow"), "labelKey"), ...(displayValue === undefined ? {} : { displayValue }), ...(typedMeasure === undefined ? {} : { typedMeasure }), ...(phenomenonRef === undefined ? {} : { phenomenonRef }), ...(phenomenonQuality === undefined ? {} : { phenomenonQuality }), knowledgeState: status(requireProperty(record, "knowledgeState", "GlobalDetailRow")), ...(entityRef === undefined ? {} : { entityRef }), evidenceRefs: strings(requireProperty(record, "evidenceRefs", "GlobalDetailRow"), "rowEvidence") };
+  const activityCostProfile = optional(record, "activityCostProfile", parseActivityCostProfile);
+  const momentComparison = optional(record, "momentComparison", parseMomentComparison);
+  return { rowId: text(requireProperty(record, "rowId", "GlobalDetailRow"), "rowId"), labelKey: text(requireProperty(record, "labelKey", "GlobalDetailRow"), "labelKey"), ...(displayValue === undefined ? {} : { displayValue }), ...(typedMeasure === undefined ? {} : { typedMeasure }), ...(phenomenonRef === undefined ? {} : { phenomenonRef }), ...(phenomenonQuality === undefined ? {} : { phenomenonQuality }), knowledgeState: status(requireProperty(record, "knowledgeState", "GlobalDetailRow")), ...(entityRef === undefined ? {} : { entityRef }), ...(activityCostProfile === undefined ? {} : { activityCostProfile }), ...(momentComparison === undefined ? {} : { momentComparison }), evidenceRefs: strings(requireProperty(record, "evidenceRefs", "GlobalDetailRow"), "rowEvidence") };
 }
 function parseDestination(value: unknown): GlobalNavigationDestination {
   const record = parseStrictRecord(value, ["targetId", "kind", "resource", "instanceKey", "entityRef", "scopeHash", "sourcePublicationId", "sourceAnalyticsRevision"], "GlobalNavigationDestination");

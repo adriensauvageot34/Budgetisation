@@ -26,6 +26,13 @@ export async function resolveGlobalM6MomentAuthority(input: {
   if (Object.values(scope.filters).some((values) => values.length)) throw new TypeError("M6_FILTER_PROVIDER_NOT_RESOLVED");
   const rows = await repository.loadEntityRows("moments", "moment_id");
   const momentIds = rows.map((row) => canonicalString(row, ["moment_id"], "entities"));
+  const canonicalNameByMomentId = new Map(rows.map((row) => {
+    const momentId = canonicalString(row, ["moment_id"], "entities");
+    const canonicalName = optionalCanonicalString(row, ["name"]);
+    return [momentId, canonicalName === undefined
+      ? { status: "UNKNOWN" as const, reasonCode: "CANONICAL_MOMENT_NAME_ABSENT" as const }
+      : { status: "KNOWN" as const, value: canonicalName, evidenceRef: `moment:${momentId}:name` }] as const;
+  }));
   const links = await repository.loadMomentLifeEventRowsByMomentIds(momentIds);
   const participantsByMoment = await loadMomentParticipantsByMomentId({ repository, context, momentIds });
   const lifeEventIds = [...new Set(links.map((row) => canonicalString(row, ["life_event_id"], "life_events")))].sort();
@@ -101,6 +108,10 @@ export async function resolveGlobalM6MomentAuthority(input: {
       .map((fact) => String(fact.canonicalComponentKey))
       .sort(),
   }));
+  const momentIdentities = selectedWithExpected.map((moment) => ({
+    momentId: moment.momentId,
+    canonicalName: canonicalNameByMomentId.get(moment.momentId) ?? { status: "UNKNOWN" as const, reasonCode: "CANONICAL_MOMENT_NAME_ABSENT" as const },
+  })).sort((left, right) => left.momentId.localeCompare(right.momentId));
   const componentAuthorities: GlobalMomentComponentAuthority[] = [];
   const authorityByIdentity = new Map<string, GlobalMomentComponentAuthority>();
   for (const link of financialLinks) for (const membership of momentByLifeEvent.get(String(link.lifeEventId)) ?? []) {
@@ -122,6 +133,7 @@ export async function resolveGlobalM6MomentAuthority(input: {
     for (const facet of Object.values(moment.facets ?? {})) for (const ref of facet?.evidenceRefs ?? []) register(ref, ref);
     for (const proof of [moment.declaredImportance, moment.transformationAnchor, moment.routineRepresentative]) for (const ref of proof?.evidenceRefs ?? []) register(ref, ref);
   }
+  for (const identity of momentIdentities) if (identity.canonicalName.status === "KNOWN") register(identity.canonicalName.evidenceRef, identity.canonicalName.value);
   for (const fact of factByKey.values()) register(`economic-component:${fact.canonicalComponentKey}`, fact);
   for (const authority of componentAuthorities) for (const ref of authority.evidenceRefs) register(ref, ref);
   const financialRelations = projectCanonicalMomentRelations([...factByKey.values()]);
@@ -131,5 +143,5 @@ export async function resolveGlobalM6MomentAuthority(input: {
   const declaration = createGlobalM6DependencyDeclaration({ personScope, authorizedPersonIds: context.personIds, momentIds: selectedWithExpected.map((moment) => moment.momentId) });
   const consumption = { factDependencyIds: ["fct_economic_component"], entityDependencyIds: ["moments", "moment_life_events", "life_event_participations"], upstreamAnalyticsIds: ["history_shared_doctrines"], otherModuleDependencyIds: ["GlobalTemporalBoundaryResolver", "GlobalMaterialityEngine"], policyIds: ["global-moment-certified-cohort", "global-moment-peer-support", "global-moment-metadata-participant-financial", "global-materiality-moment-family", "comparisonCatalog", "peerSupport", "causalCost", "spentDuring", "paymentTimeline", "momentComposition", "narrativeImportance", "robustStatistics"] };
   assertGlobalDependencyClosure(declaration, consumption);
-  return { ...result, boundary, dependencyDeclaration: declaration, sourceHash: digest(Object.entries(dependencyDigests).sort(([a], [b]) => a.localeCompare(b))), executionHash: digest({ inputHash: result.inputHash, boundary: boundary.resolutionHash, declaration: computeGlobalDependencyDeclarationDigest(declaration) }), providerStatus: { canonicalMoments: "CONNECTED", causalEconomics: "CONNECTED", momentPlaceFacets: selectedWithExpected.some((moment) => Object.values(moment.facets ?? {}).some((facet) => facet?.status === "KNOWN")) ? "PARTIAL" : "AUTHORITY_GATED" }, liveWrites: "NONE" as const };
+  return { ...result, momentIdentities, boundary, dependencyDeclaration: declaration, sourceHash: digest(Object.entries(dependencyDigests).sort(([a], [b]) => a.localeCompare(b))), executionHash: digest({ inputHash: result.inputHash, momentIdentities, boundary: boundary.resolutionHash, declaration: computeGlobalDependencyDeclarationDigest(declaration) }), providerStatus: { canonicalMoments: "CONNECTED", causalEconomics: "CONNECTED", momentPlaceFacets: selectedWithExpected.some((moment) => Object.values(moment.facets ?? {}).some((facet) => facet?.status === "KNOWN")) ? "PARTIAL" : "AUTHORITY_GATED" }, liveWrites: "NONE" as const };
 }

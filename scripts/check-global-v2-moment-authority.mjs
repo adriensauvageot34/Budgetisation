@@ -29,7 +29,7 @@ const economic = (id, momentId, date, amount) => ({
   moment: momentId === undefined ? { kind: "unknown" } : { kind: "resolved", id: momentId }, canonicalPlace: { kind: "unknown" }, necessity: { kind: "unknown" }, behavior: { kind: "unknown" }, lifeScope: { kind: "unknown" },
 });
 const momentIds = Array.from({ length: 6 }, (_, i) => uuid(100 + i));
-const moments = momentIds.map((momentId, i) => ({ moment_id: momentId, household_id: householdId, type: "Week-end / escapade", name: `M${i}`, start_date: `2026-01-${String(2 + i * 3).padStart(2, "0")}`, end_date: `2026-01-${String(4 + i * 3).padStart(2, "0")}`, lodging_mode: "PAID_LODGING" }));
+const moments = momentIds.map((momentId, i) => ({ moment_id: momentId, household_id: householdId, type: "Week-end / escapade", ...(i === 5 ? {} : { name: `Moment humain ${i}` }), start_date: `2026-01-${String(2 + i * 3).padStart(2, "0")}`, end_date: `2026-01-${String(4 + i * 3).padStart(2, "0")}`, lodging_mode: "PAID_LODGING" }));
 const lifeEvents = momentIds.map((momentId, i) => ({ moment_id: momentId, life_event_id: uuid(200 + i), relation_type: i === 0 ? "Préparation" : "Composant", validation_status: "Confirmé" }));
 const participations = lifeEvents.map((link, i) => ({ life_event_id: link.life_event_id, person_day_id: uuid(300 + i), person_id: personId, participation_status: "Confirmée" }));
 const financialRows = lifeEvents.map((link, i) => ({ financial_link_id: uuid(400 + i), life_event_id: link.life_event_id, source_kind: "Operation", operation_id: uuid(500 + i), allocation_id: null, item_id: null, cash_use_id: null, relation_type: i === 0 ? "Preparation" : "Cause_par_evenement", economic_amount_linked: String(100 + i * 10), validation_status: "Confirmé" }));
@@ -59,6 +59,9 @@ check(() => assert.equal(result.boundary.certifiedUnitIds.length, 6));
 check(() => assert.equal(result.providerStatus.canonicalMoments, "CONNECTED"));
 check(() => assert.equal(result.providerStatus.causalEconomics, "CONNECTED"));
 check(() => assert.equal(result.providerStatus.momentPlaceFacets, "PARTIAL"));
+check(() => assert.deepEqual(result.momentIdentities[0], { momentId: momentIds[0], canonicalName: { status: "KNOWN", value: "Moment humain 0", evidenceRef: `moment:${momentIds[0]}:name` } }));
+check(() => assert.notEqual(result.momentIdentities[0].canonicalName.value, result.momentIdentities[1].canonicalName.value));
+check(() => assert.deepEqual(result.momentIdentities.at(-1), { momentId: momentIds[5], canonicalName: { status: "UNKNOWN", reasonCode: "CANONICAL_MOMENT_NAME_ABSENT" } }));
 check(() => assert.equal(result.dependencyDeclaration.naturalGrain, "MOMENT"));
 check(() => assert.ok(result.dependencyClosure.some(({ ref }) => ref === `economic-component:${duringNonCausal.canonicalComponentKey}`)));
 check(() => assert.ok(calls.includes("moment_life_events") && calls.includes("economic-moment") && calls.includes("economic-range")));
