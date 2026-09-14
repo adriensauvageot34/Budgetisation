@@ -151,6 +151,8 @@ function m2AuthorityPoint(input: {
   const monthComponents = input.components.filter(({ month }) => month === input.month);
   const categoryComponents = monthComponents.filter(({ category }) =>
     category.status === "KNOWN" && String(category.id) === input.categoryId);
+  // Unclassified components remain in the M1 reconciliation below, but cannot
+  // downgrade an independently reconciled, authoritative category series.
   const categoryValue = categoryComponents.reduce((total, component) => total.plus(component.amount), new Big(0));
   if (!categoryValue.eq(input.expectedValue)) {
     throw new TypeError(`M2 category:${input.categoryId} ${input.month} ne réconcilie pas historicalSeries.`);
@@ -162,7 +164,6 @@ function m2AuthorityPoint(input: {
       throw new TypeError(`M2 ${input.month} ne réconcilie pas l'Actual mensuel autoritaire.`);
     }
   }
-  const dimensionsComplete = monthComponents.every(({ category }) => category.status === "KNOWN");
   const refs = canonicalRefs([
     ...pointRefs(input.certification),
     ...monthComponents.flatMap(({ economicIdentityRefs, evidenceRefs, category }) => [
@@ -180,8 +181,7 @@ function m2AuthorityPoint(input: {
     && actual.support.supportStatus !== "INSUFFICIENT";
   const complete = actual.status === "KNOWN"
     && supportIsEligible(actual.support)
-    && coverageIsComplete(actual.coverage)
-    && dimensionsComplete;
+    && coverageIsComplete(actual.coverage);
   const carriesTemporalValue = actualHasValue && (actual.status === "KNOWN" || actual.status === "PARTIAL");
   const status = actual.status === "KNOWN" || actual.status === "PARTIAL"
     ? complete ? "KNOWN" as const : "PARTIAL" as const

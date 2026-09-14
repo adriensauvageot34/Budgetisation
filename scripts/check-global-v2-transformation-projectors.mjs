@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import { registerHooks } from "node:module";
+import Big from "big.js";
 
 registerHooks({ resolve(specifier, context, next) {
   try { return next(specifier, context); } catch (error) {
@@ -169,9 +170,10 @@ const m2Result = {
 };
 const m2Input = { householdId, result: m2Result, monthlyComponents, certifiedMonths: m2Certifications };
 const m2Series = projectGlobalM2CategoryTransformationSeries(m2Input);
-check(() => assert.deepEqual(m2Series.map(({ signalId }) => signalId), [
+const expectedM2SignalIds = [
   "m2:category:cat-a", "m2:category:cat-b", "m2:category:cat-c", "m2:category:cat-d", "m2:category:cat-e",
-]));
+];
+check(() => assert.deepEqual(m2Series.map(({ signalId }) => signalId), expectedM2SignalIds));
 check(() => assert.equal(m2Series.length, 5));
 check(() => assert.equal(m2Series.every(({ points }) => points.length === 12 && points.every(({ complete, eligible }) => complete && eligible)), true));
 check(() => assert.deepEqual(projectGlobalM2CategoryTransformationSeries({
@@ -181,6 +183,31 @@ check(() => assert.deepEqual(projectGlobalM2CategoryTransformationSeries({
   certifiedMonths: [...m2Certifications].reverse(),
 }), m2Series));
 check(() => assert.equal(m2Series.some(({ signalId }) => signalId === "m2:category:cat-f"), false));
+const undeterminedMonth = months[0];
+const unrelatedUndeterminedComponent = {
+  month: undeterminedMonth,
+  canonicalComponentKey: `${undeterminedMonth}:unrelated-undetermined`,
+  amount: "3",
+  category: { status: "UNDETERMINED", evidenceRefs: ["category:undetermined"] },
+  subcategory: { status: "UNDETERMINED", evidenceRefs: ["subcategory:undetermined"] },
+  need: { status: "UNKNOWN", evidenceRefs: [] },
+  necessity: { status: "UNKNOWN", evidenceRefs: [] },
+  behavior: { status: "UNKNOWN", evidenceRefs: [] },
+  lifeScope: { status: "UNKNOWN", evidenceRefs: [] },
+  economicIdentityRefs: [`economic-component:${undeterminedMonth}:unrelated-undetermined`],
+  evidenceRefs: [`fact:${undeterminedMonth}:unrelated-undetermined`],
+};
+const m2CertificationsWithUnrelatedUndetermined = m2Certifications.map((point) => point.month === undeterminedMonth
+  ? m1Point(point.month, new Big(monthlyTotal).plus(unrelatedUndeterminedComponent.amount).toFixed())
+  : point);
+const m2SeriesWithUnrelatedUndetermined = projectGlobalM2CategoryTransformationSeries({
+  ...m2Input,
+  monthlyComponents: [...monthlyComponents, unrelatedUndeterminedComponent],
+  certifiedMonths: m2CertificationsWithUnrelatedUndetermined,
+});
+check(() => assert.deepEqual(m2SeriesWithUnrelatedUndetermined.map(({ signalId }) => signalId), expectedM2SignalIds));
+check(() => assert.equal(m2SeriesWithUnrelatedUndetermined.every(({ points }) =>
+  points.length === 12 && points.every(({ status, complete, eligible }) => status === "KNOWN" && complete && eligible)), true));
 check(() => assert.throws(() => projectGlobalM2CategoryTransformationSeries({
   ...m2Input,
   monthlyComponents: monthlyComponents.filter(({ month, category }) => !(month === months[0] && category.id === "cat-a")),
