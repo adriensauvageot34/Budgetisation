@@ -29,9 +29,13 @@ import type {
 } from "@/query-api/global-v2";
 import { globalV2MethodRef } from "@/query-api/global-v2";
 import { globalModulePresentation, globalUiCopy } from "./catalog";
+import { ComparisonRange } from "./comparison-range";
 import { economicMetric, economicStructureGroups, economicStructureLabel } from "./economic-ui";
 import { emitGlobalV2UxEvent } from "./instrumentation";
 import { GlobalModuleBoundary } from "./module-boundary";
+import { buildHabitCoverageModel, groupRhythmMomentsByYear } from "./rhythm-collections";
+import { resolveRhythmDetailContext, rhythmDetailReturnSection, type RhythmDetailContext, type RhythmDetailOrigin } from "./rhythm-detail-routing";
+import { composeRhythmNarrative, rhythmHeroComparison } from "./rhythm-narrative";
 import { useGlobalV2Resource, useMobileGlobalLayout, useNearViewport } from "./use-global-resource";
 import { GlobalV2VisitRuntime, parseGlobalDeepLink, type GlobalV2UiRequest, type GlobalV2UiTransport } from "./visit-runtime";
 import styles from "./global-v2.module.css";
@@ -73,7 +77,7 @@ const moduleTabs: Readonly<Record<GlobalPrimaryModuleKey, readonly { readonly ke
   ECONOMIC: [{ key: "OVERVIEW", label: "Résumé" }, { key: "EVOLUTION", label: "Évolution" }, { key: "BREAKDOWN", label: "Répartition" }, { key: "PATTERNS", label: "Dépenses récurrentes" }],
   CATEGORIES_NEEDS: [{ key: "BREAKDOWN", label: "Catégories" }, { key: "PATTERNS", label: "Besoins renseignés" }, { key: "EVOLUTION", label: "Évolution" }],
   TRANSFORMATIONS: [{ key: "OVERVIEW", label: "Vue d’ensemble" }],
-  RHYTHM: [{ key: "OVERVIEW", label: "Vue d’ensemble" }, { key: "PATTERNS", label: "Habitudes & dépenses" }, { key: "BREAKDOWN", label: "Moments" }, { key: "EVOLUTION", label: "Changements" }],
+  RHYTHM: [{ key: "PATTERNS", label: "Habitudes & dépenses" }, { key: "BREAKDOWN", label: "Moments" }, { key: "EVOLUTION", label: "Changements" }],
   RELATIONSHIPS: [{ key: "OVERVIEW", label: "Vue d’ensemble" }],
   MOMENTS: [{ key: "OVERVIEW", label: "Moments" }, { key: "COMPARISONS", label: "Comparaisons" }],
   GEO_MOBILITY: [{ key: "OVERVIEW", label: "Lieux" }, { key: "BREAKDOWN", label: "Dépenses" }, { key: "EVOLUTION", label: "Évolution" }],
@@ -175,6 +179,7 @@ function KpiGrid({ kpis, limit = 3 }: { readonly kpis: readonly GlobalCompactKpi
 
 const integerFormatter = new Intl.NumberFormat("fr-FR", { maximumFractionDigits: 0 });
 const ratioFormatter = new Intl.NumberFormat("fr-FR", { style: "percent", maximumFractionDigits: 1 });
+const lifeRatioFormatter = new Intl.NumberFormat("fr-FR", { style: "percent", maximumFractionDigits: 0 });
 const shortMonths = ["janv.", "févr.", "mars", "avr.", "mai", "juin", "juil.", "août", "sept.", "oct.", "nov.", "déc."] as const;
 const longMonths = ["janvier", "février", "mars", "avril", "mai", "juin", "juillet", "août", "septembre", "octobre", "novembre", "décembre"] as const;
 const annualReading = "Sur l’année, la tendance reste orientée à la baisse ; sur les trois derniers mois, nos dépenses repartent nettement à la hausse.";
@@ -205,6 +210,70 @@ function m2TypedNumber(value: { readonly typedMeasure?: { readonly value: string
 
 function formatM2Ratio(value: number | undefined): string {
   return value === undefined ? "Non disponible sur cette période" : ratioFormatter.format(value);
+}
+
+function formatLifeRatio(value: number | undefined): string {
+  return value === undefined ? "Non disponible sur cette période" : lifeRatioFormatter.format(value);
+}
+
+type LifeDate = { readonly year: number; readonly month: number; readonly day: number };
+
+function parseLifeDate(value: string): LifeDate | undefined {
+  const match = value.match(/^(\d{4})-(\d{2})-(\d{2})$/u);
+  if (match === null) return undefined;
+  const date = { year: Number(match[1]), month: Number(match[2]), day: Number(match[3]) };
+  const check = new Date(Date.UTC(date.year, date.month - 1, date.day));
+  return check.getUTCFullYear() === date.year && check.getUTCMonth() + 1 === date.month && check.getUTCDate() === date.day ? date : undefined;
+}
+
+function formatLifeDateRange(start: LifeDate, end: LifeDate, detail: boolean): string {
+  const sameYear = start.year === end.year;
+  const sameMonth = sameYear && start.month === end.month;
+  const monthNames = detail ? longMonths : shortMonths;
+  if (start.year === end.year && start.month === end.month && start.day === end.day) return `${start.day} ${monthNames[start.month - 1]} ${start.year}`;
+  if (detail) {
+    const startText = `${start.day}${sameMonth ? "" : ` ${monthNames[start.month - 1]}${sameYear ? "" : ` ${start.year}`}`}`;
+    return `du ${startText} au ${end.day} ${monthNames[end.month - 1]} ${end.year}`;
+  }
+  const startText = `${start.day}${sameMonth ? "" : ` ${monthNames[start.month - 1]}${sameYear ? "" : ` ${start.year}`}`}`;
+  return sameMonth
+    ? `${start.day}–${end.day} ${monthNames[end.month - 1]} ${end.year}`
+    : `${startText} – ${end.day} ${monthNames[end.month - 1]} ${end.year}`;
+}
+
+function lifeMomentDates(value: string | undefined, detail: boolean): string | undefined {
+  if (value === undefined) return undefined;
+  const rawDates = value.match(/\d{4}-\d{2}-\d{2}/gu) ?? [];
+  const start = rawDates[0] === undefined ? undefined : parseLifeDate(rawDates[0]);
+  const end = rawDates[1] === undefined ? start : parseLifeDate(rawDates[1]);
+  return start === undefined || end === undefined ? undefined : formatLifeDateRange(start, end, detail);
+}
+
+function lifeMomentIdentity(value: string | undefined, detail: boolean): string | undefined {
+  if (value === undefined) return undefined;
+  const type = lifeMomentType(value);
+  const dates = lifeMomentDates(value, detail);
+  return [type, dates].filter((part): part is string => part !== undefined && part.length > 0).join(" · ") || undefined;
+}
+
+function lifeMomentType(value: string | undefined): string | undefined {
+  const type = value?.split(" · ")[0]?.trim();
+  return type === undefined || type.length === 0 ? undefined : type;
+}
+
+function lifeUiCopy(value: string): string {
+  const copy = humanLabel(value)
+    .replace(/\bpeers?\b/giu, "moments comparables")
+    .replace(/(?:de la même )?famille de comparaison/giu, "moments comparables")
+    .replace(/expériences comparables/giu, "moments comparables")
+    .replace(/occurrences renseignées/giu, "fois avec un coût connu")
+    .replace(/historique retenu/giu, "données disponibles")
+    .replace(/\bMoment\b/gu, "moment");
+  const rawDates = copy.match(/\d{4}-\d{2}-\d{2}/gu) ?? [];
+  if (rawDates.length === 0) return copy;
+  const formatted = lifeMomentDates(copy, false);
+  if (formatted === undefined) return copy.replace(/\d{4}-\d{2}-\d{2}/gu, "date non disponible");
+  return copy.replace(rawDates.length > 1 ? `${rawDates[0]} → ${rawDates[1]}` : rawDates[0]!, formatted);
 }
 
 function formatTrend(value: number | undefined): string {
@@ -433,22 +502,28 @@ type OverlayTarget = {
   readonly moduleKey: GlobalPrimaryModuleKey;
   readonly initialSection?: GlobalExpandedSectionKey;
   readonly returnSection?: GlobalExpandedSectionKey;
+  readonly rhythmDetailContext?: RhythmDetailContext;
 };
 
 function moduleOverlayTarget(moduleKey: GlobalPrimaryModuleKey, initialSection?: GlobalExpandedSectionKey): OverlayTarget {
   const presentation = globalModulePresentation(moduleKey);
-  return { kind: "MODULE_DETAIL", title: presentation.title, resource: presentation.expandedResource, entityRef: `module:${moduleKey.toLowerCase()}`, moduleKey, ...(initialSection === undefined ? {} : { initialSection }) };
+  const title = moduleKey === "RHYTHM" && initialSection === "PATTERNS"
+    ? "Nos habitudes"
+    : moduleKey === "RHYTHM" && initialSection === "BREAKDOWN"
+      ? "Nos moments"
+      : presentation.title;
+  return { kind: "MODULE_DETAIL", title, resource: presentation.expandedResource, entityRef: `module:${moduleKey.toLowerCase()}`, moduleKey, ...(initialSection === undefined ? {} : { initialSection }) };
 }
 
 function methodOverlayTarget(moduleKey: GlobalPrimaryModuleKey): OverlayTarget {
   return { kind: "METHODOLOGY", title: "Méthode", resource: "analysis_global_methodology", entityRef: globalV2MethodRef(moduleKey), moduleKey };
 }
 
-function entityOverlayTarget(moduleKey: GlobalPrimaryModuleKey, entityRef: string, title: string, returnSection?: GlobalExpandedSectionKey): OverlayTarget | undefined {
-  const resource = moduleKey === "RHYTHM" && entityRef.startsWith("moment:")
-    ? "analysis_global_moment_experience_detail"
-    : globalModulePresentation(moduleKey).detailResource;
-  return resource === undefined ? undefined : { kind: "ENTITY_DETAIL", title, resource, entityRef, moduleKey, ...(returnSection === undefined ? {} : { returnSection }) };
+function entityOverlayTarget(moduleKey: GlobalPrimaryModuleKey, entityRef: string, title: string, returnSection?: GlobalExpandedSectionKey, rhythmOrigin?: RhythmDetailOrigin): OverlayTarget | undefined {
+  const inferredRhythmOrigin = rhythmOrigin ?? (returnSection === "PATTERNS" ? "HABITS_COLLECTION" : returnSection === "BREAKDOWN" ? "MOMENTS_COLLECTION" : "NARRATIVE");
+  const rhythmDetailContext = moduleKey === "RHYTHM" ? resolveRhythmDetailContext(entityRef, inferredRhythmOrigin) : undefined;
+  const resource = moduleKey === "RHYTHM" ? rhythmDetailContext?.resource : globalModulePresentation(moduleKey).detailResource;
+  return resource === undefined ? undefined : { kind: "ENTITY_DETAIL", title, resource, entityRef, moduleKey, ...(returnSection === undefined ? {} : { returnSection }), ...(rhythmDetailContext === undefined ? {} : { rhythmDetailContext }) };
 }
 
 function GlobalSeries({ model }: { readonly model: GlobalExpandedReadModel }) {
@@ -592,59 +667,87 @@ function LifeInsightList({ model, onDetail }: { readonly model: GlobalExpandedRe
   if (insights.length === 0) return <p className={styles.qualityNote}>Aucun fait suffisamment étayé n’est disponible pour cette période.</p>;
   return <div className={styles.lifeInsights}>{insights.map((insight) => {
     const row = model.rows.find(({ entityRef }) => entityRef !== undefined && insight.entityRefs.includes(entityRef));
-    const content = <><Sparkles aria-hidden size={19} /><span><strong>{humanLabel(insight.titleKey)}</strong><p>{humanLabel(insight.statementKey)}</p></span>{row === undefined || onDetail === undefined ? null : <ChevronRight aria-hidden size={18} />}</>;
+    const content = <><Sparkles aria-hidden size={19} /><span><strong>{lifeUiCopy(insight.titleKey)}</strong><p>{lifeUiCopy(insight.statementKey)}</p></span>{row === undefined || onDetail === undefined ? null : <ChevronRight aria-hidden size={18} />}</>;
     return row === undefined || onDetail === undefined
       ? <article key={insight.insightId}>{content}</article>
-      : <button key={insight.insightId} type="button" data-global-entity-ref={row.entityRef} onClick={() => onDetail(row, humanLabel(insight.titleKey))} aria-label={`Explorer ${humanLabel(insight.titleKey)}`}>{content}</button>;
+      : <button key={insight.insightId} type="button" data-global-entity-ref={row.entityRef} onClick={() => onDetail(row, lifeUiCopy(insight.titleKey))} aria-label={`Explorer ${lifeUiCopy(insight.titleKey)}`}>{content}</button>;
   })}</div>;
+}
+
+function LifeMethod({ model }: { readonly model: GlobalExpandedReadModel }) {
+  return <div className={styles.methodContent}><dl>
+    <div><dt>Coût connu</dt><dd>Un montant est présenté uniquement lorsqu’un coût a pu être relié à l’habitude ou au moment concerné.</dd></div>
+    <div><dt>Comparaisons</dt><dd>Un moment est situé seulement lorsque des moments similaires suffisamment renseignés sont disponibles.</dd></div>
+    <div><dt>Foyer et personnes</dt><dd>Les montants restent au niveau du foyer. Les fréquences individuelles n’attribuent aucune dépense à une personne.</dd></div>
+    <div><dt>Valeur non disponible</dt><dd>Une information absente n’est jamais remplacée par zéro.</dd></div>
+  </dl><HumanQualityNote quality={model.quality} /></div>;
 }
 
 function LifeActivityProfiles({ model, onDetail }: { readonly model: GlobalExpandedReadModel; readonly onDetail: (row: GlobalDetailRow, title?: string) => void }) {
   const rows = model.rows.filter((row) => row.typedMeasure?.kind === "MONEY" && row.activityCostProfile !== undefined);
-  if (rows.length === 0) return <p className={styles.lifeEmpty}>Nos habitudes sont bien observées, mais aucune conséquence financière n’est encore assez étayée pour être présentée ici.</p>;
+  if (rows.length === 0) return <p className={styles.lifeEmpty}>Aucune habitude n’est disponible pour le moment.</p>;
   return <section className={styles.lifeSection} aria-labelledby="life-activities-title">
-    <header><h3 id="life-activities-title">Conséquences financières observées au niveau du foyer</h3><p>Les montants portent uniquement sur les occurrences auxquelles une dépense a été directement reliée.</p></header>
+    <header><h3 id="life-activities-title">Toutes nos habitudes</h3><p>Dans l’ordre où elles sont présentées par l’analyse.</p></header>
     <div className={styles.lifeActivityGrid}>{rows.map((row) => {
       const profile = row.activityCostProfile!;
       const amount = m2TypedNumber(row);
-      const known = m2TypedNumber({ typedMeasure: profile.knownCausalCostCount });
-      const total = m2TypedNumber({ typedMeasure: profile.totalOccurrenceCount });
-      const coverage = m2TypedNumber({ typedMeasure: profile.coverageRatio });
-      return <button key={row.rowId} type="button" data-global-entity-ref={row.entityRef} onClick={() => onDetail(row, humanLabel(row.labelKey))} aria-label={`Explorer ${humanLabel(row.labelKey)}`}>
+      const label = humanLabel(row.labelKey);
+      const coverage = buildHabitCoverageModel({ activityLabel: label, knownCausalCostCount: profile.knownCausalCostCount, totalOccurrenceCount: profile.totalOccurrenceCount, coverageRatio: profile.coverageRatio });
+      const content = <>
         <span className={styles.lifeActivityName}>{humanLabel(row.labelKey)}</span>
-        <span>Médiane des occurrences dont un coût est directement relié</span>
         <strong>{formatMoney(amount)}</strong>
-        {known === undefined || total === undefined ? null : <small>{integerFormatter.format(known)} occurrences renseignées sur {integerFormatter.format(total)}</small>}
-        {coverage === undefined ? null : <small>{formatM2Ratio(coverage)} des occurrences disposent d’un coût directement relié.</small>}
-        <ChevronRight aria-hidden size={18} />
-      </button>;
+        <span>en médiane quand un coût est connu</span>
+        {coverage === undefined ? <small className={styles.lifeCoverageUnknown}>Couverture des coûts non disponible.</small> : <span className={styles.lifeCoverage} aria-label={coverage.accessibleLabel}><small>Coût connu pour {integerFormatter.format(coverage.knownCount)} {label.toLocaleLowerCase("fr-FR")} sur {integerFormatter.format(coverage.totalCount)} · {integerFormatter.format(coverage.percentage)} %</small><i aria-hidden><b style={{ width: `${coverage.barWidth}%` }} /></i></span>}
+        {row.entityRef === undefined ? null : <ChevronRight aria-hidden size={18} />}
+      </>;
+      return row.entityRef === undefined
+        ? <article key={row.rowId}>{content}</article>
+        : <button key={row.rowId} type="button" data-global-entity-ref={row.entityRef} onClick={() => onDetail(row, label)}>{content}</button>;
     })}</div>
-    <p className={styles.lifeNonAdditive}>Ces montants décrivent chaque habitude séparément et ne doivent pas être additionnés.</p>
+    <p className={styles.lifeNonAdditive}>Chaque habitude est à lire séparément : ces montants ne forment pas un total.</p>
   </section>;
 }
 
-function comparisonFamilyLabel(tier: NonNullable<GlobalDetailRow["momentComparison"]>["comparisonTier"]): string {
-  if (tier === "SAME_SERIES") return "de la même série de comparaison";
-  if (tier === "SAME_TYPE") return "du même type";
-  return "de la même famille de comparaison";
+function lifeComparisonDelta(comparison: NonNullable<GlobalDetailRow["momentComparison"]>): string | undefined {
+  const delta = m2TypedNumber({ typedMeasure: comparison.absoluteDelta });
+  const count = m2TypedNumber({ typedMeasure: comparison.peerCount });
+  if (delta === undefined || count === undefined) return undefined;
+  const direction = delta < 0 ? "en dessous" : "au-dessus";
+  return `${formatMoney(Math.abs(delta))} ${direction} de la médiane de ${integerFormatter.format(count)} moments comparables.`;
 }
 
 function LifeMomentComparisons({ model, onDetail }: { readonly model: GlobalExpandedReadModel; readonly onDetail: (row: GlobalDetailRow, title?: string) => void }) {
-  const rows = model.rows.filter((row) => row.momentComparison !== undefined);
+  const rows = model.rows.filter((row) => {
+    const comparison = row.momentComparison;
+    return comparison !== undefined
+      && m2TypedNumber({ typedMeasure: comparison.subjectCost }) !== undefined
+      && m2TypedNumber({ typedMeasure: comparison.peerMedian }) !== undefined
+      && m2TypedNumber({ typedMeasure: comparison.peerCount }) !== undefined;
+  });
   if (rows.length === 0) return null;
-  return <section className={styles.lifeSection} aria-labelledby="life-comparisons-title"><header><h3 id="life-comparisons-title">Moments qui se distinguent des expériences retenues</h3></header><div className={styles.lifeComparisonGrid}>{rows.map((row) => {
+  return <section className={styles.lifeSection} aria-labelledby="life-comparisons-title"><header><h3 id="life-comparisons-title">Des moments qui sortent de l’ordinaire</h3></header><div className={styles.lifeComparisonGrid}>{rows.map((row) => {
     const comparison = row.momentComparison!;
-    const subject = m2TypedNumber({ typedMeasure: comparison.subjectCost });
-    const median = m2TypedNumber({ typedMeasure: comparison.peerMedian });
-    const peers = m2TypedNumber({ typedMeasure: comparison.peerCount });
-    return <button key={row.rowId} type="button" data-global-entity-ref={row.entityRef} onClick={() => onDetail(row, humanLabel(row.labelKey))} aria-label={`Explorer ${humanLabel(row.labelKey)}`}><span><strong>{humanLabel(row.labelKey)}</strong>{subject === undefined || median === undefined || peers === undefined ? null : <p>{formatMoney(subject)} contre une médiane de {formatMoney(median)} parmi {integerFormatter.format(peers)} autres expériences {comparisonFamilyLabel(comparison.comparisonTier)}.</p>}</span><ChevronRight aria-hidden size={18} /></button>;
+    const subjectCost = m2TypedNumber({ typedMeasure: comparison.subjectCost });
+    const peerMedian = m2TypedNumber({ typedMeasure: comparison.peerMedian });
+    const peerCount = m2TypedNumber({ typedMeasure: comparison.peerCount });
+    const content = <span><strong>{lifeUiCopy(row.labelKey)}</strong><p>{formatMoney(subjectCost)} contre {formatMoney(peerMedian)} en médiane<br />{integerFormatter.format(peerCount!)} moments comparables</p></span>;
+    return row.entityRef === undefined
+      ? <article key={row.rowId}>{content}</article>
+      : <button key={row.rowId} type="button" data-global-entity-ref={row.entityRef} onClick={() => onDetail(row, lifeUiCopy(row.labelKey))}>{content}<ChevronRight aria-hidden size={18} /></button>;
   })}</div></section>;
 }
 
 function LifeMoments({ model, runtime, onDetail }: { readonly model: GlobalExpandedReadModel; readonly runtime: GlobalV2VisitRuntime; readonly onDetail: (row: GlobalDetailRow, title?: string) => void }) {
-  const rows = model.rows.filter((row) => row.typedMeasure?.kind === "MONEY");
+  const rows = model.rows.filter((row) => row.entityRef?.startsWith("moment:") === true);
+  const groups = groupRhythmMomentsByYear(rows);
+  if (rows.length === 0) return <p className={styles.lifeEmpty}>Aucun moment n’est disponible pour le moment.</p>;
   return <div className={styles.lifeMoments}>
-    <section className={styles.lifeSection} aria-labelledby="life-moments-title"><header><h3 id="life-moments-title">Moments auxquels des dépenses ont été directement reliées</h3></header>{rows.length === 0 ? <p className={styles.lifeEmpty}>Aucun Moment ne dispose encore d’un coût directement relié suffisamment étayé.</p> : <div className={styles.lifeMomentGrid}>{rows.map((row) => <button key={row.rowId} type="button" data-global-entity-ref={row.entityRef} onClick={() => onDetail(row, humanLabel(row.labelKey))} aria-label={`Explorer ${humanLabel(row.labelKey)}`}><span><strong>{humanLabel(row.labelKey)}</strong>{row.displayValue === undefined ? null : <small>{row.displayValue}</small>}</span><b>{formatMoney(m2TypedNumber(row))}</b><ChevronRight aria-hidden size={18} /></button>)}</div>}</section>
+    <section className={styles.lifeSection} aria-labelledby="life-moments-title"><header><h3 id="life-moments-title">Notre timeline de vie</h3><p>Les moments suivent l’ordre temporel fourni par l’analyse.</p></header><div className={styles.lifeTimeline}>{groups.map((group) => <section key={group.key} aria-labelledby={`life-year-${group.key.toLocaleLowerCase("fr-FR")}`}><h4 id={`life-year-${group.key.toLocaleLowerCase("fr-FR")}`}>{group.label}</h4><ol>{group.rows.map((row) => {
+      const amount = row.typedMeasure?.kind === "MONEY" ? m2TypedNumber(row) : undefined;
+      const identity = lifeMomentIdentity(row.displayValue, false);
+      const content = <><i className={styles.lifeTimelineMarker} aria-hidden /><span><strong>{lifeUiCopy(row.labelKey)}</strong>{identity === undefined ? <small>Date ou type non disponible</small> : <small>{identity}</small>}{amount === undefined ? <b className={styles.lifeMomentUnknown}>Montant non disponible</b> : <b>{formatMoney(amount)}</b>}</span>{row.entityRef === undefined ? null : <ChevronRight aria-hidden size={18} />}</>;
+      return <li key={row.rowId}>{row.entityRef === undefined ? <article>{content}</article> : <button type="button" data-global-entity-ref={row.entityRef} onClick={() => onDetail(row, lifeUiCopy(row.labelKey))}>{content}</button>}</li>;
+    })}</ol></section>)}</div></section>
     <ExpandedPreview runtime={runtime} moduleKey="RHYTHM" sectionKey="COMPARISONS">{(comparisons) => <LifeMomentComparisons model={comparisons} onDetail={onDetail} />}</ExpandedPreview>
   </div>;
 }
@@ -653,17 +756,60 @@ function metricBySuffix(model: GlobalExpandedReadModel, suffix: string): GlobalD
   return model.metrics.find(({ metricId }) => metricId.endsWith(suffix));
 }
 
-function LifeActivityDetail({ model, entityRef }: { readonly model: GlobalExpandedReadModel; readonly entityRef: string }) {
+function lifePersonLabel(value: string): string {
+  return lifeUiCopy(value.split(" · ").at(-1) ?? value);
+}
+
+function lifePersonFrequency(count: number | undefined, cadence: number | undefined): string {
+  const countText = count === undefined ? "Fréquence non disponible" : `${integerFormatter.format(count)} fois`;
+  if (cadence === undefined || !Number.isFinite(cadence)) return countText;
+  return `${countText} · ${cadence <= 1 ? "environ chaque jour" : `environ tous les ${integerFormatter.format(cadence)} jours`}`;
+}
+
+function hasHumanLifeComponentLabel(row: GlobalDetailRow): boolean {
+  const label = humanLabel(row.labelKey).trim();
+  return label.length > 0 && !/^Composante causale$/iu.test(label) && label !== "Information disponible";
+}
+
+function lifeActivityName(model: GlobalExpandedReadModel): string | undefined {
+  const source = model.rows.find((row) => row.entityRef?.startsWith("person-activity:"))?.labelKey.split(" · ")[0]?.trim();
+  return source === undefined || source.length === 0 ? undefined : lifeUiCopy(source);
+}
+
+function LifePersonRhythm({ row, entityRef, runtime }: { readonly row: GlobalDetailRow; readonly entityRef: string; readonly runtime: GlobalV2VisitRuntime }) {
+  const request = useMemo(() => ({ resource: "analysis_global_routine_detail" as const, params: { entityRef } }), [entityRef]);
+  const result = useGlobalV2Resource<GlobalExpandedReadModel>(runtime, request, true, "BACKGROUND");
+  const detail = transportData(result.state);
+  const occurrences = detail === undefined ? undefined : metricBySuffix(detail, ":occurrences");
+  const count = m2TypedNumber(occurrences) ?? m2TypedNumber(row);
+  const cadence = detail === undefined ? undefined : m2TypedNumber(metricBySuffix(detail, ":cadence"));
+  return <article><strong>{lifePersonLabel(row.labelKey)}</strong><span>{lifePersonFrequency(count, cadence)}</span></article>;
+}
+
+function LifeActivityDetail({ model, entityRef, runtime }: { readonly model: GlobalExpandedReadModel; readonly entityRef: string; readonly runtime: GlobalV2VisitRuntime }) {
   const household = entityRef.startsWith("household-activity:");
   const median = metricBySuffix(model, ":median");
   const known = metricBySuffix(model, ":known-count");
   const total = metricBySuffix(model, ":total-count");
   const coverage = metricBySuffix(model, ":coverage");
-  if (!household) return <div className={styles.lifeDetail}><section><h3>Rythme individuel observé</h3><div className={styles.lifeDetailMetrics}>{model.metrics.map((metric) => <article key={metric.metricId}><span>{humanLabel(metric.labelKey)}</span><strong>{metric.typedMeasure?.kind === "COUNT" ? integerFormatter.format(m2TypedNumber(metric) ?? 0) : metric.displayValue}</strong></article>)}</div></section><HumanQualityNote quality={model.quality} /></div>;
+  if (!household) {
+    const occurrences = metricBySuffix(model, ":occurrences");
+    const cadence = metricBySuffix(model, ":cadence");
+    const count = m2TypedNumber(occurrences);
+    const interval = m2TypedNumber(cadence);
+    return <div className={styles.lifeDetail}><section><h3>Rythme individuel observé</h3><p>{count === undefined ? "Fréquence non disponible" : `${integerFormatter.format(count)} fois`}{interval === undefined ? null : <> · {interval <= 1 ? "environ chaque jour" : `environ tous les ${integerFormatter.format(interval)} jours`}</>}</p></section><HumanQualityNote quality={model.quality} /></div>;
+  }
+  const medianAmount = median?.typedMeasure?.kind === "MONEY" ? m2TypedNumber(median) : undefined;
+  const knownCount = m2TypedNumber(known);
+  const totalCount = m2TypedNumber(total);
+  const coverageRatio = m2TypedNumber(coverage);
+  const personRows = model.rows.flatMap((row) => row.entityRef?.startsWith("person-activity:") ? [{ row, entityRef: row.entityRef }] : []);
+  const activityName = lifeActivityName(model);
+  const activitySubject = activityName?.toLocaleLowerCase("fr-FR") ?? "activités";
   return <div className={styles.lifeDetail}>
-    <section><h3>Conséquence financière au niveau du foyer</h3>{median?.typedMeasure?.kind === "MONEY" ? <article className={styles.lifeCausalCard}><span>Médiane des occurrences dont un coût est directement relié</span><strong>{formatMoney(m2TypedNumber(median))}</strong>{known === undefined || total === undefined ? null : <p>{integerFormatter.format(m2TypedNumber(known) ?? 0)} occurrences renseignées sur {integerFormatter.format(m2TypedNumber(total) ?? 0)}.</p>}{coverage?.typedMeasure?.kind === "RATIO" ? <p>{formatM2Ratio(m2TypedNumber(coverage))} des occurrences disposent d’un coût directement relié.</p> : null}</article> : <p className={styles.lifeEmpty}>Aucune conséquence financière n’est suffisamment étayée.</p>}</section>
-    {model.rows.some((row) => row.entityRef?.startsWith("person-activity:")) ? <section><h3>Rythmes observés par personne</h3><p>Ce contexte décrit une fréquence observée. Aucun montant n’est attribué à une personne.</p><div className={styles.lifeContextRows}>{model.rows.filter((row) => row.entityRef?.startsWith("person-activity:")).map((row) => <article key={row.rowId}><strong>{humanLabel(row.labelKey)}</strong><span>{row.displayValue}</span></article>)}</div></section> : null}
-    <p className={styles.lifeNonAdditive}>Ce profil ne peut pas être additionné aux autres activités ou aux Moments.</p><HumanQualityNote quality={model.quality} />
+    <section><h3>{activityName === undefined ? "Ce que cette habitude nous coûte" : `Ce que nos ${activitySubject} nous coûtent`}</h3>{medianAmount === undefined ? <p className={styles.lifeEmpty}>Aucune conséquence financière n’est suffisamment étayée.</p> : <article className={styles.lifeCausalCard}><strong>{formatMoney(medianAmount)}</strong><span>En médiane quand un coût est connu.</span>{knownCount === undefined || totalCount === undefined || coverageRatio === undefined ? null : <p>Coût connu pour {integerFormatter.format(knownCount)} {activitySubject} sur {integerFormatter.format(totalCount)} · {formatLifeRatio(coverageRatio)}</p>}</article>}</section>
+    {personRows.length === 0 ? null : <section><h3>Le rythme de chacun</h3><div className={styles.lifeContextRows}>{personRows.map(({ row, entityRef: personEntityRef }) => <LifePersonRhythm key={row.rowId} row={row} entityRef={personEntityRef} runtime={runtime} />)}</div><p>Aucun montant n’est attribué à une personne.</p></section>}
+    <p className={styles.lifeNonAdditive}>Chaque habitude est à lire séparément : ces montants ne forment pas un total.</p><HumanQualityNote quality={model.quality} />
   </div>;
 }
 
@@ -672,25 +818,30 @@ function LifeMomentDetail({ model }: { readonly model: GlobalExpandedReadModel }
   const causal = metricBySuffix(model, ":causal-cost");
   const spentDuring = metricBySuffix(model, ":spent-during");
   const comparison = identity?.momentComparison;
-  const q1 = metricBySuffix(model, ":q1");
-  const q3 = metricBySuffix(model, ":q3");
   const delta = metricBySuffix(model, ":absolute-delta");
-  const composition = model.rows.slice(1).filter((row) => row.typedMeasure?.kind === "MONEY");
+  const composition = model.rows.slice(1).filter((row) => row.typedMeasure?.kind === "MONEY" && hasHumanLifeComponentLabel(row));
   const peerCount = comparison === undefined ? undefined : m2TypedNumber({ typedMeasure: comparison.peerCount });
+  const subjectCost = comparison === undefined ? undefined : m2TypedNumber({ typedMeasure: comparison.subjectCost });
+  const peerMedian = comparison === undefined ? undefined : m2TypedNumber({ typedMeasure: comparison.peerMedian });
+  const momentType = lifeMomentType(identity?.displayValue);
+  const dateRange = lifeMomentDates(identity?.displayValue, true);
+  const causalAmount = causal?.typedMeasure?.kind === "MONEY" ? m2TypedNumber(causal) : undefined;
+  const spentDuringAmount = spentDuring?.typedMeasure?.kind === "MONEY" ? m2TypedNumber(spentDuring) : undefined;
   return <div className={styles.lifeDetail}>
-    {identity === undefined ? null : <header className={styles.lifeMomentIdentity}><h3>{humanLabel(identity.labelKey)}</h3>{identity.displayValue === undefined ? null : <p>{identity.displayValue}</p>}</header>}
-    {causal?.typedMeasure?.kind === "MONEY" ? <section><h3>Montant directement relié</h3><article className={styles.lifeCausalCard}><strong>{formatMoney(m2TypedNumber(causal))}</strong><p>Seules les dépenses dont le lien avec ce Moment est établi sont incluses.</p></article></section> : null}
-    {spentDuring?.typedMeasure?.kind === "MONEY" ? <section><h3>Dépensé au total pendant la période</h3><article className={styles.lifeSpentCard}><strong>{formatMoney(m2TypedNumber(spentDuring))}</strong><p>Toutes ces dépenses ne sont pas attribuées à ce Moment.</p></article></section> : null}
-    <section><h3>Comparaison avec les expériences retenues</h3>{comparison === undefined || peerCount === undefined ? <p className={styles.lifeEmpty}>Pas assez d’expériences autorisées pour situer ce montant.</p> : <div className={styles.lifeComparisonDetail}><p>{formatMoney(m2TypedNumber({ typedMeasure: comparison.subjectCost }))} contre une médiane de <strong>{formatMoney(m2TypedNumber({ typedMeasure: comparison.peerMedian }))}</strong> parmi {integerFormatter.format(peerCount)} autres expériences {comparisonFamilyLabel(comparison.comparisonTier)}.</p><dl>{q1 === undefined || q3 === undefined ? null : <div><dt>Repères observés dans l’historique retenu</dt><dd>{formatMoney(m2TypedNumber(q1))} – {formatMoney(m2TypedNumber(q3))}</dd></div>}{delta === undefined ? null : <div><dt>Écart à la médiane</dt><dd>{formatMoney(m2TypedNumber(delta), { signed: true })}</dd></div>}</dl></div>}</section>
-    {composition.length === 0 ? null : <section><h3>Ce qui compose le montant directement relié</h3><div className={styles.lifeComposition}>{composition.map((row) => <article key={row.rowId}><span>{humanLabel(row.labelKey)}</span><strong>{formatMoney(m2TypedNumber(row))}</strong></article>)}</div></section>}
+    {momentType === undefined && dateRange === undefined ? null : <header className={styles.lifeMomentIdentity} aria-label="Identité du moment">{momentType === undefined ? null : <strong>{momentType}</strong>}{dateRange === undefined ? null : <p>{dateRange}</p>}</header>}
+    {causalAmount === undefined ? null : <section><h3>Dépenses reliées à ce moment</h3><article className={styles.lifeCausalCard}><strong>{formatMoney(causalAmount)}</strong><p>Ce montant regroupe uniquement les dépenses reliées à ce moment.</p></article></section>}
+    {spentDuringAmount === undefined ? null : <section><h3>{dateRange === undefined ? "Toutes nos dépenses pendant ces dates" : `Toutes nos dépenses ${dateRange}`}</h3><article className={styles.lifeSpentCard}><strong>{formatMoney(spentDuringAmount)}</strong><p>Ce total comprend toutes les dépenses enregistrées pendant ces dates, qu’elles soient liées ou non à ce moment.</p></article></section>}
+    {causalAmount === undefined || spentDuringAmount === undefined ? null : <p className={styles.lifeScopeNotice}>Ces deux montants correspondent à deux périmètres différents.</p>}
+    <section><h3>Comparé à des moments similaires</h3>{comparison === undefined || peerCount === undefined || subjectCost === undefined || peerMedian === undefined ? <p className={styles.lifeEmpty}>Pas assez de moments comparables pour situer celui-ci.</p> : <div className={styles.lifeComparisonDetail}><p>{formatMoney(subjectCost)} contre {formatMoney(peerMedian)} en médiane parmi {integerFormatter.format(peerCount)} moments comparables.</p><ComparisonRange observed={comparison.subjectCost} median={comparison.peerMedian} lower={comparison.q1} upper={comparison.q3} supportCount={comparison.peerCount} subjectLabel={identity === undefined ? undefined : lifeUiCopy(identity.labelKey)} />{delta === undefined ? null : <p className={styles.lifeComparisonDelta}>{lifeComparisonDelta(comparison)}</p>}</div>}</section>
+    {composition.length === 0 ? null : <section><h3>Détail des dépenses reliées</h3><div className={styles.lifeComposition}>{composition.map((row) => <article key={row.rowId}><span>{lifeUiCopy(row.labelKey)}</span><strong>{formatMoney(m2TypedNumber(row))}</strong></article>)}</div></section>}
     <HumanQualityNote quality={model.quality} />
   </div>;
 }
 
 function LifeExpandedContent({ model, entityRef, onDetail, runtime }: { readonly model: GlobalExpandedReadModel; readonly entityRef: string; readonly onDetail: (row: GlobalDetailRow, title?: string) => void; readonly runtime: GlobalV2VisitRuntime }) {
-  if (model.resource === "analysis_global_routine_detail") return <LifeActivityDetail model={model} entityRef={entityRef} />;
+  if (model.resource === "analysis_global_routine_detail") return <LifeActivityDetail model={model} entityRef={entityRef} runtime={runtime} />;
   if (model.resource === "analysis_global_moment_experience_detail") return <LifeMomentDetail model={model} />;
-  if (model.sectionKey === "OVERVIEW") return <div className={styles.lifeTabContent}><LifeInsightList model={model} onDetail={onDetail} /></div>;
+  if (model.sectionKey === "OVERVIEW") return null;
   if (model.sectionKey === "PATTERNS") return <div className={styles.lifeTabContent}><LifeActivityProfiles model={model} onDetail={onDetail} /></div>;
   if (model.sectionKey === "BREAKDOWN") return <div className={styles.lifeTabContent}><LifeMoments model={model} runtime={runtime} onDetail={onDetail} /></div>;
   return <div className={styles.lifeTabContent}><LifeInsightList model={model} onDetail={onDetail} /></div>;
@@ -698,6 +849,7 @@ function LifeExpandedContent({ model, entityRef, onDetail, runtime }: { readonly
 
 function GlobalExpandedContent({ model, entityRef, onDetail, runtime, certifiedThrough }: { readonly model: GlobalExpandedReadModel; readonly entityRef: string; readonly onDetail: (row: GlobalDetailRow, title?: string) => void; readonly runtime: GlobalV2VisitRuntime; readonly certifiedThrough: string }) {
   if (model.sectionKey === "METHODOLOGY" && model.moduleKey === "ECONOMIC") return <EconomicMethod model={model} certifiedThrough={certifiedThrough} />;
+  if (model.sectionKey === "METHODOLOGY" && model.moduleKey === "RHYTHM") return <LifeMethod model={model} />;
   if (model.sectionKey === "METHODOLOGY") return <div className={styles.expandedContent}><HumanRows rows={model.rows} onDetail={onDetail} /><HumanQualityNote quality={model.quality} /></div>;
   if (model.resource === "analysis_global_economic_recurrence_detail") return <EconomicRecurrenceDetail model={model} />;
   if (model.resource === "analysis_global_category_need_detail") return <M2EntityDetail model={model} entityRef={entityRef} certifiedThrough={certifiedThrough} />;
@@ -742,11 +894,14 @@ function GlobalDetailOverlay({ target, runtime, mobile, certifiedThrough, restor
     const patternsAvailable = lifePatternsModel?.rows.some((row) => row.typedMeasure?.kind === "MONEY" && row.activityCostProfile !== undefined) ?? false;
     const momentsAvailable = (lifeBreakdownModel?.rows.length ?? 0) > 0 || (lifeComparisonsModel?.rows.length ?? 0) > 0;
     const evolutionAvailable = lifeEvolutionModel !== undefined && (lifeEvolutionModel.primaryInsight !== undefined || lifeEvolutionModel.secondaryInsights.length > 0 || lifeEvolutionModel.metrics.length > 0 || lifeEvolutionModel.series.length > 0 || lifeEvolutionModel.rows.length > 0);
-    return moduleTabs.RHYTHM.filter(({ key }) => key === "OVERVIEW" || key === "PATTERNS" && patternsAvailable || key === "BREAKDOWN" && momentsAvailable || key === "EVOLUTION" && evolutionAvailable);
+    return moduleTabs.RHYTHM.filter(({ key }) => key === "PATTERNS" && patternsAvailable || key === "BREAKDOWN" && momentsAvailable || key === "EVOLUTION" && evolutionAvailable);
   }, [lifeBreakdownModel, lifeComparisonsModel, lifeEvolutionModel, lifePatternsModel, target.kind, target.moduleKey]);
-  const [section, setSection] = useState<GlobalExpandedSectionKey>(target.initialSection ?? (target.kind === "MODULE_DETAIL" && target.moduleKey === "RHYTHM" ? "OVERVIEW" : tabs[0]?.key ?? "METHODOLOGY"));
-  useEffect(() => setSection(target.initialSection ?? (target.kind === "MODULE_DETAIL" && target.moduleKey === "RHYTHM" ? "OVERVIEW" : tabs[0]?.key ?? "METHODOLOGY")), [target]);
-  useEffect(() => { if (target.kind === "MODULE_DETAIL" && !tabs.some(({ key }) => key === section)) setSection(tabs[0]?.key ?? "OVERVIEW"); }, [section, tabs, target.kind]);
+  const preferredSection = target.kind === "MODULE_DETAIL" && target.moduleKey === "RHYTHM"
+    ? target.initialSection !== undefined && target.initialSection !== "OVERVIEW" ? target.initialSection : tabs[0]?.key ?? "PATTERNS"
+    : target.initialSection ?? tabs[0]?.key ?? "METHODOLOGY";
+  const [section, setSection] = useState<GlobalExpandedSectionKey>(preferredSection);
+  useEffect(() => setSection(preferredSection), [preferredSection]);
+  useEffect(() => { if (target.kind === "MODULE_DETAIL" && tabs.length > 0 && !tabs.some(({ key }) => key === section)) setSection(tabs[0]!.key); }, [section, tabs, target.kind]);
   const params = useMemo<Readonly<Record<string, string>>>(() => {
     const next: Record<string, string> = {};
     if (target.kind === "METHODOLOGY") {
@@ -785,18 +940,26 @@ function GlobalDetailOverlay({ target, runtime, mobile, certifiedThrough, restor
   }, [model, target.kind]);
   const presentation = globalModulePresentation(target.moduleKey);
   const subtitle = target.kind === "ENTITY_DETAIL"
-    ? target.moduleKey === "RHYTHM" ? target.entityRef.startsWith("moment:") ? "Détail du Moment" : target.entityRef.startsWith("household-activity:") ? "Détail de l’activité au niveau du foyer" : "Contexte de rythme individuel" : target.entityRef.startsWith("need:") ? "Besoin renseigné" : "Détail de la catégorie"
+    ? target.moduleKey === "RHYTHM" ? target.entityRef.startsWith("moment:") ? "Détail du moment" : target.entityRef.startsWith("household-activity:") ? "Détail de l’activité au niveau du foyer" : "Contexte de rythme individuel" : target.entityRef.startsWith("need:") ? "Besoin renseigné" : "Détail de la catégorie"
     : target.moduleKey === "ECONOMIC" ? undefined : presentation.description;
   const localError = target.kind === "METHODOLOGY" && target.moduleKey === "ECONOMIC" ? <div className={styles.methodError} role="alert">Impossible de charger les détails de méthode · <button type="button" onClick={result.retry}>Réessayer</button></div> : <LocalError retry={result.retry} />;
   const activeTabId = `${moduleSlugs[target.moduleKey]}-tab-${section.toLowerCase()}`;
   const activePanelId = `${moduleSlugs[target.moduleKey]}-panel-${section.toLowerCase()}`;
-  const returnSection = target.returnSection ?? (target.entityRef.startsWith("need:") ? "PATTERNS" : "BREAKDOWN");
-  return <OverlayFrame kind="exploration" title={target.title} subtitle={subtitle} closeAction={{ kind: "callback", onAction: onClose }} {...(target.kind === "ENTITY_DETAIL" && (target.moduleKey === "CATEGORIES_NEEDS" || target.moduleKey === "RHYTHM") ? { backAction: { kind: "callback" as const, onAction: () => onReplace(moduleOverlayTarget(target.moduleKey, returnSection)) } } : {})} restoreFocusRef={restoreFocusRef} closeOnBackdrop className={`${styles.detailOverlay} ${mobile ? styles.mobileOverlay : ""}`}>
-    {tabs.length > 1 || target.kind === "MODULE_DETAIL" && target.moduleKey === "RHYTHM" ? <div className={`${styles.overlayNavigation} ${target.moduleKey === "CATEGORIES_NEEDS" || target.moduleKey === "RHYTHM" ? styles.m2OverlayNavigation : ""}`}><div className={`${styles.sectionTabs} ${target.moduleKey === "CATEGORIES_NEEDS" || target.moduleKey === "RHYTHM" ? styles.m2Tabs : ""}`} role="tablist" aria-label={`Sections de ${target.title}`}>{tabs.map((item) => <button id={`${moduleSlugs[target.moduleKey]}-tab-${item.key.toLowerCase()}`} key={item.key} type="button" role="tab" aria-selected={section === item.key} aria-controls={`${moduleSlugs[target.moduleKey]}-panel-${item.key.toLowerCase()}`} onClick={() => { setSection(item.key); emitGlobalV2UxEvent("global_section_expanded", { moduleKey: target.moduleKey, sectionKey: item.key }); window.history.replaceState(window.history.state, "", `#${moduleSlugs[target.moduleKey]}-${item.key.toLowerCase()}`); }}>{item.label}</button>)}</div>{target.moduleKey === "ECONOMIC" || target.moduleKey === "RHYTHM" ? <button type="button" className={styles.methodLink} onClick={() => onReplace(methodOverlayTarget(target.moduleKey))}><Info aria-hidden size={15} /> {target.moduleKey === "RHYTHM" ? "Méthode / limites" : "Méthode"}</button> : null}</div> : null}
+  const rhythmReturnSection = target.kind === "ENTITY_DETAIL" ? rhythmDetailReturnSection(target.rhythmDetailContext) : undefined;
+  const returnSection = rhythmReturnSection ?? target.returnSection ?? (target.entityRef.startsWith("need:") ? "PATTERNS" : "BREAKDOWN");
+  const detailHasBack = target.kind === "ENTITY_DETAIL" && (target.moduleKey === "CATEGORIES_NEEDS" || rhythmReturnSection !== undefined);
+  const showTabs = target.moduleKey !== "RHYTHM" && tabs.length > 1;
+  const showRhythmMethod = target.kind === "MODULE_DETAIL" && target.moduleKey === "RHYTHM";
+  const rhythmDetailMode = target.kind === "ENTITY_DETAIL" && target.moduleKey === "RHYTHM";
+  const returnToCollection = () => onReplace(moduleOverlayTarget(target.moduleKey, returnSection));
+  const closeDetail = rhythmReturnSection === undefined ? onClose : returnToCollection;
+  return <OverlayFrame kind="exploration" title={target.title} subtitle={subtitle} closeAction={{ kind: "callback", onAction: closeDetail }} {...(detailHasBack ? { backAction: { kind: "callback" as const, onAction: returnToCollection } } : {})} restoreFocusRef={restoreFocusRef} closeOnBackdrop className={`${styles.detailOverlay} ${rhythmDetailMode ? styles.rhythmDetailSheet : ""} ${mobile ? styles.mobileOverlay : ""}`}>
+    {showTabs || showRhythmMethod ? <div className={`${styles.overlayNavigation} ${target.moduleKey === "CATEGORIES_NEEDS" || target.moduleKey === "RHYTHM" ? styles.m2OverlayNavigation : ""}`}>{showTabs ? <div className={`${styles.sectionTabs} ${target.moduleKey === "CATEGORIES_NEEDS" ? styles.m2Tabs : ""}`} role="tablist" aria-label={`Sections de ${target.title}`}>{tabs.map((item) => <button id={`${moduleSlugs[target.moduleKey]}-tab-${item.key.toLowerCase()}`} key={item.key} type="button" role="tab" aria-selected={section === item.key} aria-controls={`${moduleSlugs[target.moduleKey]}-panel-${item.key.toLowerCase()}`} onClick={() => { setSection(item.key); emitGlobalV2UxEvent("global_section_expanded", { moduleKey: target.moduleKey, sectionKey: item.key }); window.history.replaceState(window.history.state, "", `#${moduleSlugs[target.moduleKey]}-${item.key.toLowerCase()}`); }}>{item.label}</button>)}</div> : null}{target.moduleKey === "ECONOMIC" || target.moduleKey === "RHYTHM" ? <button type="button" className={styles.methodLink} onClick={() => onReplace(methodOverlayTarget(target.moduleKey))}><Info aria-hidden size={15} /> {target.moduleKey === "RHYTHM" ? "Fiabilité & méthode" : "Méthode"}</button> : null}</div> : null}
     {target.moduleKey === "CATEGORIES_NEEDS" ? <p className={styles.m2Period}>{analysisPeriod(certifiedThrough).label.replace("—", "→")}</p> : null}
-    <div {...(tabs.length > 1 ? { id: activePanelId, role: "tabpanel", "aria-labelledby": activeTabId } : {})}>{result.state.status === "IDLE" || result.state.status === "LOADING" ? <LoadingCard label={target.title} /> : result.state.status === "ERROR" && model === undefined ? localError : model === undefined ? null : <GlobalExpandedContent model={model} entityRef={target.entityRef} runtime={runtime} certifiedThrough={certifiedThrough} onDetail={(row, detailTitle) => {
+    <div data-rhythm-detail-origin={target.rhythmDetailContext?.origin} {...(showTabs ? { id: activePanelId, role: "tabpanel", "aria-labelledby": activeTabId } : {})}>{result.state.status === "IDLE" || result.state.status === "LOADING" ? <LoadingCard label={target.title} /> : result.state.status === "ERROR" && model === undefined ? localError : model === undefined ? null : <GlobalExpandedContent model={model} entityRef={target.entityRef} runtime={runtime} certifiedThrough={certifiedThrough} onDetail={(row, detailTitle) => {
       if (row.entityRef === undefined) return;
-      const nextTarget = entityOverlayTarget(target.moduleKey, row.entityRef, detailTitle ?? humanLabel(row.labelKey), section);
+      const rhythmOrigin = target.moduleKey !== "RHYTHM" ? undefined : section === "PATTERNS" ? "HABITS_COLLECTION" : section === "BREAKDOWN" ? "MOMENTS_COLLECTION" : undefined;
+      const nextTarget = entityOverlayTarget(target.moduleKey, row.entityRef, detailTitle ?? humanLabel(row.labelKey), section, rhythmOrigin);
       if (nextTarget === undefined) return;
       const content = document.querySelector<HTMLElement>('[data-overlay-shell][data-topmost="true"] [data-overlay-content]');
       returnScrollTop.current = content?.scrollTop;
@@ -849,8 +1012,83 @@ function M2CompactCard({ model, runtime, certifiedThrough, onDetail, onEntityDet
   </div>;
 }
 
-function LifeCompactCard({ runtime, onDetail }: { readonly runtime: GlobalV2VisitRuntime; readonly onDetail: () => void }) {
-  return <div className={styles.lifeCompact}><ExpandedPreview runtime={runtime} moduleKey="RHYTHM" sectionKey="OVERVIEW">{(overview) => <LifeInsightList model={overview} />}</ExpandedPreview><button type="button" className={styles.detailButton} onClick={onDetail} aria-label="Explorer Notre vie derrière nos dépenses">Explorer l’analyse <span aria-hidden>→</span></button></div>;
+function LifeNarrativeHero({ insight, row, onEntityDetail }: { readonly insight: GlobalCompactInsight; readonly row?: GlobalDetailRow; readonly onEntityDetail: (entityRef: string, title: string) => void }) {
+  const comparison = rhythmHeroComparison({ primary: insight, primaryRow: row });
+  const amount = comparison === undefined ? row?.typedMeasure?.kind === "MONEY" ? m2TypedNumber(row) : undefined : m2TypedNumber({ typedMeasure: comparison.subjectCost });
+  const comparisonCopy = comparison === undefined ? undefined : lifeComparisonDelta(comparison);
+  const momentRef = insight.entityRefs.find((entityRef) => entityRef.startsWith("moment:"));
+  const m6Comparison = insight.kind === "M6_MATERIAL_COMPARISON";
+  const m6Context = insight.kind === "M6_CONTEXTUAL_CAUSAL_MOMENT";
+  return <section className={`${styles.lifeNarrativeSection} ${styles.lifeNarrativeHero}`} aria-labelledby="life-narrative-hero-title">
+    <span className={styles.lifeNarrativeEyebrow}>Ce qui se distingue</span>
+    <article className={styles.lifeHero}>
+      <h3 id="life-narrative-hero-title">{lifeUiCopy(insight.titleKey)}</h3>
+      {amount === undefined ? null : <strong>{formatMoney(amount)}</strong>}
+      <div className={styles.lifeHeroEvidence}>{m6Comparison && comparisonCopy !== undefined ? <p>{comparisonCopy}</p> : m6Context ? <p>Dépenses reliées à ce moment.</p> : <p>{lifeUiCopy(insight.statementKey)}</p>}</div>
+      {comparison === undefined ? null : <ComparisonRange observed={comparison.subjectCost} median={comparison.peerMedian} lower={comparison.q1} upper={comparison.q3} supportCount={comparison.peerCount} subjectLabel={lifeUiCopy(insight.titleKey)} />}
+      {momentRef === undefined ? null : <button type="button" className={styles.lifeNarrativeAction} data-global-entity-ref={momentRef} aria-label={`Comprendre ${lifeUiCopy(insight.titleKey)}`} onClick={() => onEntityDetail(momentRef, lifeUiCopy(insight.titleKey))}>Comprendre ce moment <span aria-hidden>→</span></button>}
+    </article>
+  </section>;
+}
+
+function LifeNarrativeHabits({ rows, onEntityDetail, onCollection }: { readonly rows: readonly GlobalDetailRow[]; readonly onEntityDetail: (entityRef: string, title: string) => void; readonly onCollection: () => void }) {
+  return <section className={styles.lifeNarrativeSection} aria-labelledby="life-narrative-habits-title">
+    <h3 id="life-narrative-habits-title">Dans notre quotidien</h3>
+    <div className={styles.lifeNarrativeList}>{rows.map((row) => {
+      const profile = row.activityCostProfile!;
+      const amount = m2TypedNumber(row);
+      const known = m2TypedNumber({ typedMeasure: profile.knownCausalCostCount });
+      const total = m2TypedNumber({ typedMeasure: profile.totalOccurrenceCount });
+      const coverage = m2TypedNumber({ typedMeasure: profile.coverageRatio });
+      const content = <><span><strong>{lifeUiCopy(row.labelKey)}</strong>{amount === undefined ? null : <b>{formatMoney(amount)}</b>}<small>En médiane quand un coût est connu</small>{known === undefined || total === undefined || coverage === undefined ? null : <small>Coût connu {integerFormatter.format(known)} fois sur {integerFormatter.format(total)} · {formatLifeRatio(coverage)}</small>}</span><ChevronRight aria-hidden size={18} /></>;
+      return row.entityRef === undefined ? <article key={row.rowId}>{content}</article> : <button key={row.rowId} type="button" data-global-entity-ref={row.entityRef} onClick={() => onEntityDetail(row.entityRef!, lifeUiCopy(row.labelKey))}>{content}</button>;
+    })}</div>
+    <button type="button" className={styles.lifeNarrativeAction} onClick={onCollection}>Voir toutes nos habitudes <span aria-hidden>→</span></button>
+  </section>;
+}
+
+function LifeNarrativeMoments({ rows, onEntityDetail, onCollection }: { readonly rows: readonly GlobalDetailRow[]; readonly onEntityDetail: (entityRef: string, title: string) => void; readonly onCollection: () => void }) {
+  return <section className={styles.lifeNarrativeSection} aria-labelledby="life-narrative-moments-title">
+    <h3 id="life-narrative-moments-title">Les moments qui se voient dans nos dépenses</h3>
+    <div className={styles.lifeNarrativeList}>{rows.map((row) => {
+      const amount = m2TypedNumber(row);
+      const content = <><span><strong>{lifeUiCopy(row.labelKey)}</strong>{amount === undefined ? null : <b>{formatMoney(amount)}</b>}{lifeMomentIdentity(row.displayValue, false) === undefined ? null : <small>{lifeMomentIdentity(row.displayValue, false)}</small>}</span><ChevronRight aria-hidden size={18} /></>;
+      return row.entityRef === undefined ? <article key={row.rowId}>{content}</article> : <button key={row.rowId} type="button" data-global-entity-ref={row.entityRef} onClick={() => onEntityDetail(row.entityRef!, lifeUiCopy(row.labelKey))}>{content}</button>;
+    })}</div>
+    <button type="button" className={styles.lifeNarrativeAction} onClick={onCollection}>Voir tous nos moments <span aria-hidden>→</span></button>
+  </section>;
+}
+
+function LifeNarrativeInsights({ title, insights }: { readonly title: string; readonly insights: readonly GlobalCompactInsight[] }) {
+  return <section className={styles.lifeNarrativeSection} aria-label={title}><h3>{title}</h3><div className={styles.lifeNarrativeInsights}>{insights.map((insight) => <article key={insight.insightId}><strong>{lifeUiCopy(insight.titleKey)}</strong><p>{lifeUiCopy(insight.statementKey)}</p></article>)}</div></section>;
+}
+
+function LifeCompactCard({ runtime, onSectionDetail, onEntityDetail, onMethod }: { readonly runtime: GlobalV2VisitRuntime; readonly onSectionDetail: (section: GlobalExpandedSectionKey) => void; readonly onEntityDetail: (entityRef: string, title: string) => void; readonly onMethod: () => void }) {
+  const overviewRequest = useMemo(() => ({ resource: "analysis_global_rhythm_expanded" as const, params: { sectionKey: "OVERVIEW" } }), []);
+  const patternsRequest = useMemo(() => ({ resource: "analysis_global_rhythm_expanded" as const, params: { sectionKey: "PATTERNS" } }), []);
+  const breakdownRequest = useMemo(() => ({ resource: "analysis_global_rhythm_expanded" as const, params: { sectionKey: "BREAKDOWN" } }), []);
+  const evolutionRequest = useMemo(() => ({ resource: "analysis_global_rhythm_expanded" as const, params: { sectionKey: "EVOLUTION" } }), []);
+  const overview = useGlobalV2Resource<GlobalExpandedReadModel>(runtime, overviewRequest, true, "BACKGROUND");
+  const patterns = useGlobalV2Resource<GlobalExpandedReadModel>(runtime, patternsRequest, true, "BACKGROUND");
+  const breakdown = useGlobalV2Resource<GlobalExpandedReadModel>(runtime, breakdownRequest, true, "BACKGROUND");
+  const evolution = useGlobalV2Resource<GlobalExpandedReadModel>(runtime, evolutionRequest, true, "BACKGROUND");
+  const overviewModel = transportData(overview.state);
+  const patternsModel = transportData(patterns.state);
+  const breakdownModel = transportData(breakdown.state);
+  const evolutionModel = transportData(evolution.state);
+  const narrative = useMemo(() => composeRhythmNarrative({ overview: overviewModel, patterns: patternsModel, breakdown: breakdownModel, evolution: evolutionModel }), [breakdownModel, evolutionModel, overviewModel, patternsModel]);
+  const noContentLoaded = overviewModel === undefined && patternsModel === undefined && breakdownModel === undefined && evolutionModel === undefined;
+  const loading = [overview.state, patterns.state, breakdown.state, evolution.state].some((state) => state.status === "IDLE" || state.status === "LOADING");
+  if (noContentLoaded && loading) return <LoadingCard label="Notre vie derrière nos dépenses" />;
+  if (noContentLoaded) return <LocalError retry={() => { overview.retry(); patterns.retry(); breakdown.retry(); evolution.retry(); }} />;
+  return <div className={styles.lifeCompact} data-rhythm-primary-experience="dynamic-narrative">
+    {narrative.primary === undefined ? null : <LifeNarrativeHero insight={narrative.primary} row={narrative.primaryRow} onEntityDetail={onEntityDetail} />}
+    {narrative.habits.length === 0 ? null : <LifeNarrativeHabits rows={narrative.habits} onEntityDetail={onEntityDetail} onCollection={() => onSectionDetail("PATTERNS")} />}
+    {narrative.moments.length === 0 ? null : <LifeNarrativeMoments rows={narrative.moments} onEntityDetail={onEntityDetail} onCollection={() => onSectionDetail("BREAKDOWN")} />}
+    {narrative.changes.length === 0 ? null : <LifeNarrativeInsights title="Ce qui a changé" insights={narrative.changes} />}
+    {narrative.relationships.length === 0 ? null : <LifeNarrativeInsights title="Ce qui semble lié à notre contexte" insights={narrative.relationships} />}
+    <footer className={styles.lifeNarrativeMethod}><button type="button" className={styles.methodLink} onClick={onMethod}><Info aria-hidden size={15} /> Fiabilité & méthode</button></footer>
+  </div>;
 }
 
 function PersonaColumns({ rows, limit = 5 }: { readonly rows: readonly GlobalDetailRow[]; readonly limit?: number }) {
@@ -865,7 +1103,7 @@ function PersonaColumns({ rows, limit = 5 }: { readonly rows: readonly GlobalDet
   return <div className={styles.personColumns}>{[...groups.entries()].map(([person, entries]) => <section key={person}><h3>{person}</h3><HumanRows rows={entries} onDetail={() => undefined} /></section>)}</div>;
 }
 
-function ModuleContent({ moduleKey, model, runtime, certifiedThrough, onDetail, onEntityDetail, onMethod }: { readonly moduleKey: GlobalPrimaryModuleKey; readonly model: GlobalModuleCompactReadModel; readonly runtime: GlobalV2VisitRuntime; readonly certifiedThrough: string; readonly onDetail: () => void; readonly onEntityDetail: (entityRef: string, title: string) => void; readonly onMethod: () => void }) {
+function ModuleContent({ moduleKey, model, runtime, certifiedThrough, onDetail, onSectionDetail, onEntityDetail, onMethod }: { readonly moduleKey: GlobalPrimaryModuleKey; readonly model: GlobalModuleCompactReadModel; readonly runtime: GlobalV2VisitRuntime; readonly certifiedThrough: string; readonly onDetail: () => void; readonly onSectionDetail: (section: GlobalExpandedSectionKey) => void; readonly onEntityDetail: (entityRef: string, title: string) => void; readonly onMethod: () => void }) {
   if (moduleKey === "TRANSFORMATIONS" || moduleKey === "RELATIONSHIPS" || moduleKey === "MOMENTS") return null;
   if (moduleKey === "CONSUMPTION") return <div className={styles.neutralState}><strong>Analyse pas encore disponible</strong><p>L’identité des achats ne couvre pas encore suffisamment la période pour proposer une lecture fiable.</p></div>;
 
@@ -874,7 +1112,7 @@ function ModuleContent({ moduleKey, model, runtime, certifiedThrough, onDetail, 
 
   if (moduleKey === "CATEGORIES_NEEDS") return <M2CompactCard model={model} runtime={runtime} certifiedThrough={certifiedThrough} onDetail={onDetail} onEntityDetail={onEntityDetail} />;
 
-  if (moduleKey === "RHYTHM") return <LifeCompactCard runtime={runtime} onDetail={onDetail} />;
+  if (moduleKey === "RHYTHM") return <LifeCompactCard runtime={runtime} onSectionDetail={onSectionDetail} onEntityDetail={onEntityDetail} onMethod={onMethod} />;
 
   if (moduleKey === "GEO_MOBILITY") return <div className={styles.compact}>
     {insight === undefined ? null : <InsightCard insight={insight} />}
@@ -912,8 +1150,9 @@ function GlobalModulePanel({ moduleKey, runtime, certifiedThrough, eager, direct
     emitGlobalV2UxEvent("global_module_viewed", { moduleKey });
   }, [compactModel, moduleKey]);
   const openDetail = () => { onOverlay(moduleOverlayTarget(moduleKey)); emitGlobalV2UxEvent("global_module_expanded", { moduleKey, state: "overlay" }); };
+  const openSectionDetail = (section: GlobalExpandedSectionKey) => { onOverlay(moduleOverlayTarget(moduleKey, section)); emitGlobalV2UxEvent("global_module_expanded", { moduleKey, state: "overlay", sectionKey: section }); };
   const openEntityDetail = (entityRef: string, title: string) => {
-    const target = entityOverlayTarget(moduleKey, entityRef, title);
+    const target = entityOverlayTarget(moduleKey, entityRef, title, undefined, moduleKey === "RHYTHM" ? "NARRATIVE" : undefined);
     if (target === undefined) return;
     onOverlay(target);
     emitGlobalV2UxEvent("global_entity_opened", { moduleKey });
@@ -921,7 +1160,7 @@ function GlobalModulePanel({ moduleKey, runtime, certifiedThrough, eager, direct
   const openMethod = () => { onOverlay(methodOverlayTarget(moduleKey)); emitGlobalV2UxEvent("global_methodology_opened", { moduleKey }); };
   return <section ref={nearViewport.ref} id={moduleSlugs[moduleKey]} className={styles.module} data-module={moduleKey} aria-labelledby={`${moduleSlugs[moduleKey]}-title`}>
     <header className={styles.moduleHeader}><div>{presentation.eyebrow.length === 0 ? null : <span className="eyebrow">{presentation.eyebrow}</span>}<h2 id={`${moduleSlugs[moduleKey]}-title`}>{presentation.title}</h2>{presentation.description.length === 0 ? null : <p>{presentation.description}</p>}</div></header>
-    {compact.state.status === "IDLE" || compact.state.status === "LOADING" ? <LoadingCard label={presentation.title} /> : compact.state.status === "ERROR" && compactModel === undefined ? <LocalError retry={compact.retry} /> : compactModel === undefined ? null : <ModuleContent moduleKey={moduleKey} model={compactModel} runtime={runtime} certifiedThrough={certifiedThrough} onDetail={openDetail} onEntityDetail={openEntityDetail} onMethod={openMethod} />}
+    {compact.state.status === "IDLE" || compact.state.status === "LOADING" ? <LoadingCard label={presentation.title} /> : compact.state.status === "ERROR" && compactModel === undefined ? <LocalError retry={compact.retry} /> : compactModel === undefined ? null : <ModuleContent moduleKey={moduleKey} model={compactModel} runtime={runtime} certifiedThrough={certifiedThrough} onDetail={openDetail} onSectionDetail={openSectionDetail} onEntityDetail={openEntityDetail} onMethod={openMethod} />}
   </section>;
 }
 

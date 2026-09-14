@@ -19,6 +19,10 @@ registerHooks({ resolve(specifier, context, next) {
 const query = await import("../src/query-api/global-v2/index.ts");
 const fixtures = await import("../src/features/global-v2/fixture-data.ts");
 const catalog = await import("../src/features/global-v2/catalog.ts");
+const comparisonRange = await import("../src/features/global-v2/comparison-range-model.ts");
+const rhythmCollections = await import("../src/features/global-v2/rhythm-collections.ts");
+const rhythmDetailRouting = await import("../src/features/global-v2/rhythm-detail-routing.ts");
+const rhythmNarrative = await import("../src/features/global-v2/rhythm-narrative.ts");
 const visit = await import("../src/features/global-v2/visit-runtime.ts");
 
 let checks = 0;
@@ -123,17 +127,28 @@ const fixturePageSource = fs.readFileSync(path.join(root, "src/features/global-v
 const overlaySource = fs.readFileSync(path.join(root, "src/ui/overlays/overlay-frame.tsx"), "utf8");
 const monetaryEvolutionSource = fs.readFileSync(path.join(root, "src/ui/charts/monetary-evolution/monetary-evolution.tsx"), "utf8");
 const chartLegendSource = fs.readFileSync(path.join(root, "src/ui/charts/shared/chart-legend.tsx"), "utf8");
-const m2Source = pageSource.slice(pageSource.indexOf("function M2MoneyRows"), pageSource.indexOf("function PersonaColumns"));
+const comparisonRangeModelSource = fs.readFileSync(path.join(root, "src/features/global-v2/comparison-range-model.ts"), "utf8");
+const comparisonRangeSource = fs.readFileSync(path.join(root, "src/features/global-v2/comparison-range.tsx"), "utf8");
+const rhythmCollectionsSource = fs.readFileSync(path.join(root, "src/features/global-v2/rhythm-collections.ts"), "utf8");
+const rhythmDetailRoutingSource = fs.readFileSync(path.join(root, "src/features/global-v2/rhythm-detail-routing.ts"), "utf8");
+const rhythmNarrativeSource = fs.readFileSync(path.join(root, "src/features/global-v2/rhythm-narrative.ts"), "utf8");
+const m2Source = pageSource.slice(pageSource.indexOf("function M2MoneyRows"), pageSource.indexOf("function LifeInsightList"));
 const m2CompactSource = pageSource.slice(pageSource.indexOf("function M2CompactCard"), pageSource.indexOf("function PersonaColumns"));
 const m2InsightSource = pageSource.slice(pageSource.indexOf("function M2CompactRecentInsight"), pageSource.indexOf("function M2CompactCard"));
 const m2ComparisonsSource = pageSource.slice(pageSource.indexOf("function M2Comparisons"), pageSource.indexOf("function M2NeedsContent"));
-const m2ExpandedSource = pageSource.slice(pageSource.indexOf("function M2ExpandedContent"), pageSource.indexOf("function GlobalExpandedContent"));
+const m2ExpandedSource = pageSource.slice(pageSource.indexOf("function M2ExpandedContent"), pageSource.indexOf("function LifeInsightList"));
 const m2DetailSource = pageSource.slice(pageSource.indexOf("function M2EntityDetail"), pageSource.indexOf("function M2ExpandedContent"));
 const lifeSource = pageSource.slice(pageSource.indexOf("function LifeInsightList"), pageSource.indexOf("function GlobalExpandedContent"));
-const lifeActivityDetailSource = pageSource.slice(pageSource.indexOf("function LifeActivityDetail"), pageSource.indexOf("function LifeMomentDetail"));
+const lifeMethodSource = pageSource.slice(pageSource.indexOf("function LifeMethod"), pageSource.indexOf("function LifeActivityProfiles"));
+const lifeFormattingSource = pageSource.slice(pageSource.indexOf("const lifeRatioFormatter"), pageSource.indexOf("function formatTrend"));
+const lifeMomentsSource = pageSource.slice(pageSource.indexOf("function LifeMoments"), pageSource.indexOf("function metricBySuffix"));
+const lifeActivityDetailSource = pageSource.slice(pageSource.indexOf("function lifePersonFrequency"), pageSource.indexOf("function LifeMomentDetail"));
 const lifeMomentDetailSource = pageSource.slice(pageSource.indexOf("function LifeMomentDetail"), pageSource.indexOf("function LifeExpandedContent"));
+const lifeExpandedContentSource = pageSource.slice(pageSource.indexOf("function LifeExpandedContent"), pageSource.indexOf("function GlobalExpandedContent"));
+const globalDetailOverlaySource = pageSource.slice(pageSource.indexOf("function GlobalDetailOverlay"), pageSource.indexOf("function ExpandedPreview"));
 const storyOrderSource = pageSource.slice(pageSource.indexOf("const storyOrder"), pageSource.indexOf("const internalNavigation"));
 const navigationSource = pageSource.slice(pageSource.indexOf("const internalNavigation"), pageSource.indexOf("const moduleTabs"));
+const moduleTabsSource = pageSource.slice(pageSource.indexOf("const moduleTabs"), pageSource.indexOf("function moduleForSlug"));
 const summarySource = pageSource.slice(pageSource.indexOf("function HumanSummary"), pageSource.indexOf("export function GlobalV2Page"));
 check(() => assert.match(pageSource, /IntersectionObserver/u));
 check(() => assert.match(pageSource, /Alternative textuelle/u));
@@ -185,14 +200,14 @@ check(() => assert.doesNotMatch(m2ExpandedSource, /sectionKey="OVERVIEW"/u));
 check(() => assert.match(monetaryEvolutionSource, /ChartLegend[\s\S]*item\.label/u));
 check(() => assert.match(m2Source, /Ce qui compose ce poste/u));
 check(() => assert.match(m2DetailSource, /<dt>Référence<\/dt>/u));
-check(() => assert.match(m2Source, /analysis_global_category_need_detail/u));
+check(() => assert.match(pageSource, /analysis_global_category_need_detail/u));
 check(() => assert.match(m2Source, /detail:current-amount[\s\S]*detail:typical-amount[\s\S]*detail:delta-amount/u));
 check(() => assert.match(m2Source, /Chaque montant compare le dernier mois analysé au niveau de référence/u));
 check(() => assert.match(m2Source, /Nous préférons laisser cette part non attribuée plutôt que de la deviner/u));
 check(() => assert.match(m2CompactSource, /period\.label\.replace\("—", "→"\)/u));
 check(() => assert.doesNotMatch(m2Source, /Ce mois-ci|récemment/u));
 check(() => assert.doesNotMatch(pageSource, /Montants mensuels publiés/u));
-check(() => assert.match(pageSource, /backAction:[\s\S]*moduleOverlayTarget\(target\.moduleKey, returnSection\)/u));
+check(() => assert.match(pageSource, /returnToCollection = \(\) => onReplace\(moduleOverlayTarget\(target\.moduleKey, returnSection\)\)[\s\S]*backAction:[\s\S]*returnToCollection/u));
 check(() => assert.match(m2Source, /model\.destinations/u));
 check(() => assert.match(m2Source, /destination\.kind === "OPERATIONS"[\s\S]*destination\.resource === "operations_browse"/u));
 check(() => assert.doesNotMatch(m2DetailSource, /\["detail:active-months", "Présent"\]/u));
@@ -213,7 +228,7 @@ check(() => assert.match(m2InsightSource, /<button[\s\S]*data-m2-entity-ref=\{en
 check(() => assert.match(m2ComparisonsSource, /rows\.slice\(0, 6\)/u));
 check(() => assert.match(m2ComparisonsSource, /Réduire la liste[\s\S]*Voir les \$\{rows\.length - 6\} autres/u));
 check(() => assert.match(m2ComparisonsSource, /const label = humanLabel\(row\.labelKey\)\.replace\([\s\S]*<button[\s\S]*data-m2-entity-ref=\{row\.entityRef\}[\s\S]*onDetail\(row, label\)/u));
-check(() => assert.match(pageSource, /onDetail=\{\(row, detailTitle\) =>[\s\S]*entityOverlayTarget\(target\.moduleKey, row\.entityRef, detailTitle \?\? humanLabel\(row\.labelKey\), section\)/u));
+check(() => assert.match(pageSource, /onDetail=\{\(row, detailTitle\) =>[\s\S]*entityOverlayTarget\(target\.moduleKey, row\.entityRef, detailTitle \?\? humanLabel\(row\.labelKey\), section, rhythmOrigin\)/u));
 check(() => assert.match(m2Source, /M2MonetarySeries title="Évolution mensuelle des principaux postes"[\s\S]*showSummary=\{false\}/u));
 check(() => assert.match(chartLegendSource, /aria-label="Légende du graphique"[\s\S]*strokeStyle/u));
 check(() => assert.match(monetaryEvolutionSource, /chartSeriesStrokeStyles[\s\S]*chartSeriesDashPatterns[\s\S]*strokeDasharray=\{chartSeriesDashPatterns/u));
@@ -261,35 +276,50 @@ check(() => assert.match(cssSource, /@media \(max-width: 1024px\)/u));
 
 // RUN C: one human life-spending chapter composed from the typed RHYTHM Query payload.
 check(() => assert.match(catalogSource, /title: "Notre vie derrière nos dépenses"/u));
-check(() => assert.match(catalogSource, /Ce que certaines habitudes et certains moments ont réellement changé ou contextualisé dans nos dépenses\./u));
+check(() => assert.match(catalogSource, /Ce que nos dépenses racontent de nos habitudes et des moments qui comptent\./u));
 check(() => assert.doesNotMatch(storyOrderSource, /TRANSFORMATIONS|RELATIONSHIPS|MOMENTS/u));
 check(() => assert.equal(contract.modules.find(({ moduleKey }) => moduleKey === "TRANSFORMATIONS")?.visibility, "HIDDEN"));
 check(() => assert.equal(contract.modules.find(({ moduleKey }) => moduleKey === "RELATIONSHIPS")?.visibility, "HIDDEN"));
 check(() => assert.equal(contract.modules.find(({ moduleKey }) => moduleKey === "MOMENTS")?.visibility, "HIDDEN"));
 check(() => assert.equal((summarySource.match(/moduleKey: "RHYTHM"/gu) ?? []).length, 1));
 check(() => assert.doesNotMatch(summarySource, /moduleKey: "MOMENTS"/u));
-check(() => assert.match(pageSource, /function LifeCompactCard[\s\S]*sectionKey="OVERVIEW"[\s\S]*Explorer l’analyse/u));
+const lifePrimarySource = pageSource.slice(pageSource.indexOf("function LifeNarrativeHero"), pageSource.indexOf("function PersonaColumns"));
+check(() => assert.match(lifePrimarySource, /data-rhythm-primary-experience="dynamic-narrative"/u));
+check(() => assert.doesNotMatch(lifePrimarySource, /Explorer l’analyse|LifeInsightList|sectionTabs|moduleTabs/u));
+check(() => assert.match(lifePrimarySource, /Ce qui se distingue[\s\S]*Dans notre quotidien[\s\S]*Les moments qui se voient dans nos dépenses/u));
 check(() => assert.match(lifeSource, /primaryInsight[\s\S]*secondaryInsights[\s\S]*slice\(0, 3\)/u));
 check(() => assert.match(pageSource, /patternsAvailable[\s\S]*momentsAvailable[\s\S]*evolutionAvailable/u));
 check(() => assert.match(pageSource, /Habitudes & dépenses[\s\S]*Moments[\s\S]*Changements/u));
 check(() => assert.doesNotMatch(pageSource.slice(pageSource.indexOf("RHYTHM: ["), pageSource.indexOf("RELATIONSHIPS: [")), /Relations/u));
-check(() => assert.match(lifeSource, /Médiane des occurrences dont un coût est directement relié/u));
-check(() => assert.match(lifeSource, /occurrences renseignées sur/u));
-check(() => assert.match(lifeSource, /des occurrences disposent d’un coût directement relié/u));
-check(() => assert.match(lifeSource, /Nos habitudes sont bien observées, mais aucune conséquence financière n’est encore assez étayée pour être présentée ici\./u));
+check(() => assert.match(lifeSource, /en médiane quand un coût est connu/u));
+check(() => assert.match(lifeSource, /buildHabitCoverageModel[\s\S]*Coût connu pour [\s\S]*coverage\.percentage/u));
+check(() => assert.match(lifeSource, /Chaque habitude est à lire séparément : ces montants ne forment pas un total\./u));
+check(() => assert.match(lifeSource, /Aucune habitude n’est disponible pour le moment\./u));
 check(() => assert.doesNotMatch(lifeSource, /coût habituel/u));
 check(() => assert.match(lifeActivityDetailSource, /Aucun montant n’est attribué à une personne\./u));
-check(() => assert.match(lifeSource, /Moments auxquels des dépenses ont été directement reliées/u));
-check(() => assert.match(lifeSource, /Moments qui se distinguent des expériences retenues/u));
-check(() => assert.match(lifeSource, /de la même famille de comparaison/u));
+check(() => assert.match(lifeActivityDetailSource, /fois[\s\S]*environ tous les/u));
+check(() => assert.match(lifeSource, /Notre timeline de vie/u));
+check(() => assert.match(lifeSource, /Des moments qui sortent de l’ordinaire/u));
+check(() => assert.match(lifeSource, /delta < 0 \? "en dessous" : "au-dessus"/u));
+check(() => assert.match(lifeSource, /médiane de [\s\S]* moments comparables/u));
+check(() => assert.doesNotMatch(lifeSource, /médiane des peers|famille de comparaison|occurrences renseignées|historique retenu/iu));
 check(() => assert.doesNotMatch(lifeSource, /coûte habituellement|intervalle de confiance|fourchette future|fourchette habituelle/u));
-check(() => assert.match(lifeMomentDetailSource, /Montant directement relié[\s\S]*Dépensé au total pendant la période[\s\S]*Toutes ces dépenses ne sont pas attribuées à ce Moment\./u));
-check(() => assert.match(lifeMomentDetailSource, /Pas assez d’expériences autorisées pour situer ce montant\./u));
-check(() => assert.doesNotMatch(lifeMomentDetailSource, /\?\? 0|0 €/u));
+check(() => assert.match(lifeMomentDetailSource, /Dépenses reliées à ce moment[\s\S]*Toutes nos dépenses[\s\S]*Ce total comprend toutes les dépenses enregistrées pendant ces dates, qu’elles soient liées ou non à ce moment\./u));
+check(() => assert.match(lifeMomentDetailSource, /contre [\s\S]* en médiane parmi [\s\S]* moments comparables/u));
+check(() => assert.match(lifeMomentDetailSource, /Pas assez de moments comparables pour situer celui-ci\./u));
+check(() => assert.doesNotMatch(lifeMomentDetailSource, /\bdont\b|ratio|pourcentage|stacked|donut|part-of-whole/iu));
+check(() => assert.doesNotMatch(lifeSource, /\?\? 0|0 €/u));
+check(() => assert.match(lifeSource, /hasHumanLifeComponentLabel[\s\S]*composition = [^;]*hasHumanLifeComponentLabel/u));
+check(() => assert.doesNotMatch(lifeMomentDetailSource, />Composante causale</u));
+check(() => assert.match(lifeFormattingSource, /lifeRatioFormatter[\s\S]*maximumFractionDigits: 0/u));
+check(() => assert.match(lifeFormattingSource, /shortMonths[\s\S]*longMonths[\s\S]*du [\s\S]* au [\s\S]* – /u));
+check(() => assert.match(lifeMomentsSource, /lifeMomentIdentity\(row\.displayValue, false\)/u));
+check(() => assert.match(lifeMomentDetailSource, /lifeMomentType\(identity\?\.displayValue\)[\s\S]*lifeMomentDates\(identity\?\.displayValue, true\)/u));
+check(() => assert.doesNotMatch(lifeMomentsSource, /<small>\{row\.displayValue\}<\/small>/u));
 check(() => assert.doesNotMatch(lifeSource, /numericDisplay|parseFloat|Number\([^)]*displayValue|monthlyEquivalent/u));
 check(() => assert.doesNotMatch(lifeSource, /repère pour le prochain budget|prévision|budget estimé|Forecast|48 rythmes|37 Moments|14 comparaisons/u));
 check(() => assert.match(pageSource, /analysis_global_moment_experience_detail[\s\S]*data-global-entity-ref[\s\S]*CSS\.escape\(entityRef\)/u));
-check(() => assert.match(pageSource, /target\.moduleKey === "RHYTHM"[\s\S]*moduleOverlayTarget\(target\.moduleKey, returnSection\)/u));
+check(() => assert.match(pageSource, /rhythmDetailReturnSection\(target\.rhythmDetailContext\)[\s\S]*moduleOverlayTarget\(target\.moduleKey, returnSection\)/u));
 check(() => assert.match(cssSource, /\.lifeInsights[\s\S]*@media \(max-width: 767px\)[\s\S]*\.lifeInsights[^}]*grid-template-columns:\s*1fr/u));
 
 const lifeOverview = await transport({ resource: "analysis_global_rhythm_expanded", params: { sectionKey: "OVERVIEW" } });
@@ -302,10 +332,247 @@ check(() => assert.equal(lifeBreakdown.data.rows.every((row) => row.labelKey.len
 check(() => assert.equal(lifeComparisons.data.rows[0]?.momentComparison?.comparisonTier, "SAME_FAMILY"));
 const comparedMoment = await transport({ resource: "analysis_global_moment_experience_detail", params: { entityRef: "moment:summer" } });
 const unpairedMoment = await transport({ resource: "analysis_global_moment_experience_detail", params: { entityRef: "moment:concert" } });
+const householdActivity = await transport({ resource: "analysis_global_routine_detail", params: { entityRef: "household-activity:sport" } });
+const adrienActivity = await transport({ resource: "analysis_global_routine_detail", params: { entityRef: "person-activity:adrien:sport" } });
+const manonActivity = await transport({ resource: "analysis_global_routine_detail", params: { entityRef: "person-activity:manon:sport" } });
 check(() => assert.equal(comparedMoment.data.rows[0]?.labelKey, "Nos vacances d’été"));
 check(() => assert.ok(comparedMoment.data.metrics.some(({ metricId }) => metricId.endsWith(":causal-cost")) && comparedMoment.data.metrics.some(({ metricId }) => metricId.endsWith(":spent-during"))));
+const comparedMomentCausal = comparedMoment.data.metrics.find(({ metricId }) => metricId.endsWith(":causal-cost"))?.typedMeasure?.value;
+const comparedMomentDuring = comparedMoment.data.metrics.find(({ metricId }) => metricId.endsWith(":spent-during"))?.typedMeasure?.value;
+check(() => assert.equal(Number(comparedMomentCausal) > Number(comparedMomentDuring), true));
 check(() => assert.equal(comparedMoment.data.rows[0]?.momentComparison?.comparisonTier, "SAME_FAMILY"));
 check(() => assert.equal(unpairedMoment.data.rows[0]?.momentComparison, undefined));
+for (const result of [householdActivity, adrienActivity, manonActivity]) check(() => assert.equal(query.globalExpandedReadModelSchema.safeParse(result.data).success, true));
+check(() => assert.equal(householdActivity.data.metrics.find(({ metricId }) => metricId.endsWith(":median"))?.typedMeasure?.value, "18"));
+check(() => assert.deepEqual(adrienActivity.data.metrics.filter(({ metricId }) => metricId.endsWith(":occurrences") || metricId.endsWith(":cadence")).map(({ typedMeasure }) => typedMeasure?.value), ["8", "7"]));
+check(() => assert.deepEqual(manonActivity.data.metrics.filter(({ metricId }) => metricId.endsWith(":occurrences") || metricId.endsWith(":cadence")).map(({ typedMeasure }) => typedMeasure?.value), ["6", "9"]));
+
+async function narrativeFixture(scenario) {
+  const fixtureBundle = fixtures.createGlobalV2FixtureBundle(scenario);
+  const fixtureTransport = fixtures.createGlobalV2FixtureTransport(fixtureBundle, scenario);
+  const [overviewResult, patternsResult, breakdownResult, evolutionResult] = await Promise.all([
+    fixtureTransport({ resource: "analysis_global_rhythm_expanded", params: { sectionKey: "OVERVIEW" } }),
+    fixtureTransport({ resource: "analysis_global_rhythm_expanded", params: { sectionKey: "PATTERNS" } }),
+    fixtureTransport({ resource: "analysis_global_rhythm_expanded", params: { sectionKey: "BREAKDOWN" } }),
+    fixtureTransport({ resource: "analysis_global_rhythm_expanded", params: { sectionKey: "EVOLUTION" } }),
+  ]);
+  for (const result of [overviewResult, patternsResult, breakdownResult, evolutionResult]) check(() => assert.equal(query.globalExpandedReadModelSchema.safeParse(result.data).success, true));
+  return rhythmNarrative.composeRhythmNarrative({ overview: overviewResult.data, patterns: patternsResult.data, breakdown: breakdownResult.data, evolution: evolutionResult.data });
+}
+
+const narrativeCaseA = await narrativeFixture("contract");
+const narrativeCaseB = await narrativeFixture("rhythm-empty-hero");
+const narrativeCaseC = await narrativeFixture("rhythm-m3-positive");
+const narrativeCaseD = await narrativeFixture("rhythm-m5-positive");
+const narrativeCaseEHabits = await narrativeFixture("rhythm-empty-habits");
+const narrativeCaseEMoments = await narrativeFixture("rhythm-empty-moments");
+const narrativeHeroM3 = await narrativeFixture("rhythm-hero-m3");
+const narrativeHeroM5 = await narrativeFixture("rhythm-hero-m5");
+const narrativeHeroM6Contextual = await narrativeFixture("rhythm-hero-m6-contextual");
+check(() => assert.ok(narrativeCaseA.primary !== undefined && narrativeCaseA.habits.length > 0 && narrativeCaseA.moments.length > 0));
+check(() => assert.equal(narrativeCaseA.primary?.kind, "M6_MATERIAL_COMPARISON"));
+check(() => assert.ok(narrativeCaseA.primaryRow?.momentComparison !== undefined));
+check(() => assert.equal(narrativeCaseA.changes.length, 0));
+check(() => assert.equal(narrativeCaseA.relationships.length, 0));
+check(() => assert.ok(narrativeCaseB.primary === undefined && narrativeCaseB.habits.length > 0 && narrativeCaseB.moments.length > 0));
+check(() => assert.equal(narrativeCaseC.changes[0]?.kind, "M3_CERTIFIED_TRANSFORMATION"));
+check(() => assert.equal(narrativeCaseD.relationships[0]?.kind, "M5_MATERIAL_ROBUST_ASSOCIATION"));
+check(() => assert.match(narrativeCaseD.relationships[0]?.statementKey ?? "", /associés/u));
+check(() => assert.doesNotMatch(narrativeCaseD.relationships[0]?.statementKey ?? "", /cause|provoque|explique|entraîne/iu));
+check(() => assert.equal(narrativeCaseEHabits.habits.length, 0));
+check(() => assert.equal(narrativeCaseEMoments.moments.length, 0));
+check(() => assert.equal(narrativeCaseA.primary === undefined ? 0 : 1, 1));
+check(() => assert.match(rhythmNarrativeSource, /const primary = selectedInsights\[0\]/u));
+check(() => assert.doesNotMatch(rhythmNarrativeSource, /\.sort\(|parseFloat|numericDisplay|displayValue|Math\.|reduce\(/u));
+check(() => assert.match(lifePrimarySource, /narrative\.primary === undefined \? null[\s\S]*narrative\.habits\.length === 0 \? null[\s\S]*narrative\.moments\.length === 0 \? null[\s\S]*narrative\.changes\.length === 0 \? null[\s\S]*narrative\.relationships\.length === 0 \? null/u));
+check(() => assert.match(lifePrimarySource, /slice\(0, 3\)|composeRhythmNarrative/u));
+check(() => assert.doesNotMatch(lifePrimarySource, /rythmes Adrien|rythmes Manon|monthlyEquivalent|support moteur/u));
+
+// RUN 3: pure display geometry for real M6 comparisons, never analytical recomputation.
+const moneyMeasure = (value) => ({ kind: "MONEY", value: String(value), unit: "EUR" });
+const countMeasure = (value) => ({ kind: "COUNT", value: String(value), unit: "moment" });
+const rangeCase = (overrides = {}) => comparisonRange.buildComparisonRangeModel({
+  observed: moneyMeasure(82),
+  median: moneyMeasure(33),
+  lower: moneyMeasure(26),
+  upper: moneyMeasure(49),
+  supportCount: countMeasure(7),
+  subjectLabel: "Cette soirée",
+  comparisonLabel: "soirées comparables",
+  ...overrides,
+});
+const observedAboveMedian = rangeCase();
+const observedBelowMedian = rangeCase({ observed: moneyMeasure(22), median: moneyMeasure(33) });
+const observedAtMedian = rangeCase({ observed: moneyMeasure(33), median: moneyMeasure(33) });
+const observedInsideRange = rangeCase({ observed: moneyMeasure(40), median: moneyMeasure(33) });
+const observedAboveUpper = rangeCase({ observed: moneyMeasure(82), upper: moneyMeasure(49) });
+const observedBelowLower = rangeCase({ observed: moneyMeasure(12), lower: moneyMeasure(26) });
+const collapsedRange = rangeCase({ observed: moneyMeasure(33), median: moneyMeasure(33), lower: moneyMeasure(33), upper: moneyMeasure(33) });
+const medianOnly = rangeCase({ lower: undefined, upper: undefined });
+const unknownObserved = rangeCase({ observed: moneyMeasure("UNKNOWN") });
+check(() => assert.equal(observedAboveMedian.observedPosition > observedAboveMedian.medianPosition, true));
+check(() => assert.equal(observedBelowMedian.observedPosition < observedBelowMedian.medianPosition, true));
+check(() => assert.equal(observedAtMedian.observedPosition, observedAtMedian.medianPosition));
+check(() => assert.equal(observedInsideRange.observedPosition > observedInsideRange.lowerPosition && observedInsideRange.observedPosition < observedInsideRange.upperPosition, true));
+check(() => assert.equal(observedAboveUpper.observedPosition > observedAboveUpper.upperPosition, true));
+check(() => assert.equal(observedBelowLower.observedPosition < observedBelowLower.lowerPosition, true));
+check(() => assert.equal(observedAboveMedian.mode, "Q1_Q3"));
+check(() => assert.equal(collapsedRange.lowerPosition, collapsedRange.upperPosition));
+check(() => assert.equal(medianOnly.mode, "MEDIAN_ONLY"));
+check(() => assert.equal(unknownObserved, undefined));
+check(() => assert.doesNotMatch(comparisonRangeModelSource, /\?\?\s*0|\|\|\s*0/u));
+check(() => assert.equal(observedAboveMedian.supportCount, 7));
+check(() => assert.match(observedAboveMedian.accessibleLabel, /Cette soirée[\s\S]*82\s*€[\s\S]*médiane[\s\S]*33\s*€[\s\S]*7 soirées comparables/u));
+check(() => assert.match(comparisonRangeSource, /role="img"[\s\S]*aria-label=\{model\.accessibleLabel\}/u));
+check(() => assert.match(comparisonRangeSource, /if \(model === undefined\) return null/u));
+check(() => assert.match(comparisonRangeSource, /comparisonRangeMedianMarker[\s\S]*comparisonRangeObservedMarker/u));
+check(() => assert.doesNotMatch(comparisonRangeSource, /boxplot|whisker|intervalle de confiance|percentile|score/iu));
+check(() => assert.match(lifePrimarySource, /rhythmHeroComparison[\s\S]*<ComparisonRange/u));
+check(() => assert.match(lifeMomentDetailSource, /<ComparisonRange[\s\S]*lifeComparisonDelta/u));
+check(() => assert.ok(rhythmNarrative.rhythmHeroComparison(narrativeCaseA) !== undefined));
+check(() => assert.equal(narrativeHeroM3.primary?.kind, "M3_CERTIFIED_TRANSFORMATION"));
+check(() => assert.equal(rhythmNarrative.rhythmHeroComparison(narrativeHeroM3), undefined));
+check(() => assert.equal(narrativeHeroM5.primary?.kind, "M5_MATERIAL_ROBUST_ASSOCIATION"));
+check(() => assert.equal(rhythmNarrative.rhythmHeroComparison(narrativeHeroM5), undefined));
+check(() => assert.equal(narrativeHeroM6Contextual.primary?.kind, "M6_CONTEXTUAL_CAUSAL_MOMENT"));
+check(() => assert.equal(rhythmNarrative.rhythmHeroComparison(narrativeHeroM6Contextual), undefined));
+check(() => assert.match(lifeMomentDetailSource, /Pas assez de moments comparables pour situer celui-ci\./u));
+check(() => assert.doesNotMatch(rhythmNarrativeSource, /\.sort\(|parseFloat|numericDisplay|displayValue|Math\.|reduce\(/u));
+check(() => assert.doesNotMatch(comparisonRangeModelSource, /peer selection|recalculate|percentile|confidence|score/iu));
+
+// RUN 4: visible entity -> exact structured detail, with Narrative as a first-class origin.
+const heroMomentRef = narrativeCaseA.primary?.entityRefs.find((entityRef) => entityRef.startsWith("moment:"));
+const heroMomentRoute = heroMomentRef === undefined ? undefined : rhythmDetailRouting.resolveRhythmDetailContext(heroMomentRef, "NARRATIVE");
+const habitRoute = rhythmDetailRouting.resolveRhythmDetailContext(narrativeCaseA.habits[0]?.entityRef ?? "", "NARRATIVE");
+const momentRoute = rhythmDetailRouting.resolveRhythmDetailContext(narrativeCaseA.moments[0]?.entityRef ?? "", "NARRATIVE");
+check(() => assert.deepEqual(heroMomentRoute, { kind: "MOMENT", entityRef: "moment:summer", origin: "NARRATIVE", resource: "analysis_global_moment_experience_detail" }));
+check(() => assert.deepEqual(habitRoute, { kind: "ACTIVITY", entityRef: "household-activity:sport", origin: "NARRATIVE", resource: "analysis_global_routine_detail" }));
+check(() => assert.deepEqual(momentRoute, { kind: "MOMENT", entityRef: "moment:concert", origin: "NARRATIVE", resource: "analysis_global_moment_experience_detail" }));
+const similarlyNamedMoments = [{ label: "Soirée du 25 avril", entityRef: "moment:evening-2026-04-25" }, { label: "Soirée du 25 avril", entityRef: "moment:evening-2025-04-25" }];
+const similarlyNamedHabits = [{ label: "Courses", entityRef: "household-activity:groceries" }, { label: "Courses", entityRef: "household-activity:running" }];
+check(() => assert.deepEqual(similarlyNamedMoments.map(({ entityRef }) => rhythmDetailRouting.resolveRhythmDetailContext(entityRef, "NARRATIVE")?.entityRef), similarlyNamedMoments.map(({ entityRef }) => entityRef)));
+check(() => assert.deepEqual(similarlyNamedHabits.map(({ entityRef }) => rhythmDetailRouting.resolveRhythmDetailContext(entityRef, "NARRATIVE")?.entityRef), similarlyNamedHabits.map(({ entityRef }) => entityRef)));
+check(() => assert.equal(rhythmDetailRouting.rhythmDetailReturnSection(heroMomentRoute), undefined));
+check(() => assert.equal(rhythmDetailRouting.rhythmDetailReturnSection(rhythmDetailRouting.resolveRhythmDetailContext("household-activity:sport", "HABITS_COLLECTION")), "PATTERNS"));
+check(() => assert.equal(rhythmDetailRouting.rhythmDetailReturnSection(rhythmDetailRouting.resolveRhythmDetailContext("moment:concert", "MOMENTS_COLLECTION")), "BREAKDOWN"));
+check(() => assert.equal(rhythmDetailRouting.resolveRhythmDetailContext("", "NARRATIVE"), undefined));
+check(() => assert.equal(rhythmDetailRouting.resolveRhythmDetailContext("moment:", "NARRATIVE"), undefined));
+check(() => assert.equal(rhythmDetailRouting.resolveRhythmDetailContext("unknown:invented", "NARRATIVE"), undefined));
+check(() => assert.doesNotMatch(rhythmDetailRoutingSource, /labelKey|displayValue|title|indexOf|find\(/u));
+check(() => assert.match(lifePrimarySource, /data-global-entity-ref=\{momentRef\}[\s\S]*onEntityDetail\(momentRef, lifeUiCopy\(insight\.titleKey\)\)/u));
+check(() => assert.match(lifePrimarySource, /row\.entityRef === undefined \? <article[\s\S]*data-global-entity-ref=\{row\.entityRef\}[\s\S]*onEntityDetail\(row\.entityRef!/u));
+check(() => assert.match(lifePrimarySource, /aria-label=\{`Comprendre \$\{lifeUiCopy\(insight\.titleKey\)\}`\}/u));
+check(() => assert.match(pageSource, /entityOverlayTarget\(moduleKey, entityRef, title, undefined, moduleKey === "RHYTHM" \? "NARRATIVE" : undefined\)/u));
+check(() => assert.match(globalDetailOverlaySource, /detailHasBack[\s\S]*rhythmReturnSection !== undefined[\s\S]*rhythmDetailContext\?\.origin/u));
+check(() => assert.match(globalDetailOverlaySource, /restoreFocusRef=\{restoreFocusRef\}/u));
+check(() => assert.doesNotMatch(moduleTabsSource, /RHYTHM:\s*\[\{ key: "OVERVIEW"/u));
+check(() => assert.match(lifeExpandedContentSource, /sectionKey === "OVERVIEW"\) return null/u));
+check(() => assert.match(globalDetailOverlaySource, /showTabs = target\.moduleKey !== "RHYTHM"/u));
+check(() => assert.doesNotMatch(globalDetailOverlaySource, /target\.moduleKey === "RHYTHM" \? "OVERVIEW"/u));
+check(() => assert.match(lifeActivityDetailSource, /medianAmount[\s\S]*formatMoney\(medianAmount\)[\s\S]*En médiane quand un coût est connu\./u));
+check(() => assert.match(lifeActivityDetailSource, /Coût connu pour [\s\S]*activitySubject[\s\S]*formatLifeRatio\(coverageRatio\)/u));
+check(() => assert.match(lifeActivityDetailSource, /LifePersonRhythm[\s\S]*:occurrences[\s\S]*:cadence[\s\S]*personRows\.map[\s\S]*<LifePersonRhythm/u));
+check(() => assert.match(lifeActivityDetailSource, /Aucun montant n’est attribué à une personne\.[\s\S]*Chaque habitude est à lire séparément : ces montants ne forment pas un total\./u));
+check(() => assert.doesNotMatch(lifeActivityDetailSource, />Occurrences renseignées<|>Intervalle médian<|>Support<|>PersonDay<|>Owner<|>Scope</iu));
+check(() => assert.match(lifeMomentDetailSource, /lifeMomentType[\s\S]*lifeMomentDates[\s\S]*Dépenses reliées à ce moment[\s\S]*Toutes nos dépenses/u));
+check(() => assert.match(lifeMomentDetailSource, /Ce montant regroupe uniquement les dépenses reliées à ce moment\./u));
+check(() => assert.match(lifeMomentDetailSource, /Ces deux montants correspondent à deux périmètres différents\./u));
+check(() => assert.match(lifeMomentDetailSource, /<ComparisonRange/u));
+check(() => assert.match(lifeMomentDetailSource, /Pas assez de moments comparables pour situer celui-ci\./u));
+check(() => assert.doesNotMatch(lifeMomentDetailSource, />Composante causale|\bdont\b|représente [^<]*%|stacked|donut|part-of-whole/iu));
+check(() => assert.match(overlaySource, /document\.addEventListener\("keydown", closeOnEscape, true\)/u));
+
+// RUN 5: exhaustive contextual collections, year timeline and responsive shared details.
+const countValue = (value) => ({ kind: "COUNT", value: String(value), unit: "occurrence" });
+const ratioValue = (value) => ({ kind: "RATIO", value: String(value), unit: "ratio" });
+const coverageCase = (known, total, ratio) => rhythmCollections.buildHabitCoverageModel({
+  activityLabel: "Courses",
+  knownCausalCostCount: countValue(known),
+  totalOccurrenceCount: countValue(total),
+  coverageRatio: ratioValue(ratio),
+});
+const coverageZero = coverageCase(0, 10, 0);
+const coveragePartial = coverageCase(8, 10, 0.8);
+const coverageFull = coverageCase(10, 10, 1);
+const coverageUnknown = coverageCase(0, 10, "UNKNOWN");
+check(() => assert.equal(coverageZero?.barWidth, 0));
+check(() => assert.equal(coveragePartial?.percentage, 80));
+check(() => assert.equal(coverageFull?.barWidth, 100));
+check(() => assert.equal(coverageUnknown, undefined));
+check(() => assert.match(coveragePartial?.accessibleLabel ?? "", /Coût connu pour 8 courses sur 10, soit 80 %\./u));
+check(() => assert.doesNotMatch(rhythmCollectionsSource, /fiabilit|confiance|score|green|red/iu));
+
+const timelineRows = [
+  { rowId: "2026:a", labelKey: "Avril", displayValue: "Soirée · 2026-04-25 → 2026-04-26", knowledgeState: "KNOWN", entityRef: "moment:2026-a", evidenceRefs: [] },
+  { rowId: "2026:b", labelKey: "Juillet", displayValue: "Réparation · 2026-07-07 → 2026-07-29", knowledgeState: "KNOWN", entityRef: "moment:2026-b", evidenceRefs: [] },
+  { rowId: "2025:a", labelKey: "Octobre", displayValue: "Projet · 2025-10-03 → 2025-11-10", knowledgeState: "KNOWN", entityRef: "moment:2025-a", evidenceRefs: [] },
+  { rowId: "unknown", labelKey: "Sans date", knowledgeState: "UNKNOWN", entityRef: "moment:unknown", evidenceRefs: [] },
+];
+const timelineGroups = rhythmCollections.groupRhythmMomentsByYear(timelineRows);
+check(() => assert.deepEqual(timelineGroups.map(({ label }) => label), ["2026", "2025", "Date non disponible"]));
+check(() => assert.deepEqual(timelineGroups[0]?.rows.map(({ entityRef }) => entityRef), ["moment:2026-a", "moment:2026-b"]));
+check(() => assert.deepEqual(timelineGroups.flatMap(({ rows }) => rows.map(({ rowId }) => rowId)), timelineRows.map(({ rowId }) => rowId)));
+check(() => assert.doesNotMatch(rhythmCollectionsSource, /\.sort\(|editorialRank|amount|typedMeasure/u));
+
+const emptyComparisonsBundle = fixtures.createGlobalV2FixtureBundle("rhythm-empty-comparisons");
+const emptyComparisonsTransport = fixtures.createGlobalV2FixtureTransport(emptyComparisonsBundle, "rhythm-empty-comparisons");
+const emptyComparisons = await emptyComparisonsTransport({ resource: "analysis_global_rhythm_expanded", params: { sectionKey: "COMPARISONS" } });
+check(() => assert.equal(emptyComparisons.data.rows.length, 0));
+check(() => assert.deepEqual(lifePatterns.data.rows.map(({ entityRef }) => entityRef), ["household-activity:sport", "household-activity:cinema"]));
+check(() => assert.deepEqual(lifeBreakdown.data.rows.map(({ entityRef }) => entityRef), ["moment:summer", "moment:concert"]));
+check(() => assert.match(lifeSource, /Toutes nos habitudes[\s\S]*model\.rows\.filter/u));
+check(() => assert.doesNotMatch(lifeSource.slice(lifeSource.indexOf("function LifeActivityProfiles"), lifeSource.indexOf("function lifeComparisonDelta")), /\.sort\(/u));
+check(() => assert.match(lifeSource, /data-global-entity-ref=\{row\.entityRef\}[\s\S]*onDetail\(row, label\)/u));
+check(() => assert.match(lifeMomentsSource, /groupRhythmMomentsByYear[\s\S]*Notre timeline de vie[\s\S]*Date ou type non disponible[\s\S]*Montant non disponible/u));
+check(() => assert.match(lifeMomentsSource, /data-global-entity-ref=\{row\.entityRef\}[\s\S]*onDetail\(row, lifeUiCopy\(row\.labelKey\)\)/u));
+check(() => assert.match(lifeSource, /function LifeMomentComparisons[\s\S]*subjectCost[\s\S]*peerMedian[\s\S]*peerCount[\s\S]*moments comparables/u));
+check(() => assert.match(pageSource, /title = moduleKey === "RHYTHM" && initialSection === "PATTERNS"[\s\S]*"Nos habitudes"[\s\S]*"Nos moments"/u));
+check(() => assert.match(globalDetailOverlaySource, /showTabs = target\.moduleKey !== "RHYTHM"/u));
+check(() => assert.match(globalDetailOverlaySource, /rhythmDetailMode[\s\S]*styles\.rhythmDetailSheet/u));
+check(() => assert.match(cssSource, /\.rhythmDetailSheet\s*\{[^}]*width:\s*min\(760px, 48vw\)/u));
+check(() => assert.match(cssSource, /@media \(max-width: 767px\)[\s\S]*\.rhythmDetailSheet\s*\{[^}]*position:\s*fixed[^}]*inset:\s*0[^}]*width:\s*100vw[^}]*max-height:\s*100dvh/u));
+check(() => assert.match(cssSource, /\.lifeTimelineMarker\s*\{[^}]*width:\s*11px[^}]*height:\s*11px/u));
+check(() => assert.doesNotMatch(cssSource.slice(cssSource.indexOf(".lifeTimelineMarker"), cssSource.indexOf(".lifeComparisonGrid")), /amount|nth-child|data-/iu));
+check(() => assert.match(globalDetailOverlaySource, /returnScrollTop[\s\S]*content\.scrollTop = returnScrollTop\.current[\s\S]*row\.focus\(\{ preventScroll: true \}\)/u));
+check(() => assert.match(globalDetailOverlaySource, /closeDetail = rhythmReturnSection === undefined \? onClose : returnToCollection/u));
+check(() => assert.equal(rhythmDetailRouting.rhythmDetailReturnSection(rhythmDetailRouting.resolveRhythmDetailContext("household-activity:sport", "HABITS_COLLECTION")), "PATTERNS"));
+check(() => assert.equal(rhythmDetailRouting.rhythmDetailReturnSection(rhythmDetailRouting.resolveRhythmDetailContext("moment:summer", "MOMENTS_COLLECTION")), "BREAKDOWN"));
+check(() => assert.equal(rhythmDetailRouting.rhythmDetailReturnSection(rhythmDetailRouting.resolveRhythmDetailContext("moment:summer", "NARRATIVE")), undefined));
+check(() => assert.match(globalDetailOverlaySource, /Fiabilité & méthode/u));
+check(() => assert.match(overlaySource, /role="dialog"[\s\S]*aria-labelledby/u));
+check(() => assert.match(overlaySource, /activateOverlayFocusTrap[\s\S]*scheduleOverlayFocusRestoration[\s\S]*acquireOverlayScrollLock/u));
+check(() => assert.match(lifeExpandedContentSource, /LifeActivityDetail[\s\S]*LifeMomentDetail[\s\S]*LifeActivityProfiles[\s\S]*LifeMoments/u));
+
+// RUN 6: final frontend red-team matrix.
+const visibleRhythmSource = [lifePrimarySource, lifeMethodSource, lifeMomentsSource, lifeActivityDetailSource, lifeMomentDetailSource].join("\n");
+const visibleRhythmTextNodes = [...visibleRhythmSource.matchAll(/>([^<>{}\r\n]+)</gu)].map((match) => match[1]).join("\n");
+const exposedBackendVocabulary = /\bpeers?\b|\bfamily\b|famille de comparaison|comparisonTier|comparisonProfileId|Composante causale|causalMomentCost|spentDuring|coverageRatio|numerator|denominator|\bsupport\b|\bowner\b|readmodel|snapshot|analytics revision|entityRef|\bscope\b|phenomenon|inputHash|methodVersion|PersonDay|UNKNOWN|NOT_EVALUATED|AUTHORITY_GATED/iu;
+check(() => assert.doesNotMatch(visibleRhythmTextNodes, exposedBackendVocabulary));
+check(() => assert.doesNotMatch(visibleRhythmSource, />[^<>{}]*\d{4}-\d{2}-\d{2}[^<>{}]*</u));
+check(() => assert.match(lifeFormattingSource, /Intl\.NumberFormat\("fr-FR"[\s\S]*maximumFractionDigits: 0/u));
+check(() => assert.doesNotMatch(lifeFormattingSource, /en-US|maximumFractionDigits:\s*2/u));
+check(() => assert.match(lifeMethodSource, /Coût connu[\s\S]*Comparaisons[\s\S]*Foyer et personnes[\s\S]*Valeur non disponible/u));
+check(() => assert.doesNotMatch(lifeMethodSource, /HumanRows|entityRef|displayValue/u));
+check(() => assert.match(pageSource, /sectionKey === "METHODOLOGY" && model\.moduleKey === "RHYTHM"\) return <LifeMethod/u));
+check(() => assert.doesNotMatch(lifeMomentsSource, /spentDuring|peerMedian|\bq1\b|\bq3\b|supportCount/u));
+const lifePersonRhythmSource = lifeActivityDetailSource.slice(lifeActivityDetailSource.indexOf("function LifePersonRhythm"), lifeActivityDetailSource.indexOf("function LifeActivityDetail"));
+check(() => assert.doesNotMatch(lifePersonRhythmSource, /formatMoney|MONEY|€|causal/u));
+check(() => assert.doesNotMatch(lifeMomentDetailSource, /\bdont\b|ratio|pourcentage|stacked|donut|part-of-whole/iu));
+check(() => assert.match(lifeMomentDetailSource, /causalAmount === undefined \|\| spentDuringAmount === undefined \? null[\s\S]*deux périmètres différents/u));
+check(() => assert.doesNotMatch(rhythmNarrativeSource, /\.sort\(|\.reduce\(|parseFloat|numericDisplay|Math\.|median|coverageRatio|cadence/u));
+check(() => assert.doesNotMatch(lifeMomentsSource, /\.sort\(|editorialRank|ranking|Math\.(?:min|max)/u));
+check(() => assert.equal(narrativeCaseA.primary === undefined ? 0 : 1, 1));
+check(() => assert.equal(narrativeCaseB.primary, undefined));
+check(() => assert.equal(narrativeCaseC.changes.length > 0, true));
+check(() => assert.equal(narrativeCaseD.relationships.length > 0, true));
+check(() => assert.doesNotMatch(narrativeCaseD.relationships.map(({ statementKey }) => statementKey).join(" "), /cause|provoque|explique|entraîne|fait augmenter|fait baisser/iu));
+check(() => assert.match(lifePrimarySource, /narrative\.changes\.length === 0 \? null[\s\S]*narrative\.relationships\.length === 0 \? null/u));
+check(() => assert.doesNotMatch(lifePrimarySource, /rien n’a changé|aucun changement|aucune relation|rien à signaler/iu));
+check(() => assert.doesNotMatch(cssSource, /\.lifeMomentGrid/u));
+check(() => assert.match(lifePrimarySource, /Fiabilité & méthode/u));
+check(() => assert.match(cssSource, /\.methodLink\s*\{[^}]*color:\s*var\(--color-muted\)[^}]*font-size:\s*13px/u));
+check(() => assert.match(globalDetailOverlaySource, /target\.kind === "ENTITY_DETAIL" && target\.moduleKey === "RHYTHM"/u));
+check(() => assert.doesNotMatch(pageSource, /@\/analytics|@\/server|CanonicalRepository|FactSourceResolver/u));
 
 const masterIndex = JSON.parse(fs.readFileSync(path.join(root, "docs/global-v2/GLOBAL_MASTER_INDEX.json"), "utf8"));
 const p16Requirements = masterIndex.requirements.filter(({ owner }) => owner === "P16");

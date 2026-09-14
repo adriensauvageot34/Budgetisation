@@ -19,7 +19,7 @@ import type { GlobalV2UiRequest, GlobalV2UiTransport } from "./visit-runtime";
 
 const hash = (character: string) => character.repeat(64);
 
-export type GlobalV2FixtureScenario = "contract" | "local-error" | "new-generation";
+export type GlobalV2FixtureScenario = "contract" | "local-error" | "new-generation" | "rhythm-empty-hero" | "rhythm-m3-positive" | "rhythm-m5-positive" | "rhythm-empty-habits" | "rhythm-empty-moments" | "rhythm-empty-comparisons" | "rhythm-hero-m3" | "rhythm-hero-m5" | "rhythm-hero-m6-contextual";
 
 export type GlobalV2FixtureBundle = {
   readonly initial: GlobalInitialReadModel;
@@ -102,7 +102,7 @@ function insight(moduleKey: GlobalPrimaryModuleKey, index: number): GlobalCompac
   };
 }
 
-function moduleModel(moduleKey: GlobalPrimaryModuleKey, index: number): GlobalModuleCompactReadModel {
+function moduleModel(moduleKey: GlobalPrimaryModuleKey, index: number, scenario: GlobalV2FixtureScenario): GlobalModuleCompactReadModel {
   const presentation = globalModulePresentation(moduleKey);
   if (moduleKey === "TRANSFORMATIONS" || moduleKey === "RELATIONSHIPS" || moduleKey === "MOMENTS") {
     return {
@@ -169,7 +169,7 @@ function moduleModel(moduleKey: GlobalPrimaryModuleKey, index: number): GlobalMo
       resource: presentation.resource,
       order: presentation.order,
       visibility: "VISIBLE",
-      primaryInsight: { insightId: "life-spending:m6:summer", phenomenonId: "moment:summer", kind: "M6_MATERIAL_COMPARISON", titleKey: "Nos vacances d’été", statementKey: "1 240 € directement reliés, soit 330 € au-dessus de la médiane des expériences comparables.", primaryMetricRef: "moment:summer:causal-cost", comparisonRef: "family:travel:SAME_FAMILY", entityRefs: ["moment:summer"], evidenceRefs: ["evidence:life:summer"], detailRefs: ["moment:summer"], editorialRank: 1 },
+      ...(scenario === "rhythm-empty-hero" ? {} : { primaryInsight: { insightId: "life-spending:m6:summer", phenomenonId: "moment:summer", kind: "M6_MATERIAL_COMPARISON", titleKey: "Nos vacances d’été", statementKey: "1 240 € reliés à ce moment · 330 € au-dessus de la médiane de 6 moments comparables.", primaryMetricRef: "moment:summer:causal-cost", comparisonRef: "family:travel:SAME_FAMILY", entityRefs: ["moment:summer"], evidenceRefs: ["evidence:life:summer"], detailRefs: ["moment:summer"], editorialRank: 1 } }),
       kpis: [],
       quality: qualityKnown,
       capabilities: [{ capabilityId: "GLOBAL_RHYTHM", state: "AVAILABLE", reasonCodes: [] }],
@@ -201,7 +201,7 @@ function moduleModel(moduleKey: GlobalPrimaryModuleKey, index: number): GlobalMo
 }
 
 export function createGlobalV2FixtureBundle(scenario: GlobalV2FixtureScenario = "contract"): GlobalV2FixtureBundle {
-  const modules = globalModulePresentations.map((entry, index) => moduleModel(entry.key, index));
+  const modules = globalModulePresentations.map((entry, index) => moduleModel(entry.key, index, scenario));
   const initial: GlobalInitialReadModel = {
     kind: "global_initial",
     schemaVersion: "global-initial@v1",
@@ -369,33 +369,43 @@ function lifeInsight(id: string, titleKey: string, statementKey: string, entityR
   return { insightId: `life-spending:${id}`, phenomenonId: entityRef, kind: id.includes("routine") ? "M4_ACTIVITY_COST_PROFILE" : "M6_MATERIAL_COMPARISON", titleKey, statementKey, primaryMetricRef: `${entityRef}:causal-cost`, entityRefs: [entityRef], evidenceRefs: [`evidence:life:${id}`], detailRefs: [entityRef], editorialRank: rank };
 }
 
-function lifeExpandedFixtureModel(sectionKey: GlobalExpandedSectionKey): GlobalExpandedReadModel {
-  const primary = lifeInsight("summer", "Nos vacances d’été", "1 240 € directement reliés, soit 330 € au-dessus de la médiane des expériences comparables.", "moment:summer", 1);
+function lifeExpandedFixtureModel(sectionKey: GlobalExpandedSectionKey, scenario: GlobalV2FixtureScenario = "contract"): GlobalExpandedReadModel {
+  const primary = lifeInsight("summer", "Nos vacances d’été", "1 240 € reliés à ce moment · 330 € au-dessus de la médiane de 6 moments comparables.", "moment:summer", 1);
   const secondary = [
-    lifeInsight("routine-sport", "Nos séances de sport", "La médiane des occurrences dont un coût est directement relié est de 18 € sur 9 occurrences renseignées.", "household-activity:sport", 2),
-    lifeInsight("concert", "Le concert de juin", "186 € ont été directement reliés à ce Moment, sans comparaison historique autorisée.", "moment:concert", 3),
+    lifeInsight("routine-sport", "Nos séances de sport", "18 € en médiane quand un coût est connu · coût connu 9 fois sur 12.", "household-activity:sport", 2),
+    lifeInsight("concert", "Le concert de juin", "186 € ont été reliés à ce moment, sans assez de moments comparables.", "moment:concert", 3),
   ];
+  const m3Positive = { ...lifeInsight("change-home", "Notre quotidien à la maison a changé", "Cette transformation reste visible sur plusieurs périodes observées.", "transformation:home", 1), kind: "M3_CERTIFIED_TRANSFORMATION" };
+  const m5Positive = { ...lifeInsight("relationship-onsite", "Restaurant les jours sur site", "Dans nos données, les jours sur site sont associés à une fréquence de restaurant plus élevée que les jours en télétravail.", "relationship:onsite-restaurant", 3), kind: "M5_MATERIAL_ROBUST_ASSOCIATION" };
+  const m6Contextual = { ...lifeInsight("concert", "Le concert de juin", "186 € ont été reliés à ce moment, sans assez de moments comparables.", "moment:concert", 1), kind: "M6_CONTEXTUAL_CAUSAL_MOMENT" };
   const activityRows: readonly GlobalDetailRow[] = [
     { rowId: "001:profile:sport", labelKey: "Séances de sport", displayValue: "Médiane des occurrences dont un coût est directement relié : 18 € · 9 occurrences renseignées sur 12", typedMeasure: { kind: "MONEY", value: "18", unit: "EUR/occurrence" }, knowledgeState: "PARTIAL", entityRef: "household-activity:sport", activityCostProfile: { knownCausalCostCount: { kind: "COUNT", value: "9", unit: "occurrence" }, totalOccurrenceCount: { kind: "COUNT", value: "12", unit: "occurrence" }, coverageRatio: { kind: "RATIO", value: "0.75", unit: "ratio" }, nonAdditiveAcrossActivities: true }, evidenceRefs: ["evidence:life:sport"] },
     { rowId: "002:profile:cinema", labelKey: "Sorties cinéma", displayValue: "Médiane des occurrences dont un coût est directement relié : 31 € · 5 occurrences renseignées sur 7", typedMeasure: { kind: "MONEY", value: "31", unit: "EUR/occurrence" }, knowledgeState: "PARTIAL", entityRef: "household-activity:cinema", activityCostProfile: { knownCausalCostCount: { kind: "COUNT", value: "5", unit: "occurrence" }, totalOccurrenceCount: { kind: "COUNT", value: "7", unit: "occurrence" }, coverageRatio: { kind: "RATIO", value: "0.714285", unit: "ratio" }, nonAdditiveAcrossActivities: true }, evidenceRefs: ["evidence:life:cinema"] },
   ];
   const momentRows: readonly GlobalDetailRow[] = [
-    { rowId: "001:moment:summer", labelKey: "Nos vacances d’été", displayValue: "Voyage · août 2025", typedMeasure: { kind: "MONEY", value: "1240", unit: "EUR" }, knowledgeState: "KNOWN", entityRef: "moment:summer", evidenceRefs: ["evidence:life:summer"] },
-    { rowId: "002:moment:concert", labelKey: "Le concert de juin", displayValue: "Sortie culturelle · 14 juin 2026", typedMeasure: { kind: "MONEY", value: "186", unit: "EUR" }, knowledgeState: "KNOWN", entityRef: "moment:concert", evidenceRefs: ["evidence:life:concert"] },
+    { rowId: "001:moment:summer", labelKey: "Nos vacances d’été", displayValue: "Voyage · 1 240 € · 2025-08-02 → 2025-08-16", typedMeasure: { kind: "MONEY", value: "1240", unit: "EUR" }, knowledgeState: "KNOWN", entityRef: "moment:summer", evidenceRefs: ["evidence:life:summer"] },
+    { rowId: "002:moment:concert", labelKey: "Le concert de juin", displayValue: "Sortie culturelle · 186 € · 2026-06-14", typedMeasure: { kind: "MONEY", value: "186", unit: "EUR" }, knowledgeState: "KNOWN", entityRef: "moment:concert", evidenceRefs: ["evidence:life:concert"] },
   ];
   const comparisonRows: readonly GlobalDetailRow[] = [{ rowId: "001:comparison:summer", labelKey: "Nos vacances d’été", displayValue: "+330 € par rapport à la médiane · 6 expériences comparables", typedMeasure: { kind: "MONEY", value: "330", unit: "EUR" }, knowledgeState: "KNOWN", entityRef: "moment:summer", momentComparison: { comparisonTier: "SAME_FAMILY", comparisonProfileId: "family:travel", peerCount: { kind: "COUNT", value: "6", unit: "moment" }, subjectCost: { kind: "MONEY", value: "1240", unit: "EUR" }, peerMedian: { kind: "MONEY", value: "910", unit: "EUR" }, q1: { kind: "MONEY", value: "760", unit: "EUR" }, q3: { kind: "MONEY", value: "1080", unit: "EUR" }, mad: { kind: "MONEY", value: "130", unit: "EUR" }, absoluteDelta: { kind: "MONEY", value: "330", unit: "EUR" }, relativeDelta: { kind: "DECIMAL", value: "0.3626", unit: "ratio" } }, evidenceRefs: ["evidence:life:summer-comparison"] }];
-  const rows = sectionKey === "OVERVIEW" ? momentRows : sectionKey === "PATTERNS" ? activityRows : sectionKey === "BREAKDOWN" ? momentRows : sectionKey === "COMPARISONS" ? comparisonRows : [];
+  const selected = scenario === "rhythm-empty-hero" ? []
+    : scenario === "rhythm-hero-m3" ? [m3Positive]
+    : scenario === "rhythm-hero-m5" ? [m5Positive]
+    : scenario === "rhythm-hero-m6-contextual" ? [m6Contextual]
+    : scenario === "rhythm-m5-positive" ? [primary, secondary[0]!, m5Positive]
+    : [primary, ...secondary];
+  const overviewRows = [comparisonRows[0]!, momentRows[1]!];
+  const rows = sectionKey === "OVERVIEW" ? overviewRows : sectionKey === "PATTERNS" ? scenario === "rhythm-empty-habits" ? [] : activityRows : sectionKey === "BREAKDOWN" ? scenario === "rhythm-empty-moments" ? [] : momentRows : sectionKey === "COMPARISONS" ? scenario === "rhythm-empty-comparisons" ? [] : comparisonRows : [];
   return {
     kind: "global_expanded", schemaVersion: "global-expanded@v1", resource: "analysis_global_rhythm_expanded", moduleKey: "RHYTHM", sectionKey, visibility: "VISIBLE",
-    ...(sectionKey === "OVERVIEW" ? { primaryInsight: primary } : {}), secondaryInsights: sectionKey === "OVERVIEW" ? secondary : [], metrics: [], series: [], rows, destinations: [], quality: qualityKnown,
+    ...(sectionKey === "OVERVIEW" && selected[0] !== undefined ? { primaryInsight: selected[0] } : {}), secondaryInsights: sectionKey === "OVERVIEW" ? selected.slice(1) : sectionKey === "EVOLUTION" && scenario === "rhythm-m3-positive" ? [m3Positive] : [], metrics: [], series: [], rows, destinations: [], quality: qualityKnown,
     capabilities: [{ capabilityId: "GLOBAL_RHYTHM", state: "AVAILABLE", reasonCodes: [] }], publicationMeta, resourceMeta: resourceMeta(24),
   };
 }
 
-function expandedModel(resource: GlobalV2ExpandedResourceName, sectionKey: GlobalExpandedSectionKey, moduleKey = moduleFromResource(resource)): GlobalExpandedReadModel {
+function expandedModel(resource: GlobalV2ExpandedResourceName, sectionKey: GlobalExpandedSectionKey, moduleKey = moduleFromResource(resource), scenario: GlobalV2FixtureScenario = "contract"): GlobalExpandedReadModel {
   if (resource === "analysis_global_economic_expanded") return economicFixtureModel(sectionKey);
   if (resource === "analysis_global_categories_needs_expanded") return m2ExpandedFixtureModel(sectionKey);
-  if (resource === "analysis_global_rhythm_expanded") return lifeExpandedFixtureModel(sectionKey);
+  if (resource === "analysis_global_rhythm_expanded") return lifeExpandedFixtureModel(sectionKey, scenario);
   const presentation = globalModulePresentation(moduleKey);
   const suffix = `${moduleKey.toLowerCase()}:${sectionKey.toLowerCase()}`;
   const metrics: readonly GlobalDetailMetric[] = [
@@ -454,6 +464,16 @@ function lifeDetailMetric(metricId: string, labelKey: string, kind: "MONEY" | "C
 
 function lifeRoutineDetailFixture(entityRef: string): GlobalExpandedReadModel {
   const activity = entityRef.endsWith(":cinema") ? "Sorties cinéma" : "Séances de sport";
+  if (entityRef.startsWith("person-activity:")) {
+    const manon = entityRef.includes(":manon:");
+    const count = manon ? "6" : "8";
+    const cadence = manon ? "9" : "7";
+    return {
+      kind: "global_expanded", schemaVersion: "global-expanded@v1", resource: "analysis_global_routine_detail", moduleKey: "RHYTHM", sectionKey: "OVERVIEW", visibility: "VISIBLE", secondaryInsights: [],
+      metrics: [lifeDetailMetric(`${entityRef}:occurrences`, "Occurrences observées", "COUNT", count, "occurrence", count), lifeDetailMetric(`${entityRef}:cadence`, "Intervalle médian", "DECIMAL", cadence, "day", `${cadence} jours`)],
+      series: [], rows: [], destinations: [], quality: qualityKnown, capabilities: [{ capabilityId: "GLOBAL_RHYTHM_DETAIL", state: "AVAILABLE", reasonCodes: [] }], publicationMeta, resourceMeta: resourceMeta(34),
+    };
+  }
   const median = entityRef.endsWith(":cinema") ? "31" : "18";
   const known = entityRef.endsWith(":cinema") ? "5" : "9";
   const total = entityRef.endsWith(":cinema") ? "7" : "12";
@@ -471,9 +491,9 @@ function lifeRoutineDetailFixture(entityRef: string): GlobalExpandedReadModel {
 function lifeMomentDetailFixture(entityRef: string): GlobalExpandedReadModel {
   const compared = entityRef === "moment:summer";
   const title = compared ? "Nos vacances d’été" : "Le concert de juin";
-  const typeAndDates = compared ? "Voyage · 2 août 2025 → 16 août 2025" : "Sortie culturelle · 14 juin 2026";
+  const typeAndDates = compared ? "Voyage · 2025-08-02 → 2025-08-16" : "Sortie culturelle · 2026-06-14";
   const causal = compared ? "1240" : "186";
-  const spent = compared ? "2190" : "264";
+  const spent = compared ? "1160" : "264";
   const comparison = compared ? { comparisonTier: "SAME_FAMILY" as const, comparisonProfileId: "family:travel", peerCount: { kind: "COUNT" as const, value: "6", unit: "moment" }, subjectCost: { kind: "MONEY" as const, value: "1240", unit: "EUR" }, peerMedian: { kind: "MONEY" as const, value: "910", unit: "EUR" }, q1: { kind: "MONEY" as const, value: "760", unit: "EUR" }, q3: { kind: "MONEY" as const, value: "1080", unit: "EUR" }, mad: { kind: "MONEY" as const, value: "130", unit: "EUR" }, absoluteDelta: { kind: "MONEY" as const, value: "330", unit: "EUR" }, relativeDelta: { kind: "DECIMAL" as const, value: "0.3626", unit: "ratio" } } : undefined;
   const metrics = [
     lifeDetailMetric(`${entityRef}:causal-cost`, "Coût directement relié", "MONEY", causal, "EUR", `${causal} €`),
@@ -483,8 +503,8 @@ function lifeMomentDetailFixture(entityRef: string): GlobalExpandedReadModel {
   return {
     kind: "global_expanded", schemaVersion: "global-expanded@v1", resource: "analysis_global_moment_experience_detail", moduleKey: "RHYTHM", sectionKey: "OVERVIEW", visibility: "VISIBLE", secondaryInsights: [], metrics, series: [], rows: [
       { rowId: `000:moment-identity:${entityRef}`, labelKey: title, displayValue: typeAndDates, knowledgeState: "KNOWN", entityRef, ...(comparison === undefined ? {} : { momentComparison: comparison }), evidenceRefs: [`evidence:life:${entityRef}`] },
-      { rowId: `001:composition:${entityRef}:transport`, labelKey: compared ? "Transport directement relié" : "Billets directement reliés", displayValue: compared ? "620 €" : "142 €", typedMeasure: { kind: "MONEY", value: compared ? "620" : "142", unit: "EUR" }, knowledgeState: "KNOWN", evidenceRefs: [`evidence:life:${entityRef}:composition:1`] },
-      { rowId: `002:composition:${entityRef}:stay`, labelKey: compared ? "Hébergement directement relié" : "Déplacement directement relié", displayValue: compared ? "620 €" : "44 €", typedMeasure: { kind: "MONEY", value: compared ? "620" : "44", unit: "EUR" }, knowledgeState: "KNOWN", evidenceRefs: [`evidence:life:${entityRef}:composition:2`] },
+      { rowId: `001:composition:${entityRef}:transport`, labelKey: "Composante causale", displayValue: compared ? "620 €" : "142 €", typedMeasure: { kind: "MONEY", value: compared ? "620" : "142", unit: "EUR" }, knowledgeState: "KNOWN", evidenceRefs: [`evidence:life:${entityRef}:composition:1`] },
+      { rowId: `002:composition:${entityRef}:stay`, labelKey: "Composante causale", displayValue: compared ? "620 €" : "44 €", typedMeasure: { kind: "MONEY", value: compared ? "620" : "44", unit: "EUR" }, knowledgeState: "KNOWN", evidenceRefs: [`evidence:life:${entityRef}:composition:2`] },
     ], destinations: [], quality: qualityKnown, capabilities: [{ capabilityId: "GLOBAL_MOMENT_DETAIL", state: "AVAILABLE", reasonCodes: [] }], publicationMeta, resourceMeta: resourceMeta(35),
   };
 }
@@ -522,7 +542,7 @@ function detailModel(resource: GlobalV2ExpandedResourceName, entityRef: string, 
       ], quality: isNeed ? m2NeedQuality : qualityKnown, capabilities: [{ capabilityId: "GLOBAL_CATEGORIES_NEEDS_DETAIL", state: "AVAILABLE", reasonCodes: [] }], publicationMeta, resourceMeta: resourceMeta(32),
     };
   }
-  if (resource === "analysis_global_routine_detail" && entityRef.startsWith("household-activity:")) return lifeRoutineDetailFixture(entityRef);
+  if (resource === "analysis_global_routine_detail" && (entityRef.startsWith("household-activity:") || entityRef.startsWith("person-activity:"))) return lifeRoutineDetailFixture(entityRef);
   if (resource === "analysis_global_moment_experience_detail" && entityRef.startsWith("moment:")) return lifeMomentDetailFixture(entityRef);
   return {
     ...expandedModel(resource, resource === "analysis_global_methodology" ? "METHODOLOGY" : "OVERVIEW", moduleKey),
@@ -549,7 +569,7 @@ export function createGlobalV2FixtureTransport(bundle: GlobalV2FixtureBundle, sc
     const module = bundle.modules.find((entry) => entry.resource === request.resource);
     if (module !== undefined) return { data: module, publicationMeta };
     const expanded = globalModulePresentations.find((entry) => entry.expandedResource === request.resource);
-    if (expanded !== undefined) return { data: expandedModel(expanded.expandedResource, (request.params.sectionKey ?? "OVERVIEW") as GlobalExpandedSectionKey, expanded.key), publicationMeta };
+    if (expanded !== undefined) return { data: expandedModel(expanded.expandedResource, (request.params.sectionKey ?? "OVERVIEW") as GlobalExpandedSectionKey, expanded.key, scenario), publicationMeta };
     if (request.resource === "analysis_global_methodology") return { data: detailModel(request.resource, request.params.methodRef ?? "method:global-v2", (request.params.moduleKey ?? "ECONOMIC") as GlobalPrimaryModuleKey), publicationMeta };
     const detail = globalModulePresentations.find((entry) => "detailResource" in entry && entry.detailResource === request.resource);
     if (detail !== undefined) return { data: detailModel(request.resource as GlobalV2ExpandedResourceName, request.params.entityRef ?? `entity:${detail.key.toLowerCase()}`), publicationMeta };
