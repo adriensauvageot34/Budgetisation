@@ -380,7 +380,7 @@ const m2AuthoritySource = fs.readFileSync(path.join(root, "src/server/analytics/
 check(() => assert.match(m2AuthoritySource, /transformationMonthlyComponents: components/u));
 const personRegimeSource = fs.readFileSync(path.join(root, "src/analytics/global-v2/person-regime-authority.ts"), "utf8");
 check(() => assert.match(personRegimeSource, /\["travail_site", "teletravail"\]/u));
-check(() => assert.match(personRegimeSource, /structuralAuthorityRefs\.length === 0[\s\S]*fct_activity_occurrence:/u));
+check(() => assert.match(personRegimeSource, /participatingSeries[\s\S]*sources\.some[\s\S]*isRawActivityOccurrenceRef[\s\S]*flatMap\(\(source\) => source\.structuralAuthorityRefs\)/u));
 check(() => assert.doesNotMatch(personRegimeSource, /repas_restaurant|STABLE_CURRENT_REGIME|typical|largest|earliest|latest/iu));
 const routeSource = fs.readFileSync(path.join(root, "src/app/analyse-globale/page.tsx"), "utf8");
 check(() => assert.match(routeSource, /GLOBAL_V2_ROUTE_ACTIVE\s*!==\s*"true"/u));

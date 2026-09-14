@@ -48,6 +48,10 @@ function parseWorkSignal(signalId: string) {
   };
 }
 
+function isRawActivityOccurrenceRef(ref: string): boolean {
+  return ref.startsWith("fct_activity_occurrence:");
+}
+
 function qualifiedCandidate(input: {
   readonly personId: string;
   readonly certifiedThroughMonth: YearMonth;
@@ -57,26 +61,33 @@ function qualifiedCandidate(input: {
   const { transformation } = input;
   if (transformation.kind !== "DURABLE_CHANGE"
     || transformation.status !== "CONFIRMED_ONGOING"
-    || transformation.supportingSignals.length !== 0
     || transformation.currentRegime.status !== "KNOWN"
     || !transformation.currentRegime.structuralReferenceEligible
     || transformation.currentRegime.supportStatus !== "SUFFICIENT"
     || transformation.currentRegime.includedMonths.length < 6) return undefined;
-  const work = parseWorkSignal(transformation.primaryDriver);
-  if (work === undefined || work.personId !== input.personId) return undefined;
-  const sourceSeries = input.series.filter(({ signalId }) => signalId === work.sourceSignalId);
-  if (sourceSeries.length !== 1) return undefined;
-  const source = sourceSeries[0]!;
-  if (source.subjectRef !== `person:${input.personId}`
+  const participatingSignals = [transformation.primaryDriver, ...transformation.supportingSignals]
+    .map(parseWorkSignal);
+  if (participatingSignals.some((signal) => signal === undefined
+    || signal.personId !== input.personId)) return undefined;
+  const workSignals = participatingSignals.filter((signal) => signal !== undefined);
+  const participatingSeries = workSignals.map((work) => {
+    const matches = input.series.filter(({ signalId }) => signalId === work.sourceSignalId);
+    return matches.length === 1 ? matches[0] : undefined;
+  });
+  if (participatingSeries.some((source) => source === undefined
+    || source.subjectRef !== `person:${input.personId}`
     || source.catalogKey !== "ACTIVITY_FREQUENCY"
-    || source.certifiedThroughMonth !== input.certifiedThroughMonth
-    || source.structuralAuthorityRefs.length === 0
-    || source.structuralAuthorityRefs.some((ref) => ref.startsWith("fct_activity_occurrence:"))) return undefined;
+    || source.certifiedThroughMonth !== input.certifiedThroughMonth)) return undefined;
+  const sources = participatingSeries.filter((source) => source !== undefined);
+  if (sources.some((source) => source.structuralAuthorityRefs.length > 0
+      && source.structuralAuthorityRefs.every(isRawActivityOccurrenceRef))
+    || !sources.flatMap((source) => source.structuralAuthorityRefs)
+      .some((ref) => !isRawActivityOccurrenceRef(ref))) return undefined;
   try {
     const closure = JSON.parse(transformation.currentRegime.closure) as RegimeClosure;
     const validFrom = parseYearMonth(closure.regime.start);
     if (parseYearMonth(closure.boundary) !== input.certifiedThroughMonth) return undefined;
-    return { transformation, work, validFrom };
+    return { transformation, work: workSignals[0]!, validFrom };
   } catch {
     return undefined;
   }

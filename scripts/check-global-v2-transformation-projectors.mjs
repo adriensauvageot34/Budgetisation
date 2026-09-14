@@ -447,6 +447,73 @@ check(() => assert.equal(knownPersonRegime.capabilityState, "AVAILABLE"));
 check(() => assert.equal(knownPersonRegime.validFrom, "2026-02"));
 check(() => assert.equal(knownPersonRegime.validThrough, "2026-07-31"));
 check(() => assert.equal(knownPersonRegime.sourceActivityId, "travail_site"));
+const adrienRemoteSignalId = `m4:person:${personA}:activity:teletravail:frequency`;
+const adrienRemoteSeries = d3M4Series.find(({ signalId }) => signalId === adrienRemoteSignalId);
+assert.ok(adrienRemoteSeries);
+const fusedWorkTransformation = {
+  ...structuralWorkTransformation,
+  supportingSignals: [`${adrienRemoteSignalId}@2026-02`],
+};
+const fusedWorkInput = {
+  ...personRegimeInput,
+  transformations: [fusedWorkTransformation],
+  series: [structuralWorkSeries, adrienRemoteSeries],
+};
+const fusedWorkRegime = selectGlobalPersonRegimeAuthority(fusedWorkInput);
+check(() => assert.equal(fusedWorkRegime.status, "KNOWN"));
+check(() => assert.equal(fusedWorkRegime.capabilityState, "AVAILABLE"));
+check(() => assert.equal(selectGlobalPersonRegimeAuthority({
+  ...fusedWorkInput,
+  transformations: [{
+    ...fusedWorkTransformation,
+    primaryDriver: `${adrienRemoteSignalId}@2026-02`,
+    supportingSignals: [structuralWorkTransformation.primaryDriver],
+  }],
+}).status, "KNOWN"));
+check(() => assert.equal(selectGlobalPersonRegimeAuthority({
+  ...fusedWorkInput,
+  transformations: [{ ...fusedWorkTransformation, supportingSignals: [`m4:person:${personA}:activity:repas_restaurant:frequency@2026-02`] }],
+}).status, "UNKNOWN"));
+check(() => assert.equal(selectGlobalPersonRegimeAuthority({
+  ...fusedWorkInput,
+  transformations: [{ ...fusedWorkTransformation, supportingSignals: [`m4:person:${personA}:activity:activite_loisir:frequency@2026-02`] }],
+}).status, "UNKNOWN"));
+const crossPersonRemoteSeries = {
+  ...adrienRemoteSeries,
+  signalId: `m4:person:${personB}:activity:teletravail:frequency`,
+  subjectRef: `person:${personB}`,
+};
+check(() => assert.equal(selectGlobalPersonRegimeAuthority({
+  ...fusedWorkInput,
+  transformations: [{ ...fusedWorkTransformation, supportingSignals: [`${crossPersonRemoteSeries.signalId}@2026-02`] }],
+  series: [structuralWorkSeries, crossPersonRemoteSeries],
+}).status, "UNKNOWN"));
+check(() => assert.equal(selectGlobalPersonRegimeAuthority({
+  ...fusedWorkInput,
+  series: [
+    { ...structuralWorkSeries, structuralAuthorityRefs: [] },
+    { ...adrienRemoteSeries, structuralAuthorityRefs: [] },
+  ],
+}).status, "UNKNOWN"));
+check(() => assert.equal(selectGlobalPersonRegimeAuthority({
+  ...fusedWorkInput,
+  series: [
+    { ...structuralWorkSeries, structuralAuthorityRefs: ["fct_activity_occurrence:onsite-only"] },
+    { ...adrienRemoteSeries, structuralAuthorityRefs: ["fct_activity_occurrence:remote-only"] },
+  ],
+}).status, "UNKNOWN"));
+check(() => assert.equal(selectGlobalPersonRegimeAuthority({
+  ...fusedWorkInput,
+  series: [structuralWorkSeries],
+}).status, "UNKNOWN"));
+check(() => assert.equal(selectGlobalPersonRegimeAuthority({
+  ...fusedWorkInput,
+  series: [structuralWorkSeries, adrienRemoteSeries, { ...adrienRemoteSeries }],
+}).status, "UNKNOWN"));
+check(() => assert.equal(selectGlobalPersonRegimeAuthority({
+  ...fusedWorkInput,
+  series: [structuralWorkSeries, { ...adrienRemoteSeries, certifiedThroughMonth: "2026-06" }],
+}).status, "UNKNOWN"));
 check(() => assert.deepEqual(selectGlobalPersonRegimeAuthority({ ...personRegimeInput, transformations: [] }), {
   status: "UNKNOWN", capabilityState: "GATED", reasonCodes: ["AUTHORITY_GATED_CURRENT_REGIME"], personId: String(personA),
 }));
