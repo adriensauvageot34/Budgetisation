@@ -24,12 +24,37 @@ export type GlobalRelationshipEvolution = {
   readonly methodVersion: "global_m5_m3_evolution@v1";
 };
 
-export function buildGlobalM5TransformationFeed(result: ReturnType<typeof buildGlobalRelationshipTemporalEvidence>): readonly GlobalRelationshipEvolution[] {
+type GlobalM5EvolutionSource = {
+  readonly scope: {
+    readonly personId: string;
+    readonly householdId: string;
+    readonly regimeId: string;
+    readonly certifiedThrough: string;
+  };
+  readonly inputHash: string;
+  readonly relationships: readonly {
+    readonly relationshipId: string;
+    readonly state: string;
+    readonly windows: {
+      readonly previous: { readonly eligibleMonths: readonly string[]; readonly direction: number };
+      readonly recent: { readonly eligibleMonths: readonly string[]; readonly direction: number };
+    };
+  }[];
+};
+
+function transformationFeedFromSource(result: GlobalM5EvolutionSource): readonly GlobalRelationshipEvolution[] {
   return result.relationships.flatMap((relationship) => {
     if (relationship.state !== "CHANGED_RELATIONSHIP" && relationship.state !== "HISTORICAL_ONLY") return [];
-    const source = result;
-    return [{ catalogKey: "M5_RELATIONSHIP_EVOLUTION" as const, relationshipId: relationship.relationshipId, state: relationship.state, personId: source.scope.personId, householdId: source.scope.householdId, regimeId: source.scope.regimeId, certifiedThrough: source.scope.certifiedThrough, previousMonths: relationship.windows.previous.eligibleMonths, recentMonths: relationship.windows.recent.eligibleMonths, previousDirection: relationship.windows.previous.direction, recentDirection: relationship.windows.recent.direction, sourceInputHash: result.inputHash, causalityMode: "ASSOCIATION_ONLY" as const, methodVersion: "global_m5_m3_evolution@v1" as const }];
+    return [{ catalogKey: "M5_RELATIONSHIP_EVOLUTION" as const, relationshipId: relationship.relationshipId, state: relationship.state, personId: result.scope.personId, householdId: result.scope.householdId, regimeId: result.scope.regimeId, certifiedThrough: result.scope.certifiedThrough, previousMonths: relationship.windows.previous.eligibleMonths, recentMonths: relationship.windows.recent.eligibleMonths, previousDirection: relationship.windows.previous.direction, recentDirection: relationship.windows.recent.direction, sourceInputHash: result.inputHash, causalityMode: "ASSOCIATION_ONLY" as const, methodVersion: "global_m5_m3_evolution@v1" as const }];
   });
+}
+
+export function buildGlobalM5TransformationFeed(result: ReturnType<typeof buildGlobalRelationshipTemporalEvidence>): readonly GlobalRelationshipEvolution[] {
+  return transformationFeedFromSource(result);
+}
+
+export function buildGlobalM5ProductTransformationFeed(result: GlobalM5EvolutionSource): readonly GlobalRelationshipEvolution[] {
+  return transformationFeedFromSource(result);
 }
 
 export function validateGlobalM5TransformationFeed(values: readonly GlobalRelationshipEvolution[]) {

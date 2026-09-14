@@ -23,6 +23,12 @@ const candidateApi = await import("../src/server/analytics/global-v2-candidate.t
 const query = await import("../src/query-api/global-v2/index.ts");
 const servicesApi = await import("../src/server/query/global-v2-production-services.ts");
 const runtimeApi = await import("../src/server/query/global-v2-runtime.ts");
+const { buildGlobalM5Pr03Product } = await import("../src/analytics/global-v2/relationship-product.ts");
+const {
+  projectRelationshipPersonDays,
+  projectRelationshipRestaurantOutcomes,
+  projectRelationshipWorkContexts,
+} = await import("../src/analytics/global-v2/relationship-fact-adapter.ts");
 
 const months = Array.from({ length: 12 }, (_, index) => `${index < 5 ? "2025" : "2026"}-${String((index + 7) % 12 + 1).padStart(2, "0")}`);
 const personA = "00000000-0000-4000-8000-000000000002";
@@ -324,6 +330,62 @@ const rhythmWith = (personResults, transformationOutput = outputByModule.TRANSFO
   return candidate.snapshots.find(({ resource, params }) => resource === "analysis_global_rhythm_expanded" && params.sectionKey === "OVERVIEW").payload;
 };
 
+const upstreamPr03Provider = (personId, positive) => {
+  const regime = { status: "KNOWN", regimeId: `regime:${personId}` };
+  const personDays = [], occurrences = [], participations = [], calendar = [];
+  const completeLifeMonths = [];
+  for (let month = 1; month <= 12; month++) {
+    const prefix = `2025-${String(month).padStart(2, "0")}`;
+    completeLifeMonths.push(prefix);
+    for (let pair = 1; pair <= 3; pair++) {
+      for (const [context, dayNumber] of [["ONSITE", pair], ["REMOTE", pair + 7]]) {
+        const date = `${prefix}-${String(dayNumber).padStart(2, "0")}`;
+        const personDayId = `person-day:${personId}:${date}`;
+        const workEventId = `work:${personId}:${date}`;
+        personDays.push({ fact: "fct_person_day", householdId: base.householdId, householdTimeZone: base.householdTimeZone, personDayId, personId, localDate: date, locationObservability: "unknown" });
+        occurrences.push({ fact: "fct_activity_occurrence", householdId: base.householdId, householdTimeZone: base.householdTimeZone, lifeEventId: workEventId, activityId: context === "ONSITE" ? "travail_site" : "teletravail", lifeEventSeriesId: null, parentLifeEventId: null, startDate: date, endDate: date, validationStatus: "Confirmé", participantIds: [personId] });
+        participations.push({ lifeEventId: workEventId, personDayId, personId, status: "Confirmée", evidenceRef: `participation:${workEventId}` });
+        calendar.push({ personDayId, calendarClass: [0, 6].includes(new Date(`${date}T00:00:00Z`).getUTCDay()) ? "WEEKEND" : "WEEKDAY", evidenceRef: `calendar:${personDayId}` });
+        if (positive && context === "ONSITE") {
+          const restaurantEventId = `restaurant:${personId}:${date}`;
+          occurrences.push({ fact: "fct_activity_occurrence", householdId: base.householdId, householdTimeZone: base.householdTimeZone, lifeEventId: restaurantEventId, activityId: "repas_restaurant", lifeEventSeriesId: null, parentLifeEventId: null, startDate: date, endDate: date, validationStatus: "Confirmé", participantIds: [personId] });
+          participations.push({ lifeEventId: restaurantEventId, personDayId, personId, status: "Confirmée", evidenceRef: `participation:${restaurantEventId}` });
+        }
+      }
+    }
+  }
+  const contexts = projectRelationshipWorkContexts({ householdId: base.householdId, personId, personDays, occurrences, participations });
+  const days = projectRelationshipPersonDays({ householdId: base.householdId, personId, regimeId: regime.regimeId, personDays, contexts, calendar });
+  const outcomes = projectRelationshipRestaurantOutcomes({ householdId: base.householdId, personId, days, occurrences, participations, completeLifeMonths });
+  const refs = [...new Set([...days.flatMap((day) => [...day.evidenceRefs, ...day.contextEvidenceRefs, ...day.calendarEvidenceRefs]), ...outcomes.flatMap((outcome) => outcome.dependencyRefs), regime.regimeId])];
+  return {
+    evaluationStatus: "READY_FOR_PRODUCT", scope: { personId }, reasonCodes: [], missingPersonDayDates: [], exceptionPolicy: "NOT_USED_V1", seasonPolicy: "NOT_REQUIRED",
+    analysis: { householdId: base.householdId, personId, regimeId: regime.regimeId, householdTimeZone: base.householdTimeZone, asOf: "2026-01-01T00:00:00Z", certifiedThrough: "2025-12-31", analyticsRevision: 79, sourceRevision: 1, days, outcomes, dependencyDigests: Object.fromEntries(refs.map((ref) => [ref, `digest:${ref}`])) },
+  };
+};
+
+// Post-Run-E C01: real canonical-shaped person-day/activity participation
+// inputs flow through product execution and cross-person BH into Query/RHYTHM.
+const realPr03Product = buildGlobalM5Pr03Product({
+  authorizedPersonIds: [personA, personB],
+  providers: [upstreamPr03Provider(personA, true), upstreamPr03Provider(personB, false)],
+});
+const realPersonResult = realPr03Product.ownerResults.find((entry) => entry.scope.personId === personA);
+const realInsight = realPersonResult.insights.find((entry) => entry.relationshipId === "onsite-restaurant");
+const realHypothesis = realPr03Product.current.hypotheses.find((entry) => entry.personId === personA);
+check(() => assert.equal(realPersonResult.evaluationStatus, "EVALUATED"));
+check(() => assert.equal(realInsight.evidence.evidenceStatus, "PUBLISHED"));
+check(() => assert.equal(realInsight.evidence.adjustedQValue, realHypothesis.qValue));
+check(() => assert.notEqual(realInsight.evidence.adjustedQValue, realInsight.evidence.rawPValue));
+check(() => assert.ok(realPr03Product.windows.every((window) => window.executedTechnicalDefinitionIds.join() === "onsite-restaurant")));
+const realPr03Overview = rhythmWith(realPr03Product.ownerResults);
+check(() => assert.equal(realPr03Overview.primaryInsight.kind, "M5_MATERIAL_ROBUST_ASSOCIATION"));
+check(() => assert.match(realPr03Overview.primaryInsight.statementKey, /associés à/u));
+check(() => assert.doesNotMatch(realPr03Overview.primaryInsight.statementKey, /(?:provoque|cause|p\s*=|q\s*=)/u));
+check(() => assert.equal([realPr03Overview.primaryInsight, ...realPr03Overview.secondaryInsights].filter(({ kind }) => kind === "M5_MATERIAL_ROBUST_ASSOCIATION").length, 1));
+const unrelatedGatedProduct = buildGlobalM5Pr03Product({ authorizedPersonIds: [personA, personB], providers: [upstreamPr03Provider(personA, true), { evaluationStatus: "AUTHORITY_GATED", scope: { personId: personB }, reasonCodes: ["AUTHORITY_GATED_CURRENT_REGIME"] }] });
+check(() => assert.equal(rhythmWith(unrelatedGatedProduct.ownerResults).primaryInsight.kind, "M5_MATERIAL_ROBUST_ASSOCIATION"));
+
 // E-T33..E-T35: person-scoped owner arrays are flattened; nested evidence and
 // insight-scoped access survive unrelated module/person gates.
 const positiveRelationshipOverview = rhythmWith([gatedRelationship(personB), evaluatedRelationship(personA, [relationshipInsight()])]);
@@ -423,17 +485,19 @@ const orchestratorSource = fs.readFileSync(path.join(root, "src/server/analytics
 check(() => assert.match(orchestratorSource, /loadActivityOccurrenceCosts[\s\S]*buildGlobalActivityCostProfile[\s\S]*output: \{ rhythms, activityCostProfiles \}/u));
 check(() => assert.match(orchestratorSource, /const baseM3Series = \[[\s\S]*projectGlobalM1ActualTransformationSeries[\s\S]*projectGlobalM2CategoryTransformationSeries[\s\S]*\.\.\.baseM3M4Series[\s\S]*const baseM3 = buildGlobalTransformations\(\{[\s\S]*series: baseM3Series,[\s\S]*relations: \[\],[\s\S]*\}\)/u));
 check(() => assert.equal(orchestratorSource.match(/buildGlobalTransformations\(\{/gu)?.length, 1));
-check(() => assert.doesNotMatch(orchestratorSource, /relationshipEvolution|driverAuthorities|anchors/u));
+const baseM3EvaluationSource = orchestratorSource.slice(orchestratorSource.indexOf("const baseM3Evaluation"), orchestratorSource.indexOf("const personRegimeAuthorities"));
+check(() => assert.doesNotMatch(baseM3EvaluationSource, /relationshipEvolution|driverAuthorities|anchors/u));
 const baseM3SeriesSource = orchestratorSource.match(/const baseM3Series = \[[\s\S]*?\n      \];/u)?.[0] ?? "";
 check(() => assert.doesNotMatch(baseM3SeriesSource, /m5|m6|m7|m8/u));
 check(() => assert.match(orchestratorSource, /return \{ evaluated: true as const, series: baseM3Series, output: baseM3, knowledge: "KNOWN" as const, capabilityState: "AVAILABLE" as const, reasonCodes: \[\] as const \}/u));
 check(() => assert.match(orchestratorSource, /TRANSFORMATION_INPUT_UNIVERSE_BUILD_FAILED/u));
-check(() => assert.doesNotMatch(orchestratorSource, /relationshipEvolution/));
+const regimeSelectionSource = orchestratorSource.slice(orchestratorSource.indexOf("const personRegimeAuthorities"), orchestratorSource.indexOf("const m5 = await Promise.all"));
+check(() => assert.doesNotMatch(regimeSelectionSource, /relationshipEvolution|m5Product|m5RelationshipEvolution/u));
 check(() => assert.doesNotMatch(orchestratorSource, /moduleKey: "TRANSFORMATIONS"[^\n]*NO_CERTIFIED_TRANSFORMATION/u));
 check(() => assert.match(orchestratorSource, /const \[m2, m6, m7\][\s\S]*const baseM3Evaluation[\s\S]*const personRegimeAuthorities[\s\S]*const m5 = await Promise\.all[\s\S]*const m5Product = buildGlobalM5Pr03Product/u));
 check(() => assert.match(orchestratorSource, /selectGlobalPersonRegimeAuthority\([\s\S]*resolveGlobalM5PersonAuthority\([\s\S]*regimeAuthority,[\s\S]*buildGlobalM5Pr03Product\(\{[\s\S]*authorizedPersonIds: context\.personIds\.map\(String\),[\s\S]*providers: m5/u));
 check(() => assert.ok(orchestratorSource.lastIndexOf("buildGlobalTransformations({") < orchestratorSource.indexOf("const m5Product")));
-check(() => assert.match(orchestratorSource, /const m5RelationshipEvolution = \[\] as const/u));
+check(() => assert.match(orchestratorSource, /const m5OwnerOutput = m5Product\.ownerResults;[\s\S]*const m5RelationshipEvolution = m5Product\.relationshipEvolution/u));
 const m2AuthoritySource = fs.readFileSync(path.join(root, "src/server/analytics/global-v2-category-needs-authority.ts"), "utf8");
 check(() => assert.match(m2AuthoritySource, /transformationMonthlyComponents: components/u));
 const personRegimeSource = fs.readFileSync(path.join(root, "src/analytics/global-v2/person-regime-authority.ts"), "utf8");

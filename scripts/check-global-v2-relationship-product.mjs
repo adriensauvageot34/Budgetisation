@@ -31,7 +31,14 @@ function analysis(personId, mode = "POSITIVE", reverse = false) {
       for (const [role, dayNumber] of [["ONSITE", pair], ["REMOTE", pair + 7]]) {
         const id = `${personId}:${prefix}:${dayNumber}`;
         const day = { id, date: `${prefix}-${String(dayNumber).padStart(2, "0")}`, context: role, calendarClass: "WEEKDAY", householdId: "household", personId, regimeId, personDayObservable: true, contextEvidenceRefs: ["authority:work-context"], calendarEvidenceRefs: ["authority:calendar"], evidenceRefs: ["fact:person-day"], excludedReasons: [] };
-        const value = mode === "NEUTRAL" ? 0 : mode === "POSITIVE" ? Number(role === "ONSITE") : Number(role === "REMOTE");
+        const positive = Number(role === "ONSITE"), negative = Number(role === "REMOTE");
+        const value = mode === "NEUTRAL" ? 0
+          : mode === "POSITIVE" ? positive
+          : mode === "NEGATIVE" ? negative
+          : mode === "RECENT_ONLY" ? month <= 6 ? 0 : positive
+          : mode === "CHANGED" ? month <= 6 ? positive : negative
+          : mode === "HISTORICAL_ONLY" ? month <= 6 ? positive : month === 7 && pair === 1 ? positive : 0
+          : 0;
         days.push(day);
         outcomes.push({ dayId: id, outcome: "RESTAURANT", value, status: "KNOWN", authority: "ACTIVITY_OCCURRENCE", coverage, evidenceRefs: ["authority:restaurant"], dependencyRefs: ["authority:restaurant"] });
       }
@@ -67,6 +74,8 @@ for (const window of bothGated.windows) {
   check(() => assert.equal(window.fdr.exclusions.length, 2));
   check(() => assert.ok(window.hypotheses.every((hypothesis) => !("rawPValue" in hypothesis) && !("qValue" in hypothesis))));
 }
+check(() => assert.ok(bothGated.ownerResults.every((result) => result.evaluationStatus === "AUTHORITY_GATED" && result.insights.length === 0)));
+check(() => assert.deepEqual(bothGated.relationshipEvolution, []));
 
 // E-T20: one eligible person closes m=1; q is derived from that raw p.
 const oneEligible = buildGlobalM5Pr03Product({ authorizedPersonIds: personIds, providers: [ready(adrien), gated(manon)] });
@@ -75,6 +84,13 @@ for (const window of oneEligible.windows) {
   check(() => assert.equal(window.eligibleHypothesisCount, 1));
   check(() => assert.equal(hypothesis.qValue, hypothesis.rawPValue));
 }
+const oneEligibleOwner = oneEligible.ownerResults.find((entry) => entry.scope.personId === adrien);
+const oneEligibleInsight = oneEligibleOwner.insights.find((entry) => entry.relationshipId === "onsite-restaurant");
+check(() => assert.equal(oneEligibleOwner.evaluationStatus, "EVALUATED"));
+check(() => assert.equal(oneEligibleInsight.evidence.adjustedQValue, oneEligible.current.hypotheses.find((entry) => entry.personId === adrien).qValue));
+check(() => assert.equal(oneEligibleInsight.evidence.evidenceStatus, "PUBLISHED"));
+check(() => assert.equal(oneEligibleInsight.access.aiEligible, true));
+check(() => assert.deepEqual(oneEligible.relationshipEvolution, []));
 
 // E-T21..E-T28: one cross-person closure per window, no preselection by
 // materiality/significance, locked technical execution and canonical sign.
@@ -92,6 +108,19 @@ for (const window of bothEligible.windows) {
   check(() => assert.ok(window.hypotheses.every((entry) => entry.executedTechnicalDefinitionIds.every((id) => id === "onsite-restaurant"))));
 }
 check(() => assert.equal(new Set(bothEligible.windows.map(({ fdr }) => fdr.universeId)).size, 3));
+const crossPersonInsight = bothEligible.ownerResults.find((entry) => entry.scope.personId === manon).insights.find((entry) => entry.relationshipId === "onsite-restaurant");
+check(() => assert.equal(crossPersonInsight.evidence.adjustedQValue, bothEligible.current.hypotheses.find((entry) => entry.personId === manon).qValue));
+check(() => assert.equal(crossPersonInsight.evidence.rawPValue, bothEligible.current.hypotheses.find((entry) => entry.personId === manon).rawPValue));
+
+const recentOnly = buildGlobalM5Pr03Product({ authorizedPersonIds: personIds, providers: [ready(adrien, "RECENT_ONLY"), gated(manon)] });
+check(() => assert.equal(recentOnly.ownerResults.find((entry) => entry.scope.personId === adrien).relationships[0].state, "RECENT_ONLY"));
+check(() => assert.deepEqual(recentOnly.relationshipEvolution, []));
+const changed = buildGlobalM5Pr03Product({ authorizedPersonIds: personIds, providers: [ready(adrien, "CHANGED"), gated(manon)] });
+check(() => assert.equal(changed.ownerResults.find((entry) => entry.scope.personId === adrien).relationships[0].state, "CHANGED_RELATIONSHIP"));
+check(() => assert.deepEqual(changed.relationshipEvolution.map(({ relationshipId, state }) => ({ relationshipId, state })), [{ relationshipId: "onsite-restaurant", state: "CHANGED_RELATIONSHIP" }]));
+const historical = buildGlobalM5Pr03Product({ authorizedPersonIds: personIds, providers: [ready(adrien, "HISTORICAL_ONLY"), gated(manon)] });
+check(() => assert.equal(historical.ownerResults.find((entry) => entry.scope.personId === adrien).relationships[0].state, "HISTORICAL_ONLY"));
+check(() => assert.deepEqual(historical.relationshipEvolution.map(({ relationshipId, state }) => ({ relationshipId, state })), [{ relationshipId: "onsite-restaurant", state: "HISTORICAL_ONLY" }]));
 
 const negative = buildGlobalM5Pr03Product({ authorizedPersonIds: personIds, providers: [ready(adrien, "NEGATIVE"), gated(manon)] });
 check(() => assert.ok(negative.current.hypotheses.find((entry) => entry.personId === adrien).effect.absoluteEffect < 0));

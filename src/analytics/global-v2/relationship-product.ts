@@ -1,8 +1,11 @@
 import { sha256 } from "@noble/hashes/sha2.js";
 import { bytesToHex, utf8ToBytes } from "@noble/hashes/utils.js";
 import { canonicalSerializeGlobal } from "../../core/global-v2";
-import { closeRelationshipFdrUniverse } from "./relationship-evidence";
-import { buildGlobalDailyRelationships, type GlobalDailyRelationshipInput } from "./relationships";
+import { relationshipAccessPolicy } from "./relationship-access";
+import { classifyRelationshipTemporalWindows, closeRelationshipFdrUniverse, type RelationshipTemporalWindowEvidence } from "./relationship-evidence";
+import { buildRelationshipInsights } from "./relationship-insight";
+import { buildGlobalM5ProductTransformationFeed, validateGlobalM5TransformationFeed } from "./relationship-m3";
+import { buildGlobalDailyRelationships, qualifyGlobalDailyRelationshipEvidence, type GlobalDailyRelationshipInput } from "./relationships";
 
 export const GLOBAL_M5_PR03_PRODUCT_UNIVERSE = Object.freeze({
   universeId: "m5-v1-pr03-person",
@@ -133,6 +136,7 @@ export function buildGlobalM5Pr03Product(input: {
         return {
           ...hypothesis,
           windowRole,
+          selectedMonths: [] as const,
           eligible: false as const,
           exclusionReason: provider.reasonCodes.join("|") || "AUTHORITY_GATED_CURRENT_REGIME",
           executedTechnicalDefinitionIds: [] as const,
@@ -143,10 +147,10 @@ export function buildGlobalM5Pr03Product(input: {
       const selectedMonthSet = new Set(selectedMonths);
       const days = provider.analysis.days.filter((day) => selectedMonthSet.has(day.date.slice(0, 7)));
       if (!days.some((day) => day.context !== "UNKNOWN" && day.contextEvidenceRefs.length > 0)) {
-        return { ...hypothesis, windowRole, eligible: false as const, exclusionReason: "AUTHORITY_GATED_DAY_CONTEXT", executedTechnicalDefinitionIds: [] as const };
+        return { ...hypothesis, windowRole, selectedMonths, eligible: false as const, exclusionReason: "AUTHORITY_GATED_DAY_CONTEXT", executedTechnicalDefinitionIds: [] as const };
       }
       if (provider.missingPersonDayDates.some((date) => selectedMonths.includes(date.slice(0, 7)))) {
-        return { ...hypothesis, windowRole, eligible: false as const, exclusionReason: "SOURCE_EXPOSURE_GAPS", executedTechnicalDefinitionIds: [] as const };
+        return { ...hypothesis, windowRole, selectedMonths, eligible: false as const, exclusionReason: "SOURCE_EXPOSURE_GAPS", executedTechnicalDefinitionIds: [] as const };
       }
       const dayIds = new Set(days.map((day) => day.id));
       if (!provider.analysis.outcomes.some((outcome) => dayIds.has(outcome.dayId)
@@ -154,13 +158,13 @@ export function buildGlobalM5Pr03Product(input: {
         && outcome.authority === "ACTIVITY_OCCURRENCE"
         && outcome.status === "KNOWN"
         && outcome.coverage.effective === 1)) {
-        return { ...hypothesis, windowRole, eligible: false as const, exclusionReason: "DATA_GATED_OUTCOME_PROVIDER", executedTechnicalDefinitionIds: [] as const };
+        return { ...hypothesis, windowRole, selectedMonths, eligible: false as const, exclusionReason: "DATA_GATED_OUTCOME_PROVIDER", executedTechnicalDefinitionIds: [] as const };
       }
       if (!days.some((day) => day.calendarClass !== "UNKNOWN" && day.calendarEvidenceRefs.length > 0)) {
-        return { ...hypothesis, windowRole, eligible: false as const, exclusionReason: "AUTHORITY_GATED_CALENDAR", executedTechnicalDefinitionIds: [] as const };
+        return { ...hypothesis, windowRole, selectedMonths, eligible: false as const, exclusionReason: "AUTHORITY_GATED_CALENDAR", executedTechnicalDefinitionIds: [] as const };
       }
       if (provider.exceptionPolicy !== "NOT_USED_V1" || provider.seasonPolicy !== "NOT_REQUIRED") {
-        return { ...hypothesis, windowRole, eligible: false as const, exclusionReason: "E1_POLICY_GATE_FAILED", executedTechnicalDefinitionIds: [] as const };
+        return { ...hypothesis, windowRole, selectedMonths, eligible: false as const, exclusionReason: "E1_POLICY_GATE_FAILED", executedTechnicalDefinitionIds: [] as const };
       }
       const { weeklyInputs: _weeklyInputs, ...dailyAnalysis } = provider.analysis;
       const evaluation = buildGlobalDailyRelationships({
@@ -181,6 +185,7 @@ export function buildGlobalM5Pr03Product(input: {
         return {
           ...hypothesis,
           windowRole,
+          selectedMonths,
           eligible: false as const,
           exclusionReason: result.reasonCodes.join("|") || "RAW_STATISTIC_UNAVAILABLE",
           evaluation,
@@ -190,6 +195,7 @@ export function buildGlobalM5Pr03Product(input: {
       return {
         ...hypothesis,
         windowRole,
+        selectedMonths,
         eligible: true as const,
         rawPValue: result.statistic.pValue,
         effect: result.effect,
@@ -227,6 +233,100 @@ export function buildGlobalM5Pr03Product(input: {
       executedTechnicalDefinitionIds: [...new Set(prepared.flatMap((entry) => entry.executedTechnicalDefinitionIds))].sort(),
     };
   });
+  const finalizedEvaluation = (entry: (typeof windows)[number]["hypotheses"][number]) => {
+    if (!("evaluation" in entry) || entry.evaluation === undefined || !entry.eligible || !("qValue" in entry)) return undefined;
+    return {
+      ...entry.evaluation,
+      results: entry.evaluation.results.map((result) => {
+        if (result.relationshipId !== GLOBAL_M5_PR03_PRODUCT_UNIVERSE.technicalDefinitionId
+          || !("materiality" in result) || result.materiality === undefined
+          || !("temporal" in result) || result.temporal === undefined) return result;
+        const qualification = qualifyGlobalDailyRelationshipEvidence({
+          materialityStatus: result.materiality.status,
+          temporalRobust: result.temporal.robust,
+          qValue: entry.qValue,
+        });
+        return { ...result, qValue: entry.qValue, ...qualification };
+      }),
+    };
+  };
+  const windowEvidence = (entry: (typeof windows)[number]["hypotheses"][number]): RelationshipTemporalWindowEvidence => {
+    const evaluation = finalizedEvaluation(entry);
+    const result = evaluation?.results.find(({ relationshipId }) => relationshipId === GLOBAL_M5_PR03_PRODUCT_UNIVERSE.technicalDefinitionId);
+    const effect = result && "effect" in result ? result.effect : undefined;
+    const uncertainty = result && "uncertainty" in result ? result.uncertainty : undefined;
+    return {
+      eligibleMonths: entry.selectedMonths,
+      supportPassed: result?.support.supportStatus === "SUFFICIENT",
+      material: result !== undefined && "materiality" in result && result.materiality?.status === "MATERIAL",
+      statisticalPassed: entry.eligible && "qValue" in entry && entry.qValue <= 0.05,
+      robust: result !== undefined && "temporal" in result && result.temporal?.robust === true,
+      direction: Math.sign(effect?.absoluteEffect ?? 0) as -1 | 0 | 1,
+      confirmedNoDifference: result?.coverage.status === "KNOWN"
+        && effect?.absoluteEffect === 0
+        && uncertainty?.interval95.every((value) => value === 0) === true,
+    };
+  };
+  const ownerResults = plan.hypotheses.map((hypothesis) => {
+    const provider = providers.get(hypothesis.personId)!;
+    const productMetadata = {
+      productUniverseId: plan.universeId,
+      productDefinitionIds: plan.definitionIds,
+      productHypothesisId: hypothesis.id,
+    };
+    if (provider.evaluationStatus === "AUTHORITY_GATED") return {
+      ...provider,
+      ...productMetadata,
+      relationships: [] as const,
+      insights: [] as const,
+    };
+    const { analysis: _analysis, ...providerOwner } = provider;
+    const currentEntry = windows.find(({ windowRole }) => windowRole === "CURRENT")!.hypotheses.find(({ personId }) => personId === hypothesis.personId)!;
+    const recentEntry = windows.find(({ windowRole }) => windowRole === "RECENT_6")!.hypotheses.find(({ personId }) => personId === hypothesis.personId)!;
+    const previousEntry = windows.find(({ windowRole }) => windowRole === "PREVIOUS_6")!.hypotheses.find(({ personId }) => personId === hypothesis.personId)!;
+    const temporalWindows = {
+      current: windowEvidence(currentEntry),
+      recent: windowEvidence(recentEntry),
+      previous: windowEvidence(previousEntry),
+    };
+    const state = classifyRelationshipTemporalWindows(temporalWindows);
+    const current = finalizedEvaluation(currentEntry);
+    const recent = finalizedEvaluation(recentEntry);
+    const displayed = state === "RECENT_ONLY" ? recent : current;
+    const displayedResult = displayed?.results.find(({ relationshipId }) => relationshipId === GLOBAL_M5_PR03_PRODUCT_UNIVERSE.technicalDefinitionId);
+    const access = relationshipAccessPolicy({
+      evidenceStatus: displayedResult?.evidenceStatus ?? "REJECTED",
+      hasComparison: displayedResult !== undefined && "effect" in displayedResult,
+      temporalState: state,
+    });
+    const relationships = [{ relationshipId: GLOBAL_M5_PR03_PRODUCT_UNIVERSE.technicalDefinitionId, state, windows: temporalWindows, access }];
+    const insights = current === undefined || recent === undefined
+      ? []
+      : buildRelationshipInsights({ personId: hypothesis.personId, current, recent, classifications: relationships });
+    return {
+      ...providerOwner,
+      ...productMetadata,
+      evaluationStatus: "EVALUATED" as const,
+      reasonCodes: [] as const,
+      relationships,
+      insights,
+    };
+  });
+  const relationshipEvolution = validateGlobalM5TransformationFeed(ownerResults.flatMap((result) => {
+    if (result.evaluationStatus !== "EVALUATED") return [];
+    const provider = providers.get(result.scope.personId)!;
+    if (provider.evaluationStatus !== "READY_FOR_PRODUCT") return [];
+    return buildGlobalM5ProductTransformationFeed({
+      scope: {
+        personId: result.scope.personId,
+        householdId: provider.analysis.householdId,
+        regimeId: provider.analysis.regimeId,
+        certifiedThrough: provider.analysis.certifiedThrough,
+      },
+      inputHash: digest({ planDigest: plan.planDigest, productHypothesisId: result.productHypothesisId, relationships: result.relationships, windows: windows.map(({ windowRole, scopeRevisionIdentity }) => ({ windowRole, scopeRevisionIdentity })) }),
+      relationships: result.relationships,
+    });
+  }));
   return {
     methodVersion: GLOBAL_M5_PR03_PRODUCT_UNIVERSE.version,
     plan,
@@ -234,7 +334,9 @@ export function buildGlobalM5Pr03Product(input: {
     current: windows.find(({ windowRole }) => windowRole === "CURRENT")!,
     recent6: windows.find(({ windowRole }) => windowRole === "RECENT_6")!,
     previous6: windows.find(({ windowRole }) => windowRole === "PREVIOUS_6")!,
-    insights: [] as const,
+    ownerResults,
+    relationshipEvolution,
+    insights: ownerResults.flatMap((result) => result.insights),
     publicationEligible: false as const,
     causalityMode: "ASSOCIATION_ONLY" as const,
     liveWrites: "NONE" as const,

@@ -25,6 +25,26 @@ const digest = (value: unknown) => bytesToHex(sha256(utf8ToBytes(canonicalSerial
 const mean = (values: readonly number[]) => values.reduce((sum, value) => sum + value, 0) / values.length;
 const seedOf = (value: unknown) => parseInt(digest(value).slice(0, 8), 16);
 
+export function qualifyGlobalDailyRelationshipEvidence(input: {
+  readonly materialityStatus: string;
+  readonly temporalRobust: boolean;
+  readonly qValue: number;
+}) {
+  const reasonCodes = [
+    ...(input.materialityStatus !== "MATERIAL" ? ["MATERIALITY_NOT_PASSED"] : []),
+    ...(!input.temporalRobust ? ["TEMPORAL_ROBUSTNESS_NOT_PASSED"] : []),
+    ...(input.qValue > 0.05 ? ["FDR_PUBLICATION_THRESHOLD_NOT_PASSED"] : []),
+  ];
+  return {
+    reasonCodes,
+    evidenceStatus: reasonCodes.length === 0
+      ? "PUBLISHED" as const
+      : input.qValue <= 0.1 && input.qValue > 0.05
+        ? "SUGGESTIVE_INTERNAL" as const
+        : "REJECTED" as const,
+  };
+}
+
 export type GlobalDailyRelationshipInput = {
   readonly householdId: string;
   readonly personId: string;
@@ -259,13 +279,14 @@ export function buildGlobalDailyRelationships(input: GlobalDailyRelationshipInpu
       statistic: test.statistic,
       qValue: undefined,
       materiality: test.materiality,
+      temporal: test.temporal(),
       evidenceStatus: "REJECTED" as const,
       reasonCodes: ["CROSS_PERSON_FDR_PENDING"],
     };
     const qValue = corrected.find((result) => result.id === base.relationshipId)!.qValue;
     const temporal = test.temporal();
-    const reasonCodes = [...(test.materiality.status !== "MATERIAL" ? ["MATERIALITY_NOT_PASSED"] : []), ...(!temporal.robust ? ["TEMPORAL_ROBUSTNESS_NOT_PASSED"] : []), ...(qValue > 0.05 ? ["FDR_PUBLICATION_THRESHOLD_NOT_PASSED"] : [])];
-    return { ...base, effect: test.effect, uncertainty: test.uncertainty, statistic: test.statistic, qValue, materiality: test.materiality, temporal, evidenceStatus: reasonCodes.length === 0 ? "PUBLISHED" as const : qValue <= 0.1 && qValue > 0.05 ? "SUGGESTIVE_INTERNAL" as const : "REJECTED" as const, reasonCodes };
+    const qualification = qualifyGlobalDailyRelationshipEvidence({ materialityStatus: test.materiality.status, temporalRobust: temporal.robust, qValue });
+    return { ...base, effect: test.effect, uncertainty: test.uncertainty, statistic: test.statistic, qValue, materiality: test.materiality, temporal, ...qualification };
   });
   const weeklyEvidence = (input.weeklyInputs ?? []).map((entry) => ({ definitionId: entry.definitionId, ...(entry.materialityProof === undefined ? {} : { materialityProof: normalizeRelationshipWeeklyMaterialityProof(entry.materialityProof) }), weeks: entry.weeks.filter((week) => week.end <= through && week.personId === input.personId && week.regimeId === input.regimeId).map((week) => ({ ...week, evidenceRefs: [...new Set(week.evidenceRefs)].sort() })).sort((a, b) => a.start.localeCompare(b.start) || a.id.localeCompare(b.id)) })).sort((a, b) => a.definitionId.localeCompare(b.definitionId));
   const weeklyDependencies = [...new Set(weeklyEvidence.flatMap((entry) => [...entry.weeks.flatMap((week) => week.evidenceRefs), ...(entry.materialityProof ? [entry.materialityProof.current, ...entry.materialityProof.withdrawals.map((row) => row.candidate)].flatMap((candidate) => candidate.evidenceRefs) : [])]))].sort().map((ref) => ({ ref, digest: input.dependencyDigests[ref] }));

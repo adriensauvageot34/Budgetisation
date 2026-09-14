@@ -180,15 +180,10 @@ export async function resolveGlobalV2ProductionOwnerOutputs(repository: Canonica
     displayNamesByPersonId: Object.fromEntries(context.persons.map(({ personId, displayName }) => [String(personId), displayName])),
     providers: m5,
   });
-  const m5OwnerOutput = m5.map((result) => ({
-    ...result,
-    productUniverseId: m5Product.plan.universeId,
-    productDefinitionIds: m5Product.plan.definitionIds,
-    productHypothesisId: `${m5Product.plan.definitionIds[0]}:person:${result.scope.personId}`,
-  }));
-  // Run E keeps temporal relationship classification downstream of the locked
-  // product universe. It must not feed the same M5 regime upstream.
-  const m5RelationshipEvolution = [] as const;
+  const m5OwnerOutput = m5Product.ownerResults;
+  // This downstream feed is built only after the person-regime authorities and
+  // M5 product replay. It is never fed back into the same run's regime selector.
+  const m5RelationshipEvolution = m5Product.relationshipEvolution;
 
   const definitions: GlobalPersonaDefinition[] = activityIds.map((activityId) => ({
     metricId: `activity-rate:${activityId}`,
