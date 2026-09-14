@@ -16,6 +16,7 @@ export function createGlobalM5DependencyDeclaration(input: {
     ],
     entityDependencies: [
       { kind: "ENTITY", id: "life_event_types", requirement: "REQUIRED", scopeRelation: "canonical-type-key-not-label" },
+      { kind: "ENTITY", id: "life_event_participations", requirement: "REQUIRED", scopeRelation: "exact-person-day-participation-status" },
       { kind: "ENTITY", id: "analysis_periods", requirement: "REQUIRED", scopeRelation: "certified-observable-coverage" },
       { kind: "ENTITY", id: "financial_source_person_links", requirement: "OPTIONAL", scopeRelation: "exact-component-person-attribution" },
     ],

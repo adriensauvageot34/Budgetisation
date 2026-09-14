@@ -20,6 +20,7 @@
     "check:global-v2-routines": "node --experimental-strip-types scripts/check-global-v2-routines.mjs",
     "check:global-v2-transformation-projectors": "node --experimental-strip-types scripts/check-global-v2-transformation-projectors.mjs",
     "check:global-v2-relationships": "node --experimental-strip-types scripts/check-global-v2-relationships.mjs",
+    "check:global-v2-relationship-product": "node --experimental-strip-types scripts/check-global-v2-relationship-product.mjs",
     "check:global-v2-relationship-authority": "node scripts/check-global-v2-relationship-authority.mjs",
     "check:global-v2-moments": "node --experimental-strip-types scripts/check-global-v2-moments.mjs",
     "check:global-v2-moment-authority": "node scripts/check-global-v2-moment-authority.mjs",

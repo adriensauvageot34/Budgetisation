@@ -16,7 +16,7 @@ import {
   type GlobalPersonaDefinition,
   type GlobalPersonaObservation,
 } from "@/analytics/global-v2";
-import { buildGlobalM5TransformationFeed } from "@/analytics/global-v2/relationship-m3";
+import { buildGlobalM5Pr03Product } from "@/analytics/global-v2/relationship-product";
 import { parseHouseholdId, type PersonId } from "@/core/identity";
 import { normalizeGlobalAnalysisScopeV2 } from "@/core/global-v2";
 import { addMonths, parseHouseholdTimeZone, parseInstant, parseLocalDate, parseYearMonth } from "@/core/time";
@@ -172,10 +172,23 @@ export async function resolveGlobalV2ProductionOwnerOutputs(repository: Canonica
     return resolveGlobalM5PersonAuthority({
       repository,
       scope: { ...scope, subject: { kind: "person", personId } },
-      ...(regimeAuthority.status === "KNOWN" ? { regime: { personId: regimeAuthority.personId, result: regimeAuthority.result } } : {}),
+      regimeAuthority,
     });
   }));
-  const m5RelationshipEvolution = m5.flatMap((result) => buildGlobalM5TransformationFeed(result));
+  const m5Product = buildGlobalM5Pr03Product({
+    authorizedPersonIds: context.personIds.map(String),
+    displayNamesByPersonId: Object.fromEntries(context.persons.map(({ personId, displayName }) => [String(personId), displayName])),
+    providers: m5,
+  });
+  const m5OwnerOutput = m5.map((result) => ({
+    ...result,
+    productUniverseId: m5Product.plan.universeId,
+    productDefinitionIds: m5Product.plan.definitionIds,
+    productHypothesisId: `${m5Product.plan.definitionIds[0]}:person:${result.scope.personId}`,
+  }));
+  // Run E keeps temporal relationship classification downstream of the locked
+  // product universe. It must not feed the same M5 regime upstream.
+  const m5RelationshipEvolution = [] as const;
 
   const definitions: GlobalPersonaDefinition[] = activityIds.map((activityId) => ({
     metricId: `activity-rate:${activityId}`,
@@ -250,14 +263,14 @@ export async function resolveGlobalV2ProductionOwnerOutputs(repository: Canonica
     { moduleKey: "CATEGORIES_NEEDS", owner: "GlobalM2HouseholdAuthority", output: m2, knowledge: "KNOWN", capabilityState: "AVAILABLE", reasonCodes: [], evidenceRefs: evidence("M2", m2) },
     { moduleKey: "TRANSFORMATIONS", owner: "buildGlobalTransformations", output: baseM3Evaluation.output, knowledge: baseM3Evaluation.knowledge, capabilityState: baseM3Evaluation.capabilityState, reasonCodes: baseM3Evaluation.reasonCodes, evidenceRefs: evidence("M3", baseM3Evaluation.output) },
     { moduleKey: "RHYTHM", owner: "buildGlobalActivityRhythm", output: { rhythms, activityCostProfiles }, knowledge: rhythms.length > 0 ? "KNOWN" : "UNKNOWN", capabilityState: rhythms.length > 0 ? "AVAILABLE" : "PARTIAL", reasonCodes: rhythms.length > 0 ? [] : ["NO_OBSERVABLE_ACTIVITY"], evidenceRefs: evidence("M4", { rhythms, activityCostProfiles }) },
-    { moduleKey: "RELATIONSHIPS", owner: "GlobalM5PersonAuthority", output: m5, knowledge: m5.some((result) => result.insights.length > 0) ? "KNOWN" : "UNKNOWN", capabilityState: "PARTIAL", reasonCodes: ["AUTHORITY_GATED_RELATIONSHIP_PROVIDERS"], evidenceRefs: evidence("M5", m5) },
+    { moduleKey: "RELATIONSHIPS", owner: "GlobalM5PersonAuthority", output: m5OwnerOutput, knowledge: m5OwnerOutput.some((result) => result.insights.length > 0) ? "PARTIAL" : "UNKNOWN", capabilityState: m5.every((result) => result.evaluationStatus === "AUTHORITY_GATED") ? "UNAVAILABLE" : "PARTIAL", reasonCodes: m5.every((result) => result.evaluationStatus === "AUTHORITY_GATED") ? ["AUTHORITY_GATED_CURRENT_REGIME"] : ["AUTHORITY_GATED_RELATIONSHIP_PROVIDERS"], evidenceRefs: evidence("M5", { m5OwnerOutput, productPlanDigest: m5Product.plan.planDigest }) },
     { moduleKey: "MOMENTS", owner: "GlobalM6MomentAuthority", output: m6, knowledge: globalV2M6HasPresentationContent(m6) ? "PARTIAL" : "UNKNOWN", capabilityState: "PARTIAL", reasonCodes: globalV2M6HasPresentationContent(m6) ? ["MOMENT_PLACE_FACETS_PARTIAL"] : ["NO_COMPARABLE_MOMENT"], evidenceRefs: evidence("M6", m6) },
     { moduleKey: "GEO_MOBILITY", owner: "GlobalM7PlaceAuthority", output: m7, knowledge: hasItems(m7, ["places", "visits", "placeResults"]) ? "KNOWN" : "UNKNOWN", capabilityState: "PARTIAL", reasonCodes: ["AUTHORITY_GATED_MOBILITY"], evidenceRefs: evidence("M7", m7) },
     { moduleKey: "CONSUMPTION", owner: "GlobalM8PurchaseAuthority", output: m8, knowledge: hasItems(m8, ["events", "merchants"]) ? "PARTIAL" : "UNKNOWN", capabilityState: "PARTIAL", reasonCodes: ["PURCHASE_EVENT_COVERAGE_PARTIAL"], evidenceRefs: evidence("M8", m8) },
     { moduleKey: "PERSONAS", owner: "buildGlobalPersonaMetrics", output: m9, knowledge: personaMetrics.length > 0 ? "PARTIAL" : "UNKNOWN", capabilityState: context.personIds.length >= 2 ? "PARTIAL" : "UNAVAILABLE", reasonCodes: personaMetrics.length > 0 ? ["COMPARABLE_INTERSECTION_REQUIRED"] : ["PERSON_PAIR_UNAVAILABLE"], evidenceRefs: evidence("M9", m9) },
     { moduleKey: "TOGETHER", owner: "SharedParticipationResolver", output: m10, knowledge: m10.universes.length > 0 ? "PARTIAL" : "UNKNOWN", capabilityState: context.personIds.length === 2 ? "PARTIAL" : "UNAVAILABLE", reasonCodes: m10.universes.length > 0 ? ["PARTICIPATION_COVERAGE_VISIBLE"] : ["SHARED_UNIVERSE_UNAVAILABLE"], evidenceRefs: evidence("M10", m10) },
   ];
-  return { scope, certifiedThrough, targetMonth, ownerOutputs, presentationLabels, personRegimeAuthorities, m5RelationshipEvolution };
+  return { scope, certifiedThrough, targetMonth, ownerOutputs, presentationLabels, personRegimeAuthorities, m5Product, m5RelationshipEvolution };
 }
 
 /** Read-only production bridge: this API exposes no materialization store. */

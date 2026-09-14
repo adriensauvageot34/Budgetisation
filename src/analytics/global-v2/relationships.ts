@@ -25,7 +25,7 @@ const digest = (value: unknown) => bytesToHex(sha256(utf8ToBytes(canonicalSerial
 const mean = (values: readonly number[]) => values.reduce((sum, value) => sum + value, 0) / values.length;
 const seedOf = (value: unknown) => parseInt(digest(value).slice(0, 8), 16);
 
-export function buildGlobalDailyRelationships(input: {
+export type GlobalDailyRelationshipInput = {
   readonly householdId: string;
   readonly personId: string;
   readonly regimeId: string;
@@ -37,6 +37,8 @@ export function buildGlobalDailyRelationships(input: {
   readonly days: readonly RelationshipDayUnit[];
   readonly outcomes: readonly RelationshipDailyOutcome[];
   readonly dependencyDigests: Readonly<Record<string, string>>;
+  readonly definitionIds?: readonly string[];
+  readonly deferFdr?: boolean;
   readonly windowRole?: "CURRENT" | "RECENT_6" | "PREVIOUS_6";
   readonly definitionMonths?: Readonly<Record<string, readonly string[]>>;
   readonly weeklyInputs?: readonly {
@@ -48,7 +50,9 @@ export function buildGlobalDailyRelationships(input: {
       readonly PREVIOUS_6?: RelationshipWeeklyMaterialityProof;
     };
   }[];
-}) {
+};
+
+export function buildGlobalDailyRelationships(input: GlobalDailyRelationshipInput) {
   canonicalSerializeGlobal(input);
   const through = parseLocalDate(input.certifiedThrough);
   if (through > instantToLocalDate(parseInstant(input.asOf), parseHouseholdTimeZone(input.householdTimeZone))) throw new TypeError("M5_LOOKAHEAD_BOUNDARY");
@@ -59,7 +63,18 @@ export function buildGlobalDailyRelationships(input: {
     if (!dailyRelationshipCatalog.some((entry) => entry.id === id) || months.some((month) => !/^\d{4}-(0[1-9]|1[0-2])$/.test(month))) throw new TypeError("M5_INVALID_DEFINITION_WINDOW");
     return [id, [...new Set(months)].sort()];
   }));
-  const relevantOutcomes = new Set(dailyRelationshipCatalog.map((definition) => definition.outcome));
+  const selectedDefinitionIds = input.definitionIds === undefined
+    ? undefined
+    : [...new Set(input.definitionIds)].sort();
+  if (selectedDefinitionIds?.some((id) => !dailyRelationshipCatalog.some((definition) => definition.id === id))) {
+    throw new TypeError("M5_UNCATALOGUED_DAILY_RELATION");
+  }
+  if (input.deferFdr && (!selectedDefinitionIds || selectedDefinitionIds.length === 0)) throw new TypeError("M5_DEFERRED_FDR_REQUIRES_EXPLICIT_DEFINITIONS");
+  if (input.deferFdr && (input.weeklyInputs?.length ?? 0) > 0) throw new TypeError("M5_DEFERRED_FDR_DAILY_ONLY");
+  const activeDailyDefinitions = selectedDefinitionIds === undefined
+    ? dailyRelationshipCatalog
+    : dailyRelationshipCatalog.filter((definition) => selectedDefinitionIds.includes(definition.id));
+  const relevantOutcomes = new Set(activeDailyDefinitions.map((definition) => definition.outcome));
   const outcomes = new Map<string, RelationshipDailyOutcome>();
   const consumed = new Set<string>();
   for (const raw of input.outcomes) {
@@ -87,7 +102,7 @@ export function buildGlobalDailyRelationships(input: {
   const inputHash = digest({ scope, policies, days, outcomes: [...outcomes.values()].sort((a, b) => `${a.dayId}:${a.outcome}`.localeCompare(`${b.dayId}:${b.outcome}`)), dependencyClosure, definitionMonths });
   const engine = new GlobalMaterialityEngine();
   const scopedDays = days;
-  const prepared = dailyRelationshipCatalog.map((definition) => {
+  const prepared = activeDailyDefinitions.map((definition) => {
     const selectedMonths = definitionMonths[definition.id];
     const days = selectedMonths === undefined ? scopedDays : scopedDays.filter((day) => selectedMonths.includes(day.date.slice(0, 7)));
     const eligible = days.filter((day) => {
@@ -99,7 +114,7 @@ export function buildGlobalDailyRelationships(input: {
     const matching = matchRelationshipDays({ exposure: definition.exposure, householdId: input.householdId, personId: input.personId, regimeId: input.regimeId, through, days: eligible });
     const pairs = matching.pairs.map((pair) => ({ ...pair, a: outcomes.get(`${pair.exposed.id}:${definition.outcome}`)!.value, b: outcomes.get(`${pair.control.id}:${definition.outcome}`)!.value }));
     const sample = { exposed: matching.exposedCount, comparator: matching.controlCount, matchedPairs: pairs.length };
-    const support = { naturalGrain: "PERSON_DAY" as const, eligibleUnits: days.length, observedUnits: eligible.length, includedUnits: pairs.length * 2, excludedObservedUnits: eligible.length - pairs.length * 2, minimumRequired: definition.minimumPairs, matchedSetCount: pairs.length, supportStatus: pairs.length >= definition.minimumPairs ? "SUFFICIENT" as const : "INSUFFICIENT" as const, policyRef: "relationship-day-post-match-15@v1" };
+    const support = { naturalGrain: "PERSON_DAY" as const, eligibleUnits: days.length, observedUnits: eligible.length, includedUnits: pairs.length * 2, excludedObservedUnits: eligible.length - pairs.length * 2, minimumRequired: definition.minimumPairs * 2, matchedSetCount: pairs.length, supportStatus: pairs.length >= definition.minimumPairs ? "SUFFICIENT" as const : "INSUFFICIENT" as const, policyRef: "relationship-day-post-match-15@v1" };
     const base = { relationshipId: definition.id, definition, causalityMode: "ASSOCIATION_ONLY" as const, scope, sample, support, matching, coverage: { eligibleUnits: days.length, resolvedUnits: eligible.length, ...(days.length ? { ratio: eligible.length / days.length } : {}), status: !days.length ? "UNKNOWN" : eligible.length === days.length ? "KNOWN" : "PARTIAL" }, excludedOutcomeDayIds: days.filter((day) => !eligible.includes(day)).map((day) => day.id) };
     const authorityReasons = [
       ...(definition.exposure !== "WEEKEND" && !days.some((day) => day.context !== "UNKNOWN" && day.contextEvidenceRefs.length > 0) ? ["AUTHORITY_GATED_DAY_CONTEXT"] : []),
@@ -198,22 +213,32 @@ export function buildGlobalDailyRelationships(input: {
       if (!input.dependencyDigests[ref]) throw new TypeError(`M5_DEPENDENCY_CLOSURE_MISSING:${ref}`);
     }
   }
-  const weeklyResults = weeklyRelationshipCatalog.map((definition) => {
+  const activeWeeklyDefinitions = input.deferFdr ? [] : weeklyRelationshipCatalog;
+  const weeklyResults = activeWeeklyDefinitions.map((definition) => {
     const supplied = input.weeklyInputs?.find((value) => value.definitionId === definition.id);
     if (!supplied) return { definition, status: "UNKNOWN" as const, reasonCode: "PROVIDER_NOT_SUPPLIED" };
     if (definition.provider !== "BC_CORE") throw new TypeError("M5_P08_PROVIDER_NOT_YET_CERTIFIED");
     return prepareWeeklyRelationship({ definitionId: definition.id, personId: input.personId, regimeId: input.regimeId, through, seed: seedOf({ scope, definition: definition.id }), weeks: supplied.weeks, ...(supplied.materialityProof === undefined ? {} : { materialityProof: supplied.materialityProof }) });
   });
-  const excludedDefinitions = deferredRelationshipExaminations();
-  const fdr = closeRelationshipFdrUniverse({
-    scopeRevisionIdentity: digest({ scope, definitionMonths }),
-    expectedDefinitionIds: [...dailyRelationshipCatalog.map((definition) => definition.id), ...weeklyRelationshipCatalog.map((definition) => definition.id), ...excludedDefinitions.map((definition) => definition.id)],
-    tests: [
-      ...excludedDefinitions.map(({ id, eligible, exclusionReason }) => ({ id, eligible, exclusionReason })),
-      ...prepared.map((result) => result.test ? { id: result.relationshipId, eligible: true, pValue: result.test.statistic.pValue } : { id: result.relationshipId, eligible: false, exclusionReason: result.reasonCodes.join("|") }),
-      ...weeklyResults.map((result) => "pValue" in result && result.pValue !== undefined ? { id: result.definition.id, eligible: true, pValue: result.pValue } : { id: result.definition.id, eligible: false, exclusionReason: "reasonCode" in result ? result.reasonCode! : "UNKNOWN_WEEKLY_TEST" }),
-    ],
-  });
+  const excludedDefinitions = input.deferFdr ? [] : deferredRelationshipExaminations();
+  const fdr = input.deferFdr
+    ? {
+        universeId: digest({ scopeRevisionIdentity: digest({ scope, definitionMonths }), expectedDefinitionIds: activeDailyDefinitions.map(({ id }) => id), mode: "DEFERRED_CROSS_PERSON" }),
+        correction: "BENJAMINI_HOCHBERG" as const,
+        familySize: activeDailyDefinitions.length,
+        eligibleTestCount: 0,
+        tests: [] as const,
+        exclusions: prepared.map((result) => ({ id: result.relationshipId, exclusionReason: result.test ? "CROSS_PERSON_FDR_PENDING" : result.reasonCodes.join("|") })),
+      }
+    : closeRelationshipFdrUniverse({
+        scopeRevisionIdentity: digest({ scope, definitionMonths }),
+        expectedDefinitionIds: [...activeDailyDefinitions.map((definition) => definition.id), ...activeWeeklyDefinitions.map((definition) => definition.id), ...excludedDefinitions.map((definition) => definition.id)],
+        tests: [
+          ...excludedDefinitions.map(({ id, eligible, exclusionReason }) => ({ id, eligible, exclusionReason })),
+          ...prepared.map((result) => result.test ? { id: result.relationshipId, eligible: true, pValue: result.test.statistic.pValue } : { id: result.relationshipId, eligible: false, exclusionReason: result.reasonCodes.join("|") }),
+          ...weeklyResults.map((result) => "pValue" in result && result.pValue !== undefined ? { id: result.definition.id, eligible: true, pValue: result.pValue } : { id: result.definition.id, eligible: false, exclusionReason: "reasonCode" in result ? result.reasonCode! : "UNKNOWN_WEEKLY_TEST" }),
+        ],
+      });
   const corrected = fdr.tests;
   const weeklyQualified = weeklyResults.map((prepared) => {
     const result = "evaluateTemporal" in prepared ? (() => { const { evaluateTemporal, ...value } = prepared; return { ...value, temporal: evaluateTemporal() }; })() : prepared;
@@ -227,6 +252,16 @@ export function buildGlobalDailyRelationships(input: {
   });
   const results = prepared.map(({ pairs: _pairs, test, ...base }) => {
     if (!test) return { ...base, evidenceStatus: "REJECTED" as const };
+    if (input.deferFdr) return {
+      ...base,
+      effect: test.effect,
+      uncertainty: test.uncertainty,
+      statistic: test.statistic,
+      qValue: undefined,
+      materiality: test.materiality,
+      evidenceStatus: "REJECTED" as const,
+      reasonCodes: ["CROSS_PERSON_FDR_PENDING"],
+    };
     const qValue = corrected.find((result) => result.id === base.relationshipId)!.qValue;
     const temporal = test.temporal();
     const reasonCodes = [...(test.materiality.status !== "MATERIAL" ? ["MATERIALITY_NOT_PASSED"] : []), ...(!temporal.robust ? ["TEMPORAL_ROBUSTNESS_NOT_PASSED"] : []), ...(qValue > 0.05 ? ["FDR_PUBLICATION_THRESHOLD_NOT_PASSED"] : [])];
@@ -239,5 +274,5 @@ export function buildGlobalDailyRelationships(input: {
     ...weeklyQualified.map((entry) => ({ id: entry.definition.id, status: entry.definition.provider === "P08_MOBILITY" ? "DEFERRED_P08_P10" as const : "pValue" in entry ? "ACTIVE" as const : "EXCLUDED_WITH_REASON" as const, reasonCodes: [...entry.reasonCodes, ...("reasonCode" in entry ? [entry.reasonCode] : [])], grain: "WEEK", exposure: entry.definition.exposure, outcome: entry.definition.outcome, owner: entry.definition.provider === "P08_MOBILITY" ? "P08" : "P06" })),
     ...excludedDefinitions.map((entry) => ({ id: entry.id, status: entry.status, reasonCodes: [entry.reason], grain: entry.grain, owner: entry.owner })),
   ].sort((a, b) => a.id.localeCompare(b.id));
-  return { methodVersion: "global_relationship_daily@v1", certificationStatus: "PARTIAL_DAILY_CORE" as const, publicationEligible: false as const, pipeline: relationshipPipeline, inputHash: digest({ daily: inputHash, weeklyEvidence, weeklyDependencies, excludedDefinitions }), dependencyClosure, weeklyDependencies, policies, fdr, results, weeklyResults: weeklyQualified, excludedDefinitions, executionPlan, limitations: ["ASSOCIATION_NOT_CAUSATION", "UNOBSERVED_CONFOUNDERS", "DAILY_CORE_ONLY", "PAIRED_BOOTSTRAP_NOT_BLOCK_BOOTSTRAP"], liveWrites: "NONE" };
+  return { methodVersion: "global_relationship_daily@v1", certificationStatus: "PARTIAL_DAILY_CORE" as const, publicationEligible: false as const, pipeline: relationshipPipeline, inputHash: digest({ daily: inputHash, weeklyEvidence, weeklyDependencies, excludedDefinitions, ...(selectedDefinitionIds === undefined ? {} : { selectedDefinitionIds }), deferFdr: input.deferFdr ?? false }), dependencyClosure, weeklyDependencies, policies, fdr, results, weeklyResults: weeklyQualified, excludedDefinitions, executionPlan, limitations: ["ASSOCIATION_NOT_CAUSATION", "UNOBSERVED_CONFOUNDERS", "DAILY_CORE_ONLY", "PAIRED_BOOTSTRAP_NOT_BLOCK_BOOTSTRAP"], liveWrites: "NONE" };
 }

@@ -85,6 +85,13 @@ export {
   type GlobalPersonRegimeAuthority,
 } from "./person-regime-authority";
 export {
+  GLOBAL_M5_PR03_GATE_ORDER,
+  GLOBAL_M5_PR03_PRODUCT_UNIVERSE,
+  buildGlobalM5Pr03Product,
+  buildGlobalM5Pr03ProductPlan,
+  type GlobalM5Pr03Provider,
+} from "./relationship-product";
+export {
   projectGlobalM1ActualTransformationSeries,
   projectGlobalM2CategoryTransformationSeries,
   projectGlobalM4ActivityFrequencyTransformationSeries,

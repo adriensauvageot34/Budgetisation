@@ -5,6 +5,97 @@ import type { RelationshipDayContext, RelationshipDayUnit } from "./relationship
 import { parseGlobalCoverageSet } from "../../core/global-v2";
 import type { RelationshipDailyOutcome } from "./relationships";
 
+export type RelationshipActivityParticipation = {
+  readonly lifeEventId: string;
+  readonly personDayId: string;
+  readonly personId: string;
+  readonly status: "Confirmée" | "Déduite" | "Inconnue";
+  readonly evidenceRef: string;
+};
+
+export type RelationshipDayContextAssertion = GlobalDayContextAssertion & {
+  readonly excludedReasons?: readonly ["WORK_CONTEXT_CONFLICT"];
+};
+
+const compare = (left: string, right: string) => left.localeCompare(right);
+const affirmativeParticipation = (status: RelationshipActivityParticipation["status"]) =>
+  status === "Confirmée" || status === "Déduite";
+
+function uniqueBy<T>(values: readonly T[], key: (value: T) => string, label: string): readonly T[] {
+  const result = new Map<string, T>();
+  for (const value of values) {
+    const id = key(value);
+    const previous = result.get(id);
+    if (previous !== undefined && canonicalSerializeGlobal(previous) !== canonicalSerializeGlobal(value)) {
+      throw new TypeError(`${label}: M5_CONTRADICTORY_AUTHORITY`);
+    }
+    result.set(id, value);
+  }
+  return [...result.values()];
+}
+
+/** E1 V1: only exact same-person participation in the two canonical work
+ * activities can assert a work context. Place, HOME and negative inference are
+ * deliberately absent. Conflicting work assertions remain non-affirmative.
+ */
+export function projectRelationshipWorkContexts(input: {
+  readonly householdId: string;
+  readonly personId: string;
+  readonly personDays: readonly PersonDayFact[];
+  readonly occurrences: readonly ActivityOccurrenceFact[];
+  readonly participations: readonly RelationshipActivityParticipation[];
+}): readonly RelationshipDayContextAssertion[] {
+  const days = new Map(uniqueBy(input.personDays, (day) => String(day.personDayId), "PersonDayFact")
+    .filter((day) => String(day.personId) === input.personId)
+    .map((day) => [String(day.personDayId), day]));
+  const occurrences = new Map(uniqueBy(input.occurrences, (fact) => String(fact.lifeEventId), "ActivityOccurrenceFact")
+    .map((fact) => [String(fact.lifeEventId), fact]));
+  const participations = uniqueBy(input.participations,
+    (value) => `${value.lifeEventId}:${value.personDayId}:${value.personId}`,
+    "LifeEventParticipation")
+    .filter((value) => value.personId === input.personId && affirmativeParticipation(value.status));
+  const byDay = new Map<string, { types: Set<"ONSITE" | "REMOTE">; refs: Set<string> }>();
+  for (const participation of participations) {
+    const day = days.get(participation.personDayId);
+    const occurrence = occurrences.get(participation.lifeEventId);
+    if (day === undefined || occurrence === undefined) throw new TypeError("M5_WORK_PARTICIPATION_AUTHORITY_MISMATCH");
+    if (String(day.householdId) !== input.householdId || String(occurrence.householdId) !== input.householdId
+      || !occurrence.participantIds.some((personId) => String(personId) === input.personId)
+      || day.localDate < occurrence.startDate || day.localDate > occurrence.endDate) {
+      throw new TypeError("M5_WORK_PARTICIPATION_SCOPE_MISMATCH");
+    }
+    const dayType = String(occurrence.activityId) === "travail_site"
+      ? "ONSITE" as const
+      : String(occurrence.activityId) === "teletravail"
+        ? "REMOTE" as const
+        : undefined;
+    if (dayType === undefined) continue;
+    const authority = byDay.get(participation.personDayId) ?? { types: new Set(), refs: new Set() };
+    authority.types.add(dayType);
+    authority.refs.add(`fct_person_day:${participation.personDayId}`);
+    authority.refs.add(`fct_activity_occurrence:${participation.lifeEventId}`);
+    authority.refs.add(participation.evidenceRef);
+    byDay.set(participation.personDayId, authority);
+  }
+  return [...byDay.entries()].map(([personDayId, authority]): RelationshipDayContextAssertion => {
+    const evidenceRefs = [...authority.refs].sort(compare);
+    if (authority.types.size > 1) return {
+      personDayId,
+      dayType: "UNKNOWN",
+      authorityRef: `relationship-work-context-conflict:${personDayId}`,
+      evidenceRefs,
+      excludedReasons: ["WORK_CONTEXT_CONFLICT"],
+    };
+    const dayType = [...authority.types][0]!;
+    return {
+      personDayId,
+      dayType,
+      authorityRef: `relationship-work-context:${dayType.toLowerCase()}:${personDayId}`,
+      evidenceRefs,
+    };
+  }).sort((left, right) => compare(left.personDayId, right.personDayId));
+}
+
 /** P05's explicit assertions remain mandatory. Neither a Place nor a missing
  * context is converted into HOME/REMOTE/NOT_LEAVE. No new Fact grain is created.
  */
@@ -13,7 +104,7 @@ export function projectRelationshipPersonDays(input: {
   readonly personId: string;
   readonly regimeId: string;
   readonly personDays: readonly PersonDayFact[];
-  readonly contexts: readonly GlobalDayContextAssertion[];
+  readonly contexts: readonly RelationshipDayContextAssertion[];
   readonly calendar: readonly { readonly personDayId: string; readonly calendarClass: "WEEKDAY" | "WEEKEND"; readonly evidenceRef: string }[];
 }): readonly RelationshipDayUnit[] {
   canonicalSerializeGlobal(input);
@@ -40,10 +131,10 @@ export function projectRelationshipPersonDays(input: {
       id, householdId: input.householdId, personId: input.personId, regimeId: input.regimeId,
       date: fact.localDate, personDayObservable: true,
       context: resolved ? context.dayType as RelationshipDayContext : "UNKNOWN",
-      contextEvidenceRefs: resolved ? [context.authorityRef, ...context.evidenceRefs] : [],
+      contextEvidenceRefs: context ? [...new Set([context.authorityRef, ...context.evidenceRefs])].sort(compare) : [],
       calendarClass: cal?.evidenceRef ? cal.calendarClass : "UNKNOWN",
       calendarEvidenceRefs: cal?.evidenceRef ? [cal.evidenceRef] : [],
-      evidenceRefs: [`fct_person_day:${id}`], excludedReasons: [],
+      evidenceRefs: [`fct_person_day:${id}`], excludedReasons: context?.excludedReasons ?? [],
     };
   }).sort((a, b) => a.date.localeCompare(b.date) || a.id.localeCompare(b.id));
 }
@@ -56,6 +147,7 @@ export function projectRelationshipActivityPresence(input: {
   readonly personId: string;
   readonly activityId: string;
   readonly occurrences: readonly ActivityOccurrenceFact[];
+  readonly participations: readonly RelationshipActivityParticipation[];
 }) {
   const seen = new Map<string, ActivityOccurrenceFact>();
   for (const fact of input.occurrences) {
@@ -64,10 +156,22 @@ export function projectRelationshipActivityPresence(input: {
     if (previous && canonicalSerializeGlobal(previous) !== canonicalSerializeGlobal(fact)) throw new TypeError("M5_CONTRADICTORY_OCCURRENCE");
     seen.set(id, fact);
   }
-  return [...seen.values()].filter((fact) => String(fact.activityId) === input.activityId && fact.participantIds.some((id) => String(id) === input.personId)).map((fact) => ({
-    date: fact.startDate, lifeEventId: String(fact.lifeEventId), rawOccurrenceCount: 1 as const,
-    evidenceRef: `fct_activity_occurrence:${fact.lifeEventId}`, personId: input.personId,
-  })).sort((a, b) => a.date.localeCompare(b.date) || a.lifeEventId.localeCompare(b.lifeEventId));
+  const participations = uniqueBy(input.participations,
+    (value) => `${value.lifeEventId}:${value.personDayId}:${value.personId}`,
+    "LifeEventParticipation");
+  return participations.filter((participation) => participation.personId === input.personId
+    && affirmativeParticipation(participation.status)).flatMap((participation) => {
+    const fact = seen.get(participation.lifeEventId);
+    if (fact === undefined || String(fact.activityId) !== input.activityId) return [];
+    if (!fact.participantIds.some((id) => String(id) === input.personId)) throw new TypeError("M5_PARTICIPATION_FACT_MISMATCH");
+    return [{
+      date: fact.startDate, personDayId: participation.personDayId,
+      lifeEventId: String(fact.lifeEventId), rawOccurrenceCount: 1 as const,
+      evidenceRef: `fct_activity_occurrence:${fact.lifeEventId}`,
+      participationEvidenceRef: participation.evidenceRef,
+      personId: input.personId,
+    }];
+  }).sort((a, b) => a.date.localeCompare(b.date) || a.lifeEventId.localeCompare(b.lifeEventId));
 }
 
 /** Exact existing Canonical activity identity, not a textual/merchant classifier.
@@ -79,20 +183,31 @@ export function projectRelationshipRestaurantOutcomes(input: {
   readonly personId: string;
   readonly days: readonly RelationshipDayUnit[];
   readonly occurrences: readonly ActivityOccurrenceFact[];
+  readonly participations: readonly RelationshipActivityParticipation[];
   readonly completeLifeMonths: readonly string[];
 }): readonly RelationshipDailyOutcome[] {
   const present = projectRelationshipActivityPresence({ ...input, activityId: "repas_restaurant" });
   const complete = new Set(input.completeLifeMonths);
   const dates = new Set(input.days.filter((day) => day.personId === input.personId).map((day) => day.date));
   const unmappedMonths = new Set(present.filter((event) => !dates.has(event.date)).map((event) => event.date.slice(0, 7)));
-  const unresolvedParticipationMonths = new Set(input.occurrences.filter((fact) => fact.activityId === "repas_restaurant" && fact.participantIds.length === 0).map((fact) => fact.startDate.slice(0, 7)));
+  const unresolvedParticipationMonths = new Set([
+    ...input.occurrences.filter((fact) => String(fact.activityId) === "repas_restaurant" && fact.participantIds.length === 0)
+      .map((fact) => fact.startDate.slice(0, 7)),
+    ...input.participations.filter((participation) =>
+      participation.personId === input.personId && participation.status === "Inconnue"
+      && input.occurrences.some((fact) => String(fact.lifeEventId) === participation.lifeEventId
+        && String(fact.activityId) === "repas_restaurant"))
+      .flatMap((participation) => input.occurrences
+        .filter((fact) => String(fact.lifeEventId) === participation.lifeEventId)
+        .map((fact) => fact.startDate.slice(0, 7))),
+  ]);
   return input.days.map((day) => {
     if (day.householdId !== input.householdId || day.personId !== input.personId) throw new TypeError("M5_OUTCOME_PERSON_HOUSEHOLD_MISMATCH");
     const month = day.date.slice(0, 7);
-    const observed = present.filter((event) => event.date === day.date);
+    const observed = present.filter((event) => event.personDayId === day.id && event.date === day.date);
     const known = complete.has(month) && day.personDayObservable && !unmappedMonths.has(month) && !unresolvedParticipationMonths.has(month);
     const periodRef = `analysis-period:${month}`;
-    const evidenceRefs = [...new Set([periodRef, ...day.evidenceRefs, ...observed.map((event) => event.evidenceRef)])].sort();
+    const evidenceRefs = [...new Set([periodRef, ...day.evidenceRefs, ...observed.flatMap((event) => [event.evidenceRef, event.participationEvidenceRef])])].sort();
     const status = known ? "KNOWN" as const : "PARTIAL" as const;
     return {
       dayId: day.id, outcome: "RESTAURANT", value: Number(observed.length > 0),

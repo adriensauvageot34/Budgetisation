@@ -307,6 +307,63 @@ const noForcedFillOverview = noForcedFill.snapshots.find(({ resource, params }) 
 check(() => assert.equal(noForcedFillOverview.primaryInsight, undefined));
 check(() => assert.deepEqual(noForcedFillOverview.secondaryInsights, []));
 check(() => assert.deepEqual(noForcedFillOverview.rows, []));
+const relationshipInsight = ({ personId = personA, relationshipId = "onsite-restaurant", effect = 0.25, evidenceStatus = "PUBLISHED", materialityStatus = "MATERIAL", aiEligible = true, causalityMode = "ASSOCIATION_ONLY" } = {}) => ({
+  relationshipId, relationshipDefinitionVersion: "relationship-catalog-explicit-families@v2", subjectRef: personId, scope: "PERSON", stability: "STABLE_CURRENT_REGIME",
+  access: { autoGlobal: aiEligible ? "VISIBLE" : "HIDDEN", moduleDetailAutomatic: aiEligible ? "VISIBLE" : "HIDDEN", explicitExploration: "VISIBLE", aiEligible, statisticalValuesInAi: false, languageKey: "OBSERVED_ASSOCIATION", causalityMode: "ASSOCIATION_ONLY", policyVersion: "global-relationship-access@v1" },
+  causalityMode, grain: "DAY", exposure: relationshipId === "remote-restaurant" ? "REMOTE" : "ONSITE", comparator: relationshipId === "remote-restaurant" ? "ONSITE" : "REMOTE", outcome: "RESTAURANT",
+  sample: { exposed: 18, comparator: 18, matchedPairs: 18 }, effect: { kind: "PROBABILITY_DIFFERENCE", absoluteEffect: effect, exposedLevel: 0.5, comparatorLevel: 0.25, interval95: [0.1, 0.4] },
+  evidence: { rawPValue: 0.04, adjustedQValue: 0.04, evidenceStatus }, materiality: { status: materialityStatus }, matchingSummary: { method: "EXACT_WEEKDAY_NEAREST_NO_REPLACEMENT" },
+  support: { naturalGrain: "PERSON_DAY", eligibleUnits: 36, observedUnits: 36, includedUnits: 36, excludedObservedUnits: 0, minimumRequired: 30, supportStatus: "SUFFICIENT", policyRef: "relationship-day-post-match-15@v1" },
+  coverage: axisCoverage("PERSON_DAY", "KNOWN", 1), evidenceRefs: [`relationship:${relationshipId}:${personId}`], methodVersion: "global_relationship_insight@v1", inputHash: "f".repeat(64), analyticsRevision: 79, policyVersions: {},
+});
+const evaluatedRelationship = (personId, insights, extra = {}) => ({ evaluationStatus: "EVALUATED", scope: { personId }, productUniverseId: "m5-v1-pr03-person", productDefinitionIds: ["onsite-restaurant"], insights, ...extra });
+const gatedRelationship = (personId) => ({ evaluationStatus: "AUTHORITY_GATED", scope: { personId }, productUniverseId: "m5-v1-pr03-person", productDefinitionIds: ["onsite-restaurant"], reasonCodes: ["AUTHORITY_GATED_CURRENT_REGIME"], insights: [] });
+const rhythmWith = (personResults, transformationOutput = outputByModule.TRANSFORMATIONS) => {
+  const ownerOutputs = modules.map((entry) => entry.moduleKey === "RELATIONSHIPS" ? { ...entry, output: personResults, capabilityState: "UNAVAILABLE", reasonCodes: ["AUTHORITY_GATED_RELATIONSHIP_PROVIDERS"] } : entry.moduleKey === "TRANSFORMATIONS" ? { ...entry, output: transformationOutput } : entry);
+  const candidate = candidateApi.buildGlobalV2CandidateFromOwnerOutputs({ ...base, ownerOutputs });
+  return candidate.snapshots.find(({ resource, params }) => resource === "analysis_global_rhythm_expanded" && params.sectionKey === "OVERVIEW").payload;
+};
+
+// E-T33..E-T35: person-scoped owner arrays are flattened; nested evidence and
+// insight-scoped access survive unrelated module/person gates.
+const positiveRelationshipOverview = rhythmWith([gatedRelationship(personB), evaluatedRelationship(personA, [relationshipInsight()])]);
+check(() => assert.equal(positiveRelationshipOverview.primaryInsight.kind, "M5_MATERIAL_ROBUST_ASSOCIATION"));
+check(() => assert.equal(positiveRelationshipOverview.primaryInsight.entityRefs[0], `person:${personA}`));
+check(() => assert.match(positiveRelationshipOverview.primaryInsight.titleKey, /Camille/u));
+check(() => assert.match(positiveRelationshipOverview.primaryInsight.statementKey, /associés à une fréquence de restaurant plus élevée/u));
+check(() => assert.doesNotMatch(positiveRelationshipOverview.primaryInsight.statementKey, /(?:provoque|cause|p\s*=|q\s*=)/u));
+
+const negativeRelationshipOverview = rhythmWith([evaluatedRelationship(personA, [relationshipInsight({ effect: -0.25 })]), gatedRelationship(personB)]);
+check(() => assert.match(negativeRelationshipOverview.primaryInsight.statementKey, /plus faible/u));
+
+// E-T36 and fail-closed variants.
+for (const hidden of [
+  relationshipInsight({ relationshipId: "remote-restaurant" }),
+  relationshipInsight({ materialityStatus: "NOT_MATERIAL" }),
+  relationshipInsight({ evidenceStatus: "SUGGESTIVE_INTERNAL" }),
+  relationshipInsight({ evidenceStatus: "REJECTED" }),
+  relationshipInsight({ aiEligible: false }),
+  relationshipInsight({ causalityMode: "CAUSAL" }),
+]) {
+  const overview = rhythmWith([evaluatedRelationship(personA, [hidden]), gatedRelationship(personB)]);
+  check(() => assert.notEqual(overview.primaryInsight?.kind, "M5_MATERIAL_ROBUST_ASSOCIATION"));
+}
+const wrongUniverse = rhythmWith([{ ...evaluatedRelationship(personA, [relationshipInsight()]), productUniverseId: "technical-all" }, gatedRelationship(personB)]);
+check(() => assert.notEqual(wrongUniverse.primaryInsight?.kind, "M5_MATERIAL_ROBUST_ASSOCIATION"));
+
+// E-T37: stable person tie-break, max one M5 and frozen A > B > C > D order.
+const twoPersonForward = rhythmWith([evaluatedRelationship(personA, [relationshipInsight()]), evaluatedRelationship(personB, [relationshipInsight({ personId: personB })])]);
+const twoPersonReverse = rhythmWith([evaluatedRelationship(personB, [relationshipInsight({ personId: personB })]), evaluatedRelationship(personA, [relationshipInsight()])]);
+check(() => assert.equal(twoPersonForward.primaryInsight.insightId, twoPersonReverse.primaryInsight.insightId));
+check(() => assert.match(twoPersonForward.primaryInsight.insightId, new RegExp(personA)));
+check(() => assert.equal([twoPersonForward.primaryInsight, ...twoPersonForward.secondaryInsights].filter(({ kind }) => kind === "M5_MATERIAL_ROBUST_ASSOCIATION").length, 1));
+const transformation = { transformations: [{ transformationId: "certified-change", status: "CONFIRMED_ONGOING", titleKey: "Changement certifié", evidenceRefs: ["transformation:certified-change"] }], relationshipChanges: [] };
+const prioritized = rhythmWith([evaluatedRelationship(personA, [relationshipInsight()]), gatedRelationship(personB)], transformation);
+check(() => assert.equal(prioritized.primaryInsight.kind, "M3_CERTIFIED_TRANSFORMATION"));
+check(() => assert.equal(prioritized.secondaryInsights[0].kind, "M5_MATERIAL_ROBUST_ASSOCIATION"));
+check(() => assert.equal(1 + prioritized.secondaryInsights.length, 3));
+const currentGatedOverview = rhythmWith([gatedRelationship(personA), gatedRelationship(personB)]);
+check(() => assert.equal([currentGatedOverview.primaryInsight, ...currentGatedOverview.secondaryInsights].filter((entry) => entry?.kind === "M5_MATERIAL_ROBUST_ASSOCIATION").length, 0));
 const selectorMomentOutput = {
   ...outputByModule.MOMENTS,
   momentIdentities: Array.from({ length: 4 }, (_, index) => ({ momentId: `selector-${index}`, canonicalName: { status: "KNOWN", value: `Moment sélection ${index}`, evidenceRef: `moment:selector-${index}` } })),
@@ -373,9 +430,10 @@ check(() => assert.match(orchestratorSource, /return \{ evaluated: true as const
 check(() => assert.match(orchestratorSource, /TRANSFORMATION_INPUT_UNIVERSE_BUILD_FAILED/u));
 check(() => assert.doesNotMatch(orchestratorSource, /relationshipEvolution/));
 check(() => assert.doesNotMatch(orchestratorSource, /moduleKey: "TRANSFORMATIONS"[^\n]*NO_CERTIFIED_TRANSFORMATION/u));
-check(() => assert.match(orchestratorSource, /const \[m2, m6, m7\][\s\S]*const baseM3Evaluation[\s\S]*const personRegimeAuthorities[\s\S]*const m5 = await Promise\.all[\s\S]*const m5RelationshipEvolution = m5\.flatMap/u));
-check(() => assert.match(orchestratorSource, /selectGlobalPersonRegimeAuthority\([\s\S]*resolveGlobalM5PersonAuthority\([\s\S]*regimeAuthority\.status === "KNOWN"/u));
-check(() => assert.ok(orchestratorSource.lastIndexOf("buildGlobalTransformations({") < orchestratorSource.indexOf("const m5RelationshipEvolution")));
+check(() => assert.match(orchestratorSource, /const \[m2, m6, m7\][\s\S]*const baseM3Evaluation[\s\S]*const personRegimeAuthorities[\s\S]*const m5 = await Promise\.all[\s\S]*const m5Product = buildGlobalM5Pr03Product/u));
+check(() => assert.match(orchestratorSource, /selectGlobalPersonRegimeAuthority\([\s\S]*resolveGlobalM5PersonAuthority\([\s\S]*regimeAuthority,[\s\S]*buildGlobalM5Pr03Product\(\{[\s\S]*authorizedPersonIds: context\.personIds\.map\(String\),[\s\S]*providers: m5/u));
+check(() => assert.ok(orchestratorSource.lastIndexOf("buildGlobalTransformations({") < orchestratorSource.indexOf("const m5Product")));
+check(() => assert.match(orchestratorSource, /const m5RelationshipEvolution = \[\] as const/u));
 const m2AuthoritySource = fs.readFileSync(path.join(root, "src/server/analytics/global-v2-category-needs-authority.ts"), "utf8");
 check(() => assert.match(m2AuthoritySource, /transformationMonthlyComponents: components/u));
 const personRegimeSource = fs.readFileSync(path.join(root, "src/analytics/global-v2/person-regime-authority.ts"), "utf8");

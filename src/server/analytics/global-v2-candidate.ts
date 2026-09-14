@@ -4,6 +4,7 @@ import { createHash } from "node:crypto";
 
 import { LIFE_EVENT_ACTIVITY_CATALOG } from "@/analytics/history-v2/calendar/catalog";
 import {
+  GLOBAL_M5_PR03_PRODUCT_UNIVERSE,
   GlobalMaterialityEngine,
   GlobalPublicationEngine,
   type GlobalPublicationDecision,
@@ -1134,6 +1135,46 @@ function m6Insight(output: GlobalV2OwnerOutput, rowValue: GlobalDetailRow, kind:
   };
 }
 
+function m5RelationshipInsights(output: GlobalV2OwnerOutput, labels: GlobalV2PresentationLabels, personIds: readonly string[]): readonly GlobalCompactInsight[] {
+  return arrayOf(output.output).flatMap((personResult) => {
+    if (at(personResult, "evaluationStatus") !== "EVALUATED"
+      || at(personResult, "productUniverseId") !== GLOBAL_M5_PR03_PRODUCT_UNIVERSE.universeId
+      || !arrayOf(at(personResult, "productDefinitionIds")).includes(GLOBAL_M5_PR03_PRODUCT_UNIVERSE.technicalDefinitionId)) return [];
+    return arrayOf(at(personResult, "insights")).flatMap((entry) => {
+      const relationshipId = stringOf(at(entry, "relationshipId"));
+      const subjectRef = stringOf(at(entry, "subjectRef"));
+      const effect = numberOf(at(entry, "effect", "absoluteEffect"));
+      if (relationshipId !== GLOBAL_M5_PR03_PRODUCT_UNIVERSE.technicalDefinitionId
+        || subjectRef === undefined
+        || !personIds.includes(subjectRef)
+        || effect === undefined
+        || effect === 0
+        || at(entry, "causalityMode") !== GLOBAL_M5_PR03_PRODUCT_UNIVERSE.causalityMode
+        || at(entry, "exposure") !== GLOBAL_M5_PR03_PRODUCT_UNIVERSE.exposure
+        || at(entry, "comparator") !== GLOBAL_M5_PR03_PRODUCT_UNIVERSE.comparator
+        || at(entry, "outcome") !== GLOBAL_M5_PR03_PRODUCT_UNIVERSE.outcome
+        || at(entry, "evidence", "evidenceStatus") !== "PUBLISHED"
+        || at(entry, "materiality", "status") !== "MATERIAL"
+        || at(entry, "access", "aiEligible") !== true) return [];
+      const name = personLabel(subjectRef, labels, personIds);
+      const recent = at(entry, "access", "languageKey") === "RECENT_ASSOCIATION";
+      const direction = effect > 0 ? "plus élevée" : "plus faible";
+      const statement = `${recent ? "Sur la période récente, d" : "D"}ans vos données, pour ${name}, les jours sur site sont associés à une fréquence de restaurant ${direction} que les jours en télétravail.`;
+      return [{
+        insightId: `life-spending:m5:${relationshipId}:person:${subjectRef}`,
+        phenomenonId: `relationship:${relationshipId}:person:${subjectRef}`,
+        kind: "M5_MATERIAL_ROBUST_ASSOCIATION",
+        titleKey: `Restaurant les jours sur site · ${name}`,
+        statementKey: statement,
+        entityRefs: [`person:${subjectRef}`, `relationship:${relationshipId}`],
+        evidenceRefs: projectedEvidence(output, arrayOf(at(entry, "evidenceRefs")).filter((item): item is string => typeof item === "string")),
+        detailRefs: [`relationship:${relationshipId}:person:${subjectRef}`],
+        editorialRank: 1,
+      }];
+    });
+  }).sort((left, right) => left.entityRefs[0]!.localeCompare(right.entityRefs[0]!) || left.insightId.localeCompare(right.insightId)).slice(0, 1);
+}
+
 function lifeSpendingProjection(outputs: ReadonlyMap<GlobalPrimaryModuleKey, GlobalV2OwnerOutput>, labels: GlobalV2PresentationLabels, personIds: readonly string[]): ModuleProjection {
   const rhythmOutput = outputs.get("RHYTHM")!;
   const transformationOutput = outputs.get("TRANSFORMATIONS")!;
@@ -1156,10 +1197,7 @@ function lifeSpendingProjection(outputs: ReadonlyMap<GlobalPrimaryModuleKey, Glo
     const title = stringOf(at(entry, "titleKey"));
     return transformationId === undefined || title === undefined ? [] : [{ insightId: `life-spending:m3:${transformationId}`, phenomenonId: `transformation:${transformationId}`, kind: "M3_CERTIFIED_TRANSFORMATION", titleKey: title, statementKey: title, entityRefs: [`transformation:${transformationId}`], evidenceRefs: projectedEvidence(transformationOutput, arrayOf(at(entry, "evidenceRefs")).filter((item): item is string => typeof item === "string")), detailRefs: [`transformation:${transformationId}`], editorialRank: 1 }];
   });
-  const relationshipInsights = relationshipOutput.capabilityState === "UNAVAILABLE" || relationshipOutput.reasonCodes.some((code) => code.includes("AUTHORITY_GATED")) ? [] : arrayOf(at(relationshipOutput.output, "insights")).flatMap((entry) => {
-    const id = stringOf(at(entry, "relationshipId")); const title = stringOf(at(entry, "titleKey")); const statement = stringOf(at(entry, "statementKey"));
-    return id === undefined || title === undefined || statement === undefined || at(entry, "evidenceStatus") !== "PUBLISHED" || at(entry, "materiality", "status") !== "MATERIAL" || at(entry, "temporal", "robust") !== true ? [] : [{ insightId: `life-spending:m5:${id}`, phenomenonId: `relationship:${id}`, kind: "M5_MATERIAL_ROBUST_ASSOCIATION", titleKey: title, statementKey: statement, entityRefs: [`relationship:${id}`], evidenceRefs: projectedEvidence(relationshipOutput, arrayOf(at(entry, "evidenceRefs")).filter((item): item is string => typeof item === "string")), detailRefs: [`relationship:${id}`], editorialRank: 1 }];
-  }).slice(0, 1);
+  const relationshipInsights = m5RelationshipInsights(relationshipOutput, labels, personIds);
   const selected = [...transformationInsights, ...relationshipInsights, ...comparisonInsights, ...contextualInsights].slice(0, 3).map((entry, index) => ({ ...entry, editorialRank: index + 1 }));
   const overviewRows = selected.flatMap((insight, index) => {
     const source = [...comparisonRows, ...breakdownRows].find((entry) => entry.entityRef === insight.entityRefs[0]);
