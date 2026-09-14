@@ -8,7 +8,11 @@ import {
   buildGlobalPersonaMetrics,
   buildGlobalSharedAnalysis,
   buildGlobalTransformations,
+  projectGlobalM1ActualTransformationSeries,
+  projectGlobalM2CategoryTransformationSeries,
+  projectGlobalM4ActivityFrequencyTransformationUniverse,
   projectGlobalSharedActivitiesFromFacts,
+  selectGlobalPersonRegimeAuthority,
   type GlobalPersonaDefinition,
   type GlobalPersonaObservation,
 } from "@/analytics/global-v2";
@@ -93,9 +97,8 @@ export async function resolveGlobalV2ProductionOwnerOutputs(repository: Canonica
   const resolver = new FactSourceResolver(repository);
 
   const m8 = await resolveGlobalM8PurchaseAuthority({ repository, scope });
-  const [m2, m5, m6, m7] = await Promise.all([
+  const [m2, m6, m7] = await Promise.all([
     resolveGlobalM2HouseholdAuthority({ repository, resolver, targetMonth, purchaseAuthority: m8 }),
-    Promise.all(context.personIds.map((personId) => resolveGlobalM5PersonAuthority({ repository, scope: { ...scope, subject: { kind: "person", personId } } }))),
     resolveGlobalM6MomentAuthority({ repository, scope }),
     resolveGlobalM7PlaceAuthority({ repository, scope }),
   ]);
@@ -111,8 +114,68 @@ export async function resolveGlobalV2ProductionOwnerOutputs(repository: Canonica
   const rhythms = context.personIds.flatMap((personId) => activityIds.map((activityId) => buildGlobalActivityRhythm({ activityId, personId: String(personId), occurrences, personDays })));
   const activityCostProfiles = activityIds.map((activityId) => buildGlobalActivityCostProfile({ activityId, occurrences, activityCosts }));
 
-  const relationshipEvolution = m5.flatMap((result) => buildGlobalM5TransformationFeed(result));
-  const m3 = buildGlobalTransformations({ series: [], relations: [], relationshipEvolution });
+  const baseM3Evaluation = (() => {
+    try {
+      const baseM3CertifiedMonths = m1.history.points
+        .map((point) => ({
+          month: parseYearMonth(point.month),
+          dependencyRefs: [...new Set([
+            ...point.lineage.dependencyRefs,
+            ...point.actual.provenance.sourceRefs,
+            ...point.actual.provenance.factRefs,
+            ...point.actual.provenance.evidenceRefs,
+            ...point.actual.provenance.upstreamMetricRefs,
+          ])].sort(),
+        }))
+        .sort((left, right) => left.month.localeCompare(right.month));
+      const baseM3M4Series = projectGlobalM4ActivityFrequencyTransformationUniverse({
+        certifiedThroughMonth: targetMonth,
+        certifiedMonths: baseM3CertifiedMonths,
+        occurrences,
+        personDays,
+        rhythms,
+      });
+      const baseM3Series = [
+        projectGlobalM1ActualTransformationSeries({ householdId: String(context.householdId), authority: m1 }),
+        ...projectGlobalM2CategoryTransformationSeries({
+          householdId: String(context.householdId),
+          result: m2.result,
+          monthlyComponents: m2.transformationMonthlyComponents,
+          certifiedMonths: m1.history.points,
+        }),
+        ...baseM3M4Series,
+      ];
+      const baseM3 = buildGlobalTransformations({
+        series: baseM3Series,
+        relations: [],
+      });
+      return { evaluated: true as const, series: baseM3Series, output: baseM3, knowledge: "KNOWN" as const, capabilityState: "AVAILABLE" as const, reasonCodes: [] as const };
+    } catch {
+      return {
+        evaluated: false as const,
+        series: [] as const,
+        output: { evaluationStatus: "NOT_EVALUATED" as const, methodVersion: "global_transformations_owner_envelope@v1" as const },
+        knowledge: "UNKNOWN" as const,
+        capabilityState: "UNAVAILABLE" as const,
+        reasonCodes: ["TRANSFORMATION_INPUT_UNIVERSE_BUILD_FAILED"] as const,
+      };
+    }
+  })();
+  const personRegimeAuthorities = context.personIds.map((personId) => selectGlobalPersonRegimeAuthority({
+    personId: String(personId),
+    certifiedThrough,
+    transformations: baseM3Evaluation.evaluated ? baseM3Evaluation.output.transformations : [],
+    series: baseM3Evaluation.series,
+  }));
+  const m5 = await Promise.all(context.personIds.map((personId) => {
+    const regimeAuthority = personRegimeAuthorities.find((authority) => authority.personId === String(personId))!;
+    return resolveGlobalM5PersonAuthority({
+      repository,
+      scope: { ...scope, subject: { kind: "person", personId } },
+      ...(regimeAuthority.status === "KNOWN" ? { regime: { personId: regimeAuthority.personId, result: regimeAuthority.result } } : {}),
+    });
+  }));
+  const m5RelationshipEvolution = m5.flatMap((result) => buildGlobalM5TransformationFeed(result));
 
   const definitions: GlobalPersonaDefinition[] = activityIds.map((activityId) => ({
     metricId: `activity-rate:${activityId}`,
@@ -185,7 +248,7 @@ export async function resolveGlobalV2ProductionOwnerOutputs(repository: Canonica
   const ownerOutputs: GlobalV2OwnerOutput[] = [
     { moduleKey: "ECONOMIC", owner: "GlobalM1HouseholdAuthority", output: m1, knowledge: m1.state.actual.status, capabilityState: m1.state.actual.status === "KNOWN" ? "AVAILABLE" : "PARTIAL", reasonCodes: [], evidenceRefs: evidence("M1", m1) },
     { moduleKey: "CATEGORIES_NEEDS", owner: "GlobalM2HouseholdAuthority", output: m2, knowledge: "KNOWN", capabilityState: "AVAILABLE", reasonCodes: [], evidenceRefs: evidence("M2", m2) },
-    { moduleKey: "TRANSFORMATIONS", owner: "buildGlobalTransformations", output: m3, knowledge: "UNKNOWN", capabilityState: "UNAVAILABLE", reasonCodes: ["TRANSFORMATION_INPUT_UNIVERSE_NOT_EVALUATED"], evidenceRefs: evidence("M3", m3) },
+    { moduleKey: "TRANSFORMATIONS", owner: "buildGlobalTransformations", output: baseM3Evaluation.output, knowledge: baseM3Evaluation.knowledge, capabilityState: baseM3Evaluation.capabilityState, reasonCodes: baseM3Evaluation.reasonCodes, evidenceRefs: evidence("M3", baseM3Evaluation.output) },
     { moduleKey: "RHYTHM", owner: "buildGlobalActivityRhythm", output: { rhythms, activityCostProfiles }, knowledge: rhythms.length > 0 ? "KNOWN" : "UNKNOWN", capabilityState: rhythms.length > 0 ? "AVAILABLE" : "PARTIAL", reasonCodes: rhythms.length > 0 ? [] : ["NO_OBSERVABLE_ACTIVITY"], evidenceRefs: evidence("M4", { rhythms, activityCostProfiles }) },
     { moduleKey: "RELATIONSHIPS", owner: "GlobalM5PersonAuthority", output: m5, knowledge: m5.some((result) => result.insights.length > 0) ? "KNOWN" : "UNKNOWN", capabilityState: "PARTIAL", reasonCodes: ["AUTHORITY_GATED_RELATIONSHIP_PROVIDERS"], evidenceRefs: evidence("M5", m5) },
     { moduleKey: "MOMENTS", owner: "GlobalM6MomentAuthority", output: m6, knowledge: globalV2M6HasPresentationContent(m6) ? "PARTIAL" : "UNKNOWN", capabilityState: "PARTIAL", reasonCodes: globalV2M6HasPresentationContent(m6) ? ["MOMENT_PLACE_FACETS_PARTIAL"] : ["NO_COMPARABLE_MOMENT"], evidenceRefs: evidence("M6", m6) },
@@ -194,7 +257,7 @@ export async function resolveGlobalV2ProductionOwnerOutputs(repository: Canonica
     { moduleKey: "PERSONAS", owner: "buildGlobalPersonaMetrics", output: m9, knowledge: personaMetrics.length > 0 ? "PARTIAL" : "UNKNOWN", capabilityState: context.personIds.length >= 2 ? "PARTIAL" : "UNAVAILABLE", reasonCodes: personaMetrics.length > 0 ? ["COMPARABLE_INTERSECTION_REQUIRED"] : ["PERSON_PAIR_UNAVAILABLE"], evidenceRefs: evidence("M9", m9) },
     { moduleKey: "TOGETHER", owner: "SharedParticipationResolver", output: m10, knowledge: m10.universes.length > 0 ? "PARTIAL" : "UNKNOWN", capabilityState: context.personIds.length === 2 ? "PARTIAL" : "UNAVAILABLE", reasonCodes: m10.universes.length > 0 ? ["PARTICIPATION_COVERAGE_VISIBLE"] : ["SHARED_UNIVERSE_UNAVAILABLE"], evidenceRefs: evidence("M10", m10) },
   ];
-  return { scope, certifiedThrough, targetMonth, ownerOutputs, presentationLabels };
+  return { scope, certifiedThrough, targetMonth, ownerOutputs, presentationLabels, personRegimeAuthorities, m5RelationshipEvolution };
 }
 
 /** Read-only production bridge: this API exposes no materialization store. */

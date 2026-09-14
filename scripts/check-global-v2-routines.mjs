@@ -47,6 +47,9 @@ check(() => assert.equal(rhythm.rawOccurrenceCount, 5));
 check(() => assert.equal(rhythm.includedOccurrenceCount, 5));
 check(() => assert.equal(rhythm.multiDayOccurrenceCount, 1));
 check(() => assert.equal(rhythm.rate.value, "0.5"));
+check(() => assert.equal(rhythm.rate.unit, "OCCURRENCE_PER_OBSERVABLE_DAY"));
+check(() => assert.equal(rhythm.monthlyRates.length, 1));
+check(() => assert.equal(rhythm.monthlyRates[0].value, "0.5"));
 check(() => assert.equal(rhythm.cadence.medianIntervalDays, "2"));
 check(() => assert.equal(buildGlobalActivityRhythm({ activityId, personId, occurrences: fiveOccurrences, personDays: [...tenDays, ...Array.from({ length: 10 }, (_, i) => personDay(10 + i))] }).rate.value, "0.25"));
 check(() => assert.equal(buildGlobalActivityRhythm({ activityId, personId, occurrences: fiveOccurrences.slice(0, 2), personDays: tenDays }).cadence.status, "UNKNOWN"));
@@ -198,10 +201,33 @@ const months = Array.from({ length: 12 }, (_, month) => {
   return { days, occurrences };
 });
 const longRhythm = buildGlobalActivityRhythm({ activityId, personId, occurrences: months.flatMap((m) => m.occurrences), personDays: months.flatMap((m) => m.days) });
-const transformed = buildGlobalM4ActivityTransformations({ rhythm: longRhythm, certifiedThroughMonth: "2025-12", subjectRef: `person:${personId}`, evidence: { ...evidence, support: { ...evidence.support, naturalGrain: "MONTH", minimumRequired: 6, eligibleUnits: 12, observedUnits: 12, includedUnits: 12 } }, policyId: "ACTIVITY_FREQUENCY", semanticRefs: [], structuralAuthorityRefs: ["canonical:activity-structure"] });
-check(() => assert.equal(transformed.transformations[0].kind, "DURABLE_CHANGE"));
-check(() => assert.equal(transformed.transformations[0].status, "CONFIRMED_ONGOING"));
-check(() => assert.equal(transformed.transformations[0].affectedDomains[0], "ACTIVITY_BEHAVIOR"));
+const transformed = buildGlobalM4ActivityTransformations({
+  activityId,
+  personId,
+  certifiedThroughMonth: "2025-12",
+  certifiedMonths: months.map(({ days }) => ({ month: days[0].localDate.slice(0, 7), dependencyRefs: [`analysis-period:${days[0].localDate.slice(0, 7)}`] })),
+  occurrences: months.flatMap((m) => m.occurrences),
+  personDays: months.flatMap((m) => m.days),
+});
+check(() => assert.equal(transformed.diagnostics[0].signalId, `m4:person:${personId}:activity:${activityId}:frequency`));
+check(() => assert.equal(transformed.transformations.length, 0));
+const countPlateauOccurrences = months.flatMap((month, index) => month.occurrences.slice(0, index < 6 ? 5 : 6));
+const countTransformed = buildGlobalM4ActivityTransformations({
+  activityId,
+  personId,
+  certifiedThroughMonth: "2025-12",
+  certifiedMonths: months.map(({ days }) => ({ month: days[0].localDate.slice(0, 7), dependencyRefs: [`analysis-period:${days[0].localDate.slice(0, 7)}`] })),
+  occurrences: countPlateauOccurrences,
+  personDays: months.flatMap((m) => m.days),
+});
+const countCandidate = countTransformed.diagnostics[0].changes.candidates.find(({ boundaryMonth }) => boundaryMonth === "2025-07");
+check(() => assert.equal(countCandidate.materiality.status, "MATERIAL"));
+check(() => assert.equal(countCandidate.plateau.status, "KNOWN"));
+check(() => assert.deepEqual(countTransformed.transformations[0].beforeSummary, [{ signalId: `m4:person:${personId}:activity:${activityId}:frequency@2025-07`, value: "5" }]));
+check(() => assert.deepEqual(countTransformed.transformations[0].afterSummary, [{ signalId: `m4:person:${personId}:activity:${activityId}:frequency@2025-07`, value: "6" }]));
+check(() => assert.equal(countTransformed.transformations[0].kind, "DURABLE_CHANGE"));
+check(() => assert.equal(countTransformed.transformations[0].status, "CANDIDATE"));
+check(() => assert.equal(countTransformed.transformations[0].affectedDomains[0], "ACTIVITY_BEHAVIOR"));
 const routineTransformed = buildGlobalM4RoutineTransformations({ pattern: { ...patterns.patterns[0], evolution: { monthlyPrevalence: longRhythm.monthlyRates } }, certifiedThroughMonth: "2025-12", subjectRef: `person:${personId}`, evidence: { ...evidence, support: { ...evidence.support, naturalGrain: "MONTH", minimumRequired: 6, eligibleUnits: 12, observedUnits: 12, includedUnits: 12 } }, policyId: "ACTIVITY_FREQUENCY", semanticRefs: [], structuralAuthorityRefs: ["canonical:routine-structure"] });
 check(() => assert.equal(routineTransformed.transformations[0].affectedDomains[0], "ACTIVITY_BEHAVIOR"));
 

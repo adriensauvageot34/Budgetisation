@@ -116,7 +116,7 @@ const outputByModule = {
   TOGETHER: { universes: [{ universeId: "activity:journee_maison", support: { sharedUnits: 35, resolvedUnits: 35, eligibleUnits: 73, sharedObservableCoverage: 0.48, knowledgeState: "PARTIAL" } }] },
 };
 const moduleState = {
-  TRANSFORMATIONS: { knowledge: "UNKNOWN", capabilityState: "UNAVAILABLE", reasonCodes: ["TRANSFORMATION_INPUT_UNIVERSE_NOT_EVALUATED"] },
+  TRANSFORMATIONS: { knowledge: "KNOWN", capabilityState: "AVAILABLE", reasonCodes: [] },
   RELATIONSHIPS: { knowledge: "UNKNOWN", capabilityState: "PARTIAL", reasonCodes: ["AUTHORITY_GATED_RELATIONSHIP_PROVIDERS"] },
   MOMENTS: { knowledge: "PARTIAL", capabilityState: "PARTIAL", reasonCodes: ["MOMENT_PLACE_FACETS_PARTIAL"] },
   CONSUMPTION: { knowledge: "UNKNOWN", capabilityState: "PARTIAL", reasonCodes: ["PURCHASE_EVENT_COVERAGE_PARTIAL"] },
@@ -239,6 +239,23 @@ check(() => assert.deepEqual(Object.fromEntries(Object.entries(rhythmComparisons
 check(() => assert.equal(compact("analysis_global_rhythm").primaryInsight.kind, "M6_MATERIAL_COMPARISON"));
 check(() => assert.equal(compact("analysis_global_transformations").visibility, "HIDDEN"));
 check(() => assert.equal(compact("analysis_global_transformations").primaryInsight, undefined));
+check(() => assert.equal(compact("analysis_global_transformations").quality.knowledgeState, "KNOWN"));
+check(() => assert.equal(compact("analysis_global_transformations").capabilities[0].state, "AVAILABLE"));
+check(() => assert.deepEqual(compact("analysis_global_transformations").capabilities[0].reasonCodes, []));
+const notEvaluatedTransformations = candidateApi.buildGlobalV2CandidateFromOwnerOutputs({
+  ...base,
+  ownerOutputs: modules.map((entry) => entry.moduleKey === "TRANSFORMATIONS" ? {
+    ...entry,
+    knowledge: "UNKNOWN",
+    capabilityState: "UNAVAILABLE",
+    reasonCodes: ["TRANSFORMATION_INPUT_UNIVERSE_NOT_EVALUATED"],
+  } : entry),
+});
+const notEvaluatedTransformationCompact = notEvaluatedTransformations.snapshots.find(({ resource }) => resource === "analysis_global_transformations").payload;
+check(() => assert.equal(notEvaluatedTransformationCompact.quality.knowledgeState, "UNKNOWN"));
+check(() => assert.equal(notEvaluatedTransformationCompact.capabilities[0].state, "UNAVAILABLE"));
+check(() => assert.deepEqual(notEvaluatedTransformationCompact.capabilities[0].reasonCodes, ["TRANSFORMATION_INPUT_UNIVERSE_NOT_EVALUATED"]));
+check(() => assert.notEqual(notEvaluatedTransformations.manifestHash, first.manifestHash));
 check(() => assert.equal(JSON.stringify(first.snapshots.filter(({ resource }) => resource.includes("relationships"))).includes("relationship:technical-only"), false));
 check(() => assert.equal(compact("analysis_global_relationships").visibility, "HIDDEN"));
 check(() => assert.equal(compact("analysis_global_relationships").placeholder, undefined));
@@ -347,8 +364,24 @@ check(() => assert.equal(JSON.stringify(first.snapshots.filter(({ resource }) =>
 check(() => assert.equal(JSON.stringify(first.snapshots.filter(({ resource }) => resource.includes("rhythm"))).includes("Pas encore assez d’éléments pour établir une relation fiable"), false));
 const orchestratorSource = fs.readFileSync(path.join(root, "src/server/analytics/global-v2-production-orchestrator.ts"), "utf8");
 check(() => assert.match(orchestratorSource, /loadActivityOccurrenceCosts[\s\S]*buildGlobalActivityCostProfile[\s\S]*output: \{ rhythms, activityCostProfiles \}/u));
-check(() => assert.match(orchestratorSource, /moduleKey: "TRANSFORMATIONS"[\s\S]*knowledge: "UNKNOWN"[\s\S]*capabilityState: "UNAVAILABLE"[\s\S]*TRANSFORMATION_INPUT_UNIVERSE_NOT_EVALUATED/u));
+check(() => assert.match(orchestratorSource, /const baseM3Series = \[[\s\S]*projectGlobalM1ActualTransformationSeries[\s\S]*projectGlobalM2CategoryTransformationSeries[\s\S]*\.\.\.baseM3M4Series[\s\S]*const baseM3 = buildGlobalTransformations\(\{[\s\S]*series: baseM3Series,[\s\S]*relations: \[\],[\s\S]*\}\)/u));
+check(() => assert.equal(orchestratorSource.match(/buildGlobalTransformations\(\{/gu)?.length, 1));
+check(() => assert.doesNotMatch(orchestratorSource, /relationshipEvolution|driverAuthorities|anchors/u));
+const baseM3SeriesSource = orchestratorSource.match(/const baseM3Series = \[[\s\S]*?\n      \];/u)?.[0] ?? "";
+check(() => assert.doesNotMatch(baseM3SeriesSource, /m5|m6|m7|m8/u));
+check(() => assert.match(orchestratorSource, /return \{ evaluated: true as const, series: baseM3Series, output: baseM3, knowledge: "KNOWN" as const, capabilityState: "AVAILABLE" as const, reasonCodes: \[\] as const \}/u));
+check(() => assert.match(orchestratorSource, /TRANSFORMATION_INPUT_UNIVERSE_BUILD_FAILED/u));
+check(() => assert.doesNotMatch(orchestratorSource, /relationshipEvolution/));
 check(() => assert.doesNotMatch(orchestratorSource, /moduleKey: "TRANSFORMATIONS"[^\n]*NO_CERTIFIED_TRANSFORMATION/u));
+check(() => assert.match(orchestratorSource, /const \[m2, m6, m7\][\s\S]*const baseM3Evaluation[\s\S]*const personRegimeAuthorities[\s\S]*const m5 = await Promise\.all[\s\S]*const m5RelationshipEvolution = m5\.flatMap/u));
+check(() => assert.match(orchestratorSource, /selectGlobalPersonRegimeAuthority\([\s\S]*resolveGlobalM5PersonAuthority\([\s\S]*regimeAuthority\.status === "KNOWN"/u));
+check(() => assert.ok(orchestratorSource.lastIndexOf("buildGlobalTransformations({") < orchestratorSource.indexOf("const m5RelationshipEvolution")));
+const m2AuthoritySource = fs.readFileSync(path.join(root, "src/server/analytics/global-v2-category-needs-authority.ts"), "utf8");
+check(() => assert.match(m2AuthoritySource, /transformationMonthlyComponents: components/u));
+const personRegimeSource = fs.readFileSync(path.join(root, "src/analytics/global-v2/person-regime-authority.ts"), "utf8");
+check(() => assert.match(personRegimeSource, /\["travail_site", "teletravail"\]/u));
+check(() => assert.match(personRegimeSource, /structuralAuthorityRefs\.length === 0[\s\S]*fct_activity_occurrence:/u));
+check(() => assert.doesNotMatch(personRegimeSource, /repas_restaurant|STABLE_CURRENT_REGIME|typical|largest|earliest|latest/iu));
 const routeSource = fs.readFileSync(path.join(root, "src/app/analyse-globale/page.tsx"), "utf8");
 check(() => assert.match(routeSource, /GLOBAL_V2_ROUTE_ACTIVE\s*!==\s*"true"/u));
 check(() => assert.match(routeSource, /catch\s*\{\s*return <GlobalV2Unavailable \/>/u));

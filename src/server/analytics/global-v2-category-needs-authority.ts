@@ -154,6 +154,7 @@ export async function resolveGlobalM2HouseholdAuthority(input: {
   });
   return {
     result,
+    transformationMonthlyComponents: components,
     dependencyDeclaration: createGlobalM2DependencyDeclaration({
       personScope: { kind: "HOUSEHOLD" },
       authorizedPersonIds: input.repository.context.personIds,

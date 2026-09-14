@@ -1395,7 +1395,10 @@ function projectModule(output: GlobalV2OwnerOutput, outputs: ReadonlyMap<GlobalP
   switch (output.moduleKey) {
     case "ECONOMIC": return economicProjection(output, labels);
     case "CATEGORIES_NEEDS": return categoryNeedProjection(output, labels);
-    case "TRANSFORMATIONS": return output.reasonCodes.includes("TRANSFORMATION_INPUT_UNIVERSE_NOT_EVALUATED") ? { kpis: [], sections: {}, detailRows: [] } : neutralProjection(output, "Changements certifiés", "Les changements certifiés restent disponibles dans la ressource technique.");
+    case "TRANSFORMATIONS": return output.reasonCodes.includes("TRANSFORMATION_INPUT_UNIVERSE_NOT_EVALUATED")
+      || arrayOf(at(output.output, "transformations")).length === 0
+      ? { kpis: [], sections: {}, detailRows: [] }
+      : neutralProjection(output, "Changements certifiés", "Les changements certifiés restent disponibles dans la ressource technique.");
     case "RHYTHM": return lifeSpendingProjection(outputs, labels, personIds);
     case "RELATIONSHIPS": return output.reasonCodes.some((code) => code.includes("AUTHORITY_GATED")) ? { kpis: [], sections: {}, detailRows: [] } : neutralProjection(output, "Associations certifiées", "Les associations certifiées restent disponibles dans la ressource technique.");
     case "MOMENTS": return momentProjection(output);

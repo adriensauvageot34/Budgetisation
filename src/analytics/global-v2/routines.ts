@@ -22,6 +22,10 @@ import { projectGlobalTemporalRate } from "./temporal-projection";
 import { buildGlobalTransformations, type GlobalTransformationSeries } from "./transformations";
 import type { GlobalMaterialityCandidate } from "../../core/global-v2";
 import type { GlobalMaterialityPolicyId } from "./materiality";
+import {
+  projectGlobalM4ActivityFrequencyTransformationSeries,
+  type GlobalCertifiedMonthAuthority,
+} from "./transformation-projectors";
 
 export const GLOBAL_M4_METHOD_VERSION = "global_routine_pattern@v1" as const;
 export const GLOBAL_M4_ACTIVITY_COST_PROFILE_METHOD_VERSION = "global_activity_cost_profile@v1" as const;
@@ -612,26 +616,14 @@ export function projectRoutineTemporalSeries(input: {
  * result, so this cannot create a dependency cycle.
  */
 export function buildGlobalM4ActivityTransformations(input: {
-  readonly rhythm: ReturnType<typeof buildGlobalActivityRhythm>;
+  readonly activityId: string;
+  readonly personId: string;
   readonly certifiedThroughMonth: YearMonth;
-  readonly subjectRef: string;
-  readonly evidence: Omit<GlobalMaterialityCandidate, "candidateId" | "effect">;
-  readonly policyId: GlobalMaterialityPolicyId;
-  readonly semanticRefs: readonly string[];
-  readonly structuralAuthorityRefs: readonly string[];
+  readonly certifiedMonths: readonly GlobalCertifiedMonthAuthority[];
+  readonly occurrences: readonly ActivityOccurrenceFact[];
+  readonly personDays: readonly PersonDayFact[];
 }) {
-  const points = projectRoutineTemporalSeries({ rhythm: input.rhythm, certifiedThroughMonth: input.certifiedThroughMonth });
-  const series: GlobalTransformationSeries = {
-    signalId: `activity:${input.rhythm.activityId}:frequency`,
-    subjectRef: input.subjectRef,
-    catalogKey: "ACTIVITY_FREQUENCY",
-    certifiedThroughMonth: input.certifiedThroughMonth,
-    points,
-    evidence: input.evidence,
-    policyId: input.policyId,
-    semanticRefs: [...new Set(input.semanticRefs)].sort(),
-    structuralAuthorityRefs: [...new Set(input.structuralAuthorityRefs)].sort(),
-  };
+  const series = projectGlobalM4ActivityFrequencyTransformationSeries(input);
   return buildGlobalTransformations({ series: [series], relations: [] });
 }
 
