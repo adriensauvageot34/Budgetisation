@@ -141,6 +141,9 @@ export {
 export {
   GLOBAL_M6_METHOD_VERSION,
   buildGlobalMomentExperiences,
+  parseGlobalMomentCausalComponent,
+  parseGlobalMomentCausalComponentTransport,
+  type GlobalMomentCausalComponent,
   type GlobalMomentComponentAuthority,
   type GlobalMomentExperienceInput,
   type GlobalMomentFacetValue,

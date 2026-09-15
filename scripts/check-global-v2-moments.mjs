@@ -16,7 +16,10 @@ const {
   createGlobalM6DependencyDeclaration,
   momentComparisonCatalogV1,
   momentComparisonProfiles,
+  parseGlobalMomentCausalComponent,
+  parseGlobalMomentCausalComponentTransport,
 } = await import("../src/analytics/global-v2/index.ts");
+const { parseEconomicComponentFact } = await import("../src/analytics/facts/index.ts");
 const { assertGlobalDependencyClosure } = await import("../src/core/global-v2/index.ts");
 const { parseMoney } = await import("../src/core/money/index.ts");
 
@@ -36,6 +39,7 @@ const moment = (id, type = "Week-end / escapade", extra = {}) => ({
 });
 const fact = (id, amount, momentId = `moment:${id}`, date = "2026-01-11", extra = {}) => ({
   fact: "fct_economic_component", householdId, householdTimeZone: "Europe/Paris", canonicalComponentKey: `component:${id}`,
+  sourceKind: "Operation_parent",
   sourceOperation: { kind: "resolved", id: uuid(1000 + Number(String(id).replace(/\D/g, "") || 0)) },
   gross: parseMoney(String(amount)), refundApplied: parseMoney("0"), net: parseMoney(String(amount)),
   bankDate: { kind: "known", date },
@@ -68,6 +72,11 @@ const cohort = (peerCount, subjectAmount = 100) => {
   const facts = [fact("0", subjectAmount), ...Array.from({ length: peerCount }, (_, i) => fact(String(i + 1), 200 + i * 10))];
   return build(moments, facts);
 };
+
+const currentFact = fact("42", "1", uuid(142), "2026-01-11", { canonicalComponentKey: `operation:${uuid(42)}`, sourceOperation: { kind: "resolved", id: uuid(42) } });
+const { sourceKind: _sourceKind, ...legacyFact } = currentFact;
+check(() => assert.equal(parseEconomicComponentFact(currentFact).sourceKind, "Operation_parent"));
+check(() => assert.equal(parseEconomicComponentFact(legacyFact).sourceKind, undefined));
 
 check(() => assert.doesNotThrow(assertGlobalMomentCatalogExhaustive));
 check(() => assert.equal(Object.keys(momentComparisonCatalogV1).length, 20));
@@ -111,7 +120,10 @@ check(() => assert.equal(missingLodging.comparisons[0].status, "UNKNOWN"));
 check(() => assert.ok(missingLodging.comparisons[0].reasonCodes.includes("REQUIRED_FACET_UNRESOLVED:LODGING_MODE")));
 
 const causalMoment = moment("causal", "Voyage", { expectedCausalComponentKeys: ["component:before", "component:during"] });
-const before = fact("before", 80, "moment:causal", "2026-01-01", { gross: parseMoney("100"), refundApplied: parseMoney("20"), net: parseMoney("80") });
+const before = fact("before", 80, "moment:causal", "2026-01-01", {
+  gross: parseMoney("100"), refundApplied: parseMoney("20"), net: parseMoney("80"),
+  category: { kind: "resolved", id: uuid(801) }, subcategory: { kind: "resolved", id: uuid(802) }, merchant: { kind: "resolved", id: uuid(803) },
+});
 const during = fact("during", 40, "moment:causal", "2026-01-12");
 const concomitant = fact("concomitant", 30, undefined, "2026-01-11");
 const costResult = build([causalMoment], [before, during, concomitant], { componentAuthorities: [
@@ -120,6 +132,14 @@ const costResult = build([causalMoment], [before, during, concomitant], { compon
 ] });
 const cost = costResult.summaries[0];
 check(() => assert.equal(cost.causalCost.value, "120"));
+check(() => assert.deepEqual(cost.causalComponents.map(({ canonicalComponentKey, amount }) => [canonicalComponentKey, amount]), [["component:before", "80"], ["component:during", "40"]]));
+check(() => assert.equal(new Set(cost.causalComponents.map(({ componentRef }) => componentRef)).size, cost.causalComponents.length));
+check(() => assert.equal(cost.causalComponents.find(({ canonicalComponentKey }) => canonicalComponentKey === "component:before").sourceOperationRef, `operation:${before.sourceOperation.id}`));
+check(() => assert.equal(cost.causalComponents.find(({ canonicalComponentKey }) => canonicalComponentKey === "component:before").categoryRef, `category:${uuid(801)}`));
+check(() => assert.equal(cost.causalComponents.find(({ canonicalComponentKey }) => canonicalComponentKey === "component:before").subcategoryRef, `subcategory:${uuid(802)}`));
+check(() => assert.equal(cost.causalComponents.find(({ canonicalComponentKey }) => canonicalComponentKey === "component:before").merchantRef, `merchant:${uuid(803)}`));
+check(() => assert.equal(cost.causalComponents.find(({ canonicalComponentKey }) => canonicalComponentKey === "component:before").compositionGroup, "TRANSPORT"));
+check(() => assert.ok(cost.causalComponents.find(({ canonicalComponentKey }) => canonicalComponentKey === "component:before").evidenceRefs.includes("canonical:before")));
 check(() => assert.equal(cost.grossCausalOutflow.value, "140"));
 check(() => assert.equal(cost.refundsAndAdjustments.value, "20"));
 check(() => assert.equal(cost.spentDuring.value, "70"));
@@ -147,6 +167,7 @@ check(() => assert.equal(build([punctual], [fact("point", 20)]).summaries[0].spe
 check(() => assert.equal(build([{ ...punctual, temporalPrecision: "INSTANT", startTime: "20:00", endTime: "23:00" }], [fact("point", 20)]).summaries[0].spentDuring.status, "UNKNOWN"));
 const freeKnown = moment("free", "Visite familiale", { expectedCausalComponentKeys: [], facets: { LODGING_MODE: knownFacet("HOSTED_FREE", "free:lodging") } });
 check(() => assert.equal(build([freeKnown], []).summaries[0].causalCost.value, "0"));
+check(() => assert.deepEqual(build([freeKnown], []).summaries[0].causalComponents, []));
 const { expectedCausalComponentKeys: _expected, ...freeUnknown } = moment("free-unknown", "Visite familiale", { facets: { LODGING_MODE: knownFacet("HOSTED_FREE", "free-unknown:lodging") } });
 check(() => assert.equal(build([freeUnknown], []).summaries[0].causalCost.status, "UNKNOWN"));
 
@@ -160,7 +181,19 @@ const multi = build(multiMoments, [sharedFact], { financialRelations: multiRelat
 check(() => assert.equal(multi.summaries[0].causalCost.value, "20"));
 check(() => assert.equal(multi.summaries[1].causalCost.value, "40"));
 check(() => assert.equal(Number(multi.summaries[0].causalCost.value) + Number(multi.summaries[1].causalCost.value), 60));
+check(() => assert.equal(multi.summaries[0].causalComponents[0].amount, "20"));
+check(() => assert.equal(multi.summaries[1].causalComponents[0].amount, "40"));
 check(() => assert.equal(build(multiMoments, [sharedFact], { financialRelations: multiRelations.map((relation) => ({ ...relation, amount: parseMoney("60") })) }).summaries[0].causalCost.status, "CONFLICT"));
+
+const serializedTransport = JSON.parse(JSON.stringify(costResult));
+check(() => assert.deepEqual(parseGlobalMomentCausalComponentTransport(serializedTransport)[0].causalComponents, cost.causalComponents));
+check(() => assert.throws(() => parseGlobalMomentCausalComponent({ ...cost.causalComponents[0], unexpected: true }), /non autorisée/));
+check(() => assert.throws(() => parseGlobalMomentCausalComponentTransport({ summaries: [{ moment: { momentId: "moment:bad" }, causalCost: { status: "KNOWN", value: "1" }, causalComponents: [{ ...cost.causalComponents[0], amount: "0.99" }] }] }), /RECONCILIATION_FAILED/));
+check(() => assert.throws(() => parseGlobalMomentCausalComponentTransport({ summaries: [{ moment: { momentId: "moment:duplicate" }, causalCost: { status: "KNOWN", value: "160" }, causalComponents: [cost.causalComponents[0], cost.causalComponents[0]] }] }), /DUPLICATE_CAUSAL_COMPONENT_REF/));
+check(() => assert.throws(() => build([moment("missing-fact")], [], { financialRelations: [{ householdId, momentId: "moment:missing-fact", componentKey: "component:missing-fact", kind: "CAUSAL", authority: "EXPLICIT_CANONICAL_CAUSAL_LINK", evidenceRefs: ["causal:missing-fact"], amount: parseMoney("1"), sourceEconomicAmount: parseMoney("1") }] }), /CAUSAL_COMPONENT_FACT_MISSING/));
+const exactDecimal = build([moment("decimal", undefined, { expectedCausalComponentKeys: ["component:decimal-a", "component:decimal-b"] })], [fact("decimal-a", "0.1", "moment:decimal"), fact("decimal-b", "0.2", "moment:decimal")]).summaries[0];
+check(() => assert.equal(exactDecimal.causalCost.value, "0.3"));
+check(() => assert.deepEqual(exactDecimal.causalComponents.map(({ amount }) => amount), ["0.1", "0.2"]));
 
 const lowCost = cohort(5, 100);
 check(() => assert.ok(lowCost.comparisons[0].narrativeFlags.includes("RELATIVELY_LOW_COST")));

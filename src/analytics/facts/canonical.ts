@@ -43,6 +43,7 @@ import type {
   CanonicalComponentKey,
   CanonicalPlaceValue,
   EconomicComponentFact,
+  EconomicComponentSourceKind,
   EconomicPersonAttribution,
   FinancialSourcePersonLink,
   EconomicTiming,
@@ -117,6 +118,7 @@ export type CanonicalHouseholdContext = {
 type ParsedEconomicComponentRow = {
   readonly operationId: ReturnType<typeof parseOperationId>;
   readonly sourceKind: CanonicalSourceKind;
+  readonly sourceLayer: EconomicComponentSourceKind;
   readonly componentId: string;
   readonly canonicalComponentKey: CanonicalComponentKey;
   readonly gross: Money;
@@ -148,7 +150,7 @@ const sourceKinds = new Set<CanonicalSourceKind>([
   "Payment_component",
   "Cash_use",
 ]);
-const sourceLayers = new Set([
+const sourceLayers = new Set<EconomicComponentSourceKind>([
   "Operation_parent",
   "Operation_residual",
   "Allocation",
@@ -313,7 +315,7 @@ function parseEconomicComponentRow(value: unknown): ParsedEconomicComponentRow {
     sourceKinds,
     "financial_economic_cost_canonical.source_kind",
   );
-  const sourceLayer = parseStringLiteral(
+  const sourceLayer = parseStringLiteral<EconomicComponentSourceKind>(
     requireProperty(row, "source_layer", "financial_economic_cost_canonical"),
     sourceLayers,
     "financial_economic_cost_canonical.source_layer",
@@ -398,6 +400,7 @@ function parseEconomicComponentRow(value: unknown): ParsedEconomicComponentRow {
   return {
     operationId,
     sourceKind,
+    sourceLayer,
     componentId,
     canonicalComponentKey,
     gross,
@@ -979,6 +982,7 @@ export function projectEconomicComponentFact(
     householdId: input.household.householdId,
     householdTimeZone: input.household.householdTimeZone,
     canonicalComponentKey: component.canonicalComponentKey,
+    sourceKind: component.sourceLayer,
     sourceOperation: { kind: "resolved", id: component.operationId },
     gross: component.gross,
     refundApplied: component.refundApplied,

@@ -142,6 +142,14 @@ export type EconomicTiming =
   | { readonly kind: "unknown" }
   | { readonly kind: "conflict" };
 
+export type EconomicComponentSourceKind =
+  | "Operation_parent"
+  | "Operation_residual"
+  | "Allocation"
+  | "Item"
+  | "Payment_component"
+  | "Cash_economic_use";
+
 export type CanonicalPlaceValue =
   | {
       readonly kind: "resolved";
@@ -157,6 +165,8 @@ export type EconomicComponentFact = {
   readonly householdId: HouseholdId;
   readonly householdTimeZone: HouseholdTimeZone;
   readonly canonicalComponentKey: CanonicalComponentKey;
+  /** Optional only so facts serialized before this transport field existed remain parsable. */
+  readonly sourceKind?: EconomicComponentSourceKind;
   readonly sourceOperation: AnalyticDimensionValue<OperationId>;
   readonly gross: Money;
   readonly refundApplied: Money;

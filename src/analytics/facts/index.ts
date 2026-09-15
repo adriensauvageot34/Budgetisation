@@ -15,6 +15,7 @@ export type {
   CanonicalPlaceValue,
   CashUseId,
   EconomicComponentFact,
+  EconomicComponentSourceKind,
   EconomicPersonAttribution,
   EconomicPersonAttributionReason,
   EconomicPersonShare,

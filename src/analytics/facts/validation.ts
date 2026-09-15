@@ -27,6 +27,7 @@ import {
 } from "../../core/time";
 import {
   createRuntimeSchema,
+  hasOwn,
   parseStrictRecord,
   parseStringLiteral,
   requireProperty,
@@ -44,6 +45,7 @@ import type {
   CanonicalPlaceValue,
   CashUseId,
   EconomicComponentFact,
+  EconomicComponentSourceKind,
   EconomicPersonAttribution,
   EconomicPersonAttributionReason,
   EconomicPersonShare,
@@ -84,6 +86,9 @@ const timingKinds = new Set([
   "conflict",
 ] as const);
 const timingSegmentStates = new Set(["known", "partial", "unknown"] as const);
+const economicComponentSourceKinds = new Set<EconomicComponentSourceKind>([
+  "Operation_parent", "Operation_residual", "Allocation", "Item", "Payment_component", "Cash_economic_use",
+]);
 const placeKinds = new Set([
   "resolved",
   "unknown",
@@ -569,6 +574,7 @@ export function parseEconomicComponentFact(
       "householdId",
       "householdTimeZone",
       "canonicalComponentKey",
+      "sourceKind",
       "sourceOperation",
       "gross",
       "refundApplied",
@@ -635,6 +641,13 @@ export function parseEconomicComponentFact(
         "EconomicComponentFact",
       ),
     ),
+    ...(hasOwn(record, "sourceKind") ? {
+      sourceKind: parseStringLiteral<EconomicComponentSourceKind>(
+        requireProperty(record, "sourceKind", "EconomicComponentFact"),
+        economicComponentSourceKinds,
+        "EconomicComponentFact.sourceKind",
+      ),
+    } : {}),
     sourceOperation: parseDimensionValue(
       requireProperty(record, "sourceOperation", "EconomicComponentFact"),
       parseOperationId,

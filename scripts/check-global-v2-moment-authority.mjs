@@ -23,6 +23,7 @@ const uuid = (n) => `00000000-0000-4000-8000-${String(n).padStart(12, "0")}`;
 const householdId = uuid(1), personId = uuid(2);
 const economic = (id, momentId, date, amount) => ({
   fact: "fct_economic_component", householdId, householdTimeZone: "Europe/Paris", canonicalComponentKey: `operation:${uuid(id)}`,
+  sourceKind: "Operation_parent",
   sourceOperation: { kind: "resolved", id: uuid(id) }, gross: parseMoney(String(amount)), refundApplied: parseMoney("0"), net: parseMoney(String(amount)), bankDate: { kind: "known", date },
   economicTiming: { kind: "known", segments: [{ segmentKey: uuid(8000 + id), timingState: "known", periodStart: date, periodEnd: date, economicMonth: `${date.slice(0, 7)}-01`, amount: parseMoney(String(amount)) }] },
   person: { kind: "unknown" }, category: { kind: "undetermined" }, subcategory: { kind: "unknown" }, activity: { kind: "unknown" }, merchant: { kind: "unknown" },
@@ -55,6 +56,8 @@ check(() => assert.equal(result.summaries.find(({ moment }) => moment.momentId =
 check(() => assert.deepEqual(result.summaries.find(({ moment }) => moment.momentId === momentIds[0]).moment.expectedCausalComponentKeys, [`operation:${uuid(500)}`]));
 check(() => assert.equal(result.summaries.find(({ moment }) => moment.momentId === momentIds[0]).spentDuring.value, "125"));
 check(() => assert.equal(result.summaries.find(({ moment }) => moment.momentId === momentIds[0]).causalRoles[0].role, "PREPARATION"));
+check(() => assert.equal(result.summaries.find(({ moment }) => moment.momentId === momentIds[0]).causalComponents[0].amount, "100"));
+check(() => assert.equal(result.summaries.find(({ moment }) => moment.momentId === momentIds[0]).causalComponents[0].sourceKind, "Operation_parent"));
 check(() => assert.equal(result.boundary.certifiedUnitIds.length, 6));
 check(() => assert.equal(result.providerStatus.canonicalMoments, "CONNECTED"));
 check(() => assert.equal(result.providerStatus.causalEconomics, "CONNECTED"));

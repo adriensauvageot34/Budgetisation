@@ -24,6 +24,7 @@
     "check:global-v2-relationship-authority": "node scripts/check-global-v2-relationship-authority.mjs",
     "check:global-v2-moments": "node --experimental-strip-types scripts/check-global-v2-moments.mjs",
     "check:global-v2-moment-authority": "node scripts/check-global-v2-moment-authority.mjs",
+    "check:global-v2-m6-causal-components-fixture": "node scripts/check-global-v2-m6-causal-components-fixture.mjs",
     "check:global-v2-places": "node --experimental-strip-types scripts/check-global-v2-places.mjs",
     "check:global-v2-place-authority": "node scripts/check-global-v2-place-authority.mjs",
     "check:global-v2-purchases": "node scripts/check-global-v2-purchases.mjs",

@@ -2,7 +2,7 @@ import { Temporal } from "@js-temporal/polyfill";
 import Big from "big.js";
 import { sha256 } from "@noble/hashes/sha2.js";
 import { bytesToHex, utf8ToBytes } from "@noble/hashes/utils.js";
-import type { EconomicComponentFact } from "../facts";
+import type { EconomicComponentFact, EconomicComponentSourceKind } from "../facts";
 import {
   projectCanonicalMomentRelations,
   resolveMomentFinancialCost,
@@ -19,6 +19,7 @@ import {
 } from "../../core/global-v2";
 import { addMoney, compareMoney, parseMoney, type Money } from "../../core/money";
 import { parseLocalDate, type LocalDate } from "../../core/time";
+import { hasOwn, parseStrictRecord, parseStringLiteral, requireProperty } from "../../core/validation";
 import { GlobalMaterialityEngine, globalMaterialityPolicies } from "./materiality";
 import {
   assertGlobalMomentCatalogExhaustive,
@@ -69,6 +70,20 @@ export type GlobalMomentComponentAuthority = {
   readonly evidenceRefs: readonly string[];
 };
 
+export type GlobalMomentCausalComponent = {
+  readonly componentRef: string;
+  readonly canonicalComponentKey: string;
+  readonly amount: Money;
+  readonly sourceKind: EconomicComponentSourceKind;
+  readonly sourceOperationRef?: string;
+  readonly categoryRef?: string;
+  readonly subcategoryRef?: string;
+  readonly merchantRef?: string;
+  readonly causalRole?: NonNullable<GlobalMomentComponentAuthority["causalRole"]>;
+  readonly compositionGroup?: NonNullable<GlobalMomentComponentAuthority["compositionGroup"]>;
+  readonly evidenceRefs: readonly string[];
+};
+
 export type GlobalMomentUnitCostAuthority = {
   readonly momentId: string;
   readonly componentKey: string;
@@ -90,6 +105,92 @@ export type GlobalMomentExperienceInput = {
 };
 
 const moneySum = (values: readonly Money[]): Money => values.reduce(addMoney, zero);
+const componentSourceKinds = new Set<EconomicComponentSourceKind>(["Operation_parent", "Operation_residual", "Allocation", "Item", "Payment_component", "Cash_economic_use"]);
+const causalRoles = new Set<NonNullable<GlobalMomentComponentAuthority["causalRole"]>>(["PREPARATION", "CORE_EXPERIENCE", "AFTER_EFFECT", "ADJUSTMENT"]);
+const compositionGroups = new Set<NonNullable<GlobalMomentComponentAuthority["compositionGroup"]>>(["TRANSPORT", "LODGING", "FOOD", "ACTIVITIES", "PREPARATION", "OTHER"]);
+
+function nonEmptyString(value: unknown, typeName: string): string {
+  if (typeof value !== "string" || !value.trim()) throw new TypeError(`${typeName} doit être une chaîne non vide.`);
+  return value;
+}
+
+function optionalRef(record: Readonly<Record<string, unknown>>, key: string, prefix: string): string | undefined {
+  if (!hasOwn(record, key)) return undefined;
+  const value = nonEmptyString(requireProperty(record, key, "GlobalMomentCausalComponent"), `GlobalMomentCausalComponent.${key}`);
+  if (!value.startsWith(prefix)) throw new TypeError(`GlobalMomentCausalComponent.${key} doit commencer par ${prefix}.`);
+  return value;
+}
+
+export function parseGlobalMomentCausalComponent(value: unknown): GlobalMomentCausalComponent {
+  const record = parseStrictRecord(value, [
+    "componentRef", "canonicalComponentKey", "amount", "sourceKind", "sourceOperationRef", "categoryRef",
+    "subcategoryRef", "merchantRef", "causalRole", "compositionGroup", "evidenceRefs",
+  ], "GlobalMomentCausalComponent");
+  const canonicalComponentKey = nonEmptyString(requireProperty(record, "canonicalComponentKey", "GlobalMomentCausalComponent"), "GlobalMomentCausalComponent.canonicalComponentKey");
+  const componentRef = nonEmptyString(requireProperty(record, "componentRef", "GlobalMomentCausalComponent"), "GlobalMomentCausalComponent.componentRef");
+  if (componentRef !== `economic-component:${canonicalComponentKey}`) throw new TypeError("M6_CAUSAL_COMPONENT_REF_MISMATCH");
+  const rawEvidenceRefs = requireProperty(record, "evidenceRefs", "GlobalMomentCausalComponent");
+  if (!Array.isArray(rawEvidenceRefs)) throw new TypeError("GlobalMomentCausalComponent.evidenceRefs doit être un tableau.");
+  const evidenceRefs = rawEvidenceRefs.map((ref) => nonEmptyString(ref, "GlobalMomentCausalComponent.evidenceRefs"));
+  if (evidenceRefs.length === 0 || new Set(evidenceRefs).size !== evidenceRefs.length) throw new TypeError("M6_INVALID_CAUSAL_COMPONENT_EVIDENCE");
+  const sourceOperationRef = optionalRef(record, "sourceOperationRef", "operation:");
+  const categoryRef = optionalRef(record, "categoryRef", "category:");
+  const subcategoryRef = optionalRef(record, "subcategoryRef", "subcategory:");
+  const merchantRef = optionalRef(record, "merchantRef", "merchant:");
+  return {
+    componentRef,
+    canonicalComponentKey,
+    amount: parseMoney(requireProperty(record, "amount", "GlobalMomentCausalComponent")),
+    sourceKind: parseStringLiteral<EconomicComponentSourceKind>(requireProperty(record, "sourceKind", "GlobalMomentCausalComponent"), componentSourceKinds, "GlobalMomentCausalComponent.sourceKind"),
+    ...(sourceOperationRef === undefined ? {} : { sourceOperationRef }),
+    ...(categoryRef === undefined ? {} : { categoryRef }),
+    ...(subcategoryRef === undefined ? {} : { subcategoryRef }),
+    ...(merchantRef === undefined ? {} : { merchantRef }),
+    ...(hasOwn(record, "causalRole") ? { causalRole: parseStringLiteral<NonNullable<GlobalMomentComponentAuthority["causalRole"]>>(requireProperty(record, "causalRole", "GlobalMomentCausalComponent"), causalRoles, "GlobalMomentCausalComponent.causalRole") } : {}),
+    ...(hasOwn(record, "compositionGroup") ? { compositionGroup: parseStringLiteral<NonNullable<GlobalMomentComponentAuthority["compositionGroup"]>>(requireProperty(record, "compositionGroup", "GlobalMomentCausalComponent"), compositionGroups, "GlobalMomentCausalComponent.compositionGroup") } : {}),
+    evidenceRefs: [...evidenceRefs].sort(),
+  };
+}
+
+function assertCausalComponentReconciliation(
+  momentId: string,
+  causalCost: { readonly status: "KNOWN" | "PARTIAL"; readonly value: Money }
+    | { readonly status: "UNKNOWN" | "NOT_APPLICABLE" | "CONFLICT" },
+  components: readonly GlobalMomentCausalComponent[],
+): void {
+  if (new Set(components.map(({ componentRef }) => componentRef)).size !== components.length) throw new TypeError(`M6_DUPLICATE_CAUSAL_COMPONENT_REF:${momentId}`);
+  if (causalCost.status === "KNOWN" || causalCost.status === "PARTIAL") {
+    if (compareMoney(moneySum(components.map(({ amount }) => amount)), causalCost.value) !== 0) throw new TypeError(`M6_CAUSAL_COMPONENT_RECONCILIATION_FAILED:${momentId}`);
+  } else if (components.length !== 0) throw new TypeError(`M6_CAUSAL_COMPONENT_WITHOUT_COST:${momentId}`);
+}
+
+/** Strictly parses and reconciles the causal-component transport slice of an M6 owner output. */
+export function parseGlobalMomentCausalComponentTransport(value: unknown): readonly {
+  readonly momentId: string;
+  readonly causalComponents: readonly GlobalMomentCausalComponent[];
+}[] {
+  if (typeof value !== "object" || value === null || Array.isArray(value)) throw new TypeError("GlobalMomentExperienceOutput doit être un objet.");
+  const summaries = (value as Record<string, unknown>).summaries;
+  if (!Array.isArray(summaries)) throw new TypeError("GlobalMomentExperienceOutput.summaries doit être un tableau.");
+  return summaries.map((candidate) => {
+    if (typeof candidate !== "object" || candidate === null || Array.isArray(candidate)) throw new TypeError("GlobalMomentExperienceSummary doit être un objet.");
+    const summary = candidate as Record<string, unknown>;
+    const moment = summary.moment;
+    const causalCost = summary.causalCost;
+    if (typeof moment !== "object" || moment === null || Array.isArray(moment)) throw new TypeError("GlobalMomentExperienceSummary.moment doit être un objet.");
+    if (typeof causalCost !== "object" || causalCost === null || Array.isArray(causalCost)) throw new TypeError("GlobalMomentExperienceSummary.causalCost doit être un objet.");
+    const momentId = nonEmptyString((moment as Record<string, unknown>).momentId, "GlobalMomentExperienceSummary.momentId");
+    const costRecord = causalCost as Record<string, unknown>;
+    const status = parseStringLiteral<GlobalKnowledgeValue<Money>["status"]>(costRecord.status, new Set(["KNOWN", "PARTIAL", "UNKNOWN", "NOT_APPLICABLE", "CONFLICT"]), "GlobalMomentExperienceSummary.causalCost.status");
+    const parsedCost = status === "KNOWN" || status === "PARTIAL"
+      ? { status, value: parseMoney(costRecord.value) }
+      : { status };
+    if (!Array.isArray(summary.causalComponents)) throw new TypeError("GlobalMomentExperienceSummary.causalComponents doit être un tableau.");
+    const causalComponents = summary.causalComponents.map(parseGlobalMomentCausalComponent);
+    assertCausalComponentReconciliation(momentId, parsedCost, causalComponents);
+    return { momentId, causalComponents };
+  });
+}
 const sortedMoney = (values: readonly Money[]) => [...values].sort((a, b) => compareMoney(a, b));
 const midpoint = (a: Money, b: Money) => parseMoney(new Big(a).plus(b).div(2).toFixed());
 const medianMoney = (values: readonly Money[]): Money | undefined => {
@@ -261,6 +362,30 @@ export function buildGlobalMomentExperiences(input: GlobalMomentExperienceInput)
     else if (resolved.causalCost.status === "CONFLICT") causalCost = { status: "CONFLICT", coverage };
     else if (moment.expectedCausalComponentKeys?.length === 0) causalCost = { status: "KNOWN", value: zero, coverage };
     else causalCost = { status: "UNKNOWN", coverage };
+    if (resolved.causalAmounts.size !== resolved.causalComponentKeys.length) throw new TypeError(`M6_CAUSAL_COMPONENT_GRAIN_MISMATCH:${moment.momentId}`);
+    const causalComponents = resolved.causalComponentKeys.map((key) => {
+      const fact = factByKey.get(key);
+      if (fact === undefined) throw new TypeError(`M6_CAUSAL_COMPONENT_FACT_MISSING:${key}`);
+      if (fact.sourceKind === undefined) throw new TypeError(`M6_CAUSAL_COMPONENT_SOURCE_KIND_REQUIRED:${key}`);
+      const amount = resolved.causalAmounts.get(key);
+      if (amount === undefined) throw new TypeError(`M6_CAUSAL_COMPONENT_AMOUNT_MISSING:${key}`);
+      const authority = authorityByKey.get(`${moment.momentId}:${key}`);
+      const relationEvidence = relations.flatMap((relation) => relation.momentId === moment.momentId && relation.componentKey === key && relation.kind === "CAUSAL" ? relation.evidenceRefs : []);
+      return parseGlobalMomentCausalComponent({
+        componentRef: `economic-component:${key}`,
+        canonicalComponentKey: key,
+        amount,
+        sourceKind: fact.sourceKind,
+        ...(fact.sourceOperation.kind === "resolved" ? { sourceOperationRef: `operation:${fact.sourceOperation.id}` } : {}),
+        ...(fact.category.kind === "resolved" ? { categoryRef: `category:${fact.category.id}` } : {}),
+        ...(fact.subcategory.kind === "resolved" ? { subcategoryRef: `subcategory:${fact.subcategory.id}` } : {}),
+        ...(fact.merchant.kind === "resolved" ? { merchantRef: `merchant:${fact.merchant.id}` } : {}),
+        ...(authority?.causalRole === undefined ? {} : { causalRole: authority.causalRole }),
+        ...(authority?.compositionGroup === undefined ? {} : { compositionGroup: authority.compositionGroup }),
+        evidenceRefs: [...new Set([`economic-component:${key}`, ...relationEvidence, ...(authority?.evidenceRefs ?? [])])].sort(),
+      });
+    });
+    assertCausalComponentReconciliation(moment.momentId, causalCost, causalComponents);
     const fullFacts = resolvedFacts.filter((fact) => compareMoney(resolved.causalAmounts.get(String(fact.canonicalComponentKey))!, fact.net) === 0);
     const gross = moneySum(fullFacts.map((fact) => fact.gross));
     const refunds = moneySum(fullFacts.map((fact) => fact.refundApplied));
@@ -294,7 +419,7 @@ export function buildGlobalMomentExperiences(input: GlobalMomentExperienceInput)
       : { status: "NOT_APPLICABLE" as const };
     return {
       moment, resolvedType, profile, subjectFacets: allFacets.get(moment.momentId)!,
-      causalCost,
+      causalCost, causalComponents,
       grossCausalOutflow: causalCost.status === "UNKNOWN" || causalCost.status === "CONFLICT"
         ? { status: causalCost.status }
         : fullFacts.length === resolvedFacts.length ? { status: "KNOWN" as const, value: gross } : { status: "PARTIAL" as const, value: gross, partialMeaning: "OBSERVED_ONLY" as const, partialReasons: ["MISSING_LINKAGE" as const] },
@@ -424,10 +549,12 @@ export function buildGlobalMomentExperiences(input: GlobalMomentExperienceInput)
     return { ref, digest: value };
   });
   const policies = { catalog: "moment_comparison_catalog@v1", support: "global-moment-peer-support@v1", causal: "history_shared_doctrines@v3", spentDuring: "global-moment-spent-during@v1", robustStatistics: "median-iqr-mad@v1", narrative: "global-moment-narrative-importance@v1" };
-  return {
+  const output = {
     methodVersion: GLOBAL_M6_METHOD_VERSION, policies, summaries, comparisons, narrative, series, dependencyClosure,
     inputHash: digest({ moments, facts, relations, componentAuthorities: input.componentAuthorities ?? [], unitCostAuthorities: input.unitCostAuthorities ?? [], policies, dependencyClosure }),
     crossModuleSignals: { m3SeriesEvolution: series.filter((entry) => entry.transformationInputEligible).map((entry) => entry.seriesId), m5MomentRelationships: moments.map((moment) => moment.momentId), replayOwner: "P08" as const, replayExecuted: false as const },
     publicationEligible: false as const,
   };
+  parseGlobalMomentCausalComponentTransport(output);
+  return output;
 }
