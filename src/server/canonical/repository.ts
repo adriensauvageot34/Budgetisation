@@ -2001,7 +2001,7 @@ export class CanonicalRepository {
       (batch) =>
       this.client
         .from("life_event_types")
-        .select("life_event_type_id,type_key,label,can_span_days,active,default_calendar_mode,calendar_priority,calendar_public_label,calendar_default_role,calendar_role_if_parent,calendar_is_fallback,calendar_can_dominate,calendar_title_pattern,calendar_title_fallback,calendar_child_render")
+        .select("life_event_type_id,type_key,family,label,can_span_days,active,default_calendar_mode,calendar_priority,calendar_public_label,calendar_default_role,calendar_role_if_parent,calendar_is_fallback,calendar_can_dominate,calendar_title_pattern,calendar_title_fallback,calendar_child_render")
         .in("life_event_type_id", batch)
         .order("life_event_type_id", { ascending: true }));
   }
@@ -2020,7 +2020,7 @@ export class CanonicalRepository {
       (batch) =>
       this.client
         .from("life_event_types")
-        .select("life_event_type_id,type_key,label,can_span_days,active,default_calendar_mode,calendar_priority,calendar_public_label,calendar_default_role,calendar_role_if_parent,calendar_is_fallback,calendar_can_dominate,calendar_title_pattern,calendar_title_fallback,calendar_child_render")
+        .select("life_event_type_id,type_key,family,label,can_span_days,active,default_calendar_mode,calendar_priority,calendar_public_label,calendar_default_role,calendar_role_if_parent,calendar_is_fallback,calendar_can_dominate,calendar_title_pattern,calendar_title_fallback,calendar_child_render")
         .in("type_key", batch)
         .order("type_key", { ascending: true }));
   }
