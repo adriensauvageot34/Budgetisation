@@ -141,30 +141,43 @@ export type ImportedGlobalSummaryReadModel = {
   readonly resourceMeta: GlobalReadModelResourceMeta;
 };
 
+const expandedSection = <const Resource extends string, const ModuleKey extends GlobalPrimaryModuleKey>(
+  resource: Resource,
+  moduleKey: ModuleKey,
+  capabilityId: string,
+) => Object.freeze({ resource, moduleKey, capabilityId, group: "expanded_section" as const, paramsKind: "section_key" as const, family: "global_module" as const, availability: "AVAILABLE" as const });
+
+const entityDetail = <const Resource extends string, const ModuleKey extends GlobalPrimaryModuleKey>(
+  resource: Resource,
+  moduleKey: ModuleKey,
+  capabilityId: string,
+  availability: "AVAILABLE" | "AUTHORITY_GATED" = "AVAILABLE",
+) => Object.freeze({ resource, moduleKey, capabilityId, group: "entity_detail" as const, paramsKind: "entity_ref" as const, family: "global_entity_detail" as const, availability });
+
 export const globalV2ExpandedResourceCatalog = Object.freeze([
-  { resource: "analysis_global_economic_expanded", moduleKey: "ECONOMIC", capabilityId: "GLOBAL_ECONOMIC" },
-  { resource: "analysis_global_categories_needs_expanded", moduleKey: "CATEGORIES_NEEDS", capabilityId: "GLOBAL_CATEGORIES_NEEDS" },
-  { resource: "analysis_global_transformations_expanded", moduleKey: "TRANSFORMATIONS", capabilityId: "GLOBAL_TRANSFORMATIONS" },
-  { resource: "analysis_global_rhythm_expanded", moduleKey: "RHYTHM", capabilityId: "GLOBAL_RHYTHM" },
-  { resource: "analysis_global_relationships_expanded", moduleKey: "RELATIONSHIPS", capabilityId: "GLOBAL_RELATIONSHIPS" },
-  { resource: "analysis_global_moments_expanded", moduleKey: "MOMENTS", capabilityId: "GLOBAL_MOMENTS" },
-  { resource: "analysis_global_geo_mobility_expanded", moduleKey: "GEO_MOBILITY", capabilityId: "GLOBAL_GEO_MOBILITY" },
-  { resource: "analysis_global_consumption_expanded", moduleKey: "CONSUMPTION", capabilityId: "GLOBAL_CONSUMPTION" },
-  { resource: "analysis_global_personas_expanded", moduleKey: "PERSONAS", capabilityId: "GLOBAL_PERSONAS" },
-  { resource: "analysis_global_together_expanded", moduleKey: "TOGETHER", capabilityId: "GLOBAL_TOGETHER" },
-  { resource: "analysis_global_economic_recurrence_detail", moduleKey: "ECONOMIC", capabilityId: "GLOBAL_ECONOMIC_RECURRENCE_DETAIL" },
-  { resource: "analysis_global_category_need_detail", moduleKey: "CATEGORIES_NEEDS", capabilityId: "GLOBAL_CATEGORY_NEED_DETAIL" },
-  { resource: "analysis_global_transformation_detail", moduleKey: "TRANSFORMATIONS", capabilityId: "GLOBAL_TRANSFORMATION_DETAIL" },
-  { resource: "analysis_global_routine_detail", moduleKey: "RHYTHM", capabilityId: "GLOBAL_ROUTINE_DETAIL" },
-  { resource: "analysis_global_relationship_detail", moduleKey: "RELATIONSHIPS", capabilityId: "GLOBAL_RELATIONSHIP_DETAIL" },
-  { resource: "analysis_global_moment_experience_detail", moduleKey: "MOMENTS", capabilityId: "GLOBAL_MOMENT_DETAIL" },
-  { resource: "analysis_global_place_mobility_detail", moduleKey: "GEO_MOBILITY", capabilityId: "GLOBAL_PLACE_DETAIL" },
-  { resource: "analysis_global_purchase_merchant_detail", moduleKey: "CONSUMPTION", capabilityId: "GLOBAL_PURCHASE_MERCHANT_DETAIL" },
-  { resource: "analysis_global_product_detail", moduleKey: "CONSUMPTION", capabilityId: "GLOBAL_PRODUCT_DETAIL" },
-  { resource: "analysis_global_route_detail", moduleKey: "GEO_MOBILITY", capabilityId: "GLOBAL_ROUTE_DETAIL" },
-  { resource: "analysis_global_persona_detail", moduleKey: "PERSONAS", capabilityId: "GLOBAL_PERSONA_DETAIL" },
-  { resource: "analysis_global_participation_detail", moduleKey: "TOGETHER", capabilityId: "GLOBAL_PARTICIPATION_DETAIL" },
-  { resource: "analysis_global_methodology", moduleKey: "ECONOMIC", capabilityId: "GLOBAL_METHODOLOGY" },
+  expandedSection("analysis_global_economic_expanded", "ECONOMIC", "GLOBAL_ECONOMIC"),
+  expandedSection("analysis_global_categories_needs_expanded", "CATEGORIES_NEEDS", "GLOBAL_CATEGORIES_NEEDS"),
+  expandedSection("analysis_global_transformations_expanded", "TRANSFORMATIONS", "GLOBAL_TRANSFORMATIONS"),
+  expandedSection("analysis_global_rhythm_expanded", "RHYTHM", "GLOBAL_RHYTHM"),
+  expandedSection("analysis_global_relationships_expanded", "RELATIONSHIPS", "GLOBAL_RELATIONSHIPS"),
+  expandedSection("analysis_global_moments_expanded", "MOMENTS", "GLOBAL_MOMENTS"),
+  expandedSection("analysis_global_geo_mobility_expanded", "GEO_MOBILITY", "GLOBAL_GEO_MOBILITY"),
+  expandedSection("analysis_global_consumption_expanded", "CONSUMPTION", "GLOBAL_CONSUMPTION"),
+  expandedSection("analysis_global_personas_expanded", "PERSONAS", "GLOBAL_PERSONAS"),
+  expandedSection("analysis_global_together_expanded", "TOGETHER", "GLOBAL_TOGETHER"),
+  entityDetail("analysis_global_economic_recurrence_detail", "ECONOMIC", "GLOBAL_ECONOMIC_RECURRENCE_DETAIL"),
+  entityDetail("analysis_global_category_need_detail", "CATEGORIES_NEEDS", "GLOBAL_CATEGORY_NEED_DETAIL"),
+  entityDetail("analysis_global_transformation_detail", "TRANSFORMATIONS", "GLOBAL_TRANSFORMATION_DETAIL"),
+  entityDetail("analysis_global_routine_detail", "RHYTHM", "GLOBAL_ROUTINE_DETAIL"),
+  entityDetail("analysis_global_relationship_detail", "RELATIONSHIPS", "GLOBAL_RELATIONSHIP_DETAIL"),
+  entityDetail("analysis_global_moment_experience_detail", "MOMENTS", "GLOBAL_MOMENT_DETAIL"),
+  entityDetail("analysis_global_place_mobility_detail", "GEO_MOBILITY", "GLOBAL_PLACE_DETAIL"),
+  entityDetail("analysis_global_purchase_merchant_detail", "CONSUMPTION", "GLOBAL_PURCHASE_MERCHANT_DETAIL"),
+  entityDetail("analysis_global_product_detail", "CONSUMPTION", "GLOBAL_PRODUCT_DETAIL", "AUTHORITY_GATED"),
+  entityDetail("analysis_global_route_detail", "GEO_MOBILITY", "GLOBAL_ROUTE_DETAIL", "AUTHORITY_GATED"),
+  entityDetail("analysis_global_persona_detail", "PERSONAS", "GLOBAL_PERSONA_DETAIL"),
+  entityDetail("analysis_global_participation_detail", "TOGETHER", "GLOBAL_PARTICIPATION_DETAIL"),
+  Object.freeze({ resource: "analysis_global_methodology", moduleKey: "ECONOMIC", capabilityId: "GLOBAL_METHODOLOGY", group: "methodology" as const, paramsKind: "methodology" as const, family: "global_methodology" as const, availability: "AVAILABLE" as const }),
 ] as const);
 
 export function globalV2MethodRef(moduleKey: GlobalPrimaryModuleKey): string {

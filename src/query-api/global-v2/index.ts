@@ -34,6 +34,9 @@ export {
   type GlobalReadModelPublicationMeta,
   type GlobalReadModelResourceMeta,
   type GlobalReadModelTransportState,
+  type GlobalV2QueryParamsKind,
+  type GlobalV2ResourceFamily,
+  type GlobalV2ResourceGroup,
 } from "./types";
 export { parseGlobalPhenomenonQuality, parseGlobalTypedMeasure } from "./typed-values";
 export {
@@ -66,6 +69,20 @@ export {
   type GlobalV2ExpandedResourceName,
   type ImportedGlobalSummaryReadModel,
 } from "./details";
+export {
+  GLOBAL_LIFE_TIMELINE_MAX_DESTINATIONS,
+  GLOBAL_LIFE_TIMELINE_MAX_EVENTS,
+  GLOBAL_LIFE_TIMELINE_PAYLOAD_BUDGET_BYTES,
+  globalLifeTimelineReadModelSchema,
+  globalLifeTimelineResourceDefinition,
+  parseGlobalLifeTimelineReadModel,
+  type GlobalLifeTimelineReadModel,
+  type GlobalLifeTimelineResourceName,
+  type GlobalTimelineCausalCost,
+  type GlobalTimelineComparisonSummary,
+  type GlobalTimelineEvent,
+  type GlobalTimelinePlace,
+} from "./timeline";
 export {
   assertGlobalV2QueryRegistryComplete,
   globalV2QueryCacheKey,

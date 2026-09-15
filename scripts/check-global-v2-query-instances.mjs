@@ -37,10 +37,12 @@ const quality = { knowledgeState: "KNOWN", supportStatus: "SUFFICIENT", effectiv
 const capability = (id, state = "AVAILABLE") => ({ capabilityId: id, state, reasonCodes: state === "AVAILABLE" ? [] : ["AUTHORITY_GATED"] });
 
 const paramsFor = (resource) => {
-  if (query.globalV2TopLevelResources.includes(resource)) return {};
-  if (query.globalV2ExpandedResourceCatalog.slice(0, 10).some((entry) => entry.resource === resource)) return { sectionKey: "OVERVIEW" };
-  if (resource === "analysis_global_methodology") return { methodRef: "method:global-economic@v1", moduleKey: "ECONOMIC" };
-  return { entityRef: resource === "analysis_global_category_need_detail" ? "category:food" : `entity:${resource}` };
+  switch (query.globalV2QueryRegistry[resource].paramsKind) {
+    case "empty": return {};
+    case "section_key": return { sectionKey: "OVERVIEW" };
+    case "methodology": return { methodRef: "method:global-economic@v1", moduleKey: "ECONOMIC" };
+    case "entity_ref": return { entityRef: resource === "analysis_global_category_need_detail" ? "category:food" : `entity:${resource}` };
+  }
 };
 const resourceMeta = (resource, params) => ({
   contractVersion: query.globalV2QueryRegistry[resource].contractVersion,
@@ -99,14 +101,118 @@ const inputs = [
   ...expandedInputs,
 ];
 
+const expectedExistingParamsKinds = Object.fromEntries([
+  ...[
+    "analysis_global_manifest", "analysis_global_summary_ai", "analysis_global_economic", "analysis_global_categories_needs",
+    "analysis_global_transformations", "analysis_global_rhythm", "analysis_global_relationships", "analysis_global_moments",
+    "analysis_global_geo_mobility", "analysis_global_consumption", "analysis_global_personas", "analysis_global_together",
+  ].map((resource) => [resource, "empty"]),
+  ...[
+    "analysis_global_economic_expanded", "analysis_global_categories_needs_expanded", "analysis_global_transformations_expanded",
+    "analysis_global_rhythm_expanded", "analysis_global_relationships_expanded", "analysis_global_moments_expanded",
+    "analysis_global_geo_mobility_expanded", "analysis_global_consumption_expanded", "analysis_global_personas_expanded",
+    "analysis_global_together_expanded",
+  ].map((resource) => [resource, "section_key"]),
+  ...[
+    "analysis_global_economic_recurrence_detail", "analysis_global_category_need_detail", "analysis_global_transformation_detail",
+    "analysis_global_routine_detail", "analysis_global_relationship_detail", "analysis_global_moment_experience_detail",
+    "analysis_global_place_mobility_detail", "analysis_global_purchase_merchant_detail", "analysis_global_product_detail",
+    "analysis_global_route_detail", "analysis_global_persona_detail", "analysis_global_participation_detail",
+  ].map((resource) => [resource, "entity_ref"]),
+  ["analysis_global_methodology", "methodology"],
+]);
+const actualExistingParamsKinds = Object.fromEntries(Object.entries(query.globalV2QueryRegistry)
+  .filter(([resource]) => resource !== "analysis_global_life_timeline")
+  .map(([resource, contract]) => [resource, contract.paramsKind]));
+const timelineEvent = (index = 0) => ({
+  eventRef: `moment:${index}`,
+  sourceKind: "MOMENT",
+  canonicalName: `Moment ${index}`,
+  startDate: "2026-01-01",
+  endDate: "2026-01-01",
+  typeKey: "soiree",
+  typeLabel: "Soirée",
+  familyKey: "SOCIAL_OUTING",
+  familySource: "M6",
+  momentStructure: "SAME_DAY",
+  participantRefs: [],
+  places: [],
+  causalCost: { status: "KNOWN", value: { kind: "MONEY", value: "0", unit: "EUR" } },
+  comparisonSummary: { status: "KNOWN", comparisonTier: "SAME_TYPE", peerCount: 5, materiality: "NOT_MATERIAL" },
+  componentCount: 0,
+  detailAvailability: "MOMENT_DETAIL",
+  quality,
+  sourceModule: "MOMENTS",
+  sourceOwner: "M6",
+});
+const { momentStructure: _momentStructure, comparisonSummary: _comparisonSummary, componentCount: _componentCount, ...timelineEventBase } = timelineEvent();
+const lifeEvent = {
+  ...timelineEventBase,
+  eventRef: "life-event:1",
+  sourceKind: "LIFE_EVENT",
+  familySource: "LIFE_EVENT",
+  causalCost: { status: "UNKNOWN" },
+  detailAvailability: "INLINE_ONLY",
+  sourceModule: "CANONICAL",
+  sourceOwner: "CANONICAL",
+};
+const timelinePayload = {
+  kind: "global_life_timeline",
+  schemaVersion: "global-life-timeline@v1",
+  resource: "analysis_global_life_timeline",
+  moduleKey: "RHYTHM",
+  events: [timelineEvent()],
+  chapterOverlays: [],
+  contextSignals: [],
+  destinations: [],
+  quality,
+  publicationMeta,
+  resourceMeta: { contractVersion: "global-v2-query@v1", methodSignature: h("d"), policyVersions: { projection: "global-v2-query-projection@v1" }, resourceInputHash: h("e") },
+};
+
 query.assertGlobalV2QueryRegistryComplete();
-check(() => assert.equal(Object.keys(query.globalV2QueryRegistry).length, 35));
+check(() => assert.equal(Object.keys(query.globalV2QueryRegistry).length, 36));
+check(() => assert.deepEqual(actualExistingParamsKinds, expectedExistingParamsKinds));
+check(() => assert.deepEqual(Object.fromEntries(Object.values(query.globalV2QueryRegistry).map(({ group }) => [group, (Object.values(query.globalV2QueryRegistry).filter((contract) => contract.group === group).length)])), {
+  entity_detail: 12, expanded_section: 10, exploration: 1, methodology: 1, module_section: 10, overview: 2,
+}));
 check(() => assert.deepEqual(query.globalV2TopLevelResources.slice(0, 2), ["analysis_global_manifest", "analysis_global_summary_ai"]));
 check(() => assert.equal(query.globalV2QueryRegistry.analysis_global_product_detail.availability, "AUTHORITY_GATED"));
 check(() => assert.equal(query.globalV2QueryRegistry.analysis_global_route_detail.availability, "AUTHORITY_GATED"));
 check(() => assert.equal(query.globalV2QueryRegistry.analysis_global_economic_recurrence_detail.family, "global_entity_detail"));
 check(() => assert.deepEqual(query.parseGlobalV2QueryParams("analysis_global_economic_recurrence_detail", { entityRef: "recurrence:rent" }), { entityRef: "recurrence:rent" }));
 check(() => assert.equal(inputs.some(({ resource }) => resource === "analysis_global_product_detail" || resource === "analysis_global_route_detail"), false));
+check(() => assert.deepEqual(query.parseGlobalV2QueryParams("analysis_global_life_timeline", {}), {}));
+rejects(() => query.parseGlobalV2QueryParams("analysis_global_life_timeline", { entityRef: "moment:1" }), /non autorisée|unrecognized/);
+check(() => assert.deepEqual(query.globalV2QueryRegistry.analysis_global_life_timeline, {
+  resource: "analysis_global_life_timeline",
+  family: "global_exploration",
+  group: "exploration",
+  paramsKind: "empty",
+  moduleKey: "RHYTHM",
+  moduleRole: "PRESENTATION_ONLY",
+  capabilityId: "GLOBAL_LIFE_TIMELINE",
+  availability: "AVAILABLE",
+  schemaVersion: "global-life-timeline@v1",
+  contractVersion: "global-v2-query@v1",
+  methodVersion: "analysis_global_life_timeline@v1",
+  policyVersions: { projection: "global-v2-query-projection@v1", transport: "global-v2-snapshot-only@v1" },
+  schema: query.globalLifeTimelineReadModelSchema,
+}));
+check(() => assert.deepEqual(query.globalLifeTimelineReadModelSchema.parse(timelinePayload), timelinePayload));
+check(() => assert.equal(query.globalV2QueryRegistry.analysis_global_life_timeline.schema.safeParse(timelinePayload).success, true));
+rejects(() => query.parseGlobalLifeTimelineReadModel({ ...timelinePayload, events: [{ ...timelineEvent(), displayValue: "0 €" }] }), /non autorisée|unrecognized/);
+rejects(() => query.parseGlobalLifeTimelineReadModel({ ...timelinePayload, events: [{ ...timelineEvent(), causalCost: { status: "UNKNOWN", value: { kind: "MONEY", value: "0", unit: "EUR" } } }] }), /UNKNOWN_CAUSAL_COST_VALUE_FORBIDDEN/);
+check(() => assert.equal(query.parseGlobalLifeTimelineReadModel({ ...timelinePayload, events: [lifeEvent] }).events[0].causalCost.status, "UNKNOWN"));
+check(() => assert.equal(query.parseGlobalLifeTimelineReadModel({
+  ...timelinePayload,
+  events: Array.from({ length: query.GLOBAL_LIFE_TIMELINE_MAX_EVENTS }, (_, index) => timelineEvent(index)),
+  destinations: Array.from({ length: query.GLOBAL_LIFE_TIMELINE_MAX_DESTINATIONS }, (_, index) => ({ targetId: `target:${index}`, kind: "HISTORY", resource: "history_month_balance_summary", scopeHash, sourcePublicationId: publicationMeta.publicationId, sourceAnalyticsRevision: publicationMeta.revision })),
+}).events.length, 64));
+rejects(() => query.parseGlobalLifeTimelineReadModel({ ...timelinePayload, events: Array.from({ length: query.GLOBAL_LIFE_TIMELINE_MAX_EVENTS + 1 }, (_, index) => timelineEvent(index)) }), /EVENT_LIMIT/);
+rejects(() => query.parseGlobalLifeTimelineReadModel({ ...timelinePayload, destinations: Array.from({ length: query.GLOBAL_LIFE_TIMELINE_MAX_DESTINATIONS + 1 }, (_, index) => ({ targetId: `target:${index}`, kind: "HISTORY", resource: "history_month_balance_summary", scopeHash, sourcePublicationId: publicationMeta.publicationId, sourceAnalyticsRevision: publicationMeta.revision })) }), /DESTINATION_LIMIT/);
+rejects(() => query.parseGlobalLifeTimelineReadModel({ ...timelinePayload, events: [{ ...timelineEvent(), canonicalName: "x".repeat(query.GLOBAL_LIFE_TIMELINE_PAYLOAD_BUDGET_BYTES) }] }), /PAYLOAD_BUDGET_EXCEEDED/);
+rejects(() => query.parseGlobalLifeTimelineReadModel({ ...timelinePayload, chapterOverlays: [{ ref: "future" }] }), /MUST_BE_EMPTY_IN_V1/);
 
 const validRequest = { resource: "analysis_global_economic_expanded", scope: rawScope, params: { sectionKey: "OVERVIEW" }, expectedGeneration: { publicationId: publicationMeta.publicationId, analyticsRevision: 81 } };
 const parsedRequest = query.parseGlobalV2QueryRequest(validRequest, context);

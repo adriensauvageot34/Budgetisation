@@ -33,10 +33,12 @@ export async function buildIntegratedGlobalV2Candidate({ core, query, planApi, m
     return [{ authority: "METRIC", family: `global_${moduleKey.toLowerCase()}_qualified_output`, identity: output.outputId, digest: output.digest, required: true }];
   };
   const paramsFor = (resource, moduleKey) => {
-    if (query.globalV2TopLevelResources.includes(resource)) return {};
-    if (query.globalV2ExpandedResourceCatalog.slice(0, 10).some((entry) => entry.resource === resource)) return { sectionKey: "OVERVIEW" };
-    if (resource === "analysis_global_methodology") return { methodRef: "method:global-integrated@v1", moduleKey: moduleKey ?? "ECONOMIC" };
-    return { entityRef: `entity:${(moduleKey ?? "ECONOMIC").toLowerCase()}:primary` };
+    switch (query.globalV2QueryRegistry[resource].paramsKind) {
+      case "empty": return {};
+      case "section_key": return { sectionKey: "OVERVIEW" };
+      case "methodology": return { methodRef: "method:global-integrated@v1", moduleKey: moduleKey ?? "ECONOMIC" };
+      case "entity_ref": return { entityRef: `entity:${(moduleKey ?? "ECONOMIC").toLowerCase()}:primary` };
+    }
   };
   const instanceKey = (resource, params) => planApi.globalV2QueryInstanceKey(resource, scopeHash, params);
   const resourceMeta = (resource, params, dependencies) => ({
@@ -72,7 +74,7 @@ export async function buildIntegratedGlobalV2Candidate({ core, query, planApi, m
       const output = outputByModule.get(moduleKey);
       const dependencies = dependenciesFor(moduleKey);
       const params = paramsFor(resource, moduleKey);
-      const isModule = query.globalV2ExpandedResourceCatalog.slice(0, 10).some((item) => item.resource === resource);
+      const isModule = query.globalV2QueryRegistry[resource].group === "expanded_section";
       const payload = query.buildGlobalExpandedReadModel({
         kind: "global_expanded", schemaVersion: "global-expanded@v1", resource, moduleKey,
         sectionKey: resource === "analysis_global_methodology" ? "METHODOLOGY" : "OVERVIEW", visibility: "VISIBLE",

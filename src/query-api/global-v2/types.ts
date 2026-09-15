@@ -5,17 +5,34 @@ import type {
   GlobalPublicationVisibility,
 } from "../../analytics/global-v2/publication";
 
+export type GlobalV2ResourceFamily =
+  | "global_overview"
+  | "global_module"
+  | "global_exploration"
+  | "global_entity_detail"
+  | "global_methodology";
+
+export type GlobalV2ResourceGroup =
+  | "overview"
+  | "module_section"
+  | "expanded_section"
+  | "entity_detail"
+  | "exploration"
+  | "methodology";
+
+export type GlobalV2QueryParamsKind = "empty" | "section_key" | "entity_ref" | "methodology";
+
 export const globalPrimaryModuleCatalog = Object.freeze([
-  { moduleKey: "ECONOMIC", resource: "analysis_global_economic", order: 1 },
-  { moduleKey: "CATEGORIES_NEEDS", resource: "analysis_global_categories_needs", order: 2 },
-  { moduleKey: "TRANSFORMATIONS", resource: "analysis_global_transformations", order: 3 },
-  { moduleKey: "RHYTHM", resource: "analysis_global_rhythm", order: 4 },
-  { moduleKey: "RELATIONSHIPS", resource: "analysis_global_relationships", order: 5 },
-  { moduleKey: "MOMENTS", resource: "analysis_global_moments", order: 6 },
-  { moduleKey: "GEO_MOBILITY", resource: "analysis_global_geo_mobility", order: 7 },
-  { moduleKey: "CONSUMPTION", resource: "analysis_global_consumption", order: 8 },
-  { moduleKey: "PERSONAS", resource: "analysis_global_personas", order: 9 },
-  { moduleKey: "TOGETHER", resource: "analysis_global_together", order: 10 },
+  { moduleKey: "ECONOMIC", resource: "analysis_global_economic", order: 1, group: "module_section", paramsKind: "empty", family: "global_module", capabilityId: "GLOBAL_ECONOMIC", availability: "AVAILABLE" },
+  { moduleKey: "CATEGORIES_NEEDS", resource: "analysis_global_categories_needs", order: 2, group: "module_section", paramsKind: "empty", family: "global_module", capabilityId: "GLOBAL_CATEGORIES_NEEDS", availability: "AVAILABLE" },
+  { moduleKey: "TRANSFORMATIONS", resource: "analysis_global_transformations", order: 3, group: "module_section", paramsKind: "empty", family: "global_module", capabilityId: "GLOBAL_TRANSFORMATIONS", availability: "AVAILABLE" },
+  { moduleKey: "RHYTHM", resource: "analysis_global_rhythm", order: 4, group: "module_section", paramsKind: "empty", family: "global_module", capabilityId: "GLOBAL_RHYTHM", availability: "AVAILABLE" },
+  { moduleKey: "RELATIONSHIPS", resource: "analysis_global_relationships", order: 5, group: "module_section", paramsKind: "empty", family: "global_module", capabilityId: "GLOBAL_RELATIONSHIPS", availability: "AVAILABLE" },
+  { moduleKey: "MOMENTS", resource: "analysis_global_moments", order: 6, group: "module_section", paramsKind: "empty", family: "global_module", capabilityId: "GLOBAL_MOMENTS", availability: "AVAILABLE" },
+  { moduleKey: "GEO_MOBILITY", resource: "analysis_global_geo_mobility", order: 7, group: "module_section", paramsKind: "empty", family: "global_module", capabilityId: "GLOBAL_GEO_MOBILITY", availability: "AVAILABLE" },
+  { moduleKey: "CONSUMPTION", resource: "analysis_global_consumption", order: 8, group: "module_section", paramsKind: "empty", family: "global_module", capabilityId: "GLOBAL_CONSUMPTION", availability: "AVAILABLE" },
+  { moduleKey: "PERSONAS", resource: "analysis_global_personas", order: 9, group: "module_section", paramsKind: "empty", family: "global_module", capabilityId: "GLOBAL_PERSONAS", availability: "AVAILABLE" },
+  { moduleKey: "TOGETHER", resource: "analysis_global_together", order: 10, group: "module_section", paramsKind: "empty", family: "global_module", capabilityId: "GLOBAL_TOGETHER", availability: "AVAILABLE" },
 ] as const);
 
 export type GlobalPrimaryModule = (typeof globalPrimaryModuleCatalog)[number];

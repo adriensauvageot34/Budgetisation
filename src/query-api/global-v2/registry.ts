@@ -12,7 +12,8 @@ import { sha256 } from "@noble/hashes/sha2.js";
 import { bytesToHex, utf8ToBytes } from "@noble/hashes/utils.js";
 import { globalExpandedReadModelSchemas, globalExpandedSectionKeys, globalV2ExpandedResourceCatalog, importedGlobalSummaryReadModelSchema, type GlobalExpandedSectionKey, type GlobalV2ExpandedResourceName } from "./details";
 import { globalInitialReadModelSchema, globalPrimaryReadModelSchemas } from "./schemas";
-import { globalPrimaryModuleCatalog, type GlobalPrimaryModuleKey, type GlobalPrimaryResourceName } from "./types";
+import { globalLifeTimelineReadModelSchema, globalLifeTimelineResourceDefinition, type GlobalLifeTimelineResourceName } from "./timeline";
+import { globalPrimaryModuleCatalog, type GlobalPrimaryModuleKey, type GlobalPrimaryResourceName, type GlobalV2QueryParamsKind, type GlobalV2ResourceFamily, type GlobalV2ResourceGroup } from "./types";
 
 export const globalV2TopLevelResources = Object.freeze([
   "analysis_global_manifest",
@@ -21,7 +22,7 @@ export const globalV2TopLevelResources = Object.freeze([
 ] as const);
 
 export type GlobalV2TopLevelResourceName = (typeof globalV2TopLevelResources)[number];
-export type GlobalV2QueryResourceName = GlobalV2TopLevelResourceName | GlobalV2ExpandedResourceName;
+export type GlobalV2QueryResourceName = GlobalV2TopLevelResourceName | GlobalV2ExpandedResourceName | GlobalLifeTimelineResourceName;
 
 export type GlobalV2QueryParams = Readonly<Record<string, string>>;
 export type GlobalV2QueryRequest = {
@@ -41,25 +42,43 @@ export type NormalizedGlobalV2QueryRequest = Omit<GlobalV2QueryRequest, "scope">
 
 export type GlobalV2QueryContract = {
   readonly resource: GlobalV2QueryResourceName;
-  readonly family: "global_overview" | "global_module" | "global_exploration" | "global_entity_detail" | "global_methodology";
+  readonly family: GlobalV2ResourceFamily;
+  readonly group: GlobalV2ResourceGroup;
+  readonly paramsKind: GlobalV2QueryParamsKind;
   readonly moduleKey?: GlobalPrimaryModuleKey;
+  readonly moduleRole?: "PRESENTATION_ONLY";
   readonly capabilityId: string;
   readonly availability: "AVAILABLE" | "AUTHORITY_GATED";
+  readonly schemaVersion?: string;
   readonly contractVersion: "global-v2-query@v1";
   readonly methodVersion: string;
   readonly policyVersions: Readonly<Record<string, string>>;
   readonly schema: RuntimeSchema<unknown>;
 };
 
-const topLevelSet = new Set<string>(globalV2TopLevelResources);
-const expandedSet = new Set<string>(globalV2ExpandedResourceCatalog.map(({ resource }) => resource));
-const resourceSet = new Set<string>([...topLevelSet, ...expandedSet]);
+const overviewResourceCatalog = Object.freeze([
+  { resource: "analysis_global_manifest", group: "overview", paramsKind: "empty", family: "global_overview", capabilityId: "GLOBAL_MANIFEST", availability: "AVAILABLE" },
+  { resource: "analysis_global_summary_ai", group: "overview", paramsKind: "empty", family: "global_overview", capabilityId: "GLOBAL_IMPORTED_SUMMARY", availability: "AVAILABLE" },
+] as const);
+const resourceCatalog = Object.freeze([
+  ...overviewResourceCatalog,
+  ...globalPrimaryModuleCatalog,
+  ...globalV2ExpandedResourceCatalog,
+  globalLifeTimelineResourceDefinition,
+] as const);
+type GlobalV2ResourceDefinition = (typeof resourceCatalog)[number];
+const definitionByResource = new Map<string, GlobalV2ResourceDefinition>(resourceCatalog.map((entry) => [entry.resource, entry]));
+const resourceSet = new Set<string>(definitionByResource.keys());
 const sectionSet = new Set<string>(globalExpandedSectionKeys);
 const moduleSet = new Set<string>(globalPrimaryModuleCatalog.map(({ moduleKey }) => moduleKey));
-const expandedModuleResources = new Set<string>(globalV2ExpandedResourceCatalog.slice(0, 10).map(({ resource }) => resource));
-const authorityGatedResources = new Set<string>(["analysis_global_product_detail", "analysis_global_route_detail"]);
 const m1V2ProjectionResources = new Set<string>(["analysis_global_economic", "analysis_global_economic_expanded", "analysis_global_economic_recurrence_detail"]);
 const lifeSpendingV2ProjectionResources = new Set<string>(["analysis_global_rhythm", "analysis_global_rhythm_expanded", "analysis_global_routine_detail", "analysis_global_moment_experience_detail"]);
+
+function definitionFor(resource: GlobalV2QueryResourceName): GlobalV2ResourceDefinition {
+  const definition = definitionByResource.get(resource);
+  if (definition === undefined) throw new TypeError("GLOBAL_V2_QUERY_RESOURCE_UNREGISTERED");
+  return definition;
+}
 
 function text(value: unknown, label: string): string {
   if (typeof value !== "string" || value.length === 0 || value !== value.trim()) throw new TypeError(`${label}_INVALID`);
@@ -72,55 +91,53 @@ function integer(value: unknown, label: string): number {
 }
 
 export function parseGlobalV2QueryParams(resource: GlobalV2QueryResourceName, value: unknown): GlobalV2QueryParams {
-  if (topLevelSet.has(resource)) {
-    parseStrictRecord(value, [], "GlobalV2EmptyParams");
-    return Object.freeze({});
+  switch (definitionFor(resource).paramsKind) {
+    case "empty":
+      parseStrictRecord(value, [], "GlobalV2EmptyParams");
+      return Object.freeze({});
+    case "section_key": {
+      const record = parseStrictRecord(value, ["sectionKey"], "GlobalV2ExpandedParams");
+      return Object.freeze({ sectionKey: parseStringLiteral<GlobalExpandedSectionKey>(requireProperty(record, "sectionKey", "GlobalV2ExpandedParams"), sectionSet, "sectionKey") });
+    }
+    case "methodology": {
+      const record = parseStrictRecord(value, ["moduleKey", "methodRef"], "GlobalV2MethodologyParams");
+      return Object.freeze({
+        methodRef: text(requireProperty(record, "methodRef", "GlobalV2MethodologyParams"), "methodRef"),
+        moduleKey: parseStringLiteral<GlobalPrimaryModuleKey>(requireProperty(record, "moduleKey", "GlobalV2MethodologyParams"), moduleSet, "moduleKey"),
+      });
+    }
+    case "entity_ref": {
+      const record = parseStrictRecord(value, ["entityRef"], "GlobalV2EntityParams");
+      return Object.freeze({ entityRef: text(requireProperty(record, "entityRef", "GlobalV2EntityParams"), "entityRef") });
+    }
   }
-  if (expandedModuleResources.has(resource)) {
-    const record = parseStrictRecord(value, ["sectionKey"], "GlobalV2ExpandedParams");
-    return Object.freeze({ sectionKey: parseStringLiteral<GlobalExpandedSectionKey>(requireProperty(record, "sectionKey", "GlobalV2ExpandedParams"), sectionSet, "sectionKey") });
-  }
-  if (resource === "analysis_global_methodology") {
-    const record = parseStrictRecord(value, ["moduleKey", "methodRef"], "GlobalV2MethodologyParams");
-    return Object.freeze({
-      methodRef: text(requireProperty(record, "methodRef", "GlobalV2MethodologyParams"), "methodRef"),
-      moduleKey: parseStringLiteral<GlobalPrimaryModuleKey>(requireProperty(record, "moduleKey", "GlobalV2MethodologyParams"), moduleSet, "moduleKey"),
-    });
-  }
-  const record = parseStrictRecord(value, ["entityRef"], "GlobalV2EntityParams");
-  return Object.freeze({ entityRef: text(requireProperty(record, "entityRef", "GlobalV2EntityParams"), "entityRef") });
 }
 
 function schemaFor(resource: GlobalV2QueryResourceName): RuntimeSchema<unknown> {
   if (resource === "analysis_global_manifest") return globalInitialReadModelSchema as RuntimeSchema<unknown>;
   if (resource === "analysis_global_summary_ai") return importedGlobalSummaryReadModelSchema as RuntimeSchema<unknown>;
-  if (topLevelSet.has(resource)) return globalPrimaryReadModelSchemas[resource as GlobalPrimaryResourceName] as RuntimeSchema<unknown>;
+  if (resource === globalLifeTimelineResourceDefinition.resource) return globalLifeTimelineReadModelSchema as RuntimeSchema<unknown>;
+  if (definitionFor(resource).group === "module_section") return globalPrimaryReadModelSchemas[resource as GlobalPrimaryResourceName] as RuntimeSchema<unknown>;
   return globalExpandedReadModelSchemas[resource as GlobalV2ExpandedResourceName] as RuntimeSchema<unknown>;
-}
-
-function familyFor(resource: GlobalV2QueryResourceName): GlobalV2QueryContract["family"] {
-  if (resource === "analysis_global_manifest" || resource === "analysis_global_summary_ai") return "global_overview";
-  if (globalPrimaryModuleCatalog.some((entry) => entry.resource === resource) || expandedModuleResources.has(resource)) return "global_module";
-  if (resource === "analysis_global_methodology") return "global_methodology";
-  if (resource.endsWith("_detail")) return "global_entity_detail";
-  return "global_exploration";
-}
-
-function moduleFor(resource: GlobalV2QueryResourceName): GlobalPrimaryModuleKey | undefined {
-  return globalPrimaryModuleCatalog.find((entry) => entry.resource === resource)?.moduleKey
-    ?? globalV2ExpandedResourceCatalog.find((entry) => entry.resource === resource)?.moduleKey;
 }
 
 export const globalV2QueryRegistry = Object.freeze(Object.fromEntries(
   [...resourceSet].sort().map((resourceValue) => {
     const resource = resourceValue as GlobalV2QueryResourceName;
-    const moduleKey = moduleFor(resource);
+    const definition = definitionFor(resource);
+    const moduleKey = "moduleKey" in definition && definition.group !== "methodology" ? definition.moduleKey : undefined;
+    const moduleRole = "moduleRole" in definition ? definition.moduleRole : undefined;
+    const schemaVersion = "schemaVersion" in definition ? definition.schemaVersion : undefined;
     const contract: GlobalV2QueryContract = {
       resource,
-      family: familyFor(resource),
-      ...(moduleKey === undefined || resource === "analysis_global_methodology" ? {} : { moduleKey }),
-      capabilityId: globalV2ExpandedResourceCatalog.find((entry) => entry.resource === resource)?.capabilityId ?? (resource === "analysis_global_summary_ai" ? "GLOBAL_IMPORTED_SUMMARY" : resource === "analysis_global_manifest" ? "GLOBAL_MANIFEST" : `GLOBAL_${moduleKey}`),
-      availability: authorityGatedResources.has(resource) ? "AUTHORITY_GATED" : "AVAILABLE",
+      family: definition.family,
+      group: definition.group,
+      paramsKind: definition.paramsKind,
+      ...(moduleKey === undefined ? {} : { moduleKey }),
+      ...(moduleRole === undefined ? {} : { moduleRole }),
+      capabilityId: definition.capabilityId,
+      availability: definition.availability,
+      ...(schemaVersion === undefined ? {} : { schemaVersion }),
       contractVersion: "global-v2-query@v1",
       methodVersion: m1V2ProjectionResources.has(resource) || lifeSpendingV2ProjectionResources.has(resource) ? `${resource}@v2` : `${resource}@v1`,
       policyVersions: Object.freeze({ projection: m1V2ProjectionResources.has(resource) ? "global-m1-query-projection@v2" : lifeSpendingV2ProjectionResources.has(resource) ? "global-life-spending-query-projection@v1" : "global-v2-query-projection@v1", transport: "global-v2-snapshot-only@v1" }),

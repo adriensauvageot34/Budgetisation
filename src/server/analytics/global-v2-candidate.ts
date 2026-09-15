@@ -1513,7 +1513,7 @@ function capability(output: GlobalV2OwnerOutput): GlobalModuleCapability {
 }
 
 function detailResourceFor(moduleKey: GlobalPrimaryModuleKey): GlobalV2ExpandedResourceName | undefined {
-  return globalV2ExpandedResourceCatalog.slice(10).find(({ moduleKey: candidate, resource }) =>
+  return globalV2ExpandedResourceCatalog.filter(({ group }) => group === "entity_detail").find(({ moduleKey: candidate, resource }) =>
     candidate === moduleKey && resource !== "analysis_global_methodology" && globalV2QueryRegistry[resource].availability === "AVAILABLE")?.resource;
 }
 
@@ -1626,7 +1626,7 @@ export function buildGlobalV2CandidateFromOwnerOutputs(input: GlobalV2CandidateI
     policyVersions: globalV2QueryRegistry[resource].policyVersions,
     resourceInputHash: globalV2QueryResourceInputHash({ resource, scope, params, dependencies }),
   });
-  const expandedResourceByModule = new Map(globalV2ExpandedResourceCatalog.slice(0, 10).map(({ moduleKey, resource }) => [moduleKey, resource] as const));
+  const expandedResourceByModule = new Map(globalV2ExpandedResourceCatalog.filter(({ group }) => group === "expanded_section").map(({ moduleKey, resource }) => [moduleKey, resource] as const));
   const expandedOverviewKey = (moduleKey: GlobalPrimaryModuleKey): string => globalV2QueryInstanceKey(expandedResourceByModule.get(moduleKey)!, scopeHash, { sectionKey: "OVERVIEW" });
   const technicalTopLevelModules = new Set<GlobalPrimaryModuleKey>(["TRANSFORMATIONS", "RELATIONSHIPS", "MOMENTS"]);
   const moduleInstances: GlobalV2QueryInstanceInput[] = outputs.map((ownerOutput) => {
