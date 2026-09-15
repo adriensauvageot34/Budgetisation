@@ -2045,6 +2045,27 @@ export class CanonicalRepository {
         .order("person_id", { ascending: true }));
   }
 
+  /** Explicit Canonical LifeEvent-to-Place links. Place visits are not a substitute. */
+  loadLifeEventLocalizationRows(
+    lifeEventIds: readonly string[],
+  ): Promise<readonly CanonicalRecord[]> {
+    const ids = unique(lifeEventIds);
+    if (ids.length === 0) return Promise.resolve([]);
+    return this.readRowsByInBatches(
+      `life-event-localizations:entities:${ids.join(",")}`,
+      "life_events",
+      ids,
+      ["life_event_id", "place_id"],
+      ["life_event_id", "place_id"],
+      (batch) =>
+      this.client
+        .from("life_event_localizations")
+        .select("*")
+        .in("life_event_id", batch)
+        .order("life_event_id", { ascending: true })
+        .order("place_id", { ascending: true }));
+  }
+
   loadMomentLifeEventRowsByMomentIds(
     momentIds: readonly string[],
   ): Promise<readonly CanonicalRecord[]> {

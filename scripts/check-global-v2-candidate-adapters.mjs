@@ -43,7 +43,32 @@ assert.ok(revision, "La révision Household du fixture est requise.");
 const persons = (tables.get("persons") ?? []).filter((row) => row.household_id === household.household_id).map((row) => ({ personId: row.person_id, householdId: row.household_id, displayName: row.display_name, status: row.status }));
 const periods = (tables.get("analysis_periods") ?? []).filter((row) => row.household_id === household.household_id).map((row) => ({ analysisPeriodId: row.analysis_period_id, householdId: row.household_id, month: row.month, financeStatus: row.finance_status, lifeStatus: row.life_status, locationStatus: row.location_status, calendarStatus: row.calendar_status, isClosed: row.is_closed, sourceRevision: String(row.source_revision) }));
 const context = { userId: "global-v2-read-only-fixture", householdId: household.household_id, persons, personIds: persons.map(({ personId }) => personId), timezone: household.timezone, periods, dataRevision: String(revision.data_revision), analyticsRevision: String(revision.analytics_revision), contractVersion: "v2", asOf };
-const client = createFixtureSupabaseClient(fixturePath, { emptyTables: ["purchase_events", "purchase_event_memberships", "purchase_event_timing_assertions", "economic_component_classifications", "life_event_continuity_assertions"] });
+const servianFontesLifeEventId = "152b3ea2-7161-5aca-8969-0dfa9cd11949";
+const servianFamilyPlaceId = "45b9c4a9-4da2-5768-9aa0-4f8d32549fbb";
+const fontesFatherPlaceId = "9c6b6a7a-3301-5a8c-ad5c-64446f6cbb12";
+const lifeEventsByIdForFixture = new Map((tables.get("life_events") ?? []).map((row) => [row.life_event_id, row]));
+const momentLinksForFixture = tables.get("moment_life_events") ?? [];
+const linkedPrimaryPlacesByMoment = new Map();
+for (const link of momentLinksForFixture) {
+  const primaryPlaceId = lifeEventsByIdForFixture.get(link.life_event_id)?.primary_place_id;
+  if (primaryPlaceId === null || primaryPlaceId === undefined) continue;
+  const values = linkedPrimaryPlacesByMoment.get(link.moment_id) ?? new Set();
+  values.add(primaryPlaceId);
+  linkedPrimaryPlacesByMoment.set(link.moment_id, values);
+}
+const duplicatePrimaryLink = momentLinksForFixture.find((link) => linkedPrimaryPlacesByMoment.get(link.moment_id)?.size === 1 && lifeEventsByIdForFixture.get(link.life_event_id)?.primary_place_id);
+const duplicatePrimaryEvent = duplicatePrimaryLink === undefined ? undefined : lifeEventsByIdForFixture.get(duplicatePrimaryLink.life_event_id);
+assert.ok(duplicatePrimaryEvent, "Un LifeEvent à primary place est requis pour le test de déduplication.");
+const client = createFixtureSupabaseClient(fixturePath, {
+  emptyTables: ["purchase_events", "purchase_event_memberships", "purchase_event_timing_assertions", "economic_component_classifications", "life_event_continuity_assertions"],
+  tableRows: {
+    life_event_localizations: [
+      { life_event_id: servianFontesLifeEventId, place_id: servianFamilyPlaceId, localization_role: "confirmed_context" },
+      { life_event_id: servianFontesLifeEventId, place_id: fontesFatherPlaceId, localization_role: "confirmed_context" },
+      { life_event_id: duplicatePrimaryEvent.life_event_id, place_id: duplicatePrimaryEvent.primary_place_id, localization_role: "confirmed_context" },
+    ],
+  },
+});
 
 const { CanonicalRepository } = require(path.resolve("src/server/canonical/repository.ts"));
 const { FactSourceResolver } = require(path.resolve("src/server/analytics/fact-source-resolver.ts"));
@@ -133,7 +158,17 @@ assert.ok(fckgIdentity, "Le Moment FCKG Halloween est absent.");
 const fckg = timeline.events.find(({ eventRef }) => eventRef === `moment:${fckgIdentity.momentId}`);
 assert.equal(fckg?.causalCost.status, "KNOWN");
 assert.equal(fckg?.causalCost.value, "0");
-assert.equal(timeline.events.filter(({ sourceKind, places }) => sourceKind === "MOMENT" && places.length > 1).every((event) => !("primaryPlaceRef" in event)), true, "Plusieurs lieux autoritaires ne doivent pas fabriquer un lieu primaire.");
+assert.equal(timeline.events.every((event) => event.primaryPlaceRef === undefined || event.places.some(({ placeRef }) => placeRef === event.primaryPlaceRef)), true, "Un primary place doit toujours provenir des places transportées.");
+const servianFontes = timeline.events.find(({ eventRef }) => eventRef === "moment:31b4cb42-8ac0-5987-8564-372d41c2621c");
+assert.ok(servianFontes, "Le Moment réel Visite famille Servian / Fontès est absent.");
+assert.deepEqual(servianFontes.places.map(({ placeRef }) => placeRef), [`place:${servianFamilyPlaceId}`, `place:${fontesFatherPlaceId}`], "Les deux localisations Canonical confirmées Servian / Fontès doivent être transportées.");
+assert.equal(servianFontes.places.every(({ authority }) => authority === "LIFE_EVENT_LOCALIZATION"), true, "Servian / Fontès doit provenir uniquement des localisations explicitement reliées.");
+assert.equal("primaryPlaceRef" in servianFontes, false, "Le cas multi-lieu Servian / Fontès ne doit pas fabriquer de primary place.");
+assert.equal(timeline.events.every(({ places }) => new Set(places.map(({ placeRef }) => placeRef)).size === places.length), true, "Les place refs Timeline doivent être dédupliquées.");
+const duplicatePrimaryMoment = timeline.events.find(({ eventRef }) => eventRef === `moment:${duplicatePrimaryLink.moment_id}`);
+assert.ok(duplicatePrimaryMoment, "Le Moment de déduplication primary/localization est absent.");
+assert.equal(duplicatePrimaryMoment.places.filter(({ placeRef }) => placeRef === `place:${duplicatePrimaryEvent.primary_place_id}`).length, 1, "Une même place primary/localization doit être transportée une seule fois.");
+assert.equal(duplicatePrimaryMoment.primaryPlaceRef, `place:${duplicatePrimaryEvent.primary_place_id}`, "Le primary place Canonical doit rester distinct même quand des localisations existent.");
 assert.equal(timeline.inputHash.length, 64);
 assert.equal(new Set(timeline.dependencyClosure.map(({ ref }) => ref)).size, timeline.dependencyClosure.length);
 

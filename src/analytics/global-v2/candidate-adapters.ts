@@ -32,7 +32,7 @@ export type GlobalTimelineAdapterPlace = {
   readonly placeRef: string;
   readonly label?: string;
   readonly subtypeLabel?: string;
-  readonly authority: "LIFE_EVENT_PRIMARY_PLACE";
+  readonly authority: "LIFE_EVENT_PRIMARY_PLACE" | "LIFE_EVENT_LOCALIZATION";
   readonly evidenceRefs: readonly string[];
 };
 
@@ -146,8 +146,8 @@ export function buildGlobalTimelineCandidateBundle(input: {
     seenMomentIds.add(moment.momentId);
     const places = moment.places.map(normalizePlace);
     if (new Set(places.map(({ placeRef }) => placeRef)).size !== places.length) throw new TypeError(`TIMELINE_DUPLICATE_PLACE:${moment.momentId}`);
-    if (moment.primaryPlaceRef !== undefined && (places.length !== 1 || places[0]?.placeRef !== moment.primaryPlaceRef)) {
-      throw new TypeError(`TIMELINE_PRIMARY_PLACE_NOT_UNIQUE:${moment.momentId}`);
+    if (moment.primaryPlaceRef !== undefined && !places.some(({ placeRef }) => placeRef === moment.primaryPlaceRef)) {
+      throw new TypeError(`TIMELINE_PRIMARY_PLACE_NOT_INCLUDED:${moment.momentId}`);
     }
     const { momentId, ...rest } = moment;
     return {
@@ -181,8 +181,8 @@ export function buildGlobalTimelineCandidateBundle(input: {
     if (event.canonicalTitle === undefined || !event.canonicalTitle.trim()) { deferred.push({ eventRef, reason: "GENERIC_TITLE" }); continue; }
     const places = event.places.map(normalizePlace);
     if (new Set(places.map(({ placeRef }) => placeRef)).size !== places.length) throw new TypeError(`TIMELINE_DUPLICATE_PLACE:${event.lifeEventId}`);
-    if (event.primaryPlaceRef !== undefined && (places.length !== 1 || places[0]?.placeRef !== event.primaryPlaceRef)) {
-      throw new TypeError(`TIMELINE_PRIMARY_PLACE_NOT_UNIQUE:${event.lifeEventId}`);
+    if (event.primaryPlaceRef !== undefined && !places.some(({ placeRef }) => placeRef === event.primaryPlaceRef)) {
+      throw new TypeError(`TIMELINE_PRIMARY_PLACE_NOT_INCLUDED:${event.lifeEventId}`);
     }
     autonomous.push({
       eventRef,

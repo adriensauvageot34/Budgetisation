@@ -71,6 +71,7 @@ function role(value: string): GlobalTimelineLifeEventAdapterInput["role"] {
 function placeContext(
   placeId: string,
   labels: ReadonlyMap<string, CanonicalRecord>,
+  authority: GlobalTimelineAdapterPlace["authority"],
   evidenceRefs: readonly string[],
 ): GlobalTimelineAdapterPlace {
   const row = labels.get(placeId);
@@ -81,9 +82,28 @@ function placeContext(
     placeRef: `place:${placeId}`,
     ...(label === undefined ? {} : { label }),
     ...(subtypeLabel === undefined ? {} : { subtypeLabel }),
-    authority: "LIFE_EVENT_PRIMARY_PLACE",
+    authority,
     evidenceRefs: [...new Set(evidenceRefs)].sort(),
   };
+}
+
+function mergePlaceContexts(values: readonly GlobalTimelineAdapterPlace[]): readonly GlobalTimelineAdapterPlace[] {
+  const result = new Map<string, GlobalTimelineAdapterPlace>();
+  for (const value of values) {
+    const previous = result.get(value.placeRef);
+    if (previous === undefined) {
+      result.set(value.placeRef, value);
+      continue;
+    }
+    result.set(value.placeRef, {
+      ...previous,
+      authority: previous.authority === "LIFE_EVENT_PRIMARY_PLACE" || value.authority === "LIFE_EVENT_PRIMARY_PLACE"
+        ? "LIFE_EVENT_PRIMARY_PLACE"
+        : "LIFE_EVENT_LOCALIZATION",
+      evidenceRefs: [...new Set([...previous.evidenceRefs, ...value.evidenceRefs])].sort(),
+    });
+  }
+  return [...result.values()].sort((left, right) => left.placeRef.localeCompare(right.placeRef));
 }
 
 /** Candidate-only Canonical + M6 projection. It never enters the owner array. */
@@ -105,15 +125,28 @@ export async function resolveGlobalTimelineCandidateAdapter(input: {
     ...lifeEventIds,
     ...momentLinks.map((row) => canonicalString(row, ["life_event_id"], "life_events")),
   ])].sort();
-  const lifeEventRows = await input.repository.loadLifeEventRecords(relatedLifeEventIds);
+  const [lifeEventRows, localizationRows] = await Promise.all([
+    input.repository.loadLifeEventRecords(relatedLifeEventIds),
+    input.repository.loadLifeEventLocalizationRows(relatedLifeEventIds),
+  ]);
   const lifeEventById = new Map(lifeEventRows.map((row) => [canonicalString(row, ["life_event_id"], "life_events"), row]));
+  const localizationsByLifeEvent = new Map<string, CanonicalRecord[]>();
+  for (const row of localizationRows) {
+    const lifeEventId = canonicalString(row, ["life_event_id"], "life_events");
+    const values = localizationsByLifeEvent.get(lifeEventId) ?? [];
+    values.push(row);
+    localizationsByLifeEvent.set(lifeEventId, values);
+  }
   const typeIds = [...new Set(lifeEventRows.map((row) => canonicalString(row, ["life_event_type_id"], "life_events")))].sort();
   const typeRows = await input.repository.loadLifeEventTypeRowsByIds(typeIds);
   const typeById = new Map(typeRows.map((row) => [canonicalString(row, ["life_event_type_id"], "life_events"), row]));
-  const placeIds = [...new Set(lifeEventRows.flatMap((row) => {
-    const value = optionalCanonicalString(row, ["primary_place_id"]);
-    return value === undefined ? [] : [value];
-  }))].sort();
+  const placeIds = [...new Set([
+    ...lifeEventRows.flatMap((row) => {
+      const value = optionalCanonicalString(row, ["primary_place_id"]);
+      return value === undefined ? [] : [value];
+    }),
+    ...localizationRows.map((row) => canonicalString(row, ["place_id"], "life_events")),
+  ])].sort();
   const placeRows = await input.repository.loadEntityRows("places", "place_id", placeIds);
   const placeById = new Map(placeRows.map((row) => [canonicalString(row, ["place_id"], "entities"), row]));
   const momentRowById = new Map(momentRows.map((row) => [canonicalString(row, ["moment_id"], "entities"), row]));
@@ -138,21 +171,32 @@ export async function resolveGlobalTimelineCandidateAdapter(input: {
     const row = momentRowById.get(moment.momentId);
     if (row === undefined) throw new TypeError(`TIMELINE_MOMENT_ROW_MISSING:${moment.momentId}`);
     const linkedIds = [...new Set(linksByMoment.get(moment.momentId) ?? [])].sort();
-    const linkedPlaceIds = [...new Set(linkedIds.flatMap((lifeEventId) => {
+    const linkedPrimaryPlaceIds = [...new Set(linkedIds.flatMap((lifeEventId) => {
       const lifeEvent = lifeEventById.get(lifeEventId);
       const placeId = lifeEvent === undefined ? undefined : optionalCanonicalString(lifeEvent, ["primary_place_id"]);
       return placeId === undefined ? [] : [placeId];
     }))].sort();
-    const places = linkedPlaceIds.map((placeId) => placeContext(placeId, placeById, linkedIds.flatMap((lifeEventId) => {
-      const lifeEvent = lifeEventById.get(lifeEventId);
-      return lifeEvent !== undefined && optionalCanonicalString(lifeEvent, ["primary_place_id"]) === placeId
-        ? [`life-event:${lifeEventId}:primary-place:${placeId}`]
-        : [];
-    })));
+    const places = mergePlaceContexts([
+      ...linkedPrimaryPlaceIds.map((placeId) => placeContext(
+        placeId,
+        placeById,
+        "LIFE_EVENT_PRIMARY_PLACE",
+        linkedIds.flatMap((lifeEventId) => {
+          const lifeEvent = lifeEventById.get(lifeEventId);
+          return lifeEvent !== undefined && optionalCanonicalString(lifeEvent, ["primary_place_id"]) === placeId
+            ? [`life-event:${lifeEventId}:primary-place:${placeId}`]
+            : [];
+        }),
+      )),
+      ...linkedIds.flatMap((lifeEventId) => (localizationsByLifeEvent.get(lifeEventId) ?? []).map((localization) => {
+        const placeId = canonicalString(localization, ["place_id"], "life_events");
+        return placeContext(placeId, placeById, "LIFE_EVENT_LOCALIZATION", [`life-event:${lifeEventId}:localization:${placeId}`]);
+      })),
+    ]);
     const comparison = comparisonById.get(moment.momentId);
     const limitationCodes = [
-      ...(places.length === 0 ? ["NO_PRIMARY_PLACE_AUTHORITY"] : []),
-      ...(places.length > 1 ? ["MULTIPLE_PRIMARY_PLACE_AUTHORITIES"] : []),
+      ...(places.length === 0 ? ["NO_PLACE_AUTHORITY"] : []),
+      ...(linkedPrimaryPlaceIds.length > 1 ? ["MULTIPLE_PRIMARY_PLACE_AUTHORITIES"] : []),
     ];
     const structure = optionalCanonicalString(row, ["moment_structure"]);
     return {
@@ -166,7 +210,7 @@ export async function resolveGlobalTimelineCandidateAdapter(input: {
       ...(structure === undefined ? {} : { momentStructure: structure }),
       participantRefs: moment.householdParticipantIds.map((personId) => `person:${personId}`).sort(),
       places,
-      ...(places.length === 1 ? { primaryPlaceRef: places[0]!.placeRef } : {}),
+      ...(linkedPrimaryPlaceIds.length === 1 ? { primaryPlaceRef: `place:${linkedPrimaryPlaceIds[0]}` } : {}),
       causalCost: summary.causalCost,
       ...(moment.seriesId === undefined ? {} : { seriesRef: `moment-series:${moment.seriesId}` }),
       ...(comparison === undefined ? {} : { comparisonSummary: {
@@ -192,13 +236,24 @@ export async function resolveGlobalTimelineCandidateAdapter(input: {
     const type = typeById.get(typeId);
     if (type === undefined) throw new TypeError(`TIMELINE_LIFE_EVENT_TYPE_MISSING:${typeId}`);
     const primaryPlaceId = optionalCanonicalString(row, ["primary_place_id"]);
-    const places = primaryPlaceId === undefined ? [] : [placeContext(primaryPlaceId, placeById, [`life-event:${lifeEventId}:primary-place:${primaryPlaceId}`])];
+    const places = mergePlaceContexts([
+      ...(primaryPlaceId === undefined ? [] : [placeContext(
+        primaryPlaceId,
+        placeById,
+        "LIFE_EVENT_PRIMARY_PLACE",
+        [`life-event:${lifeEventId}:primary-place:${primaryPlaceId}`],
+      )]),
+      ...(localizationsByLifeEvent.get(lifeEventId) ?? []).map((localization) => {
+        const placeId = canonicalString(localization, ["place_id"], "life_events");
+        return placeContext(placeId, placeById, "LIFE_EVENT_LOCALIZATION", [`life-event:${lifeEventId}:localization:${placeId}`]);
+      }),
+    ]);
     const defaultRole = canonicalString(type, ["calendar_default_role"], "life_events");
     const roleOverride = optionalCanonicalString(row, ["calendar_role_override"]);
     const title = optionalCanonicalString(row, ["title"]);
     const parentId = occurrence.parentLifeEventId === null ? undefined : String(occurrence.parentLifeEventId);
     const seriesId = occurrence.lifeEventSeriesId === null ? undefined : String(occurrence.lifeEventSeriesId);
-    const limitationCodes = primaryPlaceId === undefined ? ["NO_PRIMARY_PLACE_AUTHORITY"] : [];
+    const limitationCodes = places.length === 0 ? ["NO_PLACE_AUTHORITY"] : [];
     return {
       lifeEventId,
       ...(title === undefined ? {} : { canonicalTitle: title }),

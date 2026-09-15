@@ -165,6 +165,9 @@ export function createFixtureSupabaseClient(directory, options = {}) {
   for (const table of options.emptyTables ?? []) {
     if (!tables.has(table)) tables.set(table, []);
   }
+  for (const [table, rows] of Object.entries(options.tableRows ?? {})) {
+    tables.set(table, [...rows]);
+  }
   return {
     from(table) {
       return new FixtureQuery(tables, table);
