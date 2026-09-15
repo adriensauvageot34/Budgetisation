@@ -59,13 +59,24 @@ for (const link of momentLinksForFixture) {
 const duplicatePrimaryLink = momentLinksForFixture.find((link) => linkedPrimaryPlacesByMoment.get(link.moment_id)?.size === 1 && lifeEventsByIdForFixture.get(link.life_event_id)?.primary_place_id);
 const duplicatePrimaryEvent = duplicatePrimaryLink === undefined ? undefined : lifeEventsByIdForFixture.get(duplicatePrimaryLink.life_event_id);
 assert.ok(duplicatePrimaryEvent, "Un LifeEvent à primary place est requis pour le test de déduplication.");
+const servianLocalizationId = "1bbf13ca-c4ad-5c29-8a17-d8d12c5e72df";
+const fontesLocalizationId = "c387cc67-8506-5ec4-8b8d-ab7888fa53f1";
+const duplicatePrimaryLocalizationId = "aff5f0f9-793c-5333-9c14-47a9009c411d";
+const lifeEventLocalizations = [
+  { life_event_id: servianFontesLifeEventId, localization_id: servianLocalizationId, location_certainty: "Confirmé", role: "Contexte" },
+  { life_event_id: servianFontesLifeEventId, localization_id: fontesLocalizationId, location_certainty: "Confirmé", role: "Contexte" },
+  { life_event_id: duplicatePrimaryEvent.life_event_id, localization_id: duplicatePrimaryLocalizationId, location_certainty: "Confirmé", role: "Contexte" },
+];
+assert.equal(lifeEventLocalizations.every((row) => !("place_id" in row)), true, "Le fixture life_event_localizations doit refléter le schéma live sans pseudo-colonne place_id.");
 const client = createFixtureSupabaseClient(fixturePath, {
   emptyTables: ["purchase_events", "purchase_event_memberships", "purchase_event_timing_assertions", "economic_component_classifications", "life_event_continuity_assertions"],
   tableRows: {
-    life_event_localizations: [
-      { life_event_id: servianFontesLifeEventId, place_id: servianFamilyPlaceId, localization_role: "confirmed_context" },
-      { life_event_id: servianFontesLifeEventId, place_id: fontesFatherPlaceId, localization_role: "confirmed_context" },
-      { life_event_id: duplicatePrimaryEvent.life_event_id, place_id: duplicatePrimaryEvent.primary_place_id, localization_role: "confirmed_context" },
+    life_event_localizations: lifeEventLocalizations,
+    location_occurrences: [
+      ...(tables.get("location_occurrences") ?? []),
+      { localization_id: servianLocalizationId, place_id: servianFamilyPlaceId },
+      { localization_id: fontesLocalizationId, place_id: fontesFatherPlaceId },
+      { localization_id: duplicatePrimaryLocalizationId, place_id: duplicatePrimaryEvent.primary_place_id },
     ],
   },
 });

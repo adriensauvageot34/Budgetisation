@@ -2067,24 +2067,64 @@ export class CanonicalRepository {
   }
 
   /** Explicit Canonical LifeEvent-to-Place links. Place visits are not a substitute. */
-  loadLifeEventLocalizationRows(
+  async loadLifeEventLocalizationRows(
     lifeEventIds: readonly string[],
   ): Promise<readonly CanonicalRecord[]> {
     const ids = unique(lifeEventIds);
     if (ids.length === 0) return Promise.resolve([]);
-    return this.readRowsByInBatches(
-      `life-event-localizations:entities:${ids.join(",")}`,
-      "life_events",
-      ids,
-      ["life_event_id", "place_id"],
-      ["life_event_id", "place_id"],
-      (batch) =>
-      this.client
-        .from("life_event_localizations")
-        .select("*")
-        .in("life_event_id", batch)
-        .order("life_event_id", { ascending: true })
-        .order("place_id", { ascending: true }));
+    return this.cached(`life-event-localizations:resolved:${ids.join(",")}`, async () => {
+      const links = await this.readRowsByInBatches(
+        `life-event-localizations:links:${ids.join(",")}`,
+        "life_events",
+        ids,
+        ["life_event_id", "localization_id"],
+        ["life_event_id", "localization_id"],
+        (batch) =>
+        this.client
+          .from("life_event_localizations")
+          .select("life_event_id,localization_id")
+          .in("life_event_id", batch)
+          .order("life_event_id", { ascending: true })
+          .order("localization_id", { ascending: true }));
+      const localizationIds = unique(links.map((row) =>
+        canonicalString(row, ["localization_id"], "life_events")));
+      if (localizationIds.length === 0) return [];
+      const occurrences = await this.readRowsByInBatches(
+        `life-event-localizations:occurrences:${localizationIds.join(",")}`,
+        "life_events",
+        localizationIds,
+        ["localization_id", "place_id"],
+        ["localization_id", "place_id"],
+        (batch) =>
+        this.client
+          .from("location_occurrences")
+          .select("localization_id,place_id")
+          .in("localization_id", batch)
+          .order("localization_id", { ascending: true })
+          .order("place_id", { ascending: true }));
+      const placesByLocalization = groupBy(occurrences, "localization_id");
+      const resolved = new Map<string, CanonicalRecord>();
+      for (const link of links) {
+        const lifeEventId = canonicalString(link, ["life_event_id"], "life_events");
+        const localizationId = canonicalString(link, ["localization_id"], "life_events");
+        const places = unique((placesByLocalization.get(localizationId) ?? []).map((row) =>
+          canonicalString(row, ["place_id"], "life_events")));
+        if (places.length !== 1) {
+          throw new CanonicalReadError(
+            "life_events",
+            "Life_event_localization doit résoudre exactement un lieu Canonical.",
+          );
+        }
+        const identity = `${lifeEventId}:${places[0]}`;
+        resolved.set(identity, { life_event_id: lifeEventId, place_id: places[0] });
+      }
+      return [...resolved.values()].sort((left, right) =>
+        canonicalString(left, ["life_event_id"], "life_events").localeCompare(
+          canonicalString(right, ["life_event_id"], "life_events"),
+        ) || canonicalString(left, ["place_id"], "life_events").localeCompare(
+          canonicalString(right, ["place_id"], "life_events"),
+        ));
+    });
   }
 
   loadMomentLifeEventRowsByMomentIds(
