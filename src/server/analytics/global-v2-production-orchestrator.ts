@@ -36,6 +36,7 @@ import { resolveGlobalM6MomentAuthority } from "./global-v2-moment-authority";
 import { resolveGlobalM7PlaceAuthority } from "./global-v2-place-authority";
 import { resolveGlobalM8PurchaseAuthority } from "./global-v2-purchase-authority";
 import { resolveGlobalGroceryCandidateAdapter, resolveGlobalTimelineCandidateAdapter } from "./global-v2-candidate-adapters";
+import { resolveGlobalMomentComponentPresentation } from "./global-v2-moment-component-presentation";
 import { buildGlobalV2CandidateFromOwnerOutputs, globalV2M6HasPresentationContent, type GlobalV2OwnerOutput, type GlobalV2PresentationLabels } from "./global-v2-candidate";
 
 export const GLOBAL_V2_LIVE_PROJECT = "ipuuhxrblxormwgoaqnz" as const;
@@ -253,7 +254,7 @@ export async function resolveGlobalV2ProductionOwnerOutputs(repository: Canonica
       "name",
     ),
   };
-  const [timeline, grocery] = await Promise.all([
+  const [timeline, grocery, momentComponentPresentation] = await Promise.all([
     resolveGlobalTimelineCandidateAdapter({ repository, certifiedThrough: parseLocalDate(certifiedThrough), occurrences, m6 }),
     Promise.resolve(resolveGlobalGroceryCandidateAdapter({
       months: occurrenceMonths,
@@ -262,9 +263,8 @@ export async function resolveGlobalV2ProductionOwnerOutputs(repository: Canonica
       m2MonthlyComponents: m2.transformationMonthlyComponents,
       subcategoryRows,
     })),
+    resolveGlobalMomentComponentPresentation({ repository, m6 }),
   ]);
-  // D3 preparation only: these digested adapters deliberately remain outside
-  // ownerOutputs and are not materialized by the current candidate publisher.
   const candidateAdapters = { timeline, grocery };
 
   const ownerOutputs: GlobalV2OwnerOutput[] = [
@@ -279,7 +279,7 @@ export async function resolveGlobalV2ProductionOwnerOutputs(repository: Canonica
     { moduleKey: "PERSONAS", owner: "buildGlobalPersonaMetrics", output: m9, knowledge: personaMetrics.length > 0 ? "PARTIAL" : "UNKNOWN", capabilityState: context.personIds.length >= 2 ? "PARTIAL" : "UNAVAILABLE", reasonCodes: personaMetrics.length > 0 ? ["COMPARABLE_INTERSECTION_REQUIRED"] : ["PERSON_PAIR_UNAVAILABLE"], evidenceRefs: evidence("M9", m9) },
     { moduleKey: "TOGETHER", owner: "SharedParticipationResolver", output: m10, knowledge: m10.universes.length > 0 ? "PARTIAL" : "UNKNOWN", capabilityState: context.personIds.length === 2 ? "PARTIAL" : "UNAVAILABLE", reasonCodes: m10.universes.length > 0 ? ["PARTICIPATION_COVERAGE_VISIBLE"] : ["SHARED_UNIVERSE_UNAVAILABLE"], evidenceRefs: evidence("M10", m10) },
   ];
-  return { scope, certifiedThrough, targetMonth, ownerOutputs, presentationLabels, candidateAdapters, personRegimeAuthorities, m5Product, m5RelationshipEvolution };
+  return { scope, certifiedThrough, targetMonth, ownerOutputs, presentationLabels, candidateAdapters, momentComponentPresentation, personRegimeAuthorities, m5Product, m5RelationshipEvolution };
 }
 
 /** Read-only production bridge: this API exposes no materialization store. */
@@ -304,5 +304,7 @@ export async function prepareGlobalV2LiveCandidate(input: {
     implementationIdentity: input.implementationIdentity,
     ownerOutputs: resolved.ownerOutputs,
     presentationLabels: resolved.presentationLabels,
+    candidateAdapters: resolved.candidateAdapters,
+    momentComponentPresentation: resolved.momentComponentPresentation,
   });
 }

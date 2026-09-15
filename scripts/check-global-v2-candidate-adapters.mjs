@@ -76,6 +76,7 @@ const { resolveGlobalM2HouseholdAuthority } = require(path.resolve("src/server/a
 const { resolveGlobalM6MomentAuthority } = require(path.resolve("src/server/analytics/global-v2-moment-authority.ts"));
 const { resolveGlobalTimelineCandidateAdapter, resolveGlobalGroceryCandidateAdapter } = require(path.resolve("src/server/analytics/global-v2-candidate-adapters.ts"));
 const { resolveGlobalV2ProductionOwnerOutputs } = require(path.resolve("src/server/analytics/global-v2-production-orchestrator.ts"));
+const { buildGlobalV2CandidateFromOwnerOutputs } = require(path.resolve("src/server/analytics/global-v2-candidate.ts"));
 const { buildGlobalActivityCostProfile } = require(path.resolve("src/analytics/global-v2/routines.ts"));
 const { buildGlobalTimelineCandidateBundle } = require(path.resolve("src/analytics/global-v2/candidate-adapters.ts"));
 
@@ -187,4 +188,55 @@ assert.equal(integrated.candidateAdapters.timeline.inputHash, timeline.inputHash
 assert.equal(integrated.candidateAdapters.grocery.inputHash, grocery.inputHash, "Le wiring production doit exposer le même bundle Courses.");
 assert.equal(integrated.ownerOutputs.length, 10, "D3 ne doit créer aucun nouvel owner.");
 
-console.log(`D3 real fixture: timeline ${timeline.events.length} (37 Moments + 10 autonomous LifeEvents), grocery thresholds EUR ${grocery.thresholds.p25}/${grocery.thresholds.p75}, ${grocery.eligibleMonthCount}/12 eligible months — PASS (offline read-only fixture).`);
+const candidate = buildGlobalV2CandidateFromOwnerOutputs({
+  project: "ipuuhxrblxormwgoaqnz", householdId: household.household_id, householdTimeZone: household.timezone,
+  personIds: persons.map(({ personId }) => personId), asOf, certifiedThrough, dataRevision: String(revision.data_revision), analyticsRevision: String(revision.analytics_revision),
+  implementationIdentity: "6af8ae20d08c2906fdb45cf59d3c12c79ae1700b", ownerOutputs: integrated.ownerOutputs,
+  presentationLabels: integrated.presentationLabels, candidateAdapters: integrated.candidateAdapters, momentComponentPresentation: integrated.momentComponentPresentation,
+});
+const timelineSnapshot = candidate.snapshots.find(({ resource }) => resource === "analysis_global_life_timeline");
+assert.ok(timelineSnapshot, "Le snapshot Timeline doit être requis par le candidat.");
+assert.equal(timelineSnapshot.payload.events.length, 47);
+assert.deepEqual(timelineSnapshot.payload.chapterOverlays, [], "M3 EVALUATED_EMPTY ne doit pas être forcé.");
+assert.deepEqual(timelineSnapshot.payload.contextSignals, [], "M5 AUTHORITY_GATED ne doit pas être forcé.");
+assert.ok(Buffer.byteLength(JSON.stringify(timelineSnapshot.payload)) < 96 * 1024, "Le payload Timeline doit rester sous 96 KiB.");
+const momentEvents = timelineSnapshot.payload.events.filter(({ sourceKind }) => sourceKind === "MOMENT");
+const autonomousEvents = timelineSnapshot.payload.events.filter(({ sourceKind }) => sourceKind === "LIFE_EVENT");
+assert.equal(momentEvents.length, 37);
+assert.equal(autonomousEvents.length, 10);
+assert.equal(autonomousEvents.every(({ causalCost }) => causalCost.status === "UNKNOWN" && !("value" in causalCost)), true, "UNKNOWN ne doit jamais devenir zéro.");
+const details = candidate.snapshots.filter(({ resource }) => resource === "analysis_global_moment_experience_detail");
+assert.equal(details.length, momentEvents.length, "Chaque Moment Timeline doit avoir un détail same-generation.");
+assert.equal(momentEvents.every(({ eventRef }) => details.some(({ params }) => params.entityRef === eventRef)), true);
+const detailKeys = new Set(details.map(({ key }) => key));
+const peerObservations = details.flatMap(({ payload }) => payload.peerObservations ?? []);
+assert.equal(peerObservations.length, 94, "Les 94 peer observations de la fixture doivent être résolues.");
+assert.equal(peerObservations.every(({ detailRef }) => detailKeys.has(detailRef)), true, "Chaque peer detailRef doit viser la même génération.");
+const componentRows = details.flatMap(({ payload }) => payload.momentComponentRows ?? []);
+assert.equal(componentRows.length, 154, "Les 154 composants causaux doivent être conservés.");
+assert.equal(componentRows.every(({ primaryLabel }) => primaryLabel.length > 0), true, "Aucun composant ne doit être supprimé faute de label.");
+assert.deepEqual(Object.fromEntries([...new Set(componentRows.map(({ labelSource }) => labelSource))].sort().map((source) => [source, componentRows.filter(({ labelSource }) => labelSource === source).length])), { CANONICAL_MERCHANT: 98, ITEM: 7, PRECISE_DESCRIPTION: 14, PRECISE_TYPE: 35 }, "Le fallback TL-04 doit conserver la distribution réelle, dont les 7 joins Allocation -> exact item_id.");
+for (const detail of details) {
+  const causal = detail.payload.metrics.find(({ metricId }) => metricId.endsWith(":causal-cost"))?.typedMeasure?.value;
+  assert.ok(causal !== undefined, `Coût causal absent pour ${detail.params.entityRef}`);
+  const rowTotal = (detail.payload.momentComponentRows ?? []).reduce((sum, row) => sum + Number(row.amount.value), 0);
+  const groupTotal = (detail.payload.componentGroups ?? []).reduce((sum, group) => sum + Number(group.amount.value), 0);
+  assert.ok(Math.abs(rowTotal - Number(causal)) < 1e-8, `Réconciliation rows invalide pour ${detail.params.entityRef}`);
+  assert.ok(Math.abs(groupTotal - Number(causal)) < 1e-8, `Réconciliation groups invalide pour ${detail.params.entityRef}`);
+  assert.ok(Buffer.byteLength(JSON.stringify(detail.payload)) < 96 * 1024, `Payload détail >96 KiB pour ${detail.params.entityRef}`);
+}
+const detailByName = (name) => details.find(({ payload }) => payload.rows[0]?.labelKey === name)?.payload;
+assert.equal(detailByName("Aménagement du salon 2025")?.metrics.find(({ metricId }) => metricId.endsWith(":causal-cost"))?.typedMeasure?.value, "2298.96");
+assert.equal(detailByName("Voyage à Minorque 2025")?.momentComponentRows.length, 38);
+assert.equal(detailByName("Concert Orelsan – Sud de France Arena")?.metrics.find(({ metricId }) => metricId.endsWith(":causal-cost"))?.typedMeasure?.value, "159.4");
+const fckgDetail = detailByName("Soirée techno – FCKG Halloween");
+assert.equal(fckgDetail?.metrics.find(({ metricId }) => metricId.endsWith(":causal-cost"))?.typedMeasure?.value, "0");
+assert.equal(fckgDetail?.momentComponentRows.length, 0);
+const groceryDetail = candidate.snapshots.find(({ resource, params }) => resource === "analysis_global_routine_detail" && params.entityRef === "household-activity:courses_alimentaires")?.payload;
+assert.ok(groceryDetail?.groceryRhythm, "L'adapter Courses doit être exposé dans le détail routine.");
+assert.equal(groceryDetail.groceryRhythm.thresholds.p25.value, "18.29");
+assert.equal(groceryDetail.groceryRhythm.thresholds.p75.value, "51.99");
+assert.equal(groceryDetail.groceryRhythm.eligibleMonthCount, 9);
+assert.equal(groceryDetail.groceryRhythm.months.filter(({ coverage }) => coverage < 0.7).every(({ basketStructure }) => basketStructure.status === "GATED"), true);
+
+console.log(`D4 real fixture: timeline ${timeline.events.length}, details ${details.length}, peers ${peerObservations.length}, components ${componentRows.length}, grocery ${grocery.eligibleMonthCount}/12 eligible — PASS (offline read-only fixture).`);

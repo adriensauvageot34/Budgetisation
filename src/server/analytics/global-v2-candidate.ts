@@ -1,6 +1,7 @@
 import "server-only";
 
 import { createHash } from "node:crypto";
+import Big from "big.js";
 
 import { LIFE_EVENT_ACTIVITY_CATALOG } from "@/analytics/history-v2/calendar/catalog";
 import {
@@ -19,6 +20,7 @@ import {
 } from "@/core/global-v2";
 import {
   buildGlobalExpandedReadModel,
+  buildGlobalLifeTimelineReadModel,
   buildGlobalInitialReadModel,
   buildGlobalModuleCompactReadModel,
   buildImportedGlobalSummaryReadModel,
@@ -34,6 +36,13 @@ import {
   type GlobalNavigationDestination,
   type GlobalDetailRow,
   type GlobalDetailSeries,
+  type GlobalMomentComponentGroup,
+  type GlobalMomentComponentRow,
+  type GlobalMomentPeerObservation,
+  type GlobalMomentSimilarity,
+  type GlobalSpentDuringContext,
+  type GlobalGroceryRhythmContext,
+  type GlobalTimelineEvent,
   type GlobalPhenomenonQuality,
   type GlobalTypedMeasure,
   type GlobalExpandedSectionKey,
@@ -45,6 +54,8 @@ import {
   type GlobalV2QueryParams,
   type GlobalV2QueryResourceName,
 } from "@/query-api/global-v2";
+import type { GlobalGroceryCandidateBundle, GlobalTimelineCandidateBundle } from "@/analytics/global-v2/candidate-adapters";
+import type { GlobalMomentComponentPresentationBundle } from "./global-v2-moment-component-presentation";
 import {
   attachGlobalV2QueryPlanToManifest,
   buildGlobalV2QueryPlan,
@@ -99,6 +110,8 @@ export type GlobalV2CandidateInput = {
   readonly implementationIdentity: string;
   readonly ownerOutputs: readonly GlobalV2OwnerOutput[];
   readonly presentationLabels?: GlobalV2PresentationLabels;
+  readonly candidateAdapters: { readonly timeline: GlobalTimelineCandidateBundle; readonly grocery: GlobalGroceryCandidateBundle };
+  readonly momentComponentPresentation: GlobalMomentComponentPresentationBundle;
 };
 
 export type GlobalV2PresentationLabels = {
@@ -125,6 +138,12 @@ type SectionProjection = {
   readonly primaryInsight?: GlobalCompactInsight;
   readonly secondaryInsights?: readonly GlobalCompactInsight[];
   readonly quality?: GlobalCompactQuality;
+  readonly peerObservations?: readonly GlobalMomentPeerObservation[];
+  readonly similarity?: GlobalMomentSimilarity;
+  readonly momentComponentRows?: readonly GlobalMomentComponentRow[];
+  readonly componentGroups?: readonly GlobalMomentComponentGroup[];
+  readonly spentDuringContext?: GlobalSpentDuringContext;
+  readonly groceryRhythm?: GlobalGroceryRhythmContext;
 };
 type ModuleProjection = {
   readonly primaryInsight?: GlobalCompactInsight;
@@ -421,7 +440,7 @@ function m2PhenomenonQuality(input: {
     limitationCodes: uniqueSorted(input.limitations ?? []),
     dataNature: "OBSERVED",
     methodVersion: GLOBAL_M2_QUERY_PROJECTION_VERSION,
-    inputHash: stringOf(at(input.result, "inputHash")) ?? digest(input.result),
+    inputHash: stringOf(at(input.result, "inputHash")) ?? digest(input.result ?? {}),
   };
 }
 
@@ -1047,7 +1066,7 @@ function activityProfileRows(output: GlobalV2OwnerOutput): readonly GlobalDetail
 
 type MomentProjectionEntry = { readonly summary: unknown; readonly momentId: string; readonly label: string; readonly typeLabel?: string; readonly amount: string; readonly start?: string; readonly end?: string };
 
-function canonicalMomentEntries(output: GlobalV2OwnerOutput): readonly MomentProjectionEntry[] {
+function allMomentEntries(output: GlobalV2OwnerOutput): readonly MomentProjectionEntry[] {
   const identities = new Map(arrayOf(at(output.output, "momentIdentities")).flatMap((identity) => {
     const momentId = stringOf(at(identity, "momentId"));
     const label = at(identity, "canonicalName", "status") === "KNOWN" ? stringOf(at(identity, "canonicalName", "value")) : undefined;
@@ -1058,8 +1077,13 @@ function canonicalMomentEntries(output: GlobalV2OwnerOutput): readonly MomentPro
     const label = momentId === undefined ? undefined : identities.get(momentId);
     const amount = stringOf(at(summary, "causalCost", "value"));
     const status = stringOf(at(summary, "causalCost", "status"));
-    return momentId === undefined || label === undefined || amount === undefined || numberOf(amount) === undefined || numberOf(amount)! <= 0 || !["KNOWN", "PARTIAL"].includes(status ?? "") ? [] : [{ summary, momentId, label, typeLabel: stringOf(at(summary, "moment", "type", "value")), amount, start: stringOf(at(summary, "moment", "startDate")), end: stringOf(at(summary, "moment", "endDate")) }];
+    return momentId === undefined || label === undefined || amount === undefined || numberOf(amount) === undefined || !["KNOWN", "PARTIAL"].includes(status ?? "") ? [] : [{ summary, momentId, label, typeLabel: stringOf(at(summary, "moment", "type", "value")), amount, start: stringOf(at(summary, "moment", "startDate")), end: stringOf(at(summary, "moment", "endDate")) }];
   });
+  return summaries.sort((left, right) => (left.start ?? "").localeCompare(right.start ?? "") || left.momentId.localeCompare(right.momentId));
+}
+
+function canonicalMomentEntries(output: GlobalV2OwnerOutput): readonly MomentProjectionEntry[] {
+  const summaries = allMomentEntries(output).filter(({ amount }) => numberOf(amount)! > 0);
   return summaries.sort((left, right) => Number(right.amount) - Number(left.amount) || (left.start ?? "").localeCompare(right.start ?? "") || left.momentId.localeCompare(right.momentId));
 }
 
@@ -1295,19 +1319,44 @@ function routineDetailProjection(output: GlobalV2OwnerOutput, labels: GlobalV2Pr
   return undefined;
 }
 
-function momentDetailProjection(output: GlobalV2OwnerOutput, entityRef: string): SectionProjection | undefined {
+function groceryRhythmContext(bundle: GlobalGroceryCandidateBundle): GlobalGroceryRhythmContext {
+  return {
+    grain: bundle.grain,
+    policyRef: bundle.basketPolicy.policyVersion,
+    thresholds: { p25: { kind: "MONEY", value: bundle.thresholds.p25, unit: "EUR" }, p75: { kind: "MONEY", value: bundle.thresholds.p75, unit: "EUR" } },
+    eligibleMonthCount: bundle.eligibleMonthCount,
+    historicalComparisonGate: bundle.historicalComparisonGate,
+    months: bundle.months.map((month) => ({
+      month: month.month, occurrenceCount: month.occurrenceCount, knownCostOccurrenceCount: month.knownCostOccurrenceCount, coverage: month.coverage,
+      basketStructure: month.basketStructure,
+      monthlyGrocerySpend: month.monthlyGrocerySpend.status === "KNOWN" ? { status: "KNOWN", value: { kind: "MONEY", value: month.monthlyGrocerySpend.value, unit: "EUR" } } : { status: "UNKNOWN" },
+      limitationCodes: [...month.limitationCodes].sort(),
+    })),
+  };
+}
+
+function momentDetailProjection(
+  output: GlobalV2OwnerOutput,
+  entityRef: string,
+  timeline: GlobalTimelineCandidateBundle,
+  presentation: GlobalMomentComponentPresentationBundle,
+  scopeHash: string,
+): SectionProjection | undefined {
   if (!entityRef.startsWith("moment:")) return undefined;
   const momentId = entityRef.slice("moment:".length);
-  const entry = canonicalMomentEntries(output).find((candidate) => candidate.momentId === momentId);
+  const entries = allMomentEntries(output);
+  const entry = entries.find((candidate) => candidate.momentId === momentId);
   if (entry === undefined) return undefined;
   const summaryQuality = lifeSpendingQuality({ value: entry.summary, knowledgeState: at(entry.summary, "causalCost", "status") === "PARTIAL" ? "PARTIAL" : "KNOWN", methodVersion: stringOf(at(output.output, "methodVersion")), inputHash: stringOf(at(output.output, "inputHash")) });
-  const comparison = arrayOf(at(output.output, "comparisons")).find((candidate) => stringOf(at(candidate, "momentId")) === momentId && at(candidate, "status") === "KNOWN");
-  const comparisonQuality = comparison === undefined ? undefined : lifeSpendingQuality({ value: comparison, knowledgeState: "KNOWN", supportStatus: stringOf(at(comparison, "support", "supportStatus")) as GlobalPhenomenonQuality["supportStatus"], materialityStatus: stringOf(at(comparison, "materiality", "status")) as GlobalPhenomenonQuality["materialityStatus"], methodVersion: stringOf(at(comparison, "methodVersion")), inputHash: stringOf(at(output.output, "inputHash")) });
+  const comparison = arrayOf(at(output.output, "comparisons")).find((candidate) => stringOf(at(candidate, "momentId")) === momentId);
+  const comparisonKnowledge = comparison === undefined || at(comparison, "status") === "UNKNOWN" ? "UNKNOWN" : at(comparison, "status") === "PARTIAL" ? "PARTIAL" : at(comparison, "status") === "KNOWN" ? "KNOWN" : "NOT_APPLICABLE";
+  const rawMaterialityStatus = stringOf(at(comparison, "materiality", "status"));
+  const comparisonQuality = comparison === undefined ? undefined : lifeSpendingQuality({ value: comparison, knowledgeState: comparisonKnowledge, supportStatus: stringOf(at(comparison, "support", "supportStatus")) as GlobalPhenomenonQuality["supportStatus"], ...(rawMaterialityStatus === "MATERIAL" || rawMaterialityStatus === "NOT_MATERIAL" ? { materialityStatus: rawMaterialityStatus } : {}), methodVersion: stringOf(at(comparison, "methodVersion")), inputHash: stringOf(at(output.output, "inputHash")) });
   const moneyMetric = (id: string, label: string, value: unknown, q = summaryQuality) => detailMetric({ output, id: `${entityRef}:${id}`, label, value, kind: "MONEY", unit: "EUR", quality: q, knowledgeState: q.knowledgeState });
   const metrics = [
     moneyMetric("causal-cost", "Coût directement relié", at(entry.summary, "causalCost", "value")),
     moneyMetric("spent-during", "Dépenses pendant la période", at(entry.summary, "spentDuring", "value"), lifeSpendingQuality({ value: at(entry.summary, "spentDuring"), knowledgeState: knowledgeOf(at(entry.summary, "spentDuring")), methodVersion: stringOf(at(output.output, "methodVersion")), inputHash: stringOf(at(output.output, "inputHash")) })),
-    ...(comparison === undefined || comparisonQuality === undefined ? [] : [
+    ...(comparison === undefined || comparisonQuality === undefined || !["KNOWN", "PARTIAL"].includes(String(at(comparison, "status"))) ? [] : [
       moneyMetric("subject-cost", "Coût du Moment comparé", at(comparison, "subjectCost"), comparisonQuality),
       moneyMetric("peer-median", "Médiane des expériences comparables", at(comparison, "peerMedianCost"), comparisonQuality),
       moneyMetric("q1", "Premier quartile historique", at(comparison, "q1"), comparisonQuality),
@@ -1319,18 +1368,45 @@ function momentDetailProjection(output: GlobalV2OwnerOutput, entityRef: string):
     ]),
   ].filter((item): item is GlobalDetailMetric => item !== undefined);
   const dates = entry.start === undefined ? undefined : entry.end === undefined || entry.end === entry.start ? entry.start : `${entry.start} → ${entry.end}`;
-  const detailComparisonContext = comparison === undefined ? undefined : (() => {
+  const detailComparisonContext = comparison === undefined || !["KNOWN", "PARTIAL"].includes(String(at(comparison, "status"))) ? undefined : (() => {
     const comparisonTier = stringOf(at(comparison, "comparisonTier")); const comparisonProfileId = stringOf(at(comparison, "comparisonProfileId")); const peerCount = numberOf(at(comparison, "peerCount")); const subjectCost = stringOf(at(comparison, "subjectCost")); const peerMedian = stringOf(at(comparison, "peerMedianCost")); const absoluteDelta = stringOf(at(comparison, "absoluteDelta"));
     if (comparisonTier === undefined || comparisonProfileId === undefined || peerCount === undefined || subjectCost === undefined || peerMedian === undefined || absoluteDelta === undefined) return undefined;
     const money = (value: string): GlobalTypedMeasure => ({ kind: "MONEY", value, unit: "EUR" }); const optionalMoney = (key: string) => stringOf(at(comparison, key)); const relativeDelta = stringOf(at(comparison, "relativeDelta"));
     return { comparisonTier: comparisonTier as "SAME_SERIES" | "SAME_TYPE" | "SAME_FAMILY", comparisonProfileId, peerCount: { kind: "COUNT" as const, value: String(peerCount), unit: "moment" }, subjectCost: money(subjectCost), peerMedian: money(peerMedian), ...(optionalMoney("q1") === undefined ? {} : { q1: money(optionalMoney("q1")!) }), ...(optionalMoney("q3") === undefined ? {} : { q3: money(optionalMoney("q3")!) }), ...(optionalMoney("mad") === undefined ? {} : { mad: money(optionalMoney("mad")!) }), absoluteDelta: money(absoluteDelta), ...(relativeDelta === undefined ? {} : { relativeDelta: { kind: "DECIMAL" as const, value: relativeDelta, unit: "ratio" } }) };
   })();
   const identityRow: GlobalDetailRow = { rowId: `000:moment-identity:${momentId}`, labelKey: entry.label, displayValue: [entry.typeLabel, dates].filter(Boolean).join(" · "), phenomenonRef: entityRef, phenomenonQuality: comparisonQuality ?? summaryQuality, knowledgeState: "KNOWN", entityRef, ...(detailComparisonContext === undefined ? {} : { momentComparison: detailComparisonContext }), evidenceRefs: projectedEvidence(output, arrayOf(at(entry.summary, "sourceRefs")).filter((item): item is string => typeof item === "string")) };
-  const compositionRows = arrayOf(at(entry.summary, "composition")).flatMap((component, index) => {
-    const key = stringOf(at(component, "key")); const amount = stringOf(at(component, "amount"));
-    return key === undefined || amount === undefined ? [] : [{ rowId: `${String(index + 1).padStart(3, "0")}:composition:${key}`, labelKey: "Composante causale", displayValue: formatMoney(amount)!, typedMeasure: { kind: "MONEY" as const, value: amount, unit: "EUR" }, phenomenonRef: `${entityRef}:component:${key}`, phenomenonQuality: summaryQuality, knowledgeState: "KNOWN" as const, evidenceRefs: projectedEvidence(output, arrayOf(at(component, "evidenceRefs")).filter((item): item is string => typeof item === "string")) }];
+  const componentRows: readonly GlobalMomentComponentRow[] = presentation.rows.filter(({ momentRef }) => momentRef === entityRef).map(({ momentRef: _momentRef, canonicalComponentKey: _canonicalComponentKey, amount, ...component }) => ({ ...component, evidenceRefs: [...new Set(component.evidenceRefs)].sort((left, right) => left.localeCompare(right)), amount: { kind: "MONEY", value: amount, unit: "EUR" } }));
+  const expectedCost = stringOf(at(entry.summary, "causalCost", "value"));
+  const rowTotal = componentRows.reduce((sum, rowValue) => sum.plus(rowValue.amount.value), new Big(0));
+  if (expectedCost === undefined || rowTotal.cmp(expectedCost) !== 0) throw new TypeError(`GLOBAL_MOMENT_COMPONENT_ROW_RECONCILIATION_FAILED:${entityRef}`);
+  const grouped = new Map<string, { label: string; amount: Big; refs: string[] }>();
+  for (const component of componentRows) {
+    const groupKey = component.subcategoryRef ?? component.categoryRef ?? (component.compositionGroup === undefined ? `component:${component.componentRef}` : `composition:${component.compositionGroup}`);
+    const groupLabel = component.subcategoryLabel ?? component.categoryLabel ?? component.compositionGroup ?? component.primaryLabel;
+    const current = grouped.get(groupKey) ?? { label: groupLabel, amount: new Big(0), refs: [] };
+    current.amount = current.amount.plus(component.amount.value); current.refs.push(component.componentRef); grouped.set(groupKey, current);
+  }
+  const componentGroups: readonly GlobalMomentComponentGroup[] = [...grouped].sort(([left], [right]) => left.localeCompare(right)).map(([groupKey, group]) => ({ groupKey, groupLabel: group.label, amount: { kind: "MONEY", value: group.amount.toFixed(), unit: "EUR" }, componentRefs: [...group.refs].sort(), count: group.refs.length }));
+  if (componentGroups.reduce((sum, group) => sum.plus(group.amount.value), new Big(0)).cmp(expectedCost) !== 0) throw new TypeError(`GLOBAL_MOMENT_COMPONENT_GROUP_RECONCILIATION_FAILED:${entityRef}`);
+  const timelineByRef = new Map(timeline.events.map((event) => [event.eventRef, event] as const));
+  const peerObservations: readonly GlobalMomentPeerObservation[] = arrayOf(at(comparison, "peerIds")).map((peerIdValue) => {
+    const peerId = stringOf(peerIdValue); if (peerId === undefined) throw new TypeError(`GLOBAL_MOMENT_PEER_REF_INVALID:${entityRef}`);
+    const peerRef = `moment:${peerId}`;
+    const peer = timelineByRef.get(peerRef); if (peer === undefined || peer.sourceKind !== "MOMENT") throw new TypeError(`GLOBAL_MOMENT_PEER_UNRESOLVED:${peerRef}`);
+    const preview = presentation.rows.filter(({ momentRef }) => momentRef === peerRef).slice(0, 3).map(({ momentRef: _momentRef, canonicalComponentKey: _canonicalComponentKey, amount, ...component }) => ({ ...component, evidenceRefs: [...new Set(component.evidenceRefs)].sort((left, right) => left.localeCompare(right)), amount: { kind: "MONEY" as const, value: amount, unit: "EUR" } }));
+    const causalCost = peer.causalCost.status === "KNOWN" || peer.causalCost.status === "PARTIAL" ? { status: peer.causalCost.status, value: { kind: "MONEY" as const, value: peer.causalCost.value, unit: "EUR" } } : { status: peer.causalCost.status };
+    const placeSummary = [...new Set(peer.places.flatMap(({ label: placeLabel }) => placeLabel === undefined ? [] : [placeLabel]))].sort();
+    return { peerRef, canonicalName: peer.canonicalName, startDate: peer.startDate, endDate: peer.endDate, typeKey: peer.typeKey, typeLabel: peer.typeLabel, familyKey: peer.familyKey, causalCost, ...(placeSummary.length === 0 ? {} : { placeSummary }), componentPreview: preview, detailRef: globalV2QueryInstanceKey("analysis_global_moment_experience_detail", scopeHash, { entityRef: peerRef }) };
   });
-  return { metrics, rows: [identityRow, ...compositionRows] };
+  const tier = stringOf(at(comparison, "comparisonTier"));
+  const requiredFacetKeys = arrayOf(at(entry.summary, "profile", "requiredFacets")).filter((value): value is string => typeof value === "string").sort();
+  const matchedFacets = requiredFacetKeys.flatMap((facetKey) => { const value = at(entry.summary, "subjectFacets", facetKey, "value"); return value === undefined ? [] : [{ facetKey, value: typeof value === "string" ? value : canonicalSerializeGlobal(value) }]; });
+  const supportPolicyRef = stringOf(at(comparison, "support", "policyRef"));
+  const similarity: GlobalMomentSimilarity | undefined = tier === undefined || supportPolicyRef === undefined ? undefined : { basis: tier as GlobalMomentSimilarity["basis"], requiredFacetKeys, matchedFacets, supportPolicyRef };
+  const spentStatus = stringOf(at(entry.summary, "spentDuring", "status")) as "KNOWN" | "PARTIAL" | "UNKNOWN" | "NOT_APPLICABLE" | "CONFLICT" | undefined;
+  const spentValue = stringOf(at(entry.summary, "spentDuring", "value"));
+  const spentDuringContext: GlobalSpentDuringContext | undefined = spentStatus === undefined ? undefined : { label: "Toutes nos dépenses enregistrées pendant cette période", cost: spentStatus === "KNOWN" || spentStatus === "PARTIAL" ? { status: spentStatus, value: { kind: "MONEY", value: spentValue!, unit: "EUR" } } : { status: spentStatus }, relationToCausalCost: "INDEPENDENT_SCOPE" };
+  return { metrics, rows: [identityRow], peerObservations, ...(similarity === undefined ? {} : { similarity }), momentComponentRows: componentRows, componentGroups, ...(spentDuringContext === undefined ? {} : { spentDuringContext }) };
 }
 
 function placeProjection(output: GlobalV2OwnerOutput, labels: GlobalV2PresentationLabels): ModuleProjection {
@@ -1592,6 +1668,11 @@ export function buildGlobalV2CandidateFromOwnerOutputs(input: GlobalV2CandidateI
   };
   const outputDigests = outputs.map((item) => ({ moduleKey: item.moduleKey, owner: item.owner, digest: digest(item.output), knowledge: item.knowledge, capabilityState: item.capabilityState }));
   const labelDigests = outputs.flatMap(({ moduleKey }) => labelInputsFor(moduleKey) === undefined ? [] : [{ moduleKey, digest: digest(labelInputsFor(moduleKey)) }]);
+  const adapterDigests = [
+    { family: "global_life_timeline_candidate_adapter", identity: input.candidateAdapters.timeline.adapterVersion, digest: input.candidateAdapters.timeline.inputHash },
+    { family: "global_grocery_candidate_adapter", identity: input.candidateAdapters.grocery.adapterVersion, digest: input.candidateAdapters.grocery.inputHash },
+    { family: "global_moment_component_presentation", identity: input.momentComponentPresentation.version, digest: input.momentComponentPresentation.inputHash },
+  ] as const;
   const outputsByModule = new Map(outputs.map((output) => [output.moduleKey, output] as const));
   const projections = new Map(outputs.map((output) => [output.moduleKey, projectModule(output, outputsByModule, presentationLabels, input.personIds)] as const));
   const implementation = {
@@ -1599,7 +1680,7 @@ export function buildGlobalV2CandidateFromOwnerOutputs(input: GlobalV2CandidateI
     gitSha: input.implementationIdentity,
     digest: digest({ format: "global-v2-live-implementation@v1", gitSha: input.implementationIdentity, registry: Object.entries(globalV2QueryRegistry).map(([resource, contract]) => ({ resource, contractVersion: contract.contractVersion, methodVersion: contract.methodVersion, policyVersions: contract.policyVersions })) }),
   };
-  const candidateId = deterministicUuid({ format: "global-v2-live-candidate@v1", project: input.project, householdId: input.householdId, scope, dataRevision: input.dataRevision, analyticsRevision: input.analyticsRevision, implementation, outputDigests, labelDigests });
+  const candidateId = deterministicUuid({ format: "global-v2-live-candidate@v1", project: input.project, householdId: input.householdId, scope, dataRevision: input.dataRevision, analyticsRevision: input.analyticsRevision, implementation, outputDigests, labelDigests, adapterDigests });
   const generatedAt = input.asOf;
   const provisionalMeta: GlobalReadModelPublicationMeta = {
     publicationId: candidateId,
@@ -1611,7 +1692,7 @@ export function buildGlobalV2CandidateFromOwnerOutputs(input: GlobalV2CandidateI
   };
   const dependenciesFor = (moduleKey: GlobalPrimaryModuleKey): readonly GlobalV2ResolvedDependency[] => {
     const dependencyModules: readonly GlobalPrimaryModuleKey[] = moduleKey === "RHYTHM" ? ["TRANSFORMATIONS", "RHYTHM", "RELATIONSHIPS", "MOMENTS"] : [moduleKey];
-    return dependencyModules.flatMap((dependencyModule) => {
+    const ownerDependencies = dependencyModules.flatMap((dependencyModule) => {
       const output = outputDigests.find((entry) => entry.moduleKey === dependencyModule)!;
       const labelDigest = labelDigests.find((entry) => entry.moduleKey === dependencyModule);
       return [
@@ -1619,6 +1700,8 @@ export function buildGlobalV2CandidateFromOwnerOutputs(input: GlobalV2CandidateI
         ...(labelDigest === undefined ? [] : [{ authority: "CANONICAL" as const, family: `global_${dependencyModule.toLowerCase()}_presentation_labels`, identity: `presentation-labels:${dependencyModule}`, digest: labelDigest.digest, required: true }]),
       ];
     });
+    const adapterDependencies = moduleKey === "RHYTHM" ? adapterDigests : moduleKey === "MOMENTS" ? adapterDigests.filter(({ family }) => family !== "global_grocery_candidate_adapter") : [];
+    return [...ownerDependencies, ...adapterDependencies.map((dependency) => ({ authority: "CANONICAL" as const, family: dependency.family, identity: dependency.identity, digest: dependency.digest, required: true }))];
   };
   const metaFor = (resource: GlobalV2QueryResourceName, params: GlobalV2QueryParams, dependencies: readonly GlobalV2ResolvedDependency[]): GlobalReadModelResourceMeta => ({
     contractVersion: globalV2QueryRegistry[resource].contractVersion,
@@ -1677,6 +1760,33 @@ export function buildGlobalV2CandidateFromOwnerOutputs(input: GlobalV2CandidateI
       sourcePublicationId: provisionalMeta.publicationId, sourceAnalyticsRevision: provisionalMeta.revision,
     }] as const];
   })).values()];
+  const m6Output = outputsByModule.get("MOMENTS")!;
+  const m6Comparisons = new Map(arrayOf(at(m6Output.output, "comparisons")).flatMap((comparison) => {
+    const momentId = stringOf(at(comparison, "momentId")); return momentId === undefined ? [] : [[momentId, comparison] as const];
+  }));
+  const timelineDependencies = dependenciesFor("RHYTHM");
+  const timelineParams = {};
+  const timelineEvents: readonly GlobalTimelineEvent[] = input.candidateAdapters.timeline.events.map((event): GlobalTimelineEvent => {
+    const comparison = event.sourceKind === "MOMENT" ? m6Comparisons.get(event.eventRef.slice("moment:".length)) : undefined;
+    const materialityStatus = stringOf(at(comparison, "materiality", "status"));
+    const eventQuality: GlobalCompactQuality = { knowledgeState: event.quality.knowledgeState, ...(event.quality.knowledgeState === "PARTIAL" ? { partialMeaning: "OBSERVED_ONLY" as const } : {}), dataNature: "OBSERVED", limitationCodes: [...event.quality.limitationCodes].sort(), evidenceRefs: [...event.quality.evidenceRefs].sort() };
+    const causalCost = event.causalCost.status === "KNOWN" || event.causalCost.status === "PARTIAL" ? { status: event.causalCost.status, value: { kind: "MONEY" as const, value: event.causalCost.value, unit: "EUR" } } : { status: event.causalCost.status };
+    return {
+      eventRef: event.eventRef, sourceKind: event.sourceKind, canonicalName: event.canonicalName, startDate: event.startDate, endDate: event.endDate,
+      typeKey: event.typeKey, typeLabel: event.typeLabel, familyKey: event.familyKey, familySource: event.familySource,
+      ...(event.sourceKind === "MOMENT" && event.momentStructure !== undefined ? { momentStructure: event.momentStructure } : {}), participantRefs: [...event.participantRefs].sort(),
+      places: event.places.map(({ placeRef, label: placeLabel }) => ({ placeRef, ...(placeLabel === undefined ? {} : { label: placeLabel }) })), causalCost,
+      ...(event.sourceKind === "MOMENT" && event.seriesRef !== undefined ? { seriesRef: event.seriesRef } : {}),
+      ...(event.sourceKind === "MOMENT" && event.comparisonSummary !== undefined ? { comparisonSummary: { status: event.comparisonSummary.status === "CONFLICT" ? "UNKNOWN" as const : event.comparisonSummary.status, ...(event.comparisonSummary.comparisonTier === undefined ? {} : { comparisonTier: event.comparisonSummary.comparisonTier }), peerCount: event.comparisonSummary.peerCount, materiality: materialityStatus === "MATERIAL" ? "MATERIAL" as const : materialityStatus === "NOT_MATERIAL" ? "NOT_MATERIAL" as const : "UNKNOWN" as const } } : {}),
+      ...(event.sourceKind === "MOMENT" ? { ...(event.componentCount === undefined ? {} : { componentCount: event.componentCount }), detailAvailability: "MOMENT_DETAIL" as const, sourceModule: "MOMENTS" as const, sourceOwner: "M6" as const } : { detailAvailability: "INLINE_ONLY" as const, sourceModule: "CANONICAL" as const, sourceOwner: "CANONICAL" as const }),
+      quality: eventQuality,
+    };
+  });
+  const timelineDestinations: readonly GlobalNavigationDestination[] = timelineEvents.filter(({ sourceKind }) => sourceKind === "MOMENT").map(({ eventRef }) => ({ targetId: `global-query:${eventRef}`, kind: "GLOBAL_QUERY", resource: "analysis_global_moment_experience_detail", instanceKey: globalV2QueryInstanceKey("analysis_global_moment_experience_detail", scopeHash, { entityRef: eventRef }), entityRef: eventRef, scopeHash, sourcePublicationId: provisionalMeta.publicationId, sourceAnalyticsRevision: provisionalMeta.revision }));
+  const timelineInstance: GlobalV2QueryInstanceInput = {
+    resource: "analysis_global_life_timeline", scope, params: timelineParams, dependencies: timelineDependencies,
+    payload: buildGlobalLifeTimelineReadModel({ kind: "global_life_timeline", schemaVersion: "global-life-timeline@v1", resource: "analysis_global_life_timeline", moduleKey: "RHYTHM", events: timelineEvents, chapterOverlays: [], contextSignals: [], destinations: timelineDestinations, quality: quality(outputsByModule.get("RHYTHM")!), publicationMeta: provisionalMeta, resourceMeta: metaFor("analysis_global_life_timeline", timelineParams, timelineDependencies) }),
+  };
   for (const ownerOutput of outputs) {
     const decision = publicationDecision(ownerOutput, revision, "MODULE_DETAIL");
     if (decision.visibility !== "VISIBLE") continue;
@@ -1711,18 +1821,24 @@ export function buildGlobalV2CandidateFromOwnerOutputs(input: GlobalV2CandidateI
       });
     }
     const detailResource = detailResourceFor(ownerOutput.moduleKey);
-    const detailRows = [...new Map(projection.detailRows.flatMap((detailRow) => detailRow.entityRef === undefined ? [] : [[detailRow.entityRef, detailRow] as const])).values()].slice(0, GLOBAL_MAX_SECTION_ROWS);
+    const timelineMomentRows: readonly GlobalDetailRow[] = input.candidateAdapters.timeline.events.filter(({ sourceKind }) => sourceKind === "MOMENT").map((event, index) => ({ rowId: `timeline:${String(index).padStart(3, "0")}:${event.eventRef}`, labelKey: event.canonicalName, displayValue: event.typeLabel, knowledgeState: "KNOWN", entityRef: event.eventRef, evidenceRefs: [...event.quality.evidenceRefs].sort() }));
+    const groceryProfileAvailable = ownerOutput.moduleKey === "RHYTHM" && arrayOf(at(ownerOutput.output, "activityCostProfiles")).some((entry) => stringOf(at(entry, "activityId")) === "courses_alimentaires");
+    const groceryRow: GlobalDetailRow = { rowId: "timeline:grocery:courses_alimentaires", labelKey: "Courses alimentaires", knowledgeState: "KNOWN", entityRef: "household-activity:courses_alimentaires", evidenceRefs: [`adapter:${input.candidateAdapters.grocery.inputHash}`] };
+    const sourceDetailRows = ownerOutput.moduleKey === "MOMENTS" ? timelineMomentRows : ownerOutput.moduleKey === "RHYTHM" && groceryProfileAvailable ? [groceryRow, ...projection.detailRows] : projection.detailRows;
+    const uniqueDetailRows = [...new Map(sourceDetailRows.flatMap((detailRow) => detailRow.entityRef === undefined ? [] : [[detailRow.entityRef, detailRow] as const])).values()];
+    const detailRows = ownerOutput.moduleKey === "MOMENTS" ? uniqueDetailRows : uniqueDetailRows.slice(0, GLOBAL_MAX_SECTION_ROWS);
     if (detailResource !== undefined) for (const detailRow of detailRows) {
       const params = { entityRef: detailRow.entityRef! };
       const economicDetail = ownerOutput.moduleKey === "ECONOMIC" ? economicRecurrenceDetail(ownerOutput, detailRow.entityRef!) : undefined;
       const categoryNeedDetail = ownerOutput.moduleKey === "CATEGORIES_NEEDS" ? categoryNeedDetailProjection(ownerOutput, presentationLabels, detailRow.entityRef!) : undefined;
-      const routineDetail = ownerOutput.moduleKey === "RHYTHM" ? routineDetailProjection(ownerOutput, presentationLabels, input.personIds, detailRow.entityRef!) : undefined;
-      const momentDetail = ownerOutput.moduleKey === "MOMENTS" ? momentDetailProjection(ownerOutput, detailRow.entityRef!) : undefined;
+      const routineBase = ownerOutput.moduleKey === "RHYTHM" ? routineDetailProjection(ownerOutput, presentationLabels, input.personIds, detailRow.entityRef!) : undefined;
+      const routineDetail = routineBase === undefined ? undefined : detailRow.entityRef === "household-activity:courses_alimentaires" ? { ...routineBase, groceryRhythm: groceryRhythmContext(input.candidateAdapters.grocery) } : routineBase;
+      const momentDetail = ownerOutput.moduleKey === "MOMENTS" ? momentDetailProjection(ownerOutput, detailRow.entityRef!, input.candidateAdapters.timeline, input.momentComponentPresentation, scopeHash) : undefined;
       const detail = economicDetail ?? categoryNeedDetail ?? routineDetail ?? momentDetail;
       const destinations: readonly GlobalNavigationDestination[] = detailRow.entityRef!.startsWith("category:") ? [
         { targetId: `history:${detailRow.entityRef}`, kind: "HISTORY", resource: "history_category_detail", entityRef: detailRow.entityRef!, scopeHash, sourcePublicationId: provisionalMeta.publicationId, sourceAnalyticsRevision: provisionalMeta.revision },
         { targetId: `operations:${detailRow.entityRef}`, kind: "OPERATIONS", resource: "operations_browse", entityRef: detailRow.entityRef!, scopeHash, sourcePublicationId: provisionalMeta.publicationId, sourceAnalyticsRevision: provisionalMeta.revision },
-      ] : ownerOutput.moduleKey === "RHYTHM" ? queryDestinations(detail?.rows ?? []) : [];
+      ] : ownerOutput.moduleKey === "RHYTHM" ? queryDestinations(detail?.rows ?? []) : ownerOutput.moduleKey === "MOMENTS" ? (detail?.peerObservations ?? []).map((peer) => ({ targetId: `global-query:${peer.peerRef}`, kind: "GLOBAL_QUERY", resource: "analysis_global_moment_experience_detail", instanceKey: peer.detailRef, entityRef: peer.peerRef, scopeHash, sourcePublicationId: provisionalMeta.publicationId, sourceAnalyticsRevision: provisionalMeta.revision })) : [];
       expandedInstances.push({
         resource: detailResource,
         scope,
@@ -1730,7 +1846,9 @@ export function buildGlobalV2CandidateFromOwnerOutputs(input: GlobalV2CandidateI
         dependencies,
         payload: buildGlobalExpandedReadModel({
           kind: "global_expanded", schemaVersion: "global-expanded@v1", resource: detailResource, moduleKey: ownerOutput.moduleKey, sectionKey: "OVERVIEW", visibility: "VISIBLE", secondaryInsights: [], metrics: detail?.metrics ?? [], series: detail?.series ?? [],
-          rows: detail?.rows ?? [{ ...detailRow, rowId: `detail:${detailRow.rowId}` }], destinations, quality: categoryNeedDetail?.quality ?? quality(ownerOutput), capabilities: [capability(ownerOutput)], publicationMeta: provisionalMeta, resourceMeta: metaFor(detailResource, params, dependencies),
+          rows: detail?.rows ?? [{ ...detailRow, rowId: `detail:${detailRow.rowId}` }], destinations,
+          ...(detail?.peerObservations === undefined ? {} : { peerObservations: detail.peerObservations }), ...(detail?.similarity === undefined ? {} : { similarity: detail.similarity }), ...(detail?.momentComponentRows === undefined ? {} : { momentComponentRows: detail.momentComponentRows }), ...(detail?.componentGroups === undefined ? {} : { componentGroups: detail.componentGroups }), ...(detail?.spentDuringContext === undefined ? {} : { spentDuringContext: detail.spentDuringContext }), ...(detail?.groceryRhythm === undefined ? {} : { groceryRhythm: detail.groceryRhythm }),
+          quality: categoryNeedDetail?.quality ?? quality(ownerOutput), capabilities: [capability(ownerOutput)], publicationMeta: provisionalMeta, resourceMeta: metaFor(detailResource, params, dependencies),
         }),
       });
     }
@@ -1757,6 +1875,7 @@ export function buildGlobalV2CandidateFromOwnerOutputs(input: GlobalV2CandidateI
   const provisionalInstances: GlobalV2QueryInstanceInput[] = [
     { resource: "analysis_global_manifest", scope, params: {}, payload: initialPayload, dependencies: allOutputDependencies },
     { resource: "analysis_global_summary_ai", scope, params: {}, payload: summaryPayload, dependencies: summaryDependencies },
+    timelineInstance,
     ...moduleInstances,
     ...expandedInstances,
   ];
@@ -1768,7 +1887,7 @@ export function buildGlobalV2CandidateFromOwnerOutputs(input: GlobalV2CandidateI
     contractVersion: "global-owner-outputs@v1",
     methodSignature: digest({ method: "global-v2-production-orchestration@v1", implementation }),
     policyVersions: { orchestration: "global-v2-production-orchestration@v1" },
-    resourceInputHash: digest({ scope, outputDigests, labelDigests }),
+    resourceInputHash: digest({ scope, outputDigests, labelDigests, adapterDigests }),
   };
   const artifactClosure = { outputKey: artifactKey, declarationDigest: globalV2ClosureDeclarationDigest(artifactDependencies), inputDigest: globalV2ClosureInputDigest(artifactDependencies), dependencies: artifactDependencies };
   const manifestBase = {
@@ -1792,7 +1911,7 @@ export function buildGlobalV2CandidateFromOwnerOutputs(input: GlobalV2CandidateI
   const plan = buildGlobalV2QueryPlan({ instances });
   const finalManifest = attachGlobalV2QueryPlanToManifest({ base: manifestBase, plan });
   if (manifest.manifestHash !== finalManifest.manifestHash) throw new TypeError("GLOBAL_LIVE_CANDIDATE_NON_DETERMINISTIC");
-  const artifactPayload = { kind: "global_owner_outputs", outputs: outputs.map(({ moduleKey, owner, output, knowledge, capabilityState, reasonCodes, evidenceRefs }) => ({ moduleKey, owner, output, knowledge, capabilityState, reasonCodes: [...reasonCodes].sort(), evidenceRefs: [...evidenceRefs].sort() })), presentationLabels, publicationMeta: finalMeta, resourceMeta: { contractVersion: artifactVersion.contractVersion, methodSignature: artifactVersion.methodSignature, policyVersions: artifactVersion.policyVersions, resourceInputHash: artifactVersion.resourceInputHash } };
+  const artifactPayload = { kind: "global_owner_outputs", outputs: outputs.map(({ moduleKey, owner, output, knowledge, capabilityState, reasonCodes, evidenceRefs }) => ({ moduleKey, owner, output, knowledge, capabilityState, reasonCodes: [...reasonCodes].sort(), evidenceRefs: [...evidenceRefs].sort() })), presentationLabels, candidateAdapters: input.candidateAdapters, momentComponentPresentation: input.momentComponentPresentation, publicationMeta: finalMeta, resourceMeta: { contractVersion: artifactVersion.contractVersion, methodSignature: artifactVersion.methodSignature, policyVersions: artifactVersion.policyVersions, resourceInputHash: artifactVersion.resourceInputHash } };
   return {
     project: input.project,
     householdScope: input.householdId,

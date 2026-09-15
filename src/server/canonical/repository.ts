@@ -2045,6 +2045,27 @@ export class CanonicalRepository {
         .order("person_id", { ascending: true }));
   }
 
+  /**
+   * Read-only transport used by Global V2 presentation adapters. Keeping the
+   * four physical grains separate prevents callers from joining allocations
+   * to every item of an operation instead of the allocation's exact item_id.
+   */
+  async loadOperationCompositionRows(operationIds: readonly string[]): Promise<{
+    readonly allocations: readonly CanonicalRecord[];
+    readonly items: readonly CanonicalRecord[];
+    readonly paymentComponents: readonly CanonicalRecord[];
+    readonly cashUses: readonly CanonicalRecord[];
+  }> {
+    const ids = unique(operationIds);
+    const [allocations, items, paymentComponents, cashUses] = await Promise.all([
+      this.loadComposition("operation_allocations", ids),
+      this.loadComposition("operation_items", ids),
+      this.loadComposition("payment_components", ids),
+      this.loadComposition("cash_economic_uses", ids),
+    ]);
+    return { allocations, items, paymentComponents, cashUses };
+  }
+
   /** Explicit Canonical LifeEvent-to-Place links. Place visits are not a substitute. */
   loadLifeEventLocalizationRows(
     lifeEventIds: readonly string[],

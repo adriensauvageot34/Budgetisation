@@ -19,6 +19,7 @@ import type {
   GlobalReadModelResourceMeta,
 } from "./types";
 import { parseGlobalPhenomenonQuality, parseGlobalTypedMeasure } from "./typed-values";
+import { parseLocalDate, parseYearMonth } from "../../core/time";
 
 export const GLOBAL_EXPANDED_PAYLOAD_BUDGET_BYTES = 96 * 1024;
 export const GLOBAL_MAX_EXPANDED_INSIGHTS = 5;
@@ -85,6 +86,41 @@ export type GlobalMomentComparisonContext = {
   readonly relativeDelta?: GlobalTypedMeasure;
 };
 
+export type GlobalMomentCost =
+  | { readonly status: "KNOWN" | "PARTIAL"; readonly value: GlobalTypedMeasure }
+  | { readonly status: "UNKNOWN" | "NOT_APPLICABLE" | "CONFLICT" };
+
+export type GlobalMomentComponentRow = {
+  readonly componentRef: string;
+  readonly primaryLabel: string;
+  readonly labelSource: "ITEM" | "PRECISE_DESCRIPTION" | "PRECISE_TYPE" | "CANONICAL_MERCHANT" | "SUBCATEGORY" | "CATEGORY" | "BANK_LABEL" | "CONTEXTUAL_NOTE" | "SOURCE_GRAIN";
+  readonly amount: GlobalTypedMeasure;
+  readonly sourceKind: "Operation_parent" | "Operation_residual" | "Allocation" | "Item" | "Payment_component" | "Cash_economic_use";
+  readonly sourceOperationRef?: string;
+  readonly categoryRef?: string;
+  readonly categoryLabel?: string;
+  readonly subcategoryRef?: string;
+  readonly subcategoryLabel?: string;
+  readonly merchantRef?: string;
+  readonly merchantLabel?: string;
+  readonly causalRole?: string;
+  readonly compositionGroup?: string;
+  readonly evidenceRefs: readonly string[];
+};
+
+export type GlobalMomentComponentGroup = { readonly groupKey: string; readonly groupLabel: string; readonly amount: GlobalTypedMeasure; readonly componentRefs: readonly string[]; readonly count: number };
+export type GlobalMomentPeerObservation = { readonly peerRef: string; readonly canonicalName: string; readonly startDate: string; readonly endDate: string; readonly typeKey: string; readonly typeLabel: string; readonly familyKey: string; readonly causalCost: GlobalMomentCost; readonly placeSummary?: readonly string[]; readonly componentPreview: readonly GlobalMomentComponentRow[]; readonly detailRef: string };
+export type GlobalMomentSimilarity = { readonly basis: "SAME_SERIES" | "SAME_TYPE" | "SAME_FAMILY"; readonly requiredFacetKeys: readonly string[]; readonly matchedFacets: readonly { readonly facetKey: string; readonly value: string }[]; readonly supportPolicyRef: string };
+export type GlobalSpentDuringContext = { readonly label: string; readonly cost: GlobalMomentCost; readonly relationToCausalCost: "INDEPENDENT_SCOPE" };
+export type GlobalGroceryRhythmContext = {
+  readonly grain: "HOUSEHOLD_MONTH";
+  readonly policyRef: string;
+  readonly thresholds: { readonly p25: GlobalTypedMeasure; readonly p75: GlobalTypedMeasure };
+  readonly eligibleMonthCount: number;
+  readonly historicalComparisonGate: "AVAILABLE" | "GATED";
+  readonly months: readonly { readonly month: string; readonly occurrenceCount: number; readonly knownCostOccurrenceCount: number; readonly coverage: number; readonly basketStructure: { readonly status: "KNOWN"; readonly small: number; readonly intermediate: number; readonly large: number } | { readonly status: "GATED"; readonly reasonCode: "COVERAGE_BELOW_70_PERCENT" }; readonly monthlyGrocerySpend: GlobalMomentCost; readonly limitationCodes: readonly string[] }[];
+};
+
 export type GlobalDetailRow = {
   readonly rowId: string;
   readonly labelKey: string;
@@ -124,6 +160,12 @@ export type GlobalExpandedReadModel = {
   readonly series: readonly GlobalDetailSeries[];
   readonly rows: readonly GlobalDetailRow[];
   readonly destinations: readonly GlobalNavigationDestination[];
+  readonly peerObservations?: readonly GlobalMomentPeerObservation[];
+  readonly similarity?: GlobalMomentSimilarity;
+  readonly momentComponentRows?: readonly GlobalMomentComponentRow[];
+  readonly componentGroups?: readonly GlobalMomentComponentGroup[];
+  readonly spentDuringContext?: GlobalSpentDuringContext;
+  readonly groceryRhythm?: GlobalGroceryRhythmContext;
   readonly quality: GlobalCompactQuality;
   readonly capabilities: readonly GlobalModuleCapability[];
   readonly publicationMeta: GlobalReadModelPublicationMeta;
@@ -324,6 +366,74 @@ function parseMomentComparison(value: unknown): GlobalMomentComparisonContext {
     ...(hasOwn(record, "relativeDelta") ? { relativeDelta: typedMeasureOfKind(requireProperty(record, "relativeDelta", "GlobalMomentComparisonContext"), "DECIMAL", "GLOBAL_MOMENT_COMPARISON_RELATIVE_DELTA") } : {}),
   };
 }
+
+function parseMomentCost(value: unknown): GlobalMomentCost {
+  const record = parseStrictRecord(value, ["status", "value"], "GlobalMomentCost");
+  const costStatus = parseStringLiteral<GlobalMomentCost["status"]>(requireProperty(record, "status", "GlobalMomentCost"), knowledge, "GlobalMomentCost.status");
+  const valueMeasure = optional(record, "value", (entry) => typedMeasureOfKind(entry, "MONEY", "GLOBAL_MOMENT_COST"));
+  if ((costStatus === "KNOWN" || costStatus === "PARTIAL") !== (valueMeasure !== undefined)) throw new TypeError("GLOBAL_MOMENT_COST_STATUS_VALUE_MISMATCH");
+  return costStatus === "KNOWN" || costStatus === "PARTIAL" ? { status: costStatus, value: valueMeasure! } : { status: costStatus };
+}
+
+function parseMomentComponent(value: unknown): GlobalMomentComponentRow {
+  const record = parseStrictRecord(value, ["componentRef", "primaryLabel", "labelSource", "amount", "sourceKind", "sourceOperationRef", "categoryRef", "categoryLabel", "subcategoryRef", "subcategoryLabel", "merchantRef", "merchantLabel", "causalRole", "compositionGroup", "evidenceRefs"], "GlobalMomentComponentRow");
+  const read = (key: string) => optional(record, key, (entry) => text(entry, key));
+  const sourceOperationRef = read("sourceOperationRef"), categoryRef = read("categoryRef"), categoryLabel = read("categoryLabel"), subcategoryRef = read("subcategoryRef"), subcategoryLabel = read("subcategoryLabel"), merchantRef = read("merchantRef"), merchantLabel = read("merchantLabel"), causalRole = read("causalRole"), compositionGroup = read("compositionGroup");
+  return {
+    componentRef: text(requireProperty(record, "componentRef", "GlobalMomentComponentRow"), "componentRef"),
+    primaryLabel: text(requireProperty(record, "primaryLabel", "GlobalMomentComponentRow"), "primaryLabel"),
+    labelSource: parseStringLiteral<GlobalMomentComponentRow["labelSource"]>(requireProperty(record, "labelSource", "GlobalMomentComponentRow"), new Set(["ITEM", "PRECISE_DESCRIPTION", "PRECISE_TYPE", "CANONICAL_MERCHANT", "SUBCATEGORY", "CATEGORY", "BANK_LABEL", "CONTEXTUAL_NOTE", "SOURCE_GRAIN"]), "labelSource"),
+    amount: typedMeasureOfKind(requireProperty(record, "amount", "GlobalMomentComponentRow"), "MONEY", "GLOBAL_MOMENT_COMPONENT_AMOUNT"),
+    sourceKind: parseStringLiteral<GlobalMomentComponentRow["sourceKind"]>(requireProperty(record, "sourceKind", "GlobalMomentComponentRow"), new Set(["Operation_parent", "Operation_residual", "Allocation", "Item", "Payment_component", "Cash_economic_use"]), "sourceKind"),
+    ...(sourceOperationRef === undefined ? {} : { sourceOperationRef }), ...(categoryRef === undefined ? {} : { categoryRef }), ...(categoryLabel === undefined ? {} : { categoryLabel }), ...(subcategoryRef === undefined ? {} : { subcategoryRef }), ...(subcategoryLabel === undefined ? {} : { subcategoryLabel }), ...(merchantRef === undefined ? {} : { merchantRef }), ...(merchantLabel === undefined ? {} : { merchantLabel }), ...(causalRole === undefined ? {} : { causalRole }), ...(compositionGroup === undefined ? {} : { compositionGroup }),
+    evidenceRefs: strings(requireProperty(record, "evidenceRefs", "GlobalMomentComponentRow"), "componentEvidence"),
+  };
+}
+
+function parseComponentGroup(value: unknown): GlobalMomentComponentGroup {
+  const record = parseStrictRecord(value, ["groupKey", "groupLabel", "amount", "componentRefs", "count"], "GlobalMomentComponentGroup");
+  const componentRefs = strings(requireProperty(record, "componentRefs", "GlobalMomentComponentGroup"), "groupComponentRefs");
+  const count = integer(requireProperty(record, "count", "GlobalMomentComponentGroup"), "count");
+  if (count !== componentRefs.length) throw new TypeError("GLOBAL_MOMENT_COMPONENT_GROUP_COUNT_MISMATCH");
+  return { groupKey: text(requireProperty(record, "groupKey", "GlobalMomentComponentGroup"), "groupKey"), groupLabel: text(requireProperty(record, "groupLabel", "GlobalMomentComponentGroup"), "groupLabel"), amount: typedMeasureOfKind(requireProperty(record, "amount", "GlobalMomentComponentGroup"), "MONEY", "GLOBAL_MOMENT_COMPONENT_GROUP_AMOUNT"), componentRefs, count };
+}
+
+function parsePeerObservation(value: unknown): GlobalMomentPeerObservation {
+  const record = parseStrictRecord(value, ["peerRef", "canonicalName", "startDate", "endDate", "typeKey", "typeLabel", "familyKey", "causalCost", "placeSummary", "componentPreview", "detailRef"], "GlobalMomentPeerObservation");
+  const componentPreview = array(requireProperty(record, "componentPreview", "GlobalMomentPeerObservation"), parseMomentComponent, "componentPreview");
+  if (componentPreview.length > 3) throw new TypeError("GLOBAL_MOMENT_COMPONENT_PREVIEW_LIMIT");
+  const placeSummary = optional(record, "placeSummary", (entry) => strings(entry, "peerPlaces"));
+  const startDate = parseLocalDate(requireProperty(record, "startDate", "GlobalMomentPeerObservation"));
+  const endDate = parseLocalDate(requireProperty(record, "endDate", "GlobalMomentPeerObservation"));
+  if (endDate < startDate) throw new TypeError("GLOBAL_MOMENT_PEER_INTERVAL_INVALID");
+  return { peerRef: text(requireProperty(record, "peerRef", "GlobalMomentPeerObservation"), "peerRef"), canonicalName: text(requireProperty(record, "canonicalName", "GlobalMomentPeerObservation"), "canonicalName"), startDate, endDate, typeKey: text(requireProperty(record, "typeKey", "GlobalMomentPeerObservation"), "typeKey"), typeLabel: text(requireProperty(record, "typeLabel", "GlobalMomentPeerObservation"), "typeLabel"), familyKey: text(requireProperty(record, "familyKey", "GlobalMomentPeerObservation"), "familyKey"), causalCost: parseMomentCost(requireProperty(record, "causalCost", "GlobalMomentPeerObservation")), ...(placeSummary === undefined ? {} : { placeSummary }), componentPreview, detailRef: text(requireProperty(record, "detailRef", "GlobalMomentPeerObservation"), "detailRef") };
+}
+
+function parseSimilarity(value: unknown): GlobalMomentSimilarity {
+  const record = parseStrictRecord(value, ["basis", "requiredFacetKeys", "matchedFacets", "supportPolicyRef"], "GlobalMomentSimilarity");
+  const matchedFacets = array(requireProperty(record, "matchedFacets", "GlobalMomentSimilarity"), (entry) => { const facet = parseStrictRecord(entry, ["facetKey", "value"], "GlobalMomentMatchedFacet"); return { facetKey: text(requireProperty(facet, "facetKey", "GlobalMomentMatchedFacet"), "facetKey"), value: text(requireProperty(facet, "value", "GlobalMomentMatchedFacet"), "value") }; }, "matchedFacets");
+  return { basis: parseStringLiteral<GlobalMomentSimilarity["basis"]>(requireProperty(record, "basis", "GlobalMomentSimilarity"), new Set(["SAME_SERIES", "SAME_TYPE", "SAME_FAMILY"]), "basis"), requiredFacetKeys: strings(requireProperty(record, "requiredFacetKeys", "GlobalMomentSimilarity"), "requiredFacetKeys"), matchedFacets, supportPolicyRef: text(requireProperty(record, "supportPolicyRef", "GlobalMomentSimilarity"), "supportPolicyRef") };
+}
+
+function parseSpentDuring(value: unknown): GlobalSpentDuringContext {
+  const record = parseStrictRecord(value, ["label", "cost", "relationToCausalCost"], "GlobalSpentDuringContext");
+  return { label: text(requireProperty(record, "label", "GlobalSpentDuringContext"), "label"), cost: parseMomentCost(requireProperty(record, "cost", "GlobalSpentDuringContext")), relationToCausalCost: parseStringLiteral(requireProperty(record, "relationToCausalCost", "GlobalSpentDuringContext"), new Set(["INDEPENDENT_SCOPE"]), "relationToCausalCost") };
+}
+
+function parseGroceryRhythm(value: unknown): GlobalGroceryRhythmContext {
+  const record = parseStrictRecord(value, ["grain", "policyRef", "thresholds", "eligibleMonthCount", "historicalComparisonGate", "months"], "GlobalGroceryRhythmContext");
+  const thresholds = parseStrictRecord(requireProperty(record, "thresholds", "GlobalGroceryRhythmContext"), ["p25", "p75"], "GlobalGroceryThresholds");
+  const months = array(requireProperty(record, "months", "GlobalGroceryRhythmContext"), (entry) => {
+    const month = parseStrictRecord(entry, ["month", "occurrenceCount", "knownCostOccurrenceCount", "coverage", "basketStructure", "monthlyGrocerySpend", "limitationCodes"], "GlobalGroceryMonth");
+    const coverage = requireProperty(month, "coverage", "GlobalGroceryMonth");
+    if (typeof coverage !== "number" || !Number.isFinite(coverage) || coverage < 0 || coverage > 1) throw new TypeError("GLOBAL_GROCERY_COVERAGE_INVALID");
+    const basket = parseStrictRecord(requireProperty(month, "basketStructure", "GlobalGroceryMonth"), ["status", "small", "intermediate", "large", "reasonCode"], "GlobalGroceryBasketStructure");
+    const basketStatus = parseStringLiteral<"KNOWN" | "GATED">(requireProperty(basket, "status", "GlobalGroceryBasketStructure"), new Set(["KNOWN", "GATED"]), "basketStatus");
+    const basketStructure = basketStatus === "KNOWN" ? { status: "KNOWN" as const, small: integer(requireProperty(basket, "small", "GlobalGroceryBasketStructure"), "small"), intermediate: integer(requireProperty(basket, "intermediate", "GlobalGroceryBasketStructure"), "intermediate"), large: integer(requireProperty(basket, "large", "GlobalGroceryBasketStructure"), "large") } : { status: "GATED" as const, reasonCode: parseStringLiteral<"COVERAGE_BELOW_70_PERCENT">(requireProperty(basket, "reasonCode", "GlobalGroceryBasketStructure"), new Set(["COVERAGE_BELOW_70_PERCENT"]), "reasonCode") };
+    return { month: parseYearMonth(requireProperty(month, "month", "GlobalGroceryMonth")), occurrenceCount: integer(requireProperty(month, "occurrenceCount", "GlobalGroceryMonth"), "occurrenceCount"), knownCostOccurrenceCount: integer(requireProperty(month, "knownCostOccurrenceCount", "GlobalGroceryMonth"), "knownCostOccurrenceCount"), coverage, basketStructure, monthlyGrocerySpend: parseMomentCost(requireProperty(month, "monthlyGrocerySpend", "GlobalGroceryMonth")), limitationCodes: strings(requireProperty(month, "limitationCodes", "GlobalGroceryMonth"), "groceryLimitations") };
+  }, "groceryMonths");
+  return { grain: parseStringLiteral<"HOUSEHOLD_MONTH">(requireProperty(record, "grain", "GlobalGroceryRhythmContext"), new Set(["HOUSEHOLD_MONTH"]), "grain"), policyRef: text(requireProperty(record, "policyRef", "GlobalGroceryRhythmContext"), "policyRef"), thresholds: { p25: typedMeasureOfKind(requireProperty(thresholds, "p25", "GlobalGroceryThresholds"), "MONEY", "GROCERY_P25"), p75: typedMeasureOfKind(requireProperty(thresholds, "p75", "GlobalGroceryThresholds"), "MONEY", "GROCERY_P75") }, eligibleMonthCount: integer(requireProperty(record, "eligibleMonthCount", "GlobalGroceryRhythmContext"), "eligibleMonthCount"), historicalComparisonGate: parseStringLiteral<"AVAILABLE" | "GATED">(requireProperty(record, "historicalComparisonGate", "GlobalGroceryRhythmContext"), new Set(["AVAILABLE", "GATED"]), "historicalComparisonGate"), months };
+}
 function parseRow(value: unknown): GlobalDetailRow {
   const record = parseStrictRecord(value, ["rowId", "labelKey", "displayValue", "typedMeasure", "phenomenonRef", "phenomenonQuality", "knowledgeState", "entityRef", "activityCostProfile", "momentComparison", "evidenceRefs"], "GlobalDetailRow");
   const displayValue = optional(record, "displayValue", (entry) => text(entry, "displayValue"));
@@ -353,7 +463,7 @@ function parseCapability(value: unknown): GlobalModuleCapability {
 }
 
 export function parseGlobalExpandedReadModel(value: unknown): GlobalExpandedReadModel {
-  const record = parseStrictRecord(value, ["kind", "schemaVersion", "resource", "moduleKey", "sectionKey", "visibility", "reasonCode", "primaryInsight", "secondaryInsights", "metrics", "series", "rows", "destinations", "quality", "capabilities", "publicationMeta", "resourceMeta"], "GlobalExpandedReadModel");
+  const record = parseStrictRecord(value, ["kind", "schemaVersion", "resource", "moduleKey", "sectionKey", "visibility", "reasonCode", "primaryInsight", "secondaryInsights", "metrics", "series", "rows", "destinations", "peerObservations", "similarity", "momentComponentRows", "componentGroups", "spentDuringContext", "groceryRhythm", "quality", "capabilities", "publicationMeta", "resourceMeta"], "GlobalExpandedReadModel");
   const resource = parseStringLiteral<GlobalV2ExpandedResourceName>(requireProperty(record, "resource", "GlobalExpandedReadModel"), expandedResources, "expandedResource");
   const moduleKey = parseStringLiteral<GlobalPrimaryModuleKey>(requireProperty(record, "moduleKey", "GlobalExpandedReadModel"), moduleKeys, "moduleKey");
   const catalogModule = globalV2ExpandedResourceCatalog.find((entry) => entry.resource === resource)?.moduleKey;
@@ -367,6 +477,16 @@ export function parseGlobalExpandedReadModel(value: unknown): GlobalExpandedRead
   const series = array(requireProperty(record, "series", "GlobalExpandedReadModel"), parseSeries, "series");
   const rows = array(requireProperty(record, "rows", "GlobalExpandedReadModel"), parseRow, "rows");
   const destinations = array(requireProperty(record, "destinations", "GlobalExpandedReadModel"), parseDestination, "destinations");
+  const peerObservations = optional(record, "peerObservations", (entry) => array(entry, parsePeerObservation, "peerObservations"));
+  const similarity = optional(record, "similarity", parseSimilarity);
+  const momentComponentRows = optional(record, "momentComponentRows", (entry) => array(entry, parseMomentComponent, "momentComponentRows"));
+  const componentGroups = optional(record, "componentGroups", (entry) => array(entry, parseComponentGroup, "componentGroups"));
+  const spentDuringContext = optional(record, "spentDuringContext", parseSpentDuring);
+  const groceryRhythm = optional(record, "groceryRhythm", parseGroceryRhythm);
+  if ([peerObservations, similarity, momentComponentRows, componentGroups, spentDuringContext].some((entry) => entry !== undefined) && resource !== "analysis_global_moment_experience_detail") throw new TypeError("GLOBAL_MOMENT_DETAIL_EXTENSION_RESOURCE_MISMATCH");
+  if (groceryRhythm !== undefined && resource !== "analysis_global_routine_detail") throw new TypeError("GLOBAL_GROCERY_DETAIL_RESOURCE_MISMATCH");
+  if (peerObservations !== undefined && new Set(peerObservations.map(({ peerRef }) => peerRef)).size !== peerObservations.length) throw new TypeError("GLOBAL_MOMENT_PEER_DUPLICATE");
+  if (momentComponentRows !== undefined && new Set(momentComponentRows.map(({ componentRef }) => componentRef)).size !== momentComponentRows.length) throw new TypeError("GLOBAL_MOMENT_COMPONENT_DUPLICATE");
   if (secondaryInsights.length > GLOBAL_MAX_SECONDARY_INSIGHTS || secondaryInsights.length + (primaryInsight === undefined ? 0 : 1) > GLOBAL_MAX_EXPANDED_INSIGHTS) throw new TypeError("GLOBAL_EXPANDED_INSIGHT_LIMIT");
   const metricLimit = resource === "analysis_global_economic_expanded" && sectionKey === "EVOLUTION" ? GLOBAL_MAX_M1_EVOLUTION_METRICS : GLOBAL_MAX_SECTION_METRICS;
   if (metrics.length > metricLimit || series.length > GLOBAL_MAX_SECTION_SERIES || rows.length > GLOBAL_MAX_SECTION_ROWS || destinations.length > GLOBAL_MAX_SECTION_TARGETS) throw new TypeError("GLOBAL_EXPANDED_SECTION_LIMIT");
@@ -374,7 +494,7 @@ export function parseGlobalExpandedReadModel(value: unknown): GlobalExpandedRead
   if (visibility !== "VISIBLE" && reasonCode === undefined) throw new TypeError("GLOBAL_EXPANDED_REASON_REQUIRED");
   const insightIds = [primaryInsight, ...secondaryInsights].filter((entry): entry is GlobalCompactInsight => entry !== undefined).map(({ insightId }) => insightId);
   if (new Set(insightIds).size !== insightIds.length) throw new TypeError("GLOBAL_EXPANDED_INSIGHT_DUPLICATE");
-  return { kind: parseStringLiteral(requireProperty(record, "kind", "GlobalExpandedReadModel"), new Set(["global_expanded"]), "kind"), schemaVersion: parseStringLiteral(requireProperty(record, "schemaVersion", "GlobalExpandedReadModel"), new Set(["global-expanded@v1"]), "schemaVersion"), resource, moduleKey, sectionKey, visibility, ...(reasonCode === undefined ? {} : { reasonCode }), ...(primaryInsight === undefined ? {} : { primaryInsight }), secondaryInsights, metrics, series, rows, destinations, quality: parseQuality(requireProperty(record, "quality", "GlobalExpandedReadModel")), capabilities: array(requireProperty(record, "capabilities", "GlobalExpandedReadModel"), parseCapability, "capabilities"), publicationMeta: parsePublicationMeta(requireProperty(record, "publicationMeta", "GlobalExpandedReadModel")), resourceMeta: parseResourceMeta(requireProperty(record, "resourceMeta", "GlobalExpandedReadModel")) };
+  return { kind: parseStringLiteral(requireProperty(record, "kind", "GlobalExpandedReadModel"), new Set(["global_expanded"]), "kind"), schemaVersion: parseStringLiteral(requireProperty(record, "schemaVersion", "GlobalExpandedReadModel"), new Set(["global-expanded@v1"]), "schemaVersion"), resource, moduleKey, sectionKey, visibility, ...(reasonCode === undefined ? {} : { reasonCode }), ...(primaryInsight === undefined ? {} : { primaryInsight }), secondaryInsights, metrics, series, rows, destinations, ...(peerObservations === undefined ? {} : { peerObservations }), ...(similarity === undefined ? {} : { similarity }), ...(momentComponentRows === undefined ? {} : { momentComponentRows }), ...(componentGroups === undefined ? {} : { componentGroups }), ...(spentDuringContext === undefined ? {} : { spentDuringContext }), ...(groceryRhythm === undefined ? {} : { groceryRhythm }), quality: parseQuality(requireProperty(record, "quality", "GlobalExpandedReadModel")), capabilities: array(requireProperty(record, "capabilities", "GlobalExpandedReadModel"), parseCapability, "capabilities"), publicationMeta: parsePublicationMeta(requireProperty(record, "publicationMeta", "GlobalExpandedReadModel")), resourceMeta: parseResourceMeta(requireProperty(record, "resourceMeta", "GlobalExpandedReadModel")) };
 }
 
 export function parseImportedGlobalSummaryReadModel(value: unknown): ImportedGlobalSummaryReadModel {
@@ -402,6 +522,9 @@ export function buildGlobalExpandedReadModel(input: GlobalExpandedReadModel): Gl
     series: [...input.series].sort((a, b) => a.seriesId.localeCompare(b.seriesId)),
     rows: [...input.rows].sort((a, b) => a.rowId.localeCompare(b.rowId)),
     destinations: [...input.destinations].sort((a, b) => a.targetId.localeCompare(b.targetId)),
+    ...(input.peerObservations === undefined ? {} : { peerObservations: [...input.peerObservations].sort((a, b) => a.peerRef.localeCompare(b.peerRef)) }),
+    ...(input.momentComponentRows === undefined ? {} : { momentComponentRows: [...input.momentComponentRows].sort((a, b) => a.componentRef.localeCompare(b.componentRef)) }),
+    ...(input.componentGroups === undefined ? {} : { componentGroups: [...input.componentGroups].map((group) => ({ ...group, componentRefs: [...group.componentRefs].sort() })).sort((a, b) => a.groupKey.localeCompare(b.groupKey)) }),
     capabilities: [...input.capabilities].map((entry) => ({ ...entry, reasonCodes: [...entry.reasonCodes].sort() })).sort((a, b) => a.capabilityId.localeCompare(b.capabilityId)),
   };
   const parsed = parseGlobalExpandedReadModel(canonical);

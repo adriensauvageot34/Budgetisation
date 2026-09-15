@@ -78,6 +78,11 @@ const candidate = candidateApi.buildGlobalV2CandidateFromOwnerOutputs({
   project: "local-r3", householdId: uuid(1), householdTimeZone: "Europe/Paris", personIds: [], asOf: "2026-01-01T00:00:00Z", certifiedThrough: "2025-12-31",
   dataRevision: "1", analyticsRevision: "79", implementationIdentity: "72eefdbb508e4f86461824a8d3a34a53ecf3eb92", ownerOutputs,
   presentationLabels: { recurrences: { "facts-only": "Salle de sport", rent: "Loyer" } },
+  candidateAdapters: {
+    timeline: { adapterVersion: "global-life-timeline-candidate-adapter@v1", precedence: "CERTIFIED_MOMENT > AUTONOMOUS_DOMINANT_TITLED_LIFE_EVENT > DEFER", sortContract: "startDate ASC, eventRef ASC", events: [], deferred: [], excluded: [], dependencyClosure: [], inputHash: "a".repeat(64) },
+    grocery: { adapterVersion: "global-grocery-household-month-adapter@v1", grain: "HOUSEHOLD_MONTH", basketPolicy: { policyVersion: "global-grocery-basket-structure@v1", quantileMethod: "TUKEY_HINGES_EXCLUSIVE_MEDIAN", monthlyCoverageMinimum: 0.7, historicalEligibleMonthMinimum: 8 }, thresholds: { p25: "0", p75: "0" }, months: [], eligibleMonthCount: 0, historicalComparisonGate: "GATED", dependencyClosure: [], inputHash: "b".repeat(64) },
+  },
+  momentComponentPresentation: { version: "global-moment-component-presentation@v1", rows: [], inputHash: "c".repeat(64) },
 });
 const snapshot = (resource, params = {}) => candidate.snapshots.find((entry) => entry.resource === resource && Object.entries(params).every(([key, value]) => entry.params[key] === value));
 const compact = snapshot("analysis_global_economic").payload;

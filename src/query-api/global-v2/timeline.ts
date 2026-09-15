@@ -300,4 +300,12 @@ export function parseGlobalLifeTimelineReadModel(value: unknown): GlobalLifeTime
   return parsed;
 }
 
+export function buildGlobalLifeTimelineReadModel(input: GlobalLifeTimelineReadModel): GlobalLifeTimelineReadModel {
+  return parseGlobalLifeTimelineReadModel({
+    ...input,
+    events: [...input.events].map((event) => ({ ...event, participantRefs: [...event.participantRefs].sort(), places: [...event.places].sort((left, right) => left.placeRef.localeCompare(right.placeRef)) })).sort((left, right) => left.startDate.localeCompare(right.startDate) || left.eventRef.localeCompare(right.eventRef)),
+    destinations: [...input.destinations].sort((left, right) => left.targetId.localeCompare(right.targetId)),
+  });
+}
+
 export const globalLifeTimelineReadModelSchema = createRuntimeSchema(parseGlobalLifeTimelineReadModel);

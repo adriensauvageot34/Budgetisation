@@ -3,7 +3,7 @@ import "server-only";
 import { createHash } from "node:crypto";
 
 import { canonicalSerializeGlobal, computeGlobalAnalysisScopeV2Hash, type NormalizedGlobalAnalysisScopeV2 } from "@/core/global-v2";
-import { globalV2ExpectedQueryMethodSignature, globalV2QueryRegistry, parseGlobalV2QueryParams, type GlobalExpandedReadModel, type GlobalInitialReadModel, type GlobalModuleCompactReadModel, type GlobalV2QueryParams, type GlobalV2QueryResourceName } from "@/query-api/global-v2";
+import { globalV2ExpectedQueryMethodSignature, globalV2QueryRegistry, parseGlobalV2QueryParams, type GlobalExpandedReadModel, type GlobalInitialReadModel, type GlobalLifeTimelineReadModel, type GlobalModuleCompactReadModel, type GlobalV2QueryParams, type GlobalV2QueryResourceName } from "@/query-api/global-v2";
 import { buildGlobalV2PublicationManifest, globalV2ClosureDeclarationDigest, globalV2ClosureInputDigest, globalV2PublicationFactsHash, type GlobalV2Closure, type GlobalV2ManifestInput, type GlobalV2PublicationManifest, type GlobalV2ResolvedDependency, type GlobalV2ResourceVersion } from "./global-v2";
 
 export type GlobalV2QueryInstanceInput = {
@@ -116,6 +116,20 @@ export function buildGlobalV2QueryPlan(input: {
     }
     for (const entry of detailEntries(instance.payload)) {
       if (!instanceKeys.has(entry.targetRef)) throw new TypeError(`GLOBAL_QUERY_DETAIL_INSTANCE_MISSING:${entry.targetResource}`);
+    }
+    if ((instance.payload as Partial<GlobalLifeTimelineReadModel>).kind === "global_life_timeline") {
+      const timeline = instance.payload as GlobalLifeTimelineReadModel;
+      for (const event of timeline.events.filter(({ sourceKind }) => sourceKind === "MOMENT")) {
+        const destination = timeline.destinations.find(({ entityRef, resource }) => entityRef === event.eventRef && resource === "analysis_global_moment_experience_detail");
+        if (destination?.instanceKey === undefined || !instanceKeys.has(destination.instanceKey)) throw new TypeError(`GLOBAL_TIMELINE_MOMENT_DETAIL_MISSING:${event.eventRef}`);
+      }
+    }
+    if ((instance.payload as Partial<GlobalExpandedReadModel>).resource === "analysis_global_moment_experience_detail") {
+      const detail = instance.payload as GlobalExpandedReadModel;
+      for (const peer of detail.peerObservations ?? []) {
+        const destination = detail.destinations.find(({ entityRef, instanceKey }) => entityRef === peer.peerRef && instanceKey === peer.detailRef);
+        if (destination === undefined || !instanceKeys.has(peer.detailRef)) throw new TypeError(`GLOBAL_MOMENT_PEER_DETAIL_MISSING:${peer.peerRef}`);
+      }
     }
     if ((instance.payload as Partial<GlobalInitialReadModel>).kind === "global_initial") {
       const initial = instance.payload as GlobalInitialReadModel;

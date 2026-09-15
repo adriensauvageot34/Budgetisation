@@ -138,6 +138,16 @@ const modules = query.globalPrimaryModuleCatalog.map(({ moduleKey }, index) => (
   reasonCodes: moduleState[moduleKey]?.reasonCodes ?? [],
   evidenceRefs: [`owner-output:m${index + 1}`, `owner:m${index + 1}`].sort(),
 }));
+const timelineQuality = { knowledgeState: "KNOWN", limitationCodes: [], evidenceRefs: ["fixture:timeline"] };
+const timelineEvent = (momentId, canonicalName, startDate, endDate, typeLabel, familyKey, value, componentCount, comparisonSummary) => ({ eventRef: `moment:${momentId}`, sourceKind: "MOMENT", canonicalName, startDate, endDate, typeKey: typeLabel.toLowerCase(), typeLabel, familyKey, familySource: "M6", participantRefs: [], places: [], causalCost: { status: "KNOWN", value }, ...(comparisonSummary === undefined ? {} : { comparisonSummary }), componentCount, linkedLifeEventRefs: [], quality: timelineQuality });
+const candidateAdapters = {
+  timeline: { adapterVersion: "global-life-timeline-candidate-adapter@v1", precedence: "CERTIFIED_MOMENT > AUTONOMOUS_DOMINANT_TITLED_LIFE_EVENT > DEFER", sortContract: "startDate ASC, eventRef ASC", events: [timelineEvent("two", "Anniversaire de Camille", "2026-06-15", "2026-06-15", "Célébration", "CELEBRATION", "240", 1), timelineEvent("one", "Voyage en Bretagne", "2026-07-01", "2026-07-07", "Voyage", "TRAVEL_AND_STAY", "1253.90", 1, { status: "KNOWN", comparisonTier: "SAME_FAMILY", peerCount: 6 })], deferred: [], excluded: [], dependencyClosure: [], inputHash: "e".repeat(64) },
+  grocery: { adapterVersion: "global-grocery-household-month-adapter@v1", grain: "HOUSEHOLD_MONTH", basketPolicy: { policyVersion: "global-grocery-basket-structure@v1", quantileMethod: "TUKEY_HINGES_EXCLUSIVE_MEDIAN", monthlyCoverageMinimum: 0.7, historicalEligibleMonthMinimum: 8 }, thresholds: { p25: "10", p75: "50" }, months: [], eligibleMonthCount: 0, historicalComparisonGate: "GATED", dependencyClosure: [], inputHash: "f".repeat(64) },
+};
+const momentComponentPresentation = { version: "global-moment-component-presentation@v1", inputHash: "1".repeat(64), rows: [
+  { momentRef: "moment:one", componentRef: "economic-component:operation:one", canonicalComponentKey: "operation:one", amount: "1253.90", sourceKind: "Operation_parent", primaryLabel: "Voyage", labelSource: "PRECISE_TYPE", evidenceRefs: ["economic-component:operation:one"] },
+  { momentRef: "moment:two", componentRef: "economic-component:operation:two", canonicalComponentKey: "operation:two", amount: "240", sourceKind: "Operation_parent", primaryLabel: "Anniversaire", labelSource: "PRECISE_TYPE", evidenceRefs: ["economic-component:operation:two"] },
+] };
 const base = {
   project: "ipuuhxrblxormwgoaqnz",
   householdId: "00000000-0000-4000-8000-000000000001",
@@ -149,6 +159,8 @@ const base = {
   analyticsRevision: "79",
   implementationIdentity: "2ed2cc0dadaef64a6e788cf881b6b40311a9cc2b",
   ownerOutputs: modules,
+  candidateAdapters,
+  momentComponentPresentation,
   presentationLabels: {
     persons: { [personA]: "Camille", [personB]: "Alex" },
     categories: { "cat-food": "Alimentation", "cat-home": "Logement", "cat-travel": "Transport", "cat-gifts": "Cadeaux", "cat-health": "Santé", "cat-misc": "Divers" },
@@ -156,6 +168,14 @@ const base = {
     needs: { "need-food": "Se nourrir", "need-home": "Se loger" },
     places: { "place-one": "Maison" },
   },
+};
+const transportFor = (momentOutput, hashCharacter = "7") => {
+  const names = new Map(momentOutput.momentIdentities.map(({ momentId, canonicalName }) => [momentId, canonicalName.value]));
+  const events = momentOutput.summaries.map(({ moment, causalCost }, index) => timelineEvent(moment.momentId, names.get(moment.momentId), moment.startDate, moment.endDate, moment.type.value, "TRAVEL_AND_STAY", causalCost.value, causalCost.value === "0" ? 0 : 1, (() => { const comparison = momentOutput.comparisons.find(({ momentId }) => momentId === moment.momentId); return comparison === undefined ? undefined : { status: comparison.status, ...(comparison.comparisonTier === undefined ? {} : { comparisonTier: comparison.comparisonTier }), peerCount: comparison.peerCount ?? 0 }; })())).sort((left, right) => left.startDate.localeCompare(right.startDate) || left.eventRef.localeCompare(right.eventRef));
+  return {
+    candidateAdapters: { ...candidateAdapters, timeline: { ...candidateAdapters.timeline, events, inputHash: hashCharacter.repeat(64) } },
+    momentComponentPresentation: { version: "global-moment-component-presentation@v1", inputHash: hashCharacter.repeat(64), rows: momentOutput.summaries.flatMap(({ moment, causalCost }) => causalCost.value === "0" ? [] : [{ momentRef: `moment:${moment.momentId}`, componentRef: `economic-component:operation:${moment.momentId}`, canonicalComponentKey: `operation:${moment.momentId}`, amount: causalCost.value, sourceKind: "Operation_parent", primaryLabel: names.get(moment.momentId), labelSource: "PRECISE_TYPE", evidenceRefs: [`economic-component:operation:${moment.momentId}`] }]) },
+  };
 };
 
 let checks = 0;
@@ -433,7 +453,7 @@ const selectorMomentOutput = {
   comparisons: Array.from({ length: 4 }, (_, index) => ({ ...outputByModule.MOMENTS.comparisons[0], momentId: `selector-${index}`, comparisonTier: index === 3 ? "SAME_FAMILY" : index === 2 ? "SAME_TYPE" : "SAME_SERIES", peerCount: 8 - index, absoluteDelta: String(400 - index * 20), evidenceRefs: [`comparison:selector-${index}`] })),
   narrative: Array.from({ length: 4 }, (_, index) => ({ momentId: `selector-${index}`, eligible: true, signals: ["DECLARED_IMPORTANCE"] })),
 };
-const cappedOverviewCandidate = candidateApi.buildGlobalV2CandidateFromOwnerOutputs({ ...base, ownerOutputs: mutate("MOMENTS", () => ({ output: selectorMomentOutput })) });
+const cappedOverviewCandidate = candidateApi.buildGlobalV2CandidateFromOwnerOutputs({ ...base, ownerOutputs: mutate("MOMENTS", () => ({ output: selectorMomentOutput })), ...transportFor(selectorMomentOutput, "7") });
 const cappedOverview = cappedOverviewCandidate.snapshots.find(({ resource, params }) => resource === "analysis_global_rhythm_expanded" && params.sectionKey === "OVERVIEW").payload;
 check(() => assert.equal((cappedOverview.primaryInsight === undefined ? 0 : 1) + cappedOverview.secondaryInsights.length, 3));
 check(() => assert.equal(cappedOverview.rows.some(({ entityRef }) => entityRef?.startsWith("household-activity:")), false));
@@ -441,23 +461,27 @@ const factChange = candidateApi.buildGlobalV2CandidateFromOwnerOutputs({ ...base
 check(() => assert.notEqual(factChange.candidateId, first.candidateId));
 check(() => assert.notEqual(factChange.factsHash, first.factsHash));
 check(() => assert.notEqual(factChange.manifestHash, first.manifestHash));
-const capabilityChange = candidateApi.buildGlobalV2CandidateFromOwnerOutputs({ ...base, ownerOutputs: mutate("MOMENTS", () => ({ capabilityState: "UNAVAILABLE", knowledge: "UNKNOWN", reasonCodes: ["AUTHORITY_GATED"] })) });
+const unavailableMomentOutput = { ...outputByModule.MOMENTS, momentIdentities: [], summaries: [], comparisons: [], narrative: [] };
+const capabilityChange = candidateApi.buildGlobalV2CandidateFromOwnerOutputs({ ...base, ownerOutputs: mutate("MOMENTS", () => ({ output: unavailableMomentOutput, capabilityState: "UNAVAILABLE", knowledge: "UNKNOWN", reasonCodes: ["AUTHORITY_GATED"] })), ...transportFor(unavailableMomentOutput, "6") });
 check(() => assert.notEqual(capabilityChange.requiredSnapshotCount, first.requiredSnapshotCount));
 check(() => assert.notEqual(capabilityChange.manifestHash, first.manifestHash));
-const instanceChange = candidateApi.buildGlobalV2CandidateFromOwnerOutputs({ ...base, ownerOutputs: mutate("MOMENTS", (entry) => ({ output: { ...entry.output, momentIdentities: [...entry.output.momentIdentities, { momentId: "three", canonicalName: { status: "KNOWN", value: "Projet cuisine", evidenceRef: "moment:three" } }], summaries: [...entry.output.summaries, { moment: { momentId: "three", type: { value: "Projet maison" }, startDate: "2026-07-15", endDate: "2026-07-15" }, causalCost: { status: "KNOWN", value: "100" }, sourceRefs: ["moment:three"] }] } })) });
+const instanceMomentOutput = { ...outputByModule.MOMENTS, momentIdentities: [...outputByModule.MOMENTS.momentIdentities, { momentId: "three", canonicalName: { status: "KNOWN", value: "Projet cuisine", evidenceRef: "moment:three" } }], summaries: [...outputByModule.MOMENTS.summaries, { moment: { momentId: "three", type: { value: "Projet maison" }, startDate: "2026-07-15", endDate: "2026-07-15" }, causalCost: { status: "KNOWN", value: "100" }, sourceRefs: ["moment:three"] }] };
+const instanceChange = candidateApi.buildGlobalV2CandidateFromOwnerOutputs({ ...base, ownerOutputs: mutate("MOMENTS", () => ({ output: instanceMomentOutput })), ...transportFor(instanceMomentOutput, "8") });
 check(() => assert.ok(instanceChange.requiredSnapshotCount > first.requiredSnapshotCount));
 check(() => assert.notEqual(instanceChange.manifestHash, first.manifestHash));
+const boundedMomentOutput = { inputHash: "e".repeat(64), methodVersion: "global_moment_experience@v1", momentIdentities: Array.from({ length: 60 }, (_, index) => ({ momentId: `moment-${String(index).padStart(2, "0")}`, canonicalName: { status: "KNOWN", value: `Moment ${String(index).padStart(2, "0")}`, evidenceRef: `moment:${String(index).padStart(2, "0")}` } })), summaries: Array.from({ length: 60 }, (_, index) => ({ moment: { momentId: `moment-${String(index).padStart(2, "0")}`, type: { value: "Voyage" }, startDate: "2026-07-01", endDate: "2026-07-01" }, causalCost: { status: "KNOWN", value: String(100 - index) }, sourceRefs: [`moment:${String(index).padStart(2, "0")}`] })), comparisons: [], series: [], narrative: [] };
 const boundedMoments = candidateApi.buildGlobalV2CandidateFromOwnerOutputs({
   ...base,
-  ownerOutputs: mutate("MOMENTS", () => ({ output: { inputHash: "e".repeat(64), methodVersion: "global_moment_experience@v1", momentIdentities: Array.from({ length: 60 }, (_, index) => ({ momentId: `moment-${String(index).padStart(2, "0")}`, canonicalName: { status: "KNOWN", value: `Moment ${String(index).padStart(2, "0")}`, evidenceRef: `moment:${String(index).padStart(2, "0")}` } })), summaries: Array.from({ length: 60 }, (_, index) => ({ moment: { momentId: `moment-${String(index).padStart(2, "0")}`, type: { value: "Voyage" }, startDate: "2026-07-01", endDate: "2026-07-01" }, causalCost: { status: "KNOWN", value: String(100 - index) }, sourceRefs: [`moment:${String(index).padStart(2, "0")}`] })), comparisons: [], series: [], narrative: [] } })),
+  ownerOutputs: mutate("MOMENTS", () => ({ output: boundedMomentOutput })),
+  ...transportFor(boundedMomentOutput, "9"),
 });
 const momentDetails = boundedMoments.snapshots.filter(({ resource }) => resource === "analysis_global_moment_experience_detail");
 const momentBreakdownBounded = boundedMoments.snapshots.find(({ resource, params }) => resource === "analysis_global_rhythm_expanded" && params.sectionKey === "BREAKDOWN");
-check(() => assert.equal(momentDetails.length, 10));
+check(() => assert.equal(momentDetails.length, 60));
 check(() => assert.equal(momentBreakdownBounded.payload.rows.length, 10));
 check(() => assert.deepEqual(
   momentBreakdownBounded.payload.rows.map(({ entityRef }) => entityRef).sort(),
-  momentDetails.map(({ params }) => params.entityRef).sort(),
+  momentDetails.map(({ params }) => params.entityRef).filter((entityRef) => momentBreakdownBounded.payload.rows.some((row) => row.entityRef === entityRef)).sort(),
 ));
 const versionChange = candidateApi.buildGlobalV2CandidateFromOwnerOutputs({ ...base, implementationIdentity: "3ed2cc0dadaef64a6e788cf881b6b40311a9cc2b" });
 check(() => assert.notEqual(versionChange.candidateId, first.candidateId));
