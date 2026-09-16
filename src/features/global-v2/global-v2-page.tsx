@@ -1085,17 +1085,18 @@ function LifeBackgroundRhythms({ runtime, onMethod }: { readonly runtime: Global
   return <section className={styles.lifeRhythms} aria-labelledby="life-rhythms-title" data-rhythm-source="analysis_global_routine_detail">
     <header className={styles.lifeRhythmsHeader}><div><span className="eyebrow">Habitudes récurrentes</span><h3 id="life-rhythms-title">Nos rythmes de fond</h3><p>Les courses dessinent un rythme mensuel régulier, présenté ici sans attribuer de dépense à une personne.</p></div><button type="button" className={styles.methodLink} onClick={onMethod}><Info aria-hidden size={15} /> Fiabilité & méthode</button></header>
     <article className={styles.groceryRhythmCard}>
-      <header><div><h4>Courses</h4><p>Passages observés, dépense mensuelle M2 et structure des paniers lorsque la couverture publiée le permet.</p></div><dl><div><dt>Petits paniers</dt><dd>jusqu’à {formatLifeMoney(lowerThreshold)}</dd></div><div><dt>Gros paniers</dt><dd>à partir de {formatLifeMoney(upperThreshold)}</dd></div><div><dt>Structure disponible</dt><dd>{integerFormatter.format(rhythm.eligibleMonthCount)} mois</dd></div></dl></header>
+      <header><div><h4>Courses</h4><p>Nos passages en courses, ce que nous avons dépensé chaque mois et la structure de nos paniers lorsque les données sont suffisamment complètes.</p></div><dl><div><dt>Petits paniers</dt><dd>jusqu’à {formatLifeMoney(lowerThreshold)}</dd></div><div><dt>Gros paniers</dt><dd>à partir de {formatLifeMoney(upperThreshold)}</dd></div><div><dt>Structure des paniers</dt><dd>{integerFormatter.format(rhythm.eligibleMonthCount)} mois sur {integerFormatter.format(rhythm.months.length)}</dd></div></dl></header>
       <div className={styles.groceryMonthGrid}>{rhythm.months.map((month) => {
         const monthlyAmount = month.monthlyGrocerySpend.status === "KNOWN" || month.monthlyGrocerySpend.status === "PARTIAL"
           ? month.monthlyGrocerySpend.value.kind === "MONEY" ? m2TypedNumber({ typedMeasure: month.monthlyGrocerySpend.value }) : undefined
           : undefined;
-        return <article key={month.month} className={styles.groceryMonthCard} aria-label={`Courses ${month.month}`}>
-          <header><time dateTime={month.month}>{month.month}</time><strong>{formatLifeMoney(monthlyAmount)}</strong></header>
+        const monthLabel = capitalize(frenchMonth(month.month));
+        return <article key={month.month} className={styles.groceryMonthCard} aria-label={`Courses ${monthLabel}`}>
+          <header><time dateTime={month.month}>{monthLabel}</time><strong>{formatLifeMoney(monthlyAmount)}</strong></header>
           <p>{integerFormatter.format(month.occurrenceCount)} passages · couverture {formatLifeRatio(month.coverage)}</p>
           {month.basketStructure.status === "KNOWN"
             ? <dl className={styles.groceryBasket}><div><dt>Petits</dt><dd>{integerFormatter.format(month.basketStructure.small)}</dd></div><div><dt>Intermédiaires</dt><dd>{integerFormatter.format(month.basketStructure.intermediate)}</dd></div><div><dt>Gros</dt><dd>{integerFormatter.format(month.basketStructure.large)}</dd></div></dl>
-            : <small>Structure du panier non affichée : couverture insuffisante.</small>}
+            : <small>Pas assez de passages renseignés pour détailler les paniers ce mois-ci.</small>}
         </article>;
       })}</div>
     </article>
