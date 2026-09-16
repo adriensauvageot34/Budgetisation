@@ -7,6 +7,7 @@ import type {
   GlobalExpandedReadModel,
   GlobalExpandedSectionKey,
   GlobalInitialReadModel,
+  GlobalLifeTimelineReadModel,
   GlobalModuleCompactReadModel,
   GlobalPrimaryModuleKey,
   GlobalReadModelPublicationMeta,
@@ -14,6 +15,7 @@ import type {
   GlobalV2ExpandedResourceName,
   ImportedGlobalSummaryReadModel,
 } from "@/query-api/global-v2";
+import { parseGlobalLifeTimelineReadModel } from "@/query-api/global-v2";
 import { globalModulePresentation, globalModulePresentations } from "./catalog";
 import type { GlobalV2UiRequest, GlobalV2UiTransport } from "./visit-runtime";
 
@@ -557,6 +559,19 @@ function detailModel(resource: GlobalV2ExpandedResourceName, entityRef: string, 
   };
 }
 
+function lifeTimelineFixture(): GlobalLifeTimelineReadModel {
+  const scopeHash = hash("f");
+  const events = [
+    { eventRef: "life-event:aveyron", sourceKind: "LIFE_EVENT", canonicalName: "Week-end Aveyron & Aubrac", startDate: "2025-08-08", endDate: "2025-08-10", typeKey: "voyage_sejour", typeLabel: "Voyage et séjour", familyKey: "travel", familySource: "LIFE_EVENT", participantRefs: ["person:a", "person:b"], places: [{ placeRef: "place:aveyron", label: "Aveyron" }], causalCost: { status: "UNKNOWN" }, detailAvailability: "INLINE_ONLY", quality: qualityPartial, sourceModule: "CANONICAL", sourceOwner: "CANONICAL" },
+    { eventRef: "moment:photo", sourceKind: "MOMENT", canonicalName: "Séance photo cuir", startDate: "2025-08-13", endDate: "2025-08-13", typeKey: "projet-seance-photo", typeLabel: "Projet photo", familyKey: "project", familySource: "M6", participantRefs: ["person:a", "person:b"], places: [], causalCost: { status: "KNOWN", value: { kind: "MONEY", value: "46.98", unit: "EUR" } }, comparisonSummary: { status: "UNKNOWN", peerCount: 0, materiality: "UNKNOWN" }, detailAvailability: "MOMENT_DETAIL", quality: qualityKnown, sourceModule: "MOMENTS", sourceOwner: "M6" },
+    { eventRef: "moment:summer", sourceKind: "MOMENT", canonicalName: "Voyage à Minorque 2025", startDate: "2025-09-08", endDate: "2025-09-15", typeKey: "voyage", typeLabel: "Voyage", familyKey: "travel", familySource: "M6", participantRefs: ["person:a", "person:b"], places: [{ placeRef: "place:minorca", label: "Minorque" }], causalCost: { status: "KNOWN", value: { kind: "MONEY", value: "1253.9", unit: "EUR" } }, comparisonSummary: { status: "PARTIAL", comparisonTier: "SAME_TYPE", peerCount: 4, materiality: "UNKNOWN" }, detailAvailability: "MOMENT_DETAIL", quality: qualityKnown, sourceModule: "MOMENTS", sourceOwner: "M6" },
+    { eventRef: "moment:home", sourceKind: "MOMENT", canonicalName: "Aménagement du salon", startDate: "2025-10-03", endDate: "2025-10-03", typeKey: "projet-achat-maison", typeLabel: "Projet maison", familyKey: "home", familySource: "M6", participantRefs: ["person:a", "person:b"], places: [], causalCost: { status: "KNOWN", value: { kind: "MONEY", value: "2298.96", unit: "EUR" } }, comparisonSummary: { status: "KNOWN", comparisonTier: "SAME_FAMILY", peerCount: 6, materiality: "MATERIAL" }, detailAvailability: "MOMENT_DETAIL", quality: qualityKnown, sourceModule: "MOMENTS", sourceOwner: "M6" },
+    { eventRef: "moment:free", sourceKind: "MOMENT", canonicalName: "Sortie sans dépense reliée", startDate: "2026-01-17", endDate: "2026-01-17", typeKey: "sortie-activite", typeLabel: "Sortie et activité", familyKey: "leisure", familySource: "M6", participantRefs: ["person:a"], places: [], causalCost: { status: "KNOWN", value: { kind: "MONEY", value: "0", unit: "EUR" } }, comparisonSummary: { status: "KNOWN", comparisonTier: "SAME_FAMILY", peerCount: 7, materiality: "NOT_MATERIAL" }, detailAvailability: "MOMENT_DETAIL", quality: qualityKnown, sourceModule: "MOMENTS", sourceOwner: "M6" },
+  ];
+  const destinations = events.filter(({ sourceKind }) => sourceKind === "MOMENT").map(({ eventRef }) => ({ targetId: `global-query:${eventRef}`, kind: "GLOBAL_QUERY", resource: "analysis_global_moment_experience_detail", instanceKey: `fixture:${eventRef}`, entityRef: eventRef, scopeHash, sourcePublicationId: publicationMeta.publicationId, sourceAnalyticsRevision: publicationMeta.revision }));
+  return parseGlobalLifeTimelineReadModel({ kind: "global_life_timeline", schemaVersion: "global-life-timeline@v1", resource: "analysis_global_life_timeline", moduleKey: "RHYTHM", events, chapterOverlays: [], contextSignals: [], destinations, quality: qualityKnown, publicationMeta, resourceMeta: resourceMeta(36) });
+}
+
 export function createGlobalV2FixtureTransport(bundle: GlobalV2FixtureBundle, scenario: GlobalV2FixtureScenario): GlobalV2UiTransport {
   const attempts = new Map<string, number>();
   return async (request: GlobalV2UiRequest) => {
@@ -566,6 +581,7 @@ export function createGlobalV2FixtureTransport(bundle: GlobalV2FixtureBundle, sc
     if (scenario === "local-error" && request.resource === "analysis_global_relationships" && count === 1) throw new Error("SNAPSHOT_TEMPORARILY_UNAVAILABLE");
     if (request.resource === "analysis_global_manifest") return { data: bundle.initial, publicationMeta };
     if (request.resource === "analysis_global_summary_ai") return { data: bundle.summary, publicationMeta };
+    if (request.resource === "analysis_global_life_timeline") return { data: lifeTimelineFixture(), publicationMeta };
     const module = bundle.modules.find((entry) => entry.resource === request.resource);
     if (module !== undefined) return { data: module, publicationMeta };
     const expanded = globalModulePresentations.find((entry) => entry.expandedResource === request.resource);

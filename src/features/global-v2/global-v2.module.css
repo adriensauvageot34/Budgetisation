@@ -411,6 +411,45 @@
 .backToTop { display: flex; align-items: center; gap: 7px; margin: 28px auto 12px; border: 0; background: transparent; color: var(--color-primary-deep); font-weight: 800; cursor: pointer; }
 .activationPending { display: grid; max-width: 700px; justify-items: start; gap: 14px; margin: 11vh auto; border: 1px solid var(--color-border); border-radius: 18px; padding: clamp(24px, 5vw, 48px); background: white; box-shadow: var(--shadow-md); }
 .activationPending p { color: var(--color-muted); line-height: 1.6; }
+.timelineExperience { display: grid; gap: 12px; }
+.timelineTools { display: grid; gap: 10px; border-block: 1px solid var(--color-border); padding-block: 10px; }
+.timelineMonthNav, .timelineFilters { display: flex; gap: 6px; overflow-x: auto; scrollbar-width: thin; }
+.timelineMonthNav button, .timelineFilters button { flex: 0 0 auto; border: 1px solid var(--color-border); border-radius: 999px; padding: 7px 11px; background: var(--color-surface); color: var(--color-muted); font: inherit; font-size: 12px; font-weight: 760; cursor: pointer; }
+.timelineMonthNav button[aria-current], .timelineFilters button[aria-pressed="true"] { border-color: var(--color-primary); background: var(--color-primary-soft); color: var(--color-primary-deep); }
+.timelineMonthNav button:hover, .timelineMonthNav button:focus-visible, .timelineFilters button:hover, .timelineFilters button:focus-visible { border-color: var(--color-primary); color: var(--color-primary-deep); }
+.timelineMonthNav button:focus-visible, .timelineFilters button:focus-visible { outline: 2px solid var(--color-primary); outline-offset: 2px; }
+.timelineScroller { height: clamp(520px, 62vh, 680px); overflow-y: auto; border-block: 1px solid var(--color-border); background: var(--color-surface); scrollbar-gutter: stable; overscroll-behavior: contain; scroll-behavior: smooth; }
+.timelineScroller:focus-visible { border-radius: 4px; outline: 2px solid var(--color-primary); outline-offset: 3px; }
+.timelineYear { display: grid; grid-template-columns: 76px minmax(0, 1fr); align-items: start; gap: 20px; }
+.timelineYear + .timelineYear { border-top: 1px solid var(--color-border); }
+.timelineYear > h3 { position: sticky; top: 10px; margin: 22px 0; color: var(--color-primary-deep); font-size: 23px; letter-spacing: -.025em; }
+.timelineMonth { scroll-margin-top: 42px; }
+.timelineMonth > h4 { position: sticky; z-index: 3; top: 0; margin: 0; border-bottom: 1px solid var(--color-border); padding: 10px 4px 8px; background: rgb(255 255 255 / .96); color: var(--color-muted); font-size: 12px; font-weight: 850; letter-spacing: .08em; text-transform: capitalize; backdrop-filter: blur(8px); }
+.timelineMonth ol { margin: 0; padding: 0; list-style: none; }
+.timelineMonth li { position: relative; }
+.timelineMonth li::before { position: absolute; z-index: 0; top: 0; bottom: 0; left: 53px; width: 1px; background: var(--color-border); content: ""; }
+.timelineMonth li > button, .timelineMonth li > article { position: relative; z-index: 1; display: grid; grid-template-columns: 34px 28px minmax(0, 1fr) auto; align-items: center; width: 100%; min-height: 82px; gap: 8px; border: 0; border-bottom: 1px solid var(--color-border); padding: 12px 4px; background: transparent; color: inherit; font: inherit; text-align: left; }
+.timelineMonth li > button { cursor: pointer; }
+.timelineMonth li > button:hover, .timelineMonth li > button:focus-visible { background: var(--color-surface-soft); }
+.timelineMonth li > button:focus-visible { outline: 2px solid var(--color-primary); outline-offset: -2px; }
+.timelineDay { align-self: start; padding-top: 4px; color: var(--color-muted); font-size: 12px; font-weight: 780; text-align: right; }
+.timelineMarker { display: inline-flex; align-items: center; justify-content: center; width: 28px; height: 28px; border: 1px solid var(--color-border); border-radius: 50%; background: var(--color-surface); color: var(--color-primary-deep); }
+.timelineEventBody { display: grid; min-width: 0; gap: 4px; }
+.timelineEventHeading { display: flex; flex-wrap: wrap; align-items: center; gap: 7px; }
+.timelineEventHeading strong { font-size: 16px; line-height: 1.35; }
+.timelineEventHeading em { border-radius: 999px; padding: 3px 7px; background: var(--color-primary-soft); color: var(--color-primary-deep); font-size: 10px; font-style: normal; font-weight: 850; letter-spacing: .03em; text-transform: uppercase; }
+.timelineEventMeta { color: var(--color-muted); font-size: 12px; line-height: 1.4; }
+.timelineEventFacts { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 12px; }
+.timelineEventFacts b { font-size: 14px; }
+.timelineEventFacts small { color: var(--color-muted); font-size: 11px; }
+.timelineEventFacts .timelineComparison { color: var(--color-primary-deep); font-weight: 740; }
+.timelineEventFacts .timelineUnknown { color: var(--color-muted); font-weight: 650; }
+.timelineChevron { color: var(--color-muted); }
+.timelineDistinctive { border-left: 3px solid var(--color-primary-deep); }
+.timelineDistinctive::before { left: 50px !important; }
+.timelineStatus, .timelineEmpty { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 120px; border-block: 1px solid var(--color-border); padding: 18px; color: var(--color-muted); }
+.timelineStatus button { border: 0; padding: 7px 0; background: transparent; color: var(--color-primary-deep); font-weight: 800; cursor: pointer; }
+.timelineEmpty { margin: 0; }
 @media (max-width: 1024px) {
   .story { grid-template-columns: 1fr; }
   .module, .module[data-module] { grid-column: 1; }
@@ -478,6 +517,12 @@
   .lifeTimeline li { padding-left: 24px; }
   .lifeTimelineMarker { left: -23px; }
   .generationBanner { align-items: stretch; flex-direction: column; }
+  .timelineScroller { height: 64dvh; }
+  .timelineYear { grid-template-columns: 1fr; gap: 0; }
+  .timelineYear > h3 { position: static; margin: 18px 4px 6px; }
+  .timelineMonth li > button, .timelineMonth li > article { grid-template-columns: 28px 28px minmax(0, 1fr) auto; }
+  .timelineMonth li::before { left: 43px; }
+  .timelineDistinctive::before { left: 40px !important; }
 }
 @media (max-width: 480px) {
   .kpis, .expandedMetrics, .seriesGrid, .m2DetailMetrics, .m2ReferenceCard dl { grid-template-columns: 1fr; }

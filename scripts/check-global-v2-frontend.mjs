@@ -132,6 +132,7 @@ const comparisonRangeSource = fs.readFileSync(path.join(root, "src/features/glob
 const rhythmCollectionsSource = fs.readFileSync(path.join(root, "src/features/global-v2/rhythm-collections.ts"), "utf8");
 const rhythmDetailRoutingSource = fs.readFileSync(path.join(root, "src/features/global-v2/rhythm-detail-routing.ts"), "utf8");
 const rhythmNarrativeSource = fs.readFileSync(path.join(root, "src/features/global-v2/rhythm-narrative.ts"), "utf8");
+const lifeTimelineSource = fs.readFileSync(path.join(root, "src/features/global-v2/life-timeline.tsx"), "utf8");
 const m2Source = pageSource.slice(pageSource.indexOf("function M2MoneyRows"), pageSource.indexOf("function LifeInsightList"));
 const m2CompactSource = pageSource.slice(pageSource.indexOf("function M2CompactCard"), pageSource.indexOf("function PersonaColumns"));
 const m2InsightSource = pageSource.slice(pageSource.indexOf("function M2CompactRecentInsight"), pageSource.indexOf("function M2CompactCard"));
@@ -573,6 +574,29 @@ check(() => assert.match(lifePrimarySource, /Fiabilité & méthode/u));
 check(() => assert.match(cssSource, /\.methodLink\s*\{[^}]*color:\s*var\(--color-muted\)[^}]*font-size:\s*13px/u));
 check(() => assert.match(globalDetailOverlaySource, /target\.kind === "ENTITY_DETAIL" && target\.moduleKey === "RHYTHM"/u));
 check(() => assert.doesNotMatch(pageSource, /@\/analytics|@\/server|CanonicalRepository|FactSourceResolver/u));
+
+// D6: timeline-first life chapter, projected only from the published typed timeline.
+const timelineFixture = await transport({ resource: "analysis_global_life_timeline", params: {} });
+check(() => assert.equal(query.globalLifeTimelineReadModelSchema.safeParse(timelineFixture.data).success, true));
+check(() => assert.equal(timelineFixture.data.events.some((event) => event.causalCost.status === "KNOWN" && event.causalCost.value.value === "0"), true));
+check(() => assert.match(pageSource, /moduleKey === "RHYTHM" \? <GlobalLifeTimelinePanel/u));
+check(() => assert.match(lifeTimelineSource, /resource: "analysis_global_life_timeline"/u));
+check(() => assert.doesNotMatch(lifeTimelineSource, /analysis_global_rhythm|displayValue|numericDisplay|parseFloat|\.sort\(/u));
+check(() => assert.match(lifeTimelineSource, /Sequential projection only: the Query order remains authoritative/u));
+check(() => assert.match(lifeTimelineSource, /"LIFE_EVENT:activite_loisir"[\s\S]*"M6:week-end-escapade"/u));
+check(() => assert.doesNotMatch(lifeTimelineSource, /includes\([^)]*typeKey|typeKey[^\n]*includes/u));
+check(() => assert.match(lifeTimelineSource, /Coût non établi/u));
+check(() => assert.match(lifeTimelineSource, /detailAvailability === "MOMENT_DETAIL"[\s\S]*\? <button[\s\S]*: <article/u));
+check(() => assert.match(lifeTimelineSource, /comparison\.status === "PARTIAL" \|\| comparison\.peerCount < 5/u));
+check(() => assert.match(lifeTimelineSource, /comparisonSummary\?\.status === "KNOWN" && event\.comparisonSummary\.materiality === "MATERIAL"/u));
+check(() => assert.match(lifeTimelineSource, /filters\.has\("KNOWN_COST"\) && event\.causalCost\.status !== "KNOWN"/u));
+check(() => assert.match(lifeTimelineSource, /filters\.has\("COMPARABLE"\)[\s\S]*filters\.has\("DISTINCTIVE"\)/u));
+check(() => assert.doesNotMatch(lifeTimelineSource, /amount\s*>\s*0|Number\([^)]*\)\s*>\s*0/u));
+check(() => assert.doesNotMatch(lifeTimelineSource, /Explorer l’analyse|Nos moments|LifeNarrative|Hero/u));
+check(() => assert.match(cssSource, /\.timelineScroller\s*\{[^}]*height:\s*clamp\(520px, 62vh, 680px\)[^}]*scrollbar-gutter:\s*stable/u));
+check(() => assert.match(cssSource, /@media \(max-width: 767px\)[\s\S]*\.timelineScroller\s*\{[^}]*height:\s*64dvh/u));
+check(() => assert.match(cssSource, /\.timelineMonth > h4\s*\{[^}]*position:\s*sticky/u));
+check(() => assert.match(cssSource, /\.timelineMonth li > button:focus-visible/u));
 
 const masterIndex = JSON.parse(fs.readFileSync(path.join(root, "docs/global-v2/GLOBAL_MASTER_INDEX.json"), "utf8"));
 const p16Requirements = masterIndex.requirements.filter(({ owner }) => owner === "P16");

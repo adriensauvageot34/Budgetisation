@@ -33,6 +33,7 @@ import { ComparisonRange } from "./comparison-range";
 import { economicMetric, economicStructureGroups, economicStructureLabel } from "./economic-ui";
 import { emitGlobalV2UxEvent } from "./instrumentation";
 import { GlobalModuleBoundary } from "./module-boundary";
+import { LifeTimeline } from "./life-timeline";
 import { buildHabitCoverageModel, groupRhythmMomentsByYear } from "./rhythm-collections";
 import { resolveRhythmDetailContext, rhythmDetailReturnSection, type RhythmDetailContext, type RhythmDetailOrigin } from "./rhythm-detail-routing";
 import { composeRhythmNarrative, rhythmHeroComparison } from "./rhythm-narrative";
@@ -1164,6 +1165,19 @@ function GlobalModulePanel({ moduleKey, runtime, certifiedThrough, eager, direct
   </section>;
 }
 
+function GlobalLifeTimelinePanel({ runtime, onOverlay }: { readonly runtime: GlobalV2VisitRuntime; readonly onOverlay: (target: OverlayTarget) => void }) {
+  const presentation = globalModulePresentation("RHYTHM");
+  return <section id={moduleSlugs.RHYTHM} className={styles.module} data-module="RHYTHM" aria-labelledby="rythmes-title">
+    <header className={styles.moduleHeader}><div><h2 id="rythmes-title">{presentation.title}</h2><p>{presentation.description}</p></div></header>
+    <LifeTimeline runtime={runtime} onMomentDetail={(eventRef, title) => {
+      const target = entityOverlayTarget("RHYTHM", eventRef, title, undefined, "NARRATIVE");
+      if (target === undefined) return;
+      onOverlay(target);
+      emitGlobalV2UxEvent("global_entity_opened", { moduleKey: "RHYTHM" });
+    }} />
+  </section>;
+}
+
 type SummarySlotDefinition = { readonly slot: string; readonly moduleKey: GlobalPrimaryModuleKey; readonly kind: "KPI" | "INSIGHT"; readonly kpiIndex?: number };
 
 function SummarySlot({ definition, runtime }: { readonly definition: SummarySlotDefinition; readonly runtime: GlobalV2VisitRuntime }) {
@@ -1219,7 +1233,7 @@ export function GlobalV2Page({ bundle, transport, certifiedThrough }: { readonly
     if (moduleKey === undefined) return;
     setDirectModule(moduleKey);
     const section = rawSection === undefined ? undefined : rawSection.toUpperCase() as GlobalExpandedSectionKey;
-    if (section !== undefined) openOverlay(moduleOverlayTarget(moduleKey, section));
+    if (section !== undefined && moduleKey !== "RHYTHM") openOverlay(moduleOverlayTarget(moduleKey, section));
     requestAnimationFrame(() => document.getElementById(slug)?.scrollIntoView({ block: "start" }));
   }, [openOverlay]);
 
@@ -1246,7 +1260,7 @@ export function GlobalV2Page({ bundle, transport, certifiedThrough }: { readonly
     {bundle.newerPublication === undefined ? null : <aside className={styles.generationBanner} role="status" aria-live="polite"><div><strong>Une version plus récente est disponible.</strong><span>Notre lecture actuelle reste stable jusqu’à l’actualisation.</span></div><button type="button" className="button-primary" onClick={() => window.location.reload()}><RefreshCw aria-hidden size={16} /> Actualiser</button></aside>}
     <nav className={styles.stickyNav} aria-label="Navigation dans l’analyse globale">{internalNavigation.map(({ label, anchor }) => <button key={anchor} type="button" aria-current={activeAnchor === anchor ? "location" : undefined} onClick={() => goTo(anchor)}>{label}</button>)}</nav>
     <HumanSummary runtime={runtime} />
-    <main className={styles.story}>{orderedModules.map((moduleKey, index) => <GlobalModuleBoundary key={moduleKey}><GlobalModulePanel moduleKey={moduleKey} runtime={runtime} certifiedThrough={certifiedThrough} eager={index < 2} direct={directModule === moduleKey} onOverlay={openOverlay} /></GlobalModuleBoundary>)}</main>
+    <main className={styles.story}>{orderedModules.map((moduleKey, index) => <GlobalModuleBoundary key={moduleKey}>{moduleKey === "RHYTHM" ? <GlobalLifeTimelinePanel runtime={runtime} onOverlay={openOverlay} /> : <GlobalModulePanel moduleKey={moduleKey} runtime={runtime} certifiedThrough={certifiedThrough} eager={index < 2} direct={directModule === moduleKey} onOverlay={openOverlay} />}</GlobalModuleBoundary>)}</main>
     <button type="button" className={styles.backToTop} onClick={() => goTo()}><ArrowUp aria-hidden size={17} /> Retour au sommet</button>
     {overlay === null ? null : <GlobalDetailOverlay target={overlay} runtime={runtime} mobile={mobile} certifiedThrough={certifiedThrough} restoreFocusRef={overlayInvokerRef} onReplace={(target) => { setOverlay(target); emitGlobalV2UxEvent("global_entity_opened", { moduleKey: target.moduleKey }); }} onClose={() => setOverlay(null)} />}
   </div>;
