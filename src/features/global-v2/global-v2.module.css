@@ -411,13 +411,7 @@
 .backToTop { display: flex; align-items: center; gap: 7px; margin: 28px auto 12px; border: 0; background: transparent; color: var(--color-primary-deep); font-weight: 800; cursor: pointer; }
 .activationPending { display: grid; max-width: 700px; justify-items: start; gap: 14px; margin: 11vh auto; border: 1px solid var(--color-border); border-radius: 18px; padding: clamp(24px, 5vw, 48px); background: white; box-shadow: var(--shadow-md); }
 .activationPending p { color: var(--color-muted); line-height: 1.6; }
-.timelineExperience { display: grid; gap: 12px; }
-.timelineTools { display: grid; gap: 10px; border-block: 1px solid var(--color-border); padding-block: 10px; }
-.timelineMonthNav, .timelineFilters { display: flex; gap: 6px; overflow-x: auto; scrollbar-width: thin; }
-.timelineMonthNav button, .timelineFilters button { flex: 0 0 auto; border: 1px solid var(--color-border); border-radius: 999px; padding: 7px 11px; background: var(--color-surface); color: var(--color-muted); font: inherit; font-size: 12px; font-weight: 760; cursor: pointer; }
-.timelineMonthNav button[aria-current], .timelineFilters button[aria-pressed="true"] { border-color: var(--color-primary); background: var(--color-primary-soft); color: var(--color-primary-deep); }
-.timelineMonthNav button:hover, .timelineMonthNav button:focus-visible, .timelineFilters button:hover, .timelineFilters button:focus-visible { border-color: var(--color-primary); color: var(--color-primary-deep); }
-.timelineMonthNav button:focus-visible, .timelineFilters button:focus-visible { outline: 2px solid var(--color-primary); outline-offset: 2px; }
+.timelineExperience { display: grid; }
 .timelineScroller { height: clamp(520px, 62vh, 680px); overflow-y: auto; border-block: 1px solid var(--color-border); background: var(--color-surface); scrollbar-gutter: stable; overscroll-behavior: contain; scroll-behavior: smooth; }
 .timelineScroller:focus-visible { border-radius: 4px; outline: 2px solid var(--color-primary); outline-offset: 3px; }
 .timelineYear { display: grid; grid-template-columns: 76px minmax(0, 1fr); align-items: start; gap: 20px; }

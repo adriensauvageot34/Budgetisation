@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState, type ComponentType } from "react";
+import { useMemo, type ComponentType } from "react";
 import {
   BadgeCheck,
   BriefcaseBusiness,
@@ -26,7 +26,6 @@ import type { GlobalV2VisitRuntime } from "./visit-runtime";
 import styles from "./global-v2.module.css";
 
 type TimelineIcon = ComponentType<{ readonly size?: number; readonly "aria-hidden"?: boolean }>;
-type TimelineFilter = "KNOWN_COST" | "COMPARABLE" | "DISTINCTIVE";
 
 const timelineIcons: Readonly<Record<string, TimelineIcon>> = Object.freeze({
   "LIFE_EVENT:activite_loisir": Sparkles,
@@ -82,10 +81,6 @@ function eventAmount(event: GlobalTimelineEvent): string {
   return moneyFormatter.format(Number(cost.value.value));
 }
 
-function eventHasComparison(event: GlobalTimelineEvent): boolean {
-  return event.comparisonSummary?.status === "PARTIAL" || event.comparisonSummary?.status === "KNOWN";
-}
-
 function eventIsDistinctive(event: GlobalTimelineEvent): boolean {
   return event.comparisonSummary?.status === "KNOWN" && event.comparisonSummary.materiality === "MATERIAL";
 }
@@ -95,13 +90,6 @@ function comparisonLabel(event: GlobalTimelineEvent): string | undefined {
   if (comparison === undefined || comparison.status === "UNKNOWN" || comparison.status === "NOT_APPLICABLE" || comparison.peerCount < 3) return undefined;
   if (comparison.status === "PARTIAL" || comparison.peerCount < 5) return "Peu de comparables";
   return "Voir la comparaison";
-}
-
-function eventMatchesFilters(event: GlobalTimelineEvent, filters: ReadonlySet<TimelineFilter>): boolean {
-  if (filters.has("KNOWN_COST") && event.causalCost.status !== "KNOWN") return false;
-  if (filters.has("COMPARABLE") && !eventHasComparison(event)) return false;
-  if (filters.has("DISTINCTIVE") && !eventIsDistinctive(event)) return false;
-  return true;
 }
 
 type TimelineMonth = { readonly key: string; readonly label: string; readonly events: readonly GlobalTimelineEvent[] };
@@ -152,63 +140,19 @@ function TimelineEventRow({ event, onMomentDetail }: { readonly event: GlobalTim
   </li>;
 }
 
-function FilterButton({ filter, active, children, onToggle }: { readonly filter: TimelineFilter; readonly active: boolean; readonly children: React.ReactNode; readonly onToggle: (filter: TimelineFilter) => void }) {
-  return <button type="button" aria-pressed={active} onClick={() => onToggle(filter)}>{children}</button>;
-}
-
 export function LifeTimeline({ runtime, onMomentDetail }: { readonly runtime: GlobalV2VisitRuntime; readonly onMomentDetail: (eventRef: string, title: string) => void }) {
   const request = useMemo(() => ({ resource: "analysis_global_life_timeline" as const, params: {} }), []);
   const result = useGlobalV2Resource<GlobalLifeTimelineReadModel>(runtime, request, true, "DIRECT");
-  const [filters, setFilters] = useState<ReadonlySet<TimelineFilter>>(() => new Set());
-  const scrollerRef = useRef<HTMLDivElement | null>(null);
-  const [activeMonth, setActiveMonth] = useState<string>();
   const model = result.state.status === "READY" ? result.state.data : result.state.status === "ERROR" ? result.state.previousData : undefined;
-  const visibleEvents = useMemo(() => model?.events.filter((event) => eventMatchesFilters(event, filters)) ?? [], [filters, model]);
-  const years = useMemo(() => groupTimelineEvents(visibleEvents), [visibleEvents]);
-  const months = useMemo(() => years.flatMap(({ months: entries }) => entries), [years]);
-
-  useEffect(() => {
-    setActiveMonth(months[0]?.key);
-    const root = scrollerRef.current;
-    if (root === null || !("IntersectionObserver" in window)) return;
-    const headings = [...root.querySelectorAll<HTMLElement>("[data-timeline-month]")];
-    const observer = new IntersectionObserver((entries) => {
-      const visible = entries.filter(({ isIntersecting }) => isIntersecting).at(-1);
-      const key = visible?.target.getAttribute("data-timeline-month");
-      if (key !== null && key !== undefined) setActiveMonth(key);
-    }, { root, rootMargin: "0px 0px -72% 0px", threshold: [0, 1] });
-    headings.forEach((heading) => observer.observe(heading));
-    return () => observer.disconnect();
-  }, [months]);
-
-  const toggleFilter = (filter: TimelineFilter) => setFilters((current) => {
-    const next = new Set(current);
-    if (next.has(filter)) next.delete(filter); else next.add(filter);
-    return next;
-  });
-  const goToMonth = (key: string) => {
-    const root = scrollerRef.current;
-    const heading = root?.querySelector<HTMLElement>(`[data-timeline-month="${key}"]`);
-    if (root === null || root === undefined || heading === null || heading === undefined) return;
-    root.scrollTo({ top: heading.offsetTop, behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth" });
-    setActiveMonth(key);
-  };
+  const years = useMemo(() => groupTimelineEvents(model?.events ?? []), [model]);
 
   if ((result.state.status === "IDLE" || result.state.status === "LOADING") && model === undefined) return <div className={styles.timelineStatus} role="status" aria-busy="true">Chargement de la timeline…</div>;
   if (result.state.status === "ERROR" && model === undefined) return <div className={styles.timelineStatus} role="alert"><strong>La timeline n’a pas pu être chargée.</strong><button type="button" onClick={result.retry}>Réessayer</button></div>;
   if (model === undefined) return null;
 
   return <div className={styles.timelineExperience} data-timeline-resource={model.resource}>
-    <div className={styles.timelineTools}>
-      <nav className={styles.timelineMonthNav} aria-label="Aller à un mois">{months.map((month) => <button key={month.key} type="button" aria-current={activeMonth === month.key ? "true" : undefined} onClick={() => goToMonth(month.key)}>{month.label}</button>)}</nav>
-      <div className={styles.timelineFilters} role="group" aria-label="Filtrer la timeline">
-        <FilterButton filter="KNOWN_COST" active={filters.has("KNOWN_COST")} onToggle={toggleFilter}>Coût connu</FilterButton>
-        <FilterButton filter="COMPARABLE" active={filters.has("COMPARABLE")} onToggle={toggleFilter}>Comparaison disponible</FilterButton>
-        <FilterButton filter="DISTINCTIVE" active={filters.has("DISTINCTIVE")} onToggle={toggleFilter}>Se distingue</FilterButton>
-      </div>
-    </div>
-    <div ref={scrollerRef} className={styles.timelineScroller} tabIndex={0} aria-label="Timeline de notre vie, du plus ancien au plus récent">
-      {years.length === 0 ? <p className={styles.timelineEmpty}>Aucun événement ne correspond à ces filtres.</p> : years.map((year) => <section key={year.key} className={styles.timelineYear} aria-labelledby={`timeline-year-${year.key}`}>
+    <div className={styles.timelineScroller} tabIndex={0} aria-label="Timeline de notre vie, du plus ancien au plus récent">
+      {years.length === 0 ? <p className={styles.timelineEmpty}>Aucun événement n’est disponible.</p> : years.map((year) => <section key={year.key} className={styles.timelineYear} aria-labelledby={`timeline-year-${year.key}`}>
         <h3 id={`timeline-year-${year.key}`}>{year.key}</h3>
         <div>{year.months.map((month) => <section key={month.key} className={styles.timelineMonth} aria-labelledby={`timeline-month-${month.key}`}>
           <h4 id={`timeline-month-${month.key}`} data-timeline-month={month.key}>{month.label}</h4>
