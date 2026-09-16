@@ -284,10 +284,10 @@ check(() => assert.equal(contract.modules.find(({ moduleKey }) => moduleKey === 
 check(() => assert.equal(contract.modules.find(({ moduleKey }) => moduleKey === "MOMENTS")?.visibility, "HIDDEN"));
 check(() => assert.equal((summarySource.match(/moduleKey: "RHYTHM"/gu) ?? []).length, 1));
 check(() => assert.doesNotMatch(summarySource, /moduleKey: "MOMENTS"/u));
-const lifePrimarySource = pageSource.slice(pageSource.indexOf("function LifeNarrativeHero"), pageSource.indexOf("function PersonaColumns"));
-check(() => assert.match(lifePrimarySource, /data-rhythm-primary-experience="dynamic-narrative"/u));
-check(() => assert.doesNotMatch(lifePrimarySource, /Explorer l’analyse|LifeInsightList|sectionTabs|moduleTabs/u));
-check(() => assert.match(lifePrimarySource, /Ce qui se distingue[\s\S]*Dans notre quotidien[\s\S]*Les moments qui se voient dans nos dépenses/u));
+const lifePrimarySource = pageSource.slice(pageSource.indexOf("function LifeBackgroundRhythms"), pageSource.indexOf("function PersonaColumns"));
+check(() => assert.match(lifePrimarySource, /data-rhythm-source="analysis_global_routine_detail"/u));
+check(() => assert.doesNotMatch(lifePrimarySource, /Explorer l’analyse|LifeInsightList|sectionTabs|moduleTabs|LifeNarrative|Hero/u));
+check(() => assert.match(lifePrimarySource, /Nos rythmes de fond[\s\S]*Courses[\s\S]*Passages observés/u));
 check(() => assert.match(lifeSource, /primaryInsight[\s\S]*secondaryInsights[\s\S]*slice\(0, 3\)/u));
 check(() => assert.match(pageSource, /patternsAvailable[\s\S]*momentsAvailable[\s\S]*evolutionAvailable/u));
 check(() => assert.match(pageSource, /Habitudes & dépenses[\s\S]*Moments[\s\S]*Changements/u));
@@ -336,6 +336,7 @@ const comparedMoment = await transport({ resource: "analysis_global_moment_exper
 const unpairedMoment = await transport({ resource: "analysis_global_moment_experience_detail", params: { entityRef: "moment:concert" } });
 const homeMoment = await transport({ resource: "analysis_global_moment_experience_detail", params: { entityRef: "moment:home" } });
 const householdActivity = await transport({ resource: "analysis_global_routine_detail", params: { entityRef: "household-activity:sport" } });
+const groceryActivity = await transport({ resource: "analysis_global_routine_detail", params: { entityRef: "household-activity:courses_alimentaires" } });
 const adrienActivity = await transport({ resource: "analysis_global_routine_detail", params: { entityRef: "person-activity:adrien:sport" } });
 const manonActivity = await transport({ resource: "analysis_global_routine_detail", params: { entityRef: "person-activity:manon:sport" } });
 for (const result of [comparedMoment, unpairedMoment, homeMoment]) check(() => {
@@ -358,8 +359,12 @@ check(() => assert.equal(unpairedMoment.data.momentComponentRows?.length, 3));
 check(() => assert.equal(unpairedMoment.data.metrics.find(({ metricId }) => metricId.endsWith(":causal-cost"))?.typedMeasure?.value, "159.4"));
 check(() => assert.equal([comparedMoment, homeMoment].flatMap(({ data }) => data.peerObservations ?? []).every(({ detailRef }) => detailRef.startsWith("global-query:analysis_global_moment_experience_detail:")), true));
 check(() => assert.equal([comparedMoment, unpairedMoment, homeMoment].every(({ data }) => data.spentDuringContext?.relationToCausalCost === "INDEPENDENT_SCOPE"), true));
-for (const result of [householdActivity, adrienActivity, manonActivity]) check(() => assert.equal(query.globalExpandedReadModelSchema.safeParse(result.data).success, true));
+for (const result of [householdActivity, groceryActivity, adrienActivity, manonActivity]) check(() => assert.equal(query.globalExpandedReadModelSchema.safeParse(result.data).success, true));
 check(() => assert.equal(householdActivity.data.metrics.find(({ metricId }) => metricId.endsWith(":median"))?.typedMeasure?.value, "18"));
+check(() => assert.equal(groceryActivity.data.groceryRhythm?.months.length, 12));
+check(() => assert.equal(groceryActivity.data.groceryRhythm?.eligibleMonthCount, 9));
+check(() => assert.deepEqual([groceryActivity.data.groceryRhythm?.thresholds.p25.value, groceryActivity.data.groceryRhythm?.thresholds.p75.value], ["18.29", "51.99"]));
+check(() => assert.equal(groceryActivity.data.groceryRhythm?.months.filter(({ basketStructure }) => basketStructure.status === "KNOWN").length, 9));
 check(() => assert.deepEqual(adrienActivity.data.metrics.filter(({ metricId }) => metricId.endsWith(":occurrences") || metricId.endsWith(":cadence")).map(({ typedMeasure }) => typedMeasure?.value), ["8", "7"]));
 check(() => assert.deepEqual(manonActivity.data.metrics.filter(({ metricId }) => metricId.endsWith(":occurrences") || metricId.endsWith(":cadence")).map(({ typedMeasure }) => typedMeasure?.value), ["6", "9"]));
 
@@ -400,9 +405,9 @@ check(() => assert.equal(narrativeCaseEMoments.moments.length, 0));
 check(() => assert.equal(narrativeCaseA.primary === undefined ? 0 : 1, 1));
 check(() => assert.match(rhythmNarrativeSource, /const primary = selectedInsights\[0\]/u));
 check(() => assert.doesNotMatch(rhythmNarrativeSource, /\.sort\(|parseFloat|numericDisplay|displayValue|Math\.|reduce\(/u));
-check(() => assert.match(lifePrimarySource, /narrative\.primary === undefined \? null[\s\S]*narrative\.habits\.length === 0 \? null[\s\S]*narrative\.moments\.length === 0 \? null[\s\S]*narrative\.changes\.length === 0 \? null[\s\S]*narrative\.relationships\.length === 0 \? null/u));
-check(() => assert.match(lifePrimarySource, /slice\(0, 3\)|composeRhythmNarrative/u));
-check(() => assert.doesNotMatch(lifePrimarySource, /rythmes Adrien|rythmes Manon|monthlyEquivalent|support moteur/u));
+check(() => assert.match(lifePrimarySource, /rhythm\.months\.map[\s\S]*month\.basketStructure\.status === "KNOWN"/u));
+check(() => assert.doesNotMatch(lifePrimarySource, /\.sort\(|\.reduce\(|Math\.|parseFloat|numericDisplay|displayValue/u));
+check(() => assert.doesNotMatch(lifePrimarySource, /rythmes Adrien|rythmes Manon|montant par personne|monthlyEquivalent|support moteur/u));
 
 // RUN 3: pure display geometry for real M6 comparisons, never analytical recomputation.
 const moneyMeasure = (value) => ({ kind: "MONEY", value: String(value), unit: "EUR" });
@@ -451,7 +456,7 @@ check(() => assert.match(comparisonRangeSource, /comparisonRangeMedianMarker[\s\
 check(() => assert.match(comparisonRangeSource, /aria-pressed[\s\S]*onPointerEnter[\s\S]*onFocus[\s\S]*Ouvrir ce moment/u));
 check(() => assert.match(comparisonRangeSource, /minimumFractionDigits: 0[\s\S]*maximumFractionDigits: 2/u));
 check(() => assert.doesNotMatch(comparisonRangeSource, /boxplot|whisker|intervalle de confiance|percentile|score/iu));
-check(() => assert.match(lifePrimarySource, /rhythmHeroComparison[\s\S]*<ComparisonRange/u));
+check(() => assert.match(lifeMomentDetailSource, /<ComparisonRange/u));
 check(() => assert.match(lifeMomentDetailSource, /<ComparisonRange[\s\S]*lifeComparisonDelta/u));
 check(() => assert.ok(rhythmNarrative.rhythmHeroComparison(narrativeCaseA) !== undefined));
 check(() => assert.equal(narrativeHeroM3.primary?.kind, "M3_CERTIFIED_TRANSFORMATION"));
@@ -483,10 +488,10 @@ check(() => assert.equal(rhythmDetailRouting.resolveRhythmDetailContext("", "NAR
 check(() => assert.equal(rhythmDetailRouting.resolveRhythmDetailContext("moment:", "NARRATIVE"), undefined));
 check(() => assert.equal(rhythmDetailRouting.resolveRhythmDetailContext("unknown:invented", "NARRATIVE"), undefined));
 check(() => assert.doesNotMatch(rhythmDetailRoutingSource, /labelKey|displayValue|title|indexOf|find\(/u));
-check(() => assert.match(lifePrimarySource, /data-global-entity-ref=\{momentRef\}[\s\S]*onEntityDetail\(momentRef, lifeUiCopy\(insight\.titleKey\)\)/u));
-check(() => assert.match(lifePrimarySource, /row\.entityRef === undefined \? <article[\s\S]*data-global-entity-ref=\{row\.entityRef\}[\s\S]*onEntityDetail\(row\.entityRef!/u));
-check(() => assert.match(lifePrimarySource, /aria-label=\{`Comprendre \$\{lifeUiCopy\(insight\.titleKey\)\}`\}/u));
-check(() => assert.match(pageSource, /entityOverlayTarget\(moduleKey, entityRef, title, undefined, moduleKey === "RHYTHM" \? "NARRATIVE" : undefined\)/u));
+check(() => assert.match(lifePrimarySource, /entityRef: groceryRoutineEntityRef/u));
+check(() => assert.match(lifePrimarySource, /monthlyGrocerySpend\.status === "KNOWN" \|\| month\.monthlyGrocerySpend\.status === "PARTIAL"/u));
+check(() => assert.match(lifePrimarySource, /Structure du panier non affichée : couverture insuffisante\./u));
+check(() => assert.match(pageSource, /entityOverlayTarget\("RHYTHM", eventRef, title, undefined, "NARRATIVE"\)/u));
 check(() => assert.match(globalDetailOverlaySource, /detailHasBack[\s\S]*rhythmReturnSection !== undefined[\s\S]*rhythmDetailContext\?\.origin/u));
 check(() => assert.match(globalDetailOverlaySource, /restoreFocusRef=\{restoreFocusRef\}/u));
 check(() => assert.doesNotMatch(moduleTabsSource, /RHYTHM:\s*\[\{ key: "OVERVIEW"/u));
@@ -596,8 +601,8 @@ check(() => assert.equal(narrativeCaseB.primary, undefined));
 check(() => assert.equal(narrativeCaseC.changes.length > 0, true));
 check(() => assert.equal(narrativeCaseD.relationships.length > 0, true));
 check(() => assert.doesNotMatch(narrativeCaseD.relationships.map(({ statementKey }) => statementKey).join(" "), /cause|provoque|explique|entraîne|fait augmenter|fait baisser/iu));
-check(() => assert.match(lifePrimarySource, /narrative\.changes\.length === 0 \? null[\s\S]*narrative\.relationships\.length === 0 \? null/u));
-check(() => assert.doesNotMatch(lifePrimarySource, /rien n’a changé|aucun changement|aucune relation|rien à signaler/iu));
+check(() => assert.match(lifePrimarySource, /month\.occurrenceCount[\s\S]*month\.coverage[\s\S]*basketStructure\.small[\s\S]*basketStructure\.intermediate[\s\S]*basketStructure\.large/u));
+check(() => assert.doesNotMatch(lifePrimarySource, /restaurant|sortie|rien n’a changé|aucun changement|aucune relation|rien à signaler/iu));
 check(() => assert.doesNotMatch(cssSource, /\.lifeMomentGrid/u));
 check(() => assert.match(lifePrimarySource, /Fiabilité & méthode/u));
 check(() => assert.match(cssSource, /\.methodLink\s*\{[^}]*color:\s*var\(--color-muted\)[^}]*font-size:\s*13px/u));
@@ -629,6 +634,20 @@ check(() => assert.match(cssSource, /\.timelineScroller\s*\{[^}]*height:\s*clamp
 check(() => assert.match(cssSource, /@media \(max-width: 767px\)[\s\S]*\.timelineScroller\s*\{[^}]*height:\s*64dvh/u));
 check(() => assert.match(cssSource, /\.timelineMonth > h4\s*\{[^}]*position:\s*sticky/u));
 check(() => assert.match(cssSource, /\.timelineMonth li > button:focus-visible/u));
+
+// D8: published background rhythms complete the timeline-first chapter without React analytics.
+const timelinePanelSource = pageSource.slice(pageSource.indexOf("function GlobalLifeTimelinePanel"), pageSource.indexOf("type SummarySlotDefinition"));
+check(() => assert.match(timelinePanelSource, /<LifeTimeline[\s\S]*<LifeBackgroundRhythms/u));
+check(() => assert.match(lifePrimarySource, /resource: "analysis_global_routine_detail"[\s\S]*entityRef: groceryRoutineEntityRef/u));
+check(() => assert.match(lifePrimarySource, /rhythm\.thresholds\.p25[\s\S]*rhythm\.thresholds\.p75[\s\S]*rhythm\.eligibleMonthCount/u));
+check(() => assert.match(lifePrimarySource, /month\.monthlyGrocerySpend[\s\S]*month\.occurrenceCount[\s\S]*month\.coverage/u));
+check(() => assert.match(lifePrimarySource, /month\.basketStructure\.status === "KNOWN"[\s\S]*Structure du panier non affichée/u));
+check(() => assert.doesNotMatch(lifePrimarySource, /displayValue|frenchMonth|monthParts|new Date|Date\.|\.sort\(|\.reduce\(|Math\.|parseFloat|percentile|person-activity|EUR\/person/u));
+check(() => assert.doesNotMatch(pageSource, /function LifeNarrativeHero|function LifeNarrativeHabits|function LifeNarrativeMoments|function LifeNarrativeInsights|function LifeCompactCard|composeRhythmNarrative|rhythmHeroComparison/u));
+check(() => assert.doesNotMatch(cssSource, /\.lifeCompact|\.lifeNarrative|\.lifeHero/u));
+check(() => assert.match(cssSource, /\.timelineYear > h3\s*\{[^}]*padding-left:\s*10px/u));
+check(() => assert.match(cssSource, /\.groceryMonthGrid\s*\{[^}]*grid-template-columns:\s*repeat\(4/u));
+check(() => assert.doesNotMatch(lifePrimarySource, /mobile|phone|@media/u));
 
 const masterIndex = JSON.parse(fs.readFileSync(path.join(root, "docs/global-v2/GLOBAL_MASTER_INDEX.json"), "utf8"));
 const p16Requirements = masterIndex.requirements.filter(({ owner }) => owner === "P16");

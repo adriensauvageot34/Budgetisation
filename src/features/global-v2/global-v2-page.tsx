@@ -38,7 +38,6 @@ import { GlobalModuleBoundary } from "./module-boundary";
 import { LifeTimeline } from "./life-timeline";
 import { buildHabitCoverageModel, groupRhythmMomentsByYear } from "./rhythm-collections";
 import { resolveRhythmDetailContext, rhythmDetailReturnSection, type RhythmDetailContext, type RhythmDetailOrigin } from "./rhythm-detail-routing";
-import { composeRhythmNarrative, rhythmHeroComparison } from "./rhythm-narrative";
 import { useGlobalV2Resource, useMobileGlobalLayout, useNearViewport } from "./use-global-resource";
 import { GlobalV2VisitRuntime, parseGlobalDeepLink, type GlobalV2UiRequest, type GlobalV2UiTransport } from "./visit-runtime";
 import styles from "./global-v2.module.css";
@@ -1070,83 +1069,37 @@ function M2CompactCard({ model, runtime, certifiedThrough, onDetail, onEntityDet
   </div>;
 }
 
-function LifeNarrativeHero({ insight, row, onEntityDetail }: { readonly insight: GlobalCompactInsight; readonly row?: GlobalDetailRow; readonly onEntityDetail: (entityRef: string, title: string) => void }) {
-  const comparison = rhythmHeroComparison({ primary: insight, primaryRow: row });
-  const amount = comparison === undefined ? row?.typedMeasure?.kind === "MONEY" ? m2TypedNumber(row) : undefined : m2TypedNumber({ typedMeasure: comparison.subjectCost });
-  const comparisonCopy = comparison === undefined ? undefined : lifeComparisonDelta(comparison);
-  const momentRef = insight.entityRefs.find((entityRef) => entityRef.startsWith("moment:"));
-  const m6Comparison = insight.kind === "M6_MATERIAL_COMPARISON";
-  const m6Context = insight.kind === "M6_CONTEXTUAL_CAUSAL_MOMENT";
-  return <section className={`${styles.lifeNarrativeSection} ${styles.lifeNarrativeHero}`} aria-labelledby="life-narrative-hero-title">
-    <span className={styles.lifeNarrativeEyebrow}>Ce qui se distingue</span>
-    <article className={styles.lifeHero}>
-      <h3 id="life-narrative-hero-title">{lifeUiCopy(insight.titleKey)}</h3>
-      {amount === undefined ? null : <strong>{formatMoney(amount)}</strong>}
-      <div className={styles.lifeHeroEvidence}>{m6Comparison && comparisonCopy !== undefined ? <p>{comparisonCopy}</p> : m6Context ? <p>Dépenses reliées à ce moment.</p> : <p>{lifeUiCopy(insight.statementKey)}</p>}</div>
-      {comparison === undefined ? null : <ComparisonRange observed={comparison.subjectCost} median={comparison.peerMedian} lower={comparison.q1} upper={comparison.q3} supportCount={comparison.peerCount} subjectLabel={lifeUiCopy(insight.titleKey)} />}
-      {momentRef === undefined ? null : <button type="button" className={styles.lifeNarrativeAction} data-global-entity-ref={momentRef} aria-label={`Comprendre ${lifeUiCopy(insight.titleKey)}`} onClick={() => onEntityDetail(momentRef, lifeUiCopy(insight.titleKey))}>Comprendre ce moment <span aria-hidden>→</span></button>}
+const groceryRoutineEntityRef = "household-activity:courses_alimentaires";
+
+function LifeBackgroundRhythms({ runtime, onMethod }: { readonly runtime: GlobalV2VisitRuntime; readonly onMethod: () => void }) {
+  const request = useMemo(() => ({ resource: "analysis_global_routine_detail" as const, params: { entityRef: groceryRoutineEntityRef } }), []);
+  const result = useGlobalV2Resource<GlobalExpandedReadModel>(runtime, request, true, "BACKGROUND");
+  const model = transportData(result.state);
+  const rhythm = model?.groceryRhythm;
+  if (rhythm === undefined) {
+    if (result.state.status === "ERROR") return <section className={styles.lifeRhythms} aria-labelledby="life-rhythms-title"><header><h3 id="life-rhythms-title">Nos rythmes de fond</h3></header><LocalError retry={result.retry} /></section>;
+    return <section className={styles.lifeRhythms} aria-labelledby="life-rhythms-title"><header><h3 id="life-rhythms-title">Nos rythmes de fond</h3></header><LoadingCard label="nos rythmes de fond" compact /></section>;
+  }
+  const lowerThreshold = m2TypedNumber({ typedMeasure: rhythm.thresholds.p25 });
+  const upperThreshold = m2TypedNumber({ typedMeasure: rhythm.thresholds.p75 });
+  return <section className={styles.lifeRhythms} aria-labelledby="life-rhythms-title" data-rhythm-source="analysis_global_routine_detail">
+    <header className={styles.lifeRhythmsHeader}><div><span className="eyebrow">Habitudes récurrentes</span><h3 id="life-rhythms-title">Nos rythmes de fond</h3><p>Les courses dessinent un rythme mensuel régulier, présenté ici sans attribuer de dépense à une personne.</p></div><button type="button" className={styles.methodLink} onClick={onMethod}><Info aria-hidden size={15} /> Fiabilité & méthode</button></header>
+    <article className={styles.groceryRhythmCard}>
+      <header><div><h4>Courses</h4><p>Passages observés, dépense mensuelle M2 et structure des paniers lorsque la couverture publiée le permet.</p></div><dl><div><dt>Petits paniers</dt><dd>jusqu’à {formatLifeMoney(lowerThreshold)}</dd></div><div><dt>Gros paniers</dt><dd>à partir de {formatLifeMoney(upperThreshold)}</dd></div><div><dt>Structure disponible</dt><dd>{integerFormatter.format(rhythm.eligibleMonthCount)} mois</dd></div></dl></header>
+      <div className={styles.groceryMonthGrid}>{rhythm.months.map((month) => {
+        const monthlyAmount = month.monthlyGrocerySpend.status === "KNOWN" || month.monthlyGrocerySpend.status === "PARTIAL"
+          ? month.monthlyGrocerySpend.value.kind === "MONEY" ? m2TypedNumber({ typedMeasure: month.monthlyGrocerySpend.value }) : undefined
+          : undefined;
+        return <article key={month.month} className={styles.groceryMonthCard} aria-label={`Courses ${month.month}`}>
+          <header><time dateTime={month.month}>{month.month}</time><strong>{formatLifeMoney(monthlyAmount)}</strong></header>
+          <p>{integerFormatter.format(month.occurrenceCount)} passages · couverture {formatLifeRatio(month.coverage)}</p>
+          {month.basketStructure.status === "KNOWN"
+            ? <dl className={styles.groceryBasket}><div><dt>Petits</dt><dd>{integerFormatter.format(month.basketStructure.small)}</dd></div><div><dt>Intermédiaires</dt><dd>{integerFormatter.format(month.basketStructure.intermediate)}</dd></div><div><dt>Gros</dt><dd>{integerFormatter.format(month.basketStructure.large)}</dd></div></dl>
+            : <small>Structure du panier non affichée : couverture insuffisante.</small>}
+        </article>;
+      })}</div>
     </article>
   </section>;
-}
-
-function LifeNarrativeHabits({ rows, onEntityDetail, onCollection }: { readonly rows: readonly GlobalDetailRow[]; readonly onEntityDetail: (entityRef: string, title: string) => void; readonly onCollection: () => void }) {
-  return <section className={styles.lifeNarrativeSection} aria-labelledby="life-narrative-habits-title">
-    <h3 id="life-narrative-habits-title">Dans notre quotidien</h3>
-    <div className={styles.lifeNarrativeList}>{rows.map((row) => {
-      const profile = row.activityCostProfile!;
-      const amount = m2TypedNumber(row);
-      const known = m2TypedNumber({ typedMeasure: profile.knownCausalCostCount });
-      const total = m2TypedNumber({ typedMeasure: profile.totalOccurrenceCount });
-      const coverage = m2TypedNumber({ typedMeasure: profile.coverageRatio });
-      const content = <><span><strong>{lifeUiCopy(row.labelKey)}</strong>{amount === undefined ? null : <b>{formatMoney(amount)}</b>}<small>En médiane quand un coût est connu</small>{known === undefined || total === undefined || coverage === undefined ? null : <small>Coût connu {integerFormatter.format(known)} fois sur {integerFormatter.format(total)} · {formatLifeRatio(coverage)}</small>}</span><ChevronRight aria-hidden size={18} /></>;
-      return row.entityRef === undefined ? <article key={row.rowId}>{content}</article> : <button key={row.rowId} type="button" data-global-entity-ref={row.entityRef} onClick={() => onEntityDetail(row.entityRef!, lifeUiCopy(row.labelKey))}>{content}</button>;
-    })}</div>
-    <button type="button" className={styles.lifeNarrativeAction} onClick={onCollection}>Voir toutes nos habitudes <span aria-hidden>→</span></button>
-  </section>;
-}
-
-function LifeNarrativeMoments({ rows, onEntityDetail, onCollection }: { readonly rows: readonly GlobalDetailRow[]; readonly onEntityDetail: (entityRef: string, title: string) => void; readonly onCollection: () => void }) {
-  return <section className={styles.lifeNarrativeSection} aria-labelledby="life-narrative-moments-title">
-    <h3 id="life-narrative-moments-title">Les moments qui se voient dans nos dépenses</h3>
-    <div className={styles.lifeNarrativeList}>{rows.map((row) => {
-      const amount = m2TypedNumber(row);
-      const content = <><span><strong>{lifeUiCopy(row.labelKey)}</strong>{amount === undefined ? null : <b>{formatMoney(amount)}</b>}{lifeMomentIdentity(row.displayValue, false) === undefined ? null : <small>{lifeMomentIdentity(row.displayValue, false)}</small>}</span><ChevronRight aria-hidden size={18} /></>;
-      return row.entityRef === undefined ? <article key={row.rowId}>{content}</article> : <button key={row.rowId} type="button" data-global-entity-ref={row.entityRef} onClick={() => onEntityDetail(row.entityRef!, lifeUiCopy(row.labelKey))}>{content}</button>;
-    })}</div>
-    <button type="button" className={styles.lifeNarrativeAction} onClick={onCollection}>Voir tous nos moments <span aria-hidden>→</span></button>
-  </section>;
-}
-
-function LifeNarrativeInsights({ title, insights }: { readonly title: string; readonly insights: readonly GlobalCompactInsight[] }) {
-  return <section className={styles.lifeNarrativeSection} aria-label={title}><h3>{title}</h3><div className={styles.lifeNarrativeInsights}>{insights.map((insight) => <article key={insight.insightId}><strong>{lifeUiCopy(insight.titleKey)}</strong><p>{lifeUiCopy(insight.statementKey)}</p></article>)}</div></section>;
-}
-
-function LifeCompactCard({ runtime, onSectionDetail, onEntityDetail, onMethod }: { readonly runtime: GlobalV2VisitRuntime; readonly onSectionDetail: (section: GlobalExpandedSectionKey) => void; readonly onEntityDetail: (entityRef: string, title: string) => void; readonly onMethod: () => void }) {
-  const overviewRequest = useMemo(() => ({ resource: "analysis_global_rhythm_expanded" as const, params: { sectionKey: "OVERVIEW" } }), []);
-  const patternsRequest = useMemo(() => ({ resource: "analysis_global_rhythm_expanded" as const, params: { sectionKey: "PATTERNS" } }), []);
-  const breakdownRequest = useMemo(() => ({ resource: "analysis_global_rhythm_expanded" as const, params: { sectionKey: "BREAKDOWN" } }), []);
-  const evolutionRequest = useMemo(() => ({ resource: "analysis_global_rhythm_expanded" as const, params: { sectionKey: "EVOLUTION" } }), []);
-  const overview = useGlobalV2Resource<GlobalExpandedReadModel>(runtime, overviewRequest, true, "BACKGROUND");
-  const patterns = useGlobalV2Resource<GlobalExpandedReadModel>(runtime, patternsRequest, true, "BACKGROUND");
-  const breakdown = useGlobalV2Resource<GlobalExpandedReadModel>(runtime, breakdownRequest, true, "BACKGROUND");
-  const evolution = useGlobalV2Resource<GlobalExpandedReadModel>(runtime, evolutionRequest, true, "BACKGROUND");
-  const overviewModel = transportData(overview.state);
-  const patternsModel = transportData(patterns.state);
-  const breakdownModel = transportData(breakdown.state);
-  const evolutionModel = transportData(evolution.state);
-  const narrative = useMemo(() => composeRhythmNarrative({ overview: overviewModel, patterns: patternsModel, breakdown: breakdownModel, evolution: evolutionModel }), [breakdownModel, evolutionModel, overviewModel, patternsModel]);
-  const noContentLoaded = overviewModel === undefined && patternsModel === undefined && breakdownModel === undefined && evolutionModel === undefined;
-  const loading = [overview.state, patterns.state, breakdown.state, evolution.state].some((state) => state.status === "IDLE" || state.status === "LOADING");
-  if (noContentLoaded && loading) return <LoadingCard label="Notre vie derrière nos dépenses" />;
-  if (noContentLoaded) return <LocalError retry={() => { overview.retry(); patterns.retry(); breakdown.retry(); evolution.retry(); }} />;
-  return <div className={styles.lifeCompact} data-rhythm-primary-experience="dynamic-narrative">
-    {narrative.primary === undefined ? null : <LifeNarrativeHero insight={narrative.primary} row={narrative.primaryRow} onEntityDetail={onEntityDetail} />}
-    {narrative.habits.length === 0 ? null : <LifeNarrativeHabits rows={narrative.habits} onEntityDetail={onEntityDetail} onCollection={() => onSectionDetail("PATTERNS")} />}
-    {narrative.moments.length === 0 ? null : <LifeNarrativeMoments rows={narrative.moments} onEntityDetail={onEntityDetail} onCollection={() => onSectionDetail("BREAKDOWN")} />}
-    {narrative.changes.length === 0 ? null : <LifeNarrativeInsights title="Ce qui a changé" insights={narrative.changes} />}
-    {narrative.relationships.length === 0 ? null : <LifeNarrativeInsights title="Ce qui semble lié à notre contexte" insights={narrative.relationships} />}
-    <footer className={styles.lifeNarrativeMethod}><button type="button" className={styles.methodLink} onClick={onMethod}><Info aria-hidden size={15} /> Fiabilité & méthode</button></footer>
-  </div>;
 }
 
 function PersonaColumns({ rows, limit = 5 }: { readonly rows: readonly GlobalDetailRow[]; readonly limit?: number }) {
@@ -1161,16 +1114,14 @@ function PersonaColumns({ rows, limit = 5 }: { readonly rows: readonly GlobalDet
   return <div className={styles.personColumns}>{[...groups.entries()].map(([person, entries]) => <section key={person}><h3>{person}</h3><HumanRows rows={entries} onDetail={() => undefined} /></section>)}</div>;
 }
 
-function ModuleContent({ moduleKey, model, runtime, certifiedThrough, onDetail, onSectionDetail, onEntityDetail, onMethod }: { readonly moduleKey: GlobalPrimaryModuleKey; readonly model: GlobalModuleCompactReadModel; readonly runtime: GlobalV2VisitRuntime; readonly certifiedThrough: string; readonly onDetail: () => void; readonly onSectionDetail: (section: GlobalExpandedSectionKey) => void; readonly onEntityDetail: (entityRef: string, title: string) => void; readonly onMethod: () => void }) {
-  if (moduleKey === "TRANSFORMATIONS" || moduleKey === "RELATIONSHIPS" || moduleKey === "MOMENTS") return null;
+function ModuleContent({ moduleKey, model, runtime, certifiedThrough, onDetail, onEntityDetail, onMethod }: { readonly moduleKey: GlobalPrimaryModuleKey; readonly model: GlobalModuleCompactReadModel; readonly runtime: GlobalV2VisitRuntime; readonly certifiedThrough: string; readonly onDetail: () => void; readonly onEntityDetail: (entityRef: string, title: string) => void; readonly onMethod: () => void }) {
+  if (moduleKey === "TRANSFORMATIONS" || moduleKey === "RELATIONSHIPS" || moduleKey === "MOMENTS" || moduleKey === "RHYTHM") return null;
   if (moduleKey === "CONSUMPTION") return <div className={styles.neutralState}><strong>Analyse pas encore disponible</strong><p>L’identité des achats ne couvre pas encore suffisamment la période pour proposer une lecture fiable.</p></div>;
 
   const insight = model.primaryInsight;
   if (moduleKey === "ECONOMIC") return <div className={styles.compact}><ExpandedPreview runtime={runtime} moduleKey={moduleKey} sectionKey="OVERVIEW">{(overview) => <ExpandedPreview runtime={runtime} moduleKey={moduleKey} sectionKey="EVOLUTION">{(evolution) => <EconomicCompactCard overview={overview} evolution={evolution} certifiedThrough={certifiedThrough} onDetail={onDetail} onMethod={onMethod} />}</ExpandedPreview>}</ExpandedPreview></div>;
 
   if (moduleKey === "CATEGORIES_NEEDS") return <M2CompactCard model={model} runtime={runtime} certifiedThrough={certifiedThrough} onDetail={onDetail} onEntityDetail={onEntityDetail} />;
-
-  if (moduleKey === "RHYTHM") return <LifeCompactCard runtime={runtime} onSectionDetail={onSectionDetail} onEntityDetail={onEntityDetail} onMethod={onMethod} />;
 
   if (moduleKey === "GEO_MOBILITY") return <div className={styles.compact}>
     {insight === undefined ? null : <InsightCard insight={insight} />}
@@ -1208,9 +1159,8 @@ function GlobalModulePanel({ moduleKey, runtime, certifiedThrough, eager, direct
     emitGlobalV2UxEvent("global_module_viewed", { moduleKey });
   }, [compactModel, moduleKey]);
   const openDetail = () => { onOverlay(moduleOverlayTarget(moduleKey)); emitGlobalV2UxEvent("global_module_expanded", { moduleKey, state: "overlay" }); };
-  const openSectionDetail = (section: GlobalExpandedSectionKey) => { onOverlay(moduleOverlayTarget(moduleKey, section)); emitGlobalV2UxEvent("global_module_expanded", { moduleKey, state: "overlay", sectionKey: section }); };
   const openEntityDetail = (entityRef: string, title: string) => {
-    const target = entityOverlayTarget(moduleKey, entityRef, title, undefined, moduleKey === "RHYTHM" ? "NARRATIVE" : undefined);
+    const target = entityOverlayTarget(moduleKey, entityRef, title);
     if (target === undefined) return;
     onOverlay(target);
     emitGlobalV2UxEvent("global_entity_opened", { moduleKey });
@@ -1218,7 +1168,7 @@ function GlobalModulePanel({ moduleKey, runtime, certifiedThrough, eager, direct
   const openMethod = () => { onOverlay(methodOverlayTarget(moduleKey)); emitGlobalV2UxEvent("global_methodology_opened", { moduleKey }); };
   return <section ref={nearViewport.ref} id={moduleSlugs[moduleKey]} className={styles.module} data-module={moduleKey} aria-labelledby={`${moduleSlugs[moduleKey]}-title`}>
     <header className={styles.moduleHeader}><div>{presentation.eyebrow.length === 0 ? null : <span className="eyebrow">{presentation.eyebrow}</span>}<h2 id={`${moduleSlugs[moduleKey]}-title`}>{presentation.title}</h2>{presentation.description.length === 0 ? null : <p>{presentation.description}</p>}</div></header>
-    {compact.state.status === "IDLE" || compact.state.status === "LOADING" ? <LoadingCard label={presentation.title} /> : compact.state.status === "ERROR" && compactModel === undefined ? <LocalError retry={compact.retry} /> : compactModel === undefined ? null : <ModuleContent moduleKey={moduleKey} model={compactModel} runtime={runtime} certifiedThrough={certifiedThrough} onDetail={openDetail} onSectionDetail={openSectionDetail} onEntityDetail={openEntityDetail} onMethod={openMethod} />}
+    {compact.state.status === "IDLE" || compact.state.status === "LOADING" ? <LoadingCard label={presentation.title} /> : compact.state.status === "ERROR" && compactModel === undefined ? <LocalError retry={compact.retry} /> : compactModel === undefined ? null : <ModuleContent moduleKey={moduleKey} model={compactModel} runtime={runtime} certifiedThrough={certifiedThrough} onDetail={openDetail} onEntityDetail={openEntityDetail} onMethod={openMethod} />}
   </section>;
 }
 
@@ -1231,6 +1181,10 @@ function GlobalLifeTimelinePanel({ runtime, onOverlay }: { readonly runtime: Glo
       if (target === undefined) return;
       onOverlay(target);
       emitGlobalV2UxEvent("global_entity_opened", { moduleKey: "RHYTHM" });
+    }} />
+    <LifeBackgroundRhythms runtime={runtime} onMethod={() => {
+      onOverlay(methodOverlayTarget("RHYTHM"));
+      emitGlobalV2UxEvent("global_methodology_opened", { moduleKey: "RHYTHM" });
     }} />
   </section>;
 }
