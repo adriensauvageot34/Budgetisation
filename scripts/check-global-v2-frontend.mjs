@@ -144,7 +144,7 @@ const lifeMethodSource = pageSource.slice(pageSource.indexOf("function LifeMetho
 const lifeFormattingSource = pageSource.slice(pageSource.indexOf("const lifeRatioFormatter"), pageSource.indexOf("function formatTrend"));
 const lifeMomentsSource = pageSource.slice(pageSource.indexOf("function LifeMoments"), pageSource.indexOf("function metricBySuffix"));
 const lifeActivityDetailSource = pageSource.slice(pageSource.indexOf("function lifePersonFrequency"), pageSource.indexOf("function LifeMomentDetail"));
-const lifeMomentDetailSource = pageSource.slice(pageSource.indexOf("function LifeMomentDetail"), pageSource.indexOf("function LifeExpandedContent"));
+const lifeMomentDetailSource = pageSource.slice(pageSource.indexOf("function LifeComponentRow"), pageSource.indexOf("function LifeExpandedContent"));
 const lifeExpandedContentSource = pageSource.slice(pageSource.indexOf("function LifeExpandedContent"), pageSource.indexOf("function GlobalExpandedContent"));
 const globalDetailOverlaySource = pageSource.slice(pageSource.indexOf("function GlobalDetailOverlay"), pageSource.indexOf("function ExpandedPreview"));
 const storyOrderSource = pageSource.slice(pageSource.indexOf("const storyOrder"), pageSource.indexOf("const internalNavigation"));
@@ -208,7 +208,7 @@ check(() => assert.match(m2Source, /Nous préférons laisser cette part non attr
 check(() => assert.match(m2CompactSource, /period\.label\.replace\("—", "→"\)/u));
 check(() => assert.doesNotMatch(m2Source, /Ce mois-ci|récemment/u));
 check(() => assert.doesNotMatch(pageSource, /Montants mensuels publiés/u));
-check(() => assert.match(pageSource, /returnToCollection = \(\) => onReplace\(moduleOverlayTarget\(target\.moduleKey, returnSection\)\)[\s\S]*backAction:[\s\S]*returnToCollection/u));
+check(() => assert.match(pageSource, /returnToCollection = \(\) => onReplace\(moduleOverlayTarget\(target\.moduleKey, returnSection\)\)[\s\S]*backAction:[\s\S]*goBack/u));
 check(() => assert.match(m2Source, /model\.destinations/u));
 check(() => assert.match(m2Source, /destination\.kind === "OPERATIONS"[\s\S]*destination\.resource === "operations_browse"/u));
 check(() => assert.doesNotMatch(m2DetailSource, /\["detail:active-months", "Présent"\]/u));
@@ -305,14 +305,15 @@ check(() => assert.match(lifeSource, /delta < 0 \? "en dessous" : "au-dessus"/u)
 check(() => assert.match(lifeSource, /médiane de [\s\S]* moments comparables/u));
 check(() => assert.doesNotMatch(lifeSource, /médiane des peers|famille de comparaison|occurrences renseignées|historique retenu/iu));
 check(() => assert.doesNotMatch(lifeSource, /coûte habituellement|intervalle de confiance|fourchette future|fourchette habituelle/u));
-check(() => assert.match(lifeMomentDetailSource, /Dépenses reliées à ce moment[\s\S]*Toutes nos dépenses[\s\S]*Ce total comprend toutes les dépenses enregistrées pendant ces dates, qu’elles soient liées ou non à ce moment\./u));
+check(() => assert.match(lifeMomentDetailSource, /Dépenses reliées à ce moment[\s\S]*LifeMomentComposition[\s\S]*Comparé à des moments similaires[\s\S]*Contexte de période/u));
 check(() => assert.match(lifeMomentDetailSource, /contre [\s\S]* en médiane parmi [\s\S]* moments comparables/u));
 check(() => assert.match(lifeMomentDetailSource, /Pas assez de moments comparables pour situer celui-ci\./u));
 check(() => assert.doesNotMatch(lifeMomentDetailSource, /\bdont\b|ratio|pourcentage|stacked|donut|part-of-whole/iu));
 check(() => assert.doesNotMatch(lifeSource, /\?\? 0|0 €/u));
-check(() => assert.match(lifeSource, /hasHumanLifeComponentLabel[\s\S]*composition = [^;]*hasHumanLifeComponentLabel/u));
-check(() => assert.doesNotMatch(lifeMomentDetailSource, />Composante causale</u));
+check(() => assert.match(lifeMomentDetailSource, /model\.momentComponentRows \?\? \[\][\s\S]*model\.componentGroups \?\? \[\]/u));
+check(() => assert.doesNotMatch(lifeMomentDetailSource, /model\.rows\.slice|Composante causale/u));
 check(() => assert.match(lifeFormattingSource, /lifeRatioFormatter[\s\S]*maximumFractionDigits: 0/u));
+check(() => assert.match(lifeFormattingSource, /lifeMoneyFormatter[\s\S]*maximumFractionDigits: 2/u));
 check(() => assert.match(lifeFormattingSource, /shortMonths[\s\S]*longMonths[\s\S]*du [\s\S]* au [\s\S]* – /u));
 check(() => assert.match(lifeMomentsSource, /lifeMomentIdentity\(row\.displayValue, false\)/u));
 check(() => assert.match(lifeMomentDetailSource, /lifeMomentType\(identity\?\.displayValue\)[\s\S]*lifeMomentDates\(identity\?\.displayValue, true\)/u));
@@ -333,9 +334,14 @@ check(() => assert.equal(lifeBreakdown.data.rows.every((row) => row.labelKey.len
 check(() => assert.equal(lifeComparisons.data.rows[0]?.momentComparison?.comparisonTier, "SAME_FAMILY"));
 const comparedMoment = await transport({ resource: "analysis_global_moment_experience_detail", params: { entityRef: "moment:summer" } });
 const unpairedMoment = await transport({ resource: "analysis_global_moment_experience_detail", params: { entityRef: "moment:concert" } });
+const homeMoment = await transport({ resource: "analysis_global_moment_experience_detail", params: { entityRef: "moment:home" } });
 const householdActivity = await transport({ resource: "analysis_global_routine_detail", params: { entityRef: "household-activity:sport" } });
 const adrienActivity = await transport({ resource: "analysis_global_routine_detail", params: { entityRef: "person-activity:adrien:sport" } });
 const manonActivity = await transport({ resource: "analysis_global_routine_detail", params: { entityRef: "person-activity:manon:sport" } });
+for (const result of [comparedMoment, unpairedMoment, homeMoment]) check(() => {
+  const parsed = query.globalExpandedReadModelSchema.safeParse(result.data);
+  assert.equal(parsed.success, true, parsed.success ? undefined : JSON.stringify(parsed.issues));
+});
 check(() => assert.equal(comparedMoment.data.rows[0]?.labelKey, "Nos vacances d’été"));
 check(() => assert.ok(comparedMoment.data.metrics.some(({ metricId }) => metricId.endsWith(":causal-cost")) && comparedMoment.data.metrics.some(({ metricId }) => metricId.endsWith(":spent-during"))));
 const comparedMomentCausal = comparedMoment.data.metrics.find(({ metricId }) => metricId.endsWith(":causal-cost"))?.typedMeasure?.value;
@@ -343,6 +349,15 @@ const comparedMomentDuring = comparedMoment.data.metrics.find(({ metricId }) => 
 check(() => assert.equal(Number(comparedMomentCausal) > Number(comparedMomentDuring), true));
 check(() => assert.equal(comparedMoment.data.rows[0]?.momentComparison?.comparisonTier, "SAME_FAMILY"));
 check(() => assert.equal(unpairedMoment.data.rows[0]?.momentComparison, undefined));
+check(() => assert.equal(comparedMoment.data.momentComponentRows?.length, 38));
+check(() => assert.equal(comparedMoment.data.componentGroups?.length, 3));
+check(() => assert.equal(comparedMoment.data.peerObservations?.length, 4));
+check(() => assert.equal(homeMoment.data.momentComponentRows?.length, 6));
+check(() => assert.equal(homeMoment.data.peerObservations?.length, 6));
+check(() => assert.equal(unpairedMoment.data.momentComponentRows?.length, 3));
+check(() => assert.equal(unpairedMoment.data.metrics.find(({ metricId }) => metricId.endsWith(":causal-cost"))?.typedMeasure?.value, "159.4"));
+check(() => assert.equal([comparedMoment, homeMoment].flatMap(({ data }) => data.peerObservations ?? []).every(({ detailRef }) => detailRef.startsWith("global-query:analysis_global_moment_experience_detail:")), true));
+check(() => assert.equal([comparedMoment, unpairedMoment, homeMoment].every(({ data }) => data.spentDuringContext?.relationToCausalCost === "INDEPENDENT_SCOPE"), true));
 for (const result of [householdActivity, adrienActivity, manonActivity]) check(() => assert.equal(query.globalExpandedReadModelSchema.safeParse(result.data).success, true));
 check(() => assert.equal(householdActivity.data.metrics.find(({ metricId }) => metricId.endsWith(":median"))?.typedMeasure?.value, "18"));
 check(() => assert.deepEqual(adrienActivity.data.metrics.filter(({ metricId }) => metricId.endsWith(":occurrences") || metricId.endsWith(":cadence")).map(({ typedMeasure }) => typedMeasure?.value), ["8", "7"]));
@@ -400,6 +415,10 @@ const rangeCase = (overrides = {}) => comparisonRange.buildComparisonRangeModel(
   supportCount: countMeasure(7),
   subjectLabel: "Cette soirée",
   comparisonLabel: "soirées comparables",
+  peers: [
+    { peerRef: "moment:peer-a", canonicalName: "Soirée A", startDate: "2026-01-10", endDate: "2026-01-10", typeKey: "soiree", typeLabel: "Soirée", familyKey: "leisure", causalCost: { status: "KNOWN", value: moneyMeasure(31.5) }, componentPreview: [], detailRef: "global-query:analysis_global_moment_experience_detail:fixture:a" },
+    { peerRef: "moment:peer-b", canonicalName: "Soirée B", startDate: "2026-02-10", endDate: "2026-02-10", typeKey: "soiree", typeLabel: "Soirée", familyKey: "leisure", causalCost: { status: "KNOWN", value: moneyMeasure(44.25) }, componentPreview: [], detailRef: "global-query:analysis_global_moment_experience_detail:fixture:b" },
+  ],
   ...overrides,
 });
 const observedAboveMedian = rangeCase();
@@ -423,10 +442,14 @@ check(() => assert.equal(medianOnly.mode, "MEDIAN_ONLY"));
 check(() => assert.equal(unknownObserved, undefined));
 check(() => assert.doesNotMatch(comparisonRangeModelSource, /\?\?\s*0|\|\|\s*0/u));
 check(() => assert.equal(observedAboveMedian.supportCount, 7));
+check(() => assert.deepEqual(observedAboveMedian.peers.map(({ value }) => value), [31.5, 44.25]));
+check(() => assert.equal(observedAboveMedian.peers.every(({ position }) => position >= 0 && position <= 100), true));
 check(() => assert.match(observedAboveMedian.accessibleLabel, /Cette soirée[\s\S]*82\s*€[\s\S]*médiane[\s\S]*33\s*€[\s\S]*7 soirées comparables/u));
-check(() => assert.match(comparisonRangeSource, /role="img"[\s\S]*aria-label=\{model\.accessibleLabel\}/u));
+check(() => assert.match(comparisonRangeSource, /role="group"[\s\S]*aria-label=\{model\.accessibleLabel\}/u));
 check(() => assert.match(comparisonRangeSource, /if \(model === undefined\) return null/u));
-check(() => assert.match(comparisonRangeSource, /comparisonRangeMedianMarker[\s\S]*comparisonRangeObservedMarker/u));
+check(() => assert.match(comparisonRangeSource, /comparisonRangeMedianMarker[\s\S]*comparisonRangePeerMarker[\s\S]*comparisonRangeObservedMarker/u));
+check(() => assert.match(comparisonRangeSource, /aria-pressed[\s\S]*onPointerEnter[\s\S]*onFocus[\s\S]*Ouvrir ce moment/u));
+check(() => assert.match(comparisonRangeSource, /minimumFractionDigits: 0[\s\S]*maximumFractionDigits: 2/u));
 check(() => assert.doesNotMatch(comparisonRangeSource, /boxplot|whisker|intervalle de confiance|percentile|score/iu));
 check(() => assert.match(lifePrimarySource, /rhythmHeroComparison[\s\S]*<ComparisonRange/u));
 check(() => assert.match(lifeMomentDetailSource, /<ComparisonRange[\s\S]*lifeComparisonDelta/u));
@@ -475,11 +498,13 @@ check(() => assert.match(lifeActivityDetailSource, /Coût connu pour [\s\S]*acti
 check(() => assert.match(lifeActivityDetailSource, /LifePersonRhythm[\s\S]*:occurrences[\s\S]*:cadence[\s\S]*personRows\.map[\s\S]*<LifePersonRhythm/u));
 check(() => assert.match(lifeActivityDetailSource, /Aucun montant n’est attribué à une personne\.[\s\S]*Chaque habitude est à lire séparément : ces montants ne forment pas un total\./u));
 check(() => assert.doesNotMatch(lifeActivityDetailSource, />Occurrences renseignées<|>Intervalle médian<|>Support<|>PersonDay<|>Owner<|>Scope</iu));
-check(() => assert.match(lifeMomentDetailSource, /lifeMomentType[\s\S]*lifeMomentDates[\s\S]*Dépenses reliées à ce moment[\s\S]*Toutes nos dépenses/u));
+check(() => assert.match(lifeMomentDetailSource, /Ce qui compose ce coût[\s\S]*lifeMomentType[\s\S]*lifeMomentDates[\s\S]*Dépenses reliées à ce moment[\s\S]*LifeMomentComposition[\s\S]*Comparé à des moments similaires[\s\S]*Contexte de période/u));
 check(() => assert.match(lifeMomentDetailSource, /Ce montant regroupe uniquement les dépenses reliées à ce moment\./u));
-check(() => assert.match(lifeMomentDetailSource, /Ces deux montants correspondent à deux périmètres différents\./u));
+check(() => assert.match(lifeMomentDetailSource, /indépendamment des dépenses reliées au moment\./u));
 check(() => assert.match(lifeMomentDetailSource, /<ComparisonRange/u));
 check(() => assert.match(lifeMomentDetailSource, /Pas assez de moments comparables pour situer celui-ci\./u));
+check(() => assert.match(lifeMomentDetailSource, /peerCount >= 3[\s\S]*peerCount < 5[\s\S]*Peu de comparables/u));
+check(() => assert.match(lifeMomentDetailSource, /peers=\{model\.peerObservations\}[\s\S]*onOpenPeer=\{onOpenPeer\}/u));
 check(() => assert.doesNotMatch(lifeMomentDetailSource, />Composante causale|\bdont\b|représente [^<]*%|stacked|donut|part-of-whole/iu));
 check(() => assert.match(overlaySource, /document\.addEventListener\("keydown", closeOnEscape, true\)/u));
 
@@ -535,7 +560,11 @@ check(() => assert.match(cssSource, /@media \(max-width: 767px\)[\s\S]*\.rhythmD
 check(() => assert.match(cssSource, /\.lifeTimelineMarker\s*\{[^}]*width:\s*11px[^}]*height:\s*11px/u));
 check(() => assert.doesNotMatch(cssSource.slice(cssSource.indexOf(".lifeTimelineMarker"), cssSource.indexOf(".lifeComparisonGrid")), /amount|nth-child|data-/iu));
 check(() => assert.match(globalDetailOverlaySource, /returnScrollTop[\s\S]*content\.scrollTop = returnScrollTop\.current[\s\S]*row\.focus\(\{ preventScroll: true \}\)/u));
-check(() => assert.match(globalDetailOverlaySource, /closeDetail = rhythmReturnSection === undefined \? onClose : returnToCollection/u));
+check(() => assert.match(globalDetailOverlaySource, /detailTrail\.length > 0 \|\| rhythmReturnSection === undefined \? onClose : returnToCollection/u));
+check(() => assert.match(globalDetailOverlaySource, /setDetailTrail\(\(trail\) => \[\.\.\.trail, \{ target, scrollTop: content\?\.scrollTop, peerRef: peer\.peerRef \}\]\)/u));
+check(() => assert.match(globalDetailOverlaySource, /detailTrail\.at\(-1\)[\s\S]*trail\.slice\(0, -1\)[\s\S]*onReplace\(previous\.target\)/u));
+check(() => assert.match(globalDetailOverlaySource, /returnFocusPeerRef[\s\S]*returnPeerScrollTop[\s\S]*peerPoint\.focus\(\{ preventScroll: true \}\)/u));
+check(() => assert.match(globalDetailOverlaySource, /peer\.detailRef\.startsWith\("global-query:analysis_global_moment_experience_detail:"\)[\s\S]*queryDetailRef: peer\.detailRef/u));
 check(() => assert.equal(rhythmDetailRouting.rhythmDetailReturnSection(rhythmDetailRouting.resolveRhythmDetailContext("household-activity:sport", "HABITS_COLLECTION")), "PATTERNS"));
 check(() => assert.equal(rhythmDetailRouting.rhythmDetailReturnSection(rhythmDetailRouting.resolveRhythmDetailContext("moment:summer", "MOMENTS_COLLECTION")), "BREAKDOWN"));
 check(() => assert.equal(rhythmDetailRouting.rhythmDetailReturnSection(rhythmDetailRouting.resolveRhythmDetailContext("moment:summer", "NARRATIVE")), undefined));
@@ -550,8 +579,8 @@ const visibleRhythmTextNodes = [...visibleRhythmSource.matchAll(/>([^<>{}\r\n]+)
 const exposedBackendVocabulary = /\bpeers?\b|\bfamily\b|famille de comparaison|comparisonTier|comparisonProfileId|Composante causale|causalMomentCost|spentDuring|coverageRatio|numerator|denominator|\bsupport\b|\bowner\b|readmodel|snapshot|analytics revision|entityRef|\bscope\b|phenomenon|inputHash|methodVersion|PersonDay|UNKNOWN|NOT_EVALUATED|AUTHORITY_GATED/iu;
 check(() => assert.doesNotMatch(visibleRhythmTextNodes, exposedBackendVocabulary));
 check(() => assert.doesNotMatch(visibleRhythmSource, />[^<>{}]*\d{4}-\d{2}-\d{2}[^<>{}]*</u));
-check(() => assert.match(lifeFormattingSource, /Intl\.NumberFormat\("fr-FR"[\s\S]*maximumFractionDigits: 0/u));
-check(() => assert.doesNotMatch(lifeFormattingSource, /en-US|maximumFractionDigits:\s*2/u));
+check(() => assert.match(lifeFormattingSource, /Intl\.NumberFormat\("fr-FR"[\s\S]*lifeMoneyFormatter[\s\S]*maximumFractionDigits: 2/u));
+check(() => assert.doesNotMatch(lifeFormattingSource, /en-US/u));
 check(() => assert.match(lifeMethodSource, /Coût connu[\s\S]*Comparaisons[\s\S]*Foyer et personnes[\s\S]*Valeur non disponible/u));
 check(() => assert.doesNotMatch(lifeMethodSource, /HumanRows|entityRef|displayValue/u));
 check(() => assert.match(pageSource, /sectionKey === "METHODOLOGY" && model\.moduleKey === "RHYTHM"\) return <LifeMethod/u));
@@ -559,7 +588,7 @@ check(() => assert.doesNotMatch(lifeMomentsSource, /spentDuring|peerMedian|\bq1\
 const lifePersonRhythmSource = lifeActivityDetailSource.slice(lifeActivityDetailSource.indexOf("function LifePersonRhythm"), lifeActivityDetailSource.indexOf("function LifeActivityDetail"));
 check(() => assert.doesNotMatch(lifePersonRhythmSource, /formatMoney|MONEY|€|causal/u));
 check(() => assert.doesNotMatch(lifeMomentDetailSource, /\bdont\b|ratio|pourcentage|stacked|donut|part-of-whole/iu));
-check(() => assert.match(lifeMomentDetailSource, /causalAmount === undefined \|\| spentDuringAmount === undefined \? null[\s\S]*deux périmètres différents/u));
+check(() => assert.match(lifeMomentDetailSource, /<details className=\{styles\.lifePeriodContext\}>[\s\S]*Contexte de période/u));
 check(() => assert.doesNotMatch(rhythmNarrativeSource, /\.sort\(|\.reduce\(|parseFloat|numericDisplay|Math\.|median|coverageRatio|cadence/u));
 check(() => assert.doesNotMatch(lifeMomentsSource, /\.sort\(|editorialRank|ranking|Math\.(?:min|max)/u));
 check(() => assert.equal(narrativeCaseA.primary === undefined ? 0 : 1, 1));

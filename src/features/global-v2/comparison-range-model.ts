@@ -1,4 +1,4 @@
-import type { GlobalTypedMeasure } from "@/query-api/global-v2";
+import type { GlobalMomentPeerObservation, GlobalTypedMeasure } from "@/query-api/global-v2";
 
 const DISPLAY_PADDING_PERCENT = 7;
 
@@ -10,6 +10,14 @@ export type ComparisonRangeInput = {
   readonly supportCount?: GlobalTypedMeasure | undefined;
   readonly subjectLabel?: string | undefined;
   readonly comparisonLabel?: string | undefined;
+  readonly peers?: readonly GlobalMomentPeerObservation[] | undefined;
+};
+
+export type ComparisonRangePeerModel = {
+  readonly observation: GlobalMomentPeerObservation;
+  readonly value: number;
+  readonly position: number;
+  readonly lane: -1 | 0 | 1;
 };
 
 export type ComparisonRangeModel = {
@@ -23,13 +31,15 @@ export type ComparisonRangeModel = {
   readonly medianPosition: number;
   readonly lowerPosition?: number;
   readonly upperPosition?: number;
+  readonly peers: readonly ComparisonRangePeerModel[];
   readonly accessibleLabel: string;
 };
 
 const moneyFormatter = new Intl.NumberFormat("fr-FR", {
   style: "currency",
   currency: "EUR",
-  maximumFractionDigits: 0,
+  minimumFractionDigits: 0,
+  maximumFractionDigits: 2,
 });
 
 const integerFormatter = new Intl.NumberFormat("fr-FR", { maximumFractionDigits: 0 });
@@ -64,9 +74,20 @@ export function buildComparisonRangeModel(input: ComparisonRangeInput): Comparis
   const lower = hasReferenceRange ? candidateLower : undefined;
   const upper = hasReferenceRange ? candidateUpper : undefined;
   const supportCount = countValue(input.supportCount);
-  const domainValues = lower === undefined || upper === undefined ? [observed, median] : [observed, median, lower, upper];
+  const peerValues = (input.peers ?? []).flatMap((observation) => {
+    if (observation.causalCost.status !== "KNOWN" && observation.causalCost.status !== "PARTIAL") return [];
+    const value = monetaryValue(observation.causalCost.value, input.observed.unit);
+    return value === undefined ? [] : [{ observation, value }];
+  });
+  const domainValues = lower === undefined || upper === undefined ? [observed, median, ...peerValues.map(({ value }) => value)] : [observed, median, lower, upper, ...peerValues.map(({ value }) => value)];
   const minimum = Math.min(...domainValues);
   const maximum = Math.max(...domainValues);
+  const positionedPeers = peerValues.map(({ observation, value }, index) => ({
+    observation,
+    value,
+    position: displayPosition(value, minimum, maximum),
+    lane: [-1, 0, 1][index % 3] as -1 | 0 | 1,
+  }));
   const subjectLabel = input.subjectLabel?.trim() || "Ce moment";
   const comparisonLabel = input.comparisonLabel?.trim() || "moments comparables";
   const supportCopy = supportCount === undefined ? "" : ` parmi ${integerFormatter.format(supportCount)} ${comparisonLabel}`;
@@ -86,6 +107,7 @@ export function buildComparisonRangeModel(input: ComparisonRangeInput): Comparis
       lowerPosition: displayPosition(lower, minimum, maximum),
       upperPosition: displayPosition(upper, minimum, maximum),
     }),
+    peers: positionedPeers,
     accessibleLabel: `${subjectLabel} : ${moneyFormatter.format(observed)}, contre une médiane de ${moneyFormatter.format(median)}${supportCopy}.${rangeCopy}`,
   };
 }

@@ -203,18 +203,29 @@
 .lifeHeroEvidence { min-height: 1.5em; }
 .lifeHeroEvidence p { max-width: 690px; margin: 0; color: var(--color-muted); font-size: clamp(17px, 2.3vw, 22px); line-height: 1.45; }
 .comparisonRange { display: grid; width: 100%; max-width: 720px; gap: 9px; margin: 8px 0 4px; }
-.comparisonRangePlot { position: relative; width: 100%; min-width: 0; height: 34px; }
+.comparisonRangePlot { position: relative; width: 100%; min-width: 0; height: 54px; }
 .comparisonRangeTrack, .comparisonRangeReference, .comparisonRangeMedianMarker, .comparisonRangeObservedMarker { position: absolute; top: 50%; }
 .comparisonRangeTrack { right: 0; left: 0; height: 2px; border-radius: 999px; background: #b8b4aa; transform: translateY(-50%); }
 .comparisonRangeReference { min-width: 3px; height: 10px; border-radius: 999px; background: #9aa99f; transform: translateY(-50%); }
 .comparisonRangeMedianMarker { width: 3px; height: 27px; border-radius: 999px; background: var(--color-ink); transform: translate(-50%, -50%); }
-.comparisonRangeObservedMarker { width: 14px; height: 14px; border: 2px solid #f8f4eb; background: var(--color-primary-deep); box-shadow: 0 0 0 1px var(--color-primary-deep); transform: translate(-50%, -50%) rotate(45deg); }
+.comparisonRangeObservedMarker { z-index: 3; width: 14px; height: 14px; border: 2px solid #f8f4eb; background: var(--color-primary-deep); box-shadow: 0 0 0 1px var(--color-primary-deep); transform: translate(-50%, -50%) rotate(45deg); }
+.comparisonRangePeerMarker { position: absolute; z-index: 2; width: 12px; height: 12px; border: 2px solid var(--color-surface); border-radius: 50%; padding: 0; background: #72877a; box-shadow: 0 0 0 1px #72877a; transform: translate(-50%, -50%); cursor: pointer; }
+.comparisonRangePeerMarker:hover, .comparisonRangePeerMarker:focus-visible, .comparisonRangePeerMarker[aria-pressed="true"] { background: var(--color-primary-deep); box-shadow: 0 0 0 3px rgb(46 83 69 / .2); }
+.comparisonRangePeerMarker:focus-visible { outline: 2px solid var(--color-primary); outline-offset: 3px; }
 .comparisonRangeLegend { display: flex; flex-wrap: wrap; gap: 7px 18px; color: var(--color-muted); font-size: 12px; line-height: 1.45; }
 .comparisonRangeLegend > span { display: inline-flex; align-items: center; min-width: 0; gap: 7px; }
 .comparisonRangeReferenceCopy { flex-basis: 100%; }
 .comparisonRangeLegend i { display: inline-block; flex: 0 0 auto; }
 .comparisonRangeMedianKey { width: 3px; height: 15px; border-radius: 999px; background: var(--color-ink); }
 .comparisonRangeObservedKey { width: 9px; height: 9px; border: 1px solid var(--color-primary-deep); background: var(--color-primary-deep); transform: rotate(45deg); }
+.comparisonRangeHint { margin: 0; color: var(--color-muted); font-size: 12px; }
+.comparisonRangePreview { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 12px; border-top: 1px solid var(--color-border); padding-top: 11px; }
+.comparisonRangePreview > div { display: grid; gap: 3px; }
+.comparisonRangePreview span { color: var(--color-muted); font-size: 12px; }
+.comparisonRangePreview b { font-size: 15px; }
+.comparisonRangePreview button { border: 0; padding: 5px 0; background: transparent; color: var(--color-primary-deep); font-weight: 800; cursor: pointer; }
+.comparisonRangePreview button:hover, .comparisonRangePreview button:focus-visible { color: var(--color-primary); }
+.comparisonRangePreview button:focus-visible { border-radius: 4px; outline: 2px solid var(--color-primary); outline-offset: 3px; }
 .lifeNarrativeList { display: grid; max-width: 960px; border-block: 1px solid var(--color-border); }
 .lifeNarrativeList > article, .lifeNarrativeList > button { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; width: 100%; border: 0; border-bottom: 1px solid var(--color-border); padding: 18px 4px; background: transparent; color: inherit; font: inherit; text-align: left; }
 .lifeNarrativeList > button { cursor: pointer; }
@@ -300,11 +311,31 @@
 .lifeDetailMetrics article, .lifeContextRows article, .lifeComposition article { display: grid; gap: 5px; border: 1px solid var(--color-border); border-radius: 11px; padding: 13px; }
 .lifeDetailMetrics span, .lifeContextRows span { color: var(--color-muted); font-size: 12px; }
 .lifeContextRows, .lifeComposition { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 9px; }
+.lifeComponentGroups { display: grid; gap: 8px; }
+.lifeComponentGroups > details { border: 1px solid var(--color-border); border-radius: 11px; background: var(--color-surface); }
+.lifeComponentGroups summary { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; align-items: center; gap: 13px; padding: 13px; cursor: pointer; list-style: none; }
+.lifeComponentGroups summary::-webkit-details-marker { display: none; }
+.lifeComponentGroups summary > span { display: grid; gap: 3px; }
+.lifeComponentGroups summary small { color: var(--color-muted); font-size: 12px; font-weight: 500; }
+.lifeComponentGroups summary svg { color: var(--color-muted); transition: transform 160ms ease; }
+.lifeComponentGroups details[open] summary svg { transform: rotate(90deg); }
+.lifeComponentGroups details > div { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; border-top: 1px solid var(--color-border); padding: 11px; }
+.lifeComponentGroups article { display: grid; gap: 4px; border-radius: 8px; padding: 10px; background: var(--color-surface-soft); }
+.lifeComponentGroups article span, .lifeComposition article span { color: var(--color-muted); font-size: 12px; }
 .lifeComparisonDetail { display: grid; gap: 12px; border-radius: 13px; padding: 16px; background: var(--color-surface-soft); }
+.lifeComparatorSupport { justify-self: start; border-radius: 999px; padding: 5px 9px; background: var(--ui-color-semantic-warning-soft); color: var(--ui-color-semantic-warning) !important; font-size: 12px; font-weight: 800; }
 .lifeComparisonDetail dl { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 9px; margin: 0; }
 .lifeComparisonDetail dl div { display: grid; gap: 4px; border-top: 1px solid var(--color-border); padding-top: 9px; }
 .lifeComparisonDetail dt { color: var(--color-muted); font-size: 12px; }
 .lifeComparisonDetail dd { margin: 0; font-weight: 800; }
+.lifePeriodContext { border-top: 1px solid var(--color-border); padding-top: 14px; }
+.lifePeriodContext > summary { display: flex; align-items: center; justify-content: space-between; gap: 12px; color: var(--color-muted); font-weight: 780; cursor: pointer; list-style: none; }
+.lifePeriodContext > summary::-webkit-details-marker { display: none; }
+.lifePeriodContext > summary svg { transition: transform 160ms ease; }
+.lifePeriodContext[open] > summary svg { transform: rotate(90deg); }
+.lifePeriodContext > div { display: grid; gap: 6px; margin-top: 11px; border-radius: 11px; padding: 13px; background: var(--color-surface-soft); }
+.lifePeriodContext > div span, .lifePeriodContext > div p { margin: 0; color: var(--color-muted); font-size: 13px; line-height: 1.5; }
+.lifePeriodContext > div strong { font-size: 19px; }
 .m2Period { margin: 0 0 2px; color: var(--color-muted); font-size: 13px; font-weight: 750; line-height: 1.4; }
 .m2Concentration { max-width: 760px; margin: 0; color: var(--color-muted); font-size: clamp(16px, 2vw, 20px); line-height: 1.45; }
 .m2Concentration strong { color: var(--color-ink); }
@@ -495,12 +526,14 @@
   .m2ReferenceCard { grid-template-columns: 1fr; }
   .m2ReferenceCard dl div:first-child { border-left: 0; padding-left: 0; }
   .m2MonetarySeries :global(.ui-chart-content), .m2MonetarySeries :global(.ui-chart-renderer) { min-height: 240px; height: 240px; }
-  .lifeInsights, .lifeDetailMetrics, .lifeContextRows, .lifeComposition { grid-template-columns: 1fr; }
+  .lifeInsights, .lifeDetailMetrics, .lifeContextRows, .lifeComposition, .lifeComponentGroups details > div { grid-template-columns: 1fr; }
   .lifeActivityGrid > button, .lifeActivityGrid > article { grid-template-columns: 1fr; grid-template-areas: "name" "description" "amount" "coverage"; }
   .lifeActivityGrid > button > strong, .lifeActivityGrid > article > strong { justify-self: start; margin-top: 4px; }
   .lifeHero { border-radius: 18px; padding: 22px; }
   .comparisonRangeLegend { display: grid; grid-template-columns: 1fr; gap: 6px; }
   .comparisonRangeReferenceCopy { grid-row: 3; }
+  .comparisonRangePreview { grid-template-columns: 1fr; }
+  .comparisonRangePreview button { justify-self: start; }
   .lifeNarrativeList > article > span, .lifeNarrativeList > button > span { grid-template-columns: 1fr; gap: 6px; }
   .lifeNarrativeList b { justify-self: start; }
   .lifeComparisonDetail dl { grid-template-columns: 1fr; }

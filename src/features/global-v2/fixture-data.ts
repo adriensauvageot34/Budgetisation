@@ -8,6 +8,9 @@ import type {
   GlobalExpandedSectionKey,
   GlobalInitialReadModel,
   GlobalLifeTimelineReadModel,
+  GlobalMomentComponentGroup,
+  GlobalMomentComponentRow,
+  GlobalMomentPeerObservation,
   GlobalModuleCompactReadModel,
   GlobalPrimaryModuleKey,
   GlobalReadModelPublicationMeta,
@@ -491,23 +494,39 @@ function lifeRoutineDetailFixture(entityRef: string): GlobalExpandedReadModel {
 }
 
 function lifeMomentDetailFixture(entityRef: string): GlobalExpandedReadModel {
-  const compared = entityRef === "moment:summer";
-  const title = compared ? "Nos vacances d’été" : "Le concert de juin";
-  const typeAndDates = compared ? "Voyage · 2025-08-02 → 2025-08-16" : "Sortie culturelle · 2026-06-14";
-  const causal = compared ? "1240" : "186";
-  const spent = compared ? "1160" : "264";
-  const comparison = compared ? { comparisonTier: "SAME_FAMILY" as const, comparisonProfileId: "family:travel", peerCount: { kind: "COUNT" as const, value: "6", unit: "moment" }, subjectCost: { kind: "MONEY" as const, value: "1240", unit: "EUR" }, peerMedian: { kind: "MONEY" as const, value: "910", unit: "EUR" }, q1: { kind: "MONEY" as const, value: "760", unit: "EUR" }, q3: { kind: "MONEY" as const, value: "1080", unit: "EUR" }, mad: { kind: "MONEY" as const, value: "130", unit: "EUR" }, absoluteDelta: { kind: "MONEY" as const, value: "330", unit: "EUR" }, relativeDelta: { kind: "DECIMAL" as const, value: "0.3626", unit: "ratio" } } : undefined;
+  const isSummer = entityRef === "moment:summer";
+  const isHome = entityRef === "moment:home";
+  const title = isSummer ? "Nos vacances d’été" : isHome ? "Aménagement du salon 2025" : "Concert Orelsan – Sud de France Arena";
+  const typeAndDates = isSummer ? "Voyage · 2025-08-02 → 2025-08-16" : isHome ? "Projet maison · 2025-10-03 → 2025-11-10" : "Sortie culturelle · 2026-06-14";
+  const causal = isSummer ? "1253.9" : isHome ? "2298.96" : "159.4";
+  const spent = isSummer ? "1160" : isHome ? "4759.36" : "264";
+  const peerCount = isSummer ? 4 : isHome ? 6 : 0;
+  const comparison = peerCount === 0 ? undefined : { comparisonTier: "SAME_FAMILY" as const, comparisonProfileId: isSummer ? "family:travel" : "family:home", peerCount: { kind: "COUNT" as const, value: String(peerCount), unit: "moment" }, subjectCost: { kind: "MONEY" as const, value: causal, unit: "EUR" }, peerMedian: { kind: "MONEY" as const, value: isSummer ? "910" : "860.5", unit: "EUR" }, q1: { kind: "MONEY" as const, value: isSummer ? "760" : "520", unit: "EUR" }, q3: { kind: "MONEY" as const, value: isSummer ? "1080" : "1220.25", unit: "EUR" }, mad: { kind: "MONEY" as const, value: "130", unit: "EUR" }, absoluteDelta: { kind: "MONEY" as const, value: isSummer ? "343.9" : "1438.46", unit: "EUR" }, relativeDelta: { kind: "DECIMAL" as const, value: isSummer ? "0.3779" : "1.6717", unit: "ratio" } };
+  const money = (value: string) => ({ kind: "MONEY" as const, value, unit: "EUR" });
+  const component = (suffix: string, primaryLabel: string, value: string, compositionGroup?: string): GlobalMomentComponentRow => ({ componentRef: `economic-component:${entityRef}:${suffix}`, primaryLabel, labelSource: "PRECISE_DESCRIPTION", amount: money(value), sourceKind: "Operation_parent", ...(compositionGroup === undefined ? {} : { compositionGroup }), evidenceRefs: [`evidence:life:${entityRef}:${suffix}`] });
+  const summerComponents = Array.from({ length: 38 }, (_, index) => component(`minorque-${String(index + 1).padStart(2, "0")}`, `Dépense Minorque ${index + 1}`, index === 37 ? "143.9" : "30", index < 12 ? "TRANSPORT" : index < 24 ? "HEBERGEMENT" : "SUR_PLACE"));
+  const homeComponents = [component("tv", "TV", "1180.56", "EQUIPEMENT"), component("sofa", "Canapé", "700", "MOBILIER"), component("storage", "Meuble TV + buffet", "265.97", "MOBILIER"), component("table", "Table basse", "119.99", "MOBILIER"), component("decor-1", "Décoration", "17.47", "DECORATION"), component("decor-2", "Décoration", "14.97", "DECORATION")];
+  const concertComponents = [component("ticket", "Billet concert", "135"), component("caterer", "Traiteur", "17"), component("tacos", "Tacos", "7.4")];
+  const momentComponentRows = isSummer ? summerComponents : isHome ? homeComponents : concertComponents;
+  const componentGroups: readonly GlobalMomentComponentGroup[] = isSummer ? [
+    { groupKey: "TRANSPORT", groupLabel: "Transport", amount: money("360"), componentRefs: summerComponents.slice(0, 12).map(({ componentRef }) => componentRef), count: 12 },
+    { groupKey: "HEBERGEMENT", groupLabel: "Hébergement", amount: money("360"), componentRefs: summerComponents.slice(12, 24).map(({ componentRef }) => componentRef), count: 12 },
+    { groupKey: "SUR_PLACE", groupLabel: "Sur place", amount: money("533.9"), componentRefs: summerComponents.slice(24).map(({ componentRef }) => componentRef), count: 14 },
+  ] : isHome ? [
+    { groupKey: "EQUIPEMENT", groupLabel: "Équipement", amount: money("1180.56"), componentRefs: [homeComponents[0]!.componentRef], count: 1 },
+    { groupKey: "MOBILIER", groupLabel: "Mobilier", amount: money("1085.96"), componentRefs: homeComponents.slice(1, 4).map(({ componentRef }) => componentRef), count: 3 },
+    { groupKey: "DECORATION", groupLabel: "Décoration", amount: money("32.44"), componentRefs: homeComponents.slice(4).map(({ componentRef }) => componentRef), count: 2 },
+  ] : [];
+  const peerObservations: readonly GlobalMomentPeerObservation[] = Array.from({ length: peerCount }, (_, index) => ({ peerRef: `moment:peer-${index + 1}`, canonicalName: `Moment comparable ${index + 1}`, startDate: `2025-${String(index + 1).padStart(2, "0")}-10`, endDate: `2025-${String(index + 1).padStart(2, "0")}-10`, typeKey: isSummer ? "voyage" : "projet-maison", typeLabel: isSummer ? "Voyage" : "Projet maison", familyKey: isSummer ? "travel" : "home", causalCost: { status: "KNOWN", value: money(String(700 + index * 110.25)) }, componentPreview: [], detailRef: `global-query:analysis_global_moment_experience_detail:fixture:peer-${index + 1}` }));
   const metrics = [
     lifeDetailMetric(`${entityRef}:causal-cost`, "Coût directement relié", "MONEY", causal, "EUR", `${causal} €`),
     lifeDetailMetric(`${entityRef}:spent-during`, "Dépenses pendant la période", "MONEY", spent, "EUR", `${spent} €`),
-    ...(comparison === undefined ? [] : [lifeDetailMetric(`${entityRef}:subject-cost`, "Coût du Moment comparé", "MONEY", "1240", "EUR", "1 240 €"), lifeDetailMetric(`${entityRef}:peer-median`, "Médiane des expériences comparables", "MONEY", "910", "EUR", "910 €"), lifeDetailMetric(`${entityRef}:q1`, "Premier quartile historique", "MONEY", "760", "EUR", "760 €"), lifeDetailMetric(`${entityRef}:q3`, "Troisième quartile historique", "MONEY", "1080", "EUR", "1 080 €"), lifeDetailMetric(`${entityRef}:mad`, "Écart absolu médian historique", "MONEY", "130", "EUR", "130 €"), lifeDetailMetric(`${entityRef}:absolute-delta`, "Écart à la médiane", "MONEY", "330", "EUR", "+330 €"), lifeDetailMetric(`${entityRef}:relative-delta`, "Écart relatif à la médiane", "DECIMAL", "0.3626", "ratio", "+36,3 %"), lifeDetailMetric(`${entityRef}:peer-count`, "Expériences comparables", "COUNT", "6", "moment", "6")]),
+    ...(comparison === undefined ? [] : [lifeDetailMetric(`${entityRef}:subject-cost`, "Coût du Moment comparé", "MONEY", causal, "EUR", `${causal} €`), lifeDetailMetric(`${entityRef}:peer-median`, "Médiane des expériences comparables", "MONEY", comparison.peerMedian.value, "EUR", `${comparison.peerMedian.value} €`), lifeDetailMetric(`${entityRef}:q1`, "Premier quartile historique", "MONEY", comparison.q1.value, "EUR", `${comparison.q1.value} €`), lifeDetailMetric(`${entityRef}:q3`, "Troisième quartile historique", "MONEY", comparison.q3.value, "EUR", `${comparison.q3.value} €`), lifeDetailMetric(`${entityRef}:mad`, "Écart absolu médian historique", "MONEY", "130", "EUR", "130 €"), lifeDetailMetric(`${entityRef}:absolute-delta`, "Écart à la médiane", "MONEY", comparison.absoluteDelta.value, "EUR", `${comparison.absoluteDelta.value} €`), lifeDetailMetric(`${entityRef}:relative-delta`, "Écart relatif à la médiane", "DECIMAL", comparison.relativeDelta.value, "ratio", comparison.relativeDelta.value), lifeDetailMetric(`${entityRef}:peer-count`, "Expériences comparables", "COUNT", String(peerCount), "moment", String(peerCount))]),
   ];
   return {
-    kind: "global_expanded", schemaVersion: "global-expanded@v1", resource: "analysis_global_moment_experience_detail", moduleKey: "RHYTHM", sectionKey: "OVERVIEW", visibility: "VISIBLE", secondaryInsights: [], metrics, series: [], rows: [
+    kind: "global_expanded", schemaVersion: "global-expanded@v1", resource: "analysis_global_moment_experience_detail", moduleKey: "MOMENTS", sectionKey: "OVERVIEW", visibility: "VISIBLE", secondaryInsights: [], metrics, series: [], rows: [
       { rowId: `000:moment-identity:${entityRef}`, labelKey: title, displayValue: typeAndDates, knowledgeState: "KNOWN", entityRef, ...(comparison === undefined ? {} : { momentComparison: comparison }), evidenceRefs: [`evidence:life:${entityRef}`] },
-      { rowId: `001:composition:${entityRef}:transport`, labelKey: "Composante causale", displayValue: compared ? "620 €" : "142 €", typedMeasure: { kind: "MONEY", value: compared ? "620" : "142", unit: "EUR" }, knowledgeState: "KNOWN", evidenceRefs: [`evidence:life:${entityRef}:composition:1`] },
-      { rowId: `002:composition:${entityRef}:stay`, labelKey: "Composante causale", displayValue: compared ? "620 €" : "44 €", typedMeasure: { kind: "MONEY", value: compared ? "620" : "44", unit: "EUR" }, knowledgeState: "KNOWN", evidenceRefs: [`evidence:life:${entityRef}:composition:2`] },
-    ], destinations: [], quality: qualityKnown, capabilities: [{ capabilityId: "GLOBAL_MOMENT_DETAIL", state: "AVAILABLE", reasonCodes: [] }], publicationMeta, resourceMeta: resourceMeta(35),
+    ], destinations: [], peerObservations, momentComponentRows, componentGroups, spentDuringContext: { label: "Toutes nos dépenses enregistrées pendant cette période", cost: { status: "KNOWN", value: money(spent) }, relationToCausalCost: "INDEPENDENT_SCOPE" }, quality: peerCount === 4 ? qualityPartial : qualityKnown, capabilities: [{ capabilityId: "GLOBAL_MOMENT_DETAIL", state: "AVAILABLE", reasonCodes: [] }], publicationMeta, resourceMeta: resourceMeta(35),
   };
 }
 
