@@ -301,3 +301,14 @@ export {
   type GlobalTimelineLifeEventAdapterInput,
   type GlobalTimelineMomentAdapterInput,
 } from "./candidate-adapters";
+export {
+  TIMELINE_SEMANTIC_TAXONOMY_VERSION,
+  assertTimelineSemanticTaxonomyVersion,
+  isTimelineSemanticCloseFamilyKey,
+  resolveTimelineSemanticClassification,
+  timelineSemanticTaxonomy,
+  timelineSemanticTaxonomyCounts,
+  type TimelineSemanticClassification,
+  type TimelineSemanticTaxonomyEntry,
+  type TimelineSemanticTaxonomyLevel,
+} from "./timeline-semantic-taxonomy";
