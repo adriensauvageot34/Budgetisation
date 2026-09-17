@@ -65,6 +65,17 @@ export async function resolveGlobalTimelineSemanticComparator(input: Readonly<{
   occurrences: readonly ActivityOccurrenceFact[];
   m6: M6TimelineAuthority;
 }>) {
+  return (await resolveGlobalTimelineSemanticAnalysis(input)).comparator;
+}
+
+/** Resolves both S4 and S5 owners once so S6 can project one coherent generation. */
+export async function resolveGlobalTimelineSemanticAnalysis(input: Readonly<{
+  client: SupabaseClient;
+  repository: CanonicalRepository;
+  certifiedThrough: LocalDate;
+  occurrences: readonly ActivityOccurrenceFact[];
+  m6: M6TimelineAuthority;
+}>) {
   const projection = await resolveGlobalTimelineSemanticProjection(input);
   const householdRefs = input.repository.context.personIds.map((personId) => `person:${personId}`).sort();
   const momentSummaries = new Map(input.m6.summaries.map((summary) => [`moment:${summary.moment.momentId}` as const, summary]));
@@ -82,5 +93,5 @@ export async function resolveGlobalTimelineSemanticComparator(input: Readonly<{
         : [],
     };
   });
-  return buildTimelineSemanticComparator({ projection, facetContexts });
+  return { projection, comparator: buildTimelineSemanticComparator({ projection, facetContexts }) };
 }

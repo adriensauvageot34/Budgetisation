@@ -12,7 +12,14 @@ import { sha256 } from "@noble/hashes/sha2.js";
 import { bytesToHex, utf8ToBytes } from "@noble/hashes/utils.js";
 import { globalExpandedReadModelSchemas, globalExpandedSectionKeys, globalV2ExpandedResourceCatalog, importedGlobalSummaryReadModelSchema, type GlobalExpandedSectionKey, type GlobalV2ExpandedResourceName } from "./details";
 import { globalInitialReadModelSchema, globalPrimaryReadModelSchemas } from "./schemas";
-import { globalLifeTimelineReadModelSchema, globalLifeTimelineResourceDefinition, type GlobalLifeTimelineResourceName } from "./timeline";
+import { globalLifeTimelineReadModelSchema, type GlobalLifeTimelineResourceName } from "./timeline";
+import {
+  createGlobalLifeTimelineTransportSchema,
+  globalLifeTimelineV2ResourceDefinition,
+  globalTimelineEventComparisonReadModelSchema,
+  globalTimelineEventComparisonResourceDefinition,
+  type GlobalTimelineComparisonLevel,
+} from "./timeline-v2";
 import { globalPrimaryModuleCatalog, type GlobalPrimaryModuleKey, type GlobalPrimaryResourceName, type GlobalV2QueryParamsKind, type GlobalV2ResourceFamily, type GlobalV2ResourceGroup } from "./types";
 
 export const globalV2TopLevelResources = Object.freeze([
@@ -22,7 +29,7 @@ export const globalV2TopLevelResources = Object.freeze([
 ] as const);
 
 export type GlobalV2TopLevelResourceName = (typeof globalV2TopLevelResources)[number];
-export type GlobalV2QueryResourceName = GlobalV2TopLevelResourceName | GlobalV2ExpandedResourceName | GlobalLifeTimelineResourceName;
+export type GlobalV2QueryResourceName = GlobalV2TopLevelResourceName | GlobalV2ExpandedResourceName | GlobalLifeTimelineResourceName | typeof globalTimelineEventComparisonResourceDefinition.resource;
 
 export type GlobalV2QueryParams = Readonly<Record<string, string>>;
 export type GlobalV2QueryRequest = {
@@ -64,7 +71,8 @@ const resourceCatalog = Object.freeze([
   ...overviewResourceCatalog,
   ...globalPrimaryModuleCatalog,
   ...globalV2ExpandedResourceCatalog,
-  globalLifeTimelineResourceDefinition,
+  globalLifeTimelineV2ResourceDefinition,
+  globalTimelineEventComparisonResourceDefinition,
 ] as const);
 type GlobalV2ResourceDefinition = (typeof resourceCatalog)[number];
 const definitionByResource = new Map<string, GlobalV2ResourceDefinition>(resourceCatalog.map((entry) => [entry.resource, entry]));
@@ -73,6 +81,8 @@ const sectionSet = new Set<string>(globalExpandedSectionKeys);
 const moduleSet = new Set<string>(globalPrimaryModuleCatalog.map(({ moduleKey }) => moduleKey));
 const m1V2ProjectionResources = new Set<string>(["analysis_global_economic", "analysis_global_economic_expanded", "analysis_global_economic_recurrence_detail"]);
 const lifeSpendingV2ProjectionResources = new Set<string>(["analysis_global_rhythm", "analysis_global_rhythm_expanded", "analysis_global_routine_detail", "analysis_global_moment_experience_detail"]);
+const timelineSemanticResources = new Set<string>(["analysis_global_life_timeline", "analysis_global_timeline_event_comparison"]);
+const timelineComparisonLevels: ReadonlySet<GlobalTimelineComparisonLevel> = new Set(["SAME_SERIES", "SAME_CLOSE_FAMILY", "SAME_INTERMEDIATE_FAMILY"]);
 
 function definitionFor(resource: GlobalV2QueryResourceName): GlobalV2ResourceDefinition {
   const definition = definitionByResource.get(resource);
@@ -110,13 +120,23 @@ export function parseGlobalV2QueryParams(resource: GlobalV2QueryResourceName, va
       const record = parseStrictRecord(value, ["entityRef"], "GlobalV2EntityParams");
       return Object.freeze({ entityRef: text(requireProperty(record, "entityRef", "GlobalV2EntityParams"), "entityRef") });
     }
+    case "event_comparison": {
+      const record = parseStrictRecord(value, ["eventRef", "comparisonLevel"], "GlobalV2EventComparisonParams");
+      const eventRef = text(requireProperty(record, "eventRef", "GlobalV2EventComparisonParams"), "eventRef");
+      if (!/^(?:moment|life-event):[^\s:]+$/u.test(eventRef)) throw new TypeError("GLOBAL_V2_EVENT_COMPARISON_REF_INVALID");
+      return Object.freeze({
+        eventRef,
+        comparisonLevel: parseStringLiteral<GlobalTimelineComparisonLevel>(requireProperty(record, "comparisonLevel", "GlobalV2EventComparisonParams"), timelineComparisonLevels, "comparisonLevel"),
+      });
+    }
   }
 }
 
 function schemaFor(resource: GlobalV2QueryResourceName): RuntimeSchema<unknown> {
   if (resource === "analysis_global_manifest") return globalInitialReadModelSchema as RuntimeSchema<unknown>;
   if (resource === "analysis_global_summary_ai") return importedGlobalSummaryReadModelSchema as RuntimeSchema<unknown>;
-  if (resource === globalLifeTimelineResourceDefinition.resource) return globalLifeTimelineReadModelSchema as RuntimeSchema<unknown>;
+  if (resource === globalLifeTimelineV2ResourceDefinition.resource) return createGlobalLifeTimelineTransportSchema(globalLifeTimelineReadModelSchema as RuntimeSchema<unknown>);
+  if (resource === globalTimelineEventComparisonResourceDefinition.resource) return globalTimelineEventComparisonReadModelSchema as RuntimeSchema<unknown>;
   if (definitionFor(resource).group === "module_section") return globalPrimaryReadModelSchemas[resource as GlobalPrimaryResourceName] as RuntimeSchema<unknown>;
   return globalExpandedReadModelSchemas[resource as GlobalV2ExpandedResourceName] as RuntimeSchema<unknown>;
 }
@@ -139,8 +159,10 @@ export const globalV2QueryRegistry = Object.freeze(Object.fromEntries(
       availability: definition.availability,
       ...(schemaVersion === undefined ? {} : { schemaVersion }),
       contractVersion: "global-v2-query@v1",
-      methodVersion: m1V2ProjectionResources.has(resource) || lifeSpendingV2ProjectionResources.has(resource) ? `${resource}@v2` : `${resource}@v1`,
-      policyVersions: Object.freeze({ projection: m1V2ProjectionResources.has(resource) ? "global-m1-query-projection@v2" : lifeSpendingV2ProjectionResources.has(resource) ? "global-life-spending-query-projection@v1" : "global-v2-query-projection@v1", transport: "global-v2-snapshot-only@v1" }),
+      methodVersion: m1V2ProjectionResources.has(resource) || lifeSpendingV2ProjectionResources.has(resource) || resource === "analysis_global_life_timeline" ? `${resource}@v2` : `${resource}@v1`,
+      policyVersions: timelineSemanticResources.has(resource)
+        ? Object.freeze({ projection: "timeline-semantic-projection@v1", comparator: "timeline-semantic-comparator@v1", transport: "global-v2-snapshot-only@sh05-v1" })
+        : Object.freeze({ projection: m1V2ProjectionResources.has(resource) ? "global-m1-query-projection@v2" : lifeSpendingV2ProjectionResources.has(resource) ? "global-life-spending-query-projection@v1" : "global-v2-query-projection@v1", transport: "global-v2-snapshot-only@v1" }),
       schema: schemaFor(resource),
     };
     return [resource, Object.freeze(contract)] as const;
@@ -155,6 +177,23 @@ export function globalV2ExpectedQueryMethodSignature(resource: GlobalV2QueryReso
     methodVersion: contract.methodVersion,
     policyVersions: contract.policyVersions,
   }))));
+}
+
+function legacyTimelineQueryMethodSignature(): string {
+  return bytesToHex(sha256(utf8ToBytes(canonicalSerializeGlobal({
+    resource: "analysis_global_life_timeline",
+    contractVersion: "global-v2-query@v1",
+    methodVersion: "analysis_global_life_timeline@v1",
+    policyVersions: { projection: "global-v2-query-projection@v1", transport: "global-v2-snapshot-only@v1" },
+  }))));
+}
+
+/** Temporary SH-05 cutover bridge: the active v1 generation remains readable until S7. */
+export function globalV2AcceptedQueryMethodSignatures(resource: GlobalV2QueryResourceName): readonly string[] {
+  const current = globalV2ExpectedQueryMethodSignature(resource);
+  return resource === "analysis_global_life_timeline"
+    ? Object.freeze([current, legacyTimelineQueryMethodSignature()])
+    : Object.freeze([current]);
 }
 
 export function parseGlobalV2QueryRequest(value: unknown, context: GlobalScopeValidationContext): NormalizedGlobalV2QueryRequest {

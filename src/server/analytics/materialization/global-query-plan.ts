@@ -3,7 +3,7 @@ import "server-only";
 import { createHash } from "node:crypto";
 
 import { canonicalSerializeGlobal, computeGlobalAnalysisScopeV2Hash, type NormalizedGlobalAnalysisScopeV2 } from "@/core/global-v2";
-import { globalV2ExpectedQueryMethodSignature, globalV2QueryRegistry, parseGlobalV2QueryParams, type GlobalExpandedReadModel, type GlobalInitialReadModel, type GlobalLifeTimelineReadModel, type GlobalModuleCompactReadModel, type GlobalV2QueryParams, type GlobalV2QueryResourceName } from "@/query-api/global-v2";
+import { globalV2ExpectedQueryMethodSignature, globalV2QueryRegistry, parseGlobalV2QueryParams, type GlobalExpandedReadModel, type GlobalInitialReadModel, type GlobalLifeTimelineReadModel, type GlobalLifeTimelineV2ReadModel, type GlobalModuleCompactReadModel, type GlobalTimelineEventComparisonReadModel, type GlobalV2QueryParams, type GlobalV2QueryResourceName } from "@/query-api/global-v2";
 import { buildGlobalV2PublicationManifest, globalV2ClosureDeclarationDigest, globalV2ClosureInputDigest, globalV2PublicationFactsHash, type GlobalV2Closure, type GlobalV2ManifestInput, type GlobalV2PublicationManifest, type GlobalV2ResolvedDependency, type GlobalV2ResourceVersion } from "./global-v2";
 
 export type GlobalV2QueryInstanceInput = {
@@ -42,7 +42,11 @@ function canonicalDependencies(values: readonly GlobalV2ResolvedDependency[]): r
   return result;
 }
 
-export function globalV2QueryInstanceKey(resource: GlobalV2QueryResourceName, scopeHash: string, params: GlobalV2QueryParams): string {
+export function globalV2QueryInstanceKey(resource: GlobalV2QueryResourceName, scopeHash: string, params: GlobalV2QueryParams, generation?: string): string {
+  if (resource === "analysis_global_timeline_event_comparison") {
+    if (generation === undefined || generation.length === 0) throw new TypeError("GLOBAL_TIMELINE_COMPARISON_GENERATION_REQUIRED");
+    return `global-query:${resource}:${scopeHash}:${generation}:${sha256(params)}`;
+  }
   return `global-query:${resource}:${scopeHash}:${sha256(params)}`;
 }
 
@@ -82,13 +86,17 @@ export function buildGlobalV2QueryPlan(input: {
       const meta = (parsed as { readonly resourceMeta: { readonly contractVersion: string; readonly methodSignature: string; readonly resourceInputHash: string; readonly policyVersions: Readonly<Record<string, string>> } }).resourceMeta;
       if (meta.contractVersion !== contract.contractVersion || meta.methodSignature !== methodSignature || meta.resourceInputHash !== resourceInputHash || canonicalSerializeGlobal(meta.policyVersions) !== canonicalSerializeGlobal(contract.policyVersions)) throw new TypeError("GLOBAL_QUERY_PAYLOAD_RESOURCE_META_MISMATCH");
     }
+    const publicationMeta = source.payload !== null && typeof source.payload === "object" && "publicationMeta" in source.payload
+      ? (source.payload as { readonly publicationMeta?: { readonly publicationId?: unknown } }).publicationMeta
+      : undefined;
+    const generation = typeof publicationMeta?.publicationId === "string" ? publicationMeta.publicationId : undefined;
     return {
       ...source,
       params,
       payload: parsed,
       dependencies,
       scopeHash,
-      key: globalV2QueryInstanceKey(source.resource, scopeHash, params),
+      key: globalV2QueryInstanceKey(source.resource, scopeHash, params, generation),
       resourceInputHash,
       methodSignature,
     };
@@ -118,10 +126,18 @@ export function buildGlobalV2QueryPlan(input: {
       if (!instanceKeys.has(entry.targetRef)) throw new TypeError(`GLOBAL_QUERY_DETAIL_INSTANCE_MISSING:${entry.targetResource}`);
     }
     if ((instance.payload as Partial<GlobalLifeTimelineReadModel>).kind === "global_life_timeline") {
-      const timeline = instance.payload as GlobalLifeTimelineReadModel;
-      for (const event of timeline.events.filter(({ sourceKind }) => sourceKind === "MOMENT")) {
-        const destination = timeline.destinations.find(({ entityRef, resource }) => entityRef === event.eventRef && resource === "analysis_global_moment_experience_detail");
-        if (destination?.instanceKey === undefined || !instanceKeys.has(destination.instanceKey)) throw new TypeError(`GLOBAL_TIMELINE_MOMENT_DETAIL_MISSING:${event.eventRef}`);
+      if ((instance.payload as { readonly schemaVersion?: unknown }).schemaVersion === "global-life-timeline@v1") {
+        const timeline = instance.payload as GlobalLifeTimelineReadModel;
+        for (const event of timeline.events.filter(({ sourceKind }) => sourceKind === "MOMENT")) {
+          const destination = timeline.destinations.find(({ entityRef, resource }) => entityRef === event.eventRef && resource === "analysis_global_moment_experience_detail");
+          if (destination?.instanceKey === undefined || !instanceKeys.has(destination.instanceKey)) throw new TypeError(`GLOBAL_TIMELINE_MOMENT_DETAIL_MISSING:${event.eventRef}`);
+        }
+      } else {
+        const timeline = instance.payload as GlobalLifeTimelineV2ReadModel;
+        for (const event of timeline.events.filter(({ momentDetailAvailable }) => momentDetailAvailable)) {
+          const detail = instances.find((candidate) => candidate.resource === "analysis_global_moment_experience_detail" && candidate.scopeHash === instance.scopeHash && candidate.params.entityRef === event.eventRef);
+          if (detail === undefined) throw new TypeError(`GLOBAL_TIMELINE_MOMENT_DETAIL_MISSING:${event.eventRef}`);
+        }
       }
     }
     if ((instance.payload as Partial<GlobalExpandedReadModel>).resource === "analysis_global_moment_experience_detail") {
@@ -137,6 +153,37 @@ export function buildGlobalV2QueryPlan(input: {
         if (!instances.some((candidate) => candidate.resource === target.resource && candidate.scopeHash === instance.scopeHash)) throw new TypeError("GLOBAL_QUERY_INITIAL_MODULE_MISSING");
       }
     }
+  }
+
+  const timelineV2Instances = instances.filter((instance) => instance.resource === "analysis_global_life_timeline" && (instance.payload as { readonly schemaVersion?: unknown }).schemaVersion === "global-life-timeline@v2");
+  if (instances.some(({ resource }) => resource === "analysis_global_timeline_event_comparison") && timelineV2Instances.length === 0) throw new TypeError("GLOBAL_TIMELINE_COMPARISON_TIMELINE_V2_MISSING");
+  for (const comparison of instances.filter(({ resource }) => resource === "analysis_global_timeline_event_comparison")) {
+    if (!timelineV2Instances.some(({ scopeHash }) => scopeHash === comparison.scopeHash)) throw new TypeError("GLOBAL_TIMELINE_COMPARISON_SAME_SCOPE_TIMELINE_MISSING");
+  }
+  for (const timelineInstance of timelineV2Instances) {
+    const timeline = timelineInstance.payload as GlobalLifeTimelineV2ReadModel;
+    const events = new Map(timeline.events.map((event) => [event.eventRef, event] as const));
+    const advertised = new Set(timeline.events.flatMap((event) => event.comparisonLevels.map(({ level }) => `${event.eventRef}|${level}`)));
+    const comparisons = instances.filter((instance) => instance.resource === "analysis_global_timeline_event_comparison" && instance.scopeHash === timelineInstance.scopeHash);
+    const realized = new Set<string>();
+    for (const instance of comparisons) {
+      const payload = instance.payload as GlobalTimelineEventComparisonReadModel;
+      const paramsEventRef = instance.params.eventRef;
+      const paramsLevel = instance.params.comparisonLevel;
+      const pair = `${paramsEventRef}|${paramsLevel}`;
+      if (payload.subject.eventRef !== paramsEventRef || payload.comparison.level !== paramsLevel) throw new TypeError("GLOBAL_TIMELINE_COMPARISON_PARAMS_PAYLOAD_MISMATCH");
+      if (!advertised.has(pair) || realized.has(pair)) throw new TypeError("GLOBAL_TIMELINE_COMPARISON_LEVEL_NOT_ADVERTISED");
+      realized.add(pair);
+      const subject = events.get(payload.subject.eventRef);
+      if (subject === undefined || subject.eventCost.status !== "KNOWN") throw new TypeError("GLOBAL_TIMELINE_COMPARISON_SUBJECT_INVALID");
+      const descriptor = subject.comparisonLevels.find(({ level }) => level === payload.comparison.level)!;
+      if (descriptor.peerCount !== payload.support.peerCount || descriptor.supportStatus !== payload.support.status || descriptor.materiality !== payload.materiality.status) throw new TypeError("GLOBAL_TIMELINE_COMPARISON_DESCRIPTOR_MISMATCH");
+      for (const peer of payload.peerObservations) {
+        const source = events.get(peer.eventRef);
+        if (source === undefined || source.eventCost.status !== "KNOWN" || source.sourceKind !== peer.sourceKind || source.canonicalName !== peer.canonicalName || source.startDate !== peer.startDate || source.endDate !== peer.endDate || source.visibilityTier !== peer.visibilityTier || source.eventCost.authority !== peer.eventCost.authority || source.eventCost.value !== peer.eventCost.value) throw new TypeError(`GLOBAL_TIMELINE_COMPARISON_PEER_MISMATCH:${peer.eventRef}`);
+      }
+    }
+    if (canonicalSerializeGlobal([...realized].sort()) !== canonicalSerializeGlobal([...advertised].sort())) throw new TypeError("GLOBAL_TIMELINE_COMPARISON_SNAPSHOT_SET_INCOMPLETE");
   }
 
   const queryVersions = instances.map((instance): GlobalV2ResourceVersion => {

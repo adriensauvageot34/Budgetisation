@@ -384,7 +384,7 @@ export class CanonicalRepository {
   private readonly household: CanonicalHouseholdContext;
 
   constructor(
-    private readonly client: SupabaseClient,
+    readonly client: SupabaseClient,
     readonly context: AuthorizedRuntimeContext,
   ) {
     this.household = {

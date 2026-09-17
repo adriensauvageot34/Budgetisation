@@ -1,6 +1,6 @@
 import "server-only";
 
-import { globalV2ExpectedQueryMethodSignature, globalV2QueryCacheKey, globalV2QueryRegistry, parseGlobalV2QueryRequest, type GlobalV2QueryRequest, type NormalizedGlobalV2QueryRequest } from "@/query-api/global-v2";
+import { globalV2AcceptedQueryMethodSignatures, globalV2QueryCacheKey, globalV2QueryRegistry, parseGlobalV2QueryRequest, type GlobalV2QueryRequest, type NormalizedGlobalV2QueryRequest } from "@/query-api/global-v2";
 import { canonicalSerializeGlobal, type GlobalScopeValidationContext } from "@/core/global-v2";
 import { GlobalGenerationPin, type GlobalSnapshotCandidate } from "./global-generation";
 
@@ -84,10 +84,12 @@ export async function executeGlobalV2SnapshotQuery(
     if (candidate.queryKey !== cacheKey || candidate.resource !== request.resource || candidate.publicationId !== request.expectedGeneration.publicationId || candidate.analyticsRevision !== request.expectedGeneration.analyticsRevision) {
       return error("GENERATION_MISMATCH", "Snapshot identity does not match the pinned deep link.");
     }
+    const acceptedSignatures = globalV2AcceptedQueryMethodSignatures(request.resource);
+    const legacyTimeline = request.resource === "analysis_global_life_timeline" && candidate.methodSignature !== acceptedSignatures[0];
     if (candidate.contractVersion !== contract.contractVersion
-      || candidate.methodVersion !== contract.methodVersion
-      || candidate.methodSignature !== globalV2ExpectedQueryMethodSignature(request.resource)
-      || canonicalSerializeGlobal(candidate.policyVersions) !== canonicalSerializeGlobal(contract.policyVersions)) {
+      || !acceptedSignatures.includes(candidate.methodSignature)
+      || (!legacyTimeline && (candidate.methodVersion !== contract.methodVersion
+        || canonicalSerializeGlobal(candidate.policyVersions) !== canonicalSerializeGlobal(contract.policyVersions)))) {
       return error("CONTRACT_MISMATCH", "Snapshot resource contract is incompatible.");
     }
   }
@@ -95,6 +97,10 @@ export async function executeGlobalV2SnapshotQuery(
   if (pinned.status !== "READY") return error(pinned.status, pinned.reason);
   const parsed = contract.schema.safeParse(pinned.data);
   if (!parsed.success) return error("INVALID_SNAPSHOT", "Published snapshot failed its RuntimeSchema.");
+  if (request.resource === "analysis_global_timeline_event_comparison") {
+    const payload = parsed.data as { readonly subject?: { readonly eventRef?: unknown }; readonly comparison?: { readonly level?: unknown } };
+    if (payload.subject?.eventRef !== request.params.eventRef || payload.comparison?.level !== request.params.comparisonLevel) return error("INVALID_SNAPSHOT", "Comparison snapshot does not match its requested event and level.");
+  }
   if (parsed.data !== null && typeof parsed.data === "object" && "publicationMeta" in parsed.data && "resourceMeta" in parsed.data) {
     const payload = parsed.data as {
       readonly publicationMeta: { readonly publicationId: string; readonly revision: number; readonly factsHash: string; readonly manifestHash: string };

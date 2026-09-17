@@ -9,6 +9,8 @@ import {
   GlobalMaterialityEngine,
   GlobalPublicationEngine,
   type GlobalPublicationDecision,
+  type TimelineSemanticComparatorProjection,
+  type TimelineSemanticProjection,
 } from "@/analytics/global-v2";
 import {
   canonicalSerializeGlobal,
@@ -56,6 +58,7 @@ import {
 } from "@/query-api/global-v2";
 import type { GlobalGroceryCandidateBundle, GlobalTimelineCandidateBundle } from "@/analytics/global-v2/candidate-adapters";
 import type { GlobalMomentComponentPresentationBundle } from "./global-v2-moment-component-presentation";
+import { buildGlobalTimelineQuerySnapshots } from "./global-v2-timeline-query";
 import {
   attachGlobalV2QueryPlanToManifest,
   buildGlobalV2QueryPlan,
@@ -111,6 +114,8 @@ export type GlobalV2CandidateInput = {
   readonly ownerOutputs: readonly GlobalV2OwnerOutput[];
   readonly presentationLabels?: GlobalV2PresentationLabels;
   readonly candidateAdapters: { readonly timeline: GlobalTimelineCandidateBundle; readonly grocery: GlobalGroceryCandidateBundle };
+  /** Required by the live S6 path. Optional only for the temporary pre-S7 fixture bridge. */
+  readonly semanticTimeline?: Readonly<{ readonly projection: TimelineSemanticProjection; readonly comparator: TimelineSemanticComparatorProjection }>;
   readonly momentComponentPresentation: GlobalMomentComponentPresentationBundle;
 };
 
@@ -1672,6 +1677,10 @@ export function buildGlobalV2CandidateFromOwnerOutputs(input: GlobalV2CandidateI
     { family: "global_life_timeline_candidate_adapter", identity: input.candidateAdapters.timeline.adapterVersion, digest: input.candidateAdapters.timeline.inputHash },
     { family: "global_grocery_candidate_adapter", identity: input.candidateAdapters.grocery.adapterVersion, digest: input.candidateAdapters.grocery.inputHash },
     { family: "global_moment_component_presentation", identity: input.momentComponentPresentation.version, digest: input.momentComponentPresentation.inputHash },
+    ...(input.semanticTimeline === undefined ? [] : [
+      { family: "timeline_semantic_projection", identity: input.semanticTimeline.projection.methodVersion, digest: digest(input.semanticTimeline.projection) },
+      { family: "timeline_semantic_comparator", identity: input.semanticTimeline.comparator.methodVersion, digest: digest(input.semanticTimeline.comparator) },
+    ]),
   ] as const;
   const outputsByModule = new Map(outputs.map((output) => [output.moduleKey, output] as const));
   const projections = new Map(outputs.map((output) => [output.moduleKey, projectModule(output, outputsByModule, presentationLabels, input.personIds)] as const));
@@ -1783,10 +1792,30 @@ export function buildGlobalV2CandidateFromOwnerOutputs(input: GlobalV2CandidateI
     };
   });
   const timelineDestinations: readonly GlobalNavigationDestination[] = timelineEvents.filter(({ sourceKind }) => sourceKind === "MOMENT").map(({ eventRef }) => ({ targetId: `global-query:${eventRef}`, kind: "GLOBAL_QUERY", resource: "analysis_global_moment_experience_detail", instanceKey: globalV2QueryInstanceKey("analysis_global_moment_experience_detail", scopeHash, { entityRef: eventRef }), entityRef: eventRef, scopeHash, sourcePublicationId: provisionalMeta.publicationId, sourceAnalyticsRevision: provisionalMeta.revision }));
-  const timelineInstance: GlobalV2QueryInstanceInput = {
+  const legacyTimelineInstance: GlobalV2QueryInstanceInput = {
     resource: "analysis_global_life_timeline", scope, params: timelineParams, dependencies: timelineDependencies,
     payload: buildGlobalLifeTimelineReadModel({ kind: "global_life_timeline", schemaVersion: "global-life-timeline@v1", resource: "analysis_global_life_timeline", moduleKey: "RHYTHM", events: timelineEvents, chapterOverlays: [], contextSignals: [], destinations: timelineDestinations, quality: quality(outputsByModule.get("RHYTHM")!), publicationMeta: provisionalMeta, resourceMeta: metaFor("analysis_global_life_timeline", timelineParams, timelineDependencies) }),
   };
+  const semanticSnapshots = input.semanticTimeline === undefined ? undefined : buildGlobalTimelineQuerySnapshots({
+    projection: input.semanticTimeline.projection,
+    comparator: input.semanticTimeline.comparator,
+    publicationMeta: provisionalMeta,
+    resourceMeta: (resource, params) => metaFor(resource, params, timelineDependencies),
+  });
+  const timelineInstance: GlobalV2QueryInstanceInput = semanticSnapshots === undefined ? legacyTimelineInstance : {
+    resource: "analysis_global_life_timeline",
+    scope,
+    params: timelineParams,
+    dependencies: timelineDependencies,
+    payload: semanticSnapshots.timeline,
+  };
+  const timelineComparisonInstances: GlobalV2QueryInstanceInput[] = (semanticSnapshots?.comparisons ?? []).map(({ params, payload }) => ({
+    resource: "analysis_global_timeline_event_comparison",
+    scope,
+    params,
+    dependencies: timelineDependencies,
+    payload,
+  }));
   for (const ownerOutput of outputs) {
     const decision = publicationDecision(ownerOutput, revision, "MODULE_DETAIL");
     if (decision.visibility !== "VISIBLE") continue;
@@ -1876,6 +1905,7 @@ export function buildGlobalV2CandidateFromOwnerOutputs(input: GlobalV2CandidateI
     { resource: "analysis_global_manifest", scope, params: {}, payload: initialPayload, dependencies: allOutputDependencies },
     { resource: "analysis_global_summary_ai", scope, params: {}, payload: summaryPayload, dependencies: summaryDependencies },
     timelineInstance,
+    ...timelineComparisonInstances,
     ...moduleInstances,
     ...expandedInstances,
   ];
@@ -1911,7 +1941,7 @@ export function buildGlobalV2CandidateFromOwnerOutputs(input: GlobalV2CandidateI
   const plan = buildGlobalV2QueryPlan({ instances });
   const finalManifest = attachGlobalV2QueryPlanToManifest({ base: manifestBase, plan });
   if (manifest.manifestHash !== finalManifest.manifestHash) throw new TypeError("GLOBAL_LIVE_CANDIDATE_NON_DETERMINISTIC");
-  const artifactPayload = { kind: "global_owner_outputs", outputs: outputs.map(({ moduleKey, owner, output, knowledge, capabilityState, reasonCodes, evidenceRefs }) => ({ moduleKey, owner, output, knowledge, capabilityState, reasonCodes: [...reasonCodes].sort(), evidenceRefs: [...evidenceRefs].sort() })), presentationLabels, candidateAdapters: input.candidateAdapters, momentComponentPresentation: input.momentComponentPresentation, publicationMeta: finalMeta, resourceMeta: { contractVersion: artifactVersion.contractVersion, methodSignature: artifactVersion.methodSignature, policyVersions: artifactVersion.policyVersions, resourceInputHash: artifactVersion.resourceInputHash } };
+  const artifactPayload = { kind: "global_owner_outputs", outputs: outputs.map(({ moduleKey, owner, output, knowledge, capabilityState, reasonCodes, evidenceRefs }) => ({ moduleKey, owner, output, knowledge, capabilityState, reasonCodes: [...reasonCodes].sort(), evidenceRefs: [...evidenceRefs].sort() })), presentationLabels, candidateAdapters: input.candidateAdapters, ...(input.semanticTimeline === undefined ? {} : { semanticTimeline: input.semanticTimeline }), momentComponentPresentation: input.momentComponentPresentation, publicationMeta: finalMeta, resourceMeta: { contractVersion: artifactVersion.contractVersion, methodSignature: artifactVersion.methodSignature, policyVersions: artifactVersion.policyVersions, resourceInputHash: artifactVersion.resourceInputHash } };
   return {
     project: input.project,
     householdScope: input.householdId,

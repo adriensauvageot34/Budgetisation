@@ -20,7 +20,7 @@ import {
   Users,
   Waves,
 } from "lucide-react";
-import type { GlobalLifeTimelineReadModel, GlobalTimelineEvent } from "@/query-api/global-v2";
+import type { GlobalLifeTimelineReadModel, GlobalLifeTimelineV2ReadModel, GlobalTimelineEvent, GlobalTimelineV2Event } from "@/query-api/global-v2";
 import { useGlobalV2Resource } from "./use-global-resource";
 import type { GlobalV2VisitRuntime } from "./visit-runtime";
 import styles from "./global-v2.module.css";
@@ -64,40 +64,50 @@ function timelineDate(value: string): Date {
   return new Date(`${value}T12:00:00Z`);
 }
 
-function monthKey(event: GlobalTimelineEvent): string {
+type TimelineTransportEvent = GlobalTimelineEvent | GlobalTimelineV2Event;
+type TimelineTransportReadModel = GlobalLifeTimelineReadModel | GlobalLifeTimelineV2ReadModel;
+
+function monthKey(event: TimelineTransportEvent): string {
   return event.startDate.slice(0, 7);
 }
 
-function eventDateLabel(event: GlobalTimelineEvent): string {
+function eventDateLabel(event: TimelineTransportEvent): string {
   const start = timelineDate(event.startDate);
   if (event.startDate === event.endDate) return shortDateFormatter.format(start);
   return `Du ${shortDateFormatter.format(start)} au ${shortDateFormatter.format(timelineDate(event.endDate))}`;
 }
 
-function eventAmount(event: GlobalTimelineEvent): string {
+function eventAmount(event: TimelineTransportEvent): string {
+  if ("eventCost" in event) return event.eventCost.status === "KNOWN" ? moneyFormatter.format(Number(event.eventCost.value)) : "Coût non établi";
   const cost = event.causalCost;
   if (cost.status !== "KNOWN" && cost.status !== "PARTIAL") return "Coût non établi";
   if (cost.value.kind !== "MONEY") return "Coût non établi";
   return moneyFormatter.format(Number(cost.value.value));
 }
 
-function eventIsDistinctive(event: GlobalTimelineEvent): boolean {
-  return event.comparisonSummary?.status === "KNOWN" && event.comparisonSummary.materiality === "MATERIAL";
+function eventIsDistinctive(event: TimelineTransportEvent): boolean {
+  return "comparisonLevels" in event
+    ? event.distinctiveComparisonLevel !== undefined
+    : event.comparisonSummary?.status === "KNOWN" && event.comparisonSummary.materiality === "MATERIAL";
 }
 
-function comparisonLabel(event: GlobalTimelineEvent): string | undefined {
+function comparisonLabel(event: TimelineTransportEvent): { readonly label: string; readonly peerCount: number } | undefined {
+  if ("comparisonLevels" in event) {
+    const selected = event.comparisonLevels.find(({ level }) => level === event.defaultComparisonLevel) ?? event.comparisonLevels[0];
+    if (selected === undefined) return undefined;
+    return { label: selected.supportStatus === "PARTIAL" ? "Peu de comparables" : "Voir la comparaison", peerCount: selected.peerCount };
+  }
   const comparison = event.comparisonSummary;
   if (comparison === undefined || comparison.status === "UNKNOWN" || comparison.status === "NOT_APPLICABLE" || comparison.peerCount < 3) return undefined;
-  if (comparison.status === "PARTIAL" || comparison.peerCount < 5) return "Peu de comparables";
-  return "Voir la comparaison";
+  return { label: comparison.status === "PARTIAL" || comparison.peerCount < 5 ? "Peu de comparables" : "Voir la comparaison", peerCount: comparison.peerCount };
 }
 
-type TimelineMonth = { readonly key: string; readonly label: string; readonly events: readonly GlobalTimelineEvent[] };
+type TimelineMonth = { readonly key: string; readonly label: string; readonly events: readonly TimelineTransportEvent[] };
 type TimelineYear = { readonly key: string; readonly months: readonly TimelineMonth[] };
 
 /** Sequential projection only: the Query order remains authoritative. */
-export function groupTimelineEvents(events: readonly GlobalTimelineEvent[]): readonly TimelineYear[] {
-  const years: { key: string; months: { key: string; label: string; events: GlobalTimelineEvent[] }[] }[] = [];
+export function groupTimelineEvents(events: readonly TimelineTransportEvent[]): readonly TimelineYear[] {
+  const years: { key: string; months: { key: string; label: string; events: TimelineTransportEvent[] }[] }[] = [];
   for (const event of events) {
     const yearKey = event.startDate.slice(0, 4);
     const eventMonthKey = monthKey(event);
@@ -116,25 +126,33 @@ export function groupTimelineEvents(events: readonly GlobalTimelineEvent[]): rea
   return years;
 }
 
-function TimelineEventRow({ event, onMomentDetail }: { readonly event: GlobalTimelineEvent; readonly onMomentDetail: (eventRef: string, title: string) => void }) {
-  const Icon = timelineIcons[`${event.familySource}:${event.typeKey}`] ?? Circle;
+/** Temporary SH-05 presentation bridge; S8 replaces this with native V2 cards. */
+function TimelineEventRow({ event, onMomentDetail }: { readonly event: TimelineTransportEvent; readonly onMomentDetail: (eventRef: string, title: string) => void }) {
+  const legacy = !("eventCost" in event);
+  const familySource = legacy ? event.familySource : event.sourceKind === "MOMENT" ? "M6" : "LIFE_EVENT";
+  const typeKey = legacy ? event.typeKey : event.semanticClassification.close.key;
+  const typeLabel = legacy ? event.typeLabel : event.semanticClassification.close.label;
+  const Icon = timelineIcons[`${familySource}:${typeKey}`] ?? Circle;
   const comparison = comparisonLabel(event);
   const distinctive = eventIsDistinctive(event);
-  const knownCost = event.causalCost.status === "KNOWN" || event.causalCost.status === "PARTIAL";
-  const place = event.places.find(({ label }) => label !== undefined)?.label;
-  const participantLabel = event.participantRefs.length === 1 ? "1 personne" : `${event.participantRefs.length} personnes`;
+  const costStatus = "eventCost" in event ? event.eventCost.status : event.causalCost.status;
+  const knownCost = costStatus === "KNOWN" || costStatus === "PARTIAL";
+  const place = legacy ? (event as GlobalTimelineEvent).places.find(({ label }) => label !== undefined)?.label : (event as GlobalTimelineV2Event).primaryPlaceLabel;
+  const participantCount = legacy ? (event as GlobalTimelineEvent).participantRefs.length : (event as GlobalTimelineV2Event).participantCount;
+  const participantLabel = participantCount === undefined ? undefined : participantCount === 1 ? "1 personne" : `${participantCount} personnes`;
+  const momentDetailAvailable = "momentDetailAvailable" in event ? event.momentDetailAvailable : event.detailAvailability === "MOMENT_DETAIL";
   const content = <>
     <time className={styles.timelineDay} dateTime={event.startDate}>{dayFormatter.format(timelineDate(event.startDate))}</time>
     <span className={styles.timelineMarker} aria-hidden><Icon size={16} aria-hidden /></span>
     <span className={styles.timelineEventBody}>
       <span className={styles.timelineEventHeading}><strong>{event.canonicalName}</strong>{distinctive ? <em>Se distingue</em> : null}</span>
-      <span className={styles.timelineEventMeta}>{eventDateLabel(event)} · {event.typeLabel}{place === undefined ? "" : ` · ${place}`} · {participantLabel}</span>
-      <span className={styles.timelineEventFacts}><b className={knownCost ? undefined : styles.timelineUnknown}>{eventAmount(event)}</b>{event.causalCost.status === "PARTIAL" ? <small>Coût partiellement établi</small> : null}{comparison === undefined ? null : <small className={styles.timelineComparison}>{comparison} · {event.comparisonSummary!.peerCount} événements</small>}</span>
+      <span className={styles.timelineEventMeta}>{eventDateLabel(event)} · {typeLabel}{place === undefined ? "" : ` · ${place}`}{participantLabel === undefined ? "" : ` · ${participantLabel}`}</span>
+      <span className={styles.timelineEventFacts}><b className={knownCost ? undefined : styles.timelineUnknown}>{eventAmount(event)}</b>{costStatus === "PARTIAL" ? <small>Coût partiellement établi</small> : null}{comparison === undefined ? null : <small className={styles.timelineComparison}>{comparison.label} · {comparison.peerCount} événements</small>}</span>
     </span>
-    {event.detailAvailability === "MOMENT_DETAIL" ? <ChevronRight className={styles.timelineChevron} aria-hidden size={18} /> : null}
+    {momentDetailAvailable ? <ChevronRight className={styles.timelineChevron} aria-hidden size={18} /> : null}
   </>;
-  return <li className={distinctive ? styles.timelineDistinctive : undefined} data-family-source={event.familySource} data-type-key={event.typeKey}>
-    {event.detailAvailability === "MOMENT_DETAIL"
+  return <li className={distinctive ? styles.timelineDistinctive : undefined} data-family-source={familySource} data-type-key={typeKey}>
+    {momentDetailAvailable
       ? <button type="button" data-global-entity-ref={event.eventRef} aria-label={`Ouvrir le détail de ${event.canonicalName}`} onClick={() => onMomentDetail(event.eventRef, event.canonicalName)}>{content}</button>
       : <article aria-label={`${event.canonicalName}, ${eventDateLabel(event)}, ${eventAmount(event)}`}>{content}</article>}
   </li>;
@@ -142,7 +160,7 @@ function TimelineEventRow({ event, onMomentDetail }: { readonly event: GlobalTim
 
 export function LifeTimeline({ runtime, onMomentDetail }: { readonly runtime: GlobalV2VisitRuntime; readonly onMomentDetail: (eventRef: string, title: string) => void }) {
   const request = useMemo(() => ({ resource: "analysis_global_life_timeline" as const, params: {} }), []);
-  const result = useGlobalV2Resource<GlobalLifeTimelineReadModel>(runtime, request, true, "DIRECT");
+  const result = useGlobalV2Resource<TimelineTransportReadModel>(runtime, request, true, "DIRECT");
   const model = result.state.status === "READY" ? result.state.data : result.state.status === "ERROR" ? result.state.previousData : undefined;
   const years = useMemo(() => groupTimelineEvents(model?.events ?? []), [model]);
 

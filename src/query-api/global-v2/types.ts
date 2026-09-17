@@ -20,7 +20,7 @@ export type GlobalV2ResourceGroup =
   | "exploration"
   | "methodology";
 
-export type GlobalV2QueryParamsKind = "empty" | "section_key" | "entity_ref" | "methodology";
+export type GlobalV2QueryParamsKind = "empty" | "section_key" | "entity_ref" | "methodology" | "event_comparison";
 
 export const globalPrimaryModuleCatalog = Object.freeze([
   { moduleKey: "ECONOMIC", resource: "analysis_global_economic", order: 1, group: "module_section", paramsKind: "empty", family: "global_module", capabilityId: "GLOBAL_ECONOMIC", availability: "AVAILABLE" },

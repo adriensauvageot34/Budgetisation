@@ -122,7 +122,7 @@ const expectedExistingParamsKinds = Object.fromEntries([
   ["analysis_global_methodology", "methodology"],
 ]);
 const actualExistingParamsKinds = Object.fromEntries(Object.entries(query.globalV2QueryRegistry)
-  .filter(([resource]) => resource !== "analysis_global_life_timeline")
+  .filter(([resource]) => resource !== "analysis_global_life_timeline" && resource !== "analysis_global_timeline_event_comparison")
   .map(([resource, contract]) => [resource, contract.paramsKind]));
 const timelineEvent = (index = 0) => ({
   eventRef: `moment:${index}`,
@@ -171,10 +171,10 @@ const timelinePayload = {
 };
 
 query.assertGlobalV2QueryRegistryComplete();
-check(() => assert.equal(Object.keys(query.globalV2QueryRegistry).length, 36));
+check(() => assert.equal(Object.keys(query.globalV2QueryRegistry).length, 37));
 check(() => assert.deepEqual(actualExistingParamsKinds, expectedExistingParamsKinds));
 check(() => assert.deepEqual(Object.fromEntries(Object.values(query.globalV2QueryRegistry).map(({ group }) => [group, (Object.values(query.globalV2QueryRegistry).filter((contract) => contract.group === group).length)])), {
-  entity_detail: 12, expanded_section: 10, exploration: 1, methodology: 1, module_section: 10, overview: 2,
+  entity_detail: 12, expanded_section: 10, exploration: 2, methodology: 1, module_section: 10, overview: 2,
 }));
 check(() => assert.deepEqual(query.globalV2TopLevelResources.slice(0, 2), ["analysis_global_manifest", "analysis_global_summary_ai"]));
 check(() => assert.equal(query.globalV2QueryRegistry.analysis_global_product_detail.availability, "AUTHORITY_GATED"));
@@ -193,11 +193,11 @@ check(() => assert.deepEqual(query.globalV2QueryRegistry.analysis_global_life_ti
   moduleRole: "PRESENTATION_ONLY",
   capabilityId: "GLOBAL_LIFE_TIMELINE",
   availability: "AVAILABLE",
-  schemaVersion: "global-life-timeline@v1",
+  schemaVersion: "global-life-timeline@v2",
   contractVersion: "global-v2-query@v1",
-  methodVersion: "analysis_global_life_timeline@v1",
-  policyVersions: { projection: "global-v2-query-projection@v1", transport: "global-v2-snapshot-only@v1" },
-  schema: query.globalLifeTimelineReadModelSchema,
+  methodVersion: "analysis_global_life_timeline@v2",
+  policyVersions: { projection: "timeline-semantic-projection@v1", comparator: "timeline-semantic-comparator@v1", transport: "global-v2-snapshot-only@sh05-v1" },
+  schema: query.globalV2QueryRegistry.analysis_global_life_timeline.schema,
 }));
 check(() => assert.deepEqual(query.globalLifeTimelineReadModelSchema.parse(timelinePayload), timelinePayload));
 check(() => assert.equal(query.globalV2QueryRegistry.analysis_global_life_timeline.schema.safeParse(timelinePayload).success, true));

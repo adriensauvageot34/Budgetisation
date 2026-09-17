@@ -3,7 +3,7 @@ import "server-only";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { GlobalScopeValidationContext } from "@/core/global-v2";
 import {
-  globalV2ExpectedQueryMethodSignature,
+  globalV2AcceptedQueryMethodSignatures,
   globalV2QueryRegistry,
   type GlobalReadModelPublicationMeta,
   type GlobalV2QueryRequest,
@@ -31,7 +31,7 @@ export function createGlobalV2ProductionQueryServices(input: {
     scopeValidationContext,
     authorize: (request) => request.scope.subject.kind === "household" && request.expectedGeneration.publicationId === input.generation.publicationId && request.expectedGeneration.analyticsRevision === input.generation.analyticsRevision,
     readSnapshot: async (request: NormalizedGlobalV2QueryRequest, cacheKey: string): Promise<GlobalV2StoredSnapshot | undefined> => {
-      const queryKey = globalV2QueryInstanceKey(request.resource, request.scopeHash, request.params);
+      const queryKey = globalV2QueryInstanceKey(request.resource, request.scopeHash, request.params, input.generation.publicationId);
       if (!input.generation.requiredQueryKeys.includes(queryKey)) return undefined;
       const { data, error } = await input.client.from("analytics_query_snapshots")
         .select("query_key,resource,contract_version,method_signature,payload,publication_id,is_active,invalidated_at")
@@ -57,7 +57,7 @@ export function createGlobalV2ProductionQueryServices(input: {
         active: data.is_active === true,
         invalidated: data.invalidated_at !== null,
         manifestComplete: input.generation.requiredQueryKeys.includes(queryKey),
-        signatureCompatible: data.method_signature === globalV2ExpectedQueryMethodSignature(request.resource),
+        signatureCompatible: globalV2AcceptedQueryMethodSignatures(request.resource).includes(data.method_signature),
         data: data.payload,
       };
     },

@@ -20,7 +20,7 @@ export const GLOBAL_LIFE_TIMELINE_MAX_EVENTS = 64;
 export const GLOBAL_LIFE_TIMELINE_MAX_DESTINATIONS = 64;
 export const GLOBAL_LIFE_TIMELINE_PAYLOAD_BUDGET_BYTES = 96 * 1024;
 
-export const globalLifeTimelineResourceDefinition = Object.freeze({
+export const legacyGlobalLifeTimelineResourceDefinition = Object.freeze({
   resource: "analysis_global_life_timeline",
   moduleKey: "RHYTHM",
   moduleRole: "PRESENTATION_ONLY",
@@ -32,7 +32,7 @@ export const globalLifeTimelineResourceDefinition = Object.freeze({
   availability: "AVAILABLE",
 } as const);
 
-export type GlobalLifeTimelineResourceName = typeof globalLifeTimelineResourceDefinition.resource;
+export type GlobalLifeTimelineResourceName = typeof legacyGlobalLifeTimelineResourceDefinition.resource;
 
 export type GlobalTimelineCausalCost =
   | { readonly status: "KNOWN" | "PARTIAL"; readonly value: GlobalTypedMeasure }
