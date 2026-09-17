@@ -1792,23 +1792,27 @@ export function buildGlobalV2CandidateFromOwnerOutputs(input: GlobalV2CandidateI
     };
   });
   const timelineDestinations: readonly GlobalNavigationDestination[] = timelineEvents.filter(({ sourceKind }) => sourceKind === "MOMENT").map(({ eventRef }) => ({ targetId: `global-query:${eventRef}`, kind: "GLOBAL_QUERY", resource: "analysis_global_moment_experience_detail", instanceKey: globalV2QueryInstanceKey("analysis_global_moment_experience_detail", scopeHash, { entityRef: eventRef }), entityRef: eventRef, scopeHash, sourcePublicationId: provisionalMeta.publicationId, sourceAnalyticsRevision: provisionalMeta.revision }));
-  const legacyTimelineInstance: GlobalV2QueryInstanceInput = {
-    resource: "analysis_global_life_timeline", scope, params: timelineParams, dependencies: timelineDependencies,
-    payload: buildGlobalLifeTimelineReadModel({ kind: "global_life_timeline", schemaVersion: "global-life-timeline@v1", resource: "analysis_global_life_timeline", moduleKey: "RHYTHM", events: timelineEvents, chapterOverlays: [], contextSignals: [], destinations: timelineDestinations, quality: quality(outputsByModule.get("RHYTHM")!), publicationMeta: provisionalMeta, resourceMeta: metaFor("analysis_global_life_timeline", timelineParams, timelineDependencies) }),
-  };
   const semanticSnapshots = input.semanticTimeline === undefined ? undefined : buildGlobalTimelineQuerySnapshots({
     projection: input.semanticTimeline.projection,
     comparator: input.semanticTimeline.comparator,
     publicationMeta: provisionalMeta,
     resourceMeta: (resource, params) => metaFor(resource, params, timelineDependencies),
   });
-  const timelineInstance: GlobalV2QueryInstanceInput = semanticSnapshots === undefined ? legacyTimelineInstance : {
-    resource: "analysis_global_life_timeline",
-    scope,
-    params: timelineParams,
-    dependencies: timelineDependencies,
-    payload: semanticSnapshots.timeline,
-  };
+  const timelineInstance: GlobalV2QueryInstanceInput = semanticSnapshots === undefined
+    ? {
+        resource: "analysis_global_life_timeline",
+        scope,
+        params: timelineParams,
+        dependencies: timelineDependencies,
+        payload: buildGlobalLifeTimelineReadModel({ kind: "global_life_timeline", schemaVersion: "global-life-timeline@v1", resource: "analysis_global_life_timeline", moduleKey: "RHYTHM", events: timelineEvents, chapterOverlays: [], contextSignals: [], destinations: timelineDestinations, quality: quality(outputsByModule.get("RHYTHM")!), publicationMeta: provisionalMeta, resourceMeta: metaFor("analysis_global_life_timeline", timelineParams, timelineDependencies) }),
+      }
+    : {
+        resource: "analysis_global_life_timeline",
+        scope,
+        params: timelineParams,
+        dependencies: timelineDependencies,
+        payload: semanticSnapshots.timeline,
+      };
   const timelineComparisonInstances: GlobalV2QueryInstanceInput[] = (semanticSnapshots?.comparisons ?? []).map(({ params, payload }) => ({
     resource: "analysis_global_timeline_event_comparison",
     scope,
