@@ -330,3 +330,20 @@ export {
   type TimelineSemanticProjectionAssertion,
   type TimelineSemanticProjectionEvent,
 } from "./timeline-semantic-projection";
+export {
+  TIMELINE_SEMANTIC_COMPARATOR_VERSION,
+  TIMELINE_SEMANTIC_HOUSEHOLD_FACET,
+  resolveTimelineSemanticComparatorPolicy,
+  timelineSemanticComparatorPolicies,
+  type TimelineSemanticComparatorPolicy,
+} from "./timeline-semantic-comparator-policy";
+export {
+  buildTimelineSemanticComparator,
+  type TimelineSemanticComparatorFacetContext,
+  type TimelineSemanticComparatorFacetValue,
+  type TimelineSemanticComparatorProjection,
+  type TimelineSemanticComparisonCard,
+  type TimelineSemanticComparisonLevel,
+  type TimelineSemanticComparisonResult,
+  type TimelineSemanticComparisonSupport,
+} from "./timeline-semantic-comparator";

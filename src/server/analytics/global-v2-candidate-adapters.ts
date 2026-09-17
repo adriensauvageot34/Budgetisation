@@ -26,6 +26,11 @@ export type M6TimelineAuthority = {
       readonly seriesId?: string;
     };
     readonly resolvedType?: { readonly normalizedKey: string; readonly label: string; readonly family: string };
+    readonly profile?: { readonly requiredFacets: readonly string[] };
+    readonly subjectFacets?: Readonly<Record<string, Readonly<{
+      readonly status: "KNOWN" | "UNKNOWN" | "CONFLICT";
+      readonly value?: string;
+    }>>>;
     readonly causalCost:
       | { readonly status: "KNOWN" | "PARTIAL"; readonly value: Money }
       | { readonly status: "UNKNOWN" | "NOT_APPLICABLE" | "CONFLICT" };

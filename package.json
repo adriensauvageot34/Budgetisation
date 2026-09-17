@@ -12,6 +12,7 @@
     "check:global-v2-timeline-semantic-registry": "node --experimental-strip-types scripts/check-global-v2-timeline-semantic-registry.mjs",
     "check:global-v2-life-event-cost-closure": "node --experimental-strip-types scripts/check-global-v2-life-event-cost-closure.mjs",
     "check:global-v2-timeline-semantic-projection": "node --experimental-strip-types scripts/check-global-v2-timeline-semantic-projection.mjs",
+    "check:global-v2-timeline-semantic-comparator": "node --experimental-strip-types scripts/check-global-v2-timeline-semantic-comparator.mjs",
     "check:global-v2-economic-function": "node --experimental-strip-types scripts/check-global-v2-economic-function.mjs",
     "check:m1-1r-shared-foundations": "node scripts/check-m1-1r-shared-foundations.mjs",
     "check:m1-2-3r-engine-owner": "node --experimental-strip-types scripts/check-m1-2-3r-engine-owner.mjs",
