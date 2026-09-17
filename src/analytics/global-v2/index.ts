@@ -312,3 +312,11 @@ export {
   type TimelineSemanticTaxonomyEntry,
   type TimelineSemanticTaxonomyLevel,
 } from "./timeline-semantic-taxonomy";
+export {
+  TIMELINE_EVENT_COST_METHOD_VERSION,
+  resolveTimelineLifeEventCosts,
+  type LifeEventCostClosureAssertion,
+  type LifeEventCostClosureStatus,
+  type TimelineLifeEventCost,
+  type TimelineLifeEventCostReason,
+} from "./timeline-event-cost";
