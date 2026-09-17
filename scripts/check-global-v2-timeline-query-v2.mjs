@@ -93,6 +93,7 @@ const advertisedEvents = [
   event(1, { eventRef: "life-event:subject", visibilityTier: "PRINCIPAL", eventCost: known("CANONICAL_LINKED", "0"), comparisonLevels: [{ level: "SAME_CLOSE_FAMILY", label: "Visite à des amis", supportStatus: "PARTIAL", peerCount: 3, materiality: "UNKNOWN" }], defaultComparisonLevel: "SAME_CLOSE_FAMILY" }),
   ...Array.from({ length: 3 }, (_, index) => event(index + 2, { eventRef: `moment:p${String(index).padStart(3, "0")}`, sourceKind: "MOMENT", eventCost: known("M6_CAUSAL", String(index)), momentDetailAvailable: true })),
 ];
+check(() => assert.doesNotThrow(() => query.buildGlobalLifeTimelineV2ReadModel({ ...baseTimeline, events: [event(9, { eventRef: "moment:canonical-only", sourceKind: "MOMENT", momentDetailAvailable: false })] })));
 // The same-generation authorization gate is exercised with LifeEvents only so no M6 detail resource is needed.
 const planTimelineEvents = advertisedEvents.map((entry) => entry.sourceKind === "MOMENT" ? { ...entry, eventRef: `life-event:peer-${entry.eventRef.slice(-3)}`, sourceKind: "LIFE_EVENT", momentDetailAvailable: false } : entry);
 const planPeerObservations = planTimelineEvents.slice(1).map((entry) => ({ eventRef: entry.eventRef, sourceKind: entry.sourceKind, canonicalName: entry.canonicalName, startDate: entry.startDate, endDate: entry.endDate, visibilityTier: entry.visibilityTier, eventCost: entry.eventCost }));

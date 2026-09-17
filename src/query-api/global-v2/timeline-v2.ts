@@ -277,7 +277,7 @@ function parseTimelineEvent(value: unknown): GlobalTimelineV2Event {
   const primaryPlaceLabel = optional(record, "primaryPlaceLabel", (entry) => text(entry, "primaryPlaceLabel"));
   const participantCount = optional(record, "participantCount", (entry) => integer(entry, "participantCount"));
   const momentDetailAvailable = requireProperty(record, "momentDetailAvailable", "GlobalTimelineV2Event");
-  if (typeof momentDetailAvailable !== "boolean" || momentDetailAvailable !== (sourceKind === "MOMENT")) throw new TypeError("GLOBAL_TIMELINE_DETAIL_AVAILABILITY_INVALID");
+  if (typeof momentDetailAvailable !== "boolean" || (sourceKind === "LIFE_EVENT" && momentDetailAvailable)) throw new TypeError("GLOBAL_TIMELINE_DETAIL_AVAILABILITY_INVALID");
   return {
     eventRef,
     sourceKind,

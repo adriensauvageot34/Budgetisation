@@ -121,6 +121,7 @@ export async function resolveGlobalTimelineSemanticProjection(input: Readonly<{
       ...(optionalCanonicalString(row, ["moment_series_id", "series_id"]) === undefined
         ? {}
         : { seriesRef: `moment-series:${optionalCanonicalString(row, ["moment_series_id", "series_id"])}` }),
+      detailAvailable: false,
     };
   });
   const momentOwners = [...owners.moments, ...supplementalMoments];

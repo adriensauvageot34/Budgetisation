@@ -40,6 +40,7 @@ export type TimelineSemanticMomentOwner = TimelineSemanticSourceOntology & Reado
     | Readonly<{ status: "KNOWN" | "PARTIAL"; value: Money }>
     | Readonly<{ status: "UNKNOWN" | "NOT_APPLICABLE" | "CONFLICT" }>;
   seriesRef?: string;
+  detailAvailable?: boolean;
 }>;
 
 export type TimelineSemanticLifeEventOwner = TimelineSemanticSourceOntology & Readonly<{
@@ -217,7 +218,7 @@ export function buildTimelineSemanticProjection(input: Readonly<{
         canonicalName: moment.canonicalName,
         ...common(moment, assertion, labels),
         eventCost: momentCost(moment.causalCost),
-        momentDetailAvailable: true,
+        momentDetailAvailable: moment.detailAvailable !== false,
       });
       continue;
     }
