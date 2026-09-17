@@ -414,7 +414,13 @@
 .backToTop { display: flex; align-items: center; gap: 7px; margin: 28px auto 12px; border: 0; background: transparent; color: var(--color-primary-deep); font-weight: 800; cursor: pointer; }
 .activationPending { display: grid; max-width: 700px; justify-items: start; gap: 14px; margin: 11vh auto; border: 1px solid var(--color-border); border-radius: 18px; padding: clamp(24px, 5vw, 48px); background: white; box-shadow: var(--shadow-md); }
 .activationPending p { color: var(--color-muted); line-height: 1.6; }
-.timelineExperience { display: grid; }
+.timelineExperience { display: grid; gap: 10px; }
+.timelineDensity { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+.timelineDensity button { border: 1px solid var(--color-border); border-radius: 999px; padding: 8px 13px; background: var(--color-surface); color: var(--color-muted); font: inherit; font-size: 12px; font-weight: 780; cursor: pointer; }
+.timelineDensity button[aria-pressed="true"] { border-color: var(--color-primary); background: var(--color-primary-soft); color: var(--color-primary-deep); }
+.timelineDensity button:hover, .timelineDensity button:focus-visible { border-color: var(--color-primary); color: var(--color-primary-deep); }
+.timelineDensity button:focus-visible { outline: 2px solid var(--color-primary); outline-offset: 2px; }
+.timelineDensity > span { margin-left: auto; color: var(--color-muted); font-size: 12px; }
 .timelineScroller { height: clamp(520px, 62vh, 680px); overflow-y: auto; border-block: 1px solid var(--color-border); background: var(--color-surface); scrollbar-gutter: stable; overscroll-behavior: contain; scroll-behavior: smooth; }
 .timelineScroller:focus-visible { border-radius: 4px; outline: 2px solid var(--color-primary); outline-offset: 3px; }
 .timelineYear { display: grid; grid-template-columns: 76px minmax(0, 1fr); align-items: start; gap: 20px; }
@@ -436,12 +442,20 @@
 .timelineEventHeading strong { overflow-wrap: anywhere; font-size: 16px; line-height: 1.35; }
 .timelineEventHeading em { border-radius: 999px; padding: 3px 7px; background: var(--color-primary-soft); color: var(--color-primary-deep); font-size: 10px; font-style: normal; font-weight: 850; letter-spacing: .03em; text-transform: uppercase; }
 .timelineEventMeta { color: var(--color-muted); font-size: 12px; line-height: 1.4; }
+.timelineSemanticContext { color: var(--color-muted); font-size: 11px; line-height: 1.35; }
 .timelineEventFacts { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 12px; }
 .timelineEventFacts b { font-size: 14px; }
 .timelineEventFacts small { color: var(--color-muted); font-size: 11px; }
 .timelineEventFacts .timelineComparison { color: var(--color-primary-deep); font-weight: 740; }
 .timelineEventFacts .timelineUnknown { color: var(--color-muted); font-weight: 650; }
 .timelineChevron { color: var(--color-muted); }
+.timelineChevron[data-expanded="true"] { transform: rotate(180deg); }
+.timelineLifeEventDetails { position: relative; z-index: 1; display: grid; gap: 10px; margin-left: 70px; border-bottom: 1px solid var(--color-border); padding: 2px 14px 16px; background: var(--color-surface-soft); }
+.timelineLifeEventDetails p { margin: 0; color: var(--color-muted); font-size: 12px; line-height: 1.45; }
+.timelineLifeEventDetails dl { display: flex; flex-wrap: wrap; gap: 10px 22px; margin: 0; }
+.timelineLifeEventDetails dl div { display: grid; gap: 2px; }
+.timelineLifeEventDetails dt { color: var(--color-muted); font-size: 10px; font-weight: 800; letter-spacing: .04em; text-transform: uppercase; }
+.timelineLifeEventDetails dd { margin: 0; font-size: 12px; font-weight: 720; }
 .timelineDistinctive { border-left: 3px solid var(--color-primary-deep); }
 .timelineDistinctive::before { left: 50px !important; }
 .timelineStatus, .timelineEmpty { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 120px; border-block: 1px solid var(--color-border); padding: 18px; color: var(--color-muted); }
@@ -542,6 +556,8 @@
   .timelineMonth li > button, .timelineMonth li > article { grid-template-columns: 28px 28px minmax(0, 1fr) auto; }
   .timelineMonth li::before { left: 43px; }
   .timelineDistinctive::before { left: 40px !important; }
+  .timelineDensity > span { width: 100%; margin-left: 0; }
+  .timelineLifeEventDetails { margin-left: 56px; }
 }
 @media (max-width: 480px) {
   .kpis, .expandedMetrics, .seriesGrid, .m2DetailMetrics, .m2ReferenceCard dl { grid-template-columns: 1fr; }

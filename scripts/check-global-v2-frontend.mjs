@@ -617,7 +617,7 @@ check(() => assert.match(pageSource, /moduleKey === "RHYTHM" \? <GlobalLifeTimel
 check(() => assert.match(lifeTimelineSource, /resource: "analysis_global_life_timeline"/u));
 check(() => assert.doesNotMatch(lifeTimelineSource, /analysis_global_rhythm|displayValue|numericDisplay|parseFloat|\.sort\(/u));
 check(() => assert.match(lifeTimelineSource, /Sequential projection only: the Query order remains authoritative/u));
-check(() => assert.match(lifeTimelineSource, /"LIFE_EVENT:activite_loisir"[\s\S]*"M6:week-end-escapade"/u));
+check(() => assert.match(lifeTimelineSource, /semanticCloseIcons[\s\S]*semanticIntermediateIcons/u));
 check(() => assert.doesNotMatch(lifeTimelineSource, /includes\([^)]*typeKey|typeKey[^\n]*includes/u));
 check(() => assert.match(lifeTimelineSource, /Coût non établi/u));
 check(() => assert.match(lifeTimelineSource, /detailAvailability === "MOMENT_DETAIL"[\s\S]*\? <button[\s\S]*: <article/u));
@@ -625,15 +625,24 @@ check(() => assert.match(lifeTimelineSource, /comparison\.status === "PARTIAL" \
 check(() => assert.match(lifeTimelineSource, /comparisonSummary\?\.status === "KNOWN" && event\.comparisonSummary\.materiality === "MATERIAL"/u));
 check(() => assert.doesNotMatch(lifeTimelineSource, /amount\s*>\s*0|Number\([^)]*\)\s*>\s*0/u));
 check(() => assert.doesNotMatch(lifeTimelineSource, /Explorer l’analyse|Nos moments|LifeNarrative|Hero/u));
-check(() => assert.doesNotMatch(lifeTimelineSource, /TimelineFilter|eventMatchesFilters|FilterButton|timelineTools|timelineMonthNav|timelineFilters|Aller à un mois|Filtrer la timeline|Coût connu|Comparaison disponible/u));
+check(() => assert.doesNotMatch(lifeTimelineSource, /TimelineFilter|eventMatchesFilters|FilterButton|timelineTools|timelineMonthNav|timelineFilters|Aller à un mois|Filtrer la timeline|Coût connu/u));
 check(() => assert.doesNotMatch(cssSource, /\.timelineTools|\.timelineMonthNav|\.timelineFilters/u));
-check(() => assert.match(lifeTimelineSource, /groupTimelineEvents\(model\?\.events \?\? \[\]\)/u));
-check(() => assert.match(lifeTimelineSource, /data-timeline-resource=\{model\.resource\}>\s*<div className=\{styles\.timelineScroller\}/u));
+check(() => assert.match(lifeTimelineSource, /useState<TimelineDensityMode>\("PRINCIPAL"\)/u));
+check(() => assert.match(lifeTimelineSource, /timelineEventsForDensity\(model\.events, density\)/u));
+check(() => assert.match(lifeTimelineSource, /groupTimelineEvents\(displayedEvents\)/u));
+check(() => assert.match(lifeTimelineSource, /data-timeline-resource=\{model\.resource\}>[\s\S]*className=\{styles\.timelineDensity\}[\s\S]*className=\{styles\.timelineScroller\}/u));
+check(() => assert.match(lifeTimelineSource, /semanticClassification\.close\.label/u));
+check(() => assert.match(lifeTimelineSource, /event\.sourceKind === "MOMENT" && event\.momentDetailAvailable/u));
+check(() => assert.match(lifeTimelineSource, /event\.sourceKind === "LIFE_EVENT"[\s\S]*setExpanded/u));
+check(() => assert.doesNotMatch(lifeTimelineSource.slice(lifeTimelineSource.indexOf("function TimelineV2EventRow"), lifeTimelineSource.indexOf("function TimelineEventRow")), /familySource|typeKey/u));
+check(() => assert.doesNotMatch(lifeTimelineSource, /analysis_global_timeline_event_comparison|peerObservations|medianMoney|moneyQuartiles/u));
 check(() => assert.match(lifeTimelineSource, /timeline-year-[\s\S]*timeline-month-/u));
 check(() => assert.match(cssSource, /\.timelineScroller\s*\{[^}]*height:\s*clamp\(520px, 62vh, 680px\)[^}]*scrollbar-gutter:\s*stable/u));
 check(() => assert.match(cssSource, /@media \(max-width: 767px\)[\s\S]*\.timelineScroller\s*\{[^}]*height:\s*64dvh/u));
 check(() => assert.match(cssSource, /\.timelineMonth > h4\s*\{[^}]*position:\s*sticky/u));
 check(() => assert.match(cssSource, /\.timelineMonth li > button:focus-visible/u));
+check(() => assert.match(cssSource, /\.timelineDensity button\[aria-pressed="true"\]/u));
+check(() => assert.match(cssSource, /\.timelineLifeEventDetails/u));
 
 // D8: published background rhythms complete the timeline-first chapter without React analytics.
 const timelinePanelSource = pageSource.slice(pageSource.indexOf("function GlobalLifeTimelinePanel"), pageSource.indexOf("type SummarySlotDefinition"));

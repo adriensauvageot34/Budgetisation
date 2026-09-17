@@ -143,7 +143,8 @@ if (fixturePath !== undefined) {
 }
 
 const frontend = fs.readFileSync(path.join(root, "src", "features", "global-v2", "life-timeline.tsx"), "utf8");
-check(() => assert.match(frontend, /Temporary SH-05 presentation bridge/u));
+check(() => assert.match(frontend, /active publications use the V2 card/u));
+check(() => assert.match(frontend, /timelineEventsForDensity\(model\.events, density\)/u));
 check(() => assert.doesNotMatch(frontend, /medianMoney|moneyQuartiles|MedianAbsoluteDeviation|buildTimelineSemanticComparator/u));
 
 console.log(`Global V2 Timeline Query S6 checks: ${checks} passed${fixturePath === undefined ? " (fixture acceptance not requested)." : "."}`);

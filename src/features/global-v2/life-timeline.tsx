@@ -1,12 +1,13 @@
 "use client";
 
-import { useMemo, type ComponentType } from "react";
+import { useMemo, useState, type ComponentType } from "react";
 import {
   BadgeCheck,
   BriefcaseBusiness,
   Cake,
   Camera,
   CarFront,
+  ChevronDown,
   ChevronRight,
   Circle,
   Flower2,
@@ -23,11 +24,17 @@ import {
 import type { GlobalLifeTimelineReadModel, GlobalLifeTimelineV2ReadModel, GlobalTimelineEvent, GlobalTimelineV2Event } from "@/query-api/global-v2";
 import { useGlobalV2Resource } from "./use-global-resource";
 import type { GlobalV2VisitRuntime } from "./visit-runtime";
+import {
+  hasTimelineComparisonAffordance,
+  timelineEventAmount,
+  timelineEventsForDensity,
+  type TimelineDensityMode,
+} from "./life-timeline-presentation";
 import styles from "./global-v2.module.css";
 
 type TimelineIcon = ComponentType<{ readonly size?: number; readonly "aria-hidden"?: boolean }>;
 
-const timelineIcons: Readonly<Record<string, TimelineIcon>> = Object.freeze({
+const legacyTimelineIcons: Readonly<Record<string, TimelineIcon>> = Object.freeze({
   "LIFE_EVENT:activite_loisir": Sparkles,
   "LIFE_EVENT:celebration": PartyPopper,
   "LIFE_EVENT:examen_permis": BadgeCheck,
@@ -55,6 +62,45 @@ const timelineIcons: Readonly<Record<string, TimelineIcon>> = Object.freeze({
   "M6:week-end-escapade": Plane,
 });
 
+/** Presentation mapping only: keys are supplied by the semantic taxonomy. */
+const semanticCloseIcons: Readonly<Record<string, TimelineIcon>> = Object.freeze({
+  anniversaire: Cake,
+  club_boite_de_nuit: Music,
+  concert_spectacle_musical: Music,
+  controle_technique: CarFront,
+  deplacement_professionnel_avec_nuitee: BriefcaseBusiness,
+  fete_annuelle_familiale: PartyPopper,
+  journee_plage_baignade: Waves,
+  obseques_funerailles: Flower2,
+  parcours_permis_de_conduire: BadgeCheck,
+  projet_seance_photo: Camera,
+  reparation: TriangleAlert,
+  soiree_bars_tournee_de_bars: Music,
+  soiree_techno_rave: Music,
+  voyage_vacances_a_l_etranger: Plane,
+  week_end_escapade_regionale: Plane,
+});
+
+const semanticIntermediateIcons: Readonly<Record<string, TimelineIcon>> = Object.freeze({
+  celebrations_privees: PartyPopper,
+  culture_et_evenements_publics: Music,
+  demarches_administratives_et_juridiques: BadgeCheck,
+  evenements_familiaux_marquants: Users,
+  evenements_professionnels: BriefcaseBusiness,
+  loisirs_et_activites: Sparkles,
+  missions_et_interventions_professionnelles: BriefcaseBusiness,
+  permis_et_apprentissages: BadgeCheck,
+  projets_creatifs: Camera,
+  projets_maison: House,
+  sante_medicale: Flower2,
+  sorties_festives_et_nocturnes: Music,
+  sorties_restauration_et_gourmandes: MapPin,
+  vacances_et_voyages: Plane,
+  vehicule: CarFront,
+  visites_et_temps_avec_les_proches: Users,
+  week_ends_et_escapades: Plane,
+});
+
 const moneyFormatter = new Intl.NumberFormat("fr-FR", { style: "currency", currency: "EUR", minimumFractionDigits: 0, maximumFractionDigits: 2 });
 const monthFormatter = new Intl.DateTimeFormat("fr-FR", { month: "long", year: "numeric", timeZone: "UTC" });
 const dayFormatter = new Intl.DateTimeFormat("fr-FR", { day: "numeric", timeZone: "UTC" });
@@ -77,26 +123,18 @@ function eventDateLabel(event: TimelineTransportEvent): string {
   return `Du ${shortDateFormatter.format(start)} au ${shortDateFormatter.format(timelineDate(event.endDate))}`;
 }
 
-function eventAmount(event: TimelineTransportEvent): string {
-  if ("eventCost" in event) return event.eventCost.status === "KNOWN" ? moneyFormatter.format(Number(event.eventCost.value)) : "Coût non établi";
+function legacyEventAmount(event: GlobalTimelineEvent): string {
   const cost = event.causalCost;
   if (cost.status !== "KNOWN" && cost.status !== "PARTIAL") return "Coût non établi";
   if (cost.value.kind !== "MONEY") return "Coût non établi";
   return moneyFormatter.format(Number(cost.value.value));
 }
 
-function eventIsDistinctive(event: TimelineTransportEvent): boolean {
-  return "comparisonLevels" in event
-    ? event.distinctiveComparisonLevel !== undefined
-    : event.comparisonSummary?.status === "KNOWN" && event.comparisonSummary.materiality === "MATERIAL";
+function legacyEventIsDistinctive(event: GlobalTimelineEvent): boolean {
+  return event.comparisonSummary?.status === "KNOWN" && event.comparisonSummary.materiality === "MATERIAL";
 }
 
-function comparisonLabel(event: TimelineTransportEvent): { readonly label: string; readonly peerCount: number } | undefined {
-  if ("comparisonLevels" in event) {
-    const selected = event.comparisonLevels.find(({ level }) => level === event.defaultComparisonLevel) ?? event.comparisonLevels[0];
-    if (selected === undefined) return undefined;
-    return { label: selected.supportStatus === "PARTIAL" ? "Peu de comparables" : "Voir la comparaison", peerCount: selected.peerCount };
-  }
+function legacyComparisonLabel(event: GlobalTimelineEvent): { readonly label: string; readonly peerCount: number } | undefined {
   const comparison = event.comparisonSummary;
   if (comparison === undefined || comparison.status === "UNKNOWN" || comparison.status === "NOT_APPLICABLE" || comparison.peerCount < 3) return undefined;
   return { label: comparison.status === "PARTIAL" || comparison.peerCount < 5 ? "Peu de comparables" : "Voir la comparaison", peerCount: comparison.peerCount };
@@ -126,49 +164,119 @@ export function groupTimelineEvents(events: readonly TimelineTransportEvent[]): 
   return years;
 }
 
-/** Temporary SH-05 presentation bridge; S8 replaces this with native V2 cards. */
-function TimelineEventRow({ event, onMomentDetail }: { readonly event: TimelineTransportEvent; readonly onMomentDetail: (eventRef: string, title: string) => void }) {
-  const legacy = !("eventCost" in event);
-  const familySource = legacy ? event.familySource : event.sourceKind === "MOMENT" ? "M6" : "LIFE_EVENT";
-  const typeKey = legacy ? event.typeKey : event.semanticClassification.close.key;
-  const typeLabel = legacy ? event.typeLabel : event.semanticClassification.close.label;
-  const Icon = timelineIcons[`${familySource}:${typeKey}`] ?? Circle;
-  const comparison = comparisonLabel(event);
-  const distinctive = eventIsDistinctive(event);
-  const costStatus = "eventCost" in event ? event.eventCost.status : event.causalCost.status;
+/** Kept only for fixture/cutover compatibility; active publications use the V2 card below. */
+function LegacyTimelineEventRow({ event, onMomentDetail }: { readonly event: GlobalTimelineEvent; readonly onMomentDetail: (eventRef: string, title: string) => void }) {
+  const Icon = legacyTimelineIcons[`${event.familySource}:${event.typeKey}`] ?? Circle;
+  const comparison = legacyComparisonLabel(event);
+  const distinctive = legacyEventIsDistinctive(event);
+  const costStatus = event.causalCost.status;
   const knownCost = costStatus === "KNOWN" || costStatus === "PARTIAL";
-  const place = legacy ? (event as GlobalTimelineEvent).places.find(({ label }) => label !== undefined)?.label : (event as GlobalTimelineV2Event).primaryPlaceLabel;
-  const participantCount = legacy ? (event as GlobalTimelineEvent).participantRefs.length : (event as GlobalTimelineV2Event).participantCount;
+  const place = event.places.find(({ label }) => label !== undefined)?.label;
+  const participantCount = event.participantRefs.length;
   const participantLabel = participantCount === undefined ? undefined : participantCount === 1 ? "1 personne" : `${participantCount} personnes`;
-  const momentDetailAvailable = "momentDetailAvailable" in event ? event.momentDetailAvailable : event.detailAvailability === "MOMENT_DETAIL";
+  const momentDetailAvailable = event.detailAvailability === "MOMENT_DETAIL";
   const content = <>
     <time className={styles.timelineDay} dateTime={event.startDate}>{dayFormatter.format(timelineDate(event.startDate))}</time>
     <span className={styles.timelineMarker} aria-hidden><Icon size={16} aria-hidden /></span>
     <span className={styles.timelineEventBody}>
       <span className={styles.timelineEventHeading}><strong>{event.canonicalName}</strong>{distinctive ? <em>Se distingue</em> : null}</span>
-      <span className={styles.timelineEventMeta}>{eventDateLabel(event)} · {typeLabel}{place === undefined ? "" : ` · ${place}`}{participantLabel === undefined ? "" : ` · ${participantLabel}`}</span>
-      <span className={styles.timelineEventFacts}><b className={knownCost ? undefined : styles.timelineUnknown}>{eventAmount(event)}</b>{costStatus === "PARTIAL" ? <small>Coût partiellement établi</small> : null}{comparison === undefined ? null : <small className={styles.timelineComparison}>{comparison.label} · {comparison.peerCount} événements</small>}</span>
+      <span className={styles.timelineEventMeta}>{eventDateLabel(event)} · {event.typeLabel}{place === undefined ? "" : ` · ${place}`}{participantLabel === undefined ? "" : ` · ${participantLabel}`}</span>
+      <span className={styles.timelineEventFacts}><b className={knownCost ? undefined : styles.timelineUnknown}>{legacyEventAmount(event)}</b>{costStatus === "PARTIAL" ? <small>Coût partiellement établi</small> : null}{comparison === undefined ? null : <small className={styles.timelineComparison}>{comparison.label} · {comparison.peerCount} événements</small>}</span>
     </span>
     {momentDetailAvailable ? <ChevronRight className={styles.timelineChevron} aria-hidden size={18} /> : null}
   </>;
-  return <li className={distinctive ? styles.timelineDistinctive : undefined} data-family-source={familySource} data-type-key={typeKey}>
+  return <li className={distinctive ? styles.timelineDistinctive : undefined} data-family-source={event.familySource} data-type-key={event.typeKey}>
     {momentDetailAvailable
       ? <button type="button" data-global-entity-ref={event.eventRef} aria-label={`Ouvrir le détail de ${event.canonicalName}`} onClick={() => onMomentDetail(event.eventRef, event.canonicalName)}>{content}</button>
-      : <article aria-label={`${event.canonicalName}, ${eventDateLabel(event)}, ${eventAmount(event)}`}>{content}</article>}
+      : <article aria-label={`${event.canonicalName}, ${eventDateLabel(event)}, ${legacyEventAmount(event)}`}>{content}</article>}
   </li>;
 }
 
+function TimelineV2EventRow({ event, onMomentDetail }: { readonly event: GlobalTimelineV2Event; readonly onMomentDetail: (eventRef: string, title: string) => void }) {
+  const [expanded, setExpanded] = useState(false);
+  const Icon = semanticCloseIcons[event.semanticClassification.close.key]
+    ?? semanticIntermediateIcons[event.semanticClassification.intermediate.key]
+    ?? Circle;
+  const distinctive = event.distinctiveComparisonLevel !== undefined;
+  const comparisonAvailable = hasTimelineComparisonAffordance(event);
+  const participantLabel = event.participantCount === undefined
+    ? undefined
+    : event.participantCount === 1 ? "1 personne" : `${event.participantCount} personnes`;
+  const isMomentDetail = event.sourceKind === "MOMENT" && event.momentDetailAvailable;
+  const isLifeEvent = event.sourceKind === "LIFE_EVENT";
+  const seriesLabel = event.series === undefined ? undefined : event.series.label ?? "Série identifiée";
+  const detailsId = `timeline-life-event-${event.eventRef.slice("life-event:".length)}`;
+  const content = <>
+    <time className={styles.timelineDay} dateTime={event.startDate}>{dayFormatter.format(timelineDate(event.startDate))}</time>
+    <span className={styles.timelineMarker} aria-hidden><Icon size={16} aria-hidden /></span>
+    <span className={styles.timelineEventBody}>
+      <span className={styles.timelineEventHeading}><strong>{event.canonicalName}</strong>{distinctive ? <em>Se distingue</em> : null}</span>
+      <span className={styles.timelineEventMeta}>{eventDateLabel(event)} · {event.semanticClassification.close.label}{event.primaryPlaceLabel === undefined ? "" : ` · ${event.primaryPlaceLabel}`}{participantLabel === undefined ? "" : ` · ${participantLabel}`}</span>
+      <span className={styles.timelineSemanticContext}>{event.semanticClassification.intermediate.label} · {event.semanticClassification.grand.label}</span>
+      <span className={styles.timelineEventFacts}>
+        <b className={event.eventCost.status === "KNOWN" ? undefined : styles.timelineUnknown}>{timelineEventAmount(event)}</b>
+        {seriesLabel === undefined ? null : <small>Série · {seriesLabel}</small>}
+        {comparisonAvailable ? <small className={styles.timelineComparison}>Comparaison disponible</small> : null}
+      </span>
+    </span>
+    {isMomentDetail ? <ChevronRight className={styles.timelineChevron} aria-hidden size={18} /> : null}
+    {isLifeEvent ? <ChevronDown className={styles.timelineChevron} data-expanded={expanded} aria-hidden size={18} /> : null}
+  </>;
+
+  return <li
+    className={distinctive ? styles.timelineDistinctive : undefined}
+    data-source-kind={event.sourceKind}
+    data-semantic-close={event.semanticClassification.close.key}
+    data-visibility-tier={event.visibilityTier}
+  >
+    {isMomentDetail
+      ? <button type="button" data-global-entity-ref={event.eventRef} aria-label={`Ouvrir le détail de ${event.canonicalName}`} onClick={() => onMomentDetail(event.eventRef, event.canonicalName)}>{content}</button>
+      : isLifeEvent
+        ? <button type="button" aria-expanded={expanded} aria-controls={detailsId} onClick={() => setExpanded((current) => !current)}>{content}</button>
+        : <article aria-label={`${event.canonicalName}, ${eventDateLabel(event)}, ${timelineEventAmount(event)}`}>{content}</article>}
+    {isLifeEvent && expanded ? <div id={detailsId} className={styles.timelineLifeEventDetails}>
+      <p>{event.semanticClassification.grand.label} <span aria-hidden>›</span> {event.semanticClassification.intermediate.label}</p>
+      <dl>
+        <div><dt>Catégorie</dt><dd>{event.semanticClassification.close.label}</dd></div>
+        <div><dt>Coût</dt><dd>{timelineEventAmount(event)}</dd></div>
+        {seriesLabel === undefined ? null : <div><dt>Série</dt><dd>{seriesLabel}</dd></div>}
+        {event.primaryPlaceLabel === undefined ? null : <div><dt>Lieu</dt><dd>{event.primaryPlaceLabel}</dd></div>}
+        {participantLabel === undefined ? null : <div><dt>Participants</dt><dd>{participantLabel}</dd></div>}
+      </dl>
+      {comparisonAvailable ? <p className={styles.timelineComparison}>Comparaison disponible · {event.comparisonLevels.length === 1 ? "1 profondeur" : `${event.comparisonLevels.length} profondeurs`}</p> : null}
+    </div> : null}
+  </li>;
+}
+
+function TimelineEventRow({ event, onMomentDetail }: { readonly event: TimelineTransportEvent; readonly onMomentDetail: (eventRef: string, title: string) => void }) {
+  return "eventCost" in event
+    ? <TimelineV2EventRow event={event} onMomentDetail={onMomentDetail} />
+    : <LegacyTimelineEventRow event={event} onMomentDetail={onMomentDetail} />;
+}
+
 export function LifeTimeline({ runtime, onMomentDetail }: { readonly runtime: GlobalV2VisitRuntime; readonly onMomentDetail: (eventRef: string, title: string) => void }) {
+  const [density, setDensity] = useState<TimelineDensityMode>("PRINCIPAL");
   const request = useMemo(() => ({ resource: "analysis_global_life_timeline" as const, params: {} }), []);
   const result = useGlobalV2Resource<TimelineTransportReadModel>(runtime, request, true, "DIRECT");
   const model = result.state.status === "READY" ? result.state.data : result.state.status === "ERROR" ? result.state.previousData : undefined;
-  const years = useMemo(() => groupTimelineEvents(model?.events ?? []), [model]);
+  const displayedEvents = useMemo<readonly TimelineTransportEvent[]>(() => {
+    if (model === undefined) return [];
+    return model.schemaVersion === "global-life-timeline@v2"
+      ? timelineEventsForDensity(model.events, density)
+      : model.events;
+  }, [density, model]);
+  const years = useMemo(() => groupTimelineEvents(displayedEvents), [displayedEvents]);
 
   if ((result.state.status === "IDLE" || result.state.status === "LOADING") && model === undefined) return <div className={styles.timelineStatus} role="status" aria-busy="true">Chargement de la timeline…</div>;
   if (result.state.status === "ERROR" && model === undefined) return <div className={styles.timelineStatus} role="alert"><strong>La timeline n’a pas pu être chargée.</strong><button type="button" onClick={result.retry}>Réessayer</button></div>;
   if (model === undefined) return null;
 
   return <div className={styles.timelineExperience} data-timeline-resource={model.resource}>
+    {model.schemaVersion === "global-life-timeline@v2" ? <div className={styles.timelineDensity} role="group" aria-label="Densité de la timeline">
+      <button type="button" aria-pressed={density === "PRINCIPAL"} onClick={() => setDensity("PRINCIPAL")}>Principal</button>
+      <button type="button" aria-pressed={density === "EXTENDED"} onClick={() => setDensity("EXTENDED")}>Étendu</button>
+      <span aria-live="polite">{displayedEvents.length} événements</span>
+    </div> : null}
     <div className={styles.timelineScroller} tabIndex={0} aria-label="Timeline de notre vie, du plus ancien au plus récent">
       {years.length === 0 ? <p className={styles.timelineEmpty}>Aucun événement n’est disponible.</p> : years.map((year) => <section key={year.key} className={styles.timelineYear} aria-labelledby={`timeline-year-${year.key}`}>
         <h3 id={`timeline-year-${year.key}`}>{year.key}</h3>
