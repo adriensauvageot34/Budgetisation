@@ -144,6 +144,18 @@ export class LifeEventCostAssertionRepository {
     this.context = context;
   }
 
+  async readAllActive(): Promise<readonly LifeEventCostClosureAssertion[]> {
+    const result = await this.client
+      .from("life_event_cost_assertions")
+      .select(costAssertionSelection)
+      .eq("household_id", this.context.householdId)
+      .eq("is_active", true)
+      .order("life_event_id", { ascending: true });
+    if (result.error !== null) throw new Error("LIFE_EVENT_COST_ASSERTION_READ_FAILED");
+    if (!Array.isArray(result.data)) throw new Error("LIFE_EVENT_COST_ASSERTION_READ_FAILED");
+    return result.data.map((row) => parseLifeEventCostAssertionRow(row, this.context.householdId));
+  }
+
   async readActive(lifeEventId: string): Promise<LifeEventCostClosureAssertion | null> {
     const result = await this.client
       .from("life_event_cost_assertions")

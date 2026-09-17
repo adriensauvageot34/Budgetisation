@@ -15,7 +15,7 @@ import { parseLocalDate, parseYearMonth, type LocalDate, type YearMonth } from "
 import { canonicalString, optionalCanonicalString, type CanonicalRecord } from "@/server/canonical/record";
 import type { CanonicalRepository } from "@/server/canonical/repository";
 
-type M6TimelineAuthority = {
+export type M6TimelineAuthority = {
   readonly summaries: readonly {
     readonly moment: {
       readonly momentId: string;
@@ -106,13 +106,16 @@ function mergePlaceContexts(values: readonly GlobalTimelineAdapterPlace[]): read
   return [...result.values()].sort((left, right) => left.placeRef.localeCompare(right.placeRef));
 }
 
-/** Candidate-only Canonical + M6 projection. It never enters the owner array. */
-export async function resolveGlobalTimelineCandidateAdapter(input: {
+/** Shared read-only Canonical + M6 owner normalization for Timeline projections. */
+export async function resolveGlobalTimelineOwnerInputs(input: {
   readonly repository: CanonicalRepository;
   readonly certifiedThrough: LocalDate;
   readonly occurrences: readonly ActivityOccurrenceFact[];
   readonly m6: M6TimelineAuthority;
-}) {
+}): Promise<Readonly<{
+  moments: readonly GlobalTimelineMomentAdapterInput[];
+  lifeEvents: readonly GlobalTimelineLifeEventAdapterInput[];
+}>> {
   const momentIds = input.m6.summaries.map(({ moment }) => moment.momentId);
   const occurrences = uniqueRows(input.occurrences, (occurrence) => String(occurrence.lifeEventId), "TIMELINE_LIFE_EVENT");
   const lifeEventIds = occurrences.map(({ lifeEventId }) => String(lifeEventId));
@@ -278,7 +281,16 @@ export async function resolveGlobalTimelineCandidateAdapter(input: {
       },
     };
   });
-  return buildGlobalTimelineCandidateBundle({ moments, lifeEvents });
+  return { moments, lifeEvents };
+}
+
+export async function resolveGlobalTimelineCandidateAdapter(input: {
+  readonly repository: CanonicalRepository;
+  readonly certifiedThrough: LocalDate;
+  readonly occurrences: readonly ActivityOccurrenceFact[];
+  readonly m6: M6TimelineAuthority;
+}) {
+  return buildGlobalTimelineCandidateBundle(await resolveGlobalTimelineOwnerInputs(input));
 }
 
 /** Candidate-only descriptive M4 + M2 join. It emits no behavioral claim. */

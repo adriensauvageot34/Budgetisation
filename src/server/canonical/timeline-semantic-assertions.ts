@@ -197,6 +197,19 @@ export class TimelineSemanticAssertionRepository {
     this.context = context;
   }
 
+  async readAllActive(): Promise<readonly TimelineEventSemanticAssertion[]> {
+    const result = await this.client
+      .from("timeline_event_semantic_assertions")
+      .select(semanticAssertionSelection)
+      .eq("household_id", this.context.householdId)
+      .eq("is_active", true)
+      .order("moment_id", { ascending: true, nullsFirst: false })
+      .order("life_event_id", { ascending: true, nullsFirst: false });
+    if (result.error !== null) throw new Error("TIMELINE_SEMANTIC_READ_FAILED");
+    if (!Array.isArray(result.data)) throw new Error("TIMELINE_SEMANTIC_READ_FAILED");
+    return result.data.map((row) => parseTimelineEventSemanticAssertionRow(row, this.context.householdId));
+  }
+
   async readActive(ref: TimelineSemanticEventRef): Promise<TimelineEventSemanticAssertion | null> {
     let query = this.client
       .from("timeline_event_semantic_assertions")

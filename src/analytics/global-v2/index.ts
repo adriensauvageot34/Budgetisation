@@ -320,3 +320,13 @@ export {
   type TimelineLifeEventCost,
   type TimelineLifeEventCostReason,
 } from "./timeline-event-cost";
+export {
+  TIMELINE_SEMANTIC_PROJECTION_VERSION,
+  buildTimelineSemanticProjection,
+  type TimelineSemanticEventCost,
+  type TimelineSemanticLifeEventOwner,
+  type TimelineSemanticMomentOwner,
+  type TimelineSemanticProjection,
+  type TimelineSemanticProjectionAssertion,
+  type TimelineSemanticProjectionEvent,
+} from "./timeline-semantic-projection";
