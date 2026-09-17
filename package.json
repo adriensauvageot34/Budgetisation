@@ -15,6 +15,7 @@
     "check:global-v2-timeline-semantic-comparator": "node --experimental-strip-types scripts/check-global-v2-timeline-semantic-comparator.mjs",
     "check:global-v2-timeline-query-v2": "node --experimental-strip-types scripts/check-global-v2-timeline-query-v2.mjs",
     "check:global-v2-timeline-ui-s8": "node --experimental-strip-types scripts/check-global-v2-timeline-ui-s8.mjs",
+    "check:global-v2-timeline-ui-s9": "node --experimental-strip-types scripts/check-global-v2-timeline-ui-s9.mjs",
     "check:global-v2-economic-function": "node --experimental-strip-types scripts/check-global-v2-economic-function.mjs",
     "check:m1-1r-shared-foundations": "node scripts/check-m1-1r-shared-foundations.mjs",
     "check:m1-2-3r-engine-owner": "node --experimental-strip-types scripts/check-m1-2-3r-engine-owner.mjs",

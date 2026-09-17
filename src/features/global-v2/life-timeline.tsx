@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState, type ComponentType } from "react";
+import { useEffect, useMemo, useRef, useState, type ComponentType } from "react";
 import {
   BadgeCheck,
   BriefcaseBusiness,
@@ -21,11 +21,25 @@ import {
   Users,
   Waves,
 } from "lucide-react";
-import type { GlobalLifeTimelineReadModel, GlobalLifeTimelineV2ReadModel, GlobalTimelineEvent, GlobalTimelineV2Event } from "@/query-api/global-v2";
+import type {
+  GlobalLifeTimelineReadModel,
+  GlobalLifeTimelineV2ReadModel,
+  GlobalTimelineComparisonLevel,
+  GlobalTimelineComparisonPeerObservation,
+  GlobalTimelineEvent,
+  GlobalTimelineEventComparisonReadModel,
+  GlobalTimelineV2Event,
+  GlobalTypedMeasure,
+} from "@/query-api/global-v2";
+import { ComparisonRange } from "./comparison-range";
 import { useGlobalV2Resource } from "./use-global-resource";
 import type { GlobalV2VisitRuntime } from "./visit-runtime";
 import {
   hasTimelineComparisonAffordance,
+  initialTimelineComparisonLevel,
+  orderedTimelineComparisonLevels,
+  timelineComparisonRequest,
+  timelineComparisonLevelLabel,
   timelineEventAmount,
   timelineEventsForDensity,
   type TimelineDensityMode,
@@ -112,6 +126,15 @@ function timelineDate(value: string): Date {
 
 type TimelineTransportEvent = GlobalTimelineEvent | GlobalTimelineV2Event;
 type TimelineTransportReadModel = GlobalLifeTimelineReadModel | GlobalLifeTimelineV2ReadModel;
+type LifeEventFocusRequest = Readonly<{ eventRef: `life-event:${string}`; requestId: number }>;
+
+function timelineMoneyMeasure(value: string): GlobalTypedMeasure {
+  return { kind: "MONEY", value, unit: "EUR" };
+}
+
+function timelineCountMeasure(value: number): GlobalTypedMeasure {
+  return { kind: "COUNT", value: String(value), unit: "event" };
+}
 
 function monthKey(event: TimelineTransportEvent): string {
   return event.startDate.slice(0, 7);
@@ -192,8 +215,69 @@ function LegacyTimelineEventRow({ event, onMomentDetail }: { readonly event: Glo
   </li>;
 }
 
-function TimelineV2EventRow({ event, onMomentDetail }: { readonly event: GlobalTimelineV2Event; readonly onMomentDetail: (eventRef: string, title: string) => void }) {
+function TimelineComparator({ event, runtime, onOpenPeer }: {
+  readonly event: GlobalTimelineV2Event;
+  readonly runtime: GlobalV2VisitRuntime;
+  readonly onOpenPeer: (peer: GlobalTimelineComparisonPeerObservation) => void;
+}) {
+  const descriptors = useMemo(() => orderedTimelineComparisonLevels(event), [event]);
+  const [selectedLevel, setSelectedLevel] = useState<GlobalTimelineComparisonLevel>(() => {
+    const initial = initialTimelineComparisonLevel(event);
+    if (initial === undefined) throw new TypeError(`TIMELINE_COMPARATOR_LEVEL_MISSING:${event.eventRef}`);
+    return initial;
+  });
+  const request = useMemo(() => timelineComparisonRequest(event.eventRef, selectedLevel), [event.eventRef, selectedLevel]);
+  const result = useGlobalV2Resource<GlobalTimelineEventComparisonReadModel>(runtime, request, true, "DIRECT");
+  const model = result.state.status === "READY" ? result.state.data : result.state.status === "ERROR" ? result.state.previousData : undefined;
+  const distinctiveLabel = event.distinctiveComparisonLevel === undefined
+    ? undefined
+    : timelineComparisonLevelLabel(event, event.distinctiveComparisonLevel);
+
+  return <section className={styles.timelineComparator} aria-label={`Comparaison de ${event.canonicalName}`}>
+    {descriptors.length > 1 ? <div className={styles.timelineComparisonLevels} role="radiogroup" aria-label="Profondeur de comparaison">
+      {descriptors.map(({ level }) => <button
+        key={level}
+        type="button"
+        role="radio"
+        aria-checked={selectedLevel === level}
+        onClick={() => setSelectedLevel(level)}
+      >{timelineComparisonLevelLabel(event, level)}</button>)}
+    </div> : null}
+    {distinctiveLabel === undefined ? null : <p className={styles.timelineDistinctiveBasis}>Se distingue sur la base « {distinctiveLabel} ».</p>}
+    {(result.state.status === "IDLE" || result.state.status === "LOADING") && model === undefined
+      ? <p className={styles.timelineComparatorStatus} role="status" aria-busy="true">Chargement de la comparaison…</p>
+      : result.state.status === "ERROR" && model === undefined
+        ? <p className={styles.timelineComparatorStatus} role="alert">La comparaison n’a pas pu être chargée. <button type="button" onClick={result.retry}>Réessayer</button></p>
+        : model === undefined ? null : <div className={styles.timelineComparatorResult} data-comparison-level={model.comparison.level}>
+          {model.support.status === "PARTIAL" ? <p className={styles.timelineComparatorSupport}>Peu de comparables : cette lecture reste indicative.</p> : null}
+          <p>{model.comparison.label} · {model.support.peerCount} événements comparables</p>
+          <ComparisonRange
+            key={`${event.eventRef}:${model.comparison.level}`}
+            observed={timelineMoneyMeasure(model.subject.eventCost.value)}
+            median={timelineMoneyMeasure(model.statistics.median)}
+            lower={timelineMoneyMeasure(model.statistics.q1)}
+            upper={timelineMoneyMeasure(model.statistics.q3)}
+            supportCount={timelineCountMeasure(model.support.peerCount)}
+            subjectLabel={model.subject.canonicalName}
+            comparisonLabel="événements comparables"
+            peers={model.peerObservations}
+            onOpenPeer={onOpenPeer}
+          />
+        </div>}
+  </section>;
+}
+
+function TimelineV2EventRow({ event, runtime, focusRequest, onMomentDetail, onLifeEventPeer }: {
+  readonly event: GlobalTimelineV2Event;
+  readonly runtime: GlobalV2VisitRuntime;
+  readonly focusRequest: LifeEventFocusRequest | undefined;
+  readonly onMomentDetail: (eventRef: string, title: string) => void;
+  readonly onLifeEventPeer: (peer: GlobalTimelineComparisonPeerObservation & { readonly sourceKind: "LIFE_EVENT" }) => void;
+}) {
   const [expanded, setExpanded] = useState(false);
+  const [comparatorOpen, setComparatorOpen] = useState(false);
+  const rowRef = useRef<HTMLLIElement>(null);
+  const cardButtonRef = useRef<HTMLButtonElement>(null);
   const Icon = semanticCloseIcons[event.semanticClassification.close.key]
     ?? semanticIntermediateIcons[event.semanticClassification.intermediate.key]
     ?? Circle;
@@ -206,6 +290,16 @@ function TimelineV2EventRow({ event, onMomentDetail }: { readonly event: GlobalT
   const isLifeEvent = event.sourceKind === "LIFE_EVENT";
   const seriesLabel = event.series === undefined ? undefined : event.series.label ?? "Série identifiée";
   const detailsId = `timeline-life-event-${event.eventRef.slice("life-event:".length)}`;
+  const comparatorId = `timeline-comparator-${event.eventRef.replace(":", "-")}`;
+  useEffect(() => {
+    if (!isLifeEvent || focusRequest?.eventRef !== event.eventRef) return;
+    setExpanded(true);
+    const frame = window.requestAnimationFrame(() => {
+      rowRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+      cardButtonRef.current?.focus({ preventScroll: true });
+    });
+    return () => window.cancelAnimationFrame(frame);
+  }, [event.eventRef, focusRequest, isLifeEvent]);
   const content = <>
     <time className={styles.timelineDay} dateTime={event.startDate}>{dayFormatter.format(timelineDate(event.startDate))}</time>
     <span className={styles.timelineMarker} aria-hidden><Icon size={16} aria-hidden /></span>
@@ -223,7 +317,13 @@ function TimelineV2EventRow({ event, onMomentDetail }: { readonly event: GlobalT
     {isLifeEvent ? <ChevronDown className={styles.timelineChevron} data-expanded={expanded} aria-hidden size={18} /> : null}
   </>;
 
+  const openPeer = (peer: GlobalTimelineComparisonPeerObservation) => {
+    if (peer.sourceKind === "MOMENT") onMomentDetail(peer.eventRef, peer.canonicalName);
+    else onLifeEventPeer(peer as GlobalTimelineComparisonPeerObservation & { readonly sourceKind: "LIFE_EVENT" });
+  };
+
   return <li
+    ref={rowRef}
     className={distinctive ? styles.timelineDistinctive : undefined}
     data-source-kind={event.sourceKind}
     data-semantic-close={event.semanticClassification.close.key}
@@ -232,7 +332,7 @@ function TimelineV2EventRow({ event, onMomentDetail }: { readonly event: GlobalT
     {isMomentDetail
       ? <button type="button" data-global-entity-ref={event.eventRef} aria-label={`Ouvrir le détail de ${event.canonicalName}`} onClick={() => onMomentDetail(event.eventRef, event.canonicalName)}>{content}</button>
       : isLifeEvent
-        ? <button type="button" aria-expanded={expanded} aria-controls={detailsId} onClick={() => setExpanded((current) => !current)}>{content}</button>
+        ? <button ref={cardButtonRef} type="button" aria-expanded={expanded} aria-controls={detailsId} onClick={() => setExpanded((current) => !current)}>{content}</button>
         : <article aria-label={`${event.canonicalName}, ${eventDateLabel(event)}, ${timelineEventAmount(event)}`}>{content}</article>}
     {isLifeEvent && expanded ? <div id={detailsId} className={styles.timelineLifeEventDetails}>
       <p>{event.semanticClassification.grand.label} <span aria-hidden>›</span> {event.semanticClassification.intermediate.label}</p>
@@ -245,17 +345,28 @@ function TimelineV2EventRow({ event, onMomentDetail }: { readonly event: GlobalT
       </dl>
       {comparisonAvailable ? <p className={styles.timelineComparison}>Comparaison disponible · {event.comparisonLevels.length === 1 ? "1 profondeur" : `${event.comparisonLevels.length} profondeurs`}</p> : null}
     </div> : null}
+    {comparisonAvailable ? <div className={styles.timelineComparatorAction}>
+      <button type="button" aria-expanded={comparatorOpen} aria-controls={comparatorId} onClick={() => setComparatorOpen((current) => !current)}>{comparatorOpen ? "Masquer la comparaison" : "Comparer"}</button>
+    </div> : null}
+    {comparisonAvailable && comparatorOpen ? <div id={comparatorId}><TimelineComparator event={event} runtime={runtime} onOpenPeer={openPeer} /></div> : null}
   </li>;
 }
 
-function TimelineEventRow({ event, onMomentDetail }: { readonly event: TimelineTransportEvent; readonly onMomentDetail: (eventRef: string, title: string) => void }) {
+function TimelineEventRow({ event, runtime, focusRequest, onMomentDetail, onLifeEventPeer }: {
+  readonly event: TimelineTransportEvent;
+  readonly runtime: GlobalV2VisitRuntime;
+  readonly focusRequest: LifeEventFocusRequest | undefined;
+  readonly onMomentDetail: (eventRef: string, title: string) => void;
+  readonly onLifeEventPeer: (peer: GlobalTimelineComparisonPeerObservation & { readonly sourceKind: "LIFE_EVENT" }) => void;
+}) {
   return "eventCost" in event
-    ? <TimelineV2EventRow event={event} onMomentDetail={onMomentDetail} />
+    ? <TimelineV2EventRow event={event} runtime={runtime} focusRequest={focusRequest} onMomentDetail={onMomentDetail} onLifeEventPeer={onLifeEventPeer} />
     : <LegacyTimelineEventRow event={event} onMomentDetail={onMomentDetail} />;
 }
 
 export function LifeTimeline({ runtime, onMomentDetail }: { readonly runtime: GlobalV2VisitRuntime; readonly onMomentDetail: (eventRef: string, title: string) => void }) {
   const [density, setDensity] = useState<TimelineDensityMode>("PRINCIPAL");
+  const [lifeEventFocus, setLifeEventFocus] = useState<LifeEventFocusRequest | undefined>(undefined);
   const request = useMemo(() => ({ resource: "analysis_global_life_timeline" as const, params: {} }), []);
   const result = useGlobalV2Resource<TimelineTransportReadModel>(runtime, request, true, "DIRECT");
   const model = result.state.status === "READY" ? result.state.data : result.state.status === "ERROR" ? result.state.previousData : undefined;
@@ -271,6 +382,11 @@ export function LifeTimeline({ runtime, onMomentDetail }: { readonly runtime: Gl
   if (result.state.status === "ERROR" && model === undefined) return <div className={styles.timelineStatus} role="alert"><strong>La timeline n’a pas pu être chargée.</strong><button type="button" onClick={result.retry}>Réessayer</button></div>;
   if (model === undefined) return null;
 
+  const focusLifeEventPeer = (peer: GlobalTimelineComparisonPeerObservation & { readonly sourceKind: "LIFE_EVENT" }) => {
+    if (peer.visibilityTier === "EXTENDED") setDensity("EXTENDED");
+    setLifeEventFocus((current) => ({ eventRef: peer.eventRef as `life-event:${string}`, requestId: (current?.requestId ?? 0) + 1 }));
+  };
+
   return <div className={styles.timelineExperience} data-timeline-resource={model.resource}>
     {model.schemaVersion === "global-life-timeline@v2" ? <div className={styles.timelineDensity} role="group" aria-label="Densité de la timeline">
       <button type="button" aria-pressed={density === "PRINCIPAL"} onClick={() => setDensity("PRINCIPAL")}>Principal</button>
@@ -282,7 +398,7 @@ export function LifeTimeline({ runtime, onMomentDetail }: { readonly runtime: Gl
         <h3 id={`timeline-year-${year.key}`}>{year.key}</h3>
         <div>{year.months.map((month) => <section key={month.key} className={styles.timelineMonth} aria-labelledby={`timeline-month-${month.key}`}>
           <h4 id={`timeline-month-${month.key}`} data-timeline-month={month.key}>{month.label}</h4>
-          <ol>{month.events.map((event) => <TimelineEventRow key={event.eventRef} event={event} onMomentDetail={onMomentDetail} />)}</ol>
+          <ol>{month.events.map((event) => <TimelineEventRow key={event.eventRef} event={event} runtime={runtime} focusRequest={lifeEventFocus} onMomentDetail={onMomentDetail} onLifeEventPeer={focusLifeEventPeer} />)}</ol>
         </section>)}</div>
       </section>)}
     </div>

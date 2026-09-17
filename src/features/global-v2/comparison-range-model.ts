@@ -1,8 +1,10 @@
-import type { GlobalMomentPeerObservation, GlobalTypedMeasure } from "@/query-api/global-v2";
+import type { GlobalMomentPeerObservation, GlobalTimelineComparisonPeerObservation, GlobalTypedMeasure } from "@/query-api/global-v2";
 
 const DISPLAY_PADDING_PERCENT = 7;
 
-export type ComparisonRangeInput = {
+export type ComparisonRangePeerObservation = GlobalMomentPeerObservation | GlobalTimelineComparisonPeerObservation;
+
+export type ComparisonRangeInput<Peer extends ComparisonRangePeerObservation = ComparisonRangePeerObservation> = {
   readonly observed: GlobalTypedMeasure;
   readonly median: GlobalTypedMeasure;
   readonly lower?: GlobalTypedMeasure | undefined;
@@ -10,17 +12,17 @@ export type ComparisonRangeInput = {
   readonly supportCount?: GlobalTypedMeasure | undefined;
   readonly subjectLabel?: string | undefined;
   readonly comparisonLabel?: string | undefined;
-  readonly peers?: readonly GlobalMomentPeerObservation[] | undefined;
+  readonly peers?: readonly Peer[] | undefined;
 };
 
-export type ComparisonRangePeerModel = {
-  readonly observation: GlobalMomentPeerObservation;
+export type ComparisonRangePeerModel<Peer extends ComparisonRangePeerObservation = ComparisonRangePeerObservation> = {
+  readonly observation: Peer;
   readonly value: number;
   readonly position: number;
   readonly lane: -1 | 0 | 1;
 };
 
-export type ComparisonRangeModel = {
+export type ComparisonRangeModel<Peer extends ComparisonRangePeerObservation = ComparisonRangePeerObservation> = {
   readonly mode: "Q1_Q3" | "MEDIAN_ONLY";
   readonly observed: number;
   readonly median: number;
@@ -31,7 +33,7 @@ export type ComparisonRangeModel = {
   readonly medianPosition: number;
   readonly lowerPosition?: number;
   readonly upperPosition?: number;
-  readonly peers: readonly ComparisonRangePeerModel[];
+  readonly peers: readonly ComparisonRangePeerModel<Peer>[];
   readonly accessibleLabel: string;
 };
 
@@ -56,13 +58,26 @@ function countValue(measure: GlobalTypedMeasure | undefined): number | undefined
   return Number.isFinite(value) && value >= 0 ? value : undefined;
 }
 
+export function comparisonRangePeerRef(peer: ComparisonRangePeerObservation): string {
+  return "eventRef" in peer ? peer.eventRef : peer.peerRef;
+}
+
+function peerMonetaryValue(peer: ComparisonRangePeerObservation, expectedUnit: string): number | undefined {
+  if ("eventCost" in peer) {
+    const value = Number(peer.eventCost.value);
+    return Number.isFinite(value) && expectedUnit === "EUR" ? value : undefined;
+  }
+  if (peer.causalCost.status !== "KNOWN" && peer.causalCost.status !== "PARTIAL") return undefined;
+  return monetaryValue(peer.causalCost.value, expectedUnit);
+}
+
 function displayPosition(value: number, minimum: number, maximum: number): number {
   if (minimum === maximum) return 50;
   const usableWidth = 100 - DISPLAY_PADDING_PERCENT * 2;
   return DISPLAY_PADDING_PERCENT + (value - minimum) / (maximum - minimum) * usableWidth;
 }
 
-export function buildComparisonRangeModel(input: ComparisonRangeInput): ComparisonRangeModel | undefined {
+export function buildComparisonRangeModel<Peer extends ComparisonRangePeerObservation>(input: ComparisonRangeInput<Peer>): ComparisonRangeModel<Peer> | undefined {
   if (input.observed.unit !== "EUR") return undefined;
   const observed = monetaryValue(input.observed);
   const median = monetaryValue(input.median, input.observed.unit);
@@ -74,11 +89,12 @@ export function buildComparisonRangeModel(input: ComparisonRangeInput): Comparis
   const lower = hasReferenceRange ? candidateLower : undefined;
   const upper = hasReferenceRange ? candidateUpper : undefined;
   const supportCount = countValue(input.supportCount);
-  const peerValues = (input.peers ?? []).flatMap((observation) => {
-    if (observation.causalCost.status !== "KNOWN" && observation.causalCost.status !== "PARTIAL") return [];
-    const value = monetaryValue(observation.causalCost.value, input.observed.unit);
-    return value === undefined ? [] : [{ observation, value }];
-  });
+  const peerValues: { observation: Peer; value: number }[] = [];
+  for (const observation of input.peers ?? []) {
+    const value = peerMonetaryValue(observation, input.observed.unit);
+    if (value === undefined) return undefined;
+    peerValues.push({ observation, value });
+  }
   const domainValues = lower === undefined || upper === undefined ? [observed, median, ...peerValues.map(({ value }) => value)] : [observed, median, lower, upper, ...peerValues.map(({ value }) => value)];
   const minimum = Math.min(...domainValues);
   const maximum = Math.max(...domainValues);

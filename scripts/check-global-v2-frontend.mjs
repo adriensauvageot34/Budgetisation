@@ -635,7 +635,8 @@ check(() => assert.match(lifeTimelineSource, /semanticClassification\.close\.lab
 check(() => assert.match(lifeTimelineSource, /event\.sourceKind === "MOMENT" && event\.momentDetailAvailable/u));
 check(() => assert.match(lifeTimelineSource, /event\.sourceKind === "LIFE_EVENT"[\s\S]*setExpanded/u));
 check(() => assert.doesNotMatch(lifeTimelineSource.slice(lifeTimelineSource.indexOf("function TimelineV2EventRow"), lifeTimelineSource.indexOf("function TimelineEventRow")), /familySource|typeKey/u));
-check(() => assert.doesNotMatch(lifeTimelineSource, /analysis_global_timeline_event_comparison|peerObservations|medianMoney|moneyQuartiles/u));
+check(() => assert.match(lifeTimelineSource, /timelineComparisonRequest\(event\.eventRef, selectedLevel\)/u));
+check(() => assert.doesNotMatch(lifeTimelineSource, /medianMoney|moneyQuartiles|MedianAbsoluteDeviation|buildTimelineSemanticComparator/u));
 check(() => assert.match(lifeTimelineSource, /timeline-year-[\s\S]*timeline-month-/u));
 check(() => assert.match(cssSource, /\.timelineScroller\s*\{[^}]*height:\s*clamp\(520px, 62vh, 680px\)[^}]*scrollbar-gutter:\s*stable/u));
 check(() => assert.match(cssSource, /@media \(max-width: 767px\)[\s\S]*\.timelineScroller\s*\{[^}]*height:\s*64dvh/u));

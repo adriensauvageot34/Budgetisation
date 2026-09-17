@@ -79,7 +79,7 @@ check(() => assert.match(component, /useState<TimelineDensityMode>\("PRINCIPAL"\
 check(() => assert.match(component, /timelineEventsForDensity\(model\.events, density\)/u));
 check(() => assert.match(component, />Principal<\/button>[\s\S]*>Étendu<\/button>/u));
 check(() => assert.equal((component.match(/resource: "analysis_global_life_timeline"/gu) ?? []).length, 1));
-check(() => assert.doesNotMatch(source, /analysis_global_timeline_event_comparison/u));
+check(() => assert.match(source, /timelineComparisonRequest\(event\.eventRef, selectedLevel\)/u));
 check(() => assert.match(v2Card, /semanticClassification\.close\.label/u));
 check(() => assert.match(v2Card, /semanticClassification\.intermediate\.label[\s\S]*semanticClassification\.grand\.label|semanticClassification\.grand\.label[\s\S]*semanticClassification\.intermediate\.label/u));
 check(() => assert.doesNotMatch(v2Card, /familySource|typeKey/u));
@@ -93,4 +93,4 @@ check(() => assert.match(css, /\.timelineDensity button\[aria-pressed="true"\]/u
 check(() => assert.match(css, /\.timelineLifeEventDetails/u));
 
 console.log(`Global V2 Timeline UI S8: ${checks}/${checks} PASS`);
-console.log("Density defaults to PRINCIPAL; EXTENDED is an order-preserving superset; Query/comparator math calls: 0.");
+console.log("Density defaults to PRINCIPAL; EXTENDED is an order-preserving superset; client comparator math: 0.");
