@@ -1,5 +1,7 @@
 "use client";
 
+// Deployment retrigger only: no runtime behavior change.
+
 import { useEffect, useMemo, useRef, useState, type ComponentType } from "react";
 import {
   BadgeCheck,
