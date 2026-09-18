@@ -74,11 +74,7 @@ export function ComparisonRange<Peer extends ComparisonRangePeerObservation>(pro
       <span className={styles.comparisonRangeObservedLabel} style={positioned(model.observedPosition)}>{moneyFormatter.format(model.observed)}<small>Vous</small></span>
       {hovered === undefined ? null : <span className={styles.comparisonRangeTooltip} style={positioned(hovered.position)} role="tooltip"><strong>{hovered.observation.canonicalName}</strong><span>{peerDate(hovered.observation)}</span><b>{moneyFormatter.format(hovered.value)}</b></span>}
     </div>
-    <figcaption className={styles.comparisonRangeLegend}>
-      <span><i className={styles.comparisonRangeMedianKey} />Médiane</span>
-      <span><i className={styles.comparisonRangeObservedKey} />{props.subjectLabel ?? "Cet événement"}</span>
-    </figcaption>
-    {model.peers.length === 0 ? null : selected === undefined ? <p className={styles.comparisonRangeHint}>Survolez un point pour l’identifier, puis sélectionnez-le pour l’explorer.</p> : <article className={styles.comparisonRangePreview} aria-live="polite">
+    {selected === undefined ? null : <article className={styles.comparisonRangePreview} aria-live="polite">
       <div><strong>{selected.observation.canonicalName}</strong><span>{peerDate(selected.observation)}</span><b>{moneyFormatter.format(selected.value)}</b>{props.selectedPeerDetails}</div>
       {props.onOpenPeer === undefined ? null : <button type="button" data-peer-ref={comparisonRangePeerRef(selected.observation)} onClick={() => props.onOpenPeer?.(selected.observation)}>Voir dans la Timeline <span aria-hidden>→</span></button>}
     </article>}
