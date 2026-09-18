@@ -1,7 +1,7 @@
 import "server-only";
 
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { parseGlobalV2PublicationManifest, type GlobalV2PublicationManifest } from "./global-v2";
+import { parseGlobalV2PublicationManifest, serializeGlobalV2PublicationManifest, type GlobalV2PublicationManifest } from "./global-v2";
 
 export type GlobalManifestRead =
   | { readonly status: "KNOWN"; readonly manifest: GlobalV2PublicationManifest }
@@ -28,7 +28,7 @@ export class SupabaseGlobalManifestStore {
 
   async attach(publicationId: string, input: unknown): Promise<GlobalV2PublicationManifest> {
     const manifest = parseGlobalV2PublicationManifest(input);
-    const { error } = await this.client.rpc("attach_global_v2_manifest", { p_publication_id: publicationId, p_household_id: manifest.householdId, p_manifest: manifest });
+    const { error } = await this.client.rpc("attach_global_v2_manifest", { p_publication_id: publicationId, p_household_id: manifest.householdId, p_manifest: serializeGlobalV2PublicationManifest(manifest) });
     if (error !== null) throw error;
     const read = await this.read(manifest.householdId, publicationId);
     if (read.status !== "KNOWN" || read.manifest.manifestHash !== manifest.manifestHash) throw new TypeError("GLOBAL_MANIFEST_ATTACHMENT_READ_BACK_FAILED");

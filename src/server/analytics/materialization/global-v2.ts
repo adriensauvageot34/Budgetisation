@@ -96,6 +96,18 @@ export type GlobalV2PublicationManifest = {
 
 export type GlobalV2ManifestInput = Omit<GlobalV2PublicationManifest, "manifestHash">;
 
+/** Persisted wire form. Dependencies are catalogued once and closures carry indexes. */
+export type GlobalV2PublicationManifestWire = Omit<GlobalV2PublicationManifest, "closures" | "manifestHash"> & {
+  readonly dependencyCatalog: readonly GlobalV2ResolvedDependency[];
+  readonly closures: readonly {
+    readonly outputKey: string;
+    readonly declarationDigest: string;
+    readonly inputDigest: string;
+    readonly dependencyRefs: readonly number[];
+  }[];
+  readonly manifestHash: string;
+};
+
 const MANIFEST_INPUT_KEYS = [
   "formatVersion", "profileId", "householdId", "asOf", "certifiedThrough", "liveThrough",
   "sourceRevision", "baseAnalyticsRevision", "resourceFamilies", "requiredArtifactKeys",
@@ -177,6 +189,51 @@ function canonicalClosure(input: GlobalV2Closure): GlobalV2Closure {
   return { ...input, dependencies };
 }
 
+function compactManifestBody(manifest: GlobalV2ManifestInput): Omit<GlobalV2PublicationManifestWire, "manifestHash"> {
+  const dependencyMap = new Map<string, GlobalV2ResolvedDependency>();
+  for (const closure of manifest.closures) {
+    for (const dependency of closure.dependencies) {
+      const key = `${dependency.authority}:${dependency.family}:${dependency.identity}`;
+      dependencyMap.set(key, dependency);
+    }
+  }
+  const dependencyCatalog = [...dependencyMap.values()].sort((a, b) => `${a.authority}:${a.family}:${a.identity}`.localeCompare(`${b.authority}:${b.family}:${b.identity}`));
+  const dependencyIndexes = new Map(dependencyCatalog.map((dependency, index) => [`${dependency.authority}:${dependency.family}:${dependency.identity}`, index] as const));
+  const closures = manifest.closures.map((closure) => ({
+    outputKey: closure.outputKey,
+    declarationDigest: closure.declarationDigest,
+    inputDigest: closure.inputDigest,
+    dependencyRefs: closure.dependencies.map((dependency) => dependencyIndexes.get(`${dependency.authority}:${dependency.family}:${dependency.identity}`)!).sort((a, b) => a - b),
+  }));
+  return { ...manifest, dependencyCatalog, closures };
+}
+
+function compactManifest(manifest: GlobalV2PublicationManifest): GlobalV2PublicationManifestWire {
+  const { manifestHash, ...body } = manifest;
+  const compactBody = compactManifestBody(body);
+  return { ...compactBody, manifestHash };
+}
+
+function expandWireManifest(record: Record<string, unknown>): GlobalV2ManifestInput {
+  const catalogValue = record.dependencyCatalog;
+  if (!Array.isArray(catalogValue)) throw new TypeError("GLOBAL_MANIFEST_DEPENDENCY_CATALOG_INVALID");
+  const rawCatalog = catalogValue as GlobalV2ResolvedDependency[];
+  const dependencyCatalog = canonicalDependencies(rawCatalog);
+  if (canonicalSerializeGlobal(rawCatalog) !== canonicalSerializeGlobal(dependencyCatalog)) throw new TypeError("GLOBAL_MANIFEST_DEPENDENCY_CATALOG_NON_CANONICAL");
+  const closuresValue = record.closures;
+  if (!Array.isArray(closuresValue)) throw new TypeError("GLOBAL_MANIFEST_CLOSURES_INVALID");
+  const closures = closuresValue.map((value) => {
+    if (value === null || typeof value !== "object" || Array.isArray(value)) throw new TypeError("GLOBAL_MANIFEST_CLOSURE_INVALID");
+    const closure = value as Record<string, unknown>;
+    assertExactKeys(closure, ["outputKey", "declarationDigest", "inputDigest", "dependencyRefs"], "GLOBAL_MANIFEST_CLOSURE");
+    if (!Array.isArray(closure.dependencyRefs) || closure.dependencyRefs.some((ref) => !Number.isSafeInteger(ref) || ref < 0 || ref >= dependencyCatalog.length)) throw new TypeError("GLOBAL_MANIFEST_DEPENDENCY_REF_INVALID");
+    const dependencies = (closure.dependencyRefs as number[]).map((ref) => dependencyCatalog[ref]);
+    return { outputKey: closure.outputKey, declarationDigest: closure.declarationDigest, inputDigest: closure.inputDigest, dependencies } as GlobalV2Closure;
+  });
+  const { dependencyCatalog: _dependencyCatalog, ...input } = record;
+  return { ...input, closures } as unknown as GlobalV2ManifestInput;
+}
+
 export function globalV2PublicationFactsHash(input: Pick<GlobalV2ManifestInput,
   "householdId" | "asOf" | "certifiedThrough" | "liveThrough" | "sourceRevision" | "closures"
 >): string {
@@ -251,17 +308,27 @@ export function buildGlobalV2PublicationManifest(input: GlobalV2ManifestInput): 
     artifactVersions,
     queryVersions,
   };
-  return { ...withoutHash, manifestHash: sha256(canonicalSerializeGlobal(withoutHash)) };
+  return { ...withoutHash, manifestHash: sha256(canonicalSerializeGlobal(compactManifestBody(withoutHash))) };
 }
 
 export function parseGlobalV2PublicationManifest(value: unknown): GlobalV2PublicationManifest {
   if (value === null || typeof value !== "object" || Array.isArray(value)) throw new TypeError("GLOBAL_MANIFEST_INVALID");
   const record = value as Record<string, unknown>;
   const { manifestHash, ...input } = record;
-  const rebuilt = buildGlobalV2PublicationManifest(input as unknown as GlobalV2ManifestInput);
+  const expandedInput = Object.prototype.hasOwnProperty.call(record, "dependencyCatalog")
+    ? expandWireManifest(input)
+    : input as unknown as GlobalV2ManifestInput;
+  const rebuilt = buildGlobalV2PublicationManifest(expandedInput);
   if (manifestHash !== rebuilt.manifestHash) throw new TypeError("GLOBAL_MANIFEST_HASH_MISMATCH");
-  if (canonicalSerializeGlobal(record) !== canonicalSerializeGlobal(rebuilt)) throw new TypeError("GLOBAL_MANIFEST_UNKNOWN_OR_NON_CANONICAL_FIELD");
+  const expected = Object.prototype.hasOwnProperty.call(record, "dependencyCatalog") ? compactManifest(rebuilt) : rebuilt;
+  if (canonicalSerializeGlobal(record) !== canonicalSerializeGlobal(expected)) throw new TypeError("GLOBAL_MANIFEST_UNKNOWN_OR_NON_CANONICAL_FIELD");
   return rebuilt;
+}
+
+/** Serialize the expanded in-memory manifest to the compact DB wire form. */
+export function serializeGlobalV2PublicationManifest(value: GlobalV2PublicationManifest): GlobalV2PublicationManifestWire {
+  const parsed = parseGlobalV2PublicationManifest(value);
+  return compactManifest(parsed);
 }
 
 export type GlobalV2PublicationMeta = {

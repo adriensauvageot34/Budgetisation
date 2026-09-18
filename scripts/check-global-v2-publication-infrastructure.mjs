@@ -75,6 +75,11 @@ const manifestInput = {
   publicationFactsHash: materialization.globalV2PublicationFactsHash(manifestInputBase),
 };
 const manifest = materialization.buildGlobalV2PublicationManifest(manifestInput);
+const compactManifest = materialization.serializeGlobalV2PublicationManifest(manifest);
+check(() => assert.ok(Buffer.byteLength(JSON.stringify(compactManifest), "utf8") < 2_000_000));
+check(() => assert.equal(materialization.parseGlobalV2PublicationManifest(compactManifest).manifestHash, manifest.manifestHash));
+check(() => assert.ok(Array.isArray(compactManifest.dependencyCatalog)));
+check(() => assert.equal(compactManifest.closures.every(({ dependencyRefs }) => Array.isArray(dependencyRefs)), true));
 const reversed = materialization.buildGlobalV2PublicationManifest({ ...manifestInput, closures: [...manifestInput.closures].reverse(), resourceFamilies: [...manifestInput.resourceFamilies].reverse() });
 check(() => assert.equal(manifest.manifestHash, reversed.manifestHash));
 check(() => assert.deepEqual(materialization.parseGlobalV2PublicationManifest(manifest), manifest));
