@@ -35,14 +35,15 @@ export const globalTimelineEventComparisonResourceDefinition = Object.freeze({
   group: "exploration",
   paramsKind: "event_comparison",
   family: "global_exploration",
-  schemaVersion: "global-timeline-event-comparison@v1",
+  schemaVersion: "global-timeline-event-comparison@v2",
   availability: "AVAILABLE",
 } as const);
 
 export type GlobalTimelineComparisonLevel =
   | "SAME_SERIES"
   | "SAME_CLOSE_FAMILY"
-  | "SAME_INTERMEDIATE_FAMILY";
+  | "SAME_INTERMEDIATE_FAMILY"
+  | "SAME_GRAND_FAMILY";
 
 export type GlobalTimelineSemanticClassification = Readonly<{
   taxonomyVersion: string;
@@ -61,9 +62,18 @@ export type GlobalTimelineEventCost =
 export type GlobalTimelineComparisonDescriptor = Readonly<{
   level: GlobalTimelineComparisonLevel;
   label: string;
-  supportStatus: "PARTIAL" | "KNOWN";
-  peerCount: number;
+  supportStatus: "LIMITED" | "PARTIAL" | "KNOWN";
+  relatedPeerCount: number;
+  costPeerCount: number;
   materiality: "MATERIAL" | "NOT_MATERIAL" | "UNKNOWN";
+}>;
+
+export type GlobalTimelineSpentDuringContext = Readonly<{
+  status: "KNOWN" | "PARTIAL";
+  total: Money;
+  directCostIncludedAmount?: Money;
+  additionalDuringAmount?: Money;
+  componentCount: number;
 }>;
 
 export type GlobalTimelineV2Event = Readonly<{
@@ -81,6 +91,7 @@ export type GlobalTimelineV2Event = Readonly<{
   distinctiveComparisonLevel?: GlobalTimelineComparisonLevel;
   primaryPlaceLabel?: string;
   participantCount?: number;
+  spentDuringContext?: GlobalTimelineSpentDuringContext;
   momentDetailAvailable: boolean;
 }>;
 
@@ -94,31 +105,55 @@ export type GlobalLifeTimelineV2ReadModel = Readonly<{
   resourceMeta: GlobalReadModelResourceMeta;
 }>;
 
-export type GlobalTimelineComparisonPeerObservation = Readonly<{
+type GlobalTimelineCompactComparisonDescriptor = readonly [
+  level: GlobalTimelineComparisonLevel,
+  supportStatus: GlobalTimelineComparisonDescriptor["supportStatus"],
+  relatedPeerCount: number,
+  costPeerCount: number,
+  materiality: GlobalTimelineComparisonDescriptor["materiality"],
+];
+
+type GlobalTimelineCompactEvent = Omit<GlobalTimelineV2Event, "semanticClassification" | "comparisonLevels"> & Readonly<{
+  semanticClassification: number;
+  comparisonLevels: readonly GlobalTimelineCompactComparisonDescriptor[];
+}>;
+
+/** Compact snapshot shape. Runtime parsing expands it back to the public V2 read model. */
+export type GlobalLifeTimelineV2Snapshot = Omit<GlobalLifeTimelineV2ReadModel, "events"> & Readonly<{
+  semanticClassifications: readonly GlobalTimelineSemanticClassification[];
+  comparisonLevelLabels: Readonly<Partial<Record<GlobalTimelineComparisonLevel, string>>>;
+  events: readonly GlobalTimelineCompactEvent[];
+}>;
+
+export type GlobalTimelineComparisonEventObservation = Readonly<{
   eventRef: GlobalTimelineV2Event["eventRef"];
   sourceKind: GlobalTimelineV2Event["sourceKind"];
   canonicalName: string;
   startDate: LocalDate;
   endDate: LocalDate;
   visibilityTier: GlobalTimelineV2Event["visibilityTier"];
+  eventCost: GlobalTimelineEventCost;
+}>;
+
+export type GlobalTimelineComparisonPeerObservation = GlobalTimelineComparisonEventObservation & Readonly<{
   eventCost: Extract<GlobalTimelineEventCost, { readonly status: "KNOWN" }>;
 }>;
 
 export type GlobalTimelineEventComparisonReadModel = Readonly<{
   kind: "global_timeline_event_comparison";
-  schemaVersion: "global-timeline-event-comparison@v1";
+  schemaVersion: "global-timeline-event-comparison@v2";
   resource: "analysis_global_timeline_event_comparison";
   moduleKey: "RHYTHM";
-  subject: GlobalTimelineComparisonPeerObservation;
+  subject: GlobalTimelineComparisonEventObservation;
   comparison: Readonly<{
     level: GlobalTimelineComparisonLevel;
     label: string;
     cohortKey: string;
     policyVersion: string;
   }>;
-  support: Readonly<{ status: "PARTIAL" | "KNOWN"; peerCount: number }>;
-  statistics: Readonly<{ median: Money; q1: Money; q3: Money; mad: Money }>;
-  deltas: Readonly<{ absolute: Money; relative?: string }>;
+  support: Readonly<{ status: "LIMITED" | "PARTIAL" | "KNOWN"; relatedPeerCount: number; costPeerCount: number }>;
+  statistics?: Readonly<{ median: Money; q1: Money; q3: Money; mad: Money }>;
+  deltas?: Readonly<{ absolute: Money; relative?: string }>;
   materiality: Readonly<{
     status: "MATERIAL" | "NOT_MATERIAL" | "UNKNOWN";
     policyRef: Readonly<{ id: string; version: string }>;
@@ -128,7 +163,8 @@ export type GlobalTimelineEventComparisonReadModel = Readonly<{
     status: "KNOWN" | "UNKNOWN" | "CONFLICT";
     value?: string;
   }>[];
-  peerObservations: readonly GlobalTimelineComparisonPeerObservation[];
+  relatedPeers: readonly GlobalTimelineComparisonEventObservation[];
+  costComparablePeers: readonly GlobalTimelineComparisonPeerObservation[];
   publicationMeta: GlobalReadModelPublicationMeta;
   resourceMeta: GlobalReadModelResourceMeta;
 }>;
@@ -136,11 +172,13 @@ export type GlobalTimelineEventComparisonReadModel = Readonly<{
 const HASH = /^[0-9a-f]{64}$/u;
 const INSTANT = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}/u;
 const EVENT_REF = /^(?:moment|life-event):[^\s:]+$/u;
-const comparisonLevels: ReadonlySet<GlobalTimelineComparisonLevel> = new Set([
+const comparisonLevelOrder = [
   "SAME_SERIES",
   "SAME_CLOSE_FAMILY",
   "SAME_INTERMEDIATE_FAMILY",
-]);
+  "SAME_GRAND_FAMILY",
+] as const satisfies readonly GlobalTimelineComparisonLevel[];
+const comparisonLevels: ReadonlySet<GlobalTimelineComparisonLevel> = new Set(comparisonLevelOrder);
 
 function text(value: unknown, label: string): string {
   if (typeof value !== "string" || value.length === 0 || value !== value.trim()) throw new TypeError(`${label}_INVALID`);
@@ -239,16 +277,53 @@ function parseComparisonLevel(value: unknown, label = "comparisonLevel"): Global
 }
 
 function parseDescriptor(value: unknown): GlobalTimelineComparisonDescriptor {
-  const record = parseStrictRecord(value, ["level", "label", "supportStatus", "peerCount", "materiality"], "GlobalTimelineComparisonDescriptor");
-  const peerCount = integer(requireProperty(record, "peerCount", "GlobalTimelineComparisonDescriptor"), "peerCount");
-  const supportStatus = parseStringLiteral<GlobalTimelineComparisonDescriptor["supportStatus"]>(requireProperty(record, "supportStatus", "GlobalTimelineComparisonDescriptor"), new Set(["PARTIAL", "KNOWN"]), "supportStatus");
-  if (peerCount < 3 || (supportStatus === "PARTIAL" ? peerCount > 4 : peerCount < 5)) throw new TypeError("GLOBAL_TIMELINE_DESCRIPTOR_SUPPORT_MISMATCH");
+  const record = parseStrictRecord(value, ["level", "label", "supportStatus", "relatedPeerCount", "costPeerCount", "materiality"], "GlobalTimelineComparisonDescriptor");
+  const relatedPeerCount = integer(requireProperty(record, "relatedPeerCount", "GlobalTimelineComparisonDescriptor"), "relatedPeerCount");
+  const costPeerCount = integer(requireProperty(record, "costPeerCount", "GlobalTimelineComparisonDescriptor"), "costPeerCount");
+  const supportStatus = parseStringLiteral<GlobalTimelineComparisonDescriptor["supportStatus"]>(requireProperty(record, "supportStatus", "GlobalTimelineComparisonDescriptor"), new Set(["LIMITED", "PARTIAL", "KNOWN"]), "supportStatus");
+  if (relatedPeerCount < 1 || costPeerCount > relatedPeerCount
+    || supportStatus === "LIMITED" && relatedPeerCount > 2
+    || supportStatus === "PARTIAL" && (relatedPeerCount < 3 || relatedPeerCount > 4)
+    || supportStatus === "KNOWN" && relatedPeerCount < 5) throw new TypeError("GLOBAL_TIMELINE_DESCRIPTOR_SUPPORT_MISMATCH");
   return {
     level: parseComparisonLevel(requireProperty(record, "level", "GlobalTimelineComparisonDescriptor")),
     label: text(requireProperty(record, "label", "GlobalTimelineComparisonDescriptor"), "comparisonLabel"),
     supportStatus,
-    peerCount,
+    relatedPeerCount,
+    costPeerCount,
     materiality: parseStringLiteral(requireProperty(record, "materiality", "GlobalTimelineComparisonDescriptor"), new Set(["MATERIAL", "NOT_MATERIAL", "UNKNOWN"]), "materiality"),
+  };
+}
+
+function parseCompactDescriptor(
+  value: unknown,
+  labels: Readonly<Partial<Record<GlobalTimelineComparisonLevel, string>>>,
+): GlobalTimelineComparisonDescriptor {
+  if (!Array.isArray(value) || value.length !== 5) throw new TypeError("GlobalTimelineCompactComparisonDescriptor_INVALID");
+  const level = parseComparisonLevel(value[0]);
+  const label = labels[level];
+  if (label === undefined) throw new TypeError("GLOBAL_TIMELINE_COMPARISON_LABEL_MISSING");
+  return parseDescriptor({
+    level,
+    label,
+    supportStatus: value[1],
+    relatedPeerCount: value[2],
+    costPeerCount: value[3],
+    materiality: value[4],
+  });
+}
+
+function parseSpentDuringContext(value: unknown): GlobalTimelineSpentDuringContext {
+  const record = parseStrictRecord(value, ["status", "total", "directCostIncludedAmount", "additionalDuringAmount", "componentCount"], "GlobalTimelineSpentDuringContext");
+  const status = parseStringLiteral<GlobalTimelineSpentDuringContext["status"]>(requireProperty(record, "status", "GlobalTimelineSpentDuringContext"), new Set(["KNOWN", "PARTIAL"]), "spentDuringStatus");
+  const directCostIncludedAmount = optional(record, "directCostIncludedAmount", parseMoney);
+  const additionalDuringAmount = optional(record, "additionalDuringAmount", parseMoney);
+  return {
+    status,
+    total: parseMoney(requireProperty(record, "total", "GlobalTimelineSpentDuringContext")),
+    ...(directCostIncludedAmount === undefined ? {} : { directCostIncludedAmount }),
+    ...(additionalDuringAmount === undefined ? {} : { additionalDuringAmount }),
+    componentCount: integer(requireProperty(record, "componentCount", "GlobalTimelineSpentDuringContext"), "componentCount"),
   };
 }
 
@@ -258,15 +333,32 @@ function parseSeries(value: unknown): NonNullable<GlobalTimelineV2Event["series"
   return { seriesRef: text(requireProperty(record, "seriesRef", "GlobalTimelineSeries"), "seriesRef"), ...(label === undefined ? {} : { label }) };
 }
 
-function parseTimelineEvent(value: unknown): GlobalTimelineV2Event {
-  const record = parseStrictRecord(value, ["eventRef", "sourceKind", "canonicalName", "startDate", "endDate", "visibilityTier", "semanticClassification", "eventCost", "series", "comparisonLevels", "defaultComparisonLevel", "distinctiveComparisonLevel", "primaryPlaceLabel", "participantCount", "momentDetailAvailable"], "GlobalTimelineV2Event");
+function parseTimelineEvent(
+  value: unknown,
+  compactContext?: Readonly<{
+    semanticClassifications: readonly GlobalTimelineSemanticClassification[];
+    comparisonLevelLabels: Readonly<Partial<Record<GlobalTimelineComparisonLevel, string>>>;
+  }>,
+): GlobalTimelineV2Event {
+  const record = parseStrictRecord(value, ["eventRef", "sourceKind", "canonicalName", "startDate", "endDate", "visibilityTier", "semanticClassification", "eventCost", "series", "comparisonLevels", "defaultComparisonLevel", "distinctiveComparisonLevel", "primaryPlaceLabel", "participantCount", "spentDuringContext", "momentDetailAvailable"], "GlobalTimelineV2Event");
   const eventRef = parseEventRef(requireProperty(record, "eventRef", "GlobalTimelineV2Event"), "eventRef");
   const sourceKind = parseStringLiteral<GlobalTimelineV2Event["sourceKind"]>(requireProperty(record, "sourceKind", "GlobalTimelineV2Event"), new Set(["MOMENT", "LIFE_EVENT"]), "sourceKind");
   if ((sourceKind === "MOMENT") !== eventRef.startsWith("moment:")) throw new TypeError("GLOBAL_TIMELINE_EVENT_REF_SOURCE_MISMATCH");
   const startDate = parseLocalDate(requireProperty(record, "startDate", "GlobalTimelineV2Event"));
   const endDate = parseLocalDate(requireProperty(record, "endDate", "GlobalTimelineV2Event"));
   if (endDate < startDate) throw new TypeError("GLOBAL_TIMELINE_EVENT_INTERVAL_INVALID");
-  const descriptors = array(requireProperty(record, "comparisonLevels", "GlobalTimelineV2Event"), parseDescriptor, "comparisonLevels");
+  const semanticValue = requireProperty(record, "semanticClassification", "GlobalTimelineV2Event");
+  const semanticClassification = typeof semanticValue === "number"
+    ? compactContext?.semanticClassifications[integer(semanticValue, "semanticClassificationRef")]
+    : parseSemanticClassification(semanticValue);
+  if (semanticClassification === undefined) throw new TypeError("GLOBAL_TIMELINE_SEMANTIC_CLASSIFICATION_REF_INVALID");
+  const descriptors = array(
+    requireProperty(record, "comparisonLevels", "GlobalTimelineV2Event"),
+    (entry) => Array.isArray(entry)
+      ? parseCompactDescriptor(entry, compactContext?.comparisonLevelLabels ?? {})
+      : parseDescriptor(entry),
+    "comparisonLevels",
+  );
   const levels = descriptors.map(({ level }) => level);
   if (new Set(levels).size !== levels.length) throw new TypeError("GLOBAL_TIMELINE_COMPARISON_LEVEL_DUPLICATE");
   const defaultComparisonLevel = optional(record, "defaultComparisonLevel", parseComparisonLevel);
@@ -276,6 +368,7 @@ function parseTimelineEvent(value: unknown): GlobalTimelineV2Event {
   const series = optional(record, "series", parseSeries);
   const primaryPlaceLabel = optional(record, "primaryPlaceLabel", (entry) => text(entry, "primaryPlaceLabel"));
   const participantCount = optional(record, "participantCount", (entry) => integer(entry, "participantCount"));
+  const spentDuringContext = optional(record, "spentDuringContext", parseSpentDuringContext);
   const momentDetailAvailable = requireProperty(record, "momentDetailAvailable", "GlobalTimelineV2Event");
   if (typeof momentDetailAvailable !== "boolean" || (sourceKind === "LIFE_EVENT" && momentDetailAvailable)) throw new TypeError("GLOBAL_TIMELINE_DETAIL_AVAILABILITY_INVALID");
   return {
@@ -285,7 +378,7 @@ function parseTimelineEvent(value: unknown): GlobalTimelineV2Event {
     startDate,
     endDate,
     visibilityTier: parseStringLiteral(requireProperty(record, "visibilityTier", "GlobalTimelineV2Event"), new Set(["PRINCIPAL", "EXTENDED"]), "visibilityTier"),
-    semanticClassification: parseSemanticClassification(requireProperty(record, "semanticClassification", "GlobalTimelineV2Event")),
+    semanticClassification,
     eventCost: parseEventCost(requireProperty(record, "eventCost", "GlobalTimelineV2Event")),
     ...(series === undefined ? {} : { series }),
     comparisonLevels: descriptors,
@@ -293,13 +386,25 @@ function parseTimelineEvent(value: unknown): GlobalTimelineV2Event {
     ...(distinctiveComparisonLevel === undefined ? {} : { distinctiveComparisonLevel }),
     ...(primaryPlaceLabel === undefined ? {} : { primaryPlaceLabel }),
     ...(participantCount === undefined ? {} : { participantCount }),
+    ...(spentDuringContext === undefined ? {} : { spentDuringContext }),
     momentDetailAvailable,
   };
 }
 
 export function parseGlobalLifeTimelineV2ReadModel(value: unknown): GlobalLifeTimelineV2ReadModel {
-  const record = parseStrictRecord(value, ["kind", "schemaVersion", "resource", "moduleKey", "events", "publicationMeta", "resourceMeta"], "GlobalLifeTimelineV2ReadModel");
-  const events = array(requireProperty(record, "events", "GlobalLifeTimelineV2ReadModel"), parseTimelineEvent, "events");
+  const record = parseStrictRecord(value, ["kind", "schemaVersion", "resource", "moduleKey", "semanticClassifications", "comparisonLevelLabels", "events", "publicationMeta", "resourceMeta"], "GlobalLifeTimelineV2ReadModel");
+  const semanticClassifications = optional(record, "semanticClassifications", (entry) => array(entry, parseSemanticClassification, "semanticClassifications"));
+  const comparisonLevelLabels = optional(record, "comparisonLevelLabels", (entry) => {
+    const labels = parseStrictRecord(entry, comparisonLevelOrder, "GlobalTimelineComparisonLevelLabels");
+    return Object.fromEntries(comparisonLevelOrder.flatMap((level) => hasOwn(labels, level)
+      ? [[level, text(labels[level], "comparisonLevelLabel")] as const]
+      : [])) as Readonly<Partial<Record<GlobalTimelineComparisonLevel, string>>>;
+  });
+  if ((semanticClassifications === undefined) !== (comparisonLevelLabels === undefined)) throw new TypeError("GLOBAL_TIMELINE_COMPACT_CATALOG_INCOMPLETE");
+  const compactContext = semanticClassifications === undefined || comparisonLevelLabels === undefined
+    ? undefined
+    : { semanticClassifications, comparisonLevelLabels };
+  const events = array(requireProperty(record, "events", "GlobalLifeTimelineV2ReadModel"), (entry) => parseTimelineEvent(entry, compactContext), "events");
   if (events.length > GLOBAL_LIFE_TIMELINE_V2_MAX_EVENTS) throw new TypeError("GLOBAL_LIFE_TIMELINE_EVENT_LIMIT");
   if (new Set(events.map(({ eventRef }) => eventRef)).size !== events.length) throw new TypeError("GLOBAL_LIFE_TIMELINE_EVENT_REF_DUPLICATE");
   for (let index = 1; index < events.length; index += 1) {
@@ -316,12 +421,12 @@ export function parseGlobalLifeTimelineV2ReadModel(value: unknown): GlobalLifeTi
     publicationMeta: parsePublicationMeta(requireProperty(record, "publicationMeta", "GlobalLifeTimelineV2ReadModel")),
     resourceMeta: parseResourceMeta(requireProperty(record, "resourceMeta", "GlobalLifeTimelineV2ReadModel")),
   };
-  const payloadBytes = byteLength(parsed);
+  const payloadBytes = byteLength(value);
   if (payloadBytes >= GLOBAL_LIFE_TIMELINE_V2_PAYLOAD_BUDGET_BYTES) throw new TypeError(`GLOBAL_LIFE_TIMELINE_PAYLOAD_BUDGET_EXCEEDED:${payloadBytes}`);
   return parsed;
 }
 
-function parsePeerObservation(value: unknown): GlobalTimelineComparisonPeerObservation {
+function parseEventObservation(value: unknown, requireKnown = false): GlobalTimelineComparisonEventObservation {
   const record = parseStrictRecord(value, ["eventRef", "sourceKind", "canonicalName", "startDate", "endDate", "visibilityTier", "eventCost"], "GlobalTimelineComparisonPeerObservation");
   const eventRef = parseEventRef(requireProperty(record, "eventRef", "GlobalTimelineComparisonPeerObservation"), "peerEventRef");
   const sourceKind = parseStringLiteral<GlobalTimelineV2Event["sourceKind"]>(requireProperty(record, "sourceKind", "GlobalTimelineComparisonPeerObservation"), new Set(["MOMENT", "LIFE_EVENT"]), "peerSourceKind");
@@ -336,8 +441,12 @@ function parsePeerObservation(value: unknown): GlobalTimelineComparisonPeerObser
     startDate,
     endDate,
     visibilityTier: parseStringLiteral(requireProperty(record, "visibilityTier", "GlobalTimelineComparisonPeerObservation"), new Set(["PRINCIPAL", "EXTENDED"]), "peerVisibilityTier"),
-    eventCost: parseEventCost(requireProperty(record, "eventCost", "GlobalTimelineComparisonPeerObservation"), true) as Extract<GlobalTimelineEventCost, { readonly status: "KNOWN" }>,
+    eventCost: parseEventCost(requireProperty(record, "eventCost", "GlobalTimelineComparisonPeerObservation"), requireKnown),
   };
+}
+
+function parsePeerObservation(value: unknown): GlobalTimelineComparisonPeerObservation {
+  return parseEventObservation(value, true) as GlobalTimelineComparisonPeerObservation;
 }
 
 function parsePolicyRef(value: unknown): { readonly id: string; readonly version: string } {
@@ -346,16 +455,21 @@ function parsePolicyRef(value: unknown): { readonly id: string; readonly version
 }
 
 export function parseGlobalTimelineEventComparisonReadModel(value: unknown): GlobalTimelineEventComparisonReadModel {
-  const record = parseStrictRecord(value, ["kind", "schemaVersion", "resource", "moduleKey", "subject", "comparison", "support", "statistics", "deltas", "materiality", "facetContext", "peerObservations", "publicationMeta", "resourceMeta"], "GlobalTimelineEventComparisonReadModel");
-  const subject = parsePeerObservation(requireProperty(record, "subject", "GlobalTimelineEventComparisonReadModel"));
+  const record = parseStrictRecord(value, ["kind", "schemaVersion", "resource", "moduleKey", "subject", "comparison", "support", "statistics", "deltas", "materiality", "facetContext", "relatedPeers", "costComparablePeers", "publicationMeta", "resourceMeta"], "GlobalTimelineEventComparisonReadModel");
+  const subject = parseEventObservation(requireProperty(record, "subject", "GlobalTimelineEventComparisonReadModel"));
   const comparisonRecord = parseStrictRecord(requireProperty(record, "comparison", "GlobalTimelineEventComparisonReadModel"), ["level", "label", "cohortKey", "policyVersion"], "GlobalTimelineComparisonIdentity");
-  const supportRecord = parseStrictRecord(requireProperty(record, "support", "GlobalTimelineEventComparisonReadModel"), ["status", "peerCount"], "GlobalTimelineComparisonSupport");
-  const peerCount = integer(requireProperty(supportRecord, "peerCount", "GlobalTimelineComparisonSupport"), "peerCount");
-  const supportStatus = parseStringLiteral<"PARTIAL" | "KNOWN">(requireProperty(supportRecord, "status", "GlobalTimelineComparisonSupport"), new Set(["PARTIAL", "KNOWN"]), "supportStatus");
-  if (peerCount < 3 || peerCount > GLOBAL_TIMELINE_COMPARISON_MAX_PEERS || (supportStatus === "PARTIAL" ? peerCount > 4 : peerCount < 5)) throw new TypeError("GLOBAL_TIMELINE_COMPARISON_SUPPORT_MISMATCH");
-  const statisticsRecord = parseStrictRecord(requireProperty(record, "statistics", "GlobalTimelineEventComparisonReadModel"), ["median", "q1", "q3", "mad"], "GlobalTimelineComparisonStatistics");
-  const deltasRecord = parseStrictRecord(requireProperty(record, "deltas", "GlobalTimelineEventComparisonReadModel"), ["absolute", "relative"], "GlobalTimelineComparisonDeltas");
-  const relative = optional(deltasRecord, "relative", (entry) => text(entry, "relativeDelta"));
+  const supportRecord = parseStrictRecord(requireProperty(record, "support", "GlobalTimelineEventComparisonReadModel"), ["status", "relatedPeerCount", "costPeerCount"], "GlobalTimelineComparisonSupport");
+  const relatedPeerCount = integer(requireProperty(supportRecord, "relatedPeerCount", "GlobalTimelineComparisonSupport"), "relatedPeerCount");
+  const costPeerCount = integer(requireProperty(supportRecord, "costPeerCount", "GlobalTimelineComparisonSupport"), "costPeerCount");
+  const supportStatus = parseStringLiteral<"LIMITED" | "PARTIAL" | "KNOWN">(requireProperty(supportRecord, "status", "GlobalTimelineComparisonSupport"), new Set(["LIMITED", "PARTIAL", "KNOWN"]), "supportStatus");
+  if (relatedPeerCount < 1 || relatedPeerCount > GLOBAL_TIMELINE_COMPARISON_MAX_PEERS || costPeerCount > relatedPeerCount
+    || supportStatus === "LIMITED" && relatedPeerCount > 2
+    || supportStatus === "PARTIAL" && (relatedPeerCount < 3 || relatedPeerCount > 4)
+    || supportStatus === "KNOWN" && relatedPeerCount < 5) throw new TypeError("GLOBAL_TIMELINE_COMPARISON_SUPPORT_MISMATCH");
+  const statisticsRecord = optional(record, "statistics", (entry) => parseStrictRecord(entry, ["median", "q1", "q3", "mad"], "GlobalTimelineComparisonStatistics"));
+  const deltasRecord = optional(record, "deltas", (entry) => parseStrictRecord(entry, ["absolute", "relative"], "GlobalTimelineComparisonDeltas"));
+  const relative = deltasRecord === undefined ? undefined : optional(deltasRecord, "relative", (entry) => text(entry, "relativeDelta"));
+  if ((statisticsRecord === undefined) !== (costPeerCount < 3) || deltasRecord !== undefined && (statisticsRecord === undefined || subject.eventCost.status !== "KNOWN")) throw new TypeError("GLOBAL_TIMELINE_COMPARISON_STATISTICS_AVAILABILITY_INVALID");
   const materialityRecord = parseStrictRecord(requireProperty(record, "materiality", "GlobalTimelineEventComparisonReadModel"), ["status", "policyRef"], "GlobalTimelineComparisonMateriality");
   const facetContext = array(requireProperty(record, "facetContext", "GlobalTimelineEventComparisonReadModel"), (entry) => {
     const facet = parseStrictRecord(entry, ["key", "status", "value"], "GlobalTimelineComparisonFacet");
@@ -365,12 +479,15 @@ export function parseGlobalTimelineEventComparisonReadModel(value: unknown): Glo
     return { key: text(requireProperty(facet, "key", "GlobalTimelineComparisonFacet"), "facetKey"), status, ...(facetValue === undefined ? {} : { value: facetValue }) };
   }, "facetContext");
   if (new Set(facetContext.map(({ key }) => key)).size !== facetContext.length) throw new TypeError("GLOBAL_TIMELINE_COMPARISON_FACET_DUPLICATE");
-  const peerObservations = array(requireProperty(record, "peerObservations", "GlobalTimelineEventComparisonReadModel"), parsePeerObservation, "peerObservations");
-  if (peerObservations.length !== peerCount) throw new TypeError("GLOBAL_TIMELINE_COMPARISON_PEER_COUNT_MISMATCH");
-  if (peerObservations.some(({ eventRef }) => eventRef === subject.eventRef) || new Set(peerObservations.map(({ eventRef }) => eventRef)).size !== peerObservations.length) throw new TypeError("GLOBAL_TIMELINE_COMPARISON_PEER_IDENTITY_INVALID");
+  const relatedPeers = array(requireProperty(record, "relatedPeers", "GlobalTimelineEventComparisonReadModel"), (entry) => parseEventObservation(entry), "relatedPeers");
+  const costComparablePeers = array(requireProperty(record, "costComparablePeers", "GlobalTimelineEventComparisonReadModel"), parsePeerObservation, "costComparablePeers");
+  if (relatedPeers.length !== relatedPeerCount || costComparablePeers.length !== costPeerCount) throw new TypeError("GLOBAL_TIMELINE_COMPARISON_PEER_COUNT_MISMATCH");
+  const relatedRefs = relatedPeers.map(({ eventRef }) => eventRef);
+  const costRefs = costComparablePeers.map(({ eventRef }) => eventRef);
+  if (relatedRefs.includes(subject.eventRef) || new Set(relatedRefs).size !== relatedRefs.length || costRefs.some((eventRef) => !relatedRefs.includes(eventRef))) throw new TypeError("GLOBAL_TIMELINE_COMPARISON_PEER_IDENTITY_INVALID");
   const parsed: GlobalTimelineEventComparisonReadModel = {
     kind: parseStringLiteral(requireProperty(record, "kind", "GlobalTimelineEventComparisonReadModel"), new Set(["global_timeline_event_comparison"]), "kind"),
-    schemaVersion: parseStringLiteral(requireProperty(record, "schemaVersion", "GlobalTimelineEventComparisonReadModel"), new Set(["global-timeline-event-comparison@v1"]), "schemaVersion"),
+    schemaVersion: parseStringLiteral(requireProperty(record, "schemaVersion", "GlobalTimelineEventComparisonReadModel"), new Set(["global-timeline-event-comparison@v2"]), "schemaVersion"),
     resource: parseStringLiteral(requireProperty(record, "resource", "GlobalTimelineEventComparisonReadModel"), new Set(["analysis_global_timeline_event_comparison"]), "resource"),
     moduleKey: parseStringLiteral(requireProperty(record, "moduleKey", "GlobalTimelineEventComparisonReadModel"), new Set(["RHYTHM"]), "moduleKey"),
     subject,
@@ -380,20 +497,21 @@ export function parseGlobalTimelineEventComparisonReadModel(value: unknown): Glo
       cohortKey: text(requireProperty(comparisonRecord, "cohortKey", "GlobalTimelineComparisonIdentity"), "cohortKey"),
       policyVersion: text(requireProperty(comparisonRecord, "policyVersion", "GlobalTimelineComparisonIdentity"), "policyVersion"),
     },
-    support: { status: supportStatus, peerCount },
-    statistics: {
+    support: { status: supportStatus, relatedPeerCount, costPeerCount },
+    ...(statisticsRecord === undefined ? {} : { statistics: {
       median: parseMoney(requireProperty(statisticsRecord, "median", "GlobalTimelineComparisonStatistics")),
       q1: parseMoney(requireProperty(statisticsRecord, "q1", "GlobalTimelineComparisonStatistics")),
       q3: parseMoney(requireProperty(statisticsRecord, "q3", "GlobalTimelineComparisonStatistics")),
       mad: parseMoney(requireProperty(statisticsRecord, "mad", "GlobalTimelineComparisonStatistics")),
-    },
-    deltas: { absolute: parseMoney(requireProperty(deltasRecord, "absolute", "GlobalTimelineComparisonDeltas")), ...(relative === undefined ? {} : { relative }) },
+    } }),
+    ...(deltasRecord === undefined ? {} : { deltas: { absolute: parseMoney(requireProperty(deltasRecord, "absolute", "GlobalTimelineComparisonDeltas")), ...(relative === undefined ? {} : { relative }) } }),
     materiality: {
       status: parseStringLiteral(requireProperty(materialityRecord, "status", "GlobalTimelineComparisonMateriality"), new Set(["MATERIAL", "NOT_MATERIAL", "UNKNOWN"]), "materiality"),
       policyRef: parsePolicyRef(requireProperty(materialityRecord, "policyRef", "GlobalTimelineComparisonMateriality")),
     },
     facetContext,
-    peerObservations,
+    relatedPeers,
+    costComparablePeers,
     publicationMeta: parsePublicationMeta(requireProperty(record, "publicationMeta", "GlobalTimelineEventComparisonReadModel")),
     resourceMeta: parseResourceMeta(requireProperty(record, "resourceMeta", "GlobalTimelineEventComparisonReadModel")),
   };
@@ -402,18 +520,44 @@ export function parseGlobalTimelineEventComparisonReadModel(value: unknown): Glo
   return parsed;
 }
 
-export function buildGlobalLifeTimelineV2ReadModel(input: GlobalLifeTimelineV2ReadModel): GlobalLifeTimelineV2ReadModel {
-  return parseGlobalLifeTimelineV2ReadModel({
+export function buildGlobalLifeTimelineV2ReadModel(input: GlobalLifeTimelineV2ReadModel): GlobalLifeTimelineV2Snapshot {
+  const semanticClassifications: GlobalTimelineSemanticClassification[] = [];
+  const semanticIndexes = new Map<string, number>();
+  const comparisonLevelLabels: Partial<Record<GlobalTimelineComparisonLevel, string>> = {};
+  const events = [...input.events]
+    .sort((left, right) => left.startDate.localeCompare(right.startDate) || left.eventRef.localeCompare(right.eventRef))
+    .map((event): GlobalTimelineCompactEvent => {
+      const semanticKey = JSON.stringify(event.semanticClassification);
+      let semanticClassification = semanticIndexes.get(semanticKey);
+      if (semanticClassification === undefined) {
+        semanticClassification = semanticClassifications.length;
+        semanticIndexes.set(semanticKey, semanticClassification);
+        semanticClassifications.push(event.semanticClassification);
+      }
+      const comparisonLevels = event.comparisonLevels.map((descriptor): GlobalTimelineCompactComparisonDescriptor => {
+        const existingLabel = comparisonLevelLabels[descriptor.level];
+        if (existingLabel !== undefined && existingLabel !== descriptor.label) throw new TypeError("GLOBAL_TIMELINE_COMPARISON_LABEL_CONFLICT");
+        comparisonLevelLabels[descriptor.level] = descriptor.label;
+        return [descriptor.level, descriptor.supportStatus, descriptor.relatedPeerCount, descriptor.costPeerCount, descriptor.materiality];
+      });
+      return { ...event, semanticClassification, comparisonLevels };
+    });
+  const compact: GlobalLifeTimelineV2Snapshot = {
     ...input,
-    events: [...input.events].map((event) => ({ ...event, comparisonLevels: [...event.comparisonLevels] })).sort((left, right) => left.startDate.localeCompare(right.startDate) || left.eventRef.localeCompare(right.eventRef)),
-  });
+    semanticClassifications,
+    comparisonLevelLabels,
+    events,
+  };
+  parseGlobalLifeTimelineV2ReadModel(compact);
+  return compact;
 }
 
 export function buildGlobalTimelineEventComparisonReadModel(input: GlobalTimelineEventComparisonReadModel): GlobalTimelineEventComparisonReadModel {
   return parseGlobalTimelineEventComparisonReadModel({
     ...input,
     facetContext: [...input.facetContext].sort((left, right) => left.key.localeCompare(right.key)),
-    peerObservations: [...input.peerObservations].sort((left, right) => left.eventRef.localeCompare(right.eventRef)),
+    relatedPeers: [...input.relatedPeers].sort((left, right) => left.eventRef.localeCompare(right.eventRef)),
+    costComparablePeers: [...input.costComparablePeers].sort((left, right) => left.eventRef.localeCompare(right.eventRef)),
   });
 }
 

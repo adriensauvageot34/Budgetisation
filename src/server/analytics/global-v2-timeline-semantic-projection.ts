@@ -1,5 +1,6 @@
 import "server-only";
 
+import Big from "big.js";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import {
   buildTimelineSemanticProjection,
@@ -7,13 +8,14 @@ import {
   type TimelineSemanticMomentOwner,
   type TimelineSemanticProjectionAssertion,
 } from "@/analytics/global-v2";
+import { resolveGlobalSpentDuringWindow } from "@/analytics/global-v2/spent-during";
 import {
   parseActivityCausalFinancialLinks,
   type ActivityOccurrenceFact,
 } from "@/analytics/facts";
 import { projectCanonicalMomentRelations, resolveMomentFinancialCost } from "@/analytics/history-v2/shared-doctrines";
-import { parseMoney } from "@/core/money";
-import { parseLocalDate, type LocalDate } from "@/core/time";
+import { addMoney, parseMoney } from "@/core/money";
+import { addDays, parseLocalDate, type LocalDate } from "@/core/time";
 import { LifeEventCostAssertionRepository } from "@/server/canonical/life-event-cost-assertions";
 import { canonicalString, optionalCanonicalString } from "@/server/canonical/record";
 import type { CanonicalRepository } from "@/server/canonical/repository";
@@ -158,7 +160,7 @@ export async function resolveGlobalTimelineSemanticProjection(input: Readonly<{
     closeFamilyKey: assertion.closeFamilyKey,
     taxonomyVersion: assertion.taxonomyVersion,
   }));
-  return buildTimelineSemanticProjection({
+  const projection = buildTimelineSemanticProjection({
     sourceRevision: Number(input.repository.context.dataRevision),
     moments: momentOwners,
     lifeEvents: owners.lifeEvents,
@@ -166,4 +168,41 @@ export async function resolveGlobalTimelineSemanticProjection(input: Readonly<{
     lifeEventCosts,
     seriesLabelsByRef,
   });
+  const firstDate = projection.events[0]?.startDate;
+  if (firstDate === undefined) return projection;
+  const rangedFacts = await input.repository.loadEconomicFacts({ start: firstDate, endExclusive: addDays(input.certifiedThrough, 1) });
+  const causalKeysByEvent = new Map<string, Set<string>>();
+  for (const event of projection.events) {
+    const keys = event.sourceKind === "MOMENT"
+      ? rangedFacts.flatMap((fact) => fact.moment.kind === "resolved" && `moment:${fact.moment.id}` === event.eventRef ? [String(fact.canonicalComponentKey)] : [])
+      : financialLinks.flatMap((link) => `life-event:${link.lifeEventId}` === event.eventRef ? [String(link.canonicalComponentKey)] : []);
+    causalKeysByEvent.set(event.eventRef, new Set(keys));
+  }
+  const events = projection.events.map((event) => {
+    if (event.endDate === null || event.endDate <= event.startDate) return event;
+    const window = resolveGlobalSpentDuringWindow({
+      householdId: String(input.repository.context.householdId),
+      startDate: event.startDate,
+      endDate: event.endDate,
+      temporalPrecision: "DAY",
+      facts: rangedFacts,
+    });
+    if ((window.status !== "KNOWN" && window.status !== "PARTIAL") || window.components.length === 0 || window.value === undefined) return event;
+    const causalKeys = causalKeysByEvent.get(event.eventRef) ?? new Set<string>();
+    const directCostIncludedAmount = window.components
+      .filter(({ componentKey }) => causalKeys.has(componentKey))
+      .reduce((sum, { amount }) => addMoney(sum, amount), parseMoney("0"));
+    const additionalDuringAmount = parseMoney(new Big(window.value).minus(directCostIncludedAmount).toFixed());
+    return {
+      ...event,
+      spentDuringContext: {
+        status: window.status,
+        total: window.value,
+        ...(causalKeys.size === 0 ? {} : { directCostIncludedAmount }),
+        additionalDuringAmount,
+        componentCount: window.components.length,
+      },
+    };
+  });
+  return { ...projection, events };
 }

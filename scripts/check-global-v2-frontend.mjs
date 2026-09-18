@@ -305,9 +305,9 @@ check(() => assert.match(lifeSource, /delta < 0 \? "en dessous" : "au-dessus"/u)
 check(() => assert.match(lifeSource, /médiane de [\s\S]* moments comparables/u));
 check(() => assert.doesNotMatch(lifeSource, /médiane des peers|famille de comparaison|occurrences renseignées|historique retenu/iu));
 check(() => assert.doesNotMatch(lifeSource, /coûte habituellement|intervalle de confiance|fourchette future|fourchette habituelle/u));
-check(() => assert.match(lifeMomentDetailSource, /Dépenses reliées à ce moment[\s\S]*LifeMomentComposition[\s\S]*Comparé à des moments similaires[\s\S]*Contexte de période/u));
-check(() => assert.match(lifeMomentDetailSource, /contre [\s\S]* en médiane parmi [\s\S]* moments comparables/u));
-check(() => assert.match(lifeMomentDetailSource, /Pas assez de moments comparables pour situer celui-ci\./u));
+check(() => assert.match(lifeMomentDetailSource, /Dépenses reliées à ce moment[\s\S]*LifeMomentComposition[\s\S]*Relations sémantiques[\s\S]*TimelineComparator[\s\S]*Contexte de période/u));
+check(() => assert.doesNotMatch(lifeMomentDetailSource, /Comparé à des moments similaires/u));
+check(() => assert.match(lifeMomentDetailSource, /Aucun événement relié n’est disponible\./u));
 check(() => assert.doesNotMatch(lifeMomentDetailSource, /\bdont\b|ratio|pourcentage|stacked|donut|part-of-whole/iu));
 check(() => assert.doesNotMatch(lifeSource, /\?\? 0|0 €/u));
 check(() => assert.match(lifeMomentDetailSource, /model\.momentComponentRows \?\? \[\][\s\S]*model\.componentGroups \?\? \[\]/u));
@@ -456,8 +456,8 @@ check(() => assert.match(comparisonRangeSource, /comparisonRangeMedianMarker[\s\
 check(() => assert.match(comparisonRangeSource, /aria-pressed[\s\S]*onPointerEnter[\s\S]*onFocus[\s\S]*Ouvrir ce moment/u));
 check(() => assert.match(comparisonRangeSource, /minimumFractionDigits: 0[\s\S]*maximumFractionDigits: 2/u));
 check(() => assert.doesNotMatch(comparisonRangeSource, /boxplot|whisker|intervalle de confiance|percentile|score/iu));
-check(() => assert.match(lifeMomentDetailSource, /<ComparisonRange/u));
-check(() => assert.match(lifeMomentDetailSource, /<ComparisonRange[\s\S]*lifeComparisonDelta/u));
+check(() => assert.match(lifeMomentDetailSource, /<TimelineComparator/u));
+check(() => assert.doesNotMatch(lifeMomentDetailSource, /momentComparison|lifeComparisonDelta/u));
 check(() => assert.ok(rhythmNarrative.rhythmHeroComparison(narrativeCaseA) !== undefined));
 check(() => assert.equal(narrativeHeroM3.primary?.kind, "M3_CERTIFIED_TRANSFORMATION"));
 check(() => assert.equal(rhythmNarrative.rhythmHeroComparison(narrativeHeroM3), undefined));
@@ -465,7 +465,7 @@ check(() => assert.equal(narrativeHeroM5.primary?.kind, "M5_MATERIAL_ROBUST_ASSO
 check(() => assert.equal(rhythmNarrative.rhythmHeroComparison(narrativeHeroM5), undefined));
 check(() => assert.equal(narrativeHeroM6Contextual.primary?.kind, "M6_CONTEXTUAL_CAUSAL_MOMENT"));
 check(() => assert.equal(rhythmNarrative.rhythmHeroComparison(narrativeHeroM6Contextual), undefined));
-check(() => assert.match(lifeMomentDetailSource, /Pas assez de moments comparables pour situer celui-ci\./u));
+check(() => assert.match(lifeMomentDetailSource, /Aucun événement relié n’est disponible\./u));
 check(() => assert.doesNotMatch(rhythmNarrativeSource, /\.sort\(|parseFloat|numericDisplay|displayValue|Math\.|reduce\(/u));
 check(() => assert.doesNotMatch(comparisonRangeModelSource, /peer selection|recalculate|percentile|confidence|score/iu));
 
@@ -503,13 +503,13 @@ check(() => assert.match(lifeActivityDetailSource, /Coût connu pour [\s\S]*acti
 check(() => assert.match(lifeActivityDetailSource, /LifePersonRhythm[\s\S]*:occurrences[\s\S]*:cadence[\s\S]*personRows\.map[\s\S]*<LifePersonRhythm/u));
 check(() => assert.match(lifeActivityDetailSource, /Aucun montant n’est attribué à une personne\.[\s\S]*Chaque habitude est à lire séparément : ces montants ne forment pas un total\./u));
 check(() => assert.doesNotMatch(lifeActivityDetailSource, />Occurrences renseignées<|>Intervalle médian<|>Support<|>PersonDay<|>Owner<|>Scope</iu));
-check(() => assert.match(lifeMomentDetailSource, /Ce qui compose ce coût[\s\S]*lifeMomentType[\s\S]*lifeMomentDates[\s\S]*Dépenses reliées à ce moment[\s\S]*LifeMomentComposition[\s\S]*Comparé à des moments similaires[\s\S]*Contexte de période/u));
+check(() => assert.match(lifeMomentDetailSource, /Ce qui compose ce coût[\s\S]*lifeMomentType[\s\S]*lifeMomentDates[\s\S]*Dépenses reliées à ce moment[\s\S]*LifeMomentComposition[\s\S]*Relations sémantiques[\s\S]*Contexte de période/u));
 check(() => assert.match(lifeMomentDetailSource, /Ce montant regroupe uniquement les dépenses reliées à ce moment\./u));
 check(() => assert.match(lifeMomentDetailSource, /indépendamment des dépenses reliées au moment\./u));
-check(() => assert.match(lifeMomentDetailSource, /<ComparisonRange/u));
-check(() => assert.match(lifeMomentDetailSource, /Pas assez de moments comparables pour situer celui-ci\./u));
-check(() => assert.match(lifeMomentDetailSource, /peerCount >= 3[\s\S]*peerCount < 5[\s\S]*Peu de comparables/u));
-check(() => assert.match(lifeMomentDetailSource, /peers=\{model\.peerObservations\}[\s\S]*onOpenPeer=\{onOpenPeer\}/u));
+check(() => assert.match(lifeMomentDetailSource, /<TimelineComparator/u));
+check(() => assert.doesNotMatch(lifeMomentDetailSource, /Pas assez de moments comparables pour situer celui-ci\./u));
+check(() => assert.match(lifeMomentDetailSource, /analysis_global_life_timeline[\s\S]*comparisonLevels\.length/u));
+check(() => assert.match(lifeMomentDetailSource, /onOpenPeer=\{onOpenTimelinePeer\}/u));
 check(() => assert.doesNotMatch(lifeMomentDetailSource, />Composante causale|\bdont\b|représente [^<]*%|stacked|donut|part-of-whole/iu));
 check(() => assert.match(overlaySource, /document\.addEventListener\("keydown", closeOnEscape, true\)/u));
 
@@ -635,7 +635,7 @@ check(() => assert.match(lifeTimelineSource, /semanticClassification\.close\.lab
 check(() => assert.match(lifeTimelineSource, /event\.sourceKind === "MOMENT" && event\.momentDetailAvailable/u));
 check(() => assert.match(lifeTimelineSource, /event\.sourceKind === "LIFE_EVENT"[\s\S]*setExpanded/u));
 check(() => assert.doesNotMatch(lifeTimelineSource.slice(lifeTimelineSource.indexOf("function TimelineV2EventRow"), lifeTimelineSource.indexOf("function TimelineEventRow")), /familySource|typeKey/u));
-check(() => assert.match(lifeTimelineSource, /timelineComparisonRequest\(event\.eventRef, selectedLevel\)/u));
+check(() => assert.match(lifeTimelineSource, /timelineComparisonRequest\(event\.eventRef, fallbackLevel\)/u));
 check(() => assert.doesNotMatch(lifeTimelineSource, /medianMoney|moneyQuartiles|MedianAbsoluteDeviation|buildTimelineSemanticComparator/u));
 check(() => assert.match(lifeTimelineSource, /timeline-year-[\s\S]*timeline-month-/u));
 check(() => assert.match(cssSource, /\.timelineScroller\s*\{[^}]*height:\s*clamp\(520px, 62vh, 680px\)[^}]*scrollbar-gutter:\s*stable/u));

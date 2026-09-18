@@ -1,34 +1,21 @@
 import type { GlobalMaterialityPolicyId } from "./materiality";
 import { timelineSemanticTaxonomy } from "./timeline-semantic-taxonomy";
 
-export const TIMELINE_SEMANTIC_COMPARATOR_VERSION = "timeline-semantic-comparator@v1" as const;
+export const TIMELINE_SEMANTIC_COMPARATOR_VERSION = "timeline-semantic-comparator@v2" as const;
 export const TIMELINE_SEMANTIC_HOUSEHOLD_FACET = "HOUSEHOLD_PARTICIPATION" as const;
 
 export type TimelineSemanticComparatorPolicy = Readonly<{
   closeFamilyKey: string;
   seriesPolicy: "EXPLICIT_CANONICAL_ONLY";
   closePolicy: "YES" | "NO_UNRESOLVED";
-  intermediatePolicy: "NO" | "NO_REDUNDANT" | "YES_WITH_FACET_GATE";
+  intermediatePolicy: "YES";
   intermediateRequiredFacets: readonly string[];
+  grandPolicy: "YES_OPT_IN";
   materialityPolicyId: Extract<GlobalMaterialityPolicyId, "MOMENT_SHORT" | "MOMENT_TRAVEL" | "MOMENT_PROJECT">;
   policyVersion: typeof TIMELINE_SEMANTIC_COMPARATOR_VERSION;
 }>;
 
 const unresolvedCloseFamilies = new Set(["activite_de_loisir_a_preciser"]);
-const nightlifeIntermediateCloseFamilies = new Set([
-  "club_boite_de_nuit",
-  "soiree_bars_tournee_de_bars",
-  "soiree_techno_rave",
-  "sortie_nocturne_en_etablissement",
-]);
-const redundantIntermediateCloseFamilies = new Set([
-  "audition_convocation",
-  "projet_seance_photo",
-  "salon_evenement_professionnel",
-  "session_shopping_vetements",
-  "sejour_ski",
-  "week_end_escapade_regionale",
-]);
 const travelMaterialityCloseFamilies = new Set([
   "deplacement_professionnel_avec_nuitee",
   "sejour_ski",
@@ -52,20 +39,13 @@ const projectMaterialityCloseFamilies = new Set([
 const closeEntries = timelineSemanticTaxonomy.filter(({ level }) => level === "CLOSE");
 
 export const timelineSemanticComparatorPolicies = Object.freeze(closeEntries.map((entry): TimelineSemanticComparatorPolicy => {
-  const nightlife = nightlifeIntermediateCloseFamilies.has(entry.key);
-  if (nightlife && entry.parentKey !== "sorties_festives_et_nocturnes") {
-    throw new TypeError(`TIMELINE_SEMANTIC_INTERMEDIATE_POLICY_PARENT_INVALID:${entry.key}`);
-  }
   return {
     closeFamilyKey: entry.key,
     seriesPolicy: "EXPLICIT_CANONICAL_ONLY",
     closePolicy: unresolvedCloseFamilies.has(entry.key) ? "NO_UNRESOLVED" : "YES",
-    intermediatePolicy: nightlife
-      ? "YES_WITH_FACET_GATE"
-      : redundantIntermediateCloseFamilies.has(entry.key)
-        ? "NO_REDUNDANT"
-        : "NO",
-    intermediateRequiredFacets: nightlife ? [TIMELINE_SEMANTIC_HOUSEHOLD_FACET] : [],
+    intermediatePolicy: "YES",
+    intermediateRequiredFacets: [],
+    grandPolicy: "YES_OPT_IN",
     materialityPolicyId: travelMaterialityCloseFamilies.has(entry.key)
       ? "MOMENT_TRAVEL"
       : projectMaterialityCloseFamilies.has(entry.key)

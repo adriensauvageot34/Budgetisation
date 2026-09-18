@@ -34,7 +34,6 @@ function momentFacetContext(
   eventRef: `moment:${string}`,
   summary: M6TimelineAuthority["summaries"][number],
   householdRefs: readonly string[],
-  semanticIntermediateKey: string,
 ): TimelineSemanticComparatorFacetContext {
   const facets: Record<string, TimelineSemanticComparatorFacetValue> = {};
   for (const [key, value] of Object.entries(summary.subjectFacets ?? {})) {
@@ -50,11 +49,7 @@ function momentFacetContext(
     householdRefs,
     existingParticipation?.status === "KNOWN",
   );
-  const requiredFacetKeys = [...new Set([
-    ...(summary.profile?.requiredFacets ?? []),
-    ...(semanticIntermediateKey === "sorties_festives_et_nocturnes" ? [TIMELINE_SEMANTIC_HOUSEHOLD_FACET] : []),
-  ])].sort();
-  return { eventRef, facets, requiredFacetKeys };
+  return { eventRef, facets, requiredFacetKeys: [] };
 }
 
 /** Read-only S5 owner. No source or publication mutation is performed here. */
@@ -82,15 +77,13 @@ export async function resolveGlobalTimelineSemanticAnalysis(input: Readonly<{
   const facetContexts = projection.events.map((event): TimelineSemanticComparatorFacetContext => {
     const summary = event.sourceKind === "MOMENT" ? momentSummaries.get(event.eventRef as `moment:${string}`) : undefined;
     if (summary !== undefined) {
-      return momentFacetContext(event.eventRef as `moment:${string}`, summary, householdRefs, event.semanticClassification.intermediate.key);
+      return momentFacetContext(event.eventRef as `moment:${string}`, summary, householdRefs);
     }
     const householdFacet = householdParticipation(event.participants.participantRefs, householdRefs, event.participants.count > 0);
     return {
       eventRef: event.eventRef,
       facets: { [TIMELINE_SEMANTIC_HOUSEHOLD_FACET]: householdFacet },
-      requiredFacetKeys: event.semanticClassification.intermediate.key === "sorties_festives_et_nocturnes"
-        ? [TIMELINE_SEMANTIC_HOUSEHOLD_FACET]
-        : [],
+      requiredFacetKeys: [],
     };
   });
   return { projection, comparator: buildTimelineSemanticComparator({ projection, facetContexts }) };

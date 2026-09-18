@@ -106,12 +106,15 @@ export {
   parseGlobalLifeTimelineV2ReadModel,
   parseGlobalTimelineEventComparisonReadModel,
   type GlobalLifeTimelineV2ReadModel,
+  type GlobalLifeTimelineV2Snapshot,
   type GlobalTimelineComparisonDescriptor,
+  type GlobalTimelineComparisonEventObservation,
   type GlobalTimelineComparisonLevel,
   type GlobalTimelineComparisonPeerObservation,
   type GlobalTimelineEventComparisonReadModel,
   type GlobalTimelineEventCost,
   type GlobalTimelineSemanticClassification,
+  type GlobalTimelineSpentDuringContext,
   type GlobalTimelineV2Event,
 } from "./timeline-v2";
 export {

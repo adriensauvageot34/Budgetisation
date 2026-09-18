@@ -196,7 +196,7 @@ check(() => assert.deepEqual(query.globalV2QueryRegistry.analysis_global_life_ti
   schemaVersion: "global-life-timeline@v2",
   contractVersion: "global-v2-query@v1",
   methodVersion: "analysis_global_life_timeline@v2",
-  policyVersions: { projection: "timeline-semantic-projection@v1", comparator: "timeline-semantic-comparator@v1", transport: "global-v2-snapshot-only@sh05-v1" },
+  policyVersions: { projection: "timeline-semantic-projection@v1", comparator: "timeline-semantic-comparator@v2", transport: "global-v2-snapshot-only@sh05-v2" },
   schema: query.globalV2QueryRegistry.analysis_global_life_timeline.schema,
 }));
 check(() => assert.deepEqual(query.globalLifeTimelineReadModelSchema.parse(timelinePayload), timelinePayload));

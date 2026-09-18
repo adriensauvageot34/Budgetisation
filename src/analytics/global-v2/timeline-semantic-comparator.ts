@@ -14,8 +14,8 @@ import {
 } from "./timeline-semantic-comparator-policy";
 import type { TimelineSemanticProjection, TimelineSemanticProjectionEvent } from "./timeline-semantic-projection";
 
-export type TimelineSemanticComparisonLevel = "SAME_SERIES" | "SAME_CLOSE_FAMILY" | "SAME_INTERMEDIATE_FAMILY";
-export type TimelineSemanticComparisonSupport = "UNKNOWN" | "PARTIAL" | "KNOWN";
+export type TimelineSemanticComparisonLevel = "SAME_SERIES" | "SAME_CLOSE_FAMILY" | "SAME_INTERMEDIATE_FAMILY" | "SAME_GRAND_FAMILY";
+export type TimelineSemanticComparisonSupport = "LIMITED" | "PARTIAL" | "KNOWN";
 
 export type TimelineSemanticComparatorFacetValue =
   | Readonly<{ status: "KNOWN"; value: string }>
@@ -37,12 +37,15 @@ export type TimelineSemanticComparisonResult = Readonly<{
     status: "KNOWN" | "UNKNOWN" | "CONFLICT";
     value?: string;
   }>[];
+  relatedPeerRefs: readonly TimelineSemanticProjectionEvent["eventRef"][];
   peerRefs: readonly TimelineSemanticProjectionEvent["eventRef"][];
   peerCosts: readonly Readonly<{
     eventRef: TimelineSemanticProjectionEvent["eventRef"];
     authority: "M6_CAUSAL" | "CANONICAL_LINKED";
     value: Money;
   }>[];
+  relatedPeerCount: number;
+  costPeerCount: number;
   peerCount: number;
   supportStatus: TimelineSemanticComparisonSupport;
   median?: Money;
@@ -76,11 +79,12 @@ const levelOrder: readonly TimelineSemanticComparisonLevel[] = [
   "SAME_SERIES",
   "SAME_CLOSE_FAMILY",
   "SAME_INTERMEDIATE_FAMILY",
+  "SAME_GRAND_FAMILY",
 ];
-const materialityMethodVersion = "timeline_semantic_comparator@v1" as const;
+const materialityMethodVersion = "timeline_semantic_comparator@v2" as const;
 
 function supportStatus(peerCount: number): TimelineSemanticComparisonSupport {
-  return peerCount <= 2 ? "UNKNOWN" : peerCount <= 4 ? "PARTIAL" : "KNOWN";
+  return peerCount <= 2 ? "LIMITED" : peerCount <= 4 ? "PARTIAL" : "KNOWN";
 }
 
 function materialitySupport(peerCount: number) {
@@ -120,13 +124,6 @@ function uniqueSorted(values: readonly string[]): readonly string[] {
   return [...new Set(values)].sort((left, right) => left.localeCompare(right));
 }
 
-function facetRequirements(
-  context: TimelineSemanticComparatorFacetContext,
-  policyRequired: readonly string[],
-): readonly string[] {
-  return uniqueSorted([...context.requiredFacetKeys, ...policyRequired]);
-}
-
 function requiredFacetContext(
   context: TimelineSemanticComparatorFacetContext,
   required: readonly string[],
@@ -136,18 +133,6 @@ function requiredFacetContext(
     return facet.status === "KNOWN"
       ? { key, status: facet.status, value: facet.value }
       : { key, status: facet.status };
-  });
-}
-
-function facetsMatch(
-  subject: TimelineSemanticComparatorFacetContext,
-  peer: TimelineSemanticComparatorFacetContext,
-  required: readonly string[],
-): boolean {
-  return required.every((key) => {
-    const subjectFacet = subject.facets[key];
-    const peerFacet = peer.facets[key];
-    return subjectFacet?.status === "KNOWN" && peerFacet?.status === "KNOWN" && subjectFacet.value === peerFacet.value;
   });
 }
 
@@ -162,7 +147,8 @@ function cohort(
   if (level === "SAME_CLOSE_FAMILY") {
     return { key: `close:${event.semanticClassification.close.key}`, label: event.semanticClassification.close.label };
   }
-  return { key: `intermediate:${event.semanticClassification.intermediate.key}`, label: event.semanticClassification.intermediate.label };
+  if (level === "SAME_INTERMEDIATE_FAMILY") return { key: `intermediate:${event.semanticClassification.intermediate.key}`, label: event.semanticClassification.intermediate.label };
+  return { key: `grand:${event.semanticClassification.grand.key}`, label: event.semanticClassification.grand.label };
 }
 
 function sameCohort(
@@ -172,7 +158,8 @@ function sameCohort(
 ): boolean {
   if (level === "SAME_SERIES") return subject.series !== undefined && peer.series?.seriesRef === subject.series.seriesRef;
   if (level === "SAME_CLOSE_FAMILY") return peer.semanticClassification.close.key === subject.semanticClassification.close.key;
-  return peer.semanticClassification.intermediate.key === subject.semanticClassification.intermediate.key;
+  if (level === "SAME_INTERMEDIATE_FAMILY") return peer.semanticClassification.intermediate.key === subject.semanticClassification.intermediate.key;
+  return peer.semanticClassification.grand.key === subject.semanticClassification.grand.key;
 }
 
 function isLevelAllowed(
@@ -182,7 +169,8 @@ function isLevelAllowed(
   const policy = resolveTimelineSemanticComparatorPolicy(event.semanticClassification.close.key);
   if (level === "SAME_SERIES") return event.series !== undefined;
   if (level === "SAME_CLOSE_FAMILY") return policy.closePolicy === "YES";
-  return policy.intermediatePolicy === "YES_WITH_FACET_GATE";
+  if (level === "SAME_INTERMEDIATE_FAMILY") return policy.intermediatePolicy === "YES";
+  return policy.grandPolicy === "YES_OPT_IN";
 }
 
 function compareLevel(
@@ -191,21 +179,18 @@ function compareLevel(
   events: readonly TimelineSemanticProjectionEvent[],
   contexts: ReadonlyMap<string, TimelineSemanticComparatorFacetContext>,
 ): TimelineSemanticComparisonResult | undefined {
-  if (!isLevelAllowed(subject, level) || subject.eventCost.status !== "KNOWN") return undefined;
+  if (!isLevelAllowed(subject, level)) return undefined;
   const policy = resolveTimelineSemanticComparatorPolicy(subject.semanticClassification.close.key);
   const cohortIdentity = cohort(subject, level);
   if (cohortIdentity === undefined) return undefined;
   const subjectContext = contexts.get(subject.eventRef)!;
-  const required = facetRequirements(
-    subjectContext,
-    level === "SAME_INTERMEDIATE_FAMILY" ? policy.intermediateRequiredFacets : [],
-  );
-  const peers = events.filter((peer) =>
+  const required = uniqueSorted([...Object.keys(subjectContext.facets), ...subjectContext.requiredFacetKeys, ...policy.intermediateRequiredFacets]);
+  const relatedPeers = events.filter((peer) =>
     peer.eventRef !== subject.eventRef
-    && peer.eventCost.status === "KNOWN"
-    && sameCohort(subject, peer, level)
-    && facetsMatch(subjectContext, contexts.get(peer.eventRef)!, required));
-  const peerCosts = peers
+    && sameCohort(subject, peer, level));
+  if (relatedPeers.length === 0) return undefined;
+  const peerCosts = relatedPeers
+    .filter((peer) => peer.eventCost.status === "KNOWN")
     .map((peer) => {
       if (peer.eventCost.status !== "KNOWN") throw new TypeError("TIMELINE_SEMANTIC_COMPARATOR_PEER_COST_STATE_INVALID");
       return {
@@ -215,7 +200,9 @@ function compareLevel(
       };
     })
     .sort((left, right) => left.eventRef.localeCompare(right.eventRef));
-  const count = peerCosts.length;
+  const relatedPeerRefs = relatedPeers.map(({ eventRef }) => eventRef).sort((left, right) => left.localeCompare(right));
+  const relatedCount = relatedPeerRefs.length;
+  const costCount = peerCosts.length;
   const materialityPolicy = globalMaterialityPolicies[policy.materialityPolicyId].ref;
   const base = {
     eventRef: subject.eventRef,
@@ -223,18 +210,31 @@ function compareLevel(
     cohortKey: cohortIdentity.key,
     ...(cohortIdentity.label === undefined ? {} : { cohortLabel: cohortIdentity.label }),
     requiredFacets: requiredFacetContext(subjectContext, required),
-    peerRefs: peerCosts.map(({ eventRef }) => eventRef),
+    relatedPeerRefs,
+    peerRefs: relatedPeerRefs,
     peerCosts,
-    peerCount: count,
-    supportStatus: supportStatus(count),
+    relatedPeerCount: relatedCount,
+    costPeerCount: costCount,
+    peerCount: relatedCount,
+    supportStatus: supportStatus(relatedCount),
     policyVersion: TIMELINE_SEMANTIC_COMPARATOR_VERSION,
   } as const;
-  const median = medianMoney(peerCosts.map(({ value }) => value));
+  const median = costCount >= 3 ? medianMoney(peerCosts.map(({ value }) => value)) : undefined;
   if (median === undefined) {
     return { ...base, materiality: { status: "NOT_APPLICABLE", policyRef: materialityPolicy } };
   }
   const { q1, q3 } = moneyQuartiles(peerCosts.map(({ value }) => value));
   const mad = moneyMedianAbsoluteDeviation(peerCosts.map(({ value }) => value), median);
+  if (subject.eventCost.status !== "KNOWN") {
+    return {
+      ...base,
+      median,
+      ...(q1 === undefined ? {} : { q1 }),
+      ...(q3 === undefined ? {} : { q3 }),
+      ...(mad === undefined ? {} : { mad }),
+      materiality: { status: "NOT_APPLICABLE", policyRef: materialityPolicy },
+    };
+  }
   const subjectCost = parseMoney(subject.eventCost.value);
   const absoluteDelta = parseMoney(new Big(subjectCost).minus(median).toFixed());
   const relativeDelta = compareMoney(median, parseMoney("0")) === 0
@@ -248,7 +248,7 @@ function compareLevel(
       metricRef: "eventCost",
       effect: { absolute: absoluteDelta, ...(relativeDelta === undefined ? {} : { relative: relativeDelta }) },
       knowledgeState: "KNOWN",
-      support: materialitySupport(count),
+      support: materialitySupport(costCount),
       coverage: materialityCoverage(subject),
       evidenceRefs: [subject.eventRef, ...peerCosts.map(({ eventRef }) => eventRef)],
       entityRefs: [subject.eventRef],
@@ -271,7 +271,8 @@ function compareLevel(
 
 /**
  * Computes every authorized semantic depth independently. Visibility is
- * deliberately absent from peer eligibility and GRAND is absent from the API.
+ * deliberately absent from peer eligibility. GRAND is an explicit broad view
+ * and is never selected as the automatic default.
  */
 export function buildTimelineSemanticComparator(input: Readonly<{
   projection: TimelineSemanticProjection;
@@ -303,13 +304,14 @@ export function buildTimelineSemanticComparator(input: Readonly<{
     comparisonsByEvent.set(comparison.eventRef, current);
   }
   const cards = input.projection.events.map(({ eventRef }): TimelineSemanticComparisonCard => {
-    const available = (comparisonsByEvent.get(eventRef) ?? []).filter(({ supportStatus }) => supportStatus !== "UNKNOWN");
+    const available = comparisonsByEvent.get(eventRef) ?? [];
     const comparisonLevels = available.map(({ level }) => level);
-    const distinctive = available.find(({ supportStatus, materiality }) => supportStatus === "KNOWN" && materiality.status === "MATERIAL");
+    const defaultLevel = available.find(({ level }) => level !== "SAME_GRAND_FAMILY")?.level;
+    const distinctive = available.find(({ supportStatus, costPeerCount, materiality }) => supportStatus === "KNOWN" && costPeerCount >= 5 && materiality.status === "MATERIAL");
     return {
       eventRef,
       comparisonLevels,
-      ...(comparisonLevels[0] === undefined ? {} : { defaultComparisonLevel: comparisonLevels[0] }),
+      ...(defaultLevel === undefined ? {} : { defaultComparisonLevel: defaultLevel }),
       ...(distinctive === undefined ? {} : { distinctiveComparisonLevel: distinctive.level }),
     };
   });

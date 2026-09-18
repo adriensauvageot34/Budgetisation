@@ -9,10 +9,12 @@ import type {
 import {
   buildGlobalLifeTimelineV2ReadModel,
   buildGlobalTimelineEventComparisonReadModel,
-  type GlobalLifeTimelineV2ReadModel,
+  parseGlobalLifeTimelineV2ReadModel,
+  type GlobalLifeTimelineV2Snapshot,
   type GlobalReadModelPublicationMeta,
   type GlobalReadModelResourceMeta,
   type GlobalTimelineComparisonDescriptor,
+  type GlobalTimelineComparisonEventObservation,
   type GlobalTimelineComparisonLevel,
   type GlobalTimelineComparisonPeerObservation,
   type GlobalTimelineEventComparisonReadModel,
@@ -39,13 +41,13 @@ function materialityStatus(comparison: TimelineSemanticComparisonResult): Global
 }
 
 function comparisonLabel(comparison: TimelineSemanticComparisonResult): string {
-  if (comparison.level === "SAME_SERIES") return "Série";
+  if (comparison.level === "SAME_SERIES") return "Même série";
   if (comparison.level === "SAME_CLOSE_FAMILY") return "Famille proche";
-  return "Famille intermédiaire";
+  if (comparison.level === "SAME_INTERMEDIATE_FAMILY") return "Famille intermédiaire";
+  return "Vue large";
 }
 
-function peerObservation(event: TimelineSemanticProjectionEvent): GlobalTimelineComparisonPeerObservation {
-  if (event.eventCost.status !== "KNOWN") throw new TypeError(`GLOBAL_TIMELINE_QUERY_PEER_COST_NOT_KNOWN:${event.eventRef}`);
+function eventObservation(event: TimelineSemanticProjectionEvent): GlobalTimelineComparisonEventObservation {
   return {
     eventRef: event.eventRef,
     sourceKind: event.sourceKind,
@@ -53,8 +55,14 @@ function peerObservation(event: TimelineSemanticProjectionEvent): GlobalTimeline
     startDate: event.startDate,
     endDate: event.endDate ?? event.startDate,
     visibilityTier: event.visibilityTier,
-    eventCost: { authority: event.eventCost.authority, status: "KNOWN", value: event.eventCost.value },
+    eventCost: queryCost(event),
   };
+}
+
+function peerObservation(event: TimelineSemanticProjectionEvent): GlobalTimelineComparisonPeerObservation {
+  const observation = eventObservation(event);
+  if (observation.eventCost.status !== "KNOWN") throw new TypeError(`GLOBAL_TIMELINE_QUERY_PEER_COST_NOT_KNOWN:${event.eventRef}`);
+  return observation as GlobalTimelineComparisonPeerObservation;
 }
 
 /** Pure SH-05 transport projection. It performs no cohort or statistical calculation. */
@@ -64,7 +72,7 @@ export function buildGlobalTimelineQuerySnapshots(input: Readonly<{
   publicationMeta: GlobalReadModelPublicationMeta;
   resourceMeta: ResourceMetaFactory;
 }>): Readonly<{
-  timeline: GlobalLifeTimelineV2ReadModel;
+  timeline: GlobalLifeTimelineV2Snapshot;
   comparisons: readonly Readonly<{
     params: Readonly<{ eventRef: string; comparisonLevel: GlobalTimelineComparisonLevel }>;
     payload: GlobalTimelineEventComparisonReadModel;
@@ -80,12 +88,13 @@ export function buildGlobalTimelineQuerySnapshots(input: Readonly<{
     const card = cards.get(event.eventRef)!;
     const descriptors = card.comparisonLevels.map((level): GlobalTimelineComparisonDescriptor => {
       const comparison = results.get(`${event.eventRef}|${level}`);
-      if (comparison === undefined || comparison.supportStatus === "UNKNOWN" || comparison.peerCount < 3) throw new TypeError(`GLOBAL_TIMELINE_QUERY_ADVERTISED_LEVEL_INVALID:${event.eventRef}:${level}`);
+      if (comparison === undefined || comparison.relatedPeerCount < 1) throw new TypeError(`GLOBAL_TIMELINE_QUERY_ADVERTISED_LEVEL_INVALID:${event.eventRef}:${level}`);
       return {
         level,
         label: comparisonLabel(comparison),
         supportStatus: comparison.supportStatus,
-        peerCount: comparison.peerCount,
+        relatedPeerCount: comparison.relatedPeerCount,
+        costPeerCount: comparison.costPeerCount,
         materiality: materialityStatus(comparison),
       };
     });
@@ -105,12 +114,13 @@ export function buildGlobalTimelineQuerySnapshots(input: Readonly<{
       ...(card.distinctiveComparisonLevel === undefined ? {} : { distinctiveComparisonLevel: card.distinctiveComparisonLevel }),
       ...(primaryPlaceLabel === undefined ? {} : { primaryPlaceLabel }),
       ...(event.participants.count <= 1 ? {} : { participantCount: event.participants.count }),
+      ...(event.spentDuringContext === undefined ? {} : { spentDuringContext: event.spentDuringContext }),
       momentDetailAvailable: event.momentDetailAvailable,
     };
   });
 
   const timelineParams = {};
-  const timeline = buildGlobalLifeTimelineV2ReadModel({
+  const timelineSnapshot = buildGlobalLifeTimelineV2ReadModel({
     kind: "global_life_timeline",
     schemaVersion: "global-life-timeline@v2",
     resource: "analysis_global_life_timeline",
@@ -119,14 +129,19 @@ export function buildGlobalTimelineQuerySnapshots(input: Readonly<{
     publicationMeta: input.publicationMeta,
     resourceMeta: input.resourceMeta("analysis_global_life_timeline", timelineParams),
   });
+  const timeline = parseGlobalLifeTimelineV2ReadModel(timelineSnapshot);
 
   const comparisons = timeline.events.flatMap((timelineEvent) => timelineEvent.comparisonLevels.map(({ level }) => {
     const comparison = results.get(`${timelineEvent.eventRef}|${level}`)!;
     const source = events.get(timelineEvent.eventRef)!;
     const supportStatus = comparison.supportStatus;
-    if (supportStatus === "UNKNOWN" || source.eventCost.status !== "KNOWN" || comparison.median === undefined || comparison.q1 === undefined || comparison.q3 === undefined || comparison.mad === undefined || comparison.absoluteDelta === undefined) throw new TypeError(`GLOBAL_TIMELINE_QUERY_COMPARISON_INCOMPLETE:${timelineEvent.eventRef}:${level}`);
     const params = { eventRef: timelineEvent.eventRef, comparisonLevel: level };
-    const peers = comparison.peerCosts.map(({ eventRef }) => {
+    const relatedPeers = comparison.relatedPeerRefs.map((eventRef) => {
+      const event = events.get(eventRef);
+      if (event === undefined) throw new TypeError(`GLOBAL_TIMELINE_QUERY_PEER_MISSING:${eventRef}`);
+      return eventObservation(event);
+    });
+    const costComparablePeers = comparison.peerCosts.map(({ eventRef }) => {
       const event = events.get(eventRef);
       if (event === undefined) throw new TypeError(`GLOBAL_TIMELINE_QUERY_PEER_MISSING:${eventRef}`);
       return peerObservation(event);
@@ -135,27 +150,28 @@ export function buildGlobalTimelineQuerySnapshots(input: Readonly<{
       params,
       payload: buildGlobalTimelineEventComparisonReadModel({
         kind: "global_timeline_event_comparison",
-        schemaVersion: "global-timeline-event-comparison@v1",
+        schemaVersion: "global-timeline-event-comparison@v2",
         resource: "analysis_global_timeline_event_comparison",
         moduleKey: "RHYTHM",
-        subject: peerObservation(source),
+        subject: eventObservation(source),
         comparison: {
           level,
           label: comparisonLabel(comparison),
           cohortKey: comparison.cohortKey,
           policyVersion: comparison.policyVersion,
         },
-        support: { status: supportStatus, peerCount: comparison.peerCount },
-        statistics: { median: comparison.median, q1: comparison.q1, q3: comparison.q3, mad: comparison.mad },
-        deltas: { absolute: comparison.absoluteDelta, ...(comparison.relativeDelta === undefined ? {} : { relative: comparison.relativeDelta }) },
+        support: { status: supportStatus, relatedPeerCount: comparison.relatedPeerCount, costPeerCount: comparison.costPeerCount },
+        ...(comparison.median === undefined || comparison.q1 === undefined || comparison.q3 === undefined || comparison.mad === undefined ? {} : { statistics: { median: comparison.median, q1: comparison.q1, q3: comparison.q3, mad: comparison.mad } }),
+        ...(comparison.absoluteDelta === undefined ? {} : { deltas: { absolute: comparison.absoluteDelta, ...(comparison.relativeDelta === undefined ? {} : { relative: comparison.relativeDelta }) } }),
         materiality: { status: materialityStatus(comparison), policyRef: comparison.materiality.policyRef },
         facetContext: comparison.requiredFacets,
-        peerObservations: peers,
+        relatedPeers,
+        costComparablePeers,
         publicationMeta: input.publicationMeta,
         resourceMeta: input.resourceMeta("analysis_global_timeline_event_comparison", params),
       }),
     };
   }));
 
-  return { timeline, comparisons };
+  return { timeline: timelineSnapshot, comparisons };
 }

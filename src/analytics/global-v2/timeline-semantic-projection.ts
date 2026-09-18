@@ -62,6 +62,14 @@ export type TimelineSemanticEventCost =
   | Readonly<{ authority: "CANONICAL_LINKED"; status: "UNKNOWN" | "CONFLICT" }>
   | Readonly<{ authority: "NONE"; status: "UNKNOWN" }>;
 
+export type TimelineSemanticSpentDuringContext = Readonly<{
+  status: "KNOWN" | "PARTIAL";
+  total: Money;
+  directCostIncludedAmount?: Money;
+  additionalDuringAmount?: Money;
+  componentCount: number;
+}>;
+
 export type TimelineSemanticProjectionEvent = Readonly<{
   eventRef: `moment:${string}` | `life-event:${string}`;
   sourceKind: "MOMENT" | "LIFE_EVENT";
@@ -86,6 +94,7 @@ export type TimelineSemanticProjectionEvent = Readonly<{
     count: number;
     participantRefs: readonly string[];
   }>;
+  spentDuringContext?: TimelineSemanticSpentDuringContext;
   momentDetailAvailable: boolean;
 }>;
 

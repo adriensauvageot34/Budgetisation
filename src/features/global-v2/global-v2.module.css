@@ -466,11 +466,20 @@
 .timelineComparisonLevels button[aria-checked="true"] { border-color: var(--color-primary); background: var(--color-primary-soft); color: var(--color-primary-deep); }
 .timelineComparisonLevels button:hover, .timelineComparisonLevels button:focus-visible { border-color: var(--color-primary); color: var(--color-primary-deep); }
 .timelineComparisonLevels button:focus-visible { outline: 2px solid var(--color-primary); outline-offset: 2px; }
+.timelineComparatorBroadAction { justify-self: start; border: 1px solid var(--color-primary); border-radius: 8px; padding: 8px 11px; background: var(--color-primary-soft); color: var(--color-primary-deep); font: inherit; font-size: 12px; font-weight: 800; cursor: pointer; }
 .timelineDistinctiveBasis, .timelineComparatorSupport, .timelineComparatorResult > p, .timelineComparatorStatus { margin: 0; color: var(--color-muted); font-size: 12px; line-height: 1.45; }
 .timelineDistinctiveBasis { color: var(--color-primary-deep); font-weight: 740; }
 .timelineComparatorStatus button { border: 0; padding: 0; background: transparent; color: var(--color-primary-deep); font: inherit; font-weight: 800; cursor: pointer; }
 .timelineComparatorResult { display: grid; gap: 9px; min-width: 0; }
 .timelineComparatorSupport { font-weight: 720; }
+.timelineRelatedPeers { display: grid; gap: 5px; margin: 0; padding: 0; list-style: none; }
+.timelineRelatedPeers button { display: flex; align-items: baseline; justify-content: space-between; width: 100%; gap: 12px; border: 0; border-radius: 7px; padding: 7px 9px; background: var(--color-surface); color: inherit; font: inherit; text-align: left; cursor: pointer; }
+.timelineRelatedPeers button:hover, .timelineRelatedPeers button:focus-visible { background: var(--color-primary-soft); }
+.timelineRelatedPeers span { overflow-wrap: anywhere; font-size: 12px; }
+.timelineRelatedPeers b { flex: 0 0 auto; color: var(--color-muted); font-size: 11px; }
+.timelinePeriodContext { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 4px 12px; border-top: 1px solid var(--color-border); padding-top: 9px; }
+.timelinePeriodContext strong, .timelinePeriodContext b { font-size: 12px; }
+.timelinePeriodContext p { grid-column: 1 / -1; }
 .timelineDistinctive { border-left: 3px solid var(--color-primary-deep); }
 .timelineDistinctive::before { left: 50px !important; }
 .timelineStatus, .timelineEmpty { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 120px; border-block: 1px solid var(--color-border); padding: 18px; color: var(--color-muted); }

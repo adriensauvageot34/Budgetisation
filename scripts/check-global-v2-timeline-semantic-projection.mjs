@@ -131,7 +131,7 @@ check(() => assert.deepEqual(synthetic.events.find(({ eventRef }) => eventRef ==
 check(() => assert.equal(synthetic.events.some(({ eventRef }) => eventRef === "moment:unasserted"), false));
 check(() => assert.equal(JSON.stringify(synthetic).includes("evidenceRefs"), false));
 check(() => assert.equal(JSON.stringify(synthetic).includes("causalComponents"), false));
-check(() => assert.equal(fs.readFileSync(path.join(root, "src", "analytics", "global-v2", "timeline-semantic-projection.ts"), "utf8").includes("spentDuring"), false));
+check(() => assert.equal(fs.readFileSync(path.join(root, "src", "analytics", "global-v2", "timeline-semantic-projection.ts"), "utf8").includes("spentDuringContext"), true));
 check(() => assert.throws(() => projection.buildTimelineSemanticProjection({
   sourceRevision: 4,
   moments: [],

@@ -65,10 +65,10 @@ check(() => assert.match(presentation.timelineEventAmount(knownZero), /^0(?:,00)
 check(() => assert.equal(presentation.timelineEventAmount(unknown), "Coût non établi"));
 check(() => assert.equal(presentation.timelineEventAmount(conflict), "Coût non établi"));
 
-const comparable = event(7, "PRINCIPAL", { comparisonLevels: [{ level: "SAME_CLOSE_FAMILY", label: "Visite ami", supportStatus: "PARTIAL", peerCount: 3, materiality: "UNKNOWN" }] });
+const comparable = event(7, "PRINCIPAL", { comparisonLevels: [{ level: "SAME_CLOSE_FAMILY", label: "Famille proche", supportStatus: "PARTIAL", relatedPeerCount: 3, costPeerCount: 2, materiality: "UNKNOWN" }] });
 check(() => assert.equal(presentation.hasTimelineComparisonAffordance(comparable), true));
 check(() => assert.equal(presentation.hasTimelineComparisonAffordance(events[0]), false));
-check(() => assert.deepEqual(comparable.comparisonLevels, [{ level: "SAME_CLOSE_FAMILY", label: "Visite ami", supportStatus: "PARTIAL", peerCount: 3, materiality: "UNKNOWN" }]));
+check(() => assert.deepEqual(comparable.comparisonLevels, [{ level: "SAME_CLOSE_FAMILY", label: "Famille proche", supportStatus: "PARTIAL", relatedPeerCount: 3, costPeerCount: 2, materiality: "UNKNOWN" }]));
 
 const source = fs.readFileSync(path.join(root, "src/features/global-v2/life-timeline.tsx"), "utf8");
 const css = fs.readFileSync(path.join(root, "src/features/global-v2/global-v2.module.css"), "utf8");
@@ -79,7 +79,7 @@ check(() => assert.match(component, /useState<TimelineDensityMode>\("PRINCIPAL"\
 check(() => assert.match(component, /timelineEventsForDensity\(model\.events, density\)/u));
 check(() => assert.match(component, />Principal<\/button>[\s\S]*>Étendu<\/button>/u));
 check(() => assert.equal((component.match(/resource: "analysis_global_life_timeline"/gu) ?? []).length, 1));
-check(() => assert.match(source, /timelineComparisonRequest\(event\.eventRef, selectedLevel\)/u));
+check(() => assert.match(source, /timelineComparisonRequest\(event\.eventRef, fallbackLevel\)/u));
 check(() => assert.match(v2Card, /semanticClassification\.close\.label/u));
 check(() => assert.match(v2Card, /semanticClassification\.intermediate\.label[\s\S]*semanticClassification\.grand\.label|semanticClassification\.grand\.label[\s\S]*semanticClassification\.intermediate\.label/u));
 check(() => assert.doesNotMatch(v2Card, /familySource|typeKey/u));

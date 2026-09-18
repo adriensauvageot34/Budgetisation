@@ -27,7 +27,7 @@ const semanticClassification = {
   intermediate: { key: "sorties_festives_et_nocturnes", label: "Sorties festives & nocturnes" },
   grand: { key: "sorties_loisirs_et_culture", label: "Sorties, loisirs & culture" },
 };
-const descriptor = (level, overrides = {}) => ({ level, label: level, supportStatus: "KNOWN", peerCount: 5, materiality: "NOT_MATERIAL", ...overrides });
+const descriptor = (level, overrides = {}) => ({ level, label: level, supportStatus: "KNOWN", relatedPeerCount: 5, costPeerCount: 4, materiality: "NOT_MATERIAL", ...overrides });
 const event = (comparisonLevels, overrides = {}) => ({
   eventRef: "moment:00000000-0000-0000-0000-000000000001",
   sourceKind: "MOMENT",
@@ -59,7 +59,9 @@ check(() => assert.equal(presentation.initialTimelineComparisonLevel(event(multi
 check(() => assert.equal(presentation.timelineComparisonLevelLabel(multiple, "SAME_SERIES"), "Même série · Soirées techno"));
 check(() => assert.equal(presentation.timelineComparisonLevelLabel(multiple, "SAME_CLOSE_FAMILY"), "Soirée techno / rave"));
 check(() => assert.equal(presentation.timelineComparisonLevelLabel(multiple, "SAME_INTERMEDIATE_FAMILY"), "Sorties festives & nocturnes"));
-check(() => assert.equal(presentation.orderedTimelineComparisonLevels(multiple).some(({ level }) => level.includes("GRAND")), false));
+check(() => assert.equal(presentation.timelineComparisonLevelLabel(multiple, "SAME_GRAND_FAMILY"), "Sorties, loisirs & culture"));
+const broadOnly = event([descriptor("SAME_GRAND_FAMILY")]);
+check(() => assert.equal(presentation.initialTimelineComparisonLevel(broadOnly), undefined));
 
 const closeRequest = presentation.timelineComparisonRequest(multiple.eventRef, "SAME_CLOSE_FAMILY");
 const intermediateRequest = presentation.timelineComparisonRequest(multiple.eventRef, "SAME_INTERMEDIATE_FAMILY");
@@ -96,10 +98,10 @@ const rangeModelSource = fs.readFileSync(path.join(root, "src/features/global-v2
 const comparatorSource = timelineSource.slice(timelineSource.indexOf("function TimelineComparator"), timelineSource.indexOf("function TimelineV2EventRow"));
 const v2CardSource = timelineSource.slice(timelineSource.indexOf("function TimelineV2EventRow"), timelineSource.indexOf("function TimelineEventRow"));
 check(() => assert.match(v2CardSource, /comparisonAvailable && comparatorOpen[\s\S]*<TimelineComparator/u));
-check(() => assert.match(comparatorSource, /descriptors\.length > 1[\s\S]*role="radiogroup"/u));
+check(() => assert.match(comparatorSource, /role="radiogroup"[\s\S]*relatedPeerCount/u));
 check(() => assert.match(comparatorSource, /setSelectedLevel\(level\)/u));
-check(() => assert.match(comparatorSource, /timelineComparisonRequest\(event\.eventRef, selectedLevel\)/u));
-check(() => assert.match(comparatorSource, /peers=\{model\.peerObservations\}/u));
+check(() => assert.match(comparatorSource, /timelineComparisonRequest\(event\.eventRef, fallbackLevel\)/u));
+check(() => assert.match(comparatorSource, /peers=\{model\.costComparablePeers\}/u));
 check(() => assert.match(comparatorSource, /statistics\.median[\s\S]*statistics\.q1[\s\S]*statistics\.q3/u));
 check(() => assert.match(comparatorSource, /<ComparisonRange/u));
 check(() => assert.equal((timelineSource.match(/function ComparisonRange/gu) ?? []).length, 0));
@@ -113,7 +115,7 @@ check(() => assert.match(v2CardSource, /setExpanded\(true\)[\s\S]*scrollIntoView
 check(() => assert.doesNotMatch(v2CardSource, /analysis_global_moment_experience_detail/u));
 check(() => assert.match(v2CardSource, /event\.distinctiveComparisonLevel !== undefined/u));
 check(() => assert.match(comparatorSource, /event\.distinctiveComparisonLevel[\s\S]*timelineDistinctiveBasis/u));
-check(() => assert.doesNotMatch(`${timelineSource}\n${presentationSource}`, /SAME_GRAND|GRAND_FAMILY/u));
+check(() => assert.match(`${timelineSource}\n${presentationSource}`, /SAME_GRAND_FAMILY/u));
 check(() => assert.match(rangeSource, /GlobalTimelineComparisonPeerObservation|ComparisonRangePeerObservation/u));
 
 console.log(`Global V2 Timeline comparator UI S9: ${checks}/${checks} PASS`);

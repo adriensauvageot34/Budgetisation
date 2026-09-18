@@ -168,10 +168,11 @@ if (replayPath !== undefined) {
   check(() => assert.notEqual(card(partial.eventRef).distinctiveComparisonLevel, partial.level));
 }
 
-check(() => assert.equal(policyModule.TIMELINE_SEMANTIC_COMPARATOR_VERSION, "timeline-semantic-comparator@v1"));
+check(() => assert.equal(policyModule.TIMELINE_SEMANTIC_COMPARATOR_VERSION, "timeline-semantic-comparator@v2"));
 check(() => assert.equal(policyModule.timelineSemanticComparatorPolicies.length, 53));
 check(() => assert.equal(policyModule.resolveTimelineSemanticComparatorPolicy("activite_de_loisir_a_preciser").closePolicy, "NO_UNRESOLVED"));
-check(() => assert.equal(policyModule.timelineSemanticComparatorPolicies.filter(({ intermediatePolicy }) => intermediatePolicy === "YES_WITH_FACET_GATE").length, 4));
+check(() => assert.equal(policyModule.timelineSemanticComparatorPolicies.every(({ intermediatePolicy }) => intermediatePolicy === "YES"), true));
+check(() => assert.equal(policyModule.timelineSemanticComparatorPolicies.every(({ grandPolicy }) => grandPolicy === "YES_OPT_IN"), true));
 const comparatorSource = fs.readFileSync(path.join(root, "src", "analytics", "global-v2", "timeline-semantic-comparator.ts"), "utf8");
 check(() => assert.equal(["canonicalName", "startDate", "visibilityTier", "places", "participants", "sourceOntology"].some((field) => comparatorSource.includes(`.${field}`)), false));
 

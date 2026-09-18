@@ -29,7 +29,7 @@ const check = (callback) => { callback(); checks += 1; };
 const rejects = (callback, pattern) => check(() => assert.throws(callback, pattern));
 const hash = (character) => character.repeat(64);
 const publicationMeta = { publicationId: "5acd2106-5d92-56ff-8569-623fa622c5fa", revision: 98, factsHash: hash("a"), generatedAt: "2026-09-17T12:00:00Z", profileId: "global-v2-household@v1", manifestHash: hash("b") };
-const resourceMeta = { contractVersion: "global-v2-query@v1", methodSignature: hash("c"), policyVersions: { projection: "timeline-semantic-projection@v1", comparator: "timeline-semantic-comparator@v1", transport: "global-v2-snapshot-only@sh05-v1" }, resourceInputHash: hash("d") };
+const resourceMeta = { contractVersion: "global-v2-query@v1", methodSignature: hash("c"), policyVersions: { projection: "timeline-semantic-projection@v1", comparator: "timeline-semantic-comparator@v2", transport: "global-v2-snapshot-only@sh05-v2" }, resourceInputHash: hash("d") };
 const semantic = { taxonomyVersion: "timeline_semantic_taxonomy@v1", close: { key: "visite_ami", label: "Visite à des amis" }, intermediate: { key: "visites_et_liens_sociaux", label: "Visites & liens sociaux" }, grand: { key: "relations_et_evenements_de_vie", label: "Relations & événements de vie" } };
 const event = (index, overrides = {}) => ({
   eventRef: `life-event:${String(index).padStart(4, "0")}`,
@@ -60,23 +60,23 @@ rejects(() => query.parseGlobalLifeTimelineV2ReadModel({ ...baseTimeline, events
 rejects(() => query.parseGlobalLifeTimelineV2ReadModel({ ...baseTimeline, events: [event(1, { canonicalName: "x".repeat(128 * 1024) })] }), /PAYLOAD_BUDGET/);
 
 check(() => assert.deepEqual(query.parseGlobalV2QueryParams("analysis_global_timeline_event_comparison", { eventRef: "moment:abc", comparisonLevel: "SAME_CLOSE_FAMILY" }), { eventRef: "moment:abc", comparisonLevel: "SAME_CLOSE_FAMILY" }));
-rejects(() => query.parseGlobalV2QueryParams("analysis_global_timeline_event_comparison", { eventRef: "moment:abc", comparisonLevel: "SAME_GRAND_FAMILY" }), /comparisonLevel/);
+check(() => assert.deepEqual(query.parseGlobalV2QueryParams("analysis_global_timeline_event_comparison", { eventRef: "moment:abc", comparisonLevel: "SAME_GRAND_FAMILY" }), { eventRef: "moment:abc", comparisonLevel: "SAME_GRAND_FAMILY" }));
 rejects(() => query.parseGlobalV2QueryParams("analysis_global_timeline_event_comparison", { eventRef: "invalid", comparisonLevel: "SAME_SERIES" }), /REF_INVALID/);
 rejects(() => query.parseGlobalV2QueryParams("analysis_global_timeline_event_comparison", { eventRef: "moment:abc", comparisonLevel: "SAME_SERIES", extra: true }), /GlobalV2EventComparisonParams/);
 
 const known = (authority = "M6_CAUSAL", value = "10") => ({ authority, status: "KNOWN", value });
 const peer = (index) => ({ eventRef: `moment:p${String(index).padStart(3, "0")}`, sourceKind: "MOMENT", canonicalName: `P${index}`, startDate: "2025-01-01", endDate: "2025-01-01", visibilityTier: "EXTENDED", eventCost: known("M6_CAUSAL", String(index)) });
 const comparison = (peerCount) => ({
-  kind: "global_timeline_event_comparison", schemaVersion: "global-timeline-event-comparison@v1", resource: "analysis_global_timeline_event_comparison", moduleKey: "RHYTHM",
+  kind: "global_timeline_event_comparison", schemaVersion: "global-timeline-event-comparison@v2", resource: "analysis_global_timeline_event_comparison", moduleKey: "RHYTHM",
   subject: { eventRef: "life-event:subject", sourceKind: "LIFE_EVENT", canonicalName: "Sujet", startDate: "2025-02-01", endDate: "2025-02-01", visibilityTier: "PRINCIPAL", eventCost: known("CANONICAL_LINKED", "0") },
-  comparison: { level: "SAME_CLOSE_FAMILY", label: "Visite à des amis", cohortKey: "close:visite_ami", policyVersion: "timeline-semantic-comparator@v1" },
-  support: { status: peerCount < 5 ? "PARTIAL" : "KNOWN", peerCount }, statistics: { median: "10", q1: "5", q3: "15", mad: "5" }, deltas: { absolute: "-10", relative: "-1" },
-  materiality: { status: peerCount < 5 ? "UNKNOWN" : "NOT_MATERIAL", policyRef: { id: "global-materiality-moment-short", version: "v1" } }, facetContext: [], peerObservations: Array.from({ length: peerCount }, (_, index) => peer(index)), publicationMeta, resourceMeta,
+  comparison: { level: "SAME_CLOSE_FAMILY", label: "Famille proche", cohortKey: "close:visite_ami", policyVersion: "timeline-semantic-comparator@v2" },
+  support: { status: peerCount < 3 ? "LIMITED" : peerCount < 5 ? "PARTIAL" : "KNOWN", relatedPeerCount: peerCount, costPeerCount: peerCount }, ...(peerCount < 3 ? {} : { statistics: { median: "10", q1: "5", q3: "15", mad: "5" }, deltas: { absolute: "-10", relative: "-1" } }),
+  materiality: { status: peerCount < 5 ? "UNKNOWN" : "NOT_MATERIAL", policyRef: { id: "global-materiality-moment-short", version: "v1" } }, facetContext: [], relatedPeers: Array.from({ length: peerCount }, (_, index) => peer(index)), costComparablePeers: Array.from({ length: peerCount }, (_, index) => peer(index)), publicationMeta, resourceMeta,
 });
-check(() => assert.equal(query.parseGlobalTimelineEventComparisonReadModel(comparison(255)).peerObservations.length, 255));
+check(() => assert.equal(query.parseGlobalTimelineEventComparisonReadModel(comparison(10)).costComparablePeers.length, 10));
 rejects(() => query.parseGlobalTimelineEventComparisonReadModel(comparison(256)), /SUPPORT_MISMATCH/);
-rejects(() => query.parseGlobalTimelineEventComparisonReadModel({ ...comparison(3), support: { status: "PARTIAL", peerCount: 4 } }), /PEER_COUNT_MISMATCH/);
-rejects(() => query.parseGlobalTimelineEventComparisonReadModel({ ...comparison(3), peerObservations: comparison(3).peerObservations.map((entry) => ({ ...entry, canonicalName: "x".repeat(40_000) })) }), /PAYLOAD_BUDGET/);
+rejects(() => query.parseGlobalTimelineEventComparisonReadModel({ ...comparison(3), support: { status: "PARTIAL", relatedPeerCount: 4, costPeerCount: 3 } }), /PEER_COUNT_MISMATCH/);
+rejects(() => query.parseGlobalTimelineEventComparisonReadModel({ ...comparison(3), relatedPeers: comparison(3).relatedPeers.map((entry) => ({ ...entry, canonicalName: "x".repeat(40_000) })) }), /PAYLOAD_BUDGET/);
 
 const scopeHash = hash("e");
 const params = { eventRef: "life-event:subject", comparisonLevel: "SAME_CLOSE_FAMILY" };
@@ -90,7 +90,7 @@ const normalizedScope = core.normalizeGlobalAnalysisScopeV2({ subject: { kind: "
 const dependencies = [{ authority: "CANONICAL", family: "timeline-semantic", identity: "timeline-semantic@v1", digest: hash("f"), required: true }];
 const metaFor = (resource, resourceParams) => ({ contractVersion: query.globalV2QueryRegistry[resource].contractVersion, methodSignature: planApi.globalV2QueryMethodSignature(resource), policyVersions: query.globalV2QueryRegistry[resource].policyVersions, resourceInputHash: planApi.globalV2QueryResourceInputHash({ resource, scope: normalizedScope, params: resourceParams, dependencies }) });
 const advertisedEvents = [
-  event(1, { eventRef: "life-event:subject", visibilityTier: "PRINCIPAL", eventCost: known("CANONICAL_LINKED", "0"), comparisonLevels: [{ level: "SAME_CLOSE_FAMILY", label: "Visite à des amis", supportStatus: "PARTIAL", peerCount: 3, materiality: "UNKNOWN" }], defaultComparisonLevel: "SAME_CLOSE_FAMILY" }),
+  event(1, { eventRef: "life-event:subject", visibilityTier: "PRINCIPAL", eventCost: known("CANONICAL_LINKED", "0"), comparisonLevels: [{ level: "SAME_CLOSE_FAMILY", label: "Famille proche", supportStatus: "PARTIAL", relatedPeerCount: 3, costPeerCount: 3, materiality: "UNKNOWN" }], defaultComparisonLevel: "SAME_CLOSE_FAMILY" }),
   ...Array.from({ length: 3 }, (_, index) => event(index + 2, { eventRef: `moment:p${String(index).padStart(3, "0")}`, sourceKind: "MOMENT", eventCost: known("M6_CAUSAL", String(index)), momentDetailAvailable: true })),
 ];
 check(() => assert.doesNotThrow(() => query.buildGlobalLifeTimelineV2ReadModel({ ...baseTimeline, events: [event(9, { eventRef: "moment:canonical-only", sourceKind: "MOMENT", momentDetailAvailable: false })] })));
@@ -99,7 +99,7 @@ const planTimelineEvents = advertisedEvents.map((entry) => entry.sourceKind === 
 const planPeerObservations = planTimelineEvents.slice(1).map((entry) => ({ eventRef: entry.eventRef, sourceKind: entry.sourceKind, canonicalName: entry.canonicalName, startDate: entry.startDate, endDate: entry.endDate, visibilityTier: entry.visibilityTier, eventCost: entry.eventCost }));
 const planTimeline = query.buildGlobalLifeTimelineV2ReadModel({ ...baseTimeline, events: planTimelineEvents, resourceMeta: metaFor("analysis_global_life_timeline", {}) });
 const planParams = { eventRef: "life-event:subject", comparisonLevel: "SAME_CLOSE_FAMILY" };
-const planComparison = query.buildGlobalTimelineEventComparisonReadModel({ ...comparison(3), peerObservations: planPeerObservations, resourceMeta: metaFor("analysis_global_timeline_event_comparison", planParams) });
+const planComparison = query.buildGlobalTimelineEventComparisonReadModel({ ...comparison(3), relatedPeers: planPeerObservations, costComparablePeers: planPeerObservations, resourceMeta: metaFor("analysis_global_timeline_event_comparison", planParams) });
 check(() => assert.equal(planApi.buildGlobalV2QueryPlan({ instances: [
   { resource: "analysis_global_life_timeline", scope: normalizedScope, params: {}, payload: planTimeline, dependencies },
   { resource: "analysis_global_timeline_event_comparison", scope: normalizedScope, params: planParams, payload: planComparison, dependencies },

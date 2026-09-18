@@ -21,6 +21,8 @@ import type {
   GlobalInitialReadModel,
   GlobalMomentComponentRow,
   GlobalMomentPeerObservation,
+  GlobalLifeTimelineV2ReadModel,
+  GlobalTimelineComparisonEventObservation,
   GlobalNavigationDestination,
   ImportedGlobalSummaryReadModel,
   GlobalModuleCompactReadModel,
@@ -35,7 +37,7 @@ import { ComparisonRange } from "./comparison-range";
 import { economicMetric, economicStructureGroups, economicStructureLabel } from "./economic-ui";
 import { emitGlobalV2UxEvent } from "./instrumentation";
 import { GlobalModuleBoundary } from "./module-boundary";
-import { LifeTimeline } from "./life-timeline";
+import { LifeTimeline, TimelineComparator } from "./life-timeline";
 import { buildHabitCoverageModel, groupRhythmMomentsByYear } from "./rhythm-collections";
 import { resolveRhythmDetailContext, rhythmDetailReturnSection, type RhythmDetailContext, type RhythmDetailOrigin } from "./rhythm-detail-routing";
 import { useGlobalV2Resource, useMobileGlobalLayout, useNearViewport } from "./use-global-resource";
@@ -837,47 +839,45 @@ function LifeMomentComposition({ model }: { readonly model: GlobalExpandedReadMo
   })}{ungroupedRows.length === 0 ? null : <details><summary><span><strong>Autres dépenses reliées</strong><small>{integerFormatter.format(ungroupedRows.length)} dépenses</small></span><ChevronRight aria-hidden size={17} /></summary><div>{ungroupedRows.map((row) => <LifeComponentRow key={row.componentRef} row={row} />)}</div></details>}</div></section>;
 }
 
-function LifeMomentDetail({ model, onOpenPeer }: { readonly model: GlobalExpandedReadModel; readonly onOpenPeer: (peer: GlobalMomentPeerObservation) => void }) {
+function LifeMomentDetail({ model, entityRef, runtime, onOpenTimelinePeer }: { readonly model: GlobalExpandedReadModel; readonly entityRef: string; readonly runtime: GlobalV2VisitRuntime; readonly onOpenTimelinePeer: (peer: GlobalTimelineComparisonEventObservation) => void }) {
   const identity = model.rows[0];
   const causal = metricBySuffix(model, ":causal-cost");
-  const comparison = identity?.momentComparison;
-  const peerCount = comparison === undefined ? undefined : m2TypedNumber({ typedMeasure: comparison.peerCount });
-  const subjectCost = comparison === undefined ? undefined : m2TypedNumber({ typedMeasure: comparison.subjectCost });
-  const peerMedian = comparison === undefined ? undefined : m2TypedNumber({ typedMeasure: comparison.peerMedian });
+  const timelineRequest = useMemo(() => ({ resource: "analysis_global_life_timeline" as const, params: {} }), []);
+  const timelineResult = useGlobalV2Resource<GlobalLifeTimelineV2ReadModel>(runtime, timelineRequest, true, "BACKGROUND");
+  const timelineModel = transportData(timelineResult.state);
+  const timelineEvent = timelineModel?.events.find((event) => event.eventRef === entityRef);
   const momentType = lifeMomentType(identity?.displayValue);
   const dateRange = lifeMomentDates(identity?.displayValue, true);
   const causalAmount = causal?.typedMeasure?.kind === "MONEY" ? m2TypedNumber(causal) : undefined;
   const spentDuring = model.spentDuringContext;
   const spentDuringAmount = spentDuring?.cost.status === "KNOWN" || spentDuring?.cost.status === "PARTIAL" ? spentDuring.cost.value.kind === "MONEY" ? m2TypedNumber({ typedMeasure: spentDuring.cost.value }) : undefined : undefined;
-  const comparatorVisible = comparison !== undefined && peerCount !== undefined && peerCount >= 3 && subjectCost !== undefined && peerMedian !== undefined;
-  const partialComparator = comparatorVisible && peerCount < 5;
   return <div className={styles.lifeDetail}>
     {momentType === undefined && dateRange === undefined ? null : <header className={styles.lifeMomentIdentity} aria-label="Identité du moment">{momentType === undefined ? null : <strong>{momentType}</strong>}{dateRange === undefined ? null : <p>{dateRange}</p>}</header>}
     {causalAmount === undefined ? null : <section><h3>Dépenses reliées à ce moment</h3><article className={styles.lifeCausalCard}><strong>{formatLifeMoney(causalAmount)}</strong><p>Ce montant regroupe uniquement les dépenses reliées à ce moment.</p></article></section>}
     <LifeMomentComposition model={model} />
-    <section><h3>Comparé à des moments similaires</h3>{!comparatorVisible ? <p className={styles.lifeEmpty}>Pas assez de moments comparables pour situer celui-ci.</p> : <div className={styles.lifeComparisonDetail}>{partialComparator ? <p className={styles.lifeComparatorSupport}>Peu de comparables : cette lecture reste indicative.</p> : null}<p>{formatLifeMoney(subjectCost)} contre {formatLifeMoney(peerMedian)} en médiane parmi {integerFormatter.format(peerCount)} moments comparables.</p><ComparisonRange key={identity?.entityRef ?? identity?.rowId} observed={comparison.subjectCost} median={comparison.peerMedian} lower={comparison.q1} upper={comparison.q3} supportCount={comparison.peerCount} subjectLabel={identity === undefined ? undefined : lifeUiCopy(identity.labelKey)} peers={model.peerObservations} onOpenPeer={onOpenPeer} /><p className={styles.lifeComparisonDelta}>{lifeComparisonDelta(comparison)}</p></div>}</section>
+    <section><h3>Relations sémantiques</h3>{timelineEvent === undefined || timelineEvent.comparisonLevels.length === 0 ? <p className={styles.lifeEmpty}>Aucun événement relié n’est disponible.</p> : <TimelineComparator event={timelineEvent} runtime={runtime} onOpenPeer={onOpenTimelinePeer} />}</section>
     {spentDuring === undefined ? null : <details className={styles.lifePeriodContext}><summary>Contexte de période <ChevronRight aria-hidden size={17} /></summary><div><span>{spentDuring.label}</span><strong>{formatLifeMoney(spentDuringAmount)}</strong><p>Ce montant couvre la période, indépendamment des dépenses reliées au moment.</p></div></details>}
     <HumanQualityNote quality={model.quality} />
   </div>;
 }
 
-function LifeExpandedContent({ model, entityRef, onDetail, onOpenPeer, runtime }: { readonly model: GlobalExpandedReadModel; readonly entityRef: string; readonly onDetail: (row: GlobalDetailRow, title?: string) => void; readonly onOpenPeer: (peer: GlobalMomentPeerObservation) => void; readonly runtime: GlobalV2VisitRuntime }) {
+function LifeExpandedContent({ model, entityRef, onDetail, onOpenPeer, onOpenTimelinePeer, runtime }: { readonly model: GlobalExpandedReadModel; readonly entityRef: string; readonly onDetail: (row: GlobalDetailRow, title?: string) => void; readonly onOpenPeer: (peer: GlobalMomentPeerObservation) => void; readonly onOpenTimelinePeer: (peer: GlobalTimelineComparisonEventObservation) => void; readonly runtime: GlobalV2VisitRuntime }) {
   if (model.resource === "analysis_global_routine_detail") return <LifeActivityDetail model={model} entityRef={entityRef} runtime={runtime} />;
-  if (model.resource === "analysis_global_moment_experience_detail") return <LifeMomentDetail model={model} onOpenPeer={onOpenPeer} />;
+  if (model.resource === "analysis_global_moment_experience_detail") return <LifeMomentDetail model={model} entityRef={entityRef} runtime={runtime} onOpenTimelinePeer={onOpenTimelinePeer} />;
   if (model.sectionKey === "OVERVIEW") return null;
   if (model.sectionKey === "PATTERNS") return <div className={styles.lifeTabContent}><LifeActivityProfiles model={model} onDetail={onDetail} /></div>;
   if (model.sectionKey === "BREAKDOWN") return <div className={styles.lifeTabContent}><LifeMoments model={model} runtime={runtime} onDetail={onDetail} /></div>;
   return <div className={styles.lifeTabContent}><LifeInsightList model={model} onDetail={onDetail} /></div>;
 }
 
-function GlobalExpandedContent({ model, entityRef, onDetail, onOpenPeer, runtime, certifiedThrough }: { readonly model: GlobalExpandedReadModel; readonly entityRef: string; readonly onDetail: (row: GlobalDetailRow, title?: string) => void; readonly onOpenPeer: (peer: GlobalMomentPeerObservation) => void; readonly runtime: GlobalV2VisitRuntime; readonly certifiedThrough: string }) {
+function GlobalExpandedContent({ model, entityRef, onDetail, onOpenPeer, onOpenTimelinePeer, runtime, certifiedThrough }: { readonly model: GlobalExpandedReadModel; readonly entityRef: string; readonly onDetail: (row: GlobalDetailRow, title?: string) => void; readonly onOpenPeer: (peer: GlobalMomentPeerObservation) => void; readonly onOpenTimelinePeer: (peer: GlobalTimelineComparisonEventObservation) => void; readonly runtime: GlobalV2VisitRuntime; readonly certifiedThrough: string }) {
   if (model.sectionKey === "METHODOLOGY" && model.moduleKey === "ECONOMIC") return <EconomicMethod model={model} certifiedThrough={certifiedThrough} />;
   if (model.sectionKey === "METHODOLOGY" && model.moduleKey === "RHYTHM") return <LifeMethod model={model} />;
   if (model.sectionKey === "METHODOLOGY") return <div className={styles.expandedContent}><HumanRows rows={model.rows} onDetail={onDetail} /><HumanQualityNote quality={model.quality} /></div>;
   if (model.resource === "analysis_global_economic_recurrence_detail") return <EconomicRecurrenceDetail model={model} />;
   if (model.resource === "analysis_global_category_need_detail") return <M2EntityDetail model={model} entityRef={entityRef} certifiedThrough={certifiedThrough} />;
   if (model.resource === "analysis_global_categories_needs_expanded") return <M2ExpandedContent model={model} onDetail={onDetail} runtime={runtime} certifiedThrough={certifiedThrough} />;
-  if (model.moduleKey === "RHYTHM" || model.resource === "analysis_global_moment_experience_detail") return <LifeExpandedContent model={model} entityRef={entityRef} onDetail={onDetail} onOpenPeer={onOpenPeer} runtime={runtime} />;
+  if (model.moduleKey === "RHYTHM" || model.resource === "analysis_global_moment_experience_detail") return <LifeExpandedContent model={model} entityRef={entityRef} onDetail={onDetail} onOpenPeer={onOpenPeer} onOpenTimelinePeer={onOpenTimelinePeer} runtime={runtime} />;
   if (model.resource === "analysis_global_economic_expanded") return <div className={styles.expandedContent}>
     {model.sectionKey === "OVERVIEW" ? <EconomicSummary model={model} certifiedThrough={certifiedThrough} /> : null}
     {model.sectionKey === "EVOLUTION" ? <ExpandedPreview runtime={runtime} moduleKey="ECONOMIC" sectionKey="OVERVIEW">{(overview) => <><EconomicEvolution model={model} overview={overview} certifiedThrough={certifiedThrough} /><EconomicSignals model={model} /></>}</ExpandedPreview> : null}
@@ -1010,10 +1010,22 @@ function GlobalDetailOverlay({ target, runtime, mobile, certifiedThrough, restor
     onReplace({ ...nextTarget, queryDetailRef: peer.detailRef });
     if (content !== null) content.scrollTop = 0;
   };
+  const openTimelinePeer = (peer: GlobalTimelineComparisonEventObservation) => {
+    if (peer.sourceKind === "LIFE_EVENT") {
+      onClose();
+      window.requestAnimationFrame(() => window.dispatchEvent(new CustomEvent("global-v2:focus-life-event", { detail: { eventRef: peer.eventRef, visibilityTier: peer.visibilityTier } })));
+      return;
+    }
+    const nextTarget = entityOverlayTarget("RHYTHM", peer.eventRef, peer.canonicalName, undefined, "NARRATIVE");
+    if (nextTarget === undefined) return;
+    const content = document.querySelector<HTMLElement>('[data-overlay-shell][data-topmost="true"] [data-overlay-content]');
+    onReplace(nextTarget);
+    if (content !== null) content.scrollTop = 0;
+  };
   return <OverlayFrame kind="exploration" title={target.title} subtitle={subtitle} closeAction={{ kind: "callback", onAction: closeDetail }} {...(detailHasBack ? { backAction: { kind: "callback" as const, onAction: goBack } } : {})} restoreFocusRef={restoreFocusRef} closeOnBackdrop className={`${styles.detailOverlay} ${rhythmDetailMode ? styles.rhythmDetailSheet : ""} ${mobile ? styles.mobileOverlay : ""}`}>
     {showTabs || showRhythmMethod ? <div className={`${styles.overlayNavigation} ${target.moduleKey === "CATEGORIES_NEEDS" || target.moduleKey === "RHYTHM" ? styles.m2OverlayNavigation : ""}`}>{showTabs ? <div className={`${styles.sectionTabs} ${target.moduleKey === "CATEGORIES_NEEDS" ? styles.m2Tabs : ""}`} role="tablist" aria-label={`Sections de ${target.title}`}>{tabs.map((item) => <button id={`${moduleSlugs[target.moduleKey]}-tab-${item.key.toLowerCase()}`} key={item.key} type="button" role="tab" aria-selected={section === item.key} aria-controls={`${moduleSlugs[target.moduleKey]}-panel-${item.key.toLowerCase()}`} onClick={() => { setSection(item.key); emitGlobalV2UxEvent("global_section_expanded", { moduleKey: target.moduleKey, sectionKey: item.key }); window.history.replaceState(window.history.state, "", `#${moduleSlugs[target.moduleKey]}-${item.key.toLowerCase()}`); }}>{item.label}</button>)}</div> : null}{target.moduleKey === "ECONOMIC" || target.moduleKey === "RHYTHM" ? <button type="button" className={styles.methodLink} onClick={() => onReplace(methodOverlayTarget(target.moduleKey))}><Info aria-hidden size={15} /> {target.moduleKey === "RHYTHM" ? "Fiabilité & méthode" : "Méthode"}</button> : null}</div> : null}
     {target.moduleKey === "CATEGORIES_NEEDS" ? <p className={styles.m2Period}>{analysisPeriod(certifiedThrough).label.replace("—", "→")}</p> : null}
-    <div data-rhythm-detail-origin={target.rhythmDetailContext?.origin} data-query-detail-ref={target.queryDetailRef} {...(showTabs ? { id: activePanelId, role: "tabpanel", "aria-labelledby": activeTabId } : {})}>{result.state.status === "IDLE" || result.state.status === "LOADING" ? <LoadingCard label={target.title} /> : result.state.status === "ERROR" && model === undefined ? localError : model === undefined ? null : <GlobalExpandedContent model={model} entityRef={target.entityRef} runtime={runtime} certifiedThrough={certifiedThrough} onOpenPeer={openPeer} onDetail={(row, detailTitle) => {
+    <div data-rhythm-detail-origin={target.rhythmDetailContext?.origin} data-query-detail-ref={target.queryDetailRef} {...(showTabs ? { id: activePanelId, role: "tabpanel", "aria-labelledby": activeTabId } : {})}>{result.state.status === "IDLE" || result.state.status === "LOADING" ? <LoadingCard label={target.title} /> : result.state.status === "ERROR" && model === undefined ? localError : model === undefined ? null : <GlobalExpandedContent model={model} entityRef={target.entityRef} runtime={runtime} certifiedThrough={certifiedThrough} onOpenPeer={openPeer} onOpenTimelinePeer={openTimelinePeer} onDetail={(row, detailTitle) => {
       if (row.entityRef === undefined) return;
       const rhythmOrigin = target.moduleKey !== "RHYTHM" ? undefined : section === "PATTERNS" ? "HABITS_COLLECTION" : section === "BREAKDOWN" ? "MOMENTS_COLLECTION" : undefined;
       const nextTarget = entityOverlayTarget(target.moduleKey, row.entityRef, detailTitle ?? humanLabel(row.labelKey), section, rhythmOrigin);

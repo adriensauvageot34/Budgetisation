@@ -6,6 +6,7 @@ const comparisonLevelOrder = Object.freeze([
   "SAME_SERIES",
   "SAME_CLOSE_FAMILY",
   "SAME_INTERMEDIATE_FAMILY",
+  "SAME_GRAND_FAMILY",
 ] as const satisfies readonly GlobalTimelineComparisonLevel[]);
 
 const moneyFormatter = new Intl.NumberFormat("fr-FR", {
@@ -46,13 +47,21 @@ export function orderedTimelineComparisonLevels(event: GlobalTimelineV2Event): r
 export function initialTimelineComparisonLevel(event: GlobalTimelineV2Event): GlobalTimelineComparisonLevel | undefined {
   const levels = orderedTimelineComparisonLevels(event);
   if (event.defaultComparisonLevel !== undefined && levels.some(({ level }) => level === event.defaultComparisonLevel)) return event.defaultComparisonLevel;
-  return levels[0]?.level;
+  return levels.find(({ level }) => level !== "SAME_GRAND_FAMILY")?.level;
 }
 
 export function timelineComparisonLevelLabel(event: GlobalTimelineV2Event, level: GlobalTimelineComparisonLevel): string {
   if (level === "SAME_SERIES") return event.series?.label === undefined ? "Même série" : `Même série · ${event.series.label}`;
   if (level === "SAME_CLOSE_FAMILY") return event.semanticClassification.close.label;
-  return event.semanticClassification.intermediate.label;
+  if (level === "SAME_INTERMEDIATE_FAMILY") return event.semanticClassification.intermediate.label;
+  return event.semanticClassification.grand.label;
+}
+
+export function timelineComparisonLevelShortLabel(level: GlobalTimelineComparisonLevel): string {
+  if (level === "SAME_SERIES") return "Série";
+  if (level === "SAME_CLOSE_FAMILY") return "Proche";
+  if (level === "SAME_INTERMEDIATE_FAMILY") return "Intermédiaire";
+  return "Large";
 }
 
 export function timelineComparisonRequest(eventRef: GlobalTimelineV2Event["eventRef"], comparisonLevel: GlobalTimelineComparisonLevel) {

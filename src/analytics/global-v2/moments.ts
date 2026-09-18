@@ -29,6 +29,7 @@ import {
   type GlobalMomentFacetKey,
   type GlobalMomentFamily,
 } from "./moment-catalog";
+import { resolveGlobalSpentDuringWindow, spentDuringKnowledgeValue } from "./spent-during";
 
 export const GLOBAL_M6_METHOD_VERSION = "global_moment_experience@v1" as const;
 const zero = parseMoney("0");
@@ -283,29 +284,13 @@ function financialCoverage(moment: GlobalMomentInput, resolvedKeys: readonly str
 }
 
 function spentDuring(moment: GlobalMomentInput, facts: readonly EconomicComponentFact[]): GlobalKnowledgeValue<Money> {
-  if (moment.startDate === undefined || moment.endDate === undefined || moment.temporalPrecision === "UNKNOWN") return { status: "UNKNOWN" };
-  if (moment.startDate === moment.endDate && moment.temporalPrecision !== "INSTANT") return { status: "NOT_APPLICABLE" };
-  if (moment.temporalPrecision === "INSTANT") {
-    // EconomicComponentFact currently has day precision only. Never treat the whole day as an hourly interval.
-    return { status: "UNKNOWN" };
-  }
-  const included: Money[] = [];
-  let unresolved = false;
-  for (const fact of facts) {
-    if (fact.householdId !== moment.householdId) continue;
-    if (fact.economicTiming.kind === "unknown" || fact.economicTiming.kind === "conflict") { unresolved = true; continue; }
-    if (fact.economicTiming.kind === "partial") unresolved = true;
-    for (const segment of fact.economicTiming.segments) {
-      if (segment.timingState !== "known" || segment.periodStart === null || segment.periodEnd === null) { unresolved = true; continue; }
-      const intersects = segment.periodStart <= moment.endDate && segment.periodEnd >= moment.startDate;
-      if (!intersects) continue;
-      if (segment.periodStart < moment.startDate || segment.periodEnd > moment.endDate) { unresolved = true; continue; }
-      included.push(segment.amount);
-    }
-  }
-  const value = moneySum(included);
-  if (!unresolved) return { status: "KNOWN", value };
-  return included.length ? { status: "PARTIAL", value, partialMeaning: "OBSERVED_ONLY", partialReasons: ["MISSING_INTERVALS"] } : { status: "UNKNOWN" };
+  return spentDuringKnowledgeValue(resolveGlobalSpentDuringWindow({
+    householdId: moment.householdId,
+    startDate: moment.startDate,
+    endDate: moment.endDate,
+    temporalPrecision: moment.temporalPrecision,
+    facts,
+  }));
 }
 
 function phase(date: LocalDate | undefined, moment: GlobalMomentInput): "PAID_BEFORE" | "PAID_DURING" | "PAID_AFTER" | "UNKNOWN_PAYMENT_PHASE" {
