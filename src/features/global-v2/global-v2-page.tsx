@@ -1239,10 +1239,12 @@ function GlobalLifeTimelinePanel({ runtime, onOverlay }: { readonly runtime: Glo
       aria-label={expanded ? "Recentrer la timeline sur les événements principaux" : "Élargir la timeline aux événements étendus"}
       onClick={() => { setFocusInvitation(false); setDensity(expanded ? "PRINCIPAL" : "EXTENDED"); }}
     >
-      <span className={styles.timelineFocusFrame} aria-hidden><i /><i /><i /><i /></span>
-      <span className={styles.timelineFocusLabels} aria-hidden>
-        <span data-active={!expanded}>Élargir</span>
-        <span className={styles.timelineFocusRecenter} data-active={expanded}>Recentrer</span>
+      <span className={styles.timelineFocusFrame} aria-hidden>
+        <i /><i /><i /><i />
+        <span className={styles.timelineFocusLabels}>
+          <span data-active={!expanded}>Élargir</span>
+          <span className={styles.timelineFocusRecenter} data-active={expanded}>Recentrer</span>
+        </span>
       </span>
     </button></div></header>
     <LifeTimeline runtime={runtime} density={density} onDensityChange={setDensity} onMomentDetail={(eventRef, title) => {
