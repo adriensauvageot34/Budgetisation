@@ -44,6 +44,13 @@ check(() => assert.match(card, /const canExpand = expenseRows\.length > 0 && com
 check(() => assert.match(card, /canExpand[\s\S]*\? <button[\s\S]*: <article/u));
 check(() => assert.doesNotMatch(card, /timelineLifeEventDetails|timelineExpandedExpenses|Voir le détail complet|spentDuringContext|timelinePeriodContext/u));
 check(() => assert.match(card, /canExpand \? <div[\s\S]*<TimelineComparator/u));
+check(() => assert.match(card, /data-expanded=\{canExpand && expanded\}/u));
+check(() => assert.match(css, /\.timelineAccordion\s*\{[^}]*grid-template-rows:\s*0fr[^}]*260ms[^}]*opacity/u));
+check(() => assert.match(css, /\.timelineAccordion\[data-expanded="true"\]\s*\{[^}]*grid-template-rows:\s*1fr[^}]*opacity:\s*1/u));
+check(() => assert.match(css, /\.timelineAccordion > div\s*\{[^}]*min-height:\s*0[^}]*overflow:\s*hidden[^}]*translateY\(-6px\)[^}]*transition/u));
+check(() => assert.match(css, /\.timelineAccordion\[data-expanded="true"\] > div\s*\{[^}]*opacity:\s*1[^}]*translateY\(0\)/u));
+check(() => assert.match(css, /\.timelineChevron\s*\{[^}]*260ms[^}]*cubic-bezier[^}]*\}[\s\S]*\.timelineChevron\[data-expanded="true"\][^}]*rotate\(180deg\)/u));
+check(() => assert.match(css, /li\[data-expanded="true"\] > button\s*\{[^}]*background:[^}]*box-shadow:/u));
 check(() => assert.doesNotMatch(comparator, /timelineRelatedPeers|Analyse indicative|événements reliés ·/u));
 check(() => assert.doesNotMatch(presentation, /comparisonLevelOrder[\s\S]*SAME_GRAND_FAMILY/u));
 check(() => assert.match(presentation, /return visible\.slice\(0, 3\)/u));

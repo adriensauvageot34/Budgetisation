@@ -442,10 +442,11 @@
 .timelineMonth ol { margin: 0; padding: 0; list-style: none; }
 .timelineMonth li { position: relative; }
 .timelineMonth li::before { position: absolute; z-index: 0; top: 0; bottom: 0; left: 53px; width: 1px; background: var(--color-border); content: ""; }
-.timelineMonth li > button, .timelineMonth li > article { position: relative; z-index: 1; display: grid; grid-template-columns: 34px 28px minmax(0, 1fr) minmax(190px, 280px) auto; align-items: center; width: 100%; min-width: 0; min-height: 82px; gap: 8px; border: 0; border-bottom: 1px solid var(--color-border); padding: 12px 4px; background: transparent; color: inherit; font: inherit; text-align: left; }
+.timelineMonth li > button, .timelineMonth li > article { position: relative; z-index: 1; display: grid; grid-template-columns: 34px 28px minmax(0, 1fr) minmax(190px, 280px) auto; align-items: center; width: 100%; min-width: 0; min-height: 82px; gap: 8px; border: 0; border-bottom: 1px solid var(--color-border); padding: 12px 4px; background: transparent; color: inherit; font: inherit; text-align: left; transition: border-color 240ms ease, background-color 240ms ease, box-shadow 240ms ease; }
 .timelineMonth li[data-has-expenses="false"] > button, .timelineMonth li[data-has-expenses="false"] > article { grid-template-columns: 34px 28px minmax(0, 1fr); }
 .timelineMonth li > button { cursor: pointer; }
 .timelineMonth li > button:hover, .timelineMonth li > button:focus-visible { background: var(--color-surface-soft); }
+.timelineMonth li[data-expanded="true"] > button { border-bottom-color: rgb(46 83 69 / .2); background: var(--color-surface-soft); box-shadow: inset 3px 0 0 rgb(46 83 69 / .18); }
 .timelineMonth li > button:focus-visible { outline: 2px solid var(--color-primary); outline-offset: -2px; }
 .timelineDay { align-self: start; padding-top: 4px; color: var(--color-muted); font-size: 12px; font-weight: 780; text-align: right; }
 .timelineMarker { display: inline-flex; align-items: center; justify-content: center; width: 28px; height: 28px; border: 1px solid var(--color-border); border-radius: 50%; background: var(--color-surface); color: var(--color-primary-deep); }
@@ -460,15 +461,16 @@
 .timelineEventFacts small { color: var(--color-muted); font-size: 11px; }
 .timelineEventFacts .timelineComparison { color: var(--color-primary-deep); font-weight: 740; }
 .timelineEventFacts .timelineUnknown { color: var(--color-muted); font-weight: 650; }
-.timelineChevron { grid-column: 5; color: var(--color-muted); transition: transform 180ms ease; }
+.timelineChevron { grid-column: 5; color: var(--color-muted); transform-origin: center; transition: transform 260ms cubic-bezier(.22, 1, .36, 1), color 220ms ease; }
 .timelineChevron[data-expanded="true"] { transform: rotate(180deg); }
 .timelineExpensePreview { display: grid; grid-column: 4; grid-auto-rows: 25px; min-width: 0; max-height: 54px; gap: 4px; overflow-y: auto; padding-right: 4px; overscroll-behavior: contain; scrollbar-width: thin; }
 .timelineExpensePreview > span, .timelineExpenseList > span { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 6px; min-width: 0; }
 .timelineExpensePreview > span > span, .timelineExpenseList > span > span { overflow: hidden; color: var(--color-muted); font-size: 10px; text-overflow: ellipsis; white-space: nowrap; }
 .timelineExpensePreview b, .timelineExpenseList b { font-size: 11px; white-space: nowrap; }
-.timelineAccordion { position: relative; z-index: 1; display: grid; max-height: 0; overflow: hidden; opacity: 0; transition: max-height 210ms ease, opacity 160ms ease; }
-.timelineAccordion[data-expanded="true"] { max-height: 4200px; opacity: 1; }
-.timelineAccordion > div { display: grid; background: var(--color-surface-soft); }
+.timelineAccordion { position: relative; z-index: 1; display: grid; grid-template-rows: 0fr; opacity: 0; pointer-events: none; transition: grid-template-rows 260ms cubic-bezier(.22, 1, .36, 1), opacity 200ms ease; }
+.timelineAccordion[data-expanded="true"] { grid-template-rows: 1fr; opacity: 1; pointer-events: auto; }
+.timelineAccordion > div { display: grid; min-height: 0; overflow: hidden; background: var(--color-surface-soft); opacity: 0; transform: translateY(-6px); transition: opacity 200ms ease 35ms, transform 260ms cubic-bezier(.22, 1, .36, 1); }
+.timelineAccordion[data-expanded="true"] > div { opacity: 1; transform: translateY(0); }
 .timelineExpenseList { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 7px 18px; }
 .timelineExpenseList > span { border-radius: 8px; padding: 8px; background: var(--color-surface); }
 .timelineComparator { position: relative; z-index: 1; display: grid; gap: 12px; margin-left: 70px; border-bottom: 1px solid var(--color-border); padding: 14px; background: var(--color-surface-soft); }

@@ -401,6 +401,7 @@ function TimelineV2EventRow({ event, runtime, focusRequest, expanded, onToggle, 
     data-semantic-close={event.semanticClassification.close.key}
     data-visibility-tier={event.visibilityTier}
     data-has-expenses={expenseRows.length > 0}
+    data-expanded={canExpand && expanded}
   >
     {canExpand
       ? <button ref={cardButtonRef} type="button" data-global-entity-ref={event.eventRef} aria-label={`${expanded ? "Refermer" : "Explorer"} ${event.canonicalName}`} aria-expanded={expanded} aria-controls={detailsId} onClick={onToggle}>{content}</button>
