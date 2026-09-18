@@ -79,6 +79,12 @@ function displayPosition(value: number, minimum: number, maximum: number): numbe
   return DISPLAY_PADDING_PERCENT + (value - minimum) / (maximum - minimum) * usableWidth;
 }
 
+function visualPeerPosition(base: number, duplicateIndex: number, duplicateCount: number): number {
+  if (duplicateCount <= 1) return base;
+  const offset = (duplicateIndex - (duplicateCount - 1) / 2) * 1.6;
+  return Math.min(96, Math.max(4, base + offset));
+}
+
 export function buildComparisonRangeModel<Peer extends ComparisonRangePeerObservation>(input: ComparisonRangeInput<Peer>): ComparisonRangeModel<Peer> | undefined {
   if (input.observed.unit !== "EUR") return undefined;
   const observed = monetaryValue(input.observed);
@@ -100,12 +106,30 @@ export function buildComparisonRangeModel<Peer extends ComparisonRangePeerObserv
   const domainValues = lower === undefined || upper === undefined ? [observed, median, ...peerValues.map(({ value }) => value)] : [observed, median, lower, upper, ...peerValues.map(({ value }) => value)];
   const minimum = Math.min(...domainValues);
   const maximum = Math.max(...domainValues);
-  const positionedPeers = peerValues.map(({ observation, value }, index) => ({
-    observation,
-    value,
-    position: displayPosition(value, minimum, maximum),
-    lane: [-1, 0, 1][index % 3] as -1 | 0 | 1,
-  }));
+  const observedPosition = displayPosition(observed, minimum, maximum);
+  const medianPosition = displayPosition(median, minimum, maximum);
+  const structuralPositions = [observedPosition, medianPosition, ...(lower === undefined || upper === undefined ? [] : [displayPosition(lower, minimum, maximum), displayPosition(upper, minimum, maximum)])];
+  const duplicateCounts = new Map<number, number>();
+  const duplicateIndexes = new Map<number, number>();
+  for (const { value } of peerValues) {
+    const count = duplicateCounts.get(value);
+    duplicateCounts.set(value, (count === undefined ? 0 : count) + 1);
+  }
+  const positionedPeers = peerValues.map(({ observation, value }, index) => {
+    const basePosition = displayPosition(value, minimum, maximum);
+    const currentDuplicateIndex = duplicateIndexes.get(value);
+    const duplicateIndex = currentDuplicateIndex === undefined ? 0 : currentDuplicateIndex;
+    const currentDuplicateCount = duplicateCounts.get(value);
+    const duplicateCount = currentDuplicateCount === undefined ? 1 : currentDuplicateCount;
+    duplicateIndexes.set(value, duplicateIndex + 1);
+    const collidesWithStructure = structuralPositions.some((position) => Math.abs(position - basePosition) < 0.8);
+    return {
+      observation,
+      value,
+      position: visualPeerPosition(basePosition, duplicateIndex, duplicateCount),
+      lane: (collidesWithStructure ? (duplicateIndex % 2 === 0 ? -1 : 1) : [-1, 0, 1][index % 3]) as -1 | 0 | 1,
+    };
+  });
   const subjectLabel = input.subjectLabel?.trim() || "Ce moment";
   const comparisonLabel = input.comparisonLabel?.trim() || "moments comparables";
   const supportCopy = supportCount === undefined ? "" : ` parmi ${integerFormatter.format(supportCount)} ${comparisonLabel}`;
@@ -121,8 +145,8 @@ export function buildComparisonRangeModel<Peer extends ComparisonRangePeerObserv
     maximum,
     ...(lower === undefined || upper === undefined ? {} : { lower, upper }),
     ...(supportCount === undefined ? {} : { supportCount }),
-    observedPosition: displayPosition(observed, minimum, maximum),
-    medianPosition: displayPosition(median, minimum, maximum),
+    observedPosition,
+    medianPosition,
     ...(lower === undefined || upper === undefined ? {} : {
       lowerPosition: displayPosition(lower, minimum, maximum),
       upperPosition: displayPosition(upper, minimum, maximum),

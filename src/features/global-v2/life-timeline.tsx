@@ -243,13 +243,11 @@ function expenseAmount(row: GlobalMomentComponentRow): string {
 
 function TimelineExpenses({ rows, compact = false }: { readonly rows: readonly GlobalMomentComponentRow[]; readonly compact?: boolean }) {
   if (rows.length === 0) return null;
-  const visibleRows = compact ? rows.slice(0, 3) : rows;
   return <span className={compact ? styles.timelineExpensePreview : styles.timelineExpenseList} aria-label={compact ? "Principales dépenses liées" : "Dépenses liées"}>
-    {visibleRows.map((row) => {
+    {rows.map((row) => {
       const Icon = expenseIcon(row);
       return <span key={row.componentRef}><Icon aria-hidden size={15} /><span>{row.primaryLabel}</span><b>{expenseAmount(row)}</b></span>;
     })}
-    {compact && rows.length > visibleRows.length ? <small>+{rows.length - visibleRows.length}</small> : null}
   </span>;
 }
 
@@ -331,39 +329,52 @@ export function TimelineComparator({ event, runtime, onOpenPeer }: {
   </section>;
 }
 
-function TimelineV2EventRow({ event, runtime, focusRequest, expanded, onToggle, onMomentDetail, onTimelinePeer }: {
+function TimelineV2EventRow({ event, runtime, focusRequest, expanded, onToggle, onTimelinePeer }: {
   readonly event: GlobalTimelineV2Event;
   readonly runtime: GlobalV2VisitRuntime;
   readonly focusRequest: TimelineEventFocusRequest | undefined;
   readonly expanded: boolean;
   readonly onToggle: () => void;
-  readonly onMomentDetail: (eventRef: string, title: string) => void;
   readonly onTimelinePeer: (peer: GlobalTimelineComparisonEventObservation) => void;
 }) {
   const [hasExpanded, setHasExpanded] = useState(expanded);
+  const [detailsNearViewport, setDetailsNearViewport] = useState(false);
   const rowRef = useRef<HTMLLIElement>(null);
   const cardButtonRef = useRef<HTMLButtonElement>(null);
+  const cardArticleRef = useRef<HTMLElement>(null);
   const Icon = semanticCloseIcons[event.semanticClassification.close.key]
     ?? semanticIntermediateIcons[event.semanticClassification.intermediate.key]
     ?? Circle;
   const distinctive = event.distinctiveComparisonLevel !== undefined;
   const comparisonAvailable = hasTimelineComparisonAffordance(event);
-  const participantLabel = event.participantCount === undefined
-    ? undefined
-    : event.participantCount === 1 ? "1 personne" : `${event.participantCount} personnes`;
   const isMomentDetail = event.sourceKind === "MOMENT" && event.momentDetailAvailable;
-  const seriesLabel = event.series === undefined ? undefined : event.series.label ?? "Série identifiée";
   const detailsId = `timeline-event-${event.eventRef.replace(":", "-")}`;
   const detailRequest = useMemo(() => ({ resource: "analysis_global_moment_experience_detail" as const, params: { entityRef: event.eventRef } }), [event.eventRef]);
-  const detailResult = useGlobalV2Resource<GlobalExpandedReadModel>(runtime, detailRequest, expanded && isMomentDetail, "DIRECT");
+  const detailResult = useGlobalV2Resource<GlobalExpandedReadModel>(runtime, detailRequest, detailsNearViewport && isMomentDetail, "BACKGROUND");
   const detailModel = detailResult.state.status === "READY" ? detailResult.state.data : detailResult.state.status === "ERROR" ? detailResult.state.previousData : undefined;
   const expenseRows = detailModel?.momentComponentRows ?? [];
+  const canExpand = expenseRows.length > 0 && comparisonAvailable;
   useEffect(() => { if (expanded) setHasExpanded(true); }, [expanded]);
+  useEffect(() => {
+    const element = rowRef.current;
+    if (detailsNearViewport || !isMomentDetail || element === null) return;
+    if (!("IntersectionObserver" in window)) {
+      setDetailsNearViewport(true);
+      return;
+    }
+    const observer = new IntersectionObserver(([entry]) => {
+      if (!entry?.isIntersecting) return;
+      setDetailsNearViewport(true);
+      observer.disconnect();
+    }, { rootMargin: "120% 0px" });
+    observer.observe(element);
+    return () => observer.disconnect();
+  }, [detailsNearViewport, isMomentDetail]);
   useEffect(() => {
     if (focusRequest?.eventRef !== event.eventRef) return;
     const frame = window.requestAnimationFrame(() => {
       rowRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
-      cardButtonRef.current?.focus({ preventScroll: true });
+      (cardButtonRef.current ?? cardArticleRef.current)?.focus({ preventScroll: true });
     });
     return () => window.cancelAnimationFrame(frame);
   }, [event.eventRef, focusRequest]);
@@ -372,15 +383,13 @@ function TimelineV2EventRow({ event, runtime, focusRequest, expanded, onToggle, 
     <span className={styles.timelineMarker} aria-hidden><Icon size={16} aria-hidden /></span>
     <span className={styles.timelineEventBody}>
       <span className={styles.timelineEventHeading}><strong>{event.canonicalName}</strong>{distinctive ? <em>Se distingue</em> : null}</span>
-      <span className={styles.timelineEventMeta}>{eventDateLabel(event)} · {event.semanticClassification.close.label}{event.primaryPlaceLabel === undefined ? "" : ` · ${event.primaryPlaceLabel}`}{participantLabel === undefined ? "" : ` · ${participantLabel}`}</span>
-      <span className={styles.timelineSemanticContext}>{event.semanticClassification.intermediate.label} · {event.semanticClassification.grand.label}</span>
+      <span className={styles.timelineEventMeta}>{event.primaryPlaceLabel === undefined ? null : <><span className={styles.timelinePlaceLabel}>{event.primaryPlaceLabel}</span><span aria-hidden> · </span></>}<span>{event.semanticClassification.close.label}</span></span>
       <span className={styles.timelineEventFacts}>
-        <b className={event.eventCost.status === "KNOWN" ? undefined : styles.timelineUnknown}>{timelineEventAmount(event)}</b>
-        {seriesLabel === undefined ? null : <small>Série · {seriesLabel}</small>}
+        {event.eventCost.status === "KNOWN" ? <b>{timelineEventAmount(event)}</b> : null}
       </span>
     </span>
-    {!expanded && expenseRows.length > 0 ? <TimelineExpenses rows={expenseRows} compact /> : null}
-    <ChevronDown className={styles.timelineChevron} data-expanded={expanded} aria-hidden size={18} />
+    {expenseRows.length > 0 ? <TimelineExpenses rows={expenseRows} compact /> : null}
+    {canExpand ? <ChevronDown className={styles.timelineChevron} data-expanded={expanded} aria-hidden size={18} /> : null}
   </>;
 
   return <li
@@ -389,26 +398,14 @@ function TimelineV2EventRow({ event, runtime, focusRequest, expanded, onToggle, 
     data-source-kind={event.sourceKind}
     data-semantic-close={event.semanticClassification.close.key}
     data-visibility-tier={event.visibilityTier}
+    data-has-expenses={expenseRows.length > 0}
   >
-    <button ref={cardButtonRef} type="button" data-global-entity-ref={event.eventRef} aria-label={`${expanded ? "Refermer" : "Explorer"} ${event.canonicalName}`} aria-expanded={expanded} aria-controls={detailsId} onClick={onToggle}>{content}</button>
-    <div id={detailsId} className={styles.timelineAccordion} data-expanded={expanded} aria-hidden={!expanded}>
-      {hasExpanded ? <div>
-      <div className={styles.timelineLifeEventDetails}>
-      <p>{event.semanticClassification.grand.label} <span aria-hidden>›</span> {event.semanticClassification.intermediate.label}</p>
-      <dl>
-        <div><dt>Catégorie</dt><dd>{event.semanticClassification.close.label}</dd></div>
-        <div><dt>Coût</dt><dd>{timelineEventAmount(event)}</dd></div>
-        {seriesLabel === undefined ? null : <div><dt>Série</dt><dd>{seriesLabel}</dd></div>}
-        {event.primaryPlaceLabel === undefined ? null : <div><dt>Lieu</dt><dd>{event.primaryPlaceLabel}</dd></div>}
-        {participantLabel === undefined ? null : <div><dt>Participants</dt><dd>{participantLabel}</dd></div>}
-      </dl>
-      {isMomentDetail ? <button type="button" className={styles.timelineFullDetailAction} onClick={() => onMomentDetail(event.eventRef, event.canonicalName)}>Voir le détail complet</button> : null}
-      </div>
-      {expenseRows.length === 0 ? null : <section className={styles.timelineExpandedExpenses}><h5>Dépenses liées</h5><TimelineExpenses rows={expenseRows} /></section>}
-      {comparisonAvailable ? <TimelineComparator event={event} runtime={runtime} onOpenPeer={onTimelinePeer} /> : null}
-      {event.spentDuringContext === undefined ? null : <div className={styles.timelinePeriodContext}><strong>Dépenses pendant la période</strong><b>{moneyFormatter.format(Number(event.spentDuringContext.total))}</b><p>Ces dépenses ont eu lieu pendant cette période mais ne sont pas nécessairement causées par l’événement.</p></div>}
-      </div> : null}
-    </div>
+    {canExpand
+      ? <button ref={cardButtonRef} type="button" data-global-entity-ref={event.eventRef} aria-label={`${expanded ? "Refermer" : "Explorer"} ${event.canonicalName}`} aria-expanded={expanded} aria-controls={detailsId} onClick={onToggle}>{content}</button>
+      : <article ref={cardArticleRef} tabIndex={-1} data-global-entity-ref={event.eventRef} aria-label={event.canonicalName}>{content}</article>}
+    {canExpand ? <div id={detailsId} className={styles.timelineAccordion} data-expanded={expanded} aria-hidden={!expanded}>
+      {hasExpanded ? <div><TimelineComparator event={event} runtime={runtime} onOpenPeer={onTimelinePeer} /></div> : null}
+    </div> : null}
   </li>;
 }
 
@@ -422,12 +419,11 @@ function TimelineEventRow({ event, runtime, focusRequest, expanded, onToggle, on
   readonly onTimelinePeer: (peer: GlobalTimelineComparisonEventObservation) => void;
 }) {
   return "eventCost" in event
-    ? <TimelineV2EventRow event={event} runtime={runtime} focusRequest={focusRequest} expanded={expanded} onToggle={onToggle} onMomentDetail={onMomentDetail} onTimelinePeer={onTimelinePeer} />
+    ? <TimelineV2EventRow event={event} runtime={runtime} focusRequest={focusRequest} expanded={expanded} onToggle={onToggle} onTimelinePeer={onTimelinePeer} />
     : <LegacyTimelineEventRow event={event} onMomentDetail={onMomentDetail} />;
 }
 
-export function LifeTimeline({ runtime, onMomentDetail }: { readonly runtime: GlobalV2VisitRuntime; readonly onMomentDetail: (eventRef: string, title: string) => void }) {
-  const [density, setDensity] = useState<TimelineDensityMode>("PRINCIPAL");
+export function LifeTimeline({ runtime, density, onDensityChange, onMomentDetail }: { readonly runtime: GlobalV2VisitRuntime; readonly density: TimelineDensityMode; readonly onDensityChange: (density: TimelineDensityMode) => void; readonly onMomentDetail: (eventRef: string, title: string) => void }) {
   const [expandedEventRef, setExpandedEventRef] = useState<GlobalTimelineV2Event["eventRef"] | undefined>(undefined);
   const [eventFocus, setEventFocus] = useState<TimelineEventFocusRequest | undefined>(undefined);
   const request = useMemo(() => ({ resource: "analysis_global_life_timeline" as const, params: {} }), []);
@@ -444,36 +440,30 @@ export function LifeTimeline({ runtime, onMomentDetail }: { readonly runtime: Gl
     const focus = (raw: Event) => {
       const detail = (raw as CustomEvent<{ readonly eventRef?: unknown; readonly visibilityTier?: unknown }>).detail;
       if (typeof detail?.eventRef !== "string" || !detail.eventRef.startsWith("life-event:")) return;
-      if (detail.visibilityTier === "EXTENDED") setDensity("EXTENDED");
+      if (detail.visibilityTier === "EXTENDED") onDensityChange("EXTENDED");
       const eventRef = detail.eventRef as GlobalTimelineV2Event["eventRef"];
       setExpandedEventRef(eventRef);
       setEventFocus((current) => ({ eventRef, requestId: (current?.requestId ?? 0) + 1 }));
     };
     window.addEventListener("global-v2:focus-life-event", focus);
     return () => window.removeEventListener("global-v2:focus-life-event", focus);
-  }, []);
+  }, [onDensityChange]);
+  useEffect(() => {
+    if (density !== "PRINCIPAL" || model?.schemaVersion !== "global-life-timeline@v2") return;
+    if (model.events.find(({ eventRef }) => eventRef === expandedEventRef)?.visibilityTier === "EXTENDED") setExpandedEventRef(undefined);
+  }, [density, expandedEventRef, model]);
 
   if ((result.state.status === "IDLE" || result.state.status === "LOADING") && model === undefined) return <div className={styles.timelineStatus} role="status" aria-busy="true">Chargement de la timeline…</div>;
   if (result.state.status === "ERROR" && model === undefined) return <div className={styles.timelineStatus} role="alert"><strong>La timeline n’a pas pu être chargée.</strong><button type="button" onClick={result.retry}>Réessayer</button></div>;
   if (model === undefined) return null;
 
   const focusTimelinePeer = (peer: GlobalTimelineComparisonEventObservation) => {
-    if (peer.visibilityTier === "EXTENDED") setDensity("EXTENDED");
+    if (peer.visibilityTier === "EXTENDED") onDensityChange("EXTENDED");
     setExpandedEventRef(peer.eventRef);
     setEventFocus((current) => ({ eventRef: peer.eventRef, requestId: (current?.requestId ?? 0) + 1 }));
   };
 
-  const changeDensity = (next: TimelineDensityMode) => {
-    setDensity(next);
-    if (next === "PRINCIPAL" && model.schemaVersion === "global-life-timeline@v2" && model.events.find(({ eventRef }) => eventRef === expandedEventRef)?.visibilityTier === "EXTENDED") setExpandedEventRef(undefined);
-  };
-
   return <div className={styles.timelineExperience} data-timeline-resource={model.resource}>
-    {model.schemaVersion === "global-life-timeline@v2" ? <div className={styles.timelineDensity} role="group" aria-label="Densité de la timeline">
-      <button type="button" aria-pressed={density === "PRINCIPAL"} onClick={() => changeDensity("PRINCIPAL")}>Principal</button>
-      <button type="button" aria-pressed={density === "EXTENDED"} onClick={() => changeDensity("EXTENDED")}>Étendu</button>
-      <span aria-live="polite">{displayedEvents.length} événements</span>
-    </div> : null}
     <div className={styles.timelineScroller} tabIndex={0} aria-label="Timeline de notre vie, du plus ancien au plus récent">
       {years.length === 0 ? <p className={styles.timelineEmpty}>Aucun événement n’est disponible.</p> : years.map((year) => <section key={year.key} className={styles.timelineYear} aria-labelledby={`timeline-year-${year.key}`}>
         <h3 id={`timeline-year-${year.key}`}>{year.key}</h3>

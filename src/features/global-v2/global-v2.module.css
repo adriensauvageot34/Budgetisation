@@ -199,7 +199,7 @@
 .comparisonRangeReference { min-width: 3px; height: 10px; border-radius: 999px; background: #9aa99f; transform: translateY(-50%); }
 .comparisonRangeMedianMarker { width: 3px; height: 27px; border-radius: 999px; background: var(--color-ink); transform: translate(-50%, -50%); }
 .comparisonRangeObservedMarker { z-index: 3; width: 14px; height: 14px; border: 2px solid #f8f4eb; background: var(--color-primary-deep); box-shadow: 0 0 0 1px var(--color-primary-deep); transform: translate(-50%, -50%) rotate(45deg); }
-.comparisonRangePeerMarker { position: absolute; z-index: 2; width: 12px; height: 12px; border: 2px solid var(--color-surface); border-radius: 50%; padding: 0; background: #72877a; box-shadow: 0 0 0 1px #72877a; transform: translate(-50%, -50%); cursor: pointer; }
+.comparisonRangePeerMarker { position: absolute; z-index: 5; width: 12px; height: 12px; border: 2px solid var(--color-surface); border-radius: 50%; padding: 0; background: #72877a; box-shadow: 0 0 0 1px #72877a; transform: translate(-50%, -50%); cursor: pointer; }
 .comparisonRangePeerMarker:hover, .comparisonRangePeerMarker:focus-visible, .comparisonRangePeerMarker[aria-pressed="true"] { background: var(--color-primary-deep); box-shadow: 0 0 0 3px rgb(46 83 69 / .2); }
 .comparisonRangePeerMarker:focus-visible { outline: 2px solid var(--color-primary); outline-offset: 3px; }
 .comparisonRangeBoundaryLabel, .comparisonRangeQuartileLabel, .comparisonRangeMedianLabel, .comparisonRangeObservedLabel { position: absolute; z-index: 4; color: var(--color-muted); font-size: 10px; line-height: 1.2; white-space: nowrap; transform: translateX(-50%); }
@@ -423,13 +423,15 @@
 .backToTop { display: flex; align-items: center; gap: 7px; margin: 28px auto 12px; border: 0; background: transparent; color: var(--color-primary-deep); font-weight: 800; cursor: pointer; }
 .activationPending { display: grid; max-width: 700px; justify-items: start; gap: 14px; margin: 11vh auto; border: 1px solid var(--color-border); border-radius: 18px; padding: clamp(24px, 5vw, 48px); background: white; box-shadow: var(--shadow-md); }
 .activationPending p { color: var(--color-muted); line-height: 1.6; }
-.timelineExperience { display: grid; gap: 10px; }
+.timelineModuleHeader { align-items: center; flex-wrap: wrap; }
+.timelineModuleHeader > div:first-child { min-width: 0; }
+.timelineModuleHeader .timelineDensity { flex: 0 0 auto; margin-left: auto; }
+.timelineExperience { display: grid; gap: 0; }
 .timelineDensity { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
 .timelineDensity button { border: 1px solid var(--color-border); border-radius: 999px; padding: 8px 13px; background: var(--color-surface); color: var(--color-muted); font: inherit; font-size: 12px; font-weight: 780; cursor: pointer; }
 .timelineDensity button[aria-pressed="true"] { border-color: var(--color-primary); background: var(--color-primary-soft); color: var(--color-primary-deep); }
 .timelineDensity button:hover, .timelineDensity button:focus-visible { border-color: var(--color-primary); color: var(--color-primary-deep); }
 .timelineDensity button:focus-visible { outline: 2px solid var(--color-primary); outline-offset: 2px; }
-.timelineDensity > span { margin-left: auto; color: var(--color-muted); font-size: 12px; }
 .timelineScroller { height: clamp(520px, 62vh, 680px); overflow-y: auto; border-block: 1px solid var(--color-border); background: var(--color-surface); scrollbar-gutter: stable; overscroll-behavior: contain; scroll-behavior: smooth; }
 .timelineScroller:focus-visible { border-radius: 4px; outline: 2px solid var(--color-primary); outline-offset: 3px; }
 .timelineYear { display: grid; grid-template-columns: 76px minmax(0, 1fr); align-items: start; gap: 20px; }
@@ -440,7 +442,8 @@
 .timelineMonth ol { margin: 0; padding: 0; list-style: none; }
 .timelineMonth li { position: relative; }
 .timelineMonth li::before { position: absolute; z-index: 0; top: 0; bottom: 0; left: 53px; width: 1px; background: var(--color-border); content: ""; }
-.timelineMonth li > button, .timelineMonth li > article { position: relative; z-index: 1; display: grid; grid-template-columns: 34px 28px minmax(0, 1fr) minmax(0, 220px) auto; align-items: center; width: 100%; min-width: 0; min-height: 82px; gap: 8px; border: 0; border-bottom: 1px solid var(--color-border); padding: 12px 4px; background: transparent; color: inherit; font: inherit; text-align: left; }
+.timelineMonth li > button, .timelineMonth li > article { position: relative; z-index: 1; display: grid; grid-template-columns: 34px 28px minmax(0, 1fr) minmax(190px, 280px) auto; align-items: center; width: 100%; min-width: 0; min-height: 82px; gap: 8px; border: 0; border-bottom: 1px solid var(--color-border); padding: 12px 4px; background: transparent; color: inherit; font: inherit; text-align: left; }
+.timelineMonth li[data-has-expenses="false"] > button, .timelineMonth li[data-has-expenses="false"] > article { grid-template-columns: 34px 28px minmax(0, 1fr); }
 .timelineMonth li > button { cursor: pointer; }
 .timelineMonth li > button:hover, .timelineMonth li > button:focus-visible { background: var(--color-surface-soft); }
 .timelineMonth li > button:focus-visible { outline: 2px solid var(--color-primary); outline-offset: -2px; }
@@ -451,7 +454,7 @@
 .timelineEventHeading strong { overflow-wrap: anywhere; font-size: 16px; line-height: 1.35; }
 .timelineEventHeading em { border-radius: 999px; padding: 3px 7px; background: var(--color-primary-soft); color: var(--color-primary-deep); font-size: 10px; font-style: normal; font-weight: 850; letter-spacing: .03em; text-transform: uppercase; }
 .timelineEventMeta { color: var(--color-muted); font-size: 12px; line-height: 1.4; }
-.timelineSemanticContext { color: var(--color-muted); font-size: 11px; line-height: 1.35; }
+.timelinePlaceLabel { color: var(--color-ink); text-decoration: underline; text-decoration-color: var(--color-border); text-underline-offset: 3px; }
 .timelineEventFacts { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 12px; }
 .timelineEventFacts b { font-size: 14px; }
 .timelineEventFacts small { color: var(--color-muted); font-size: 11px; }
@@ -459,49 +462,26 @@
 .timelineEventFacts .timelineUnknown { color: var(--color-muted); font-weight: 650; }
 .timelineChevron { grid-column: 5; color: var(--color-muted); transition: transform 180ms ease; }
 .timelineChevron[data-expanded="true"] { transform: rotate(180deg); }
-.timelineExpensePreview { display: grid; min-width: 0; gap: 4px; }
+.timelineExpensePreview { display: grid; grid-column: 4; grid-auto-rows: 25px; min-width: 0; max-height: 54px; gap: 4px; overflow-y: auto; padding-right: 4px; overscroll-behavior: contain; scrollbar-width: thin; }
 .timelineExpensePreview > span, .timelineExpenseList > span { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 6px; min-width: 0; }
 .timelineExpensePreview > span > span, .timelineExpenseList > span > span { overflow: hidden; color: var(--color-muted); font-size: 10px; text-overflow: ellipsis; white-space: nowrap; }
 .timelineExpensePreview b, .timelineExpenseList b { font-size: 11px; white-space: nowrap; }
-.timelineExpensePreview small { justify-self: end; color: var(--color-primary-deep); font-size: 10px; font-weight: 800; }
 .timelineAccordion { position: relative; z-index: 1; display: grid; max-height: 0; overflow: hidden; opacity: 0; transition: max-height 210ms ease, opacity 160ms ease; }
 .timelineAccordion[data-expanded="true"] { max-height: 4200px; opacity: 1; }
 .timelineAccordion > div { display: grid; background: var(--color-surface-soft); }
-.timelineLifeEventDetails { position: relative; z-index: 1; display: grid; gap: 10px; margin-left: 70px; border-bottom: 1px solid var(--color-border); padding: 2px 14px 16px; background: var(--color-surface-soft); }
-.timelineLifeEventDetails p { margin: 0; color: var(--color-muted); font-size: 12px; line-height: 1.45; }
-.timelineLifeEventDetails dl { display: flex; flex-wrap: wrap; gap: 10px 22px; margin: 0; }
-.timelineLifeEventDetails dl div { display: grid; gap: 2px; }
-.timelineLifeEventDetails dt { color: var(--color-muted); font-size: 10px; font-weight: 800; letter-spacing: .04em; text-transform: uppercase; }
-.timelineLifeEventDetails dd { margin: 0; font-size: 12px; font-weight: 720; }
-.timelineFullDetailAction { justify-self: start; border: 0; padding: 4px 0; background: transparent; color: var(--color-primary-deep); font: inherit; font-size: 11px; font-weight: 800; cursor: pointer; }
-.timelineExpandedExpenses { display: grid; gap: 8px; margin-left: 70px; border-bottom: 1px solid var(--color-border); padding: 14px; }
-.timelineExpandedExpenses h5 { margin: 0; font-size: 13px; }
 .timelineExpenseList { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 7px 18px; }
 .timelineExpenseList > span { border-radius: 8px; padding: 8px; background: var(--color-surface); }
-.timelineComparatorAction { position: relative; z-index: 1; display: flex; justify-content: flex-end; border-bottom: 1px solid var(--color-border); padding: 0 12px 10px 70px; background: var(--color-surface); }
-.timelineComparatorAction button { border: 0; border-radius: 6px; padding: 6px 9px; background: var(--color-primary-soft); color: var(--color-primary-deep); font: inherit; font-size: 11px; font-weight: 800; cursor: pointer; }
-.timelineComparatorAction button:hover, .timelineComparatorAction button:focus-visible { color: var(--color-primary); }
-.timelineComparatorAction button:focus-visible { outline: 2px solid var(--color-primary); outline-offset: 2px; }
 .timelineComparator { position: relative; z-index: 1; display: grid; gap: 12px; margin-left: 70px; border-bottom: 1px solid var(--color-border); padding: 14px; background: var(--color-surface-soft); }
 .timelineComparisonLevels { display: flex; flex-wrap: wrap; gap: 6px; }
 .timelineComparisonLevels button { border: 1px solid var(--color-border); border-radius: 999px; padding: 7px 10px; background: var(--color-surface); color: var(--color-muted); font: inherit; font-size: 11px; font-weight: 760; cursor: pointer; }
 .timelineComparisonLevels button[aria-checked="true"] { border-color: var(--color-primary); background: var(--color-primary-soft); color: var(--color-primary-deep); }
 .timelineComparisonLevels button:hover, .timelineComparisonLevels button:focus-visible { border-color: var(--color-primary); color: var(--color-primary-deep); }
 .timelineComparisonLevels button:focus-visible { outline: 2px solid var(--color-primary); outline-offset: 2px; }
-.timelineComparatorBroadAction { justify-self: start; border: 1px solid var(--color-primary); border-radius: 8px; padding: 8px 11px; background: var(--color-primary-soft); color: var(--color-primary-deep); font: inherit; font-size: 12px; font-weight: 800; cursor: pointer; }
 .timelineDistinctiveBasis, .timelineComparatorSupport, .timelineComparatorResult > p, .timelineComparatorStatus { margin: 0; color: var(--color-muted); font-size: 12px; line-height: 1.45; }
 .timelineDistinctiveBasis { color: var(--color-primary-deep); font-weight: 740; }
 .timelineComparatorStatus button { border: 0; padding: 0; background: transparent; color: var(--color-primary-deep); font: inherit; font-weight: 800; cursor: pointer; }
 .timelineComparatorResult { display: grid; gap: 9px; min-width: 0; }
 .timelineComparatorSupport { font-weight: 720; }
-.timelineRelatedPeers { display: grid; gap: 5px; margin: 0; padding: 0; list-style: none; }
-.timelineRelatedPeers button { display: flex; align-items: baseline; justify-content: space-between; width: 100%; gap: 12px; border: 0; border-radius: 7px; padding: 7px 9px; background: var(--color-surface); color: inherit; font: inherit; text-align: left; cursor: pointer; }
-.timelineRelatedPeers button:hover, .timelineRelatedPeers button:focus-visible { background: var(--color-primary-soft); }
-.timelineRelatedPeers span { overflow-wrap: anywhere; font-size: 12px; }
-.timelineRelatedPeers b { flex: 0 0 auto; color: var(--color-muted); font-size: 11px; }
-.timelinePeriodContext { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 4px 12px; margin-left: 70px; border-top: 1px solid var(--color-border); padding: 14px; }
-.timelinePeriodContext strong, .timelinePeriodContext b { font-size: 12px; }
-.timelinePeriodContext p { grid-column: 1 / -1; }
 .timelineDistinctive { border-left: 3px solid var(--color-primary-deep); }
 .timelineDistinctive::before { left: 50px !important; }
 .timelineStatus, .timelineEmpty { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 120px; border-block: 1px solid var(--color-border); padding: 18px; color: var(--color-muted); }
@@ -599,14 +579,13 @@
   .timelineScroller { height: 64dvh; }
   .timelineYear { grid-template-columns: 1fr; gap: 0; }
   .timelineYear > h3 { position: static; margin: 18px 4px 6px; }
-  .timelineMonth li > button, .timelineMonth li > article { grid-template-columns: 28px 28px minmax(0, 1fr) auto auto; }
-  .timelineExpensePreview { grid-column: 3 / 5; grid-row: 2; margin-top: 6px; }
-  .timelineChevron { grid-column: 5; grid-row: 1; }
+  .timelineModuleHeader { align-items: flex-start; }
+  .timelineMonth li > button, .timelineMonth li > article { grid-template-columns: 28px 28px minmax(0, 1fr) auto; }
+  .timelineMonth li[data-has-expenses="false"] > button, .timelineMonth li[data-has-expenses="false"] > article { grid-template-columns: 28px 28px minmax(0, 1fr); }
+  .timelineExpensePreview { grid-column: 3 / 5; grid-row: 2; max-height: 54px; margin-top: 6px; }
+  .timelineChevron { grid-column: 4; grid-row: 1; }
   .timelineMonth li::before { left: 43px; }
   .timelineDistinctive::before { left: 40px !important; }
-  .timelineDensity > span { width: 100%; margin-left: 0; }
-  .timelineLifeEventDetails { margin-left: 56px; }
-  .timelineExpandedExpenses, .timelinePeriodContext { margin-left: 56px; }
   .timelineExpenseList { grid-template-columns: 1fr; }
   .timelineComparator { margin-left: 56px; }
 }

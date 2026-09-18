@@ -627,10 +627,11 @@ check(() => assert.doesNotMatch(lifeTimelineSource, /amount\s*>\s*0|Number\([^)]
 check(() => assert.doesNotMatch(lifeTimelineSource, /Explorer l’analyse|Nos moments|LifeNarrative|Hero/u));
 check(() => assert.doesNotMatch(lifeTimelineSource, /TimelineFilter|eventMatchesFilters|FilterButton|timelineTools|timelineMonthNav|timelineFilters|Aller à un mois|Filtrer la timeline|Coût connu/u));
 check(() => assert.doesNotMatch(cssSource, /\.timelineTools|\.timelineMonthNav|\.timelineFilters/u));
-check(() => assert.match(lifeTimelineSource, /useState<TimelineDensityMode>\("PRINCIPAL"\)/u));
+check(() => assert.match(pageSource, /useState<TimelineDensityMode>\("PRINCIPAL"\)/u));
 check(() => assert.match(lifeTimelineSource, /timelineEventsForDensity\(model\.events, density\)/u));
 check(() => assert.match(lifeTimelineSource, /groupTimelineEvents\(displayedEvents\)/u));
-check(() => assert.match(lifeTimelineSource, /data-timeline-resource=\{model\.resource\}>[\s\S]*className=\{styles\.timelineDensity\}[\s\S]*className=\{styles\.timelineScroller\}/u));
+check(() => assert.match(pageSource, /timelineModuleHeader[\s\S]*className=\{styles\.timelineDensity\}[\s\S]*<LifeTimeline/u));
+check(() => assert.match(lifeTimelineSource, /data-timeline-resource=\{model\.resource\}>[\s\S]*className=\{styles\.timelineScroller\}/u));
 check(() => assert.match(lifeTimelineSource, /semanticClassification\.close\.label/u));
 check(() => assert.match(lifeTimelineSource, /event\.sourceKind === "MOMENT" && event\.momentDetailAvailable/u));
 check(() => assert.match(lifeTimelineSource, /expandedEventRef[\s\S]*onToggle=\{\(\) => setExpandedEventRef/u));
@@ -643,7 +644,7 @@ check(() => assert.match(cssSource, /@media \(max-width: 767px\)[\s\S]*\.timelin
 check(() => assert.match(cssSource, /\.timelineMonth > h4\s*\{[^}]*position:\s*sticky/u));
 check(() => assert.match(cssSource, /\.timelineMonth li > button:focus-visible/u));
 check(() => assert.match(cssSource, /\.timelineDensity button\[aria-pressed="true"\]/u));
-check(() => assert.match(cssSource, /\.timelineLifeEventDetails/u));
+check(() => assert.doesNotMatch(cssSource, /\.timelineLifeEventDetails/u));
 
 // D8: published background rhythms complete the timeline-first chapter without React analytics.
 const timelinePanelSource = pageSource.slice(pageSource.indexOf("function GlobalLifeTimelinePanel"), pageSource.indexOf("type SummarySlotDefinition"));

@@ -38,6 +38,7 @@ import { economicMetric, economicStructureGroups, economicStructureLabel } from 
 import { emitGlobalV2UxEvent } from "./instrumentation";
 import { GlobalModuleBoundary } from "./module-boundary";
 import { LifeTimeline, TimelineComparator } from "./life-timeline";
+import type { TimelineDensityMode } from "./life-timeline-presentation";
 import { buildHabitCoverageModel, groupRhythmMomentsByYear } from "./rhythm-collections";
 import { resolveRhythmDetailContext, rhythmDetailReturnSection, type RhythmDetailContext, type RhythmDetailOrigin } from "./rhythm-detail-routing";
 import { useGlobalV2Resource, useMobileGlobalLayout, useNearViewport } from "./use-global-resource";
@@ -1187,9 +1188,13 @@ function GlobalModulePanel({ moduleKey, runtime, certifiedThrough, eager, direct
 
 function GlobalLifeTimelinePanel({ runtime, onOverlay }: { readonly runtime: GlobalV2VisitRuntime; readonly onOverlay: (target: OverlayTarget) => void }) {
   const presentation = globalModulePresentation("RHYTHM");
+  const [density, setDensity] = useState<TimelineDensityMode>("PRINCIPAL");
   return <section id={moduleSlugs.RHYTHM} className={styles.module} data-module="RHYTHM" aria-labelledby="rythmes-title">
-    <header className={styles.moduleHeader}><div><h2 id="rythmes-title">{presentation.title}</h2><p>{presentation.description}</p></div></header>
-    <LifeTimeline runtime={runtime} onMomentDetail={(eventRef, title) => {
+    <header className={`${styles.moduleHeader} ${styles.timelineModuleHeader}`}><div><h2 id="rythmes-title">{presentation.title}</h2></div><div className={styles.timelineDensity} role="group" aria-label="Densité de la timeline">
+      <button type="button" aria-pressed={density === "PRINCIPAL"} onClick={() => setDensity("PRINCIPAL")}>Principal</button>
+      <button type="button" aria-pressed={density === "EXTENDED"} onClick={() => setDensity("EXTENDED")}>Étendu</button>
+    </div></header>
+    <LifeTimeline runtime={runtime} density={density} onDensityChange={setDensity} onMomentDetail={(eventRef, title) => {
       const target = entityOverlayTarget("RHYTHM", eventRef, title, undefined, "NARRATIVE");
       if (target === undefined) return;
       onOverlay(target);

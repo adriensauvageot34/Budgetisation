@@ -50,9 +50,9 @@ check(() => assert.doesNotMatch(comparator, /timelineRelatedPeers|Analyse indica
 check(() => assert.match(range, /onPointerEnter[\s\S]*role="tooltip"/u));
 check(() => assert.match(range, /setSelectedPeerRef[\s\S]*comparisonRangePreview/u));
 check(() => assert.match(range, /Voir dans la Timeline/u));
-check(() => assert.match(v2Card, /expenseRows\.length === 0 \? null/u));
-check(() => assert.match(v2Card, /spentDuringContext === undefined \? null/u));
-check(() => assert.match(v2Card, /analysis_global_moment_experience_detail[\s\S]*expanded && isMomentDetail/u));
+check(() => assert.match(v2Card, /expenseRows\.length > 0 \? <TimelineExpenses rows=\{expenseRows\} compact/u));
+check(() => assert.doesNotMatch(v2Card, /spentDuringContext|timelinePeriodContext/u));
+check(() => assert.match(v2Card, /analysis_global_moment_experience_detail[\s\S]*detailsNearViewport && isMomentDetail/u));
 check(() => assert.match(comparator, /TimelinePeerExpenses[\s\S]*selectedPeer/u));
 check(() => assert.match(timeline, /<ComparisonRange/u));
 check(() => assert.match(range, /Q1 ·[\s\S]*Q3 ·[\s\S]*Médiane[\s\S]*Vous/u));
