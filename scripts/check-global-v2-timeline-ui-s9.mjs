@@ -56,12 +56,13 @@ check(() => assert.deepEqual(presentation.orderedTimelineComparisonLevels(one).m
 check(() => assert.deepEqual(presentation.orderedTimelineComparisonLevels(multiple).map(({ level }) => level), ["SAME_SERIES", "SAME_CLOSE_FAMILY", "SAME_INTERMEDIATE_FAMILY"]));
 check(() => assert.equal(presentation.initialTimelineComparisonLevel(multiple), "SAME_CLOSE_FAMILY"));
 check(() => assert.equal(presentation.initialTimelineComparisonLevel(event(multiple.comparisonLevels)), "SAME_SERIES"));
-check(() => assert.equal(presentation.timelineComparisonLevelLabel(multiple, "SAME_SERIES"), "Même série · Soirées techno"));
+check(() => assert.equal(presentation.timelineComparisonLevelLabel(multiple, "SAME_SERIES"), "Soirées techno"));
 check(() => assert.equal(presentation.timelineComparisonLevelLabel(multiple, "SAME_CLOSE_FAMILY"), "Soirée techno / rave"));
 check(() => assert.equal(presentation.timelineComparisonLevelLabel(multiple, "SAME_INTERMEDIATE_FAMILY"), "Sorties festives & nocturnes"));
 check(() => assert.equal(presentation.timelineComparisonLevelLabel(multiple, "SAME_GRAND_FAMILY"), "Sorties, loisirs & culture"));
 const broadOnly = event([descriptor("SAME_GRAND_FAMILY")]);
 check(() => assert.equal(presentation.initialTimelineComparisonLevel(broadOnly), undefined));
+check(() => assert.deepEqual(presentation.orderedTimelineComparisonLevels(broadOnly), []));
 
 const closeRequest = presentation.timelineComparisonRequest(multiple.eventRef, "SAME_CLOSE_FAMILY");
 const intermediateRequest = presentation.timelineComparisonRequest(multiple.eventRef, "SAME_INTERMEDIATE_FAMILY");
@@ -97,10 +98,10 @@ const rangeSource = fs.readFileSync(path.join(root, "src/features/global-v2/comp
 const rangeModelSource = fs.readFileSync(path.join(root, "src/features/global-v2/comparison-range-model.ts"), "utf8");
 const comparatorSource = timelineSource.slice(timelineSource.indexOf("function TimelineComparator"), timelineSource.indexOf("function TimelineV2EventRow"));
 const v2CardSource = timelineSource.slice(timelineSource.indexOf("function TimelineV2EventRow"), timelineSource.indexOf("function TimelineEventRow"));
-check(() => assert.match(v2CardSource, /comparisonAvailable && comparatorOpen[\s\S]*<TimelineComparator/u));
+check(() => assert.match(v2CardSource, /comparisonAvailable \? <TimelineComparator/u));
 check(() => assert.match(comparatorSource, /role="radiogroup"[\s\S]*relatedPeerCount/u));
 check(() => assert.match(comparatorSource, /setSelectedLevel\(level\)/u));
-check(() => assert.match(comparatorSource, /timelineComparisonRequest\(event\.eventRef, fallbackLevel\)/u));
+check(() => assert.match(comparatorSource, /timelineComparisonRequest\(event\.eventRef, "SAME_SERIES"\)[\s\S]*timelineComparisonRequest\(event\.eventRef, "SAME_CLOSE_FAMILY"\)[\s\S]*timelineComparisonRequest\(event\.eventRef, "SAME_INTERMEDIATE_FAMILY"\)/u));
 check(() => assert.match(comparatorSource, /peers=\{model\.costComparablePeers\}/u));
 check(() => assert.match(comparatorSource, /statistics\.median[\s\S]*statistics\.q1[\s\S]*statistics\.q3/u));
 check(() => assert.match(comparatorSource, /<ComparisonRange/u));
@@ -109,13 +110,12 @@ check(() => assert.doesNotMatch(timelineSource, /comparisonRangePlot/u));
 check(() => assert.doesNotMatch(comparatorSource, /\.filter\(|\.reduce\(|\.sort\(|medianMoney|moneyQuartiles|MedianAbsoluteDeviation|buildTimelineSemanticComparator|computeMateriality/iu));
 check(() => assert.doesNotMatch(rangeModelSource, /\.filter\(/u));
 check(() => assert.match(rangeModelSource, /for \(const observation of input\.peers \?\? \[\]\)[\s\S]*if \(value === undefined\) return undefined/u));
-check(() => assert.match(v2CardSource, /peer\.sourceKind === "MOMENT"[\s\S]*onMomentDetail\(peer\.eventRef, peer\.canonicalName\)[\s\S]*onLifeEventPeer/u));
-check(() => assert.match(timelineSource, /peer\.visibilityTier === "EXTENDED"\) setDensity\("EXTENDED"\)[\s\S]*setLifeEventFocus/u));
-check(() => assert.match(v2CardSource, /setExpanded\(true\)[\s\S]*scrollIntoView[\s\S]*cardButtonRef\.current\?\.focus/u));
-check(() => assert.doesNotMatch(v2CardSource, /analysis_global_moment_experience_detail/u));
+check(() => assert.match(timelineSource, /focusTimelinePeer[\s\S]*peer\.visibilityTier === "EXTENDED"\) setDensity\("EXTENDED"\)[\s\S]*setExpandedEventRef\(peer\.eventRef\)/u));
+check(() => assert.match(v2CardSource, /scrollIntoView[\s\S]*cardButtonRef\.current\?\.focus/u));
+check(() => assert.match(v2CardSource, /analysis_global_moment_experience_detail[\s\S]*expanded && isMomentDetail/u));
 check(() => assert.match(v2CardSource, /event\.distinctiveComparisonLevel !== undefined/u));
 check(() => assert.match(comparatorSource, /event\.distinctiveComparisonLevel[\s\S]*timelineDistinctiveBasis/u));
-check(() => assert.match(`${timelineSource}\n${presentationSource}`, /SAME_GRAND_FAMILY/u));
+check(() => assert.doesNotMatch(presentationSource.slice(presentationSource.indexOf("const comparisonLevelOrder"), presentationSource.indexOf("const moneyFormatter")), /SAME_GRAND_FAMILY/u));
 check(() => assert.match(rangeSource, /GlobalTimelineComparisonPeerObservation|ComparisonRangePeerObservation/u));
 
 console.log(`Global V2 Timeline comparator UI S9: ${checks}/${checks} PASS`);

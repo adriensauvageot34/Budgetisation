@@ -26,6 +26,8 @@ export type ComparisonRangeModel<Peer extends ComparisonRangePeerObservation = C
   readonly mode: "Q1_Q3" | "MEDIAN_ONLY";
   readonly observed: number;
   readonly median: number;
+  readonly minimum: number;
+  readonly maximum: number;
   readonly lower?: number;
   readonly upper?: number;
   readonly supportCount?: number;
@@ -115,6 +117,8 @@ export function buildComparisonRangeModel<Peer extends ComparisonRangePeerObserv
     mode: lower === undefined || upper === undefined ? "MEDIAN_ONLY" : "Q1_Q3",
     observed,
     median,
+    minimum,
+    maximum,
     ...(lower === undefined || upper === undefined ? {} : { lower, upper }),
     ...(supportCount === undefined ? {} : { supportCount }),
     observedPosition: displayPosition(observed, minimum, maximum),

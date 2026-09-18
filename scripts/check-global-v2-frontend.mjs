@@ -453,7 +453,7 @@ check(() => assert.match(observedAboveMedian.accessibleLabel, /Cette soirée[\s\
 check(() => assert.match(comparisonRangeSource, /role="group"[\s\S]*aria-label=\{model\.accessibleLabel\}/u));
 check(() => assert.match(comparisonRangeSource, /if \(model === undefined\) return null/u));
 check(() => assert.match(comparisonRangeSource, /comparisonRangeMedianMarker[\s\S]*comparisonRangePeerMarker[\s\S]*comparisonRangeObservedMarker/u));
-check(() => assert.match(comparisonRangeSource, /aria-pressed[\s\S]*onPointerEnter[\s\S]*onFocus[\s\S]*Ouvrir ce moment/u));
+check(() => assert.match(comparisonRangeSource, /aria-pressed[\s\S]*onPointerEnter[\s\S]*onFocus[\s\S]*Voir dans la Timeline/u));
 check(() => assert.match(comparisonRangeSource, /minimumFractionDigits: 0[\s\S]*maximumFractionDigits: 2/u));
 check(() => assert.doesNotMatch(comparisonRangeSource, /boxplot|whisker|intervalle de confiance|percentile|score/iu));
 check(() => assert.match(lifeMomentDetailSource, /<TimelineComparator/u));
@@ -633,9 +633,9 @@ check(() => assert.match(lifeTimelineSource, /groupTimelineEvents\(displayedEven
 check(() => assert.match(lifeTimelineSource, /data-timeline-resource=\{model\.resource\}>[\s\S]*className=\{styles\.timelineDensity\}[\s\S]*className=\{styles\.timelineScroller\}/u));
 check(() => assert.match(lifeTimelineSource, /semanticClassification\.close\.label/u));
 check(() => assert.match(lifeTimelineSource, /event\.sourceKind === "MOMENT" && event\.momentDetailAvailable/u));
-check(() => assert.match(lifeTimelineSource, /event\.sourceKind === "LIFE_EVENT"[\s\S]*setExpanded/u));
+check(() => assert.match(lifeTimelineSource, /expandedEventRef[\s\S]*onToggle=\{\(\) => setExpandedEventRef/u));
 check(() => assert.doesNotMatch(lifeTimelineSource.slice(lifeTimelineSource.indexOf("function TimelineV2EventRow"), lifeTimelineSource.indexOf("function TimelineEventRow")), /familySource|typeKey/u));
-check(() => assert.match(lifeTimelineSource, /timelineComparisonRequest\(event\.eventRef, fallbackLevel\)/u));
+check(() => assert.match(lifeTimelineSource, /timelineComparisonRequest\(event\.eventRef, "SAME_SERIES"\)[\s\S]*timelineComparisonRequest\(event\.eventRef, "SAME_CLOSE_FAMILY"\)[\s\S]*timelineComparisonRequest\(event\.eventRef, "SAME_INTERMEDIATE_FAMILY"\)/u));
 check(() => assert.doesNotMatch(lifeTimelineSource, /medianMoney|moneyQuartiles|MedianAbsoluteDeviation|buildTimelineSemanticComparator/u));
 check(() => assert.match(lifeTimelineSource, /timeline-year-[\s\S]*timeline-month-/u));
 check(() => assert.match(cssSource, /\.timelineScroller\s*\{[^}]*height:\s*clamp\(520px, 62vh, 680px\)[^}]*scrollbar-gutter:\s*stable/u));

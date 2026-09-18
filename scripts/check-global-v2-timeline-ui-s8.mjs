@@ -79,14 +79,14 @@ check(() => assert.match(component, /useState<TimelineDensityMode>\("PRINCIPAL"\
 check(() => assert.match(component, /timelineEventsForDensity\(model\.events, density\)/u));
 check(() => assert.match(component, />Principal<\/button>[\s\S]*>Étendu<\/button>/u));
 check(() => assert.equal((component.match(/resource: "analysis_global_life_timeline"/gu) ?? []).length, 1));
-check(() => assert.match(source, /timelineComparisonRequest\(event\.eventRef, fallbackLevel\)/u));
+check(() => assert.match(source, /timelineComparisonRequest\(event\.eventRef, "SAME_CLOSE_FAMILY"\)/u));
 check(() => assert.match(v2Card, /semanticClassification\.close\.label/u));
 check(() => assert.match(v2Card, /semanticClassification\.intermediate\.label[\s\S]*semanticClassification\.grand\.label|semanticClassification\.grand\.label[\s\S]*semanticClassification\.intermediate\.label/u));
 check(() => assert.doesNotMatch(v2Card, /familySource|typeKey/u));
 check(() => assert.match(v2Card, /event\.sourceKind === "MOMENT" && event\.momentDetailAvailable/u));
-check(() => assert.match(v2Card, /event\.sourceKind === "LIFE_EVENT"/u));
-check(() => assert.match(v2Card, /isMomentDetail[\s\S]*onMomentDetail\(event\.eventRef, event\.canonicalName\)[\s\S]*isLifeEvent[\s\S]*setExpanded/u));
-check(() => assert.match(v2Card, /comparisonAvailable \? <small[\s\S]*Comparaison disponible/u));
+check(() => assert.match(v2Card, /aria-expanded=\{expanded\}[\s\S]*onClick=\{onToggle\}/u));
+check(() => assert.match(v2Card, /isMomentDetail[\s\S]*onMomentDetail\(event\.eventRef, event\.canonicalName\)[\s\S]*Voir le détail complet/u));
+check(() => assert.match(v2Card, /comparisonAvailable \? <TimelineComparator/u));
 check(() => assert.doesNotMatch(`${v2Card}\n${component}\n${presentationSource}`, /median|quartile|\bq1\b|\bq3\b|\bmad\b|peerObservations|materiality\s*[=!<>]|\.sort\(|\.reduce\(/iu));
 check(() => assert.match(source, /semanticCloseIcons[\s\S]*semanticIntermediateIcons/u));
 check(() => assert.match(css, /\.timelineDensity button\[aria-pressed="true"\]/u));
