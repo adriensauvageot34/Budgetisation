@@ -417,14 +417,30 @@
 .activationPending { display: grid; max-width: 700px; justify-items: start; gap: 14px; margin: 11vh auto; border: 1px solid var(--color-border); border-radius: 18px; padding: clamp(24px, 5vw, 48px); background: white; box-shadow: var(--shadow-md); }
 .activationPending p { color: var(--color-muted); line-height: 1.6; }
 .timelineModuleHeader { align-items: center; flex-wrap: wrap; }
-.timelineModuleHeader > div:first-child { min-width: 0; }
-.timelineModuleHeader .timelineDensity { flex: 0 0 auto; margin-left: auto; }
+.timelineTitleRow { display: flex; min-width: 0; flex-wrap: wrap; align-items: center; gap: 12px 16px; }
+.timelineTitleRow h2 { margin: 4px 0 0; }
+.timelineFocusControl { display: inline-flex; flex: 0 0 auto; align-items: center; gap: 7px; margin-top: 4px; border: 0; border-radius: 6px; padding: 4px 3px; background: transparent; color: var(--color-primary-deep); font: inherit; cursor: pointer; }
+.timelineFocusControl:hover { color: var(--color-primary); }
+.timelineFocusControl:focus-visible { outline: 2px solid var(--color-primary); outline-offset: 3px; }
+.timelineFocusFrame { position: relative; display: inline-block; width: 26px; height: 20px; }
+.timelineFocusFrame i { position: absolute; width: 7px; height: 7px; transition: inset 250ms cubic-bezier(.22, 1, .36, 1), transform 250ms cubic-bezier(.22, 1, .36, 1); }
+.timelineFocusFrame i:nth-child(1) { top: 4px; left: 4px; border-top: 1.5px solid currentcolor; border-left: 1.5px solid currentcolor; }
+.timelineFocusFrame i:nth-child(2) { top: 4px; right: 4px; border-top: 1.5px solid currentcolor; border-right: 1.5px solid currentcolor; }
+.timelineFocusFrame i:nth-child(3) { right: 4px; bottom: 4px; border-right: 1.5px solid currentcolor; border-bottom: 1.5px solid currentcolor; }
+.timelineFocusFrame i:nth-child(4) { bottom: 4px; left: 4px; border-bottom: 1.5px solid currentcolor; border-left: 1.5px solid currentcolor; }
+.timelineFocusControl[data-expanded="true"] .timelineFocusFrame i:nth-child(1) { top: 0; left: 0; }
+.timelineFocusControl[data-expanded="true"] .timelineFocusFrame i:nth-child(2) { top: 0; right: 0; }
+.timelineFocusControl[data-expanded="true"] .timelineFocusFrame i:nth-child(3) { right: 0; bottom: 0; }
+.timelineFocusControl[data-expanded="true"] .timelineFocusFrame i:nth-child(4) { bottom: 0; left: 0; }
+.timelineFocusLabels { position: relative; display: inline-grid; width: 68px; height: 18px; align-items: center; }
+.timelineFocusLabels > span { grid-area: 1 / 1; opacity: 0; font-size: 12px; font-weight: 780; line-height: 1; transform: translateY(4px); transition: opacity 180ms ease, transform 250ms cubic-bezier(.22, 1, .36, 1); }
+.timelineFocusLabels > span[data-active="true"] { opacity: 1; transform: translateY(0); }
+.timelineFocusLabels .timelineFocusRecenter { font-size: 11px; font-weight: 700; }
+.timelineFocusControl[data-invitation="true"] .timelineFocusLabels > span[data-active="true"] { animation: timelineFocusLabelInvite 420ms ease-out both; }
+.timelineFocusControl[data-invitation="true"] .timelineFocusFrame { animation: timelineFocusFrameInvite 420ms ease-out both; }
+@keyframes timelineFocusLabelInvite { 50% { transform: scale(1.05); } }
+@keyframes timelineFocusFrameInvite { 50% { transform: scale(1.12); } }
 .timelineExperience { display: grid; gap: 0; background: var(--color-surface); }
-.timelineDensity { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
-.timelineDensity button { border: 1px solid var(--color-border); border-radius: 999px; padding: 8px 13px; background: var(--color-surface); color: var(--color-muted); font: inherit; font-size: 12px; font-weight: 780; cursor: pointer; }
-.timelineDensity button[aria-pressed="true"] { border-color: var(--color-primary); background: var(--color-primary-soft); color: var(--color-primary-deep); }
-.timelineDensity button:hover, .timelineDensity button:focus-visible { border-color: var(--color-primary); color: var(--color-primary-deep); }
-.timelineDensity button:focus-visible { outline: 2px solid var(--color-primary); outline-offset: 2px; }
 .timelineScroller { height: clamp(520px, 62vh, 680px); overflow-y: auto; border-block: 1px solid var(--color-border); background: linear-gradient(90deg, rgb(46 83 69 / .025), transparent 112px), var(--color-surface); scrollbar-color: rgb(46 83 69 / .24) transparent; scrollbar-gutter: stable; overscroll-behavior: contain; scroll-behavior: smooth; }
 .timelineScroller:focus-visible { border-radius: 4px; outline: 2px solid var(--color-primary); outline-offset: 3px; }
 .timelineYear { display: grid; grid-template-columns: 76px minmax(0, 1fr); align-items: start; gap: 20px; }

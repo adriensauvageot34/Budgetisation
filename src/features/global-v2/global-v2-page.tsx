@@ -1189,11 +1189,62 @@ function GlobalModulePanel({ moduleKey, runtime, certifiedThrough, eager, direct
 function GlobalLifeTimelinePanel({ runtime, onOverlay }: { readonly runtime: GlobalV2VisitRuntime; readonly onOverlay: (target: OverlayTarget) => void }) {
   const presentation = globalModulePresentation("RHYTHM");
   const [density, setDensity] = useState<TimelineDensityMode>("PRINCIPAL");
+  const [focusInvitation, setFocusInvitation] = useState(false);
+  const focusControlRef = useRef<HTMLButtonElement>(null);
+  const focusInvitationPlayed = useRef(false);
+  useEffect(() => {
+    const control = focusControlRef.current;
+    if (control === null || density !== "PRINCIPAL" || focusInvitationPlayed.current || window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    let visible = false;
+    let hasScrolled = false;
+    let invitationTimer: number | undefined;
+    let resetTimer: number | undefined;
+    const invite = () => {
+      if (!visible || !hasScrolled || focusInvitationPlayed.current) return;
+      focusInvitationPlayed.current = true;
+      invitationTimer = window.setTimeout(() => {
+        setFocusInvitation(true);
+        resetTimer = window.setTimeout(() => setFocusInvitation(false), 420);
+      }, 120);
+    };
+    const observer = new IntersectionObserver(([entry]) => {
+      visible = entry?.isIntersecting === true && entry.intersectionRatio >= .75;
+      invite();
+    }, { threshold: [.75] });
+    const handleScroll = (event: Event) => {
+      const target = event.target;
+      const scrollDepth = target instanceof HTMLElement ? target.scrollTop : window.scrollY;
+      if (scrollDepth < 48) return;
+      hasScrolled = true;
+      invite();
+    };
+    observer.observe(control);
+    window.addEventListener("scroll", handleScroll, { capture: true, passive: true });
+    return () => {
+      observer.disconnect();
+      window.removeEventListener("scroll", handleScroll, true);
+      if (invitationTimer !== undefined) window.clearTimeout(invitationTimer);
+      if (resetTimer !== undefined) window.clearTimeout(resetTimer);
+    };
+  }, [density]);
+  const expanded = density === "EXTENDED";
   return <section id={moduleSlugs.RHYTHM} className={styles.module} data-module="RHYTHM" aria-labelledby="rythmes-title">
-    <header className={`${styles.moduleHeader} ${styles.timelineModuleHeader}`}><div><h2 id="rythmes-title">{presentation.title}</h2></div><div className={styles.timelineDensity} role="group" aria-label="Densité de la timeline">
-      <button type="button" aria-pressed={density === "PRINCIPAL"} onClick={() => setDensity("PRINCIPAL")}>Principal</button>
-      <button type="button" aria-pressed={density === "EXTENDED"} onClick={() => setDensity("EXTENDED")}>Étendu</button>
-    </div></header>
+    <header className={`${styles.moduleHeader} ${styles.timelineModuleHeader}`}><div className={styles.timelineTitleRow}><h2 id="rythmes-title">{presentation.title}</h2><button
+      ref={focusControlRef}
+      type="button"
+      className={styles.timelineFocusControl}
+      data-expanded={expanded}
+      data-invitation={focusInvitation}
+      aria-pressed={expanded}
+      aria-label={expanded ? "Recentrer la timeline sur les événements principaux" : "Élargir la timeline aux événements étendus"}
+      onClick={() => { setFocusInvitation(false); setDensity(expanded ? "PRINCIPAL" : "EXTENDED"); }}
+    >
+      <span className={styles.timelineFocusFrame} aria-hidden><i /><i /><i /><i /></span>
+      <span className={styles.timelineFocusLabels} aria-hidden>
+        <span data-active={!expanded}>Élargir</span>
+        <span className={styles.timelineFocusRecenter} data-active={expanded}>Recentrer</span>
+      </span>
+    </button></div></header>
     <LifeTimeline runtime={runtime} density={density} onDensityChange={setDensity} onMomentDetail={(eventRef, title) => {
       const target = entityOverlayTarget("RHYTHM", eventRef, title, undefined, "NARRATIVE");
       if (target === undefined) return;
