@@ -426,19 +426,19 @@
 .timelineModuleHeader { align-items: center; flex-wrap: wrap; }
 .timelineModuleHeader > div:first-child { min-width: 0; }
 .timelineModuleHeader .timelineDensity { flex: 0 0 auto; margin-left: auto; }
-.timelineExperience { display: grid; gap: 0; }
+.timelineExperience { display: grid; gap: 0; background: var(--color-surface); }
 .timelineDensity { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
 .timelineDensity button { border: 1px solid var(--color-border); border-radius: 999px; padding: 8px 13px; background: var(--color-surface); color: var(--color-muted); font: inherit; font-size: 12px; font-weight: 780; cursor: pointer; }
 .timelineDensity button[aria-pressed="true"] { border-color: var(--color-primary); background: var(--color-primary-soft); color: var(--color-primary-deep); }
 .timelineDensity button:hover, .timelineDensity button:focus-visible { border-color: var(--color-primary); color: var(--color-primary-deep); }
 .timelineDensity button:focus-visible { outline: 2px solid var(--color-primary); outline-offset: 2px; }
-.timelineScroller { height: clamp(520px, 62vh, 680px); overflow-y: auto; border-block: 1px solid var(--color-border); background: var(--color-surface); scrollbar-gutter: stable; overscroll-behavior: contain; scroll-behavior: smooth; }
+.timelineScroller { height: clamp(520px, 62vh, 680px); overflow-y: auto; border-block: 1px solid var(--color-border); background: linear-gradient(90deg, rgb(46 83 69 / .025), transparent 112px), var(--color-surface); scrollbar-color: rgb(46 83 69 / .24) transparent; scrollbar-gutter: stable; overscroll-behavior: contain; scroll-behavior: smooth; }
 .timelineScroller:focus-visible { border-radius: 4px; outline: 2px solid var(--color-primary); outline-offset: 3px; }
 .timelineYear { display: grid; grid-template-columns: 76px minmax(0, 1fr); align-items: start; gap: 20px; }
 .timelineYear + .timelineYear { border-top: 1px solid var(--color-border); }
-.timelineYear > h3 { position: sticky; top: 10px; box-sizing: border-box; margin: 22px 0; padding-left: 10px; color: var(--color-primary-deep); font-size: 23px; letter-spacing: -.025em; }
+.timelineYear > h3 { position: sticky; top: 10px; box-sizing: border-box; margin: 22px 0; padding-left: 10px; color: var(--color-primary-deep); font-size: 23px; font-variant-numeric: tabular-nums; letter-spacing: -.025em; }
 .timelineMonth { scroll-margin-top: 42px; }
-.timelineMonth > h4 { position: sticky; z-index: 3; top: 0; margin: 0; border-bottom: 1px solid var(--color-border); padding: 10px 4px 8px; background: rgb(255 255 255 / .96); color: var(--color-muted); font-size: 12px; font-weight: 850; letter-spacing: .08em; text-transform: capitalize; backdrop-filter: blur(8px); }
+.timelineMonth > h4 { position: sticky; z-index: 3; top: 0; margin: 0; border-bottom: 1px solid var(--color-border); padding: 11px 4px 9px; background: rgb(255 255 255 / .94); color: var(--color-muted); font-size: 12px; font-weight: 850; letter-spacing: .08em; text-transform: capitalize; backdrop-filter: blur(10px); }
 .timelineMonth ol { margin: 0; padding: 0; list-style: none; }
 .timelineMonth li { position: relative; }
 .timelineMonth li::before { position: absolute; z-index: 0; top: 0; bottom: 0; left: 53px; width: 1px; background: var(--color-border); content: ""; }
@@ -449,7 +449,8 @@
 .timelineMonth li[data-expanded="true"] > button { border-bottom-color: rgb(46 83 69 / .2); background: var(--color-surface-soft); box-shadow: inset 3px 0 0 rgb(46 83 69 / .18); }
 .timelineMonth li > button:focus-visible { outline: 2px solid var(--color-primary); outline-offset: -2px; }
 .timelineDay { align-self: start; padding-top: 4px; color: var(--color-muted); font-size: 12px; font-weight: 780; text-align: right; }
-.timelineMarker { display: inline-flex; align-items: center; justify-content: center; width: 28px; height: 28px; border: 1px solid var(--color-border); border-radius: 50%; background: var(--color-surface); color: var(--color-primary-deep); }
+.timelineMarker { display: inline-flex; align-items: center; justify-content: center; width: 28px; height: 28px; border: 1px solid var(--color-border); border-radius: 50%; background: var(--color-surface); color: var(--color-primary-deep); box-shadow: 0 1px 0 rgb(46 83 69 / .05); transition: border-color 220ms ease, background-color 220ms ease, transform 220ms ease; }
+.timelineMonth li > button:hover .timelineMarker, .timelineMonth li > button:focus-visible .timelineMarker, .timelineMonth li[data-expanded="true"] .timelineMarker { border-color: rgb(46 83 69 / .28); background: var(--color-primary-soft); transform: scale(1.04); }
 .timelineEventBody { display: grid; min-width: 0; gap: 4px; }
 .timelineEventHeading { display: flex; flex-wrap: wrap; align-items: center; gap: 7px; }
 .timelineEventHeading strong { overflow-wrap: anywhere; font-size: 16px; line-height: 1.35; }
@@ -484,6 +485,25 @@
 .timelineComparatorStatus button { border: 0; padding: 0; background: transparent; color: var(--color-primary-deep); font: inherit; font-weight: 800; cursor: pointer; }
 .timelineComparatorResult { display: grid; gap: 9px; min-width: 0; }
 .timelineComparatorSupport { font-weight: 720; }
+.timelineVisuallyHidden { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+.timelineLoading { display: grid; grid-template-columns: 76px minmax(0, 1fr); min-height: clamp(520px, 62vh, 680px); border-block: 1px solid var(--color-border); background: linear-gradient(90deg, rgb(46 83 69 / .025), transparent 112px), var(--color-surface); }
+.timelineLoadingYear { width: 48px; height: 24px; margin: 24px 10px; border-radius: 7px; background: var(--color-primary-soft); }
+.timelineLoadingRows { display: grid; align-content: start; }
+.timelineLoadingRow { display: grid; grid-template-columns: 34px 28px minmax(0, 1fr) minmax(190px, 280px); align-items: center; min-height: 82px; gap: 8px; border-bottom: 1px solid var(--color-border); padding: 12px 4px; }
+.timelineLoadingRow > i { grid-column: 1; width: 17px; height: 10px; justify-self: end; border-radius: 999px; background: rgb(46 83 69 / .09); }
+.timelineLoadingRow::before { grid-column: 2; width: 28px; height: 28px; border-radius: 50%; background: rgb(46 83 69 / .08); content: ""; }
+.timelineLoadingRow > span { display: grid; grid-column: 3; gap: 8px; }
+.timelineLoadingRow b, .timelineLoadingRow small, .timelineLoadingRow > em, .timelineComparatorLoadingTrack, .timelineComparatorLoadingLegend i { display: block; border-radius: 999px; background: linear-gradient(100deg, rgb(46 83 69 / .07) 20%, rgb(255 255 255 / .78) 40%, rgb(46 83 69 / .07) 60%); background-size: 200% 100%; animation: timelineShimmer 1.35s ease-in-out infinite; }
+.timelineLoadingRow b { width: 54%; height: 13px; }
+.timelineLoadingRow[data-width="short"] b { width: 36%; }
+.timelineLoadingRow[data-width="long"] b { width: 72%; }
+.timelineLoadingRow small { width: 32%; height: 9px; }
+.timelineLoadingRow > em { grid-column: 4; width: 76%; height: 34px; justify-self: end; }
+.timelineComparatorLoading { display: grid; min-height: 152px; align-content: center; gap: 22px; padding: 8px 4px; }
+.timelineComparatorLoadingTrack { width: 100%; height: 8px; }
+.timelineComparatorLoadingLegend { display: flex; gap: 18px; }
+.timelineComparatorLoadingLegend i { width: 92px; height: 10px; }
+@keyframes timelineShimmer { to { background-position: -200% 0; } }
 .timelineDistinctive { border-left: 3px solid var(--color-primary-deep); }
 .timelineDistinctive::before { left: 50px !important; }
 .timelineStatus, .timelineEmpty { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 120px; border-block: 1px solid var(--color-border); padding: 18px; color: var(--color-muted); }
@@ -588,6 +608,14 @@
   .timelineChevron { grid-column: 4; grid-row: 1; }
   .timelineMonth li::before { left: 43px; }
   .timelineDistinctive::before { left: 40px !important; }
+  .timelineLoading { grid-template-columns: 1fr; min-height: 64dvh; }
+  .timelineLoadingYear { margin: 18px 4px 6px; }
+  .timelineLoadingRows { grid-column: 1; }
+  .timelineLoadingRow { grid-template-columns: 28px 28px minmax(0, 1fr); padding-left: 24px; }
+  .timelineLoadingRow > i { grid-column: 1; }
+  .timelineLoadingRow::before { grid-column: 2; }
+  .timelineLoadingRow > span { grid-column: 3; }
+  .timelineLoadingRow > em { display: none; }
   .timelineExpenseList { grid-template-columns: 1fr; }
   .timelineComparator { margin-left: 56px; }
 }

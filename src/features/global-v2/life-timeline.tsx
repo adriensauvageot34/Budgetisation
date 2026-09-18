@@ -253,6 +253,28 @@ function TimelineExpenses({ rows, compact = false }: { readonly rows: readonly G
   </span>;
 }
 
+function TimelineLoadingSkeleton() {
+  return <div className={styles.timelineLoading} role="status" aria-busy="true">
+    <span className={styles.timelineVisuallyHidden}>Chargement de la timeline…</span>
+    <span className={styles.timelineLoadingYear} aria-hidden />
+    <div className={styles.timelineLoadingRows} aria-hidden>
+      {["short", "long", "medium", "long"].map((width, index) => <span key={`${width}-${index}`} className={styles.timelineLoadingRow} data-width={width}>
+        <i />
+        <span><b /><small /></span>
+        <em />
+      </span>)}
+    </div>
+  </div>;
+}
+
+function TimelineComparatorLoading() {
+  return <div className={styles.timelineComparatorLoading} role="status" aria-busy="true">
+    <span className={styles.timelineVisuallyHidden}>Chargement de la comparaison…</span>
+    <span className={styles.timelineComparatorLoadingTrack} aria-hidden />
+    <span className={styles.timelineComparatorLoadingLegend} aria-hidden><i /><i /></span>
+  </div>;
+}
+
 function TimelinePeerExpenses({ peer, runtime }: { readonly peer: GlobalTimelineComparisonPeerObservation; readonly runtime: GlobalV2VisitRuntime }) {
   const request = useMemo(() => ({ resource: "analysis_global_moment_experience_detail" as const, params: { entityRef: peer.eventRef } }), [peer.eventRef]);
   const result = useGlobalV2Resource<GlobalExpandedReadModel>(runtime, request, peer.sourceKind === "MOMENT", "DIRECT");
@@ -308,7 +330,7 @@ export function TimelineComparator({ event, runtime, onOpenPeer }: {
     </div>
     {distinctiveLabel === undefined ? null : <p className={styles.timelineDistinctiveBasis}>Se distingue sur la base « {distinctiveLabel} ».</p>}
     {(result.state.status === "IDLE" || result.state.status === "LOADING") && model === undefined
-      ? <p className={styles.timelineComparatorStatus} role="status" aria-busy="true">Chargement de la comparaison…</p>
+      ? <TimelineComparatorLoading />
       : result.state.status === "ERROR" && model === undefined
         ? <p className={styles.timelineComparatorStatus} role="alert">La comparaison n’a pas pu être chargée. <button type="button" onClick={result.retry}>Réessayer</button></p>
         : model === undefined ? null : <div className={styles.timelineComparatorResult} data-comparison-level={model.comparison.level}>
@@ -456,7 +478,7 @@ export function LifeTimeline({ runtime, density, onDensityChange, onMomentDetail
     if (model.events.find(({ eventRef }) => eventRef === expandedEventRef)?.visibilityTier === "EXTENDED") setExpandedEventRef(undefined);
   }, [density, expandedEventRef, model]);
 
-  if ((result.state.status === "IDLE" || result.state.status === "LOADING") && model === undefined) return <div className={styles.timelineStatus} role="status" aria-busy="true">Chargement de la timeline…</div>;
+  if ((result.state.status === "IDLE" || result.state.status === "LOADING") && model === undefined) return <TimelineLoadingSkeleton />;
   if (result.state.status === "ERROR" && model === undefined) return <div className={styles.timelineStatus} role="alert"><strong>La timeline n’a pas pu être chargée.</strong><button type="button" onClick={result.retry}>Réessayer</button></div>;
   if (model === undefined) return null;
 
