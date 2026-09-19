@@ -20,6 +20,7 @@
     "check:global-v2-timeline-ui-s9-3": "node --experimental-strip-types scripts/check-global-v2-timeline-ui-s9-3.mjs",
     "check:global-v2-timeline-ui-s9-4": "node --experimental-strip-types scripts/check-global-v2-timeline-ui-s9-4.mjs",
     "check:global-v2-timeline-ui-s9-5": "node --experimental-strip-types scripts/check-global-v2-timeline-ui-s9-5.mjs",
+    "check:global-v2-timeline-ui-s9-6": "node --experimental-strip-types scripts/check-global-v2-timeline-ui-s9-6.mjs",
     "check:global-v2-timeline-product-alignment": "node --experimental-strip-types scripts/check-global-v2-timeline-product-alignment.mjs",
     "check:global-v2-economic-function": "node --experimental-strip-types scripts/check-global-v2-economic-function.mjs",
     "check:m1-1r-shared-foundations": "node scripts/check-m1-1r-shared-foundations.mjs",

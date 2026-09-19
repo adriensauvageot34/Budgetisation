@@ -264,7 +264,9 @@ check(() => assert.match(pageSource, /Aucune différence nette à mettre en avan
 check(() => assert.match(pageSource, /Ce que les données vous voient explicitement faire ensemble/u));
 check(() => assert.doesNotMatch(pageSource, /toujours ensemble/iu));
 check(() => assert.match(pageSource, /Voir le détail/u));
-check(() => assert.doesNotMatch(pageSource, />Développer<|data-expanded=|aria-expanded=/u));
+check(() => assert.doesNotMatch(pageSource, />Développer<|aria-expanded=/u));
+check(() => assert.equal((pageSource.match(/data-expanded=\{expanded\}/gu) ?? []).length, 1));
+check(() => assert.match(pageSource, /timelineFocusControl[\s\S]*data-expanded=\{expanded\}/u));
 check(() => assert.match(pageSource, /MODULE_DETAIL[\s\S]*OverlayFrame/u));
 check(() => assert.match(pageSource, /Analyse partielle/u));
 check(() => assert.doesNotMatch(pageSource, /global\.placeholder\.unknown_required_value/u));
@@ -630,11 +632,11 @@ check(() => assert.doesNotMatch(cssSource, /\.timelineTools|\.timelineMonthNav|\
 check(() => assert.match(pageSource, /useState<TimelineDensityMode>\("PRINCIPAL"\)/u));
 check(() => assert.match(lifeTimelineSource, /timelineEventsForDensity\(model\.events, density\)/u));
 check(() => assert.match(lifeTimelineSource, /groupTimelineEvents\(displayedEvents\)/u));
-check(() => assert.match(pageSource, /timelineModuleHeader[\s\S]*className=\{styles\.timelineDensity\}[\s\S]*<LifeTimeline/u));
+check(() => assert.match(pageSource, /timelineModuleHeader[\s\S]*className=\{styles\.timelineFocusControl\}[\s\S]*Élargir[\s\S]*Recentrer[\s\S]*<LifeTimeline/u));
 check(() => assert.match(lifeTimelineSource, /data-timeline-resource=\{model\.resource\}>[\s\S]*className=\{styles\.timelineScroller\}/u));
 check(() => assert.match(lifeTimelineSource, /semanticClassification\.close\.label/u));
 check(() => assert.match(lifeTimelineSource, /event\.sourceKind === "MOMENT" && event\.momentDetailAvailable/u));
-check(() => assert.match(lifeTimelineSource, /expandedEventRef[\s\S]*onToggle=\{\(\) => setExpandedEventRef/u));
+check(() => assert.match(lifeTimelineSource, /expandedEventRef[\s\S]*onToggle=\{\(\) => \{[\s\S]*setExpandedEventRef\(nextRef\)[\s\S]*setFocusedEventRef\(nextRef\)/u));
 check(() => assert.doesNotMatch(lifeTimelineSource.slice(lifeTimelineSource.indexOf("function TimelineV2EventRow"), lifeTimelineSource.indexOf("function TimelineEventRow")), /familySource|typeKey/u));
 check(() => assert.match(lifeTimelineSource, /timelineComparisonRequest\(event\.eventRef, "SAME_SERIES"\)[\s\S]*timelineComparisonRequest\(event\.eventRef, "SAME_CLOSE_FAMILY"\)[\s\S]*timelineComparisonRequest\(event\.eventRef, "SAME_INTERMEDIATE_FAMILY"\)/u));
 check(() => assert.doesNotMatch(lifeTimelineSource, /medianMoney|moneyQuartiles|MedianAbsoluteDeviation|buildTimelineSemanticComparator/u));
@@ -643,7 +645,7 @@ check(() => assert.match(cssSource, /\.timelineScroller\s*\{[^}]*height:\s*clamp
 check(() => assert.match(cssSource, /@media \(max-width: 767px\)[\s\S]*\.timelineScroller\s*\{[^}]*height:\s*64dvh/u));
 check(() => assert.match(cssSource, /\.timelineMonth > h4\s*\{[^}]*position:\s*sticky/u));
 check(() => assert.match(cssSource, /\.timelineMonth li > button:focus-visible/u));
-check(() => assert.match(cssSource, /\.timelineDensity button\[aria-pressed="true"\]/u));
+check(() => assert.match(cssSource, /\.timelineFocusControl\[data-expanded="true"\] \.timelineFocusFrame/u));
 check(() => assert.doesNotMatch(cssSource, /\.timelineLifeEventDetails/u));
 
 // D8: published background rhythms complete the timeline-first chapter without React analytics.

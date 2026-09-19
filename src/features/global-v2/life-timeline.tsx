@@ -353,11 +353,13 @@ export function TimelineComparator({ event, runtime, onOpenPeer }: {
   </section>;
 }
 
-function TimelineV2EventRow({ event, runtime, focusRequest, expanded, onToggle, onTimelinePeer }: {
+function TimelineV2EventRow({ event, runtime, focusRequest, expanded, focused, focusMode, onToggle, onTimelinePeer }: {
   readonly event: GlobalTimelineV2Event;
   readonly runtime: GlobalV2VisitRuntime;
   readonly focusRequest: TimelineEventFocusRequest | undefined;
   readonly expanded: boolean;
+  readonly focused: boolean;
+  readonly focusMode: boolean;
   readonly onToggle: () => void;
   readonly onTimelinePeer: (peer: GlobalTimelineComparisonEventObservation) => void;
 }) {
@@ -402,6 +404,21 @@ function TimelineV2EventRow({ event, runtime, focusRequest, expanded, onToggle, 
     });
     return () => window.cancelAnimationFrame(frame);
   }, [event.eventRef, focusRequest]);
+  useEffect(() => {
+    if (!focused || !canExpand) return;
+    const timer = window.setTimeout(() => {
+      const element = rowRef.current;
+      const scroller = element?.closest<HTMLElement>(`.${styles.timelineScroller}`);
+      if (element === null || element === undefined || scroller === null || scroller === undefined) return;
+      const rowBounds = element.getBoundingClientRect();
+      const scrollerBounds = scroller.getBoundingClientRect();
+      const comfortableTop = scrollerBounds.top + 18;
+      const comfortableBottom = scrollerBounds.bottom - 18;
+      if (rowBounds.top >= comfortableTop && rowBounds.bottom <= comfortableBottom) return;
+      element.scrollIntoView({ behavior: "smooth", block: rowBounds.height > comfortableBottom - comfortableTop ? "start" : "nearest" });
+    }, 160);
+    return () => window.clearTimeout(timer);
+  }, [canExpand, focused]);
   const content = <>
     <time className={styles.timelineDay} dateTime={event.startDate}>{dayFormatter.format(timelineDate(event.startDate))}</time>
     <span className={styles.timelineMarker} aria-hidden><Icon size={16} aria-hidden /></span>
@@ -424,6 +441,8 @@ function TimelineV2EventRow({ event, runtime, focusRequest, expanded, onToggle, 
     data-visibility-tier={event.visibilityTier}
     data-has-expenses={expenseRows.length > 0}
     data-expanded={canExpand && expanded}
+    data-timeline-focused={canExpand && focused}
+    data-timeline-dimmed={focusMode && !focused}
   >
     {canExpand
       ? <button ref={cardButtonRef} type="button" data-global-entity-ref={event.eventRef} aria-label={`${expanded ? "Refermer" : "Explorer"} ${event.canonicalName}`} aria-expanded={expanded} aria-controls={detailsId} onClick={onToggle}>{content}</button>
@@ -434,22 +453,25 @@ function TimelineV2EventRow({ event, runtime, focusRequest, expanded, onToggle, 
   </li>;
 }
 
-function TimelineEventRow({ event, runtime, focusRequest, expanded, onToggle, onMomentDetail, onTimelinePeer }: {
+function TimelineEventRow({ event, runtime, focusRequest, expanded, focused, focusMode, onToggle, onMomentDetail, onTimelinePeer }: {
   readonly event: TimelineTransportEvent;
   readonly runtime: GlobalV2VisitRuntime;
   readonly focusRequest: TimelineEventFocusRequest | undefined;
   readonly expanded: boolean;
+  readonly focused: boolean;
+  readonly focusMode: boolean;
   readonly onToggle: () => void;
   readonly onMomentDetail: (eventRef: string, title: string) => void;
   readonly onTimelinePeer: (peer: GlobalTimelineComparisonEventObservation) => void;
 }) {
   return "eventCost" in event
-    ? <TimelineV2EventRow event={event} runtime={runtime} focusRequest={focusRequest} expanded={expanded} onToggle={onToggle} onTimelinePeer={onTimelinePeer} />
+    ? <TimelineV2EventRow event={event} runtime={runtime} focusRequest={focusRequest} expanded={expanded} focused={focused} focusMode={focusMode} onToggle={onToggle} onTimelinePeer={onTimelinePeer} />
     : <LegacyTimelineEventRow event={event} onMomentDetail={onMomentDetail} />;
 }
 
 export function LifeTimeline({ runtime, density, onDensityChange, onMomentDetail }: { readonly runtime: GlobalV2VisitRuntime; readonly density: TimelineDensityMode; readonly onDensityChange: (density: TimelineDensityMode) => void; readonly onMomentDetail: (eventRef: string, title: string) => void }) {
   const [expandedEventRef, setExpandedEventRef] = useState<GlobalTimelineV2Event["eventRef"] | undefined>(undefined);
+  const [focusedEventRef, setFocusedEventRef] = useState<GlobalTimelineV2Event["eventRef"] | undefined>(undefined);
   const [eventFocus, setEventFocus] = useState<TimelineEventFocusRequest | undefined>(undefined);
   const request = useMemo(() => ({ resource: "analysis_global_life_timeline" as const, params: {} }), []);
   const result = useGlobalV2Resource<TimelineTransportReadModel>(runtime, request, true, "DIRECT");
@@ -467,6 +489,7 @@ export function LifeTimeline({ runtime, density, onDensityChange, onMomentDetail
       if (typeof detail?.eventRef !== "string" || !detail.eventRef.startsWith("life-event:")) return;
       if (detail.visibilityTier === "EXTENDED") onDensityChange("EXTENDED");
       const eventRef = detail.eventRef as GlobalTimelineV2Event["eventRef"];
+      setFocusedEventRef(undefined);
       setExpandedEventRef(eventRef);
       setEventFocus((current) => ({ eventRef, requestId: (current?.requestId ?? 0) + 1 }));
     };
@@ -475,7 +498,9 @@ export function LifeTimeline({ runtime, density, onDensityChange, onMomentDetail
   }, [onDensityChange]);
   useEffect(() => {
     if (density !== "PRINCIPAL" || model?.schemaVersion !== "global-life-timeline@v2") return;
-    if (model.events.find(({ eventRef }) => eventRef === expandedEventRef)?.visibilityTier === "EXTENDED") setExpandedEventRef(undefined);
+    if (model.events.find(({ eventRef }) => eventRef === expandedEventRef)?.visibilityTier !== "EXTENDED") return;
+    setExpandedEventRef(undefined);
+    setFocusedEventRef(undefined);
   }, [density, expandedEventRef, model]);
 
   if ((result.state.status === "IDLE" || result.state.status === "LOADING") && model === undefined) return <TimelineLoadingSkeleton />;
@@ -484,19 +509,27 @@ export function LifeTimeline({ runtime, density, onDensityChange, onMomentDetail
 
   const focusTimelinePeer = (peer: GlobalTimelineComparisonEventObservation) => {
     if (peer.visibilityTier === "EXTENDED") onDensityChange("EXTENDED");
+    setFocusedEventRef(undefined);
     setExpandedEventRef(peer.eventRef);
     setEventFocus((current) => ({ eventRef: peer.eventRef, requestId: (current?.requestId ?? 0) + 1 }));
   };
 
   return <div className={styles.timelineExperience} data-timeline-resource={model.resource}>
-    <div className={styles.timelineScroller} tabIndex={0} aria-label="Timeline de notre vie, du plus ancien au plus récent">
-      {years.length === 0 ? <p className={styles.timelineEmpty}>Aucun événement n’est disponible.</p> : years.map((year) => <section key={year.key} className={styles.timelineYear} aria-labelledby={`timeline-year-${year.key}`}>
-        <h3 id={`timeline-year-${year.key}`}>{year.key}</h3>
-        <div>{year.months.map((month) => <section key={month.key} className={styles.timelineMonth} aria-labelledby={`timeline-month-${month.key}`}>
-          <h4 id={`timeline-month-${month.key}`} data-timeline-month={month.key}>{month.label}</h4>
-          <ol>{month.events.map((event) => <TimelineEventRow key={event.eventRef} event={event} runtime={runtime} focusRequest={eventFocus} expanded={expandedEventRef === event.eventRef} onToggle={() => setExpandedEventRef((current) => current === event.eventRef ? undefined : event.eventRef as GlobalTimelineV2Event["eventRef"])} onMomentDetail={onMomentDetail} onTimelinePeer={focusTimelinePeer} />)}</ol>
-        </section>)}</div>
-      </section>)}
+    <div className={styles.timelineScroller} data-focus-active={focusedEventRef !== undefined} tabIndex={0} aria-label="Timeline de notre vie, du plus ancien au plus récent">
+      {years.length === 0 ? <p className={styles.timelineEmpty}>Aucun événement n’est disponible.</p> : years.map((year) => {
+        const containsFocus = year.months.some((month) => month.events.some(({ eventRef }) => eventRef === focusedEventRef));
+        return <section key={year.key} className={styles.timelineYear} data-contains-focus={containsFocus} aria-labelledby={`timeline-year-${year.key}`}>
+          <h3 id={`timeline-year-${year.key}`}>{year.key}</h3>
+          <div>{year.months.map((month) => <section key={month.key} className={styles.timelineMonth} aria-labelledby={`timeline-month-${month.key}`}>
+            <h4 id={`timeline-month-${month.key}`} data-timeline-month={month.key}>{month.label}</h4>
+            <ol>{month.events.map((event) => <TimelineEventRow key={event.eventRef} event={event} runtime={runtime} focusRequest={eventFocus} expanded={expandedEventRef === event.eventRef} focused={focusedEventRef === event.eventRef} focusMode={focusedEventRef !== undefined} onToggle={() => {
+              const nextRef = focusedEventRef === event.eventRef ? undefined : event.eventRef as GlobalTimelineV2Event["eventRef"];
+              setExpandedEventRef(nextRef);
+              setFocusedEventRef(nextRef);
+            }} onMomentDetail={onMomentDetail} onTimelinePeer={focusTimelinePeer} />)}</ol>
+          </section>)}</div>
+        </section>;
+      })}
     </div>
   </div>;
 }

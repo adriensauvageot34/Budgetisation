@@ -1,0 +1,41 @@
+import assert from "node:assert/strict";
+import fs from "node:fs";
+import path from "node:path";
+
+const root = process.cwd();
+const timeline = fs.readFileSync(path.join(root, "src/features/global-v2/life-timeline.tsx"), "utf8");
+const range = fs.readFileSync(path.join(root, "src/features/global-v2/comparison-range.tsx"), "utf8");
+const css = fs.readFileSync(path.join(root, "src/features/global-v2/global-v2.module.css"), "utf8");
+const card = timeline.slice(timeline.indexOf("function TimelineV2EventRow"), timeline.indexOf("function TimelineEventRow"));
+const lifeTimeline = timeline.slice(timeline.indexOf("export function LifeTimeline"));
+let checks = 0;
+const check = (run) => { run(); checks += 1; };
+
+check(() => assert.match(lifeTimeline, /useState<GlobalTimelineV2Event\["eventRef"\] \| undefined>\(undefined\)[\s\S]*focusedEventRef/u));
+check(() => assert.equal((lifeTimeline.match(/const \[focusedEventRef/gu) ?? []).length, 1));
+check(() => assert.match(lifeTimeline, /data-focus-active=\{focusedEventRef !== undefined\}/u));
+check(() => assert.match(card, /data-timeline-focused=\{canExpand && focused\}/u));
+check(() => assert.match(card, /data-timeline-dimmed=\{focusMode && !focused\}/u));
+check(() => assert.match(css, /data-timeline-focused="true"[^}]*width:\s*calc\(100% \+ var\(--timeline-chronology-width\)\)[^}]*margin-left:\s*calc\(-1 \* var\(--timeline-chronology-width\)\)/u));
+check(() => assert.match(css, /data-timeline-focused="true"[^}]*background:\s*var\(--color-surface\)[^}]*box-shadow:/u));
+check(() => assert.match(css, /data-timeline-focused="true"[^}]*\.timelineDay\s*\{[^}]*opacity:\s*0/u));
+check(() => assert.match(lifeTimeline, /data-contains-focus=\{containsFocus\}/u));
+check(() => assert.match(css, /data-contains-focus="true"[^}]*> h3\s*\{[^}]*opacity:\s*0/u));
+check(() => assert.match(css, /data-timeline-focused="true"\]::before\s*\{[^}]*opacity:\s*0/u));
+check(() => assert.match(css, /data-timeline-dimmed="true"\]\s*\{[^}]*opacity:\s*\.46/u));
+check(() => assert.match(css, /data-timeline-focused="true"\]\s*\{[^}]*opacity:\s*1/u));
+check(() => assert.match(css, /\.timelineAccordion\s*\{[^}]*grid-template-rows:\s*0fr[^}]*210ms[\s\S]*\.timelineAccordion\[data-expanded="true"\][^}]*grid-template-rows:\s*1fr[^}]*330ms/u));
+check(() => assert.match(css, /timelineFocusContentIn[\s\S]*timelineRangeBuild[\s\S]*timelineRangePointIn/u));
+check(() => assert.match(css, /@keyframes timelineChevronOpen/u));
+check(() => assert.match(css, /> button:active\s*\{[^}]*scale\(\.995\)/u));
+check(() => assert.match(lifeTimeline, /const nextRef = focusedEventRef === event\.eventRef \? undefined : event\.eventRef[\s\S]*setExpandedEventRef\(nextRef\)[\s\S]*setFocusedEventRef\(nextRef\)/u));
+check(() => assert.match(card, /const canExpand = expenseRows\.length > 0 && comparisonAvailable[\s\S]*canExpand\s*\? <button/u));
+check(() => assert.match(card, /rowBounds\.top >= comfortableTop && rowBounds\.bottom <= comfortableBottom\) return[\s\S]*scrollIntoView/u));
+check(() => assert.match(css, /\.timelineExpensePreview\s*\{[^}]*grid-template-columns:\s*repeat\(2, minmax\(0, 1fr\)\)/u));
+check(() => assert.match(css, /data-timeline-focused="true"[^}]*> button\s*\{[^}]*minmax\(0, 3fr\) minmax\(0, 2fr\)/u));
+check(() => assert.doesNotMatch(range, /comparisonRangeLegend|comparisonRangeHint|Survolez un point/u));
+check(() => assert.match(css, /@media \(prefers-reduced-motion: reduce\)[\s\S]*animation-duration:\s*\.01ms !important[\s\S]*transition-duration:\s*\.01ms !important/u));
+check(() => assert.doesNotMatch(css, /(?:^|[;{]\s*)filter:\s*blur/mu));
+check(() => assert.match(css, /--timeline-focus-duration:\s*210ms[\s\S]*data-timeline-focused="true"[^}]*--timeline-focus-duration:\s*350ms/u));
+
+console.log(`Global V2 Timeline card focus motion S9.6: ${checks}/${checks} PASS`);

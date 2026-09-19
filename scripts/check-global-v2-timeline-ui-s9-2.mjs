@@ -43,7 +43,7 @@ const comparator = timeline.slice(timeline.indexOf("export function TimelineComp
 const lifeTimeline = timeline.slice(timeline.indexOf("export function LifeTimeline"));
 check(() => assert.doesNotMatch(v2Card, />Comparer</u));
 check(() => assert.match(v2Card, /aria-expanded=\{expanded\}[\s\S]*onClick=\{onToggle\}/u));
-check(() => assert.match(lifeTimeline, /expandedEventRef[\s\S]*setExpandedEventRef\(\(current\) => current === event\.eventRef \? undefined : event\.eventRef/u));
+check(() => assert.match(lifeTimeline, /focusedEventRef[\s\S]*const nextRef = focusedEventRef === event\.eventRef \? undefined : event\.eventRef[\s\S]*setExpandedEventRef\(nextRef\)[\s\S]*setFocusedEventRef\(nextRef\)/u));
 check(() => assert.match(v2Card, /aria-controls=\{detailsId\} onClick=\{onToggle\}>\{content\}<\/button>/u));
 check(() => assert.match(comparator, /visibleTimelineComparisonLevels/u));
 check(() => assert.doesNotMatch(comparator, /timelineRelatedPeers|Analyse indicative|événements reliés ·/u));

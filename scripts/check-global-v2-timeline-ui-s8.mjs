@@ -78,7 +78,7 @@ const v2Card = source.slice(source.indexOf("function TimelineV2EventRow"), sourc
 const component = source.slice(source.indexOf("export function LifeTimeline"));
 check(() => assert.match(pageSource, /useState<TimelineDensityMode>\("PRINCIPAL"\)/u));
 check(() => assert.match(component, /timelineEventsForDensity\(model\.events, density\)/u));
-check(() => assert.match(pageSource, />Principal<\/button>[\s\S]*>Étendu<\/button>/u));
+check(() => assert.match(pageSource, /timelineFocusControl[\s\S]*setDensity\(expanded \? "PRINCIPAL" : "EXTENDED"\)[\s\S]*Élargir[\s\S]*Recentrer/u));
 check(() => assert.equal((component.match(/resource: "analysis_global_life_timeline"/gu) ?? []).length, 1));
 check(() => assert.match(source, /timelineComparisonRequest\(event\.eventRef, "SAME_CLOSE_FAMILY"\)/u));
 check(() => assert.match(v2Card, /semanticClassification\.close\.label/u));
@@ -90,7 +90,7 @@ check(() => assert.doesNotMatch(v2Card, /Voir le détail complet|onMomentDetail\
 check(() => assert.match(v2Card, /canExpand \? <div[\s\S]*<TimelineComparator/u));
 check(() => assert.doesNotMatch(`${v2Card}\n${component}\n${presentationSource}`, /median|quartile|\bq1\b|\bq3\b|\bmad\b|peerObservations|materiality\s*[=!<>]|\.sort\(|\.reduce\(/iu));
 check(() => assert.match(source, /semanticCloseIcons[\s\S]*semanticIntermediateIcons/u));
-check(() => assert.match(css, /\.timelineDensity button\[aria-pressed="true"\]/u));
+check(() => assert.match(css, /\.timelineFocusControl\[data-expanded="true"\]/u));
 check(() => assert.doesNotMatch(css, /\.timelineLifeEventDetails/u));
 
 console.log(`Global V2 Timeline UI S8: ${checks}/${checks} PASS`);
