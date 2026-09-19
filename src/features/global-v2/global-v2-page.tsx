@@ -24,7 +24,6 @@ import type {
   GlobalLifeTimelineV2ReadModel,
   GlobalTimelineComparisonEventObservation,
   GlobalNavigationDestination,
-  ImportedGlobalSummaryReadModel,
   GlobalModuleCompactReadModel,
   GlobalPrimaryModuleKey,
   GlobalReadModelPublicationMeta,
@@ -47,7 +46,6 @@ import styles from "./global-v2.module.css";
 
 export type GlobalV2PageBundle = {
   readonly initial: GlobalInitialReadModel;
-  readonly summary: ImportedGlobalSummaryReadModel;
   readonly newerPublication?: GlobalReadModelPublicationMeta;
 };
 
@@ -65,7 +63,7 @@ const moduleSlugs: Readonly<Record<GlobalPrimaryModuleKey, string>> = Object.fre
 });
 
 const storyOrder = Object.freeze([
-  "ECONOMIC", "CATEGORIES_NEEDS", "RHYTHM", "GEO_MOBILITY", "TOGETHER", "PERSONAS", "CONSUMPTION",
+  "ECONOMIC", "CATEGORIES_NEEDS", "RHYTHM", "PERSONAS", "TOGETHER",
 ] as const satisfies readonly GlobalPrimaryModuleKey[]);
 
 const internalNavigation = Object.freeze([
@@ -73,7 +71,6 @@ const internalNavigation = Object.freeze([
   { label: "Nos dépenses", anchor: "economie" },
   { label: "Catégories", anchor: "categories" },
   { label: "Vie & dépenses", anchor: "rythmes" },
-  { label: "Lieux", anchor: "lieux" },
   { label: "Profils", anchor: "profils" },
   { label: "Nous deux", anchor: "nous-deux" },
 ] as const);
@@ -92,7 +89,7 @@ const moduleTabs: Readonly<Record<GlobalPrimaryModuleKey, readonly { readonly ke
 });
 
 function moduleForSlug(slug: string): GlobalPrimaryModuleKey | undefined {
-  return (Object.entries(moduleSlugs) as readonly [GlobalPrimaryModuleKey, string][]).find(([, value]) => value === slug)?.[0];
+  return storyOrder.find((moduleKey) => moduleSlugs[moduleKey] === slug);
 }
 
 function humanLabel(value: string): string {
@@ -1129,19 +1126,12 @@ function PersonaColumns({ rows, limit = 5 }: { readonly rows: readonly GlobalDet
 }
 
 function ModuleContent({ moduleKey, model, runtime, certifiedThrough, onDetail, onEntityDetail, onMethod }: { readonly moduleKey: GlobalPrimaryModuleKey; readonly model: GlobalModuleCompactReadModel; readonly runtime: GlobalV2VisitRuntime; readonly certifiedThrough: string; readonly onDetail: () => void; readonly onEntityDetail: (entityRef: string, title: string) => void; readonly onMethod: () => void }) {
-  if (moduleKey === "TRANSFORMATIONS" || moduleKey === "RELATIONSHIPS" || moduleKey === "MOMENTS" || moduleKey === "RHYTHM") return null;
-  if (moduleKey === "CONSUMPTION") return <div className={styles.neutralState}><strong>Analyse pas encore disponible</strong><p>L’identité des achats ne couvre pas encore suffisamment la période pour proposer une lecture fiable.</p></div>;
+  if (moduleKey === "TRANSFORMATIONS" || moduleKey === "RELATIONSHIPS" || moduleKey === "MOMENTS" || moduleKey === "RHYTHM" || moduleKey === "GEO_MOBILITY" || moduleKey === "CONSUMPTION") return null;
 
   const insight = model.primaryInsight;
   if (moduleKey === "ECONOMIC") return <div className={styles.compact}><ExpandedPreview runtime={runtime} moduleKey={moduleKey} sectionKey="OVERVIEW">{(overview) => <ExpandedPreview runtime={runtime} moduleKey={moduleKey} sectionKey="EVOLUTION">{(evolution) => <EconomicCompactCard overview={overview} evolution={evolution} certifiedThrough={certifiedThrough} onDetail={onDetail} onMethod={onMethod} />}</ExpandedPreview>}</ExpandedPreview></div>;
 
   if (moduleKey === "CATEGORIES_NEEDS") return <M2CompactCard model={model} runtime={runtime} certifiedThrough={certifiedThrough} onDetail={onDetail} onEntityDetail={onEntityDetail} />;
-
-  if (moduleKey === "GEO_MOBILITY") return <div className={styles.compact}>
-    {insight === undefined ? null : <InsightCard insight={insight} />}
-    <ExpandedPreview runtime={runtime} moduleKey={moduleKey} sectionKey="OVERVIEW">{(expanded) => <CountRanking title="Lieux les plus visités" rows={expanded.rows.map((row) => ({ id: row.rowId, label: row.labelKey, displayValue: row.displayValue }))} />}</ExpandedPreview>
-    <SeeDetail onClick={onDetail} />
-  </div>;
 
   if (moduleKey === "PERSONAS") return <div className={styles.compact}>
     <PartialBadge onClick={onMethod} />
@@ -1260,33 +1250,10 @@ function GlobalLifeTimelinePanel({ runtime, onOverlay }: { readonly runtime: Glo
   </section>;
 }
 
-type SummarySlotDefinition = { readonly slot: string; readonly moduleKey: GlobalPrimaryModuleKey; readonly kind: "KPI" | "INSIGHT"; readonly kpiIndex?: number };
-
-function SummarySlot({ definition, runtime }: { readonly definition: SummarySlotDefinition; readonly runtime: GlobalV2VisitRuntime }) {
-  const presentation = globalModulePresentation(definition.moduleKey);
-  const request = useMemo(() => ({ resource: presentation.resource, params: {} }), [presentation.resource]);
-  const result = useGlobalV2Resource<GlobalModuleCompactReadModel>(runtime, request, true, "BACKGROUND");
-  const model = transportData(result.state);
-  if (model === undefined) return result.state.status === "ERROR" ? null : <LoadingCard label={definition.slot} compact />;
-  if (model.visibility !== "VISIBLE") return null;
-  if (definition.kind === "KPI") {
-    const kpi = model.kpis[definition.kpiIndex ?? 0];
-    return kpi === undefined ? null : <article className={styles.summarySlot} data-summary-slot={definition.slot}><span>{humanLabel(kpi.labelKey)}</span><strong>{kpi.displayValue}</strong></article>;
-  }
-  const insight = model.primaryInsight;
-  return insight === undefined ? null : <article className={styles.summarySlot} data-summary-slot={definition.slot}><span>{humanLabel(insight.titleKey)}</span><strong>{humanLabel(insight.statementKey)}</strong></article>;
-}
-
-function HumanSummary({ runtime }: { readonly runtime: GlobalV2VisitRuntime }) {
-  const s1: SummarySlotDefinition = { slot: "S1", moduleKey: "ECONOMIC", kind: "KPI", kpiIndex: 0 };
-  const s2: SummarySlotDefinition = { slot: "S2", moduleKey: "ECONOMIC", kind: "INSIGHT" };
-  const row2: readonly SummarySlotDefinition[] = [{ slot: "S3", moduleKey: "CATEGORIES_NEEDS", kind: "INSIGHT" }, { slot: "S4", moduleKey: "RHYTHM", kind: "INSIGHT" }];
-  const row3: readonly SummarySlotDefinition[] = [{ slot: "S5", moduleKey: "GEO_MOBILITY", kind: "INSIGHT" }, { slot: "S6", moduleKey: "TOGETHER", kind: "INSIGHT" }];
+function ContextualSummaryPlaceholder() {
   return <section id="synthese" className={styles.summary} aria-labelledby="global-summary-title">
-    <header><div><span className="eyebrow">Synthèse</span><h2 id="global-summary-title">L’essentiel de notre année</h2></div></header>
-    <section className={styles.summaryGroup}><h3>Notre argent</h3><div className={styles.summaryRow}><SummarySlot definition={s1} runtime={runtime} /><SummarySlot definition={s2} runtime={runtime} /></div></section>
-    <div className={styles.summaryRow}>{row2.map((definition) => <SummarySlot key={definition.slot} definition={definition} runtime={runtime} />)}</div>
-    <div className={styles.summaryRow}>{row3.map((definition) => <SummarySlot key={definition.slot} definition={definition} runtime={runtime} />)}</div>
+    <h2 id="global-summary-title">Synthèse</h2>
+    <div className={styles.summaryPlaceholder}>En attente du résumé contextuel</div>
   </section>;
 }
 
@@ -1341,7 +1308,7 @@ export function GlobalV2Page({ bundle, transport, certifiedThrough }: { readonly
     <header className={styles.hero}><div><h1>Notre vie, dans son ensemble</h1><p className={styles.period}>{analysisPeriod(certifiedThrough).label.replace("—", "→")}</p><p>Une vue d’ensemble de nos dépenses, habitudes, moments et lieux sur l’année.</p><button type="button" className={styles.methodButton} onClick={() => openOverlay(methodOverlayTarget("ECONOMIC"))}><Info aria-hidden size={17} /> Méthode</button></div></header>
     {bundle.newerPublication === undefined ? null : <aside className={styles.generationBanner} role="status" aria-live="polite"><div><strong>Une version plus récente est disponible.</strong><span>Notre lecture actuelle reste stable jusqu’à l’actualisation.</span></div><button type="button" className="button-primary" onClick={() => window.location.reload()}><RefreshCw aria-hidden size={16} /> Actualiser</button></aside>}
     <nav className={styles.stickyNav} aria-label="Navigation dans l’analyse globale">{internalNavigation.map(({ label, anchor }) => <button key={anchor} type="button" aria-current={activeAnchor === anchor ? "location" : undefined} onClick={() => goTo(anchor)}>{label}</button>)}</nav>
-    <HumanSummary runtime={runtime} />
+    <ContextualSummaryPlaceholder />
     <main className={styles.story}>{orderedModules.map((moduleKey, index) => <GlobalModuleBoundary key={moduleKey}>{moduleKey === "RHYTHM" ? <GlobalLifeTimelinePanel runtime={runtime} onOverlay={openOverlay} /> : <GlobalModulePanel moduleKey={moduleKey} runtime={runtime} certifiedThrough={certifiedThrough} eager={index < 2} direct={directModule === moduleKey} onOverlay={openOverlay} />}</GlobalModuleBoundary>)}</main>
     <button type="button" className={styles.backToTop} onClick={() => goTo()}><ArrowUp aria-hidden size={17} /> Retour au sommet</button>
     {overlay === null ? null : <GlobalDetailOverlay target={overlay} runtime={runtime} mobile={mobile} certifiedThrough={certifiedThrough} restoreFocusRef={overlayInvokerRef} onReplace={(target) => { setOverlay(target); emitGlobalV2UxEvent("global_entity_opened", { moduleKey: target.moduleKey }); }} onClose={() => setOverlay(null)} />}

@@ -13,17 +13,12 @@
 .stickyNav::-webkit-scrollbar { display: none; }
 .stickyNav button { flex: 0 0 auto; min-height: 36px; border: 0; border-radius: 10px; padding: 7px 11px; background: transparent; color: var(--color-muted); font-size: 13px; font-weight: 750; cursor: pointer; }
 .stickyNav button[aria-current] { background: var(--color-primary-soft); color: var(--color-primary-deep); }
-.summary, .module { scroll-margin-top: 76px; border: 1px solid var(--color-border); border-radius: 20px; background: white; box-shadow: var(--shadow-sm); }
-.summary { margin: 28px 0 22px; padding: clamp(22px, 4vw, 38px); background: linear-gradient(145deg, #f9f6ee, #eef5f2); }
-.summary h2 { margin-top: 5px; font-size: clamp(28px, 3.5vw, 40px); }
-.summaryGroup { margin-top: 28px; }
-.summaryGroup h3 { margin: 0 0 10px; font-size: 14px; letter-spacing: .04em; text-transform: uppercase; }
-.summaryRow { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 12px; margin-top: 12px; }
-.summarySlot { display: grid; align-content: start; gap: 8px; min-height: 118px; border: 1px solid rgb(255 255 255 / .8); border-radius: 15px; padding: 18px; background: rgb(255 255 255 / .72); }
-.summarySlot span { color: var(--color-muted); font-size: 13px; font-weight: 750; }
-.summarySlot strong { font-size: 18px; line-height: 1.45; }
+.summary, .module { scroll-margin-top: 76px; }
+.summary { margin: 28px 0 22px; }
+.summary h2 { font-size: clamp(28px, 3.5vw, 40px); }
+.summaryPlaceholder { display: grid; min-height: 176px; place-items: center; margin-top: 16px; border: 1px solid var(--color-border); border-radius: 18px; padding: clamp(26px, 5vw, 48px); background: var(--color-surface); box-shadow: var(--shadow-sm); color: var(--color-muted); font-size: 15px; font-weight: 720; text-align: center; }
 .story { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); align-items: start; gap: 20px; }
-.module { grid-column: span 12; overflow: clip; }
+.module { grid-column: span 12; overflow: clip; border: 1px solid var(--color-border); border-radius: 20px; background: white; box-shadow: var(--shadow-sm); }
 .module[data-module="RHYTHM"] { grid-column: span 12; overflow: visible; border: 0; background: transparent; box-shadow: none; }
 .module[data-module="RHYTHM"] .moduleHeader { padding: clamp(34px, 6vw, 64px) 0 22px; }
 .module[data-module="RHYTHM"] .moduleHeader h2 { max-width: 850px; font-size: clamp(34px, 5vw, 56px); line-height: 1.02; }
@@ -596,8 +591,8 @@
   .hero h1 { font-size: 43px; }
   .hero p { font-size: 16px; }
   .stickyNav { margin-inline: -14px; border-inline: 0; border-radius: 0; padding-inline: 14px; }
-  .summary { margin-top: 18px; padding: 20px; }
-  .summaryRow, .personColumns { grid-template-columns: 1fr; }
+  .summary { margin-top: 18px; }
+  .personColumns { grid-template-columns: 1fr; }
   .moduleHeader { padding: 20px 18px 15px; }
   .compact, .m2Compact { padding: 0 18px 20px; }
   .neutralState, .skeleton, .localError { margin-inline: 18px; }

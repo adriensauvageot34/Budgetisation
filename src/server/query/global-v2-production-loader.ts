@@ -6,7 +6,6 @@ import {
   type GlobalInitialReadModel,
   type GlobalReadModelPublicationMeta,
   type GlobalV2QueryRequest,
-  type ImportedGlobalSummaryReadModel,
 } from "@/query-api/global-v2";
 import { getBootstrapContext } from "@/server/bootstrap/context";
 import { createAuthorizedRuntimeContext, type AuthorizedRuntimeContext } from "@/server/canonical/context";
@@ -94,12 +93,9 @@ export async function readGlobalV2ProductionSnapshot(input: {
 
 export async function loadGlobalV2ProductionBundle() {
   const runtime = await createGlobalV2ProductionRuntime();
-  const [initial, summary] = await Promise.all([
-    readGlobalV2ProductionSnapshot({ runtime, resource: "analysis_global_manifest", params: {} }),
-    readGlobalV2ProductionSnapshot({ runtime, resource: "analysis_global_summary_ai", params: {} }),
-  ]);
+  const initial = await readGlobalV2ProductionSnapshot({ runtime, resource: "analysis_global_manifest", params: {} });
   return {
-    bundle: { initial: initial.data as GlobalInitialReadModel, summary: summary.data as ImportedGlobalSummaryReadModel },
+    bundle: { initial: initial.data as GlobalInitialReadModel },
     certifiedThrough: runtime.generation.scope.time.certifiedThrough,
   };
 }

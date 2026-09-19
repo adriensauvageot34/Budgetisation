@@ -133,6 +133,7 @@ const rhythmCollectionsSource = fs.readFileSync(path.join(root, "src/features/gl
 const rhythmDetailRoutingSource = fs.readFileSync(path.join(root, "src/features/global-v2/rhythm-detail-routing.ts"), "utf8");
 const rhythmNarrativeSource = fs.readFileSync(path.join(root, "src/features/global-v2/rhythm-narrative.ts"), "utf8");
 const lifeTimelineSource = fs.readFileSync(path.join(root, "src/features/global-v2/life-timeline.tsx"), "utf8");
+const productionLoaderSource = fs.readFileSync(path.join(root, "src/server/query/global-v2-production-loader.ts"), "utf8");
 const m2Source = pageSource.slice(pageSource.indexOf("function M2MoneyRows"), pageSource.indexOf("function LifeInsightList"));
 const m2CompactSource = pageSource.slice(pageSource.indexOf("function M2CompactCard"), pageSource.indexOf("function PersonaColumns"));
 const m2InsightSource = pageSource.slice(pageSource.indexOf("function M2CompactRecentInsight"), pageSource.indexOf("function M2CompactCard"));
@@ -150,7 +151,8 @@ const globalDetailOverlaySource = pageSource.slice(pageSource.indexOf("function 
 const storyOrderSource = pageSource.slice(pageSource.indexOf("const storyOrder"), pageSource.indexOf("const internalNavigation"));
 const navigationSource = pageSource.slice(pageSource.indexOf("const internalNavigation"), pageSource.indexOf("const moduleTabs"));
 const moduleTabsSource = pageSource.slice(pageSource.indexOf("const moduleTabs"), pageSource.indexOf("function moduleForSlug"));
-const summarySource = pageSource.slice(pageSource.indexOf("function HumanSummary"), pageSource.indexOf("export function GlobalV2Page"));
+const summarySource = pageSource.slice(pageSource.indexOf("function ContextualSummaryPlaceholder"), pageSource.indexOf("export function GlobalV2Page"));
+const moduleContentSource = pageSource.slice(pageSource.indexOf("function ModuleContent"), pageSource.indexOf("function GlobalModulePanel"));
 check(() => assert.match(pageSource, /IntersectionObserver/u));
 check(() => assert.match(pageSource, /Alternative textuelle/u));
 check(() => assert.match(pageSource, /global_module_viewed/u));
@@ -250,15 +252,15 @@ check(() => assert.match(pageSource, /Notre vie, dans son ensemble/u));
 check(() => assert.match(pageSource, /12 mois analysés/u));
 check(() => assert.match(pageSource, /> Méthode</u));
 check(() => assert.doesNotMatch(pageSource, /ANALYSE GLOBALE · NOUVELLE ARCHITECTURE|synthèse non importée|Non importée/u));
-check(() => assert.match(navigationSource, /Synthèse[\s\S]*Nos dépenses[\s\S]*Catégories[\s\S]*Vie & dépenses[\s\S]*Lieux[\s\S]*Profils[\s\S]*Nous deux/u));
-check(() => assert.doesNotMatch(navigationSource, /Moments|Autres analyses|Relations/u));
-check(() => assert.match(summarySource, /slot: "S1"[\s\S]*slot: "S2"[\s\S]*slot: "S3"[\s\S]*slot: "S4"[\s\S]*slot: "S5"[\s\S]*slot: "S6"/u));
-check(() => assert.doesNotMatch(summarySource, /slot: "S7"|moduleKey: "MOMENTS"/u));
+check(() => assert.match(navigationSource, /Synthèse[\s\S]*Nos dépenses[\s\S]*Catégories[\s\S]*Vie & dépenses[\s\S]*Profils[\s\S]*Nous deux/u));
+check(() => assert.doesNotMatch(navigationSource, /Lieux|Achats|Moments|Autres analyses|Relations/u));
+check(() => assert.match(summarySource, /id="synthese"[\s\S]*>Synthèse<[\s\S]*En attente du résumé contextuel/u));
+check(() => assert.doesNotMatch(summarySource, /SummarySlot|data-summary-slot|L’essentiel de notre année|Notre argent|moduleKey:/u));
 check(() => assert.match(pageSource, /RankingBar/u));
 check(() => assert.match(pageSource, /MultiSeriesMonetaryEvolution/u));
 check(() => assert.doesNotMatch(pageSource, /Aucun changement durable clairement identifié/u));
 check(() => assert.doesNotMatch(pageSource, /Pas encore assez d’éléments pour établir une relation fiable/u));
-check(() => assert.match(pageSource, /Analyse pas encore disponible/u));
+check(() => assert.doesNotMatch(pageSource, /Analyse pas encore disponible/u));
 check(() => assert.doesNotMatch(pageSource, /0 achat|0 €/u));
 check(() => assert.match(pageSource, /Aucune différence nette à mettre en avant entre vos profils/u));
 check(() => assert.match(pageSource, /Ce que les données vous voient explicitement faire ensemble/u));
@@ -280,12 +282,17 @@ check(() => assert.match(cssSource, /@media \(max-width: 1024px\)/u));
 // RUN C: one human life-spending chapter composed from the typed RHYTHM Query payload.
 check(() => assert.match(catalogSource, /title: "Notre vie derrière nos dépenses"/u));
 check(() => assert.match(catalogSource, /Ce que nos dépenses racontent de nos habitudes et des moments qui comptent\./u));
-check(() => assert.doesNotMatch(storyOrderSource, /TRANSFORMATIONS|RELATIONSHIPS|MOMENTS/u));
+check(() => assert.match(storyOrderSource, /"ECONOMIC", "CATEGORIES_NEEDS", "RHYTHM", "PERSONAS", "TOGETHER"/u));
+check(() => assert.doesNotMatch(storyOrderSource, /TRANSFORMATIONS|RELATIONSHIPS|MOMENTS|GEO_MOBILITY|CONSUMPTION/u));
 check(() => assert.equal(contract.modules.find(({ moduleKey }) => moduleKey === "TRANSFORMATIONS")?.visibility, "HIDDEN"));
 check(() => assert.equal(contract.modules.find(({ moduleKey }) => moduleKey === "RELATIONSHIPS")?.visibility, "HIDDEN"));
 check(() => assert.equal(contract.modules.find(({ moduleKey }) => moduleKey === "MOMENTS")?.visibility, "HIDDEN"));
-check(() => assert.equal((summarySource.match(/moduleKey: "RHYTHM"/gu) ?? []).length, 1));
-check(() => assert.doesNotMatch(summarySource, /moduleKey: "MOMENTS"/u));
+check(() => assert.doesNotMatch(moduleContentSource, /Analyse pas encore disponible|Lieux les plus visités/u));
+check(() => assert.match(moduleContentSource, /moduleKey === "GEO_MOBILITY" \|\| moduleKey === "CONSUMPTION"\) return null/u));
+check(() => assert.doesNotMatch(productionLoaderSource.slice(productionLoaderSource.indexOf("export async function loadGlobalV2ProductionBundle")), /analysis_global_summary_ai|ImportedGlobalSummaryReadModel/u));
+check(() => assert.match(catalogSource, /key: "GEO_MOBILITY"[\s\S]*analysis_global_geo_mobility[\s\S]*key: "CONSUMPTION"[\s\S]*analysis_global_consumption/u));
+check(() => assert.ok(query.globalPrimaryModuleCatalog.some(({ moduleKey, resource }) => moduleKey === "GEO_MOBILITY" && resource === "analysis_global_geo_mobility")));
+check(() => assert.ok(query.globalPrimaryModuleCatalog.some(({ moduleKey, resource }) => moduleKey === "CONSUMPTION" && resource === "analysis_global_consumption")));
 const lifePrimarySource = pageSource.slice(pageSource.indexOf("function LifeBackgroundRhythms"), pageSource.indexOf("function PersonaColumns"));
 check(() => assert.match(lifePrimarySource, /data-rhythm-source="analysis_global_routine_detail"/u));
 check(() => assert.doesNotMatch(lifePrimarySource, /Explorer l’analyse|LifeInsightList|sectionTabs|moduleTabs|LifeNarrative|Hero/u));
@@ -649,7 +656,7 @@ check(() => assert.match(cssSource, /\.timelineFocusControl\[data-expanded="true
 check(() => assert.doesNotMatch(cssSource, /\.timelineLifeEventDetails/u));
 
 // D8: published background rhythms complete the timeline-first chapter without React analytics.
-const timelinePanelSource = pageSource.slice(pageSource.indexOf("function GlobalLifeTimelinePanel"), pageSource.indexOf("type SummarySlotDefinition"));
+const timelinePanelSource = pageSource.slice(pageSource.indexOf("function GlobalLifeTimelinePanel"), pageSource.indexOf("function ContextualSummaryPlaceholder"));
 check(() => assert.match(timelinePanelSource, /<LifeTimeline[\s\S]*<LifeBackgroundRhythms/u));
 check(() => assert.match(lifePrimarySource, /resource: "analysis_global_routine_detail"[\s\S]*entityRef: groceryRoutineEntityRef/u));
 check(() => assert.match(lifePrimarySource, /rhythm\.thresholds\.p25[\s\S]*rhythm\.thresholds\.p75[\s\S]*rhythm\.eligibleMonthCount/u));
