@@ -17,7 +17,7 @@ check(() => assert.match(lifeTimeline, /data-focus-active=\{focusedEventRef !== 
 check(() => assert.match(card, /data-timeline-focused=\{canExpand && focused\}/u));
 check(() => assert.match(card, /data-timeline-dimmed=\{focusMode && !focused\}/u));
 check(() => assert.match(css, /data-timeline-focused="true"[^}]*width:\s*calc\(100% \+ var\(--timeline-chronology-width\)\)[^}]*margin-left:\s*calc\(-1 \* var\(--timeline-chronology-width\)\)/u));
-check(() => assert.match(css, /data-timeline-focused="true"[^}]*background:\s*var\(--color-surface\)[^}]*box-shadow:/u));
+check(() => assert.match(css, /data-timeline-focused="true"[^}]*background:\s*var\(--event-accent-wash\)[^}]*box-shadow:/u));
 check(() => assert.match(css, /data-timeline-focused="true"[^}]*\.timelineDay\s*\{[^}]*opacity:\s*0/u));
 check(() => assert.match(lifeTimeline, /data-contains-focus=\{containsFocus\}/u));
 check(() => assert.match(css, /data-contains-focus="true"[^}]*> h3\s*\{[^}]*opacity:\s*0/u));

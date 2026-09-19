@@ -457,21 +457,32 @@
 .timelineMonth { scroll-margin-top: 42px; }
 .timelineMonth > h4 { position: sticky; z-index: 3; top: 0; margin: 0; border-bottom: 1px solid var(--color-border); padding: 11px 4px 9px; background: rgb(255 255 255 / .94); color: var(--color-muted); font-size: 12px; font-weight: 850; letter-spacing: .08em; text-transform: capitalize; backdrop-filter: blur(10px); transition: opacity 250ms cubic-bezier(.2, .8, .2, 1); }
 .timelineMonth ol { margin: 0; padding: 0; list-style: none; }
-.timelineMonth li { --timeline-focus-duration: 210ms; position: relative; width: 100%; margin-left: 0; border: 1px solid transparent; border-radius: 0; background: transparent; opacity: 1; transition: width var(--timeline-focus-duration) cubic-bezier(.2, .8, .2, 1), margin-left var(--timeline-focus-duration) cubic-bezier(.2, .8, .2, 1), opacity 240ms cubic-bezier(.2, .8, .2, 1), border-color var(--timeline-focus-duration) ease, border-radius var(--timeline-focus-duration) ease, background-color var(--timeline-focus-duration) ease, box-shadow var(--timeline-focus-duration) ease; }
-.timelineMonth li::before { position: absolute; z-index: 0; top: 0; bottom: 0; left: 53px; width: 1px; background: var(--color-border); opacity: 1; content: ""; transition: opacity 220ms cubic-bezier(.2, .8, .2, 1); }
-.timelineMonth li > button, .timelineMonth li > article { position: relative; z-index: 1; display: grid; grid-template-columns: 34px 28px minmax(0, 3fr) minmax(0, 2fr) 18px; align-items: center; width: 100%; min-width: 0; min-height: 82px; gap: 8px; border: 0; border-bottom: 1px solid var(--color-border); padding: 12px 4px; background: transparent; color: inherit; font: inherit; text-align: left; transition: grid-template-columns var(--timeline-focus-duration) cubic-bezier(.2, .8, .2, 1), padding var(--timeline-focus-duration) cubic-bezier(.2, .8, .2, 1), border-color 220ms ease, background-color var(--timeline-focus-duration) ease, box-shadow 220ms ease, transform 90ms ease; }
-.timelineMonth li[data-has-expenses="false"] > button, .timelineMonth li[data-has-expenses="false"] > article { grid-template-columns: 34px 28px minmax(0, 1fr); }
+.timelineMonth li { --timeline-focus-duration: 210ms; --timeline-node-center: 69px; --event-accent: #68766f; --event-accent-soft: #f4f6f4; --event-accent-border: rgb(104 118 111 / .24); --event-accent-glow: rgb(104 118 111 / .08); --event-accent-wash: #fdfdfc; position: relative; width: 100%; margin-left: 0; border: 1px solid transparent; border-radius: 0; background-color: transparent; opacity: 1; transition: width var(--timeline-focus-duration) cubic-bezier(.2, .8, .2, 1), margin-left var(--timeline-focus-duration) cubic-bezier(.2, .8, .2, 1), opacity 240ms cubic-bezier(.2, .8, .2, 1), border-color var(--timeline-focus-duration) ease, border-radius var(--timeline-focus-duration) ease, background-color var(--timeline-focus-duration) ease, box-shadow var(--timeline-focus-duration) ease; }
+.timelineMonth li[data-semantic-visual="relations"] { --event-accent: #8b6257; --event-accent-soft: #faf3f0; --event-accent-border: rgb(139 98 87 / .27); --event-accent-glow: rgb(139 98 87 / .085); --event-accent-wash: #fdfbfa; }
+.timelineMonth li[data-semantic-visual="leisure-culture"] { --event-accent: #716482; --event-accent-soft: #f5f2f7; --event-accent-border: rgb(113 100 130 / .26); --event-accent-glow: rgb(113 100 130 / .08); --event-accent-wash: #fcfbfd; }
+.timelineMonth li[data-semantic-visual="travel"] { --event-accent: #5d7769; --event-accent-soft: #f1f6f2; --event-accent-border: rgb(93 119 105 / .27); --event-accent-glow: rgb(93 119 105 / .085); --event-accent-wash: #fbfdfb; }
+.timelineMonth li[data-semantic-visual="projects"] { --event-accent: #846f4e; --event-accent-soft: #f8f4eb; --event-accent-border: rgb(132 111 78 / .26); --event-accent-glow: rgb(132 111 78 / .08); --event-accent-wash: #fdfcf9; }
+.timelineMonth li[data-semantic-visual="material-life"] { --event-accent: #667268; --event-accent-soft: #f2f4f1; --event-accent-border: rgb(102 114 104 / .25); --event-accent-glow: rgb(102 114 104 / .075); --event-accent-wash: #fbfcfb; }
+.timelineMonth li[data-semantic-visual="health"] { --event-accent: #806773; --event-accent-soft: #f7f2f4; --event-accent-border: rgb(128 103 115 / .25); --event-accent-glow: rgb(128 103 115 / .075); --event-accent-wash: #fdfbfc; }
+.timelineMonth li[data-semantic-visual="professional"] { --event-accent: #5f7080; --event-accent-soft: #f1f4f6; --event-accent-border: rgb(95 112 128 / .25); --event-accent-glow: rgb(95 112 128 / .075); --event-accent-wash: #fbfcfd; }
+.timelineMonth li::before { position: absolute; z-index: 0; top: 0; bottom: 0; left: calc(var(--timeline-node-center) - .5px); width: 1px; background: var(--color-border); opacity: 1; content: ""; transition: opacity 220ms cubic-bezier(.2, .8, .2, 1); }
+.timelineMonth li::after { position: absolute; z-index: 0; top: calc(50% - 34px); left: calc(var(--timeline-node-center) - .5px); width: 1px; height: 68px; background: linear-gradient(transparent, var(--event-accent) 22%, var(--event-accent) 78%, transparent); opacity: .58; transform: scaleY(1); transform-origin: center; content: ""; transition: opacity 190ms ease, transform 210ms cubic-bezier(.2, .8, .2, 1); }
+.timelineMonth li > button, .timelineMonth li > article { position: relative; z-index: 1; display: grid; grid-template-columns: 34px 46px minmax(0, 3fr) minmax(0, 2fr) 18px; align-items: center; width: 100%; min-width: 0; min-height: 82px; gap: 8px; border: 0; border-bottom: 1px solid var(--color-border); padding: 12px 4px; background: transparent; color: inherit; font: inherit; text-align: left; transition: grid-template-columns var(--timeline-focus-duration) cubic-bezier(.2, .8, .2, 1), padding var(--timeline-focus-duration) cubic-bezier(.2, .8, .2, 1), border-color 220ms ease, background-color var(--timeline-focus-duration) ease, box-shadow 220ms ease, transform 90ms ease; }
+.timelineMonth li[data-has-expenses="false"] > button, .timelineMonth li[data-has-expenses="false"] > article { grid-template-columns: 34px 46px minmax(0, 1fr); }
 .timelineMonth li > button { cursor: pointer; }
 .timelineMonth li > button:hover, .timelineMonth li > button:focus-visible { background: var(--color-surface-soft); }
+.timelineMonth li:hover::after { opacity: .74; transform: scaleY(1.04); }
 .timelineMonth li > button:active { transform: scale(.995); }
 .timelineMonth li[data-expanded="true"] > button { border-bottom-color: rgb(46 83 69 / .14); background: var(--color-surface); }
 .timelineMonth li > button:focus-visible { outline: 2px solid var(--color-primary); outline-offset: -2px; }
-.timelineDay { align-self: start; overflow: hidden; padding-top: 4px; color: var(--color-muted); font-size: 12px; font-weight: 780; text-align: right; transition: opacity 180ms ease, transform 240ms cubic-bezier(.2, .8, .2, 1); }
-.timelineMarker { display: inline-flex; align-items: center; justify-content: center; width: 28px; height: 28px; overflow: hidden; border: 1px solid var(--color-border); border-radius: 50%; background: var(--color-surface); color: var(--color-primary-deep); box-shadow: 0 1px 0 rgb(46 83 69 / .05); transition: width var(--timeline-focus-duration) cubic-bezier(.2, .8, .2, 1), opacity 180ms ease, border-color 220ms ease, background-color 220ms ease, transform 220ms ease; }
-.timelineMonth li > button:hover .timelineMarker, .timelineMonth li > button:focus-visible .timelineMarker, .timelineMonth li[data-expanded="true"] .timelineMarker { border-color: rgb(46 83 69 / .28); background: var(--color-primary-soft); transform: scale(1.04); }
+.timelineDay { align-self: center; overflow: hidden; padding-top: 0; color: color-mix(in srgb, var(--event-accent) 24%, var(--color-muted)); font-size: 12px; font-weight: 780; text-align: right; transition: opacity 180ms ease, color 220ms ease, transform 240ms cubic-bezier(.2, .8, .2, 1); }
+.timelineMarker { position: relative; display: inline-flex; align-items: center; justify-content: center; width: 44px; height: 44px; justify-self: center; overflow: hidden; border: 1px solid var(--event-accent-border); border-radius: 50%; background: var(--event-accent-soft); color: var(--event-accent); box-shadow: 0 0 0 3px color-mix(in srgb, var(--event-accent) 5%, transparent), 0 4px 13px var(--event-accent-glow), inset 0 0 0 1px rgb(255 255 255 / .72); transition: width var(--timeline-focus-duration) cubic-bezier(.2, .8, .2, 1), opacity 180ms ease, border-color 220ms ease, background-color 220ms ease, box-shadow 220ms ease, transform 220ms cubic-bezier(.2, .8, .2, 1); }
+.timelineMonth li:hover .timelineMarker { border-color: color-mix(in srgb, var(--event-accent) 32%, transparent); box-shadow: 0 0 0 3px color-mix(in srgb, var(--event-accent) 6%, transparent), 0 5px 15px color-mix(in srgb, var(--event-accent) 10%, transparent), inset 0 0 0 1px rgb(255 255 255 / .78); transform: translateY(-.5px) scale(1.008); }
+.timelineMonth li > button:hover .timelineMarker, .timelineMonth li > button:focus-visible .timelineMarker { border-color: color-mix(in srgb, var(--event-accent) 36%, transparent); box-shadow: 0 0 0 3px color-mix(in srgb, var(--event-accent) 7%, transparent), 0 5px 15px color-mix(in srgb, var(--event-accent) 11%, transparent), inset 0 0 0 1px rgb(255 255 255 / .78); transform: translateY(-.5px) scale(1.015); }
+.timelineMonth li > button:hover .timelineEventHeading strong, .timelineMonth li > button:focus-visible .timelineEventHeading strong { color: var(--color-primary-deep); }
 .timelineEventBody { display: grid; min-width: 0; gap: 4px; }
 .timelineEventHeading { display: flex; flex-wrap: wrap; align-items: center; gap: 7px; }
-.timelineEventHeading strong { overflow-wrap: anywhere; font-size: 16px; line-height: 1.35; }
+.timelineEventHeading strong { overflow-wrap: anywhere; font-size: 16px; line-height: 1.35; transition: color 180ms ease; }
 .timelineEventHeading em { border-radius: 999px; padding: 3px 7px; background: var(--color-primary-soft); color: var(--color-primary-deep); font-size: 10px; font-style: normal; font-weight: 850; letter-spacing: .03em; text-transform: uppercase; }
 .timelineEventMeta { color: var(--color-muted); font-size: 12px; line-height: 1.4; }
 .timelinePlaceLabel { color: var(--color-ink); text-decoration: underline; text-decoration-color: var(--color-border); text-underline-offset: 3px; }
@@ -508,12 +519,17 @@
 .timelineScroller[data-focus-active="true"] .timelineYear > h3 { opacity: .45; }
 .timelineScroller[data-focus-active="true"] .timelineYear[data-contains-focus="true"] > h3 { opacity: 0; transform: translateX(-8px); }
 .timelineScroller[data-focus-active="true"] .timelineMonth li[data-timeline-dimmed="true"] { opacity: .46; }
-.timelineMonth li[data-timeline-focused="true"] { --timeline-focus-duration: 350ms; z-index: 9; width: calc(100% + var(--timeline-chronology-width)); margin-left: calc(-1 * var(--timeline-chronology-width)); border-color: rgb(46 83 69 / .14); border-radius: 14px; background: var(--color-surface); opacity: 1; box-shadow: 0 12px 30px rgb(42 47 43 / .09); }
+.timelineMonth li[data-timeline-focused="true"] { --timeline-focus-duration: 350ms; z-index: 9; width: calc(100% + var(--timeline-chronology-width)); margin-left: calc(-1 * var(--timeline-chronology-width)); border-color: var(--event-accent-border); border-radius: 14px; background: var(--event-accent-wash); opacity: 1; box-shadow: 0 12px 30px rgb(42 47 43 / .085), 0 3px 13px var(--event-accent-glow); }
 .timelineMonth li[data-timeline-focused="true"]::before { opacity: 0; }
-.timelineMonth li[data-timeline-focused="true"] > button { grid-template-columns: 0 0 minmax(0, 3fr) minmax(0, 2fr) 18px; padding: 18px 20px 14px; background: var(--color-surface); }
+.timelineMonth li[data-timeline-focused="true"]::after { animation: timelineSegmentAbsorb 210ms cubic-bezier(.2, .8, .2, 1) both; }
+.timelineMonth li[data-timeline-focused="true"] > button { grid-template-columns: 0 0 minmax(0, 3fr) minmax(0, 2fr) 18px; padding: 18px 20px 14px; background: transparent; }
 .timelineMonth li[data-timeline-focused="true"] .timelineDay { opacity: 0; transform: translateX(-8px); }
-.timelineMonth li[data-timeline-focused="true"] .timelineMarker { width: 0; border-color: transparent; opacity: 0; transform: scale(.8); }
-.timelineMonth li[data-timeline-focused="true"] .timelineComparator { margin-left: 0; padding: 18px 20px 20px; background: var(--color-surface); }
+.timelineMonth li[data-timeline-focused="true"] .timelineMarker { width: 0; border-color: transparent; animation: timelineMedallionAbsorb 210ms cubic-bezier(.2, .8, .2, 1) both; }
+.timelineMonth li[data-timeline-focused="true"] .timelineAccordion > div, .timelineMonth li[data-timeline-focused="true"] .timelineComparator { background: transparent; }
+.timelineMonth li[data-timeline-focused="true"] .timelineComparator { margin-left: 0; padding: 18px 20px 20px; }
+.timelineDistinctive .timelineMarker { box-shadow: 0 0 0 4px color-mix(in srgb, var(--event-accent) 7%, transparent), 0 4px 14px color-mix(in srgb, var(--event-accent) 10%, transparent), inset 0 0 0 1px rgb(255 255 255 / .76); }
+@keyframes timelineSegmentAbsorb { 0% { opacity: .68; transform: scaleY(.35); } 62% { opacity: .78; transform: scaleY(1); } 100% { opacity: 0; transform: scaleY(1); } }
+@keyframes timelineMedallionAbsorb { 0% { opacity: 1; transform: scale(1); } 58% { opacity: .84; transform: scale(1.01); } 100% { opacity: 0; transform: scale(.96); } }
 .timelineAccordion[data-expanded="true"] .timelineComparisonLevels { animation: timelineFocusContentIn 220ms cubic-bezier(.2, .8, .2, 1) 130ms both; }
 .timelineAccordion[data-expanded="true"] .comparisonRangeTrack, .timelineAccordion[data-expanded="true"] .comparisonRangeReference { transform-origin: left center; animation: timelineRangeBuild 260ms cubic-bezier(.2, .8, .2, 1) 165ms both; }
 .timelineAccordion[data-expanded="true"] .comparisonRangePeerMarker { animation: timelineRangePointIn 190ms cubic-bezier(.2, .8, .2, 1) 205ms both; }
@@ -527,9 +543,9 @@
 .timelineLoading { display: grid; grid-template-columns: 76px minmax(0, 1fr); min-height: clamp(520px, 62vh, 680px); border-block: 1px solid var(--color-border); background: linear-gradient(90deg, rgb(46 83 69 / .025), transparent 112px), var(--color-surface); }
 .timelineLoadingYear { width: 48px; height: 24px; margin: 24px 10px; border-radius: 7px; background: var(--color-primary-soft); }
 .timelineLoadingRows { display: grid; align-content: start; }
-.timelineLoadingRow { display: grid; grid-template-columns: 34px 28px minmax(0, 1fr) minmax(190px, 280px); align-items: center; min-height: 82px; gap: 8px; border-bottom: 1px solid var(--color-border); padding: 12px 4px; }
+.timelineLoadingRow { display: grid; grid-template-columns: 34px 46px minmax(0, 1fr) minmax(190px, 280px); align-items: center; min-height: 82px; gap: 8px; border-bottom: 1px solid var(--color-border); padding: 12px 4px; }
 .timelineLoadingRow > i { grid-column: 1; width: 17px; height: 10px; justify-self: end; border-radius: 999px; background: rgb(46 83 69 / .09); }
-.timelineLoadingRow::before { grid-column: 2; width: 28px; height: 28px; border-radius: 50%; background: rgb(46 83 69 / .08); content: ""; }
+.timelineLoadingRow::before { grid-column: 2; width: 42px; height: 42px; justify-self: center; border-radius: 50%; background: rgb(46 83 69 / .08); content: ""; }
 .timelineLoadingRow > span { display: grid; grid-column: 3; gap: 8px; }
 .timelineLoadingRow b, .timelineLoadingRow small, .timelineLoadingRow > em, .timelineComparatorLoadingTrack, .timelineComparatorLoadingLegend i { display: block; border-radius: 999px; background: linear-gradient(100deg, rgb(46 83 69 / .07) 20%, rgb(255 255 255 / .78) 40%, rgb(46 83 69 / .07) 60%); background-size: 200% 100%; animation: timelineShimmer 1.35s ease-in-out infinite; }
 .timelineLoadingRow b { width: 54%; height: 13px; }
@@ -542,8 +558,7 @@
 .timelineComparatorLoadingLegend { display: flex; gap: 18px; }
 .timelineComparatorLoadingLegend i { width: 92px; height: 10px; }
 @keyframes timelineShimmer { to { background-position: -200% 0; } }
-.timelineDistinctive { border-left: 3px solid var(--color-primary-deep); }
-.timelineDistinctive::before { left: 50px !important; }
+.timelineDistinctive { border-left: 0; }
 .timelineStatus, .timelineEmpty { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 120px; border-block: 1px solid var(--color-border); padding: 18px; color: var(--color-muted); }
 .timelineStatus button { border: 0; padding: 7px 0; background: transparent; color: var(--color-primary-deep); font-weight: 800; cursor: pointer; }
 .timelineEmpty { margin: 0; }
@@ -638,19 +653,19 @@
   .timelineYear { --timeline-chronology-width: 0px; grid-template-columns: 1fr; gap: 0; }
   .timelineYear > h3 { position: static; margin: 18px 4px 6px; }
   .timelineModuleHeader { align-items: flex-start; }
-  .timelineMonth li > button, .timelineMonth li > article { grid-template-columns: 28px 28px minmax(0, 1fr) auto; }
-  .timelineMonth li[data-has-expenses="false"] > button, .timelineMonth li[data-has-expenses="false"] > article { grid-template-columns: 28px 28px minmax(0, 1fr); }
+  .timelineMonth li { --timeline-node-center: 60px; }
+  .timelineMonth li > button, .timelineMonth li > article { grid-template-columns: 28px 40px minmax(0, 1fr) auto; }
+  .timelineMonth li[data-has-expenses="false"] > button, .timelineMonth li[data-has-expenses="false"] > article { grid-template-columns: 28px 40px minmax(0, 1fr); }
+  .timelineMarker { width: 38px; height: 38px; }
   .timelineMonth li[data-timeline-focused="true"] > button { grid-template-columns: 0 0 minmax(0, 1fr) 18px; padding-inline: 14px; }
   .timelineExpensePreview { grid-column: 3 / 5; grid-row: 2; max-height: 54px; margin-top: 6px; }
   .timelineChevron { grid-column: 4; grid-row: 1; }
-  .timelineMonth li::before { left: 43px; }
-  .timelineDistinctive::before { left: 40px !important; }
   .timelineLoading { grid-template-columns: 1fr; min-height: 64dvh; }
   .timelineLoadingYear { margin: 18px 4px 6px; }
   .timelineLoadingRows { grid-column: 1; }
-  .timelineLoadingRow { grid-template-columns: 28px 28px minmax(0, 1fr); padding-left: 24px; }
+  .timelineLoadingRow { grid-template-columns: 28px 40px minmax(0, 1fr); padding-left: 24px; }
   .timelineLoadingRow > i { grid-column: 1; }
-  .timelineLoadingRow::before { grid-column: 2; }
+  .timelineLoadingRow::before { grid-column: 2; width: 38px; height: 38px; }
   .timelineLoadingRow > span { grid-column: 3; }
   .timelineLoadingRow > em { display: none; }
   .timelineExpenseList { grid-template-columns: 1fr; }

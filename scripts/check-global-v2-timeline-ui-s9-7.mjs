@@ -1,0 +1,47 @@
+import assert from "node:assert/strict";
+import fs from "node:fs";
+import path from "node:path";
+import { TIMELINE_FAMILY_VISUALS, timelineSemanticVisual } from "../src/features/global-v2/timeline-semantic-visuals.ts";
+
+const root = process.cwd();
+const timeline = fs.readFileSync(path.join(root, "src/features/global-v2/life-timeline.tsx"), "utf8");
+const visuals = fs.readFileSync(path.join(root, "src/features/global-v2/timeline-semantic-visuals.ts"), "utf8");
+const css = fs.readFileSync(path.join(root, "src/features/global-v2/global-v2.module.css"), "utf8");
+const range = fs.readFileSync(path.join(root, "src/features/global-v2/comparison-range.tsx"), "utf8");
+const card = timeline.slice(timeline.indexOf("function TimelineV2EventRow"), timeline.indexOf("function TimelineEventRow"));
+let checks = 0;
+const check = (run) => { run(); checks += 1; };
+
+check(() => assert.equal(Object.keys(TIMELINE_FAMILY_VISUALS).length, 7));
+check(() => assert.equal(timelineSemanticVisual("voyages_sejours_et_escapades"), "travel"));
+check(() => assert.equal(timelineSemanticVisual("sorties_loisirs_et_culture"), "leisure-culture"));
+check(() => assert.equal(timelineSemanticVisual("relations_fetes_et_evenements_de_vie"), "relations"));
+check(() => assert.equal(timelineSemanticVisual("projets_et_etapes_personnelles"), "projects"));
+check(() => assert.equal(timelineSemanticVisual("vie_materielle_achats_et_entretien"), "material-life"));
+check(() => assert.equal(timelineSemanticVisual("sante_et_soins_personnels"), "health"));
+check(() => assert.equal(timelineSemanticVisual("vie_professionnelle_et_demarches"), "professional"));
+check(() => assert.equal(timelineSemanticVisual("unknown-family"), "neutral"));
+check(() => assert.doesNotMatch(visuals, /label|title\.includes|canonicalName/u));
+check(() => assert.match(timeline, /data-semantic-visual=\{timelineSemanticVisual\(event\.semanticClassification\.grand\.key\)\}/u));
+check(() => assert.match(card, /timelineMarker[^\n]*<Icon size=\{19\}/u));
+check(() => assert.match(css, /--event-accent:[^;]+;[^}]*--event-accent-soft:[^;]+;[^}]*--event-accent-border:[^;]+;[^}]*--event-accent-glow:[^;]+;[^}]*--event-accent-wash:/u));
+check(() => assert.equal((css.match(/data-semantic-visual=/gu) ?? []).length, 7));
+check(() => assert.match(css, /\.timelineMarker\s*\{[^}]*width:\s*44px[^}]*height:\s*44px[^}]*border:\s*1px solid var\(--event-accent-border\)/u));
+check(() => assert.match(css, /\.timelineMarker\s*\{[^}]*background:\s*var\(--event-accent-soft\)[^}]*color:\s*var\(--event-accent\)/u));
+check(() => assert.match(css, /\.timelineMarker\s*\{[^}]*box-shadow:[^;]*var\(--event-accent-glow\)[^;]*inset/u));
+check(() => assert.match(css, /\.timelineDay\s*\{[^}]*align-self:\s*center[^}]*color:\s*color-mix\([^;]*var\(--event-accent\) 24%/u));
+check(() => assert.match(css, /\.timelineMonth li::after\s*\{[^}]*height:\s*68px[^}]*background:\s*linear-gradient\([^;]*var\(--event-accent\)/u));
+check(() => assert.match(css, /@keyframes timelineSegmentAbsorb[^}]*scaleY\(\.35\)/u));
+check(() => assert.match(css, /data-timeline-focused="true"[^}]*background:\s*var\(--event-accent-wash\)/u));
+check(() => assert.match(css, /--event-accent-wash:\s*#f(?:b|c|d)[a-f0-9]{4}/u));
+check(() => assert.match(css, /data-timeline-focused="true"[^}]*\.timelineMarker\s*\{[^}]*timelineMedallionAbsorb/u));
+check(() => assert.match(css, /data-timeline-focused="true"\]::before\s*\{[^}]*opacity:\s*0[\s\S]*data-timeline-focused="true"\]::after/u));
+check(() => assert.match(css, /\.timelineDistinctive \.timelineMarker\s*\{[^}]*box-shadow/u));
+check(() => assert.doesNotMatch(visuals, /distinctive|se_distingue/u));
+check(() => assert.match(css, /\.timelineExpensePreview\s*\{[^}]*grid-template-columns:\s*repeat\(2, minmax\(0, 1fr\)\)/u));
+check(() => assert.doesNotMatch(css.slice(css.indexOf(".timelineExpensePreview"), css.indexOf(".timelineAccordion")), /event-accent/u));
+check(() => assert.doesNotMatch(range, /comparisonRangeLegend|comparisonRangeHint|Survolez un point/u));
+check(() => assert.match(css, /@media \(prefers-reduced-motion: reduce\)[\s\S]*animation-duration:\s*\.01ms !important[\s\S]*transition-duration:\s*\.01ms !important/u));
+check(() => assert.match(timeline, /const nextRef = focusedEventRef === event\.eventRef[\s\S]*setFocusedEventRef\(nextRef\)/u));
+
+console.log(`Global V2 semantic Timeline medallions S9.7: ${checks}/${checks} PASS`);

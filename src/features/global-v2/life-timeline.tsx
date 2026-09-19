@@ -57,6 +57,7 @@ import {
   visibleTimelineComparisonLevels,
   type TimelineDensityMode,
 } from "./life-timeline-presentation";
+import { timelineSemanticVisual } from "./timeline-semantic-visuals";
 import styles from "./global-v2.module.css";
 
 type TimelineIcon = ComponentType<{ readonly size?: number; readonly "aria-hidden"?: boolean }>;
@@ -421,7 +422,7 @@ function TimelineV2EventRow({ event, runtime, focusRequest, expanded, focused, f
   }, [canExpand, focused]);
   const content = <>
     <time className={styles.timelineDay} dateTime={event.startDate}>{dayFormatter.format(timelineDate(event.startDate))}</time>
-    <span className={styles.timelineMarker} aria-hidden><Icon size={16} aria-hidden /></span>
+    <span className={styles.timelineMarker} aria-hidden><Icon size={19} aria-hidden /></span>
     <span className={styles.timelineEventBody}>
       <span className={styles.timelineEventHeading}><strong>{event.canonicalName}</strong>{distinctive ? <em>Se distingue</em> : null}</span>
       <span className={styles.timelineEventMeta}>{event.primaryPlaceLabel === undefined ? null : <><span className={styles.timelinePlaceLabel}>{event.primaryPlaceLabel}</span><span aria-hidden> · </span></>}<span>{event.semanticClassification.close.label}</span></span>
@@ -438,6 +439,8 @@ function TimelineV2EventRow({ event, runtime, focusRequest, expanded, focused, f
     className={distinctive ? styles.timelineDistinctive : undefined}
     data-source-kind={event.sourceKind}
     data-semantic-close={event.semanticClassification.close.key}
+    data-semantic-visual={timelineSemanticVisual(event.semanticClassification.grand.key)}
+    data-distinctive={distinctive}
     data-visibility-tier={event.visibilityTier}
     data-has-expenses={expenseRows.length > 0}
     data-expanded={canExpand && expanded}
