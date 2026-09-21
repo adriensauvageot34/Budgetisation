@@ -75,7 +75,8 @@ type SemanticPresentation = {
   readonly resolveTitle?: (semanticKey: string) => string | undefined;
   readonly description: string;
   readonly icon: PersonaPresentationIcon;
-  readonly editorialGroup: PersonaEditorialGroup;
+  readonly editorialGroup?: PersonaEditorialGroup;
+  readonly resolveEditorialGroup?: (semanticKey: string) => PersonaEditorialGroup | undefined;
   readonly renderer: PersonaRenderer;
   readonly metricsPolicy: readonly string[];
   readonly childrenStrategy: PersonaChildrenStrategy;
@@ -90,6 +91,21 @@ const rhythmMetrics = Object.freeze(["occurrenceCount", "medianIntervalDays", "m
 const mobilityMetrics = Object.freeze(["directCost", "distanceKm"] as const);
 const projectMetrics = Object.freeze(["observedAmount", "committedAmount"] as const);
 const productMetrics = Object.freeze(["typicalPrice", "occurrenceCount", "medianGapDays", "firstObservedDate", "lastObservedDate"] as const);
+const dailyActivityIds = new Set<LifeEventActivityTypeKey>(["travail_site", "teletravail", "journee_maison"]);
+
+function activityIdFromSemanticKey(semanticKey: string): LifeEventActivityTypeKey {
+  return semanticKey.slice("activity:".length) as LifeEventActivityTypeKey;
+}
+
+function activityEditorialGroup(semanticKey: string): PersonaEditorialGroup | undefined {
+  const activityId = activityIdFromSemanticKey(semanticKey);
+  if (LIFE_EVENT_ACTIVITY_CATALOG[activityId] === undefined) return undefined;
+  return dailyActivityIds.has(activityId) ? "DAILY_RHYTHM" : "RECURRING_LIFE";
+}
+
+function normalizedEditorialTitle(title: string): string {
+  return title.normalize("NFKC").trim().toLocaleLowerCase("fr-FR");
+}
 
 /** Exact semantic registry. It labels available traits; it never decides that a trait exists. */
 export const PERSONA_SEMANTIC_PRESENTATION_REGISTRY_V1: Readonly<Record<string, SemanticPresentation>> = Object.freeze({
@@ -139,10 +155,10 @@ export const PERSONA_SEMANTIC_PATTERN_REGISTRY_V1: readonly SemanticPatternPrese
   },
   {
     matches: (key) => key.startsWith("activity:"), resolveTitle: (key) => {
-      const activityId = key.slice("activity:".length) as LifeEventActivityTypeKey;
+      const activityId = activityIdFromSemanticKey(key);
       return LIFE_EVENT_ACTIVITY_CATALOG[activityId]?.publicLabel;
     }, description: "Une activité qui revient régulièrement dans le quotidien.",
-    icon: "RHYTHM", editorialGroup: "DAILY_RHYTHM", renderer: "RHYTHM", metricsPolicy: rhythmMetrics,
+    icon: "RHYTHM", resolveEditorialGroup: activityEditorialGroup, renderer: "RHYTHM", metricsPolicy: rhythmMetrics,
     childrenStrategy: "NONE", temporalTreatment: "STATUS", portraitMarker: true, requiresUsefulMetric: true,
   },
   {
@@ -152,12 +168,12 @@ export const PERSONA_SEMANTIC_PATTERN_REGISTRY_V1: readonly SemanticPatternPrese
   },
 ]);
 
-type ChildPresentation = { readonly matches: (semanticKey: string) => boolean; readonly title: string };
+type ChildPresentation = { readonly matches: (semanticKey: string) => boolean; readonly title: string; readonly hideWhenExamplesPresent?: boolean };
 const childPresentationRegistry: readonly ChildPresentation[] = Object.freeze([
   { matches: (key) => key.startsWith("creative.photo."), title: "Photo" },
   { matches: (key) => key.startsWith("creative.music."), title: "Musique" },
   { matches: (key) => key.startsWith("creative.home_studio."), title: "Home studio" },
-  { matches: (key) => key.startsWith("creative.projects."), title: "Pratiques créatives" },
+  { matches: (key) => key.startsWith("creative.projects."), title: "Pratiques créatives", hideWhenExamplesPresent: true },
   { matches: (key) => /^product-need:maquillage_.+_mascara$/u.test(key), title: "Mascara" },
   { matches: (key) => /^product-need:maquillage_.+_sourcils$/u.test(key), title: "Sourcils" },
   { matches: (key) => /^product-need:skincare_.+$/u.test(key), title: "Soin de la peau" },
@@ -178,6 +194,16 @@ const metricPresentationRegistry: readonly MetricPresentation[] = Object.freeze(
   { metricKey: "firstObservedDate", label: "Première observation", format: "DATE" },
   { metricKey: "lastObservedDate", label: "Dernière observation", format: "DATE" },
 ]);
+const personaDateFormatter = new Intl.DateTimeFormat("fr-FR", { day: "numeric", month: "short", year: "numeric", timeZone: "UTC" });
+
+export function formatPersonaDate(value: string): string {
+  const match = /^(\d{4})-(\d{2})-(\d{2})$/u.exec(value);
+  if (match === null) return value;
+  const year = Number(match[1]), month = Number(match[2]), day = Number(match[3]);
+  const date = new Date(Date.UTC(year, month - 1, day));
+  if (date.getUTCFullYear() !== year || date.getUTCMonth() !== month - 1 || date.getUTCDate() !== day) return value;
+  return personaDateFormatter.format(date);
+}
 
 function presentValue(value: PersonaMetricValue | undefined): PersonaMetricValue | undefined {
   if (typeof value === "number") return Number.isFinite(value) ? value : undefined;
@@ -217,12 +243,12 @@ function semanticPresentation(semanticKey: string): SemanticPresentation | undef
     ?? PERSONA_SEMANTIC_PATTERN_REGISTRY_V1.find((entry) => entry.matches(semanticKey));
 }
 
-function presentChild(child: PersonaTraitChild): PersonaPresentationChild | undefined {
-  const title = childPresentationRegistry.find((entry) => entry.matches(child.semanticKey))?.title;
-  if (title === undefined) return undefined;
+function presentChild(child: PersonaTraitChild, hasExamples: boolean): PersonaPresentationChild | undefined {
+  const presentation = childPresentationRegistry.find((entry) => entry.matches(child.semanticKey));
+  if (presentation === undefined || hasExamples && presentation.hideWhenExamplesPresent === true) return undefined;
   const statusLabel = personaTemporalStatusLabel(child.temporalStatus);
   return {
-    traitId: child.traitId, semanticKey: child.semanticKey, title,
+    traitId: child.traitId, semanticKey: child.semanticKey, title: presentation.title,
     ...(statusLabel === undefined ? {} : { statusLabel }),
     metrics: presentationMetrics(child.metrics, productMetrics),
   };
@@ -243,20 +269,24 @@ export function presentPersonaTrait(trait: PersonaTrait, engineRank: number): Pe
   if (semantic === undefined) return undefined;
   const title = semantic.resolveTitle?.(trait.semanticKey) ?? semantic.title;
   if (title === undefined) return undefined;
+  const editorialGroup = semantic.resolveEditorialGroup?.(trait.semanticKey) ?? semantic.editorialGroup;
+  if (editorialGroup === undefined) return undefined;
   const metrics = presentationMetrics(trait.metrics, semantic.metricsPolicy);
   if (semantic.requiresUsefulMetric === true && metrics.length === 0) return undefined;
   const statusLabel = semantic.temporalTreatment === "NONE" ? undefined : personaTemporalStatusLabel(trait.temporalStatus);
+  const examples = presentationExamples(trait, semantic);
+  const exampleTitles = new Set(examples.map(normalizedEditorialTitle));
   const children = semantic.childrenStrategy === "KNOWN_CHILDREN"
     ? (trait.children ?? []).flatMap((child) => {
-      const presented = presentChild(child);
-      return presented === undefined ? [] : [presented];
+      const presented = presentChild(child, examples.length > 0);
+      return presented === undefined || exampleTitles.has(normalizedEditorialTitle(presented.title)) ? [] : [presented];
     })
     : [];
   return {
     traitId: trait.traitId, semanticKey: trait.semanticKey, renderer: semantic.renderer, icon: semantic.icon,
-    editorialGroup: semantic.editorialGroup, title, description: semantic.description, engineRank, portraitMarker: semantic.portraitMarker,
+    editorialGroup, title, description: semantic.description, engineRank, portraitMarker: semantic.portraitMarker,
     ...(statusLabel === undefined ? {} : { statusLabel }), metrics,
-    examples: presentationExamples(trait, semantic), children,
+    examples, children,
   };
 }
 
@@ -284,7 +314,7 @@ function composeProfile(profile: PersonaProfile, displayName: string | undefined
   for (const [engineRank, trait] of profile.featuredTraits.entries()) {
     const block = presentPersonaTrait(trait, engineRank);
     if (block === undefined) continue;
-    const markerIdentity = `${block.icon}:${block.title.normalize("NFKC").trim().toLocaleLowerCase("fr-FR")}`;
+    const markerIdentity = `${block.icon}:${normalizedEditorialTitle(block.title)}`;
     if (block.portraitMarker && markers.length < 4 && !markerIdentities.has(markerIdentity)) {
       markers.push({ traitId: block.traitId, title: block.title, icon: block.icon, engineRank });
       markerIdentities.add(markerIdentity);

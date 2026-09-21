@@ -393,9 +393,9 @@
 .personaPersonHeader span { color: var(--color-muted); font-size: 9px; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; }
 .personaPersonHeader h4 { margin: 0; font-family: var(--font-serif, Georgia, serif); font-size: clamp(24px, 3vw, 32px); font-weight: 570; letter-spacing: -.025em; }
 .personaMarkers { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 9px; margin: 0; padding: 0; list-style: none; }
-.personaMarker { display: grid; min-height: 54px; grid-template-columns: 38px minmax(0, 1fr); align-items: center; gap: 9px; border-radius: 12px; padding: 7px 10px 7px 7px; background: rgb(232 237 229 / .74); color: var(--color-primary-deep); }
-.personaMarker > span { display: grid; width: 38px; height: 38px; place-items: center; border-radius: 10px; background: rgb(255 255 255 / .7); color: var(--color-primary); }
-.personaMarker strong { font-size: 12px; line-height: 1.25; }
+.personaMarker { display: grid; min-height: 52px; grid-template-columns: 42px minmax(0, 1fr); align-items: center; gap: 9px; border-radius: 9px; padding: 5px 6px; background: rgb(232 237 229 / .26); color: var(--color-primary-deep); }
+.personaMarker > span { display: grid; width: 42px; height: 42px; place-items: center; border-radius: 50%; background: rgb(226 234 222 / .78); color: var(--color-primary); }
+.personaMarker strong { font-size: 12.5px; line-height: 1.25; }
 .personaEditorialColumn > h4 { margin: 0 0 13px; color: #88775d; font-size: 12px; font-weight: 820; letter-spacing: .04em; }
 .personaEditorialBlocks { display: grid; align-content: start; gap: 12px; }
 .personaEditorialSection[data-persona-section="dailyRhythms"] .personaEditorialBlocks { gap: 0; }

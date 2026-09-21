@@ -57,6 +57,11 @@ const rhythmAdrien = trait("rhythm-a", "routine:work-meal", "ROUTINE", adrien, {
 const workSite = trait("work-site", "activity:travail_site", "ROUTINE", adrien, { metrics: { occurrenceCount: 115, medianIntervalDays: 2 } });
 const remoteWork = trait("remote-work", "activity:teletravail", "ROUTINE", manon, { metrics: { occurrenceCount: 24 } });
 const familyVisit = trait("family-visit", "activity:visite_famille", "ROUTINE", manon, { metrics: { occurrenceCount: 8 } });
+const groceries = trait("groceries", "activity:courses_alimentaires", "ROUTINE", adrien, { metrics: { occurrenceCount: 15 } });
+const pharmacy = trait("pharmacy", "activity:pharmacie", "ROUTINE", adrien, { metrics: { occurrenceCount: 4 } });
+const restaurant = trait("restaurant", "activity:repas_restaurant", "ROUTINE", manon, { metrics: { occurrenceCount: 11 } });
+const friendVisit = trait("friend-visit", "activity:visite_ami", "ROUTINE", manon, { metrics: { occurrenceCount: 6 } });
+const professionalTrip = trait("professional-trip", "activity:deplacement_pro", "ROUTINE", manon, { metrics: { occurrenceCount: 5 } });
 const unknownActivity = trait("unknown-activity", "activity:unknown_activity", "ROUTINE", adrien, { metrics: { occurrenceCount: 99 } });
 
 const beauty = trait("beauty-parent", "universe.beauty_and_care", "UNIVERSE", manon, {
@@ -107,12 +112,22 @@ check(() => assert.equal(presentation.presentPersonaTrait(unknownActivity, 0), u
 check(() => assert.equal(blocks(adrienProfile).some(({ title }) => title === "Activité récurrente"), false));
 check(() => assert.equal(blocks(manonProfile).some(({ title }) => title === "Activité récurrente"), false));
 
+// Activity groups are semantic and person-agnostic.
+check(() => assert.equal(presentation.presentPersonaTrait(groceries, 0)?.editorialGroup, "RECURRING_LIFE"));
+check(() => assert.equal(presentation.presentPersonaTrait(pharmacy, 0)?.editorialGroup, "RECURRING_LIFE"));
+check(() => assert.equal(presentation.presentPersonaTrait(restaurant, 0)?.editorialGroup, "RECURRING_LIFE"));
+check(() => assert.equal(presentation.presentPersonaTrait(friendVisit, 0)?.editorialGroup, "RECURRING_LIFE"));
+check(() => assert.equal(presentation.presentPersonaTrait(professionalTrip, 0)?.editorialGroup, "RECURRING_LIFE"));
+check(() => assert.equal(presentation.presentPersonaTrait(workSite, 0)?.editorialGroup, "DAILY_RHYTHM"));
+check(() => assert.equal(presentation.presentPersonaTrait(remoteWork, 0)?.editorialGroup, "DAILY_RHYTHM"));
+check(() => assert.equal(presentation.presentPersonaTrait(rhythmAdrien, 0)?.editorialGroup, "DAILY_RHYTHM"));
+
 // D: one creative block aggregates its known examples and children.
 check(() => assert.equal(adrienProfile.phasedProjects[0].renderer, "CREATIVE_UNIVERSE"));
 check(() => assert.equal(adrienProfile.phasedProjects[0].title, "Projets créatifs"));
 check(() => assert.deepEqual(adrienProfile.phasedProjects[0].examples, ["Home studio", "Musique", "Photo"]));
-check(() => assert.deepEqual(adrienProfile.phasedProjects[0].children.map(({ title }) => title), ["Photo", "Pratiques créatives"]));
-check(() => assert.equal(adrienProfile.phasedProjects[0].children[0].statusLabel, "En cours"));
+check(() => assert.deepEqual(adrienProfile.phasedProjects[0].children.map(({ title }) => title), []));
+check(() => assert.equal(adrienProfile.phasedProjects[0].children.some(({ title }) => adrienProfile.phasedProjects[0].examples.includes(title)), false));
 
 // E-F: Beauty is one block; known children stay compact within it.
 check(() => assert.equal(manonProfile.recurringLife.length, 1));
@@ -165,6 +180,8 @@ check(() => assert.deepEqual(adrienProfile.phasedProjects.map(({ engineRank }) =
 
 check(() => assert.equal(presentation.personaTemporalStatusLabel("HISTORICAL"), "Utilisé auparavant"));
 check(() => assert.equal(presentation.personaTemporalStatusLabel("STABLE"), undefined));
+check(() => assert.equal(presentation.formatPersonaDate("2025-07-31"), "31 juil. 2025"));
+check(() => assert.equal(presentation.formatPersonaDate("not-a-date"), "not-a-date"));
 check(() => assert.equal(presentation.buildPersonaPresentationModel(expanded([], { profile: undefined })).profiles.length, 0));
 check(() => assert.equal(presentation.buildPersonaPresentationModel(expanded([], { sectionKey: "PATTERNS" })).profiles.length, 0));
 check(() => assert.equal(presentation.PERSONA_SEMANTIC_PRESENTATION_REGISTRY_V1["universe.beauty_and_care"].editorialGroup, "RECURRING_LIFE"));
@@ -184,6 +201,8 @@ check(() => assert.match(source, /editorialGroup[\s\S]*renderer[\s\S]*metricsPol
 check(() => assert.match(source, /markers\.length < 4/u));
 check(() => assert.match(source, /markerIdentities\.has\(markerIdentity\)/u));
 check(() => assert.doesNotMatch(source, /title:\s*"Activité récurrente"/u));
+check(() => assert.match(source, /dailyActivityIds[\s\S]*travail_site[\s\S]*teletravail[\s\S]*journee_maison/u));
+check(() => assert.match(source, /exampleTitles\.has\(normalizedEditorialTitle\(presented\.title\)\)/u));
 check(() => assert.match(viewSource, /Portraits express[\s\S]*Vos rythmes du quotidien[\s\S]*Ce qui revient chez chacun[\s\S]*Ce qui vit par phases/u));
 check(() => assert.match(viewSource, /<h2 id=\{headingId\}>Nos profils<\/h2>[\s\S]*Deux quotidiens, deux façons de dépenser/u));
 check(() => assert.match(viewSource, /presentation\.profiles\.slice\(0, 2\)/u));
@@ -198,6 +217,7 @@ check(() => assert.doesNotMatch(pageSource, /Aucune différence nette à mettre 
 check(() => assert.match(cssSource, /\.personaEditorialColumns\s*\{[^}]*grid-template-columns:\s*repeat\(2/u));
 check(() => assert.match(cssSource, /\.personaMarker\s*\{/u));
 check(() => assert.match(cssSource, /\.personaMarkers\s*\{[^}]*grid-template-columns:\s*repeat\(2/u));
+check(() => assert.match(cssSource, /\.personaMarker\s*\{[^}]*background:\s*rgb\(232 237 229 \/ \.26\)/u));
 check(() => assert.match(cssSource, /data-persona-section="dailyRhythms"[\s\S]*data-persona-renderer="RHYTHM"/u));
 check(() => assert.match(viewSource, /data-persona-layout=\{visibleProfiles\.length === 1 \? "single" : "paired"\}/u));
 check(() => assert.match(cssSource, /data-persona-section="phasedProjects"[\s\S]*data-persona-layout="single"[\s\S]*64%/u));

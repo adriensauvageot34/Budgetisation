@@ -1,5 +1,5 @@
 import { BadgeCheck, BriefcaseBusiness, Clock3, Heart, Sparkles, WandSparkles, type LucideIcon } from "lucide-react";
-import type { PersonaPortraitMarker, PersonaPresentationBlock, PersonaPresentationIcon, PersonaPresentationMetric } from "./persona-presentation";
+import { formatPersonaDate, type PersonaPortraitMarker, type PersonaPresentationBlock, type PersonaPresentationIcon, type PersonaPresentationMetric } from "./persona-presentation";
 import styles from "../global-v2.module.css";
 
 const numberFormatter = new Intl.NumberFormat("fr-FR", { maximumFractionDigits: 2 });
@@ -20,7 +20,7 @@ function numericMetricValue(metric: PersonaPresentationMetric): number | undefin
 }
 
 function formatPersonaMetric(metric: PersonaPresentationMetric): string {
-  if (metric.format === "DATE") return String(metric.value);
+  if (metric.format === "DATE") return formatPersonaDate(String(metric.value));
   const value = numericMetricValue(metric);
   if (value === undefined) return String(metric.value);
   if (metric.format === "MONEY_EUR") return moneyFormatter.format(value);
@@ -36,7 +36,7 @@ function PersonaMetrics({ metrics }: { readonly metrics: readonly PersonaPresent
 
 export function PersonaMarker({ marker }: { readonly marker: PersonaPortraitMarker }) {
   const Icon = iconByPresentation[marker.icon];
-  return <li className={styles.personaMarker}><span aria-hidden="true"><Icon size={20} strokeWidth={1.7} /></span><strong>{marker.title}</strong></li>;
+  return <li className={styles.personaMarker}><span aria-hidden="true"><Icon size={22} strokeWidth={1.65} /></span><strong>{marker.title}</strong></li>;
 }
 
 export function PersonaEditorialBlock({ block }: { readonly block: PersonaPresentationBlock }) {
