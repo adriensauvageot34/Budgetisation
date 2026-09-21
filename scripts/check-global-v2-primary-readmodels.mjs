@@ -58,6 +58,22 @@ const candidate = (id, moduleKey, score, overrides = {}) => ({
 const quality = { knowledgeState: "KNOWN", supportStatus: "SUFFICIENT", effectiveCoverage: 1, dataNature: "OBSERVED", limitationCodes: [], evidenceRefs: ["evidence:module"] };
 const capability = { capabilityId: "module", state: "AVAILABLE", reasonCodes: [] };
 const detail = { entryId: "detail", labelKey: "detail.label", targetResource: "analysis_global_detail", targetRef: "target:1" };
+const personaProfile = analytics.buildPersonaProfile({ signals: [{
+  signalId: "read-model:declared-project",
+  signalType: "DECLARED",
+  semanticKey: "creative.photo.read-model",
+  subject: { kind: "PERSON", personId: "00000000-0000-4000-8000-000000000001" },
+  scope: "PERSONAL",
+  action: "AFFIRM",
+  value: true,
+  kind: "PROJECT",
+  family: "LEISURE_AND_ACTIVITIES",
+  authority: "USER_VALIDATED",
+  temporalStatus: "PROJECT",
+  sourceModule: "DECLARED_V1",
+  evidenceRefs: ["declaration:photo-project"],
+  limitations: ["RUNTIME_ACTIVITY_SUPPORT_PARTIAL"],
+}] });
 
 // Publication hard gates remain upstream and opportunistic insights never get placeholders.
 const publicationEngine = new analytics.GlobalPublicationEngine();
@@ -127,6 +143,15 @@ check(() => assert.equal(modules[1].kpis.length, 1));
 check(() => assert.equal(modules[3].placeholder.messageKey, "global.placeholder.insufficient_support"));
 check(() => assert.equal(modules[0].quality.knowledgeState, "PARTIAL"));
 check(() => assert.equal(modules[0].quality.partialMeaning, "OBSERVED_ONLY"));
+const personaExpanded = query.buildGlobalExpandedReadModel({
+  kind: "global_expanded", schemaVersion: "global-expanded@v1", resource: "analysis_global_personas_expanded", moduleKey: "PERSONAS", sectionKey: "OVERVIEW", visibility: "VISIBLE",
+  secondaryInsights: [], metrics: [], series: [], rows: [], destinations: [], profile: personaProfile,
+  quality, capabilities: [{ ...capability, capabilityId: "GLOBAL_PERSONAS" }], publicationMeta, resourceMeta: resourceMeta(50),
+});
+check(() => assert.deepEqual(personaExpanded.profile, personaProfile));
+check(() => assert.equal(personaExpanded.profile.profiles[0].featuredTraits[0].explanation.evidenceRefs[0], "declaration:photo-project"));
+check(() => assert.ok(Buffer.byteLength(JSON.stringify(personaExpanded), "utf8") <= query.GLOBAL_EXPANDED_PAYLOAD_BUDGET_BYTES));
+rejects(() => query.buildGlobalExpandedReadModel({ ...personaExpanded, resource: "analysis_global_together_expanded", moduleKey: "TOGETHER" }), /PERSONA_PROFILE_RESOURCE_MISMATCH/);
 const transportSchema = query.createGlobalReadModelTransportSchema(query.parseGlobalModuleCompactReadModel);
 check(() => assert.equal(transportSchema.parse({ status: "READY", data: modules[0] }).data.quality.knowledgeState, "PARTIAL"));
 check(() => assert.equal(transportSchema.parse({ status: "ERROR", errorCode: "NETWORK", previousData: modules[0] }).previousData.visibility, "VISIBLE"));

@@ -26,6 +26,22 @@ import { parseGlobalPhenomenonQuality, parseGlobalTypedMeasure } from "./typed-v
 import { globalPrimaryModuleCatalog } from "./types";
 import type { DataStatus, PartialMeaning } from "../../core/history-v2";
 import type { GlobalPublicationQualification, GlobalPublicationReasonCode, GlobalPublicationVisibility } from "../../analytics/global-v2/publication";
+import { globalPersonaFamilyCatalog } from "../../analytics/global-v2/persona";
+import {
+  personaClaimDimensionCatalog,
+  personaScopeCatalog,
+  personaTraitKindCatalog,
+  type PersonaAuthority,
+  type PersonaKnowledgeStatus,
+  type PersonaProfile,
+  type PersonaProfileOutput,
+  type PersonaScope,
+  type PersonaTemporalStatus,
+  type PersonaTrait,
+  type PersonaTraitChild,
+  type PersonaTraitExplanation,
+  type PersonaTraitSelection,
+} from "../../analytics/global-v2/persona-signals";
 
 const moduleKeys = new Set(globalPrimaryModuleCatalog.map(({ moduleKey }) => moduleKey));
 const resources = new Set(globalPrimaryModuleCatalog.map(({ resource }) => resource));
@@ -44,6 +60,13 @@ const reasonValues: ReadonlySet<GlobalPublicationReasonCode> = new Set([
 ]);
 const HASH = /^[0-9a-f]{64}$/u;
 const INSTANT = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}/u;
+const personaAuthorities = new Set<PersonaAuthority>(["USER_VALIDATED", "CANONICAL_DB", "OBSERVED", "DERIVED"]);
+const personaKnowledgeStatuses = new Set<PersonaKnowledgeStatus>(["OBSERVED", "DERIVED", "USER_VALIDATED", "TO_CONFIRM"]);
+const personaTemporalStatuses = new Set<PersonaTemporalStatus>(["STABLE", "EMERGING", "HISTORICAL", "PROJECT", "CHANGED", "UNKNOWN"]);
+const personaScopes = new Set<PersonaScope>(personaScopeCatalog);
+const personaKinds = new Set(personaTraitKindCatalog);
+const personaDimensions = new Set(personaClaimDimensionCatalog);
+const personaFamilies = new Set(globalPersonaFamilyCatalog);
 
 function text(value: unknown, label: string): string {
   if (typeof value !== "string" || value.trim().length === 0) throw new TypeError(`${label}_INVALID`);
@@ -76,6 +99,132 @@ function strings(value: unknown, label: string): readonly string[] {
 
 function optional<T>(record: Readonly<Record<string, unknown>>, key: string, parse: (value: unknown) => T): T | undefined {
   return hasOwn(record, key) ? parse(record[key]) : undefined;
+}
+
+function personaList<T extends string>(value: unknown, allowed: ReadonlySet<string>, label: string): readonly T[] {
+  const result = array(value, (entry) => parseStringLiteral<T>(entry, allowed, label), label);
+  if (new Set(result).size !== result.length) throw new TypeError(`${label}_DUPLICATE`);
+  return result;
+}
+
+function personaStrings(value: unknown, label: string): readonly string[] {
+  const result = array(value, (entry) => text(entry, label), label);
+  if (new Set(result).size !== result.length) throw new TypeError(`${label}_DUPLICATE`);
+  return result;
+}
+
+function parsePersonaMetrics(value: unknown): Readonly<Record<string, string | number>> {
+  const keys = typeof value === "object" && value !== null && !Array.isArray(value) ? Object.keys(value) : [];
+  const record = parseStrictRecord(value, keys, "PersonaMetrics");
+  for (const [key, metric] of Object.entries(record)) {
+    if (key.trim().length === 0 || typeof metric !== "string" && (typeof metric !== "number" || !Number.isFinite(metric))) {
+      throw new TypeError("PERSONA_METRIC_INVALID");
+    }
+  }
+  return record as Readonly<Record<string, string | number>>;
+}
+
+function validatePersonaSubject(value: unknown, scope: PersonaScope): void {
+  const record = parseStrictRecord(value, ["kind", "personId", "personIds", "householdId"], "PersonaSubject");
+  const kind = parseStringLiteral(requireProperty(record, "kind", "PersonaSubject"), new Set(["PERSON", "SHARED", "HOUSEHOLD"]), "PersonaSubject.kind");
+  if (scope === "PERSONAL") {
+    if (kind !== "PERSON") throw new TypeError("PERSONA_SUBJECT_SCOPE_MISMATCH");
+    text(requireProperty(record, "personId", "PersonaSubject"), "personId");
+  } else if (scope === "SHARED") {
+    if (kind !== "SHARED") throw new TypeError("PERSONA_SUBJECT_SCOPE_MISMATCH");
+    const personIds = optional(record, "personIds", (entry) => array(entry, (personId) => text(personId, "personId"), "personIds"));
+    if (personIds !== undefined && (personIds.length !== 2 || new Set(personIds).size !== 2)) throw new TypeError("PERSONA_SHARED_SUBJECT_INVALID");
+  } else {
+    if (kind !== "HOUSEHOLD") throw new TypeError("PERSONA_SUBJECT_SCOPE_MISMATCH");
+    optional(record, "householdId", (entry) => text(entry, "householdId"));
+  }
+}
+
+function validatePersonaCommon(record: Readonly<Record<string, unknown>>): void {
+  parseStringLiteral(requireProperty(record, "kind", "PersonaTrait"), personaKinds, "PersonaTrait.kind");
+  parseStringLiteral(requireProperty(record, "family", "PersonaTrait"), personaFamilies, "PersonaTrait.family");
+  text(requireProperty(record, "semanticKey", "PersonaTrait"), "semanticKey");
+  optional(record, "authority", (entry) => parseStringLiteral<PersonaAuthority>(entry, personaAuthorities, "PersonaAuthority"));
+  optional(record, "authorities", (entry) => personaList<PersonaAuthority>(entry, personaAuthorities, "PersonaAuthorities"));
+  optional(record, "knowledgeStatus", (entry) => parseStringLiteral<PersonaKnowledgeStatus>(entry, personaKnowledgeStatuses, "PersonaKnowledgeStatus"));
+  optional(record, "temporalStatus", (entry) => parseStringLiteral<PersonaTemporalStatus>(entry, personaTemporalStatuses, "PersonaTemporalStatus"));
+  optional(record, "dimensions", (entry) => personaList(entry, personaDimensions, "PersonaDimensions"));
+  for (const key of ["context", "validFrom", "validTo", "groupKey", "summary"] as const) optional(record, key, (entry) => text(entry, key));
+  for (const key of ["signalRefs", "evidenceRefs", "sourceModules", "limitations", "qualifications", "needKeys"] as const) optional(record, key, (entry) => personaStrings(entry, key));
+  optional(record, "metrics", parsePersonaMetrics);
+}
+
+function parsePersonaTraitChild(value: unknown): PersonaTraitChild {
+  const record = parseStrictRecord(value, ["traitId", "semanticKey", "kind", "family", "temporalStatus", "authorities", "sourceModules", "evidenceRefs", "limitations", "metrics"], "PersonaTraitChild");
+  text(requireProperty(record, "traitId", "PersonaTraitChild"), "traitId");
+  text(requireProperty(record, "semanticKey", "PersonaTraitChild"), "semanticKey");
+  parseStringLiteral(requireProperty(record, "kind", "PersonaTraitChild"), personaKinds, "PersonaTraitChild.kind");
+  parseStringLiteral(requireProperty(record, "family", "PersonaTraitChild"), personaFamilies, "PersonaTraitChild.family");
+  optional(record, "temporalStatus", (entry) => parseStringLiteral<PersonaTemporalStatus>(entry, personaTemporalStatuses, "PersonaTemporalStatus"));
+  personaList(requireProperty(record, "authorities", "PersonaTraitChild"), personaAuthorities, "PersonaAuthorities");
+  for (const key of ["sourceModules", "evidenceRefs", "limitations"] as const) personaStrings(requireProperty(record, key, "PersonaTraitChild"), key);
+  optional(record, "metrics", parsePersonaMetrics);
+  return value as PersonaTraitChild;
+}
+
+function parsePersonaExplanation(value: unknown): PersonaTraitExplanation {
+  const record = parseStrictRecord(value, ["summaryCode", "reasonCodes", "authorities", "sourceModules", "signalRefs", "evidenceRefs", "limitations", "metrics", "children"], "PersonaTraitExplanation");
+  text(requireProperty(record, "summaryCode", "PersonaTraitExplanation"), "summaryCode");
+  personaStrings(requireProperty(record, "reasonCodes", "PersonaTraitExplanation"), "reasonCodes");
+  personaList(requireProperty(record, "authorities", "PersonaTraitExplanation"), personaAuthorities, "PersonaAuthorities");
+  for (const key of ["sourceModules", "signalRefs", "evidenceRefs", "limitations"] as const) personaStrings(requireProperty(record, key, "PersonaTraitExplanation"), key);
+  optional(record, "metrics", parsePersonaMetrics);
+  array(requireProperty(record, "children", "PersonaTraitExplanation"), parsePersonaTraitChild, "children");
+  return value as PersonaTraitExplanation;
+}
+
+function parsePersonaSelection(value: unknown): PersonaTraitSelection {
+  const record = parseStrictRecord(value, ["featured", "reasonCodes", "methodVersion"], "PersonaTraitSelection");
+  if (requireProperty(record, "featured", "PersonaTraitSelection") !== true) throw new TypeError("PERSONA_SELECTION_INVALID");
+  personaStrings(requireProperty(record, "reasonCodes", "PersonaTraitSelection"), "reasonCodes");
+  text(requireProperty(record, "methodVersion", "PersonaTraitSelection"), "methodVersion");
+  return value as PersonaTraitSelection;
+}
+
+function parsePersonaTrait(value: unknown): PersonaTrait {
+  const record = parseStrictRecord(value, [
+    "traitId", "subject", "scope", "kind", "family", "semanticKey", "authority", "authorities", "knowledgeStatus", "temporalStatus",
+    "dimensions", "context", "validFrom", "validTo", "signalRefs", "evidenceRefs", "sourceModules", "limitations", "qualifications",
+    "metrics", "groupKey", "needKeys", "summary", "children", "explanation", "selection",
+  ], "PersonaTrait");
+  text(requireProperty(record, "traitId", "PersonaTrait"), "traitId");
+  const scope = parseStringLiteral<PersonaScope>(requireProperty(record, "scope", "PersonaTrait"), personaScopes, "PersonaScope");
+  validatePersonaSubject(requireProperty(record, "subject", "PersonaTrait"), scope);
+  validatePersonaCommon(record);
+  optional(record, "children", (entry) => array(entry, parsePersonaTraitChild, "children"));
+  optional(record, "explanation", parsePersonaExplanation);
+  optional(record, "selection", parsePersonaSelection);
+  return value as PersonaTrait;
+}
+
+function parsePersonaProfile(value: unknown): PersonaProfile {
+  const record = parseStrictRecord(value, ["subject", "scope", "allTraits", "featuredTraits", "limitations"], "PersonaProfile");
+  const scope = parseStringLiteral<PersonaScope>(requireProperty(record, "scope", "PersonaProfile"), personaScopes, "PersonaScope");
+  validatePersonaSubject(requireProperty(record, "subject", "PersonaProfile"), scope);
+  const allTraits = array(requireProperty(record, "allTraits", "PersonaProfile"), parsePersonaTrait, "allTraits");
+  const featuredTraits = array(requireProperty(record, "featuredTraits", "PersonaProfile"), parsePersonaTrait, "featuredTraits");
+  const allIds = new Set(allTraits.map(({ traitId }) => traitId));
+  if (allIds.size !== allTraits.length || featuredTraits.some(({ traitId, explanation, selection }) => !allIds.has(traitId) || explanation === undefined || selection?.featured !== true)) {
+    throw new TypeError("PERSONA_PROFILE_TRAIT_COHERENCE_INVALID");
+  }
+  optional(record, "limitations", (entry) => personaStrings(entry, "limitations"));
+  return value as PersonaProfile;
+}
+
+export function parsePersonaProfileOutput(value: unknown): PersonaProfileOutput {
+  const record = parseStrictRecord(value, ["contractVersion", "methodVersion", "profiles", "limitations"], "PersonaProfileOutput");
+  parseStringLiteral(requireProperty(record, "contractVersion", "PersonaProfileOutput"), new Set(["v1"]), "PersonaProfileOutput.contractVersion");
+  text(requireProperty(record, "methodVersion", "PersonaProfileOutput"), "methodVersion");
+  const profiles = array(requireProperty(record, "profiles", "PersonaProfileOutput"), parsePersonaProfile, "profiles");
+  const identities = profiles.map(({ scope, subject }) => `${scope}:${JSON.stringify(subject)}`);
+  if (new Set(identities).size !== identities.length) throw new TypeError("PERSONA_PROFILE_DUPLICATE");
+  optional(record, "limitations", (entry) => personaStrings(entry, "limitations"));
+  return value as PersonaProfileOutput;
 }
 
 function parsePublicationMeta(value: unknown): GlobalReadModelPublicationMeta {

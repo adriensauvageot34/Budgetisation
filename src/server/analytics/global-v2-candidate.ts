@@ -9,6 +9,7 @@ import {
   GlobalMaterialityEngine,
   GlobalPublicationEngine,
   type GlobalPublicationDecision,
+  type PersonaProfileOutput,
   type TimelineSemanticComparatorProjection,
   type TimelineSemanticProjection,
 } from "@/analytics/global-v2";
@@ -149,6 +150,7 @@ type SectionProjection = {
   readonly componentGroups?: readonly GlobalMomentComponentGroup[];
   readonly spentDuringContext?: GlobalSpentDuringContext;
   readonly groceryRhythm?: GlobalGroceryRhythmContext;
+  readonly profile?: PersonaProfileOutput;
 };
 type ModuleProjection = {
   readonly primaryInsight?: GlobalCompactInsight;
@@ -1473,7 +1475,7 @@ function personaProjection(output: GlobalV2OwnerOutput, labels: GlobalV2Presenta
   return {
     ...(rows.length === 0 ? {} : { primaryInsight: presentationInsight(output, "neutral-persona-comparison", "Aucune différence nette à mettre en avant entre vos profils", "Les métriques descriptives restent disponibles séparément pour chaque personne, sans conclusion gagnant/perdant.") }),
     kpis: [],
-    sections: { OVERVIEW: { rows } },
+    sections: { OVERVIEW: { rows, ...(at(output.output, "profile") === undefined ? {} : { profile: at(output.output, "profile") as PersonaProfileOutput }) } },
     detailRows: rows,
   };
 }
@@ -1846,6 +1848,7 @@ export function buildGlobalV2CandidateFromOwnerOutputs(input: GlobalV2CandidateI
           series: section.series ?? [],
           rows: section.rows ?? [],
           destinations: ownerOutput.moduleKey === "RHYTHM" ? queryDestinations(section.destinationRows ?? section.rows ?? []) : [],
+          ...(section.profile === undefined ? {} : { profile: section.profile }),
           quality: section.quality ?? quality(ownerOutput),
           capabilities: [capability(ownerOutput)],
           publicationMeta: provisionalMeta,

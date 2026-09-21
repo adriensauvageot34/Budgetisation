@@ -20,6 +20,7 @@ registerHooks({ resolve(specifier, context, next) {
 } });
 
 const candidateApi = await import("../src/server/analytics/global-v2-candidate.ts");
+const analytics = await import("../src/analytics/global-v2/index.ts");
 const query = await import("../src/query-api/global-v2/index.ts");
 const servicesApi = await import("../src/server/query/global-v2-production-services.ts");
 const runtimeApi = await import("../src/server/query/global-v2-runtime.ts");
@@ -33,6 +34,13 @@ const {
 const months = Array.from({ length: 12 }, (_, index) => `${index < 5 ? "2025" : "2026"}-${String((index + 7) % 12 + 1).padStart(2, "0")}`);
 const personA = "00000000-0000-4000-8000-000000000002";
 const personB = "00000000-0000-4000-8000-000000000003";
+const personaProfile = analytics.buildPersonaProfile({ signals: [
+  { signalId: "bridge:photo", signalType: "DECLARED", semanticKey: "creative.photo.adrien", subject: { kind: "PERSON", personId: personA }, scope: "PERSONAL", action: "AFFIRM", value: true, kind: "PROJECT", family: "LEISURE_AND_ACTIVITIES", authority: "USER_VALIDATED", temporalStatus: "PROJECT", sourceModule: "DECLARED_V1", evidenceRefs: ["declaration:photo-project"] },
+  { signalId: "bridge:mascara", signalType: "PRODUCT_CYCLE", semanticKey: "product-need:maquillage_manon_mascara", subject: { kind: "PERSON", personId: personB }, scope: "PERSONAL", needKey: "maquillage_manon_mascara", family: "PERSONAL_CARE", authority: "OBSERVED", temporalStatus: "STABLE", sourceModule: "PRODUCT_OBSERVATIONS", metrics: { occurrenceCount: 6, medianGapDays: 65, typicalPrice: 32 }, evidenceRefs: ["product-observation:mascara"], limitations: ["PRODUCT_COVERAGE_PARTIAL"] },
+  { signalId: "bridge:brows", signalType: "PRODUCT_CYCLE", semanticKey: "product-need:maquillage_manon_sourcils", subject: { kind: "PERSON", personId: personB }, scope: "PERSONAL", needKey: "maquillage_manon_sourcils", family: "PERSONAL_CARE", authority: "OBSERVED", temporalStatus: "STABLE", sourceModule: "PRODUCT_OBSERVATIONS", metrics: { occurrenceCount: 7, medianGapDays: 57, typicalPrice: 9.99 }, evidenceRefs: ["product-observation:brows"], limitations: ["PRODUCT_COVERAGE_PARTIAL"] },
+  { signalId: "bridge:gaming", signalType: "DECLARED", semanticKey: "gaming", subject: { kind: "SHARED", personIds: [personA, personB] }, scope: "SHARED", action: "AFFIRM", value: true, kind: "UNIVERSE", family: "LEISURE_AND_ACTIVITIES", authority: "USER_VALIDATED", sourceModule: "DECLARED_V1", evidenceRefs: ["declaration:gaming-shared"] },
+  { signalId: "bridge:car", signalType: "DECLARED", semanticKey: "vehicle.peugeot_207", subject: { kind: "HOUSEHOLD", householdId: "00000000-0000-4000-8000-000000000004" }, scope: "HOUSEHOLD", action: "AFFIRM", value: true, kind: "MOBILITY", family: "MOBILITY", authority: "USER_VALIDATED", sourceModule: "DECLARED_V1", evidenceRefs: ["declaration:household-car"], limitations: ["CANONICAL_VEHICLE_AUTHORITY_UNAVAILABLE"] },
+] });
 const strongSupport = { naturalGrain: "MONTH", eligibleUnits: 12, observedUnits: 12, includedUnits: 12, excludedObservedUnits: 0, minimumRequired: 6, supportStatus: "STRONG", policyRef: "global-m2-category-reference-support@v1" };
 const axisCoverage = (dimension, status, effective) => ({ dimensions: [{ dimension, status, numerator: effective * 100, denominator: 100, ratio: effective, unit: "canonical_economic_component", basis: "authoritative-dimension-resolution", evidenceRefs: [`coverage:${dimension.toLowerCase()}`], policyRef: "global-category-need-coverage@v1" }], requiredDimensions: [dimension], effective, aggregation: "MIN_REQUIRED_DIMENSIONS" });
 const annualSeries = (amount) => months.map((month, index) => ({ month, amount: index === months.length - 1 ? amount : "0" }));
@@ -118,7 +126,7 @@ const outputByModule = {
   },
   GEO_MOBILITY: { places: [{ placeId: "place-one", visitCount: 408, visitDays: 120, medianDuration: 892, lifecycle: { status: "REGULAR_STABLE" } }], finance: { rollups: [{ placeId: "place-one", amount: "300" }] } },
   CONSUMPTION: { events: [], merchants: [], checkoutPurchaseCount: 0, retainedPurchaseCount: 0 },
-  PERSONAS: { metrics: [{ personId: personA, metricId: "activity-rate:travail_site", rawValue: "0.49" }, { personId: personB, metricId: "activity-rate:teletravail", rawValue: "0.25" }], differences: [] },
+  PERSONAS: { metrics: [{ personId: personA, metricId: "activity-rate:travail_site", rawValue: "0.49" }, { personId: personB, metricId: "activity-rate:teletravail", rawValue: "0.25" }], differences: [], profile: personaProfile },
   TOGETHER: { universes: [{ universeId: "activity:journee_maison", support: { sharedUnits: 35, resolvedUnits: 35, eligibleUnits: 73, sharedObservableCoverage: 0.48, knowledgeState: "PARTIAL" } }] },
 };
 const moduleState = {
@@ -310,6 +318,19 @@ check(() => assert.deepEqual(compact("analysis_global_consumption").kpis, []));
 check(() => assert.equal(compact("analysis_global_personas").visibility, "VISIBLE"));
 check(() => assert.equal(compact("analysis_global_personas").primaryInsight.titleKey, "Aucune différence nette à mettre en avant entre vos profils"));
 check(() => assert.ok(snapshot("analysis_global_personas_expanded", "OVERVIEW").payload.rows.length > 0));
+const personaReadModel = snapshot("analysis_global_personas_expanded", "OVERVIEW").payload;
+const projectedPersona = personaReadModel.profile;
+const projectedPersonaTraits = projectedPersona.profiles.flatMap(({ allTraits }) => allTraits);
+const projectedPersonaFeatured = projectedPersona.profiles.flatMap(({ featuredTraits }) => featuredTraits);
+check(() => assert.deepEqual(projectedPersona, personaProfile));
+check(() => assert.equal(projectedPersona.profiles.filter(({ scope }) => scope === "SHARED").length, 1));
+check(() => assert.equal(projectedPersona.profiles.filter(({ scope }) => scope === "HOUSEHOLD").length, 1));
+check(() => assert.ok(projectedPersonaFeatured.every(({ explanation, selection }) => explanation?.reasonCodes.length > 0 && selection?.featured === true)));
+check(() => assert.ok(projectedPersonaFeatured.flatMap(({ explanation }) => explanation?.evidenceRefs ?? []).includes("product-observation:mascara")));
+check(() => assert.ok(projectedPersonaTraits.flatMap(({ limitations }) => limitations ?? []).includes("PRODUCT_COVERAGE_PARTIAL")));
+check(() => assert.deepEqual(projectedPersonaFeatured.find(({ semanticKey }) => semanticKey === "universe.beauty_and_care").children.map(({ semanticKey }) => semanticKey), ["product-need:maquillage_manon_mascara", "product-need:maquillage_manon_sourcils"]));
+check(() => assert.ok(Buffer.byteLength(JSON.stringify(compact("analysis_global_personas")), "utf8") <= query.GLOBAL_COMPACT_PAYLOAD_BUDGET_BYTES));
+check(() => assert.ok(Buffer.byteLength(JSON.stringify(personaReadModel), "utf8") <= query.GLOBAL_EXPANDED_PAYLOAD_BUDGET_BYTES));
 check(() => assert.equal(compact("analysis_global_together").visibility, "VISIBLE"));
 check(() => assert.match(compact("analysis_global_together").primaryInsight.statementKey, /35 occurrences explicitement partagées/));
 check(() => assert.equal(snapshot("analysis_global_together_expanded", "OVERVIEW").payload.rows[0].labelKey, "Journée à la maison"));
@@ -571,3 +592,4 @@ check(() => assert.equal(producerReads, 0));
 check(() => assert.equal(result.publicationId, first.candidateId));
 
 console.log(`P19A production candidate + snapshot bridge: PASS ${checks}/${checks}; candidate snapshots=${first.requiredSnapshotCount}; producer reads=${producerReads}.`);
+console.log("PERSONA_GOLDEN_READ_MODEL=PASS");

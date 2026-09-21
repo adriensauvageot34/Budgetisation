@@ -39,6 +39,7 @@ const asOf = args.get("--as-of");
 const fixtureDirectory = args.get("--fixture-dir");
 const expectedDataRevision = args.get("--data-revision");
 const currentAnalyticsRevision = args.get("--analytics-revision");
+const includePersonaProfile = args.has("--include-persona-profile");
 if (!/^[0-9a-f]{40}$/u.test(implementationIdentity ?? "") || !/^\d{4}-\d{2}-\d{2}T/u.test(asOf ?? "")) {
   throw new TypeError("Usage: --implementation-sha=<40 hex> --as-of=<Instant> [--fixture-dir=<private export>]");
 }
@@ -84,4 +85,14 @@ summary.versions = {
   methodSignatures: [...new Set(candidate.versions.queries.map(({ methodSignature }) => methodSignature))].sort(),
   policyVersions: [...new Set(candidate.versions.queries.flatMap(({ policyVersions }) => Object.entries(policyVersions).map(([key, value]) => `${key}=${value}`)))].sort(),
 };
+if (includePersonaProfile) {
+  const personaSnapshot = candidate.snapshots.find(({ resource, payload }) => resource === "analysis_global_personas_expanded" && payload.sectionKey === "OVERVIEW");
+  if (personaSnapshot?.payload.profile === undefined) throw new TypeError("GLOBAL_LIVE_PERSONA_PROFILE_MISSING");
+  summary.personaReadModel = {
+    payloadBytes: Buffer.byteLength(JSON.stringify(personaSnapshot.payload), "utf8"),
+    compactPayloadBytes: Buffer.byteLength(JSON.stringify(candidate.snapshots.find(({ resource }) => resource === "analysis_global_personas")?.payload), "utf8"),
+    legacyOverviewRows: personaSnapshot.payload.rows ?? [],
+    profile: personaSnapshot.payload.profile,
+  };
+}
 process.stdout.write(`${JSON.stringify(summary, null, 2)}\n`);

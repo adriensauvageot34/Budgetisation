@@ -573,6 +573,32 @@ check(() => assert.deepEqual(groceriesAdapterTrait.qualifications, ["ADRIEN_SMAL
 check(() => assert.equal(adaptedTraits.some((trait) => trait.semanticKey === "household.has_pet" || trait.groupKey === "household.pet"), false));
 check(() => assert.ok(adaptedTraits.some((trait) => trait.semanticKey === "gaming" && trait.scope === "SHARED")));
 check(() => assert.ok(adaptedTraits.some((trait) => trait.semanticKey === "creative.photo.adrien" && trait.temporalStatus === "PROJECT")));
+const declaredLicence = adaptedTraits.find((trait) => trait.semanticKey === "driving_license.adrien");
+check(() => assert.ok(declaredLicence));
+check(() => assert.equal(declaredLicence.scope, "PERSONAL"));
+check(() => assert.equal(declaredLicence.kind, "PROJECT"));
+check(() => assert.equal(declaredLicence.family, "MOBILITY"));
+check(() => assert.equal(declaredLicence.temporalStatus, "PROJECT"));
+check(() => assert.equal(declaredLicence.knowledgeStatus, "USER_VALIDATED"));
+check(() => assert.deepEqual(declaredLicence.qualifications, ["IN_PROGRESS"]));
+check(() => assert.equal(declaredLicence.qualifications.includes("OBTAINED"), false));
+check(() => assert.equal(declaredLicence.metrics, undefined));
+const declaredCreativeSupport = adaptedTraits.find((trait) => trait.semanticKey === "creative.projects.adrien");
+check(() => assert.ok(declaredCreativeSupport));
+check(() => assert.equal(declaredCreativeSupport.kind, "UNIVERSE"));
+check(() => assert.equal(declaredCreativeSupport.temporalStatus, "UNKNOWN"));
+check(() => assert.deepEqual(declaredCreativeSupport.qualifications, ["PHOTO", "MUSIC", "HOME_STUDIO"]));
+check(() => assert.equal(declaredCreativeSupport.metrics, undefined));
+check(() => assert.ok(declaredCreativeSupport.limitations.includes("CADENCE_NOT_DECLARED")));
+const declaredCreativeUniverse = adaptedTraits.find((trait) => trait.semanticKey === "universe.creative_projects");
+check(() => assert.ok(declaredCreativeUniverse));
+check(() => assert.deepEqual(declaredCreativeUniverse.children.map(({ semanticKey }) => semanticKey), ["creative.photo.adrien", "creative.projects.adrien"]));
+check(() => assert.ok(["HOME_STUDIO", "MUSIC", "PHOTO"].every((example) => declaredCreativeUniverse.qualifications.includes(example))));
+check(() => assert.ok(adapted.profile.profiles.find((profile) => profile.scope === "PERSONAL" && profile.subject.personId === adrien)
+  .featuredTraits.some(({ traitId }) => traitId === declaredCreativeUniverse.traitId)));
+check(() => assert.equal(adaptedTraits.some((trait) => ["creative.music.adrien", "creative.home_studio.adrien"].includes(trait.semanticKey)), false));
+check(() => assert.equal(adaptedTraits.some((trait) => trait.semanticKey.startsWith("creative.")
+  && Object.keys(trait.metrics ?? {}).some((key) => /cadence|recent|spend|amount/i.test(key))), false));
 check(() => assert.ok(adaptedTraits.some((trait) => trait.semanticKey === "subscription.chatgpt.adrien" && trait.scope === "PERSONAL")));
 check(() => assert.equal(adaptedTraits.filter((trait) => trait.semanticKey === "routine:work-ange-work").length, 1));
 check(() => assert.equal(adapted.signals.some((signal) => signal.signalId === `m4:rhythm:${manon}:travail_site`), false));
@@ -590,6 +616,8 @@ const groupedGaming = traitByKey(engineOutputs.get("P1-PS5-PAYER-NOT-USER"), "ga
 const groupedTechno = traitByKey(engineOutputs.get("P1-TECHNO-SHARED-WITHOUT-M10-REWRITE"), "techno", "SHARED");
 check(() => assert.equal(groupedGaming.scope, "SHARED"));
 check(() => assert.equal(groupedTechno.scope, "SHARED"));
+check(() => assert.equal(adaptedTraits.some((trait) => trait.scope === "PERSONAL" && ["gaming", "techno"].includes(trait.semanticKey)), false));
+check(() => assert.ok(adaptedTraits.some((trait) => trait.scope === "HOUSEHOLD" && trait.semanticKey === "groceries.organization")));
 
 const beautySignals = [
   ["mascara", "beauty.mascara", "maquillage_manon_mascara"],
