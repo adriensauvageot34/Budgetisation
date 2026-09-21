@@ -20,6 +20,7 @@ import type {
 import { optionalCanonicalString, type CanonicalRecord } from "@/server/canonical/record";
 import { FactSourceResolver } from "./fact-source-resolver";
 import { resolveGlobalM1HouseholdAuthority } from "./global-v2-economic-authority";
+import { resolveGlobalM2NeedSubjects } from "./global-v2-need-subject-authority";
 
 function rowsByKey(rows: readonly CanonicalRecord[], kind: string, idColumn: string): ReadonlyMap<string, CanonicalRecord> {
   return new Map(rows.flatMap((row) => {
@@ -102,6 +103,7 @@ export async function resolveGlobalM2HouseholdAuthority(input: {
     input.repository.loadEconomicComponentClassifications(range),
   ]);
   const needByComponentKey = resolveGlobalM2NeedAuthorities(bundle);
+  const needSubjects = resolveGlobalM2NeedSubjects(bundle.needs, input.repository.context.personIds);
   const classificationsByComponentKey = new Map(classifications.map((classification) => [
     String(classification.canonicalComponentKey),
     classification,
@@ -150,6 +152,7 @@ export async function resolveGlobalM2HouseholdAuthority(input: {
     officialTypicalTotal: m1.state.typicalReference.value!,
     officialCategoryCurrentAmounts: Object.fromEntries(categoryAuthorities.map(({ categoryId, current }) => [categoryId, current])),
     officialCategoryTypicalAmounts: Object.fromEntries(categoryAuthorities.map(({ categoryId, typical }) => [categoryId, typical])),
+    needSubjects,
     ...(purchaseEnrichment === undefined ? {} : { purchaseFrequencyTicket: purchaseEnrichment.frequencyTicket }),
   });
   return {

@@ -153,6 +153,7 @@ function candidateFromSignal(signal: PersonaSignal): PersonaTraitCandidate | und
     ...(signalMetrics(signal) === undefined ? {} : { metrics: signalMetrics(signal) }),
     ...(signal.groupKey === undefined ? {} : { groupKey: signal.groupKey }),
     ...("needKey" in signal && signal.needKey !== undefined ? { needKeys: [signal.needKey] } : {}),
+    ...("entityRef" in signal && signal.entityRef !== undefined ? { entityRefs: [signal.entityRef] } : {}),
   } as PersonaTraitCandidate;
 }
 
@@ -260,6 +261,7 @@ function mergeTwo(left: PersonaTraitCandidate, right: PersonaTraitCandidate): Pe
   const sameDimension = dimensions.some((dimension) => left.dimensions?.includes(dimension) === true && right.dimensions?.includes(dimension) === true);
   const groupKey = left.groupKey === right.groupKey ? left.groupKey : left.groupKey ?? right.groupKey;
   const needKeys = unique([...(left.needKeys ?? []), ...(right.needKeys ?? [])]);
+  const entityRefs = unique([...(left.entityRefs ?? []), ...(right.entityRefs ?? [])]);
   const groupConflict = left.groupKey !== undefined && right.groupKey !== undefined && left.groupKey !== right.groupKey;
   const temporalStatus = mergeTemporalStatus([left.temporalStatus, right.temporalStatus]);
   const context = left.context ?? right.context;
@@ -301,6 +303,7 @@ function mergeTwo(left: PersonaTraitCandidate, right: PersonaTraitCandidate): Pe
     limitations,
     qualifications: unique([...(left.qualifications ?? []), ...(right.qualifications ?? [])]),
     ...(needKeys.length === 0 ? {} : { needKeys }),
+    ...(entityRefs.length === 0 ? {} : { entityRefs }),
     ...(mergedMetrics.metrics === undefined ? {} : { metrics: mergedMetrics.metrics }),
     ...(groupKey === undefined || groupConflict ? {} : { groupKey }),
   } as PersonaTraitCandidate;

@@ -99,6 +99,11 @@ export type GlobalM2MonetaryCoverage = {
   readonly knownShare: string | null;
 };
 
+export type GlobalM2NeedSubjectAuthority =
+  | { readonly scope: "PERSONAL"; readonly personId: PersonId }
+  | { readonly scope: "HOUSEHOLD" }
+  | { readonly scope: "CONFLICT" };
+
 export type GlobalM2Group = {
   readonly key: string;
   readonly dimension: GlobalM2DimensionValue;
@@ -123,6 +128,8 @@ export type GlobalM2Group = {
   };
   readonly drillDownRef: { readonly kind: "CATEGORY" | "NEED"; readonly id: string };
   readonly evidenceRefs: readonly string[];
+  /** Present only on the NEED axis; resolved solely from Canonical needs.person_id. */
+  readonly subject?: GlobalM2NeedSubjectAuthority;
 };
 
 export type GlobalM2Axis = {
@@ -341,6 +348,7 @@ function buildAxis(input: {
   readonly officialTypicalTotal: Money;
   readonly officialCategoryCurrentAmounts: Readonly<Record<string, Money>>;
   readonly officialCategoryTypicalAmounts: Readonly<Record<string, Money>>;
+  readonly needSubjects: Readonly<Record<string, GlobalM2NeedSubjectAuthority>>;
 }): GlobalM2Axis {
   const grouped = groupMonthly(input.components, input.axis);
   const dimensions = dimensionByKey(input.components, input.axis);
@@ -376,6 +384,9 @@ function buildAxis(input: {
     const annualAmount = sum(historicalSeries.map(({ amount }) => amount));
     const currentShare = ratio(monthlyAmount, input.actual);
     const referenceShare = typicalAmount === null ? null : ratio(typicalAmount, input.officialTypicalTotal);
+    const subject = input.axis === "NEED" && dimension.status === "KNOWN"
+      ? input.needSubjects[dimension.id] ?? { scope: "HOUSEHOLD" as const }
+      : undefined;
     return {
       key,
       dimension,
@@ -402,6 +413,7 @@ function buildAxis(input: {
       },
       drillDownRef: { kind: input.axis, id: key },
       evidenceRefs: canonicalRefs(targetComponents.filter((component) => dimensionKey(dimensionOf(component, input.axis)) === key).flatMap(({ evidenceRefs }) => evidenceRefs)),
+      ...(subject === undefined ? {} : { subject }),
     };
   });
   const currentTotal = sum(groups.map(({ monthlyAmount }) => monthlyAmount));
@@ -450,6 +462,7 @@ export function buildGlobalCategoryNeeds(input: {
   readonly officialTypicalTotal: Money;
   readonly officialCategoryCurrentAmounts: Readonly<Record<string, Money>>;
   readonly officialCategoryTypicalAmounts: Readonly<Record<string, Money>>;
+  readonly needSubjects?: Readonly<Record<string, GlobalM2NeedSubjectAuthority>>;
   readonly purchaseFrequencyTicket?: GlobalPurchaseFrequencyTicketResult;
 }): GlobalCategoryNeedsResult {
   const referenceMonths = [...new Set(input.referenceMonths)].sort();
@@ -471,6 +484,7 @@ export function buildGlobalCategoryNeeds(input: {
     officialTypicalTotal: parseMoney(input.officialTypicalTotal),
     officialCategoryCurrentAmounts: input.officialCategoryCurrentAmounts,
     officialCategoryTypicalAmounts: input.officialCategoryTypicalAmounts,
+    needSubjects: input.needSubjects ?? {},
   };
   const categories = buildAxis({ ...common, axis: "CATEGORY" });
   const needs = buildAxis({ ...common, axis: "NEED" });

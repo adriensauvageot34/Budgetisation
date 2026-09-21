@@ -73,6 +73,22 @@ const personaSignals = [{
   sourceModule: "DECLARED_V1",
   evidenceRefs: ["declaration:photo-project"],
   limitations: ["RUNTIME_ACTIVITY_SUPPORT_PARTIAL"],
+}, {
+  signalId: "m2:need:read-model-personal",
+  signalType: "NEED",
+  semanticKey: "need:read-model-personal",
+  subject: { kind: "PERSON", personId: "00000000-0000-4000-8000-000000000001" },
+  scope: "PERSONAL",
+  needKey: "read-model-personal",
+  entityRef: "need:read-model-personal",
+  active: true,
+  kind: "HABIT",
+  family: "PRODUCTS_AND_CONSUMPTION",
+  authority: "CANONICAL_DB",
+  knowledgeStatus: "OBSERVED",
+  sourceModule: "M2",
+  metrics: { activeMonths: 9, annualAmount: "900", monthlyAmount: "100", typicalAmount: "95" },
+  evidenceRefs: ["need:read-model-personal"],
 }];
 const personaProfile = analytics.buildPersonaProfile({ signals: personaSignals });
 const personaProfileBeforeProjection = structuredClone(personaProfile);
@@ -235,6 +251,11 @@ check(() => assert.deepEqual(detailA.blocks.find(({ blockId }) => blockId === se
 check(() => assert.notDeepEqual(detailA, detailB));
 check(() => assert.equal(detailA.personId, personAId));
 check(() => assert.equal(detailB.personId, personBId));
+const personalNeedBlock = detailA.blocks.find(({ semanticKey }) => semanticKey === "need:read-model-personal");
+check(() => assert.ok(personalNeedBlock));
+check(() => assert.deepEqual(personalNeedBlock.detailRefs, [{ resource: "analysis_global_category_need_detail", entityRef: "need:read-model-personal", role: "PRIMARY" }]));
+check(() => assert.deepEqual(personalNeedBlock.surfaceMetrics.map(({ metricId, displayValue }) => [metricId, displayValue]), [["activeMonths", "9"], ["annualAmount", "900"], ["monthlyAmount", "100"]]));
+check(() => assert.equal(personalNeedBlock.availability, "AVAILABLE"));
 check(() => assert.equal(JSON.stringify([detailA, detailB]).includes("shared.must-not-leak"), false));
 check(() => assert.equal(JSON.stringify([detailA, detailB]).includes("household.must-not-leak"), false));
 check(() => assert.doesNotMatch(JSON.stringify([detailA, detailB]), /allTraits|evidenceRefs|signalRefs|sourceModules|ownerOutputs|selection|explanation|reasonCodes|inputHash/u));

@@ -69,6 +69,7 @@ const result = globalAnalytics.buildGlobalCategoryNeeds({
   officialTypicalTotal: m("80"),
   officialCategoryCurrentAmounts: { [categoryA]: m("100") },
   officialCategoryTypicalAmounts: { [categoryA]: m("85") },
+  needSubjects: { "need-home": { scope: "PERSONAL", personId: identity.parsePersonId(uuid(301)) } },
 });
 check(() => assert.equal(globalAnalytics.resolveGlobalM2NeedDimension({ sourceNeedId: "need-a", operationComponentCount: 2, knownNeedIds: new Set(["need-a"]), evidenceRefs: ["need:a"] }).status, "KNOWN"));
 check(() => assert.equal(globalAnalytics.resolveGlobalM2NeedDimension({ operationNeedId: "need-a", operationComponentCount: 2, knownNeedIds: new Set(["need-a"]), evidenceRefs: ["operation:a"] }).status, "UNKNOWN"));
@@ -81,6 +82,8 @@ check(() => assert.equal(result.categories.currentTotal, "80"));
 check(() => assert.equal(result.needs.currentTotal, "80"));
 check(() => assert.equal(result.categories.annualTotal, "560"));
 check(() => assert.equal(result.needs.annualTotal, "560"));
+check(() => assert.deepEqual(result.needs.groups.find(({ key }) => key === "need-home").subject, { scope: "PERSONAL", personId: identity.parsePersonId(uuid(301)) }));
+check(() => assert.equal(result.needs.groups.find(({ key }) => key === "__UNKNOWN__").subject, undefined));
 check(() => assert.equal(result.categories.groups.reduce((total, { annualAmount }) => money.addMoney(total, annualAmount), m("0")), result.categories.annualTotal));
 check(() => assert.equal(result.needs.groups.reduce((total, { annualAmount }) => money.addMoney(total, annualAmount), m("0")), result.needs.annualTotal));
 check(() => assert.equal(result.categories.groups.find(({ key }) => key === "__UNKNOWN__").monthlyAmount, "-20"));
@@ -123,6 +126,7 @@ const reordered = globalAnalytics.buildGlobalCategoryNeeds({
   officialTypicalTotal: m("80"),
   officialCategoryCurrentAmounts: { [categoryA]: m("100") },
   officialCategoryTypicalAmounts: { [categoryA]: m("85") },
+  needSubjects: { "need-home": { scope: "PERSONAL", personId: identity.parsePersonId(uuid(301)) } },
 });
 check(() => assert.equal(reordered.inputHash, result.inputHash));
 check(() => assert.deepEqual(reordered.categories, result.categories));

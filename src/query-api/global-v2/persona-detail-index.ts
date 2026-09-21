@@ -163,12 +163,17 @@ export function parsePublishedPersonaDetailIndex(value: unknown): PublishedPerso
 export function projectPublishedPersonaDetailIndex(input: PersonaProfileOutput, personId: PersonId): PublishedPersonaDetailIndex {
   const profile = input.profiles.find((candidate) => candidate.scope === "PERSONAL" && candidate.subject.kind === "PERSON" && candidate.subject.personId === personId);
   if (profile === undefined) throw new TypeError("PERSONA_DETAIL_PERSON_PROFILE_MISSING");
+  const featuredIds = new Set(profile.featuredTraits.map(({ traitId }) => traitId));
+  const traits = [...new Map([
+    ...profile.featuredTraits,
+    ...profile.allTraits.filter(({ entityRefs }) => entityRefs?.some((entityRef) => entityRef.startsWith("need:")) === true),
+  ].map((trait) => [trait.traitId, trait] as const)).values()]
+    .sort((left, right) => Number(featuredIds.has(right.traitId)) - Number(featuredIds.has(left.traitId)) || left.traitId.localeCompare(right.traitId))
+    .slice(0, PERSONA_DETAIL_INDEX_MAX_BLOCKS);
   return parsePublishedPersonaDetailIndex({
     schemaVersion: PERSONA_DETAIL_INDEX_SCHEMA_VERSION,
     personId,
-    blocks: [...profile.featuredTraits]
-      .sort((left, right) => left.traitId.localeCompare(right.traitId))
-      .slice(0, PERSONA_DETAIL_INDEX_MAX_BLOCKS)
+    blocks: traits
       .map((trait) => {
         if (trait.scope !== "PERSONAL" || trait.subject.kind !== "PERSON" || trait.subject.personId !== personId) {
           throw new TypeError("PERSONA_DETAIL_SOURCE_SUBJECT_MISMATCH");
@@ -186,6 +191,10 @@ export function projectPublishedPersonaDetailIndex(input: PersonaProfileOutput, 
             kind: child.kind,
             ...(child.temporalStatus === undefined ? {} : { temporalStatus: child.temporalStatus }),
           }));
+        const detailRefs = [...new Set((trait.entityRefs ?? []).filter((entityRef) => entityRef.startsWith("need:")))]
+          .sort()
+          .slice(0, PERSONA_DETAIL_INDEX_MAX_REFS_PER_BLOCK)
+          .map((entityRef) => ({ resource: "analysis_global_category_need_detail" as const, entityRef, role: "PRIMARY" as const }));
         return {
           blockId: trait.traitId,
           semanticKey: trait.semanticKey,
@@ -193,10 +202,10 @@ export function projectPublishedPersonaDetailIndex(input: PersonaProfileOutput, 
           ...(trait.temporalStatus === undefined ? {} : { temporalStatus: trait.temporalStatus }),
           surfaceMetrics,
           items,
-          detailRefs: [],
-          availability: surfaceMetrics.length + items.length > 0 ? "AVAILABLE" : "PARTIAL",
+          detailRefs,
+          availability: surfaceMetrics.length + items.length + detailRefs.length > 0 ? "AVAILABLE" : "PARTIAL",
         };
-      }),
+      }).sort((left, right) => left.blockId.localeCompare(right.blockId)),
   });
 }
 

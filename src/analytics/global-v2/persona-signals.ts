@@ -124,6 +124,7 @@ export type PersonalCostSignal = PersonaSignalBase & {
 export type NeedSignal = PersonaSignalBase & {
   readonly signalType: "NEED";
   readonly needKey?: string;
+  readonly entityRef?: string;
   readonly active?: boolean;
 };
 
@@ -203,6 +204,7 @@ type PersonaTraitFields = {
   readonly metrics?: PersonaMetrics;
   readonly groupKey?: string;
   readonly needKeys?: readonly string[];
+  readonly entityRefs?: readonly string[];
 };
 
 export type PersonaTraitCandidate = PersonaScopedSubject & PersonaTraitFields & {

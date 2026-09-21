@@ -51,6 +51,11 @@ type NeedGroup = {
   readonly activeMonths: number;
   readonly monthlyAmount?: Money;
   readonly typicalAmount?: Money | null;
+  readonly annualAmount?: Money;
+  readonly subject?:
+    | { readonly scope: "PERSONAL"; readonly personId: PersonId }
+    | { readonly scope: "HOUSEHOLD" }
+    | { readonly scope: "CONFLICT" };
   readonly evidenceRefs: readonly string[];
 };
 
@@ -297,29 +302,39 @@ export function adaptGlobalM1PersonalCostSignals(input: {
 
 export function adaptGlobalM2NeedSignals(input: {
   readonly householdId: HouseholdId;
+  readonly authorizedPersonIds: readonly PersonId[];
   readonly groups: readonly NeedGroup[];
 }): readonly NeedSignal[] {
+  const authorized = new Map(input.authorizedPersonIds.map((personId) => [String(personId), personId]));
   return [...input.groups]
     .sort((a, b) => a.key.localeCompare(b.key))
     .flatMap((group): readonly NeedSignal[] => {
       if (group.dimension.status !== "KNOWN" || group.dimension.id === undefined) return [];
+      if (group.subject?.scope === "CONFLICT") return [];
+      const personalPersonId = group.subject?.scope === "PERSONAL" ? authorized.get(String(group.subject.personId)) : undefined;
+      if (group.subject?.scope === "PERSONAL" && personalPersonId === undefined) return [];
+      const scope = personalPersonId === undefined ? householdScope(input.householdId) : personScope(personalPersonId);
       const metrics: Record<string, string | number> = { activeMonths: group.activeMonths };
       if (group.monthlyAmount !== undefined) metrics.monthlyAmount = group.monthlyAmount;
       if (group.typicalAmount !== undefined && group.typicalAmount !== null) metrics.typicalAmount = group.typicalAmount;
+      if (group.annualAmount !== undefined) metrics.annualAmount = group.annualAmount;
       return [{
         signalId: `m2:need:${group.dimension.id}`,
         signalType: "NEED",
         semanticKey: `need:${group.dimension.id}`,
-        ...householdScope(input.householdId),
+        ...scope,
         needKey: group.dimension.id,
+        entityRef: `need:${group.dimension.id}`,
         active: group.activeMonths > 0,
+        kind: "HABIT",
+        family: "PRODUCTS_AND_CONSUMPTION",
         authority: "CANONICAL_DB",
         knowledgeStatus: "OBSERVED",
         dimension: "ORGANIZATION",
         sourceModule: "M2",
         methodVersion: GLOBAL_PERSONA_SIGNAL_ADAPTER_VERSION,
         metrics,
-        limitations: ["NEED_ROLE_NOT_PROJECTED_TO_PERSON"],
+        ...(personalPersonId === undefined ? { limitations: ["NEED_ROLE_NOT_PROJECTED_TO_PERSON"] } : {}),
         evidenceRefs: evidence([...(group.dimension.evidenceRefs ?? []), ...group.evidenceRefs], `m2:need:${group.dimension.id}`),
       }];
     });
@@ -611,7 +626,7 @@ export function buildGlobalV2PersonaSignals(input: GlobalV2PersonaSignalAdapterI
   const declarations = buildGlobalPersonaDeclaredSignalsV1(input);
   const upstreamSignals: PersonaSignal[] = [
     ...adaptGlobalM1PersonalCostSignals({ authorities: input.personalCostAuthorities ?? [], authorizedPersonIds: input.personIds }),
-    ...adaptGlobalM2NeedSignals({ householdId: input.householdId, groups: input.m2.result.needs.groups }),
+    ...adaptGlobalM2NeedSignals({ householdId: input.householdId, authorizedPersonIds: input.personIds, groups: input.m2.result.needs.groups }),
     ...adaptGlobalM4RoutineSignals({ rhythms: input.m4.rhythms, ...(input.m4.routinePatterns === undefined ? {} : { routinePatterns: input.m4.routinePatterns }), authorizedPersonIds: input.personIds }),
     ...adaptGlobalM6MomentSignals({ householdId: input.householdId, personIds: input.personIds, summaries: input.m6.summaries, certifiedThrough: input.certifiedThrough }),
     ...adaptGlobalM7MobilitySignals({ householdId: input.householdId, authorizedPersonIds: input.personIds, authorities: input.mobilityAuthorities ?? [] }),

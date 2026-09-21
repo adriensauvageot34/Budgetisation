@@ -21,6 +21,7 @@ registerHooks({
 
 const analytics = await import("../src/analytics/global-v2/index.ts");
 const personaAdapters = await import("../src/server/analytics/global-v2-persona-signals.ts");
+const m2Authority = await import("../src/server/analytics/global-v2-need-subject-authority.ts");
 const identity = await import("../src/core/identity/index.ts");
 
 const uuid = (n) => `00000000-0000-4000-8000-${String(n).padStart(12, "0")}`;
@@ -450,7 +451,11 @@ const adapterInput = {
     { costId: "beneficiary-not-payer", semanticKey: "subscription.example", payerPersonId: adrien, beneficiaryPersonId: manon, beneficiaryEvidenceRefs: ["beneficiary:manon"], typicalAmount: "19.99", recurrenceStatus: "ACTIVE", evidenceRefs: ["recurrence:example"] },
   ],
   m2: { result: { needs: { groups: [
-    { key: "groceries", dimension: { status: "KNOWN", id: "courses_alimentaires_foyer", evidenceRefs: ["need:courses"] }, activeMonths: 12, monthlyAmount: "400", typicalAmount: "380", evidenceRefs: ["m2:courses"] },
+    { key: "groceries", dimension: { status: "KNOWN", id: "courses_alimentaires_foyer", evidenceRefs: ["need:courses"] }, subject: { scope: "HOUSEHOLD" }, activeMonths: 12, monthlyAmount: "400", typicalAmount: "380", annualAmount: "4560", evidenceRefs: ["m2:courses"] },
+    { key: "work-meal", dimension: { status: "KNOWN", id: "repas_travail_personne_a", evidenceRefs: ["need:work-meal"] }, subject: { scope: "PERSONAL", personId: adrien }, activeMonths: 11, monthlyAmount: "120", typicalAmount: "100", annualAmount: "1320", evidenceRefs: ["m2:work-meal"] },
+    { key: "vape", dimension: { status: "KNOWN", id: "vape_personne_a", evidenceRefs: ["need:vape"] }, subject: { scope: "PERSONAL", personId: adrien }, activeMonths: 10, monthlyAmount: "45", typicalAmount: "40", annualAmount: "450", evidenceRefs: ["m2:vape"] },
+    { key: "beauty", dimension: { status: "KNOWN", id: "beaute_personne_b", evidenceRefs: ["need:beauty"] }, subject: { scope: "PERSONAL", personId: manon }, activeMonths: 12, monthlyAmount: "32", typicalAmount: "30", annualAmount: "384", evidenceRefs: ["m2:beauty"] },
+    { key: "excluded", dimension: { status: "KNOWN", id: "need_outside_household", evidenceRefs: ["need:outside"] }, subject: { scope: "CONFLICT" }, activeMonths: 12, monthlyAmount: "99", typicalAmount: "90", annualAmount: "1188", evidenceRefs: ["m2:outside"] },
   ] } } },
   m4: {
     rhythms: [
@@ -497,7 +502,27 @@ const householdNeed = adaptedBySignalId.get("m2:need:courses_alimentaires_foyer"
 check(() => assert.equal(householdNeed.subject.kind, "HOUSEHOLD"));
 check(() => assert.equal(householdNeed.scope, "HOUSEHOLD"));
 check(() => assert.equal(householdNeed.needKey, "courses_alimentaires_foyer"));
-check(() => assert.equal(adapted.signals.some((signal) => signal.signalType === "NEED" && signal.scope === "PERSONAL"), false));
+const workMealNeed = adaptedBySignalId.get("m2:need:repas_travail_personne_a");
+const vapeNeed = adaptedBySignalId.get("m2:need:vape_personne_a");
+const beautyNeed = adaptedBySignalId.get("m2:need:beaute_personne_b");
+check(() => assert.deepEqual({ kind: workMealNeed.subject.kind, personId: workMealNeed.subject.personId, scope: workMealNeed.scope }, { kind: "PERSON", personId: adrien, scope: "PERSONAL" }));
+check(() => assert.deepEqual({ kind: vapeNeed.subject.kind, personId: vapeNeed.subject.personId, scope: vapeNeed.scope }, { kind: "PERSON", personId: adrien, scope: "PERSONAL" }));
+check(() => assert.deepEqual({ kind: beautyNeed.subject.kind, personId: beautyNeed.subject.personId, scope: beautyNeed.scope }, { kind: "PERSON", personId: manon, scope: "PERSONAL" }));
+check(() => assert.equal(workMealNeed.entityRef, "need:repas_travail_personne_a"));
+check(() => assert.deepEqual(workMealNeed.metrics, { activeMonths: 11, annualAmount: "1320", monthlyAmount: "120", typicalAmount: "100" }));
+check(() => assert.equal(adaptedBySignalId.has("m2:need:need_outside_household"), false));
+const subjectResolution = m2Authority.resolveGlobalM2NeedSubjects([
+  { need_id: "canonical-personal", person_id: adrien, personne_concernee: "Texte contradictoire" },
+  { need_id: "canonical-household", personne_concernee: "Nom affiché sans autorité" },
+  { need_id: "canonical-outside", person_id: uuid(99), personne_concernee: "Adrien" },
+  { need_id: "canonical-invalid", person_id: "Adrien" },
+], [adrien, manon]);
+check(() => assert.deepEqual(subjectResolution["canonical-personal"], { scope: "PERSONAL", personId: adrien }));
+check(() => assert.deepEqual(subjectResolution["canonical-household"], { scope: "HOUSEHOLD" }));
+check(() => assert.deepEqual(subjectResolution["canonical-outside"], { scope: "CONFLICT" }));
+check(() => assert.deepEqual(subjectResolution["canonical-invalid"], { scope: "CONFLICT" }));
+check(() => assert.doesNotMatch(m2Authority.resolveGlobalM2NeedSubjects.toString(), /personne_concernee|displayName|merchant|category|Adrien|Manon/u));
+check(() => assert.doesNotMatch(personaAdapters.adaptGlobalM2NeedSignals.toString(), /personne_concernee|displayName|merchant|category|Adrien|Manon/u));
 const m10Signal = adapted.signals.find((signal) => signal.signalType === "SHARED_ACTIVITY" && signal.semanticKey === "techno");
 check(() => assert.ok(m10Signal));
 check(() => assert.equal(m10Signal.sourceModule, "M10"));

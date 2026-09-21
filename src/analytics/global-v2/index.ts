@@ -45,6 +45,7 @@ export {
   type GlobalM2DimensionValue,
   type GlobalM2Group,
   type GlobalM2MonthlyComponent,
+  type GlobalM2NeedSubjectAuthority,
   type GlobalM2SeriesPoint,
   type GlobalPurchaseEventAmount,
   type GlobalPurchaseFrequencyTicketResult,
