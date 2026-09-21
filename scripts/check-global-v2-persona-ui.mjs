@@ -54,6 +54,10 @@ const licence = trait("licence", "driving_license.adrien", "PROJECT", adrien, { 
 const mobilityAdrien = trait("mobility-a", "mobility.work.adrien", "MOBILITY", adrien, { metrics: { directCost: 0, distanceKm: "UNKNOWN" } });
 const chatgpt = trait("chatgpt", "subscription.chatgpt.adrien", "HABIT", adrien);
 const rhythmAdrien = trait("rhythm-a", "routine:work-meal", "ROUTINE", adrien, { metrics: { occurrenceCount: 61, medianIntervalDays: 4 } });
+const workSite = trait("work-site", "activity:travail_site", "ROUTINE", adrien, { metrics: { occurrenceCount: 115, medianIntervalDays: 2 } });
+const remoteWork = trait("remote-work", "activity:teletravail", "ROUTINE", manon, { metrics: { occurrenceCount: 24 } });
+const familyVisit = trait("family-visit", "activity:visite_famille", "ROUTINE", manon, { metrics: { occurrenceCount: 8 } });
+const unknownActivity = trait("unknown-activity", "activity:unknown_activity", "ROUTINE", adrien, { metrics: { occurrenceCount: 99 } });
 
 const beauty = trait("beauty-parent", "universe.beauty_and_care", "UNIVERSE", manon, {
   children: [
@@ -64,7 +68,7 @@ const beauty = trait("beauty-parent", "universe.beauty_and_care", "UNIVERSE", ma
   ],
 });
 const mobilityManon = trait("mobility-m", "mobility.work.manon", "MOBILITY", manon);
-const rhythmManon = trait("rhythm-m", "activity:work", "ROUTINE", manon, { metrics: { occurrenceCount: 12 } });
+const rhythmManon = remoteWork;
 const unknownHabit = trait("unknown-habit", "habit.opaque", "HABIT", manon);
 const nonFeatured = trait("not-featured", "routine:not-featured", "ROUTINE", adrien, { metrics: { occurrenceCount: 88 } });
 const sharedGaming = { traitId: "gaming", semanticKey: "gaming", kind: "UNIVERSE", scope: "SHARED", subject: { kind: "SHARED", personIds: [adrien, manon] } };
@@ -95,6 +99,14 @@ check(() => assert.equal(blocks(adrienProfile).some(({ traitId }) => traitId ===
 check(() => assert.equal(blocks(manonProfile).some(({ traitId }) => traitId === unknownHabit.traitId), false));
 check(() => assert.equal(presentation.presentPersonaTrait(trait("metricless-rhythm", "routine:opaque", "ROUTINE", adrien), 0), undefined));
 
+// Canonical activity labels are resolved from the existing Life Event catalog.
+check(() => assert.equal(presentation.presentPersonaTrait(workSite, 0)?.title, "Travail sur site"));
+check(() => assert.equal(presentation.presentPersonaTrait(remoteWork, 0)?.title, "Télétravail"));
+check(() => assert.equal(presentation.presentPersonaTrait(familyVisit, 0)?.title, "Visite familiale"));
+check(() => assert.equal(presentation.presentPersonaTrait(unknownActivity, 0), undefined));
+check(() => assert.equal(blocks(adrienProfile).some(({ title }) => title === "Activité récurrente"), false));
+check(() => assert.equal(blocks(manonProfile).some(({ title }) => title === "Activité récurrente"), false));
+
 // D: one creative block aggregates its known examples and children.
 check(() => assert.equal(adrienProfile.phasedProjects[0].renderer, "CREATIVE_UNIVERSE"));
 check(() => assert.equal(adrienProfile.phasedProjects[0].title, "Projets créatifs"));
@@ -118,6 +130,13 @@ check(() => assert.equal(adrienProfile.phasedProjects[1].statusLabel, "En cours"
 check(() => assert.deepEqual(adrienProfile.dailyRhythms[0].metrics, [{ metricKey: "directCost", label: "Coût direct", value: 0, format: "MONEY_EUR" }]));
 check(() => assert.equal(adrienProfile.dailyRhythms[0].metrics.some(({ value }) => value === "UNKNOWN"), false));
 
+// Non-positive day intervals are editorially meaningless; explicit zero money is not.
+const dayMetricBlock = (value) => presentation.presentPersonaTrait(trait(`days-${value}`, "activity:travail_site", "ROUTINE", adrien, { metrics: { occurrenceCount: 1, medianIntervalDays: value } }), 0);
+check(() => assert.equal(dayMetricBlock(0).metrics.some(({ format }) => format === "DAYS"), false));
+check(() => assert.equal(dayMetricBlock(-1).metrics.some(({ format }) => format === "DAYS"), false));
+check(() => assert.deepEqual(dayMetricBlock(57).metrics.find(({ format }) => format === "DAYS")?.value, 57));
+check(() => assert.equal(adrienProfile.dailyRhythms[0].metrics.find(({ format }) => format === "MONEY_EUR")?.value, 0));
+
 // J, M, N: no balancing card or marker is fabricated.
 check(() => assert.equal(adrienProfile.markers.length, 4));
 check(() => assert.equal(manonProfile.markers.length, 3));
@@ -126,6 +145,12 @@ const onlyMobility = presentation.buildPersonaPresentationModel(expanded([profil
 check(() => assert.equal(onlyMobility.profiles[0].markers.length, 1));
 check(() => assert.equal(onlyMobility.profiles[0].recurringLife.length, 0));
 check(() => assert.equal(onlyMobility.profiles[0].phasedProjects.length, 0));
+
+// Marker identity is icon + normalized title; detail blocks remain exhaustive.
+const duplicateMarkers = presentation.buildPersonaPresentationModel(expanded([profile(adrien, [workSite, { ...workSite, traitId: "work-site-again" }])]));
+check(() => assert.equal(duplicateMarkers.profiles[0].markers.length, 1));
+check(() => assert.equal(duplicateMarkers.profiles[0].dailyRhythms.length, 2));
+check(() => assert.deepEqual(duplicateMarkers.profiles[0].dailyRhythms.map(({ engineRank }) => engineRank), [0, 1]));
 
 // K: only PERSONAL profiles and traits are admitted.
 check(() => assert.equal(presentation.presentPersonaTrait(sharedGaming, 0), undefined));
@@ -151,12 +176,16 @@ const cardSource = fs.readFileSync(path.join(root, "src/features/global-v2/perso
 const pageSource = fs.readFileSync(path.join(root, "src/features/global-v2/global-v2-page.tsx"), "utf8");
 const cssSource = fs.readFileSync(path.join(root, "src/features/global-v2/global-v2.module.css"), "utf8");
 check(() => assert.doesNotMatch(source, /\.sort\(|\.reduce\(|characteristicScore|selectFeatured|promotePersona|buildPersonaProfile/u));
-check(() => assert.doesNotMatch(source, /from\s+["']@\/analytics|from\s+["']@\/server|@supabase/u));
+check(() => assert.match(source, /LIFE_EVENT_ACTIVITY_CATALOG[\s\S]*@\/analytics\/history-v2\/calendar\/catalog/u));
+check(() => assert.doesNotMatch(source, /@\/analytics\/production|from\s+["']@\/server|@supabase/u));
 check(() => assert.doesNotMatch(source, /["'](?:Routine|Projet|Habitude|Univers|Mobilité)["']/u));
 check(() => assert.doesNotMatch(source, /["'](?:Adrien|Manon)["']/u));
 check(() => assert.match(source, /editorialGroup[\s\S]*renderer[\s\S]*metricsPolicy[\s\S]*childrenStrategy[\s\S]*temporalTreatment/u));
 check(() => assert.match(source, /markers\.length < 4/u));
+check(() => assert.match(source, /markerIdentities\.has\(markerIdentity\)/u));
+check(() => assert.doesNotMatch(source, /title:\s*"Activité récurrente"/u));
 check(() => assert.match(viewSource, /Portraits express[\s\S]*Vos rythmes du quotidien[\s\S]*Ce qui revient chez chacun[\s\S]*Ce qui vit par phases/u));
+check(() => assert.match(viewSource, /<h2 id=\{headingId\}>Nos profils<\/h2>[\s\S]*Deux quotidiens, deux façons de dépenser/u));
 check(() => assert.match(viewSource, /presentation\.profiles\.slice\(0, 2\)/u));
 check(() => assert.match(viewSource, /Adrien \+ Manon[\s\S]*♡ Nous deux/u));
 check(() => assert.doesNotMatch(viewSource, /useState|onClick|sharedGaming|scope === "SHARED"/u));
@@ -168,6 +197,11 @@ check(() => assert.match(pageSource, /moduleKey === "PERSONAS"\) return <Persona
 check(() => assert.doesNotMatch(pageSource, /Aucune différence nette à mettre en avant entre vos profils/u));
 check(() => assert.match(cssSource, /\.personaEditorialColumns\s*\{[^}]*grid-template-columns:\s*repeat\(2/u));
 check(() => assert.match(cssSource, /\.personaMarker\s*\{/u));
+check(() => assert.match(cssSource, /\.personaMarkers\s*\{[^}]*grid-template-columns:\s*repeat\(2/u));
+check(() => assert.match(cssSource, /data-persona-section="dailyRhythms"[\s\S]*data-persona-renderer="RHYTHM"/u));
+check(() => assert.match(viewSource, /data-persona-layout=\{visibleProfiles\.length === 1 \? "single" : "paired"\}/u));
+check(() => assert.match(cssSource, /data-persona-section="phasedProjects"[\s\S]*data-persona-layout="single"[\s\S]*64%/u));
+check(() => assert.match(cssSource, /\.module\[data-module="PERSONAS"\]\s*\{[^}]*border:\s*0;[^}]*border-radius:\s*0;[^}]*box-shadow:\s*none/u));
 check(() => assert.match(cssSource, /data-persona-renderer="BEAUTY_UNIVERSE"/u));
 
 console.log(`Global V2 Persona editorial presentation: ${checks}/${checks} PASS`);

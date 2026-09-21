@@ -36,7 +36,7 @@ function PersonaMetrics({ metrics }: { readonly metrics: readonly PersonaPresent
 
 export function PersonaMarker({ marker }: { readonly marker: PersonaPortraitMarker }) {
   const Icon = iconByPresentation[marker.icon];
-  return <li className={styles.personaMarker}><Icon aria-hidden="true" size={15} strokeWidth={1.8} /><span>{marker.title}</span></li>;
+  return <li className={styles.personaMarker}><span aria-hidden="true"><Icon size={20} strokeWidth={1.7} /></span><strong>{marker.title}</strong></li>;
 }
 
 export function PersonaEditorialBlock({ block }: { readonly block: PersonaPresentationBlock }) {

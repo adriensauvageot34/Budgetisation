@@ -41,7 +41,7 @@ function PersonaEditorialSection({ profiles, collection, eyebrow, title, personH
   const titleId = `persona-section-${collection}`;
   return <section className={styles.personaEditorialSection} aria-labelledby={titleId} data-persona-section={collection}>
     <header className={styles.personaSectionHeading}><span>{eyebrow}</span><h3 id={titleId}>{title}</h3></header>
-    <div className={styles.personaEditorialColumns} data-column-count={visibleProfiles.length}>
+    <div className={styles.personaEditorialColumns} data-column-count={visibleProfiles.length} data-persona-layout={visibleProfiles.length === 1 ? "single" : "paired"}>
       {visibleProfiles.map((profile) => <section key={profile.personId} className={styles.personaEditorialColumn} data-persona-column={profiles.indexOf(profile) + 1} aria-label={personHeading(profileName(profile))}>
         <h4>{personHeading(profileName(profile))}</h4>
         <div className={styles.personaEditorialBlocks}>{blocksFor(profile, collection).map((block) => <PersonaEditorialBlock key={block.traitId} block={block} />)}</div>
@@ -55,7 +55,7 @@ export function PersonaView({ model, headingId }: { readonly model: GlobalExpand
   const profiles = presentation.profiles.slice(0, 2);
   return <div className={styles.personaView}>
     <header className={styles.personaModuleHeader}>
-      <div><span className="eyebrow">Nos profils</span><h2 id={headingId}>Deux quotidiens, deux façons de dépenser.</h2><p>Des repères personnels composés à partir de ce qui revient, de ce qui rythme les journées et de ce qui évolue.</p></div>
+      <div><span className="eyebrow">Portraits personnels</span><h2 id={headingId}>Nos profils</h2><p className={styles.personaHeroLead}>Deux quotidiens, deux façons de dépenser.</p></div>
       <div className={styles.personaScopeSwitch} role="group" aria-label="Périmètre affiché"><span aria-current="page">Adrien + Manon</span><span>♡ Nous deux</span></div>
     </header>
     <PersonaPortraits profiles={profiles} />

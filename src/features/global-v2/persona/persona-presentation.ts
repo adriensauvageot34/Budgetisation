@@ -1,4 +1,5 @@
 import type { GlobalExpandedReadModel } from "@/query-api/global-v2";
+import { LIFE_EVENT_ACTIVITY_CATALOG, type LifeEventActivityTypeKey } from "@/analytics/history-v2/calendar/catalog";
 
 type PersonaProfileOutput = NonNullable<GlobalExpandedReadModel["profile"]>;
 type PersonaProfile = PersonaProfileOutput["profiles"][number];
@@ -70,7 +71,8 @@ export type PersonaPresentationModel = {
 };
 
 type SemanticPresentation = {
-  readonly title: string;
+  readonly title?: string;
+  readonly resolveTitle?: (semanticKey: string) => string | undefined;
   readonly description: string;
   readonly icon: PersonaPresentationIcon;
   readonly editorialGroup: PersonaEditorialGroup;
@@ -136,7 +138,10 @@ export const PERSONA_SEMANTIC_PATTERN_REGISTRY_V1: readonly SemanticPatternPrese
     childrenStrategy: "NONE", temporalTreatment: "STATUS", portraitMarker: true,
   },
   {
-    matches: (key) => key.startsWith("activity:"), title: "Activité récurrente", description: "Une activité observée à plusieurs reprises dans le quotidien.",
+    matches: (key) => key.startsWith("activity:"), resolveTitle: (key) => {
+      const activityId = key.slice("activity:".length) as LifeEventActivityTypeKey;
+      return LIFE_EVENT_ACTIVITY_CATALOG[activityId]?.publicLabel;
+    }, description: "Une activité qui revient régulièrement dans le quotidien.",
     icon: "RHYTHM", editorialGroup: "DAILY_RHYTHM", renderer: "RHYTHM", metricsPolicy: rhythmMetrics,
     childrenStrategy: "NONE", temporalTreatment: "STATUS", portraitMarker: true, requiresUsefulMetric: true,
   },
@@ -189,6 +194,10 @@ function presentationMetrics(metrics: PersonaTrait["metrics"], policy: readonly 
     if (!policy.includes(definition.metricKey)) continue;
     const value = presentValue(metrics[definition.metricKey]);
     if (value === undefined) continue;
+    if (definition.format === "DAYS") {
+      const numericValue = typeof value === "number" ? value : Number(value);
+      if (!Number.isFinite(numericValue) || numericValue <= 0) continue;
+    }
     presented.push({ metricKey: definition.metricKey, label: definition.label, value, format: definition.format });
     if (presented.length === 3) break;
   }
@@ -232,6 +241,8 @@ export function presentPersonaTrait(trait: PersonaTrait, engineRank: number): Pe
   if (trait.scope !== "PERSONAL" || trait.subject.kind !== "PERSON") return undefined;
   const semantic = semanticPresentation(trait.semanticKey);
   if (semantic === undefined) return undefined;
+  const title = semantic.resolveTitle?.(trait.semanticKey) ?? semantic.title;
+  if (title === undefined) return undefined;
   const metrics = presentationMetrics(trait.metrics, semantic.metricsPolicy);
   if (semantic.requiresUsefulMetric === true && metrics.length === 0) return undefined;
   const statusLabel = semantic.temporalTreatment === "NONE" ? undefined : personaTemporalStatusLabel(trait.temporalStatus);
@@ -243,7 +254,7 @@ export function presentPersonaTrait(trait: PersonaTrait, engineRank: number): Pe
     : [];
   return {
     traitId: trait.traitId, semanticKey: trait.semanticKey, renderer: semantic.renderer, icon: semantic.icon,
-    editorialGroup: semantic.editorialGroup, title: semantic.title, description: semantic.description, engineRank, portraitMarker: semantic.portraitMarker,
+    editorialGroup: semantic.editorialGroup, title, description: semantic.description, engineRank, portraitMarker: semantic.portraitMarker,
     ...(statusLabel === undefined ? {} : { statusLabel }), metrics,
     examples: presentationExamples(trait, semantic), children,
   };
@@ -269,10 +280,15 @@ function composeProfile(profile: PersonaProfile, displayName: string | undefined
   const dailyRhythms: PersonaPresentationBlock[] = [];
   const recurringLife: PersonaPresentationBlock[] = [];
   const phasedProjects: PersonaPresentationBlock[] = [];
+  const markerIdentities = new Set<string>();
   for (const [engineRank, trait] of profile.featuredTraits.entries()) {
     const block = presentPersonaTrait(trait, engineRank);
     if (block === undefined) continue;
-    if (block.portraitMarker && markers.length < 4) markers.push({ traitId: block.traitId, title: block.title, icon: block.icon, engineRank });
+    const markerIdentity = `${block.icon}:${block.title.normalize("NFKC").trim().toLocaleLowerCase("fr-FR")}`;
+    if (block.portraitMarker && markers.length < 4 && !markerIdentities.has(markerIdentity)) {
+      markers.push({ traitId: block.traitId, title: block.title, icon: block.icon, engineRank });
+      markerIdentities.add(markerIdentity);
+    }
     if (block.editorialGroup === "DAILY_RHYTHM") dailyRhythms.push(block);
     if (block.editorialGroup === "RECURRING_LIFE") recurringLife.push(block);
     if (block.editorialGroup === "PHASED_PROJECT") phasedProjects.push(block);
