@@ -1469,13 +1469,82 @@ function placeProjection(output: GlobalV2OwnerOutput, labels: GlobalV2Presentati
     return lifecycle === undefined || lifecycleLabels[lifecycle] === undefined ? [] : [row(output, index + 1, `place-lifecycle:${placeId}`, label, lifecycleLabels[lifecycle]!, `place:${placeId}`, "KNOWN")];
   });
   const headline = places[0];
+  const personPlaceRows = arrayOf(at(output.output, "personPlaceRollups")).flatMap((rollup, index) => {
+    const entityRef = stringOf(at(rollup, "entityRef"));
+    const personId = stringOf(at(rollup, "personId"));
+    const placeId = stringOf(at(rollup, "placeId"));
+    const visitCount = numberOf(at(rollup, "visitCount"));
+    const distinctVisitDays = numberOf(at(rollup, "distinctVisitDays"));
+    if (entityRef === undefined || personId === undefined || placeId === undefined || visitCount === undefined || distinctVisitDays === undefined) return [];
+    const knowledgeState = stringOf(at(rollup, "knowledgeState")) === "PARTIAL" ? "PARTIAL" as const : "KNOWN" as const;
+    return [row(output, index + 1, `person-place:${entityRef}`, `${personLabel(personId, labels, [])} · ${labels.places?.[placeId] ?? placeId}`, `${visitCount} visites · ${distinctVisitDays} jours distincts`, entityRef, knowledgeState)];
+  });
+  const returnPatternRows = arrayOf(at(output.output, "personPlaceReturnPatterns")).flatMap((pattern, index) => {
+    const entityRef = stringOf(at(pattern, "entityRef"));
+    const personId = stringOf(at(pattern, "personId"));
+    const originPlaceId = stringOf(at(pattern, "originPlaceId"));
+    const stopPlaceId = stringOf(at(pattern, "stopPlaceId"));
+    const destinationPlaceId = stringOf(at(pattern, "destinationPlaceId"));
+    const occurrenceCount = numberOf(at(pattern, "occurrenceCount"));
+    if (entityRef === undefined || personId === undefined || originPlaceId === undefined || stopPlaceId === undefined || destinationPlaceId === undefined || occurrenceCount === undefined) return [];
+    const placeLabel = (placeId: string) => labels.places?.[placeId] ?? placeId;
+    const knowledgeState = stringOf(at(pattern, "knowledgeState")) === "PARTIAL" ? "PARTIAL" as const : "KNOWN" as const;
+    return [row(output, index + 1, `person-place-return:${entityRef}`, personLabel(personId, labels, []), `${placeLabel(originPlaceId)} → ${placeLabel(stopPlaceId)} → ${placeLabel(destinationPlaceId)} · ${occurrenceCount} occurrences`, entityRef, knowledgeState)];
+  });
   return {
     ...(headline === undefined ? {} : {
       primaryInsight: presentationInsight(output, "primary-place", headline.label, `${formatNumber(at(headline.place, "visitCount"), 0)} visites observées · Votre lieu le plus fréquenté sur la période`, { primaryMetricRef: `global-m7:${headline.placeId}`, entityRefs: [`place:${headline.placeId}`] }),
     }),
     kpis: places.slice(0, 3).map(({ place, placeId, label }, index) => kpi(output, `kpi:places:${String(index).padStart(2, "0")}`, label, `${formatNumber(at(place, "visitCount"), 0) ?? "0"} visites`, `global-m7:${placeId}`)),
     sections: { OVERVIEW: { rows: placeRows }, BREAKDOWN: { rows: financeRows }, EVOLUTION: { rows: lifecycleRows } },
-    detailRows: placeRows,
+    detailRows: [...placeRows, ...personPlaceRows, ...returnPatternRows],
+  };
+}
+
+function placeDetailProjection(output: GlobalV2OwnerOutput, labels: GlobalV2PresentationLabels, entityRef: string): SectionProjection | undefined {
+  const rollup = arrayOf(at(output.output, "personPlaceRollups")).find((entry) => stringOf(at(entry, "entityRef")) === entityRef);
+  if (rollup !== undefined) {
+    const placeId = stringOf(at(rollup, "placeId"));
+    const visitCount = numberOf(at(rollup, "visitCount"));
+    const distinctVisitDays = numberOf(at(rollup, "distinctVisitDays"));
+    const medianDuration = numberOf(at(rollup, "medianDurationMinutes"));
+    if (placeId === undefined || visitCount === undefined || distinctVisitDays === undefined) return undefined;
+    const knowledgeState = stringOf(at(rollup, "knowledgeState")) === "PARTIAL" ? "PARTIAL" as const : "KNOWN" as const;
+    return {
+      metrics: [
+        metric(output, "visit-count", "Visites", String(visitCount), knowledgeState),
+        metric(output, "distinct-visit-days", "Jours distincts", String(distinctVisitDays), knowledgeState),
+        ...(medianDuration === undefined ? [] : [metric(output, "median-duration-minutes", "Durée médiane", `${medianDuration} min`, knowledgeState)]),
+      ],
+      rows: [
+        row(output, 1, "place", "Lieu", labels.places?.[placeId] ?? placeId, entityRef, "KNOWN"),
+        row(output, 2, "first-observed", "Première observation", stringOf(at(rollup, "firstObservedDate")) ?? "Indisponible", entityRef, "KNOWN"),
+        row(output, 3, "last-observed", "Dernière observation", stringOf(at(rollup, "lastObservedDate")) ?? "Indisponible", entityRef, "KNOWN"),
+      ],
+    };
+  }
+  const pattern = arrayOf(at(output.output, "personPlaceReturnPatterns")).find((entry) => stringOf(at(entry, "entityRef")) === entityRef);
+  if (pattern === undefined) return undefined;
+  const originPlaceId = stringOf(at(pattern, "originPlaceId"));
+  const stopPlaceId = stringOf(at(pattern, "stopPlaceId"));
+  const destinationPlaceId = stringOf(at(pattern, "destinationPlaceId"));
+  const occurrenceCount = numberOf(at(pattern, "occurrenceCount"));
+  const distinctDayCount = numberOf(at(pattern, "distinctDayCount"));
+  if (originPlaceId === undefined || stopPlaceId === undefined || destinationPlaceId === undefined || occurrenceCount === undefined || distinctDayCount === undefined) return undefined;
+  const placeLabel = (placeId: string) => labels.places?.[placeId] ?? placeId;
+  const knowledgeState = stringOf(at(pattern, "knowledgeState")) === "PARTIAL" ? "PARTIAL" as const : "KNOWN" as const;
+  return {
+    metrics: [
+      metric(output, "occurrence-count", "Occurrences", String(occurrenceCount), knowledgeState),
+      metric(output, "distinct-day-count", "Jours distincts", String(distinctDayCount), knowledgeState),
+    ],
+    rows: [
+      row(output, 1, "origin", "Origine", placeLabel(originPlaceId), entityRef, "KNOWN"),
+      row(output, 2, "stop", "Étape", placeLabel(stopPlaceId), entityRef, "KNOWN"),
+      row(output, 3, "destination", "Destination", placeLabel(destinationPlaceId), entityRef, "KNOWN"),
+      row(output, 4, "first-observed", "Première observation", stringOf(at(pattern, "firstObservedDate")) ?? "Indisponible", entityRef, "KNOWN"),
+      row(output, 5, "last-observed", "Dernière observation", stringOf(at(pattern, "lastObservedDate")) ?? "Indisponible", entityRef, "KNOWN"),
+    ],
   };
 }
 
@@ -1890,7 +1959,7 @@ export function buildGlobalV2CandidateFromOwnerOutputs(input: GlobalV2CandidateI
       }]) ?? [];
     const sourceDetailRows = ownerOutput.moduleKey === "MOMENTS" ? timelineMomentRows : ownerOutput.moduleKey === "PERSONAS" ? personaDetailRows : ownerOutput.moduleKey === "RHYTHM" && groceryProfileAvailable ? [groceryRow, ...projection.detailRows] : projection.detailRows;
     const uniqueDetailRows = [...new Map(sourceDetailRows.flatMap((detailRow) => detailRow.entityRef === undefined ? [] : [[detailRow.entityRef, detailRow] as const])).values()];
-    const detailRows = ownerOutput.moduleKey === "MOMENTS" ? uniqueDetailRows : uniqueDetailRows.slice(0, GLOBAL_MAX_SECTION_ROWS);
+    const detailRows = ownerOutput.moduleKey === "MOMENTS" || ownerOutput.moduleKey === "GEO_MOBILITY" ? uniqueDetailRows : uniqueDetailRows.slice(0, GLOBAL_MAX_SECTION_ROWS);
     if (detailResource !== undefined) for (const detailRow of detailRows) {
       const params = { entityRef: detailRow.entityRef! };
       const economicDetail = ownerOutput.moduleKey === "ECONOMIC" ? economicRecurrenceDetail(ownerOutput, detailRow.entityRef!) : undefined;
@@ -1898,10 +1967,11 @@ export function buildGlobalV2CandidateFromOwnerOutputs(input: GlobalV2CandidateI
       const routineBase = ownerOutput.moduleKey === "RHYTHM" ? routineDetailProjection(ownerOutput, presentationLabels, input.personIds, detailRow.entityRef!) : undefined;
       const routineDetail = routineBase === undefined ? undefined : detailRow.entityRef === "household-activity:courses_alimentaires" ? { ...routineBase, groceryRhythm: groceryRhythmContext(input.candidateAdapters.grocery) } : routineBase;
       const momentDetail = ownerOutput.moduleKey === "MOMENTS" ? momentDetailProjection(ownerOutput, detailRow.entityRef!, input.candidateAdapters.timeline, input.momentComponentPresentation, scopeHash) : undefined;
+      const placeDetail = ownerOutput.moduleKey === "GEO_MOBILITY" ? placeDetailProjection(ownerOutput, presentationLabels, detailRow.entityRef!) : undefined;
       const personaDetailIndex = ownerOutput.moduleKey === "PERSONAS" && personaProfile !== undefined && detailRow.entityRef!.startsWith("person:")
         ? projectPublishedPersonaDetailIndex(personaProfile, detailRow.entityRef!.slice("person:".length) as PersonId)
         : undefined;
-      const detail = economicDetail ?? categoryNeedDetail ?? routineDetail ?? momentDetail;
+      const detail = economicDetail ?? categoryNeedDetail ?? routineDetail ?? momentDetail ?? placeDetail;
       const destinations: readonly GlobalNavigationDestination[] = detailRow.entityRef!.startsWith("category:") ? [
         { targetId: `history:${detailRow.entityRef}`, kind: "HISTORY", resource: "history_category_detail", entityRef: detailRow.entityRef!, scopeHash, sourcePublicationId: provisionalMeta.publicationId, sourceAnalyticsRevision: provisionalMeta.revision },
         { targetId: `operations:${detailRow.entityRef}`, kind: "OPERATIONS", resource: "operations_browse", entityRef: detailRow.entityRef!, scopeHash, sourcePublicationId: provisionalMeta.publicationId, sourceAnalyticsRevision: provisionalMeta.revision },

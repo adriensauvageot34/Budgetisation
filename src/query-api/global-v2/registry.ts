@@ -83,6 +83,7 @@ const m1V2ProjectionResources = new Set<string>(["analysis_global_economic", "an
 const lifeSpendingV2ProjectionResources = new Set<string>(["analysis_global_rhythm", "analysis_global_rhythm_expanded", "analysis_global_routine_detail", "analysis_global_moment_experience_detail"]);
 const timelineSemanticResources = new Set<string>(["analysis_global_life_timeline", "analysis_global_timeline_event_comparison"]);
 const personaDetailIndexResources = new Set<string>(["analysis_global_persona_detail"]);
+const placeMobilityV2ProjectionResources = new Set<string>(["analysis_global_place_mobility_detail"]);
 const timelineComparisonLevels: ReadonlySet<GlobalTimelineComparisonLevel> = new Set(["SAME_SERIES", "SAME_CLOSE_FAMILY", "SAME_INTERMEDIATE_FAMILY", "SAME_GRAND_FAMILY"]);
 
 function definitionFor(resource: GlobalV2QueryResourceName): GlobalV2ResourceDefinition {
@@ -160,10 +161,10 @@ export const globalV2QueryRegistry = Object.freeze(Object.fromEntries(
       availability: definition.availability,
       ...(schemaVersion === undefined ? {} : { schemaVersion }),
       contractVersion: "global-v2-query@v1",
-      methodVersion: m1V2ProjectionResources.has(resource) || lifeSpendingV2ProjectionResources.has(resource) || timelineSemanticResources.has(resource) || personaDetailIndexResources.has(resource) ? `${resource}@v2` : `${resource}@v1`,
+      methodVersion: m1V2ProjectionResources.has(resource) || lifeSpendingV2ProjectionResources.has(resource) || timelineSemanticResources.has(resource) || personaDetailIndexResources.has(resource) || placeMobilityV2ProjectionResources.has(resource) ? `${resource}@v2` : `${resource}@v1`,
       policyVersions: timelineSemanticResources.has(resource)
         ? Object.freeze({ projection: "timeline-semantic-projection@v1", comparator: "timeline-semantic-comparator@v2", transport: "global-v2-snapshot-only@sh05-v2" })
-        : Object.freeze({ projection: m1V2ProjectionResources.has(resource) ? "global-m1-query-projection@v2" : lifeSpendingV2ProjectionResources.has(resource) ? "global-life-spending-query-projection@v1" : personaDetailIndexResources.has(resource) ? "global-persona-detail-index-projection@v1" : "global-v2-query-projection@v1", transport: "global-v2-snapshot-only@v1" }),
+        : Object.freeze({ projection: m1V2ProjectionResources.has(resource) ? "global-m1-query-projection@v2" : lifeSpendingV2ProjectionResources.has(resource) ? "global-life-spending-query-projection@v1" : personaDetailIndexResources.has(resource) ? "global-persona-detail-index-projection@v2" : placeMobilityV2ProjectionResources.has(resource) ? "global-m7-person-place-query-projection@v1" : "global-v2-query-projection@v1", transport: "global-v2-snapshot-only@v1" }),
       schema: schemaFor(resource),
     };
     return [resource, Object.freeze(contract)] as const;

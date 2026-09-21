@@ -181,7 +181,9 @@ check(() => assert.equal(query.globalV2QueryRegistry.analysis_global_product_det
 check(() => assert.equal(query.globalV2QueryRegistry.analysis_global_route_detail.availability, "AUTHORITY_GATED"));
 check(() => assert.equal(query.globalV2QueryRegistry.analysis_global_economic_recurrence_detail.family, "global_entity_detail"));
 check(() => assert.equal(query.globalV2QueryRegistry.analysis_global_persona_detail.methodVersion, "analysis_global_persona_detail@v2"));
-check(() => assert.equal(query.globalV2QueryRegistry.analysis_global_persona_detail.policyVersions.projection, "global-persona-detail-index-projection@v1"));
+check(() => assert.equal(query.globalV2QueryRegistry.analysis_global_persona_detail.policyVersions.projection, "global-persona-detail-index-projection@v2"));
+check(() => assert.equal(query.globalV2QueryRegistry.analysis_global_place_mobility_detail.methodVersion, "analysis_global_place_mobility_detail@v2"));
+check(() => assert.equal(query.globalV2QueryRegistry.analysis_global_place_mobility_detail.policyVersions.projection, "global-m7-person-place-query-projection@v1"));
 check(() => assert.deepEqual(query.parseGlobalV2QueryParams("analysis_global_economic_recurrence_detail", { entityRef: "recurrence:rent" }), { entityRef: "recurrence:rent" }));
 check(() => assert.equal(inputs.some(({ resource }) => resource === "analysis_global_product_detail" || resource === "analysis_global_route_detail"), false));
 check(() => assert.deepEqual(query.parseGlobalV2QueryParams("analysis_global_life_timeline", {}), {}));

@@ -8,6 +8,14 @@ import { addMoney, type Money } from "../../core/money";
 import { parseLocalDate, type LocalDate } from "../../core/time";
 
 export const GLOBAL_M7_METHOD_VERSION = "global_place_mobility@v1" as const;
+export const GLOBAL_M7_PERSON_PLACE_POLICY = Object.freeze({
+  policyRef: "global-m7-person-place-support@v1",
+  minimumDistinctVisitDays: 2,
+  minimumReturnPatternOccurrences: 2,
+  maximumRollupsPerPerson: 12,
+  maximumReturnPatternsPerPerson: 12,
+  maximumPublishedEntities: 100,
+});
 export type GlobalPlaceResolutionLevel = "VENUE" | "ADDRESS" | "SITE" | "LOCALITY" | "MUNICIPALITY" | "REGION" | "UNKNOWN";
 export type GlobalVisitKind = "STOP" | "STAY" | "TRANSIT" | "PASS_THROUGH";
 export type GlobalPlaceLifecycle = "NEWLY_OBSERVED" | "REGULAR" | "NEW_REGULAR" | "GROWING" | "DECLINING" | "REGULAR_STABLE" | "DORMANT" | "ABANDONED" | "ROLE_ENDED" | "OBSERVED";
@@ -90,6 +98,56 @@ type WorkingVisit = {
   readonly rollupOnly?: boolean;
 };
 
+type GlobalPlaceTransition = {
+  readonly transitionId: string;
+  readonly personId: string;
+  readonly originPlaceId: string;
+  readonly destinationPlaceId: string;
+  readonly originVisitId: string;
+  readonly destinationVisitId: string;
+  readonly routeKnown: false;
+  readonly distanceKnown: false;
+  readonly modeKnown: false;
+  readonly evidenceRefs: readonly string[];
+};
+
+export type GlobalPersonPlaceRollup = {
+  readonly entityRef: string;
+  readonly personId: string;
+  readonly placeId: string;
+  readonly visitCount: number;
+  readonly distinctVisitDays: number;
+  readonly firstObservedDate: LocalDate;
+  readonly lastObservedDate: LocalDate;
+  readonly medianDurationMinutes?: number;
+  readonly support: {
+    readonly status: "SUFFICIENT";
+    readonly observedUnits: number;
+    readonly minimumRequired: number;
+    readonly policyRef: typeof GLOBAL_M7_PERSON_PLACE_POLICY.policyRef;
+  };
+  readonly knowledgeState: "KNOWN" | "PARTIAL";
+};
+
+export type GlobalPersonPlaceReturnPattern = {
+  readonly entityRef: string;
+  readonly personId: string;
+  readonly originPlaceId: string;
+  readonly stopPlaceId: string;
+  readonly destinationPlaceId: string;
+  readonly occurrenceCount: number;
+  readonly distinctDayCount: number;
+  readonly firstObservedDate: LocalDate;
+  readonly lastObservedDate: LocalDate;
+  readonly support: {
+    readonly status: "SUFFICIENT";
+    readonly observedUnits: number;
+    readonly minimumRequired: number;
+    readonly policyRef: typeof GLOBAL_M7_PERSON_PLACE_POLICY.policyRef;
+  };
+  readonly knowledgeState: "KNOWN" | "PARTIAL";
+};
+
 const digest = (value: unknown) => bytesToHex(sha256(utf8ToBytes(canonicalSerializeGlobal(value))));
 const unique = (values: readonly string[]) => [...new Set(values)].sort();
 const zero = "0" as Money;
@@ -102,6 +160,112 @@ const overlapMinutes = (a: WorkingVisit, b: WorkingVisit) => {
   return Temporal.Instant.compare(instant(start), instant(end)) < 0 ? durationMinutes(start, end) : 0;
 };
 const resolutionRank: Readonly<Record<GlobalPlaceResolutionLevel, number>> = { VENUE: 6, ADDRESS: 5, SITE: 4, LOCALITY: 3, MUNICIPALITY: 2, REGION: 1, UNKNOWN: 0 };
+
+function deduplicateByIdentity<T>(values: readonly T[], identity: (value: T) => string, errorCode: string): readonly T[] {
+  const result = new Map<string, T>();
+  for (const value of values) {
+    const key = identity(value);
+    const previous = result.get(key);
+    if (previous !== undefined && canonicalSerializeGlobal(previous) !== canonicalSerializeGlobal(value)) throw new TypeError(`${errorCode}:${key}`);
+    result.set(key, value);
+  }
+  return [...result.values()];
+}
+
+function limitedByPerson<T extends { readonly personId: string; readonly entityRef: string }>(
+  values: readonly T[],
+  maximumPerPerson: number,
+  compare: (left: T, right: T) => number,
+): readonly T[] {
+  const people = unique(values.map(({ personId }) => personId));
+  return people.flatMap((personId) => values.filter((value) => value.personId === personId).sort(compare).slice(0, maximumPerPerson))
+    .sort((left, right) => left.personId.localeCompare(right.personId) || left.entityRef.localeCompare(right.entityRef))
+    .slice(0, GLOBAL_M7_PERSON_PLACE_POLICY.maximumPublishedEntities);
+}
+
+function buildPersonPlaceRollups(visits: readonly WorkingVisit[], visitDays: readonly { readonly personId: string; readonly placeId: string; readonly localDate: LocalDate }[]): readonly GlobalPersonPlaceRollup[] {
+  const groups = new Map<string, WorkingVisit[]>();
+  for (const visit of visits) {
+    const key = `${visit.personId}:${visit.placeId}`;
+    groups.set(key, [...(groups.get(key) ?? []), visit]);
+  }
+  const rollups = [...groups.values()].flatMap((rows): readonly GlobalPersonPlaceRollup[] => {
+    const first = rows[0]!;
+    const dates = unique(visitDays.filter((day) => day.personId === first.personId && day.placeId === first.placeId).map(({ localDate }) => localDate));
+    if (dates.length < GLOBAL_M7_PERSON_PLACE_POLICY.minimumDistinctVisitDays) return [];
+    const observedDates = rows.map(({ localDate }) => localDate).sort();
+    const durations = rows.flatMap(({ durationMinutes: value }) => value === undefined ? [] : [value]).sort((left, right) => left - right);
+    const medianDurationMinutes = durations.length === 0 ? undefined : durations[Math.floor((durations.length - 1) / 2)];
+    return [{
+      entityRef: `person-place:${digest(["person-place", first.personId, first.placeId]).slice(0, 24)}`,
+      personId: first.personId,
+      placeId: first.placeId,
+      visitCount: rows.length,
+      distinctVisitDays: dates.length,
+      firstObservedDate: observedDates[0]!,
+      lastObservedDate: observedDates.at(-1)!,
+      ...(medianDurationMinutes === undefined ? {} : { medianDurationMinutes }),
+      support: { status: "SUFFICIENT", observedUnits: dates.length, minimumRequired: GLOBAL_M7_PERSON_PLACE_POLICY.minimumDistinctVisitDays, policyRef: GLOBAL_M7_PERSON_PLACE_POLICY.policyRef },
+      knowledgeState: rows.every(({ status }) => status === "KNOWN") ? "KNOWN" : "PARTIAL",
+    }];
+  });
+  return limitedByPerson(rollups, GLOBAL_M7_PERSON_PLACE_POLICY.maximumRollupsPerPerson, (left, right) => right.distinctVisitDays - left.distinctVisitDays || right.visitCount - left.visitCount || left.entityRef.localeCompare(right.entityRef));
+}
+
+function buildPersonPlaceReturnPatterns(transitions: readonly GlobalPlaceTransition[], visits: readonly WorkingVisit[]): readonly GlobalPersonPlaceReturnPattern[] {
+  const visitById = new Map(visits.map((visit) => [visit.visitId, visit] as const));
+  const canonicalTransitions = [...deduplicateByIdentity(transitions, ({ transitionId }) => transitionId, "M7_CONTRADICTORY_TRANSITION_IDENTITY")]
+    .sort((left, right) => left.personId.localeCompare(right.personId)
+      || (visitById.get(left.originVisitId)?.startAt ?? visitById.get(left.originVisitId)?.localDate ?? "").localeCompare(visitById.get(right.originVisitId)?.startAt ?? visitById.get(right.originVisitId)?.localDate ?? "")
+      || left.transitionId.localeCompare(right.transitionId));
+  const occurrences = new Map<string, {
+    readonly personId: string;
+    readonly originPlaceId: string;
+    readonly stopPlaceId: string;
+    readonly destinationPlaceId: string;
+    readonly rows: Map<string, { readonly date: LocalDate; readonly known: boolean }>;
+  }>();
+  for (let index = 0; index < canonicalTransitions.length - 1; index += 1) {
+    const outbound = canonicalTransitions[index]!, inbound = canonicalTransitions[index + 1]!;
+    if (outbound.personId !== inbound.personId
+      || outbound.destinationVisitId !== inbound.originVisitId
+      || outbound.originPlaceId !== inbound.destinationPlaceId
+      || outbound.destinationPlaceId !== inbound.originPlaceId) continue;
+    const stopVisit = visitById.get(outbound.destinationVisitId);
+    const originVisit = visitById.get(outbound.originVisitId), destinationVisit = visitById.get(inbound.destinationVisitId);
+    if (originVisit === undefined || stopVisit === undefined || destinationVisit === undefined) continue;
+    const grain = canonicalSerializeGlobal([outbound.personId, outbound.originPlaceId, outbound.destinationPlaceId, inbound.destinationPlaceId]);
+    const occurrenceId = digest([outbound.personId, outbound.originVisitId, outbound.destinationVisitId, inbound.destinationVisitId]);
+    const group = occurrences.get(grain) ?? {
+      personId: outbound.personId,
+      originPlaceId: outbound.originPlaceId,
+      stopPlaceId: outbound.destinationPlaceId,
+      destinationPlaceId: inbound.destinationPlaceId,
+      rows: new Map<string, { readonly date: LocalDate; readonly known: boolean }>(),
+    };
+    group.rows.set(occurrenceId, { date: stopVisit.localDate, known: [originVisit, stopVisit, destinationVisit].every(({ status }) => status === "KNOWN") });
+    occurrences.set(grain, group);
+  }
+  const patterns = [...occurrences.values()].flatMap((group): readonly GlobalPersonPlaceReturnPattern[] => {
+    if (group.rows.size < GLOBAL_M7_PERSON_PLACE_POLICY.minimumReturnPatternOccurrences) return [];
+    const dates = [...group.rows.values()].map(({ date }) => date).sort();
+    const distinctDates = unique(dates);
+    return [{
+      entityRef: `person-place-return:${digest(["person-place-return", group.personId, group.originPlaceId, group.stopPlaceId, group.destinationPlaceId]).slice(0, 24)}`,
+      personId: group.personId,
+      originPlaceId: group.originPlaceId,
+      stopPlaceId: group.stopPlaceId,
+      destinationPlaceId: group.destinationPlaceId,
+      occurrenceCount: group.rows.size,
+      distinctDayCount: distinctDates.length,
+      firstObservedDate: dates[0]!,
+      lastObservedDate: dates.at(-1)!,
+      support: { status: "SUFFICIENT", observedUnits: group.rows.size, minimumRequired: GLOBAL_M7_PERSON_PLACE_POLICY.minimumReturnPatternOccurrences, policyRef: GLOBAL_M7_PERSON_PLACE_POLICY.policyRef },
+      knowledgeState: [...group.rows.values()].every(({ known }) => known) ? "KNOWN" : "PARTIAL",
+    }];
+  });
+  return limitedByPerson(patterns, GLOBAL_M7_PERSON_PLACE_POLICY.maximumReturnPatternsPerPerson, (left, right) => right.occurrenceCount - left.occurrenceCount || right.distinctDayCount - left.distinctDayCount || left.entityRef.localeCompare(right.entityRef));
+}
 
 function normalizePlaces(values: readonly GlobalPlaceNode[]) {
   const result = new Map<string, GlobalPlaceNode>();
@@ -316,9 +480,9 @@ function resolveFinance(input: GlobalPlaceEngineInput, places: ReadonlyMap<strin
 export function buildGlobalPlaceMobility(input: GlobalPlaceEngineInput) {
   parseLocalDate(input.certifiedThrough);
   const places = normalizePlaces(input.places);
-  const raw = initialVisits(input, places).filter((visit) => visit.localDate <= input.certifiedThrough);
+  const raw = deduplicateByIdentity(initialVisits(input, places).filter((visit) => visit.localDate <= input.certifiedThrough), ({ visitId }) => visitId, "M7_CONTRADICTORY_VISIT_IDENTITY");
   const visits = mergeVisits(raw, places);
-  const eligible = visits.filter((visit) => !visit.rollupOnly && (visit.visitKind === "STOP" || visit.visitKind === "STAY"));
+  const eligible = deduplicateByIdentity(visits.filter((visit) => !visit.rollupOnly && (visit.visitKind === "STOP" || visit.visitKind === "STAY")), ({ visitId }) => visitId, "M7_CONTRADICTORY_VISIT_IDENTITY");
   const slices = eligible.flatMap((visit) => visitDaySlices(visit, input.householdTimeZone).map((slice) => ({ ...slice, visitId: visit.visitId, personId: visit.personId, placeId: visit.placeId, explicitlyProved: visit.sourceMode !== "PASSIVE_LOCATION" })));
   const dayGroups = new Map<string, typeof slices>();
   for (const slice of slices) { const key = `${slice.personId}:${slice.placeId}:${slice.date}`, rows = dayGroups.get(key) ?? []; rows.push(slice); dayGroups.set(key, rows); }
@@ -348,10 +512,12 @@ export function buildGlobalPlaceMobility(input: GlobalPlaceEngineInput) {
   const placesOutput = placeMetrics.map(({ rawImportanceInputs: _raw, ...metric }) => ({ ...metric, importance: scores.get(metric.placeId)!, discoveryImportance: scores.get(metric.placeId)!.currentImportance * metric.routinePlacePenalty })).sort((a, b) => b.discoveryImportance - a.discoveryImportance || a.placeId.localeCompare(b.placeId));
   const discoveryRail = (() => { const output: string[] = [], routine = new Set<string>(); for (const place of placesOutput) { if (place.roleStatus === "ACTIVE_ROUTINE" && routine.size >= 1) continue; output.push(place.placeId); if (place.roleStatus === "ACTIVE_ROUTINE") routine.add(place.placeId); if (output.length === 6) break; } return output; })();
   const stays = buildStays(visits, input.nightEvidence ?? []);
-  const transitions = unique(eligible.map((visit) => visit.personId)).flatMap((personId) => {
-    const ordered = eligible.filter((visit) => visit.personId === personId && visit.startAt && visit.endAt).sort((a, b) => a.startAt!.localeCompare(b.startAt!));
+  const transitions: readonly GlobalPlaceTransition[] = unique(eligible.map((visit) => visit.personId)).flatMap((personId) => {
+    const ordered = eligible.filter((visit) => visit.personId === personId && visit.startAt && visit.endAt).sort((a, b) => a.startAt!.localeCompare(b.startAt!) || a.visitId.localeCompare(b.visitId));
     return ordered.slice(1).flatMap((destination, index) => { const origin = ordered[index]; return origin.placeId === destination.placeId ? [] : [{ transitionId: `od:${digest([personId, origin.visitId, destination.visitId]).slice(0, 16)}`, personId, originPlaceId: origin.placeId, destinationPlaceId: destination.placeId, originVisitId: origin.visitId, destinationVisitId: destination.visitId, routeKnown: false as const, distanceKnown: false as const, modeKnown: false as const, evidenceRefs: unique([...origin.evidenceRefs, ...destination.evidenceRefs]) }]; });
-  });
+  }).sort((left, right) => left.personId.localeCompare(right.personId) || left.transitionId.localeCompare(right.transitionId));
+  const personPlaceRollups = buildPersonPlaceRollups(eligible, visitDays);
+  const personPlaceReturnPatterns = buildPersonPlaceReturnPatterns(transitions, eligible);
   const finance = resolveFinance(input, places);
   const mobilityCapabilities = {
     placeVisits: { state: "AVAILABLE" as const, reasonCodes: [] as string[] },
@@ -381,10 +547,10 @@ export function buildGlobalPlaceMobility(input: GlobalPlaceEngineInput) {
   ]);
   for (const ref of consumedRefs) if (!input.dependencyDigests[ref]) throw new TypeError(`M7_DEPENDENCY_CLOSURE_MISSING:${ref}`);
   const dependencyClosure = consumedRefs.map((ref) => ({ ref, digest: input.dependencyDigests[ref] }));
-  const policies = { visit: "global-place-visit-resolution@v1", merge: "global-place-merge-15m@v1", overlap: "global-place-overlap-5m@v1", days: "global-place-visit-day-15m@v1", stay: "global-place-night-evidence@v1", importance: "global-place-importance@v1", lifecycle: "global-place-lifecycle-3plus3@v1", finance: "global-place-finance-coverage-85-60@v1", mobility: "ga0-authority-gates@v1" };
+  const policies = { visit: "global-place-visit-resolution@v1", merge: "global-place-merge-15m@v1", overlap: "global-place-overlap-5m@v1", days: "global-place-visit-day-15m@v1", stay: "global-place-night-evidence@v1", importance: "global-place-importance@v1", lifecycle: "global-place-lifecycle-3plus3@v1", finance: "global-place-finance-coverage-85-60@v1", mobility: "ga0-authority-gates@v1", personPlace: GLOBAL_M7_PERSON_PLACE_POLICY.policyRef };
   const crossModuleSignals = placesOutput.flatMap((place) => ["NEW_REGULAR", "GROWING", "DECLINING", "ROLE_ENDED"].includes(place.lifecycle.status) ? [{ signalId: `place:${place.placeId}:${place.lifecycle.status}`, placeId: place.placeId, kind: place.lifecycle.status, m3Eligible: place.lifecycle.status !== "NEWLY_OBSERVED" }] : []);
   const relationshipReplay = { m6MomentDefinitionsExamined: true, m7MobilityDefinitions: "EXCLUDED_AUTHORITY_GATED" as const, m7PlaceDefinitions: "EXAMINED_CORE_ONLY" as const, fdrUniverseChanged: false as const, reason: "NO_NEW_ELIGIBLE_STATISTICAL_DEFINITION_WITH_AUTHORITATIVE_COMPARATOR_AND_OUTCOME", sourceDependsOnRelationshipResult: false as const };
-  const output = { methodVersion: GLOBAL_M7_METHOD_VERSION, policies, visits, visitDays, stays, transitions, places: placesOutput, discoveryRail, finance, mobilityCapabilities, mobility, crossModuleSignals, relationshipReplay, dependencyClosure, liveWrites: "NONE" as const };
+  const output = { methodVersion: GLOBAL_M7_METHOD_VERSION, policies, visits, visitDays, stays, transitions, personPlaceRollups, personPlaceReturnPatterns, places: placesOutput, discoveryRail, finance, mobilityCapabilities, mobility, crossModuleSignals, relationshipReplay, dependencyClosure, liveWrites: "NONE" as const };
   const semanticInput = {
     householdId: input.householdId,
     householdTimeZone: input.householdTimeZone,

@@ -47,7 +47,7 @@ export function createGlobalM7DependencyDeclaration(input: {
     policyVersions: {
       visitResolution: "v1", visitMerge: "v1", visitDays: "v1", stayEvidence: "v1",
       placeImportance: "v1", placeLifecycle: "v1", localizedFinance: "v1",
-      placeHierarchy: "v1", mobilityGates: "v1", relationshipReplay: "v1",
+      placeHierarchy: "v1", mobilityGates: "v1", relationshipReplay: "v1", personPlaceProjection: "v1",
     },
     publicationOutputs: [],
     invalidationScope: { kind: "MODULE", moduleId: "global-v2:m7-place-mobility" },

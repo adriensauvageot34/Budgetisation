@@ -37,6 +37,8 @@ const personA = "00000000-0000-4000-8000-000000000002";
 const personB = "00000000-0000-4000-8000-000000000003";
 const personaProfile = analytics.buildPersonaProfile({ signals: [
   { signalId: "bridge:photo", signalType: "DECLARED", semanticKey: "creative.photo.adrien", subject: { kind: "PERSON", personId: personA }, scope: "PERSONAL", action: "AFFIRM", value: true, kind: "PROJECT", family: "LEISURE_AND_ACTIVITIES", authority: "USER_VALIDATED", temporalStatus: "PROJECT", sourceModule: "DECLARED_V1", evidenceRefs: ["declaration:photo-project"] },
+  { signalId: "m7:person-place:bridge-rollup", signalType: "MOBILITY", semanticKey: "person-place:place-one", subject: { kind: "PERSON", personId: personA }, scope: "PERSONAL", entityRef: "person-place:bridge-rollup", kind: "HABIT", family: "MOBILITY", authority: "OBSERVED", knowledgeStatus: "OBSERVED", context: "PERSON_PLACE_ROLLUP", sourceModule: "M7", metrics: { visitCount: 3, distinctVisitDays: 2, medianDurationMinutes: 40 }, evidenceRefs: ["person-place:bridge-rollup"] },
+  { signalId: "m7:person-place-return:bridge-pattern", signalType: "MOBILITY", semanticKey: "person-place-return:place-one:place-two:place-one", subject: { kind: "PERSON", personId: personA }, scope: "PERSONAL", entityRef: "person-place-return:bridge-pattern", kind: "HABIT", family: "MOBILITY", authority: "OBSERVED", knowledgeStatus: "OBSERVED", context: "PERSON_PLACE_RETURN_PATTERN", sourceModule: "M7", metrics: { returnCount: 2, distinctDayCount: 2 }, evidenceRefs: ["person-place-return:bridge-pattern"] },
   { signalId: "m2:need:bridge-personal", signalType: "NEED", semanticKey: "need:bridge-personal", subject: { kind: "PERSON", personId: personB }, scope: "PERSONAL", needKey: "bridge-personal", entityRef: "need:bridge-personal", active: true, kind: "HABIT", family: "PRODUCTS_AND_CONSUMPTION", authority: "CANONICAL_DB", knowledgeStatus: "OBSERVED", sourceModule: "M2", metrics: { activeMonths: 12, annualAmount: "720", monthlyAmount: "60", typicalAmount: "55" }, evidenceRefs: ["need:bridge-personal"] },
   { signalId: "bridge:mascara", signalType: "PRODUCT_CYCLE", semanticKey: "product-need:maquillage_manon_mascara", subject: { kind: "PERSON", personId: personB }, scope: "PERSONAL", needKey: "maquillage_manon_mascara", family: "PERSONAL_CARE", authority: "OBSERVED", temporalStatus: "STABLE", sourceModule: "PRODUCT_OBSERVATIONS", metrics: { occurrenceCount: 6, medianGapDays: 65, typicalPrice: 32 }, evidenceRefs: ["product-observation:mascara"], limitations: ["PRODUCT_COVERAGE_PARTIAL"] },
   { signalId: "bridge:brows", signalType: "PRODUCT_CYCLE", semanticKey: "product-need:maquillage_manon_sourcils", subject: { kind: "PERSON", personId: personB }, scope: "PERSONAL", needKey: "maquillage_manon_sourcils", family: "PERSONAL_CARE", authority: "OBSERVED", temporalStatus: "STABLE", sourceModule: "PRODUCT_OBSERVATIONS", metrics: { occurrenceCount: 7, medianGapDays: 57, typicalPrice: 9.99 }, evidenceRefs: ["product-observation:brows"], limitations: ["PRODUCT_COVERAGE_PARTIAL"] },
@@ -127,7 +129,12 @@ const outputByModule = {
     comparisons: [{ momentId: "one", status: "KNOWN", comparisonTier: "SAME_FAMILY", comparisonProfileId: "travel-family", peerCount: 6, support: { supportStatus: "SUFFICIENT" }, subjectCost: "1253.90", peerMedianCost: "900", q1: "700", q3: "1100", mad: "150", absoluteDelta: "353.90", relativeDelta: "0.393222", materiality: { status: "MATERIAL" }, evidenceRefs: ["comparison:one"], methodVersion: "global_moment_experience@v1" }],
     series: [], narrative: [{ momentId: "one", eligible: true, signals: ["UNUSUAL"] }, { momentId: "two", eligible: true, signals: ["DECLARED_IMPORTANCE"] }],
   },
-  GEO_MOBILITY: { places: [{ placeId: "place-one", visitCount: 408, visitDays: 120, medianDuration: 892, lifecycle: { status: "REGULAR_STABLE" } }], finance: { rollups: [{ placeId: "place-one", amount: "300" }] } },
+  GEO_MOBILITY: {
+    places: [{ placeId: "place-one", visitCount: 408, visitDays: 120, medianDuration: 892, lifecycle: { status: "REGULAR_STABLE" } }],
+    personPlaceRollups: [{ entityRef: "person-place:bridge-rollup", personId: personA, placeId: "place-one", visitCount: 3, distinctVisitDays: 2, firstObservedDate: "2026-06-10", lastObservedDate: "2026-06-11", medianDurationMinutes: 40, support: { status: "SUFFICIENT", observedUnits: 2, minimumRequired: 2, policyRef: "global-m7-person-place-support@v1" }, knowledgeState: "KNOWN" }],
+    personPlaceReturnPatterns: [{ entityRef: "person-place-return:bridge-pattern", personId: personA, originPlaceId: "place-one", stopPlaceId: "place-two", destinationPlaceId: "place-one", occurrenceCount: 2, distinctDayCount: 2, firstObservedDate: "2026-06-10", lastObservedDate: "2026-06-11", support: { status: "SUFFICIENT", observedUnits: 2, minimumRequired: 2, policyRef: "global-m7-person-place-support@v1" }, knowledgeState: "KNOWN" }],
+    finance: { rollups: [{ placeId: "place-one", amount: "300" }] },
+  },
   CONSUMPTION: { events: [], merchants: [], checkoutPurchaseCount: 0, retainedPurchaseCount: 0 },
   PERSONAS: { metrics: [{ personId: personA, metricId: "activity-rate:travail_site", rawValue: "0.49" }, { personId: personB, metricId: "activity-rate:teletravail", rawValue: "0.25" }], differences: [], profile: personaProfile },
   TOGETHER: { universes: [{ universeId: "activity:journee_maison", support: { sharedUnits: 35, resolvedUnits: 35, eligibleUnits: 73, sharedObservableCoverage: 0.48, knowledgeState: "PARTIAL" } }] },
@@ -180,7 +187,7 @@ const base = {
     categories: { "cat-food": "Alimentation", "cat-home": "Logement", "cat-travel": "Transport", "cat-gifts": "Cadeaux", "cat-health": "Santé", "cat-misc": "Divers" },
     subcategories: { "sub-food-core": "Courses", "sub-food-extra": "Restaurants", "sub-home": "Loyer", "sub-travel": "Train", "sub-gifts": "Cadeaux", "sub-health": "Santé", "sub-misc": "Divers" },
     needs: { "need-food": "Se nourrir", "need-home": "Se loger" },
-    places: { "place-one": "Maison" },
+    places: { "place-one": "Lieu A", "place-two": "Lieu B" },
   },
 };
 const transportFor = (momentOutput, hashCharacter = "7") => {
@@ -436,7 +443,15 @@ check(() => assert.equal(personaDetailSnapshots.every(({ payload, params }) => p
 check(() => assert.equal(personaDetailSnapshots.every(({ payload }) => payload.rows.length === 0), true));
 const personADetail = personaDetailSnapshots.find(({ params }) => params.entityRef === `person:${personA}`).payload.personaDetailIndex;
 const personBDetail = personaDetailSnapshots.find(({ params }) => params.entityRef === `person:${personB}`).payload.personaDetailIndex;
-check(() => assert.equal(personADetail.blocks.every(({ detailRefs }) => detailRefs.length === 0), true));
+const bridgePlaceBlock = personADetail.blocks.find(({ semanticKey }) => semanticKey === "person-place:place-one");
+const bridgePatternBlock = personADetail.blocks.find(({ semanticKey }) => semanticKey === "person-place-return:place-one:place-two:place-one");
+check(() => assert.deepEqual(bridgePlaceBlock.detailRefs, [{ resource: "analysis_global_place_mobility_detail", entityRef: "person-place:bridge-rollup", role: "PRIMARY" }]));
+check(() => assert.deepEqual(bridgePatternBlock.detailRefs, [{ resource: "analysis_global_place_mobility_detail", entityRef: "person-place-return:bridge-pattern", role: "PRIMARY" }]));
+const ownerPlaceDetail = queryDetail("analysis_global_place_mobility_detail", "person-place:bridge-rollup");
+const ownerPatternDetail = queryDetail("analysis_global_place_mobility_detail", "person-place-return:bridge-pattern");
+check(() => assert.deepEqual(ownerPlaceDetail.metrics.map(({ metricId, displayValue }) => [metricId, displayValue]), [["distinct-visit-days", "2"], ["median-duration-minutes", "40 min"], ["visit-count", "3"]]));
+check(() => assert.deepEqual(ownerPatternDetail.metrics.map(({ metricId, displayValue }) => [metricId, displayValue]), [["distinct-day-count", "2"], ["occurrence-count", "2"]]));
+check(() => assert.equal(JSON.stringify([bridgePlaceBlock, bridgePatternBlock]).includes("personPlaceRollups"), false));
 const bridgeNeedBlock = personBDetail.blocks.find(({ semanticKey }) => semanticKey === "need:bridge-personal");
 check(() => assert.deepEqual(bridgeNeedBlock.detailRefs, [{ resource: "analysis_global_category_need_detail", entityRef: "need:bridge-personal", role: "PRIMARY" }]));
 check(() => assert.deepEqual(bridgeNeedBlock.surfaceMetrics.map(({ metricId, displayValue }) => [metricId, displayValue]), [["activeMonths", "12"], ["annualAmount", "720"], ["monthlyAmount", "60"]]));

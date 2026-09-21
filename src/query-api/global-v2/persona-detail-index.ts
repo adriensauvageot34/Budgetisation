@@ -93,6 +93,12 @@ function assertCanonical<T>(values: readonly T[], identity: (value: T) => string
   }
 }
 
+function ownerResourceForEntityRef(entityRef: string): PersonaOwnerDetailResource | undefined {
+  if (entityRef.startsWith("need:")) return "analysis_global_category_need_detail";
+  if (entityRef.startsWith("person-place:") || entityRef.startsWith("person-place-return:")) return "analysis_global_place_mobility_detail";
+  return undefined;
+}
+
 function parseMetric(value: unknown): PublishedPersonaDetailSurfaceMetric {
   const record = parseStrictRecord(value, ["metricId", "labelKey", "displayValue"], "PublishedPersonaDetailSurfaceMetric");
   return {
@@ -166,7 +172,7 @@ export function projectPublishedPersonaDetailIndex(input: PersonaProfileOutput, 
   const featuredIds = new Set(profile.featuredTraits.map(({ traitId }) => traitId));
   const traits = [...new Map([
     ...profile.featuredTraits,
-    ...profile.allTraits.filter(({ entityRefs }) => entityRefs?.some((entityRef) => entityRef.startsWith("need:")) === true),
+    ...profile.allTraits.filter(({ entityRefs }) => entityRefs?.some((entityRef) => ownerResourceForEntityRef(entityRef) !== undefined) === true),
   ].map((trait) => [trait.traitId, trait] as const)).values()]
     .sort((left, right) => Number(featuredIds.has(right.traitId)) - Number(featuredIds.has(left.traitId)) || left.traitId.localeCompare(right.traitId))
     .slice(0, PERSONA_DETAIL_INDEX_MAX_BLOCKS);
@@ -191,10 +197,13 @@ export function projectPublishedPersonaDetailIndex(input: PersonaProfileOutput, 
             kind: child.kind,
             ...(child.temporalStatus === undefined ? {} : { temporalStatus: child.temporalStatus }),
           }));
-        const detailRefs = [...new Set((trait.entityRefs ?? []).filter((entityRef) => entityRef.startsWith("need:")))]
-          .sort()
-          .slice(0, PERSONA_DETAIL_INDEX_MAX_REFS_PER_BLOCK)
-          .map((entityRef) => ({ resource: "analysis_global_category_need_detail" as const, entityRef, role: "PRIMARY" as const }));
+        const detailRefs = [...new Map((trait.entityRefs ?? []).flatMap((entityRef) => {
+          const resource = ownerResourceForEntityRef(entityRef);
+          const ref = resource === undefined ? undefined : { resource, entityRef, role: "PRIMARY" as const };
+          return ref === undefined ? [] : [[`${resource}:${entityRef}:PRIMARY`, ref] as const];
+        })).values()]
+          .sort((left, right) => `${left.resource}:${left.entityRef}:${left.role}`.localeCompare(`${right.resource}:${right.entityRef}:${right.role}`))
+          .slice(0, PERSONA_DETAIL_INDEX_MAX_REFS_PER_BLOCK);
         return {
           blockId: trait.traitId,
           semanticKey: trait.semanticKey,

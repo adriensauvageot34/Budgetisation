@@ -467,7 +467,12 @@ const adapterInput = {
     ],
   },
   m6: { summaries: [] },
-  m7: { mobilityCapabilities: { routeDistance: { state: "UNAVAILABLE", reasonCodes: ["AUTHORITY_NOT_PROVEN_GA0"] } }, mobility: { legs: [], routes: [] } },
+  m7: {
+    mobilityCapabilities: { routeDistance: { state: "UNAVAILABLE", reasonCodes: ["AUTHORITY_NOT_PROVEN_GA0"] } },
+    mobility: { legs: [], routes: [] },
+    personPlaceRollups: [{ entityRef: "person-place:fixture-rollup", personId: adrien, placeId: "place-a", visitCount: 3, distinctVisitDays: 2, firstObservedDate: "2026-01-02", lastObservedDate: "2026-01-03", medianDurationMinutes: 35, support: { status: "SUFFICIENT", observedUnits: 2, minimumRequired: 2, policyRef: "global-m7-person-place-support@v1" }, knowledgeState: "KNOWN" }],
+    personPlaceReturnPatterns: [{ entityRef: "person-place-return:fixture-pattern", personId: manon, originPlaceId: "place-a", stopPlaceId: "place-b", destinationPlaceId: "place-a", occurrenceCount: 4, distinctDayCount: 3, firstObservedDate: "2026-02-01", lastObservedDate: "2026-02-04", support: { status: "SUFFICIENT", observedUnits: 4, minimumRequired: 2, policyRef: "global-m7-person-place-support@v1" }, knowledgeState: "KNOWN" }],
+  },
   m8: { capabilities: { products: { state: "UNAVAILABLE", reasonCode: "DEFERRED_P10" } } },
   productObservations: [
     { observationId: "mascara-1", subject: { kind: "PERSON", personId: manon }, needKey: "maquillage_manon_mascara", productKey: "benefit_badgal_bang", observedAt: "2026-01-01", price: "31", family: "PERSONAL_CARE", groupKey: "beauty_and_care", evidenceRefs: ["product:mascara-1"] },
@@ -550,6 +555,18 @@ check(() => assert.ok(adapted.limitations.includes("M8_PRODUCT_CYCLE_ENGINE_UNAV
 check(() => assert.equal(adaptedWithoutProductProvider.capabilities.productCycleRuntime.state, "UNAVAILABLE"));
 check(() => assert.ok(adaptedWithoutProductProvider.limitations.includes("M8_PRODUCT_OBSERVATION_PROVIDER_UNAVAILABLE")));
 check(() => assert.equal(adaptedWithoutProductProvider.signals.some((signal) => signal.signalType === "PRODUCT_CYCLE"), false));
+const placeRollupSignal = adaptedBySignalId.get("m7:person-place:person-place:fixture-rollup");
+const returnPatternSignal = adaptedBySignalId.get("m7:person-place-return:person-place-return:fixture-pattern");
+check(() => assert.deepEqual({ subject: placeRollupSignal.subject, scope: placeRollupSignal.scope, entityRef: placeRollupSignal.entityRef }, { subject: { kind: "PERSON", personId: adrien }, scope: "PERSONAL", entityRef: "person-place:fixture-rollup" }));
+check(() => assert.deepEqual(placeRollupSignal.metrics, { distinctVisitDays: 2, medianDurationMinutes: 35, visitCount: 3 }));
+check(() => assert.deepEqual({ subject: returnPatternSignal.subject, scope: returnPatternSignal.scope, entityRef: returnPatternSignal.entityRef }, { subject: { kind: "PERSON", personId: manon }, scope: "PERSONAL", entityRef: "person-place-return:fixture-pattern" }));
+check(() => assert.deepEqual(returnPatternSignal.metrics, { distinctDayCount: 3, returnCount: 4 }));
+const placeRollupTrait = adaptedTraits.find(({ semanticKey }) => semanticKey === "person-place:place-a");
+check(() => assert.deepEqual(placeRollupTrait.sourceModules, ["M7"]));
+check(() => assert.equal(placeRollupTrait.context, "PERSON_PLACE_ROLLUP"));
+check(() => assert.equal(placeRollupTrait.semanticKey.includes("travail_site"), false));
+check(() => assert.equal(adapted.profile.profiles.flatMap(({ featuredTraits }) => featuredTraits).some(({ entityRefs }) => entityRefs?.some((entityRef) => entityRef.startsWith("person-place")) === true), false));
+check(() => assert.doesNotMatch(personaAdapters.adaptGlobalM7PlaceReferenceSignals.toString(), /displayName|placeLabel|Adrien|Manon|WORK_MEAL|LUNCH/u));
 
 const resolvedProductObservations = await personaAdapters.resolveGlobalPersonaProductObservations({
   repository: {

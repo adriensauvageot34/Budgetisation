@@ -89,6 +89,36 @@ const personaSignals = [{
   sourceModule: "M2",
   metrics: { activeMonths: 9, annualAmount: "900", monthlyAmount: "100", typicalAmount: "95" },
   evidenceRefs: ["need:read-model-personal"],
+}, {
+  signalId: "m7:person-place:read-model-rollup",
+  signalType: "MOBILITY",
+  semanticKey: "person-place:read-model-place",
+  subject: { kind: "PERSON", personId: "00000000-0000-4000-8000-000000000001" },
+  scope: "PERSONAL",
+  entityRef: "person-place:read-model-rollup",
+  kind: "HABIT",
+  family: "MOBILITY",
+  authority: "OBSERVED",
+  knowledgeStatus: "OBSERVED",
+  context: "PERSON_PLACE_ROLLUP",
+  sourceModule: "M7",
+  metrics: { visitCount: 3, distinctVisitDays: 2, medianDurationMinutes: 40 },
+  evidenceRefs: ["person-place:read-model-rollup"],
+}, {
+  signalId: "m7:person-place-return:read-model-pattern",
+  signalType: "MOBILITY",
+  semanticKey: "person-place-return:read-model-a:read-model-b:read-model-a",
+  subject: { kind: "PERSON", personId: "00000000-0000-4000-8000-000000000001" },
+  scope: "PERSONAL",
+  entityRef: "person-place-return:read-model-pattern",
+  kind: "HABIT",
+  family: "MOBILITY",
+  authority: "OBSERVED",
+  knowledgeStatus: "OBSERVED",
+  context: "PERSON_PLACE_RETURN_PATTERN",
+  sourceModule: "M7",
+  metrics: { returnCount: 2, distinctDayCount: 2 },
+  evidenceRefs: ["person-place-return:read-model-pattern"],
 }];
 const personaProfile = analytics.buildPersonaProfile({ signals: personaSignals });
 const personaProfileBeforeProjection = structuredClone(personaProfile);
@@ -256,6 +286,12 @@ check(() => assert.ok(personalNeedBlock));
 check(() => assert.deepEqual(personalNeedBlock.detailRefs, [{ resource: "analysis_global_category_need_detail", entityRef: "need:read-model-personal", role: "PRIMARY" }]));
 check(() => assert.deepEqual(personalNeedBlock.surfaceMetrics.map(({ metricId, displayValue }) => [metricId, displayValue]), [["activeMonths", "9"], ["annualAmount", "900"], ["monthlyAmount", "100"]]));
 check(() => assert.equal(personalNeedBlock.availability, "AVAILABLE"));
+const placeRollupBlock = detailA.blocks.find(({ semanticKey }) => semanticKey === "person-place:read-model-place");
+const returnPatternBlock = detailA.blocks.find(({ semanticKey }) => semanticKey === "person-place-return:read-model-a:read-model-b:read-model-a");
+check(() => assert.deepEqual(placeRollupBlock.detailRefs, [{ resource: "analysis_global_place_mobility_detail", entityRef: "person-place:read-model-rollup", role: "PRIMARY" }]));
+check(() => assert.deepEqual(returnPatternBlock.detailRefs, [{ resource: "analysis_global_place_mobility_detail", entityRef: "person-place-return:read-model-pattern", role: "PRIMARY" }]));
+check(() => assert.deepEqual(placeRollupBlock.surfaceMetrics.map(({ metricId, displayValue }) => [metricId, displayValue]), [["distinctVisitDays", "2"], ["medianDurationMinutes", "40"], ["visitCount", "3"]]));
+check(() => assert.equal(JSON.stringify([placeRollupBlock, returnPatternBlock]).includes("ownerOutputs"), false));
 check(() => assert.equal(JSON.stringify([detailA, detailB]).includes("shared.must-not-leak"), false));
 check(() => assert.equal(JSON.stringify([detailA, detailB]).includes("household.must-not-leak"), false));
 check(() => assert.doesNotMatch(JSON.stringify([detailA, detailB]), /allTraits|evidenceRefs|signalRefs|sourceModules|ownerOutputs|selection|explanation|reasonCodes|inputHash/u));

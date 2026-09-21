@@ -147,6 +147,7 @@ export type MomentSignal = PersonaSignalBase & {
 
 export type MobilitySignal = PersonaSignalBase & {
   readonly signalType: "MOBILITY";
+  readonly entityRef?: string;
   readonly mode?: string;
   readonly vehicleRef?: string;
 };

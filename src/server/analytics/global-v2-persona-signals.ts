@@ -7,6 +7,8 @@ import {
   buildPersonaProfile,
   type DeclaredSignal,
   type DifferenceSignal,
+  type GlobalPersonPlaceReturnPattern,
+  type GlobalPersonPlaceRollup,
   type GlobalPersonaDifference,
   type GlobalPersonaFamily,
   type MobilitySignal,
@@ -157,6 +159,8 @@ export type GlobalV2PersonaSignalAdapterInput = {
   readonly m7: {
     readonly mobilityCapabilities?: Readonly<Record<string, { readonly state?: string; readonly reasonCodes?: readonly string[] }>>;
     readonly mobility?: { readonly legs?: readonly unknown[]; readonly routes?: readonly unknown[] };
+    readonly personPlaceRollups?: readonly GlobalPersonPlaceRollup[];
+    readonly personPlaceReturnPatterns?: readonly GlobalPersonPlaceReturnPattern[];
   };
   readonly mobilityAuthorities?: readonly MobilityAuthority[];
   readonly m8: { readonly capabilities?: { readonly products?: { readonly state?: string; readonly reasonCode?: string } } };
@@ -561,6 +565,65 @@ export function adaptGlobalM7MobilitySignals(input: {
   });
 }
 
+export function adaptGlobalM7PlaceReferenceSignals(input: {
+  readonly authorizedPersonIds: readonly PersonId[];
+  readonly rollups: readonly GlobalPersonPlaceRollup[];
+  readonly returnPatterns: readonly GlobalPersonPlaceReturnPattern[];
+}): readonly MobilitySignal[] {
+  const authorized = new Map(input.authorizedPersonIds.map((personId) => [String(personId), personId]));
+  const rollupSignals = [...input.rollups].sort((left, right) => left.entityRef.localeCompare(right.entityRef)).flatMap((rollup): readonly MobilitySignal[] => {
+    const personId = authorized.get(rollup.personId);
+    if (personId === undefined || rollup.support.status !== "SUFFICIENT") return [];
+    return [{
+      signalId: `m7:person-place:${rollup.entityRef}`,
+      signalType: "MOBILITY",
+      semanticKey: `person-place:${rollup.placeId}`,
+      ...personScope(personId),
+      entityRef: rollup.entityRef,
+      kind: "HABIT",
+      family: "MOBILITY",
+      authority: "OBSERVED",
+      knowledgeStatus: rollup.knowledgeState === "KNOWN" ? "OBSERVED" : "TO_CONFIRM",
+      temporalStatus: "UNKNOWN",
+      dimension: "USAGE",
+      context: "PERSON_PLACE_ROLLUP",
+      metrics: {
+        visitCount: rollup.visitCount,
+        distinctVisitDays: rollup.distinctVisitDays,
+        ...(rollup.medianDurationMinutes === undefined ? {} : { medianDurationMinutes: rollup.medianDurationMinutes }),
+      },
+      limitations: ["OWNER_BACKED_PLACE_REFERENCE_ONLY"],
+      evidenceRefs: [rollup.entityRef],
+      sourceModule: "M7",
+      methodVersion: GLOBAL_PERSONA_SIGNAL_ADAPTER_VERSION,
+    }];
+  });
+  const patternSignals = [...input.returnPatterns].sort((left, right) => left.entityRef.localeCompare(right.entityRef)).flatMap((pattern): readonly MobilitySignal[] => {
+    const personId = authorized.get(pattern.personId);
+    if (personId === undefined || pattern.support.status !== "SUFFICIENT") return [];
+    return [{
+      signalId: `m7:person-place-return:${pattern.entityRef}`,
+      signalType: "MOBILITY",
+      semanticKey: `person-place-return:${pattern.originPlaceId}:${pattern.stopPlaceId}:${pattern.destinationPlaceId}`,
+      ...personScope(personId),
+      entityRef: pattern.entityRef,
+      kind: "HABIT",
+      family: "MOBILITY",
+      authority: "OBSERVED",
+      knowledgeStatus: pattern.knowledgeState === "KNOWN" ? "OBSERVED" : "TO_CONFIRM",
+      temporalStatus: "UNKNOWN",
+      dimension: "USAGE",
+      context: "PERSON_PLACE_RETURN_PATTERN",
+      metrics: { returnCount: pattern.occurrenceCount, distinctDayCount: pattern.distinctDayCount },
+      limitations: ["SEMANTIC_ROLE_NOT_INFERRED", "OWNER_BACKED_PLACE_REFERENCE_ONLY"],
+      evidenceRefs: [pattern.entityRef],
+      sourceModule: "M7",
+      methodVersion: GLOBAL_PERSONA_SIGNAL_ADAPTER_VERSION,
+    }];
+  });
+  return [...rollupSignals, ...patternSignals].sort((left, right) => left.signalId.localeCompare(right.signalId));
+}
+
 export function adaptGlobalPersonaDifferenceSignals(input: {
   readonly householdId: HouseholdId;
   readonly differences: readonly GlobalPersonaDifference[];
@@ -630,6 +693,7 @@ export function buildGlobalV2PersonaSignals(input: GlobalV2PersonaSignalAdapterI
     ...adaptGlobalM4RoutineSignals({ rhythms: input.m4.rhythms, ...(input.m4.routinePatterns === undefined ? {} : { routinePatterns: input.m4.routinePatterns }), authorizedPersonIds: input.personIds }),
     ...adaptGlobalM6MomentSignals({ householdId: input.householdId, personIds: input.personIds, summaries: input.m6.summaries, certifiedThrough: input.certifiedThrough }),
     ...adaptGlobalM7MobilitySignals({ householdId: input.householdId, authorizedPersonIds: input.personIds, authorities: input.mobilityAuthorities ?? [] }),
+    ...adaptGlobalM7PlaceReferenceSignals({ authorizedPersonIds: input.personIds, rollups: input.m7.personPlaceRollups ?? [], returnPatterns: input.m7.personPlaceReturnPatterns ?? [] }),
     ...adaptGlobalM8ProductObservationSignals({ observations: input.productObservations ?? [] }),
     ...adaptGlobalM10SharedActivitySignals({ personIds: input.personIds, universes: input.m10.universes }),
     ...adaptGlobalPersonaDifferenceSignals({ householdId: input.householdId, differences: input.differences }),

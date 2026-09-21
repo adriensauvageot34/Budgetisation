@@ -154,6 +154,7 @@ export {
 export { createGlobalM6DependencyDeclaration } from "./moment-dependencies";
 export {
   GLOBAL_M7_METHOD_VERSION,
+  GLOBAL_M7_PERSON_PLACE_POLICY,
   buildGlobalPlaceMobility,
   type GlobalEconomicPlaceAttributionInput,
   type GlobalEconomicPlaceAttributionMode,
@@ -163,6 +164,8 @@ export {
   type GlobalPlaceNode,
   type GlobalPlaceResolutionLevel,
   type GlobalPlaceRoleAssertion,
+  type GlobalPersonPlaceReturnPattern,
+  type GlobalPersonPlaceRollup,
   type GlobalVisitKind,
   type GlobalVisitSemanticEvidence,
 } from "./places";

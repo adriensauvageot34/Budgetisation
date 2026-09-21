@@ -143,6 +143,61 @@ check(() => assert.equal(transitions.transitions.length, 1));
 check(() => assert.equal(transitions.transitions[0].routeKnown, false));
 check(() => assert.equal(transitions.transitions[0].distanceKnown, false));
 
+const personalRollupVisits = [
+  visit("rollup-1", "venue", "2026-06-10T08:00:00", "2026-06-10T09:00:00"),
+  visit("rollup-2", "venue", "2026-06-10T10:00:00", "2026-06-10T10:30:00"),
+  visit("rollup-3", "venue", "2026-06-11T08:00:00", "2026-06-11T08:45:00"),
+];
+const personalRollup = build({ visits: personalRollupVisits }).personPlaceRollups[0];
+check(() => assert.equal(personalRollup.visitCount, 3));
+check(() => assert.equal(personalRollup.distinctVisitDays, 2));
+check(() => assert.equal(personalRollup.firstObservedDate, "2026-06-10"));
+check(() => assert.equal(personalRollup.lastObservedDate, "2026-06-11"));
+check(() => assert.equal(personalRollup.medianDurationMinutes, 45));
+check(() => assert.equal(build({ visits: [personalRollupVisits[0]] }).personPlaceRollups.length, 0));
+
+const returnVisits = [
+  visit("return-1-a", "venue", "2026-06-10T08:00:00", "2026-06-10T09:00:00"),
+  visit("return-1-b", "other", "2026-06-10T10:00:00", "2026-06-10T11:00:00"),
+  visit("return-1-c", "venue", "2026-06-10T12:00:00", "2026-06-10T13:00:00"),
+  visit("return-2-a", "venue", "2026-06-11T08:00:00", "2026-06-11T09:00:00"),
+  visit("return-2-b", "other", "2026-06-11T10:00:00", "2026-06-11T11:00:00"),
+  visit("return-2-c", "venue", "2026-06-11T12:00:00", "2026-06-11T13:00:00"),
+];
+const returnOutput = build({ visits: returnVisits });
+const returnPattern = returnOutput.personPlaceReturnPatterns.find(({ originPlaceId, stopPlaceId, destinationPlaceId }) => originPlaceId === "venue" && stopPlaceId === "other" && destinationPlaceId === "venue");
+check(() => assert.ok(returnPattern));
+check(() => assert.equal(returnPattern.occurrenceCount, 2));
+check(() => assert.equal(returnPattern.distinctDayCount, 2));
+check(() => assert.equal(returnPattern.firstObservedDate, "2026-06-10"));
+check(() => assert.equal(returnPattern.lastObservedDate, "2026-06-11"));
+check(() => assert.equal(returnPattern.originPlaceId, returnPattern.destinationPlaceId));
+check(() => assert.equal(build({ visits: returnVisits.slice(0, 3) }).personPlaceReturnPatterns.length, 0));
+const nonReturnVisits = [
+  visit("non-return-a", "venue", "2026-06-10T08:00:00", "2026-06-10T09:00:00"),
+  visit("non-return-b", "other", "2026-06-10T10:00:00", "2026-06-10T11:00:00"),
+  visit("non-return-c", "unknown", "2026-06-10T12:00:00", "2026-06-10T13:00:00"),
+  visit("non-return-d", "venue", "2026-06-11T08:00:00", "2026-06-11T09:00:00"),
+  visit("non-return-e", "other", "2026-06-11T10:00:00", "2026-06-11T11:00:00"),
+  visit("non-return-f", "unknown", "2026-06-11T12:00:00", "2026-06-11T13:00:00"),
+];
+check(() => assert.equal(build({ visits: nonReturnVisits }).personPlaceReturnPatterns.length, 0));
+const secondPersonId = uuid(3);
+const secondPersonReturn = returnVisits.map((entry) => ({ ...entry, visitKey: `${entry.visitKey}:p2`, personDayId: `${entry.personDayId}:p2`, personId: secondPersonId }));
+const twoPersonPatterns = build({ visits: [...returnVisits, ...secondPersonReturn] }).personPlaceReturnPatterns.filter(({ originPlaceId, stopPlaceId }) => originPlaceId === "venue" && stopPlaceId === "other");
+check(() => assert.equal(twoPersonPatterns.length, 2));
+check(() => assert.notEqual(twoPersonPatterns[0].entityRef, twoPersonPatterns[1].entityRef));
+const duplicatedReturn = build({ visits: [...returnVisits, ...returnVisits] });
+check(() => assert.equal(duplicatedReturn.personPlaceReturnPatterns.find(({ originPlaceId, stopPlaceId }) => originPlaceId === "venue" && stopPlaceId === "other").occurrenceCount, 2));
+check(() => assert.equal(duplicatedReturn.personPlaceRollups.find(({ placeId }) => placeId === "venue").visitCount, 4));
+const reorderedReturn = build({ visits: [...returnVisits].reverse(), places: [...places].reverse() });
+check(() => assert.deepEqual(reorderedReturn.personPlaceRollups, returnOutput.personPlaceRollups));
+check(() => assert.deepEqual(reorderedReturn.personPlaceReturnPatterns, returnOutput.personPlaceReturnPatterns));
+check(() => assert.equal(reorderedReturn.personPlaceRollups.find(({ placeId }) => placeId === "venue").entityRef, returnOutput.personPlaceRollups.find(({ placeId }) => placeId === "venue").entityRef));
+check(() => assert.equal(reorderedReturn.personPlaceReturnPatterns.find(({ originPlaceId, stopPlaceId }) => originPlaceId === "venue" && stopPlaceId === "other").entityRef, returnPattern.entityRef));
+const placesSource = fs.readFileSync(new URL("../src/analytics/global-v2/places.ts", import.meta.url), "utf8");
+check(() => assert.doesNotMatch(placesSource, /displayName|placeLabel|travail_site|WORK_MEAL|LUNCH|Boulangerie/u));
+
 const orderedInput = { visits: [visit("o1", "venue", "2026-06-10T08:00:00", "2026-06-10T09:00:00"), visit("o2", "other", "2026-06-11T08:00:00", "2026-06-11T09:00:00")], personDays: [day("2026-05-10"), day("2026-06-10")] };
 const ordered = build(orderedInput), permuted = build({ ...orderedInput, visits: [...orderedInput.visits].reverse(), personDays: [...orderedInput.personDays].reverse(), places: [...places].reverse() });
 check(() => assert.equal(ordered.inputHash, permuted.inputHash));
@@ -151,7 +206,7 @@ check(() => assert.notEqual(ordered.inputHash, build({ ...orderedInput, visits: 
 check(() => assert.throws(() => buildGlobalPlaceMobility({ householdId, householdTimeZone: "Europe/Paris", certifiedThrough: "2026-06-30", places, visits: [visit("missing", "venue", "2026-06-10T08:00:00", "2026-06-10T09:00:00")], personDays: [], economicFacts: [], purchaseEvents: [], dependencyDigests: Object.fromEntries(places.flatMap((row) => row.evidenceRefs.map((ref) => [ref, `digest:${ref}`]))) }), /DEPENDENCY_CLOSURE_MISSING/));
 
 const declaration = createGlobalM7DependencyDeclaration({ personScope: { kind: "HOUSEHOLD" }, authorizedPersonIds: [personId], placeIds: places.map(({ placeId }) => placeId) });
-check(() => assert.doesNotThrow(() => assertGlobalDependencyClosure(declaration, { factDependencyIds: ["fct_place_visit", "fct_person_day", "fct_economic_component", "fct_purchase_event"], entityDependencyIds: ["places"], upstreamAnalyticsIds: ["history_shared_doctrines"], otherModuleDependencyIds: ["GlobalTemporalBoundaryResolver", "GlobalMaterialityEngine"], policyIds: ["global-place-certified-corpus", "global-place-observable-months", "global-place-location-and-finance", "global-place-growth-decline", "visitResolution", "visitMerge", "visitDays", "stayEvidence", "placeImportance", "placeLifecycle", "localizedFinance", "placeHierarchy", "mobilityGates", "relationshipReplay"] })));
+check(() => assert.doesNotThrow(() => assertGlobalDependencyClosure(declaration, { factDependencyIds: ["fct_place_visit", "fct_person_day", "fct_economic_component", "fct_purchase_event"], entityDependencyIds: ["places"], upstreamAnalyticsIds: ["history_shared_doctrines"], otherModuleDependencyIds: ["GlobalTemporalBoundaryResolver", "GlobalMaterialityEngine"], policyIds: ["global-place-certified-corpus", "global-place-observable-months", "global-place-location-and-finance", "global-place-growth-decline", "visitResolution", "visitMerge", "visitDays", "stayEvidence", "placeImportance", "placeLifecycle", "localizedFinance", "placeHierarchy", "mobilityGates", "relationshipReplay", "personPlaceProjection"] })));
 
 const replay = recertifyGlobalCDForPlaceAndMoment({ moments: { inputHash: "m6", crossModuleSignals: { m3SeriesEvolution: [] } }, places: empty });
 check(() => assert.equal(replay.examinedDefinitions.length, 15));
