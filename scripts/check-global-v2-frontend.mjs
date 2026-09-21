@@ -135,7 +135,7 @@ const rhythmNarrativeSource = fs.readFileSync(path.join(root, "src/features/glob
 const lifeTimelineSource = fs.readFileSync(path.join(root, "src/features/global-v2/life-timeline.tsx"), "utf8");
 const productionLoaderSource = fs.readFileSync(path.join(root, "src/server/query/global-v2-production-loader.ts"), "utf8");
 const m2Source = pageSource.slice(pageSource.indexOf("function M2MoneyRows"), pageSource.indexOf("function LifeInsightList"));
-const m2CompactSource = pageSource.slice(pageSource.indexOf("function M2CompactCard"), pageSource.indexOf("function PersonaColumns"));
+const m2CompactSource = pageSource.slice(pageSource.indexOf("function M2CompactCard"), pageSource.indexOf("function PersonaPanel"));
 const m2InsightSource = pageSource.slice(pageSource.indexOf("function M2CompactRecentInsight"), pageSource.indexOf("function M2CompactCard"));
 const m2ComparisonsSource = pageSource.slice(pageSource.indexOf("function M2Comparisons"), pageSource.indexOf("function M2NeedsContent"));
 const m2ExpandedSource = pageSource.slice(pageSource.indexOf("function M2ExpandedContent"), pageSource.indexOf("function LifeInsightList"));
@@ -262,7 +262,7 @@ check(() => assert.doesNotMatch(pageSource, /Aucun changement durable clairement
 check(() => assert.doesNotMatch(pageSource, /Pas encore assez d’éléments pour établir une relation fiable/u));
 check(() => assert.doesNotMatch(pageSource, /Analyse pas encore disponible/u));
 check(() => assert.doesNotMatch(pageSource, /0 achat|0 €/u));
-check(() => assert.match(pageSource, /Aucune différence nette à mettre en avant entre vos profils/u));
+check(() => assert.doesNotMatch(pageSource, /Aucune différence nette à mettre en avant entre vos profils/u));
 check(() => assert.match(pageSource, /Ce que les données vous voient explicitement faire ensemble/u));
 check(() => assert.doesNotMatch(pageSource, /toujours ensemble/iu));
 check(() => assert.match(pageSource, /Voir le détail/u));
@@ -276,7 +276,7 @@ check(() => assert.match(catalogSource, /return "Information disponible"/u));
 check(() => assert.match(cssSource, /grid-template-columns:\s*repeat\(12/u));
 check(() => assert.match(cssSource, /data-module="RHYTHM"[^\n]*span 12/u));
 check(() => assert.match(cssSource, /data-module="TOGETHER"[\s\S]*span 7/u));
-check(() => assert.match(cssSource, /data-module="PERSONAS"[\s\S]*span 5/u));
+check(() => assert.match(cssSource, /data-module="PERSONAS"[\s\S]*span 12/u));
 check(() => assert.match(cssSource, /@media \(max-width: 1024px\)/u));
 
 // RUN C: one human life-spending chapter composed from the typed RHYTHM Query payload.
@@ -293,7 +293,7 @@ check(() => assert.doesNotMatch(productionLoaderSource.slice(productionLoaderSou
 check(() => assert.match(catalogSource, /key: "GEO_MOBILITY"[\s\S]*analysis_global_geo_mobility[\s\S]*key: "CONSUMPTION"[\s\S]*analysis_global_consumption/u));
 check(() => assert.ok(query.globalPrimaryModuleCatalog.some(({ moduleKey, resource }) => moduleKey === "GEO_MOBILITY" && resource === "analysis_global_geo_mobility")));
 check(() => assert.ok(query.globalPrimaryModuleCatalog.some(({ moduleKey, resource }) => moduleKey === "CONSUMPTION" && resource === "analysis_global_consumption")));
-const lifePrimarySource = pageSource.slice(pageSource.indexOf("function LifeBackgroundRhythms"), pageSource.indexOf("function PersonaColumns"));
+const lifePrimarySource = pageSource.slice(pageSource.indexOf("function LifeBackgroundRhythms"), pageSource.indexOf("function PersonaPanel"));
 check(() => assert.match(lifePrimarySource, /data-rhythm-source="analysis_global_routine_detail"/u));
 check(() => assert.doesNotMatch(lifePrimarySource, /Explorer l’analyse|LifeInsightList|sectionTabs|moduleTabs|LifeNarrative|Hero/u));
 check(() => assert.match(lifePrimarySource, /Nos rythmes de fond[\s\S]*Courses[\s\S]*Nos passages en courses/u));

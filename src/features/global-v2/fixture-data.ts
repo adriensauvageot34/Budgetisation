@@ -407,10 +407,112 @@ function lifeExpandedFixtureModel(sectionKey: GlobalExpandedSectionKey, scenario
   };
 }
 
+type FixturePersonaProfile = NonNullable<GlobalExpandedReadModel["profile"]>["profiles"][number];
+type FixturePersonaTrait = FixturePersonaProfile["allTraits"][number];
+type FixturePersonaChild = NonNullable<FixturePersonaTrait["children"]>[number];
+
+const fixtureAdrienId = "00000000-0000-4000-8000-000000000301";
+const fixtureManonId = "00000000-0000-4000-8000-000000000302";
+
+function fixturePersonaChild(traitId: string, semanticKey: string, kind: FixturePersonaChild["kind"], family: FixturePersonaChild["family"], temporalStatus?: FixturePersonaChild["temporalStatus"], metrics?: FixturePersonaChild["metrics"]): FixturePersonaChild {
+  return { traitId, semanticKey, kind, family, ...(temporalStatus === undefined ? {} : { temporalStatus }), authorities: ["USER_VALIDATED"], sourceModules: ["DECLARED_V1"], evidenceRefs: [`fixture:${traitId}`], limitations: [], ...(metrics === undefined ? {} : { metrics }) };
+}
+
+function fixturePersonaTrait(input: {
+  readonly traitId: string;
+  readonly personId: string;
+  readonly semanticKey: string;
+  readonly kind: FixturePersonaTrait["kind"];
+  readonly family: FixturePersonaTrait["family"];
+  readonly temporalStatus?: FixturePersonaTrait["temporalStatus"];
+  readonly metrics?: FixturePersonaTrait["metrics"];
+  readonly qualifications?: readonly string[];
+  readonly children?: readonly FixturePersonaChild[];
+}): FixturePersonaTrait {
+  const children = input.children ?? [];
+  const signalRef = `fixture-signal:${input.traitId}`;
+  const evidenceRef = `fixture-evidence:${input.traitId}`;
+  return {
+    traitId: input.traitId,
+    subject: { kind: "PERSON", personId: input.personId as never },
+    scope: "PERSONAL",
+    kind: input.kind,
+    family: input.family,
+    semanticKey: input.semanticKey,
+    authority: "USER_VALIDATED",
+    authorities: ["USER_VALIDATED"],
+    knowledgeStatus: "USER_VALIDATED",
+    ...(input.temporalStatus === undefined ? {} : { temporalStatus: input.temporalStatus }),
+    dimensions: ["GENERAL"],
+    signalRefs: [signalRef],
+    evidenceRefs: [evidenceRef],
+    sourceModules: ["DECLARED_V1"],
+    limitations: [],
+    ...(input.qualifications === undefined ? {} : { qualifications: input.qualifications }),
+    ...(input.metrics === undefined ? {} : { metrics: input.metrics }),
+    ...(children.length === 0 ? {} : { children }),
+    explanation: { summaryCode: "TRAIT_SUPPORTED_BY_AUTHORITY_AND_EVIDENCE", reasonCodes: ["NON_REDUNDANT_SELECTION"], authorities: ["USER_VALIDATED"], sourceModules: ["DECLARED_V1"], signalRefs: [signalRef], evidenceRefs: [evidenceRef], limitations: [], children },
+    selection: { featured: true, reasonCodes: ["NON_REDUNDANT_SELECTION"], methodVersion: "global_persona_selection@v1" as never },
+  };
+}
+
+function personaExpandedFixtureModel(sectionKey: GlobalExpandedSectionKey): GlobalExpandedReadModel {
+  const creative = fixturePersonaTrait({
+    traitId: "persona-fixture:adrien:creative",
+    personId: fixtureAdrienId,
+    semanticKey: "universe.creative_projects",
+    kind: "UNIVERSE",
+    family: "LEISURE_AND_ACTIVITIES",
+    temporalStatus: "PROJECT",
+    qualifications: ["HOME_STUDIO", "MUSIC", "PHOTO", "PROJECT"],
+    metrics: { childCount: 2 },
+    children: [
+      fixturePersonaChild("persona-fixture:adrien:photo", "creative.photo.adrien", "PROJECT", "LEISURE_AND_ACTIVITIES", "PROJECT"),
+      fixturePersonaChild("persona-fixture:adrien:creative-support", "creative.projects.adrien", "UNIVERSE", "LEISURE_AND_ACTIVITIES", "UNKNOWN"),
+    ],
+  });
+  const adrienTraits = [
+    creative,
+    fixturePersonaTrait({ traitId: "persona-fixture:adrien:licence", personId: fixtureAdrienId, semanticKey: "driving_license.adrien", kind: "PROJECT", family: "MOBILITY", temporalStatus: "PROJECT", qualifications: ["IN_PROGRESS"] }),
+    fixturePersonaTrait({ traitId: "persona-fixture:adrien:mobility", personId: fixtureAdrienId, semanticKey: "mobility.work.adrien", kind: "MOBILITY", family: "MOBILITY", metrics: { directCost: 0 } }),
+    fixturePersonaTrait({ traitId: "persona-fixture:adrien:chatgpt", personId: fixtureAdrienId, semanticKey: "subscription.chatgpt.adrien", kind: "HABIT", family: "RECURRING_PERSONAL_COSTS" }),
+  ];
+  const beauty = fixturePersonaTrait({
+    traitId: "persona-fixture:manon:beauty",
+    personId: fixtureManonId,
+    semanticKey: "universe.beauty_and_care",
+    kind: "UNIVERSE",
+    family: "PERSONAL_CARE",
+    metrics: { childCount: 3 },
+    children: [
+      fixturePersonaChild("persona-fixture:manon:mascara", "product-need:maquillage_manon_mascara", "HABIT", "PERSONAL_CARE", "CHANGED", { occurrenceCount: 6, typicalPrice: 32 }),
+      fixturePersonaChild("persona-fixture:manon:brows", "product-need:maquillage_manon_sourcils", "HABIT", "PERSONAL_CARE", "STABLE", { occurrenceCount: 7, typicalPrice: 9.99 }),
+      fixturePersonaChild("persona-fixture:manon:skincare", "product-need:skincare_manon_masque", "HABIT", "PERSONAL_CARE", "CHANGED", { occurrenceCount: 2, typicalPrice: 9.98 }),
+    ],
+  });
+  const manonTraits = [
+    beauty,
+    fixturePersonaTrait({ traitId: "persona-fixture:manon:mobility", personId: fixtureManonId, semanticKey: "mobility.work.manon", kind: "MOBILITY", family: "MOBILITY" }),
+  ];
+  const profiles: readonly FixturePersonaProfile[] = [
+    { subject: { kind: "PERSON", personId: fixtureAdrienId as never }, scope: "PERSONAL", allTraits: adrienTraits, featuredTraits: adrienTraits },
+    { subject: { kind: "PERSON", personId: fixtureManonId as never }, scope: "PERSONAL", allTraits: manonTraits, featuredTraits: manonTraits },
+  ];
+  return {
+    kind: "global_expanded", schemaVersion: "global-expanded@v1", resource: "analysis_global_personas_expanded", moduleKey: "PERSONAS", sectionKey, visibility: "VISIBLE",
+    secondaryInsights: [], metrics: [], series: [], rows: sectionKey === "OVERVIEW" ? [
+      { rowId: "persona-label:adrien", labelKey: "Adrien · Profil", knowledgeState: "KNOWN", entityRef: `person:${fixtureAdrienId}`, evidenceRefs: ["fixture:persona-label:adrien"] },
+      { rowId: "persona-label:manon", labelKey: "Manon · Profil", knowledgeState: "KNOWN", entityRef: `person:${fixtureManonId}`, evidenceRefs: ["fixture:persona-label:manon"] },
+    ] : [], destinations: [], ...(sectionKey === "OVERVIEW" ? { profile: { contractVersion: "v1" as never, methodVersion: "global_persona_profile@v1" as never, profiles } } : {}), quality: qualityKnown,
+    capabilities: [{ capabilityId: "GLOBAL_PERSONAS", state: "AVAILABLE", reasonCodes: [] }], publicationMeta, resourceMeta: resourceMeta(24),
+  };
+}
+
 function expandedModel(resource: GlobalV2ExpandedResourceName, sectionKey: GlobalExpandedSectionKey, moduleKey = moduleFromResource(resource), scenario: GlobalV2FixtureScenario = "contract"): GlobalExpandedReadModel {
   if (resource === "analysis_global_economic_expanded") return economicFixtureModel(sectionKey);
   if (resource === "analysis_global_categories_needs_expanded") return m2ExpandedFixtureModel(sectionKey);
   if (resource === "analysis_global_rhythm_expanded") return lifeExpandedFixtureModel(sectionKey, scenario);
+  if (resource === "analysis_global_personas_expanded") return personaExpandedFixtureModel(sectionKey);
   const presentation = globalModulePresentation(moduleKey);
   const suffix = `${moduleKey.toLowerCase()}:${sectionKey.toLowerCase()}`;
   const metrics: readonly GlobalDetailMetric[] = [

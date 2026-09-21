@@ -40,6 +40,7 @@ import { LifeTimeline, TimelineComparator } from "./life-timeline";
 import type { TimelineDensityMode } from "./life-timeline-presentation";
 import { buildHabitCoverageModel, groupRhythmMomentsByYear } from "./rhythm-collections";
 import { resolveRhythmDetailContext, rhythmDetailReturnSection, type RhythmDetailContext, type RhythmDetailOrigin } from "./rhythm-detail-routing";
+import { PersonaView } from "./persona/persona-view";
 import { useGlobalV2Resource, useMobileGlobalLayout, useNearViewport } from "./use-global-resource";
 import { GlobalV2VisitRuntime, parseGlobalDeepLink, type GlobalV2UiRequest, type GlobalV2UiTransport } from "./visit-runtime";
 import styles from "./global-v2.module.css";
@@ -1113,16 +1114,8 @@ function LifeBackgroundRhythms({ runtime, onMethod }: { readonly runtime: Global
   </section>;
 }
 
-function PersonaColumns({ rows, limit = 5 }: { readonly rows: readonly GlobalDetailRow[]; readonly limit?: number }) {
-  const groups = new Map<string, GlobalDetailRow[]>();
-  for (const row of rows) {
-    const [person = "Profil", ...label] = humanLabel(row.labelKey).split(" · ");
-    const current = groups.get(person) ?? [];
-    if (current.length < limit) current.push({ ...row, labelKey: label.join(" · ") || humanLabel(row.labelKey) });
-    groups.set(person, current);
-  }
-  if (groups.size === 0) return null;
-  return <div className={styles.personColumns}>{[...groups.entries()].map(([person, entries]) => <section key={person}><h3>{person}</h3><HumanRows rows={entries} onDetail={() => undefined} /></section>)}</div>;
+function PersonaPanel({ runtime }: { readonly runtime: GlobalV2VisitRuntime }) {
+  return <ExpandedPreview runtime={runtime} moduleKey="PERSONAS" sectionKey="OVERVIEW">{(expanded) => <PersonaView model={expanded} headingId={`${moduleSlugs.PERSONAS}-title`} />}</ExpandedPreview>;
 }
 
 function ModuleContent({ moduleKey, model, runtime, certifiedThrough, onDetail, onEntityDetail, onMethod }: { readonly moduleKey: GlobalPrimaryModuleKey; readonly model: GlobalModuleCompactReadModel; readonly runtime: GlobalV2VisitRuntime; readonly certifiedThrough: string; readonly onDetail: () => void; readonly onEntityDetail: (entityRef: string, title: string) => void; readonly onMethod: () => void }) {
@@ -1133,12 +1126,7 @@ function ModuleContent({ moduleKey, model, runtime, certifiedThrough, onDetail, 
 
   if (moduleKey === "CATEGORIES_NEEDS") return <M2CompactCard model={model} runtime={runtime} certifiedThrough={certifiedThrough} onDetail={onDetail} onEntityDetail={onEntityDetail} />;
 
-  if (moduleKey === "PERSONAS") return <div className={styles.compact}>
-    <PartialBadge onClick={onMethod} />
-    <div className={styles.neutralHeadline}><strong>Aucune différence nette à mettre en avant entre vos profils</strong><p>Les métriques factuelles restent présentées séparément, sans classement entre les personnes.</p></div>
-    <ExpandedPreview runtime={runtime} moduleKey={moduleKey} sectionKey="OVERVIEW">{(expanded) => <PersonaColumns rows={expanded.rows} limit={3} />}</ExpandedPreview>
-    <SeeDetail onClick={onDetail} />
-  </div>;
+  if (moduleKey === "PERSONAS") return <PersonaPanel runtime={runtime} />;
 
   return <div className={styles.compact}>
     <PartialBadge onClick={onMethod} />
@@ -1171,7 +1159,7 @@ function GlobalModulePanel({ moduleKey, runtime, certifiedThrough, eager, direct
   };
   const openMethod = () => { onOverlay(methodOverlayTarget(moduleKey)); emitGlobalV2UxEvent("global_methodology_opened", { moduleKey }); };
   return <section ref={nearViewport.ref} id={moduleSlugs[moduleKey]} className={styles.module} data-module={moduleKey} aria-labelledby={`${moduleSlugs[moduleKey]}-title`}>
-    <header className={styles.moduleHeader}><div>{presentation.eyebrow.length === 0 ? null : <span className="eyebrow">{presentation.eyebrow}</span>}<h2 id={`${moduleSlugs[moduleKey]}-title`}>{presentation.title}</h2>{presentation.description.length === 0 ? null : <p>{presentation.description}</p>}</div></header>
+    {moduleKey === "PERSONAS" ? null : <header className={styles.moduleHeader}><div>{presentation.eyebrow.length === 0 ? null : <span className="eyebrow">{presentation.eyebrow}</span>}<h2 id={`${moduleSlugs[moduleKey]}-title`}>{presentation.title}</h2>{presentation.description.length === 0 ? null : <p>{presentation.description}</p>}</div></header>}
     {compact.state.status === "IDLE" || compact.state.status === "LOADING" ? <LoadingCard label={presentation.title} /> : compact.state.status === "ERROR" && compactModel === undefined ? <LocalError retry={compact.retry} /> : compactModel === undefined ? null : <ModuleContent moduleKey={moduleKey} model={compactModel} runtime={runtime} certifiedThrough={certifiedThrough} onDetail={openDetail} onEntityDetail={openEntityDetail} onMethod={openMethod} />}
   </section>;
 }

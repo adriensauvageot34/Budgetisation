@@ -26,7 +26,7 @@
 .module[data-module="TRANSFORMATIONS"] { grid-column: span 4; }
 .module[data-module="MOMENTS"], .module[data-module="GEO_MOBILITY"], .module[data-module="RELATIONSHIPS"], .module[data-module="CONSUMPTION"] { grid-column: span 6; }
 .module[data-module="TOGETHER"] { grid-column: span 7; }
-.module[data-module="PERSONAS"] { grid-column: span 5; }
+.module[data-module="PERSONAS"] { grid-column: span 12; overflow: visible; background: #fbfaf6; }
 .moduleHeader { display: flex; align-items: start; justify-content: space-between; gap: 24px; padding: 24px 26px 18px; }
 .moduleHeader h2 { margin-top: 4px; font-size: clamp(24px, 3vw, 32px); }
 .moduleHeader p { max-width: 650px; margin: 8px 0 0; color: var(--color-muted); line-height: 1.5; }
@@ -373,8 +373,42 @@
 .chartCompact :global(.ui-chart-content), .chartCompact :global(.ui-chart-renderer) { min-height: 230px; height: 230px; }
 .chartWide :global(.ui-chart-content), .chartWide :global(.ui-chart-renderer) { min-height: 280px; height: 280px; }
 .chartCompact :global(.ui-chart-summary), .chartWide :global(.ui-chart-summary) { color: var(--color-muted); font-size: 12px; }
-.personColumns { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: start; gap: 12px; }
-.personColumns h3 { margin: 0 0 8px; font-size: 16px; }
+.personaView { display: grid; gap: 0; }
+.personaModuleHeader { display: flex; align-items: flex-start; justify-content: space-between; gap: 28px; border-bottom: 1px solid var(--color-border); padding: 30px 30px 26px; }
+.personaModuleHeader > div:first-child { max-width: 700px; }
+.personaModuleHeader h2 { max-width: 660px; margin: 5px 0 0; font-size: clamp(28px, 4vw, 42px); line-height: 1.08; }
+.personaModuleHeader p { max-width: 630px; margin: 11px 0 0; color: var(--color-muted); line-height: 1.55; }
+.personaScopeSwitch { display: inline-flex; flex: 0 0 auto; gap: 4px; border: 1px solid var(--color-border); border-radius: 999px; padding: 4px; background: rgb(255 255 255 / .8); color: var(--color-muted); font-size: 12px; font-weight: 780; }
+.personaScopeSwitch span { border-radius: 999px; padding: 8px 12px; white-space: nowrap; }
+.personaScopeSwitch span[aria-current] { background: var(--color-primary-deep); color: white; box-shadow: 0 3px 10px rgb(36 50 47 / .14); }
+.personaColumns { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: start; padding: 0 30px 34px; }
+.personaColumn { min-width: 0; padding-right: 28px; }
+.personaColumn + .personaColumn { border-left: 1px solid var(--color-border); padding-right: 0; padding-left: 28px; }
+.personaPersonHeader { position: sticky; z-index: 4; top: 54px; display: grid; gap: 3px; margin-bottom: 18px; border-bottom: 1px solid rgb(46 83 69 / .14); padding: 20px 2px 13px; background: rgb(251 250 246 / .94); backdrop-filter: blur(12px); }
+.personaPersonHeader span { color: var(--color-muted); font-size: 10px; font-weight: 800; letter-spacing: .09em; text-transform: uppercase; }
+.personaPersonHeader h3 { margin: 0; color: var(--color-primary-deep); font-size: clamp(22px, 3vw, 30px); letter-spacing: -.025em; }
+.personaCards { display: grid; align-content: start; gap: 14px; }
+.personaCard { display: grid; min-width: 0; gap: 15px; border: 1px solid rgb(36 50 47 / .12); border-radius: 16px; padding: 19px; background: rgb(255 255 255 / .88); box-shadow: 0 8px 24px rgb(36 50 47 / .045); }
+.personaCard[data-persona-kind="UNIVERSE"] { background: linear-gradient(145deg, #fff, #f3f6f1); }
+.personaCard[data-persona-kind="PROJECT"] { border-left: 3px solid #9a815d; }
+.personaCard[data-persona-kind="MOBILITY"] { border-left: 3px solid var(--color-primary); }
+.personaCardHeader { display: grid; gap: 7px; }
+.personaCardHeader > span { color: var(--color-muted); font-size: 10px; font-weight: 820; letter-spacing: .09em; text-transform: uppercase; }
+.personaCardHeader > div { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
+.personaCardHeader h4 { margin: 0; font-size: 19px; letter-spacing: -.02em; }
+.personaCardHeader strong, .personaChildren li > div span { flex: 0 0 auto; border-radius: 999px; padding: 4px 8px; background: var(--color-primary-soft); color: var(--color-primary-deep); font-size: 10px; font-weight: 800; }
+.personaCardHeader p { margin: 0; color: var(--color-muted); font-size: 13px; line-height: 1.5; }
+.personaMetrics { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; margin: 0; }
+.personaMetrics > div { display: grid; gap: 3px; border-radius: 10px; padding: 10px; background: var(--color-surface-soft); }
+.personaMetrics dt { color: var(--color-muted); font-size: 10px; font-weight: 750; }
+.personaMetrics dd { margin: 0; font-size: 14px; font-weight: 830; }
+.personaExamples { display: flex; flex-wrap: wrap; gap: 6px; margin: 0; padding: 0; list-style: none; }
+.personaExamples li { border: 1px solid var(--color-border); border-radius: 999px; padding: 5px 9px; background: #fff; color: var(--color-primary-deep); font-size: 11px; font-weight: 730; }
+.personaChildren { display: grid; gap: 0; margin: 0; padding: 0; list-style: none; }
+.personaChildren > li { display: grid; gap: 8px; border-top: 1px solid var(--color-border); padding: 11px 0 2px; }
+.personaChildren li > div:first-child { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.personaChildren li > div strong { font-size: 13px; }
+.personaChildren .personaMetrics { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 .skeleton { min-height: 138px; margin: 0 26px 24px; overflow: hidden; border-radius: 12px; padding: 18px; background: linear-gradient(100deg, #ecece7 20%, #f8f8f5 40%, #ecece7 60%); background-size: 200% 100%; color: transparent; animation: skeleton 1.2s linear infinite; }
 .skeletonCompact { min-height: 96px; margin: 0; }
 @keyframes skeleton { to { background-position: -200% 0; } }
@@ -592,7 +626,6 @@
   .hero p { font-size: 16px; }
   .stickyNav { margin-inline: -14px; border-inline: 0; border-radius: 0; padding-inline: 14px; }
   .summary { margin-top: 18px; }
-  .personColumns { grid-template-columns: 1fr; }
   .moduleHeader { padding: 20px 18px 15px; }
   .compact, .m2Compact { padding: 0 18px 20px; }
   .neutralState, .skeleton, .localError { margin-inline: 18px; }
