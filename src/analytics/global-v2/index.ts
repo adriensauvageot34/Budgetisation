@@ -261,8 +261,11 @@ export {
   type PersonaSubject,
   type PersonaTemporalStatus,
   type PersonaTrait,
+  type PersonaTraitChild,
   type PersonaTraitCandidate,
+  type PersonaTraitExplanation,
   type PersonaTraitKind,
+  type PersonaTraitSelection,
   type ProductCycleSignal,
   type RoutineSignal,
   type SharedActivitySignal,
@@ -275,6 +278,13 @@ export {
   generatePersonaCandidates,
   mergePersonaCandidates,
 } from "./persona-profile";
+export {
+  GLOBAL_PERSONA_GROUPING_CATALOG_VERSION,
+  GLOBAL_PERSONA_SELECTION_METHOD_VERSION,
+  personaGroupingCatalog,
+  promotePersonaTraitUniverses,
+  selectFeaturedPersonaTraits,
+} from "./persona-selection";
 export {
   GLOBAL_M10_METHOD_VERSION,
   SharedParticipationResolver,

@@ -1,6 +1,7 @@
 import { canonicalSerializeGlobal } from "../../core/global-v2";
 import { parseMethodVersion } from "../../core/versions";
 import { applyPersonaDeclarations } from "./persona-declarations";
+import { promotePersonaTraitUniverses, selectFeaturedPersonaTraits } from "./persona-selection";
 import {
   PERSONA_SIGNAL_CONTRACT_VERSION,
   type DeclaredSignal,
@@ -151,6 +152,7 @@ function candidateFromSignal(signal: PersonaSignal): PersonaTraitCandidate | und
     limitations: signalLimitations(signal),
     ...(signalMetrics(signal) === undefined ? {} : { metrics: signalMetrics(signal) }),
     ...(signal.groupKey === undefined ? {} : { groupKey: signal.groupKey }),
+    ...("needKey" in signal && signal.needKey !== undefined ? { needKeys: [signal.needKey] } : {}),
   } as PersonaTraitCandidate;
 }
 
@@ -257,6 +259,7 @@ function mergeTwo(left: PersonaTraitCandidate, right: PersonaTraitCandidate): Pe
   const mergedMetrics = mergeMetrics(left.metrics, right.metrics);
   const sameDimension = dimensions.some((dimension) => left.dimensions?.includes(dimension) === true && right.dimensions?.includes(dimension) === true);
   const groupKey = left.groupKey === right.groupKey ? left.groupKey : left.groupKey ?? right.groupKey;
+  const needKeys = unique([...(left.needKeys ?? []), ...(right.needKeys ?? [])]);
   const groupConflict = left.groupKey !== undefined && right.groupKey !== undefined && left.groupKey !== right.groupKey;
   const temporalStatus = mergeTemporalStatus([left.temporalStatus, right.temporalStatus]);
   const context = left.context ?? right.context;
@@ -297,6 +300,7 @@ function mergeTwo(left: PersonaTraitCandidate, right: PersonaTraitCandidate): Pe
     sourceModules: unique([...(left.sourceModules ?? []), ...(right.sourceModules ?? [])]),
     limitations,
     qualifications: unique([...(left.qualifications ?? []), ...(right.qualifications ?? [])]),
+    ...(needKeys.length === 0 ? {} : { needKeys }),
     ...(mergedMetrics.metrics === undefined ? {} : { metrics: mergedMetrics.metrics }),
     ...(groupKey === undefined || groupConflict ? {} : { groupKey }),
   } as PersonaTraitCandidate;
@@ -336,19 +340,23 @@ function profileKey(trait: PersonaTrait): string {
 
 export function buildPersonaProfile(input: {
   readonly signals: readonly PersonaSignal[];
+  readonly previousFeaturedTraits?: readonly PersonaTrait[];
 }): PersonaProfileOutput {
   const declarations = input.signals.filter((signal): signal is DeclaredSignal => signal.signalType === "DECLARED");
   const generated = generatePersonaCandidates(input.signals);
   const merged = mergePersonaCandidates(generated);
   const declared = applyPersonaDeclarations({ candidates: merged, declarations });
-  const allTraits = buildPersonaTraits(mergePersonaCandidates(declared));
+  const allTraits = promotePersonaTraitUniverses(buildPersonaTraits(mergePersonaCandidates(declared)));
   const groups = new Map<string, PersonaTrait[]>();
   for (const trait of allTraits) groups.set(profileKey(trait), [...(groups.get(profileKey(trait)) ?? []), trait]);
-  const profiles: PersonaProfile[] = [...groups.entries()].sort(([a], [b]) => a.localeCompare(b)).map(([, traits]) => ({
+  const profiles: PersonaProfile[] = [...groups.entries()].sort(([a], [b]) => a.localeCompare(b)).map(([key, traits]) => ({
     subject: traits[0]!.subject,
     scope: traits[0]!.scope,
     allTraits: traits,
-    featuredTraits: [],
+    featuredTraits: selectFeaturedPersonaTraits({
+      allTraits: traits,
+      previousFeaturedTraits: input.previousFeaturedTraits?.filter((trait) => profileKey(trait) === key),
+    }),
     limitations: unique(traits.flatMap(({ limitations }) => limitations ?? [])),
   } as PersonaProfile));
   return {

@@ -296,6 +296,7 @@ check(() => assert.deepEqual([...usedActions].sort(), [...analytics.personaDecla
 check(() => assert.equal(fixtures.some(({ signals }) => signals.some(({ subject }) => subject.kind === "PERSON" && !subject.personId)), false));
 
 const allTraits = (output) => output.profiles.flatMap(({ allTraits: traits }) => traits);
+const featuredTraits = (output) => output.profiles.flatMap(({ featuredTraits: traits }) => traits);
 const matchingTraits = (output, expected) => allTraits(output).filter((trait) =>
   trait.semanticKey === expected.semanticKey
   && trait.scope === expected.scope
@@ -313,7 +314,10 @@ for (const fixture of fixtures) {
     check(() => assert.equal(matchingTraits(output, expected).length, 1, `${fixture.id} missing or duplicated ${expected.semanticKey}`));
   }
   check(() => assert.deepEqual(fixture.signals, snapshots.get(fixture.id), `${fixture.id} mutated its source signals`));
-  check(() => assert.ok(output.profiles.every(({ featuredTraits }) => featuredTraits.length === 0), `${fixture.id} must not select featured traits during P2`));
+  check(() => assert.ok(output.profiles.every((profile) => profile.featuredTraits.every((trait) =>
+    profile.allTraits.some(({ traitId }) => traitId === trait.traitId)
+    && trait.selection?.featured === true
+    && trait.explanation !== undefined)), `${fixture.id} featured traits must remain explainable allTraits members`));
 }
 
 // 1. A payer-only PS5 signal does not create personal gaming; the usage declaration creates Shared gaming.
@@ -423,7 +427,9 @@ check(() => assert.equal(allTraits(courses).some((trait) => trait.scope === "PER
 
 const producedKinds = new Set(positiveOutputs.flatMap(({ output }) => allTraits(output).map(({ kind }) => kind)));
 check(() => assert.deepEqual([...producedKinds].sort(), [...analytics.personaTraitKindCatalog].sort()));
-check(() => assert.ok(positiveOutputs.every(({ output }) => output.profiles.every(({ featuredTraits }) => featuredTraits.length === 0))));
+check(() => assert.ok(positiveOutputs.every(({ output }) => output.profiles.every((profile) => profile.featuredTraits.every((trait) =>
+  profile.allTraits.some(({ traitId }) => traitId === trait.traitId)
+  && trait.explanation?.reasonCodes.length > 0)))));
 
 const protectedByEngine = fixtures.filter(({ phase }) => phase === "ENGINE_ASSERTED").length;
 check(() => assert.equal(protectedByEngine, fixtures.length));
@@ -570,9 +576,168 @@ check(() => assert.ok(adaptedTraits.some((trait) => trait.semanticKey === "creat
 check(() => assert.ok(adaptedTraits.some((trait) => trait.semanticKey === "subscription.chatgpt.adrien" && trait.scope === "PERSONAL")));
 check(() => assert.equal(adaptedTraits.filter((trait) => trait.semanticKey === "routine:work-ange-work").length, 1));
 check(() => assert.equal(adapted.signals.some((signal) => signal.signalId === `m4:rhythm:${manon}:travail_site`), false));
-check(() => assert.ok(adapted.profile.profiles.every(({ featuredTraits }) => featuredTraits.length === 0)));
+check(() => assert.ok(adapted.profile.profiles.every((profile) => profile.featuredTraits.every((trait) =>
+  profile.allTraits.some(({ traitId }) => traitId === trait.traitId)
+  && trait.explanation !== undefined
+  && trait.selection?.methodVersion === analytics.GLOBAL_PERSONA_SELECTION_METHOD_VERSION))));
 check(() => assert.ok(adapted.limitations.includes("M7_ROUTE_DISTANCE_AND_COST_AUTHORITY_UNAVAILABLE")));
 check(() => assert.equal(adapted.adapterVersion, "global_persona_signal_adapter@v1"));
+
+// P4 — grouping, featured selection and structured explainability.
+check(() => assert.equal(analytics.GLOBAL_PERSONA_SELECTION_METHOD_VERSION, "global_persona_selection@v1"));
+check(() => assert.equal(analytics.GLOBAL_PERSONA_GROUPING_CATALOG_VERSION, "global_persona_grouping_catalog@v1"));
+const groupedGaming = traitByKey(engineOutputs.get("P1-PS5-PAYER-NOT-USER"), "gaming", "SHARED");
+const groupedTechno = traitByKey(engineOutputs.get("P1-TECHNO-SHARED-WITHOUT-M10-REWRITE"), "techno", "SHARED");
+check(() => assert.equal(groupedGaming.scope, "SHARED"));
+check(() => assert.equal(groupedTechno.scope, "SHARED"));
+
+const beautySignals = [
+  ["mascara", "beauty.mascara", "maquillage_manon_mascara"],
+  ["brows", "beauty.brows", "maquillage_manon_sourcils"],
+  ["epilation", "beauty.epilation", "epilation_manon"],
+  ["skincare", "beauty.skincare", "skincare_manon_masque"],
+].map(([id, semanticKey, needKey]) => ({
+  signalId: `p4:beauty:${id}`,
+  signalType: "PRODUCT_CYCLE",
+  semanticKey,
+  ...personal(manon),
+  needKey,
+  family: "PERSONAL_CARE",
+  authority: "OBSERVED",
+  temporalStatus: "STABLE",
+  sourceModule: "M8",
+  metrics: { occurrenceCount: 2 },
+  evidenceRefs: [`product:${id}`],
+}));
+const beautyProfile = analytics.buildPersonaProfile({ signals: beautySignals });
+const beautyUniverse = traitByKey(beautyProfile, "universe.beauty_and_care", "PERSONAL");
+check(() => assert.ok(beautyUniverse));
+check(() => assert.deepEqual(beautyUniverse.children.map(({ semanticKey }) => semanticKey), ["beauty.brows", "beauty.epilation", "beauty.mascara", "beauty.skincare"]));
+check(() => assert.ok(beautyUniverse.children.every(({ traitId }) => allTraits(beautyProfile).some((trait) => trait.traitId === traitId))));
+check(() => assert.ok(featuredTraits(beautyProfile).some(({ traitId }) => traitId === beautyUniverse.traitId)));
+check(() => assert.equal(featuredTraits(beautyProfile).some(({ traitId }) => beautyUniverse.children.some((child) => child.traitId === traitId)), false));
+check(() => assert.deepEqual(beautyUniverse.explanation, undefined));
+const featuredBeauty = featuredTraits(beautyProfile).find(({ traitId }) => traitId === beautyUniverse.traitId);
+check(() => assert.deepEqual(featuredBeauty.explanation.children.map(({ traitId }) => traitId), beautyUniverse.children.map(({ traitId }) => traitId)));
+check(() => assert.ok(featuredBeauty.explanation.reasonCodes.includes("EXPLICIT_UNIVERSE_WITH_REAL_CHILDREN")));
+
+const partialBeautySignals = [
+  ["mascara", "maquillage_manon_mascara"],
+  ["brows", "maquillage_manon_sourcils"],
+].map(([id, needKey]) => ({
+  signalId: `p4:runtime:${id}`,
+  signalType: "PRODUCT_CYCLE",
+  semanticKey: `product-need:${needKey}`,
+  ...personal(manon),
+  needKey,
+  family: "PERSONAL_CARE",
+  authority: "OBSERVED",
+  sourceModule: "PRODUCT_OBSERVATIONS",
+  metrics: { occurrenceCount: 2 },
+  evidenceRefs: [`product-observation:${id}`],
+}));
+const partialBeauty = analytics.buildPersonaProfile({ signals: partialBeautySignals });
+const partialBeautyUniverse = traitByKey(partialBeauty, "universe.beauty_and_care", "PERSONAL");
+check(() => assert.deepEqual(partialBeautyUniverse.children.map(({ semanticKey }) => semanticKey), [
+  "product-need:maquillage_manon_mascara",
+  "product-need:maquillage_manon_sourcils",
+]));
+check(() => assert.equal(partialBeautyUniverse.children.some(({ semanticKey }) => /epilation|skincare/.test(semanticKey)), false));
+
+const creativeSignals = [
+  { signalId: "p4:creative:photo", signalType: "MOMENT", semanticKey: "creative.photo.adrien", ...personal(adrien), momentRef: "photo-project", kind: "PROJECT", family: "LEISURE_AND_ACTIVITIES", authority: "USER_VALIDATED", temporalStatus: "PROJECT", sourceModule: "M6", evidenceRefs: ["moment:photo"] },
+  { signalId: "p4:creative:music", signalType: "MOMENT", semanticKey: "creative.music.adrien", ...personal(adrien), momentRef: "home-studio", kind: "PROJECT", family: "LEISURE_AND_ACTIVITIES", authority: "USER_VALIDATED", temporalStatus: "PROJECT", sourceModule: "M6", evidenceRefs: ["moment:music"] },
+];
+const creativeProfile = analytics.buildPersonaProfile({ signals: creativeSignals });
+const creativeUniverse = traitByKey(creativeProfile, "universe.creative_projects", "PERSONAL");
+check(() => assert.deepEqual(creativeUniverse.children.map(({ semanticKey }) => semanticKey), ["creative.music.adrien", "creative.photo.adrien"]));
+check(() => assert.ok(featuredTraits(creativeProfile).some(({ traitId }) => traitId === creativeUniverse.traitId)));
+
+const digitalSignals = [
+  ["chatgpt", "subscription.chatgpt.adrien"],
+  ["qobuz", "subscription.qobuz.adrien"],
+  ["lightroom", "subscription.lightroom.adrien"],
+].map(([id, semanticKey]) => ({
+  signalId: `p4:digital:${id}`,
+  signalType: "DECLARED",
+  semanticKey,
+  ...personal(adrien),
+  action: "AFFIRM",
+  value: true,
+  kind: "HABIT",
+  family: "DIGITAL_AND_SUBSCRIPTIONS",
+  authority: "USER_VALIDATED",
+  sourceModule: "DECLARED",
+  evidenceRefs: [`declaration:${id}`],
+}));
+const digitalProfile = analytics.buildPersonaProfile({ signals: digitalSignals });
+check(() => assert.equal(allTraits(digitalProfile).some(({ kind }) => kind === "UNIVERSE"), false));
+check(() => assert.deepEqual(allTraits(digitalProfile).map(({ semanticKey }) => semanticKey), digitalSignals.map(({ semanticKey }) => semanticKey).sort()));
+
+const manualTrait = (overrides) => ({
+  traitId: "persona-trait:manual",
+  semanticKey: "manual.trait",
+  ...personal(adrien),
+  kind: "ROUTINE",
+  family: "WORK_AND_DAY_CONTEXT",
+  authority: "OBSERVED",
+  authorities: ["OBSERVED"],
+  knowledgeStatus: "OBSERVED",
+  temporalStatus: "STABLE",
+  dimensions: ["USAGE"],
+  signalRefs: ["manual:signal"],
+  evidenceRefs: ["manual:evidence"],
+  sourceModules: ["M4"],
+  limitations: [],
+  ...overrides,
+});
+const threeStrong = [0, 1, 2].map((index) => manualTrait({
+  traitId: `persona-trait:strong:${index}`,
+  semanticKey: `strong.${index}`,
+  authority: "USER_VALIDATED",
+  authorities: ["USER_VALIDATED"],
+  knowledgeStatus: "USER_VALIDATED",
+  signalRefs: [`strong:${index}`],
+  evidenceRefs: [`strong:evidence:${index}`],
+}));
+check(() => assert.equal(analytics.selectFeaturedPersonaTraits({ allTraits: threeStrong }).length, 3));
+
+const challenger = manualTrait({ traitId: "persona-trait:a-challenger", semanticKey: "stable.challenger" });
+const incumbent = manualTrait({ traitId: "persona-trait:z-incumbent", semanticKey: "stable.incumbent" });
+check(() => assert.equal(analytics.selectFeaturedPersonaTraits({ allTraits: [incumbent, challenger], maxFeatured: 1 })[0].traitId, challenger.traitId));
+check(() => assert.equal(analytics.selectFeaturedPersonaTraits({ allTraits: [incumbent, challenger], previousFeaturedTraits: [incumbent], maxFeatured: 1 })[0].traitId, incumbent.traitId));
+const strongChallenger = manualTrait({ traitId: "persona-trait:strong-challenger", semanticKey: "stable.strong-challenger", authority: "USER_VALIDATED", authorities: ["USER_VALIDATED"], knowledgeStatus: "USER_VALIDATED" });
+check(() => assert.equal(analytics.selectFeaturedPersonaTraits({ allTraits: [incumbent, strongChallenger], previousFeaturedTraits: [incumbent], maxFeatured: 1 })[0].traitId, strongChallenger.traitId));
+
+const deterministicSignals = [...beautySignals, ...creativeSignals];
+check(() => assert.deepEqual(
+  analytics.buildPersonaProfile({ signals: [...deterministicSignals].reverse() }),
+  analytics.buildPersonaProfile({ signals: deterministicSignals }),
+));
+
+const scopeProfile = analytics.buildPersonaProfile({ signals: [
+  { signalId: "p4:scope:shared", signalType: "DECLARED", semanticKey: "scope.example", ...shared, action: "AFFIRM", value: true, kind: "UNIVERSE", family: "LEISURE_AND_ACTIVITIES", authority: "USER_VALIDATED", sourceModule: "DECLARED", evidenceRefs: ["scope:shared"] },
+  { signalId: "p4:scope:household", signalType: "DECLARED", semanticKey: "scope.example", ...householdScope, action: "AFFIRM", value: true, kind: "UNIVERSE", family: "LEISURE_AND_ACTIVITIES", authority: "USER_VALIDATED", sourceModule: "DECLARED", evidenceRefs: ["scope:household"] },
+] });
+check(() => assert.deepEqual(scopeProfile.profiles.map(({ scope }) => scope).sort(), ["HOUSEHOLD", "SHARED"]));
+check(() => assert.equal(scopeProfile.profiles.some(({ allTraits: traits }) => traits.some((trait) => trait.scope !== traits[0].scope)), false));
+
+const differenceTraits = [0, 1, 2].map((index) => manualTrait({
+  traitId: `persona-trait:difference:${index}`,
+  semanticKey: `difference:${index}`,
+  signalRefs: [`difference:${index}`],
+  evidenceRefs: [`difference:evidence:${index}`],
+  sourceModules: ["M9_HISTORICAL_DIFFERENCE"],
+}));
+const differenceSelection = analytics.selectFeaturedPersonaTraits({ allTraits: [...differenceTraits, ...threeStrong], maxFeatured: 4 });
+check(() => assert.ok(differenceSelection.filter(({ semanticKey }) => semanticKey.startsWith("difference:")).length <= 1));
+check(() => assert.ok(differenceSelection.every(({ explanation }) =>
+  explanation.reasonCodes.length > 0
+  && Array.isArray(explanation.authorities)
+  && Array.isArray(explanation.sourceModules)
+  && Array.isArray(explanation.evidenceRefs)
+  && Array.isArray(explanation.limitations)
+  && Array.isArray(explanation.children))));
 
 console.log(`Persona golden P2 harness: ${fixtures.length}/${fixtures.length} anti-cases structurally validated (${checks} total checks).`);
 console.log(`Persona golden positive cases: ${positiveFixtures.length}/${positiveFixtures.length} passed.`);
@@ -581,3 +746,4 @@ console.log("PERSONA_GOLDEN_CORE=PASS");
 console.log("PERSONA_GOLDEN_ADAPTERS=PASS");
 console.log("PERSONA_GOLDEN_HARNESS=PASS");
 console.log("PERSONA_GOLDEN_ENGINE=PASS");
+console.log("PERSONA_GOLDEN_SELECTION=PASS");

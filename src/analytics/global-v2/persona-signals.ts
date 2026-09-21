@@ -202,15 +202,50 @@ type PersonaTraitFields = {
   readonly qualifications?: readonly string[];
   readonly metrics?: PersonaMetrics;
   readonly groupKey?: string;
+  readonly needKeys?: readonly string[];
 };
 
 export type PersonaTraitCandidate = PersonaScopedSubject & PersonaTraitFields & {
   readonly candidateId: string;
 };
 
+export type PersonaTraitChild = {
+  readonly traitId: string;
+  readonly semanticKey: string;
+  readonly kind: PersonaTraitKind;
+  readonly family: GlobalPersonaFamily;
+  readonly temporalStatus?: PersonaTemporalStatus;
+  readonly authorities: readonly PersonaAuthority[];
+  readonly sourceModules: readonly string[];
+  readonly evidenceRefs: readonly string[];
+  readonly limitations: readonly string[];
+  readonly metrics?: PersonaMetrics;
+};
+
+export type PersonaTraitExplanation = {
+  readonly summaryCode: string;
+  readonly reasonCodes: readonly string[];
+  readonly authorities: readonly PersonaAuthority[];
+  readonly sourceModules: readonly string[];
+  readonly signalRefs: readonly string[];
+  readonly evidenceRefs: readonly string[];
+  readonly limitations: readonly string[];
+  readonly metrics?: PersonaMetrics;
+  readonly children: readonly PersonaTraitChild[];
+};
+
+export type PersonaTraitSelection = {
+  readonly featured: true;
+  readonly reasonCodes: readonly string[];
+  readonly methodVersion: MethodVersion;
+};
+
 export type PersonaTrait = PersonaScopedSubject & PersonaTraitFields & {
   readonly traitId: string;
   readonly summary?: string;
+  readonly children?: readonly PersonaTraitChild[];
+  readonly explanation?: PersonaTraitExplanation;
+  readonly selection?: PersonaTraitSelection;
 };
 
 export type PersonaProfile = PersonaScopedSubject & {
