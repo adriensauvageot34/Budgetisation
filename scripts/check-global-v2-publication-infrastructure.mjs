@@ -155,6 +155,7 @@ check(() => assert.deepEqual(transitivePlan.affectedOutputs.map(({ outputFamily 
 check(() => assert.equal(analytics.planGlobalInvalidation({ ...event, cause: "UI_ONLY_CHANGE" }, invalidationRegistry).affectedOutputs.length, 0));
 
 const sql = fs.readFileSync(path.join(root, "supabase/migrations/20260906120000_global_v2_publication_infrastructure.sql"), "utf8");
+const guardOptimizationSql = fs.readFileSync(path.join(root, "supabase/migrations/20260921180440_optimize_frozen_content_guards.sql"), "utf8");
 check(() => assert.match(sql, /add column global_manifest jsonb/));
 check(() => assert.match(sql, /FULL RESTAGE|set is_active=false/iu));
 check(() => assert.match(sql, /source revision|source_revision/is));
@@ -167,6 +168,11 @@ check(() => assert.match(sql, /revoke truncate,trigger on public\.analytics_publ
 check(() => assert.doesNotMatch(sql, /update public\.analytics_publications set global_manifest[^\n]+where global_manifest is null/iu));
 check(() => assert.equal(materialization.globalV2MaterializationProfile.restagePolicy, "FULL_RESTAGE"));
 check(() => assert.equal(materialization.globalV2MaterializationProfile.intergenerationReferences, "FORBIDDEN"));
+check(() => assert.equal((guardOptimizationSql.match(/create or replace function public\.guard_(?:global|history)_v2_frozen_content\(\)/giu) ?? []).length, 2));
+check(() => assert.doesNotMatch(guardOptimizationSql, /to_jsonb\s*\(\s*(?:new|old)\s*\)/iu));
+check(() => assert.doesNotMatch(guardOptimizationSql, /(?:create|drop)\s+(?:table|trigger|index)|alter\s+table|statement_timeout/iu));
+check(() => assert.match(guardOptimizationSql, /old\.payload is distinct from new\.payload/iu));
+check(() => assert.match(guardOptimizationSql, /select a\.artifact_row_id into v_existing_id[\s\S]+if found then[\s\S]+select \* into strict v_existing_artifact/iu));
 
 let sqlRuntime = "NOT_RUN";
 if (process.env.GLOBAL_PGLITE_MODULE !== undefined) {
@@ -192,6 +198,7 @@ if (process.env.GLOBAL_PGLITE_MODULE !== undefined) {
     await db.exec(readMigration("20260904110151_history_v2_dependency_manifest.sql"));
     await db.exec(readMigration("20260904110402_history_v2_frozen_publications.sql"));
     await db.exec(sql);
+    await db.exec(guardOptimizationSql);
     const schema = (await db.query(`select
       exists(select 1 from information_schema.columns where table_schema='public' and table_name='analytics_publications' and column_name='global_manifest' and data_type='jsonb') as manifest_column,
       (select count(*)::int from pg_trigger where not tgisinternal and tgenabled='O' and tgname like 'global_v2_%') as enabled_guards,
@@ -203,6 +210,12 @@ if (process.env.GLOBAL_PGLITE_MODULE !== undefined) {
     await db.exec("set role service_role");
     const handshake = (await db.query("select * from public.global_v2_publication_contract()" )).rows;
     check(() => assert.deepEqual(handshake, [{ boundary_version: "global-v2-publication@v1" }]));
+    const guardDefinitions = (await db.query(`select pg_get_functiondef(p.oid) as definition
+      from pg_proc p join pg_namespace n on n.oid=p.pronamespace
+      where n.nspname='public' and p.proname in ('guard_global_v2_frozen_content','guard_history_v2_frozen_content')
+      order by p.proname`)).rows;
+    check(() => assert.equal(guardDefinitions.length, 2));
+    check(() => assert.equal(guardDefinitions.every(({ definition }) => !/to_jsonb\s*\(\s*(?:new|old)\s*\)/iu.test(definition)), true));
 
     const first = await buildIntegratedGlobalV2Candidate({ core, query, planApi, materialization, analytics });
     const second = await buildIntegratedGlobalV2Candidate(

@@ -40,11 +40,15 @@ export async function checkHistoryFrozenPublication({ materialization, preflight
   await rejects(() => store.writeQuery(testStage.queries[0].request, testStage.queries[0].data), /without a draft/);
 
   const sql = fs.readFileSync("supabase/migrations/20260904110402_history_v2_frozen_publications.sql", "utf8");
+  const guardOptimizationSql = fs.readFileSync("supabase/migrations/20260921180440_optimize_frozen_content_guards.sql", "utf8");
   for (const fragment of ["security invoker", "for update", "v_new - v_technical", "published_at is not null",
     "unsealed, never-published", "revoke truncate", "History retry changed", "create trigger"]) {
     check(() => assert.ok(sql.includes(fragment), fragment));
   }
   check(() => assert.doesNotMatch(sql, /create or replace function public\.(?:publish|restore)|disable trigger|set\s+payload\s*=|delete\s+from/iu));
+  check(() => assert.doesNotMatch(guardOptimizationSql, /to_jsonb\s*\(\s*(?:new|old)\s*\)/iu));
+  check(() => assert.match(guardOptimizationSql, /public\.is_history_v2_publication\(old\.publication_id\)[\s\S]+public\.is_history_v2_publication\(new\.publication_id\)/iu));
+  check(() => assert.match(guardOptimizationSql, /old\.payload is distinct from new\.payload/iu));
   const producer = fs.readFileSync("scripts/check-history-v2-certification-12-months.mjs", "utf8");
   check(() => assert.ok(producer.includes('selectedMonth === undefined ? months : [selectedMonth]')));
   check(() => assert.ok(producer.includes('Single-month rebuild requires full invariant certification')));
@@ -90,6 +94,7 @@ export async function checkHistoryFrozenPublication({ materialization, preflight
       [legacyId,runtimeContext.householdId,`${receipt.month}-01`,"a".repeat(64)]);
     await db.exec(read("20260904110151_history_v2_dependency_manifest.sql"));
     await db.exec(sql);
+    await db.exec(guardOptimizationSql);
     await db.exec("set role service_role;");
     const client = postgresClient(raw);
     const grants = await raw(`select
