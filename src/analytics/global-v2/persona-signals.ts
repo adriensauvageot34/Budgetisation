@@ -40,10 +40,21 @@ export const personaDeclaredSignalActionCatalog = Object.freeze([
   "NEGATE",
 ] as const);
 
+export const personaClaimDimensionCatalog = Object.freeze([
+  "FINANCE",
+  "USAGE",
+  "OWNERSHIP",
+  "PARTICIPATION",
+  "TEMPORALITY",
+  "ORGANIZATION",
+  "GENERAL",
+] as const);
+
 export type PersonaSignalType = (typeof personaSignalTypeCatalog)[number];
 export type PersonaScope = (typeof personaScopeCatalog)[number];
 export type PersonaTraitKind = (typeof personaTraitKindCatalog)[number];
 export type PersonaDeclaredSignalAction = (typeof personaDeclaredSignalActionCatalog)[number];
+export type PersonaClaimDimension = (typeof personaClaimDimensionCatalog)[number];
 
 export type PersonaAuthority =
   | "USER_VALIDATED"
@@ -90,6 +101,11 @@ type PersonaSignalFields = {
   readonly limitations?: readonly string[];
   readonly metrics?: PersonaMetrics;
   readonly groupKey?: string;
+  readonly context?: string;
+  readonly validFrom?: LocalDate;
+  readonly validTo?: LocalDate;
+  readonly dimension?: PersonaClaimDimension;
+  readonly sourceModule?: string;
   readonly methodVersion?: MethodVersion;
 };
 
@@ -109,12 +125,10 @@ export type NeedSignal = PersonaSignalBase & {
   readonly signalType: "NEED";
   readonly needKey?: string;
   readonly active?: boolean;
-  readonly context?: string;
 };
 
 export type RoutineSignal = PersonaSignalBase & {
   readonly signalType: "ROUTINE";
-  readonly context?: string;
   readonly pattern?: readonly string[];
 };
 
@@ -128,12 +142,10 @@ export type ProductCycleSignal = PersonaSignalBase & {
 export type MomentSignal = PersonaSignalBase & {
   readonly signalType: "MOMENT";
   readonly momentRef?: string;
-  readonly context?: string;
 };
 
 export type MobilitySignal = PersonaSignalBase & {
   readonly signalType: "MOBILITY";
-  readonly context?: string;
   readonly mode?: string;
   readonly vehicleRef?: string;
 };
@@ -156,9 +168,7 @@ export type DeclaredSignal = PersonaSignalBase & {
   readonly signalType: "DECLARED";
   readonly action: PersonaDeclaredSignalAction;
   readonly value?: PersonaDeclaredValue;
-  readonly context?: string;
-  readonly validFrom?: LocalDate;
-  readonly validTo?: LocalDate;
+  readonly targetSemanticKeys?: readonly string[];
   readonly note?: string;
 };
 
@@ -178,11 +188,18 @@ type PersonaTraitFields = {
   readonly family: GlobalPersonaFamily;
   readonly semanticKey: string;
   readonly authority?: PersonaAuthority;
+  readonly authorities?: readonly PersonaAuthority[];
   readonly knowledgeStatus?: PersonaKnowledgeStatus;
   readonly temporalStatus?: PersonaTemporalStatus;
+  readonly dimensions?: readonly PersonaClaimDimension[];
+  readonly context?: string;
+  readonly validFrom?: LocalDate;
+  readonly validTo?: LocalDate;
   readonly signalRefs?: readonly string[];
   readonly evidenceRefs?: readonly string[];
+  readonly sourceModules?: readonly string[];
   readonly limitations?: readonly string[];
+  readonly qualifications?: readonly string[];
   readonly metrics?: PersonaMetrics;
   readonly groupKey?: string;
 };

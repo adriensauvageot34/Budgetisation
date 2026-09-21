@@ -233,6 +233,7 @@ export {
 export { createGlobalM9DependencyDeclaration } from "./persona-dependencies";
 export {
   PERSONA_SIGNAL_CONTRACT_VERSION,
+  personaClaimDimensionCatalog,
   personaDeclaredSignalActionCatalog,
   personaScopeCatalog,
   personaSignalTypeCatalog,
@@ -244,6 +245,7 @@ export {
   type NeedSignal,
   type PersonalCostSignal,
   type PersonaAuthority,
+  type PersonaClaimDimension,
   type PersonaDeclaredSignalAction,
   type PersonaDeclaredValue,
   type PersonaKnowledgeStatus,
@@ -265,6 +267,14 @@ export {
   type RoutineSignal,
   type SharedActivitySignal,
 } from "./persona-signals";
+export { applyPersonaDeclarations } from "./persona-declarations";
+export {
+  GLOBAL_PERSONA_PROFILE_METHOD_VERSION,
+  buildPersonaProfile,
+  buildPersonaTraits,
+  generatePersonaCandidates,
+  mergePersonaCandidates,
+} from "./persona-profile";
 export {
   GLOBAL_M10_METHOD_VERSION,
   SharedParticipationResolver,
