@@ -58,7 +58,7 @@ const candidate = (id, moduleKey, score, overrides = {}) => ({
 const quality = { knowledgeState: "KNOWN", supportStatus: "SUFFICIENT", effectiveCoverage: 1, dataNature: "OBSERVED", limitationCodes: [], evidenceRefs: ["evidence:module"] };
 const capability = { capabilityId: "module", state: "AVAILABLE", reasonCodes: [] };
 const detail = { entryId: "detail", labelKey: "detail.label", targetResource: "analysis_global_detail", targetRef: "target:1" };
-const personaProfile = analytics.buildPersonaProfile({ signals: [{
+const personaSignals = [{
   signalId: "read-model:declared-project",
   signalType: "DECLARED",
   semanticKey: "creative.photo.read-model",
@@ -73,7 +73,10 @@ const personaProfile = analytics.buildPersonaProfile({ signals: [{
   sourceModule: "DECLARED_V1",
   evidenceRefs: ["declaration:photo-project"],
   limitations: ["RUNTIME_ACTIVITY_SUPPORT_PARTIAL"],
-}] });
+}];
+const personaProfile = analytics.buildPersonaProfile({ signals: personaSignals });
+const personaProfileBeforeProjection = structuredClone(personaProfile);
+const publishedPersonaProfile = query.projectPersonaPublishedProfile(personaProfile);
 
 // Publication hard gates remain upstream and opportunistic insights never get placeholders.
 const publicationEngine = new analytics.GlobalPublicationEngine();
@@ -145,13 +148,30 @@ check(() => assert.equal(modules[0].quality.knowledgeState, "PARTIAL"));
 check(() => assert.equal(modules[0].quality.partialMeaning, "OBSERVED_ONLY"));
 const personaExpanded = query.buildGlobalExpandedReadModel({
   kind: "global_expanded", schemaVersion: "global-expanded@v1", resource: "analysis_global_personas_expanded", moduleKey: "PERSONAS", sectionKey: "OVERVIEW", visibility: "VISIBLE",
-  secondaryInsights: [], metrics: [], series: [], rows: [], destinations: [], profile: personaProfile,
+  secondaryInsights: [], metrics: [], series: [], rows: [], destinations: [], profile: publishedPersonaProfile,
   quality, capabilities: [{ ...capability, capabilityId: "GLOBAL_PERSONAS" }], publicationMeta, resourceMeta: resourceMeta(50),
 });
-check(() => assert.deepEqual(personaExpanded.profile, personaProfile));
-check(() => assert.equal(personaExpanded.profile.profiles[0].featuredTraits[0].explanation.evidenceRefs[0], "declaration:photo-project"));
+check(() => assert.deepEqual(personaProfile, personaProfileBeforeProjection));
+check(() => assert.deepEqual(personaExpanded.profile, publishedPersonaProfile));
+check(() => assert.deepEqual(personaExpanded.profile.profiles.map(({ scope }) => scope), ["PERSONAL"]));
+check(() => assert.deepEqual(personaExpanded.profile.profiles[0].featuredTraits.map(({ traitId }) => traitId), personaProfile.profiles.find(({ scope }) => scope === "PERSONAL").featuredTraits.map(({ traitId }) => traitId)));
+check(() => assert.equal("allTraits" in personaExpanded.profile.profiles[0], false));
+check(() => assert.doesNotMatch(JSON.stringify(personaExpanded.profile), /evidenceRefs|signalRefs|sourceModules|authorit(?:y|ies)|explanation|selection|reasonCodes|limitations/u));
+const unknownMetricEngineProfile = structuredClone(personaProfile);
+unknownMetricEngineProfile.profiles[0].allTraits[0].metrics = { unknownValue: "UNKNOWN", measuredZero: 0 };
+unknownMetricEngineProfile.profiles[0].featuredTraits[0].metrics = { unknownValue: "UNKNOWN", measuredZero: 0 };
+check(() => assert.deepEqual(query.projectPersonaPublishedProfile(unknownMetricEngineProfile).profiles[0].featuredTraits[0].metrics, { unknownValue: "UNKNOWN", measuredZero: 0 }));
+const largeEvidencePersonaProfile = analytics.buildPersonaProfile({ signals: [{
+  ...personaSignals[0],
+  evidenceRefs: Array.from({ length: 5_000 }, (_, index) => `evidence:persona:${String(index).padStart(5, "0")}:${"x".repeat(48)}`),
+}] });
+const largeEvidencePublishedProfile = query.projectPersonaPublishedProfile(largeEvidencePersonaProfile);
+check(() => assert.deepEqual(largeEvidencePublishedProfile, publishedPersonaProfile));
+check(() => assert.ok(Buffer.byteLength(JSON.stringify(largeEvidencePersonaProfile), "utf8") > query.GLOBAL_EXPANDED_PAYLOAD_BUDGET_BYTES));
+check(() => assert.ok(Buffer.byteLength(JSON.stringify(largeEvidencePublishedProfile), "utf8") < query.GLOBAL_EXPANDED_PAYLOAD_BUDGET_BYTES));
 check(() => assert.ok(Buffer.byteLength(JSON.stringify(personaExpanded), "utf8") <= query.GLOBAL_EXPANDED_PAYLOAD_BUDGET_BYTES));
 rejects(() => query.buildGlobalExpandedReadModel({ ...personaExpanded, resource: "analysis_global_together_expanded", moduleKey: "TOGETHER" }), /PERSONA_PROFILE_RESOURCE_MISMATCH/);
+rejects(() => query.parsePersonaPublishedProfileOutput({ ...publishedPersonaProfile, profiles: [{ ...publishedPersonaProfile.profiles[0], allTraits: [] }] }), /non autorisée|unrecognized_key/u);
 const transportSchema = query.createGlobalReadModelTransportSchema(query.parseGlobalModuleCompactReadModel);
 check(() => assert.equal(transportSchema.parse({ status: "READY", data: modules[0] }).data.quality.knowledgeState, "PARTIAL"));
 check(() => assert.equal(transportSchema.parse({ status: "ERROR", errorCode: "NETWORK", previousData: modules[0] }).previousData.visibility, "VISIBLE"));
@@ -189,3 +209,4 @@ check(() => assert.equal(new Set(materialization.globalV2PrimaryQueryResources).
 console.log(`Global V2 primary ReadModels: ${checks}/${checks} PASS`);
 console.log(`Primary module schemas: ${modules.length}/10 PASS`);
 console.log(`Maximum compact payload: ${Math.max(...modules.map((module) => Buffer.byteLength(JSON.stringify(module), "utf8")))} bytes`);
+console.log(`Persona payload projection: engine=${Buffer.byteLength(JSON.stringify(largeEvidencePersonaProfile), "utf8")} bytes; published=${Buffer.byteLength(JSON.stringify(personaExpanded), "utf8")} bytes`);

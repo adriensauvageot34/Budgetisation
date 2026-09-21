@@ -40,6 +40,16 @@ export {
 } from "./types";
 export { parseGlobalPhenomenonQuality, parseGlobalTypedMeasure } from "./typed-values";
 export {
+  PERSONA_PUBLISHED_PROFILE_CONTRACT_VERSION,
+  parsePersonaPublishedProfileOutput,
+  projectPersonaPublishedProfile,
+  type PersonaPublishedProfile,
+  type PersonaPublishedProfileOutput,
+  type PersonaPublishedSubject,
+  type PersonaPublishedTrait,
+  type PersonaPublishedTraitChild,
+} from "./persona-published";
+export {
   GLOBAL_EXPANDED_PAYLOAD_BUDGET_BYTES,
   GLOBAL_MAX_EXPANDED_INSIGHTS,
   GLOBAL_MAX_SECONDARY_INSIGHTS,

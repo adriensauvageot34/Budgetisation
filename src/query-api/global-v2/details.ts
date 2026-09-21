@@ -8,7 +8,6 @@ import {
 import type { RuntimeSchema } from "../../core/validation";
 import type { DataStatus, PartialMeaning } from "../../core/history-v2";
 import type { GlobalPublicationReasonCode, GlobalPublicationVisibility } from "../../analytics/global-v2/publication";
-import type { PersonaProfileOutput } from "../../analytics/global-v2/persona-signals";
 import type {
   GlobalCompactInsight,
   GlobalCompactQuality,
@@ -20,7 +19,7 @@ import type {
   GlobalReadModelResourceMeta,
 } from "./types";
 import { parseGlobalPhenomenonQuality, parseGlobalTypedMeasure } from "./typed-values";
-import { parsePersonaProfileOutput } from "./schemas";
+import { parsePersonaPublishedProfileOutput, type PersonaPublishedProfileOutput } from "./persona-published";
 import { parseLocalDate, parseYearMonth } from "../../core/time";
 
 export const GLOBAL_EXPANDED_PAYLOAD_BUDGET_BYTES = 96 * 1024;
@@ -169,7 +168,7 @@ export type GlobalExpandedReadModel = {
   readonly spentDuringContext?: GlobalSpentDuringContext;
   readonly groceryRhythm?: GlobalGroceryRhythmContext;
   /** Persona v1 knowledge payload; only valid on PERSONAS/OVERVIEW. */
-  readonly profile?: PersonaProfileOutput;
+  readonly profile?: PersonaPublishedProfileOutput;
   readonly quality: GlobalCompactQuality;
   readonly capabilities: readonly GlobalModuleCapability[];
   readonly publicationMeta: GlobalReadModelPublicationMeta;
@@ -487,7 +486,7 @@ export function parseGlobalExpandedReadModel(value: unknown): GlobalExpandedRead
   const componentGroups = optional(record, "componentGroups", (entry) => array(entry, parseComponentGroup, "componentGroups"));
   const spentDuringContext = optional(record, "spentDuringContext", parseSpentDuring);
   const groceryRhythm = optional(record, "groceryRhythm", parseGroceryRhythm);
-  const profile = optional(record, "profile", parsePersonaProfileOutput);
+  const profile = optional(record, "profile", parsePersonaPublishedProfileOutput);
   if ([peerObservations, similarity, momentComponentRows, componentGroups, spentDuringContext].some((entry) => entry !== undefined) && resource !== "analysis_global_moment_experience_detail") throw new TypeError("GLOBAL_MOMENT_DETAIL_EXTENSION_RESOURCE_MISMATCH");
   if (groceryRhythm !== undefined && resource !== "analysis_global_routine_detail") throw new TypeError("GLOBAL_GROCERY_DETAIL_RESOURCE_MISMATCH");
   if (profile !== undefined && (resource !== "analysis_global_personas_expanded" || moduleKey !== "PERSONAS" || sectionKey !== "OVERVIEW" || visibility !== "VISIBLE")) throw new TypeError("GLOBAL_PERSONA_PROFILE_RESOURCE_MISMATCH");

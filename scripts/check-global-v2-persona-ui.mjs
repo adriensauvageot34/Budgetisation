@@ -33,7 +33,6 @@ const trait = (traitId, semanticKey, kind, personId, overrides = {}) => ({
   traitId,
   semanticKey,
   kind,
-  family: kind === "MOBILITY" || semanticKey === "driving_license.adrien" ? "MOBILITY" : "LEISURE_AND_ACTIVITIES",
   ...personalSubject(personId),
   ...overrides,
 });
@@ -41,19 +40,14 @@ const child = (traitId, semanticKey, kind, overrides = {}) => ({
   traitId,
   semanticKey,
   kind,
-  family: "LEISURE_AND_ACTIVITIES",
-  authorities: [],
-  sourceModules: [],
-  evidenceRefs: [],
-  limitations: [],
   ...overrides,
 });
-const profile = (personId, featuredTraits, allTraits = featuredTraits) => ({ ...personalSubject(personId), allTraits, featuredTraits });
+const profile = (personId, featuredTraits) => ({ ...personalSubject(personId), featuredTraits });
 const expanded = (profiles, overrides = {}) => ({
   resource: "analysis_global_personas_expanded",
   moduleKey: "PERSONAS",
   sectionKey: "OVERVIEW",
-  profile: { contractVersion: "v1", methodVersion: "global_persona_profile@v1", profiles },
+  profile: { contractVersion: "persona-published-profile@v1", methodVersion: "global_persona_profile@v1", profiles },
   rows: [
     { rowId: "persona-adrien", labelKey: "Adrien · Travail", entityRef: `person:${adrien}` },
     { rowId: "persona-manon", labelKey: "Manon · Travail", entityRef: `person:${manon}` },
@@ -90,15 +84,14 @@ const sharedGaming = {
   traitId: "gaming",
   semanticKey: "gaming",
   kind: "UNIVERSE",
-  family: "LEISURE_AND_ACTIVITIES",
   scope: "SHARED",
   subject: { kind: "SHARED", personIds: [adrien, manon] },
 };
 
 const mappedModel = presentation.buildPersonaPresentationModel(expanded([
   profile(manon, [beauty, mobilityManon]),
-  profile(adrien, [creative, licence, mobilityAdrien, chatgpt], [creative, licence, mobilityAdrien, chatgpt, nonFeatured]),
-  { scope: "SHARED", subject: { kind: "SHARED", personIds: [adrien, manon] }, allTraits: [sharedGaming], featuredTraits: [sharedGaming] },
+  profile(adrien, [creative, licence, mobilityAdrien, chatgpt]),
+  { scope: "SHARED", subject: { kind: "SHARED", personIds: [adrien, manon] }, featuredTraits: [sharedGaming] },
 ]));
 const model = { ...mappedModel, profiles: presentation.orderPersonaPresentationProfiles(mappedModel.profiles) };
 
