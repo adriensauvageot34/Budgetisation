@@ -7,12 +7,8 @@ import { pathToFileURL } from "node:url";
 const root = path.resolve(path.dirname(new URL(import.meta.url).pathname.replace(/^\/(?:[A-Za-z]:)/u, (value) => value.slice(1))), "..");
 registerHooks({
   resolve(specifier, context, nextResolve) {
-    const target = specifier.startsWith("@/")
-      ? pathToFileURL(path.join(root, "src", specifier.slice(2))).href
-      : specifier;
-    try {
-      return nextResolve(target, context);
-    } catch (error) {
+    const target = specifier.startsWith("@/") ? pathToFileURL(path.join(root, "src", specifier.slice(2))).href : specifier;
+    try { return nextResolve(target, context); } catch (error) {
       if ((!target.startsWith(".") && !target.startsWith("file:")) || /\.[cm]?[jt]sx?$/u.test(target)) throw error;
       for (const candidate of [`${target}.ts`, `${target}/index.ts`]) {
         try { return nextResolve(candidate, context); } catch { /* continue */ }
@@ -29,19 +25,8 @@ const check = (assertion) => { assertion(); checks += 1; };
 const adrien = "00000000-0000-0000-0000-000000000001";
 const manon = "00000000-0000-0000-0000-000000000002";
 const personalSubject = (personId) => ({ subject: { kind: "PERSON", personId }, scope: "PERSONAL" });
-const trait = (traitId, semanticKey, kind, personId, overrides = {}) => ({
-  traitId,
-  semanticKey,
-  kind,
-  ...personalSubject(personId),
-  ...overrides,
-});
-const child = (traitId, semanticKey, kind, overrides = {}) => ({
-  traitId,
-  semanticKey,
-  kind,
-  ...overrides,
-});
+const trait = (traitId, semanticKey, kind, personId, overrides = {}) => ({ traitId, semanticKey, kind, ...personalSubject(personId), ...overrides });
+const child = (traitId, semanticKey, kind, overrides = {}) => ({ traitId, semanticKey, kind, ...overrides });
 const profile = (personId, featuredTraits) => ({ ...personalSubject(personId), featuredTraits });
 const expanded = (profiles, overrides = {}) => ({
   resource: "analysis_global_personas_expanded",
@@ -64,99 +49,101 @@ const creative = trait("creative-parent", "universe.creative_projects", "UNIVERS
     child("creative-support", "creative.projects.adrien", "UNIVERSE", { temporalStatus: "UNKNOWN" }),
   ],
 });
-const licence = trait("licence", "driving_license.adrien", "PROJECT", adrien, {
-  temporalStatus: "PROJECT",
-  qualifications: ["IN_PROGRESS"],
-  metrics: { observedAmount: "UNKNOWN" },
-});
+const unknownProject = trait("unknown-project", "project.opaque", "PROJECT", adrien, { temporalStatus: "PROJECT" });
+const licence = trait("licence", "driving_license.adrien", "PROJECT", adrien, { temporalStatus: "PROJECT", metrics: { observedAmount: "UNKNOWN" } });
 const mobilityAdrien = trait("mobility-a", "mobility.work.adrien", "MOBILITY", adrien, { metrics: { directCost: 0, distanceKm: "UNKNOWN" } });
 const chatgpt = trait("chatgpt", "subscription.chatgpt.adrien", "HABIT", adrien);
+const rhythmAdrien = trait("rhythm-a", "routine:work-meal", "ROUTINE", adrien, { metrics: { occurrenceCount: 61, medianIntervalDays: 4 } });
+
 const beauty = trait("beauty-parent", "universe.beauty_and_care", "UNIVERSE", manon, {
   children: [
     child("mascara", "product-need:maquillage_manon_mascara", "HABIT", { metrics: { occurrenceCount: 6, typicalPrice: 32 } }),
     child("brows", "product-need:maquillage_manon_sourcils", "HABIT", { metrics: { occurrenceCount: 7 } }),
     child("skincare", "product-need:skincare_manon_masque", "HABIT"),
+    child("unknown-child", "product-need:opaque", "HABIT", { metrics: { occurrenceCount: 99 } }),
   ],
 });
 const mobilityManon = trait("mobility-m", "mobility.work.manon", "MOBILITY", manon);
-const nonFeatured = trait("not-featured", "routine.not_featured", "ROUTINE", adrien);
-const sharedGaming = {
-  traitId: "gaming",
-  semanticKey: "gaming",
-  kind: "UNIVERSE",
-  scope: "SHARED",
-  subject: { kind: "SHARED", personIds: [adrien, manon] },
-};
+const rhythmManon = trait("rhythm-m", "activity:work", "ROUTINE", manon, { metrics: { occurrenceCount: 12 } });
+const unknownHabit = trait("unknown-habit", "habit.opaque", "HABIT", manon);
+const nonFeatured = trait("not-featured", "routine:not-featured", "ROUTINE", adrien, { metrics: { occurrenceCount: 88 } });
+const sharedGaming = { traitId: "gaming", semanticKey: "gaming", kind: "UNIVERSE", scope: "SHARED", subject: { kind: "SHARED", personIds: [adrien, manon] } };
 
-const mappedModel = presentation.buildPersonaPresentationModel(expanded([
-  profile(manon, [beauty, mobilityManon]),
-  profile(adrien, [creative, licence, mobilityAdrien, chatgpt]),
+const model = presentation.buildPersonaPresentationModel(expanded([
+  profile(manon, [beauty, mobilityManon, rhythmManon, unknownHabit]),
+  profile(adrien, [creative, unknownProject, licence, mobilityAdrien, chatgpt, rhythmAdrien]),
   { scope: "SHARED", subject: { kind: "SHARED", personIds: [adrien, manon] }, featuredTraits: [sharedGaming] },
 ]));
-const model = { ...mappedModel, profiles: presentation.orderPersonaPresentationProfiles(mappedModel.profiles) };
+const adrienProfile = model.profiles[0];
+const manonProfile = model.profiles[1];
+const blocks = (profileValue) => [...profileValue.dailyRhythms, ...profileValue.recurringLife, ...profileValue.phasedProjects];
 
 check(() => assert.equal(model.version, "persona_presentation@v1"));
 check(() => assert.deepEqual(model.profiles.map(({ personId }) => personId), [adrien, manon]));
 check(() => assert.deepEqual(model.profiles.map(({ displayName }) => displayName), ["Adrien", "Manon"]));
-check(() => assert.deepEqual(model.profiles[0].cards.map(({ traitId }) => traitId), ["creative-parent", "licence", "mobility-a", "chatgpt"]));
-check(() => assert.equal(model.profiles[0].cards.some(({ traitId }) => traitId === "not-featured"), false));
-check(() => assert.equal(model.profiles.flatMap(({ cards }) => cards).some(({ semanticKey }) => semanticKey === "gaming"), false));
-check(() => assert.deepEqual(model.profiles[0].cards.map(({ engineRank }) => engineRank), [0, 1, 2, 3]));
+check(() => assert.equal(model.profiles.length, 2));
+check(() => assert.equal(blocks(adrienProfile).some(({ traitId }) => traitId === nonFeatured.traitId), false));
+check(() => assert.equal(model.profiles.some(({ personId }) => personId === undefined), false));
 
-const creativeCard = model.profiles[0].cards[0];
-check(() => assert.equal(creativeCard.component, "CreativeProjectsCard"));
-check(() => assert.equal(creativeCard.title, "Projets créatifs"));
-check(() => assert.deepEqual(creativeCard.examples, ["Home studio", "Musique", "Photo"]));
-check(() => assert.deepEqual(creativeCard.children.map(({ title }) => title), ["Photo", "Pratiques créatives"]));
-check(() => assert.equal(creativeCard.children[0].statusLabel, "En cours"));
-check(() => assert.equal(Object.hasOwn(creativeCard.children[1], "statusLabel"), false));
-check(() => assert.equal(creativeCard.metrics.length, 0));
+// A-C, I: no kind-only fallback survives the composer.
+for (const kind of ["ROUTINE", "HABIT", "UNIVERSE", "PROJECT", "MOBILITY", "HOUSEHOLD_ORGANIZATION"]) {
+  check(() => assert.equal(presentation.presentPersonaTrait(trait(`generic-${kind}`, `generic.${kind.toLowerCase()}`, kind, adrien), 0), undefined));
+}
+check(() => assert.equal(blocks(adrienProfile).some(({ title }) => ["Routine", "Projet", "Habitude", "Univers", "Mobilité"].includes(title)), false));
+check(() => assert.equal(blocks(manonProfile).some(({ title }) => ["Routine", "Projet", "Habitude", "Univers", "Mobilité"].includes(title)), false));
+check(() => assert.equal(blocks(adrienProfile).some(({ traitId }) => traitId === unknownProject.traitId), false));
+check(() => assert.equal(blocks(manonProfile).some(({ traitId }) => traitId === unknownHabit.traitId), false));
+check(() => assert.equal(presentation.presentPersonaTrait(trait("metricless-rhythm", "routine:opaque", "ROUTINE", adrien), 0), undefined));
 
-const licenceCard = model.profiles[0].cards[1];
-check(() => assert.equal(licenceCard.component, "DrivingLicenseCard"));
-check(() => assert.equal(licenceCard.statusLabel, "En cours"));
-check(() => assert.deepEqual(licenceCard.metrics, []));
-check(() => assert.equal(licenceCard.title, "Permis de conduire"));
+// D: one creative block aggregates its known examples and children.
+check(() => assert.equal(adrienProfile.phasedProjects[0].renderer, "CREATIVE_UNIVERSE"));
+check(() => assert.equal(adrienProfile.phasedProjects[0].title, "Projets créatifs"));
+check(() => assert.deepEqual(adrienProfile.phasedProjects[0].examples, ["Home studio", "Musique", "Photo"]));
+check(() => assert.deepEqual(adrienProfile.phasedProjects[0].children.map(({ title }) => title), ["Photo", "Pratiques créatives"]));
+check(() => assert.equal(adrienProfile.phasedProjects[0].children[0].statusLabel, "En cours"));
 
-const adrienMobilityCard = model.profiles[0].cards[2];
-check(() => assert.equal(adrienMobilityCard.component, "WorkMobilityCard"));
-check(() => assert.deepEqual(adrienMobilityCard.metrics, [{ metricKey: "directCost", label: "Coût direct", value: 0, format: "MONEY_EUR" }]));
-check(() => assert.equal(adrienMobilityCard.metrics.some(({ value }) => value === "UNKNOWN"), false));
-check(() => assert.equal(model.profiles[0].cards[3].component, "HabitCard"));
-
-const beautyCard = model.profiles[1].cards[0];
-check(() => assert.equal(beautyCard.component, "BeautyUniverseCard"));
-check(() => assert.deepEqual(beautyCard.children.map(({ title }) => title), ["Mascara", "Sourcils", "Soin de la peau"]));
-check(() => assert.equal(beautyCard.children.some(({ title }) => title === "Épilation"), false));
-check(() => assert.deepEqual(beautyCard.children[0].metrics, [
+// E-F: Beauty is one block; known children stay compact within it.
+check(() => assert.equal(manonProfile.recurringLife.length, 1));
+check(() => assert.equal(manonProfile.recurringLife[0].renderer, "BEAUTY_UNIVERSE"));
+check(() => assert.deepEqual(manonProfile.recurringLife[0].children.map(({ title }) => title), ["Mascara", "Sourcils", "Soin de la peau"]));
+check(() => assert.equal(manonProfile.recurringLife[0].children.some(({ traitId }) => traitId === "unknown-child"), false));
+check(() => assert.deepEqual(manonProfile.recurringLife[0].children[0].metrics, [
   { metricKey: "typicalPrice", label: "Prix typique", value: 32, format: "MONEY_EUR" },
   { metricKey: "occurrenceCount", label: "Occurrences", value: 6, format: "COUNT" },
 ]));
-check(() => assert.equal(model.profiles[1].cards[1].component, "WorkMobilityCard"));
 
-const genericKinds = [
-  ["ROUTINE", "RoutineCard"],
-  ["HABIT", "HabitCard"],
-  ["UNIVERSE", "UniverseCard"],
-  ["PROJECT", "ProjectCard"],
-  ["MOBILITY", "MobilityCard"],
-  ["HOUSEHOLD_ORGANIZATION", "HouseholdOrganizationCard"],
-];
-for (const [kind, component] of genericKinds) {
-  const card = presentation.presentPersonaTrait(trait(`generic-${kind}`, `generic.${kind.toLowerCase()}`, kind, adrien), 0);
-  check(() => assert.equal(card.component, component));
-}
+// G-H: specialized human title and explicit zero both survive.
+check(() => assert.equal(adrienProfile.phasedProjects[1].title, "Permis de conduire"));
+check(() => assert.equal(adrienProfile.phasedProjects[1].statusLabel, "En cours"));
+check(() => assert.deepEqual(adrienProfile.dailyRhythms[0].metrics, [{ metricKey: "directCost", label: "Coût direct", value: 0, format: "MONEY_EUR" }]));
+check(() => assert.equal(adrienProfile.dailyRhythms[0].metrics.some(({ value }) => value === "UNKNOWN"), false));
+
+// J, M, N: no balancing card or marker is fabricated.
+check(() => assert.equal(adrienProfile.markers.length, 4));
+check(() => assert.equal(manonProfile.markers.length, 3));
+check(() => assert.notEqual(blocks(adrienProfile).length, blocks(manonProfile).length));
+const onlyMobility = presentation.buildPersonaPresentationModel(expanded([profile(adrien, [mobilityAdrien])]));
+check(() => assert.equal(onlyMobility.profiles[0].markers.length, 1));
+check(() => assert.equal(onlyMobility.profiles[0].recurringLife.length, 0));
+check(() => assert.equal(onlyMobility.profiles[0].phasedProjects.length, 0));
+
+// K: only PERSONAL profiles and traits are admitted.
+check(() => assert.equal(presentation.presentPersonaTrait(sharedGaming, 0), undefined));
+check(() => assert.equal(model.profiles.some(({ personId }) => personId === manon || personId === adrien), true));
+check(() => assert.equal(blocks(adrienProfile).some(({ semanticKey }) => semanticKey === "gaming"), false));
+
+// L: grouping preserves relative engine order and original rank.
+check(() => assert.deepEqual(adrienProfile.dailyRhythms.map(({ traitId }) => traitId), ["mobility-a", "rhythm-a"]));
+check(() => assert.deepEqual(adrienProfile.dailyRhythms.map(({ engineRank }) => engineRank), [3, 5]));
+check(() => assert.deepEqual(adrienProfile.phasedProjects.map(({ traitId }) => traitId), ["creative-parent", "licence"]));
+check(() => assert.deepEqual(adrienProfile.phasedProjects.map(({ engineRank }) => engineRank), [0, 2]));
+
 check(() => assert.equal(presentation.personaTemporalStatusLabel("HISTORICAL"), "Utilisé auparavant"));
 check(() => assert.equal(presentation.personaTemporalStatusLabel("STABLE"), undefined));
-check(() => assert.equal(presentation.personaTemporalStatusLabel("UNKNOWN"), undefined));
-check(() => assert.equal(presentation.presentPersonaTrait(sharedGaming, 0), undefined));
-
-const onlyThree = presentation.buildPersonaPresentationModel(expanded([profile(adrien, [creative, licence, mobilityAdrien])]));
-check(() => assert.equal(onlyThree.profiles[0].cards.length, 3));
 check(() => assert.equal(presentation.buildPersonaPresentationModel(expanded([], { profile: undefined })).profiles.length, 0));
 check(() => assert.equal(presentation.buildPersonaPresentationModel(expanded([], { sectionKey: "PATTERNS" })).profiles.length, 0));
-check(() => assert.equal(presentation.PERSONA_SEMANTIC_PRESENTATION_REGISTRY_V1["universe.beauty_and_care"].component, "BeautyUniverseCard"));
-check(() => assert.equal(presentation.PERSONA_SEMANTIC_PRESENTATION_REGISTRY_V1["mobility.work.manon"].component, "WorkMobilityCard"));
+check(() => assert.equal(presentation.PERSONA_SEMANTIC_PRESENTATION_REGISTRY_V1["universe.beauty_and_care"].editorialGroup, "RECURRING_LIFE"));
+check(() => assert.equal(presentation.PERSONA_SEMANTIC_PRESENTATION_REGISTRY_V1["universe.creative_projects"].childrenStrategy, "KNOWN_CHILDREN"));
 
 const source = fs.readFileSync(path.join(root, "src/features/global-v2/persona/persona-presentation.ts"), "utf8");
 const viewSource = fs.readFileSync(path.join(root, "src/features/global-v2/persona/persona-view.tsx"), "utf8");
@@ -165,20 +152,23 @@ const pageSource = fs.readFileSync(path.join(root, "src/features/global-v2/globa
 const cssSource = fs.readFileSync(path.join(root, "src/features/global-v2/global-v2.module.css"), "utf8");
 check(() => assert.doesNotMatch(source, /\.sort\(|\.reduce\(|characteristicScore|selectFeatured|promotePersona|buildPersonaProfile/u));
 check(() => assert.doesNotMatch(source, /from\s+["']@\/analytics|from\s+["']@\/server|@supabase/u));
-check(() => assert.doesNotMatch(source, /import\s+(?:React|\{[^}]*use(?:State|Effect|Memo))/u));
-check(() => assert.match(viewSource, /orderPersonaPresentationProfiles\(presentation\.profiles\)\.slice\(0, 2\)/u));
+check(() => assert.doesNotMatch(source, /["'](?:Routine|Projet|Habitude|Univers|Mobilité)["']/u));
+check(() => assert.doesNotMatch(source, /["'](?:Adrien|Manon)["']/u));
+check(() => assert.match(source, /editorialGroup[\s\S]*renderer[\s\S]*metricsPolicy[\s\S]*childrenStrategy[\s\S]*temporalTreatment/u));
+check(() => assert.match(source, /markers\.length < 4/u));
+check(() => assert.match(viewSource, /Portraits express[\s\S]*Vos rythmes du quotidien[\s\S]*Ce qui revient chez chacun[\s\S]*Ce qui vit par phases/u));
+check(() => assert.match(viewSource, /presentation\.profiles\.slice\(0, 2\)/u));
 check(() => assert.match(viewSource, /Adrien \+ Manon[\s\S]*♡ Nous deux/u));
-check(() => assert.match(viewSource, /personaColumns[\s\S]*profile\.cards\.map/u));
+check(() => assert.doesNotMatch(viewSource, /useState|onClick|sharedGaming|scope === "SHARED"/u));
 check(() => assert.doesNotMatch(viewSource, /compare|comparison|différence|gagnant|perdant/iu));
-check(() => assert.match(cardSource, /card\.children\.length === 0 \? null/u));
-check(() => assert.match(cardSource, /card\.metrics[\s\S]*card\.examples[\s\S]*card\.children/u));
-check(() => assert.doesNotMatch(cardSource, /\.reduce\(|\.sort\(|USER_VALIDATED|evidenceRefs|sourceModules/u));
+check(() => assert.doesNotMatch(cardSource, /kindLabels|data-persona-kind|>Routine<|>Projet<|>Habitude</u));
+check(() => assert.match(cardSource, /block\.children\.length === 0 \? null/u));
+check(() => assert.match(cardSource, /block\.metrics[\s\S]*block\.examples[\s\S]*block\.children/u));
 check(() => assert.match(pageSource, /moduleKey === "PERSONAS"\) return <PersonaPanel runtime=\{runtime\}/u));
 check(() => assert.doesNotMatch(pageSource, /Aucune différence nette à mettre en avant entre vos profils/u));
-check(() => assert.doesNotMatch(pageSource, /function PersonaColumns/u));
-check(() => assert.match(cssSource, /\.module\[data-module="PERSONAS"\]\s*\{[^}]*grid-column:\s*span 12/u));
-check(() => assert.match(cssSource, /\.personaColumns\s*\{[^}]*grid-template-columns:\s*repeat\(2/u));
-check(() => assert.match(cssSource, /\.personaPersonHeader\s*\{[^}]*position:\s*sticky/u));
+check(() => assert.match(cssSource, /\.personaEditorialColumns\s*\{[^}]*grid-template-columns:\s*repeat\(2/u));
+check(() => assert.match(cssSource, /\.personaMarker\s*\{/u));
+check(() => assert.match(cssSource, /data-persona-renderer="BEAUTY_UNIVERSE"/u));
 
-console.log(`Global V2 Persona presentation: ${checks}/${checks} PASS`);
-console.log("Expanded profile only; featured order preserved; client analytics recalculation: 0.");
+console.log(`Global V2 Persona editorial presentation: ${checks}/${checks} PASS`);
+console.log("Published featured traits only; editorial grouping preserves engine order; invented placeholders: 0.");

@@ -373,42 +373,51 @@
 .chartCompact :global(.ui-chart-content), .chartCompact :global(.ui-chart-renderer) { min-height: 230px; height: 230px; }
 .chartWide :global(.ui-chart-content), .chartWide :global(.ui-chart-renderer) { min-height: 280px; height: 280px; }
 .chartCompact :global(.ui-chart-summary), .chartWide :global(.ui-chart-summary) { color: var(--color-muted); font-size: 12px; }
-.personaView { display: grid; gap: 0; }
-.personaModuleHeader { display: flex; align-items: flex-start; justify-content: space-between; gap: 28px; border-bottom: 1px solid var(--color-border); padding: 30px 30px 26px; }
-.personaModuleHeader > div:first-child { max-width: 700px; }
-.personaModuleHeader h2 { max-width: 660px; margin: 5px 0 0; font-size: clamp(28px, 4vw, 42px); line-height: 1.08; }
-.personaModuleHeader p { max-width: 630px; margin: 11px 0 0; color: var(--color-muted); line-height: 1.55; }
-.personaScopeSwitch { display: inline-flex; flex: 0 0 auto; gap: 4px; border: 1px solid var(--color-border); border-radius: 999px; padding: 4px; background: rgb(255 255 255 / .8); color: var(--color-muted); font-size: 12px; font-weight: 780; }
-.personaScopeSwitch span { border-radius: 999px; padding: 8px 12px; white-space: nowrap; }
-.personaScopeSwitch span[aria-current] { background: var(--color-primary-deep); color: white; box-shadow: 0 3px 10px rgb(36 50 47 / .14); }
-.personaColumns { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: start; padding: 0 30px 34px; }
-.personaColumn { min-width: 0; padding-right: 28px; }
-.personaColumn + .personaColumn { border-left: 1px solid var(--color-border); padding-right: 0; padding-left: 28px; }
-.personaPersonHeader { position: sticky; z-index: 4; top: 54px; display: grid; gap: 3px; margin-bottom: 18px; border-bottom: 1px solid rgb(46 83 69 / .14); padding: 20px 2px 13px; background: rgb(251 250 246 / .94); backdrop-filter: blur(12px); }
-.personaPersonHeader span { color: var(--color-muted); font-size: 10px; font-weight: 800; letter-spacing: .09em; text-transform: uppercase; }
-.personaPersonHeader h3 { margin: 0; color: var(--color-primary-deep); font-size: clamp(22px, 3vw, 30px); letter-spacing: -.025em; }
-.personaCards { display: grid; align-content: start; gap: 14px; }
-.personaCard { display: grid; min-width: 0; gap: 15px; border: 1px solid rgb(36 50 47 / .12); border-radius: 16px; padding: 19px; background: rgb(255 255 255 / .88); box-shadow: 0 8px 24px rgb(36 50 47 / .045); }
-.personaCard[data-persona-kind="UNIVERSE"] { background: linear-gradient(145deg, #fff, #f3f6f1); }
-.personaCard[data-persona-kind="PROJECT"] { border-left: 3px solid #9a815d; }
-.personaCard[data-persona-kind="MOBILITY"] { border-left: 3px solid var(--color-primary); }
-.personaCardHeader { display: grid; gap: 7px; }
-.personaCardHeader > span { color: var(--color-muted); font-size: 10px; font-weight: 820; letter-spacing: .09em; text-transform: uppercase; }
-.personaCardHeader > div { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
-.personaCardHeader h4 { margin: 0; font-size: 19px; letter-spacing: -.02em; }
-.personaCardHeader strong, .personaChildren li > div span { flex: 0 0 auto; border-radius: 999px; padding: 4px 8px; background: var(--color-primary-soft); color: var(--color-primary-deep); font-size: 10px; font-weight: 800; }
-.personaCardHeader p { margin: 0; color: var(--color-muted); font-size: 13px; line-height: 1.5; }
-.personaMetrics { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; margin: 0; }
-.personaMetrics > div { display: grid; gap: 3px; border-radius: 10px; padding: 10px; background: var(--color-surface-soft); }
-.personaMetrics dt { color: var(--color-muted); font-size: 10px; font-weight: 750; }
-.personaMetrics dd { margin: 0; font-size: 14px; font-weight: 830; }
-.personaExamples { display: flex; flex-wrap: wrap; gap: 6px; margin: 0; padding: 0; list-style: none; }
-.personaExamples li { border: 1px solid var(--color-border); border-radius: 999px; padding: 5px 9px; background: #fff; color: var(--color-primary-deep); font-size: 11px; font-weight: 730; }
-.personaChildren { display: grid; gap: 0; margin: 0; padding: 0; list-style: none; }
-.personaChildren > li { display: grid; gap: 8px; border-top: 1px solid var(--color-border); padding: 11px 0 2px; }
+.personaView { display: grid; color: var(--color-primary-deep); }
+.personaModuleHeader { display: flex; align-items: flex-start; justify-content: space-between; gap: 32px; padding: 34px 34px 30px; }
+.personaModuleHeader > div:first-child { max-width: 730px; }
+.personaModuleHeader h2 { max-width: 680px; margin: 6px 0 0; font-family: var(--font-serif, Georgia, serif); font-size: clamp(30px, 4vw, 46px); font-weight: 560; line-height: 1.04; letter-spacing: -.035em; }
+.personaModuleHeader p { max-width: 620px; margin: 12px 0 0; color: var(--color-muted); font-size: 14px; line-height: 1.55; }
+.personaScopeSwitch { display: inline-flex; flex: 0 0 auto; gap: 3px; border: 1px solid rgb(46 83 69 / .13); border-radius: 999px; padding: 3px; background: rgb(255 255 255 / .62); color: var(--color-muted); font-size: 11px; font-weight: 780; }
+.personaScopeSwitch span { border-radius: 999px; padding: 7px 11px; white-space: nowrap; }
+.personaScopeSwitch span[aria-current] { background: var(--color-primary-deep); color: white; box-shadow: 0 3px 10px rgb(36 50 47 / .12); }
+.personaPortraits, .personaEditorialSection { border-top: 1px solid rgb(46 83 69 / .13); padding: 26px 34px 32px; }
+.personaSectionHeading { display: grid; gap: 4px; margin-bottom: 22px; }
+.personaSectionHeading > span { color: #88775d; font-size: 10px; font-weight: 820; letter-spacing: .12em; text-transform: uppercase; }
+.personaSectionHeading h3 { margin: 0; font-family: var(--font-serif, Georgia, serif); font-size: clamp(24px, 3vw, 32px); font-weight: 570; letter-spacing: -.025em; }
+.personaEditorialColumns { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: start; column-gap: 0; }
+.personaPortrait, .personaEditorialColumn { min-width: 0; padding-right: 30px; }
+.personaPortrait + .personaPortrait, .personaEditorialColumn[data-persona-column="2"] { grid-column: 2; border-left: 1px solid rgb(46 83 69 / .13); padding-right: 0; padding-left: 30px; }
+.personaPersonHeader { display: grid; gap: 2px; margin-bottom: 14px; }
+.personaPersonHeader span { color: var(--color-muted); font-size: 9px; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; }
+.personaPersonHeader h4 { margin: 0; font-family: var(--font-serif, Georgia, serif); font-size: clamp(24px, 3vw, 32px); font-weight: 570; letter-spacing: -.025em; }
+.personaMarkers { display: flex; flex-wrap: wrap; gap: 8px; margin: 0; padding: 0; list-style: none; }
+.personaMarker { display: inline-flex; align-items: center; gap: 7px; border-radius: 999px; padding: 8px 11px; background: rgb(232 237 229 / .82); color: var(--color-primary-deep); font-size: 12px; font-weight: 730; }
+.personaMarker svg { flex: 0 0 auto; color: var(--color-primary); }
+.personaEditorialColumn > h4 { margin: 0 0 13px; color: #88775d; font-size: 12px; font-weight: 820; letter-spacing: .04em; }
+.personaEditorialBlocks { display: grid; align-content: start; gap: 12px; }
+.personaEditorialBlock { display: grid; min-width: 0; gap: 13px; border-radius: 14px; padding: 17px 18px; background: rgb(255 255 255 / .72); box-shadow: inset 0 0 0 1px rgb(46 83 69 / .08); }
+.personaEditorialBlock[data-persona-renderer="CREATIVE_UNIVERSE"] { background: linear-gradient(145deg, rgb(255 255 255 / .82), rgb(234 239 229 / .92)); }
+.personaEditorialBlock[data-persona-renderer="BEAUTY_UNIVERSE"] { background: linear-gradient(145deg, rgb(255 255 255 / .82), rgb(245 237 225 / .88)); }
+.personaEditorialBlock[data-persona-renderer="RHYTHM"], .personaEditorialBlock[data-persona-renderer="WORK_MOBILITY"] { border-radius: 0; padding: 13px 2px 14px; background: transparent; box-shadow: none; }
+.personaEditorialBlock[data-persona-renderer="RHYTHM"] + .personaEditorialBlock[data-persona-renderer="RHYTHM"], .personaEditorialBlock[data-persona-renderer="WORK_MOBILITY"] + .personaEditorialBlock { border-top: 1px solid rgb(46 83 69 / .12); }
+.personaEditorialHeader { display: grid; grid-template-columns: 34px minmax(0, 1fr); gap: 11px; }
+.personaEditorialIcon { display: grid; width: 34px; height: 34px; place-items: center; border-radius: 50%; background: rgb(232 237 229 / .9); color: var(--color-primary); }
+.personaEditorialTitle { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
+.personaEditorialTitle h4 { margin: 1px 0 0; font-size: 17px; letter-spacing: -.015em; }
+.personaEditorialTitle strong, .personaChildren li > div span { flex: 0 0 auto; border-radius: 999px; padding: 4px 8px; background: var(--color-primary-soft); color: var(--color-primary-deep); font-size: 10px; font-weight: 800; }
+.personaEditorialHeader p { margin: 5px 0 0; color: var(--color-muted); font-size: 12px; line-height: 1.5; }
+.personaMetrics { display: flex; flex-wrap: wrap; gap: 7px 16px; margin: 0 0 0 45px; }
+.personaMetrics > div { display: flex; align-items: baseline; gap: 5px; }
+.personaMetrics dt { color: var(--color-muted); font-size: 10px; font-weight: 720; }
+.personaMetrics dd { margin: 0; font-size: 13px; font-weight: 820; }
+.personaExamples { display: flex; flex-wrap: wrap; gap: 6px; margin: 0 0 0 45px; padding: 0; list-style: none; }
+.personaExamples li { border: 1px solid rgb(46 83 69 / .14); border-radius: 999px; padding: 5px 9px; background: rgb(255 255 255 / .62); font-size: 11px; font-weight: 730; }
+.personaChildren { display: grid; gap: 0; margin: 0 0 0 45px; padding: 0; list-style: none; }
+.personaChildren > li { display: grid; gap: 7px; border-top: 1px solid rgb(46 83 69 / .11); padding: 10px 0 1px; }
 .personaChildren li > div:first-child { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
-.personaChildren li > div strong { font-size: 13px; }
-.personaChildren .personaMetrics { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.personaChildren li > div strong { font-size: 12px; }
+.personaChildren .personaMetrics { margin-left: 0; }
 .skeleton { min-height: 138px; margin: 0 26px 24px; overflow: hidden; border-radius: 12px; padding: 18px; background: linear-gradient(100deg, #ecece7 20%, #f8f8f5 40%, #ecece7 60%); background-size: 200% 100%; color: transparent; animation: skeleton 1.2s linear infinite; }
 .skeletonCompact { min-height: 96px; margin: 0; }
 @keyframes skeleton { to { background-position: -200% 0; } }
@@ -670,6 +679,13 @@
   .comparisonRangePreview { grid-template-columns: 1fr; }
   .comparisonRangePreview button { justify-self: start; }
   .lifeComparisonDetail dl { grid-template-columns: 1fr; }
+  .personaModuleHeader { align-items: stretch; flex-direction: column; gap: 18px; padding: 27px 20px 24px; }
+  .personaScopeSwitch { align-self: flex-start; }
+  .personaPortraits, .personaEditorialSection { padding: 23px 20px 27px; }
+  .personaEditorialColumns { grid-template-columns: 1fr; row-gap: 24px; }
+  .personaPortrait, .personaEditorialColumn { grid-column: 1 !important; border-left: 0 !important; padding: 0 !important; }
+  .personaPortrait + .personaPortrait, .personaEditorialColumn + .personaEditorialColumn { border-top: 1px solid rgb(46 83 69 / .13); padding-top: 22px !important; }
+  .personaMetrics, .personaExamples, .personaChildren { margin-left: 0; }
   .mobileOverlay { width: 100vw !important; max-height: 100vh !important; border-radius: 18px 18px 0 0 !important; }
   .rhythmDetailSheet { position: fixed; inset: 0; width: 100vw !important; max-height: 100dvh !important; margin: 0; border-radius: 0 !important; }
   .lifeTimeline > section { grid-template-columns: 1fr; gap: 5px; }

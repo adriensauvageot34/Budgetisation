@@ -4,25 +4,17 @@ type PersonaProfileOutput = NonNullable<GlobalExpandedReadModel["profile"]>;
 type PersonaProfile = PersonaProfileOutput["profiles"][number];
 type PersonaTrait = PersonaProfile["featuredTraits"][number];
 type PersonaTraitChild = NonNullable<PersonaTrait["children"]>[number];
-type PersonaTraitKind = PersonaTrait["kind"];
 type PersonaTemporalStatus = NonNullable<PersonaTrait["temporalStatus"]>;
 type PersonaMetricValue = NonNullable<PersonaTrait["metrics"]>[string];
 type PersonalSubject = Extract<PersonaProfile["subject"], { readonly kind: "PERSON" }>;
 
 export const PERSONA_PRESENTATION_VERSION = "persona_presentation@v1" as const;
 
-export type PersonaCardComponent =
-  | "RoutineCard"
-  | "HabitCard"
-  | "UniverseCard"
-  | "ProjectCard"
-  | "MobilityCard"
-  | "HouseholdOrganizationCard"
-  | "BeautyUniverseCard"
-  | "CreativeProjectsCard"
-  | "DrivingLicenseCard"
-  | "WorkMobilityCard";
-
+export type PersonaEditorialGroup = "DAILY_RHYTHM" | "RECURRING_LIFE" | "PHASED_PROJECT";
+export type PersonaRenderer = "RHYTHM" | "CREATIVE_UNIVERSE" | "BEAUTY_UNIVERSE" | "DRIVING_LICENSE" | "WORK_MOBILITY" | "DIGITAL_SUBSCRIPTION";
+export type PersonaPresentationIcon = "RHYTHM" | "CREATIVE" | "BEAUTY" | "DRIVING" | "MOBILITY" | "DIGITAL";
+export type PersonaChildrenStrategy = "NONE" | "KNOWN_CHILDREN";
+export type PersonaTemporalTreatment = "NONE" | "STATUS" | "PHASE";
 export type PersonaPresentationMetricFormat = "COUNT" | "DAYS" | "MONEY_EUR" | "DISTANCE_KM" | "DATE";
 
 export type PersonaPresentationMetric = {
@@ -36,33 +28,40 @@ export type PersonaPresentationChild = {
   readonly traitId: string;
   readonly semanticKey: string;
   readonly title: string;
-  readonly kind: PersonaTraitKind;
   readonly statusLabel?: string;
   readonly metrics: readonly PersonaPresentationMetric[];
 };
 
-export type PersonaPresentationCard = {
+export type PersonaPresentationBlock = {
   readonly traitId: string;
   readonly semanticKey: string;
-  readonly kind: PersonaTraitKind;
-  readonly component: PersonaCardComponent;
+  readonly renderer: PersonaRenderer;
+  readonly icon: PersonaPresentationIcon;
+  readonly editorialGroup: PersonaEditorialGroup;
   readonly title: string;
   readonly description: string;
-  /** Editorial hint only. Engine order remains authoritative in `cards`. */
-  readonly presentationPriority: number;
   readonly engineRank: number;
+  readonly portraitMarker: boolean;
   readonly statusLabel?: string;
   readonly metrics: readonly PersonaPresentationMetric[];
   readonly examples: readonly string[];
   readonly children: readonly PersonaPresentationChild[];
-  /** Preserved for the future detail drawer; never use it to recompute the trait. */
-  readonly trait: PersonaTrait;
+};
+
+export type PersonaPortraitMarker = {
+  readonly traitId: string;
+  readonly title: string;
+  readonly icon: PersonaPresentationIcon;
+  readonly engineRank: number;
 };
 
 export type PersonaPresentationProfile = {
   readonly personId: PersonalSubject["personId"];
   readonly displayName?: string;
-  readonly cards: readonly PersonaPresentationCard[];
+  readonly markers: readonly PersonaPortraitMarker[];
+  readonly dailyRhythms: readonly PersonaPresentationBlock[];
+  readonly recurringLife: readonly PersonaPresentationBlock[];
+  readonly phasedProjects: readonly PersonaPresentationBlock[];
 };
 
 export type PersonaPresentationModel = {
@@ -70,94 +69,109 @@ export type PersonaPresentationModel = {
   readonly profiles: readonly PersonaPresentationProfile[];
 };
 
-type KindPresentation = {
-  readonly component: PersonaCardComponent;
+type SemanticPresentation = {
   readonly title: string;
   readonly description: string;
-  readonly priority: number;
-};
-
-export const PERSONA_KIND_PRESENTATION_FALLBACKS: Readonly<Record<PersonaTraitKind, KindPresentation>> = Object.freeze({
-  ROUTINE: { component: "RoutineCard", title: "Routine", description: "Un rythme qui structure le quotidien.", priority: 60 },
-  HABIT: { component: "HabitCard", title: "Habitude", description: "Une habitude présente dans le quotidien.", priority: 50 },
-  UNIVERSE: { component: "UniverseCard", title: "Univers", description: "Un ensemble de pratiques liées.", priority: 70 },
-  PROJECT: { component: "ProjectCard", title: "Projet", description: "Un projet personnel suivi dans le temps.", priority: 65 },
-  MOBILITY: { component: "MobilityCard", title: "Mobilité", description: "Une façon de se déplacer au quotidien.", priority: 55 },
-  HOUSEHOLD_ORGANIZATION: { component: "HouseholdOrganizationCard", title: "Organisation", description: "Une organisation personnelle du quotidien.", priority: 40 },
-});
-
-type SemanticPresentation = Partial<KindPresentation> & {
+  readonly icon: PersonaPresentationIcon;
+  readonly editorialGroup: PersonaEditorialGroup;
+  readonly renderer: PersonaRenderer;
+  readonly metricsPolicy: readonly string[];
+  readonly childrenStrategy: PersonaChildrenStrategy;
+  readonly temporalTreatment: PersonaTemporalTreatment;
+  readonly portraitMarker: boolean;
   readonly exampleLabels?: Readonly<Record<string, string>>;
+  readonly requiresUsefulMetric?: boolean;
 };
 
-/** Presentation-only registry. Keys describe traits; they never decide whether a trait exists. */
+const noMetrics = Object.freeze([] as const);
+const rhythmMetrics = Object.freeze(["occurrenceCount", "medianIntervalDays", "medianGapDays", "typicalAmount", "typicalPrice"] as const);
+const mobilityMetrics = Object.freeze(["directCost", "distanceKm"] as const);
+const projectMetrics = Object.freeze(["observedAmount", "committedAmount"] as const);
+const productMetrics = Object.freeze(["typicalPrice", "occurrenceCount", "medianGapDays", "firstObservedDate", "lastObservedDate"] as const);
+
+/** Exact semantic registry. It labels available traits; it never decides that a trait exists. */
 export const PERSONA_SEMANTIC_PRESENTATION_REGISTRY_V1: Readonly<Record<string, SemanticPresentation>> = Object.freeze({
   "universe.beauty_and_care": {
-    component: "BeautyUniverseCard",
     title: "Beauté & soins",
-    description: "Les gestes de beauté et de soin réellement présents.",
-    priority: 90,
+    description: "Les gestes de beauté et de soin réellement observés.",
+    icon: "BEAUTY",
+    editorialGroup: "RECURRING_LIFE",
+    renderer: "BEAUTY_UNIVERSE",
+    metricsPolicy: noMetrics,
+    childrenStrategy: "KNOWN_CHILDREN",
+    temporalTreatment: "STATUS",
+    portraitMarker: true,
   },
   "universe.creative_projects": {
-    component: "CreativeProjectsCard",
     title: "Projets créatifs",
-    description: "Les pratiques et projets créatifs réellement renseignés.",
-    priority: 85,
+    description: "Des pratiques créatives réunies dans un même univers.",
+    icon: "CREATIVE",
+    editorialGroup: "PHASED_PROJECT",
+    renderer: "CREATIVE_UNIVERSE",
+    metricsPolicy: noMetrics,
+    childrenStrategy: "KNOWN_CHILDREN",
+    temporalTreatment: "PHASE",
+    portraitMarker: true,
     exampleLabels: { PHOTO: "Photo", MUSIC: "Musique", HOME_STUDIO: "Home studio" },
   },
-  "driving_license.adrien": {
-    component: "DrivingLicenseCard",
-    title: "Permis de conduire",
-    description: "Le suivi factuel du projet de permis.",
-    priority: 75,
-  },
-  "mobility.work.adrien": {
-    component: "WorkMobilityCard",
-    title: "Trajets de travail",
-    description: "Le mode de transport renseigné pour les trajets professionnels.",
-    priority: 60,
-  },
-  "mobility.work.manon": {
-    component: "WorkMobilityCard",
-    title: "Trajets de travail",
-    description: "Le mode de transport renseigné pour les trajets professionnels.",
-    priority: 60,
-  },
 });
 
-const semanticTitles: Readonly<Record<string, string>> = Object.freeze({
-  "beauty.mascara": "Mascara",
-  "beauty.brows": "Sourcils",
-  "beauty.skincare": "Soin de la peau",
-  "beauty.epilation": "Épilation",
-  "product-need:maquillage_manon_mascara": "Mascara",
-  "product-need:maquillage_manon_sourcils": "Sourcils",
-  "product-need:skincare_manon_masque": "Soin de la peau",
-  "product-need:epilation_manon": "Épilation",
-  "creative.photo.adrien": "Photo",
-  "creative.music.adrien": "Musique",
-  "creative.home_studio.adrien": "Home studio",
-  "creative.projects.adrien": "Pratiques créatives",
-});
+type SemanticPatternPresentation = SemanticPresentation & { readonly matches: (semanticKey: string) => boolean };
 
-type MetricPresentation = {
-  readonly metricKey: string;
-  readonly label: string;
-  readonly format: PersonaPresentationMetricFormat;
-  readonly kinds: readonly PersonaTraitKind[];
-};
+/** Pattern entries cover person-scoped keys without branching on a display name. */
+export const PERSONA_SEMANTIC_PATTERN_REGISTRY_V1: readonly SemanticPatternPresentation[] = Object.freeze([
+  {
+    matches: (key) => key.startsWith("driving_license."), title: "Permis de conduire", description: "Un projet de mobilité suivi dans le temps.",
+    icon: "DRIVING", editorialGroup: "PHASED_PROJECT", renderer: "DRIVING_LICENSE", metricsPolicy: projectMetrics,
+    childrenStrategy: "NONE", temporalTreatment: "PHASE", portraitMarker: true,
+  },
+  {
+    matches: (key) => key.startsWith("mobility.work."), title: "Trajets de travail", description: "Le mode de transport renseigné pour les déplacements professionnels.",
+    icon: "MOBILITY", editorialGroup: "DAILY_RHYTHM", renderer: "WORK_MOBILITY", metricsPolicy: mobilityMetrics,
+    childrenStrategy: "NONE", temporalTreatment: "STATUS", portraitMarker: true,
+  },
+  {
+    matches: (key) => key.startsWith("subscription.chatgpt."), title: "Usage de ChatGPT", description: "Un usage personnel explicitement renseigné.",
+    icon: "DIGITAL", editorialGroup: "RECURRING_LIFE", renderer: "DIGITAL_SUBSCRIPTION", metricsPolicy: rhythmMetrics,
+    childrenStrategy: "NONE", temporalTreatment: "STATUS", portraitMarker: true,
+  },
+  {
+    matches: (key) => key.startsWith("activity:"), title: "Activité récurrente", description: "Une activité observée à plusieurs reprises dans le quotidien.",
+    icon: "RHYTHM", editorialGroup: "DAILY_RHYTHM", renderer: "RHYTHM", metricsPolicy: rhythmMetrics,
+    childrenStrategy: "NONE", temporalTreatment: "STATUS", portraitMarker: true, requiresUsefulMetric: true,
+  },
+  {
+    matches: (key) => key.startsWith("routine:"), title: "Rythme observé", description: "Un rythme qui revient dans les observations du quotidien.",
+    icon: "RHYTHM", editorialGroup: "DAILY_RHYTHM", renderer: "RHYTHM", metricsPolicy: rhythmMetrics,
+    childrenStrategy: "NONE", temporalTreatment: "STATUS", portraitMarker: true, requiresUsefulMetric: true,
+  },
+]);
 
+type ChildPresentation = { readonly matches: (semanticKey: string) => boolean; readonly title: string };
+const childPresentationRegistry: readonly ChildPresentation[] = Object.freeze([
+  { matches: (key) => key.startsWith("creative.photo."), title: "Photo" },
+  { matches: (key) => key.startsWith("creative.music."), title: "Musique" },
+  { matches: (key) => key.startsWith("creative.home_studio."), title: "Home studio" },
+  { matches: (key) => key.startsWith("creative.projects."), title: "Pratiques créatives" },
+  { matches: (key) => /^product-need:maquillage_.+_mascara$/u.test(key), title: "Mascara" },
+  { matches: (key) => /^product-need:maquillage_.+_sourcils$/u.test(key), title: "Sourcils" },
+  { matches: (key) => /^product-need:skincare_.+$/u.test(key), title: "Soin de la peau" },
+  { matches: (key) => /^product-need:epilation_.+$/u.test(key), title: "Épilation" },
+]);
+
+type MetricPresentation = { readonly metricKey: string; readonly label: string; readonly format: PersonaPresentationMetricFormat };
 const metricPresentationRegistry: readonly MetricPresentation[] = Object.freeze([
-  { metricKey: "directCost", label: "Coût direct", format: "MONEY_EUR", kinds: ["MOBILITY"] },
-  { metricKey: "observedAmount", label: "Montant engagé", format: "MONEY_EUR", kinds: ["PROJECT"] },
-  { metricKey: "committedAmount", label: "Montant engagé", format: "MONEY_EUR", kinds: ["PROJECT"] },
-  { metricKey: "typicalPrice", label: "Prix typique", format: "MONEY_EUR", kinds: ["HABIT", "ROUTINE"] },
-  { metricKey: "typicalAmount", label: "Montant typique", format: "MONEY_EUR", kinds: ["HABIT", "ROUTINE"] },
-  { metricKey: "occurrenceCount", label: "Occurrences", format: "COUNT", kinds: ["HABIT", "ROUTINE"] },
-  { metricKey: "medianGapDays", label: "Intervalle typique", format: "DAYS", kinds: ["HABIT", "ROUTINE"] },
-  { metricKey: "distanceKm", label: "Distance", format: "DISTANCE_KM", kinds: ["MOBILITY"] },
-  { metricKey: "firstObservedDate", label: "Première observation", format: "DATE", kinds: ["HABIT", "ROUTINE"] },
-  { metricKey: "lastObservedDate", label: "Dernière observation", format: "DATE", kinds: ["HABIT", "ROUTINE"] },
+  { metricKey: "directCost", label: "Coût direct", format: "MONEY_EUR" },
+  { metricKey: "observedAmount", label: "Montant engagé", format: "MONEY_EUR" },
+  { metricKey: "committedAmount", label: "Montant engagé", format: "MONEY_EUR" },
+  { metricKey: "typicalPrice", label: "Prix typique", format: "MONEY_EUR" },
+  { metricKey: "typicalAmount", label: "Montant typique", format: "MONEY_EUR" },
+  { metricKey: "occurrenceCount", label: "Occurrences", format: "COUNT" },
+  { metricKey: "medianIntervalDays", label: "Intervalle typique", format: "DAYS" },
+  { metricKey: "medianGapDays", label: "Intervalle typique", format: "DAYS" },
+  { metricKey: "distanceKm", label: "Distance", format: "DISTANCE_KM" },
+  { metricKey: "firstObservedDate", label: "Première observation", format: "DATE" },
+  { metricKey: "lastObservedDate", label: "Dernière observation", format: "DATE" },
 ]);
 
 function presentValue(value: PersonaMetricValue | undefined): PersonaMetricValue | undefined {
@@ -168,13 +182,17 @@ function presentValue(value: PersonaMetricValue | undefined): PersonaMetricValue
   return normalized;
 }
 
-function presentationMetrics(kind: PersonaTraitKind, metrics: PersonaTrait["metrics"]): readonly PersonaPresentationMetric[] {
-  if (metrics === undefined) return [];
-  return metricPresentationRegistry.flatMap((definition) => {
-    if (!definition.kinds.includes(kind)) return [];
+function presentationMetrics(metrics: PersonaTrait["metrics"], policy: readonly string[]): readonly PersonaPresentationMetric[] {
+  if (metrics === undefined || policy.length === 0) return [];
+  const presented: PersonaPresentationMetric[] = [];
+  for (const definition of metricPresentationRegistry) {
+    if (!policy.includes(definition.metricKey)) continue;
     const value = presentValue(metrics[definition.metricKey]);
-    return value === undefined ? [] : [{ metricKey: definition.metricKey, label: definition.label, value, format: definition.format }];
-  }).slice(0, 3);
+    if (value === undefined) continue;
+    presented.push({ metricKey: definition.metricKey, label: definition.label, value, format: definition.format });
+    if (presented.length === 3) break;
+  }
+  return presented;
 }
 
 export function personaTemporalStatusLabel(status: PersonaTemporalStatus | undefined): string | undefined {
@@ -185,51 +203,49 @@ export function personaTemporalStatusLabel(status: PersonaTemporalStatus | undef
   return undefined;
 }
 
-function presentationTitle(semanticKey: string, kind: PersonaTraitKind): string {
-  return PERSONA_SEMANTIC_PRESENTATION_REGISTRY_V1[semanticKey]?.title
-    ?? semanticTitles[semanticKey]
-    ?? PERSONA_KIND_PRESENTATION_FALLBACKS[kind].title;
+function semanticPresentation(semanticKey: string): SemanticPresentation | undefined {
+  return PERSONA_SEMANTIC_PRESENTATION_REGISTRY_V1[semanticKey]
+    ?? PERSONA_SEMANTIC_PATTERN_REGISTRY_V1.find((entry) => entry.matches(semanticKey));
 }
 
-function presentChild(child: PersonaTraitChild): PersonaPresentationChild {
+function presentChild(child: PersonaTraitChild): PersonaPresentationChild | undefined {
+  const title = childPresentationRegistry.find((entry) => entry.matches(child.semanticKey))?.title;
+  if (title === undefined) return undefined;
   const statusLabel = personaTemporalStatusLabel(child.temporalStatus);
   return {
-    traitId: child.traitId,
-    semanticKey: child.semanticKey,
-    title: presentationTitle(child.semanticKey, child.kind),
-    kind: child.kind,
+    traitId: child.traitId, semanticKey: child.semanticKey, title,
     ...(statusLabel === undefined ? {} : { statusLabel }),
-    metrics: presentationMetrics(child.kind, child.metrics),
+    metrics: presentationMetrics(child.metrics, productMetrics),
   };
 }
 
-function presentationExamples(trait: PersonaTrait, semantic: SemanticPresentation | undefined): readonly string[] {
-  if (semantic?.exampleLabels === undefined) return [];
+function presentationExamples(trait: PersonaTrait, semantic: SemanticPresentation): readonly string[] {
+  if (semantic.exampleLabels === undefined) return [];
   return (trait.qualifications ?? []).flatMap((qualification) => {
     const label = semantic.exampleLabels?.[qualification];
     return label === undefined ? [] : [label];
   });
 }
 
-export function presentPersonaTrait(trait: PersonaTrait, engineRank: number): PersonaPresentationCard | undefined {
+/** Converts one selected engine trait only when an editorial renderer is registered. */
+export function presentPersonaTrait(trait: PersonaTrait, engineRank: number): PersonaPresentationBlock | undefined {
   if (trait.scope !== "PERSONAL" || trait.subject.kind !== "PERSON") return undefined;
-  const fallback = PERSONA_KIND_PRESENTATION_FALLBACKS[trait.kind];
-  const semantic = PERSONA_SEMANTIC_PRESENTATION_REGISTRY_V1[trait.semanticKey];
-  const statusLabel = personaTemporalStatusLabel(trait.temporalStatus);
+  const semantic = semanticPresentation(trait.semanticKey);
+  if (semantic === undefined) return undefined;
+  const metrics = presentationMetrics(trait.metrics, semantic.metricsPolicy);
+  if (semantic.requiresUsefulMetric === true && metrics.length === 0) return undefined;
+  const statusLabel = semantic.temporalTreatment === "NONE" ? undefined : personaTemporalStatusLabel(trait.temporalStatus);
+  const children = semantic.childrenStrategy === "KNOWN_CHILDREN"
+    ? (trait.children ?? []).flatMap((child) => {
+      const presented = presentChild(child);
+      return presented === undefined ? [] : [presented];
+    })
+    : [];
   return {
-    traitId: trait.traitId,
-    semanticKey: trait.semanticKey,
-    kind: trait.kind,
-    component: semantic?.component ?? fallback.component,
-    title: semantic?.title ?? semanticTitles[trait.semanticKey] ?? fallback.title,
-    description: semantic?.description ?? fallback.description,
-    presentationPriority: semantic?.priority ?? fallback.priority,
-    engineRank,
-    ...(statusLabel === undefined ? {} : { statusLabel }),
-    metrics: presentationMetrics(trait.kind, trait.metrics),
-    examples: presentationExamples(trait, semantic),
-    children: (trait.children ?? []).map(presentChild),
-    trait,
+    traitId: trait.traitId, semanticKey: trait.semanticKey, renderer: semantic.renderer, icon: semantic.icon,
+    editorialGroup: semantic.editorialGroup, title: semantic.title, description: semantic.description, engineRank, portraitMarker: semantic.portraitMarker,
+    ...(statusLabel === undefined ? {} : { statusLabel }), metrics,
+    examples: presentationExamples(trait, semantic), children,
   };
 }
 
@@ -247,43 +263,43 @@ function personaDisplayNames(source: PersonaExpandedProfileSource): ReadonlyMap<
   return names;
 }
 
-const preferredProfileOrder = Object.freeze(["Adrien", "Manon"] as const);
-
-/** UI-only column order. Missing profiles are never synthesized. */
-export function orderPersonaPresentationProfiles(profiles: readonly PersonaPresentationProfile[]): readonly PersonaPresentationProfile[] {
-  const ordered: PersonaPresentationProfile[] = [];
-  const used = new Set<PersonaPresentationProfile["personId"]>();
-  for (const displayName of preferredProfileOrder) {
-    const profile = profiles.find((candidate) => candidate.displayName === displayName && !used.has(candidate.personId));
-    if (profile === undefined) continue;
-    ordered.push(profile);
-    used.add(profile.personId);
+function composeProfile(profile: PersonaProfile, displayName: string | undefined): PersonaPresentationProfile | undefined {
+  if (profile.scope !== "PERSONAL" || profile.subject.kind !== "PERSON") return undefined;
+  const markers: PersonaPortraitMarker[] = [];
+  const dailyRhythms: PersonaPresentationBlock[] = [];
+  const recurringLife: PersonaPresentationBlock[] = [];
+  const phasedProjects: PersonaPresentationBlock[] = [];
+  for (const [engineRank, trait] of profile.featuredTraits.entries()) {
+    const block = presentPersonaTrait(trait, engineRank);
+    if (block === undefined) continue;
+    if (block.portraitMarker && markers.length < 4) markers.push({ traitId: block.traitId, title: block.title, icon: block.icon, engineRank });
+    if (block.editorialGroup === "DAILY_RHYTHM") dailyRhythms.push(block);
+    if (block.editorialGroup === "RECURRING_LIFE") recurringLife.push(block);
+    if (block.editorialGroup === "PHASED_PROJECT") phasedProjects.push(block);
   }
-  for (const profile of profiles) {
-    if (used.has(profile.personId)) continue;
-    ordered.push(profile);
-    used.add(profile.personId);
-  }
-  return ordered;
+  return { personId: profile.subject.personId, ...(displayName === undefined ? {} : { displayName }), markers, dailyRhythms, recurringLife, phasedProjects };
 }
 
-/** Maps the validated expanded Persona read model without selecting, grouping or ranking traits again. */
+/** Presentation composition only: no trait selection, score, ranking, or analytical fallback. */
 export function buildPersonaPresentationModel(source: PersonaExpandedProfileSource): PersonaPresentationModel {
-  if (source.resource !== "analysis_global_personas_expanded"
-    || source.moduleKey !== "PERSONAS"
-    || source.sectionKey !== "OVERVIEW"
-    || source.profile === undefined) {
+  if (source.resource !== "analysis_global_personas_expanded" || source.moduleKey !== "PERSONAS" || source.sectionKey !== "OVERVIEW" || source.profile === undefined) {
     return { version: PERSONA_PRESENTATION_VERSION, profiles: [] };
   }
   const displayNames = personaDisplayNames(source);
-  const profiles = source.profile.profiles.flatMap((profile) => {
-    if (profile.scope !== "PERSONAL" || profile.subject.kind !== "PERSON") return [];
-    const cards = profile.featuredTraits.flatMap((trait, engineRank) => {
-      const card = presentPersonaTrait(trait, engineRank);
-      return card === undefined ? [] : [card];
-    });
-    const displayName = displayNames.get(String(profile.subject.personId));
-    return [{ personId: profile.subject.personId, ...(displayName === undefined ? {} : { displayName }), cards }];
-  });
+  const profilesById = new Map<string, PersonaPresentationProfile>();
+  for (const profile of source.profile.profiles) {
+    if (profile.scope !== "PERSONAL" || profile.subject.kind !== "PERSON") continue;
+    const personId = String(profile.subject.personId);
+    const composed = composeProfile(profile, displayNames.get(personId));
+    if (composed !== undefined) profilesById.set(personId, composed);
+  }
+  const profiles: PersonaPresentationProfile[] = [];
+  for (const personId of displayNames.keys()) {
+    const profile = profilesById.get(personId);
+    if (profile === undefined) continue;
+    profiles.push(profile);
+    profilesById.delete(personId);
+  }
+  for (const profile of profilesById.values()) profiles.push(profile);
   return { version: PERSONA_PRESENTATION_VERSION, profiles };
 }
