@@ -1928,6 +1928,31 @@ export class CanonicalRepository {
     );
   }
 
+  /**
+   * Persona's temporary read-only product fallback. These rows remain raw
+   * observations: this loader does not promote them to PurchaseLineFact,
+   * ProductVariant or ProductAcquisitionOccurrence.
+   */
+  async loadPersonaProductObservationRows(
+    certifiedThrough: LocalDate,
+  ): Promise<readonly CanonicalRecord[]> {
+    await this.assertAuthorizedCanonicalHouseholdScope();
+    const personIds = unique(this.context.personIds.map(String));
+    if (personIds.length === 0) return [];
+    return this.readRowsPaginated(
+      `persona:product-observations:${certifiedThrough}:${personIds.join(",")}`,
+      "product_observations",
+      (from, to) => this.client
+        .from("product_observations")
+        .select("observation_id,date_achat,operation_id,product_key,need_key,person_id,source_enrichissement,need_id,persona_price:montant_paye::text")
+        .in("person_id", personIds)
+        .lte("date_achat", certifiedThrough)
+        .order("date_achat", { ascending: true })
+        .order("observation_id", { ascending: true })
+        .range(from, to),
+    );
+  }
+
   /** Canonical closure for the Calendar-centric economic projection. */
   async loadCalendarEconomicTaxonomy(): Promise<{
     readonly categories: readonly CanonicalRecord[];

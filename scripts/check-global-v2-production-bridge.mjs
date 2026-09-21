@@ -518,7 +518,8 @@ check(() => assert.match(orchestratorSource, /TRANSFORMATION_INPUT_UNIVERSE_BUIL
 const regimeSelectionSource = orchestratorSource.slice(orchestratorSource.indexOf("const personRegimeAuthorities"), orchestratorSource.indexOf("const m5 = await Promise.all"));
 check(() => assert.doesNotMatch(regimeSelectionSource, /relationshipEvolution|m5Product|m5RelationshipEvolution/u));
 check(() => assert.doesNotMatch(orchestratorSource, /moduleKey: "TRANSFORMATIONS"[^\n]*NO_CERTIFIED_TRANSFORMATION/u));
-check(() => assert.match(orchestratorSource, /const \[m2, m6, m7\][\s\S]*const baseM3Evaluation[\s\S]*const personRegimeAuthorities[\s\S]*const m5 = await Promise\.all[\s\S]*const m5Product = buildGlobalM5Pr03Product/u));
+check(() => assert.match(orchestratorSource, /const \[m2, m6, m7, productObservations\][\s\S]*resolveGlobalPersonaProductObservations[\s\S]*const baseM3Evaluation[\s\S]*const personRegimeAuthorities[\s\S]*const m5 = await Promise\.all[\s\S]*const m5Product = buildGlobalM5Pr03Product/u));
+check(() => assert.match(orchestratorSource, /buildGlobalV2PersonaSignals\(\{[\s\S]*m8,[\s\S]*productObservations,[\s\S]*m10,/u));
 check(() => assert.match(orchestratorSource, /selectGlobalPersonRegimeAuthority\([\s\S]*resolveGlobalM5PersonAuthority\([\s\S]*regimeAuthority,[\s\S]*buildGlobalM5Pr03Product\(\{[\s\S]*authorizedPersonIds: context\.personIds\.map\(String\),[\s\S]*providers: m5/u));
 check(() => assert.ok(orchestratorSource.lastIndexOf("buildGlobalTransformations({") < orchestratorSource.indexOf("const m5Product")));
 check(() => assert.match(orchestratorSource, /const m5OwnerOutput = m5Product\.ownerResults;[\s\S]*const m5RelationshipEvolution = m5Product\.relationshipEvolution/u));

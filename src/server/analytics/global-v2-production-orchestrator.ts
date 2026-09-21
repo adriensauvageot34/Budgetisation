@@ -35,6 +35,7 @@ import { resolveGlobalM5PersonAuthority } from "./global-v2-relationship-authori
 import { resolveGlobalM6MomentAuthority } from "./global-v2-moment-authority";
 import { resolveGlobalM7PlaceAuthority } from "./global-v2-place-authority";
 import { resolveGlobalM8PurchaseAuthority } from "./global-v2-purchase-authority";
+import { buildGlobalV2PersonaSignals, resolveGlobalPersonaProductObservations } from "./global-v2-persona-signals";
 import { resolveGlobalGroceryCandidateAdapter, resolveGlobalTimelineCandidateAdapter } from "./global-v2-candidate-adapters";
 import { resolveGlobalMomentComponentPresentation } from "./global-v2-moment-component-presentation";
 import { resolveGlobalTimelineSemanticAnalysis } from "./global-v2-timeline-semantic-comparator";
@@ -100,10 +101,11 @@ export async function resolveGlobalV2ProductionOwnerOutputs(repository: Canonica
   const resolver = new FactSourceResolver(repository);
 
   const m8 = await resolveGlobalM8PurchaseAuthority({ repository, scope });
-  const [m2, m6, m7] = await Promise.all([
+  const [m2, m6, m7, productObservations] = await Promise.all([
     resolveGlobalM2HouseholdAuthority({ repository, resolver, targetMonth, purchaseAuthority: m8 }),
     resolveGlobalM6MomentAuthority({ repository, scope }),
     resolveGlobalM7PlaceAuthority({ repository, scope }),
+    resolveGlobalPersonaProductObservations({ repository, certifiedThrough: parseLocalDate(certifiedThrough) }),
   ]);
   const m1 = m2.m1;
 
@@ -188,6 +190,11 @@ export async function resolveGlobalV2ProductionOwnerOutputs(repository: Canonica
   // M5 product replay. It is never fed back into the same run's regime selector.
   const m5RelationshipEvolution = m5Product.relationshipEvolution;
 
+  const sharedUnits = context.personIds.length === 2
+    ? projectGlobalSharedActivitiesFromFacts({ occurrences, personIds: [String(context.personIds[0]), String(context.personIds[1])], activityTypeByActivityId: Object.fromEntries(activityIds.map((id) => [id, undefined])) })
+    : [];
+  const m10 = { units: sharedUnits, universes: buildGlobalSharedAnalysis(sharedUnits), authority: context.personIds.length === 2 ? "CANONICAL_ACTIVITY_PARTICIPATION" : "DATA_GATED_PERSON_PAIR" };
+
   const definitions: GlobalPersonaDefinition[] = activityIds.map((activityId) => ({
     metricId: `activity-rate:${activityId}`,
     family: "LEISURE_AND_ACTIVITIES",
@@ -216,12 +223,7 @@ export async function resolveGlobalV2ProductionOwnerOutputs(repository: Canonica
   })));
   const personaMetrics = context.personIds.length >= 2 ? buildGlobalPersonaMetrics({ definitions, personIds: context.personIds, observations }) : [];
   const personaDifferences = context.personIds.length >= 2 ? buildGlobalPersonaDifferences({ definitions, personAId: context.personIds[0]!, personBId: context.personIds[1]!, observations, temporalStatusByMetric: Object.fromEntries(definitions.map(({ metricId }) => [metricId, "INSUFFICIENT_TEMPORAL_SUPPORT"])) }) : [];
-  const m9 = { definitions, metrics: personaMetrics, differences: personaDifferences, authority: context.personIds.length >= 2 ? "P01_PERSON_ATTRIBUTION_AND_M4_ACTIVITY" : "DATA_GATED_PERSON_PAIR" };
-
-  const sharedUnits = context.personIds.length === 2
-    ? projectGlobalSharedActivitiesFromFacts({ occurrences, personIds: [String(context.personIds[0]), String(context.personIds[1])], activityTypeByActivityId: Object.fromEntries(activityIds.map((id) => [id, undefined])) })
-    : [];
-  const m10 = { units: sharedUnits, universes: buildGlobalSharedAnalysis(sharedUnits), authority: context.personIds.length === 2 ? "CANONICAL_ACTIVITY_PARTICIPATION" : "DATA_GATED_PERSON_PAIR" };
+  const historicalM9 = { definitions, metrics: personaMetrics, differences: personaDifferences, authority: context.personIds.length >= 2 ? "P01_PERSON_ATTRIBUTION_AND_M4_ACTIVITY" : "DATA_GATED_PERSON_PAIR" };
 
   const categoryIds = m2.result.categories.groups.flatMap(({ dimension }) => dimension.status === "KNOWN" ? [String(dimension.id)] : []);
   const subcategoryIds = [...new Set(m2.result.categories.groups.flatMap(({ annualSubcategoryBreakdown }) =>
@@ -268,6 +270,31 @@ export async function resolveGlobalV2ProductionOwnerOutputs(repository: Canonica
     resolveGlobalMomentComponentPresentation({ repository, m6 }),
   ]);
   const candidateAdapters = { timeline, grocery };
+  const persona = buildGlobalV2PersonaSignals({
+    householdId: context.householdId,
+    personIds: context.personIds,
+    displayNamesByPersonId: presentationLabels.persons ?? {},
+    m1,
+    m2,
+    m4: { rhythms },
+    m6,
+    m7,
+    m8,
+    productObservations,
+    m10,
+    differences: personaDifferences,
+    certifiedThrough: parseLocalDate(certifiedThrough),
+  });
+  const m9 = {
+    ...historicalM9,
+    profile: persona.profile,
+    signals: persona.signals,
+    declarations: persona.declarations,
+    adapterVersion: persona.adapterVersion,
+    declarationProviderVersion: persona.declarationProviderVersion,
+    limitations: persona.limitations,
+    capabilities: persona.capabilities,
+  };
 
   const ownerOutputs: GlobalV2OwnerOutput[] = [
     { moduleKey: "ECONOMIC", owner: "GlobalM1HouseholdAuthority", output: m1, knowledge: m1.state.actual.status, capabilityState: m1.state.actual.status === "KNOWN" ? "AVAILABLE" : "PARTIAL", reasonCodes: [], evidenceRefs: evidence("M1", m1) },
@@ -278,10 +305,10 @@ export async function resolveGlobalV2ProductionOwnerOutputs(repository: Canonica
     { moduleKey: "MOMENTS", owner: "GlobalM6MomentAuthority", output: m6, knowledge: globalV2M6HasPresentationContent(m6) ? "PARTIAL" : "UNKNOWN", capabilityState: "PARTIAL", reasonCodes: globalV2M6HasPresentationContent(m6) ? ["MOMENT_PLACE_FACETS_PARTIAL"] : ["NO_COMPARABLE_MOMENT"], evidenceRefs: evidence("M6", m6) },
     { moduleKey: "GEO_MOBILITY", owner: "GlobalM7PlaceAuthority", output: m7, knowledge: hasItems(m7, ["places", "visits", "placeResults"]) ? "KNOWN" : "UNKNOWN", capabilityState: "PARTIAL", reasonCodes: ["AUTHORITY_GATED_MOBILITY"], evidenceRefs: evidence("M7", m7) },
     { moduleKey: "CONSUMPTION", owner: "GlobalM8PurchaseAuthority", output: m8, knowledge: hasItems(m8, ["events", "merchants"]) ? "PARTIAL" : "UNKNOWN", capabilityState: "PARTIAL", reasonCodes: ["PURCHASE_EVENT_COVERAGE_PARTIAL"], evidenceRefs: evidence("M8", m8) },
-    { moduleKey: "PERSONAS", owner: "buildGlobalPersonaMetrics", output: m9, knowledge: personaMetrics.length > 0 ? "PARTIAL" : "UNKNOWN", capabilityState: context.personIds.length >= 2 ? "PARTIAL" : "UNAVAILABLE", reasonCodes: personaMetrics.length > 0 ? ["COMPARABLE_INTERSECTION_REQUIRED"] : ["PERSON_PAIR_UNAVAILABLE"], evidenceRefs: evidence("M9", m9) },
     { moduleKey: "TOGETHER", owner: "SharedParticipationResolver", output: m10, knowledge: m10.universes.length > 0 ? "PARTIAL" : "UNKNOWN", capabilityState: context.personIds.length === 2 ? "PARTIAL" : "UNAVAILABLE", reasonCodes: m10.universes.length > 0 ? ["PARTICIPATION_COVERAGE_VISIBLE"] : ["SHARED_UNIVERSE_UNAVAILABLE"], evidenceRefs: evidence("M10", m10) },
+    { moduleKey: "PERSONAS", owner: "buildGlobalV2PersonaSignals", output: m9, knowledge: persona.profile.profiles.length > 0 ? "PARTIAL" : personaMetrics.length > 0 ? "PARTIAL" : "UNKNOWN", capabilityState: context.personIds.length > 0 ? "PARTIAL" : "UNAVAILABLE", reasonCodes: persona.limitations, evidenceRefs: evidence("M9", m9) },
   ];
-  return { scope, certifiedThrough, targetMonth, ownerOutputs, presentationLabels, candidateAdapters, semanticTimeline, momentComponentPresentation, personRegimeAuthorities, m5Product, m5RelationshipEvolution };
+  return { scope, certifiedThrough, targetMonth, ownerOutputs, presentationLabels, candidateAdapters, semanticTimeline, momentComponentPresentation, personRegimeAuthorities, m5Product, m5RelationshipEvolution, persona };
 }
 
 /** Read-only production bridge: this API exposes no materialization store. */

@@ -25,10 +25,12 @@ export function createGlobalM9DependencyDeclaration(personIds: readonly PersonId
       { kind: "ANALYTICS", id: "global-v2:m6-moment-experiences", requirement: "OPTIONAL", scopeRelation: "official-exceptional-moment-exclusions", corpusAuthority: "CERTIFIED_HISTORY" },
       { kind: "ANALYTICS", id: "global-v2:m7-place-mobility", requirement: "OPTIONAL", scopeRelation: "proven-person-place-metrics", corpusAuthority: "CERTIFIED_HISTORY" },
       { kind: "ANALYTICS", id: "global-v2:m8-purchase-merchant", requirement: "OPTIONAL", scopeRelation: "retained-purchase-metrics-only", corpusAuthority: "CERTIFIED_HISTORY" },
+      { kind: "ANALYTICS", id: "global-v2:m10-shared-participation", requirement: "OPTIONAL", scopeRelation: "sole-authority-for-shared-participation-resolution-and-coverage", corpusAuthority: "CERTIFIED_HISTORY" },
     ],
     otherModuleDependencies: [
       { kind: "MODULE", id: "GlobalTemporalBoundaryResolver", requirement: "REQUIRED", scopeRelation: "own-support-and-comparable-intersection" },
       { kind: "MODULE", id: "GlobalMaterialityEngine", requirement: "REQUIRED", scopeRelation: "persona-money-or-frequency-policy" },
+      { kind: "MODULE", id: "PersonaDeclaredSignalProviderV1", requirement: "OPTIONAL", scopeRelation: "user-validated-semantic-qualification-without-upstream-rewrite" },
     ],
     naturalGrain: "MONTH",
     timeWindowPolicy: { id: "global-persona-natural-windows", version: "v1" },

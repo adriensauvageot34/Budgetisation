@@ -105,6 +105,7 @@ function enrichCandidate(candidate: PersonaTraitCandidate, declaration: Declared
     ...(candidate.validFrom === undefined && declaration.validFrom !== undefined ? { validFrom: declaration.validFrom } : {}),
     ...(candidate.validTo === undefined && declaration.validTo !== undefined ? { validTo: declaration.validTo } : {}),
     ...(candidate.groupKey === undefined && declaration.groupKey !== undefined ? { groupKey: declaration.groupKey } : {}),
+    ...(declaration.metrics === undefined ? {} : { metrics: { ...(candidate.metrics ?? {}), ...declaration.metrics } }),
   };
 }
 
@@ -138,6 +139,7 @@ function createAffirmedCandidate(declaration: DeclaredSignal): PersonaTraitCandi
     limitations: unique(declaration.limitations ?? []),
     ...(qualifications.length === 0 ? {} : { qualifications }),
     ...(declaration.groupKey === undefined ? {} : { groupKey: declaration.groupKey }),
+    ...(declaration.metrics === undefined ? {} : { metrics: declaration.metrics }),
   } as PersonaTraitCandidate;
 }
 

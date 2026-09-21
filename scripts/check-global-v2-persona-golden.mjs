@@ -1,10 +1,16 @@
 import assert from "node:assert/strict";
+import path from "node:path";
 import { registerHooks } from "node:module";
+import { pathToFileURL } from "node:url";
+
+const root = process.cwd();
 
 registerHooks({
   resolve(specifier, context, nextResolve) {
+    if (specifier === "server-only") return { url: "data:text/javascript,export{}", shortCircuit: true };
+    if (specifier.startsWith("@/")) specifier = pathToFileURL(path.join(root, "src", specifier.slice(2))).href;
     try { return nextResolve(specifier, context); } catch (originalError) {
-      if (!specifier.startsWith(".") || /\.[cm]?[jt]sx?$/.test(specifier)) throw originalError;
+      if ((!specifier.startsWith(".") && !specifier.startsWith("file:")) || /\.[cm]?[jt]sx?$/.test(specifier)) throw originalError;
       for (const candidate of [`${specifier}.ts`, `${specifier}/index.ts`]) {
         try { return nextResolve(candidate, context); } catch { /* next */ }
       }
@@ -14,6 +20,7 @@ registerHooks({
 });
 
 const analytics = await import("../src/analytics/global-v2/index.ts");
+const personaAdapters = await import("../src/server/analytics/global-v2-persona-signals.ts");
 const identity = await import("../src/core/identity/index.ts");
 
 const uuid = (n) => `00000000-0000-4000-8000-${String(n).padStart(12, "0")}`;
@@ -421,8 +428,156 @@ check(() => assert.ok(positiveOutputs.every(({ output }) => output.profiles.ever
 const protectedByEngine = fixtures.filter(({ phase }) => phase === "ENGINE_ASSERTED").length;
 check(() => assert.equal(protectedByEngine, fixtures.length));
 
+const sharedTechnoUnit = {
+  unitId: "techno-1",
+  resolution: "SHARED",
+  evidenceRefs: ["m10:techno-1"],
+};
+const adapterInput = {
+  householdId: household,
+  personIds: [adrien, manon],
+  displayNamesByPersonId: { [adrien]: "Adrien", [manon]: "Manon" },
+  m1: { recurrences: { series: [] } },
+  personalCostAuthorities: [
+    { costId: "card-only", semanticKey: "payment.card.X3366", payerPersonId: adrien, observedAmount: "25", evidenceRefs: ["card:X3366"] },
+    { costId: "beneficiary-without-proof", semanticKey: "subscription.unproved", beneficiaryPersonId: adrien, observedAmount: "12", evidenceRefs: ["recurrence:unproved"] },
+    { costId: "beneficiary-not-payer", semanticKey: "subscription.example", payerPersonId: adrien, beneficiaryPersonId: manon, beneficiaryEvidenceRefs: ["beneficiary:manon"], typicalAmount: "19.99", recurrenceStatus: "ACTIVE", evidenceRefs: ["recurrence:example"] },
+  ],
+  m2: { result: { needs: { groups: [
+    { key: "groceries", dimension: { status: "KNOWN", id: "courses_alimentaires_foyer", evidenceRefs: ["need:courses"] }, activeMonths: 12, monthlyAmount: "400", typicalAmount: "380", evidenceRefs: ["m2:courses"] },
+  ] } } },
+  m4: {
+    rhythms: [
+      { activityId: "travail_site", personId: adrien, includedOccurrenceCount: 69, eligibleObservableDays: 200, rate: { status: "KNOWN", value: "0.345" }, cadence: { status: "KNOWN", medianIntervalDays: "2" }, support: { supportStatus: "SUFFICIENT", occurrenceCount: 69 }, dependencyRefs: ["m4:onsite-adrien"] },
+      { activityId: "travail_site", personId: manon, includedOccurrenceCount: 0, eligibleObservableDays: 200, rate: { status: "KNOWN", value: "0" }, support: { supportStatus: "SUFFICIENT", occurrenceCount: 0 }, dependencyRefs: ["m4:onsite-zero"] },
+    ],
+    routinePatterns: [
+      { routineId: "work-ange-work", scope: "PERSON", personId: adrien, eligibilityContext: "ONSITE_WORK", coreTokens: ["DAY_CONTEXT:WORK", "ACTIVITY:ANGE", "DAY_CONTEXT:WORK"], optionalTokens: [], occurrenceCount: 39, prevalence: 0.565, certificationStatus: "CERTIFIED", strength: "STRONG", evidenceRefs: ["routine:work-ange-work"] },
+    ],
+  },
+  m6: { summaries: [] },
+  m7: { mobilityCapabilities: { routeDistance: { state: "UNAVAILABLE", reasonCodes: ["AUTHORITY_NOT_PROVEN_GA0"] } }, mobility: { legs: [], routes: [] } },
+  m8: { capabilities: { products: { state: "UNAVAILABLE", reasonCode: "DEFERRED_P10" } } },
+  productObservations: [
+    { observationId: "mascara-1", subject: { kind: "PERSON", personId: manon }, needKey: "maquillage_manon_mascara", productKey: "benefit_badgal_bang", observedAt: "2026-01-01", price: "31", family: "PERSONAL_CARE", groupKey: "beauty_and_care", evidenceRefs: ["product:mascara-1"] },
+    { observationId: "mascara-2", subject: { kind: "PERSON", personId: manon }, needKey: "maquillage_manon_mascara", productKey: "benefit_fan_fest", observedAt: "2026-03-07", price: "33", family: "PERSONAL_CARE", groupKey: "beauty_and_care", evidenceRefs: ["product:mascara-2"] },
+  ],
+  m10: {
+    units: [sharedTechnoUnit],
+    universes: [{
+      universeId: "activity:techno", grain: "OCCURRENCE",
+      support: { eligibleUnits: 2, resolvedUnits: 1, unresolvedUnits: 1, conflictUnits: 0, sharedUnits: 1, sharedObservableCoverage: 0.5, sharedRate: 1, knowledgeState: "UNKNOWN" },
+      sharedUnits: [sharedTechnoUnit],
+    }],
+  },
+  differences: [],
+  certifiedThrough: "2026-07-31",
+};
+
+const upstreamM10Snapshot = structuredClone(adapterInput.m10);
+const adapted = personaAdapters.buildGlobalV2PersonaSignals(adapterInput);
+const { productObservations: _omittedProductObservations, ...adapterInputWithoutProductProvider } = adapterInput;
+const adaptedWithoutProductProvider = personaAdapters.buildGlobalV2PersonaSignals(adapterInputWithoutProductProvider);
+const adaptedTraits = allTraits(adapted.profile);
+const adaptedBySignalId = new Map(adapted.signals.map((signal) => [signal.signalId, signal]));
+const beneficiarySignal = adaptedBySignalId.get("m1:personal-cost:beneficiary-not-payer");
+check(() => assert.equal(adaptedBySignalId.has("m1:personal-cost:card-only"), false));
+check(() => assert.equal(adaptedBySignalId.has("m1:personal-cost:beneficiary-without-proof"), false));
+check(() => assert.equal(beneficiarySignal.subject.kind, "PERSON"));
+check(() => assert.equal(beneficiarySignal.subject.personId, manon));
+check(() => assert.equal(beneficiarySignal.payerPersonId, adrien));
+check(() => assert.equal(beneficiarySignal.beneficiaryPersonId, manon));
+const householdNeed = adaptedBySignalId.get("m2:need:courses_alimentaires_foyer");
+check(() => assert.equal(householdNeed.subject.kind, "HOUSEHOLD"));
+check(() => assert.equal(householdNeed.scope, "HOUSEHOLD"));
+check(() => assert.equal(householdNeed.needKey, "courses_alimentaires_foyer"));
+check(() => assert.equal(adapted.signals.some((signal) => signal.signalType === "NEED" && signal.scope === "PERSONAL"), false));
+const m10Signal = adapted.signals.find((signal) => signal.signalType === "SHARED_ACTIVITY" && signal.semanticKey === "techno");
+check(() => assert.ok(m10Signal));
+check(() => assert.equal(m10Signal.sourceModule, "M10"));
+check(() => assert.equal(m10Signal.metrics.sharedOccurrences, 1));
+check(() => assert.deepEqual(adapterInput.m10, upstreamM10Snapshot));
+const technoTraits = adaptedTraits.filter((trait) => trait.semanticKey === "techno" && trait.scope === "SHARED");
+check(() => assert.equal(technoTraits.length, 1));
+check(() => assert.ok(technoTraits[0].sourceModules.includes("M10")));
+check(() => assert.ok(technoTraits[0].sourceModules.includes("DECLARED_V1")));
+const productSignals = adapted.signals.filter((signal) => signal.signalType === "PRODUCT_CYCLE" && signal.needKey === "maquillage_manon_mascara");
+check(() => assert.equal(productSignals.length, 1));
+check(() => assert.equal(productSignals[0].referenceChanged, true));
+check(() => assert.equal(productSignals[0].productKey, undefined));
+check(() => assert.equal(productSignals[0].metrics.occurrenceCount, 2));
+check(() => assert.equal(productSignals[0].metrics.medianGapDays, 65));
+check(() => assert.equal(productSignals[0].metrics.typicalPrice, 32));
+check(() => assert.equal(productSignals[0].metrics.firstObservedDate, "2026-01-01"));
+check(() => assert.equal(productSignals[0].metrics.lastObservedDate, "2026-03-07"));
+check(() => assert.equal(productSignals[0].metrics.referenceState, "CHANGED_PRODUCT"));
+check(() => assert.equal(Object.hasOwn(productSignals[0].metrics, "distinctProductCount"), false));
+check(() => assert.equal(productSignals[0].semanticKey, "product-need:maquillage_manon_mascara"));
+check(() => assert.equal(adapted.capabilities.productCycleRuntime.state, "CONNECTED"));
+check(() => assert.equal(adapted.capabilities.productCycleRuntime.source, "product_observations"));
+check(() => assert.ok(adapted.limitations.includes("M8_PRODUCT_CYCLE_ENGINE_UNAVAILABLE_USING_DESCRIPTIVE_FALLBACK")));
+check(() => assert.equal(adaptedWithoutProductProvider.capabilities.productCycleRuntime.state, "UNAVAILABLE"));
+check(() => assert.ok(adaptedWithoutProductProvider.limitations.includes("M8_PRODUCT_OBSERVATION_PROVIDER_UNAVAILABLE")));
+check(() => assert.equal(adaptedWithoutProductProvider.signals.some((signal) => signal.signalType === "PRODUCT_CYCLE"), false));
+
+const resolvedProductObservations = await personaAdapters.resolveGlobalPersonaProductObservations({
+  repository: {
+    context: { personIds: [manon] },
+    async loadPersonaProductObservationRows() {
+      return [{
+        observation_id: "observation-live-shape",
+        date_achat: "2026-07-16",
+        operation_id: "operation-live-shape",
+        product_key: "benefit_badgal_bang_8_5g",
+        need_key: "maquillage_manon_mascara",
+        person_id: manon,
+        source_enrichissement: "document_utilisateur",
+        need_id: "need-mascara",
+        persona_price: "32",
+      }];
+    },
+  },
+  certifiedThrough: "2026-07-31",
+});
+check(() => assert.equal(resolvedProductObservations.length, 1));
+check(() => assert.deepEqual(resolvedProductObservations[0].subject, { kind: "PERSON", personId: manon }));
+check(() => assert.equal(resolvedProductObservations[0].needKey, "maquillage_manon_mascara"));
+check(() => assert.equal(resolvedProductObservations[0].productKey, "benefit_badgal_bang_8_5g"));
+check(() => assert.equal(resolvedProductObservations[0].observedAt, "2026-07-16"));
+check(() => assert.equal(resolvedProductObservations[0].price, "32"));
+check(() => assert.deepEqual(resolvedProductObservations[0].evidenceRefs, [
+  "need:need-mascara",
+  "operation:operation-live-shape",
+  "product-observation-source:document_utilisateur",
+  "product-observation:observation-live-shape",
+]));
+const manonCommute = adaptedTraits.find((trait) => trait.semanticKey === "mobility.work.manon");
+const adrienCommute = adaptedTraits.find((trait) => trait.semanticKey === "mobility.work.adrien");
+check(() => assert.ok(["DISTANCE_UNKNOWN", "FUEL_COST_UNKNOWN", "WORK_COST_SHARE_UNKNOWN"].every((limitation) => manonCommute.limitations.includes(limitation))));
+check(() => assert.deepEqual(manonCommute.metrics ?? {}, {}));
+check(() => assert.equal(adrienCommute.metrics.directCost, 0));
+check(() => assert.equal(Object.keys(adrienCommute.metrics).some((key) => /distance|fuel|annual|year/i.test(key)), false));
+const householdCar = adaptedTraits.find((trait) => trait.semanticKey === "vehicle.peugeot_207");
+check(() => assert.equal(householdCar.scope, "HOUSEHOLD"));
+check(() => assert.ok(householdCar.limitations.includes("CANONICAL_VEHICLE_AUTHORITY_UNAVAILABLE")));
+check(() => assert.equal(adaptedTraits.some((trait) => trait.semanticKey === "vehicle.peugeot_207" && trait.scope === "PERSONAL"), false));
+const groceriesAdapterTrait = adaptedTraits.find((trait) => trait.semanticKey === "groceries.organization");
+check(() => assert.equal(groceriesAdapterTrait.scope, "HOUSEHOLD"));
+check(() => assert.deepEqual(groceriesAdapterTrait.qualifications, ["ADRIEN_SMALL_LOCAL_GROCERIES", "MANON_LARGE_GROCERIES"]));
+check(() => assert.equal(adaptedTraits.some((trait) => trait.semanticKey === "household.has_pet" || trait.groupKey === "household.pet"), false));
+check(() => assert.ok(adaptedTraits.some((trait) => trait.semanticKey === "gaming" && trait.scope === "SHARED")));
+check(() => assert.ok(adaptedTraits.some((trait) => trait.semanticKey === "creative.photo.adrien" && trait.temporalStatus === "PROJECT")));
+check(() => assert.ok(adaptedTraits.some((trait) => trait.semanticKey === "subscription.chatgpt.adrien" && trait.scope === "PERSONAL")));
+check(() => assert.equal(adaptedTraits.filter((trait) => trait.semanticKey === "routine:work-ange-work").length, 1));
+check(() => assert.equal(adapted.signals.some((signal) => signal.signalId === `m4:rhythm:${manon}:travail_site`), false));
+check(() => assert.ok(adapted.profile.profiles.every(({ featuredTraits }) => featuredTraits.length === 0)));
+check(() => assert.ok(adapted.limitations.includes("M7_ROUTE_DISTANCE_AND_COST_AUTHORITY_UNAVAILABLE")));
+check(() => assert.equal(adapted.adapterVersion, "global_persona_signal_adapter@v1"));
+
 console.log(`Persona golden P2 harness: ${fixtures.length}/${fixtures.length} anti-cases structurally validated (${checks} total checks).`);
 console.log(`Persona golden positive cases: ${positiveFixtures.length}/${positiveFixtures.length} passed.`);
 console.log(`Persona golden engine protections: ${protectedByEngine}/${fixtures.length} passed; 0 pending P2/P3.`);
+console.log("PERSONA_GOLDEN_CORE=PASS");
+console.log("PERSONA_GOLDEN_ADAPTERS=PASS");
 console.log("PERSONA_GOLDEN_HARNESS=PASS");
 console.log("PERSONA_GOLDEN_ENGINE=PASS");
