@@ -60,14 +60,17 @@ const closure = (outputKey, n) => {
     dependencies,
   };
 };
+const artifactKeys = Array.from({ length: 14 }, (_, index) => `artifact:${String(index + 1).padStart(2, "0")}`);
+const artifactVersions = artifactKeys.map((key, index) => version(key, "global_owner_output", index % 5 + 1));
+const artifactClosures = artifactKeys.map((key, index) => closure(key, index % 5 + 1));
 const manifestInputBase = {
   formatVersion: materialization.globalV2ManifestFormatVersion,
   profileId: materialization.globalV2PublicationProfileId,
   householdId: "00000000-0000-4000-8000-000000000001",
   asOf: "2026-09-06T12:00:00Z", certifiedThrough: "2026-07-31", sourceRevision: "1", baseAnalyticsRevision: "79",
-  resourceFamilies: [...materialization.globalV2ResourceFamilies], requiredArtifactKeys: ["artifact:overview"], requiredQueryKeys: ["query:overview"],
-  closures: [closure("artifact:overview", 1), closure("query:overview", 2)], externalDependencyRefs: [],
-  artifactVersions: [version("artifact:overview", "global_v2_overview_artifact", 1)], queryVersions: [version("query:overview", "global_overview", 2)],
+  resourceFamilies: [...materialization.globalV2ResourceFamilies], requiredArtifactKeys: artifactKeys, requiredQueryKeys: ["query:overview"],
+  closures: [...artifactClosures, closure("query:overview", 2)], externalDependencyRefs: [],
+  artifactVersions, queryVersions: [version("query:overview", "global_overview", 2)],
   implementation: { status: "KNOWN", digest: hash("e"), gitSha },
 };
 const manifestInput = {
@@ -96,9 +99,12 @@ rejects(() => materialization.buildGlobalV2PublicationManifest({ ...manifestInpu
 
 const makeRows = (publicationId) => materialization.stageGlobalV2GenerationInMemory({
   manifest, publicationId, revision: 80, generatedAt: "2026-09-06T12:01:00Z",
-  artifacts: [{ ...manifest.artifactVersions[0], payload: { kind: "artifact" } }],
+  artifacts: manifest.artifactVersions.map((artifactVersion) => ({ ...artifactVersion, payload: { kind: "artifact", key: artifactVersion.key } })),
   queries: [{ ...manifest.queryVersions[0], payload: { kind: "query" } }],
 });
+rejects(() => materialization.stageGlobalV2GenerationInMemory({ manifest, publicationId: "00000000-0000-4000-8000-000000000199", revision: 80, generatedAt: "2026-09-06T12:01:00Z", artifacts: manifest.artifactVersions.slice(0, -1).map((artifactVersion) => ({ ...artifactVersion, payload: {} })), queries: [{ ...manifest.queryVersions[0], payload: {} }] }), /KEY_SET_MISMATCH/);
+rejects(() => materialization.stageGlobalV2GenerationInMemory({ manifest, publicationId: "00000000-0000-4000-8000-000000000198", revision: 80, generatedAt: "2026-09-06T12:01:00Z", artifacts: [...manifest.artifactVersions.map((artifactVersion) => ({ ...artifactVersion, payload: {} })), { ...version("artifact:extra", "global_owner_output", 3), payload: {} }], queries: [{ ...manifest.queryVersions[0], payload: {} }] }), /KEY_SET_MISMATCH/);
+rejects(() => materialization.stageGlobalV2GenerationInMemory({ manifest, publicationId: "00000000-0000-4000-8000-000000000197", revision: 80, generatedAt: "2026-09-06T12:01:00Z", artifacts: manifest.artifactVersions.map((artifactVersion, index) => ({ ...artifactVersion, ...(index === 0 ? { contractVersion: "bad@v1" } : {}), payload: {} })), queries: [{ ...manifest.queryVersions[0], payload: {} }] }), /VERSION_MISMATCH/);
 const pub1 = "00000000-0000-4000-8000-000000000101", pub2 = "00000000-0000-4000-8000-000000000102";
 const coordinator = new InMemoryGlobalPublicationCoordinator();
 coordinator.seedRevisions(manifest.householdId, "1", 79);
@@ -106,24 +112,26 @@ coordinator.begin({ publicationId: pub1, householdId: manifest.householdId, sour
 const rows1 = makeRows(pub1);
 coordinator.stage(pub1, rows1[0]);
 rejects(() => coordinator.attachManifest(pub1, manifest), /INCOMPLETE_OR_EXTRA/);
-coordinator.stage(pub1, rows1[1]);
-coordinator.stage(pub1, rows1[1]);
-rejects(() => coordinator.stage(pub1, { ...rows1[1], payload: { changed: true } }), /RETRY_CHANGED_CONTENT/);
+coordinator.stage(pub1, rows1[0]);
+rejects(() => coordinator.stage(pub1, { ...rows1[0], payload: { changed: true } }), /RETRY_CHANGED_CONTENT/);
+rows1.slice(1).forEach((row) => coordinator.stage(pub1, row));
 check(() => assert.equal(coordinator.attachManifest(pub1, manifest).manifestHash, manifest.manifestHash));
 rejects(() => coordinator.mutate(pub1, rows1[0].key, rows1[0]), /IMMUTABLE/);
 rejects(() => coordinator.finalize(pub1, 78), /CONCURRENT/);
 check(() => assert.deepEqual(coordinator.finalize(pub1, 79), { analyticsRevision: 80, publicationId: pub1 }));
 check(() => assert.deepEqual(coordinator.finalize(pub1, 79), { analyticsRevision: 80, publicationId: pub1 }));
-check(() => assert.deepEqual(coordinator.active({ householdId: manifest.householdId }).keys, ["artifact:overview", "query:overview"]));
+check(() => assert.deepEqual(coordinator.active({ householdId: manifest.householdId }).keys, [...artifactKeys, "query:overview"]));
 
 const manifest2InputBase = { ...manifestInputBase, baseAnalyticsRevision: "80" };
 const manifest2 = materialization.buildGlobalV2PublicationManifest({ ...manifest2InputBase, publicationFactsHash: materialization.globalV2PublicationFactsHash(manifest2InputBase) });
-const rows2 = materialization.stageGlobalV2GenerationInMemory({ manifest: manifest2, publicationId: pub2, revision: 81, generatedAt: "2026-09-06T13:00:00Z", artifacts: [{ ...manifest2.artifactVersions[0], payload: {} }], queries: [{ ...manifest2.queryVersions[0], payload: {} }] });
+const rows2 = materialization.stageGlobalV2GenerationInMemory({ manifest: manifest2, publicationId: pub2, revision: 81, generatedAt: "2026-09-06T13:00:00Z", artifacts: manifest2.artifactVersions.map((artifactVersion) => ({ ...artifactVersion, payload: {} })), queries: [{ ...manifest2.queryVersions[0], payload: {} }] });
 coordinator.begin({ publicationId: pub2, householdId: manifest.householdId, sourceRevision: "1", baseAnalyticsRevision: 80 });
 rows2.forEach((row) => coordinator.stage(pub2, row)); coordinator.attachManifest(pub2, manifest2);
 check(() => assert.equal(coordinator.finalize(pub2, 80).analyticsRevision, 81));
+check(() => assert.deepEqual(coordinator.active({ householdId: manifest.householdId }).keys, [...artifactKeys, "query:overview"]));
 rejects(() => coordinator.finalize(pub1, 79), /REACTIVATE|SEALED/);
 check(() => assert.deepEqual(coordinator.rollback({ householdId: manifest.householdId, currentPublicationId: pub2, targetPublicationId: pub1, expectedAnalyticsRevision: 81 }), { analyticsRevision: 82, publicationId: pub1 }));
+check(() => assert.deepEqual(coordinator.active({ householdId: manifest.householdId }).keys, [...artifactKeys, "query:overview"]));
 
 const invalid = new InMemoryGlobalPublicationCoordinator(); invalid.seedRevisions(manifest.householdId, "1", 79); invalid.begin({ publicationId: pub1, householdId: manifest.householdId, sourceRevision: "1", baseAnalyticsRevision: 79 }); rows1.forEach((r) => invalid.stage(pub1, r)); invalid.attachManifest(pub1, manifest); invalid.finalize(pub1, 79); invalid.invalidate(pub1);
 rejects(() => invalid.rollback({ householdId: manifest.householdId, currentPublicationId: pub1, targetPublicationId: pub1, expectedAnalyticsRevision: 80 }), /INELIGIBLE/);

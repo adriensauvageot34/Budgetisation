@@ -81,6 +81,21 @@ import {
 
 const GIT_SHA = /^[0-9a-f]{40}$/u;
 
+export const GLOBAL_V2_ARTIFACT_PAYLOAD_BUDGET_BYTES = 7 * 1024 * 1024;
+
+const globalV2OwnerArtifactSlug: Readonly<Record<GlobalPrimaryModuleKey, string>> = {
+  ECONOMIC: "economic",
+  CATEGORIES_NEEDS: "categories-needs",
+  TRANSFORMATIONS: "transformations",
+  RHYTHM: "rhythm",
+  RELATIONSHIPS: "relationships",
+  MOMENTS: "moments",
+  GEO_MOBILITY: "geo-mobility",
+  CONSUMPTION: "consumption",
+  PERSONAS: "personas",
+  TOGETHER: "together",
+};
+
 function digest(value: unknown): string {
   return createHash("sha256").update(canonicalSerializeGlobal(value), "utf8").digest("hex");
 }
@@ -1917,17 +1932,94 @@ export function buildGlobalV2CandidateFromOwnerOutputs(input: GlobalV2CandidateI
     ...moduleInstances,
     ...expandedInstances,
   ];
-  const artifactKey = `global-artifact:owner-outputs:${scopeHash}`;
-  const artifactDependencies = allOutputDependencies;
-  const artifactVersion: GlobalV2ResourceVersion = {
-    key: artifactKey,
-    family: "global_owner_outputs",
-    contractVersion: "global-owner-outputs@v1",
-    methodSignature: digest({ method: "global-v2-production-orchestration@v1", implementation }),
-    policyVersions: { orchestration: "global-v2-production-orchestration@v1" },
-    resourceInputHash: digest({ scope, outputDigests, labelDigests, adapterDigests }),
-  };
-  const artifactClosure = { outputKey: artifactKey, declarationDigest: globalV2ClosureDeclarationDigest(artifactDependencies), inputDigest: globalV2ClosureInputDigest(artifactDependencies), dependencies: artifactDependencies };
+  const orchestrationMethodSignature = digest({ method: "global-v2-production-orchestration@v1", implementation });
+  const artifactPolicyVersions = { orchestration: "global-v2-production-orchestration@v1" } as const;
+  const dependencyKey = (dependency: GlobalV2ResolvedDependency): string => `${dependency.authority}:${dependency.family}:${dependency.identity}`;
+  const dependenciesMatching = (predicate: (dependency: GlobalV2ResolvedDependency) => boolean): readonly GlobalV2ResolvedDependency[] => allOutputDependencies.filter(predicate);
+  const versionFor = (input: {
+    readonly key: string;
+    readonly family: string;
+    readonly contractVersion: string;
+    readonly resourceInput: unknown;
+  }): GlobalV2ResourceVersion => ({
+    key: input.key,
+    family: input.family,
+    contractVersion: input.contractVersion,
+    methodSignature: orchestrationMethodSignature,
+    policyVersions: artifactPolicyVersions,
+    resourceInputHash: digest(input.resourceInput),
+  });
+  const closureFor = (version: GlobalV2ResourceVersion, dependencies: readonly GlobalV2ResolvedDependency[]) => ({
+    outputKey: version.key,
+    declarationDigest: globalV2ClosureDeclarationDigest(dependencies),
+    inputDigest: globalV2ClosureInputDigest(dependencies),
+    dependencies,
+  });
+  const ownerArtifactDefinitions = outputs.map((ownerOutput) => {
+    const dependencies = dependenciesFor(ownerOutput.moduleKey);
+    const key = `global-artifact:owner-output:${globalV2OwnerArtifactSlug[ownerOutput.moduleKey]}:${scopeHash}`;
+    const semanticBody = {
+      moduleKey: ownerOutput.moduleKey,
+      owner: ownerOutput.owner,
+      output: ownerOutput.output,
+      knowledge: ownerOutput.knowledge,
+      capabilityState: ownerOutput.capabilityState,
+      reasonCodes: [...ownerOutput.reasonCodes].sort(),
+      evidenceRefs: [...ownerOutput.evidenceRefs].sort(),
+    };
+    const version = versionFor({
+      key,
+      family: "global_owner_output",
+      contractVersion: "global-owner-output@v1",
+      resourceInput: { scope, semanticBody, dependencies },
+    });
+    return { key, semanticBody, version, dependencies };
+  });
+  const supportArtifactDefinitions = [
+    {
+      key: `global-artifact:presentation-labels:${scopeHash}`,
+      semanticBody: { presentationLabels },
+      family: "global_presentation_labels",
+      contractVersion: "global-presentation-labels@v1",
+      dependencies: dependenciesMatching(({ family }) => family.endsWith("_presentation_labels")),
+      resourceInput: { scope, labelDigests, presentationLabels },
+    },
+    {
+      key: `global-artifact:candidate-adapters:${scopeHash}`,
+      semanticBody: { candidateAdapters: input.candidateAdapters },
+      family: "global_candidate_adapters",
+      contractVersion: "global-candidate-adapters@v1",
+      dependencies: dependenciesMatching(({ family }) => family === "global_life_timeline_candidate_adapter" || family === "global_grocery_candidate_adapter"),
+      resourceInput: { scope, adapterDigests: adapterDigests.filter(({ family }) => family === "global_life_timeline_candidate_adapter" || family === "global_grocery_candidate_adapter") },
+    },
+    ...(input.semanticTimeline === undefined ? [] : [{
+      key: `global-artifact:semantic-timeline:${scopeHash}`,
+      semanticBody: { semanticTimeline: input.semanticTimeline },
+      family: "global_semantic_timeline",
+      contractVersion: "global-semantic-timeline@v1",
+      dependencies: dependenciesMatching(({ family }) => family === "timeline_semantic_projection" || family === "timeline_semantic_comparator"),
+      resourceInput: { scope, adapterDigests: adapterDigests.filter(({ family }) => family === "timeline_semantic_projection" || family === "timeline_semantic_comparator") },
+    }]),
+    {
+      key: `global-artifact:moment-component-presentation:${scopeHash}`,
+      semanticBody: { momentComponentPresentation: input.momentComponentPresentation },
+      family: "global_moment_component_presentation",
+      contractVersion: "global-moment-component-presentation@v1",
+      dependencies: dependenciesMatching(({ family }) => family === "global_moment_component_presentation"),
+      resourceInput: { scope, adapterDigests: adapterDigests.filter(({ family }) => family === "global_moment_component_presentation") },
+    },
+  ].map((definition) => {
+    const version = versionFor(definition);
+    return { key: definition.key, semanticBody: definition.semanticBody, version, dependencies: definition.dependencies };
+  });
+  const artifactDefinitions = [...ownerArtifactDefinitions, ...supportArtifactDefinitions]
+    .sort((left, right) => left.key.localeCompare(right.key));
+  const artifactDependencyUnion = [...new Map(artifactDefinitions.flatMap(({ dependencies }) => dependencies).map((dependency) => [dependencyKey(dependency), dependency] as const)).values()];
+  if (canonicalSerializeGlobal(artifactDependencyUnion.sort((left, right) => dependencyKey(left).localeCompare(dependencyKey(right)))) !== canonicalSerializeGlobal([...allOutputDependencies].sort((left, right) => dependencyKey(left).localeCompare(dependencyKey(right))))) {
+    throw new TypeError("GLOBAL_ARTIFACT_DEPENDENCY_UNION_MISMATCH");
+  }
+  const artifactVersions = artifactDefinitions.map(({ version }) => version);
+  const artifactClosures = artifactDefinitions.map(({ version, dependencies }) => closureFor(version, dependencies));
   const manifestBase = {
     formatVersion: globalV2ManifestFormatVersion,
     profileId: globalV2PublicationProfileId,
@@ -1937,9 +2029,9 @@ export function buildGlobalV2CandidateFromOwnerOutputs(input: GlobalV2CandidateI
     sourceRevision: input.dataRevision,
     baseAnalyticsRevision: input.analyticsRevision,
     resourceFamilies: [...globalV2ResourceFamilies],
-    requiredArtifactKeys: [artifactKey],
-    artifactVersions: [artifactVersion],
-    artifactClosures: [artifactClosure],
+    requiredArtifactKeys: artifactVersions.map(({ key }) => key),
+    artifactVersions,
+    artifactClosures,
     implementation,
   };
   const provisionalPlan = buildGlobalV2QueryPlan({ instances: provisionalInstances });
@@ -1949,7 +2041,23 @@ export function buildGlobalV2CandidateFromOwnerOutputs(input: GlobalV2CandidateI
   const plan = buildGlobalV2QueryPlan({ instances });
   const finalManifest = attachGlobalV2QueryPlanToManifest({ base: manifestBase, plan });
   if (manifest.manifestHash !== finalManifest.manifestHash) throw new TypeError("GLOBAL_LIVE_CANDIDATE_NON_DETERMINISTIC");
-  const artifactPayload = { kind: "global_owner_outputs", outputs: outputs.map(({ moduleKey, owner, output, knowledge, capabilityState, reasonCodes, evidenceRefs }) => ({ moduleKey, owner, output, knowledge, capabilityState, reasonCodes: [...reasonCodes].sort(), evidenceRefs: [...evidenceRefs].sort() })), presentationLabels, candidateAdapters: input.candidateAdapters, ...(input.semanticTimeline === undefined ? {} : { semanticTimeline: input.semanticTimeline }), momentComponentPresentation: input.momentComponentPresentation, publicationMeta: finalMeta, resourceMeta: { contractVersion: artifactVersion.contractVersion, methodSignature: artifactVersion.methodSignature, policyVersions: artifactVersion.policyVersions, resourceInputHash: artifactVersion.resourceInputHash } };
+  const artifacts = artifactDefinitions.map(({ key, semanticBody, version, dependencies }) => {
+    const payload = {
+      ...semanticBody,
+      publicationMeta: finalMeta,
+      resourceMeta: {
+        contractVersion: version.contractVersion,
+        methodSignature: version.methodSignature,
+        policyVersions: version.policyVersions,
+        resourceInputHash: version.resourceInputHash,
+      },
+    };
+    const payloadBytes = Buffer.byteLength(JSON.stringify(payload), "utf8");
+    if (payloadBytes > GLOBAL_V2_ARTIFACT_PAYLOAD_BUDGET_BYTES) {
+      throw new TypeError(`GLOBAL_ARTIFACT_PAYLOAD_BUDGET_EXCEEDED:key=${key}:bytes=${payloadBytes}:budget=${GLOBAL_V2_ARTIFACT_PAYLOAD_BUDGET_BYTES}`);
+    }
+    return { key, payload, version, dependencies };
+  });
   return {
     project: input.project,
     householdScope: input.householdId,
@@ -1972,7 +2080,7 @@ export function buildGlobalV2CandidateFromOwnerOutputs(input: GlobalV2CandidateI
     scopeHash,
     plan,
     manifest: finalManifest,
-    artifacts: [{ key: artifactKey, payload: artifactPayload, version: artifactVersion, dependencies: artifactDependencies }],
+    artifacts,
     snapshots: plan.instances.map((instance) => ({ key: instance.key, resource: instance.resource, scopeHash: instance.scopeHash, params: instance.params, payload: instance.payload, methodSignature: instance.methodSignature, resourceInputHash: instance.resourceInputHash, policyVersions: globalV2QueryRegistry[instance.resource].policyVersions, payloadHash: digest(instance.payload) })),
   };
 }

@@ -22,6 +22,7 @@ registerHooks({ resolve(specifier, context, next) {
 const candidateApi = await import("../src/server/analytics/global-v2-candidate.ts");
 const analytics = await import("../src/analytics/global-v2/index.ts");
 const query = await import("../src/query-api/global-v2/index.ts");
+const materialization = await import("../src/server/analytics/materialization/global-v2.ts");
 const servicesApi = await import("../src/server/query/global-v2-production-services.ts");
 const runtimeApi = await import("../src/server/query/global-v2-runtime.ts");
 const { buildGlobalM5Pr03Product } = await import("../src/analytics/global-v2/relationship-product.ts");
@@ -157,6 +158,8 @@ const momentComponentPresentation = { version: "global-moment-component-presenta
   { momentRef: "moment:one", componentRef: "economic-component:operation:one", canonicalComponentKey: "operation:one", amount: "1253.90", sourceKind: "Operation_parent", primaryLabel: "Voyage", labelSource: "PRECISE_TYPE", evidenceRefs: ["economic-component:operation:one"] },
   { momentRef: "moment:two", componentRef: "economic-component:operation:two", canonicalComponentKey: "operation:two", amount: "240", sourceKind: "Operation_parent", primaryLabel: "Anniversaire", labelSource: "PRECISE_TYPE", evidenceRefs: ["economic-component:operation:two"] },
 ] };
+const semanticProjection = analytics.buildTimelineSemanticProjection({ sourceRevision: 1, moments: [], lifeEvents: [], assertions: [], lifeEventCosts: [] });
+const semanticTimeline = { projection: semanticProjection, comparator: analytics.buildTimelineSemanticComparator({ projection: semanticProjection }) };
 const base = {
   project: "ipuuhxrblxormwgoaqnz",
   householdId: "00000000-0000-4000-8000-000000000001",
@@ -169,6 +172,7 @@ const base = {
   implementationIdentity: "2ed2cc0dadaef64a6e788cf881b6b40311a9cc2b",
   ownerOutputs: modules,
   candidateAdapters,
+  semanticTimeline,
   momentComponentPresentation,
   presentationLabels: {
     persons: { [personA]: "Camille", [personB]: "Alex" },
@@ -203,6 +207,92 @@ check(() => assert.deepEqual(first.snapshots.map(({ payloadHash }) => payloadHas
 check(() => assert.equal(first.requiredSnapshotCount, first.queryInstanceCount));
 check(() => assert.equal(first.requiredSnapshotCount, first.requiredKeys.queries.length));
 check(() => assert.equal(first.requiredArtifactCount, first.requiredKeys.artifacts.length));
+check(() => assert.equal(first.requiredArtifactCount, 14));
+check(() => assert.equal(first.artifacts.length, 14));
+check(() => assert.equal(first.versions.artifacts.length, 14));
+check(() => assert.equal(first.manifest.closures.filter(({ outputKey }) => first.requiredKeys.artifacts.includes(outputKey)).length, 14));
+check(() => assert.equal(first.artifacts.some(({ key, version }) => key.includes("owner-outputs") || version.family === "global_owner_outputs"), false));
+check(() => assert.deepEqual(first.artifacts.map(({ key }) => key), [...first.requiredKeys.artifacts].sort()));
+const artifactPayloadBytes = first.artifacts.map(({ key, version, payload }) => ({ key, family: version.family, bytes: Buffer.byteLength(JSON.stringify(payload), "utf8") }));
+check(() => assert.equal(artifactPayloadBytes.every(({ bytes }) => bytes <= candidateApi.GLOBAL_V2_ARTIFACT_PAYLOAD_BUDGET_BYTES), true, artifactPayloadBytes.filter(({ bytes }) => bytes > candidateApi.GLOBAL_V2_ARTIFACT_PAYLOAD_BUDGET_BYTES).map(({ key }) => key).join(",")));
+const artifactPayloadByFamily = new Map(first.artifacts.map((artifact) => [artifact.version.family, artifact.payload]));
+const recomposedLegacyBody = {
+  outputs: first.artifacts.filter(({ version }) => version.family === "global_owner_output").map(({ payload }) => {
+    const { publicationMeta: _publicationMeta, resourceMeta: _resourceMeta, ...ownerBody } = payload;
+    return ownerBody;
+  }).sort((left, right) => left.moduleKey.localeCompare(right.moduleKey)),
+  presentationLabels: artifactPayloadByFamily.get("global_presentation_labels").presentationLabels,
+  candidateAdapters: artifactPayloadByFamily.get("global_candidate_adapters").candidateAdapters,
+  semanticTimeline: artifactPayloadByFamily.get("global_semantic_timeline").semanticTimeline,
+  momentComponentPresentation: artifactPayloadByFamily.get("global_moment_component_presentation").momentComponentPresentation,
+};
+const expectedLegacyBody = {
+  outputs: first.ownerOutputs.map(({ moduleKey, owner, output, knowledge, capabilityState, reasonCodes, evidenceRefs }) => ({ moduleKey, owner, output, knowledge, capabilityState, reasonCodes: [...reasonCodes].sort(), evidenceRefs: [...evidenceRefs].sort() })),
+  presentationLabels: Object.fromEntries(["persons", "places", "categories", "subcategories", "needs", "recurrences"].map((group) => [group, Object.fromEntries(Object.entries(base.presentationLabels[group] ?? {}).sort(([left], [right]) => left.localeCompare(right)))])),
+  candidateAdapters: base.candidateAdapters,
+  semanticTimeline: base.semanticTimeline,
+  momentComponentPresentation: base.momentComponentPresentation,
+};
+check(() => assert.deepEqual(recomposedLegacyBody, expectedLegacyBody));
+const dependencyIdentity = (dependency) => `${dependency.authority}:${dependency.family}:${dependency.identity}`;
+const dependencyUnion = (dependencies) => [...new Map(dependencies.map((dependency) => [dependencyIdentity(dependency), dependency])).values()].sort((left, right) => dependencyIdentity(left).localeCompare(dependencyIdentity(right)));
+const legacyArtifactDependencies = first.plan.instances.find(({ resource }) => resource === "analysis_global_manifest").dependencies;
+const newArtifactDependencyUnion = dependencyUnion(first.artifacts.flatMap(({ dependencies }) => dependencies));
+check(() => assert.deepEqual(newArtifactDependencyUnion, dependencyUnion(legacyArtifactDependencies)));
+const artifactKeySet = new Set(first.requiredKeys.artifacts);
+const queryClosures = first.manifest.closures.filter(({ outputKey }) => !artifactKeySet.has(outputKey));
+const legacyArtifactClosure = {
+  outputKey: `global-artifact:owner-outputs:${first.scopeHash}`,
+  declarationDigest: materialization.globalV2ClosureDeclarationDigest(legacyArtifactDependencies),
+  inputDigest: materialization.globalV2ClosureInputDigest(legacyArtifactDependencies),
+  dependencies: legacyArtifactDependencies,
+};
+const legacyPublicationFactsHash = materialization.globalV2PublicationFactsHash({
+  householdId: first.manifest.householdId,
+  asOf: first.manifest.asOf,
+  certifiedThrough: first.manifest.certifiedThrough,
+  sourceRevision: first.manifest.sourceRevision,
+  closures: [legacyArtifactClosure, ...queryClosures],
+});
+check(() => assert.equal(first.manifest.publicationFactsHash, legacyPublicationFactsHash));
+const firstArtifactVersion = first.versions.artifacts[0];
+const legacyManifest = materialization.buildGlobalV2PublicationManifest({
+  formatVersion: first.manifest.formatVersion,
+  profileId: first.manifest.profileId,
+  householdId: first.manifest.householdId,
+  asOf: first.manifest.asOf,
+  certifiedThrough: first.manifest.certifiedThrough,
+  sourceRevision: first.manifest.sourceRevision,
+  baseAnalyticsRevision: first.manifest.baseAnalyticsRevision,
+  resourceFamilies: first.manifest.resourceFamilies,
+  requiredArtifactKeys: [legacyArtifactClosure.outputKey],
+  requiredQueryKeys: first.manifest.requiredQueryKeys,
+  closures: [legacyArtifactClosure, ...queryClosures],
+  externalDependencyRefs: first.manifest.externalDependencyRefs,
+  artifactVersions: [{ ...firstArtifactVersion, key: legacyArtifactClosure.outputKey, family: "global_owner_outputs", contractVersion: "global-owner-outputs@v1" }],
+  queryVersions: first.manifest.queryVersions,
+  publicationFactsHash: legacyPublicationFactsHash,
+  implementation: first.manifest.implementation,
+});
+check(() => assert.notEqual(first.manifest.manifestHash, legacyManifest.manifestHash));
+const relabeled = candidateApi.buildGlobalV2CandidateFromOwnerOutputs({
+  ...base,
+  presentationLabels: { ...base.presentationLabels, categories: { ...base.presentationLabels.categories, "cat-food": "Alimentation courante" } },
+});
+const artifactInputHashes = (candidate) => new Map(candidate.artifacts.map(({ key, version }) => [key.replace(candidate.scopeHash, "{scopeHash}"), version.resourceInputHash]));
+const firstArtifactInputHashes = artifactInputHashes(first);
+const changedArtifactInputKeys = [...artifactInputHashes(relabeled)].filter(([key, resourceInputHash]) => firstArtifactInputHashes.get(key) !== resourceInputHash).map(([key]) => key).sort();
+check(() => assert.deepEqual(changedArtifactInputKeys, [
+  "global-artifact:owner-output:categories-needs:{scopeHash}",
+  "global-artifact:presentation-labels:{scopeHash}",
+]));
+const withoutSemanticTimeline = candidateApi.buildGlobalV2CandidateFromOwnerOutputs({ ...base, semanticTimeline: undefined });
+check(() => assert.equal(withoutSemanticTimeline.artifacts.length, 13));
+check(() => assert.equal(withoutSemanticTimeline.artifacts.some(({ version }) => version.family === "global_semantic_timeline"), false));
+check(() => assert.throws(() => candidateApi.buildGlobalV2CandidateFromOwnerOutputs({
+  ...base,
+  ownerOutputs: modules.map((ownerOutput) => ownerOutput.moduleKey === "PERSONAS" ? { ...ownerOutput, output: { ...ownerOutput.output, artifactBudgetProbe: "x".repeat(candidateApi.GLOBAL_V2_ARTIFACT_PAYLOAD_BUDGET_BYTES) } } : ownerOutput),
+}), new RegExp(`GLOBAL_ARTIFACT_PAYLOAD_BUDGET_EXCEEDED:key=global-artifact:owner-output:personas:${first.scopeHash}`)));
 check(() => assert.equal(new Set(first.requiredKeys.queries).size, first.requiredKeys.queries.length));
 check(() => assert.equal(new Set(first.availableCapabilities).size, first.availableCapabilities.length));
 check(() => assert.equal(new Set(first.gatedCapabilities).size, first.gatedCapabilities.length));
@@ -597,3 +687,4 @@ check(() => assert.equal(result.publicationId, first.candidateId));
 
 console.log(`P19A production candidate + snapshot bridge: PASS ${checks}/${checks}; candidate snapshots=${first.requiredSnapshotCount}; producer reads=${producerReads}.`);
 console.log("PERSONA_GOLDEN_READ_MODEL=PASS");
+console.log(`GLOBAL_ARTIFACT_SPLIT=${JSON.stringify({ budgetBytes: candidateApi.GLOBAL_V2_ARTIFACT_PAYLOAD_BUDGET_BYTES, artifacts: artifactPayloadBytes })}`);
