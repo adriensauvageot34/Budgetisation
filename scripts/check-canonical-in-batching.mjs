@@ -295,6 +295,7 @@ const paginatedOperationRows = Array.from({ length: 1_505 }, (_, index) => ({
   montant: "1",
 }));
 const operationRanges = [];
+const operationSelections = [];
 const paginationClient = {
   from(table) {
     if (table === "canonical_household_scope_control") {
@@ -313,7 +314,10 @@ const paginationClient = {
     assert.equal(table, "operations");
     let range = [0, paginatedOperationRows.length - 1];
     const query = {
-      select() { return query; },
+      select(selection) {
+        operationSelections.push(selection);
+        return query;
+      },
       gte() { return query; },
       lt() { return query; },
       order() { return query; },
@@ -339,9 +343,159 @@ const paginatedOperations = await paginationRepository.loadOperationsByBankRange
 });
 assert.equal(paginatedOperations.length, 1_505);
 assert.deepEqual(operationRanges, [[0, 999], [1000, 1999]]);
+assert.deepEqual(operationSelections, [
+  "*,montant_bancaire_exact:montant::text",
+  "*,montant_bancaire_exact:montant::text",
+]);
 assert.deepEqual(
   paginatedOperations.map(({ operation_id: operationId }) => operationId),
   paginatedOperationRows.map(({ operation_id: operationId }) => operationId),
 );
+
+const economicRange = {
+  start: "2026-01-01",
+  endExclusive: "2026-02-01",
+};
+const sharedOperationId = "operation-shared";
+const economicDiscoveryRows = {
+  bank: [
+    ...Array.from({ length: 1_001 }, (_, index) => ({
+      operation_id: `bank-${String(index).padStart(4, "0")}`,
+      complete_bank_field: `bank-value-${index}`,
+    })),
+    { operation_id: sharedOperationId, complete_bank_field: "shared-bank-value" },
+  ],
+  "real-date": [
+    { operation_id: sharedOperationId },
+    ...Array.from({ length: 1_004 }, (_, index) => ({
+      operation_id: `real-${String(index).padStart(4, "0")}`,
+    })),
+  ],
+  "forced-month": [
+    ...Array.from({ length: 1_003 }, (_, index) => ({
+      operation_id: `forced-${String(index).padStart(4, "0")}`,
+    })),
+    { operation_id: sharedOperationId },
+  ],
+};
+const economicDiscoveryCalls = [];
+const economicDiscoveryClient = {
+  from(table) {
+    if (table === "canonical_household_scope_control") {
+      const query = {
+        select() { return query; },
+        limit() { return query; },
+        then(resolve, reject) {
+          return Promise.resolve({
+            data: [{ household_count: 1, household_id: runtimeContext.householdId, status: "READY" }],
+            error: null,
+          }).then(resolve, reject);
+        },
+      };
+      return query;
+    }
+    if (table === "financial_economic_timing_canonical") {
+      const query = {
+        select() { return query; },
+        eq() { return query; },
+        gte() { return query; },
+        lt() { return query; },
+        order() { return query; },
+        then(resolve, reject) {
+          return Promise.resolve({ data: [], error: null }).then(resolve, reject);
+        },
+      };
+      return query;
+    }
+    assert.equal(table, "operations");
+    const state = { selection: undefined, kind: undefined, range: [0, Number.MAX_SAFE_INTEGER] };
+    const query = {
+      select(selection) {
+        state.selection = selection;
+        return query;
+      },
+      gte(column) {
+        state.kind = column === "date_bancaire"
+          ? "bank"
+          : column === "date_transaction_reelle"
+            ? "real-date"
+            : "forced-month";
+        return query;
+      },
+      lt() { return query; },
+      eq() { return query; },
+      order() { return query; },
+      range(from, to) {
+        state.range = [from, to];
+        return query;
+      },
+      then(resolve, reject) {
+        const rows = economicDiscoveryRows[state.kind];
+        economicDiscoveryCalls.push({
+          kind: state.kind,
+          selection: state.selection,
+          range: [...state.range],
+        });
+        const page = rows.slice(state.range[0], state.range[1] + 1);
+        const data = state.selection === "operation_id"
+          ? page.map(({ operation_id }) => ({ operation_id }))
+          : page;
+        return Promise.resolve({ data, error: null }).then(resolve, reject);
+      },
+    };
+    return query;
+  },
+};
+const economicDiscoveryRepository = new CanonicalRepository(
+  economicDiscoveryClient,
+  runtimeContext,
+);
+const completeBankRows = await economicDiscoveryRepository.loadOperationsByBankRange(economicRange);
+assert.equal(completeBankRows.length, economicDiscoveryRows.bank.length);
+assert.equal(completeBankRows[0].complete_bank_field, "bank-value-0");
+
+let economicOperationIds = [];
+economicDiscoveryRepository.loadEconomicComponentRowsByOperations = async (operationIds) => {
+  economicOperationIds = [...operationIds];
+  return operationIds.map((operationId) => ({
+    operation_id: operationId,
+    canonical_component_key: `economic:${operationId}`,
+  }));
+};
+economicDiscoveryRepository.loadEconomicComponentRowsByKeys = async () => [];
+economicDiscoveryRepository.projectEconomicComponentRows = async (components) => components;
+
+const economicFacts = await economicDiscoveryRepository.loadEconomicFacts(economicRange);
+const expectedEconomicOperationIds = [...new Set([
+  ...economicDiscoveryRows.bank,
+  ...economicDiscoveryRows["real-date"],
+  ...economicDiscoveryRows["forced-month"],
+].map(({ operation_id }) => operation_id))].sort();
+
+assert.deepEqual(economicOperationIds, expectedEconomicOperationIds);
+assert.deepEqual(
+  economicFacts.map(({ operation_id }) => operation_id),
+  expectedEconomicOperationIds,
+);
+assert.equal(economicOperationIds.filter((id) => id === sharedOperationId).length, 1);
+const idOnlyDiscoveryCalls = economicDiscoveryCalls
+  .filter(({ selection }) => selection === "operation_id");
+assert.equal(idOnlyDiscoveryCalls.length, 6);
+assert.equal(economicDiscoveryCalls.length, 8);
+assert.equal(
+  economicDiscoveryCalls.filter(({ selection }) =>
+    selection === "*,montant_bancaire_exact:montant::text").length,
+  2,
+);
+for (const kind of ["bank", "real-date", "forced-month"]) {
+  assert.deepEqual(
+    idOnlyDiscoveryCalls
+      .filter((call) => call.kind === kind)
+      .map(({ range }) => range),
+    [[0, 999], [1000, 1999]],
+  );
+}
+assert.equal(economicOperationIds.includes("real-1003"), true);
+assert.equal(economicOperationIds.includes("forced-1002"), true);
 
 console.log("Canonical .in batching checks: PASS");

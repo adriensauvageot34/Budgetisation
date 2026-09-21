@@ -522,40 +522,63 @@ export class CanonicalRepository {
     );
   }
 
-  private async loadOperationsByHistoricalTimingRange(
+  private async loadEconomicOperationIdsByBankRange(
     range: CanonicalDateRange,
-  ): Promise<readonly CanonicalRecord[]> {
+  ): Promise<readonly string[]> {
+    await this.assertAuthorizedCanonicalHouseholdScope();
+    const rows = await this.readRowsPaginated(
+      `economic-operation-ids:bank:${range.start}:${range.endExclusive}`,
+      "operations",
+      (from, to) =>
+        this.client
+          .from("operations")
+          .select("operation_id")
+          .gte("date_bancaire", range.start)
+          .lt("date_bancaire", range.endExclusive)
+          .order("date_bancaire", { ascending: true })
+          .order("operation_id", { ascending: true })
+          .range(from, to),
+    );
+    return rows.map((row) => canonicalString(row, ["operation_id"], "operations"));
+  }
+
+  private async loadEconomicOperationIdsByHistoricalTimingRange(
+    range: CanonicalDateRange,
+  ): Promise<readonly string[]> {
     await this.assertAuthorizedCanonicalHouseholdScope();
     const startMonth = yearMonthOf(range.start);
     const endMonth = yearMonthOf(range.endExclusive);
     const [byRealDate, byForcedMonth] = await Promise.all([
-      this.readRows(
-        `operations:real-date:${range.start}:${range.endExclusive}`,
+      this.readRowsPaginated(
+        `economic-operation-ids:real-date:${range.start}:${range.endExclusive}`,
         "operations",
-        () =>
+        (from, to) =>
           this.client
             .from("operations")
-            .select("*,montant_bancaire_exact:montant::text")
+            .select("operation_id")
             .gte("date_transaction_reelle", range.start)
             .lt("date_transaction_reelle", range.endExclusive)
             .eq("date_transaction_precision", "Jour exact")
             .order("date_transaction_reelle", { ascending: true })
-            .order("operation_id", { ascending: true }),
+            .order("operation_id", { ascending: true })
+            .range(from, to),
       ),
-      this.readRows(
-        `operations:forced-month:${startMonth}:${endMonth}`,
+      this.readRowsPaginated(
+        `economic-operation-ids:forced-month:${startMonth}:${endMonth}`,
         "operations",
-        () =>
+        (from, to) =>
           this.client
             .from("operations")
-            .select("*,montant_bancaire_exact:montant::text")
+            .select("operation_id")
             .gte("mois_analytique_force", startMonth)
             .lt("mois_analytique_force", endMonth)
             .order("mois_analytique_force", { ascending: true })
-            .order("operation_id", { ascending: true }),
+            .order("operation_id", { ascending: true })
+            .range(from, to),
       ),
     ]);
-    return mergeRows(byRealDate, byForcedMonth, "operation_id", "operations");
+    return unique([...byRealDate, ...byForcedMonth].map((row) =>
+      canonicalString(row, ["operation_id"], "operations")));
   }
 
   async loadLatestBankOperationMonth(): Promise<YearMonth | null> {
@@ -895,20 +918,15 @@ export class CanonicalRepository {
     range: CanonicalDateRange,
   ): Promise<readonly EconomicComponentFact[]> {
     return this.cached(`facts:economic:${range.start}:${range.endExclusive}`, async () => {
-      const [bankOperations, historicalTimingOperations, rangeTiming] = await Promise.all([
-        this.loadOperationsByBankRange(range),
-        this.loadOperationsByHistoricalTimingRange(range),
+      const [bankOperationIds, historicalTimingOperationIds, rangeTiming] = await Promise.all([
+        this.loadEconomicOperationIdsByBankRange(range),
+        this.loadEconomicOperationIdsByHistoricalTimingRange(range),
         this.loadTimingRowsForRange(range),
       ]);
-      const rangeOperations = mergeRows(
-        bankOperations,
-        historicalTimingOperations,
-        "operation_id",
-        "operations",
-      );
-      const rangeOperationIds = rangeOperations.map((row) =>
-        canonicalString(row, ["operation_id"], "operations"),
-      );
+      const rangeOperationIds = unique([
+        ...bankOperationIds,
+        ...historicalTimingOperationIds,
+      ]);
       const rangeComponentKeys = rangeTiming.map((row) =>
         canonicalString(row, ["canonical_component_key"], "timing"),
       );
