@@ -40,6 +40,26 @@ export {
 } from "./types";
 export { parseGlobalPhenomenonQuality, parseGlobalTypedMeasure } from "./typed-values";
 export {
+  PERSONA_DETAIL_INDEX_MAX_BLOCKS,
+  PERSONA_DETAIL_INDEX_MAX_ITEMS_PER_BLOCK,
+  PERSONA_DETAIL_INDEX_MAX_METRICS_PER_BLOCK,
+  PERSONA_DETAIL_INDEX_MAX_REFS_PER_BLOCK,
+  PERSONA_DETAIL_INDEX_PAYLOAD_BUDGET_BYTES,
+  PERSONA_DETAIL_INDEX_SCHEMA_VERSION,
+  PERSONA_DETAIL_INDEX_SOFT_BUDGET_BYTES,
+  parsePublishedPersonaDetailIndex,
+  personaOwnerDetailResourceCatalog,
+  projectPublishedPersonaDetailIndex,
+  publishedPersonaDetailIndexSchema,
+  type PersonaOwnerDetailRef,
+  type PersonaOwnerDetailResource,
+  type PublishedPersonaDetailBlock,
+  type PublishedPersonaDetailIndex,
+  type PublishedPersonaDetailItem,
+  type PublishedPersonaDetailSurfaceMetric,
+} from "./persona-detail-index";
+export {
+  PERSONA_OVERVIEW_SOFT_BUDGET_BYTES,
   PERSONA_PUBLISHED_PROFILE_CONTRACT_VERSION,
   parsePersonaPublishedProfileOutput,
   projectPersonaPublishedProfile,

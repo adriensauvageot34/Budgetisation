@@ -19,6 +19,7 @@ import type {
   GlobalReadModelResourceMeta,
 } from "./types";
 import { parseGlobalPhenomenonQuality, parseGlobalTypedMeasure } from "./typed-values";
+import { parsePublishedPersonaDetailIndex, type PublishedPersonaDetailIndex } from "./persona-detail-index";
 import { parsePersonaPublishedProfileOutput, type PersonaPublishedProfileOutput } from "./persona-published";
 import { parseLocalDate, parseYearMonth } from "../../core/time";
 
@@ -169,6 +170,8 @@ export type GlobalExpandedReadModel = {
   readonly groceryRhythm?: GlobalGroceryRhythmContext;
   /** Persona v1 knowledge payload; only valid on PERSONAS/OVERVIEW. */
   readonly profile?: PersonaPublishedProfileOutput;
+  /** Compact owner-backed index; only valid on a PERSONAS entity detail. */
+  readonly personaDetailIndex?: PublishedPersonaDetailIndex;
   readonly quality: GlobalCompactQuality;
   readonly capabilities: readonly GlobalModuleCapability[];
   readonly publicationMeta: GlobalReadModelPublicationMeta;
@@ -466,7 +469,7 @@ function parseCapability(value: unknown): GlobalModuleCapability {
 }
 
 export function parseGlobalExpandedReadModel(value: unknown): GlobalExpandedReadModel {
-  const record = parseStrictRecord(value, ["kind", "schemaVersion", "resource", "moduleKey", "sectionKey", "visibility", "reasonCode", "primaryInsight", "secondaryInsights", "metrics", "series", "rows", "destinations", "peerObservations", "similarity", "momentComponentRows", "componentGroups", "spentDuringContext", "groceryRhythm", "profile", "quality", "capabilities", "publicationMeta", "resourceMeta"], "GlobalExpandedReadModel");
+  const record = parseStrictRecord(value, ["kind", "schemaVersion", "resource", "moduleKey", "sectionKey", "visibility", "reasonCode", "primaryInsight", "secondaryInsights", "metrics", "series", "rows", "destinations", "peerObservations", "similarity", "momentComponentRows", "componentGroups", "spentDuringContext", "groceryRhythm", "profile", "personaDetailIndex", "quality", "capabilities", "publicationMeta", "resourceMeta"], "GlobalExpandedReadModel");
   const resource = parseStringLiteral<GlobalV2ExpandedResourceName>(requireProperty(record, "resource", "GlobalExpandedReadModel"), expandedResources, "expandedResource");
   const moduleKey = parseStringLiteral<GlobalPrimaryModuleKey>(requireProperty(record, "moduleKey", "GlobalExpandedReadModel"), moduleKeys, "moduleKey");
   const catalogModule = globalV2ExpandedResourceCatalog.find((entry) => entry.resource === resource)?.moduleKey;
@@ -487,9 +490,11 @@ export function parseGlobalExpandedReadModel(value: unknown): GlobalExpandedRead
   const spentDuringContext = optional(record, "spentDuringContext", parseSpentDuring);
   const groceryRhythm = optional(record, "groceryRhythm", parseGroceryRhythm);
   const profile = optional(record, "profile", parsePersonaPublishedProfileOutput);
+  const personaDetailIndex = optional(record, "personaDetailIndex", parsePublishedPersonaDetailIndex);
   if ([peerObservations, similarity, momentComponentRows, componentGroups, spentDuringContext].some((entry) => entry !== undefined) && resource !== "analysis_global_moment_experience_detail") throw new TypeError("GLOBAL_MOMENT_DETAIL_EXTENSION_RESOURCE_MISMATCH");
   if (groceryRhythm !== undefined && resource !== "analysis_global_routine_detail") throw new TypeError("GLOBAL_GROCERY_DETAIL_RESOURCE_MISMATCH");
   if (profile !== undefined && (resource !== "analysis_global_personas_expanded" || moduleKey !== "PERSONAS" || sectionKey !== "OVERVIEW" || visibility !== "VISIBLE")) throw new TypeError("GLOBAL_PERSONA_PROFILE_RESOURCE_MISMATCH");
+  if (personaDetailIndex !== undefined && (resource !== "analysis_global_persona_detail" || moduleKey !== "PERSONAS" || sectionKey !== "OVERVIEW" || visibility !== "VISIBLE")) throw new TypeError("GLOBAL_PERSONA_DETAIL_INDEX_RESOURCE_MISMATCH");
   if (peerObservations !== undefined && new Set(peerObservations.map(({ peerRef }) => peerRef)).size !== peerObservations.length) throw new TypeError("GLOBAL_MOMENT_PEER_DUPLICATE");
   if (momentComponentRows !== undefined && new Set(momentComponentRows.map(({ componentRef }) => componentRef)).size !== momentComponentRows.length) throw new TypeError("GLOBAL_MOMENT_COMPONENT_DUPLICATE");
   if (secondaryInsights.length > GLOBAL_MAX_SECONDARY_INSIGHTS || secondaryInsights.length + (primaryInsight === undefined ? 0 : 1) > GLOBAL_MAX_EXPANDED_INSIGHTS) throw new TypeError("GLOBAL_EXPANDED_INSIGHT_LIMIT");
@@ -499,7 +504,7 @@ export function parseGlobalExpandedReadModel(value: unknown): GlobalExpandedRead
   if (visibility !== "VISIBLE" && reasonCode === undefined) throw new TypeError("GLOBAL_EXPANDED_REASON_REQUIRED");
   const insightIds = [primaryInsight, ...secondaryInsights].filter((entry): entry is GlobalCompactInsight => entry !== undefined).map(({ insightId }) => insightId);
   if (new Set(insightIds).size !== insightIds.length) throw new TypeError("GLOBAL_EXPANDED_INSIGHT_DUPLICATE");
-  return { kind: parseStringLiteral(requireProperty(record, "kind", "GlobalExpandedReadModel"), new Set(["global_expanded"]), "kind"), schemaVersion: parseStringLiteral(requireProperty(record, "schemaVersion", "GlobalExpandedReadModel"), new Set(["global-expanded@v1"]), "schemaVersion"), resource, moduleKey, sectionKey, visibility, ...(reasonCode === undefined ? {} : { reasonCode }), ...(primaryInsight === undefined ? {} : { primaryInsight }), secondaryInsights, metrics, series, rows, destinations, ...(peerObservations === undefined ? {} : { peerObservations }), ...(similarity === undefined ? {} : { similarity }), ...(momentComponentRows === undefined ? {} : { momentComponentRows }), ...(componentGroups === undefined ? {} : { componentGroups }), ...(spentDuringContext === undefined ? {} : { spentDuringContext }), ...(groceryRhythm === undefined ? {} : { groceryRhythm }), ...(profile === undefined ? {} : { profile }), quality: parseQuality(requireProperty(record, "quality", "GlobalExpandedReadModel")), capabilities: array(requireProperty(record, "capabilities", "GlobalExpandedReadModel"), parseCapability, "capabilities"), publicationMeta: parsePublicationMeta(requireProperty(record, "publicationMeta", "GlobalExpandedReadModel")), resourceMeta: parseResourceMeta(requireProperty(record, "resourceMeta", "GlobalExpandedReadModel")) };
+  return { kind: parseStringLiteral(requireProperty(record, "kind", "GlobalExpandedReadModel"), new Set(["global_expanded"]), "kind"), schemaVersion: parseStringLiteral(requireProperty(record, "schemaVersion", "GlobalExpandedReadModel"), new Set(["global-expanded@v1"]), "schemaVersion"), resource, moduleKey, sectionKey, visibility, ...(reasonCode === undefined ? {} : { reasonCode }), ...(primaryInsight === undefined ? {} : { primaryInsight }), secondaryInsights, metrics, series, rows, destinations, ...(peerObservations === undefined ? {} : { peerObservations }), ...(similarity === undefined ? {} : { similarity }), ...(momentComponentRows === undefined ? {} : { momentComponentRows }), ...(componentGroups === undefined ? {} : { componentGroups }), ...(spentDuringContext === undefined ? {} : { spentDuringContext }), ...(groceryRhythm === undefined ? {} : { groceryRhythm }), ...(profile === undefined ? {} : { profile }), ...(personaDetailIndex === undefined ? {} : { personaDetailIndex }), quality: parseQuality(requireProperty(record, "quality", "GlobalExpandedReadModel")), capabilities: array(requireProperty(record, "capabilities", "GlobalExpandedReadModel"), parseCapability, "capabilities"), publicationMeta: parsePublicationMeta(requireProperty(record, "publicationMeta", "GlobalExpandedReadModel")), resourceMeta: parseResourceMeta(requireProperty(record, "resourceMeta", "GlobalExpandedReadModel")) };
 }
 
 export function parseImportedGlobalSummaryReadModel(value: unknown): ImportedGlobalSummaryReadModel {

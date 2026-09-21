@@ -17,6 +17,7 @@ import {
 } from "../../analytics/global-v2/persona-signals";
 
 export const PERSONA_PUBLISHED_PROFILE_CONTRACT_VERSION = "persona-published-profile@v1" as const;
+export const PERSONA_OVERVIEW_SOFT_BUDGET_BYTES = 24 * 1024;
 
 export type PersonaPublishedSubject = {
   readonly kind: "PERSON";

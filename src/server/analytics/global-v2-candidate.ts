@@ -21,6 +21,7 @@ import {
   type GlobalMaterialityCandidate,
   type GlobalScopeValidationContext,
 } from "@/core/global-v2";
+import type { PersonId } from "@/core/identity";
 import {
   buildGlobalExpandedReadModel,
   buildGlobalLifeTimelineReadModel,
@@ -32,6 +33,7 @@ import {
   globalV2ExpandedResourceCatalog,
   globalV2MethodRef,
   globalV2QueryRegistry,
+  projectPublishedPersonaDetailIndex,
   projectPersonaPublishedProfile,
   type GlobalCompactInsight,
   type GlobalCompactKpi,
@@ -1876,7 +1878,17 @@ export function buildGlobalV2CandidateFromOwnerOutputs(input: GlobalV2CandidateI
     const timelineMomentRows: readonly GlobalDetailRow[] = input.candidateAdapters.timeline.events.filter(({ sourceKind }) => sourceKind === "MOMENT").map((event, index) => ({ rowId: `timeline:${String(index).padStart(3, "0")}:${event.eventRef}`, labelKey: event.canonicalName, displayValue: event.typeLabel, knowledgeState: "KNOWN", entityRef: event.eventRef, evidenceRefs: [...event.quality.evidenceRefs].sort() }));
     const groceryProfileAvailable = ownerOutput.moduleKey === "RHYTHM" && arrayOf(at(ownerOutput.output, "activityCostProfiles")).some((entry) => stringOf(at(entry, "activityId")) === "courses_alimentaires");
     const groceryRow: GlobalDetailRow = { rowId: "timeline:grocery:courses_alimentaires", labelKey: "Courses alimentaires", knowledgeState: "KNOWN", entityRef: "household-activity:courses_alimentaires", evidenceRefs: [`adapter:${input.candidateAdapters.grocery.inputHash}`] };
-    const sourceDetailRows = ownerOutput.moduleKey === "MOMENTS" ? timelineMomentRows : ownerOutput.moduleKey === "RHYTHM" && groceryProfileAvailable ? [groceryRow, ...projection.detailRows] : projection.detailRows;
+    const personaProfile = ownerOutput.moduleKey === "PERSONAS" ? at(ownerOutput.output, "profile") as PersonaProfileOutput | undefined : undefined;
+    const personaDetailRows: readonly GlobalDetailRow[] = personaProfile?.profiles.flatMap((profile, index) =>
+      profile.scope !== "PERSONAL" || profile.subject.kind !== "PERSON" ? [] : [{
+        rowId: `persona-index:${String(index).padStart(3, "0")}:${profile.subject.personId}`,
+        labelKey: personLabel(profile.subject.personId, presentationLabels, input.personIds),
+        displayValue: "Profil personnel",
+        knowledgeState: "PARTIAL" as const,
+        entityRef: `person:${profile.subject.personId}`,
+        evidenceRefs: [],
+      }]) ?? [];
+    const sourceDetailRows = ownerOutput.moduleKey === "MOMENTS" ? timelineMomentRows : ownerOutput.moduleKey === "PERSONAS" ? personaDetailRows : ownerOutput.moduleKey === "RHYTHM" && groceryProfileAvailable ? [groceryRow, ...projection.detailRows] : projection.detailRows;
     const uniqueDetailRows = [...new Map(sourceDetailRows.flatMap((detailRow) => detailRow.entityRef === undefined ? [] : [[detailRow.entityRef, detailRow] as const])).values()];
     const detailRows = ownerOutput.moduleKey === "MOMENTS" ? uniqueDetailRows : uniqueDetailRows.slice(0, GLOBAL_MAX_SECTION_ROWS);
     if (detailResource !== undefined) for (const detailRow of detailRows) {
@@ -1886,6 +1898,9 @@ export function buildGlobalV2CandidateFromOwnerOutputs(input: GlobalV2CandidateI
       const routineBase = ownerOutput.moduleKey === "RHYTHM" ? routineDetailProjection(ownerOutput, presentationLabels, input.personIds, detailRow.entityRef!) : undefined;
       const routineDetail = routineBase === undefined ? undefined : detailRow.entityRef === "household-activity:courses_alimentaires" ? { ...routineBase, groceryRhythm: groceryRhythmContext(input.candidateAdapters.grocery) } : routineBase;
       const momentDetail = ownerOutput.moduleKey === "MOMENTS" ? momentDetailProjection(ownerOutput, detailRow.entityRef!, input.candidateAdapters.timeline, input.momentComponentPresentation, scopeHash) : undefined;
+      const personaDetailIndex = ownerOutput.moduleKey === "PERSONAS" && personaProfile !== undefined && detailRow.entityRef!.startsWith("person:")
+        ? projectPublishedPersonaDetailIndex(personaProfile, detailRow.entityRef!.slice("person:".length) as PersonId)
+        : undefined;
       const detail = economicDetail ?? categoryNeedDetail ?? routineDetail ?? momentDetail;
       const destinations: readonly GlobalNavigationDestination[] = detailRow.entityRef!.startsWith("category:") ? [
         { targetId: `history:${detailRow.entityRef}`, kind: "HISTORY", resource: "history_category_detail", entityRef: detailRow.entityRef!, scopeHash, sourcePublicationId: provisionalMeta.publicationId, sourceAnalyticsRevision: provisionalMeta.revision },
@@ -1898,8 +1913,9 @@ export function buildGlobalV2CandidateFromOwnerOutputs(input: GlobalV2CandidateI
         dependencies,
         payload: buildGlobalExpandedReadModel({
           kind: "global_expanded", schemaVersion: "global-expanded@v1", resource: detailResource, moduleKey: ownerOutput.moduleKey, sectionKey: "OVERVIEW", visibility: "VISIBLE", secondaryInsights: [], metrics: detail?.metrics ?? [], series: detail?.series ?? [],
-          rows: detail?.rows ?? [{ ...detailRow, rowId: `detail:${detailRow.rowId}` }], destinations,
+          rows: personaDetailIndex === undefined ? detail?.rows ?? [{ ...detailRow, rowId: `detail:${detailRow.rowId}` }] : [], destinations,
           ...(detail?.peerObservations === undefined ? {} : { peerObservations: detail.peerObservations }), ...(detail?.similarity === undefined ? {} : { similarity: detail.similarity }), ...(detail?.momentComponentRows === undefined ? {} : { momentComponentRows: detail.momentComponentRows }), ...(detail?.componentGroups === undefined ? {} : { componentGroups: detail.componentGroups }), ...(detail?.spentDuringContext === undefined ? {} : { spentDuringContext: detail.spentDuringContext }), ...(detail?.groceryRhythm === undefined ? {} : { groceryRhythm: detail.groceryRhythm }),
+          ...(personaDetailIndex === undefined ? {} : { personaDetailIndex }),
           quality: categoryNeedDetail?.quality ?? quality(ownerOutput), capabilities: [capability(ownerOutput)], publicationMeta: provisionalMeta, resourceMeta: metaFor(detailResource, params, dependencies),
         }),
       });

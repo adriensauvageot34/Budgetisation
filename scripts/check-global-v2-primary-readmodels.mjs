@@ -170,8 +170,92 @@ check(() => assert.deepEqual(largeEvidencePublishedProfile, publishedPersonaProf
 check(() => assert.ok(Buffer.byteLength(JSON.stringify(largeEvidencePersonaProfile), "utf8") > query.GLOBAL_EXPANDED_PAYLOAD_BUDGET_BYTES));
 check(() => assert.ok(Buffer.byteLength(JSON.stringify(largeEvidencePublishedProfile), "utf8") < query.GLOBAL_EXPANDED_PAYLOAD_BUDGET_BYTES));
 check(() => assert.ok(Buffer.byteLength(JSON.stringify(personaExpanded), "utf8") <= query.GLOBAL_EXPANDED_PAYLOAD_BUDGET_BYTES));
+check(() => assert.ok(Buffer.byteLength(JSON.stringify(personaExpanded), "utf8") <= query.PERSONA_OVERVIEW_SOFT_BUDGET_BYTES));
+check(() => assert.equal(query.GLOBAL_EXPANDED_PAYLOAD_BUDGET_BYTES, 96 * 1024));
 rejects(() => query.buildGlobalExpandedReadModel({ ...personaExpanded, resource: "analysis_global_together_expanded", moduleKey: "TOGETHER" }), /PERSONA_PROFILE_RESOURCE_MISMATCH/);
 rejects(() => query.parsePersonaPublishedProfileOutput({ ...publishedPersonaProfile, profiles: [{ ...publishedPersonaProfile.profiles[0], allTraits: [] }] }), /non autorisée|unrecognized_key/u);
+
+const personAProfile = personaProfile.profiles.find(({ scope }) => scope === "PERSONAL");
+const personAId = personAProfile.subject.personId;
+const personBId = "00000000-0000-4000-8000-000000000202";
+const secondTrait = {
+  ...structuredClone(personAProfile.featuredTraits[0]),
+  traitId: "read-model:second-trait",
+  semanticKey: "routine.read-model.second",
+  metrics: { zMetric: 9, aMetric: 1, cMetric: 3, ignoredMetric: 4 },
+};
+const personAWithTwoTraits = {
+  ...structuredClone(personAProfile),
+  featuredTraits: [secondTrait, ...structuredClone(personAProfile.featuredTraits)],
+  allTraits: [secondTrait, ...structuredClone(personAProfile.allTraits)],
+};
+const personBProfile = {
+  ...structuredClone(personAProfile),
+  subject: { kind: "PERSON", personId: personBId },
+  featuredTraits: personAProfile.featuredTraits.map((trait) => ({
+    ...structuredClone(trait),
+    traitId: `person-b:${trait.traitId}`,
+    semanticKey: `person-b.${trait.semanticKey}`,
+    subject: { kind: "PERSON", personId: personBId },
+  })),
+  allTraits: personAProfile.allTraits.map((trait) => ({
+    ...structuredClone(trait),
+    traitId: `person-b:${trait.traitId}`,
+    semanticKey: `person-b.${trait.semanticKey}`,
+    subject: { kind: "PERSON", personId: personBId },
+  })),
+};
+const sharedProfile = {
+  subject: { kind: "SHARED", personIds: [personAId, personBId] },
+  scope: "SHARED",
+  allTraits: [{ ...structuredClone(personAProfile.allTraits[0]), traitId: "shared:trait", semanticKey: "shared.must-not-leak", subject: { kind: "SHARED", personIds: [personAId, personBId] }, scope: "SHARED" }],
+  featuredTraits: [{ ...structuredClone(personAProfile.featuredTraits[0]), traitId: "shared:trait", semanticKey: "shared.must-not-leak", subject: { kind: "SHARED", personIds: [personAId, personBId] }, scope: "SHARED" }],
+};
+const householdProfile = {
+  subject: { kind: "HOUSEHOLD", householdId: "00000000-0000-4000-8000-000000000303" },
+  scope: "HOUSEHOLD",
+  allTraits: [{ ...structuredClone(personAProfile.allTraits[0]), traitId: "household:trait", semanticKey: "household.must-not-leak", subject: { kind: "HOUSEHOLD", householdId: "00000000-0000-4000-8000-000000000303" }, scope: "HOUSEHOLD" }],
+  featuredTraits: [{ ...structuredClone(personAProfile.featuredTraits[0]), traitId: "household:trait", semanticKey: "household.must-not-leak", subject: { kind: "HOUSEHOLD", householdId: "00000000-0000-4000-8000-000000000303" }, scope: "HOUSEHOLD" }],
+};
+const detailSource = { ...personaProfile, profiles: [sharedProfile, personBProfile, householdProfile, personAWithTwoTraits] };
+const detailA = query.projectPublishedPersonaDetailIndex(detailSource, personAId);
+const detailB = query.projectPublishedPersonaDetailIndex(detailSource, personBId);
+check(() => assert.deepEqual(query.parsePublishedPersonaDetailIndex(detailA), detailA));
+check(() => assert.equal(query.publishedPersonaDetailIndexSchema.safeParse(detailA).success, true));
+rejects(() => query.parsePublishedPersonaDetailIndex({ ...detailA, ownerOutputs: [] }), /non autorisée|unrecognized_key/u);
+rejects(() => query.parsePublishedPersonaDetailIndex({ ...detailA, blocks: [{ ...detailA.blocks[0], evidenceRefs: [] }, ...detailA.blocks.slice(1)] }), /non autorisée|unrecognized_key/u);
+const reversedDetailSource = {
+  ...detailSource,
+  profiles: detailSource.profiles.map((profile) => profile.scope === "PERSONAL" && profile.subject.personId === personAId
+    ? { ...profile, featuredTraits: [...profile.featuredTraits].reverse() }
+    : profile),
+};
+check(() => assert.deepEqual(query.projectPublishedPersonaDetailIndex(reversedDetailSource, personAId), detailA));
+check(() => assert.deepEqual(detailA.blocks.find(({ blockId }) => blockId === secondTrait.traitId).surfaceMetrics.map(({ metricId }) => metricId), ["aMetric", "cMetric", "ignoredMetric"]));
+check(() => assert.notDeepEqual(detailA, detailB));
+check(() => assert.equal(detailA.personId, personAId));
+check(() => assert.equal(detailB.personId, personBId));
+check(() => assert.equal(JSON.stringify([detailA, detailB]).includes("shared.must-not-leak"), false));
+check(() => assert.equal(JSON.stringify([detailA, detailB]).includes("household.must-not-leak"), false));
+check(() => assert.doesNotMatch(JSON.stringify([detailA, detailB]), /allTraits|evidenceRefs|signalRefs|sourceModules|ownerOutputs|selection|explanation|reasonCodes|inputHash/u));
+const hugeEvidenceDetailSource = structuredClone(detailSource);
+const hugeRefs = Array.from({ length: 10_000 }, (_, index) => `engine-evidence:${String(index).padStart(5, "0")}:${"x".repeat(64)}`);
+const hugePersonA = hugeEvidenceDetailSource.profiles.find((profile) => profile.scope === "PERSONAL" && profile.subject.personId === personAId);
+hugePersonA.featuredTraits = hugePersonA.featuredTraits.map((trait) => ({ ...trait, evidenceRefs: hugeRefs, signalRefs: hugeRefs }));
+hugePersonA.allTraits = hugePersonA.allTraits.map((trait) => ({ ...trait, evidenceRefs: hugeRefs, signalRefs: hugeRefs }));
+const hugeEvidenceDetail = query.projectPublishedPersonaDetailIndex(hugeEvidenceDetailSource, personAId);
+check(() => assert.deepEqual(hugeEvidenceDetail, detailA));
+check(() => assert.ok(Buffer.byteLength(JSON.stringify(hugeEvidenceDetailSource), "utf8") > 1_000_000));
+check(() => assert.ok(Buffer.byteLength(JSON.stringify(detailA), "utf8") <= query.PERSONA_DETAIL_INDEX_SOFT_BUDGET_BYTES));
+check(() => assert.ok(Buffer.byteLength(JSON.stringify(detailB), "utf8") <= query.PERSONA_DETAIL_INDEX_PAYLOAD_BUDGET_BYTES));
+rejects(() => query.parsePublishedPersonaDetailIndex({ ...detailA, blocks: [{ ...detailA.blocks[0], semanticKey: "x".repeat(query.PERSONA_DETAIL_INDEX_PAYLOAD_BUDGET_BYTES) }, ...detailA.blocks.slice(1)] }), /PAYLOAD_BUDGET_EXCEEDED/u);
+const personaDetailReadModel = query.buildGlobalExpandedReadModel({
+  kind: "global_expanded", schemaVersion: "global-expanded@v1", resource: "analysis_global_persona_detail", moduleKey: "PERSONAS", sectionKey: "OVERVIEW", visibility: "VISIBLE",
+  secondaryInsights: [], metrics: [], series: [], rows: [], destinations: [], personaDetailIndex: detailA,
+  quality, capabilities: [{ ...capability, capabilityId: "GLOBAL_PERSONA_DETAIL" }], publicationMeta, resourceMeta: resourceMeta(51),
+});
+check(() => assert.deepEqual(personaDetailReadModel.personaDetailIndex, detailA));
+rejects(() => query.buildGlobalExpandedReadModel({ ...personaDetailReadModel, resource: "analysis_global_personas_expanded" }), /PERSONA_DETAIL_INDEX_RESOURCE_MISMATCH/);
 const transportSchema = query.createGlobalReadModelTransportSchema(query.parseGlobalModuleCompactReadModel);
 check(() => assert.equal(transportSchema.parse({ status: "READY", data: modules[0] }).data.quality.knowledgeState, "PARTIAL"));
 check(() => assert.equal(transportSchema.parse({ status: "ERROR", errorCode: "NETWORK", previousData: modules[0] }).previousData.visibility, "VISIBLE"));
@@ -210,3 +294,4 @@ console.log(`Global V2 primary ReadModels: ${checks}/${checks} PASS`);
 console.log(`Primary module schemas: ${modules.length}/10 PASS`);
 console.log(`Maximum compact payload: ${Math.max(...modules.map((module) => Buffer.byteLength(JSON.stringify(module), "utf8")))} bytes`);
 console.log(`Persona payload projection: engine=${Buffer.byteLength(JSON.stringify(largeEvidencePersonaProfile), "utf8")} bytes; published=${Buffer.byteLength(JSON.stringify(personaExpanded), "utf8")} bytes`);
+console.log(`Persona budgets: overview=${Buffer.byteLength(JSON.stringify(personaExpanded), "utf8")} bytes; detail-index-max=${Math.max(Buffer.byteLength(JSON.stringify(detailA), "utf8"), Buffer.byteLength(JSON.stringify(detailB), "utf8"))} bytes`);

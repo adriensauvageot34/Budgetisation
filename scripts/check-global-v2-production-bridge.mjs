@@ -424,7 +424,18 @@ const publishedBeautyTrait = projectedPersonaFeatured.find(({ semanticKey }) => 
 check(() => assert.equal(publishedBeautyTrait.children.find(({ semanticKey }) => semanticKey === "product-need:maquillage_manon_mascara").metrics.typicalPrice, 32));
 check(() => assert.deepEqual(publishedBeautyTrait.children.map(({ semanticKey }) => semanticKey), ["product-need:maquillage_manon_mascara", "product-need:maquillage_manon_sourcils"]));
 check(() => assert.ok(Buffer.byteLength(JSON.stringify(compact("analysis_global_personas")), "utf8") <= query.GLOBAL_COMPACT_PAYLOAD_BUDGET_BYTES));
+check(() => assert.ok(Buffer.byteLength(JSON.stringify(personaReadModel), "utf8") <= query.PERSONA_OVERVIEW_SOFT_BUDGET_BYTES));
 check(() => assert.ok(Buffer.byteLength(JSON.stringify(personaReadModel), "utf8") <= query.GLOBAL_EXPANDED_PAYLOAD_BUDGET_BYTES));
+const personaDetailSnapshots = first.snapshots.filter(({ resource }) => resource === "analysis_global_persona_detail");
+const secondPersonaDetailSnapshots = second.snapshots.filter(({ resource }) => resource === "analysis_global_persona_detail");
+check(() => assert.equal(personaDetailSnapshots.length, 2));
+check(() => assert.deepEqual(personaDetailSnapshots.map(({ params }) => params.entityRef), [`person:${personA}`, `person:${personB}`]));
+check(() => assert.deepEqual(personaDetailSnapshots, secondPersonaDetailSnapshots));
+check(() => assert.equal(personaDetailSnapshots.every(({ payload, params }) => payload.personaDetailIndex.personId === params.entityRef.slice("person:".length)), true));
+check(() => assert.equal(personaDetailSnapshots.every(({ payload }) => payload.rows.length === 0 && payload.personaDetailIndex.blocks.every(({ detailRefs }) => detailRefs.length === 0)), true));
+check(() => assert.equal(personaDetailSnapshots.every(({ payload }) => !/shared|household.must-not-leak/u.test(JSON.stringify(payload.personaDetailIndex))), true));
+check(() => assert.equal(personaDetailSnapshots.every(({ payload }) => !/allTraits|evidenceRefs|signalRefs|sourceModules|ownerOutputs|selection|explanation|reasonCodes|inputHash/u.test(JSON.stringify(payload.personaDetailIndex))), true));
+check(() => assert.equal(personaDetailSnapshots.every(({ payload }) => Buffer.byteLength(JSON.stringify(payload.personaDetailIndex), "utf8") <= query.PERSONA_DETAIL_INDEX_SOFT_BUDGET_BYTES), true));
 check(() => assert.equal(compact("analysis_global_together").visibility, "VISIBLE"));
 check(() => assert.match(compact("analysis_global_together").primaryInsight.statementKey, /35 occurrences explicitement partagées/));
 check(() => assert.equal(snapshot("analysis_global_together_expanded", "OVERVIEW").payload.rows[0].labelKey, "Journée à la maison"));
