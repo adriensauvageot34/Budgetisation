@@ -63,13 +63,17 @@ const client = createClient(url, key, {
   ...(key.startsWith("sb_secret_") ? { global: { fetch: secretKeyFetch } } : {}),
 });
 const { GLOBAL_V2_LIVE_PROJECT, createGlobalV2CandidateContext, prepareGlobalV2LiveCandidate } = require(path.resolve(root, "src/server/analytics/global-v2-production-orchestrator.ts"));
+const { serializeGlobalV2PublicationManifest } = require(path.resolve(root, "src/server/analytics/materialization/global-v2.ts"));
 const { canonicalSerializeQueryParams } = require(path.resolve(root, "src/query-api/request/cache-key.ts"));
 const context = await createGlobalV2CandidateContext({ client, householdId, asOf });
 const candidate = await prepareGlobalV2LiveCandidate({ project: GLOBAL_V2_LIVE_PROJECT, client, context, implementationIdentity });
+const manifestWire = serializeGlobalV2PublicationManifest(candidate.manifest);
 const editorial = candidate.artifacts.find((entry) => entry.payload.editorial?.schemaVersion === "persona-editorial@v1")?.payload.editorial;
 if (!editorial || editorial.persons.length !== 2) throw new TypeError("GLOBAL_PERSONA_EDITORIAL_NOT_READY");
 const editorialBytes = Buffer.byteLength(JSON.stringify(editorial), "utf8");
 if (editorialBytes > 48 * 1024) throw new TypeError(`GLOBAL_PERSONA_EDITORIAL_NOT_COMPACT:${editorialBytes}`);
+const manifestBytes = Buffer.byteLength(JSON.stringify(manifestWire), "utf8");
+if (manifestBytes > 2_000_000) throw new TypeError(`GLOBAL_MANIFEST_NOT_COMPACT:${manifestBytes}`);
 const digest = (value) => createHash("sha256").update(canonicalSerializeQueryParams(value)).digest("hex");
 const asOfMonth = `${asOf.slice(0, 7)}-01`;
 const sourceRevision = Number(candidate.dataRevision);
@@ -78,7 +82,7 @@ const publicationId = candidate.candidateId;
 const summary = {
   publicationId, sourceRevision, baseRevision, nextRevision: baseRevision + 1,
   artifactCount: candidate.artifacts.length, snapshotCount: candidate.snapshots.length,
-  editorialBytes,
+  editorialBytes, manifestBytes,
   vehicleCost: editorial.vehicleHouseholdCost.totalIdentifiedCost,
   permitCost: editorial.persons[0].personalUniverses.permit.cost,
   photoNetCost: editorial.persons[0].personalUniverses.photo.netCost,
@@ -140,7 +144,7 @@ for (const [table, rows, keyColumn, batchSize] of [["analytics_artifacts", artif
     if (index % 60 === 0 || index + batchSize >= missingRows.length) process.stderr.write(`GLOBAL_STAGE_PROGRESS ${table} ${Math.min(index + batchSize, missingRows.length)}/${missingRows.length}\n`);
   }
 }
-const { error: sealError } = await client.rpc("attach_global_v2_manifest", { p_publication_id: publicationId, p_household_id: householdId, p_manifest: candidate.manifest });
+const { error: sealError } = await client.rpc("attach_global_v2_manifest", { p_publication_id: publicationId, p_household_id: householdId, p_manifest: manifestWire });
 if (sealError) throw sealError;
 const { data: published, error: publishError } = await client.rpc("publish_global_v2_materialization", { p_publication_id: publicationId, p_expected_analytics_revision: baseRevision });
 if (publishError) throw publishError;
