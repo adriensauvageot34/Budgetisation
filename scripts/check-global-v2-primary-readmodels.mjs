@@ -336,6 +336,37 @@ check(() => assert.equal(JSON.stringify(publishedPersonaProfile), overviewBefore
 check(() => assert.equal(JSON.stringify([detailA, detailB]).includes("shared.must-not-leak"), false));
 check(() => assert.equal(JSON.stringify([detailA, detailB]).includes("household.must-not-leak"), false));
 check(() => assert.doesNotMatch(JSON.stringify([detailA, detailB]), /allTraits|evidenceRefs|signalRefs|sourceModules|ownerOutputs|selection|explanation|reasonCodes|inputHash/u));
+check(() => assert.equal(query.PERSONA_DETAIL_INDEX_SELECTION_POLICY_VERSION, "persona-detail-index-owner-diversity@v1"));
+const basePersonalNeedTrait = personAProfile.allTraits.find(({ semanticKey }) => semanticKey === "need:read-model-personal");
+const diversityNeeds = Array.from({ length: 6 }, (_, index) => ({
+  ...structuredClone(basePersonalNeedTrait),
+  traitId: `zz-owner-diversity:need:${String(index).padStart(2, "0")}`,
+  semanticKey: `need:owner-diversity-${String(index).padStart(2, "0")}`,
+  entityRefs: [`need:owner-diversity-${String(index).padStart(2, "0")}`],
+}));
+const diversityProfile = {
+  ...structuredClone(personAProfile),
+  allTraits: [...structuredClone(personAProfile.allTraits), ...diversityNeeds],
+};
+const diversitySource = { ...personaProfile, profiles: [diversityProfile] };
+const manyMobilitySummaries = Array.from({ length: 30 }, (_, index) => mobilitySummary(
+  `personal-mobility:${String(index).padStart(32, "0")}`,
+  personAId,
+  index % 2 === 0 ? "WORK_COMMUTE" : "FRIEND_VISIT",
+));
+const diversityDetail = query.projectPublishedPersonaDetailIndex(diversitySource, personAId, { personalMobilitySummaries: manyMobilitySummaries });
+const reversedDiversityDetail = query.projectPublishedPersonaDetailIndex(
+  { ...diversitySource, profiles: [{ ...diversityProfile, allTraits: [...diversityProfile.allTraits].reverse(), featuredTraits: [...diversityProfile.featuredTraits].reverse() }] },
+  personAId,
+  { personalMobilitySummaries: [...manyMobilitySummaries].reverse() },
+);
+check(() => assert.deepEqual(reversedDiversityDetail, diversityDetail));
+check(() => assert.equal(diversityDetail.blocks.length, query.PERSONA_DETAIL_INDEX_MAX_BLOCKS));
+check(() => assert.equal(diversityNeeds.every(({ semanticKey }) => diversityDetail.blocks.some((block) => block.semanticKey === semanticKey)), true));
+check(() => assert.ok(diversityDetail.blocks.filter(({ blockId }) => blockId.startsWith("mobility-summary:")).length < query.PERSONA_DETAIL_INDEX_MAX_BLOCKS));
+check(() => assert.deepEqual(diversityDetail.blocks.map(({ blockId }) => blockId), [...diversityDetail.blocks.map(({ blockId }) => blockId)].sort()));
+check(() => assert.ok(Buffer.byteLength(JSON.stringify(diversityDetail), "utf8") <= query.PERSONA_DETAIL_INDEX_PAYLOAD_BUDGET_BYTES));
+check(() => assert.doesNotMatch(JSON.stringify(diversityDetail), /rawLegs|allTraits|ownerOutputs/u));
 const hugeEvidenceDetailSource = structuredClone(detailSource);
 const hugeRefs = Array.from({ length: 10_000 }, (_, index) => `engine-evidence:${String(index).padStart(5, "0")}:${"x".repeat(64)}`);
 const hugePersonA = hugeEvidenceDetailSource.profiles.find((profile) => profile.scope === "PERSONAL" && profile.subject.personId === personAId);

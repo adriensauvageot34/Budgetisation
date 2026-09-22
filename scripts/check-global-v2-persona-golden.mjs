@@ -460,7 +460,16 @@ const adapterInput = {
   personIds: [adrien, manon],
   displayNamesByPersonId: { [adrien]: "Adrien", [manon]: "Manon" },
   m1: { recurrences: {
-    series: [{ recurrenceId: "card-only" }, { recurrenceId: "beneficiary-without-proof" }, { recurrenceId: "beneficiary-not-payer" }, { recurrenceId: "single-beneficiary" }],
+    series: [
+      { recurrenceId: "card-only" },
+      { recurrenceId: "beneficiary-without-proof" },
+      { recurrenceId: "beneficiary-not-payer" },
+      { recurrenceId: "single-beneficiary" },
+      { recurrenceId: "91e58dd4-1a8d-536f-a841-eff33c136228" },
+      { recurrenceId: "b2abae46-3378-5f09-897c-7c44eed28073" },
+      { recurrenceId: "24c0cb89-34bf-5e2a-881d-4d4f9f7b694a" },
+      { recurrenceId: "6ceae158-ebba-5208-9d41-85eac3bd4dde" },
+    ],
     personalCostAuthorities: [
       personalCostAuthority({ authorityId: "card-only", recurrenceId: "card-only", attributionState: "UNKNOWN", evidenceRefs: [] }),
       personalCostAuthority({ authorityId: "beneficiary-without-proof", recurrenceId: "beneficiary-without-proof", attributionState: "PERSONAL", personId: adrien, evidenceRefs: [], typicalOccurrenceAmount: "12" }),
@@ -524,8 +533,38 @@ check(() => assert.equal(beneficiarySignal.beneficiaryPersonId, manon));
 check(() => assert.equal(beneficiarySignal.entityRef, "recurrence:beneficiary-not-payer"));
 check(() => assert.deepEqual(beneficiarySignal.evidenceRefs, ["beneficiary-not-payer", "recurrence:beneficiary-not-payer"]));
 check(() => assert.equal(adapted.signals.filter(({ signalType }) => signalType === "PERSONAL_COST").length, 1));
-check(() => assert.ok(adapted.signals.some(({ signalType, semanticKey }) => signalType === "DECLARED" && semanticKey === "subscription.chatgpt.adrien")));
+const expectedPersonalServiceUsage = new Map([
+  ["subscription.chatgpt.adrien", "recurrence:91e58dd4-1a8d-536f-a841-eff33c136228"],
+  ["subscription.qobuz.adrien", "recurrence:b2abae46-3378-5f09-897c-7c44eed28073"],
+  ["subscription.max.manon", "recurrence:24c0cb89-34bf-5e2a-881d-4d4f9f7b694a"],
+  ["subscription.netflix.manon", "recurrence:6ceae158-ebba-5208-9d41-85eac3bd4dde"],
+]);
+for (const [semanticKey, entityRef] of expectedPersonalServiceUsage) {
+  const usage = adapted.signals.find((signal) => signal.signalType === "DECLARED" && signal.semanticKey === semanticKey);
+  const usageTrait = adaptedTraits.find((trait) => trait.semanticKey === semanticKey);
+  check(() => assert.ok(usage));
+  check(() => assert.equal(usage.authority, "USER_VALIDATED"));
+  check(() => assert.equal(usage.dimension, "USAGE"));
+  check(() => assert.equal(usage.value, "PERSONAL_USAGE"));
+  check(() => assert.equal(usage.entityRef, entityRef));
+  check(() => assert.deepEqual(usageTrait.entityRefs, [entityRef]));
+  check(() => assert.equal(usageTrait.dimensions.includes("FINANCE"), false));
+  check(() => assert.ok(usage.limitations.includes("PERSONAL_PAYMENT_NOT_ESTABLISHED")));
+  check(() => assert.ok(usage.limitations.includes("PERSONAL_BENEFICIARY_COST_NOT_ESTABLISHED")));
+  check(() => assert.equal(adapted.signals.some((signal) => signal.signalType === "PERSONAL_COST" && signal.semanticKey === semanticKey), false));
+}
+const adapterInputWithoutServiceRecurrences = structuredClone(adapterInput);
+adapterInputWithoutServiceRecurrences.m1.recurrences.series = adapterInputWithoutServiceRecurrences.m1.recurrences.series
+  .filter(({ recurrenceId }) => ![...expectedPersonalServiceUsage.values()].includes(`recurrence:${recurrenceId}`));
+const usageWithoutObservedService = personaAdapters.buildGlobalV2PersonaSignals(adapterInputWithoutServiceRecurrences);
+for (const semanticKey of expectedPersonalServiceUsage.keys()) {
+  const usage = usageWithoutObservedService.signals.find((signal) => signal.signalType === "DECLARED" && signal.semanticKey === semanticKey);
+  check(() => assert.ok(usage));
+  check(() => assert.equal(usage.entityRef, undefined));
+  check(() => assert.ok(usage.limitations.includes("HOUSEHOLD_SUBSCRIPTION_NOT_OBSERVED")));
+}
 check(() => assert.equal(adapted.signals.some(({ signalType, semanticKey }) => signalType === "PERSONAL_COST" && semanticKey.includes("chatgpt")), false));
+check(() => assert.doesNotMatch(personaAdapters.buildGlobalPersonaDeclaredSignalsV1.toString(), /merchant|labelRef|toLowerCase|\.includes\(/u));
 check(() => assert.doesNotMatch(personaAdapters.adaptGlobalM1PersonalCostSignals.toString(), /payer|card|merchant|displayName|personaUsage|OpenAI|Ornikar|Coiffeur/u));
 const householdNeed = adaptedBySignalId.get("m2:need:courses_alimentaires_foyer");
 check(() => assert.equal(householdNeed.subject.kind, "HOUSEHOLD"));

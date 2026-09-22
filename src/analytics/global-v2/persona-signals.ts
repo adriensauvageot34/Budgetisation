@@ -170,6 +170,7 @@ export type DeclaredSignal = PersonaSignalBase & {
   readonly signalType: "DECLARED";
   readonly action: PersonaDeclaredSignalAction;
   readonly value?: PersonaDeclaredValue;
+  readonly entityRef?: string;
   readonly targetSemanticKeys?: readonly string[];
   readonly note?: string;
 };

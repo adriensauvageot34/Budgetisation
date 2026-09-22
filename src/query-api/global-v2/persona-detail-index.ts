@@ -22,6 +22,7 @@ export const PERSONA_DETAIL_INDEX_MAX_BLOCKS = 24;
 export const PERSONA_DETAIL_INDEX_MAX_METRICS_PER_BLOCK = 3;
 export const PERSONA_DETAIL_INDEX_MAX_ITEMS_PER_BLOCK = 6;
 export const PERSONA_DETAIL_INDEX_MAX_REFS_PER_BLOCK = 6;
+export const PERSONA_DETAIL_INDEX_SELECTION_POLICY_VERSION = "persona-detail-index-owner-diversity@v1" as const;
 
 export const personaOwnerDetailResourceCatalog = Object.freeze([
   "analysis_global_category_need_detail",
@@ -120,6 +121,45 @@ const mobilityContextRank: Readonly<Record<PersonalMobilitySummary["contextKind"
   UNKNOWN: 9,
 });
 
+type PersonaDetailSelectionCandidate = {
+  readonly block: PublishedPersonaDetailBlock;
+  readonly ownerFamily: string;
+  readonly priority: number;
+  readonly rank: number;
+};
+
+function compareSelectionCandidate(left: PersonaDetailSelectionCandidate, right: PersonaDetailSelectionCandidate): number {
+  return left.priority - right.priority || left.rank - right.rank || left.block.blockId.localeCompare(right.block.blockId);
+}
+
+/** Selects within the fixed block budget by cycling across owner families. */
+function selectDiverseDetailBlocks(candidates: readonly PersonaDetailSelectionCandidate[]): readonly PublishedPersonaDetailBlock[] {
+  const deduplicated = new Map<string, PersonaDetailSelectionCandidate>();
+  for (const candidate of [...candidates].sort(compareSelectionCandidate)) {
+    if (!deduplicated.has(candidate.block.blockId)) deduplicated.set(candidate.block.blockId, candidate);
+  }
+  const buckets = new Map<string, PersonaDetailSelectionCandidate[]>();
+  for (const candidate of deduplicated.values()) {
+    const bucket = buckets.get(candidate.ownerFamily) ?? [];
+    bucket.push(candidate);
+    buckets.set(candidate.ownerFamily, bucket);
+  }
+  for (const bucket of buckets.values()) bucket.sort(compareSelectionCandidate);
+  const selected: PersonaDetailSelectionCandidate[] = [];
+  while (selected.length < PERSONA_DETAIL_INDEX_MAX_BLOCKS) {
+    const activeFamilies = [...buckets.entries()]
+      .filter(([, bucket]) => bucket.length > 0)
+      .sort(([leftFamily, left], [rightFamily, right]) => compareSelectionCandidate(left[0]!, right[0]!) || leftFamily.localeCompare(rightFamily));
+    if (activeFamilies.length === 0) break;
+    for (const [, bucket] of activeFamilies) {
+      const candidate = bucket.shift();
+      if (candidate !== undefined) selected.push(candidate);
+      if (selected.length === PERSONA_DETAIL_INDEX_MAX_BLOCKS) break;
+    }
+  }
+  return selected.map(({ block }) => block).sort((left, right) => left.blockId.localeCompare(right.blockId));
+}
+
 function parseMetric(value: unknown): PublishedPersonaDetailSurfaceMetric {
   const record = parseStrictRecord(value, ["metricId", "labelKey", "displayValue"], "PublishedPersonaDetailSurfaceMetric");
   return {
@@ -200,64 +240,70 @@ export function projectPublishedPersonaDetailIndex(
     ...profile.allTraits.filter(({ entityRefs }) => entityRefs?.some((entityRef) => ownerResourceForEntityRef(entityRef) !== undefined) === true),
   ].map((trait) => [trait.traitId, trait] as const)).values()]
     .sort((left, right) => Number(featuredIds.has(right.traitId)) - Number(featuredIds.has(left.traitId)) || left.traitId.localeCompare(right.traitId));
-  const mobilityBlocks: readonly PublishedPersonaDetailBlock[] = [...(ownerInput.personalMobilitySummaries ?? [])]
+  const traitCandidates: readonly PersonaDetailSelectionCandidate[] = traits.map((trait, rank) => {
+    if (trait.scope !== "PERSONAL" || trait.subject.kind !== "PERSON" || trait.subject.personId !== personId) {
+      throw new TypeError("PERSONA_DETAIL_SOURCE_SUBJECT_MISMATCH");
+    }
+    const surfaceMetrics = Object.entries(trait.metrics ?? {})
+      .sort(([left], [right]) => left.localeCompare(right))
+      .slice(0, PERSONA_DETAIL_INDEX_MAX_METRICS_PER_BLOCK)
+      .map(([metricId, value]) => ({ metricId, labelKey: metricId, displayValue: String(value) }));
+    const items = [...(trait.children ?? [])]
+      .sort((left, right) => left.traitId.localeCompare(right.traitId))
+      .slice(0, PERSONA_DETAIL_INDEX_MAX_ITEMS_PER_BLOCK)
+      .map((child) => ({
+        itemId: child.traitId,
+        semanticKey: child.semanticKey,
+        kind: child.kind,
+        ...(child.temporalStatus === undefined ? {} : { temporalStatus: child.temporalStatus }),
+      }));
+    const detailRefs = [...new Map((trait.entityRefs ?? []).flatMap((entityRef) => {
+      const resource = ownerResourceForEntityRef(entityRef);
+      const ref = resource === undefined ? undefined : { resource, entityRef, role: "PRIMARY" as const };
+      return ref === undefined ? [] : [[`${resource}:${entityRef}:PRIMARY`, ref] as const];
+    })).values()]
+      .sort((left, right) => `${left.resource}:${left.entityRef}:${left.role}`.localeCompare(`${right.resource}:${right.entityRef}:${right.role}`))
+      .slice(0, PERSONA_DETAIL_INDEX_MAX_REFS_PER_BLOCK);
+    const block: PublishedPersonaDetailBlock = {
+      blockId: trait.traitId,
+      semanticKey: trait.semanticKey,
+      kind: trait.kind,
+      ...(trait.temporalStatus === undefined ? {} : { temporalStatus: trait.temporalStatus }),
+      surfaceMetrics,
+      items,
+      detailRefs,
+      availability: surfaceMetrics.length + items.length + detailRefs.length > 0 ? "AVAILABLE" : "PARTIAL",
+    };
+    return {
+      block,
+      ownerFamily: detailRefs[0]?.resource ?? `trait-family:${trait.family}`,
+      priority: featuredIds.has(trait.traitId) ? 0 : 1,
+      rank,
+    };
+  });
+  const mobilityCandidates: readonly PersonaDetailSelectionCandidate[] = [...(ownerInput.personalMobilitySummaries ?? [])]
     .filter((summary) => summary.personId === personId && summary.scope === "PERSONAL" && summary.support.status === "SUFFICIENT")
     .sort((left, right) => mobilityContextRank[left.contextKind] - mobilityContextRank[right.contextKind]
       || left.couplePresenceFilter.state.localeCompare(right.couplePresenceFilter.state)
       || left.entityRef.localeCompare(right.entityRef))
-    .slice(0, Math.floor(PERSONA_DETAIL_INDEX_MAX_BLOCKS / 2))
-    .map((summary) => ({
-      blockId: `mobility-summary:${summary.entityRef}`,
-      semanticKey: mobilitySemanticKey(summary),
-      kind: "MOBILITY",
-      surfaceMetrics: [],
-      items: [],
-      detailRefs: [{ ...summary.detailRef }],
-      availability: "AVAILABLE",
+    .map((summary, rank) => ({
+      block: {
+        blockId: `mobility-summary:${summary.entityRef}`,
+        semanticKey: mobilitySemanticKey(summary),
+        kind: "MOBILITY" as const,
+        surfaceMetrics: [],
+        items: [],
+        detailRefs: [{ ...summary.detailRef }],
+        availability: "AVAILABLE" as const,
+      },
+      ownerFamily: "analysis_global_place_mobility_detail:personal-mobility",
+      priority: 1,
+      rank,
     }));
-  const traitLimit = Math.max(0, PERSONA_DETAIL_INDEX_MAX_BLOCKS - mobilityBlocks.length);
   return parsePublishedPersonaDetailIndex({
     schemaVersion: PERSONA_DETAIL_INDEX_SCHEMA_VERSION,
     personId,
-    blocks: [
-      ...traits.slice(0, traitLimit)
-      .map((trait) => {
-        if (trait.scope !== "PERSONAL" || trait.subject.kind !== "PERSON" || trait.subject.personId !== personId) {
-          throw new TypeError("PERSONA_DETAIL_SOURCE_SUBJECT_MISMATCH");
-        }
-        const surfaceMetrics = Object.entries(trait.metrics ?? {})
-          .sort(([left], [right]) => left.localeCompare(right))
-          .slice(0, PERSONA_DETAIL_INDEX_MAX_METRICS_PER_BLOCK)
-          .map(([metricId, value]) => ({ metricId, labelKey: metricId, displayValue: String(value) }));
-        const items = [...(trait.children ?? [])]
-          .sort((left, right) => left.traitId.localeCompare(right.traitId))
-          .slice(0, PERSONA_DETAIL_INDEX_MAX_ITEMS_PER_BLOCK)
-          .map((child) => ({
-            itemId: child.traitId,
-            semanticKey: child.semanticKey,
-            kind: child.kind,
-            ...(child.temporalStatus === undefined ? {} : { temporalStatus: child.temporalStatus }),
-          }));
-        const detailRefs = [...new Map((trait.entityRefs ?? []).flatMap((entityRef) => {
-          const resource = ownerResourceForEntityRef(entityRef);
-          const ref = resource === undefined ? undefined : { resource, entityRef, role: "PRIMARY" as const };
-          return ref === undefined ? [] : [[`${resource}:${entityRef}:PRIMARY`, ref] as const];
-        })).values()]
-          .sort((left, right) => `${left.resource}:${left.entityRef}:${left.role}`.localeCompare(`${right.resource}:${right.entityRef}:${right.role}`))
-          .slice(0, PERSONA_DETAIL_INDEX_MAX_REFS_PER_BLOCK);
-        return {
-          blockId: trait.traitId,
-          semanticKey: trait.semanticKey,
-          kind: trait.kind,
-          ...(trait.temporalStatus === undefined ? {} : { temporalStatus: trait.temporalStatus }),
-          surfaceMetrics,
-          items,
-          detailRefs,
-          availability: surfaceMetrics.length + items.length + detailRefs.length > 0 ? "AVAILABLE" : "PARTIAL",
-        };
-      }),
-      ...mobilityBlocks,
-    ].sort((left, right) => left.blockId.localeCompare(right.blockId)),
+    blocks: selectDiverseDetailBlocks([...traitCandidates, ...mobilityCandidates]),
   });
 }
 
