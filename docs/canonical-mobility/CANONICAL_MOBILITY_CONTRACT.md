@@ -76,3 +76,28 @@ the context place. `OTHER_ELSEWHERE_CONFIRMED` requires an exact, overlapping,
 positive presence at another canonical place. Missing GPS, absent PersonDay
 coverage, and missing participation are never negative proof. Every other case
 is `UNKNOWN`; no projection claims that a person was physically alone.
+
+## P4.5-D personal mobility owner projection
+
+`PersonalMobilitySummary` is a compact M7 owner projection at person, personal
+context, and optional pairwise-presence-filter grain. Only `LINKED` context
+resolutions whose scope is `PERSONAL` are eligible. `SHARED` and `HOUSEHOLD`
+legs are never divided or silently attributed to a person.
+
+Every physical total is deduplicated by `mobilityLegId` inside its rollup.
+Overlapping context dimensions may describe the same leg, but `ALL_PERSONAL`
+counts that leg once. `legCount`, `distinctDayCount`, and LifeEvent-based
+`eventCount` remain separate units. The additive monetary authority is
+`mobility_usage_estimated_fuel_cost@v1`; `fuel_trip_estimate` is not summed and
+bank fuel payments never enter the projection. The result is gross estimated
+mobility usage, not incremental or counterfactual cost.
+
+Pairwise “without the other household member” summaries include only
+`OTHER_ELSEWHERE_CONFIRMED`. `UNKNOWN` and `CO_PRESENT_CONFIRMED` are excluded.
+Temporal and source-confidence distributions remain owner metadata. No
+`WORK_MIDDAY` or after-work pattern is synthesized without a semantic owner.
+
+Persona consumes only compact, person-isolated detail references to
+`analysis_global_place_mobility_detail`. Raw legs, exhaustive context links,
+owner output objects, and evidence collections stay behind M7. Persona does not
+recompute distance, days, fuel, presence, or cost, and its Overview is unchanged.

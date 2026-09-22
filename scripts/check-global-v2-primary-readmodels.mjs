@@ -273,8 +273,26 @@ const householdProfile = {
   featuredTraits: [{ ...structuredClone(personAProfile.featuredTraits[0]), traitId: "household:trait", semanticKey: "household.must-not-leak", subject: { kind: "HOUSEHOLD", householdId: "00000000-0000-4000-8000-000000000303" }, scope: "HOUSEHOLD" }],
 };
 const detailSource = { ...personaProfile, profiles: [sharedProfile, personBProfile, householdProfile, personAWithTwoTraits] };
-const detailA = query.projectPublishedPersonaDetailIndex(detailSource, personAId);
-const detailB = query.projectPublishedPersonaDetailIndex(detailSource, personBId);
+const mobilitySummary = (entityRef, personId, contextKind, overrides = {}) => ({
+  entityRef, personId, contextKind, scope: "PERSONAL", couplePresenceFilter: { state: "ANY" },
+  legCount: 4, distinctDayCount: 2, eventCount: 1, distanceKm: "42", durationSeconds: { status: "KNOWN", value: "2400", knownLegCount: 4, eligibleLegCount: 4 },
+  estimatedFuelLiters: "3", estimatedFuelCost: "6", mobilityCostMetric: { metricId: "mobility_usage_estimated_fuel_cost", methodVersion: "mobility_usage_estimated_fuel_cost@v1", provenance: "estimated", monetaryBasis: "estimated_cost" },
+  grossMobilityUsage: { status: "READY" }, incrementalMobilityCost: { status: "UNAVAILABLE", reasonCode: "COUNTERFACTUAL_MODEL_UNAVAILABLE" },
+  firstObservedDate: "2026-06-01", lastObservedDate: "2026-06-02", support: { status: "SUFFICIENT", observedLegCount: 4, distinctDayCount: 2, minimumDistinctDays: 2, policyRef: "global-m7-personal-mobility-distinct-day-support@v1" },
+  knowledgeState: "KNOWN", temporalQualityDistribution: { EXACT: 4, APPROXIMATE: 0, DATE_ONLY: 0, PROXY: 0, UNKNOWN: 0 }, sourceConfidenceDistribution: { HIGH: 4, MEDIUM: 0, LOW: 0, UNKNOWN: 0 },
+  detailRef: { resource: "analysis_global_place_mobility_detail", entityRef, role: "PRIMARY" }, evidenceRefs: ["owner:evidence"], inputHash: h("9"),
+  rawLegs: [{ secret: "must-not-copy-raw-leg" }], contextLinks: [{ secret: "must-not-copy-context-link" }], ownerOutput: { secret: "must-not-copy-owner-output" },
+  ...overrides,
+});
+const personalMobilitySummaries = [
+  mobilitySummary("personal-mobility:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", personAId, "WORK_COMMUTE"),
+  mobilitySummary("personal-mobility:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb", personBId, "FRIEND_VISIT"),
+  mobilitySummary("personal-mobility:cccccccccccccccccccccccccccccccc", personAId, "HEALTH", { support: { status: "LIMITED", observedLegCount: 1, distinctDayCount: 1, minimumDistinctDays: 2, policyRef: "global-m7-personal-mobility-distinct-day-support@v1" } }),
+  mobilitySummary("personal-mobility:dddddddddddddddddddddddddddddddd", personAId, "SHOPPING", { scope: "SHARED" }),
+];
+const overviewBeforeMobilityBridge = JSON.stringify(publishedPersonaProfile);
+const detailA = query.projectPublishedPersonaDetailIndex(detailSource, personAId, { personalMobilitySummaries });
+const detailB = query.projectPublishedPersonaDetailIndex(detailSource, personBId, { personalMobilitySummaries });
 check(() => assert.deepEqual(query.parsePublishedPersonaDetailIndex(detailA), detailA));
 check(() => assert.equal(query.publishedPersonaDetailIndexSchema.safeParse(detailA).success, true));
 rejects(() => query.parsePublishedPersonaDetailIndex({ ...detailA, ownerOutputs: [] }), /non autorisée|unrecognized_key/u);
@@ -285,7 +303,7 @@ const reversedDetailSource = {
     ? { ...profile, featuredTraits: [...profile.featuredTraits].reverse() }
     : profile),
 };
-check(() => assert.deepEqual(query.projectPublishedPersonaDetailIndex(reversedDetailSource, personAId), detailA));
+check(() => assert.deepEqual(query.projectPublishedPersonaDetailIndex(reversedDetailSource, personAId, { personalMobilitySummaries: [...personalMobilitySummaries].reverse() }), detailA));
 check(() => assert.deepEqual(detailA.blocks.find(({ blockId }) => blockId === secondTrait.traitId).surfaceMetrics.map(({ metricId }) => metricId), ["aMetric", "cMetric", "ignoredMetric"]));
 check(() => assert.notDeepEqual(detailA, detailB));
 check(() => assert.equal(detailA.personId, personAId));
@@ -305,6 +323,16 @@ check(() => assert.deepEqual(placeRollupBlock.detailRefs, [{ resource: "analysis
 check(() => assert.deepEqual(returnPatternBlock.detailRefs, [{ resource: "analysis_global_place_mobility_detail", entityRef: "person-place-return:read-model-pattern", role: "PRIMARY" }]));
 check(() => assert.deepEqual(placeRollupBlock.surfaceMetrics.map(({ metricId, displayValue }) => [metricId, displayValue]), [["distinctVisitDays", "2"], ["medianDurationMinutes", "40"], ["visitCount", "3"]]));
 check(() => assert.equal(JSON.stringify([placeRollupBlock, returnPatternBlock]).includes("ownerOutputs"), false));
+const mobilityBlockA = detailA.blocks.find(({ semanticKey }) => semanticKey === "mobility:work-commute");
+const mobilityBlockB = detailB.blocks.find(({ semanticKey }) => semanticKey === "mobility:friend-visit");
+check(() => assert.deepEqual(mobilityBlockA.detailRefs, [{ resource: "analysis_global_place_mobility_detail", entityRef: "personal-mobility:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", role: "PRIMARY" }]));
+check(() => assert.deepEqual(mobilityBlockA.surfaceMetrics, []));
+check(() => assert.ok(mobilityBlockB));
+check(() => assert.equal(detailA.blocks.some(({ semanticKey }) => semanticKey === "mobility:friend-visit"), false));
+check(() => assert.equal(detailA.blocks.some(({ semanticKey }) => semanticKey === "mobility:health"), false));
+check(() => assert.equal(detailA.blocks.some(({ semanticKey }) => semanticKey === "mobility:shopping"), false));
+check(() => assert.doesNotMatch(JSON.stringify([detailA, detailB]), /must-not-copy-raw-leg|must-not-copy-context-link|must-not-copy-owner-output/u));
+check(() => assert.equal(JSON.stringify(publishedPersonaProfile), overviewBeforeMobilityBridge));
 check(() => assert.equal(JSON.stringify([detailA, detailB]).includes("shared.must-not-leak"), false));
 check(() => assert.equal(JSON.stringify([detailA, detailB]).includes("household.must-not-leak"), false));
 check(() => assert.doesNotMatch(JSON.stringify([detailA, detailB]), /allTraits|evidenceRefs|signalRefs|sourceModules|ownerOutputs|selection|explanation|reasonCodes|inputHash/u));
@@ -313,7 +341,7 @@ const hugeRefs = Array.from({ length: 10_000 }, (_, index) => `engine-evidence:$
 const hugePersonA = hugeEvidenceDetailSource.profiles.find((profile) => profile.scope === "PERSONAL" && profile.subject.personId === personAId);
 hugePersonA.featuredTraits = hugePersonA.featuredTraits.map((trait) => ({ ...trait, evidenceRefs: hugeRefs, signalRefs: hugeRefs }));
 hugePersonA.allTraits = hugePersonA.allTraits.map((trait) => ({ ...trait, evidenceRefs: hugeRefs, signalRefs: hugeRefs }));
-const hugeEvidenceDetail = query.projectPublishedPersonaDetailIndex(hugeEvidenceDetailSource, personAId);
+const hugeEvidenceDetail = query.projectPublishedPersonaDetailIndex(hugeEvidenceDetailSource, personAId, { personalMobilitySummaries });
 check(() => assert.deepEqual(hugeEvidenceDetail, detailA));
 check(() => assert.ok(Buffer.byteLength(JSON.stringify(hugeEvidenceDetailSource), "utf8") > 1_000_000));
 check(() => assert.ok(Buffer.byteLength(JSON.stringify(detailA), "utf8") <= query.PERSONA_DETAIL_INDEX_SOFT_BUDGET_BYTES));

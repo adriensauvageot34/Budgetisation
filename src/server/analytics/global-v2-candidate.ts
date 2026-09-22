@@ -10,6 +10,7 @@ import {
   GlobalPublicationEngine,
   type GlobalPublicationDecision,
   type PersonaProfileOutput,
+  type PersonalMobilitySummary,
   type TimelineSemanticComparatorProjection,
   type TimelineSemanticProjection,
 } from "@/analytics/global-v2";
@@ -1434,6 +1435,18 @@ function momentDetailProjection(
   return { metrics, rows: [identityRow], peerObservations, ...(similarity === undefined ? {} : { similarity }), momentComponentRows: componentRows, componentGroups, ...(spentDuringContext === undefined ? {} : { spentDuringContext }) };
 }
 
+const personalMobilityContextLabels: Readonly<Record<string, string>> = Object.freeze({
+  ALL_PERSONAL: "Mobilité personnelle",
+  WORK_COMMUTE: "Mobilité liée au travail",
+  WORK_MIDDAY: "Mobilité de milieu de journée de travail",
+  FAMILY_VISIT: "Mobilité familiale",
+  FRIEND_VISIT: "Mobilité amicale",
+  HEALTH: "Mobilité santé",
+  SHOPPING: "Mobilité shopping personnelle",
+  LEISURE: "Mobilité loisirs",
+  OTHER: "Autre mobilité personnelle",
+});
+
 function placeProjection(output: GlobalV2OwnerOutput, labels: GlobalV2PresentationLabels): ModuleProjection {
   const places = arrayOf(at(output.output, "places")).flatMap((place) => {
     const placeId = stringOf(at(place, "placeId"));
@@ -1491,17 +1504,61 @@ function placeProjection(output: GlobalV2OwnerOutput, labels: GlobalV2Presentati
     const knowledgeState = stringOf(at(pattern, "knowledgeState")) === "PARTIAL" ? "PARTIAL" as const : "KNOWN" as const;
     return [row(output, index + 1, `person-place-return:${entityRef}`, personLabel(personId, labels, []), `${placeLabel(originPlaceId)} → ${placeLabel(stopPlaceId)} → ${placeLabel(destinationPlaceId)} · ${occurrenceCount} occurrences`, entityRef, knowledgeState)];
   });
+  const personalMobilityRows = arrayOf(at(output.output, "personalMobilitySummaries")).flatMap((summary, index) => {
+    const entityRef = stringOf(at(summary, "entityRef"));
+    const personId = stringOf(at(summary, "personId"));
+    const contextKind = stringOf(at(summary, "contextKind"));
+    const legCount = numberOf(at(summary, "legCount"));
+    const distinctDayCount = numberOf(at(summary, "distinctDayCount"));
+    if (entityRef === undefined || personId === undefined || contextKind === undefined || legCount === undefined || distinctDayCount === undefined) return [];
+    const filtered = stringOf(at(summary, "couplePresenceFilter", "state")) === "OTHER_ELSEWHERE_CONFIRMED";
+    const knowledgeState = stringOf(at(summary, "knowledgeState")) === "PARTIAL" ? "PARTIAL" as const : "KNOWN" as const;
+    const label = `${personLabel(personId, labels, [])} · ${personalMobilityContextLabels[contextKind] ?? contextKind}${filtered ? " · autre membre confirmé ailleurs" : ""}`;
+    return [row(output, index + 1, `personal-mobility:${entityRef}`, label, `${legCount} legs · ${distinctDayCount} jours distincts`, entityRef, knowledgeState)];
+  });
   return {
     ...(headline === undefined ? {} : {
       primaryInsight: presentationInsight(output, "primary-place", headline.label, `${formatNumber(at(headline.place, "visitCount"), 0)} visites observées · Votre lieu le plus fréquenté sur la période`, { primaryMetricRef: `global-m7:${headline.placeId}`, entityRefs: [`place:${headline.placeId}`] }),
     }),
     kpis: places.slice(0, 3).map(({ place, placeId, label }, index) => kpi(output, `kpi:places:${String(index).padStart(2, "0")}`, label, `${formatNumber(at(place, "visitCount"), 0) ?? "0"} visites`, `global-m7:${placeId}`)),
     sections: { OVERVIEW: { rows: placeRows }, BREAKDOWN: { rows: financeRows }, EVOLUTION: { rows: lifecycleRows } },
-    detailRows: [...placeRows, ...personPlaceRows, ...returnPatternRows],
+    detailRows: [...placeRows, ...personPlaceRows, ...returnPatternRows, ...personalMobilityRows],
   };
 }
 
 function placeDetailProjection(output: GlobalV2OwnerOutput, labels: GlobalV2PresentationLabels, entityRef: string): SectionProjection | undefined {
+  const personalSummary = arrayOf(at(output.output, "personalMobilitySummaries")).find((entry) => stringOf(at(entry, "entityRef")) === entityRef);
+  if (personalSummary !== undefined) {
+    const personId = stringOf(at(personalSummary, "personId"));
+    const contextKind = stringOf(at(personalSummary, "contextKind"));
+    const legCount = numberOf(at(personalSummary, "legCount"));
+    const distinctDayCount = numberOf(at(personalSummary, "distinctDayCount"));
+    const eventCount = numberOf(at(personalSummary, "eventCount"));
+    const distanceKm = stringOf(at(personalSummary, "distanceKm"));
+    const estimatedFuelLiters = stringOf(at(personalSummary, "estimatedFuelLiters"));
+    const estimatedFuelCost = stringOf(at(personalSummary, "estimatedFuelCost"));
+    if (personId === undefined || contextKind === undefined || legCount === undefined || distinctDayCount === undefined || eventCount === undefined || distanceKm === undefined || estimatedFuelLiters === undefined || estimatedFuelCost === undefined) return undefined;
+    const knowledgeState = stringOf(at(personalSummary, "knowledgeState")) === "PARTIAL" ? "PARTIAL" as const : "KNOWN" as const;
+    const presenceState = stringOf(at(personalSummary, "couplePresenceFilter", "state"));
+    return {
+      metrics: [
+        metric(output, "distinct-day-count", "Jours distincts", String(distinctDayCount), knowledgeState),
+        metric(output, "distance-km", "Distance", `${formatNumber(distanceKm, 3)} km`, knowledgeState),
+        metric(output, "estimated-fuel-cost", "Coût carburant d’usage estimé", formatMoney(estimatedFuelCost)!, knowledgeState),
+        metric(output, "estimated-fuel-liters", "Carburant estimé", `${formatNumber(estimatedFuelLiters, 3)} L`, knowledgeState),
+        metric(output, "event-count", "Événements distincts", String(eventCount), knowledgeState),
+        metric(output, "leg-count", "Legs", String(legCount), knowledgeState),
+      ],
+      rows: [
+        row(output, 1, "person", "Personne", personLabel(personId, labels, []), entityRef, "KNOWN"),
+        row(output, 2, "context", "Contexte", personalMobilityContextLabels[contextKind] ?? contextKind, entityRef, "KNOWN"),
+        row(output, 3, "presence-filter", "Filtre de présence", presenceState === "OTHER_ELSEWHERE_CONFIRMED" ? "Autre membre du foyer confirmé ailleurs" : "Toute présence", entityRef, "KNOWN"),
+        row(output, 4, "first-observed", "Première observation", stringOf(at(personalSummary, "firstObservedDate")) ?? "Indisponible", entityRef, knowledgeState),
+        row(output, 5, "last-observed", "Dernière observation", stringOf(at(personalSummary, "lastObservedDate")) ?? "Indisponible", entityRef, knowledgeState),
+        row(output, 6, "cost-basis", "Nature du coût", "Coût carburant d’usage estimé · coût incrémental indisponible", entityRef, "KNOWN"),
+      ],
+    };
+  }
   const rollup = arrayOf(at(output.output, "personPlaceRollups")).find((entry) => stringOf(at(entry, "entityRef")) === entityRef);
   if (rollup !== undefined) {
     const placeId = stringOf(at(rollup, "placeId"));
@@ -1778,6 +1835,7 @@ export function buildGlobalV2CandidateFromOwnerOutputs(input: GlobalV2CandidateI
     ]),
   ] as const;
   const outputsByModule = new Map(outputs.map((output) => [output.moduleKey, output] as const));
+  const personalMobilitySummaries = arrayOf(at(outputsByModule.get("GEO_MOBILITY")?.output, "personalMobilitySummaries")) as readonly PersonalMobilitySummary[];
   const projections = new Map(outputs.map((output) => [output.moduleKey, projectModule(output, outputsByModule, presentationLabels, input.personIds)] as const));
   const implementation = {
     status: "KNOWN" as const,
@@ -1975,7 +2033,7 @@ export function buildGlobalV2CandidateFromOwnerOutputs(input: GlobalV2CandidateI
       const momentDetail = ownerOutput.moduleKey === "MOMENTS" ? momentDetailProjection(ownerOutput, detailRow.entityRef!, input.candidateAdapters.timeline, input.momentComponentPresentation, scopeHash) : undefined;
       const placeDetail = ownerOutput.moduleKey === "GEO_MOBILITY" ? placeDetailProjection(ownerOutput, presentationLabels, detailRow.entityRef!) : undefined;
       const personaDetailIndex = ownerOutput.moduleKey === "PERSONAS" && personaProfile !== undefined && detailRow.entityRef!.startsWith("person:")
-        ? projectPublishedPersonaDetailIndex(personaProfile, detailRow.entityRef!.slice("person:".length) as PersonId)
+        ? projectPublishedPersonaDetailIndex(personaProfile, detailRow.entityRef!.slice("person:".length) as PersonId, { personalMobilitySummaries })
         : undefined;
       const detail = economicDetail ?? categoryNeedDetail ?? routineDetail ?? momentDetail ?? placeDetail;
       const destinations: readonly GlobalNavigationDestination[] = detailRow.entityRef!.startsWith("category:") ? [

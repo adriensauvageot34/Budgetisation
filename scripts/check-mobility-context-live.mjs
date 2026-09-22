@@ -139,17 +139,41 @@ try {
   }));
   const { buildGlobalM7MobilityContextAuthority } = require(path.resolve(root, "src/analytics/global-v2/mobility-context.ts"));
   const result = buildGlobalM7MobilityContextAuthority({ householdId, householdTimeZone, householdPersonIds, mobilityLegs, lifeEventContexts, placeVisits, personDays });
+  const { buildGlobalM7PersonalMobilityAuthority } = require(path.resolve(root, "src/analytics/global-v2/personal-mobility.ts"));
+  const personalMobility = buildGlobalM7PersonalMobilityAuthority({
+    mobilityLegs,
+    contextLinks: result.contextLinks,
+    presenceResolutions: result.presenceResolutions,
+  });
   assert.equal(result.sourceLegCount, result.physicalTotals.physicalLegCount);
   assert.equal(new Set(result.contextLinks.map(({ contextResolutionId }) => contextResolutionId)).size, result.contextLinks.length);
   assert.equal(result.contextLinks.some((link) => "estimatedFuelCost" in link || "distanceKm" in link || "estimatedFuelLiters" in link), false);
   assert.equal(result.liveWrites, "NONE");
+  assert.deepEqual(personalMobility.physicalTotals, result.physicalTotals);
+  assert.equal(personalMobility.costMetricId, "mobility_usage_estimated_fuel_cost");
+  assert.equal(personalMobility.workMiddaySummaryReady, false);
+  assert.equal(personalMobility.afterWorkPatternReady, false);
+  assert.equal(personalMobility.liveWrites, "NONE");
   const counts = (values) => Object.fromEntries([...values.reduce((map, value) => map.set(value, (map.get(value) ?? 0) + 1), new Map())].sort(([left], [right]) => left.localeCompare(right)));
+  const confirmedWithoutPartner = (contextKind) => personalMobility.summaries.filter((summary) =>
+    summary.contextKind === contextKind && summary.couplePresenceFilter.state === "OTHER_ELSEWHERE_CONFIRMED");
   console.log(JSON.stringify({
     sourceLegCount: result.sourceLegCount,
     physicalTotals: result.physicalTotals,
     contextLinkStates: counts(result.contextLinks.map(({ linkState }) => linkState)),
     linkedPurposes: counts(result.contextLinks.filter(({ linkState }) => linkState === "LINKED").map(({ purpose }) => purpose)),
     pairwisePresenceStates: counts(result.presenceResolutions.map(({ state }) => state)),
+    personalMobility: {
+      summaryCount: personalMobility.summaries.length,
+      summaryContexts: counts(personalMobility.summaries.map(({ contextKind }) => contextKind)),
+      workSummaryCount: personalMobility.summaries.filter(({ contextKind }) => contextKind === "WORK_COMMUTE").length,
+      familyWithoutPartnerEventCount: confirmedWithoutPartner("FAMILY_VISIT").reduce((total, { eventCount }) => total + eventCount, 0),
+      friendWithoutPartnerEventCount: confirmedWithoutPartner("FRIEND_VISIT").reduce((total, { eventCount }) => total + eventCount, 0),
+      physicalTotals: personalMobility.physicalTotals,
+      workMiddaySummaryReady: personalMobility.workMiddaySummaryReady,
+      afterWorkPatternReady: personalMobility.afterWorkPatternReady,
+      costMetricId: personalMobility.costMetricId,
+    },
     liveWrites: result.liveWrites,
   }, null, 2));
 } finally {

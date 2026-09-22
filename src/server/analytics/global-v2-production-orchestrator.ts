@@ -33,6 +33,7 @@ import { resolveGlobalM1HouseholdAuthority } from "./global-v2-economic-authorit
 import { resolveGlobalM2HouseholdAuthority } from "./global-v2-category-needs-authority";
 import { resolveGlobalM5PersonAuthority } from "./global-v2-relationship-authority";
 import { resolveGlobalM6MomentAuthority } from "./global-v2-moment-authority";
+import { resolveGlobalM7PersonalMobilityAuthority } from "./global-v2-personal-mobility-authority";
 import { resolveGlobalM7PlaceAuthority } from "./global-v2-place-authority";
 import { resolveGlobalM8PurchaseAuthority } from "./global-v2-purchase-authority";
 import { buildGlobalV2PersonaSignals, resolveGlobalPersonaProductObservations } from "./global-v2-persona-signals";
@@ -101,12 +102,28 @@ export async function resolveGlobalV2ProductionOwnerOutputs(repository: Canonica
   const resolver = new FactSourceResolver(repository);
 
   const m8 = await resolveGlobalM8PurchaseAuthority({ repository, scope });
-  const [m2, m6, m7, productObservations] = await Promise.all([
+  const [m2, m6, m7Place, m7PersonalMobility, productObservations] = await Promise.all([
     resolveGlobalM2HouseholdAuthority({ repository, resolver, targetMonth, purchaseAuthority: m8 }),
     resolveGlobalM6MomentAuthority({ repository, scope }),
     resolveGlobalM7PlaceAuthority({ repository, scope }),
+    resolveGlobalM7PersonalMobilityAuthority({ repository, certifiedThrough }),
     resolveGlobalPersonaProductObservations({ repository, certifiedThrough: parseLocalDate(certifiedThrough) }),
   ]);
+  const m7 = {
+    ...m7Place,
+    personalMobilitySummaries: m7PersonalMobility.summaries,
+    personalMobilityCapability: {
+      methodVersion: m7PersonalMobility.methodVersion,
+      costMetricId: m7PersonalMobility.costMetricId,
+      physicalTotals: m7PersonalMobility.physicalTotals,
+      workMiddaySummaryReady: m7PersonalMobility.workMiddaySummaryReady,
+      afterWorkPatternReady: m7PersonalMobility.afterWorkPatternReady,
+      contextAuthorityHash: m7PersonalMobility.contextAuthorityHash,
+      inputHash: m7PersonalMobility.inputHash,
+      outputHash: m7PersonalMobility.outputHash,
+      liveWrites: m7PersonalMobility.liveWrites,
+    },
+  };
   const m1 = m2.m1;
 
   const occurrenceMonths = eligiblePeriods.map(({ month }) => parseYearMonth(month.slice(0, 7)));
@@ -303,7 +320,7 @@ export async function resolveGlobalV2ProductionOwnerOutputs(repository: Canonica
     { moduleKey: "RHYTHM", owner: "buildGlobalActivityRhythm", output: { rhythms, activityCostProfiles }, knowledge: rhythms.length > 0 ? "KNOWN" : "UNKNOWN", capabilityState: rhythms.length > 0 ? "AVAILABLE" : "PARTIAL", reasonCodes: rhythms.length > 0 ? [] : ["NO_OBSERVABLE_ACTIVITY"], evidenceRefs: evidence("M4", { rhythms, activityCostProfiles }) },
     { moduleKey: "RELATIONSHIPS", owner: "GlobalM5PersonAuthority", output: m5OwnerOutput, knowledge: m5OwnerOutput.some((result) => result.insights.length > 0) ? "PARTIAL" : "UNKNOWN", capabilityState: m5.every((result) => result.evaluationStatus === "AUTHORITY_GATED") ? "UNAVAILABLE" : "PARTIAL", reasonCodes: m5.every((result) => result.evaluationStatus === "AUTHORITY_GATED") ? ["AUTHORITY_GATED_CURRENT_REGIME"] : ["AUTHORITY_GATED_RELATIONSHIP_PROVIDERS"], evidenceRefs: evidence("M5", { m5OwnerOutput, productPlanDigest: m5Product.plan.planDigest }) },
     { moduleKey: "MOMENTS", owner: "GlobalM6MomentAuthority", output: m6, knowledge: globalV2M6HasPresentationContent(m6) ? "PARTIAL" : "UNKNOWN", capabilityState: "PARTIAL", reasonCodes: globalV2M6HasPresentationContent(m6) ? ["MOMENT_PLACE_FACETS_PARTIAL"] : ["NO_COMPARABLE_MOMENT"], evidenceRefs: evidence("M6", m6) },
-    { moduleKey: "GEO_MOBILITY", owner: "GlobalM7PlaceAuthority", output: m7, knowledge: hasItems(m7, ["places", "visits", "placeResults"]) ? "KNOWN" : "UNKNOWN", capabilityState: "PARTIAL", reasonCodes: ["AUTHORITY_GATED_MOBILITY"], evidenceRefs: evidence("M7", m7) },
+    { moduleKey: "GEO_MOBILITY", owner: "GlobalM7MobilityAuthority", output: m7, knowledge: hasItems(m7, ["places", "visits", "placeResults", "personalMobilitySummaries"]) ? "KNOWN" : "UNKNOWN", capabilityState: "PARTIAL", reasonCodes: ["INCREMENTAL_MOBILITY_COST_UNAVAILABLE", "WORK_MIDDAY_AUTHORITY_UNAVAILABLE"], evidenceRefs: evidence("M7", m7) },
     { moduleKey: "CONSUMPTION", owner: "GlobalM8PurchaseAuthority", output: m8, knowledge: hasItems(m8, ["events", "merchants"]) ? "PARTIAL" : "UNKNOWN", capabilityState: "PARTIAL", reasonCodes: ["PURCHASE_EVENT_COVERAGE_PARTIAL"], evidenceRefs: evidence("M8", m8) },
     { moduleKey: "TOGETHER", owner: "SharedParticipationResolver", output: m10, knowledge: m10.universes.length > 0 ? "PARTIAL" : "UNKNOWN", capabilityState: context.personIds.length === 2 ? "PARTIAL" : "UNAVAILABLE", reasonCodes: m10.universes.length > 0 ? ["PARTICIPATION_COVERAGE_VISIBLE"] : ["SHARED_UNIVERSE_UNAVAILABLE"], evidenceRefs: evidence("M10", m10) },
     { moduleKey: "PERSONAS", owner: "buildGlobalV2PersonaSignals", output: m9, knowledge: persona.profile.profiles.length > 0 ? "PARTIAL" : personaMetrics.length > 0 ? "PARTIAL" : "UNKNOWN", capabilityState: context.personIds.length > 0 ? "PARTIAL" : "UNAVAILABLE", reasonCodes: persona.limitations, evidenceRefs: evidence("M9", m9) },

@@ -4,6 +4,7 @@ import {
   type PersonaTemporalStatus,
   type PersonaTraitKind,
 } from "../../analytics/global-v2/persona-signals";
+import type { PersonalMobilitySummary } from "../../analytics/global-v2/personal-mobility";
 import type { PersonId } from "../../core/identity";
 import {
   createRuntimeSchema,
@@ -96,9 +97,28 @@ function assertCanonical<T>(values: readonly T[], identity: (value: T) => string
 function ownerResourceForEntityRef(entityRef: string): PersonaOwnerDetailResource | undefined {
   if (entityRef.startsWith("need:")) return "analysis_global_category_need_detail";
   if (entityRef.startsWith("recurrence:")) return "analysis_global_economic_recurrence_detail";
-  if (entityRef.startsWith("person-place:") || entityRef.startsWith("person-place-return:")) return "analysis_global_place_mobility_detail";
+  if (entityRef.startsWith("person-place:") || entityRef.startsWith("person-place-return:") || entityRef.startsWith("personal-mobility:")) return "analysis_global_place_mobility_detail";
   return undefined;
 }
+
+function mobilitySemanticKey(summary: PersonalMobilitySummary): string {
+  const context = summary.contextKind.toLowerCase().replaceAll("_", "-");
+  const presence = summary.couplePresenceFilter.state === "OTHER_ELSEWHERE_CONFIRMED" ? ":without-household-partner-confirmed" : "";
+  return `mobility:${context}${presence}`;
+}
+
+const mobilityContextRank: Readonly<Record<PersonalMobilitySummary["contextKind"], number>> = Object.freeze({
+  ALL_PERSONAL: 0,
+  WORK_COMMUTE: 1,
+  FAMILY_VISIT: 2,
+  FRIEND_VISIT: 3,
+  HEALTH: 4,
+  SHOPPING: 5,
+  WORK_MIDDAY: 6,
+  LEISURE: 7,
+  OTHER: 8,
+  UNKNOWN: 9,
+});
 
 function parseMetric(value: unknown): PublishedPersonaDetailSurfaceMetric {
   const record = parseStrictRecord(value, ["metricId", "labelKey", "displayValue"], "PublishedPersonaDetailSurfaceMetric");
@@ -167,7 +187,11 @@ export function parsePublishedPersonaDetailIndex(value: unknown): PublishedPerso
   return parsed;
 }
 
-export function projectPublishedPersonaDetailIndex(input: PersonaProfileOutput, personId: PersonId): PublishedPersonaDetailIndex {
+export function projectPublishedPersonaDetailIndex(
+  input: PersonaProfileOutput,
+  personId: PersonId,
+  ownerInput: { readonly personalMobilitySummaries?: readonly PersonalMobilitySummary[] } = {},
+): PublishedPersonaDetailIndex {
   const profile = input.profiles.find((candidate) => candidate.scope === "PERSONAL" && candidate.subject.kind === "PERSON" && candidate.subject.personId === personId);
   if (profile === undefined) throw new TypeError("PERSONA_DETAIL_PERSON_PROFILE_MISSING");
   const featuredIds = new Set(profile.featuredTraits.map(({ traitId }) => traitId));
@@ -175,12 +199,28 @@ export function projectPublishedPersonaDetailIndex(input: PersonaProfileOutput, 
     ...profile.featuredTraits,
     ...profile.allTraits.filter(({ entityRefs }) => entityRefs?.some((entityRef) => ownerResourceForEntityRef(entityRef) !== undefined) === true),
   ].map((trait) => [trait.traitId, trait] as const)).values()]
-    .sort((left, right) => Number(featuredIds.has(right.traitId)) - Number(featuredIds.has(left.traitId)) || left.traitId.localeCompare(right.traitId))
-    .slice(0, PERSONA_DETAIL_INDEX_MAX_BLOCKS);
+    .sort((left, right) => Number(featuredIds.has(right.traitId)) - Number(featuredIds.has(left.traitId)) || left.traitId.localeCompare(right.traitId));
+  const mobilityBlocks: readonly PublishedPersonaDetailBlock[] = [...(ownerInput.personalMobilitySummaries ?? [])]
+    .filter((summary) => summary.personId === personId && summary.scope === "PERSONAL" && summary.support.status === "SUFFICIENT")
+    .sort((left, right) => mobilityContextRank[left.contextKind] - mobilityContextRank[right.contextKind]
+      || left.couplePresenceFilter.state.localeCompare(right.couplePresenceFilter.state)
+      || left.entityRef.localeCompare(right.entityRef))
+    .slice(0, Math.floor(PERSONA_DETAIL_INDEX_MAX_BLOCKS / 2))
+    .map((summary) => ({
+      blockId: `mobility-summary:${summary.entityRef}`,
+      semanticKey: mobilitySemanticKey(summary),
+      kind: "MOBILITY",
+      surfaceMetrics: [],
+      items: [],
+      detailRefs: [{ ...summary.detailRef }],
+      availability: "AVAILABLE",
+    }));
+  const traitLimit = Math.max(0, PERSONA_DETAIL_INDEX_MAX_BLOCKS - mobilityBlocks.length);
   return parsePublishedPersonaDetailIndex({
     schemaVersion: PERSONA_DETAIL_INDEX_SCHEMA_VERSION,
     personId,
-    blocks: traits
+    blocks: [
+      ...traits.slice(0, traitLimit)
       .map((trait) => {
         if (trait.scope !== "PERSONAL" || trait.subject.kind !== "PERSON" || trait.subject.personId !== personId) {
           throw new TypeError("PERSONA_DETAIL_SOURCE_SUBJECT_MISMATCH");
@@ -215,7 +255,9 @@ export function projectPublishedPersonaDetailIndex(input: PersonaProfileOutput, 
           detailRefs,
           availability: surfaceMetrics.length + items.length + detailRefs.length > 0 ? "AVAILABLE" : "PARTIAL",
         };
-      }).sort((left, right) => left.blockId.localeCompare(right.blockId)),
+      }),
+      ...mobilityBlocks,
+    ].sort((left, right) => left.blockId.localeCompare(right.blockId)),
   });
 }
 

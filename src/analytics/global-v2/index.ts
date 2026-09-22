@@ -191,6 +191,16 @@ export {
   type MobilityTemporalQuality,
   type MobilityTemporalRelation,
 } from "./mobility-context";
+export {
+  GLOBAL_M7_PERSONAL_MOBILITY_METHOD_VERSION,
+  GLOBAL_M7_PERSONAL_MOBILITY_SUPPORT_POLICY,
+  PERSONAL_MOBILITY_ROLLUP_METRIC_ID,
+  buildGlobalM7PersonalMobilityAuthority,
+  type GlobalM7PersonalMobilityAuthority,
+  type PersonalMobilityContextKind,
+  type PersonalMobilityCouplePresenceFilter,
+  type PersonalMobilitySummary,
+} from "./personal-mobility";
 export { recertifyGlobalCDForPlaceAndMoment } from "./place-recertification";
 export {
   GLOBAL_M8_METHOD_VERSION,
