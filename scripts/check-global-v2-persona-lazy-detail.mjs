@@ -85,13 +85,11 @@ check(() => assert.equal(resolver.personaDetailMetricLabel(ownerPresentation.met
 check(() => assert.equal(resolver.presentPersonaOwnerDetail({ metrics: [], rows: [], series: [] }).empty, true));
 
 const viewSource = fs.readFileSync(path.join(root, "src/features/global-v2/persona/persona-view.tsx"), "utf8");
-const drawerSource = fs.readFileSync(path.join(root, "src/features/global-v2/persona/persona-detail-drawer.tsx"), "utf8");
 const resolverSource = fs.readFileSync(path.join(root, "src/features/global-v2/persona/persona-detail-resolver.ts"), "utf8");
-check(() => assert.match(viewSource, /openDetail === undefined \? null : <PersonaDetailDrawer/u));
-check(() => assert.match(drawerSource, /personaOwnerDetailRequest\(detailRef\)[\s\S]*useGlobalV2Resource<GlobalExpandedReadModel>\(runtime, request, true, "DIRECT"\)/u));
-check(() => assert.match(drawerSource, /Le détail se prépare…[\s\S]*Impossible de charger ce détail[\s\S]*Réessayer/u));
-check(() => assert.doesNotMatch(drawerSource + resolverSource, /@supabase|createClient|service_role|MobilityLeg/u));
+check(() => assert.doesNotMatch(viewSource, /PersonaDetailDrawer|openDetail|onDetail|Voir le détail|useGlobalV2Resource/u));
+check(() => assert.equal(fs.existsSync(path.join(root, "src/features/global-v2/persona/persona-detail-drawer.tsx")), false));
+check(() => assert.doesNotMatch(resolverSource, /@supabase|createClient|service_role|MobilityLeg/u));
 check(() => assert.doesNotMatch(resolverSource, /Adrien|Manon|if\s*\([^)]*beauty/iu));
 
-console.log(`Global V2 Persona lazy owner detail: ${checks}/${checks} PASS`);
-console.log("Initial owner detail requests: 0; visit cache reuse: PASS; raw MobilityLeg requests: 0.");
+console.log(`Global V2 Persona detail removal and generic resolver: ${checks}/${checks} PASS`);
+console.log("Persona drawer requests: 0; generic visit cache reuse: PASS; raw MobilityLeg requests: 0.");

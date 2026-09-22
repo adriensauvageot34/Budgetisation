@@ -19,6 +19,7 @@ import type {
   ImportedGlobalSummaryReadModel,
 } from "@/query-api/global-v2";
 import { PERSONA_PUBLISHED_PROFILE_CONTRACT_VERSION, parseGlobalLifeTimelineReadModel } from "@/query-api/global-v2";
+import { buildPersonaDirectModel, type PersonaDirectModel } from "@/query-api/global-v2/persona-direct-presentation";
 import { globalModulePresentation, globalModulePresentations } from "./catalog";
 import type { GlobalV2UiRequest, GlobalV2UiTransport } from "./visit-runtime";
 
@@ -28,6 +29,7 @@ export type GlobalV2FixtureScenario = "contract" | "local-error" | "new-generati
 
 export type GlobalV2FixtureBundle = {
   readonly initial: GlobalInitialReadModel;
+  readonly persona: PersonaDirectModel;
   readonly summary: ImportedGlobalSummaryReadModel;
   readonly modules: readonly GlobalModuleCompactReadModel[];
   readonly newerPublication?: GlobalReadModelPublicationMeta;
@@ -227,6 +229,7 @@ export function createGlobalV2FixtureBundle(scenario: GlobalV2FixtureScenario = 
   };
   return {
     initial,
+    persona: buildPersonaDirectModel({ overview: personaExpandedFixtureModel("OVERVIEW"), indices: [], details: new Map(), labels: { needs: {} }, ownerDetailResolutionsInitial: 0, serverBuildMs: 0 }),
     summary,
     modules,
     ...(scenario === "new-generation" ? { newerPublication: { ...publicationMeta, publicationId: "00000000-0000-4000-8000-000000000161", revision: 83, factsHash: hash("d"), manifestHash: hash("e"), generatedAt: "2026-09-06T17:00:00Z" } } : {}),

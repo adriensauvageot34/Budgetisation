@@ -41,12 +41,14 @@ import type { TimelineDensityMode } from "./life-timeline-presentation";
 import { buildHabitCoverageModel, groupRhythmMomentsByYear } from "./rhythm-collections";
 import { resolveRhythmDetailContext, rhythmDetailReturnSection, type RhythmDetailContext, type RhythmDetailOrigin } from "./rhythm-detail-routing";
 import { PersonaView } from "./persona/persona-view";
+import type { PersonaDirectModel } from "@/query-api/global-v2/persona-direct-presentation";
 import { useGlobalV2Resource, useMobileGlobalLayout, useNearViewport } from "./use-global-resource";
 import { GlobalV2VisitRuntime, parseGlobalDeepLink, type GlobalV2UiRequest, type GlobalV2UiTransport } from "./visit-runtime";
 import styles from "./global-v2.module.css";
 
 export type GlobalV2PageBundle = {
   readonly initial: GlobalInitialReadModel;
+  readonly persona: PersonaDirectModel;
   readonly newerPublication?: GlobalReadModelPublicationMeta;
 };
 
@@ -1114,8 +1116,8 @@ function LifeBackgroundRhythms({ runtime, onMethod }: { readonly runtime: Global
   </section>;
 }
 
-function PersonaPanel({ runtime }: { readonly runtime: GlobalV2VisitRuntime }) {
-  return <ExpandedPreview runtime={runtime} moduleKey="PERSONAS" sectionKey="OVERVIEW">{(expanded) => <PersonaView model={expanded} headingId={`${moduleSlugs.PERSONAS}-title`} runtime={runtime} />}</ExpandedPreview>;
+function PersonaPanel({ persona }: { readonly persona: PersonaDirectModel }) {
+  return <PersonaView model={persona} headingId={`${moduleSlugs.PERSONAS}-title`} />;
 }
 
 function ModuleContent({ moduleKey, model, runtime, certifiedThrough, onDetail, onEntityDetail, onMethod }: { readonly moduleKey: GlobalPrimaryModuleKey; readonly model: GlobalModuleCompactReadModel; readonly runtime: GlobalV2VisitRuntime; readonly certifiedThrough: string; readonly onDetail: () => void; readonly onEntityDetail: (entityRef: string, title: string) => void; readonly onMethod: () => void }) {
@@ -1125,8 +1127,6 @@ function ModuleContent({ moduleKey, model, runtime, certifiedThrough, onDetail, 
   if (moduleKey === "ECONOMIC") return <div className={styles.compact}><ExpandedPreview runtime={runtime} moduleKey={moduleKey} sectionKey="OVERVIEW">{(overview) => <ExpandedPreview runtime={runtime} moduleKey={moduleKey} sectionKey="EVOLUTION">{(evolution) => <EconomicCompactCard overview={overview} evolution={evolution} certifiedThrough={certifiedThrough} onDetail={onDetail} onMethod={onMethod} />}</ExpandedPreview>}</ExpandedPreview></div>;
 
   if (moduleKey === "CATEGORIES_NEEDS") return <M2CompactCard model={model} runtime={runtime} certifiedThrough={certifiedThrough} onDetail={onDetail} onEntityDetail={onEntityDetail} />;
-
-  if (moduleKey === "PERSONAS") return <PersonaPanel runtime={runtime} />;
 
   return <div className={styles.compact}>
     <PartialBadge onClick={onMethod} />
@@ -1297,7 +1297,7 @@ export function GlobalV2Page({ bundle, transport, certifiedThrough }: { readonly
     {bundle.newerPublication === undefined ? null : <aside className={styles.generationBanner} role="status" aria-live="polite"><div><strong>Une version plus récente est disponible.</strong><span>Notre lecture actuelle reste stable jusqu’à l’actualisation.</span></div><button type="button" className="button-primary" onClick={() => window.location.reload()}><RefreshCw aria-hidden size={16} /> Actualiser</button></aside>}
     <nav className={styles.stickyNav} aria-label="Navigation dans l’analyse globale">{internalNavigation.map(({ label, anchor }) => <button key={anchor} type="button" aria-current={activeAnchor === anchor ? "location" : undefined} onClick={() => goTo(anchor)}>{label}</button>)}</nav>
     <ContextualSummaryPlaceholder />
-    <main className={styles.story}>{orderedModules.map((moduleKey, index) => <GlobalModuleBoundary key={moduleKey}>{moduleKey === "RHYTHM" ? <GlobalLifeTimelinePanel runtime={runtime} onOverlay={openOverlay} /> : <GlobalModulePanel moduleKey={moduleKey} runtime={runtime} certifiedThrough={certifiedThrough} eager={index < 2} direct={directModule === moduleKey} onOverlay={openOverlay} />}</GlobalModuleBoundary>)}</main>
+    <main className={styles.story}>{orderedModules.map((moduleKey, index) => <GlobalModuleBoundary key={moduleKey}>{moduleKey === "RHYTHM" ? <GlobalLifeTimelinePanel runtime={runtime} onOverlay={openOverlay} /> : moduleKey === "PERSONAS" ? <section id="profils" className={styles.module} data-module="PERSONAS" aria-labelledby="profils-title"><PersonaPanel persona={bundle.persona} /></section> : <GlobalModulePanel moduleKey={moduleKey} runtime={runtime} certifiedThrough={certifiedThrough} eager={index < 2} direct={directModule === moduleKey} onOverlay={openOverlay} />}</GlobalModuleBoundary>)}</main>
     <button type="button" className={styles.backToTop} onClick={() => goTo()}><ArrowUp aria-hidden size={17} /> Retour au sommet</button>
     {overlay === null ? null : <GlobalDetailOverlay target={overlay} runtime={runtime} mobile={mobile} certifiedThrough={certifiedThrough} restoreFocusRef={overlayInvokerRef} onReplace={(target) => { setOverlay(target); emitGlobalV2UxEvent("global_entity_opened", { moduleKey: target.moduleKey }); }} onClose={() => setOverlay(null)} />}
   </div>;
