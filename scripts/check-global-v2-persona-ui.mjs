@@ -72,7 +72,7 @@ const beauty = trait("beauty-parent", "universe.beauty_and_care", "UNIVERSE", ma
     child("unknown-child", "product-need:opaque", "HABIT", { metrics: { occurrenceCount: 99 } }),
   ],
 });
-const mobilityManon = trait("mobility-m", "mobility.work.manon", "MOBILITY", manon);
+const mobilityManon = trait("mobility-m", "mobility.work.manon", "MOBILITY", manon, { qualifications: ["CAR"] });
 const rhythmManon = remoteWork;
 const unknownHabit = trait("unknown-habit", "habit.opaque", "HABIT", manon);
 const nonFeatured = trait("not-featured", "routine:not-featured", "ROUTINE", adrien, { metrics: { occurrenceCount: 88 } });
@@ -134,23 +134,45 @@ check(() => assert.equal(manonProfile.recurringLife.length, 1));
 check(() => assert.equal(manonProfile.recurringLife[0].renderer, "BEAUTY_UNIVERSE"));
 check(() => assert.deepEqual(manonProfile.recurringLife[0].children.map(({ title }) => title), ["Mascara", "Sourcils", "Soin de la peau"]));
 check(() => assert.equal(manonProfile.recurringLife[0].children.some(({ traitId }) => traitId === "unknown-child"), false));
-check(() => assert.deepEqual(manonProfile.recurringLife[0].children[0].metrics, [
-  { metricKey: "typicalPrice", label: "Prix typique", value: 32, format: "MONEY_EUR" },
-  { metricKey: "occurrenceCount", label: "Occurrences", value: 6, format: "COUNT" },
-]));
+check(() => assert.deepEqual(manonProfile.recurringLife[0].children[0].metrics, []));
+check(() => assert.equal(manonProfile.recurringLife[0].children.length, 3));
 
-// G-H: specialized human title and explicit zero both survive.
+// G-H: specialized human title survives; unauthorized explicit zero money does not.
 check(() => assert.equal(adrienProfile.phasedProjects[1].title, "Permis de conduire"));
 check(() => assert.equal(adrienProfile.phasedProjects[1].statusLabel, "En cours"));
-check(() => assert.deepEqual(adrienProfile.dailyRhythms[0].metrics, [{ metricKey: "directCost", label: "Coût direct", value: 0, format: "MONEY_EUR" }]));
+check(() => assert.deepEqual(adrienProfile.dailyRhythms[0].metrics, []));
 check(() => assert.equal(adrienProfile.dailyRhythms[0].metrics.some(({ value }) => value === "UNKNOWN"), false));
 
-// Non-positive day intervals are editorially meaningless; explicit zero money is not.
+// Non-positive day intervals are editorially meaningless.
 const dayMetricBlock = (value) => presentation.presentPersonaTrait(trait(`days-${value}`, "activity:travail_site", "ROUTINE", adrien, { metrics: { occurrenceCount: 1, medianIntervalDays: value } }), 0);
 check(() => assert.equal(dayMetricBlock(0).metrics.some(({ format }) => format === "DAYS"), false));
 check(() => assert.equal(dayMetricBlock(-1).metrics.some(({ format }) => format === "DAYS"), false));
 check(() => assert.deepEqual(dayMetricBlock(57).metrics.find(({ format }) => format === "DAYS")?.value, 57));
-check(() => assert.equal(adrienProfile.dailyRhythms[0].metrics.find(({ format }) => format === "MONEY_EUR")?.value, 0));
+check(() => assert.equal(adrienProfile.dailyRhythms[0].metrics.some(({ format }) => format === "MONEY_EUR"), false));
+
+// Personal cost remains absent when no beneficiary authority is published.
+check(() => assert.equal(blocks(adrienProfile).find(({ renderer }) => renderer === "DRIVING_LICENSE")?.metrics.some(({ format }) => format === "MONEY_EUR"), false));
+check(() => assert.equal(blocks(adrienProfile).find(({ renderer }) => renderer === "DIGITAL_SUBSCRIPTION")?.metrics.some(({ format }) => format === "MONEY_EUR"), false));
+check(() => assert.equal(blocks(manonProfile).find(({ renderer }) => renderer === "WORK_MOBILITY")?.description, "La voiture structure une partie de ses journées de travail."));
+
+const ownerRef = (entityRef) => ({ resource: "analysis_global_place_mobility_detail", entityRef, role: "PRIMARY" });
+const manonIndex = {
+  schemaVersion: "persona-detail-index@v1",
+  personId: manon,
+  blocks: [
+    { blockId: "mobility-friend", semanticKey: "mobility:friend-visit:without-household-partner-confirmed", kind: "MOBILITY", surfaceMetrics: [], items: [], detailRefs: [ownerRef("personal-mobility:friend")], availability: "AVAILABLE" },
+    { blockId: "mobility-work", semanticKey: "mobility:work-commute", kind: "MOBILITY", surfaceMetrics: [], items: [], detailRefs: [ownerRef("personal-mobility:work")], availability: "AVAILABLE" },
+  ],
+};
+const socialModel = presentation.buildPersonaPresentationModel(expanded([profile(manon, [mobilityManon, friendVisit])]));
+const connectedManon = presentation.connectPersonaProfileDetailIndex(socialModel.profiles[0], manonIndex);
+const connectedBlocks = blocks(connectedManon);
+check(() => assert.equal(connectedBlocks.find(({ renderer }) => renderer === "WORK_MOBILITY")?.detailRef?.entityRef, "personal-mobility:work"));
+check(() => assert.equal(connectedBlocks.find(({ semanticKey }) => semanticKey === "activity:visite_ami")?.title, "Les visites faites de son côté"));
+check(() => assert.equal(connectedBlocks.find(({ semanticKey }) => semanticKey === "activity:visite_ami")?.detailRef?.entityRef, "personal-mobility:friend"));
+check(() => assert.equal(connectedBlocks.find(({ semanticKey }) => semanticKey === "activity:visite_ami")?.metrics.length, 0));
+check(() => assert.doesNotMatch(JSON.stringify(connectedBlocks), /seule|en solo/iu));
+check(() => assert.doesNotMatch(JSON.stringify(connectedBlocks), /WORK_MIDDAY|AFTER_WORK/iu));
 
 // J, M, N: no balancing card or marker is fabricated.
 check(() => assert.equal(adrienProfile.markers.length, 4));
@@ -203,11 +225,13 @@ check(() => assert.match(source, /markerIdentities\.has\(markerIdentity\)/u));
 check(() => assert.doesNotMatch(source, /title:\s*"Activité récurrente"/u));
 check(() => assert.match(source, /dailyActivityIds[\s\S]*travail_site[\s\S]*teletravail[\s\S]*journee_maison/u));
 check(() => assert.match(source, /exampleTitles\.has\(normalizedEditorialTitle\(presented\.title\)\)/u));
-check(() => assert.match(viewSource, /Portraits express[\s\S]*Vos rythmes du quotidien[\s\S]*Ce qui revient chez chacun[\s\S]*Ce qui vit par phases/u));
+check(() => assert.match(viewSource, /Portrait express/u));
+check(() => assert.match(viewSource, /Ses rythmes du quotidien[\s\S]*Ce qui revient[\s\S]*Ce qui vit par phases/u));
 check(() => assert.match(viewSource, /<h2 id=\{headingId\}>Nos profils<\/h2>[\s\S]*Deux quotidiens, deux façons de dépenser/u));
 check(() => assert.match(viewSource, /presentation\.profiles\.slice\(0, 2\)/u));
 check(() => assert.match(viewSource, /Adrien \+ Manon[\s\S]*♡ Nous deux/u));
-check(() => assert.doesNotMatch(viewSource, /useState|onClick|sharedGaming|scope === "SHARED"/u));
+check(() => assert.match(viewSource, /useState[\s\S]*personaMobileSwitch[\s\S]*aria-pressed/u));
+check(() => assert.doesNotMatch(viewSource, /sharedGaming|scope === "SHARED"/u));
 check(() => assert.doesNotMatch(viewSource, /compare|comparison|différence|gagnant|perdant/iu));
 check(() => assert.doesNotMatch(cardSource, /kindLabels|data-persona-kind|>Routine<|>Projet<|>Habitude</u));
 check(() => assert.match(cardSource, /block\.children\.length === 0 \? null/u));
@@ -219,8 +243,10 @@ check(() => assert.match(cssSource, /\.personaMarker\s*\{/u));
 check(() => assert.match(cssSource, /\.personaMarkers\s*\{[^}]*grid-template-columns:\s*repeat\(2/u));
 check(() => assert.match(cssSource, /\.personaMarker\s*\{[^}]*background:\s*rgb\(232 237 229 \/ \.26\)/u));
 check(() => assert.match(cssSource, /data-persona-section="dailyRhythms"[\s\S]*data-persona-renderer="RHYTHM"/u));
-check(() => assert.match(viewSource, /data-persona-layout=\{visibleProfiles\.length === 1 \? "single" : "paired"\}/u));
-check(() => assert.match(cssSource, /data-persona-section="phasedProjects"[\s\S]*data-persona-layout="single"[\s\S]*64%/u));
+check(() => assert.match(viewSource, /personaProfileColumns/u));
+check(() => assert.match(viewSource, /data-persona-column=\{index \+ 1\}/u));
+check(() => assert.match(cssSource, /\.personaProfileColumns\s*\{[\s\S]*\.personaProfileColumn\[data-persona-column="2"\]/u));
+check(() => assert.match(cssSource, /data-mobile-active="false"[\s\S]*display:\s*none/u));
 check(() => assert.match(cssSource, /\.module\[data-module="PERSONAS"\]\s*\{[^}]*border:\s*0;[^}]*border-radius:\s*0;[^}]*box-shadow:\s*none/u));
 check(() => assert.match(cssSource, /data-persona-renderer="BEAUTY_UNIVERSE"/u));
 

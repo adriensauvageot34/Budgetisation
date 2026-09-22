@@ -1115,7 +1115,7 @@ function LifeBackgroundRhythms({ runtime, onMethod }: { readonly runtime: Global
 }
 
 function PersonaPanel({ runtime }: { readonly runtime: GlobalV2VisitRuntime }) {
-  return <ExpandedPreview runtime={runtime} moduleKey="PERSONAS" sectionKey="OVERVIEW">{(expanded) => <PersonaView model={expanded} headingId={`${moduleSlugs.PERSONAS}-title`} />}</ExpandedPreview>;
+  return <ExpandedPreview runtime={runtime} moduleKey="PERSONAS" sectionKey="OVERVIEW">{(expanded) => <PersonaView model={expanded} headingId={`${moduleSlugs.PERSONAS}-title`} runtime={runtime} />}</ExpandedPreview>;
 }
 
 function ModuleContent({ moduleKey, model, runtime, certifiedThrough, onDetail, onEntityDetail, onMethod }: { readonly moduleKey: GlobalPrimaryModuleKey; readonly model: GlobalModuleCompactReadModel; readonly runtime: GlobalV2VisitRuntime; readonly certifiedThrough: string; readonly onDetail: () => void; readonly onEntityDetail: (entityRef: string, title: string) => void; readonly onMethod: () => void }) {

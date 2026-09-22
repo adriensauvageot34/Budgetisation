@@ -48,6 +48,7 @@
     "check:global-v2-persona": "node --experimental-strip-types scripts/check-global-v2-persona.mjs",
     "check:global-v2-persona-golden": "node --experimental-strip-types scripts/check-global-v2-persona-golden.mjs",
     "check:global-v2-persona-ui": "node --experimental-strip-types scripts/check-global-v2-persona-ui.mjs",
+    "check:global-v2-persona-lazy-detail": "node --experimental-strip-types scripts/check-global-v2-persona-lazy-detail.mjs",
     "check:global-v2-shared": "node --experimental-strip-types scripts/check-global-v2-shared-participation.mjs",
     "check:global-v2-publication": "node --experimental-strip-types scripts/check-global-v2-publication-infrastructure.mjs",
     "check:frozen-content-guards": "node scripts/check-frozen-content-guard-optimization.mjs",

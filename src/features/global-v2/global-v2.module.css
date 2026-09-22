@@ -382,11 +382,18 @@
 .personaScopeSwitch { display: inline-flex; flex: 0 0 auto; gap: 3px; border: 1px solid rgb(46 83 69 / .13); border-radius: 999px; padding: 3px; background: rgb(255 255 255 / .62); color: var(--color-muted); font-size: 11px; font-weight: 780; }
 .personaScopeSwitch span { border-radius: 999px; padding: 7px 11px; white-space: nowrap; }
 .personaScopeSwitch span[aria-current] { background: var(--color-primary-deep); color: white; box-shadow: 0 3px 10px rgb(36 50 47 / .12); }
+.personaMobileSwitch { display: none; }
 .personaPortraits, .personaEditorialSection { border-top: 1px solid rgb(46 83 69 / .13); padding: 26px 18px 32px; }
 .personaSectionHeading { display: grid; gap: 4px; margin-bottom: 22px; }
 .personaSectionHeading > span { color: #88775d; font-size: 10px; font-weight: 820; letter-spacing: .12em; text-transform: uppercase; }
 .personaSectionHeading h3 { margin: 0; font-family: var(--font-serif, Georgia, serif); font-size: clamp(24px, 3vw, 32px); font-weight: 570; letter-spacing: -.025em; }
 .personaEditorialColumns { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: start; column-gap: 0; }
+.personaProfileColumns { border-top: 1px solid rgb(46 83 69 / .13); padding: 0 18px 32px; }
+.personaProfileColumn { min-width: 0; padding: 27px 30px 0 0; }
+.personaProfileColumn[data-persona-column="2"] { border-left: 1px solid rgb(46 83 69 / .13); padding-right: 0; padding-left: 30px; }
+.personaProfileColumn > .personaPersonHeader { position: sticky; z-index: 2; top: 0; margin: -1px 0 0; border-bottom: 1px solid rgb(46 83 69 / .11); padding: 15px 0 14px; background: rgb(251 250 246 / .96); backdrop-filter: blur(8px); }
+.personaProfileColumn > .personaPortrait, .personaProfileColumn > .personaEditorialSection { border-top: 0; border-bottom: 1px solid rgb(46 83 69 / .11); padding: 24px 0 27px; }
+.personaProfileColumn > .personaEditorialSection:last-child { border-bottom: 0; }
 .personaPortrait, .personaEditorialColumn { min-width: 0; padding-right: 30px; }
 .personaPortrait + .personaPortrait, .personaEditorialColumn[data-persona-column="2"] { grid-column: 2; border-left: 1px solid rgb(46 83 69 / .13); padding-right: 0; padding-left: 30px; }
 .personaPersonHeader { display: grid; gap: 2px; margin-bottom: 14px; }
@@ -426,6 +433,28 @@
 .personaChildren li > div:first-child { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
 .personaChildren li > div strong { font-size: 12px; }
 .personaChildren .personaMetrics { margin-left: 0; }
+.personaDetailButton { display: inline-flex; width: fit-content; align-items: center; gap: 4px; margin: 1px 0 0 45px; border: 0; border-bottom: 1px solid rgb(46 83 69 / .26); padding: 4px 0 3px; background: transparent; color: var(--color-primary-deep); font-size: 11px; font-weight: 820; cursor: pointer; }
+.personaDetailButton:hover, .personaDetailButton:focus-visible { border-color: var(--color-primary); color: var(--color-primary); }
+.personaDetailButton:focus-visible { outline: 2px solid var(--color-primary); outline-offset: 3px; }
+.personaDrawerBackdrop { position: fixed; z-index: 80; inset: 0; display: flex; justify-content: flex-end; background: rgb(24 35 31 / .34); }
+.personaDrawer { width: min(520px, 100vw); height: 100%; overflow-y: auto; border-left: 1px solid rgb(46 83 69 / .14); padding: 28px; background: #fbfaf6; box-shadow: -18px 0 48px rgb(24 35 31 / .16); color: var(--color-primary-deep); }
+.personaDrawerHeader { display: flex; align-items: flex-start; justify-content: space-between; gap: 20px; border-bottom: 1px solid rgb(46 83 69 / .13); padding-bottom: 22px; }
+.personaDrawerHeader span { color: #88775d; font-size: 10px; font-weight: 820; letter-spacing: .12em; text-transform: uppercase; }
+.personaDrawerHeader h2 { margin: 5px 0 0; font-family: var(--font-serif, Georgia, serif); font-size: clamp(28px, 5vw, 40px); font-weight: 570; letter-spacing: -.03em; }
+.personaDrawerHeader button { display: grid; width: 38px; height: 38px; flex: 0 0 auto; place-items: center; border: 1px solid rgb(46 83 69 / .15); border-radius: 50%; background: white; color: var(--color-primary-deep); cursor: pointer; }
+.personaDrawerContent { display: grid; gap: 30px; padding: 26px 0; }
+.personaDrawerContent section { display: grid; gap: 14px; }
+.personaDrawerContent h3 { margin: 0; font-family: var(--font-serif, Georgia, serif); font-size: 20px; font-weight: 580; }
+.personaDrawerMetrics, .personaDrawerRows { display: grid; gap: 0; margin: 0; }
+.personaDrawerMetrics > div, .personaDrawerRows > div { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: baseline; gap: 18px; border-top: 1px solid rgb(46 83 69 / .1); padding: 12px 0; }
+.personaDrawerMetrics dt, .personaDrawerRows dt { color: var(--color-muted); font-size: 12px; }
+.personaDrawerMetrics dd, .personaDrawerRows dd { max-width: 260px; margin: 0; font-size: 13px; font-weight: 790; text-align: right; }
+.personaDrawerSeries { display: grid; gap: 0; margin: 0; padding: 0; list-style: none; }
+.personaDrawerSeries li { display: flex; justify-content: space-between; gap: 18px; border-top: 1px solid rgb(46 83 69 / .1); padding: 10px 0; font-size: 12px; }
+.personaDrawerLoading, .personaDrawerEmpty, .personaDrawerError { margin: 24px 0 0; color: var(--color-muted); font-size: 13px; line-height: 1.55; }
+.personaDrawerError { display: grid; justify-items: start; gap: 10px; }
+.personaDrawerError p { margin: 0; }
+.personaDrawerError button { border: 0; border-radius: 999px; padding: 8px 12px; background: var(--color-primary-deep); color: white; font-weight: 780; cursor: pointer; }
 .personaEditorialSection[data-persona-section="phasedProjects"] .personaEditorialColumns[data-persona-layout="single"] { grid-template-columns: minmax(0, 64%); }
 .personaEditorialSection[data-persona-section="phasedProjects"] .personaEditorialColumns[data-persona-layout="single"] .personaEditorialColumn { grid-column: 1; border-left: 0; padding-right: 0; padding-left: 0; }
 .skeleton { min-height: 138px; margin: 0 26px 24px; overflow: hidden; border-radius: 12px; padding: 18px; background: linear-gradient(100deg, #ecece7 20%, #f8f8f5 40%, #ecece7 60%); background-size: 200% 100%; color: transparent; animation: skeleton 1.2s linear infinite; }
@@ -691,12 +720,25 @@
   .lifeComparisonDetail dl { grid-template-columns: 1fr; }
   .personaModuleHeader { align-items: stretch; flex-direction: column; gap: 18px; padding: 27px 20px 24px; }
   .personaScopeSwitch { align-self: flex-start; }
+  .personaMobileSwitch { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 4px; margin: 0 20px 18px; border: 1px solid rgb(46 83 69 / .13); border-radius: 999px; padding: 4px; background: rgb(255 255 255 / .58); }
+  .personaMobileSwitch button { border: 0; border-radius: 999px; padding: 9px 12px; background: transparent; color: var(--color-muted); font-size: 12px; font-weight: 790; cursor: pointer; }
+  .personaMobileSwitch button[aria-pressed="true"] { background: var(--color-primary-deep); color: white; }
+  .personaProfileColumns { display: block; padding: 0 20px 28px; }
+  .personaProfileColumn { padding: 0; }
+  .personaProfileColumn[data-persona-column="2"] { border-left: 0; padding-left: 0; }
+  .personaProfileColumn[data-mobile-active="false"] { display: none; }
+  .personaProfileColumn > .personaPersonHeader { position: static; padding-top: 23px; }
+  .personaProfileColumn > .personaPortrait, .personaProfileColumn > .personaEditorialSection { padding-inline: 0; }
   .personaPortraits, .personaEditorialSection { padding: 23px 20px 27px; }
   .personaEditorialColumns { grid-template-columns: 1fr; row-gap: 24px; }
   .personaEditorialSection[data-persona-section="phasedProjects"] .personaEditorialColumns[data-persona-layout="single"] { grid-template-columns: 1fr; }
   .personaPortrait, .personaEditorialColumn { grid-column: 1 !important; border-left: 0 !important; padding: 0 !important; }
   .personaPortrait + .personaPortrait, .personaEditorialColumn + .personaEditorialColumn { border-top: 1px solid rgb(46 83 69 / .13); padding-top: 22px !important; }
   .personaMetrics, .personaExamples, .personaChildren { margin-left: 0; }
+  .personaDetailButton { margin-left: 0; }
+  .personaDrawer { width: 100vw; border-left: 0; padding: 22px 20px; }
+  .personaDrawerMetrics > div, .personaDrawerRows > div { grid-template-columns: 1fr; gap: 4px; }
+  .personaDrawerMetrics dd, .personaDrawerRows dd { max-width: none; text-align: left; }
   .mobileOverlay { width: 100vw !important; max-height: 100vh !important; border-radius: 18px 18px 0 0 !important; }
   .rhythmDetailSheet { position: fixed; inset: 0; width: 100vw !important; max-height: 100dvh !important; margin: 0; border-radius: 0 !important; }
   .lifeTimeline > section { grid-template-columns: 1fr; gap: 5px; }

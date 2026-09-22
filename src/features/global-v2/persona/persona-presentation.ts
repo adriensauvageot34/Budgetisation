@@ -1,5 +1,11 @@
-import type { GlobalExpandedReadModel } from "@/query-api/global-v2";
+import type {
+  GlobalExpandedReadModel,
+  PersonaOwnerDetailRef,
+  PublishedPersonaDetailBlock,
+  PublishedPersonaDetailIndex,
+} from "@/query-api/global-v2";
 import { LIFE_EVENT_ACTIVITY_CATALOG, type LifeEventActivityTypeKey } from "@/analytics/history-v2/calendar/catalog";
+import { preferredPersonaDetailRef } from "./persona-detail-resolver";
 
 type PersonaProfileOutput = NonNullable<GlobalExpandedReadModel["profile"]>;
 type PersonaProfile = PersonaProfileOutput["profiles"][number];
@@ -47,6 +53,7 @@ export type PersonaPresentationBlock = {
   readonly metrics: readonly PersonaPresentationMetric[];
   readonly examples: readonly string[];
   readonly children: readonly PersonaPresentationChild[];
+  readonly detailRef?: PersonaOwnerDetailRef;
 };
 
 export type PersonaPortraitMarker = {
@@ -87,10 +94,9 @@ type SemanticPresentation = {
 };
 
 const noMetrics = Object.freeze([] as const);
-const rhythmMetrics = Object.freeze(["occurrenceCount", "medianIntervalDays", "medianGapDays", "typicalAmount", "typicalPrice"] as const);
-const mobilityMetrics = Object.freeze(["directCost", "distanceKm"] as const);
-const projectMetrics = Object.freeze(["observedAmount", "committedAmount"] as const);
-const productMetrics = Object.freeze(["typicalPrice", "occurrenceCount", "medianGapDays", "firstObservedDate", "lastObservedDate"] as const);
+const rhythmMetrics = Object.freeze(["occurrenceCount", "medianIntervalDays", "medianGapDays"] as const);
+const mobilityMetrics = Object.freeze(["distanceKm"] as const);
+const projectMetrics = noMetrics;
 const dailyActivityIds = new Set<LifeEventActivityTypeKey>(["travail_site", "teletravail", "journee_maison"]);
 
 function activityIdFromSemanticKey(semanticKey: string): LifeEventActivityTypeKey {
@@ -144,14 +150,16 @@ export const PERSONA_SEMANTIC_PATTERN_REGISTRY_V1: readonly SemanticPatternPrese
     childrenStrategy: "NONE", temporalTreatment: "PHASE", portraitMarker: true,
   },
   {
-    matches: (key) => key.startsWith("mobility.work."), title: "Trajets de travail", description: "Le mode de transport renseigné pour les déplacements professionnels.",
+    matches: (key) => key.startsWith("mobility.work."), title: "Trajets de travail", description: "Les déplacements professionnels qui structurent les journées de travail.",
     icon: "MOBILITY", editorialGroup: "DAILY_RHYTHM", renderer: "WORK_MOBILITY", metricsPolicy: mobilityMetrics,
     childrenStrategy: "NONE", temporalTreatment: "STATUS", portraitMarker: true,
+    exampleLabels: Object.freeze({ CAR: "Voiture", TRAM_BUSTRAM: "Tram & bus" }) as Readonly<Record<string, string>>,
   },
   {
     matches: (key) => key.startsWith("subscription.chatgpt."), title: "Usage de ChatGPT", description: "Un usage personnel explicitement renseigné.",
     icon: "DIGITAL", editorialGroup: "RECURRING_LIFE", renderer: "DIGITAL_SUBSCRIPTION", metricsPolicy: rhythmMetrics,
     childrenStrategy: "NONE", temporalTreatment: "STATUS", portraitMarker: true,
+    exampleLabels: Object.freeze({ PERSONAL_SUBSCRIPTION: "Usage personnel" }) as Readonly<Record<string, string>>,
   },
   {
     matches: (key) => key.startsWith("activity:"), resolveTitle: (key) => {
@@ -167,6 +175,12 @@ export const PERSONA_SEMANTIC_PATTERN_REGISTRY_V1: readonly SemanticPatternPrese
     childrenStrategy: "NONE", temporalTreatment: "STATUS", portraitMarker: true, requiresUsefulMetric: true,
   },
 ]);
+
+function workMobilityDescription(trait: PersonaTrait): string {
+  if (trait.qualifications?.includes("CAR") === true) return "La voiture structure une partie de ses journées de travail.";
+  if (trait.qualifications?.includes("TRAM_BUSTRAM") === true) return "Le tram et le bus structurent une partie de ses journées de travail.";
+  return "Ses déplacements professionnels structurent une partie de ses journées de travail.";
+}
 
 type ChildPresentation = { readonly matches: (semanticKey: string) => boolean; readonly title: string; readonly hideWhenExamplesPresent?: boolean };
 const childPresentationRegistry: readonly ChildPresentation[] = Object.freeze([
@@ -250,7 +264,7 @@ function presentChild(child: PersonaTraitChild, hasExamples: boolean): PersonaPr
   return {
     traitId: child.traitId, semanticKey: child.semanticKey, title: presentation.title,
     ...(statusLabel === undefined ? {} : { statusLabel }),
-    metrics: presentationMetrics(child.metrics, productMetrics),
+    metrics: [],
   };
 }
 
@@ -282,11 +296,51 @@ export function presentPersonaTrait(trait: PersonaTrait, engineRank: number): Pe
       return presented === undefined || exampleTitles.has(normalizedEditorialTitle(presented.title)) ? [] : [presented];
     })
     : [];
+  const description = semantic.renderer === "WORK_MOBILITY" ? workMobilityDescription(trait) : semantic.description;
   return {
     traitId: trait.traitId, semanticKey: trait.semanticKey, renderer: semantic.renderer, icon: semantic.icon,
-    editorialGroup, title, description: semantic.description, engineRank, portraitMarker: semantic.portraitMarker,
+    editorialGroup, title, description, engineRank, portraitMarker: semantic.portraitMarker,
     ...(statusLabel === undefined ? {} : { statusLabel }), metrics,
     examples, children,
+  };
+}
+
+function blockWithDetailRef(blocks: readonly PublishedPersonaDetailBlock[], semanticKey: string): PublishedPersonaDetailBlock | undefined {
+  return blocks.find((candidate) => candidate.semanticKey === semanticKey && candidate.detailRefs.length > 0);
+}
+
+function ownerDetailBlock(block: PersonaPresentationBlock, index: PublishedPersonaDetailIndex): PublishedPersonaDetailBlock | undefined {
+  const exact = index.blocks.find((candidate) => candidate.blockId === block.traitId || candidate.semanticKey === block.semanticKey);
+  if (exact !== undefined && exact.detailRefs.length > 0) return exact;
+  if (block.renderer === "WORK_MOBILITY") return blockWithDetailRef(index.blocks, "mobility:work-commute");
+  if (block.semanticKey === "activity:visite_ami") return blockWithDetailRef(index.blocks, "mobility:friend-visit:without-household-partner-confirmed");
+  if (block.semanticKey === "activity:visite_famille") return blockWithDetailRef(index.blocks, "mobility:family-visit:without-household-partner-confirmed");
+  return undefined;
+}
+
+function connectPersonaBlock(block: PersonaPresentationBlock, index: PublishedPersonaDetailIndex): PersonaPresentationBlock {
+  const detailRef = preferredPersonaDetailRef(ownerDetailBlock(block, index)?.detailRefs ?? []);
+  if (detailRef === undefined) return block;
+  if (block.semanticKey === "activity:visite_ami" || block.semanticKey === "activity:visite_famille") {
+    return {
+      ...block,
+      title: "Les visites faites de son côté",
+      description: "Des visites confirmées sans l’autre membre du foyer.",
+      metrics: [],
+      detailRef,
+    };
+  }
+  return { ...block, detailRef };
+}
+
+/** Connects selected presentation blocks to published owner refs without loading owner output. */
+export function connectPersonaProfileDetailIndex(profile: PersonaPresentationProfile, index: PublishedPersonaDetailIndex): PersonaPresentationProfile {
+  if (String(index.personId) !== String(profile.personId)) return profile;
+  return {
+    ...profile,
+    dailyRhythms: profile.dailyRhythms.map((block) => connectPersonaBlock(block, index)),
+    recurringLife: profile.recurringLife.map((block) => connectPersonaBlock(block, index)),
+    phasedProjects: profile.phasedProjects.map((block) => connectPersonaBlock(block, index)),
   };
 }
 

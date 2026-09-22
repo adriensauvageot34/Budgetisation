@@ -1,4 +1,4 @@
-import { BadgeCheck, BriefcaseBusiness, Clock3, Heart, Sparkles, WandSparkles, type LucideIcon } from "lucide-react";
+import { BadgeCheck, BriefcaseBusiness, ChevronRight, Clock3, Heart, Sparkles, WandSparkles, type LucideIcon } from "lucide-react";
 import { formatPersonaDate, type PersonaPortraitMarker, type PersonaPresentationBlock, type PersonaPresentationIcon, type PersonaPresentationMetric } from "./persona-presentation";
 import styles from "../global-v2.module.css";
 
@@ -39,7 +39,7 @@ export function PersonaMarker({ marker }: { readonly marker: PersonaPortraitMark
   return <li className={styles.personaMarker}><span aria-hidden="true"><Icon size={22} strokeWidth={1.65} /></span><strong>{marker.title}</strong></li>;
 }
 
-export function PersonaEditorialBlock({ block }: { readonly block: PersonaPresentationBlock }) {
+export function PersonaEditorialBlock({ block, onDetail }: { readonly block: PersonaPresentationBlock; readonly onDetail?: (block: PersonaPresentationBlock) => void }) {
   const Icon = iconByPresentation[block.icon];
   return <article className={styles.personaEditorialBlock} data-persona-renderer={block.renderer}>
     <header className={styles.personaEditorialHeader}>
@@ -55,5 +55,8 @@ export function PersonaEditorialBlock({ block }: { readonly block: PersonaPresen
       <div><strong>{child.title}</strong>{child.statusLabel === undefined ? null : <span>{child.statusLabel}</span>}</div>
       <PersonaMetrics metrics={child.metrics} />
     </li>)}</ul>}
+    {block.detailRef === undefined || onDetail === undefined ? null : <button type="button" className={styles.personaDetailButton} onClick={() => onDetail(block)}>
+      Voir le détail <ChevronRight aria-hidden size={15} />
+    </button>}
   </article>;
 }
