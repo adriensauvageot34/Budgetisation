@@ -30,7 +30,7 @@ import type { CanonicalRepository } from "@/server/canonical/repository";
 import { canonicalMoney, canonicalString, optionalCanonicalString } from "@/server/canonical/record";
 
 export const GLOBAL_PERSONA_SIGNAL_ADAPTER_VERSION = parseMethodVersion("global_persona_signal_adapter@v1");
-export const GLOBAL_PERSONA_DECLARATION_PROVIDER_VERSION = parseMethodVersion("global_persona_declared_provider@v1");
+export const GLOBAL_PERSONA_DECLARATION_PROVIDER_VERSION = parseMethodVersion("global_persona_declared_provider@v2");
 
 type NeedGroup = {
   readonly key: string;
@@ -175,6 +175,7 @@ const evidence = (values: readonly string[], fallback: string): readonly string[
 const PERSONAL_USAGE_SERVICE_DECLARATIONS_V1 = Object.freeze([
   { signalId: "declared-v1:adrien:chatgpt", personName: "Adrien", semanticKey: "subscription.chatgpt.adrien", recurrenceId: "91e58dd4-1a8d-536f-a841-eff33c136228", evidenceRef: "declaration-v1:chatgpt-personal-adrien" },
   { signalId: "declared-v1:adrien:qobuz", personName: "Adrien", semanticKey: "subscription.qobuz.adrien", recurrenceId: "b2abae46-3378-5f09-897c-7c44eed28073", evidenceRef: "declaration-v1:qobuz-personal-adrien" },
+  { signalId: "declared-v2:adrien:google-ai-pro", personName: "Adrien", semanticKey: "subscription.google_ai_pro.adrien", recurrenceId: "67657950-b736-5f73-89bc-456d207b965c", evidenceRef: "declaration-v2:google-ai-pro-personal-usage-adrien" },
   { signalId: "declared-v1:manon:max", personName: "Manon", semanticKey: "subscription.max.manon", recurrenceId: "24c0cb89-34bf-5e2a-881d-4d4f9f7b694a", evidenceRef: "declaration-v1:max-personal-manon" },
   { signalId: "declared-v1:manon:netflix", personName: "Manon", semanticKey: "subscription.netflix.manon", recurrenceId: "6ceae158-ebba-5208-9d41-85eac3bd4dde", evidenceRef: "declaration-v1:netflix-personal-manon" },
 ] as const);
@@ -672,9 +673,12 @@ export function buildGlobalPersonaDeclaredSignalsV1(input: GlobalV2PersonaSignal
     { signalId: "declared-v1:adrien:driving-license-in-progress", signalType: "DECLARED", semanticKey: "driving_license.adrien", ...personScope(adrien), action: "AFFIRM", value: "IN_PROGRESS", kind: "PROJECT", family: "MOBILITY", authority: "USER_VALIDATED", temporalStatus: "PROJECT", dimension: "TEMPORALITY", sourceModule: "DECLARED_V1", methodVersion: GLOBAL_PERSONA_DECLARATION_PROVIDER_VERSION, evidenceRefs: ["declaration-v1:driving-license-in-progress"] },
     { signalId: "declared-v1:adrien:photo-active", signalType: "DECLARED", semanticKey: "creative.photo.adrien", ...personScope(adrien), action: "TEMPORAL_OVERRIDE", value: "PROJECT", kind: "PROJECT", family: "LEISURE_AND_ACTIVITIES", authority: "USER_VALIDATED", dimension: "TEMPORALITY", sourceModule: "DECLARED_V1", methodVersion: GLOBAL_PERSONA_DECLARATION_PROVIDER_VERSION, evidenceRefs: ["declaration-v1:photo-active"] },
     { signalId: "declared-v1:adrien:work-commute", signalType: "DECLARED", semanticKey: "mobility.work.adrien", ...personScope(adrien), action: "AFFIRM", value: "TRAM_BUSTRAM", kind: "MOBILITY", family: "MOBILITY", authority: "USER_VALIDATED", dimension: "USAGE", context: "WORK_COMMUTE", metrics: { directCost: 0 }, limitations: ["DISTANCE_UNKNOWN", "FUEL_COST_NOT_APPLICABLE", "ZERO_COST_IS_DECLARED_NOT_CALCULATED"], sourceModule: "DECLARED_V1", methodVersion: GLOBAL_PERSONA_DECLARATION_PROVIDER_VERSION, evidenceRefs: ["declaration-v1:adrien-work-tram-bustram-zero-cost"] },
+    { signalId: "declared-v2:adrien:styling-wax", signalType: "DECLARED", semanticKey: "personal_care.styling_wax.adrien", ...personScope(adrien), action: "AFFIRM", value: "REGULAR_REPURCHASE", kind: "HABIT", family: "PERSONAL_CARE", authority: "USER_VALIDATED", dimension: "USAGE", groupKey: "styling_wax", limitations: ["PRICE_UNAVAILABLE", "CADENCE_UNOBSERVED", "PERSONAL_PAYMENT_NOT_ESTABLISHED"], sourceModule: "DECLARED_V2", methodVersion: GLOBAL_PERSONA_DECLARATION_PROVIDER_VERSION, evidenceRefs: ["declaration-v2:adrien-styling-wax-repurchase"] },
+    { signalId: "declared-v2:adrien:hairdresser", signalType: "DECLARED", semanticKey: "personal_care.hairdresser.adrien", ...personScope(adrien), action: "AFFIRM", value: "PERSONAL_ROUTINE", kind: "HABIT", family: "PERSONAL_CARE", authority: "USER_VALIDATED", dimension: "USAGE", groupKey: "hairdresser", limitations: ["HOUSEHOLD_HAIRCUT_COST_NOT_PERSONAL_COST", "ANNUAL_FREQUENCY_NOT_CERTIFIED"], sourceModule: "DECLARED_V2", methodVersion: GLOBAL_PERSONA_DECLARATION_PROVIDER_VERSION, evidenceRefs: ["declaration-v2:adrien-hairdresser-routine"] },
   );
   if (manon !== undefined) declarations.push(
     { signalId: "declared-v1:manon:work-commute", signalType: "DECLARED", semanticKey: "mobility.work.manon", ...personScope(manon), action: "AFFIRM", value: "CAR", kind: "MOBILITY", family: "MOBILITY", authority: "USER_VALIDATED", dimension: "USAGE", context: "WORK_COMMUTE", limitations: ["DISTANCE_UNKNOWN", "FUEL_COST_UNKNOWN", "WORK_COST_SHARE_UNKNOWN"], sourceModule: "DECLARED_V1", methodVersion: GLOBAL_PERSONA_DECLARATION_PROVIDER_VERSION, evidenceRefs: ["declaration-v1:manon-work-car"] },
+    { signalId: "declared-v2:manon:suno-father-song", signalType: "DECLARED", semanticKey: "creative.suno_father_song.manon", ...personScope(manon), action: "AFFIRM", value: "ONE_OFF_FATHER_SONG", kind: "PROJECT", family: "LEISURE_AND_ACTIVITIES", authority: "USER_VALIDATED", temporalStatus: "PROJECT", dimension: "USAGE", groupKey: "suno_father_song", entityRef: "recurrence:24cefd44-463b-59fa-b232-376b5404461c", limitations: ["NOVEMBER_2025_SUNO_NOT_LINKED", "PERSONAL_PAYMENT_NOT_ESTABLISHED"], sourceModule: "DECLARED_V2", methodVersion: GLOBAL_PERSONA_DECLARATION_PROVIDER_VERSION, evidenceRefs: ["declaration-v2:manon-suno-father-song", "recurrence:24cefd44-463b-59fa-b232-376b5404461c"] },
   );
   for (const service of PERSONAL_USAGE_SERVICE_DECLARATIONS_V1) {
     const personId = peopleByName.get(service.personName);

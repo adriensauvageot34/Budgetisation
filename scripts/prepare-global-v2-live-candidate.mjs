@@ -68,7 +68,23 @@ if (fixtureDirectory !== undefined) {
   const key = process.env.SUPABASE_SECRET_KEY ?? process.env.SUPABASE_SERVICE_ROLE_KEY;
   const householdId = args.get("--household-id");
   if (!url || !key || !householdId) throw new TypeError("Server-only Supabase credentials and --household-id are required for live read-only preparation.");
-  client = createClient(url, key, { auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false } });
+  const secretKeyFetch = async (input, init) => {
+    const request = new Request(input, init);
+    const headers = new Headers(request.headers);
+    headers.delete("Authorization");
+    const withoutBearer = new Request(request, { headers });
+    for (let attempt = 0; attempt < 3; attempt += 1) {
+      const response = await fetch(withoutBearer.clone());
+      if (response.status !== 401 || !(await response.clone().text()).includes("JWT issued at future")) return response;
+      if (attempt === 2) throw new TypeError(`SUPABASE_API_CLOCK_SKEW:${new URL(request.url).pathname}`);
+      await new Promise((resolve) => setTimeout(resolve, 500 * (attempt + 1)));
+    }
+    throw new TypeError("SUPABASE_API_RETRY_EXHAUSTED");
+  };
+  client = createClient(url, key, {
+    auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false },
+    ...(key.startsWith("sb_secret_") ? { global: { fetch: secretKeyFetch } } : {}),
+  });
   const { createGlobalV2CandidateContext } = require(path.resolve(root, "src/server/analytics/global-v2-production-orchestrator.ts"));
   context = await createGlobalV2CandidateContext({ client, householdId, asOf });
 }

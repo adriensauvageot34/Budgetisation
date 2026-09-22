@@ -2125,7 +2125,16 @@ export function buildGlobalV2CandidateFromOwnerOutputs(input: GlobalV2CandidateI
     });
     return { key, semanticBody, version, dependencies };
   });
+  const personaEditorial = at(outputsByModule.get("PERSONAS")?.output, "editorial");
   const supportArtifactDefinitions = [
+    ...(personaEditorial === undefined ? [] : [{
+      key: `global-artifact:persona-editorial:${scopeHash}`,
+      semanticBody: { editorial: personaEditorial },
+      family: "global_persona_editorial",
+      contractVersion: "persona-editorial@v1",
+      dependencies: [...new Map(["PERSONAS", "ECONOMIC", "CATEGORIES_NEEDS", "GEO_MOBILITY"].flatMap((moduleKey) => dependenciesFor(moduleKey as GlobalPrimaryModuleKey)).map((dependency) => [`${dependency.authority}:${dependency.family}:${dependency.identity}`, dependency] as const)).values()],
+      resourceInput: { scope, editorialDigest: digest(personaEditorial) },
+    }]),
     {
       key: `global-artifact:presentation-labels:${scopeHash}`,
       semanticBody: { presentationLabels },

@@ -9,6 +9,7 @@ import {
   type GlobalV2QueryRequest,
 } from "@/query-api/global-v2";
 import { buildPersonaDirectModel, personaDirectDetailKey, selectPersonaDirectOwnerRefs, type PersonaDirectLabels } from "@/query-api/global-v2/persona-direct-presentation";
+import { PERSONA_EDITORIAL_SCHEMA_VERSION, type resolveGlobalPersonaEditorial } from "@/server/analytics/global-v2-persona-editorial";
 import { getBootstrapContext } from "@/server/bootstrap/context";
 import { createAuthorizedRuntimeContext, type AuthorizedRuntimeContext } from "@/server/canonical/context";
 import { createCanonicalReadClient } from "@/server/canonical/client";
@@ -129,4 +130,25 @@ export async function loadGlobalV2ProductionBundle() {
     bundle: { initial: initial.data as GlobalInitialReadModel, persona },
     certifiedThrough: runtime.generation.scope.time.certifiedThrough,
   };
+}
+
+/** Compact, generation-pinned P4.8-A read model for the next Persona UI lot. */
+export async function loadGlobalV2PersonaEditorialReadModel(): Promise<Awaited<ReturnType<typeof resolveGlobalPersonaEditorial>>> {
+  const runtime = await createGlobalV2ProductionRuntime();
+  const { data, error } = await runtime.client.from("analytics_artifacts")
+    .select("payload")
+    .eq("household_id", runtime.context.householdId)
+    .eq("publication_id", runtime.generation.publicationId)
+    .eq("artifact_family", "global_persona_editorial")
+    .eq("is_active", true)
+    .is("invalidated_at", null);
+  if (error !== null) throw error;
+  if (data?.length !== 1) throw new TypeError("GLOBAL_PERSONA_EDITORIAL_ARTIFACT_MISSING");
+  const payload = data[0]!.payload as { readonly publicationMeta?: GlobalReadModelPublicationMeta; readonly editorial?: Awaited<ReturnType<typeof resolveGlobalPersonaEditorial>> };
+  if (payload.publicationMeta?.publicationId !== runtime.generation.publicationId
+    || payload.publicationMeta.revision !== runtime.generation.analyticsRevision
+    || payload.publicationMeta.factsHash !== runtime.generation.publicationMeta.factsHash
+    || payload.publicationMeta.manifestHash !== runtime.generation.publicationMeta.manifestHash
+    || payload.editorial?.schemaVersion !== PERSONA_EDITORIAL_SCHEMA_VERSION) throw new TypeError("GLOBAL_PERSONA_EDITORIAL_GENERATION_MISMATCH");
+  return payload.editorial;
 }

@@ -37,6 +37,7 @@ import { resolveGlobalM7PersonalMobilityAuthority } from "./global-v2-personal-m
 import { resolveGlobalM7PlaceAuthority } from "./global-v2-place-authority";
 import { resolveGlobalM8PurchaseAuthority } from "./global-v2-purchase-authority";
 import { buildGlobalV2PersonaSignals, resolveGlobalPersonaProductObservations } from "./global-v2-persona-signals";
+import { resolveGlobalPersonaEditorial } from "./global-v2-persona-editorial";
 import { resolveGlobalGroceryCandidateAdapter, resolveGlobalTimelineCandidateAdapter } from "./global-v2-candidate-adapters";
 import { resolveGlobalMomentComponentPresentation } from "./global-v2-moment-component-presentation";
 import { resolveGlobalTimelineSemanticAnalysis } from "./global-v2-timeline-semantic-comparator";
@@ -302,6 +303,16 @@ export async function resolveGlobalV2ProductionOwnerOutputs(repository: Canonica
     differences: personaDifferences,
     certifiedThrough: parseLocalDate(certifiedThrough),
   });
+  const editorial = await resolveGlobalPersonaEditorial({
+    client: repository.client,
+    householdId: String(context.householdId),
+    personIdsByName: Object.fromEntries(context.persons.map(({ personId, displayName }) => [displayName, String(personId)])),
+    firstDay: `${occurrenceMonths[0]}-01`,
+    certifiedThrough,
+    m1Series: m1.recurrences.series as unknown as readonly Record<string, unknown>[],
+    m2NeedGroups: m2.result.needs.groups as unknown as readonly Record<string, unknown>[],
+    mobilitySummaries: m7PersonalMobility.summaries,
+  });
   const m9 = {
     ...historicalM9,
     profile: persona.profile,
@@ -311,6 +322,7 @@ export async function resolveGlobalV2ProductionOwnerOutputs(repository: Canonica
     declarationProviderVersion: persona.declarationProviderVersion,
     limitations: persona.limitations,
     capabilities: persona.capabilities,
+    editorial,
   };
 
   const ownerOutputs: GlobalV2OwnerOutput[] = [
