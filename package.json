@@ -87,6 +87,7 @@
     "jszip": "3.10.1",
     "lucide-react": "^0.468.0",
     "next": "16.2.6",
+    "pg": "8.16.3",
     "react": "19.2.6",
     "react-dom": "19.2.6",
     "recharts": "^2.15.0"
@@ -95,6 +96,7 @@
     "@tailwindcss/postcss": "4.2.1",
     "@types/big.js": "7.0.0",
     "@types/node": "22.19.19",
+    "@types/pg": "8.15.5",
     "@types/react": "19.2.14",
     "@types/react-dom": "19.2.3",
     "tailwindcss": "4.2.1",

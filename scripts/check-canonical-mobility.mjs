@@ -60,6 +60,11 @@ check(() => assert.equal(first.report.resolvedPlaceIdentities, 0));
 check(() => assert.equal(first.report.unresolvedPlaceIdentities, 92));
 check(() => assert.equal(first.vehicleCandidate.owner_person_id, null));
 check(() => assert.match(first.vehicleCandidate.label, /2010.*1\.4 VTi 95.*SP95.*BVM5/));
+check(() => assert.equal(first.fuelPriceObservations.length, 12));
+check(() => assert.equal(new Set(first.fuelPriceObservations.map(({ fuel_price_observation_id }) => fuel_price_observation_id)).size, 12));
+check(() => assert.equal(first.fuelPriceObservations.every(({ observed_at }) => observed_at.endsWith("-01T00:00:00.000Z")), true));
+check(() => assert.equal(first.legs.every(({ fuel_price_observation_id }) => typeof fuel_price_observation_id === "string"), true));
+check(() => assert.equal(new Set(first.legs.map(({ fuel_price_observation_id }) => fuel_price_observation_id)).size, 12));
 
 const repeated = await mobilityImport.buildCanonicalMobilityImportPlan({
   filePath: sourcePath,

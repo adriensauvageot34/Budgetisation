@@ -16,6 +16,7 @@ export const MOBILITY_VEHICLE_MODEL_REF = "peugeot-207-1.4-vti95-bvm5-sp95@tomto
 const DATASET_NAMESPACE = "610f0cce-dde4-5b6b-9a2d-92c5d23226f5";
 const LEG_NAMESPACE = "2a2ab9bf-74c9-5bb7-8fe6-87b2eef13893";
 const VEHICLE_NAMESPACE = "00f3cbaa-0ec2-56d7-b0fd-23959b1a72fb";
+const FUEL_PRICE_OBSERVATION_NAMESPACE = "7fbb87f8-d925-59c0-82fd-9dd7de362462";
 const uuidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const sourceIdPattern = /^(NAV|JOUR|AUT)-[0-9]{4}$/;
 const localDatePattern = /^\d{4}-\d{2}-\d{2}$/;
@@ -83,6 +84,17 @@ export type CanonicalMobilityLegRow = Readonly<Record<string, unknown>> & {
   readonly vehicle_id: string;
 };
 
+export type CanonicalMobilityFuelPriceObservationRow = {
+  readonly fuel_price_observation_id: string;
+  readonly fuel_type: "SP95";
+  readonly price_per_liter: string;
+  readonly observed_at: string;
+  readonly geographic_scope: "LOCAL_DEPARTMENT" | "NATIONAL";
+  readonly source: string;
+  readonly quality: "P3_LOCAL_DEPARTMENT" | "P4_NATIONAL_FALLBACK";
+  readonly provenance: "observed";
+};
+
 export type CanonicalMobilityDryRunReport = {
   readonly status: "PASS";
   readonly sourceFileName: string;
@@ -118,6 +130,7 @@ export type CanonicalMobilityImportPlan = {
     readonly consumption_l_100km: null;
     readonly status: "active";
   };
+  readonly fuelPriceObservations: readonly CanonicalMobilityFuelPriceObservationRow[];
   readonly legs: readonly CanonicalMobilityLegRow[];
   readonly facts: readonly MobilityLegFact[];
   readonly report: CanonicalMobilityDryRunReport;
@@ -284,14 +297,25 @@ function fuelAuthority(row: Readonly<Record<string, unknown>>, travelDate: strin
   const isLocal = qualityLabel === "P3 local/département";
   const isNational = qualityLabel === "P4 national fallback";
   if (!isLocal && !isNational) throw new TypeError(`Qualité prix inconnue: ${qualityLabel}`);
-  return {
+  const authority = {
     fuelType: "SP95" as const,
     pricePerLiter: nonNegativeDecimal(row["Prix SP95 historique (€/L)"], "Prix SP95 historique", 6),
     pricePeriod: travelDate.slice(0, 7),
     geoScope: isLocal ? "LOCAL_DEPARTMENT" as const : "NATIONAL" as const,
     source: requiredText(row["Source prix"], "Source prix"),
     quality: isLocal ? "P3_LOCAL_DEPARTMENT" as const : "P4_NATIONAL_FALLBACK" as const,
-    observationId: null,
+  };
+  return {
+    ...authority,
+    observationId: deterministicUuid(FUEL_PRICE_OBSERVATION_NAMESPACE, [
+      authority.fuelType,
+      authority.pricePeriod,
+      authority.pricePerLiter,
+      authority.geoScope,
+      authority.source,
+      authority.quality,
+      CANONICAL_MOBILITY_IMPORT_METHOD_VERSION,
+    ].join("|")),
   };
 }
 
@@ -385,6 +409,7 @@ export async function buildCanonicalMobilityImportPlan(input: {
   }
 
   const legs: CanonicalMobilityLegRow[] = [];
+  const fuelPriceObservations = new Map<string, CanonicalMobilityFuelPriceObservationRow>();
   const facts: MobilityLegFact[] = [];
   const sourceIds = new Set<string>();
   const canonicalIds = new Set<string>();
@@ -427,6 +452,16 @@ export async function buildCanonicalMobilityImportPlan(input: {
       const estimatedFuelLiters = nonNegativeDecimal(row["Essence estimée (L)"], "Essence estimée (L)", 9);
       const estimatedFuelCost = nonNegativeDecimal(row["Coût carburant estimé (€)"], "Coût carburant estimé (€)", 9);
       const fuel = fuelAuthority(row, date);
+      fuelPriceObservations.set(fuel.observationId, {
+        fuel_price_observation_id: fuel.observationId,
+        fuel_type: fuel.fuelType,
+        price_per_liter: fuel.pricePerLiter,
+        observed_at: `${fuel.pricePeriod}-01T00:00:00.000Z`,
+        geographic_scope: fuel.geoScope,
+        source: fuel.source,
+        quality: fuel.quality,
+        provenance: "observed",
+      });
       const independentlyCalculatedCost = new Big(estimatedFuelLiters).times(fuel.pricePerLiter);
       if (independentlyCalculatedCost.minus(estimatedFuelCost).abs().gt("0.000001")) {
         throw new TypeError(`${candidateId}: coût carburant incohérent avec litres × prix.`);
@@ -578,6 +613,8 @@ export async function buildCanonicalMobilityImportPlan(input: {
       vehicle_id: vehicleId, household_id: householdId, owner_person_id: null,
       label: "Peugeot 207 2010 — 1.4 VTi 95 — SP95 — BVM5", fuel_type: "SP95", consumption_l_100km: null, status: "active",
     },
+    fuelPriceObservations: [...fuelPriceObservations.values()].sort((left, right) =>
+      left.fuel_price_observation_id.localeCompare(right.fuel_price_observation_id)),
     legs: legs.sort((left, right) => left.source_leg_id.localeCompare(right.source_leg_id)),
     facts: facts.sort((left, right) => left.source.sourceLegId.localeCompare(right.source.sourceLegId)),
     report: { status: "PASS", ...reportBase, databaseWrites: 0, financeRowsPlanned: 0 },
