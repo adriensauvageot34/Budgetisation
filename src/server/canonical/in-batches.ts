@@ -1,6 +1,7 @@
 import "server-only";
 
 export const CANONICAL_IN_BATCH_SIZE = 100;
+export const CANONICAL_ECONOMIC_IN_BATCH_SIZE = 120;
 export const CANONICAL_IN_MAX_CONCURRENCY = 3;
 
 export function normalizeCanonicalInValues(

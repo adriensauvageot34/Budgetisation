@@ -50,6 +50,14 @@ export async function resolveGlobalM1HouseholdAuthority(input: {
     subject: { kind: "household" as const },
     time: { kind: "month" as const, month: targetMonth },
   };
+  const eligiblePeriods = input.repository.context.periods
+    .filter(({ month }) => month.slice(0, 7) <= targetMonth)
+    .sort((a, b) => a.month.localeCompare(b.month));
+  const closureStartMonth = eligiblePeriods[0]?.month.slice(0, 7) ?? targetMonth;
+  await input.repository.preloadEconomicFactsClosure({
+    start: parseLocalDate(`${closureStartMonth}-01`),
+    endExclusive: parseLocalDate(`${addMonths(targetMonth, 1)}-01`),
+  });
   const [actualSource, monthlyMinimalSource, periodMinimalSource, facts, classifications] = await Promise.all([
     resolver.resolveCanonical("economic_consumption_net_attributable", scope),
     resolver.resolveCanonical("minimal_month_cost", scope),
@@ -76,9 +84,6 @@ export async function resolveGlobalM1HouseholdAuthority(input: {
     throw new TypeError("M1 exige des autorités monétaires mensuelles EUR/month.");
   }
 
-  const eligiblePeriods = input.repository.context.periods
-    .filter(({ month }) => month.slice(0, 7) <= targetMonth)
-    .sort((a, b) => a.month.localeCompare(b.month));
   const monthlyAuthorities = await Promise.all(eligiblePeriods.map(async (period) => {
     const month = parseYearMonth(period.month.slice(0, 7));
     const monthScope = {

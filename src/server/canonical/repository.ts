@@ -72,6 +72,8 @@ import {
 } from "./record";
 import { safeRuntimeEnvironment } from "@/server/runtime-environment";
 import {
+  CANONICAL_ECONOMIC_IN_BATCH_SIZE,
+  CANONICAL_IN_BATCH_SIZE,
   readCanonicalInBatches,
 } from "./in-batches";
 import {
@@ -138,6 +140,20 @@ function logExpectedPurchaseMigrationAbsence(
 export type CanonicalDateRange = {
   readonly start: LocalDate;
   readonly endExclusive: LocalDate;
+};
+
+export type CanonicalEconomicFactsClosure = {
+  readonly householdId: HouseholdId;
+  readonly range: CanonicalDateRange;
+  readonly asOf: string;
+  readonly economicFacts: readonly EconomicComponentFact[];
+};
+
+type EconomicFactsClosureState = CanonicalEconomicFactsClosure & {
+  readonly operations: readonly CanonicalRecord[];
+  readonly timingRows: readonly CanonicalRecord[];
+  readonly compositions: Readonly<Record<CompositionTable, readonly CanonicalRecord[]>>;
+  readonly operationIds: ReadonlySet<string>;
 };
 
 export type CanonicalOperationBundle = {
@@ -387,6 +403,7 @@ function compareCanonicalBatchRows(
 export class CanonicalRepository {
   private readonly cache = new Map<string, Promise<unknown>>();
   private readonly household: CanonicalHouseholdContext;
+  private economicFactsClosure: EconomicFactsClosureState | undefined;
 
   constructor(
     readonly client: SupabaseClient,
@@ -459,6 +476,7 @@ export class CanonicalRepository {
     identityColumns: readonly string[],
     orderColumns: readonly string[],
     query: (batch: readonly string[]) => PromiseLike<CanonicalQueryResult>,
+    batchSize = CANONICAL_IN_BATCH_SIZE,
   ): Promise<readonly CanonicalRecord[]> {
     return this.cached(key, () => readCanonicalInBatches({
       values,
@@ -469,6 +487,7 @@ export class CanonicalRepository {
         right,
         [...orderColumns, ...identityColumns],
       ),
+      batchSize,
     }));
   }
 
@@ -604,9 +623,16 @@ export class CanonicalRepository {
 
   async loadOperationsByIds(
     operationIds: readonly string[],
+    batchSize = CANONICAL_IN_BATCH_SIZE,
   ): Promise<readonly CanonicalRecord[]> {
     const ids = unique(operationIds);
     if (ids.length === 0) return [];
+    const closure = this.economicFactsClosure;
+    if (closure !== undefined && ids.every((id) => closure.operationIds.has(id))) {
+      const selected = new Set(ids);
+      return closure.operations.filter((row) =>
+        selected.has(canonicalString(row, ["operation_id"], "operations")));
+    }
     await this.assertAuthorizedCanonicalHouseholdScope();
     return this.readRowsByInBatches(
       `operations:ids:${ids.join(",")}`,
@@ -620,6 +646,7 @@ export class CanonicalRepository {
           .select("*,montant_bancaire_exact:montant::text")
           .in("operation_id", batch)
           .order("operation_id", { ascending: true }),
+      batchSize,
     );
   }
 
@@ -652,6 +679,7 @@ export class CanonicalRepository {
           )
           .in("operation_id", batch)
           .order("canonical_component_key", { ascending: true }),
+      CANONICAL_ECONOMIC_IN_BATCH_SIZE,
     );
   }
 
@@ -674,6 +702,7 @@ export class CanonicalRepository {
           )
           .in("canonical_component_key", batch)
           .order("canonical_component_key", { ascending: true }),
+      CANONICAL_ECONOMIC_IN_BATCH_SIZE,
     );
   }
 
@@ -718,6 +747,7 @@ export class CanonicalRepository {
           .in("canonical_component_key", batch)
           .order("canonical_component_key", { ascending: true })
           .order("economic_segment_id", { ascending: true }),
+      CANONICAL_ECONOMIC_IN_BATCH_SIZE,
     );
   }
 
@@ -749,6 +779,7 @@ export class CanonicalRepository {
           .order(idColumn, { ascending: true })
           .order("person_id", { ascending: true })
           .order("relation_type", { ascending: true }),
+        CANONICAL_ECONOMIC_IN_BATCH_SIZE,
       );
     }));
     return rowsBySource.flat();
@@ -767,7 +798,7 @@ export class CanonicalRepository {
 
     const [operations, places, timingRows, timingControls, reconciliations, allocations, items, paymentComponents, cashUses, personLinks] =
       await Promise.all([
-        this.loadOperationsByIds(operationIds),
+        this.loadOperationsByIds(operationIds, CANONICAL_ECONOMIC_IN_BATCH_SIZE),
         this.readRowsByInBatches(
           `places:keys:${componentKeys.join(",")}`,
           "places",
@@ -779,7 +810,8 @@ export class CanonicalRepository {
             .from("operation_place_canonical")
             .select("canonical_component_key,operation_id,place_id,resolution_state")
             .in("canonical_component_key", batch)
-            .order("canonical_component_key", { ascending: true })),
+            .order("canonical_component_key", { ascending: true }),
+          CANONICAL_ECONOMIC_IN_BATCH_SIZE),
         this.loadTimingRowsByKeys(componentKeys),
         this.readRowsByInBatches(
           `timing-controls:${componentKeys.join(",")}`,
@@ -792,7 +824,8 @@ export class CanonicalRepository {
             .from("financial_economic_timing_control")
             .select("canonical_component_key,canonical_economic_net::text,segment_count,known_count,partial_count,unknown_count,household_count,household_mismatch_count,segment_amount_sum::text,amount_delta::text,status")
             .in("canonical_component_key", batch)
-            .order("canonical_component_key", { ascending: true })),
+            .order("canonical_component_key", { ascending: true }),
+          CANONICAL_ECONOMIC_IN_BATCH_SIZE),
         this.readRowsByInBatches(
           `reconciliation:${operationIds.join(",")}`,
           "economic",
@@ -804,11 +837,12 @@ export class CanonicalRepository {
             .from("financial_canonical_reconciliation_control")
             .select("operation_id,economic_gross_delta::text,economic_refund_resolution,economic_status")
             .in("operation_id", batch)
-            .order("operation_id", { ascending: true })),
-        this.loadComposition("operation_allocations", operationIds),
-        this.loadComposition("operation_items", operationIds),
-        this.loadComposition("payment_components", operationIds),
-        this.loadComposition("cash_economic_uses", operationIds),
+            .order("operation_id", { ascending: true }),
+          CANONICAL_ECONOMIC_IN_BATCH_SIZE),
+        this.loadComposition("operation_allocations", operationIds, CANONICAL_ECONOMIC_IN_BATCH_SIZE),
+        this.loadComposition("operation_items", operationIds, CANONICAL_ECONOMIC_IN_BATCH_SIZE),
+        this.loadComposition("payment_components", operationIds, CANONICAL_ECONOMIC_IN_BATCH_SIZE),
+        this.loadComposition("cash_economic_uses", operationIds, CANONICAL_ECONOMIC_IN_BATCH_SIZE),
         this.loadPersonLinkRowsForComponents(components),
       ]);
 
@@ -922,6 +956,15 @@ export class CanonicalRepository {
   async loadEconomicFacts(
     range: CanonicalDateRange,
   ): Promise<readonly EconomicComponentFact[]> {
+    const closure = this.economicFactsClosure;
+    if (
+      closure !== undefined
+      && closure.range.start <= range.start
+      && closure.range.endExclusive >= range.endExclusive
+    ) {
+      return this.cached(`facts:economic:closure:${range.start}:${range.endExclusive}`, async () =>
+        this.projectEconomicFactsFromClosure(closure, range));
+    }
     return this.cached(`facts:economic:${range.start}:${range.endExclusive}`, async () => {
       const [bankOperationIds, historicalTimingOperationIds, rangeTiming] = await Promise.all([
         this.loadEconomicOperationIdsByBankRange(range),
@@ -947,6 +990,99 @@ export class CanonicalRepository {
       );
       return this.projectEconomicComponentRows(components);
     });
+  }
+
+  /**
+   * Builds one request-scoped superset for repeated monthly economic reads.
+   * Sub-ranges still use the exact bank/real-date/forced-month/timing discovery
+   * semantics of loadEconomicFacts; only their physical reads are eliminated.
+   */
+  async preloadEconomicFactsClosure(
+    range: CanonicalDateRange,
+  ): Promise<CanonicalEconomicFactsClosure> {
+    const existing = this.economicFactsClosure;
+    if (
+      existing !== undefined
+      && existing.range.start <= range.start
+      && existing.range.endExclusive >= range.endExclusive
+    ) return existing;
+
+    return this.cached(`facts:economic-closure:${range.start}:${range.endExclusive}`, async () => {
+      const economicFacts = await this.loadEconomicFacts(range);
+      const operationIds = unique(economicFacts.flatMap(({ sourceOperation }) =>
+        sourceOperation.kind === "resolved" ? [String(sourceOperation.id)] : []));
+      const componentKeys = economicFacts.map(({ canonicalComponentKey }) =>
+        String(canonicalComponentKey));
+      const [operations, timingRows, allocations, items, paymentComponents, cashUses] =
+        await Promise.all([
+          this.loadOperationsByIds(operationIds),
+          this.loadTimingRowsByKeys(componentKeys),
+          this.loadComposition("operation_allocations", operationIds),
+          this.loadComposition("operation_items", operationIds),
+          this.loadComposition("payment_components", operationIds),
+          this.loadComposition("cash_economic_uses", operationIds),
+        ]);
+      const closure: EconomicFactsClosureState = {
+        householdId: this.context.householdId,
+        range,
+        asOf: this.context.asOf,
+        economicFacts,
+        operations,
+        timingRows,
+        compositions: {
+          operation_allocations: allocations,
+          operation_items: items,
+          payment_components: paymentComponents,
+          cash_economic_uses: cashUses,
+        },
+        operationIds: new Set(operationIds),
+      };
+      this.economicFactsClosure = closure;
+      return closure;
+    });
+  }
+
+  private projectEconomicFactsFromClosure(
+    closure: EconomicFactsClosureState,
+    range: CanonicalDateRange,
+  ): readonly EconomicComponentFact[] {
+    const startMonth = yearMonthOf(range.start);
+    const endMonth = yearMonthOf(range.endExclusive);
+    const operationIds = new Set(closure.operations.flatMap((operation) => {
+      const bankDate = optionalCanonicalString(operation, ["date_bancaire"]);
+      const realDate = optionalCanonicalString(operation, ["date_transaction_reelle"]);
+      const realDatePrecision = optionalCanonicalString(operation, ["date_transaction_precision"]);
+      const forcedMonth = optionalCanonicalString(operation, ["mois_analytique_force"]);
+      const included =
+        (bankDate !== undefined && bankDate >= range.start && bankDate < range.endExclusive)
+        || (realDate !== undefined
+          && realDate >= range.start
+          && realDate < range.endExclusive
+          && realDatePrecision === "Jour exact")
+        || (forcedMonth !== undefined && forcedMonth >= startMonth && forcedMonth < endMonth);
+      return included
+        ? [canonicalString(operation, ["operation_id"], "operations")]
+        : [];
+    }));
+    const timingComponentKeys = new Set(closure.timingRows.flatMap((timing) => {
+      const economicMonth = optionalCanonicalString(timing, ["economic_month"]);
+      return economicMonth !== undefined
+        && economicMonth >= range.start
+        && economicMonth < range.endExclusive
+        ? [canonicalString(timing, ["canonical_component_key"], "timing")]
+        : [];
+    }));
+    const byComponentKey = new Map(closure.economicFacts.map((fact) =>
+      [String(fact.canonicalComponentKey), fact] as const));
+    const byOperation = closure.economicFacts
+      .filter(({ sourceOperation }) =>
+        sourceOperation.kind === "resolved" && operationIds.has(String(sourceOperation.id)))
+      .sort((left, right) =>
+        String(left.canonicalComponentKey).localeCompare(String(right.canonicalComponentKey)));
+    const byTiming = [...timingComponentKeys]
+      .sort()
+      .flatMap((key) => byComponentKey.get(key) ?? []);
+    return dedupeEconomicComponents([...byOperation, ...byTiming]);
   }
 
   async loadEconomicComponentClassifications(
@@ -1879,10 +2015,20 @@ export class CanonicalRepository {
   private loadComposition(
     table: CompositionTable,
     operationIds: readonly string[],
+    batchSize = CANONICAL_IN_BATCH_SIZE,
   ): Promise<readonly CanonicalRecord[]> {
     const ids = unique(operationIds);
     if (ids.length === 0) return Promise.resolve([]);
     const mapping = compositionMappings[table];
+    const closure = this.economicFactsClosure;
+    if (closure !== undefined && ids.every((id) => closure.operationIds.has(id))) {
+      const selected = new Set(ids);
+      const operationIdColumn = mapping.operationIdSelection === null
+        ? mapping.foreignOperationKey
+        : "operation_id";
+      return Promise.resolve(closure.compositions[table].filter((row) =>
+        selected.has(canonicalString(row, [operationIdColumn], "operations"))));
+    }
     const operationIdSelection = mapping.operationIdSelection === null
       ? ""
       : `,${mapping.operationIdSelection}`;
@@ -1901,6 +2047,7 @@ export class CanonicalRepository {
         .in(mapping.foreignOperationKey, batch)
         .order(mapping.foreignOperationKey, { ascending: true })
         .order(mapping.stableId, { ascending: true }),
+      batchSize,
     );
   }
 
