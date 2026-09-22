@@ -45,3 +45,34 @@ and observed times remain separate from proxy route times.
 The import command is dry-run-only in P4.5-A. Its apply mode fails closed until
 P4.5-B receives explicit approval. Database writes, Global V2 publication, and
 UI consumption are outside this phase.
+
+## P4.5-C derived context authority
+
+P4.5-C adds no canonical column or table. `MobilityContextResolution` and
+`MobilityPresenceResolution` are deterministic M7 owner projections rebuilt
+from `MobilityLegFact`, structured LifeEvent types and participations, canonical
+place identifiers, `PersonDayFact`, and positive `PlaceVisitFact` intervals.
+They are not Persona records and they never carry distance, fuel, or cost.
+
+The context grain is `mobility leg × context reference × subject person`; one
+physical leg can therefore have several context links without becoming several
+physical movements. Any additive projection must first deduplicate by
+`mobilityLegId`. A missing candidate is represented as `UNLINKED`, while proxy,
+approximate, or date-only candidates remain `AMBIGUOUS`.
+
+Strong event links require an exact canonical endpoint place and a compatible
+observed leg time. An observed arrival may fall from 120 minutes before the
+context start through its end; an observed departure may fall from the context
+start through 120 minutes after its end; an observed untyped point must fall
+inside the interval. Proxy time, approximate intervals, and date-only evidence
+never become a strong link. More precise participation evidence takes priority
+over weaker evidence for the same event and subject. Source groups such as
+`NAV` and `JOUR`, source labels, display labels, merchants, and fuzzy place
+matching are never semantic evidence.
+
+Couple presence is strictly pairwise. `CO_PRESENT_CONFIRMED` requires a second
+positive participation in the same LifeEvent or an exact positive presence at
+the context place. `OTHER_ELSEWHERE_CONFIRMED` requires an exact, overlapping,
+positive presence at another canonical place. Missing GPS, absent PersonDay
+coverage, and missing participation are never negative proof. Every other case
+is `UNKNOWN`; no projection claims that a person was physically alone.

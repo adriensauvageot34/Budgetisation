@@ -171,6 +171,26 @@ export {
   type GlobalVisitSemanticEvidence,
 } from "./places";
 export { createGlobalM7DependencyDeclaration } from "./place-dependencies";
+export {
+  GLOBAL_M7_MOBILITY_CONTEXT_METHOD_VERSION,
+  GLOBAL_M7_MOBILITY_CONTEXT_POLICY,
+  aggregateMobilityPhysicalTotals,
+  buildGlobalM7MobilityContextAuthority,
+  resolveMobilityPurposeFromTypeKey,
+  type GlobalM7MobilityContextAuthority,
+  type MobilityContextKnowledgeState,
+  type MobilityContextKind,
+  type MobilityContextLinkState,
+  type MobilityContextResolution,
+  type MobilityContextScope,
+  type MobilityLifeEventContextAuthority,
+  type MobilityLifeEventParticipationAuthority,
+  type MobilityPhysicalTotals,
+  type MobilityPresenceResolution,
+  type MobilityPurpose,
+  type MobilityTemporalQuality,
+  type MobilityTemporalRelation,
+} from "./mobility-context";
 export { recertifyGlobalCDForPlaceAndMoment } from "./place-recertification";
 export {
   GLOBAL_M8_METHOD_VERSION,
