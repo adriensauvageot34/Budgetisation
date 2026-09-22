@@ -37,6 +37,7 @@ const personA = "00000000-0000-4000-8000-000000000002";
 const personB = "00000000-0000-4000-8000-000000000003";
 const personaProfile = analytics.buildPersonaProfile({ signals: [
   { signalId: "bridge:photo", signalType: "DECLARED", semanticKey: "creative.photo.adrien", subject: { kind: "PERSON", personId: personA }, scope: "PERSONAL", action: "AFFIRM", value: true, kind: "PROJECT", family: "LEISURE_AND_ACTIVITIES", authority: "USER_VALIDATED", temporalStatus: "PROJECT", sourceModule: "DECLARED_V1", evidenceRefs: ["declaration:photo-project"] },
+  { signalId: "m1:personal-cost:bridge", signalType: "PERSONAL_COST", semanticKey: "personal-cost:bridge-personal", subject: { kind: "PERSON", personId: personA }, scope: "PERSONAL", entityRef: "recurrence:bridge-personal", kind: "HABIT", family: "RECURRING_PERSONAL_COSTS", authority: "CANONICAL_DB", knowledgeStatus: "OBSERVED", temporalStatus: "STABLE", sourceModule: "M1", typicalAmount: "19.99", beneficiaryPersonId: personA, metrics: { personalCostCoverage: 1, recurrenceStatus: "ACTIVE" }, evidenceRefs: ["personal-cost:bridge", "recurrence:bridge-personal"] },
   { signalId: "m7:person-place:bridge-rollup", signalType: "MOBILITY", semanticKey: "person-place:place-one", subject: { kind: "PERSON", personId: personA }, scope: "PERSONAL", entityRef: "person-place:bridge-rollup", kind: "HABIT", family: "MOBILITY", authority: "OBSERVED", knowledgeStatus: "OBSERVED", context: "PERSON_PLACE_ROLLUP", sourceModule: "M7", metrics: { visitCount: 3, distinctVisitDays: 2, medianDurationMinutes: 40 }, evidenceRefs: ["person-place:bridge-rollup"] },
   { signalId: "m7:person-place-return:bridge-pattern", signalType: "MOBILITY", semanticKey: "person-place-return:place-one:place-two:place-one", subject: { kind: "PERSON", personId: personA }, scope: "PERSONAL", entityRef: "person-place-return:bridge-pattern", kind: "HABIT", family: "MOBILITY", authority: "OBSERVED", knowledgeStatus: "OBSERVED", context: "PERSON_PLACE_RETURN_PATTERN", sourceModule: "M7", metrics: { returnCount: 2, distinctDayCount: 2 }, evidenceRefs: ["person-place-return:bridge-pattern"] },
   { signalId: "m2:need:bridge-personal", signalType: "NEED", semanticKey: "need:bridge-personal", subject: { kind: "PERSON", personId: personB }, scope: "PERSONAL", needKey: "bridge-personal", entityRef: "need:bridge-personal", active: true, kind: "HABIT", family: "PRODUCTS_AND_CONSUMPTION", authority: "CANONICAL_DB", knowledgeStatus: "OBSERVED", sourceModule: "M2", metrics: { activeMonths: 12, annualAmount: "720", monthlyAmount: "60", typicalAmount: "55" }, evidenceRefs: ["need:bridge-personal"] },
@@ -84,6 +85,10 @@ const outputByModule = {
     minimal: { metric: { status: "KNOWN", value: "1636.766" } },
     structure: { behavior: { amounts: { Fixe: "1590.49", Variable: "2182.65" } }, lifeScope: { amounts: { CURRENT: "2343.18", NON_CURRENT: "1429.96" } }, necessity: { amounts: { Contrainte: "1730.27", Indispensable: "1572.28" } } },
     temporal: { trend: { startLevel: "3427.21", endLevel: "2845.67", slopePerMonth: "-52.86" }, recentChange: { previousLevel: "2529.75", recentLevel: "3289.43", delta: "759.68" } },
+    recurrences: {
+      series: [{ recurrenceId: "bridge-personal", firstObservedAt: "2026-06-01", lastObservedAt: "2026-07-01", typicalOccurrenceCost: { status: "KNOWN", value: "19.99", unit: "EUR/occurrence" }, expectedOccurrenceAmount: { status: "UNKNOWN", unit: "EUR/occurrence" }, monthlyEquivalent: { status: "UNKNOWN", unit: "EUR/month" }, cadence: { status: "UNKNOWN", reasonCode: "QUALIFIED_CADENCE_AUTHORITY_UNAVAILABLE" }, lifecycle: { status: "KNOWN", value: "ACTIVE" }, priceEvolution: { status: "UNKNOWN", reasonCode: "COMPARABLE_PRICE_SERIES_UNAVAILABLE" }, support: { occurrenceCount: 2 }, inputHash: "9".repeat(64) }],
+      personalCostAuthorities: [{ authorityId: "personal-cost:bridge", policyRef: "global-m1-personal-cost-authority@v1", recurrenceId: "bridge-personal", economicEntityRef: "recurrence:bridge-personal", attributionState: "PERSONAL", personId: personA, coverage: { eligibleOccurrenceCount: 2, attributedOccurrenceCount: 2, fullyCertifiedOccurrenceCount: 2, eligibleAbsoluteAmount: "39.98", attributedAbsoluteAmount: "39.98", amountRatio: 1, occurrenceRatio: 1 }, support: { observedOccurrences: 2, minimumRequired: 2, status: "SUFFICIENT", policyRef: "global-m1-personal-cost-authority@v1" }, typicalOccurrenceAmount: "19.99", lifecycle: { status: "KNOWN", value: "ACTIVE" }, detailRef: { resource: "analysis_global_economic_recurrence_detail", entityRef: "recurrence:bridge-personal", role: "PRIMARY" }, evidenceRefs: ["beneficiary:bridge-personal"], inputHash: "8".repeat(64) }],
+    },
   },
   CATEGORIES_NEEDS: { result: {
     inputHash: "a".repeat(64),
@@ -188,6 +193,7 @@ const base = {
     subcategories: { "sub-food-core": "Courses", "sub-food-extra": "Restaurants", "sub-home": "Loyer", "sub-travel": "Train", "sub-gifts": "Cadeaux", "sub-health": "Santé", "sub-misc": "Divers" },
     needs: { "need-food": "Se nourrir", "need-home": "Se loger" },
     places: { "place-one": "Lieu A", "place-two": "Lieu B" },
+    recurrences: { "bridge-personal": "Abonnement certifié" },
   },
 };
 const transportFor = (momentOutput, hashCharacter = "7") => {
@@ -445,13 +451,16 @@ const personADetail = personaDetailSnapshots.find(({ params }) => params.entityR
 const personBDetail = personaDetailSnapshots.find(({ params }) => params.entityRef === `person:${personB}`).payload.personaDetailIndex;
 const bridgePlaceBlock = personADetail.blocks.find(({ semanticKey }) => semanticKey === "person-place:place-one");
 const bridgePatternBlock = personADetail.blocks.find(({ semanticKey }) => semanticKey === "person-place-return:place-one:place-two:place-one");
+const bridgePersonalCostBlock = personADetail.blocks.find(({ semanticKey }) => semanticKey === "personal-cost:bridge-personal");
 check(() => assert.deepEqual(bridgePlaceBlock.detailRefs, [{ resource: "analysis_global_place_mobility_detail", entityRef: "person-place:bridge-rollup", role: "PRIMARY" }]));
 check(() => assert.deepEqual(bridgePatternBlock.detailRefs, [{ resource: "analysis_global_place_mobility_detail", entityRef: "person-place-return:bridge-pattern", role: "PRIMARY" }]));
+check(() => assert.deepEqual(bridgePersonalCostBlock.detailRefs, [{ resource: "analysis_global_economic_recurrence_detail", entityRef: "recurrence:bridge-personal", role: "PRIMARY" }]));
+check(() => assert.deepEqual(bridgePersonalCostBlock.surfaceMetrics.map(({ metricId, displayValue }) => [metricId, displayValue]), [["personalCostCoverage", "1"], ["recurrenceStatus", "ACTIVE"], ["typicalAmount", "19.99"]]));
 const ownerPlaceDetail = queryDetail("analysis_global_place_mobility_detail", "person-place:bridge-rollup");
 const ownerPatternDetail = queryDetail("analysis_global_place_mobility_detail", "person-place-return:bridge-pattern");
 check(() => assert.deepEqual(ownerPlaceDetail.metrics.map(({ metricId, displayValue }) => [metricId, displayValue]), [["distinct-visit-days", "2"], ["median-duration-minutes", "40 min"], ["visit-count", "3"]]));
 check(() => assert.deepEqual(ownerPatternDetail.metrics.map(({ metricId, displayValue }) => [metricId, displayValue]), [["distinct-day-count", "2"], ["occurrence-count", "2"]]));
-check(() => assert.equal(JSON.stringify([bridgePlaceBlock, bridgePatternBlock]).includes("personPlaceRollups"), false));
+check(() => assert.equal(JSON.stringify([bridgePlaceBlock, bridgePatternBlock, bridgePersonalCostBlock]).includes("personalCostAuthorities"), false));
 const bridgeNeedBlock = personBDetail.blocks.find(({ semanticKey }) => semanticKey === "need:bridge-personal");
 check(() => assert.deepEqual(bridgeNeedBlock.detailRefs, [{ resource: "analysis_global_category_need_detail", entityRef: "need:bridge-personal", role: "PRIMARY" }]));
 check(() => assert.deepEqual(bridgeNeedBlock.surfaceMetrics.map(({ metricId, displayValue }) => [metricId, displayValue]), [["activeMonths", "12"], ["annualAmount", "720"], ["monthlyAmount", "60"]]));

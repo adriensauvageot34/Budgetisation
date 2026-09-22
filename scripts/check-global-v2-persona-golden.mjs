@@ -440,16 +440,34 @@ const sharedTechnoUnit = {
   resolution: "SHARED",
   evidenceRefs: ["m10:techno-1"],
 };
+const personalCostAuthority = ({ authorityId, recurrenceId, attributionState, personId, evidenceRefs, typicalOccurrenceAmount, supportStatus = "SUFFICIENT" }) => ({
+  authorityId,
+  policyRef: "global-m1-personal-cost-authority@v1",
+  recurrenceId,
+  economicEntityRef: `recurrence:${recurrenceId}`,
+  attributionState,
+  ...(personId === undefined ? {} : { personId }),
+  coverage: { eligibleOccurrenceCount: 2, attributedOccurrenceCount: attributionState === "UNKNOWN" ? 0 : 2, fullyCertifiedOccurrenceCount: attributionState === "PERSONAL" ? 2 : 0, eligibleAbsoluteAmount: "39.98", attributedAbsoluteAmount: attributionState === "UNKNOWN" ? "0" : "39.98", amountRatio: attributionState === "UNKNOWN" ? 0 : 1, occurrenceRatio: attributionState === "PERSONAL" ? 1 : 0 },
+  support: { observedOccurrences: supportStatus === "SUFFICIENT" ? 2 : 1, minimumRequired: 2, status: supportStatus, policyRef: "global-m1-personal-cost-authority@v1" },
+  ...(typicalOccurrenceAmount === undefined ? {} : { typicalOccurrenceAmount }),
+  lifecycle: { status: "KNOWN", value: "ACTIVE" },
+  detailRef: { resource: "analysis_global_economic_recurrence_detail", entityRef: `recurrence:${recurrenceId}`, role: "PRIMARY" },
+  evidenceRefs,
+  inputHash: authorityId.padEnd(64, "0").slice(0, 64),
+});
 const adapterInput = {
   householdId: household,
   personIds: [adrien, manon],
   displayNamesByPersonId: { [adrien]: "Adrien", [manon]: "Manon" },
-  m1: { recurrences: { series: [] } },
-  personalCostAuthorities: [
-    { costId: "card-only", semanticKey: "payment.card.X3366", payerPersonId: adrien, observedAmount: "25", evidenceRefs: ["card:X3366"] },
-    { costId: "beneficiary-without-proof", semanticKey: "subscription.unproved", beneficiaryPersonId: adrien, observedAmount: "12", evidenceRefs: ["recurrence:unproved"] },
-    { costId: "beneficiary-not-payer", semanticKey: "subscription.example", payerPersonId: adrien, beneficiaryPersonId: manon, beneficiaryEvidenceRefs: ["beneficiary:manon"], typicalAmount: "19.99", recurrenceStatus: "ACTIVE", evidenceRefs: ["recurrence:example"] },
-  ],
+  m1: { recurrences: {
+    series: [{ recurrenceId: "card-only" }, { recurrenceId: "beneficiary-without-proof" }, { recurrenceId: "beneficiary-not-payer" }, { recurrenceId: "single-beneficiary" }],
+    personalCostAuthorities: [
+      personalCostAuthority({ authorityId: "card-only", recurrenceId: "card-only", attributionState: "UNKNOWN", evidenceRefs: [] }),
+      personalCostAuthority({ authorityId: "beneficiary-without-proof", recurrenceId: "beneficiary-without-proof", attributionState: "PERSONAL", personId: adrien, evidenceRefs: [], typicalOccurrenceAmount: "12" }),
+      personalCostAuthority({ authorityId: "beneficiary-not-payer", recurrenceId: "beneficiary-not-payer", attributionState: "PERSONAL", personId: manon, evidenceRefs: ["beneficiary:manon"], typicalOccurrenceAmount: "19.99" }),
+      personalCostAuthority({ authorityId: "single-beneficiary", recurrenceId: "single-beneficiary", attributionState: "PERSONAL", personId: adrien, evidenceRefs: ["beneficiary:single"], typicalOccurrenceAmount: "11", supportStatus: "INSUFFICIENT" }),
+    ],
+  } },
   m2: { result: { needs: { groups: [
     { key: "groceries", dimension: { status: "KNOWN", id: "courses_alimentaires_foyer", evidenceRefs: ["need:courses"] }, subject: { scope: "HOUSEHOLD" }, activeMonths: 12, monthlyAmount: "400", typicalAmount: "380", annualAmount: "4560", evidenceRefs: ["m2:courses"] },
     { key: "work-meal", dimension: { status: "KNOWN", id: "repas_travail_personne_a", evidenceRefs: ["need:work-meal"] }, subject: { scope: "PERSONAL", personId: adrien }, activeMonths: 11, monthlyAmount: "120", typicalAmount: "100", annualAmount: "1320", evidenceRefs: ["m2:work-meal"] },
@@ -499,10 +517,16 @@ const adaptedBySignalId = new Map(adapted.signals.map((signal) => [signal.signal
 const beneficiarySignal = adaptedBySignalId.get("m1:personal-cost:beneficiary-not-payer");
 check(() => assert.equal(adaptedBySignalId.has("m1:personal-cost:card-only"), false));
 check(() => assert.equal(adaptedBySignalId.has("m1:personal-cost:beneficiary-without-proof"), false));
+check(() => assert.equal(adaptedBySignalId.has("m1:personal-cost:single-beneficiary"), false));
 check(() => assert.equal(beneficiarySignal.subject.kind, "PERSON"));
 check(() => assert.equal(beneficiarySignal.subject.personId, manon));
-check(() => assert.equal(beneficiarySignal.payerPersonId, adrien));
 check(() => assert.equal(beneficiarySignal.beneficiaryPersonId, manon));
+check(() => assert.equal(beneficiarySignal.entityRef, "recurrence:beneficiary-not-payer"));
+check(() => assert.deepEqual(beneficiarySignal.evidenceRefs, ["beneficiary-not-payer", "recurrence:beneficiary-not-payer"]));
+check(() => assert.equal(adapted.signals.filter(({ signalType }) => signalType === "PERSONAL_COST").length, 1));
+check(() => assert.ok(adapted.signals.some(({ signalType, semanticKey }) => signalType === "DECLARED" && semanticKey === "subscription.chatgpt.adrien")));
+check(() => assert.equal(adapted.signals.some(({ signalType, semanticKey }) => signalType === "PERSONAL_COST" && semanticKey.includes("chatgpt")), false));
+check(() => assert.doesNotMatch(personaAdapters.adaptGlobalM1PersonalCostSignals.toString(), /payer|card|merchant|displayName|personaUsage|OpenAI|Ornikar|Coiffeur/u));
 const householdNeed = adaptedBySignalId.get("m2:need:courses_alimentaires_foyer");
 check(() => assert.equal(householdNeed.subject.kind, "HOUSEHOLD"));
 check(() => assert.equal(householdNeed.scope, "HOUSEHOLD"));

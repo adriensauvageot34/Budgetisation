@@ -7,6 +7,7 @@ import {
   buildPersonaProfile,
   type DeclaredSignal,
   type DifferenceSignal,
+  type GlobalM1PersonalCostAuthority,
   type GlobalPersonPlaceReturnPattern,
   type GlobalPersonPlaceRollup,
   type GlobalPersonaDifference,
@@ -30,22 +31,6 @@ import { canonicalMoney, canonicalString, optionalCanonicalString } from "@/serv
 
 export const GLOBAL_PERSONA_SIGNAL_ADAPTER_VERSION = parseMethodVersion("global_persona_signal_adapter@v1");
 export const GLOBAL_PERSONA_DECLARATION_PROVIDER_VERSION = parseMethodVersion("global_persona_declared_provider@v1");
-
-type PersonalCostAuthority = {
-  readonly costId: string;
-  readonly semanticKey: string;
-  readonly beneficiaryPersonId?: PersonId;
-  readonly beneficiaryEvidenceRefs?: readonly string[];
-  readonly payerPersonId?: PersonId;
-  readonly observedAmount?: Money;
-  readonly typicalAmount?: Money;
-  readonly entityRef?: string;
-  readonly needKey?: string;
-  readonly recurrenceStatus?: "ACTIVE" | "ENDED" | "INTERRUPTED" | "RESTARTED" | "UNKNOWN";
-  readonly family?: GlobalPersonaFamily;
-  readonly context?: string;
-  readonly evidenceRefs: readonly string[];
-};
 
 type NeedGroup = {
   readonly key: string;
@@ -150,9 +135,7 @@ export type GlobalV2PersonaSignalAdapterInput = {
   readonly householdId: HouseholdId;
   readonly personIds: readonly PersonId[];
   readonly displayNamesByPersonId: Readonly<Record<string, string>>;
-  readonly m1: { readonly recurrences: { readonly series: readonly unknown[] } };
-  /** M1 currently exposes no person-bound recurrence rows. This input stays empty until a beneficiary authority is projected. */
-  readonly personalCostAuthorities?: readonly PersonalCostAuthority[];
+  readonly m1: { readonly recurrences: { readonly series: readonly unknown[]; readonly personalCostAuthorities?: readonly GlobalM1PersonalCostAuthority[] } };
   readonly m2: { readonly result: { readonly needs: { readonly groups: readonly NeedGroup[] } } };
   readonly m4: { readonly rhythms: readonly ActivityRhythm[]; readonly routinePatterns?: readonly RoutinePattern[] };
   readonly m6: { readonly summaries: readonly MomentSummary[] };
@@ -267,39 +250,39 @@ function momentFamily(value: string | undefined): GlobalPersonaFamily | undefine
 }
 
 export function adaptGlobalM1PersonalCostSignals(input: {
-  readonly authorities: readonly PersonalCostAuthority[];
+  readonly authorities: readonly GlobalM1PersonalCostAuthority[];
   readonly authorizedPersonIds: readonly PersonId[];
 }): readonly PersonalCostSignal[] {
   const authorized = new Set(input.authorizedPersonIds.map(String));
   return [...input.authorities]
-    .sort((a, b) => a.costId.localeCompare(b.costId))
+    .sort((a, b) => a.authorityId.localeCompare(b.authorityId))
     .flatMap((authority): readonly PersonalCostSignal[] => {
-      const beneficiary = authority.beneficiaryPersonId;
-      if (beneficiary === undefined || !authorized.has(String(beneficiary)) || (authority.beneficiaryEvidenceRefs?.length ?? 0) === 0) return [];
-      if (authority.observedAmount === undefined && authority.typicalAmount === undefined) return [];
-      const recurrenceStatus = authority.recurrenceStatus ?? "UNKNOWN";
+      const beneficiary = authority.personId;
+      if (authority.attributionState !== "PERSONAL" || authority.support.status !== "SUFFICIENT" || beneficiary === undefined || !authorized.has(String(beneficiary)) || authority.evidenceRefs.length === 0) return [];
+      if (authority.typicalOccurrenceAmount === undefined && authority.monthlyEquivalent === undefined) return [];
+      const recurrenceStatus = authority.lifecycle.status === "KNOWN" ? authority.lifecycle.value : "UNKNOWN";
       return [{
-        signalId: `m1:personal-cost:${authority.costId}`,
+        signalId: `m1:personal-cost:${authority.authorityId}`,
         signalType: "PERSONAL_COST",
-        semanticKey: authority.semanticKey,
+        semanticKey: `personal-cost:${authority.recurrenceId}`,
         ...personScope(beneficiary),
         kind: "HABIT",
-        family: authority.family ?? "RECURRING_PERSONAL_COSTS",
+        family: "RECURRING_PERSONAL_COSTS",
         authority: "CANONICAL_DB",
         knowledgeStatus: "OBSERVED",
         temporalStatus: recurrenceStatus === "ACTIVE" || recurrenceStatus === "RESTARTED" ? "STABLE" : recurrenceStatus === "ENDED" ? "HISTORICAL" : "UNKNOWN",
         dimension: "FINANCE",
         sourceModule: "M1",
         methodVersion: GLOBAL_PERSONA_SIGNAL_ADAPTER_VERSION,
-        ...(authority.context === undefined ? {} : { context: authority.context }),
-        ...(authority.needKey === undefined ? {} : { needKey: authority.needKey }),
-        ...(authority.entityRef === undefined ? {} : { entityRef: authority.entityRef }),
-        ...(authority.observedAmount === undefined ? {} : { observedAmount: authority.observedAmount }),
-        ...(authority.typicalAmount === undefined ? {} : { typicalAmount: authority.typicalAmount }),
-        ...(authority.payerPersonId === undefined ? {} : { payerPersonId: authority.payerPersonId }),
+        entityRef: authority.detailRef.entityRef,
+        ...(authority.typicalOccurrenceAmount === undefined ? {} : { typicalAmount: authority.typicalOccurrenceAmount }),
         beneficiaryPersonId: beneficiary,
-        metrics: { recurrenceStatus },
-        evidenceRefs: evidence([...authority.evidenceRefs, ...(authority.beneficiaryEvidenceRefs ?? [])], `m1:personal-cost:${authority.costId}`),
+        metrics: {
+          recurrenceStatus,
+          ...(authority.coverage.amountRatio === null ? {} : { personalCostCoverage: authority.coverage.amountRatio }),
+          ...(authority.monthlyEquivalent === undefined ? {} : { monthlyEquivalent: authority.monthlyEquivalent }),
+        },
+        evidenceRefs: [authority.authorityId, authority.detailRef.entityRef].sort(),
       }];
     });
 }
@@ -688,7 +671,7 @@ export function buildGlobalPersonaDeclaredSignalsV1(input: GlobalV2PersonaSignal
 export function buildGlobalV2PersonaSignals(input: GlobalV2PersonaSignalAdapterInput & { readonly certifiedThrough: LocalDate }): GlobalV2PersonaSignalAdapterResult {
   const declarations = buildGlobalPersonaDeclaredSignalsV1(input);
   const upstreamSignals: PersonaSignal[] = [
-    ...adaptGlobalM1PersonalCostSignals({ authorities: input.personalCostAuthorities ?? [], authorizedPersonIds: input.personIds }),
+    ...adaptGlobalM1PersonalCostSignals({ authorities: input.m1.recurrences.personalCostAuthorities ?? [], authorizedPersonIds: input.personIds }),
     ...adaptGlobalM2NeedSignals({ householdId: input.householdId, authorizedPersonIds: input.personIds, groups: input.m2.result.needs.groups }),
     ...adaptGlobalM4RoutineSignals({ rhythms: input.m4.rhythms, ...(input.m4.routinePatterns === undefined ? {} : { routinePatterns: input.m4.routinePatterns }), authorizedPersonIds: input.personIds }),
     ...adaptGlobalM6MomentSignals({ householdId: input.householdId, personIds: input.personIds, summaries: input.m6.summaries, certifiedThrough: input.certifiedThrough }),
@@ -700,7 +683,7 @@ export function buildGlobalV2PersonaSignals(input: GlobalV2PersonaSignalAdapterI
   ];
   const signals = [...upstreamSignals, ...declarations].sort((a, b) => a.signalId.localeCompare(b.signalId));
   const limitations = unique([
-    ...(input.personalCostAuthorities?.length ? [] : [input.m1.recurrences.series.length > 0 ? "M1_RECURRENCES_LACK_PERSON_BENEFICIARY_BINDING" : "M1_PERSONAL_BENEFICIARY_AUTHORITY_UNAVAILABLE"]),
+    ...(input.m1.recurrences.personalCostAuthorities?.some(({ attributionState }) => attributionState === "PERSONAL") ? [] : [input.m1.recurrences.series.length > 0 ? "M1_RECURRENCES_LACK_PERSON_BENEFICIARY_BINDING" : "M1_PERSONAL_BENEFICIARY_AUTHORITY_UNAVAILABLE"]),
     ...(input.m4.routinePatterns?.length ? [] : ["M4_SEQUENCED_ROUTINE_OUTPUT_UNAVAILABLE"]),
     ...(input.productObservations === undefined
       ? ["M8_PRODUCT_OBSERVATION_PROVIDER_UNAVAILABLE"]

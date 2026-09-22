@@ -177,6 +177,7 @@ export async function resolveGlobalM1HouseholdAuthority(input: {
     economicDate: LocalDate;
     amount: Big;
     evidenceRefs: Set<string>;
+    personAttributions: Map<string, { amount: Big; person: (typeof bundle.economicFacts)[number]["person"] }>;
   }>();
   for (const fact of bundle.economicFacts) {
     if (fact.sourceOperation.kind !== "resolved" || (fact.economicTiming.kind !== "known" && fact.economicTiming.kind !== "partial")) continue;
@@ -188,10 +189,14 @@ export async function resolveGlobalM1HouseholdAuthority(input: {
       const date = occurrenceDate(segment.periodStart, segment.economicMonth);
       const occurrenceId = `operation:${operationId}:${date}`;
       const key = `${recurrenceId}:${occurrenceId}`;
-      const current = occurrenceAmounts.get(key) ?? { recurrenceId, occurrenceId, economicDate: date, amount: new Big(0), evidenceRefs: new Set<string>() };
+      const current = occurrenceAmounts.get(key) ?? { recurrenceId, occurrenceId, economicDate: date, amount: new Big(0), evidenceRefs: new Set<string>(), personAttributions: new Map() };
       current.amount = current.amount.plus(segment.amount);
       current.evidenceRefs.add(`fact:${fact.canonicalComponentKey}`);
       current.evidenceRefs.add(`operation:${operationId}`);
+      const componentKey = String(fact.canonicalComponentKey);
+      const component = current.personAttributions.get(componentKey) ?? { amount: new Big(0), person: fact.person };
+      component.amount = component.amount.plus(segment.amount);
+      current.personAttributions.set(componentKey, component);
       occurrenceAmounts.set(key, current);
     }
   }
@@ -216,6 +221,11 @@ export async function resolveGlobalM1HouseholdAuthority(input: {
       economicDate: value.economicDate,
       amount: parseMoney(value.amount.toFixed()),
       evidenceRefs: [...value.evidenceRefs].sort(),
+      personAttributions: [...value.personAttributions.entries()].sort(([left], [right]) => left.localeCompare(right)).map(([canonicalComponentKey, attribution]) => ({
+        canonicalComponentKey,
+        amount: parseMoney(attribution.amount.toFixed()),
+        person: attribution.person,
+      })),
     })),
     dependencyDeclaration,
     factsDigest: digest(bundle.economicFacts),

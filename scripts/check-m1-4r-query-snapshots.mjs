@@ -30,6 +30,7 @@ let checks = 0;
 const check = (fn) => { fn(); checks += 1; };
 const uuid = (n) => `00000000-0000-4000-8000-${String(n).padStart(12, "0")}`;
 const householdId = identity.parseHouseholdId(uuid(1));
+const personA = identity.parsePersonId(uuid(2));
 const zone = time.parseHouseholdTimeZone("Europe/Paris");
 const asMoney = money.parseMoney;
 const month = time.parseYearMonth;
@@ -64,8 +65,8 @@ const owner = analytics.buildGlobalM1OwnerV2({
   history, periodMinimal: minimal(month("2025-12"), true), structure, temporal: analytics.buildGlobalM1Temporal({ certifiedThroughMonth: month("2025-12"), months: monthly }),
   recurrenceObservations: [
     { recurrenceId: "facts-only", occurrenceId: "operation:1", economicDate: "2025-11-02", amount: asMoney("25"), evidenceRefs: ["operation:1"] },
-    { recurrenceId: "rent", occurrenceId: "operation:2", economicDate: "2025-11-01", amount: asMoney("600"), evidenceRefs: ["operation:2"] },
-    { recurrenceId: "rent", occurrenceId: "operation:3", economicDate: "2025-12-01", amount: asMoney("600"), evidenceRefs: ["operation:3"] },
+    { recurrenceId: "rent", occurrenceId: "operation:2", economicDate: "2025-11-01", amount: asMoney("600"), evidenceRefs: ["operation:2"], personAttributions: [{ canonicalComponentKey: "component:rent-2", amount: asMoney("600"), person: { kind: "resolved", id: personA, attribution: "explicit_beneficiary", evidenceRefs: ["beneficiary:rent-2"], payerEvidenceRefs: [] } }] },
+    { recurrenceId: "rent", occurrenceId: "operation:3", economicDate: "2025-12-01", amount: asMoney("600"), evidenceRefs: ["operation:3"], personAttributions: [{ canonicalComponentKey: "component:rent-3", amount: asMoney("600"), person: { kind: "resolved", id: personA, attribution: "explicit_beneficiary", evidenceRefs: ["beneficiary:rent-3"], payerEvidenceRefs: [] } }] },
   ],
   recurrenceAuthorities: [{ recurrenceId: "rent", expectedOccurrenceAmount: asMoney("600"), expectedOccurrencesPerYear: 12, lifecycle: "ACTIVE", effectiveFrom: "2025-01-01", declaredAt: "2025-01-01T00:00:00Z", sourceRevision: "1", evidenceRefs: ["authority:rent"] }],
   dependencyDeclaration: analytics.createGlobalM1DependencyDeclaration({ personScope: { kind: "HOUSEHOLD" }, authorizedPersonIds: [] }),
@@ -121,7 +122,11 @@ check(() => assert.ok(patterns.rows.some(({ labelKey, displayValue, knowledgeSta
 check(() => assert.equal(comparisons.rows.length, 0));
 check(() => assert.equal(recurrenceDetails.length, 2));
 check(() => assert.equal(recurrenceDetails.every(({ params, payload }) => typeof params.entityRef === "string" && payload.kind === "global_expanded"), true));
-check(() => assert.equal(recurrenceDetails.every(({ payload }) => payload.metrics.length === 3 && payload.rows.length === 5), true));
+check(() => assert.equal(recurrenceDetails.every(({ payload }) => payload.metrics.length === 4 && payload.rows.length === 6), true));
+check(() => assert.ok(recurrenceDetails.find(({ params }) => params.entityRef === "recurrence:rent").payload.rows.some(({ labelKey, displayValue }) => labelKey === "Attribution personnelle" && displayValue === "PERSONAL")));
+check(() => assert.ok(recurrenceDetails.find(({ params }) => params.entityRef === "recurrence:rent").payload.metrics.some(({ metricId, displayValue }) => metricId === "detail:personal-attribution-coverage" && displayValue === "100 %")));
+check(() => assert.equal(owner.recurrences.personalCostAuthorities.find(({ recurrenceId }) => recurrenceId === "rent").attributionState, "PERSONAL"));
+check(() => assert.equal(owner.recurrences.personalCostAuthorities.find(({ recurrenceId }) => recurrenceId === "facts-only").attributionState, "UNKNOWN"));
 check(() => assert.ok(snapshot("analysis_global_methodology", { moduleKey: "ECONOMIC", methodRef: "method:global-economic@v1" }).payload.rows.some(({ labelKey }) => labelKey === "Données certifiées jusqu’au")));
 check(() => assert.equal(snapshot("analysis_global_methodology", { moduleKey: "ECONOMIC" }).params.methodRef, "method:global-economic@v1"));
 check(() => assert.equal(candidate.requiredKeys.queries.some((key) => recurrenceDetails.some((detail) => detail.key === key)), true));

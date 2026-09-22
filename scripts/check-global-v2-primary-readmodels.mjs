@@ -230,10 +230,19 @@ const secondTrait = {
   semanticKey: "routine.read-model.second",
   metrics: { zMetric: 9, aMetric: 1, cMetric: 3, ignoredMetric: 4 },
 };
+const personalCostTrait = {
+  ...structuredClone(personAProfile.allTraits[0]),
+  traitId: "read-model:personal-cost",
+  semanticKey: "personal-cost:read-model-recurrence",
+  kind: "HABIT",
+  family: "RECURRING_PERSONAL_COSTS",
+  metrics: { personalCostCoverage: 1, typicalAmount: "19.99" },
+  entityRefs: ["recurrence:read-model-recurrence"],
+};
 const personAWithTwoTraits = {
   ...structuredClone(personAProfile),
   featuredTraits: [secondTrait, ...structuredClone(personAProfile.featuredTraits)],
-  allTraits: [secondTrait, ...structuredClone(personAProfile.allTraits)],
+  allTraits: [secondTrait, personalCostTrait, ...structuredClone(personAProfile.allTraits)],
 };
 const personBProfile = {
   ...structuredClone(personAProfile),
@@ -282,8 +291,12 @@ check(() => assert.notDeepEqual(detailA, detailB));
 check(() => assert.equal(detailA.personId, personAId));
 check(() => assert.equal(detailB.personId, personBId));
 const personalNeedBlock = detailA.blocks.find(({ semanticKey }) => semanticKey === "need:read-model-personal");
+const personalCostBlock = detailA.blocks.find(({ semanticKey }) => semanticKey === "personal-cost:read-model-recurrence");
 check(() => assert.ok(personalNeedBlock));
 check(() => assert.deepEqual(personalNeedBlock.detailRefs, [{ resource: "analysis_global_category_need_detail", entityRef: "need:read-model-personal", role: "PRIMARY" }]));
+check(() => assert.deepEqual(personalCostBlock.detailRefs, [{ resource: "analysis_global_economic_recurrence_detail", entityRef: "recurrence:read-model-recurrence", role: "PRIMARY" }]));
+check(() => assert.deepEqual(personalCostBlock.surfaceMetrics.map(({ metricId, displayValue }) => [metricId, displayValue]), [["personalCostCoverage", "1"], ["typicalAmount", "19.99"]]));
+check(() => assert.equal("ownerOutputs" in personalCostBlock, false));
 check(() => assert.deepEqual(personalNeedBlock.surfaceMetrics.map(({ metricId, displayValue }) => [metricId, displayValue]), [["activeMonths", "9"], ["annualAmount", "900"], ["monthlyAmount", "100"]]));
 check(() => assert.equal(personalNeedBlock.availability, "AVAILABLE"));
 const placeRollupBlock = detailA.blocks.find(({ semanticKey }) => semanticKey === "person-place:read-model-place");

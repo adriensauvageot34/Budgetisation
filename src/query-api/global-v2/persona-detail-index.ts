@@ -95,6 +95,7 @@ function assertCanonical<T>(values: readonly T[], identity: (value: T) => string
 
 function ownerResourceForEntityRef(entityRef: string): PersonaOwnerDetailResource | undefined {
   if (entityRef.startsWith("need:")) return "analysis_global_category_need_detail";
+  if (entityRef.startsWith("recurrence:")) return "analysis_global_economic_recurrence_detail";
   if (entityRef.startsWith("person-place:") || entityRef.startsWith("person-place-return:")) return "analysis_global_place_mobility_detail";
   return undefined;
 }

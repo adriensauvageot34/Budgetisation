@@ -337,7 +337,7 @@ check(() => globalCore.assertGlobalDependencyClosure(declaration, {
   entityDependencyIds: ["analysis_periods", "historical_minimal_rule_authority", "historical_recurrence_authority", "historical_declared_minimum_authority", "recurrence_series", "financial_source_person_links"],
   upstreamAnalyticsIds: ["economic_consumption_net_attributable", "typical_month_cost", "minimal_month_cost"],
   otherModuleDependencyIds: ["GlobalTemporalBoundaryResolver", "history-v2:bank-economy-bridge", "global-temporal-analysis@v2"],
-  policyIds: ["global-economic-month-window", "global-typical-support", "global-economic-coverage", "timeWindow", "typicalSupport", "classificationCoverage", "recurrence", "temporalAnalysis", "temporalFinancialCoverage", "temporalMateriality"],
+  policyIds: ["global-economic-month-window", "global-typical-support", "global-economic-coverage", "timeWindow", "typicalSupport", "classificationCoverage", "recurrence", "personalCostAuthority", "temporalAnalysis", "temporalFinancialCoverage", "temporalMateriality"],
 }));
 
 const resolverSource = fs.readFileSync(new URL("../src/server/analytics/fact-source-resolver.ts", import.meta.url), "utf8");

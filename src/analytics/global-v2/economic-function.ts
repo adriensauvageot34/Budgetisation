@@ -42,6 +42,7 @@ export const globalM1Policies = {
   typicalSupport: "global-typical-support@v1",
   classificationCoverage: "global-economic-classification-coverage@v1",
   recurrence: "global-structural-recurrence@v1",
+  personalCostAuthority: "global-m1-personal-cost-authority@v1",
 } as const;
 
 export type GlobalM1DeferredTemporalOutputs = {
@@ -614,6 +615,7 @@ export function createGlobalM1DependencyDeclaration(input: {
       typicalSupport: "v1",
       classificationCoverage: "v1",
       recurrence: "v1",
+      personalCostAuthority: "v1",
     },
     publicationOutputs: [],
     invalidationScope: { kind: "MODULE", moduleId: "global-v2:m1-economic-function" },

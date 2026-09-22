@@ -2,6 +2,7 @@ import Big from "big.js";
 import { sha256 } from "@noble/hashes/sha2.js";
 import { bytesToHex, utf8ToBytes } from "@noble/hashes/utils.js";
 import type { MinimalMonthComponent } from "../baseline";
+import type { EconomicPersonAttribution } from "../facts";
 import type { ProducedMoneyMetric } from "../production";
 import {
   canonicalSerializeGlobal,
@@ -12,7 +13,8 @@ import {
   type GlobalSupport,
   type GlobalValueProvenance,
 } from "../../core/global-v2";
-import { addMoney, parseMoney, type Money } from "../../core/money";
+import type { PersonId } from "../../core/identity";
+import { addMoney, parseDecimalString, parseMoney, type DecimalString, type Money } from "../../core/money";
 import type { Instant, LocalDate, YearMonth } from "../../core/time";
 import type { AnalyticsRevision, DataRevision, MethodVersion } from "../../core/versions";
 import type {
@@ -22,6 +24,7 @@ import type {
 } from "./economic-function";
 
 const ZERO = parseMoney("0");
+const GLOBAL_M1_PERSONAL_COST_MINIMUM_OCCURRENCES = 2;
 export const GLOBAL_M1_OWNER_METHOD_VERSION = "global_m1_owner@v2" as MethodVersion;
 
 function digest(label: string, value: unknown): string {
@@ -82,6 +85,11 @@ export type GlobalM1RecurrenceObservation = {
   readonly economicDate: LocalDate;
   readonly amount: Money;
   readonly evidenceRefs: readonly string[];
+  readonly personAttributions?: readonly {
+    readonly canonicalComponentKey: string;
+    readonly amount: Money;
+    readonly person: EconomicPersonAttribution;
+  }[];
 };
 
 export type GlobalM1RecurrenceAuthority = {
@@ -110,6 +118,42 @@ export type GlobalM1RecurrenceSeries = {
   readonly lifecycle: { readonly status: "KNOWN"; readonly value: "ACTIVE" | "ENDED" | "INTERRUPTED" | "RESTARTED" } | { readonly status: "UNKNOWN"; readonly reasonCode: string };
   readonly support: GlobalSupport;
   readonly provenance: GlobalValueProvenance;
+  readonly inputHash: string;
+};
+
+export type GlobalM1PersonalCostAuthority = {
+  readonly authorityId: string;
+  readonly policyRef: "global-m1-personal-cost-authority@v1";
+  readonly recurrenceId: string;
+  readonly economicEntityRef: string;
+  readonly attributionState: "PERSONAL" | "SHARED" | "PARTIAL" | "UNKNOWN" | "CONFLICT";
+  readonly personId?: PersonId;
+  readonly beneficiaryShares?: readonly { readonly personId: PersonId; readonly share: DecimalString }[];
+  readonly unattributedShare?: DecimalString;
+  readonly coverage: {
+    readonly eligibleOccurrenceCount: number;
+    readonly attributedOccurrenceCount: number;
+    readonly fullyCertifiedOccurrenceCount: number;
+    readonly eligibleAbsoluteAmount: Money;
+    readonly attributedAbsoluteAmount: Money;
+    readonly amountRatio: number | null;
+    readonly occurrenceRatio: number | null;
+  };
+  readonly support: {
+    readonly observedOccurrences: number;
+    readonly minimumRequired: typeof GLOBAL_M1_PERSONAL_COST_MINIMUM_OCCURRENCES;
+    readonly status: "SUFFICIENT" | "INSUFFICIENT";
+    readonly policyRef: "global-m1-personal-cost-authority@v1";
+  };
+  readonly typicalOccurrenceAmount?: Money;
+  readonly monthlyEquivalent?: Money;
+  readonly lifecycle: GlobalM1RecurrenceSeries["lifecycle"];
+  readonly detailRef: {
+    readonly resource: "analysis_global_economic_recurrence_detail";
+    readonly entityRef: string;
+    readonly role: "PRIMARY";
+  };
+  readonly evidenceRefs: readonly string[];
   readonly inputHash: string;
 };
 
@@ -156,6 +200,7 @@ export type GlobalM1OwnerOutputV2 = {
   };
   readonly recurrences: {
     readonly series: readonly GlobalM1RecurrenceSeries[];
+    readonly personalCostAuthorities: readonly GlobalM1PersonalCostAuthority[];
     readonly structuralRecurringCost: GlobalM1QualifiedMoney;
     readonly newRecurringEquivalent: GlobalM1QualifiedMoney;
     readonly endedRecurringEquivalent: GlobalM1QualifiedMoney;
@@ -359,6 +404,167 @@ function structureAxis(raw: GlobalEconomicStructure["necessity"], evidenceRefs: 
   };
 }
 
+type OccurrencePersonAttribution = {
+  readonly state: "PERSONAL" | "SHARED" | "PARTIAL" | "UNKNOWN" | "CONFLICT";
+  readonly personId?: PersonId;
+  readonly beneficiaryShares: readonly { readonly personId: PersonId; readonly share: DecimalString }[];
+  readonly unattributedShare: DecimalString;
+  readonly eligibleAbsoluteAmount: Big;
+  readonly attributedAbsoluteAmount: Big;
+  readonly evidenceRefs: readonly string[];
+  readonly signature: string;
+};
+
+function beneficiaryEvidenceRefs(person: EconomicPersonAttribution): readonly string[] {
+  if (person.kind === "resolved") return [...(person.evidenceRefs ?? [])].sort();
+  if (person.kind === "shared" || person.kind === "partial") return [...new Set(person.shares.flatMap(({ evidenceRefs }) => evidenceRefs))].sort();
+  return person.kind === "conflict" ? [...new Set(person.evidenceRefs ?? [])].sort() : [];
+}
+
+function occurrencePersonAttribution(observation: GlobalM1RecurrenceObservation): OccurrencePersonAttribution {
+  const components = [...(observation.personAttributions ?? [])].sort((left, right) => left.canonicalComponentKey.localeCompare(right.canonicalComponentKey));
+  if (new Set(components.map(({ canonicalComponentKey }) => canonicalComponentKey)).size !== components.length) {
+    throw new TypeError(`M1_PERSONAL_COST_DUPLICATE_COMPONENT:${observation.occurrenceId}`);
+  }
+  if (components.length > 0) {
+    const componentTotal = components.reduce((total, component) => total.plus(component.amount), new Big(0));
+    if (!componentTotal.eq(observation.amount)) throw new TypeError(`M1_PERSONAL_COST_AMOUNT_MISMATCH:${observation.occurrenceId}`);
+  }
+  const eligibleAbsoluteAmount = components.length === 0
+    ? new Big(observation.amount).abs()
+    : components.reduce((total, component) => total.plus(new Big(component.amount).abs()), new Big(0));
+  const amountsByPerson = new Map<PersonId, Big>();
+  const refs = new Set<string>();
+  let conflict = false;
+  let usedShareAuthority = false;
+  let attributedAbsoluteAmount = new Big(0);
+  for (const component of components) {
+    const amount = new Big(component.amount).abs();
+    const person = component.person;
+    beneficiaryEvidenceRefs(person).forEach((ref) => refs.add(ref));
+    if (person.kind === "conflict") {
+      conflict = true;
+      continue;
+    }
+    if (person.kind === "resolved" && person.attribution === "explicit_beneficiary") {
+      amountsByPerson.set(person.id, (amountsByPerson.get(person.id) ?? new Big(0)).plus(amount));
+      attributedAbsoluteAmount = attributedAbsoluteAmount.plus(amount);
+      continue;
+    }
+    if (person.kind === "shared" || person.kind === "partial") {
+      usedShareAuthority = true;
+      for (const share of person.shares) {
+        const attributed = amount.times(share.share);
+        amountsByPerson.set(share.personId, (amountsByPerson.get(share.personId) ?? new Big(0)).plus(attributed));
+        attributedAbsoluteAmount = attributedAbsoluteAmount.plus(attributed);
+      }
+    }
+  }
+  const beneficiaryShares = eligibleAbsoluteAmount.eq(0) ? [] : [...amountsByPerson.entries()]
+    .map(([personId, amount]) => ({ personId, share: parseDecimalString(amount.div(eligibleAbsoluteAmount).toFixed()) }))
+    .sort((left, right) => left.personId.localeCompare(right.personId));
+  const rawUnattributedShare = eligibleAbsoluteAmount.eq(0) ? new Big(1) : new Big(1).minus(attributedAbsoluteAmount.div(eligibleAbsoluteAmount));
+  const unattributedShare = parseDecimalString((rawUnattributedShare.lt(0) ? new Big(0) : rawUnattributedShare).toFixed());
+  const fullyAttributed = eligibleAbsoluteAmount.gt(0) && attributedAbsoluteAmount.eq(eligibleAbsoluteAmount);
+  const state = conflict
+    ? "CONFLICT" as const
+    : attributedAbsoluteAmount.eq(0)
+      ? "UNKNOWN" as const
+      : fullyAttributed && !usedShareAuthority && beneficiaryShares.length === 1
+        ? "PERSONAL" as const
+        : fullyAttributed
+          ? "SHARED" as const
+          : "PARTIAL" as const;
+  const personId = state === "PERSONAL" ? beneficiaryShares[0]?.personId : undefined;
+  const signature = canonicalSerializeGlobal({ state: state === "PARTIAL" ? "SHARED_OR_PARTIAL" : state, beneficiaryShares, unattributedShare });
+  return {
+    state,
+    ...(personId === undefined ? {} : { personId }),
+    beneficiaryShares,
+    unattributedShare,
+    eligibleAbsoluteAmount,
+    attributedAbsoluteAmount,
+    evidenceRefs: [...refs].sort(),
+    signature,
+  };
+}
+
+function buildPersonalCostAuthority(
+  recurrence: GlobalM1RecurrenceSeries,
+  rawObservations: readonly GlobalM1RecurrenceObservation[],
+): GlobalM1PersonalCostAuthority {
+  const observations = [...new Map(rawObservations.map((entry) => [entry.occurrenceId, entry] as const)).values()]
+    .sort((left, right) => left.economicDate.localeCompare(right.economicDate) || left.occurrenceId.localeCompare(right.occurrenceId));
+  const attributions = observations.map(occurrencePersonAttribution);
+  const eligibleAbsolute = attributions.reduce((total, value) => total.plus(value.eligibleAbsoluteAmount), new Big(0));
+  const attributedAbsolute = attributions.reduce((total, value) => total.plus(value.attributedAbsoluteAmount), new Big(0));
+  const known = attributions.filter(({ state }) => state !== "UNKNOWN");
+  const personalPersonIds = [...new Set(known.flatMap(({ state, personId }) => state === "PERSONAL" && personId !== undefined ? [personId] : []))].sort();
+  const nonPersonalKnown = known.filter(({ state }) => state !== "PERSONAL" && state !== "CONFLICT");
+  const sharedSignatures = [...new Set(nonPersonalKnown.map(({ signature }) => signature))];
+  const anyConflict = known.some(({ state }) => state === "CONFLICT");
+  const mixedModes = personalPersonIds.length > 0 && nonPersonalKnown.length > 0;
+  const baseAttributionState = anyConflict || personalPersonIds.length > 1 || mixedModes || sharedSignatures.length > 1
+    ? "CONFLICT" as const
+    : known.length === 0
+      ? "UNKNOWN" as const
+      : personalPersonIds.length === 1
+        ? attributions.some(({ state }) => state === "UNKNOWN") ? "PARTIAL" as const : "PERSONAL" as const
+        : attributions.some(({ state }) => state === "UNKNOWN" || state === "PARTIAL") ? "PARTIAL" as const : "SHARED" as const;
+  const attributionState = observations.length < GLOBAL_M1_PERSONAL_COST_MINIMUM_OCCURRENCES && (baseAttributionState === "PERSONAL" || baseAttributionState === "SHARED")
+    ? "PARTIAL" as const
+    : baseAttributionState;
+  const entityRef = `recurrence:${recurrence.recurrenceId}`;
+  const amountRatio = eligibleAbsolute.eq(0) ? null : Number(attributedAbsolute.div(eligibleAbsolute).toFixed());
+  const fullyCertifiedOccurrenceCount = attributions.filter(({ state }) => state === "PERSONAL" || state === "SHARED").length;
+  const occurrenceRatio = observations.length === 0 ? null : fullyCertifiedOccurrenceCount / observations.length;
+  const personalPersonId = (attributionState === "PERSONAL" || attributionState === "PARTIAL") && personalPersonIds.length === 1 && nonPersonalKnown.length === 0 ? personalPersonIds[0] : undefined;
+  const aggregateSharedAmounts = new Map<PersonId, Big>();
+  for (const attribution of nonPersonalKnown) for (const share of attribution.beneficiaryShares) {
+    const amount = attribution.eligibleAbsoluteAmount.times(share.share);
+    aggregateSharedAmounts.set(share.personId, (aggregateSharedAmounts.get(share.personId) ?? new Big(0)).plus(amount));
+  }
+  const aggregateBeneficiaryShares = eligibleAbsolute.eq(0) ? [] : [...aggregateSharedAmounts.entries()]
+    .map(([personId, amount]) => ({ personId, share: parseDecimalString(amount.div(eligibleAbsolute).toFixed()) }))
+    .sort((left, right) => left.personId.localeCompare(right.personId));
+  const aggregateUnattributed = parseDecimalString((eligibleAbsolute.eq(0) ? new Big(1) : new Big(1).minus(attributedAbsolute.div(eligibleAbsolute))).toFixed());
+  const hashInput = attributions.map(({ eligibleAbsoluteAmount, attributedAbsoluteAmount, ...value }) => ({
+    ...value,
+    eligibleAbsoluteAmount: eligibleAbsoluteAmount.toFixed(),
+    attributedAbsoluteAmount: attributedAbsoluteAmount.toFixed(),
+  }));
+  return {
+    authorityId: `personal-cost:${digest("global-m1-personal-cost-identity@v1", ["m1-personal-cost", recurrence.recurrenceId]).slice(0, 24)}`,
+    policyRef: "global-m1-personal-cost-authority@v1",
+    recurrenceId: recurrence.recurrenceId,
+    economicEntityRef: entityRef,
+    attributionState,
+    ...(personalPersonId === undefined ? {} : { personId: personalPersonId }),
+    ...(nonPersonalKnown.length === 0 ? {} : { beneficiaryShares: aggregateBeneficiaryShares, unattributedShare: aggregateUnattributed }),
+    coverage: {
+      eligibleOccurrenceCount: observations.length,
+      attributedOccurrenceCount: attributions.filter(({ state }) => state !== "UNKNOWN" && state !== "CONFLICT").length,
+      fullyCertifiedOccurrenceCount,
+      eligibleAbsoluteAmount: parseMoney(eligibleAbsolute.toFixed()),
+      attributedAbsoluteAmount: parseMoney(attributedAbsolute.toFixed()),
+      amountRatio,
+      occurrenceRatio,
+    },
+    support: {
+      observedOccurrences: observations.length,
+      minimumRequired: GLOBAL_M1_PERSONAL_COST_MINIMUM_OCCURRENCES,
+      status: observations.length >= GLOBAL_M1_PERSONAL_COST_MINIMUM_OCCURRENCES ? "SUFFICIENT" : "INSUFFICIENT",
+      policyRef: "global-m1-personal-cost-authority@v1",
+    },
+    ...(attributionState === "PERSONAL" && recurrence.typicalOccurrenceCost.value !== undefined ? { typicalOccurrenceAmount: recurrence.typicalOccurrenceCost.value } : {}),
+    ...(attributionState === "PERSONAL" && recurrence.monthlyEquivalent.value !== undefined ? { monthlyEquivalent: recurrence.monthlyEquivalent.value } : {}),
+    lifecycle: recurrence.lifecycle,
+    detailRef: { resource: "analysis_global_economic_recurrence_detail", entityRef, role: "PRIMARY" },
+    evidenceRefs: [...new Set(attributions.flatMap(({ evidenceRefs }) => evidenceRefs))].sort(),
+    inputHash: digest("global-m1-personal-cost-authority@v1", { recurrenceInputHash: recurrence.inputHash, attributions: hashInput }),
+  };
+}
+
 function buildRecurrences(input: {
   readonly observations: readonly GlobalM1RecurrenceObservation[];
   readonly authorities: readonly GlobalM1RecurrenceAuthority[];
@@ -404,6 +610,7 @@ function buildRecurrences(input: {
       inputHash: digest("global-m1-recurrence-series@v2", { recurrenceId, observations, ...(authority === undefined ? {} : { authority }) }),
     } satisfies GlobalM1RecurrenceSeries;
   });
+  const personalCostAuthorities = series.map((recurrence) => buildPersonalCostAuthority(recurrence, bySeries.get(recurrence.recurrenceId) ?? []));
   const knownMonthly = series.filter(({ monthlyEquivalent }) => monthlyEquivalent.value !== undefined);
   const recurrenceRefs = series.flatMap(({ provenance: p }) => p.evidenceRefs);
   const p = provenance({ nature: "HYBRID", sourceRefs: recurrenceRefs, factRefs: recurrenceRefs, dataRevision: input.dataRevision, analyticsRevision: input.analyticsRevision });
@@ -425,12 +632,13 @@ function buildRecurrences(input: {
   const restartedValue = changeSum("RESTARTED");
   return {
     series,
+    personalCostAuthorities,
     structuralRecurringCost: aggregate(structuralValue, structuralStatus, "NO_QUALIFIED_MONTHLY_EQUIVALENT", "structural"),
     newRecurringEquivalent: aggregate(newValue, newValue === undefined ? "UNKNOWN" : "KNOWN", "NEW_LIFECYCLE_AUTHORITY_UNAVAILABLE", "new"),
     endedRecurringEquivalent: aggregate(endedValue, endedValue === undefined ? "UNKNOWN" : "KNOWN", "ENDED_LIFECYCLE_AUTHORITY_UNAVAILABLE", "ended"),
     restartedRecurringEquivalent: aggregate(restartedValue, restartedValue === undefined ? "UNKNOWN" : "KNOWN", "RESTARTED_LIFECYCLE_AUTHORITY_UNAVAILABLE", "restarted"),
     priceChangeExistingRecurrences: aggregate(undefined, "UNKNOWN", "COMPARABLE_EXPECTED_AMOUNT_HISTORY_UNAVAILABLE", "price-change"),
-    inputHash: digest("global-m1-recurrences@v2", { series: series.map(({ inputHash }) => inputHash) }),
+    inputHash: digest("global-m1-recurrences@v2", { series: series.map(({ inputHash }) => inputHash), personalCostAuthorities: personalCostAuthorities.map(({ inputHash }) => inputHash) }),
   };
 }
 

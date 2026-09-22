@@ -69,6 +69,7 @@ export {
   type GlobalM1HistoryInput,
   type GlobalM1HistoryPoint,
   type GlobalM1OwnerOutputV2,
+  type GlobalM1PersonalCostAuthority,
   type GlobalM1QualifiedMoney,
   type GlobalM1RecurrenceAuthority,
   type GlobalM1RecurrenceObservation,

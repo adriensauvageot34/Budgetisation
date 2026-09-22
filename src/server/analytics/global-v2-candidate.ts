@@ -1692,11 +1692,16 @@ function economicRecurrenceDetail(output: GlobalV2OwnerOutput, entityRef: string
   const recurrenceId = entityRef.slice("recurrence:".length);
   const recurrence = arrayOf(at(output.output, "recurrences", "series")).find((entry) => stringOf(at(entry, "recurrenceId")) === recurrenceId);
   if (recurrence === undefined) return undefined;
-  const metrics = ([
+  const personalCostAuthority = arrayOf(at(output.output, "recurrences", "personalCostAuthorities")).find((entry) => stringOf(at(entry, "economicEntityRef")) === entityRef);
+  const attributionState = stringOf(at(personalCostAuthority, "attributionState"));
+  const amountRatio = numberOf(at(personalCostAuthority, "coverage", "amountRatio"));
+  const metrics: GlobalDetailMetric[] = [...([
     ["typical-occurrence-cost", "Coût typique par occurrence", "typicalOccurrenceCost"],
     ["expected-occurrence-amount", "Montant attendu par occurrence", "expectedOccurrenceAmount"],
     ["monthly-equivalent", "Équivalent mensuel", "monthlyEquivalent"],
-  ] as const).map(([id, label, key]) => qualifiedMetric(output, `detail:${id}`, label, at(recurrence, key)));
+  ] as const).map(([id, label, key]) => qualifiedMetric(output, `detail:${id}`, label, at(recurrence, key))),
+  ...(amountRatio === undefined ? [] : [metric(output, "detail:personal-attribution-coverage", "Couverture d’attribution personnelle", `${Math.round(amountRatio * 1_000) / 10} %`, attributionState === "PERSONAL" || attributionState === "SHARED" ? "KNOWN" : attributionState === "CONFLICT" ? "CONFLICT" : "PARTIAL")]),
+  ];
   const lifecycle = stringOf(at(recurrence, "lifecycle", "value"));
   const cadence = numberOf(at(recurrence, "cadence", "expectedOccurrencesPerYear"));
   const rows: GlobalDetailRow[] = [
@@ -1705,6 +1710,7 @@ function economicRecurrenceDetail(output: GlobalV2OwnerOutput, entityRef: string
     row(output, 3, "cadence", "Cadence", cadence === undefined ? "Non qualifiée" : `${cadence} occurrence(s)/an`, entityRef, cadence === undefined ? "UNKNOWN" : "KNOWN"),
     row(output, 4, "lifecycle", "Cycle de vie", lifecycle === undefined ? "Non déterminé" : ({ ACTIVE: "Active", ENDED: "Terminée", INTERRUPTED: "Interrompue", RESTARTED: "Reprise" } as Readonly<Record<string, string>>)[lifecycle] ?? lifecycle, entityRef, lifecycle === undefined ? "UNKNOWN" : "KNOWN"),
     row(output, 5, "price-evolution", "Évolution du prix", stringOf(at(recurrence, "priceEvolution", "reasonCode")) === undefined ? "Disponible" : "Non qualifiée", entityRef, stringOf(at(recurrence, "priceEvolution", "status")) === "KNOWN" ? "KNOWN" : "UNKNOWN"),
+    ...(attributionState === undefined ? [] : [row(output, 6, "personal-attribution", "Attribution personnelle", attributionState, entityRef, attributionState === "PERSONAL" || attributionState === "SHARED" ? "KNOWN" : attributionState === "CONFLICT" ? "CONFLICT" : attributionState === "PARTIAL" ? "PARTIAL" : "UNKNOWN")]),
   ];
   return { metrics, rows };
 }

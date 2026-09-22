@@ -21,6 +21,8 @@ let checks = 0;
 const check = (fn) => { fn(); checks += 1; };
 const uuid = (n) => `00000000-0000-4000-8000-${String(n).padStart(12, "0")}`;
 const householdId = identity.parseHouseholdId(uuid(1));
+const personA = identity.parsePersonId(uuid(2));
+const personB = identity.parsePersonId(uuid(3));
 const zone = time.parseHouseholdTimeZone("Europe/Paris");
 const asMoney = money.parseMoney;
 const month = time.parseYearMonth;
@@ -133,10 +135,65 @@ const withoutPeriodMinimal = build({ periodMinimal: undefined });
 check(() => assert.equal(withoutPeriodMinimal.state.minimalState.status, "UNKNOWN"));
 check(() => assert.ok(withoutPeriodMinimal.methodology.limitations.includes("GLOBAL_RETROSPECTIVE_MINIMAL_UNAVAILABLE")));
 
+const attributedComponent = (key, amount, person) => ({ canonicalComponentKey: key, amount: asMoney(amount), person });
+const personalObservation = (recurrenceId, occurrenceId, amount, personAttributions) => ({
+  recurrenceId, occurrenceId, economicDate: `2025-12-${occurrenceId.endsWith("2") ? "02" : "01"}`, amount: asMoney(amount), evidenceRefs: [`operation:${occurrenceId}`], personAttributions,
+});
+const explicit = (personId, evidenceRef) => ({ kind: "resolved", id: personId, attribution: "explicit_beneficiary", evidenceRefs: [evidenceRef], payerEvidenceRefs: [] });
+const unknown = (payerEvidenceRefs = []) => ({ kind: "unknown", reasonCode: "NO_EXPLICIT_BENEFICIARY", evidenceRefs: payerEvidenceRefs, payerEvidenceRefs });
+const personalObservations = [
+  personalObservation("unique-beneficiary", "unique-1", "20", [attributedComponent("component:unique-1", "20", explicit(personA, "beneficiary:unique-1"))]),
+  personalObservation("unique-beneficiary", "unique-2", "22", [attributedComponent("component:unique-2", "22", explicit(personA, "beneficiary:unique-2"))]),
+  personalObservation("payer-only", "payer-1", "30", [attributedComponent("component:payer-1", "30", unknown(["payer:person-a"]))]),
+  { ...personalObservation("no-beneficiary", "none-1", "15", [attributedComponent("component:none-1", "15", unknown())]), merchantName: "OpenAI", displayName: "Adrien", cardHolderPersonId: personA, personaUsagePersonId: personA },
+  personalObservation("shared-exact", "shared-1", "40", [attributedComponent("component:shared-1", "40", { kind: "shared", shares: [{ personId: personA, share: "0.25", evidenceRefs: ["share:a"] }, { personId: personB, share: "0.75", evidenceRefs: ["share:b"] }], evidenceRefs: ["share:a", "share:b"], payerEvidenceRefs: [] })]),
+  personalObservation("shared-exact", "shared-2", "40", [attributedComponent("component:shared-2", "40", { kind: "shared", shares: [{ personId: personA, share: "0.25", evidenceRefs: ["share:a:2"] }, { personId: personB, share: "0.75", evidenceRefs: ["share:b:2"] }], evidenceRefs: ["share:a:2", "share:b:2"], payerEvidenceRefs: [] })]),
+  personalObservation("partial-share", "partial-share-1", "40", [attributedComponent("component:partial-share-1", "40", { kind: "partial", shares: [{ personId: personA, share: "0.25", evidenceRefs: ["share:partial-a"] }], unattributedShare: "0.75", evidenceRefs: ["share:partial-a"], payerEvidenceRefs: [] })]),
+  personalObservation("partial-series", "partial-series-1", "10", [attributedComponent("component:partial-series-1", "10", explicit(personA, "beneficiary:partial-series"))]),
+  personalObservation("partial-series", "partial-series-2", "10", [attributedComponent("component:partial-series-2", "10", unknown())]),
+  personalObservation("contradictory-series", "contradictory-1", "12", [attributedComponent("component:contradictory-1", "12", explicit(personA, "beneficiary:contradictory-a"))]),
+  personalObservation("contradictory-series", "contradictory-2", "12", [attributedComponent("component:contradictory-2", "12", explicit(personB, "beneficiary:contradictory-b"))]),
+  personalObservation("multiple-beneficiaries", "multiple-1", "18", [attributedComponent("component:multiple-1", "18", { kind: "conflict", reasonCode: "MULTIPLE_UNALLOCATED_BENEFICIARIES", evidenceRefs: ["beneficiary:a", "beneficiary:b"], payerEvidenceRefs: [] })]),
+  personalObservation("outside-household", "outside-1", "18", [attributedComponent("component:outside-1", "18", { kind: "conflict", reasonCode: "OUT_OF_HOUSEHOLD_PERSON", evidenceRefs: ["beneficiary:outside"], payerEvidenceRefs: [] })]),
+  personalObservation("payer-and-beneficiary", "payer-beneficiary-1", "9", [attributedComponent("component:payer-beneficiary-1", "9", { ...explicit(personA, "beneficiary:payer-beneficiary"), payerEvidenceRefs: ["payer:person-a"] })]),
+  personalObservation("payer-and-beneficiary", "payer-beneficiary-2", "9", [attributedComponent("component:payer-beneficiary-2", "9", { ...explicit(personA, "beneficiary:payer-beneficiary:2"), payerEvidenceRefs: ["payer:person-a:2"] })]),
+  personalObservation("single-certified-payment", "single-1", "11", [attributedComponent("component:single-1", "11", explicit(personA, "beneficiary:single"))]),
+];
+const personalOwner = build({ recurrenceObservations: personalObservations });
+const personalAuthorities = new Map(personalOwner.recurrences.personalCostAuthorities.map((authority) => [authority.recurrenceId, authority]));
+check(() => assert.equal(personalAuthorities.get("unique-beneficiary").attributionState, "PERSONAL"));
+check(() => assert.equal(personalAuthorities.get("unique-beneficiary").personId, personA));
+check(() => assert.equal(personalAuthorities.get("unique-beneficiary").typicalOccurrenceAmount, "21"));
+check(() => assert.equal(personalAuthorities.get("payer-only").attributionState, "UNKNOWN"));
+check(() => assert.equal(personalAuthorities.get("no-beneficiary").attributionState, "UNKNOWN"));
+check(() => assert.equal(personalAuthorities.get("shared-exact").attributionState, "SHARED"));
+check(() => assert.deepEqual(personalAuthorities.get("shared-exact").beneficiaryShares, [{ personId: personA, share: "0.25" }, { personId: personB, share: "0.75" }]));
+check(() => assert.equal(personalAuthorities.get("partial-share").attributionState, "PARTIAL"));
+check(() => assert.equal(personalAuthorities.get("partial-share").unattributedShare, "0.75"));
+check(() => assert.equal(personalAuthorities.get("partial-series").attributionState, "PARTIAL"));
+check(() => assert.equal(personalAuthorities.get("partial-series").coverage.amountRatio, 0.5));
+check(() => assert.equal(personalAuthorities.get("contradictory-series").attributionState, "CONFLICT"));
+check(() => assert.equal(personalAuthorities.get("multiple-beneficiaries").attributionState, "CONFLICT"));
+check(() => assert.equal(personalAuthorities.get("outside-household").attributionState, "CONFLICT"));
+check(() => assert.equal(personalAuthorities.get("payer-and-beneficiary").attributionState, "PERSONAL"));
+check(() => assert.equal(personalAuthorities.get("payer-and-beneficiary").personId, personA));
+check(() => assert.equal(personalAuthorities.get("single-certified-payment").attributionState, "PARTIAL"));
+check(() => assert.equal(personalAuthorities.get("single-certified-payment").support.status, "INSUFFICIENT"));
+check(() => assert.ok(personalOwner.recurrences.personalCostAuthorities.every(({ detailRef }) => detailRef.resource === "analysis_global_economic_recurrence_detail")));
+check(() => assert.deepEqual(
+  build({ recurrenceObservations: [...personalObservations].reverse() }).recurrences.personalCostAuthorities,
+  personalOwner.recurrences.personalCostAuthorities,
+));
+check(() => assert.equal(
+  build({ recurrenceObservations: structuredClone(personalObservations) }).recurrences.personalCostAuthorities.find(({ recurrenceId }) => recurrenceId === "unique-beneficiary").authorityId,
+  personalAuthorities.get("unique-beneficiary").authorityId,
+));
+
 const source = await import("node:fs").then(({ readFileSync }) => readFileSync("src/server/analytics/global-v2-economic-authority.ts", "utf8"));
 check(() => assert.ok(!source.includes("analytics_query_snapshots")));
 check(() => assert.ok(!source.includes("CertifiedHistoricalMinimalSource")));
 check(() => assert.ok(source.includes("loadMinimalPlanningBundle")));
 check(() => assert.ok(source.includes("recurrenceByOperation")));
+check(() => assert.ok(source.includes("personAttributions")));
 
 console.log(`M1 2/3R engine owner: ${checks}/${checks} PASS`);

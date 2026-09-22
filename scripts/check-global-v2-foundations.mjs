@@ -179,6 +179,11 @@ check(() => assert.deepEqual(resolvePerson([link(persons[0], "beneficiary")]), {
   kind: "resolved", id: persons[0], attribution: "explicit_beneficiary",
   evidenceRefs: [`financial_source_person_link:Operation:${uuid(10)}:${persons[0]}:beneficiary`], payerEvidenceRefs: [],
 }));
+check(() => assert.deepEqual(resolvePerson([link(persons[0], "payer"), link(persons[0], "beneficiary")]), {
+  kind: "resolved", id: persons[0], attribution: "explicit_beneficiary",
+  evidenceRefs: [`financial_source_person_link:Operation:${uuid(10)}:${persons[0]}:beneficiary`],
+  payerEvidenceRefs: [`financial_source_person_link:Operation:${uuid(10)}:${persons[0]}:payer`],
+}));
 check(() => assert.equal(resolvePerson([link(persons[0], "beneficiary"), link(persons[1], "beneficiary")]).kind, "conflict"));
 check(() => assert.equal(resolvePerson([link(persons[0], "beneficiary_share", "0.25"), link(persons[1], "beneficiary_share", "0.75")]).kind, "shared"));
 check(() => assert.deepEqual(resolvePerson([link(persons[0], "beneficiary_share", "0.25")]).unattributedShare, "0.75"));
