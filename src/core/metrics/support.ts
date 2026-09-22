@@ -17,6 +17,7 @@ export type SupportUnit =
   | "occurrence"
   | "purchase_event"
   | "place_visit"
+  | "mobility_leg"
   | "independent_28d_block"
   | "paired_observation"
   | "year";
@@ -44,6 +45,7 @@ const supportUnits: ReadonlySet<string> = new Set<SupportUnit>([
   "occurrence",
   "purchase_event",
   "place_visit",
+  "mobility_leg",
   "independent_28d_block",
   "paired_observation",
   "year",

@@ -27,6 +27,7 @@ import {
   type PersonDayFact,
   type PlaceVisitFact,
   type PurchaseEventFact,
+  type MobilityLegFact,
 } from "@/analytics/facts";
 import {
   parseHistoricalMinimalRuleVersion,
@@ -73,6 +74,10 @@ import { safeRuntimeEnvironment } from "@/server/runtime-environment";
 import {
   readCanonicalInBatches,
 } from "./in-batches";
+import {
+  MOBILITY_LEG_SELECTION,
+  projectMobilityLegFactFromCanonicalRow,
+} from "./mobility";
 
 type CanonicalQueryResult = {
   readonly data: unknown;
@@ -1944,6 +1949,50 @@ export class CanonicalRepository {
         return query.in(idColumn, batch).order(idColumn, { ascending: true });
       },
     );
+  }
+
+  async loadMobilityLegFacts(
+    range?: CanonicalDateRange,
+  ): Promise<readonly MobilityLegFact[]> {
+    await this.assertAuthorizedCanonicalHouseholdScope();
+    const key = `mobility-legs:${range?.start ?? "all"}:${range?.endExclusive ?? "all"}`;
+    const rows = await this.readRowsPaginated(
+      key,
+      "mobility",
+      (from, to) => {
+        let query = this.client
+          .from("mobility_legs")
+          .select(MOBILITY_LEG_SELECTION)
+          .eq("household_id", this.context.householdId);
+        if (range !== undefined) {
+          query = query.gte("travel_date", range.start).lt("travel_date", range.endExclusive);
+        }
+        return query
+          .order("travel_date", { ascending: true })
+          .order("mobility_leg_id", { ascending: true })
+          .range(from, to);
+      },
+    );
+    return rows.map(projectMobilityLegFactFromCanonicalRow);
+  }
+
+  async hasMobilityDatasetCoverage(range: CanonicalDateRange): Promise<boolean> {
+    await this.assertAuthorizedCanonicalHouseholdScope();
+    const rows = await this.readRowsPaginated(
+      `mobility-datasets:${range.start}:${range.endExclusive}`,
+      "mobility",
+      (from, to) => this.client
+        .from("mobility_datasets")
+        .select("dataset_id,period_start,period_end")
+        .eq("household_id", this.context.householdId)
+        .order("period_start", { ascending: true })
+        .order("dataset_id", { ascending: true })
+        .range(from, to),
+    );
+    const endInclusive = addDays(range.endExclusive, -1);
+    return rows.some((row) =>
+      canonicalString(row, ["period_start"], "mobility") <= range.start
+      && canonicalString(row, ["period_end"], "mobility") >= endInclusive);
   }
 
   /**

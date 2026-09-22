@@ -15,6 +15,7 @@ import {
   countPersonDays,
   countPurchaseEvents,
   medianKnownActivityCausalCost,
+  sumMobilityEstimatedFuelCost,
 } from "../facts";
 import type { ActivityOccurrenceCostFact } from "../facts";
 import {
@@ -119,6 +120,8 @@ function expectedSourceKind(
     case "sum_activity_causal_cost":
     case "median_activity_causal_cost":
       return "activity_occurrence_costs";
+    case "sum_mobility_usage_estimated_fuel_cost":
+      return "mobility_legs";
     case "fuel_trip_estimate":
       return "fuel_trip_estimate";
   }
@@ -274,6 +277,11 @@ function produceKnownFactMetric(input: {
       return observedMetric({
         ...input,
         value: countActivityOccurrences(input.source.facts),
+      });
+    case "sum_mobility_usage_estimated_fuel_cost":
+      return observedMetric({
+        ...input,
+        value: sumMobilityEstimatedFuelCost(input.source.facts),
       });
     case "typical_month":
     case "minimal_month":

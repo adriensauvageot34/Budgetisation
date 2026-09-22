@@ -37,7 +37,17 @@ export type {
   PurchaseEventSourceKind,
   PurchaseEventTiming,
   FinancialSourcePersonLink,
+  MobilityLegEndpoint,
+  MobilityLegFact,
+  MobilityLegFuelAuthority,
+  MobilityLegSource,
+  MobilityLegTime,
 } from "./types";
+export {
+  mobilityLegFactSchema,
+  parseMobilityLegFact,
+  sumMobilityEstimatedFuelCost,
+} from "./mobility";
 export type {
   ComponentAxisClassification,
   ComponentClassificationAssertion,

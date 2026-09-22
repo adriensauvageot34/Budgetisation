@@ -57,6 +57,7 @@ export type ActiveMetricId =
   | "activity_frequency"
   | "activity_causal_cost"
   | "activity_causal_median_cost_per_occurrence"
+  | "mobility_usage_estimated_fuel_cost"
   | "fuel_trip_estimate";
 
 export type MetricProductionStrategy =
@@ -71,6 +72,7 @@ export type MetricProductionStrategy =
   | "count_activity_occurrences"
   | "sum_activity_causal_cost"
   | "median_activity_causal_cost"
+  | "sum_mobility_usage_estimated_fuel_cost"
   | "fuel_trip_estimate";
 
 export type MetricAvailabilityRule =
@@ -145,6 +147,7 @@ export type MetricProductionSource =
   | ScopedFactSource<"place_visits">
   | ScopedFactSource<"activity_occurrences">
   | ScopedFactSource<"activity_occurrence_costs">
+  | ScopedFactSource<"mobility_legs">
   | ({
       readonly kind: "minimal_month";
       readonly scopeHash: ScopeHash;

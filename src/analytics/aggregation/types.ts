@@ -29,6 +29,7 @@ export type AnalyticDateBasis =
   | "person_local_date"
   | "purchase_event_date"
   | "place_visit_interval"
+  | "mobility_leg_date"
   | "observation_window";
 
 export type AnalyticDedupeRule =

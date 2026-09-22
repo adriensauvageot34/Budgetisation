@@ -41,6 +41,7 @@ const descriptions: Record<ActiveMetricId, string> = {
   activity_frequency: "Nombre d'occurrences d'activité admissibles.",
   activity_causal_cost: "Somme économique nette canoniquement attribuée aux occurrences d'activité.",
   activity_causal_median_cost_per_occurrence: "Médiane des coûts causaux nets par occurrence qualifiée.",
+  mobility_usage_estimated_fuel_cost: "Somme des coûts carburant d’usage estimés de MobilityLeg uniques.",
   fuel_trip_estimate: "Estimation distincte du coût carburant selon les entrées disponibles.",
 };
 
@@ -60,6 +61,7 @@ const formulas: Record<ActiveMetricId, string> = {
   activity_frequency: "Comptage dédupliqué des fct_activity_occurrence admissibles.",
   activity_causal_cost: "Somme des coûts causaux qualifiés après déduplication par canonical_component_key.",
   activity_causal_median_cost_per_occurrence: "Médiane des coûts causaux nets connus ; indisponible sous 5 occurrences qualifiées.",
+  mobility_usage_estimated_fuel_cost: "Somme des estimatedFuelCost attachés à des fct_mobility_leg uniques ; aucun paiement carburant n’est utilisé.",
   fuel_trip_estimate: "Application de la méthode d'estimation Analytics publiée, sans dépense observée inventée.",
 };
 

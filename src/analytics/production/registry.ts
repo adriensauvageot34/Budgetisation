@@ -26,6 +26,7 @@ export const metricMethodVersions = {
   activity_frequency: parseMethodVersion("activity_frequency@v1"),
   activity_causal_cost: parseMethodVersion("activity_causal_cost@v1"),
   activity_causal_median_cost_per_occurrence: parseMethodVersion("activity_causal_median_cost_per_occurrence@v1"),
+  mobility_usage_estimated_fuel_cost: parseMethodVersion("mobility_usage_estimated_fuel_cost@v1"),
   fuel_trip_estimate: FUEL_TRIP_ESTIMATE_METHOD_VERSION,
 } as const satisfies Record<ActiveMetricId, import("../../core/versions").MethodVersion>;
 
@@ -357,6 +358,26 @@ export const metricRegistry = {
     allowedTimeKinds: ["month"],
     aggregationCapabilityId: "activity_month_median_cost_per_occurrence",
   },
+  mobility_usage_estimated_fuel_cost: {
+    metricId: parseMetricId("mobility_usage_estimated_fuel_cost"),
+    semanticName: "Coût carburant d’usage estimé des déplacements",
+    grain: ["mobility_leg"],
+    sourceFact: ["fct_mobility_leg"],
+    productionStrategy: "sum_mobility_usage_estimated_fuel_cost",
+    dateBasis: "mobility_leg_date",
+    dimensions: ["month"],
+    allowedFilters: [],
+    monetaryBasis: "estimated_cost",
+    supportPolicy: { kind: "optional", unit: "mobility_leg" },
+    availabilityRules: ["source_availability"],
+    additivity: { kind: "additive" },
+    provenanceRule: "estimated",
+    comparisonCapabilities: ["same_metric"],
+    methodVersion: metricMethodVersions.mobility_usage_estimated_fuel_cost,
+    unit: "EUR",
+    outputKind: "money",
+    allowedTimeKinds: ["month", "global"],
+  },
   fuel_trip_estimate: {
     metricId: parseMetricId("fuel_trip_estimate"),
     semanticName: "Estimation du carburant d’un trajet",
@@ -409,6 +430,7 @@ const implementedProductionStrategies: ReadonlySet<string> = new Set([
   "count_activity_occurrences",
   "sum_activity_causal_cost",
   "median_activity_causal_cost",
+  "sum_mobility_usage_estimated_fuel_cost",
   "fuel_trip_estimate",
 ]);
 

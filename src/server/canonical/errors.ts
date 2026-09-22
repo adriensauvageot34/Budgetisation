@@ -17,7 +17,8 @@ export type CanonicalSourceName =
   | "person_links"
   | "product_observations"
   | "historical_minimal_authority"
-  | "household_scope";
+  | "household_scope"
+  | "mobility";
 
 export class CanonicalReadError extends QueryTemporaryUnavailableError {
   readonly source: CanonicalSourceName;

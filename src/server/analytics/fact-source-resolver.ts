@@ -23,6 +23,7 @@ import type {
   EconomicComponentFact,
   EconomicComponentClassificationFact,
   LifeEventContinuityFact,
+  MobilityLegFact,
   PersonDayFact,
   PlaceVisitFact,
 } from "@/analytics/facts";
@@ -171,6 +172,10 @@ export class FactSourceResolver {
 
   loadPlaceVisits(scope: AnalysisScope): Promise<readonly PlaceVisitFact[]> {
     return this.repository.loadPlaceVisits(canonicalRangeForScope(scope));
+  }
+
+  loadMobilityLegs(scope: AnalysisScope): Promise<readonly MobilityLegFact[]> {
+    return this.repository.loadMobilityLegFacts(canonicalRangeForScope(scope));
   }
 
   loadActivityOccurrences(
@@ -560,6 +565,31 @@ export class FactSourceResolver {
           scopeHash,
           availability: "known",
           facts: await this.loadActivityOccurrenceCosts(scope),
+        };
+      }
+      case "fct_mobility_leg": {
+        if (scope.subject.kind === "person") {
+          return { kind: "mobility_legs", scopeHash, availability: "unknown" };
+        }
+        const range = canonicalRangeForScope(scope);
+        const [facts, hasCoverage] = await Promise.all([
+          this.repository.loadMobilityLegFacts(range),
+          this.repository.hasMobilityDatasetCoverage(range),
+        ]);
+        if (!hasCoverage) {
+          return {
+            kind: "mobility_legs",
+            scopeHash,
+            availability: "unknown",
+            coverage: { level: "partial" },
+          };
+        }
+        return {
+          kind: "mobility_legs",
+          scopeHash,
+          availability: "known",
+          facts,
+          support: sourceSupport(facts.length, "mobility_leg"),
         };
       }
       case "fct_purchase_event": {

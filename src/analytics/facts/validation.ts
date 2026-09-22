@@ -64,6 +64,7 @@ import type {
   PurchaseEventId,
   PurchaseEventSource,
 } from "./types";
+import { parseMobilityLegFact } from "./mobility";
 
 const dimensionKinds = new Set([
   "resolved",
@@ -1124,6 +1125,8 @@ export function parseAnalyticFact(value: unknown): AnalyticFact {
       return parsePurchaseEventFact(value);
     case "fct_place_visit":
       return parsePlaceVisitFact(value);
+    case "fct_mobility_leg":
+      return parseMobilityLegFact(value);
     default:
       throw new TypeError("AnalyticFact.fact est inconnu.");
   }

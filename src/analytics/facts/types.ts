@@ -34,6 +34,65 @@ export type PlaceVisitKey = Brand<string, "PlaceVisitKey">;
 export type PersonDayId = Brand<string, "PersonDayId">;
 export type LifeEventSeriesId = Brand<string, "LifeEventSeriesId">;
 
+export type MobilityLegEndpoint = {
+  readonly placeId: PlaceId | null;
+  readonly sourceLabel: string | null;
+  readonly resolutionState: "EXPLICIT_MAPPING" | "UNRESOLVED";
+};
+
+export type MobilityLegFuelAuthority = {
+  readonly fuelType: "SP95";
+  readonly pricePerLiter: DecimalString;
+  readonly pricePeriod: YearMonth;
+  readonly geoScope: "LOCAL_DEPARTMENT" | "NATIONAL";
+  readonly source: string;
+  readonly quality: "P3_LOCAL_DEPARTMENT" | "P4_NATIONAL_FALLBACK";
+  readonly observationId: string | null;
+};
+
+export type MobilityLegTime = {
+  readonly observedTime: string | null;
+  readonly authority: "OBSERVED" | "PROXY" | "UNKNOWN";
+  readonly type: "DEPARTURE" | "ARRIVAL" | "UNTYPED" | "UNKNOWN";
+  readonly routeTimeBasis: string | null;
+  readonly routeProxyTimes: readonly string[];
+};
+
+export type MobilityLegSource = {
+  readonly datasetId: string;
+  readonly sourceLegId: string;
+  readonly group: "NAV" | "JOUR" | "AUT";
+  readonly sheet: string;
+  readonly reconstruction: string;
+  readonly quality: string;
+  readonly status: "CERTIFIED_SOURCE" | "SOURCE_PARTIAL";
+  readonly confidence: "HIGH" | "MEDIUM" | "LOW" | "UNKNOWN";
+  readonly sourceRowHash: string;
+};
+
+export type MobilityLegFact = {
+  readonly fact: "fct_mobility_leg";
+  readonly legId: string;
+  readonly householdId: HouseholdId;
+  readonly vehicleId: string;
+  readonly date: LocalDate;
+  readonly origin: MobilityLegEndpoint;
+  readonly destination: MobilityLegEndpoint;
+  readonly distanceKm: DecimalString;
+  readonly durationSeconds: DecimalString | null;
+  readonly durationNoTrafficSeconds: DecimalString | null;
+  readonly estimatedFuelLiters: DecimalString;
+  readonly estimatedFuelCost: Money;
+  readonly fuel: MobilityLegFuelAuthority;
+  readonly time: MobilityLegTime;
+  readonly consumptionModelRef: string;
+  readonly routeMethodRef: string;
+  readonly source: MobilityLegSource;
+  readonly methodVersion: import("../../core/versions").MethodVersion;
+  readonly evidenceRefs: readonly string[];
+  readonly provenance: "estimated";
+};
+
 export type ActivityOccurrenceValidationStatus = "Confirmé" | "Déduit";
 
 export type AnalyticDimensionValue<Id extends string> =
@@ -333,7 +392,8 @@ export type AnalyticFact =
   | ActivityOccurrenceCostFact
   | PersonDayFact
   | PurchaseEventFact
-  | PlaceVisitFact;
+  | PlaceVisitFact
+  | MobilityLegFact;
 
 export type AnalyticFactSource = AnalyticFact["fact"];
 
@@ -343,4 +403,5 @@ export type AnalyticGrain =
   | "activity_occurrence_cost"
   | "person_local_date"
   | "purchase_event"
-  | "person_place_visit_interval";
+  | "person_place_visit_interval"
+  | "mobility_leg";
