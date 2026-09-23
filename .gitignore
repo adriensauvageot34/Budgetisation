@@ -10,6 +10,7 @@
 
 # local
 .DS_Store
+private/persona/
 *.pem
 .env*
 !.env.example

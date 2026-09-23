@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Image from "next/image";
 import { BriefcaseBusiness, Camera, CarFront, Headphones, Heart, House, Monitor, Moon, Scissors, UserRound, UtensilsCrossed } from "lucide-react";
 import type { PersonaDirectModel } from "@/query-api/global-v2/persona-direct-presentation";
 import type { EditorialMobility, EditorialOuting, EditorialPeriod, EditorialProject, EditorialSubscription, PersonaEditorialModel } from "@/query-api/global-v2/persona-editorial";
@@ -228,7 +229,17 @@ function ManonFriends({ person, months }: { readonly person: PersonaEditorialMod
 export function PersonaEditorialView({ model, direct, headingId }: { readonly model: PersonaEditorialModel; readonly direct: PersonaDirectModel; readonly headingId: string }) {
   const [active, setActive] = useState<"adrien" | "manon">("adrien");
   const months = monthKeys(model.period.first, model.period.certifiedThrough);
-  return <div className={styles.root}><header className={styles.hero}><div><span className={styles.eyebrow}>Portraits personnels</span><h2 id={headingId}>Nos profils</h2><p>Deux quotidiens, deux façons de dépenser.</p><small>D’après vos habitudes d’{fullMonthYear.format(dateOf(model.period.first))} à {fullMonthYear.format(dateOf(model.period.certifiedThrough))}.</small></div><nav className={styles.heroTabs} aria-label="Choisir le portrait"><span aria-current="page">Adrien + Manon</span><a href="#nous-deux"><Heart aria-hidden="true" size={15} /> Nous deux</a></nav></header>
+  return <div className={styles.root}>
+    <header className={styles.hero}>
+      <div><h2 id={headingId}>Nos profils</h2><small>{fullMonthYear.format(dateOf(model.period.first))} → {fullMonthYear.format(dateOf(model.period.certifiedThrough))}</small></div>
+      <div className={styles.heroIdentity}>
+        <div className={styles.heroPortraits} aria-label="Portraits d’Adrien et Manon">
+          <div data-person="adrien"><span className={styles.portraitFrame}><Image src="/api/persona-portrait/adrien" alt="Portrait d’Adrien" width={84} height={84} sizes="84px" unoptimized /></span><strong>Adrien</strong></div>
+          <div data-person="manon"><span className={styles.portraitFrame}><Image src="/api/persona-portrait/manon" alt="Portrait de Manon" width={84} height={84} sizes="84px" unoptimized /></span><strong>Manon</strong></div>
+        </div>
+        <nav className={styles.heroTabs} aria-label="Choisir le portrait"><span aria-current="page">Adrien + Manon</span><a href="#nous-deux"><Heart aria-hidden="true" size={15} /> Nous deux</a></nav>
+      </div>
+    </header>
     <nav className={styles.mobileSwitch} aria-label="Personne affichée sur mobile"><button type="button" aria-pressed={active === "adrien"} onClick={() => setActive("adrien")}>Adrien</button><button type="button" aria-pressed={active === "manon"} onClick={() => setActive("manon")}>Manon</button></nav>
     <section className={styles.majorSection} aria-labelledby="persona-work-title"><SectionHeading id="persona-work-title" title="Nos journées de travail" lead="Ce que nos trajets et nos pauses racontent." /><div className={styles.editorialGrid}>
       <div className={styles.span6} data-mobile-active={active === "adrien"}><WorkEconomicNote person="adrien" label="Transports en commun" value={amount(model.persons[0].work.commute.directCost)} detail="de coût direct pour aller travailler" /></div><div className={styles.span6} data-mobile-active={active === "manon"}><WorkEconomicNote person="manon" label="Peugeot pour aller travailler" value={model.vehicle.workUsageSummary?.estimatedFuelCostPerDay === null || model.vehicle.workUsageSummary === null ? "—" : amount(model.vehicle.workUsageSummary.estimatedFuelCostPerDay, true)} detail="de carburant utilisé par journée de trajet" /></div>

@@ -476,12 +476,23 @@
 .friendsStory .mobilityAside { grid-column: 2; grid-row: 1 / span 4; min-width: 280px; margin: 0; border: 0; border-left: 1px solid var(--manon-line); padding: 0 0 0 20px; }
 .friendsStory .mobilityFigures { margin-top: 8px; }
 .outingsStory li { border-color: var(--person-line); background: #fffdfd; }
+.hero { padding-block: 22px; }
+.hero h2 { margin-top: 0; }
+.hero > div:first-child > small { display: block; margin-top: 8px; font-size: 13px; }
+.heroIdentity { display: grid; justify-items: center; gap: 12px; flex: none; }
+.heroPortraits { display: flex; justify-content: center; gap: 30px; }
+.heroPortraits > div { display: grid; justify-items: center; gap: 5px; color: var(--person-accent); font-size: 13px; }
+.portraitFrame { display: block; width: 88px; height: 88px; overflow: hidden; border: 3px solid var(--person-line); border-radius: 50%; background: var(--person-tint); }
+.portraitFrame img { display: block; width: 100%; height: 100%; object-fit: cover; object-position: center 32%; }
+.heroPortraits strong { font-size: 13px; font-weight: 750; }
 @media (max-width: 1100px) {
   .mealFacts { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .interventions { flex-wrap: wrap; }
   .interventions ul { margin-left: 40px; }
 }
 @media (max-width: 740px) {
+  .heroIdentity { margin-top: 18px; }
+  .heroPortraits { gap: 22px; }
   .workEconomicNote { flex-wrap: wrap; min-height: 0; }
   .permitBars { margin-top: 8px; }
   .vehicleStory footer { margin-inline: 20px; }

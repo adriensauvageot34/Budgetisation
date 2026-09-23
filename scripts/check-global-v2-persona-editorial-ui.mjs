@@ -5,12 +5,22 @@ const view = fs.readFileSync("src/features/global-v2/persona/persona-editorial-v
 const css = fs.readFileSync("src/features/global-v2/persona/persona-editorial.module.css", "utf8");
 const page = fs.readFileSync("src/features/global-v2/global-v2-page.tsx", "utf8");
 const loader = fs.readFileSync("src/server/query/global-v2-production-loader.ts", "utf8");
+const portraitRoute = fs.readFileSync("src/app/api/persona-portrait/[name]/route.ts", "utf8");
+const portraitMigration = fs.readFileSync("supabase/migrations/20260923131118_private_persona_portraits.sql", "utf8");
 
 for (const heading of ["Nos journées de travail", "Nos univers personnels", "Nos habitudes qui reviennent", "Notre vie sociale, chacun de son côté", "Notre Peugeot, son outil de travail quotidien", "Séries & divertissement", "Barbe & cheveux", "Ses produits fidèles", "sorties de son côté", "Famille", "Une chanson pour son père"]) {
   if (heading === "Une chanson pour son père") continue; // The published project provides this title.
   assert.ok(view.includes(heading), `missing editorial story: ${heading}`);
 }
 assert.match(view, /suno\.description/);
+assert.match(view, /Image src="\/api\/persona-portrait\/adrien" alt="Portrait d’Adrien"/);
+assert.match(view, /Image src="\/api\/persona-portrait\/manon" alt="Portrait de Manon"/);
+assert.match(portraitRoute, /getAuthenticatedBootstrapClient/);
+assert.match(portraitRoute, /getCurrentHousehold/);
+assert.match(portraitRoute, /private, no-store/);
+assert.match(portraitRoute, /createCanonicalReadClient\(\)\.storage/);
+assert.match(portraitRoute, /\.from\("persona-portraits"\)/);
+assert.match(portraitMigration, /'persona-portraits', 'persona-portraits', false/);
 assert.match(view, /model\.period\.first[\s\S]*model\.period\.certifiedThrough/);
 assert.match(view, /permit\.monthlyCost/);
 assert.match(view, /meal\.merchantHabitSummary/);
