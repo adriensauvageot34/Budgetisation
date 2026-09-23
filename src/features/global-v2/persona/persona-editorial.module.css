@@ -257,10 +257,10 @@
 .vehicleBranches { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); flex: 1; gap: 15px; padding: 9px 26px 12px; }
 .vehicleBranches section { border-top: 1px solid #bdcfbf; padding: 13px 0 0; }
 .vehicleBranches .bigFact strong { font-size: 25px; }
-.vehicleBranches small { font-size: 12px; }
-.vehicleBranches p:not(.kicker) { margin: 7px 0; font-size: 12px; }
+.vehicleBranches small { font-size: 13px; }
+.vehicleBranches p:not(.kicker) { margin: 7px 0; font-size: 13px; }
 .insuranceRail { display: flex; flex-wrap: wrap; gap: 8px 12px; margin-top: 8px; }
-.insuranceRail > div { display: grid; gap: 2px; font-size: 12px; }
+.insuranceRail > div { display: grid; gap: 2px; font-size: 13px; }
 .insuranceRail small { color: var(--muted); }
 .vehicleStory footer { display: block; padding: 9px 26px 13px; background: transparent; color: var(--muted); font-size: 12px; }
 .vehicleStory footer strong { color: var(--ink); font-family: inherit; font-size: 13px; font-weight: 750; }
@@ -288,14 +288,14 @@
 .seriesStory { border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); }
 .seriesTimeline { margin-top: 24px; }
 .seriesMonths { display: grid; grid-template-columns: repeat(var(--month-count, 12), 1fr); margin-left: 88px; margin-right: 65px; }
-.seriesMonths span { color: var(--muted); font-size: 11px; text-align: center; text-transform: uppercase; }
+.seriesMonths span { color: var(--muted); font-size: 12px; text-align: center; text-transform: uppercase; }
 .seriesTrack { display: grid; grid-template-columns: 80px minmax(0, 1fr) 57px; gap: 8px; align-items: center; margin-top: 15px; }
 .seriesTrack > strong { font-size: 15px; }
 .seriesTrack > div { display: flex; gap: 3px; }
 .seriesTrack > div span { flex: 1; height: 15px; border-radius: 3px; background: #e6e8df; }
 .seriesTrack > div span[data-active="true"] { background: #7b9e80; }
 .seriesTrack:nth-of-type(3) > div span[data-active="true"] { background: #af9674; }
-.seriesTrack small { font-size: 11px; text-align: right; }
+.seriesTrack small { font-size: 12px; text-align: right; }
 .sunoStory { min-height: 0; background: #f6eee4; border-radius: 22px; }
 .sunoStory h5 { font-size: 22px; }
 .sunoWave { height: 32px; margin: 10px 0 0; }
@@ -303,8 +303,8 @@
 .sunoStory .projectCost { border: 0; padding: 0; }
 .sunoStory .projectCost .bigFact strong { font-size: 22px; }
 .hairdresserStory { background: #edf1e9; }
-.hairPresence { margin: 16px 0; }
-.presenceRail { --rail-label-width: 155px; padding: 12px 0; }
+.hairPresence { margin: 12px 0; }
+.presenceRail { --rail-label-width: 155px; padding: 9px 0; }
 .presenceMonths > span { font-size: 11px; }
 .presenceTrack { min-height: 42px; }
 .presenceTrack > strong { font-size: 13px; }
@@ -312,16 +312,17 @@
 .presenceTrack i { width: 8px; height: 8px; }
 .presenceTrack i[data-present="true"] { width: 17px; height: 17px; }
 .placeNotes li, .placeNotes small { font-size: 12px; }
-.waxStory { grid-template-columns: 48px 1fr; gap: 14px; margin-top: 14px; border-top: 1px solid #cdd9cb; padding: 17px 0 0; }
+.waxStory { grid-template-columns: 48px 1fr; gap: 14px; margin-top: 10px; border-top: 1px solid #cdd9cb; padding: 11px 0 0; }
 .waxJar { width: 40px; height: 35px; margin: 8px 2px; }
 .waxJar::before { height: 8px; top: -7px; }
 .waxJar span { inset: 10px 5px 7px; }
 .waxStory strong { font-size: 14px; }
 .waxStory small { font-size: 13px; }
-.productsStory { background: #f5efe5; }
-.productShelf { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; margin-top: 20px; }
+.editorialGrid > div > .productsStory { height: auto; }
+.productsStory { border-radius: 0; background: transparent; }
+.productShelf { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; margin-top: 17px; border-top: 1px solid #e5dccc; padding-top: 18px; }
 .product { display: block; border: 0; padding: 0; }
-.productObject { width: 70px; height: 77px; margin-bottom: 10px; }
+.productObject { width: 76px; height: 82px; margin-bottom: 10px; }
 .product > div, .product > div > div { display: grid; gap: 5px; }
 .product > div > div + div { margin-top: 7px; }
 .product > div > small { font-size: 11px; }
@@ -357,8 +358,8 @@
 .outingsStory { background: #f3f2e9; color: var(--ink); }
 .outingsStory .storyTop, .outingsStory .storyTop svg, .outingsStory h5 { color: var(--ink); }
 .outingsStory h5 { font-size: 22px; }
-.outingsStory ul { display: flex; flex-wrap: wrap; gap: 7px; margin-top: 15px; }
-.outingsStory li { display: grid; flex: 1 1 auto; gap: 2px; border: 1px solid #dce4d9; border-radius: 12px; padding: 7px 9px; background: #fffefa; font-size: 12px; }
+.outingsStory ul { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 7px; margin-top: 15px; }
+.outingsStory li { display: grid; min-width: 0; gap: 2px; border: 1px solid #dce4d9; border-radius: 12px; padding: 8px 10px; background: #fffefa; font-size: 13px; }
 .outingsStory li small, .outingsStory time { color: var(--muted); font-size: 11px; }
 @media (max-width: 1100px) {
   .editorialGrid { gap: 15px; }

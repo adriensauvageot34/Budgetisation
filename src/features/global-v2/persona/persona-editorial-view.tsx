@@ -172,7 +172,7 @@ function AdrienHabits({ person, months }: { readonly person: PersonaEditorialMod
   const { hairdresser, stylingWax } = person.recurringHabits;
   return <article className={styles.hairdresserStory}><Scissors className={styles.objectIcon} aria-hidden="true" size={70} strokeWidth={1.1} /><div className={styles.storyTop}>Adrien · Soin</div><h5>Barbe & cheveux</h5>
     <div className={styles.hairPresence}><BigFact value={integer.format(hairdresser.observedPresenceDays)} caption="journées chez le coiffeur" />{hairdresser.typicalPersonalCost === null ? null : <BigFact value={amount(hairdresser.typicalPersonalCost)} caption="par passage" />}</div>
-    {hairdresser.places.length === 0 ? null : <><PresenceRail months={months} tracks={hairdresser.places.map((place) => ({ key: place.placeRef, label: shortPlaceLabel(place.label), monthlyPresenceDays: place.monthlyPresenceDays }))} /><ul className={styles.placeNotes}>{hairdresser.places.map((place) => <li key={place.placeRef}>{shortPlaceLabel(place.label)}<small>{integer.format(place.presenceDays)} journées</small></li>)}</ul></>}
+    {hairdresser.places.length === 0 ? null : <PresenceRail months={months} tracks={hairdresser.places.map((place) => ({ key: place.placeRef, label: `${shortPlaceLabel(place.label).split(/\s+[–—]\s+/u)[0]} · ${integer.format(place.presenceDays)}`, monthlyPresenceDays: place.monthlyPresenceDays }))} />}
     <div className={styles.waxStory}><div className={styles.waxJar} aria-hidden="true"><span /></div><div><strong>{stylingWax.label}</strong><small>{stylingWax.price === null ? null : amount(stylingWax.price)}{stylingWax.observedCadenceDays === null ? null : ` · ${cadenceLabel(stylingWax.observedCadenceDays)}`}</small></div></div>
   </article>;
 }
@@ -201,9 +201,19 @@ function MobilityAside({ summary, title }: { readonly summary: EditorialMobility
   if (summary === null || summary.support !== "SUFFICIENT") return null;
   return <div className={styles.mobilityAside}><strong>{title}</strong><div className={styles.mobilityFigures}><BigFact value={integer.format(summary.eventCount)} caption="visites" /><BigFact value={`${integer.format(Number(summary.distanceKm))} km`} caption="parcourus" /><BigFact value={amount(summary.estimatedFuelCost, true)} caption="de carburant estimé" /></div></div>;
 }
+function outingTitle(value: string): string {
+  return value
+    .replace(/^Soirée à [^:]+:\s*/iu, "")
+    .replace(/^Sortie\s*\/\s*soirée\s*[–—-]\s*/iu, "")
+    .replace(/^Soirée techno\s*[–—-]\s*/iu, "")
+    .replace(/^Sortie(?:\s+au)?\s+/iu, "")
+    .replace(/\s*[–—-]\s*\d{1,2}\s+\p{L}+\s+\d{4}$/iu, "")
+    .replace(/\s+\d{1,2}\s+\p{L}+\s+\d{4}$/iu, "")
+    .replace(/^bar à jeux$/iu, "Bar à jeux");
+}
 function OutingsStory({ name, outings }: { readonly name: string; readonly outings: readonly EditorialOuting[] }) {
   if (outings.length === 0) return null;
-  return <article className={styles.outingsStory}><div className={styles.storyTop}><Moon aria-hidden="true" size={25} strokeWidth={1.5} /><span>{name}</span></div><h5>{integer.format(outings.length)} sorties de son côté</h5><ul>{outings.map((outing) => <li key={outing.eventRef}><span>{outing.title}</span><time dateTime={outing.date}>{month(outing.date)}</time></li>)}</ul></article>;
+  return <article className={styles.outingsStory}><div className={styles.storyTop}><Moon aria-hidden="true" size={25} strokeWidth={1.5} /><span>{name}</span></div><h5>{integer.format(outings.length)} sorties de son côté</h5><ul>{outings.map((outing) => <li key={outing.eventRef}><span>{outingTitle(outing.title) || outing.place || "Sortie"}</span><time dateTime={outing.date}>{month(outing.date)}</time></li>)}</ul></article>;
 }
 function ManonFamily({ person, months }: { readonly person: PersonaEditorialModel["persons"][1]; readonly months: readonly string[] }) {
   const { fatherHome, maternalFamilyHome, familyMobilityWithoutPartner } = person.socialLife;
