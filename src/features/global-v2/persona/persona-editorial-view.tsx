@@ -51,7 +51,7 @@ function ProfileHeader({ model, headingId }: { readonly model: PersonaEditorialM
 }
 function Permit({ person }: { readonly person: PersonaEditorialModel["persons"][0] }) {
   const permit = person.personalUniverses.permit;
-  const months = Object.entries(permit.monthlyCost ?? {}).filter(([, cost]) => Number(cost) > 0).sort(([a], [b]) => a.localeCompare(b));
+  const months = Object.entries(permit.monthlyCost ?? {}).filter(([, cost]) => Number(cost) > 0).sort(([, a], [, b]) => Number(b) - Number(a)).slice(0, 3).sort(([a], [b]) => a.localeCompare(b));
   return <article className={styles.permitProfile} data-person="adrien"><div className={styles.moduleTitle}><CarFront aria-hidden="true" size={25} /><h4>Le permis</h4></div><div className={styles.permitLead}><Fact value={amount(permit.cost, true)} label="pour le projet" />{permit.period === null ? null : <span>{periodLabel(permit.period)}</span>}</div><div className={styles.permitMonths}>{months.map(([key, cost]) => <div key={key}><span>{monthOnly.format(dateOf(`${key}-01`))}</span><strong>{amount(cost, true)}</strong></div>)}</div></article>;
 }
 function Peugeot({ model }: { readonly model: PersonaEditorialModel }) {

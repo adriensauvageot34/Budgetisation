@@ -17,6 +17,7 @@ assert.match(view, /Image src="\/api\/persona-portrait\/manon" alt="Portrait de 
 assert.match(css, /border-radius: 50%/);
 assert.match(css, /object-fit: cover/);
 assert.match(view, /button type="button" disabled aria-label="Nous deux, bientôt disponible"/);
+assert.match(view, /permit\.monthlyCost[^\n]+\.slice\(0, 3\)/);
 assert.doesNotMatch(page, /"PERSONAS", "TOGETHER"/);
 assert.match(view, /meal\.allPurchaseHabitSummary/);
 assert.match(server, /allPurchaseHabitSummary/);
