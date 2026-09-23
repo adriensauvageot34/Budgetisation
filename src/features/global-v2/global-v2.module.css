@@ -618,7 +618,7 @@
 .groceryBasket dt { overflow-wrap: anywhere; font-size: 9px; line-height: 1.2; }
 .groceryBasket dd { font-size: 13px; }
 @media (max-width: 1024px) {
-  .story { grid-template-columns: 1fr; }
+  .story { grid-template-columns: minmax(0, 1fr); }
   .module, .module[data-module] { grid-column: 1; }
 }
 @media (max-width: 767px) {
