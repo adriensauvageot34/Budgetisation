@@ -26,7 +26,7 @@
 .module[data-module="TRANSFORMATIONS"] { grid-column: span 4; }
 .module[data-module="MOMENTS"], .module[data-module="GEO_MOBILITY"], .module[data-module="RELATIONSHIPS"], .module[data-module="CONSUMPTION"] { grid-column: span 6; }
 .module[data-module="TOGETHER"] { grid-column: span 7; }
-.module[data-module="PERSONAS"] { grid-column: span 12; overflow: visible; border: 0; border-radius: 0; background: transparent; box-shadow: none; }
+.module[data-module="PERSONAS"] { grid-column: span 12; width: min(1260px, calc(100vw - 2 * var(--space-page))); justify-self: center; overflow: visible; border: 0; border-radius: 0; background: transparent; box-shadow: none; }
 .moduleHeader { display: flex; align-items: start; justify-content: space-between; gap: 24px; padding: 24px 26px 18px; }
 .moduleHeader h2 { margin-top: 4px; font-size: clamp(24px, 3vw, 32px); }
 .moduleHeader p { max-width: 650px; margin: 8px 0 0; color: var(--color-muted); line-height: 1.5; }
