@@ -25,7 +25,7 @@ assert.match(view, /beautyNeeds\[product\.needKey\]/);
 assert.match(view, /product\.medianGapDays === null \|\| product\.purchaseCount < 3/);
 assert.doesNotMatch(view, /vape\.directPurchases\.map/);
 assert.match(view, /fatherHome[\s\S]*maternalFamilyHome[\s\S]*familyMobilityWithoutPartner/);
-assert.match(view, /monthlyPresenceSegments\?\.\[key\]/);
+assert.match(view, /monthlyPresenceSegments\[key\] \?\? \[false, false, false, false\]/);
 assert.match(view, /summary\.support !== "SUFFICIENT"/);
 assert.match(view, /outingsWithoutPartnerParticipation/);
 assert.match(view, /carburant estimé|carburant utilisé/iu);

@@ -145,7 +145,7 @@ function PresenceRail({ months, tracks }: { readonly months: readonly string[]; 
   return <div className={styles.presenceRail}><div className={styles.presenceMonths} style={gridStyle}><span />{months.map((key) => <span key={key}>{monthOnly.format(dateOf(`${key}-01`)).slice(0, 3)}</span>)}</div>
     {tracks.map((track) => <div className={styles.presenceTrack} style={gridStyle} key={track.key}><strong>{track.label}</strong>{months.map((key) => {
       const days = track.monthlyPresenceDays[key];
-      const segments = track.monthlyPresenceSegments?.[key];
+      const segments = track.monthlyPresenceSegments === undefined ? undefined : (track.monthlyPresenceSegments[key] ?? [false, false, false, false]);
       return <span className={styles.presenceCells} key={key} aria-label={`${track.label} : ${days ?? 0} journée${days === 1 ? "" : "s"} en ${monthOnly.format(dateOf(`${key}-01`))}`}>
         {(segments ?? [typeof days === "number" && days > 0]).map((present, index) => <i key={index} data-present={present} title={segments === undefined ? undefined : `${1 + index * 7}–${index === 3 ? "fin" : 7 + index * 7} : ${present ? "présence" : "aucune présence"}`} />)}
       </span>;
