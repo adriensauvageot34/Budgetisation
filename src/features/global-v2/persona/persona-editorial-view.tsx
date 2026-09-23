@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { Camera, CarFront, Headphones, Heart, Monitor, Moon, Scissors, Train, UtensilsCrossed } from "lucide-react";
+import { Camera, CarFront, Headphones, Heart, Monitor, Moon, Scissors, ShieldCheck, Train, UtensilsCrossed } from "lucide-react";
 import type { PersonaDirectModel } from "@/query-api/global-v2/persona-direct-presentation";
 import type { EditorialOuting, EditorialPeriod, EditorialProject, EditorialSubscription, PersonaEditorialModel } from "@/query-api/global-v2/persona-editorial";
 import styles from "./persona-editorial.module.css";
@@ -48,7 +48,10 @@ function ProfileHeader({ model, headingId }: { readonly model: PersonaEditorialM
         <div><span className={styles.adrienFactIcon}><Train aria-hidden="true" size={18} /></span><span className={styles.adrienFactLabel}>Transports en commun</span><strong>{amount(adrien.work.commute.directCost)}</strong><small>pour aller travailler</small></div>
         <div><span className={styles.adrienFactIcon}><CarFront aria-hidden="true" size={18} /></span><span className={styles.adrienFactLabel}>Permis en cours</span><strong>{amount(adrien.personalUniverses.permit.cost, true)}</strong><small>pour le projet</small></div>
       </div></article>
-      <article className={styles.identityCard} data-person="manon"><span className={styles.portraitFrame}><Image src="/api/persona-portrait/manon" alt="Portrait de Manon" width={116} height={116} sizes="116px" priority unoptimized /></span><div className={styles.identityBody}><h3>Manon</h3><p className={styles.identityWork}>{manon.work.primaryWorkPlaces[0]?.label.replace(/\s+[–—]\s+.*$/u, "") ?? "Promotrans"}</p><div className={styles.identityFacts}><div><span>Peugeot pour travailler</span><strong>{commute === null || commute === undefined ? "—" : amount(commute, true)}</strong><small>par jour de trajet</small></div><div><span>Assurance voiture</span><strong>{insurance === null ? "—" : monthly(insurance)}</strong><small>{model.vehicle.insuranceSummary.currentProvider ?? "assurance actuelle"}</small></div></div></div></article>
+      <article className={`${styles.identityCard} ${styles.manonIdentityCard}`} data-person="manon"><div className={styles.manonIdentityTop}><span className={`${styles.portraitFrame} ${styles.manonPortraitFrame}`}><Image src="/api/persona-portrait/manon" alt="Portrait de Manon" width={116} height={116} sizes="116px" priority unoptimized /></span><div className={styles.identityBody}><h3>Manon</h3><p className={styles.identityWork}>{manon.work.primaryWorkPlaces[0]?.label.replace(/\s+[–—]\s+.*$/u, "") ?? "Promotrans"}</p></div></div><div className={styles.manonFacts}>
+        <div><span className={styles.manonFactIcon}><CarFront aria-hidden="true" size={18} /></span><span className={styles.manonFactLabel}>Peugeot pour travailler</span><strong>{commute === null || commute === undefined ? "—" : amount(commute, true)}</strong><small>par jour de trajet</small></div>
+        <div><span className={styles.manonFactIcon}><ShieldCheck aria-hidden="true" size={18} /></span><span className={styles.manonFactLabel}>Assurance voiture</span><strong>{insurance === null ? "—" : monthly(insurance)}</strong><small>{model.vehicle.insuranceSummary.currentProvider ?? "assurance actuelle"}</small></div>
+      </div></article>
     </div>
   </header>;
 }

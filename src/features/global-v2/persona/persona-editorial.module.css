@@ -27,6 +27,17 @@
 .adrienFactLabel { min-width: 0; color: #466a7d; font-size: 11px; font-weight: 740; }
 .adrienFacts strong { color: #264d64; font-size: 17px; line-height: 1.12; white-space: nowrap; }
 .adrienFacts small { color: #647780; font-size: 10px; }
+.identityCard.manonIdentityCard { position: relative; isolation: isolate; grid-template-columns: minmax(0, 1fr); grid-template-rows: auto auto; align-items: stretch; gap: 6px; min-height: 0; overflow: hidden; border-radius: 24px; padding: 8px 16px; background-color: var(--manon-bg); background-image: linear-gradient(90deg, rgba(248, 237, 241, .72) 0%, rgba(248, 237, 241, .5) 42%, rgba(248, 237, 241, .14) 70%, rgba(248, 237, 241, 0) 100%), url("/persona/illustrations/part-1/manon-profile-work-driving-bg.png"); background-position: left center, right center; background-size: 100% 100%, cover; background-repeat: no-repeat; }
+.manonIdentityTop { display: grid; grid-template-columns: 116px minmax(0, 1fr); align-items: center; gap: 14px; width: 70%; min-width: 0; }
+.portraitFrame.manonPortraitFrame { width: 116px; height: 116px; border-color: #f0dce3; box-shadow: 0 0 0 4px rgba(161, 104, 125, .18); }
+.manonIdentityCard .identityBody h3 { font-size: 34px; }
+.manonIdentityCard .identityWork { max-width: 29rem; }
+.manonFacts { display: grid; grid-column: 1; grid-row: 2; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; width: 72%; min-width: 0; }
+.manonFacts > div { display: grid; grid-template-columns: 26px minmax(0, 1fr); grid-template-rows: auto auto auto; align-items: center; column-gap: 7px; min-width: 0; border: 1px solid rgba(223, 191, 202, .76); border-radius: 16px; padding: 5px 8px; background: rgba(255, 255, 255, .9); }
+.manonFactIcon { display: grid; grid-column: 1; grid-row: 1 / 4; width: 26px; height: 26px; place-items: center; border-radius: 50%; background: #f6e7ec; color: #865265; }
+.manonFactLabel { min-width: 0; color: #805363; font-size: 11px; font-weight: 740; }
+.manonFacts strong { color: #684252; font-size: 17px; line-height: 1.12; white-space: nowrap; }
+.manonFacts small { color: #77636a; font-size: 10px; }
 .portraitFrame { display: block; width: 116px; height: 116px; overflow: hidden; border: 3px solid var(--person-line); border-radius: 50%; background: #fff; }
 .portraitFrame img { display: block; width: 100%; height: 100%; object-fit: cover; object-position: center 31%; }
 .identityBody { min-width: 0; }
@@ -194,6 +205,15 @@
   .adrienFactIcon { width: 26px; height: 26px; }
   .adrienFactIcon svg { width: 15px; height: 15px; }
   .adrienFacts strong { font-size: 17px; }
+  .identityCard.manonIdentityCard { grid-template-columns: minmax(0, 1fr); padding: 15px; }
+  .manonIdentityTop { grid-template-columns: 74px minmax(0, 1fr); gap: 12px; width: 100%; }
+  .portraitFrame.manonPortraitFrame { width: 74px; height: 74px; }
+  .manonIdentityCard .identityBody h3 { font-size: 29px; }
+  .manonFacts { gap: 6px; width: 100%; }
+  .manonFacts > div { grid-template-columns: 26px minmax(0, 1fr); column-gap: 7px; padding: 8px; }
+  .manonFactIcon { width: 26px; height: 26px; }
+  .manonFactIcon svg { width: 15px; height: 15px; }
+  .manonFacts strong { font-size: 16px; }
   .portraitFrame { width: 74px; height: 74px; }
   .identityFacts { grid-template-columns: 1fr 1fr; }
   .identityFacts strong { font-size: 15px; }
