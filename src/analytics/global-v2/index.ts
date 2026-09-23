@@ -234,6 +234,20 @@ export {
   type MonthlyMobilityUsageBands,
 } from "./monthly-mobility-narrative";
 export {
+  GLOBAL_CAR_MOBILITY_COMPARISON_REASONS,
+  GLOBAL_CAR_MOBILITY_RHYTHM_METHOD_VERSION,
+  GLOBAL_CAR_MOBILITY_RHYTHM_POLICIES,
+  buildGlobalCarMobilityRhythmProjection,
+  type GlobalCarMobilityModeledUsage,
+  type GlobalCarMobilityMonthDetail,
+  type GlobalCarMobilityNarrativeSummary,
+  type GlobalCarMobilityQuality,
+  type GlobalCarMobilityRhythmMonth,
+  type GlobalCarMobilityRhythmProjection,
+  type GlobalCarMobilityUsageComposition,
+  type GlobalCarObservedFuelPaid,
+} from "./car-mobility-rhythm";
+export {
   GLOBAL_M7_PERSONAL_MOBILITY_METHOD_VERSION,
   GLOBAL_M7_PERSONAL_MOBILITY_SUPPORT_POLICY,
   PERSONAL_MOBILITY_ROLLUP_METRIC_ID,
