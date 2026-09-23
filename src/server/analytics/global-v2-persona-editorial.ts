@@ -6,6 +6,14 @@ import type { PersonalMobilitySummary } from "@/analytics/global-v2/personal-mob
 
 export const PERSONA_EDITORIAL_SCHEMA_VERSION = "persona-editorial@v1" as const;
 
+// Explicit contract-to-household-vehicle association confirmed for this
+// editorial portrait. Amounts, periods and lifecycle remain owner-derived.
+const carInsuranceSeriesKeys = {
+  historical: "ornikar-assurances-assurances-assurance-automobile",
+  current: "pacifica-assurances-assurance-automobile-contrat-140394759",
+  refundedIsolated: "pacifica-assurances-auto-contrat-140804629",
+} as const;
+
 type Row = Record<string, unknown>;
 type Query = PromiseLike<{ data: unknown; error: { message: string } | null }>;
 
@@ -49,7 +57,7 @@ async function byIds(client: SupabaseClient, table: string, column: string, ids:
   if (!unique.length) return [];
   const batches = [];
   for (let index = 0; index < unique.length; index += 100) batches.push(unique.slice(index, index + 100));
-  const orderColumn: Readonly<Record<string, string>> = { location_occurrences: "localization_id", operations: "operation_id", operation_tags: "operation_tag_id", operation_place_canonical: "canonical_component_key", life_event_financial_links: "financial_link_id", operation_allocations: "allocation_id" };
+  const orderColumn: Readonly<Record<string, string>> = { location_occurrences: "localization_id", operations: "operation_id", operation_tags: "operation_tag_id", operation_place_canonical: "canonical_component_key", life_event_financial_links: "financial_link_id", operation_allocations: "allocation_id", financial_economic_cost_canonical: "canonical_component_key", financial_source_person_links: "financial_source_person_link_id" };
   const result = await Promise.all(batches.map((batch) => pages((from, to) => client.from(table).select("*").in(column, batch).order(orderColumn[table] ?? column).range(from, to))));
   return result.flat();
 }
@@ -83,7 +91,7 @@ export async function resolveGlobalPersonaEditorial(input: {
   const adrien = input.personIdsByName.Adrien;
   const manon = input.personIdsByName.Manon;
   if (!adrien || !manon) throw new TypeError("PERSONA_EDITORIAL_PERSONS_MISSING");
-  const [eventTypes, events, participations, roles, places, personDays, needs, tags, products, recurrences, vehicles] = await Promise.all([
+  const [eventTypes, events, participations, roles, places, personDays, needs, tags, products, recurrences, vehicles, insuranceSeries] = await Promise.all([
     pages((from, to) => input.client.from("life_event_types").select("life_event_type_id,type_key").order("life_event_type_id").range(from, to)),
     pages((from, to) => input.client.from("life_events").select("life_event_id,life_event_type_id,title,start_date,end_date,primary_place_id,validation_status").gte("start_date", input.firstDay).lte("start_date", input.certifiedThrough).order("life_event_id").range(from, to)),
     pages((from, to) => input.client.from("life_event_participations").select("life_event_id,person_id,participation_status").in("person_id", [adrien, manon]).order("participation_id").range(from, to)),
@@ -95,6 +103,7 @@ export async function resolveGlobalPersonaEditorial(input: {
     pages((from, to) => input.client.from("product_observations").select("observation_id,person_id,need_key,product_key,nom,date_achat,montant_paye").in("person_id", [adrien, manon]).lte("date_achat", input.certifiedThrough).order("observation_id").range(from, to)),
     pages((from, to) => input.client.from("recurrence_series").select("recurrence_series_id,cadence_estimee,statut_serie").in("recurrence_series_id", ["67657950-b736-5f73-89bc-456d207b965c", "b2abae46-3378-5f09-897c-7c44eed28073", "6ceae158-ebba-5208-9d41-85eac3bd4dde", "24c0cb89-34bf-5e2a-881d-4d4f9f7b694a", "24cefd44-463b-59fa-b232-376b5404461c"]).order("recurrence_series_id").range(from, to)),
     pages((from, to) => input.client.from("vehicles").select("vehicle_id,owner_person_id,label,status,valid_from,valid_to").eq("household_id", input.householdId).order("vehicle_id").range(from, to)),
+    pages((from, to) => input.client.from("recurrence_series").select("recurrence_series_id,series_key,name,marchand_normalise,statut_serie").in("series_key", Object.values(carInsuranceSeriesKeys)).order("recurrence_series_id").range(from, to)),
   ]);
   const eventTypeById = new Map(eventTypes.map((row) => [str(row, "life_event_type_id"), str(row, "type_key")]));
   const placeById = new Map(places.map((row) => [str(row, "place_id"), row]));
@@ -158,6 +167,66 @@ export async function resolveGlobalPersonaEditorial(input: {
   const linkedCarOps = await byIds(input.client, "operations", "operation_id", carLinks.map((row) => str(row, "operation_id")));
   const carTags = ["Contexte:voiture", "Facteur:reparation_voiture", "Facteur:controle_technique"];
   const vehicleOps = [...new Map([...tagged(carTags), ...linkedCarOps].filter((row) => num(row, "montant").lt(0) && date(row) >= input.firstDay && date(row) <= input.certifiedThrough).map((row) => [str(row, "operation_id"), row])).values()];
+  const insuranceOps = (await byIds(input.client, "operations", "recurrence_series_id", insuranceSeries.map((row) => str(row, "recurrence_series_id"))))
+    .filter((row) => num(row, "montant").lt(0) && date(row) >= input.firstDay && date(row) <= input.certifiedThrough);
+  const primarySeriesKeys = new Set<string>([carInsuranceSeriesKeys.historical, carInsuranceSeriesKeys.current]);
+  const primarySeries = insuranceSeries.filter((row) => primarySeriesKeys.has(str(row, "series_key")));
+  const primarySeriesComplete = primarySeries.length === 2;
+  const insuranceMainIds = new Set(primarySeries.map((row) => str(row, "recurrence_series_id")));
+  const insuranceMainOps = insuranceOps.filter((row) => insuranceMainIds.has(str(row, "recurrence_series_id")));
+  const [economicCosts, payerLinks] = await Promise.all([
+    byIds(input.client, "financial_economic_cost_canonical", "operation_id", [...insuranceOps, ...vehicleOps].map((row) => str(row, "operation_id"))),
+    byIds(input.client, "financial_source_person_links", "operation_id", insuranceMainOps.map((row) => str(row, "operation_id"))),
+  ]);
+  const economicByOperation = new Map<string, { gross: Big; refund: Big; net: Big }>();
+  for (const row of economicCosts) {
+    const id = str(row, "operation_id");
+    const previous = economicByOperation.get(id) ?? { gross: new Big(0), refund: new Big(0), net: new Big(0) };
+    economicByOperation.set(id, {
+      gross: previous.gross.plus(num(row, "canonical_economic_gross")),
+      refund: previous.refund.plus(num(row, "refund_applied")),
+      net: previous.net.plus(num(row, "canonical_economic_net")),
+    });
+  }
+  const costsCertified = (ops: readonly Row[]) => ops.length > 0 && ops.every((row) => {
+    const cost = economicByOperation.get(str(row, "operation_id"));
+    return cost !== undefined && cost.gross.minus(cost.refund).eq(cost.net) && cost.net.gte(0);
+  });
+  const insuranceCostsCertified = primarySeriesComplete && insuranceMainOps.length > 0 && primarySeries.every((row) => {
+    const ops = insuranceMainOps.filter((operation) => str(operation, "recurrence_series_id") === str(row, "recurrence_series_id"));
+    return ops.length === 0 || costsCertified(ops);
+  });
+  const insuranceCost = insuranceCostsCertified ? sum(insuranceMainOps.map((row) => economicByOperation.get(str(row, "operation_id"))!.net)) : null;
+  const payerCertified = insuranceMainOps.length > 0 && insuranceMainOps.every((row) => {
+    const links = payerLinks.filter((link) => str(link, "operation_id") === str(row, "operation_id") && str(link, "relation_type") === "payer");
+    return links.length === 1 && str(links[0]!, "person_id") === manon
+      && str(links[0]!, "validated_by").startsWith("USER_VALIDATED") && Boolean(str(links[0]!, "validated_at"));
+  });
+  const insuranceSeriesSummaries = insuranceSeries
+    .filter((row) => insuranceMainIds.has(str(row, "recurrence_series_id")))
+    .map((row) => {
+      const id = str(row, "recurrence_series_id");
+      const ops = insuranceMainOps.filter((operation) => str(operation, "recurrence_series_id") === id);
+      const m1 = input.m1Series.find((series) => str(series, "recurrenceId") === id);
+      const typical = m1?.typicalOccurrenceCost as Row | undefined;
+      return {
+        seriesRef: `recurrence:${id}`,
+        provider: str(row, "marchand_normalise") || str(row, "name"),
+        lifecycle: str(row, "statut_serie"),
+        period: period(ops.map(date)),
+        occurrenceCount: ops.length,
+        monthlyCost: str(typical ?? {}, "status") === "KNOWN" ? str(typical!, "value") : null,
+        periodCost: costsCertified(ops) ? money(sum(ops.map((operation) => economicByOperation.get(str(operation, "operation_id"))!.net))) : null,
+      };
+    }).filter((series) => series.occurrenceCount > 0)
+    .sort((a, b) => (a.period?.first ?? "").localeCompare(b.period?.first ?? ""));
+  const currentInsurance = insuranceSeriesSummaries.filter((series) => series.lifecycle === "Active");
+  const isolatedSeriesId = str(insuranceSeries.find((row) => str(row, "series_key") === carInsuranceSeriesKeys.refundedIsolated) ?? {}, "recurrence_series_id");
+  const isolatedOps = insuranceOps.filter((row) => str(row, "recurrence_series_id") === isolatedSeriesId);
+  const isolatedRefundResolved = (isolatedOps.length === 0 || costsCertified(isolatedOps)) && isolatedOps.every((row) => {
+    const cost = economicByOperation.get(str(row, "operation_id"))!;
+    return cost.net.eq(0) && cost.gross.eq(cost.refund);
+  });
   const codeEvents = personEvents(adrien, "examen_permis");
   const codeLinks = await byIds(input.client, "life_event_financial_links", "life_event_id", codeEvents.map((row) => str(row, "life_event_id")));
   const codeOps = await byIds(input.client, "operations", "operation_id", codeLinks.map((row) => str(row, "operation_id")));
@@ -194,13 +263,48 @@ export async function resolveGlobalPersonaEditorial(input: {
   const hairPlaces = visits(adrien, "PERSONAL_CARE_ANCHOR");
   const householdVehicle = vehicles.find((row) => str(row, "status") === "active" && !row.owner_person_id && (!row.valid_from || str(row, "valid_from") <= input.certifiedThrough) && (!row.valid_to || str(row, "valid_to") >= input.firstDay));
   const vehicle = householdVehicle ? { vehicleRef: `vehicle:${str(householdVehicle, "vehicle_id")}`, label: str(householdVehicle, "label"), scope: "HOUSEHOLD" as const } : null;
+  const maintenance = { scope: "HOUSEHOLD" as const, vehicle, period: period(vehicleOps.map(date)), operationCount: vehicleOps.length, totalIdentifiedCost: money(spent(vehicleOps)), fuelUsageExcluded: true };
+  const maintenanceCertified = (vehicleOps.length === 0 || costsCertified(vehicleOps)) && money(sum(vehicleOps.map((row) => economicByOperation.get(str(row, "operation_id"))!.net))) === maintenance.totalIdentifiedCost;
+  const distinctCosts = !insuranceOps.some((row) => vehicleOps.some((vehicleRow) => str(vehicleRow, "operation_id") === str(row, "operation_id")));
+  const nonFuelTotalReady = insuranceCost !== null && maintenanceCertified && distinctCosts && isolatedRefundResolved;
+  const workUsageSummary = compactMobility(mobility(manon, "WORK_COMMUTE"));
+  const insuranceSummary = {
+    scope: "HOUSEHOLD_VEHICLE_WITH_PERSONAL_PAYER" as const,
+    series: insuranceSeriesSummaries,
+    currentProvider: currentInsurance.length === 1 ? currentInsurance[0]!.provider : null,
+    currentMonthlyCost: currentInsurance.length === 1 ? currentInsurance[0]!.monthlyCost : null,
+    period: period(insuranceMainOps.map(date)),
+    periodCost: insuranceCost === null ? null : money(insuranceCost),
+    payerPersonId: payerCertified ? manon : null,
+    payerAuthority: payerCertified ? "USER_VALIDATED" as const : "UNKNOWN" as const,
+    beneficiaryNotInferred: true,
+    ownershipNotInferred: true,
+    isolatedRefundResolved,
+  };
   return {
     schemaVersion: PERSONA_EDITORIAL_SCHEMA_VERSION,
     period: { first: input.firstDay, certifiedThrough: input.certifiedThrough },
-    vehicleHouseholdCost: { scope: "HOUSEHOLD" as const, vehicle, period: period(vehicleOps.map(date)), operationCount: vehicleOps.length, totalIdentifiedCost: money(spent(vehicleOps)), fuelUsageExcluded: true },
+    vehicleHouseholdCost: maintenance,
+    vehicle: { householdVehicle: vehicle, workUsageSummary, insuranceSummary, maintenanceSummary: maintenance, nonFuelCostTotal: nonFuelTotalReady ? money(insuranceCost!.plus(spent(vehicleOps))) : null, nonFuelCostTotalReady: nonFuelTotalReady, fuelUsageSeparate: true },
     persons: [
       { personId: adrien, work: { onsiteDays: workEvent(adrien, "travail_site"), remoteDays: workEvent(adrien, "teletravail"), commute: { mode: "PUBLIC_TRANSIT", directCost: "0.00", authority: "USER_VALIDATED" }, workMeals: meal(adrien, "repas_travail_adrien") }, personalUniverses: { permit: { scope: "PROJECT", status: "IN_PROGRESS", period: period([...permitOps.map(date), ...lessons.map((row) => str(row, "start_date"))]), cost: money(spent(permitOps)), lessonsByMonth: monthCounts(lessons.map((row) => str(row, "start_date"))), codeDates: codeEvents.map((row) => str(row, "start_date")) }, photo: project(["Contexte:projet_photo", "Contexte:projet_seance_photo"]), musicHeadphones: project(["Contexte:univers_musique_adrien"]), googleAiPro: subscription("67657950-b736-5f73-89bc-456d207b965c") }, recurringHabits: { chatGptUsage: "USER_VALIDATED", qobuz: subscription("b2abae46-3378-5f09-897c-7c44eed28073"), hairdresser: { authority: "USER_VALIDATED_ROUTINE_WITH_OBSERVED_PLACE_PRESENCE", places: hairPlaces, observedPresenceDays: hairPlaces.reduce((total, place) => total + place.presenceDays, 0), personalAnnualCost: null, typicalPersonalCost: null }, stylingWax: { label: "Cire coiffante", repurchase: "USER_VALIDATED", price: null, observedCadenceDays: null } }, socialLife: { outingsWithoutPartnerParticipation: adrienOutings, wording: "DE_SON_COTE" } },
-      { personId: manon, work: { onsiteDays: workEvent(manon, "travail_site"), primaryWorkPlaces: visits(manon, "PRIMARY_WORK"), workMeals: meal(manon, "repas_travail_manon"), professionalInterventions: { eventCount: pro.length, byMonth: monthCounts(pro.map((row) => str(row, "start_date"))), contexts: pro.map((row) => ({ date: str(row, "start_date"), title: str(row, "title"), place: str(placeById.get(str(row, "primary_place_id")) ?? {}, "nom_canonique") || null })) }, commute: { vehicle, strictOwnerSummary: compactMobility(mobility(manon, "WORK_COMMUTE")), annualRawLegEstimateNotCertified: true } }, personalUniverses: { sunoFatherSong: { scope: "PROJECT", description: "Une chanson pour son père", ...project(["Contexte:projet_suno_manon"]), recurrence: subscription("24cefd44-463b-59fa-b232-376b5404461c"), novemberPaymentExcluded: true }, products: personalProducts }, recurringHabits: { netflix: subscription("6ceae158-ebba-5208-9d41-85eac3bd4dde"), max: subscription("24c0cb89-34bf-5e2a-881d-4d4f9f7b694a"), vape: { m2FirstActiveMonth: vapeFirstActiveMonth, firstDirectPurchaseAt: period(vapeOps.map(date))?.first ?? null, directPurchases: vapeOps.map((row) => ({ date: date(row), amount: money(num(row, "montant").abs()) })).sort((a, b) => a.date.localeCompare(b.date)), directObservedCost: money(spent(vapeOps)), allocatedObservedCost: money(vapeAllocatedCost), allocationCount: vapeAllocations.length, m2AnnualCost: vapeOwnerAnnualCost, reconciledToM2: vapeReconciled } }, socialLife: { fatherHome: visits(manon, "FATHER_HOME"), maternalFamilyHome: visits(manon, "MATERNAL_FAMILY_HOME"), amandine: visits(manon, "SOCIAL_ANCHOR"), familyMobilityWithoutPartner: compactMobility(mobility(manon, "FAMILY_VISIT", "OTHER_ELSEWHERE_CONFIRMED")), friendMobilityWithoutPartner: compactMobility(mobility(manon, "FRIEND_VISIT", "OTHER_ELSEWHERE_CONFIRMED")), outingsWithoutPartnerParticipation: manonOutings, wording: "DE_SON_COTE", presenceIsNotTrip: true } },
+      {
+        personId: manon,
+        work: {
+          onsiteDays: workEvent(manon, "travail_site"),
+          primaryWorkPlaces: visits(manon, "PRIMARY_WORK"),
+          workMeals: meal(manon, "repas_travail_manon"),
+          professionalInterventions: {
+            eventCount: pro.length,
+            byMonth: monthCounts(pro.map((row) => str(row, "start_date"))),
+            contexts: pro.map((row) => ({ date: str(row, "start_date"), title: str(row, "title"), place: str(placeById.get(str(row, "primary_place_id")) ?? {}, "nom_canonique") || null })),
+          },
+          commute: { vehicle, strictOwnerSummary: workUsageSummary, annualRawLegEstimateNotCertified: true },
+        },
+        personalUniverses: { sunoFatherSong: { scope: "PROJECT", description: "Une chanson pour son père", ...project(["Contexte:projet_suno_manon"]), recurrence: subscription("24cefd44-463b-59fa-b232-376b5404461c"), novemberPaymentExcluded: true }, products: personalProducts },
+        recurringHabits: { netflix: subscription("6ceae158-ebba-5208-9d41-85eac3bd4dde"), max: subscription("24c0cb89-34bf-5e2a-881d-4d4f9f7b694a"), vape: { m2FirstActiveMonth: vapeFirstActiveMonth, firstDirectPurchaseAt: period(vapeOps.map(date))?.first ?? null, directPurchases: vapeOps.map((row) => ({ date: date(row), amount: money(num(row, "montant").abs()) })).sort((a, b) => a.date.localeCompare(b.date)), directObservedCost: money(spent(vapeOps)), allocatedObservedCost: money(vapeAllocatedCost), allocationCount: vapeAllocations.length, m2AnnualCost: vapeOwnerAnnualCost, reconciledToM2: vapeReconciled } },
+        socialLife: { fatherHome: visits(manon, "FATHER_HOME"), maternalFamilyHome: visits(manon, "MATERNAL_FAMILY_HOME"), amandine: visits(manon, "SOCIAL_ANCHOR"), familyMobilityWithoutPartner: compactMobility(mobility(manon, "FAMILY_VISIT", "OTHER_ELSEWHERE_CONFIRMED")), friendMobilityWithoutPartner: compactMobility(mobility(manon, "FRIEND_VISIT", "OTHER_ELSEWHERE_CONFIRMED")), outingsWithoutPartnerParticipation: manonOutings, wording: "DE_SON_COTE", presenceIsNotTrip: true },
+      },
     ],
   };
 }

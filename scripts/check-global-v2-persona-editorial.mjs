@@ -50,15 +50,42 @@ const tables = {
   person_days: [{ person_day_id: "d1", person_id: "m", date: "2026-01-04" }],
   location_occurrences: [{ localization_id: "l1", person_day_id: "d1", person_id: "m", place_id: "fontes" }, { localization_id: "l2", person_day_id: "d1", person_id: "m", place_id: "fontes" }],
   needs: [{ need_id: "vape", need_key: "vape_manon", person_id: "m" }],
-  tags: [{ tag_id: "photo", tag_key: "Contexte:projet_photo" }],
-  operation_tags: [{ operation_tag_id: "t1", operation_id: "buy", tag_id: "photo" }, { operation_tag_id: "t2", operation_id: "refund", tag_id: "photo" }],
-  operations: [{ operation_id: "buy", montant: "-64.28", date_transaction_reelle: "2026-01-05" }, { operation_id: "refund", montant: "27", date_transaction_reelle: "2026-01-06", rembourse_operation_id: "buy" }, { operation_id: "vape-direct", need_id: "vape", montant: "-23.80", date_transaction_reelle: "2026-01-07" }, { operation_id: "vape-parent", montant: "-64.50", date_transaction_reelle: "2026-01-08" }],
-  product_observations: [], recurrence_series: [], operation_place_canonical: [], life_event_financial_links: [], operation_allocations: [{ allocation_id: "va1", operation_id: "vape-parent", need_id: "vape", montant: "64.50" }],
+  tags: [{ tag_id: "photo", tag_key: "Contexte:projet_photo" }, { tag_id: "car", tag_key: "Contexte:voiture" }],
+  operation_tags: [{ operation_tag_id: "t1", operation_id: "buy", tag_id: "photo" }, { operation_tag_id: "t2", operation_id: "refund", tag_id: "photo" }, { operation_tag_id: "t3", operation_id: "maintenance", tag_id: "car" }],
+  operations: [
+    { operation_id: "buy", montant: "-64.28", date_transaction_reelle: "2026-01-05" },
+    { operation_id: "refund", montant: "27", date_transaction_reelle: "2026-01-06", rembourse_operation_id: "buy" },
+    { operation_id: "vape-direct", need_id: "vape", montant: "-23.80", date_transaction_reelle: "2026-01-07" },
+    { operation_id: "vape-parent", montant: "-64.50", date_transaction_reelle: "2026-01-08" },
+    { operation_id: "insurance-old", recurrence_series_id: "ins-old", montant: "-100", date_transaction_reelle: "2026-01-10" },
+    { operation_id: "insurance-current", recurrence_series_id: "ins-current", montant: "-80", date_transaction_reelle: "2026-01-11" },
+    { operation_id: "insurance-isolated", recurrence_series_id: "ins-isolated", montant: "-80", date_transaction_reelle: "2026-01-12" },
+    { operation_id: "insurance-refund", montant: "80", rembourse_operation_id: "insurance-isolated", date_transaction_reelle: "2026-01-13" },
+    { operation_id: "maintenance", montant: "-30", date_transaction_reelle: "2026-01-14" },
+  ],
+  product_observations: [],
+  recurrence_series: [
+    { recurrence_series_id: "ins-old", series_key: "ornikar-assurances-assurances-assurance-automobile", marchand_normalise: "Ornikar Assurances", statut_serie: "Historique / interrompue" },
+    { recurrence_series_id: "ins-current", series_key: "pacifica-assurances-assurance-automobile-contrat-140394759", marchand_normalise: "Pacifica", statut_serie: "Active" },
+    { recurrence_series_id: "ins-isolated", series_key: "pacifica-assurances-auto-contrat-140804629", marchand_normalise: "Pacifica", statut_serie: "Historique / occurrence isolée" },
+  ],
+  financial_economic_cost_canonical: [
+    { operation_id: "insurance-old", canonical_component_key: "old", canonical_economic_gross: "100", refund_applied: "0", canonical_economic_net: "100" },
+    { operation_id: "insurance-current", canonical_component_key: "current", canonical_economic_gross: "80", refund_applied: "0", canonical_economic_net: "80" },
+    { operation_id: "insurance-isolated", canonical_component_key: "isolated", canonical_economic_gross: "80", refund_applied: "80", canonical_economic_net: "0" },
+    { operation_id: "maintenance", canonical_component_key: "maintenance", canonical_economic_gross: "30", refund_applied: "0", canonical_economic_net: "30" },
+  ],
+  financial_source_person_links: [
+    { financial_source_person_link_id: "payer-old", operation_id: "insurance-old", person_id: "m", relation_type: "payer", validated_by: "USER_VALIDATED:P4.8-A1", validated_at: "2026-01-15" },
+    { financial_source_person_link_id: "payer-current", operation_id: "insurance-current", person_id: "m", relation_type: "payer", validated_by: "USER_VALIDATED:P4.8-A1", validated_at: "2026-01-15" },
+  ],
+  operation_place_canonical: [], life_event_financial_links: [], operation_allocations: [{ allocation_id: "va1", operation_id: "vape-parent", need_id: "vape", montant: "64.50" }],
   vehicles: [{ vehicle_id: "car", household_id: "h", owner_person_id: null, label: "Peugeot 207", status: "active" }],
 };
-const client = { from(table) { assert.ok(table in tables, `unexpected table ${table}`); return new Query(tables[table]); } };
+const clientFor = (data) => ({ from(table) { assert.ok(table in data, `unexpected table ${table}`); return new Query(data[table]); } });
 const { resolveGlobalPersonaEditorial } = require(path.resolve(root, "src/server/analytics/global-v2-persona-editorial.ts"));
-const model = await resolveGlobalPersonaEditorial({ client, householdId: "h", personIdsByName: { Adrien: "a", Manon: "m" }, firstDay: "2026-01-01", certifiedThrough: "2026-01-31", m1Series: [], m2NeedGroups: [{ dimension: { id: "vape" }, annualAmount: "88.30", historicalSeries: [{ month: "2026-01", amount: "88.30" }] }], mobilitySummaries: [] });
+const inputFor = (data) => ({ client: clientFor(data), householdId: "h", personIdsByName: { Adrien: "a", Manon: "m" }, firstDay: "2026-01-01", certifiedThrough: "2026-01-31", m1Series: [{ recurrenceId: "ins-old", typicalOccurrenceCost: { status: "KNOWN", value: "100.00" } }, { recurrenceId: "ins-current", typicalOccurrenceCost: { status: "KNOWN", value: "80.00" } }], m2NeedGroups: [{ dimension: { id: "vape" }, annualAmount: "88.30", historicalSeries: [{ month: "2026-01", amount: "88.30" }] }], mobilitySummaries: [] });
+const model = await resolveGlobalPersonaEditorial(inputFor(tables));
 assert.equal(model.schemaVersion, "persona-editorial@v1");
 assert.equal(model.persons[0].work.onsiteDays, 1);
 assert.equal(model.persons[0].socialLife.outingsWithoutPartnerParticipation.length, 1);
@@ -68,6 +95,26 @@ assert.equal(model.persons[1].socialLife.fatherHome[0].presenceDays, 1);
 assert.equal(model.persons[0].recurringHabits.hairdresser.personalAnnualCost, null);
 assert.equal(model.persons[1].work.commute.strictOwnerSummary, null);
 assert.equal(model.vehicleHouseholdCost.vehicle.label, "Peugeot 207");
+assert.equal(model.vehicle.insuranceSummary.currentProvider, "Pacifica");
+assert.equal(model.vehicle.insuranceSummary.currentMonthlyCost, "80.00");
+assert.equal(model.vehicle.insuranceSummary.periodCost, "180.00");
+assert.equal(model.vehicle.insuranceSummary.payerPersonId, "m");
+assert.equal(model.vehicle.insuranceSummary.payerAuthority, "USER_VALIDATED");
+assert.equal(model.vehicle.insuranceSummary.isolatedRefundResolved, true);
+assert.equal(model.vehicle.maintenanceSummary.totalIdentifiedCost, "30.00");
+assert.equal(model.vehicle.nonFuelCostTotal, "210.00");
+assert.equal(model.vehicle.nonFuelCostTotalReady, true);
+assert.equal(model.vehicle.householdVehicle.scope, "HOUSEHOLD");
+assert.equal(model.vehicle.workUsageSummary, null);
+assert.equal(Object.hasOwn(model.vehicle, "fuelPaidAmount"), false);
 assert.equal(model.persons[1].recurringHabits.vape.allocatedObservedCost, "64.50");
 assert.equal(model.persons[1].recurringHabits.vape.reconciledToM2, true);
+const payerUnknown = await resolveGlobalPersonaEditorial(inputFor({ ...tables, financial_source_person_links: [] }));
+assert.equal(payerUnknown.vehicle.insuranceSummary.payerAuthority, "UNKNOWN");
+assert.equal(payerUnknown.vehicle.insuranceSummary.payerPersonId, null);
+assert.equal(payerUnknown.vehicle.nonFuelCostTotal, "210.00");
+const refundUnresolved = await resolveGlobalPersonaEditorial(inputFor({ ...tables, financial_economic_cost_canonical: tables.financial_economic_cost_canonical.map((row) => row.operation_id === "insurance-isolated" ? { ...row, refund_applied: "0", canonical_economic_net: "80" } : row) }));
+assert.equal(refundUnresolved.vehicle.insuranceSummary.isolatedRefundResolved, false);
+assert.equal(refundUnresolved.vehicle.nonFuelCostTotalReady, false);
+assert.equal(refundUnresolved.vehicle.nonFuelCostTotal, null);
 console.log("PERSONA_EDITORIAL_FOUNDATION=PASS");
