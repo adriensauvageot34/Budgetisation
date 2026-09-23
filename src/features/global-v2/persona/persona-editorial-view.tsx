@@ -79,7 +79,7 @@ function AdrienPermit({ person }: { readonly person: PersonaEditorialModel["pers
       {months.length === 0 ? null : <div className={styles.permitBars} role="img" aria-label={`Dépenses du permis par mois : ${months.map(([key, cost]) => `${month(`${key}-01`)} ${amount(cost)}`).join(", ")}`}>
         {months.map(([key, cost], index) => <div key={key}><span className={styles.permitBarTrack}><i style={{ height: `${maximum === 0 ? 0 : Math.max(7, Number(cost) / maximum * 100)}%` }} /></span><strong>{index % 3 === 0 ? monthOnly.format(dateOf(`${key}-01`)).slice(0, 3) : ""}</strong></div>)}
       </div>}
-      {notableMonths.length === 0 ? null : <p className={styles.permitPeaks}>{notableMonths.map(([key, cost]) => `${monthOnly.format(dateOf(`${key}-01`)).slice(0, 3)} ${amount(cost, true)}`).join(" · ")}</p>}
+      {notableMonths.length === 0 ? null : <p className={styles.permitPeaks}>{notableMonths.map(([key, cost]) => `${monthOnly.format(dateOf(`${key}-01`)).slice(0, 4)} ${amount(cost, true)}`).join(" · ")}</p>}
     </article>;
 }
 function VehicleStory({ model, manonId }: { readonly model: PersonaEditorialModel; readonly manonId: string }) {
