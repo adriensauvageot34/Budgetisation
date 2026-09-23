@@ -45,17 +45,19 @@ const tables = {
   life_event_types: [{ life_event_type_id: "work", type_key: "travail_site" }, { life_event_type_id: "out", type_key: "sortie_soiree" }],
   life_events: [{ life_event_id: "w1", life_event_type_id: "work", start_date: "2026-01-02", validation_status: "Confirmé" }, { life_event_id: "o1", life_event_type_id: "out", title: "Bar à jeux", start_date: "2026-01-03", validation_status: "Confirmé" }],
   life_event_participations: [{ participation_id: "p1", life_event_id: "w1", person_id: "a", participation_status: "Confirmée" }, { participation_id: "p2", life_event_id: "o1", person_id: "a", participation_status: "Confirmée" }],
-  person_place_roles: [{ person_place_role_id: "r1", person_id: "m", place_id: "fontes", role: "FATHER_HOME" }],
-  referentiel_lieu: [{ place_id: "fontes", nom_canonique: "Fontès" }],
-  person_days: [{ person_day_id: "d1", person_id: "m", date: "2026-01-04" }],
-  location_occurrences: [{ localization_id: "l1", person_day_id: "d1", person_id: "m", place_id: "fontes" }, { localization_id: "l2", person_day_id: "d1", person_id: "m", place_id: "fontes" }],
-  needs: [{ need_id: "vape", need_key: "vape_manon", person_id: "m" }],
+  person_place_roles: [{ person_place_role_id: "r1", person_id: "m", place_id: "fontes", role: "FATHER_HOME" }, { person_place_role_id: "r2", person_id: "a", place_id: "ange", role: "WORK_MEAL_ANCHOR" }],
+  person_habit_assertions: [{ person_habit_assertion_id: "ha1", household_id: "h", person_id: "a", habit_key: "hairdresser", monthly_visit_estimate: "1.00", typical_visit_price: "20.00", price_basis: "INDICATIVE_PRICE_NOT_PAYMENT", authority: "USER_VALIDATED" }],
+  referentiel_lieu: [{ place_id: "fontes", nom_canonique: "Fontès" }, { place_id: "ange", nom_canonique: "Ange" }],
+  person_days: [{ person_day_id: "d1", person_id: "m", date: "2026-01-04" }, { person_day_id: "d2", person_id: "a", date: "2026-01-04" }],
+  location_occurrences: [{ localization_id: "l1", person_day_id: "d1", person_id: "m", place_id: "fontes" }, { localization_id: "l2", person_day_id: "d1", person_id: "m", place_id: "fontes" }, { localization_id: "l3", person_day_id: "d2", person_id: "a", place_id: "ange" }],
+  needs: [{ need_id: "vape", need_key: "vape_manon", person_id: "m" }, { need_id: "meal-a", need_key: "repas_travail_adrien", person_id: "a" }],
   tags: [{ tag_id: "photo", tag_key: "Contexte:projet_photo" }, { tag_id: "car", tag_key: "Contexte:voiture" }],
   operation_tags: [{ operation_tag_id: "t1", operation_id: "buy", tag_id: "photo" }, { operation_tag_id: "t2", operation_id: "refund", tag_id: "photo" }, { operation_tag_id: "t3", operation_id: "maintenance", tag_id: "car" }],
   operations: [
     { operation_id: "buy", montant: "-64.28", date_transaction_reelle: "2026-01-05" },
     { operation_id: "refund", montant: "27", date_transaction_reelle: "2026-01-06", rembourse_operation_id: "buy" },
     { operation_id: "vape-direct", need_id: "vape", montant: "-23.80", date_transaction_reelle: "2026-01-07" },
+    { operation_id: "meal-ange", need_id: "meal-a", marchand: "Boulangerie Ange", montant: "-5.90", date_transaction_reelle: "2026-01-05" },
     { operation_id: "vape-parent", montant: "-64.50", date_transaction_reelle: "2026-01-08" },
     { operation_id: "insurance-old", recurrence_series_id: "ins-old", montant: "-100", date_transaction_reelle: "2026-01-10" },
     { operation_id: "insurance-current", recurrence_series_id: "ins-current", montant: "-80", date_transaction_reelle: "2026-01-11" },
@@ -93,6 +95,13 @@ assert.equal(model.persons[0].personalUniverses.photo.grossCost, "64.28");
 assert.equal(model.persons[0].personalUniverses.photo.netCost, "37.28");
 assert.equal(model.persons[1].socialLife.fatherHome[0].presenceDays, 1);
 assert.equal(model.persons[0].recurringHabits.hairdresser.personalAnnualCost, null);
+assert.equal(model.persons[0].recurringHabits.hairdresser.illustrativeAnnualCost, "240.00");
+assert.equal(model.persons[0].recurringHabits.hairdresser.typicalVisitPrice, "20.00");
+assert.equal(model.persons[0].work.workMeals.merchantHabitSummary.purchaseCount, 1);
+assert.equal(model.persons[0].work.workMeals.merchantHabitSummary.annualObservedCost, null);
+assert.equal(model.persons[0].work.workMeals.anchorPresence.presenceDays, 1);
+assert.deepEqual(model.persons[1].socialLife.fatherHome[0].monthlyPresenceSegments["2026-01"], [true, false, false, false]);
+assert.equal(model.persons[1].work.workMeals.merchantHabitSummary.purchaseCount, 0);
 assert.equal(model.persons[1].work.commute.strictOwnerSummary, null);
 assert.equal(model.vehicleHouseholdCost.vehicle.label, "Peugeot 207");
 assert.equal(model.vehicle.insuranceSummary.currentProvider, "Pacifica");

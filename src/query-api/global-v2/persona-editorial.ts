@@ -26,12 +26,14 @@ export type EditorialMeal = {
   readonly anchorTypicalPurchase: string | null;
   readonly anchorPresence: { readonly label: string; readonly presenceDays: number; readonly period: EditorialPeriod } | null;
   readonly presenceIsNotPurchase: boolean;
+  readonly merchantHabitSummary?: { readonly merchant: string; readonly purchaseCount: number; readonly period: EditorialPeriod; readonly typicalPurchase: string | null; readonly observedCost: string; readonly monthlyObservedCost: string | null; readonly monthlyPurchaseRate: number | null; readonly annualObservedCost: string | null; readonly monetaryBasis: "DIRECT_OBSERVED_PURCHASES_NO_PAYER_INFERENCE" };
 };
 export type EditorialPlacePresence = {
   readonly placeRef: string;
   readonly label: string;
   readonly presenceDays: number;
   readonly monthlyPresenceDays: Readonly<Record<string, number>>;
+  readonly monthlyPresenceSegments?: Readonly<Record<string, readonly boolean[]>>;
   readonly period: EditorialPeriod;
   readonly evidence: "CANONICAL_LOCATION_PRESENCE";
 };
@@ -70,11 +72,11 @@ export type PersonaEditorialModel = {
     {
       readonly personId: string;
       readonly work: { readonly onsiteDays: number; readonly remoteDays: number; readonly commute: { readonly mode: "PUBLIC_TRANSIT"; readonly directCost: string; readonly authority: "USER_VALIDATED" }; readonly workMeals: EditorialMeal };
-      readonly personalUniverses: { readonly permit: { readonly scope: "PROJECT"; readonly period: EditorialPeriod; readonly cost: string; readonly lessonsByMonth: Readonly<Record<string, number>>; readonly codeDates: readonly string[] }; readonly photo: EditorialProject; readonly musicHeadphones: EditorialProject; readonly googleAiPro: EditorialSubscription };
+      readonly personalUniverses: { readonly permit: { readonly scope: "PROJECT"; readonly period: EditorialPeriod; readonly cost: string; readonly monthlyCost?: Readonly<Record<string, string>>; readonly lessonsByMonth: Readonly<Record<string, number>>; readonly codeDates: readonly string[] }; readonly photo: EditorialProject; readonly musicHeadphones: EditorialProject; readonly googleAiPro: EditorialSubscription };
       readonly recurringHabits: {
         readonly chatGptUsage: "USER_VALIDATED";
         readonly qobuz: EditorialSubscription;
-        readonly hairdresser: { readonly authority: "USER_VALIDATED_ROUTINE_WITH_OBSERVED_PLACE_PRESENCE"; readonly places: readonly EditorialPlacePresence[]; readonly observedPresenceDays: number; readonly personalAnnualCost: string | null; readonly typicalPersonalCost: string | null };
+        readonly hairdresser: { readonly authority: "USER_VALIDATED_ROUTINE_WITH_OBSERVED_PLACE_PRESENCE"; readonly places: readonly EditorialPlacePresence[]; readonly observedPresenceDays: number; readonly personalAnnualCost: string | null; readonly typicalPersonalCost: string | null; readonly monthlyVisitEstimate?: string | null; readonly typicalVisitPrice?: string | null; readonly illustrativeAnnualCost?: string | null; readonly priceBasis?: "INDICATIVE_PRICE_NOT_PAYMENT" | null };
         readonly stylingWax: { readonly label: string; readonly repurchase: "USER_VALIDATED"; readonly price: string | null; readonly observedCadenceDays: number | null };
       };
       readonly socialLife: { readonly outingsWithoutPartnerParticipation: readonly EditorialOuting[]; readonly wording: "DE_SON_COTE" };

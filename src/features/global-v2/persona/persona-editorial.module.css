@@ -399,3 +399,92 @@
   .presenceTrack > strong { font-size: 11px; }
   .presenceMonths > span { font-size: 9px; }
 }
+
+/* A stable visual grammar for personal stories, without separate long columns. */
+.root { --adrien-ink: #536f83; --adrien-line: #b5c9d5; --adrien-tint: #edf3f7; --manon-ink: #865667; --manon-line: #d7b9c4; --manon-tint: #f8eff1; }
+.root [data-person="adrien"] { --person-accent: var(--adrien-ink); --person-line: var(--adrien-line); --person-tint: var(--adrien-tint); }
+.root [data-person="manon"] { --person-accent: var(--manon-ink); --person-line: var(--manon-line); --person-tint: var(--manon-tint); }
+.root article[data-person], .root aside[data-person] { border-left: 3px solid var(--person-line); background: var(--person-tint); }
+.root article[data-person] .storyTop, .root aside[data-person] .storyTop { color: var(--person-accent); }
+.root article[data-person] .storyTop svg, .root aside[data-person] > svg, .root article[data-person] .objectIcon { color: var(--person-accent); }
+.root article[data-person] .bigFact strong { color: var(--ink); }
+.root .productsStory[data-person], .root .musicStory[data-person], .root .seriesStory[data-person] { border-radius: 0 18px 18px 0; background: linear-gradient(90deg, var(--person-tint), transparent 94%); }
+.root .outingsStory[data-person] { color: var(--ink); }
+.workEconomicNote { display: flex; align-items: baseline; gap: 10px; min-height: 62px; border-bottom: 1px solid var(--person-line); padding: 9px 10px 10px; background: linear-gradient(90deg, var(--person-tint), transparent 86%); }
+.workEconomicNote .storyTop { flex: none; color: var(--person-accent); }
+.workEconomicNote > span:not(.storyTop) { font-size: 14px; }
+.workEconomicNote strong { color: var(--person-accent); font-family: var(--font-serif, Georgia, serif); font-size: 25px; font-weight: 520; white-space: nowrap; }
+.workEconomicNote small { font-size: 12px; }
+.permitStory { display: flex; flex-direction: column; }
+.permitStory .storyLead { align-items: baseline; }
+.permitBars { display: flex; align-items: end; justify-content: space-around; gap: 14px; min-height: 128px; margin-top: auto; padding-top: 17px; }
+.permitBars > div { display: grid; justify-items: center; gap: 4px; min-width: 0; flex: 1; }
+.permitBarTrack { display: flex; align-items: end; justify-content: center; width: 100%; height: 80px; border-bottom: 1px solid var(--adrien-line); }
+.permitBarTrack i { display: block; width: min(100%, 44px); border-radius: 8px 8px 0 0; background: #9bb5c7; }
+.permitBars strong { color: var(--adrien-ink); font-size: 12px; font-weight: 760; text-transform: uppercase; }
+.permitBars small { font-size: 12px; }
+.vehicleBranches section[data-person="manon"] { border-top-color: var(--manon-line); border-radius: 10px; padding: 13px 10px 8px; background: var(--manon-tint); }
+.vehicleBranches section[data-person="manon"] .kicker { color: var(--manon-ink); }
+.vehicleBranches .insuranceRail { margin-top: 12px; }
+.vehicleStory footer { display: flex; align-items: baseline; justify-content: space-between; gap: 15px; border-top: 1px solid #cad9ca; margin-inline: 26px; padding-inline: 0; }
+.mealFacts { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 11px; margin-top: 15px; }
+.mealFacts .bigFact strong { font-size: clamp(20px, 1.8vw, 27px); }
+.mealFacts .bigFact span { max-width: 120px; font-size: 12px; }
+.habitStory > p { margin: 9px 0 0; font-size: 13px; }
+.interventions { flex-direction: row; align-items: center; gap: 15px; min-height: 72px; padding: 11px 20px; border-radius: 15px; }
+.interventions > div { display: grid; gap: 2px; }
+.interventions > div > strong { margin: 0; font-size: 14px; }
+.interventions ul { margin: 0 0 0 auto; }
+.interventions li { border-color: var(--manon-line); background: #fffafb; }
+.photoObjects { display: flex; flex-wrap: wrap; gap: 6px; max-width: 72%; margin: 13px 0 0; padding: 0; list-style: none; }
+.photoObjects li { border: 1px solid var(--adrien-line); border-radius: 999px; padding: 5px 9px; background: #f9fcfd; color: #5d7180; font-size: 12px; }
+.toolPills > span { border: 0; border-bottom: 1px solid var(--adrien-line); border-radius: 0; padding: 8px 0; background: transparent; }
+.hairRhythm { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 11px; margin-top: 20px; }
+.hairRhythm .bigFact strong { font-size: clamp(21px, 2vw, 28px); }
+.hairRhythm .bigFact span { font-size: 12px; }
+.hairPlaces { margin: 16px 0 0 !important; color: var(--adrien-ink) !important; font-size: 13px !important; font-weight: 690; }
+.waxStory { margin-top: 17px; border-color: var(--adrien-line); }
+.waxJar { border-color: #89a7bb; background: linear-gradient(#e5f0f6, #bbcfdb); }
+.waxJar::before { background: #748fa3; }
+.waxJar span { border-color: #7894a7; }
+.productShelf { border-color: var(--manon-line); }
+.productObject { position: relative; overflow: hidden; border: 1px solid var(--manon-line); background: #f1dfe5 !important; color: var(--manon-ink) !important; }
+.productObject i, .productObject::before, .productObject::after { content: ""; position: absolute; display: block; }
+.productObject[data-object="mascara"] i { width: 12px; height: 46px; border: 2px solid #8b5a6b; border-radius: 5px; background: linear-gradient(90deg, #b68495, #d1a5b1); transform: rotate(-15deg); }
+.productObject[data-object="mascara"]::before { z-index: 1; top: 14px; width: 13px; height: 3px; background: #734659; transform: rotate(-15deg); }
+.productObject[data-object="pencil"] i { width: 9px; height: 52px; border: 1px solid #815363; border-radius: 2px; background: #be8b9a; transform: rotate(34deg); }
+.productObject[data-object="pencil"]::after { top: 15px; left: 49px; width: 0; height: 0; border: 5px solid transparent; border-bottom: 10px solid #815363; transform: rotate(34deg); }
+.productObject[data-object="mask"] i { width: 46px; height: 39px; border: 2px solid #9b7380; border-radius: 48% 48% 40% 40%; background: #f8e9ed; transform: rotate(-8deg); }
+.productObject[data-object="mask"]::before { z-index: 1; left: 23px; top: 33px; width: 7px; height: 3px; border-radius: 50%; background: #a47d89; box-shadow: 17px 0 #a47d89; transform: rotate(-8deg); }
+.vapeStory { grid-template-columns: minmax(110px, 1fr) auto minmax(0, 2fr); min-height: 82px; gap: 20px; }
+.vapeStory > strong { color: var(--manon-ink); font-size: 16px; white-space: nowrap; }
+.vapeStory > p { margin: 0; max-width: 570px; font-size: 14px; }
+.presenceCells { display: flex !important; flex-direction: row; align-items: center; justify-content: center; gap: 2px; }
+.presenceCells i { flex: none; width: 6px; height: 6px; border-color: var(--manon-line); }
+.presenceCells i[data-present="true"] { width: 8px; height: 8px; border-color: var(--manon-ink); background: var(--manon-ink); }
+.presenceTrack + .presenceTrack .presenceCells i[data-present="true"] { border-color: #b28a9a; background: #b28a9a; }
+.familyStory .presenceRail, .friendsStory .presenceRail { border-color: var(--manon-line); }
+.familyStory .presenceTrack > strong, .friendsStory .presenceTrack > strong { color: var(--manon-ink); }
+.friendsStory { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 3px 22px; align-items: center; }
+.friendsStory .storyTop, .friendsStory h5, .friendsStory > p, .friendsStory .presenceRail { grid-column: 1; }
+.friendsStory > p { margin: 4px 0; }
+.friendsStory .presenceRail { margin-top: 3px; }
+.friendsStory .mobilityAside { grid-column: 2; grid-row: 1 / span 4; min-width: 280px; margin: 0; border: 0; border-left: 1px solid var(--manon-line); padding: 0 0 0 20px; }
+.friendsStory .mobilityFigures { margin-top: 8px; }
+.outingsStory li { border-color: var(--person-line); background: #fffdfd; }
+@media (max-width: 1100px) {
+  .mealFacts { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .interventions { flex-wrap: wrap; }
+  .interventions ul { margin-left: 40px; }
+}
+@media (max-width: 740px) {
+  .workEconomicNote { flex-wrap: wrap; min-height: 0; }
+  .permitBars { margin-top: 8px; }
+  .vehicleStory footer { margin-inline: 20px; }
+  .interventions ul { margin-left: 0; }
+  .mealFacts { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .hairRhythm { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .vapeStory { grid-template-columns: 1fr; gap: 7px; }
+  .friendsStory { display: block; }
+  .friendsStory .mobilityAside { min-width: 0; margin-top: 12px; border-top: 1px solid var(--manon-line); border-left: 0; padding: 12px 0 0; }
+}

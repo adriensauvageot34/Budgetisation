@@ -27,6 +27,17 @@ const sortedDates = (values: readonly string[]): readonly string[] => [...values
 const period = (values: readonly string[]) => { const dates = sortedDates(values); return dates.length ? { first: dates[0]!, last: dates.at(-1)! } : null; };
 const countDays = (values: readonly string[]): number => new Set(values.filter(Boolean)).size;
 const monthCounts = (values: readonly string[]) => Object.fromEntries([...new Set(values.map((value) => value.slice(0, 7)))].sort().map((month) => [month, values.filter((value) => value.startsWith(month)).length]));
+const monthCosts = (rows: readonly Row[]) => Object.fromEntries([...new Set(rows.map((row) => date(row).slice(0, 7)))].sort().map((key) => [key, money(spent(rows.filter((row) => date(row).startsWith(key))))]));
+const monthSpan = (first: string, last: string): number => {
+  const start = new Date(`${first.slice(0, 7)}-01T00:00:00Z`);
+  const end = new Date(`${last.slice(0, 7)}-01T00:00:00Z`);
+  return (end.getUTCFullYear() - start.getUTCFullYear()) * 12 + end.getUTCMonth() - start.getUTCMonth() + 1;
+};
+const monthSegments = (values: readonly string[]) => {
+  const unique = [...new Set(values.filter(Boolean))];
+  const keys = [...new Set(unique.map((value) => value.slice(0, 7)))].sort();
+  return Object.fromEntries(keys.map((key) => [key, [0, 1, 2, 3].map((index) => unique.some((value) => value.startsWith(key) && Math.min(3, Math.floor((Number(value.slice(8, 10)) - 1) / 7)) === index))]));
+};
 const median = (values: readonly Big[]): string | null => {
   const sorted = [...values].sort((a, b) => a.cmp(b));
   if (!sorted.length) return null;
@@ -91,7 +102,7 @@ export async function resolveGlobalPersonaEditorial(input: {
   const adrien = input.personIdsByName.Adrien;
   const manon = input.personIdsByName.Manon;
   if (!adrien || !manon) throw new TypeError("PERSONA_EDITORIAL_PERSONS_MISSING");
-  const [eventTypes, events, participations, roles, places, personDays, needs, tags, products, recurrences, vehicles, insuranceSeries] = await Promise.all([
+  const [eventTypes, events, participations, roles, places, personDays, needs, tags, products, recurrences, vehicles, insuranceSeries, habitAssertions] = await Promise.all([
     pages((from, to) => input.client.from("life_event_types").select("life_event_type_id,type_key").order("life_event_type_id").range(from, to)),
     pages((from, to) => input.client.from("life_events").select("life_event_id,life_event_type_id,title,start_date,end_date,primary_place_id,validation_status").gte("start_date", input.firstDay).lte("start_date", input.certifiedThrough).order("life_event_id").range(from, to)),
     pages((from, to) => input.client.from("life_event_participations").select("life_event_id,person_id,participation_status").in("person_id", [adrien, manon]).order("participation_id").range(from, to)),
@@ -104,6 +115,7 @@ export async function resolveGlobalPersonaEditorial(input: {
     pages((from, to) => input.client.from("recurrence_series").select("recurrence_series_id,cadence_estimee,statut_serie").in("recurrence_series_id", ["67657950-b736-5f73-89bc-456d207b965c", "b2abae46-3378-5f09-897c-7c44eed28073", "6ceae158-ebba-5208-9d41-85eac3bd4dde", "24c0cb89-34bf-5e2a-881d-4d4f9f7b694a", "24cefd44-463b-59fa-b232-376b5404461c"]).order("recurrence_series_id").range(from, to)),
     pages((from, to) => input.client.from("vehicles").select("vehicle_id,owner_person_id,label,status,valid_from,valid_to").eq("household_id", input.householdId).order("vehicle_id").range(from, to)),
     pages((from, to) => input.client.from("recurrence_series").select("recurrence_series_id,series_key,name,marchand_normalise,statut_serie").in("series_key", Object.values(carInsuranceSeriesKeys)).order("recurrence_series_id").range(from, to)),
+    pages((from, to) => input.client.from("person_habit_assertions").select("person_habit_assertion_id,person_id,habit_key,monthly_visit_estimate,typical_visit_price,price_basis,authority").eq("household_id", input.householdId).order("person_habit_assertion_id").range(from, to)),
   ]);
   const eventTypeById = new Map(eventTypes.map((row) => [str(row, "life_event_type_id"), str(row, "type_key")]));
   const placeById = new Map(places.map((row) => [str(row, "place_id"), row]));
@@ -125,7 +137,7 @@ export async function resolveGlobalPersonaEditorial(input: {
     const dates = locations.filter((item) => str(item, "person_id") === personId && str(item, "place_id") === placeId)
       .map((item) => dayById.get(str(item, "person_day_id")) ?? "")
       .filter((day) => day >= input.firstDay && day <= input.certifiedThrough && (!row.valid_from || day >= str(row, "valid_from")) && (!row.valid_to || day <= str(row, "valid_to")));
-    return { placeRef: `place:${placeId}`, label: str(placeById.get(placeId)!, "nom_canonique"), presenceDays: countDays(dates), monthlyPresenceDays: Object.fromEntries(Object.entries(monthCounts([...new Set(dates)])).sort()), period: period(dates), evidence: "CANONICAL_LOCATION_PRESENCE" as const };
+    return { placeRef: `place:${placeId}`, label: str(placeById.get(placeId)!, "nom_canonique"), presenceDays: countDays(dates), monthlyPresenceDays: Object.fromEntries(Object.entries(monthCounts([...new Set(dates)])).sort()), monthlyPresenceSegments: monthSegments(dates), period: period(dates), evidence: "CANONICAL_LOCATION_PRESENCE" as const };
   });
   const needId = (key: string): string => str(needs.find((row) => str(row, "need_key") === key) ?? {}, "need_id");
   const tagIds = tags.map((row) => str(row, "tag_id"));
@@ -148,12 +160,16 @@ export async function resolveGlobalPersonaEditorial(input: {
   const opPlaceRows = await byIds(input.client, "operation_place_canonical", "operation_id", needOps.map((row) => str(row, "operation_id")));
   const placeByOperation = new Map(opPlaceRows.filter((row) => str(row, "resolution_state") === "known").map((row) => [str(row, "operation_id"), str(row, "place_id")]));
   const needSummary = (key: string) => input.m2NeedGroups.find((row) => str(row.dimension as Row ?? {}, "id") === needId(key));
-  const meal = (personId: string, key: string) => {
+  const meal = (personId: string, key: string, merchant: string) => {
     const ops = needOps.filter((row) => str(row, "need_id") === needId(key) && date(row) >= input.firstDay && date(row) <= input.certifiedThrough && num(row, "montant").lt(0));
     const anchor = placeRoles.find((row) => str(row, "person_id") === personId && str(row, "role") === "WORK_MEAL_ANCHOR");
     const anchorOps = ops.filter((row) => placeByOperation.get(str(row, "operation_id")) === str(anchor ?? {}, "place_id"));
+    const merchantOps = ops.filter((row) => str(row, "marchand").normalize("NFKC").toLocaleLowerCase("fr-FR") === merchant.toLocaleLowerCase("fr-FR"));
+    const merchantCost = spent(merchantOps);
+    const months = monthSpan(input.firstDay, input.certifiedThrough);
     const owner = needSummary(key);
-    return { needRef: `need:${needId(key)}`, directPurchaseCount: ops.length, directPurchaseDays: countDays(ops.map(date)), directObservedCost: money(spent(ops)), m2AnnualCost: owner ? str(owner, "annualAmount") || null : null, anchorPurchaseCount: anchorOps.length, anchorTypicalPurchase: median(anchorOps.map((row) => num(row, "montant").abs())), anchorPresence: visits(personId, "WORK_MEAL_ANCHOR")[0] ?? null, presenceIsNotPurchase: true };
+    return { needRef: `need:${needId(key)}`, directPurchaseCount: ops.length, directPurchaseDays: countDays(ops.map(date)), directObservedCost: money(spent(ops)), m2AnnualCost: owner ? str(owner, "annualAmount") || null : null, anchorPurchaseCount: anchorOps.length, anchorTypicalPurchase: median(anchorOps.map((row) => num(row, "montant").abs())), anchorPresence: visits(personId, "WORK_MEAL_ANCHOR")[0] ?? null, presenceIsNotPurchase: true,
+      merchantHabitSummary: { merchant, purchaseCount: merchantOps.length, period: period(merchantOps.map(date)), typicalPurchase: median(merchantOps.map((row) => num(row, "montant").abs())), observedCost: money(merchantCost), monthlyObservedCost: months > 0 ? money(merchantCost.div(months)) : null, monthlyPurchaseRate: months > 0 ? Number(new Big(merchantOps.length).div(months).round(1).toString()) : null, annualObservedCost: months === 12 ? money(merchantCost) : null, monetaryBasis: "DIRECT_OBSERVED_PURCHASES_NO_PAYER_INFERENCE" as const } };
   };
   const project = (tagKeys: readonly string[]) => {
     const ops = tagged(tagKeys);
@@ -261,6 +277,11 @@ export async function resolveGlobalPersonaEditorial(input: {
   const workEvent = (personId: string, type: string) => countDays(personEvents(personId, type).map((row) => str(row, "start_date")));
   const pro = personEvents(manon, "deplacement_pro");
   const hairPlaces = visits(adrien, "PERSONAL_CARE_ANCHOR");
+  const hairAssertions = habitAssertions.filter((row) => str(row, "person_id") === adrien && str(row, "habit_key") === "hairdresser" && str(row, "authority") === "USER_VALIDATED" && str(row, "price_basis") === "INDICATIVE_PRICE_NOT_PAYMENT");
+  if (hairAssertions.length > 1) throw new TypeError("PERSONA_HAIRDRESSER_ASSERTION_AMBIGUOUS");
+  const hairAssertion = hairAssertions[0];
+  const hairMonthlyFrequency = hairAssertion ? num(hairAssertion, "monthly_visit_estimate") : null;
+  const hairTypicalPrice = hairAssertion ? num(hairAssertion, "typical_visit_price") : null;
   const householdVehicle = vehicles.find((row) => str(row, "status") === "active" && !row.owner_person_id && (!row.valid_from || str(row, "valid_from") <= input.certifiedThrough) && (!row.valid_to || str(row, "valid_to") >= input.firstDay));
   const vehicle = householdVehicle ? { vehicleRef: `vehicle:${str(householdVehicle, "vehicle_id")}`, label: str(householdVehicle, "label"), scope: "HOUSEHOLD" as const } : null;
   const maintenance = { scope: "HOUSEHOLD" as const, vehicle, period: period(vehicleOps.map(date)), operationCount: vehicleOps.length, totalIdentifiedCost: money(spent(vehicleOps)), fuelUsageExcluded: true };
@@ -287,13 +308,13 @@ export async function resolveGlobalPersonaEditorial(input: {
     vehicleHouseholdCost: maintenance,
     vehicle: { householdVehicle: vehicle, workUsageSummary, insuranceSummary, maintenanceSummary: maintenance, nonFuelCostTotal: nonFuelTotalReady ? money(insuranceCost!.plus(spent(vehicleOps))) : null, nonFuelCostTotalReady: nonFuelTotalReady, fuelUsageSeparate: true },
     persons: [
-      { personId: adrien, work: { onsiteDays: workEvent(adrien, "travail_site"), remoteDays: workEvent(adrien, "teletravail"), commute: { mode: "PUBLIC_TRANSIT", directCost: "0.00", authority: "USER_VALIDATED" }, workMeals: meal(adrien, "repas_travail_adrien") }, personalUniverses: { permit: { scope: "PROJECT", status: "IN_PROGRESS", period: period([...permitOps.map(date), ...lessons.map((row) => str(row, "start_date"))]), cost: money(spent(permitOps)), lessonsByMonth: monthCounts(lessons.map((row) => str(row, "start_date"))), codeDates: codeEvents.map((row) => str(row, "start_date")) }, photo: project(["Contexte:projet_photo", "Contexte:projet_seance_photo"]), musicHeadphones: project(["Contexte:univers_musique_adrien"]), googleAiPro: subscription("67657950-b736-5f73-89bc-456d207b965c") }, recurringHabits: { chatGptUsage: "USER_VALIDATED", qobuz: subscription("b2abae46-3378-5f09-897c-7c44eed28073"), hairdresser: { authority: "USER_VALIDATED_ROUTINE_WITH_OBSERVED_PLACE_PRESENCE", places: hairPlaces, observedPresenceDays: hairPlaces.reduce((total, place) => total + place.presenceDays, 0), personalAnnualCost: null, typicalPersonalCost: null }, stylingWax: { label: "Cire coiffante", repurchase: "USER_VALIDATED", price: null, observedCadenceDays: null } }, socialLife: { outingsWithoutPartnerParticipation: adrienOutings, wording: "DE_SON_COTE" } },
+{ personId: adrien, work: { onsiteDays: workEvent(adrien, "travail_site"), remoteDays: workEvent(adrien, "teletravail"), commute: { mode: "PUBLIC_TRANSIT", directCost: "0.00", authority: "USER_VALIDATED" }, workMeals: meal(adrien, "repas_travail_adrien", "Boulangerie Ange") }, personalUniverses: { permit: { scope: "PROJECT", status: "IN_PROGRESS", period: period([...permitOps.map(date), ...lessons.map((row) => str(row, "start_date"))]), cost: money(spent(permitOps)), monthlyCost: monthCosts(permitOps), lessonsByMonth: monthCounts(lessons.map((row) => str(row, "start_date"))), codeDates: codeEvents.map((row) => str(row, "start_date")) }, photo: project(["Contexte:projet_photo", "Contexte:projet_seance_photo"]), musicHeadphones: project(["Contexte:univers_musique_adrien"]), googleAiPro: subscription("67657950-b736-5f73-89bc-456d207b965c") }, recurringHabits: { chatGptUsage: "USER_VALIDATED", qobuz: subscription("b2abae46-3378-5f09-897c-7c44eed28073"), hairdresser: { authority: "USER_VALIDATED_ROUTINE_WITH_OBSERVED_PLACE_PRESENCE", places: hairPlaces, observedPresenceDays: hairPlaces.reduce((total, place) => total + place.presenceDays, 0), personalAnnualCost: null, typicalPersonalCost: null, monthlyVisitEstimate: hairMonthlyFrequency?.toString() ?? null, typicalVisitPrice: hairTypicalPrice === null ? null : money(hairTypicalPrice), illustrativeAnnualCost: hairMonthlyFrequency === null || hairTypicalPrice === null ? null : money(hairMonthlyFrequency.times(12).times(hairTypicalPrice)), priceBasis: hairAssertion ? "INDICATIVE_PRICE_NOT_PAYMENT" as const : null }, stylingWax: { label: "Cire coiffante", repurchase: "USER_VALIDATED", price: null, observedCadenceDays: null } }, socialLife: { outingsWithoutPartnerParticipation: adrienOutings, wording: "DE_SON_COTE" } },
       {
         personId: manon,
         work: {
           onsiteDays: workEvent(manon, "travail_site"),
           primaryWorkPlaces: visits(manon, "PRIMARY_WORK"),
-          workMeals: meal(manon, "repas_travail_manon"),
+          workMeals: meal(manon, "repas_travail_manon", "Marie Blachère"),
           professionalInterventions: {
             eventCount: pro.length,
             byMonth: monthCounts(pro.map((row) => str(row, "start_date"))),
