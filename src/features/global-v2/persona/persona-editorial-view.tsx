@@ -60,7 +60,7 @@ function MealStory({ name, meal, adrien }: { readonly name: string; readonly mea
   return <article className={styles.habitStory} data-story="work-meal" data-person={adrien ? "adrien" : "manon"}><div className={styles.storyTop}><UtensilsCrossed aria-hidden="true" size={22} strokeWidth={1.5} /><span>{adrien ? "Adrien" : "Manon"}</span></div>
     <h5>{name}</h5>
     {habit === undefined || habit.purchaseCount === 0 ? <p>Ses achats à cette adresse ne sont pas encore détaillés.</p> : <><p>Son repère autour du travail · {integer.format(habit.purchaseCount)} achats identifiés sur la période</p><div className={styles.mealFacts}>
-      {habit.monthlyPurchaseRate === null ? null : <BigFact value={`≈ ${new Intl.NumberFormat("fr-FR", { maximumFractionDigits: 1 }).format(habit.monthlyPurchaseRate)}×/mois`} caption="rythme moyen des achats identifiés" />}
+      {habit.monthlyPurchaseRate === null ? null : <BigFact value={`≈ ${new Intl.NumberFormat("fr-FR", { maximumFractionDigits: 1 }).format(habit.monthlyPurchaseRate)}/mois`} caption="achats en moyenne" />}
       {habit.typicalPurchase === null ? null : <BigFact value={amount(habit.typicalPurchase, true)} caption="par achat" />}
       {habit.monthlyObservedCost === null ? null : <BigFact value={amount(habit.monthlyObservedCost, true)} caption="d’achats par mois en moyenne" />}
       {habit.annualObservedCost === null ? null : <BigFact value={amount(habit.annualObservedCost, true)} caption="d’achats identifiés sur 12 mois" />}
@@ -74,10 +74,12 @@ function AdrienPermit({ person }: { readonly person: PersonaEditorialModel["pers
   const permit = person.personalUniverses.permit;
   const months = Object.entries(permit.monthlyCost ?? {}).sort(([a], [b]) => a.localeCompare(b));
   const maximum = Math.max(0, ...months.map(([, cost]) => Number(cost)));
+  const notableMonths = [...months].sort(([, a], [, b]) => Number(b) - Number(a)).slice(0, 3).sort(([a], [b]) => a.localeCompare(b));
   return <article className={styles.permitStory} data-story="permit" data-person="adrien"><div className={styles.storyTop}><CarFront aria-hidden="true" size={22} strokeWidth={1.5} /><span>Adrien</span></div><h5>Le permis, un projet qui avance</h5><div className={styles.storyLead}><BigFact value={amount(permit.cost, true)} caption="investis autour du projet" />{permit.period === null ? null : <span>{periodLabel(permit.period)}</span>}</div>
       {months.length === 0 ? null : <div className={styles.permitBars} role="img" aria-label={`Dépenses du permis par mois : ${months.map(([key, cost]) => `${month(`${key}-01`)} ${amount(cost)}`).join(", ")}`}>
-        {months.map(([key, cost]) => <div key={key}><span className={styles.permitBarTrack}><i style={{ height: `${maximum === 0 ? 0 : Math.max(7, Number(cost) / maximum * 100)}%` }} /></span><strong>{monthOnly.format(dateOf(`${key}-01`))}</strong><small>{amount(cost, true)}</small></div>)}
+        {months.map(([key, cost], index) => <div key={key}><span className={styles.permitBarTrack}><i style={{ height: `${maximum === 0 ? 0 : Math.max(7, Number(cost) / maximum * 100)}%` }} /></span><strong>{index % 3 === 0 ? monthOnly.format(dateOf(`${key}-01`)).slice(0, 3) : ""}</strong></div>)}
       </div>}
+      {notableMonths.length === 0 ? null : <p className={styles.permitPeaks}>{notableMonths.map(([key, cost]) => `${monthOnly.format(dateOf(`${key}-01`)).slice(0, 3)} ${amount(cost, true)}`).join(" · ")}</p>}
     </article>;
 }
 function VehicleStory({ model, manonId }: { readonly model: PersonaEditorialModel; readonly manonId: string }) {
@@ -156,7 +158,7 @@ function AdrienHabits({ person }: { readonly person: PersonaEditorialModel["pers
   const { hairdresser, stylingWax } = person.recurringHabits;
   return <article className={styles.hairdresserStory} data-person="adrien"><Scissors className={styles.objectIcon} aria-hidden="true" size={70} strokeWidth={1.1} /><div className={styles.storyTop}>Adrien</div><h5>Barbe & cheveux</h5>
     {hairdresser.priceBasis === "INDICATIVE_PRICE_NOT_PAYMENT" && hairdresser.monthlyVisitEstimate !== null && hairdresser.monthlyVisitEstimate !== undefined ? <div className={styles.hairRhythm}>
-      <BigFact value={`≈ ${integer.format(Number(hairdresser.monthlyVisitEstimate))} fois/mois`} caption="son rythme habituel" />
+      <BigFact value={`≈ ${integer.format(Number(hairdresser.monthlyVisitEstimate))}`} caption="fois par mois, habituellement" />
       {hairdresser.typicalVisitPrice === null || hairdresser.typicalVisitPrice === undefined ? null : <BigFact value={amount(hairdresser.typicalVisitPrice, true)} caption="prix indicatif par passage" />}
       {hairdresser.illustrativeAnnualCost === null || hairdresser.illustrativeAnnualCost === undefined ? null : <BigFact value={amount(hairdresser.illustrativeAnnualCost, true)} caption="sur un an à ce rythme" />}
     </div> : null}

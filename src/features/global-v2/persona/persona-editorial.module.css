@@ -417,12 +417,13 @@
 .workEconomicNote small { font-size: 12px; }
 .permitStory { display: flex; flex-direction: column; }
 .permitStory .storyLead { align-items: baseline; }
-.permitBars { display: flex; align-items: end; justify-content: space-around; gap: 14px; min-height: 128px; margin-top: auto; padding-top: 17px; }
+.permitBars { display: flex; align-items: end; justify-content: space-around; gap: 4px; min-height: 111px; margin-top: auto; padding-top: 14px; }
 .permitBars > div { display: grid; justify-items: center; gap: 4px; min-width: 0; flex: 1; }
 .permitBarTrack { display: flex; align-items: end; justify-content: center; width: 100%; height: 80px; border-bottom: 1px solid var(--adrien-line); }
 .permitBarTrack i { display: block; width: min(100%, 44px); border-radius: 8px 8px 0 0; background: #9bb5c7; }
-.permitBars strong { color: var(--adrien-ink); font-size: 12px; font-weight: 760; text-transform: uppercase; }
+.permitBars strong { min-height: 15px; color: var(--adrien-ink); font-size: 9px; font-weight: 760; text-transform: uppercase; }
 .permitBars small { font-size: 12px; }
+.permitPeaks { margin: 8px 0 0 !important; color: var(--adrien-ink); font-size: 12px !important; font-weight: 680; text-align: center; }
 .vehicleBranches section[data-person="manon"] { border-top-color: var(--manon-line); border-radius: 10px; padding: 13px 10px 8px; background: var(--manon-tint); }
 .vehicleBranches section[data-person="manon"] .kicker { color: var(--manon-ink); }
 .vehicleBranches .insuranceRail { margin-top: 12px; }
@@ -430,6 +431,7 @@
 .mealFacts { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 11px; margin-top: 15px; }
 .mealFacts .bigFact strong { font-size: clamp(20px, 1.8vw, 27px); }
 .mealFacts .bigFact span { max-width: 120px; font-size: 12px; }
+.mealFacts .bigFact, .hairRhythm .bigFact { min-width: 0; }
 .habitStory > p { margin: 9px 0 0; font-size: 13px; }
 .interventions { flex-direction: row; align-items: center; gap: 15px; min-height: 72px; padding: 11px 20px; border-radius: 15px; }
 .interventions > div { display: grid; gap: 2px; }
@@ -442,6 +444,8 @@
 .hairRhythm { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 11px; margin-top: 20px; }
 .hairRhythm .bigFact strong { font-size: clamp(21px, 2vw, 28px); }
 .hairRhythm .bigFact span { font-size: 12px; }
+.seriesTrack { grid-template-columns: 80px minmax(0, 1fr) 72px; }
+.seriesMonths { margin-right: 80px; }
 .hairPlaces { margin: 16px 0 0 !important; color: var(--adrien-ink) !important; font-size: 13px !important; font-weight: 690; }
 .waxStory { margin-top: 17px; border-color: var(--adrien-line); }
 .waxJar { border-color: #89a7bb; background: linear-gradient(#e5f0f6, #bbcfdb); }
