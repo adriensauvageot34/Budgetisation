@@ -118,5 +118,78 @@
 .sunoWave i:nth-child(2n) { height: 24px; }
 .sunoFacts { display: flex; flex-wrap: wrap; gap: 7px 15px; align-items: baseline; margin: 19px 0; font-size: 13px; }
 .sunoStory .projectCost { border-top: 1px solid #e8d9c9; padding-top: 18px; }
+.hairdresserStory, .productsStory, .vapeStory, .familyStory, .friendsStory, .outingsStory { min-width: 0; border-radius: 22px; padding: clamp(22px, 2.5vw, 34px); }
+.hairdresserStory { background: #e9eee8; }
+.hairdresserStory > p, .productsStory > p, .familyStory > p, .friendsStory > p, .vapeStory > p { margin: 10px 0 20px; color: var(--muted); font-size: 13px; }
+.hairPresence { display: flex; flex-wrap: wrap; gap: 14px 28px; margin: 25px 0 24px; }
+.hairPresence .bigFact strong { font-size: 31px; }
+.presenceRail { --rail-label-width: 126px; overflow: hidden; border-top: 1px solid #c9d8cb; border-bottom: 1px solid #c9d8cb; padding: 16px 0 17px; }
+.presenceMonths, .presenceTrack { display: grid; align-items: center; }
+.presenceMonths { margin-bottom: 11px; }
+.presenceMonths > span { color: #607466; font-size: 8px; font-weight: 720; text-align: center; text-transform: uppercase; }
+.presenceTrack { min-height: 29px; }
+.presenceTrack > strong { overflow: hidden; color: #3c5847; font-size: 10px; font-weight: 720; text-overflow: ellipsis; white-space: nowrap; }
+.presenceTrack > span { display: grid; height: 22px; place-items: center; }
+.presenceTrack i { display: block; width: 5px; height: 5px; border: 1px solid #afc2b0; border-radius: 50%; background: transparent; }
+.presenceTrack i[data-present="true"] { width: 11px; height: 11px; border-color: #789a7e; background: #789a7e; }
+.presenceTrack + .presenceTrack i[data-present="true"] { border-color: #b69c75; background: #b69c75; }
+.placeNotes { display: flex; flex-wrap: wrap; gap: 10px 24px; margin: 15px 0 0; padding: 0; list-style: none; }
+.placeNotes li { display: grid; gap: 3px; font-size: 11px; font-weight: 720; }
+.placeNotes small { font-size: 10px; font-weight: 500; }
+.waxStory { display: grid; grid-template-columns: 78px minmax(0, 1fr); gap: 22px; align-items: center; padding: 18px 4px; }
+.waxStory h5 { font-size: 25px; }
+.waxStory p { margin: 8px 0; color: var(--muted); font-size: 12px; }
+.waxStory small { display: block; margin-top: 6px; }
+.waxJar { position: relative; width: 65px; height: 60px; margin: 8px; border: 1px solid #8ba38d; border-radius: 10px 10px 17px 17px; background: linear-gradient(#e3e9df, #b8cbb8); }
+.waxJar::before { content: ""; position: absolute; left: -5px; right: -5px; top: -10px; height: 12px; border-radius: 7px; background: #61836b; }
+.waxJar span { position: absolute; inset: 20px 10px 15px; border: 1px solid #709478; border-radius: 50%; }
+.productsStory { background: #f4eee5; }
+.productShelf { display: grid; gap: 0; margin-top: 23px; }
+.product { display: grid; grid-template-columns: 56px minmax(0, 1fr); gap: 17px; border-top: 1px solid #e5dccc; padding: 19px 0; }
+.productObject { display: grid; width: 53px; height: 62px; place-items: center; border-radius: 17px 17px 12px 12px; background: #e8ddca; color: #6d775d; }
+.product:nth-child(2) .productObject { background: #e3e8dc; color: #597760; }
+.product:nth-child(3) .productObject { background: #e7e2d7; color: #8a7661; }
+.product > div { display: grid; align-content: center; gap: 4px; }
+.product > div > small { color: #718171; font-size: 10px; letter-spacing: .1em; text-transform: uppercase; }
+.product > div > strong { font-size: 15px; line-height: 1.35; }
+.product > div > span { color: #566959; font-size: 11px; }
+.vapeStory { background: #edf0e9; }
+.vapeStory .dateThread { margin-top: 17px; }
+.vapeTotal { display: flex; gap: 12px; align-items: baseline; margin: 10px 0 23px; border-top: 1px solid #d1ddcf; padding-top: 16px; }
+.vapeTotal strong { font-family: var(--font-serif, Georgia, serif); font-size: 28px; font-weight: 520; white-space: nowrap; }
+.vapeTotal span { color: var(--muted); font-size: 11px; }
+.vapeKinds { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; border-top: 1px solid #d1ddcf; padding-top: 19px; }
+.vapeKinds > div { display: grid; align-content: start; gap: 5px; }
+.vapeKinds svg { color: #6b9272; }
+.vapeKinds strong { font-size: 13px; }
+.vapeKinds small, .vapeNote { font-size: 10px; }
+.vapeNote { display: block; margin-top: 17px; }
+.familyStory { background: #ecf0e8; }
+.familyStory .presenceRail { margin: 22px 0 20px; }
+.familyPeople { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+.familyPeople > div { display: grid; align-content: start; gap: 7px; padding: 15px 0; }
+.familyPeople > div svg { color: #739379; }
+.familyPeople > div + div svg { color: #b49a76; }
+.familyPeople > div > span { font-size: 11px; font-weight: 750; }
+.familyPeople .bigFact strong { font-size: 31px; }
+.mobilityAside { margin-top: 12px; border-top: 1px solid #cbd8c9; padding-top: 21px; }
+.mobilityAside > strong { display: block; max-width: 300px; font-family: var(--font-serif, Georgia, serif); font-size: 20px; font-weight: 520; line-height: 1.25; }
+.mobilityFigures { display: flex; flex-wrap: wrap; gap: 14px 22px; margin: 20px 0 13px; }
+.mobilityFigures .bigFact strong { font-size: 25px; }
+.mobilityFigures .bigFact span { max-width: 115px; }
+.mobilityAside > small { font-size: 10px; }
+.friendsStory { background: #f4f0e8; }
+.friendsStory > p { margin-top: 17px; }
+.friendsStory > p strong { color: var(--ink); }
+.friendsStory .mobilityAside { border-color: #e2d9c9; }
+.outingsStory { background: #2c473b; color: #fbfaf6; }
+.outingsStory .storyTop, .outingsStory .storyTop svg { color: #c4d5bf; }
+.outingsStory h5, .outingsStory .bigFact strong { color: #fbfaf6; }
+.outingsStory .bigFact { margin: 20px 0 21px; }
+.outingsStory .bigFact span { color: #c7d7c9; }
+.outingsStory ul { display: grid; gap: 0; margin: 0; padding: 0; list-style: none; }
+.outingsStory li { display: flex; justify-content: space-between; gap: 12px; border-top: 1px solid rgb(242 244 236 / .18); padding: 11px 0; font-size: 12px; }
+.outingsStory li > span { display: grid; gap: 2px; }
+.outingsStory li small, .outingsStory time { color: #c5d1c5; font-size: 10px; }
 @media (max-width: 980px) { .columns { gap: 26px; } .route { gap: 7px; } .routeLine { font-size: 10px; } .vehicleBranches { padding-inline: 21px; } .vehicleStory > header { padding-inline: 21px; } }
-@media (max-width: 740px) { .hero { padding: 28px 20px; } .heroTabs { margin-top: 24px; } .heroTabs > * { min-width: 0; padding-inline: 15px; } .mobileSwitch { display: flex; gap: 5px; margin: 0 20px 18px; border: 1px solid var(--line); border-radius: 999px; padding: 4px; } .mobileSwitch button { flex: 1; border: 0; border-radius: 999px; padding: 10px; background: transparent; color: var(--muted); font-size: 12px; font-weight: 700; } .mobileSwitch button[aria-pressed="true"] { background: var(--ink); color: white; } .majorSection { padding: 28px 20px 45px; } .sectionHeading { margin-bottom: 20px; } .columns { display: block; } .columns > div[data-mobile-active="false"] { display: none; } .personColumn { gap: 20px; } .route { min-height: 0; } .vehicleStory > header, .vehicleBranches, .vehicleStory footer { padding-inline: 20px; } .vehicleRoad { margin-inline: 20px; } }
+@media (max-width: 740px) { .hero { padding: 28px 20px; } .heroTabs { margin-top: 24px; } .heroTabs > * { min-width: 0; padding-inline: 15px; } .mobileSwitch { display: flex; gap: 5px; margin: 0 20px 18px; border: 1px solid var(--line); border-radius: 999px; padding: 4px; } .mobileSwitch button { flex: 1; border: 0; border-radius: 999px; padding: 10px; background: transparent; color: var(--muted); font-size: 12px; font-weight: 700; } .mobileSwitch button[aria-pressed="true"] { background: var(--ink); color: white; } .majorSection { padding: 28px 20px 45px; } .sectionHeading { margin-bottom: 20px; } .columns { display: block; } .columns > div[data-mobile-active="false"] { display: none; } .personColumn { gap: 20px; } .route { min-height: 0; } .vehicleStory > header, .vehicleBranches, .vehicleStory footer { padding-inline: 20px; } .vehicleRoad { margin-inline: 20px; } .presenceRail { --rail-label-width: 95px; } .presenceTrack > strong { font-size: 9px; } .presenceMonths > span { font-size: 7px; } .familyPeople { gap: 8px; } .mobilityFigures { gap: 12px; } }

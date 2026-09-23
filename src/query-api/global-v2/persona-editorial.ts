@@ -27,6 +27,26 @@ export type EditorialMeal = {
   readonly anchorPresence: { readonly label: string; readonly presenceDays: number; readonly period: EditorialPeriod } | null;
   readonly presenceIsNotPurchase: boolean;
 };
+export type EditorialPlacePresence = {
+  readonly placeRef: string;
+  readonly label: string;
+  readonly presenceDays: number;
+  readonly monthlyPresenceDays: Readonly<Record<string, number>>;
+  readonly period: EditorialPeriod;
+  readonly evidence: "CANONICAL_LOCATION_PRESENCE";
+};
+export type EditorialMobility = {
+  readonly period: EditorialPeriod;
+  readonly distinctDayCount: number;
+  readonly eventCount: number;
+  readonly distanceKm: string;
+  readonly estimatedFuelCost: string;
+  readonly estimatedFuelCostPerDay: string | null;
+  readonly monetaryBasis: "ESTIMATED_FUEL_USAGE_NOT_PAID_AMOUNT";
+  readonly support: string;
+  readonly presenceFilter: string;
+} | null;
+export type EditorialOuting = { readonly date: string; readonly title: string; readonly place: string | null; readonly eventRef: string };
 export type PersonaEditorialModel = {
   readonly schemaVersion: "persona-editorial@v1";
   readonly period: { readonly first: string; readonly certifiedThrough: string };
@@ -51,13 +71,36 @@ export type PersonaEditorialModel = {
       readonly personId: string;
       readonly work: { readonly onsiteDays: number; readonly remoteDays: number; readonly commute: { readonly mode: "PUBLIC_TRANSIT"; readonly directCost: string; readonly authority: "USER_VALIDATED" }; readonly workMeals: EditorialMeal };
       readonly personalUniverses: { readonly permit: { readonly scope: "PROJECT"; readonly period: EditorialPeriod; readonly cost: string; readonly lessonsByMonth: Readonly<Record<string, number>>; readonly codeDates: readonly string[] }; readonly photo: EditorialProject; readonly musicHeadphones: EditorialProject; readonly googleAiPro: EditorialSubscription };
-      readonly recurringHabits: { readonly chatGptUsage: "USER_VALIDATED"; readonly qobuz: EditorialSubscription };
+      readonly recurringHabits: {
+        readonly chatGptUsage: "USER_VALIDATED";
+        readonly qobuz: EditorialSubscription;
+        readonly hairdresser: { readonly authority: "USER_VALIDATED_ROUTINE_WITH_OBSERVED_PLACE_PRESENCE"; readonly places: readonly EditorialPlacePresence[]; readonly observedPresenceDays: number; readonly personalAnnualCost: string | null; readonly typicalPersonalCost: string | null };
+        readonly stylingWax: { readonly label: string; readonly repurchase: "USER_VALIDATED"; readonly price: string | null; readonly observedCadenceDays: number | null };
+      };
+      readonly socialLife: { readonly outingsWithoutPartnerParticipation: readonly EditorialOuting[]; readonly wording: "DE_SON_COTE" };
     },
     {
       readonly personId: string;
       readonly work: { readonly onsiteDays: number; readonly primaryWorkPlaces: readonly { readonly label: string; readonly presenceDays: number }[]; readonly workMeals: EditorialMeal; readonly professionalInterventions: { readonly eventCount: number; readonly contexts: readonly { readonly date: string; readonly title: string; readonly place: string | null }[] } };
-      readonly personalUniverses: { readonly sunoFatherSong: EditorialProject & { readonly description: string; readonly recurrence: EditorialSubscription; readonly novemberPaymentExcluded: boolean } };
-      readonly recurringHabits: { readonly netflix: EditorialSubscription; readonly max: EditorialSubscription };
+      readonly personalUniverses: {
+        readonly sunoFatherSong: EditorialProject & { readonly description: string; readonly recurrence: EditorialSubscription; readonly novemberPaymentExcluded: boolean };
+        readonly products: readonly { readonly productKey: string; readonly label: string; readonly needKey: string; readonly purchaseCount: number; readonly typicalPrice: string | null; readonly medianGapDays: number | null; readonly period: EditorialPeriod }[];
+      };
+      readonly recurringHabits: {
+        readonly netflix: EditorialSubscription;
+        readonly max: EditorialSubscription;
+        readonly vape: { readonly m2FirstActiveMonth: string | null; readonly firstDirectPurchaseAt: string | null; readonly directPurchases: readonly { readonly date: string; readonly amount: string }[]; readonly directObservedCost: string; readonly allocatedObservedCost: string; readonly allocationCount: number; readonly m2AnnualCost: string | null; readonly reconciledToM2: boolean | null };
+      };
+      readonly socialLife: {
+        readonly fatherHome: readonly EditorialPlacePresence[];
+        readonly maternalFamilyHome: readonly EditorialPlacePresence[];
+        readonly amandine: readonly EditorialPlacePresence[];
+        readonly familyMobilityWithoutPartner: EditorialMobility;
+        readonly friendMobilityWithoutPartner: EditorialMobility;
+        readonly outingsWithoutPartnerParticipation: readonly EditorialOuting[];
+        readonly wording: "DE_SON_COTE";
+        readonly presenceIsNotTrip: true;
+      };
     },
   ];
 };
