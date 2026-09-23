@@ -69,7 +69,7 @@ const moduleSlugs: Readonly<Record<GlobalPrimaryModuleKey, string>> = Object.fre
 });
 
 const storyOrder = Object.freeze([
-  "ECONOMIC", "CATEGORIES_NEEDS", "RHYTHM", "PERSONAS", "TOGETHER",
+  "ECONOMIC", "CATEGORIES_NEEDS", "RHYTHM", "PERSONAS",
 ] as const satisfies readonly GlobalPrimaryModuleKey[]);
 
 const internalNavigation = Object.freeze([
@@ -78,7 +78,6 @@ const internalNavigation = Object.freeze([
   { label: "Catégories", anchor: "categories" },
   { label: "Vie & dépenses", anchor: "rythmes" },
   { label: "Profils", anchor: "profils" },
-  { label: "Nous deux", anchor: "nous-deux" },
 ] as const);
 
 const moduleTabs: Readonly<Record<GlobalPrimaryModuleKey, readonly { readonly key: GlobalExpandedSectionKey; readonly label: string }[]>> = Object.freeze({

@@ -27,11 +27,13 @@ export type EditorialMeal = {
   readonly anchorPresence: { readonly label: string; readonly presenceDays: number; readonly period: EditorialPeriod } | null;
   readonly presenceIsNotPurchase: boolean;
   readonly merchantHabitSummary?: { readonly merchant: string; readonly purchaseCount: number; readonly period: EditorialPeriod; readonly typicalPurchase: string | null; readonly observedCost: string; readonly monthlyObservedCost: string | null; readonly monthlyPurchaseRate: number | null; readonly annualObservedCost: string | null; readonly monetaryBasis: "DIRECT_OBSERVED_PURCHASES_NO_PAYER_INFERENCE" };
+  readonly allPurchaseHabitSummary?: { readonly purchaseCount: number; readonly period: EditorialPeriod; readonly typicalPurchase: string | null; readonly monthlyObservedCost: string | null; readonly monthlyPurchaseRate: number | null; readonly annualObservedCost: string | null; readonly merchants: readonly string[]; readonly monetaryBasis: "DIRECT_OBSERVED_PURCHASES_NO_PAYER_INFERENCE" };
 };
 export type EditorialPlacePresence = {
   readonly placeRef: string;
   readonly label: string;
   readonly presenceDays: number;
+  readonly visitCount?: number;
   readonly monthlyPresenceDays: Readonly<Record<string, number>>;
   readonly monthlyPresenceSegments?: Readonly<Record<string, readonly boolean[]>>;
   readonly period: EditorialPeriod;
@@ -65,6 +67,7 @@ export type PersonaEditorialModel = {
       readonly payerAuthority: "USER_VALIDATED" | "UNKNOWN";
     };
     readonly maintenanceSummary: { readonly scope: "HOUSEHOLD"; readonly period: EditorialPeriod; readonly operationCount: number; readonly totalIdentifiedCost: string; readonly fuelUsageExcluded: boolean };
+    readonly maintenanceResponsibilityPersonId?: string | null;
     readonly nonFuelCostTotal: string | null;
     readonly nonFuelCostTotalReady: boolean;
   };
@@ -78,6 +81,7 @@ export type PersonaEditorialModel = {
         readonly qobuz: EditorialSubscription;
         readonly hairdresser: { readonly authority: "USER_VALIDATED_ROUTINE_WITH_OBSERVED_PLACE_PRESENCE"; readonly places: readonly EditorialPlacePresence[]; readonly observedPresenceDays: number; readonly personalAnnualCost: string | null; readonly typicalPersonalCost: string | null; readonly monthlyVisitEstimate?: string | null; readonly typicalVisitPrice?: string | null; readonly illustrativeAnnualCost?: string | null; readonly priceBasis?: "INDICATIVE_PRICE_NOT_PAYMENT" | null };
         readonly stylingWax: { readonly label: string; readonly repurchase: "USER_VALIDATED"; readonly price: string | null; readonly observedCadenceDays: number | null };
+        readonly tobacco?: { readonly approximateMonthlyBudget: string | null; readonly sourceAnnualBudget: string | null; readonly authority: "USER_VALIDATED_APPROXIMATE_ATTRIBUTION" | "UNAVAILABLE" };
       };
       readonly socialLife: { readonly outingsWithoutPartnerParticipation: readonly EditorialOuting[]; readonly wording: "DE_SON_COTE" };
     },
@@ -91,12 +95,21 @@ export type PersonaEditorialModel = {
       readonly recurringHabits: {
         readonly netflix: EditorialSubscription;
         readonly max: EditorialSubscription;
-        readonly vape: { readonly m2FirstActiveMonth: string | null; readonly firstDirectPurchaseAt: string | null; readonly directPurchases: readonly { readonly date: string; readonly amount: string }[]; readonly directObservedCost: string; readonly allocatedObservedCost: string; readonly allocationCount: number; readonly m2AnnualCost: string | null; readonly reconciledToM2: boolean | null };
+        readonly videoObservedCost?: string;
+        readonly cigarettesPerDay?: string | null;
+        readonly vape: { readonly m2FirstActiveMonth: string | null; readonly firstDirectPurchaseAt: string | null; readonly directPurchases: readonly { readonly date: string; readonly amount: string }[]; readonly directObservedCost: string; readonly allocatedObservedCost: string; readonly allocationCount: number; readonly m2AnnualCost: string | null; readonly reconciledToM2: boolean | null; readonly equipmentCost?: string | null; readonly equipmentItemCount?: number };
       };
       readonly socialLife: {
         readonly fatherHome: readonly EditorialPlacePresence[];
         readonly maternalFamilyHome: readonly EditorialPlacePresence[];
         readonly amandine: readonly EditorialPlacePresence[];
+        readonly friendVisits?: readonly { readonly placeRef: string; readonly label: string; readonly visitCount: number; readonly monthlyVisitSegments: Readonly<Record<string, readonly boolean[]>> }[];
+        readonly familyVisitTotal?: number;
+        readonly familyVisitsPerQuarter?: number;
+        readonly fatherRoundTripFuelCost?: string | null;
+        readonly motherRoundTripFuelCost?: string | null;
+        readonly familyMobility?: EditorialMobility;
+        readonly friendMobility?: EditorialMobility;
         readonly familyMobilityWithoutPartner: EditorialMobility;
         readonly friendMobilityWithoutPartner: EditorialMobility;
         readonly outingsWithoutPartnerParticipation: readonly EditorialOuting[];

@@ -102,6 +102,20 @@ const summary = {
   socialOutings: { adrien: editorial.persons[0].socialLife.outingsWithoutPartnerParticipation.length, manon: editorial.persons[1].socialLife.outingsWithoutPartnerParticipation.length },
   sunoProjectCost: editorial.persons[1].personalUniverses.sunoFatherSong.netCost,
   vape: editorial.persons[1].recurringHabits.vape,
+  profileFirst: {
+    adrienMeals: editorial.persons[0].work.workMeals.allPurchaseHabitSummary,
+    manonMeals: editorial.persons[1].work.workMeals.allPurchaseHabitSummary,
+    adrienTobacco: editorial.persons[0].recurringHabits.tobacco,
+    manonCigarettesPerDay: editorial.persons[1].recurringHabits.cigarettesPerDay,
+    videoObservedCost: editorial.persons[1].recurringHabits.videoObservedCost,
+    familyVisitTotal: editorial.persons[1].socialLife.familyVisitTotal,
+    fatherVisits: editorial.persons[1].socialLife.fatherHome[0]?.visitCount ?? null,
+    motherVisits: editorial.persons[1].socialLife.maternalFamilyHome[0]?.visitCount ?? null,
+    fatherRoundTripFuelCost: editorial.persons[1].socialLife.fatherRoundTripFuelCost,
+    motherRoundTripFuelCost: editorial.persons[1].socialLife.motherRoundTripFuelCost,
+    familyFuelCost: editorial.persons[1].socialLife.familyMobility?.estimatedFuelCost ?? null,
+    friendVisits: editorial.persons[1].socialLife.friendVisits.map((friend) => ({ label: friend.label, visitCount: friend.visitCount })),
+  },
 };
 if (dryRun) { process.stdout.write(`${JSON.stringify({ ...summary, dryRun: true }, null, 2)}\n`); process.exit(0); }
 
