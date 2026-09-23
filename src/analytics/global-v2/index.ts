@@ -248,6 +248,27 @@ export {
   type GlobalCarObservedFuelPaid,
 } from "./car-mobility-rhythm";
 export {
+  GLOBAL_FOOD_ANNOTATION_POLICY_VERSION,
+  GLOBAL_FOOD_HIGHLIGHT_POLICY_VERSION,
+  GLOBAL_FOOD_RESTAURANT_CROSS_COVERAGE_POLICY_VERSION,
+  GLOBAL_FOOD_RHYTHM_METHOD_VERSION,
+  GLOBAL_FOOD_SCOPE,
+  buildGlobalFoodRhythmProjection,
+  globalFoodAnnotationPolicy,
+  globalFoodHighlightPolicy,
+  globalFoodRestaurantCrossCoveragePolicy,
+  type GlobalFoodActivityLabel,
+  type GlobalFoodAnnualAnnotation,
+  type GlobalFoodBucket,
+  type GlobalFoodCompositionHighlight,
+  type GlobalFoodDeliveryBehavior,
+  type GlobalFoodFinancialComponent,
+  type GlobalFoodGroceryBehavior,
+  type GlobalFoodRestaurantBehavior,
+  type GlobalFoodRhythmMonth,
+  type GlobalFoodRhythmProjection,
+} from "./food-rhythm";
+export {
   GLOBAL_M7_PERSONAL_MOBILITY_METHOD_VERSION,
   GLOBAL_M7_PERSONAL_MOBILITY_SUPPORT_POLICY,
   PERSONAL_MOBILITY_ROLLUP_METRIC_ID,
