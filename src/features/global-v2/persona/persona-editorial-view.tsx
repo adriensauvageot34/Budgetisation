@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { Camera, CarFront, Headphones, Heart, Monitor, Moon, Scissors, UtensilsCrossed } from "lucide-react";
+import { Camera, CarFront, Headphones, Heart, Monitor, Moon, Scissors, Train, UtensilsCrossed } from "lucide-react";
 import type { PersonaDirectModel } from "@/query-api/global-v2/persona-direct-presentation";
 import type { EditorialOuting, EditorialPeriod, EditorialProject, EditorialSubscription, PersonaEditorialModel } from "@/query-api/global-v2/persona-editorial";
 import styles from "./persona-editorial.module.css";
@@ -44,7 +44,10 @@ function ProfileHeader({ model, headingId }: { readonly model: PersonaEditorialM
   return <header className={styles.profileHero}>
     <div className={styles.heroLine}><h2 id={headingId}>Nos profils</h2><nav className={styles.profileTabs} aria-label="Vues des profils"><span aria-current="page">Adrien + Manon</span><button type="button" disabled aria-label="Nous deux, bientôt disponible"><Heart aria-hidden="true" size={15} /> Nous deux <small>à venir</small></button></nav></div>
     <div className={styles.profilePair}>
-      <article className={styles.identityCard} data-person="adrien"><span className={styles.portraitFrame}><Image src="/api/persona-portrait/adrien" alt="Portrait d’Adrien" width={116} height={116} sizes="116px" priority unoptimized /></span><div className={styles.identityBody}><h3>Adrien</h3><p className={styles.identityWork}>OBS <span>·</span> Bâtiment Genesis — Montpellier</p><div className={styles.identityFacts}><div><span>Transports en commun</span><strong>{amount(adrien.work.commute.directCost)}</strong><small>pour aller travailler</small></div><div><span>Permis en cours</span><strong>{amount(adrien.personalUniverses.permit.cost, true)}</strong><small>pour le projet</small></div></div></div></article>
+      <article className={`${styles.identityCard} ${styles.adrienIdentityCard}`} data-person="adrien"><div className={styles.adrienIdentityTop}><span className={`${styles.portraitFrame} ${styles.adrienPortraitFrame}`}><Image src="/api/persona-portrait/adrien" alt="Portrait d’Adrien" width={116} height={116} sizes="116px" priority unoptimized /></span><div className={styles.identityBody}><h3>Adrien</h3><p className={styles.identityWork}>OBS <span>·</span> Bâtiment Genesis · Montpellier</p></div></div><div className={styles.adrienFacts}>
+        <div><span className={styles.adrienFactIcon}><Train aria-hidden="true" size={18} /></span><span className={styles.adrienFactLabel}>Transports en commun</span><strong>{amount(adrien.work.commute.directCost)}</strong><small>pour aller travailler</small></div>
+        <div><span className={styles.adrienFactIcon}><CarFront aria-hidden="true" size={18} /></span><span className={styles.adrienFactLabel}>Permis en cours</span><strong>{amount(adrien.personalUniverses.permit.cost, true)}</strong><small>pour le projet</small></div>
+      </div></article>
       <article className={styles.identityCard} data-person="manon"><span className={styles.portraitFrame}><Image src="/api/persona-portrait/manon" alt="Portrait de Manon" width={116} height={116} sizes="116px" priority unoptimized /></span><div className={styles.identityBody}><h3>Manon</h3><p className={styles.identityWork}>{manon.work.primaryWorkPlaces[0]?.label.replace(/\s+[–—]\s+.*$/u, "") ?? "Promotrans"}</p><div className={styles.identityFacts}><div><span>Peugeot pour travailler</span><strong>{commute === null || commute === undefined ? "—" : amount(commute, true)}</strong><small>par jour de trajet</small></div><div><span>Assurance voiture</span><strong>{insurance === null ? "—" : monthly(insurance)}</strong><small>{model.vehicle.insuranceSummary.currentProvider ?? "assurance actuelle"}</small></div></div></div></article>
     </div>
   </header>;
