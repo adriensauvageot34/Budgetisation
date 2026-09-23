@@ -192,6 +192,21 @@ export {
   type MobilityTemporalRelation,
 } from "./mobility-context";
 export {
+  MOBILITY_TRIP_CONTEXT_METHOD_VERSION,
+  resolveMobilityTripContexts,
+  type MobilityTripContextBuildResult,
+  type MobilityTripContextLeg,
+  type MobilityTripContextLink,
+  type MobilityTripContextLinkMethod,
+  type MobilityTripContextReasonCode,
+  type MobilityTripContextRelation,
+  type MobilityTripContextResolutionAudit,
+  type MobilityTripContextTrip,
+  type MobilityTripLifeEventAuthority,
+  type MobilityTripMomentAuthority,
+  type MobilityTripMomentLifeEventLink,
+} from "./mobility-trip-context";
+export {
   GLOBAL_M7_PERSONAL_MOBILITY_METHOD_VERSION,
   GLOBAL_M7_PERSONAL_MOBILITY_SUPPORT_POLICY,
   PERSONAL_MOBILITY_ROLLUP_METRIC_ID,

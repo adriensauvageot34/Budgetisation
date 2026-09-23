@@ -63,6 +63,7 @@
     "check:canonical-mobility": "node --experimental-strip-types scripts/check-canonical-mobility.mjs",
     "check:mobility-trips": "node --experimental-strip-types scripts/check-mobility-trips.mjs",
     "check:mobility-context": "node --experimental-strip-types scripts/check-mobility-context.mjs",
+    "check:mobility-trip-contexts": "node --experimental-strip-types scripts/check-mobility-trip-contexts.mjs",
     "check:mobility-context-live": "node scripts/check-mobility-context-live.mjs",
     "check:personal-mobility": "node --experimental-strip-types scripts/check-personal-mobility.mjs",
     "mobility:dry-run": "node --experimental-strip-types scripts/import-canonical-mobility.mjs --dry-run",
