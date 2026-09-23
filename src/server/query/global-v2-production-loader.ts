@@ -9,6 +9,7 @@ import {
   type GlobalV2QueryRequest,
 } from "@/query-api/global-v2";
 import { buildPersonaDirectModel, personaDirectDetailKey, selectPersonaDirectOwnerRefs, type PersonaDirectLabels } from "@/query-api/global-v2/persona-direct-presentation";
+import type { PersonaEditorialModel } from "@/query-api/global-v2/persona-editorial";
 import { PERSONA_EDITORIAL_SCHEMA_VERSION, type resolveGlobalPersonaEditorial } from "@/server/analytics/global-v2-persona-editorial";
 import { getBootstrapContext } from "@/server/bootstrap/context";
 import { createAuthorizedRuntimeContext, type AuthorizedRuntimeContext } from "@/server/canonical/context";
@@ -123,18 +124,25 @@ export async function loadGlobalV2ProductionBundle() {
   const refs = selectPersonaDirectOwnerRefs({ overview, indices, labels: labelsPayload.presentationLabels });
   const ownerRequests = refs.map((ref) => ({ resource: ref.resource, params: { entityRef: ref.entityRef } }));
   await runtime.services.primeSnapshotRows(ownerRequests);
-  const ownerResults = await Promise.all(ownerRequests.map((request) => readGlobalV2ProductionSnapshot({ runtime, ...request })));
+  const [ownerResults, editorial] = await Promise.all([
+    Promise.all(ownerRequests.map((request) => readGlobalV2ProductionSnapshot({ runtime, ...request }))),
+    readPersonaEditorialArtifact(runtime),
+  ]);
   const details = new Map(refs.map((ref, index) => [personaDirectDetailKey(ref), ownerResults[index]!.data as GlobalExpandedReadModel]));
   const persona = buildPersonaDirectModel({ overview, indices, details, labels: labelsPayload.presentationLabels, ownerDetailResolutionsInitial: refs.length, serverBuildMs: Math.round(performance.now() - started) });
   return {
-    bundle: { initial: initial.data as GlobalInitialReadModel, persona },
+    bundle: { initial: initial.data as GlobalInitialReadModel, persona, personaEditorial: editorial },
     certifiedThrough: runtime.generation.scope.time.certifiedThrough,
   };
 }
 
 /** Compact, generation-pinned P4.8-A read model for the next Persona UI lot. */
-export async function loadGlobalV2PersonaEditorialReadModel(): Promise<Awaited<ReturnType<typeof resolveGlobalPersonaEditorial>>> {
+export async function loadGlobalV2PersonaEditorialReadModel(): Promise<PersonaEditorialModel> {
   const runtime = await createGlobalV2ProductionRuntime();
+  return readPersonaEditorialArtifact(runtime);
+}
+
+async function readPersonaEditorialArtifact(runtime: Awaited<ReturnType<typeof createGlobalV2ProductionRuntime>>): Promise<PersonaEditorialModel> {
   const { data, error } = await runtime.client.from("analytics_artifacts")
     .select("payload")
     .eq("household_id", runtime.context.householdId)
@@ -150,5 +158,6 @@ export async function loadGlobalV2PersonaEditorialReadModel(): Promise<Awaited<R
     || payload.publicationMeta.factsHash !== runtime.generation.publicationMeta.factsHash
     || payload.publicationMeta.manifestHash !== runtime.generation.publicationMeta.manifestHash
     || payload.editorial?.schemaVersion !== PERSONA_EDITORIAL_SCHEMA_VERSION) throw new TypeError("GLOBAL_PERSONA_EDITORIAL_GENERATION_MISMATCH");
-  return payload.editorial;
+  if (payload.editorial.persons.length !== 2 || payload.editorial.vehicle === undefined) throw new TypeError("GLOBAL_PERSONA_EDITORIAL_SHAPE_MISMATCH");
+  return payload.editorial as unknown as PersonaEditorialModel;
 }

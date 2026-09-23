@@ -50,6 +50,7 @@
     "check:global-v2-persona-ui": "node --experimental-strip-types scripts/check-global-v2-persona-ui.mjs",
     "check:global-v2-persona-direct": "node --experimental-strip-types scripts/check-global-v2-persona-direct.mjs",
     "check:global-v2-persona-editorial": "node scripts/check-global-v2-persona-editorial.mjs",
+    "check:global-v2-persona-editorial-ui": "node scripts/check-global-v2-persona-editorial-ui.mjs",
     "check:global-v2-persona-lazy-detail": "node --experimental-strip-types scripts/check-global-v2-persona-lazy-detail.mjs",
     "check:global-v2-shared": "node --experimental-strip-types scripts/check-global-v2-shared-participation.mjs",
     "check:global-v2-publication": "node --experimental-strip-types scripts/check-global-v2-publication-infrastructure.mjs",
