@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { Camera, CarFront, Headphones, Heart, Monitor, Moon, Scissors, ShieldCheck, Train, UtensilsCrossed } from "lucide-react";
+import { BadgeCheck, Camera, CarFront, Headphones, Heart, Monitor, Moon, Scissors, ShieldCheck, Train, UtensilsCrossed } from "lucide-react";
 import type { PersonaDirectModel } from "@/query-api/global-v2/persona-direct-presentation";
 import type { EditorialOuting, EditorialPeriod, EditorialProject, EditorialSubscription, PersonaEditorialModel } from "@/query-api/global-v2/persona-editorial";
 import styles from "./persona-editorial.module.css";
@@ -58,7 +58,7 @@ function ProfileHeader({ model, headingId }: { readonly model: PersonaEditorialM
 function Permit({ person }: { readonly person: PersonaEditorialModel["persons"][0] }) {
   const permit = person.personalUniverses.permit;
   const months = Object.entries(permit.monthlyCost ?? {}).filter(([, cost]) => Number(cost) > 0).sort(([, a], [, b]) => Number(b) - Number(a)).slice(0, 3).sort(([a], [b]) => a.localeCompare(b));
-  return <article className={styles.permitProfile} data-person="adrien"><div className={styles.moduleTitle}><CarFront aria-hidden="true" size={25} /><h4>Le permis</h4></div><div className={styles.permitLead}><Fact value={amount(permit.cost, true)} label="pour le projet" />{permit.period === null ? null : <span>{periodLabel(permit.period)}</span>}</div><div className={styles.permitMonths}>{months.map(([key, cost]) => <div key={key}><span>{monthOnly.format(dateOf(`${key}-01`))}</span><strong>{amount(cost, true)}</strong></div>)}</div></article>;
+  return <article className={styles.permitProfile} data-person="adrien"><div className={styles.permitHero}><div className={styles.permitIntro}><span className={styles.permitProjectLabel}><BadgeCheck aria-hidden="true" size={16} />Projet en cours</span><h4>Le permis</h4><strong className={styles.permitHeroCost}>{amount(permit.cost, true)}</strong><span className={styles.permitHeroCaption}>investis dans le permis</span></div></div><div className={styles.permitMonths} aria-label="Dépenses mensuelles du permis">{months.map(([key, cost]) => <div className={key.endsWith("-07") ? styles.permitMonthJuly : undefined} key={key}><span>{monthOnly.format(dateOf(`${key}-01`))}</span><strong>{amount(cost, true)}</strong></div>)}</div></article>;
 }
 function Peugeot({ model }: { readonly model: PersonaEditorialModel }) {
   const { vehicle } = model;
