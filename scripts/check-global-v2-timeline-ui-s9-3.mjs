@@ -33,7 +33,8 @@ check(() => assert.match(panel, /useState<TimelineDensityMode>\("PRINCIPAL"\)/u)
 check(() => assert.doesNotMatch(card, /eventDateLabel\(event\)|participantLabel|participantCount/u));
 check(() => assert.match(card, /timelinePlaceLabel/u));
 check(() => assert.match(css, /\.timelinePlaceLabel\s*\{[^}]*text-decoration:\s*underline/u));
-check(() => assert.match(card, /event\.eventCost\.status === "KNOWN" \? <b>/u));
+check(() => assert.match(timeline.slice(timeline.indexOf("export function TimelineEventFacts"), timeline.indexOf("function TimelineLoadingSkeleton")), /event\.eventCost\.status === "KNOWN" \? <b>/u));
+check(() => assert.match(card, /<TimelineEventFacts event=\{event\} \/>/u));
 check(() => assert.doesNotMatch(card, /Coût non établi|Série ·|timelineSemanticContext/u));
 check(() => assert.match(card, /detailsNearViewport && isMomentDetail, "BACKGROUND"/u));
 check(() => assert.match(card, /IntersectionObserver[\s\S]*rootMargin: "120% 0px"/u));

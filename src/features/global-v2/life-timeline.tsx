@@ -34,6 +34,7 @@ import type {
   GlobalExpandedReadModel,
   GlobalLifeTimelineReadModel,
   GlobalLifeTimelineV2ReadModel,
+  GlobalLifeTimelineV3ReadModel,
   GlobalMomentComponentRow,
   GlobalTimelineComparisonLevel,
   GlobalTimelineComparisonEventObservation,
@@ -41,6 +42,8 @@ import type {
   GlobalTimelineEvent,
   GlobalTimelineEventComparisonReadModel,
   GlobalTimelineV2Event,
+  GlobalTimelineV3Event,
+  GlobalTimelineMobilityContext,
   GlobalTypedMeasure,
 } from "@/query-api/global-v2";
 import { ComparisonRange } from "./comparison-range";
@@ -130,6 +133,8 @@ const semanticIntermediateIcons: Readonly<Record<string, TimelineIcon>> = Object
 });
 
 const moneyFormatter = new Intl.NumberFormat("fr-FR", { style: "currency", currency: "EUR", minimumFractionDigits: 0, maximumFractionDigits: 2 });
+const mobilityCostFormatter = new Intl.NumberFormat("fr-FR", { style: "currency", currency: "EUR", minimumFractionDigits: 2, maximumFractionDigits: 2 });
+const mobilityDistanceFormatter = new Intl.NumberFormat("fr-FR", { minimumFractionDigits: 1, maximumFractionDigits: 1 });
 const monthFormatter = new Intl.DateTimeFormat("fr-FR", { month: "long", year: "numeric", timeZone: "UTC" });
 const dayFormatter = new Intl.DateTimeFormat("fr-FR", { day: "numeric", timeZone: "UTC" });
 const shortDateFormatter = new Intl.DateTimeFormat("fr-FR", { day: "numeric", month: "short", timeZone: "UTC" });
@@ -138,8 +143,8 @@ function timelineDate(value: string): Date {
   return new Date(`${value}T12:00:00Z`);
 }
 
-type TimelineTransportEvent = GlobalTimelineEvent | GlobalTimelineV2Event;
-type TimelineTransportReadModel = GlobalLifeTimelineReadModel | GlobalLifeTimelineV2ReadModel;
+type TimelineTransportEvent = GlobalTimelineEvent | GlobalTimelineV2Event | GlobalTimelineV3Event;
+type TimelineTransportReadModel = GlobalLifeTimelineReadModel | GlobalLifeTimelineV2ReadModel | GlobalLifeTimelineV3ReadModel;
 type TimelineEventFocusRequest = Readonly<{ eventRef: TimelineTransportEvent["eventRef"]; requestId: number }>;
 
 function timelineMoneyMeasure(value: string): GlobalTypedMeasure {
@@ -266,6 +271,21 @@ function TimelineExpenses({ rows, compact = false }: { readonly rows: readonly G
   </span>;
 }
 
+function TimelineMobilityFact({ context }: { readonly context: GlobalTimelineMobilityContext }) {
+  return <span className={styles.timelineMobilityFact}>
+    <CarFront size={15} aria-hidden="true" />
+    <span>Déplacement{context.status === "PARTIAL" ? " partiel" : ""} · ≈ <strong>{mobilityCostFormatter.format(Number(context.estimatedFuelCost))}</strong> · {mobilityDistanceFormatter.format(Number(context.distanceKm))} km{context.status === "PARTIAL" ? " documentés" : ""}</span>
+  </span>;
+}
+
+export function TimelineEventFacts({ event }: { readonly event: GlobalTimelineV2Event | GlobalTimelineV3Event }) {
+  const mobilityContext = "mobilityContext" in event ? event.mobilityContext : undefined;
+  return <span className={`${styles.timelineEventFacts} ${styles.timelineSemanticFacts}`}>
+    {event.eventCost.status === "KNOWN" ? <b>Dépenses liées · {timelineEventAmount(event)}</b> : null}
+    {mobilityContext === undefined ? null : <TimelineMobilityFact context={mobilityContext} />}
+  </span>;
+}
+
 function TimelineLoadingSkeleton() {
   return <div className={styles.timelineLoading} role="status" aria-busy="true">
     <span className={styles.timelineVisuallyHidden}>Chargement de la timeline…</span>
@@ -331,7 +351,8 @@ export function TimelineComparator({ event, runtime, onOpenPeer }: {
       ? timelineComparisonLevelLabel(event, event.distinctiveComparisonLevel)
       : undefined;
 
-  return <section className={styles.timelineComparator} aria-label={`Comparaison de ${event.canonicalName}`}>
+  return <section className={styles.timelineComparator} aria-label={`Comparaison des dépenses liées de ${event.canonicalName}`}>
+    <h5 className={styles.timelineComparatorTitle}>Comparaison des dépenses liées</h5>
     <div className={styles.timelineComparisonLevels} role="radiogroup" aria-label="Profondeur de comparaison">
       {descriptors.map(({ level, relatedPeerCount }) => <button
         key={level}
@@ -367,7 +388,7 @@ export function TimelineComparator({ event, runtime, onOpenPeer }: {
 }
 
 function TimelineV2EventRow({ event, runtime, focusRequest, expanded, focused, focusMode, onToggle, onTimelinePeer }: {
-  readonly event: GlobalTimelineV2Event;
+  readonly event: GlobalTimelineV2Event | GlobalTimelineV3Event;
   readonly runtime: GlobalV2VisitRuntime;
   readonly focusRequest: TimelineEventFocusRequest | undefined;
   readonly expanded: boolean;
@@ -438,11 +459,9 @@ function TimelineV2EventRow({ event, runtime, focusRequest, expanded, focused, f
     <time className={styles.timelineDay} dateTime={event.startDate}>{dayFormatter.format(timelineDate(event.startDate))}</time>
     <span className={styles.timelineMarker} aria-hidden><Icon size={19} aria-hidden /></span>
     <span className={styles.timelineEventBody}>
-      <span className={styles.timelineEventHeading}><strong>{event.canonicalName}</strong>{distinctive ? <em>Se distingue</em> : null}</span>
+      <span className={styles.timelineEventHeading}><strong>{event.canonicalName}</strong>{distinctive ? <em>Se distingue côté dépenses</em> : null}</span>
       <span className={styles.timelineEventMeta}>{event.primaryPlaceLabel === undefined ? null : <><span className={styles.timelinePlaceLabel}>{event.primaryPlaceLabel}</span><span aria-hidden> · </span></>}<span>{event.semanticClassification.close.label}</span></span>
-      <span className={styles.timelineEventFacts}>
-        {event.eventCost.status === "KNOWN" ? <b>{timelineEventAmount(event)}</b> : null}
-      </span>
+      <TimelineEventFacts event={event} />
     </span>
     {expenseRows.length > 0 ? <TimelineExpenses rows={expenseRows} compact /> : null}
     {canExpand ? <ChevronDown className={styles.timelineChevron} data-expanded={expanded} aria-hidden size={18} /> : null}
@@ -495,7 +514,7 @@ export function LifeTimeline({ runtime, density, onDensityChange, onMomentDetail
   const model = result.state.status === "READY" ? result.state.data : result.state.status === "ERROR" ? result.state.previousData : undefined;
   const displayedEvents = useMemo<readonly TimelineTransportEvent[]>(() => {
     if (model === undefined) return [];
-    return model.schemaVersion === "global-life-timeline@v2"
+    return model.schemaVersion === "global-life-timeline@v2" || model.schemaVersion === "global-life-timeline@v3"
       ? timelineEventsForDensity(model.events, density)
       : model.events;
   }, [density, model]);
@@ -504,7 +523,7 @@ export function LifeTimeline({ runtime, density, onDensityChange, onMomentDetail
     const focus = (raw: Event) => {
       const detail = (raw as CustomEvent<{ readonly eventRef?: unknown; readonly visibilityTier?: unknown }>).detail;
       if (typeof detail?.eventRef !== "string" || (!detail.eventRef.startsWith("life-event:") && !detail.eventRef.startsWith("moment:"))) return;
-      const target = model?.schemaVersion === "global-life-timeline@v2" ? model.events.find(({ eventRef }) => eventRef === detail.eventRef) : undefined;
+      const target = model?.schemaVersion === "global-life-timeline@v2" || model?.schemaVersion === "global-life-timeline@v3" ? model.events.find(({ eventRef }) => eventRef === detail.eventRef) : undefined;
       if (detail.visibilityTier === "EXTENDED" || target?.visibilityTier === "EXTENDED") onDensityChange("EXTENDED");
       const eventRef = detail.eventRef as GlobalTimelineV2Event["eventRef"];
       setFocusedEventRef(undefined);
@@ -515,7 +534,7 @@ export function LifeTimeline({ runtime, density, onDensityChange, onMomentDetail
     return () => window.removeEventListener("global-v2:focus-life-event", focus);
   }, [model, onDensityChange]);
   useEffect(() => {
-    if (density !== "PRINCIPAL" || model?.schemaVersion !== "global-life-timeline@v2") return;
+    if (density !== "PRINCIPAL" || (model?.schemaVersion !== "global-life-timeline@v2" && model?.schemaVersion !== "global-life-timeline@v3")) return;
     if (model.events.find(({ eventRef }) => eventRef === expandedEventRef)?.visibilityTier !== "EXTENDED") return;
     setExpandedEventRef(undefined);
     setFocusedEventRef(undefined);

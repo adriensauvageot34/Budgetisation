@@ -522,6 +522,10 @@
 .timelineEventFacts small { color: var(--color-muted); font-size: 11px; }
 .timelineEventFacts .timelineComparison { color: var(--color-primary-deep); font-weight: 740; }
 .timelineEventFacts .timelineUnknown { color: var(--color-muted); font-weight: 650; }
+.timelineSemanticFacts { display: grid; justify-items: start; gap: 4px; min-width: 0; }
+.timelineMobilityFact { display: inline-flex; align-items: flex-start; gap: 6px; min-width: 0; max-width: 100%; color: var(--color-muted); font-size: 12px; line-height: 1.4; overflow-wrap: anywhere; }
+.timelineMobilityFact svg { flex: 0 0 auto; margin-top: 1px; color: var(--color-muted); }
+.timelineMobilityFact strong { color: var(--color-ink); font-weight: 720; }
 .timelineChevron { grid-column: 5; color: var(--color-muted); transform: translateY(0) rotate(0); transform-origin: center; transition: transform 200ms cubic-bezier(.2, .8, .2, 1), color 220ms ease; }
 .timelineChevron[data-expanded="true"] { animation: timelineChevronOpen 300ms cubic-bezier(.2, .8, .2, 1) both; transform: translateY(0) rotate(180deg); }
 @keyframes timelineChevronOpen { 0% { transform: translateY(0) rotate(0); } 24% { transform: translateY(1px) rotate(30deg); } 100% { transform: translateY(0) rotate(180deg); } }
@@ -536,6 +540,7 @@
 .timelineExpenseList { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 7px 18px; }
 .timelineExpenseList > span { border-radius: 8px; padding: 8px; background: var(--color-surface); }
 .timelineComparator { position: relative; z-index: 1; display: grid; gap: 12px; margin-left: 70px; border-bottom: 1px solid var(--color-border); padding: 14px; background: var(--color-surface-soft); }
+.timelineComparatorTitle { margin: 0; color: var(--color-ink); font-size: 13px; font-weight: 780; }
 .timelineComparisonLevels { display: flex; flex-wrap: wrap; gap: 6px; }
 .timelineComparisonLevels button { border: 1px solid var(--color-border); border-radius: 999px; padding: 7px 10px; background: var(--color-surface); color: var(--color-muted); font: inherit; font-size: 11px; font-weight: 760; cursor: pointer; }
 .timelineComparisonLevels button[aria-checked="true"] { border-color: var(--color-primary); background: var(--color-primary-soft); color: var(--color-primary-deep); }

@@ -14,6 +14,12 @@ const moneyFormatter = new Intl.NumberFormat("fr-FR", {
   minimumFractionDigits: 0,
   maximumFractionDigits: 2,
 });
+const moneyWithCentsFormatter = new Intl.NumberFormat("fr-FR", {
+  style: "currency",
+  currency: "EUR",
+  minimumFractionDigits: 2,
+  maximumFractionDigits: 2,
+});
 
 /** Presentation-only filter: Query visibility remains the sole authority. */
 export function timelineEventsForDensity(
@@ -26,9 +32,9 @@ export function timelineEventsForDensity(
 }
 
 export function timelineEventAmount(event: GlobalTimelineV2Event): string {
-  return event.eventCost.status === "KNOWN"
-    ? moneyFormatter.format(Number(event.eventCost.value))
-    : "Coût non établi";
+  if (event.eventCost.status !== "KNOWN") return "Coût non établi";
+  const amount = Number(event.eventCost.value);
+  return (Number.isInteger(amount) ? moneyFormatter : moneyWithCentsFormatter).format(amount);
 }
 
 export function hasTimelineComparisonAffordance(event: GlobalTimelineV2Event): boolean {
