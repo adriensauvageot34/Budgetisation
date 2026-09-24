@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { Camera, CarFront, Headphones, Heart, Monitor, Moon, Scissors, UtensilsCrossed } from "lucide-react";
+import { BadgeCheck, Camera, CarFront, Headphones, Heart, Monitor, Moon, Scissors, ShieldCheck, Train, UtensilsCrossed } from "lucide-react";
 import type { PersonaDirectModel } from "@/query-api/global-v2/persona-direct-presentation";
 import type { EditorialOuting, EditorialPeriod, EditorialProject, EditorialSubscription, PersonaEditorialModel } from "@/query-api/global-v2/persona-editorial";
 import styles from "./persona-editorial.module.css";
@@ -44,15 +44,21 @@ function ProfileHeader({ model, headingId }: { readonly model: PersonaEditorialM
   return <header className={styles.profileHero}>
     <div className={styles.heroLine}><h2 id={headingId}>Nos profils</h2><nav className={styles.profileTabs} aria-label="Vues des profils"><span aria-current="page">Adrien + Manon</span><button type="button" disabled aria-label="Nous deux, bientôt disponible"><Heart aria-hidden="true" size={15} /> Nous deux <small>à venir</small></button></nav></div>
     <div className={styles.profilePair}>
-      <article className={styles.identityCard} data-person="adrien"><span className={styles.portraitFrame}><Image src="/api/persona-portrait/adrien" alt="Portrait d’Adrien" width={116} height={116} sizes="116px" priority unoptimized /></span><div className={styles.identityBody}><h3>Adrien</h3><p className={styles.identityWork}>OBS <span>·</span> Bâtiment Genesis — Montpellier</p><div className={styles.identityFacts}><div><span>Transports en commun</span><strong>{amount(adrien.work.commute.directCost)}</strong><small>pour aller travailler</small></div><div><span>Permis en cours</span><strong>{amount(adrien.personalUniverses.permit.cost, true)}</strong><small>pour le projet</small></div></div></div></article>
-      <article className={styles.identityCard} data-person="manon"><span className={styles.portraitFrame}><Image src="/api/persona-portrait/manon" alt="Portrait de Manon" width={116} height={116} sizes="116px" priority unoptimized /></span><div className={styles.identityBody}><h3>Manon</h3><p className={styles.identityWork}>{manon.work.primaryWorkPlaces[0]?.label.replace(/\s+[–—]\s+.*$/u, "") ?? "Promotrans"}</p><div className={styles.identityFacts}><div><span>Peugeot pour travailler</span><strong>{commute === null || commute === undefined ? "—" : amount(commute, true)}</strong><small>par jour de trajet</small></div><div><span>Assurance voiture</span><strong>{insurance === null ? "—" : monthly(insurance)}</strong><small>{model.vehicle.insuranceSummary.currentProvider ?? "assurance actuelle"}</small></div></div></div></article>
+      <article className={`${styles.identityCard} ${styles.adrienIdentityCard}`} data-person="adrien"><div className={styles.adrienIdentityTop}><span className={`${styles.portraitFrame} ${styles.adrienPortraitFrame}`}><Image src="/api/persona-portrait/adrien" alt="Portrait d’Adrien" width={116} height={116} sizes="116px" priority unoptimized /></span><div className={styles.identityBody}><h3>Adrien</h3><p className={styles.identityWork}>One business school</p></div></div><div className={styles.adrienFacts}>
+        <div><span className={styles.adrienFactIcon}><Train aria-hidden="true" size={18} /></span><span className={styles.adrienFactLabel}>Transports en commun</span><strong>{amount(adrien.work.commute.directCost)}</strong><small>pour aller travailler</small></div>
+        <div><span className={styles.adrienFactIcon}><CarFront aria-hidden="true" size={18} /></span><span className={styles.adrienFactLabel}>Permis en cours</span><strong>{amount(adrien.personalUniverses.permit.cost, true)}</strong><small>pour le projet</small></div>
+      </div></article>
+      <article className={`${styles.identityCard} ${styles.manonIdentityCard}`} data-person="manon"><div className={styles.manonIdentityTop}><span className={`${styles.portraitFrame} ${styles.manonPortraitFrame}`}><Image src="/api/persona-portrait/manon" alt="Portrait de Manon" width={116} height={116} sizes="116px" priority unoptimized /></span><div className={styles.identityBody}><h3>Manon</h3><p className={styles.identityWork}>{manon.work.primaryWorkPlaces[0]?.label.replace(/\s+[–—]\s+.*$/u, "") ?? "Promotrans"}</p></div></div><div className={styles.manonFacts}>
+        <div><span className={styles.manonFactIcon}><CarFront aria-hidden="true" size={18} /></span><span className={styles.manonFactLabel}>Peugeot pour travailler</span><strong>{commute === null || commute === undefined ? "—" : amount(commute, true)}</strong><small>par jour de trajet</small></div>
+        <div><span className={styles.manonFactIcon}><ShieldCheck aria-hidden="true" size={18} /></span><span className={styles.manonFactLabel}>Assurance voiture</span><strong>{insurance === null ? "—" : monthly(insurance)}</strong><small>{model.vehicle.insuranceSummary.currentProvider ?? "assurance actuelle"}</small></div>
+      </div></article>
     </div>
   </header>;
 }
 function Permit({ person }: { readonly person: PersonaEditorialModel["persons"][0] }) {
   const permit = person.personalUniverses.permit;
   const months = Object.entries(permit.monthlyCost ?? {}).filter(([, cost]) => Number(cost) > 0).sort(([, a], [, b]) => Number(b) - Number(a)).slice(0, 3).sort(([a], [b]) => a.localeCompare(b));
-  return <article className={styles.permitProfile} data-person="adrien"><div className={styles.moduleTitle}><CarFront aria-hidden="true" size={25} /><h4>Le permis</h4></div><div className={styles.permitLead}><Fact value={amount(permit.cost, true)} label="pour le projet" />{permit.period === null ? null : <span>{periodLabel(permit.period)}</span>}</div><div className={styles.permitMonths}>{months.map(([key, cost]) => <div key={key}><span>{monthOnly.format(dateOf(`${key}-01`))}</span><strong>{amount(cost, true)}</strong></div>)}</div></article>;
+  return <article className={styles.permitProfile} data-person="adrien"><div className={styles.permitHero}><div className={styles.permitIntro}><span className={styles.permitProjectLabel}><BadgeCheck aria-hidden="true" size={16} />Projet en cours</span><h4>Le permis</h4><strong className={styles.permitHeroCost}>{amount(permit.cost, true)}</strong><span className={styles.permitHeroCaption}>investis dans le permis</span></div></div><div className={styles.permitMonths} aria-label="Dépenses mensuelles du permis">{months.map(([key, cost]) => <div className={key.endsWith("-07") ? styles.permitMonthJuly : undefined} key={key}><span>{monthOnly.format(dateOf(`${key}-01`))}</span><strong>{amount(cost, true)}</strong></div>)}</div></article>;
 }
 function Peugeot({ model }: { readonly model: PersonaEditorialModel }) {
   const { vehicle } = model;
