@@ -81,7 +81,6 @@ const candidate = candidateApi.buildGlobalV2CandidateFromOwnerOutputs({
   presentationLabels: { recurrences: { "facts-only": "Salle de sport", rent: "Loyer" } },
   candidateAdapters: {
     timeline: { adapterVersion: "global-life-timeline-candidate-adapter@v1", precedence: "CERTIFIED_MOMENT > AUTONOMOUS_DOMINANT_TITLED_LIFE_EVENT > DEFER", sortContract: "startDate ASC, eventRef ASC", events: [], deferred: [], excluded: [], dependencyClosure: [], inputHash: "a".repeat(64) },
-    grocery: { adapterVersion: "global-grocery-household-month-adapter@v1", grain: "HOUSEHOLD_MONTH", basketPolicy: { policyVersion: "global-grocery-basket-structure@v1", quantileMethod: "TUKEY_HINGES_EXCLUSIVE_MEDIAN", monthlyCoverageMinimum: 0.7, historicalEligibleMonthMinimum: 8 }, thresholds: { p25: "0", p75: "0" }, months: [], eligibleMonthCount: 0, historicalComparisonGate: "GATED", dependencyClosure: [], inputHash: "b".repeat(64) },
   },
   momentComponentPresentation: { version: "global-moment-component-presentation@v1", rows: [], inputHash: "c".repeat(64) },
 });

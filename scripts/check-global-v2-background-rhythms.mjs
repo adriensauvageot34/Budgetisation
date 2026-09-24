@@ -151,7 +151,7 @@ const candidate = candidateApi.buildGlobalV2CandidateFromOwnerOutputs({
   analyticsRevision: "96",
   implementationIdentity: "1".repeat(40),
   ownerOutputs,
-  candidateAdapters: { timeline: { adapterVersion: "fixture-timeline@v1", inputHash: h("7"), events: [] }, grocery: { adapterVersion: "fixture-grocery@v1", inputHash: h("8") } },
+  candidateAdapters: { timeline: { adapterVersion: "fixture-timeline@v1", inputHash: h("7"), events: [] } },
   backgroundRhythms: { food, carMobility },
   momentComponentPresentation: { version: "fixture-moment-components@v1", inputHash: h("9") },
 });
@@ -161,7 +161,7 @@ check(() => assert.equal(candidate.artifacts.filter(({ version }) => version.fam
 check(() => assert.ok(candidate.versions.artifacts.some(({ family }) => family === "global_background_rhythms")));
 check(() => assert.ok(candidate.manifest.requiredQueryKeys.includes(candidate.snapshots.find(({ resource }) => resource === "analysis_global_background_rhythms").key)));
 check(() => assert.deepEqual(Object.keys(candidate.artifacts.find(({ version }) => version.family === "global_candidate_adapters").payload.candidateAdapters), ["timeline"]));
-check(() => assert.equal(candidate.artifacts.filter(({ version }) => version.family === "global_legacy_grocery_adapter").length, 1));
+check(() => assert.equal(candidate.artifacts.filter(({ version }) => version.family === "global_legacy_grocery_adapter").length, 0));
 
 const productionSizeDiagnostics = Object.fromEntries(Object.entries({
   foodAnnual: foodRhythmProjectionFixture.annual,

@@ -196,7 +196,8 @@ assert.equal(grocery.inputHash.length, 64);
 assert.equal(new Set(grocery.dependencyClosure.map(({ ref }) => ref)).size, grocery.dependencyClosure.length);
 const integrated = await resolveGlobalV2ProductionOwnerOutputs(repository);
 assert.equal(integrated.candidateAdapters.timeline.inputHash, timeline.inputHash, "Le wiring production doit exposer le même bundle Timeline.");
-assert.equal(integrated.candidateAdapters.grocery.inputHash, grocery.inputHash, "Le wiring production doit exposer le même bundle Courses.");
+assert.deepEqual(Object.keys(integrated.candidateAdapters), ["timeline"], "Le produit final ne doit conserver que l’adapter Timeline.");
+assert.equal(integrated.groceryAuthority.inputHash, grocery.inputHash, "L’autorité Courses doit rester disponible en amont pour FOOD.");
 assert.equal(integrated.ownerOutputs.length, 10, "D3 ne doit créer aucun nouvel owner.");
 
 const candidate = buildGlobalV2CandidateFromOwnerOutputs({
@@ -244,10 +245,8 @@ const fckgDetail = detailByName("Soirée techno – FCKG Halloween");
 assert.equal(fckgDetail?.metrics.find(({ metricId }) => metricId.endsWith(":causal-cost"))?.typedMeasure?.value, "0");
 assert.equal(fckgDetail?.momentComponentRows.length, 0);
 const groceryDetail = candidate.snapshots.find(({ resource, params }) => resource === "analysis_global_routine_detail" && params.entityRef === "household-activity:courses_alimentaires")?.payload;
-assert.ok(groceryDetail?.groceryRhythm, "L'adapter Courses doit être exposé dans le détail routine.");
-assert.equal(groceryDetail.groceryRhythm.thresholds.p25.value, "18.29");
-assert.equal(groceryDetail.groceryRhythm.thresholds.p75.value, "51.99");
-assert.equal(groceryDetail.groceryRhythm.eligibleMonthCount, 9);
-assert.equal(groceryDetail.groceryRhythm.months.filter(({ coverage }) => coverage < 0.7).every(({ basketStructure }) => basketStructure.status === "GATED"), true);
+assert.ok(groceryDetail, "Le détail routine générique Courses doit rester disponible lorsqu’il est matériel.");
+assert.equal("groceryRhythm" in groceryDetail, false, "Le détail routine ne doit plus transporter le produit Grocery retiré.");
+assert.ok(groceryDetail.metrics.some(({ metricId }) => metricId.endsWith(":median")), "Le profil de coût M4 générique doit rester lisible.");
 
-console.log(`D4 real fixture: timeline ${timeline.events.length}, details ${details.length}, peers ${peerObservations.length}, components ${componentRows.length}, grocery ${grocery.eligibleMonthCount}/12 eligible — PASS (offline read-only fixture).`);
+console.log(`D4 real fixture: timeline ${timeline.events.length}, details ${details.length}, peers ${peerObservations.length}, components ${componentRows.length}, grocery authority ${grocery.eligibleMonthCount}/12 eligible — PASS (offline read-only fixture).`);

@@ -403,10 +403,9 @@ check(() => assert.equal([comparedMoment, homeMoment].flatMap(({ data }) => data
 check(() => assert.equal([comparedMoment, unpairedMoment, homeMoment].every(({ data }) => data.spentDuringContext?.relationToCausalCost === "INDEPENDENT_SCOPE"), true));
 for (const result of [householdActivity, groceryActivity, adrienActivity, manonActivity]) check(() => assert.equal(query.globalExpandedReadModelSchema.safeParse(result.data).success, true));
 check(() => assert.equal(householdActivity.data.metrics.find(({ metricId }) => metricId.endsWith(":median"))?.typedMeasure?.value, "18"));
-check(() => assert.equal(groceryActivity.data.groceryRhythm?.months.length, 12));
-check(() => assert.equal(groceryActivity.data.groceryRhythm?.eligibleMonthCount, 9));
-check(() => assert.deepEqual([groceryActivity.data.groceryRhythm?.thresholds.p25.value, groceryActivity.data.groceryRhythm?.thresholds.p75.value], ["18.29", "51.99"]));
-check(() => assert.equal(groceryActivity.data.groceryRhythm?.months.filter(({ basketStructure }) => basketStructure.status === "KNOWN").length, 9));
+check(() => assert.equal("groceryRhythm" in groceryActivity.data, false));
+check(() => assert.ok(groceryActivity.data.metrics.some(({ metricId }) => metricId.endsWith(":median"))));
+check(() => assert.equal(query.globalExpandedReadModelSchema.safeParse({ ...groceryActivity.data, groceryRhythm: {} }).success, false));
 check(() => assert.deepEqual(adrienActivity.data.metrics.filter(({ metricId }) => metricId.endsWith(":occurrences") || metricId.endsWith(":cadence")).map(({ typedMeasure }) => typedMeasure?.value), ["8", "7"]));
 check(() => assert.deepEqual(manonActivity.data.metrics.filter(({ metricId }) => metricId.endsWith(":occurrences") || metricId.endsWith(":cadence")).map(({ typedMeasure }) => typedMeasure?.value), ["6", "9"]));
 

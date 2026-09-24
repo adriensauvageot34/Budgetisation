@@ -287,7 +287,7 @@ export async function resolveGlobalV2ProductionOwnerOutputs(repository: Canonica
     })),
     resolveGlobalMomentComponentPresentation({ repository, m6 }),
   ]);
-  const candidateAdapters = { timeline, grocery };
+  const candidateAdapters = { timeline };
   const persona = buildGlobalV2PersonaSignals({
     householdId: context.householdId,
     personIds: context.personIds,
@@ -337,7 +337,7 @@ export async function resolveGlobalV2ProductionOwnerOutputs(repository: Canonica
     { moduleKey: "TOGETHER", owner: "SharedParticipationResolver", output: m10, knowledge: m10.universes.length > 0 ? "PARTIAL" : "UNKNOWN", capabilityState: context.personIds.length === 2 ? "PARTIAL" : "UNAVAILABLE", reasonCodes: m10.universes.length > 0 ? ["PARTICIPATION_COVERAGE_VISIBLE"] : ["SHARED_UNIVERSE_UNAVAILABLE"], evidenceRefs: evidence("M10", m10) },
     { moduleKey: "PERSONAS", owner: "buildGlobalV2PersonaSignals", output: m9, knowledge: persona.profile.profiles.length > 0 ? "PARTIAL" : personaMetrics.length > 0 ? "PARTIAL" : "UNKNOWN", capabilityState: context.personIds.length > 0 ? "PARTIAL" : "UNAVAILABLE", reasonCodes: persona.limitations, evidenceRefs: evidence("M9", m9) },
   ];
-  return { scope, certifiedThrough, targetMonth, ownerOutputs, presentationLabels, candidateAdapters, semanticTimeline, momentComponentPresentation, personRegimeAuthorities, m5Product, m5RelationshipEvolution, persona };
+  return { scope, certifiedThrough, targetMonth, ownerOutputs, presentationLabels, candidateAdapters, groceryAuthority: grocery, semanticTimeline, momentComponentPresentation, personRegimeAuthorities, m5Product, m5RelationshipEvolution, persona };
 }
 
 /** Read-only production bridge: this API exposes no materialization store. */

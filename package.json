@@ -68,6 +68,7 @@
     "check:global-v2-car-mobility-rhythm": "node --experimental-strip-types scripts/check-global-v2-car-mobility-rhythm.mjs",
     "check:global-v2-food-rhythm": "node --experimental-strip-types scripts/check-global-v2-food-rhythm.mjs",
     "check:global-v2-background-rhythms": "node --experimental-strip-types scripts/check-global-v2-background-rhythms.mjs",
+    "check:global-v2-background-rhythms-cutover": "node scripts/check-global-v2-background-rhythms-cutover.mjs",
     "check:mobility-context-live": "node scripts/check-mobility-context-live.mjs",
     "check:personal-mobility": "node --experimental-strip-types scripts/check-personal-mobility.mjs",
     "mobility:dry-run": "node --experimental-strip-types scripts/import-canonical-mobility.mjs --dry-run",

@@ -98,7 +98,6 @@ export {
   type GlobalMomentPeerObservation,
   type GlobalMomentSimilarity,
   type GlobalSpentDuringContext,
-  type GlobalGroceryRhythmContext,
   type GlobalDetailSeries,
   type GlobalDetailSeriesPoint,
   type GlobalExpandedReadModel,

@@ -51,7 +51,6 @@ import {
   type GlobalMomentPeerObservation,
   type GlobalMomentSimilarity,
   type GlobalSpentDuringContext,
-  type GlobalGroceryRhythmContext,
   type GlobalTimelineEvent,
   type GlobalPhenomenonQuality,
   type GlobalTypedMeasure,
@@ -64,7 +63,7 @@ import {
   type GlobalV2QueryParams,
   type GlobalV2QueryResourceName,
 } from "@/query-api/global-v2";
-import type { GlobalGroceryCandidateBundle, GlobalTimelineCandidateBundle } from "@/analytics/global-v2/candidate-adapters";
+import type { GlobalTimelineCandidateBundle } from "@/analytics/global-v2/candidate-adapters";
 import type { GlobalMomentComponentPresentationBundle } from "./global-v2-moment-component-presentation";
 import { buildGlobalTimelineQuerySnapshots } from "./global-v2-timeline-query";
 import {
@@ -136,8 +135,8 @@ export type GlobalV2CandidateInput = {
   readonly implementationIdentity: string;
   readonly ownerOutputs: readonly GlobalV2OwnerOutput[];
   readonly presentationLabels?: GlobalV2PresentationLabels;
-  readonly candidateAdapters: { readonly timeline: GlobalTimelineCandidateBundle; readonly grocery: GlobalGroceryCandidateBundle };
-  /** P6 publication input. Optional only for legacy pre-P6 fixtures and live preparation. */
+  readonly candidateAdapters: { readonly timeline: GlobalTimelineCandidateBundle };
+  /** P9 publication input. An absent projection fails closed in the new UI; it never restores the retired Grocery presentation. */
   readonly backgroundRhythms?: { readonly food: GlobalFoodRhythmProjection; readonly carMobility: GlobalCarMobilityRhythmProjection };
   /** Required by the live S6 path. Optional only for the temporary pre-S7 fixture bridge. */
   readonly semanticTimeline?: Readonly<{ readonly projection: TimelineSemanticProjection; readonly comparator: TimelineSemanticComparatorProjection }>;
@@ -173,7 +172,6 @@ type SectionProjection = {
   readonly momentComponentRows?: readonly GlobalMomentComponentRow[];
   readonly componentGroups?: readonly GlobalMomentComponentGroup[];
   readonly spentDuringContext?: GlobalSpentDuringContext;
-  readonly groceryRhythm?: GlobalGroceryRhythmContext;
   readonly profile?: PersonaProfileOutput;
 };
 type ModuleProjection = {
@@ -1350,22 +1348,6 @@ function routineDetailProjection(output: GlobalV2OwnerOutput, labels: GlobalV2Pr
   return undefined;
 }
 
-function groceryRhythmContext(bundle: GlobalGroceryCandidateBundle): GlobalGroceryRhythmContext {
-  return {
-    grain: bundle.grain,
-    policyRef: bundle.basketPolicy.policyVersion,
-    thresholds: { p25: { kind: "MONEY", value: bundle.thresholds.p25, unit: "EUR" }, p75: { kind: "MONEY", value: bundle.thresholds.p75, unit: "EUR" } },
-    eligibleMonthCount: bundle.eligibleMonthCount,
-    historicalComparisonGate: bundle.historicalComparisonGate,
-    months: bundle.months.map((month) => ({
-      month: month.month, occurrenceCount: month.occurrenceCount, knownCostOccurrenceCount: month.knownCostOccurrenceCount, coverage: month.coverage,
-      basketStructure: month.basketStructure,
-      monthlyGrocerySpend: month.monthlyGrocerySpend.status === "KNOWN" ? { status: "KNOWN", value: { kind: "MONEY", value: month.monthlyGrocerySpend.value, unit: "EUR" } } : { status: "UNKNOWN" },
-      limitationCodes: [...month.limitationCodes].sort(),
-    })),
-  };
-}
-
 function momentDetailProjection(
   output: GlobalV2OwnerOutput,
   entityRef: string,
@@ -1832,7 +1814,6 @@ export function buildGlobalV2CandidateFromOwnerOutputs(input: GlobalV2CandidateI
   const labelDigests = outputs.flatMap(({ moduleKey }) => labelInputsFor(moduleKey) === undefined ? [] : [{ moduleKey, digest: digest(labelInputsFor(moduleKey)) }]);
   const adapterDigests = [
     { family: "global_life_timeline_candidate_adapter", identity: input.candidateAdapters.timeline.adapterVersion, digest: input.candidateAdapters.timeline.inputHash },
-    { family: "global_grocery_candidate_adapter", identity: input.candidateAdapters.grocery.adapterVersion, digest: input.candidateAdapters.grocery.inputHash },
     ...(input.backgroundRhythms === undefined ? [] : [
       { family: "global_food_rhythm_projection", identity: input.backgroundRhythms.food.methodVersion, digest: digest(input.backgroundRhythms.food) },
       { family: "global_car_mobility_rhythm_projection", identity: input.backgroundRhythms.carMobility.methodVersion, digest: digest(input.backgroundRhythms.carMobility) },
@@ -2018,8 +1999,6 @@ export function buildGlobalV2CandidateFromOwnerOutputs(input: GlobalV2CandidateI
     }
     const detailResource = detailResourceFor(ownerOutput.moduleKey);
     const timelineMomentRows: readonly GlobalDetailRow[] = input.candidateAdapters.timeline.events.filter(({ sourceKind }) => sourceKind === "MOMENT").map((event, index) => ({ rowId: `timeline:${String(index).padStart(3, "0")}:${event.eventRef}`, labelKey: event.canonicalName, displayValue: event.typeLabel, knowledgeState: "KNOWN", entityRef: event.eventRef, evidenceRefs: [...event.quality.evidenceRefs].sort() }));
-    const groceryProfileAvailable = ownerOutput.moduleKey === "RHYTHM" && arrayOf(at(ownerOutput.output, "activityCostProfiles")).some((entry) => stringOf(at(entry, "activityId")) === "courses_alimentaires");
-    const groceryRow: GlobalDetailRow = { rowId: "timeline:grocery:courses_alimentaires", labelKey: "Courses alimentaires", knowledgeState: "KNOWN", entityRef: "household-activity:courses_alimentaires", evidenceRefs: [`adapter:${input.candidateAdapters.grocery.inputHash}`] };
     const personaProfile = ownerOutput.moduleKey === "PERSONAS" ? at(ownerOutput.output, "profile") as PersonaProfileOutput | undefined : undefined;
     const personaDetailRows: readonly GlobalDetailRow[] = personaProfile?.profiles.flatMap((profile, index) =>
       profile.scope !== "PERSONAL" || profile.subject.kind !== "PERSON" ? [] : [{
@@ -2030,15 +2009,14 @@ export function buildGlobalV2CandidateFromOwnerOutputs(input: GlobalV2CandidateI
         entityRef: `person:${profile.subject.personId}`,
         evidenceRefs: [],
       }]) ?? [];
-    const sourceDetailRows = ownerOutput.moduleKey === "MOMENTS" ? timelineMomentRows : ownerOutput.moduleKey === "PERSONAS" ? personaDetailRows : ownerOutput.moduleKey === "RHYTHM" && groceryProfileAvailable ? [groceryRow, ...projection.detailRows] : projection.detailRows;
+    const sourceDetailRows = ownerOutput.moduleKey === "MOMENTS" ? timelineMomentRows : ownerOutput.moduleKey === "PERSONAS" ? personaDetailRows : projection.detailRows;
     const uniqueDetailRows = [...new Map(sourceDetailRows.flatMap((detailRow) => detailRow.entityRef === undefined ? [] : [[detailRow.entityRef, detailRow] as const])).values()];
     const detailRows = ownerOutput.moduleKey === "MOMENTS" || ownerOutput.moduleKey === "GEO_MOBILITY" ? uniqueDetailRows : uniqueDetailRows.slice(0, GLOBAL_MAX_SECTION_ROWS);
     if (detailResource !== undefined) for (const detailRow of detailRows) {
       const params = { entityRef: detailRow.entityRef! };
       const economicDetail = ownerOutput.moduleKey === "ECONOMIC" ? economicRecurrenceDetail(ownerOutput, detailRow.entityRef!) : undefined;
       const categoryNeedDetail = ownerOutput.moduleKey === "CATEGORIES_NEEDS" ? categoryNeedDetailProjection(ownerOutput, presentationLabels, detailRow.entityRef!) : undefined;
-      const routineBase = ownerOutput.moduleKey === "RHYTHM" ? routineDetailProjection(ownerOutput, presentationLabels, input.personIds, detailRow.entityRef!) : undefined;
-      const routineDetail = routineBase === undefined ? undefined : detailRow.entityRef === "household-activity:courses_alimentaires" ? { ...routineBase, groceryRhythm: groceryRhythmContext(input.candidateAdapters.grocery) } : routineBase;
+      const routineDetail = ownerOutput.moduleKey === "RHYTHM" ? routineDetailProjection(ownerOutput, presentationLabels, input.personIds, detailRow.entityRef!) : undefined;
       const momentDetail = ownerOutput.moduleKey === "MOMENTS" ? momentDetailProjection(ownerOutput, detailRow.entityRef!, input.candidateAdapters.timeline, input.momentComponentPresentation, scopeHash) : undefined;
       const placeDetail = ownerOutput.moduleKey === "GEO_MOBILITY" ? placeDetailProjection(ownerOutput, presentationLabels, detailRow.entityRef!) : undefined;
       const personaDetailIndex = ownerOutput.moduleKey === "PERSONAS" && personaProfile !== undefined && detailRow.entityRef!.startsWith("person:")
@@ -2057,7 +2035,7 @@ export function buildGlobalV2CandidateFromOwnerOutputs(input: GlobalV2CandidateI
         payload: buildGlobalExpandedReadModel({
           kind: "global_expanded", schemaVersion: "global-expanded@v1", resource: detailResource, moduleKey: ownerOutput.moduleKey, sectionKey: "OVERVIEW", visibility: "VISIBLE", secondaryInsights: [], metrics: detail?.metrics ?? [], series: detail?.series ?? [],
           rows: personaDetailIndex === undefined ? detail?.rows ?? [{ ...detailRow, rowId: `detail:${detailRow.rowId}` }] : [], destinations,
-          ...(detail?.peerObservations === undefined ? {} : { peerObservations: detail.peerObservations }), ...(detail?.similarity === undefined ? {} : { similarity: detail.similarity }), ...(detail?.momentComponentRows === undefined ? {} : { momentComponentRows: detail.momentComponentRows }), ...(detail?.componentGroups === undefined ? {} : { componentGroups: detail.componentGroups }), ...(detail?.spentDuringContext === undefined ? {} : { spentDuringContext: detail.spentDuringContext }), ...(detail?.groceryRhythm === undefined ? {} : { groceryRhythm: detail.groceryRhythm }),
+          ...(detail?.peerObservations === undefined ? {} : { peerObservations: detail.peerObservations }), ...(detail?.similarity === undefined ? {} : { similarity: detail.similarity }), ...(detail?.momentComponentRows === undefined ? {} : { momentComponentRows: detail.momentComponentRows }), ...(detail?.componentGroups === undefined ? {} : { componentGroups: detail.componentGroups }), ...(detail?.spentDuringContext === undefined ? {} : { spentDuringContext: detail.spentDuringContext }),
           ...(personaDetailIndex === undefined ? {} : { personaDetailIndex }),
           quality: categoryNeedDetail?.quality ?? quality(ownerOutput), capabilities: [capability(ownerOutput)], publicationMeta: provisionalMeta, resourceMeta: metaFor(detailResource, params, dependencies),
         }),
@@ -2168,20 +2146,12 @@ export function buildGlobalV2CandidateFromOwnerOutputs(input: GlobalV2CandidateI
     },
     {
       key: `global-artifact:candidate-adapters:${scopeHash}`,
-      semanticBody: { candidateAdapters: input.backgroundRhythms === undefined ? input.candidateAdapters : { timeline: input.candidateAdapters.timeline } },
+      semanticBody: { candidateAdapters: input.candidateAdapters },
       family: "global_candidate_adapters",
       contractVersion: "global-candidate-adapters@v1",
-      dependencies: dependenciesMatching(({ family }) => family === "global_life_timeline_candidate_adapter" || (input.backgroundRhythms === undefined && family === "global_grocery_candidate_adapter")),
-      resourceInput: { scope, adapterDigests: adapterDigests.filter(({ family }) => family === "global_life_timeline_candidate_adapter" || (input.backgroundRhythms === undefined && family === "global_grocery_candidate_adapter")) },
+      dependencies: dependenciesMatching(({ family }) => family === "global_life_timeline_candidate_adapter"),
+      resourceInput: { scope, adapterDigests: adapterDigests.filter(({ family }) => family === "global_life_timeline_candidate_adapter") },
     },
-    ...(input.backgroundRhythms === undefined ? [] : [{
-      key: `global-artifact:legacy-grocery-adapter:${scopeHash}`,
-      semanticBody: { grocery: input.candidateAdapters.grocery },
-      family: "global_legacy_grocery_adapter",
-      contractVersion: "global-legacy-grocery-adapter@v1",
-      dependencies: dependenciesMatching(({ family }) => family === "global_grocery_candidate_adapter"),
-      resourceInput: { scope, adapterDigests: adapterDigests.filter(({ family }) => family === "global_grocery_candidate_adapter") },
-    }]),
     ...(input.backgroundRhythms === undefined ? [] : [{
       key: `global-artifact:background-rhythms:${scopeHash}`,
       semanticBody: { backgroundRhythms: input.backgroundRhythms },

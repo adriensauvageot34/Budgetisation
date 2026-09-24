@@ -574,34 +574,13 @@ function lifeRoutineDetailFixture(entityRef: string): GlobalExpandedReadModel {
   const known = entityRef.endsWith(":cinema") ? "5" : "9";
   const total = entityRef.endsWith(":cinema") ? "7" : "12";
   const coverage = entityRef.endsWith(":cinema") ? "0.714285" : "0.75";
-  const groceryRhythm = entityRef === "household-activity:courses_alimentaires" ? {
-    grain: "HOUSEHOLD_MONTH" as const,
-    policyRef: "global-grocery-basket-structure@v1",
-    thresholds: { p25: { kind: "MONEY" as const, unit: "EUR", value: "18.29" }, p75: { kind: "MONEY" as const, unit: "EUR", value: "51.99" } },
-    eligibleMonthCount: 9,
-    historicalComparisonGate: "AVAILABLE" as const,
-    months: [
-      { month: "2025-08", occurrenceCount: 8, knownCostOccurrenceCount: 8, coverage: 1, basketStructure: { status: "KNOWN" as const, small: 2, intermediate: 3, large: 3 }, monthlyGrocerySpend: { status: "KNOWN" as const, value: { kind: "MONEY" as const, unit: "EUR", value: "479.74" } }, limitationCodes: [] },
-      { month: "2025-09", occurrenceCount: 6, knownCostOccurrenceCount: 4, coverage: 0.6666666666666666, basketStructure: { status: "GATED" as const, reasonCode: "COVERAGE_BELOW_70_PERCENT" as const }, monthlyGrocerySpend: { status: "KNOWN" as const, value: { kind: "MONEY" as const, unit: "EUR", value: "662.71" } }, limitationCodes: ["BASKET_STRUCTURE_COVERAGE_BELOW_70_PERCENT"] },
-      { month: "2025-10", occurrenceCount: 6, knownCostOccurrenceCount: 6, coverage: 1, basketStructure: { status: "KNOWN" as const, small: 0, intermediate: 3, large: 3 }, monthlyGrocerySpend: { status: "KNOWN" as const, value: { kind: "MONEY" as const, unit: "EUR", value: "546.58" } }, limitationCodes: [] },
-      { month: "2025-11", occurrenceCount: 10, knownCostOccurrenceCount: 9, coverage: 0.9, basketStructure: { status: "KNOWN" as const, small: 1, intermediate: 6, large: 2 }, monthlyGrocerySpend: { status: "KNOWN" as const, value: { kind: "MONEY" as const, unit: "EUR", value: "417.8" } }, limitationCodes: [] },
-      { month: "2025-12", occurrenceCount: 9, knownCostOccurrenceCount: 7, coverage: 0.7777777777777778, basketStructure: { status: "KNOWN" as const, small: 3, intermediate: 3, large: 1 }, monthlyGrocerySpend: { status: "KNOWN" as const, value: { kind: "MONEY" as const, unit: "EUR", value: "280.98" } }, limitationCodes: [] },
-      { month: "2026-01", occurrenceCount: 10, knownCostOccurrenceCount: 9, coverage: 0.9, basketStructure: { status: "KNOWN" as const, small: 3, intermediate: 3, large: 3 }, monthlyGrocerySpend: { status: "KNOWN" as const, value: { kind: "MONEY" as const, unit: "EUR", value: "536.38" } }, limitationCodes: [] },
-      { month: "2026-02", occurrenceCount: 10, knownCostOccurrenceCount: 8, coverage: 0.8, basketStructure: { status: "KNOWN" as const, small: 2, intermediate: 4, large: 2 }, monthlyGrocerySpend: { status: "KNOWN" as const, value: { kind: "MONEY" as const, unit: "EUR", value: "356.29" } }, limitationCodes: [] },
-      { month: "2026-03", occurrenceCount: 8, knownCostOccurrenceCount: 5, coverage: 0.625, basketStructure: { status: "GATED" as const, reasonCode: "COVERAGE_BELOW_70_PERCENT" as const }, monthlyGrocerySpend: { status: "KNOWN" as const, value: { kind: "MONEY" as const, unit: "EUR", value: "248.47" } }, limitationCodes: ["BASKET_STRUCTURE_COVERAGE_BELOW_70_PERCENT"] },
-      { month: "2026-04", occurrenceCount: 12, knownCostOccurrenceCount: 9, coverage: 0.75, basketStructure: { status: "KNOWN" as const, small: 3, intermediate: 5, large: 1 }, monthlyGrocerySpend: { status: "KNOWN" as const, value: { kind: "MONEY" as const, unit: "EUR", value: "353.74" } }, limitationCodes: [] },
-      { month: "2026-05", occurrenceCount: 11, knownCostOccurrenceCount: 9, coverage: 0.8181818181818182, basketStructure: { status: "KNOWN" as const, small: 4, intermediate: 5, large: 0 }, monthlyGrocerySpend: { status: "KNOWN" as const, value: { kind: "MONEY" as const, unit: "EUR", value: "397.06" } }, limitationCodes: [] },
-      { month: "2026-06", occurrenceCount: 11, knownCostOccurrenceCount: 8, coverage: 0.7272727272727273, basketStructure: { status: "KNOWN" as const, small: 1, intermediate: 2, large: 5 }, monthlyGrocerySpend: { status: "KNOWN" as const, value: { kind: "MONEY" as const, unit: "EUR", value: "556.16" } }, limitationCodes: [] },
-      { month: "2026-07", occurrenceCount: 9, knownCostOccurrenceCount: 5, coverage: 0.5555555555555556, basketStructure: { status: "GATED" as const, reasonCode: "COVERAGE_BELOW_70_PERCENT" as const }, monthlyGrocerySpend: { status: "KNOWN" as const, value: { kind: "MONEY" as const, unit: "EUR", value: "439.97" } }, limitationCodes: ["BASKET_STRUCTURE_COVERAGE_BELOW_70_PERCENT"] },
-    ],
-  } : undefined;
   return {
     kind: "global_expanded", schemaVersion: "global-expanded@v1", resource: "analysis_global_routine_detail", moduleKey: "RHYTHM", sectionKey: "OVERVIEW", visibility: "VISIBLE", secondaryInsights: [],
     metrics: [lifeDetailMetric(`${entityRef}:median`, "Médiane des occurrences dont un coût est directement relié", "MONEY", median, "EUR/occurrence", `${median} €`), lifeDetailMetric(`${entityRef}:known-count`, "Occurrences renseignées", "COUNT", known, "occurrence", known), lifeDetailMetric(`${entityRef}:total-count`, "Occurrences observées au foyer", "COUNT", total, "occurrence", total), lifeDetailMetric(`${entityRef}:coverage`, "Couverture des coûts directement reliés", "RATIO", coverage, "ratio", `${Math.round(Number(coverage) * 100)} %`)],
     series: [], rows: [
       { rowId: `context:001:${entityRef}:adrien`, labelKey: `${activity} · Adrien`, displayValue: "8 occurrences · intervalle médian 7 jours", typedMeasure: { kind: "COUNT", value: "8", unit: "occurrence" }, knowledgeState: "KNOWN", entityRef: `person-activity:adrien:${entityRef.split(":").at(-1)}`, evidenceRefs: ["evidence:life:adrien"] },
       { rowId: `context:002:${entityRef}:manon`, labelKey: `${activity} · Manon`, displayValue: "6 occurrences · intervalle médian 9 jours", typedMeasure: { kind: "COUNT", value: "6", unit: "occurrence" }, knowledgeState: "KNOWN", entityRef: `person-activity:manon:${entityRef.split(":").at(-1)}`, evidenceRefs: ["evidence:life:manon"] },
-    ], destinations: [], ...(groceryRhythm === undefined ? {} : { groceryRhythm }), quality: qualityKnown, capabilities: [{ capabilityId: "GLOBAL_RHYTHM_DETAIL", state: "AVAILABLE", reasonCodes: [] }], publicationMeta, resourceMeta: resourceMeta(34),
+    ], destinations: [], quality: qualityKnown, capabilities: [{ capabilityId: "GLOBAL_RHYTHM_DETAIL", state: "AVAILABLE", reasonCodes: [] }], publicationMeta, resourceMeta: resourceMeta(34),
   };
 }
 
