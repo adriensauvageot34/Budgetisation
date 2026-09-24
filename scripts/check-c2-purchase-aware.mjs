@@ -95,6 +95,9 @@ check(() => assert.equal(project([{ ...mixed, operationOwnerSourceKind: "Operati
 const splitLegacy = { ...legacy, canonicalComponentKey: `allocation:${uuid(8)}` };
 check(() => assert.equal(project([mixed], "PURCHASE_AWARE_PILOT", [legacy, splitLegacy]).facts.length, 1));
 check(() => assert.equal(project([mixed], "PURCHASE_AWARE_PILOT", [legacy]).facts[0].reconciliation, "PURCHASE_OWNER_RECONCILED"));
+check(() => assert.equal(project([{ ...mixed, purchaseTaxonomy: {
+  categoryId: uuid(40), subcategoryId: uuid(41), needId: uuid(42), merchantId: uuid(43),
+}, semanticPurpose: "WORK_LUNCH" }], "PURCHASE_AWARE_PILOT", [legacy]).facts[0].taxonomy.subcategoryId, uuid(41)));
 check(() => assert.equal(project([purchase({ ...mixed, operationCanonicalFactCount: 0 })], "PURCHASE_AWARE_PILOT", [legacy]).blocking[0].reason, "OPERATION_CANONICAL_OWNER_ABSENT"));
 
 // F3: funding composition is explanatory; gross is read once from the event.

@@ -1637,7 +1637,7 @@ export class CanonicalRepository {
       const events = await this.readRowsPaginated(
         `purchase-aware-events:${this.context.householdId}`, "purchase_events",
         (from, to) => this.client.from("purchase_events")
-          .select("purchase_event_id,household_id,gross_amount::text,gross_amount_status")
+          .select("purchase_event_id,household_id,gross_amount::text,gross_amount_status,category_id,subcategory_id,need_id,merchant_id,semantic_purpose")
           .eq("household_id", this.context.householdId)
           .eq("purchase_visibility", "PURCHASE_AWARE_PILOT")
           .order("purchase_event_id", { ascending: true })
@@ -1747,11 +1747,19 @@ export class CanonicalRepository {
         const operation = ownerOperation === undefined ? undefined : operationById.get(ownerOperation.sourceId);
         const native = nativeByEvent.get(id);
         const rawAmount = event.gross_amount;
+        const purchaseTaxonomy = {
+          categoryId: optionalCanonicalString(event, ["category_id"]) ?? null,
+          subcategoryId: optionalCanonicalString(event, ["subcategory_id"]) ?? null,
+          needId: optionalCanonicalString(event, ["need_id"]) ?? null,
+          merchantId: optionalCanonicalString(event, ["merchant_id"]) ?? null,
+        };
         return {
           purchaseEventId: id,
           householdId: canonicalString(event, ["household_id"], "purchase_events") as PurchaseAwarePurchase["householdId"],
           grossAmount: rawAmount === null ? null : String(rawAmount),
           grossAmountStatus: canonicalString(event, ["gross_amount_status"], "purchase_events") as PurchaseAwarePurchase["grossAmountStatus"],
+          ...(Object.values(purchaseTaxonomy).some((value) => value !== null) ? { purchaseTaxonomy } : {}),
+          semanticPurpose: optionalCanonicalString(event, ["semantic_purpose"]) ?? null,
           sources: eventSources,
           timingAssertions: (timingByEvent.get(id) ?? []).map((row) => ({
             authority: canonicalString(row, ["timing_authority"], "purchase_events") as PurchaseAwarePurchase["timingAssertions"][number]["authority"],

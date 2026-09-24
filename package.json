@@ -48,6 +48,7 @@
     "check:global-v2-place-authority": "node scripts/check-global-v2-place-authority.mjs",
     "check:global-v2-purchases": "node scripts/check-global-v2-purchases.mjs",
     "check:c2-purchase-aware": "node scripts/check-c2-purchase-aware.mjs",
+    "check:c3-swile-staging": "node scripts/check-c3-swile-staging.mjs",
     "check:global-v2-purchase-authority": "node scripts/check-global-v2-purchase-authority.mjs",
     "check:global-v2-purchase-convergence": "node --experimental-strip-types scripts/check-global-v2-purchase-convergence.mjs",
     "check:global-v2-persona": "node --experimental-strip-types scripts/check-global-v2-persona.mjs",

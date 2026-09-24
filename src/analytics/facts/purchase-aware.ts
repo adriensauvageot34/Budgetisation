@@ -110,6 +110,13 @@ export type PurchaseAwarePurchase = {
     readonly needId: string | null;
     readonly merchantId: string | null;
   };
+  readonly purchaseTaxonomy?: {
+    readonly categoryId: string | null;
+    readonly subcategoryId: string | null;
+    readonly needId: string | null;
+    readonly merchantId: string | null;
+  };
+  readonly semanticPurpose?: string | null;
 };
 
 export type PurchaseAwareEconomicFact = {
@@ -129,6 +136,7 @@ export type PurchaseAwareEconomicFact = {
     readonly merchantId: string | null;
   };
   readonly timing: PurchaseEventTiming;
+  readonly semanticPurpose: string | null;
   readonly classification: Readonly<Record<"necessity" | "behavior" | "lifeScope", ComponentAxisClassification>>;
   readonly reconciliation: "PURCHASE_OWNER_RECONCILED" | "PURCHASE_OWNER_PARTIAL" | "PURCHASE_OWNER_UNKNOWN" | "PURCHASE_OWNER_CONFLICT";
 };
@@ -260,15 +268,16 @@ export function projectPurchaseAwareCanonical(input: {
         : { kind: "not_applicable" },
       economicAmount,
       bankAmount,
-      taxonomy: owner.kind === "operation"
+      taxonomy: purchase.purchaseTaxonomy ?? (owner.kind === "operation"
         ? purchase.operationTaxonomy ?? { categoryId: null, subcategoryId: null, needId: null, merchantId: null }
         : {
           categoryId: purchase.nativeComponent?.categoryId ?? null,
           subcategoryId: purchase.nativeComponent?.subcategoryId ?? null,
           needId: purchase.nativeComponent?.needId ?? null,
           merchantId: purchase.nativeComponent?.merchantId ?? null,
-        },
+        }),
       timing,
+      semanticPurpose: purchase.semanticPurpose ?? null,
       classification: purchaseClassifications(purchase),
       reconciliation: economicAmount.status === "KNOWN" ? "PURCHASE_OWNER_RECONCILED"
         : economicAmount.status === "LOWER_BOUND" ? "PURCHASE_OWNER_PARTIAL"
