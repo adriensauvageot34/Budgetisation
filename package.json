@@ -71,6 +71,7 @@
     "check:global-v2-background-rhythms-cutover": "node scripts/check-global-v2-background-rhythms-cutover.mjs",
     "check:mobility-context-live": "node scripts/check-mobility-context-live.mjs",
     "check:personal-mobility": "node --experimental-strip-types scripts/check-personal-mobility.mjs",
+    "check:global-v2-event-mobility": "node --experimental-strip-types scripts/check-global-v2-event-mobility.mjs",
     "mobility:dry-run": "node --experimental-strip-types scripts/import-canonical-mobility.mjs --dry-run",
     "check:analytics-materialization": "node scripts/check-analytics-materialization.mjs",
     "check:exploration-entities": "node scripts/check-exploration-entities.mjs",

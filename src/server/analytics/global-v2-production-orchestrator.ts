@@ -34,6 +34,7 @@ import { resolveGlobalM2HouseholdAuthority } from "./global-v2-category-needs-au
 import { resolveGlobalM5PersonAuthority } from "./global-v2-relationship-authority";
 import { resolveGlobalM6MomentAuthority } from "./global-v2-moment-authority";
 import { resolveGlobalM7PersonalMobilityAuthority } from "./global-v2-personal-mobility-authority";
+import { resolveGlobalM7EventMobilityAuthority } from "./global-v2-event-mobility-authority";
 import { resolveGlobalM7PlaceAuthority } from "./global-v2-place-authority";
 import { resolveGlobalM8PurchaseAuthority } from "./global-v2-purchase-authority";
 import { buildGlobalV2PersonaSignals, resolveGlobalPersonaProductObservations } from "./global-v2-persona-signals";
@@ -111,6 +112,9 @@ export async function resolveGlobalV2ProductionOwnerOutputs(repository: Canonica
     resolveGlobalM7PersonalMobilityAuthority({ repository, certifiedThrough }),
     resolveGlobalPersonaProductObservations({ repository, certifiedThrough: parseLocalDate(certifiedThrough) }),
   ]);
+  // Event Mobility is available to later M7 work in memory. The current
+  // candidate and its persisted artifacts remain on their V2 contract.
+  const eventMobilityAuthority = await resolveGlobalM7EventMobilityAuthority({ repository, certifiedThrough });
   const m7 = {
     ...m7Place,
     personalMobilitySummaries: m7PersonalMobility.summaries,
@@ -348,7 +352,7 @@ export async function resolveGlobalV2ProductionOwnerOutputs(repository: Canonica
     { moduleKey: "TOGETHER", owner: "SharedParticipationResolver", output: m10, knowledge: m10.universes.length > 0 ? "PARTIAL" : "UNKNOWN", capabilityState: context.personIds.length === 2 ? "PARTIAL" : "UNAVAILABLE", reasonCodes: m10.universes.length > 0 ? ["PARTICIPATION_COVERAGE_VISIBLE"] : ["SHARED_UNIVERSE_UNAVAILABLE"], evidenceRefs: evidence("M10", m10) },
     { moduleKey: "PERSONAS", owner: "buildGlobalV2PersonaSignals", output: m9, knowledge: persona.profile.profiles.length > 0 ? "PARTIAL" : personaMetrics.length > 0 ? "PARTIAL" : "UNKNOWN", capabilityState: context.personIds.length > 0 ? "PARTIAL" : "UNAVAILABLE", reasonCodes: persona.limitations, evidenceRefs: evidence("M9", m9) },
   ];
-  return { scope, certifiedThrough, targetMonth, ownerOutputs, presentationLabels, candidateAdapters, groceryAuthority: grocery, backgroundRhythms, semanticTimeline, momentComponentPresentation, personRegimeAuthorities, m5Product, m5RelationshipEvolution, persona };
+  return { scope, certifiedThrough, targetMonth, ownerOutputs, eventMobilityAuthority, eventMobilityCapability: { state: "AVAILABLE" as const, methodVersion: eventMobilityAuthority.methodVersion, policyVersion: eventMobilityAuthority.policyVersion, costMetricId: eventMobilityAuthority.costMetricId, outputHash: eventMobilityAuthority.outputHash }, presentationLabels, candidateAdapters, groceryAuthority: grocery, backgroundRhythms, semanticTimeline, momentComponentPresentation, personRegimeAuthorities, m5Product, m5RelationshipEvolution, persona };
 }
 
 /** Read-only production bridge: this API exposes no materialization store. */

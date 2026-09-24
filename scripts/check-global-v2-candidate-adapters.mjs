@@ -196,6 +196,10 @@ assert.equal(grocery.months.filter(({ basketStructure }) => basketStructure.stat
 assert.equal(grocery.inputHash.length, 64);
 assert.equal(new Set(grocery.dependencyClosure.map(({ ref }) => ref)).size, grocery.dependencyClosure.length);
 const integrated = await resolveGlobalV2ProductionOwnerOutputs(repository);
+assert.equal(integrated.eventMobilityCapability.state, "AVAILABLE");
+assert.equal(integrated.eventMobilityCapability.outputHash, integrated.eventMobilityAuthority.outputHash);
+assert.equal(integrated.eventMobilityAuthority.summaries.length > 0, true, "L’Owner Event Mobility doit être exposé en mémoire.");
+assert.equal(integrated.eventMobilityAuthority.physicalUnionTotals.physicalLegCount > 0, true);
 assert.equal(integrated.candidateAdapters.timeline.inputHash, timeline.inputHash, "Le wiring production doit exposer le même bundle Timeline.");
 assert.deepEqual(Object.keys(integrated.candidateAdapters), ["timeline"], "Le produit final ne doit conserver que l’adapter Timeline.");
 assert.equal(integrated.groceryAuthority.inputHash, grocery.inputHash, "L’autorité Courses doit rester disponible en amont pour FOOD.");

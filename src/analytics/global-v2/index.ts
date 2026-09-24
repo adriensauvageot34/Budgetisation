@@ -278,6 +278,21 @@ export {
   type PersonalMobilityCouplePresenceFilter,
   type PersonalMobilitySummary,
 } from "./personal-mobility";
+export {
+  GLOBAL_M7_EVENT_MOBILITY_METHOD_VERSION,
+  GLOBAL_M7_EVENT_MOBILITY_POLICY_VERSION,
+  EVENT_MOBILITY_COST_METRIC_ID,
+  EVENT_MOBILITY_COST_METRIC_VERSION,
+  buildGlobalM7EventMobilityAuthority,
+  type EventMobilityContextLink,
+  type EventMobilityContextResolution,
+  type EventMobilityMembership,
+  type EventMobilityPhysicalTotals,
+  type EventMobilityRelationType,
+  type EventMobilitySummary,
+  type EventMobilityTrip,
+  type GlobalM7EventMobilityAuthority,
+} from "./event-mobility";
 export { recertifyGlobalCDForPlaceAndMoment } from "./place-recertification";
 export {
   GLOBAL_M8_METHOD_VERSION,
