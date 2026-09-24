@@ -207,7 +207,8 @@ export type EconomicComponentSourceKind =
   | "Allocation"
   | "Item"
   | "Payment_component"
-  | "Cash_economic_use";
+  | "Cash_economic_use"
+  | "Purchase_component";
 
 export type CanonicalPlaceValue =
   | {

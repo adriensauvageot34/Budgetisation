@@ -14,6 +14,8 @@ import {
   projectPersonDayFact,
   projectPlaceVisitFact,
   projectPurchaseEventFact,
+  projectPurchaseAwareCanonical,
+  parsePurchaseEventCanonicalSources,
   resolveEconomicComponentClassifications,
   type ActivityOccurrenceFact,
   type CanonicalHouseholdContext,
@@ -27,6 +29,8 @@ import {
   type PersonDayFact,
   type PlaceVisitFact,
   type PurchaseEventFact,
+  type PurchaseAwareCanonicalResult,
+  type PurchaseAwarePurchase,
   type MobilityLegFact,
 } from "@/analytics/facts";
 import {
@@ -1518,15 +1522,50 @@ export class CanonicalRepository {
     );
   }
 
+  private async defaultVisiblePurchaseEvents(
+    events: readonly CanonicalRecord[],
+  ): Promise<readonly CanonicalRecord[]> {
+    if (events.length === 0) return events;
+    const ids = events.map((row) => canonicalString(row, ["purchase_event_id"], "purchase_events"));
+    let visibilityRows: readonly CanonicalRecord[];
+    try {
+      visibilityRows = await this.readRowsByInBatches(
+        `purchase-event-visibility:${ids.join(",")}`, "purchase_events", ids,
+        ["purchase_event_id"], ["purchase_event_id"],
+        (batch) => this.client.from("purchase_events")
+          .select("purchase_event_id,purchase_visibility")
+          .in("purchase_event_id", batch)
+          .order("purchase_event_id", { ascending: true }),
+      );
+    } catch (error) {
+      const cause = error instanceof CanonicalReadError ? error.cause as CanonicalQueryErrorShape | undefined : undefined;
+      if (cause?.code === "42703" && cause.message?.includes("purchase_visibility")) return events;
+      throw error;
+    }
+    const visibilityById = byUniqueKey(visibilityRows, "purchase_event_id", "purchase_events");
+    if (visibilityById.size !== events.length) {
+      throw new CanonicalReadError("purchase_events", "La visibilité PurchaseEvent est incomplète.");
+    }
+    return events.filter((event) => {
+      const id = canonicalString(event, ["purchase_event_id"], "purchase_events");
+      const scope = optionalCanonicalString(visibilityById.get(id)!, ["purchase_visibility"]) ?? "DEFAULT";
+      if (scope !== "DEFAULT" && scope !== "PURCHASE_AWARE_PILOT") {
+        throw new CanonicalReadError("purchase_events", "Une visibilité PurchaseEvent est invalide.");
+      }
+      return scope === "DEFAULT";
+    });
+  }
+
   async loadPurchaseEvents(): Promise<readonly PurchaseEventFact[]> {
     return this.cached("facts:purchase-events", async () => {
-      const events = await this.readRows("purchase-events", "purchase_events", () =>
+      const allEvents = await this.readRows("purchase-events", "purchase_events", () =>
         this.client
           .from("purchase_events")
           .select("purchase_event_id,household_id,provenance")
           .eq("household_id", this.context.householdId)
           .order("purchase_event_id", { ascending: true }),
       );
+      const events = await this.defaultVisiblePurchaseEvents(allEvents);
       if (events.length === 0) return [];
       const ids = events.map((row) =>
         canonicalString(row, ["purchase_event_id"], "purchase_events"),
@@ -1580,6 +1619,184 @@ export class CanonicalRepository {
           });
         }),
       );
+    });
+  }
+
+  /** Explicit pilot boundary. Existing callers continue through loadEconomicFacts/loadPurchaseEvents. */
+  async loadPurchaseAwareCanonical(
+    range: CanonicalDateRange,
+    visibility: "DEFAULT" | "PURCHASE_AWARE_PILOT" = "DEFAULT",
+  ): Promise<PurchaseAwareCanonicalResult> {
+    return this.cached(`facts:purchase-aware:${visibility}:${range.start}:${range.endExclusive}`, async () => {
+      const legacyFacts = await this.loadEconomicFacts(range);
+      if (visibility === "DEFAULT") {
+        return projectPurchaseAwareCanonical({
+          visibility, householdId: this.context.householdId, range, legacyFacts, purchases: [],
+        });
+      }
+      const events = await this.readRowsPaginated(
+        `purchase-aware-events:${this.context.householdId}`, "purchase_events",
+        (from, to) => this.client.from("purchase_events")
+          .select("purchase_event_id,household_id,gross_amount::text,gross_amount_status")
+          .eq("household_id", this.context.householdId)
+          .eq("purchase_visibility", "PURCHASE_AWARE_PILOT")
+          .order("purchase_event_id", { ascending: true })
+          .range(from, to),
+      );
+      if (events.length === 0) {
+        return projectPurchaseAwareCanonical({
+          visibility, householdId: this.context.householdId, range, legacyFacts, purchases: [],
+        });
+      }
+      const ids = events.map((row) => canonicalString(row, ["purchase_event_id"], "purchase_events"));
+      const [membershipRows, timingRows, nativeRows] = await Promise.all([
+        this.readRowsByInBatches(
+          `purchase-aware-memberships:${ids.join(",")}`, "purchase_events", ids,
+          ["purchase_event_id", "membership_kind", "canonical_component_key"],
+          ["purchase_event_id", "membership_kind", "canonical_component_key"],
+          (batch) => this.client.from("purchase_event_memberships")
+            .select("purchase_event_id,membership_kind,operation_id,allocation_id,item_id,payment_component_id,cash_use_id,purchase_economic_component_id,canonical_component_key,evidence_refs,provenance")
+            .in("purchase_event_id", batch)
+            .order("purchase_event_id", { ascending: true })
+            .order("membership_kind", { ascending: true })
+            .order("canonical_component_key", { ascending: true }),
+        ),
+        this.readRowsByInBatches(
+          `purchase-aware-timing:${ids.join(",")}`, "purchase_events", ids,
+          ["purchase_event_id", "purchase_event_timing_assertion_id"],
+          ["purchase_event_id", "purchase_event_timing_assertion_id"],
+          (batch) => this.client.from("purchase_event_timing_assertions")
+            .select("purchase_event_timing_assertion_id,purchase_event_id,timing_authority,timing_precision,economic_date,economic_month,evidence_refs")
+            .in("purchase_event_id", batch)
+            .eq("is_active", true)
+            .order("purchase_event_id", { ascending: true })
+            .order("purchase_event_timing_assertion_id", { ascending: true }),
+        ),
+        this.readRowsByInBatches(
+          `purchase-aware-native:${ids.join(",")}`, "purchase_events", ids,
+          ["purchase_event_id"], ["purchase_event_id"],
+          (batch) => this.client.from("purchase_economic_components")
+            .select("purchase_economic_component_id,purchase_event_id,household_id,canonical_component_key,category_id,subcategory_id,need_id,merchant_id")
+            .eq("household_id", this.context.householdId)
+            .in("purchase_event_id", batch)
+            .order("purchase_event_id", { ascending: true }),
+        ),
+      ]);
+      const timingByEvent = groupBy(timingRows, "purchase_event_id");
+      const nativeByEvent = byUniqueKey(nativeRows, "purchase_event_id", "purchase_events");
+      const parsedSources = parsePurchaseEventCanonicalSources(membershipRows);
+      const ownerKeys = unique(parsedSources.flatMap((source) =>
+        source.membershipKind === "CONSUMPTION_COMPONENT" ? [String(source.canonicalComponentKey)] : []));
+      const operationIds = unique(parsedSources.flatMap((source) =>
+        source.membershipKind === "CONSUMPTION_COMPONENT" && source.kind === "operation"
+          ? [source.sourceId] : []));
+      const [operations, classificationRows, operationCanonicalFacts] = await Promise.all([
+        this.readRowsByInBatches(
+          `purchase-aware-operations:${operationIds.join(",")}`, "operations", operationIds,
+          ["operation_id"], ["operation_id"],
+          (batch) => this.client.from("operations")
+            .select("operation_id,montant_bancaire_depense::text,importance,nature_fixe_variable,contexte_vie,category_id,subcategory_id,need_id,merchant_id")
+            .in("operation_id", batch)
+            .order("operation_id", { ascending: true }),
+        ),
+        this.readRowsByInBatches(
+          `purchase-aware-classifications:${ownerKeys.join(",")}`, "economic", ownerKeys,
+          ["canonical_component_key", "axis"], ["canonical_component_key", "axis"],
+          (batch) => this.client.from("economic_component_classifications")
+            .select("household_id,canonical_component_key,axis,status,value,authority,evidence_refs,provenance")
+            .eq("household_id", this.context.householdId)
+            .in("canonical_component_key", batch)
+            .order("canonical_component_key", { ascending: true })
+            .order("axis", { ascending: true }),
+        ),
+        this.loadEconomicComponentRowsByOperations(operationIds)
+          .then((rows) => this.projectEconomicComponentRows(rows)),
+      ]);
+      const operationById = byUniqueKey(operations, "operation_id", "operations");
+      const assertions: ComponentClassificationAssertion[] = classificationRows.map((row) => {
+        const axis = canonicalString(row, ["axis"], "economic") as ComponentClassificationAxis;
+        const status = canonicalString(row, ["status"], "economic") as ComponentClassificationAssertion["resolution"]["status"];
+        if (!classificationAxes.includes(axis) || !["KNOWN", "UNKNOWN", "CONFLICT"].includes(status)) {
+          throw new CanonicalReadError("economic", "Une classification d'achat est invalide.");
+        }
+        const value = normalizeComponentClassificationValue(axis, row.value);
+        if (status === "KNOWN" && value === null) {
+          throw new CanonicalReadError("economic", "Une classification KNOWN exige une valeur.");
+        }
+        const refs = row.evidence_refs;
+        if (!Array.isArray(refs) || refs.some((ref) => typeof ref !== "string")) {
+          throw new CanonicalReadError("economic", "Les preuves de classification sont invalides.");
+        }
+        return {
+          canonicalComponentKey: canonicalString(row, ["canonical_component_key"], "economic") as ComponentClassificationAssertion["canonicalComponentKey"],
+          axis,
+          resolution: {
+            status,
+            value: status === "KNOWN" ? value : null,
+            authority: optionalCanonicalString(row, ["authority"]) as ComponentClassificationAssertion["resolution"]["authority"] ?? null,
+            evidenceRefs: refs as string[],
+            provenance: canonicalString(row, ["provenance"], "economic") as ComponentClassificationAssertion["resolution"]["provenance"],
+          },
+        };
+      });
+      const purchases: PurchaseAwarePurchase[] = events.map((event) => {
+        const id = canonicalString(event, ["purchase_event_id"], "purchase_events");
+        const eventSources = parsedSources.filter((source) => String(source.purchaseEventId) === id);
+        const ownerOperation = eventSources.find((source) =>
+          source.membershipKind === "CONSUMPTION_COMPONENT" && source.kind === "operation");
+        const operation = ownerOperation === undefined ? undefined : operationById.get(ownerOperation.sourceId);
+        const native = nativeByEvent.get(id);
+        const rawAmount = event.gross_amount;
+        return {
+          purchaseEventId: id,
+          householdId: canonicalString(event, ["household_id"], "purchase_events") as PurchaseAwarePurchase["householdId"],
+          grossAmount: rawAmount === null ? null : String(rawAmount),
+          grossAmountStatus: canonicalString(event, ["gross_amount_status"], "purchase_events") as PurchaseAwarePurchase["grossAmountStatus"],
+          sources: eventSources,
+          timingAssertions: (timingByEvent.get(id) ?? []).map((row) => ({
+            authority: canonicalString(row, ["timing_authority"], "purchase_events") as PurchaseAwarePurchase["timingAssertions"][number]["authority"],
+            precision: canonicalString(row, ["timing_precision"], "purchase_events") as "DAY" | "MONTH",
+            economicDate: optionalCanonicalString(row, ["economic_date"]) ?? null,
+            economicMonth: canonicalString(row, ["economic_month"], "purchase_events"),
+            evidenceRefs: row.evidence_refs as string[],
+          })),
+          ...(native === undefined ? {} : { nativeComponent: {
+            purchaseComponentId: canonicalString(native, ["purchase_economic_component_id"], "purchase_events"),
+            canonicalComponentKey: canonicalString(native, ["canonical_component_key"], "purchase_events") as NonNullable<PurchaseAwarePurchase["nativeComponent"]>["canonicalComponentKey"],
+            purchaseEventId: id,
+            categoryId: optionalCanonicalString(native, ["category_id"]) ?? null,
+            subcategoryId: optionalCanonicalString(native, ["subcategory_id"]) ?? null,
+            needId: optionalCanonicalString(native, ["need_id"]) ?? null,
+            merchantId: optionalCanonicalString(native, ["merchant_id"]) ?? null,
+          } }),
+          ...(operation === undefined ? {} : {
+            bankAmount: optionalCanonicalString(operation, ["montant_bancaire_depense"]) ?? null,
+            operationCanonicalFactCount: operationCanonicalFacts.filter((fact) =>
+              fact.sourceOperation.kind === "resolved"
+              && String(fact.sourceOperation.id) === ownerOperation?.sourceId).length,
+            operationOwnerSourceKind: operationCanonicalFacts.find((fact) =>
+              String(fact.canonicalComponentKey) === ownerOperation?.canonicalComponentKey
+              && (fact.sourceKind === "Operation_parent" || fact.sourceKind === "Operation_residual"))?.sourceKind as "Operation_parent" | "Operation_residual" | undefined,
+            operationClassificationValues: {
+              NECESSITY: operation.importance,
+              BEHAVIOR: operation.nature_fixe_variable,
+              LIFE_SCOPE: operation.contexte_vie,
+            },
+            operationTaxonomy: {
+              categoryId: optionalCanonicalString(operation, ["category_id"]) ?? null,
+              subcategoryId: optionalCanonicalString(operation, ["subcategory_id"]) ?? null,
+              needId: optionalCanonicalString(operation, ["need_id"]) ?? null,
+              merchantId: optionalCanonicalString(operation, ["merchant_id"]) ?? null,
+            },
+          }),
+          classifications: assertions.filter((assertion) =>
+            eventSources.some((source) => source.membershipKind === "CONSUMPTION_COMPONENT"
+              && source.canonicalComponentKey === assertion.canonicalComponentKey)),
+        };
+      });
+      return projectPurchaseAwareCanonical({
+        visibility, householdId: this.context.householdId, range, legacyFacts, purchases,
+      });
     });
   }
 

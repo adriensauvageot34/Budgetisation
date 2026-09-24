@@ -88,7 +88,7 @@ const timingKinds = new Set([
 ] as const);
 const timingSegmentStates = new Set(["known", "partial", "unknown"] as const);
 const economicComponentSourceKinds = new Set<EconomicComponentSourceKind>([
-  "Operation_parent", "Operation_residual", "Allocation", "Item", "Payment_component", "Cash_economic_use",
+  "Operation_parent", "Operation_residual", "Allocation", "Item", "Payment_component", "Cash_economic_use", "Purchase_component",
 ]);
 const placeKinds = new Set([
   "resolved",
@@ -619,6 +619,22 @@ export function parseEconomicComponentFact(
     );
   }
 
+  const sourceKind = hasOwn(record, "sourceKind")
+    ? parseStringLiteral<EconomicComponentSourceKind>(
+        requireProperty(record, "sourceKind", "EconomicComponentFact"),
+        economicComponentSourceKinds,
+        "EconomicComponentFact.sourceKind",
+      )
+    : undefined;
+  const sourceOperation = parseDimensionValue(
+    requireProperty(record, "sourceOperation", "EconomicComponentFact"),
+    parseOperationId,
+    "EconomicComponentFact.sourceOperation",
+  );
+  if (sourceKind === "Purchase_component" && sourceOperation.kind !== "not_applicable") {
+    throw new TypeError("Purchase_component ne possède pas d'Operation source.");
+  }
+
   return {
     fact: parseStringLiteral(
       requireProperty(record, "fact", "EconomicComponentFact"),
@@ -642,18 +658,8 @@ export function parseEconomicComponentFact(
         "EconomicComponentFact",
       ),
     ),
-    ...(hasOwn(record, "sourceKind") ? {
-      sourceKind: parseStringLiteral<EconomicComponentSourceKind>(
-        requireProperty(record, "sourceKind", "EconomicComponentFact"),
-        economicComponentSourceKinds,
-        "EconomicComponentFact.sourceKind",
-      ),
-    } : {}),
-    sourceOperation: parseDimensionValue(
-      requireProperty(record, "sourceOperation", "EconomicComponentFact"),
-      parseOperationId,
-      "EconomicComponentFact.sourceOperation",
-    ),
+    ...(sourceKind === undefined ? {} : { sourceKind }),
+    sourceOperation,
     gross,
     refundApplied,
     net,

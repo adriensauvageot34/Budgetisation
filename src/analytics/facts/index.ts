@@ -68,6 +68,20 @@ export type {
 export { continuityForSpanBehavior } from "./continuity";
 export type { PurchaseEventTimingAssertion } from "./purchase-event";
 export { resolvePurchaseEventTiming } from "./purchase-event";
+export type {
+  EconomicAmountQuality,
+  PurchaseAwareCanonicalResult,
+  PurchaseAwareEconomicFact,
+  PurchaseAwarePurchase,
+  PurchaseEconomicOwner,
+} from "./purchase-aware";
+export {
+  addEconomicAmounts,
+  projectPurchaseAwareCanonical,
+  purchaseIdentityKeyOfEconomicFact,
+  purchaseGrossAmount,
+  resolveEffectivePurchaseEconomicOwner,
+} from "./purchase-aware";
 export {
   buildActivityOccurrenceCostFacts,
   isCausalActivityRelation,

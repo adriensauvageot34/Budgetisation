@@ -8,6 +8,7 @@ import { optionalCanonicalString, type CanonicalRecord } from "@/server/canonica
 import { createHash } from "node:crypto";
 
 export const GLOBAL_MOMENT_COMPONENT_PRESENTATION_VERSION = "global-moment-component-presentation@v1" as const;
+type DefaultEconomicSourceKind = Exclude<EconomicComponentSourceKind, "Purchase_component">;
 
 export type GlobalMomentComponentLabelSource =
   | "ITEM"
@@ -25,7 +26,7 @@ export type GlobalMomentComponentPresentationRow = {
   readonly componentRef: string;
   readonly canonicalComponentKey: string;
   readonly amount: Money;
-  readonly sourceKind: EconomicComponentSourceKind;
+  readonly sourceKind: DefaultEconomicSourceKind;
   readonly primaryLabel: string;
   readonly labelSource: GlobalMomentComponentLabelSource;
   readonly sourceOperationRef?: string;
@@ -51,7 +52,7 @@ type RawComponent = {
   readonly componentRef: string;
   readonly canonicalComponentKey: string;
   readonly amount: Money;
-  readonly sourceKind: EconomicComponentSourceKind;
+  readonly sourceKind: DefaultEconomicSourceKind;
   readonly sourceOperationRef?: string;
   readonly categoryRef?: string;
   readonly subcategoryRef?: string;
@@ -80,12 +81,13 @@ function rawComponents(m6: unknown): readonly RawComponent[] {
     return record.causalComponents.map((candidate) => {
       const component = candidate as Record<string, unknown>;
       if (typeof component.componentRef !== "string" || typeof component.canonicalComponentKey !== "string" || typeof component.amount !== "string" || typeof component.sourceKind !== "string" || !Array.isArray(component.evidenceRefs)) throw new TypeError("GLOBAL_MOMENT_COMPONENT_PRESENTATION_COMPONENT_INVALID");
+      if (component.sourceKind === "Purchase_component") throw new TypeError("GLOBAL_MOMENT_COMPONENT_PILOT_SOURCE_NOT_VISIBLE");
       return {
         momentRef: `moment:${momentId}`,
         componentRef: component.componentRef,
         canonicalComponentKey: component.canonicalComponentKey,
         amount: component.amount as Money,
-        sourceKind: component.sourceKind as EconomicComponentSourceKind,
+        sourceKind: component.sourceKind as DefaultEconomicSourceKind,
         ...(typeof component.sourceOperationRef === "string" ? { sourceOperationRef: component.sourceOperationRef } : {}),
         ...(typeof component.categoryRef === "string" ? { categoryRef: component.categoryRef } : {}),
         ...(typeof component.subcategoryRef === "string" ? { subcategoryRef: component.subcategoryRef } : {}),
