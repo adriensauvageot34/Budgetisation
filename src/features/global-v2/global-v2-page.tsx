@@ -42,6 +42,7 @@ import { buildHabitCoverageModel, groupRhythmMomentsByYear } from "./rhythm-coll
 import { resolveRhythmDetailContext, rhythmDetailReturnSection, type RhythmDetailContext, type RhythmDetailOrigin } from "./rhythm-detail-routing";
 import { PersonaView } from "./persona/persona-view";
 import { PersonaEditorialView } from "./persona/persona-editorial-view";
+import { BackgroundRhythms } from "./background-rhythms";
 import type { PersonaDirectModel } from "@/query-api/global-v2/persona-direct-presentation";
 import type { PersonaEditorialModel } from "@/query-api/global-v2/persona-editorial";
 import { useGlobalV2Resource, useMobileGlobalLayout, useNearViewport } from "./use-global-resource";
@@ -1084,40 +1085,6 @@ function M2CompactCard({ model, runtime, certifiedThrough, onDetail, onEntityDet
   </div>;
 }
 
-const groceryRoutineEntityRef = "household-activity:courses_alimentaires";
-
-function LifeBackgroundRhythms({ runtime, onMethod }: { readonly runtime: GlobalV2VisitRuntime; readonly onMethod: () => void }) {
-  const request = useMemo(() => ({ resource: "analysis_global_routine_detail" as const, params: { entityRef: groceryRoutineEntityRef } }), []);
-  const result = useGlobalV2Resource<GlobalExpandedReadModel>(runtime, request, true, "BACKGROUND");
-  const model = transportData(result.state);
-  const rhythm = model?.groceryRhythm;
-  if (rhythm === undefined) {
-    if (result.state.status === "ERROR") return <section className={styles.lifeRhythms} aria-labelledby="life-rhythms-title"><header><h3 id="life-rhythms-title">Nos rythmes de fond</h3></header><LocalError retry={result.retry} /></section>;
-    return <section className={styles.lifeRhythms} aria-labelledby="life-rhythms-title"><header><h3 id="life-rhythms-title">Nos rythmes de fond</h3></header><LoadingCard label="nos rythmes de fond" compact /></section>;
-  }
-  const lowerThreshold = m2TypedNumber({ typedMeasure: rhythm.thresholds.p25 });
-  const upperThreshold = m2TypedNumber({ typedMeasure: rhythm.thresholds.p75 });
-  return <section className={styles.lifeRhythms} aria-labelledby="life-rhythms-title" data-rhythm-source="analysis_global_routine_detail">
-    <header className={styles.lifeRhythmsHeader}><div><span className="eyebrow">Habitudes récurrentes</span><h3 id="life-rhythms-title">Nos rythmes de fond</h3><p>Les courses dessinent un rythme mensuel régulier, présenté ici sans attribuer de dépense à une personne.</p></div><button type="button" className={styles.methodLink} onClick={onMethod}><Info aria-hidden size={15} /> Fiabilité & méthode</button></header>
-    <article className={styles.groceryRhythmCard}>
-      <header><div><h4>Courses</h4><p>Nos passages en courses, ce que nous avons dépensé chaque mois et la structure de nos paniers lorsque les données sont suffisamment complètes.</p></div><dl><div><dt>Petits paniers</dt><dd>jusqu’à {formatLifeMoney(lowerThreshold)}</dd></div><div><dt>Gros paniers</dt><dd>à partir de {formatLifeMoney(upperThreshold)}</dd></div><div><dt>Structure des paniers</dt><dd>{integerFormatter.format(rhythm.eligibleMonthCount)} mois sur {integerFormatter.format(rhythm.months.length)}</dd></div></dl></header>
-      <div className={styles.groceryMonthGrid}>{rhythm.months.map((month) => {
-        const monthlyAmount = month.monthlyGrocerySpend.status === "KNOWN" || month.monthlyGrocerySpend.status === "PARTIAL"
-          ? month.monthlyGrocerySpend.value.kind === "MONEY" ? m2TypedNumber({ typedMeasure: month.monthlyGrocerySpend.value }) : undefined
-          : undefined;
-        const monthLabel = capitalize(frenchMonth(month.month));
-        return <article key={month.month} className={styles.groceryMonthCard} aria-label={`Courses ${monthLabel}`}>
-          <header><time dateTime={month.month}>{monthLabel}</time><strong>{formatLifeMoney(monthlyAmount)}</strong></header>
-          <p>{integerFormatter.format(month.occurrenceCount)} passages · couverture {formatLifeRatio(month.coverage)}</p>
-          {month.basketStructure.status === "KNOWN"
-            ? <dl className={styles.groceryBasket}><div><dt>Petits</dt><dd>{integerFormatter.format(month.basketStructure.small)}</dd></div><div><dt>Intermédiaires</dt><dd>{integerFormatter.format(month.basketStructure.intermediate)}</dd></div><div><dt>Gros</dt><dd>{integerFormatter.format(month.basketStructure.large)}</dd></div></dl>
-            : <small>Pas assez de passages renseignés pour détailler les paniers ce mois-ci.</small>}
-        </article>;
-      })}</div>
-    </article>
-  </section>;
-}
-
 function PersonaPanel({ persona, editorial }: { readonly persona: PersonaDirectModel; readonly editorial?: PersonaEditorialModel }) {
   return editorial === undefined ? <PersonaView model={persona} headingId={`${moduleSlugs.PERSONAS}-title`} /> : <PersonaEditorialView model={editorial} direct={persona} headingId={`${moduleSlugs.PERSONAS}-title`} />;
 }
@@ -1233,7 +1200,7 @@ function GlobalLifeTimelinePanel({ runtime, onOverlay }: { readonly runtime: Glo
       onOverlay(target);
       emitGlobalV2UxEvent("global_entity_opened", { moduleKey: "RHYTHM" });
     }} />
-    <LifeBackgroundRhythms runtime={runtime} onMethod={() => {
+    <BackgroundRhythms runtime={runtime} onMethod={() => {
       onOverlay(methodOverlayTarget("RHYTHM"));
       emitGlobalV2UxEvent("global_methodology_opened", { moduleKey: "RHYTHM" });
     }} />

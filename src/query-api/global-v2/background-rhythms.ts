@@ -431,8 +431,8 @@ function validateAnnual(value: unknown): GlobalBackgroundRhythmsReadModel {
 }
 
 function validateRoutineGroup(value: unknown, label: string): void {
-  const record = exact(value, ["routineGroupId", "pattern", "title", "semanticFamily", "semanticTier", "occurrenceCount", "annualOccurrenceCount", "mobilityTripIds", "monthContribution", "fullTrips"], label);
-  for (const key of ["routineGroupId", "pattern", "title", "semanticFamily"] as const) text(requireProperty(record, key, label), `${label}.${key}`);
+  const record = exact(value, ["routineGroupId", "pattern", "title", "semanticFamily", "semanticTier", "usageBand", "occurrenceCount", "annualOccurrenceCount", "mobilityTripIds", "monthContribution", "fullTrips"], label);
+  for (const key of ["routineGroupId", "pattern", "title", "semanticFamily", "usageBand"] as const) text(requireProperty(record, key, label), `${label}.${key}`);
   for (const key of ["semanticTier", "occurrenceCount", "annualOccurrenceCount"] as const) integer(requireProperty(record, key, label), `${label}.${key}`);
   array(requireProperty(record, "mobilityTripIds", label), `${label}.mobilityTripIds`).forEach((entry) => text(entry, `${label}.mobilityTripId`));
   validateMetricTotals(requireProperty(record, "monthContribution", label), `${label}.monthContribution`);
@@ -440,8 +440,10 @@ function validateRoutineGroup(value: unknown, label: string): void {
 }
 
 function validateTripSummary(value: unknown, label: string): void {
-  const record = exact(value, ["tripSummaryId", "mobilityTripId", "title", "semanticFamily", "semanticTier", "usageBand", "multiDay", "crossMonth", "startDate", "endDate", "monthContribution", "fullTrip"], label);
+  const record = exact(value, ["tripSummaryId", "mobilityTripId", "title", "semanticFamily", "semanticTier", "usageBand", "multiDay", "crossMonth", "startDate", "endDate", "targetKind", "targetRef", "monthContribution", "fullTrip"], label);
   for (const key of ["tripSummaryId", "mobilityTripId", "title", "semanticFamily", "usageBand", "startDate", "endDate"] as const) text(requireProperty(record, key, label), `${label}.${key}`);
+  if (hasOwn(record, "targetKind")) text(record.targetKind, `${label}.targetKind`);
+  if (hasOwn(record, "targetRef")) text(record.targetRef, `${label}.targetRef`);
   integer(requireProperty(record, "semanticTier", label), `${label}.semanticTier`);
   if (typeof record.multiDay !== "boolean" || typeof record.crossMonth !== "boolean") throw new TypeError(`${label}_INVALID`);
   validateMetricTotals(requireProperty(record, "monthContribution", label), `${label}.monthContribution`);
@@ -449,8 +451,8 @@ function validateTripSummary(value: unknown, label: string): void {
 }
 
 function validateContextOnly(value: unknown, label: string): void {
-  const record = exact(value, ["contextOnlyId", "mobilityTripId", "title", "semanticFamily", "semanticTier", "relationType", "targetKind", "targetRef"], label);
-  for (const key of ["contextOnlyId", "mobilityTripId", "title", "semanticFamily", "relationType"] as const) text(requireProperty(record, key, label), `${label}.${key}`);
+  const record = exact(value, ["contextOnlyId", "mobilityTripId", "title", "semanticFamily", "semanticTier", "usageBand", "relationType", "targetKind", "targetRef"], label);
+  for (const key of ["contextOnlyId", "mobilityTripId", "title", "semanticFamily", "usageBand", "relationType"] as const) text(requireProperty(record, key, label), `${label}.${key}`);
   integer(requireProperty(record, "semanticTier", label), `${label}.semanticTier`);
   if (hasOwn(record, "targetKind")) text(record.targetKind, `${label}.targetKind`);
   if (hasOwn(record, "targetRef")) text(record.targetRef, `${label}.targetRef`);

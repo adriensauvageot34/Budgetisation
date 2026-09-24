@@ -127,6 +127,7 @@ export type MonthlyMobilityRoutineGroup = {
   readonly title: string;
   readonly semanticFamily: MobilitySemanticFamily;
   readonly semanticTier: number;
+  readonly usageBand: MobilityUsageBand;
   readonly occurrenceCount: number;
   readonly annualOccurrenceCount: number;
   readonly mobilityTripIds: readonly string[];
@@ -145,6 +146,8 @@ export type MonthlyMobilityTripSummary = {
   readonly crossMonth: boolean;
   readonly startDate: string;
   readonly endDate: string;
+  readonly targetKind?: MonthlyMobilityNarrativeContextInput["targetKind"];
+  readonly targetRef?: `moment:${string}` | `life-event:${string}`;
   readonly monthContribution: MobilityNarrativeMetricTotals;
   readonly fullTrip: MobilityNarrativeMetricTotals;
 };
@@ -155,6 +158,7 @@ export type MonthlyMobilityContextOnly = {
   readonly title: string;
   readonly semanticFamily: MobilitySemanticFamily;
   readonly semanticTier: number;
+  readonly usageBand: MobilityUsageBand;
   readonly relationType: MonthlyMobilityNarrativeContextInput["relationType"];
   readonly targetKind?: MonthlyMobilityNarrativeContextInput["targetKind"];
   readonly targetRef?: `moment:${string}` | `life-event:${string}`;
@@ -549,6 +553,7 @@ function buildMonth(month: string, allProfiles: readonly TripProfile[]): Monthly
       title: members[0].routineTitle,
       semanticFamily: members[0].semanticFamily,
       semanticTier: members[0].semanticTier,
+      usageBand: members[0].usageBand,
       occurrenceCount: members.length,
       annualOccurrenceCount: annual,
       mobilityTripIds: members.map(({ trip }) => trip.mobilityTripId).sort((left, right) => left.localeCompare(right)),
@@ -579,20 +584,24 @@ function buildMonth(month: string, allProfiles: readonly TripProfile[]): Monthly
   }));
   const summaryCandidates = rankedPending.filter(({ profile, mandatory }) => mandatory || profile.usageBand !== "UNRESOLVED").slice(0, 12);
   const summaryTripIds = new Set(summaryCandidates.map(({ profile }) => profile.trip.mobilityTripId));
-  const tripSummaries: MonthlyMobilityTripSummary[] = summaryCandidates.map(({ profile, metric }) => ({
-    tripSummaryId: stableId("mobility-trip-summary", [month, profile.trip.mobilityTripId]),
-    mobilityTripId: profile.trip.mobilityTripId,
-    title: tripTitle(profile),
-    semanticFamily: profile.semanticFamily,
-    semanticTier: profile.semanticTier,
-    usageBand: profile.usageBand,
-    multiDay: profile.multiDay,
-    crossMonth: profile.crossMonth,
-    startDate: profile.trip.startDate,
-    endDate: profile.trip.endDate,
-    monthContribution: metric,
-    fullTrip: profile.fullTrip,
-  }));
+  const tripSummaries: MonthlyMobilityTripSummary[] = summaryCandidates.map(({ profile, metric }) => {
+    const target = strongestContext(profile.contexts);
+    return {
+      tripSummaryId: stableId("mobility-trip-summary", [month, profile.trip.mobilityTripId]),
+      mobilityTripId: profile.trip.mobilityTripId,
+      title: tripTitle(profile),
+      semanticFamily: profile.semanticFamily,
+      semanticTier: profile.semanticTier,
+      usageBand: profile.usageBand,
+      multiDay: profile.multiDay,
+      crossMonth: profile.crossMonth,
+      startDate: profile.trip.startDate,
+      endDate: profile.trip.endDate,
+      ...(target?.targetRef === undefined ? {} : { targetKind: target.targetKind, targetRef: target.targetRef }),
+      monthContribution: metric,
+      fullTrip: profile.fullTrip,
+    };
+  });
   const suppressed = pending.filter(({ trip }) => !summaryTripIds.has(trip.mobilityTripId));
   const contextCandidates = profiles.flatMap((profile) => profile.contexts.map((context) => ({ profile, context })))
     .filter(({ profile, context }) => !summaryTripIds.has(profile.trip.mobilityTripId) && context.semanticTier <= 2)
@@ -611,6 +620,7 @@ function buildMonth(month: string, allProfiles: readonly TripProfile[]): Monthly
       title,
       semanticFamily: context.semanticFamily,
       semanticTier: context.semanticTier,
+      usageBand: profile.usageBand,
       relationType: context.relationType,
       ...(context.targetRef === undefined ? {} : { targetKind: context.targetKind, targetRef: context.targetRef }),
     });

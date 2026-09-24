@@ -140,7 +140,7 @@ function timelineDate(value: string): Date {
 
 type TimelineTransportEvent = GlobalTimelineEvent | GlobalTimelineV2Event;
 type TimelineTransportReadModel = GlobalLifeTimelineReadModel | GlobalLifeTimelineV2ReadModel;
-type TimelineEventFocusRequest = Readonly<{ eventRef: GlobalTimelineV2Event["eventRef"]; requestId: number }>;
+type TimelineEventFocusRequest = Readonly<{ eventRef: TimelineTransportEvent["eventRef"]; requestId: number }>;
 
 function timelineMoneyMeasure(value: string): GlobalTypedMeasure {
   return { kind: "MONEY", value, unit: "EUR" };
@@ -202,7 +202,10 @@ export function groupTimelineEvents(events: readonly TimelineTransportEvent[]): 
 }
 
 /** Kept only for fixture/cutover compatibility; active publications use the V2 card below. */
-function LegacyTimelineEventRow({ event, onMomentDetail }: { readonly event: GlobalTimelineEvent; readonly onMomentDetail: (eventRef: string, title: string) => void }) {
+function LegacyTimelineEventRow({ event, focusRequest, onMomentDetail }: { readonly event: GlobalTimelineEvent; readonly focusRequest: TimelineEventFocusRequest | undefined; readonly onMomentDetail: (eventRef: string, title: string) => void }) {
+  const rowRef = useRef<HTMLLIElement>(null);
+  const cardButtonRef = useRef<HTMLButtonElement>(null);
+  const cardArticleRef = useRef<HTMLElement>(null);
   const Icon = legacyTimelineIcons[`${event.familySource}:${event.typeKey}`] ?? Circle;
   const comparison = legacyComparisonLabel(event);
   const distinctive = legacyEventIsDistinctive(event);
@@ -212,6 +215,15 @@ function LegacyTimelineEventRow({ event, onMomentDetail }: { readonly event: Glo
   const participantCount = event.participantRefs.length;
   const participantLabel = participantCount === undefined ? undefined : participantCount === 1 ? "1 personne" : `${participantCount} personnes`;
   const momentDetailAvailable = event.detailAvailability === "MOMENT_DETAIL";
+  useEffect(() => {
+    if (focusRequest?.eventRef !== event.eventRef) return;
+    const frame = window.requestAnimationFrame(() => {
+      const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+      rowRef.current?.scrollIntoView({ behavior: reducedMotion ? "auto" : "smooth", block: "center" });
+      (cardButtonRef.current ?? cardArticleRef.current)?.focus({ preventScroll: true });
+    });
+    return () => window.cancelAnimationFrame(frame);
+  }, [event.eventRef, focusRequest]);
   const content = <>
     <time className={styles.timelineDay} dateTime={event.startDate}>{dayFormatter.format(timelineDate(event.startDate))}</time>
     <span className={styles.timelineMarker} aria-hidden><Icon size={16} aria-hidden /></span>
@@ -222,10 +234,10 @@ function LegacyTimelineEventRow({ event, onMomentDetail }: { readonly event: Glo
     </span>
     {momentDetailAvailable ? <ChevronRight className={styles.timelineChevron} aria-hidden size={18} /> : null}
   </>;
-  return <li className={distinctive ? styles.timelineDistinctive : undefined} data-family-source={event.familySource} data-type-key={event.typeKey}>
+  return <li ref={rowRef} className={distinctive ? styles.timelineDistinctive : undefined} data-family-source={event.familySource} data-type-key={event.typeKey}>
     {momentDetailAvailable
-      ? <button type="button" data-global-entity-ref={event.eventRef} aria-label={`Ouvrir le détail de ${event.canonicalName}`} onClick={() => onMomentDetail(event.eventRef, event.canonicalName)}>{content}</button>
-      : <article aria-label={`${event.canonicalName}, ${eventDateLabel(event)}, ${legacyEventAmount(event)}`}>{content}</article>}
+      ? <button ref={cardButtonRef} type="button" data-global-entity-ref={event.eventRef} aria-label={`Ouvrir le détail de ${event.canonicalName}`} onClick={() => onMomentDetail(event.eventRef, event.canonicalName)}>{content}</button>
+      : <article ref={cardArticleRef} tabIndex={-1} data-global-entity-ref={event.eventRef} aria-label={`${event.canonicalName}, ${eventDateLabel(event)}, ${legacyEventAmount(event)}`}>{content}</article>}
   </li>;
 }
 
@@ -400,7 +412,8 @@ function TimelineV2EventRow({ event, runtime, focusRequest, expanded, focused, f
   useEffect(() => {
     if (focusRequest?.eventRef !== event.eventRef) return;
     const frame = window.requestAnimationFrame(() => {
-      rowRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+      const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+      rowRef.current?.scrollIntoView({ behavior: reducedMotion ? "auto" : "smooth", block: "center" });
       (cardButtonRef.current ?? cardArticleRef.current)?.focus({ preventScroll: true });
     });
     return () => window.cancelAnimationFrame(frame);
@@ -416,7 +429,8 @@ function TimelineV2EventRow({ event, runtime, focusRequest, expanded, focused, f
       const comfortableTop = scrollerBounds.top + 18;
       const comfortableBottom = scrollerBounds.bottom - 18;
       if (rowBounds.top >= comfortableTop && rowBounds.bottom <= comfortableBottom) return;
-      element.scrollIntoView({ behavior: "smooth", block: rowBounds.height > comfortableBottom - comfortableTop ? "start" : "nearest" });
+      const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+      element.scrollIntoView({ behavior: reducedMotion ? "auto" : "smooth", block: rowBounds.height > comfortableBottom - comfortableTop ? "start" : "nearest" });
     }, 160);
     return () => window.clearTimeout(timer);
   }, [canExpand, focused]);
@@ -469,7 +483,7 @@ function TimelineEventRow({ event, runtime, focusRequest, expanded, focused, foc
 }) {
   return "eventCost" in event
     ? <TimelineV2EventRow event={event} runtime={runtime} focusRequest={focusRequest} expanded={expanded} focused={focused} focusMode={focusMode} onToggle={onToggle} onTimelinePeer={onTimelinePeer} />
-    : <LegacyTimelineEventRow event={event} onMomentDetail={onMomentDetail} />;
+    : <LegacyTimelineEventRow event={event} focusRequest={focusRequest} onMomentDetail={onMomentDetail} />;
 }
 
 export function LifeTimeline({ runtime, density, onDensityChange, onMomentDetail }: { readonly runtime: GlobalV2VisitRuntime; readonly density: TimelineDensityMode; readonly onDensityChange: (density: TimelineDensityMode) => void; readonly onMomentDetail: (eventRef: string, title: string) => void }) {
@@ -489,8 +503,9 @@ export function LifeTimeline({ runtime, density, onDensityChange, onMomentDetail
   useEffect(() => {
     const focus = (raw: Event) => {
       const detail = (raw as CustomEvent<{ readonly eventRef?: unknown; readonly visibilityTier?: unknown }>).detail;
-      if (typeof detail?.eventRef !== "string" || !detail.eventRef.startsWith("life-event:")) return;
-      if (detail.visibilityTier === "EXTENDED") onDensityChange("EXTENDED");
+      if (typeof detail?.eventRef !== "string" || (!detail.eventRef.startsWith("life-event:") && !detail.eventRef.startsWith("moment:"))) return;
+      const target = model?.schemaVersion === "global-life-timeline@v2" ? model.events.find(({ eventRef }) => eventRef === detail.eventRef) : undefined;
+      if (detail.visibilityTier === "EXTENDED" || target?.visibilityTier === "EXTENDED") onDensityChange("EXTENDED");
       const eventRef = detail.eventRef as GlobalTimelineV2Event["eventRef"];
       setFocusedEventRef(undefined);
       setExpandedEventRef(eventRef);
@@ -498,7 +513,7 @@ export function LifeTimeline({ runtime, density, onDensityChange, onMomentDetail
     };
     window.addEventListener("global-v2:focus-life-event", focus);
     return () => window.removeEventListener("global-v2:focus-life-event", focus);
-  }, [onDensityChange]);
+  }, [model, onDensityChange]);
   useEffect(() => {
     if (density !== "PRINCIPAL" || model?.schemaVersion !== "global-life-timeline@v2") return;
     if (model.events.find(({ eventRef }) => eventRef === expandedEventRef)?.visibilityTier !== "EXTENDED") return;

@@ -101,6 +101,7 @@ const narrativeMonths = monthlyGoldens.map(([month, , , , cost], index) => {
       title: "Trajets travail",
       semanticFamily: "WORK",
       semanticTier: 2,
+      usageBand: "AROUND_WORK",
       occurrenceCount: 1,
       annualOccurrenceCount: 12,
       mobilityTripIds: [`trip-${index}`],

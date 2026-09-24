@@ -1,0 +1,165 @@
+.backgroundRhythms { display: grid; gap: 28px; margin-top: clamp(48px, 7vw, 76px); border-top: 1px solid var(--color-border); padding-top: clamp(34px, 5vw, 54px); }
+.backgroundHeader { display: flex; align-items: end; justify-content: space-between; gap: 28px; }
+.backgroundHeader > div { display: grid; gap: 8px; }
+.backgroundHeader > div > span, .cardEyebrow, .monthComposition > header span, .carMonthJourneys > header span { color: var(--color-muted); font-size: 11px; font-weight: 820; letter-spacing: .12em; text-transform: uppercase; }
+.backgroundHeader h3 { margin: 0; font-size: clamp(28px, 4vw, 42px); letter-spacing: -.035em; line-height: 1.08; }
+.backgroundHeader p { max-width: 720px; margin: 0; color: var(--color-muted); line-height: 1.55; }
+.backgroundHeader button, .monthFocusHeader button, .carDetailGroup li > button, .localDetailError button, .backgroundError button { display: inline-flex; align-items: center; gap: 7px; border: 0; padding: 7px 0; background: transparent; color: var(--color-primary-deep); font-size: 13px; font-weight: 780; cursor: pointer; }
+.backgroundHeader button:focus-visible, .monthFocusHeader button:focus-visible, .carDetailGroup li > button:focus-visible, .localDetailError button:focus-visible, .backgroundError button:focus-visible { border-radius: 5px; outline: 2px solid var(--color-primary); outline-offset: 4px; }
+.rhythmCards { display: grid; gap: clamp(24px, 4vw, 40px); }
+.rhythmCard { display: grid; min-width: 0; gap: 20px; border: 1px solid var(--color-border); border-radius: 22px; padding: clamp(20px, 3vw, 30px); background: var(--color-surface); box-shadow: var(--shadow-sm); }
+.rhythmCardHeader { display: grid; grid-template-columns: minmax(0, 1fr) minmax(250px, 360px); align-items: start; gap: 34px; }
+.rhythmCardHeader h4 { margin: 4px 0 0; font-size: clamp(24px, 3vw, 32px); letter-spacing: -.035em; }
+.rhythmCardHeader p { max-width: 620px; margin: 8px 0 0; color: var(--color-muted); line-height: 1.5; }
+.annualKpi { display: grid; justify-items: end; border-left: 1px solid var(--color-border); padding-left: 28px; text-align: right; }
+.annualKpi strong { color: var(--color-primary-deep); font-size: clamp(29px, 3.2vw, 42px); letter-spacing: -.045em; line-height: 1; }
+.annualKpi span { margin-top: 6px; color: var(--color-ink); font-size: 13px; font-weight: 720; }
+.annualKpi small { margin-top: 10px; color: var(--color-muted); font-size: 11px; line-height: 1.4; }
+.legend { display: flex; flex-wrap: wrap; gap: 10px 20px; color: var(--color-muted); font-size: 11px; font-weight: 680; }
+.legend span { display: inline-flex; align-items: center; gap: 7px; }
+.legend span::before { width: 10px; height: 10px; border-radius: 50%; background: var(--legend-color); content: ""; }
+.legend span[data-tone="food-courses"] { --legend-color: #315f49; }
+.legend span[data-tone="food-restaurants"] { --legend-color: #8eae8e; }
+.legend span[data-tone="food-deliveries"] { --legend-color: #d8b989; }
+.legend span[data-tone="car-work"] { --legend-color: #365f76; }
+.legend span[data-tone="car-outside"] { --legend-color: #719999; }
+.legend span[data-tone="car-unresolved"] { --legend-color: #d9d5ca; }
+.annualVisualBody { position: relative; min-width: 0; padding-top: 76px; }
+.annualRiver { display: block; width: 100%; height: 268px; overflow: visible; }
+.annualRiver path { stroke: rgb(255 255 255 / .34); stroke-width: 1.2; vector-effect: non-scaling-stroke; }
+.foodCourses { fill: #315f49; }
+.foodRestaurants { fill: #8eae8e; }
+.foodDeliveries { fill: #d8b989; }
+.carWork { fill: #365f76; }
+.carOutside { fill: #719999; }
+.carUnresolved { fill: #d9d5ca; }
+.monthInteractionLayer { position: absolute; z-index: 4; top: 76px; right: 0; left: 0; display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); height: 268px; }
+.monthAnchor { position: relative; min-width: 0; border: 0; border-radius: 7px; padding: 0; background: transparent; color: var(--color-muted); cursor: pointer; }
+.monthAnchor::after { position: absolute; top: 0; right: 4px; bottom: 30px; left: 4px; border: 1px solid transparent; border-radius: 8px; content: ""; transition: border-color 130ms ease, background 130ms ease; }
+.monthAnchor:hover::after, .monthAnchor[data-preview="true"]::after { border-color: rgb(255 255 255 / .72); background: rgb(255 255 255 / .09); }
+.monthAnchor[data-selected="true"]::after { border-color: var(--color-primary-deep); box-shadow: 0 0 0 2px rgb(255 255 255 / .84); }
+.monthAnchor > span { position: absolute; right: 0; bottom: 4px; left: 0; overflow: hidden; font-size: 10px; font-weight: 760; text-align: center; text-overflow: clip; text-transform: capitalize; white-space: nowrap; }
+.monthAnchor:focus-visible { z-index: 2; outline: 3px solid var(--color-primary); outline-offset: 2px; }
+.selectedMonthGuide { position: absolute; z-index: 3; top: 76px; width: 1px; height: calc(100% - 34px); background: linear-gradient(to bottom, var(--color-primary-deep), rgb(46 83 69 / .18)); pointer-events: none; }
+.chartTooltip { position: absolute; z-index: 7; top: 0; display: grid; width: 205px; gap: 3px; border: 1px solid rgb(36 50 47 / .1); border-radius: 12px; padding: 12px 14px; background: rgb(255 255 255 / .96); box-shadow: 0 12px 32px rgb(36 50 47 / .13); color: var(--color-muted); font-size: 11px; line-height: 1.35; pointer-events: none; transform: translateX(-50%); }
+.chartTooltip strong { color: var(--color-primary-deep); font-size: 12px; text-transform: capitalize; }
+.chartTooltip b { margin-bottom: 4px; color: var(--color-ink); font-size: 17px; }
+.chartTooltip em { color: var(--color-muted); font-style: normal; font-weight: 760; }
+.chartTooltip i { margin-top: 6px; border-top: 1px solid var(--color-border); padding-top: 7px; color: var(--color-ink); font-style: normal; font-weight: 760; }
+.rhythmAnnotations { display: flex; flex-wrap: wrap; gap: 8px; }
+.rhythmAnnotation { margin: 0; border-left: 2px solid var(--color-primary-soft); padding: 3px 10px; color: var(--color-muted); font-size: 11px; line-height: 1.45; }
+.fuelPaidRail { position: relative; z-index: 5; display: grid; gap: 14px; margin-top: 18px; border-top: 1px solid var(--color-border); padding-top: 20px; background: var(--color-surface); }
+.fuelPaidRail > header { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: end; gap: 20px; }
+.fuelPaidRail h5 { margin: 0; font-size: 16px; }
+.fuelPaidRail p { max-width: 670px; margin: 5px 0 0; color: var(--color-muted); font-size: 11px; line-height: 1.45; }
+.fuelPaidRail > header > strong { display: grid; justify-items: end; color: var(--color-primary-deep); font-size: 19px; }
+.fuelPaidRail > header > strong span { color: var(--color-muted); font-size: 10px; font-weight: 680; }
+.fuelPaidRail > div { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); height: 68px; gap: 3px; }
+.fuelPaidRail > div > span { position: relative; display: flex; min-width: 0; align-items: end; justify-content: center; border-radius: 3px 3px 0 0; background: var(--color-surface-soft); }
+.fuelPaidRail i { display: block; width: min(20px, 48%); min-height: 0; border-radius: 3px 3px 0 0; background: #879aa4; }
+.fuelPaidRail small { position: absolute; top: calc(100% + 3px); overflow: hidden; width: 100%; color: transparent; font-size: 7px; text-align: center; white-space: nowrap; }
+.monthFocusRegion { position: relative; display: grid; gap: 26px; margin: 10px calc(clamp(20px, 3vw, 30px) * -1) calc(clamp(20px, 3vw, 30px) * -1); border-top: 1px solid var(--color-border); border-radius: 0 0 22px 22px; padding: clamp(24px, 4vw, 38px) clamp(20px, 3vw, 30px); background: linear-gradient(180deg, var(--color-surface-soft), var(--color-surface)); animation: focusReveal 180ms ease-out both; }
+.focusConnector { position: absolute; top: -36px; left: var(--focus-connector-position, 50%); width: 1px; height: 36px; background: var(--color-primary); opacity: .42; }
+@keyframes focusReveal { from { opacity: 0; transform: translateY(-6px); } }
+.monthFocusHeader { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: start; gap: 28px; }
+.monthFocusHeader > div:first-child { display: grid; gap: 2px; }
+.monthFocusHeader > div:first-child > span { color: var(--color-primary-deep); font-size: 11px; font-weight: 850; letter-spacing: .12em; }
+.monthFocusHeader h5 { margin: 2px 0 0; font-size: clamp(28px, 4vw, 42px); letter-spacing: -.04em; }
+.monthFocusHeader p { margin: 0; color: var(--color-muted); }
+.monthFocusHeader small { margin-top: 7px; color: var(--color-ink); font-weight: 720; }
+.foodSummaryBand, .carSummaryBand { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); border-block: 1px solid var(--color-border); }
+.foodSummaryBand > section, .carSummaryBand > section { min-width: 0; padding: 18px; }
+.foodSummaryBand > section + section, .carSummaryBand > section + section { border-left: 1px solid var(--color-border); }
+.foodSummaryBand h6, .carSummaryBand h6, .foodHighlightGroup h6, .carDetailGroup h6 { margin: 0 0 12px; color: var(--color-muted); font-size: 10px; font-weight: 850; letter-spacing: .1em; text-transform: uppercase; }
+.foodSummaryBand dl, .foodSummaryBand p, .carSummaryBand p { margin: 0; }
+.foodSummaryBand dl { display: grid; gap: 6px; }
+.foodSummaryBand dl div { display: flex; justify-content: space-between; gap: 10px; }
+.foodSummaryBand dt { color: var(--color-muted); font-size: 11px; }
+.foodSummaryBand dd { margin: 0; font-size: 12px; font-weight: 780; }
+.foodSummaryBand section:nth-child(2) p { margin-top: 5px; color: var(--color-muted); font-size: 11px; }
+.foodSummaryBand section:nth-child(2) strong { color: var(--color-ink); }
+.foodSummaryBand section:nth-child(3) p, .foodSummaryBand section:nth-child(4) p, .carSummaryBand p { color: var(--color-muted); font-size: 11px; line-height: 1.45; }
+.carSummaryBand strong { display: block; margin-bottom: 5px; color: var(--color-primary-deep); font-size: 18px; }
+.monthComposition, .carMonthJourneys { display: grid; gap: 18px; }
+.monthComposition > header h5, .carMonthJourneys > header h5 { margin: 4px 0 0; font-size: 22px; letter-spacing: -.025em; }
+.monthComposition > div { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0; border-block: 1px solid var(--color-border); }
+.foodHighlightGroup { min-width: 0; padding: 20px; }
+.foodHighlightGroup + .foodHighlightGroup { border-left: 1px solid var(--color-border); }
+.foodHighlightGroup > p, .emptyDetail { margin: 0; color: var(--color-muted); font-size: 12px; }
+.foodHighlightGroup ul, .carDetailGroup ul { display: grid; gap: 0; margin: 0; padding: 0; list-style: none; }
+.foodHighlightGroup li { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: start; gap: 12px; border-top: 1px solid var(--color-border); padding: 12px 0; }
+.foodHighlightGroup li:first-child { border-top: 0; padding-top: 0; }
+.foodHighlightGroup li > span { display: grid; gap: 3px; min-width: 0; }
+.foodHighlightGroup li strong { overflow-wrap: anywhere; font-size: 12px; }
+.foodHighlightGroup li small { color: var(--color-muted); font-size: 10px; line-height: 1.4; }
+.foodHighlightGroup li b { font-size: 12px; white-space: nowrap; }
+.focusPaid { display: grid; justify-items: end; max-width: 260px; text-align: right; }
+.focusPaid strong { color: var(--color-primary-deep); font-size: 25px; }
+.focusPaid > span { color: var(--color-muted); font-size: 11px; }
+.focusPaid button { margin-top: 12px; }
+.carDetailColumns { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 34px; }
+.carDetailGroup { min-width: 0; }
+.carDetailGroup li { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 18px; border-top: 1px solid var(--color-border); padding: 16px 0; }
+.carDetailGroup li > div { display: grid; gap: 4px; min-width: 0; }
+.carDetailGroup li strong { font-size: 14px; }
+.carDetailGroup li p, .carDetailGroup li small { margin: 0; color: var(--color-muted); font-size: 11px; line-height: 1.45; }
+.carDetailGroup li small { display: block; margin-top: 3px; }
+.carDetailGroup li > button { align-self: center; font-size: 11px; text-align: right; }
+.contextOnlyRow { background: linear-gradient(90deg, transparent, rgb(46 83 69 / .025)); }
+.suppressedRemainder { margin: 0; border-top: 1px solid var(--color-border); padding-top: 14px; color: var(--color-muted); font-size: 12px; font-weight: 700; }
+.carDetailSkeleton { display: grid; gap: 12px; }
+.carDetailSkeleton span, .backgroundSkeleton span { display: block; border-radius: 999px; background: linear-gradient(100deg, rgb(46 83 69 / .07) 20%, rgb(255 255 255 / .82) 40%, rgb(46 83 69 / .07) 60%); background-size: 200% 100%; animation: rhythmShimmer 1.3s ease-in-out infinite; }
+.carDetailSkeleton span { width: 88%; height: 52px; }
+.carDetailSkeleton span:nth-child(2) { width: 72%; }
+.carDetailSkeleton span:nth-child(3) { width: 80%; }
+.backgroundSkeleton { display: grid; gap: 16px; border: 1px solid var(--color-border); border-radius: 22px; padding: 30px; }
+.backgroundSkeleton span { height: 16px; }
+.backgroundSkeleton span:nth-child(2) { width: 42%; height: 38px; }
+.backgroundSkeleton span:nth-child(3) { height: 240px; }
+.backgroundSkeleton span:nth-child(4) { width: 67%; }
+@keyframes rhythmShimmer { to { background-position: -200% 0; } }
+.localDetailError, .backgroundError { display: flex; align-items: center; justify-content: space-between; gap: 16px; border: 1px solid var(--color-border); border-radius: 12px; padding: 16px; background: var(--color-surface); }
+.localDetailError p, .backgroundError p { margin: 0; color: var(--color-muted); font-size: 12px; }
+
+@media (max-width: 960px) {
+  .rhythmCardHeader { grid-template-columns: minmax(0, 1fr) minmax(220px, 300px); }
+  .foodSummaryBand, .carSummaryBand { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .foodSummaryBand > section:nth-child(3), .carSummaryBand > section:nth-child(3) { border-top: 1px solid var(--color-border); border-left: 0; }
+  .foodSummaryBand > section:nth-child(4), .carSummaryBand > section:nth-child(4) { border-top: 1px solid var(--color-border); }
+  .monthComposition > div { grid-template-columns: 1fr; }
+  .foodHighlightGroup + .foodHighlightGroup { border-top: 1px solid var(--color-border); border-left: 0; }
+  .carDetailColumns { grid-template-columns: 1fr; gap: 24px; }
+}
+
+@media (max-width: 600px) {
+  .backgroundRhythms { gap: 20px; }
+  .backgroundHeader { align-items: start; flex-direction: column; gap: 12px; }
+  .rhythmCard { gap: 16px; border-radius: 16px; padding: 18px 14px; }
+  .rhythmCardHeader { grid-template-columns: 1fr; gap: 18px; }
+  .annualKpi { justify-items: start; border-top: 1px solid var(--color-border); border-left: 0; padding: 16px 0 0; text-align: left; }
+  .annualVisualBody { padding-top: 88px; }
+  .annualRiver { height: 220px; }
+  .monthInteractionLayer { top: 88px; height: 220px; }
+  .monthAnchor::after { right: 1px; bottom: 27px; left: 1px; }
+  .monthAnchor > span { font-size: 8px; }
+  .selectedMonthGuide { top: 88px; }
+  .chartTooltip { width: 174px; padding: 9px 10px; font-size: 9px; }
+  .fuelPaidRail > header { grid-template-columns: 1fr; }
+  .fuelPaidRail > header > strong { justify-items: start; }
+  .fuelPaidRail > div { height: 56px; }
+  .monthFocusRegion { margin-inline: -14px; margin-bottom: -18px; border-radius: 0 0 16px 16px; padding: 24px 14px; }
+  .monthFocusHeader { grid-template-columns: 1fr; gap: 18px; }
+  .focusPaid { justify-items: start; max-width: none; text-align: left; }
+  .foodSummaryBand, .carSummaryBand { grid-template-columns: 1fr; }
+  .foodSummaryBand > section + section, .foodSummaryBand > section:nth-child(3), .foodSummaryBand > section:nth-child(4), .carSummaryBand > section + section, .carSummaryBand > section:nth-child(3), .carSummaryBand > section:nth-child(4) { border-top: 1px solid var(--color-border); border-left: 0; }
+  .foodSummaryBand > section, .carSummaryBand > section, .foodHighlightGroup { padding: 16px 4px; }
+  .carDetailGroup li { grid-template-columns: 1fr; gap: 4px; }
+  .carDetailGroup li > button { justify-self: start; text-align: left; }
+  .localDetailError, .backgroundError { align-items: flex-start; flex-direction: column; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .monthAnchor::after { transition: none; }
+  .monthFocusRegion { animation: none; }
+  .carDetailSkeleton span, .backgroundSkeleton span { animation: none; background: rgb(46 83 69 / .07); }
+}

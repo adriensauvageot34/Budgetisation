@@ -7,6 +7,8 @@ import type {
   GlobalExpandedReadModel,
   GlobalExpandedSectionKey,
   GlobalInitialReadModel,
+  GlobalBackgroundRhythmMonthDetailReadModel,
+  GlobalBackgroundRhythmsReadModel,
   GlobalLifeTimelineReadModel,
   GlobalMomentComponentGroup,
   GlobalMomentComponentRow,
@@ -18,7 +20,7 @@ import type {
   GlobalV2ExpandedResourceName,
   ImportedGlobalSummaryReadModel,
 } from "@/query-api/global-v2";
-import { PERSONA_PUBLISHED_PROFILE_CONTRACT_VERSION, parseGlobalLifeTimelineReadModel } from "@/query-api/global-v2";
+import { PERSONA_PUBLISHED_PROFILE_CONTRACT_VERSION, parseGlobalBackgroundRhythmMonthDetailReadModel, parseGlobalBackgroundRhythmsReadModel, parseGlobalLifeTimelineReadModel } from "@/query-api/global-v2";
 import { buildPersonaDirectModel, type PersonaDirectModel } from "@/query-api/global-v2/persona-direct-presentation";
 import { globalModulePresentation, globalModulePresentations } from "./catalog";
 import type { GlobalV2UiRequest, GlobalV2UiTransport } from "./visit-runtime";
@@ -688,6 +690,129 @@ function detailModel(resource: GlobalV2ExpandedResourceName, entityRef: string, 
   };
 }
 
+const backgroundFoodGoldens = Object.freeze([
+  ["2025-08", "479.74", "38.80", "0.00", "518.54"],
+  ["2025-09", "662.71", "242.13", "26.35", "931.19"],
+  ["2025-10", "546.58", "77.05", "0.00", "623.63"],
+  ["2025-11", "417.80", "184.10", "30.80", "632.70"],
+  ["2025-12", "280.98", "113.90", "67.17", "462.05"],
+  ["2026-01", "536.38", "56.85", "10.75", "603.98"],
+  ["2026-02", "356.29", "59.85", "0.00", "416.14"],
+  ["2026-03", "248.47", "68.15", "0.00", "316.62"],
+  ["2026-04", "353.74", "77.65", "0.00", "431.39"],
+  ["2026-05", "397.06", "127.30", "0.00", "524.36"],
+  ["2026-06", "556.16", "163.55", "24.10", "743.81"],
+  ["2026-07", "439.97", "94.20", "0.00", "534.17"],
+] as const);
+
+const backgroundCarGoldens = Object.freeze([
+  ["2025-08", 40, "1011.664", "84.130875", "142.601833125", "130.46"],
+  ["2025-09", 45, "686.272", "57.660979", "98.715596048", "180.07"],
+  ["2025-10", 61, "562.793", "51.517590", "87.219279870", "43.46"],
+  ["2025-11", 63, "301.743", "30.955127", "53.552369710", "66.30"],
+  ["2025-12", 53, "410.753", "39.131861", "66.250240673", "84.09"],
+  ["2026-01", 60, "261.481", "27.243484", "46.722575060", "85.59"],
+  ["2026-02", 63, "772.738", "66.145484", "114.563978288", "50.43"],
+  ["2026-03", 65, "1004.511", "82.188531", "158.048545113", "88.81"],
+  ["2026-04", 72, "653.059", "56.739839", "115.465572365", "145.51"],
+  ["2026-05", 55, "501.450", "44.439705", "92.345706990", "127.68"],
+  ["2026-06", 47, "472.483", "42.600976", "84.222129552", "0"],
+  ["2026-07", 60, "731.185", "64.515893", "128.773722428", "195.11"],
+] as const);
+
+function backgroundFoodHighlights(month: string) {
+  if (month === "2025-12") return [
+    [["food-highlight:dec:courses", "operation:dec:courses", "63.40", "OPERATION", "2025-12-09", "Intermarché", "LARGE", 31, "occurrence:dec:courses", "activity:courses", "courses"]],
+    [["food-highlight:dec:restaurant", "operation:dec:restaurant", "8.90", "OPERATION", "2025-12-12", "Ange", null, null, "occurrence:dec:lunch", "activity:work-lunch", "repas du midi au travail"]],
+    [["food-highlight:dec:delivery", "operation:dec:delivery", "21.90", "OPERATION", "2025-12-04", "Uber Eats", null, null, null, null, null]],
+  ];
+  return [
+    [[`food-highlight:${month}:courses`, `operation:${month}:courses`, "42.30", "OPERATION", `${month}-08`, "Courses du mois", null, null, null, null, null]],
+    [[`food-highlight:${month}:restaurant`, `operation:${month}:restaurant`, "18.40", "OPERATION", `${month}-14`, "Repas à l’extérieur", null, null, null, null, null]],
+    [],
+  ];
+}
+
+function backgroundRhythmsFixture(): GlobalBackgroundRhythmsReadModel {
+  const groceryOccurrences = [8, 6, 6, 10, 9, 10, 10, 8, 12, 11, 11, 9];
+  const groceryKnown = [8, 4, 6, 9, 7, 9, 8, 5, 9, 9, 8, 5];
+  const restaurantPayments = [4, 12, 8, 10, 8, 6, 8, 9, 10, 8, 12, 5];
+  const restaurantOccurrences = [7, 9, 11, 10, 16, 9, 16, 17, 18, 11, 14, 10];
+  const restaurantKnown = [3, 0, 3, 4, 4, 1, 2, 2, 1, 2, 5, 1];
+  const deliveryPayments = [0, 1, 0, 1, 4, 1, 0, 0, 0, 0, 1, 0];
+  const foodMonths = backgroundFoodGoldens.map(([month, courses, restaurants, deliveries, total], index) => {
+    const coverage = groceryKnown[index]! / groceryOccurrences[index]!;
+    const nonGrocery = Number(restaurants) + Number(deliveries);
+    const basket = coverage >= .7
+      ? { status: "KNOWN", small: 2, intermediate: 3, large: Math.max(0, groceryKnown[index]! - 5) }
+      : { status: "GATED", reasonCode: "COVERAGE_BELOW_70_PERCENT" };
+    return [month, courses, restaurants, deliveries, total, nonGrocery.toFixed(2), (nonGrocery / Number(total)).toFixed(6), [groceryOccurrences[index], groceryKnown[index], coverage.toFixed(6), basket], [restaurantPayments[index], restaurantOccurrences[index], restaurantKnown[index], "0.75", "0.82", restaurantKnown[index]! > 0 ? { status: "KNOWN", value: "18.40" } : { status: "GATED", reasonCode: "FOOD_RESTAURANT_CROSS_COVERAGE_INSUFFICIENT" }], deliveryPayments[index], backgroundFoodHighlights(month), [basket.status, restaurantKnown[index]! > 0 ? "KNOWN" : "GATED", basket.status === "KNOWN" ? [] : ["BASKET_STRUCTURE_COVERAGE_BELOW_70_PERCENT"]]];
+  });
+  const carMonths = backgroundCarGoldens.map(([month, legCount, distanceKm, liters, cost, paid], index) => {
+    const partial = [0, 6, 11].includes(index);
+    const total = Number(cost);
+    const unresolved = partial ? total * .1 : 0;
+    const around = (total - unresolved) * .6;
+    const outside = total - unresolved - around;
+    return {
+      month,
+      modeledUsage: { estimatedFuelCost: cost, distanceKm, estimatedFuelLiters: liters, legCount, dataNature: "ESTIMATED", dateBasis: "MOBILITY_LEG_DATE" },
+      observedFuelPaid: { amount: paid, operationCount: Number(paid) === 0 ? 0 : 1, financialComponentCount: Number(paid) === 0 ? 0 : 1, dataNature: "OBSERVED", dateBasis: "ECONOMIC_TIMING" },
+      usageComposition: { aroundWorkEstimatedFuelCost: around.toFixed(6), outsideWorkEstimatedFuelCost: outside.toFixed(6), unresolvedEstimatedFuelCost: unresolved.toFixed(6), classificationCoverage: partial ? "0.9" : "1", classificationStatus: partial ? "PARTIAL" : "COMPLETE" },
+      narrativeSummary: { routineGroupCount: 1, tripSummaryCount: 1, contextOnlyCount: 1, suppressedTripCount: index === 7 ? 2 : 0, visibleItemCount: 3 },
+      detailAvailable: true,
+      quality: { estimateCoverage: "1", resolvedEstimateCount: legCount, eligibleLegCount: legCount, estimateKnowledge: "KNOWN", measurementNature: "ESTIMATED", corpusCompleteness: "UNKNOWN", corpusCompletenessReason: "REAL_WORLD_MOBILITY_EXHAUSTIVENESS_NOT_PROVEN" },
+    };
+  });
+  const annualAround = carMonths.reduce((total, month) => total + Number(month.usageComposition.aroundWorkEstimatedFuelCost), 0);
+  const annualOutside = carMonths.reduce((total, month) => total + Number(month.usageComposition.outsideWorkEstimatedFuelCost), 0);
+  const annualUnresolved = carMonths.reduce((total, month) => total + Number(month.usageComposition.unresolvedEstimatedFuelCost), 0);
+  return parseGlobalBackgroundRhythmsReadModel({
+    kind: "global_background_rhythms", schemaVersion: "global-background-rhythms@v1", resource: "analysis_global_background_rhythms", moduleKey: "RHYTHM",
+    period: { startMonth: "2025-08", endMonth: "2026-07" },
+    food: {
+      annual: { courses: "5275.88", restaurants: "1303.53", deliveries: "159.17", total: "6738.58", nonGroceryAmount: "1462.70", nonGroceryShare: "0.217067", groceryBehavior: { knownCostOccurrenceCount: 87, eligibleMonthCount: 9, historicalComparisonGate: "AVAILABLE", thresholds: { p25: "18.29", p75: "51.99" } }, restaurantBehavior: { paymentCount: 100, semanticOccurrenceCount: 158, knownCostOccurrenceCount: 28, occurrenceCoverage: "0.75", linkedFinanceAmountCoverage: "0.82", medianCost: { status: "KNOWN", value: "18.40" } }, deliveryBehavior: { paymentCount: 8, countLabel: "paiements de livraison", occurrenceStatus: "UNKNOWN", reasonCode: "NO_DELIVERY_OCCURRENCE_AUTHORITY" } },
+      months: foodMonths,
+      constants: { financialAmountAvailable: true, deliveryCountLabel: "paiements de livraison", deliveryOccurrenceStatus: "UNKNOWN", deliveryReasonCode: "NO_DELIVERY_OCCURRENCE_AUTHORITY", monetaryAuthority: "FINANCE_CANONICAL", financialKnowledge: "KNOWN", deliveryOccurrenceKnowledge: "UNKNOWN" },
+      annotations: [
+        { annotationId: "food-annotation:september", kind: "MONTH_TO_MONTH_VARIATION", fromMonth: "2025-08", toMonth: "2025-09", text: "Septembre combine davantage de courses et de repas à l’extérieur.", coursesChange: "182.97", nonGroceryChange: "229.68" },
+        { annotationId: "food-annotation:december", kind: "MONTH_TO_MONTH_VARIATION", fromMonth: "2025-11", toMonth: "2025-12", text: "Décembre est plus contenu, avec une part hors courses plus visible.", coursesChange: "-136.82", nonGroceryChange: "-33.83" },
+        { annotationId: "food-annotation:june", kind: "MONTH_TO_MONTH_VARIATION", fromMonth: "2026-05", toMonth: "2026-06", text: "Juin rassemble davantage de courses et de restaurants.", coursesChange: "159.10", nonGroceryChange: "60.35" },
+      ],
+      methodVersion: "global_food_rhythm@v1", inputHash: hash("c"),
+    },
+    carMobility: {
+      annual: { modeledUsage: { estimatedFuelCost: "1188.481549222", distanceKm: "7370.132", estimatedFuelLiters: "647.270344", legCount: 684, dataNature: "ESTIMATED", dateBasis: "MOBILITY_LEG_DATE" }, observedFuelPaid: { amount: "1197.51", operationCount: 19, financialComponentCount: 19, dataNature: "OBSERVED", dateBasis: "ECONOMIC_TIMING" }, quality: { estimateCoverage: "1", resolvedEstimateCount: 684, eligibleLegCount: 684, estimateKnowledge: "KNOWN", measurementNature: "ESTIMATED", corpusCompleteness: "UNKNOWN", corpusCompletenessReason: "REAL_WORLD_MOBILITY_EXHAUSTIVENESS_NOT_PROVEN" } },
+      usageComposition: { aroundWorkEstimatedFuelCost: annualAround.toFixed(6), outsideWorkEstimatedFuelCost: annualOutside.toFixed(6), unresolvedEstimatedFuelCost: annualUnresolved.toFixed(6), classificationCoverage: "0.969", classificationStatus: "PARTIAL" },
+      months: carMonths,
+      annotations: [], metadata: [{ key: "comparisonStatus", value: "NOT_RECONCILABLE" }], methodVersion: "global_car_mobility_rhythm@v1", inputHash: hash("d"),
+    },
+    quality: { food: { completeMonthCount: 12, reconciliationStatus: "PASS" }, carMobility: { estimateCoverage: "1", resolvedEstimateCount: 684, eligibleLegCount: 684, estimateKnowledge: "KNOWN", measurementNature: "ESTIMATED", corpusCompleteness: "UNKNOWN", corpusCompletenessReason: "REAL_WORLD_MOBILITY_EXHAUSTIVENESS_NOT_PROVEN" } },
+    destinations: backgroundCarGoldens.map(([month]) => ({ targetId: `background-rhythm:${month}`, kind: "GLOBAL_QUERY", resource: "analysis_global_background_rhythm_month_detail", instanceKey: `fixture:car:${month}`, entityRef: `car-mobility-month:${month}`, scopeHash: hash("e"), sourcePublicationId: publicationMeta.publicationId, sourceAnalyticsRevision: publicationMeta.revision })),
+    publicationMeta, resourceMeta: resourceMeta(60),
+  });
+}
+
+function backgroundMonthDetailFixture(month: string): GlobalBackgroundRhythmMonthDetailReadModel {
+  const source = backgroundCarGoldens.find(([key]) => key === month) ?? backgroundCarGoldens[0];
+  const [, , distanceKm, liters, cost] = source!;
+  const march = month === "2026-03";
+  const targetRef = march ? "life-event:ski" : `life-event:mobility-${month}`;
+  return parseGlobalBackgroundRhythmMonthDetailReadModel({
+    kind: "global_background_rhythm_month_detail", schemaVersion: "global-background-rhythm-month-detail@v1", resource: "analysis_global_background_rhythm_month_detail", moduleKey: "RHYTHM", domain: "CAR_MOBILITY", month,
+    routineGroups: [
+      { routineGroupId: `routine:${month}:work`, pattern: "WORK_ONLY", title: "Trajets maison ↔ travail", semanticFamily: "WORK", semanticTier: 1, usageBand: "AROUND_WORK", occurrenceCount: march ? 19 : 12, annualOccurrenceCount: 184, mobilityTripIds: [`trip:${month}:work`], monthContribution: { distanceKm: (Number(distanceKm) * .45).toFixed(3), estimatedFuelLiters: (Number(liters) * .45).toFixed(3), estimatedFuelCost: (Number(cost) * .45).toFixed(2) }, fullTrips: { distanceKm: (Number(distanceKm) * .45).toFixed(3), estimatedFuelLiters: (Number(liters) * .45).toFixed(3), estimatedFuelCost: (Number(cost) * .45).toFixed(2) } },
+      { routineGroupId: `routine:${month}:outings`, pattern: "WORKDAY_OUTING", title: "Déplacements pendant la journée de travail", semanticFamily: "WORK", semanticTier: 2, usageBand: "AROUND_WORK", occurrenceCount: march ? 5 : 3, annualOccurrenceCount: 42, mobilityTripIds: [`trip:${month}:outing`], monthContribution: { distanceKm: "42.4", estimatedFuelLiters: "3.8", estimatedFuelCost: "7.20" }, fullTrips: { distanceKm: "42.4", estimatedFuelLiters: "3.8", estimatedFuelCost: "7.20" } },
+    ],
+    tripSummaries: [{ tripSummaryId: `summary:${month}:event`, mobilityTripId: `trip:${month}:event`, title: march ? "Séjour ski aux 7 Laux" : "Sortie du mois", semanticFamily: march ? "LEISURE" : "PERSONAL", semanticTier: 1, usageBand: "OUTSIDE_WORK", multiDay: march, crossMonth: march, startDate: march ? "2026-02-26" : `${month}-16`, endDate: march ? "2026-03-01" : `${month}-16`, targetKind: "LIFE_EVENT", targetRef, monthContribution: { distanceKm: march ? "289.70" : "64.2", estimatedFuelLiters: march ? "24.90" : "5.7", estimatedFuelCost: march ? "46.00" : "10.40" }, fullTrip: { distanceKm: march ? "648.00" : "64.2", estimatedFuelLiters: march ? "55.60" : "5.7", estimatedFuelCost: march ? "103.00" : "10.40" } }],
+    contextOnly: [{ contextOnlyId: `context:${month}`, mobilityTripId: `trip:${month}:context`, title: march ? "Sortie loisirs" : "Déplacement personnel", semanticFamily: march ? "LEISURE" : "PERSONAL", semanticTier: 2, usageBand: "OUTSIDE_WORK", relationType: "PRIMARY_CONTEXT", targetKind: "LIFE_EVENT", targetRef }],
+    suppressedRemainder: { tripCount: march ? 2 : 0, mobilityTripIds: march ? [`trip:${month}:suppressed:1`, `trip:${month}:suppressed:2`] : [], displayText: march ? "+ 2 autres déplacements inclus dans le total mensuel" : "+ 0 autres déplacements inclus dans le total mensuel", internalReconciliation: { distanceKm: "0", estimatedFuelLiters: "0", estimatedFuelCost: "0" } },
+    destinations: [{ targetId: `background-rhythm-context:${targetRef}`, kind: "ENTITY", resource: "global_life_event", entityRef: targetRef, scopeHash: hash("e"), sourcePublicationId: publicationMeta.publicationId, sourceAnalyticsRevision: publicationMeta.revision }],
+    quality: { mobility: { estimateCoverage: "1", resolvedEstimateCount: 1, eligibleLegCount: 1, estimateKnowledge: "KNOWN", measurementNature: "ESTIMATED", corpusCompleteness: "UNKNOWN", corpusCompletenessReason: "REAL_WORLD_MOBILITY_EXHAUSTIVENESS_NOT_PROVEN" }, narrative: { routineGroupCount: 2, tripSummaryCount: 1, contextOnlyCount: 1, suppressedTripCount: march ? 2 : 0, visibleItemCount: 4, limitationCodes: [] } },
+    publicationMeta, resourceMeta: resourceMeta(61),
+  });
+}
+
 function lifeTimelineFixture(): GlobalLifeTimelineReadModel {
   const scopeHash = hash("f");
   const events = [
@@ -696,6 +821,7 @@ function lifeTimelineFixture(): GlobalLifeTimelineReadModel {
     { eventRef: "moment:summer", sourceKind: "MOMENT", canonicalName: "Voyage à Minorque 2025", startDate: "2025-09-08", endDate: "2025-09-15", typeKey: "voyage", typeLabel: "Voyage", familyKey: "travel", familySource: "M6", participantRefs: ["person:a", "person:b"], places: [{ placeRef: "place:minorca", label: "Minorque" }], causalCost: { status: "KNOWN", value: { kind: "MONEY", value: "1253.9", unit: "EUR" } }, comparisonSummary: { status: "PARTIAL", comparisonTier: "SAME_TYPE", peerCount: 4, materiality: "UNKNOWN" }, detailAvailability: "MOMENT_DETAIL", quality: qualityKnown, sourceModule: "MOMENTS", sourceOwner: "M6" },
     { eventRef: "moment:home", sourceKind: "MOMENT", canonicalName: "Aménagement du salon", startDate: "2025-10-03", endDate: "2025-10-03", typeKey: "projet-achat-maison", typeLabel: "Projet maison", familyKey: "home", familySource: "M6", participantRefs: ["person:a", "person:b"], places: [], causalCost: { status: "KNOWN", value: { kind: "MONEY", value: "2298.96", unit: "EUR" } }, comparisonSummary: { status: "KNOWN", comparisonTier: "SAME_FAMILY", peerCount: 6, materiality: "MATERIAL" }, detailAvailability: "MOMENT_DETAIL", quality: qualityKnown, sourceModule: "MOMENTS", sourceOwner: "M6" },
     { eventRef: "moment:free", sourceKind: "MOMENT", canonicalName: "Sortie sans dépense reliée", startDate: "2026-01-17", endDate: "2026-01-17", typeKey: "sortie-activite", typeLabel: "Sortie et activité", familyKey: "leisure", familySource: "M6", participantRefs: ["person:a"], places: [], causalCost: { status: "KNOWN", value: { kind: "MONEY", value: "0", unit: "EUR" } }, comparisonSummary: { status: "KNOWN", comparisonTier: "SAME_FAMILY", peerCount: 7, materiality: "NOT_MATERIAL" }, detailAvailability: "MOMENT_DETAIL", quality: qualityKnown, sourceModule: "MOMENTS", sourceOwner: "M6" },
+    { eventRef: "life-event:ski", sourceKind: "LIFE_EVENT", canonicalName: "Séjour ski aux 7 Laux", startDate: "2026-02-26", endDate: "2026-03-01", typeKey: "voyage-sejour", typeLabel: "Séjour et loisirs", familyKey: "travel", familySource: "LIFE_EVENT", participantRefs: ["person:a", "person:b"], places: [{ placeRef: "place:sept-laux", label: "Les 7 Laux" }], causalCost: { status: "UNKNOWN" }, detailAvailability: "INLINE_ONLY", quality: qualityKnown, sourceModule: "CANONICAL", sourceOwner: "CANONICAL" },
   ];
   const destinations = events.filter(({ sourceKind }) => sourceKind === "MOMENT").map(({ eventRef }) => ({ targetId: `global-query:${eventRef}`, kind: "GLOBAL_QUERY", resource: "analysis_global_moment_experience_detail", instanceKey: `fixture:${eventRef}`, entityRef: eventRef, scopeHash, sourcePublicationId: publicationMeta.publicationId, sourceAnalyticsRevision: publicationMeta.revision }));
   return parseGlobalLifeTimelineReadModel({ kind: "global_life_timeline", schemaVersion: "global-life-timeline@v1", resource: "analysis_global_life_timeline", moduleKey: "RHYTHM", events, chapterOverlays: [], contextSignals: [], destinations, quality: qualityKnown, publicationMeta, resourceMeta: resourceMeta(36) });
@@ -711,6 +837,8 @@ export function createGlobalV2FixtureTransport(bundle: GlobalV2FixtureBundle, sc
     if (request.resource === "analysis_global_manifest") return { data: bundle.initial, publicationMeta };
     if (request.resource === "analysis_global_summary_ai") return { data: bundle.summary, publicationMeta };
     if (request.resource === "analysis_global_life_timeline") return { data: lifeTimelineFixture(), publicationMeta };
+    if (request.resource === "analysis_global_background_rhythms") return { data: backgroundRhythmsFixture(), publicationMeta };
+    if (request.resource === "analysis_global_background_rhythm_month_detail") return { data: backgroundMonthDetailFixture(request.params.month ?? "2025-08"), publicationMeta };
     const module = bundle.modules.find((entry) => entry.resource === request.resource);
     if (module !== undefined) return { data: module, publicationMeta };
     const expanded = globalModulePresentations.find((entry) => entry.expandedResource === request.resource);
