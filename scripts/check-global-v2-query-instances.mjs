@@ -199,10 +199,10 @@ check(() => assert.deepEqual(query.globalV2QueryRegistry.analysis_global_life_ti
   moduleRole: "PRESENTATION_ONLY",
   capabilityId: "GLOBAL_LIFE_TIMELINE",
   availability: "AVAILABLE",
-  schemaVersion: "global-life-timeline@v2",
+  schemaVersion: "global-life-timeline@v3",
   contractVersion: "global-v2-query@v1",
-  methodVersion: "analysis_global_life_timeline@v2",
-  policyVersions: { projection: "timeline-semantic-projection@v1", comparator: "timeline-semantic-comparator@v2", transport: "global-v2-snapshot-only@sh05-v2" },
+  methodVersion: "analysis_global_life_timeline@v3",
+  policyVersions: { projection: "timeline-semantic-projection@v1", comparator: "timeline-semantic-comparator@v2", eventMobilityOwner: "global_m7_event_mobility@v1", physicalAttribution: "global-m7-event-mobility-physical-attribution@v1", costMetric: "mobility_usage_estimated_fuel_cost@v1", transport: "global-v2-snapshot-only@sh05-v3" },
   schema: query.globalV2QueryRegistry.analysis_global_life_timeline.schema,
 }));
 check(() => assert.deepEqual(query.globalLifeTimelineReadModelSchema.parse(timelinePayload), timelinePayload));

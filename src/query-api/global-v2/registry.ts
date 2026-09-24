@@ -14,12 +14,11 @@ import { globalExpandedReadModelSchemas, globalExpandedSectionKeys, globalV2Expa
 import { globalInitialReadModelSchema, globalPrimaryReadModelSchemas } from "./schemas";
 import { globalLifeTimelineReadModelSchema, type GlobalLifeTimelineResourceName } from "./timeline";
 import {
-  createGlobalLifeTimelineTransportSchema,
-  globalLifeTimelineV2ResourceDefinition,
   globalTimelineEventComparisonReadModelSchema,
   globalTimelineEventComparisonResourceDefinition,
   type GlobalTimelineComparisonLevel,
 } from "./timeline-v2";
+import { createGlobalLifeTimelineV3TransportSchema, globalLifeTimelineV3ResourceDefinition } from "./timeline-v3";
 import {
   globalBackgroundRhythmMonthDetailReadModelSchema,
   globalBackgroundRhythmMonthDetailResourceDefinition,
@@ -78,7 +77,7 @@ const resourceCatalog = Object.freeze([
   ...overviewResourceCatalog,
   ...globalPrimaryModuleCatalog,
   ...globalV2ExpandedResourceCatalog,
-  globalLifeTimelineV2ResourceDefinition,
+  globalLifeTimelineV3ResourceDefinition,
   globalTimelineEventComparisonResourceDefinition,
   globalBackgroundRhythmsResourceDefinition,
   globalBackgroundRhythmMonthDetailResourceDefinition,
@@ -154,7 +153,7 @@ export function parseGlobalV2QueryParams(resource: GlobalV2QueryResourceName, va
 function schemaFor(resource: GlobalV2QueryResourceName): RuntimeSchema<unknown> {
   if (resource === "analysis_global_manifest") return globalInitialReadModelSchema as RuntimeSchema<unknown>;
   if (resource === "analysis_global_summary_ai") return importedGlobalSummaryReadModelSchema as RuntimeSchema<unknown>;
-  if (resource === globalLifeTimelineV2ResourceDefinition.resource) return createGlobalLifeTimelineTransportSchema(globalLifeTimelineReadModelSchema as RuntimeSchema<unknown>);
+  if (resource === globalLifeTimelineV3ResourceDefinition.resource) return createGlobalLifeTimelineV3TransportSchema(globalLifeTimelineReadModelSchema as RuntimeSchema<unknown>);
   if (resource === globalTimelineEventComparisonResourceDefinition.resource) return globalTimelineEventComparisonReadModelSchema as RuntimeSchema<unknown>;
   if (resource === globalBackgroundRhythmsResourceDefinition.resource) return globalBackgroundRhythmsReadModelSchema as RuntimeSchema<unknown>;
   if (resource === globalBackgroundRhythmMonthDetailResourceDefinition.resource) return globalBackgroundRhythmMonthDetailReadModelSchema as RuntimeSchema<unknown>;
@@ -182,8 +181,10 @@ export const globalV2QueryRegistry = Object.freeze(Object.fromEntries(
       ...(schemaVersion === undefined ? {} : { schemaVersion }),
       ...(transport === undefined ? {} : { transport }),
       contractVersion: "global-v2-query@v1",
-      methodVersion: m1V2ProjectionResources.has(resource) || lifeSpendingV2ProjectionResources.has(resource) || timelineSemanticResources.has(resource) || personaDetailIndexResources.has(resource) || placeMobilityV2ProjectionResources.has(resource) ? `${resource}@v2` : `${resource}@v1`,
-      policyVersions: timelineSemanticResources.has(resource)
+      methodVersion: resource === "analysis_global_life_timeline" ? "analysis_global_life_timeline@v3" : m1V2ProjectionResources.has(resource) || lifeSpendingV2ProjectionResources.has(resource) || timelineSemanticResources.has(resource) || personaDetailIndexResources.has(resource) || placeMobilityV2ProjectionResources.has(resource) ? `${resource}@v2` : `${resource}@v1`,
+      policyVersions: resource === "analysis_global_life_timeline"
+        ? Object.freeze({ projection: "timeline-semantic-projection@v1", comparator: "timeline-semantic-comparator@v2", eventMobilityOwner: "global_m7_event_mobility@v1", physicalAttribution: "global-m7-event-mobility-physical-attribution@v1", costMetric: "mobility_usage_estimated_fuel_cost@v1", transport: "global-v2-snapshot-only@sh05-v3" })
+        : timelineSemanticResources.has(resource)
         ? Object.freeze({ projection: "timeline-semantic-projection@v1", comparator: "timeline-semantic-comparator@v2", transport: "global-v2-snapshot-only@sh05-v2" })
         : backgroundRhythmResources.has(resource)
           ? Object.freeze({ projection: "global-background-rhythms-query@v1", wire: "global-background-rhythms-compact-wire@v1", transport: resource === "analysis_global_background_rhythms" ? "background-near-viewport@v1" : "direct-on-demand-click@v1" })
@@ -214,11 +215,20 @@ function legacyTimelineQueryMethodSignature(): string {
   }))));
 }
 
-/** Temporary SH-05 cutover bridge: the active v1 generation remains readable until S7. */
+function timelineV2QueryMethodSignature(): string {
+  return bytesToHex(sha256(utf8ToBytes(canonicalSerializeGlobal({
+    resource: "analysis_global_life_timeline",
+    contractVersion: "global-v2-query@v1",
+    methodVersion: "analysis_global_life_timeline@v2",
+    policyVersions: { projection: "timeline-semantic-projection@v1", comparator: "timeline-semantic-comparator@v2", transport: "global-v2-snapshot-only@sh05-v2" },
+  }))));
+}
+
+/** Keep both earlier Timeline signatures readable while the V3 rollback gate is prepared. */
 export function globalV2AcceptedQueryMethodSignatures(resource: GlobalV2QueryResourceName): readonly string[] {
   const current = globalV2ExpectedQueryMethodSignature(resource);
   return resource === "analysis_global_life_timeline"
-    ? Object.freeze([current, legacyTimelineQueryMethodSignature()])
+    ? Object.freeze([current, timelineV2QueryMethodSignature(), legacyTimelineQueryMethodSignature()])
     : Object.freeze([current]);
 }
 

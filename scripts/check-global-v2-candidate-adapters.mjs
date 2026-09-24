@@ -89,6 +89,9 @@ const { resolveGlobalM6MomentAuthority } = require(path.resolve("src/server/anal
 const { resolveGlobalTimelineCandidateAdapter, resolveGlobalGroceryCandidateAdapter } = require(path.resolve("src/server/analytics/global-v2-candidate-adapters.ts"));
 const { resolveGlobalV2ProductionOwnerOutputs } = require(path.resolve("src/server/analytics/global-v2-production-orchestrator.ts"));
 const { buildGlobalV2CandidateFromOwnerOutputs } = require(path.resolve("src/server/analytics/global-v2-candidate.ts"));
+const { buildGlobalTimelineQuerySnapshots } = require(path.resolve("src/server/analytics/global-v2-timeline-query.ts"));
+const { parseGlobalLifeTimelineV2ReadModel } = require(path.resolve("src/query-api/global-v2/timeline-v2.ts"));
+const { parseGlobalLifeTimelineV3ReadModel } = require(path.resolve("src/query-api/global-v2/timeline-v3.ts"));
 const { buildGlobalActivityCostProfile } = require(path.resolve("src/analytics/global-v2/routines.ts"));
 const { buildGlobalTimelineCandidateBundle } = require(path.resolve("src/analytics/global-v2/candidate-adapters.ts"));
 
@@ -220,6 +223,58 @@ assert.equal(eventMobilityArtifact.dependencies.length, 1);
 assert.equal(eventMobilityArtifact.dependencies[0].digest, integrated.eventMobilityAuthority.outputHash);
 assert.equal(candidate.requiredKeys.artifacts.filter((key) => key === eventMobilityArtifact.key).length, 1);
 assert.equal(candidate.manifest.closures.filter(({ outputKey }) => outputKey === eventMobilityArtifact.key).length, 1);
+const v3Candidate = buildGlobalV2CandidateFromOwnerOutputs({
+  project: "ipuuhxrblxormwgoaqnz", householdId: household.household_id, householdTimeZone: household.timezone,
+  personIds: persons.map(({ personId }) => personId), asOf, certifiedThrough,
+  dataRevision: String(revision.data_revision), analyticsRevision: String(revision.analytics_revision),
+  implementationIdentity: "6af8ae20d08c2906fdb45cf59d3c12c79ae1700b", ownerOutputs: integrated.ownerOutputs,
+  eventMobilityAuthority: integrated.eventMobilityAuthority, presentationLabels: integrated.presentationLabels,
+  candidateAdapters: integrated.candidateAdapters, momentComponentPresentation: integrated.momentComponentPresentation,
+  semanticTimeline: integrated.semanticTimeline,
+});
+const timelineResourceMeta = (resource, params) => {
+  const snapshot = v3Candidate.snapshots.find((entry) => entry.resource === resource && JSON.stringify(entry.params) === JSON.stringify(params));
+  assert.ok(snapshot, `Missing ${resource} snapshot for parity.`);
+  return snapshot.payload.resourceMeta;
+};
+const timelineInputs = { projection: integrated.semanticTimeline.projection, comparator: integrated.semanticTimeline.comparator,
+  publicationMeta: v3Candidate.snapshots.find(({ resource }) => resource === "analysis_global_life_timeline").payload.publicationMeta,
+  resourceMeta: timelineResourceMeta };
+const v2Timeline = buildGlobalTimelineQuerySnapshots(timelineInputs);
+const v3Timeline = buildGlobalTimelineQuerySnapshots({ ...timelineInputs, eventMobilityAuthority: integrated.eventMobilityAuthority });
+const parsedV2Timeline = parseGlobalLifeTimelineV2ReadModel(v2Timeline.timeline);
+const parsedV3Timeline = parseGlobalLifeTimelineV3ReadModel(v3Timeline.timeline);
+const candidateTimeline = v3Candidate.snapshots.find(({ resource }) => resource === "analysis_global_life_timeline");
+assert.deepEqual(candidateTimeline.payload, v3Timeline.timeline, "Le candidate doit stager le même V3 compact que le Query builder.");
+assert.equal(v3Timeline.timeline.schemaVersion, "global-life-timeline@v3");
+assert.deepEqual(v3Timeline.comparisons, v2Timeline.comparisons, "Le Comparator ne doit recevoir aucune donnée Mobility.");
+for (const field of ["eventRef", "sourceKind", "canonicalName", "startDate", "endDate", "visibilityTier", "semanticClassification", "eventCost", "series", "comparisonLevels", "defaultComparisonLevel", "distinctiveComparisonLevel", "primaryPlaceLabel", "participantCount", "spentDuringContext", "momentDetailAvailable"]) {
+  assert.deepEqual(parsedV3Timeline.events.map((event) => event[field]), parsedV2Timeline.events.map((event) => event[field]), `Timeline V3 must preserve ${field}.`);
+}
+const timelineEventRefs = new Set(parsedV3Timeline.events.map(({ eventRef }) => eventRef));
+const matchedSummaries = integrated.eventMobilityAuthority.summaries.filter(({ eventRef }) => timelineEventRefs.has(eventRef));
+const unmatchedSummaries = integrated.eventMobilityAuthority.summaries.filter(({ eventRef }) => !timelineEventRefs.has(eventRef));
+const valuedMatchedSummaries = matchedSummaries.filter(({ status }) => status === "KNOWN" || status === "PARTIAL");
+const publishedMobilityEvents = parsedV3Timeline.events.filter(({ mobilityContext }) => mobilityContext !== undefined);
+assert.equal(publishedMobilityEvents.length, valuedMatchedSummaries.length);
+for (const summary of valuedMatchedSummaries) {
+  const context = parsedV3Timeline.events.find(({ eventRef }) => eventRef === summary.eventRef)?.mobilityContext;
+  assert.deepEqual(context, { status: summary.status, physicalLegCount: summary.physicalLegCount, tripCount: summary.tripCount,
+    distanceKm: summary.distanceKm, estimatedFuelLiters: summary.estimatedFuelLiters, estimatedFuelCost: summary.estimatedFuelCost,
+    validationStatus: summary.validationStatus });
+}
+const v2TimelineBytes = new TextEncoder().encode(JSON.stringify(v2Timeline.timeline)).byteLength;
+const v3TimelineBytes = new TextEncoder().encode(JSON.stringify(v3Timeline.timeline)).byteLength;
+assert.ok(v3TimelineBytes < 128 * 1024, "Timeline V3 must remain within the unchanged 128 KiB budget.");
+const serializedV3Timeline = JSON.stringify(v3Timeline.timeline);
+for (const raw of ["mobilityLegId", "mobilityTripId", "mobilityTripContextLinkId", "contextResolutionId", "evidenceRefs", "inputHash", "outputHash"]) assert.equal(serializedV3Timeline.includes(`"${raw}"`), false);
+console.log(`TIMELINE_V3_REAL_FIXTURE=${JSON.stringify({ v2Bytes: v2TimelineBytes, v3Bytes: v3TimelineBytes, deltaBytes: v3TimelineBytes - v2TimelineBytes,
+  eventCount: parsedV3Timeline.events.length, summaryCount: integrated.eventMobilityAuthority.summaries.length,
+  matchedSummaries: matchedSummaries.length, unmatchedSummaries: unmatchedSummaries.length,
+  unmatchedEventRefs: unmatchedSummaries.map(({ eventRef }) => eventRef), mobilityContexts: publishedMobilityEvents.length,
+  KNOWN: publishedMobilityEvents.filter(({ mobilityContext }) => mobilityContext.status === "KNOWN").length,
+  PARTIAL: publishedMobilityEvents.filter(({ mobilityContext }) => mobilityContext.status === "PARTIAL").length,
+  remainingBudgetBytes: 128 * 1024 - v3TimelineBytes } )}`);
 const timelineSnapshot = candidate.snapshots.find(({ resource }) => resource === "analysis_global_life_timeline");
 assert.ok(timelineSnapshot, "Le snapshot Timeline doit être requis par le candidat.");
 assert.equal(timelineSnapshot.payload.events.length, 57);

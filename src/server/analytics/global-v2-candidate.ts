@@ -1921,6 +1921,7 @@ export function buildGlobalV2CandidateFromOwnerOutputs(input: GlobalV2CandidateI
     const momentId = stringOf(at(comparison, "momentId")); return momentId === undefined ? [] : [[momentId, comparison] as const];
   }));
   const timelineDependencies = dependenciesFor("RHYTHM");
+  const timelineMobilityDependencies = [...timelineDependencies, ...eventMobilityArtifact.dependencies];
   const timelineParams = {};
   const timelineEvents: readonly GlobalTimelineEvent[] = input.candidateAdapters.timeline.events.map((event): GlobalTimelineEvent => {
     const comparison = event.sourceKind === "MOMENT" ? m6Comparisons.get(event.eventRef.slice("moment:".length)) : undefined;
@@ -1942,8 +1943,9 @@ export function buildGlobalV2CandidateFromOwnerOutputs(input: GlobalV2CandidateI
   const semanticSnapshots = input.semanticTimeline === undefined ? undefined : buildGlobalTimelineQuerySnapshots({
     projection: input.semanticTimeline.projection,
     comparator: input.semanticTimeline.comparator,
+    eventMobilityAuthority: input.eventMobilityAuthority,
     publicationMeta: provisionalMeta,
-    resourceMeta: (resource, params) => metaFor(resource, params, timelineDependencies),
+    resourceMeta: (resource, params) => metaFor(resource, params, resource === "analysis_global_life_timeline" ? timelineMobilityDependencies : timelineDependencies),
   });
   const timelineInstance: GlobalV2QueryInstanceInput = semanticSnapshots === undefined
     ? {
@@ -1957,7 +1959,7 @@ export function buildGlobalV2CandidateFromOwnerOutputs(input: GlobalV2CandidateI
         resource: "analysis_global_life_timeline",
         scope,
         params: timelineParams,
-        dependencies: timelineDependencies,
+        dependencies: timelineMobilityDependencies,
         payload: semanticSnapshots.timeline,
       };
   const timelineComparisonInstances: GlobalV2QueryInstanceInput[] = (semanticSnapshots?.comparisons ?? []).map(({ params, payload }) => ({

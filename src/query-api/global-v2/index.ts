@@ -130,7 +130,6 @@ export {
   buildGlobalTimelineEventComparisonReadModel,
   globalLifeTimelineV2ReadModelSchema,
   globalLifeTimelineV2ResourceDefinition,
-  globalLifeTimelineV2ResourceDefinition as globalLifeTimelineResourceDefinition,
   globalTimelineEventComparisonReadModelSchema,
   globalTimelineEventComparisonResourceDefinition,
   parseGlobalLifeTimelineV2ReadModel,
@@ -147,6 +146,20 @@ export {
   type GlobalTimelineSpentDuringContext,
   type GlobalTimelineV2Event,
 } from "./timeline-v2";
+export {
+  GLOBAL_LIFE_TIMELINE_V3_MAX_EVENTS,
+  GLOBAL_LIFE_TIMELINE_V3_PAYLOAD_BUDGET_BYTES,
+  buildGlobalLifeTimelineV3ReadModel,
+  globalLifeTimelineV3ReadModelSchema,
+  globalLifeTimelineV3ResourceDefinition,
+  globalLifeTimelineV3ResourceDefinition as globalLifeTimelineResourceDefinition,
+  parseGlobalLifeTimelineV3ReadModel,
+  type GlobalLifeTimelineV3ReadModel,
+  type GlobalLifeTimelineV3Snapshot,
+  type GlobalTimelineMobilityContext,
+  type GlobalTimelineMobilityMeta,
+  type GlobalTimelineV3Event,
+} from "./timeline-v3";
 export {
   GLOBAL_BACKGROUND_RHYTHMS_ANNUAL_PAYLOAD_BUDGET_BYTES,
   GLOBAL_BACKGROUND_RHYTHM_MONTH_DETAIL_PAYLOAD_BUDGET_BYTES,

@@ -3,7 +3,7 @@ import "server-only";
 import { createHash } from "node:crypto";
 
 import { canonicalSerializeGlobal, computeGlobalAnalysisScopeV2Hash, type NormalizedGlobalAnalysisScopeV2 } from "@/core/global-v2";
-import { globalV2ExpectedQueryMethodSignature, globalV2QueryRegistry, parseGlobalLifeTimelineV2ReadModel, parseGlobalV2QueryParams, type GlobalExpandedReadModel, type GlobalInitialReadModel, type GlobalLifeTimelineReadModel, type GlobalModuleCompactReadModel, type GlobalTimelineEventComparisonReadModel, type GlobalV2QueryParams, type GlobalV2QueryResourceName } from "@/query-api/global-v2";
+import { globalV2ExpectedQueryMethodSignature, globalV2QueryRegistry, parseGlobalLifeTimelineV2ReadModel, parseGlobalLifeTimelineV3ReadModel, parseGlobalV2QueryParams, type GlobalExpandedReadModel, type GlobalInitialReadModel, type GlobalLifeTimelineReadModel, type GlobalModuleCompactReadModel, type GlobalTimelineEventComparisonReadModel, type GlobalV2QueryParams, type GlobalV2QueryResourceName } from "@/query-api/global-v2";
 import { buildGlobalV2PublicationManifest, globalV2ClosureDeclarationDigest, globalV2ClosureInputDigest, globalV2PublicationFactsHash, type GlobalV2Closure, type GlobalV2ManifestInput, type GlobalV2PublicationManifest, type GlobalV2ResolvedDependency, type GlobalV2ResourceVersion } from "./global-v2";
 
 export type GlobalV2QueryInstanceInput = {
@@ -93,12 +93,12 @@ export function buildGlobalV2QueryPlan(input: {
     return {
       ...source,
       params,
-      // Timeline V2 uses a catalog-backed wire representation. Keep that compact
+      // Timeline V2/V3 use a catalog-backed wire representation. Keep that compact
       // snapshot in the plan after schema validation; Query parsing expands it.
       payload: source.resource === "analysis_global_life_timeline"
         && source.payload !== null
         && typeof source.payload === "object"
-        && (source.payload as { readonly schemaVersion?: unknown }).schemaVersion === "global-life-timeline@v2"
+        && ["global-life-timeline@v2", "global-life-timeline@v3"].includes(String((source.payload as { readonly schemaVersion?: unknown }).schemaVersion))
         ? source.payload
         : parsed,
       dependencies,
@@ -140,7 +140,9 @@ export function buildGlobalV2QueryPlan(input: {
           if (destination?.instanceKey === undefined || !instanceKeys.has(destination.instanceKey)) throw new TypeError(`GLOBAL_TIMELINE_MOMENT_DETAIL_MISSING:${event.eventRef}`);
         }
       } else {
-        const timeline = parseGlobalLifeTimelineV2ReadModel(instance.payload);
+        const timeline = (instance.payload as { readonly schemaVersion?: unknown }).schemaVersion === "global-life-timeline@v3"
+          ? parseGlobalLifeTimelineV3ReadModel(instance.payload)
+          : parseGlobalLifeTimelineV2ReadModel(instance.payload);
         for (const event of timeline.events.filter(({ momentDetailAvailable }) => momentDetailAvailable)) {
           const detail = instances.find((candidate) => candidate.resource === "analysis_global_moment_experience_detail" && candidate.scopeHash === instance.scopeHash && candidate.params.entityRef === event.eventRef);
           if (detail === undefined) throw new TypeError(`GLOBAL_TIMELINE_MOMENT_DETAIL_MISSING:${event.eventRef}`);
@@ -162,13 +164,15 @@ export function buildGlobalV2QueryPlan(input: {
     }
   }
 
-  const timelineV2Instances = instances.filter((instance) => instance.resource === "analysis_global_life_timeline" && (instance.payload as { readonly schemaVersion?: unknown }).schemaVersion === "global-life-timeline@v2");
-  if (instances.some(({ resource }) => resource === "analysis_global_timeline_event_comparison") && timelineV2Instances.length === 0) throw new TypeError("GLOBAL_TIMELINE_COMPARISON_TIMELINE_V2_MISSING");
+  const timelineSemanticInstances = instances.filter((instance) => instance.resource === "analysis_global_life_timeline" && ["global-life-timeline@v2", "global-life-timeline@v3"].includes(String((instance.payload as { readonly schemaVersion?: unknown }).schemaVersion)));
+  if (instances.some(({ resource }) => resource === "analysis_global_timeline_event_comparison") && timelineSemanticInstances.length === 0) throw new TypeError("GLOBAL_TIMELINE_COMPARISON_TIMELINE_V2_MISSING");
   for (const comparison of instances.filter(({ resource }) => resource === "analysis_global_timeline_event_comparison")) {
-    if (!timelineV2Instances.some(({ scopeHash }) => scopeHash === comparison.scopeHash)) throw new TypeError("GLOBAL_TIMELINE_COMPARISON_SAME_SCOPE_TIMELINE_MISSING");
+    if (!timelineSemanticInstances.some(({ scopeHash }) => scopeHash === comparison.scopeHash)) throw new TypeError("GLOBAL_TIMELINE_COMPARISON_SAME_SCOPE_TIMELINE_MISSING");
   }
-  for (const timelineInstance of timelineV2Instances) {
-    const timeline = parseGlobalLifeTimelineV2ReadModel(timelineInstance.payload);
+  for (const timelineInstance of timelineSemanticInstances) {
+    const timeline = (timelineInstance.payload as { readonly schemaVersion?: unknown }).schemaVersion === "global-life-timeline@v3"
+      ? parseGlobalLifeTimelineV3ReadModel(timelineInstance.payload)
+      : parseGlobalLifeTimelineV2ReadModel(timelineInstance.payload);
     const events = new Map(timeline.events.map((event) => [event.eventRef, event] as const));
     const advertised = new Set(timeline.events.flatMap((event) => event.comparisonLevels.map(({ level }) => `${event.eventRef}|${level}`)));
     const comparisons = instances.filter((instance) => instance.resource === "analysis_global_timeline_event_comparison" && instance.scopeHash === timelineInstance.scopeHash);

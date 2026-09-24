@@ -14,6 +14,7 @@
     "check:global-v2-timeline-semantic-projection": "node --experimental-strip-types scripts/check-global-v2-timeline-semantic-projection.mjs",
     "check:global-v2-timeline-semantic-comparator": "node --experimental-strip-types scripts/check-global-v2-timeline-semantic-comparator.mjs",
     "check:global-v2-timeline-query-v2": "node --experimental-strip-types scripts/check-global-v2-timeline-query-v2.mjs",
+    "check:global-v2-timeline-query-v3": "node --experimental-strip-types scripts/check-global-v2-timeline-query-v3.mjs",
     "check:global-v2-timeline-ui-s8": "node --experimental-strip-types scripts/check-global-v2-timeline-ui-s8.mjs",
     "check:global-v2-timeline-ui-s9": "node --experimental-strip-types scripts/check-global-v2-timeline-ui-s9.mjs",
     "check:global-v2-timeline-ui-s9-2": "node --experimental-strip-types scripts/check-global-v2-timeline-ui-s9-2.mjs",
