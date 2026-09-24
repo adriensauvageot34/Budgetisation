@@ -162,8 +162,8 @@ const transitivePlan = analytics.planGlobalInvalidation(event, [
 check(() => assert.deepEqual(transitivePlan.affectedOutputs.map(({ outputFamily }) => outputFamily), ["analysis_global_categories", "global_categories", "global_read_model"]));
 check(() => assert.equal(analytics.planGlobalInvalidation({ ...event, cause: "UI_ONLY_CHANGE" }, invalidationRegistry).affectedOutputs.length, 0));
 
-const sql = fs.readFileSync(path.join(root, "supabase/migrations/20260906120000_global_v2_publication_infrastructure.sql"), "utf8");
-const guardOptimizationSql = fs.readFileSync(path.join(root, "supabase/migrations/20260921180440_optimize_frozen_content_guards.sql"), "utf8");
+const sql = fs.readFileSync(path.join(root, "supabase/migrations/20260907123714_global_v2_publication_infrastructure.sql"), "utf8");
+const guardOptimizationSql = fs.readFileSync(path.join(root, "supabase/migrations/20260921162509_optimize_frozen_content_guards.sql"), "utf8");
 check(() => assert.match(sql, /add column global_manifest jsonb/));
 check(() => assert.match(sql, /FULL RESTAGE|set is_active=false/iu));
 check(() => assert.match(sql, /source revision|source_revision/is));
@@ -201,7 +201,7 @@ if (process.env.GLOBAL_PGLITE_MODULE !== undefined) {
     `);
     const initial = readMigration("20260825105100_analytics_materialization.sql");
     await db.exec(initial.slice(0, initial.indexOf("create or replace function public.record_analytics_mutation")) + "commit;");
-    await db.exec(readMigration("20260831150000_history_v2_publication_rollback.sql"));
+    await db.exec(readMigration("20260831094236_history_v2_publication_rollback.sql"));
     await db.exec(readMigration("20260902105811_enforce_single_active_analytics_generation.sql"));
     await db.exec(readMigration("20260904110151_history_v2_dependency_manifest.sql"));
     await db.exec(readMigration("20260904110402_history_v2_frozen_publications.sql"));

@@ -116,7 +116,7 @@ export async function createHc5Postgres(moduleFile, householdId, month) {
     grant execute on function public.hc5_correct_event(uuid,uuid,text) to service_role;
   `);
   for (const migration of ["20260825105100_analytics_materialization.sql",
-    "20260831150000_history_v2_publication_rollback.sql",
+    "20260831094236_history_v2_publication_rollback.sql",
     "20260902105811_enforce_single_active_analytics_generation.sql",
     "20260904110151_history_v2_dependency_manifest.sql",
     "20260904110402_history_v2_frozen_publications.sql"]) await db.exec(read(migration));

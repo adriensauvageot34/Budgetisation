@@ -128,7 +128,7 @@ check(() => assert.match(authorityBuilderSource, /version\.conditionCode === "WO
 check(() => assert.match(authorityBuilderSource, /cadence === "Mensuelle"\s*\? recurrenceMonthlyEquivalent/));
 check(() => assert.doesNotMatch(authorityBuilderSource, /actif_prevision|minimal_month_cost@v1|history_/));
 
-const migration = fs.readFileSync(path.join(root, "supabase/migrations/20260908160000_m1_historical_minimal_bitemporal_authority.sql"), "utf8");
+const migration = fs.readFileSync(path.join(root, "supabase/migrations/20260908141949_m1_historical_minimal_bitemporal_authority.sql"), "utf8");
 check(() => assert.match(migration, /create table public\.minimal_baseline_rule_versions/));
 check(() => assert.match(migration, /create table public\.recurrence_state_history/));
 check(() => assert.match(migration, /daterange\(v\.effective_from, v\.effective_to, '\[\)'\)/));

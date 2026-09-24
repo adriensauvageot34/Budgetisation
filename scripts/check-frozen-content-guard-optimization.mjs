@@ -4,7 +4,7 @@ import path from "node:path";
 import { pathToFileURL } from "node:url";
 
 const root = process.cwd();
-const migrationName = "20260921180440_optimize_frozen_content_guards.sql";
+const migrationName = "20260921162509_optimize_frozen_content_guards.sql";
 const readMigration = (name) => fs.readFileSync(path.join(root, "supabase/migrations", name), "utf8");
 const optimizationSql = readMigration(migrationName);
 let checks = 0;
@@ -41,11 +41,11 @@ try {
   `);
   const initial = readMigration("20260825105100_analytics_materialization.sql");
   await db.exec(initial.slice(0, initial.indexOf("create or replace function public.record_analytics_mutation")) + "commit;");
-  await db.exec(readMigration("20260831150000_history_v2_publication_rollback.sql"));
+  await db.exec(readMigration("20260831094236_history_v2_publication_rollback.sql"));
   await db.exec(readMigration("20260902105811_enforce_single_active_analytics_generation.sql"));
   await db.exec(readMigration("20260904110151_history_v2_dependency_manifest.sql"));
   await db.exec(readMigration("20260904110402_history_v2_frozen_publications.sql"));
-  await db.exec(readMigration("20260906120000_global_v2_publication_infrastructure.sql"));
+  await db.exec(readMigration("20260907123714_global_v2_publication_infrastructure.sql"));
   await db.exec(optimizationSql);
 
   const definitions = (await db.query(`select p.proname,pg_get_functiondef(p.oid) as definition

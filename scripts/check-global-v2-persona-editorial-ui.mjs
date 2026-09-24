@@ -7,7 +7,7 @@ const page = fs.readFileSync("src/features/global-v2/global-v2-page.tsx", "utf8"
 const server = fs.readFileSync("src/server/analytics/global-v2-persona-editorial.ts", "utf8");
 const loader = fs.readFileSync("src/server/query/global-v2-production-loader.ts", "utf8");
 const portraitRoute = fs.readFileSync("src/app/api/persona-portrait/[name]/route.ts", "utf8");
-const portraitMigration = fs.readFileSync("supabase/migrations/20260923131118_private_persona_portraits.sql", "utf8");
+const portraitMigration = fs.readFileSync("supabase/migrations/20260923131239_private_persona_portraits.sql", "utf8");
 
 for (const heading of ["Nos profils", "Nos journées de travail", "Nos univers personnels", "Nos habitudes qui reviennent", "Notre vie sociale, chacun de son côté", "Le permis", "Notre Peugeot", "Repas au travail", "Séries & divertissement", "Barbe & cheveux", "Ses produits fidèles", "Famille", "Amis", "Vape", "Cigarettes", "Tabac"]) {
   assert.ok(view.includes(heading), `missing profile story: ${heading}`);

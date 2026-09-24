@@ -40,7 +40,7 @@ export async function checkHistoryFrozenPublication({ materialization, preflight
   await rejects(() => store.writeQuery(testStage.queries[0].request, testStage.queries[0].data), /without a draft/);
 
   const sql = fs.readFileSync("supabase/migrations/20260904110402_history_v2_frozen_publications.sql", "utf8");
-  const guardOptimizationSql = fs.readFileSync("supabase/migrations/20260921180440_optimize_frozen_content_guards.sql", "utf8");
+  const guardOptimizationSql = fs.readFileSync("supabase/migrations/20260921162509_optimize_frozen_content_guards.sql", "utf8");
   for (const fragment of ["security invoker", "for update", "v_new - v_technical", "published_at is not null",
     "unsealed, never-published", "revoke truncate", "History retry changed", "create trigger"]) {
     check(() => assert.ok(sql.includes(fragment), fragment));
@@ -74,7 +74,7 @@ export async function checkHistoryFrozenPublication({ materialization, preflight
     `);
     const initial = read("20260825105100_analytics_materialization.sql");
     await db.exec(initial.slice(0, initial.indexOf("create or replace function public.record_analytics_mutation")) + "commit;");
-    await db.exec(read("20260831150000_history_v2_publication_rollback.sql"));
+    await db.exec(read("20260831094236_history_v2_publication_rollback.sql"));
     await db.exec(read("20260902105811_enforce_single_active_analytics_generation.sql"));
     await raw("insert into households values ($1)", [runtimeContext.householdId]);
     await raw("insert into household_revisions(household_id,data_revision,analytics_revision) values ($1,$2,$3)",

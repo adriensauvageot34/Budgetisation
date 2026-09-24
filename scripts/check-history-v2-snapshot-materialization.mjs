@@ -522,7 +522,7 @@ const activeGenerationMigration = fs.readFileSync(path.join(
 ), "utf8");
 const rollbackMigration = fs.readFileSync(path.join(
   repositoryRoot,
-  "supabase/migrations/20260831150000_history_v2_publication_rollback.sql",
+  "supabase/migrations/20260831094236_history_v2_publication_rollback.sql",
 ), "utf8");
 check(() => {
   for (const queryIdentityColumn of [

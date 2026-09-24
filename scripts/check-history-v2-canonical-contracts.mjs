@@ -142,9 +142,9 @@ assert.equal(continuity.continuityForSpanBehavior("POINT", continuityFact), null
 assert.equal(continuity.continuityForSpanBehavior("EXPLICIT_CONTINUITY", { ...continuityFact, status: "UNKNOWN", continuityQualifier: null }), "UNKNOWN");
 assert.equal(continuity.continuityForSpanBehavior("EXPLICIT_CONTINUITY", { ...continuityFact, status: "CONFLICT", continuityQualifier: null }), "CONFLICT");
 
-const purchaseSql = fs.readFileSync("supabase/migrations/20260822000000_purchase_event_identity.sql", "utf8");
-const classificationSql = fs.readFileSync("supabase/migrations/20260830090000_economic_component_classifications.sql", "utf8");
-const continuitySql = fs.readFileSync("supabase/migrations/20260830091000_life_event_continuity_assertions.sql", "utf8");
+const purchaseSql = fs.readFileSync("supabase/migrations/20260829231059_purchase_event_identity.sql", "utf8");
+const classificationSql = fs.readFileSync("supabase/migrations/20260829231101_economic_component_classifications.sql", "utf8");
+const continuitySql = fs.readFileSync("supabase/migrations/20260829231103_life_event_continuity_assertions.sql", "utf8");
 assert.match(purchaseSql, /purchase_event_consumption_owner_unique/);
 assert.match(purchaseSql, /where membership_kind = 'CONSUMPTION_COMPONENT'/);
 assert.doesNotMatch(purchaseSql, /BANK_DATE_FALLBACK/i);
