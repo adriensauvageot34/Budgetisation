@@ -78,6 +78,7 @@ const ownerOutputs = query.globalPrimaryModuleCatalog.map(({ moduleKey }, index)
 const candidate = candidateApi.buildGlobalV2CandidateFromOwnerOutputs({
   project: "local-r3", householdId: uuid(1), householdTimeZone: "Europe/Paris", personIds: [], asOf: "2026-01-01T00:00:00Z", certifiedThrough: "2025-12-31",
   dataRevision: "1", analyticsRevision: "79", implementationIdentity: "72eefdbb508e4f86461824a8d3a34a53ecf3eb92", ownerOutputs,
+  eventMobilityAuthority: analytics.buildGlobalM7EventMobilityAuthority({ mobilityLegs: [], trips: [], memberships: [], contextLinks: [], contextResolutions: [] }),
   presentationLabels: { recurrences: { "facts-only": "Salle de sport", rent: "Loyer" } },
   candidateAdapters: {
     timeline: { adapterVersion: "global-life-timeline-candidate-adapter@v1", precedence: "CERTIFIED_MOMENT > AUTONOMOUS_DOMINANT_TITLED_LIFE_EVENT > DEFER", sortContract: "startDate ASC, eventRef ASC", events: [], deferred: [], excluded: [], dependencyClosure: [], inputHash: "a".repeat(64) },

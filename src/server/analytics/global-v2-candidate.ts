@@ -66,6 +66,8 @@ import {
 import type { GlobalTimelineCandidateBundle } from "@/analytics/global-v2/candidate-adapters";
 import type { GlobalMomentComponentPresentationBundle } from "./global-v2-moment-component-presentation";
 import { buildGlobalTimelineQuerySnapshots } from "./global-v2-timeline-query";
+import { buildGlobalEventMobilityArtifactDefinition } from "./global-v2-event-mobility-artifact";
+import type { GlobalM7EventMobilityAuthority } from "@/analytics/global-v2/event-mobility";
 import {
   attachGlobalV2QueryPlanToManifest,
   buildGlobalV2QueryPlan,
@@ -134,6 +136,7 @@ export type GlobalV2CandidateInput = {
   readonly analyticsRevision: string;
   readonly implementationIdentity: string;
   readonly ownerOutputs: readonly GlobalV2OwnerOutput[];
+  readonly eventMobilityAuthority: GlobalM7EventMobilityAuthority;
   readonly presentationLabels?: GlobalV2PresentationLabels;
   readonly candidateAdapters: { readonly timeline: GlobalTimelineCandidateBundle };
   /** P9 publication input. An absent projection fails closed in the new UI; it never restores the retired Grocery presentation. */
@@ -1832,7 +1835,8 @@ export function buildGlobalV2CandidateFromOwnerOutputs(input: GlobalV2CandidateI
     gitSha: input.implementationIdentity,
     digest: digest({ format: "global-v2-live-implementation@v1", gitSha: input.implementationIdentity, registry: Object.entries(globalV2QueryRegistry).map(([resource, contract]) => ({ resource, contractVersion: contract.contractVersion, methodVersion: contract.methodVersion, policyVersions: contract.policyVersions })) }),
   };
-  const candidateId = deterministicUuid({ format: "global-v2-live-candidate@v1", project: input.project, householdId: input.householdId, scope, dataRevision: input.dataRevision, analyticsRevision: input.analyticsRevision, implementation, outputDigests, labelDigests, adapterDigests });
+  const eventMobilityArtifact = buildGlobalEventMobilityArtifactDefinition({ scope, scopeHash, owner: input.eventMobilityAuthority });
+  const candidateId = deterministicUuid({ format: "global-v2-live-candidate@v1", project: input.project, householdId: input.householdId, scope, dataRevision: input.dataRevision, analyticsRevision: input.analyticsRevision, implementation, outputDigests, labelDigests, adapterDigests, eventMobilityOutputHash: input.eventMobilityAuthority.outputHash });
   const generatedAt = input.asOf;
   const provisionalMeta: GlobalReadModelPublicationMeta = {
     publicationId: candidateId,
@@ -2180,10 +2184,10 @@ export function buildGlobalV2CandidateFromOwnerOutputs(input: GlobalV2CandidateI
     const version = versionFor(definition);
     return { key: definition.key, semanticBody: definition.semanticBody, version, dependencies: definition.dependencies };
   });
-  const artifactDefinitions = [...ownerArtifactDefinitions, ...supportArtifactDefinitions]
+  const artifactDefinitions = [...ownerArtifactDefinitions, ...supportArtifactDefinitions, eventMobilityArtifact]
     .sort((left, right) => left.key.localeCompare(right.key));
   const artifactDependencyUnion = [...new Map(artifactDefinitions.flatMap(({ dependencies }) => dependencies).map((dependency) => [dependencyKey(dependency), dependency] as const)).values()];
-  if (canonicalSerializeGlobal(artifactDependencyUnion.sort((left, right) => dependencyKey(left).localeCompare(dependencyKey(right)))) !== canonicalSerializeGlobal([...allOutputDependencies].sort((left, right) => dependencyKey(left).localeCompare(dependencyKey(right))))) {
+  if (canonicalSerializeGlobal(artifactDependencyUnion.sort((left, right) => dependencyKey(left).localeCompare(dependencyKey(right)))) !== canonicalSerializeGlobal([...allOutputDependencies, ...eventMobilityArtifact.dependencies].sort((left, right) => dependencyKey(left).localeCompare(dependencyKey(right))))) {
     throw new TypeError("GLOBAL_ARTIFACT_DEPENDENCY_UNION_MISMATCH");
   }
   const artifactVersions = artifactDefinitions.map(({ version }) => version);

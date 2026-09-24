@@ -209,8 +209,17 @@ const candidate = buildGlobalV2CandidateFromOwnerOutputs({
   project: "ipuuhxrblxormwgoaqnz", householdId: household.household_id, householdTimeZone: household.timezone,
   personIds: persons.map(({ personId }) => personId), asOf, certifiedThrough, dataRevision: String(revision.data_revision), analyticsRevision: String(revision.analytics_revision),
   implementationIdentity: "6af8ae20d08c2906fdb45cf59d3c12c79ae1700b", ownerOutputs: integrated.ownerOutputs,
+  eventMobilityAuthority: integrated.eventMobilityAuthority,
   presentationLabels: integrated.presentationLabels, candidateAdapters: integrated.candidateAdapters, momentComponentPresentation: integrated.momentComponentPresentation,
 });
+const eventMobilityArtifact = candidate.artifacts.find(({ version }) => version.family === "global_event_mobility");
+assert.ok(eventMobilityArtifact, "La génération Global doit exiger l’artifact Event Mobility.");
+const { publicationMeta: _eventPublicationMeta, resourceMeta: _eventResourceMeta, ...eventMobilityBody } = eventMobilityArtifact.payload;
+assert.deepEqual(eventMobilityBody, integrated.eventMobilityAuthority, "L’artifact doit préserver l’Owner sans recalcul métier.");
+assert.equal(eventMobilityArtifact.dependencies.length, 1);
+assert.equal(eventMobilityArtifact.dependencies[0].digest, integrated.eventMobilityAuthority.outputHash);
+assert.equal(candidate.requiredKeys.artifacts.filter((key) => key === eventMobilityArtifact.key).length, 1);
+assert.equal(candidate.manifest.closures.filter(({ outputKey }) => outputKey === eventMobilityArtifact.key).length, 1);
 const timelineSnapshot = candidate.snapshots.find(({ resource }) => resource === "analysis_global_life_timeline");
 assert.ok(timelineSnapshot, "Le snapshot Timeline doit être requis par le candidat.");
 assert.equal(timelineSnapshot.payload.events.length, 57);

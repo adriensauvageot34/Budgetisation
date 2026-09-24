@@ -19,6 +19,7 @@ const core = await import("../src/core/global-v2/index.ts");
 const query = await import("../src/query-api/global-v2/index.ts");
 const planApi = await import("../src/server/analytics/materialization/global-query-plan.ts");
 const candidateApi = await import("../src/server/analytics/global-v2-candidate.ts");
+const { buildGlobalM7EventMobilityAuthority } = await import("../src/analytics/global-v2/event-mobility.ts");
 const { carMobilityProjectionFixture } = await import("./check-global-v2-car-mobility-rhythm.mjs");
 const { foodRhythmProjectionFixture } = await import("./check-global-v2-food-rhythm.mjs");
 
@@ -151,6 +152,7 @@ const candidate = candidateApi.buildGlobalV2CandidateFromOwnerOutputs({
   analyticsRevision: "96",
   implementationIdentity: "1".repeat(40),
   ownerOutputs,
+  eventMobilityAuthority: buildGlobalM7EventMobilityAuthority({ mobilityLegs: [], trips: [], memberships: [], contextLinks: [], contextResolutions: [] }),
   candidateAdapters: { timeline: { adapterVersion: "fixture-timeline@v1", inputHash: h("7"), events: [] } },
   backgroundRhythms: { food, carMobility },
   momentComponentPresentation: { version: "fixture-moment-components@v1", inputHash: h("9") },

@@ -376,6 +376,7 @@ export async function prepareGlobalV2LiveCandidate(input: {
     analyticsRevision: String(input.context.analyticsRevision),
     implementationIdentity: input.implementationIdentity,
     ownerOutputs: resolved.ownerOutputs,
+    eventMobilityAuthority: resolved.eventMobilityAuthority,
     presentationLabels: resolved.presentationLabels,
     candidateAdapters: resolved.candidateAdapters,
     backgroundRhythms: resolved.backgroundRhythms,

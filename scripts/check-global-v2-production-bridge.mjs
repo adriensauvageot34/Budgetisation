@@ -179,6 +179,7 @@ const momentComponentPresentation = { version: "global-moment-component-presenta
 const semanticProjection = analytics.buildTimelineSemanticProjection({ sourceRevision: 1, moments: [], lifeEvents: [], assertions: [], lifeEventCosts: [] });
 const semanticTimeline = { projection: semanticProjection, comparator: analytics.buildTimelineSemanticComparator({ projection: semanticProjection }) };
 const base = {
+  eventMobilityAuthority: analytics.buildGlobalM7EventMobilityAuthority({ mobilityLegs: [], trips: [], memberships: [], contextLinks: [], contextResolutions: [] }),
   project: "ipuuhxrblxormwgoaqnz",
   householdId: "00000000-0000-4000-8000-000000000001",
   householdTimeZone: "Europe/Paris",
@@ -231,10 +232,10 @@ check(() => assert.ok(withBackgroundRhythms.candidateId !== first.candidateId));
 check(() => assert.equal(first.requiredSnapshotCount, first.queryInstanceCount));
 check(() => assert.equal(first.requiredSnapshotCount, first.requiredKeys.queries.length));
 check(() => assert.equal(first.requiredArtifactCount, first.requiredKeys.artifacts.length));
-check(() => assert.equal(first.requiredArtifactCount, 14));
-check(() => assert.equal(first.artifacts.length, 14));
-check(() => assert.equal(first.versions.artifacts.length, 14));
-check(() => assert.equal(first.manifest.closures.filter(({ outputKey }) => first.requiredKeys.artifacts.includes(outputKey)).length, 14));
+check(() => assert.equal(first.requiredArtifactCount, 15));
+check(() => assert.equal(first.artifacts.length, 15));
+check(() => assert.equal(first.versions.artifacts.length, 15));
+check(() => assert.equal(first.manifest.closures.filter(({ outputKey }) => first.requiredKeys.artifacts.includes(outputKey)).length, 15));
 check(() => assert.equal(first.artifacts.some(({ key, version }) => key.includes("owner-outputs") || version.family === "global_owner_outputs"), false));
 check(() => assert.deepEqual(first.artifacts.map(({ key }) => key), [...first.requiredKeys.artifacts].sort()));
 const artifactPayloadBytes = first.artifacts.map(({ key, version, payload }) => ({ key, family: version.family, bytes: Buffer.byteLength(JSON.stringify(payload), "utf8") }));
@@ -262,14 +263,15 @@ const dependencyIdentity = (dependency) => `${dependency.authority}:${dependency
 const dependencyUnion = (dependencies) => [...new Map(dependencies.map((dependency) => [dependencyIdentity(dependency), dependency])).values()].sort((left, right) => dependencyIdentity(left).localeCompare(dependencyIdentity(right)));
 const legacyArtifactDependencies = first.plan.instances.find(({ resource }) => resource === "analysis_global_manifest").dependencies;
 const newArtifactDependencyUnion = dependencyUnion(first.artifacts.flatMap(({ dependencies }) => dependencies));
-check(() => assert.deepEqual(newArtifactDependencyUnion, dependencyUnion(legacyArtifactDependencies)));
+const eventMobilityDependency = first.artifacts.find(({ version }) => version.family === "global_event_mobility").dependencies[0];
+check(() => assert.deepEqual(newArtifactDependencyUnion, dependencyUnion([...legacyArtifactDependencies, eventMobilityDependency])));
 const artifactKeySet = new Set(first.requiredKeys.artifacts);
 const queryClosures = first.manifest.closures.filter(({ outputKey }) => !artifactKeySet.has(outputKey));
 const legacyArtifactClosure = {
   outputKey: `global-artifact:owner-outputs:${first.scopeHash}`,
-  declarationDigest: materialization.globalV2ClosureDeclarationDigest(legacyArtifactDependencies),
-  inputDigest: materialization.globalV2ClosureInputDigest(legacyArtifactDependencies),
-  dependencies: legacyArtifactDependencies,
+  declarationDigest: materialization.globalV2ClosureDeclarationDigest([...legacyArtifactDependencies, eventMobilityDependency]),
+  inputDigest: materialization.globalV2ClosureInputDigest([...legacyArtifactDependencies, eventMobilityDependency]),
+  dependencies: [...legacyArtifactDependencies, eventMobilityDependency],
 };
 const legacyPublicationFactsHash = materialization.globalV2PublicationFactsHash({
   householdId: first.manifest.householdId,
@@ -311,7 +313,7 @@ check(() => assert.deepEqual(changedArtifactInputKeys, [
   "global-artifact:presentation-labels:{scopeHash}",
 ]));
 const withoutSemanticTimeline = candidateApi.buildGlobalV2CandidateFromOwnerOutputs({ ...base, semanticTimeline: undefined });
-check(() => assert.equal(withoutSemanticTimeline.artifacts.length, 13));
+check(() => assert.equal(withoutSemanticTimeline.artifacts.length, 14));
 check(() => assert.equal(withoutSemanticTimeline.artifacts.some(({ version }) => version.family === "global_semantic_timeline"), false));
 check(() => assert.throws(() => candidateApi.buildGlobalV2CandidateFromOwnerOutputs({
   ...base,
