@@ -1540,7 +1540,7 @@ export class CanonicalRepository {
           ["purchase_event_id", "membership_kind", "canonical_component_key"],
           (batch) => this.client
             .from("purchase_event_memberships")
-            .select("purchase_event_id,membership_kind,operation_id,allocation_id,item_id,payment_component_id,cash_use_id,canonical_component_key,evidence_refs,provenance")
+            .select("purchase_event_id,membership_kind,operation_id,allocation_id,item_id,payment_component_id,cash_use_id,purchase_economic_component_id,canonical_component_key,evidence_refs,provenance")
             .in("purchase_event_id", batch)
             .order("purchase_event_id", { ascending: true })
             .order("membership_kind", { ascending: true })

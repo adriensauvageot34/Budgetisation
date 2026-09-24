@@ -110,7 +110,7 @@ const visitTimePrecisionValues = new Set<PlaceVisitTimePrecision>([
   "unknown",
 ]);
 const canonicalComponentKeyPattern =
-  /^(operation|allocation|item|payment_component|cash_use):[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/;
+  /^(operation|allocation|item|payment_component|cash_use|purchase_component):[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/;
 const canonicalUuidPattern =
   /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/;
 
@@ -129,7 +129,7 @@ export function parseCanonicalComponentKey(
 ): CanonicalComponentKey {
   if (typeof value !== "string" || !canonicalComponentKeyPattern.test(value)) {
     throw new TypeError(
-      "CanonicalComponentKey doit utiliser exactement operation, allocation, item, payment_component ou cash_use suivi d'un UUID.",
+      "CanonicalComponentKey doit utiliser une source canonique reconnue suivie d'un UUID.",
     );
   }
   return value as CanonicalComponentKey;
@@ -851,7 +851,7 @@ function parsePurchaseEventSource(value: unknown): PurchaseEventSource {
   }
   const kind = parseStringLiteral<PurchaseEventSource["kind"]>(
     requireProperty(candidate, "kind", "PurchaseEventSource"),
-    new Set(["operation", "allocation", "item", "payment_component", "cash_use"] as const),
+    new Set(["operation", "allocation", "item", "payment_component", "cash_use", "purchase_component"] as const),
     "PurchaseEventSource.kind",
   );
   const sourceId = parseOpaqueKey<string>(

@@ -77,6 +77,16 @@ const eventFact = canonical.projectPurchaseEventFact({
 });
 assert.equal(eventFact.economicAmount, "12.34");
 assert.equal(eventFact.timing.economicDate, "2026-05-12");
+const purchaseComponentId = uuid("21");
+const purchaseComponentSources = canonical.parsePurchaseEventCanonicalSources([{
+  purchase_event_id: eventId, membership_kind: "CONSUMPTION_COMPONENT",
+  operation_id: null, allocation_id: null, item_id: null, payment_component_id: null,
+  cash_use_id: null, purchase_economic_component_id: purchaseComponentId,
+  canonical_component_key: `purchase_component:${purchaseComponentId}`,
+  evidence_refs: ["benefit-source:1"], provenance: "STRUCTURED_CANONICAL_SOURCE",
+}]);
+assert.equal(purchaseComponentSources[0].kind, "purchase_component");
+assert.equal(purchaseComponentSources[0].canonicalComponentKey, `purchase_component:${purchaseComponentId}`);
 assert.throws(() => canonical.projectPurchaseEventFact({
   household,
   purchaseEvent: { purchase_event_id: eventId, household_id: uuid("2"), provenance: "EXPLICIT_USER_ASSERTION" },

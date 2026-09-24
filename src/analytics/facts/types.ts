@@ -330,7 +330,8 @@ export type PurchaseEventSourceKind =
   | "allocation"
   | "item"
   | "payment_component"
-  | "cash_use";
+  | "cash_use"
+  | "purchase_component";
 
 export type PurchaseEventSource = {
   readonly membershipKind: "CONSUMPTION_COMPONENT" | "EVIDENCE_SOURCE";

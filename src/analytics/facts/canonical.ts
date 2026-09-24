@@ -1354,7 +1354,7 @@ export function projectActivityOccurrenceFact(input: {
 export type PurchaseEventCanonicalSource = {
   readonly purchaseEventId: PurchaseEventId;
   readonly membershipKind: "CONSUMPTION_COMPONENT" | "EVIDENCE_SOURCE";
-  readonly kind: "operation" | "allocation" | "item" | "payment_component" | "cash_use";
+  readonly kind: "operation" | "allocation" | "item" | "payment_component" | "cash_use" | "purchase_component";
   readonly sourceId: string;
   readonly canonicalComponentKey: CanonicalComponentKey;
   readonly evidenceRefs: readonly string[];
@@ -1368,7 +1368,7 @@ function parsePurchaseEventCanonicalSource(
     value,
     [
       "purchase_event_id", "membership_kind", "operation_id", "allocation_id",
-      "item_id", "payment_component_id", "cash_use_id", "canonical_component_key",
+      "item_id", "payment_component_id", "cash_use_id", "purchase_economic_component_id", "canonical_component_key",
       "evidence_refs", "provenance",
     ],
     "purchase_event_memberships",
@@ -1379,9 +1379,12 @@ function parsePurchaseEventCanonicalSource(
     ["item", "item_id"],
     ["payment_component", "payment_component_id"],
     ["cash_use", "cash_use_id"],
+    ["purchase_component", "purchase_economic_component_id"],
   ] as const;
   const present = sources.flatMap(([kind, column]) => {
-    const sourceId = requireProperty(row, column, "purchase_event_memberships");
+    const sourceId = column === "purchase_economic_component_id" && !Object.hasOwn(row, column)
+      ? null
+      : requireProperty(row, column, "purchase_event_memberships");
     return sourceId === null ? [] : [{ kind, sourceId: String(sourceId) }];
   });
   if (present.length !== 1) {
