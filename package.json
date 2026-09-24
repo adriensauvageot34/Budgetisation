@@ -17,6 +17,7 @@
     "check:global-v2-timeline-query-v3": "node --experimental-strip-types scripts/check-global-v2-timeline-query-v3.mjs",
     "check:global-v2-timeline-v3-rollback": "node --experimental-strip-types scripts/check-global-v2-timeline-v3-rollback.mjs",
     "check:global-v2-timeline-mobility-ui": "node scripts/check-global-v2-timeline-mobility-ui.mjs",
+    "check:global-v2-timeline-mobility-red-team": "node scripts/check-global-v2-timeline-mobility-red-team.mjs",
     "check:global-v2-timeline-ui-s8": "node --experimental-strip-types scripts/check-global-v2-timeline-ui-s8.mjs",
     "check:global-v2-timeline-ui-s9": "node --experimental-strip-types scripts/check-global-v2-timeline-ui-s9.mjs",
     "check:global-v2-timeline-ui-s9-2": "node --experimental-strip-types scripts/check-global-v2-timeline-ui-s9-2.mjs",

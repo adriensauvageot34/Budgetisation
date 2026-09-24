@@ -61,6 +61,22 @@ const common = { projection, comparator, publicationMeta, resourceMeta: meta };
 const v2 = snapshotsApi.buildGlobalTimelineQuerySnapshots(common);
 const v3 = snapshotsApi.buildGlobalTimelineQuerySnapshots({ ...common, eventMobilityAuthority: owner });
 const second = snapshotsApi.buildGlobalTimelineQuerySnapshots({ ...common, eventMobilityAuthority: owner });
+const changedSummaries = summaries.map((summary, index) => index === 0
+  ? { ...summary, estimatedFuelCost: "3.123456789", inputHash: digest({ previous: summary.inputHash, estimatedFuelCost: "3.123456789" }) }
+  : summary);
+const changedOwnerBody = { ...ownerBody, summaries: changedSummaries, inputHash: digest(changedSummaries.map(({ inputHash }) => inputHash)) };
+const changedOwner = { ...changedOwnerBody, outputHash: digest(changedOwnerBody) };
+const changedMobilityDependencies = [...semanticDependencies, { ...mobilityDependency, digest: changedOwner.outputHash }];
+const changedMeta = (resource, params) => ({ contractVersion: query.globalV2QueryRegistry[resource].contractVersion,
+  methodSignature: planApi.globalV2QueryMethodSignature(resource), policyVersions: query.globalV2QueryRegistry[resource].policyVersions,
+  resourceInputHash: planApi.globalV2QueryResourceInputHash({ resource, scope, params,
+    dependencies: resource === "analysis_global_life_timeline" ? changedMobilityDependencies : semanticDependencies }) });
+const changedV3 = snapshotsApi.buildGlobalTimelineQuerySnapshots({ ...common, resourceMeta: changedMeta, eventMobilityAuthority: changedOwner });
+const parsedChangedV3 = query.parseGlobalLifeTimelineV3ReadModel(changedV3.timeline);
+assert.notEqual(parsedChangedV3.events[0].mobilityContext.estimatedFuelCost, query.parseGlobalLifeTimelineV3ReadModel(v3.timeline).events[0].mobilityContext.estimatedFuelCost);
+assert.deepEqual(parsedChangedV3.events.map(({ eventCost }) => eventCost), query.parseGlobalLifeTimelineV3ReadModel(v3.timeline).events.map(({ eventCost }) => eventCost), "A Mobility-only mutation cannot alter eventCost.");
+assert.deepEqual(changedV3.comparisons, v3.comparisons, "A Mobility-only mutation cannot alter Comparator payloads.");
+assert.notEqual(changedV3.timeline.resourceMeta.resourceInputHash, v3.timeline.resourceMeta.resourceInputHash);
 const parsedV2 = query.parseGlobalLifeTimelineV2ReadModel(v2.timeline);
 const parsedV3 = query.parseGlobalLifeTimelineV3ReadModel(v3.timeline);
 assert.equal(v3.timeline.schemaVersion, "global-life-timeline@v3");
@@ -91,6 +107,7 @@ assert.deepEqual(v3.comparisons, v2.comparisons);
 assert.ok(v3.comparisons.length > 0);
 assert.equal(JSON.stringify(v3.comparisons).includes("mobilityContext"), false);
 assert.equal(JSON.stringify(v3.comparisons).includes("mobilityMeta"), false);
+for (const field of ["estimatedFuelCost", "distanceKm", "estimatedFuelLiters"]) assert.equal(JSON.stringify(v3.comparisons).includes(`"${field}"`), false);
 const serialized = JSON.stringify(v3.timeline);
 for (const field of ["mobilityLegId", "mobilityTripId", "mobilityTripContextLinkId", "contextResolutionId", "evidenceRefs", "inputHash", "outputHash"]) assert.equal(serialized.includes(`"${field}"`), false);
 assert.equal(serialized, JSON.stringify(second.timeline));
