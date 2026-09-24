@@ -706,7 +706,8 @@ check(() => assert.match(personRegimeSource, /\["travail_site", "teletravail"\]/
 check(() => assert.match(personRegimeSource, /participatingSeries[\s\S]*sources\.some[\s\S]*isRawActivityOccurrenceRef[\s\S]*flatMap\(\(source\) => source\.structuralAuthorityRefs\)/u));
 check(() => assert.doesNotMatch(personRegimeSource, /repas_restaurant|STABLE_CURRENT_REGIME|typical|largest|earliest|latest/iu));
 const routeSource = fs.readFileSync(path.join(root, "src/app/analyse-globale/page.tsx"), "utf8");
-check(() => assert.match(routeSource, /GLOBAL_V2_ROUTE_ACTIVE\s*!==\s*"true"/u));
+check(() => assert.doesNotMatch(routeSource, /GLOBAL_V2_ROUTE_ACTIVE/u));
+check(() => assert.match(routeSource, /loadGlobalV2ProductionBundle/u));
 check(() => assert.match(routeSource, /catch\s*\{\s*return <GlobalV2Unavailable \/>/u));
 
 const initialSnapshot = first.snapshots.find(({ resource }) => resource === "analysis_global_manifest");
