@@ -26,6 +26,8 @@ const materialization = await import("../src/server/analytics/materialization/gl
 const servicesApi = await import("../src/server/query/global-v2-production-services.ts");
 const runtimeApi = await import("../src/server/query/global-v2-runtime.ts");
 const { buildGlobalM5Pr03Product } = await import("../src/analytics/global-v2/relationship-product.ts");
+const { carMobilityProjectionFixture } = await import("./check-global-v2-car-mobility-rhythm.mjs");
+const { foodRhythmProjectionFixture } = await import("./check-global-v2-food-rhythm.mjs");
 const {
   projectRelationshipPersonDays,
   projectRelationshipRestaurantOutcomes,
@@ -213,6 +215,7 @@ let checks = 0;
 const check = (fn) => { fn(); checks += 1; };
 const first = candidateApi.buildGlobalV2CandidateFromOwnerOutputs(base);
 const second = candidateApi.buildGlobalV2CandidateFromOwnerOutputs({ ...base, ownerOutputs: [...modules].reverse() });
+const withBackgroundRhythms = candidateApi.buildGlobalV2CandidateFromOwnerOutputs({ ...base, backgroundRhythms: { food: foodRhythmProjectionFixture, carMobility: carMobilityProjectionFixture } });
 const snapshot = (resource, sectionKey) => first.snapshots.find((entry) => entry.resource === resource && (sectionKey === undefined || entry.params.sectionKey === sectionKey));
 const compact = (resource) => snapshot(resource).payload;
 const detail = (entityRef) => first.snapshots.find((entry) => entry.resource === "analysis_global_category_need_detail" && entry.params.entityRef === entityRef)?.payload;
@@ -222,6 +225,10 @@ check(() => assert.equal(first.factsHash, second.factsHash));
 check(() => assert.equal(first.manifestHash, second.manifestHash));
 check(() => assert.deepEqual(first.requiredKeys, second.requiredKeys));
 check(() => assert.deepEqual(first.snapshots.map(({ payloadHash }) => payloadHash), second.snapshots.map(({ payloadHash }) => payloadHash)));
+check(() => assert.equal(withBackgroundRhythms.snapshots.filter(({ resource }) => resource === "analysis_global_background_rhythms").length, 1));
+check(() => assert.equal(withBackgroundRhythms.snapshots.filter(({ resource }) => resource === "analysis_global_background_rhythm_month_detail").length, 12));
+check(() => assert.equal(withBackgroundRhythms.artifacts.filter(({ version }) => version.family === "global_background_rhythms").length, 1));
+check(() => assert.ok(withBackgroundRhythms.candidateId !== first.candidateId));
 check(() => assert.equal(first.requiredSnapshotCount, first.queryInstanceCount));
 check(() => assert.equal(first.requiredSnapshotCount, first.requiredKeys.queries.length));
 check(() => assert.equal(first.requiredArtifactCount, first.requiredKeys.artifacts.length));

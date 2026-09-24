@@ -182,6 +182,7 @@ const projectionInput = {
   ],
 };
 const projection = buildGlobalFoodRhythmProjection(projectionInput);
+export { projection as foodRhythmProjectionFixture };
 let checks = 0;
 const check = (assertion) => { assertion(); checks += 1; };
 

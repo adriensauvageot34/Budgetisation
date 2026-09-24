@@ -89,6 +89,8 @@ export type MonthlyMobilityNarrativeContextInput = {
   readonly mobilityTripContextLinkId: string;
   readonly mobilityTripId: string;
   readonly targetKind: "MOMENT" | "LIFE_EVENT";
+  /** Stable semantic target retained for bounded Query V2 navigation. */
+  readonly targetRef?: `moment:${string}` | `life-event:${string}`;
   readonly relationType:
     | "PRIMARY_CONTEXT"
     | "ENVELOPING_CONTEXT"
@@ -154,6 +156,14 @@ export type MonthlyMobilityContextOnly = {
   readonly semanticFamily: MobilitySemanticFamily;
   readonly semanticTier: number;
   readonly relationType: MonthlyMobilityNarrativeContextInput["relationType"];
+  readonly targetKind?: MonthlyMobilityNarrativeContextInput["targetKind"];
+  readonly targetRef?: `moment:${string}` | `life-event:${string}`;
+};
+
+export type MonthlyMobilityNarrativeDestination = {
+  readonly targetKind: MonthlyMobilityNarrativeContextInput["targetKind"];
+  readonly targetRef: `moment:${string}` | `life-event:${string}`;
+  readonly title: string;
 };
 
 export type MonthlyMobilitySuppressedRemainder = {
@@ -176,6 +186,7 @@ export type MonthlyMobilityNarrative = {
   readonly routineGroups: readonly MonthlyMobilityRoutineGroup[];
   readonly tripSummaries: readonly MonthlyMobilityTripSummary[];
   readonly contextOnly: readonly MonthlyMobilityContextOnly[];
+  readonly destinations: readonly MonthlyMobilityNarrativeDestination[];
   readonly suppressedRemainder: MonthlyMobilitySuppressedRemainder;
   readonly partition: readonly MonthlyMobilityPartitionAssignment[];
   readonly usageBands: MonthlyMobilityUsageBands;
@@ -601,6 +612,7 @@ function buildMonth(month: string, allProfiles: readonly TripProfile[]): Monthly
       semanticFamily: context.semanticFamily,
       semanticTier: context.semanticTier,
       relationType: context.relationType,
+      ...(context.targetRef === undefined ? {} : { targetKind: context.targetKind, targetRef: context.targetRef }),
     });
     if (contextOnly.length === 4) break;
   }
@@ -632,11 +644,17 @@ function buildMonth(month: string, allProfiles: readonly TripProfile[]): Monthly
       startDate: profiles.find(({ trip }) => trip.mobilityTripId === context.mobilityTripId)!.trip.startDate,
     })),
   ];
+  const destinations = [...new Map(profiles.flatMap(({ contexts }) => contexts.flatMap((context) => context.targetRef === undefined ? [] : [[context.targetRef, {
+    targetKind: context.targetKind,
+    targetRef: context.targetRef,
+    title: safeLabel(context.displayLabel) ?? contextLabel(context.semanticFamily),
+  }] as const]))).values()].sort((left, right) => left.targetRef.localeCompare(right.targetRef)).slice(0, 16);
   const result: MonthlyMobilityNarrative = {
     month,
     routineGroups: routineCandidates.map(({ startDate: _startDate, ...group }) => group),
     tripSummaries,
     contextOnly,
+    destinations,
     suppressedRemainder: {
       tripCount: suppressed.length,
       mobilityTripIds: suppressed.map(({ trip }) => trip.mobilityTripId).sort((left, right) => left.localeCompare(right)),

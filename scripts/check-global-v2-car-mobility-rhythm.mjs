@@ -179,6 +179,7 @@ const projectionInput = {
   fuelSubcategoryId: FUEL_SUBCATEGORY_ID,
 };
 const projection = buildGlobalCarMobilityRhythmProjection(projectionInput);
+export { projection as carMobilityProjectionFixture };
 let checks = 0;
 const check = (assertion) => { assertion(); checks += 1; };
 const displayMoney = (value) => new Big(value).toFixed(2);

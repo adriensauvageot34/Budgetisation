@@ -7,6 +7,7 @@ import type {
   MonthlyMobilityContextOnly,
   MonthlyMobilityNarrative,
   MonthlyMobilityNarrativeResult,
+  MonthlyMobilityNarrativeDestination,
   MonthlyMobilityRoutineGroup,
   MonthlyMobilitySuppressedRemainder,
   MonthlyMobilityTripSummary,
@@ -76,6 +77,7 @@ export type GlobalCarMobilityMonthDetail = {
   readonly routineGroups: readonly MonthlyMobilityRoutineGroup[];
   readonly tripSummaries: readonly MonthlyMobilityTripSummary[];
   readonly contextOnly: readonly MonthlyMobilityContextOnly[];
+  readonly destinations: readonly MonthlyMobilityNarrativeDestination[];
   readonly suppressedRemainder: MonthlyMobilitySuppressedRemainder;
 };
 
@@ -318,6 +320,7 @@ function narrativeDetail(narrative: MonthlyMobilityNarrative | undefined): Globa
     routineGroups: narrative.routineGroups,
     tripSummaries: narrative.tripSummaries,
     contextOnly: narrative.contextOnly,
+    destinations: narrative.destinations ?? [],
     suppressedRemainder: narrative.suppressedRemainder,
   };
 }

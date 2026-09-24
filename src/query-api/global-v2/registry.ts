@@ -20,6 +20,12 @@ import {
   globalTimelineEventComparisonResourceDefinition,
   type GlobalTimelineComparisonLevel,
 } from "./timeline-v2";
+import {
+  globalBackgroundRhythmMonthDetailReadModelSchema,
+  globalBackgroundRhythmMonthDetailResourceDefinition,
+  globalBackgroundRhythmsReadModelSchema,
+  globalBackgroundRhythmsResourceDefinition,
+} from "./background-rhythms";
 import { globalPrimaryModuleCatalog, type GlobalPrimaryModuleKey, type GlobalPrimaryResourceName, type GlobalV2QueryParamsKind, type GlobalV2ResourceFamily, type GlobalV2ResourceGroup } from "./types";
 
 export const globalV2TopLevelResources = Object.freeze([
@@ -29,7 +35,7 @@ export const globalV2TopLevelResources = Object.freeze([
 ] as const);
 
 export type GlobalV2TopLevelResourceName = (typeof globalV2TopLevelResources)[number];
-export type GlobalV2QueryResourceName = GlobalV2TopLevelResourceName | GlobalV2ExpandedResourceName | GlobalLifeTimelineResourceName | typeof globalTimelineEventComparisonResourceDefinition.resource;
+export type GlobalV2QueryResourceName = GlobalV2TopLevelResourceName | GlobalV2ExpandedResourceName | GlobalLifeTimelineResourceName | typeof globalTimelineEventComparisonResourceDefinition.resource | typeof globalBackgroundRhythmsResourceDefinition.resource | typeof globalBackgroundRhythmMonthDetailResourceDefinition.resource;
 
 export type GlobalV2QueryParams = Readonly<Record<string, string>>;
 export type GlobalV2QueryRequest = {
@@ -57,6 +63,7 @@ export type GlobalV2QueryContract = {
   readonly capabilityId: string;
   readonly availability: "AVAILABLE" | "AUTHORITY_GATED";
   readonly schemaVersion?: string;
+  readonly transport?: Readonly<{ readonly priority: "BACKGROUND" | "DIRECT"; readonly activation: "NEAR_VIEWPORT" | "ON_DEMAND_CLICK" }>;
   readonly contractVersion: "global-v2-query@v1";
   readonly methodVersion: string;
   readonly policyVersions: Readonly<Record<string, string>>;
@@ -73,6 +80,8 @@ const resourceCatalog = Object.freeze([
   ...globalV2ExpandedResourceCatalog,
   globalLifeTimelineV2ResourceDefinition,
   globalTimelineEventComparisonResourceDefinition,
+  globalBackgroundRhythmsResourceDefinition,
+  globalBackgroundRhythmMonthDetailResourceDefinition,
 ] as const);
 type GlobalV2ResourceDefinition = (typeof resourceCatalog)[number];
 const definitionByResource = new Map<string, GlobalV2ResourceDefinition>(resourceCatalog.map((entry) => [entry.resource, entry]));
@@ -82,6 +91,7 @@ const moduleSet = new Set<string>(globalPrimaryModuleCatalog.map(({ moduleKey })
 const m1V2ProjectionResources = new Set<string>(["analysis_global_economic", "analysis_global_economic_expanded", "analysis_global_economic_recurrence_detail"]);
 const lifeSpendingV2ProjectionResources = new Set<string>(["analysis_global_rhythm", "analysis_global_rhythm_expanded", "analysis_global_routine_detail", "analysis_global_moment_experience_detail"]);
 const timelineSemanticResources = new Set<string>(["analysis_global_life_timeline", "analysis_global_timeline_event_comparison"]);
+const backgroundRhythmResources = new Set<string>(["analysis_global_background_rhythms", "analysis_global_background_rhythm_month_detail"]);
 const personaDetailIndexResources = new Set<string>(["analysis_global_persona_detail"]);
 const placeMobilityV2ProjectionResources = new Set<string>(["analysis_global_place_mobility_detail"]);
 const timelineComparisonLevels: ReadonlySet<GlobalTimelineComparisonLevel> = new Set(["SAME_SERIES", "SAME_CLOSE_FAMILY", "SAME_INTERMEDIATE_FAMILY", "SAME_GRAND_FAMILY"]);
@@ -131,6 +141,13 @@ export function parseGlobalV2QueryParams(resource: GlobalV2QueryResourceName, va
         comparisonLevel: parseStringLiteral<GlobalTimelineComparisonLevel>(requireProperty(record, "comparisonLevel", "GlobalV2EventComparisonParams"), timelineComparisonLevels, "comparisonLevel"),
       });
     }
+    case "rhythm_month": {
+      const record = parseStrictRecord(value, ["domain", "month"], "GlobalV2RhythmMonthParams");
+      const domain = requireProperty(record, "domain", "GlobalV2RhythmMonthParams");
+      const month = text(requireProperty(record, "month", "GlobalV2RhythmMonthParams"), "month");
+      if (domain !== "CAR_MOBILITY" || !/^\d{4}-(0[1-9]|1[0-2])$/u.test(month)) throw new TypeError("GLOBAL_V2_RHYTHM_MONTH_PARAMS_INVALID");
+      return Object.freeze({ domain, month });
+    }
   }
 }
 
@@ -139,6 +156,8 @@ function schemaFor(resource: GlobalV2QueryResourceName): RuntimeSchema<unknown> 
   if (resource === "analysis_global_summary_ai") return importedGlobalSummaryReadModelSchema as RuntimeSchema<unknown>;
   if (resource === globalLifeTimelineV2ResourceDefinition.resource) return createGlobalLifeTimelineTransportSchema(globalLifeTimelineReadModelSchema as RuntimeSchema<unknown>);
   if (resource === globalTimelineEventComparisonResourceDefinition.resource) return globalTimelineEventComparisonReadModelSchema as RuntimeSchema<unknown>;
+  if (resource === globalBackgroundRhythmsResourceDefinition.resource) return globalBackgroundRhythmsReadModelSchema as RuntimeSchema<unknown>;
+  if (resource === globalBackgroundRhythmMonthDetailResourceDefinition.resource) return globalBackgroundRhythmMonthDetailReadModelSchema as RuntimeSchema<unknown>;
   if (definitionFor(resource).group === "module_section") return globalPrimaryReadModelSchemas[resource as GlobalPrimaryResourceName] as RuntimeSchema<unknown>;
   return globalExpandedReadModelSchemas[resource as GlobalV2ExpandedResourceName] as RuntimeSchema<unknown>;
 }
@@ -150,6 +169,7 @@ export const globalV2QueryRegistry = Object.freeze(Object.fromEntries(
     const moduleKey = "moduleKey" in definition && definition.group !== "methodology" ? definition.moduleKey : undefined;
     const moduleRole = "moduleRole" in definition ? definition.moduleRole : undefined;
     const schemaVersion = "schemaVersion" in definition ? definition.schemaVersion : undefined;
+    const transport = "transport" in definition ? definition.transport : undefined;
     const contract: GlobalV2QueryContract = {
       resource,
       family: definition.family,
@@ -160,10 +180,13 @@ export const globalV2QueryRegistry = Object.freeze(Object.fromEntries(
       capabilityId: definition.capabilityId,
       availability: definition.availability,
       ...(schemaVersion === undefined ? {} : { schemaVersion }),
+      ...(transport === undefined ? {} : { transport }),
       contractVersion: "global-v2-query@v1",
       methodVersion: m1V2ProjectionResources.has(resource) || lifeSpendingV2ProjectionResources.has(resource) || timelineSemanticResources.has(resource) || personaDetailIndexResources.has(resource) || placeMobilityV2ProjectionResources.has(resource) ? `${resource}@v2` : `${resource}@v1`,
       policyVersions: timelineSemanticResources.has(resource)
         ? Object.freeze({ projection: "timeline-semantic-projection@v1", comparator: "timeline-semantic-comparator@v2", transport: "global-v2-snapshot-only@sh05-v2" })
+        : backgroundRhythmResources.has(resource)
+          ? Object.freeze({ projection: "global-background-rhythms-query@v1", wire: "global-background-rhythms-compact-wire@v1", transport: resource === "analysis_global_background_rhythms" ? "background-near-viewport@v1" : "direct-on-demand-click@v1" })
         : Object.freeze({ projection: m1V2ProjectionResources.has(resource) ? "global-m1-query-projection@v2" : lifeSpendingV2ProjectionResources.has(resource) ? "global-life-spending-query-projection@v1" : personaDetailIndexResources.has(resource) ? "global-persona-detail-index-projection@v2" : placeMobilityV2ProjectionResources.has(resource) ? "global-m7-person-place-query-projection@v1" : "global-v2-query-projection@v1", transport: "global-v2-snapshot-only@v1" }),
       schema: schemaFor(resource),
     };
@@ -178,6 +201,7 @@ export function globalV2ExpectedQueryMethodSignature(resource: GlobalV2QueryReso
     contractVersion: contract.contractVersion,
     methodVersion: contract.methodVersion,
     policyVersions: contract.policyVersions,
+    ...(contract.transport === undefined ? {} : { transport: contract.transport }),
   }))));
 }
 

@@ -42,6 +42,7 @@ const paramsFor = (resource) => {
     case "section_key": return { sectionKey: "OVERVIEW" };
     case "methodology": return { methodRef: "method:global-economic@v1", moduleKey: "ECONOMIC" };
     case "entity_ref": return { entityRef: resource === "analysis_global_category_need_detail" ? "category:food" : `entity:${resource}` };
+    case "rhythm_month": return { domain: "CAR_MOBILITY", month: "2026-07" };
   }
 };
 const resourceMeta = (resource, params) => ({
@@ -104,7 +105,7 @@ const inputs = [
 const expectedExistingParamsKinds = Object.fromEntries([
   ...[
     "analysis_global_manifest", "analysis_global_summary_ai", "analysis_global_economic", "analysis_global_categories_needs",
-    "analysis_global_transformations", "analysis_global_rhythm", "analysis_global_relationships", "analysis_global_moments",
+    "analysis_global_transformations", "analysis_global_rhythm", "analysis_global_relationships", "analysis_global_moments", "analysis_global_background_rhythms",
     "analysis_global_geo_mobility", "analysis_global_consumption", "analysis_global_personas", "analysis_global_together",
   ].map((resource) => [resource, "empty"]),
   ...[
@@ -120,6 +121,7 @@ const expectedExistingParamsKinds = Object.fromEntries([
     "analysis_global_route_detail", "analysis_global_persona_detail", "analysis_global_participation_detail",
   ].map((resource) => [resource, "entity_ref"]),
   ["analysis_global_methodology", "methodology"],
+  ["analysis_global_background_rhythm_month_detail", "rhythm_month"],
 ]);
 const actualExistingParamsKinds = Object.fromEntries(Object.entries(query.globalV2QueryRegistry)
   .filter(([resource]) => resource !== "analysis_global_life_timeline" && resource !== "analysis_global_timeline_event_comparison")
@@ -171,10 +173,10 @@ const timelinePayload = {
 };
 
 query.assertGlobalV2QueryRegistryComplete();
-check(() => assert.equal(Object.keys(query.globalV2QueryRegistry).length, 37));
+check(() => assert.equal(Object.keys(query.globalV2QueryRegistry).length, 39));
 check(() => assert.deepEqual(actualExistingParamsKinds, expectedExistingParamsKinds));
 check(() => assert.deepEqual(Object.fromEntries(Object.values(query.globalV2QueryRegistry).map(({ group }) => [group, (Object.values(query.globalV2QueryRegistry).filter((contract) => contract.group === group).length)])), {
-  entity_detail: 12, expanded_section: 10, exploration: 2, methodology: 1, module_section: 10, overview: 2,
+  entity_detail: 13, expanded_section: 10, exploration: 3, methodology: 1, module_section: 10, overview: 2,
 }));
 check(() => assert.deepEqual(query.globalV2TopLevelResources.slice(0, 2), ["analysis_global_manifest", "analysis_global_summary_ai"]));
 check(() => assert.equal(query.globalV2QueryRegistry.analysis_global_product_detail.availability, "AUTHORITY_GATED"));

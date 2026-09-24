@@ -13,6 +13,8 @@ import {
   type PersonalMobilitySummary,
   type TimelineSemanticComparatorProjection,
   type TimelineSemanticProjection,
+  type GlobalCarMobilityRhythmProjection,
+  type GlobalFoodRhythmProjection,
 } from "@/analytics/global-v2";
 import {
   canonicalSerializeGlobal,
@@ -25,6 +27,7 @@ import {
 import type { PersonId } from "@/core/identity";
 import {
   buildGlobalExpandedReadModel,
+  buildGlobalBackgroundRhythmSnapshots,
   buildGlobalLifeTimelineReadModel,
   buildGlobalInitialReadModel,
   buildGlobalModuleCompactReadModel,
@@ -134,6 +137,8 @@ export type GlobalV2CandidateInput = {
   readonly ownerOutputs: readonly GlobalV2OwnerOutput[];
   readonly presentationLabels?: GlobalV2PresentationLabels;
   readonly candidateAdapters: { readonly timeline: GlobalTimelineCandidateBundle; readonly grocery: GlobalGroceryCandidateBundle };
+  /** P6 publication input. Optional only for legacy pre-P6 fixtures and live preparation. */
+  readonly backgroundRhythms?: { readonly food: GlobalFoodRhythmProjection; readonly carMobility: GlobalCarMobilityRhythmProjection };
   /** Required by the live S6 path. Optional only for the temporary pre-S7 fixture bridge. */
   readonly semanticTimeline?: Readonly<{ readonly projection: TimelineSemanticProjection; readonly comparator: TimelineSemanticComparatorProjection }>;
   readonly momentComponentPresentation: GlobalMomentComponentPresentationBundle;
@@ -1828,6 +1833,10 @@ export function buildGlobalV2CandidateFromOwnerOutputs(input: GlobalV2CandidateI
   const adapterDigests = [
     { family: "global_life_timeline_candidate_adapter", identity: input.candidateAdapters.timeline.adapterVersion, digest: input.candidateAdapters.timeline.inputHash },
     { family: "global_grocery_candidate_adapter", identity: input.candidateAdapters.grocery.adapterVersion, digest: input.candidateAdapters.grocery.inputHash },
+    ...(input.backgroundRhythms === undefined ? [] : [
+      { family: "global_food_rhythm_projection", identity: input.backgroundRhythms.food.methodVersion, digest: digest(input.backgroundRhythms.food) },
+      { family: "global_car_mobility_rhythm_projection", identity: input.backgroundRhythms.carMobility.methodVersion, digest: digest(input.backgroundRhythms.carMobility) },
+    ]),
     { family: "global_moment_component_presentation", identity: input.momentComponentPresentation.version, digest: input.momentComponentPresentation.inputHash },
     ...(input.semanticTimeline === undefined ? [] : [
       { family: "timeline_semantic_projection", identity: input.semanticTimeline.projection.methodVersion, digest: digest(input.semanticTimeline.projection) },
@@ -2074,6 +2083,19 @@ export function buildGlobalV2CandidateFromOwnerOutputs(input: GlobalV2CandidateI
   });
   const summaryDependencies: readonly GlobalV2ResolvedDependency[] = [{ authority: "CANONICAL", family: "imported_global_summary", identity: `summary:${input.householdId}:missing`, digest: digest({ status: "MISSING", sourceRevision: input.dataRevision }), required: true }];
   const summaryPayload = buildImportedGlobalSummaryReadModel({ kind: "global_imported_summary", schemaVersion: "global-imported-summary@v1", status: "MISSING", publicationMeta: provisionalMeta, resourceMeta: metaFor("analysis_global_summary_ai", {}, summaryDependencies) });
+  const backgroundDependencies = dependenciesFor("RHYTHM").filter(({ family }) => family === "global_food_rhythm_projection" || family === "global_car_mobility_rhythm_projection");
+  const backgroundSnapshots = input.backgroundRhythms === undefined ? undefined : buildGlobalBackgroundRhythmSnapshots({
+    ...input.backgroundRhythms,
+    publicationMeta: provisionalMeta,
+    annualResourceMeta: metaFor("analysis_global_background_rhythms", {}, backgroundDependencies),
+    monthlyResourceMeta: (params) => metaFor("analysis_global_background_rhythm_month_detail", params, backgroundDependencies),
+    monthlyInstanceKey: (params) => globalV2QueryInstanceKey("analysis_global_background_rhythm_month_detail", scopeHash, params),
+    scopeHash,
+  });
+  const backgroundInstances: GlobalV2QueryInstanceInput[] = backgroundSnapshots === undefined ? [] : [
+    { resource: "analysis_global_background_rhythms", scope, params: {}, payload: backgroundSnapshots.annual, dependencies: backgroundDependencies },
+    ...backgroundSnapshots.monthlyDetails.map(({ params, payload }) => ({ resource: "analysis_global_background_rhythm_month_detail" as const, scope, params, payload, dependencies: backgroundDependencies })),
+  ];
   const provisionalInstances: GlobalV2QueryInstanceInput[] = [
     { resource: "analysis_global_manifest", scope, params: {}, payload: initialPayload, dependencies: allOutputDependencies },
     { resource: "analysis_global_summary_ai", scope, params: {}, payload: summaryPayload, dependencies: summaryDependencies },
@@ -2081,6 +2103,7 @@ export function buildGlobalV2CandidateFromOwnerOutputs(input: GlobalV2CandidateI
     ...timelineComparisonInstances,
     ...moduleInstances,
     ...expandedInstances,
+    ...backgroundInstances,
   ];
   const orchestrationMethodSignature = digest({ method: "global-v2-production-orchestration@v1", implementation });
   const artifactPolicyVersions = { orchestration: "global-v2-production-orchestration@v1" } as const;
@@ -2145,12 +2168,28 @@ export function buildGlobalV2CandidateFromOwnerOutputs(input: GlobalV2CandidateI
     },
     {
       key: `global-artifact:candidate-adapters:${scopeHash}`,
-      semanticBody: { candidateAdapters: input.candidateAdapters },
+      semanticBody: { candidateAdapters: input.backgroundRhythms === undefined ? input.candidateAdapters : { timeline: input.candidateAdapters.timeline } },
       family: "global_candidate_adapters",
       contractVersion: "global-candidate-adapters@v1",
-      dependencies: dependenciesMatching(({ family }) => family === "global_life_timeline_candidate_adapter" || family === "global_grocery_candidate_adapter"),
-      resourceInput: { scope, adapterDigests: adapterDigests.filter(({ family }) => family === "global_life_timeline_candidate_adapter" || family === "global_grocery_candidate_adapter") },
+      dependencies: dependenciesMatching(({ family }) => family === "global_life_timeline_candidate_adapter" || (input.backgroundRhythms === undefined && family === "global_grocery_candidate_adapter")),
+      resourceInput: { scope, adapterDigests: adapterDigests.filter(({ family }) => family === "global_life_timeline_candidate_adapter" || (input.backgroundRhythms === undefined && family === "global_grocery_candidate_adapter")) },
     },
+    ...(input.backgroundRhythms === undefined ? [] : [{
+      key: `global-artifact:legacy-grocery-adapter:${scopeHash}`,
+      semanticBody: { grocery: input.candidateAdapters.grocery },
+      family: "global_legacy_grocery_adapter",
+      contractVersion: "global-legacy-grocery-adapter@v1",
+      dependencies: dependenciesMatching(({ family }) => family === "global_grocery_candidate_adapter"),
+      resourceInput: { scope, adapterDigests: adapterDigests.filter(({ family }) => family === "global_grocery_candidate_adapter") },
+    }]),
+    ...(input.backgroundRhythms === undefined ? [] : [{
+      key: `global-artifact:background-rhythms:${scopeHash}`,
+      semanticBody: { backgroundRhythms: input.backgroundRhythms },
+      family: "global_background_rhythms",
+      contractVersion: "global-background-rhythms-artifact@v1",
+      dependencies: dependenciesMatching(({ family }) => family === "global_food_rhythm_projection" || family === "global_car_mobility_rhythm_projection"),
+      resourceInput: { scope, projectionDigests: adapterDigests.filter(({ family }) => family === "global_food_rhythm_projection" || family === "global_car_mobility_rhythm_projection") },
+    }]),
     ...(input.semanticTimeline === undefined ? [] : [{
       key: `global-artifact:semantic-timeline:${scopeHash}`,
       semanticBody: { semanticTimeline: input.semanticTimeline },
