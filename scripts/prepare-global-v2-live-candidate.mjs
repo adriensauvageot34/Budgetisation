@@ -95,6 +95,21 @@ const summary = Object.fromEntries([
   "candidateId", "factsHash", "manifestHash", "requiredArtifactCount", "requiredSnapshotCount",
   "queryInstanceCount", "availableCapabilities", "gatedCapabilities", "requiredKeys",
 ].map((key) => [key, candidate[key]]));
+const backgroundAnnual = candidate.snapshots.find(({ resource }) => resource === "analysis_global_background_rhythms");
+const backgroundDetails = candidate.snapshots.filter(({ resource }) => resource === "analysis_global_background_rhythm_month_detail");
+if (backgroundAnnual === undefined) throw new TypeError("GLOBAL_BACKGROUND_RHYTHMS_ANNUAL_MISSING");
+const serializedBytes = (value) => Buffer.byteLength(JSON.stringify(value), "utf8");
+const june = backgroundAnnual.payload.carMobility.months.find(({ month }) => month.endsWith("-06"));
+if (june === undefined) throw new TypeError("GLOBAL_BACKGROUND_RHYTHMS_JUNE_MISSING");
+summary.backgroundRhythms = {
+  annualPayloadBytes: serializedBytes(backgroundAnnual.payload),
+  maximumMonthPayloadBytes: Math.max(0, ...backgroundDetails.map(({ payload }) => serializedBytes(payload))),
+  featureTotalBytes: [backgroundAnnual, ...backgroundDetails].reduce((total, { payload }) => total + serializedBytes(payload), 0),
+  snapshotCount: 1 + backgroundDetails.length,
+  foodAnnualTotal: backgroundAnnual.payload.food.annual.total,
+  carAnnual: backgroundAnnual.payload.carMobility.annual,
+  june: { modeledUsage: june.modeledUsage, observedFuelPaid: june.observedFuelPaid },
+};
 summary.versions = {
   artifactContractVersions: [...new Set(candidate.versions.artifacts.map(({ contractVersion }) => contractVersion))].sort(),
   queryContractVersions: [...new Set(candidate.versions.queries.map(({ contractVersion }) => contractVersion))].sort(),

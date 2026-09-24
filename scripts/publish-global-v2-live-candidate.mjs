@@ -79,10 +79,25 @@ const asOfMonth = `${asOf.slice(0, 7)}-01`;
 const sourceRevision = Number(candidate.dataRevision);
 const baseRevision = Number(candidate.analyticsRevision);
 const publicationId = candidate.candidateId;
+const backgroundAnnual = candidate.snapshots.find(({ resource }) => resource === "analysis_global_background_rhythms");
+const backgroundDetails = candidate.snapshots.filter(({ resource }) => resource === "analysis_global_background_rhythm_month_detail");
+if (backgroundAnnual === undefined) throw new TypeError("GLOBAL_BACKGROUND_RHYTHMS_ANNUAL_MISSING");
+const serializedBytes = (value) => Buffer.byteLength(JSON.stringify(value), "utf8");
+const june = backgroundAnnual.payload.carMobility.months.find(({ month }) => month.endsWith("-06"));
+if (june === undefined) throw new TypeError("GLOBAL_BACKGROUND_RHYTHMS_JUNE_MISSING");
 const summary = {
   publicationId, sourceRevision, baseRevision, nextRevision: baseRevision + 1,
   artifactCount: candidate.artifacts.length, snapshotCount: candidate.snapshots.length,
   editorialBytes, manifestBytes,
+  backgroundRhythms: {
+    annualPayloadBytes: serializedBytes(backgroundAnnual.payload),
+    maximumMonthPayloadBytes: Math.max(0, ...backgroundDetails.map(({ payload }) => serializedBytes(payload))),
+    featureTotalBytes: [backgroundAnnual, ...backgroundDetails].reduce((total, { payload }) => total + serializedBytes(payload), 0),
+    snapshotCount: 1 + backgroundDetails.length,
+    foodAnnualTotal: backgroundAnnual.payload.food.annual.total,
+    carAnnual: backgroundAnnual.payload.carMobility.annual,
+    june: { modeledUsage: june.modeledUsage, observedFuelPaid: june.observedFuelPaid },
+  },
   vehicleCost: editorial.vehicleHouseholdCost.totalIdentifiedCost,
   carInsurance: {
     currentProvider: editorial.vehicle?.insuranceSummary?.currentProvider ?? null,

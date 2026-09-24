@@ -42,6 +42,7 @@ import { resolveGlobalGroceryCandidateAdapter, resolveGlobalTimelineCandidateAda
 import { resolveGlobalMomentComponentPresentation } from "./global-v2-moment-component-presentation";
 import { resolveGlobalTimelineSemanticAnalysis } from "./global-v2-timeline-semantic-comparator";
 import { buildGlobalV2CandidateFromOwnerOutputs, globalV2M6HasPresentationContent, type GlobalV2OwnerOutput, type GlobalV2PresentationLabels } from "./global-v2-candidate";
+import { resolveGlobalBackgroundRhythmsProduction } from "./global-v2-background-rhythms-production";
 
 export const GLOBAL_V2_LIVE_PROJECT = "ipuuhxrblxormwgoaqnz" as const;
 
@@ -288,6 +289,16 @@ export async function resolveGlobalV2ProductionOwnerOutputs(repository: Canonica
     resolveGlobalMomentComponentPresentation({ repository, m6 }),
   ]);
   const candidateAdapters = { timeline };
+  const backgroundRhythms = await resolveGlobalBackgroundRhythmsProduction({
+    client: repository.client,
+    repository,
+    months: occurrenceMonths,
+    grocery,
+    subcategoryRows,
+    minimalBundle,
+    occurrences,
+    activityCosts,
+  });
   const persona = buildGlobalV2PersonaSignals({
     householdId: context.householdId,
     personIds: context.personIds,
@@ -337,7 +348,7 @@ export async function resolveGlobalV2ProductionOwnerOutputs(repository: Canonica
     { moduleKey: "TOGETHER", owner: "SharedParticipationResolver", output: m10, knowledge: m10.universes.length > 0 ? "PARTIAL" : "UNKNOWN", capabilityState: context.personIds.length === 2 ? "PARTIAL" : "UNAVAILABLE", reasonCodes: m10.universes.length > 0 ? ["PARTICIPATION_COVERAGE_VISIBLE"] : ["SHARED_UNIVERSE_UNAVAILABLE"], evidenceRefs: evidence("M10", m10) },
     { moduleKey: "PERSONAS", owner: "buildGlobalV2PersonaSignals", output: m9, knowledge: persona.profile.profiles.length > 0 ? "PARTIAL" : personaMetrics.length > 0 ? "PARTIAL" : "UNKNOWN", capabilityState: context.personIds.length > 0 ? "PARTIAL" : "UNAVAILABLE", reasonCodes: persona.limitations, evidenceRefs: evidence("M9", m9) },
   ];
-  return { scope, certifiedThrough, targetMonth, ownerOutputs, presentationLabels, candidateAdapters, groceryAuthority: grocery, semanticTimeline, momentComponentPresentation, personRegimeAuthorities, m5Product, m5RelationshipEvolution, persona };
+  return { scope, certifiedThrough, targetMonth, ownerOutputs, presentationLabels, candidateAdapters, groceryAuthority: grocery, backgroundRhythms, semanticTimeline, momentComponentPresentation, personRegimeAuthorities, m5Product, m5RelationshipEvolution, persona };
 }
 
 /** Read-only production bridge: this API exposes no materialization store. */
@@ -363,6 +374,7 @@ export async function prepareGlobalV2LiveCandidate(input: {
     ownerOutputs: resolved.ownerOutputs,
     presentationLabels: resolved.presentationLabels,
     candidateAdapters: resolved.candidateAdapters,
+    backgroundRhythms: resolved.backgroundRhythms,
     semanticTimeline: resolved.semanticTimeline,
     momentComponentPresentation: resolved.momentComponentPresentation,
   });

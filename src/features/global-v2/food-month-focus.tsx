@@ -6,7 +6,7 @@ import styles from "./background-rhythms.module.css";
 const basketLabels = Object.freeze({ SMALL: "petit panier", INTERMEDIATE: "panier moyen", LARGE: "gros panier" } as const);
 
 function FoodHighlight({ item }: { readonly item: GlobalBackgroundFoodHighlightTuple }) {
-  const [, , amount, , date, label, basketClass, articleCount, , , activityLabel] = item;
+  const [, amount, , date, label, basketClass, articleCount, , , activityLabel] = item;
   const context = [
     date === null ? undefined : dayLabel(date),
     activityLabel ?? undefined,

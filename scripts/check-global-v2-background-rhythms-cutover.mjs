@@ -66,6 +66,14 @@ const orchestrator = read("src/server/analytics/global-v2-production-orchestrato
 assert.match(orchestrator, /resolveGlobalGroceryCandidateAdapter/u);
 assert.match(orchestrator, /groceryAuthority: grocery/u, "Le bundle Grocery doit rester exposé comme autorité amont FOOD.");
 assert.match(orchestrator, /const candidateAdapters = \{ timeline \}/u);
+assert.match(orchestrator, /resolveGlobalBackgroundRhythmsProduction/u, "La préparation live doit construire les projections BackgroundRhythms.");
+assert.match(orchestrator, /backgroundRhythms: resolved\.backgroundRhythms/u, "Le candidat officiel doit recevoir les projections BackgroundRhythms.");
+
+const productionProjection = read("src/server/analytics/global-v2-background-rhythms-production.ts");
+assert.match(productionProjection, /buildGlobalFoodRhythmProjection/u);
+assert.match(productionProjection, /buildGlobalCarMobilityRhythmProjection/u);
+assert.match(productionProjection, /buildMonthlyMobilityNarrative/u);
+assert.equal(/\.xlsx|XLSX/u.test(productionProjection), false, "L’adaptateur live BackgroundRhythms ne doit pas importer le classeur Mobility.");
 
 const foodProjection = read("src/analytics/global-v2/food-rhythm.ts");
 assert.match(foodProjection, /GlobalGroceryCandidateBundle/u);

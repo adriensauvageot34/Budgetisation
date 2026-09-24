@@ -625,6 +625,7 @@ export class CanonicalRepository {
     operationIds: readonly string[],
     batchSize = CANONICAL_IN_BATCH_SIZE,
   ): Promise<readonly CanonicalRecord[]> {
+    await this.assertAuthorizedCanonicalHouseholdScope();
     const ids = unique(operationIds);
     if (ids.length === 0) return [];
     const closure = this.economicFactsClosure;
@@ -633,7 +634,6 @@ export class CanonicalRepository {
       return closure.operations.filter((row) =>
         selected.has(canonicalString(row, ["operation_id"], "operations")));
     }
-    await this.assertAuthorizedCanonicalHouseholdScope();
     return this.readRowsByInBatches(
       `operations:ids:${ids.join(",")}`,
       "operations",

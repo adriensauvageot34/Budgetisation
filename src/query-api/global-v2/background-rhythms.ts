@@ -49,7 +49,6 @@ type FoodMonth = GlobalFoodRhythmProjection["months"][number];
 type FoodHighlight = FoodMonth["compositionHighlights"]["courses"][number];
 
 export type GlobalBackgroundFoodHighlightTuple = readonly [
-  highlightId: string,
   stableSourceId: string,
   amount: string,
   sourceType: FoodHighlight["sourceType"],
@@ -89,6 +88,10 @@ export type GlobalBackgroundRhythmDestination = Readonly<{
 }>;
 
 export type GlobalBackgroundCarMonthSummary = Omit<CarMonth, "detail">;
+export type GlobalBackgroundRoutineGroup = Omit<NonNullable<CarMonth["detail"]>["routineGroups"][number], "mobilityTripIds">;
+export type GlobalBackgroundTripSummary = Omit<NonNullable<CarMonth["detail"]>["tripSummaries"][number], "mobilityTripId">;
+export type GlobalBackgroundContextOnly = Omit<NonNullable<CarMonth["detail"]>["contextOnly"][number], "mobilityTripId">;
+export type GlobalBackgroundSuppressedRemainder = Omit<NonNullable<CarMonth["detail"]>["suppressedRemainder"], "mobilityTripIds">;
 
 export type GlobalBackgroundRhythmsReadModel = Readonly<{
   kind: "global_background_rhythms";
@@ -137,10 +140,10 @@ export type GlobalBackgroundRhythmMonthDetailReadModel = Readonly<{
   moduleKey: "RHYTHM";
   domain: "CAR_MOBILITY";
   month: string;
-  routineGroups: NonNullable<CarMonth["detail"]>["routineGroups"];
-  tripSummaries: NonNullable<CarMonth["detail"]>["tripSummaries"];
-  contextOnly: NonNullable<CarMonth["detail"]>["contextOnly"];
-  suppressedRemainder: NonNullable<CarMonth["detail"]>["suppressedRemainder"];
+  routineGroups: readonly GlobalBackgroundRoutineGroup[];
+  tripSummaries: readonly GlobalBackgroundTripSummary[];
+  contextOnly: readonly GlobalBackgroundContextOnly[];
+  suppressedRemainder: GlobalBackgroundSuppressedRemainder;
   destinations: readonly GlobalBackgroundRhythmDestination[];
   quality: Readonly<{
     mobility: CarMonth["quality"];
@@ -304,14 +307,13 @@ function validateCarMonth(value: unknown, label: string): void {
 }
 
 function validateFoodHighlight(value: unknown, label: string): void {
-  if (!Array.isArray(value) || value.length !== 11) throw new TypeError(`${label}_INVALID`);
-  text(value[0], `${label}.highlightId`);
-  text(value[1], `${label}.stableSourceId`);
-  decimal(value[2], `${label}.amount`);
-  text(value[3], `${label}.sourceType`);
-  for (const index of [4, 5, 8, 9, 10]) if (value[index] !== null) text(value[index], `${label}[${index}]`);
-  if (value[6] !== null && !["SMALL", "INTERMEDIATE", "LARGE"].includes(String(value[6]))) throw new TypeError(`${label}.basketClass_INVALID`);
-  if (value[7] !== null) integer(value[7], `${label}.articleCount`);
+  if (!Array.isArray(value) || value.length !== 10) throw new TypeError(`${label}_INVALID`);
+  text(value[0], `${label}.stableSourceId`);
+  decimal(value[1], `${label}.amount`);
+  text(value[2], `${label}.sourceType`);
+  for (const index of [3, 4, 7, 8, 9]) if (value[index] !== null) text(value[index], `${label}[${index}]`);
+  if (value[5] !== null && !["SMALL", "INTERMEDIATE", "LARGE"].includes(String(value[5]))) throw new TypeError(`${label}.basketClass_INVALID`);
+  if (value[6] !== null) integer(value[6], `${label}.articleCount`);
 }
 
 function validateFoodMonth(value: unknown, label: string): void {
@@ -431,17 +433,16 @@ function validateAnnual(value: unknown): GlobalBackgroundRhythmsReadModel {
 }
 
 function validateRoutineGroup(value: unknown, label: string): void {
-  const record = exact(value, ["routineGroupId", "pattern", "title", "semanticFamily", "semanticTier", "usageBand", "occurrenceCount", "annualOccurrenceCount", "mobilityTripIds", "monthContribution", "fullTrips"], label);
+  const record = exact(value, ["routineGroupId", "pattern", "title", "semanticFamily", "semanticTier", "usageBand", "occurrenceCount", "annualOccurrenceCount", "monthContribution", "fullTrips"], label);
   for (const key of ["routineGroupId", "pattern", "title", "semanticFamily", "usageBand"] as const) text(requireProperty(record, key, label), `${label}.${key}`);
   for (const key of ["semanticTier", "occurrenceCount", "annualOccurrenceCount"] as const) integer(requireProperty(record, key, label), `${label}.${key}`);
-  array(requireProperty(record, "mobilityTripIds", label), `${label}.mobilityTripIds`).forEach((entry) => text(entry, `${label}.mobilityTripId`));
   validateMetricTotals(requireProperty(record, "monthContribution", label), `${label}.monthContribution`);
   validateMetricTotals(requireProperty(record, "fullTrips", label), `${label}.fullTrips`);
 }
 
 function validateTripSummary(value: unknown, label: string): void {
-  const record = exact(value, ["tripSummaryId", "mobilityTripId", "title", "semanticFamily", "semanticTier", "usageBand", "multiDay", "crossMonth", "startDate", "endDate", "targetKind", "targetRef", "monthContribution", "fullTrip"], label);
-  for (const key of ["tripSummaryId", "mobilityTripId", "title", "semanticFamily", "usageBand", "startDate", "endDate"] as const) text(requireProperty(record, key, label), `${label}.${key}`);
+  const record = exact(value, ["tripSummaryId", "title", "semanticFamily", "semanticTier", "usageBand", "multiDay", "crossMonth", "startDate", "endDate", "targetKind", "targetRef", "monthContribution", "fullTrip"], label);
+  for (const key of ["tripSummaryId", "title", "semanticFamily", "usageBand", "startDate", "endDate"] as const) text(requireProperty(record, key, label), `${label}.${key}`);
   if (hasOwn(record, "targetKind")) text(record.targetKind, `${label}.targetKind`);
   if (hasOwn(record, "targetRef")) text(record.targetRef, `${label}.targetRef`);
   integer(requireProperty(record, "semanticTier", label), `${label}.semanticTier`);
@@ -451,8 +452,8 @@ function validateTripSummary(value: unknown, label: string): void {
 }
 
 function validateContextOnly(value: unknown, label: string): void {
-  const record = exact(value, ["contextOnlyId", "mobilityTripId", "title", "semanticFamily", "semanticTier", "usageBand", "relationType", "targetKind", "targetRef"], label);
-  for (const key of ["contextOnlyId", "mobilityTripId", "title", "semanticFamily", "usageBand", "relationType"] as const) text(requireProperty(record, key, label), `${label}.${key}`);
+  const record = exact(value, ["contextOnlyId", "title", "semanticFamily", "semanticTier", "usageBand", "relationType", "targetKind", "targetRef"], label);
+  for (const key of ["contextOnlyId", "title", "semanticFamily", "usageBand", "relationType"] as const) text(requireProperty(record, key, label), `${label}.${key}`);
   integer(requireProperty(record, "semanticTier", label), `${label}.semanticTier`);
   if (hasOwn(record, "targetKind")) text(record.targetKind, `${label}.targetKind`);
   if (hasOwn(record, "targetRef")) text(record.targetRef, `${label}.targetRef`);
@@ -466,9 +467,8 @@ function validateMonthDetail(value: unknown): GlobalBackgroundRhythmMonthDetailR
   array(requireProperty(record, "routineGroups", "GlobalBackgroundMonthDetail"), "routineGroups", 3).forEach((entry, index) => validateRoutineGroup(entry, `routineGroups[${index}]`));
   array(requireProperty(record, "tripSummaries", "GlobalBackgroundMonthDetail"), "tripSummaries", 12).forEach((entry, index) => validateTripSummary(entry, `tripSummaries[${index}]`));
   array(requireProperty(record, "contextOnly", "GlobalBackgroundMonthDetail"), "contextOnly", 4).forEach((entry, index) => validateContextOnly(entry, `contextOnly[${index}]`));
-  const suppressed = exact(requireProperty(record, "suppressedRemainder", "GlobalBackgroundMonthDetail"), ["tripCount", "mobilityTripIds", "displayText", "internalReconciliation"], "GlobalBackgroundSuppressedRemainder");
+  const suppressed = exact(requireProperty(record, "suppressedRemainder", "GlobalBackgroundMonthDetail"), ["tripCount", "displayText", "internalReconciliation"], "GlobalBackgroundSuppressedRemainder");
   integer(requireProperty(suppressed, "tripCount", "GlobalBackgroundSuppressedRemainder"), "suppressed.tripCount");
-  array(requireProperty(suppressed, "mobilityTripIds", "GlobalBackgroundSuppressedRemainder"), "suppressed.mobilityTripIds").forEach((entry) => text(entry, "suppressed.mobilityTripId"));
   text(requireProperty(suppressed, "displayText", "GlobalBackgroundSuppressedRemainder"), "suppressed.displayText");
   validateMetricTotals(requireProperty(suppressed, "internalReconciliation", "GlobalBackgroundSuppressedRemainder"), "suppressed.internalReconciliation");
   array(requireProperty(record, "destinations", "GlobalBackgroundMonthDetail"), "destinations", 16).forEach(parseDestination);
@@ -503,7 +503,6 @@ export function buildGlobalBackgroundRhythmSnapshots(input: {
 }): GlobalBackgroundRhythmSnapshots {
   if (input.food.months.length !== 12 || input.carMobility.months.length !== 12) throw new TypeError("GLOBAL_BACKGROUND_RHYTHM_REQUIRES_TWELVE_MONTHS");
   const compactHighlight = (highlight: FoodHighlight): GlobalBackgroundFoodHighlightTuple => [
-    highlight.highlightId,
     highlight.stableSourceId,
     highlight.amount,
     highlight.sourceType,
@@ -620,10 +619,10 @@ export function buildGlobalBackgroundRhythmSnapshots(input: {
       moduleKey: "RHYTHM",
       domain: "CAR_MOBILITY",
       month: source.month,
-      routineGroups: detail.routineGroups,
-      tripSummaries: detail.tripSummaries,
-      contextOnly: detail.contextOnly,
-      suppressedRemainder: detail.suppressedRemainder,
+      routineGroups: detail.routineGroups.map(({ mobilityTripIds: _mobilityTripIds, ...group }) => group),
+      tripSummaries: detail.tripSummaries.map(({ mobilityTripId: _mobilityTripId, ...summary }) => summary),
+      contextOnly: detail.contextOnly.map(({ mobilityTripId: _mobilityTripId, ...context }) => context),
+      suppressedRemainder: (({ mobilityTripIds: _mobilityTripIds, ...remainder }) => remainder)(detail.suppressedRemainder),
       destinations,
       quality: { mobility: source.quality, narrative: { ...source.narrativeSummary, limitationCodes: source.quality.estimateKnowledge === "KNOWN" ? [] : ["MOBILITY_ESTIMATE_COVERAGE_PARTIAL"] } },
       publicationMeta: input.publicationMeta,
@@ -636,7 +635,27 @@ export function buildGlobalBackgroundRhythmSnapshots(input: {
   const monthlyBytes = monthlyDetails.map(({ payload }) => serializedBytes(payload));
   const maximumMonthlyDetailSerializedBytes = Math.max(0, ...monthlyBytes);
   const featureTotalSerializedBytes = annualSerializedBytes + monthlyBytes.reduce((sum, value) => sum + value, 0);
-  if (annualSerializedBytes > GLOBAL_BACKGROUND_RHYTHMS_ANNUAL_PAYLOAD_BUDGET_BYTES) throw new TypeError(`GLOBAL_BACKGROUND_RHYTHMS_ANNUAL_BUDGET_EXCEEDED:${annualSerializedBytes}`);
+  if (annualSerializedBytes > GLOBAL_BACKGROUND_RHYTHMS_ANNUAL_PAYLOAD_BUDGET_BYTES) {
+    const highlights = input.food.months.map(({ month, compositionHighlights }) => ({ month, compositionHighlights }));
+    const highlightEntries = input.food.months.flatMap(({ compositionHighlights }) => [
+      ...compositionHighlights.courses,
+      ...compositionHighlights.restaurants,
+      ...compositionHighlights.deliveries,
+    ]);
+    const monthsWithoutHighlights = input.food.months.map(({ compositionHighlights: _compositionHighlights, ...month }) => month);
+    throw new TypeError(`GLOBAL_BACKGROUND_RHYTHMS_ANNUAL_BUDGET_EXCEEDED:${annualSerializedBytes}:${canonicalSerializeGlobal({
+      foodAnnualBytes: serializedBytes(input.food.annual),
+      foodMonthsBytes: serializedBytes(input.food.months),
+      foodHighlightsBytes: serializedBytes(highlights),
+      foodHighlightCount: highlightEntries.length,
+      foodHighlightIdentityBytes: serializedBytes(highlightEntries.map(({ highlightId, stableSourceId }) => ({ highlightId, stableSourceId }))),
+      foodHighlightLabelBytes: serializedBytes(highlightEntries.map(({ label, activityContext }) => ({ label: label ?? null, activityLabel: activityContext?.label ?? null }))),
+      foodHighlightContextBytes: serializedBytes(highlightEntries.map(({ activityContext }) => activityContext ?? null)),
+      foodMonthsWithoutHighlightsBytes: serializedBytes(monthsWithoutHighlights),
+      carAnnualBytes: serializedBytes(input.carMobility.annual),
+      carMonthSummariesBytes: serializedBytes(input.carMobility.months.map(({ detail: _detail, ...month }) => month)),
+    })}`);
+  }
   if (maximumMonthlyDetailSerializedBytes > GLOBAL_BACKGROUND_RHYTHM_MONTH_DETAIL_PAYLOAD_BUDGET_BYTES) throw new TypeError(`GLOBAL_BACKGROUND_RHYTHM_MONTH_BUDGET_EXCEEDED:${maximumMonthlyDetailSerializedBytes}`);
   if (featureTotalSerializedBytes > GLOBAL_BACKGROUND_RHYTHMS_FEATURE_PAYLOAD_BUDGET_BYTES) throw new TypeError(`GLOBAL_BACKGROUND_RHYTHMS_FEATURE_BUDGET_EXCEEDED:${featureTotalSerializedBytes}`);
   const expectedFeatureSnapshotCount = 1 + monthlyDetails.length;
