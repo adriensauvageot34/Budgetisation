@@ -1,4 +1,4 @@
-.page { width: min(1180px, calc(100vw - 2 * var(--space-page))); margin: 0 auto; color: var(--color-ink); }
+.page { width: min(1180px, 100%); margin: 0 auto; color: var(--color-ink); }
 .hero { display: grid; grid-template-columns: minmax(0, 900px); min-height: 390px; align-items: center; padding: 48px 0 34px; }
 .hero h1, .summary h2, .module h2, .activationPending h1 { margin: 0; letter-spacing: -.035em; }
 .hero h1 { max-width: 800px; font-size: clamp(44px, 6vw, 78px); line-height: .98; }
