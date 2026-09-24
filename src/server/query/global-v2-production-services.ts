@@ -5,6 +5,7 @@ import type { GlobalScopeValidationContext } from "@/core/global-v2";
 import {
   globalV2AcceptedQueryMethodSignatures,
   globalV2QueryRegistry,
+  globalV2TimelineMethodForSchema,
   parseGlobalV2QueryRequest,
   type GlobalReadModelPublicationMeta,
   type GlobalV2QueryRequest,
@@ -49,7 +50,9 @@ export function createGlobalV2ProductionQueryServices(input: {
       queryKey: cacheKey,
       resource: request.resource,
       contractVersion: data.contract_version,
-      methodVersion: contract.methodVersion,
+      methodVersion: request.resource === "analysis_global_life_timeline"
+        ? globalV2TimelineMethodForSchema(data.payload !== null && typeof data.payload === "object" && "schemaVersion" in data.payload ? data.payload.schemaVersion : undefined)?.methodVersion ?? contract.methodVersion
+        : contract.methodVersion,
       methodSignature: data.method_signature,
       resourceInputHash: payload.resourceMeta.resourceInputHash,
       policyVersions: payload.resourceMeta.policyVersions,

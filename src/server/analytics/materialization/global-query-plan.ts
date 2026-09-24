@@ -3,7 +3,7 @@ import "server-only";
 import { createHash } from "node:crypto";
 
 import { canonicalSerializeGlobal, computeGlobalAnalysisScopeV2Hash, type NormalizedGlobalAnalysisScopeV2 } from "@/core/global-v2";
-import { globalV2ExpectedQueryMethodSignature, globalV2QueryRegistry, parseGlobalLifeTimelineV2ReadModel, parseGlobalLifeTimelineV3ReadModel, parseGlobalV2QueryParams, type GlobalExpandedReadModel, type GlobalInitialReadModel, type GlobalLifeTimelineReadModel, type GlobalModuleCompactReadModel, type GlobalTimelineEventComparisonReadModel, type GlobalV2QueryParams, type GlobalV2QueryResourceName } from "@/query-api/global-v2";
+import { globalV2ExpectedQueryMethodSignature, globalV2QueryRegistry, globalV2TimelineMethodForSchema, parseGlobalLifeTimelineV2ReadModel, parseGlobalLifeTimelineV3ReadModel, parseGlobalV2QueryParams, type GlobalExpandedReadModel, type GlobalInitialReadModel, type GlobalLifeTimelineReadModel, type GlobalModuleCompactReadModel, type GlobalTimelineEventComparisonReadModel, type GlobalV2QueryParams, type GlobalV2QueryResourceName } from "@/query-api/global-v2";
 import { buildGlobalV2PublicationManifest, globalV2ClosureDeclarationDigest, globalV2ClosureInputDigest, globalV2PublicationFactsHash, type GlobalV2Closure, type GlobalV2ManifestInput, type GlobalV2PublicationManifest, type GlobalV2ResolvedDependency, type GlobalV2ResourceVersion } from "./global-v2";
 
 export type GlobalV2QueryInstanceInput = {
@@ -19,6 +19,7 @@ export type GlobalV2QueryInstance = GlobalV2QueryInstanceInput & {
   readonly scopeHash: string;
   readonly resourceInputHash: string;
   readonly methodSignature: string;
+  readonly policyVersions: Readonly<Record<string, string>>;
 };
 
 export type GlobalV2QueryPlan = {
@@ -80,11 +81,16 @@ export function buildGlobalV2QueryPlan(input: {
     if (dependencies.length === 0 || dependencies.some((dependency) => !dependency.digest || !dependency.identity || !dependency.family)) throw new TypeError("GLOBAL_QUERY_DEPENDENCY_CLOSURE_INCOMPLETE");
     const scopeHash = computeGlobalAnalysisScopeV2Hash(source.scope);
     const resourceInputHash = globalV2QueryResourceInputHash({ ...source, params, dependencies });
-    const methodSignature = globalV2QueryMethodSignature(source.resource);
+    const timelineMethod = source.resource === "analysis_global_life_timeline"
+      ? globalV2TimelineMethodForSchema(source.payload !== null && typeof source.payload === "object" && "schemaVersion" in source.payload ? source.payload.schemaVersion : undefined)
+      : undefined;
+    if (source.resource === "analysis_global_life_timeline" && timelineMethod === undefined) throw new TypeError("GLOBAL_LIFE_TIMELINE_SCHEMA_UNSUPPORTED");
+    const methodSignature = timelineMethod?.methodSignature ?? globalV2QueryMethodSignature(source.resource);
+    const policyVersions = timelineMethod?.policyVersions ?? contract.policyVersions;
     const parsed = contract.schema.parse(source.payload);
     if (parsed !== null && typeof parsed === "object" && "resourceMeta" in parsed) {
       const meta = (parsed as { readonly resourceMeta: { readonly contractVersion: string; readonly methodSignature: string; readonly resourceInputHash: string; readonly policyVersions: Readonly<Record<string, string>> } }).resourceMeta;
-      if (meta.contractVersion !== contract.contractVersion || meta.methodSignature !== methodSignature || meta.resourceInputHash !== resourceInputHash || canonicalSerializeGlobal(meta.policyVersions) !== canonicalSerializeGlobal(contract.policyVersions)) throw new TypeError("GLOBAL_QUERY_PAYLOAD_RESOURCE_META_MISMATCH");
+      if (meta.contractVersion !== contract.contractVersion || meta.methodSignature !== methodSignature || meta.resourceInputHash !== resourceInputHash || canonicalSerializeGlobal(meta.policyVersions) !== canonicalSerializeGlobal(policyVersions)) throw new TypeError("GLOBAL_QUERY_PAYLOAD_RESOURCE_META_MISMATCH");
     }
     const publicationMeta = source.payload !== null && typeof source.payload === "object" && "publicationMeta" in source.payload
       ? (source.payload as { readonly publicationMeta?: { readonly publicationId?: unknown } }).publicationMeta
@@ -106,6 +112,7 @@ export function buildGlobalV2QueryPlan(input: {
       key: globalV2QueryInstanceKey(source.resource, scopeHash, params, generation),
       resourceInputHash,
       methodSignature,
+      policyVersions,
     };
   }).sort((left, right) => left.key.localeCompare(right.key));
   if (new Set(instances.map(({ key }) => key)).size !== instances.length) throw new TypeError("GLOBAL_QUERY_INSTANCE_DUPLICATE");
@@ -199,7 +206,7 @@ export function buildGlobalV2QueryPlan(input: {
 
   const queryVersions = instances.map((instance): GlobalV2ResourceVersion => {
     const contract = globalV2QueryRegistry[instance.resource];
-    return { key: instance.key, family: contract.family, contractVersion: contract.contractVersion, methodSignature: instance.methodSignature, policyVersions: contract.policyVersions, resourceInputHash: instance.resourceInputHash };
+    return { key: instance.key, family: contract.family, contractVersion: contract.contractVersion, methodSignature: instance.methodSignature, policyVersions: instance.policyVersions, resourceInputHash: instance.resourceInputHash };
   });
   const closures = instances.map((instance): GlobalV2Closure => ({
     outputKey: instance.key,

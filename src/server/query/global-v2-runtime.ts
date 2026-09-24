@@ -1,6 +1,6 @@
 import "server-only";
 
-import { globalV2AcceptedQueryMethodSignatures, globalV2QueryCacheKey, globalV2QueryRegistry, parseGlobalV2QueryRequest, type GlobalV2QueryRequest, type NormalizedGlobalV2QueryRequest } from "@/query-api/global-v2";
+import { globalV2AcceptedQueryMethodSignatures, globalV2QueryCacheKey, globalV2QueryRegistry, globalV2TimelineMethodForSchema, parseGlobalV2QueryRequest, type GlobalV2QueryRequest, type NormalizedGlobalV2QueryRequest } from "@/query-api/global-v2";
 import { canonicalSerializeGlobal, type GlobalScopeValidationContext } from "@/core/global-v2";
 import { GlobalGenerationPin, type GlobalSnapshotCandidate } from "./global-generation";
 
@@ -85,11 +85,15 @@ export async function executeGlobalV2SnapshotQuery(
       return error("GENERATION_MISMATCH", "Snapshot identity does not match the pinned deep link.");
     }
     const acceptedSignatures = globalV2AcceptedQueryMethodSignatures(request.resource);
-    const legacyTimeline = request.resource === "analysis_global_life_timeline" && candidate.methodSignature !== acceptedSignatures[0];
+    const timelineMethod = request.resource === "analysis_global_life_timeline"
+      ? globalV2TimelineMethodForSchema(candidate.data !== null && typeof candidate.data === "object" && "schemaVersion" in candidate.data ? candidate.data.schemaVersion : undefined)
+      : undefined;
     if (candidate.contractVersion !== contract.contractVersion
       || !acceptedSignatures.includes(candidate.methodSignature)
-      || (!legacyTimeline && (candidate.methodVersion !== contract.methodVersion
-        || canonicalSerializeGlobal(candidate.policyVersions) !== canonicalSerializeGlobal(contract.policyVersions)))) {
+      || (request.resource === "analysis_global_life_timeline" && timelineMethod === undefined)
+      || candidate.methodSignature !== (timelineMethod?.methodSignature ?? acceptedSignatures[0])
+      || candidate.methodVersion !== (timelineMethod?.methodVersion ?? contract.methodVersion)
+      || canonicalSerializeGlobal(candidate.policyVersions) !== canonicalSerializeGlobal(timelineMethod?.policyVersions ?? contract.policyVersions)) {
       return error("CONTRACT_MISMATCH", "Snapshot resource contract is incompatible.");
     }
   }

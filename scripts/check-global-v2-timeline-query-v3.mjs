@@ -122,3 +122,5 @@ const v2Bytes = new TextEncoder().encode(JSON.stringify(v2.timeline)).byteLength
 const v3Bytes = new TextEncoder().encode(serialized).byteLength;
 assert.ok(v3Bytes < 128 * 1024);
 console.log(JSON.stringify({ result: "PASS", fixture: "synthetic", v2Bytes, v3Bytes, deltaBytes: v3Bytes - v2Bytes, eventCount: parsedV3.events.length, matchedMobilityContexts: 2, KNOWN: 1, PARTIAL: 1, unmatchedSummaries: 1, remainingBudgetBytes: 128 * 1024 - v3Bytes }));
+
+export { owner, projection, comparator, scope, publicationMeta, semanticDependencies, mobilityDependency, v2, v3 };

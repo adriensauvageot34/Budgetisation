@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import fs from "node:fs";
 import path from "node:path";
 import process from "node:process";
+import { createHash } from "node:crypto";
 import Module, { createRequire } from "node:module";
 import ts from "typescript";
 
@@ -232,6 +233,53 @@ const v3Candidate = buildGlobalV2CandidateFromOwnerOutputs({
   candidateAdapters: integrated.candidateAdapters, momentComponentPresentation: integrated.momentComponentPresentation,
   semanticTimeline: integrated.semanticTimeline,
 });
+const { canonicalSerializeGlobal } = require(path.resolve("src/core/global-v2/index.ts"));
+const { outputHash: _previousEventMobilityHash, ...changedEventMobilityBody } = {
+  ...integrated.eventMobilityAuthority, inputHash: "f".repeat(64),
+};
+const changedEventMobilityAuthority = {
+  ...changedEventMobilityBody,
+  outputHash: createHash("sha256").update(canonicalSerializeGlobal(changedEventMobilityBody), "utf8").digest("hex"),
+};
+const v3CandidateB = buildGlobalV2CandidateFromOwnerOutputs({
+  project: "ipuuhxrblxormwgoaqnz", householdId: household.household_id, householdTimeZone: household.timezone,
+  personIds: persons.map(({ personId }) => personId), asOf, certifiedThrough,
+  dataRevision: String(revision.data_revision), analyticsRevision: String(revision.analytics_revision),
+  implementationIdentity: "6af8ae20d08c2906fdb45cf59d3c12c79ae1700b", ownerOutputs: integrated.ownerOutputs,
+  eventMobilityAuthority: changedEventMobilityAuthority, presentationLabels: integrated.presentationLabels,
+  candidateAdapters: integrated.candidateAdapters, momentComponentPresentation: integrated.momentComponentPresentation,
+  semanticTimeline: integrated.semanticTimeline,
+});
+const v3TimelineA = v3Candidate.plan.instances.find(({ resource }) => resource === "analysis_global_life_timeline");
+const v3TimelineB = v3CandidateB.plan.instances.find(({ resource }) => resource === "analysis_global_life_timeline");
+assert.notEqual(v3TimelineA.resourceInputHash, v3TimelineB.resourceInputHash);
+assert.notEqual(v3Candidate.plan.closures.find(({ outputKey }) => outputKey === v3TimelineA.key).inputDigest,
+  v3CandidateB.plan.closures.find(({ outputKey }) => outputKey === v3TimelineB.key).inputDigest);
+const comparisonA = v3Candidate.plan.instances.filter(({ resource }) => resource === "analysis_global_timeline_event_comparison");
+const comparisonB = v3CandidateB.plan.instances.filter(({ resource }) => resource === "analysis_global_timeline_event_comparison");
+assert.equal(comparisonA.length, comparisonB.length);
+for (let index = 0; index < comparisonA.length; index += 1) {
+  assert.equal(comparisonA[index].resourceInputHash, comparisonB[index].resourceInputHash);
+  assert.equal(comparisonA[index].methodSignature, comparisonB[index].methodSignature);
+  assert.equal(v3Candidate.plan.closures.find(({ outputKey }) => outputKey === comparisonA[index].key).inputDigest,
+    v3CandidateB.plan.closures.find(({ outputKey }) => outputKey === comparisonB[index].key).inputDigest);
+  const { publicationMeta: _publicationA, ...semanticPayloadA } = comparisonA[index].payload;
+  const { publicationMeta: _publicationB, ...semanticPayloadB } = comparisonB[index].payload;
+  assert.deepEqual(semanticPayloadA, semanticPayloadB);
+}
+console.log(`TIMELINE_V3_CANDIDATE_INVALIDATION=${JSON.stringify({ timelineHashChanged: true, timelineClosureChanged: true,
+  comparisonHashesStable: true, comparisonPayloadsStableApartFromGeneration: true, comparisonSnapshotCount: comparisonA.length })}`);
+const v3TimelineInstance = v3Candidate.plan.instances.find(({ resource }) => resource === "analysis_global_life_timeline");
+const v3ComparisonInstances = v3Candidate.plan.instances.filter(({ resource }) => resource === "analysis_global_timeline_event_comparison");
+assert.ok(v3TimelineInstance);
+assert.ok(v3ComparisonInstances.length > 0);
+assert.ok(v3TimelineInstance.dependencies.some(({ family, identity, digest }) => family === "global_event_mobility_owner_output" && identity === "GlobalM7EventMobilityAuthority:EVENT_MOBILITY" && digest === integrated.eventMobilityAuthority.outputHash));
+assert.ok(v3ComparisonInstances.every(({ dependencies }) => dependencies.every(({ family }) => family !== "global_event_mobility_owner_output")));
+assert.ok(v3Candidate.plan.closures.find(({ outputKey }) => outputKey === v3TimelineInstance.key)?.dependencies.some(({ family }) => family === "global_event_mobility_owner_output"));
+assert.ok(v3ComparisonInstances.every(({ key }) => v3Candidate.plan.closures.find(({ outputKey }) => outputKey === key)?.dependencies.every(({ family }) => family !== "global_event_mobility_owner_output")));
+assert.ok(v3Candidate.plan.queryVersions.some(({ key, methodSignature, resourceInputHash }) => key === v3TimelineInstance.key && methodSignature === v3TimelineInstance.methodSignature && resourceInputHash === v3TimelineInstance.resourceInputHash));
+assert.ok(v3Candidate.plan.instances.every(({ payload }) => payload.publicationMeta?.publicationId === v3TimelineInstance.payload.publicationMeta.publicationId));
+console.log(`TIMELINE_V3_DEPENDENCY_SPLIT=${JSON.stringify({ timeline: v3TimelineInstance.dependencies.map(({ authority, family, identity }) => ({ authority, family, identity })), comparator: v3ComparisonInstances[0].dependencies.map(({ authority, family, identity }) => ({ authority, family, identity })), comparisonSnapshotCount: v3ComparisonInstances.length, requiredQueryKeys: v3Candidate.plan.requiredQueryKeys.length })}`);
 const timelineResourceMeta = (resource, params) => {
   const snapshot = v3Candidate.snapshots.find((entry) => entry.resource === resource && JSON.stringify(entry.params) === JSON.stringify(params));
   assert.ok(snapshot, `Missing ${resource} snapshot for parity.`);

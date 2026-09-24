@@ -206,12 +206,15 @@ export function globalV2ExpectedQueryMethodSignature(resource: GlobalV2QueryReso
   }))));
 }
 
+const timelineV2PolicyVersions = Object.freeze({ projection: "timeline-semantic-projection@v1", comparator: "timeline-semantic-comparator@v2", transport: "global-v2-snapshot-only@sh05-v2" });
+const timelineV1PolicyVersions = Object.freeze({ projection: "global-v2-query-projection@v1", transport: "global-v2-snapshot-only@v1" });
+
 function legacyTimelineQueryMethodSignature(): string {
   return bytesToHex(sha256(utf8ToBytes(canonicalSerializeGlobal({
     resource: "analysis_global_life_timeline",
     contractVersion: "global-v2-query@v1",
     methodVersion: "analysis_global_life_timeline@v1",
-    policyVersions: { projection: "global-v2-query-projection@v1", transport: "global-v2-snapshot-only@v1" },
+    policyVersions: timelineV1PolicyVersions,
   }))));
 }
 
@@ -220,11 +223,22 @@ function timelineV2QueryMethodSignature(): string {
     resource: "analysis_global_life_timeline",
     contractVersion: "global-v2-query@v1",
     methodVersion: "analysis_global_life_timeline@v2",
-    policyVersions: { projection: "timeline-semantic-projection@v1", comparator: "timeline-semantic-comparator@v2", transport: "global-v2-snapshot-only@sh05-v2" },
+    policyVersions: timelineV2PolicyVersions,
   }))));
 }
 
-/** Keep both earlier Timeline signatures readable while the V3 rollback gate is prepared. */
+/** The active V2 publication remains readable during the V3 rollback window. */
+export function globalV2TimelineMethodForSchema(schemaVersion: unknown): Readonly<{ methodVersion: string; methodSignature: string; policyVersions: Readonly<Record<string, string>> }> | undefined {
+  if (schemaVersion === "global-life-timeline@v3") {
+    const current = globalV2QueryRegistry.analysis_global_life_timeline;
+    return { methodVersion: current.methodVersion, methodSignature: globalV2ExpectedQueryMethodSignature("analysis_global_life_timeline"), policyVersions: current.policyVersions };
+  }
+  if (schemaVersion === "global-life-timeline@v2") return { methodVersion: "analysis_global_life_timeline@v2", methodSignature: timelineV2QueryMethodSignature(), policyVersions: timelineV2PolicyVersions };
+  // Still produced by the non-semantic candidate adapter and present in historical snapshots.
+  if (schemaVersion === "global-life-timeline@v1") return { methodVersion: "analysis_global_life_timeline@v1", methodSignature: legacyTimelineQueryMethodSignature(), policyVersions: timelineV1PolicyVersions };
+  return undefined;
+}
+
 export function globalV2AcceptedQueryMethodSignatures(resource: GlobalV2QueryResourceName): readonly string[] {
   const current = globalV2ExpectedQueryMethodSignature(resource);
   return resource === "analysis_global_life_timeline"

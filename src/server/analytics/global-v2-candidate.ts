@@ -37,6 +37,7 @@ import {
   globalV2ExpandedResourceCatalog,
   globalV2MethodRef,
   globalV2QueryRegistry,
+  globalV2TimelineMethodForSchema,
   projectPublishedPersonaDetailIndex,
   projectPersonaPublishedProfile,
   type GlobalCompactInsight,
@@ -1861,8 +1862,10 @@ export function buildGlobalV2CandidateFromOwnerOutputs(input: GlobalV2CandidateI
   };
   const metaFor = (resource: GlobalV2QueryResourceName, params: GlobalV2QueryParams, dependencies: readonly GlobalV2ResolvedDependency[]): GlobalReadModelResourceMeta => ({
     contractVersion: globalV2QueryRegistry[resource].contractVersion,
-    methodSignature: globalV2QueryMethodSignature(resource),
-    policyVersions: globalV2QueryRegistry[resource].policyVersions,
+    methodSignature: resource === "analysis_global_life_timeline" && input.semanticTimeline === undefined
+      ? globalV2TimelineMethodForSchema("global-life-timeline@v1")!.methodSignature : globalV2QueryMethodSignature(resource),
+    policyVersions: resource === "analysis_global_life_timeline" && input.semanticTimeline === undefined
+      ? globalV2TimelineMethodForSchema("global-life-timeline@v1")!.policyVersions : globalV2QueryRegistry[resource].policyVersions,
     resourceInputHash: globalV2QueryResourceInputHash({ resource, scope, params, dependencies }),
   });
   const expandedResourceByModule = new Map(globalV2ExpandedResourceCatalog.filter(({ group }) => group === "expanded_section").map(({ moduleKey, resource }) => [moduleKey, resource] as const));
@@ -1920,8 +1923,11 @@ export function buildGlobalV2CandidateFromOwnerOutputs(input: GlobalV2CandidateI
   const m6Comparisons = new Map(arrayOf(at(m6Output.output, "comparisons")).flatMap((comparison) => {
     const momentId = stringOf(at(comparison, "momentId")); return momentId === undefined ? [] : [[momentId, comparison] as const];
   }));
-  const timelineDependencies = dependenciesFor("RHYTHM");
-  const timelineMobilityDependencies = [...timelineDependencies, ...eventMobilityArtifact.dependencies];
+  // Both semantic readers retain the RHYTHM closure (owners, labels, semantic
+  // projection/comparator and background inputs). Only the presentation reader
+  // consumes the independent Event Mobility owner output.
+  const timelineComparisonDependencies = dependenciesFor("RHYTHM");
+  const timelineDependencies = [...timelineComparisonDependencies, ...eventMobilityArtifact.dependencies];
   const timelineParams = {};
   const timelineEvents: readonly GlobalTimelineEvent[] = input.candidateAdapters.timeline.events.map((event): GlobalTimelineEvent => {
     const comparison = event.sourceKind === "MOMENT" ? m6Comparisons.get(event.eventRef.slice("moment:".length)) : undefined;
@@ -1945,28 +1951,28 @@ export function buildGlobalV2CandidateFromOwnerOutputs(input: GlobalV2CandidateI
     comparator: input.semanticTimeline.comparator,
     eventMobilityAuthority: input.eventMobilityAuthority,
     publicationMeta: provisionalMeta,
-    resourceMeta: (resource, params) => metaFor(resource, params, resource === "analysis_global_life_timeline" ? timelineMobilityDependencies : timelineDependencies),
+    resourceMeta: (resource, params) => metaFor(resource, params, resource === "analysis_global_life_timeline" ? timelineDependencies : timelineComparisonDependencies),
   });
   const timelineInstance: GlobalV2QueryInstanceInput = semanticSnapshots === undefined
     ? {
         resource: "analysis_global_life_timeline",
         scope,
         params: timelineParams,
-        dependencies: timelineDependencies,
-        payload: buildGlobalLifeTimelineReadModel({ kind: "global_life_timeline", schemaVersion: "global-life-timeline@v1", resource: "analysis_global_life_timeline", moduleKey: "RHYTHM", events: timelineEvents, chapterOverlays: [], contextSignals: [], destinations: timelineDestinations, quality: quality(outputsByModule.get("RHYTHM")!), publicationMeta: provisionalMeta, resourceMeta: metaFor("analysis_global_life_timeline", timelineParams, timelineDependencies) }),
+        dependencies: timelineComparisonDependencies,
+        payload: buildGlobalLifeTimelineReadModel({ kind: "global_life_timeline", schemaVersion: "global-life-timeline@v1", resource: "analysis_global_life_timeline", moduleKey: "RHYTHM", events: timelineEvents, chapterOverlays: [], contextSignals: [], destinations: timelineDestinations, quality: quality(outputsByModule.get("RHYTHM")!), publicationMeta: provisionalMeta, resourceMeta: metaFor("analysis_global_life_timeline", timelineParams, timelineComparisonDependencies) }),
       }
     : {
         resource: "analysis_global_life_timeline",
         scope,
         params: timelineParams,
-        dependencies: timelineMobilityDependencies,
+        dependencies: timelineDependencies,
         payload: semanticSnapshots.timeline,
       };
   const timelineComparisonInstances: GlobalV2QueryInstanceInput[] = (semanticSnapshots?.comparisons ?? []).map(({ params, payload }) => ({
     resource: "analysis_global_timeline_event_comparison",
     scope,
     params,
-    dependencies: timelineDependencies,
+    dependencies: timelineComparisonDependencies,
     payload,
   }));
   for (const ownerOutput of outputs) {
@@ -2255,6 +2261,6 @@ export function buildGlobalV2CandidateFromOwnerOutputs(input: GlobalV2CandidateI
     plan,
     manifest: finalManifest,
     artifacts,
-    snapshots: plan.instances.map((instance) => ({ key: instance.key, resource: instance.resource, scopeHash: instance.scopeHash, params: instance.params, payload: instance.payload, methodSignature: instance.methodSignature, resourceInputHash: instance.resourceInputHash, policyVersions: globalV2QueryRegistry[instance.resource].policyVersions, payloadHash: digest(instance.payload) })),
+    snapshots: plan.instances.map((instance) => ({ key: instance.key, resource: instance.resource, scopeHash: instance.scopeHash, params: instance.params, payload: instance.payload, methodSignature: instance.methodSignature, resourceInputHash: instance.resourceInputHash, policyVersions: instance.policyVersions, payloadHash: digest(instance.payload) })),
   };
 }

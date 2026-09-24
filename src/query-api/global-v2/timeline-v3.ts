@@ -3,7 +3,6 @@ import {
   GLOBAL_LIFE_TIMELINE_V2_MAX_EVENTS,
   GLOBAL_LIFE_TIMELINE_V2_PAYLOAD_BUDGET_BYTES,
   buildGlobalLifeTimelineV2ReadModel,
-  createGlobalLifeTimelineTransportSchema,
   parseGlobalLifeTimelineV2ReadModel,
   type GlobalLifeTimelineV2ReadModel,
   type GlobalLifeTimelineV2Snapshot,
@@ -163,9 +162,21 @@ export function buildGlobalLifeTimelineV3ReadModel(input: GlobalLifeTimelineV3Re
 
 export const globalLifeTimelineV3ReadModelSchema = createRuntimeSchema(parseGlobalLifeTimelineV3ReadModel);
 
+export type GlobalLifeTimelineRollbackReadModel = GlobalLifeTimelineV2ReadModel | GlobalLifeTimelineV3ReadModel;
+
+export function parseGlobalLifeTimelineRollbackReadModel(value: unknown): GlobalLifeTimelineRollbackReadModel {
+  const schemaVersion = value !== null && typeof value === "object" && "schemaVersion" in value
+    ? (value as { readonly schemaVersion?: unknown }).schemaVersion : undefined;
+  if (schemaVersion === "global-life-timeline@v3") return parseGlobalLifeTimelineV3ReadModel(value);
+  if (schemaVersion === "global-life-timeline@v2") return parseGlobalLifeTimelineV2ReadModel(value);
+  throw new TypeError("GLOBAL_LIFE_TIMELINE_SCHEMA_UNSUPPORTED");
+}
+
 export function createGlobalLifeTimelineV3TransportSchema(legacySchema: RuntimeSchema<unknown>): RuntimeSchema<unknown> {
-  const earlier = createGlobalLifeTimelineTransportSchema(legacySchema);
-  return createRuntimeSchema((value) => value !== null && typeof value === "object" && "schemaVersion" in value && (value as { readonly schemaVersion?: unknown }).schemaVersion === "global-life-timeline@v3"
-    ? parseGlobalLifeTimelineV3ReadModel(value)
-    : earlier.parse(value));
+  return createRuntimeSchema((value) => {
+    const schemaVersion = value !== null && typeof value === "object" && "schemaVersion" in value
+      ? (value as { readonly schemaVersion?: unknown }).schemaVersion : undefined;
+    if (schemaVersion === "global-life-timeline@v1") return legacySchema.parse(value);
+    return parseGlobalLifeTimelineRollbackReadModel(value);
+  });
 }
