@@ -40,6 +40,7 @@ assert.equal(households.length, 1, "Le fixture doit contenir exactement un House
 const household = households[0];
 const revision = (tables.get("household_revisions") ?? []).find((row) => row.household_id === household.household_id);
 assert.ok(revision, "La révision Household du fixture est requise.");
+assert.equal(String(revision.data_revision), "8", "Le fixture doit représenter la source revision 8 certifiée.");
 const persons = (tables.get("persons") ?? []).filter((row) => row.household_id === household.household_id).map((row) => ({ personId: row.person_id, householdId: row.household_id, displayName: row.display_name, status: row.status }));
 const periods = (tables.get("analysis_periods") ?? []).filter((row) => row.household_id === household.household_id).map((row) => ({ analysisPeriodId: row.analysis_period_id, householdId: row.household_id, month: row.month, financeStatus: row.finance_status, lifeStatus: row.life_status, locationStatus: row.location_status, calendarStatus: row.calendar_status, isClosed: row.is_closed, sourceRevision: String(row.source_revision) }));
 const context = { userId: "global-v2-read-only-fixture", householdId: household.household_id, persons, personIds: persons.map(({ personId }) => personId), timezone: household.timezone, periods, dataRevision: String(revision.data_revision), analyticsRevision: String(revision.analytics_revision), contractVersion: "v2", asOf };
@@ -154,9 +155,9 @@ const activityCostProfiles = activityIds.map((activityId) => buildGlobalActivity
 const timeline = await resolveGlobalTimelineCandidateAdapter({ repository, certifiedThrough, occurrences, m6 });
 const grocery = resolveGlobalGroceryCandidateAdapter({ months, occurrences, activityCostProfiles, m2MonthlyComponents: m2.transformationMonthlyComponents, subcategoryRows: taxonomy.subcategories });
 
-assert.equal(timeline.events.length, 47, "Le nombre dynamique d'événements Timeline du fixture a dérivé.");
+assert.equal(timeline.events.length, 57, "Le nombre dynamique d'événements Timeline du fixture a dérivé.");
 assert.equal(timeline.events.filter(({ sourceKind }) => sourceKind === "MOMENT").length, 37, "Tous les Moments M6 certifiés doivent être inclus.");
-assert.equal(timeline.events.filter(({ sourceKind }) => sourceKind === "LIFE_EVENT").length, 10, "Le nombre de LifeEvents autonomes du fixture a dérivé.");
+assert.equal(timeline.events.filter(({ sourceKind }) => sourceKind === "LIFE_EVENT").length, 20, "Le nombre de LifeEvents autonomes du fixture a dérivé.");
 assert.equal(new Set(timeline.events.map(({ eventRef }) => eventRef)).size, timeline.events.length, "Les eventRefs doivent être uniques.");
 assert.deepEqual([...timeline.events].sort((left, right) => left.startDate.localeCompare(right.startDate) || left.eventRef.localeCompare(right.eventRef)), timeline.events, "Le bundle doit préserver le contrat de tri.");
 const autonomousRefs = new Set(timeline.events.filter(({ sourceKind }) => sourceKind === "LIFE_EVENT").map(({ eventRef }) => eventRef));
@@ -208,14 +209,14 @@ const candidate = buildGlobalV2CandidateFromOwnerOutputs({
 });
 const timelineSnapshot = candidate.snapshots.find(({ resource }) => resource === "analysis_global_life_timeline");
 assert.ok(timelineSnapshot, "Le snapshot Timeline doit être requis par le candidat.");
-assert.equal(timelineSnapshot.payload.events.length, 47);
+assert.equal(timelineSnapshot.payload.events.length, 57);
 assert.deepEqual(timelineSnapshot.payload.chapterOverlays, [], "M3 EVALUATED_EMPTY ne doit pas être forcé.");
 assert.deepEqual(timelineSnapshot.payload.contextSignals, [], "M5 AUTHORITY_GATED ne doit pas être forcé.");
 assert.ok(Buffer.byteLength(JSON.stringify(timelineSnapshot.payload)) < 96 * 1024, "Le payload Timeline doit rester sous 96 KiB.");
 const momentEvents = timelineSnapshot.payload.events.filter(({ sourceKind }) => sourceKind === "MOMENT");
 const autonomousEvents = timelineSnapshot.payload.events.filter(({ sourceKind }) => sourceKind === "LIFE_EVENT");
 assert.equal(momentEvents.length, 37);
-assert.equal(autonomousEvents.length, 10);
+assert.equal(autonomousEvents.length, 20);
 assert.equal(autonomousEvents.every(({ causalCost }) => causalCost.status === "UNKNOWN" && !("value" in causalCost)), true, "UNKNOWN ne doit jamais devenir zéro.");
 const details = candidate.snapshots.filter(({ resource }) => resource === "analysis_global_moment_experience_detail");
 assert.equal(details.length, momentEvents.length, "Chaque Moment Timeline doit avoir un détail same-generation.");
