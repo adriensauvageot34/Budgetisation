@@ -48,6 +48,13 @@ export type ComponentClassificationAssertion = {
   readonly resolution: ComponentAxisClassification;
 };
 
+/** Evidence scoped to the human purchase, independent of its economic owner. */
+export type PurchaseEventClassificationAssertion = {
+  readonly purchaseEventId: string;
+  readonly axis: ComponentClassificationAxis;
+  readonly resolution: ComponentAxisClassification;
+};
+
 const axisToProperty = {
   NECESSITY: "necessity",
   BEHAVIOR: "behavior",

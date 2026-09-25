@@ -61,7 +61,7 @@ const native = {
 const purchase = (options = {}) => ({
   purchaseEventId: uuid(10), householdId, grossAmount: "25", grossAmountStatus: "KNOWN",
   sources: [nativeSource], timingAssertions, nativeComponent: native,
-  classifications: [], ...options,
+  purchaseClassifications: [], ...options,
 });
 const project = (purchases, visibility = "PURCHASE_AWARE_PILOT", legacyFacts = []) =>
   projectPurchaseAwareCanonical({ visibility, householdId, range, legacyFacts, purchases });
@@ -91,6 +91,20 @@ check(() => assert.equal(result.facts[0].economicAmount.value, "30.8"));
 check(() => assert.equal(result.facts[0].bankAmount.value, "5.8"));
 check(() => assert.equal(legacy.net, "5.8"));
 check(() => assert.equal(result.facts[0].classification.necessity.value, "Contraint"));
+const purchaseAssertion = {
+  purchaseEventId: uuid(10), axis: "NECESSITY",
+  resolution: { status: "KNOWN", value: "Optionnel", authority: "EXPLICIT_COMPONENT_OVERRIDE",
+    evidenceRefs: ["purchase:explicit"], provenance: "CONTROLLED_BACKFILL" },
+};
+const componentAssertion = { canonicalComponentKey: `operation:${operationId}`, axis: "NECESSITY",
+  resolution: { status: "KNOWN", value: "Indispensable", authority: "EXPLICIT_COMPONENT_OVERRIDE",
+    evidenceRefs: ["operation:historical"], provenance: "CONTROLLED_BACKFILL" } };
+check(() => assert.equal(project([{ ...mixed, purchaseClassifications: [purchaseAssertion],
+  componentClassifications: [componentAssertion] }], "PURCHASE_AWARE_PILOT", [legacy]).facts[0].classification.necessity.value, "Optionnel"));
+check(() => assert.equal(project([{ ...mixed, componentClassifications: [componentAssertion] }],
+  "PURCHASE_AWARE_PILOT", [legacy]).facts[0].classification.necessity.value, "Indispensable"));
+check(() => assert.deepEqual(project([{ ...mixed, purchaseClassifications: [purchaseAssertion] }],
+  "DEFAULT", [legacy]).facts, [legacy]));
 check(() => assert.equal(project([{ ...mixed, operationOwnerSourceKind: "Operation_residual" }], "PURCHASE_AWARE_PILOT", [legacy]).facts[0].sourceKind, "Operation_residual"));
 const splitLegacy = { ...legacy, canonicalComponentKey: `allocation:${uuid(8)}` };
 check(() => assert.equal(project([mixed], "PURCHASE_AWARE_PILOT", [legacy, splitLegacy]).facts.length, 1));
@@ -153,8 +167,8 @@ const nativeKnownFact = {
 check(() => assert.equal(parseEconomicComponentFact(nativeKnownFact).sourceOperation.kind, "not_applicable"));
 check(() => assert.throws(() => parseEconomicComponentFact({ ...nativeKnownFact, sourceOperation: { kind: "resolved", id: operationId } }), /ne possède pas/));
 check(() => assert.equal(project([purchase({ timingAssertions: [] })]).blocking[0].reason, "TIMING_UNRESOLVED"));
-check(() => assert.equal(project([purchase({ classifications: [{
-  canonicalComponentKey: nativeSource.canonicalComponentKey, axis: "NECESSITY",
+check(() => assert.equal(project([purchase({ purchaseClassifications: [{
+  purchaseEventId: uuid(10), axis: "NECESSITY",
   resolution: { status: "KNOWN", value: "Contraint", authority: "EXPLICIT_COMPONENT_OVERRIDE", evidenceRefs: ["explicit:need"], provenance: "EXPLICIT_USER_ASSERTION" },
 }] })]).facts[0].classification.necessity.value, "Contraint"));
 
@@ -163,7 +177,7 @@ const staged = [{ purchase_event_id: uuid(10), household_id: householdId, proven
 const queried = [];
 const client = { from(table) {
   const query = { table, selection: "", select(value) { this.selection = value; return this; },
-    eq() { return this; }, in() { return this; }, order() { return this; },
+    eq() { return this; }, in() { return this; }, order() { return this; }, limit() { return this; },
     then(resolve) {
       queried.push(`${this.table}:${this.selection}`);
       const data = this.selection === "purchase_event_id,household_id,provenance" ? staged

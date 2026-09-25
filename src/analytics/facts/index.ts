@@ -51,6 +51,7 @@ export {
 export type {
   ComponentAxisClassification,
   ComponentClassificationAssertion,
+  PurchaseEventClassificationAssertion,
   ComponentClassificationAuthority,
   ComponentClassificationAxis,
   ComponentClassificationCandidate,

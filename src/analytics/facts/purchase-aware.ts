@@ -5,6 +5,7 @@ import {
   normalizeComponentClassificationValue,
   type ComponentAxisClassification,
   type ComponentClassificationAssertion,
+  type PurchaseEventClassificationAssertion,
   type ComponentClassificationAxis,
 } from "./component-classification";
 import { resolvePurchaseEventTiming, type PurchaseEventTimingAssertion } from "./purchase-event";
@@ -102,7 +103,8 @@ export type PurchaseAwarePurchase = {
   readonly bankAmount?: string | null;
   readonly operationCanonicalFactCount?: number;
   readonly operationOwnerSourceKind?: "Operation_parent" | "Operation_residual";
-  readonly classifications: readonly ComponentClassificationAssertion[];
+  readonly purchaseClassifications: readonly PurchaseEventClassificationAssertion[];
+  readonly componentClassifications?: readonly ComponentClassificationAssertion[];
   readonly operationClassificationValues?: Readonly<Record<ComponentClassificationAxis, unknown>>;
   readonly operationTaxonomy?: {
     readonly categoryId: string | null;
@@ -167,10 +169,16 @@ function purchaseClassifications(purchase: PurchaseAwarePurchase): PurchaseAware
   if (owner.status !== "RESOLVED") throw new TypeError("La classification exige un propriétaire résolu.");
   const operationId = owner.kind === "operation" ? owner.operationId : null;
   return Object.fromEntries((Object.keys(axisProperties) as ComponentClassificationAxis[]).map((axis) => {
-    const assertions = purchase.classifications.filter((row) =>
-      row.canonicalComponentKey === owner.canonicalComponentKey && row.axis === axis);
+    const assertions = purchase.purchaseClassifications.filter((row) =>
+      row.purchaseEventId === purchase.purchaseEventId && row.axis === axis);
     if (assertions.length > 1) throw new TypeError("Une classification d'achat est dupliquée.");
     if (assertions.length === 1) return [axisProperties[axis], assertions[0].resolution];
+    if (operationId !== null) {
+      const componentAssertions = (purchase.componentClassifications ?? []).filter((row) =>
+        row.canonicalComponentKey === owner.canonicalComponentKey && row.axis === axis);
+      if (componentAssertions.length > 1) throw new TypeError("Une classification de composant est dupliquée.");
+      if (componentAssertions.length === 1) return [axisProperties[axis], componentAssertions[0].resolution];
+    }
     const value = operationId !== null
       ? normalizeComponentClassificationValue(axis, purchase.operationClassificationValues?.[axis])
       : null;

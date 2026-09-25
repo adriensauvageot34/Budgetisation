@@ -129,13 +129,11 @@ export async function importBenefitSnapshot(db, dto) {
         [uuid("channel",eventId),batch.householdId,eventId,purchase.channel,
           JSON.stringify([`source:${externalId}`]),provenance]);
       for (const classification of purchase.classifications) {
-        await put(`insert into public.economic_component_classifications
-          (economic_component_classification_id,household_id,operation_id,purchase_economic_component_id,
+        await put(`insert into public.purchase_event_classification_assertions
+          (purchase_event_classification_assertion_id,household_id,purchase_event_id,
             axis,status,value,authority,evidence_refs,provenance)
-          values ($1,$2,$3,$4,$5,$6,$7,$8,$9::jsonb,$10)`,
-          [uuid("classification",ownerKey,classification.axis),batch.householdId,
-            purchase.owner.kind === "operation" ? ownerId : null,
-            purchase.owner.kind === "purchase_component" ? ownerId : null,
+          values ($1,$2,$3,$4,$5,$6,$7,$8::jsonb,$9)`,
+          [uuid("purchase-classification",eventId,classification.axis),batch.householdId,eventId,
             classification.axis,classification.status,classification.value,classification.authority,
             JSON.stringify(classification.evidenceRefs),classification.provenance]);
       }

@@ -50,6 +50,7 @@ const migrations = [
   "20260925003500_generic_benefit_purchase_foundation.sql",
   "20260925113000_purchase_event_visibility_scope.sql",
   "20260925153000_purchase_event_semantic_context.sql",
+  "20260925160000_purchase_event_classification_assertions.sql",
 ];
 async function setup(db) {
   await db.exec(base);
@@ -110,14 +111,15 @@ async function tableStats(db) {
   const names = ["import_batches", "external_source_records", "purchase_events", "benefit_wallets",
     "purchase_funding_components", "purchase_economic_components", "purchase_event_memberships",
     "benefit_wallet_ledger_entries", "purchase_event_timing_assertions", "purchase_event_channel_assertions",
-    "economic_component_classifications"];
+    "economic_component_classifications", "purchase_event_classification_assertions"];
   const counts = {};
   for (const name of names) counts[name] = Number(await scalar(db, `select count(*)::integer value from public.${name}`));
   assert.deepEqual(counts, {
     import_batches: 1, external_source_records: 213, purchase_events: 200, benefit_wallets: 1,
     purchase_funding_components: 255, purchase_economic_components: 146, purchase_event_memberships: 200,
     benefit_wallet_ledger_entries: 213, purchase_event_timing_assertions: 200,
-    purchase_event_channel_assertions: 200, economic_component_classifications: 600,
+    purchase_event_channel_assertions: 200, economic_component_classifications: 0,
+    purchase_event_classification_assertions: 600,
   });
   assert.equal(Number(await scalar(db, `select count(*)::integer value from public.purchase_events where gross_amount_status='KNOWN'`)), 184);
   assert.equal(Number(await scalar(db, `select count(*)::integer value from public.purchase_events where gross_amount_status='PARTIAL'`)), 16);
@@ -162,6 +164,7 @@ async function digest(db) {
     ["purchase_event_timing_assertions","purchase_event_timing_assertion_id"],
     ["purchase_event_channel_assertions","purchase_event_channel_assertion_id"],
     ["economic_component_classifications","economic_component_classification_id"],
+    ["purchase_event_classification_assertions","purchase_event_classification_assertion_id"],
   ];
   const normalized = [];
   for (const [name, key] of specs) {
@@ -287,6 +290,10 @@ async function projectionSmoke(db) {
     join public.purchase_event_timing_assertions t using(purchase_event_id)
     where p.purchase_visibility='PURCHASE_AWARE_PILOT' order by p.purchase_event_id`)).rows;
   const operationRows = (await q(db, "select operation_id,montant_bancaire_depense::text bank_amount from public.operations")).rows;
+  const classificationRows = (await q(db, `select purchase_event_id,axis,status,value,authority,evidence_refs,provenance
+    from public.purchase_event_classification_assertions where is_active order by purchase_event_id,axis`)).rows;
+  assert.equal(classificationRows.length, 600);
+  const classificationsByEvent = Map.groupBy(classificationRows, (row) => row.purchase_event_id);
   const bankById = new Map(operationRows.map((row) => [row.operation_id, row.bank_amount]));
   const purchases = events.map((row) => {
     const operation = Boolean(row.operation_id);
@@ -307,7 +314,11 @@ async function projectionSmoke(db) {
         purchaseComponentId: sourceId, canonicalComponentKey: row.canonical_component_key,
         purchaseEventId: row.purchase_event_id, categoryId: row.category_id,
         subcategoryId: row.subcategory_id, needId: row.need_id, merchantId: row.merchant_id,
-      } }), classifications: [],
+      } }), purchaseClassifications: (classificationsByEvent.get(row.purchase_event_id) ?? []).map((item) => ({
+        purchaseEventId: item.purchase_event_id, axis: item.axis,
+        resolution: { status: item.status, value: item.value, authority: item.authority,
+          evidenceRefs: item.evidence_refs, provenance: item.provenance },
+      })),
     };
   });
   const legacyFacts = operationRows.map((row) => ({ canonicalComponentKey: `operation:${row.operation_id}`,
@@ -326,6 +337,15 @@ async function projectionSmoke(db) {
   assert.equal(result.facts.filter((fact) => fact.economicAmount.status === "LOWER_BOUND").length, 16);
   assert.equal(result.facts.filter((fact) => fact.bankAmount.status === "NOT_APPLICABLE").length, 146);
   assert.equal(result.facts.filter((fact) => fact.semanticPurpose === "WORK_LUNCH").length, 36);
+  for (const fact of result.facts) for (const [axis, property] of [
+    ["NECESSITY", "necessity"], ["BEHAVIOR", "behavior"], ["LIFE_SCOPE", "lifeScope"],
+  ]) {
+    const row = classificationsByEvent.get(fact.purchaseEventId)?.find((item) => item.axis === axis);
+    assert.ok(row);
+    assert.equal(fact.classification[property].status, row.status);
+    assert.equal(fact.classification[property].value, row.value);
+    assert.deepEqual(fact.classification[property].evidenceRefs, row.evidence_refs);
+  }
   assert.ok(result.facts.every((fact) => fact.taxonomy.categoryId && fact.taxonomy.subcategoryId && fact.taxonomy.merchantId));
   assert.equal(sum(result.facts, (fact) => fact.economicAmount.status === "KNOWN"
     ? fact.economicAmount.value : fact.economicAmount.minimum), 341839);

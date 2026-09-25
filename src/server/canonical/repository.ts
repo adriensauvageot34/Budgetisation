@@ -22,6 +22,7 @@ import {
   type EconomicComponentFact,
   type EconomicComponentClassificationFact,
   type ComponentClassificationAssertion,
+  type PurchaseEventClassificationAssertion,
   type ComponentClassificationAxis,
   type ComponentClassificationCandidate,
   type ComponentClassificationValue,
@@ -1634,6 +1635,11 @@ export class CanonicalRepository {
           visibility, householdId: this.context.householdId, range, legacyFacts, purchases: [],
         });
       }
+      await this.readRows("purchase-aware-classification-schema", "purchase_events", () =>
+        this.client.from("purchase_event_classification_assertions")
+          .select("purchase_event_id")
+          .eq("household_id", this.context.householdId)
+          .limit(1));
       const events = await this.readRowsPaginated(
         `purchase-aware-events:${this.context.householdId}`, "purchase_events",
         (from, to) => this.client.from("purchase_events")
@@ -1685,12 +1691,13 @@ export class CanonicalRepository {
       const timingByEvent = groupBy(timingRows, "purchase_event_id");
       const nativeByEvent = byUniqueKey(nativeRows, "purchase_event_id", "purchase_events");
       const parsedSources = parsePurchaseEventCanonicalSources(membershipRows);
-      const ownerKeys = unique(parsedSources.flatMap((source) =>
-        source.membershipKind === "CONSUMPTION_COMPONENT" ? [String(source.canonicalComponentKey)] : []));
+      const operationOwnerKeys = unique(parsedSources.flatMap((source) =>
+        source.membershipKind === "CONSUMPTION_COMPONENT" && source.kind === "operation"
+          ? [String(source.canonicalComponentKey)] : []));
       const operationIds = unique(parsedSources.flatMap((source) =>
         source.membershipKind === "CONSUMPTION_COMPONENT" && source.kind === "operation"
           ? [source.sourceId] : []));
-      const [operations, classificationRows, operationCanonicalFacts] = await Promise.all([
+      const [operations, purchaseClassificationRows, componentClassificationRows, operationCanonicalFacts] = await Promise.all([
         this.readRowsByInBatches(
           `purchase-aware-operations:${operationIds.join(",")}`, "operations", operationIds,
           ["operation_id"], ["operation_id"],
@@ -1700,7 +1707,18 @@ export class CanonicalRepository {
             .order("operation_id", { ascending: true }),
         ),
         this.readRowsByInBatches(
-          `purchase-aware-classifications:${ownerKeys.join(",")}`, "economic", ownerKeys,
+          `purchase-aware-event-classifications:${ids.join(",")}`, "purchase_events", ids,
+          ["purchase_event_id", "axis"], ["purchase_event_id", "axis"],
+          (batch) => this.client.from("purchase_event_classification_assertions")
+            .select("purchase_event_id,axis,status,value,authority,evidence_refs,provenance")
+            .eq("household_id", this.context.householdId)
+            .eq("is_active", true)
+            .in("purchase_event_id", batch)
+            .order("purchase_event_id", { ascending: true })
+            .order("axis", { ascending: true }),
+        ),
+        this.readRowsByInBatches(
+          `purchase-aware-component-classifications:${operationOwnerKeys.join(",")}`, "economic", operationOwnerKeys,
           ["canonical_component_key", "axis"], ["canonical_component_key", "axis"],
           (batch) => this.client.from("economic_component_classifications")
             .select("household_id,canonical_component_key,axis,status,value,authority,evidence_refs,provenance")
@@ -1713,7 +1731,7 @@ export class CanonicalRepository {
           .then((rows) => this.projectEconomicComponentRows(rows)),
       ]);
       const operationById = byUniqueKey(operations, "operation_id", "operations");
-      const assertions: ComponentClassificationAssertion[] = classificationRows.map((row) => {
+      const classificationResolution = (row: CanonicalRecord): ComponentClassificationAssertion["resolution"] => {
         const axis = canonicalString(row, ["axis"], "economic") as ComponentClassificationAxis;
         const status = canonicalString(row, ["status"], "economic") as ComponentClassificationAssertion["resolution"]["status"];
         if (!classificationAxes.includes(axis) || !["KNOWN", "UNKNOWN", "CONFLICT"].includes(status)) {
@@ -1728,17 +1746,23 @@ export class CanonicalRepository {
           throw new CanonicalReadError("economic", "Les preuves de classification sont invalides.");
         }
         return {
-          canonicalComponentKey: canonicalString(row, ["canonical_component_key"], "economic") as ComponentClassificationAssertion["canonicalComponentKey"],
-          axis,
-          resolution: {
             status,
             value: status === "KNOWN" ? value : null,
             authority: optionalCanonicalString(row, ["authority"]) as ComponentClassificationAssertion["resolution"]["authority"] ?? null,
             evidenceRefs: refs as string[],
             provenance: canonicalString(row, ["provenance"], "economic") as ComponentClassificationAssertion["resolution"]["provenance"],
-          },
         };
-      });
+      };
+      const purchaseAssertions: PurchaseEventClassificationAssertion[] = purchaseClassificationRows.map((row) => ({
+        purchaseEventId: canonicalString(row, ["purchase_event_id"], "purchase_events"),
+        axis: canonicalString(row, ["axis"], "purchase_events") as ComponentClassificationAxis,
+        resolution: classificationResolution(row),
+      }));
+      const componentAssertions: ComponentClassificationAssertion[] = componentClassificationRows.map((row) => ({
+        canonicalComponentKey: canonicalString(row, ["canonical_component_key"], "economic") as ComponentClassificationAssertion["canonicalComponentKey"],
+        axis: canonicalString(row, ["axis"], "economic") as ComponentClassificationAxis,
+        resolution: classificationResolution(row),
+      }));
       const purchases: PurchaseAwarePurchase[] = events.map((event) => {
         const id = canonicalString(event, ["purchase_event_id"], "purchase_events");
         const eventSources = parsedSources.filter((source) => String(source.purchaseEventId) === id);
@@ -1797,9 +1821,10 @@ export class CanonicalRepository {
               merchantId: optionalCanonicalString(operation, ["merchant_id"]) ?? null,
             },
           }),
-          classifications: assertions.filter((assertion) =>
+          purchaseClassifications: purchaseAssertions.filter((assertion) => assertion.purchaseEventId === id),
+          componentClassifications: componentAssertions.filter((assertion) =>
             eventSources.some((source) => source.membershipKind === "CONSUMPTION_COMPONENT"
-              && source.canonicalComponentKey === assertion.canonicalComponentKey)),
+              && source.kind === "operation" && source.canonicalComponentKey === assertion.canonicalComponentKey)),
         };
       });
       return projectPurchaseAwareCanonical({
