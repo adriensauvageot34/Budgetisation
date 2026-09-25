@@ -63,6 +63,8 @@ import {
   type GlobalV2ExpandedResourceName,
   type GlobalV2QueryParams,
   type GlobalV2QueryResourceName,
+  type GlobalBackgroundBenefitFunding,
+  type GlobalBackgroundPurchasePresentation,
 } from "@/query-api/global-v2";
 import type { GlobalTimelineCandidateBundle } from "@/analytics/global-v2/candidate-adapters";
 import type { GlobalMomentComponentPresentationBundle } from "./global-v2-moment-component-presentation";
@@ -141,7 +143,8 @@ export type GlobalV2CandidateInput = {
   readonly presentationLabels?: GlobalV2PresentationLabels;
   readonly candidateAdapters: { readonly timeline: GlobalTimelineCandidateBundle };
   /** P9 publication input. An absent projection fails closed in the new UI; it never restores the retired Grocery presentation. */
-  readonly backgroundRhythms?: { readonly food: GlobalFoodRhythmProjection; readonly carMobility: GlobalCarMobilityRhythmProjection };
+  readonly backgroundRhythms?: { readonly food: GlobalFoodRhythmProjection; readonly carMobility: GlobalCarMobilityRhythmProjection;
+    readonly benefitFunding?: GlobalBackgroundBenefitFunding; readonly purchasePresentation?: GlobalBackgroundPurchasePresentation };
   /** Required by the live S6 path. Optional only for the temporary pre-S7 fixture bridge. */
   readonly semanticTimeline?: Readonly<{ readonly projection: TimelineSemanticProjection; readonly comparator: TimelineSemanticComparatorProjection }>;
   readonly momentComponentPresentation: GlobalMomentComponentPresentationBundle;
@@ -2168,7 +2171,7 @@ export function buildGlobalV2CandidateFromOwnerOutputs(input: GlobalV2CandidateI
       key: `global-artifact:background-rhythms:${scopeHash}`,
       semanticBody: { backgroundRhythms: input.backgroundRhythms },
       family: "global_background_rhythms",
-      contractVersion: "global-background-rhythms-artifact@v1",
+      contractVersion: "global-background-rhythms-artifact@v2",
       dependencies: dependenciesMatching(({ family }) => family === "global_food_rhythm_projection" || family === "global_car_mobility_rhythm_projection"),
       resourceInput: { scope, projectionDigests: adapterDigests.filter(({ family }) => family === "global_food_rhythm_projection" || family === "global_car_mobility_rhythm_projection") },
     }]),

@@ -181,13 +181,15 @@ export const globalV2QueryRegistry = Object.freeze(Object.fromEntries(
       ...(schemaVersion === undefined ? {} : { schemaVersion }),
       ...(transport === undefined ? {} : { transport }),
       contractVersion: "global-v2-query@v1",
-      methodVersion: resource === "analysis_global_life_timeline" ? "analysis_global_life_timeline@v3" : m1V2ProjectionResources.has(resource) || lifeSpendingV2ProjectionResources.has(resource) || timelineSemanticResources.has(resource) || personaDetailIndexResources.has(resource) || placeMobilityV2ProjectionResources.has(resource) ? `${resource}@v2` : `${resource}@v1`,
+      methodVersion: resource === "analysis_global_life_timeline" ? "analysis_global_life_timeline@v3" : resource === "analysis_global_background_rhythms" || m1V2ProjectionResources.has(resource) || lifeSpendingV2ProjectionResources.has(resource) || timelineSemanticResources.has(resource) || personaDetailIndexResources.has(resource) || placeMobilityV2ProjectionResources.has(resource) ? `${resource}@v2` : `${resource}@v1`,
       policyVersions: resource === "analysis_global_life_timeline"
         ? Object.freeze({ projection: "timeline-semantic-projection@v1", comparator: "timeline-semantic-comparator@v2", eventMobilityOwner: "global_m7_event_mobility@v1", physicalAttribution: "global-m7-event-mobility-physical-attribution@v1", costMetric: "mobility_usage_estimated_fuel_cost@v1", transport: "global-v2-snapshot-only@sh05-v3" })
         : timelineSemanticResources.has(resource)
         ? Object.freeze({ projection: "timeline-semantic-projection@v1", comparator: "timeline-semantic-comparator@v2", transport: "global-v2-snapshot-only@sh05-v2" })
         : backgroundRhythmResources.has(resource)
-          ? Object.freeze({ projection: "global-background-rhythms-query@v1", wire: "global-background-rhythms-compact-wire@v1", transport: resource === "analysis_global_background_rhythms" ? "background-near-viewport@v1" : "direct-on-demand-click@v1" })
+          ? resource === "analysis_global_background_rhythms"
+            ? Object.freeze({ projection: "global-background-rhythms-query@v2", wire: "global-background-rhythms-compact-wire@v2", transport: "background-near-viewport@v1" })
+            : Object.freeze({ projection: "global-background-rhythms-query@v1", wire: "global-background-rhythms-compact-wire@v1", transport: "direct-on-demand-click@v1" })
         : Object.freeze({ projection: m1V2ProjectionResources.has(resource) ? "global-m1-query-projection@v2" : lifeSpendingV2ProjectionResources.has(resource) ? "global-life-spending-query-projection@v1" : personaDetailIndexResources.has(resource) ? "global-persona-detail-index-projection@v2" : placeMobilityV2ProjectionResources.has(resource) ? "global-m7-person-place-query-projection@v1" : "global-v2-query-projection@v1", transport: "global-v2-snapshot-only@v1" }),
       schema: schemaFor(resource),
     };

@@ -21,7 +21,7 @@ Module._resolveFilename = function(request, parent, isMain, options) {
   const target = request.startsWith("@/") ? path.resolve(root, "src", request.slice(2)) : request;
   try { return originalResolve.call(this, target, parent, isMain, options); } catch (error) {
     if (path.extname(target)) throw error;
-    for (const candidate of [`${target}.ts`, path.join(target, "index.ts")]) try { return originalResolve.call(this, candidate, parent, isMain, options); } catch { /* next */ }
+    for (const candidate of [`${target}.ts`, `${target}.tsx`, path.join(target, "index.ts")]) try { return originalResolve.call(this, candidate, parent, isMain, options); } catch { /* next */ }
     throw error;
   }
 };
@@ -80,7 +80,7 @@ try {
   const imported = await importBenefitSnapshot(db, dto);
   assert.equal(imported.status, "IMPORTED");
   const pilotTables = {};
-  for (const name of ["purchase_events", "purchase_event_memberships", "purchase_event_timing_assertions",
+  for (const name of ["purchase_events", "purchase_event_memberships", "purchase_event_timing_assertions", "purchase_event_channel_assertions",
     "purchase_economic_components", "economic_component_classifications", "purchase_event_classification_assertions",
     "purchase_funding_components", "benefit_wallets"]) {
     pilotTables[name] = (await query(`select * from public.${name}`)).rows.map((row) =>
@@ -233,6 +233,8 @@ try {
   const fundingVariantComponents = projectGlobalFoodEconomicComponents({ canonical: fundingVariantCanonical,
     bundle: minimalBundle, subcategoryRows: taxonomy.subcategories });
   assert.deepEqual(fundingVariantComponents, economicComponents);
+  assert.deepEqual(mismatches, []);
+  if (process.env.C5_FAST !== "1") {
   // Compare the complete DEFAULT candidate under identical fixture data, with and without pilot tables.
   const eventRows = fixtureTables.get("life_events") ?? [];
   const eventsById = new Map(eventRows.map((row) => [row.life_event_id, row]));
@@ -302,6 +304,11 @@ try {
     defaultSnapshotCount: defaultCandidate.snapshots.length,
     merchantReferencesResolvedEphemeral: missingMerchants }, null, 2));
   assert.deepEqual(mismatches, []);
+  }
+  if (process.env.C5_CERTIFY === "1" || process.env.C5_FAST === "1") {
+    const { certifyC5BackgroundRhythms } = await import("./check-c5-background-rhythms.mjs");
+    await certifyC5BackgroundRhythms({ root, require, fs, ts, dto, pilotTables, canonical, food, carMobility, months });
+  }
 } finally {
   await db.close();
 }

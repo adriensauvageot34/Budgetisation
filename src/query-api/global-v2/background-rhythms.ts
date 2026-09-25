@@ -23,7 +23,7 @@ export const globalBackgroundRhythmsResourceDefinition = Object.freeze({
   group: "exploration",
   paramsKind: "empty",
   family: "global_exploration",
-  schemaVersion: "global-background-rhythms@v1",
+  schemaVersion: "global-background-rhythms@v2",
   transport: { priority: "BACKGROUND", activation: "NEAR_VIEWPORT" },
   availability: "AVAILABLE",
 } as const);
@@ -59,7 +59,30 @@ export type GlobalBackgroundFoodHighlightTuple = readonly [
   occurrenceId: string | null,
   activityId: string | null,
   activityLabel: string | null,
+  extension?: "L" | "U" | "LU",
 ];
+
+/** Bits 0-4 mark lower-bound money: courses, restaurants, deliveries, total,
+ * non-grocery. Bit 5 marks a gated non-grocery share. */
+export type GlobalBackgroundFoodQualityTuple = readonly [mask: number, exactKnownSubtotal: string, minimumTotal: string];
+export type GlobalBackgroundBenefitCoverage = Readonly<{
+  status: "FULL" | "PARTIAL" | "NOT_OBSERVED";
+  startMonth: string;
+  endMonth: string;
+  exceptions: readonly (readonly [monthIndex: number, state: "IN_COVERAGE" | "OUT_OF_COVERAGE"])[];
+}>;
+export type GlobalBackgroundBenefitFunding = Readonly<{
+  coverage: GlobalBackgroundBenefitCoverage;
+  months: readonly (readonly [month: string, amount: string])[];
+}>;
+export type GlobalBackgroundPurchasePresentation = Readonly<Record<string, Readonly<{
+  merchantLabel: string;
+  channel: "DIRECT_OR_IN_PERSON" | "UBER_EATS" | "UNKNOWN";
+}>>>;
+
+export type GlobalBackgroundFoodAnnual = Omit<GlobalFoodRhythmProjection["annual"], "amountKnowledge" | "nonGroceryShareKnowledge" | "financialKnowledge"> & Readonly<{
+  moneyQuality: GlobalBackgroundFoodQualityTuple;
+}>;
 
 export type GlobalBackgroundFoodMonth = readonly [
   month: string,
@@ -74,6 +97,7 @@ export type GlobalBackgroundFoodMonth = readonly [
   deliveryPaymentCount: number,
   compositionHighlights: readonly [courses: readonly GlobalBackgroundFoodHighlightTuple[], restaurants: readonly GlobalBackgroundFoodHighlightTuple[], deliveries: readonly GlobalBackgroundFoodHighlightTuple[]],
   quality: readonly [groceryBasketKnowledge: string, restaurantMedianKnowledge: string, limitationCodes: readonly string[]],
+  moneyQuality: GlobalBackgroundFoodQualityTuple,
 ];
 
 export type GlobalBackgroundRhythmDestination = Readonly<{
@@ -95,20 +119,21 @@ export type GlobalBackgroundSuppressedRemainder = Omit<NonNullable<CarMonth["det
 
 export type GlobalBackgroundRhythmsReadModel = Readonly<{
   kind: "global_background_rhythms";
-  schemaVersion: "global-background-rhythms@v1";
+  schemaVersion: "global-background-rhythms@v2";
   resource: "analysis_global_background_rhythms";
   moduleKey: "RHYTHM";
   period: { readonly startMonth: string; readonly endMonth: string };
   food: Readonly<{
-    annual: GlobalFoodRhythmProjection["annual"];
+    annual: GlobalBackgroundFoodAnnual;
     months: readonly GlobalBackgroundFoodMonth[];
+    benefitCoverage: GlobalBackgroundBenefitCoverage;
+    monthlyBenefitFunding: readonly (readonly [monthIndex: number, amount: string])[];
     constants: Readonly<{
       financialAmountAvailable: true;
       deliveryCountLabel: FoodMonth["deliveryBehavior"]["countLabel"];
       deliveryOccurrenceStatus: FoodMonth["deliveryBehavior"]["occurrenceStatus"];
       deliveryReasonCode: FoodMonth["deliveryBehavior"]["reasonCode"];
       monetaryAuthority: FoodMonth["quality"]["monetaryAuthority"];
-      financialKnowledge: FoodMonth["quality"]["financialKnowledge"];
       deliveryOccurrenceKnowledge: FoodMonth["quality"]["deliveryOccurrenceKnowledge"];
     }>;
     annotations: GlobalFoodRhythmProjection["annotations"];
@@ -181,6 +206,44 @@ function decimal(value: unknown, label: string): string {
   const result = text(value, label);
   if (!/^-?(?:0|[1-9]\d*)(?:\.\d+)?$/u.test(result)) throw new TypeError(`${label}_INVALID`);
   return result;
+}
+
+function moneyDecimal(value: unknown, label: string): string {
+  const result = decimal(value, label);
+  if (new Big(result).lt(0)) throw new TypeError(`${label}_NEGATIVE`);
+  return result;
+}
+
+const MONEY_FIELDS = ["courses", "restaurants", "deliveries", "total", "nonGroceryAmount"] as const;
+function validateMoneyQuality(value: unknown, amounts: readonly unknown[], share: unknown, label: string): GlobalBackgroundFoodQualityTuple {
+  if (!Array.isArray(value) || value.length !== 3) throw new TypeError(`${label}_INVALID`);
+  const mask = integer(value[0], `${label}.mask`);
+  if (mask > 63) throw new TypeError(`${label}.mask_INVALID`);
+  const exact = moneyDecimal(value[1], `${label}.exactKnownSubtotal`);
+  const minimum = moneyDecimal(value[2], `${label}.minimumTotal`);
+  if (new Big(exact).gt(minimum) || !new Big(minimum).eq(moneyDecimal(amounts[3], `${label}.total`))) throw new TypeError(`${label}_TOTAL_INVALID`);
+  if ((mask & 8) === 0 && !new Big(exact).eq(minimum)) throw new TypeError(`${label}_EXACT_INVALID`);
+  if ((mask & 8) !== 0 && !new Big(exact).lt(minimum)) throw new TypeError(`${label}_LOWER_BOUND_INVALID`);
+  if (((mask & 32) !== 0) !== (share === null)) throw new TypeError(`${label}_SHARE_INVALID`);
+  for (let index = 0; index < amounts.length; index += 1) moneyDecimal(amounts[index], `${label}.${MONEY_FIELDS[index]}`);
+  return value as unknown as GlobalBackgroundFoodQualityTuple;
+}
+
+function validateBenefitCoverage(value: unknown, months: readonly string[]): GlobalBackgroundBenefitCoverage {
+  const record = exact(value, ["status", "startMonth", "endMonth", "exceptions"], "GlobalBackgroundBenefitCoverage");
+  const status = record.status;
+  if (status !== "FULL" && status !== "PARTIAL" && status !== "NOT_OBSERVED") throw new TypeError("GLOBAL_BACKGROUND_COVERAGE_STATUS_INVALID");
+  if (month(record.startMonth, "coverage.startMonth") !== months[0] || month(record.endMonth, "coverage.endMonth") !== months.at(-1)) throw new TypeError("GLOBAL_BACKGROUND_COVERAGE_RANGE_INVALID");
+  const exceptions = array(record.exceptions, "coverage.exceptions", months.length);
+  const seen = new Set<number>();
+  for (const exception of exceptions) {
+    if (!Array.isArray(exception) || exception.length !== 2) throw new TypeError("GLOBAL_BACKGROUND_COVERAGE_EXCEPTION_INVALID");
+    const index = integer(exception[0], "coverage.exception.monthIndex");
+    if (index >= months.length || seen.has(index) || (exception[1] !== "IN_COVERAGE" && exception[1] !== "OUT_OF_COVERAGE")) throw new TypeError("GLOBAL_BACKGROUND_COVERAGE_EXCEPTION_INVALID");
+    seen.add(index);
+  }
+  if (status !== "PARTIAL" && exceptions.length > 0) throw new TypeError("GLOBAL_BACKGROUND_COVERAGE_EXCEPTION_INVALID");
+  return value as GlobalBackgroundBenefitCoverage;
 }
 
 function month(value: unknown, label: string): string {
@@ -307,19 +370,21 @@ function validateCarMonth(value: unknown, label: string): void {
 }
 
 function validateFoodHighlight(value: unknown, label: string): void {
-  if (!Array.isArray(value) || value.length !== 10) throw new TypeError(`${label}_INVALID`);
+  if (!Array.isArray(value) || value.length < 5 || value.length > 11) throw new TypeError(`${label}_INVALID`);
+  if (value.length > 5 && value.length < 10 && value.at(-1) === null) throw new TypeError(`${label}_TRAILING_NULL`);
   text(value[0], `${label}.stableSourceId`);
-  decimal(value[1], `${label}.amount`);
-  text(value[2], `${label}.sourceType`);
-  for (const index of [3, 4, 7, 8, 9]) if (value[index] !== null) text(value[index], `${label}[${index}]`);
-  if (value[5] !== null && !["SMALL", "INTERMEDIATE", "LARGE"].includes(String(value[5]))) throw new TypeError(`${label}.basketClass_INVALID`);
-  if (value[6] !== null) integer(value[6], `${label}.articleCount`);
+  moneyDecimal(value[1], `${label}.amount`);
+  if (!["OPERATION", "ALLOCATION", "ITEM", "PAYMENT_COMPONENT", "CASH_USE", "PURCHASE_COMPONENT"].includes(String(value[2]))) throw new TypeError(`${label}.sourceType_INVALID`);
+  for (const index of [3, 4, 7, 8, 9]) if (value[index] !== null && value[index] !== undefined) text(value[index], `${label}[${index}]`);
+  if (value[5] !== null && value[5] !== undefined && !["SMALL", "INTERMEDIATE", "LARGE"].includes(String(value[5]))) throw new TypeError(`${label}.basketClass_INVALID`);
+  if (value[6] !== null && value[6] !== undefined) integer(value[6], `${label}.articleCount`);
+  if (value.length === 11 && !["L", "U", "LU"].includes(String(value[10]))) throw new TypeError(`${label}.extension_INVALID`);
 }
 
 function validateFoodMonth(value: unknown, label: string): void {
-  if (!Array.isArray(value) || value.length !== 12) throw new TypeError(`${label}_INVALID`);
+  if (!Array.isArray(value) || value.length !== 13) throw new TypeError(`${label}_INVALID`);
   month(value[0], `${label}.month`);
-  for (let index = 1; index <= 5; index += 1) decimal(value[index], `${label}[${index}]`);
+  for (let index = 1; index <= 5; index += 1) moneyDecimal(value[index], `${label}[${index}]`);
   if (value[6] !== null) decimal(value[6], `${label}.nonGroceryShare`);
   const grocery = value[7];
   if (!Array.isArray(grocery) || grocery.length !== 4) throw new TypeError(`${label}.groceryBehavior_INVALID`);
@@ -352,12 +417,14 @@ function validateFoodMonth(value: unknown, label: string): void {
   text(quality[0], `${label}.quality.groceryBasketKnowledge`);
   text(quality[1], `${label}.quality.restaurantMedianKnowledge`);
   array(quality[2], `${label}.quality.limitationCodes`).forEach((entry) => text(entry, `${label}.quality.limitationCode`));
+  validateMoneyQuality(value[12], value.slice(1, 6), value[6], `${label}.moneyQuality`);
 }
 
 function validateFoodAnnual(value: unknown): void {
-  const record = exact(value, ["courses", "restaurants", "deliveries", "total", "nonGroceryAmount", "nonGroceryShare", "groceryBehavior", "restaurantBehavior", "deliveryBehavior"], "GlobalBackgroundFoodAnnual");
-  for (const key of ["courses", "restaurants", "deliveries", "total", "nonGroceryAmount"] as const) decimal(requireProperty(record, key, "GlobalBackgroundFoodAnnual"), `food.annual.${key}`);
+  const record = exact(value, ["courses", "restaurants", "deliveries", "total", "nonGroceryAmount", "nonGroceryShare", "groceryBehavior", "restaurantBehavior", "deliveryBehavior", "moneyQuality"], "GlobalBackgroundFoodAnnual");
+  for (const key of MONEY_FIELDS) moneyDecimal(requireProperty(record, key, "GlobalBackgroundFoodAnnual"), `food.annual.${key}`);
   if (record.nonGroceryShare !== null) decimal(record.nonGroceryShare, "food.annual.nonGroceryShare");
+  validateMoneyQuality(record.moneyQuality, MONEY_FIELDS.map((key) => record[key]), record.nonGroceryShare, "food.annual.moneyQuality");
   const grocery = exact(requireProperty(record, "groceryBehavior", "GlobalBackgroundFoodAnnual"), ["knownCostOccurrenceCount", "eligibleMonthCount", "historicalComparisonGate", "thresholds"], "GlobalBackgroundFoodAnnualGrocery");
   integer(requireProperty(grocery, "knownCostOccurrenceCount", "GlobalBackgroundFoodAnnualGrocery"), "food.annual.grocery.knownCostOccurrenceCount");
   integer(requireProperty(grocery, "eligibleMonthCount", "GlobalBackgroundFoodAnnualGrocery"), "food.annual.grocery.eligibleMonthCount");
@@ -365,34 +432,56 @@ function validateFoodAnnual(value: unknown): void {
   const thresholds = exact(requireProperty(grocery, "thresholds", "GlobalBackgroundFoodAnnualGrocery"), ["p25", "p75"], "GlobalBackgroundFoodAnnualThresholds");
   decimal(requireProperty(thresholds, "p25", "GlobalBackgroundFoodAnnualThresholds"), "food.annual.grocery.p25");
   decimal(requireProperty(thresholds, "p75", "GlobalBackgroundFoodAnnualThresholds"), "food.annual.grocery.p75");
-  const restaurant = exact(requireProperty(record, "restaurantBehavior", "GlobalBackgroundFoodAnnual"), ["paymentCount", "semanticOccurrenceCount", "knownCostOccurrenceCount", "occurrenceCoverage", "linkedFinanceAmountCoverage", "medianCost"], "GlobalBackgroundFoodAnnualRestaurant");
+  const restaurant = exact(requireProperty(record, "restaurantBehavior", "GlobalBackgroundFoodAnnual"), ["paymentCount", "purchaseCount", "semanticOccurrenceCount", "knownCostOccurrenceCount", "occurrenceCoverage", "linkedFinanceAmountCoverage", "medianCost"], "GlobalBackgroundFoodAnnualRestaurant");
   for (const key of ["paymentCount", "semanticOccurrenceCount", "knownCostOccurrenceCount"] as const) integer(requireProperty(restaurant, key, "GlobalBackgroundFoodAnnualRestaurant"), `food.annual.restaurant.${key}`);
+  if (hasOwn(restaurant, "purchaseCount")) integer(restaurant.purchaseCount, "food.annual.restaurant.purchaseCount");
   decimal(requireProperty(restaurant, "occurrenceCoverage", "GlobalBackgroundFoodAnnualRestaurant"), "food.annual.restaurant.occurrenceCoverage");
   decimal(requireProperty(restaurant, "linkedFinanceAmountCoverage", "GlobalBackgroundFoodAnnualRestaurant"), "food.annual.restaurant.linkedFinanceAmountCoverage");
   const median = exact(requireProperty(restaurant, "medianCost", "GlobalBackgroundFoodAnnualRestaurant"), ["status", "value", "reasonCode"], "GlobalBackgroundFoodAnnualMedian");
   text(requireProperty(median, "status", "GlobalBackgroundFoodAnnualMedian"), "food.annual.restaurant.median.status");
   if (hasOwn(median, "value")) decimal(median.value, "food.annual.restaurant.median.value");
   if (hasOwn(median, "reasonCode")) text(median.reasonCode, "food.annual.restaurant.median.reasonCode");
-  const delivery = exact(requireProperty(record, "deliveryBehavior", "GlobalBackgroundFoodAnnual"), ["paymentCount", "countLabel", "occurrenceStatus", "reasonCode"], "GlobalBackgroundFoodAnnualDelivery");
+  const delivery = exact(requireProperty(record, "deliveryBehavior", "GlobalBackgroundFoodAnnual"), ["paymentCount", "purchaseCount", "countLabel", "occurrenceStatus", "reasonCode"], "GlobalBackgroundFoodAnnualDelivery");
   integer(requireProperty(delivery, "paymentCount", "GlobalBackgroundFoodAnnualDelivery"), "food.annual.delivery.paymentCount");
+  if (hasOwn(delivery, "purchaseCount")) integer(delivery.purchaseCount, "food.annual.delivery.purchaseCount");
   for (const key of ["countLabel", "occurrenceStatus", "reasonCode"] as const) text(requireProperty(delivery, key, "GlobalBackgroundFoodAnnualDelivery"), `food.annual.delivery.${key}`);
 }
 
 function validateAnnual(value: unknown): GlobalBackgroundRhythmsReadModel {
   assertNoForbiddenFields(value);
   const record = exact(value, ["kind", "schemaVersion", "resource", "moduleKey", "period", "food", "carMobility", "quality", "destinations", "publicationMeta", "resourceMeta"], "GlobalBackgroundRhythmsReadModel");
-  if (record.kind !== "global_background_rhythms" || record.schemaVersion !== "global-background-rhythms@v1" || record.resource !== "analysis_global_background_rhythms" || record.moduleKey !== "RHYTHM") throw new TypeError("GLOBAL_BACKGROUND_RHYTHMS_IDENTITY_INVALID");
+  if (record.kind !== "global_background_rhythms" || record.schemaVersion !== "global-background-rhythms@v2" || record.resource !== "analysis_global_background_rhythms" || record.moduleKey !== "RHYTHM") throw new TypeError("GLOBAL_BACKGROUND_RHYTHMS_IDENTITY_INVALID");
   const period = exact(requireProperty(record, "period", "GlobalBackgroundRhythmsReadModel"), ["startMonth", "endMonth"], "GlobalBackgroundPeriod");
   month(requireProperty(period, "startMonth", "GlobalBackgroundPeriod"), "period.startMonth");
   month(requireProperty(period, "endMonth", "GlobalBackgroundPeriod"), "period.endMonth");
-  const food = exact(requireProperty(record, "food", "GlobalBackgroundRhythmsReadModel"), ["annual", "months", "constants", "annotations", "methodVersion", "inputHash"], "GlobalBackgroundFood");
+  const food = exact(requireProperty(record, "food", "GlobalBackgroundRhythmsReadModel"), ["annual", "months", "benefitCoverage", "monthlyBenefitFunding", "constants", "annotations", "methodVersion", "inputHash"], "GlobalBackgroundFood");
   validateFoodAnnual(requireProperty(food, "annual", "GlobalBackgroundFood"));
   const foodMonths = array(requireProperty(food, "months", "GlobalBackgroundFood"), "food.months");
   if (foodMonths.length !== 12) throw new TypeError("GLOBAL_BACKGROUND_FOOD_MONTH_COUNT_INVALID");
   foodMonths.forEach((entry, index) => validateFoodMonth(entry, `food.months[${index}]`));
-  const foodConstants = exact(requireProperty(food, "constants", "GlobalBackgroundFood"), ["financialAmountAvailable", "deliveryCountLabel", "deliveryOccurrenceStatus", "deliveryReasonCode", "monetaryAuthority", "financialKnowledge", "deliveryOccurrenceKnowledge"], "GlobalBackgroundFoodConstants");
+  const highlightIds = new Set<string>();
+  for (const row of foodMonths as readonly GlobalBackgroundFoodMonth[]) for (const bucket of row[10]) for (const entry of bucket) {
+    if (highlightIds.has(entry[0])) throw new TypeError("GLOBAL_BACKGROUND_HIGHLIGHT_DUPLICATE");
+    highlightIds.add(entry[0]);
+  }
+  const orderedMonths = foodMonths.map((entry) => (entry as GlobalBackgroundFoodMonth)[0]);
+  const coverage = validateBenefitCoverage(requireProperty(food, "benefitCoverage", "GlobalBackgroundFood"), orderedMonths);
+  const exceptions = new Map(coverage.exceptions);
+  const funding = array(requireProperty(food, "monthlyBenefitFunding", "GlobalBackgroundFood"), "food.monthlyBenefitFunding", 12);
+  const fundingIndexes = new Set<number>();
+  for (const entry of funding) {
+    if (!Array.isArray(entry) || entry.length !== 2) throw new TypeError("GLOBAL_BACKGROUND_FUNDING_ENTRY_INVALID");
+    const index = integer(entry[0], "funding.monthIndex");
+    if (index >= orderedMonths.length || fundingIndexes.has(index)) throw new TypeError("GLOBAL_BACKGROUND_FUNDING_MONTH_INVALID");
+    fundingIndexes.add(index);
+    moneyDecimal(entry[1], "funding.amount");
+    const state = exceptions.get(index) ?? (coverage.status === "FULL" ? "IN_COVERAGE" : "OUT_OF_COVERAGE");
+    if (state !== "IN_COVERAGE") throw new TypeError("GLOBAL_BACKGROUND_FUNDING_OUTSIDE_COVERAGE");
+  }
+  if (orderedMonths.some((entry, index) => index > 0 && orderedMonths[index - 1]! >= entry)) throw new TypeError("GLOBAL_BACKGROUND_FOOD_MONTH_ORDER_INVALID");
+  const foodConstants = exact(requireProperty(food, "constants", "GlobalBackgroundFood"), ["financialAmountAvailable", "deliveryCountLabel", "deliveryOccurrenceStatus", "deliveryReasonCode", "monetaryAuthority", "deliveryOccurrenceKnowledge"], "GlobalBackgroundFoodConstants");
   if (foodConstants.financialAmountAvailable !== true) throw new TypeError("GLOBAL_BACKGROUND_FOOD_CONSTANTS_INVALID");
-  for (const key of ["deliveryCountLabel", "deliveryOccurrenceStatus", "deliveryReasonCode", "monetaryAuthority", "financialKnowledge", "deliveryOccurrenceKnowledge"] as const) text(requireProperty(foodConstants, key, "GlobalBackgroundFoodConstants"), `food.constants.${key}`);
+  for (const key of ["deliveryCountLabel", "deliveryOccurrenceStatus", "deliveryReasonCode", "monetaryAuthority", "deliveryOccurrenceKnowledge"] as const) text(requireProperty(foodConstants, key, "GlobalBackgroundFoodConstants"), `food.constants.${key}`);
   const foodAnnotations = array(requireProperty(food, "annotations", "GlobalBackgroundFood"), "food.annotations", 5);
   foodAnnotations.forEach((entry, index) => {
     const annotation = exact(entry, ["annotationId", "kind", "fromMonth", "toMonth", "text", "coursesChange", "nonGroceryChange"], `food.annotations[${index}]`);
@@ -488,6 +577,79 @@ export const globalBackgroundRhythmMonthDetailReadModelSchema: RuntimeSchema<Glo
 export const parseGlobalBackgroundRhythmsReadModel = (value: unknown): GlobalBackgroundRhythmsReadModel => globalBackgroundRhythmsReadModelSchema.parse(value);
 export const parseGlobalBackgroundRhythmMonthDetailReadModel = (value: unknown): GlobalBackgroundRhythmMonthDetailReadModel => globalBackgroundRhythmMonthDetailReadModelSchema.parse(value);
 
+export type GlobalBackgroundFoodMoney = Readonly<{ amount: string; quality: "KNOWN" | "LOWER_BOUND" }>;
+export type GlobalBackgroundFoodHighlight = Readonly<{
+  stableSourceId: string;
+  amount: GlobalBackgroundFoodMoney;
+  sourceType: FoodHighlight["sourceType"];
+  date: string | null;
+  merchantLabel: string | null;
+  basketClass: FoodHighlight["basketClass"] | null;
+  articleCount: number | null;
+  activityLabel: string | null;
+  channel: "UBER_EATS" | null;
+}>;
+export type GlobalBackgroundFoodSemanticMonth = Readonly<{
+  month: string;
+  money: Readonly<Record<(typeof MONEY_FIELDS)[number], GlobalBackgroundFoodMoney>>;
+  nonGroceryShare: Readonly<{ status: "KNOWN"; value: string | null } | { status: "GATED" }>;
+  grocery: GlobalBackgroundFoodMonth[7];
+  restaurant: GlobalBackgroundFoodMonth[8];
+  deliveryPurchaseCount: number;
+  highlights: readonly (readonly GlobalBackgroundFoodHighlight[])[];
+  benefitCoverage: "IN_COVERAGE" | "OUT_OF_COVERAGE";
+  monthlyBenefitFunding: string | null;
+  showBenefitFunding: boolean;
+}>;
+export type GlobalBackgroundFoodSemantic = Readonly<{
+  annual: GlobalBackgroundRhythmsReadModel["food"]["annual"] & Readonly<{
+    money: Readonly<Record<(typeof MONEY_FIELDS)[number], GlobalBackgroundFoodMoney>>;
+    nonGroceryShareState: "KNOWN" | "GATED";
+  }>;
+  months: readonly GlobalBackgroundFoodSemanticMonth[];
+  annotations: GlobalBackgroundRhythmsReadModel["food"]["annotations"];
+}>;
+
+/** Decodes the validated compact v2 wire before presentation code sees money or coverage. */
+export function expandGlobalBackgroundFoodReadModel(value: unknown): GlobalBackgroundFoodSemantic {
+  const wire = parseGlobalBackgroundRhythmsReadModel(value);
+  const money = (amounts: readonly string[], quality: GlobalBackgroundFoodQualityTuple) => Object.fromEntries(
+    MONEY_FIELDS.map((field, index) => [field, { amount: amounts[index]!, quality: quality[0] & (1 << index) ? "LOWER_BOUND" : "KNOWN" }]),
+  ) as Record<(typeof MONEY_FIELDS)[number], GlobalBackgroundFoodMoney>;
+  const coverage = wire.food.benefitCoverage;
+  const exceptions = new Map(coverage.exceptions);
+  const funding = new Map(wire.food.monthlyBenefitFunding);
+  const annual = wire.food.annual;
+  return {
+    annual: {
+      ...annual,
+      money: money(MONEY_FIELDS.map((field) => annual[field]), annual.moneyQuality),
+      nonGroceryShareState: annual.moneyQuality[0] & 32 ? "GATED" : "KNOWN",
+    },
+    months: wire.food.months.map((row, index) => {
+      const benefitCoverage = exceptions.get(index) ?? (coverage.status === "FULL" ? "IN_COVERAGE" : "OUT_OF_COVERAGE");
+      return {
+        month: row[0], money: money(row.slice(1, 6) as string[], row[12]),
+        nonGroceryShare: row[12][0] & 32 ? { status: "GATED" as const } : { status: "KNOWN" as const, value: row[6] },
+        grocery: row[7], restaurant: row[8], deliveryPurchaseCount: row[9],
+        highlights: row[10].map((bucket) => bucket.map((entry) => {
+          const extension = entry[10] ?? "";
+          return {
+            stableSourceId: entry[0], amount: { amount: entry[1], quality: extension.includes("L") ? "LOWER_BOUND" as const : "KNOWN" as const },
+            sourceType: entry[2], date: entry[3] ?? null, merchantLabel: entry[4] ?? null,
+            basketClass: entry[5] ?? null, articleCount: entry[6] ?? null,
+            activityLabel: entry[9] ?? null, channel: extension.includes("U") ? "UBER_EATS" as const : null,
+          };
+        })),
+        benefitCoverage,
+        monthlyBenefitFunding: benefitCoverage === "IN_COVERAGE" ? funding.get(index) ?? "0" : null,
+        showBenefitFunding: benefitCoverage === "IN_COVERAGE" && funding.has(index),
+      };
+    }),
+    annotations: wire.food.annotations,
+  };
+}
+
 function serializedBytes(value: unknown): number {
   return new TextEncoder().encode(canonicalSerializeGlobal(value)).byteLength;
 }
@@ -495,6 +657,8 @@ function serializedBytes(value: unknown): number {
 export function buildGlobalBackgroundRhythmSnapshots(input: {
   readonly food: GlobalFoodRhythmProjection;
   readonly carMobility: GlobalCarMobilityRhythmProjection;
+  readonly benefitFunding?: GlobalBackgroundBenefitFunding;
+  readonly purchasePresentation?: GlobalBackgroundPurchasePresentation;
   readonly publicationMeta: GlobalReadModelPublicationMeta;
   readonly annualResourceMeta: GlobalReadModelResourceMeta;
   readonly monthlyResourceMeta: (params: GlobalBackgroundRhythmMonthParams) => GlobalReadModelResourceMeta;
@@ -502,25 +666,36 @@ export function buildGlobalBackgroundRhythmSnapshots(input: {
   readonly scopeHash: string;
 }): GlobalBackgroundRhythmSnapshots {
   if (input.food.months.length !== 12 || input.carMobility.months.length !== 12) throw new TypeError("GLOBAL_BACKGROUND_RHYTHM_REQUIRES_TWELVE_MONTHS");
-  const compactHighlight = (highlight: FoodHighlight): GlobalBackgroundFoodHighlightTuple => [
-    highlight.stableSourceId,
-    highlight.amount,
-    highlight.sourceType,
-    highlight.date ?? null,
-    highlight.label ?? null,
-    highlight.basketClass ?? null,
-    highlight.articleCount ?? null,
-    highlight.activityContext?.occurrenceId ?? null,
-    highlight.activityContext?.activityId ?? null,
-    highlight.activityContext?.label ?? null,
-  ];
+  const compactHighlight = (highlight: FoodHighlight): GlobalBackgroundFoodHighlightTuple => {
+    const purchaseEventId = /^purchase-event:([^:]+):\d{4}-\d{2}$/u.exec(highlight.stableSourceId)?.[1];
+    const presentation = purchaseEventId === undefined ? undefined : input.purchasePresentation?.[purchaseEventId];
+    const extension = `${highlight.amountKnowledge === "LOWER_BOUND" ? "L" : ""}${presentation?.channel === "UBER_EATS" ? "U" : ""}`;
+    const tuple: unknown[] = [
+      highlight.stableSourceId, highlight.amount, highlight.sourceType,
+      highlight.date ?? null, highlight.label ?? presentation?.merchantLabel ?? null,
+      highlight.basketClass ?? null, highlight.articleCount ?? null,
+      highlight.activityContext?.occurrenceId ?? null,
+      highlight.activityContext?.activityId ?? null,
+      highlight.activityContext?.label ?? null,
+    ];
+    if (extension) tuple.push(extension);
+    else while (tuple.length > 5 && tuple.at(-1) === null) tuple.pop();
+    return tuple as unknown as GlobalBackgroundFoodHighlightTuple;
+  };
+  const qualityTuple = (source: Pick<FoodMonth, "courses" | "restaurants" | "deliveries" | "total" | "nonGroceryShare" | "amountKnowledge" | "nonGroceryShareKnowledge"> & { readonly nonGroceryAmount: string }): GlobalBackgroundFoodQualityTuple => {
+    const mask = ["courses", "restaurants", "deliveries", "total"].reduce((bits, field, index) =>
+      bits | (source.amountKnowledge?.[field as keyof NonNullable<FoodMonth["amountKnowledge"]>]?.status === "LOWER_BOUND" ? 1 << index : 0), 0)
+      | ((source.amountKnowledge?.restaurants.status === "LOWER_BOUND" || source.amountKnowledge?.deliveries.status === "LOWER_BOUND") ? 16 : 0)
+      | (source.nonGroceryShareKnowledge?.status === "GATED" || source.nonGroceryShare === null ? 32 : 0);
+    const total = source.amountKnowledge?.total;
+    return [mask, total?.exactKnownSubtotal ?? source.total, total?.minimumTotal ?? source.total];
+  };
   const foodConstantSignature = (source: FoodMonth): string => canonicalSerializeGlobal({
     financialAmountAvailable: source.groceryBehavior.financialAmountAvailable,
     deliveryCountLabel: source.deliveryBehavior.countLabel,
     deliveryOccurrenceStatus: source.deliveryBehavior.occurrenceStatus,
     deliveryReasonCode: source.deliveryBehavior.reasonCode,
     monetaryAuthority: source.quality.monetaryAuthority,
-    financialKnowledge: source.quality.financialKnowledge,
     deliveryOccurrenceKnowledge: source.quality.deliveryOccurrenceKnowledge,
   });
   if (new Set(input.food.months.map(foodConstantSignature)).size !== 1) throw new TypeError("GLOBAL_BACKGROUND_FOOD_COMPACT_CONSTANT_MISMATCH");
@@ -537,7 +712,19 @@ export function buildGlobalBackgroundRhythmSnapshots(input: {
     source.deliveryBehavior.paymentCount,
     [source.compositionHighlights.courses.map(compactHighlight), source.compositionHighlights.restaurants.map(compactHighlight), source.compositionHighlights.deliveries.map(compactHighlight)],
     [source.quality.groceryBasketKnowledge, source.quality.restaurantMedianKnowledge, source.quality.limitationCodes],
+    qualityTuple(source),
   ]);
+  const coverage = input.benefitFunding?.coverage ?? {
+    status: "NOT_OBSERVED" as const, startMonth: foodMonths[0]![0], endMonth: foodMonths[11]![0], exceptions: [],
+  };
+  const monthIndex = new Map(foodMonths.map(([value], index) => [value, index] as const));
+  const monthlyBenefitFunding = (input.benefitFunding?.months ?? []).map(([value, amount]) => {
+    const index = monthIndex.get(value);
+    if (index === undefined) throw new TypeError(`GLOBAL_BACKGROUND_FUNDING_MONTH_OUTSIDE_PERIOD:${value}`);
+    return [index, amount] as const;
+  }).sort(([left], [right]) => left - right);
+  const { amountKnowledge: _annualAmountKnowledge, nonGroceryShareKnowledge: _annualShareKnowledge,
+    financialKnowledge: _annualFinancialKnowledge, ...annualFoodCore } = input.food.annual;
   const carMonths = [...input.carMobility.months].sort((left, right) => left.month.localeCompare(right.month));
   if (new Set(foodMonths.map(([value]) => value)).size !== 12 || new Set(carMonths.map(({ month: value }) => value)).size !== 12) throw new TypeError("GLOBAL_BACKGROUND_RHYTHM_MONTH_DUPLICATE");
   const detailMonths = carMonths.filter(({ detailAvailable, detail }) => detailAvailable && detail !== null);
@@ -562,20 +749,21 @@ export function buildGlobalBackgroundRhythmSnapshots(input: {
   const annualClassificationCoverage = annualModeledCost.eq(0) ? new Big(0) : annualModeledCost.minus(annualUnresolved).div(annualModeledCost);
   const annual: GlobalBackgroundRhythmsReadModel = {
     kind: "global_background_rhythms",
-    schemaVersion: "global-background-rhythms@v1",
+    schemaVersion: "global-background-rhythms@v2",
     resource: globalBackgroundRhythmsResourceDefinition.resource,
     moduleKey: "RHYTHM",
     period: { startMonth: foodMonths[0]![0], endMonth: foodMonths[11]![0] },
     food: {
-      annual: input.food.annual,
+      annual: { ...annualFoodCore, moneyQuality: qualityTuple(input.food.annual) },
       months: foodMonths,
+      benefitCoverage: coverage,
+      monthlyBenefitFunding,
       constants: {
         financialAmountAvailable: true,
         deliveryCountLabel: input.food.months[0]!.deliveryBehavior.countLabel,
         deliveryOccurrenceStatus: input.food.months[0]!.deliveryBehavior.occurrenceStatus,
         deliveryReasonCode: input.food.months[0]!.deliveryBehavior.reasonCode,
         monetaryAuthority: input.food.months[0]!.quality.monetaryAuthority,
-        financialKnowledge: input.food.months[0]!.quality.financialKnowledge,
         deliveryOccurrenceKnowledge: input.food.months[0]!.quality.deliveryOccurrenceKnowledge,
       },
       annotations: input.food.annotations.slice(0, 5), methodVersion: input.food.methodVersion, inputHash: input.food.inputHash,

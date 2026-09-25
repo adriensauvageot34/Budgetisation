@@ -15,6 +15,7 @@ import {
   type MonthlyMobilityNarrativeTripInput,
 } from "@/analytics/global-v2";
 import type { ActivityOccurrenceCostFact, ActivityOccurrenceFact, EconomicComponentFact, MobilityLegFact, PurchaseAwareCanonicalResult } from "@/analytics/facts";
+import type { GlobalBackgroundBenefitFunding, GlobalBackgroundPurchasePresentation } from "@/query-api/global-v2";
 import { addMonths, parseLocalDate, type YearMonth } from "@/core/time";
 import type { CanonicalMinimalPlanningBundle, CanonicalRepository } from "@/server/canonical/repository";
 import { optionalCanonicalString, type CanonicalRecord } from "@/server/canonical/record";
@@ -29,6 +30,7 @@ type BackgroundRhythmProjectionInput = {
   readonly occurrences: readonly ActivityOccurrenceFact[];
   readonly activityCosts: readonly ActivityOccurrenceCostFact[];
   readonly foodEconomicComponents?: readonly GlobalFoodEconomicComponent[];
+  readonly benefitContext?: Readonly<{ benefitFunding: GlobalBackgroundBenefitFunding; purchasePresentation: GlobalBackgroundPurchasePresentation }>;
 };
 
 const PAGE_SIZE = 1_000;
@@ -397,5 +399,5 @@ export async function resolveGlobalBackgroundRhythmsProduction(input: Background
     economicFacts: input.minimalBundle.economicFacts,
     fuelSubcategoryId: stringValue(fuelRows[0]!, "subcategory_id", "subcategories"),
   });
-  return { food, carMobility };
+  return { food, carMobility, ...input.benefitContext };
 }

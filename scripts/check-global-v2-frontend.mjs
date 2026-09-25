@@ -643,7 +643,7 @@ check(() => assert.equal(narrativeCaseB.primary, undefined));
 check(() => assert.equal(narrativeCaseC.changes.length > 0, true));
 check(() => assert.equal(narrativeCaseD.relationships.length > 0, true));
 check(() => assert.doesNotMatch(narrativeCaseD.relationships.map(({ statementKey }) => statementKey).join(" "), /cause|provoque|explique|entraîne|fait augmenter|fait baisser/iu));
-check(() => assert.match(foodFocusSource, /groceryOccurrences[\s\S]*restaurantOccurrences[\s\S]*deliveryPayments[\s\S]*basketStructure\.small[\s\S]*basketStructure\.intermediate[\s\S]*basketStructure\.large/u));
+check(() => assert.match(foodFocusSource, /groceryOccurrences[\s\S]*restaurantOccurrences[\s\S]*deliveryPurchaseCount[\s\S]*basketStructure\.small[\s\S]*basketStructure\.intermediate[\s\S]*basketStructure\.large/u));
 check(() => assert.doesNotMatch(lifePrimarySource, /rien n’a changé|aucun changement|aucune relation|rien à signaler/iu));
 check(() => assert.doesNotMatch(cssSource, /\.lifeMomentGrid/u));
 check(() => assert.match(backgroundSource, /Fiabilité & méthode/u));
@@ -693,7 +693,7 @@ const timelinePanelSource = pageSource.slice(pageSource.indexOf("function Global
 check(() => assert.match(timelinePanelSource, /<LifeTimeline[\s\S]*<BackgroundRhythms/u));
 check(() => assert.match(backgroundSource, /resource: "analysis_global_background_rhythms"[\s\S]*nearViewport\.near[\s\S]*"BACKGROUND"/u));
 check(() => assert.match(foodRiverSource, /food\.months\.map[\s\S]*AnnualMonthInteractionLayer[\s\S]*FoodMonthFocus/u));
-check(() => assert.match(foodFocusSource, /passages courses[\s\S]*repas repérés[\s\S]*paiements de livraison/u));
+check(() => assert.match(foodFocusSource, /passages courses[\s\S]*repas repérés[\s\S]*achats en livraison/u));
 check(() => assert.match(foodFocusSource, /Ce qui a composé le mois[\s\S]*Courses[\s\S]*Restaurants & repas à l’extérieur[\s\S]*Livraisons/u));
 check(() => assert.match(carRouteSource, /aroundWorkEstimatedFuelCost[\s\S]*outsideWorkEstimatedFuelCost[\s\S]*unresolvedEstimatedFuelCost/u));
 check(() => assert.match(carRouteSource, /Paiements à la pompe[\s\S]*distincts de l’usage estimé[\s\S]*payés sur l’année/u));

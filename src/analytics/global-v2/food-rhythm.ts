@@ -173,6 +173,8 @@ export type GlobalFoodAnnualAnnotation = {
 
 export type GlobalFoodRhythmProjection = {
   readonly period: { readonly startMonth: string; readonly endMonth: string };
+  /** Purchase identities already admitted by the FOOD classifier; used only for secondary funding presentation. */
+  readonly fundingEligiblePurchaseEventIds?: readonly string[];
   readonly annual: {
     readonly courses: string;
     readonly restaurants: string;
@@ -547,6 +549,7 @@ export function buildGlobalFoodRhythmProjection(input: {
   const resultMonths = months;
   return {
     period: { startMonth: input.startMonth, endMonth: input.endMonth },
+    ...(purchaseAware ? { fundingEligiblePurchaseEventIds: [...new Set(classified.flatMap(({ purchaseEventId }) => purchaseEventId === null ? [] : [purchaseEventId]))].sort() } : {}),
     annual: {
       courses: annualCourses.toString(),
       restaurants: annualRestaurants.toString(),
