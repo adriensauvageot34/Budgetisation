@@ -119,7 +119,6 @@ summary.backgroundRhythms = {
   benefitCoverage: backgroundAnnual.payload.food.benefitCoverage,
   monthlyBenefitFunding: backgroundAnnual.payload.food.monthlyBenefitFunding,
   carAnnual: backgroundAnnual.payload.carMobility.annual,
-  carMonthDetails: backgroundDetails.map(({ payload }) => payload.carMobility),
   june: { modeledUsage: june.modeledUsage, observedFuelPaid: june.observedFuelPaid },
 };
 summary.versions = {
@@ -180,6 +179,15 @@ if (compareActivePublication !== undefined) {
   const activeAnnual = activeQueryByKey.get(backgroundAnnual.key.replace(candidate.candidateId, compareActivePublication));
   if (activeAnnual === undefined) throw new TypeError("GLOBAL_ACTIVE_BACKGROUND_ANNUAL_MISSING");
   summary.activeAnnualCompatibility = parseGlobalBackgroundRhythmsReadModel(activeAnnual.payload).schemaVersion;
+  summary.carAnnualEquality = firstDiff(business(activeAnnual.payload.carMobility), business(backgroundAnnual.payload.carMobility)) === null;
+  const carMonthDeltas = backgroundDetails.flatMap(({ key, payload }) => {
+    const active = activeQueryByKey.get(key.replace(candidate.candidateId, compareActivePublication));
+    return active === undefined ? [{ key, path: "MISSING" }] :
+      (firstDiff(business(active.payload), business(payload)) === null ? []
+        : [{ key, path: firstDiff(business(active.payload), business(payload)) }]);
+  });
+  summary.carMonthDetailEquality = { equal: backgroundDetails.length - carMonthDeltas.length,
+    total: backgroundDetails.length, deltas: carMonthDeltas };
   const queryDeltas = candidate.snapshots.filter(({ resource }) => !resource.startsWith("analysis_global_background_rhythm"))
     .flatMap(({ key, payload }) => {
       const active = activeQueryByKey.get(key.replace(candidate.candidateId, compareActivePublication));

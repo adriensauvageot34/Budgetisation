@@ -158,9 +158,10 @@ if (dryRun) { process.stdout.write(`${JSON.stringify({ ...summary, dryRun: true 
 if (stageOnly) {
   const { data: active, error: activeError } = await client.from("analytics_publications")
     .select("publication_id,published_analytics_revision").eq("household_id", householdId)
-    .eq("scope_kind", "global").eq("status", "published");
+    .eq("scope_kind", "global").eq("status", "published")
+    .eq("published_analytics_revision", baseRevision);
   if (activeError || active?.length !== 1 || active[0]?.publication_id !== expectedActivePublication
-    || Number(active[0]?.published_analytics_revision) !== baseRevision - 1
+    || Number(active[0]?.published_analytics_revision) !== baseRevision
     || sourceRevision !== Number(context.dataRevision) + 1) throw new TypeError("C6_STAGE_BASELINE_CHANGED");
 }
 
