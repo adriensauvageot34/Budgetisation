@@ -67,7 +67,8 @@ function Peugeot({ model }: { readonly model: PersonaEditorialModel }) {
   const transition = story.insuranceEvolution;
   const shortTrips = story.tripProfile.shortTrips, longTrips = story.tripProfile.longTrips;
   const tripContrast = Number(shortTrips.tripShare) > Number(longTrips.tripShare) && Number(longTrips.distanceShare) > Number(shortTrips.distanceShare);
-  const maintenancePeaks = story.maintenanceRhythm.peakMonths.map((key) => monthOnly.format(dateOf(`${key}-01`)));
+  const maintenancePeaks = [...story.maintenanceRhythm.peakMonths].sort().map((key) => monthOnly.format(dateOf(`${key}-01`)));
+  const vehicleName = vehicle.householdVehicle.label.match(/^Peugeot\s+207\b/iu)?.[0] ?? vehicle.householdVehicle.label;
   const manon = model.persons[1];
   const workPlace = manon.work.primaryWorkPlaces[0]?.label.replace(/\s+[–—]\s+.*$/u, "");
   const familyPlaces = [...new Set([...manon.socialLife.fatherHome, ...manon.socialLife.maternalFamilyHome]
@@ -75,26 +76,26 @@ function Peugeot({ model }: { readonly model: PersonaEditorialModel }) {
   const friendPlaceCount = manon.socialLife.friendVisits?.length ?? 0;
   return <article className={styles.peugeotProfile} data-person="manon">
     <header className={styles.peugeotHero}>
-      <div className={styles.peugeotIdentity}><h4>Notre Peugeot</h4><div className={styles.peugeotSubtitle}><span>{vehicle.householdVehicle.label} · 5 portes</span><span className={styles.peugeotBadge}>Véhicule du foyer</span></div></div>
+      <div className={styles.peugeotIdentity}><h4>Notre Peugeot</h4><div className={styles.peugeotSubtitle}><span>{vehicleName} · 5 portes</span><span className={styles.peugeotBadge}>Véhicule du foyer</span></div></div>
       {vehicle.nonFuelCostTotalReady && vehicle.nonFuelCostTotal !== null ? <div className={styles.peugeotTotal}><strong>{amount(vehicle.nonFuelCostTotal, true)}</strong><span>hors carburant</span></div> : null}
     </header>
     <div className={styles.peugeotColumns}>
-      <div><h5>Pour travailler</h5>{usage === null ? null : <><Fact value={`${integer.format(Number(usage.distanceKm))} km`} label="sur la période" />{usage.estimatedFuelCostPerDay === null ? null : <p>{amount(usage.estimatedFuelCostPerDay, true)} / jour de trajet</p>}<small>{amount(usage.estimatedFuelCost, true)} de carburant utilisé estimé</small></>}</div>
-      <div><h5>Assurance</h5>{insurance.currentMonthlyCost === null ? null : <Fact value={monthly(insurance.currentMonthlyCost)} label={insurance.currentProvider ?? "assurance actuelle"} />}{transition.previousProvider && transition.previousMonthlyCost && transition.currentProvider && transition.currentMonthlyCost ? <p>{transition.previousProvider} {amount(transition.previousMonthlyCost)} → {transition.currentProvider} {amount(transition.currentMonthlyCost)}</p> : null}{transition.monthlyDifference === null || transition.evolution === "UNKNOWN" || transition.evolution === "STABLE" ? null : <small>{amount(transition.monthlyDifference, true)} {transition.evolution === "DECREASE" ? "économisés" : "de plus"} / mois</small>}{insurance.periodCost === null ? null : <small>{amount(insurance.periodCost, true)} sur la période</small>}</div>
+      <div><h5>Pour travailler</h5>{usage === null ? null : <><Fact value={`${integer.format(Number(usage.distanceKm))} km`} label="sur la période" />{usage.estimatedFuelCostPerDay === null ? null : <p>≈ {amount(usage.estimatedFuelCostPerDay)} / jour de trajet</p>}<small>{amount(usage.estimatedFuelCost, true)} de carburant utilisé estimé</small></>}</div>
+      <div><h5>Assurance</h5>{insurance.currentMonthlyCost === null ? null : <Fact value={monthly(insurance.currentMonthlyCost)} label={insurance.currentProvider ?? "assurance actuelle"} />}{transition.previousProvider && transition.previousMonthlyCost && transition.currentProvider && transition.currentMonthlyCost ? <p>{transition.previousProvider.replace(/\s+Assurances$/iu, "")} {amount(transition.previousMonthlyCost)} → {transition.currentProvider} {amount(transition.currentMonthlyCost)}</p> : null}{transition.monthlyDifference === null || transition.evolution === "UNKNOWN" || transition.evolution === "STABLE" ? null : <small>{amount(transition.monthlyDifference, true)} {transition.evolution === "DECREASE" ? "économisés" : "de plus"} / mois</small>}{insurance.periodCost === null ? null : <small>{amount(insurance.periodCost, true)} sur la période</small>}</div>
       <div><h5>Entretien</h5><Fact value={amount(vehicle.maintenanceSummary.totalIdentifiedCost, true)} label="réparations & entretien" />{maintenancePeaks.length ? <small>principalement en {maintenancePeaks.join(" et ")}</small> : null}</div>
     </div>
     <div className={styles.peugeotStory}><h5>Une voiture très présente dans notre quotidien</h5><div className={styles.peugeotStoryMetrics}>
       <Fact value={`${integer.format(Number(story.usage.distanceKm))} km`} label="sur 12 mois" />
       <Fact value={integer.format(story.usage.distinctUsageDays)} label="jours d’utilisation" />
-      {story.usage.drivingHours === null ? null : <Fact value={`≈ ${integer.format(Number(story.usage.drivingHours))} h`} label="sur la route" />}
+      {story.usage.drivingHours === null ? null : <Fact value={`≈ ${integer.format(Math.floor(Number(story.usage.drivingHours)))} h`} label="sur la route" />}
       <Fact value={`${integer.format(Number(story.usage.estimatedFuelLiters))} L`} label="utilisés estimés" />
       <Fact value={amount(story.usage.estimatedFuelCost, true)} label="de carburant utilisé estimé" />
       {story.usage.estimatedConsumptionL100Km === null ? null : <Fact value={`≈ ${oneDecimal.format(Number(story.usage.estimatedConsumptionL100Km))} L/100 km`} label="consommation estimée" />}
     </div></div>
     <div className={styles.peugeotBottom}>
       <div className={styles.peugeotTrips}><h5>Son profil de trajets</h5><div className={styles.peugeotTripMetrics}>
-        <div><strong>{oneDecimal.format(Number(shortTrips.tripShare))} %</strong><span>des trajets font moins de 5 km</span><small>{oneDecimal.format(Number(shortTrips.distanceShare))} % des kilomètres</small></div>
-        <div><strong>{oneDecimal.format(Number(longTrips.tripShare))} %</strong><span>des trajets font 50 km ou plus</span><small>{oneDecimal.format(Number(longTrips.distanceShare))} % des kilomètres</small></div>
+        <div><strong>{integer.format(Number(shortTrips.tripShare))} %</strong><span>des trajets font moins de 5 km</span><small>≈ {integer.format(Number(shortTrips.distanceShare))} % des kilomètres</small></div>
+        <div><strong>{integer.format(Number(longTrips.tripShare))} %</strong><span>des trajets font 50 km ou plus</span><small>≈ {integer.format(Number(longTrips.distanceShare))} % des kilomètres</small></div>
       </div>{tripContrast ? <p>Beaucoup de petits trajets au quotidien, mais les grandes distances font l’essentiel des kilomètres.</p> : null}</div>
       <div className={styles.peugeotDestinations}><h5>Où elle nous emmène</h5><div className={styles.peugeotDestinationList}>
         {workPlace ? <div><span>Travail</span><strong>{workPlace}</strong></div> : null}
