@@ -148,7 +148,7 @@ if (compareActivePublication !== undefined) {
     }
   };
   const metadataKeys = new Set(["publicationMeta", "resourceMeta", "publicationId", "sourcePublicationId",
-    "sourceAnalyticsRevision", "analyticsRevision", "sourceRevision", "generatedAt", "computedAt",
+    "sourceAnalyticsRevision", "analyticsRevision", "sourceRevision", "dataRevision", "generatedAt", "computedAt",
     "factsHash", "inputHash", "manifestHash", "resourceInputHash", "methodSignature", "instanceKey"]);
   const business = (value, ownerBoundary = false) => Array.isArray(value) ? value.map((entry) => business(entry, ownerBoundary))
     : value !== null && typeof value === "object"
@@ -159,7 +159,7 @@ if (compareActivePublication !== undefined) {
         .sort(([left], [right]) => left.localeCompare(right))
         .map(([key, entry]) => [key, key === "displayValue" && value.rowId === "007:method:revisions"
           && typeof entry === "string" && /^data \d+ · analytics \d+$/.test(entry)
-          ? entry.replace(/analytics \d+$/, "analytics <revision>")
+          ? "data <revision> · analytics <revision>"
           : business(entry, ownerBoundary)]))
       : value;
   const firstDiff = (left, right, path = "$") => {
