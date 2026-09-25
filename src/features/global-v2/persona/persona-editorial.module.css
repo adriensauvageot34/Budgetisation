@@ -86,6 +86,20 @@
 .peugeotColumns .profileFact strong { font-size: clamp(22px, 2vw, 28px); }
 .peugeotColumns p { margin-top: 8px; color: #5e5960; font-size: 13px; }
 .peugeotColumns small { display: block; margin-top: 3px; color: var(--muted); font-size: 12px; }
+.peugeotStory, .peugeotTrips { margin-top: 17px; border-top: 1px solid var(--manon-line); padding-top: 12px; }
+.peugeotStory > h5, .peugeotTrips > h5 { margin-bottom: 10px; color: var(--manon); font-size: 12px; font-family: inherit; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; }
+.peugeotStoryMetrics { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); }
+.peugeotStoryMetrics > .profileFact { min-width: 0; padding: 1px 10px; }
+.peugeotStoryMetrics > .profileFact + .profileFact { border-left: 1px solid var(--manon-line); }
+.peugeotStoryMetrics .profileFact strong { color: #713f54; font-size: clamp(18px, 1.75vw, 24px); }
+.peugeotStoryMetrics .profileFact span { color: var(--muted); font-size: 10px; line-height: 1.25; }
+.peugeotTripMetrics { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.peugeotTripMetrics > div { display: grid; grid-template-columns: auto 1fr; align-items: baseline; column-gap: 8px; row-gap: 2px; min-width: 0; padding: 3px 10px; }
+.peugeotTripMetrics > div + div { border-left: 1px solid var(--manon-line); }
+.peugeotTripMetrics strong { grid-row: span 2; color: #713f54; font: 600 28px/1 var(--font-serif, Georgia, serif); letter-spacing: -.04em; white-space: nowrap; }
+.peugeotTripMetrics span { color: #51464a; font-size: 12px; }
+.peugeotTripMetrics small { color: var(--muted); font-size: 11px; }
+.peugeotTrips > p { margin-top: 9px; border-radius: 999px; padding: 6px 10px; background: #fff8f7a8; color: #674b54; font: italic 13px/1.3 var(--font-serif, Georgia, serif); text-align: center; }
 .mealProfile { grid-column: span 6; border: 1px solid var(--person-line); border-radius: 18px; padding: 20px 23px; background: var(--person-bg); }
 .mealProfile .moduleTitle h4 { font-size: 25px; }
 .mealMetrics { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 11px; margin-top: 17px; }
@@ -189,6 +203,8 @@
   .permitProfile { grid-column: span 5; }
   .peugeotProfile { grid-column: span 7; }
   .peugeotColumns { gap: 10px; }
+  .peugeotStoryMetrics { grid-template-columns: repeat(3, minmax(0, 1fr)); row-gap: 8px; }
+  .peugeotStoryMetrics > .profileFact:nth-child(4) { border-left: 0; }
   .groomingProfile, .beautyProfile { grid-column: span 6; }
   .universesGrid { grid-template-columns: 1fr; }
 }
@@ -200,6 +216,10 @@
   .workGrid > *, .habitsGrid > * { grid-column: 1; }
   .peugeotColumns { grid-template-columns: 1fr 1fr; }
   .peugeotColumns > div:last-child { grid-column: 1 / -1; }
+  .peugeotStoryMetrics { grid-template-columns: repeat(2, minmax(0, 1fr)); row-gap: 9px; }
+  .peugeotStoryMetrics > .profileFact:nth-child(odd) { border-left: 0; }
+  .peugeotStoryMetrics > .profileFact:nth-child(even) { border-left: 1px solid var(--manon-line); }
+  .peugeotTripMetrics strong { font-size: 23px; }
   .socialTimeline > header { align-items: start; flex-wrap: wrap; }
 }
 @media (max-width: 480px) {
@@ -228,6 +248,8 @@
   .identityFacts strong { font-size: 15px; }
   .peugeotColumns, .beautyShelf { grid-template-columns: 1fr; }
   .peugeotColumns > div:last-child { grid-column: auto; }
+  .peugeotTripMetrics { grid-template-columns: 1fr; gap: 7px; }
+  .peugeotTripMetrics > div + div { border-top: 1px solid var(--manon-line); border-left: 0; padding-top: 9px; }
   .adrienUniverses { grid-template-columns: 1fr; }
   .groomingFacts { grid-template-columns: 1fr 1fr; }
   .mealMetrics { grid-template-columns: repeat(2, minmax(0, 1fr)); }

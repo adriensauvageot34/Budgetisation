@@ -2147,7 +2147,7 @@ export function buildGlobalV2CandidateFromOwnerOutputs(input: GlobalV2CandidateI
       key: `global-artifact:persona-editorial:${scopeHash}`,
       semanticBody: { editorial: personaEditorial },
       family: "global_persona_editorial",
-      contractVersion: "persona-editorial@v1",
+      contractVersion: "persona-editorial@v2",
       dependencies: [...new Map(["PERSONAS", "ECONOMIC", "CATEGORIES_NEEDS", "GEO_MOBILITY"].flatMap((moduleKey) => dependenciesFor(moduleKey as GlobalPrimaryModuleKey)).map((dependency) => [`${dependency.authority}:${dependency.family}:${dependency.identity}`, dependency] as const)).values()],
       resourceInput: { scope, editorialDigest: digest(personaEditorial) },
     }]),

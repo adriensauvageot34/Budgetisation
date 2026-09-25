@@ -51,8 +51,33 @@ export type EditorialMobility = {
   readonly presenceFilter: string;
 } | null;
 export type EditorialOuting = { readonly date: string; readonly title: string; readonly place: string | null; readonly eventRef: string };
+export type EditorialVehicleStorySummary = {
+  readonly period: { readonly first: string; readonly last: string };
+  readonly usage: {
+    readonly distanceKm: string;
+    readonly distinctUsageDays: number;
+    readonly drivingHours: string | null;
+    readonly estimatedFuelLiters: string;
+    readonly estimatedFuelCost: string;
+    readonly estimatedConsumptionL100Km: string | null;
+    readonly legCount: number;
+  };
+  readonly tripProfile: {
+    readonly shortTrips: { readonly thresholdKm: 5; readonly tripCount: number; readonly tripShare: string; readonly distanceKm: string; readonly distanceShare: string };
+    readonly longTrips: { readonly thresholdKm: 50; readonly tripCount: number; readonly tripShare: string; readonly distanceKm: string; readonly distanceShare: string };
+  };
+  readonly insuranceEvolution: {
+    readonly previousProvider: string | null;
+    readonly previousMonthlyCost: string | null;
+    readonly currentProvider: string | null;
+    readonly currentMonthlyCost: string | null;
+    readonly monthlyDifference: string | null;
+    readonly evolution: "DECREASE" | "INCREASE" | "STABLE" | "UNKNOWN";
+  };
+  readonly maintenanceRhythm: { readonly monthlyCosts: Readonly<Record<string, string>>; readonly peakMonths: readonly string[] };
+};
 export type PersonaEditorialModel = {
-  readonly schemaVersion: "persona-editorial@v1";
+  readonly schemaVersion: "persona-editorial@v2";
   readonly period: { readonly first: string; readonly certifiedThrough: string };
   readonly vehicle: {
     readonly householdVehicle: { readonly label: string; readonly scope: "HOUSEHOLD" } | null;
@@ -67,6 +92,7 @@ export type PersonaEditorialModel = {
       readonly payerAuthority: "USER_VALIDATED" | "UNKNOWN";
     };
     readonly maintenanceSummary: { readonly scope: "HOUSEHOLD"; readonly period: EditorialPeriod; readonly operationCount: number; readonly totalIdentifiedCost: string; readonly fuelUsageExcluded: boolean };
+    readonly storySummary: EditorialVehicleStorySummary;
     readonly maintenanceResponsibilityPersonId?: string | null;
     readonly nonFuelCostTotal: string | null;
     readonly nonFuelCostTotalReady: boolean;

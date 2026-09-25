@@ -78,7 +78,7 @@ const context = await createGlobalV2CandidateContext({ client, householdId, asOf
 const candidate = await prepareGlobalV2LiveCandidate({ project: GLOBAL_V2_LIVE_PROJECT, client, context,
   implementationIdentity, backgroundVisibility, candidateSourceRevision });
 const manifestWire = serializeGlobalV2PublicationManifest(candidate.manifest);
-const editorial = candidate.artifacts.find((entry) => entry.payload.editorial?.schemaVersion === "persona-editorial@v1")?.payload.editorial;
+const editorial = candidate.artifacts.find((entry) => entry.payload.editorial?.schemaVersion === "persona-editorial@v2")?.payload.editorial;
 if (!editorial || editorial.persons.length !== 2) throw new TypeError("GLOBAL_PERSONA_EDITORIAL_NOT_READY");
 const editorialBytes = Buffer.byteLength(JSON.stringify(editorial), "utf8");
 if (editorialBytes > 48 * 1024) throw new TypeError(`GLOBAL_PERSONA_EDITORIAL_NOT_COMPACT:${editorialBytes}`);

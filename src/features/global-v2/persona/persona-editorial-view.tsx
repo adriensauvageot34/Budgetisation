@@ -63,12 +63,26 @@ function Permit({ person }: { readonly person: PersonaEditorialModel["persons"][
 function Peugeot({ model }: { readonly model: PersonaEditorialModel }) {
   const { vehicle } = model;
   if (vehicle.householdVehicle === null) return null;
-  const usage = vehicle.workUsageSummary, insurance = vehicle.insuranceSummary;
-  return <article className={styles.peugeotProfile} data-person="manon"><header><div><div className={styles.moduleTitle}><CarFront aria-hidden="true" size={27} /><h4>Notre Peugeot</h4></div><p>Peugeot 207 · véhicule du foyer</p></div>{vehicle.nonFuelCostTotalReady && vehicle.nonFuelCostTotal !== null ? <div className={styles.peugeotTotal}><strong>{amount(vehicle.nonFuelCostTotal, true)}</strong><span>hors carburant</span></div> : null}</header><div className={styles.peugeotColumns}>
-    <div><h5>Pour travailler</h5>{usage === null ? null : <><Fact value={`${integer.format(Number(usage.distanceKm))} km`} label="sur la période" /><p>{amount(usage.estimatedFuelCost, true)} de carburant utilisé</p>{usage.estimatedFuelCostPerDay === null ? null : <small>{amount(usage.estimatedFuelCostPerDay, true)} par jour de trajet</small>}</>}</div>
-    <div><h5>Assurance</h5>{insurance.currentMonthlyCost === null ? null : <Fact value={monthly(insurance.currentMonthlyCost)} label={insurance.currentProvider ?? "assurance actuelle"} />}<p>{insurance.series.map((item) => item.provider).join(" → ")}</p>{insurance.periodCost === null ? null : <small>{amount(insurance.periodCost, true)} sur la période</small>}</div>
-    <div><h5>Entretien</h5><Fact value={amount(vehicle.maintenanceSummary.totalIdentifiedCost, true)} label="réparations & entretien" /></div>
-  </div></article>;
+  const usage = vehicle.workUsageSummary, insurance = vehicle.insuranceSummary, story = vehicle.storySummary;
+  const transition = story.insuranceEvolution;
+  const shortTrips = story.tripProfile.shortTrips, longTrips = story.tripProfile.longTrips;
+  const tripContrast = Number(shortTrips.tripShare) > Number(longTrips.tripShare) && Number(longTrips.distanceShare) > Number(shortTrips.distanceShare);
+  const maintenancePeaks = story.maintenanceRhythm.peakMonths.map((key) => monthOnly.format(dateOf(`${key}-01`)));
+  return <article className={styles.peugeotProfile} data-person="manon"><header><div><div className={styles.moduleTitle}><CarFront aria-hidden="true" size={27} /><h4>Notre Peugeot</h4></div><p>{vehicle.householdVehicle.label} 5 portes · véhicule du foyer</p></div>{vehicle.nonFuelCostTotalReady && vehicle.nonFuelCostTotal !== null ? <div className={styles.peugeotTotal}><strong>{amount(vehicle.nonFuelCostTotal, true)}</strong><span>hors carburant</span></div> : null}</header><div className={styles.peugeotColumns}>
+    <div><h5>Pour travailler</h5>{usage === null ? null : <><Fact value={`${integer.format(Number(usage.distanceKm))} km`} label="sur la période" /><p>{amount(usage.estimatedFuelCost, true)} de carburant utilisé estimé</p>{usage.estimatedFuelCostPerDay === null ? null : <small>{amount(usage.estimatedFuelCostPerDay, true)} par jour de trajet</small>}</>}</div>
+    <div><h5>Assurance</h5>{insurance.currentMonthlyCost === null ? null : <Fact value={monthly(insurance.currentMonthlyCost)} label={insurance.currentProvider ?? "assurance actuelle"} />}{transition.previousProvider && transition.previousMonthlyCost && transition.currentProvider && transition.currentMonthlyCost ? <p>{transition.previousProvider} {amount(transition.previousMonthlyCost)} → {transition.currentProvider} {amount(transition.currentMonthlyCost)}</p> : null}{transition.monthlyDifference === null || transition.evolution === "UNKNOWN" || transition.evolution === "STABLE" ? null : <small>{amount(transition.monthlyDifference, true)} {transition.evolution === "DECREASE" ? "de moins" : "de plus"} / mois</small>}{insurance.periodCost === null ? null : <small>{amount(insurance.periodCost, true)} sur la période</small>}</div>
+    <div><h5>Entretien</h5><Fact value={amount(vehicle.maintenanceSummary.totalIdentifiedCost, true)} label="réparations & entretien" />{maintenancePeaks.length ? <small>principalement en {maintenancePeaks.join(" et ")}</small> : null}</div>
+  </div><div className={styles.peugeotStory}><h5>Une voiture très présente dans notre quotidien</h5><div className={styles.peugeotStoryMetrics}>
+    <Fact value={`${integer.format(Number(story.usage.distanceKm))} km`} label="sur 12 mois" />
+    <Fact value={integer.format(story.usage.distinctUsageDays)} label="jours d’utilisation" />
+    {story.usage.drivingHours === null ? null : <Fact value={`≈ ${integer.format(Number(story.usage.drivingHours))} h`} label="sur la route" />}
+    <Fact value={`${integer.format(Number(story.usage.estimatedFuelLiters))} L`} label="de carburant utilisé estimé" />
+    <Fact value={amount(story.usage.estimatedFuelCost, true)} label="de carburant utilisé estimé" />
+    {story.usage.estimatedConsumptionL100Km === null ? null : <Fact value={`≈ ${oneDecimal.format(Number(story.usage.estimatedConsumptionL100Km))} L/100 km`} label="consommation estimée" />}
+  </div></div><div className={styles.peugeotTrips}><h5>Son profil de trajets</h5><div className={styles.peugeotTripMetrics}>
+    <div><strong>{oneDecimal.format(Number(shortTrips.tripShare))} %</strong><span>des trajets font moins de 5 km</span><small>{oneDecimal.format(Number(shortTrips.distanceShare))} % des kilomètres</small></div>
+    <div><strong>{oneDecimal.format(Number(longTrips.tripShare))} %</strong><span>des trajets font 50 km ou plus</span><small>{oneDecimal.format(Number(longTrips.distanceShare))} % des kilomètres</small></div>
+  </div>{tripContrast ? <p>Beaucoup de petits trajets au quotidien, mais les grandes distances font l’essentiel des kilomètres.</p> : null}</div></article>;
 }
 function WorkMeals({ meal, person }: { readonly meal: PersonaEditorialModel["persons"][number]["work"]["workMeals"]; readonly person: "adrien" | "manon" }) {
   const summary = meal.allPurchaseHabitSummary;

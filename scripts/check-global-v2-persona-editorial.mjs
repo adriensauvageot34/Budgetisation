@@ -48,7 +48,12 @@ const tables = {
   person_place_roles: [{ person_place_role_id: "r1", person_id: "m", place_id: "fontes", role: "FATHER_HOME" }, { person_place_role_id: "r2", person_id: "a", place_id: "ange", role: "WORK_MEAL_ANCHOR" }],
   person_habit_assertions: [{ person_habit_assertion_id: "ha1", household_id: "h", person_id: "a", habit_key: "hairdresser", monthly_visit_estimate: "1.00", typical_visit_price: "20.00", price_basis: "INDICATIVE_PRICE_NOT_PAYMENT", authority: "USER_VALIDATED" }],
   persona_profile_assertions: [{ assertion_id: "pa1", household_id: "h", person_id: "m", assertion_key: "daily_cigarettes", numeric_value: "2.00", authority: "USER_VALIDATED" }, { assertion_id: "pa2", household_id: "h", person_id: "a", assertion_key: "approximate_household_tobacco_budget", authority: "USER_VALIDATED" }, { assertion_id: "pa3", household_id: "h", person_id: "m", assertion_key: "vehicle_maintenance_responsibility", authority: "USER_VALIDATED" }],
-  mobility_legs: [],
+  mobility_legs: [
+    { mobility_leg_id: "leg-short", household_id: "h", vehicle_id: "car", travel_date: "2025-08-02", distance_km: "4.00", duration_seconds: "1200", estimated_fuel_liters: "0.32", estimated_fuel_cost: "0.60", status: "CERTIFIED_SOURCE" },
+    { mobility_leg_id: "leg-long", household_id: "h", vehicle_id: "car", travel_date: "2026-01-02", distance_km: "50.00", duration_seconds: "7200", estimated_fuel_liters: "4.00", estimated_fuel_cost: "7.00", status: "CERTIFIED_SOURCE" },
+    { mobility_leg_id: "leg-partial", household_id: "h", vehicle_id: "car", travel_date: "2026-01-03", distance_km: "15.00", duration_seconds: "1800", estimated_fuel_liters: "1.20", estimated_fuel_cost: "2.00", status: "SOURCE_PARTIAL" },
+    { mobility_leg_id: "other-car", household_id: "h", vehicle_id: "other", travel_date: "2026-01-03", distance_km: "100.00", duration_seconds: "3600", estimated_fuel_liters: "8.00", estimated_fuel_cost: "15.00", status: "CERTIFIED_SOURCE" },
+  ],
   referentiel_lieu: [{ place_id: "fontes", nom_canonique: "Fontès" }, { place_id: "ange", nom_canonique: "Ange" }, { place_id: "cedric", nom_canonique: "Chez Cédric" }],
   person_days: [{ person_day_id: "d1", person_id: "m", date: "2026-01-04" }, { person_day_id: "d2", person_id: "a", date: "2026-01-04" }, { person_day_id: "d3", person_id: "m", date: "2026-01-05" }],
   location_occurrences: [{ localization_id: "l1", person_day_id: "d1", person_id: "m", place_id: "fontes" }, { localization_id: "l2", person_day_id: "d1", person_id: "m", place_id: "fontes" }, { localization_id: "l3", person_day_id: "d2", person_id: "a", place_id: "ange" }, { localization_id: "l4", person_day_id: "d3", person_id: "m", place_id: "fontes" }],
@@ -61,7 +66,7 @@ const tables = {
     { operation_id: "vape-direct", need_id: "vape", montant: "-23.80", date_transaction_reelle: "2026-01-07" },
     { operation_id: "meal-ange", need_id: "meal-a", marchand: "Boulangerie Ange", montant: "-5.90", date_transaction_reelle: "2026-01-05" },
     { operation_id: "vape-parent", montant: "-64.50", date_transaction_reelle: "2026-01-08" },
-    { operation_id: "insurance-old", recurrence_series_id: "ins-old", montant: "-100", date_transaction_reelle: "2026-01-10" },
+    { operation_id: "insurance-old", recurrence_series_id: "ins-old", montant: "-100", date_transaction_reelle: "2026-01-02" },
     { operation_id: "insurance-current", recurrence_series_id: "ins-current", montant: "-80", date_transaction_reelle: "2026-01-11" },
     { operation_id: "insurance-isolated", recurrence_series_id: "ins-isolated", montant: "-80", date_transaction_reelle: "2026-01-12" },
     { operation_id: "insurance-refund", montant: "80", rembourse_operation_id: "insurance-isolated", date_transaction_reelle: "2026-01-13" },
@@ -91,7 +96,7 @@ const clientFor = (data) => ({ from(table) { assert.ok(table in data, `unexpecte
 const { resolveGlobalPersonaEditorial } = require(path.resolve(root, "src/server/analytics/global-v2-persona-editorial.ts"));
 const inputFor = (data) => ({ client: clientFor(data), householdId: "h", personIdsByName: { Adrien: "a", Manon: "m" }, firstDay: "2026-01-01", certifiedThrough: "2026-01-31", m1Series: [{ recurrenceId: "ins-old", typicalOccurrenceCost: { status: "KNOWN", value: "100.00" } }, { recurrenceId: "ins-current", typicalOccurrenceCost: { status: "KNOWN", value: "80.00" } }], m2NeedGroups: [{ dimension: { id: "vape" }, annualAmount: "88.30", historicalSeries: [{ month: "2026-01", amount: "88.30" }] }, { dimension: { id: "tobacco" }, annualAmount: "2400.00" }], mobilitySummaries: [] });
 const model = await resolveGlobalPersonaEditorial(inputFor(tables));
-assert.equal(model.schemaVersion, "persona-editorial@v1");
+assert.equal(model.schemaVersion, "persona-editorial@v2");
 assert.equal(model.persons[0].work.onsiteDays, 1);
 assert.equal(model.persons[0].socialLife.outingsWithoutPartnerParticipation.length, 1);
 assert.equal(model.persons[0].personalUniverses.photo.grossCost, "64.28");
@@ -119,6 +124,18 @@ assert.equal(model.vehicle.insuranceSummary.payerPersonId, "m");
 assert.equal(model.vehicle.insuranceSummary.payerAuthority, "USER_VALIDATED");
 assert.equal(model.vehicle.insuranceSummary.isolatedRefundResolved, true);
 assert.equal(model.vehicle.maintenanceSummary.totalIdentifiedCost, "30.00");
+assert.equal(model.vehicle.storySummary.period.first, "2025-02-01");
+assert.equal(model.vehicle.storySummary.usage.distanceKm, "54.00");
+assert.equal(model.vehicle.storySummary.usage.distinctUsageDays, 2);
+assert.equal(model.vehicle.storySummary.usage.drivingHours, "2.33");
+assert.equal(model.vehicle.storySummary.usage.estimatedFuelLiters, "4.32");
+assert.equal(model.vehicle.storySummary.usage.estimatedFuelCost, "7.60");
+assert.equal(model.vehicle.storySummary.tripProfile.shortTrips.tripShare, "50");
+assert.equal(model.vehicle.storySummary.tripProfile.longTrips.distanceShare, "92.6");
+assert.equal(model.vehicle.storySummary.insuranceEvolution.previousProvider, "Ornikar Assurances");
+assert.equal(model.vehicle.storySummary.insuranceEvolution.currentProvider, "Pacifica");
+assert.equal(model.vehicle.storySummary.insuranceEvolution.monthlyDifference, "20.00");
+assert.deepEqual(model.vehicle.storySummary.maintenanceRhythm.peakMonths, ["2026-01"]);
 assert.equal(model.vehicle.nonFuelCostTotal, "210.00");
 assert.equal(model.vehicle.nonFuelCostTotalReady, true);
 assert.equal(model.vehicle.householdVehicle.scope, "HOUSEHOLD");
