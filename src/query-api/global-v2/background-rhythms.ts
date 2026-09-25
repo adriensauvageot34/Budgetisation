@@ -571,7 +571,39 @@ function validateMonthDetail(value: unknown): GlobalBackgroundRhythmMonthDetailR
   return value as GlobalBackgroundRhythmMonthDetailReadModel;
 }
 
-export const globalBackgroundRhythmsReadModelSchema: RuntimeSchema<GlobalBackgroundRhythmsReadModel> = createRuntimeSchema(validateAnnual);
+/** G0 remains v1 during C6 staging. Decode its known money as exact while
+ * keeping Benefit coverage unobserved, then run the same strict v2 validator. */
+function compatibleAnnualWire(value: unknown): unknown {
+  if (value === null || typeof value !== "object" || Array.isArray(value)) return value;
+  const record = value as Record<string, unknown>;
+  if (record.schemaVersion !== "global-background-rhythms@v1") return value;
+  if (record.food === null || typeof record.food !== "object" || Array.isArray(record.food)) return value;
+  const food = record.food as Record<string, unknown>;
+  if (food.annual === null || typeof food.annual !== "object" || Array.isArray(food.annual)
+    || !Array.isArray(food.months) || food.months.length !== 12
+    || food.months.some((row) => !Array.isArray(row) || row.length !== 12)) return value;
+  const annual = food.annual as Record<string, unknown>;
+  const months = food.months as unknown[][];
+  const constants = food.constants as Record<string, unknown> | undefined;
+  const firstMonth = months[0]?.[0], lastMonth = months[11]?.[0];
+  if (typeof firstMonth !== "string" || typeof lastMonth !== "string") return value;
+  return {
+    ...record,
+    schemaVersion: "global-background-rhythms@v2",
+    food: {
+      ...food,
+      annual: { ...annual, moneyQuality: [annual.nonGroceryShare === null ? 32 : 0, annual.total, annual.total] },
+      months: months.map((row) => [...row, [row[6] === null ? 32 : 0, row[4], row[4]]]),
+      benefitCoverage: { status: "NOT_OBSERVED", startMonth: firstMonth, endMonth: lastMonth, exceptions: [] },
+      monthlyBenefitFunding: [],
+      constants: constants === undefined ? constants : Object.fromEntries(Object.entries(constants)
+        .filter(([key]) => key !== "financialKnowledge")),
+    },
+  };
+}
+
+export const globalBackgroundRhythmsReadModelSchema: RuntimeSchema<GlobalBackgroundRhythmsReadModel> =
+  createRuntimeSchema((value) => validateAnnual(compatibleAnnualWire(value)));
 export const globalBackgroundRhythmMonthDetailReadModelSchema: RuntimeSchema<GlobalBackgroundRhythmMonthDetailReadModel> = createRuntimeSchema(validateMonthDetail);
 
 export const parseGlobalBackgroundRhythmsReadModel = (value: unknown): GlobalBackgroundRhythmsReadModel => globalBackgroundRhythmsReadModelSchema.parse(value);

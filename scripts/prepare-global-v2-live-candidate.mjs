@@ -40,9 +40,13 @@ const fixtureDirectory = args.get("--fixture-dir");
 const expectedDataRevision = args.get("--data-revision");
 const currentAnalyticsRevision = args.get("--analytics-revision");
 const includePersonaProfile = args.has("--include-persona-profile");
+const backgroundVisibility = args.get("--background-visibility") ?? "DEFAULT";
+const candidateSourceRevision = args.get("--candidate-source-revision");
+const compareActivePublication = args.get("--compare-active-publication");
 if (!/^[0-9a-f]{40}$/u.test(implementationIdentity ?? "") || !/^\d{4}-\d{2}-\d{2}T/u.test(asOf ?? "")) {
   throw new TypeError("Usage: --implementation-sha=<40 hex> --as-of=<Instant> [--fixture-dir=<private export>]");
 }
+if (!["DEFAULT", "PURCHASE_AWARE_PILOT"].includes(backgroundVisibility)) throw new TypeError("Invalid background visibility");
 
 const { GLOBAL_V2_LIVE_PROJECT, prepareGlobalV2LiveCandidate } = require(path.resolve(root, "src/server/analytics/global-v2-production-orchestrator.ts"));
 let client;
@@ -89,7 +93,8 @@ if (fixtureDirectory !== undefined) {
   context = await createGlobalV2CandidateContext({ client, householdId, asOf });
 }
 
-const candidate = await prepareGlobalV2LiveCandidate({ project: GLOBAL_V2_LIVE_PROJECT, client, context, implementationIdentity });
+const candidate = await prepareGlobalV2LiveCandidate({ project: GLOBAL_V2_LIVE_PROJECT, client, context,
+  implementationIdentity, backgroundVisibility, candidateSourceRevision });
 const summary = Object.fromEntries([
   "project", "householdScope", "asOf", "dataRevision", "analyticsRevision", "implementationIdentity",
   "candidateId", "factsHash", "manifestHash", "requiredArtifactCount", "requiredSnapshotCount",
@@ -98,6 +103,8 @@ const summary = Object.fromEntries([
 const backgroundAnnual = candidate.snapshots.find(({ resource }) => resource === "analysis_global_background_rhythms");
 const backgroundDetails = candidate.snapshots.filter(({ resource }) => resource === "analysis_global_background_rhythm_month_detail");
 if (backgroundAnnual === undefined) throw new TypeError("GLOBAL_BACKGROUND_RHYTHMS_ANNUAL_MISSING");
+const { parseGlobalBackgroundRhythmsReadModel } = require(path.resolve(root, "src/query-api/global-v2/background-rhythms.ts"));
+summary.candidateAnnualRuntime = parseGlobalBackgroundRhythmsReadModel(backgroundAnnual.payload).schemaVersion;
 const serializedBytes = (value) => Buffer.byteLength(JSON.stringify(value), "utf8");
 const june = backgroundAnnual.payload.carMobility.months.find(({ month }) => month.endsWith("-06"));
 if (june === undefined) throw new TypeError("GLOBAL_BACKGROUND_RHYTHMS_JUNE_MISSING");
@@ -107,7 +114,12 @@ summary.backgroundRhythms = {
   featureTotalBytes: [backgroundAnnual, ...backgroundDetails].reduce((total, { payload }) => total + serializedBytes(payload), 0),
   snapshotCount: 1 + backgroundDetails.length,
   foodAnnualTotal: backgroundAnnual.payload.food.annual.total,
+  foodAnnual: backgroundAnnual.payload.food.annual,
+  foodMonths: backgroundAnnual.payload.food.months,
+  benefitCoverage: backgroundAnnual.payload.food.benefitCoverage,
+  monthlyBenefitFunding: backgroundAnnual.payload.food.monthlyBenefitFunding,
   carAnnual: backgroundAnnual.payload.carMobility.annual,
+  carMonthDetails: backgroundDetails.map(({ payload }) => payload.carMobility),
   june: { modeledUsage: june.modeledUsage, observedFuelPaid: june.observedFuelPaid },
 };
 summary.versions = {
@@ -116,6 +128,81 @@ summary.versions = {
   methodSignatures: [...new Set(candidate.versions.queries.map(({ methodSignature }) => methodSignature))].sort(),
   policyVersions: [...new Set(candidate.versions.queries.flatMap(({ policyVersions }) => Object.entries(policyVersions).map(([key, value]) => `${key}=${value}`)))].sort(),
 };
+if (compareActivePublication !== undefined) {
+  if (fixtureDirectory !== undefined) throw new TypeError("Active comparison requires live reads");
+  const readPublicationRows = async (table, key) => {
+    const rows = [];
+    for (let from = 0; ; from += 100) {
+      const { data, error } = await client.from(table).select(`${key},payload`)
+        .eq("publication_id", compareActivePublication).order(key).range(from, from + 99);
+      if (error) throw error;
+      rows.push(...data);
+      if (data.length < 100) return rows;
+    }
+  };
+  const metadataKeys = new Set(["publicationMeta", "resourceMeta", "publicationId", "sourcePublicationId",
+    "sourceAnalyticsRevision", "analyticsRevision", "sourceRevision", "generatedAt", "computedAt",
+    "factsHash", "inputHash", "manifestHash", "resourceInputHash", "methodSignature", "instanceKey"]);
+  const business = (value, ownerBoundary = false) => Array.isArray(value) ? value.map((entry) => business(entry, ownerBoundary))
+    : value !== null && typeof value === "object"
+      ? Object.fromEntries(Object.entries(value)
+        .filter(([key]) => !metadataKeys.has(key) && !(ownerBoundary && (
+          (key === "resolutionHash" && value.window !== undefined && value.certifiedUnitIds !== undefined)
+          || (key === "executionHash" && value.boundary?.resolutionHash !== undefined))))
+        .sort(([left], [right]) => left.localeCompare(right))
+        .map(([key, entry]) => [key, key === "displayValue" && value.rowId === "007:method:revisions"
+          && typeof entry === "string" && /^data \d+ · analytics \d+$/.test(entry)
+          ? entry.replace(/analytics \d+$/, "analytics <revision>")
+          : business(entry, ownerBoundary)]))
+      : value;
+  const firstDiff = (left, right, path = "$") => {
+    if (JSON.stringify(left) === JSON.stringify(right)) return null;
+    if (Array.isArray(left) && Array.isArray(right)) {
+      if (left.length !== right.length) return `${path}.length`;
+      for (let index = 0; index < left.length; index += 1) {
+        const diff = firstDiff(left[index], right[index], `${path}[${index}]`);
+        if (diff !== null) return diff;
+      }
+    } else if (left && right && typeof left === "object" && typeof right === "object") {
+      for (const key of new Set([...Object.keys(left), ...Object.keys(right)])) {
+        const diff = firstDiff(left[key], right[key], `${path}.${key}`);
+        if (diff !== null) return diff;
+      }
+    }
+    return path;
+  };
+  const [activeQueries, activeArtifacts] = await Promise.all([
+    readPublicationRows("analytics_query_snapshots", "query_key"),
+    readPublicationRows("analytics_artifacts", "artifact_key"),
+  ]);
+  const activeQueryByKey = new Map(activeQueries.map((row) => [row.query_key, row]));
+  const activeArtifactByKey = new Map(activeArtifacts.map((row) => [row.artifact_key, row]));
+  const activeAnnual = activeQueryByKey.get(backgroundAnnual.key.replace(candidate.candidateId, compareActivePublication));
+  if (activeAnnual === undefined) throw new TypeError("GLOBAL_ACTIVE_BACKGROUND_ANNUAL_MISSING");
+  summary.activeAnnualCompatibility = parseGlobalBackgroundRhythmsReadModel(activeAnnual.payload).schemaVersion;
+  const queryDeltas = candidate.snapshots.filter(({ resource }) => !resource.startsWith("analysis_global_background_rhythm"))
+    .flatMap(({ key, payload }) => {
+      const active = activeQueryByKey.get(key.replace(candidate.candidateId, compareActivePublication));
+      return active === undefined ? [{ key, path: "MISSING" }] :
+        (firstDiff(business(active.payload), business(payload)) === null ? []
+          : [{ key, path: firstDiff(business(active.payload), business(payload)) }]);
+    });
+  const artifactDeltas = candidate.artifacts.filter(({ version }) => version.family !== "global_background_rhythms")
+    .flatMap(({ key, payload }) => {
+      const active = activeArtifactByKey.get(key);
+      return active === undefined ? [{ key, path: "MISSING" }] :
+        (firstDiff(business(active.payload, true), business(payload, true)) === null ? []
+          : [{ key, path: firstDiff(business(active.payload, true), business(payload, true)) }]);
+    });
+  summary.activeEquality = {
+    activeQueryCount: activeQueries.length, activeArtifactCount: activeArtifacts.length,
+    outOfScopeQueries: candidate.snapshots.length - backgroundDetails.length - 1,
+    outOfScopeArtifacts: candidate.artifacts.length - 1,
+    queryEqual: candidate.snapshots.length - backgroundDetails.length - 1 - queryDeltas.length,
+    artifactEqual: candidate.artifacts.length - 1 - artifactDeltas.length,
+    queryDeltas: queryDeltas.slice(0, 25), artifactDeltas: artifactDeltas.slice(0, 25),
+  };
+}
 if (includePersonaProfile) {
   const personaSnapshot = candidate.snapshots.find(({ resource, payload }) => resource === "analysis_global_personas_expanded" && payload.sectionKey === "OVERVIEW");
   if (personaSnapshot?.payload.profile === undefined) throw new TypeError("GLOBAL_LIVE_PERSONA_PROFILE_MISSING");

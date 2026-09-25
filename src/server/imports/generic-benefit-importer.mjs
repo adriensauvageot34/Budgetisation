@@ -66,8 +66,8 @@ export async function importBenefitSnapshot(db, dto) {
   await query(db, "begin");
   try {
     await put(`insert into public.import_batches
-      (import_batch_id,household_id,source_system,file_hash,period_start,period_end,source_instance_key,source_snapshot_id,coverage_status)
-      values ($1,$2,$3,$4,$5,$6,$7,$8,$9)`,
+      (import_batch_id,household_id,source_system,file_hash,period_start,period_end,source_instance_key,source_snapshot_id,coverage_status,imported_at,status)
+      values ($1,$2,$3,$4,$5,$6,$7,$8,$9,now(),'imported')`,
       [batchId,batch.householdId,batch.sourceSystem,batch.sourceSha256,batch.coverageStart,batch.coverageEnd,
         batch.sourceInstanceKey,batch.sourceSnapshotId,batch.coverageStatus]);
     for (const record of records) {

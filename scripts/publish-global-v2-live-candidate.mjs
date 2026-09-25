@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import { createHash } from "node:crypto";
+import { execFileSync } from "node:child_process";
 import fs from "node:fs";
 import path from "node:path";
 import process from "node:process";
@@ -37,8 +38,16 @@ const householdId = args.get("--household-id");
 const implementationIdentity = args.get("--implementation-sha");
 const asOf = args.get("--as-of");
 const dryRun = args.has("--dry-run");
+const stageOnly = args.has("--stage-only");
+const backgroundVisibility = args.get("--background-visibility") ?? "DEFAULT";
+const candidateSourceRevision = args.get("--candidate-source-revision");
+const expectedActivePublication = args.get("--expected-active-publication");
 if (!/^[0-9a-f]{40}$/u.test(implementationIdentity ?? "") || !/^\d{4}-\d{2}-\d{2}T/u.test(asOf ?? "") || !/^[0-9a-f-]{36}$/u.test(householdId ?? "")) {
   throw new TypeError("Usage: --household-id=<uuid> --implementation-sha=<40 hex> --as-of=<Instant> [--dry-run]");
+}
+if (stageOnly && (backgroundVisibility !== "PURCHASE_AWARE_PILOT" || !/^\d+$/u.test(candidateSourceRevision ?? "")
+  || !/^[0-9a-f-]{36}$/u.test(expectedActivePublication ?? ""))) {
+  throw new TypeError("C6_STAGE_ONLY_GUARDS_REQUIRED");
 }
 const url = process.env.SUPABASE_URL;
 const key = process.env.SUPABASE_SECRET_KEY ?? process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -66,7 +75,8 @@ const { GLOBAL_V2_LIVE_PROJECT, createGlobalV2CandidateContext, prepareGlobalV2L
 const { serializeGlobalV2PublicationManifest } = require(path.resolve(root, "src/server/analytics/materialization/global-v2.ts"));
 const { canonicalSerializeQueryParams } = require(path.resolve(root, "src/query-api/request/cache-key.ts"));
 const context = await createGlobalV2CandidateContext({ client, householdId, asOf });
-const candidate = await prepareGlobalV2LiveCandidate({ project: GLOBAL_V2_LIVE_PROJECT, client, context, implementationIdentity });
+const candidate = await prepareGlobalV2LiveCandidate({ project: GLOBAL_V2_LIVE_PROJECT, client, context,
+  implementationIdentity, backgroundVisibility, candidateSourceRevision });
 const manifestWire = serializeGlobalV2PublicationManifest(candidate.manifest);
 const editorial = candidate.artifacts.find((entry) => entry.payload.editorial?.schemaVersion === "persona-editorial@v1")?.payload.editorial;
 if (!editorial || editorial.persons.length !== 2) throw new TypeError("GLOBAL_PERSONA_EDITORIAL_NOT_READY");
@@ -83,6 +93,17 @@ const backgroundAnnual = candidate.snapshots.find(({ resource }) => resource ===
 const backgroundDetails = candidate.snapshots.filter(({ resource }) => resource === "analysis_global_background_rhythm_month_detail");
 if (backgroundAnnual === undefined) throw new TypeError("GLOBAL_BACKGROUND_RHYTHMS_ANNUAL_MISSING");
 const serializedBytes = (value) => Buffer.byteLength(JSON.stringify(value), "utf8");
+if (stageOnly) {
+  const head = execFileSync("git", ["rev-parse", "HEAD"], { cwd: root, encoding: "utf8" }).trim();
+  const { parseGlobalBackgroundRhythmsReadModel } = require(path.resolve(root, "src/query-api/global-v2/background-rhythms.ts"));
+  if (head !== implementationIdentity || candidate.artifacts.length !== 17 || candidate.snapshots.length !== 759
+    || backgroundDetails.length !== 12
+    || parseGlobalBackgroundRhythmsReadModel(backgroundAnnual.payload).schemaVersion !== "global-background-rhythms@v2"
+    || serializedBytes(backgroundAnnual.payload) > 47104
+    || [backgroundAnnual, ...backgroundDetails].reduce((total, { payload }) => total + serializedBytes(payload), 0) > 153600) {
+    throw new TypeError("C6_STAGE_CANDIDATE_PREFLIGHT_FAILED");
+  }
+}
 const june = backgroundAnnual.payload.carMobility.months.find(({ month }) => month.endsWith("-06"));
 if (june === undefined) throw new TypeError("GLOBAL_BACKGROUND_RHYTHMS_JUNE_MISSING");
 const summary = {
@@ -134,6 +155,15 @@ const summary = {
 };
 if (dryRun) { process.stdout.write(`${JSON.stringify({ ...summary, dryRun: true }, null, 2)}\n`); process.exit(0); }
 
+if (stageOnly) {
+  const { data: active, error: activeError } = await client.from("analytics_publications")
+    .select("publication_id,published_analytics_revision").eq("household_id", householdId)
+    .eq("scope_kind", "global").eq("status", "published");
+  if (activeError || active?.length !== 1 || active[0]?.publication_id !== expectedActivePublication
+    || Number(active[0]?.published_analytics_revision) !== baseRevision - 1
+    || sourceRevision !== Number(context.dataRevision) + 1) throw new TypeError("C6_STAGE_BASELINE_CHANGED");
+}
+
 // Stage a complete draft; only the official sealed-publication RPC activates it.
 const { data: existingDraft, error: draftReadError } = await client.from("analytics_publications")
   .select("status,source_revision,base_analytics_revision,global_manifest")
@@ -184,6 +214,17 @@ for (const [table, rows, keyColumn, batchSize] of [["analytics_artifacts", artif
 }
 const { error: sealError } = await client.rpc("attach_global_v2_manifest", { p_publication_id: publicationId, p_household_id: householdId, p_manifest: manifestWire });
 if (sealError) throw sealError;
+if (stageOnly) {
+  const { data: sealed, error: sealedError } = await client.from("analytics_publications")
+    .select("status,source_revision,base_analytics_revision,global_manifest")
+    .eq("publication_id", publicationId).single();
+  if (sealedError || sealed?.status !== "draft" || sealed.global_manifest === null
+    || Number(sealed.source_revision) !== sourceRevision || Number(sealed.base_analytics_revision) !== baseRevision) {
+    throw new TypeError("C6_SEAL_READBACK_FAILED");
+  }
+  process.stdout.write(`${JSON.stringify({ ...summary, sealed: true, activePublication: expectedActivePublication }, null, 2)}\n`);
+  process.exit(0);
+}
 const { data: published, error: publishError } = await client.rpc("publish_global_v2_materialization", { p_publication_id: publicationId, p_expected_analytics_revision: baseRevision });
 if (publishError) throw publishError;
 assert.equal(Number(published?.[0]?.analytics_revision), baseRevision + 1);

@@ -44,6 +44,7 @@ import { resolveGlobalMomentComponentPresentation } from "./global-v2-moment-com
 import { resolveGlobalTimelineSemanticAnalysis } from "./global-v2-timeline-semantic-comparator";
 import { buildGlobalV2CandidateFromOwnerOutputs, globalV2M6HasPresentationContent, type GlobalV2OwnerOutput, type GlobalV2PresentationLabels } from "./global-v2-candidate";
 import { resolveGlobalBackgroundRhythmsProduction } from "./global-v2-background-rhythms-production";
+import { resolveGlobalFoodGroceryPurchaseAwarePilot } from "./global-v2-food-grocery-pilot";
 
 export const GLOBAL_V2_LIVE_PROJECT = "ipuuhxrblxormwgoaqnz" as const;
 
@@ -88,7 +89,10 @@ export async function createGlobalV2CandidateContext(input: {
   }, parseInstant(input.asOf));
 }
 
-export async function resolveGlobalV2ProductionOwnerOutputs(repository: CanonicalRepository) {
+export async function resolveGlobalV2ProductionOwnerOutputs(
+  repository: CanonicalRepository,
+  options: { readonly backgroundVisibility?: "DEFAULT" | "PURCHASE_AWARE_PILOT" } = {},
+) {
   const { context } = repository;
   const eligiblePeriods = context.periods.filter((period) =>
     period.isClosed
@@ -293,16 +297,17 @@ export async function resolveGlobalV2ProductionOwnerOutputs(repository: Canonica
     resolveGlobalMomentComponentPresentation({ repository, m6 }),
   ]);
   const candidateAdapters = { timeline };
-  const backgroundRhythms = await resolveGlobalBackgroundRhythmsProduction({
-    client: repository.client,
-    repository,
-    months: occurrenceMonths,
-    grocery,
-    subcategoryRows,
-    minimalBundle,
-    occurrences,
-    activityCosts,
-  });
+  const backgroundRhythms = options.backgroundVisibility === "PURCHASE_AWARE_PILOT"
+    ? await resolveGlobalFoodGroceryPurchaseAwarePilot({
+      repository, months: occurrenceMonths, minimalBundle, occurrences, activityCosts,
+      m2MonthlyComponents: m2.transformationMonthlyComponents, subcategoryRows,
+    }).then(({ food, carMobility, benefitFunding, purchasePresentation }) => ({
+      food, carMobility, benefitFunding, purchasePresentation,
+    }))
+    : await resolveGlobalBackgroundRhythmsProduction({
+      client: repository.client, repository, months: occurrenceMonths, grocery,
+      subcategoryRows, minimalBundle, occurrences, activityCosts,
+    });
   const persona = buildGlobalV2PersonaSignals({
     householdId: context.householdId,
     personIds: context.personIds,
@@ -361,10 +366,17 @@ export async function prepareGlobalV2LiveCandidate(input: {
   readonly client: SupabaseClient;
   readonly context: AuthorizedRuntimeContext;
   readonly implementationIdentity: string;
+  readonly backgroundVisibility?: "DEFAULT" | "PURCHASE_AWARE_PILOT";
+  readonly candidateSourceRevision?: string;
 }) {
   if (input.project !== GLOBAL_V2_LIVE_PROJECT) throw new TypeError("GLOBAL_LIVE_PROJECT_MISMATCH");
+  const sourceRevision = input.candidateSourceRevision ?? String(input.context.dataRevision);
+  if (input.backgroundVisibility === "PURCHASE_AWARE_PILOT"
+    && sourceRevision !== String(Number(input.context.dataRevision) + 1)) {
+    throw new TypeError("GLOBAL_PILOT_FUTURE_SOURCE_REVISION_INVALID");
+  }
   const repository = new CanonicalRepository(input.client, input.context);
-  const resolved = await resolveGlobalV2ProductionOwnerOutputs(repository);
+  const resolved = await resolveGlobalV2ProductionOwnerOutputs(repository, { backgroundVisibility: input.backgroundVisibility });
   return buildGlobalV2CandidateFromOwnerOutputs({
     project: input.project,
     householdId: String(input.context.householdId),
@@ -372,7 +384,7 @@ export async function prepareGlobalV2LiveCandidate(input: {
     personIds: input.context.personIds.map(String),
     asOf: input.context.asOf,
     certifiedThrough: resolved.certifiedThrough,
-    dataRevision: String(input.context.dataRevision),
+    dataRevision: sourceRevision,
     analyticsRevision: String(input.context.analyticsRevision),
     implementationIdentity: input.implementationIdentity,
     ownerOutputs: resolved.ownerOutputs,
