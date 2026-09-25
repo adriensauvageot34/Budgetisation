@@ -68,7 +68,6 @@ function Peugeot({ model }: { readonly model: PersonaEditorialModel }) {
   const shortTrips = story.tripProfile.shortTrips, longTrips = story.tripProfile.longTrips;
   const tripContrast = Number(shortTrips.tripShare) > Number(longTrips.tripShare) && Number(longTrips.distanceShare) > Number(shortTrips.distanceShare);
   const maintenancePeaks = [...story.maintenanceRhythm.peakMonths].sort().map((key) => monthOnly.format(dateOf(`${key}-01`)));
-  const vehicleName = vehicle.householdVehicle.label.match(/^Peugeot\s+207\b/iu)?.[0] ?? vehicle.householdVehicle.label;
   const manon = model.persons[1];
   const workPlace = manon.work.primaryWorkPlaces[0]?.label.replace(/\s+[–—]\s+.*$/u, "");
   const familyPlaces = [...new Set([...manon.socialLife.fatherHome, ...manon.socialLife.maternalFamilyHome]
@@ -76,7 +75,7 @@ function Peugeot({ model }: { readonly model: PersonaEditorialModel }) {
   const friendPlaceCount = manon.socialLife.friendVisits?.length ?? 0;
   return <article className={styles.peugeotProfile} data-person="manon">
     <header className={styles.peugeotHero}>
-      <div className={styles.peugeotIdentity}><div className={styles.peugeotTitleRow}><h4>Notre Peugeot</h4><span className={styles.peugeotBadge}>Véhicule du foyer</span></div><p className={styles.peugeotSubtitle}>{vehicleName} · 5 portes</p></div>
+      <div className={styles.peugeotIdentity}><h4>Notre Peugeot</h4></div>
       {vehicle.nonFuelCostTotalReady && vehicle.nonFuelCostTotal !== null ? <div className={styles.peugeotTotal}><strong>{amount(vehicle.nonFuelCostTotal, true)}</strong><span>hors carburant</span></div> : null}
     </header>
     <div className={styles.peugeotColumns}>

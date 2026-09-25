@@ -74,12 +74,9 @@
 .permitMonths > .permitMonthJuly { background: rgba(222, 238, 255, .88); }
 .permitMonths > .permitMonthJuly span { color: #356da4; }
 .permitMonths > .permitMonthJuly strong { color: #1269bb; font-size: 24px; }
-.peugeotProfile { grid-column: 1 / -1; display: grid; grid-template-columns: minmax(0, .92fr) minmax(0, 1.08fr); gap: 12px 16px; min-width: 0; border: 1px solid var(--manon-line); border-radius: 24px; padding: clamp(16px, 2vw, 26px); background-color: var(--manon-bg); background-image: url("/persona/illustrations/part-1/BG-Peugeot-persona.webp"); background-position: center; background-size: cover; }
+.peugeotProfile { grid-column: 1 / -1; display: grid; grid-template-columns: minmax(0, .92fr) minmax(0, 1.08fr); gap: 12px 16px; min-width: 0; border: 1px solid var(--manon-line); border-radius: 24px; padding: clamp(16px, 2vw, 26px); background-color: var(--manon-bg); background-image: url("/persona/illustrations/part-1/BG2-Peugeot-persona.webp"); background-position: center; background-size: cover; }
 .peugeotHero { grid-column: 1 / -1; display: flex; justify-content: space-between; align-items: start; gap: 24px; min-height: 134px; }
-.peugeotTitleRow { display: flex; align-items: center; flex-wrap: wrap; gap: 10px 16px; }
 .peugeotIdentity h4 { color: #83102f; font-size: clamp(42px, 5.4vw, 76px); font-weight: 620; line-height: .98; text-shadow: 0 1px 8px #fff7f1; }
-.peugeotIdentity .peugeotSubtitle { margin-top: 6px; color: #811c35; font: 600 17px/1.2 var(--font-serif, Georgia, serif); text-shadow: 0 1px 7px #fff7f1; }
-.peugeotBadge { display: inline-block; border: 1px solid #f8b5c5; border-radius: 999px; padding: 8px 15px; background: linear-gradient(135deg, rgba(255, 245, 247, .92), rgba(255, 189, 207, .9)); color: #991935; font-size: 13px; font-weight: 750; white-space: nowrap; }
 .peugeotTotal { display: grid; gap: 0; color: #83102f; text-align: right; white-space: nowrap; text-shadow: 0 1px 8px #fff7f1; }
 .peugeotTotal strong { font-family: var(--font-serif, Georgia, serif); font-size: clamp(48px, 6vw, 82px); font-weight: 600; line-height: .95; }
 .peugeotTotal span { font: 600 17px/1.2 var(--font-serif, Georgia, serif); }
