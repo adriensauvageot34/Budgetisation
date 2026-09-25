@@ -92,14 +92,12 @@ export async function certifyC5BackgroundRhythms({ root, require, fs, ts, dto, p
   assert.match(annualHtml, /au moins 8[\s\u00a0\u202f]*546,07 euros/u);
   assert.equal((annualHtml.match(/data-tone="food-/gu) ?? []).length, 3);
   assert.match(annualHtml, /Swile · titres-restaurant/u);
-  assert.equal((annualHtml.match(/class="swileFundingPoint"/gu) ?? []).length, semantic.months.filter(({ showBenefitFunding }) => showBenefitFunding).length);
+  assert.equal((annualHtml.match(/class="swileFundingOverlay"/gu) ?? []).length, semantic.months.filter(({ showBenefitFunding }) => showBenefitFunding).length);
   const february = semantic.months.find(({ month }) => month === "2026-02");
   assert.equal(february?.monthlyBenefitFunding, "141.73");
-  assert.match(annualHtml, /Février 2026 : 141,73[\s\u00a0\u202f]*€ financés par Swile/u);
+  assert.match(annualHtml, /<rect[^>]*class="swileFundingOverlay"[^>]*data-month="2026-02"/u);
   const outsideAnnualHtml = renderToStaticMarkup(React.createElement(FoodRhythmRiver, { food: outsideSemantic }));
-  assert.doesNotMatch(outsideAnnualHtml, /<circle[^>]*data-month="2025-08"/u);
-  assert.match(outsideAnnualHtml, /Août 2025 : titres-restaurant non observés/u);
-  assert.doesNotMatch(outsideAnnualHtml, /Août 2025 : 0[\s\u00a0\u202f]*€ financés par Swile/u);
+  assert.doesNotMatch(outsideAnnualHtml, /<rect[^>]*data-month="2025-08"/u);
   const known = semantic.months.find(({ money }) => money.total.quality === "KNOWN");
   const lower = semantic.months.find(({ money, showBenefitFunding }) => money.total.quality === "LOWER_BOUND" && showBenefitFunding);
   assert.ok(known && lower);

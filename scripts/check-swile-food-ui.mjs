@@ -48,11 +48,9 @@ const semantic = expandGlobalBackgroundFoodReadModel(covered);
 const html = renderToStaticMarkup(React.createElement(FoodRhythmRiver, { food: semantic }));
 assert.equal((html.match(/data-tone="food-/gu) ?? []).length, 3);
 assert.match(html, /Swile · titres-restaurant/u);
-assert.match(html, /<circle[^>]*data-month="2026-02"/u);
-assert.doesNotMatch(html, /<circle[^>]*data-month="2025-08"/u);
-assert.match(html, /Février 2026 : 141,73[\s\u00a0\u202f]*€ financés par Swile/u);
-assert.match(html, /Août 2025 : titres-restaurant non observés/u);
-assert.doesNotMatch(html, /Août 2025 : 0[\s\u00a0\u202f]*€ financés par Swile/u);
+assert.match(html, /<rect[^>]*class="swileFundingOverlay"[^>]*data-month="2026-02"/u);
+assert.doesNotMatch(html, /<rect[^>]*data-month="2025-08"/u);
+assert.doesNotMatch(html, /swileFundingTrack/u);
 const focus = (index) => renderToStaticMarkup(React.createElement(FoodMonthFocus, {
   month: semantic.months[index], annotations: semantic.annotations, connectorPosition: 50, onClose: () => {},
 }));

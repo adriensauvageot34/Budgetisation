@@ -21,12 +21,14 @@
 .legend span[data-tone="food-courses"] { --legend-color: #315f49; }
 .legend span[data-tone="food-restaurants"] { --legend-color: #8eae8e; }
 .legend span[data-tone="food-deliveries"] { --legend-color: #d8b989; }
+.legend > .swileOverlayLegend::before { width: 13px; border: 1px solid #c69a55; border-radius: 2px; background: repeating-linear-gradient(35deg, rgb(224 190 122 / .2) 0 4px, rgb(211 164 91 / .65) 4px 6px, rgb(224 190 122 / .2) 6px 9px); }
 .legend span[data-tone="car-work"] { --legend-color: #365f76; }
 .legend span[data-tone="car-outside"] { --legend-color: #719999; }
 .legend span[data-tone="car-unresolved"] { --legend-color: #d9d5ca; }
 .annualVisualBody { position: relative; min-width: 0; padding-top: 76px; }
 .annualRiver { display: block; width: 100%; height: 268px; overflow: visible; }
-.annualRiver path { stroke: rgb(255 255 255 / .34); stroke-width: 1.2; vector-effect: non-scaling-stroke; }
+.annualRiver > path { stroke: rgb(255 255 255 / .34); stroke-width: 1.2; vector-effect: non-scaling-stroke; }
+.swileFundingOverlay { pointer-events: none; }
 .foodCourses { fill: #315f49; }
 .foodRestaurants { fill: #8eae8e; }
 .foodDeliveries { fill: #d8b989; }
@@ -49,12 +51,6 @@
 .chartTooltip b { margin-bottom: 4px; color: var(--color-ink); font-size: 17px; }
 .chartTooltip em { color: var(--color-muted); font-style: normal; font-weight: 760; }
 .chartTooltip i { margin-top: 6px; border-top: 1px solid var(--color-border); padding-top: 7px; color: var(--color-ink); font-style: normal; font-weight: 760; }
-.swileFundingTrack { display: grid; min-width: 0; gap: 5px; border-top: 1px solid var(--color-border); padding-top: 11px; }
-.swileFundingLabel { color: var(--color-muted); font-size: 10px; font-weight: 800; letter-spacing: .09em; text-transform: uppercase; }
-.swileFundingTrack svg { display: block; width: 100%; height: 40px; }
-.swileFundingArea { fill: rgb(84 129 109 / .13); }
-.swileFundingLine { fill: none; stroke: #54816d; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; vector-effect: non-scaling-stroke; }
-.swileFundingPoint { fill: #54816d; stroke: var(--color-surface); stroke-width: 1.5; vector-effect: non-scaling-stroke; }
 .rhythmAnnotations { display: flex; flex-wrap: wrap; gap: 8px; }
 .rhythmAnnotation { margin: 0; border-left: 2px solid var(--color-primary-soft); padding: 3px 10px; color: var(--color-muted); font-size: 11px; line-height: 1.45; }
 .fuelPaidRail { position: relative; z-index: 5; display: grid; gap: 14px; margin-top: 18px; border-top: 1px solid var(--color-border); padding-top: 20px; background: var(--color-surface); }
@@ -153,7 +149,6 @@
   .monthAnchor > span { font-size: 8px; }
   .selectedMonthGuide { top: 88px; }
   .chartTooltip { width: 174px; padding: 9px 10px; font-size: 9px; }
-  .swileFundingTrack svg { height: 32px; }
   .fuelPaidRail > header { grid-template-columns: 1fr; }
   .fuelPaidRail > header > strong { justify-items: start; }
   .fuelPaidRail > div { height: 56px; }
