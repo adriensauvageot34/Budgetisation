@@ -68,25 +68,46 @@ function Peugeot({ model }: { readonly model: PersonaEditorialModel }) {
   const shortTrips = story.tripProfile.shortTrips, longTrips = story.tripProfile.longTrips;
   const tripContrast = Number(shortTrips.tripShare) > Number(longTrips.tripShare) && Number(longTrips.distanceShare) > Number(shortTrips.distanceShare);
   const maintenancePeaks = story.maintenanceRhythm.peakMonths.map((key) => monthOnly.format(dateOf(`${key}-01`)));
-  return <article className={styles.peugeotProfile} data-person="manon"><header><div><div className={styles.moduleTitle}><CarFront aria-hidden="true" size={27} /><h4>Notre Peugeot</h4></div><p>{vehicle.householdVehicle.label} 5 portes · véhicule du foyer</p></div>{vehicle.nonFuelCostTotalReady && vehicle.nonFuelCostTotal !== null ? <div className={styles.peugeotTotal}><strong>{amount(vehicle.nonFuelCostTotal, true)}</strong><span>hors carburant</span></div> : null}</header><div className={styles.peugeotColumns}>
-    <div><h5>Pour travailler</h5>{usage === null ? null : <><Fact value={`${integer.format(Number(usage.distanceKm))} km`} label="sur la période" /><p>{amount(usage.estimatedFuelCost, true)} de carburant utilisé estimé</p>{usage.estimatedFuelCostPerDay === null ? null : <small>{amount(usage.estimatedFuelCostPerDay, true)} par jour de trajet</small>}</>}</div>
-    <div><h5>Assurance</h5>{insurance.currentMonthlyCost === null ? null : <Fact value={monthly(insurance.currentMonthlyCost)} label={insurance.currentProvider ?? "assurance actuelle"} />}{transition.previousProvider && transition.previousMonthlyCost && transition.currentProvider && transition.currentMonthlyCost ? <p>{transition.previousProvider} {amount(transition.previousMonthlyCost)} → {transition.currentProvider} {amount(transition.currentMonthlyCost)}</p> : null}{transition.monthlyDifference === null || transition.evolution === "UNKNOWN" || transition.evolution === "STABLE" ? null : <small>{amount(transition.monthlyDifference, true)} {transition.evolution === "DECREASE" ? "de moins" : "de plus"} / mois</small>}{insurance.periodCost === null ? null : <small>{amount(insurance.periodCost, true)} sur la période</small>}</div>
-    <div><h5>Entretien</h5><Fact value={amount(vehicle.maintenanceSummary.totalIdentifiedCost, true)} label="réparations & entretien" />{maintenancePeaks.length ? <small>principalement en {maintenancePeaks.join(" et ")}</small> : null}</div>
-  </div><div className={styles.peugeotStory}><h5>Une voiture très présente dans notre quotidien</h5><div className={styles.peugeotStoryMetrics}>
-    <Fact value={`${integer.format(Number(story.usage.distanceKm))} km`} label="sur 12 mois" />
-    <Fact value={integer.format(story.usage.distinctUsageDays)} label="jours d’utilisation" />
-    {story.usage.drivingHours === null ? null : <Fact value={`≈ ${integer.format(Number(story.usage.drivingHours))} h`} label="sur la route" />}
-    <Fact value={`${integer.format(Number(story.usage.estimatedFuelLiters))} L`} label="de carburant utilisé estimé" />
-    <Fact value={amount(story.usage.estimatedFuelCost, true)} label="de carburant utilisé estimé" />
-    {story.usage.estimatedConsumptionL100Km === null ? null : <Fact value={`≈ ${oneDecimal.format(Number(story.usage.estimatedConsumptionL100Km))} L/100 km`} label="consommation estimée" />}
-  </div></div><div className={styles.peugeotTrips}><h5>Son profil de trajets</h5><div className={styles.peugeotTripMetrics}>
-    <div><strong>{oneDecimal.format(Number(shortTrips.tripShare))} %</strong><span>des trajets font moins de 5 km</span><small>{oneDecimal.format(Number(shortTrips.distanceShare))} % des kilomètres</small></div>
-    <div><strong>{oneDecimal.format(Number(longTrips.tripShare))} %</strong><span>des trajets font 50 km ou plus</span><small>{oneDecimal.format(Number(longTrips.distanceShare))} % des kilomètres</small></div>
-  </div>{tripContrast ? <p>Beaucoup de petits trajets au quotidien, mais les grandes distances font l’essentiel des kilomètres.</p> : null}</div></article>;
+  const manon = model.persons[1];
+  const workPlace = manon.work.primaryWorkPlaces[0]?.label.replace(/\s+[–—]\s+.*$/u, "");
+  const familyPlaces = [...new Set([...manon.socialLife.fatherHome, ...manon.socialLife.maternalFamilyHome]
+    .map((place) => place.label.replace(/^.*\s[–—]\s/u, "")))];
+  const friendPlaceCount = manon.socialLife.friendVisits?.length ?? 0;
+  return <article className={styles.peugeotProfile} data-person="manon">
+    <header className={styles.peugeotHero}>
+      <div className={styles.peugeotIdentity}><h4>Notre Peugeot</h4><div className={styles.peugeotSubtitle}><span>{vehicle.householdVehicle.label} · 5 portes</span><span className={styles.peugeotBadge}>Véhicule du foyer</span></div></div>
+      {vehicle.nonFuelCostTotalReady && vehicle.nonFuelCostTotal !== null ? <div className={styles.peugeotTotal}><strong>{amount(vehicle.nonFuelCostTotal, true)}</strong><span>hors carburant</span></div> : null}
+    </header>
+    <div className={styles.peugeotColumns}>
+      <div><h5>Pour travailler</h5>{usage === null ? null : <><Fact value={`${integer.format(Number(usage.distanceKm))} km`} label="sur la période" />{usage.estimatedFuelCostPerDay === null ? null : <p>{amount(usage.estimatedFuelCostPerDay, true)} / jour de trajet</p>}<small>{amount(usage.estimatedFuelCost, true)} de carburant utilisé estimé</small></>}</div>
+      <div><h5>Assurance</h5>{insurance.currentMonthlyCost === null ? null : <Fact value={monthly(insurance.currentMonthlyCost)} label={insurance.currentProvider ?? "assurance actuelle"} />}{transition.previousProvider && transition.previousMonthlyCost && transition.currentProvider && transition.currentMonthlyCost ? <p>{transition.previousProvider} {amount(transition.previousMonthlyCost)} → {transition.currentProvider} {amount(transition.currentMonthlyCost)}</p> : null}{transition.monthlyDifference === null || transition.evolution === "UNKNOWN" || transition.evolution === "STABLE" ? null : <small>{amount(transition.monthlyDifference, true)} {transition.evolution === "DECREASE" ? "économisés" : "de plus"} / mois</small>}{insurance.periodCost === null ? null : <small>{amount(insurance.periodCost, true)} sur la période</small>}</div>
+      <div><h5>Entretien</h5><Fact value={amount(vehicle.maintenanceSummary.totalIdentifiedCost, true)} label="réparations & entretien" />{maintenancePeaks.length ? <small>principalement en {maintenancePeaks.join(" et ")}</small> : null}</div>
+    </div>
+    <div className={styles.peugeotStory}><h5>Une voiture très présente dans notre quotidien</h5><div className={styles.peugeotStoryMetrics}>
+      <Fact value={`${integer.format(Number(story.usage.distanceKm))} km`} label="sur 12 mois" />
+      <Fact value={integer.format(story.usage.distinctUsageDays)} label="jours d’utilisation" />
+      {story.usage.drivingHours === null ? null : <Fact value={`≈ ${integer.format(Number(story.usage.drivingHours))} h`} label="sur la route" />}
+      <Fact value={`${integer.format(Number(story.usage.estimatedFuelLiters))} L`} label="utilisés estimés" />
+      <Fact value={amount(story.usage.estimatedFuelCost, true)} label="de carburant utilisé estimé" />
+      {story.usage.estimatedConsumptionL100Km === null ? null : <Fact value={`≈ ${oneDecimal.format(Number(story.usage.estimatedConsumptionL100Km))} L/100 km`} label="consommation estimée" />}
+    </div></div>
+    <div className={styles.peugeotBottom}>
+      <div className={styles.peugeotTrips}><h5>Son profil de trajets</h5><div className={styles.peugeotTripMetrics}>
+        <div><strong>{oneDecimal.format(Number(shortTrips.tripShare))} %</strong><span>des trajets font moins de 5 km</span><small>{oneDecimal.format(Number(shortTrips.distanceShare))} % des kilomètres</small></div>
+        <div><strong>{oneDecimal.format(Number(longTrips.tripShare))} %</strong><span>des trajets font 50 km ou plus</span><small>{oneDecimal.format(Number(longTrips.distanceShare))} % des kilomètres</small></div>
+      </div>{tripContrast ? <p>Beaucoup de petits trajets au quotidien, mais les grandes distances font l’essentiel des kilomètres.</p> : null}</div>
+      <div className={styles.peugeotDestinations}><h5>Où elle nous emmène</h5><div className={styles.peugeotDestinationList}>
+        {workPlace ? <div><span>Travail</span><strong>{workPlace}</strong></div> : null}
+        {familyPlaces.length ? <div><span>Famille</span><strong>{familyPlaces.join(" · ")}</strong></div> : null}
+        <div><span>Week-ends & loisirs</span><strong>Les 7 Laux · Marseille</strong></div>
+        {friendPlaceCount ? <div><span>Amis</span><strong>{friendPlaceCount} lieux visités</strong></div> : null}
+      </div>{workPlace && familyPlaces.length ? <p>Le travail structure son quotidien ; la famille et les week-ends font une grande partie de ses longs kilomètres.</p> : null}</div>
+    </div>
+  </article>;
 }
 function WorkMeals({ meal, person }: { readonly meal: PersonaEditorialModel["persons"][number]["work"]["workMeals"]; readonly person: "adrien" | "manon" }) {
   const summary = meal.allPurchaseHabitSummary;
-  return <article className={styles.mealProfile} data-person={person}><div className={styles.moduleTitle}><UtensilsCrossed aria-hidden="true" size={23} /><h4>Repas au travail</h4></div>{summary === undefined || summary.purchaseCount === 0 ? <p>Pas encore assez d’achats pour dégager un rythme.</p> : <><div className={styles.mealMetrics}>
+  return <article className={styles.mealProfile} data-person={person}><div className={styles.moduleTitle}><UtensilsCrossed aria-hidden="true" size={23} /><h4>Repas au travail — {person === "adrien" ? "Adrien" : "Manon"}</h4></div>{summary === undefined || summary.purchaseCount === 0 ? <p>Pas encore assez d’achats pour dégager un rythme.</p> : <><div className={styles.mealMetrics}>
     {summary.monthlyPurchaseRate === null ? null : <Fact value={`≈ ${oneDecimal.format(summary.monthlyPurchaseRate)}`} label="achats / mois" />}
     {summary.typicalPurchase === null ? null : <Fact value={amount(summary.typicalPurchase, true)} label="par passage" />}
     {summary.monthlyObservedCost === null ? null : <Fact value={amount(summary.monthlyObservedCost, true)} label="par mois" />}
@@ -167,7 +188,7 @@ export function PersonaEditorialView({ model, direct, headingId }: { readonly mo
   const months = monthKeys(model.period.first, model.period.certifiedThrough);
   return <div className={styles.root}>
     <ProfileHeader model={model} headingId={headingId} />
-    <Section id="persona-work-title" title="Nos journées de travail"><div className={styles.workGrid}><Permit person={model.persons[0]} /><Peugeot model={model} /><WorkMeals person="adrien" meal={model.persons[0].work.workMeals} /><WorkMeals person="manon" meal={model.persons[1].work.workMeals} /></div></Section>
+    <Section id="persona-work-title" title="Nos journées de travail"><div className={styles.workGrid}><Peugeot model={model} /><Permit person={model.persons[0]} /><WorkMeals person="adrien" meal={model.persons[0].work.workMeals} /><WorkMeals person="manon" meal={model.persons[1].work.workMeals} /></div></Section>
     <Section id="persona-universes-title" title="Nos univers personnels"><div className={styles.universesGrid}><AdrienUniverses person={model.persons[0]} direct={direct} /><ManonUniverses person={model.persons[1]} months={months} /></div></Section>
     <Section id="persona-habits-title" title="Nos habitudes qui reviennent"><div className={styles.habitsGrid}><Grooming person={model.persons[0]} /><Beauty person={model.persons[1]} /><Tobacco person={model.persons[0]} /><Vape person={model.persons[1]} /><Cigarettes person={model.persons[1]} /></div></Section>
     <Section id="persona-social-title" title="Notre vie sociale, chacun de son côté"><div className={styles.socialGrid}><Family person={model.persons[1]} months={months} /><Friends person={model.persons[1]} months={months} /><div className={styles.outingsPair}><Outings name="Adrien" outings={model.persons[0].socialLife.outingsWithoutPartnerParticipation} /><Outings name="Manon" outings={model.persons[1].socialLife.outingsWithoutPartnerParticipation} /></div></div></Section>
