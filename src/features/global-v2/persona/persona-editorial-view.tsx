@@ -76,7 +76,7 @@ function Peugeot({ model }: { readonly model: PersonaEditorialModel }) {
   const friendPlaceCount = manon.socialLife.friendVisits?.length ?? 0;
   return <article className={styles.peugeotProfile} data-person="manon">
     <header className={styles.peugeotHero}>
-      <div className={styles.peugeotIdentity}><h4>Notre Peugeot</h4><div className={styles.peugeotSubtitle}><span>{vehicleName} · 5 portes</span><span className={styles.peugeotBadge}>Véhicule du foyer</span></div></div>
+      <div className={styles.peugeotIdentity}><div className={styles.peugeotTitleRow}><h4>Notre Peugeot</h4><span className={styles.peugeotBadge}>Véhicule du foyer</span></div><p className={styles.peugeotSubtitle}>{vehicleName} · 5 portes</p></div>
       {vehicle.nonFuelCostTotalReady && vehicle.nonFuelCostTotal !== null ? <div className={styles.peugeotTotal}><strong>{amount(vehicle.nonFuelCostTotal, true)}</strong><span>hors carburant</span></div> : null}
     </header>
     <div className={styles.peugeotColumns}>
@@ -100,8 +100,7 @@ function Peugeot({ model }: { readonly model: PersonaEditorialModel }) {
       <div className={styles.peugeotDestinations}><h5>Où elle nous emmène</h5><div className={styles.peugeotDestinationList}>
         {workPlace ? <div><span>Travail</span><strong>{workPlace}</strong></div> : null}
         {familyPlaces.length ? <div><span>Famille</span><strong>{familyPlaces.join(" · ")}</strong></div> : null}
-        <div><span>Week-ends & loisirs</span><strong>Les 7 Laux · Marseille</strong></div>
-        {friendPlaceCount ? <div><span>Amis</span><strong>{friendPlaceCount} lieux visités</strong></div> : null}
+        <div><span>Week-ends & loisirs</span><strong>Les 7 Laux · Marseille</strong>{friendPlaceCount ? <small>Amis · {friendPlaceCount} lieux visités</small> : null}</div>
       </div>{workPlace && familyPlaces.length ? <p>Le travail structure son quotidien ; la famille et les week-ends font une grande partie de ses longs kilomètres.</p> : null}</div>
     </div>
   </article>;
