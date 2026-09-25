@@ -149,7 +149,7 @@ if (compareActivePublication !== undefined) {
   };
   const metadataKeys = new Set(["publicationMeta", "resourceMeta", "publicationId", "sourcePublicationId",
     "sourceAnalyticsRevision", "analyticsRevision", "sourceRevision", "dataRevision", "generatedAt", "computedAt",
-    "factsHash", "inputHash", "manifestHash", "resourceInputHash", "methodSignature", "instanceKey"]);
+    "factsHash", "inputHash", "purchaseInputHash", "manifestHash", "resourceInputHash", "methodSignature", "instanceKey"]);
   const business = (value, ownerBoundary = false) => Array.isArray(value) ? value.map((entry) => business(entry, ownerBoundary))
     : value !== null && typeof value === "object"
       ? Object.fromEntries(Object.entries(value)
