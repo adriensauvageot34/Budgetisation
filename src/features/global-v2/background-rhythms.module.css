@@ -49,6 +49,12 @@
 .chartTooltip b { margin-bottom: 4px; color: var(--color-ink); font-size: 17px; }
 .chartTooltip em { color: var(--color-muted); font-style: normal; font-weight: 760; }
 .chartTooltip i { margin-top: 6px; border-top: 1px solid var(--color-border); padding-top: 7px; color: var(--color-ink); font-style: normal; font-weight: 760; }
+.swileFundingTrack { display: grid; min-width: 0; gap: 5px; border-top: 1px solid var(--color-border); padding-top: 11px; }
+.swileFundingLabel { color: var(--color-muted); font-size: 10px; font-weight: 800; letter-spacing: .09em; text-transform: uppercase; }
+.swileFundingTrack svg { display: block; width: 100%; height: 40px; }
+.swileFundingArea { fill: rgb(84 129 109 / .13); }
+.swileFundingLine { fill: none; stroke: #54816d; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; vector-effect: non-scaling-stroke; }
+.swileFundingPoint { fill: #54816d; stroke: var(--color-surface); stroke-width: 1.5; vector-effect: non-scaling-stroke; }
 .rhythmAnnotations { display: flex; flex-wrap: wrap; gap: 8px; }
 .rhythmAnnotation { margin: 0; border-left: 2px solid var(--color-primary-soft); padding: 3px 10px; color: var(--color-muted); font-size: 11px; line-height: 1.45; }
 .fuelPaidRail { position: relative; z-index: 5; display: grid; gap: 14px; margin-top: 18px; border-top: 1px solid var(--color-border); padding-top: 20px; background: var(--color-surface); }
@@ -147,6 +153,7 @@
   .monthAnchor > span { font-size: 8px; }
   .selectedMonthGuide { top: 88px; }
   .chartTooltip { width: 174px; padding: 9px 10px; font-size: 9px; }
+  .swileFundingTrack svg { height: 32px; }
   .fuelPaidRail > header { grid-template-columns: 1fr; }
   .fuelPaidRail > header > strong { justify-items: start; }
   .fuelPaidRail > div { height: 56px; }

@@ -35,7 +35,7 @@ export function FoodMonthFocus({ month, annotations, connectorPosition, onClose 
   const titleId = `food-focus-${monthKey}`;
   return <RhythmMonthFocusRegion domain="food" labelledBy={titleId} connectorPosition={connectorPosition}>
     <header className={styles.monthFocusHeader}>
-      <div><span>{monthLabel(monthKey).toLocaleUpperCase("fr-FR")}</span><h5 id={titleId}><span aria-hidden="true">{formatFoodMoney(money.total)}</span><span className={styles.srOnly}>{foodMoneyAccessibleLabel(money.total)}</span></h5><p>consacrés à cette lecture de l’alimentation</p>{month.showBenefitFunding && month.monthlyBenefitFunding !== null ? <small>dont {formatMoney(month.monthlyBenefitFunding, true)} financés par titres-restaurant</small> : null}{month.benefitCoverage === "OUT_OF_COVERAGE" ? <small>Source titres-restaurant non observée pour ce mois</small> : null}</div>
+      <div><span>{monthLabel(monthKey).toLocaleUpperCase("fr-FR")}</span><h5 id={titleId}><span aria-hidden="true">{formatFoodMoney(money.total)}</span><span className={styles.srOnly}>{foodMoneyAccessibleLabel(money.total)}</span></h5><p>consacrés à cette lecture de l’alimentation</p>{month.showBenefitFunding && month.monthlyBenefitFunding !== null ? <small>Swile · {formatMoney(month.monthlyBenefitFunding, true)} financés en titres-restaurant</small> : null}{month.benefitCoverage === "OUT_OF_COVERAGE" ? <small>Source titres-restaurant non observée pour ce mois</small> : null}</div>
       <button type="button" onClick={onClose}>Revenir à l’année <span aria-hidden>→</span></button>
     </header>
     <div className={styles.foodSummaryBand}>
