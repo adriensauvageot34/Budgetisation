@@ -252,6 +252,7 @@ export {
   GLOBAL_FOOD_HIGHLIGHT_POLICY_VERSION,
   GLOBAL_FOOD_RESTAURANT_CROSS_COVERAGE_POLICY_VERSION,
   GLOBAL_FOOD_RHYTHM_METHOD_VERSION,
+  GLOBAL_FOOD_PURCHASE_AWARE_METHOD_VERSION,
   GLOBAL_FOOD_SCOPE,
   buildGlobalFoodRhythmProjection,
   globalFoodAnnotationPolicy,
@@ -263,6 +264,7 @@ export {
   type GlobalFoodCompositionHighlight,
   type GlobalFoodDeliveryBehavior,
   type GlobalFoodFinancialComponent,
+  type GlobalFoodEconomicComponent,
   type GlobalFoodGroceryBehavior,
   type GlobalFoodRestaurantBehavior,
   type GlobalFoodRhythmMonth,
@@ -467,6 +469,7 @@ export {
 } from "./insight-selection";
 export {
   GLOBAL_GROCERY_ADAPTER_VERSION,
+  GLOBAL_GROCERY_PURCHASE_AWARE_ADAPTER_VERSION,
   GLOBAL_GROCERY_BASKET_POLICY_VERSION,
   GLOBAL_TIMELINE_CANDIDATE_ADAPTER_VERSION,
   buildGlobalGroceryCandidateBundle,

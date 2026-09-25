@@ -8,12 +8,13 @@ import {
   resolveMobilityNarrativePlaceRole,
   resolveMobilityNarrativeSemanticFamily,
   type GlobalFoodFinancialComponent,
+  type GlobalFoodEconomicComponent,
   type GlobalGroceryCandidateBundle,
   type MobilitySemanticFamily,
   type MonthlyMobilityNarrativeContextInput,
   type MonthlyMobilityNarrativeTripInput,
 } from "@/analytics/global-v2";
-import type { ActivityOccurrenceCostFact, ActivityOccurrenceFact, EconomicComponentFact, MobilityLegFact } from "@/analytics/facts";
+import type { ActivityOccurrenceCostFact, ActivityOccurrenceFact, EconomicComponentFact, MobilityLegFact, PurchaseAwareCanonicalResult } from "@/analytics/facts";
 import { addMonths, parseLocalDate, type YearMonth } from "@/core/time";
 import type { CanonicalMinimalPlanningBundle, CanonicalRepository } from "@/server/canonical/repository";
 import { optionalCanonicalString, type CanonicalRecord } from "@/server/canonical/record";
@@ -27,6 +28,7 @@ type BackgroundRhythmProjectionInput = {
   readonly minimalBundle: CanonicalMinimalPlanningBundle;
   readonly occurrences: readonly ActivityOccurrenceFact[];
   readonly activityCosts: readonly ActivityOccurrenceCostFact[];
+  readonly foodEconomicComponents?: readonly GlobalFoodEconomicComponent[];
 };
 
 const PAGE_SIZE = 1_000;
@@ -165,6 +167,66 @@ function financialComponents(input: {
       }];
     });
   });
+}
+
+/** One canonical economic closure can feed both FOOD and Grocery in the pilot. */
+export function projectGlobalFoodEconomicComponents(input: {
+  readonly canonical: PurchaseAwareCanonicalResult;
+  readonly bundle: CanonicalMinimalPlanningBundle;
+  readonly subcategoryRows: readonly CanonicalRecord[];
+}): readonly GlobalFoodEconomicComponent[] {
+  if (input.canonical.visibility !== "PURCHASE_AWARE_PILOT" || input.canonical.status !== "PASS") {
+    throw new TypeError("FOOD_PURCHASE_AWARE_CANONICAL_BLOCKED");
+  }
+  const subcategoryKeyById = new Map(input.subcategoryRows.flatMap((row) => {
+    const id = optionalCanonicalString(row, ["subcategory_id"]);
+    const key = optionalCanonicalString(row, ["subcategory_key"]);
+    return id === undefined || key === undefined ? [] : [[id, key] as const];
+  }));
+  const legacy = financialComponents({
+    facts: input.canonical.facts.filter((fact): fact is EconomicComponentFact => fact.fact !== "fct_purchase_aware_economic_component"),
+    bundle: input.bundle,
+    subcategoryRows: input.subcategoryRows,
+  }).map((component): GlobalFoodEconomicComponent => ({
+    canonicalComponentKey: component.canonicalComponentKey,
+    economicSegmentKey: component.economicSegmentKey,
+    purchaseIdentityKey: `operation:${component.operationId}`,
+    purchaseEventId: null,
+    economicMonth: component.economicMonth,
+    economicDate: component.economicDate,
+    amount: { status: "KNOWN", value: component.amount },
+    subcategoryKey: component.subcategoryKey,
+    semanticPurpose: component.operationTypePrecis === "Repas du midi au travail" ? "WORK_LUNCH" : null,
+    merchantLabel: component.merchantLabel,
+    articleCount: component.articleCount,
+    sourceType: component.sourceType,
+  }));
+  const purchases = input.canonical.facts.flatMap((fact): readonly GlobalFoodEconomicComponent[] => {
+    if (fact.fact !== "fct_purchase_aware_economic_component") return [];
+    if (fact.economicAmount.status !== "KNOWN" && fact.economicAmount.status !== "LOWER_BOUND") {
+      throw new TypeError(`FOOD_PURCHASE_AMOUNT_UNRESOLVED:${fact.purchaseEventId}`);
+    }
+    const subcategoryKey = fact.taxonomy.subcategoryId === null ? undefined : subcategoryKeyById.get(fact.taxonomy.subcategoryId);
+    if (subcategoryKey === undefined) throw new TypeError(`FOOD_PURCHASE_SUBCATEGORY_UNRESOLVED:${fact.purchaseEventId}`);
+    if (fact.timing.economicMonth === null) throw new TypeError(`FOOD_PURCHASE_TIMING_UNRESOLVED:${fact.purchaseEventId}`);
+    return [{
+      canonicalComponentKey: String(fact.canonicalComponentKey),
+      economicSegmentKey: `purchase-event:${fact.purchaseEventId}:${fact.timing.economicMonth}`,
+      purchaseIdentityKey: fact.purchaseIdentityKey,
+      purchaseEventId: fact.purchaseEventId,
+      economicMonth: String(fact.timing.economicMonth),
+      economicDate: fact.timing.economicDate === null ? null : String(fact.timing.economicDate),
+      amount: fact.economicAmount.status === "KNOWN"
+        ? { status: "KNOWN", value: String(fact.economicAmount.value) }
+        : { status: "LOWER_BOUND", minimum: String(fact.economicAmount.minimum) },
+      subcategoryKey,
+      semanticPurpose: fact.semanticPurpose === "WORK_LUNCH" ? "WORK_LUNCH" : null,
+      merchantLabel: null,
+      articleCount: null,
+      sourceType: fact.sourceKind === "Purchase_component" ? "PURCHASE_COMPONENT" : "OPERATION",
+    }];
+  });
+  return [...legacy, ...purchases].sort((left, right) => left.economicSegmentKey.localeCompare(right.economicSegmentKey));
 }
 
 function semanticTier(context: CanonicalRecord): 1 | 2 | 3 | 4 {
@@ -319,7 +381,9 @@ export async function resolveGlobalBackgroundRhythmsProduction(input: Background
   const food = buildGlobalFoodRhythmProjection({
     startMonth: String(firstMonth),
     endMonth: String(lastMonth),
-    financialComponents: financialComponents({ facts: input.minimalBundle.economicFacts, bundle: input.minimalBundle, subcategoryRows: input.subcategoryRows }),
+    ...(input.foodEconomicComponents === undefined
+      ? { financialComponents: financialComponents({ facts: input.minimalBundle.economicFacts, bundle: input.minimalBundle, subcategoryRows: input.subcategoryRows }) }
+      : { economicComponents: input.foodEconomicComponents }),
     grocery: input.grocery,
     activityOccurrences: input.occurrences,
     activityCosts: input.activityCosts,

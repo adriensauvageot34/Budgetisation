@@ -305,6 +305,7 @@ export function resolveGlobalGroceryCandidateAdapter(input: {
   readonly activityCostProfiles: readonly GlobalActivityCostProfileAdapterInput[];
   readonly m2MonthlyComponents: readonly GlobalM2MonthlyComponent[];
   readonly subcategoryRows: readonly CanonicalRecord[];
+  readonly foodEconomicComponents?: readonly import("@/analytics/global-v2/food-rhythm").GlobalFoodEconomicComponent[];
 }) {
   const grocerySubcategories = input.subcategoryRows.filter((row) => optionalCanonicalString(row, ["subcategory_key"]) === "alimentation__courses_alimentaires");
   if (grocerySubcategories.length !== 1) throw new TypeError(`GROCERY_SUBCATEGORY_AUTHORITY_COUNT:${grocerySubcategories.length}`);
@@ -319,5 +320,6 @@ export function resolveGlobalGroceryCandidateAdapter(input: {
     occurrences: input.occurrences,
     activityCostProfile: profiles[0]!,
     m2MonthlyComponents: input.m2MonthlyComponents,
+    ...(input.foodEconomicComponents === undefined ? {} : { economicComponents: input.foodEconomicComponents }),
   });
 }

@@ -9,6 +9,7 @@ import type { GlobalM2MonthlyComponent } from "./category-needs";
 
 export const GLOBAL_TIMELINE_CANDIDATE_ADAPTER_VERSION = "global-life-timeline-candidate-adapter@v1" as const;
 export const GLOBAL_GROCERY_ADAPTER_VERSION = "global-grocery-household-month-adapter@v1" as const;
+export const GLOBAL_GROCERY_PURCHASE_AWARE_ADAPTER_VERSION = "global-grocery-household-month-adapter@v2-purchase-aware" as const;
 export const GLOBAL_GROCERY_BASKET_POLICY_VERSION = "global-grocery-basket-structure@v1" as const;
 
 export const globalGroceryBasketPolicy = Object.freeze({
@@ -234,12 +235,13 @@ export type GlobalGroceryMonth = {
     | { readonly status: "GATED"; readonly reasonCode: "COVERAGE_BELOW_70_PERCENT" };
   readonly monthlyGrocerySpend:
     | { readonly status: "KNOWN"; readonly value: Money }
+    | { readonly status: "LOWER_BOUND"; readonly minimum: Money; readonly exactKnownSubtotal: Money }
     | { readonly status: "UNKNOWN" };
   readonly limitationCodes: readonly string[];
 };
 
 export type GlobalGroceryCandidateBundle = {
-  readonly adapterVersion: typeof GLOBAL_GROCERY_ADAPTER_VERSION;
+  readonly adapterVersion: typeof GLOBAL_GROCERY_ADAPTER_VERSION | typeof GLOBAL_GROCERY_PURCHASE_AWARE_ADAPTER_VERSION;
   readonly grain: "HOUSEHOLD_MONTH";
   readonly basketPolicy: typeof globalGroceryBasketPolicy;
   readonly thresholds: { readonly p25: Money; readonly p75: Money };
@@ -274,6 +276,7 @@ export function buildGlobalGroceryCandidateBundle(input: {
   readonly occurrences: readonly ActivityOccurrenceFact[];
   readonly activityCostProfile: GlobalActivityCostProfileAdapterInput;
   readonly m2MonthlyComponents: readonly GlobalM2MonthlyComponent[];
+  readonly economicComponents?: readonly import("./food-rhythm").GlobalFoodEconomicComponent[];
 }): GlobalGroceryCandidateBundle {
   assertIdentity(input.groceryActivityId, "GROCERY_ACTIVITY_ID");
   assertIdentity(input.grocerySubcategoryId, "GROCERY_SUBCATEGORY_ID");
@@ -300,9 +303,19 @@ export function buildGlobalGroceryCandidateBundle(input: {
     const knownCostOccurrenceCount = monthCosts.length;
     const coverage = occurrenceCount === 0 ? 0 : knownCostOccurrenceCount / occurrenceCount;
     const spendComponents = input.m2MonthlyComponents.filter((component) => component.month === month && component.subcategory.status === "KNOWN" && String(component.subcategory.id) === input.grocerySubcategoryId);
-    const monthlyGrocerySpend = spendComponents.length === 0
-      ? { status: "UNKNOWN" as const }
-      : { status: "KNOWN" as const, value: spendComponents.reduce((sum, component) => addMoney(sum, component.amount), zero) };
+    const economicCourses = input.economicComponents?.filter((component) => component.economicMonth === month && component.subcategoryKey === "alimentation__courses_alimentaires");
+    const monthlyGrocerySpend = economicCourses === undefined
+      ? spendComponents.length === 0
+        ? { status: "UNKNOWN" as const }
+        : { status: "KNOWN" as const, value: spendComponents.reduce((total, component) => addMoney(total, component.amount), zero) }
+      : economicCourses.some(({ amount }) => amount.status === "LOWER_BOUND")
+        ? {
+            status: "LOWER_BOUND" as const,
+            exactKnownSubtotal: economicCourses.filter(({ amount }) => amount.status === "KNOWN")
+              .reduce((total, { amount }) => addMoney(total, parseMoney(amount.status === "KNOWN" ? amount.value : "0")), zero),
+            minimum: economicCourses.reduce((total, { amount }) => addMoney(total, parseMoney(amount.status === "KNOWN" ? amount.value : amount.minimum)), zero),
+          }
+        : { status: "KNOWN" as const, value: economicCourses.reduce((total, { amount }) => addMoney(total, parseMoney(amount.status === "KNOWN" ? amount.value : "0")), zero) };
     const eligible = coverage >= globalGroceryBasketPolicy.monthlyCoverageMinimum;
     return {
       month,
@@ -326,11 +339,14 @@ export function buildGlobalGroceryCandidateBundle(input: {
     ...occurrences.map((occurrence) => ({ ref: `activity-occurrence:${occurrence.lifeEventId}`, digest: digest(occurrence) })),
     ...costs.map((cost) => ({ ref: `activity-cost:${cost.occurrenceId}`, digest: digest(cost) })),
     ...input.m2MonthlyComponents.filter((component) => component.subcategory.status === "KNOWN" && String(component.subcategory.id) === input.grocerySubcategoryId)
+      .filter(() => input.economicComponents === undefined)
       .map((component) => ({ ref: `m2-component:${component.canonicalComponentKey}:${component.month}`, digest: digest(component) })),
+    ...(input.economicComponents ?? []).filter(({ subcategoryKey }) => subcategoryKey === "alimentation__courses_alimentaires")
+      .map((component) => ({ ref: `economic-component:${component.economicSegmentKey}`, digest: digest(component) })),
   ].sort((left, right) => left.ref.localeCompare(right.ref));
   if (new Set(dependencyClosure.map(({ ref }) => ref)).size !== dependencyClosure.length) throw new TypeError("GROCERY_DEPENDENCY_DUPLICATE");
   const structural = {
-    adapterVersion: GLOBAL_GROCERY_ADAPTER_VERSION,
+    adapterVersion: input.economicComponents === undefined ? GLOBAL_GROCERY_ADAPTER_VERSION : GLOBAL_GROCERY_PURCHASE_AWARE_ADAPTER_VERSION,
     grain: "HOUSEHOLD_MONTH" as const,
     basketPolicy: globalGroceryBasketPolicy,
     thresholds,
