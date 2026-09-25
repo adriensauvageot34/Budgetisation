@@ -43,6 +43,7 @@ const includePersonaProfile = args.has("--include-persona-profile");
 const backgroundVisibility = args.get("--background-visibility") ?? "DEFAULT";
 const candidateSourceRevision = args.get("--candidate-source-revision");
 const compareActivePublication = args.get("--compare-active-publication");
+const simulateFutureRevisions = args.has("--simulate-future-revisions");
 if (!/^[0-9a-f]{40}$/u.test(implementationIdentity ?? "") || !/^\d{4}-\d{2}-\d{2}T/u.test(asOf ?? "")) {
   throw new TypeError("Usage: --implementation-sha=<40 hex> --as-of=<Instant> [--fixture-dir=<private export>]");
 }
@@ -91,6 +92,13 @@ if (fixtureDirectory !== undefined) {
   });
   const { createGlobalV2CandidateContext } = require(path.resolve(root, "src/server/analytics/global-v2-production-orchestrator.ts"));
   context = await createGlobalV2CandidateContext({ client, householdId, asOf });
+}
+if (simulateFutureRevisions) {
+  if (fixtureDirectory !== undefined || backgroundVisibility !== "DEFAULT" || candidateSourceRevision !== undefined) {
+    throw new TypeError("GLOBAL_FUTURE_REVISION_SIMULATION_INVALID");
+  }
+  context = { ...context, dataRevision: String(Number(context.dataRevision) + 1),
+    analyticsRevision: String(Number(context.analyticsRevision) + 1) };
 }
 
 const candidate = await prepareGlobalV2LiveCandidate({ project: GLOBAL_V2_LIVE_PROJECT, client, context,
