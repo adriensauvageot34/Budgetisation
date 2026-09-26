@@ -1,5 +1,8 @@
 import type { ForecastComponent, ForecastRange } from "@/server/phase2/month-forecast";
 import type { MonthForecastSnapshot } from "@/server/phase2/month-forecast-snapshot";
+import type { StoredMonthInputs } from "@/server/phase2/month-inputs";
+import { REPLACEABLE_ENVELOPES, type MonthScenario } from "@/server/phase2/month-scenario";
+import { updateMonthInputs } from "@/app/mois-a-venir/actions";
 
 const currency = (value: string | null): string => value === null
   ? "Inconnu"
@@ -47,7 +50,7 @@ function Scenario({ label, range, field, active = false }: { label: string; rang
 
 const lifeKeys = ["food", "health", "personal-care", "tobacco-vape", "work-coffee", "animal-care"] as const;
 
-export function MonthForecastView({ forecast }: { forecast: MonthForecastSnapshot }) {
+export function MonthForecastView({ forecast, scenario, stored, whatIfError, inputError }: { forecast: MonthForecastSnapshot; scenario: MonthScenario; stored: StoredMonthInputs; whatIfError: boolean; inputError: boolean }) {
   const obligations = forecast.components.filter((component) => component.key.startsWith("obligation:"));
   const life = lifeKeys.map((key) => forecast.components.find((component) => component.key === key)).filter((component): component is ForecastComponent => component !== undefined);
   const mobility = forecast.components.find((component) => component.key === "mobility-usage");
@@ -65,15 +68,15 @@ export function MonthForecastView({ forecast }: { forecast: MonthForecastSnapsho
     <section className="overflow-hidden rounded-3xl bg-gradient-to-br from-slate-900 via-emerald-950 to-emerald-800 p-5 text-white shadow-xl sm:p-8" aria-labelledby="forecast-summary">
       <p className="text-xs font-bold uppercase tracking-[0.18em] text-emerald-200">Scénario central · probable</p>
       <h2 id="forecast-summary" className="mt-1 text-xl font-bold">Ce qui reste à répartir ce mois</h2>
-      <div className="mt-5 grid gap-3 sm:grid-cols-[1.3fr_1fr_1fr]"><Figure label="FreeToSpend" value={forecast.freeToSpend.central} prominent note="Après le socle économique et la réserve de sécurité. Hors événements encore inconnus." />
-        <Figure label="Revenus attendus" value={forecast.income.central} note="Probable, pas encore encaissé." /><Figure label="Socle central" value={forecast.economicCost.central} note="Consommation économique connue." /></div>
-      <p className="mt-4 text-sm text-white/80">Réserve de sécurité : <strong>{currency(forecast.reserve.amount)}</strong> · Disponible maintenant : <strong>{forecast.availableNow.status === "UNAVAILABLE" ? "indisponible sans solde d’ouverture" : currency(forecast.availableNow.value)}</strong></p>
+      <div className="mt-5 grid gap-3 sm:grid-cols-[1.3fr_1fr_1fr]"><Figure label="FreeToSpend" value={scenario.freeToSpend.central} prominent note="Après le socle connu, vos inputs et la réserve. Hors événements encore inconnus." />
+        <Figure label="Revenus attendus" value={forecast.income.central} note="Probable, pas encore encaissé." /><Figure label="Socle central" value={scenario.economicCost.central} note="Consommation économique connue et déclarée." /></div>
+      <p className="mt-4 text-sm text-white/80">Réserve de sécurité : <strong>{currency(stored.inputs.safetyReserve)}</strong> · Disponible maintenant : <strong>{scenario.availableNow.status === "UNAVAILABLE" ? "Inconnu" : currency(scenario.availableNow.value)}</strong></p>
     </section>
 
     <section className="card p-5 sm:p-7" aria-labelledby="forecast-scenarios"><div className="flex flex-wrap items-baseline justify-between gap-2"><h2 id="forecast-scenarios" className="text-xl font-black">Trois scénarios</h2><span className="text-xs font-semibold text-slate-500">FreeToSpend mensuel · socle connu</span></div>
-      <div className="mt-4 grid gap-3 sm:grid-cols-3"><Scenario label="Prudent" range={forecast.freeToSpend} field="low" /><Scenario label="Central" range={forecast.freeToSpend} field="central" active /><Scenario label="Favorable" range={forecast.freeToSpend} field="high" /></div>
+      <div className="mt-4 grid gap-3 sm:grid-cols-3"><Scenario label="Prudent" range={scenario.freeToSpend} field="low" /><Scenario label="Central" range={scenario.freeToSpend} field="central" active /><Scenario label="Favorable" range={scenario.freeToSpend} field="high" /></div>
       <p className="mt-4 text-sm text-slate-600">L’amplitude vient des revenus probables et des dépenses habituelles observées. Les événements non déclarés et les échéances conditionnelles restent inconnus.</p>
-      <details className="mt-3 text-sm text-slate-600"><summary className="cursor-pointer font-semibold">Voir le socle économique bas / central / haut</summary><p className="mt-2">{currency(forecast.economicCost.low)} · {currency(forecast.economicCost.central)} · {currency(forecast.economicCost.high)}</p></details>
+      <details className="mt-3 text-sm text-slate-600"><summary className="cursor-pointer font-semibold">Voir le socle économique bas / central / haut</summary><p className="mt-2">{currency(scenario.economicCost.low)} · {currency(scenario.economicCost.central)} · {currency(scenario.economicCost.high)}</p></details>
     </section>
 
     <section className="card p-5 sm:p-7" aria-labelledby="forecast-obligations"><div className="flex flex-wrap items-baseline justify-between gap-2"><h2 id="forecast-obligations" className="text-xl font-black">Calendrier des obligations</h2><span className="text-sm font-bold text-emerald-800">{currency(forecast.obligations.central)} · Engagé / très probable</span></div>
@@ -89,11 +92,61 @@ export function MonthForecastView({ forecast }: { forecast: MonthForecastSnapsho
     </section>
 
     <div className="grid gap-6 lg:grid-cols-2"><section className="card p-5 sm:p-7" aria-labelledby="forecast-mobility"><h2 id="forecast-mobility" className="text-xl font-black">Mobilité</h2><p className="mt-1 text-sm text-slate-600">Le carburant consommé et le carburant payé sont deux lectures différentes.</p><div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2"><Figure label="Usage économique estimé" value={mobility?.central ?? null} note="Inclus dans le socle économique." /><Figure label="Vue cash totale" value={forecast.cash.grossBeforeUnconfirmedFunding.central} note="Inclut une réserve de carburant payé ; son montant isolé n'est pas publié." /></div>{mobility && <Evidence component={mobility} />}</section>
-      <section className="card p-5 sm:p-7" aria-labelledby="forecast-funding"><h2 id="forecast-funding" className="text-xl font-black">Funding · Benefit</h2><p className="mt-1 text-sm text-slate-600">Le financement ne réduit pas la consommation économique.</p><div className="mt-4 grid gap-3 sm:grid-cols-2"><Figure label="Benefit probable" value={forecast.funding.benefitHistoricalRange.central} note="Repère historique, non confirmé pour ce mois." /><Figure label="Benefit confirmé" value={forecast.cash.confirmedBenefit} note="Solde du wallet inconnu." /></div><p className="mt-4 text-sm text-slate-700">Besoin cash avant Benefit : <strong>{currency(forecast.cash.grossBeforeUnconfirmedFunding.central)}</strong></p><p className="mt-1 text-sm text-slate-700">Si le financement historique se confirme : <strong>{currency(forecast.cash.afterPotentialBenefit.central)}</strong> hors Benefit.</p></section></div>
+      <section className="card p-5 sm:p-7" aria-labelledby="forecast-funding"><h2 id="forecast-funding" className="text-xl font-black">Funding · Benefit</h2><p className="mt-1 text-sm text-slate-600">Le financement ne réduit pas la consommation économique.</p><div className="mt-4 grid gap-3 sm:grid-cols-2"><Figure label="Benefit probable" value={forecast.funding.benefitHistoricalRange.central} note="Repère historique, non confirmé pour ce mois." /><Figure label="Solde Benefit déclaré" value={stored.inputs.benefit.currentBalance?.amount ?? null} note="Séparé du coût alimentaire." /></div><p className="mt-4 text-sm text-slate-700">Besoin cash avant Benefit : <strong>{currency(forecast.cash.grossBeforeUnconfirmedFunding.central)}</strong></p><p className="mt-1 text-sm text-slate-700">Chargement attendu déclaré : <strong>{currency(stored.inputs.benefit.expectedLoading?.amount ?? null)}</strong> · non reçu.</p><p className="mt-1 text-sm text-slate-700">Si le financement historique se confirme : <strong>{currency(forecast.cash.afterPotentialBenefit.central)}</strong> hors Benefit.</p></section></div>
 
-    <div className="grid gap-6 lg:grid-cols-2"><section className="card p-5 sm:p-7" aria-labelledby="forecast-events"><h2 id="forecast-events" className="text-xl font-black">Événements</h2><p className="mt-3 text-sm text-slate-700">Prévu par vous : {forecast.events.planned.length === 0 ? "aucun événement enregistré pour ce mois." : `${forecast.events.planned.length} événement(s).`}</p><p className="mt-2 rounded-xl bg-amber-50 p-3 text-sm font-semibold text-amber-900">Delta financier : {forecast.events.eventDelta === null ? "Inconnu" : currency(forecast.events.eventDelta)}</p><p className="mt-2 text-xs text-slate-500">Un événement futur non déclaré ne vaut pas zéro.</p></section>
-      <section className="card p-5 sm:p-7" aria-labelledby="forecast-confirm"><h2 id="forecast-confirm" className="text-xl font-black">À confirmer</h2><ul className="mt-3 space-y-2 text-sm text-slate-700"><li>Ornikar / Alma : échéance du mois non prouvée.</li><li>Benefit / Swile : financement et solde actuel à vérifier.</li><li>Données récentes : août et septembre ne figurent pas encore dans les références publiées.</li><li>Solde d’ouverture : nécessaire pour connaître le disponible maintenant.</li></ul></section></div>
+    <div className="grid gap-6 lg:grid-cols-2"><section className="card p-5 sm:p-7" aria-labelledby="forecast-events"><h2 id="forecast-events" className="text-xl font-black">Événements</h2><p className="mt-3 text-sm text-slate-700">Prévu par vous : {stored.inputs.plannedEvents.length === 0 ? "aucun événement enregistré pour ce mois." : `${stored.inputs.plannedEvents.length} événement(s).`}</p><p className="mt-2 rounded-xl bg-amber-50 p-3 text-sm font-semibold text-amber-900">Delta déclaré : {currency(scenario.userPlannedEventDelta)} · Autres événements : Inconnu</p><p className="mt-2 text-xs text-slate-500">Un événement futur non déclaré ne vaut pas zéro.</p></section>
+      <section className="card p-5 sm:p-7" aria-labelledby="forecast-confirm"><h2 id="forecast-confirm" className="text-xl font-black">À confirmer</h2><ul className="mt-3 space-y-2 text-sm text-slate-700"><li>Ornikar / Alma : {stored.inputs.confirmedObligations.length ? "échéance déclarée par vous, incluse dans le scénario." : "échéance du mois non prouvée."}</li><li>Benefit / Swile : {stored.inputs.benefit.currentBalance ? "solde déclaré ; chargement et utilisation future restent à vérifier." : "financement et solde actuel à vérifier."}</li><li>Données récentes : août et septembre ne figurent pas encore dans les références publiées.</li><li>Disponible immédiat : {scenario.availableNow.status === "AVAILABLE" ? "calculé depuis votre solde daté d’aujourd’hui, moins la réserve." : "solde actuel ou mouvements depuis ce solde à confirmer."}</li></ul></section></div>
 
-    <section className="rounded-3xl border border-dashed border-emerald-300 bg-emerald-50/60 p-5 sm:p-7" aria-labelledby="forecast-what-if"><span className="text-xs font-bold uppercase tracking-widest text-emerald-700">Prochainement</span><h2 id="forecast-what-if" className="mt-2 text-xl font-black">Et si on changeait le mois ?</h2><p className="mt-2 text-sm text-slate-600">Espace réservé aux essais visuels. Aucun scénario personnel n’est enregistré ici pour le moment.</p></section>
+    <section className="card p-5 sm:p-7" aria-labelledby="forecast-inputs">
+      <h2 id="forecast-inputs" className="text-xl font-black">Vos informations pour ce mois</h2>
+      {inputError && <p className="mt-2 rounded-lg bg-red-50 p-3 text-sm font-semibold text-red-800" role="alert">Information invalide : vérifiez les montants, dates et enveloppes remplacées.</p>}
+      <p className="mt-1 text-sm text-slate-600">Elles complètent la prévision publiée. Dernière modification : {stored.updatedAt ? dateLabel(stored.updatedAt) : "aucune"}.</p>
+      <form action={updateMonthInputs} className="mt-5 grid gap-4 sm:grid-cols-2">
+        <input type="hidden" name="targetMonth" value={forecast.meta.targetMonth} /><input type="hidden" name="intent" value="settings" />
+        <label className="text-sm font-semibold">Réserve de sécurité (€)<input className="mt-1 w-full rounded-lg border p-2" name="safetyReserve" type="number" min="0" step="0.01" required defaultValue={stored.inputs.safetyReserve} /></label>
+        <label className="text-sm font-semibold">Solde bancaire d’ouverture (€)<input className="mt-1 w-full rounded-lg border p-2" name="openingAmount" type="number" step="0.01" defaultValue={stored.inputs.openingBalance?.amount ?? ""} /></label>
+        <label className="text-sm font-semibold">Date du solde bancaire<input className="mt-1 w-full rounded-lg border p-2" name="openingDate" type="date" defaultValue={stored.inputs.openingBalance?.asOfDate ?? ""} /></label>
+        <label className="text-sm font-semibold">Solde Benefit actuel (€)<input className="mt-1 w-full rounded-lg border p-2" name="benefitBalance" type="number" min="0" step="0.01" defaultValue={stored.inputs.benefit.currentBalance?.amount ?? ""} /></label>
+        <label className="text-sm font-semibold">Date du solde Benefit<input className="mt-1 w-full rounded-lg border p-2" name="benefitDate" type="date" defaultValue={stored.inputs.benefit.currentBalance?.asOfDate ?? ""} /></label>
+        <label className="text-sm font-semibold">Chargement Benefit attendu (€)<input className="mt-1 w-full rounded-lg border p-2" name="benefitLoading" type="number" min="0" step="0.01" defaultValue={stored.inputs.benefit.expectedLoading?.amount ?? ""} /></label>
+        <label className="text-sm font-semibold">Date prévue du chargement<input className="mt-1 w-full rounded-lg border p-2" name="loadingDate" type="date" defaultValue={stored.inputs.benefit.expectedLoading?.expectedDate ?? ""} /></label>
+        <div className="sm:col-span-2"><button className="rounded-lg bg-slate-900 px-4 py-2 font-bold text-white" type="submit">Enregistrer les informations</button></div>
+      </form>
+      <div className="mt-6 grid gap-6 lg:grid-cols-2">
+        <div><h3 className="font-bold">Événement prévu par vous</h3>
+          <form action={updateMonthInputs} className="mt-2 grid gap-2">
+            <input type="hidden" name="targetMonth" value={forecast.meta.targetMonth} /><input type="hidden" name="intent" value="add-event" />
+            <input className="rounded-lg border p-2" name="eventLabel" placeholder="Événement" aria-label="Événement" required />
+            <input className="rounded-lg border p-2" name="eventDate" type="date" defaultValue={`${forecast.meta.targetMonth}-01`} required aria-label="Date de l’événement" />
+            <label className="text-sm">Coût prévu (€)<input className="mt-1 w-full rounded-lg border p-2" name="eventCost" type="number" min="0" step="0.01" required /></label>
+            <label className="text-sm">Dépense habituelle remplacée (€)<input className="mt-1 w-full rounded-lg border p-2" name="baselineDisplaced" type="number" min="0" step="0.01" defaultValue="0" required /></label>
+            <label className="text-sm">Enveloppe habituelle remplacée<select className="mt-1 w-full rounded-lg border p-2" name="eventParent"><option value="">Aucune</option>{forecast.components.filter((part) => REPLACEABLE_ENVELOPES.some((key) => key === part.key)).map((part) => <option key={part.key} value={part.key}>{part.label}</option>)}</select></label>
+            <button className="rounded-lg border border-slate-900 px-4 py-2 font-bold" type="submit">Ajouter l’événement</button>
+          </form>
+          <ul className="mt-3 space-y-2">{stored.inputs.plannedEvents.map((event) => <li key={event.id} className="flex items-center justify-between gap-2 text-sm"><span>{event.label} · {currency(event.plannedCost)} · remplace {currency(event.baselineDisplaced)}</span><form action={updateMonthInputs}><input type="hidden" name="targetMonth" value={forecast.meta.targetMonth} /><input type="hidden" name="intent" value="remove-event" /><input type="hidden" name="eventId" value={event.id} /><button className="underline" type="submit">Retirer</button></form></li>)}</ul>
+        </div>
+        <div><h3 className="font-bold">Échéance conditionnelle confirmée</h3>
+          <form action={updateMonthInputs} className="mt-2 grid gap-2">
+            <input type="hidden" name="targetMonth" value={forecast.meta.targetMonth} /><input type="hidden" name="intent" value="confirm-obligation" />
+            <select className="rounded-lg border p-2" name="componentKey" required aria-label="Échéance conditionnelle">{obligations.filter((part) => part.knowledgeState === "CONDITIONAL_UNKNOWN" && /Ornikar|Alma/iu.test(part.label)).map((part) => <option key={part.key} value={part.key}>{part.label}</option>)}</select>
+            <input className="rounded-lg border p-2" name="obligationDate" type="date" defaultValue={`${forecast.meta.targetMonth}-01`} required aria-label="Date de l’échéance" />
+            <input className="rounded-lg border p-2" name="obligationAmount" type="number" min="0" step="0.01" required aria-label="Montant confirmé" placeholder="Montant confirmé (€)" />
+            <button className="rounded-lg border border-slate-900 px-4 py-2 font-bold" type="submit">Confirmer l’échéance</button>
+          </form>
+          <ul className="mt-3 space-y-2">{stored.inputs.confirmedObligations.map((item) => <li key={item.componentKey} className="flex items-center justify-between gap-2 text-sm"><span>{obligations.find((part) => part.key === item.componentKey)?.label} · {currency(item.amount)}</span><form action={updateMonthInputs}><input type="hidden" name="targetMonth" value={forecast.meta.targetMonth} /><input type="hidden" name="intent" value="remove-obligation" /><input type="hidden" name="componentKey" value={item.componentKey} /><button className="underline" type="submit">Retirer</button></form></li>)}</ul>
+        </div>
+      </div>
+    </section>
+    <section className="rounded-3xl border border-emerald-300 bg-emerald-50/60 p-5 sm:p-7" aria-labelledby="forecast-what-if"><h2 id="forecast-what-if" className="text-xl font-black">Et si vous faisiez un achat ?</h2><p className="mt-2 text-sm text-slate-600">Simulation temporaire, sans modifier la prévision publiée ni vos informations enregistrées.</p>
+      {whatIfError && <p className="mt-2 rounded-lg bg-red-50 p-3 text-sm font-semibold text-red-800" role="alert">Simulation invalide : vérifiez le montant couvert et l’enveloppe choisie.</p>}
+      <form method="get" className="mt-4 grid gap-3 sm:grid-cols-3">
+        <label className="text-sm font-semibold">Achat envisagé (€)<input className="mt-1 w-full rounded-lg border p-2" name="purchase" type="number" min="0" step="0.01" required defaultValue={scenario.whatIf?.amount ?? ""} /></label>
+        <label className="text-sm font-semibold">Déjà couvert par une enveloppe (€)<input className="mt-1 w-full rounded-lg border p-2" name="covered" type="number" min="0" step="0.01" defaultValue={scenario.whatIf?.covered ?? "0"} /></label>
+        <label className="text-sm font-semibold">Enveloppe parent<select className="mt-1 w-full rounded-lg border p-2" name="parent" defaultValue={scenario.whatIf?.parentEnvelope ?? ""}><option value="">Aucune</option>{forecast.components.filter((part) => REPLACEABLE_ENVELOPES.some((key) => key === part.key)).map((part) => <option value={part.key} key={part.key}>{part.label}</option>)}</select></label>
+        <button className="rounded-lg bg-emerald-800 px-4 py-2 font-bold text-white sm:col-span-3" type="submit">Simuler</button>
+      </form>
+      {scenario.whatIf && <div className="mt-4 grid gap-3 sm:grid-cols-3"><Figure label="Impact additif" value={scenario.whatIf.additiveImpact} /><Figure label="FreeToSpend après achat" value={scenario.freeToSpend.central} /><Figure label="Cash prudent après achat" value={scenario.cashPrudent.central} /></div>}
+      <p className="mt-3 text-xs text-slate-600">Cash prudent avant Benefit confirmé : {currency(scenario.cashPrudent.central)}. Solde Benefit et chargement attendu : {currency(scenario.benefitPotential)}. AvailableNow : {scenario.availableNow.status === "AVAILABLE" ? currency(scenario.availableNow.value) : "Inconnu — mouvements depuis le solde d’ouverture non établis ou solde absent"}.</p>
+    </section>
   </div>;
 }
