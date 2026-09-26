@@ -12,6 +12,7 @@ const originalLoad = Module._load;
 const originalResolve = Module._resolveFilename;
 Module._load = function load(request, parent, isMain) {
   if (request === "server-only") return {};
+  if (request === "@/app/mois-a-venir/actions") return { updateMonthInputs: async () => {} };
   return originalLoad.call(this, request, parent, isMain);
 };
 Module._resolveFilename = function resolve(request, parent, isMain, options) {
@@ -88,21 +89,41 @@ if (args.has("--ui-mapping")) {
   const React = require("react");
   const { renderToStaticMarkup } = require("react-dom/server");
   const { queryMonthForecast } = require(path.resolve(root, "src/server/phase2/month-forecast-snapshot.ts"));
+  const { readMonthInputs } = require(path.resolve(root, "src/server/phase2/month-inputs.ts"));
+  const { deriveMonthScenario } = require(path.resolve(root, "src/server/phase2/month-scenario.ts"));
   const { MonthForecastView } = require(path.resolve(root, "src/features/phase2/month-forecast-view.tsx"));
   const queried = await queryMonthForecast(client, householdId, targetMonth);
-  const render = (payload) => renderToStaticMarkup(React.createElement(MonthForecastView, { forecast: payload }));
+  const { data: snapshot, error: snapshotError } = await client.from("analytics_query_snapshots")
+    .select("payload").eq("household_id", householdId).eq("resource", "phase2_month_forecast")
+    .eq("period_month", `${targetMonth}-01`).eq("is_active", true).is("invalidated_at", null).single();
+  if (snapshotError) throw snapshotError;
+  const business = ({ components, income, obligations, economicCost, cash, funding, events, reserve, freeToSpend, availableNow, limitations }) =>
+    ({ components, income, obligations, economicCost, cash, funding, events, reserve, freeToSpend, availableNow, limitations });
+  assert.deepEqual(business(queried), business(snapshot.payload));
+  assert.deepEqual(business(forecast), business(queried));
+  const stored = await readMonthInputs(client, householdId, targetMonth);
+  const today = new Date().toISOString().slice(0, 10);
+  const render = (payload) => {
+    const scenario = deriveMonthScenario(payload, stored.inputs, null, today);
+    return renderToStaticMarkup(React.createElement(MonthForecastView, {
+      forecast: payload, scenario, stored, whatIfError: false, inputError: false,
+    }));
+  };
   const html = render(queried);
   assert.match(html, /985,48\s*€/u);
   assert.match(html, /2[\s\u00a0\u202f]*363,51\s*€/u);
   assert.match(html, /aucun événement enregistré/iu);
-  assert.match(html, /Delta financier : Inconnu/u);
-  assert.match(html, /indisponible sans solde d’ouverture/u);
+  assert.match(html, /Autres événements : Inconnu/u);
+  assert.match(html, /Disponible maintenant : <strong>Inconnu/u);
+  assert.match(html, /Prévision provisoire/u);
+  assert.match(html, /Données récentes : août et septembre/u);
+  assert.match(html, /Solde Benefit déclaré/u);
   assert.doesNotMatch(html, /0\s*€\s*événements/iu);
   const changed = structuredClone(queried);
   changed.freeToSpend.central = "12345.67";
   assert.match(render(changed), /12[\s\u00a0\u202f]*345,67\s*€/u);
   assert.doesNotMatch(render(changed), /985,48\s*€/u);
-  console.log(JSON.stringify({ test: "PASS UI payload mapping and UNKNOWN visibility", targetMonth,
+  console.log(JSON.stringify({ test: "PASS engine=snapshot=query=UI and UNKNOWN visibility", targetMonth,
     publicationId: queried.meta.sourcePublicationId, htmlBytes: Buffer.byteLength(html) }));
   process.exit(0);
 }
