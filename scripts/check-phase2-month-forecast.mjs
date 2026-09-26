@@ -24,8 +24,8 @@ Module._resolveFilename = function resolve(request, parent, isMain, options) {
     throw error;
   }
 };
-require.extensions[".ts"] = (module, filename) => module._compile(ts.transpileModule(fs.readFileSync(filename, "utf8"), {
-  compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022, esModuleInterop: true }, fileName: filename,
+for (const extension of [".ts", ".tsx"]) require.extensions[extension] = (module, filename) => module._compile(ts.transpileModule(fs.readFileSync(filename, "utf8"), {
+  compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022, jsx: ts.JsxEmit.ReactJSX, esModuleInterop: true }, fileName: filename,
 }).outputText, filename);
 
 const args = new Map(process.argv.slice(2).map((entry) => {
@@ -84,6 +84,28 @@ console.log(JSON.stringify({
   availableNow: forecast.availableNow.status,
 }, null, 2));
 if (args.has("--inspect")) process.exit(0);
+if (args.has("--ui-mapping")) {
+  const React = require("react");
+  const { renderToStaticMarkup } = require("react-dom/server");
+  const { queryMonthForecast } = require(path.resolve(root, "src/server/phase2/month-forecast-snapshot.ts"));
+  const { MonthForecastView } = require(path.resolve(root, "src/features/phase2/month-forecast-view.tsx"));
+  const queried = await queryMonthForecast(client, householdId, targetMonth);
+  const render = (payload) => renderToStaticMarkup(React.createElement(MonthForecastView, { forecast: payload }));
+  const html = render(queried);
+  assert.match(html, /985,48\s*€/u);
+  assert.match(html, /2[\s\u00a0\u202f]*363,51\s*€/u);
+  assert.match(html, /aucun événement enregistré/iu);
+  assert.match(html, /Delta financier : Inconnu/u);
+  assert.match(html, /indisponible sans solde d’ouverture/u);
+  assert.doesNotMatch(html, /0\s*€\s*événements/iu);
+  const changed = structuredClone(queried);
+  changed.freeToSpend.central = "12345.67";
+  assert.match(render(changed), /12[\s\u00a0\u202f]*345,67\s*€/u);
+  assert.doesNotMatch(render(changed), /985,48\s*€/u);
+  console.log(JSON.stringify({ test: "PASS UI payload mapping and UNKNOWN visibility", targetMonth,
+    publicationId: queried.meta.sourcePublicationId, htmlBytes: Buffer.byteLength(html) }));
+  process.exit(0);
+}
 if (args.has("--round-trip")) {
   const { materializeMonthForecast, queryMonthForecast, MONTH_FORECAST_RESOURCE } = require(path.resolve(root, "src/server/phase2/month-forecast-snapshot.ts"));
   const snapshot = await materializeMonthForecast(client, householdId, targetMonth);
