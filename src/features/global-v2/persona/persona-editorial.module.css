@@ -84,6 +84,9 @@
 .peugeotColumns > div { position: relative; min-width: 0; border: 1px solid rgba(255, 255, 255, .65); border-radius: 16px; padding: 14px 12px; background: rgba(255, 247, 249, .88); backdrop-filter: blur(3px); }
 .peugeotColumns > div::before { position: absolute; top: 13px; left: 11px; width: 30px; height: 30px; border: 1px solid rgba(199, 42, 83, .16); border-radius: 50%; background: rgba(243, 179, 195, .4); content: ""; }
 .peugeotColumns h5 { display: flex; align-items: center; min-height: 32px; margin: 0 0 18px; padding-left: 36px; color: #8e1734; font-size: 12px; font-family: inherit; font-weight: 830; letter-spacing: .02em; line-height: 1.12; text-transform: uppercase; }
+.workIllustration { position: relative; width: calc(100% - 8px); height: clamp(100px, 10vw, 125px); margin: 0 auto 8px; }
+.workIllustration img { object-fit: contain; object-position: center bottom; }
+.peugeotWork .profileFact { text-align: center; }
 .peugeotColumns .profileFact strong { color: #9c1538; font-size: clamp(22px, 2.4vw, 34px); }
 .peugeotColumns .profileFact span { color: #694951; font-size: 12px; }
 .peugeotColumns p { margin-top: 15px; border-radius: 11px; padding: 7px; background: rgba(250, 210, 219, .6); color: #74283d; font-size: 12px; line-height: 1.28; }
