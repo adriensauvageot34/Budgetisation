@@ -26,6 +26,7 @@ import {
   globalBackgroundRhythmsResourceDefinition,
 } from "./background-rhythms";
 import { globalPrimaryModuleCatalog, type GlobalPrimaryModuleKey, type GlobalPrimaryResourceName, type GlobalV2QueryParamsKind, type GlobalV2ResourceFamily, type GlobalV2ResourceGroup } from "./types";
+import { phase2MonthForecastReadModelSchema, phase2MonthForecastResourceDefinition } from "./phase2-month-forecast";
 
 export const globalV2TopLevelResources = Object.freeze([
   "analysis_global_manifest",
@@ -34,7 +35,7 @@ export const globalV2TopLevelResources = Object.freeze([
 ] as const);
 
 export type GlobalV2TopLevelResourceName = (typeof globalV2TopLevelResources)[number];
-export type GlobalV2QueryResourceName = GlobalV2TopLevelResourceName | GlobalV2ExpandedResourceName | GlobalLifeTimelineResourceName | typeof globalTimelineEventComparisonResourceDefinition.resource | typeof globalBackgroundRhythmsResourceDefinition.resource | typeof globalBackgroundRhythmMonthDetailResourceDefinition.resource;
+export type GlobalV2QueryResourceName = GlobalV2TopLevelResourceName | GlobalV2ExpandedResourceName | GlobalLifeTimelineResourceName | typeof globalTimelineEventComparisonResourceDefinition.resource | typeof globalBackgroundRhythmsResourceDefinition.resource | typeof globalBackgroundRhythmMonthDetailResourceDefinition.resource | typeof phase2MonthForecastResourceDefinition.resource;
 
 export type GlobalV2QueryParams = Readonly<Record<string, string>>;
 export type GlobalV2QueryRequest = {
@@ -81,6 +82,7 @@ const resourceCatalog = Object.freeze([
   globalTimelineEventComparisonResourceDefinition,
   globalBackgroundRhythmsResourceDefinition,
   globalBackgroundRhythmMonthDetailResourceDefinition,
+  phase2MonthForecastResourceDefinition,
 ] as const);
 type GlobalV2ResourceDefinition = (typeof resourceCatalog)[number];
 const definitionByResource = new Map<string, GlobalV2ResourceDefinition>(resourceCatalog.map((entry) => [entry.resource, entry]));
@@ -147,6 +149,12 @@ export function parseGlobalV2QueryParams(resource: GlobalV2QueryResourceName, va
       if (domain !== "CAR_MOBILITY" || !/^\d{4}-(0[1-9]|1[0-2])$/u.test(month)) throw new TypeError("GLOBAL_V2_RHYTHM_MONTH_PARAMS_INVALID");
       return Object.freeze({ domain, month });
     }
+    case "target_month": {
+      const record = parseStrictRecord(value, ["targetMonth"], "Phase2MonthForecastParams");
+      const targetMonth = text(requireProperty(record, "targetMonth", "Phase2MonthForecastParams"), "targetMonth");
+      if (!/^\d{4}-(0[1-9]|1[0-2])$/u.test(targetMonth)) throw new TypeError("PHASE2_TARGET_MONTH_INVALID");
+      return Object.freeze({ targetMonth });
+    }
   }
 }
 
@@ -157,6 +165,7 @@ function schemaFor(resource: GlobalV2QueryResourceName): RuntimeSchema<unknown> 
   if (resource === globalTimelineEventComparisonResourceDefinition.resource) return globalTimelineEventComparisonReadModelSchema as RuntimeSchema<unknown>;
   if (resource === globalBackgroundRhythmsResourceDefinition.resource) return globalBackgroundRhythmsReadModelSchema as RuntimeSchema<unknown>;
   if (resource === globalBackgroundRhythmMonthDetailResourceDefinition.resource) return globalBackgroundRhythmMonthDetailReadModelSchema as RuntimeSchema<unknown>;
+  if (resource === phase2MonthForecastResourceDefinition.resource) return phase2MonthForecastReadModelSchema;
   if (definitionFor(resource).group === "module_section") return globalPrimaryReadModelSchemas[resource as GlobalPrimaryResourceName] as RuntimeSchema<unknown>;
   return globalExpandedReadModelSchemas[resource as GlobalV2ExpandedResourceName] as RuntimeSchema<unknown>;
 }
@@ -186,6 +195,8 @@ export const globalV2QueryRegistry = Object.freeze(Object.fromEntries(
         ? Object.freeze({ projection: "timeline-semantic-projection@v1", comparator: "timeline-semantic-comparator@v2", eventMobilityOwner: "global_m7_event_mobility@v1", physicalAttribution: "global-m7-event-mobility-physical-attribution@v1", costMetric: "mobility_usage_estimated_fuel_cost@v1", transport: "global-v2-snapshot-only@sh05-v3" })
         : timelineSemanticResources.has(resource)
         ? Object.freeze({ projection: "timeline-semantic-projection@v1", comparator: "timeline-semantic-comparator@v2", transport: "global-v2-snapshot-only@sh05-v2" })
+        : resource === "phase2_month_forecast"
+          ? Object.freeze({ projection: "phase2-month-forecast-assembler@v1", transport: "analytics-query-snapshot@v1" })
         : backgroundRhythmResources.has(resource)
           ? resource === "analysis_global_background_rhythms"
             ? Object.freeze({ projection: "global-background-rhythms-query@v2", wire: "global-background-rhythms-compact-wire@v2", transport: "background-near-viewport@v1" })

@@ -84,6 +84,29 @@ console.log(JSON.stringify({
   availableNow: forecast.availableNow.status,
 }, null, 2));
 if (args.has("--inspect")) process.exit(0);
+if (args.has("--round-trip")) {
+  const { materializeMonthForecast, queryMonthForecast, MONTH_FORECAST_RESOURCE } = require(path.resolve(root, "src/server/phase2/month-forecast-snapshot.ts"));
+  const snapshot = await materializeMonthForecast(client, householdId, targetMonth);
+  const queried = await queryMonthForecast(client, householdId, targetMonth);
+  const business = ({ meta, components, income, obligations, economicCost, cash, funding, events, reserve, freeToSpend, availableNow, limitations }) => ({
+    meta: { targetMonth: meta.targetMonth, sourcePublicationId: meta.sourcePublicationId,
+      sourceRevision: meta.sourceRevision, analyticsRevision: meta.analyticsRevision, certificationStatus: meta.certificationStatus },
+    components, income, obligations, economicCost, cash, funding, events, reserve, freeToSpend, availableNow, limitations,
+  });
+  assert.deepEqual(business(snapshot), business(forecast));
+  assert.deepEqual(business(queried), business(snapshot));
+  const { count, error: countError } = await client.from("analytics_query_snapshots")
+    .select("query_snapshot_id", { count: "exact", head: true })
+    .eq("household_id", householdId).eq("resource", MONTH_FORECAST_RESOURCE)
+    .eq("period_month", `${targetMonth}-01`).eq("is_active", true).is("invalidated_at", null);
+  if (countError) throw countError;
+  assert.equal(count, 1);
+  console.log(JSON.stringify({ test: "PASS engine=snapshot=query", resource: MONTH_FORECAST_RESOURCE,
+    contractVersion: snapshot.resourceMeta.contractVersion, methodSignature: snapshot.resourceMeta.methodSignature,
+    publicationId: snapshot.meta.sourcePublicationId, targetMonth, activeSnapshotCount: count,
+    computedAt: snapshot.meta.computedAt, queryFreeToSpendCentral: queried.freeToSpend.central }));
+  process.exit(0);
+}
 
 // Golden amounts are test expectations from the October master, never production constants.
 assert.equal(authorities.background.food.methodVersion, "global_food_rhythm@v2-purchase-aware");
