@@ -7,6 +7,7 @@ import process from "node:process";
 import Module, { createRequire } from "node:module";
 import ts from "typescript";
 import { createClient } from "@supabase/supabase-js";
+import { assertGlobalFoodAuthorityMonotonicity, readActiveGlobalFoodAuthority, selectGlobalFoodBackgroundVisibility } from "./lib/global-food-authority-monotonicity.mjs";
 
 const require = createRequire(import.meta.url);
 const root = process.cwd();
@@ -39,13 +40,13 @@ const implementationIdentity = args.get("--implementation-sha");
 const asOf = args.get("--as-of");
 const dryRun = args.has("--dry-run");
 const stageOnly = args.has("--stage-only");
-const backgroundVisibility = args.get("--background-visibility") ?? "DEFAULT";
+const requestedBackgroundVisibility = args.get("--background-visibility") ?? "DEFAULT";
 const candidateSourceRevision = args.get("--candidate-source-revision");
 const expectedActivePublication = args.get("--expected-active-publication");
 if (!/^[0-9a-f]{40}$/u.test(implementationIdentity ?? "") || !/^\d{4}-\d{2}-\d{2}T/u.test(asOf ?? "") || !/^[0-9a-f-]{36}$/u.test(householdId ?? "")) {
   throw new TypeError("Usage: --household-id=<uuid> --implementation-sha=<40 hex> --as-of=<Instant> [--dry-run]");
 }
-if (stageOnly && (backgroundVisibility !== "PURCHASE_AWARE_PILOT" || !/^\d+$/u.test(candidateSourceRevision ?? "")
+if (stageOnly && (requestedBackgroundVisibility !== "PURCHASE_AWARE_PILOT" || !/^\d+$/u.test(candidateSourceRevision ?? "")
   || !/^[0-9a-f-]{36}$/u.test(expectedActivePublication ?? ""))) {
   throw new TypeError("C6_STAGE_ONLY_GUARDS_REQUIRED");
 }
@@ -75,6 +76,9 @@ const { GLOBAL_V2_LIVE_PROJECT, createGlobalV2CandidateContext, prepareGlobalV2L
 const { serializeGlobalV2PublicationManifest } = require(path.resolve(root, "src/server/analytics/materialization/global-v2.ts"));
 const { canonicalSerializeQueryParams } = require(path.resolve(root, "src/query-api/request/cache-key.ts"));
 const context = await createGlobalV2CandidateContext({ client, householdId, asOf });
+const activeFood = await readActiveGlobalFoodAuthority(client, householdId);
+const sourceRevisionForCandidate = candidateSourceRevision ?? String(context.dataRevision);
+const backgroundVisibility = selectGlobalFoodBackgroundVisibility(requestedBackgroundVisibility, activeFood, sourceRevisionForCandidate);
 const candidate = await prepareGlobalV2LiveCandidate({ project: GLOBAL_V2_LIVE_PROJECT, client, context,
   implementationIdentity, backgroundVisibility, candidateSourceRevision });
 const manifestWire = serializeGlobalV2PublicationManifest(candidate.manifest);
@@ -92,6 +96,7 @@ const publicationId = candidate.candidateId;
 const backgroundAnnual = candidate.snapshots.find(({ resource }) => resource === "analysis_global_background_rhythms");
 const backgroundDetails = candidate.snapshots.filter(({ resource }) => resource === "analysis_global_background_rhythm_month_detail");
 if (backgroundAnnual === undefined) throw new TypeError("GLOBAL_BACKGROUND_RHYTHMS_ANNUAL_MISSING");
+assertGlobalFoodAuthorityMonotonicity(activeFood, sourceRevisionForCandidate, backgroundAnnual.payload.food.methodVersion);
 const serializedBytes = (value) => Buffer.byteLength(JSON.stringify(value), "utf8");
 if (stageOnly) {
   const head = execFileSync("git", ["rev-parse", "HEAD"], { cwd: root, encoding: "utf8" }).trim();

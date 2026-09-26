@@ -6,6 +6,7 @@ import ts from "typescript";
 import { createClient } from "@supabase/supabase-js";
 
 import { createFixtureSupabaseClient, loadFixtureTables } from "./lib/fixture-supabase-client.mjs";
+import { assertGlobalFoodAuthorityMonotonicity, readActiveGlobalFoodAuthority, selectGlobalFoodBackgroundVisibility } from "./lib/global-food-authority-monotonicity.mjs";
 
 const require = createRequire(import.meta.url);
 const root = process.cwd();
@@ -40,14 +41,14 @@ const fixtureDirectory = args.get("--fixture-dir");
 const expectedDataRevision = args.get("--data-revision");
 const currentAnalyticsRevision = args.get("--analytics-revision");
 const includePersonaProfile = args.has("--include-persona-profile");
-const backgroundVisibility = args.get("--background-visibility") ?? "DEFAULT";
+const requestedBackgroundVisibility = args.get("--background-visibility") ?? "DEFAULT";
 const candidateSourceRevision = args.get("--candidate-source-revision");
 const compareActivePublication = args.get("--compare-active-publication");
 const simulateFutureRevisions = args.has("--simulate-future-revisions");
 if (!/^[0-9a-f]{40}$/u.test(implementationIdentity ?? "") || !/^\d{4}-\d{2}-\d{2}T/u.test(asOf ?? "")) {
   throw new TypeError("Usage: --implementation-sha=<40 hex> --as-of=<Instant> [--fixture-dir=<private export>]");
 }
-if (!["DEFAULT", "PURCHASE_AWARE_PILOT"].includes(backgroundVisibility)) throw new TypeError("Invalid background visibility");
+if (!["DEFAULT", "PURCHASE_AWARE_PILOT"].includes(requestedBackgroundVisibility)) throw new TypeError("Invalid background visibility");
 
 const { GLOBAL_V2_LIVE_PROJECT, prepareGlobalV2LiveCandidate } = require(path.resolve(root, "src/server/analytics/global-v2-production-orchestrator.ts"));
 let client;
@@ -94,12 +95,16 @@ if (fixtureDirectory !== undefined) {
   context = await createGlobalV2CandidateContext({ client, householdId, asOf });
 }
 if (simulateFutureRevisions) {
-  if (fixtureDirectory !== undefined || backgroundVisibility !== "DEFAULT" || candidateSourceRevision !== undefined) {
+  if (fixtureDirectory !== undefined || requestedBackgroundVisibility !== "DEFAULT" || candidateSourceRevision !== undefined) {
     throw new TypeError("GLOBAL_FUTURE_REVISION_SIMULATION_INVALID");
   }
   context = { ...context, dataRevision: String(Number(context.dataRevision) + 1),
     analyticsRevision: String(Number(context.analyticsRevision) + 1) };
 }
+
+const activeFood = fixtureDirectory === undefined ? await readActiveGlobalFoodAuthority(client, String(context.householdId)) : null;
+const sourceRevision = candidateSourceRevision ?? String(context.dataRevision);
+const backgroundVisibility = selectGlobalFoodBackgroundVisibility(requestedBackgroundVisibility, activeFood, sourceRevision);
 
 const candidate = await prepareGlobalV2LiveCandidate({ project: GLOBAL_V2_LIVE_PROJECT, client, context,
   implementationIdentity, backgroundVisibility, candidateSourceRevision });
@@ -111,6 +116,7 @@ const summary = Object.fromEntries([
 const backgroundAnnual = candidate.snapshots.find(({ resource }) => resource === "analysis_global_background_rhythms");
 const backgroundDetails = candidate.snapshots.filter(({ resource }) => resource === "analysis_global_background_rhythm_month_detail");
 if (backgroundAnnual === undefined) throw new TypeError("GLOBAL_BACKGROUND_RHYTHMS_ANNUAL_MISSING");
+assertGlobalFoodAuthorityMonotonicity(activeFood, sourceRevision, backgroundAnnual.payload.food.methodVersion);
 const { parseGlobalBackgroundRhythmsReadModel } = require(path.resolve(root, "src/query-api/global-v2/background-rhythms.ts"));
 summary.candidateAnnualRuntime = parseGlobalBackgroundRhythmsReadModel(backgroundAnnual.payload).schemaVersion;
 const serializedBytes = (value) => Buffer.byteLength(JSON.stringify(value), "utf8");

@@ -372,8 +372,9 @@ export async function prepareGlobalV2LiveCandidate(input: {
   if (input.project !== GLOBAL_V2_LIVE_PROJECT) throw new TypeError("GLOBAL_LIVE_PROJECT_MISMATCH");
   const sourceRevision = input.candidateSourceRevision ?? String(input.context.dataRevision);
   if (input.backgroundVisibility === "PURCHASE_AWARE_PILOT"
+    && sourceRevision !== String(input.context.dataRevision)
     && sourceRevision !== String(Number(input.context.dataRevision) + 1)) {
-    throw new TypeError("GLOBAL_PILOT_FUTURE_SOURCE_REVISION_INVALID");
+    throw new TypeError("GLOBAL_PILOT_SOURCE_REVISION_INVALID");
   }
   const repository = new CanonicalRepository(input.client, input.context);
   const resolved = await resolveGlobalV2ProductionOwnerOutputs(repository, { backgroundVisibility: input.backgroundVisibility });
