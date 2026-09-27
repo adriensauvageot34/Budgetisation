@@ -12,6 +12,7 @@ const exactMoney = new Intl.NumberFormat("fr-FR", { style: "currency", currency:
 const roundedMoney = new Intl.NumberFormat("fr-FR", { style: "currency", currency: "EUR", maximumFractionDigits: 0 });
 const monthOnly = new Intl.DateTimeFormat("fr-FR", { month: "long", timeZone: "UTC" });
 const monthYear = new Intl.DateTimeFormat("fr-FR", { month: "short", year: "numeric", timeZone: "UTC" });
+const shortMonthYear = new Intl.DateTimeFormat("fr-FR", { month: "short", year: "2-digit", timeZone: "UTC" });
 
 function dateOf(value: string): Date { return new Date(`${value.slice(0, 10)}T00:00:00Z`); }
 function month(value: string): string { return monthYear.format(dateOf(value)); }
@@ -67,11 +68,7 @@ function Peugeot({ model }: { readonly model: PersonaEditorialModel }) {
   const transition = story.insuranceEvolution;
   const shortTrips = story.tripProfile.shortTrips, longTrips = story.tripProfile.longTrips;
   const oneIn = (share: string) => Number(share) > 0 ? `≈ 1/${Math.max(1, Math.round(100 / Number(share)))}` : "—";
-  return <article className={styles.peugeotProfile} data-person="manon">
-    <header className={styles.peugeotHero}>
-      <div className={styles.peugeotIdentity}><h4>Notre Peugeot</h4></div>
-      {vehicle.nonFuelCostTotalReady && vehicle.nonFuelCostTotal !== null ? <div className={styles.peugeotTotal}><strong>{amount(vehicle.nonFuelCostTotal, true)}</strong><span>hors carburant</span></div> : null}
-    </header>
+  return <article className={styles.peugeotProfile} data-person="manon" aria-label="Usages et coût de la Peugeot">
     <div className={styles.peugeotColumns}>
       <div className={styles.peugeotWork}>
         <h5>Pour travailler</h5>
@@ -92,13 +89,14 @@ function Peugeot({ model }: { readonly model: PersonaEditorialModel }) {
         </div>
       </div>
     </div>
-    <div className={styles.peugeotStory}><h5>Une voiture très présente au quotidien</h5><div className={styles.peugeotStoryMetrics}>
-      <div><strong>{integer.format(Number(story.usage.distanceKm))} km</strong><span>· 12 mois</span></div>
+    <div className={styles.peugeotStory}><div className={styles.peugeotStoryMetrics}>
+      <div><strong>{integer.format(Number(story.usage.distanceKm))} km</strong></div>
       <div><strong>{integer.format(story.usage.distinctUsageDays)}</strong><span>jours utilisés</span></div>
       {story.usage.drivingHours === null ? null : <div><strong>≈ {integer.format(Math.floor(Number(story.usage.drivingHours)))} h</strong><span>de route</span></div>}
       <div aria-label={`≈ ${integer.format(Number(story.usage.estimatedFuelLiters))} litres de carburant utilisés estimés`}><strong>≈ {integer.format(Number(story.usage.estimatedFuelLiters))} L</strong></div>
       <div><strong>{amount(story.usage.estimatedFuelCost, true)}</strong><span>carburant</span></div>
       {story.usage.estimatedConsumptionL100Km === null ? null : <div aria-label={`≈ ${oneDecimal.format(Number(story.usage.estimatedConsumptionL100Km))} litres aux 100 kilomètres, consommation estimée`}><strong>≈ {oneDecimal.format(Number(story.usage.estimatedConsumptionL100Km))} L/100 km</strong></div>}
+      {vehicle.totalVehicleCost === null ? null : <div className={styles.peugeotTotalKpi}><strong>{amount(vehicle.totalVehicleCost, true)}</strong><span>Coût total</span><small>{shortMonthYear.format(dateOf(story.period.first))} – {shortMonthYear.format(dateOf(story.period.last))}</small></div>}
     </div></div>
   </article>;
 }

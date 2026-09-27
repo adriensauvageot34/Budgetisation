@@ -96,6 +96,7 @@ export type PersonaEditorialModel = {
     readonly maintenanceResponsibilityPersonId?: string | null;
     readonly nonFuelCostTotal: string | null;
     readonly nonFuelCostTotalReady: boolean;
+    readonly totalVehicleCost: string | null;
   };
   readonly persons: readonly [
     {

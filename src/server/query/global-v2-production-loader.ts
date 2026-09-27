@@ -1,5 +1,6 @@
 import "server-only";
 
+import Big from "big.js";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { parseInstant } from "@/core/time";
 import {
@@ -159,5 +160,11 @@ async function readPersonaEditorialArtifact(runtime: Awaited<ReturnType<typeof c
     || payload.publicationMeta.manifestHash !== runtime.generation.publicationMeta.manifestHash
     || payload.editorial?.schemaVersion !== PERSONA_EDITORIAL_SCHEMA_VERSION) throw new TypeError("GLOBAL_PERSONA_EDITORIAL_GENERATION_MISMATCH");
   if (payload.editorial.persons.length !== 2 || payload.editorial.vehicle === undefined) throw new TypeError("GLOBAL_PERSONA_EDITORIAL_SHAPE_MISMATCH");
-  return payload.editorial as unknown as PersonaEditorialModel;
+  const editorial = payload.editorial as unknown as PersonaEditorialModel;
+  const { vehicle } = editorial;
+  const totalVehicleCost = vehicle.nonFuelCostTotalReady && vehicle.nonFuelCostTotal !== null
+    && editorial.period.first === vehicle.storySummary.period.first
+    ? new Big(vehicle.nonFuelCostTotal).plus(vehicle.storySummary.usage.estimatedFuelCost).toFixed(2)
+    : null;
+  return { ...editorial, vehicle: { ...vehicle, totalVehicleCost } };
 }
