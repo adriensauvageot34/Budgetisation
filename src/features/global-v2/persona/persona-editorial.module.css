@@ -77,7 +77,7 @@
 .peugeotProfile { --scene-position: 40% bottom; --scene-size: 107% auto; position: relative; isolation: isolate; grid-column: 1 / -1; width: 100%; min-width: 0; aspect-ratio: 2029 / 650; min-height: 440px; overflow: hidden; border-radius: 24px; background: var(--manon-bg) url("/persona/illustrations/part-1/voiture-BG.webp") right bottom / var(--scene-size) no-repeat; }
 .peugeotColumns { position: absolute; z-index: 1; top: 5%; right: 1.7%; display: grid; grid-template-columns: minmax(0, 1.16fr) minmax(0, 1fr); gap: 10px; width: 56%; height: 56%; min-width: 0; }
 .peugeotColumns > div { min-width: 0; overflow: hidden; border: 1px solid rgba(255, 255, 255, .88); border-radius: 17px; padding: 9px 11px 23px; background: rgba(255, 247, 249, .93); box-shadow: 0 8px 22px rgba(91, 22, 38, .08); }
-.workIllustration { width: 100%; max-width: 290px; margin: -27px auto -2px; }
+.workIllustration { width: 100%; max-width: 330px; margin: -27px auto -2px; }
 .workIllustration img { display: block; width: 100%; height: auto; object-fit: contain; }
 .peugeotWorkDistance { display: flex; align-items: baseline; justify-content: center; gap: 6px; color: #9c1538; text-align: center; white-space: nowrap; }
 .peugeotWorkDistance strong { font: 600 30px/1 var(--font-serif, Georgia, serif); letter-spacing: -.035em; font-variant-numeric: tabular-nums; }
