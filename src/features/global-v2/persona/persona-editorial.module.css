@@ -76,35 +76,44 @@
 .permitMonths > .permitMonthJuly strong { color: #1269bb; font-size: 24px; }
 .peugeotProfile { grid-column: 1 / -1; display: grid; grid-template-columns: minmax(0, 42fr) minmax(0, 58fr); gap: 10px 16px; min-width: 0; border: 1px solid var(--manon-line); border-radius: 24px; padding: 16px clamp(16px, 2vw, 26px) clamp(16px, 2vw, 26px); background-color: var(--manon-bg); background-image: url("/persona/illustrations/part-1/BG2-Peugeot-persona.webp"); background-position: center; background-size: cover; }
 .peugeotColumns { grid-column: 2; display: grid; grid-template-columns: minmax(0, 1.24fr) minmax(0, 1fr); gap: 9px; align-items: start; }
-.peugeotColumns > div { min-width: 0; border: 1px solid rgba(255, 255, 255, .72); border-radius: 16px; padding: 10px 12px; background: rgba(255, 247, 249, .91); backdrop-filter: blur(3px); }
+.peugeotColumns > div { min-width: 0; border: 1px solid rgba(255, 255, 255, .82); border-radius: 16px; padding: 10px 12px; background: rgba(255, 247, 249, .93); box-shadow: 0 8px 22px rgba(91, 22, 38, .08); backdrop-filter: blur(3px); }
 .peugeotColumns h5 { margin: 0; color: #8e1734; font-size: 15px; font-family: var(--font-serif, Georgia, serif); font-weight: 750; letter-spacing: -.015em; line-height: 1.12; text-transform: uppercase; }
 .workIllustration { width: 100%; max-width: 300px; margin: -2px auto 0; }
 .workIllustration img { display: block; width: 100%; height: auto; object-fit: contain; }
-.peugeotWorkDistance { display: block; color: #9c1538; font: 600 30px/1 var(--font-serif, Georgia, serif); letter-spacing: -.035em; text-align: center; white-space: nowrap; }
+.peugeotWorkDistance { display: flex; align-items: baseline; justify-content: center; gap: 6px; color: #9c1538; text-align: center; white-space: nowrap; }
+.peugeotWorkDistance strong { font: 600 30px/1 var(--font-serif, Georgia, serif); letter-spacing: -.035em; font-variant-numeric: tabular-nums; }
+.peugeotWorkDistance span { color: #76505b; font-size: 11px; font-weight: 650; }
 .peugeotTripRows { display: grid; gap: 1px; margin-top: 5px; }
-.peugeotTripRows > div { display: grid; grid-template-columns: minmax(0, 1.35fr) 12px minmax(0, 1fr); align-items: center; gap: 4px; border-top: 1px solid rgba(199, 42, 83, .14); padding: 5px 0; }
+.peugeotTripRows > div { display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr); align-items: baseline; gap: 7px; border-top: 1px solid rgba(199, 42, 83, .16); padding: 5px 0; }
 .peugeotTripRows strong { color: #9c1538; font: 650 13px/1.2 var(--font-serif, Georgia, serif); white-space: nowrap; }
-.peugeotTripRows span { color: #8e1734; font: 600 13px/1.2 var(--font-serif, Georgia, serif); white-space: nowrap; }
-.peugeotTripRows b { color: #cc4268; font-size: 13px; line-height: 1.2; text-align: center; }
-.peugeotWorkCosts { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 5px; margin-top: 4px; }
-.peugeotWorkCosts p { border-radius: 10px; padding: 6px 4px; background: rgba(250, 210, 219, .55); color: #8e1734; font-size: 12px; font-weight: 700; line-height: 1.2; text-align: center; }
-.peugeotCareTotal { display: block; margin: 8px 0 9px; color: #9c1538; font: 600 clamp(31px, 3vw, 40px)/1 var(--font-serif, Georgia, serif); text-align: center; white-space: nowrap; }
+.peugeotTripRows span { color: #76505b; font-size: 11px; font-weight: 650; line-height: 1.2; text-align: right; white-space: nowrap; }
+.peugeotWorkCosts { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); margin-top: 3px; border-top: 1px solid rgba(199, 42, 83, .22); }
+.peugeotWorkCosts p { display: flex; align-items: baseline; justify-content: center; flex-wrap: wrap; gap: 0 3px; padding: 7px 2px 1px; color: #76505b; font-size: 11px; line-height: 1.2; text-align: center; }
+.peugeotWorkCosts p + p { border-left: 1px solid rgba(199, 42, 83, .2); }
+.peugeotWorkCosts strong { color: #9c1538; font: 650 14px/1.1 var(--font-serif, Georgia, serif); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.peugeotCareHero { display: flex; align-items: center; justify-content: space-between; min-height: 72px; gap: 2px; }
+.peugeotCareHero img { display: block; width: 100px; height: 68px; object-fit: contain; flex: none; }
+.peugeotCareTotal { color: #9c1538; font: 600 clamp(28px, 2.4vw, 34px)/1 var(--font-serif, Georgia, serif); letter-spacing: -.04em; font-variant-numeric: tabular-nums; white-space: nowrap; }
 .peugeotCareSplit { display: grid; gap: 6px; }
 .peugeotCareSplit > div { min-width: 0; }
-.peugeotCareSplit > div + div { border-top: 1px solid var(--manon-line); padding-top: 6px; }
-.peugeotCareSplit h6 { margin: 0 0 3px; color: #8e1734; font-size: 11px; text-transform: uppercase; }
+.peugeotCareSplit h6 { margin: 0 0 3px; color: #8e1734; font-size: 11px; letter-spacing: .06em; text-transform: uppercase; }
 .peugeotCareSplit p { margin-top: 3px; color: #684650; font-size: 11px; line-height: 1.25; }
-.peugeotCareSplit p strong { color: #9c1538; font: 600 15px/1.1 var(--font-serif, Georgia, serif); }
-.peugeotStory { grid-column: 1 / -1; border: 1px solid rgba(255, 255, 255, .7); border-radius: 17px; padding: 2px 7px; background: rgba(255, 247, 249, .92); backdrop-filter: blur(3px); }
-.peugeotStoryMetrics { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)) minmax(170px, 1.15fr) minmax(180px, 1.45fr); align-items: center; }
-.peugeotStoryMetrics > div { display: flex; align-items: baseline; flex-wrap: wrap; gap: 0 3px; min-width: 0; border-left: 1px solid var(--manon-line); padding: 0 7px; }
-.peugeotStoryMetrics > div:first-child { border-left: 0; }
-.peugeotStoryMetrics strong { color: #8f1535; font: 600 clamp(16px, 1.45vw, 20px)/1.1 var(--font-serif, Georgia, serif); white-space: nowrap; }
+.peugeotCareSplit p strong { color: #9c1538; font: 600 15px/1.1 var(--font-serif, Georgia, serif); font-variant-numeric: tabular-nums; }
+.peugeotInsurance { border-radius: 8px; padding: 6px 7px; background: rgba(249, 224, 230, .46); }
+.peugeotInsuranceTransition { display: flex; justify-content: space-between; gap: 2px; font-size: 10px !important; white-space: nowrap; }
+.peugeotInsuranceTransition span:nth-child(2) { color: #ba3a5c; }
+.peugeotCareSplit .peugeotInsuranceSavings { color: #8e1734; font-weight: 750; }
+.peugeotInsurancePeriod { color: #76505b !important; }
+.peugeotCareSplit > div + div { border-top: 1px solid rgba(199, 42, 83, .2); padding-top: 6px; }
+.peugeotStory { grid-column: 1 / -1; border: 1px solid rgba(255, 255, 255, .82); border-radius: 17px; padding: 2px 7px; background: rgba(255, 247, 249, .94); box-shadow: 0 8px 22px rgba(91, 22, 38, .07); backdrop-filter: blur(3px); }
+.peugeotStoryMetrics { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)) minmax(145px, 1.1fr) minmax(165px, 1.15fr) minmax(205px, 1.55fr); align-items: center; }
+.peugeotStoryMetrics > div { display: flex; align-items: baseline; flex-wrap: wrap; gap: 0 3px; min-width: 0; padding: 0 7px; }
+.peugeotStoryMetrics > div:nth-child(4), .peugeotStoryMetrics > div:nth-child(6) { border-left: 1px solid rgba(199, 42, 83, .27); padding-left: 12px; }
+.peugeotStoryMetrics strong { color: #8f1535; font: 600 clamp(16px, 1.45vw, 20px)/1.1 var(--font-serif, Georgia, serif); font-variant-numeric: tabular-nums; white-space: nowrap; }
 .peugeotStoryMetrics span { color: #684650; font-size: 11px; line-height: 1.2; white-space: nowrap; }
-.peugeotStoryMetrics > .peugeotTotalKpi { display: grid; justify-items: center; border: 1px solid rgba(199, 42, 83, .25); border-radius: 12px; padding: 3px 8px; background: rgba(248, 211, 220, .85); text-align: center; }
+.peugeotStoryMetrics > .peugeotTotalKpi { display: grid; justify-items: end; gap: 2px; border-left: 2px solid rgba(157, 21, 56, .52); padding: 5px 7px 5px 12px; background: rgba(248, 211, 220, .52); text-align: right; }
 .peugeotStoryMetrics .peugeotTotalKpi strong { font-size: clamp(25px, 2.3vw, 33px); font-weight: 700; line-height: 1; }
-.peugeotStoryMetrics .peugeotTotalKpi span { color: #8e1734; font-weight: 800; letter-spacing: .06em; line-height: 1; text-transform: uppercase; }
-.peugeotTotalKpi small { color: #76505b; font-size: 11px; line-height: 1.1; white-space: nowrap; }
+.peugeotStoryMetrics .peugeotTotalKpi span { color: #8e1734; font-size: 10px; font-weight: 800; letter-spacing: .04em; line-height: 1.1; text-transform: uppercase; }
 .mealProfile { border: 1px solid var(--person-line); border-radius: 18px; padding: 20px 23px; background: var(--person-bg); }
 .mealProfile .moduleTitle h4 { font-size: clamp(20px, 2vw, 25px); }
 .mealMetrics { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 11px; margin-top: 17px; }
