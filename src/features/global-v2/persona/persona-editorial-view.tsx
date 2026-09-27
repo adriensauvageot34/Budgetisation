@@ -92,9 +92,12 @@ function Peugeot({ model }: { readonly model: PersonaEditorialModel }) {
       {story.usage.estimatedConsumptionL100Km === null ? null : <Fact value={`≈ ${oneDecimal.format(Number(story.usage.estimatedConsumptionL100Km))} L/100 km`} label="consommation estimée" />}
     </div></div>
     <div className={styles.peugeotBottom}>
-      <div className={styles.peugeotTrips}><h5>Son profil de trajets</h5><div className={styles.peugeotTripMetrics}>
-        <div><strong>{integer.format(Number(shortTrips.tripShare))} %</strong><span>des trajets font moins de 5 km</span><small>≈ {integer.format(Number(shortTrips.distanceShare))} % des kilomètres</small></div>
-        <div><strong>{integer.format(Number(longTrips.tripShare))} %</strong><span>des trajets font 50 km ou plus</span><small>≈ {integer.format(Number(longTrips.distanceShare))} % des kilomètres</small></div>
+      <div className={styles.peugeotTrips}><h5>Son profil de trajets</h5><div className={styles.peugeotTripBody}>
+        <div className={styles.peugeotTripIllustration}><Image src="/persona/illustrations/part-1/trajet-travail.webp" alt="Trajet en Peugeot entre le domicile et Promotrans" width={1534} height={1022} sizes="(max-width: 480px) 80vw, 24vw" /></div>
+        <div className={styles.peugeotTripMetrics}>
+          <div><strong>{integer.format(Number(shortTrips.tripShare))} %</strong><span>des trajets font moins de 5 km</span><small><b>≈ {integer.format(Number(shortTrips.distanceShare))} %</b> des kilomètres</small></div>
+          <div><strong>{integer.format(Number(longTrips.tripShare))} %</strong><span>des trajets font 50 km ou plus</span><small><b>≈ {integer.format(Number(longTrips.distanceShare))} %</b> des kilomètres</small></div>
+        </div>
       </div>{tripContrast ? <p>Beaucoup de petits trajets au quotidien, mais les grandes distances font l’essentiel des kilomètres.</p> : null}</div>
       <div className={styles.peugeotDestinations}><h5>Où elle nous emmène</h5><div className={styles.peugeotDestinationList}>
         {workPlace ? <div><span>Travail</span><strong>{workPlace}</strong></div> : null}
