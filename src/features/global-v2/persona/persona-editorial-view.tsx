@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import { BadgeCheck, Camera, CarFront, Headphones, Heart, Monitor, Moon, Scissors, ShieldCheck, Train, UtensilsCrossed } from "lucide-react";
 import type { PersonaDirectModel } from "@/query-api/global-v2/persona-direct-presentation";
@@ -63,15 +64,25 @@ function Permit({ person }: { readonly person: PersonaEditorialModel["persons"][
 }
 function Peugeot({ model }: { readonly model: PersonaEditorialModel }) {
   const { vehicle } = model;
+  const sceneRef = useRef<HTMLElement>(null);
+  const [entered, setEntered] = useState(false);
+  useEffect(() => {
+    const scene = sceneRef.current;
+    if (scene === null) return;
+    const observer = new IntersectionObserver(([entry]) => {
+      if (entry?.isIntersecting) { setEntered(true); observer.disconnect(); }
+    }, { threshold: 0.12 });
+    observer.observe(scene);
+    return () => observer.disconnect();
+  }, []);
   if (vehicle.householdVehicle === null) return null;
   const usage = vehicle.workUsageSummary, insurance = vehicle.insuranceSummary, story = vehicle.storySummary;
   const transition = story.insuranceEvolution;
   const shortTrips = story.tripProfile.shortTrips, longTrips = story.tripProfile.longTrips;
   const oneIn = (share: string) => Number(share) > 0 ? `≈ 1/${Math.max(1, Math.round(100 / Number(share)))}` : "—";
-  return <article className={styles.peugeotProfile} data-person="manon" aria-label="Usages et coût de la Peugeot">
+  return <article ref={sceneRef} className={styles.peugeotProfile} data-person="manon" data-entered={entered ? "true" : undefined} aria-label="Usages et coût de la Peugeot">
     <div className={styles.peugeotColumns}>
-      <div className={styles.peugeotWork}>
-        <h5>Pour travailler</h5>
+      <div className={styles.peugeotWork} role="group" aria-label="Pour travailler">
         <div className={styles.workIllustration}><Image src="/persona/illustrations/part-1/Trajet_travail_2.webp" alt="Trajet en Peugeot entre le domicile et Promotrans" width={2048} height={768} sizes="(max-width: 760px) 80vw, 32vw" /></div>
         {usage === null ? null : <div className={styles.peugeotWorkDistance}><strong>{integer.format(Number(usage.distanceKm))} km</strong><span>pour travailler</span></div>}
         <div className={styles.peugeotTripRows}>
@@ -80,8 +91,7 @@ function Peugeot({ model }: { readonly model: PersonaEditorialModel }) {
         </div>
         {usage === null ? null : <div className={styles.peugeotWorkCosts}>{usage.estimatedFuelCostPerDay === null ? null : <p><strong>≈ {amount(usage.estimatedFuelCostPerDay)}</strong><span>/jour de trajet</span></p>}<p><strong>{amount(usage.estimatedFuelCost, true)}</strong><span>carburant</span></p></div>}
       </div>
-      <div className={styles.peugeotCare}>
-        <h5>Assurance &amp; entretien</h5>
+      <div className={styles.peugeotCare} role="group" aria-label="Assurance et entretien">
         <div className={styles.peugeotCareHero}>
           {vehicle.nonFuelCostTotalReady && vehicle.nonFuelCostTotal !== null ? <strong className={styles.peugeotCareTotal}>{amount(vehicle.nonFuelCostTotal, true)}</strong> : null}
           <Image src="/persona/illustrations/part-1/peugeot-care-still-life.png" alt="" aria-hidden="true" width={1536} height={1024} sizes="110px" />
@@ -92,12 +102,13 @@ function Peugeot({ model }: { readonly model: PersonaEditorialModel }) {
         </div>
       </div>
     </div>
-    <div className={styles.peugeotStory}><div className={styles.peugeotStoryMetrics}>
-      <div><strong>{integer.format(Number(story.usage.distanceKm))} km</strong></div>
+    <div className={styles.peugeotForeground} aria-hidden="true" />
+    <div className={`${styles.peugeotStory} ${styles.stoneEngravedText}`}><div className={styles.peugeotStoryMetrics}>
+      <div><strong>{integer.format(Number(story.usage.distanceKm))} km</strong><span>parcourus</span></div>
       <div><strong>{integer.format(story.usage.distinctUsageDays)}</strong><span>jours utilisés</span></div>
       {story.usage.drivingHours === null ? null : <div><strong>≈ {integer.format(Math.floor(Number(story.usage.drivingHours)))} h</strong><span>de route</span></div>}
-      <div aria-label={`≈ ${integer.format(Number(story.usage.estimatedFuelLiters))} litres de carburant utilisés estimés`}><strong>≈ {integer.format(Number(story.usage.estimatedFuelLiters))} L</strong></div>
-      {story.usage.estimatedConsumptionL100Km === null ? null : <div aria-label={`≈ ${oneDecimal.format(Number(story.usage.estimatedConsumptionL100Km))} litres aux 100 kilomètres, consommation estimée`}><strong>≈ {oneDecimal.format(Number(story.usage.estimatedConsumptionL100Km))} L/100 km</strong></div>}
+      <div aria-label={`≈ ${integer.format(Number(story.usage.estimatedFuelLiters))} litres de carburant utilisés estimés`}><strong>≈ {integer.format(Number(story.usage.estimatedFuelLiters))} L</strong><span>consommés</span></div>
+      {story.usage.estimatedConsumptionL100Km === null ? null : <div aria-label={`≈ ${oneDecimal.format(Number(story.usage.estimatedConsumptionL100Km))} litres aux 100 kilomètres, consommation estimée`}><strong>≈ {oneDecimal.format(Number(story.usage.estimatedConsumptionL100Km))} L/100 km</strong><span>consommation moyenne</span></div>}
       <div><strong>{amount(story.usage.estimatedFuelCost, true)}</strong><span>carburant</span></div>
       {vehicle.totalVehicleCost === null ? null : <div className={styles.peugeotTotalKpi}><strong>{amount(vehicle.totalVehicleCost, true)}</strong><span>Coût total · {shortMonthYear.format(dateOf(story.period.first))} – {shortMonthYear.format(dateOf(story.period.last))}</span></div>}
     </div></div>
