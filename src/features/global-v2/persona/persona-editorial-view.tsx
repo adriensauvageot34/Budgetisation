@@ -74,8 +74,8 @@ function Peugeot({ model }: { readonly model: PersonaEditorialModel }) {
     </header>
     <div className={styles.peugeotColumns}>
       <div className={styles.peugeotWork}>
-        <h5>Pour travailler</h5><span className={styles.peugeotSubtitle}>Trajets du quotidien</span>
-        <div className={styles.workIllustration}><Image src="/persona/illustrations/part-1/trajet-travail.webp" alt="Trajet en Peugeot entre le domicile et Promotrans" fill sizes="(max-width: 760px) 80vw, 32vw" /></div>
+        <h5>Pour travailler</h5>
+        <div className={styles.workIllustration}><Image src="/persona/illustrations/part-1/Trajet_travail_2.webp" alt="Trajet en Peugeot entre le domicile et Promotrans" width={2048} height={768} sizes="(max-width: 760px) 80vw, 32vw" /></div>
         {usage === null ? null : <Fact value={`${integer.format(Number(usage.distanceKm))} km`} label="sur la période" />}
         <div className={styles.peugeotTripRows}>
           <div><span><strong>≈ {integer.format(Math.round(Number(shortTrips.tripShare) / 10))} trajets sur 10</strong><small>font moins de 5 km</small></span><b aria-hidden="true">→</b><span><strong>{oneIn(shortTrips.distanceShare, "km")}</strong><small>de notre kilométrage</small></span></div>
@@ -84,7 +84,7 @@ function Peugeot({ model }: { readonly model: PersonaEditorialModel }) {
         {usage === null ? null : <div className={styles.peugeotWorkCosts}>{usage.estimatedFuelCostPerDay === null ? null : <p>≈ {amount(usage.estimatedFuelCostPerDay)} / jour de trajet</p>}<p>{amount(usage.estimatedFuelCost, true)} de carburant utilisé estimé</p></div>}
       </div>
       <div className={styles.peugeotCare}>
-        <h5>Assurance &amp; entretien</h5><span className={styles.peugeotSubtitle}>Une voiture bien protégée en toutes circonstances</span>
+        <h5>Assurance &amp; entretien</h5>
         {vehicle.nonFuelCostTotalReady && vehicle.nonFuelCostTotal !== null ? <Fact value={amount(vehicle.nonFuelCostTotal, true)} label="sur la période" /> : null}
         <div className={styles.peugeotCareSplit}>
           <div><h6>Assurance</h6>{insurance.currentMonthlyCost === null ? null : <Fact value={monthly(insurance.currentMonthlyCost)} label={insurance.currentProvider ?? "assurance actuelle"} />}{transition.previousProvider && transition.previousMonthlyCost && transition.currentProvider && transition.currentMonthlyCost ? <p>{transition.previousProvider.replace(/\s+Assurances$/iu, "")} {amount(transition.previousMonthlyCost)} → {transition.currentProvider} {amount(transition.currentMonthlyCost)}</p> : null}{transition.monthlyDifference === null || transition.evolution === "UNKNOWN" || transition.evolution === "STABLE" ? null : <small>{amount(transition.monthlyDifference, true)} {transition.evolution === "DECREASE" ? "économisés" : "de plus"} / mois</small>}{insurance.periodCost === null ? null : <small>{amount(insurance.periodCost, true)} d’assurance sur la période</small>}</div>
