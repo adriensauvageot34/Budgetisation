@@ -90,7 +90,7 @@
 .peugeotTripRows > div { display: grid; grid-template-columns: minmax(0, 1.35fr) 12px minmax(0, 1fr); align-items: center; gap: 4px; border-top: 1px solid rgba(199, 42, 83, .14); padding: 5px 0; }
 .peugeotTripRows strong { color: #9c1538; font: 650 13px/1.2 var(--font-serif, Georgia, serif); white-space: nowrap; }
 .peugeotTripRows span { color: #8e1734; font: 600 13px/1.2 var(--font-serif, Georgia, serif); white-space: nowrap; }
-.peugeotTripRows b { color: #cc4268; text-align: center; }
+.peugeotTripRows b { color: #cc4268; font-size: 13px; line-height: 1.2; text-align: center; }
 .peugeotWorkCosts { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 5px; margin-top: 4px; }
 .peugeotWorkCosts p { border-radius: 10px; padding: 6px 4px; background: rgba(250, 210, 219, .55); color: #8e1734; font-size: 12px; font-weight: 700; line-height: 1.2; text-align: center; }
 .peugeotCareTotal { display: block; margin: 8px 0 9px; color: #9c1538; font: 600 clamp(31px, 3vw, 40px)/1 var(--font-serif, Georgia, serif); text-align: center; white-space: nowrap; }
