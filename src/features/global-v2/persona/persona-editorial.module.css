@@ -293,11 +293,11 @@
   .beautyShelf { grid-template-columns: 1fr; }
   .peugeotProfile { --scene-position: 31% center; min-height: 830px; }
   .peugeotColumns { top: 3%; right: 4%; width: 92%; }
-  .peugeotStory { top: 72%; height: 16%; }
+  .peugeotStory { top: 72%; height: 14%; }
   .peugeotStoryMetrics { grid-template-columns: repeat(2, minmax(0, 1fr)); grid-template-rows: repeat(4, minmax(0, 1fr)); }
   .peugeotStoryMetrics > .peugeotTotalKpi { grid-column: 1 / -1; }
   .peugeotStoryMetrics strong { font-size: 18px; }
-  .peugeotStoryMetrics .peugeotTotalKpi strong { font-size: 24px; }
+  .peugeotStoryMetrics .peugeotTotalKpi strong { font-size: 22px; }
   .adrienUniverses { grid-template-columns: 1fr; }
   .groomingFacts { grid-template-columns: 1fr 1fr; }
   .mealMetrics { grid-template-columns: repeat(2, minmax(0, 1fr)); }
