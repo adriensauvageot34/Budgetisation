@@ -217,6 +217,9 @@
   .groomingProfile, .beautyProfile { grid-column: span 6; }
   .universesGrid { grid-template-columns: 1fr; }
 }
+@media (max-width: 1000px) {
+  .peugeotColumns { grid-template-columns: 1fr; }
+}
 @media (max-width: 760px) {
   .heroLine { align-items: start; flex-wrap: wrap; gap: 12px; }
   .profilePair, .outingsPair { grid-template-columns: 1fr; }
