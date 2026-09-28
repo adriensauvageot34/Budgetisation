@@ -32,6 +32,13 @@ scénario. Le reste est entièrement additionnel. Le service n'écrit que dans l
 prospective ; aucune opération historique, publication ou révision analytique ne
 doit être créée.
 
+La contrainte SQL impose également des CostItems valides : 1 à 50 lignes,
+identifiants distincts, libellés et montants positifs, et clés de baseline autorisées.
+La validation du service intervient avant simulation et enregistrement. Les règles
+RLS réservent les lectures et mutations aux membres du foyer ; `created_by` et
+`household_id` sont immuables côté client, et `updated_by` doit être l'utilisateur
+authentifié. Le cycle prévu → déclaré réalisé → prévu ne touche que cette table.
+
 Le builder collecte d'abord la famille et le sous-type, puis le contexte pertinent et
 les lignes de coût. « Habituel » est traduit en clé de baseline dans le brouillon,
 jamais présenté comme une clé technique. Sa simulation et la prévision affichée
