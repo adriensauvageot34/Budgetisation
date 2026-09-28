@@ -34,10 +34,24 @@ export async function updateMonthInputs(form: FormData): Promise<void> {
         expectedLoading: benefitLoading === null ? null : { amount: benefitLoading, expectedDate: field(form, "loadingDate") },
       },
     };
+  } else if (intent === "save-reserve") {
+    next = { ...current, safetyReserve: field(form, "safetyReserve") };
+  } else if (intent === "save-bank-balance") {
+    const amount = optionalMoney(form, "openingAmount");
+    next = { ...current, openingBalance: amount === null ? null : { amount, asOfDate: field(form, "openingDate") } };
+  } else if (intent === "save-benefit") {
+    const balance = optionalMoney(form, "benefitBalance");
+    const loading = optionalMoney(form, "benefitLoading");
+    next = { ...current, benefit: {
+      currentBalance: balance === null ? null : { amount: balance, asOfDate: field(form, "benefitDate") },
+      expectedLoading: loading === null ? null : { amount: loading, expectedDate: field(form, "loadingDate") },
+    } };
   } else if (intent === "add-event") {
+    const kind = field(form, "eventKind");
+    const label = field(form, "eventLabel") || (["Soirée", "Restaurant", "Famille", "Voyage / déplacement", "Achat", "Autre"].includes(kind) ? kind : "");
     next = { ...current, plannedEvents: [...current.plannedEvents, {
-      id: randomUUID(), label: field(form, "eventLabel"), plannedCost: field(form, "eventCost"),
-      baselineDisplaced: field(form, "baselineDisplaced"), parentEnvelope: field(form, "eventParent") || null,
+      id: randomUUID(), label, plannedCost: field(form, "eventCost"),
+      baselineDisplaced: field(form, "baselineDisplaced") || "0", parentEnvelope: field(form, "eventParent") || null,
       plannedDate: field(form, "eventDate"),
     }] };
   } else if (intent === "remove-event") {

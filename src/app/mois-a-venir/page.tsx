@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
 import { withProductAuthentication } from "@/app/product-query";
-import { MonthForecastView } from "@/features/phase2/month-forecast-view";
+import { MonthForecastView } from "./month-forecast-view";
 import { getBootstrapContext } from "@/server/bootstrap/context";
 import { getAuthenticatedBootstrapClient } from "@/server/bootstrap/auth";
 import { createCanonicalReadClient } from "@/server/canonical/client";
@@ -35,15 +35,19 @@ export default async function MonthForecastPage({ searchParams }: { searchParams
     year: "numeric", month: "2-digit", day: "2-digit" }).formatToParts(new Date());
   const datePart = (part: string) => dateParts.find((item) => item.type === part)?.value ?? "";
   const today = `${datePart("year")}-${datePart("month")}-${datePart("day")}`;
+  const baseScenario = deriveMonthScenario(forecast, stored.inputs, null, today);
   let scenario;
   let whatIfError = false;
   try {
     scenario = deriveMonthScenario(forecast, stored.inputs, purchase, today);
   } catch (error) {
     if (!(error instanceof TypeError) || purchase === null) throw error;
-    scenario = deriveMonthScenario(forecast, stored.inputs, null, today);
+    scenario = baseScenario;
     whatIfError = true;
   }
-  return <MonthForecastView forecast={forecast} scenario={scenario} stored={stored}
+  const eventImpacts = Object.fromEntries(stored.inputs.plannedEvents.map((event) => [event.id,
+    deriveMonthScenario(forecast, { ...stored.inputs, plannedEvents: [event], confirmedObligations: [] }, null, today).userPlannedEventDelta]));
+  return <MonthForecastView forecast={forecast} scenario={scenario} baseScenario={baseScenario} stored={stored}
+    eventImpacts={eventImpacts} today={today} purchaseName={value("purchaseName").slice(0, 120)}
     whatIfError={whatIfError} inputError={value("inputError") === "1"} />;
 }
