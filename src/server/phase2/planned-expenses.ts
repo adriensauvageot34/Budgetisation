@@ -137,12 +137,18 @@ const dateTime = (value: unknown): string => {
 
 async function validateReferences(client: SupabaseClient, householdId: string, draft: PlannedExpenseDraft): Promise<void> {
   const participantIds = draft.context.participantPersonIds ?? [];
+  const workMealPeople = new Set(draft.costItems.flatMap((item) => item.baselineKey === "adrien-work-meals" ? ["Adrien"]
+    : item.baselineKey === "manon-work-meals" ? ["Manon"] : []));
+  if (workMealPeople.size > 0 && participantIds.length === 0)
+    throw new TypeError("PLANNED_EXPENSE_WORK_MEAL_PERSON_REQUIRED");
   if (participantIds.length > 0) {
     const { data, error } = await client.from("persons").select("person_id,display_name,status")
       .eq("household_id", householdId).in("person_id", [...participantIds]);
     if (error) throw error;
     if ((data?.length ?? 0) !== participantIds.length || data?.some((person) => person.status !== "active"))
       throw new TypeError("PLANNED_EXPENSE_PERSON_NOT_IN_HOUSEHOLD");
+    if ([...workMealPeople].some((name) => !data?.some((person) => person.display_name === name)))
+      throw new TypeError("PLANNED_EXPENSE_WORK_MEAL_BASELINE_PERSON_MISMATCH");
     if (draft.familyKey === "food" && draft.subtypeKey === "work_meal") {
       const name = data![0]!.display_name;
       if (name !== "Adrien" && name !== "Manon") throw new TypeError("PLANNED_EXPENSE_WORK_MEAL_PERSON_UNSUPPORTED");
@@ -153,7 +159,7 @@ async function validateReferences(client: SupabaseClient, householdId: string, d
   }
   if (draft.context.place?.kind === "KNOWN") {
     const { data, error } = await createCanonicalReadClient().from("referentiel_lieu")
-      .select("place_id").eq("place_id", draft.context.place.placeId).maybeSingle();
+      .select("place_id").eq("place_id", draft.context.place.placeId).eq("private_place", false).maybeSingle();
     if (error) throw error;
     if (!data) throw new TypeError("PLANNED_EXPENSE_PLACE_UNKNOWN");
   }

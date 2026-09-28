@@ -13,8 +13,8 @@ Ils partagent le snapshot publié `phase2_month_forecast` et les inputs prospect
 | M4 Dépenses variables | Enveloppes de consommation habituelle | Composants additifs des catégories de vie ; aucune date individuelle inférée |
 | M5 Mobilité | Usage automobile et essence | Composant `mobility-usage` ; détail affiché dans une seule section dédiée |
 | M6 Swile | Financement potentiel distinct de la consommation | `forecast.funding` et solde/chargement saisis ; jamais traité comme revenu bancaire |
-| M7 Dépenses prévues | Déclarations prospectives et impact supplémentaire par scénario | Fondation `phase2_planned_expenses` + service `planned-expenses.ts` + `deriveMonthScenario` ; liste et formulaire unifiés réservés au lot UI suivant |
-| M8 Ancienne simulation | Parcours UI transitoire en attente du builder unifié | `WhatIfPurchase` reste affiché, mais ne sert pas de moteur Planned Expenses ; les écritures `plannedEvents` sont désactivées |
+| M7 Dépenses prévues | Builder progressif, liste et impact supplémentaire par scénario | `phase2_planned_expenses` + service `planned-expenses.ts` + `deriveMonthScenario` ; simulation serveur avant enregistrement |
+| M8 Ancienne simulation | Parcours retiré de l'interface | Le formulaire `plannedEvents` et le what-if par URL ne sont plus des voies utilisateur ; les écritures legacy restent désactivées |
 
 ## Fondation Planned Expenses V1
 
@@ -32,10 +32,17 @@ scénario. Le reste est entièrement additionnel. Le service n'écrit que dans l
 prospective ; aucune opération historique, publication ou révision analytique ne
 doit être créée.
 
+Le builder collecte d'abord la famille et le sous-type, puis le contexte pertinent et
+les lignes de coût. « Habituel » est traduit en clé de baseline dans le brouillon,
+jamais présenté comme une clé technique. Sa simulation et la prévision affichée
+passent par le même moteur. La liste est relue de la table après chaque mutation.
+
 ## Projection du calendrier
 
-Une date est affichée seulement lorsqu'elle a été saisie pour un événement ou une
-dépense possible confirmée. `freshnessDate` signale la fraîcheur des observations,
+Une date de dépense prévue est affichée seulement lorsqu'elle a été saisie. Le
+calendrier projette les charges certaines datées et les Planned Expenses datées depuis
+leurs sources respectives. Il montre le coût brut prévu, y compris après marquage
+« réalisée », sans créer de table calendrier. `freshnessDate` signale la fraîcheur des observations,
 pas une date de prélèvement à venir. Les revenus et charges fixes sans jour certifié
 figurent dans « Date à confirmer ». Les charges fixes restent incluses dans le total
 mensuel même sans jour connu. Un retrait les soustrait uniquement du scénario du

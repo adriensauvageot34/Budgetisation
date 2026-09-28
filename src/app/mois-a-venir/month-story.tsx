@@ -1,10 +1,10 @@
-import Big from "big.js";
 import { Banknote, CalendarDays, ChevronDown, House, Landmark, PiggyBank, ShieldCheck, Smartphone, Sparkles, Wallet, BookOpen } from "lucide-react";
 import type { MonthEconomicPlan } from "@/server/phase2/month-scenario";
 import type { StatisticalComponent } from "@/server/phase2/month-reference";
-import { updateMonthInputs } from "./actions";
 import { ResourceEditor } from "./resource-editor";
 import { MonthCalendar } from "./month-calendar";
+import { PlannedExpensesControl } from "./planned-expenses-control";
+import { projectMonthCalendar, type PlannedExpenseCard } from "./planned-expenses-projection";
 
 const money = (value: string | null, exact = false) => value === null ? "À confirmer" : new Intl.NumberFormat("fr-FR", {
   style: "currency", currency: "EUR", maximumFractionDigits: exact ? 2 : 0, minimumFractionDigits: exact ? 2 : 0,
@@ -45,18 +45,12 @@ function StatisticalCard({ part, tone }: { part: StatisticalComponent; tone: "ne
   </article>;
 }
 
-export function MonthStory({ plan, targetMonth, plannedEvents, eventImpacts }: { plan: MonthEconomicPlan | null; targetMonth: string;
-  plannedEvents: readonly { id: string; label: string; plannedDate: string; plannedCost: string }[];
-  eventImpacts: Readonly<Record<string, string | null>> }) {
+export function MonthStory({ plan, targetMonth, plannedExpenses, persons, places }: { plan: MonthEconomicPlan | null; targetMonth: string;
+  plannedExpenses: readonly PlannedExpenseCard[]; persons: readonly { personId: string; displayName: string }[];
+  places: readonly { placeId: string; name: string }[] }) {
   if (!plan) return <section className="card p-6" role="status"><h2 className="text-xl font-black">Notre mois n’est pas encore prêt</h2><p className="mt-2 text-slate-600">Il manque encore des informations pour préparer ce mois.</p></section>;
   const groups = [...plan.certainOutflows.groups].sort((a, b) => groupOrder.indexOf(a.label) - groupOrder.indexOf(b.label));
-  const monthName = new Intl.DateTimeFormat("fr-FR", { month: "long", timeZone: "UTC" }).format(new Date(`${targetMonth}-01T12:00:00Z`));
-  const calendarTotals = new Map<string, Big>();
-  for (const item of plan.certainOutflows.items) if (item.date)
-    calendarTotals.set(item.date, (calendarTotals.get(item.date) ?? new Big(0)).plus(item.amount));
-  for (const item of plannedEvents)
-    calendarTotals.set(item.plannedDate, (calendarTotals.get(item.plannedDate) ?? new Big(0)).plus(item.plannedCost));
-  const dailyTotals = Object.fromEntries([...calendarTotals].map(([date, total]) => [date, total.toFixed(2)]));
+  const calendar = projectMonthCalendar(plan.certainOutflows.items, plannedExpenses);
 
   return <div className="space-y-7 sm:space-y-9">
     <header className="space-y-2"><p className="eyebrow">Préparons notre mois ensemble</p><h1 className="text-4xl font-black capitalize tracking-tight sm:text-5xl">{monthLabel(targetMonth)}</h1><p className="text-slate-600">Voyons ce qui entre, ce qui est déjà réservé et ce qu’on peut encore prévoir.</p></header>
@@ -74,13 +68,11 @@ export function MonthStory({ plan, targetMonth, plannedEvents, eventImpacts }: {
           <ul className="mx-4 border-t border-slate-200 pb-3 pt-2 text-sm">{group.items.map((item) => <li key={item.key} className="flex flex-wrap justify-between gap-x-3 py-1"><span className="min-w-0 break-words">{item.label}<span className="block text-xs text-slate-500">{item.dateCertainty === "DECLARED" ? "Date déclarée" : item.dateCertainty === "HISTORICAL_ESTIMATE" ? "Date habituelle estimée" : "Date à confirmer"}</span></span><strong className="shrink-0 tabular-nums">{money(item.amount, true)}</strong></li>)}</ul></details>;
       })}</div></section>
 
-    <section id="timeline-title" className="card scroll-mt-6 p-4 sm:p-6" aria-labelledby="calendar-title"><div className="flex items-center gap-3"><span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-slate-100 text-slate-700"><CalendarDays size={19} aria-hidden="true" /></span><div><h2 id="calendar-title" className="text-xl font-black">Notre mois en un coup d’œil</h2><p className="text-xs text-slate-600">Les dates déclarées et nos dates habituelles</p></div></div><MonthCalendar targetMonth={targetMonth} outflows={plan.certainOutflows.items} plannedEvents={plannedEvents} dailyTotals={dailyTotals} /></section>
+    <section id="timeline-title" className="card scroll-mt-6 p-4 sm:p-6" aria-labelledby="calendar-title"><div className="flex items-center gap-3"><span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-slate-100 text-slate-700"><CalendarDays size={19} aria-hidden="true" /></span><div><h2 id="calendar-title" className="text-xl font-black">Notre mois en un coup d’œil</h2><p className="text-xs text-slate-600">Les dates déclarées et nos dates habituelles</p></div></div><MonthCalendar targetMonth={targetMonth} entries={calendar.entries} undated={calendar.undated} dailyTotals={calendar.dailyTotals} /></section>
 
     <section className="overflow-hidden rounded-[1.7rem] bg-emerald-950 px-5 py-6 text-white sm:flex sm:items-end sm:justify-between sm:gap-5 sm:px-8 sm:py-7" aria-labelledby="after-title"><div><h2 id="after-title" className="text-xl font-bold">Après nos charges certaines</h2><p className="mt-1 text-sm text-emerald-100">Avant les dépenses du quotidien</p><p className="mt-2 text-xs text-emerald-200">Inclut les titres-restaurants ; ce n’est pas notre solde bancaire.</p></div><p className="mt-4 whitespace-nowrap text-4xl font-black tracking-tight tabular-nums sm:mt-0 sm:text-5xl">{money(plan.afterCertainOutflows, true)}</p></section>
 
-    <section className="rounded-[1.7rem] bg-sky-50/70 p-5 sm:p-6" aria-labelledby="planned-title"><div className="flex flex-wrap items-start justify-between gap-3"><div><h2 id="planned-title" className="text-xl font-black">Ce qu’on a prévu en plus</h2>{plannedEvents.length === 0 ? <p className="mt-2 text-sm font-semibold">Rien d’ajouté pour l’instant.</p> : <p className="mt-2 text-sm text-slate-700">Nos ajouts pour {monthName}</p>}<p className="mt-1 text-sm text-slate-600">Une soirée, un achat ou un week-end ? Ajoutons-le pour voir son impact sur {monthName}.</p></div><a href="#add-event" className="button-secondary shrink-0 !border-sky-200 !bg-white text-sm">＋ Ajouter quelque chose</a></div>
-      {plannedEvents.length > 0 && <ul className="mt-4 grid gap-2 sm:grid-cols-2">{plannedEvents.map((event) => <li key={event.id} className="flex flex-wrap items-center justify-between gap-2 rounded-xl bg-white p-3 text-sm"><span><strong>{event.label}</strong><span className="block text-xs text-slate-600">{new Intl.DateTimeFormat("fr-FR", { day: "numeric", month: "long", timeZone: "UTC" }).format(new Date(`${event.plannedDate}T12:00:00Z`))} · {money(event.plannedCost, true)}</span>{eventImpacts[event.id] !== null && eventImpacts[event.id] !== undefined && <span className="block text-xs text-slate-600">Impact ajouté au mois : {money(eventImpacts[event.id], true)}</span>}</span><form action={updateMonthInputs}><input type="hidden" name="targetMonth" value={targetMonth} /><input type="hidden" name="intent" value="remove-event" /><input type="hidden" name="eventId" value={event.id} /><button type="submit" className="min-h-9 text-xs font-bold text-emerald-900 underline">Retirer</button></form></li>)}</ul>}
-    </section>
+    <PlannedExpensesControl targetMonth={targetMonth} expenses={plannedExpenses} persons={persons} places={places} />
 
     <section aria-labelledby="necessary-title"><h2 id="necessary-title" className="text-2xl font-black">Ce qu’il nous faut pour le quotidien</h2><p className="mt-1 text-sm text-slate-600">Des dépenses qui varient, mais qu’on aura normalement ce mois-ci.</p><div className="mt-4 grid gap-3 md:grid-cols-3">{plan.necessaryVariables.items.map((part) => <StatisticalCard key={part.key} part={part} tone="necessary" />)}</div></section>
 

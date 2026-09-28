@@ -69,6 +69,20 @@ assert.throws(() => parsePlannedExpenseDraft({ ...partyDraft, context: { unknown
 assert.throws(() => parsePlannedExpenseDraft({ ...partyDraft, familyKey: "food", subtypeKey: "work_meal",
   context: {} }, month), /WORK_MEAL_PERSON_REQUIRED/);
 const noReferenceClient = {};
+await assert.rejects(simulatePlannedExpense(noReferenceClient, householdId, forecast, inputs, [], {
+  ...partyDraft, costItems: [cost("20.00", "adrien-work-meals", "Repas")],
+}, "2026-09-28"), /WORK_MEAL_PERSON_REQUIRED/, "a work-meal baseline needs its person even in a mixed outing");
+const adrienId = randomUUID();
+const mixedWorkMealDraft = { ...partyDraft, context: { participantPersonIds: [adrienId] },
+  costItems: [cost("20.00", "adrien-work-meals", "Repas")] };
+const personClient = (displayName) => ({ from(table) {
+  assert.equal(table, "persons");
+  return { select() { return this; }, eq() { return this; },
+    in() { return Promise.resolve({ data: [{ person_id: adrienId, display_name: displayName, status: "active" }], error: null }); } };
+} });
+await simulatePlannedExpense(personClient("Adrien"), householdId, forecast, inputs, [], mixedWorkMealDraft, "2026-09-28");
+await assert.rejects(simulatePlannedExpense(personClient("Manon"), householdId, forecast, inputs, [], mixedWorkMealDraft,
+  "2026-09-28"), /BASELINE_PERSON_MISMATCH/);
 const simulated = await simulatePlannedExpense(noReferenceClient, householdId, forecast, inputs, [], partyDraft, "2026-09-28");
 assert.deepEqual(simulated.economicPlan.scenarios, amounts([party47]), "draft and saved use the same engine");
 assert.deepEqual((await simulatePlannedExpense(noReferenceClient, householdId, forecast, inputs, [],
