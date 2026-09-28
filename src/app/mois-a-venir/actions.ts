@@ -9,6 +9,7 @@ import { createCanonicalReadClient } from "@/server/canonical/client";
 import { queryMonthForecast } from "@/server/phase2/month-forecast-snapshot";
 import { readMonthInputs, saveMonthInputs } from "@/server/phase2/month-inputs";
 import { deriveMonthScenario, type MonthInputs } from "@/server/phase2/month-scenario";
+import { readPlannedExpenses } from "@/server/phase2/planned-expenses";
 
 const field = (form: FormData, key: string): string => String(form.get(key) ?? "").trim();
 const optionalMoney = (form: FormData, key: string): string | null => field(form, key) || null;
@@ -47,16 +48,8 @@ export async function updateMonthInputs(form: FormData): Promise<void> {
       currentBalance: balance === null ? null : { amount: balance, asOfDate: field(form, "benefitDate") },
       expectedLoading: loading === null ? null : { amount: loading, expectedDate: field(form, "loadingDate") },
     } };
-  } else if (intent === "add-event") {
-    const kind = field(form, "eventKind");
-    const label = field(form, "eventLabel") || (["Soirée", "Restaurant", "Famille", "Voyage / déplacement", "Achat", "Autre"].includes(kind) ? kind : "");
-    next = { ...current, plannedEvents: [...current.plannedEvents, {
-      id: randomUUID(), label, plannedCost: field(form, "eventCost"),
-      baselineDisplaced: field(form, "baselineDisplaced") || "0", parentEnvelope: field(form, "eventParent") || null,
-      plannedDate: field(form, "eventDate"),
-    }] };
-  } else if (intent === "remove-event") {
-    next = { ...current, plannedEvents: current.plannedEvents.filter((event) => event.id !== field(form, "eventId")) };
+  } else if (intent === "add-event" || intent === "remove-event") {
+    throw new TypeError("LEGACY_PLANNED_EVENT_WRITE_DISABLED");
   } else if (intent === "confirm-obligation") {
     const key = field(form, "componentKey");
     next = { ...current, confirmedObligations: [...current.confirmedObligations.filter((part) => part.componentKey !== key),
@@ -113,7 +106,8 @@ export async function updateMonthInputs(form: FormData): Promise<void> {
   } else throw new TypeError("MONTH_INPUT_INTENT_INVALID");
   // Validate the derived scenario against the published authority before writing.
   try {
-    deriveMonthScenario(forecast, next, null, new Date().toISOString().slice(0, 10));
+    const plannedExpenses = await readPlannedExpenses(supabase, household.householdId, targetMonth);
+    deriveMonthScenario(forecast, next, null, new Date().toISOString().slice(0, 10), plannedExpenses);
   } catch (error) {
     if (error instanceof TypeError) redirect("/mois-a-venir?inputError=1");
     throw error;

@@ -152,3 +152,4 @@ assert.equal(deriveMonthScenario(november, defaultMonthInputs(), null, "2026-09-
   "October's declared decisions are not copied into a later month");
 assert.equal(JSON.stringify(forecast), source, "scenario decisions never mutate the published snapshot");
 console.log("PASS: October resources, certain outflows, scenarios, negative invariants, override propagation and undo");
+export { forecast, inputs, deriveMonthScenario };

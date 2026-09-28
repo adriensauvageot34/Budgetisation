@@ -7,6 +7,7 @@ import { createCanonicalReadClient } from "@/server/canonical/client";
 import { MONTH_FORECAST_RESOURCE, queryMonthForecast } from "@/server/phase2/month-forecast-snapshot";
 import { readMonthInputs } from "@/server/phase2/month-inputs";
 import { deriveMonthScenario, type WhatIfPurchase } from "@/server/phase2/month-scenario";
+import { readPlannedExpenses } from "@/server/phase2/planned-expenses";
 
 export const metadata = { title: "Notre mois à venir" };
 export const dynamic = "force-dynamic";
@@ -24,7 +25,10 @@ export default async function MonthForecastPage({ searchParams }: { searchParams
   const targetMonth = String(latest.period_month).slice(0, 7);
   const forecast = await queryMonthForecast(client, context.household.householdId, targetMonth);
   const { supabase } = await getAuthenticatedBootstrapClient();
-  const stored = await readMonthInputs(supabase, context.household.householdId, targetMonth);
+  const [stored, plannedExpenses] = await Promise.all([
+    readMonthInputs(supabase, context.household.householdId, targetMonth),
+    readPlannedExpenses(supabase, context.household.householdId, targetMonth),
+  ]);
   const params = await searchParams;
   const value = (key: string) => typeof params[key] === "string" ? params[key] as string : "";
   const purchase: WhatIfPurchase | null = value("purchase") === "" ? null : {
@@ -35,19 +39,17 @@ export default async function MonthForecastPage({ searchParams }: { searchParams
     year: "numeric", month: "2-digit", day: "2-digit" }).formatToParts(new Date());
   const datePart = (part: string) => dateParts.find((item) => item.type === part)?.value ?? "";
   const today = `${datePart("year")}-${datePart("month")}-${datePart("day")}`;
-  const baseScenario = deriveMonthScenario(forecast, stored.inputs, null, today);
+  const baseScenario = deriveMonthScenario(forecast, stored.inputs, null, today, plannedExpenses);
   let scenario;
   let whatIfError = false;
   try {
-    scenario = deriveMonthScenario(forecast, stored.inputs, purchase, today);
+    scenario = deriveMonthScenario(forecast, stored.inputs, purchase, today, plannedExpenses);
   } catch (error) {
     if (!(error instanceof TypeError) || purchase === null) throw error;
     scenario = baseScenario;
     whatIfError = true;
   }
-  const eventImpacts = Object.fromEntries(stored.inputs.plannedEvents.map((event) => [event.id,
-    deriveMonthScenario(forecast, { ...stored.inputs, plannedEvents: [event], confirmedObligations: [] }, null, today).userPlannedEventDelta]));
   return <MonthForecastView forecast={forecast} scenario={scenario} baseScenario={baseScenario} stored={stored}
-    eventImpacts={eventImpacts} today={today} purchaseName={value("purchaseName").slice(0, 120)}
+    eventImpacts={{}} today={today} purchaseName={value("purchaseName").slice(0, 120)}
     whatIfError={whatIfError} inputError={value("inputError") === "1"} />;
 }

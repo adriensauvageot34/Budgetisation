@@ -16,9 +16,11 @@ export async function readMonthInputs(client: SupabaseClient, householdId: strin
 export async function saveMonthInputs(client: SupabaseClient, householdId: string, targetMonth: string,
   userId: string, inputs: MonthInputs): Promise<StoredMonthInputs> {
   const payload = monthInputsSchema.parse(inputs);
+  if (payload.plannedEvents.length !== 0) throw new TypeError("LEGACY_PLANNED_EVENTS_CUTOVER_REQUIRED");
+  const { plannedEvents: _legacyPlannedEvents, ...settingsPayload } = payload;
   const updatedAt = new Date().toISOString();
   const { error } = await client.from("phase2_month_inputs").upsert({
-    household_id: householdId, target_month: `${targetMonth}-01`, payload,
+    household_id: householdId, target_month: `${targetMonth}-01`, payload: settingsPayload,
     updated_by: userId, updated_at: updatedAt,
   }, { onConflict: "household_id,target_month" });
   if (error) throw error;

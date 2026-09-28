@@ -13,8 +13,24 @@ Ils partagent le snapshot publié `phase2_month_forecast` et les inputs prospect
 | M4 Dépenses variables | Enveloppes de consommation habituelle | Composants additifs des catégories de vie ; aucune date individuelle inférée |
 | M5 Mobilité | Usage automobile et essence | Composant `mobility-usage` ; détail affiché dans une seule section dédiée |
 | M6 Swile | Financement potentiel distinct de la consommation | `forecast.funding` et solde/chargement saisis ; jamais traité comme revenu bancaire |
-| M7 Événements | Projets confirmés et leur impact supplémentaire | `plannedEvents` et `deriveMonthScenario`, avec remplacement d'une part déjà couverte |
-| M8 Simulation | Hypothèse temporaire d'achat | `WhatIfPurchase` en lecture seule ; devient M7 après confirmation |
+| M7 Dépenses prévues | Déclarations prospectives et impact supplémentaire par scénario | Fondation `phase2_planned_expenses` + service `planned-expenses.ts` + `deriveMonthScenario` ; liste et formulaire unifiés réservés au lot UI suivant |
+| M8 Ancienne simulation | Parcours UI transitoire en attente du builder unifié | `WhatIfPurchase` reste affiché, mais ne sert pas de moteur Planned Expenses ; les écritures `plannedEvents` sont désactivées |
+
+## Fondation Planned Expenses V1
+
+`phase2_planned_expenses` est la seule source active des nouvelles dépenses prévues.
+Chaque ligne appartient à un foyer et à un mois, contient 1 à 50 CostItems JSONB et un
+contexte facultatif. Le coût brut est la somme des CostItems, jamais une colonne
+indépendante. `PLANNED` et `DECLARED_REALIZED` changent la présentation, pas le coût
+total. `plannedEvents` reste toléré uniquement comme tableau vide à la lecture des
+anciens réglages mensuels ; toute nouvelle écriture legacy est refusée.
+
+Le même `deriveMonthScenario` calcule les dépenses enregistrées et un brouillon simulé.
+Les lignes liées à `groceries`, `household-restaurants`, `adrien-work-meals` ou
+`manon-work-meals` sont agrégées par enveloppe avant remplacement dans chaque
+scénario. Le reste est entièrement additionnel. Le service n'écrit que dans la table
+prospective ; aucune opération historique, publication ou révision analytique ne
+doit être créée.
 
 ## Projection du calendrier
 

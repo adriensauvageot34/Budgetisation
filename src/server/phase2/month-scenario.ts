@@ -4,6 +4,7 @@ import Big from "big.js";
 import type { MonthForecastSnapshot } from "./month-forecast-snapshot";
 import { DEFAULT_SAFETY_RESERVE, type ForecastRange } from "./month-forecast";
 import type { StatisticalComponent } from "./month-reference";
+import type { PlannedExpenseScenarioEntry, PlannedBaselineKey } from "./planned-expenses";
 
 export type MonthInputs = Readonly<{
   safetyReserve: string;
@@ -46,7 +47,8 @@ const parseParent = (value: unknown): string | null => {
 export const monthInputsSchema = { parse(value: unknown): MonthInputs {
   const input = record(value);
   const benefit = record(input.benefit);
-  if (!Array.isArray(input.plannedEvents) || input.plannedEvents.length > 30
+  const legacyPlannedEvents = input.plannedEvents ?? [];
+  if (!Array.isArray(legacyPlannedEvents) || legacyPlannedEvents.length > 30
     || !Array.isArray(input.confirmedObligations) || input.confirmedObligations.length > 10) throw new TypeError("MONTH_INPUT_LIST_INVALID");
   const parseKeys = (value: unknown): string[] => {
     if (value === undefined) return []; // Existing monthly JSON remains readable.
@@ -75,7 +77,7 @@ export const monthInputsSchema = { parse(value: unknown): MonthInputs {
     safetyReserve: parseMoney(input.safetyReserve), openingBalance: parseDated(input.openingBalance, "asOfDate", true),
     benefit: { currentBalance: parseDated(benefit.currentBalance, "asOfDate"),
       expectedLoading: parseDated(benefit.expectedLoading, "expectedDate") },
-    plannedEvents: input.plannedEvents.map((raw: unknown) => {
+    plannedEvents: legacyPlannedEvents.map((raw: unknown) => {
       const item = record(raw);
       if (typeof item.id !== "string" || !/^[0-9a-f-]{36}$/iu.test(item.id)
         || typeof item.label !== "string" || item.label.trim().length < 1 || item.label.length > 120) throw new TypeError("MONTH_INPUT_EVENT_INVALID");
@@ -135,13 +137,16 @@ export type MonthEconomicPlan = Readonly<{ resources: readonly PlanResource[]; s
   afterCertainOutflows: string; necessaryVariables: { items: readonly StatisticalComponent[]; total: ForecastRange };
   flexibleVariables: { items: readonly StatisticalComponent[]; total: ForecastRange };
   scenarios: { lowConsumption: string; central: string; highConsumption: string };
+  plannedExpenses: { grossCost: string; plannedGross: string; declaredRealizedGross: string;
+    netImpact: ForecastRange; absorbedByBaseline: ForecastRange };
   automaticEventProvision: "0.00"; declaredEventImpact: string }>;
 
 const outflowGroup = (label: string): string => /Nexity|EDF|eau|loyer|veolia/iu.test(label) ? "Maison"
   : /SFR/iu.test(label) ? "Télécom" : /Pacifica/iu.test(label) ? "Assurances"
     : /Crédit Agricole/iu.test(label) ? "Banque" : "Abonnements";
 
-function deriveEconomicPlan(forecast: MonthForecastSnapshot, inputs: MonthInputs): MonthEconomicPlan | null {
+function deriveEconomicPlan(forecast: MonthForecastSnapshot, inputs: MonthInputs,
+  plannedExpenses: readonly PlannedExpenseScenarioEntry[]): MonthEconomicPlan | null {
   const reference = forecast.referencePlan;
   if (!reference) return null; // Older snapshots remain readable until their normal republication.
   const incomeKeys = [
@@ -202,24 +207,57 @@ function deriveEconomicPlan(forecast: MonthForecastSnapshot, inputs: MonthInputs
     const groupItems = items.filter((item) => item.group === label);
     return { label, total: euros(groupItems.reduce((sum, item) => sum.plus(item.amount), new Big(0))), items: groupItems };
   });
-  const declaredEventImpact = inputs.plannedEvents.reduce((sum, item) => sum.plus(item.plannedCost).minus(item.baselineDisplaced), new Big(0));
+  const baselines = new Map<PlannedBaselineKey, Big>();
+  let extra = new Big(0);
+  let plannedGross = new Big(0);
+  let declaredRealizedGross = new Big(0);
+  for (const expense of plannedExpenses) {
+    for (const item of expense.costItems) {
+      const amount = new Big(item.amount);
+      if (item.baselineKey === null) extra = extra.plus(amount);
+      else baselines.set(item.baselineKey, (baselines.get(item.baselineKey) ?? new Big(0)).plus(amount));
+      if (expense.status === "PLANNED") plannedGross = plannedGross.plus(amount);
+      else declaredRealizedGross = declaredRealizedGross.plus(amount);
+    }
+  }
+  const gross = plannedGross.plus(declaredRealizedGross);
+  const baselinePart = (key: PlannedBaselineKey) => [...reference.necessary, ...reference.flexible]
+    .find((part) => part.key === key);
+  const plannedImpact = (scenario: "low" | "central" | "high") => {
+    let impact = extra;
+    for (const [key, amount] of baselines) {
+      const available = baselinePart(key)?.[scenario];
+      if (available === null || available === undefined) throw new TypeError(`PLANNED_EXPENSE_BASELINE_MISSING:${key}`);
+      const excess = amount.minus(available);
+      if (excess.gt(0)) impact = impact.plus(excess);
+    }
+    return impact;
+  };
+  const lowImpact = plannedImpact("low");
+  const centralImpact = plannedImpact("central");
+  const highImpact = plannedImpact("high");
   const economicResources = salaryCash.plus(mealBenefits);
   const afterCertain = economicResources.minus(certainOutflows);
   const necessary = reference.necessaryTotal;
   const flexible = reference.flexibleTotal;
-  const lowConsumption = afterCertain.minus(necessary.low!).minus(flexible.low!).minus(declaredEventImpact);
-  const central = afterCertain.minus(necessary.central!).minus(flexible.central!).minus(declaredEventImpact);
-  const highConsumption = afterCertain.minus(necessary.high!).minus(flexible.high!).minus(declaredEventImpact);
+  const lowConsumption = afterCertain.minus(necessary.low!).minus(flexible.low!).minus(lowImpact);
+  const central = afterCertain.minus(necessary.central!).minus(flexible.central!).minus(centralImpact);
+  const highConsumption = afterCertain.minus(necessary.high!).minus(flexible.high!).minus(highImpact);
   return { resources, salaryCash: euros(salaryCash), mealBenefits: euros(mealBenefits), economicResources: euros(economicResources),
     certainOutflows: { items, groups, total: euros(certainOutflows), excludedKeys: inputs.excludedFixedObligations },
     afterCertainOutflows: euros(afterCertain), necessaryVariables: { items: reference.necessary, total: necessary },
     flexibleVariables: { items: reference.flexible, total: flexible },
     scenarios: { lowConsumption: euros(lowConsumption), central: euros(central), highConsumption: euros(highConsumption) },
-    automaticEventProvision: "0.00", declaredEventImpact: euros(declaredEventImpact) };
+    plannedExpenses: { grossCost: euros(gross), plannedGross: euros(plannedGross), declaredRealizedGross: euros(declaredRealizedGross),
+      netImpact: { low: euros(lowImpact), central: euros(centralImpact), high: euros(highImpact) },
+      absorbedByBaseline: { low: euros(gross.minus(lowImpact)), central: euros(gross.minus(centralImpact)),
+        high: euros(gross.minus(highImpact)) } },
+    automaticEventProvision: "0.00", declaredEventImpact: euros(centralImpact) };
 }
 
 export function deriveMonthScenario(forecast: MonthForecastSnapshot, rawInputs: MonthInputs,
-  rawPurchase: WhatIfPurchase | null, asOfDate: string): Readonly<{
+  rawPurchase: WhatIfPurchase | null, asOfDate: string,
+  plannedExpenses: readonly PlannedExpenseScenarioEntry[] = []): Readonly<{
     targetMonth: string; publicationId: string; inputs: MonthInputs;
     whatIf: { amount: string; parentEnvelope: string | null; covered: string; additiveImpact: string } | null;
     userPlannedEventDelta: string | null; undeclaredEventDelta: null;
@@ -230,6 +268,11 @@ export function deriveMonthScenario(forecast: MonthForecastSnapshot, rawInputs: 
     availableNow: { status: "AVAILABLE"; value: string; asOfDate: string } | { status: "UNAVAILABLE"; value: null; reason: string };
   }> {
   const inputs = monthInputsSchema.parse(rawInputs);
+  if (inputs.plannedEvents.length !== 0) throw new TypeError("LEGACY_PLANNED_EVENTS_CUTOVER_REQUIRED");
+  if (new Set(plannedExpenses.map((item) => item.id)).size !== plannedExpenses.length
+    || plannedExpenses.some((item) => item.targetMonth !== forecast.meta.targetMonth
+      || (item.status !== "PLANNED" && item.status !== "DECLARED_REALIZED")))
+    throw new TypeError("PLANNED_EXPENSE_SCENARIO_INPUT_INVALID");
   parseDate(asOfDate);
   const purchase = rawPurchase === null ? null : whatIfPurchaseSchema.parse(rawPurchase);
   if (purchase?.parentEnvelope === null && purchase.amountAlreadyCoveredByParentEnvelope !== "0" && new Big(purchase.amountAlreadyCoveredByParentEnvelope).gt(0))
@@ -242,21 +285,6 @@ export function deriveMonthScenario(forecast: MonthForecastSnapshot, rawInputs: 
     throw new TypeError("WHAT_IF_COVERAGE_EXCEEDS_PURCHASE");
   if (purchase && parent && (parent.central === null || new Big(purchase.amountAlreadyCoveredByParentEnvelope).gt(parent.central)))
     throw new TypeError("WHAT_IF_COVERAGE_EXCEEDS_PARENT");
-  const displacedByParent = new Map<string, Big>();
-  for (const event of inputs.plannedEvents) {
-    if (!event.plannedDate.startsWith(forecast.meta.targetMonth))
-      throw new TypeError("PLANNED_EVENT_MONTH_OR_DISPLACEMENT_INVALID");
-    if (new Big(event.baselineDisplaced).gt(0)) {
-      const envelope = forecast.components.find((part) => part.key === event.parentEnvelope
-        && REPLACEABLE_ENVELOPES.some((key) => key === part.key) && part.additiveGroup !== null && part.parentEnvelope === null);
-      if (!envelope || envelope.central === null) throw new TypeError("PLANNED_EVENT_PARENT_UNKNOWN");
-      const displaced = (displacedByParent.get(envelope.key) ?? new Big(0)).plus(event.baselineDisplaced);
-      if (displaced.gt(envelope.central)) throw new TypeError("PLANNED_EVENT_DISPLACEMENT_EXCEEDS_PARENT");
-      displacedByParent.set(envelope.key, displaced);
-    }
-  }
-  if (parent && new Big(purchase!.amountAlreadyCoveredByParentEnvelope)
-    .plus(displacedByParent.get(parent.key) ?? 0).gt(parent.central!)) throw new TypeError("WHAT_IF_PARENT_ALREADY_DISPLACED");
   for (const obligation of inputs.confirmedObligations) {
     const component = forecast.components.find((part) => part.key === obligation.componentKey);
     if (!component || component.knowledgeState !== "CONDITIONAL_UNKNOWN"
@@ -290,12 +318,11 @@ export function deriveMonthScenario(forecast: MonthForecastSnapshot, rawInputs: 
       throw new TypeError("FIXED_EXCLUSION_TARGET_INVALID");
     return total.plus(component.central);
   }, new Big(0));
-  const eventDelta = inputs.plannedEvents.reduce((total, event) => total.plus(event.plannedCost).minus(event.baselineDisplaced), new Big(0));
   const confirmedObligations = inputs.confirmedObligations.reduce((total, item) => total.plus(item.amount), new Big(0));
   const rawImpact = purchase ? new Big(purchase.amount).minus(purchase.amountAlreadyCoveredByParentEnvelope) : new Big(0);
   const additiveImpact = rawImpact.gt(0) ? rawImpact : new Big(0);
   const reserveDifference = new Big(inputs.safetyReserve).minus(forecast.reserve.amount);
-  const totalCostDelta = eventDelta.plus(confirmedObligations).plus(additiveImpact).minus(excludedFixedTotal);
+  const totalCostDelta = confirmedObligations.plus(additiveImpact).minus(excludedFixedTotal);
   const spendDelta = totalCostDelta.plus(reserveDifference);
   const economicCost: ForecastRange = {
     low: add(forecast.economicCost.low, totalCostDelta), central: add(forecast.economicCost.central, totalCostDelta),
@@ -326,12 +353,19 @@ export function deriveMonthScenario(forecast: MonthForecastSnapshot, rawInputs: 
     targetMonth: forecast.meta.targetMonth, publicationId: forecast.meta.sourcePublicationId, inputs,
     whatIf: purchase === null ? null : { amount: purchase.amount, parentEnvelope: purchase.parentEnvelope,
       covered: purchase.amountAlreadyCoveredByParentEnvelope, additiveImpact: euros(additiveImpact) },
-    userPlannedEventDelta: inputs.plannedEvents.length ? euros(eventDelta) : null,
+    userPlannedEventDelta: null,
     undeclaredEventDelta: null, fixedExpenseTotal: forecast.obligations.central === null ? null
       : euros(new Big(forecast.obligations.central).minus(excludedFixedTotal)), excludedFixedTotal: euros(excludedFixedTotal),
-    economicPlan: deriveEconomicPlan(forecast, inputs),
+    economicPlan: deriveEconomicPlan(forecast, inputs, plannedExpenses),
     economicCost, freeToSpend, cashPrudent, benefitPotential, availableNow,
   };
+}
+
+/** Draft simulation uses the exact saved-expense derivation, replacing an entity with the same ID. */
+export function simulatePlannedExpenseScenario(forecast: MonthForecastSnapshot, inputs: MonthInputs,
+  saved: readonly PlannedExpenseScenarioEntry[], draft: PlannedExpenseScenarioEntry, asOfDate: string): MonthScenario {
+  const next = [...saved.filter((expense) => expense.id !== draft.id), draft];
+  return deriveMonthScenario(forecast, inputs, null, asOfDate, next);
 }
 
 export type MonthScenario = ReturnType<typeof deriveMonthScenario>;
