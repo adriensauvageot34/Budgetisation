@@ -131,10 +131,10 @@ if (args.has("--round-trip")) {
   const { materializeMonthForecast, queryMonthForecast, MONTH_FORECAST_RESOURCE } = require(path.resolve(root, "src/server/phase2/month-forecast-snapshot.ts"));
   const snapshot = await materializeMonthForecast(client, householdId, targetMonth);
   const queried = await queryMonthForecast(client, householdId, targetMonth);
-  const business = ({ meta, components, income, obligations, economicCost, cash, funding, events, reserve, freeToSpend, availableNow, limitations }) => ({
+  const business = ({ meta, components, income, obligations, economicCost, cash, funding, events, reserve, freeToSpend, availableNow, limitations, referencePlan }) => ({
     meta: { targetMonth: meta.targetMonth, sourcePublicationId: meta.sourcePublicationId,
       sourceRevision: meta.sourceRevision, analyticsRevision: meta.analyticsRevision, certificationStatus: meta.certificationStatus },
-    components, income, obligations, economicCost, cash, funding, events, reserve, freeToSpend, availableNow, limitations,
+    components, income, obligations, economicCost, cash, funding, events, reserve, freeToSpend, availableNow, limitations, referencePlan,
   });
   assert.deepEqual(business(snapshot), business(forecast));
   assert.deepEqual(business(queried), business(snapshot));
@@ -144,6 +144,20 @@ if (args.has("--round-trip")) {
     .eq("period_month", `${targetMonth}-01`).eq("is_active", true).is("invalidated_at", null);
   if (countError) throw countError;
   assert.equal(count, 1);
+  if (targetMonth === "2026-10") {
+    const { readMonthInputs } = require(path.resolve(root, "src/server/phase2/month-inputs.ts"));
+    const { deriveMonthScenario } = require(path.resolve(root, "src/server/phase2/month-scenario.ts"));
+    const stored = await readMonthInputs(client, householdId, targetMonth);
+    const plan = deriveMonthScenario(queried, stored.inputs, null, "2026-09-28").economicPlan;
+    assert.ok(queried.referencePlan, "October reference plan was not published");
+    assert.ok(plan, "October declared resources are missing");
+    assert.equal(plan.economicResources, "3928.99");
+    assert.equal(plan.certainOutflows.total, "2047.23");
+    assert.equal(plan.afterCertainOutflows, "1881.76");
+    assert.deepEqual(plan.necessaryVariables.total, { low: "632.00", central: "788.00", high: "929.00" });
+    assert.deepEqual(plan.flexibleVariables.total, { low: "79.00", central: "177.93", high: "397.00" });
+    assert.deepEqual(plan.scenarios, { lowConsumption: "1170.76", central: "915.83", highConsumption: "555.76" });
+  }
   console.log(JSON.stringify({ test: "PASS engine=snapshot=query", resource: MONTH_FORECAST_RESOURCE,
     contractVersion: snapshot.resourceMeta.contractVersion, methodSignature: snapshot.resourceMeta.methodSignature,
     publicationId: snapshot.meta.sourcePublicationId, targetMonth, activeSnapshotCount: count,
