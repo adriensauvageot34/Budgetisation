@@ -79,6 +79,37 @@ export async function updateMonthInputs(form: FormData): Promise<void> {
     next = { ...current, excludedFixedObligations: intent === "exclude-fixed"
       ? [...new Set([...current.excludedFixedObligations, key])]
       : current.excludedFixedObligations.filter((item) => item !== key) };
+  } else if (intent === "set-resource-override" || intent === "clear-resource-override") {
+    const key = field(form, "resourceKey");
+    const supported = forecast.income.components.some((part) => part.key === key && part.central !== null)
+      || ((key === "benefit:swile" || key === "benefit:edenred") && current.declaredResources[key] !== undefined);
+    if (!supported) throw new TypeError("RESOURCE_OVERRIDE_TARGET_INVALID");
+    const resourceOverrides = { ...current.resourceOverrides };
+    if (intent === "clear-resource-override") delete resourceOverrides[key];
+    else resourceOverrides[key] = field(form, "resourceAmount");
+    next = { ...current, resourceOverrides };
+  } else if (intent === "declare-meal-resource") {
+    const key = field(form, "resourceKey");
+    if (key !== "benefit:swile" && key !== "benefit:edenred") throw new TypeError("DECLARED_RESOURCE_TARGET_INVALID");
+    next = { ...current, declaredResources: { ...current.declaredResources, [key]: field(form, "resourceAmount") } };
+  } else if (intent === "set-fixed-amount-override" || intent === "clear-fixed-amount-override") {
+    const key = field(form, "componentKey");
+    const fixedAmountOverrides = { ...current.fixedAmountOverrides };
+    if (intent === "clear-fixed-amount-override") delete fixedAmountOverrides[key];
+    else {
+      if (!forecast.components.some((part) => part.key === key && part.nature === "CONTRACTUAL_EXPECTED"
+        && part.additiveGroup === "obligations" && part.central !== null)) throw new TypeError("FIXED_OVERRIDE_TARGET_INVALID");
+      fixedAmountOverrides[key] = { amount: field(form, "obligationAmount"),
+        dueDate: field(form, "obligationDate") || null, reason: "MONTH_EXCEPTION" };
+    }
+    next = { ...current, fixedAmountOverrides };
+  } else if (intent === "add-declared-savings") {
+    next = { ...current, declaredOutflows: [...current.declaredOutflows, {
+      id: randomUUID(), label: field(form, "outflowLabel"), amount: field(form, "outflowAmount"),
+      dueDate: field(form, "outflowDate") || null, kind: "SAVINGS" as const,
+    }] };
+  } else if (intent === "remove-declared-outflow") {
+    next = { ...current, declaredOutflows: current.declaredOutflows.filter((item) => item.id !== field(form, "outflowId")) };
   } else throw new TypeError("MONTH_INPUT_INTENT_INVALID");
   // Validate the derived scenario against the published authority before writing.
   try {

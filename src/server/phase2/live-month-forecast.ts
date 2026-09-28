@@ -9,6 +9,7 @@ import {
   type GlobalV2QueryResourceName,
 } from "@/query-api/global-v2";
 import { assembleMonthForecast, type ForecastAuthorities, type ForecastOperation, type ForecastRecurrence, type MonthForecast } from "./month-forecast";
+import { REFERENCE_SUBCATEGORIES, type EconomicReferenceEntry, type MobilityReferenceLeg } from "./month-reference";
 
 const RESOURCES = [
   "analysis_global_background_rhythms", "analysis_global_economic_recurrence_detail",
@@ -76,6 +77,46 @@ export async function loadMonthForecastAuthorities(client: SupabaseClient, house
   if ((recurrenceOperationsResult.data?.length ?? 0) === 1000 || (incomeOperationsResult.data?.length ?? 0) === 1000) {
     throw new TypeError("FORECAST_OPERATION_PAGE_LIMIT_REACHED");
   }
+  const subcategoryResult = await client.from("subcategories").select("subcategory_id,nom_canonique")
+    .in("nom_canonique", [...REFERENCE_SUBCATEGORIES]);
+  if (subcategoryResult.error) throw subcategoryResult.error;
+  const names = new Map((subcategoryResult.data ?? []).map((row) => [row.subcategory_id, row.nom_canonique]));
+  if (new Set(names.values()).size !== REFERENCE_SUBCATEGORIES.length) throw new TypeError("FORECAST_REFERENCE_SUBCATEGORY_MISSING");
+  const costResult = await client.from("financial_economic_cost_canonical")
+    .select("operation_id,subcategory_id,canonical_economic_net").in("subcategory_id", [...names.keys()]).range(0, 999);
+  if (costResult.error) throw costResult.error;
+  if ((costResult.data?.length ?? 0) === 1000) throw new TypeError("FORECAST_REFERENCE_COST_PAGE_LIMIT_REACHED");
+  const operationRows: { operation_id: string; date_bancaire: string; personne_concernee: string | null;
+    type_precis: string | null; marchand: string | null }[] = [];
+  for (let offset = 0; ; offset += 1000) {
+    const result = await client.from("operations")
+      .select("operation_id,date_bancaire,personne_concernee,type_precis,marchand")
+      .gte("date_bancaire", start).lt("date_bancaire", endExclusive)
+      .order("operation_id").range(offset, offset + 999);
+    if (result.error) throw result.error;
+    operationRows.push(...(result.data ?? []));
+    if ((result.data?.length ?? 0) < 1000) break;
+  }
+  const operationsById = new Map(operationRows.map((row) => [row.operation_id, row]));
+  const economicEntries: EconomicReferenceEntry[] = (costResult.data ?? []).flatMap((row) => {
+    const operation = operationsById.get(row.operation_id);
+    const subcategory = names.get(row.subcategory_id);
+    return operation && subcategory ? [{ operationId: row.operation_id, date: operation.date_bancaire,
+      amount: String(row.canonical_economic_net), subcategory, person: operation.personne_concernee,
+      preciseType: operation.type_precis, merchant: operation.marchand }] : [];
+  });
+  if (economicEntries.length < 500) throw new TypeError("FORECAST_REFERENCE_ECONOMIC_COVERAGE_INSUFFICIENT");
+  const mobilityResult = await client.from("mobility_legs")
+    .select("travel_date,origin_source_label,destination_source_label,estimated_fuel_cost")
+    .eq("household_id", householdId).gte("travel_date", start).lt("travel_date", endExclusive)
+    .eq("status", "CERTIFIED_SOURCE").range(0, 999);
+  if (mobilityResult.error) throw mobilityResult.error;
+  if ((mobilityResult.data?.length ?? 0) === 1000) throw new TypeError("FORECAST_REFERENCE_MOBILITY_PAGE_LIMIT_REACHED");
+  const mobilityLegs: MobilityReferenceLeg[] = (mobilityResult.data ?? []).filter((row) => row.estimated_fuel_cost !== null)
+    .map((row) => ({ date: row.travel_date, origin: row.origin_source_label, destination: row.destination_source_label,
+      fuelCost: String(row.estimated_fuel_cost) }));
+  const referenceStart = new Date(`${background.period.endMonth}-01T12:00:00Z`);
+  referenceStart.setUTCMonth(referenceStart.getUTCMonth() - 11);
   return {
     publication, background, recurrenceDetails, categoryNeedDetails, routineDetails,
     transformation: { visibility: (one("analysis_global_transformations") as { visibility: string }).visibility },
@@ -83,6 +124,8 @@ export async function loadMonthForecastAuthorities(client: SupabaseClient, house
     recurrenceOperations: (recurrenceOperationsResult.data ?? []) as ForecastOperation[],
     incomeOperations: (incomeOperationsResult.data ?? []) as ForecastOperation[],
     categories: categoriesResult.data ?? [], needs: needsResult.data ?? [],
+    referenceEvidence: { startMonth: referenceStart.toISOString().slice(0, 7), endMonth: background.period.endMonth,
+      economicEntries, mobilityLegs },
   };
 }
 

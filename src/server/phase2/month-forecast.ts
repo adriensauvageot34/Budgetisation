@@ -2,6 +2,7 @@ import "server-only";
 
 import Big from "big.js";
 import { expandGlobalBackgroundFoodReadModel, type GlobalBackgroundRhythmsReadModel, type GlobalExpandedReadModel } from "@/query-api/global-v2";
+import { buildMonthReference, type MonthReferenceEvidence, type MonthReferencePlan } from "./month-reference";
 
 export type ForecastKnowledge = "PROBABLE" | "UNKNOWN" | "CONDITIONAL_UNKNOWN";
 export type ForecastRange = Readonly<{ low: string | null; central: string | null; high: string | null }>;
@@ -35,6 +36,7 @@ export type MonthForecast = Readonly<{
   freeToSpend: ForecastRange & { knowledgeState: "PROBABLE" | "UNKNOWN"; coverage: "KNOWN_BASELINE_ONLY" };
   availableNow: { status: "UNAVAILABLE"; value: null; missingInputs: readonly ["OPENING_BALANCE"] };
   limitations: readonly string[];
+  referencePlan?: MonthReferencePlan;
 }>;
 
 export type ForecastRecurrence = Readonly<{
@@ -57,6 +59,7 @@ export type ForecastAuthorities = Readonly<{
   incomeOperations: readonly ForecastOperation[];
   categories: readonly { category_id: string; nom_canonique: string }[];
   needs: readonly { need_id: string; name: string }[];
+  referenceEvidence?: MonthReferenceEvidence;
 }>;
 
 // P2-13 policy for any target month. It is not an October observation.
@@ -253,6 +256,11 @@ export function assembleMonthForecast(input: ForecastAuthorities, targetMonth: s
     categoryComponent(input, "Animaux", "animal-care", "category", latestMonth),
   ];
   const car = mobility(input);
+  // The declared work patterns and exceptions in this reference contract concern October 2026 only.
+  const referencePlan = input.referenceEvidence && targetMonth === "2026-10" ? buildMonthReference(input.referenceEvidence, targetMonth,
+    input.recurrenceOperations.filter((operation) => operation.recurrence_series_id !== null).map((operation) => ({
+      componentKey: `obligation:${operation.recurrence_series_id}`, date: operation.date_bancaire,
+    }))) : undefined;
   const components = [...charges, food, ...categories, car.usage];
   const summedObligations = sumAdditiveForecastComponents(charges.filter((part) => part.additiveGroup === "obligations"));
   const obligationRange = summedObligations.central === null ? summedObligations : {
@@ -293,5 +301,6 @@ export function assembleMonthForecast(input: ForecastAuthorities, targetMonth: s
       ...(input.transformation.visibility !== "VISIBLE" ? ["M3_REGIME_NOT_PUBLISHED"] : []),
       ...(input.routineDetails.length === 0 ? ["ROUTINE_DETAIL_UNAVAILABLE"] : []),
       "ECONOMIC_BASE_EXCLUDES_UNKNOWN_EVENTS_AND_CONDITIONAL_OBLIGATIONS"],
+    ...(referencePlan ? { referencePlan } : {}),
   };
 }

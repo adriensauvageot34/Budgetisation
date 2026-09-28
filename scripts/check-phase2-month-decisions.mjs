@@ -38,9 +38,17 @@ const forecast = { meta: { targetMonth: "2026-10", sourcePublicationId: "test" }
 const oldPayload = { ...defaultMonthInputs(), safetyReserve: "20.00" };
 delete oldPayload.excludedFixedObligations;
 delete oldPayload.declinedConditionalObligations;
+delete oldPayload.declaredResources;
+delete oldPayload.resourceOverrides;
+delete oldPayload.fixedAmountOverrides;
+delete oldPayload.declaredOutflows;
 const inputs = monthInputsSchema.parse(oldPayload);
 assert.deepEqual(inputs.excludedFixedObligations, []);
 assert.deepEqual(inputs.declinedConditionalObligations, []);
+assert.deepEqual(inputs.declaredResources, {});
+assert.deepEqual(inputs.resourceOverrides, {});
+assert.deepEqual(inputs.fixedAmountOverrides, {});
+assert.deepEqual(inputs.declaredOutflows, []);
 const derive = (next) => deriveMonthScenario(forecast, next, null, "2026-09-28");
 const base = derive(inputs);
 assert.equal(base.freeToSpend.central, "80.00");

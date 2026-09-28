@@ -60,5 +60,21 @@ export const phase2MonthForecastReadModelSchema = createRuntimeSchema((value: un
   const available = record(payload.availableNow, "availableNow");
   if (available.status !== "UNAVAILABLE" || available.value !== null) throw new TypeError("FORECAST_OPENING_BALANCE_INVALID");
   if (!Array.isArray(payload.limitations)) throw new TypeError("FORECAST_LIMITATIONS_INVALID");
+  if (payload.referencePlan !== undefined) {
+    const plan = record(payload.referencePlan, "ForecastReferencePlan");
+    if (plan.targetMonth !== targetMonth || !Array.isArray(plan.necessary) || !Array.isArray(plan.flexible))
+      throw new TypeError("FORECAST_REFERENCE_PLAN_INVALID");
+    for (const item of [...plan.necessary, ...plan.flexible]) {
+      const part = record(item, "ForecastReferenceComponent");
+      text(part.key, "reference.key");
+      text(part.method, "reference.method");
+      range(part, "ForecastReferenceComponent");
+      if (!Number.isSafeInteger(part.observationCount) || (part.observationCount as number) < 0
+        || !Array.isArray(part.provenance)) throw new TypeError("FORECAST_REFERENCE_PROVENANCE_INVALID");
+    }
+    range(plan.necessaryTotal, "necessaryTotal");
+    range(plan.flexibleTotal, "flexibleTotal");
+    record(plan.estimatedDays, "estimatedDays");
+  }
   return value;
 });
