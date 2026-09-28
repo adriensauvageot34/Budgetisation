@@ -1,4 +1,4 @@
-import type { ForecastComponent, ForecastRange } from "@/server/phase2/month-forecast";
+import type { ForecastComponent } from "@/server/phase2/month-forecast";
 import type { MonthForecastSnapshot } from "@/server/phase2/month-forecast-snapshot";
 import type { StoredMonthInputs } from "@/server/phase2/month-inputs";
 import { REPLACEABLE_ENVELOPES, type MonthScenario } from "@/server/phase2/month-scenario";
@@ -21,6 +21,10 @@ function Details({ part }: { part: ForecastComponent }) {
       <details className="pt-1 text-xs"><summary className="cursor-pointer font-semibold">Voir les détails techniques</summary><p className="mt-1 break-all">Référence : {part.referenceMode} · Sources : {part.provenance.join(" · ") || "non précisées"} · Limites : {part.limitations.join(" · ") || "aucune"}</p></details>
     </div>
   </details>;
+}
+
+function UndatedRow({ part, kind }: { part: ForecastComponent; kind: string }) {
+  return <li className="rounded-xl border border-slate-200 bg-slate-50 p-3"><div className="flex items-start justify-between gap-3"><div><p className="text-xs font-semibold text-slate-500">{kind}</p><p className="font-bold">{part.label}</p></div><strong className="whitespace-nowrap">{kind === "Revenu attendu" ? "+" : part.central === null ? "" : "− "}{money(part.central)}</strong></div><Details part={part} /></li>;
 }
 
 function ActionForm({ targetMonth, intent, children, label }: { targetMonth: string; intent: string; children: React.ReactNode; label: string }) {
@@ -52,7 +56,10 @@ export function MonthForecastView({ forecast, scenario, baseScenario, stored, ev
   const undated = [
     ...forecast.income.components.map((part) => ({ id: part.key, label: part.label, amount: part.central, kind: "Revenu attendu", part })),
     ...obligations.filter((part) => !stored.inputs.confirmedObligations.some((item) => item.componentKey === part.key)).map((part) => ({ id: part.key, label: part.label, amount: part.central, kind: part.knowledgeState === "CONDITIONAL_UNKNOWN" ? "À confirmer" : "Dépense attendue", part })),
-  ];
+  ].sort((a, b) => {
+    const rank = (kind: string) => kind === "Revenu attendu" ? 0 : kind === "À confirmer" ? 1 : 2;
+    return rank(a.kind) - rank(b.kind) || Number(b.amount ?? 0) - Number(a.amount ?? 0);
+  });
   const monthIsCurrent = today.slice(0, 7) === targetMonth;
   const monthEnd = new Date(Date.UTC(Number(targetMonth.slice(0, 4)), Number(targetMonth.slice(5, 7)), 0)).toISOString().slice(0, 10);
   const summary = baseScenario.freeToSpend.central;
@@ -87,7 +94,7 @@ export function MonthForecastView({ forecast, scenario, baseScenario, stored, ev
       <p className="mt-1 text-sm text-slate-600">Les dates connues apparaissent d’abord. Les autres restent visibles sans jour inventé.</p>
       {dated.length > 0 && <ol className="mt-5 border-l-2 border-emerald-200 pl-5">{dated.map((item) => <li key={item.id} className="relative pb-5 last:pb-0 before:absolute before:-left-[27px] before:top-2 before:h-3 before:w-3 before:rounded-full before:bg-emerald-700"><div className="flex flex-wrap items-start justify-between gap-3 rounded-2xl bg-emerald-50/70 p-3"><div><p className="text-xs font-bold uppercase tracking-wide text-emerald-800">{monthIsCurrent ? item.date < today ? "Date passée, réalisation non confirmée · " : item.date === today ? "Aujourd’hui · " : "Reste du mois · " : ""}{dateLabel(item.date)} · {item.kind}</p><p className="mt-1 font-bold">{item.label}</p>{item.impact !== null && <p className="text-xs text-slate-600">Impact supplémentaire sur le mois : {money(item.impact)}</p>}</div><strong className="whitespace-nowrap">− {money(item.amount)}</strong></div></li>)}</ol>}
       <h3 className="mt-6 text-sm font-black uppercase tracking-wide text-slate-600">Date à confirmer</h3>
-      {undated.length ? <ul className="mt-3 grid gap-2 sm:grid-cols-2">{undated.map((item) => <li key={item.id} className="rounded-xl border border-slate-200 bg-slate-50 p-3"><div className="flex items-start justify-between gap-3"><div><p className="text-xs font-semibold text-slate-500">{item.kind}</p><p className="font-bold">{item.label}</p></div><strong className="whitespace-nowrap">{item.kind === "Revenu attendu" ? "+" : item.amount === null ? "" : "− "}{money(item.amount)}</strong></div><Details part={item.part} /></li>)}</ul> : <p className="mt-2 text-sm text-slate-600">Aucun autre élément datable dans la prévision publiée.</p>}
+      {undated.length ? <><ul className="mt-3 grid gap-2 sm:grid-cols-2">{undated.slice(0, 8).map((item) => <UndatedRow key={item.id} part={item.part} kind={item.kind} />)}</ul>{undated.length > 8 && <details className="mt-3 rounded-xl border border-slate-200 p-3"><summary className="cursor-pointer font-bold text-emerald-800">Voir les {undated.length - 8} autres éléments sans date</summary><ul className="mt-3 grid gap-2 sm:grid-cols-2">{undated.slice(8).map((item) => <UndatedRow key={item.id} part={item.part} kind={item.kind} />)}</ul></details>}</> : <p className="mt-2 text-sm text-slate-600">Aucun autre élément datable dans la prévision publiée.</p>}
       {forecast.income.components.length === 0 && <p className="mt-3 text-sm text-amber-900">Les revenus attendus ne sont pas assez établis pour être détaillés.</p>}
     </section>
 
