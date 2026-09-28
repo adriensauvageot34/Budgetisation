@@ -5,6 +5,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { getAuthenticatedBootstrapClient } from "@/server/bootstrap/auth";
 import { getCurrentHousehold } from "@/server/bootstrap/queries";
+import { createCanonicalReadClient } from "@/server/canonical/client";
 import { queryMonthForecast } from "@/server/phase2/month-forecast-snapshot";
 import { readMonthInputs, saveMonthInputs } from "@/server/phase2/month-inputs";
 import { deriveMonthScenario, type MonthInputs } from "@/server/phase2/month-scenario";
@@ -18,7 +19,7 @@ export async function updateMonthInputs(form: FormData): Promise<void> {
   const { supabase, user } = await getAuthenticatedBootstrapClient();
   const household = await getCurrentHousehold(supabase);
   if (!household) throw new TypeError("MONTH_INPUT_HOUSEHOLD_MISSING");
-  const forecast = await queryMonthForecast(supabase, household.householdId, targetMonth);
+  const forecast = await queryMonthForecast(createCanonicalReadClient(), household.householdId, targetMonth);
   const stored = await readMonthInputs(supabase, household.householdId, targetMonth);
   const current: MonthInputs = stored.inputs;
   const intent = field(form, "intent");
