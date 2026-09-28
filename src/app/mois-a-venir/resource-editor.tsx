@@ -20,6 +20,7 @@ export function ResourceEditor({ resource, targetMonth }: { resource: Resource; 
   const [pending, startTransition] = useTransition();
   const meal = resource.pocket === "MEAL_BENEFIT";
   const overridden = resource.provenance === "MONTH_OVERRIDE";
+  const monthName = new Intl.DateTimeFormat("fr-FR", { month: "long", timeZone: "UTC" }).format(new Date(`${targetMonth}-01T12:00:00Z`));
 
   function send(intent: "set-resource-override" | "clear-resource-override", value?: string) {
     setError(null);
@@ -60,7 +61,7 @@ export function ResourceEditor({ resource, targetMonth }: { resource: Resource; 
         <button className="button-primary !min-h-10 !px-3" type="submit" disabled={pending}>{pending ? "Enregistrement…" : "Valider"}</button>
         <button className="button-ghost !min-h-10 !px-2" type="button" aria-label={`Annuler la modification de ${resource.label}`} disabled={pending} onClick={() => setEditing(false)}><X size={17} /></button></div>
     </form> : <p className="mt-4 break-words text-2xl font-black tracking-tight tabular-nums sm:text-[1.8rem]">{money(resource.amount)}</p>}
-    <div className="mt-2 min-h-5 text-xs text-slate-600">{overridden ? "Modifié pour ce mois" : meal ? "Déclaré pour ce mois" : "Prévision publiée"}</div>
+    <div className="mt-2 min-h-5 text-xs text-slate-600">{overridden ? `Modifié pour ${monthName}` : resource.provenance === "USER_DECLARED" ? `Déclaré pour ${monthName}` : `Prévu pour ${monthName}`}</div>
     {overridden && !editing && <button type="button" className="mt-2 inline-flex min-h-9 items-center gap-1 text-xs font-bold text-emerald-900 underline underline-offset-2" disabled={pending} onClick={() => send("clear-resource-override")}><RotateCcw size={13} />{pending ? "Restauration…" : `Revenir à ${resource.sourceAmount === null ? "la prévision" : money(resource.sourceAmount)}`}</button>}
     {error && <p role="alert" className="mt-2 text-xs font-semibold text-red-800">{error}</p>}
   </div>;
