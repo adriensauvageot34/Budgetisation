@@ -74,7 +74,7 @@
 .permitMonths > .permitMonthJuly { background: rgba(222, 238, 255, .88); }
 .permitMonths > .permitMonthJuly span { color: #356da4; }
 .permitMonths > .permitMonthJuly strong { color: #1269bb; font-size: 24px; }
-.peugeotProfile { --scene-position: 40% bottom; --scene-size: 105% auto; --foreground-size: 100% auto; position: relative; isolation: isolate; grid-column: 1 / -1; width: 100%; min-width: 0; aspect-ratio: 2029 / 650; min-height: 440px; overflow: hidden; border-radius: 24px; background: var(--manon-bg) url("/persona/illustrations/part-1/voiture-BG.webp") right bottom 30px / var(--scene-size) no-repeat; }
+.peugeotProfile { --scene-position: 40% bottom; --scene-size: 105% auto; --foreground-size: 100% auto; position: relative; isolation: isolate; grid-column: 1 / -1; width: 100%; min-width: 0; aspect-ratio: 2029 / 650; min-height: 440px; overflow: hidden; border-radius: 24px; background: var(--manon-bg) url("/persona/illustrations/part-1/voiture-BG.webp") right bottom 40px / var(--scene-size) no-repeat; }
 .peugeotColumns { position: absolute; z-index: 1; top: 5%; right: 1%; display: grid; grid-template-columns: minmax(0, 1.16fr) minmax(0, 1fr); gap: 10px; width: 55%; height: 56%; min-width: 0; }
 .peugeotColumns > div { min-width: 0; overflow: hidden; border: 1px solid rgba(255, 255, 255, .92); border-radius: 17px; padding: 9px 11px 23px; background: rgba(255, 247, 249, .985); box-shadow: 0 8px 22px rgba(91, 22, 38, .08); }
 .workIllustration { width: 100%; max-width: 330px; margin: -27px auto -12px; }
