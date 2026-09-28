@@ -60,9 +60,25 @@ export async function updateMonthInputs(form: FormData): Promise<void> {
   } else if (intent === "confirm-obligation") {
     const key = field(form, "componentKey");
     next = { ...current, confirmedObligations: [...current.confirmedObligations.filter((part) => part.componentKey !== key),
-      { componentKey: key, amount: field(form, "obligationAmount"), dueDate: field(form, "obligationDate") }] };
-  } else if (intent === "remove-obligation") {
-    next = { ...current, confirmedObligations: current.confirmedObligations.filter((part) => part.componentKey !== field(form, "componentKey")) };
+      { componentKey: key, amount: field(form, "obligationAmount"), dueDate: field(form, "obligationDate") }],
+      declinedConditionalObligations: current.declinedConditionalObligations.filter((item) => item !== key) };
+  } else if (intent === "decline-conditional" || intent === "unknown-conditional") {
+    const key = field(form, "componentKey");
+    if (intent === "decline-conditional" && !forecast.components.some((part) => part.key === key
+      && part.knowledgeState === "CONDITIONAL_UNKNOWN" && /Ornikar|Alma/iu.test(part.label)))
+      throw new TypeError("CONDITIONAL_DECISION_TARGET_INVALID");
+    next = { ...current, confirmedObligations: current.confirmedObligations.filter((part) => part.componentKey !== key),
+      declinedConditionalObligations: intent === "decline-conditional"
+        ? [...new Set([...current.declinedConditionalObligations, key])]
+        : current.declinedConditionalObligations.filter((item) => item !== key) };
+  } else if (intent === "exclude-fixed" || intent === "restore-fixed") {
+    const key = field(form, "componentKey");
+    if (intent === "exclude-fixed" && !forecast.components.some((part) => part.key === key
+      && part.nature === "CONTRACTUAL_EXPECTED" && part.additiveGroup === "obligations" && part.central !== null))
+      throw new TypeError("FIXED_EXCLUSION_TARGET_INVALID");
+    next = { ...current, excludedFixedObligations: intent === "exclude-fixed"
+      ? [...new Set([...current.excludedFixedObligations, key])]
+      : current.excludedFixedObligations.filter((item) => item !== key) };
   } else throw new TypeError("MONTH_INPUT_INTENT_INVALID");
   // Validate the derived scenario against the published authority before writing.
   try {

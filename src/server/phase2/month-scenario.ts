@@ -10,6 +10,8 @@ export type MonthInputs = Readonly<{
   benefit: { currentBalance: { amount: string; asOfDate: string } | null; expectedLoading: { amount: string; expectedDate: string } | null };
   plannedEvents: readonly { id: string; label: string; plannedCost: string; baselineDisplaced: string; parentEnvelope: string | null; plannedDate: string }[];
   confirmedObligations: readonly { componentKey: string; amount: string; dueDate: string }[];
+  excludedFixedObligations: readonly string[];
+  declinedConditionalObligations: readonly string[];
 }>;
 const record = (value: unknown): Record<string, unknown> => {
   if (typeof value !== "object" || value === null || Array.isArray(value)) throw new TypeError("MONTH_INPUT_OBJECT_INVALID");
@@ -41,6 +43,12 @@ export const monthInputsSchema = { parse(value: unknown): MonthInputs {
   const benefit = record(input.benefit);
   if (!Array.isArray(input.plannedEvents) || input.plannedEvents.length > 30
     || !Array.isArray(input.confirmedObligations) || input.confirmedObligations.length > 10) throw new TypeError("MONTH_INPUT_LIST_INVALID");
+  const parseKeys = (value: unknown): string[] => {
+    if (value === undefined) return []; // Existing monthly JSON remains readable.
+    if (!Array.isArray(value) || value.length > 50 || value.some((key) => typeof key !== "string" || !key.startsWith("obligation:"))
+      || new Set(value).size !== value.length) throw new TypeError("MONTH_INPUT_DECISION_INVALID");
+    return value as string[];
+  };
   return {
     safetyReserve: parseMoney(input.safetyReserve), openingBalance: parseDated(input.openingBalance, "asOfDate", true),
     benefit: { currentBalance: parseDated(benefit.currentBalance, "asOfDate"),
@@ -59,12 +67,14 @@ export const monthInputsSchema = { parse(value: unknown): MonthInputs {
       if (typeof item.componentKey !== "string" || !item.componentKey.startsWith("obligation:")) throw new TypeError("MONTH_INPUT_OBLIGATION_INVALID");
       return { componentKey: item.componentKey, amount: parseMoney(item.amount), dueDate: parseDate(item.dueDate) };
     }),
+    excludedFixedObligations: parseKeys(input.excludedFixedObligations),
+    declinedConditionalObligations: parseKeys(input.declinedConditionalObligations),
   };
 }};
 export const defaultMonthInputs = (): MonthInputs => ({
   safetyReserve: DEFAULT_SAFETY_RESERVE, openingBalance: null,
   benefit: { currentBalance: null, expectedLoading: null },
-  plannedEvents: [], confirmedObligations: [],
+  plannedEvents: [], confirmedObligations: [], excludedFixedObligations: [], declinedConditionalObligations: [],
 });
 
 export type WhatIfPurchase = Readonly<{ amount: string; parentEnvelope: string | null; amountAlreadyCoveredByParentEnvelope: string }>;
@@ -83,6 +93,7 @@ export function deriveMonthScenario(forecast: MonthForecastSnapshot, rawInputs: 
     targetMonth: string; publicationId: string; inputs: MonthInputs;
     whatIf: { amount: string; parentEnvelope: string | null; covered: string; additiveImpact: string } | null;
     userPlannedEventDelta: string | null; undeclaredEventDelta: null;
+    fixedExpenseTotal: string | null; excludedFixedTotal: string;
     economicCost: ForecastRange; freeToSpend: ForecastRange; cashPrudent: ForecastRange;
     benefitPotential: string | null;
     availableNow: { status: "AVAILABLE"; value: string; asOfDate: string } | { status: "UNAVAILABLE"; value: null; reason: string };
@@ -123,12 +134,26 @@ export function deriveMonthScenario(forecast: MonthForecastSnapshot, rawInputs: 
   }
   if (new Set(inputs.confirmedObligations.map((part) => part.componentKey)).size !== inputs.confirmedObligations.length)
     throw new TypeError("CONFIRMED_OBLIGATION_DUPLICATE");
+  if (inputs.declinedConditionalObligations.some((key) => inputs.confirmedObligations.some((part) => part.componentKey === key)))
+    throw new TypeError("CONDITIONAL_DECISION_CONFLICT");
+  for (const key of inputs.declinedConditionalObligations) {
+    const component = forecast.components.find((part) => part.key === key);
+    if (component && component.knowledgeState !== "CONDITIONAL_UNKNOWN") throw new TypeError("CONDITIONAL_DECISION_TARGET_INVALID");
+  }
+  const excludedFixedTotal = inputs.excludedFixedObligations.reduce((total, key) => {
+    const component = forecast.components.find((part) => part.key === key);
+    if (!component) return total; // An obsolete monthly decision must not break a newer publication.
+    if (component.nature !== "CONTRACTUAL_EXPECTED" || component.additiveGroup !== "obligations"
+      || component.central === null || component.low !== component.central || component.high !== component.central)
+      throw new TypeError("FIXED_EXCLUSION_TARGET_INVALID");
+    return total.plus(component.central);
+  }, new Big(0));
   const eventDelta = inputs.plannedEvents.reduce((total, event) => total.plus(event.plannedCost).minus(event.baselineDisplaced), new Big(0));
   const confirmedObligations = inputs.confirmedObligations.reduce((total, item) => total.plus(item.amount), new Big(0));
   const rawImpact = purchase ? new Big(purchase.amount).minus(purchase.amountAlreadyCoveredByParentEnvelope) : new Big(0);
   const additiveImpact = rawImpact.gt(0) ? rawImpact : new Big(0);
   const reserveDifference = new Big(inputs.safetyReserve).minus(forecast.reserve.amount);
-  const totalCostDelta = eventDelta.plus(confirmedObligations).plus(additiveImpact);
+  const totalCostDelta = eventDelta.plus(confirmedObligations).plus(additiveImpact).minus(excludedFixedTotal);
   const spendDelta = totalCostDelta.plus(reserveDifference);
   const economicCost: ForecastRange = {
     low: add(forecast.economicCost.low, totalCostDelta), central: add(forecast.economicCost.central, totalCostDelta),
@@ -160,7 +185,9 @@ export function deriveMonthScenario(forecast: MonthForecastSnapshot, rawInputs: 
     whatIf: purchase === null ? null : { amount: purchase.amount, parentEnvelope: purchase.parentEnvelope,
       covered: purchase.amountAlreadyCoveredByParentEnvelope, additiveImpact: euros(additiveImpact) },
     userPlannedEventDelta: inputs.plannedEvents.length ? euros(eventDelta) : null,
-    undeclaredEventDelta: null, economicCost, freeToSpend, cashPrudent, benefitPotential, availableNow,
+    undeclaredEventDelta: null, fixedExpenseTotal: forecast.obligations.central === null ? null
+      : euros(new Big(forecast.obligations.central).minus(excludedFixedTotal)), excludedFixedTotal: euros(excludedFixedTotal),
+    economicCost, freeToSpend, cashPrudent, benefitPotential, availableNow,
   };
 }
 
