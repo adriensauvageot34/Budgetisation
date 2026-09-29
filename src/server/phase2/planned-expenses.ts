@@ -86,7 +86,8 @@ const parsePlaceRef = (value: unknown): ProspectivePlaceRef => {
   throw new TypeError("PLANNED_EXPENSE_PLACE_KIND_INVALID");
 };
 
-export function parsePlannedExpenseDraft(value: unknown, targetMonth: string): PlannedExpenseDraft {
+export function parsePlannedExpenseDraft(value: unknown, targetMonth: string,
+  purpose: "WRITE" | "PREVIEW" = "WRITE"): PlannedExpenseDraft {
   parseTargetMonth(targetMonth);
   const raw = object(value, "PLANNED_EXPENSE_DRAFT_INVALID");
   keysOnly(raw, ["familyKey", "subtypeKey", "title", "plannedDate", "costItems", "context"], "PLANNED_EXPENSE_DRAFT_FIELDS_INVALID");
@@ -242,15 +243,15 @@ export function parsePlannedExpenseDraft(value: unknown, targetMonth: string): P
       return [key, parsePlaceRef(value)];
     }));
   }
-  if (familyKey === "food" && raw.subtypeKey === "fast_food"
+  if (purpose === "WRITE" && familyKey === "food" && raw.subtypeKey === "fast_food"
     && context.purchaseMode !== "TAKEAWAY" && context.purchaseMode !== "DELIVERY")
     throw new TypeError("PLANNED_EXPENSE_PURCHASE_MODE_REQUIRED");
-  if (familyKey === "purchase" && raw.subtypeKey === "clothing"
+  if (purpose === "WRITE" && familyKey === "purchase" && raw.subtypeKey === "clothing"
     && context.purchaseMode !== "IN_STORE" && context.purchaseMode !== "ONLINE")
     throw new TypeError("PLANNED_EXPENSE_PURCHASE_MODE_REQUIRED");
-  if (context.purchaseMode === "DELIVERY" && !context.deliveryProvider)
+  if (purpose === "WRITE" && context.purchaseMode === "DELIVERY" && !context.deliveryProvider)
     throw new TypeError("PLANNED_EXPENSE_DELIVERY_PROVIDER_REQUIRED");
-  if (context.purchaseMode === "ONLINE" && !context.seller)
+  if (purpose === "WRITE" && context.purchaseMode === "ONLINE" && !context.seller)
     throw new TypeError("PLANNED_EXPENSE_SELLER_REQUIRED");
   if (contextRaw.gift !== undefined) {
     const gift = object(contextRaw.gift, "PLANNED_EXPENSE_GIFT_INVALID");
@@ -308,11 +309,11 @@ export function parsePlannedExpenseDraft(value: unknown, targetMonth: string): P
     context.route = { mode: route.mode as NonNullable<PlannedExpenseContext["route"]>["mode"], stops,
       ...(fuelEstimate ? { fuelEstimate } : {}) };
   }
-  if ((familyKey === "visit_trip" && ["family_visit", "friend_visit"].includes(raw.subtypeKey as string))
+  if (purpose === "WRITE" && (familyKey === "visit_trip" && ["family_visit", "friend_visit"].includes(raw.subtypeKey as string))
     && !context.personVisited) throw new TypeError("PLANNED_EXPENSE_VISITED_PERSON_REQUIRED");
   if (familyKey === "food" && raw.subtypeKey === "work_meal" && context.participantPersonIds?.length !== 1)
     throw new TypeError("PLANNED_EXPENSE_WORK_MEAL_PERSON_REQUIRED");
-  if (familyKey === "purchase" && raw.subtypeKey === "gift" && !context.gift)
+  if (purpose === "WRITE" && familyKey === "purchase" && raw.subtypeKey === "gift" && !context.gift)
     throw new TypeError("PLANNED_EXPENSE_GIFT_RECIPIENT_REQUIRED");
   if (costItems.some((item) => item.assetKey === "transport:fuel_usage")
     && (context.route?.mode !== "CAR" || !context.route.fuelEstimate))
@@ -322,7 +323,7 @@ export function parsePlannedExpenseDraft(value: unknown, targetMonth: string): P
       visitFormat: context.visitFormat, socialOccasion: context.socialOccasion,
       occasionLabel: context.occasionLabel, deliveryProviderKey: context.deliveryProviderKey } });
   if (context.place && resolved.fields.place === "HIDDEN") throw new TypeError("PLANNED_EXPENSE_PLACE_FORBIDDEN");
-  if (!context.place && resolved.fields.place === "REQUIRED") throw new TypeError("PLANNED_EXPENSE_PLACE_REQUIRED");
+  if (purpose === "WRITE" && !context.place && resolved.fields.place === "REQUIRED") throw new TypeError("PLANNED_EXPENSE_PLACE_REQUIRED");
   if (context.personVisited && resolved.fields.visitedContact === "HIDDEN")
     throw new TypeError("PLANNED_EXPENSE_VISITED_PERSON_FORBIDDEN");
   if (context.personVisited?.kind === "CONTACT") {
@@ -336,7 +337,7 @@ export function parsePlannedExpenseDraft(value: unknown, targetMonth: string): P
     throw new TypeError("PLANNED_EXPENSE_PURCHASE_MODE_FORBIDDEN");
   if ((context.deliveryProvider || context.deliveryProviderKey) && resolved.fields.deliveryProvider === "HIDDEN")
     throw new TypeError("PLANNED_EXPENSE_DELIVERY_PROVIDER_FORBIDDEN");
-  if (resolved.fields.deliveryProvider === "REQUIRED" && (!context.deliveryProvider || !context.deliveryProviderKey))
+  if (purpose === "WRITE" && resolved.fields.deliveryProvider === "REQUIRED" && (!context.deliveryProvider || !context.deliveryProviderKey))
     throw new TypeError("PLANNED_EXPENSE_DELIVERY_PROVIDER_REQUIRED");
   const knownProvider = DELIVERY_PROVIDERS.find((provider) => provider.key === context.deliveryProviderKey);
   if (knownProvider && knownProvider.key !== "OTHER" && context.deliveryProvider !== knownProvider.label)
@@ -512,8 +513,11 @@ export async function readPlannedExpenses(client: SupabaseClient, householdId: s
 /** A draft never writes to Supabase. Editing replaces the saved ID in the same financial path. */
 export async function simulatePlannedExpense(client: SupabaseClient, householdId: string,
   forecast: MonthForecastSnapshot, inputs: MonthInputs, saved: readonly PlannedExpense[],
-  rawDraft: unknown, asOfDate: string, editedId?: string) {
-  const draft = await validatePlannedExpenseForWrite(client, householdId, forecast.meta.targetMonth, rawDraft);
+  rawDraft: unknown, asOfDate: string, editedId?: string, purpose: "WRITE" | "PREVIEW" = "WRITE") {
+  const draft = purpose === "PREVIEW"
+    ? parsePlannedExpenseDraft(rawDraft, forecast.meta.targetMonth, "PREVIEW")
+    : parsePlannedExpenseDraft(rawDraft, forecast.meta.targetMonth);
+  await validateReferences(client, uuid(householdId, "PLANNED_EXPENSE_HOUSEHOLD_INVALID"), draft);
   const existing = editedId === undefined ? undefined : saved.find((item) => item.id === uuid(editedId, "PLANNED_EXPENSE_ID_INVALID"));
   if (editedId !== undefined && (!existing || existing.status !== "PLANNED"))
     throw new TypeError("PLANNED_EXPENSE_EDIT_TARGET_INVALID");

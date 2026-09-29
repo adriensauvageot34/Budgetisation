@@ -225,6 +225,18 @@ export function childPlaceRoles(module: AssetModule): readonly PlaceRole[] {
   return key ? resolvePlannedContext({ familyKey: key[0], subtypeKey: key[1] }).place.allowedRoles : [];
 }
 
+/** One domain lookup for the baseline question shown by the Builder. */
+export function baselineKeyForModule(module: AssetModule, workMealPerson?: "ADRIEN" | "MANON"):
+  BaselinePolicy["key"] {
+  const representative: Partial<Record<AssetModule, readonly [PlannedExpenseFamily, string]>> = {
+    groceries: ["food", "groceries"], restaurant: ["food", "restaurant"],
+    fast_food: ["food", "fast_food"], work_meal: ["food", "work_meal"],
+  };
+  const context = representative[module];
+  return context ? resolvePlannedContext({ familyKey: context[0], subtypeKey: context[1],
+    modifiers: { workMealPerson } }).baseline.key : null;
+}
+
 export const BRING_ITEMS_LENS = {
   SIMPLE: ["gift:flowers", "visit_friend:brought_drink", "visit_friend:brought_food"],
   APERO_PARTY: ["house_party:beer", "house_party:wine", "house_party:vodka", "house_party:rum",

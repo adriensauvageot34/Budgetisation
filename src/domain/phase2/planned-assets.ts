@@ -51,6 +51,9 @@ add("house_party", "crazy_tiger", "Crazy Tiger", "🥤", "FIXED", "BANK", { defa
 many("house_party", [["mixer", "Diluant", "🍹"], ["beer", "Bière", "🍺"], ["wine", "Vin", "🍷"], ["rum", "Rhum", "🍾"], ["snack", "Snack", "🍕", "SHARED", "MEAL"], ["chips", "Chips", "🥨", "SHARED", "MEAL"]]);
 many("groceries", [["food", "Courses alimentaires", "🛒", "MANUAL", "MEAL"], ["meat", "Viande", "🥩", "MANUAL", "MEAL"], ["fish", "Poisson", "🐟", "MANUAL", "MEAL"], ["produce", "Fruits / légumes", "🥦", "MANUAL", "MEAL"], ["fresh", "Produits frais", "🥛", "MANUAL", "MEAL"], ["pantry", "Féculents / épicerie", "🍝", "MANUAL", "MEAL"], ["drinks", "Boissons", "🧃", "MANUAL", "MEAL"], ["snacks", "Goûters", "🍪", "MANUAL", "MEAL"], ["dessert", "Dessert à apporter", "🍰", "MANUAL", "MEAL"], ["hygiene", "Hygiène / papier", "🧻"], ["special_meal", "Courses pour repas spécial / amis", "🍽️", "MANUAL", "MEAL"]]);
 many("restaurant", [["starter", "Entrée", "🥗", "PER_PERSON", "MEAL"], ["main", "Plat", "🍝", "PER_PERSON", "MEAL"], ["dessert", "Dessert", "🍰", "PER_PERSON", "MEAL"], ["wine_glass", "Verre de vin", "🍷"], ["wine_bottle", "Bouteille de vin", "🍾"], ["beer", "Bière", "🍺"], ["cocktail", "Cocktail", "🍹"], ["soft", "Soft", "🥤", "PER_PERSON", "MEAL"], ["coffee", "Café", "☕", "PER_PERSON", "MEAL"], ["water", "Eau", "💧", "SHARED", "MEAL"], ["uber", "Uber", "🚕"], ["parking", "Parking", "🚗"]]);
+// Honest split categories: a meal subtotal may use meal wallets; alcohol remains bank only.
+many("restaurant", [["meal_total", "Repas et boissons sans alcool", "🍽️", "MANUAL", "MEAL"],
+  ["alcohol_total", "Alcool", "🍷"]]);
 many("fast_food", [["burger", "Burger", "🍔", "PER_PERSON", "MEAL"], ["thai", "Thaï", "🍜", "PER_PERSON", "MEAL"], ["fries", "Frites", "🍟", "PER_PERSON", "MEAL"], ["drink", "Boisson", "🥤", "PER_PERSON", "MEAL"], ["tacos", "Tacos", "🌯", "PER_PERSON", "MEAL"], ["kebab", "Kebab", "🥙", "PER_PERSON", "MEAL"], ["pizza", "Pizza", "🍕", "SHARED", "MEAL"], ["chicken", "Poulet", "🍗", "PER_PERSON", "MEAL"], ["sandwich", "Sandwich", "🥪", "PER_PERSON", "MEAL"], ["dessert", "Dessert", "🍰", "PER_PERSON", "MEAL"], ["delivery_fee", "Frais de livraison", "🚚"], ["service_fee", "Frais de service", "💸"]]);
 many("work_meal", [["bakery", "Boulangerie", "🥖", "FIXED", "MEAL"], ["grand_frais", "Grand Frais", "🛒", "FIXED", "MEAL"], ["mcdo", "McDo", "🍔", "FIXED", "MEAL"]]);
 many("transport", [["fuel_usage", "Coût carburant estimé", "⛽"], ["toll", "Péage", "🛣️"], ["parking", "Parking", "🅿️"], ["train", "Train", "🚆", "PER_PERSON"], ["bus", "Bus", "🚌", "PER_PERSON"], ["uber", "Uber / taxi", "🚕"]]);
@@ -74,6 +77,9 @@ export const PLANNED_ASSETS = ASSET_CATALOG;
 export const ASSET_AGGREGATE_DESCENDANTS: Readonly<Record<string, readonly string[]>> = {
   "groceries:food": ["groceries:meat", "groceries:fish", "groceries:produce", "groceries:fresh",
     "groceries:pantry", "groceries:drinks", "groceries:snacks"],
+  "restaurant:meal_total": ["restaurant:starter", "restaurant:main", "restaurant:dessert",
+    "restaurant:soft", "restaurant:coffee", "restaurant:water"],
+  "restaurant:alcohol_total": ["restaurant:wine_glass", "restaurant:wine_bottle", "restaurant:beer", "restaurant:cocktail"],
 };
 export const plannedAsset = (key: string): PlannedAsset | undefined => assets.find((asset) => asset.assetKey === key);
 export const assetsForModule = (module: AssetModule): readonly PlannedAsset[] => assets.filter((asset) => asset.module === module);

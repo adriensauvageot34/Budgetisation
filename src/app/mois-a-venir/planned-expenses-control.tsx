@@ -4,11 +4,16 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import Big from "big.js";
 import { CalendarDays, Check, Pencil, Plus, RotateCcw, Trash2 } from "lucide-react";
-import { PLANNED_FAMILIES, PLANNED_SUBTYPE_LABELS, assetsForModule, rootAssetModule, suggestedAssetQuantity,
+import { PLANNED_FAMILIES, PLANNED_SUBTYPE_LABELS, ASSET_AGGREGATE_DESCENDANTS, assetsForModule, plannedAsset, rootAssetModule, suggestedAssetQuantity,
   type AssetModule, type PlannedAsset, type PlannedExpenseFamily } from "@/domain/phase2/planned-assets";
 import { plannedLineGross } from "@/domain/phase2/planned-money";
-import { placesForPlannedContext, type PlannedPlaceOption } from "@/domain/phase2/planned-places";
-import { DELIVERY_PROVIDERS, FISHING_ASSET_LENS, SOCIAL_CONTACTS_V1, resolvePlannedContext } from "@/domain/phase2/planned-rules";
+import { rankPlacesForPlannedContext, type PlannedPlaceOption } from "@/domain/phase2/planned-places";
+import { DELIVERY_PROVIDERS, FISHING_ASSET_LENS, SOCIAL_CONTACTS_V1, baselineKeyForModule,
+  resolvePlannedContext } from "@/domain/phase2/planned-rules";
+import { acceptBuilderChild, availableBuilderChildren, changeBuilderContext, changeBuilderRoot, collapseBuilderCosts, createBuilderState,
+  deriveBuilderReadiness, discardSuspended, editBuilderDraft, itemizeBuilderCosts, materializeBuilderDraft,
+  setQuickBaseline, setQuickTotal, splitRestaurantQuickTotal, suggestedBuilderChildren,
+  undoBuilderChange } from "@/domain/phase2/planned-builder";
 import type { CostItem, ModulePath, PlannedBaselineKey, PlannedExpenseContext, PlannedPriceSuggestion, PlannedVehicleEstimate } from "@/domain/phase2/planned-contract";
 import type { PlannedExpenseCard } from "./planned-expenses-projection";
 import { changePlannedExpenseStatus, estimatePlannedRoute, previewPlannedExpense, removePlannedExpense,
@@ -38,6 +43,12 @@ const emptyDraft = (): Draft => ({ familyKey: "outing", subtypeKey: null, title:
 const familyLabel = (family: PlannedExpenseFamily) => PLANNED_FAMILIES.find((part) => part.key === family)?.label ?? "Projet";
 const subtypeLabel = (family: PlannedExpenseFamily, subtype: string | null) =>
   PLANNED_SUBTYPE_LABELS[family].find((part) => part.key === subtype)?.label ?? "";
+const moduleLabel = (module: AssetModule): string => ({ restaurant: "Restaurant", gift: "Cadeau",
+  transport: "Transport", house_party: "Soirée", visit_family: "Visite famille", visit_friend: "Visite amis",
+  groceries: "Courses", fast_food: "Fast-food", work_meal: "Repas au travail", activity: "Activité",
+  beauty: "Beauté", clothing: "Vêtements", household: "Produits ménagers", home: "Maison",
+  tech: "Matériel", automotive: "Automobile", club: "Club / festival", bar: "Bar", trip: "Séjour",
+  fishing: "Pêche", other: "Autre" })[module];
 const itemTotal = (item: CostItem) => /^(?:0|[1-9]\d{0,3})(?:\.\d{1,3})?$/u.test(item.quantity)
   && /^(?:0|[1-9]\d{0,8})(?:\.\d{1,2})?$/u.test(item.unitAmount)
   && new Big(item.quantity).gt(0) && new Big(item.unitAmount).gt(0)
@@ -45,32 +56,32 @@ const itemTotal = (item: CostItem) => /^(?:0|[1-9]\d{0,3})(?:\.\d{1,3})?$/u.test
 const fundingMode = (item: CostItem): "BANK" | "SWILE" | "EDENRED" | "MIXED" =>
   !item.fundingAllocations?.length ? "BANK" : item.fundingAllocations.length === 1
     ? item.fundingAllocations[0]!.source : "MIXED";
-const validItem = (item: CostItem) => {
-  const total = itemTotal(item);
-  if (!item.label.trim() || !total) return false;
-  const parts = item.fundingAllocations;
-  return !parts || (parts.length > 0 && parts.every((part) => /^(?:0|[1-9]\d{0,8})(?:\.\d{1,2})?$/u.test(part.amount)
-    && new Big(part.amount).gt(0)) && parts.reduce((sum, part) => sum.plus(part.amount), new Big(0)).eq(total));
-};
 const baselineFor = (module: AssetModule, personIds: readonly string[], people: readonly Person[]): PlannedBaselineKey | null => {
-  if (module === "groceries") return "groceries";
-  if (module === "restaurant" || module === "fast_food") return "household-restaurants";
-  if (module === "work_meal") {
-    const name = people.find((person) => person.personId === personIds[0])?.displayName;
-    return name === "Adrien" ? "adrien-work-meals" : name === "Manon" ? "manon-work-meals" : null;
-  }
-  return null;
+  const name = people.find((person) => person.personId === personIds[0])?.displayName;
+  return baselineKeyForModule(module, name === "Adrien" ? "ADRIEN" : name === "Manon" ? "MANON" : undefined);
 };
 
 export function PlannedExpensesControl({ targetMonth, expenses, persons, places, vehicle, prices, funding }: Props) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [step, setStep] = useState(1);
-  const [draft, setDraft] = useState<Draft>(emptyDraft);
+  const [intentFamily, setIntentFamily] = useState<PlannedExpenseFamily>("outing");
+  const [closeRequested, setCloseRequested] = useState(false);
+  const [builder, setBuilder] = useState(() => createBuilderState(emptyDraft()));
+  const draft = builder.draft;
+  const setDraft = (next: Draft | ((current: Draft) => Draft)) => setBuilder((current) => {
+    const updated = typeof next === "function" ? next(current.draft) : next;
+    return editBuilderDraft({ ...current, origins: { ...current.origins,
+      ...(JSON.stringify(updated.context.place) !== JSON.stringify(current.draft.context.place) ? { place: "EXPLICIT" as const } : {}),
+      ...(JSON.stringify(updated.context.route) !== JSON.stringify(current.draft.context.route) ? { route: "EXPLICIT" as const } : {}),
+    } }, updated);
+  });
   const [modulePath, setModulePath] = useState<AssetModule[]>([]);
   const [search, setSearch] = useState("");
   const [editedId, setEditedId] = useState<string | undefined>();
   const [preview, setPreview] = useState<Preview | null>(null);
+  const [previewRevision, setPreviewRevision] = useState<number | null>(null);
+  const [splitMeal, setSplitMeal] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [deleteId, setDeleteId] = useState<string | null>(null);
@@ -85,31 +96,44 @@ export function PlannedExpensesControl({ targetMonth, expenses, persons, places,
     : visitedRef?.kind === "CONTACT"
       ? SOCIAL_CONTACTS_V1.find((contact) => contact.key === visitedRef.contactKey)?.label : undefined;
   const contextPersonLabel = isWorkMeal ? persons.find((person) => person.personId === draft.context.participantPersonIds?.[0])?.displayName : visited;
-  const relevantPlaces = placesForPlannedContext(places, draft.familyKey, draft.subtypeKey, contextPersonLabel);
-  const supportsParticipants = draft.familyKey === "outing" || draft.familyKey === "food" || draft.familyKey === "visit_trip" || draft.familyKey === "activity";
+  const resolved = draft.subtypeKey !== null || draft.familyKey === "other"
+    ? resolvePlannedContext({ familyKey: draft.familyKey, subtypeKey: draft.subtypeKey,
+      modifiers: { purchaseMode: draft.context.purchaseMode, housePartyPlaceMode: draft.context.housePartyPlaceMode,
+        visitFormat: draft.context.visitFormat, socialOccasion: draft.context.socialOccasion,
+        deliveryProviderKey: draft.context.deliveryProviderKey,
+        workMealPerson: contextPersonLabel === "Adrien" ? "ADRIEN" : contextPersonLabel === "Manon" ? "MANON" : undefined } }) : null;
+  const relevantPlaces = resolved ? rankPlacesForPlannedContext(places, resolved, {
+    contactKey: visitedRef?.kind === "CONTACT" ? visitedRef.contactKey : undefined,
+    workMealPersonName: isWorkMeal ? contextPersonLabel : undefined,
+    giftAssetKey: draft.costItems.find((item) => item.assetKey?.startsWith("gift:"))?.assetKey ?? undefined,
+  }).map((item) => item.place) : [];
+  const supportsParticipants = !!resolved && (resolved.fields.participants !== "HIDDEN" || resolved.fields.travelCompanions !== "HIDDEN");
   const isVisit = draft.familyKey === "visit_trip" && ["family_visit", "friend_visit"].includes(draft.subtypeKey ?? "");
-  const contextValid = draft.title.trim().length > 0 && (!isWorkMeal || draft.context.participantPersonIds?.length === 1)
-    && (!isVisit || (draft.context.personVisited?.kind === "CONTACT" ||
-      draft.context.personVisited?.kind === "TEXT" && !!draft.context.personVisited.label.trim()))
-    && (!(["fast_food", "clothing"].includes(draft.subtypeKey ?? "")) || !!draft.context.purchaseMode)
-    && (draft.context.purchaseMode !== "DELIVERY" || !!draft.context.deliveryProvider?.trim())
-    && (draft.context.purchaseMode !== "ONLINE" || !!draft.context.seller?.trim())
-    && (draft.subtypeKey !== "gift" || !!draft.context.gift?.recipient.trim());
-  const canPreview = draft.costItems.length > 0 && draft.costItems.every(validItem)
-    && (!draft.context.gift || !!draft.context.gift.recipient.trim())
-    && (!draft.context.route || draft.context.route.mode !== "CAR" || !!draft.context.route.fuelEstimate);
+  const readiness = deriveBuilderReadiness(builder);
+  const contextValid = draft.title.trim().length > 0;
+  const canPreview = readiness.previewReady;
+  const previewCurrent = preview !== null && previewRevision === builder.revision;
+  const simpleGross = materializeBuilderDraft(builder).costItems.every((item) => itemTotal(item))
+    ? materializeBuilderDraft(builder).costItems.reduce((sum, item) => sum.plus(itemTotal(item)!), new Big(0)).toFixed(2) : null;
 
   const resetPreview = () => { setPreview(null); setError(""); };
   const start = (item?: PlannedExpenseCard) => {
     const next = item ? { familyKey: item.familyKey, subtypeKey: item.subtypeKey, title: item.title,
       plannedDate: item.plannedDate, costItems: item.costItems.map((cost) => ({ ...cost })), context: { ...item.context } } : emptyDraft();
-    setDraft(next);
+    setBuilder(createBuilderState(next));
+    setIntentFamily(next.familyKey); setCloseRequested(false);
     setModulePath([rootAssetModule(next.familyKey, next.subtypeKey)]);
-    setEditedId(item?.id); setPreview(null); setError(""); setSearch(""); setStep(item ? 3 : 1); setOpen(true);
+    setEditedId(item?.id); setPreview(null); setPreviewRevision(null); setError(""); setSearch(""); setStep(item ? 3 : 1); setOpen(true);
     window.setTimeout(() => document.getElementById("planned-expense-builder")?.scrollIntoView({ behavior: "smooth" }), 0);
   };
   const updateItem = (id: string, change: Partial<CostItem>) => {
-    setDraft((current) => ({ ...current, costItems: current.costItems.map((item) => item.id !== id ? item : (() => {
+    setBuilder((state) => editBuilderDraft({ ...state, origins: {
+      ...state.origins,
+      ...(change.baselineKey !== undefined ? { [`baseline.${id}`]: "EXPLICIT" as const } : {}),
+      ...(change.quantity !== undefined ? { [`quantity.${id}`]: "EXPLICIT" as const } : {}),
+      ...(change.unitAmount !== undefined ? { [`price.${id}`]: "EXPLICIT" as const } : {}),
+    } },
+      { ...state.draft, costItems: state.draft.costItems.map((item) => item.id !== id ? item : (() => {
       const next = { ...item, ...change };
       if ((change.quantity !== undefined || change.unitAmount !== undefined) && item.fundingAllocations?.length === 1) {
         const total = itemTotal(next);
@@ -120,6 +144,12 @@ export function PlannedExpensesControl({ targetMonth, expenses, persons, places,
     resetPreview();
   };
   const addAsset = (asset?: PlannedAsset) => {
+    if (draft.costItems.some((item) => item.modulePath?.length !== 2 && path.length === 1
+      && (item.id === "00000000-0000-4000-8000-000000000001"
+        || asset && ASSET_AGGREGATE_DESCENDANTS[item.assetKey ?? ""]?.includes(asset.assetKey)))) {
+      setError("Retirez d’abord le total que ces détails remplacent. Vous pouvez annuler la conversion pour retrouver votre total.");
+      return;
+    }
     const knownPrice = asset ? prices.find((price) => price.assetKey === asset.assetKey) : undefined;
     const quantity = asset ? suggestedAssetQuantity(asset, draft.context.participantPersonIds?.length ?? 0,
       draft.context.additionalGuestCount ?? 0) : "1";
@@ -128,7 +158,11 @@ export function PlannedExpensesControl({ targetMonth, expenses, persons, places,
       quantity, unitAmount: knownPrice?.unitAmount ?? asset?.defaultUnitAmount ?? "", baselineKey: null, modulePath: itemPath,
       priceSource: knownPrice ? "LAST_KNOWN" : asset?.defaultUnitAmount ? "SYSTEM_DEFAULT" : "MANUAL",
       ...(knownPrice || asset?.defaultUnitAmount ? { priceSourceLabel: knownPrice?.sourceLabel ?? "Prix proposé, modifiable" } : {}) };
-    setDraft((current) => ({ ...current, costItems: [...current.costItems, item] }));
+    setBuilder((current) => editBuilderDraft({ ...current, origins: { ...current.origins,
+      [`quantity.${item.id}`]: asset ? "AUTO_DERIVED" : "EXPLICIT",
+      [`price.${item.id}`]: knownPrice || asset?.defaultUnitAmount ? "AUTO_DERIVED" : "EXPLICIT",
+      [`cost.${item.id}`]: "EXPLICIT" } },
+    { ...current.draft, costItems: [...current.draft.costItems, item] }));
     resetPreview();
   };
   const setFunding = (item: CostItem, mode: "BANK" | "SWILE" | "EDENRED" | "MIXED") => {
@@ -153,15 +187,27 @@ export function PlannedExpensesControl({ targetMonth, expenses, persons, places,
     const current = draft.context.participantPersonIds ?? [];
     const ids = isWorkMeal ? [person.personId] : current.includes(person.personId)
       ? current.filter((id) => id !== person.personId) : [...current, person.personId];
-    setDraft({ ...draft, context: { ...draft.context, participantPersonIds: ids,
-      ...(isWorkMeal ? { place: undefined } : {}) },
-      costItems: draft.costItems.map((item) => item.baselineKey?.endsWith("-work-meals")
-        ? { ...item, baselineKey: baselineFor("work_meal", ids, persons) } : item) });
+    setBuilder((state) => {
+      const contextual = changeBuilderContext(state, { ...state.draft.context, participantPersonIds: ids });
+      return editBuilderDraft({ ...contextual, quickBaseline: isWorkMeal && state.quickBaseline
+        ? baselineFor("work_meal", ids, persons) : state.quickBaseline }, { ...contextual.draft,
+      costItems: contextual.draft.costItems.map((item) => {
+        const asset = item.assetKey ? assetsForModule(item.modulePath?.at(-1) ?? root).find((part) => part.assetKey === item.assetKey) : undefined;
+        const quantity = asset && state.origins[`quantity.${item.id}`] === "AUTO_DERIVED"
+          ? suggestedAssetQuantity(asset, ids.length, state.draft.context.additionalGuestCount ?? 0) : item.quantity;
+        const next = { ...item, quantity,
+          baselineKey: item.baselineKey?.endsWith("-work-meals") ? baselineFor("work_meal", ids, persons) : item.baselineKey };
+        return item.fundingAllocations?.length === 1 && quantity !== item.quantity && itemTotal(next)
+          ? { ...next, fundingAllocations: [{ source: item.fundingAllocations[0]!.source, amount: itemTotal(next)! }] } : next;
+      }) });
+    });
     resetPreview();
   };
   const selectSubtype = (family: PlannedExpenseFamily, subtype: string | null) => {
+    if (family === draft.familyKey && subtype === draft.subtypeKey && draft.title) { setStep(3); return; }
     const label = subtypeLabel(family, subtype) || familyLabel(family);
-    setDraft({ familyKey: family, subtypeKey: subtype, title: label, plannedDate: null, costItems: [], context: {} });
+    setBuilder((current) => changeBuilderRoot(current, { familyKey: family, subtypeKey: subtype,
+      title: label, plannedDate: current.draft.plannedDate, costItems: [], context: {} }));
     setModulePath([rootAssetModule(family, subtype)]); setStep(3); resetPreview();
   };
   const run = async (action: () => Promise<void>) => {
@@ -173,12 +219,14 @@ export function PlannedExpensesControl({ targetMonth, expenses, persons, places,
   const simulate = async () => {
     if (!canPreview) return;
     setBusy(true); setError("");
-    try { setPreview(await previewPlannedExpense(targetMonth, draft, editedId)); setStep(5); }
+    try { setPreview(await previewPlannedExpense(targetMonth, materializeBuilderDraft(builder, true), editedId));
+      setPreviewRevision(builder.revision); setStep(5); }
     catch { setError("La simulation n’a pas abouti. Vérifiez les prix, le financement, les personnes et le trajet."); }
     finally { setBusy(false); }
   };
   const save = () => run(async () => {
-    await savePlannedExpense(targetMonth, draft, editedId);
+    if (!readiness.saveReady || !previewCurrent) return;
+    await savePlannedExpense(targetMonth, materializeBuilderDraft(builder), editedId);
     setOpen(false); setPreview(null); setEditedId(undefined);
   });
   const route = draft.context.route;
@@ -189,6 +237,7 @@ export function PlannedExpensesControl({ targetMonth, expenses, persons, places,
   };
   const estimateRoute = async () => {
     if (!route || route.mode !== "CAR") return;
+    const requestedRevision = builder.revision;
     setBusy(true); setError("");
     try {
       const fuelEstimate = await estimatePlannedRoute(targetMonth, route.stops);
@@ -196,9 +245,10 @@ export function PlannedExpensesControl({ targetMonth, expenses, persons, places,
         quantity: "1", unitAmount: fuelEstimate.cost, baselineKey: null,
         modulePath: [root],
         priceSource: "CALCULATED", priceSourceLabel: fuelEstimate.fuelPriceSource };
-      setDraft((current) => ({ ...current, context: { ...current.context,
+      setBuilder((state) => state.revision !== requestedRevision ? state : editBuilderDraft({ ...state, origins: { ...state.origins,
+        [`cost.${fuelItem.id}`]: "AUTO_DERIVED" } }, { ...state.draft, context: { ...state.draft.context,
         route: { mode: "CAR", stops: route.stops, fuelEstimate } },
-      costItems: [...current.costItems.filter((item) => item.assetKey !== "transport:fuel_usage"), fuelItem] }));
+      costItems: [...state.draft.costItems.filter((item) => item.assetKey !== "transport:fuel_usage"), fuelItem] }));
       setPreview(null);
     } catch { setError("Renseignez les kilomètres de chaque segment du trajet."); }
     finally { setBusy(false); }
@@ -207,13 +257,6 @@ export function PlannedExpensesControl({ targetMonth, expenses, persons, places,
     ? FISHING_ASSET_LENS.flatMap((key) => assetsForModule("fishing").filter((asset) => asset.assetKey === key)) : [])]
     .filter((asset) => asset.assetKey !== "transport:fuel_usage"
       && (!search || asset.label.toLocaleLowerCase("fr").includes(search.toLocaleLowerCase("fr"))));
-  // C1 shim: C4 will replace the step layout, while both paths already consume the same domain rules.
-  const resolved = draft.subtypeKey !== null || draft.familyKey === "other"
-    ? resolvePlannedContext({ familyKey: draft.familyKey, subtypeKey: draft.subtypeKey,
-      modifiers: { purchaseMode: draft.context.purchaseMode, housePartyPlaceMode: draft.context.housePartyPlaceMode,
-        visitFormat: draft.context.visitFormat, socialOccasion: draft.context.socialOccasion,
-        deliveryProviderKey: draft.context.deliveryProviderKey } }) : null;
-  const availableChildren = path.length === 1 ? resolved?.children ?? [] : [];
 
   const card = (item: PlannedExpenseCard) => <li key={item.id} className="min-w-0 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
     <div className="flex flex-wrap items-start justify-between gap-3"><div className="min-w-0 flex-1"><p className="text-xs font-bold text-emerald-900">{familyLabel(item.familyKey)} · {subtypeLabel(item.familyKey, item.subtypeKey)}</p><h4 className="break-words text-base font-black">{item.title}</h4><p className="mt-1 text-xs text-slate-600"><CalendarDays size={13} className="mr-1 inline" aria-hidden="true" />{item.plannedDate ? dateLabel(item.plannedDate) : "Ce mois-ci · sans date précise"}</p></div><strong className="text-lg tabular-nums">{money(item.grossCost)}</strong></div>
@@ -232,46 +275,66 @@ export function PlannedExpensesControl({ targetMonth, expenses, persons, places,
       {!open && <button type="button" className={primary} onClick={() => start()}><Plus size={16} className="mr-1 inline" />Prévoir une dépense</button>}</div>
     {error && !open && <p role="alert" className="mt-3 rounded-xl bg-red-50 p-3 text-sm text-red-800">{error}</p>}
     {open && <div className="mt-5 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-6">
-      <div className="flex flex-wrap justify-between gap-2"><div><p className="text-xs font-bold uppercase tracking-wide text-emerald-800">{editedId ? "Modifier" : "Nouvelle prévision"} · étape {step} sur 5</p><h3 className="mt-1 text-lg font-black">{["Qu’avez-vous prévu ?", "Quel genre ?", "Quelques détails utiles", "Qu’est-ce qui coûte ?", "Voici l’effet sur notre mois"][step - 1]}</h3></div><button type="button" className={secondary} onClick={() => { setOpen(false); setPreview(null); }}>Fermer</button></div>
+      <div className="flex flex-wrap justify-between gap-2"><div><p className="text-xs font-bold uppercase tracking-wide text-emerald-800">{editedId ? "Modifier" : "Nouvelle prévision"} · {step <= 3 ? "Votre projet" : step === 4 ? "Son coût et ses compléments" : "Aperçu"}</p><h3 className="mt-1 text-lg font-black">{["Qu’avez-vous prévu ?", "Précisons votre idée", "Quelques détails utiles", "Combien prévoyez-vous ?", "Voici l’effet sur notre mois"][step - 1]}</h3></div><div className="flex gap-2">{builder.undo && <button type="button" className={secondary} onClick={() => { setBuilder(undoBuilderChange); setModulePath([]); resetPreview(); }}>Annuler le dernier changement</button>}<button type="button" className={secondary} onClick={() => { if (builder.revision > 0) setCloseRequested(true); else setOpen(false); }}>Fermer</button></div></div>
+      {closeRequested && <div className="mt-3 rounded-xl bg-amber-50 p-3 text-sm"><p>Quitter et abandonner les modifications de ce brouillon ?</p><button type="button" className={secondary} onClick={() => { setOpen(false); setPreview(null); setCloseRequested(false); }}>Abandonner</button><button type="button" className={secondary} onClick={() => setCloseRequested(false)}>Continuer à préparer</button></div>}
       {error && <p role="alert" className="mt-3 rounded-xl bg-red-50 p-3 text-sm text-red-800">{error}</p>}
-      {step === 1 && <div className="mt-4 grid gap-2 sm:grid-cols-2 lg:grid-cols-3">{PLANNED_FAMILIES.map((family) => <button key={family.key} type="button" className="rounded-xl border border-slate-200 p-4 text-left hover:border-emerald-700" onClick={() => {
-        setDraft({ ...emptyDraft(), familyKey: family.key }); setStep(PLANNED_SUBTYPE_LABELS[family.key].length ? 2 : 3);
-        setModulePath([rootAssetModule(family.key, null)]); resetPreview(); }}><span aria-hidden="true" className="text-2xl">{family.icon}</span><strong className="mt-2 block">{family.label}</strong><span className="text-xs text-slate-600">{family.hint}</span></button>)}</div>}
-      {step === 2 && <div className="mt-4 grid gap-2 sm:grid-cols-2 lg:grid-cols-3">{PLANNED_SUBTYPE_LABELS[draft.familyKey].map((part) => <button key={part.key} type="button" className="rounded-xl border border-slate-200 px-4 py-3 text-left font-semibold hover:border-emerald-700" onClick={() => selectSubtype(draft.familyKey, part.key)}>{part.label}</button>)}<button type="button" className={secondary} onClick={() => setStep(1)}>Retour</button></div>}
-      {step === 3 && <div className="mt-4 grid gap-4"><p className="text-sm font-semibold text-emerald-900">{familyLabel(draft.familyKey)}{draft.subtypeKey ? ` · ${subtypeLabel(draft.familyKey, draft.subtypeKey)}` : ""}</p>
-        <label className="grid gap-1 text-sm font-semibold">Comment l’appeler ?<input className={inputClass} value={draft.title} maxLength={120} onChange={(event) => { setDraft({ ...draft, title: event.target.value }); resetPreview(); }} /></label>
+      {step >= 3 && <div className="mt-3 rounded-xl bg-slate-50 p-3 text-sm" aria-live="polite"><strong>Votre projet :</strong> {draft.title || "À nommer"} · {draft.plannedDate ? dateLabel(draft.plannedDate) : "date à préciser si vous le souhaitez"} · {simpleGross && new Big(simpleGross).gt(0) ? money(simpleGross) : "coût à préciser"}{builder.costMode !== "QUICK_TOTAL" && ` · ${draft.costItems.length} élément(s)`}
+        <span className="ml-2 font-semibold">{readiness.saveReady ? "Prêt à enregistrer" : readiness.previewReady ? "Aperçu possible" : "À compléter"}</span></div>}
+      {step >= 3 && readiness.issues.length > 0 && <div className="mt-3 rounded-xl border border-amber-200 bg-amber-50 p-3 text-sm"><strong>À vérifier</strong><ul className="mt-1 list-inside list-disc">{readiness.issues.map((issue) => <li key={`${issue.code}-${issue.scope}`}><button type="button" className="text-left underline" onClick={() => { setStep(issue.repairTarget === "builder-cost" || issue.repairTarget.startsWith("funding-") || issue.repairTarget === "builder-addons" ? 4 : 3); window.setTimeout(() => document.getElementById(issue.repairTarget)?.scrollIntoView({ behavior: "smooth", block: "center" }), 0); }}>{issue.message}</button></li>)}</ul></div>}
+      {builder.suspended.length > 0 && <div id="builder-suspended" className="mt-3 rounded-xl border border-amber-300 p-3 text-sm"><strong>Informations mises de côté</strong><p>Vos saisies incompatibles sont conservées localement.</p><ul className="list-inside list-disc">{builder.suspended.map((part, index) => <li key={`${part.path}-${index}`}>{part.reason}</li>)}</ul><div className="mt-2 flex gap-2"><button type="button" className={secondary} onClick={() => { setBuilder(undoBuilderChange); setModulePath([]); resetPreview(); }}>Annuler le changement</button><button type="button" className={secondary} onClick={() => setBuilder(discardSuspended)}>Confirmer le retrait</button></div></div>}
+      {step === 1 && <div id="builder-intent" className="mt-4 grid gap-2 sm:grid-cols-2 lg:grid-cols-3">{([
+        ["Restaurant", "food", "restaurant"], ["Courses", "food", "groceries"],
+        ["Soirée", "outing", null], ["Voir quelqu’un", "visit_trip", null],
+        ["Activité", "activity", null], ["Achat", "purchase", null], ["Autre", "other", null],
+      ] as const).map(([label, family, subtype]) => <button key={label} type="button" className="rounded-xl border border-slate-200 p-4 text-left font-bold hover:border-emerald-700" onClick={() => {
+        if (subtype !== null || family === "other") selectSubtype(family, subtype);
+        else { setIntentFamily(family); setStep(2); }
+      }}>{label}</button>)}</div>}
+      {step === 2 && <div className="mt-4 grid gap-2 sm:grid-cols-2 lg:grid-cols-3">{PLANNED_SUBTYPE_LABELS[intentFamily].map((part) => <button key={part.key} type="button" className="rounded-xl border border-slate-200 px-4 py-3 text-left font-semibold hover:border-emerald-700" onClick={() => selectSubtype(intentFamily, part.key)}>{part.label}</button>)}<button type="button" className={secondary} onClick={() => setStep(1)}>Retour</button></div>}
+      {step === 3 && <div id="builder-context" className="mt-4 grid gap-4"><p className="text-sm font-semibold text-emerald-900">{familyLabel(draft.familyKey)}{draft.subtypeKey ? ` · ${subtypeLabel(draft.familyKey, draft.subtypeKey)}` : ""}</p>
+        <label id="builder-title" className="grid gap-1 text-sm font-semibold">Comment l’appeler ?<input className={inputClass} value={draft.title} maxLength={120} onChange={(event) => { setDraft({ ...draft, title: event.target.value }); resetPreview(); }} /></label>
         <label className="grid gap-1 text-sm font-semibold">Date prévue, si vous la connaissez<input className={inputClass} type="date" min={`${targetMonth}-01`} max={monthEnd(targetMonth)} value={draft.plannedDate ?? ""} onChange={(event) => { setDraft({ ...draft, plannedDate: event.target.value || null }); resetPreview(); }} /></label>
         {isWorkMeal && <fieldset className="rounded-xl border border-slate-200 p-3"><legend className="px-1 text-sm font-bold">Pour qui ?</legend><div className="flex flex-wrap gap-4">{persons.filter((person) => ["Adrien", "Manon"].includes(person.displayName)).map((person) => <label key={person.personId} className="flex gap-2"><input type="radio" name="work-meal-person" checked={draft.context.participantPersonIds?.includes(person.personId) ?? false} onChange={() => setPerson(person)} />{person.displayName}</label>)}</div></fieldset>}
         {isVisit && <label className="grid gap-1 text-sm font-semibold">Qui allons-nous voir ?<select className={inputClass} value={draft.context.personVisited?.kind === "CONTACT" ? draft.context.personVisited.contactKey : visited ? "OTHER" : ""} onChange={(event) => {
           const value = event.target.value; const personVisited = value === "OTHER" ? { kind: "TEXT" as const, label: "" }
             : value ? { kind: "CONTACT" as const, contactKey: value } : undefined;
-          setDraft({ ...draft, context: { ...draft.context, personVisited } }); resetPreview(); }}><option value="">Choisir une personne</option>{(draft.subtypeKey === "family_visit" ? visitedFamily : visitedFriends).map((contact) => <option key={contact.key} value={contact.key}>{contact.label}</option>)}<option value="OTHER">Autre personne</option></select></label>}
+          setBuilder((current) => changeBuilderContext(current, { ...current.draft.context, personVisited })); resetPreview(); }}><option value="">Choisir une personne</option>{(draft.subtypeKey === "family_visit" ? visitedFamily : visitedFriends).map((contact) => <option key={contact.key} value={contact.key}>{contact.label}</option>)}<option value="OTHER">Autre personne</option></select></label>}
         {isVisit && draft.context.personVisited?.kind === "TEXT" && <label className="grid gap-1 text-sm font-semibold">Son nom<input className={inputClass} value={draft.context.personVisited.label} onChange={(event) => { setDraft({ ...draft, context: { ...draft.context, personVisited: { kind: "TEXT", label: event.target.value } } }); resetPreview(); }} /></label>}
-        {(draft.subtypeKey === "fast_food" || draft.subtypeKey === "clothing") && <fieldset className="rounded-xl border border-slate-200 p-3"><legend className="px-1 text-sm font-bold">{draft.subtypeKey === "fast_food" ? "Comment manger ?" : "Mode d’achat"}</legend><div className="flex flex-wrap gap-4">{(draft.subtypeKey === "fast_food" ? [["TAKEAWAY", "Sur place / à emporter"], ["DELIVERY", "En livraison"]] : [["IN_STORE", "Magasin physique"], ["ONLINE", "En ligne / livraison"]]).map(([value, label]) => <label key={value} className="flex gap-2"><input type="radio" name="purchase-mode" checked={draft.context.purchaseMode === value} onChange={() => { setDraft({ ...draft, context: { ...draft.context, purchaseMode: value as PlannedExpenseContext["purchaseMode"] } }); resetPreview(); }} />{label}</label>)}</div></fieldset>}
+        {draft.subtypeKey === "house_party" && <fieldset className="rounded-xl border border-slate-200 p-3"><legend className="font-bold">Où aura lieu la soirée ?</legend>{([ ["OWN_HOME", "Chez nous"], ["OTHER_HOME", "Chez quelqu’un d’autre"] ] as const).map(([value, label]) => <label key={value} className="mr-5 inline-flex gap-2"><input type="radio" name="house-party-place" checked={draft.context.housePartyPlaceMode === value} onChange={() => { setBuilder((current) => changeBuilderContext(current, { ...current.draft.context, housePartyPlaceMode: value })); resetPreview(); }} />{label}</label>)}</fieldset>}
+        {isVisit && <label className="grid gap-1 text-sm font-semibold">Occasion<select className={inputClass} value={draft.context.socialOccasion ?? "NONE"} onChange={(event) => { setBuilder((current) => changeBuilderContext(current, { ...current.draft.context, socialOccasion: event.target.value as PlannedExpenseContext["socialOccasion"] })); resetPreview(); }}><option value="NONE">Sans occasion particulière</option><option value="BIRTHDAY">Anniversaire</option><option value="CHRISTMAS">Noël</option><option value="CELEBRATION">Fête</option><option value="OTHER_SPECIAL">Autre occasion</option></select></label>}
+        {resolved?.fields.purchaseMode !== "HIDDEN" && <fieldset className="rounded-xl border border-slate-200 p-3"><legend className="px-1 text-sm font-bold">{draft.subtypeKey === "fast_food" ? "Comment manger ?" : "Mode d’achat"}</legend><div className="flex flex-wrap gap-4">{(draft.subtypeKey === "fast_food" ? [["TAKEAWAY", "Sur place / à emporter"], ["DELIVERY", "En livraison"]] : [["IN_STORE", "Magasin physique"], ["ONLINE", "En ligne / livraison"]]).map(([value, label]) => <label key={value} className="flex gap-2"><input type="radio" name="purchase-mode" checked={draft.context.purchaseMode === value} onChange={() => { setBuilder((current) => changeBuilderContext(current, { ...current.draft.context, purchaseMode: value as PlannedExpenseContext["purchaseMode"], ...(value !== "DELIVERY" ? { deliveryProvider: undefined, deliveryProviderKey: undefined } : {}) })); resetPreview(); }} />{label}</label>)}</div></fieldset>}
         {draft.context.purchaseMode === "DELIVERY" && <label className="grid gap-1 text-sm font-semibold">Qui livre ?<input className={inputClass} list="planned-delivery-services" value={draft.context.deliveryProvider ?? ""} onChange={(event) => { const provider = DELIVERY_PROVIDERS.find((item) => item.label === event.target.value);
           setDraft({ ...draft, context: { ...draft.context, deliveryProvider: event.target.value,
             deliveryProviderKey: provider?.key ?? "OTHER" } }); resetPreview(); }} /><datalist id="planned-delivery-services">{DELIVERY_PROVIDERS.filter((item) => item.key !== "OTHER").map((item) => <option key={item.key} value={item.label} />)}</datalist></label>}
         {draft.context.purchaseMode === "ONLINE" && <label className="grid gap-1 text-sm font-semibold">Quelle boutique ?<input className={inputClass} list="planned-online-stores" value={draft.context.seller ?? ""} onChange={(event) => { setDraft({ ...draft, context: { ...draft.context, seller: event.target.value } }); resetPreview(); }} /><datalist id="planned-online-stores"><option value="Shein" /><option value="Amazon" /></datalist></label>}
         {draft.subtypeKey === "gift" && <div className="grid gap-3 sm:grid-cols-2"><label className="grid gap-1 text-sm font-semibold">Pour qui ?<input className={inputClass} value={draft.context.gift?.recipient ?? ""} onChange={(event) => setDraft({ ...draft, context: { ...draft.context, gift: { recipient: event.target.value, occasion: draft.context.gift?.occasion ?? "Sans occasion particulière" } } })} /></label><label className="grid gap-1 text-sm font-semibold">Pour quelle occasion ?<select className={inputClass} value={draft.context.gift?.occasion ?? "Sans occasion particulière"} onChange={(event) => setDraft({ ...draft, context: { ...draft.context, gift: { recipient: draft.context.gift?.recipient ?? "", occasion: event.target.value } } })}>{["Anniversaire", "Noël", "Fête", "Sans occasion particulière", "Autre"].map((part) => <option key={part}>{part}</option>)}</select></label></div>}
-        <details className="rounded-xl border border-slate-200 p-3"><summary className="cursor-pointer font-bold">Personnaliser · personnes et lieu</summary><div className="mt-3 grid gap-3">
+        <details className="rounded-xl border border-slate-200 p-3" open={resolved?.fields.place === "REQUIRED" ? true : undefined}><summary className="cursor-pointer font-bold">{resolved?.fields.place === "REQUIRED" ? "Lieu nécessaire" : "Détailler · personnes et lieu"}</summary><div className="mt-3 grid gap-3">
           {supportsParticipants && !isWorkMeal && <fieldset><legend className="text-sm font-bold">Avec qui ?</legend><div className="flex flex-wrap gap-4">{persons.map((person) => <label key={person.personId} className="flex gap-2 text-sm"><input type="checkbox" checked={draft.context.participantPersonIds?.includes(person.personId) ?? false} onChange={() => setPerson(person)} />{person.displayName}</label>)}</div><label className="mt-2 grid max-w-xs gap-1 text-sm">Invités non nommés<input className={inputClass} type="number" min="0" max="99" value={draft.context.additionalGuestCount ?? 0} onChange={(event) => { setDraft({ ...draft, context: { ...draft.context, additionalGuestCount: Number(event.target.value) } }); resetPreview(); }} /></label></fieldset>}
-          <label className="grid gap-1 text-sm font-semibold">{isVisit ? "Destination" : "Lieu"} (facultatif)<select className={inputClass} value={draft.context.place?.kind === "KNOWN" ? draft.context.place.placeId : draft.context.place?.kind === "TEXT" ? "TEXT" : ""} onChange={(event) => {
+          {resolved?.fields.place !== "HIDDEN" && <label className="grid gap-1 text-sm font-semibold">{isVisit ? "Destination" : "Lieu"} {resolved?.fields.place === "REQUIRED" ? "(nécessaire)" : "(facultatif)"}<select className={inputClass} value={draft.context.place?.kind === "KNOWN" ? draft.context.place.placeId : draft.context.place?.kind === "TEXT" ? "TEXT" : ""} onChange={(event) => {
             const value = event.target.value; const place = value === "TEXT" ? { kind: "TEXT" as const, label: "" } : value ? { kind: "KNOWN" as const, placeId: value } : undefined;
-            setDraft({ ...draft, context: { ...draft.context, place } }); resetPreview(); }}><option value="">Sans lieu précis</option>{relevantPlaces.map((place) => <option key={place.placeId} value={place.placeId}>{place.name}</option>)}<option value="TEXT">Saisir un autre lieu</option></select></label>
-          {draft.context.place?.kind === "TEXT" && <label className="grid gap-1 text-sm font-semibold">Nom du lieu<input className={inputClass} value={draft.context.place.label} onChange={(event) => { setDraft({ ...draft, context: { ...draft.context, place: { kind: "TEXT", label: event.target.value } } }); resetPreview(); }} /></label>}
+            setBuilder((current) => editBuilderDraft({ ...current, origins: { ...current.origins, place: "EXPLICIT" } }, { ...current.draft, context: { ...current.draft.context, place } })); resetPreview(); }}><option value="">Sans lieu précis</option>{relevantPlaces.map((place) => <option key={place.placeId} value={place.placeId}>{place.name}</option>)}<option value="TEXT">Saisir un autre lieu</option></select></label>}
+          {resolved?.fields.place !== "HIDDEN" && draft.context.place?.kind === "TEXT" && <label className="grid gap-1 text-sm font-semibold">Nom du lieu<input className={inputClass} value={draft.context.place.label} onChange={(event) => { setDraft({ ...draft, context: { ...draft.context, place: { kind: "TEXT", label: event.target.value } } }); resetPreview(); }} /></label>}
           {isVisit && relevantPlaces.length === 0 && <p className="text-xs text-slate-600">Aucun lieu lié à cette personne n’est confirmé dans les données. Vous pouvez saisir une destination prévue.</p>}
         </div></details>
-        <div className="flex flex-wrap gap-2"><button type="button" className={secondary} onClick={() => setStep(PLANNED_SUBTYPE_LABELS[draft.familyKey].length ? 2 : 1)}>Retour</button><button type="button" className={primary} disabled={!contextValid || draft.context.place?.kind === "TEXT" && !draft.context.place.label.trim()} onClick={() => setStep(4)}>Continuer</button></div>
+        <div className="flex flex-wrap gap-2"><button type="button" className={secondary} onClick={() => { setIntentFamily(draft.familyKey); setStep(1); }}>Retour</button><button type="button" className={primary} disabled={!contextValid || draft.context.place?.kind === "TEXT" && !draft.context.place.label.trim()} onClick={() => setStep(4)}>Continuer</button></div>
       </div>}
-      {step === 4 && <div className="mt-4 grid gap-5"><div><p className="text-sm text-slate-600">Choisissez des éléments ou ajoutez les vôtres. Aucun prix suggéré n’est ajouté sans votre choix.</p>
-        <div className="mt-3 flex flex-wrap items-center gap-2"><strong className="text-sm">{path.join(" › ").replaceAll("_", " ")}</strong>{path.length > 1 && <button type="button" className={secondary} onClick={() => { setModulePath(path.slice(0, -1)); setSearch(""); }}>Revenir au module parent</button>}</div>
-        {path.includes("gift") && draft.subtypeKey !== "gift" && <label className="mt-3 grid max-w-md gap-1 text-sm font-semibold">Pour qui est le cadeau ?<input className={inputClass} value={draft.context.gift?.recipient ?? ""} onChange={(event) => { setDraft({ ...draft, context: { ...draft.context, gift: { recipient: event.target.value, occasion: draft.context.gift?.occasion ?? "Sans occasion particulière" } } }); resetPreview(); }} /></label>}
+      {step === 4 && <div id="builder-cost" className="mt-4 grid gap-5"><div><p className="text-sm text-slate-600">Commencez par un montant global. Détaillez seulement si cela change le calcul ou le financement.</p>
+        <div className="mt-3 rounded-xl border border-emerald-200 bg-emerald-50 p-4"><div className="flex flex-wrap gap-2"><button type="button" className={secondary} onClick={() => { if (builder.costMode === "QUICK_TOTAL") return; try { setBuilder(collapseBuilderCosts(builder)); setError(""); } catch { setError("Ces lignes ont des règles de financement ou d’impact différentes : gardez la ventilation."); } }}>Total rapide</button><button type="button" className={secondary} onClick={() => setBuilder(itemizeBuilderCosts)}>Détailler les éléments</button></div>
+          {builder.costMode === "QUICK_TOTAL" && <label className="mt-3 grid max-w-xs gap-1 text-sm font-semibold">Montant prévu (€)<input className={inputClass} type="number" min="0.01" step="0.01" value={builder.quickTotal} onChange={(event) => setBuilder((current) => setQuickTotal(current, event.target.value))} /></label>}
+          {builder.costMode === "QUICK_TOTAL" && resolved?.baseline.mode === "ASK" && resolved.baseline.key && <fieldset className="mt-3 text-sm"><legend className="font-semibold">Déjà compris dans vos habitudes ?</legend><label className="mr-5 inline-flex gap-2"><input type="radio" name="quick-baseline" checked={builder.quickBaseline === null} onChange={() => setBuilder((current) => setQuickBaseline(current, null))} />En plus</label><label className="inline-flex gap-2"><input type="radio" name="quick-baseline" checked={builder.quickBaseline === resolved.baseline.key} onChange={() => setBuilder((current) => setQuickBaseline(current, resolved.baseline.key))} />Habituel</label></fieldset>}
+          {builder.costMode === "QUICK_TOTAL" && draft.subtypeKey === "restaurant" && builder.quickTotal && <div className="mt-3 grid max-w-md gap-2"><p className="text-sm">Besoin de séparer le repas et l’alcool pour le financement ?</p><label className="grid gap-1 text-sm">Part repas et boissons sans alcool (€)<input className={inputClass} type="number" min="0.01" step="0.01" value={splitMeal} onChange={(event) => setSplitMeal(event.target.value)} /></label><button type="button" className={secondary} onClick={() => { try { setBuilder(splitRestaurantQuickTotal(builder, splitMeal)); setError(""); } catch { setError("La part repas doit être comprise dans le total."); } }}>Ventiler le total</button></div>}
+          {builder.costMode === "TARGETED_SPLIT" && <p className="mt-2 text-sm">Total ventilé : modifiez chaque part ci-dessous. Le total évoluera avec vos modifications.</p>}</div>
+        {builder.costMode !== "QUICK_TOTAL" && <>
+        <div className="mt-3 flex flex-wrap items-center gap-2"><strong className="text-sm">{path.map(moduleLabel).join(" › ")}</strong>{path.length > 1 && <button type="button" className={secondary} onClick={() => { setModulePath(path.slice(0, -1)); setSearch(""); }}>Revenir au module parent</button>}</div>
+        {path.length === 1 && builder.acceptedChildren.length > 0 && <div className="mt-2 flex gap-2">{builder.acceptedChildren.filter((child) => resolved?.children.some((edge) => edge.childModule === child)).map((child) => <button key={child} type="button" className={secondary} onClick={() => { setModulePath([root, child]); setSearch(""); }}>Modifier {moduleLabel(child)}</button>)}</div>}
+        {builder.acceptedChildren.includes("gift") && draft.subtypeKey !== "gift" && <label className="mt-3 grid max-w-md gap-1 text-sm font-semibold">Pour qui est le cadeau ?<input className={inputClass} value={draft.context.gift?.recipient ?? ""} onChange={(event) => { setDraft({ ...draft, context: { ...draft.context, gift: { recipient: event.target.value, occasion: draft.context.gift?.occasion ?? "Sans occasion particulière" } } }); resetPreview(); }} /></label>}
         {module === "house_party" && <button type="button" className={`${secondary} mt-3`} onClick={() => { addAsset(assetsForModule("house_party")[0]); addAsset(assetsForModule("house_party")[1]); }}>Ajouter le panier suggéré · Vodka 1 × 16 € et Crazy Tiger 2 × 3 €</button>}
-        <label className="mt-3 grid gap-1 text-sm font-semibold">Rechercher un élément<input className={inputClass} type="search" value={search} onChange={(event) => setSearch(event.target.value)} /></label>
-        {availableChildren.length > 0 && <div className="flex flex-wrap gap-2">{availableChildren.map((edge) => <button key={edge.childModule} type="button" className={secondary} onClick={() => { setModulePath([root, edge.childModule]); setSearch(""); }}>Ouvrir {edge.childModule.replaceAll("_", " ")}{edge.availability === "SUGGESTED" ? " · suggestion" : ""}</button>)}</div>}
+        <details className="mt-3 rounded-xl border border-slate-200 p-3" open={builder.costMode === "ITEMIZED" ? true : undefined}><summary className="cursor-pointer font-bold">Détailler davantage et ajouter des compléments</summary><label className="mt-3 grid gap-1 text-sm font-semibold">Rechercher un élément<input className={inputClass} type="search" value={search} onChange={(event) => setSearch(event.target.value)} /></label>
+        <div id="builder-addons" className="mt-3"><div className="flex flex-wrap gap-2">{suggestedBuilderChildren(builder).map((child) => <button key={child} type="button" className={secondary} onClick={() => { setBuilder((current) => acceptBuilderChild(current, child)); setModulePath([root, child]); setSearch(""); }}>Ajouter {moduleLabel(child)} · suggestion</button>)}</div>
+          {availableBuilderChildren(builder).length > 0 && <details className="mt-2"><summary className="cursor-pointer text-sm font-semibold">Ajouter autre chose</summary><div className="mt-2 flex flex-wrap gap-2">{availableBuilderChildren(builder).map((child) => <button key={child} type="button" className={secondary} onClick={() => { setBuilder((current) => acceptBuilderChild(current, child)); setModulePath([root, child]); setSearch(""); }}>Ajouter {moduleLabel(child)}</button>)}</div></details>}</div>
         <div className="mt-3 grid max-h-64 gap-2 overflow-y-auto sm:grid-cols-2 lg:grid-cols-3">{visibleAssets.map((asset) => { const knownPrice = prices.find((price) => price.assetKey === asset.assetKey); return <button key={asset.assetKey} type="button" className="rounded-xl border border-slate-200 p-3 text-left text-sm hover:border-emerald-700" onClick={() => addAsset(asset)}><span aria-hidden="true">{asset.icon} </span>{asset.label}{knownPrice ? <span className="block text-xs text-slate-600">Prix récent : {money(knownPrice.unitAmount)} · {knownPrice.sourceLabel}</span> : asset.defaultUnitAmount && <span className="block text-xs text-slate-600">Suggestion : {asset.defaultQuantity} × {money(asset.defaultUnitAmount)}</span>}</button>; })}</div>
-        <button type="button" className={`${secondary} mt-3`} disabled={draft.costItems.length >= 50} onClick={() => addAsset()}><Plus size={14} className="mr-1 inline" />Ajouter un élément personnalisé</button></div>
-        {resolved?.transport !== "FORBIDDEN" && <details className="rounded-xl border border-slate-200 p-3"><summary className="cursor-pointer font-bold">Transport · prévoir un trajet en voiture</summary>
+        <button type="button" className={`${secondary} mt-3`} disabled={draft.costItems.length >= 50} onClick={() => addAsset()}><Plus size={14} className="mr-1 inline" />Ajouter un élément personnalisé</button></details>
+        {resolved?.transport !== "FORBIDDEN" && <details className="rounded-xl border border-slate-200 p-3"><summary className="cursor-pointer font-bold">{resolved?.transport === "SUGGESTED" ? "Transport · prévoir un trajet en voiture · suggestion" : "Ajouter autre chose · trajet en voiture"}</summary>
           <div className="mt-3 grid gap-3"><p className="text-xs text-slate-600">Saisissez les kilomètres de chaque segment dans l’ordre. La distance n’est pas calculée automatiquement.</p>
             <fieldset><legend className="text-sm font-bold">Qui effectue le trajet ?</legend><div className="flex flex-wrap gap-4">{persons.map((person) => <label key={person.personId} className="flex gap-2 text-sm"><input type="checkbox" checked={draft.context.travellingParticipantPersonIds?.includes(person.personId) ?? false} onChange={() => { const current = draft.context.travellingParticipantPersonIds ?? []; const travellingParticipantPersonIds = current.includes(person.personId) ? current.filter((id) => id !== person.personId) : [...current, person.personId]; setDraft({ ...draft, context: { ...draft.context, travellingParticipantPersonIds } }); resetPreview(); }} />{person.displayName}</label>)}</div></fieldset>
             {!route && <button type="button" className={secondary} onClick={() => changeStops([{ label: "Maison", distanceToNextKm: "" }, { label: draft.context.place?.kind === "TEXT" ? draft.context.place.label : draft.context.place?.kind === "KNOWN" ? relevantPlaces.find((place) => place.placeId === (draft.context.place as { kind: "KNOWN"; placeId: string }).placeId)?.name ?? "Destination" : "Destination", distanceToNextKm: "" }, { label: "Maison", distanceToNextKm: null }])}>Prévoir un trajet voiture</button>}
@@ -282,22 +345,26 @@ export function PlannedExpensesControl({ targetMonth, expenses, persons, places,
           </div></details>}
         <div className="grid gap-3">{draft.costItems.map((item, index) => {
           const itemModule = item.modulePath?.at(-1) ?? root;
-          const habitual = baselineFor(itemModule, draft.context.participantPersonIds ?? [], persons);
+          const edge = item.modulePath?.[1] ? resolved?.children.find((candidate) => candidate.childModule === item.modulePath?.[1]) : undefined;
+          const habitual = edge?.baselineOverride === null || plannedAsset(item.assetKey ?? "")?.module === "transport" ? null : baselineFor(itemModule, draft.context.participantPersonIds ?? [], persons);
           const asset = item.assetKey ? assetsForModule(itemModule).find((part) => part.assetKey === item.assetKey) : undefined;
-          return <div key={item.id} className="rounded-xl border border-slate-200 p-3"><div className="flex justify-between gap-2"><strong className="text-sm">Élément {index + 1} · {item.modulePath?.join(" › ").replaceAll("_", " ")}</strong><button type="button" className={secondary} aria-label={`Supprimer l’élément ${index + 1}`} onClick={() => { setDraft({ ...draft, costItems: draft.costItems.filter((part) => part.id !== item.id) }); resetPreview(); }}><Trash2 size={14} /></button></div>
+          return <div key={item.id} className="rounded-xl border border-slate-200 p-3"><div className="flex justify-between gap-2"><strong className="text-sm">Élément {index + 1} · {item.modulePath?.map(moduleLabel).join(" › ")}</strong><button type="button" className={secondary} aria-label={`Supprimer l’élément ${index + 1}`} onClick={() => { setDraft({ ...draft, costItems: draft.costItems.filter((part) => part.id !== item.id) }); resetPreview(); }}><Trash2 size={14} /></button></div>
             <div className="mt-3 grid gap-3 sm:grid-cols-[minmax(0,1fr)_7rem_10rem]"><label className="grid gap-1 text-sm font-semibold">Élément<input className={inputClass} value={item.label} maxLength={120} onChange={(event) => updateItem(item.id, { label: event.target.value })} /></label><label className="grid gap-1 text-sm font-semibold">Quantité<input className={inputClass} type="number" min="0.001" step="0.001" value={item.quantity} disabled={item.assetKey === "transport:fuel_usage"} onChange={(event) => updateItem(item.id, { quantity: event.target.value })} /></label><label className="grid gap-1 text-sm font-semibold">Prix unitaire (€)<input className={inputClass} type="number" min="0.01" step="0.01" value={item.unitAmount} disabled={item.assetKey === "transport:fuel_usage"} onChange={(event) => updateItem(item.id, { unitAmount: event.target.value, priceSource: "MANUAL" })} /></label></div>
             {(item.assetKey?.endsWith(":cocktail") || item.assetKey?.endsWith(":mixer")) && <label className="mt-3 grid gap-1 text-sm font-semibold">Quel parfum ou cocktail ?<input className={inputClass} value={item.variantLabel ?? ""} onChange={(event) => updateItem(item.id, { variantLabel: event.target.value || null })} placeholder="Ex. Mojito" /></label>}
             <p className="mt-2 text-xs text-slate-600">{item.priceSource === "SYSTEM_DEFAULT" ? "Prix proposé · modifiable" : item.priceSource === "CALCULATED" ? "Estimation calculée" : item.priceSource === "LAST_KNOWN" ? "Prix récent" : "Prix à confirmer"}{itemTotal(item) ? ` · total ${money(itemTotal(item)!)}` : ""}</p>
-            {habitual && <fieldset className="mt-3 flex flex-wrap gap-4 text-sm"><legend className="font-semibold">Cette dépense est-elle déjà dans vos habitudes ?</legend><label className="flex gap-2"><input type="radio" name={`habitual-${item.id}`} checked={item.baselineKey === null} onChange={() => updateItem(item.id, { baselineKey: null })} />En plus</label><label className="flex gap-2"><input type="radio" name={`habitual-${item.id}`} checked={item.baselineKey === habitual} onChange={() => updateItem(item.id, { baselineKey: habitual })} />Habituel</label></fieldset>}
-            {asset?.fundingEligibility === "MEAL" && <div className="mt-3 grid gap-2"><label className="grid gap-1 text-sm font-semibold">Comment financer cet élément ?<select className={inputClass} value={fundingMode(item)} onChange={(event) => setFunding(item, event.target.value as "BANK" | "SWILE" | "EDENRED" | "MIXED")}><option value="BANK">Banque</option><option value="SWILE">Swile</option><option value="EDENRED">Edenred</option><option value="MIXED" disabled={!itemTotal(item) || new Big(itemTotal(item)!).lt("0.02")}>Mixte</option></select></label>{fundingMode(item) === "MIXED" && <div className="grid gap-2 sm:grid-cols-3">{(["BANK", "SWILE", "EDENRED"] as const).map((source) => <label key={source} className="grid gap-1 text-sm">{source === "BANK" ? "Banque" : source} (€)<input className={inputClass} type="number" min="0" step="0.01" value={item.fundingAllocations?.find((part) => part.source === source)?.amount ?? ""} onChange={(event) => editAllocation(item, source, event.target.value)} /></label>)}</div>}</div>}
+            {habitual && <fieldset className="mt-3 flex flex-wrap gap-4 text-sm"><legend className="font-semibold">Cette dépense est-elle déjà dans vos habitudes ?</legend><label className="flex gap-2"><input type="radio" name={`habitual-${item.id}`} checked={item.baselineKey === null && !!builder.origins[`baseline.${item.id}`]} onChange={() => updateItem(item.id, { baselineKey: null })} />En plus</label><label className="flex gap-2"><input type="radio" name={`habitual-${item.id}`} checked={item.baselineKey === habitual} onChange={() => updateItem(item.id, { baselineKey: habitual })} />Habituel</label></fieldset>}
+            {asset?.fundingEligibility === "MEAL" && edge?.fundingOverride !== "BANK_ONLY" && <div id={`funding-${item.id}`} className="mt-3 grid gap-2"><label className="grid gap-1 text-sm font-semibold">Comment financer cet élément ?<select className={inputClass} value={fundingMode(item)} onChange={(event) => setFunding(item, event.target.value as "BANK" | "SWILE" | "EDENRED" | "MIXED")}><option value="BANK">Banque</option><option value="SWILE">Swile</option><option value="EDENRED">Edenred</option><option value="MIXED" disabled={!itemTotal(item) || new Big(itemTotal(item)!).lt("0.02")}>Mixte</option></select></label>{fundingMode(item) === "MIXED" && <div className="grid gap-2 sm:grid-cols-3">{(["BANK", "SWILE", "EDENRED"] as const).map((source) => <label key={source} className="grid gap-1 text-sm">{source === "BANK" ? "Banque" : source} (€)<input className={inputClass} type="number" min="0" step="0.01" value={item.fundingAllocations?.find((part) => part.source === source)?.amount ?? ""} onChange={(event) => editAllocation(item, source, event.target.value)} /></label>)}</div>}</div>}
           </div>;
-        })}</div>
+        })}</div></>}</div>
         <div className="flex flex-wrap gap-2"><button type="button" className={secondary} onClick={() => setStep(3)}>Retour</button><button type="button" className={primary} disabled={!canPreview || busy} onClick={simulate}>{busy ? "Simulation…" : "Voir l’effet sur notre mois"}</button></div>
       </div>}
-      {step === 5 && preview && <div className="mt-4 grid gap-4"><div className="rounded-xl bg-emerald-50 p-4"><p className="text-sm">Coût économique brut</p><p className="text-3xl font-black tabular-nums">{money(preview.grossCost)}</p><p className="mt-2 text-sm">Absorbé par les habitudes : {money(preview.absorbedByBaseline.central)} · Impact supplémentaire central : {money(preview.netAdditionalImpact.central)}</p><details className="mt-2 text-xs"><summary className="cursor-pointer font-bold">Pourquoi ?</summary><p className="mt-1">{preview.explanation}</p></details></div>
+      {step === 5 && !previewCurrent && <div className="mt-4 rounded-xl bg-amber-50 p-4 text-sm">L’aperçu précédent n’est plus à jour. <button type="button" className={secondary} onClick={() => setStep(4)}>Recalculer après modification</button></div>}
+      {step === 5 && previewCurrent && preview && <div className="mt-4 grid gap-4"><div className="rounded-xl bg-emerald-50 p-4"><p className="text-sm">Coût économique brut</p><p className="text-3xl font-black tabular-nums">{money(preview.grossCost)}</p><p className="mt-2 text-sm">Absorbé par les habitudes : {money(preview.absorbedByBaseline.central)} · Impact supplémentaire central : {money(preview.netAdditionalImpact.central)}</p><details className="mt-2 text-xs"><summary className="cursor-pointer font-bold">Pourquoi ?</summary><p className="mt-1">{preview.explanation}</p></details></div>
         <div className="grid gap-2 sm:grid-cols-3">{([ ["Si on dépense peu", "lowConsumption"], ["Le plus probable", "central"], ["Si le mois coûte plus", "highConsumption"] ] as const).map(([label, key]) => <div key={key} className={`rounded-xl p-3 ${key === "central" ? "bg-white ring-2 ring-emerald-700" : "bg-slate-50"}`}><p className="text-xs font-bold">{label}</p><p className="text-xs text-slate-600">Avant : {money(preview.before[key])}</p><p className="text-lg font-black">Après : {money(preview.after[key])}</p></div>)}</div>
-        <div className="grid gap-2 rounded-xl border border-slate-200 p-4 text-sm"><h4 className="font-bold">Financement prévu</h4><p>Banque : {money(preview.funding.bankAllocated)} · besoin avec dépassement : {money(preview.funding.bankNeedWithShortfall)}</p>{([ ["Swile", preview.funding.swile], ["Edenred", preview.funding.edenred] ] as const).map(([label, pocket]) => <p key={label}>{label} · ressource prévue {money(pocket.resource)} · réservée par vos plans {money(pocket.reserved)} · disponible ensuite {money(pocket.availableAfter)}{new Big(pocket.shortfall).gt(0) && <strong className="block text-amber-900">Dépassement de {money(pocket.shortfall)} à financer autrement.</strong>}</p>)}<details><summary className="cursor-pointer font-semibold">Pourquoi ?</summary><p className="mt-1 text-xs">Ces réservations sont des projets. Elles ne modifient pas le solde réel de vos cagnottes. Le coût économique reste le même quel que soit le moyen de paiement.</p></details></div>
-        <p className="text-xs text-slate-600">La simulation n’enregistre rien.</p><div className="flex flex-wrap gap-2"><button type="button" className={secondary} onClick={() => { setPreview(null); setStep(4); }}>Modifier</button><button type="button" className={primary} disabled={busy} onClick={save}>{busy ? "Enregistrement…" : editedId ? "Enregistrer la modification" : "Ajouter au mois"}</button></div></div>}
+        <div className="grid gap-2 rounded-xl border border-slate-200 p-4 text-sm"><h4 className="font-bold">Financement prévu</h4>{readiness.issues.some((issue) => issue.code === "FUNDING_INCOMPLETE")
+          ? <p className="font-semibold text-amber-900">Répartition à compléter. L’impact économique est calculé ; les réservations de financement seront affichées après correction.</p>
+          : <><p>Banque : {money(preview.funding.bankAllocated)} · besoin avec dépassement : {money(preview.funding.bankNeedWithShortfall)}</p>{([ ["Swile", preview.funding.swile], ["Edenred", preview.funding.edenred] ] as const).map(([label, pocket]) => <p key={label}>{label} · ressource prévue {money(pocket.resource)} · réservée par vos plans {money(pocket.reserved)} · disponible ensuite {money(pocket.availableAfter)}{new Big(pocket.shortfall).gt(0) && <strong className="block text-amber-900">Dépassement de {money(pocket.shortfall)} à financer autrement.</strong>}</p>)}<details><summary className="cursor-pointer font-semibold">Pourquoi ?</summary><p className="mt-1 text-xs">Ces réservations sont des projets. Elles ne modifient pas le solde réel de vos cagnottes. Le coût économique reste le même quel que soit le moyen de paiement.</p></details></>}</div>
+        <p className="text-xs text-slate-600">La simulation n’enregistre rien.</p><div className="flex flex-wrap gap-2"><button type="button" className={secondary} onClick={() => { setPreview(null); setStep(4); }}>Modifier</button><button type="button" className={primary} disabled={busy || !readiness.saveReady} onClick={save}>{busy ? "Enregistrement…" : editedId ? "Enregistrer la modification" : "Ajouter au mois"}</button></div></div>}
     </div>}
     <div className="mt-6 grid gap-5 lg:grid-cols-2"><div><h3 className="text-base font-black">À venir / prévues ({planned.length})</h3>{planned.length ? <ul className="mt-3 grid gap-3">{planned.map(card)}</ul> : <p className="mt-2 text-sm text-slate-600">Aucune dépense ajoutée pour l’instant.</p>}</div><div><h3 className="text-base font-black">Réalisées ce mois-ci ({realized.length})</h3>{realized.length ? <ul className="mt-3 grid gap-3">{realized.map(card)}</ul> : <p className="mt-2 text-sm text-slate-600">Aucune prévision marquée comme réalisée.</p>}</div></div>
     {(new Big(funding.swile.reserved).gt(0) || new Big(funding.edenred.reserved).gt(0)) && <p className="mt-4 text-xs text-slate-600">Plans enregistrés : Swile {money(funding.swile.reserved)} réservés, Edenred {money(funding.edenred.reserved)} réservés. Aucun solde réel n’est débité.</p>}

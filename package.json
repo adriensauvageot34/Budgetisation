@@ -5,6 +5,7 @@
   "scripts": {
     "check:phase2-planned-domain": "node scripts/check-phase2-planned-domain.mjs",
     "check:phase2-planned-server-contract": "node scripts/check-phase2-planned-server-contract.mjs",
+    "check:phase2-planned-builder": "node scripts/check-phase2-planned-builder.mjs",
     "check:architecture": "node scripts/check-architecture-imports.mjs",
     "check:product-completeness": "node scripts/check-product-completeness.mjs",
     "check:analysis-month-contracts": "node --experimental-strip-types scripts/check-analysis-month-contracts.mjs",

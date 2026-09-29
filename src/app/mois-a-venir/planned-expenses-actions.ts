@@ -42,10 +42,10 @@ async function monthContext(targetMonth: string) {
 export async function previewPlannedExpense(targetMonth: string, rawDraft: unknown, editedId?: string) {
   const context = await monthContext(targetMonth);
   const today = new Date().toISOString().slice(0, 10);
-  const draft = parsePlannedExpenseDraft(rawDraft, targetMonth);
+  const draft = parsePlannedExpenseDraft(rawDraft, targetMonth, "PREVIEW");
   const before = deriveMonthScenario(context.forecast, context.inputs, null, today, context.saved).economicPlan;
   const after = (await simulatePlannedExpense(context.supabase, context.household.householdId,
-    context.forecast, context.inputs, context.saved, draft, today, editedId)).economicPlan;
+    context.forecast, context.inputs, context.saved, draft, today, editedId, "PREVIEW")).economicPlan;
   if (!before || !after) throw new TypeError("PLANNED_EXPENSE_FORECAST_UNAVAILABLE");
   const difference = (field: "netImpact" | "absorbedByBaseline") => Object.fromEntries(scenarios.map((key) =>
     [key, euro(new Big(after.plannedExpenses[field][key]!).minus(before.plannedExpenses[field][key]!))])) as Record<typeof scenarios[number], string>;
