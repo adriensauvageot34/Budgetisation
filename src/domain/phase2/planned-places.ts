@@ -1,7 +1,7 @@
-import type { PlannedExpenseFamily } from "./planned-assets";
+import type { AssetModule, PlannedExpenseFamily } from "./planned-assets";
 import type { PlaceRole } from "./planned-contract";
 import { derivePlannedPlaceRoles } from "./planned-place-rules";
-import { resolvePlannedContext, SOCIAL_CONTACTS_V1, type ProspectiveContact,
+import { childPlaceRoles, resolvePlannedContext, SOCIAL_CONTACTS_V1, type ProspectiveContact,
   type ResolvedPlannedContext } from "./planned-rules";
 
 export type PlannedPlaceOption = Readonly<{ placeId: string; name: string; commune: string | null;
@@ -12,6 +12,10 @@ export type RankedPlannedPlace = Readonly<{ place: PlannedPlaceOption; roles: re
 
 const contactByKey = (key: string | undefined): ProspectiveContact | undefined =>
   SOCIAL_CONTACTS_V1.find((contact) => contact.key === key);
+export function placesForChildModule(places: readonly PlannedPlaceOption[], child: AssetModule): readonly PlannedPlaceOption[] {
+  return places.filter((place) => !place.privatePlace && childPlaceRoles(child)
+    .some((role) => derivePlannedPlaceRoles(place).includes(role))).sort((a, b) => a.name.localeCompare(b.name, "fr"));
+}
 const isContactHome = (candidate: PlannedPlaceOption, contact: ProspectiveContact | undefined): boolean => {
   if (!contact) return false;
   if (contact.places.some((link) => link.placeId === candidate.placeId)) return true;

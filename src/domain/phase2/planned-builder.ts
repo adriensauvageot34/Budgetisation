@@ -1,6 +1,7 @@
 import Big from "big.js";
 import { ASSET_AGGREGATE_DESCENDANTS, plannedAsset, rootAssetModule, type AssetModule } from "./planned-assets";
-import type { CostItem, PlannedBaselineKey, PlannedExpenseContext, PlannedExpenseDraft } from "./planned-contract";
+import type { CostItem, PlannedBaselineKey, PlannedExpenseContext, PlannedExpenseDraft, ProspectivePlaceRef } from "./planned-contract";
+import { deduplicateRouteStops, routePlaceIdentity, stopForPlace } from "./planned-routes";
 import { moduleAvailability, resolvePlannedContext, SOCIAL_CONTACTS_V1, type ResolvedPlannedContext } from "./planned-rules";
 import { plannedLineGross } from "./planned-money";
 
@@ -38,8 +39,74 @@ export function createBuilderState(draft: PlannedExpenseDraft): BuilderState {
     suspended: [], origins: Object.fromEntries(draft.costItems.map((item) => [`baseline.${item.id}`, "EXPLICIT"])),
     undo: null, revision: 0 };
 }
-export const editBuilderDraft = (state: BuilderState, draft: PlannedExpenseDraft): BuilderState =>
-  touch(state, { draft: clone(draft) });
+export function editBuilderDraft(state: BuilderState, draft: PlannedExpenseDraft): BuilderState {
+  let next = clone(draft);
+  const placeChanged = JSON.stringify(draft.context.place) !== JSON.stringify(state.draft.context.place);
+  const orphanChildren = (Object.keys(next.context.childLocalPlaceRefs ?? {}) as AssetModule[])
+    .filter((child) => !next.costItems.some((item) => item.modulePath?.[1] === child));
+  const routeAffected = next.context.route?.stops.some((stop) => stop.endpointSource === "ROOT_PLACE" && placeChanged
+    || stop.childModule && orphanChildren.includes(stop.childModule));
+  const routeTopology = (draft: PlannedExpenseDraft) => draft.context.route?.stops
+    .map((stop) => [routePlaceIdentity(stop), stop.endpointSource, stop.childModule]);
+  const topologyChanged = JSON.stringify(routeTopology(state.draft)) !== JSON.stringify(routeTopology(draft));
+  const refs = { ...next.context.childLocalPlaceRefs };
+  for (const child of orphanChildren) delete refs[child];
+  if (orphanChildren.length) next = { ...next, context: { ...next.context, childLocalPlaceRefs: refs } };
+  if (routeAffected && next.context.route) {
+    const stops = next.context.route.stops.flatMap((stop) => {
+      if (stop.childModule && orphanChildren.includes(stop.childModule)) return [];
+      if (stop.endpointSource === "ROOT_PLACE" && placeChanged) return next.context.place
+        ? [stopForPlace(next.context.place, stop.label, "ROOT_PLACE")] : [];
+      return [stop];
+    });
+    next = { ...next, context: { ...next.context, route: stops.length >= 2
+      ? { mode: next.context.route.mode, stops: invalidateRouteDistances(stops) } : undefined },
+      costItems: next.costItems.filter((item) => item.assetKey !== "transport:fuel_usage") };
+  }
+  return touch(state, { draft: next }, !!routeAffected || !!orphanChildren.length || topologyChanged);
+}
+export function setBuilderChildPlace(state: BuilderState, child: AssetModule, ref?: ProspectivePlaceRef): BuilderState {
+  const edge = resolvedFor(state.draft)?.children.find((candidate) => candidate.childModule === child);
+  if (!edge || edge.localPlacePolicy === "HIDDEN" || !state.draft.costItems.some((item) => item.modulePath?.[1] === child))
+    throw new TypeError("BUILDER_CHILD_PLACE_INVALID");
+  const refs = { ...state.draft.context.childLocalPlaceRefs };
+  if (ref) refs[child] = ref; else delete refs[child];
+  const route = state.draft.context.route;
+  // An edited endpoint leaves the route until the user explicitly chooses its new place again.
+  const stops = route?.stops.filter((stop) => stop.childModule !== child);
+  const included = route?.stops.some((stop) => stop.childModule === child);
+  return touch(state, { draft: { ...state.draft, context: { ...state.draft.context, childLocalPlaceRefs: refs,
+    ...(included ? { route: stops && stops.length >= 2 ? { mode: route!.mode, stops: invalidateRouteDistances(stops) } : undefined } : {}) },
+    costItems: route?.stops.some((stop) => stop.childModule === child)
+      ? state.draft.costItems.filter((item) => item.assetKey !== "transport:fuel_usage") : state.draft.costItems } }, true);
+}
+export const invalidateRouteDistances = (stops: NonNullable<PlannedExpenseContext["route"]>["stops"]) =>
+  deduplicateRouteStops(stops).map((stop, index, all) => ({ ...stop, distanceToNextKm: index === all.length - 1 ? null : "",
+    distanceSource: undefined, estimatedFuelLiters: undefined, evidence: undefined }));
+export function addBuilderChildRouteStop(state: BuilderState, child: AssetModule, label: string): BuilderState {
+  const edge = resolvedFor(state.draft)?.children.find((candidate) => candidate.childModule === child);
+  const ref = state.draft.context.childLocalPlaceRefs?.[child], route = state.draft.context.route;
+  if (!ref || !route || route.stops.length < 2 || !edge || edge.rootTransportStopAvailability === "NEVER")
+    throw new TypeError("BUILDER_CHILD_ROUTE_STOP_INVALID");
+  if (route.stops.some((stop) => stop.childModule === child)) return state;
+  const point = stopForPlace(ref, label, "CHILD_LOCAL_PLACE", child);
+  const closed = routePlaceIdentity(route.stops[0]!) === routePlaceIdentity(route.stops.at(-1)!);
+  const stops = closed ? [...route.stops.slice(0, -1), point, route.stops.at(-1)!] : [...route.stops, point];
+  return touch(state, { draft: { ...state.draft, context: { ...state.draft.context,
+    route: { mode: route.mode, stops: invalidateRouteDistances(stops) } },
+    costItems: state.draft.costItems.filter((item) => item.assetKey !== "transport:fuel_usage") } }, true);
+}
+export function removeBuilderChild(state: BuilderState, child: AssetModule): BuilderState {
+  const refs = { ...state.draft.context.childLocalPlaceRefs };
+  delete refs[child];
+  const route = state.draft.context.route;
+  const included = route?.stops.some((stop) => stop.childModule === child);
+  const stops = route?.stops.filter((stop) => stop.childModule !== child);
+  return touch(state, { acceptedChildren: state.acceptedChildren.filter((module) => module !== child),
+    draft: { ...state.draft, context: { ...state.draft.context, childLocalPlaceRefs: refs,
+      ...(included ? { route: stops && stops.length >= 2 ? { mode: route!.mode, stops: invalidateRouteDistances(stops) } : undefined } : {}) },
+      costItems: state.draft.costItems.filter((item) => item.modulePath?.[1] !== child && (!included || item.assetKey !== "transport:fuel_usage")) } }, true);
+}
 export function changeBuilderRoot(state: BuilderState, draft: PlannedExpenseDraft): BuilderState {
   const hasContent = state.draft.costItems.length > 0 || state.quickTotal !== ""
     || Object.values(state.draft.context).some((value) => value !== undefined);
@@ -81,7 +148,8 @@ export function materializeBuilderDraft(state: BuilderState, forPreview = false)
     ...(resolved?.transport === "FORBIDDEN" ? { route: undefined } : {}),
     ...(resolved?.fields.place === "HIDDEN" ? { place: undefined } : {}),
     ...(draft.context.childLocalPlaceRefs ? { childLocalPlaceRefs: Object.fromEntries(
-      Object.entries(draft.context.childLocalPlaceRefs).filter(([module]) => activeItems.some((item) => item.modulePath?.[1] === module))) } : {}) } : draft.context;
+      Object.entries(draft.context.childLocalPlaceRefs).filter(([module, ref]) => activeItems.some((item) => item.modulePath?.[1] === module)
+        && !(ref?.kind === "TEXT" && !ref.label.trim()))) } : {}) } : draft.context;
   if (state.costMode !== "QUICK_TOTAL") return forPreview ? { ...draft, title: previewTitle, context,
     costItems: activeItems.map((item) => ({ ...item,
       fundingAllocations: validFunding(item) ? item.fundingAllocations : undefined })) } : draft;
@@ -185,6 +253,12 @@ export function changeBuilderContext(state: BuilderState, context: PlannedExpens
     }
     return true;
   });
+  const childRefs = { ...nextContext.childLocalPlaceRefs };
+  for (const child of Object.keys(childRefs) as AssetModule[]) if (!costItems.some((item) => item.modulePath?.[1] === child)) {
+    suspend("childLocalPlaceRefs", before.childLocalPlaceRefs, "Un lieu de complément est devenu incompatible.");
+    delete childRefs[child];
+  }
+  if (nextContext.childLocalPlaceRefs) nextContext.childLocalPlaceRefs = childRefs;
   return touch(state, { draft: { ...nextDraft, context: nextContext, costItems }, suspended, origins }, true);
 }
 export const discardSuspended = (state: BuilderState): BuilderState => touch(state, { suspended: [] }, true);
@@ -209,6 +283,16 @@ export function deriveBuilderReadiness(state: BuilderState): Readonly<{ previewR
     issue("BLOCK_SAVE", "CONTACT_LABEL_REQUIRED", "context.personVisited", "Précisez le nom de la personne.", "builder-context");
   if (draft.context.route?.mode === "CAR" && !draft.context.route.fuelEstimate)
     issue("BLOCK_PREVIEW", "ROUTE_ESTIMATE_REQUIRED", "context.route", "Estimez le carburant du trajet.", "builder-addons");
+  for (const [child, ref] of Object.entries(draft.context.childLocalPlaceRefs ?? {})) {
+    const edge = resolved?.children.find((edge) => edge.childModule === child);
+    if (!edge || edge.localPlacePolicy === "HIDDEN" || !draft.costItems.some((item) => item.modulePath?.[1] === child))
+      issue("BLOCK_SAVE", "CHILD_PLACE_ORPHAN", `context.childLocalPlaceRefs.${child}`, "Retirez ce lieu devenu sans complément.", "builder-addons");
+    if (ref?.kind === "TEXT" && !ref.label.trim())
+      issue("BLOCK_SAVE", "CHILD_PLACE_LABEL_REQUIRED", `context.childLocalPlaceRefs.${child}`, "Précisez le lieu du complément.", "builder-addons");
+  }
+  for (const edge of resolved?.children ?? []) if (edge.localPlacePolicy === "REQUIRED"
+    && draft.costItems.some((item) => item.modulePath?.[1] === edge.childModule) && !draft.context.childLocalPlaceRefs?.[edge.childModule])
+    issue("BLOCK_SAVE", "CHILD_PLACE_REQUIRED", `context.childLocalPlaceRefs.${edge.childModule}`, "Choisissez le lieu du complément.", "builder-addons");
   for (const item of draft.costItems) {
     try { if (!item.label.trim() || !moneyPattern.test(item.unitAmount) || new Big(item.unitAmount).lte(0)
       || !/^(?:0|[1-9]\d{0,3})(?:\.\d{1,3})?$/u.test(item.quantity)

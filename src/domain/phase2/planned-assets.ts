@@ -16,7 +16,7 @@ export const ASSET_MODULES = ["bar", "club", "house_party", "groceries", "restau
 export type AssetModule = typeof ASSET_MODULES[number];
 export type PlannedAsset = Readonly<{ assetKey: string; module: AssetModule; label: string; icon: string;
   quantityStrategy: QuantityStrategy; defaultQuantity?: string; defaultUnitAmount?: string;
-  fundingEligibility: "MEAL" | "BANK" }>;
+  fundingEligibility: "MEAL" | "BANK"; cashTreatment: "PAYABLE" | "ECONOMIC_ONLY" }>;
 
 export const PLANNED_FAMILIES: readonly { key: PlannedExpenseFamily; label: string; icon: string; hint: string }[] = [
   { key: "outing", label: "Sortie / soirée", icon: "🎉", hint: "Bar, club, soirée" },
@@ -39,7 +39,8 @@ export const PLANNED_SUBTYPE_LABELS: Record<PlannedExpenseFamily, readonly { key
 const assets: PlannedAsset[] = [];
 const add = (module: AssetModule, key: string, label: string, icon: string, quantityStrategy: QuantityStrategy = "MANUAL",
   fundingEligibility: "MEAL" | "BANK" = "BANK", options: Partial<Pick<PlannedAsset, "defaultQuantity" | "defaultUnitAmount">> = {}) => {
-  assets.push({ assetKey: `${module}:${key}`, module, label, icon, quantityStrategy, fundingEligibility, ...options });
+  assets.push({ assetKey: `${module}:${key}`, module, label, icon, quantityStrategy, fundingEligibility,
+    cashTreatment: module === "transport" && key === "fuel_usage" ? "ECONOMIC_ONLY" : "PAYABLE", ...options });
 };
 const many = (module: AssetModule, rows: readonly [string, string, string, QuantityStrategy?, ("MEAL" | "BANK")?][]) =>
   rows.forEach(([key, label, icon, strategy, funding]) => add(module, key, label, icon, strategy, funding));

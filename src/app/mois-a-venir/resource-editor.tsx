@@ -51,7 +51,7 @@ export function ResourceEditor({ resource, targetMonth }: { resource: Resource; 
         <span className={`flex size-9 shrink-0 items-center justify-center rounded-xl ${meal ? "bg-amber-100 text-amber-900" : "bg-emerald-100 text-emerald-900"}`} aria-hidden="true">
           {meal ? <Ticket size={19} /> : <BriefcaseBusiness size={19} />}
         </span>
-        <div className="min-w-0"><p className="truncate text-sm font-bold">{resource.label}</p><p className="text-xs text-slate-600">{meal ? "Cagnotte repas" : "Salaire · compte bancaire"}</p></div>
+        <div className="min-w-0"><p className="truncate text-sm font-bold">{resource.label}</p><p className="text-xs text-slate-600">{meal ? "Ressource repas prévue" : "Salaire prévu du mois"}</p></div>
       </div>
       {!editing && <button type="button" className="button-ghost !min-h-9 !p-2" aria-label={`Modifier ${resource.label}`} onClick={() => { setError(null); setEditing(true); }}><Pencil size={16} /></button>}
     </div>

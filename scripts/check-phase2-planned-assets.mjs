@@ -57,13 +57,13 @@ assert.throws(() => parsePlannedExpenseDraft(draft("food", "restaurant", [
   line("restaurant:wine_glass", "1", "15.00", [{ source: "SWILE", amount: "15.00" }]),
 ]), month), /FUNDING_INELIGIBLE/);
 
-// ASSET-06: a reservation over the planned pocket is an explicit alternative bank need.
+// ASSET-06: a reservation over the planned pocket is an explicit financing shortfall.
 const swileResource = new Big(plan([]).plannedFunding.swile.resource);
 const oversized = swileResource.plus(35).toFixed(2);
 const shortagePlan = plan([saved([line("restaurant:main", "1", oversized,
   [{ source: "SWILE", amount: oversized }])])]);
 assert.equal(shortagePlan.plannedFunding.swile.shortfall, "35.00");
-assert.equal(shortagePlan.plannedFunding.bankNeedWithShortfall, "35.00");
+assert.equal(shortagePlan.plannedFunding.fundingToComplete, "35.00");
 assert.equal(shortagePlan.plannedFunding.swile.resource, plan([]).plannedFunding.swile.resource);
 
 const place = (name, usage, subtype, relationships = [], privatePlace = false) => ({

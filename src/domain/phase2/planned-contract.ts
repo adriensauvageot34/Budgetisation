@@ -25,6 +25,14 @@ export type CostItem = Readonly<{ id: string; assetKey: string | null; label: st
 export type ProspectivePlaceRef = Readonly<{ kind: "KNOWN"; placeId: string }
   | { kind: "TEXT"; label: string; provenance?: "USER_DECLARED_PROSPECTIVE" }>;
 export type PlannedExpensePlace = ProspectivePlaceRef;
+export type RouteEvidence = Readonly<{ method: string; observationCount: number; minimumKm: string;
+  maximumKm: string; firstDate: string; lastDate: string }>;
+export type PlannedRouteStop = Readonly<{ label: string; placeId?: string; distanceToNextKm?: string | null;
+  endpointSource?: RouteEndpointSource; childModule?: AssetModule;
+  distanceSource?: "MANUAL" | "HISTORICAL_ROUTE"; estimatedFuelLiters?: string; evidence?: RouteEvidence }>;
+export type PlannedFuelEstimate = Readonly<{ vehicleLabel: string; consumptionL100Km: string; fuelPricePerLiter: string;
+  fuelPriceSource: string; fuelPriceObservedAt?: string; fuelPriceQuality?: string;
+  distanceKm: string; liters: string; cost: string }>;
 export type PlannedExpenseContext = Readonly<{ participantPersonIds?: readonly string[]; travellingParticipantPersonIds?: readonly string[];
   additionalGuestCount?: number; personVisited?: ProspectivePersonRef;
   place?: PlannedExpensePlace; purchaseMode?: "IN_STORE" | "ONLINE" | "TAKEAWAY" | "DELIVERY";
@@ -34,12 +42,10 @@ export type PlannedExpenseContext = Readonly<{ participantPersonIds?: readonly s
   seller?: string; gift?: Readonly<{ recipient: string; occasion: string }>;
   childLocalPlaceRefs?: Readonly<Partial<Record<AssetModule, ProspectivePlaceRef>>>;
   route?: Readonly<{ mode: "CAR" | "TRAIN" | "BUS" | "TAXI";
-    stops: readonly { label: string; placeId?: string; distanceToNextKm?: string | null;
-      endpointSource?: RouteEndpointSource; childModule?: AssetModule }[];
-    fuelEstimate?: Readonly<{ vehicleLabel: string; consumptionL100Km: string; fuelPricePerLiter: string;
-      fuelPriceSource: string; distanceKm: string; liters: string; cost: string }> }> }>;
+    stops: readonly PlannedRouteStop[];
+    fuelEstimate?: PlannedFuelEstimate }> }>;
 export type PlannedExpenseDraft = Readonly<{ familyKey: PlannedExpenseFamily; subtypeKey: string | null;
   title: string; plannedDate: string | null; costItems: readonly CostItem[]; context: PlannedExpenseContext }>;
 export type PlannedVehicleEstimate = Readonly<{ label: string; consumptionL100Km: string;
-  fuelPricePerLiter: string; fuelPriceSource: string }>;
+  fuelPricePerLiter: string; fuelPriceSource: string; fuelPriceObservedAt?: string; fuelPriceQuality?: string }>;
 export type PlannedPriceSuggestion = Readonly<{ assetKey: string; unitAmount: string; sourceLabel: string }>;

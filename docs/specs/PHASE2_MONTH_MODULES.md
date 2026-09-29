@@ -70,13 +70,32 @@ réservations, disponible et dépassement à financer autrement. Elle n'altère 
 coût économique brut, ni la cagnotte réelle. Le remplacement par une enveloppe
 habituelle reste calculé une seule fois dans `deriveMonthScenario`.
 
-Le trajet en voiture est une suite ordonnée de segments, avec départ et retour à la
-maison proposés. Aucun service de routing exploitable n'est configuré dans ce dépôt :
-les kilomètres sont saisis pour chaque segment. L'estimation réutilise le véhicule
-canonique, la consommation observée des trajets canoniques et le dernier prix de
-carburant disponible. Le coût affiché est l'usage estimé du carburant ; il ne
-représente ni un plein payé ni une opération historique. Le service recalcule et
-valide cette estimation avant l'enregistrement.
+Le trajet en voiture reste une seule chaîne ordonnée de segments racine. Pour
+compatibilité avec C2, elle est encodée par les étapes ordonnées et leur distance
+vers l'étape suivante ; `routeSegments()` expose uniquement les paires adjacentes.
+Chaque étape peut référencer le lieu principal, le lieu propre d'un complément,
+ou un lieu directement choisi. Un complément conserve son lieu indépendamment du
+trajet ; son ajout au trajet est explicite. Le retour à la maison est également
+explicite. Les doublons physiques strictement identiques et consécutifs sont
+fusionnés. Aucun ordre parallèle de segments n'est persisté.
+
+Chaque paire dirigée est résolue depuis l'historique canonique du véhicule, avec
+une médiane par méthode de route et une provenance datée. Les litres observés de
+la même route servent au coût d'usage. Un sens manquant reste inconnu ; des
+kilomètres manuels explicites peuvent le compléter avec la consommation du
+véhicule ou sa consommation historique pondérée. Aucun retour symétrisé,
+Haversine ou routing externe n'est inventé. Le service revalide les preuves
+historiques et le prix carburant avant l'enregistrement. `transport:fuel_usage`
+est `ECONOMIC_ONLY` dans le catalogue partagé et ne réserve aucun financement.
+Péage et parking restent payables. Aucun MobilityTrip historique n'est créé.
+
+La carte d'impact projette la différence des restes mensuels issus de
+`deriveMonthScenario`, en excluant la ligne éditée du scénario avant projet.
+Elle distingue coût prévu, quotidien déjà compris, supplément mensuel, paiement
+prévu, usage carburant et reste projeté central. Le moteur expose les couches
+mensuelles après dépenses certaines, déjà réalisé, encore prévu, vie courante
+restante estimée et reste projeté. Un manque Swile/Edenred reste un financement
+à compléter ; il n'est jamais ajouté automatiquement aux allocations Banque.
 
 Le contrat JSONB enrichi est validé par le service et par la contrainte de la table
 prospective. Les éléments personnalisés restent propres à leur dépense V1. Les

@@ -4,8 +4,24 @@ import Big from "big.js";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { PlannedPlaceOption } from "@/domain/phase2/planned-places";
 import { SOCIAL_CONTACTS_V1 } from "@/domain/phase2/planned-rules";
+import { derivePlannedPlaceRoles } from "@/domain/phase2/planned-place-rules";
 import type { PlannedPriceSuggestion, PlannedVehicleEstimate } from "@/domain/phase2/planned-contract";
+import { calculateRouteFuel, type HistoricalRouteLeg } from "@/domain/phase2/planned-routes";
 export type { PlannedVehicleEstimate };
+
+async function readVehicleLegs(client: SupabaseClient, householdId: string, vehicleId: string) {
+  const rows = [];
+  for (let offset = 0; ; offset += 1000) {
+    const { data, error } = await client.from("mobility_legs")
+      .select("origin_place_id,destination_place_id,distance_km,estimated_fuel_liters,route_method_ref,travel_date")
+      .eq("household_id", householdId).eq("vehicle_id", vehicleId).gt("distance_km", 0)
+      .order("mobility_leg_id").range(offset, offset + 999);
+    if (error) throw error;
+    rows.push(...data ?? []);
+    if ((data?.length ?? 0) < 1000) break;
+  }
+  return rows;
+}
 
 export async function readPlannedContextOptions(client: SupabaseClient, householdId: string,
   persons: readonly { personId: string; displayName: string }[]): Promise<{
@@ -20,9 +36,8 @@ export async function readPlannedContextOptions(client: SupabaseClient, househol
       .order("nom_canonique").limit(500),
     persons.length ? client.from("person_place_roles").select("person_id,place_id,role")
       .in("person_id", persons.map((person) => person.personId)) : Promise.resolve({ data: [], error: null }),
-    vehicle ? client.from("mobility_legs").select("distance_km,estimated_fuel_liters")
-      .eq("vehicle_id", vehicle.vehicle_id).gt("distance_km", 0)
-      .order("travel_date", { ascending: false }).limit(500) : Promise.resolve({ data: [], error: null }),
+    vehicle ? readVehicleLegs(client, householdId, vehicle.vehicle_id).then((data) => ({ data, error: null }))
+      : Promise.resolve({ data: [], error: null }),
     vehicle ? client.from("fuel_price_observations")
       .select("price_per_liter,observed_at,quality").eq("fuel_type", vehicle.fuel_type)
       .order("observed_at", { ascending: false }).limit(1) : Promise.resolve({ data: [], error: null }),
@@ -43,7 +58,7 @@ export async function readPlannedContextOptions(client: SupabaseClient, househol
       const person = persons.find((candidate) => candidate.personId === role.person_id);
       return person ? [{ personName: person.displayName, role: role.role }] : [];
     }),
-  })).filter((place) => !place.privatePlace || place.relationships.length > 0
+  })).filter((place) => !place.privatePlace || derivePlannedPlaceRoles(place).includes("OWN_HOME") || place.relationships.length > 0
     || SOCIAL_CONTACTS_V1.some((contact) => contact.places.some((link) => link.placeId === place.placeId)));
   let estimatedVehicle: PlannedVehicleEstimate | null = null;
   if (vehicle && pricesResult.data?.[0]) {
@@ -56,6 +71,7 @@ export async function readPlannedContextOptions(client: SupabaseClient, househol
       const price = pricesResult.data[0];
       estimatedVehicle = { label: vehicle.label, consumptionL100Km: consumption.round(3).toFixed(3),
         fuelPricePerLiter: new Big(price.price_per_liter).toFixed(3),
+        fuelPriceObservedAt: price.observed_at, fuelPriceQuality: price.quality,
         fuelPriceSource: `Estimation · dernier prix ${new Intl.DateTimeFormat("fr-FR", { month: "long", year: "numeric", timeZone: "UTC" }).format(new Date(price.observed_at))}` };
     }
   }
@@ -73,18 +89,20 @@ export async function readPlannedContextOptions(client: SupabaseClient, househol
   return { places, vehicle: estimatedVehicle, prices };
 }
 
-export function estimatePlannedCarRoute(stops: readonly { distanceToNextKm?: string | null }[],
+export async function readPlannedRouteHistory(client: SupabaseClient, householdId: string): Promise<HistoricalRouteLeg[]> {
+  const { data: vehicles, error } = await client.from("vehicles").select("vehicle_id")
+    .eq("household_id", householdId).eq("status", "active").order("valid_from", { ascending: false }).limit(1);
+  if (error) throw error;
+  if (!vehicles?.[0]) return [];
+  // Full paginated history: a recent slice is not the authority for a directed median.
+  return (await readVehicleLegs(client, householdId, vehicles[0].vehicle_id)).flatMap((leg): HistoricalRouteLeg[] =>
+    leg.origin_place_id && leg.destination_place_id && leg.estimated_fuel_liters !== null
+      ? [{ originPlaceId: leg.origin_place_id, destinationPlaceId: leg.destination_place_id,
+        distanceKm: String(leg.distance_km), fuelLiters: String(leg.estimated_fuel_liters),
+        method: leg.route_method_ref, date: leg.travel_date }] : []);
+}
+
+export function estimatePlannedCarRoute(stops: readonly { label?: string; distanceToNextKm?: string | null }[],
   vehicle: PlannedVehicleEstimate) {
-  if (stops.length < 2 || stops.length > 12 || stops.at(-1)?.distanceToNextKm) throw new TypeError("PLANNED_ROUTE_STOPS_INVALID");
-  const distance = stops.slice(0, -1).reduce((sum, stop) => {
-    const value = stop.distanceToNextKm;
-    if (typeof value !== "string" || !/^(?:0|[1-9]\d{0,4})(?:\.\d{1,2})?$/u.test(value)
-      || new Big(value).lte(0)) throw new TypeError("PLANNED_ROUTE_DISTANCE_INVALID");
-    return sum.plus(value);
-  }, new Big(0));
-  const liters = distance.times(vehicle.consumptionL100Km).div(100);
-  return { vehicleLabel: vehicle.label, consumptionL100Km: vehicle.consumptionL100Km,
-    fuelPricePerLiter: vehicle.fuelPricePerLiter, fuelPriceSource: vehicle.fuelPriceSource,
-    distanceKm: distance.toFixed(2), liters: liters.round(3).toFixed(3),
-    cost: liters.times(vehicle.fuelPricePerLiter).round(2).toFixed(2) };
+  return calculateRouteFuel(stops.map((stop, index) => ({ ...stop, label: stop.label ?? `Étape ${index + 1}` })), vehicle);
 }

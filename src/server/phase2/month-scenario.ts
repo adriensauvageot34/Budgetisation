@@ -5,7 +5,7 @@ import type { MonthForecastSnapshot } from "./month-forecast-snapshot";
 import { DEFAULT_SAFETY_RESERVE, type ForecastRange } from "./month-forecast";
 import type { StatisticalComponent } from "./month-reference";
 import type { PlannedExpenseScenarioEntry, PlannedBaselineKey } from "./planned-expenses";
-import { plannedLineGross } from "@/domain/phase2/planned-money";
+import { plannedLineGross, costItemCashTreatment } from "@/domain/phase2/planned-money";
 
 export type MonthInputs = Readonly<{
   safetyReserve: string;
@@ -140,7 +140,9 @@ export type MonthEconomicPlan = Readonly<{ resources: readonly PlanResource[]; s
   scenarios: { lowConsumption: string; central: string; highConsumption: string };
   plannedExpenses: { grossCost: string; plannedGross: string; declaredRealizedGross: string;
     netImpact: ForecastRange; absorbedByBaseline: ForecastRange };
-  plannedFunding: { bankAllocated: string; bankNeedWithShortfall: string;
+  monthlyLayers: { afterCertainOutflows: string; declaredRealized: string; stillPlanned: string;
+    remainingDailyLife: string; projectedRemainder: string };
+  plannedFunding: { bankAllocated: string; fundingToComplete: string;
     swile: { resource: string; reserved: string; availableAfter: string; shortfall: string };
     edenred: { resource: string; reserved: string; availableAfter: string; shortfall: string } };
   automaticEventProvision: "0.00"; declaredEventImpact: string }>;
@@ -224,7 +226,7 @@ function deriveEconomicPlan(forecast: MonthForecastSnapshot, inputs: MonthInputs
       if (expense.status === "PLANNED") plannedGross = plannedGross.plus(amount);
       else declaredRealizedGross = declaredRealizedGross.plus(amount);
       // Fuel usage is an economic estimate, not a payable line reserved against a funding source.
-      if (item.assetKey !== "transport:fuel_usage")
+      if (costItemCashTreatment(item) !== "ECONOMIC_ONLY")
         for (const allocation of item.fundingAllocations ?? [{ source: "BANK" as const, amount: amount.toFixed(2) }])
           funding[allocation.source] = funding[allocation.source].plus(allocation.amount);
     }
@@ -270,7 +272,10 @@ function deriveEconomicPlan(forecast: MonthForecastSnapshot, inputs: MonthInputs
       absorbedByBaseline: { low: euros(gross.minus(lowImpact)), central: euros(gross.minus(centralImpact)),
         high: euros(gross.minus(highImpact)) } },
     plannedFunding: { bankAllocated: euros(funding.BANK),
-      bankNeedWithShortfall: euros(funding.BANK.plus(swile.shortfall).plus(edenred.shortfall)), swile, edenred },
+      fundingToComplete: euros(new Big(swile.shortfall).plus(edenred.shortfall)), swile, edenred },
+    monthlyLayers: { afterCertainOutflows: euros(afterCertain), declaredRealized: euros(declaredRealizedGross),
+      stillPlanned: euros(plannedGross), remainingDailyLife: euros(new Big(necessary.central!).plus(flexible.central!)
+        .minus(gross.minus(centralImpact))), projectedRemainder: euros(central) },
     automaticEventProvision: "0.00", declaredEventImpact: euros(centralImpact) };
 }
 

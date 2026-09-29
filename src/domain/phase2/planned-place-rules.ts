@@ -33,6 +33,9 @@ export const PLACE_ROLE_RULES: readonly Rule[] = [
 
 export function derivePlannedPlaceRoles(place: PlannedPlaceFacts): readonly PlaceRole[] {
   const roles = new Set<PlaceRole>();
+  // Same exact home classification as the canonical MobilityTrip reconstruction.
+  if (place.nature === "Domicile privé" && place.usage === "Domicile" && place.subtype === "Domicile principal")
+    roles.add("OWN_HOME");
   for (const rule of PLACE_ROLE_RULES) if (rule.pattern.test(place[rule.field] ?? ""))
     for (const role of rule.add) roles.add(role);
   if (place.relationships?.some((relation) => relation.role === "PRIMARY_HOME" || relation.role === "HOUSEHOLD_HOME"))

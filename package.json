@@ -101,7 +101,9 @@
     "typecheck": "tsc --noEmit",
     "build": "next build",
     "verify": "npm run check:architecture && npm run check:product-completeness && npm run check:analysis-month-contracts && npm run check:analysis-global-contracts && npm run check:global-legacy-read-through && npm run check:canonical-in-batching && npm run check:analytics-materialization && npm run check:exploration-entities && npm run check:live-runtime-regressions && npm run check:history-v2-canonical && npm run check:history-v2-transversal && npm run check:history-v2-calendar-daily && npm run check:history-v2-readmodels && npm run check:history-v2-month-balance && npm run check:history-v2-snapshot-materialization && npm run check:history-v2-frontend && npm run typecheck && npm run build",
-    "start": "next start"
+    "start": "next start",
+    "check:phase2-planned-routes": "node scripts/check-phase2-planned-routes.mjs",
+    "check:phase2-planned-finance": "node scripts/check-phase2-planned-finance.mjs"
   },
   "dependencies": {
     "@js-temporal/polyfill": "0.5.1",
