@@ -92,7 +92,7 @@ assert.equal(route.distanceKm, "86.00");
 assert.equal(route.liters, "6.106");
 assert.equal(route.cost, "11.17");
 const visit = parsePlannedExpenseDraft(draft("visit_trip", "family_visit", [
-  { ...line("transport:fuel_usage", "1", route.cost, undefined, null, ["visit_family", "transport"]),
+  { ...line("transport:fuel_usage", "1", route.cost, undefined, null, ["visit_family"]),
     priceSource: "CALCULATED" },
 ], { personVisited: { kind: "TEXT", label: "Père de Manon" }, route: {
   mode: "CAR", stops: [{ label: "Maison", distanceToNextKm: "25.50" },

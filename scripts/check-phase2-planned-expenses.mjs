@@ -71,11 +71,13 @@ assert.throws(() => parsePlannedExpenseDraft({ ...partyDraft, familyKey: "food",
   context: {} }, month), /WORK_MEAL_PERSON_REQUIRED/);
 const noReferenceClient = {};
 await assert.rejects(simulatePlannedExpense(noReferenceClient, householdId, forecast, inputs, [], {
-  ...partyDraft, costItems: [{ ...cost("20.00", "adrien-work-meals", "Repas"), modulePath: ["house_party", "work_meal"] }],
-}, "2026-09-28"), /WORK_MEAL_PERSON_REQUIRED/, "a work-meal baseline needs its person even in a mixed outing");
+  ...partyDraft, familyKey: "food", subtypeKey: "work_meal",
+  costItems: [{ ...cost("20.00", "adrien-work-meals", "Repas"), modulePath: ["work_meal"] }],
+}, "2026-09-28"), /WORK_MEAL_PERSON_REQUIRED/, "a work-meal baseline needs its person");
 const adrienId = randomUUID();
-const mixedWorkMealDraft = { ...partyDraft, context: { participantPersonIds: [adrienId] },
-  costItems: [{ ...cost("20.00", "adrien-work-meals", "Repas"), modulePath: ["house_party", "work_meal"] }] };
+const mixedWorkMealDraft = { ...partyDraft, familyKey: "food", subtypeKey: "work_meal",
+  context: { participantPersonIds: [adrienId] },
+  costItems: [{ ...cost("20.00", "adrien-work-meals", "Repas"), modulePath: ["work_meal"] }] };
 const personClient = (displayName) => ({ from(table) {
   assert.equal(table, "persons");
   return { select() { return this; },

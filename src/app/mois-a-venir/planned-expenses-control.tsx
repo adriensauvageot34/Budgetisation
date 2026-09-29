@@ -8,7 +8,8 @@ import { PLANNED_FAMILIES, PLANNED_SUBTYPE_LABELS, assetsForModule, rootAssetMod
   type AssetModule, type PlannedAsset, type PlannedExpenseFamily } from "@/domain/phase2/planned-assets";
 import { plannedLineGross } from "@/domain/phase2/planned-money";
 import { placesForPlannedContext, type PlannedPlaceOption } from "@/domain/phase2/planned-places";
-import type { CostItem, PlannedBaselineKey, PlannedExpenseContext, PlannedPriceSuggestion, PlannedVehicleEstimate } from "@/domain/phase2/planned-contract";
+import { DELIVERY_PROVIDERS, FISHING_ASSET_LENS, SOCIAL_CONTACTS_V1, resolvePlannedContext } from "@/domain/phase2/planned-rules";
+import type { CostItem, ModulePath, PlannedBaselineKey, PlannedExpenseContext, PlannedPriceSuggestion, PlannedVehicleEstimate } from "@/domain/phase2/planned-contract";
 import type { PlannedExpenseCard } from "./planned-expenses-projection";
 import { changePlannedExpenseStatus, estimatePlannedRoute, previewPlannedExpense, removePlannedExpense,
   savePlannedExpense } from "./planned-expenses-actions";
@@ -29,10 +30,8 @@ const monthEnd = (month: string) => new Date(Date.UTC(Number(month.slice(0, 4)),
 const inputClass = "min-h-11 min-w-0 w-full rounded-xl border border-slate-300 bg-white px-3 text-base focus-visible:outline-2 focus-visible:outline-emerald-700";
 const secondary = "min-h-10 rounded-xl border border-slate-300 bg-white px-4 py-2 text-sm font-bold text-slate-800 hover:bg-slate-50 focus-visible:outline-2 focus-visible:outline-emerald-700";
 const primary = "min-h-11 rounded-xl bg-emerald-800 px-5 py-2 text-sm font-bold text-white hover:bg-emerald-900 disabled:opacity-50 focus-visible:outline-2 focus-visible:outline-emerald-700";
-const visitedFamily = ["Père de Manon", "Mère de Manon", "Grands-parents de Manon", "Père d’Adrien", "Mère d’Adrien", "Grand-mère d’Adrien"];
-const visitedFriends = ["Cédric", "Lucas", "Greg", "Juliette", "Florentine"];
-const friendDestinations: Record<string, string> = { Cédric: "Fabrègues", Lucas: "Saint-Jean-de-Védas",
-  Greg: "Saint-Jean-de-Védas", Juliette: "Nizas" };
+const visitedFamily = SOCIAL_CONTACTS_V1.filter((contact) => contact.kind === "FAMILY");
+const visitedFriends = SOCIAL_CONTACTS_V1.filter((contact) => contact.kind === "FRIEND");
 
 const emptyDraft = (): Draft => ({ familyKey: "outing", subtypeKey: null, title: "", plannedDate: null,
   costItems: [], context: {} });
@@ -81,13 +80,17 @@ export function PlannedExpensesControl({ targetMonth, expenses, persons, places,
   const planned = expenses.filter((item) => item.status === "PLANNED");
   const realized = expenses.filter((item) => item.status === "DECLARED_REALIZED");
   const isWorkMeal = draft.familyKey === "food" && draft.subtypeKey === "work_meal";
-  const visited = draft.context.personVisited?.kind === "TEXT" ? draft.context.personVisited.label : undefined;
+  const visitedRef = draft.context.personVisited;
+  const visited = visitedRef?.kind === "TEXT" ? visitedRef.label
+    : visitedRef?.kind === "CONTACT"
+      ? SOCIAL_CONTACTS_V1.find((contact) => contact.key === visitedRef.contactKey)?.label : undefined;
   const contextPersonLabel = isWorkMeal ? persons.find((person) => person.personId === draft.context.participantPersonIds?.[0])?.displayName : visited;
   const relevantPlaces = placesForPlannedContext(places, draft.familyKey, draft.subtypeKey, contextPersonLabel);
   const supportsParticipants = draft.familyKey === "outing" || draft.familyKey === "food" || draft.familyKey === "visit_trip" || draft.familyKey === "activity";
   const isVisit = draft.familyKey === "visit_trip" && ["family_visit", "friend_visit"].includes(draft.subtypeKey ?? "");
   const contextValid = draft.title.trim().length > 0 && (!isWorkMeal || draft.context.participantPersonIds?.length === 1)
-    && (!isVisit || draft.context.personVisited?.kind === "TEXT" && !!draft.context.personVisited.label.trim())
+    && (!isVisit || (draft.context.personVisited?.kind === "CONTACT" ||
+      draft.context.personVisited?.kind === "TEXT" && !!draft.context.personVisited.label.trim()))
     && (!(["fast_food", "clothing"].includes(draft.subtypeKey ?? "")) || !!draft.context.purchaseMode)
     && (draft.context.purchaseMode !== "DELIVERY" || !!draft.context.deliveryProvider?.trim())
     && (draft.context.purchaseMode !== "ONLINE" || !!draft.context.seller?.trim())
@@ -117,11 +120,10 @@ export function PlannedExpensesControl({ targetMonth, expenses, persons, places,
     resetPreview();
   };
   const addAsset = (asset?: PlannedAsset) => {
-    if (asset?.nestedModule) { setModulePath([...path, asset.nestedModule]); setSearch(""); return; }
     const knownPrice = asset ? prices.find((price) => price.assetKey === asset.assetKey) : undefined;
     const quantity = asset ? suggestedAssetQuantity(asset, draft.context.participantPersonIds?.length ?? 0,
       draft.context.additionalGuestCount ?? 0) : "1";
-    const itemPath = asset && asset.module !== module ? [...path, asset.module] : path;
+    const itemPath: ModulePath = path.length === 2 ? [root, module] : [root];
     const item: CostItem = { id: crypto.randomUUID(), assetKey: asset?.assetKey ?? null, label: asset?.label ?? "",
       quantity, unitAmount: knownPrice?.unitAmount ?? asset?.defaultUnitAmount ?? "", baselineKey: null, modulePath: itemPath,
       priceSource: knownPrice ? "LAST_KNOWN" : asset?.defaultUnitAmount ? "SYSTEM_DEFAULT" : "MANUAL",
@@ -192,7 +194,7 @@ export function PlannedExpensesControl({ targetMonth, expenses, persons, places,
       const fuelEstimate = await estimatePlannedRoute(targetMonth, route.stops);
       const fuelItem: CostItem = { id: crypto.randomUUID(), assetKey: "transport:fuel_usage", label: "Coût carburant estimé",
         quantity: "1", unitAmount: fuelEstimate.cost, baselineKey: null,
-        modulePath: [...path.filter((part) => part !== "transport"), "transport"],
+        modulePath: [root],
         priceSource: "CALCULATED", priceSourceLabel: fuelEstimate.fuelPriceSource };
       setDraft((current) => ({ ...current, context: { ...current.context,
         route: { mode: "CAR", stops: route.stops, fuelEstimate } },
@@ -201,9 +203,17 @@ export function PlannedExpensesControl({ targetMonth, expenses, persons, places,
     } catch { setError("Renseignez les kilomètres de chaque segment du trajet."); }
     finally { setBusy(false); }
   };
-  const visibleAssets = [...assetsForModule(module), ...(module === "fishing" ? assetsForModule("activity") : [])]
+  const visibleAssets = [...assetsForModule(module), ...(module === "activity" && draft.subtypeKey === "fishing"
+    ? FISHING_ASSET_LENS.flatMap((key) => assetsForModule("fishing").filter((asset) => asset.assetKey === key)) : [])]
     .filter((asset) => asset.assetKey !== "transport:fuel_usage"
       && (!search || asset.label.toLocaleLowerCase("fr").includes(search.toLocaleLowerCase("fr"))));
+  // C1 shim: C4 will replace the step layout, while both paths already consume the same domain rules.
+  const resolved = draft.subtypeKey !== null || draft.familyKey === "other"
+    ? resolvePlannedContext({ familyKey: draft.familyKey, subtypeKey: draft.subtypeKey,
+      modifiers: { purchaseMode: draft.context.purchaseMode, housePartyPlaceMode: draft.context.housePartyPlaceMode,
+        visitFormat: draft.context.visitFormat, socialOccasion: draft.context.socialOccasion,
+        deliveryProviderKey: draft.context.deliveryProviderKey } }) : null;
+  const availableChildren = path.length === 1 ? resolved?.children ?? [] : [];
 
   const card = (item: PlannedExpenseCard) => <li key={item.id} className="min-w-0 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
     <div className="flex flex-wrap items-start justify-between gap-3"><div className="min-w-0 flex-1"><p className="text-xs font-bold text-emerald-900">{familyLabel(item.familyKey)} · {subtypeLabel(item.familyKey, item.subtypeKey)}</p><h4 className="break-words text-base font-black">{item.title}</h4><p className="mt-1 text-xs text-slate-600"><CalendarDays size={13} className="mr-1 inline" aria-hidden="true" />{item.plannedDate ? dateLabel(item.plannedDate) : "Ce mois-ci · sans date précise"}</p></div><strong className="text-lg tabular-nums">{money(item.grossCost)}</strong></div>
@@ -232,13 +242,15 @@ export function PlannedExpensesControl({ targetMonth, expenses, persons, places,
         <label className="grid gap-1 text-sm font-semibold">Comment l’appeler ?<input className={inputClass} value={draft.title} maxLength={120} onChange={(event) => { setDraft({ ...draft, title: event.target.value }); resetPreview(); }} /></label>
         <label className="grid gap-1 text-sm font-semibold">Date prévue, si vous la connaissez<input className={inputClass} type="date" min={`${targetMonth}-01`} max={monthEnd(targetMonth)} value={draft.plannedDate ?? ""} onChange={(event) => { setDraft({ ...draft, plannedDate: event.target.value || null }); resetPreview(); }} /></label>
         {isWorkMeal && <fieldset className="rounded-xl border border-slate-200 p-3"><legend className="px-1 text-sm font-bold">Pour qui ?</legend><div className="flex flex-wrap gap-4">{persons.filter((person) => ["Adrien", "Manon"].includes(person.displayName)).map((person) => <label key={person.personId} className="flex gap-2"><input type="radio" name="work-meal-person" checked={draft.context.participantPersonIds?.includes(person.personId) ?? false} onChange={() => setPerson(person)} />{person.displayName}</label>)}</div></fieldset>}
-        {isVisit && <label className="grid gap-1 text-sm font-semibold">Qui allons-nous voir ?<select className={inputClass} value={visited && (draft.subtypeKey === "family_visit" ? visitedFamily : visitedFriends).includes(visited) ? visited : visited ? "OTHER" : ""} onChange={(event) => {
-          const value = event.target.value; const personVisited = value ? { kind: "TEXT" as const, label: value === "OTHER" ? "Autre personne" : value } : undefined;
-          const suggestion = draft.subtypeKey === "friend_visit" ? friendDestinations[value] : undefined;
-          setDraft({ ...draft, context: { ...draft.context, personVisited, place: suggestion ? { kind: "TEXT", label: suggestion } : undefined } }); resetPreview(); }}><option value="">Choisir une personne</option>{(draft.subtypeKey === "family_visit" ? visitedFamily : visitedFriends).map((name) => <option key={name} value={name}>{name}</option>)}<option value="OTHER">Autre personne</option></select></label>}
-        {isVisit && visited && ![...visitedFamily, ...visitedFriends].includes(visited) && <label className="grid gap-1 text-sm font-semibold">Son nom<input className={inputClass} value={visited === "Autre personne" ? "" : visited} onChange={(event) => { setDraft({ ...draft, context: { ...draft.context, personVisited: { kind: "TEXT", label: event.target.value } } }); resetPreview(); }} /></label>}
+        {isVisit && <label className="grid gap-1 text-sm font-semibold">Qui allons-nous voir ?<select className={inputClass} value={draft.context.personVisited?.kind === "CONTACT" ? draft.context.personVisited.contactKey : visited ? "OTHER" : ""} onChange={(event) => {
+          const value = event.target.value; const personVisited = value === "OTHER" ? { kind: "TEXT" as const, label: "" }
+            : value ? { kind: "CONTACT" as const, contactKey: value } : undefined;
+          setDraft({ ...draft, context: { ...draft.context, personVisited } }); resetPreview(); }}><option value="">Choisir une personne</option>{(draft.subtypeKey === "family_visit" ? visitedFamily : visitedFriends).map((contact) => <option key={contact.key} value={contact.key}>{contact.label}</option>)}<option value="OTHER">Autre personne</option></select></label>}
+        {isVisit && draft.context.personVisited?.kind === "TEXT" && <label className="grid gap-1 text-sm font-semibold">Son nom<input className={inputClass} value={draft.context.personVisited.label} onChange={(event) => { setDraft({ ...draft, context: { ...draft.context, personVisited: { kind: "TEXT", label: event.target.value } } }); resetPreview(); }} /></label>}
         {(draft.subtypeKey === "fast_food" || draft.subtypeKey === "clothing") && <fieldset className="rounded-xl border border-slate-200 p-3"><legend className="px-1 text-sm font-bold">{draft.subtypeKey === "fast_food" ? "Comment manger ?" : "Mode d’achat"}</legend><div className="flex flex-wrap gap-4">{(draft.subtypeKey === "fast_food" ? [["TAKEAWAY", "Sur place / à emporter"], ["DELIVERY", "En livraison"]] : [["IN_STORE", "Magasin physique"], ["ONLINE", "En ligne / livraison"]]).map(([value, label]) => <label key={value} className="flex gap-2"><input type="radio" name="purchase-mode" checked={draft.context.purchaseMode === value} onChange={() => { setDraft({ ...draft, context: { ...draft.context, purchaseMode: value as PlannedExpenseContext["purchaseMode"] } }); resetPreview(); }} />{label}</label>)}</div></fieldset>}
-        {draft.context.purchaseMode === "DELIVERY" && <label className="grid gap-1 text-sm font-semibold">Qui livre ?<input className={inputClass} list="planned-delivery-services" value={draft.context.deliveryProvider ?? ""} onChange={(event) => { setDraft({ ...draft, context: { ...draft.context, deliveryProvider: event.target.value } }); resetPreview(); }} /><datalist id="planned-delivery-services"><option value="Uber Eats" /><option value="Lady Sushi" /><option value="Domino’s" /></datalist></label>}
+        {draft.context.purchaseMode === "DELIVERY" && <label className="grid gap-1 text-sm font-semibold">Qui livre ?<input className={inputClass} list="planned-delivery-services" value={draft.context.deliveryProvider ?? ""} onChange={(event) => { const provider = DELIVERY_PROVIDERS.find((item) => item.label === event.target.value);
+          setDraft({ ...draft, context: { ...draft.context, deliveryProvider: event.target.value,
+            deliveryProviderKey: provider?.key ?? "OTHER" } }); resetPreview(); }} /><datalist id="planned-delivery-services">{DELIVERY_PROVIDERS.filter((item) => item.key !== "OTHER").map((item) => <option key={item.key} value={item.label} />)}</datalist></label>}
         {draft.context.purchaseMode === "ONLINE" && <label className="grid gap-1 text-sm font-semibold">Quelle boutique ?<input className={inputClass} list="planned-online-stores" value={draft.context.seller ?? ""} onChange={(event) => { setDraft({ ...draft, context: { ...draft.context, seller: event.target.value } }); resetPreview(); }} /><datalist id="planned-online-stores"><option value="Shein" /><option value="Amazon" /></datalist></label>}
         {draft.subtypeKey === "gift" && <div className="grid gap-3 sm:grid-cols-2"><label className="grid gap-1 text-sm font-semibold">Pour qui ?<input className={inputClass} value={draft.context.gift?.recipient ?? ""} onChange={(event) => setDraft({ ...draft, context: { ...draft.context, gift: { recipient: event.target.value, occasion: draft.context.gift?.occasion ?? "Sans occasion particulière" } } })} /></label><label className="grid gap-1 text-sm font-semibold">Pour quelle occasion ?<select className={inputClass} value={draft.context.gift?.occasion ?? "Sans occasion particulière"} onChange={(event) => setDraft({ ...draft, context: { ...draft.context, gift: { recipient: draft.context.gift?.recipient ?? "", occasion: event.target.value } } })}>{["Anniversaire", "Noël", "Fête", "Sans occasion particulière", "Autre"].map((part) => <option key={part}>{part}</option>)}</select></label></div>}
         <details className="rounded-xl border border-slate-200 p-3"><summary className="cursor-pointer font-bold">Personnaliser · personnes et lieu</summary><div className="mt-3 grid gap-3">
@@ -256,9 +268,10 @@ export function PlannedExpensesControl({ targetMonth, expenses, persons, places,
         {path.includes("gift") && draft.subtypeKey !== "gift" && <label className="mt-3 grid max-w-md gap-1 text-sm font-semibold">Pour qui est le cadeau ?<input className={inputClass} value={draft.context.gift?.recipient ?? ""} onChange={(event) => { setDraft({ ...draft, context: { ...draft.context, gift: { recipient: event.target.value, occasion: draft.context.gift?.occasion ?? "Sans occasion particulière" } } }); resetPreview(); }} /></label>}
         {module === "house_party" && <button type="button" className={`${secondary} mt-3`} onClick={() => { addAsset(assetsForModule("house_party")[0]); addAsset(assetsForModule("house_party")[1]); }}>Ajouter le panier suggéré · Vodka 1 × 16 € et Crazy Tiger 2 × 3 €</button>}
         <label className="mt-3 grid gap-1 text-sm font-semibold">Rechercher un élément<input className={inputClass} type="search" value={search} onChange={(event) => setSearch(event.target.value)} /></label>
-        <div className="mt-3 grid max-h-64 gap-2 overflow-y-auto sm:grid-cols-2 lg:grid-cols-3">{visibleAssets.map((asset) => { const knownPrice = prices.find((price) => price.assetKey === asset.assetKey); return <button key={asset.assetKey} type="button" className="rounded-xl border border-slate-200 p-3 text-left text-sm hover:border-emerald-700" onClick={() => addAsset(asset)}><span aria-hidden="true">{asset.icon} </span>{asset.label}{asset.nestedModule && <span className="block text-xs text-emerald-800">Ouvrir le module</span>}{knownPrice ? <span className="block text-xs text-slate-600">Prix récent : {money(knownPrice.unitAmount)} · {knownPrice.sourceLabel}</span> : asset.defaultUnitAmount && <span className="block text-xs text-slate-600">Suggestion : {asset.defaultQuantity} × {money(asset.defaultUnitAmount)}</span>}</button>; })}</div>
+        {availableChildren.length > 0 && <div className="flex flex-wrap gap-2">{availableChildren.map((edge) => <button key={edge.childModule} type="button" className={secondary} onClick={() => { setModulePath([root, edge.childModule]); setSearch(""); }}>Ouvrir {edge.childModule.replaceAll("_", " ")}{edge.availability === "SUGGESTED" ? " · suggestion" : ""}</button>)}</div>}
+        <div className="mt-3 grid max-h-64 gap-2 overflow-y-auto sm:grid-cols-2 lg:grid-cols-3">{visibleAssets.map((asset) => { const knownPrice = prices.find((price) => price.assetKey === asset.assetKey); return <button key={asset.assetKey} type="button" className="rounded-xl border border-slate-200 p-3 text-left text-sm hover:border-emerald-700" onClick={() => addAsset(asset)}><span aria-hidden="true">{asset.icon} </span>{asset.label}{knownPrice ? <span className="block text-xs text-slate-600">Prix récent : {money(knownPrice.unitAmount)} · {knownPrice.sourceLabel}</span> : asset.defaultUnitAmount && <span className="block text-xs text-slate-600">Suggestion : {asset.defaultQuantity} × {money(asset.defaultUnitAmount)}</span>}</button>; })}</div>
         <button type="button" className={`${secondary} mt-3`} disabled={draft.costItems.length >= 50} onClick={() => addAsset()}><Plus size={14} className="mr-1 inline" />Ajouter un élément personnalisé</button></div>
-        {(draft.familyKey === "visit_trip" || draft.familyKey === "activity" || draft.familyKey === "outing" || draft.familyKey === "food") && <details className="rounded-xl border border-slate-200 p-3"><summary className="cursor-pointer font-bold">Transport · prévoir un trajet en voiture</summary>
+        {resolved?.transport !== "FORBIDDEN" && <details className="rounded-xl border border-slate-200 p-3"><summary className="cursor-pointer font-bold">Transport · prévoir un trajet en voiture</summary>
           <div className="mt-3 grid gap-3"><p className="text-xs text-slate-600">Saisissez les kilomètres de chaque segment dans l’ordre. La distance n’est pas calculée automatiquement.</p>
             <fieldset><legend className="text-sm font-bold">Qui effectue le trajet ?</legend><div className="flex flex-wrap gap-4">{persons.map((person) => <label key={person.personId} className="flex gap-2 text-sm"><input type="checkbox" checked={draft.context.travellingParticipantPersonIds?.includes(person.personId) ?? false} onChange={() => { const current = draft.context.travellingParticipantPersonIds ?? []; const travellingParticipantPersonIds = current.includes(person.personId) ? current.filter((id) => id !== person.personId) : [...current, person.personId]; setDraft({ ...draft, context: { ...draft.context, travellingParticipantPersonIds } }); resetPreview(); }} />{person.displayName}</label>)}</div></fieldset>
             {!route && <button type="button" className={secondary} onClick={() => changeStops([{ label: "Maison", distanceToNextKm: "" }, { label: draft.context.place?.kind === "TEXT" ? draft.context.place.label : draft.context.place?.kind === "KNOWN" ? relevantPlaces.find((place) => place.placeId === (draft.context.place as { kind: "KNOWN"; placeId: string }).placeId)?.name ?? "Destination" : "Destination", distanceToNextKm: "" }, { label: "Maison", distanceToNextKm: null }])}>Prévoir un trajet voiture</button>}

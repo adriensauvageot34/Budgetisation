@@ -3,6 +3,7 @@ import "server-only";
 import Big from "big.js";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { PlannedPlaceOption } from "@/domain/phase2/planned-places";
+import { SOCIAL_CONTACTS_V1 } from "@/domain/phase2/planned-rules";
 import type { PlannedPriceSuggestion, PlannedVehicleEstimate } from "@/domain/phase2/planned-contract";
 export type { PlannedVehicleEstimate };
 
@@ -42,7 +43,8 @@ export async function readPlannedContextOptions(client: SupabaseClient, househol
       const person = persons.find((candidate) => candidate.personId === role.person_id);
       return person ? [{ personName: person.displayName, role: role.role }] : [];
     }),
-  })).filter((place) => !place.privatePlace || place.relationships.length > 0);
+  })).filter((place) => !place.privatePlace || place.relationships.length > 0
+    || SOCIAL_CONTACTS_V1.some((contact) => contact.places.some((link) => link.placeId === place.placeId)));
   let estimatedVehicle: PlannedVehicleEstimate | null = null;
   if (vehicle && pricesResult.data?.[0]) {
     const legs = legsResult.data ?? [];

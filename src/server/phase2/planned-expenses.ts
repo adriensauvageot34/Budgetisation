@@ -4,11 +4,15 @@ import { randomUUID } from "node:crypto";
 import Big from "big.js";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { createCanonicalReadClient } from "@/server/canonical/client";
-import { PLANNED_EXPENSE_SUBTYPES, plannedAsset, rootAssetModule, type AssetModule, type PlannedExpenseFamily } from "@/domain/phase2/planned-assets";
+import { ASSET_MODULES, PLANNED_EXPENSE_SUBTYPES, plannedAsset, rootAssetModule,
+  type AssetModule, type PlannedExpenseFamily } from "@/domain/phase2/planned-assets";
 import { plannedLineGross } from "@/domain/phase2/planned-money";
-import { placesForPlannedContext } from "@/domain/phase2/planned-places";
+import { rankPlacesForPlannedContext } from "@/domain/phase2/planned-places";
+import { derivePlannedPlaceRoles } from "@/domain/phase2/planned-place-rules";
+import { BRING_ITEMS_LENS, DELIVERY_PROVIDERS, FISHING_ASSET_LENS, SOCIAL_CONTACTS_V1, resolvePlannedContext,
+  validateModulePath, childPlaceRoles } from "@/domain/phase2/planned-rules";
 import type { CostItem, FundingAllocation, FundingSource, PlannedBaselineKey, PlannedExpenseContext,
-  PlannedExpenseDraft, PriceSource } from "@/domain/phase2/planned-contract";
+  PlannedExpenseDraft, PriceSource, ModulePath, ProspectivePlaceRef } from "@/domain/phase2/planned-contract";
 import { readPlannedContextOptions } from "./planned-context";
 import type { MonthForecastSnapshot } from "./month-forecast-snapshot";
 import { simulatePlannedExpenseScenario, type MonthInputs } from "./month-scenario";
@@ -65,7 +69,22 @@ const decimal = (value: unknown, pattern: RegExp, code: string): string => {
   if (typeof value !== "string" || !pattern.test(value) || new Big(value).lte(0)) throw new TypeError(code);
   return value;
 };
-const moduleKeys = new Set<AssetModule>(["bar", "club", "house_party", "groceries", "restaurant", "fast_food", "work_meal", "transport", "visit_family", "visit_friend", "trip", "activity", "fishing", "beauty", "clothing", "household", "home", "gift", "tech", "automotive", "other"]);
+const moduleKeys = new Set<AssetModule>(ASSET_MODULES);
+const parsePlaceRef = (value: unknown): ProspectivePlaceRef => {
+  const place = object(value, "PLANNED_EXPENSE_PLACE_INVALID");
+  if (place.kind === "KNOWN") {
+    keysOnly(place, ["kind", "placeId"], "PLANNED_EXPENSE_PLACE_FIELDS_INVALID");
+    return { kind: "KNOWN", placeId: uuid(place.placeId, "PLANNED_EXPENSE_PLACE_ID_INVALID") };
+  }
+  if (place.kind === "TEXT") {
+    keysOnly(place, ["kind", "label", "provenance"], "PLANNED_EXPENSE_PLACE_FIELDS_INVALID");
+    if (place.provenance !== undefined && place.provenance !== "USER_DECLARED_PROSPECTIVE")
+      throw new TypeError("PLANNED_EXPENSE_PLACE_PROVENANCE_INVALID");
+    return { kind: "TEXT", label: title(place.label, "PLANNED_EXPENSE_PLACE_LABEL_INVALID"),
+      ...(place.provenance ? { provenance: "USER_DECLARED_PROSPECTIVE" as const } : {}) };
+  }
+  throw new TypeError("PLANNED_EXPENSE_PLACE_KIND_INVALID");
+};
 
 export function parsePlannedExpenseDraft(value: unknown, targetMonth: string): PlannedExpenseDraft {
   parseTargetMonth(targetMonth);
@@ -95,14 +114,12 @@ export function parsePlannedExpenseDraft(value: unknown, targetMonth: string): P
     if (assetKey !== null && (typeof assetKey !== "string" || !plannedAsset(assetKey)))
       throw new TypeError("PLANNED_EXPENSE_ASSET_INVALID");
     const modulePath = item.modulePath === undefined ? undefined : (() => {
-      if (!Array.isArray(item.modulePath) || item.modulePath.length < 1 || item.modulePath.length > 5
+      if (!Array.isArray(item.modulePath) || item.modulePath.length < 1 || item.modulePath.length > 2
         || item.modulePath.some((part: unknown) => typeof part !== "string" || !moduleKeys.has(part as AssetModule)))
         throw new TypeError("PLANNED_EXPENSE_MODULE_PATH_INVALID");
-      return item.modulePath as AssetModule[];
+      return item.modulePath as unknown as ModulePath;
     })();
     const module = modulePath?.at(-1) ?? rootAssetModule(familyKey, raw.subtypeKey as string | null);
-    if (assetKey !== null && plannedAsset(assetKey)?.module !== module)
-      throw new TypeError("PLANNED_EXPENSE_ASSET_MODULE_INVALID");
     const baselineKey = item.baselineKey;
     if (baselineKey !== null && (typeof baselineKey !== "string" || !baselineKeys.has(baselineKey as PlannedBaselineKey)))
       throw new TypeError("PLANNED_EXPENSE_BASELINE_INVALID");
@@ -146,7 +163,9 @@ export function parsePlannedExpenseDraft(value: unknown, targetMonth: string): P
   if (new Set(costItems.map((item) => item.id)).size !== costItems.length) throw new TypeError("PLANNED_EXPENSE_COST_ITEM_ID_DUPLICATE");
   const contextRaw = object(raw.context, "PLANNED_EXPENSE_CONTEXT_INVALID");
   keysOnly(contextRaw, ["participantPersonIds", "travellingParticipantPersonIds", "additionalGuestCount", "personVisited",
-    "place", "purchaseMode", "deliveryProvider", "seller", "gift", "route"], "PLANNED_EXPENSE_CONTEXT_FIELDS_INVALID");
+    "place", "purchaseMode", "housePartyPlaceMode", "visitFormat", "socialOccasion", "occasionLabel",
+    "deliveryProviderKey", "deliveryProvider", "seller", "gift", "childLocalPlaceRefs", "route"],
+  "PLANNED_EXPENSE_CONTEXT_FIELDS_INVALID");
   const context: { -readonly [K in keyof PlannedExpenseContext]?: PlannedExpenseContext[K] } = {};
   const personIds = (value: unknown, code: string): string[] => {
     if (!Array.isArray(value) || value.length > 20) throw new TypeError(code);
@@ -165,33 +184,62 @@ export function parsePlannedExpenseDraft(value: unknown, targetMonth: string): P
   }
   if (contextRaw.personVisited !== undefined) {
     const visited = object(contextRaw.personVisited, "PLANNED_EXPENSE_VISITED_PERSON_INVALID");
-    if (visited.kind === "KNOWN") {
+    if (visited.kind === "HOUSEHOLD_PERSON" || visited.kind === "KNOWN") {
       keysOnly(visited, ["kind", "personId"], "PLANNED_EXPENSE_VISITED_PERSON_INVALID");
-      context.personVisited = { kind: "KNOWN", personId: uuid(visited.personId, "PLANNED_EXPENSE_VISITED_PERSON_INVALID") };
+      context.personVisited = { kind: "HOUSEHOLD_PERSON", personId: uuid(visited.personId, "PLANNED_EXPENSE_VISITED_PERSON_INVALID") };
+    } else if (visited.kind === "CONTACT") {
+      keysOnly(visited, ["kind", "contactKey"], "PLANNED_EXPENSE_VISITED_PERSON_INVALID");
+      if (typeof visited.contactKey !== "string" || !SOCIAL_CONTACTS_V1.some((contact) => contact.key === visited.contactKey))
+        throw new TypeError("PLANNED_EXPENSE_CONTACT_INVALID");
+      context.personVisited = { kind: "CONTACT", contactKey: visited.contactKey };
     } else if (visited.kind === "TEXT") {
       keysOnly(visited, ["kind", "label"], "PLANNED_EXPENSE_VISITED_PERSON_INVALID");
       context.personVisited = { kind: "TEXT", label: title(visited.label, "PLANNED_EXPENSE_VISITED_PERSON_INVALID") };
     } else throw new TypeError("PLANNED_EXPENSE_VISITED_PERSON_INVALID");
   }
   if (contextRaw.place !== undefined) {
-    const place = object(contextRaw.place, "PLANNED_EXPENSE_PLACE_INVALID");
-    if (place.kind === "KNOWN") {
-      keysOnly(place, ["kind", "placeId"], "PLANNED_EXPENSE_PLACE_FIELDS_INVALID");
-      context.place = { kind: "KNOWN", placeId: uuid(place.placeId, "PLANNED_EXPENSE_PLACE_ID_INVALID") };
-    } else if (place.kind === "TEXT") {
-      keysOnly(place, ["kind", "label"], "PLANNED_EXPENSE_PLACE_FIELDS_INVALID");
-      context.place = { kind: "TEXT", label: title(place.label, "PLANNED_EXPENSE_PLACE_LABEL_INVALID") };
-    } else throw new TypeError("PLANNED_EXPENSE_PLACE_KIND_INVALID");
+    context.place = parsePlaceRef(contextRaw.place);
   }
   if (contextRaw.purchaseMode !== undefined) {
     if (!["IN_STORE", "ONLINE", "TAKEAWAY", "DELIVERY"].includes(contextRaw.purchaseMode as string))
       throw new TypeError("PLANNED_EXPENSE_PURCHASE_MODE_INVALID");
     context.purchaseMode = contextRaw.purchaseMode as PlannedExpenseContext["purchaseMode"];
   }
+  if (contextRaw.housePartyPlaceMode !== undefined) {
+    if (contextRaw.housePartyPlaceMode !== "OWN_HOME" && contextRaw.housePartyPlaceMode !== "OTHER_HOME")
+      throw new TypeError("PLANNED_EXPENSE_HOUSE_PARTY_MODE_INVALID");
+    context.housePartyPlaceMode = contextRaw.housePartyPlaceMode;
+  }
+  if (contextRaw.visitFormat !== undefined) {
+    if (!["SIMPLE", "APERO_PARTY", "MEAL", "STAY"].includes(contextRaw.visitFormat as string))
+      throw new TypeError("PLANNED_EXPENSE_VISIT_FORMAT_INVALID");
+    context.visitFormat = contextRaw.visitFormat as PlannedExpenseContext["visitFormat"];
+  }
+  if (contextRaw.socialOccasion !== undefined) {
+    if (!["NONE", "BIRTHDAY", "CHRISTMAS", "CELEBRATION", "OTHER_SPECIAL"].includes(contextRaw.socialOccasion as string))
+      throw new TypeError("PLANNED_EXPENSE_SOCIAL_OCCASION_INVALID");
+    context.socialOccasion = contextRaw.socialOccasion as PlannedExpenseContext["socialOccasion"];
+  }
+  if (contextRaw.occasionLabel !== undefined)
+    context.occasionLabel = title(contextRaw.occasionLabel, "PLANNED_EXPENSE_OCCASION_LABEL_INVALID");
+  if (contextRaw.deliveryProviderKey !== undefined) {
+    if (typeof contextRaw.deliveryProviderKey !== "string" || !DELIVERY_PROVIDERS.some((provider) => provider.key === contextRaw.deliveryProviderKey))
+      throw new TypeError("PLANNED_EXPENSE_DELIVERY_PROVIDER_INVALID");
+    context.deliveryProviderKey = contextRaw.deliveryProviderKey;
+  }
   if (contextRaw.deliveryProvider !== undefined)
     context.deliveryProvider = title(contextRaw.deliveryProvider, "PLANNED_EXPENSE_DELIVERY_PROVIDER_INVALID");
+  if (context.deliveryProvider && !context.deliveryProviderKey)
+    context.deliveryProviderKey = DELIVERY_PROVIDERS.find((provider) => provider.label === context.deliveryProvider)?.key ?? "OTHER";
   if (contextRaw.seller !== undefined)
     context.seller = title(contextRaw.seller, "PLANNED_EXPENSE_SELLER_INVALID");
+  if (contextRaw.childLocalPlaceRefs !== undefined) {
+    const refs = object(contextRaw.childLocalPlaceRefs, "PLANNED_EXPENSE_CHILD_PLACE_INVALID");
+    context.childLocalPlaceRefs = Object.fromEntries(Object.entries(refs).map(([key, value]) => {
+      if (!moduleKeys.has(key as AssetModule) || key === "transport") throw new TypeError("PLANNED_EXPENSE_CHILD_PLACE_INVALID");
+      return [key, parsePlaceRef(value)];
+    }));
+  }
   if (familyKey === "food" && raw.subtypeKey === "fast_food"
     && context.purchaseMode !== "TAKEAWAY" && context.purchaseMode !== "DELIVERY")
     throw new TypeError("PLANNED_EXPENSE_PURCHASE_MODE_REQUIRED");
@@ -216,14 +264,24 @@ export function parsePlannedExpenseDraft(value: unknown, targetMonth: string): P
       throw new TypeError("PLANNED_EXPENSE_ROUTE_INVALID");
     const stops = route.stops.map((rawStop: unknown, index: number) => {
       const stop = object(rawStop, "PLANNED_EXPENSE_ROUTE_STOP_INVALID");
-      keysOnly(stop, ["label", "placeId", "distanceToNextKm"], "PLANNED_EXPENSE_ROUTE_STOP_INVALID");
+      keysOnly(stop, ["label", "placeId", "distanceToNextKm", "endpointSource", "childModule"], "PLANNED_EXPENSE_ROUTE_STOP_INVALID");
       const label = title(stop.label, "PLANNED_EXPENSE_ROUTE_STOP_INVALID");
       const placeId = stop.placeId === undefined ? undefined : uuid(stop.placeId, "PLANNED_EXPENSE_ROUTE_PLACE_INVALID");
       const km = stop.distanceToNextKm;
       if (index === (route.stops as unknown[]).length - 1 ? km !== null && km !== undefined
         : typeof km !== "string" || !/^(?:0|[1-9]\d{0,4})(?:\.\d{1,2})?$/u.test(km) || new Big(km).lte(0))
         throw new TypeError("PLANNED_EXPENSE_ROUTE_DISTANCE_INVALID");
-      return { label, ...(placeId ? { placeId } : {}), distanceToNextKm: index === (route.stops as unknown[]).length - 1 ? null : km as string };
+      const source = stop.endpointSource;
+      if (source !== undefined && !["ROOT_PLACE", "CHILD_LOCAL_PLACE", "DIRECT_PLACE"].includes(source as string))
+        throw new TypeError("PLANNED_EXPENSE_ROUTE_ENDPOINT_INVALID");
+      const childModule = stop.childModule;
+      if (childModule !== undefined && (typeof childModule !== "string" || !moduleKeys.has(childModule as AssetModule)))
+        throw new TypeError("PLANNED_EXPENSE_ROUTE_ENDPOINT_INVALID");
+      if ((source === "CHILD_LOCAL_PLACE") !== (childModule !== undefined))
+        throw new TypeError("PLANNED_EXPENSE_ROUTE_ENDPOINT_INVALID");
+      return { label, ...(placeId ? { placeId } : {}), distanceToNextKm: index === (route.stops as unknown[]).length - 1 ? null : km as string,
+        ...(source ? { endpointSource: source as "ROOT_PLACE" | "CHILD_LOCAL_PLACE" | "DIRECT_PLACE" } : {}),
+        ...(childModule ? { childModule: childModule as AssetModule } : {}) };
     });
     let fuelEstimate: NonNullable<PlannedExpenseContext["route"]>["fuelEstimate"];
     if (route.fuelEstimate !== undefined) {
@@ -255,6 +313,60 @@ export function parsePlannedExpenseDraft(value: unknown, targetMonth: string): P
   if (costItems.some((item) => item.assetKey === "transport:fuel_usage")
     && (context.route?.mode !== "CAR" || !context.route.fuelEstimate))
     throw new TypeError("PLANNED_EXPENSE_CAR_ESTIMATE_REQUIRED");
+  const resolved = resolvePlannedContext({ familyKey, subtypeKey: raw.subtypeKey as string | null,
+    modifiers: { housePartyPlaceMode: context.housePartyPlaceMode, purchaseMode: context.purchaseMode,
+      visitFormat: context.visitFormat, socialOccasion: context.socialOccasion,
+      occasionLabel: context.occasionLabel, deliveryProviderKey: context.deliveryProviderKey } });
+  if (context.place && resolved.fields.place === "HIDDEN") throw new TypeError("PLANNED_EXPENSE_PLACE_FORBIDDEN");
+  if (context.personVisited && resolved.fields.visitedContact === "HIDDEN")
+    throw new TypeError("PLANNED_EXPENSE_VISITED_PERSON_FORBIDDEN");
+  if (context.purchaseMode && resolved.fields.purchaseMode === "HIDDEN")
+    throw new TypeError("PLANNED_EXPENSE_PURCHASE_MODE_FORBIDDEN");
+  if ((context.deliveryProvider || context.deliveryProviderKey) && resolved.fields.deliveryProvider === "HIDDEN")
+    throw new TypeError("PLANNED_EXPENSE_DELIVERY_PROVIDER_FORBIDDEN");
+  if (context.seller && resolved.fields.seller === "HIDDEN") throw new TypeError("PLANNED_EXPENSE_SELLER_FORBIDDEN");
+  if (context.housePartyPlaceMode && !(familyKey === "outing" && raw.subtypeKey === "house_party"))
+    throw new TypeError("PLANNED_EXPENSE_HOUSE_PARTY_MODE_FORBIDDEN");
+  if (context.visitFormat && resolved.fields.visitFormat === "HIDDEN")
+    throw new TypeError("PLANNED_EXPENSE_VISIT_FORMAT_FORBIDDEN");
+  if (context.socialOccasion && resolved.fields.socialOccasion === "HIDDEN")
+    throw new TypeError("PLANNED_EXPENSE_SOCIAL_OCCASION_FORBIDDEN");
+  if (context.route && resolved.transport === "FORBIDDEN") throw new TypeError("PLANNED_EXPENSE_TRANSPORT_FORBIDDEN");
+  for (const item of costItems) {
+    const path = item.modulePath ?? [resolved.rootModule];
+    validateModulePath(path, resolved);
+    const assetModule = item.assetKey === null ? null : plannedAsset(item.assetKey)?.module;
+    const fromBringItems = (familyKey === "visit_trip" && ["family_visit", "friend_visit"].includes(raw.subtypeKey as string))
+      && path.length === 1 && item.assetKey !== null
+      && Object.values(BRING_ITEMS_LENS).some((keys) => (keys as readonly string[]).includes(item.assetKey!));
+    const fromFishing = familyKey === "activity" && raw.subtypeKey === "fishing"
+      && path.length === 1 && item.assetKey !== null
+      && (FISHING_ASSET_LENS as readonly string[]).includes(item.assetKey);
+    if (assetModule !== null && assetModule !== path.at(-1)
+      && !(assetModule === "transport" && path.length === 1 && resolved.transport !== "FORBIDDEN")
+      && !fromBringItems && !fromFishing) throw new TypeError("PLANNED_EXPENSE_ASSET_MODULE_INVALID");
+  }
+  for (const [module, ref] of Object.entries(context.childLocalPlaceRefs ?? {})) {
+    const edge = resolved.children.find((candidate) => candidate.childModule === module);
+    if (!edge || edge.localPlacePolicy === "HIDDEN" || !costItems.some((item) => item.modulePath?.[1] === module))
+      throw new TypeError("PLANNED_EXPENSE_CHILD_PLACE_INVALID");
+    if (!ref) throw new TypeError("PLANNED_EXPENSE_CHILD_PLACE_INVALID");
+  }
+  for (const stop of context.route?.stops ?? []) {
+    if (stop.endpointSource === "ROOT_PLACE" && (!context.place
+      || context.place.kind === "KNOWN" && context.place.placeId !== stop.placeId
+      || context.place.kind === "TEXT" && context.place.label !== stop.label))
+      throw new TypeError("PLANNED_EXPENSE_ROUTE_ENDPOINT_INVALID");
+    if (stop.endpointSource === "CHILD_LOCAL_PLACE") {
+      const childModule = stop.childModule;
+      const ref = childModule ? context.childLocalPlaceRefs?.[childModule] : undefined;
+      const edge = resolved.children.find((candidate) => candidate.childModule === childModule);
+      if (!ref || !edge || edge.rootTransportStopAvailability === "NEVER"
+        || ref.kind === "KNOWN" && ref.placeId !== stop.placeId
+        || ref.kind === "TEXT" && ref.label !== stop.label)
+        throw new TypeError("PLANNED_EXPENSE_ROUTE_ENDPOINT_INVALID");
+    }
+  }
   return { familyKey, subtypeKey: raw.subtypeKey as string | null, title: title(raw.title, "PLANNED_EXPENSE_TITLE_INVALID"),
     plannedDate, costItems, context };
 }
@@ -282,7 +394,8 @@ async function validateReferences(client: SupabaseClient, householdId: string, d
   const workMealPeople = new Set(draft.costItems.flatMap((item) => item.baselineKey === "adrien-work-meals" ? ["Adrien"]
     : item.baselineKey === "manon-work-meals" ? ["Manon"] : []));
   if (participantIds.length === 0 && travellerIds.length === 0 && workMealPeople.size === 0
-    && draft.context.personVisited?.kind !== "KNOWN" && draft.context.place?.kind !== "KNOWN"
+    && draft.context.personVisited?.kind !== "HOUSEHOLD_PERSON" && draft.context.place?.kind !== "KNOWN"
+    && !Object.values(draft.context.childLocalPlaceRefs ?? {}).some((ref) => ref?.kind === "KNOWN")
     && !draft.context.route?.fuelEstimate && !draft.context.route?.stops.some((stop) => stop.placeId)) return;
   if (workMealPeople.size > 0 && participantIds.length === 0)
     throw new TypeError("PLANNED_EXPENSE_WORK_MEAL_PERSON_REQUIRED");
@@ -291,7 +404,7 @@ async function validateReferences(client: SupabaseClient, householdId: string, d
   if (error) throw error;
   const people = (data ?? []).filter((person) => person.status === "active");
   const knownIds = new Set(people.map((person) => person.person_id));
-  if ([...participantIds, ...travellerIds, ...(draft.context.personVisited?.kind === "KNOWN"
+  if ([...participantIds, ...travellerIds, ...(draft.context.personVisited?.kind === "HOUSEHOLD_PERSON"
     ? [draft.context.personVisited.personId] : [])].some((id) => !knownIds.has(id)))
     throw new TypeError("PLANNED_EXPENSE_PERSON_NOT_IN_HOUSEHOLD");
   if ([...workMealPeople].some((name) => !people.some((person) => person.display_name === name && participantIds.includes(person.person_id))))
@@ -303,16 +416,34 @@ async function validateReferences(client: SupabaseClient, householdId: string, d
     if (draft.costItems.some((item) => item.baselineKey !== null && item.baselineKey !== allowed))
       throw new TypeError("PLANNED_EXPENSE_WORK_MEAL_BASELINE_PERSON_MISMATCH");
   }
-  if (draft.context.place?.kind === "KNOWN" || draft.context.route?.fuelEstimate || draft.context.route?.stops.some((stop) => stop.placeId)) {
+  if (draft.context.place?.kind === "KNOWN" || draft.context.route?.fuelEstimate
+    || draft.context.route?.stops.some((stop) => stop.placeId)
+    || Object.values(draft.context.childLocalPlaceRefs ?? {}).some((ref) => ref?.kind === "KNOWN")) {
     const options = await readPlannedContextOptions(createCanonicalReadClient(), householdId,
       people.map((person) => ({ personId: person.person_id, displayName: person.display_name })));
     if (draft.context.place?.kind === "KNOWN") {
+      const rootPlaceId = draft.context.place.placeId;
+      const visitedRef = draft.context.personVisited;
       const label = draft.familyKey === "food" && draft.subtypeKey === "work_meal"
         ? people.find((person) => person.person_id === participantIds[0])?.display_name
-        : draft.context.personVisited?.kind === "TEXT" ? draft.context.personVisited.label : undefined;
-      if (!placesForPlannedContext(options.places, draft.familyKey, draft.subtypeKey, label)
-        .some((place) => place.placeId === (draft.context.place as { placeId: string }).placeId))
+        : visitedRef?.kind === "TEXT" ? visitedRef.label
+          : visitedRef?.kind === "CONTACT"
+            ? SOCIAL_CONTACTS_V1.find((contact) => contact.key === visitedRef.contactKey)?.label : undefined;
+      const resolved = resolvePlannedContext({ familyKey: draft.familyKey, subtypeKey: draft.subtypeKey,
+        modifiers: { purchaseMode: draft.context.purchaseMode, housePartyPlaceMode: draft.context.housePartyPlaceMode,
+          visitFormat: draft.context.visitFormat, socialOccasion: draft.context.socialOccasion } });
+      const compatible = rankPlacesForPlannedContext(options.places, resolved,
+        { contactKey: visitedRef?.kind === "CONTACT" ? visitedRef.contactKey
+          : SOCIAL_CONTACTS_V1.find((contact) => contact.label === label)?.key,
+        workMealPersonName: label, giftAssetKey: draft.costItems.find((item) => item.assetKey?.startsWith("gift:"))?.assetKey ?? undefined });
+      if (!compatible.some((item) => item.place.placeId === rootPlaceId))
         throw new TypeError("PLANNED_EXPENSE_PLACE_CONTEXT_INVALID");
+    }
+    for (const [module, ref] of Object.entries(draft.context.childLocalPlaceRefs ?? {})) if (ref?.kind === "KNOWN") {
+      const place = options.places.find((candidate) => candidate.placeId === ref.placeId);
+      const roles = place ? derivePlannedPlaceRoles(place) : [];
+      if (!place || !childPlaceRoles(module as AssetModule).some((role) => roles.includes(role)))
+        throw new TypeError("PLANNED_EXPENSE_CHILD_PLACE_INVALID");
     }
     if (draft.context.route?.stops.some((stop) => stop.placeId && !options.places.some((place) => place.placeId === stop.placeId)))
       throw new TypeError("PLANNED_EXPENSE_ROUTE_PLACE_INVALID");
