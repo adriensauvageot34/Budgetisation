@@ -5,6 +5,8 @@ import type { MonthScenario } from "@/server/phase2/month-scenario";
 import { updateMonthInputs } from "@/app/mois-a-venir/actions";
 import { MonthStory } from "./month-story";
 import type { PlannedExpenseCard } from "./planned-expenses-projection";
+import type { PlannedPlaceOption } from "@/domain/phase2/planned-places";
+import type { PlannedVehicleEstimate } from "@/server/phase2/planned-context";
 
 const money = (value: string | null, exact = false) => value === null ? "À confirmer" : new Intl.NumberFormat("fr-FR", {
   style: "currency", currency: "EUR", maximumFractionDigits: exact ? 2 : 0, minimumFractionDigits: exact ? 2 : 0,
@@ -48,9 +50,10 @@ function Field({ label, name, type = "text", value, min, max, required = false }
 
 type Props = { forecast: MonthForecastSnapshot; scenario: MonthScenario; stored: StoredMonthInputs;
   plannedExpenses: readonly PlannedExpenseCard[]; persons: readonly { personId: string; displayName: string }[];
-  places: readonly { placeId: string; name: string }[]; inputError: boolean };
+  places: readonly PlannedPlaceOption[]; vehicle: PlannedVehicleEstimate | null;
+  prices: readonly import("@/domain/phase2/planned-contract").PlannedPriceSuggestion[]; inputError: boolean };
 
-export function MonthForecastView({ forecast, scenario, stored, plannedExpenses, persons, places, inputError }: Props) {
+export function MonthForecastView({ forecast, scenario, stored, plannedExpenses, persons, places, vehicle, prices, inputError }: Props) {
   const targetMonth = forecast.meta.targetMonth;
   const obligations = forecast.components.filter((part) => part.key.startsWith("obligation:"));
   const conditional = obligations.filter((part) => part.knowledgeState === "CONDITIONAL_UNKNOWN" && /Ornikar|Alma/iu.test(part.label));
@@ -66,7 +69,7 @@ export function MonthForecastView({ forecast, scenario, stored, plannedExpenses,
   const hasSwile = stored.inputs.benefit.currentBalance !== null;
 
   return <main className="mx-auto max-w-5xl space-y-7 pb-20 text-slate-900">
-    <MonthStory plan={scenario.economicPlan} targetMonth={targetMonth} plannedExpenses={plannedExpenses} persons={persons} places={places} />
+    <MonthStory plan={scenario.economicPlan} targetMonth={targetMonth} plannedExpenses={plannedExpenses} persons={persons} places={places} vehicle={vehicle} prices={prices} />
 
     <section id="complete-month" className="card p-5 sm:p-7" aria-labelledby="complete-title">
       <h2 id="complete-title" className="text-2xl font-black">À compléter pour {monthLabel(targetMonth)}</h2>

@@ -46,11 +46,12 @@ const client = { from(table) {
   };
   return query;
 } };
-const cost = (amount, label, baselineKey = null) => ({ id: randomUUID(), label, amount, baselineKey });
-const partyDraft = (amount, date) => ({ familyKey: "outing", subtypeKey: "private_party", title: "Soirée",
+const cost = (amount, label, baselineKey = null) => ({ id: randomUUID(), assetKey: null,
+  label, quantity: "1", unitAmount: amount, baselineKey });
+const partyDraft = (amount, date) => ({ familyKey: "outing", subtypeKey: "house_party", title: "Soirée",
   plannedDate: date, costItems: [cost(amount, "Entrée")], context: {} });
-const shoesDraft = { familyKey: "purchase", subtypeKey: null, title: "Chaussures", plannedDate: null,
-  costItems: [cost("100.00", "Chaussures")], context: {} };
+const shoesDraft = { familyKey: "purchase", subtypeKey: "clothing", title: "Chaussures", plannedDate: null,
+  costItems: [cost("100.00", "Chaussures")], context: { purchaseMode: "IN_STORE" } };
 const snapshot = async () => {
   const saved = await readPlannedExpenses(client, householdId, month); // Fresh authoritative read, as on reload.
   const cards = projectPlannedExpenseCards(saved);

@@ -8,6 +8,7 @@ import { MONTH_FORECAST_RESOURCE, queryMonthForecast } from "@/server/phase2/mon
 import { readMonthInputs } from "@/server/phase2/month-inputs";
 import { deriveMonthScenario } from "@/server/phase2/month-scenario";
 import { readPlannedExpenses } from "@/server/phase2/planned-expenses";
+import { readPlannedContextOptions } from "@/server/phase2/planned-context";
 import { projectPlannedExpenseCards } from "./planned-expenses-projection";
 
 export const metadata = { title: "Notre mois à venir" };
@@ -26,14 +27,15 @@ export default async function MonthForecastPage({ searchParams }: { searchParams
   const targetMonth = String(latest.period_month).slice(0, 7);
   const forecast = await queryMonthForecast(client, context.household.householdId, targetMonth);
   const { supabase } = await getAuthenticatedBootstrapClient();
-  const [stored, plannedExpenses, personsResult, placesResult] = await Promise.all([
+  const [stored, plannedExpenses, personsResult] = await Promise.all([
     readMonthInputs(supabase, context.household.householdId, targetMonth),
     readPlannedExpenses(supabase, context.household.householdId, targetMonth),
     supabase.from("persons").select("person_id,display_name,status").eq("household_id", context.household.householdId).order("display_name"),
-    client.from("referentiel_lieu").select("place_id,nom_canonique").eq("private_place", false).order("nom_canonique").limit(500),
   ]);
   if (personsResult.error) throw personsResult.error;
-  if (placesResult.error) throw placesResult.error;
+  const persons = (personsResult.data ?? []).filter((person) => person.status === "active")
+    .map((person) => ({ personId: person.person_id, displayName: person.display_name }));
+  const options = await readPlannedContextOptions(client, context.household.householdId, persons);
   const params = await searchParams;
   const dateParts = new Intl.DateTimeFormat("en-US", { timeZone: context.household.timezone,
     year: "numeric", month: "2-digit", day: "2-digit" }).formatToParts(new Date());
@@ -42,8 +44,6 @@ export default async function MonthForecastPage({ searchParams }: { searchParams
   const scenario = deriveMonthScenario(forecast, stored.inputs, null, today, plannedExpenses);
   return <MonthForecastView forecast={forecast} scenario={scenario} stored={stored}
     plannedExpenses={projectPlannedExpenseCards(plannedExpenses)}
-    persons={(personsResult.data ?? []).filter((person) => person.status === "active")
-      .map((person) => ({ personId: person.person_id, displayName: person.display_name }))}
-    places={(placesResult.data ?? []).map((place) => ({ placeId: place.place_id, name: place.nom_canonique }))}
+    persons={persons} places={options.places} vehicle={options.vehicle} prices={options.prices}
     inputError={params.inputError === "1"} />;
 }

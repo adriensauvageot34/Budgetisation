@@ -44,6 +44,45 @@ les lignes de coût. « Habituel » est traduit en clé de baseline dans le brou
 jamais présenté comme une clé technique. Sa simulation et la prévision affichée
 passent par le même moteur. La liste est relue de la table après chaque mutation.
 
+## Système d'actifs prévu V1
+
+Le catalogue versionné `src/domain/phase2/planned-assets.ts` propose les familles,
+sous-types, éléments et modules réutilisables. Une ouverture de Restaurant, Transport,
+Beauté, Ménager, Cadeau ou Activité ajoute un niveau de `modulePath` au même brouillon ;
+elle ne crée pas une autre dépense prévue. L'élément personnalisé reste disponible
+dans chaque module. Ses quantités et prix unitaires sont saisis ou modifiables ; le
+total de ligne est calculé et arrondi au centime. Les seules suggestions monétaires
+fixes V1 sont les deux éléments explicites du panier « soirée maison ». Mascara et
+crayon à sourcils peuvent proposer le dernier achat canonique de la personne,
+avec sa date et sans écraser le prix saisi.
+
+Le contexte prospectif distingue participants, personnes qui voyagent, invités non
+nommés, personne visitée, lieu, achat, livraison, cadeau et trajet. Les lieux connus
+viennent de la couche canonique et sont filtrés selon le contexte. Un lieu ou une
+personne sans lien démontré peut être saisi comme texte prospectif, sans créer de
+référence canonique. Le repas au travail exige Adrien ou Manon et ne propose que les
+lieux rattachés à la personne choisie.
+
+Chaque CostItem alimentaire éligible peut être financé par Banque, Swile, Edenred ou
+une répartition exacte. Les autres éléments, dont alcool, parking et Uber, restent
+financés par Banque. La projection de financement expose ressources prévues,
+réservations, disponible et dépassement à financer autrement. Elle n'altère ni le
+coût économique brut, ni la cagnotte réelle. Le remplacement par une enveloppe
+habituelle reste calculé une seule fois dans `deriveMonthScenario`.
+
+Le trajet en voiture est une suite ordonnée de segments, avec départ et retour à la
+maison proposés. Aucun service de routing exploitable n'est configuré dans ce dépôt :
+les kilomètres sont saisis pour chaque segment. L'estimation réutilise le véhicule
+canonique, la consommation observée des trajets canoniques et le dernier prix de
+carburant disponible. Le coût affiché est l'usage estimé du carburant ; il ne
+représente ni un plein payé ni une opération historique. Le service recalcule et
+valide cette estimation avant l'enregistrement.
+
+Le contrat JSONB enrichi est validé par le service et par la contrainte de la table
+prospective. Les éléments personnalisés restent propres à leur dépense V1. Les
+favoris, prix appris automatiquement par lieu, routing automatique, paiements
+multi-mois et rapprochement bancaire sont des extensions futures.
+
 ## Projection du calendrier
 
 Une date de dépense prévue est affichée seulement lorsqu'elle a été saisie. Le

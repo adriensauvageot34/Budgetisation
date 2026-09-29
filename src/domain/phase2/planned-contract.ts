@@ -1,0 +1,24 @@
+import type { AssetModule, PlannedExpenseFamily } from "./planned-assets";
+
+export type PlannedBaselineKey = "groceries" | "household-restaurants" | "adrien-work-meals" | "manon-work-meals";
+export type FundingSource = "BANK" | "SWILE" | "EDENRED";
+export type FundingAllocation = Readonly<{ source: FundingSource; amount: string }>;
+export type PriceSource = "MANUAL" | "SYSTEM_DEFAULT" | "LAST_KNOWN" | "CALCULATED";
+export type CostItem = Readonly<{ id: string; assetKey: string | null; label: string; variantLabel?: string | null;
+  quantity: string; unitAmount: string; baselineKey: PlannedBaselineKey | null;
+  fundingAllocations?: readonly FundingAllocation[]; priceSource?: PriceSource; priceSourceLabel?: string | null;
+  modulePath?: readonly AssetModule[] }>;
+export type PlannedExpensePlace = Readonly<{ kind: "KNOWN"; placeId: string } | { kind: "TEXT"; label: string }>;
+export type PlannedExpenseContext = Readonly<{ participantPersonIds?: readonly string[]; travellingParticipantPersonIds?: readonly string[];
+  additionalGuestCount?: number; personVisited?: Readonly<{ kind: "KNOWN"; personId: string } | { kind: "TEXT"; label: string }>;
+  place?: PlannedExpensePlace; purchaseMode?: "IN_STORE" | "ONLINE" | "TAKEAWAY" | "DELIVERY";
+  deliveryProvider?: string; seller?: string; gift?: Readonly<{ recipient: string; occasion: string }>;
+  route?: Readonly<{ mode: "CAR" | "TRAIN" | "BUS" | "TAXI";
+    stops: readonly { label: string; placeId?: string; distanceToNextKm?: string | null }[];
+    fuelEstimate?: Readonly<{ vehicleLabel: string; consumptionL100Km: string; fuelPricePerLiter: string;
+      fuelPriceSource: string; distanceKm: string; liters: string; cost: string }> }> }>;
+export type PlannedExpenseDraft = Readonly<{ familyKey: PlannedExpenseFamily; subtypeKey: string | null;
+  title: string; plannedDate: string | null; costItems: readonly CostItem[]; context: PlannedExpenseContext }>;
+export type PlannedVehicleEstimate = Readonly<{ label: string; consumptionL100Km: string;
+  fuelPricePerLiter: string; fuelPriceSource: string }>;
+export type PlannedPriceSuggestion = Readonly<{ assetKey: string; unitAmount: string; sourceLabel: string }>;

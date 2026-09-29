@@ -5,6 +5,8 @@ import { ResourceEditor } from "./resource-editor";
 import { MonthCalendar } from "./month-calendar";
 import { PlannedExpensesControl } from "./planned-expenses-control";
 import { projectMonthCalendar, type PlannedExpenseCard } from "./planned-expenses-projection";
+import type { PlannedPlaceOption } from "@/domain/phase2/planned-places";
+import type { PlannedVehicleEstimate } from "@/server/phase2/planned-context";
 
 const money = (value: string | null, exact = false) => value === null ? "À confirmer" : new Intl.NumberFormat("fr-FR", {
   style: "currency", currency: "EUR", maximumFractionDigits: exact ? 2 : 0, minimumFractionDigits: exact ? 2 : 0,
@@ -45,9 +47,10 @@ function StatisticalCard({ part, tone }: { part: StatisticalComponent; tone: "ne
   </article>;
 }
 
-export function MonthStory({ plan, targetMonth, plannedExpenses, persons, places }: { plan: MonthEconomicPlan | null; targetMonth: string;
+export function MonthStory({ plan, targetMonth, plannedExpenses, persons, places, vehicle, prices }: { plan: MonthEconomicPlan | null; targetMonth: string;
   plannedExpenses: readonly PlannedExpenseCard[]; persons: readonly { personId: string; displayName: string }[];
-  places: readonly { placeId: string; name: string }[] }) {
+  places: readonly PlannedPlaceOption[]; vehicle: PlannedVehicleEstimate | null;
+  prices: readonly import("@/domain/phase2/planned-contract").PlannedPriceSuggestion[] }) {
   if (!plan) return <section className="card p-6" role="status"><h2 className="text-xl font-black">Notre mois n’est pas encore prêt</h2><p className="mt-2 text-slate-600">Il manque encore des informations pour préparer ce mois.</p></section>;
   const groups = [...plan.certainOutflows.groups].sort((a, b) => groupOrder.indexOf(a.label) - groupOrder.indexOf(b.label));
   const calendar = projectMonthCalendar(plan.certainOutflows.items, plannedExpenses);
@@ -72,7 +75,7 @@ export function MonthStory({ plan, targetMonth, plannedExpenses, persons, places
 
     <section className="overflow-hidden rounded-[1.7rem] bg-emerald-950 px-5 py-6 text-white sm:flex sm:items-end sm:justify-between sm:gap-5 sm:px-8 sm:py-7" aria-labelledby="after-title"><div><h2 id="after-title" className="text-xl font-bold">Après nos charges certaines</h2><p className="mt-1 text-sm text-emerald-100">Avant les dépenses du quotidien</p><p className="mt-2 text-xs text-emerald-200">Inclut les titres-restaurants ; ce n’est pas notre solde bancaire.</p></div><p className="mt-4 whitespace-nowrap text-4xl font-black tracking-tight tabular-nums sm:mt-0 sm:text-5xl">{money(plan.afterCertainOutflows, true)}</p></section>
 
-    <PlannedExpensesControl targetMonth={targetMonth} expenses={plannedExpenses} persons={persons} places={places} />
+    <PlannedExpensesControl targetMonth={targetMonth} expenses={plannedExpenses} persons={persons} places={places} vehicle={vehicle} prices={prices} funding={plan.plannedFunding} />
 
     <section aria-labelledby="necessary-title"><h2 id="necessary-title" className="text-2xl font-black">Ce qu’il nous faut pour le quotidien</h2><p className="mt-1 text-sm text-slate-600">Des dépenses qui varient, mais qu’on aura normalement ce mois-ci.</p><div className="mt-4 grid gap-3 md:grid-cols-3">{plan.necessaryVariables.items.map((part) => <StatisticalCard key={part.key} part={part} tone="necessary" />)}</div></section>
 

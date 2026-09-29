@@ -1,5 +1,6 @@
 import Big from "big.js";
 import type { PlannedExpense } from "@/server/phase2/planned-expenses";
+import { plannedLineGross } from "@/domain/phase2/planned-money";
 
 export type PlannedExpenseCard = Pick<PlannedExpense, "id" | "familyKey" | "subtypeKey" | "title" | "plannedDate" | "status" | "costItems" | "context"> & {
   grossCost: string;
@@ -14,7 +15,7 @@ export const projectPlannedExpenseCards = (expenses: readonly PlannedExpense[]):
   expenses.map((expense) => ({ id: expense.id, familyKey: expense.familyKey, subtypeKey: expense.subtypeKey,
     title: expense.title, plannedDate: expense.plannedDate, status: expense.status,
     costItems: expense.costItems, context: expense.context,
-    grossCost: expense.costItems.reduce((sum, item) => sum.plus(item.amount), new Big(0)).toFixed(2) }));
+    grossCost: expense.costItems.reduce((sum, item) => sum.plus(plannedLineGross(item)), new Big(0)).toFixed(2) }));
 
 export function projectMonthCalendar(outflows: readonly CalendarOutflow[],
   expenses: readonly PlannedExpenseCard[]): { entries: CalendarEntry[]; undated: CalendarOutflow[];

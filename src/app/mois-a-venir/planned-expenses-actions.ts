@@ -13,6 +13,7 @@ import {
   markPlannedExpenseRealized, parsePlannedExpenseDraft, readPlannedExpenses,
   restorePlannedExpense, simulatePlannedExpense, updatePlannedExpense,
 } from "@/server/phase2/planned-expenses";
+import { estimatePlannedCarRoute, readPlannedContextOptions } from "@/server/phase2/planned-context";
 
 const euro = (value: Big) => value.toFixed(2);
 const scenarios = ["low", "central", "high"] as const;
@@ -53,7 +54,7 @@ export async function previewPlannedExpense(targetMonth: string, rawDraft: unkno
   const minimum = impacts.reduce((smallest, value) => value.lt(smallest) ? value : smallest);
   const maximum = impacts.reduce((largest, value) => value.gt(largest) ? value : largest);
   const restaurantHabitual = draft.familyKey === "food"
-    && ["restaurant", "fast_food", "delivery"].includes(draft.subtypeKey ?? "")
+    && ["restaurant", "fast_food"].includes(draft.subtypeKey ?? "")
     && draft.costItems.every((item) => item.baselineKey === "household-restaurants");
   return {
     grossCost: grossPlannedExpenseCost(draft),
@@ -61,10 +62,27 @@ export async function previewPlannedExpense(targetMonth: string, rawDraft: unkno
     netAdditionalImpact,
     before: before.scenarios,
     after: after.scenarios,
+    funding: after.plannedFunding,
     explanation: restaurantHabitual
       ? `Compté dans votre enveloppe restaurants habituelle. Impact supplémentaire : ${euro(minimum)} à ${euro(maximum)} € selon le scénario.`
       : "Les lignes habituelles utilisent d’abord leur enveloppe du mois ; seul le dépassement s’ajoute au coût prévu.",
   };
+}
+
+export async function estimatePlannedRoute(targetMonth: string,
+  stops: readonly { label: string; placeId?: string; distanceToNextKm?: string | null }[]) {
+  const context = await monthContext(targetMonth);
+  const { data: people, error } = await context.supabase.from("persons")
+    .select("person_id,display_name,status").eq("household_id", context.household.householdId);
+  if (error) throw error;
+  const options = await readPlannedContextOptions(createCanonicalReadClient(), context.household.householdId,
+    (people ?? []).filter((person) => person.status === "active")
+      .map((person) => ({ personId: person.person_id, displayName: person.display_name })));
+  if (!options.vehicle) throw new TypeError("PLANNED_EXPENSE_VEHICLE_PRICE_UNAVAILABLE");
+  if (stops.some((stop) => typeof stop.label !== "string" || stop.label.trim().length < 1 || stop.label.length > 120
+    || (stop.placeId && !options.places.some((place) => place.placeId === stop.placeId))))
+    throw new TypeError("PLANNED_ROUTE_STOP_INVALID");
+  return estimatePlannedCarRoute(stops, options.vehicle);
 }
 
 export async function savePlannedExpense(targetMonth: string, rawDraft: unknown, editedId?: string): Promise<void> {

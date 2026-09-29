@@ -12,7 +12,8 @@ const { parsePlannedExpenseDraft, grossPlannedExpenseCost, simulatePlannedExpens
 const { saveMonthInputs } = require(path.resolve("src/server/phase2/month-inputs.ts"));
 
 const month = "2026-10";
-const cost = (amount, baselineKey = null, label = "Coût") => ({ id: randomUUID(), label, amount, baselineKey });
+const cost = (amount, baselineKey = null, label = "Coût") => ({ id: randomUUID(), assetKey: null,
+  label, quantity: "1", unitAmount: amount, baselineKey });
 const expense = (items, status = "PLANNED", id = randomUUID()) => ({ id, targetMonth: month, status, costItems: items });
 const story = (items) => deriveMonthScenario(forecast, inputs, null, "2026-09-28", items).economicPlan;
 const amounts = (items) => story(items).scenarios;
@@ -56,29 +57,29 @@ assert.throws(() => story([party47, party47]), /PLANNED_EXPENSE_SCENARIO_INPUT_I
 assert.equal(inputs.plannedEvents.length, 0, "legacy events stay empty");
 const householdId = randomUUID();
 const userId = randomUUID();
-const partyDraft = { familyKey: "outing", subtypeKey: "private_party", title: "Soirée", plannedDate: "2026-10-20",
+const partyDraft = { familyKey: "outing", subtypeKey: "house_party", title: "Soirée", plannedDate: "2026-10-20",
   costItems: [cost("25.00", null, "Entrée"), cost("22.00", null, "Boissons")], context: {} };
 assert.equal(grossPlannedExpenseCost(parsePlannedExpenseDraft(partyDraft, month)), "47.00");
 assert.throws(() => parsePlannedExpenseDraft({ ...partyDraft, plannedDate: "2026-11-01" }, month), /DATE_MONTH_INVALID/);
 assert.throws(() => parsePlannedExpenseDraft({ ...partyDraft, familyKey: "Maison" }, month), /FAMILY_INVALID/);
 assert.throws(() => parsePlannedExpenseDraft({ ...partyDraft, familyKey: "activity", subtypeKey: "trip_stay" }, month), /SUBTYPE_INVALID/);
 assert.throws(() => parsePlannedExpenseDraft({ ...partyDraft, familyKey: "visit_trip", subtypeKey: "concert_festival" }, month), /SUBTYPE_INVALID/);
-assert.throws(() => parsePlannedExpenseDraft({ ...partyDraft, costItems: [cost("0.00")] }, month), /AMOUNT_INVALID/);
+assert.throws(() => parsePlannedExpenseDraft({ ...partyDraft, costItems: [cost("0.00")] }, month), /UNIT_AMOUNT_INVALID/);
 assert.throws(() => parsePlannedExpenseDraft({ ...partyDraft, costItems: [cost("47.00", "tobacco-vape")] }, month), /BASELINE_INVALID/);
 assert.throws(() => parsePlannedExpenseDraft({ ...partyDraft, context: { unknown: true } }, month), /CONTEXT_FIELDS_INVALID/);
 assert.throws(() => parsePlannedExpenseDraft({ ...partyDraft, familyKey: "food", subtypeKey: "work_meal",
   context: {} }, month), /WORK_MEAL_PERSON_REQUIRED/);
 const noReferenceClient = {};
 await assert.rejects(simulatePlannedExpense(noReferenceClient, householdId, forecast, inputs, [], {
-  ...partyDraft, costItems: [cost("20.00", "adrien-work-meals", "Repas")],
+  ...partyDraft, costItems: [{ ...cost("20.00", "adrien-work-meals", "Repas"), modulePath: ["house_party", "work_meal"] }],
 }, "2026-09-28"), /WORK_MEAL_PERSON_REQUIRED/, "a work-meal baseline needs its person even in a mixed outing");
 const adrienId = randomUUID();
 const mixedWorkMealDraft = { ...partyDraft, context: { participantPersonIds: [adrienId] },
-  costItems: [cost("20.00", "adrien-work-meals", "Repas")] };
+  costItems: [{ ...cost("20.00", "adrien-work-meals", "Repas"), modulePath: ["house_party", "work_meal"] }] };
 const personClient = (displayName) => ({ from(table) {
   assert.equal(table, "persons");
-  return { select() { return this; }, eq() { return this; },
-    in() { return Promise.resolve({ data: [{ person_id: adrienId, display_name: displayName, status: "active" }], error: null }); } };
+  return { select() { return this; },
+    eq() { return Promise.resolve({ data: [{ person_id: adrienId, display_name: displayName, status: "active" }], error: null }); } };
 } });
 await simulatePlannedExpense(personClient("Adrien"), householdId, forecast, inputs, [], mixedWorkMealDraft, "2026-09-28");
 await assert.rejects(simulatePlannedExpense(personClient("Manon"), householdId, forecast, inputs, [], mixedWorkMealDraft,
