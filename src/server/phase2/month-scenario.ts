@@ -223,8 +223,10 @@ function deriveEconomicPlan(forecast: MonthForecastSnapshot, inputs: MonthInputs
       else baselines.set(item.baselineKey, (baselines.get(item.baselineKey) ?? new Big(0)).plus(amount));
       if (expense.status === "PLANNED") plannedGross = plannedGross.plus(amount);
       else declaredRealizedGross = declaredRealizedGross.plus(amount);
-      for (const allocation of item.fundingAllocations ?? [{ source: "BANK" as const, amount: amount.toFixed(2) }])
-        funding[allocation.source] = funding[allocation.source].plus(allocation.amount);
+      // Fuel usage is an economic estimate, not a payable line reserved against a funding source.
+      if (item.assetKey !== "transport:fuel_usage")
+        for (const allocation of item.fundingAllocations ?? [{ source: "BANK" as const, amount: amount.toFixed(2) }])
+          funding[allocation.source] = funding[allocation.source].plus(allocation.amount);
     }
   }
   const gross = plannedGross.plus(declaredRealizedGross);

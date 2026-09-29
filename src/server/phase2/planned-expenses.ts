@@ -4,7 +4,7 @@ import { randomUUID } from "node:crypto";
 import Big from "big.js";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { createCanonicalReadClient } from "@/server/canonical/client";
-import { ASSET_MODULES, PLANNED_EXPENSE_SUBTYPES, plannedAsset, rootAssetModule,
+import { ASSET_AGGREGATE_DESCENDANTS, ASSET_MODULES, PLANNED_EXPENSE_SUBTYPES, plannedAsset, rootAssetModule,
   type AssetModule, type PlannedExpenseFamily } from "@/domain/phase2/planned-assets";
 import { plannedLineGross } from "@/domain/phase2/planned-money";
 import { rankPlacesForPlannedContext } from "@/domain/phase2/planned-places";
@@ -146,6 +146,8 @@ export function parsePlannedExpenseDraft(value: unknown, targetMonth: string): P
       if (fundingAllocations.some((part) => part.source !== "BANK")
         && (assetKey === null || plannedAsset(assetKey)?.fundingEligibility !== "MEAL"))
         throw new TypeError("PLANNED_EXPENSE_FUNDING_INELIGIBLE");
+      if (assetKey === "transport:fuel_usage")
+        throw new TypeError("PLANNED_EXPENSE_FUEL_FUNDING_FORBIDDEN");
     }
     const priceSource = item.priceSource;
     if (priceSource !== undefined && !["MANUAL", "SYSTEM_DEFAULT", "LAST_KNOWN", "CALCULATED"].includes(priceSource as string))
@@ -298,6 +300,8 @@ export function parsePlannedExpenseDraft(value: unknown, targetMonth: string): P
         consumptionL100Km, fuelPricePerLiter, fuelPriceSource: title(estimate.fuelPriceSource, "PLANNED_EXPENSE_FUEL_ESTIMATE_INVALID"),
         distanceKm: distanceKm.toFixed(2), liters: liters.round(3).toFixed(3), cost: cost.toFixed(2) };
     }
+    if (route.mode !== "CAR" && fuelEstimate)
+      throw new TypeError("PLANNED_EXPENSE_FUEL_ESTIMATE_MODE_INVALID");
     if (route.mode === "CAR" && (!fuelEstimate || costItems.filter((item) => item.assetKey === "transport:fuel_usage"
       && item.quantity === "1" && item.unitAmount === fuelEstimate.cost && item.priceSource === "CALCULATED").length !== 1))
       throw new TypeError("PLANNED_EXPENSE_CAR_ESTIMATE_REQUIRED");
@@ -318,12 +322,29 @@ export function parsePlannedExpenseDraft(value: unknown, targetMonth: string): P
       visitFormat: context.visitFormat, socialOccasion: context.socialOccasion,
       occasionLabel: context.occasionLabel, deliveryProviderKey: context.deliveryProviderKey } });
   if (context.place && resolved.fields.place === "HIDDEN") throw new TypeError("PLANNED_EXPENSE_PLACE_FORBIDDEN");
+  if (!context.place && resolved.fields.place === "REQUIRED") throw new TypeError("PLANNED_EXPENSE_PLACE_REQUIRED");
   if (context.personVisited && resolved.fields.visitedContact === "HIDDEN")
     throw new TypeError("PLANNED_EXPENSE_VISITED_PERSON_FORBIDDEN");
+  if (context.personVisited?.kind === "CONTACT") {
+    const contactKey = context.personVisited.contactKey;
+    const contact = SOCIAL_CONTACTS_V1.find((item) => item.key === contactKey);
+    if (!contact || (raw.subtypeKey === "family_visit" && contact.kind !== "FAMILY")
+      || (raw.subtypeKey === "friend_visit" && contact.kind !== "FRIEND"))
+      throw new TypeError("PLANNED_EXPENSE_CONTACT_CONTEXT_INVALID");
+  }
   if (context.purchaseMode && resolved.fields.purchaseMode === "HIDDEN")
     throw new TypeError("PLANNED_EXPENSE_PURCHASE_MODE_FORBIDDEN");
   if ((context.deliveryProvider || context.deliveryProviderKey) && resolved.fields.deliveryProvider === "HIDDEN")
     throw new TypeError("PLANNED_EXPENSE_DELIVERY_PROVIDER_FORBIDDEN");
+  if (resolved.fields.deliveryProvider === "REQUIRED" && (!context.deliveryProvider || !context.deliveryProviderKey))
+    throw new TypeError("PLANNED_EXPENSE_DELIVERY_PROVIDER_REQUIRED");
+  const knownProvider = DELIVERY_PROVIDERS.find((provider) => provider.key === context.deliveryProviderKey);
+  if (knownProvider && knownProvider.key !== "OTHER" && context.deliveryProvider !== knownProvider.label)
+    throw new TypeError("PLANNED_EXPENSE_DELIVERY_PROVIDER_MISMATCH");
+  const textPlaceLabel = context.place?.kind === "TEXT" ? context.place.label : undefined;
+  if (textPlaceLabel && DELIVERY_PROVIDERS.some((provider) => provider.key !== "OTHER"
+    && provider.label === textPlaceLabel))
+    throw new TypeError("PLANNED_EXPENSE_MERCHANT_AS_PLACE_INVALID");
   if (context.seller && resolved.fields.seller === "HIDDEN") throw new TypeError("PLANNED_EXPENSE_SELLER_FORBIDDEN");
   if (context.housePartyPlaceMode && !(familyKey === "outing" && raw.subtypeKey === "house_party"))
     throw new TypeError("PLANNED_EXPENSE_HOUSE_PARTY_MODE_FORBIDDEN");
@@ -335,6 +356,11 @@ export function parsePlannedExpenseDraft(value: unknown, targetMonth: string): P
   for (const item of costItems) {
     const path = item.modulePath ?? [resolved.rootModule];
     validateModulePath(path, resolved);
+    const edge = path.length === 2 ? resolved.children.find((candidate) => candidate.childModule === path[1]) : undefined;
+    if (edge?.baselineOverride === null && item.baselineKey !== null)
+      throw new TypeError("PLANNED_EXPENSE_CHILD_BASELINE_FORBIDDEN");
+    if (edge?.fundingOverride === "BANK_ONLY" && item.fundingAllocations?.some((part) => part.source !== "BANK"))
+      throw new TypeError("PLANNED_EXPENSE_CHILD_FUNDING_FORBIDDEN");
     const assetModule = item.assetKey === null ? null : plannedAsset(item.assetKey)?.module;
     const fromBringItems = (familyKey === "visit_trip" && ["family_visit", "friend_visit"].includes(raw.subtypeKey as string))
       && path.length === 1 && item.assetKey !== null
@@ -345,6 +371,12 @@ export function parsePlannedExpenseDraft(value: unknown, targetMonth: string): P
     if (assetModule !== null && assetModule !== path.at(-1)
       && !(assetModule === "transport" && path.length === 1 && resolved.transport !== "FORBIDDEN")
       && !fromBringItems && !fromFishing) throw new TypeError("PLANNED_EXPENSE_ASSET_MODULE_INVALID");
+  }
+  for (const [aggregateKey, descendants] of Object.entries(ASSET_AGGREGATE_DESCENDANTS)) {
+    const aggregates = costItems.filter((item) => item.assetKey === aggregateKey);
+    if (aggregates.some((aggregate) => costItems.some((item) => descendants.includes(item.assetKey ?? "")
+      && JSON.stringify(item.modulePath ?? [resolved.rootModule]) === JSON.stringify(aggregate.modulePath ?? [resolved.rootModule]))))
+      throw new TypeError("PLANNED_EXPENSE_AGGREGATE_DESCENDANTS_ACTIVE");
   }
   for (const [module, ref] of Object.entries(context.childLocalPlaceRefs ?? {})) {
     const edge = resolved.children.find((candidate) => candidate.childModule === module);
@@ -459,6 +491,15 @@ const rowFields = "planned_expense_id,household_id,target_month,family_key,subty
 const draftColumns = (draft: PlannedExpenseDraft) => ({ family_key: draft.familyKey, subtype_key: draft.subtypeKey,
   title: draft.title, planned_date: draft.plannedDate, cost_items: draft.costItems, context: draft.context });
 
+/** Shared preview/create/update boundary: V1 structure, V2 resolved context, V3 graph,
+ * V4 asset eligibility and V5 finance in parsePlannedExpenseDraft; V6 live refs below. */
+async function validatePlannedExpenseForWrite(client: SupabaseClient, householdId: string,
+  targetMonth: string, rawDraft: unknown): Promise<PlannedExpenseDraft> {
+  const draft = parsePlannedExpenseDraft(rawDraft, targetMonth);
+  await validateReferences(client, uuid(householdId, "PLANNED_EXPENSE_HOUSEHOLD_INVALID"), draft);
+  return draft;
+}
+
 export async function readPlannedExpenses(client: SupabaseClient, householdId: string, targetMonth: string): Promise<PlannedExpense[]> {
   parseTargetMonth(targetMonth);
   const { data, error } = await client.from("phase2_planned_expenses").select(rowFields)
@@ -472,8 +513,7 @@ export async function readPlannedExpenses(client: SupabaseClient, householdId: s
 export async function simulatePlannedExpense(client: SupabaseClient, householdId: string,
   forecast: MonthForecastSnapshot, inputs: MonthInputs, saved: readonly PlannedExpense[],
   rawDraft: unknown, asOfDate: string, editedId?: string) {
-  const draft = parsePlannedExpenseDraft(rawDraft, forecast.meta.targetMonth);
-  await validateReferences(client, uuid(householdId, "PLANNED_EXPENSE_HOUSEHOLD_INVALID"), draft);
+  const draft = await validatePlannedExpenseForWrite(client, householdId, forecast.meta.targetMonth, rawDraft);
   const existing = editedId === undefined ? undefined : saved.find((item) => item.id === uuid(editedId, "PLANNED_EXPENSE_ID_INVALID"));
   if (editedId !== undefined && (!existing || existing.status !== "PLANNED"))
     throw new TypeError("PLANNED_EXPENSE_EDIT_TARGET_INVALID");
@@ -484,8 +524,7 @@ export async function simulatePlannedExpense(client: SupabaseClient, householdId
 }
 export async function createPlannedExpense(client: SupabaseClient, householdId: string, targetMonth: string,
   userId: string, rawDraft: unknown): Promise<PlannedExpense> {
-  const draft = parsePlannedExpenseDraft(rawDraft, targetMonth);
-  await validateReferences(client, uuid(householdId, "PLANNED_EXPENSE_HOUSEHOLD_INVALID"), draft);
+  const draft = await validatePlannedExpenseForWrite(client, householdId, targetMonth, rawDraft);
   const { data, error } = await client.from("phase2_planned_expenses").insert({
     planned_expense_id: randomUUID(), household_id: householdId, target_month: `${targetMonth}-01`,
     ...draftColumns(draft), status: "PLANNED", created_by: uuid(userId, "PLANNED_EXPENSE_USER_INVALID"), updated_by: userId,
@@ -504,8 +543,7 @@ export async function updatePlannedExpense(client: SupabaseClient, householdId: 
   userId: string, rawDraft: unknown): Promise<PlannedExpense> {
   const previous = await requireExpense(client, householdId, id);
   if (previous.status !== "PLANNED") throw new TypeError("PLANNED_EXPENSE_REALIZED_EDIT_FORBIDDEN");
-  const draft = parsePlannedExpenseDraft(rawDraft, previous.targetMonth);
-  await validateReferences(client, householdId, draft);
+  const draft = await validatePlannedExpenseForWrite(client, householdId, previous.targetMonth, rawDraft);
   const { data, error } = await client.from("phase2_planned_expenses").update({ ...draftColumns(draft),
     updated_by: uuid(userId, "PLANNED_EXPENSE_USER_INVALID"), updated_at: new Date().toISOString() })
     .eq("household_id", householdId).eq("planned_expense_id", id).eq("status", "PLANNED")

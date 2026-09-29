@@ -49,7 +49,7 @@ const client = { from(table) {
 const cost = (amount, label, baselineKey = null) => ({ id: randomUUID(), assetKey: null,
   label, quantity: "1", unitAmount: amount, baselineKey });
 const partyDraft = (amount, date) => ({ familyKey: "outing", subtypeKey: "house_party", title: "Soirée",
-  plannedDate: date, costItems: [cost(amount, "Entrée")], context: {} });
+  plannedDate: date, costItems: [cost(amount, "Entrée")], context: { place: { kind: "TEXT", label: "Maison" } } });
 const shoesDraft = { familyKey: "purchase", subtypeKey: "clothing", title: "Chaussures", plannedDate: null,
   costItems: [cost("100.00", "Chaussures")], context: { purchaseMode: "IN_STORE" } };
 const snapshot = async () => {

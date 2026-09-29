@@ -58,7 +58,8 @@ assert.equal(inputs.plannedEvents.length, 0, "legacy events stay empty");
 const householdId = randomUUID();
 const userId = randomUUID();
 const partyDraft = { familyKey: "outing", subtypeKey: "house_party", title: "Soirée", plannedDate: "2026-10-20",
-  costItems: [cost("25.00", null, "Entrée"), cost("22.00", null, "Boissons")], context: {} };
+  costItems: [cost("25.00", null, "Entrée"), cost("22.00", null, "Boissons")],
+  context: { place: { kind: "TEXT", label: "Maison" } } };
 assert.equal(grossPlannedExpenseCost(parsePlannedExpenseDraft(partyDraft, month)), "47.00");
 assert.throws(() => parsePlannedExpenseDraft({ ...partyDraft, plannedDate: "2026-11-01" }, month), /DATE_MONTH_INVALID/);
 assert.throws(() => parsePlannedExpenseDraft({ ...partyDraft, familyKey: "Maison" }, month), /FAMILY_INVALID/);

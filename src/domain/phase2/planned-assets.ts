@@ -70,6 +70,11 @@ many("other", [["administrative", "Administratif", "ðŸ“„"], ["fee", "Frais", "ðŸ
 
 export const ASSET_CATALOG: readonly PlannedAsset[] = assets;
 export const PLANNED_ASSETS = ASSET_CATALOG;
+// An aggregate can be persisted only while none of its replacement details is active in the same module path.
+export const ASSET_AGGREGATE_DESCENDANTS: Readonly<Record<string, readonly string[]>> = {
+  "groceries:food": ["groceries:meat", "groceries:fish", "groceries:produce", "groceries:fresh",
+    "groceries:pantry", "groceries:drinks", "groceries:snacks"],
+};
 export const plannedAsset = (key: string): PlannedAsset | undefined => assets.find((asset) => asset.assetKey === key);
 export const assetsForModule = (module: AssetModule): readonly PlannedAsset[] => assets.filter((asset) => asset.module === module);
 export const suggestedAssetQuantity = (asset: PlannedAsset, namedParticipants: number, additionalGuests = 0): string =>

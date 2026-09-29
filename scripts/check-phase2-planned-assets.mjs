@@ -100,6 +100,8 @@ const visit = parsePlannedExpenseDraft(draft("visit_trip", "family_visit", [
     { label: "Maison", distanceToNextKm: null }], fuelEstimate: route,
 } }), month);
 assert.equal(plan([saved(visit.costItems)]).plannedExpenses.grossCost, "11.17");
+assert.equal(plan([saved(visit.costItems)]).plannedFunding.bankAllocated, "0.00",
+  "economic-only fuel usage never reserves payable bank funding");
 
 // SYNC-NEW-01: a quantity edit changes the same saved entity in list, calendar and forecast.
 const id = randomUUID();
