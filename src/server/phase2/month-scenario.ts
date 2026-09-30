@@ -7,8 +7,11 @@ import type { StatisticalComponent } from "./month-reference";
 import type { PlannedExpenseScenarioEntry, PlannedBaselineKey } from "./planned-expenses";
 import { plannedLineGross, costItemCashTreatment } from "@/domain/phase2/planned-money";
 import { forecastRemainingMonth, type CostRange, type RemainingMonthPrediction } from "./remaining-month-forecast";
+import { parseMonthDecisionSettings, type MonthDecisionSettings } from "@/domain/phase2/month-decision-contract";
+import { calibrateForecast } from "./forecast-memory";
 
 export type MonthInputs = Readonly<{
+  decision?: MonthDecisionSettings;
   safetyReserve: string;
   openingBalance: { amount: string; asOfDate: string } | null;
   benefit: { currentBalance: { amount: string; asOfDate: string } | null; expectedLoading: { amount: string; expectedDate: string } | null };
@@ -76,6 +79,7 @@ export const monthInputsSchema = { parse(value: unknown): MonthInputs {
   const rawOutflows = input.declaredOutflows ?? [];
   if (!Array.isArray(rawOutflows) || rawOutflows.length > 20) throw new TypeError("MONTH_INPUT_DECLARED_OUTFLOWS_INVALID");
   return {
+    decision: parseMonthDecisionSettings(input.decision),
     safetyReserve: parseMoney(input.safetyReserve), openingBalance: parseDated(input.openingBalance, "asOfDate", true),
     benefit: { currentBalance: parseDated(benefit.currentBalance, "asOfDate"),
       expectedLoading: parseDated(benefit.expectedLoading, "expectedDate") },
@@ -110,6 +114,7 @@ export const monthInputsSchema = { parse(value: unknown): MonthInputs {
   };
 }};
 export const defaultMonthInputs = (): MonthInputs => ({
+  decision: parseMonthDecisionSettings(undefined),
   safetyReserve: DEFAULT_SAFETY_RESERVE, openingBalance: null,
   benefit: { currentBalance: null, expectedLoading: null },
   plannedEvents: [], confirmedObligations: [], excludedFixedObligations: [], declinedConditionalObligations: [],
@@ -257,14 +262,15 @@ function deriveEconomicPlan(forecast: MonthForecastSnapshot, inputs: MonthInputs
     }
     return impact;
   };
-  const prediction = forecast.predictionEvidence ? forecastRemainingMonth(reference, forecast.predictionEvidence, asOfDate, plannedExpenses) : null;
+  const prediction = forecast.predictionEvidence ? forecastRemainingMonth(reference, forecast.predictionEvidence, asOfDate, plannedExpenses,
+    inputs.decision?.assumptions, forecast.calibration ?? calibrateForecast(forecast.forecastMemory ?? [], forecast.predictionEvidence, asOfDate)) : null;
   for (const key of baselines.keys()) if (baselinePart(key)?.central == null)
     throw new TypeError(`PLANNED_EXPENSE_BASELINE_MISSING:${key}`);
   // Differential compatibility shim for published snapshots without request-local
   // evidence (not a second UI engine). Production reads attach canonical evidence.
-  const lowImpact = new Big(prediction?.projectImpact.low ?? plannedImpact("low"));
+  const lowImpact = new Big(prediction?.joint.low.impact ?? prediction?.projectImpact.low ?? plannedImpact("low"));
   const centralImpact = new Big(prediction?.projectImpact.central ?? plannedImpact("central"));
-  const highImpact = new Big(prediction?.projectImpact.high ?? plannedImpact("high"));
+  const highImpact = new Big(prediction?.joint.high.impact ?? prediction?.projectImpact.high ?? plannedImpact("high"));
   const economicResources = salaryCash.plus(mealBenefits);
   const fundingPocket = (key: "benefit:swile" | "benefit:edenred", total: Big, used: Big) => {
     const resource = new Big(resources.find((part) => part.key === key)?.amount ?? "0");
@@ -275,8 +281,8 @@ function deriveEconomicPlan(forecast: MonthForecastSnapshot, inputs: MonthInputs
   const swile = fundingPocket("benefit:swile", funding.SWILE, usedDeclared.SWILE);
   const edenred = fundingPocket("benefit:edenred", funding.EDENRED, usedDeclared.EDENRED);
   const afterCertain = economicResources.minus(certainOutflows);
-  const necessary = prediction?.essentialProvision ?? reference.necessaryTotal;
-  const flexible = prediction?.optionalProvision ?? reference.flexibleTotal;
+  const necessary = prediction ? {low:prediction.joint.low.essential,central:prediction.essentialProvision.central,high:prediction.joint.high.essential} : reference.necessaryTotal;
+  const flexible = prediction ? {low:prediction.joint.low.optional,central:prediction.optionalProvision.central,high:prediction.joint.high.optional} : reference.flexibleTotal;
   const lowConsumption = afterCertain.minus(necessary.low!).minus(flexible.low!).minus(lowImpact);
   const central = afterCertain.minus(necessary.central!).minus(flexible.central!).minus(centralImpact);
   const highConsumption = afterCertain.minus(necessary.high!).minus(flexible.high!).minus(highImpact);

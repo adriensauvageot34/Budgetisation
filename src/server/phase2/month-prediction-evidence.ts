@@ -8,7 +8,7 @@ import type { MonthPredictionEvidence } from "./remaining-month-forecast";
  * Legacy operations have no household_id: the existing singleton scope control
  * must pass before reading them. Never use a client filter as authorization. */
 export async function readMonthPredictionEvidence(client: SupabaseClient, householdId: string,
-  targetMonth: string): Promise<MonthPredictionEvidence> {
+  targetMonth: string, allowEmptyHistory = false): Promise<MonthPredictionEvidence> {
   const scope = await client.from("canonical_household_scope_control").select("household_count,household_id,status").limit(2);
   if (scope.error) throw scope.error;
   if (scope.data?.length !== 1 || parseCanonicalHouseholdScope(scope.data[0]) !== householdId)
@@ -16,17 +16,20 @@ export async function readMonthPredictionEvidence(client: SupabaseClient, househ
   const latest = await client.from("operations").select("date_bancaire").lt("date_bancaire", `${targetMonth}-01`)
     .order("date_bancaire", { ascending: false }).limit(1).maybeSingle();
   if (latest.error) throw latest.error;
-  const endMonth = latest.data?.date_bancaire?.slice(0, 7);
+  const previousMonth = new Date(`${targetMonth}-01T12:00:00Z`); previousMonth.setUTCMonth(previousMonth.getUTCMonth() - 1);
+  const endMonth = latest.data?.date_bancaire?.slice(0, 7) ?? (allowEmptyHistory ? previousMonth.toISOString().slice(0, 7) : null);
   if (!endMonth) throw new TypeError("MONTH_PREDICTION_HISTORY_MISSING");
   const first = new Date(`${endMonth}-01T12:00:00Z`); first.setUTCMonth(first.getUTCMonth() - 11);
   const end = new Date(`${targetMonth}-01T12:00:00Z`); end.setUTCMonth(end.getUTCMonth() + 1);
   const startDate = first.toISOString().slice(0, 10), endExclusive = end.toISOString().slice(0, 10);
-  const [subcategory, people] = await Promise.all([
+  const [subcategory, people, batches] = await Promise.all([
     client.from("subcategories").select("subcategory_id,nom_canonique").in("nom_canonique", [...REFERENCE_SUBCATEGORIES]),
     client.from("persons").select("person_id,display_name").eq("household_id", householdId),
+    client.from("import_batches").select("period_start,period_end,coverage_status,status").eq("household_id",householdId),
   ]);
   if (subcategory.error) throw subcategory.error;
   if (people.error) throw people.error;
+  if (batches.error) throw batches.error;
   const names = new Map((subcategory.data ?? []).map(r => [r.subcategory_id, r.nom_canonique]));
   const operations: { operation_id: string; date_bancaire: string; personne_concernee: string | null;
     type_precis: string | null; marchand: string | null }[] = [];
@@ -67,10 +70,17 @@ export async function readMonthPredictionEvidence(client: SupabaseClient, househ
     if ((result.data?.length ?? 0) < 1000) break;
   }
   const isHistory = (date: string) => date.slice(0, 7) <= endMonth;
+  const complete=(batches.data??[]).filter(b=>b.status==="imported"&&b.coverage_status==="FULL");
+  const completeMonths:string[]=[];
+  for(let cursor=new Date(`${startDate.slice(0,7)}-01T12:00:00Z`);cursor<end;cursor.setUTCMonth(cursor.getUTCMonth()+1)){
+    const m=cursor.toISOString().slice(0,7), last=new Date(Date.UTC(cursor.getUTCFullYear(),cursor.getUTCMonth()+1,0)).toISOString().slice(0,10);
+    if(complete.some(b=>b.period_start<=`${m}-01`&&b.period_end>=last))completeMonths.push(m);
+  }
   return { history: { startMonth: startDate.slice(0, 7), endMonth,
     economicEntries: rows.filter(r => isHistory(r.date)), mobilityLegs: legs.filter(l => isHistory(l.date)) },
     currentEconomicEntries: rows.filter(r => r.date.startsWith(targetMonth)),
     currentMobilityLegs: legs.filter(r => r.date.startsWith(targetMonth)),
     observedThrough: operations.map(r => r.date_bancaire).sort().at(-1) ?? null,
+    coverageThrough:complete.filter(b=>b.period_start<=`${targetMonth}-01`).map(b=>b.period_end).sort().at(-1)??null,completeMonths,
     personNamesById: Object.fromEntries((people.data ?? []).map(p => [p.person_id, p.display_name])) };
 }

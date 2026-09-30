@@ -9,10 +9,13 @@ import { assembleMonthForecast, type MonthForecast } from "./month-forecast";
 import { loadMonthForecastAuthorities } from "./live-month-forecast";
 import { readMonthPredictionEvidence } from "./month-prediction-evidence";
 import type { MonthPredictionEvidence } from "./remaining-month-forecast";
+import { readForecastMemory, type ForecastCheckpoint } from "./forecast-memory";
 
 export const MONTH_FORECAST_RESOURCE = "phase2_month_forecast" as const;
 const sha256 = (value: unknown): string => createHash("sha256").update(canonicalSerializeGlobal(value), "utf8").digest("hex");
 export type MonthForecastSnapshot = MonthForecast & {
+  readonly forecastMemory?: readonly ForecastCheckpoint[];
+  readonly calibration?: import("./remaining-month-forecast").ForecastCalibration;
   readonly predictionEvidence?: MonthPredictionEvidence;
   readonly publicationMeta: { readonly publicationId: string; readonly revision: number; readonly factsHash: string; readonly manifestHash: string };
   readonly resourceMeta: { readonly contractVersion: string; readonly methodSignature: string; readonly policyVersions: Readonly<Record<string, string>>; readonly resourceInputHash: string };
@@ -101,7 +104,10 @@ export async function queryMonthForecast(client: SupabaseClient, householdId: st
     || payload.resourceMeta.methodSignature !== methodSignature
     || payload.publicationMeta.factsHash !== identity.publicationMeta.factsHash
     || payload.publicationMeta.manifestHash !== identity.publicationMeta.manifestHash) throw new TypeError("FORECAST_SNAPSHOT_PAYLOAD_MISMATCH");
-  return { ...payload, predictionEvidence: await readMonthPredictionEvidence(client, householdId, targetMonth) };
+  const [predictionEvidence, forecastMemory] = await Promise.all([
+    readMonthPredictionEvidence(client, householdId, targetMonth), readForecastMemory(client, householdId, targetMonth),
+  ]);
+  return { ...payload, predictionEvidence, forecastMemory };
 }
 
 /** A report target may not have a published monthly cache yet. Resolve its own
@@ -121,5 +127,8 @@ export async function resolvePlanningMonthForecast(client: SupabaseClient, house
     resourceMeta: { contractVersion: contract.contractVersion, methodSignature, policyVersions: contract.policyVersions,
       resourceInputHash: sha256({ publicationId: forecast.meta.sourcePublicationId, sourceRevision: forecast.meta.sourceRevision,
         analyticsRevision: forecast.meta.analyticsRevision, targetMonth, methodSignature }) } }) as MonthForecastSnapshot;
-  return { ...payload, predictionEvidence: await readMonthPredictionEvidence(client, householdId, targetMonth) };
+  const [predictionEvidence, forecastMemory] = await Promise.all([
+    readMonthPredictionEvidence(client, householdId, targetMonth), readForecastMemory(client, householdId, targetMonth),
+  ]);
+  return { ...payload, predictionEvidence, forecastMemory };
 }

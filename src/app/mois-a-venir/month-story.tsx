@@ -8,7 +8,12 @@ import { PlannedExpensesControl } from "./planned-expenses-control";
 import { projectMonthCalendar, type PlannedExpenseCard } from "./planned-expenses-projection";
 import type { PlannedPlaceOption } from "@/domain/phase2/planned-places";
 import type { PlannedVehicleEstimate } from "@/server/phase2/planned-context";
-import { RemainingForecastCard, ScenarioMilestone } from "./month-narrative-cards";
+import { RemainingForecastCard, ScenarioMilestone, ForecastTransition } from "./month-narrative-cards";
+import { parseMonthDecisionSettings, type MonthDecisionSettings } from "@/domain/phase2/month-decision-contract";
+import { projectMonthDecision } from "@/server/phase2/month-decision-projection";
+import type { ForecastCheckpoint } from "@/server/phase2/forecast-memory";
+import { MonthDecisionTools } from "./month-decision-tools";
+import { MonthSectionNav } from "./month-section-nav";
 
 const money = (value: string | null, exact = false) => value === null ? "À confirmer" : new Intl.NumberFormat("fr-FR", {
   style: "currency", currency: "EUR", maximumFractionDigits: exact ? 2 : 0, minimumFractionDigits: exact ? 2 : 0,
@@ -49,7 +54,8 @@ function StatisticalCard({ part, tone }: { part: StatisticalComponent; tone: "ne
   </article>;
 }
 
-export function MonthStory({ plan, targetMonth, plannedExpenses, persons, places, vehicle, prices, today, dateEvidence, references }: { plan: MonthEconomicPlan | null; targetMonth: string;
+export function MonthStory({ plan, targetMonth, plannedExpenses, persons, places, vehicle, prices, today, dateEvidence, references, settings: rawSettings, memory = [], calibrated = false }: { plan: MonthEconomicPlan | null; targetMonth: string;
+  settings?: MonthDecisionSettings; memory?: readonly ForecastCheckpoint[]; calibrated?: boolean;
   plannedExpenses: readonly PlannedExpenseCard[]; persons: readonly { personId: string; displayName: string }[];
   places: readonly PlannedPlaceOption[]; vehicle: PlannedVehicleEstimate | null;
   prices: readonly import("@/domain/phase2/planned-contract").PlannedPriceSuggestion[]; today: string;
@@ -61,9 +67,13 @@ export function MonthStory({ plan, targetMonth, plannedExpenses, persons, places
     dateEvidenceCount: item.dateCertainty === "HISTORICAL_ESTIMATE" ? dateEvidence[item.key]?.observationCount : undefined })), plannedExpenses);
   const narrative = plan.narrative, prediction = narrative.prediction;
   const importsMissing = prediction?.currentImportsMissing ?? false;
+  const settings = parseMonthDecisionSettings(rawSettings);
+  const decision = projectMonthDecision(plan, settings, targetMonth, today, plannedExpenses, memory);
+  const current = decision.mode === "CURRENT_MONTH";
 
   return <PlannedExpenseInteractions><div className="space-y-7 sm:space-y-9">
-    <header className="space-y-2"><p className="eyebrow">Préparons notre mois ensemble</p><h1 className="text-4xl font-black capitalize tracking-tight sm:text-5xl">{monthLabel(targetMonth)}</h1><p className="text-slate-600">Voyons ce qui entre, ce qui est déjà réservé et ce qu’on peut encore prévoir.</p><p className="text-xs text-slate-600">Les dépenses de travail restent estimées selon les rythmes déclarés : cinq jours sur site par semaine pour Manon, deux à trois pour Adrien, avec les jours ouvrés de ce mois.</p></header>
+    <header className="space-y-2"><p className="eyebrow">{current ? "Notre mois en cours" : "Préparons notre mois ensemble"}</p><h1 className="text-4xl font-black capitalize tracking-tight">{monthLabel(targetMonth)}</h1><p className="text-slate-600">{current ? "Ce qu’on connaît déjà, puis ce qu’il reste à prévoir." : "Voyons ce qui entre, ce qui est réservé et ce qu’on peut prévoir."}</p><p className="text-xs text-slate-500">Estimation au {new Intl.DateTimeFormat("fr-FR", { dateStyle: "long", timeZone: "UTC" }).format(new Date(`${today}T12:00:00Z`))}</p></header>
+    <MonthSectionNav />
 
     <section className="card p-4 sm:p-6" aria-labelledby="resources-title"><div className="flex flex-wrap items-end justify-between gap-3"><h2 id="resources-title" className="text-2xl font-black">Nos ressources</h2><div className="text-left sm:text-right"><p className="text-xs font-semibold text-slate-600">Ressources prévues du mois</p><p className="text-3xl font-black tracking-tight tabular-nums text-emerald-950">{money(plan.economicResources, true)}</p></div></div>
       <div className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">{plan.resources.map((resource) => <ResourceEditor key={resource.key} resource={resource} targetMonth={targetMonth} />)}</div>
@@ -78,25 +88,29 @@ export function MonthStory({ plan, targetMonth, plannedExpenses, persons, places
           <ul className="mx-4 border-t border-slate-200 pb-3 pt-2 text-sm">{group.items.map((item) => <li key={item.key} className="flex flex-wrap justify-between gap-x-3 py-1"><span className="min-w-0 break-words">{item.label}<span className="block text-xs text-slate-500">{item.dateCertainty === "DECLARED" ? "Date déclarée" : item.dateCertainty === "HISTORICAL_ESTIMATE" ? "Date habituelle estimée" : "Date à confirmer"}</span></span><strong className="shrink-0 tabular-nums">{money(item.amount, true)}</strong></li>)}</ul></details>;
       })}</div></section>
 
-    <section className="overflow-hidden rounded-[1.7rem] bg-emerald-950 px-5 py-6 text-white sm:flex sm:items-end sm:justify-between sm:gap-5 sm:px-8 sm:py-7" aria-labelledby="after-title"><div><h2 id="after-title" className="text-xl font-bold">Après nos charges certaines</h2><p className="mt-1 text-sm text-emerald-100">Avant le quotidien et nos nouveaux projets</p><p className="mt-2 text-xs text-emerald-200">Inclut les titres-restaurants ; ce n’est pas notre solde bancaire.</p></div><p className="mt-4 whitespace-nowrap text-4xl font-black tracking-tight tabular-nums sm:mt-0 sm:text-5xl">{money(plan.afterCertainOutflows, true)}</p></section>
-
+    <section className="flex items-center justify-between gap-5 rounded-2xl border border-emerald-100 bg-emerald-50/50 px-6 py-5" aria-labelledby="after-title"><div><h2 id="after-title" className="text-xl font-bold">Après nos charges certaines</h2><p className="mt-1 text-xs text-slate-600">Avant le quotidien et nos projets · titres-restaurants compris</p><p className="mt-1 text-xs text-slate-500">Repère arrondi pour la suite : {money(String(decision.visible.afterCertain))}</p></div><p className="whitespace-nowrap text-3xl font-black tabular-nums text-emerald-950">{money(plan.afterCertainOutflows, true)}</p></section>
     <PlannedExpensesControl targetMonth={targetMonth} expenses={plannedExpenses} persons={persons} places={places} vehicle={vehicle} prices={prices} funding={plan.plannedFunding} />
 
-    <section id="timeline-title" className="scroll-mt-6" aria-label="Calendrier du mois"><MonthCalendar key={targetMonth} targetMonth={targetMonth} today={today} entries={calendar.entries} undated={calendar.undated} dailyTotals={calendar.dailyTotals} /></section>
+    <section id="timeline-title" className="scroll-mt-24" aria-label="Calendrier du mois"><MonthCalendar key={targetMonth} targetMonth={targetMonth} today={today} entries={calendar.entries} undated={calendar.undated} dailyTotals={calendar.dailyTotals} /></section>
 
-    <section aria-labelledby="after-projects-title" className="flex items-end justify-between gap-5 rounded-2xl border border-sky-100 bg-sky-50/70 p-6"><div>
-      <h2 id="after-projects-title" className="text-xl font-bold">Après nos charges et nos projets</h2>
-      <p className="mt-2 max-w-2xl text-sm text-slate-600">Le coût habituel reste compris dans le quotidien estimé. Ce jalon applique uniquement l’effet supplémentaire de nos choix, pas leur coût brut dans le calendrier.</p>
-    </div><p className="whitespace-nowrap text-4xl font-black tabular-nums text-sky-950">{money(narrative.remainderAfterProjects, true)}</p></section>
+    {decision.showProjectMilestone ? <><ForecastTransition label="Effet supplémentaire de nos projets" amount={decision.visible.projectDelta} /><section aria-labelledby="after-projects-title" className="flex items-center justify-between gap-5 rounded-2xl bg-sky-50/70 px-6 py-4"><div><h2 id="after-projects-title" className="text-lg font-bold">Après nos charges et nos projets</h2><p className="mt-1 text-xs text-slate-600">Le coût habituel déjà compris dans le quotidien est déduit de l’effet des projets.</p></div><p className="text-3xl font-black tabular-nums text-sky-950">{money(String(decision.visible.afterProjects))}</p></section></> : <p className="text-sm text-slate-500">{plannedExpenses.length ? "Nos projets restent dans les habitudes déjà prévues : aucun effet supplémentaire sur ce jalon." : "Aucun projet ajouté : poursuivons avec le quotidien."}</p>}
+    <section aria-labelledby="necessary-title" className="scroll-mt-24"><h2 id="necessary-title" className="text-2xl font-black">Ce qu’il nous faut pour le quotidien</h2><p className="mt-1 text-sm text-slate-600">Ce qu’il reste à couvrir pour vivre normalement jusqu’à la fin du mois.</p><div className="mt-4 grid grid-cols-3 gap-3">{prediction ? prediction.essential.map(category => <RemainingForecastCard key={category.key} category={category} importsMissing={importsMissing} current={current} targetMonth={targetMonth} settings={settings} />) : plan.necessaryVariables.items.map(part => <StatisticalCard key={part.key} part={part} tone="necessary" />)}</div></section>
 
-    <section aria-labelledby="necessary-title"><h2 id="necessary-title" className="text-2xl font-black">Ce qu’il nous faut pour le quotidien</h2><p className="mt-1 text-sm text-slate-600">Ce qu’il reste à couvrir pour vivre normalement jusqu’à la fin du mois.</p><div className="mt-4 grid grid-cols-3 gap-3">{prediction ? prediction.essential.map(category => <RemainingForecastCard key={category.key} category={category} importsMissing={importsMissing} />) : plan.necessaryVariables.items.map(part => <StatisticalCard key={part.key} part={part} tone="necessary" />)}</div></section>
-
+    <ForecastTransition label="Référence du quotidien nécessaire" amount={decision.visible.essentialDelta} parts={decision.visible.essential} />
     <ScenarioMilestone title="Après l’essentiel du mois" values={narrative.remainderAfterEssential} labels={["Si le quotidien coûte peu", "Mois habituel", "Si le quotidien coûte plus"]} incomplete={importsMissing}
       description="Après les charges, l’effet de nos projets et le quotidien nécessaire. Les dépenses importées et la part habituelle déjà couverte sont comptées une seule fois ; les extras restent à part." />
 
-    <section aria-labelledby="flexible-title"><h2 id="flexible-title" className="text-2xl font-black">Ce qui pourrait encore s’ajouter</h2><p className="mt-1 text-sm text-slate-600">Des achats facultatifs encore possibles, selon les occasions restantes. Un mois calme peut rester à 0 €.</p><div className="mt-4 grid grid-cols-2 gap-3">{prediction ? prediction.optional.map(category => <RemainingForecastCard key={category.key} category={category} optional importsMissing={importsMissing} />) : plan.flexibleVariables.items.map(part => <StatisticalCard key={part.key} part={part} tone="flexible" />)}</div></section>
+    <section aria-labelledby="flexible-title" className="scroll-mt-24"><h2 id="flexible-title" className="text-2xl font-black">Ce qui pourrait encore s’ajouter</h2><p className="mt-1 text-sm text-slate-600">Des achats facultatifs encore possibles, selon les occasions restantes. Un mois calme peut rester à 0 €.</p><div className="mt-4 grid grid-cols-2 gap-3">{prediction ? prediction.optional.map(category => <RemainingForecastCard key={category.key} category={category} optional importsMissing={importsMissing} current={current} targetMonth={targetMonth} settings={settings} />) : plan.flexibleVariables.items.map(part => <StatisticalCard key={part.key} part={part} tone="flexible" />)}</div></section>
 
+    <ForecastTransition label="Référence des dépenses facultatives" amount={decision.visible.optionalDelta} parts={decision.visible.optional} />
     <ScenarioMilestone title="Projection de fin de mois" values={narrative.final} labels={["Mois calme", "Scénario habituel", "Mois plus coûteux"]} final incomplete={importsMissing}
-      description="L’essentiel du mois, puis les dépenses facultatives encore possibles. Chaque scénario reste une estimation." />
+      description={decision.jointExplanation} />
+    {decision.mealFundingVisible && <section id="meal-funding" className="scroll-mt-24 rounded-2xl border border-slate-200 p-5"><h2 className="text-lg font-bold">Nos ressources repas affectées</h2><p className="mt-1 text-xs text-slate-600">Les affectations explicites aux projets sont comptées ici. Les futurs repas estimés ne réservent pas automatiquement de titres-restaurants.</p><div className="mt-3 grid grid-cols-2 gap-4">{([["Swile", plan.plannedFunding.swile], ["Edenred", plan.plannedFunding.edenred]] as const).map(([label, pocket]) => <dl className="space-y-1 text-sm" key={label}><dt className="font-bold">{label}</dt><dd>Ressource : {money(pocket.resource, true)}</dd><dd>Réservé aux projets : {money(pocket.reserved, true)}</dd><dd>Usage déclaré : {money(pocket.usedDeclared, true)}</dd><dd>Disponible après affectations : {money(pocket.availableAfter, true)}</dd>{Number(pocket.shortfall) > 0 && <dd className="text-amber-900">À financer autrement : {money(pocket.shortfall, true)}</dd>}</dl>)}</div></section>}
+    {decision.attention.length > 0 && <section aria-labelledby="attention-title" className="rounded-2xl bg-amber-50 p-5"><h2 id="attention-title" className="text-lg font-bold">À regarder ensemble</h2><ul className="mt-3 space-y-2 text-sm">{decision.attention.map(item => <li key={item.key}><a className="underline underline-offset-2" href={item.href}>{item.message}</a></li>)}</ul></section>}
+    <details id="forecast-history" className="scroll-mt-24 rounded-2xl border border-slate-200 p-5"><summary className="cursor-pointer font-bold">Comment notre projection évolue</summary><p className="mt-3 text-sm text-slate-600">{decision.change.stability}</p><p className="mt-2 text-xs text-slate-600">{calibrated ? "Les erreurs de mois terminés avec imports complets corrigent le biais et la largeur de certains intervalles." : "Calibration personnelle : recul insuffisant. Il faut quatre mois terminés, avec imports complets et prévisions réellement conservées, au même horizon."}</p>
+      {decision.change.sampleCount > 0 && <><p className="mt-3 text-sm">Depuis la dernière estimation : <strong>{money(String(decision.change.visibleDelta))}</strong> sur la projection arrondie.</p><ul className="mt-2 space-y-1 text-sm">{decision.change.visibleChanges.map(item => <li key={item.key} className="flex justify-between gap-4"><span>{item.label}</span><strong>{money(String(item.visible))}</strong></li>)}</ul><p className="mt-2 text-xs">Écart exact avant arrondi : {money(decision.change.delta, true)}.</p></>}
+      <details className="mt-4 text-xs"><summary className="cursor-pointer font-semibold">Estimations conservées</summary>{memory.filter(r => r.target_month.startsWith(targetMonth)).length ? <ul className="mt-2 space-y-1">{memory.filter(r => r.target_month.startsWith(targetMonth)).map(r => <li key={r.checkpoint_id}>{r.as_of_date} · {money(r.payload.final.central)} · <span className="text-slate-500">{r.model_version}</span></li>)}</ul> : <p className="mt-2">Aucune estimation conservée. Les prévisions passées ne sont jamais recréées après coup.</p>}</details>
+    </details>
+    <MonthDecisionTools key={`${targetMonth}:${plan.narrative.final.central}:${JSON.stringify(settings)}`} targetMonth={targetMonth} settings={settings} decision={decision} />
   </div></PlannedExpenseInteractions>;
 }

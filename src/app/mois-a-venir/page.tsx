@@ -13,6 +13,10 @@ import { projectPlannedExpenseCards, projectExpenseFunding } from "./planned-exp
 import { projectPlannedExpenseImpact } from "@/server/phase2/planned-impact";
 import { prospectivePersonIdentity, prospectivePersonLabel } from "@/domain/phase2/planned-product";
 import { planningDate } from "@/server/phase2/planning-date";
+import { readMonthPredictionEvidence } from "@/server/phase2/month-prediction-evidence";
+import { readForecastMemory } from "@/server/phase2/forecast-memory";
+import { projectPastMonthReview } from "@/server/phase2/past-month-review";
+import { PastMonthView } from "./past-month-view";
 
 export const metadata = { title: "Notre mois à venir" };
 export const dynamic = "force-dynamic";
@@ -31,6 +35,14 @@ export default async function MonthForecastPage({ searchParams }: { searchParams
   const activeMonth = String(latest.period_month).slice(0, 7);
   const requestedMonth = typeof params.month === "string" && /^\d{4}-(0[1-9]|1[0-2])$/u.test(params.month) ? params.month : activeMonth;
   const targetMonth = requestedMonth;
+  const today = planningDate(context.household.timezone);
+  if (targetMonth < today.slice(0, 7)) {
+    const [evidence, memory] = await Promise.all([
+      readMonthPredictionEvidence(client, context.household.householdId, targetMonth, true),
+      readForecastMemory(client, context.household.householdId, targetMonth),
+    ]);
+    return <PastMonthView targetMonth={targetMonth} review={projectPastMonthReview(targetMonth, evidence, memory)} />;
+  }
   let forecast;
   try {
     forecast = targetMonth === activeMonth ? await queryMonthForecast(client, context.household.householdId, targetMonth)
@@ -49,7 +61,6 @@ export default async function MonthForecastPage({ searchParams }: { searchParams
   const persons = (personsResult.data ?? []).filter((person) => person.status === "active")
     .map((person) => ({ personId: person.person_id, displayName: person.display_name }));
   const options = await readPlannedContextOptions(client, context.household.householdId, persons);
-  const today = planningDate(context.household.timezone);
   const scenario = deriveMonthScenario(forecast, stored.inputs, null, today, plannedExpenses);
   const placeLabel = (ref: import("@/domain/phase2/planned-contract").ProspectivePlaceRef | undefined) =>
     ref?.kind === "TEXT" ? ref.label : ref?.kind === "KNOWN" ? options.places.find((place) => place.placeId === ref.placeId)?.name : undefined;

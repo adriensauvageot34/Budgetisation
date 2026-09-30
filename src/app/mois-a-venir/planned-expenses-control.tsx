@@ -77,6 +77,7 @@ export function PlannedExpensesControl({ targetMonth, expenses, persons, places,
   const router = useRouter();
   const interactions = usePlannedExpenseInteractions();
   const [open, setOpen] = useState(false);
+  const [simulationMode, setSimulationMode] = useState(false);
   const [step, setStep] = useState(1);
   const [intentChoices, setIntentChoices] = useState<readonly string[] | undefined>();
   const [assetLens, setAssetLens] = useState<"MODULE" | "BRING_ITEMS">("MODULE");
@@ -148,6 +149,7 @@ export function PlannedExpensesControl({ targetMonth, expenses, persons, places,
 
   const resetPreview = () => { setPreview(null); setError(""); setIssue(null); };
   const start = (item?: PlannedExpenseCard, mode: "DECLARE" | "CORRECT" | null = null, plannedDate?: string) => {
+    setSimulationMode(false);
     if (inFlight.current) return;
     draftSession.current++;
     const next = item ? { familyKey: item.familyKey, subtypeKey: item.subtypeKey, title: item.title,
@@ -300,12 +302,16 @@ export function PlannedExpensesControl({ targetMonth, expenses, persons, places,
     const pending = interactions?.pending;
     if (!pending) return;
     interactions.consume();
-    if (pending.action === "CREATE") {
+    if (pending.action === "CREATE" || pending.action === "SIMULATE") {
       if (inFlight.current || open && builder.revision > 0) {
         setError("Terminez ou fermez le brouillon ouvert avant de prévoir autre chose.");
         window.setTimeout(() => { const target = document.getElementById("planned-expense-builder"); target?.scrollIntoView({ block: "start" }); target?.focus(); }, 0);
       }
-      else start(undefined, null, pending.plannedDate);
+      else {
+        start(undefined, null, pending.action === "CREATE" ? pending.plannedDate : undefined);
+        setSimulationMode(pending.action === "SIMULATE");
+        window.setTimeout(() => { const target = document.getElementById("planned-expense-builder"); target?.scrollIntoView({ block: "start" }); target?.focus(); }, 0);
+      }
       return;
     }
     const item = expenses.find((row) => row.id === pending.id);
@@ -450,7 +456,7 @@ export function PlannedExpensesControl({ targetMonth, expenses, persons, places,
       </div>}
       {step === 5 && !previewCurrent && <div className="mt-4 rounded-xl bg-amber-50 p-4 text-sm">L’aperçu précédent n’est plus à jour. <button type="button" className={secondary} onClick={() => setStep(4)}>Recalculer après modification</button></div>}
       {step === 5 && previewCurrent && preview && <div className="mt-4 grid gap-4"><PlannedImpactCard preview={preview} fundingIncomplete={readiness.issues.some((issue) => issue.code === "FUNDING_INCOMPLETE")} />
-        <p className="text-xs text-slate-600">La simulation n’enregistre rien.</p><div className="flex flex-wrap gap-2"><button type="button" className={secondary} onClick={() => { setPreview(null); setStep(4); }}>Modifier</button><button type="button" className={primary} disabled={busy || !readiness.saveReady} onClick={save}>{busy ? "Enregistrement…" : realityMode === "DECLARE" ? "Confirmer la réalisation" : realityMode === "CORRECT" ? "Enregistrer la déclaration corrigée" : editedId ? "Enregistrer la modification" : "Ajouter au mois"}</button></div></div>}
+        <p className="text-xs text-slate-600">La simulation n’enregistre rien.</p><div className="flex flex-wrap gap-2"><button type="button" className={secondary} onClick={() => { setPreview(null); setStep(4); }}>Modifier</button><button type="button" className={primary} disabled={busy || !readiness.saveReady} onClick={save}>{busy ? "Enregistrement…" : realityMode === "DECLARE" ? "Confirmer la réalisation" : realityMode === "CORRECT" ? "Enregistrer la déclaration corrigée" : editedId ? "Enregistrer la modification" : simulationMode ? "Ajouter réellement au mois" : "Ajouter au mois"}</button></div></div>}
     </div>}
     <div className="mt-6 grid gap-5 lg:grid-cols-2"><div><h3 className="text-base font-black">À venir / prévues ({planned.length})</h3>{planned.length ? <ul className="mt-3 grid gap-3">{planned.map(card)}</ul> : <p className="mt-2 text-sm text-slate-600">Aucune dépense ajoutée pour l’instant.</p>}</div><div><h3 className="text-base font-black">Réalisées ce mois-ci ({realized.length})</h3>{realized.length ? <ul className="mt-3 grid gap-3">{realized.map(card)}</ul> : <p className="mt-2 text-sm text-slate-600">Aucune prévision marquée comme réalisée.</p>}</div></div>
     {(new Big(funding.swile.reserved).gt(0) || new Big(funding.edenred.reserved).gt(0) || new Big(funding.swile.usedDeclared).gt(0) || new Big(funding.edenred.usedDeclared).gt(0)) && <p className="mt-4 text-xs text-slate-600">Financement du mois : Swile {money(funding.swile.reserved)} réservés et {money(funding.swile.usedDeclared)} utilisés déclarés ; Edenred {money(funding.edenred.reserved)} réservés et {money(funding.edenred.usedDeclared)} utilisés déclarés. Aucun solde réel n’est débité.</p>}

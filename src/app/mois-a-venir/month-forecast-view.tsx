@@ -7,6 +7,7 @@ import { MonthStory } from "./month-story";
 import type { PlannedExpenseCard } from "./planned-expenses-projection";
 import type { PlannedPlaceOption } from "@/domain/phase2/planned-places";
 import type { PlannedVehicleEstimate } from "@/server/phase2/planned-context";
+import { calibrateForecast } from "@/server/phase2/forecast-memory";
 
 const money = (value: string | null, exact = false) => value === null ? "À confirmer" : new Intl.NumberFormat("fr-FR", {
   style: "currency", currency: "EUR", maximumFractionDigits: exact ? 2 : 0, minimumFractionDigits: exact ? 2 : 0,
@@ -73,6 +74,7 @@ export function MonthForecastView({ forecast, scenario, stored, plannedExpenses,
     {(!stored.inputs.declaredResources["benefit:swile"] || !stored.inputs.declaredResources["benefit:edenred"])
       && <section className="card p-5"><h2 className="text-xl font-black">Préparer les ressources de {monthLabel(targetMonth)}</h2><p className="mt-2 text-sm">Renseignez vos titres-restaurants prévus pour ce mois, y compris 0 € si vous n’en prévoyez aucun. Les ressources et les exceptions d’un autre mois ne sont pas copiées.</p><ActionForm targetMonth={targetMonth} intent="declare-monthly-benefits" label="Enregistrer les ressources de ce mois"><Field label="Ressource Swile du mois (€)" name="swileResource" type="number" min="0" required value={stored.inputs.declaredResources["benefit:swile"]} /><Field label="Ressource Edenred du mois (€)" name="edenredResource" type="number" min="0" required value={stored.inputs.declaredResources["benefit:edenred"]} /></ActionForm></section>}
     <MonthStory plan={scenario.economicPlan} targetMonth={targetMonth} plannedExpenses={plannedExpenses} persons={persons} places={places} vehicle={vehicle} prices={prices} today={today} dateEvidence={forecast.referencePlan?.estimatedDays ?? {}}
+      settings={stored.inputs.decision} memory={forecast.forecastMemory} calibrated={forecast.predictionEvidence ? Object.keys(calibrateForecast(forecast.forecastMemory ?? [], forecast.predictionEvidence, today)).length > 0 : false}
       references={Object.fromEntries(forecast.components.map((part) => [part.key, { freshnessDate: part.freshnessDate, confidence: part.confidence }]))} />
 
     <section id="complete-month" className="card p-5 sm:p-7" aria-labelledby="complete-title">

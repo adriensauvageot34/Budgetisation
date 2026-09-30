@@ -12,6 +12,10 @@ import { deriveMonthScenario, type MonthInputs } from "@/server/phase2/month-sce
 import { readPlannedExpenses } from "@/server/phase2/planned-expenses";
 
 import { planningDate } from "@/server/phase2/planning-date";
+import { parseMonthDecisionSettings, type MonthDecisionSettings } from "@/domain/phase2/month-decision-contract";
+import { makeForecastCheckpoint, insertForecastCheckpoint } from "@/server/phase2/forecast-memory";
+import { projectMonthDecision } from "@/server/phase2/month-decision-projection";
+import Big from "big.js";
 
 const field = (form: FormData, key: string): string => String(form.get(key) ?? "").trim();
 const optionalMoney = (form: FormData, key: string): string | null => field(form, key) || null;
@@ -32,7 +36,17 @@ export async function updateMonthInputs(form: FormData): Promise<void> {
   const current: MonthInputs = stored.inputs;
   const intent = field(form, "intent");
   let next: MonthInputs;
-  if (intent === "settings") {
+  if (intent === "save-month-assumption" || intent === "clear-month-assumption" || intent === "save-month-goal" || intent === "clear-month-goal") {
+    if (targetMonth < planningDate(household.timezone).slice(0, 7)) throw new TypeError("MONTH_DECISION_PAST_READ_ONLY");
+    const decision = parseMonthDecisionSettings(current.decision);
+    const assumptions = { ...decision.assumptions };
+    const key = field(form, "categoryKey") as keyof typeof assumptions;
+    if (intent === "clear-month-assumption") delete assumptions[key];
+    if (intent === "save-month-assumption") assumptions[key] = field(form, "assumptionMode") === "CUSTOM"
+      ? { mode: "CUSTOM", amount: field(form, "assumptionAmount") } : { mode: field(form, "assumptionMode") as "LOWER" | "HIGHER" };
+    next = { ...current, decision: parseMonthDecisionSettings({ ...decision, assumptions,
+      goal: intent === "clear-month-goal" ? null : intent === "save-month-goal" ? field(form, "monthGoal") : decision.goal }) };
+  } else if (intent === "settings") {
     const openingAmount = optionalMoney(form, "openingAmount");
     const benefitBalance = optionalMoney(form, "benefitBalance");
     const benefitLoading = optionalMoney(form, "benefitLoading");
@@ -124,4 +138,47 @@ export async function updateMonthInputs(form: FormData): Promise<void> {
   }
   await saveMonthInputs(supabase, household.householdId, targetMonth, user.id, next);
   revalidatePath("/mois-a-venir");
+}
+
+async function decisionContext(targetMonth: string) {
+  if (!/^\d{4}-(0[1-9]|1[0-2])$/u.test(targetMonth)) throw new TypeError("MONTH_INPUT_TARGET_INVALID");
+  const { supabase, user } = await getAuthenticatedBootstrapClient();
+  const household = await getCurrentHousehold(supabase);
+  if (!household) throw new TypeError("MONTH_INPUT_HOUSEHOLD_MISSING");
+  const asOf = planningDate(household.timezone);
+  if (targetMonth < asOf.slice(0, 7)) throw new TypeError("MONTH_DECISION_PAST_READ_ONLY");
+  const forecast = await resolvePlanningMonthForecast(createCanonicalReadClient(), household.householdId, targetMonth);
+  const [stored, expenses] = await Promise.all([readMonthInputs(supabase, household.householdId, targetMonth), readPlannedExpenses(supabase, household.householdId, targetMonth)]);
+  return { user, household, asOf, forecast, stored, expenses };
+}
+
+/** Explicit conservation only; consultation and simulation never write. */
+export async function preserveMonthForecast(targetMonth: string): Promise<{ ok: boolean; message: string }> {
+  const ctx = await decisionContext(targetMonth);
+  const plan = deriveMonthScenario(ctx.forecast, ctx.stored.inputs, null, ctx.asOf, ctx.expenses).economicPlan;
+  if (!plan) return { ok: false, message: "Complétez les ressources du mois avant de conserver une estimation." };
+  await insertForecastCheckpoint(createCanonicalReadClient(), ctx.household.householdId, ctx.user.id, targetMonth, ctx.asOf,
+    makeForecastCheckpoint(ctx.forecast, ctx.stored.inputs, plan, ctx.asOf));
+  revalidatePath("/mois-a-venir");
+  return { ok: true, message: "Estimation conservée. Elle pourra être comparée aux imports complets du mois." };
+}
+
+export async function simulateMonthBehavior(targetMonth: string, preset: string) {
+  const ctx = await decisionContext(targetMonth);
+  const normal = deriveMonthScenario(ctx.forecast, ctx.stored.inputs, null, ctx.asOf, ctx.expenses).economicPlan;
+  if (!normal?.narrative.prediction) return { ok: false as const, message: "Complétez les ressources du mois avant de simuler." };
+  const categoryKey = preset === "restaurant-zero" ? "household-restaurants" : preset === "groceries-minus-100" ? "groceries" : preset === "tobacco-minus-20" ? "tobacco-vape" : null;
+  if (!categoryKey) throw new TypeError("MONTH_BEHAVIOR_PRESET_INVALID");
+  const category = [...normal.narrative.prediction.essential, ...normal.narrative.prediction.optional].find(c => c.key === categoryKey)!;
+  const observed = new Big(category.alreadyRealized), total = new Big(category.projectedMonth.central);
+  // Existing observations and explicit projects cannot be undone by a behavioral scenario.
+  const floor = observed.plus(category.habitualProjectGross);
+  const target = preset === "restaurant-zero" ? floor : preset === "groceries-minus-100" ? total.minus(100) : total.minus(observed).times(.8).plus(observed);
+  const amount = (target.lt(floor) ? floor : target).toFixed(2);
+  const settings: MonthDecisionSettings = parseMonthDecisionSettings({ ...parseMonthDecisionSettings(ctx.stored.inputs.decision),
+    assumptions: { ...ctx.stored.inputs.decision?.assumptions, [categoryKey]: { mode: "CUSTOM", amount } } });
+  const plan = deriveMonthScenario(ctx.forecast, { ...ctx.stored.inputs, decision: settings }, null, ctx.asOf, ctx.expenses).economicPlan!;
+  return { ok: true as const, categoryKey, amount, projection: plan.narrative.final,
+    delta: new Big(plan.narrative.final.central).minus(normal.narrative.final.central).toFixed(2),
+    decision: projectMonthDecision(plan, settings, targetMonth, ctx.asOf, ctx.expenses, ctx.forecast.forecastMemory) };
 }

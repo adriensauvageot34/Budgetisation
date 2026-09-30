@@ -113,7 +113,7 @@ const {readMonthPredictionEvidence}=require("../src/server/phase2/month-predicti
 const household=randomUUID(), operationRows=Array.from({length:1001},(_,i)=>({operation_id:String(i).padStart(4,"0"),
   date_bancaire:"2026-09-30",personne_concernee:null,type_precis:null,marchand:null}));
 const tables={canonical_household_scope_control:[{household_count:1,household_id:household,status:"READY"}],
-  operations:operationRows,subcategories:[{subcategory_id:"food",nom_canonique:"Courses alimentaires"}],persons:[],mobility_legs:[],
+  operations:operationRows,subcategories:[{subcategory_id:"food",nom_canonique:"Courses alimentaires"}],persons:[],mobility_legs:[],import_batches:[],
   financial_economic_cost_canonical:operationRows.map((r,i)=>({operation_id:r.operation_id,subcategory_id:"food",canonical_economic_net:"1.00",canonical_component_key:String(i).padStart(4,"0")}))};
 const reads=[];
 const client={from(table){reads.push(table);let values=[...tables[table]];const q={select(){return q;},
@@ -145,7 +145,7 @@ const {MonthStory}=require("../src/app/mois-a-venir/month-story.tsx");
 const {AppRouterContext}=require("next/dist/shared/lib/app-router-context.shared-runtime");
 const router={refresh(){},push(){},replace(){},back(){},forward(){},prefetch(){}};
 const html=renderToStaticMarkup(React.createElement(AppRouterContext.Provider,{value:router},React.createElement(MonthStory,{plan:first,targetMonth:"2026-10",plannedExpenses:[],persons:[],places:[],vehicle:null,prices:[],today:"2026-10-01",dateEvidence:{},references:{}})));
-const titles=["Nos ressources","Ce qui part quoi qu’il arrive","Après nos charges certaines","Ajouter quelque chose à notre mois","Calendrier du mois","Après nos charges et nos projets","Ce qu’il nous faut pour le quotidien","Après l’essentiel du mois","Ce qui pourrait encore s’ajouter","Projection de fin de mois"];
+const titles=["Nos ressources","Ce qui part quoi qu’il arrive","Après nos charges certaines","Ajouter quelque chose à notre mois","Calendrier du mois","Ce qu’il nous faut pour le quotidien","Après l’essentiel du mois","Ce qui pourrait encore s’ajouter","Projection de fin de mois"];
 let previous=-1;for(const title of titles){const index=html.indexOf(title);assert(index>previous,title);previous=index;}
 assert.doesNotMatch(html,/Comment se construit notre mois|Ce qu’on dépense parfois en plus|Reste projeté en fin de mois/);
 assert.match(html,/Bas plausible/);assert.match(html,/Haut plausible/);assert.match(html,/Scénario habituel/);
