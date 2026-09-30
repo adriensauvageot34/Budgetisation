@@ -58,7 +58,9 @@ for (const count of [1, 2, 3]) {
   assert.equal((rendered.match(/data-calendar-event=/gu) ?? []).length, Math.min(count, 2));
   assert.match(rendered, /36,98/);
   assert.equal((rendered.match(/data-calendar-day-total=/gu) ?? []).length, count > 1 ? 1 : 0, "single event amount is not repeated as a daily total");
-  assert.match(rendered, /grid-template-columns:40px minmax\(0,1fr\) \d+ch/);
+  assert.match(rendered, /grid-cols-\[40px_minmax\(0,1fr\)_max-content\]/);
+  assert.match(rendered, /grid-cols-subgrid/);
+  assert.match(rendered, /\[&amp;_button\]:text-xs!/);
   assert.match(rendered, /whitespace-nowrap font-semibold tabular-nums/);
   if (count > 2) assert.match(rendered, /\+1 autre/); else assert.doesNotMatch(rendered, /\+\d autre/);
 }

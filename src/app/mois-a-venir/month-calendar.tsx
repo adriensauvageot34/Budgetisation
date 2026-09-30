@@ -141,7 +141,7 @@ export function MonthCalendar({ targetMonth, entries, undated, dailyTotals, toda
   const create = (date: string) => onAction?.({ action: "CREATE", plannedDate: date });
 
   return <div className="min-w-0">
-    <div className="overflow-hidden rounded-xl border border-slate-200 bg-white">
+    <div className="overflow-hidden rounded-xl border border-slate-200 bg-white [&_button]:text-xs!">
     <header className="flex items-center justify-between gap-3 border-b border-slate-100 px-3 py-1.5"><h3 className="text-sm font-bold capitalize">{monthTitle}</h3>
       <div className="flex gap-0.5" aria-label="Éléments affichés">{([ ["ALL", "Tout"], ["PROJECTS", "Projets"], ["CHARGES", "Charges"] ] as const).map(([value, label]) =>
         <button key={value} type="button" aria-pressed={filter === value} onClick={() => setFilter(value)} className={`rounded-sm px-2 py-0.5 text-xs font-medium focus-visible:outline-2 focus-visible:outline-indigo-700 ${filter === value ? "bg-slate-100 text-slate-800" : "text-slate-500 hover:text-slate-800"}`}>{label}</button>)}</div>
@@ -160,7 +160,6 @@ export function MonthCalendar({ targetMonth, entries, undated, dailyTotals, toda
             const allDay = monthEntries.filter((item) => item.date === date);
             const dayEntries = allDay.filter(accepts), visible = visibleCalendarItems(dayEntries);
             const summary = calendarDaySummary(dayEntries);
-            const amountChars = Math.max(0, ...visible.map((item) => calendarMoney(item.amount).length)) + 1;
             const isToday = date === today;
             return <div role="gridcell" aria-selected={selected === date} key={date} className={`group relative min-w-0 border-r border-slate-100 px-1.5 last:border-r-0 ${selected === date ? "bg-sky-50 ring-1 ring-inset ring-sky-200" : columnIndex > 4 ? "bg-slate-50/60" : ""}`}
               onClick={(event) => { if (event.target === event.currentTarget && allDay.length) { const source = dayButtons.current.get(day); if (source) open(date, source); } }}
@@ -175,17 +174,17 @@ export function MonthCalendar({ targetMonth, entries, undated, dailyTotals, toda
                 {dayEntries.length > 1 && <span data-calendar-day-total={date} className="pt-0.5 font-medium text-slate-500">{calendarMoney(summary.grossTotal)}</span>}
                 {!allDay.length && <span className="absolute inset-x-0 top-9 text-center text-xs font-medium text-sky-700 opacity-0 group-hover:opacity-100 group-focus-within:opacity-100">+ Prévoir</span>}
               </button>
+              <div className="grid grid-cols-[40px_minmax(0,1fr)_max-content] gap-x-1.5">
               {visible.map((item) => <button key={item.key} type="button" tabIndex={-1} data-calendar-event={item.key}
                 title={`${calendarEventLabel(item)} · ${calendarMoney(item.amount)}`}
                 aria-label={`${calendarEventLabel(item)}, ${calendarMoney(item.amount)}, ${calendarStateLabel(item)}`}
                 aria-haspopup="dialog" aria-expanded={selected === date && focusedKey === item.key}
-                style={{ gridTemplateColumns: `40px minmax(0,1fr) ${amountChars}ch` }}
-                onClick={(event) => open(date, event.currentTarget, item.key)} className={`mb-0.5 grid h-6 w-full min-w-0 cursor-pointer items-center gap-x-1.5 rounded text-left text-xs hover:bg-slate-100 focus-visible:bg-slate-100 focus-visible:outline-2 focus-visible:outline-indigo-700 ${eventTone(item)}`}>
+                onClick={(event) => open(date, event.currentTarget, item.key)} className={`col-span-3 mb-0.5 grid h-6 w-full min-w-0 grid-cols-subgrid cursor-pointer items-center gap-x-1.5 rounded text-left text-xs hover:bg-slate-100 focus-visible:bg-slate-100 focus-visible:outline-2 focus-visible:outline-indigo-700 ${eventTone(item)}`}>
                 <span className="relative flex w-10 items-center justify-center"><span aria-hidden="true" data-calendar-state={item.nature} className="absolute -left-1.5 w-2 text-center text-xs">
                   {item.expense?.needsRealityConfirmation ? "!" : item.nature === "DECLARED_REALIZED" ? "✓" : item.nature === "PLANNED_EXPENSE" ? "●" : ""}</span><EventIcon item={item} /></span>
                 <span className="min-w-0 truncate">{calendarEventLabel(item)}</span>
                 <strong className="shrink-0 whitespace-nowrap font-semibold tabular-nums">{calendarMoney(item.amount)}</strong>
-              </button>)}
+              </button>)}</div>
               {dayEntries.length > visible.length && <button type="button" tabIndex={-1} aria-haspopup="dialog" onClick={(event) => open(date, event.currentTarget)} className="cursor-pointer rounded px-1 text-xs font-medium text-slate-500 hover:bg-slate-100 hover:text-indigo-700 focus-visible:bg-slate-100 focus-visible:outline-2 focus-visible:outline-indigo-700">+{dayEntries.length - visible.length} {dayEntries.length - visible.length > 1 ? "autres" : "autre"} <span aria-hidden="true">→</span></button>}
             </div>;
           })}
