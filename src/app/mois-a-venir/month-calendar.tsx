@@ -1,8 +1,8 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useId, useLayoutEffect, useRef, useState } from "react";
 import Image from "next/image";
-import { X, House, Smartphone, ShieldCheck, Landmark, Layers, BookOpen, PiggyBank } from "lucide-react";
+import { X, House, Smartphone, ShieldCheck, Landmark, Layers, BookOpen, PiggyBank, Droplets } from "lucide-react";
 import { HistorySemanticIcon } from "@/features/history-v2/semantic-icon";
 import type { CalendarEntry, CalendarItem } from "./planned-expenses-projection";
 import { calendarDate, calendarDateLabel, calendarDayDescription, calendarDaySummary, calendarEventLabel, calendarExpenseActions,
@@ -11,9 +11,9 @@ import { calendarDate, calendarDateLabel, calendarDayDescription, calendarDaySum
 import { usePlannedExpenseInteractions, type PlannedExpenseInteraction } from "./planned-expense-interactions";
 
 const eventTone = (item: CalendarItem) => item.nature === "DECLARED_REALIZED"
-  ? "bg-emerald-50 text-emerald-900" : item.expense?.needsRealityConfirmation
-    ? "bg-amber-50 text-amber-900" : item.nature === "PLANNED_EXPENSE"
-      ? "bg-sky-50 text-sky-900" : "text-slate-700";
+  ? "text-emerald-800" : item.expense?.needsRealityConfirmation
+    ? "text-amber-800" : item.nature === "PLANNED_EXPENSE"
+      ? "text-sky-800" : "text-slate-700";
 const buttonClass = "rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-bold focus-visible:outline-2 focus-visible:outline-indigo-700 disabled:opacity-50";
 const disclosureClass = "border-t border-slate-200 pt-3 text-sm [&>summary]:cursor-pointer [&>summary]:font-semibold";
 const categoryIcons = { Maison: House, Télécom: Smartphone, Assurances: ShieldCheck, Banque: Landmark,
@@ -21,11 +21,11 @@ const categoryIcons = { Maison: House, Télécom: Smartphone, Assurances: Shield
 const brandWidths: Record<string, number> = { sfr: 28, edf: 28, google: 22, "credit-agricole": 22,
   max: 30, pacifica: 44, nexity: 40, openai: 42 };
 
-function EventIcon({ item, size = 22 }: { item: CalendarItem; size?: number }) {
+function EventIcon({ item, size = 24 }: { item: CalendarItem; size?: number }) {
   const icon = calendarIcon(item);
-  const CategoryIcon = !item.expense ? categoryIcons[item.group as keyof typeof categoryIcons] : undefined;
+  const CategoryIcon = !item.expense ? item.calendarLabel === "Eau" ? Droplets : categoryIcons[item.group as keyof typeof categoryIcons] : undefined;
   return <span data-brand-key={icon.brandKey ?? undefined} className="inline-flex shrink-0 items-center justify-center" aria-hidden="true">
-    {icon.brandKey ? <Image src={`/brands/${icon.brandKey}.svg`} width={Math.round((brandWidths[icon.brandKey] ?? 22) * size / 22)} height={size} alt="" />
+    {icon.brandKey ? <Image src={`/brands/${icon.brandKey}.svg`} width={Math.min(40, Math.round((brandWidths[icon.brandKey] ?? 22) * size / 22))} height={size} alt="" />
       : CategoryIcon ? <CategoryIcon size={size} /> : <HistorySemanticIcon iconKey={icon.semanticIconKey} size={size} />}
   </span>;
 }
@@ -34,14 +34,19 @@ function EventIcon({ item, size = 22 }: { item: CalendarItem; size?: number }) {
 export function CalendarEventDetails({ item, onAction, expanded = false }: { item: CalendarItem;
   onAction?: (interaction: PlannedExpenseInteraction) => void; expanded?: boolean }) {
   const expense = item.expense, detail = expense?.detail;
+  const [revealed, setRevealed] = useState(expanded);
+  const detailId = useId();
+  useEffect(() => setRevealed(expanded), [expanded]);
   return <article data-expense-id={expense?.id} className="space-y-2 border-b border-slate-100 py-3 last:border-0">
-    <div className="flex items-start gap-2"><EventIcon item={item} size={26} /><div className="min-w-0 flex-1">
-      <h3 className="break-words text-sm font-bold">{calendarEventLabel(item)}</h3>
-      {expense && <p className={`mt-1 inline-block text-xs font-semibold ${eventTone(item)}`}>{calendarStateLabel(item)}</p>}
-    </div><strong className="whitespace-nowrap text-sm tabular-nums">{calendarMoney(item.amount)}</strong></div>
+    <button type="button" aria-expanded={revealed} aria-controls={detailId} onClick={() => setRevealed(!revealed)}
+      className="grid w-full cursor-pointer grid-cols-[40px_minmax(0,1fr)_auto] items-center gap-x-2 rounded text-left hover:bg-slate-50 focus-visible:outline-2 focus-visible:outline-indigo-700">
+      <span className="flex justify-center"><EventIcon item={item} /></span><span className="break-words text-sm font-bold">{calendarEventLabel(item)}</span>
+      <strong className="whitespace-nowrap text-sm tabular-nums">{calendarMoney(item.amount)}</strong></button>
+    {expense && <p className={`text-xs font-semibold ${eventTone(item)}`}>{calendarStateLabel(item)}</p>}
     <p className="text-xs text-slate-600">{item.dateCertainty === "HISTORICAL_ESTIMATE"
-      ? `Date habituelle estimée autour du ${item.date ? calendarDate(item.date) : "jour non précisé"}`
+      ? `Date estimée autour du ${item.date ? calendarDate(item.date) : "jour non précisé"}`
       : item.date ? `${calendarDateLabel(item)} · ${calendarDate(item.date)}` : "Ce mois-ci · sans jour précis"}</p>
+    {revealed && <div id={detailId} className="space-y-2">
     {expense && <>
       {detail?.placeLabel && <p className="text-sm">Lieu : <strong>{detail.placeLabel}</strong></p>}
       {!!detail?.participantLabels?.length && <p className="text-sm">Avec : {detail.participantLabels.join(" · ")}</p>}
@@ -69,12 +74,12 @@ export function CalendarEventDetails({ item, onAction, expanded = false }: { ite
           <span className="shrink-0 tabular-nums">{cost.quantity} × {calendarMoney(cost.unitAmount)}</span></li>)}
       </ul></details>
     </>}
-    <details className={disclosureClass} open={expanded}><summary>Détails</summary><p className="mt-2 break-words text-xs">{item.fullLabel ?? item.label}</p>
-      {item.dateEvidenceCount && item.dateCertainty === "HISTORICAL_ESTIMATE" ? <p className="mt-1 text-xs">Basée sur {item.dateEvidenceCount} observation{item.dateEvidenceCount > 1 ? "s" : ""}.</p> : null}
+    <div className="border-t border-slate-100 pt-2"><p className="break-words text-xs">{item.fullLabel ?? item.label}</p>
+      {item.dateEvidenceCount && item.dateCertainty === "HISTORICAL_ESTIMATE" ? <p className="mt-1 text-xs">Basée sur {item.dateEvidenceCount} prélèvement{item.dateEvidenceCount > 1 ? "s" : ""} observé{item.dateEvidenceCount > 1 ? "s" : ""}. Le jour exact peut varier.</p> : null}
       {item.freshnessDate && <p className="mt-1 text-xs">Dernière référence disponible : {calendarDate(item.freshnessDate)}.</p>}
       {item.provenance && <p className="mt-1 text-xs">{item.provenance === "SNAPSHOT" ? "Issue de la prévision publiée" : "Renseignée pour ce mois"}.</p>}
       {expense && <p className="mt-1 text-xs">Déclaration prospective, sans transaction ni débit de wallet observé.</p>}
-    </details>
+    </div></div>}
   </article>;
 }
 
@@ -108,11 +113,11 @@ export function MonthCalendar({ targetMonth, entries, undated, dailyTotals, toda
   const title = selectedUndated ? "Sans jour précis" : selected ? calendarDate(selected) : "";
   const monthTitle = new Intl.DateTimeFormat("fr-FR", { month: "long", year: "numeric", timeZone: "UTC" }).format(new Date(`${targetMonth}-01T12:00:00Z`));
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (!selected || !panel.current || !opener.current) return;
     const node = panel.current;
     const reposition = () => {
-      const anchor = opener.current?.getBoundingClientRect();
+      const anchor = (focusedKey ? opener.current : opener.current?.closest('[role="gridcell"]') ?? opener.current)?.getBoundingClientRect();
       if (anchor) setPanelPosition(calendarPopoverPosition(anchor,
         { width: window.innerWidth, height: window.innerHeight },
         { width: node.offsetWidth, height: node.offsetHeight }));
@@ -136,26 +141,29 @@ export function MonthCalendar({ targetMonth, entries, undated, dailyTotals, toda
   const create = (date: string) => onAction?.({ action: "CREATE", plannedDate: date });
 
   return <div className="min-w-0">
-    <header className="mb-2 flex items-center justify-between gap-3"><h3 className="text-base font-bold capitalize">{monthTitle}</h3>
-      <div className="flex gap-0.5 rounded-md bg-slate-50 p-0.5" aria-label="Éléments affichés">{([ ["ALL", "Tout"], ["PROJECTS", "Projets"], ["CHARGES", "Charges"] ] as const).map(([value, label]) =>
-        <button key={value} type="button" aria-pressed={filter === value} onClick={() => setFilter(value)} className={`rounded px-2.5 py-1 text-xs font-medium focus-visible:outline-2 focus-visible:outline-indigo-700 ${filter === value ? "bg-white text-slate-800 shadow-sm" : "text-slate-500 hover:text-slate-800"}`}>{label}</button>)}</div>
+    <div className="overflow-hidden rounded-xl border border-slate-200 bg-white">
+    <header className="flex items-center justify-between gap-3 border-b border-slate-100 px-3 py-1.5"><h3 className="text-sm font-bold capitalize">{monthTitle}</h3>
+      <div className="flex gap-0.5" aria-label="Éléments affichés">{([ ["ALL", "Tout"], ["PROJECTS", "Projets"], ["CHARGES", "Charges"] ] as const).map(([value, label]) =>
+        <button key={value} type="button" aria-pressed={filter === value} onClick={() => setFilter(value)} className={`rounded-sm px-2 py-0.5 text-xs font-medium focus-visible:outline-2 focus-visible:outline-indigo-700 ${filter === value ? "bg-slate-100 text-slate-800" : "text-slate-500 hover:text-slate-800"}`}>{label}</button>)}</div>
     </header>
-    <div role="grid" aria-label={`Calendrier de ${monthTitle}`} aria-colcount={7} aria-rowcount={weeks.length + 1} className="overflow-hidden rounded-xl border border-slate-200 bg-white">
+    <div role="grid" aria-label={`Calendrier de ${monthTitle}`} aria-colcount={7} aria-rowcount={weeks.length + 1}>
       <div role="row" className="grid grid-cols-7 border-b border-slate-200 text-center text-xs font-semibold text-slate-500">
         {["Lun", "Mar", "Mer", "Jeu", "Ven", "Sam", "Dim"].map((day) => <span role="columnheader" key={day} className="py-2">{day}</span>)}
       </div>
       {weeks.map((week, rowIndex) => {
         const maxEvents = Math.max(...week.map((day) => monthEntries.filter((item) => item.date === `${targetMonth}-${String(day).padStart(2, "0")}` && accepts(item)).length));
-        const height = maxEvents > 2 ? "h-[98px]" : maxEvents ? "h-[86px]" : "h-[76px]";
+        const height = maxEvents > 2 ? "h-[98px]" : maxEvents > 1 ? "h-[82px]" : maxEvents ? "h-[74px]" : "h-[66px]";
         return <div role="row" key={rowIndex} className={`grid grid-cols-7 border-b border-slate-100 last:border-b-0 ${height}`}>
           {week.map((day, columnIndex) => {
-            if (day === null) return <div role="gridcell" key={`empty-${columnIndex}`} className="border-r border-slate-100 bg-slate-50/40 last:border-r-0" />;
+            if (day === null) return <div role="gridcell" data-outside-month="true" key={`empty-${columnIndex}`} className="border-r border-slate-100 bg-slate-100/70 opacity-60 last:border-r-0" />;
             const date = `${targetMonth}-${String(day).padStart(2, "0")}`;
             const allDay = monthEntries.filter((item) => item.date === date);
             const dayEntries = allDay.filter(accepts), visible = visibleCalendarItems(dayEntries);
             const summary = calendarDaySummary(dayEntries);
+            const amountChars = Math.max(0, ...visible.map((item) => calendarMoney(item.amount).length)) + 1;
             const isToday = date === today;
-            return <div role="gridcell" aria-selected={selected === date} key={date} className={`group relative min-w-0 border-r border-slate-100 px-1.5 last:border-r-0 ${columnIndex > 4 ? "bg-slate-50/60" : ""}`}
+            return <div role="gridcell" aria-selected={selected === date} key={date} className={`group relative min-w-0 border-r border-slate-100 px-1.5 last:border-r-0 ${selected === date ? "bg-sky-50 ring-1 ring-inset ring-sky-200" : columnIndex > 4 ? "bg-slate-50/60" : ""}`}
+              onClick={(event) => { if (event.target === event.currentTarget && allDay.length) { const source = dayButtons.current.get(day); if (source) open(date, source); } }}
               onKeyDown={(event) => { const next = calendarKeyboardDay(day, event.key, days, firstWeekday);
                 if (next !== null) { event.preventDefault(); setActiveDay(next); dayButtons.current.get(next)?.focus(); } }}>
               <button type="button" data-calendar-day={day} ref={(node) => { if (node) dayButtons.current.set(day, node); else dayButtons.current.delete(day); }}
@@ -164,35 +172,34 @@ export function MonthCalendar({ targetMonth, entries, undated, dailyTotals, toda
                 onFocus={() => setActiveDay(day)} onClick={(event) => allDay.length ? open(date, event.currentTarget) : create(date)}
                 className={`flex w-full items-start justify-between pt-1 text-left text-xs tabular-nums focus-visible:outline-2 focus-visible:outline-indigo-700 ${allDay.length ? "h-7" : "absolute inset-0 px-1.5"}`}>
                 <span className={`flex size-5 items-center justify-center ${isToday ? "rounded-full bg-indigo-700 font-bold text-white" : "text-slate-500"}`}>{day}</span>
-                {dayEntries.length > 0 && <span className="pt-0.5 font-semibold text-slate-500">{calendarMoney(summary.grossTotal)}</span>}
+                {dayEntries.length > 1 && <span data-calendar-day-total={date} className="pt-0.5 font-medium text-slate-500">{calendarMoney(summary.grossTotal)}</span>}
                 {!allDay.length && <span className="absolute inset-x-0 top-9 text-center text-xs font-medium text-sky-700 opacity-0 group-hover:opacity-100 group-focus-within:opacity-100">+ Prévoir</span>}
               </button>
               {visible.map((item) => <button key={item.key} type="button" tabIndex={-1} data-calendar-event={item.key}
                 title={`${calendarEventLabel(item)} · ${calendarMoney(item.amount)}`}
                 aria-label={`${calendarEventLabel(item)}, ${calendarMoney(item.amount)}, ${calendarStateLabel(item)}`}
                 aria-haspopup="dialog" aria-expanded={selected === date && focusedKey === item.key}
-                onClick={(event) => open(date, event.currentTarget, item.key)} className={`flex h-[22px] w-full min-w-0 items-center gap-1 px-0.5 text-left text-xs hover:brightness-95 focus-visible:outline-2 focus-visible:outline-indigo-700 ${eventTone(item)}`}>
-                <EventIcon item={item} /><span className="min-w-0 flex-1 overflow-hidden whitespace-nowrap">{calendarEventLabel(item)}</span>
-                {item.nature === "DECLARED_REALIZED" && <span aria-hidden="true">✓</span>}
-                {item.expense?.needsRealityConfirmation && <span aria-hidden="true">?</span>}
+                style={{ gridTemplateColumns: `40px minmax(0,1fr) ${amountChars}ch` }}
+                onClick={(event) => open(date, event.currentTarget, item.key)} className={`mb-0.5 grid h-6 w-full min-w-0 cursor-pointer items-center gap-x-1.5 rounded text-left text-xs hover:bg-slate-100 focus-visible:bg-slate-100 focus-visible:outline-2 focus-visible:outline-indigo-700 ${eventTone(item)}`}>
+                <span className="relative flex w-10 items-center justify-center"><span aria-hidden="true" data-calendar-state={item.nature} className="absolute -left-1.5 w-2 text-center text-xs">
+                  {item.expense?.needsRealityConfirmation ? "!" : item.nature === "DECLARED_REALIZED" ? "✓" : item.nature === "PLANNED_EXPENSE" ? "●" : ""}</span><EventIcon item={item} /></span>
+                <span className="min-w-0 truncate">{calendarEventLabel(item)}</span>
                 <strong className="shrink-0 whitespace-nowrap font-semibold tabular-nums">{calendarMoney(item.amount)}</strong>
               </button>)}
-              {dayEntries.length > visible.length && <button type="button" tabIndex={-1} onClick={(event) => open(date, event.currentTarget)} className="mt-0.5 text-xs font-medium text-slate-500 hover:text-indigo-700 focus-visible:outline-2 focus-visible:outline-indigo-700">+{dayEntries.length - visible.length} {dayEntries.length - visible.length > 1 ? "autres" : "autre"}</button>}
+              {dayEntries.length > visible.length && <button type="button" tabIndex={-1} aria-haspopup="dialog" onClick={(event) => open(date, event.currentTarget)} className="cursor-pointer rounded px-1 text-xs font-medium text-slate-500 hover:bg-slate-100 hover:text-indigo-700 focus-visible:bg-slate-100 focus-visible:outline-2 focus-visible:outline-indigo-700">+{dayEntries.length - visible.length} {dayEntries.length - visible.length > 1 ? "autres" : "autre"} <span aria-hidden="true">→</span></button>}
             </div>;
           })}
         </div>;
       })}
-    </div>
+    </div></div>
     {projects.length > 0 && <section className="mt-3" aria-label="À placer dans le calendrier"><h3 className="text-xs font-semibold text-slate-600">À placer dans le calendrier</h3>
       <ul className="mt-1 divide-y divide-slate-100">{orderCalendarItems(projects).map((item) => <li key={item.key}><button type="button" className="flex w-full items-center gap-2 py-2 text-left text-sm focus-visible:outline-2 focus-visible:outline-indigo-700" aria-haspopup="dialog" onClick={(event) => open(`undated:${item.key}`, event.currentTarget, item.key)}>
         <EventIcon item={item} /><span className="min-w-0 flex-1">{item.calendarLabel ?? item.label} <span className="text-xs text-slate-500">· {calendarStateLabel(item)}</span></span><strong className="tabular-nums">{calendarMoney(item.amount)}</strong></button></li>)}</ul>
     </section>}
-    {monthly.length > 0 && <section className="mt-3 border-t border-slate-100 pt-2" aria-label="Sans jour précis"><h3 className="text-xs font-semibold text-slate-600">Sans jour précis{monthly.length > 1 ? ` (${monthly.length})` : ""}</h3>
-      <ul className="mt-1 flex flex-wrap gap-x-6 gap-y-1">{monthly.map((item) => <li key={item.key} className="flex items-center gap-2 text-xs text-slate-600" title={item.fullLabel ?? item.label}><EventIcon item={item} /><span>{item.calendarLabel ?? item.label}{item.kind === "SAVINGS" && <span className="ml-2 text-slate-500">Objectif du mois</span>}</span><strong className="tabular-nums">{calendarMoney(item.amount)}</strong></li>)}</ul>
-    </section>}
+    {monthly.length > 0 && <UndatedMonthlyItems items={monthly} />}
     {selected && <div ref={panel} popover="auto" role="dialog" aria-modal="false" aria-labelledby="calendar-panel-title" aria-describedby="calendar-panel-summary"
       style={{ left: panelPosition.left, top: panelPosition.top }}
-      className="fixed m-0 w-[420px] max-w-[calc(100vw-24px)] max-h-[min(440px,calc(100dvh-24px))] overflow-y-auto rounded-xl border border-slate-200 bg-white p-4 text-slate-900 shadow-xl"
+      className="fixed m-0 w-[380px] max-w-[calc(100vw-24px)] max-h-[min(440px,calc(100dvh-24px))] overflow-y-auto rounded-xl border border-slate-200 bg-white p-3 text-slate-900 shadow-xl"
       onToggle={(event) => { if (event.newState === "closed" && panel.current === event.currentTarget && !event.currentTarget.matches(":popover-open")) close(); }}
       onKeyDown={(event) => { if (event.key === "Escape") { event.preventDefault(); event.stopPropagation(); close(); } }}>
       <header className="flex items-start justify-between gap-3"><div>
@@ -202,9 +209,18 @@ export function MonthCalendar({ targetMonth, entries, undated, dailyTotals, toda
       <div className="mt-1">{orderCalendarItems(selectedEntries).map((item) => <div key={item.key} tabIndex={-1} ref={(node) => { if (node) eventDetails.current.set(item.key, node); else eventDetails.current.delete(item.key); }}
         className={`scroll-mt-2 focus-visible:outline-2 focus-visible:outline-indigo-700 ${focusedKey === item.key ? "rounded bg-slate-50 px-2" : ""}`}>
         <CalendarEventDetails item={item} onAction={onAction} expanded={focusedKey === item.key} /></div>)}</div>
-      {!selectedUndated && selectedTotal.estimatedCount > 0 && <details className="mt-2 text-xs text-slate-500"><summary className="cursor-pointer focus-visible:outline-2 focus-visible:outline-indigo-700">Détail du total</summary>
+      {!selectedUndated && selectedTotal.estimatedCount > 0 && selectedTotal.exactCount > 0 && <details className="mt-2 text-xs text-slate-500"><summary className="cursor-pointer focus-visible:outline-2 focus-visible:outline-indigo-700">Détail du total</summary>
         <p className="mt-1">À date précise : {calendarMoney(selectedTotal.exactDateTotal)} · À date estimée : {calendarMoney(selectedTotal.estimatedDateTotal)}</p></details>}
-      {!selectedUndated && interactions && <button type="button" className="mt-3 text-sm font-semibold text-sky-800 focus-visible:outline-2 focus-visible:outline-indigo-700" onClick={() => create(selected)}>+ Prévoir quelque chose ce jour</button>}
+      {!selectedUndated && interactions && <button type="button" className="mt-2 w-full border-t border-slate-100 pt-2 text-left text-xs font-semibold text-sky-800 focus-visible:outline-2 focus-visible:outline-indigo-700" onClick={() => create(selected)}>+ Prévoir ce jour</button>}
     </div>}
   </div>;
+}
+
+function UndatedMonthlyItems({ items }: { items: readonly CalendarItem[] }) {
+  const title = `Sans jour précis (${items.length})`;
+  const rows = <ul className="mt-1 divide-y divide-slate-100">{items.map((item) => <li key={item.key} className="grid grid-cols-[40px_minmax(0,1fr)_auto] items-center gap-2 py-1 text-xs text-slate-600" title={item.fullLabel ?? item.label}>
+    <span className="flex justify-center"><EventIcon item={item} /></span><span>{item.calendarLabel ?? item.label}{item.kind === "SAVINGS" && <span className="block text-slate-500">Objectif du mois</span>}</span>
+    <strong className="whitespace-nowrap tabular-nums">{calendarMoney(item.amount)}</strong></li>)}</ul>;
+  return <section className="mt-2" aria-label="Sans jour précis">{items.length > 1 ? <details><summary className="cursor-pointer text-xs font-semibold text-slate-600 focus-visible:outline-2 focus-visible:outline-indigo-700">{title}</summary>{rows}</details>
+    : <><h3 className="text-xs font-semibold text-slate-600">{title}</h3>{rows}</>}</section>;
 }

@@ -57,6 +57,9 @@ for (const count of [1, 2, 3]) {
   const rendered = renderCalendar(data);
   assert.equal((rendered.match(/data-calendar-event=/gu) ?? []).length, Math.min(count, 2));
   assert.match(rendered, /36,98/);
+  assert.equal((rendered.match(/data-calendar-day-total=/gu) ?? []).length, count > 1 ? 1 : 0, "single event amount is not repeated as a daily total");
+  assert.match(rendered, /grid-template-columns:40px minmax\(0,1fr\) \d+ch/);
+  assert.match(rendered, /whitespace-nowrap font-semibold tabular-nums/);
   if (count > 2) assert.match(rendered, /\+1 autre/); else assert.doesNotMatch(rendered, /\+\d autre/);
 }
 
@@ -78,7 +81,7 @@ assert.equal(impact.netAdditionalImpact.central, "0.00"); assert.equal(state.cal
 const card = { ...state.cards[0], detail: { additionalImpact: impact.netAdditionalImpact.central,
   includedBaseline: impact.absorbedByBaseline.central, fuelUsage: impact.fuelUsage,
   funding: projectExpenseFunding(state.cards[0]), childPlaceLabels: [] } };
-const detailed = renderToStaticMarkup(React.createElement(CalendarEventDetails, { item: { ...state.calendar.entries[0], expense: card }, onAction: () => {} }));
+const detailed = renderToStaticMarkup(React.createElement(CalendarEventDetails, { item: { ...state.calendar.entries[0], expense: card }, onAction: () => {}, expanded: true }));
 assert.match(detailed, /S’ajoute au mois/); assert.match(detailed, /0,00/); assert.match(detailed, /60,00/);
 assert.match(detailed, /40,00/); assert.match(detailed, /20,00/); assert.match(detailed, /Oui, ça a eu lieu/);
 assert(state.cards[0].needsRealityConfirmation); assert.equal(root.status,"PLANNED", "CAL-21 past stays Planned");
@@ -91,7 +94,7 @@ assert.equal((await read()).calendar.entries[0].date,"2026-10-22");
 root = value(await a.confirmPlannedExpenseReality("2026-10", expenseDraft(root), command(root))).expense;
 state = await read(); assert.equal(state.calendar.entries[0].nature,"DECLARED_REALIZED");
 const realizedHtml = renderCalendar(state.calendar);
-assert.match(realizedHtml,/✓ Réalisée/); assert.match(realizedHtml,/bg-emerald-50/); assert.doesNotMatch(realizedHtml,/line-through|<del>/);
+assert.match(realizedHtml,/✓ Réalisée/); assert.match(realizedHtml,/text-emerald-800/); assert.match(realizedHtml,/data-calendar-state="DECLARED_REALIZED"[^>]*>✓/); assert.doesNotMatch(realizedHtml,/bg-emerald-50|line-through|<del>/);
 root = value(await a.confirmPlannedExpenseReality("2026-10", { ...expenseDraft(root), costItems:[item("67.00", "restaurant:main", ["restaurant"]) ] }, command(root), true)).expense;
 state = await read(); assert.equal(state.calendar.entries[0].key,root.id); assert.equal(state.calendar.entries[0].amount,"67.00");
 const beforeRestore = state.plan.scenarios;
@@ -150,7 +153,9 @@ assert.equal(calendarMetadata("Pacifica · Habitation").calendarLabel,"Habitatio
 assert.equal(calendarMetadata("Pacifica · Juridique").calendarLabel,"Juridique");
 assert.equal(presentation.calendarEventLabel({...busy.entries[0],...calendarMetadata("Pacifica · Habitation")}),"Habitation");
 assert.equal(presentation.calendarEventLabel({...busy.entries[0],...calendarMetadata("Pacifica · Juridique")}),"Juridique");
-assert.notEqual(calendarMetadata("SFR · Contrat 1234").calendarLabel,calendarMetadata("SFR · Contrat 5678").calendarLabel);
+assert.equal(calendarMetadata("SFR · Contrat 1234").calendarLabel,"Abonnement");
+assert.equal(calendarMetadata("SFR · Contrat 5678").calendarLabel,"Abonnement");
+assert.notEqual(calendarMetadata("SFR · Contrat 1234").fullLabel,calendarMetadata("SFR · Contrat 5678").fullLabel);
 assert.doesNotMatch(calendarMetadata("SFR · Contrat 1234").calendarLabel,/Adrien|Manon|Mobile|Internet/);
 const future = {...card,needsRealityConfirmation:false};
 assert.deepEqual(presentation.calendarExpenseActions(future).map(row=>row.action),["EDIT","REPORT","DELETE"]);
@@ -160,12 +165,16 @@ const important = {...mixed.entries[0],key:"past",amount:"1.00",nature:"PLANNED_
 assert.equal(presentation.visibleCalendarItems([...busy.entries,important])[0].key,"past","past project wins over large routine charges");
 const futureItem = {...important,key:"future",expense:future};
 assert.equal(presentation.visibleCalendarItems([...busy.entries,futureItem])[0].key,"future","explicit future project remains visible");
-const estimatedDetails = renderToStaticMarkup(React.createElement(CalendarEventDetails,{item:{...busy.entries[1],dateEvidenceCount:12}}));
-assert.match(estimatedDetails,/Basée sur 12 observations/);
-assert.match(estimatedDetails,/<details[^>]*><summary>Détails<\/summary>/);
-assert.doesNotMatch(renderToStaticMarkup(React.createElement(CalendarEventDetails,{item:busy.entries[1]})),/12 observations/);
+const estimatedDetails = renderToStaticMarkup(React.createElement(CalendarEventDetails,{item:{...busy.entries[1],dateEvidenceCount:12},expanded:true}));
+assert.match(estimatedDetails,/Basée sur 12 prélèvements observés/);
+assert.match(estimatedDetails,/Date estimée autour du/);
+assert.match(estimatedDetails,/aria-expanded="true"/);
+assert.doesNotMatch(estimatedDetails,/<summary>Détails<\/summary>/);
+assert.doesNotMatch(renderToStaticMarkup(React.createElement(CalendarEventDetails,{item:{...busy.entries[1],dateEvidenceCount:12}})),/12 prélèvements/);
 const sixWeeks = renderToStaticMarkup(React.createElement(MonthCalendar,{targetMonth:"2026-08",entries:[],undated:[],dailyTotals:{},today:"2026-08-12"}));
-assert.equal((sixWeeks.match(/role="row"/gu)??[]).length,7); assert.match(sixWeeks,/h-\[76px\]/);
+assert.equal((sixWeeks.match(/role="row"/gu)??[]).length,7); assert.match(sixWeeks,/h-\[66px\]/);
+assert.equal((sixWeeks.match(/data-outside-month="true"/gu)??[]).length,11);
+assert.doesNotMatch(sixWeeks, /data-outside-month="true"[^>]*>\s*<button/);
 const source = fs.readFileSync("src/app/mois-a-venir/month-calendar.tsx","utf8");
 assert.match(source,/node\.showPopover\(\)/); assert.match(source,/popover="auto"/);
 assert.match(source,/node\.hidePopover\(\)/); assert.match(source,/opener\.current\?\.focus\(/);
@@ -176,14 +185,19 @@ assert.deepEqual(presentation.calendarPopoverPosition({left:1150,right:1280,top:
 assert.deepEqual(presentation.calendarPopoverPosition({left:0,right:150,top:10,bottom:96},{width:500,height:400},{width:420,height:360}),{left:12,top:12});
 for (const [label, expected] of [["SFR – SFR – Internet", "Internet"],["SFR – Mobile Adrien", "Mobile Adrien"],
   ["Crédit Agricole – Cotisation Alertes SMS", "Alertes SMS"],["Crédit Agricole – Tenue de compte", "Tenue de compte"],
-  ["Pacifica – Assurance auto", "Auto"]]) assert.equal(calendarMetadata(label).calendarLabel,expected);
+  ["Pacifica – Assurance auto", "Assurance auto"]]) assert.equal(calendarMetadata(label).calendarLabel,expected);
 const opaque = "SFR – SFR – contrat NCNTE202200123456";
-assert.equal(calendarMetadata(opaque).calendarLabel,"…123456"); assert.equal(calendarMetadata(opaque).fullLabel,opaque);
+assert.equal(calendarMetadata(opaque).calendarLabel,"Abonnement"); assert.equal(calendarMetadata(opaque).fullLabel,opaque);
 assert.doesNotMatch(calendarMetadata(opaque).calendarLabel,/Internet|Mobile|Adrien|Manon|NCNTE/);
+const opaqueItem = {...certain(opaque,"36.98","HISTORICAL_ESTIMATE"),key:"opaque-fixture",...calendarMetadata(opaque),dateEvidenceCount:12};
+assert.doesNotMatch(renderCalendar(projectMonthCalendar([opaqueItem],[])),/123456|NCNTE|…/);
+assert.doesNotMatch(renderToStaticMarkup(React.createElement(CalendarEventDetails,{item:opaqueItem})),/123456|NCNTE/);
+assert.match(renderToStaticMarkup(React.createElement(CalendarEventDetails,{item:opaqueItem,expanded:true})),/NCNTE202200123456/);
+assert.match(renderCalendar(projectMonthCalendar([certain("Eau","23.00")],[])),/lucide-droplets/);
 const realizedSmall = {...futureItem,key:"realized",nature:"DECLARED_REALIZED",amount:"999.00",expense:{...future,status:"DECLARED_REALIZED"}};
 assert.deepEqual(presentation.orderCalendarItems([realizedSmall,futureItem,important,...busy.entries]).slice(0,3).map(row=>row.key),["past","future","realized"]);
 const savings = renderCalendar(projectMonthCalendar([{...certain("Épargne voyage","1200.00","UNKNOWN"),date:null,kind:"SAVINGS",group:"Épargne"}],[]));
-assert.match(savings,/Objectif du mois/); assert.doesNotMatch(savings,/bg-amber|role="alert"|data-calendar-event/);
+assert.match(savings,/Sans jour précis \(1\)/); assert.match(savings,/Objectif du mois/); assert.doesNotMatch(savings,/bg-amber|role="alert"|data-calendar-event/);
 assert.doesNotMatch(source,/line-through|role="region"|set.*Status|declarePlannedExpense/);
 assert(client.writes.every(row=>row.table==="phase2_planned_expenses"));
 console.log("PASS: calendar redesign, compact 2/+N, independent day totals, exact/estimated, labels, salience, today/focus, 6 weeks, lifecycle actions, C8 projection sync and META-20");
