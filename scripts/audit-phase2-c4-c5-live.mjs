@@ -65,7 +65,8 @@ for (const key of ["manon_father", "lucas", "cedric"]) {
   assert.equal(impact.grossCost, impact.netAdditionalImpact.central);
   const invalidEvidence = structuredClone(draft);
   invalidEvidence.context.route.stops.find((stop) => stop.evidence).evidence.observationCount += 1;
-  await assert.rejects(simulatePlannedExpense(client, householdId, forecast, inputs, [], invalidEvidence, "2026-09-30"), /ROUTE_EVIDENCE_STALE/);
+  assert.deepEqual((await simulatePlannedExpense(client, householdId, forecast, inputs, [], invalidEvidence, "2026-09-30")).economicPlan,
+    after, "C6 now re-resolves untrusted/stale route observations using current canonical truth");
 }
 for (const [table, count] of Object.entries(counts)) {
   const result = await client.from(table).select("*", { head: true, count: "exact" }).eq("household_id", householdId);

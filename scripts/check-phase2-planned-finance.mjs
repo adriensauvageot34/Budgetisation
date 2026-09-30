@@ -46,9 +46,13 @@ for (const p of [h, e, marginal]) for (const [axis, scenario] of [["low", "lowCo
 const edited = draft([line("restaurant:main", "65.00")]);
 assert.equal(preview(edited, [another]).grossCost, "65.00"); assert.equal(preview(edited, [another]).netAdditionalImpact.central, "65.00");
 assert.match(fs.readFileSync("src/app/mois-a-venir/planned-expenses-actions.ts", "utf8"), /saved\.filter\(\(expense\) => expense\.id !== editedId\)/);
-// FIN-05, META-09: lifecycle changes two presentation layers and leaves the monthly result/funding intact.
+// FIN-05, META-09: lifecycle preserves economics and moves RESERVED to USED_DECLARED.
 const planned = plan([expense(habitual)]), realized = plan([expense(habitual, "DECLARED_REALIZED")]);
-assert.deepEqual(planned.scenarios, realized.scenarios); assert.deepEqual(planned.plannedFunding, realized.plannedFunding);
+assert.deepEqual(planned.scenarios, realized.scenarios);
+assert.equal(planned.plannedFunding.swile.availableAfter, realized.plannedFunding.swile.availableAfter);
+assert.equal(planned.plannedFunding.swile.reserved, "60.00");
+assert.equal(realized.plannedFunding.swile.usedDeclared, "60.00");
+assert.equal(realized.plannedFunding.swile.reserved, "0.00");
 assert.equal(planned.monthlyLayers.stillPlanned, "60.00"); assert.equal(realized.monthlyLayers.declaredRealized, "60.00");
 assert.equal(planned.monthlyLayers.remainingDailyLife, realized.monthlyLayers.remainingDailyLife);
 for (const p of [planned, realized, plan([another, expense(extra)])])

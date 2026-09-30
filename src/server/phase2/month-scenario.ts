@@ -142,9 +142,9 @@ export type MonthEconomicPlan = Readonly<{ resources: readonly PlanResource[]; s
     netImpact: ForecastRange; absorbedByBaseline: ForecastRange };
   monthlyLayers: { afterCertainOutflows: string; declaredRealized: string; stillPlanned: string;
     remainingDailyLife: string; projectedRemainder: string };
-  plannedFunding: { bankAllocated: string; fundingToComplete: string;
-    swile: { resource: string; reserved: string; availableAfter: string; shortfall: string };
-    edenred: { resource: string; reserved: string; availableAfter: string; shortfall: string } };
+  plannedFunding: { bankAllocated: string; bankReserved: string; bankUsedDeclared: string; fundingToComplete: string;
+    swile: { resource: string; reserved: string; usedDeclared: string; availableAfter: string; shortfall: string };
+    edenred: { resource: string; reserved: string; usedDeclared: string; availableAfter: string; shortfall: string } };
   automaticEventProvision: "0.00"; declaredEventImpact: string }>;
 
 const outflowGroup = (label: string): string => /Nexity|EDF|eau|loyer|veolia/iu.test(label) ? "Maison"
@@ -155,6 +155,8 @@ function deriveEconomicPlan(forecast: MonthForecastSnapshot, inputs: MonthInputs
   plannedExpenses: readonly PlannedExpenseScenarioEntry[]): MonthEconomicPlan | null {
   const reference = forecast.referencePlan;
   if (!reference) return null; // Older snapshots remain readable until their normal republication.
+  if (reference.targetMonth !== forecast.meta.targetMonth)
+    throw new TypeError("PLANNED_EXPENSE_BASELINE_MONTH_INVALID");
   const incomeKeys = [
     ["income:Digital Learning Contest", "Salaire Adrien"],
     ["income:Promotrans", "Salaire Manon"],
@@ -218,6 +220,7 @@ function deriveEconomicPlan(forecast: MonthForecastSnapshot, inputs: MonthInputs
   let plannedGross = new Big(0);
   let declaredRealizedGross = new Big(0);
   const funding = { BANK: new Big(0), SWILE: new Big(0), EDENRED: new Big(0) };
+  const usedDeclared = { BANK: new Big(0), SWILE: new Big(0), EDENRED: new Big(0) };
   for (const expense of plannedExpenses) {
     for (const item of expense.costItems) {
       const amount = new Big(plannedLineGross(item));
@@ -227,8 +230,11 @@ function deriveEconomicPlan(forecast: MonthForecastSnapshot, inputs: MonthInputs
       else declaredRealizedGross = declaredRealizedGross.plus(amount);
       // Fuel usage is an economic estimate, not a payable line reserved against a funding source.
       if (costItemCashTreatment(item) !== "ECONOMIC_ONLY")
-        for (const allocation of item.fundingAllocations ?? [{ source: "BANK" as const, amount: amount.toFixed(2) }])
+        for (const allocation of item.fundingAllocations ?? [{ source: "BANK" as const, amount: amount.toFixed(2) }]) {
           funding[allocation.source] = funding[allocation.source].plus(allocation.amount);
+          if (expense.status === "DECLARED_REALIZED")
+            usedDeclared[allocation.source] = usedDeclared[allocation.source].plus(allocation.amount);
+        }
     }
   }
   const gross = plannedGross.plus(declaredRealizedGross);
@@ -248,14 +254,14 @@ function deriveEconomicPlan(forecast: MonthForecastSnapshot, inputs: MonthInputs
   const centralImpact = plannedImpact("central");
   const highImpact = plannedImpact("high");
   const economicResources = salaryCash.plus(mealBenefits);
-  const fundingPocket = (key: "benefit:swile" | "benefit:edenred", reserved: Big) => {
+  const fundingPocket = (key: "benefit:swile" | "benefit:edenred", total: Big, used: Big) => {
     const resource = new Big(resources.find((part) => part.key === key)?.amount ?? "0");
-    const remaining = resource.minus(reserved);
-    return { resource: euros(resource), reserved: euros(reserved), availableAfter: euros(remaining.gt(0) ? remaining : new Big(0)),
+    const remaining = resource.minus(total);
+    return { resource: euros(resource), reserved: euros(total.minus(used)), usedDeclared: euros(used), availableAfter: euros(remaining.gt(0) ? remaining : new Big(0)),
       shortfall: euros(remaining.lt(0) ? remaining.abs() : new Big(0)) };
   };
-  const swile = fundingPocket("benefit:swile", funding.SWILE);
-  const edenred = fundingPocket("benefit:edenred", funding.EDENRED);
+  const swile = fundingPocket("benefit:swile", funding.SWILE, usedDeclared.SWILE);
+  const edenred = fundingPocket("benefit:edenred", funding.EDENRED, usedDeclared.EDENRED);
   const afterCertain = economicResources.minus(certainOutflows);
   const necessary = reference.necessaryTotal;
   const flexible = reference.flexibleTotal;
@@ -271,7 +277,8 @@ function deriveEconomicPlan(forecast: MonthForecastSnapshot, inputs: MonthInputs
       netImpact: { low: euros(lowImpact), central: euros(centralImpact), high: euros(highImpact) },
       absorbedByBaseline: { low: euros(gross.minus(lowImpact)), central: euros(gross.minus(centralImpact)),
         high: euros(gross.minus(highImpact)) } },
-    plannedFunding: { bankAllocated: euros(funding.BANK),
+    plannedFunding: { bankAllocated: euros(funding.BANK), bankReserved: euros(funding.BANK.minus(usedDeclared.BANK)),
+      bankUsedDeclared: euros(usedDeclared.BANK),
       fundingToComplete: euros(new Big(swile.shortfall).plus(edenred.shortfall)), swile, edenred },
     monthlyLayers: { afterCertainOutflows: euros(afterCertain), declaredRealized: euros(declaredRealizedGross),
       stillPlanned: euros(plannedGross), remainingDailyLife: euros(new Big(necessary.central!).plus(flexible.central!)

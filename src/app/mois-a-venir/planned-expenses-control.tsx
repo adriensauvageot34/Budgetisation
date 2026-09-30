@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import Big from "big.js";
 import { CalendarDays, Check, Pencil, Plus, RotateCcw, Trash2 } from "lucide-react";
 import { PLANNED_FAMILIES, PLANNED_SUBTYPE_LABELS, ASSET_AGGREGATE_DESCENDANTS, assetsForModule, plannedAsset, rootAssetModule, suggestedAssetQuantity,
@@ -16,15 +16,16 @@ import { acceptBuilderChild, availableBuilderChildren, changeBuilderContext, cha
   undoBuilderChange } from "@/domain/phase2/planned-builder";
 import type { CostItem, ModulePath, PlannedBaselineKey, PlannedExpenseContext, PlannedPriceSuggestion, PlannedVehicleEstimate } from "@/domain/phase2/planned-contract";
 import type { PlannedExpenseCard } from "./planned-expenses-projection";
-import { changePlannedExpenseStatus, previewPlannedExpense, removePlannedExpense,
-  savePlannedExpense } from "./planned-expenses-actions";
+import { confirmPlannedExpenseReality, restorePlannedExpenseAction, reportPlannedExpenseAction,
+  previewPlannedExpense, removePlannedExpense, savePlannedExpense } from "./planned-expenses-actions";
+import { canCollapseRealityCosts, fundingAfterGrossChange, type PlannedIssue, type PlannedResult, type RealityConfirmationDraft } from "@/domain/phase2/planned-mutations";
 
 import { PlannedRouteEditor } from "./planned-route-editor";
 import { PlannedImpactCard } from "./planned-impact-card";
 
 type Person = { personId: string; displayName: string };
 type Draft = Pick<PlannedExpenseCard, "familyKey" | "subtypeKey" | "title" | "plannedDate" | "costItems" | "context">;
-type Preview = Awaited<ReturnType<typeof previewPlannedExpense>>;
+type Preview = Extract<Awaited<ReturnType<typeof previewPlannedExpense>>, { ok: true }>["value"];
 type Funding = NonNullable<Preview["funding"]>;
 type Props = { targetMonth: string; expenses: readonly PlannedExpenseCard[]; persons: readonly Person[];
   places: readonly PlannedPlaceOption[]; vehicle: PlannedVehicleEstimate | null;
@@ -63,6 +64,10 @@ const baselineFor = (module: AssetModule, personIds: readonly string[], people: 
   const name = people.find((person) => person.personId === personIds[0])?.displayName;
   return baselineKeyForModule(module, name === "Adrien" ? "ADRIEN" : name === "Manon" ? "MANON" : undefined);
 };
+function unwrap<T>(result: PlannedResult<T>): T {
+  if (!result.ok) throw Object.assign(new Error(result.issue.message), { issue: result.issue });
+  return result.value;
+}
 
 export function PlannedExpensesControl({ targetMonth, expenses, persons, places, vehicle, prices, funding }: Props) {
   const router = useRouter();
@@ -82,6 +87,17 @@ export function PlannedExpensesControl({ targetMonth, expenses, persons, places,
   const [modulePath, setModulePath] = useState<AssetModule[]>([]);
   const [search, setSearch] = useState("");
   const [editedId, setEditedId] = useState<string | undefined>();
+  const [requestId, setRequestId] = useState("");
+  const [expectedUpdatedAt, setExpectedUpdatedAt] = useState<string | undefined>();
+  const [realityMode, setRealityMode] = useState<"DECLARE" | "CORRECT" | null>(null);
+  const [issue, setIssue] = useState<PlannedIssue | null>(null);
+  const [notice, setNotice] = useState("");
+  const [reportId, setReportId] = useState<string | null>(null);
+  const [reportDate, setReportDate] = useState("");
+  const inFlight = useRef(false);
+  const draftSession = useRef(0);
+  const currentRevision = useRef(builder.revision);
+  currentRevision.current = builder.revision;
   const [preview, setPreview] = useState<Preview | null>(null);
   const [previewRevision, setPreviewRevision] = useState<number | null>(null);
   const [splitMeal, setSplitMeal] = useState("");
@@ -116,15 +132,19 @@ export function PlannedExpensesControl({ targetMonth, expenses, persons, places,
   const readiness = deriveBuilderReadiness(builder);
   const contextValid = draft.title.trim().length > 0;
   const canPreview = readiness.previewReady;
-  const previewCurrent = preview !== null && previewRevision === builder.revision;
+  const previewCurrent = preview !== null && previewRevision === builder.revision && preview.targetMonth === targetMonth;
   const simpleGross = materializeBuilderDraft(builder).costItems.every((item) => itemTotal(item))
     ? materializeBuilderDraft(builder).costItems.reduce((sum, item) => sum.plus(itemTotal(item)!), new Big(0)).toFixed(2) : null;
 
-  const resetPreview = () => { setPreview(null); setError(""); };
-  const start = (item?: PlannedExpenseCard) => {
+  const resetPreview = () => { setPreview(null); setError(""); setIssue(null); };
+  const start = (item?: PlannedExpenseCard, mode: "DECLARE" | "CORRECT" | null = null) => {
+    if (inFlight.current) return;
+    draftSession.current++;
     const next = item ? { familyKey: item.familyKey, subtypeKey: item.subtypeKey, title: item.title,
       plannedDate: item.plannedDate, costItems: item.costItems.map((cost) => ({ ...cost })), context: { ...item.context } } : emptyDraft();
     setBuilder(createBuilderState(next));
+    setRequestId(item?.id ?? crypto.randomUUID()); setExpectedUpdatedAt(item?.updatedAt); setRealityMode(mode);
+    setIssue(null); setNotice(""); setReportId(null); setDeleteId(null);
     setIntentFamily(next.familyKey); setCloseRequested(false);
     setModulePath([rootAssetModule(next.familyKey, next.subtypeKey)]);
     setEditedId(item?.id); setPreview(null); setPreviewRevision(null); setError(""); setSearch(""); setStep(item ? 3 : 1); setOpen(true);
@@ -141,7 +161,7 @@ export function PlannedExpensesControl({ targetMonth, expenses, persons, places,
       const next = { ...item, ...change };
       if ((change.quantity !== undefined || change.unitAmount !== undefined) && item.fundingAllocations?.length === 1) {
         const total = itemTotal(next);
-        if (total) next.fundingAllocations = [{ source: item.fundingAllocations[0]!.source, amount: total }];
+        if (total) next.fundingAllocations = fundingAfterGrossChange(item, total);
       }
       return next;
     })()) }));
@@ -202,7 +222,7 @@ export function PlannedExpensesControl({ targetMonth, expenses, persons, places,
         const next = { ...item, quantity,
           baselineKey: item.baselineKey?.endsWith("-work-meals") ? baselineFor("work_meal", ids, persons) : item.baselineKey };
         return item.fundingAllocations?.length === 1 && quantity !== item.quantity && itemTotal(next)
-          ? { ...next, fundingAllocations: [{ source: item.fundingAllocations[0]!.source, amount: itemTotal(next)! }] } : next;
+          ? { ...next, fundingAllocations: fundingAfterGrossChange(item, itemTotal(next)!) } : next;
       }) });
     });
     resetPreview();
@@ -215,24 +235,59 @@ export function PlannedExpensesControl({ targetMonth, expenses, persons, places,
     setModulePath([rootAssetModule(family, subtype)]); setStep(3); resetPreview();
   };
   const run = async (action: () => Promise<void>) => {
+    if (inFlight.current) return;
+    inFlight.current = true;
     setBusy(true); setError("");
     try { await action(); router.refresh(); }
-    catch { setError("Impossible d’enregistrer. Vérifiez les détails et réessayez."); }
-    finally { setBusy(false); }
+    catch (caught) { setError(caught instanceof Error ? caught.message : "Impossible d’enregistrer. Réessayez.");
+      setIssue((caught as { issue?: PlannedIssue })?.issue ?? null); }
+    finally { setBusy(false); inFlight.current = false; }
   };
   const simulate = async () => {
-    if (!canPreview) return;
+    if (!canPreview || inFlight.current) return;
+    inFlight.current = true;
+    const revision = builder.revision;
+    const session = draftSession.current;
     setBusy(true); setError("");
-    try { setPreview(await previewPlannedExpense(targetMonth, materializeBuilderDraft(builder, true), editedId));
-      setPreviewRevision(builder.revision); setStep(5); }
-    catch { setError("La simulation n’a pas abouti. Vérifiez les prix, le financement, les personnes et le trajet."); }
-    finally { setBusy(false); }
+    try { const value = unwrap(await previewPlannedExpense(targetMonth, materializeBuilderDraft(builder, true), editedId));
+      if (currentRevision.current !== revision || draftSession.current !== session) return;
+      setPreview(value); setPreviewRevision(revision); setStep(5); }
+    catch (caught) { if (currentRevision.current === revision && draftSession.current === session) {
+      setError(caught instanceof Error ? caught.message : "La simulation n’a pas abouti.");
+      setIssue((caught as { issue?: PlannedIssue })?.issue ?? null); } }
+    finally { setBusy(false); inFlight.current = false; }
   };
   const save = () => run(async () => {
     if (!readiness.saveReady || !previewCurrent) return;
-    await savePlannedExpense(targetMonth, materializeBuilderDraft(builder), editedId);
+    const command = { id: requestId, expectedUpdatedAt };
+    if (realityMode) {
+      const realityDraft: RealityConfirmationDraft = { expenseId: requestId, expectedUpdatedAt: expectedUpdatedAt!,
+        finalDraft: materializeBuilderDraft(builder) };
+      unwrap(await confirmPlannedExpenseReality(targetMonth, realityDraft.finalDraft,
+        { id: realityDraft.expenseId, expectedUpdatedAt: realityDraft.expectedUpdatedAt }, realityMode === "CORRECT"));
+      setNotice(realityMode === "CORRECT" ? "Déclaration corrigée." : "Réalisation déclarée. Le financement prévu devient utilisé déclaré.");
+    } else {
+      const saved = unwrap(await savePlannedExpense(targetMonth, materializeBuilderDraft(builder), command));
+      setNotice(saved.notice);
+    }
     setOpen(false); setPreview(null); setEditedId(undefined);
   });
+  const repairServerIssue = () => {
+    if (!issue) return;
+    if (issue.repairTarget === "reload") { router.refresh(); return; }
+    const step = issue.repairTarget === "context" || issue.repairTarget === "date" ? 3 : 4;
+    setStep(step);
+    window.setTimeout(() => {
+      const fundingTarget = readiness.issues.find((problem) => problem.code === "FUNDING_INCOMPLETE")?.repairTarget;
+      const target = issue.repairTarget === "funding"
+        ? fundingTarget ? document.getElementById(fundingTarget) : document.querySelector<HTMLElement>('[id^="funding-"]')
+        : issue.repairTarget === "route" ? document.getElementById("builder-route")
+          : document.getElementById(step === 3 ? "builder-context" : "builder-cost");
+      target?.querySelectorAll("details").forEach((details) => { details.open = true; });
+      target?.scrollIntoView({ behavior: "smooth", block: "center" });
+      target?.querySelector<HTMLInputElement>("input, select, button")?.focus();
+    }, 0);
+  };
   const visibleAssets = [...assetsForModule(module), ...(module === "activity" && draft.subtypeKey === "fishing"
     ? FISHING_ASSET_LENS.flatMap((key) => assetsForModule("fishing").filter((asset) => asset.assetKey === key)) : [])]
     .filter((asset) => asset.assetKey !== "transport:fuel_usage"
@@ -241,23 +296,31 @@ export function PlannedExpensesControl({ targetMonth, expenses, persons, places,
   const card = (item: PlannedExpenseCard) => <li key={item.id} className="min-w-0 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
     <div className="flex flex-wrap items-start justify-between gap-3"><div className="min-w-0 flex-1"><p className="text-xs font-bold text-emerald-900">{familyLabel(item.familyKey)} · {subtypeLabel(item.familyKey, item.subtypeKey)}</p><h4 className="break-words text-base font-black">{item.title}</h4><p className="mt-1 text-xs text-slate-600"><CalendarDays size={13} className="mr-1 inline" aria-hidden="true" />{item.plannedDate ? dateLabel(item.plannedDate) : "Ce mois-ci · sans date précise"}</p></div><strong className="text-lg tabular-nums">{money(item.grossCost)}</strong></div>
     <p className="mt-2 break-words text-xs text-slate-600">{item.costItems.map((cost) => `${cost.variantLabel || cost.label} · ${cost.quantity} × ${money(cost.unitAmount)}`).join(" · ")}</p>
-    <p className="mt-2 text-xs font-semibold text-slate-700">{item.status === "PLANNED" ? "Prévue" : "Réalisée déclarée · sans transaction observée"}</p>
+    <p className="mt-2 text-xs font-semibold text-slate-700">{item.status === "PLANNED" ? item.needsRealityConfirmation ? "À confirmer · la date est passée" : "Prévue" : "Réalisée déclarée · sans transaction observée"}</p>
     <div className="mt-3 flex flex-wrap gap-2 border-t border-slate-100 pt-3">{item.status === "PLANNED" ? <>
       <button type="button" className={secondary} disabled={busy} onClick={() => start(item)}><Pencil size={14} className="mr-1 inline" />Modifier</button>
-      <button type="button" className={secondary} disabled={busy} onClick={() => run(() => changePlannedExpenseStatus(targetMonth, item.id, "DECLARED_REALIZED"))}><Check size={14} className="mr-1 inline" />Réalisée</button>
-      {deleteId === item.id ? <><span className="self-center text-xs">Supprimer cette prévision ?</span><button type="button" className={secondary} disabled={busy} onClick={() => run(async () => { await removePlannedExpense(targetMonth, item.id); setDeleteId(null); })}>Confirmer</button><button type="button" className={secondary} onClick={() => setDeleteId(null)}>Annuler</button></>
-        : <button type="button" className={secondary} disabled={busy} onClick={() => setDeleteId(item.id)}><Trash2 size={14} className="mr-1 inline" />Supprimer</button>}
-    </> : <button type="button" className={secondary} disabled={busy} onClick={() => run(() => changePlannedExpenseStatus(targetMonth, item.id, "PLANNED"))}><RotateCcw size={14} className="mr-1 inline" />Repasser en prévue</button>}</div>
+      <button type="button" className={secondary} disabled={busy} onClick={() => start(item, "DECLARE")}><Check size={14} className="mr-1 inline" />Oui, ça a eu lieu</button>
+      <button type="button" className={secondary} disabled={busy} onClick={() => { setReportId(item.id); setReportDate(item.plannedDate ?? ""); }}>Reporter</button>
+    </> : <>
+      <button type="button" className={secondary} disabled={busy} onClick={() => start(item, "CORRECT")}><Pencil size={14} className="mr-1 inline" />Corriger la déclaration</button>
+      <button type="button" className={secondary} disabled={busy} onClick={() => run(async () => { unwrap(await restorePlannedExpenseAction(targetMonth, { id: item.id, expectedUpdatedAt: item.updatedAt })); setNotice("Remise en prévu, avec les mêmes coûts."); })}><RotateCcw size={14} className="mr-1 inline" />Remettre en prévu</button>
+    </>}
+      {deleteId === item.id ? <><span className="self-center text-xs">{item.status === "PLANNED" ? "Confirmer que ce projet n’a pas eu lieu et supprimer sa prévision ?" : "Supprimer définitivement cette déclaration ?"} Son coût et son financement seront retirés du mois.</span><button type="button" className={secondary} disabled={busy} onClick={() => run(async () => { unwrap(await removePlannedExpense(targetMonth, { id: item.id, expectedUpdatedAt: item.updatedAt })); setDeleteId(null); setNotice("Dépense supprimée du mois."); })}>Confirmer la suppression</button><button type="button" className={secondary} onClick={() => setDeleteId(null)}>Annuler</button></>
+        : <button type="button" className={secondary} disabled={busy} onClick={() => setDeleteId(item.id)}><Trash2 size={14} className="mr-1 inline" />{item.status === "PLANNED" ? item.needsRealityConfirmation ? "Ça n’a pas eu lieu" : "Supprimer la prévision" : "Supprimer la déclaration"}</button>}
+    </div>
+    {reportId === item.id && <div className="mt-3 grid gap-2 rounded-xl bg-slate-50 p-3"><label className="grid gap-1 text-sm font-semibold">Nouvelle date prévue<input type="date" className={inputClass} value={reportDate} onChange={(event) => setReportDate(event.target.value)} /></label><p className="text-xs">La même dépense rejoindra le mois choisi. Ses ressources et ses estimations seront revérifiées.</p><div className="flex gap-2"><button className={secondary} disabled={busy || !reportDate} onClick={() => run(async () => { const moved = unwrap(await reportPlannedExpenseAction(targetMonth, { id: item.id, expectedUpdatedAt: item.updatedAt }, reportDate)); setReportId(null); setNotice(`Projet reporté en ${moved.targetMonth}.`); if (moved.targetMonth !== targetMonth) router.push(`/mois-a-venir?month=${moved.targetMonth}`); })}>Confirmer le report</button><button className={secondary} onClick={() => setReportId(null)}>Annuler</button></div></div>}
   </li>;
 
   return <section id="planned-expense-builder" className="scroll-mt-6 rounded-[1.7rem] bg-sky-50/70 p-5 sm:p-6" aria-labelledby="planned-expense-title">
     <div className="flex flex-wrap items-center justify-between gap-3"><div><p className="text-xs font-bold uppercase tracking-wide text-emerald-800">Nos projets</p><h2 id="planned-expense-title" className="text-2xl font-black">Ajouter quelque chose à notre mois</h2><p className="mt-1 text-sm text-slate-600">Un projet, ses éléments, puis son effet sur le mois.</p></div>
       {!open && <button type="button" className={primary} onClick={() => start()}><Plus size={16} className="mr-1 inline" />Prévoir une dépense</button>}</div>
-    {error && !open && <p role="alert" className="mt-3 rounded-xl bg-red-50 p-3 text-sm text-red-800">{error}</p>}
+    {notice && <p role="status" className="mt-3 rounded-xl bg-emerald-100 p-3 text-sm">{notice}</p>}
+    {error && !open && <p role="alert" className="mt-3 rounded-xl bg-red-50 p-3 text-sm text-red-800">{error}{issue?.repairTarget === "reload" && <button className={secondary} onClick={() => router.refresh()}>Recharger la liste</button>}{issue?.repairTarget === "month" && reportDate && <a className="ml-2 underline" href={`/mois-a-venir?month=${reportDate.slice(0, 7)}`}>Préparer les ressources de ce mois</a>}</p>}
     {open && <div className="mt-5 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-6">
       <div className="flex flex-wrap justify-between gap-2"><div><p className="text-xs font-bold uppercase tracking-wide text-emerald-800">{editedId ? "Modifier" : "Nouvelle prévision"} · {step <= 3 ? "Votre projet" : step === 4 ? "Son coût et ses compléments" : "Aperçu"}</p><h3 className="mt-1 text-lg font-black">{["Qu’avez-vous prévu ?", "Précisons votre idée", "Quelques détails utiles", "Combien prévoyez-vous ?", "Voici l’effet sur notre mois"][step - 1]}</h3></div><div className="flex gap-2">{builder.undo && <button type="button" className={secondary} onClick={() => { setBuilder(undoBuilderChange); setModulePath([]); resetPreview(); }}>Annuler le dernier changement</button>}<button type="button" className={secondary} onClick={() => { if (builder.revision > 0) setCloseRequested(true); else setOpen(false); }}>Fermer</button></div></div>
       {closeRequested && <div className="mt-3 rounded-xl bg-amber-50 p-3 text-sm"><p>Quitter et abandonner les modifications de ce brouillon ?</p><button type="button" className={secondary} onClick={() => { setOpen(false); setPreview(null); setCloseRequested(false); }}>Abandonner</button><button type="button" className={secondary} onClick={() => setCloseRequested(false)}>Continuer à préparer</button></div>}
-      {error && <p role="alert" className="mt-3 rounded-xl bg-red-50 p-3 text-sm text-red-800">{error}</p>}
+      {realityMode && <p className="mt-3 rounded-xl bg-sky-50 p-3 text-sm">{realityMode === "DECLARE" ? "Vérifiez ce qui a réellement coûté et son financement, puis confirmez la réalisation." : "Corrigez les éléments et le financement de votre déclaration."} Pour un coût détaillé, corrigez les lignes ; aucun écart ne sera réparti automatiquement.</p>}
+      {error && <div role="alert" className="mt-3 rounded-xl bg-red-50 p-3 text-sm text-red-800"><p>{error}</p>{issue && <button type="button" className={secondary} onClick={repairServerIssue}>{issue.repairTarget === "reload" ? "Actualiser la liste, garder mon brouillon" : "Aller à la correction"}</button>}{issue?.repairTarget === "reload" && editedId && <button type="button" className={secondary} onClick={() => { const fresh = expenses.find((item) => item.id === editedId); if (fresh) start(fresh, realityMode); }}>Abandonner mon brouillon et reprendre la version affichée</button>}</div>}
       {step >= 3 && <div className="mt-3 rounded-xl bg-slate-50 p-3 text-sm" aria-live="polite"><strong>Votre projet :</strong> {draft.title || "À nommer"} · {draft.plannedDate ? dateLabel(draft.plannedDate) : "date à préciser si vous le souhaitez"} · {simpleGross && new Big(simpleGross).gt(0) ? money(simpleGross) : "coût à préciser"}{builder.costMode !== "QUICK_TOTAL" && ` · ${draft.costItems.length} élément(s)`}
         <span className="ml-2 font-semibold">{readiness.saveReady ? "Prêt à enregistrer" : readiness.previewReady ? "Aperçu possible" : "À compléter"}</span></div>}
       {step >= 3 && readiness.issues.length > 0 && <div className="mt-3 rounded-xl border border-amber-200 bg-amber-50 p-3 text-sm"><strong>À vérifier</strong><ul className="mt-1 list-inside list-disc">{readiness.issues.map((issue) => <li key={`${issue.code}-${issue.scope}`}><button type="button" className="text-left underline" onClick={() => { setStep(issue.repairTarget === "builder-cost" || issue.repairTarget.startsWith("funding-") || issue.repairTarget === "builder-addons" ? 4 : 3); window.setTimeout(() => document.getElementById(issue.repairTarget)?.scrollIntoView({ behavior: "smooth", block: "center" }), 0); }}>{issue.message}</button></li>)}</ul></div>}
@@ -299,7 +362,8 @@ export function PlannedExpensesControl({ targetMonth, expenses, persons, places,
         <div className="flex flex-wrap gap-2"><button type="button" className={secondary} onClick={() => { setIntentFamily(draft.familyKey); setStep(1); }}>Retour</button><button type="button" className={primary} disabled={!contextValid || draft.context.place?.kind === "TEXT" && !draft.context.place.label.trim()} onClick={() => setStep(4)}>Continuer</button></div>
       </div>}
       {step === 4 && <div id="builder-cost" className="mt-4 grid gap-5"><div><p className="text-sm text-slate-600">Commencez par un montant global. Détaillez seulement si cela change le calcul ou le financement.</p>
-        <div className="mt-3 rounded-xl border border-emerald-200 bg-emerald-50 p-4"><div className="flex flex-wrap gap-2"><button type="button" className={secondary} onClick={() => { if (builder.costMode === "QUICK_TOTAL") return; try { setBuilder(collapseBuilderCosts(builder)); setError(""); } catch { setError("Ces lignes ont des règles de financement ou d’impact différentes : gardez la ventilation."); } }}>Total rapide</button><button type="button" className={secondary} onClick={() => setBuilder(itemizeBuilderCosts)}>Détailler les éléments</button></div>
+        <div className="mt-3 rounded-xl border border-emerald-200 bg-emerald-50 p-4"><div className="flex flex-wrap gap-2"><button type="button" className={secondary} disabled={!!realityMode && !canCollapseRealityCosts(draft.costItems)} onClick={() => { if (builder.costMode === "QUICK_TOTAL") return; try { setBuilder(collapseBuilderCosts(builder)); setError(""); } catch { setError("Ces lignes ont des règles de financement ou d’impact différentes : gardez la ventilation."); } }}>Total rapide</button><button type="button" className={secondary} onClick={() => setBuilder(itemizeBuilderCosts)}>Détailler les éléments</button></div>
+          {realityMode && !canCollapseRealityCosts(draft.costItems) && <p className="mt-2 text-sm">Corrigez les lignes du détail pour obtenir le coût final. Aucun écart global n’est réparti automatiquement.</p>}
           {builder.costMode === "QUICK_TOTAL" && <label className="mt-3 grid max-w-xs gap-1 text-sm font-semibold">Montant prévu (€)<input className={inputClass} type="number" min="0.01" step="0.01" value={builder.quickTotal} onChange={(event) => setBuilder((current) => setQuickTotal(current, event.target.value))} /></label>}
           {builder.costMode === "QUICK_TOTAL" && resolved?.baseline.mode === "ASK" && resolved.baseline.key && <fieldset className="mt-3 text-sm"><legend className="font-semibold">Cette dépense fait-elle partie de vos habitudes ?</legend><label className="mr-5 inline-flex gap-2"><input type="radio" name="quick-baseline" checked={builder.quickBaseline === null} onChange={() => setBuilder((current) => setQuickBaseline(current, null))} />S’ajoute à vos dépenses habituelles</label><label className="inline-flex gap-2"><input type="radio" name="quick-baseline" checked={builder.quickBaseline === resolved.baseline.key} onChange={() => setBuilder((current) => setQuickBaseline(current, resolved.baseline.key))} />Fait partie de vos dépenses habituelles</label></fieldset>}
           {builder.costMode === "QUICK_TOTAL" && draft.subtypeKey === "restaurant" && builder.quickTotal && <div className="mt-3 grid max-w-md gap-2"><p className="text-sm">Besoin de séparer le repas et l’alcool pour le financement ?</p><label className="grid gap-1 text-sm">Part repas et boissons sans alcool (€)<input className={inputClass} type="number" min="0.01" step="0.01" value={splitMeal} onChange={(event) => setSplitMeal(event.target.value)} /></label><button type="button" className={secondary} onClick={() => { try { setBuilder(splitRestaurantQuickTotal(builder, splitMeal)); setError(""); } catch { setError("La part repas doit être comprise dans le total."); } }}>Ventiler le total</button></div>}
@@ -326,15 +390,18 @@ export function PlannedExpensesControl({ targetMonth, expenses, persons, places,
             <p className="mt-2 text-xs text-slate-600">{item.priceSource === "SYSTEM_DEFAULT" ? "Prix proposé · modifiable" : item.priceSource === "CALCULATED" ? "Estimation calculée" : item.priceSource === "LAST_KNOWN" ? "Prix récent" : "Prix à confirmer"}{itemTotal(item) ? ` · total ${money(itemTotal(item)!)}` : ""}</p>
             {habitual && <fieldset className="mt-3 flex flex-wrap gap-4 text-sm"><legend className="font-semibold">Cette dépense fait-elle partie de vos habitudes ?</legend><label className="flex gap-2"><input type="radio" name={`habitual-${item.id}`} checked={item.baselineKey === null && !!builder.origins[`baseline.${item.id}`]} onChange={() => updateItem(item.id, { baselineKey: null })} />S’ajoute à vos dépenses habituelles</label><label className="flex gap-2"><input type="radio" name={`habitual-${item.id}`} checked={item.baselineKey === habitual} onChange={() => updateItem(item.id, { baselineKey: habitual })} />Fait partie de vos dépenses habituelles</label></fieldset>}
             {asset?.fundingEligibility === "MEAL" && edge?.fundingOverride !== "BANK_ONLY" && <div id={`funding-${item.id}`} className="mt-3 grid gap-2"><label className="grid gap-1 text-sm font-semibold">Comment financer cet élément ?<select className={inputClass} value={fundingMode(item)} onChange={(event) => setFunding(item, event.target.value as "BANK" | "SWILE" | "EDENRED" | "MIXED")}><option value="BANK">Banque</option><option value="SWILE">Swile</option><option value="EDENRED">Edenred</option><option value="MIXED" disabled={!itemTotal(item) || new Big(itemTotal(item)!).lt("0.02")}>Mixte</option></select></label>{fundingMode(item) === "MIXED" && <div className="grid gap-2 sm:grid-cols-3">{(["BANK", "SWILE", "EDENRED"] as const).map((source) => <label key={source} className="grid gap-1 text-sm">{source === "BANK" ? "Banque" : source} (€)<input className={inputClass} type="number" min="0" step="0.01" value={item.fundingAllocations?.find((part) => part.source === source)?.amount ?? ""} onChange={(event) => editAllocation(item, source, event.target.value)} /></label>)}</div>}</div>}
+            {readiness.issues.some((problem) => problem.code === "FUNDING_INCOMPLETE" && problem.scope === `costItems.${item.id}.fundingAllocations`)
+              && ["SWILE", "EDENRED"].includes(fundingMode(item)) && itemTotal(item) && <button type="button" className={secondary}
+                onClick={() => setFunding(item, fundingMode(item) as "SWILE" | "EDENRED")}>Confirmer {fundingMode(item)} pour {money(itemTotal(item)!)}</button>}
           </div>;
         })}</div></>}</div>
         <div className="flex flex-wrap gap-2"><button type="button" className={secondary} onClick={() => setStep(3)}>Retour</button><button type="button" className={primary} disabled={!canPreview || busy} onClick={simulate}>{busy ? "Simulation…" : "Voir l’effet sur notre mois"}</button></div>
       </div>}
       {step === 5 && !previewCurrent && <div className="mt-4 rounded-xl bg-amber-50 p-4 text-sm">L’aperçu précédent n’est plus à jour. <button type="button" className={secondary} onClick={() => setStep(4)}>Recalculer après modification</button></div>}
       {step === 5 && previewCurrent && preview && <div className="mt-4 grid gap-4"><PlannedImpactCard preview={preview} fundingIncomplete={readiness.issues.some((issue) => issue.code === "FUNDING_INCOMPLETE")} />
-        <p className="text-xs text-slate-600">La simulation n’enregistre rien.</p><div className="flex flex-wrap gap-2"><button type="button" className={secondary} onClick={() => { setPreview(null); setStep(4); }}>Modifier</button><button type="button" className={primary} disabled={busy || !readiness.saveReady} onClick={save}>{busy ? "Enregistrement…" : editedId ? "Enregistrer la modification" : "Ajouter au mois"}</button></div></div>}
+        <p className="text-xs text-slate-600">La simulation n’enregistre rien.</p><div className="flex flex-wrap gap-2"><button type="button" className={secondary} onClick={() => { setPreview(null); setStep(4); }}>Modifier</button><button type="button" className={primary} disabled={busy || !readiness.saveReady} onClick={save}>{busy ? "Enregistrement…" : realityMode === "DECLARE" ? "Confirmer la réalisation" : realityMode === "CORRECT" ? "Enregistrer la déclaration corrigée" : editedId ? "Enregistrer la modification" : "Ajouter au mois"}</button></div></div>}
     </div>}
     <div className="mt-6 grid gap-5 lg:grid-cols-2"><div><h3 className="text-base font-black">À venir / prévues ({planned.length})</h3>{planned.length ? <ul className="mt-3 grid gap-3">{planned.map(card)}</ul> : <p className="mt-2 text-sm text-slate-600">Aucune dépense ajoutée pour l’instant.</p>}</div><div><h3 className="text-base font-black">Réalisées ce mois-ci ({realized.length})</h3>{realized.length ? <ul className="mt-3 grid gap-3">{realized.map(card)}</ul> : <p className="mt-2 text-sm text-slate-600">Aucune prévision marquée comme réalisée.</p>}</div></div>
-    {(new Big(funding.swile.reserved).gt(0) || new Big(funding.edenred.reserved).gt(0)) && <p className="mt-4 text-xs text-slate-600">Plans enregistrés : Swile {money(funding.swile.reserved)} réservés, Edenred {money(funding.edenred.reserved)} réservés. Aucun solde réel n’est débité.</p>}
+    {(new Big(funding.swile.reserved).gt(0) || new Big(funding.edenred.reserved).gt(0) || new Big(funding.swile.usedDeclared).gt(0) || new Big(funding.edenred.usedDeclared).gt(0)) && <p className="mt-4 text-xs text-slate-600">Financement du mois : Swile {money(funding.swile.reserved)} réservés et {money(funding.swile.usedDeclared)} utilisés déclarés ; Edenred {money(funding.edenred.reserved)} réservés et {money(funding.edenred.usedDeclared)} utilisés déclarés. Aucun solde réel n’est débité.</p>}
   </section>;
 }

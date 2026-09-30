@@ -1,6 +1,6 @@
 import type { previewPlannedExpense } from "./planned-expenses-actions";
 
-type Preview = Awaited<ReturnType<typeof previewPlannedExpense>>;
+type Preview = Extract<Awaited<ReturnType<typeof previewPlannedExpense>>, { ok: true }>["value"];
 const money = (value: string) => new Intl.NumberFormat("fr-FR", { style: "currency", currency: "EUR" }).format(Number(value));
 export function PlannedImpactCard({ preview, fundingIncomplete }: { preview: Preview; fundingIncomplete: boolean }) {
   return <article className="grid gap-4 rounded-2xl border border-emerald-200 bg-emerald-50 p-5" aria-label="Effet sur notre mois">
@@ -9,9 +9,9 @@ export function PlannedImpactCard({ preview, fundingIncomplete }: { preview: Pre
     <div><h4 className="text-base font-bold">S’ajoute au mois</h4><p className="text-3xl font-black text-emerald-950">{money(preview.netAdditionalImpact.central)}</p><p className="text-xs text-slate-600">Estimation centrale, selon nos habitudes</p></div>
     <section className="rounded-xl bg-white p-4 text-sm"><h4 className="font-bold">Paiement prévu</h4><p>Montant à payer : {money(preview.payableGross)}</p>
       {fundingIncomplete ? <p className="mt-2 font-semibold text-amber-900">Financement à compléter. L’effet économique reste calculable.</p> : <>
-        <p className="mt-2">Banque · paiements prévus sur le mois : {money(preview.funding.bankAllocated)}</p>
+        <p className="mt-2">Banque · paiements prévus sur le mois : {money(preview.funding.bankAllocated)} · réservés : {money(preview.funding.bankReserved)} · utilisés déclarés : {money(preview.funding.bankUsedDeclared)}</p>
         {([ ["Swile", preview.funding.swile], ["Edenred", preview.funding.edenred] ] as const).map(([label, pocket]) => <div key={label} className="mt-2">
-          <p className="font-semibold">{label}</p><p>Ressource prévue du mois : {money(pocket.resource)} · prévue pour les paiements : {money(pocket.reserved)}</p>
+          <p className="font-semibold">{label}</p><p>Ressource prévue du mois : {money(pocket.resource)} · réservée : {money(pocket.reserved)} · utilisée déclarée : {money(pocket.usedDeclared)}</p>
           <p>Ressource restante projetée : {money(pocket.availableAfter)}</p>
           {Number(pocket.shortfall) > 0 && <p className="font-bold text-amber-900">Financement à compléter : {money(pocket.shortfall)}. Choisissez comment couvrir cette part.</p>}
         </div>)}<p className="mt-2 text-xs text-slate-600">Les réservations couvrent tous les projets du mois. Un manque sur Swile ou Edenred conserve le paiement choisi et doit être réparé explicitement.</p>

@@ -547,9 +547,21 @@ const draftColumns = (draft: PlannedExpenseDraft) => ({ family_key: draft.family
 
 /** Shared preview/create/update boundary: V1 structure, V2 resolved context, V3 graph,
  * V4 asset eligibility and V5 finance in parsePlannedExpenseDraft; V6 live refs below. */
-async function validatePlannedExpenseForWrite(client: SupabaseClient, householdId: string,
-  targetMonth: string, rawDraft: unknown): Promise<PlannedExpenseDraft> {
-  const draft = parsePlannedExpenseDraft(rawDraft, targetMonth);
+export async function resolvePlannedExpenseDraft(client: SupabaseClient, householdId: string,
+  targetMonth: string, rawDraft: unknown, purpose: "WRITE" | "PREVIEW" = "WRITE"): Promise<PlannedExpenseDraft> {
+  // Parse the incoming estimate first: inconsistent client arithmetic is never trusted.
+  let draft = parsePlannedExpenseDraft(rawDraft, targetMonth, purpose);
+  if (draft.context.route?.mode === "CAR") {
+    const options = await readPlannedContextOptions(createCanonicalReadClient(), householdId, []);
+    if (!options.vehicle) throw new TypeError("PLANNED_EXPENSE_VEHICLE_PRICE_UNAVAILABLE");
+    const route = resolvePlannedRoute(draft.context.route.stops,
+      await readPlannedRouteHistory(createCanonicalReadClient(), householdId), options.vehicle);
+    if (!route.fuelEstimate) throw new TypeError("PLANNED_EXPENSE_ROUTE_DISTANCE_REQUIRED");
+    draft = parsePlannedExpenseDraft({ ...draft, context: { ...draft.context,
+      route: { mode: "CAR", stops: route.stops, fuelEstimate: route.fuelEstimate } },
+      costItems: draft.costItems.map((item) => item.assetKey === "transport:fuel_usage"
+        ? { ...item, unitAmount: route.fuelEstimate!.cost } : item) }, targetMonth, purpose);
+  }
   await validateReferences(client, uuid(householdId, "PLANNED_EXPENSE_HOUSEHOLD_INVALID"), draft);
   return draft;
 }
@@ -564,28 +576,37 @@ export async function readPlannedExpenses(client: SupabaseClient, householdId: s
 }
 
 /** A draft never writes to Supabase. Editing replaces the saved ID in the same financial path. */
-export async function simulatePlannedExpense(client: SupabaseClient, householdId: string,
+export async function preparePlannedExpenseSimulation(client: SupabaseClient, householdId: string,
   forecast: MonthForecastSnapshot, inputs: MonthInputs, saved: readonly PlannedExpense[],
   rawDraft: unknown, asOfDate: string, editedId?: string, purpose: "WRITE" | "PREVIEW" = "WRITE") {
-  const draft = purpose === "PREVIEW"
-    ? parsePlannedExpenseDraft(rawDraft, forecast.meta.targetMonth, "PREVIEW")
-    : parsePlannedExpenseDraft(rawDraft, forecast.meta.targetMonth);
-  await validateReferences(client, uuid(householdId, "PLANNED_EXPENSE_HOUSEHOLD_INVALID"), draft);
+  const draft = await resolvePlannedExpenseDraft(client, householdId, forecast.meta.targetMonth, rawDraft, purpose);
   const existing = editedId === undefined ? undefined : saved.find((item) => item.id === uuid(editedId, "PLANNED_EXPENSE_ID_INVALID"));
-  if (editedId !== undefined && (!existing || existing.status !== "PLANNED"))
+  if (editedId !== undefined && !existing)
     throw new TypeError("PLANNED_EXPENSE_EDIT_TARGET_INVALID");
   if (saved.some((item) => item.householdId !== householdId || item.targetMonth !== forecast.meta.targetMonth))
     throw new TypeError("PLANNED_EXPENSE_SAVED_SCOPE_INVALID");
-  return simulatePlannedExpenseScenario(forecast, inputs, saved,
-    { id: existing?.id ?? randomUUID(), targetMonth: forecast.meta.targetMonth, status: "PLANNED", costItems: draft.costItems }, asOfDate);
+  return { draft, scenario: simulatePlannedExpenseScenario(forecast, inputs, saved,
+    { id: existing?.id ?? randomUUID(), targetMonth: forecast.meta.targetMonth,
+      status: existing?.status ?? "PLANNED", costItems: draft.costItems }, asOfDate) };
+}
+export async function simulatePlannedExpense(...args: Parameters<typeof preparePlannedExpenseSimulation>) {
+  return (await preparePlannedExpenseSimulation(...args)).scenario;
 }
 export async function createPlannedExpense(client: SupabaseClient, householdId: string, targetMonth: string,
-  userId: string, rawDraft: unknown): Promise<PlannedExpense> {
-  const draft = await validatePlannedExpenseForWrite(client, householdId, targetMonth, rawDraft);
+  userId: string, rawDraft: unknown, requestId: string): Promise<PlannedExpense> {
+  const id = uuid(requestId, "PLANNED_EXPENSE_ID_INVALID");
+  const draft = await resolvePlannedExpenseDraft(client, householdId, targetMonth, rawDraft);
   const { data, error } = await client.from("phase2_planned_expenses").insert({
-    planned_expense_id: randomUUID(), household_id: householdId, target_month: `${targetMonth}-01`,
+    planned_expense_id: id, household_id: householdId, target_month: `${targetMonth}-01`,
     ...draftColumns(draft), status: "PLANNED", created_by: uuid(userId, "PLANNED_EXPENSE_USER_INVALID"), updated_by: userId,
   }).select(rowFields).single();
+  if (error?.code === "23505") {
+    // The primary key arbitrates concurrent attempts. Never upsert: a replay cannot overwrite.
+    const existing = await requireExpense(client, householdId, id);
+    if (existing.createdBy !== userId || existing.targetMonth !== targetMonth || !sameIntent(existing, draft))
+      throw new TypeError("PLANNED_EXPENSE_IDEMPOTENCY_CONFLICT");
+    return existing;
+  }
   if (error) throw error;
   return parseRow(data);
 }
@@ -593,44 +614,104 @@ async function requireExpense(client: SupabaseClient, householdId: string, id: s
   const { data, error } = await client.from("phase2_planned_expenses").select(rowFields)
     .eq("household_id", uuid(householdId, "PLANNED_EXPENSE_HOUSEHOLD_INVALID"))
     .eq("planned_expense_id", uuid(id, "PLANNED_EXPENSE_ID_INVALID")).single();
+  if (error?.code === "PGRST116" || !error && !data) throw new TypeError("PLANNED_EXPENSE_NOT_FOUND");
   if (error) throw error;
   return parseRow(data);
 }
 export async function updatePlannedExpense(client: SupabaseClient, householdId: string, id: string,
-  userId: string, rawDraft: unknown): Promise<PlannedExpense> {
+  userId: string, rawDraft: unknown, expectedUpdatedAt: string): Promise<PlannedExpense> {
   const previous = await requireExpense(client, householdId, id);
   if (previous.status !== "PLANNED") throw new TypeError("PLANNED_EXPENSE_REALIZED_EDIT_FORBIDDEN");
-  const draft = await validatePlannedExpenseForWrite(client, householdId, previous.targetMonth, rawDraft);
-  const { data, error } = await client.from("phase2_planned_expenses").update({ ...draftColumns(draft),
-    updated_by: uuid(userId, "PLANNED_EXPENSE_USER_INVALID"), updated_at: new Date().toISOString() })
-    .eq("household_id", householdId).eq("planned_expense_id", id).eq("status", "PLANNED")
-    .select(rowFields).single();
-  if (error) throw error;
-  const updated = parseRow(data);
-  if (updated.createdBy !== previous.createdBy || updated.id !== previous.id || updated.householdId !== previous.householdId)
-    throw new TypeError("PLANNED_EXPENSE_IDENTITY_CHANGED");
-  return updated;
+  assertVersion(previous, expectedUpdatedAt);
+  const draft = await resolvePlannedExpenseDraft(client, householdId, previous.targetMonth, rawDraft);
+  return compareAndSet(client, previous, userId, draft, "PLANNED", expectedUpdatedAt);
 }
-export async function deletePlannedExpense(client: SupabaseClient, householdId: string, id: string): Promise<void> {
-  await requireExpense(client, householdId, id);
-  const { data, error } = await client.from("phase2_planned_expenses").delete()
-    .eq("household_id", householdId).eq("planned_expense_id", id).select("planned_expense_id").single();
-  if (error) throw error;
-  if (data?.planned_expense_id !== id) throw new TypeError("PLANNED_EXPENSE_DELETE_MISSING");
-}
-async function setStatus(client: SupabaseClient, householdId: string, id: string, userId: string,
-  from: PlannedExpenseStatus, to: PlannedExpenseStatus): Promise<PlannedExpense> {
+export async function deletePlannedExpense(client: SupabaseClient, householdId: string, id: string,
+  expectedUpdatedAt: string): Promise<void> {
   const previous = await requireExpense(client, householdId, id);
-  if (previous.status !== from) throw new TypeError("PLANNED_EXPENSE_STATUS_TRANSITION_INVALID");
-  const { data, error } = await client.from("phase2_planned_expenses").update({ status: to,
-    updated_by: uuid(userId, "PLANNED_EXPENSE_USER_INVALID"), updated_at: new Date().toISOString() })
-    .eq("household_id", householdId).eq("planned_expense_id", id).eq("status", from).select(rowFields).single();
+  assertVersion(previous, expectedUpdatedAt);
+  const { data, error } = await client.from("phase2_planned_expenses").delete()
+    .eq("household_id", householdId).eq("planned_expense_id", id).eq("updated_at", expectedUpdatedAt)
+    .select("planned_expense_id").maybeSingle();
   if (error) throw error;
-  const updated = parseRow(data);
-  if (updated.createdBy !== previous.createdBy || updated.id !== previous.id) throw new TypeError("PLANNED_EXPENSE_IDENTITY_CHANGED");
-  return updated;
+  if (data?.planned_expense_id !== id) throw new TypeError("PLANNED_EXPENSE_EDIT_STALE");
 }
-export const markPlannedExpenseRealized = (client: SupabaseClient, householdId: string, id: string, userId: string) =>
-  setStatus(client, householdId, id, userId, "PLANNED", "DECLARED_REALIZED");
-export const restorePlannedExpense = (client: SupabaseClient, householdId: string, id: string, userId: string) =>
-  setStatus(client, householdId, id, userId, "DECLARED_REALIZED", "PLANNED");
+
+function sameIntent(left: PlannedExpenseDraft, right: PlannedExpenseDraft): boolean {
+  const intent = (draft: PlannedExpenseDraft) => {
+    const copy = JSON.parse(JSON.stringify(draftColumns(draft)));
+    // Live derivations may change between equivalent intent replays.
+    if (copy.context.route?.mode === "CAR") {
+      delete copy.context.route.fuelEstimate;
+      for (const stop of copy.context.route.stops) if (stop.distanceSource === "HISTORICAL_ROUTE") {
+        delete stop.distanceToNextKm; delete stop.estimatedFuelLiters; delete stop.evidence;
+      }
+      for (const item of copy.cost_items) if (item.assetKey === "transport:fuel_usage") delete item.unitAmount;
+    }
+    const canonical = (value: unknown): unknown => Array.isArray(value) ? value.map(canonical)
+      : value && typeof value === "object" ? Object.fromEntries(Object.entries(value).sort(([a], [b]) => a.localeCompare(b))
+        .map(([key, part]) => [key, canonical(part)])) : value;
+    return JSON.stringify(canonical(copy));
+  };
+  return intent(left) === intent(right);
+}
+function assertVersion(previous: PlannedExpense, expected: string, reality = false) {
+  if (!expected || Number.isNaN(Date.parse(expected)) || previous.updatedAt !== expected)
+    throw new TypeError(reality ? "REALITY_DRAFT_STALE" : "PLANNED_EXPENSE_EDIT_STALE");
+}
+async function compareAndSet(client: SupabaseClient, previous: PlannedExpense, userId: string,
+  draft: PlannedExpenseDraft, status: PlannedExpenseStatus, expected: string,
+  targetMonth = previous.targetMonth, reality = false): Promise<PlannedExpense> {
+  const { data, error } = await client.from("phase2_planned_expenses").update({ ...draftColumns(draft), status,
+    ...(targetMonth !== previous.targetMonth ? { target_month: `${targetMonth}-01` } : {}),
+    updated_by: uuid(userId, "PLANNED_EXPENSE_USER_INVALID"),
+    updated_at: new Date(Math.max(Date.now(), Date.parse(previous.updatedAt) + 1)).toISOString() })
+    .eq("household_id", previous.householdId).eq("planned_expense_id", previous.id)
+    .eq("updated_at", expected).eq("status", previous.status).select(rowFields).maybeSingle();
+  if (error) throw error;
+  if (!data) throw new TypeError(reality ? "REALITY_DRAFT_STALE" : "PLANNED_EXPENSE_EDIT_STALE");
+  return parseRow(data);
+}
+
+/** Final content and lifecycle are one SQL UPDATE, arbitrated by the existing updated_at. */
+export async function declarePlannedExpense(client: SupabaseClient, householdId: string, id: string,
+  userId: string, rawDraft: unknown, expected: string,
+  preflight: (draft: PlannedExpenseDraft, previous: PlannedExpense) => Promise<void>, correction = false) {
+  const previous = await requireExpense(client, householdId, id);
+  const draft = await resolvePlannedExpenseDraft(client, householdId, previous.targetMonth, rawDraft);
+  if (!correction && previous.status === "DECLARED_REALIZED" && previous.updatedBy === userId && sameIntent(previous, draft))
+    return previous; // identical confirmation replay; no second write or contribution
+  assertVersion(previous, expected, true);
+  if (previous.status !== (correction ? "DECLARED_REALIZED" : "PLANNED"))
+    throw new TypeError("PLANNED_EXPENSE_STATUS_TRANSITION_INVALID");
+  await preflight(draft, previous);
+  try { return await compareAndSet(client, previous, userId, draft, "DECLARED_REALIZED", expected, previous.targetMonth, true); }
+  catch (error) {
+    if (!correction && error instanceof Error && error.message === "REALITY_DRAFT_STALE") {
+      const current = await requireExpense(client, householdId, id);
+      if (current.status === "DECLARED_REALIZED" && current.updatedBy === userId && sameIntent(current, draft)) return current;
+    }
+    throw error;
+  }
+}
+export async function restorePlannedExpense(client: SupabaseClient, householdId: string, id: string,
+  userId: string, expected: string) {
+  const previous = await requireExpense(client, householdId, id);
+  assertVersion(previous, expected, true);
+  if (previous.status !== "DECLARED_REALIZED") throw new TypeError("PLANNED_EXPENSE_STATUS_TRANSITION_INVALID");
+  // Inverse presentation/funding transition preserves the final content exactly.
+  return compareAndSet(client, previous, userId, previous, "PLANNED", expected, previous.targetMonth, true);
+}
+export async function reportPlannedExpense(client: SupabaseClient, householdId: string, id: string,
+  userId: string, plannedDate: string, expected: string,
+  preflight: (draft: PlannedExpenseDraft, targetMonth: string) => Promise<void>) {
+  const previous = await requireExpense(client, householdId, id);
+  assertVersion(previous, expected);
+  if (previous.status !== "PLANNED") throw new TypeError("PLANNED_EXPENSE_STATUS_TRANSITION_INVALID");
+  const targetMonth = date(plannedDate, "PLANNED_EXPENSE_DATE_INVALID").slice(0, 7);
+  const raw = { familyKey: previous.familyKey, subtypeKey: previous.subtypeKey, title: previous.title,
+    plannedDate, costItems: previous.costItems, context: previous.context };
+  const draft = await resolvePlannedExpenseDraft(client, householdId, targetMonth, raw);
+  await preflight(draft, targetMonth);
+  return compareAndSet(client, previous, userId, draft, "PLANNED", expected, targetMonth);
+}

@@ -4,7 +4,7 @@ import { MonthForecastView } from "./month-forecast-view";
 import { getBootstrapContext } from "@/server/bootstrap/context";
 import { getAuthenticatedBootstrapClient } from "@/server/bootstrap/auth";
 import { createCanonicalReadClient } from "@/server/canonical/client";
-import { MONTH_FORECAST_RESOURCE, queryMonthForecast } from "@/server/phase2/month-forecast-snapshot";
+import { MONTH_FORECAST_RESOURCE, queryMonthForecast, resolvePlanningMonthForecast } from "@/server/phase2/month-forecast-snapshot";
 import { readMonthInputs } from "@/server/phase2/month-inputs";
 import { deriveMonthScenario } from "@/server/phase2/month-scenario";
 import { readPlannedExpenses } from "@/server/phase2/planned-expenses";
@@ -24,8 +24,18 @@ export default async function MonthForecastPage({ searchParams }: { searchParams
     .order("period_month", { ascending: false }).limit(1).maybeSingle();
   if (error) throw error;
   if (!latest?.period_month) return <section className="card mx-auto max-w-3xl p-8" role="status"><p className="eyebrow">Notre mois à venir</p><h1 className="mt-2 text-3xl font-black">Prévision indisponible</h1><p className="mt-3 text-slate-600">Aucun mois prospectif publié pour ce foyer.</p></section>;
-  const targetMonth = String(latest.period_month).slice(0, 7);
-  const forecast = await queryMonthForecast(client, context.household.householdId, targetMonth);
+  const params = await searchParams;
+  const activeMonth = String(latest.period_month).slice(0, 7);
+  const requestedMonth = typeof params.month === "string" && /^\d{4}-(0[1-9]|1[0-2])$/u.test(params.month) ? params.month : activeMonth;
+  const targetMonth = requestedMonth;
+  let forecast;
+  try {
+    forecast = targetMonth === activeMonth ? await queryMonthForecast(client, context.household.householdId, targetMonth)
+      : await resolvePlanningMonthForecast(client, context.household.householdId, targetMonth);
+  } catch (error) {
+    if (!(error instanceof Error) || error.message !== "FORECAST_TARGET_MONTH_NOT_FUTURE") throw error;
+    return <section className="card mx-auto max-w-3xl p-8"><h1 className="text-2xl font-black">Ce mois ne fait pas partie des prévisions</h1><p className="mt-3">Choisissez un mois après la période historique de référence.</p><a className="mt-4 inline-block font-bold underline" href="/mois-a-venir">Revenir au mois à venir</a></section>;
+  }
   const { supabase } = await getAuthenticatedBootstrapClient();
   const [stored, plannedExpenses, personsResult] = await Promise.all([
     readMonthInputs(supabase, context.household.householdId, targetMonth),
@@ -36,14 +46,13 @@ export default async function MonthForecastPage({ searchParams }: { searchParams
   const persons = (personsResult.data ?? []).filter((person) => person.status === "active")
     .map((person) => ({ personId: person.person_id, displayName: person.display_name }));
   const options = await readPlannedContextOptions(client, context.household.householdId, persons);
-  const params = await searchParams;
   const dateParts = new Intl.DateTimeFormat("en-US", { timeZone: context.household.timezone,
     year: "numeric", month: "2-digit", day: "2-digit" }).formatToParts(new Date());
   const datePart = (part: string) => dateParts.find((item) => item.type === part)?.value ?? "";
   const today = `${datePart("year")}-${datePart("month")}-${datePart("day")}`;
   const scenario = deriveMonthScenario(forecast, stored.inputs, null, today, plannedExpenses);
   return <MonthForecastView forecast={forecast} scenario={scenario} stored={stored}
-    plannedExpenses={projectPlannedExpenseCards(plannedExpenses)}
+    plannedExpenses={projectPlannedExpenseCards(plannedExpenses, today)}
     persons={persons} places={options.places} vehicle={options.vehicle} prices={options.prices}
     inputError={params.inputError === "1"} />;
 }

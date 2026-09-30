@@ -6,7 +6,7 @@ import { redirect } from "next/navigation";
 import { getAuthenticatedBootstrapClient } from "@/server/bootstrap/auth";
 import { getCurrentHousehold } from "@/server/bootstrap/queries";
 import { createCanonicalReadClient } from "@/server/canonical/client";
-import { queryMonthForecast } from "@/server/phase2/month-forecast-snapshot";
+import { queryMonthForecast, resolvePlanningMonthForecast } from "@/server/phase2/month-forecast-snapshot";
 import { readMonthInputs, saveMonthInputs } from "@/server/phase2/month-inputs";
 import { deriveMonthScenario, type MonthInputs } from "@/server/phase2/month-scenario";
 import { readPlannedExpenses } from "@/server/phase2/planned-expenses";
@@ -20,7 +20,12 @@ export async function updateMonthInputs(form: FormData): Promise<void> {
   const { supabase, user } = await getAuthenticatedBootstrapClient();
   const household = await getCurrentHousehold(supabase);
   if (!household) throw new TypeError("MONTH_INPUT_HOUSEHOLD_MISSING");
-  const forecast = await queryMonthForecast(createCanonicalReadClient(), household.householdId, targetMonth);
+  let forecast;
+  try { forecast = await queryMonthForecast(createCanonicalReadClient(), household.householdId, targetMonth); }
+  catch (error) {
+    if (!(error instanceof Error) || error.message !== "FORECAST_ACTIVE_MONTH_SNAPSHOT_MISSING") throw error;
+    forecast = await resolvePlanningMonthForecast(createCanonicalReadClient(), household.householdId, targetMonth);
+  }
   const stored = await readMonthInputs(supabase, household.householdId, targetMonth);
   const current: MonthInputs = stored.inputs;
   const intent = field(form, "intent");
@@ -72,6 +77,9 @@ export async function updateMonthInputs(form: FormData): Promise<void> {
     next = { ...current, excludedFixedObligations: intent === "exclude-fixed"
       ? [...new Set([...current.excludedFixedObligations, key])]
       : current.excludedFixedObligations.filter((item) => item !== key) };
+  } else if (intent === "declare-monthly-benefits") {
+    next = { ...current, declaredResources: { ...current.declaredResources,
+      "benefit:swile": field(form, "swileResource"), "benefit:edenred": field(form, "edenredResource") } };
   } else if (intent === "set-resource-override" || intent === "clear-resource-override") {
     const key = field(form, "resourceKey");
     const supported = forecast.income.components.some((part) => part.key === key && part.central !== null)
@@ -109,7 +117,7 @@ export async function updateMonthInputs(form: FormData): Promise<void> {
     const plannedExpenses = await readPlannedExpenses(supabase, household.householdId, targetMonth);
     deriveMonthScenario(forecast, next, null, new Date().toISOString().slice(0, 10), plannedExpenses);
   } catch (error) {
-    if (error instanceof TypeError) redirect("/mois-a-venir?inputError=1");
+    if (error instanceof TypeError) redirect(`/mois-a-venir?month=${targetMonth}&inputError=1`);
     throw error;
   }
   await saveMonthInputs(supabase, household.householdId, targetMonth, user.id, next);

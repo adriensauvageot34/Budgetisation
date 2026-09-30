@@ -256,8 +256,9 @@ export function assembleMonthForecast(input: ForecastAuthorities, targetMonth: s
     categoryComponent(input, "Animaux", "animal-care", "category", latestMonth),
   ];
   const car = mobility(input);
-  // The declared work patterns and exceptions in this reference contract concern October 2026 only.
-  const referencePlan = input.referenceEvidence && targetMonth === "2026-10" ? buildMonthReference(input.referenceEvidence, targetMonth,
+  // C7 human decision: reuse the declared work patterns as explicit estimates.
+  // Recompute workdays for the target month; monthly resources/exceptions stay month-local.
+  const referencePlan = input.referenceEvidence ? buildMonthReference(input.referenceEvidence, targetMonth,
     input.recurrenceOperations.filter((operation) => operation.recurrence_series_id !== null).map((operation) => ({
       componentKey: `obligation:${operation.recurrence_series_id}`, date: operation.date_bancaire,
     }))) : undefined;

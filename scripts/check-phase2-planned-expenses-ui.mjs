@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { expenseDraft } from "./lib/planned-expense-memory-client.mjs";
 import { randomUUID } from "node:crypto";
 import { createRequire } from "node:module";
 import path from "node:path";
@@ -6,7 +7,7 @@ import { forecast, inputs, deriveMonthScenario } from "./check-phase2-october-co
 
 const require = createRequire(import.meta.url);
 const { readPlannedExpenses, createPlannedExpense, updatePlannedExpense, deletePlannedExpense,
-  markPlannedExpenseRealized, restorePlannedExpense, simulatePlannedExpense } =
+  declarePlannedExpense, restorePlannedExpense, simulatePlannedExpense } =
   require(path.resolve("src/server/phase2/planned-expenses.ts"));
 const { projectPlannedExpenseCards, projectMonthCalendar } =
   require(path.resolve("src/app/mois-a-venir/planned-expenses-projection.ts"));
@@ -41,6 +42,7 @@ const client = { from(table) {
       }
       return { data: selected, error: null };
     },
+    maybeSingle() { return this.single(); },
     single() { const result = query.execute(); return { ...result, data: Array.isArray(result.data) ? result.data[0] ?? null : result.data }; },
     then(resolve, reject) { return Promise.resolve(query.execute()).then(resolve, reject); },
   };
@@ -71,7 +73,7 @@ const assertReload = async (expectedCount) => {
 
 const simulatedParty = await simulatePlannedExpense(client, householdId, forecast, inputs, [], partyDraft("47.00", "2026-10-20"), "2026-09-28");
 assert.equal(rows.length, 0, "simulation never writes a draft");
-const party = await createPlannedExpense(client, householdId, month, userId, partyDraft("47.00", "2026-10-20"));
+const party = await createPlannedExpense(client, householdId, month, userId, partyDraft("47.00", "2026-10-20"), randomUUID());
 let state = await assertReload(1);
 assert.equal(state.cards[0].id, party.id);
 assert.equal(state.calendar.entries[0].key, party.id);
@@ -79,50 +81,50 @@ assert.equal(state.calendar.entries[0].amount, "47.00");
 assert.deepEqual(state.plan.scenarios, simulatedParty.economicPlan.scenarios, "simulate equals save, reload and derive");
 assert.deepEqual(state.plan.scenarios, { lowConsumption: "1123.76", central: "868.83", highConsumption: "508.76" });
 
-const shoes = await createPlannedExpense(client, householdId, month, userId, shoesDraft);
+const shoes = await createPlannedExpense(client, householdId, month, userId, shoesDraft, randomUUID());
 state = await assertReload(2);
 assert(state.cards.some((item) => item.id === shoes.id));
 assert(!state.calendar.entries.some((item) => item.key === shoes.id), "undated purchase stays out of calendar");
 assert.equal(state.plan.scenarios.central, "768.83");
 
-const updated = await updatePlannedExpense(client, householdId, party.id, userId, partyDraft("72.00", "2026-10-20"));
+const updated = await updatePlannedExpense(client, householdId, party.id, userId, partyDraft("72.00", "2026-10-20"), (await readPlannedExpenses(client, householdId, month)).find(row => row.id === party.id).updatedAt);
 state = await assertReload(2);
 assert.equal(updated.id, party.id);
 assert.equal(state.cards.find((item) => item.id === party.id).grossCost, "72.00");
 assert.equal(state.calendar.entries.find((item) => item.key === party.id).amount, "72.00");
 assert.equal(state.plan.scenarios.central, "743.83", "47 -> 72 changes forecast by -25");
 
-await updatePlannedExpense(client, householdId, party.id, userId, partyDraft("72.00", "2026-10-21"));
+await updatePlannedExpense(client, householdId, party.id, userId, partyDraft("72.00", "2026-10-21"), (await readPlannedExpenses(client, householdId, month)).find(row => row.id === party.id).updatedAt);
 state = await assertReload(2);
 assert.equal(state.cards.find((item) => item.id === party.id).plannedDate, "2026-10-21");
 assert.equal(state.calendar.entries.find((item) => item.key === party.id).date, "2026-10-21");
 assert.equal(state.plan.scenarios.central, "743.83");
 
-await updatePlannedExpense(client, householdId, party.id, userId, partyDraft("72.00", null));
+await updatePlannedExpense(client, householdId, party.id, userId, partyDraft("72.00", null), (await readPlannedExpenses(client, householdId, month)).find(row => row.id === party.id).updatedAt);
 state = await assertReload(2);
 assert(state.cards.some((item) => item.id === party.id));
 assert(!state.calendar.entries.some((item) => item.key === party.id));
 assert.equal(state.plan.scenarios.central, "743.83");
 
-await updatePlannedExpense(client, householdId, party.id, userId, partyDraft("72.00", "2026-10-21"));
+await updatePlannedExpense(client, householdId, party.id, userId, partyDraft("72.00", "2026-10-21"), (await readPlannedExpenses(client, householdId, month)).find(row => row.id === party.id).updatedAt);
 state = await assertReload(2);
 assert.equal(state.calendar.entries.find((item) => item.key === party.id).date, "2026-10-21");
 assert.equal(state.plan.scenarios.central, "743.83");
 
-await markPlannedExpenseRealized(client, householdId, party.id, userId);
+await declarePlannedExpense(client, householdId, party.id, userId, expenseDraft(state.saved.find(row => row.id === party.id)), state.saved.find(row => row.id === party.id).updatedAt, async () => {});
 state = await assertReload(2);
 assert.equal(state.cards.find((item) => item.id === party.id).status, "DECLARED_REALIZED");
 assert.equal(state.calendar.entries.find((item) => item.key === party.id).nature, "DECLARED_REALIZED");
 assert.equal(state.plan.scenarios.central, "743.83");
 assert.equal(state.plan.plannedExpenses.declaredRealizedGross, "72.00");
 
-await restorePlannedExpense(client, householdId, party.id, userId);
+await restorePlannedExpense(client, householdId, party.id, userId, state.saved.find(row => row.id === party.id).updatedAt);
 state = await assertReload(2);
 assert.equal(state.cards.find((item) => item.id === party.id).status, "PLANNED");
 assert.equal(state.calendar.entries.find((item) => item.key === party.id).nature, "PLANNED_EXPENSE");
 assert.equal(state.plan.scenarios.central, "743.83");
 
-await deletePlannedExpense(client, householdId, party.id);
+await deletePlannedExpense(client, householdId, party.id, state.saved.find(row => row.id === party.id).updatedAt);
 state = await assertReload(1);
 assert(!state.cards.some((item) => item.id === party.id));
 assert(!state.calendar.entries.some((item) => item.key === party.id));

@@ -3,6 +3,8 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
+    "check:phase2-planned-reliability": "node scripts/check-phase2-planned-reliability.mjs",
+    "check:phase2-planned-reality": "node scripts/check-phase2-planned-reality.mjs",
     "check:phase2-planned-domain": "node scripts/check-phase2-planned-domain.mjs",
     "check:phase2-planned-server-contract": "node scripts/check-phase2-planned-server-contract.mjs",
     "check:phase2-planned-builder": "node scripts/check-phase2-planned-builder.mjs",

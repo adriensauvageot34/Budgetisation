@@ -66,7 +66,8 @@ for (let index = 0; index < 180; index += 1) {
     destination: "Marie Blachère – Montpellier sud", fuelCost: "0.165" },
     { date, origin: "Marie Blachère – Montpellier sud", destination: "Promotrans – Montpellier", fuelCost: "0.165" });
 }
-const referencePlan = buildMonthReference({ startMonth: "2025-08", endMonth: "2026-07", economicEntries, mobilityLegs },
+const referenceEvidence = { startMonth: "2025-08", endMonth: "2026-07", economicEntries, mobilityLegs };
+const referencePlan = buildMonthReference(referenceEvidence,
   "2026-10", ["2025-08-04", "2025-09-03", "2025-10-05"].map((date) => ({ componentKey: "obligation:edf", date })));
 assert.deepEqual(referencePlan.necessaryTotal, { low: "632.00", central: "788.00", high: "929.00" });
 assert.deepEqual(referencePlan.flexibleTotal, { low: "79.00", central: "177.93", high: "397.00" });
@@ -152,4 +153,4 @@ assert.equal(deriveMonthScenario(november, defaultMonthInputs(), null, "2026-09-
   "October's declared decisions are not copied into a later month");
 assert.equal(JSON.stringify(forecast), source, "scenario decisions never mutate the published snapshot");
 console.log("PASS: October resources, certain outflows, scenarios, negative invariants, override propagation and undo");
-export { forecast, inputs, deriveMonthScenario };
+export { forecast, inputs, deriveMonthScenario, referenceEvidence };

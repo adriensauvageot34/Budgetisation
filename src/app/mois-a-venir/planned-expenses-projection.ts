@@ -1,9 +1,10 @@
 import Big from "big.js";
 import type { PlannedExpense } from "@/server/phase2/planned-expenses";
 import { plannedLineGross } from "@/domain/phase2/planned-money";
+import { needsRealityConfirmation } from "@/domain/phase2/planned-mutations";
 
-export type PlannedExpenseCard = Pick<PlannedExpense, "id" | "familyKey" | "subtypeKey" | "title" | "plannedDate" | "status" | "costItems" | "context"> & {
-  grossCost: string;
+export type PlannedExpenseCard = Pick<PlannedExpense, "id" | "familyKey" | "subtypeKey" | "title" | "plannedDate" | "status" | "costItems" | "context" | "updatedAt" | "targetMonth"> & {
+  grossCost: string; needsRealityConfirmation: boolean;
 };
 export type CalendarEntry = Readonly<{ key: string; label: string; amount: string; date: string;
   nature: "CERTAIN_OUTFLOW" | "PLANNED_EXPENSE" | "DECLARED_REALIZED";
@@ -11,10 +12,11 @@ export type CalendarEntry = Readonly<{ key: string; label: string; amount: strin
 export type CalendarOutflow = Readonly<{ key: string; label: string; amount: string; date: string | null;
   dateCertainty: "DECLARED" | "HISTORICAL_ESTIMATE" | "UNKNOWN" }>;
 
-export const projectPlannedExpenseCards = (expenses: readonly PlannedExpense[]): PlannedExpenseCard[] =>
+export const projectPlannedExpenseCards = (expenses: readonly PlannedExpense[], today = new Date().toISOString().slice(0, 10)): PlannedExpenseCard[] =>
   expenses.map((expense) => ({ id: expense.id, familyKey: expense.familyKey, subtypeKey: expense.subtypeKey,
     title: expense.title, plannedDate: expense.plannedDate, status: expense.status,
-    costItems: expense.costItems, context: expense.context,
+    costItems: expense.costItems, context: expense.context, updatedAt: expense.updatedAt, targetMonth: expense.targetMonth,
+    needsRealityConfirmation: needsRealityConfirmation(expense, today),
     grossCost: expense.costItems.reduce((sum, item) => sum.plus(plannedLineGross(item)), new Big(0)).toFixed(2) }));
 
 export function projectMonthCalendar(outflows: readonly CalendarOutflow[],

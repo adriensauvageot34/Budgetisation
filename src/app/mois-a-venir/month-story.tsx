@@ -56,7 +56,7 @@ export function MonthStory({ plan, targetMonth, plannedExpenses, persons, places
   const calendar = projectMonthCalendar(plan.certainOutflows.items, plannedExpenses);
 
   return <div className="space-y-7 sm:space-y-9">
-    <header className="space-y-2"><p className="eyebrow">Préparons notre mois ensemble</p><h1 className="text-4xl font-black capitalize tracking-tight sm:text-5xl">{monthLabel(targetMonth)}</h1><p className="text-slate-600">Voyons ce qui entre, ce qui est déjà réservé et ce qu’on peut encore prévoir.</p></header>
+    <header className="space-y-2"><p className="eyebrow">Préparons notre mois ensemble</p><h1 className="text-4xl font-black capitalize tracking-tight sm:text-5xl">{monthLabel(targetMonth)}</h1><p className="text-slate-600">Voyons ce qui entre, ce qui est déjà réservé et ce qu’on peut encore prévoir.</p><p className="text-xs text-slate-600">Les dépenses de travail restent estimées selon les rythmes déclarés : cinq jours sur site par semaine pour Manon, deux à trois pour Adrien, avec les jours ouvrés de ce mois.</p></header>
 
     <section className="card p-4 sm:p-6" aria-labelledby="resources-title"><div className="flex flex-wrap items-end justify-between gap-3"><h2 id="resources-title" className="text-2xl font-black">Nos ressources</h2><div className="text-left sm:text-right"><p className="text-xs font-semibold text-slate-600">Ressources prévues du mois</p><p className="text-3xl font-black tracking-tight tabular-nums text-emerald-950">{money(plan.economicResources, true)}</p></div></div>
       <div className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">{plan.resources.map((resource) => <ResourceEditor key={resource.key} resource={resource} targetMonth={targetMonth} />)}</div>

@@ -3,6 +3,9 @@
 Les modules ci-dessous sont des responsabilités de lecture et d'interaction sur `/mois-a-venir`.
 Ils partagent le snapshot publié `phase2_month_forecast` et les inputs prospectifs
 `phase2_month_inputs`. Aucun module ne possède un moteur financier supplémentaire.
+Les mois futurs sans snapshot mensuel sont résolus en lecture depuis les autorités
+canoniques courantes par `resolvePlanningMonthForecast`, avec le même moteur.
+Cette résolution ne publie ni snapshot, ni révision analytique.
 
 | Module | Responsabilité | Autorité et état actuel |
 | --- | --- | --- |
@@ -107,7 +110,7 @@ multi-mois et rapprochement bancaire sont des extensions futures.
 Une date de dépense prévue est affichée seulement lorsqu'elle a été saisie. Le
 calendrier projette les charges certaines datées et les Planned Expenses datées depuis
 leurs sources respectives. Il montre le coût brut prévu, y compris après marquage
-« réalisée », sans créer de table calendrier. `freshnessDate` signale la fraîcheur des observations,
+« déclarée réalisée », sans créer de table calendrier. `freshnessDate` signale la fraîcheur des observations,
 pas une date de prélèvement à venir. Les revenus et charges fixes sans jour certifié
 figurent dans « Date à confirmer ». Les charges fixes restent incluses dans le total
 mensuel même sans jour connu. Un retrait les soustrait uniquement du scénario du
@@ -116,3 +119,47 @@ mois ; il n'efface ni transaction, ni obligation, ni snapshot publié.
 Les charges fixes sont retenues par la règle déjà appliquée au forecast : série
 active, détail de récurrence disponible, mode « Échéance fixe », cadence mensuelle
 et montant estimable. Les autres séries demeurent conditionnelles ou inconnues.
+
+## Fiabilité Preview / Save et cycle déclaré (C6 / C7)
+
+`resolvePlannedExpenseDraft` constitue la frontière commune de Preview, création,
+édition, déclaration et report : parsing et domaine partagé, graph, assets,
+invariants financiers, puis références live du foyer. Les distances historiques
+et prix carburant sont résolus à nouveau depuis les faits courants. Un trajet
+incomplet ou un lieu devenu incompatible échoue sans écriture partielle.
+Les autorités calculées envoyées dans le payload client sont refusées.
+
+La création utilise un UUID stable par brouillon et l'unicité de la clé primaire.
+Un replay identique relit la même root ; une intention différente avec le même
+identifiant est refusée. Les mutations utilisent le `updated_at` relu et un
+compare-and-set SQL avec foyer, identifiant, version et statut. Les erreurs
+structurées indiquent code, path et cible de réparation ; le brouillon local est
+conservé. Les Preview obsolètes ne remplacent pas un brouillon plus récent.
+
+Seuls `PLANNED` et `DECLARED_REALIZED` sont persistés. Une date passée produit
+« À confirmer » sans mutation. La confirmation locale préremplit les CostItems
+actuels ; leur contenu final et le statut sont enregistrés dans un seul UPDATE
+après recalcul du scénario. Correction déclarée et restauration sont dédiées.
+À contenu identique, coût, baseline et reste projeté sont conservés ; les
+allocations passent de `reserved` à `usedDeclared`, puis inversement au restore.
+Ce financement déclaré ne débite aucune authority wallet observée.
+
+Un total corrigé peut actualiser une allocation explicite Banque seule.
+Swile/Edenred ou un financement mixte devenu incohérent exige confirmation.
+Un détail de plusieurs lignes ne peut pas être remplacé par un total global
+pendant la déclaration ; les lignes sont corrigées explicitement.
+
+Le report conserve l'identifiant de la root et revalide la destination. Les
+hypothèses de travail existantes sont réutilisées comme estimations explicites,
+avec les jours du nouveau mois, selon validation humaine du 30 septembre 2026.
+Les ressources Swile/Edenred doivent être déclarées pour chaque mois, y compris
+un zéro explicite : celles d'octobre ne sont jamais copiées. Sans ces ressources,
+le report ne déplace pas la root ; la page du mois cible permet leur saisie.
+La migration `20260929232710_phase2_planned_report_month.sql`, approuvée puis
+appliquée, ajoute uniquement le droit UPDATE sur `target_month` sous RLS.
+
+« Ça n'a pas eu lieu » et la suppression d'une déclaration demandent une
+confirmation spécifique puis suppriment uniquement la root prospective. Liste,
+calendrier, baseline et financement sont reconstruits depuis les lignes restantes.
+Aucun statut CANCELLED, amount parallèle, realizedDate, brouillon cloud ou
+écriture historique n'est ajouté.

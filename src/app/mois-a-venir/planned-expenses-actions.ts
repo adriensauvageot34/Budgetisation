@@ -5,14 +5,15 @@ import { revalidatePath } from "next/cache";
 import { getAuthenticatedBootstrapClient } from "@/server/bootstrap/auth";
 import { getCurrentHousehold } from "@/server/bootstrap/queries";
 import { createCanonicalReadClient } from "@/server/canonical/client";
-import { MONTH_FORECAST_RESOURCE, queryMonthForecast } from "@/server/phase2/month-forecast-snapshot";
+import { MONTH_FORECAST_RESOURCE, queryMonthForecast, resolvePlanningMonthForecast } from "@/server/phase2/month-forecast-snapshot";
 import { readMonthInputs } from "@/server/phase2/month-inputs";
 import { deriveMonthScenario } from "@/server/phase2/month-scenario";
 import {
   createPlannedExpense, deletePlannedExpense,
-  markPlannedExpenseRealized, parsePlannedExpenseDraft, readPlannedExpenses,
-  restorePlannedExpense, simulatePlannedExpense, updatePlannedExpense,
+  declarePlannedExpense, readPlannedExpenses, reportPlannedExpense,
+  restorePlannedExpense, preparePlannedExpenseSimulation, updatePlannedExpense,
 } from "@/server/phase2/planned-expenses";
+import { plannedMutationIssue, type PlannedResult, type PlannedWriteCommand } from "@/domain/phase2/planned-mutations";
 import { readPlannedRouteHistory, readPlannedContextOptions } from "@/server/phase2/planned-context";
 import { resolvePlannedRoute } from "@/domain/phase2/planned-routes";
 import type { PlannedRouteStop } from "@/domain/phase2/planned-contract";
@@ -33,24 +34,34 @@ async function monthContext(targetMonth: string) {
     .eq("resource", MONTH_FORECAST_RESOURCE).eq("is_active", true).is("invalidated_at", null)
     .order("period_month", { ascending: false }).limit(1).maybeSingle();
   if (error) throw error;
-  if (String(latest?.period_month ?? "").slice(0, 7) !== targetMonth)
-    throw new TypeError("PLANNED_EXPENSE_ACTIVE_MONTH_MISMATCH");
+  const activeMonth = String(latest?.period_month ?? "").slice(0, 7);
+  if (!activeMonth) throw new TypeError("PLANNED_EXPENSE_FORECAST_UNAVAILABLE");
   const [forecast, stored, saved] = await Promise.all([
-    queryMonthForecast(reader, household.householdId, targetMonth),
+    targetMonth === activeMonth ? queryMonthForecast(reader, household.householdId, targetMonth)
+      : resolvePlanningMonthForecast(reader, household.householdId, targetMonth),
     readMonthInputs(supabase, household.householdId, targetMonth),
     readPlannedExpenses(supabase, household.householdId, targetMonth),
   ]);
   return { supabase, user, household, forecast, inputs: stored.inputs, saved };
 }
 
-export async function previewPlannedExpense(targetMonth: string, rawDraft: unknown, editedId?: string) {
+async function result<T>(work: () => Promise<T>): Promise<PlannedResult<T>> {
+  try { return { ok: true, value: await work() }; }
+  catch (error) { return { ok: false, issue: plannedMutationIssue(error) }; }
+}
+function requireMonthlyResources(context: Awaited<ReturnType<typeof monthContext>>) {
+  if ((["benefit:swile", "benefit:edenred"] as const).some((key) => context.inputs.declaredResources[key] === undefined))
+    throw new TypeError("PLANNED_EXPENSE_MONTH_RESOURCES_REQUIRED");
+}
+async function preview(targetMonth: string, rawDraft: unknown, editedId?: string) {
   const context = await monthContext(targetMonth);
+  requireMonthlyResources(context);
   const today = new Date().toISOString().slice(0, 10);
-  const draft = parsePlannedExpenseDraft(rawDraft, targetMonth, "PREVIEW");
+  const { draft, scenario } = await preparePlannedExpenseSimulation(context.supabase, context.household.householdId,
+    context.forecast, context.inputs, context.saved, rawDraft, today, editedId, "PREVIEW");
   const before = deriveMonthScenario(context.forecast, context.inputs, null, today,
     context.saved.filter((expense) => expense.id !== editedId)).economicPlan;
-  const after = (await simulatePlannedExpense(context.supabase, context.household.householdId,
-    context.forecast, context.inputs, context.saved, draft, today, editedId, "PREVIEW")).economicPlan;
+  const after = scenario.economicPlan;
   if (!before || !after) throw new TypeError("PLANNED_EXPENSE_FORECAST_UNAVAILABLE");
   const projection = projectPlannedExpenseImpact(before, after, draft);
   const { netAdditionalImpact } = projection;
@@ -62,10 +73,15 @@ export async function previewPlannedExpense(targetMonth: string, rawDraft: unkno
     && draft.costItems.every((item) => item.baselineKey === "household-restaurants");
   return {
     ...projection,
+    targetMonth,
+    resolvedDraft: draft,
     explanation: restaurantHabitual
       ? `Compté dans votre enveloppe restaurants habituelle. Impact supplémentaire : ${euro(minimum)} à ${euro(maximum)} € selon le scénario.`
       : "Les lignes habituelles utilisent d’abord leur enveloppe du mois ; seul le dépassement s’ajoute au coût prévu.",
   };
+}
+export async function previewPlannedExpense(targetMonth: string, rawDraft: unknown, editedId?: string) {
+  return result(() => preview(targetMonth, rawDraft, editedId));
 }
 
 export async function estimatePlannedRoute(targetMonth: string,
@@ -84,31 +100,81 @@ export async function estimatePlannedRoute(targetMonth: string,
   return resolvePlannedRoute(stops, await readPlannedRouteHistory(createCanonicalReadClient(), context.household.householdId), options.vehicle);
 }
 
-export async function savePlannedExpense(targetMonth: string, rawDraft: unknown, editedId?: string): Promise<void> {
-  const context = await monthContext(targetMonth);
-  // The preview path validates the same draft against the current saved month before any write.
-  await simulatePlannedExpense(context.supabase, context.household.householdId,
-    context.forecast, context.inputs, context.saved, rawDraft, new Date().toISOString().slice(0, 10), editedId);
-  if (editedId) await updatePlannedExpense(context.supabase, context.household.householdId, editedId, context.user.id, rawDraft);
-  else await createPlannedExpense(context.supabase, context.household.householdId, targetMonth, context.user.id, rawDraft);
-  revalidatePath("/mois-a-venir");
+export async function savePlannedExpense(targetMonth: string, rawDraft: unknown, command: PlannedWriteCommand) {
+  return result(async () => {
+    const context = await monthContext(targetMonth);
+    requireMonthlyResources(context);
+    const editedId = command.expectedUpdatedAt ? command.id : undefined;
+    const { draft, scenario } = await preparePlannedExpenseSimulation(context.supabase, context.household.householdId,
+      context.forecast, context.inputs, editedId ? context.saved : context.saved.filter((row) => row.id !== command.id),
+      rawDraft, new Date().toISOString().slice(0, 10), editedId);
+    if (!scenario.economicPlan) throw new TypeError("PLANNED_EXPENSE_FORECAST_UNAVAILABLE");
+    const expense = editedId
+      ? await updatePlannedExpense(context.supabase, context.household.householdId, editedId, context.user.id, draft, command.expectedUpdatedAt!)
+      : await createPlannedExpense(context.supabase, context.household.householdId, targetMonth, context.user.id, draft, command.id);
+    revalidatePath("/mois-a-venir");
+    return { ...(await freshReadModel(targetMonth, expense.id)),
+      notice: "Enregistré avec les ressources du mois, les lieux et les estimations de trajet actuellement disponibles." };
+  });
 }
 
-export async function changePlannedExpenseStatus(targetMonth: string, id: string,
-  next: "PLANNED" | "DECLARED_REALIZED"): Promise<void> {
-  const context = await monthContext(targetMonth);
-  const expense = context.saved.find((item) => item.id === id);
-  if (!expense) throw new TypeError("PLANNED_EXPENSE_NOT_FOUND");
-  if (next === "DECLARED_REALIZED")
-    await markPlannedExpenseRealized(context.supabase, context.household.householdId, id, context.user.id);
-  else await restorePlannedExpense(context.supabase, context.household.householdId, id, context.user.id);
-  revalidatePath("/mois-a-venir");
+async function freshReadModel(targetMonth: string, id: string) {
+  const current = await monthContext(targetMonth);
+  const expense = current.saved.find((row) => row.id === id);
+  const scenario = deriveMonthScenario(current.forecast, current.inputs, null,
+    new Date().toISOString().slice(0, 10), current.saved);
+  return { expense: expense ?? null, scenario };
 }
 
-export async function removePlannedExpense(targetMonth: string, id: string): Promise<void> {
-  const context = await monthContext(targetMonth);
-  const expense = context.saved.find((item) => item.id === id);
-  if (!expense || expense.status !== "PLANNED") throw new TypeError("PLANNED_EXPENSE_DELETE_TARGET_INVALID");
-  await deletePlannedExpense(context.supabase, context.household.householdId, id);
-  revalidatePath("/mois-a-venir");
+export async function confirmPlannedExpenseReality(targetMonth: string, rawDraft: unknown,
+  command: PlannedWriteCommand, correction = false) {
+  return result(async () => {
+    const context = await monthContext(targetMonth);
+    requireMonthlyResources(context);
+    const expense = await declarePlannedExpense(context.supabase, context.household.householdId, command.id,
+      context.user.id, rawDraft, command.expectedUpdatedAt!, async (draft, previous) => {
+        if (previous.targetMonth !== targetMonth) throw new TypeError("REALITY_DRAFT_STALE");
+        const resolved = await preparePlannedExpenseSimulation(context.supabase, context.household.householdId,
+          context.forecast, context.inputs, context.saved, draft, new Date().toISOString().slice(0, 10), previous.id);
+        if (!resolved.scenario.economicPlan) throw new TypeError("PLANNED_EXPENSE_FORECAST_UNAVAILABLE");
+      }, correction);
+    revalidatePath("/mois-a-venir");
+    return freshReadModel(expense.targetMonth, expense.id);
+  });
+}
+
+export async function restorePlannedExpenseAction(targetMonth: string, command: PlannedWriteCommand) {
+  return result(async () => {
+    const context = await monthContext(targetMonth);
+    const expense = await restorePlannedExpense(context.supabase, context.household.householdId, command.id,
+      context.user.id, command.expectedUpdatedAt!);
+    revalidatePath("/mois-a-venir");
+    return freshReadModel(expense.targetMonth, expense.id);
+  });
+}
+
+export async function reportPlannedExpenseAction(targetMonth: string, command: PlannedWriteCommand, plannedDate: string) {
+  return result(async () => {
+    const context = await monthContext(targetMonth);
+    const expense = await reportPlannedExpense(context.supabase, context.household.householdId, command.id,
+      context.user.id, plannedDate, command.expectedUpdatedAt!, async (draft, destinationMonth) => {
+        const destination = destinationMonth === targetMonth ? context : await monthContext(destinationMonth);
+        requireMonthlyResources(destination);
+        const resolved = await preparePlannedExpenseSimulation(destination.supabase, destination.household.householdId,
+          destination.forecast, destination.inputs, destination.saved, draft, new Date().toISOString().slice(0, 10),
+          destinationMonth === targetMonth ? command.id : undefined);
+        if (!resolved.scenario.economicPlan) throw new TypeError("PLANNED_EXPENSE_FORECAST_UNAVAILABLE");
+      });
+    revalidatePath("/mois-a-venir");
+    return { targetMonth: expense.targetMonth, ...(await freshReadModel(expense.targetMonth, expense.id)) };
+  });
+}
+
+export async function removePlannedExpense(targetMonth: string, command: PlannedWriteCommand) {
+  return result(async () => {
+    const context = await monthContext(targetMonth);
+    await deletePlannedExpense(context.supabase, context.household.householdId, command.id, command.expectedUpdatedAt!);
+    revalidatePath("/mois-a-venir");
+    return freshReadModel(targetMonth, command.id);
+  });
 }

@@ -1,11 +1,12 @@
 import assert from "node:assert/strict";
+import { expenseDraft } from "./lib/planned-expense-memory-client.mjs";
 import fs from "node:fs";
 import { randomUUID } from "node:crypto";
 import { createRequire } from "node:module";
 import { forecast, inputs } from "./check-phase2-october-contract.mjs";
 const require = createRequire(import.meta.url);
 const { parsePlannedExpenseDraft, createPlannedExpense, readPlannedExpenses, updatePlannedExpense,
-  markPlannedExpenseRealized, restorePlannedExpense } = require("../src/server/phase2/planned-expenses.ts");
+  declarePlannedExpense, restorePlannedExpense } = require("../src/server/phase2/planned-expenses.ts");
 const { resolvePlannedRoute, routeSegments, assertRouteContinuity, deduplicateRouteStops, stopForPlace } = require("../src/domain/phase2/planned-routes.ts");
 const { createBuilderState, setBuilderChildPlace, addBuilderChildRouteStop, removeBuilderChild, undoBuilderChange,
   editBuilderDraft, invalidateRouteDistances } = require("../src/domain/phase2/planned-builder.ts");
@@ -119,6 +120,7 @@ const tableClient = { from(table) {
     select() { return this; }, eq(key, value) { where.push([key, value]); return this; }, order() { return this; },
     insert(row) { mutations.push([table, "insert"]); storedRow = { ...structuredClone(row), created_at: "2026-09-30T00:00:00Z", updated_at: "2026-09-30T00:00:00Z" }; return this; },
     update(patch) { mutations.push([table, "update"]); this.patch = structuredClone(patch); return this; },
+    maybeSingle() { return this.single(); },
     single() { assert(where.every(([key, value]) => storedRow[key] === value)); if (this.patch) storedRow = { ...storedRow, ...this.patch }; return Promise.resolve({ data: structuredClone(storedRow), error: null }); },
     then(resolve) { assert(where.every(([key, value]) => storedRow[key] === value)); resolve({ data: [structuredClone(storedRow)], error: null }); },
   };
@@ -126,12 +128,12 @@ const tableClient = { from(table) {
 } };
 const textDraft = { ...visit(), context: { personVisited: { kind: "TEXT", label: "Ami déclaré" },
   place: { kind: "TEXT", label: "Lieu principal déclaré" }, childLocalPlaceRefs: { restaurant: { kind: "TEXT", label: "Restaurant déclaré", provenance: "USER_DECLARED_PROSPECTIVE" } } } };
-const created = await createPlannedExpense(tableClient, householdId, "2026-10", userId, textDraft);
+const created = await createPlannedExpense(tableClient, householdId, "2026-10", userId, textDraft, randomUUID());
 assert.deepEqual((await readPlannedExpenses(tableClient, householdId, "2026-10"))[0].context, textDraft.context);
-const updated = await updatePlannedExpense(tableClient, householdId, created.id, userId, { ...textDraft, title: "Titre modifié" });
+const updated = await updatePlannedExpense(tableClient, householdId, created.id, userId, { ...textDraft, title: "Titre modifié" }, created.updatedAt);
 assert.equal(updated.id, created.id); assert.deepEqual(updated.context.childLocalPlaceRefs, textDraft.context.childLocalPlaceRefs);
-const declared = await markPlannedExpenseRealized(tableClient, householdId, created.id, userId);
+const declared = await declarePlannedExpense(tableClient, householdId, created.id, userId, expenseDraft(updated), updated.updatedAt, async () => {});
 assert.equal(declared.id, created.id); assert.equal(declared.status, "DECLARED_REALIZED"); assert.deepEqual(declared.costItems, created.costItems);
-assert.equal((await restorePlannedExpense(tableClient, householdId, created.id, userId)).status, "PLANNED");
+assert.equal((await restorePlannedExpense(tableClient, householdId, created.id, userId, declared.updatedAt)).status, "PLANNED");
 assert.equal(mutations.length, 4); assert(mutations.every(([table]) => table === "phase2_planned_expenses"));
 console.log("PASS: C4 LP-01..08, binding, continuity, directed medians, PARTIAL/manual, fuel, META-05..08/18/19");

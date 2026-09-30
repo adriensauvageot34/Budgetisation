@@ -53,7 +53,7 @@ export function PlannedRouteEditor({ builder, setBuilder, places, vehicle, targe
     } catch { setMessage("Vérifiez les lieux et les kilomètres saisis. L’estimation n’a pas abouti."); }
     finally { setBusy(false); }
   };
-  return <div className="grid gap-3">
+  return <div id="builder-route" className="grid gap-3">
     {resolved.children.filter((edge) => edge.localPlacePolicy !== "HIDDEN"
       && draft.costItems.some((item) => item.modulePath?.[1] === edge.childModule)).map((edge) => {
       const child = edge.childModule, ref = draft.context.childLocalPlaceRefs?.[child];

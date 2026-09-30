@@ -99,3 +99,22 @@ export async function queryMonthForecast(client: SupabaseClient, householdId: st
     || payload.publicationMeta.manifestHash !== identity.publicationMeta.manifestHash) throw new TypeError("FORECAST_SNAPSHOT_PAYLOAD_MISMATCH");
   return payload;
 }
+
+/** A report target may not have a published monthly cache yet. Resolve its own
+ * month from the current canonical authorities, without writing a snapshot. */
+export async function resolvePlanningMonthForecast(client: SupabaseClient, householdId: string,
+  targetMonth: string): Promise<MonthForecastSnapshot> {
+  parseGlobalV2QueryParams(MONTH_FORECAST_RESOURCE, { targetMonth });
+  const [authorities, identity] = await Promise.all([
+    loadMonthForecastAuthorities(client, householdId), activeIdentity(client, householdId),
+  ]);
+  if (authorities.publication.publication_id !== identity.publication.publication_id)
+    throw new TypeError("FORECAST_GENERATION_CHANGED_DURING_BUILD");
+  const forecast = assembleMonthForecast(authorities, targetMonth);
+  const contract = globalV2QueryRegistry[MONTH_FORECAST_RESOURCE];
+  const methodSignature = globalV2ExpectedQueryMethodSignature(MONTH_FORECAST_RESOURCE);
+  return contract.schema.parse({ ...forecast, publicationMeta: identity.publicationMeta,
+    resourceMeta: { contractVersion: contract.contractVersion, methodSignature, policyVersions: contract.policyVersions,
+      resourceInputHash: sha256({ publicationId: forecast.meta.sourcePublicationId, sourceRevision: forecast.meta.sourceRevision,
+        analyticsRevision: forecast.meta.analyticsRevision, targetMonth, methodSignature }) } }) as MonthForecastSnapshot;
+}

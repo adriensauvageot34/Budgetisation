@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { expenseDraft } from "./lib/planned-expense-memory-client.mjs";
 import { randomUUID } from "node:crypto";
 import { createRequire } from "node:module";
 import path from "node:path";
@@ -7,7 +8,7 @@ import { forecast, inputs, deriveMonthScenario } from "./check-phase2-october-co
 const require = createRequire(import.meta.url);
 const { parsePlannedExpenseDraft, grossPlannedExpenseCost, simulatePlannedExpense,
   readPlannedExpenses, createPlannedExpense, updatePlannedExpense, deletePlannedExpense,
-  markPlannedExpenseRealized, restorePlannedExpense } =
+  declarePlannedExpense, restorePlannedExpense } =
   require(path.resolve("src/server/phase2/planned-expenses.ts"));
 const { saveMonthInputs } = require(path.resolve("src/server/phase2/month-inputs.ts"));
 
@@ -133,6 +134,7 @@ const memoryClient = { from(table) {
       }
       return { data: selected, error: null };
     },
+    maybeSingle() { return this.single(); },
     single() {
       const result = query.execute();
       return { ...result, data: Array.isArray(result.data) ? result.data[0] ?? null : result.data };
@@ -141,11 +143,11 @@ const memoryClient = { from(table) {
   };
   return query;
 } };
-const created = await createPlannedExpense(memoryClient, householdId, month, userId, partyDraft);
+const created = await createPlannedExpense(memoryClient, householdId, month, userId, partyDraft, randomUUID());
 assert.equal(created.status, "PLANNED");
 assert.equal(created.createdBy, userId);
 assert.equal((await readPlannedExpenses(memoryClient, householdId, month)).length, 1);
-const edited = await updatePlannedExpense(memoryClient, householdId, created.id, userId, updatedDraft);
+const edited = await updatePlannedExpense(memoryClient, householdId, created.id, userId, updatedDraft, created.updatedAt);
 assert.equal(edited.id, created.id);
 assert.equal(edited.createdBy, created.createdBy);
 assert.equal(grossPlannedExpenseCost(edited), "72.00");
@@ -153,13 +155,13 @@ assert.deepEqual((await simulatePlannedExpense(memoryClient, householdId, foreca
   [created], updatedDraft, "2026-09-28", created.id)).economicPlan.scenarios,
   deriveMonthScenario(forecast, inputs, null, "2026-09-28", [edited]).economicPlan.scenarios,
   "simulate(edit) equals saved and reloaded derivation");
-const realizedRow = await markPlannedExpenseRealized(memoryClient, householdId, created.id, userId);
+const realizedRow = await declarePlannedExpense(memoryClient, householdId, created.id, userId, expenseDraft(edited), edited.updatedAt, async () => {});
 assert.equal(realizedRow.status, "DECLARED_REALIZED");
 assert.deepEqual(amounts([edited]), amounts([realizedRow]));
 await assert.rejects(updatePlannedExpense(memoryClient, householdId, created.id, userId, partyDraft), /REALIZED_EDIT_FORBIDDEN/);
-const restoredRow = await restorePlannedExpense(memoryClient, householdId, created.id, userId);
+const restoredRow = await restorePlannedExpense(memoryClient, householdId, created.id, userId, realizedRow.updatedAt);
 assert.equal(restoredRow.status, "PLANNED");
-await deletePlannedExpense(memoryClient, householdId, created.id);
+await deletePlannedExpense(memoryClient, householdId, created.id, restoredRow.updatedAt);
 assert.deepEqual(await readPlannedExpenses(memoryClient, householdId, month), []);
 let savedSettings;
 await saveMonthInputs({ from(table) {
