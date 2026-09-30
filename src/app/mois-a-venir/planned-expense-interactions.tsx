@@ -1,0 +1,16 @@
+"use client";
+
+import { createContext, useCallback, useContext, useState, type ReactNode } from "react";
+
+export type PlannedExpenseInteraction = { id: string; action: "EDIT" | "DECLARE" | "CORRECT" | "RESTORE" | "REPORT" | "DELETE" };
+const InteractionContext = createContext<{ pending: PlannedExpenseInteraction | null;
+  request: (action: PlannedExpenseInteraction) => void; consume: () => void } | null>(null);
+
+/** Local navigation only. The existing builder owns drafts and server actions. */
+export function PlannedExpenseInteractions({ children }: { children: ReactNode }) {
+  const [pending, setPending] = useState<PlannedExpenseInteraction | null>(null);
+  const request = useCallback((action: PlannedExpenseInteraction) => setPending(action), []);
+  const consume = useCallback(() => setPending(null), []);
+  return <InteractionContext.Provider value={{ pending, request, consume }}>{children}</InteractionContext.Provider>;
+}
+export const usePlannedExpenseInteractions = () => useContext(InteractionContext);

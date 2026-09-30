@@ -102,7 +102,13 @@ assert(!changed.draft.context.route.stops.some((stop) => stop.childModule));
 const saved = (status) => ({ id: randomUUID(), targetMonth: "2026-10", status, costItems: valid.costItems });
 const a = deriveMonthScenario(forecast, inputs, null, "2026-09-30", [saved("PLANNED")]).economicPlan;
 const b = deriveMonthScenario(forecast, inputs, null, "2026-09-30", [saved("DECLARED_REALIZED")]).economicPlan;
-assert.deepEqual(a.scenarios, b.scenarios); assert.deepEqual(a.plannedFunding, b.plannedFunding);
+// STATIC_CONTRACT DD4: economics stay neutral, BANK reservation becomes used declared.
+assert.deepEqual(a.scenarios, b.scenarios);
+assert.equal(a.plannedFunding.bankAllocated, b.plannedFunding.bankAllocated);
+assert.deepEqual(a.plannedFunding.swile, b.plannedFunding.swile);
+assert.deepEqual(a.plannedFunding.edenred, b.plannedFunding.edenred);
+assert.equal(a.plannedFunding.bankReserved, "25.00"); assert.equal(a.plannedFunding.bankUsedDeclared, "0.00");
+assert.equal(b.plannedFunding.bankReserved, "0.00"); assert.equal(b.plannedFunding.bankUsedDeclared, "25.00");
 assert.equal(a.plannedFunding.bankAllocated, "25.00");
 assert.throws(() => parse({ ...valid, costItems: valid.costItems.map((item) => item.assetKey === "transport:fuel_usage" ? { ...item, fundingAllocations: [{ source: "BANK", amount: item.unitAmount }] } : item) }), /FUEL_FUNDING/);
 assert.deepEqual(placesForChildModule([{ placeId: randomUUID(), name: "Privé", privatePlace: true, nature: "Domicile privé", usage: "Restaurant", subtype: null, relationships: [] }], "restaurant"), []);

@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Big from "big.js";
 import { CalendarDays, Check, Pencil, Plus, RotateCcw, Trash2 } from "lucide-react";
 import { PLANNED_FAMILIES, PLANNED_SUBTYPE_LABELS, ASSET_AGGREGATE_DESCENDANTS, assetsForModule, plannedAsset, rootAssetModule, suggestedAssetQuantity,
@@ -22,6 +22,7 @@ import { canCollapseRealityCosts, fundingAfterGrossChange, type PlannedIssue, ty
 
 import { PlannedRouteEditor } from "./planned-route-editor";
 import { PlannedImpactCard } from "./planned-impact-card";
+import { usePlannedExpenseInteractions } from "./planned-expense-interactions";
 
 type Person = { personId: string; displayName: string };
 type Draft = Pick<PlannedExpenseCard, "familyKey" | "subtypeKey" | "title" | "plannedDate" | "costItems" | "context">;
@@ -71,6 +72,7 @@ function unwrap<T>(result: PlannedResult<T>): T {
 
 export function PlannedExpensesControl({ targetMonth, expenses, persons, places, vehicle, prices, funding }: Props) {
   const router = useRouter();
+  const interactions = usePlannedExpenseInteractions();
   const [open, setOpen] = useState(false);
   const [step, setStep] = useState(1);
   const [intentFamily, setIntentFamily] = useState<PlannedExpenseFamily>("outing");
@@ -293,6 +295,26 @@ export function PlannedExpensesControl({ targetMonth, expenses, persons, places,
     .filter((asset) => asset.assetKey !== "transport:fuel_usage"
       && (!search || asset.label.toLocaleLowerCase("fr").includes(search.toLocaleLowerCase("fr"))));
 
+  useEffect(() => {
+    const pending = interactions?.pending;
+    if (!pending) return;
+    interactions.consume();
+    const item = expenses.find((row) => row.id === pending.id);
+    if (!item) { setError("Ce projet n’est plus présent. Actualisez la page."); return; }
+    if (inFlight.current || open && builder.revision > 0) {
+      setError("Terminez ou fermez le brouillon ouvert avant de poursuivre cette action.");
+    } else if (pending.action === "RESTORE") {
+      void run(async () => { unwrap(await restorePlannedExpenseAction(targetMonth, { id: item.id, expectedUpdatedAt: item.updatedAt })); });
+    } else if (pending.action === "REPORT") { setReportId(item.id); setReportDate(item.plannedDate ?? ""); }
+    else if (pending.action === "DELETE") setDeleteId(item.id);
+    else start(item, pending.action === "DECLARE" ? "DECLARE" : pending.action === "CORRECT" ? "CORRECT" : null);
+    window.setTimeout(() => {
+      const target = document.getElementById("planned-expense-builder");
+      target?.scrollIntoView({ behavior: "smooth", block: "start" }); target?.focus();
+    }, 0);
+    // Pending is a consumed navigation command, never a second draft authority.
+  }, [interactions?.pending]);
+
   const card = (item: PlannedExpenseCard) => <li key={item.id} className="min-w-0 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
     <div className="flex flex-wrap items-start justify-between gap-3"><div className="min-w-0 flex-1"><p className="text-xs font-bold text-emerald-900">{familyLabel(item.familyKey)} · {subtypeLabel(item.familyKey, item.subtypeKey)}</p><h4 className="break-words text-base font-black">{item.title}</h4><p className="mt-1 text-xs text-slate-600"><CalendarDays size={13} className="mr-1 inline" aria-hidden="true" />{item.plannedDate ? dateLabel(item.plannedDate) : "Ce mois-ci · sans date précise"}</p></div><strong className="text-lg tabular-nums">{money(item.grossCost)}</strong></div>
     <p className="mt-2 break-words text-xs text-slate-600">{item.costItems.map((cost) => `${cost.variantLabel || cost.label} · ${cost.quantity} × ${money(cost.unitAmount)}`).join(" · ")}</p>
@@ -311,7 +333,7 @@ export function PlannedExpensesControl({ targetMonth, expenses, persons, places,
     {reportId === item.id && <div className="mt-3 grid gap-2 rounded-xl bg-slate-50 p-3"><label className="grid gap-1 text-sm font-semibold">Nouvelle date prévue<input type="date" className={inputClass} value={reportDate} onChange={(event) => setReportDate(event.target.value)} /></label><p className="text-xs">La même dépense rejoindra le mois choisi. Ses ressources et ses estimations seront revérifiées.</p><div className="flex gap-2"><button className={secondary} disabled={busy || !reportDate} onClick={() => run(async () => { const moved = unwrap(await reportPlannedExpenseAction(targetMonth, { id: item.id, expectedUpdatedAt: item.updatedAt }, reportDate)); setReportId(null); setNotice(`Projet reporté en ${moved.targetMonth}.`); if (moved.targetMonth !== targetMonth) router.push(`/mois-a-venir?month=${moved.targetMonth}`); })}>Confirmer le report</button><button className={secondary} onClick={() => setReportId(null)}>Annuler</button></div></div>}
   </li>;
 
-  return <section id="planned-expense-builder" className="scroll-mt-6 rounded-[1.7rem] bg-sky-50/70 p-5 sm:p-6" aria-labelledby="planned-expense-title">
+  return <section id="planned-expense-builder" tabIndex={-1} className="scroll-mt-6 rounded-[1.7rem] bg-sky-50/70 p-5 sm:p-6 focus-visible:outline-2 focus-visible:outline-indigo-700" aria-labelledby="planned-expense-title">
     <div className="flex flex-wrap items-center justify-between gap-3"><div><p className="text-xs font-bold uppercase tracking-wide text-emerald-800">Nos projets</p><h2 id="planned-expense-title" className="text-2xl font-black">Ajouter quelque chose à notre mois</h2><p className="mt-1 text-sm text-slate-600">Un projet, ses éléments, puis son effet sur le mois.</p></div>
       {!open && <button type="button" className={primary} onClick={() => start()}><Plus size={16} className="mr-1 inline" />Prévoir une dépense</button>}</div>
     {notice && <p role="status" className="mt-3 rounded-xl bg-emerald-100 p-3 text-sm">{notice}</p>}

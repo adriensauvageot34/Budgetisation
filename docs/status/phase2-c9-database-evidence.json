@@ -1,0 +1,235 @@
+{
+  "sqlSha256": "011997035d1e049352ccaf49f67dba396b20e5200d687ccb4c2053a37bfe752d",
+  "head": "0d83eb018a022add0318025f9bfb27104a256ed7",
+  "policies": [
+    {
+      "cmd": "DELETE",
+      "qual": "( SELECT private.user_has_household_access(phase2_planned_expenses.household_id) AS user_has_household_access)",
+      "roles": [
+        "authenticated"
+      ],
+      "policyname": "phase2_planned_expenses_delete",
+      "with_check": null
+    },
+    {
+      "cmd": "INSERT",
+      "qual": null,
+      "roles": [
+        "authenticated"
+      ],
+      "policyname": "phase2_planned_expenses_insert",
+      "with_check": "(( SELECT private.user_has_household_access(phase2_planned_expenses.household_id) AS user_has_household_access) AND (created_by = ( SELECT auth.uid() AS uid)) AND (updated_by = ( SELECT auth.uid() AS uid)))"
+    },
+    {
+      "cmd": "SELECT",
+      "qual": "( SELECT private.user_has_household_access(phase2_planned_expenses.household_id) AS user_has_household_access)",
+      "roles": [
+        "authenticated"
+      ],
+      "policyname": "phase2_planned_expenses_read",
+      "with_check": null
+    },
+    {
+      "cmd": "UPDATE",
+      "qual": "( SELECT private.user_has_household_access(phase2_planned_expenses.household_id) AS user_has_household_access)",
+      "roles": [
+        "authenticated"
+      ],
+      "policyname": "phase2_planned_expenses_update",
+      "with_check": "(( SELECT private.user_has_household_access(phase2_planned_expenses.household_id) AS user_has_household_access) AND (updated_by = ( SELECT auth.uid() AS uid)))"
+    }
+  ],
+  "triggers": 0,
+  "authCount": 1,
+  "checkedAt": "2026-09-30T00:33:42.153536+00:00",
+  "migrations": [
+    {
+      "name": "phase2_planned_expenses",
+      "version": "20260928163114"
+    },
+    {
+      "name": "phase2_planned_cost_items_guard",
+      "version": "20260928205006"
+    },
+    {
+      "name": "phase2_planned_cost_items_guard_fix",
+      "version": "20260928210316"
+    },
+    {
+      "name": "phase2_planned_asset_cost_items",
+      "version": "20260929064922"
+    },
+    {
+      "name": "phase2_planned_module_path_v1",
+      "version": "20260929211001"
+    },
+    {
+      "name": "phase2_planned_report_month",
+      "version": "20260929232710"
+    }
+  ],
+  "rlsEnabled": true,
+  "plannedRows": 0,
+  "columnGrants": [
+    {
+      "column_name": "context",
+      "privilege_type": "INSERT"
+    },
+    {
+      "column_name": "context",
+      "privilege_type": "SELECT"
+    },
+    {
+      "column_name": "context",
+      "privilege_type": "UPDATE"
+    },
+    {
+      "column_name": "cost_items",
+      "privilege_type": "INSERT"
+    },
+    {
+      "column_name": "cost_items",
+      "privilege_type": "SELECT"
+    },
+    {
+      "column_name": "cost_items",
+      "privilege_type": "UPDATE"
+    },
+    {
+      "column_name": "created_at",
+      "privilege_type": "INSERT"
+    },
+    {
+      "column_name": "created_at",
+      "privilege_type": "SELECT"
+    },
+    {
+      "column_name": "created_by",
+      "privilege_type": "INSERT"
+    },
+    {
+      "column_name": "created_by",
+      "privilege_type": "SELECT"
+    },
+    {
+      "column_name": "family_key",
+      "privilege_type": "INSERT"
+    },
+    {
+      "column_name": "family_key",
+      "privilege_type": "SELECT"
+    },
+    {
+      "column_name": "family_key",
+      "privilege_type": "UPDATE"
+    },
+    {
+      "column_name": "household_id",
+      "privilege_type": "INSERT"
+    },
+    {
+      "column_name": "household_id",
+      "privilege_type": "SELECT"
+    },
+    {
+      "column_name": "planned_date",
+      "privilege_type": "INSERT"
+    },
+    {
+      "column_name": "planned_date",
+      "privilege_type": "SELECT"
+    },
+    {
+      "column_name": "planned_date",
+      "privilege_type": "UPDATE"
+    },
+    {
+      "column_name": "planned_expense_id",
+      "privilege_type": "INSERT"
+    },
+    {
+      "column_name": "planned_expense_id",
+      "privilege_type": "SELECT"
+    },
+    {
+      "column_name": "status",
+      "privilege_type": "INSERT"
+    },
+    {
+      "column_name": "status",
+      "privilege_type": "SELECT"
+    },
+    {
+      "column_name": "status",
+      "privilege_type": "UPDATE"
+    },
+    {
+      "column_name": "subtype_key",
+      "privilege_type": "INSERT"
+    },
+    {
+      "column_name": "subtype_key",
+      "privilege_type": "SELECT"
+    },
+    {
+      "column_name": "subtype_key",
+      "privilege_type": "UPDATE"
+    },
+    {
+      "column_name": "target_month",
+      "privilege_type": "INSERT"
+    },
+    {
+      "column_name": "target_month",
+      "privilege_type": "SELECT"
+    },
+    {
+      "column_name": "target_month",
+      "privilege_type": "UPDATE"
+    },
+    {
+      "column_name": "title",
+      "privilege_type": "INSERT"
+    },
+    {
+      "column_name": "title",
+      "privilege_type": "SELECT"
+    },
+    {
+      "column_name": "title",
+      "privilege_type": "UPDATE"
+    },
+    {
+      "column_name": "updated_at",
+      "privilege_type": "INSERT"
+    },
+    {
+      "column_name": "updated_at",
+      "privilege_type": "SELECT"
+    },
+    {
+      "column_name": "updated_at",
+      "privilege_type": "UPDATE"
+    },
+    {
+      "column_name": "updated_by",
+      "privilege_type": "INSERT"
+    },
+    {
+      "column_name": "updated_by",
+      "privilege_type": "SELECT"
+    },
+    {
+      "column_name": "updated_by",
+      "privilege_type": "UPDATE"
+    }
+  ],
+  "householdCount": 1,
+  "syntheticHouseholdsRemaining": 0,
+  "oracle": "LIVE_CURRENT",
+  "authorization": "Human approved targeted rollback test in this conversation",
+  "rlsTwoHouseholds": "PASS",
+  "targetedHistoricalTraces": "PASS",
+  "persistence": "ROLLBACK",
+  "firstAttempt": "Timed out scanning analytic payloads; transaction rolled back. Targeted household predicates used on successful rerun."
+}

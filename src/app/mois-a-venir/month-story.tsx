@@ -3,6 +3,7 @@ import type { MonthEconomicPlan } from "@/server/phase2/month-scenario";
 import type { StatisticalComponent } from "@/server/phase2/month-reference";
 import { ResourceEditor } from "./resource-editor";
 import { MonthCalendar } from "./month-calendar";
+import { PlannedExpenseInteractions } from "./planned-expense-interactions";
 import { PlannedExpensesControl } from "./planned-expenses-control";
 import { projectMonthCalendar, type PlannedExpenseCard } from "./planned-expenses-projection";
 import type { PlannedPlaceOption } from "@/domain/phase2/planned-places";
@@ -55,7 +56,7 @@ export function MonthStory({ plan, targetMonth, plannedExpenses, persons, places
   const groups = [...plan.certainOutflows.groups].sort((a, b) => groupOrder.indexOf(a.label) - groupOrder.indexOf(b.label));
   const calendar = projectMonthCalendar(plan.certainOutflows.items, plannedExpenses);
 
-  return <div className="space-y-7 sm:space-y-9">
+  return <PlannedExpenseInteractions><div className="space-y-7 sm:space-y-9">
     <header className="space-y-2"><p className="eyebrow">Préparons notre mois ensemble</p><h1 className="text-4xl font-black capitalize tracking-tight sm:text-5xl">{monthLabel(targetMonth)}</h1><p className="text-slate-600">Voyons ce qui entre, ce qui est déjà réservé et ce qu’on peut encore prévoir.</p><p className="text-xs text-slate-600">Les dépenses de travail restent estimées selon les rythmes déclarés : cinq jours sur site par semaine pour Manon, deux à trois pour Adrien, avec les jours ouvrés de ce mois.</p></header>
 
     <section className="card p-4 sm:p-6" aria-labelledby="resources-title"><div className="flex flex-wrap items-end justify-between gap-3"><h2 id="resources-title" className="text-2xl font-black">Nos ressources</h2><div className="text-left sm:text-right"><p className="text-xs font-semibold text-slate-600">Ressources prévues du mois</p><p className="text-3xl font-black tracking-tight tabular-nums text-emerald-950">{money(plan.economicResources, true)}</p></div></div>
@@ -71,7 +72,7 @@ export function MonthStory({ plan, targetMonth, plannedExpenses, persons, places
           <ul className="mx-4 border-t border-slate-200 pb-3 pt-2 text-sm">{group.items.map((item) => <li key={item.key} className="flex flex-wrap justify-between gap-x-3 py-1"><span className="min-w-0 break-words">{item.label}<span className="block text-xs text-slate-500">{item.dateCertainty === "DECLARED" ? "Date déclarée" : item.dateCertainty === "HISTORICAL_ESTIMATE" ? "Date habituelle estimée" : "Date à confirmer"}</span></span><strong className="shrink-0 tabular-nums">{money(item.amount, true)}</strong></li>)}</ul></details>;
       })}</div></section>
 
-    <section id="timeline-title" className="card scroll-mt-6 p-4 sm:p-6" aria-labelledby="calendar-title"><div className="flex items-center gap-3"><span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-slate-100 text-slate-700"><CalendarDays size={19} aria-hidden="true" /></span><div><h2 id="calendar-title" className="text-xl font-black">Notre mois en un coup d’œil</h2><p className="text-xs text-slate-600">Les dates déclarées et nos dates habituelles</p></div></div><MonthCalendar targetMonth={targetMonth} entries={calendar.entries} undated={calendar.undated} dailyTotals={calendar.dailyTotals} /></section>
+    <section id="timeline-title" className="card scroll-mt-6 p-4 sm:p-6" aria-labelledby="calendar-title"><div className="flex items-center gap-3"><span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-slate-100 text-slate-700"><CalendarDays size={19} aria-hidden="true" /></span><div><h2 id="calendar-title" className="text-xl font-black">Notre mois en un coup d’œil</h2><p className="text-xs text-slate-600">Les dates déclarées et nos dates habituelles</p></div></div><MonthCalendar key={targetMonth} targetMonth={targetMonth} entries={calendar.entries} undated={calendar.undated} dailyTotals={calendar.dailyTotals} /></section>
 
     <section className="overflow-hidden rounded-[1.7rem] bg-emerald-950 px-5 py-6 text-white sm:flex sm:items-end sm:justify-between sm:gap-5 sm:px-8 sm:py-7" aria-labelledby="after-title"><div><h2 id="after-title" className="text-xl font-bold">Après nos charges certaines</h2><p className="mt-1 text-sm text-emerald-100">Avant les dépenses du quotidien</p><p className="mt-2 text-xs text-emerald-200">Inclut les titres-restaurants ; ce n’est pas notre solde bancaire.</p></div><p className="mt-4 whitespace-nowrap text-4xl font-black tracking-tight tabular-nums sm:mt-0 sm:text-5xl">{money(plan.afterCertainOutflows, true)}</p></section>
 
@@ -88,5 +89,5 @@ export function MonthStory({ plan, targetMonth, plannedExpenses, persons, places
     <section aria-labelledby="flexible-title"><h2 id="flexible-title" className="text-2xl font-black">Ce qu’on dépense parfois en plus</h2><p className="mt-1 text-sm text-slate-600">Cela dépend de nos journées au travail et de nos envies du mois.</p><div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">{plan.flexibleVariables.items.map((part) => <StatisticalCard key={part.key} part={part} tone="flexible" />)}</div></section>
 
     <section className="rounded-[1.7rem] bg-emerald-50/80 p-5 sm:p-6" aria-labelledby="scenarios-title"><h2 id="scenarios-title" className="text-2xl font-black">Reste projeté en fin de mois</h2><p className="mt-4 text-4xl font-black tabular-nums">{money(plan.scenarios.central, true)}</p><p className="mt-1 text-sm text-slate-600">Estimation centrale, autour de notre rythme habituel</p><details className="mt-3 text-sm"><summary className="cursor-pointer font-bold">Voir la fourchette</summary><div className="mt-3 grid grid-cols-2 gap-3"><p>Si on dépense plutôt peu : <strong>{money(plan.scenarios.lowConsumption, true)}</strong></p><p>Si le mois coûte plus cher : <strong>{money(plan.scenarios.highConsumption, true)}</strong></p></div></details><p className="mt-3 text-xs text-slate-600">Ces montants sont des repères, pas une promesse. Notre marge de sécurité, réglable plus bas, n’est pas encore retirée ici.</p></section>
-  </div>;
+  </div></PlannedExpenseInteractions>;
 }

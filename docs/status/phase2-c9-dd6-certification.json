@@ -1,0 +1,4782 @@
+{
+  "checkedAt": "2026-09-30T01:01:34.319Z",
+  "preflight": {
+    "head": "0d83eb018a022add0318025f9bfb27104a256ed7",
+    "branch": "main",
+    "worktree": [
+      "M docs/specs/PHASE2_MONTH_MODULES.md",
+      " M package.json",
+      " M scripts/check-phase2-planned-routes.mjs",
+      " M src/app/mois-a-venir/month-calendar.tsx",
+      " M src/app/mois-a-venir/month-story.tsx",
+      " M src/app/mois-a-venir/page.tsx",
+      " M src/app/mois-a-venir/planned-expenses-control.tsx",
+      " M src/app/mois-a-venir/planned-expenses-projection.ts",
+      "?? docs/status/phase2-c8-calendar.md",
+      "?? docs/status/phase2-c9-database-evidence.json",
+      "?? docs/status/phase2-c9-dd6-certification.json",
+      "?? docs/status/phase2-c9-dd6-certification.md",
+      "?? scripts/audit-phase2-dd6-live.mjs",
+      "?? scripts/check-phase2-dd6-certification.mjs",
+      "?? scripts/check-phase2-planned-calendar.mjs",
+      "?? scripts/check-phase2-planned-guards.mjs",
+      "?? scripts/lib/planned-dd6-coverage.mjs",
+      "?? src/app/mois-a-venir/calendar-presentation.ts",
+      "?? src/app/mois-a-venir/planned-expense-interactions.tsx",
+      "?? supabase/tests/"
+    ],
+    "plannedMigrations": [
+      "20260928163114_phase2_planned_expenses.sql",
+      "20260928205006_phase2_planned_cost_items_guard.sql",
+      "20260928210316_phase2_planned_cost_items_guard_fix.sql",
+      "20260929064922_phase2_planned_asset_cost_items.sql",
+      "20260929211001_phase2_planned_module_path_v1.sql",
+      "20260929232710_phase2_planned_report_month.sql"
+    ],
+    "sourceSha256": "53cdcd878e492f5b182dea5506a96fc6edc6cec08250627e0a527e222c95aa70",
+    "commands": {
+      "types": "tsc --noEmit",
+      "lint": null,
+      "build": "next build"
+    },
+    "protectedAuthorities": [
+      "operations",
+      "life_events",
+      "moments",
+      "mobility_legs",
+      "mobility_trips",
+      "persons",
+      "referentiel_lieu",
+      "person_place_roles",
+      "fuel_price_observations",
+      "benefit_wallets",
+      "benefit_wallet_ledger_entries",
+      "analytics_query_snapshots",
+      "analytics_artifacts",
+      "analytics_publications"
+    ]
+  },
+  "oracleDoctrine": "Expected values are declared fixtures, contract laws or independent current medians; never regenerated from failing implementation.",
+  "dbEvidence": "docs/status/phase2-c9-database-evidence.json",
+  "live": {
+    "checkedAt": "2026-09-30T01:01:26.390Z",
+    "plannedRows": 0,
+    "oracle": "LIVE_CURRENT",
+    "routeOracles": [
+      {
+        "contactKey": "manon_father",
+        "oracle": "LIVE_CURRENT",
+        "directedDistances": [
+          "62.962",
+          "64.342"
+        ],
+        "observationCounts": [
+          3,
+          3
+        ],
+        "fuelCost": "20.83",
+        "status": "KNOWN"
+      },
+      {
+        "contactKey": "lucas",
+        "oracle": "LIVE_CURRENT",
+        "directedDistances": [
+          "6.196",
+          null
+        ],
+        "observationCounts": [
+          1,
+          0
+        ],
+        "fuelCost": null,
+        "status": "PARTIAL"
+      },
+      {
+        "contactKey": "cedric",
+        "oracle": "LIVE_CURRENT",
+        "directedDistances": [
+          "13.169",
+          "14.327"
+        ],
+        "observationCounts": [
+          2,
+          2
+        ],
+        "fuelCost": "4.96",
+        "status": "KNOWN"
+      }
+    ],
+    "fuelObservedAt": "2026-07-01T00:00:00+00:00",
+    "protectedAuthorities": [
+      "operations",
+      "life_events",
+      "moments",
+      "mobility_legs",
+      "mobility_trips",
+      "persons",
+      "referentiel_lieu",
+      "person_place_roles",
+      "fuel_price_observations",
+      "benefit_wallets",
+      "benefit_wallet_ledger_entries",
+      "analytics_query_snapshots",
+      "analytics_artifacts",
+      "analytics_publications"
+    ],
+    "writes": 0
+  },
+  "targetedZeroWrite": [
+    {
+      "operation": "Preview",
+      "prospectiveWrites": 0,
+      "historicalWrites": 0,
+      "targetedRoot": true
+    },
+    {
+      "operation": "Create",
+      "prospectiveWrites": 1,
+      "historicalWrites": 0,
+      "targetedRoot": true
+    },
+    {
+      "operation": "Update",
+      "prospectiveWrites": 1,
+      "historicalWrites": 0,
+      "targetedRoot": true
+    },
+    {
+      "operation": "Declare",
+      "prospectiveWrites": 1,
+      "historicalWrites": 0,
+      "targetedRoot": true
+    },
+    {
+      "operation": "Restore",
+      "prospectiveWrites": 1,
+      "historicalWrites": 0,
+      "targetedRoot": true
+    },
+    {
+      "operation": "Report",
+      "prospectiveWrites": 1,
+      "historicalWrites": 0,
+      "targetedRoot": true
+    },
+    {
+      "operation": "Delete",
+      "prospectiveWrites": 1,
+      "historicalWrites": 0,
+      "targetedRoot": true
+    },
+    {
+      "operation": "contact TEXT + user-declared place",
+      "prospectiveWrites": 1,
+      "historicalWrites": 0,
+      "targetedRoot": true
+    },
+    {
+      "operation": "child local place",
+      "prospectiveWrites": 1,
+      "historicalWrites": 0,
+      "targetedRoot": true
+    },
+    {
+      "operation": "route/fuel Preview",
+      "prospectiveWrites": 0,
+      "historicalWrites": 0,
+      "targetedRoot": true
+    },
+    {
+      "operation": "route/fuel Save",
+      "prospectiveWrites": 1,
+      "historicalWrites": 0,
+      "targetedRoot": true
+    },
+    {
+      "operation": "Declared route",
+      "prospectiveWrites": 1,
+      "historicalWrites": 0,
+      "targetedRoot": true
+    },
+    {
+      "operation": "draft context change + local Undo",
+      "prospectiveWrites": 0,
+      "historicalWrites": 0,
+      "targetedRoot": true
+    },
+    {
+      "operation": "foreign refs",
+      "prospectiveWrites": 0,
+      "historicalWrites": 0,
+      "targetedRoot": true
+    },
+    {
+      "operation": "foreign refs",
+      "prospectiveWrites": 0,
+      "historicalWrites": 0,
+      "targetedRoot": true
+    }
+  ],
+  "commands": {
+    "scripts/check-phase2-planned-domain.mjs": {
+      "STATUS": "PASS",
+      "durationMs": 20533,
+      "command": "node scripts/check-phase2-planned-domain.mjs",
+      "evidence": "PASS: October resources, certain outflows, scenarios, negative invariants, override propagation and undo\nPASS: C1 registry, graph, assets, roles, contacts, delivery and invalid payloads"
+    },
+    "scripts/check-phase2-planned-server-contract.mjs": {
+      "STATUS": "PASS",
+      "durationMs": 20499,
+      "command": "node scripts/check-phase2-planned-server-contract.mjs",
+      "evidence": "PASS: October resources, certain outflows, scenarios, negative invariants, override propagation and undo\nPASS: C2 structural, resolved context, graph, assets, finance, live references and migration shape"
+    },
+    "scripts/check-phase2-planned-builder.mjs": {
+      "STATUS": "PASS",
+      "durationMs": 20540,
+      "command": "node scripts/check-phase2-planned-builder.mjs",
+      "evidence": "PASS: October resources, certain outflows, scenarios, negative invariants, override propagation and undo\nPASS: C3 AB-01..12, COST-ADAPT-01..06, DRAFT-01..05, META-01/02/14"
+    },
+    "scripts/check-phase2-planned-assets.mjs": {
+      "STATUS": "PASS",
+      "durationMs": 15112,
+      "command": "node scripts/check-phase2-planned-assets.mjs",
+      "evidence": "PASS: October resources, certain outflows, scenarios, negative invariants, override propagation and undo\nPASS: ASSET-01..06, PLACE-01..03, ROUTE-01..02, SYNC-NEW-01"
+    },
+    "scripts/check-phase2-planned-expenses.mjs": {
+      "STATUS": "PASS",
+      "durationMs": 15370,
+      "command": "node scripts/check-phase2-planned-expenses.mjs",
+      "evidence": "PASS: October resources, certain outflows, scenarios, negative invariants, override propagation and undo\nPASS: Planned Expenses October goldens, shared baseline, lifecycle, edit, delete, isolation"
+    },
+    "scripts/check-phase2-planned-expenses-ui.mjs": {
+      "STATUS": "PASS",
+      "durationMs": 15659,
+      "command": "node scripts/check-phase2-planned-expenses-ui.mjs",
+      "evidence": "PASS: October resources, certain outflows, scenarios, negative invariants, override propagation and undo\nPASS: 10 Planned Expenses list/calendar/forecast synchronization and reload invariants"
+    },
+    "scripts/check-phase2-planned-finance.mjs": {
+      "STATUS": "PASS",
+      "durationMs": 19955,
+      "command": "node scripts/check-phase2-planned-finance.mjs",
+      "evidence": "PASS: October resources, certain outflows, scenarios, negative invariants, override propagation and undo\nPASS: C5 FIN-01..08, FIN-UI-01..04, META-03/04/05/09/20, baseline displacement, quantity, language and no BANK reallocation"
+    },
+    "scripts/check-phase2-planned-routes.mjs": {
+      "STATUS": "PASS",
+      "durationMs": 20021,
+      "command": "node scripts/check-phase2-planned-routes.mjs",
+      "evidence": "PASS: October resources, certain outflows, scenarios, negative invariants, override propagation and undo\nPASS: C4 LP-01..08, binding, continuity, directed medians, PARTIAL/manual, fuel, META-05..08/18/19"
+    },
+    "scripts/check-phase2-planned-reliability.mjs": {
+      "STATUS": "PASS",
+      "durationMs": 21254,
+      "command": "node scripts/check-phase2-planned-reliability.mjs",
+      "evidence": "PASS: October resources, certain outflows, scenarios, negative invariants, override propagation and undo\nPASS: C6 PARITY-01..04, resolver parity, IDEMP-CREATE-01/02, tampering, live drift, CAS, META-15/16/17, Preview zero-write"
+    },
+    "scripts/check-phase2-planned-guards.mjs": {
+      "STATUS": "PASS",
+      "durationMs": 23031,
+      "command": "node scripts/check-phase2-planned-guards.mjs",
+      "evidence": "PASS: October resources, certain outflows, scenarios, negative invariants, override propagation and undo\nPASS: C9 targeted zero-write per operation, foreign references, MEM-V1-01..07, no duplicate authority\nDD6_ZERO_WRITE=[{\"operation\":\"Preview\",\"prospectiveWrites\":0,\"historicalWrites\":0,\"targetedRoot\":true},{\"operation\":\"Create\",\"prospectiveWrites\":1,\"historicalWrites\":0,\"targetedRoot\":true},{\"operation\":\"Update\",\"prospectiveWrites\":1,\"historicalWrites\":0,\"targetedRoot\":true},{\"operation\":\"Declare\",\"prospectiveWrites\":1,\"historicalWrites\":0,\"targetedRoot\":true},{\"operation\":\"Restore\",\"prospectiveWrites\":1,\"historicalWrites\":0,\"targetedRoot\":true},{\"operation\":\"Report\",\"prospectiveWrites\":1,\"historicalWrites\":0,\"targetedRoot\":true},{\"operation\":\"Delete\",\"prospectiveWrites\":1,\"historicalWrites\":0,\"targetedRoot\":true},{\"operation\":\"contact TEXT + user-declared place\",\"prospectiveWrites\":1,\"historicalWrites\":0,\"targetedRoot\":true},{\"operation\":\"child local place\",\"prospectiveWrites\":1,\"historicalWrites\":0,\"targetedRoot\":true},{\"operation\":\"route/fuel Preview\",\"prospectiveWrites\":0,\"historicalWrites\":0,\"targetedRoot\":true},{\"operation\":\"route/fuel Save\",\"prospectiveWrites\":1,\"historicalWrites\":0,\"targetedRoot\":true},{\"operation\":\"Declared route\",\"prospectiveWrites\":1,\"historicalWrites\":0,\"targetedRoot\":true},{\"operation\":\"draft context change + local Undo\",\"prospectiveWrites\":0,\"historicalWrites\":0,\"targetedRoot\":true},{\"operation\":\"foreign refs\",\"prospectiveWrites\":0,\"historicalWrites\":0,\"targetedRoot\":true},{\"operation\":\"foreign refs\",\"prospectiveWrites\":0,\"historicalWrites\":0,\"targetedRoot\":true}]"
+    },
+    "scripts/check-phase2-planned-calendar.mjs": {
+      "STATUS": "PASS",
+      "durationMs": 23878,
+      "command": "node scripts/check-phase2-planned-calendar.mjs",
+      "evidence": "PASS: October resources, certain outflows, scenarios, negative invariants, override propagation and undo\nPASS: C8 CAL-01..27, gross/baseline/funding truth, undated, keyboard law, item-level certainty, all projection sync, META-20"
+    },
+    "scripts/check-phase2-planned-reality.mjs": {
+      "STATUS": "PASS",
+      "durationMs": 24064,
+      "command": "node scripts/check-phase2-planned-reality.mjs",
+      "evidence": "PASS: October resources, certain outflows, scenarios, negative invariants, override propagation and undo\nPASS: C7 REAL-01..07, atomic final costs, RESERVED/USED_DECLARED, IDEMP-REAL-01, STALE-REAL-01, REPORT-01/02, delete/restore/status, META-09..13/19, historical zero-write"
+    },
+    "scripts/check-architecture-imports.mjs": {
+      "STATUS": "PASS",
+      "durationMs": 5738,
+      "command": "node scripts/check-architecture-imports.mjs",
+      "evidence": "Architecture import check: PASS (678 fichiers)"
+    },
+    "types": {
+      "STATUS": "PASS",
+      "durationMs": 32677,
+      "command": "node node_modules/typescript/bin/tsc --noEmit",
+      "evidence": ""
+    },
+    "lint": {
+      "STATUS": "NOT_APPLICABLE",
+      "reason": "No lint script or configured lint runner in this repository."
+    },
+    "production-build": {
+      "STATUS": "PASS",
+      "durationMs": 95110,
+      "command": "node node_modules/next/dist/bin/next build",
+      "evidence": "▲ Next.js 16.2.6 (Turbopack)\n- Environments: .env.local\n\n  Creating an optimized production build ...\n✓ Compiled successfully in 39.2s\n  Running TypeScript ...\n  Finished TypeScript in 46s ...\n  Collecting page data using 7 workers ...\n  Generating static pages using 7 workers (0/7) ...\n  Generating static pages using 7 workers (1/7) \r\n  Generating static pages using 7 workers (3/7) \r\n  Generating static pages using 7 workers (5/7) \r\n✓ Generating static pages using 7 workers (7/7) in 918ms\n  Finalizing page optimization ...\n\nRoute (app)\n┌ ƒ /\n├ ○ /_not-found\n├ ○ /acces-refuse\n├ ○ /analyse\n├ ƒ /analyse-globale\n├ ƒ /api/global-v2/query\n├ ƒ /api/persona-portrait/[name]\n├ ƒ /api/query\n├ ƒ /categorie/[slug]\n├ ○ /connexion\n├ ƒ /diagnostic\n├ ƒ /historique\n├ ƒ /historique/[month]\n├ ƒ /historique/analyse/global\n├ ○ /imports\n├ ƒ /mois-a-venir\n├ ƒ /operations\n└ ○ /parametres\n\n\nƒ Proxy (Middleware)\n\n○  (Static)   prerendered as static content\nƒ  (Dynamic)  server-rendered on demand"
+    },
+    "scripts/audit-phase2-dd6-live.mjs": {
+      "STATUS": "PASS",
+      "durationMs": 4144,
+      "command": "node --env-file=.env.local scripts/audit-phase2-dd6-live.mjs",
+      "evidence": "PASS: October resources, certain outflows, scenarios, negative invariants, override propagation and undo\nPASS: DD6 live route oracles derived independently from current canonical observations; no writes\nDD6_LIVE={\"checkedAt\":\"2026-09-30T01:01:26.390Z\",\"plannedRows\":0,\"oracle\":\"LIVE_CURRENT\",\"routeOracles\":[{\"contactKey\":\"manon_father\",\"oracle\":\"LIVE_CURRENT\",\"directedDistances\":[\"62.962\",\"64.342\"],\"observationCounts\":[3,3],\"fuelCost\":\"20.83\",\"status\":\"KNOWN\"},{\"contactKey\":\"lucas\",\"oracle\":\"LIVE_CURRENT\",\"directedDistances\":[\"6.196\",null],\"observationCounts\":[1,0],\"fuelCost\":null,\"status\":\"PARTIAL\"},{\"contactKey\":\"cedric\",\"oracle\":\"LIVE_CURRENT\",\"directedDistances\":[\"13.169\",\"14.327\"],\"observationCounts\":[2,2],\"fuelCost\":\"4.96\",\"status\":\"KNOWN\"}],\"fuelObservedAt\":\"2026-07-01T00:00:00+00:00\",\"protectedAuthorities\":[\"operations\",\"life_events\",\"moments\",\"mobility_legs\",\"mobility_trips\",\"persons\",\"referentiel_lieu\",\"person_place_roles\",\"fuel_price_observations\",\"benefit_wallets\",\"benefit_wallet_ledger_entries\",\"analytics_query_snapshots\",\"analytics_artifacts\",\"analytics_publications\"],\"writes\":0}"
+    },
+    "scripts/audit-phase2-c6-c7-live.mjs": {
+      "STATUS": "PASS",
+      "durationMs": 7574,
+      "command": "node --env-file=.env.local scripts/audit-phase2-c6-c7-live.mjs",
+      "evidence": "PASS: October resources, certain outflows, scenarios, negative invariants, override propagation and undo\n{\"checkedAt\":\"2026-09-30T01:01:33.993Z\",\"counts\":{\"phase2_planned_expenses\":0,\"phase2_month_inputs\":1,\"operations\":1660,\"life_events\":938,\"mobility_trips\":296,\"mobility_legs\":684,\"analytics_query_snapshots\":20384,\"analytics_artifacts\":7430},\"novemberOwnReference\":\"PASS\",\"undeclaredMonthlyResources\":\"UNKNOWN\",\"simulatedMonthlyResources\":\"PASS\",\"prospectiveWrites\":0,\"historicalWrites\":0,\"snapshotWrites\":0}"
+    },
+    "supabase/tests/phase2_planned_expenses_rls.sql": {
+      "STATUS": "PASS",
+      "evidenceSource": "docs/status/phase2-c9-database-evidence.json",
+      "checkedAt": "2026-09-30T00:33:42.153536+00:00",
+      "reason": "Previously executed, human-approved remote rollback probe, matching SQL digest. Not silently rerun."
+    }
+  },
+  "ruleCoverage": [
+    {
+      "RULE_ID": "GLOBAL-01",
+      "OWNER": "src/server/phase2/planned-expenses.ts",
+      "HORIZON": "V1",
+      "DOMAIN_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-reliability.mjs",
+          "EVIDENCE": "roots.filter(row => row.id === request.id).length"
+        }
+      ],
+      "SERVER_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-guards.mjs",
+          "EVIDENCE": "ZERO-WRITE"
+        }
+      ],
+      "USER_FLOW_PROOF": "PENDING_C10",
+      "NEGATIVE_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-server-contract.mjs",
+          "EVIDENCE": "DRAFT_FIELDS_INVALID"
+        }
+      ],
+      "METAMORPHIC_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-guards.mjs",
+          "EVIDENCE": "targeted root predicate"
+        }
+      ],
+      "ORACLE": "STATIC_CONTRACT",
+      "STATUS": "PASS"
+    },
+    {
+      "RULE_ID": "GLOBAL-02",
+      "OWNER": "src/server/phase2/planned-expenses.ts",
+      "HORIZON": "V1",
+      "DOMAIN_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-reality.mjs",
+          "EVIDENCE": "DECLARED_REALIZED"
+        }
+      ],
+      "SERVER_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-guards.mjs",
+          "EVIDENCE": "ZERO-WRITE"
+        }
+      ],
+      "USER_FLOW_PROOF": "PENDING_C10",
+      "NEGATIVE_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-server-contract.mjs",
+          "EVIDENCE": "DRAFT_FIELDS_INVALID"
+        }
+      ],
+      "METAMORPHIC_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-guards.mjs",
+          "EVIDENCE": "targeted root predicate"
+        }
+      ],
+      "ORACLE": "STATIC_CONTRACT",
+      "STATUS": "PASS"
+    },
+    {
+      "RULE_ID": "GLOBAL-03",
+      "OWNER": "src/app/mois-a-venir/planned-expenses-projection.ts",
+      "HORIZON": "V1",
+      "DOMAIN_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-calendar.mjs",
+          "EVIDENCE": "occurrence.length"
+        }
+      ],
+      "SERVER_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-guards.mjs",
+          "EVIDENCE": "ZERO-WRITE"
+        }
+      ],
+      "USER_FLOW_PROOF": "PENDING_C10",
+      "NEGATIVE_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-server-contract.mjs",
+          "EVIDENCE": "DRAFT_FIELDS_INVALID"
+        }
+      ],
+      "METAMORPHIC_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-guards.mjs",
+          "EVIDENCE": "targeted root predicate"
+        }
+      ],
+      "ORACLE": "STATIC_CONTRACT",
+      "STATUS": "PASS"
+    },
+    {
+      "RULE_ID": "GLOBAL-04",
+      "OWNER": "src/server/phase2/month-scenario.ts",
+      "HORIZON": "V1",
+      "DOMAIN_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-calendar.mjs",
+          "EVIDENCE": "state.plan.plannedExpenses.grossCost"
+        }
+      ],
+      "SERVER_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-guards.mjs",
+          "EVIDENCE": "ZERO-WRITE"
+        }
+      ],
+      "USER_FLOW_PROOF": "PENDING_C10",
+      "NEGATIVE_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-server-contract.mjs",
+          "EVIDENCE": "DRAFT_FIELDS_INVALID"
+        }
+      ],
+      "METAMORPHIC_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-guards.mjs",
+          "EVIDENCE": "targeted root predicate"
+        }
+      ],
+      "ORACLE": "MATHEMATICAL_INVARIANT",
+      "STATUS": "PASS"
+    },
+    {
+      "RULE_ID": "GLOBAL-05",
+      "OWNER": "src/domain/phase2/planned-rules.ts",
+      "HORIZON": "V1",
+      "DOMAIN_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-server-contract.mjs",
+          "EVIDENCE": "MODULE_PATH_INVALID"
+        }
+      ],
+      "SERVER_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-guards.mjs",
+          "EVIDENCE": "ZERO-WRITE"
+        }
+      ],
+      "USER_FLOW_PROOF": "PENDING_C10",
+      "NEGATIVE_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-server-contract.mjs",
+          "EVIDENCE": "DRAFT_FIELDS_INVALID"
+        }
+      ],
+      "METAMORPHIC_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-guards.mjs",
+          "EVIDENCE": "targeted root predicate"
+        }
+      ],
+      "ORACLE": "STATIC_CONTRACT",
+      "STATUS": "PASS"
+    },
+    {
+      "RULE_ID": "GLOBAL-06",
+      "OWNER": "src/domain/phase2/planned-rules.ts",
+      "HORIZON": "V1",
+      "DOMAIN_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-server-contract.mjs",
+          "EVIDENCE": "MODULE_PATH_INVALID"
+        }
+      ],
+      "SERVER_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-guards.mjs",
+          "EVIDENCE": "ZERO-WRITE"
+        }
+      ],
+      "USER_FLOW_PROOF": "PENDING_C10",
+      "NEGATIVE_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-server-contract.mjs",
+          "EVIDENCE": "DRAFT_FIELDS_INVALID"
+        }
+      ],
+      "METAMORPHIC_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-guards.mjs",
+          "EVIDENCE": "targeted root predicate"
+        }
+      ],
+      "ORACLE": "STATIC_CONTRACT",
+      "STATUS": "PASS"
+    },
+    {
+      "RULE_ID": "GLOBAL-07",
+      "OWNER": "src/domain/phase2/planned-rules.ts",
+      "HORIZON": "V1",
+      "DOMAIN_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-domain.mjs",
+          "EVIDENCE": "assert.notEqual(edge.childModule, \"transport\")"
+        }
+      ],
+      "SERVER_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-guards.mjs",
+          "EVIDENCE": "ZERO-WRITE"
+        }
+      ],
+      "USER_FLOW_PROOF": "PENDING_C10",
+      "NEGATIVE_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-server-contract.mjs",
+          "EVIDENCE": "DRAFT_FIELDS_INVALID"
+        }
+      ],
+      "METAMORPHIC_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-guards.mjs",
+          "EVIDENCE": "targeted root predicate"
+        }
+      ],
+      "ORACLE": "STATIC_CONTRACT",
+      "STATUS": "PASS"
+    },
+    {
+      "RULE_ID": "GLOBAL-08",
+      "OWNER": "src/domain/phase2/planned-rules.ts",
+      "HORIZON": "V1",
+      "DOMAIN_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-domain.mjs",
+          "EVIDENCE": "bring_items:"
+        }
+      ],
+      "SERVER_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-guards.mjs",
+          "EVIDENCE": "ZERO-WRITE"
+        }
+      ],
+      "USER_FLOW_PROOF": "PENDING_C10",
+      "NEGATIVE_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-server-contract.mjs",
+          "EVIDENCE": "DRAFT_FIELDS_INVALID"
+        }
+      ],
+      "METAMORPHIC_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-guards.mjs",
+          "EVIDENCE": "targeted root predicate"
+        }
+      ],
+      "ORACLE": "STATIC_CONTRACT",
+      "STATUS": "PASS"
+    },
+    {
+      "RULE_ID": "GLOBAL-09",
+      "OWNER": "src/domain/phase2/planned-places.ts",
+      "HORIZON": "V1",
+      "DOMAIN_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-server-contract.mjs",
+          "EVIDENCE": "MERCHANT_AS_PLACE_INVALID"
+        }
+      ],
+      "SERVER_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-guards.mjs",
+          "EVIDENCE": "ZERO-WRITE"
+        }
+      ],
+      "USER_FLOW_PROOF": "PENDING_C10",
+      "NEGATIVE_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-server-contract.mjs",
+          "EVIDENCE": "DRAFT_FIELDS_INVALID"
+        }
+      ],
+      "METAMORPHIC_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-guards.mjs",
+          "EVIDENCE": "targeted root predicate"
+        }
+      ],
+      "ORACLE": "STATIC_CONTRACT",
+      "STATUS": "PASS"
+    },
+    {
+      "RULE_ID": "GLOBAL-10",
+      "OWNER": "src/server/phase2/planned-expenses.ts",
+      "HORIZON": "V1",
+      "DOMAIN_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-guards.mjs",
+          "EVIDENCE": "historical authority mutation"
+        }
+      ],
+      "SERVER_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-guards.mjs",
+          "EVIDENCE": "ZERO-WRITE"
+        }
+      ],
+      "USER_FLOW_PROOF": "PENDING_C10",
+      "NEGATIVE_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-server-contract.mjs",
+          "EVIDENCE": "DRAFT_FIELDS_INVALID"
+        }
+      ],
+      "METAMORPHIC_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-guards.mjs",
+          "EVIDENCE": "targeted root predicate"
+        }
+      ],
+      "ORACLE": "STATIC_CONTRACT",
+      "STATUS": "PASS"
+    },
+    {
+      "RULE_ID": "GLOBAL-11",
+      "OWNER": "src/server/phase2/planned-expenses.ts",
+      "HORIZON": "V1",
+      "DOMAIN_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-reliability.mjs",
+          "EVIDENCE": "trustedRouteCost"
+        }
+      ],
+      "SERVER_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-guards.mjs",
+          "EVIDENCE": "ZERO-WRITE"
+        }
+      ],
+      "USER_FLOW_PROOF": "PENDING_C10",
+      "NEGATIVE_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-server-contract.mjs",
+          "EVIDENCE": "DRAFT_FIELDS_INVALID"
+        }
+      ],
+      "METAMORPHIC_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-guards.mjs",
+          "EVIDENCE": "targeted root predicate"
+        }
+      ],
+      "ORACLE": "STATIC_CONTRACT",
+      "STATUS": "PASS"
+    },
+    {
+      "RULE_ID": "GLOBAL-12",
+      "OWNER": "src/app/mois-a-venir/planned-expenses-projection.ts",
+      "HORIZON": "V1",
+      "DOMAIN_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-calendar.mjs",
+          "EVIDENCE": "fresh reload is the sole projection source"
+        }
+      ],
+      "SERVER_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-guards.mjs",
+          "EVIDENCE": "ZERO-WRITE"
+        }
+      ],
+      "USER_FLOW_PROOF": "PENDING_C10",
+      "NEGATIVE_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-server-contract.mjs",
+          "EVIDENCE": "DRAFT_FIELDS_INVALID"
+        }
+      ],
+      "METAMORPHIC_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-guards.mjs",
+          "EVIDENCE": "targeted root predicate"
+        }
+      ],
+      "ORACLE": "STATIC_CONTRACT",
+      "STATUS": "PASS"
+    },
+    {
+      "RULE_ID": "GLOBAL-13",
+      "OWNER": "src/server/phase2/month-scenario.ts",
+      "HORIZON": "V1",
+      "DOMAIN_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-finance.mjs",
+          "EVIDENCE": "funding is orthogonal"
+        }
+      ],
+      "SERVER_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-guards.mjs",
+          "EVIDENCE": "ZERO-WRITE"
+        }
+      ],
+      "USER_FLOW_PROOF": "PENDING_C10",
+      "NEGATIVE_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-server-contract.mjs",
+          "EVIDENCE": "DRAFT_FIELDS_INVALID"
+        }
+      ],
+      "METAMORPHIC_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-guards.mjs",
+          "EVIDENCE": "targeted root predicate"
+        }
+      ],
+      "ORACLE": "MATHEMATICAL_INVARIANT",
+      "STATUS": "PASS"
+    },
+    {
+      "RULE_ID": "AB-01",
+      "OWNER": "src/domain/phase2/planned-builder.ts",
+      "HORIZON": "V1",
+      "DOMAIN_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-builder.mjs",
+          "EVIDENCE": "!ready.saveReady || ready.previewReady"
+        }
+      ],
+      "SERVER_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-server-contract.mjs",
+          "EVIDENCE": "parsePlannedExpenseDraft"
+        }
+      ],
+      "USER_FLOW_PROOF": "PENDING_C10",
+      "NEGATIVE_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-builder.mjs",
+          "EVIDENCE": "parseWrite"
+        }
+      ],
+      "METAMORPHIC_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-builder.mjs",
+          "EVIDENCE": "undoBuilderChange"
+        }
+      ],
+      "ORACLE": "STATIC_CONTRACT",
+      "STATUS": "PASS"
+    },
+    {
+      "RULE_ID": "AB-02",
+      "OWNER": "src/domain/phase2/planned-builder.ts",
+      "HORIZON": "V1",
+      "DOMAIN_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-builder.mjs",
+          "EVIDENCE": "funding leaves"
+        }
+      ],
+      "SERVER_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-server-contract.mjs",
+          "EVIDENCE": "parsePlannedExpenseDraft"
+        }
+      ],
+      "USER_FLOW_PROOF": "PENDING_C10",
+      "NEGATIVE_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-builder.mjs",
+          "EVIDENCE": "parseWrite"
+        }
+      ],
+      "METAMORPHIC_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-builder.mjs",
+          "EVIDENCE": "undoBuilderChange"
+        }
+      ],
+      "ORACLE": "STATIC_CONTRACT",
+      "STATUS": "PASS"
+    },
+    {
+      "RULE_ID": "AB-03",
+      "OWNER": "src/domain/phase2/planned-builder.ts",
+      "HORIZON": "V1",
+      "DOMAIN_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-builder.mjs",
+          "EVIDENCE": "date is nullable"
+        }
+      ],
+      "SERVER_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-server-contract.mjs",
+          "EVIDENCE": "parsePlannedExpenseDraft"
+        }
+      ],
+      "USER_FLOW_PROOF": "PENDING_C10",
+      "NEGATIVE_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-builder.mjs",
+          "EVIDENCE": "parseWrite"
+        }
+      ],
+      "METAMORPHIC_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-builder.mjs",
+          "EVIDENCE": "undoBuilderChange"
+        }
+      ],
+      "ORACLE": "STATIC_CONTRACT",
+      "STATUS": "PASS"
+    },
+    {
+      "RULE_ID": "AB-04",
+      "OWNER": "src/domain/phase2/planned-builder.ts",
+      "HORIZON": "V1",
+      "DOMAIN_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-builder.mjs",
+          "EVIDENCE": "place is a Save requirement"
+        }
+      ],
+      "SERVER_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-server-contract.mjs",
+          "EVIDENCE": "parsePlannedExpenseDraft"
+        }
+      ],
+      "USER_FLOW_PROOF": "PENDING_C10",
+      "NEGATIVE_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-builder.mjs",
+          "EVIDENCE": "parseWrite"
+        }
+      ],
+      "METAMORPHIC_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-builder.mjs",
+          "EVIDENCE": "undoBuilderChange"
+        }
+      ],
+      "ORACLE": "STATIC_CONTRACT",
+      "STATUS": "PASS"
+    },
+    {
+      "RULE_ID": "AB-05",
+      "OWNER": "src/domain/phase2/planned-builder.ts",
+      "HORIZON": "V1",
+      "DOMAIN_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-builder.mjs",
+          "EVIDENCE": "suggestions create no cost"
+        }
+      ],
+      "SERVER_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-server-contract.mjs",
+          "EVIDENCE": "parsePlannedExpenseDraft"
+        }
+      ],
+      "USER_FLOW_PROOF": "PENDING_C10",
+      "NEGATIVE_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-builder.mjs",
+          "EVIDENCE": "parseWrite"
+        }
+      ],
+      "METAMORPHIC_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-builder.mjs",
+          "EVIDENCE": "undoBuilderChange"
+        }
+      ],
+      "ORACLE": "STATIC_CONTRACT",
+      "STATUS": "PASS"
+    },
+    {
+      "RULE_ID": "AB-06",
+      "OWNER": "src/domain/phase2/planned-builder.ts",
+      "HORIZON": "V1",
+      "DOMAIN_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-builder.mjs",
+          "EVIDENCE": "accepted Gift survives"
+        }
+      ],
+      "SERVER_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-server-contract.mjs",
+          "EVIDENCE": "parsePlannedExpenseDraft"
+        }
+      ],
+      "USER_FLOW_PROOF": "PENDING_C10",
+      "NEGATIVE_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-builder.mjs",
+          "EVIDENCE": "parseWrite"
+        }
+      ],
+      "METAMORPHIC_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-builder.mjs",
+          "EVIDENCE": "undoBuilderChange"
+        }
+      ],
+      "ORACLE": "STATIC_CONTRACT",
+      "STATUS": "PASS"
+    },
+    {
+      "RULE_ID": "AB-07",
+      "OWNER": "src/domain/phase2/planned-builder.ts",
+      "HORIZON": "V1",
+      "DOMAIN_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-builder.mjs",
+          "EVIDENCE": "forbidden child"
+        }
+      ],
+      "SERVER_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-server-contract.mjs",
+          "EVIDENCE": "parsePlannedExpenseDraft"
+        }
+      ],
+      "USER_FLOW_PROOF": "PENDING_C10",
+      "NEGATIVE_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-builder.mjs",
+          "EVIDENCE": "parseWrite"
+        }
+      ],
+      "METAMORPHIC_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-builder.mjs",
+          "EVIDENCE": "undoBuilderChange"
+        }
+      ],
+      "ORACLE": "STATIC_CONTRACT",
+      "STATUS": "PASS"
+    },
+    {
+      "RULE_ID": "AB-08",
+      "OWNER": "src/domain/phase2/planned-builder.ts",
+      "HORIZON": "V1",
+      "DOMAIN_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-builder.mjs",
+          "EVIDENCE": "derived values may leave"
+        }
+      ],
+      "SERVER_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-server-contract.mjs",
+          "EVIDENCE": "parsePlannedExpenseDraft"
+        }
+      ],
+      "USER_FLOW_PROOF": "PENDING_C10",
+      "NEGATIVE_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-builder.mjs",
+          "EVIDENCE": "parseWrite"
+        }
+      ],
+      "METAMORPHIC_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-builder.mjs",
+          "EVIDENCE": "undoBuilderChange"
+        }
+      ],
+      "ORACLE": "STATIC_CONTRACT",
+      "STATUS": "PASS"
+    },
+    {
+      "RULE_ID": "AB-09",
+      "OWNER": "src/domain/phase2/planned-builder.ts",
+      "HORIZON": "V1",
+      "DOMAIN_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-builder.mjs",
+          "EVIDENCE": "explicit route is suspended"
+        }
+      ],
+      "SERVER_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-server-contract.mjs",
+          "EVIDENCE": "parsePlannedExpenseDraft"
+        }
+      ],
+      "USER_FLOW_PROOF": "PENDING_C10",
+      "NEGATIVE_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-builder.mjs",
+          "EVIDENCE": "parseWrite"
+        }
+      ],
+      "METAMORPHIC_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-builder.mjs",
+          "EVIDENCE": "undoBuilderChange"
+        }
+      ],
+      "ORACLE": "STATIC_CONTRACT",
+      "STATUS": "PASS"
+    },
+    {
+      "RULE_ID": "AB-10",
+      "OWNER": "src/domain/phase2/planned-builder.ts",
+      "HORIZON": "V1",
+      "DOMAIN_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-builder.mjs",
+          "EVIDENCE": "META-14"
+        }
+      ],
+      "SERVER_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-server-contract.mjs",
+          "EVIDENCE": "parsePlannedExpenseDraft"
+        }
+      ],
+      "USER_FLOW_PROOF": "PENDING_C10",
+      "NEGATIVE_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-builder.mjs",
+          "EVIDENCE": "parseWrite"
+        }
+      ],
+      "METAMORPHIC_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-builder.mjs",
+          "EVIDENCE": "undoBuilderChange"
+        }
+      ],
+      "ORACLE": "STATIC_CONTRACT",
+      "STATUS": "PASS"
+    },
+    {
+      "RULE_ID": "AB-11",
+      "OWNER": "src/domain/phase2/planned-builder.ts",
+      "HORIZON": "V1",
+      "DOMAIN_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-builder.mjs",
+          "EVIDENCE": "old Preview token"
+        }
+      ],
+      "SERVER_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-server-contract.mjs",
+          "EVIDENCE": "parsePlannedExpenseDraft"
+        }
+      ],
+      "USER_FLOW_PROOF": "PENDING_C10",
+      "NEGATIVE_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-builder.mjs",
+          "EVIDENCE": "parseWrite"
+        }
+      ],
+      "METAMORPHIC_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-builder.mjs",
+          "EVIDENCE": "revision"
+        }
+      ],
+      "ORACLE": "STATIC_CONTRACT",
+      "STATUS": "PASS"
+    },
+    {
+      "RULE_ID": "AB-12",
+      "OWNER": "src/domain/phase2/planned-builder.ts",
+      "HORIZON": "V1",
+      "DOMAIN_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-builder.mjs",
+          "EVIDENCE": "client readiness cannot legalize"
+        }
+      ],
+      "SERVER_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-reliability.mjs",
+          "EVIDENCE": "trustedFundingResult"
+        }
+      ],
+      "USER_FLOW_PROOF": "PENDING_C10",
+      "NEGATIVE_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-builder.mjs",
+          "EVIDENCE": "parseWrite"
+        }
+      ],
+      "METAMORPHIC_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-builder.mjs",
+          "EVIDENCE": "undoBuilderChange"
+        }
+      ],
+      "ORACLE": "STATIC_CONTRACT",
+      "STATUS": "PASS"
+    },
+    {
+      "RULE_ID": "COST-ADAPT-01",
+      "OWNER": "src/domain/phase2/planned-builder.ts",
+      "HORIZON": "V1",
+      "DOMAIN_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-builder.mjs",
+          "EVIDENCE": "COST-ADAPT-01..04"
+        }
+      ],
+      "SERVER_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-server-contract.mjs",
+          "EVIDENCE": "AGGREGATE_DESCENDANTS_ACTIVE"
+        }
+      ],
+      "USER_FLOW_PROOF": "PENDING_C10",
+      "NEGATIVE_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-builder.mjs",
+          "EVIDENCE": "COLLAPSE_INCOMPATIBLE"
+        }
+      ],
+      "METAMORPHIC_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-builder.mjs",
+          "EVIDENCE": "splitRestaurantQuickTotal"
+        }
+      ],
+      "ORACLE": "USER_DECLARED_FIXTURE",
+      "STATUS": "PASS"
+    },
+    {
+      "RULE_ID": "COST-ADAPT-02",
+      "OWNER": "src/domain/phase2/planned-builder.ts",
+      "HORIZON": "V1",
+      "DOMAIN_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-builder.mjs",
+          "EVIDENCE": "45.00"
+        }
+      ],
+      "SERVER_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-server-contract.mjs",
+          "EVIDENCE": "AGGREGATE_DESCENDANTS_ACTIVE"
+        }
+      ],
+      "USER_FLOW_PROOF": "PENDING_C10",
+      "NEGATIVE_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-builder.mjs",
+          "EVIDENCE": "COLLAPSE_INCOMPATIBLE"
+        }
+      ],
+      "METAMORPHIC_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-builder.mjs",
+          "EVIDENCE": "splitRestaurantQuickTotal"
+        }
+      ],
+      "ORACLE": "USER_DECLARED_FIXTURE",
+      "STATUS": "PASS"
+    },
+    {
+      "RULE_ID": "COST-ADAPT-03",
+      "OWNER": "src/domain/phase2/planned-builder.ts",
+      "HORIZON": "V1",
+      "DOMAIN_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-builder.mjs",
+          "EVIDENCE": "AGGREGATE_DESCENDANTS_ACTIVE"
+        }
+      ],
+      "SERVER_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-server-contract.mjs",
+          "EVIDENCE": "AGGREGATE_DESCENDANTS_ACTIVE"
+        }
+      ],
+      "USER_FLOW_PROOF": "PENDING_C10",
+      "NEGATIVE_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-builder.mjs",
+          "EVIDENCE": "COLLAPSE_INCOMPATIBLE"
+        }
+      ],
+      "METAMORPHIC_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-builder.mjs",
+          "EVIDENCE": "splitRestaurantQuickTotal"
+        }
+      ],
+      "ORACLE": "USER_DECLARED_FIXTURE",
+      "STATUS": "PASS"
+    },
+    {
+      "RULE_ID": "COST-ADAPT-04",
+      "OWNER": "src/domain/phase2/planned-builder.ts",
+      "HORIZON": "V1",
+      "DOMAIN_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-builder.mjs",
+          "EVIDENCE": "65"
+        }
+      ],
+      "SERVER_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-server-contract.mjs",
+          "EVIDENCE": "AGGREGATE_DESCENDANTS_ACTIVE"
+        }
+      ],
+      "USER_FLOW_PROOF": "PENDING_C10",
+      "NEGATIVE_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-builder.mjs",
+          "EVIDENCE": "COLLAPSE_INCOMPATIBLE"
+        }
+      ],
+      "METAMORPHIC_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-builder.mjs",
+          "EVIDENCE": "splitRestaurantQuickTotal"
+        }
+      ],
+      "ORACLE": "USER_DECLARED_FIXTURE",
+      "STATUS": "PASS"
+    },
+    {
+      "RULE_ID": "COST-ADAPT-05",
+      "OWNER": "src/domain/phase2/planned-builder.ts",
+      "HORIZON": "V1",
+      "DOMAIN_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-builder.mjs",
+          "EVIDENCE": "COLLAPSE_INCOMPATIBLE"
+        }
+      ],
+      "SERVER_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-server-contract.mjs",
+          "EVIDENCE": "AGGREGATE_DESCENDANTS_ACTIVE"
+        }
+      ],
+      "USER_FLOW_PROOF": "PENDING_C10",
+      "NEGATIVE_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-builder.mjs",
+          "EVIDENCE": "COLLAPSE_INCOMPATIBLE"
+        }
+      ],
+      "METAMORPHIC_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-builder.mjs",
+          "EVIDENCE": "splitRestaurantQuickTotal"
+        }
+      ],
+      "ORACLE": "USER_DECLARED_FIXTURE",
+      "STATUS": "PASS"
+    },
+    {
+      "RULE_ID": "COST-ADAPT-06",
+      "OWNER": "src/domain/phase2/planned-builder.ts",
+      "HORIZON": "V1",
+      "DOMAIN_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-builder.mjs",
+          "EVIDENCE": "fuel economic-only"
+        }
+      ],
+      "SERVER_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-server-contract.mjs",
+          "EVIDENCE": "AGGREGATE_DESCENDANTS_ACTIVE"
+        }
+      ],
+      "USER_FLOW_PROOF": "PENDING_C10",
+      "NEGATIVE_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-builder.mjs",
+          "EVIDENCE": "COLLAPSE_INCOMPATIBLE"
+        }
+      ],
+      "METAMORPHIC_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-builder.mjs",
+          "EVIDENCE": "splitRestaurantQuickTotal"
+        }
+      ],
+      "ORACLE": "USER_DECLARED_FIXTURE",
+      "STATUS": "PASS"
+    },
+    {
+      "RULE_ID": "DRAFT-01",
+      "OWNER": "src/domain/phase2/planned-builder.ts",
+      "HORIZON": "V1",
+      "DOMAIN_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-builder.mjs",
+          "EVIDENCE": "delivered"
+        }
+      ],
+      "SERVER_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-guards.mjs",
+          "EVIDENCE": "draft context change + local Undo"
+        }
+      ],
+      "USER_FLOW_PROOF": "PENDING_C10",
+      "NEGATIVE_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-builder.mjs",
+          "EVIDENCE": "suspended"
+        }
+      ],
+      "METAMORPHIC_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-builder.mjs",
+          "EVIDENCE": "undoBuilderChange"
+        }
+      ],
+      "ORACLE": "STATIC_CONTRACT",
+      "STATUS": "PASS"
+    },
+    {
+      "RULE_ID": "DRAFT-02",
+      "OWNER": "src/domain/phase2/planned-builder.ts",
+      "HORIZON": "V1",
+      "DOMAIN_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-builder.mjs",
+          "EVIDENCE": "ownHome"
+        }
+      ],
+      "SERVER_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-guards.mjs",
+          "EVIDENCE": "draft context change + local Undo"
+        }
+      ],
+      "USER_FLOW_PROOF": "PENDING_C10",
+      "NEGATIVE_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-builder.mjs",
+          "EVIDENCE": "suspended"
+        }
+      ],
+      "METAMORPHIC_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-builder.mjs",
+          "EVIDENCE": "undoBuilderChange"
+        }
+      ],
+      "ORACLE": "STATIC_CONTRACT",
+      "STATUS": "PASS"
+    },
+    {
+      "RULE_ID": "DRAFT-03",
+      "OWNER": "src/domain/phase2/planned-builder.ts",
+      "HORIZON": "V1",
+      "DOMAIN_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-builder.mjs",
+          "EVIDENCE": "noBirthday.acceptedChildren"
+        }
+      ],
+      "SERVER_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-guards.mjs",
+          "EVIDENCE": "draft context change + local Undo"
+        }
+      ],
+      "USER_FLOW_PROOF": "PENDING_C10",
+      "NEGATIVE_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-builder.mjs",
+          "EVIDENCE": "suspended"
+        }
+      ],
+      "METAMORPHIC_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-builder.mjs",
+          "EVIDENCE": "undoBuilderChange"
+        }
+      ],
+      "ORACLE": "STATIC_CONTRACT",
+      "STATUS": "PASS"
+    },
+    {
+      "RULE_ID": "DRAFT-04",
+      "OWNER": "src/domain/phase2/planned-builder.ts",
+      "HORIZON": "V1",
+      "DOMAIN_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-builder.mjs",
+          "EVIDENCE": "autoCedric"
+        }
+      ],
+      "SERVER_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-guards.mjs",
+          "EVIDENCE": "draft context change + local Undo"
+        }
+      ],
+      "USER_FLOW_PROOF": "PENDING_C10",
+      "NEGATIVE_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-builder.mjs",
+          "EVIDENCE": "suspended"
+        }
+      ],
+      "METAMORPHIC_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-builder.mjs",
+          "EVIDENCE": "undoBuilderChange"
+        }
+      ],
+      "ORACLE": "STATIC_CONTRACT",
+      "STATUS": "PASS"
+    },
+    {
+      "RULE_ID": "DRAFT-05",
+      "OWNER": "src/domain/phase2/planned-builder.ts",
+      "HORIZON": "V1",
+      "DOMAIN_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-builder.mjs",
+          "EVIDENCE": "new Set(undoBuilderChange"
+        }
+      ],
+      "SERVER_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-guards.mjs",
+          "EVIDENCE": "draft context change + local Undo"
+        }
+      ],
+      "USER_FLOW_PROOF": "PENDING_C10",
+      "NEGATIVE_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-builder.mjs",
+          "EVIDENCE": "suspended"
+        }
+      ],
+      "METAMORPHIC_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-builder.mjs",
+          "EVIDENCE": "undoBuilderChange"
+        }
+      ],
+      "ORACLE": "STATIC_CONTRACT",
+      "STATUS": "PASS"
+    },
+    {
+      "RULE_ID": "FIN-01",
+      "OWNER": "src/server/phase2/month-scenario.ts",
+      "HORIZON": "V1",
+      "DOMAIN_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-finance.mjs",
+          "EVIDENCE": "funding is orthogonal"
+        }
+      ],
+      "SERVER_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-reliability.mjs",
+          "EVIDENCE": "PARITY"
+        }
+      ],
+      "USER_FLOW_PROOF": "PENDING_C10",
+      "NEGATIVE_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-finance.mjs",
+          "EVIDENCE": "FUNDING"
+        }
+      ],
+      "METAMORPHIC_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-finance.mjs",
+          "EVIDENCE": "META-"
+        }
+      ],
+      "ORACLE": "MATHEMATICAL_INVARIANT",
+      "STATUS": "PASS"
+    },
+    {
+      "RULE_ID": "FIN-02",
+      "OWNER": "src/server/phase2/month-scenario.ts",
+      "HORIZON": "V1",
+      "DOMAIN_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-finance.mjs",
+          "EVIDENCE": "baseline changes"
+        }
+      ],
+      "SERVER_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-reliability.mjs",
+          "EVIDENCE": "PARITY"
+        }
+      ],
+      "USER_FLOW_PROOF": "PENDING_C10",
+      "NEGATIVE_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-finance.mjs",
+          "EVIDENCE": "FUNDING"
+        }
+      ],
+      "METAMORPHIC_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-finance.mjs",
+          "EVIDENCE": "META-"
+        }
+      ],
+      "ORACLE": "MATHEMATICAL_INVARIANT",
+      "STATUS": "PASS"
+    },
+    {
+      "RULE_ID": "FIN-03",
+      "OWNER": "src/server/phase2/month-scenario.ts",
+      "HORIZON": "V1",
+      "DOMAIN_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-finance.mjs",
+          "EVIDENCE": "before[scenario]"
+        }
+      ],
+      "SERVER_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-reliability.mjs",
+          "EVIDENCE": "PARITY"
+        }
+      ],
+      "USER_FLOW_PROOF": "PENDING_C10",
+      "NEGATIVE_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-finance.mjs",
+          "EVIDENCE": "FUNDING"
+        }
+      ],
+      "METAMORPHIC_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-finance.mjs",
+          "EVIDENCE": "META-"
+        }
+      ],
+      "ORACLE": "MATHEMATICAL_INVARIANT",
+      "STATUS": "PASS"
+    },
+    {
+      "RULE_ID": "FIN-04",
+      "OWNER": "src/server/phase2/month-scenario.ts",
+      "HORIZON": "V1",
+      "DOMAIN_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-finance.mjs",
+          "EVIDENCE": "absorbedByBaseline"
+        }
+      ],
+      "SERVER_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-reliability.mjs",
+          "EVIDENCE": "PARITY"
+        }
+      ],
+      "USER_FLOW_PROOF": "PENDING_C10",
+      "NEGATIVE_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-finance.mjs",
+          "EVIDENCE": "FUNDING"
+        }
+      ],
+      "METAMORPHIC_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-finance.mjs",
+          "EVIDENCE": "META-"
+        }
+      ],
+      "ORACLE": "MATHEMATICAL_INVARIANT",
+      "STATUS": "PASS"
+    },
+    {
+      "RULE_ID": "FIN-05",
+      "OWNER": "src/server/phase2/month-scenario.ts",
+      "HORIZON": "V1",
+      "DOMAIN_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-finance.mjs",
+          "EVIDENCE": "lifecycle preserves"
+        }
+      ],
+      "SERVER_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-reliability.mjs",
+          "EVIDENCE": "PARITY"
+        }
+      ],
+      "USER_FLOW_PROOF": "PENDING_C10",
+      "NEGATIVE_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-finance.mjs",
+          "EVIDENCE": "FUNDING"
+        }
+      ],
+      "METAMORPHIC_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-finance.mjs",
+          "EVIDENCE": "META-"
+        }
+      ],
+      "ORACLE": "MATHEMATICAL_INVARIANT",
+      "STATUS": "PASS"
+    },
+    {
+      "RULE_ID": "FIN-06",
+      "OWNER": "src/server/phase2/month-scenario.ts",
+      "HORIZON": "V1",
+      "DOMAIN_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-finance.mjs",
+          "EVIDENCE": "FIN-06"
+        }
+      ],
+      "SERVER_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-reliability.mjs",
+          "EVIDENCE": "PARITY"
+        }
+      ],
+      "USER_FLOW_PROOF": "PENDING_C10",
+      "NEGATIVE_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-finance.mjs",
+          "EVIDENCE": "FUNDING"
+        }
+      ],
+      "METAMORPHIC_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-finance.mjs",
+          "EVIDENCE": "META-"
+        }
+      ],
+      "ORACLE": "MATHEMATICAL_INVARIANT",
+      "STATUS": "PASS"
+    },
+    {
+      "RULE_ID": "FIN-07",
+      "OWNER": "src/server/phase2/month-scenario.ts",
+      "HORIZON": "V1",
+      "DOMAIN_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-finance.mjs",
+          "EVIDENCE": "marginal impact is zero"
+        }
+      ],
+      "SERVER_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-reliability.mjs",
+          "EVIDENCE": "PARITY"
+        }
+      ],
+      "USER_FLOW_PROOF": "PENDING_C10",
+      "NEGATIVE_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-finance.mjs",
+          "EVIDENCE": "FUNDING"
+        }
+      ],
+      "METAMORPHIC_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-finance.mjs",
+          "EVIDENCE": "META-"
+        }
+      ],
+      "ORACLE": "MATHEMATICAL_INVARIANT",
+      "STATUS": "PASS"
+    },
+    {
+      "RULE_ID": "FIN-08",
+      "OWNER": "src/server/phase2/month-scenario.ts",
+      "HORIZON": "V1",
+      "DOMAIN_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-finance.mjs",
+          "EVIDENCE": "shortfall"
+        }
+      ],
+      "SERVER_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-reliability.mjs",
+          "EVIDENCE": "PARITY"
+        }
+      ],
+      "USER_FLOW_PROOF": "PENDING_C10",
+      "NEGATIVE_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-finance.mjs",
+          "EVIDENCE": "FUNDING"
+        }
+      ],
+      "METAMORPHIC_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-finance.mjs",
+          "EVIDENCE": "META-"
+        }
+      ],
+      "ORACLE": "MATHEMATICAL_INVARIANT",
+      "STATUS": "PASS"
+    },
+    {
+      "RULE_ID": "FIN-UI-01",
+      "OWNER": "src/app/mois-a-venir/planned-impact-card.tsx",
+      "HORIZON": "V1",
+      "DOMAIN_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-finance.mjs",
+          "EVIDENCE": "FIN-UI-01..04"
+        }
+      ],
+      "SERVER_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-finance.mjs",
+          "EVIDENCE": "netAdditionalImpact.central"
+        }
+      ],
+      "USER_FLOW_PROOF": "PENDING_C10",
+      "NEGATIVE_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-finance.mjs",
+          "EVIDENCE": "safe.to.spend"
+        }
+      ],
+      "METAMORPHIC_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-finance.mjs",
+          "EVIDENCE": "marginal"
+        }
+      ],
+      "ORACLE": "STATIC_CONTRACT",
+      "STATUS": "PASS"
+    },
+    {
+      "RULE_ID": "FIN-UI-02",
+      "OWNER": "src/app/mois-a-venir/planned-impact-card.tsx",
+      "HORIZON": "V1",
+      "DOMAIN_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-finance.mjs",
+          "EVIDENCE": "FIN-UI-01..04"
+        }
+      ],
+      "SERVER_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-finance.mjs",
+          "EVIDENCE": "netAdditionalImpact.central"
+        }
+      ],
+      "USER_FLOW_PROOF": "PENDING_C10",
+      "NEGATIVE_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-finance.mjs",
+          "EVIDENCE": "safe.to.spend"
+        }
+      ],
+      "METAMORPHIC_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-finance.mjs",
+          "EVIDENCE": "marginal"
+        }
+      ],
+      "ORACLE": "STATIC_CONTRACT",
+      "STATUS": "PASS"
+    },
+    {
+      "RULE_ID": "FIN-UI-03",
+      "OWNER": "src/app/mois-a-venir/planned-impact-card.tsx",
+      "HORIZON": "V1",
+      "DOMAIN_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-finance.mjs",
+          "EVIDENCE": "FIN-UI-01..04"
+        }
+      ],
+      "SERVER_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-finance.mjs",
+          "EVIDENCE": "netAdditionalImpact.central"
+        }
+      ],
+      "USER_FLOW_PROOF": "PENDING_C10",
+      "NEGATIVE_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-finance.mjs",
+          "EVIDENCE": "safe.to.spend"
+        }
+      ],
+      "METAMORPHIC_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-finance.mjs",
+          "EVIDENCE": "marginal"
+        }
+      ],
+      "ORACLE": "STATIC_CONTRACT",
+      "STATUS": "PASS"
+    },
+    {
+      "RULE_ID": "FIN-UI-04",
+      "OWNER": "src/app/mois-a-venir/planned-impact-card.tsx",
+      "HORIZON": "V1",
+      "DOMAIN_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-finance.mjs",
+          "EVIDENCE": "FIN-UI-01..04"
+        }
+      ],
+      "SERVER_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-finance.mjs",
+          "EVIDENCE": "netAdditionalImpact.central"
+        }
+      ],
+      "USER_FLOW_PROOF": "PENDING_C10",
+      "NEGATIVE_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-finance.mjs",
+          "EVIDENCE": "safe.to.spend"
+        }
+      ],
+      "METAMORPHIC_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-finance.mjs",
+          "EVIDENCE": "marginal"
+        }
+      ],
+      "ORACLE": "STATIC_CONTRACT",
+      "STATUS": "PASS"
+    },
+    {
+      "RULE_ID": "LP-01",
+      "OWNER": "src/domain/phase2/planned-rules.ts",
+      "HORIZON": "V1",
+      "DOMAIN_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-routes.mjs",
+          "EVIDENCE": "independent local place"
+        }
+      ],
+      "SERVER_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-calendar.mjs",
+          "EVIDENCE": "Sync child place and route edits"
+        }
+      ],
+      "USER_FLOW_PROOF": "PENDING_C10",
+      "NEGATIVE_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-routes.mjs",
+          "EVIDENCE": "CHILD_PLACE_INVALID"
+        }
+      ],
+      "METAMORPHIC_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-routes.mjs",
+          "EVIDENCE": "META-06"
+        }
+      ],
+      "ORACLE": "STATIC_CONTRACT",
+      "STATUS": "PASS"
+    },
+    {
+      "RULE_ID": "LP-02",
+      "OWNER": "src/domain/phase2/planned-rules.ts",
+      "HORIZON": "V1",
+      "DOMAIN_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-routes.mjs",
+          "EVIDENCE": "no child transport"
+        }
+      ],
+      "SERVER_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-calendar.mjs",
+          "EVIDENCE": "Sync child place and route edits"
+        }
+      ],
+      "USER_FLOW_PROOF": "PENDING_C10",
+      "NEGATIVE_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-routes.mjs",
+          "EVIDENCE": "CHILD_PLACE_INVALID"
+        }
+      ],
+      "METAMORPHIC_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-routes.mjs",
+          "EVIDENCE": "META-06"
+        }
+      ],
+      "ORACLE": "STATIC_CONTRACT",
+      "STATUS": "PASS"
+    },
+    {
+      "RULE_ID": "LP-03",
+      "OWNER": "src/domain/phase2/planned-rules.ts",
+      "HORIZON": "V1",
+      "DOMAIN_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-routes.mjs",
+          "EVIDENCE": "no implied route inclusion"
+        }
+      ],
+      "SERVER_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-calendar.mjs",
+          "EVIDENCE": "Sync child place and route edits"
+        }
+      ],
+      "USER_FLOW_PROOF": "PENDING_C10",
+      "NEGATIVE_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-routes.mjs",
+          "EVIDENCE": "CHILD_PLACE_INVALID"
+        }
+      ],
+      "METAMORPHIC_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-routes.mjs",
+          "EVIDENCE": "META-06"
+        }
+      ],
+      "ORACLE": "STATIC_CONTRACT",
+      "STATUS": "PASS"
+    },
+    {
+      "RULE_ID": "LP-04",
+      "OWNER": "src/domain/phase2/planned-rules.ts",
+      "HORIZON": "V1",
+      "DOMAIN_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-routes.mjs",
+          "EVIDENCE": "orphan"
+        }
+      ],
+      "SERVER_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-calendar.mjs",
+          "EVIDENCE": "Sync child place and route edits"
+        }
+      ],
+      "USER_FLOW_PROOF": "PENDING_C10",
+      "NEGATIVE_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-routes.mjs",
+          "EVIDENCE": "CHILD_PLACE_INVALID"
+        }
+      ],
+      "METAMORPHIC_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-routes.mjs",
+          "EVIDENCE": "META-06"
+        }
+      ],
+      "ORACLE": "STATIC_CONTRACT",
+      "STATUS": "PASS"
+    },
+    {
+      "RULE_ID": "LP-05",
+      "OWNER": "src/domain/phase2/planned-rules.ts",
+      "HORIZON": "V1",
+      "DOMAIN_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-routes.mjs",
+          "EVIDENCE": "nested transport"
+        }
+      ],
+      "SERVER_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-calendar.mjs",
+          "EVIDENCE": "Sync child place and route edits"
+        }
+      ],
+      "USER_FLOW_PROOF": "PENDING_C10",
+      "NEGATIVE_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-routes.mjs",
+          "EVIDENCE": "CHILD_PLACE_INVALID"
+        }
+      ],
+      "METAMORPHIC_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-routes.mjs",
+          "EVIDENCE": "META-06"
+        }
+      ],
+      "ORACLE": "STATIC_CONTRACT",
+      "STATUS": "PASS"
+    },
+    {
+      "RULE_ID": "LP-06",
+      "OWNER": "src/domain/phase2/planned-rules.ts",
+      "HORIZON": "V1",
+      "DOMAIN_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-routes.mjs",
+          "EVIDENCE": "consecutive identity collapses"
+        }
+      ],
+      "SERVER_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-calendar.mjs",
+          "EVIDENCE": "Sync child place and route edits"
+        }
+      ],
+      "USER_FLOW_PROOF": "PENDING_C10",
+      "NEGATIVE_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-routes.mjs",
+          "EVIDENCE": "CHILD_PLACE_INVALID"
+        }
+      ],
+      "METAMORPHIC_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-routes.mjs",
+          "EVIDENCE": "META-06"
+        }
+      ],
+      "ORACLE": "STATIC_CONTRACT",
+      "STATUS": "PASS"
+    },
+    {
+      "RULE_ID": "LP-07",
+      "OWNER": "src/domain/phase2/planned-rules.ts",
+      "HORIZON": "V1",
+      "DOMAIN_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-routes.mjs",
+          "EVIDENCE": "two different child types"
+        }
+      ],
+      "SERVER_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-calendar.mjs",
+          "EVIDENCE": "Sync child place and route edits"
+        }
+      ],
+      "USER_FLOW_PROOF": "PENDING_C10",
+      "NEGATIVE_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-routes.mjs",
+          "EVIDENCE": "CHILD_PLACE_INVALID"
+        }
+      ],
+      "METAMORPHIC_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-routes.mjs",
+          "EVIDENCE": "META-06"
+        }
+      ],
+      "ORACLE": "STATIC_CONTRACT",
+      "STATUS": "PASS"
+    },
+    {
+      "RULE_ID": "LP-08",
+      "OWNER": "src/domain/phase2/planned-rules.ts",
+      "HORIZON": "V1",
+      "DOMAIN_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-routes.mjs",
+          "EVIDENCE": "two instances"
+        }
+      ],
+      "SERVER_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-calendar.mjs",
+          "EVIDENCE": "Sync child place and route edits"
+        }
+      ],
+      "USER_FLOW_PROOF": "PENDING_C10",
+      "NEGATIVE_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-routes.mjs",
+          "EVIDENCE": "CHILD_PLACE_INVALID"
+        }
+      ],
+      "METAMORPHIC_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-routes.mjs",
+          "EVIDENCE": "META-06"
+        }
+      ],
+      "ORACLE": "STATIC_CONTRACT",
+      "STATUS": "PASS"
+    },
+    {
+      "RULE_ID": "ROUTE-BIND-01",
+      "OWNER": "src/domain/phase2/planned-routes.ts",
+      "HORIZON": "V1",
+      "DOMAIN_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-routes.mjs",
+          "EVIDENCE": "ROOT_PLACE"
+        }
+      ],
+      "SERVER_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-reliability.mjs",
+          "EVIDENCE": "missingEvidence"
+        }
+      ],
+      "USER_FLOW_PROOF": "PENDING_C10",
+      "NEGATIVE_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-routes.mjs",
+          "EVIDENCE": "stop.endpointSource === \"ROOT_PLACE\""
+        }
+      ],
+      "METAMORPHIC_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-routes.mjs",
+          "EVIDENCE": "META-07"
+        }
+      ],
+      "ORACLE": "STATIC_CONTRACT",
+      "STATUS": "PASS"
+    },
+    {
+      "RULE_ID": "ROUTE-BIND-02",
+      "OWNER": "src/domain/phase2/planned-routes.ts",
+      "HORIZON": "V1",
+      "DOMAIN_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-routes.mjs",
+          "EVIDENCE": "CHILD_LOCAL_PLACE"
+        }
+      ],
+      "SERVER_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-reliability.mjs",
+          "EVIDENCE": "missingEvidence"
+        }
+      ],
+      "USER_FLOW_PROOF": "PENDING_C10",
+      "NEGATIVE_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-routes.mjs",
+          "EVIDENCE": "stop.endpointSource === \"ROOT_PLACE\""
+        }
+      ],
+      "METAMORPHIC_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-routes.mjs",
+          "EVIDENCE": "META-07"
+        }
+      ],
+      "ORACLE": "STATIC_CONTRACT",
+      "STATUS": "PASS"
+    },
+    {
+      "RULE_ID": "ROUTE-BIND-03",
+      "OWNER": "src/domain/phase2/planned-routes.ts",
+      "HORIZON": "V1",
+      "DOMAIN_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-routes.mjs",
+          "EVIDENCE": "DIRECT_PLACE"
+        }
+      ],
+      "SERVER_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-reliability.mjs",
+          "EVIDENCE": "missingEvidence"
+        }
+      ],
+      "USER_FLOW_PROOF": "PENDING_C10",
+      "NEGATIVE_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-routes.mjs",
+          "EVIDENCE": "stop.endpointSource === \"ROOT_PLACE\""
+        }
+      ],
+      "METAMORPHIC_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-routes.mjs",
+          "EVIDENCE": "META-07"
+        }
+      ],
+      "ORACLE": "STATIC_CONTRACT",
+      "STATUS": "PASS"
+    },
+    {
+      "RULE_ID": "ROUTE-CONTINUITY",
+      "OWNER": "src/domain/phase2/planned-routes.ts",
+      "HORIZON": "V1",
+      "DOMAIN_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-routes.mjs",
+          "EVIDENCE": "assertRouteContinuity"
+        }
+      ],
+      "SERVER_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-reliability.mjs",
+          "EVIDENCE": "missingEvidence"
+        }
+      ],
+      "USER_FLOW_PROOF": "PENDING_C10",
+      "NEGATIVE_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-routes.mjs",
+          "EVIDENCE": "stop.endpointSource === \"ROOT_PLACE\""
+        }
+      ],
+      "METAMORPHIC_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-routes.mjs",
+          "EVIDENCE": "META-07"
+        }
+      ],
+      "ORACLE": "STATIC_CONTRACT",
+      "STATUS": "PASS"
+    },
+    {
+      "RULE_ID": "REAL-01",
+      "OWNER": "src/server/phase2/planned-expenses.ts",
+      "HORIZON": "V1",
+      "DOMAIN_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-reality.mjs",
+          "EVIDENCE": "needsRealityConfirmation"
+        }
+      ],
+      "SERVER_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-reality.mjs",
+          "EVIDENCE": "confirmPlannedExpenseReality"
+        }
+      ],
+      "USER_FLOW_PROOF": "PENDING_C10",
+      "NEGATIVE_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-reality.mjs",
+          "EVIDENCE": "STATUS_TRANSITION_INVALID"
+        }
+      ],
+      "METAMORPHIC_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-reality.mjs",
+          "EVIDENCE": "scenarios"
+        }
+      ],
+      "ORACLE": "USER_DECLARED_FIXTURE",
+      "STATUS": "PASS"
+    },
+    {
+      "RULE_ID": "REAL-02",
+      "OWNER": "src/server/phase2/planned-expenses.ts",
+      "HORIZON": "V1",
+      "DOMAIN_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-reality.mjs",
+          "EVIDENCE": "25"
+        }
+      ],
+      "SERVER_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-reality.mjs",
+          "EVIDENCE": "confirmPlannedExpenseReality"
+        }
+      ],
+      "USER_FLOW_PROOF": "PENDING_C10",
+      "NEGATIVE_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-reality.mjs",
+          "EVIDENCE": "STATUS_TRANSITION_INVALID"
+        }
+      ],
+      "METAMORPHIC_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-reality.mjs",
+          "EVIDENCE": "scenarios"
+        }
+      ],
+      "ORACLE": "USER_DECLARED_FIXTURE",
+      "STATUS": "PASS"
+    },
+    {
+      "RULE_ID": "REAL-03",
+      "OWNER": "src/server/phase2/planned-expenses.ts",
+      "HORIZON": "V1",
+      "DOMAIN_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-reality.mjs",
+          "EVIDENCE": "canCollapseRealityCosts"
+        }
+      ],
+      "SERVER_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-reality.mjs",
+          "EVIDENCE": "confirmPlannedExpenseReality"
+        }
+      ],
+      "USER_FLOW_PROOF": "PENDING_C10",
+      "NEGATIVE_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-reality.mjs",
+          "EVIDENCE": "STATUS_TRANSITION_INVALID"
+        }
+      ],
+      "METAMORPHIC_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-reality.mjs",
+          "EVIDENCE": "scenarios"
+        }
+      ],
+      "ORACLE": "USER_DECLARED_FIXTURE",
+      "STATUS": "PASS"
+    },
+    {
+      "RULE_ID": "REAL-04",
+      "OWNER": "src/server/phase2/planned-expenses.ts",
+      "HORIZON": "V1",
+      "DOMAIN_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-reality.mjs",
+          "EVIDENCE": "fundingAfterGrossChange"
+        }
+      ],
+      "SERVER_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-reality.mjs",
+          "EVIDENCE": "confirmPlannedExpenseReality"
+        }
+      ],
+      "USER_FLOW_PROOF": "PENDING_C10",
+      "NEGATIVE_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-reality.mjs",
+          "EVIDENCE": "STATUS_TRANSITION_INVALID"
+        }
+      ],
+      "METAMORPHIC_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-reality.mjs",
+          "EVIDENCE": "scenarios"
+        }
+      ],
+      "ORACLE": "USER_DECLARED_FIXTURE",
+      "STATUS": "PASS"
+    },
+    {
+      "RULE_ID": "REAL-05",
+      "OWNER": "src/server/phase2/planned-expenses.ts",
+      "HORIZON": "V1",
+      "DOMAIN_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-reality.mjs",
+          "EVIDENCE": "67.00"
+        }
+      ],
+      "SERVER_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-reality.mjs",
+          "EVIDENCE": "confirmPlannedExpenseReality"
+        }
+      ],
+      "USER_FLOW_PROOF": "PENDING_C10",
+      "NEGATIVE_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-reality.mjs",
+          "EVIDENCE": "STATUS_TRANSITION_INVALID"
+        }
+      ],
+      "METAMORPHIC_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-reality.mjs",
+          "EVIDENCE": "scenarios"
+        }
+      ],
+      "ORACLE": "USER_DECLARED_FIXTURE",
+      "STATUS": "PASS"
+    },
+    {
+      "RULE_ID": "REAL-06",
+      "OWNER": "src/server/phase2/planned-expenses.ts",
+      "HORIZON": "V1",
+      "DOMAIN_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-reality.mjs",
+          "EVIDENCE": "beforeRestore"
+        }
+      ],
+      "SERVER_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-reality.mjs",
+          "EVIDENCE": "confirmPlannedExpenseReality"
+        }
+      ],
+      "USER_FLOW_PROOF": "PENDING_C10",
+      "NEGATIVE_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-reality.mjs",
+          "EVIDENCE": "STATUS_TRANSITION_INVALID"
+        }
+      ],
+      "METAMORPHIC_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-reality.mjs",
+          "EVIDENCE": "scenarios"
+        }
+      ],
+      "ORACLE": "USER_DECLARED_FIXTURE",
+      "STATUS": "PASS"
+    },
+    {
+      "RULE_ID": "REAL-07",
+      "OWNER": "src/server/phase2/planned-expenses.ts",
+      "HORIZON": "V1",
+      "DOMAIN_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-reality.mjs",
+          "EVIDENCE": "removed.rows.length"
+        }
+      ],
+      "SERVER_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-reality.mjs",
+          "EVIDENCE": "confirmPlannedExpenseReality"
+        }
+      ],
+      "USER_FLOW_PROOF": "PENDING_C10",
+      "NEGATIVE_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-reality.mjs",
+          "EVIDENCE": "STATUS_TRANSITION_INVALID"
+        }
+      ],
+      "METAMORPHIC_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-reality.mjs",
+          "EVIDENCE": "scenarios"
+        }
+      ],
+      "ORACLE": "USER_DECLARED_FIXTURE",
+      "STATUS": "PASS"
+    },
+    {
+      "RULE_ID": "IDEMP-CREATE-01",
+      "OWNER": "src/server/phase2/planned-expenses.ts",
+      "HORIZON": "V1",
+      "DOMAIN_PROOF": [],
+      "SERVER_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-reliability.mjs",
+          "EVIDENCE": "PARITY"
+        }
+      ],
+      "USER_FLOW_PROOF": "PENDING_C10",
+      "NEGATIVE_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-reliability.mjs",
+          "EVIDENCE": "PLANNED_EXPENSE_EDIT_STALE"
+        }
+      ],
+      "METAMORPHIC_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-reliability.mjs",
+          "EVIDENCE": "client.writes.length"
+        }
+      ],
+      "ORACLE": "STATIC_CONTRACT",
+      "STATUS": "PASS"
+    },
+    {
+      "RULE_ID": "IDEMP-CREATE-02",
+      "OWNER": "src/server/phase2/planned-expenses.ts",
+      "HORIZON": "V1",
+      "DOMAIN_PROOF": [],
+      "SERVER_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-reliability.mjs",
+          "EVIDENCE": "PARITY"
+        }
+      ],
+      "USER_FLOW_PROOF": "PENDING_C10",
+      "NEGATIVE_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-reliability.mjs",
+          "EVIDENCE": "PLANNED_EXPENSE_EDIT_STALE"
+        }
+      ],
+      "METAMORPHIC_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-reliability.mjs",
+          "EVIDENCE": "client.writes.length"
+        }
+      ],
+      "ORACLE": "STATIC_CONTRACT",
+      "STATUS": "PASS"
+    },
+    {
+      "RULE_ID": "IDEMP-REAL-01",
+      "OWNER": "src/server/phase2/planned-expenses.ts",
+      "HORIZON": "V1",
+      "DOMAIN_PROOF": [],
+      "SERVER_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-reality.mjs",
+          "EVIDENCE": "REALITY_DRAFT_STALE"
+        }
+      ],
+      "USER_FLOW_PROOF": "PENDING_C10",
+      "NEGATIVE_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-reality.mjs",
+          "EVIDENCE": "STATUS_TRANSITION_INVALID"
+        }
+      ],
+      "METAMORPHIC_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-reality.mjs",
+          "EVIDENCE": "scenarios"
+        }
+      ],
+      "ORACLE": "STATIC_CONTRACT",
+      "STATUS": "PASS"
+    },
+    {
+      "RULE_ID": "STALE-REAL-01",
+      "OWNER": "src/server/phase2/planned-expenses.ts",
+      "HORIZON": "V1",
+      "DOMAIN_PROOF": [],
+      "SERVER_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-reality.mjs",
+          "EVIDENCE": "REALITY_DRAFT_STALE"
+        }
+      ],
+      "USER_FLOW_PROOF": "PENDING_C10",
+      "NEGATIVE_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-reality.mjs",
+          "EVIDENCE": "STATUS_TRANSITION_INVALID"
+        }
+      ],
+      "METAMORPHIC_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-reality.mjs",
+          "EVIDENCE": "scenarios"
+        }
+      ],
+      "ORACLE": "STATIC_CONTRACT",
+      "STATUS": "PASS"
+    },
+    {
+      "RULE_ID": "STALE-EDIT",
+      "OWNER": "src/server/phase2/planned-expenses.ts",
+      "HORIZON": "V1",
+      "DOMAIN_PROOF": [],
+      "SERVER_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-reliability.mjs",
+          "EVIDENCE": "PARITY"
+        }
+      ],
+      "USER_FLOW_PROOF": "PENDING_C10",
+      "NEGATIVE_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-reliability.mjs",
+          "EVIDENCE": "PLANNED_EXPENSE_EDIT_STALE"
+        }
+      ],
+      "METAMORPHIC_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-reliability.mjs",
+          "EVIDENCE": "client.writes.length"
+        }
+      ],
+      "ORACLE": "STATIC_CONTRACT",
+      "STATUS": "PASS"
+    },
+    {
+      "RULE_ID": "PARITY-01",
+      "OWNER": "src/server/phase2/planned-expenses.ts",
+      "HORIZON": "V1",
+      "DOMAIN_PROOF": [],
+      "SERVER_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-reliability.mjs",
+          "EVIDENCE": "PARITY"
+        }
+      ],
+      "USER_FLOW_PROOF": "PENDING_C10",
+      "NEGATIVE_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-reliability.mjs",
+          "EVIDENCE": "PLANNED_EXPENSE_EDIT_STALE"
+        }
+      ],
+      "METAMORPHIC_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-reliability.mjs",
+          "EVIDENCE": "client.writes.length"
+        }
+      ],
+      "ORACLE": "STATIC_CONTRACT",
+      "STATUS": "PASS"
+    },
+    {
+      "RULE_ID": "PARITY-02",
+      "OWNER": "src/server/phase2/planned-expenses.ts",
+      "HORIZON": "V1",
+      "DOMAIN_PROOF": [],
+      "SERVER_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-reliability.mjs",
+          "EVIDENCE": "PARITY"
+        }
+      ],
+      "USER_FLOW_PROOF": "PENDING_C10",
+      "NEGATIVE_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-reliability.mjs",
+          "EVIDENCE": "PLANNED_EXPENSE_EDIT_STALE"
+        }
+      ],
+      "METAMORPHIC_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-reliability.mjs",
+          "EVIDENCE": "client.writes.length"
+        }
+      ],
+      "ORACLE": "STATIC_CONTRACT",
+      "STATUS": "PASS"
+    },
+    {
+      "RULE_ID": "PARITY-03",
+      "OWNER": "src/server/phase2/planned-expenses.ts",
+      "HORIZON": "V1",
+      "DOMAIN_PROOF": [],
+      "SERVER_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-reliability.mjs",
+          "EVIDENCE": "PARITY"
+        }
+      ],
+      "USER_FLOW_PROOF": "PENDING_C10",
+      "NEGATIVE_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-reliability.mjs",
+          "EVIDENCE": "PLANNED_EXPENSE_EDIT_STALE"
+        }
+      ],
+      "METAMORPHIC_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-reliability.mjs",
+          "EVIDENCE": "client.writes.length"
+        }
+      ],
+      "ORACLE": "STATIC_CONTRACT",
+      "STATUS": "PASS"
+    },
+    {
+      "RULE_ID": "PARITY-04",
+      "OWNER": "src/server/phase2/planned-expenses.ts",
+      "HORIZON": "V1",
+      "DOMAIN_PROOF": [],
+      "SERVER_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-reliability.mjs",
+          "EVIDENCE": "PARITY"
+        }
+      ],
+      "USER_FLOW_PROOF": "PENDING_C10",
+      "NEGATIVE_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-reliability.mjs",
+          "EVIDENCE": "PLANNED_EXPENSE_EDIT_STALE"
+        }
+      ],
+      "METAMORPHIC_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-reliability.mjs",
+          "EVIDENCE": "client.writes.length"
+        }
+      ],
+      "ORACLE": "STATIC_CONTRACT",
+      "STATUS": "PASS"
+    },
+    {
+      "RULE_ID": "REPORT-01",
+      "OWNER": "src/server/phase2/planned-expenses.ts",
+      "HORIZON": "V1",
+      "DOMAIN_PROOF": [],
+      "SERVER_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-reality.mjs",
+          "EVIDENCE": "REALITY_DRAFT_STALE"
+        }
+      ],
+      "USER_FLOW_PROOF": "PENDING_C10",
+      "NEGATIVE_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-reality.mjs",
+          "EVIDENCE": "STATUS_TRANSITION_INVALID"
+        }
+      ],
+      "METAMORPHIC_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-reality.mjs",
+          "EVIDENCE": "scenarios"
+        }
+      ],
+      "ORACLE": "STATIC_CONTRACT",
+      "STATUS": "PASS"
+    },
+    {
+      "RULE_ID": "REPORT-02",
+      "OWNER": "src/server/phase2/planned-expenses.ts",
+      "HORIZON": "V1",
+      "DOMAIN_PROOF": [],
+      "SERVER_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-reality.mjs",
+          "EVIDENCE": "REALITY_DRAFT_STALE"
+        }
+      ],
+      "USER_FLOW_PROOF": "PENDING_C10",
+      "NEGATIVE_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-reality.mjs",
+          "EVIDENCE": "STATUS_TRANSITION_INVALID"
+        }
+      ],
+      "METAMORPHIC_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-reality.mjs",
+          "EVIDENCE": "scenarios"
+        }
+      ],
+      "ORACLE": "STATIC_CONTRACT",
+      "STATUS": "PASS"
+    },
+    {
+      "RULE_ID": "CAL-01",
+      "OWNER": "src/app/mois-a-venir/planned-expenses-projection.ts",
+      "HORIZON": "V1",
+      "DOMAIN_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-calendar.mjs",
+          "EVIDENCE": "CAL-"
+        }
+      ],
+      "SERVER_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-calendar.mjs",
+          "EVIDENCE": "fresh reload"
+        }
+      ],
+      "USER_FLOW_PROOF": "PENDING_C10",
+      "NEGATIVE_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-calendar.mjs",
+          "EVIDENCE": "line-through"
+        }
+      ],
+      "METAMORPHIC_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-calendar.mjs",
+          "EVIDENCE": "META-20"
+        }
+      ],
+      "ORACLE": "STATIC_CONTRACT",
+      "STATUS": "PASS"
+    },
+    {
+      "RULE_ID": "CAL-02",
+      "OWNER": "src/app/mois-a-venir/planned-expenses-projection.ts",
+      "HORIZON": "V1",
+      "DOMAIN_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-calendar.mjs",
+          "EVIDENCE": "CAL-"
+        }
+      ],
+      "SERVER_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-calendar.mjs",
+          "EVIDENCE": "fresh reload"
+        }
+      ],
+      "USER_FLOW_PROOF": "PENDING_C10",
+      "NEGATIVE_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-calendar.mjs",
+          "EVIDENCE": "line-through"
+        }
+      ],
+      "METAMORPHIC_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-calendar.mjs",
+          "EVIDENCE": "META-20"
+        }
+      ],
+      "ORACLE": "STATIC_CONTRACT",
+      "STATUS": "PASS"
+    },
+    {
+      "RULE_ID": "CAL-03",
+      "OWNER": "src/app/mois-a-venir/planned-expenses-projection.ts",
+      "HORIZON": "V1",
+      "DOMAIN_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-calendar.mjs",
+          "EVIDENCE": "CAL-"
+        }
+      ],
+      "SERVER_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-calendar.mjs",
+          "EVIDENCE": "fresh reload"
+        }
+      ],
+      "USER_FLOW_PROOF": "PENDING_C10",
+      "NEGATIVE_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-calendar.mjs",
+          "EVIDENCE": "line-through"
+        }
+      ],
+      "METAMORPHIC_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-calendar.mjs",
+          "EVIDENCE": "META-20"
+        }
+      ],
+      "ORACLE": "STATIC_CONTRACT",
+      "STATUS": "PASS"
+    },
+    {
+      "RULE_ID": "CAL-04",
+      "OWNER": "src/app/mois-a-venir/planned-expenses-projection.ts",
+      "HORIZON": "V1",
+      "DOMAIN_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-calendar.mjs",
+          "EVIDENCE": "CAL-"
+        }
+      ],
+      "SERVER_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-calendar.mjs",
+          "EVIDENCE": "fresh reload"
+        }
+      ],
+      "USER_FLOW_PROOF": "PENDING_C10",
+      "NEGATIVE_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-calendar.mjs",
+          "EVIDENCE": "line-through"
+        }
+      ],
+      "METAMORPHIC_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-calendar.mjs",
+          "EVIDENCE": "META-20"
+        }
+      ],
+      "ORACLE": "STATIC_CONTRACT",
+      "STATUS": "PASS"
+    },
+    {
+      "RULE_ID": "CAL-05",
+      "OWNER": "src/app/mois-a-venir/planned-expenses-projection.ts",
+      "HORIZON": "V1",
+      "DOMAIN_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-calendar.mjs",
+          "EVIDENCE": "CAL-"
+        }
+      ],
+      "SERVER_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-calendar.mjs",
+          "EVIDENCE": "fresh reload"
+        }
+      ],
+      "USER_FLOW_PROOF": "PENDING_C10",
+      "NEGATIVE_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-calendar.mjs",
+          "EVIDENCE": "line-through"
+        }
+      ],
+      "METAMORPHIC_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-calendar.mjs",
+          "EVIDENCE": "META-20"
+        }
+      ],
+      "ORACLE": "STATIC_CONTRACT",
+      "STATUS": "PASS"
+    },
+    {
+      "RULE_ID": "CAL-06",
+      "OWNER": "src/app/mois-a-venir/planned-expenses-projection.ts",
+      "HORIZON": "V1",
+      "DOMAIN_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-calendar.mjs",
+          "EVIDENCE": "CAL-"
+        }
+      ],
+      "SERVER_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-calendar.mjs",
+          "EVIDENCE": "fresh reload"
+        }
+      ],
+      "USER_FLOW_PROOF": "PENDING_C10",
+      "NEGATIVE_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-calendar.mjs",
+          "EVIDENCE": "line-through"
+        }
+      ],
+      "METAMORPHIC_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-calendar.mjs",
+          "EVIDENCE": "META-20"
+        }
+      ],
+      "ORACLE": "STATIC_CONTRACT",
+      "STATUS": "PASS"
+    },
+    {
+      "RULE_ID": "CAL-07",
+      "OWNER": "src/app/mois-a-venir/planned-expenses-projection.ts",
+      "HORIZON": "V1",
+      "DOMAIN_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-calendar.mjs",
+          "EVIDENCE": "CAL-"
+        }
+      ],
+      "SERVER_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-calendar.mjs",
+          "EVIDENCE": "fresh reload"
+        }
+      ],
+      "USER_FLOW_PROOF": "PENDING_C10",
+      "NEGATIVE_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-calendar.mjs",
+          "EVIDENCE": "line-through"
+        }
+      ],
+      "METAMORPHIC_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-calendar.mjs",
+          "EVIDENCE": "META-20"
+        }
+      ],
+      "ORACLE": "STATIC_CONTRACT",
+      "STATUS": "PASS"
+    },
+    {
+      "RULE_ID": "CAL-08",
+      "OWNER": "src/app/mois-a-venir/planned-expenses-projection.ts",
+      "HORIZON": "V1",
+      "DOMAIN_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-calendar.mjs",
+          "EVIDENCE": "CAL-"
+        }
+      ],
+      "SERVER_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-calendar.mjs",
+          "EVIDENCE": "fresh reload"
+        }
+      ],
+      "USER_FLOW_PROOF": "PENDING_C10",
+      "NEGATIVE_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-calendar.mjs",
+          "EVIDENCE": "line-through"
+        }
+      ],
+      "METAMORPHIC_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-calendar.mjs",
+          "EVIDENCE": "META-20"
+        }
+      ],
+      "ORACLE": "STATIC_CONTRACT",
+      "STATUS": "PASS"
+    },
+    {
+      "RULE_ID": "CAL-09",
+      "OWNER": "src/app/mois-a-venir/planned-expenses-projection.ts",
+      "HORIZON": "V1",
+      "DOMAIN_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-calendar.mjs",
+          "EVIDENCE": "CAL-"
+        }
+      ],
+      "SERVER_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-calendar.mjs",
+          "EVIDENCE": "fresh reload"
+        }
+      ],
+      "USER_FLOW_PROOF": "PENDING_C10",
+      "NEGATIVE_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-calendar.mjs",
+          "EVIDENCE": "line-through"
+        }
+      ],
+      "METAMORPHIC_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-calendar.mjs",
+          "EVIDENCE": "META-20"
+        }
+      ],
+      "ORACLE": "STATIC_CONTRACT",
+      "STATUS": "PASS"
+    },
+    {
+      "RULE_ID": "CAL-10",
+      "OWNER": "src/app/mois-a-venir/planned-expenses-projection.ts",
+      "HORIZON": "V1",
+      "DOMAIN_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-calendar.mjs",
+          "EVIDENCE": "CAL-"
+        }
+      ],
+      "SERVER_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-calendar.mjs",
+          "EVIDENCE": "fresh reload"
+        }
+      ],
+      "USER_FLOW_PROOF": "PENDING_C10",
+      "NEGATIVE_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-calendar.mjs",
+          "EVIDENCE": "line-through"
+        }
+      ],
+      "METAMORPHIC_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-calendar.mjs",
+          "EVIDENCE": "META-20"
+        }
+      ],
+      "ORACLE": "STATIC_CONTRACT",
+      "STATUS": "PASS"
+    },
+    {
+      "RULE_ID": "CAL-11",
+      "OWNER": "src/app/mois-a-venir/planned-expenses-projection.ts",
+      "HORIZON": "V1",
+      "DOMAIN_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-calendar.mjs",
+          "EVIDENCE": "CAL-"
+        }
+      ],
+      "SERVER_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-calendar.mjs",
+          "EVIDENCE": "fresh reload"
+        }
+      ],
+      "USER_FLOW_PROOF": "PENDING_C10",
+      "NEGATIVE_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-calendar.mjs",
+          "EVIDENCE": "line-through"
+        }
+      ],
+      "METAMORPHIC_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-calendar.mjs",
+          "EVIDENCE": "META-20"
+        }
+      ],
+      "ORACLE": "STATIC_CONTRACT",
+      "STATUS": "PASS"
+    },
+    {
+      "RULE_ID": "CAL-12",
+      "OWNER": "src/app/mois-a-venir/planned-expenses-projection.ts",
+      "HORIZON": "V1",
+      "DOMAIN_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-calendar.mjs",
+          "EVIDENCE": "CAL-"
+        }
+      ],
+      "SERVER_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-calendar.mjs",
+          "EVIDENCE": "fresh reload"
+        }
+      ],
+      "USER_FLOW_PROOF": "PENDING_C10",
+      "NEGATIVE_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-calendar.mjs",
+          "EVIDENCE": "line-through"
+        }
+      ],
+      "METAMORPHIC_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-calendar.mjs",
+          "EVIDENCE": "META-20"
+        }
+      ],
+      "ORACLE": "STATIC_CONTRACT",
+      "STATUS": "PASS"
+    },
+    {
+      "RULE_ID": "CAL-13",
+      "OWNER": "src/app/mois-a-venir/planned-expenses-projection.ts",
+      "HORIZON": "V1",
+      "DOMAIN_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-calendar.mjs",
+          "EVIDENCE": "CAL-"
+        }
+      ],
+      "SERVER_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-calendar.mjs",
+          "EVIDENCE": "fresh reload"
+        }
+      ],
+      "USER_FLOW_PROOF": "PENDING_C10",
+      "NEGATIVE_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-calendar.mjs",
+          "EVIDENCE": "line-through"
+        }
+      ],
+      "METAMORPHIC_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-calendar.mjs",
+          "EVIDENCE": "META-20"
+        }
+      ],
+      "ORACLE": "STATIC_CONTRACT",
+      "STATUS": "PASS"
+    },
+    {
+      "RULE_ID": "CAL-14",
+      "OWNER": "src/app/mois-a-venir/planned-expenses-projection.ts",
+      "HORIZON": "V1",
+      "DOMAIN_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-calendar.mjs",
+          "EVIDENCE": "CAL-"
+        }
+      ],
+      "SERVER_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-calendar.mjs",
+          "EVIDENCE": "fresh reload"
+        }
+      ],
+      "USER_FLOW_PROOF": "PENDING_C10",
+      "NEGATIVE_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-calendar.mjs",
+          "EVIDENCE": "line-through"
+        }
+      ],
+      "METAMORPHIC_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-calendar.mjs",
+          "EVIDENCE": "META-20"
+        }
+      ],
+      "ORACLE": "STATIC_CONTRACT",
+      "STATUS": "PASS"
+    },
+    {
+      "RULE_ID": "CAL-15",
+      "OWNER": "src/app/mois-a-venir/planned-expenses-projection.ts",
+      "HORIZON": "V1",
+      "DOMAIN_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-calendar.mjs",
+          "EVIDENCE": "CAL-"
+        }
+      ],
+      "SERVER_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-calendar.mjs",
+          "EVIDENCE": "fresh reload"
+        }
+      ],
+      "USER_FLOW_PROOF": "PENDING_C10",
+      "NEGATIVE_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-calendar.mjs",
+          "EVIDENCE": "line-through"
+        }
+      ],
+      "METAMORPHIC_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-calendar.mjs",
+          "EVIDENCE": "META-20"
+        }
+      ],
+      "ORACLE": "STATIC_CONTRACT",
+      "STATUS": "PASS"
+    },
+    {
+      "RULE_ID": "CAL-16",
+      "OWNER": "src/app/mois-a-venir/planned-expenses-projection.ts",
+      "HORIZON": "V1",
+      "DOMAIN_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-calendar.mjs",
+          "EVIDENCE": "CAL-"
+        }
+      ],
+      "SERVER_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-calendar.mjs",
+          "EVIDENCE": "fresh reload"
+        }
+      ],
+      "USER_FLOW_PROOF": "PENDING_C10",
+      "NEGATIVE_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-calendar.mjs",
+          "EVIDENCE": "line-through"
+        }
+      ],
+      "METAMORPHIC_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-calendar.mjs",
+          "EVIDENCE": "META-20"
+        }
+      ],
+      "ORACLE": "STATIC_CONTRACT",
+      "STATUS": "PASS"
+    },
+    {
+      "RULE_ID": "CAL-17",
+      "OWNER": "src/app/mois-a-venir/planned-expenses-projection.ts",
+      "HORIZON": "V1",
+      "DOMAIN_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-calendar.mjs",
+          "EVIDENCE": "CAL-"
+        }
+      ],
+      "SERVER_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-calendar.mjs",
+          "EVIDENCE": "fresh reload"
+        }
+      ],
+      "USER_FLOW_PROOF": "PENDING_C10",
+      "NEGATIVE_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-calendar.mjs",
+          "EVIDENCE": "line-through"
+        }
+      ],
+      "METAMORPHIC_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-calendar.mjs",
+          "EVIDENCE": "META-20"
+        }
+      ],
+      "ORACLE": "STATIC_CONTRACT",
+      "STATUS": "PASS"
+    },
+    {
+      "RULE_ID": "CAL-18",
+      "OWNER": "src/app/mois-a-venir/planned-expenses-projection.ts",
+      "HORIZON": "V1",
+      "DOMAIN_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-calendar.mjs",
+          "EVIDENCE": "CAL-"
+        }
+      ],
+      "SERVER_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-calendar.mjs",
+          "EVIDENCE": "fresh reload"
+        }
+      ],
+      "USER_FLOW_PROOF": "PENDING_C10",
+      "NEGATIVE_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-calendar.mjs",
+          "EVIDENCE": "line-through"
+        }
+      ],
+      "METAMORPHIC_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-calendar.mjs",
+          "EVIDENCE": "META-20"
+        }
+      ],
+      "ORACLE": "STATIC_CONTRACT",
+      "STATUS": "PASS"
+    },
+    {
+      "RULE_ID": "CAL-19",
+      "OWNER": "src/app/mois-a-venir/planned-expenses-projection.ts",
+      "HORIZON": "V1",
+      "DOMAIN_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-calendar.mjs",
+          "EVIDENCE": "CAL-"
+        }
+      ],
+      "SERVER_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-calendar.mjs",
+          "EVIDENCE": "fresh reload"
+        }
+      ],
+      "USER_FLOW_PROOF": "PENDING_C10",
+      "NEGATIVE_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-calendar.mjs",
+          "EVIDENCE": "line-through"
+        }
+      ],
+      "METAMORPHIC_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-calendar.mjs",
+          "EVIDENCE": "META-20"
+        }
+      ],
+      "ORACLE": "STATIC_CONTRACT",
+      "STATUS": "PASS"
+    },
+    {
+      "RULE_ID": "CAL-20",
+      "OWNER": "src/app/mois-a-venir/planned-expenses-projection.ts",
+      "HORIZON": "V1",
+      "DOMAIN_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-calendar.mjs",
+          "EVIDENCE": "CAL-"
+        }
+      ],
+      "SERVER_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-calendar.mjs",
+          "EVIDENCE": "fresh reload"
+        }
+      ],
+      "USER_FLOW_PROOF": "PENDING_C10",
+      "NEGATIVE_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-calendar.mjs",
+          "EVIDENCE": "line-through"
+        }
+      ],
+      "METAMORPHIC_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-calendar.mjs",
+          "EVIDENCE": "META-20"
+        }
+      ],
+      "ORACLE": "STATIC_CONTRACT",
+      "STATUS": "PASS"
+    },
+    {
+      "RULE_ID": "CAL-21",
+      "OWNER": "src/app/mois-a-venir/planned-expenses-projection.ts",
+      "HORIZON": "V1",
+      "DOMAIN_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-calendar.mjs",
+          "EVIDENCE": "CAL-"
+        }
+      ],
+      "SERVER_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-calendar.mjs",
+          "EVIDENCE": "fresh reload"
+        }
+      ],
+      "USER_FLOW_PROOF": "PENDING_C10",
+      "NEGATIVE_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-calendar.mjs",
+          "EVIDENCE": "line-through"
+        }
+      ],
+      "METAMORPHIC_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-calendar.mjs",
+          "EVIDENCE": "META-20"
+        }
+      ],
+      "ORACLE": "STATIC_CONTRACT",
+      "STATUS": "PASS"
+    },
+    {
+      "RULE_ID": "CAL-22",
+      "OWNER": "src/app/mois-a-venir/planned-expenses-projection.ts",
+      "HORIZON": "V1",
+      "DOMAIN_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-calendar.mjs",
+          "EVIDENCE": "CAL-"
+        }
+      ],
+      "SERVER_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-calendar.mjs",
+          "EVIDENCE": "fresh reload"
+        }
+      ],
+      "USER_FLOW_PROOF": "PENDING_C10",
+      "NEGATIVE_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-calendar.mjs",
+          "EVIDENCE": "line-through"
+        }
+      ],
+      "METAMORPHIC_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-calendar.mjs",
+          "EVIDENCE": "META-20"
+        }
+      ],
+      "ORACLE": "STATIC_CONTRACT",
+      "STATUS": "PASS"
+    },
+    {
+      "RULE_ID": "CAL-23",
+      "OWNER": "src/app/mois-a-venir/planned-expenses-projection.ts",
+      "HORIZON": "V1",
+      "DOMAIN_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-calendar.mjs",
+          "EVIDENCE": "CAL-"
+        }
+      ],
+      "SERVER_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-calendar.mjs",
+          "EVIDENCE": "fresh reload"
+        }
+      ],
+      "USER_FLOW_PROOF": "PENDING_C10",
+      "NEGATIVE_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-calendar.mjs",
+          "EVIDENCE": "line-through"
+        }
+      ],
+      "METAMORPHIC_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-calendar.mjs",
+          "EVIDENCE": "META-20"
+        }
+      ],
+      "ORACLE": "STATIC_CONTRACT",
+      "STATUS": "PASS"
+    },
+    {
+      "RULE_ID": "CAL-24",
+      "OWNER": "src/app/mois-a-venir/planned-expenses-projection.ts",
+      "HORIZON": "V1",
+      "DOMAIN_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-calendar.mjs",
+          "EVIDENCE": "CAL-"
+        }
+      ],
+      "SERVER_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-calendar.mjs",
+          "EVIDENCE": "fresh reload"
+        }
+      ],
+      "USER_FLOW_PROOF": "PENDING_C10",
+      "NEGATIVE_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-calendar.mjs",
+          "EVIDENCE": "line-through"
+        }
+      ],
+      "METAMORPHIC_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-calendar.mjs",
+          "EVIDENCE": "META-20"
+        }
+      ],
+      "ORACLE": "STATIC_CONTRACT",
+      "STATUS": "PASS"
+    },
+    {
+      "RULE_ID": "CAL-25",
+      "OWNER": "src/app/mois-a-venir/planned-expenses-projection.ts",
+      "HORIZON": "V1",
+      "DOMAIN_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-calendar.mjs",
+          "EVIDENCE": "CAL-"
+        }
+      ],
+      "SERVER_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-calendar.mjs",
+          "EVIDENCE": "fresh reload"
+        }
+      ],
+      "USER_FLOW_PROOF": "PENDING_C10",
+      "NEGATIVE_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-calendar.mjs",
+          "EVIDENCE": "line-through"
+        }
+      ],
+      "METAMORPHIC_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-calendar.mjs",
+          "EVIDENCE": "META-20"
+        }
+      ],
+      "ORACLE": "STATIC_CONTRACT",
+      "STATUS": "PASS"
+    },
+    {
+      "RULE_ID": "CAL-26",
+      "OWNER": "src/app/mois-a-venir/planned-expenses-projection.ts",
+      "HORIZON": "V1",
+      "DOMAIN_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-calendar.mjs",
+          "EVIDENCE": "CAL-"
+        }
+      ],
+      "SERVER_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-calendar.mjs",
+          "EVIDENCE": "fresh reload"
+        }
+      ],
+      "USER_FLOW_PROOF": "PENDING_C10",
+      "NEGATIVE_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-calendar.mjs",
+          "EVIDENCE": "line-through"
+        }
+      ],
+      "METAMORPHIC_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-calendar.mjs",
+          "EVIDENCE": "META-20"
+        }
+      ],
+      "ORACLE": "STATIC_CONTRACT",
+      "STATUS": "PASS"
+    },
+    {
+      "RULE_ID": "CAL-27",
+      "OWNER": "src/app/mois-a-venir/planned-expenses-projection.ts",
+      "HORIZON": "V1",
+      "DOMAIN_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-calendar.mjs",
+          "EVIDENCE": "CAL-"
+        }
+      ],
+      "SERVER_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-calendar.mjs",
+          "EVIDENCE": "fresh reload"
+        }
+      ],
+      "USER_FLOW_PROOF": "PENDING_C10",
+      "NEGATIVE_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-calendar.mjs",
+          "EVIDENCE": "line-through"
+        }
+      ],
+      "METAMORPHIC_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-calendar.mjs",
+          "EVIDENCE": "META-20"
+        }
+      ],
+      "ORACLE": "STATIC_CONTRACT",
+      "STATUS": "PASS"
+    },
+    {
+      "RULE_ID": "RLS-READ",
+      "OWNER": "supabase/migrations/20260928163114_phase2_planned_expenses.sql",
+      "HORIZON": "V1",
+      "DOMAIN_PROOF": [],
+      "SERVER_PROOF": [
+        {
+          "RUNNER": "supabase/tests/phase2_planned_expenses_rls.sql",
+          "EVIDENCE": "DD6_"
+        }
+      ],
+      "USER_FLOW_PROOF": "NOT_APPLICABLE",
+      "NEGATIVE_PROOF": [
+        {
+          "RUNNER": "supabase/tests/phase2_planned_expenses_rls.sql",
+          "EVIDENCE": "DD6_FOREIGN"
+        }
+      ],
+      "METAMORPHIC_PROOF": [],
+      "ORACLE": "LIVE_CURRENT",
+      "STATUS": "PASS"
+    },
+    {
+      "RULE_ID": "RLS-CREATE",
+      "OWNER": "supabase/migrations/20260928163114_phase2_planned_expenses.sql",
+      "HORIZON": "V1",
+      "DOMAIN_PROOF": [],
+      "SERVER_PROOF": [
+        {
+          "RUNNER": "supabase/tests/phase2_planned_expenses_rls.sql",
+          "EVIDENCE": "DD6_"
+        }
+      ],
+      "USER_FLOW_PROOF": "NOT_APPLICABLE",
+      "NEGATIVE_PROOF": [
+        {
+          "RUNNER": "supabase/tests/phase2_planned_expenses_rls.sql",
+          "EVIDENCE": "DD6_FOREIGN"
+        }
+      ],
+      "METAMORPHIC_PROOF": [],
+      "ORACLE": "LIVE_CURRENT",
+      "STATUS": "PASS"
+    },
+    {
+      "RULE_ID": "RLS-UPDATE",
+      "OWNER": "supabase/migrations/20260928163114_phase2_planned_expenses.sql",
+      "HORIZON": "V1",
+      "DOMAIN_PROOF": [],
+      "SERVER_PROOF": [
+        {
+          "RUNNER": "supabase/tests/phase2_planned_expenses_rls.sql",
+          "EVIDENCE": "DD6_"
+        }
+      ],
+      "USER_FLOW_PROOF": "NOT_APPLICABLE",
+      "NEGATIVE_PROOF": [
+        {
+          "RUNNER": "supabase/tests/phase2_planned_expenses_rls.sql",
+          "EVIDENCE": "DD6_FOREIGN"
+        }
+      ],
+      "METAMORPHIC_PROOF": [],
+      "ORACLE": "LIVE_CURRENT",
+      "STATUS": "PASS"
+    },
+    {
+      "RULE_ID": "RLS-DELETE",
+      "OWNER": "supabase/migrations/20260928163114_phase2_planned_expenses.sql",
+      "HORIZON": "V1",
+      "DOMAIN_PROOF": [],
+      "SERVER_PROOF": [
+        {
+          "RUNNER": "supabase/tests/phase2_planned_expenses_rls.sql",
+          "EVIDENCE": "DD6_"
+        }
+      ],
+      "USER_FLOW_PROOF": "NOT_APPLICABLE",
+      "NEGATIVE_PROOF": [
+        {
+          "RUNNER": "supabase/tests/phase2_planned_expenses_rls.sql",
+          "EVIDENCE": "DD6_FOREIGN"
+        }
+      ],
+      "METAMORPHIC_PROOF": [],
+      "ORACLE": "LIVE_CURRENT",
+      "STATUS": "PASS"
+    },
+    {
+      "RULE_ID": "RLS-DECLARE",
+      "OWNER": "supabase/migrations/20260928163114_phase2_planned_expenses.sql",
+      "HORIZON": "V1",
+      "DOMAIN_PROOF": [],
+      "SERVER_PROOF": [
+        {
+          "RUNNER": "supabase/tests/phase2_planned_expenses_rls.sql",
+          "EVIDENCE": "DD6_"
+        }
+      ],
+      "USER_FLOW_PROOF": "NOT_APPLICABLE",
+      "NEGATIVE_PROOF": [
+        {
+          "RUNNER": "supabase/tests/phase2_planned_expenses_rls.sql",
+          "EVIDENCE": "DD6_FOREIGN"
+        }
+      ],
+      "METAMORPHIC_PROOF": [],
+      "ORACLE": "LIVE_CURRENT",
+      "STATUS": "PASS"
+    },
+    {
+      "RULE_ID": "RLS-RESTORE",
+      "OWNER": "supabase/migrations/20260928163114_phase2_planned_expenses.sql",
+      "HORIZON": "V1",
+      "DOMAIN_PROOF": [],
+      "SERVER_PROOF": [
+        {
+          "RUNNER": "supabase/tests/phase2_planned_expenses_rls.sql",
+          "EVIDENCE": "DD6_"
+        }
+      ],
+      "USER_FLOW_PROOF": "NOT_APPLICABLE",
+      "NEGATIVE_PROOF": [
+        {
+          "RUNNER": "supabase/tests/phase2_planned_expenses_rls.sql",
+          "EVIDENCE": "DD6_FOREIGN"
+        }
+      ],
+      "METAMORPHIC_PROOF": [],
+      "ORACLE": "LIVE_CURRENT",
+      "STATUS": "PASS"
+    },
+    {
+      "RULE_ID": "RLS-REPORT",
+      "OWNER": "supabase/migrations/20260928163114_phase2_planned_expenses.sql",
+      "HORIZON": "V1",
+      "DOMAIN_PROOF": [],
+      "SERVER_PROOF": [
+        {
+          "RUNNER": "supabase/tests/phase2_planned_expenses_rls.sql",
+          "EVIDENCE": "DD6_"
+        }
+      ],
+      "USER_FLOW_PROOF": "NOT_APPLICABLE",
+      "NEGATIVE_PROOF": [
+        {
+          "RUNNER": "supabase/tests/phase2_planned_expenses_rls.sql",
+          "EVIDENCE": "DD6_FOREIGN"
+        }
+      ],
+      "METAMORPHIC_PROOF": [],
+      "ORACLE": "LIVE_CURRENT",
+      "STATUS": "PASS"
+    },
+    {
+      "RULE_ID": "RLS-HOUSEHOLD_TAMPERING",
+      "OWNER": "supabase/migrations/20260928163114_phase2_planned_expenses.sql",
+      "HORIZON": "V1",
+      "DOMAIN_PROOF": [],
+      "SERVER_PROOF": [
+        {
+          "RUNNER": "supabase/tests/phase2_planned_expenses_rls.sql",
+          "EVIDENCE": "DD6_"
+        }
+      ],
+      "USER_FLOW_PROOF": "NOT_APPLICABLE",
+      "NEGATIVE_PROOF": [
+        {
+          "RUNNER": "supabase/tests/phase2_planned_expenses_rls.sql",
+          "EVIDENCE": "DD6_FOREIGN"
+        }
+      ],
+      "METAMORPHIC_PROOF": [],
+      "ORACLE": "LIVE_CURRENT",
+      "STATUS": "PASS"
+    },
+    {
+      "RULE_ID": "RLS-FOREIGN_REFS",
+      "OWNER": "supabase/migrations/20260928163114_phase2_planned_expenses.sql",
+      "HORIZON": "V1",
+      "DOMAIN_PROOF": [],
+      "SERVER_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-guards.mjs",
+          "EVIDENCE": "foreign refs"
+        }
+      ],
+      "USER_FLOW_PROOF": "NOT_APPLICABLE",
+      "NEGATIVE_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-guards.mjs",
+          "EVIDENCE": "PERSON_NOT_IN_HOUSEHOLD"
+        }
+      ],
+      "METAMORPHIC_PROOF": [],
+      "ORACLE": "STATIC_CONTRACT",
+      "STATUS": "PASS"
+    },
+    {
+      "RULE_ID": "ZERO-WRITE-01",
+      "OWNER": "src/server/phase2/planned-expenses.ts",
+      "HORIZON": "V1",
+      "DOMAIN_PROOF": [],
+      "SERVER_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-guards.mjs",
+          "EVIDENCE": "Preview"
+        }
+      ],
+      "USER_FLOW_PROOF": "NOT_APPLICABLE",
+      "NEGATIVE_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-guards.mjs",
+          "EVIDENCE": "historical authority mutation"
+        }
+      ],
+      "METAMORPHIC_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-guards.mjs",
+          "EVIDENCE": "targeted root predicate"
+        }
+      ],
+      "ORACLE": "MATHEMATICAL_INVARIANT",
+      "STATUS": "PASS"
+    },
+    {
+      "RULE_ID": "ZERO-WRITE-02",
+      "OWNER": "src/server/phase2/planned-expenses.ts",
+      "HORIZON": "V1",
+      "DOMAIN_PROOF": [],
+      "SERVER_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-guards.mjs",
+          "EVIDENCE": "Create"
+        }
+      ],
+      "USER_FLOW_PROOF": "NOT_APPLICABLE",
+      "NEGATIVE_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-guards.mjs",
+          "EVIDENCE": "historical authority mutation"
+        }
+      ],
+      "METAMORPHIC_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-guards.mjs",
+          "EVIDENCE": "targeted root predicate"
+        }
+      ],
+      "ORACLE": "MATHEMATICAL_INVARIANT",
+      "STATUS": "PASS"
+    },
+    {
+      "RULE_ID": "ZERO-WRITE-03",
+      "OWNER": "src/server/phase2/planned-expenses.ts",
+      "HORIZON": "V1",
+      "DOMAIN_PROOF": [],
+      "SERVER_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-guards.mjs",
+          "EVIDENCE": "Update"
+        }
+      ],
+      "USER_FLOW_PROOF": "NOT_APPLICABLE",
+      "NEGATIVE_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-guards.mjs",
+          "EVIDENCE": "historical authority mutation"
+        }
+      ],
+      "METAMORPHIC_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-guards.mjs",
+          "EVIDENCE": "targeted root predicate"
+        }
+      ],
+      "ORACLE": "MATHEMATICAL_INVARIANT",
+      "STATUS": "PASS"
+    },
+    {
+      "RULE_ID": "ZERO-WRITE-04",
+      "OWNER": "src/server/phase2/planned-expenses.ts",
+      "HORIZON": "V1",
+      "DOMAIN_PROOF": [],
+      "SERVER_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-guards.mjs",
+          "EVIDENCE": "Delete"
+        }
+      ],
+      "USER_FLOW_PROOF": "NOT_APPLICABLE",
+      "NEGATIVE_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-guards.mjs",
+          "EVIDENCE": "historical authority mutation"
+        }
+      ],
+      "METAMORPHIC_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-guards.mjs",
+          "EVIDENCE": "targeted root predicate"
+        }
+      ],
+      "ORACLE": "MATHEMATICAL_INVARIANT",
+      "STATUS": "PASS"
+    },
+    {
+      "RULE_ID": "ZERO-WRITE-05",
+      "OWNER": "src/server/phase2/planned-expenses.ts",
+      "HORIZON": "V1",
+      "DOMAIN_PROOF": [],
+      "SERVER_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-guards.mjs",
+          "EVIDENCE": "Declare"
+        }
+      ],
+      "USER_FLOW_PROOF": "NOT_APPLICABLE",
+      "NEGATIVE_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-guards.mjs",
+          "EVIDENCE": "historical authority mutation"
+        }
+      ],
+      "METAMORPHIC_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-guards.mjs",
+          "EVIDENCE": "targeted root predicate"
+        }
+      ],
+      "ORACLE": "MATHEMATICAL_INVARIANT",
+      "STATUS": "PASS"
+    },
+    {
+      "RULE_ID": "ZERO-WRITE-06",
+      "OWNER": "src/server/phase2/planned-expenses.ts",
+      "HORIZON": "V1",
+      "DOMAIN_PROOF": [],
+      "SERVER_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-guards.mjs",
+          "EVIDENCE": "Restore"
+        }
+      ],
+      "USER_FLOW_PROOF": "NOT_APPLICABLE",
+      "NEGATIVE_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-guards.mjs",
+          "EVIDENCE": "historical authority mutation"
+        }
+      ],
+      "METAMORPHIC_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-guards.mjs",
+          "EVIDENCE": "targeted root predicate"
+        }
+      ],
+      "ORACLE": "MATHEMATICAL_INVARIANT",
+      "STATUS": "PASS"
+    },
+    {
+      "RULE_ID": "ZERO-WRITE-07",
+      "OWNER": "src/server/phase2/planned-expenses.ts",
+      "HORIZON": "V1",
+      "DOMAIN_PROOF": [],
+      "SERVER_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-guards.mjs",
+          "EVIDENCE": "Report"
+        }
+      ],
+      "USER_FLOW_PROOF": "NOT_APPLICABLE",
+      "NEGATIVE_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-guards.mjs",
+          "EVIDENCE": "historical authority mutation"
+        }
+      ],
+      "METAMORPHIC_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-guards.mjs",
+          "EVIDENCE": "targeted root predicate"
+        }
+      ],
+      "ORACLE": "MATHEMATICAL_INVARIANT",
+      "STATUS": "PASS"
+    },
+    {
+      "RULE_ID": "ZERO-WRITE-08",
+      "OWNER": "src/server/phase2/planned-expenses.ts",
+      "HORIZON": "V1",
+      "DOMAIN_PROOF": [],
+      "SERVER_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-guards.mjs",
+          "EVIDENCE": "contact TEXT + user-declared place"
+        }
+      ],
+      "USER_FLOW_PROOF": "NOT_APPLICABLE",
+      "NEGATIVE_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-guards.mjs",
+          "EVIDENCE": "historical authority mutation"
+        }
+      ],
+      "METAMORPHIC_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-guards.mjs",
+          "EVIDENCE": "targeted root predicate"
+        }
+      ],
+      "ORACLE": "MATHEMATICAL_INVARIANT",
+      "STATUS": "PASS"
+    },
+    {
+      "RULE_ID": "ZERO-WRITE-09",
+      "OWNER": "src/server/phase2/planned-expenses.ts",
+      "HORIZON": "V1",
+      "DOMAIN_PROOF": [],
+      "SERVER_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-guards.mjs",
+          "EVIDENCE": "child local place"
+        }
+      ],
+      "USER_FLOW_PROOF": "NOT_APPLICABLE",
+      "NEGATIVE_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-guards.mjs",
+          "EVIDENCE": "historical authority mutation"
+        }
+      ],
+      "METAMORPHIC_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-guards.mjs",
+          "EVIDENCE": "targeted root predicate"
+        }
+      ],
+      "ORACLE": "MATHEMATICAL_INVARIANT",
+      "STATUS": "PASS"
+    },
+    {
+      "RULE_ID": "ZERO-WRITE-10",
+      "OWNER": "src/server/phase2/planned-expenses.ts",
+      "HORIZON": "V1",
+      "DOMAIN_PROOF": [],
+      "SERVER_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-guards.mjs",
+          "EVIDENCE": "route/fuel Preview"
+        }
+      ],
+      "USER_FLOW_PROOF": "NOT_APPLICABLE",
+      "NEGATIVE_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-guards.mjs",
+          "EVIDENCE": "historical authority mutation"
+        }
+      ],
+      "METAMORPHIC_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-guards.mjs",
+          "EVIDENCE": "targeted root predicate"
+        }
+      ],
+      "ORACLE": "MATHEMATICAL_INVARIANT",
+      "STATUS": "PASS"
+    },
+    {
+      "RULE_ID": "ZERO-WRITE-11",
+      "OWNER": "src/server/phase2/planned-expenses.ts",
+      "HORIZON": "V1",
+      "DOMAIN_PROOF": [],
+      "SERVER_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-guards.mjs",
+          "EVIDENCE": "route/fuel Save"
+        }
+      ],
+      "USER_FLOW_PROOF": "NOT_APPLICABLE",
+      "NEGATIVE_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-guards.mjs",
+          "EVIDENCE": "historical authority mutation"
+        }
+      ],
+      "METAMORPHIC_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-guards.mjs",
+          "EVIDENCE": "targeted root predicate"
+        }
+      ],
+      "ORACLE": "MATHEMATICAL_INVARIANT",
+      "STATUS": "PASS"
+    },
+    {
+      "RULE_ID": "ZERO-WRITE-12",
+      "OWNER": "src/server/phase2/planned-expenses.ts",
+      "HORIZON": "V1",
+      "DOMAIN_PROOF": [],
+      "SERVER_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-guards.mjs",
+          "EVIDENCE": "draft context change + local Undo"
+        }
+      ],
+      "USER_FLOW_PROOF": "NOT_APPLICABLE",
+      "NEGATIVE_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-guards.mjs",
+          "EVIDENCE": "historical authority mutation"
+        }
+      ],
+      "METAMORPHIC_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-guards.mjs",
+          "EVIDENCE": "targeted root predicate"
+        }
+      ],
+      "ORACLE": "MATHEMATICAL_INVARIANT",
+      "STATUS": "PASS"
+    },
+    {
+      "RULE_ID": "MEM-V1-01",
+      "OWNER": "src/server/phase2/planned-expenses.ts",
+      "HORIZON": "V1",
+      "DOMAIN_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-guards.mjs",
+          "EVIDENCE": "MEM-V1-01..07"
+        }
+      ],
+      "SERVER_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-guards.mjs",
+          "EVIDENCE": "TEXT remains intention"
+        }
+      ],
+      "USER_FLOW_PROOF": "NOT_APPLICABLE",
+      "NEGATIVE_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-guards.mjs",
+          "EVIDENCE": "DRAFT_FIELDS_INVALID"
+        }
+      ],
+      "METAMORPHIC_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-guards.mjs",
+          "EVIDENCE": "Declared route"
+        }
+      ],
+      "ORACLE": "STATIC_CONTRACT",
+      "STATUS": "PASS"
+    },
+    {
+      "RULE_ID": "MEM-V1-02",
+      "OWNER": "src/server/phase2/planned-expenses.ts",
+      "HORIZON": "V1",
+      "DOMAIN_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-guards.mjs",
+          "EVIDENCE": "MEM-V1-01..07"
+        }
+      ],
+      "SERVER_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-guards.mjs",
+          "EVIDENCE": "TEXT remains intention"
+        }
+      ],
+      "USER_FLOW_PROOF": "NOT_APPLICABLE",
+      "NEGATIVE_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-guards.mjs",
+          "EVIDENCE": "DRAFT_FIELDS_INVALID"
+        }
+      ],
+      "METAMORPHIC_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-guards.mjs",
+          "EVIDENCE": "Declared route"
+        }
+      ],
+      "ORACLE": "STATIC_CONTRACT",
+      "STATUS": "PASS"
+    },
+    {
+      "RULE_ID": "MEM-V1-03",
+      "OWNER": "src/server/phase2/planned-expenses.ts",
+      "HORIZON": "V1",
+      "DOMAIN_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-guards.mjs",
+          "EVIDENCE": "MEM-V1-01..07"
+        }
+      ],
+      "SERVER_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-guards.mjs",
+          "EVIDENCE": "TEXT remains intention"
+        }
+      ],
+      "USER_FLOW_PROOF": "NOT_APPLICABLE",
+      "NEGATIVE_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-guards.mjs",
+          "EVIDENCE": "DRAFT_FIELDS_INVALID"
+        }
+      ],
+      "METAMORPHIC_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-guards.mjs",
+          "EVIDENCE": "Declared route"
+        }
+      ],
+      "ORACLE": "STATIC_CONTRACT",
+      "STATUS": "PASS"
+    },
+    {
+      "RULE_ID": "MEM-V1-04",
+      "OWNER": "src/server/phase2/planned-expenses.ts",
+      "HORIZON": "V1",
+      "DOMAIN_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-guards.mjs",
+          "EVIDENCE": "MEM-V1-01..07"
+        }
+      ],
+      "SERVER_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-guards.mjs",
+          "EVIDENCE": "TEXT remains intention"
+        }
+      ],
+      "USER_FLOW_PROOF": "NOT_APPLICABLE",
+      "NEGATIVE_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-guards.mjs",
+          "EVIDENCE": "DRAFT_FIELDS_INVALID"
+        }
+      ],
+      "METAMORPHIC_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-guards.mjs",
+          "EVIDENCE": "Declared route"
+        }
+      ],
+      "ORACLE": "STATIC_CONTRACT",
+      "STATUS": "PASS"
+    },
+    {
+      "RULE_ID": "MEM-V1-05",
+      "OWNER": "src/server/phase2/planned-expenses.ts",
+      "HORIZON": "V1",
+      "DOMAIN_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-guards.mjs",
+          "EVIDENCE": "MEM-V1-01..07"
+        }
+      ],
+      "SERVER_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-guards.mjs",
+          "EVIDENCE": "TEXT remains intention"
+        }
+      ],
+      "USER_FLOW_PROOF": "NOT_APPLICABLE",
+      "NEGATIVE_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-guards.mjs",
+          "EVIDENCE": "DRAFT_FIELDS_INVALID"
+        }
+      ],
+      "METAMORPHIC_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-guards.mjs",
+          "EVIDENCE": "Declared route"
+        }
+      ],
+      "ORACLE": "STATIC_CONTRACT",
+      "STATUS": "PASS"
+    },
+    {
+      "RULE_ID": "MEM-V1-06",
+      "OWNER": "src/server/phase2/planned-expenses.ts",
+      "HORIZON": "V1",
+      "DOMAIN_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-guards.mjs",
+          "EVIDENCE": "MEM-V1-01..07"
+        }
+      ],
+      "SERVER_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-guards.mjs",
+          "EVIDENCE": "TEXT remains intention"
+        }
+      ],
+      "USER_FLOW_PROOF": "NOT_APPLICABLE",
+      "NEGATIVE_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-guards.mjs",
+          "EVIDENCE": "DRAFT_FIELDS_INVALID"
+        }
+      ],
+      "METAMORPHIC_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-guards.mjs",
+          "EVIDENCE": "Declared route"
+        }
+      ],
+      "ORACLE": "STATIC_CONTRACT",
+      "STATUS": "PASS"
+    },
+    {
+      "RULE_ID": "MEM-V1-07",
+      "OWNER": "src/server/phase2/planned-expenses.ts",
+      "HORIZON": "V1",
+      "DOMAIN_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-guards.mjs",
+          "EVIDENCE": "MEM-V1-01..07"
+        }
+      ],
+      "SERVER_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-guards.mjs",
+          "EVIDENCE": "TEXT remains intention"
+        }
+      ],
+      "USER_FLOW_PROOF": "NOT_APPLICABLE",
+      "NEGATIVE_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-guards.mjs",
+          "EVIDENCE": "DRAFT_FIELDS_INVALID"
+        }
+      ],
+      "METAMORPHIC_PROOF": [
+        {
+          "RUNNER": "scripts/check-phase2-planned-guards.mjs",
+          "EVIDENCE": "Declared route"
+        }
+      ],
+      "ORACLE": "STATIC_CONTRACT",
+      "STATUS": "PASS"
+    },
+    {
+      "RULE_ID": "MEM-01",
+      "OWNER": "src/server/phase2/planned-expenses.ts",
+      "HORIZON": "V1.1",
+      "DOMAIN_PROOF": [],
+      "SERVER_PROOF": [],
+      "USER_FLOW_PROOF": "NOT_APPLICABLE",
+      "NEGATIVE_PROOF": [],
+      "METAMORPHIC_PROOF": [],
+      "ORACLE": "STATIC_CONTRACT",
+      "STATUS": "NOT_APPLICABLE"
+    },
+    {
+      "RULE_ID": "MEM-02",
+      "OWNER": "src/server/phase2/planned-expenses.ts",
+      "HORIZON": "V1.1",
+      "DOMAIN_PROOF": [],
+      "SERVER_PROOF": [],
+      "USER_FLOW_PROOF": "NOT_APPLICABLE",
+      "NEGATIVE_PROOF": [],
+      "METAMORPHIC_PROOF": [],
+      "ORACLE": "STATIC_CONTRACT",
+      "STATUS": "NOT_APPLICABLE"
+    },
+    {
+      "RULE_ID": "MEM-03",
+      "OWNER": "src/server/phase2/planned-expenses.ts",
+      "HORIZON": "V1.1",
+      "DOMAIN_PROOF": [],
+      "SERVER_PROOF": [],
+      "USER_FLOW_PROOF": "NOT_APPLICABLE",
+      "NEGATIVE_PROOF": [],
+      "METAMORPHIC_PROOF": [],
+      "ORACLE": "STATIC_CONTRACT",
+      "STATUS": "NOT_APPLICABLE"
+    },
+    {
+      "RULE_ID": "MEM-04",
+      "OWNER": "src/server/phase2/planned-expenses.ts",
+      "HORIZON": "V1.1",
+      "DOMAIN_PROOF": [],
+      "SERVER_PROOF": [],
+      "USER_FLOW_PROOF": "NOT_APPLICABLE",
+      "NEGATIVE_PROOF": [],
+      "METAMORPHIC_PROOF": [],
+      "ORACLE": "STATIC_CONTRACT",
+      "STATUS": "NOT_APPLICABLE"
+    },
+    {
+      "RULE_ID": "MEM-05",
+      "OWNER": "src/server/phase2/planned-expenses.ts",
+      "HORIZON": "V1.1",
+      "DOMAIN_PROOF": [],
+      "SERVER_PROOF": [],
+      "USER_FLOW_PROOF": "NOT_APPLICABLE",
+      "NEGATIVE_PROOF": [],
+      "METAMORPHIC_PROOF": [],
+      "ORACLE": "STATIC_CONTRACT",
+      "STATUS": "NOT_APPLICABLE"
+    },
+    {
+      "RULE_ID": "MEM-06",
+      "OWNER": "src/server/phase2/planned-expenses.ts",
+      "HORIZON": "V1.1",
+      "DOMAIN_PROOF": [],
+      "SERVER_PROOF": [],
+      "USER_FLOW_PROOF": "NOT_APPLICABLE",
+      "NEGATIVE_PROOF": [],
+      "METAMORPHIC_PROOF": [],
+      "ORACLE": "STATIC_CONTRACT",
+      "STATUS": "NOT_APPLICABLE"
+    },
+    {
+      "RULE_ID": "MEM-07",
+      "OWNER": "src/server/phase2/planned-expenses.ts",
+      "HORIZON": "V1.1",
+      "DOMAIN_PROOF": [],
+      "SERVER_PROOF": [],
+      "USER_FLOW_PROOF": "NOT_APPLICABLE",
+      "NEGATIVE_PROOF": [],
+      "METAMORPHIC_PROOF": [],
+      "ORACLE": "STATIC_CONTRACT",
+      "STATUS": "NOT_APPLICABLE"
+    },
+    {
+      "RULE_ID": "MEM-08",
+      "OWNER": "src/server/phase2/planned-expenses.ts",
+      "HORIZON": "V1.1",
+      "DOMAIN_PROOF": [],
+      "SERVER_PROOF": [],
+      "USER_FLOW_PROOF": "NOT_APPLICABLE",
+      "NEGATIVE_PROOF": [],
+      "METAMORPHIC_PROOF": [],
+      "ORACLE": "STATIC_CONTRACT",
+      "STATUS": "NOT_APPLICABLE"
+    }
+  ],
+  "metamorphic": [
+    {
+      "RULE_ID": "META-01",
+      "ORACLE": "MATHEMATICAL_INVARIANT",
+      "PROOF": {
+        "RUNNER": "scripts/check-phase2-planned-builder.mjs",
+        "EVIDENCE": "!ready.saveReady || ready.previewReady"
+      },
+      "STATUS": "PASS"
+    },
+    {
+      "RULE_ID": "META-02",
+      "ORACLE": "MATHEMATICAL_INVARIANT",
+      "PROOF": {
+        "RUNNER": "scripts/check-phase2-planned-builder.mjs",
+        "EVIDENCE": "splitRestaurantQuickTotal"
+      },
+      "STATUS": "PASS"
+    },
+    {
+      "RULE_ID": "META-03",
+      "ORACLE": "MATHEMATICAL_INVARIANT",
+      "PROOF": {
+        "RUNNER": "scripts/check-phase2-planned-finance.mjs",
+        "EVIDENCE": "META-03"
+      },
+      "STATUS": "PASS"
+    },
+    {
+      "RULE_ID": "META-04",
+      "ORACLE": "MATHEMATICAL_INVARIANT",
+      "PROOF": {
+        "RUNNER": "scripts/check-phase2-planned-finance.mjs",
+        "EVIDENCE": "META-04"
+      },
+      "STATUS": "PASS"
+    },
+    {
+      "RULE_ID": "META-05",
+      "ORACLE": "MATHEMATICAL_INVARIANT",
+      "PROOF": {
+        "RUNNER": "scripts/check-phase2-planned-finance.mjs",
+        "EVIDENCE": "META-05"
+      },
+      "STATUS": "PASS"
+    },
+    {
+      "RULE_ID": "META-06",
+      "ORACLE": "MATHEMATICAL_INVARIANT",
+      "PROOF": {
+        "RUNNER": "scripts/check-phase2-planned-routes.mjs",
+        "EVIDENCE": "META-06"
+      },
+      "STATUS": "PASS"
+    },
+    {
+      "RULE_ID": "META-07",
+      "ORACLE": "MATHEMATICAL_INVARIANT",
+      "PROOF": {
+        "RUNNER": "scripts/check-phase2-planned-routes.mjs",
+        "EVIDENCE": "META-07"
+      },
+      "STATUS": "PASS"
+    },
+    {
+      "RULE_ID": "META-08",
+      "ORACLE": "MATHEMATICAL_INVARIANT",
+      "PROOF": {
+        "RUNNER": "scripts/check-phase2-planned-routes.mjs",
+        "EVIDENCE": "META-08"
+      },
+      "STATUS": "PASS"
+    },
+    {
+      "RULE_ID": "META-09",
+      "ORACLE": "MATHEMATICAL_INVARIANT",
+      "PROOF": {
+        "RUNNER": "scripts/check-phase2-planned-reality.mjs",
+        "EVIDENCE": "scenarios"
+      },
+      "STATUS": "PASS"
+    },
+    {
+      "RULE_ID": "META-10",
+      "ORACLE": "MATHEMATICAL_INVARIANT",
+      "PROOF": {
+        "RUNNER": "scripts/check-phase2-planned-reality.mjs",
+        "EVIDENCE": "scenarios"
+      },
+      "STATUS": "PASS"
+    },
+    {
+      "RULE_ID": "META-11",
+      "ORACLE": "MATHEMATICAL_INVARIANT",
+      "PROOF": {
+        "RUNNER": "scripts/check-phase2-planned-reality.mjs",
+        "EVIDENCE": "scenarios"
+      },
+      "STATUS": "PASS"
+    },
+    {
+      "RULE_ID": "META-12",
+      "ORACLE": "MATHEMATICAL_INVARIANT",
+      "PROOF": {
+        "RUNNER": "scripts/check-phase2-planned-reality.mjs",
+        "EVIDENCE": "scenarios"
+      },
+      "STATUS": "PASS"
+    },
+    {
+      "RULE_ID": "META-13",
+      "ORACLE": "MATHEMATICAL_INVARIANT",
+      "PROOF": {
+        "RUNNER": "scripts/check-phase2-planned-reality.mjs",
+        "EVIDENCE": "scenarios"
+      },
+      "STATUS": "PASS"
+    },
+    {
+      "RULE_ID": "META-14",
+      "ORACLE": "MATHEMATICAL_INVARIANT",
+      "PROOF": {
+        "RUNNER": "scripts/check-phase2-planned-guards.mjs",
+        "EVIDENCE": "draft context change + local Undo"
+      },
+      "STATUS": "PASS"
+    },
+    {
+      "RULE_ID": "META-15",
+      "ORACLE": "MATHEMATICAL_INVARIANT",
+      "PROOF": {
+        "RUNNER": "scripts/check-phase2-planned-reliability.mjs",
+        "EVIDENCE": "PARITY"
+      },
+      "STATUS": "PASS"
+    },
+    {
+      "RULE_ID": "META-16",
+      "ORACLE": "MATHEMATICAL_INVARIANT",
+      "PROOF": {
+        "RUNNER": "scripts/check-phase2-planned-reliability.mjs",
+        "EVIDENCE": "PARITY"
+      },
+      "STATUS": "PASS"
+    },
+    {
+      "RULE_ID": "META-17",
+      "ORACLE": "MATHEMATICAL_INVARIANT",
+      "PROOF": {
+        "RUNNER": "scripts/check-phase2-planned-reliability.mjs",
+        "EVIDENCE": "PARITY"
+      },
+      "STATUS": "PASS"
+    },
+    {
+      "RULE_ID": "META-18",
+      "ORACLE": "MATHEMATICAL_INVARIANT",
+      "PROOF": {
+        "RUNNER": "scripts/check-phase2-planned-guards.mjs",
+        "EVIDENCE": "contact TEXT + user-declared place"
+      },
+      "STATUS": "PASS"
+    },
+    {
+      "RULE_ID": "META-19",
+      "ORACLE": "MATHEMATICAL_INVARIANT",
+      "PROOF": {
+        "RUNNER": "scripts/check-phase2-planned-guards.mjs",
+        "EVIDENCE": "Declared route"
+      },
+      "STATUS": "PASS"
+    },
+    {
+      "RULE_ID": "META-20",
+      "ORACLE": "MATHEMATICAL_INVARIANT",
+      "PROOF": {
+        "RUNNER": "scripts/check-phase2-planned-calendar.mjs",
+        "EVIDENCE": "META-20"
+      },
+      "STATUS": "PASS"
+    }
+  ],
+  "gates": [
+    {
+      "ID": "GATE-01",
+      "NAME": "Registry/config",
+      "STATUS": "PASS"
+    },
+    {
+      "ID": "GATE-02",
+      "NAME": "Context resolver",
+      "STATUS": "PASS"
+    },
+    {
+      "ID": "GATE-03",
+      "NAME": "Adaptive Builder/readiness",
+      "STATUS": "PASS"
+    },
+    {
+      "ID": "GATE-04",
+      "NAME": "Places/contacts/social",
+      "STATUS": "PASS"
+    },
+    {
+      "ID": "GATE-05",
+      "NAME": "Assets/module graph",
+      "STATUS": "PASS"
+    },
+    {
+      "ID": "GATE-06",
+      "NAME": "Funding/baseline",
+      "STATUS": "PASS"
+    },
+    {
+      "ID": "GATE-07",
+      "NAME": "Financial decision truth",
+      "STATUS": "PASS"
+    },
+    {
+      "ID": "GATE-08",
+      "NAME": "Child local place/root transport",
+      "STATUS": "PASS"
+    },
+    {
+      "ID": "GATE-09",
+      "NAME": "Route/fuel",
+      "STATUS": "PASS"
+    },
+    {
+      "ID": "GATE-10",
+      "NAME": "Lifecycle/reality transition",
+      "STATUS": "PASS"
+    },
+    {
+      "ID": "GATE-11",
+      "NAME": "Persistence/idempotence/stale",
+      "STATUS": "PASS"
+    },
+    {
+      "ID": "GATE-12",
+      "NAME": "Server validation",
+      "STATUS": "PASS"
+    },
+    {
+      "ID": "GATE-13",
+      "NAME": "MonthScenario/read model",
+      "STATUS": "PASS"
+    },
+    {
+      "ID": "GATE-14",
+      "NAME": "Calendar/list/forecast",
+      "STATUS": "PASS"
+    },
+    {
+      "ID": "GATE-15",
+      "NAME": "Preview/Save parity",
+      "STATUS": "PASS"
+    },
+    {
+      "ID": "GATE-16",
+      "NAME": "RLS",
+      "STATUS": "PASS"
+    },
+    {
+      "ID": "GATE-17",
+      "NAME": "Targeted historical zero-write",
+      "STATUS": "PASS"
+    },
+    {
+      "ID": "GATE-18",
+      "NAME": "Production build",
+      "STATUS": "PASS"
+    },
+    {
+      "ID": "GATE-19",
+      "NAME": "Rule coverage / ownership",
+      "STATUS": "PASS"
+    },
+    {
+      "ID": "GATE-20",
+      "NAME": "Cleanup no duplicate authority",
+      "STATUS": "PASS"
+    },
+    {
+      "ID": "GATE-21",
+      "NAME": "Representative user flow evidence",
+      "STATUS": "PENDING_C10"
+    }
+  ],
+  "summary": {
+    "C9_AUTOMATED_DD6": "PASS",
+    "RULE_COVERAGE": "PASS",
+    "METAMORPHIC": "PASS",
+    "RLS": "PASS",
+    "HISTORICAL_ZERO_WRITE": "PASS",
+    "PREVIEW_SAVE_PARITY": "PASS",
+    "PRODUCTION_BUILD": "PASS",
+    "GATE_21_USER_FLOW": "PENDING_C10"
+  }
+}

@@ -120,6 +120,44 @@ Les charges fixes sont retenues par la règle déjà appliquée au forecast : s�
 active, détail de récurrence disponible, mode « Échéance fixe », cadence mensuelle
 et montant estimable. Les autres séries demeurent conditionnelles ou inconnues.
 
+### Projection et interactions C8
+
+La liste, la grille et le forecast relisent les mêmes roots prospectives après
+chaque mutation. Une root datée fournit une seule occurrence ; les modules enfants
+restent dans le détail. Une root sans date figure dans « À dater », y compris
+lorsqu'elle est déclarée réalisée. Les charges certaines sans date y figurent aussi.
+Le montant d'une cellule est toujours le coût brut, indépendamment du financement
+ou de la part absorbée dans le quotidien.
+
+L'ordre d'affichage du MASTER est centralisé dans `calendar-presentation.ts` :
+dates exactes avant estimées, puis déclarées réalisées, certaines, prévues ; à
+priorité identique, montant décroissant et identité stable. Jusqu'à trois éléments
+restent visibles ; à partir de quatre, deux éléments puis « +N autres ». Les
+centimes sont conservés. L'estimation de date est attachée à l'élément concerné.
+Les états sont lisibles en texte, et la réalisation n'est jamais barrée.
+
+Le tiroir modal à droite conserve la hauteur de grille. Navigation par flèches,
+Entrée/Espace, Tab confinée, Échap et retour au déclencheur sont pris en charge.
+Les actions du tiroir transmettent une commande au Builder existant, sans second
+brouillon ni calcul métier. Un brouillon explicite ouvert est protégé. Le détail
+d'impact provient du même `deriveMonthScenario` serveur, avec la root exclue du
+scénario avant projet. Les marques sans image locale utilisent le vocabulaire
+sémantique existant de l'Historique.
+
+### Certification automatique C9
+
+`check-phase2-dd6-certification.mjs` compose les runners existants, les suites C8
+et de refus/zero-write C9, TypeScript et le build de production. Son index de
+preuves n'est pas une registry métier. Chaque règle référence son owner, son
+horizon, ses preuves et le type d'oracle. Les valeurs attendues ne sont pas
+régénérées après un échec.
+
+Les audits live sont en lecture seule. Le test RLS SQL distant exige une validation
+humaine distincte : deux foyers synthétiques, CRUD/lifecycle/report/restore,
+tampering, recherche ciblée de traces historiques, puis ROLLBACK. Le runner peut
+consommer cette preuve datée avec son hash SQL ; il ne relance pas implicitement
+une mutation distante. Les parcours représentatifs GATE-21 restent PENDING_C10.
+
 ## Fiabilité Preview / Save et cycle déclaré (C6 / C7)
 
 `resolvePlannedExpenseDraft` constitue la frontière commune de Preview, création,

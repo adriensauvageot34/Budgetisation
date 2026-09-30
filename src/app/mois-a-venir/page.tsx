@@ -9,7 +9,8 @@ import { readMonthInputs } from "@/server/phase2/month-inputs";
 import { deriveMonthScenario } from "@/server/phase2/month-scenario";
 import { readPlannedExpenses } from "@/server/phase2/planned-expenses";
 import { readPlannedContextOptions } from "@/server/phase2/planned-context";
-import { projectPlannedExpenseCards } from "./planned-expenses-projection";
+import { projectPlannedExpenseCards, projectExpenseFunding } from "./planned-expenses-projection";
+import { projectPlannedExpenseImpact } from "@/server/phase2/planned-impact";
 
 export const metadata = { title: "Notre mois à venir" };
 export const dynamic = "force-dynamic";
@@ -51,8 +52,21 @@ export default async function MonthForecastPage({ searchParams }: { searchParams
   const datePart = (part: string) => dateParts.find((item) => item.type === part)?.value ?? "";
   const today = `${datePart("year")}-${datePart("month")}-${datePart("day")}`;
   const scenario = deriveMonthScenario(forecast, stored.inputs, null, today, plannedExpenses);
+  const placeLabel = (ref: import("@/domain/phase2/planned-contract").ProspectivePlaceRef | undefined) =>
+    ref?.kind === "TEXT" ? ref.label : ref?.kind === "KNOWN" ? options.places.find((place) => place.placeId === ref.placeId)?.name : undefined;
+  const cards = projectPlannedExpenseCards(plannedExpenses, today).map((card) => {
+    if (!scenario.economicPlan) return card;
+    const before = deriveMonthScenario(forecast, stored.inputs, null, today,
+      plannedExpenses.filter((row) => row.id !== card.id)).economicPlan;
+    if (!before) return card;
+    const impact = projectPlannedExpenseImpact(before, scenario.economicPlan, card);
+    return { ...card, detail: { additionalImpact: impact.netAdditionalImpact.central,
+      includedBaseline: impact.absorbedByBaseline.central, fuelUsage: impact.fuelUsage,
+      funding: projectExpenseFunding(card), placeLabel: placeLabel(card.context.place),
+      childPlaceLabels: Object.values(card.context.childLocalPlaceRefs ?? {}).map(placeLabel).filter((label): label is string => !!label) } };
+  });
   return <MonthForecastView forecast={forecast} scenario={scenario} stored={stored}
-    plannedExpenses={projectPlannedExpenseCards(plannedExpenses, today)}
+    plannedExpenses={cards}
     persons={persons} places={options.places} vehicle={options.vehicle} prices={options.prices}
     inputError={params.inputError === "1"} />;
 }
