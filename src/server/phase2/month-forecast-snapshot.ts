@@ -7,10 +7,13 @@ import { globalV2ExpectedQueryMethodSignature, globalV2QueryRegistry, parseGloba
 import { globalV2QueryInstanceKey } from "@/server/analytics/materialization/global-query-plan";
 import { assembleMonthForecast, type MonthForecast } from "./month-forecast";
 import { loadMonthForecastAuthorities } from "./live-month-forecast";
+import { readMonthPredictionEvidence } from "./month-prediction-evidence";
+import type { MonthPredictionEvidence } from "./remaining-month-forecast";
 
 export const MONTH_FORECAST_RESOURCE = "phase2_month_forecast" as const;
 const sha256 = (value: unknown): string => createHash("sha256").update(canonicalSerializeGlobal(value), "utf8").digest("hex");
 export type MonthForecastSnapshot = MonthForecast & {
+  readonly predictionEvidence?: MonthPredictionEvidence;
   readonly publicationMeta: { readonly publicationId: string; readonly revision: number; readonly factsHash: string; readonly manifestHash: string };
   readonly resourceMeta: { readonly contractVersion: string; readonly methodSignature: string; readonly policyVersions: Readonly<Record<string, string>>; readonly resourceInputHash: string };
 };
@@ -73,7 +76,8 @@ export async function materializeMonthForecast(client: SupabaseClient, household
   return payload;
 }
 
-/** Stable targetMonth query: validates the stored payload and never runs the engine. */
+/** Validate the published forecast, then attach request-local canonical evidence.
+ * No prediction or enriched snapshot is written back. */
 export async function queryMonthForecast(client: SupabaseClient, householdId: string, targetMonth: string): Promise<MonthForecastSnapshot> {
   const params = parseGlobalV2QueryParams(MONTH_FORECAST_RESOURCE, { targetMonth });
   const identity = await activeIdentity(client, householdId);
@@ -97,7 +101,7 @@ export async function queryMonthForecast(client: SupabaseClient, householdId: st
     || payload.resourceMeta.methodSignature !== methodSignature
     || payload.publicationMeta.factsHash !== identity.publicationMeta.factsHash
     || payload.publicationMeta.manifestHash !== identity.publicationMeta.manifestHash) throw new TypeError("FORECAST_SNAPSHOT_PAYLOAD_MISMATCH");
-  return payload;
+  return { ...payload, predictionEvidence: await readMonthPredictionEvidence(client, householdId, targetMonth) };
 }
 
 /** A report target may not have a published monthly cache yet. Resolve its own
@@ -113,8 +117,9 @@ export async function resolvePlanningMonthForecast(client: SupabaseClient, house
   const forecast = assembleMonthForecast(authorities, targetMonth);
   const contract = globalV2QueryRegistry[MONTH_FORECAST_RESOURCE];
   const methodSignature = globalV2ExpectedQueryMethodSignature(MONTH_FORECAST_RESOURCE);
-  return contract.schema.parse({ ...forecast, publicationMeta: identity.publicationMeta,
+  const payload = contract.schema.parse({ ...forecast, publicationMeta: identity.publicationMeta,
     resourceMeta: { contractVersion: contract.contractVersion, methodSignature, policyVersions: contract.policyVersions,
       resourceInputHash: sha256({ publicationId: forecast.meta.sourcePublicationId, sourceRevision: forecast.meta.sourceRevision,
         analyticsRevision: forecast.meta.analyticsRevision, targetMonth, methodSignature }) } }) as MonthForecastSnapshot;
+  return { ...payload, predictionEvidence: await readMonthPredictionEvidence(client, householdId, targetMonth) };
 }

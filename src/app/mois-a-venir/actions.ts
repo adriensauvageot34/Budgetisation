@@ -11,6 +11,8 @@ import { readMonthInputs, saveMonthInputs } from "@/server/phase2/month-inputs";
 import { deriveMonthScenario, type MonthInputs } from "@/server/phase2/month-scenario";
 import { readPlannedExpenses } from "@/server/phase2/planned-expenses";
 
+import { planningDate } from "@/server/phase2/planning-date";
+
 const field = (form: FormData, key: string): string => String(form.get(key) ?? "").trim();
 const optionalMoney = (form: FormData, key: string): string | null => field(form, key) || null;
 
@@ -115,7 +117,7 @@ export async function updateMonthInputs(form: FormData): Promise<void> {
   // Validate the derived scenario against the published authority before writing.
   try {
     const plannedExpenses = await readPlannedExpenses(supabase, household.householdId, targetMonth);
-    deriveMonthScenario(forecast, next, null, new Date().toISOString().slice(0, 10), plannedExpenses);
+    deriveMonthScenario(forecast, next, null, planningDate(household.timezone), plannedExpenses);
   } catch (error) {
     if (error instanceof TypeError) redirect(`/mois-a-venir?month=${targetMonth}&inputError=1`);
     throw error;

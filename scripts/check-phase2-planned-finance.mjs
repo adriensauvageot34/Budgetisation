@@ -78,7 +78,7 @@ for (const item of [line("restaurant:main", "30.00", null, [{ source: "SWILE", a
 // FIN-UI-01..04: render the real card; central first, variable and identical scenario impacts remain honest.
 for (const data of [h, e, marginal, f]) {
   const html = renderToStaticMarkup(React.createElement(PlannedImpactCard, { preview: { ...data, explanation: "Scénarios du mois" }, fundingIncomplete: false }));
-  const labels = ["Coût prévu", "S’ajoute au mois", "Paiement prévu", "Reste projeté en fin de mois", "Fourchette et explications"];
+  const labels = ["Coût prévu", "Effet sur le mois", "Paiement prévu", "Reste projeté en fin de mois", "Fourchette et explications"];
   const indexes = labels.map((label) => html.indexOf(label));
   assert(indexes.every((index) => index >= 0)); assert(indexes.every((index, i) => i === 0 || index > indexes[i - 1]));
   assert(html.includes(money(data.after.central))); assert(html.includes(money(data.netAdditionalImpact.central)));

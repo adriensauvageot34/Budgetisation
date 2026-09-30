@@ -14,9 +14,12 @@ export function projectPlannedExpenseImpact(before: MonthEconomicPlan, after: Mo
     .reduce((sum, item) => sum.plus(plannedLineGross(item)), new Big(0));
   const netAdditionalImpact = Object.fromEntries(scenarios.map((key) => [key,
     new Big(before.scenarios[scenarioKey[key]]).minus(after.scenarios[scenarioKey[key]]).toFixed(2)])) as Record<typeof scenarios[number], string>;
-  // Certified for the V1 baseline-displacement model only. Revisit if MonthScenario gains other effects.
+  // A cheaper habitual project can reduce the prediction. Coverage displayed as
+  // part of the project's cost never exceeds that cost; the signed delta remains
+  // the scenario authority and preserves the savings separately.
   const absorbedByBaseline = Object.fromEntries(scenarios.map((key) =>
-    [key, gross.minus(netAdditionalImpact[key]).toFixed(2)])) as Record<typeof scenarios[number], string>;
+    [key, gross.minus(netAdditionalImpact[key]).gt(gross) ? gross.toFixed(2)
+      : gross.minus(netAdditionalImpact[key]).lt(0) ? "0.00" : gross.minus(netAdditionalImpact[key]).toFixed(2)])) as Record<typeof scenarios[number], string>;
   const projectPayment = {
     bank: new Big(after.plannedFunding.bankAllocated).minus(before.plannedFunding.bankAllocated).toFixed(2),
     swile: new Big(after.plannedFunding.swile.reserved).plus(after.plannedFunding.swile.usedDeclared)

@@ -3,6 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
+    "check:phase2-month-narrative": "node scripts/check-phase2-month-narrative.mjs",
     "check:phase2-planned-calendar": "node scripts/check-phase2-planned-calendar.mjs",
     "check:phase2-planned-guards": "node scripts/check-phase2-planned-guards.mjs",
     "check:phase2-dd6-certification": "node scripts/check-phase2-dd6-certification.mjs",

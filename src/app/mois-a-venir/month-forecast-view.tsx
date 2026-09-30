@@ -76,8 +76,8 @@ export function MonthForecastView({ forecast, scenario, stored, plannedExpenses,
       references={Object.fromEntries(forecast.components.map((part) => [part.key, { freshnessDate: part.freshnessDate, confidence: part.confidence }]))} />
 
     <section id="complete-month" className="card p-5 sm:p-7" aria-labelledby="complete-title">
-      <h2 id="complete-title" className="text-2xl font-black">À compléter pour {monthLabel(targetMonth)}</h2>
-      <p className="mt-1 text-sm text-slate-600">Quelques précisions utiles, seulement si vous les connaissez.</p>
+      <h2 id="complete-title" className="text-2xl font-black">Améliorer la précision du mois</h2>
+      <p className="mt-1 text-sm text-slate-600">Ces informations affinent nos repères, lorsque vous les connaissez.</p>
       {inputError && <p role="alert" className="mt-3 rounded-xl bg-red-50 p-3 text-sm font-semibold text-red-800">Impossible d’enregistrer : vérifiez les montants, les dates et la part déjà prévue.</p>}
       <div className="mt-4 grid gap-3 lg:grid-cols-2">
         <details id="bank-balance" className="scroll-mt-6 rounded-2xl border border-slate-200 p-4"><summary className="cursor-pointer font-bold">Ajouter ou mettre à jour notre solde actuel · {hasBank ? "renseigné" : "à renseigner"}</summary><ActionForm targetMonth={targetMonth} intent="save-bank-balance" label="Enregistrer le solde"><Field label="Solde bancaire (€)" name="openingAmount" type="number" value={stored.inputs.openingBalance?.amount} /><Field label="Date du solde" name="openingDate" type="date" value={stored.inputs.openingBalance?.asOfDate} /><p className="text-xs text-slate-600">Le disponible aujourd’hui n’est calculable qu’avec un solde daté d’aujourd’hui.</p></ActionForm></details>

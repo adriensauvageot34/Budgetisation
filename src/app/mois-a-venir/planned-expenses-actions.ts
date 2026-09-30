@@ -20,6 +20,8 @@ import type { PlannedRouteStop } from "@/domain/phase2/planned-contract";
 
 import { projectPlannedExpenseImpact } from "@/server/phase2/planned-impact";
 
+import { planningDate } from "@/server/phase2/planning-date";
+
 const euro = (value: Big) => value.toFixed(2);
 const scenarios = ["low", "central", "high"] as const;
 
@@ -42,7 +44,7 @@ async function monthContext(targetMonth: string) {
     readMonthInputs(supabase, household.householdId, targetMonth),
     readPlannedExpenses(supabase, household.householdId, targetMonth),
   ]);
-  return { supabase, user, household, forecast, inputs: stored.inputs, saved };
+  return { supabase, user, household, forecast, inputs: stored.inputs, saved, today: planningDate(household.timezone) };
 }
 
 async function result<T>(work: () => Promise<T>): Promise<PlannedResult<T>> {
@@ -56,7 +58,7 @@ function requireMonthlyResources(context: Awaited<ReturnType<typeof monthContext
 async function preview(targetMonth: string, rawDraft: unknown, editedId?: string) {
   const context = await monthContext(targetMonth);
   requireMonthlyResources(context);
-  const today = new Date().toISOString().slice(0, 10);
+  const today = context.today;
   const { draft, scenario } = await preparePlannedExpenseSimulation(context.supabase, context.household.householdId,
     context.forecast, context.inputs, context.saved, rawDraft, today, editedId, "PREVIEW");
   const before = deriveMonthScenario(context.forecast, context.inputs, null, today,
@@ -107,7 +109,7 @@ export async function savePlannedExpense(targetMonth: string, rawDraft: unknown,
     const editedId = command.expectedUpdatedAt ? command.id : undefined;
     const { draft, scenario } = await preparePlannedExpenseSimulation(context.supabase, context.household.householdId,
       context.forecast, context.inputs, editedId ? context.saved : context.saved.filter((row) => row.id !== command.id),
-      rawDraft, new Date().toISOString().slice(0, 10), editedId);
+      rawDraft, context.today, editedId);
     if (!scenario.economicPlan) throw new TypeError("PLANNED_EXPENSE_FORECAST_UNAVAILABLE");
     const expense = editedId
       ? await updatePlannedExpense(context.supabase, context.household.householdId, editedId, context.user.id, draft, command.expectedUpdatedAt!)
@@ -122,7 +124,7 @@ async function freshReadModel(targetMonth: string, id: string) {
   const current = await monthContext(targetMonth);
   const expense = current.saved.find((row) => row.id === id);
   const scenario = deriveMonthScenario(current.forecast, current.inputs, null,
-    new Date().toISOString().slice(0, 10), current.saved);
+    current.today, current.saved);
   return { expense: expense ?? null, scenario };
 }
 
@@ -135,7 +137,7 @@ export async function confirmPlannedExpenseReality(targetMonth: string, rawDraft
       context.user.id, rawDraft, command.expectedUpdatedAt!, async (draft, previous) => {
         if (previous.targetMonth !== targetMonth) throw new TypeError("REALITY_DRAFT_STALE");
         const resolved = await preparePlannedExpenseSimulation(context.supabase, context.household.householdId,
-          context.forecast, context.inputs, context.saved, draft, new Date().toISOString().slice(0, 10), previous.id);
+          context.forecast, context.inputs, context.saved, draft, context.today, previous.id);
         if (!resolved.scenario.economicPlan) throw new TypeError("PLANNED_EXPENSE_FORECAST_UNAVAILABLE");
       }, correction);
     revalidatePath("/mois-a-venir");
@@ -161,7 +163,7 @@ export async function reportPlannedExpenseAction(targetMonth: string, command: P
         const destination = destinationMonth === targetMonth ? context : await monthContext(destinationMonth);
         requireMonthlyResources(destination);
         const resolved = await preparePlannedExpenseSimulation(destination.supabase, destination.household.householdId,
-          destination.forecast, destination.inputs, destination.saved, draft, new Date().toISOString().slice(0, 10),
+          destination.forecast, destination.inputs, destination.saved, draft, destination.today,
           destinationMonth === targetMonth ? command.id : undefined);
         if (!resolved.scenario.economicPlan) throw new TypeError("PLANNED_EXPENSE_FORECAST_UNAVAILABLE");
       });

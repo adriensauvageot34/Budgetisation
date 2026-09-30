@@ -27,13 +27,14 @@ const numeric = (value: string): number => {
 };
 const cents = (value: number | Big) => new Big(value).round(2).toFixed(2);
 const integer = (value: number) => new Big(value).round(0).toFixed(2);
-const quantile = (values: readonly number[], fraction: number): number => {
+export const referenceQuantile = (values: readonly number[], fraction: number): number => {
   if (!values.length) throw new TypeError("REFERENCE_SUPPORT_EMPTY");
   const ordered = [...values].sort((a, b) => a - b);
   const index = (ordered.length - 1) * fraction;
   const lower = Math.floor(index);
   return ordered[lower]! + (ordered[Math.ceil(index)]! - ordered[lower]!) * (index - lower);
 };
+const quantile = referenceQuantile;
 const monthSequence = (start: string, end: string): string[] => {
   const months: string[] = [];
   const cursor = new Date(`${start}-01T12:00:00Z`);
@@ -48,7 +49,7 @@ const total = (parts: readonly StatisticalComponent[]): ForecastRange => ({
   central: parts.reduce((sum, part) => sum.plus(part.central!), new Big(0)).toFixed(2),
   high: parts.reduce((sum, part) => sum.plus(part.high!), new Big(0)).toFixed(2),
 });
-const workdays = (targetMonth: string): number => {
+export const referenceWorkdays = (targetMonth: string): number => {
   const [year, month] = targetMonth.split("-").map(Number);
   const days = new Date(Date.UTC(year!, month!, 0)).getUTCDate();
   let count = 0;
@@ -58,6 +59,24 @@ const workdays = (targetMonth: string): number => {
   }
   return count;
 };
+const workdays = referenceWorkdays;
+
+/** Same certified route identities for the monthly reference and remaining-month forecast. */
+export function referenceMobilityDays(legs: readonly MobilityReferenceLeg[]) {
+  const home = "Domicile Adrien & Manon", office = "Promotrans – Montpellier", lunch = "Marie Blachère – Montpellier sud";
+  const days = new Map<string, { outbound?: number; inbound?: number; lunchOut?: number; lunchIn?: number }>();
+  for (const leg of legs) {
+    const day = days.get(leg.date) ?? {}, value = numeric(leg.fuelCost);
+    if (leg.origin === home && leg.destination === office) day.outbound = (day.outbound ?? 0) + value;
+    if (leg.origin === office && leg.destination === home) day.inbound = (day.inbound ?? 0) + value;
+    if (leg.origin === office && leg.destination === lunch) day.lunchOut = (day.lunchOut ?? 0) + value;
+    if (leg.origin === lunch && leg.destination === office) day.lunchIn = (day.lunchIn ?? 0) + value;
+    days.set(leg.date, day);
+  }
+  return [...days].flatMap(([date, day]) => day.outbound === undefined || day.inbound === undefined ? [] : [{ date,
+    commute: day.outbound + day.inbound,
+    detour: day.lunchOut === undefined || day.lunchIn === undefined ? null : day.lunchOut + day.lunchIn }]);
+}
 
 export function buildMonthReference(evidence: MonthReferenceEvidence, targetMonth: string,
   recurrenceDates: readonly { componentKey: string; date: string }[]): MonthReferencePlan {
@@ -101,23 +120,9 @@ export function buildMonthReference(evidence: MonthReferenceEvidence, targetMont
   const byDay = new Map<string, Big>();
   for (const entry of cafeRows) byDay.set(entry.date, (byDay.get(entry.date) ?? new Big(0)).plus(entry.amount));
   const cafeDays = [...byDay.values()].map((value) => value.toNumber());
-  const home = "Domicile Adrien & Manon";
-  const office = "Promotrans – Montpellier";
-  const lunch = "Marie Blachère – Montpellier sud";
-  const mobilityDays = new Map<string, { outbound?: number; inbound?: number; lunchOut?: number; lunchIn?: number }>();
-  for (const leg of evidence.mobilityLegs) {
-    const day = mobilityDays.get(leg.date) ?? {};
-    const value = numeric(leg.fuelCost);
-    if (leg.origin === home && leg.destination === office) day.outbound = (day.outbound ?? 0) + value;
-    if (leg.origin === office && leg.destination === home) day.inbound = (day.inbound ?? 0) + value;
-    if (leg.origin === office && leg.destination === lunch) day.lunchOut = (day.lunchOut ?? 0) + value;
-    if (leg.origin === lunch && leg.destination === office) day.lunchIn = (day.lunchIn ?? 0) + value;
-    mobilityDays.set(leg.date, day);
-  }
-  const commutes = [...mobilityDays.values()].flatMap((day) => day.outbound === undefined || day.inbound === undefined
-    ? [] : [day.outbound + day.inbound]);
-  const lunchDetours = [...mobilityDays.values()].flatMap((day) => day.lunchOut === undefined || day.lunchIn === undefined
-    ? [] : [day.lunchOut + day.lunchIn]);
+  const mobilityDays = referenceMobilityDays(evidence.mobilityLegs);
+  const commutes = mobilityDays.map((day) => day.commute);
+  const lunchDetours = mobilityDays.flatMap((day) => day.detour === null ? [] : [day.detour]);
   if (commutes.length < 30 || lunchDetours.length === 0 || cafeDays.length < 30) throw new TypeError("REFERENCE_MOBILITY_OR_COFFEE_SUPPORT_INSUFFICIENT");
   const dailyCommute = new Big(quantile(commutes, 0.5)).round(2);
   const dailyLunchDetour = new Big(lunchDetours.reduce((sum, value) => sum + value, 0) / lunchDetours.length).round(2);

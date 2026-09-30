@@ -8,6 +8,7 @@ import { PlannedExpensesControl } from "./planned-expenses-control";
 import { projectMonthCalendar, type PlannedExpenseCard } from "./planned-expenses-projection";
 import type { PlannedPlaceOption } from "@/domain/phase2/planned-places";
 import type { PlannedVehicleEstimate } from "@/server/phase2/planned-context";
+import { RemainingForecastCard, ScenarioMilestone } from "./month-narrative-cards";
 
 const money = (value: string | null, exact = false) => value === null ? "À confirmer" : new Intl.NumberFormat("fr-FR", {
   style: "currency", currency: "EUR", maximumFractionDigits: exact ? 2 : 0, minimumFractionDigits: exact ? 2 : 0,
@@ -36,7 +37,7 @@ const noteLabels: Record<string, string> = {
 function StatisticalCard({ part, tone }: { part: StatisticalComponent; tone: "necessary" | "flexible" }) {
   return <article className={`min-w-0 rounded-2xl ${tone === "necessary" ? "bg-white p-5 shadow-sm ring-1 ring-slate-100 sm:p-6" : "bg-slate-50/80 p-4 sm:p-5"}`}>
     <h3 className="text-sm font-bold text-slate-700">{statisticalLabels[part.key] ?? "Autre dépense"}</h3>
-    <p className={`mt-2 break-words font-black tracking-tight tabular-nums ${tone === "necessary" ? "text-[1.7rem] sm:text-[1.9rem]" : "text-2xl"}`}>{money(part.low)} <span className="text-slate-400">–</span> {money(part.high)}</p>
+    <dl className="mt-3 grid grid-cols-3 gap-2">{([[tone === "necessary" ? "Bas plausible" : "Calme", part.low], [tone === "necessary" ? "Habituel" : "Probable", part.central], [tone === "necessary" ? "Haut plausible" : "Actif", part.high]] as const).map(([label, value], index) => <div key={label}><dt className="text-xs text-slate-500">{label}</dt><dd className={`mt-1 tabular-nums ${index === 1 ? "text-2xl font-black" : "text-sm"}`}>{money(value)}</dd></div>)}</dl>
     {part.key !== "manon-work-meals" && part.key !== "manon-work-mobility" && <p className="mt-1 text-xs text-slate-600">Autour de <strong>{money(part.central)}</strong> sur un mois habituel</p>}
     {part.key === "manon-work-meals" && <p className="mt-1 text-xs text-slate-600">Selon les jours travaillés sur place</p>}
     {part.key === "manon-work-mobility" && <p className="mt-1 text-xs text-slate-600">5 jours sur site par semaine</p>}
@@ -58,6 +59,8 @@ export function MonthStory({ plan, targetMonth, plannedExpenses, persons, places
   const groups = [...plan.certainOutflows.groups].sort((a, b) => groupOrder.indexOf(a.label) - groupOrder.indexOf(b.label));
   const calendar = projectMonthCalendar(plan.certainOutflows.items.map((item) => ({ ...item, ...references[item.key],
     dateEvidenceCount: item.dateCertainty === "HISTORICAL_ESTIMATE" ? dateEvidence[item.key]?.observationCount : undefined })), plannedExpenses);
+  const narrative = plan.narrative, prediction = narrative.prediction;
+  const importsMissing = prediction?.currentImportsMissing ?? false;
 
   return <PlannedExpenseInteractions><div className="space-y-7 sm:space-y-9">
     <header className="space-y-2"><p className="eyebrow">Préparons notre mois ensemble</p><h1 className="text-4xl font-black capitalize tracking-tight sm:text-5xl">{monthLabel(targetMonth)}</h1><p className="text-slate-600">Voyons ce qui entre, ce qui est déjà réservé et ce qu’on peut encore prévoir.</p><p className="text-xs text-slate-600">Les dépenses de travail restent estimées selon les rythmes déclarés : cinq jours sur site par semaine pour Manon, deux à trois pour Adrien, avec les jours ouvrés de ce mois.</p></header>
@@ -75,22 +78,25 @@ export function MonthStory({ plan, targetMonth, plannedExpenses, persons, places
           <ul className="mx-4 border-t border-slate-200 pb-3 pt-2 text-sm">{group.items.map((item) => <li key={item.key} className="flex flex-wrap justify-between gap-x-3 py-1"><span className="min-w-0 break-words">{item.label}<span className="block text-xs text-slate-500">{item.dateCertainty === "DECLARED" ? "Date déclarée" : item.dateCertainty === "HISTORICAL_ESTIMATE" ? "Date habituelle estimée" : "Date à confirmer"}</span></span><strong className="shrink-0 tabular-nums">{money(item.amount, true)}</strong></li>)}</ul></details>;
       })}</div></section>
 
-    <section id="timeline-title" className="scroll-mt-6" aria-label="Calendrier du mois"><MonthCalendar key={targetMonth} targetMonth={targetMonth} today={today} entries={calendar.entries} undated={calendar.undated} dailyTotals={calendar.dailyTotals} /></section>
-
-    <section className="overflow-hidden rounded-[1.7rem] bg-emerald-950 px-5 py-6 text-white sm:flex sm:items-end sm:justify-between sm:gap-5 sm:px-8 sm:py-7" aria-labelledby="after-title"><div><h2 id="after-title" className="text-xl font-bold">Après nos charges certaines</h2><p className="mt-1 text-sm text-emerald-100">Avant les dépenses du quotidien</p><p className="mt-2 text-xs text-emerald-200">Inclut les titres-restaurants ; ce n’est pas notre solde bancaire.</p></div><p className="mt-4 whitespace-nowrap text-4xl font-black tracking-tight tabular-nums sm:mt-0 sm:text-5xl">{money(plan.afterCertainOutflows, true)}</p></section>
+    <section className="overflow-hidden rounded-[1.7rem] bg-emerald-950 px-5 py-6 text-white sm:flex sm:items-end sm:justify-between sm:gap-5 sm:px-8 sm:py-7" aria-labelledby="after-title"><div><h2 id="after-title" className="text-xl font-bold">Après nos charges certaines</h2><p className="mt-1 text-sm text-emerald-100">Avant le quotidien et nos nouveaux projets</p><p className="mt-2 text-xs text-emerald-200">Inclut les titres-restaurants ; ce n’est pas notre solde bancaire.</p></div><p className="mt-4 whitespace-nowrap text-4xl font-black tracking-tight tabular-nums sm:mt-0 sm:text-5xl">{money(plan.afterCertainOutflows, true)}</p></section>
 
     <PlannedExpensesControl targetMonth={targetMonth} expenses={plannedExpenses} persons={persons} places={places} vehicle={vehicle} prices={prices} funding={plan.plannedFunding} />
 
-    <section className="card p-5" aria-label="Construction du reste projeté"><h2 className="text-xl font-black">Comment se construit notre mois</h2><dl className="mt-3 grid grid-cols-5 gap-3">{([
-      ["Après dépenses certaines", plan.monthlyLayers.afterCertainOutflows], ["Déjà réalisé", plan.monthlyLayers.declaredRealized],
-      ["Encore prévu", plan.monthlyLayers.stillPlanned], ["Vie courante restante estimée", plan.monthlyLayers.remainingDailyLife],
-      ["Reste projeté", plan.monthlyLayers.projectedRemainder],
-    ] as const).map(([label, amount]) => <div key={label}><dt className="text-xs font-semibold text-slate-600">{label}</dt><dd className="mt-1 text-lg font-black">{money(amount, true)}</dd></div>)}</dl><p className="mt-3 text-xs text-slate-600">« Déjà réalisé » désigne ici vos projets marqués comme réalisés. Leur changement d’état conserve le coût du mois.</p></section>
+    <section id="timeline-title" className="scroll-mt-6" aria-label="Calendrier du mois"><MonthCalendar key={targetMonth} targetMonth={targetMonth} today={today} entries={calendar.entries} undated={calendar.undated} dailyTotals={calendar.dailyTotals} /></section>
 
-    <section aria-labelledby="necessary-title"><h2 id="necessary-title" className="text-2xl font-black">Ce qu’il nous faut pour le quotidien</h2><p className="mt-1 text-sm text-slate-600">Des dépenses qui varient, mais qu’on aura normalement ce mois-ci.</p><div className="mt-4 grid gap-3 md:grid-cols-3">{plan.necessaryVariables.items.map((part) => <StatisticalCard key={part.key} part={part} tone="necessary" />)}</div></section>
+    <section aria-labelledby="after-projects-title" className="flex items-end justify-between gap-5 rounded-2xl border border-sky-100 bg-sky-50/70 p-6"><div>
+      <h2 id="after-projects-title" className="text-xl font-bold">Après nos charges et nos projets</h2>
+      <p className="mt-2 max-w-2xl text-sm text-slate-600">Le coût habituel reste compris dans le quotidien estimé. Ce jalon applique uniquement l’effet supplémentaire de nos choix, pas leur coût brut dans le calendrier.</p>
+    </div><p className="whitespace-nowrap text-4xl font-black tabular-nums text-sky-950">{money(narrative.remainderAfterProjects, true)}</p></section>
 
-    <section aria-labelledby="flexible-title"><h2 id="flexible-title" className="text-2xl font-black">Ce qu’on dépense parfois en plus</h2><p className="mt-1 text-sm text-slate-600">Cela dépend de nos journées au travail et de nos envies du mois.</p><div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">{plan.flexibleVariables.items.map((part) => <StatisticalCard key={part.key} part={part} tone="flexible" />)}</div></section>
+    <section aria-labelledby="necessary-title"><h2 id="necessary-title" className="text-2xl font-black">Ce qu’il nous faut pour le quotidien</h2><p className="mt-1 text-sm text-slate-600">Ce qu’il reste à couvrir pour vivre normalement jusqu’à la fin du mois.</p><div className="mt-4 grid grid-cols-3 gap-3">{prediction ? prediction.essential.map(category => <RemainingForecastCard key={category.key} category={category} importsMissing={importsMissing} />) : plan.necessaryVariables.items.map(part => <StatisticalCard key={part.key} part={part} tone="necessary" />)}</div></section>
 
-    <section className="rounded-[1.7rem] bg-emerald-50/80 p-5 sm:p-6" aria-labelledby="scenarios-title"><h2 id="scenarios-title" className="text-2xl font-black">Reste projeté en fin de mois</h2><p className="mt-4 text-4xl font-black tabular-nums">{money(plan.scenarios.central, true)}</p><p className="mt-1 text-sm text-slate-600">Estimation centrale, autour de notre rythme habituel</p><details className="mt-3 text-sm"><summary className="cursor-pointer font-bold">Voir la fourchette</summary><div className="mt-3 grid grid-cols-2 gap-3"><p>Si on dépense plutôt peu : <strong>{money(plan.scenarios.lowConsumption, true)}</strong></p><p>Si le mois coûte plus cher : <strong>{money(plan.scenarios.highConsumption, true)}</strong></p></div></details><p className="mt-3 text-xs text-slate-600">Ces montants sont des repères, pas une promesse. Notre marge de sécurité, réglable plus bas, n’est pas encore retirée ici.</p></section>
+    <ScenarioMilestone title="Après l’essentiel du mois" values={narrative.remainderAfterEssential} labels={["Si le quotidien coûte peu", "Mois habituel", "Si le quotidien coûte plus"]} incomplete={importsMissing}
+      description="Après les charges, l’effet de nos projets et le quotidien nécessaire. Les dépenses importées et la part habituelle déjà couverte sont comptées une seule fois ; les extras restent à part." />
+
+    <section aria-labelledby="flexible-title"><h2 id="flexible-title" className="text-2xl font-black">Ce qui pourrait encore s’ajouter</h2><p className="mt-1 text-sm text-slate-600">Des achats facultatifs encore possibles, selon les occasions restantes. Un mois calme peut rester à 0 €.</p><div className="mt-4 grid grid-cols-2 gap-3">{prediction ? prediction.optional.map(category => <RemainingForecastCard key={category.key} category={category} optional importsMissing={importsMissing} />) : plan.flexibleVariables.items.map(part => <StatisticalCard key={part.key} part={part} tone="flexible" />)}</div></section>
+
+    <ScenarioMilestone title="Projection de fin de mois" values={narrative.final} labels={["Mois calme", "Scénario habituel", "Mois plus coûteux"]} final incomplete={importsMissing}
+      description="L’essentiel du mois, puis les dépenses facultatives encore possibles. Chaque scénario reste une estimation." />
   </div></PlannedExpenseInteractions>;
 }

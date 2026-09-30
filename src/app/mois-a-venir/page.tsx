@@ -12,6 +12,7 @@ import { readPlannedContextOptions } from "@/server/phase2/planned-context";
 import { projectPlannedExpenseCards, projectExpenseFunding } from "./planned-expenses-projection";
 import { projectPlannedExpenseImpact } from "@/server/phase2/planned-impact";
 import { prospectivePersonIdentity, prospectivePersonLabel } from "@/domain/phase2/planned-product";
+import { planningDate } from "@/server/phase2/planning-date";
 
 export const metadata = { title: "Notre mois à venir" };
 export const dynamic = "force-dynamic";
@@ -48,10 +49,7 @@ export default async function MonthForecastPage({ searchParams }: { searchParams
   const persons = (personsResult.data ?? []).filter((person) => person.status === "active")
     .map((person) => ({ personId: person.person_id, displayName: person.display_name }));
   const options = await readPlannedContextOptions(client, context.household.householdId, persons);
-  const dateParts = new Intl.DateTimeFormat("en-US", { timeZone: context.household.timezone,
-    year: "numeric", month: "2-digit", day: "2-digit" }).formatToParts(new Date());
-  const datePart = (part: string) => dateParts.find((item) => item.type === part)?.value ?? "";
-  const today = `${datePart("year")}-${datePart("month")}-${datePart("day")}`;
+  const today = planningDate(context.household.timezone);
   const scenario = deriveMonthScenario(forecast, stored.inputs, null, today, plannedExpenses);
   const placeLabel = (ref: import("@/domain/phase2/planned-contract").ProspectivePlaceRef | undefined) =>
     ref?.kind === "TEXT" ? ref.label : ref?.kind === "KNOWN" ? options.places.find((place) => place.placeId === ref.placeId)?.name : undefined;

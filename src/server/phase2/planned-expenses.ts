@@ -26,7 +26,8 @@ export type { CostItem, FundingAllocation, FundingSource, PlannedBaselineKey, Pl
 export type PlannedExpenseStatus = "PLANNED" | "DECLARED_REALIZED";
 export type PlannedExpense = PlannedExpenseDraft & Readonly<{ id: string; householdId: string; targetMonth: string;
   status: PlannedExpenseStatus; createdBy: string; updatedBy: string; createdAt: string; updatedAt: string }>;
-export type PlannedExpenseScenarioEntry = Pick<PlannedExpense, "id" | "targetMonth" | "status" | "costItems">;
+export type PlannedExpenseScenarioEntry = Pick<PlannedExpense, "id" | "targetMonth" | "status" | "costItems">
+  & Partial<Pick<PlannedExpense, "plannedDate" | "context">>;
 
 const uuidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/iu;
 const moneyPattern = /^(?:0|[1-9]\d{0,8})(?:\.\d{1,2})?$/u;
@@ -616,7 +617,7 @@ export async function preparePlannedExpenseSimulation(client: SupabaseClient, ho
     throw new TypeError("PLANNED_EXPENSE_SAVED_SCOPE_INVALID");
   return { draft, scenario: simulatePlannedExpenseScenario(forecast, inputs, saved,
     { id: existing?.id ?? randomUUID(), targetMonth: forecast.meta.targetMonth,
-      status: existing?.status ?? "PLANNED", costItems: draft.costItems }, asOfDate) };
+      status: existing?.status ?? "PLANNED", costItems: draft.costItems, plannedDate: draft.plannedDate, context: draft.context }, asOfDate) };
 }
 export async function simulatePlannedExpense(...args: Parameters<typeof preparePlannedExpenseSimulation>) {
   return (await preparePlannedExpenseSimulation(...args)).scenario;
