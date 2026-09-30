@@ -63,6 +63,8 @@ export function forecastRemainingMonth(reference: MonthReferencePlan, evidence: 
   const monthDays = remainingMonthDays(month, `${month}-01`).length;
   const recentStart = monthAt(evidence.history.endMonth, -5);
   const start = recentStart < evidence.history.startMonth ? evidence.history.startMonth : recentStart;
+  const monthLabel = (value: string) => new Intl.DateTimeFormat("fr-FR", { month: "long", year: "numeric", timeZone: "UTC" })
+    .format(new Date(`${value}-01T12:00:00Z`));
   const months: string[] = [];
   for (let cursor = start; cursor <= evidence.history.endMonth; cursor = monthAt(cursor, 1)) months.push(cursor);
   const historical = evidence.history.economicEntries.filter(r => r.date.slice(0, 7) >= start && r.date.slice(0, 7) <= evidence.history.endMonth);
@@ -182,7 +184,7 @@ export function forecastRemainingMonth(reference: MonthReferencePlan, evidence: 
       habitualProjectGross: money(habitGross), absorbedByHabit: absorbed, remainingOpportunities: opportunities, probability,
       expectedOccurrences: occurrences, conditionalMedianAmount: unit, plannedOccurrencesAbsorbingHabit: habitualCount,
       plannedOccurrencesExtra: slot.extra, confidence: fallback || support < 5 ? "LOW" as const : support < 20 ? "MEDIUM" as const : "HIGH" as const,
-      observationCount: support, explanation };
+      observationCount: support, explanation: `${explanation} Observations disponibles de ${monthLabel(start)} à ${monthLabel(evidence.history.endMonth)}.` };
   });
   const essential = categories.filter(c => reference.necessary.some(p => p.key === c.key));
   const optional = categories.filter(c => reference.flexible.some(p => p.key === c.key));

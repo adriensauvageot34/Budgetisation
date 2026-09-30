@@ -41,3 +41,10 @@ Le lot teste aussi les quantiles face à un mois atypique, la réduction au 20 d
 - Un shim côté serveur conserve l'ancien calcul pour les fixtures/snapshots fournis sans observations. Les lecteurs de production attachent toujours les observations ; React ne possède aucun calcul de remplacement.
 - Pas d'appariement silencieux entre une dépense prospective déclarée et une opération bancaire importée : ces faits gardent leurs autorités distinctes.
 - Aucun test live avec écriture Supabase dans ce lot. Le navigateur de production vérifie la présentation en lecture seule après le déploiement Git.
+
+## Production
+
+- Déploiement Git V4 prêt ; session navigateur authentifiée contrôlée en lecture seule.
+- Nouvel ordre, jalons, trois scénarios, extras calmes à zéro, détails de la prévision et calendrier conservé : constatés sur la page déployée.
+- Aucune erreur console observée. Période historique explicitée dans les explications afin de distinguer récence disponible et mois courant.
+- Le script live autonome `check-phase2-month-forecast.mjs` n'a pas démarré : ses paramètres de foyer/mois et son environnement serveur étaient absents. Aucun résultat PASS ne lui est attribué ; la lecture réelle a été vérifiée via la page de production.
