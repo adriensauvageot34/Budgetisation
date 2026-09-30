@@ -1,0 +1,16 @@
+{
+  "authUsers": 1,
+  "checkedAt": "2026-09-30T09:09:18.50428+00:00",
+  "smokeRows": 0,
+  "households": 1,
+  "plannedRows": 0,
+  "novemberInputRows": 0,
+  "syntheticHouseholdsRemaining": 0,
+  "status": "PASS",
+  "before": {
+    "plannedRows": 0,
+    "novemberInputRows": 0
+  },
+  "restoration": "Exact original absence of November input row restored; guarded delete required same household/month, timestamp and entire synthetic payload. Five browser-created roots all deleted via normal app actions. No preexisting prospective root existed.",
+  "authorization": "Human-approved C10 temporary fixtures and cleanup"
+}

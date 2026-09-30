@@ -1,0 +1,89 @@
+{
+  "checkedAt": "2026-09-30T09:11:58.824Z",
+  "sourceSha256": "29f33248bba050a02e8f358d9b277d7d47022431111105cb26c2bc095c9d3cd0",
+  "headAtExecution": "bed265c2d4f648123054fe4b5e4b2677d61a9498",
+  "status": "PASS",
+  "mechanism": "Existing Codex integrated browser (Cua Playwright locators), normal authenticated app, localhost:3000, real Supabase prospective persistence. No added browser framework or auth bypass.",
+  "executionWindowUTC": {
+    "from": "2026-09-30T08:35:00Z",
+    "to": "2026-09-30T09:09:18.50428+00:00"
+  },
+  "scope": "Desktop representative smokes; browser tool calls and read-only DB rereads in this conversation. Supporting server/RLS proofs are distinguished from browser observations.",
+  "smokes": [
+    {
+      "id": "SMOKE-01",
+      "status": "PASS",
+      "proof": "Browser Save: OWN_HOME known domicile, two explicit basket assets 16 + 2×3 =22, no Transport controls. One saved row, one undated calendar button, forecast +22 and projected remainder -22."
+    },
+    {
+      "id": "SMOKE-02",
+      "status": "PASS",
+      "proof": "Browser required provider blocker before Uber Eats. Quick total25, no fee lines or user route; habitual baseline25, economic impact0. Saved/read one root with provider."
+    },
+    {
+      "id": "SMOKE-03",
+      "status": "PASS",
+      "proof": "Actual browser Lucas birthday: Gift suggestion visible with0items, no gift auto-created. Contact derives home with provenance. Explicit Restaurant child36, TEXT local place, root4stops DIRECT→ROOT→CHILD→DIRECT, manual5/2/6km, fuel2.28 economic-only. Preview gross38.28 vs payable36, one saved dated root."
+    },
+    {
+      "id": "SMOKE-04",
+      "status": "PASS",
+      "proof": "Browser60 Quick→45 meal +15 alcohol: total unchanged, exactly two item lines. Only meal offers Swile; preview reserved45 Swile /15 Bank for this expense, impact60. Saved one dated root."
+    },
+    {
+      "id": "SMOKE-05",
+      "status": "PASS",
+      "proof": "Browser Fontès CAR, explicit return: directed62.962/64.342km,3 observations each,2segments127.30km10.434L cost20.83. July01 observation + P4_NATIONAL_FALLBACK wording visible. Preview payable0 vs gross20.83. One fuel line with no allocation."
+    },
+    {
+      "id": "SMOKE-06",
+      "status": "PASS",
+      "proof": "Browser TAKEAWAY explicit3-stop route with4/4km and1.40fuel→DELIVERY/UberEats. Route retained in local suspension, Preview12 allowed, Add-to-month disabled. Undo restores3stops4/4km and2costlines13.40 without duplicate; previousPreview visibly stale. Draft abandoned, noDBroot."
+    },
+    {
+      "id": "SMOKE-07",
+      "status": "PASS",
+      "proof": "Browser confirms realization of existing delivery25→28. DB reread same PK, single line28.00, DECLARED_REALIZED. Card states without observed transaction; forecast declared28 and planned141.11, no old25 counted."
+    },
+    {
+      "id": "SMOKE-08",
+      "status": "PASS",
+      "proof": "Browser report to Nov05 first rejected absent month meal resources; root staysOct. Explicit synthetic NovSwile/Edenred0; retry samePK datedNov05 cost29.00. ReloadNov onecard/onecalendar event/planned29, monthremaining931.54. ReloadOct deliveryabsent, planned141.11, remaining965.93; month work facts not copied."
+    },
+    {
+      "id": "SMOKE-09",
+      "status": "PASS",
+      "proof": "Browser explicit did-not-happen confirmation deletes only report fixture. Nov card/event both0, planned29→0, habitual baseline freed (remaining931.54→960.54), economic remainder unchanged1444.94, DBrootabsent rather than CANCELLED. Funding boundary targeted server probe verified separately."
+    },
+    {
+      "id": "SMOKE-10",
+      "status": "PASS",
+      "proof": "Browser correction DECLARED28→29 on same root then Remettre en prévu. DB samePK PLANNED29.00, no parallel planned/declared fields. Correction preview Bank reserved73/declared29; after restore forecast declared0, all29 remains planned. Funding lifecycle invariants also independently checked by real service runners."
+    }
+  ],
+  "cleanup": {
+    "browser": "PASS",
+    "counts": {
+      "authUsers": 1,
+      "checkedAt": "2026-09-30T09:09:18.50428+00:00",
+      "smokeRows": 0,
+      "households": 1,
+      "plannedRows": 0,
+      "novemberInputRows": 0,
+      "syntheticHouseholdsRemaining": 0
+    },
+    "projectionReturnedToInitial": "PASS",
+    "consoleErrorsAfterCleanup": []
+  },
+  "screenshots": [
+    "phase2-c10-fixtures.png",
+    "phase2-c10-clean.png"
+  ],
+  "privateEvidence": "Fixture PKs and exact backup stored outside repository; no credentials or real banking payload exported.",
+  "limitations": [
+    "No standalone replayable Playwright/Cypress CLI; use checklist and Cua tools for future browser reruns.",
+    "Native date fill required ordinary ArrowUp/ArrowDown to fire input events; no product keyboard redesign performed.",
+    "Local dev cache caused initial404; fresh cache restored pages. Fresh background tabs recovered browser command timeouts.",
+    "Zero historical write proof comes from per-operation real service boundary probes and live RLS rollback fixtures; global row counters alone are not treated as that proof."
+  ]
+}

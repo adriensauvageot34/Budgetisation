@@ -1,7 +1,7 @@
-import type { AssetModule, PlannedExpenseFamily } from "./planned-assets";
+import type { AssetModule } from "./planned-assets";
 import type { PlaceRole } from "./planned-contract";
 import { derivePlannedPlaceRoles } from "./planned-place-rules";
-import { childPlaceRoles, resolvePlannedContext, SOCIAL_CONTACTS_V1, type ProspectiveContact,
+import { childPlaceRoles, SOCIAL_CONTACTS_V1, type ProspectiveContact,
   type ResolvedPlannedContext } from "./planned-rules";
 
 export type PlannedPlaceOption = Readonly<{ placeId: string; name: string; commune: string | null;
@@ -56,13 +56,4 @@ export function rankPlacesForPlannedContext(places: readonly PlannedPlaceOption[
   }
   return ranked.sort((a, b) => (a.rankingTier === b.rankingTier ? a.place.name.localeCompare(b.place.name, "fr")
     : a.rankingTier === "PRIMARY" ? -1 : 1));
-}
-
-/** C1 compatibility shim for the current Builder; C4 will pass contact keys directly. */
-export function placesForPlannedContext(places: readonly PlannedPlaceOption[], family: PlannedExpenseFamily,
-  subtype: string | null, visitedLabel?: string): PlannedPlaceOption[] {
-  if (subtype === null && family !== "other") return [];
-  const contact = SOCIAL_CONTACTS_V1.find((item) => item.label === visitedLabel);
-  return rankPlacesForPlannedContext(places, resolvePlannedContext({ familyKey: family, subtypeKey: subtype }),
-    { contactKey: contact?.key, workMealPersonName: visitedLabel }).map((item) => item.place);
 }

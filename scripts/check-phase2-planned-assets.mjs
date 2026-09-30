@@ -9,7 +9,8 @@ const require = createRequire(import.meta.url);
 const root = process.cwd();
 const { PLANNED_ASSETS, plannedAsset, assetsForModule, suggestedAssetQuantity, PLANNED_EXPENSE_SUBTYPES } =
   require(path.resolve(root, "src/domain/phase2/planned-assets.ts"));
-const { placesForPlannedContext } = require(path.resolve(root, "src/domain/phase2/planned-places.ts"));
+const { rankPlacesForPlannedContext } = require(path.resolve(root, "src/domain/phase2/planned-places.ts"));
+const { resolvePlannedContext } = require(path.resolve(root, "src/domain/phase2/planned-rules.ts"));
 const { estimatePlannedCarRoute } = require(path.resolve(root, "src/server/phase2/planned-context.ts"));
 const { parsePlannedExpenseDraft } = require(path.resolve(root, "src/server/phase2/planned-expenses.ts"));
 const { projectPlannedExpenseCards, projectMonthCalendar } =
@@ -75,10 +76,10 @@ const family = place("Chez le père de Manon", "Famille", "Domicile familial",
   [{ personName: "Manon", role: "FATHER_HOME" }], true);
 const other = place("Autre domicile", "Famille", "Domicile familial", [], true);
 const places = [foodStore, bar, family, other];
-assert.deepEqual(placesForPlannedContext(places, "food", "groceries").map((item) => item.name), ["Grand Frais"]);
-assert.deepEqual(placesForPlannedContext(places, "visit_trip", "family_visit", "Père de Manon").map((item) => item.name),
+assert.deepEqual(rankPlacesForPlannedContext(places, resolvePlannedContext({ familyKey: "food", subtypeKey: "groceries" })).map((item) => item.place.name), ["Grand Frais"]);
+assert.deepEqual(rankPlacesForPlannedContext(places, resolvePlannedContext({ familyKey: "visit_trip", subtypeKey: "family_visit" }), { contactKey: "manon_father" }).map((item) => item.place.name),
   ["Chez le père de Manon"]);
-assert.deepEqual(placesForPlannedContext(places, "visit_trip", "friend_visit", "Lucas"), []);
+assert.deepEqual(rankPlacesForPlannedContext(places, resolvePlannedContext({ familyKey: "visit_trip", subtypeKey: "friend_visit" }), { contactKey: "lucas" }), []);
 
 // ROUTE-01/02: each ordered segment contributes once, and the calculation is read-only.
 const route = estimatePlannedCarRoute([

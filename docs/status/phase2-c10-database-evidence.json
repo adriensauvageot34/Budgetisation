@@ -1,0 +1,80 @@
+{
+  "policies": [
+    {
+      "cmd": "DELETE",
+      "qual": "( SELECT private.user_has_household_access(phase2_planned_expenses.household_id) AS user_has_household_access)",
+      "roles": [
+        "authenticated"
+      ],
+      "policyname": "phase2_planned_expenses_delete",
+      "with_check": null
+    },
+    {
+      "cmd": "INSERT",
+      "qual": null,
+      "roles": [
+        "authenticated"
+      ],
+      "policyname": "phase2_planned_expenses_insert",
+      "with_check": "(( SELECT private.user_has_household_access(phase2_planned_expenses.household_id) AS user_has_household_access) AND (created_by = ( SELECT auth.uid() AS uid)) AND (updated_by = ( SELECT auth.uid() AS uid)))"
+    },
+    {
+      "cmd": "SELECT",
+      "qual": "( SELECT private.user_has_household_access(phase2_planned_expenses.household_id) AS user_has_household_access)",
+      "roles": [
+        "authenticated"
+      ],
+      "policyname": "phase2_planned_expenses_read",
+      "with_check": null
+    },
+    {
+      "cmd": "UPDATE",
+      "qual": "( SELECT private.user_has_household_access(phase2_planned_expenses.household_id) AS user_has_household_access)",
+      "roles": [
+        "authenticated"
+      ],
+      "policyname": "phase2_planned_expenses_update",
+      "with_check": "(( SELECT private.user_has_household_access(phase2_planned_expenses.household_id) AS user_has_household_access) AND (updated_by = ( SELECT auth.uid() AS uid)))"
+    }
+  ],
+  "triggers": 0,
+  "authCount": 1,
+  "checkedAt": "2026-09-30T08:47:28.337415+00:00",
+  "migrations": [
+    {
+      "name": "phase2_planned_expenses",
+      "version": "20260928163114"
+    },
+    {
+      "name": "phase2_planned_cost_items_guard",
+      "version": "20260928205006"
+    },
+    {
+      "name": "phase2_planned_cost_items_guard_fix",
+      "version": "20260928210316"
+    },
+    {
+      "name": "phase2_planned_asset_cost_items",
+      "version": "20260929064922"
+    },
+    {
+      "name": "phase2_planned_module_path_v1",
+      "version": "20260929211001"
+    },
+    {
+      "name": "phase2_planned_report_month",
+      "version": "20260929232710"
+    }
+  ],
+  "rlsEnabled": true,
+  "plannedRows": 4,
+  "householdCount": 1,
+  "syntheticHouseholdsRemaining": 0,
+  "sqlSha256": "011997035d1e049352ccaf49f67dba396b20e5200d687ccb4c2053a37bfe752d",
+  "head": "bed265c2d4f648123054fe4b5e4b2677d61a9498",
+  "oracle": "LIVE_CURRENT",
+  "authorization": "Human-approved targeted rollback test rerun during C10",
+  "rlsTwoHouseholds": "PASS",
+  "targetedHistoricalTraces": "PASS",
+  "persistence": "ROLLBACK"
+}

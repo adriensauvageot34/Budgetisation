@@ -80,6 +80,8 @@ const paths=["src/domain/phase2/planned-builder.ts","src/domain/phase2/planned-r
   "src/domain/phase2/planned-places.ts","src/server/phase2/planned-expenses.ts",
   "src/app/mois-a-venir/planned-expenses-control.tsx","src/app/mois-a-venir/planned-expenses-actions.ts"];
 const sources=paths.map(path=>fs.readFileSync(path,"utf8"));
+// C10: the differential place shim is retired after direct resolver/browser proof.
+assert.doesNotMatch(sources[2], /export function placesForPlannedContext/u);
 for (const source of sources) assert.doesNotMatch(source,/planning_memory|autoLearn|learnPreference|savePreset|applyPreset|repeatExpense|lastTimeExpense/u);
 for (const key of ["memory","preset","template","repeat","declaredAmount","calendarRow","forecastRow","undoBuffer"])
   assert.throws(()=>s.parsePlannedExpenseDraft({...visit,[key]:{}},"2026-10"),/DRAFT_FIELDS_INVALID/);

@@ -6,6 +6,7 @@
     "check:phase2-planned-calendar": "node scripts/check-phase2-planned-calendar.mjs",
     "check:phase2-planned-guards": "node scripts/check-phase2-planned-guards.mjs",
     "check:phase2-dd6-certification": "node scripts/check-phase2-dd6-certification.mjs",
+    "check:phase2-c10-finalization": "node scripts/finalize-phase2-c10.mjs",
     "check:phase2-planned-reliability": "node scripts/check-phase2-planned-reliability.mjs",
     "check:phase2-planned-reality": "node scripts/check-phase2-planned-reality.mjs",
     "check:phase2-planned-domain": "node scripts/check-phase2-planned-domain.mjs",
