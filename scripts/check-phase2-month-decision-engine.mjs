@@ -105,6 +105,10 @@ for (const p of [base, mid, current, custom, withHabit, higher, overfull]) {
   assert(Number(p.narrative.final.central) >= Number(p.narrative.final.highConsumption));
 }
 assert.equal(projectMonthDecision(base, defaultMonthDecisionSettings(), "2026-10", "2026-09-30", []).attention.length,0);
+const display = projectMonthDecision(base, settings, "2026-10", "2026-09-30", []).visible;
+assert.equal(base.narrative.prediction.optional.reduce((n,c)=>n+display.categoryDisplay[c.key].remaining.central,0),display.optionalDelta,"card amounts and transition share the same rounding");
+assert.equal(base.narrative.prediction.essential.reduce((n,c)=>n+display.categoryDisplay[c.key].remaining.central,0),display.essentialDelta);
+for(const c of current.narrative.prediction.essential){const d=projectMonthDecision(current,settings,"2026-10","2026-10-15",[]).visible.categoryDisplay[c.key];assert.equal(d.observed+Math.round(Number(c.habitualProjectGross))+d.remaining.central,d.projectedCentral);}
 assert.equal(projectMonthDecision(base, settings, "2026-10", "2026-09-30", []).showProjectMilestone,false);
 assert(projectMonthDecision(mid, settings,"2026-10","2026-10-15", [{...expense,plannedDate:"2026-10-03"}]).attention.some(a=>a.key==="past-plan"));
 const saturated = { ...base, plannedFunding: { ...base.plannedFunding, swile: { resource: "100.00", reserved: "91.00", usedDeclared:"0.00", availableAfter:"9.00",shortfall:"0.00" } } };

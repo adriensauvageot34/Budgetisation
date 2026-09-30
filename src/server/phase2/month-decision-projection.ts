@@ -29,6 +29,17 @@ export function projectMonthDecision(plan: MonthEconomicPlan, settings: MonthDec
   const breakdown = (optional: boolean, total: number) => roundedParts((optional ? prediction?.optional : prediction?.essential)?.map(c => ({
     key: c.key, label: c.label, amount: c.baselineProvision.central,
   })) ?? [{ key: "reference", label: "Référence publiée", amount: String(total) }], total);
+  const essentialParts = breakdown(false, essentialDelta), optionalParts = breakdown(true, optionalDelta);
+  const categoryDisplay = Object.fromEntries([...(prediction?.essential ?? []), ...(prediction?.optional ?? [])].map(c => {
+    const part = [...essentialParts, ...optionalParts].find(p => p.key === c.key)!;
+    const adjustment = part.visible - Math.round(Number(c.baselineProvision.central));
+    const central = new Big(c.remaining.central).eq(0) ? 0 : Math.max(0, Math.round(Number(c.remaining.central)) + adjustment);
+    // Transfer the common reference rounding to the corresponding card. The
+    // observed + explicit habitual project + remaining display is reconciled too.
+    const observed = Math.round(Number(c.alreadyRealized)), habitual = Math.round(Number(c.habitualProjectGross));
+    return [c.key, { remaining: { low: Math.min(Math.round(Number(c.remaining.low)), central), central,
+      high: Math.max(Math.round(Number(c.remaining.high)), central) }, observed, projectedCentral: observed + habitual + central }];
+  }));
   const change = explainForecastChange(plan, memory, targetMonth);
   const last = memory.filter(r => r.target_month.startsWith(targetMonth)).at(-1);
   const changeTarget = last ? final - Math.round(Number(last.payload.final.central)) : 0;
@@ -54,7 +65,7 @@ export function projectMonthDecision(plan: MonthEconomicPlan, settings: MonthDec
   };
   return { mode, asOf, showProjectMilestone: !new Big(plan.plannedExpenses.netImpact.central ?? 0).eq(0),
     visible: { afterCertain, afterProjects, afterEssential, final, projectDelta: afterCertain - afterProjects,
-      essentialDelta, optionalDelta, essential: breakdown(false, essentialDelta), optional: breakdown(true, optionalDelta) },
+      essentialDelta, optionalDelta, essential: essentialParts, optional: optionalParts, categoryDisplay },
     change: { ...change, visibleDelta: changeTarget, visibleChanges }, attention, goal: exactGoal,
     mealFundingVisible: [plan.plannedFunding.swile, plan.plannedFunding.edenred].some(p => new Big(p.reserved).plus(p.usedDeclared).plus(p.shortfall).gt(0)),
     jointExplanation: prediction?.joint.method === "EMPIRICAL_MONTHS"
