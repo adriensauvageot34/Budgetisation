@@ -3,7 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import Big from "big.js";
-import { CalendarDays, Check, Pencil, Plus, RotateCcw, Trash2 } from "lucide-react";
+import { CalendarDays, Plus, RotateCcw, Trash2 } from "lucide-react";
 import { PLANNED_FAMILIES, PLANNED_SUBTYPE_LABELS, assetsForModule, plannedAsset, rootAssetModule, suggestedAssetQuantity,
   type AssetModule, type PlannedAsset, type PlannedExpenseFamily } from "@/domain/phase2/planned-assets";
 import { plannedLineGross } from "@/domain/phase2/planned-money";
@@ -25,6 +25,7 @@ import { PlannedContactField, PlannedParticipants } from "./planned-people-field
 import { PlannedRouteEditor } from "./planned-route-editor";
 import { PlannedImpactCard } from "./planned-impact-card";
 import { usePlannedExpenseInteractions } from "./planned-expense-interactions";
+import { calendarExpenseActions } from "./calendar-presentation";
 
 type Person = { personId: string; displayName: string };
 type Draft = Pick<PlannedExpenseCard, "familyKey" | "subtypeKey" | "title" | "plannedDate" | "costItems" | "context">;
@@ -146,18 +147,18 @@ export function PlannedExpensesControl({ targetMonth, expenses, persons, places,
     ? materializeBuilderDraft(builder).costItems.reduce((sum, item) => sum.plus(itemTotal(item)!), new Big(0)).toFixed(2) : null;
 
   const resetPreview = () => { setPreview(null); setError(""); setIssue(null); };
-  const start = (item?: PlannedExpenseCard, mode: "DECLARE" | "CORRECT" | null = null) => {
+  const start = (item?: PlannedExpenseCard, mode: "DECLARE" | "CORRECT" | null = null, plannedDate?: string) => {
     if (inFlight.current) return;
     draftSession.current++;
     const next = item ? { familyKey: item.familyKey, subtypeKey: item.subtypeKey, title: item.title,
-      plannedDate: item.plannedDate, costItems: item.costItems.map((cost) => ({ ...cost })), context: { ...item.context } } : emptyDraft();
+      plannedDate: item.plannedDate, costItems: item.costItems.map((cost) => ({ ...cost })), context: { ...item.context } } : { ...emptyDraft(), plannedDate: plannedDate ?? null };
     setBuilder(createBuilderState(next)); setSplitMeal(""); setAssetLens("MODULE"); setIntentChoices(undefined);
     setRequestId(item?.id ?? crypto.randomUUID()); setExpectedUpdatedAt(item?.updatedAt); setRealityMode(mode);
     setIssue(null); setNotice(""); setReportId(null); setDeleteId(null);
     setIntentFamily(next.familyKey); setCloseRequested(false);
     setModulePath([rootAssetModule(next.familyKey, next.subtypeKey)]);
     setEditedId(item?.id); setPreview(null); setPreviewRevision(null); setError(""); setSearch(""); setStep(item ? 3 : 1); setOpen(true);
-    window.setTimeout(() => document.getElementById("planned-expense-builder")?.scrollIntoView({ behavior: "smooth" }), 0);
+    window.setTimeout(() => { const target = document.getElementById("planned-expense-builder"); target?.scrollIntoView({ behavior: "smooth" }); target?.focus(); }, 0);
   };
   const updateItem = (id: string, change: Partial<CostItem>) => {
     setBuilder((state) => editBuilderDraft({ ...state, origins: {
@@ -299,6 +300,14 @@ export function PlannedExpensesControl({ targetMonth, expenses, persons, places,
     const pending = interactions?.pending;
     if (!pending) return;
     interactions.consume();
+    if (pending.action === "CREATE") {
+      if (inFlight.current || open && builder.revision > 0) {
+        setError("Terminez ou fermez le brouillon ouvert avant de prévoir autre chose.");
+        window.setTimeout(() => { const target = document.getElementById("planned-expense-builder"); target?.scrollIntoView({ block: "start" }); target?.focus(); }, 0);
+      }
+      else start(undefined, null, pending.plannedDate);
+      return;
+    }
     const item = expenses.find((row) => row.id === pending.id);
     if (!item) { setError("Ce projet n’est plus présent. Actualisez la page."); return; }
     if (inFlight.current || open && builder.revision > 0) {
@@ -319,16 +328,14 @@ export function PlannedExpensesControl({ targetMonth, expenses, persons, places,
     <div className="flex flex-wrap items-start justify-between gap-3"><div className="min-w-0 flex-1"><p className="text-xs font-bold text-emerald-900">{familyLabel(item.familyKey)} · {subtypeLabel(item.familyKey, item.subtypeKey)}</p><h4 className="break-words text-base font-black">{item.title}</h4><p className="mt-1 text-xs text-slate-600"><CalendarDays size={13} className="mr-1 inline" aria-hidden="true" />{item.plannedDate ? dateLabel(item.plannedDate) : "Ce mois-ci · sans date précise"}</p></div><strong className="text-lg tabular-nums">{money(item.grossCost)}</strong></div>
     <p className="mt-2 break-words text-xs text-slate-600">{item.costItems.map((cost) => `${cost.variantLabel || cost.label} · ${cost.quantity} × ${money(cost.unitAmount)}`).join(" · ")}</p>
     <p className="mt-2 text-xs font-semibold text-slate-700">{item.status === "PLANNED" ? item.needsRealityConfirmation ? "À confirmer · la date est passée" : "Prévue" : "Réalisée · déclarée par vous"}</p>
-    <div className="mt-3 flex flex-wrap gap-2 border-t border-slate-100 pt-3">{item.status === "PLANNED" ? <>
-      <button type="button" className={secondary} disabled={busy} onClick={() => start(item)}><Pencil size={14} className="mr-1 inline" />Modifier</button>
-      <button type="button" className={secondary} disabled={busy} onClick={() => start(item, "DECLARE")}><Check size={14} className="mr-1 inline" />{item.needsRealityConfirmation ? "Oui, ça a eu lieu" : "Déclarer la réalisation"}</button>
-      <button type="button" className={secondary} disabled={busy} onClick={() => { setReportId(item.id); setReportDate(item.plannedDate ?? ""); }}>Reporter</button>
-    </> : <>
-      <button type="button" className={secondary} disabled={busy} onClick={() => start(item, "CORRECT")}><Pencil size={14} className="mr-1 inline" />Corriger la déclaration</button>
-      <button type="button" className={secondary} disabled={busy} onClick={() => run(async () => { unwrap(await restorePlannedExpenseAction(targetMonth, { id: item.id, expectedUpdatedAt: item.updatedAt })); setNotice("Remise en prévu, avec les mêmes coûts."); })}><RotateCcw size={14} className="mr-1 inline" />Remettre en prévu</button>
-    </>}
+    <div className="mt-3 flex flex-wrap gap-2 border-t border-slate-100 pt-3">{calendarExpenseActions(item).filter(({ action }) => action !== "DELETE").map(({ action, label }) =>
+      <button key={action} type="button" className={secondary} disabled={busy} onClick={() => {
+        if (action === "REPORT") { setReportId(item.id); setReportDate(item.plannedDate ?? ""); }
+        else if (action === "RESTORE") void run(async () => { unwrap(await restorePlannedExpenseAction(targetMonth, { id: item.id, expectedUpdatedAt: item.updatedAt })); setNotice("Remise en prévu, avec les mêmes coûts."); });
+        else start(item, action === "DECLARE" ? "DECLARE" : action === "CORRECT" ? "CORRECT" : null);
+      }}>{label}</button>)}
       {deleteId === item.id ? <><span className="self-center text-xs">{item.status === "PLANNED" ? "Confirmer que ce projet n’a pas eu lieu et supprimer sa prévision ?" : "Supprimer définitivement cette déclaration ?"} Son coût et son financement seront retirés du mois.</span><button type="button" className={secondary} disabled={busy} onClick={() => run(async () => { unwrap(await removePlannedExpense(targetMonth, { id: item.id, expectedUpdatedAt: item.updatedAt })); setDeleteId(null); setNotice("Dépense supprimée du mois."); })}>Confirmer la suppression</button><button type="button" className={secondary} onClick={() => setDeleteId(null)}>Annuler</button></>
-        : <button type="button" className={secondary} disabled={busy} onClick={() => setDeleteId(item.id)}><Trash2 size={14} className="mr-1 inline" />{item.status === "PLANNED" ? item.needsRealityConfirmation ? "Ça n’a pas eu lieu" : "Supprimer la prévision" : "Supprimer la déclaration"}</button>}
+        : <button type="button" className={secondary} disabled={busy} onClick={() => setDeleteId(item.id)}><Trash2 size={14} className="mr-1 inline" />{calendarExpenseActions(item).find(({ action }) => action === "DELETE")?.label}</button>}
     </div>
     {reportId === item.id && <div className="mt-3 grid gap-2 rounded-xl bg-slate-50 p-3"><label className="grid gap-1 text-sm font-semibold">Nouvelle date prévue<input type="date" className={inputClass} value={reportDate} onChange={(event) => setReportDate(event.target.value)} /></label><p className="text-xs">La même dépense rejoindra le mois choisi. Ses ressources et ses estimations seront revérifiées.</p><div className="flex gap-2"><button className={secondary} disabled={busy || !reportDate} onClick={() => run(async () => { const moved = unwrap(await reportPlannedExpenseAction(targetMonth, { id: item.id, expectedUpdatedAt: item.updatedAt }, reportDate)); setReportId(null); setNotice(`Projet reporté en ${moved.targetMonth}.`); if (moved.targetMonth !== targetMonth) router.push(`/mois-a-venir?month=${moved.targetMonth}`); })}>Confirmer le report</button><button className={secondary} onClick={() => setReportId(null)}>Annuler</button></div></div>}
   </li>;

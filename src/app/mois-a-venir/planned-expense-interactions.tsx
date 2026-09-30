@@ -2,7 +2,9 @@
 
 import { createContext, useCallback, useContext, useState, type ReactNode } from "react";
 
-export type PlannedExpenseInteraction = { id: string; action: "EDIT" | "DECLARE" | "CORRECT" | "RESTORE" | "REPORT" | "DELETE" };
+export type ExistingExpenseAction = "EDIT" | "DECLARE" | "CORRECT" | "RESTORE" | "REPORT" | "DELETE";
+export type PlannedExpenseInteraction = { id: string; action: ExistingExpenseAction }
+  | { action: "CREATE"; plannedDate: string };
 const InteractionContext = createContext<{ pending: PlannedExpenseInteraction | null;
   request: (action: PlannedExpenseInteraction) => void; consume: () => void } | null>(null);
 

@@ -68,7 +68,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         ref={runtime.backgroundRootRef}
         className={historyV2
           ? "min-h-[calc(100vh-73px)] py-6"
-          : "mx-auto min-h-[calc(100vh-73px)] max-w-6xl px-[var(--space-page)] py-8"}
+          : pathname === "/mois-a-venir"
+            ? "mx-auto min-h-[calc(100vh-73px)] max-w-[1360px] px-[var(--space-page)] py-8"
+            : "mx-auto min-h-[calc(100vh-73px)] max-w-6xl px-[var(--space-page)] py-8"}
       >
         {children}
       </main>

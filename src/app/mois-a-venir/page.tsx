@@ -11,6 +11,7 @@ import { readPlannedExpenses } from "@/server/phase2/planned-expenses";
 import { readPlannedContextOptions } from "@/server/phase2/planned-context";
 import { projectPlannedExpenseCards, projectExpenseFunding } from "./planned-expenses-projection";
 import { projectPlannedExpenseImpact } from "@/server/phase2/planned-impact";
+import { prospectivePersonIdentity, prospectivePersonLabel } from "@/domain/phase2/planned-product";
 
 export const metadata = { title: "Notre mois à venir" };
 export const dynamic = "force-dynamic";
@@ -60,13 +61,23 @@ export default async function MonthForecastPage({ searchParams }: { searchParams
       plannedExpenses.filter((row) => row.id !== card.id)).economicPlan;
     if (!before) return card;
     const impact = projectPlannedExpenseImpact(before, scenario.economicPlan, card);
+    const participantRefs = [
+      ...(card.context.participantPersonIds ?? []).map((personId) => ({ kind: "HOUSEHOLD_PERSON" as const, personId })),
+      ...(card.context.participantRefs ?? []),
+      ...(card.context.hostParticipates && card.context.host ? [card.context.host] : []),
+      ...(card.context.visitedPersonParticipates && card.context.personVisited ? [card.context.personVisited] : []),
+    ];
+    const participantLabels = [...new Map(participantRefs.map((ref) => [prospectivePersonIdentity(ref),
+      ref.kind === "HOUSEHOLD_PERSON" ? persons.find((person) => person.personId === ref.personId)?.displayName : prospectivePersonLabel(ref)])).values()]
+      .filter((label): label is string => !!label);
+    if (card.context.additionalGuestCount) participantLabels.push(`${card.context.additionalGuestCount} autre${card.context.additionalGuestCount > 1 ? "s" : ""} invité${card.context.additionalGuestCount > 1 ? "s" : ""}`);
     return { ...card, detail: { additionalImpact: impact.netAdditionalImpact.central,
       includedBaseline: impact.absorbedByBaseline.central, fuelUsage: impact.fuelUsage,
-      funding: projectExpenseFunding(card), placeLabel: placeLabel(card.context.place),
+      funding: projectExpenseFunding(card), placeLabel: placeLabel(card.context.place), participantLabels,
       childPlaceLabels: Object.values(card.context.childLocalPlaceRefs ?? {}).map(placeLabel).filter((label): label is string => !!label) } };
   });
   return <MonthForecastView forecast={forecast} scenario={scenario} stored={stored}
-    plannedExpenses={cards}
+    plannedExpenses={cards} today={today}
     persons={persons} places={options.places} vehicle={options.vehicle} prices={options.prices}
     inputError={params.inputError === "1"} />;
 }

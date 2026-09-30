@@ -170,7 +170,7 @@ const control = fs.readFileSync("src/app/mois-a-venir/planned-expenses-control.t
 assert(!control.includes(".div(2)")); assert(control.includes('setSplitMeal("")'));
 assert(control.includes("✓ Ajouté")); assert(control.includes("PlannedParticipants"));
 const calendar = fs.readFileSync("src/app/mois-a-venir/month-calendar.tsx", "utf8");
-assert(calendar.includes("h-32")); assert(!calendar.includes("h-40")); assert(calendar.includes("/brands/"));
+assert(calendar.includes("h-[86px]")); assert(!calendar.includes("h-40")); assert(calendar.includes("/brands/"));
 for (const key of ["sfr", "edf", "google", "openai", "max", "pacifica", "credit-agricole", "nexity"]) assert(fs.existsSync(`public/brands/${key}.svg`));
 results.push({ name: "UI boundaries: explicit mixed inputs, reset, feedback, compact calendar and local marks", status: "PASS" });
 console.log(JSON.stringify({ POST_V1_FIX_PACK: "PASS", checks: results }, null, 2));

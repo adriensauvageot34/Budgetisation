@@ -1,4 +1,4 @@
-import { Banknote, CalendarDays, ChevronDown, House, Landmark, PiggyBank, ShieldCheck, Smartphone, Sparkles, Wallet, BookOpen } from "lucide-react";
+import { Banknote, ChevronDown, House, Landmark, PiggyBank, ShieldCheck, Smartphone, Sparkles, Wallet, BookOpen } from "lucide-react";
 import type { MonthEconomicPlan } from "@/server/phase2/month-scenario";
 import type { StatisticalComponent } from "@/server/phase2/month-reference";
 import { ResourceEditor } from "./resource-editor";
@@ -48,13 +48,16 @@ function StatisticalCard({ part, tone }: { part: StatisticalComponent; tone: "ne
   </article>;
 }
 
-export function MonthStory({ plan, targetMonth, plannedExpenses, persons, places, vehicle, prices }: { plan: MonthEconomicPlan | null; targetMonth: string;
+export function MonthStory({ plan, targetMonth, plannedExpenses, persons, places, vehicle, prices, today, dateEvidence, references }: { plan: MonthEconomicPlan | null; targetMonth: string;
   plannedExpenses: readonly PlannedExpenseCard[]; persons: readonly { personId: string; displayName: string }[];
   places: readonly PlannedPlaceOption[]; vehicle: PlannedVehicleEstimate | null;
-  prices: readonly import("@/domain/phase2/planned-contract").PlannedPriceSuggestion[] }) {
+  prices: readonly import("@/domain/phase2/planned-contract").PlannedPriceSuggestion[]; today: string;
+  dateEvidence: Readonly<Record<string, { observationCount: number }>>;
+  references: Readonly<Record<string, { freshnessDate: string | null; confidence: string }>> }) {
   if (!plan) return <section className="card p-6" role="status"><h2 className="text-xl font-black">Notre mois n’est pas encore prêt</h2><p className="mt-2 text-slate-600">Il manque encore des informations pour préparer ce mois.</p></section>;
   const groups = [...plan.certainOutflows.groups].sort((a, b) => groupOrder.indexOf(a.label) - groupOrder.indexOf(b.label));
-  const calendar = projectMonthCalendar(plan.certainOutflows.items, plannedExpenses);
+  const calendar = projectMonthCalendar(plan.certainOutflows.items.map((item) => ({ ...item, ...references[item.key],
+    dateEvidenceCount: item.dateCertainty === "HISTORICAL_ESTIMATE" ? dateEvidence[item.key]?.observationCount : undefined })), plannedExpenses);
 
   return <PlannedExpenseInteractions><div className="space-y-7 sm:space-y-9">
     <header className="space-y-2"><p className="eyebrow">Préparons notre mois ensemble</p><h1 className="text-4xl font-black capitalize tracking-tight sm:text-5xl">{monthLabel(targetMonth)}</h1><p className="text-slate-600">Voyons ce qui entre, ce qui est déjà réservé et ce qu’on peut encore prévoir.</p><p className="text-xs text-slate-600">Les dépenses de travail restent estimées selon les rythmes déclarés : cinq jours sur site par semaine pour Manon, deux à trois pour Adrien, avec les jours ouvrés de ce mois.</p></header>
@@ -72,7 +75,7 @@ export function MonthStory({ plan, targetMonth, plannedExpenses, persons, places
           <ul className="mx-4 border-t border-slate-200 pb-3 pt-2 text-sm">{group.items.map((item) => <li key={item.key} className="flex flex-wrap justify-between gap-x-3 py-1"><span className="min-w-0 break-words">{item.label}<span className="block text-xs text-slate-500">{item.dateCertainty === "DECLARED" ? "Date déclarée" : item.dateCertainty === "HISTORICAL_ESTIMATE" ? "Date habituelle estimée" : "Date à confirmer"}</span></span><strong className="shrink-0 tabular-nums">{money(item.amount, true)}</strong></li>)}</ul></details>;
       })}</div></section>
 
-    <section id="timeline-title" className="card scroll-mt-6 p-4 sm:p-6" aria-labelledby="calendar-title"><div className="flex items-center gap-3"><span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-slate-100 text-slate-700"><CalendarDays size={19} aria-hidden="true" /></span><div><h2 id="calendar-title" className="text-xl font-black">Notre mois en un coup d’œil</h2><p className="text-xs text-slate-600">Les dates déclarées et nos dates habituelles</p></div></div><MonthCalendar key={targetMonth} targetMonth={targetMonth} entries={calendar.entries} undated={calendar.undated} dailyTotals={calendar.dailyTotals} /></section>
+    <section id="timeline-title" className="scroll-mt-6" aria-labelledby="calendar-title"><h2 id="calendar-title" className="mb-3 text-xl font-black">Notre mois en un coup d’œil</h2><MonthCalendar key={targetMonth} targetMonth={targetMonth} today={today} entries={calendar.entries} undated={calendar.undated} dailyTotals={calendar.dailyTotals} /></section>
 
     <section className="overflow-hidden rounded-[1.7rem] bg-emerald-950 px-5 py-6 text-white sm:flex sm:items-end sm:justify-between sm:gap-5 sm:px-8 sm:py-7" aria-labelledby="after-title"><div><h2 id="after-title" className="text-xl font-bold">Après nos charges certaines</h2><p className="mt-1 text-sm text-emerald-100">Avant les dépenses du quotidien</p><p className="mt-2 text-xs text-emerald-200">Inclut les titres-restaurants ; ce n’est pas notre solde bancaire.</p></div><p className="mt-4 whitespace-nowrap text-4xl font-black tracking-tight tabular-nums sm:mt-0 sm:text-5xl">{money(plan.afterCertainOutflows, true)}</p></section>
 

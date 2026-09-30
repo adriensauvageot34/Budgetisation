@@ -16,6 +16,7 @@ const { projectPlannedExpenseCards, projectMonthCalendar, projectExpenseFunding 
 const { projectPlannedExpenseImpact } = require("../src/server/phase2/planned-impact.ts");
 const { deriveMonthScenario } = require("../src/server/phase2/month-scenario.ts");
 const presentation = require("../src/app/mois-a-venir/calendar-presentation.ts");
+const { calendarMetadata } = require("../src/app/mois-a-venir/calendar-metadata.ts");
 const { MonthCalendar, CalendarEventDetails } = require("../src/app/mois-a-venir/month-calendar.tsx");
 const command = row => ({ id: row.id, expectedUpdatedAt: row.updatedAt });
 const create = async raw => value(await a.savePlannedExpense("2026-10", raw, { id: randomUUID() })).expense;
@@ -43,19 +44,20 @@ const renderCalendar = data => renderToStaticMarkup(React.createElement(MonthCal
 const html = renderCalendar(busy);
 assert.match(html, /365,83/); assert.match(html, /255,74/); assert.match(html, /13,99/); assert.match(html, /\+3 autres/);
 assert.equal((html.match(/data-calendar-event=/gu) ?? []).length, 2, "CAL-10/11 top two, then +N");
-assert.equal((html.match(/tabindex="0"/gu) ?? []).length, 1, "one keyboard entry point");
+assert.equal((html.match(/data-calendar-day="\d+"[^>]*tabindex="0"/gu) ?? []).length, 1, "one grid keyboard entry point");
 assert.match(html, /role="row"/); assert.match(html, /role="columnheader"/); assert.match(html, /role="gridcell"/);
 assert.doesNotMatch(html, /line-through|<s>|<del>|CANCELLED|montants? prévus au total/iu);
 assert.equal(presentation.calendarIcon(busy.entries.find(row => row.key === "EDF")).brandKey, "edf");
 assert.equal(presentation.calendarIcon(busy.entries.find(row => row.key === "EDF")).semanticIconKey, "home");
-assert.equal(presentation.calendarIcon({...busy.entries[0],label:"Max – Abonnement Max/WBD"}).semanticIconKey,"culture");
+assert.equal(presentation.calendarIcon({...busy.entries[0],...calendarMetadata("Max – Abonnement Max/WBD"),label:"Max – Abonnement Max/WBD"}).semanticIconKey,"culture");
 
-// CAL-07..09: one, two and three events all remain visible, with exact cents.
+// Revised compact contract: one/two visible; three and above use top two +N.
 for (const count of [1, 2, 3]) {
   const data = projectMonthCalendar(Array.from({ length: count }, (_, i) => certain(`Certain ${i}`, "36.98")), []);
   const rendered = renderCalendar(data);
-  assert.equal((rendered.match(/data-calendar-event=/gu) ?? []).length, count);
-  assert.match(rendered, /36,98/); assert.doesNotMatch(rendered, /\+\d autres/);
+  assert.equal((rendered.match(/data-calendar-event=/gu) ?? []).length, Math.min(count, 2));
+  assert.match(rendered, /36,98/);
+  if (count > 2) assert.match(rendered, /\+1 autre/); else assert.doesNotMatch(rendered, /\+\d autre/);
 }
 
 // CAL-17 / keyboard law. Oracle: STATIC_CONTRACT, not snapshots or the tested helper.
@@ -111,7 +113,7 @@ assert.equal(state.plan.plannedExpenses.grossCost,"53.00");
 const allUndated = projectMonthCalendar([{ ...certain("Certain à dater","13.99","UNKNOWN"),date:null }],state.cards);
 assert.equal(allUndated.undated.length,3);
 const undatedHtml = renderCalendar(allUndated);
-assert.match(undatedHtml,/À dater/); assert.match(undatedHtml,/Réalisée/); assert.match(undatedHtml,/Prévue/);
+assert.match(undatedHtml,/À placer dans le calendrier/); assert.match(undatedHtml,/Sans jour précis/); assert.match(undatedHtml,/Réalisée/); assert.match(undatedHtml,/Prévue/);
 assert.doesNotMatch(undatedHtml,/data-calendar-event=/);
 
 // Sync child place and route edits: one root occurrence, children only in details.
@@ -131,14 +133,43 @@ assert.equal(state.plan.plannedExpenses.grossCost,"89.98");
 const mixed = projectMonthCalendar([certain("EDF","78.20","HISTORICAL_ESTIMATE")],
   [{...state.cards[0],plannedDate:"2026-10-04"},{...state.cards[1],plannedDate:"2026-10-04"}]);
 const description = presentation.calendarDayDescription("2026-10-04",mixed.entries,mixed.dailyTotals["2026-10-04"]);
-assert.match(description,/Charge certaine/); assert.match(description,/Prévue/); assert.match(description,/Réalisée/);
-assert.equal((description.match(/Date habituelle estimée/gu)??[]).length,1);
+assert.match(description,/2 à date précise/); assert.match(description,/1 à date habituelle estimée/);
 const sorted = presentation.orderCalendarItems(mixed.entries);
 assert.equal(sorted[0].nature,"DECLARED_REALIZED"); assert.equal(sorted.at(-1).label,"EDF");
+
+// Calendar redesign: independent totals, date certainty, visual salience and lifecycle actions.
+assert.deepEqual(presentation.calendarDaySummary(busy.entries), { grossTotal:"365.83", exactDateTotal:"287.63", estimatedDateTotal:"78.20", exactCount:4, estimatedCount:1, marker:"◌" });
+assert.equal(presentation.calendarDaySummary([busy.entries[1]]).marker,"≈");
+assert.equal(presentation.calendarDaySummary([busy.entries[0]]).marker,"");
+assert.match(html,/◌/); assert.doesNotMatch(html,/text-\[9px\]|text-\[10px\]|h-32/);
+assert.equal(presentation.calendarInitialDay("2026-10","2026-10-20",busy.entries),20);
+assert.equal(presentation.calendarInitialDay("2026-10","2026-09-30",busy.entries),4);
+assert.equal(presentation.calendarInitialDay("2026-10","2026-09-30",[]),1);
+assert.match(renderCalendar({...busy,today:"2026-10-04"}),/aria-current="date"/);
+assert.doesNotMatch(renderCalendar({...busy,today:"2026-09-30"}),/aria-current="date"/);
+assert.equal(calendarMetadata("Pacifica · Habitation").calendarLabel,"Pacifica · Habitation");
+assert.equal(calendarMetadata("Pacifica · Juridique").calendarLabel,"Pacifica · Juridique");
+assert.equal(presentation.calendarEventLabel({...busy.entries[0],...calendarMetadata("Pacifica · Habitation")}),"Habitation");
+assert.equal(presentation.calendarEventLabel({...busy.entries[0],...calendarMetadata("Pacifica · Juridique")}),"Juridique");
+assert.notEqual(calendarMetadata("SFR · Contrat 1234").calendarLabel,calendarMetadata("SFR · Contrat 5678").calendarLabel);
+assert.doesNotMatch(calendarMetadata("SFR · Contrat 1234").calendarLabel,/Adrien|Manon|Mobile|Internet/);
+const future = {...card,needsRealityConfirmation:false};
+assert.deepEqual(presentation.calendarExpenseActions(future).map(row=>row.action),["EDIT","REPORT","DELETE"]);
+assert.deepEqual(presentation.calendarExpenseActions({...card,needsRealityConfirmation:true}).map(row=>row.action),["DECLARE","REPORT","EDIT","DELETE"]);
+assert.deepEqual(presentation.calendarExpenseActions({...card,status:"DECLARED_REALIZED"}).map(row=>row.action),["CORRECT","RESTORE","DELETE"]);
+const important = {...mixed.entries[0],key:"past",amount:"1.00",nature:"PLANNED_EXPENSE",expense:{...card,needsRealityConfirmation:true}};
+assert.equal(presentation.visibleCalendarItems([...busy.entries,important])[0].key,"past","past project wins over large routine charges");
+const futureItem = {...important,key:"future",expense:future};
+assert.equal(presentation.visibleCalendarItems([...busy.entries,futureItem])[0].key,"future","explicit future project remains visible");
+const estimatedDetails = renderToStaticMarkup(React.createElement(CalendarEventDetails,{item:{...busy.entries[1],dateEvidenceCount:12}}));
+assert.match(estimatedDetails,/12 prélèvements observés/);
+assert.doesNotMatch(renderToStaticMarkup(React.createElement(CalendarEventDetails,{item:busy.entries[1]})),/12 prélèvements/);
+const sixWeeks = renderToStaticMarkup(React.createElement(MonthCalendar,{targetMonth:"2026-08",entries:[],undated:[],dailyTotals:{},today:"2026-08-12"}));
+assert.equal((sixWeeks.match(/role="row"/gu)??[]).length,7); assert.match(sixWeeks,/h-\[76px\]/);
 const source = fs.readFileSync("src/app/mois-a-venir/month-calendar.tsx","utf8");
 assert.match(source,/node\.showModal\(\)/); assert.match(source,/node\.close\(\); opener\.current\?\.focus\(\)/);
 assert.match(source,/onCancel=/); assert.match(source,/fixed inset-y-0/); assert.match(source,/focus-visible:outline-indigo/);
 assert.match(source,/event\.key !== "Tab"/); assert.match(source,/event\.preventDefault\(\); \(event\.shiftKey \? last : first\)\?\.focus\(\)/);
 assert.doesNotMatch(source,/line-through|role="region"|set.*Status|declarePlannedExpense/);
 assert(client.writes.every(row=>row.table==="phase2_planned_expenses"));
-console.log("PASS: C8 CAL-01..27, gross/baseline/funding truth, undated, keyboard law, item-level certainty, all projection sync, META-20");
+console.log("PASS: calendar redesign, compact 2/+N, independent day totals, exact/estimated, labels, salience, today/focus, 6 weeks, lifecycle actions, C8 projection sync and META-20");
