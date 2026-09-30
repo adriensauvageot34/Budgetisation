@@ -34,6 +34,9 @@ export type PlannedFuelEstimate = Readonly<{ vehicleLabel: string; consumptionL1
   fuelPriceSource: string; fuelPriceObservedAt?: string; fuelPriceQuality?: string;
   distanceKm: string; liters: string; cost: string }>;
 export type PlannedExpenseContext = Readonly<{ participantPersonIds?: readonly string[]; travellingParticipantPersonIds?: readonly string[];
+  participantRefs?: readonly ProspectivePersonRef[]; host?: ProspectivePersonRef;
+  hostParticipates?: boolean; visitedPersonParticipates?: boolean;
+  transportMode?: "CAR" | "TRAIN" | "BUS" | "TAXI" | "CARPOOL" | "FREE" | "OTHER";
   additionalGuestCount?: number; personVisited?: ProspectivePersonRef;
   place?: PlannedExpensePlace; purchaseMode?: "IN_STORE" | "ONLINE" | "TAKEAWAY" | "DELIVERY";
   housePartyPlaceMode?: "OWN_HOME" | "OTHER_HOME"; visitFormat?: "SIMPLE" | "APERO_PARTY" | "MEAL" | "STAY";

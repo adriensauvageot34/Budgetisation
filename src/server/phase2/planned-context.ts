@@ -1,3 +1,7 @@
+const OBSERVED_PRICE_ASSETS_V1: Record<string, string> = {
+  maquillage_manon_mascara: "beauty:mascara", maquillage_manon_sourcils: "beauty:eyebrow_pencil",
+  maquillage_manon_fixateur: "beauty:setting_spray", skincare_manon_masque: "beauty:face_mask",
+};
 import "server-only";
 
 import Big from "big.js";
@@ -44,9 +48,9 @@ export async function readPlannedContextOptions(client: SupabaseClient, househol
     persons.length ? client.from("product_observations")
       .select("need_key,date_achat,montant_paye")
       .in("person_id", persons.map((person) => person.personId))
-      .in("need_key", ["maquillage_manon_mascara", "maquillage_manon_sourcils"])
+      .in("need_key", Object.keys(OBSERVED_PRICE_ASSETS_V1))
       .lte("date_achat", new Date().toISOString().slice(0, 10))
-      .order("date_achat", { ascending: false }).limit(20) : Promise.resolve({ data: [], error: null }),
+      .order("date_achat", { ascending: false }).limit(100) : Promise.resolve({ data: [], error: null }),
   ]);
   for (const result of [placesResult, rolesResult, legsResult, pricesResult, productResult]) if (result.error) throw result.error;
   const roles = rolesResult.data ?? [];
@@ -75,9 +79,7 @@ export async function readPlannedContextOptions(client: SupabaseClient, househol
         fuelPriceSource: `Estimation · dernier prix ${new Intl.DateTimeFormat("fr-FR", { month: "long", year: "numeric", timeZone: "UTC" }).format(new Date(price.observed_at))}` };
     }
   }
-  const assetByNeed: Record<string, string> = {
-    maquillage_manon_mascara: "beauty:mascara", maquillage_manon_sourcils: "beauty:eyebrow_pencil",
-  };
+  const assetByNeed = OBSERVED_PRICE_ASSETS_V1;
   const known = new Set<string>();
   const prices: PlannedPriceSuggestion[] = (productResult.data ?? []).flatMap((row) => {
     const assetKey = assetByNeed[row.need_key];

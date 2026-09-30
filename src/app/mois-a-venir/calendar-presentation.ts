@@ -40,8 +40,7 @@ export function calendarKeyboardDay(day: number, key: string, days: number, firs
   return next === undefined ? null : Math.max(1, Math.min(days, next));
 }
 
-// No brand images exist in public for V1. Keep the single mapping here and use
-// the History semantic icon vocabulary. A future local logo can be attached here.
+// Local brandmarks in public/brands; unrecognized charges keep the semantic icon.
 const brands = [
   ["sfr", /\bSFR\b/iu, "remote_work"], ["edf", /\bEDF\b/iu, "home"],
   ["google", /Google/iu, "remote_work"], ["openai", /ChatGPT|OpenAI/iu, "remote_work"],

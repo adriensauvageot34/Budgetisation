@@ -28,14 +28,19 @@ const isContactHome = (candidate: PlannedPlaceOption, contact: ProspectiveContac
 
 export function rankPlacesForPlannedContext(places: readonly PlannedPlaceOption[],
   resolved: ResolvedPlannedContext, options: Readonly<{ contactKey?: string; workMealPersonName?: string;
-    giftAssetKey?: string }> = {}): readonly RankedPlannedPlace[] {
+    giftAssetKey?: string; assetKeys?: readonly string[] }> = {}): readonly RankedPlannedPlace[] {
   const contact = contactByKey(options.contactKey);
   const giftRoles: readonly PlaceRole[] = resolved.place.source !== "DYNAMIC_GIFT" ? []
     : options.giftAssetKey === "gift:chocolate" ? ["GROCERY"]
       : options.giftAssetKey === "gift:clothes" || options.giftAssetKey === "gift:jewelry"
         ? ["CLOTHING_RETAIL", "SHOPPING_AREA"]
         : options.giftAssetKey === "gift:flowers" ? ["GROCERY"] : [];
-  const allowed = resolved.place.source === "DYNAMIC_GIFT" ? giftRoles : resolved.place.allowedRoles;
+  const selectedBeauty = options.assetKeys?.filter((key) => key.startsWith("beauty:")) ?? [];
+  const beautyRoles: readonly PlaceRole[] = selectedBeauty.length === 0 ? ["BEAUTY_RETAIL", "PHARMACY", "HAIRDRESSER", "GROCERY"]
+    : selectedBeauty.includes("beauty:hairdresser") && selectedBeauty.length === 1 ? ["HAIRDRESSER"]
+      : ["BEAUTY_RETAIL", "PHARMACY", "GROCERY", ...(selectedBeauty.includes("beauty:hairdresser") ? ["HAIRDRESSER" as const] : [])];
+  const allowed = resolved.place.source === "DYNAMIC_GIFT" ? giftRoles
+    : resolved.subtypeKey === "beauty" ? beautyRoles : resolved.place.allowedRoles;
   const ranked: RankedPlannedPlace[] = [];
   for (const candidate of places) {
     const roles = derivePlannedPlaceRoles(candidate);

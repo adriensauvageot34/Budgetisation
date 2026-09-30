@@ -17,6 +17,13 @@ export function projectPlannedExpenseImpact(before: MonthEconomicPlan, after: Mo
   // Certified for the V1 baseline-displacement model only. Revisit if MonthScenario gains other effects.
   const absorbedByBaseline = Object.fromEntries(scenarios.map((key) =>
     [key, gross.minus(netAdditionalImpact[key]).toFixed(2)])) as Record<typeof scenarios[number], string>;
+  const projectPayment = {
+    bank: new Big(after.plannedFunding.bankAllocated).minus(before.plannedFunding.bankAllocated).toFixed(2),
+    swile: new Big(after.plannedFunding.swile.reserved).plus(after.plannedFunding.swile.usedDeclared)
+      .minus(before.plannedFunding.swile.reserved).minus(before.plannedFunding.swile.usedDeclared).toFixed(2),
+    edenred: new Big(after.plannedFunding.edenred.reserved).plus(after.plannedFunding.edenred.usedDeclared)
+      .minus(before.plannedFunding.edenred.reserved).minus(before.plannedFunding.edenred.usedDeclared).toFixed(2),
+  };
   return { grossCost: gross.toFixed(2), fuelUsage: fuel.toFixed(2), payableGross: gross.minus(fuel).toFixed(2),
-    netAdditionalImpact, absorbedByBaseline, before: before.scenarios, after: after.scenarios, funding: after.plannedFunding };
+    netAdditionalImpact, absorbedByBaseline, projectPayment, before: before.scenarios, after: after.scenarios, funding: after.plannedFunding };
 }

@@ -38,7 +38,7 @@ const tests=["scripts/check-phase2-planned-domain.mjs","scripts/check-phase2-pla
   "scripts/check-phase2-planned-builder.mjs","scripts/check-phase2-planned-assets.mjs","scripts/check-phase2-planned-expenses.mjs",
   "scripts/check-phase2-planned-expenses-ui.mjs","scripts/check-phase2-planned-routes.mjs","scripts/check-phase2-planned-finance.mjs",
   "scripts/check-phase2-planned-reliability.mjs","scripts/check-phase2-planned-reality.mjs","scripts/check-phase2-planned-calendar.mjs",
-  "scripts/check-phase2-planned-guards.mjs","scripts/check-architecture-imports.mjs"];
+  "scripts/check-phase2-planned-guards.mjs","scripts/check-phase2-post-v1-fixes.mjs","scripts/check-architecture-imports.mjs"];
 // Existing script runners in bounded batches; each gets an isolated module cache.
 for(let start=0;start<tests.length;start+=3)await Promise.all(tests.slice(start,start+3).map(id=>run(id,[id])));
 await run("types",["node_modules/typescript/bin/tsc","--noEmit"]);

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, type Dispatch, type SetStateAction } from "react";
-import { addBuilderChildRouteStop, editBuilderDraft, invalidateRouteDistances, removeBuilderChild,
+import { addBuilderChildRouteStop, changeBuilderContext, editBuilderDraft, invalidateRouteDistances, removeBuilderChild,
   setBuilderChildPlace, type BuilderState } from "@/domain/phase2/planned-builder";
 import type { PlannedRouteStop, PlannedVehicleEstimate, CostItem } from "@/domain/phase2/planned-contract";
 import { resolvePlannedContext } from "@/domain/phase2/planned-rules";
@@ -9,7 +9,8 @@ import { placesForChildModule, type PlannedPlaceOption } from "@/domain/phase2/p
 import { derivePlannedPlaceRoles } from "@/domain/phase2/planned-place-rules";
 import { deduplicateRouteStops, routeSegments, stopForPlace } from "@/domain/phase2/planned-routes";
 import { estimatePlannedRoute } from "./planned-expenses-actions";
-import { plannedAsset } from "@/domain/phase2/planned-assets";
+import { assetParticipantCount } from "@/domain/phase2/planned-product";
+import { plannedAsset, suggestedAssetQuantity } from "@/domain/phase2/planned-assets";
 
 const inputClass = "min-h-11 w-full rounded-xl border border-slate-300 bg-white px-3";
 const buttonClass = "rounded-xl border border-slate-300 bg-white px-4 py-2 text-sm font-bold disabled:opacity-50";
@@ -23,12 +24,13 @@ export function PlannedRouteEditor({ builder, setBuilder, places, vehicle, targe
     modifiers: { purchaseMode: draft.context.purchaseMode, housePartyPlaceMode: draft.context.housePartyPlaceMode,
       visitFormat: draft.context.visitFormat, socialOccasion: draft.context.socialOccasion } });
   const route = draft.context.route;
+  const transportMode = draft.context.transportMode ?? route?.mode;
   const home = places.find((place) => derivePlannedPlaceRoles(place).includes("OWN_HOME"));
   const physicalLabel = (ref: NonNullable<typeof draft.context.place>) => ref.kind === "TEXT"
     ? ref.label : places.find((place) => place.placeId === ref.placeId)?.name ?? "Lieu choisi";
   const changeStops = (stops: readonly PlannedRouteStop[], topologyChanged = false) => {
     setBuilder((current) => editBuilderDraft(current, { ...current.draft,
-      context: { ...current.draft.context, route: { mode: "CAR", stops: topologyChanged
+      context: { ...current.draft.context, transportMode: "CAR", route: { mode: "CAR", stops: topologyChanged
         ? invalidateRouteDistances(stops) : deduplicateRouteStops(stops) } },
       costItems: current.draft.costItems.filter((item) => item.assetKey !== "transport:fuel_usage") }));
     setMessage("");
@@ -73,19 +75,21 @@ export function PlannedRouteEditor({ builder, setBuilder, places, vehicle, targe
         <button type="button" className={`${buttonClass} ml-2 mt-2`} onClick={() => setBuilder((current) => removeBuilderChild(current, child))}>Retirer {childLabel(child)}</button>
       </fieldset>;
     })}
-    {resolved.transport !== "FORBIDDEN" && <details className="rounded-xl border border-slate-200 p-3"><summary className="cursor-pointer font-bold">Prévoir notre trajet en voiture</summary>
-      <p className="mt-2 text-xs text-slate-600">Chaque étape rejoint la suivante. L’historique respecte le sens du trajet ; un retour se choisit explicitement.</p>
+    {resolved.transport !== "FORBIDDEN" && <details className="rounded-xl border border-slate-200 p-3"><summary className="cursor-pointer font-bold">Faut-il prévoir le déplacement ?</summary>
+      <label className="mt-3 grid gap-1 text-sm font-semibold">Comment se déplacer ?<select className={inputClass} value={transportMode ?? ""} onChange={(event) => { const mode = event.target.value as typeof transportMode; setBuilder((current) => changeBuilderContext(current, { ...current.draft.context, transportMode: mode || undefined })); }}><option value="">Pas de déplacement prévu pour le moment</option><option value="CAR">Voiture</option><option value="TRAIN">Train</option><option value="BUS">Bus / transports en commun</option><option value="TAXI">Uber / taxi</option><option value="CARPOOL">Covoiturage</option><option value="FREE">À pied / gratuit</option><option value="OTHER">Autre déplacement payant</option></select></label>
+      {transportMode === "CAR" && <p className="mt-2 text-xs text-slate-600">Chaque étape rejoint la suivante. L’historique respecte le sens du trajet ; un retour se choisit explicitement.</p>}
       <fieldset className="mt-2"><legend className="text-sm font-bold">Qui effectue le trajet ?</legend><div className="flex gap-4">{persons.map((person) => <label key={person.personId} className="flex gap-2 text-sm"><input type="checkbox" checked={draft.context.travellingParticipantPersonIds?.includes(person.personId) ?? false}
         onChange={() => setBuilder((current) => { const previous = current.draft.context.travellingParticipantPersonIds ?? [];
-          return editBuilderDraft(current, { ...current.draft, context: { ...current.draft.context, travellingParticipantPersonIds:
-            previous.includes(person.personId) ? previous.filter((id) => id !== person.personId) : [...previous, person.personId] } }); })} />{person.displayName}</label>)}</div></fieldset>
-      <div className="mt-3 flex gap-2">{["transport:toll", "transport:parking"].map((assetKey) => {
+          return changeBuilderContext(current, { ...current.draft.context, travellingParticipantPersonIds:
+            previous.includes(person.personId) ? previous.filter((id) => id !== person.personId) : [...previous, person.personId] }); })} />{person.displayName}</label>)}</div></fieldset>
+      <div className="mt-3 flex gap-2">{(transportMode === "CAR" ? ["transport:toll", "transport:parking"] : transportMode && transportMode !== "FREE" ? [`transport:${({ TRAIN: "train", BUS: "bus", TAXI: "uber", CARPOOL: "carpool", OTHER: "other" } as Record<string, string>)[transportMode]}`] : []).map((assetKey) => {
         const asset = plannedAsset(assetKey)!;
-        return <button key={assetKey} type="button" className={buttonClass} disabled={draft.costItems.length >= 50} onClick={() => setBuilder((current) => editBuilderDraft(current,
-          { ...current.draft, costItems: [...current.draft.costItems, { id: crypto.randomUUID(), assetKey,
-            label: asset.label, quantity: "1", unitAmount: "", baselineKey: null, modulePath: [resolved.rootModule], priceSource: "MANUAL" }] }))}>Ajouter {asset.label.toLocaleLowerCase("fr")}</button>;
+        return <button key={assetKey} type="button" className={buttonClass} disabled={draft.costItems.length >= 50 || draft.costItems.some((item) => item.assetKey === assetKey)} onClick={() => setBuilder((current) => { const id = crypto.randomUUID(); return editBuilderDraft({ ...current, origins: { ...current.origins, [`quantity.${id}`]: "AUTO_DERIVED" } },
+          { ...current.draft, costItems: [...current.draft.costItems, { id, assetKey,
+            label: asset.label, quantity: suggestedAssetQuantity(asset, assetParticipantCount(asset, current.draft.context)), unitAmount: "", baselineKey: null, modulePath: [resolved.rootModule], priceSource: "MANUAL" }] }); })}>Ajouter {asset.label.toLocaleLowerCase("fr")}</button>;
       })}</div>
-      {!route && <button type="button" className={`${buttonClass} mt-2`} onClick={() => changeStops([
+      {transportMode === "FREE" && <p className="text-sm">Aucun coût de déplacement ajouté.</p>}
+      {transportMode === "CAR" && !route && <button type="button" className={`${buttonClass} mt-2`} onClick={() => changeStops([
         home ? { label: home.name, placeId: home.placeId, endpointSource: "DIRECT_PLACE" } : { label: "Départ à préciser", endpointSource: "DIRECT_PLACE" },
         draft.context.place ? stopForPlace(draft.context.place, physicalLabel(draft.context.place), "ROOT_PLACE")
           : { label: "Destination à préciser", endpointSource: "DIRECT_PLACE" }], true)}>Prévoir un trajet voiture</button>}

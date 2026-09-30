@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import Image from "next/image";
 import { X } from "lucide-react";
 import { HistorySemanticIcon } from "@/features/history-v2/semantic-icon";
 import type { CalendarEntry, CalendarItem } from "./planned-expenses-projection";
@@ -16,7 +17,7 @@ const buttonClass = "rounded-lg border border-slate-300 bg-white px-3 py-2 text-
 function EventIcon({ item, size = 16 }: { item: CalendarItem; size?: number }) {
   const icon = calendarIcon(item);
   return <span data-brand-key={icon.brandKey ?? undefined} className="inline-flex shrink-0 items-center justify-center" aria-hidden="true">
-    <HistorySemanticIcon iconKey={icon.semanticIconKey} size={size} />
+    {icon.brandKey ? <Image src={`/brands/${icon.brandKey}.svg`} width={size} height={size} alt="" /> : <HistorySemanticIcon iconKey={icon.semanticIconKey} size={size} />}
   </span>;
 }
 
@@ -38,7 +39,7 @@ export function CalendarEventDetails({ item, onAction }: { item: CalendarItem;
       </ul>
       {detail && <dl className="mt-3 grid grid-cols-2 gap-2 text-sm"><dt>S’ajoute au mois</dt><dd className="text-right font-bold">{calendarMoney(detail.additionalImpact)}</dd>
         <dt>Déjà compris dans le quotidien</dt><dd className="text-right">{calendarMoney(detail.includedBaseline)}</dd>
-        {detail.funding.map((part) => <div key={part.source} className="col-span-2 flex justify-between gap-3"><dt>{part.source === "BANK" ? "Banque" : part.source === "SWILE" ? "Swile" : "Edenred"} · {expense.status === "PLANNED" ? "réservé" : "utilisé déclaré"}</dt><dd>{calendarMoney(part.amount)}</dd></div>)}
+        {detail.funding.map((part) => <div key={part.source} className="col-span-2 flex justify-between gap-3"><dt>{part.source === "BANK" ? "Banque" : part.source === "SWILE" ? "Swile" : "Edenred"} · {expense.status === "PLANNED" ? part.source === "BANK" ? "prévu" : "réservé" : "utilisé déclaré"}</dt><dd>{calendarMoney(part.amount)}</dd></div>)}
         {detail.fuelUsage !== "0.00" && <><dt>Usage carburant estimé</dt><dd className="text-right">{calendarMoney(detail.fuelUsage)}</dd></>}
       </dl>}
       {detail?.placeLabel && <p className="mt-3 text-sm">Lieu : {detail.placeLabel}</p>}
@@ -108,7 +109,7 @@ export function MonthCalendar({ targetMonth, entries, undated, dailyTotals }: { 
                 const next = calendarKeyboardDay(day, event.key, days, firstWeekday);
                 if (next !== null) { event.preventDefault(); setActiveDay(next); dayButtons.current.get(next)?.focus(); }
               }} onClick={(event) => open(date, event.currentTarget)}
-              className={`flex h-40 w-full min-w-0 flex-col rounded-xl border p-2 text-left focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-700 ${selected === date ? "outline-2 outline-offset-1 outline-indigo-700" : ""} ${dayEntries.length ? "border-slate-200 bg-white" : "border-transparent bg-slate-50"}`}>
+              className={`flex h-32 w-full min-w-0 flex-col rounded-xl border p-2 text-left focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-700 ${selected === date ? "outline-2 outline-offset-1 outline-indigo-700" : ""} ${dayEntries.length ? "border-slate-200 bg-white" : "border-transparent bg-slate-50"}`}>
               <span className="flex w-full justify-between gap-1 text-xs font-bold tabular-nums"><span>{day}</span>
                 {dayEntries.length > 1 && <span>{calendarMoney(dailyTotals[date]!)}</span>}</span>
               <span className="mt-2 grid w-full gap-1">{visible.map((item) => <span key={item.key} data-calendar-event={item.key}

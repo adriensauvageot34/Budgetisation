@@ -49,6 +49,16 @@ const edge = (fromRoot: AssetModule, childModule: ModuleEdge["childModule"],
 
 // Transport is a root capability, never a child. BringItems is a lens, never a node.
 export const MODULE_EDGES: readonly ModuleEdge[] = [
+  edge("other", "restaurant", "AVAILABLE", "OPTIONAL", "AVAILABLE"),
+  edge("other", "activity", "AVAILABLE", "OPTIONAL", "AVAILABLE"),
+  edge("other", "gift", "AVAILABLE"),
+  edge("other", "bar", "AVAILABLE", "OPTIONAL", "AVAILABLE"),
+  edge("other", "club", "AVAILABLE", "OPTIONAL", "AVAILABLE"),
+  edge("other", "beauty", "AVAILABLE"),
+  edge("other", "clothing", "AVAILABLE"),
+  edge("other", "household", "AVAILABLE"),
+  edge("other", "tech", "AVAILABLE"),
+  edge("other", "home", "AVAILABLE"),
   edge("groceries", "beauty", "AVAILABLE", "HIDDEN", "NEVER", { inherit: ["DATE", "PLACE"] }),
   edge("groceries", "household", "AVAILABLE", "HIDDEN", "NEVER", { inherit: ["DATE", "PLACE"] }),
   edge("groceries", "house_party", "AVAILABLE", "HIDDEN", "NEVER", { inherit: ["DATE", "PLACE"] }),
@@ -150,7 +160,7 @@ export function resolvePlannedContext(input: Readonly<{ familyKey: PlannedExpens
       transport = m.housePartyPlaceMode === "OTHER_HOME" ? "SUGGESTED" : "FORBIDDEN";
     } else { selectedPlace = place("OPTIONAL", ["BAR", "NIGHT_OUT", "ACTIVITY"]); transport = "AVAILABLE"; }
   } else if (familyKey === "food") {
-    if (subtypeKey === "groceries") { selectedPlace = place("OPTIONAL", ["GROCERY"]); baseline = askBaseline("groceries"); }
+    if (subtypeKey === "groceries") { selectedPlace = place("OPTIONAL", ["GROCERY"]); baseline = askBaseline("groceries"); transport = "AVAILABLE"; }
     if (subtypeKey === "restaurant") { fields.participants = "OPTIONAL";
       selectedPlace = place("OPTIONAL", ["RESTAURANT"]); transport = "AVAILABLE";
       baseline = askBaseline("household-restaurants"); }
@@ -179,11 +189,12 @@ export function resolvePlannedContext(input: Readonly<{ familyKey: PlannedExpens
     selectedPlace = place("OPTIONAL", ["ACTIVITY"], "CANONICAL", true,
       ACTIVITY_PLACE_HINTS[subtypeKey ?? ""]); transport = "SUGGESTED";
   } else if (familyKey === "purchase") {
+    transport = m.purchaseMode === "ONLINE" ? "FORBIDDEN" : "AVAILABLE";
     if (subtypeKey === "gift") { selectedPlace = place("OPTIONAL", [], "DYNAMIC_GIFT");
       fields.socialOccasion = "OPTIONAL"; }
     else {
       const roles: Partial<Record<string, readonly PlaceRole[]>> = { beauty: ["BEAUTY_RETAIL", "PHARMACY", "HAIRDRESSER"],
-        clothing: ["CLOTHING_RETAIL", "SHOPPING_AREA"], household: ["HOUSEHOLD_RETAIL"],
+        clothing: ["CLOTHING_RETAIL", "SHOPPING_AREA"], household: ["HOUSEHOLD_RETAIL", "GROCERY"],
         home_equipment: ["HOME_EQUIPMENT", "SHOPPING_AREA"], tech: ["TECH_RETAIL", "SHOPPING_AREA"],
         automotive: ["AUTO_RETAIL_SERVICE"] };
       selectedPlace = place("OPTIONAL", roles[subtypeKey ?? ""] ?? [], roles[subtypeKey ?? ""] ? "CANONICAL" : "NONE");
@@ -194,7 +205,9 @@ export function resolvePlannedContext(input: Readonly<{ familyKey: PlannedExpens
     }
   } else { selectedPlace = place("OPTIONAL", [], "NONE"); }
   fields.place = selectedPlace.field;
-  const children = MODULE_EDGES.filter((item) => item.fromRoot === entry.rootModule).map((item) =>
+  const children = MODULE_EDGES.filter((item) => item.fromRoot === entry.rootModule
+    && (entry.rootModule !== "other" || subtypeKey === "other_outing" && ["restaurant", "activity", "bar", "club", "gift"].includes(item.childModule)
+      || subtypeKey === "other_purchase" && ["beauty", "clothing", "household", "tech", "home", "gift"].includes(item.childModule))).map((item) =>
     item.childModule === "gift" && giftOccasion(m.socialOccasion)
       ? { ...item, availability: "SUGGESTED" as const } : item);
   const provider = m.purchaseMode === "DELIVERY"

@@ -37,7 +37,7 @@ assert.equal(suggestedAssetQuantity(plannedAsset("bar:tapas"), 2), "1");
 // ASSET-02: the visible house-party preset stays two editable catalog suggestions.
 assert.deepEqual(assetsForModule("house_party").slice(0, 2).map((asset) =>
   [asset.label, asset.defaultQuantity, asset.defaultUnitAmount]),
-[["Vodka", "1", "16.00"], ["Crazy Tiger", "2", "3.00"]]);
+[["Vodka", "1", "16.00"], ["Crazy Tiger sans alcool", "2", "3.00"]]);
 
 // ASSET-03: nested restaurant is one top-level trip with a preserved module path.
 const trip = parsePlannedExpenseDraft(draft("visit_trip", "trip_stay",

@@ -1,6 +1,7 @@
 import type { PlaceRole } from "./planned-contract";
 
 export type PlannedPlaceFacts = Readonly<{ nature: string | null; usage: string | null;
+  name?: string;
   subtype: string | null; privatePlace: boolean;
   relationships?: readonly { personName: string; role: string }[] }>;
 type Rule = Readonly<{ field: "nature" | "usage" | "subtype"; pattern: RegExp; add: readonly PlaceRole[] }>;
@@ -31,6 +32,12 @@ export const PLACE_ROLE_RULES: readonly Rule[] = [
   { field: "nature", pattern: /Gare|Aéroport|Station de bus/iu, add: ["TRANSPORT_HUB"] },
 ];
 
+/** V1 exact exceptions: canonical metadata is too broad for these observed establishments. */
+export const PLACE_ROLE_OVERRIDES_V1: Readonly<Record<string, readonly PlaceRole[]>> = {
+  "McDonald’s": ["FAST_FOOD"], "Burger King Odysseum": ["FAST_FOOD"],
+  "Thai to Box": ["FAST_FOOD"], "Chicken Place – Castelnau-le-Lez": ["FAST_FOOD"],
+};
+
 export function derivePlannedPlaceRoles(place: PlannedPlaceFacts): readonly PlaceRole[] {
   const roles = new Set<PlaceRole>();
   // Same exact home classification as the canonical MobilityTrip reconstruction.
@@ -38,6 +45,11 @@ export function derivePlannedPlaceRoles(place: PlannedPlaceFacts): readonly Plac
     roles.add("OWN_HOME");
   for (const rule of PLACE_ROLE_RULES) if (rule.pattern.test(place[rule.field] ?? ""))
     for (const role of rule.add) roles.add(role);
+  const override = place.name ? PLACE_ROLE_OVERRIDES_V1[place.name] : undefined;
+  if (override && !place.privatePlace) { roles.clear(); for (const role of override) roles.add(role); }
+  if (roles.has("FAST_FOOD")) roles.delete("RESTAURANT");
+  if (roles.has("NIGHT_OUT")) { roles.delete("BAR"); roles.delete("ACTIVITY"); }
+  if (roles.has("HAIRDRESSER")) roles.delete("BEAUTY_RETAIL");
   if (place.relationships?.some((relation) => relation.role === "PRIMARY_HOME" || relation.role === "HOUSEHOLD_HOME"))
     roles.add("OWN_HOME");
   if (place.privatePlace) for (const role of [...roles])
