@@ -13,18 +13,17 @@ export const calendarStateLabel = (item: CalendarItem) => item.nature === "DECLA
   ? "✓ Réalisée · déclarée par vous" : item.nature === "PLANNED_EXPENSE"
     ? item.expense?.needsRealityConfirmation ? "Prévue · à confirmer" : "Prévue" : "Échéance";
 export const calendarDateLabel = (item: CalendarItem) => item.dateCertainty === "HISTORICAL_ESTIMATE"
-  ? "≈ Date habituelle estimée" : item.dateCertainty === "DECLARED" ? "Date précise" : "Sans jour précis";
+  ? "Date habituelle estimée" : item.dateCertainty === "DECLARED" ? "Date précise" : "Sans jour précis";
 
 /** In a compact row the adjacent logo already identifies the brand. Keep the
  * distinguishing contract visible rather than repeating the brand in the text. */
-export const calendarEventLabel = (item: CalendarItem) => item.brandKey
-  ? (item.calendarLabel ?? item.label).replace(/^[^·]+ · /u, "") : item.calendarLabel ?? item.label;
+export const calendarEventLabel = (item: CalendarItem) => item.calendarLabel ?? item.label;
 
 /** Visual salience only; this never changes financial ordering or totals. */
 export function orderCalendarItems(items: readonly CalendarItem[]): CalendarItem[] {
   const priority = (item: CalendarItem) => item.expense?.needsRealityConfirmation ? 0
-    : item.nature !== "CERTAIN_OUTFLOW" ? 1 : item.dateCertainty === "DECLARED" ? 2
-      : item.dateCertainty === "HISTORICAL_ESTIMATE" ? 4 : 3;
+    : item.nature === "PLANNED_EXPENSE" ? 1 : item.nature === "DECLARED_REALIZED" ? 2
+      : item.dateCertainty === "DECLARED" ? 3 : item.dateCertainty === "HISTORICAL_ESTIMATE" ? 5 : 4;
   return [...items].sort((a, b) => priority(a) - priority(b)
     || new Big(b.amount).cmp(a.amount) || a.key.localeCompare(b.key));
 }
@@ -37,8 +36,7 @@ export function calendarDaySummary(items: readonly CalendarItem[]) {
   const estimated = items.filter((item) => item.dateCertainty === "HISTORICAL_ESTIMATE");
   const sum = (rows: readonly CalendarItem[]) => rows.reduce((total, item) => total.plus(item.amount), new Big(0)).toFixed(2);
   return { grossTotal: sum(items), exactDateTotal: sum(exact), estimatedDateTotal: sum(estimated),
-    exactCount: exact.length, estimatedCount: estimated.length,
-    marker: estimated.length ? exact.length ? "◌" : "≈" : "" };
+    exactCount: exact.length, estimatedCount: estimated.length };
 }
 
 export function calendarInitialDay(targetMonth: string, today: string, items: readonly CalendarItem[]) {
@@ -55,11 +53,21 @@ export function calendarExpenseActions(expense: NonNullable<CalendarItem["expens
 }
 
 export function calendarDayDescription(date: string, items: readonly CalendarItem[], total?: string) {
-  const summary = calendarDaySummary(items);
-  return `${calendarDate(date)} : ${items.length} élément${items.length > 1 ? "s" : ""}`
-    + (total ? `, ${calendarMoney(total)} au total` : "")
-    + (items.length ? `. ${summary.exactCount} à date précise, ${summary.estimatedCount} à date habituelle estimée. Ouvrir les détails`
+  return `${calendarDate(date)}. ${items.length} élément${items.length > 1 ? "s" : ""}`
+    + (total ? `. Total ${calendarMoney(total)}` : "")
+    + (items.length ? ". Ouvrir les détails"
       : ". Rien de prévu. Prévoir quelque chose ce jour");
+}
+
+/** Local panel positioning only; no calendar/financial state is derived here. */
+export function calendarPopoverPosition(anchor: { left: number; right: number; top: number; bottom: number },
+  viewport: { width: number; height: number }, panel: { width: number; height: number }) {
+  const gap = 8, margin = 12;
+  const left = Math.max(margin, Math.min(anchor.left, viewport.width - panel.width - margin));
+  const below = anchor.bottom + gap;
+  const top = below + panel.height <= viewport.height - margin ? below
+    : Math.max(margin, Math.min(anchor.top - panel.height - gap, viewport.height - panel.height - margin));
+  return { left, top };
 }
 
 /** Roving focus stays in this month; Home/End move within the current week. */
