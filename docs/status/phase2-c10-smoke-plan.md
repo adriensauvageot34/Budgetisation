@@ -4,6 +4,10 @@ HEAD de départ : `bed265c2d4f648123054fe4b5e4b2677d61a9498`.
 Périmètre : navigateur local `/mois-a-venir`, ordinateur, actions applicatives
 existantes, fixtures identifiées par le préfixe `[C10-SMOKE-`.
 
+Ce document est le plan initial soumis à validation. Les statuts du tableau sont
+ceux d'avant exécution ; les résultats réels et le nettoyage figurent désormais
+dans [le journal navigateur](phase2-c10-browser-evidence.json) et le bundle final.
+
 ## Parcours à certifier
 
 | ID | Parcours | Preuve attendue | Navigateur |

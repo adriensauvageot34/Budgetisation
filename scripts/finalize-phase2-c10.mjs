@@ -46,7 +46,9 @@ const gaps = ["No configured lint runner (NOT_APPLICABLE).", "Browser smokes use
 const report = { checkedAt: new Date().toISOString(), headFinal: git("rev-parse", "HEAD"), branch: git("branch", "--show-current"),
   worktree: git("status", "--short").split("\n").filter(Boolean), sourceSha256: auto.preflight.sourceSha256,
   headConvention: "HEAD_FINAL identifies the tested implementation commit. The subsequent evidence-only commit references this immutable HEAD without a self-referential Git hash.",
-  commands: auto.commands, gates, ruleCoverage: auto.ruleCoverage, metamorphic: auto.metamorphic,
+  commands: auto.commands, gates, ruleCoverage: auto.ruleCoverage.map(row => ({ ...row,
+    USER_FLOW_PROOF: row.HORIZON === "V1.1" ? "NOT_APPLICABLE: deferred"
+      : browserStatus === "PASS" ? "C10 SMOKE-01..10 representative; per-rule automated proofs retained, not exhaustive browser assertion" : browserStatus })), metamorphic: auto.metamorphic,
   browserEvidence: browser, restoration, financialOracle: auto.commands["scripts/check-phase2-planned-finance.mjs"],
   routeOracle: auto.live, rls: read("phase2-c10-database-evidence.json"), zeroWrite: auto.targetedZeroWrite,
   previewSaveParity: auto.commands["scripts/check-phase2-planned-reliability.mjs"], cleanupReport: base + "phase2-c10-cleanup.md",

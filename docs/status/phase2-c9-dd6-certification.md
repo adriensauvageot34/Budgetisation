@@ -1,6 +1,6 @@
 # Phase 2 — C9 certification DD6 automatique
 
-Exécuté : 2026-09-30T01:01:34.319Z (UTC). HEAD de départ : 0d83eb018a022add0318025f9bfb27104a256ed7.
+Exécuté : 2026-09-30T09:14:25.273Z (UTC). HEAD de départ : bed265c2d4f648123054fe4b5e4b2677d61a9498.
 
 Les preuves RLS sont celles du test distant approuvé, daté et annulé par ROLLBACK, avec contrôle du hash SQL. Les parcours représentatifs restent PENDING_C10.
 
@@ -35,17 +35,17 @@ Les preuves RLS sont celles du test distant approuvé, daté et annulé par ROLL
 | Runner | Statut |
 | --- | --- |
 | scripts/check-phase2-planned-domain.mjs | PASS |
-| scripts/check-phase2-planned-server-contract.mjs | PASS |
 | scripts/check-phase2-planned-builder.mjs | PASS |
+| scripts/check-phase2-planned-server-contract.mjs | PASS |
 | scripts/check-phase2-planned-assets.mjs | PASS |
 | scripts/check-phase2-planned-expenses.mjs | PASS |
 | scripts/check-phase2-planned-expenses-ui.mjs | PASS |
-| scripts/check-phase2-planned-finance.mjs | PASS |
 | scripts/check-phase2-planned-routes.mjs | PASS |
+| scripts/check-phase2-planned-finance.mjs | PASS |
 | scripts/check-phase2-planned-reliability.mjs | PASS |
 | scripts/check-phase2-planned-guards.mjs | PASS |
-| scripts/check-phase2-planned-calendar.mjs | PASS |
 | scripts/check-phase2-planned-reality.mjs | PASS |
+| scripts/check-phase2-planned-calendar.mjs | PASS |
 | scripts/check-architecture-imports.mjs | PASS |
 | types | PASS |
 | lint | NOT_APPLICABLE |

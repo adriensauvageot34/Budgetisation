@@ -1,210 +1,17 @@
 {
-  "checkedAt": "2026-09-30T09:14:25.273Z",
-  "preflight": {
-    "head": "bed265c2d4f648123054fe4b5e4b2677d61a9498",
-    "branch": "main",
-    "worktree": [
-      "M scripts/check-phase2-planned-assets.mjs",
-      " M scripts/check-phase2-planned-guards.mjs",
-      " M src/app/mois-a-venir/planned-expenses-control.tsx",
-      " M src/domain/phase2/planned-places.ts",
-      "?? docs/status/phase2-c10-cleanup.md",
-      "?? docs/status/phase2-c10-database-evidence.json",
-      "?? docs/status/phase2-c10-restoration.json",
-      "?? docs/status/phase2-c10-smoke-plan.md"
-    ],
-    "plannedMigrations": [
-      "20260928163114_phase2_planned_expenses.sql",
-      "20260928205006_phase2_planned_cost_items_guard.sql",
-      "20260928210316_phase2_planned_cost_items_guard_fix.sql",
-      "20260929064922_phase2_planned_asset_cost_items.sql",
-      "20260929211001_phase2_planned_module_path_v1.sql",
-      "20260929232710_phase2_planned_report_month.sql"
-    ],
-    "sourceSha256": "29f33248bba050a02e8f358d9b277d7d47022431111105cb26c2bc095c9d3cd0",
-    "commands": {
-      "types": "tsc --noEmit",
-      "lint": null,
-      "build": "next build"
-    },
-    "protectedAuthorities": [
-      "operations",
-      "life_events",
-      "moments",
-      "mobility_legs",
-      "mobility_trips",
-      "persons",
-      "referentiel_lieu",
-      "person_place_roles",
-      "fuel_price_observations",
-      "benefit_wallets",
-      "benefit_wallet_ledger_entries",
-      "analytics_query_snapshots",
-      "analytics_artifacts",
-      "analytics_publications"
-    ]
-  },
-  "oracleDoctrine": "Expected values are declared fixtures, contract laws or independent current medians; never regenerated from failing implementation.",
-  "dbEvidence": "docs/status/phase2-c10-database-evidence.json",
-  "live": {
-    "checkedAt": "2026-09-30T09:14:16.545Z",
-    "plannedRows": 0,
-    "oracle": "LIVE_CURRENT",
-    "routeOracles": [
-      {
-        "contactKey": "manon_father",
-        "oracle": "LIVE_CURRENT",
-        "directedDistances": [
-          "62.962",
-          "64.342"
-        ],
-        "observationCounts": [
-          3,
-          3
-        ],
-        "fuelCost": "20.83",
-        "status": "KNOWN"
-      },
-      {
-        "contactKey": "lucas",
-        "oracle": "LIVE_CURRENT",
-        "directedDistances": [
-          "6.196",
-          null
-        ],
-        "observationCounts": [
-          1,
-          0
-        ],
-        "fuelCost": null,
-        "status": "PARTIAL"
-      },
-      {
-        "contactKey": "cedric",
-        "oracle": "LIVE_CURRENT",
-        "directedDistances": [
-          "13.169",
-          "14.327"
-        ],
-        "observationCounts": [
-          2,
-          2
-        ],
-        "fuelCost": "4.96",
-        "status": "KNOWN"
-      }
-    ],
-    "fuelObservedAt": "2026-07-01T00:00:00+00:00",
-    "protectedAuthorities": [
-      "operations",
-      "life_events",
-      "moments",
-      "mobility_legs",
-      "mobility_trips",
-      "persons",
-      "referentiel_lieu",
-      "person_place_roles",
-      "fuel_price_observations",
-      "benefit_wallets",
-      "benefit_wallet_ledger_entries",
-      "analytics_query_snapshots",
-      "analytics_artifacts",
-      "analytics_publications"
-    ],
-    "writes": 0
-  },
-  "targetedZeroWrite": [
-    {
-      "operation": "Preview",
-      "prospectiveWrites": 0,
-      "historicalWrites": 0,
-      "targetedRoot": true
-    },
-    {
-      "operation": "Create",
-      "prospectiveWrites": 1,
-      "historicalWrites": 0,
-      "targetedRoot": true
-    },
-    {
-      "operation": "Update",
-      "prospectiveWrites": 1,
-      "historicalWrites": 0,
-      "targetedRoot": true
-    },
-    {
-      "operation": "Declare",
-      "prospectiveWrites": 1,
-      "historicalWrites": 0,
-      "targetedRoot": true
-    },
-    {
-      "operation": "Restore",
-      "prospectiveWrites": 1,
-      "historicalWrites": 0,
-      "targetedRoot": true
-    },
-    {
-      "operation": "Report",
-      "prospectiveWrites": 1,
-      "historicalWrites": 0,
-      "targetedRoot": true
-    },
-    {
-      "operation": "Delete",
-      "prospectiveWrites": 1,
-      "historicalWrites": 0,
-      "targetedRoot": true
-    },
-    {
-      "operation": "contact TEXT + user-declared place",
-      "prospectiveWrites": 1,
-      "historicalWrites": 0,
-      "targetedRoot": true
-    },
-    {
-      "operation": "child local place",
-      "prospectiveWrites": 1,
-      "historicalWrites": 0,
-      "targetedRoot": true
-    },
-    {
-      "operation": "route/fuel Preview",
-      "prospectiveWrites": 0,
-      "historicalWrites": 0,
-      "targetedRoot": true
-    },
-    {
-      "operation": "route/fuel Save",
-      "prospectiveWrites": 1,
-      "historicalWrites": 0,
-      "targetedRoot": true
-    },
-    {
-      "operation": "Declared route",
-      "prospectiveWrites": 1,
-      "historicalWrites": 0,
-      "targetedRoot": true
-    },
-    {
-      "operation": "draft context change + local Undo",
-      "prospectiveWrites": 0,
-      "historicalWrites": 0,
-      "targetedRoot": true
-    },
-    {
-      "operation": "foreign refs",
-      "prospectiveWrites": 0,
-      "historicalWrites": 0,
-      "targetedRoot": true
-    },
-    {
-      "operation": "foreign refs",
-      "prospectiveWrites": 0,
-      "historicalWrites": 0,
-      "targetedRoot": true
-    }
+  "checkedAt": "2026-09-30T09:23:19.932Z",
+  "headFinal": "7f0deb279fdd64d5fd0087e360cf3bc9c02807e5",
+  "branch": "main",
+  "worktree": [
+    "M docs/status/phase2-c10-smoke-plan.md",
+    " M docs/status/phase2-c9-dd6-certification.json",
+    " M docs/status/phase2-c9-dd6-certification.md",
+    " M scripts/finalize-phase2-c10.mjs",
+    "?? docs/status/phase2-c10-final-evidence.json",
+    "?? docs/status/phase2-c10-final-evidence.md"
   ],
+  "sourceSha256": "29f33248bba050a02e8f358d9b277d7d47022431111105cb26c2bc095c9d3cd0",
+  "headConvention": "HEAD_FINAL identifies the tested implementation commit. The subsequent evidence-only commit references this immutable HEAD without a self-referential Git hash.",
   "commands": {
     "scripts/check-phase2-planned-domain.mjs": {
       "STATUS": "PASS",
@@ -319,6 +126,113 @@
       "reason": "Previously executed, human-approved remote rollback probe, matching SQL digest. Not silently rerun."
     }
   },
+  "gates": [
+    {
+      "ID": "GATE-01",
+      "NAME": "Registry/config",
+      "STATUS": "PASS"
+    },
+    {
+      "ID": "GATE-02",
+      "NAME": "Context resolver",
+      "STATUS": "PASS"
+    },
+    {
+      "ID": "GATE-03",
+      "NAME": "Adaptive Builder/readiness",
+      "STATUS": "PASS"
+    },
+    {
+      "ID": "GATE-04",
+      "NAME": "Places/contacts/social",
+      "STATUS": "PASS"
+    },
+    {
+      "ID": "GATE-05",
+      "NAME": "Assets/module graph",
+      "STATUS": "PASS"
+    },
+    {
+      "ID": "GATE-06",
+      "NAME": "Funding/baseline",
+      "STATUS": "PASS"
+    },
+    {
+      "ID": "GATE-07",
+      "NAME": "Financial decision truth",
+      "STATUS": "PASS"
+    },
+    {
+      "ID": "GATE-08",
+      "NAME": "Child local place/root transport",
+      "STATUS": "PASS"
+    },
+    {
+      "ID": "GATE-09",
+      "NAME": "Route/fuel",
+      "STATUS": "PASS"
+    },
+    {
+      "ID": "GATE-10",
+      "NAME": "Lifecycle/reality transition",
+      "STATUS": "PASS"
+    },
+    {
+      "ID": "GATE-11",
+      "NAME": "Persistence/idempotence/stale",
+      "STATUS": "PASS"
+    },
+    {
+      "ID": "GATE-12",
+      "NAME": "Server validation",
+      "STATUS": "PASS"
+    },
+    {
+      "ID": "GATE-13",
+      "NAME": "MonthScenario/read model",
+      "STATUS": "PASS"
+    },
+    {
+      "ID": "GATE-14",
+      "NAME": "Calendar/list/forecast",
+      "STATUS": "PASS"
+    },
+    {
+      "ID": "GATE-15",
+      "NAME": "Preview/Save parity",
+      "STATUS": "PASS"
+    },
+    {
+      "ID": "GATE-16",
+      "NAME": "RLS",
+      "STATUS": "PASS"
+    },
+    {
+      "ID": "GATE-17",
+      "NAME": "Targeted historical zero-write",
+      "STATUS": "PASS"
+    },
+    {
+      "ID": "GATE-18",
+      "NAME": "Production build",
+      "STATUS": "PASS"
+    },
+    {
+      "ID": "GATE-19",
+      "NAME": "Rule coverage / ownership",
+      "STATUS": "PASS"
+    },
+    {
+      "ID": "GATE-20",
+      "NAME": "Cleanup no duplicate authority",
+      "STATUS": "PASS"
+    },
+    {
+      "ID": "GATE-21",
+      "NAME": "Representative user flow evidence",
+      "STATUS": "PASS"
+    }
+  ],
   "ruleCoverage": [
     {
       "RULE_ID": "GLOBAL-01",
@@ -336,7 +250,7 @@
           "EVIDENCE": "ZERO-WRITE"
         }
       ],
-      "USER_FLOW_PROOF": "PENDING_C10",
+      "USER_FLOW_PROOF": "C10 SMOKE-01..10 representative; per-rule automated proofs retained, not exhaustive browser assertion",
       "NEGATIVE_PROOF": [
         {
           "RUNNER": "scripts/check-phase2-planned-server-contract.mjs",
@@ -368,7 +282,7 @@
           "EVIDENCE": "ZERO-WRITE"
         }
       ],
-      "USER_FLOW_PROOF": "PENDING_C10",
+      "USER_FLOW_PROOF": "C10 SMOKE-01..10 representative; per-rule automated proofs retained, not exhaustive browser assertion",
       "NEGATIVE_PROOF": [
         {
           "RUNNER": "scripts/check-phase2-planned-server-contract.mjs",
@@ -400,7 +314,7 @@
           "EVIDENCE": "ZERO-WRITE"
         }
       ],
-      "USER_FLOW_PROOF": "PENDING_C10",
+      "USER_FLOW_PROOF": "C10 SMOKE-01..10 representative; per-rule automated proofs retained, not exhaustive browser assertion",
       "NEGATIVE_PROOF": [
         {
           "RUNNER": "scripts/check-phase2-planned-server-contract.mjs",
@@ -432,7 +346,7 @@
           "EVIDENCE": "ZERO-WRITE"
         }
       ],
-      "USER_FLOW_PROOF": "PENDING_C10",
+      "USER_FLOW_PROOF": "C10 SMOKE-01..10 representative; per-rule automated proofs retained, not exhaustive browser assertion",
       "NEGATIVE_PROOF": [
         {
           "RUNNER": "scripts/check-phase2-planned-server-contract.mjs",
@@ -464,7 +378,7 @@
           "EVIDENCE": "ZERO-WRITE"
         }
       ],
-      "USER_FLOW_PROOF": "PENDING_C10",
+      "USER_FLOW_PROOF": "C10 SMOKE-01..10 representative; per-rule automated proofs retained, not exhaustive browser assertion",
       "NEGATIVE_PROOF": [
         {
           "RUNNER": "scripts/check-phase2-planned-server-contract.mjs",
@@ -496,7 +410,7 @@
           "EVIDENCE": "ZERO-WRITE"
         }
       ],
-      "USER_FLOW_PROOF": "PENDING_C10",
+      "USER_FLOW_PROOF": "C10 SMOKE-01..10 representative; per-rule automated proofs retained, not exhaustive browser assertion",
       "NEGATIVE_PROOF": [
         {
           "RUNNER": "scripts/check-phase2-planned-server-contract.mjs",
@@ -528,7 +442,7 @@
           "EVIDENCE": "ZERO-WRITE"
         }
       ],
-      "USER_FLOW_PROOF": "PENDING_C10",
+      "USER_FLOW_PROOF": "C10 SMOKE-01..10 representative; per-rule automated proofs retained, not exhaustive browser assertion",
       "NEGATIVE_PROOF": [
         {
           "RUNNER": "scripts/check-phase2-planned-server-contract.mjs",
@@ -560,7 +474,7 @@
           "EVIDENCE": "ZERO-WRITE"
         }
       ],
-      "USER_FLOW_PROOF": "PENDING_C10",
+      "USER_FLOW_PROOF": "C10 SMOKE-01..10 representative; per-rule automated proofs retained, not exhaustive browser assertion",
       "NEGATIVE_PROOF": [
         {
           "RUNNER": "scripts/check-phase2-planned-server-contract.mjs",
@@ -592,7 +506,7 @@
           "EVIDENCE": "ZERO-WRITE"
         }
       ],
-      "USER_FLOW_PROOF": "PENDING_C10",
+      "USER_FLOW_PROOF": "C10 SMOKE-01..10 representative; per-rule automated proofs retained, not exhaustive browser assertion",
       "NEGATIVE_PROOF": [
         {
           "RUNNER": "scripts/check-phase2-planned-server-contract.mjs",
@@ -624,7 +538,7 @@
           "EVIDENCE": "ZERO-WRITE"
         }
       ],
-      "USER_FLOW_PROOF": "PENDING_C10",
+      "USER_FLOW_PROOF": "C10 SMOKE-01..10 representative; per-rule automated proofs retained, not exhaustive browser assertion",
       "NEGATIVE_PROOF": [
         {
           "RUNNER": "scripts/check-phase2-planned-server-contract.mjs",
@@ -656,7 +570,7 @@
           "EVIDENCE": "ZERO-WRITE"
         }
       ],
-      "USER_FLOW_PROOF": "PENDING_C10",
+      "USER_FLOW_PROOF": "C10 SMOKE-01..10 representative; per-rule automated proofs retained, not exhaustive browser assertion",
       "NEGATIVE_PROOF": [
         {
           "RUNNER": "scripts/check-phase2-planned-server-contract.mjs",
@@ -688,7 +602,7 @@
           "EVIDENCE": "ZERO-WRITE"
         }
       ],
-      "USER_FLOW_PROOF": "PENDING_C10",
+      "USER_FLOW_PROOF": "C10 SMOKE-01..10 representative; per-rule automated proofs retained, not exhaustive browser assertion",
       "NEGATIVE_PROOF": [
         {
           "RUNNER": "scripts/check-phase2-planned-server-contract.mjs",
@@ -720,7 +634,7 @@
           "EVIDENCE": "ZERO-WRITE"
         }
       ],
-      "USER_FLOW_PROOF": "PENDING_C10",
+      "USER_FLOW_PROOF": "C10 SMOKE-01..10 representative; per-rule automated proofs retained, not exhaustive browser assertion",
       "NEGATIVE_PROOF": [
         {
           "RUNNER": "scripts/check-phase2-planned-server-contract.mjs",
@@ -752,7 +666,7 @@
           "EVIDENCE": "parsePlannedExpenseDraft"
         }
       ],
-      "USER_FLOW_PROOF": "PENDING_C10",
+      "USER_FLOW_PROOF": "C10 SMOKE-01..10 representative; per-rule automated proofs retained, not exhaustive browser assertion",
       "NEGATIVE_PROOF": [
         {
           "RUNNER": "scripts/check-phase2-planned-builder.mjs",
@@ -784,7 +698,7 @@
           "EVIDENCE": "parsePlannedExpenseDraft"
         }
       ],
-      "USER_FLOW_PROOF": "PENDING_C10",
+      "USER_FLOW_PROOF": "C10 SMOKE-01..10 representative; per-rule automated proofs retained, not exhaustive browser assertion",
       "NEGATIVE_PROOF": [
         {
           "RUNNER": "scripts/check-phase2-planned-builder.mjs",
@@ -816,7 +730,7 @@
           "EVIDENCE": "parsePlannedExpenseDraft"
         }
       ],
-      "USER_FLOW_PROOF": "PENDING_C10",
+      "USER_FLOW_PROOF": "C10 SMOKE-01..10 representative; per-rule automated proofs retained, not exhaustive browser assertion",
       "NEGATIVE_PROOF": [
         {
           "RUNNER": "scripts/check-phase2-planned-builder.mjs",
@@ -848,7 +762,7 @@
           "EVIDENCE": "parsePlannedExpenseDraft"
         }
       ],
-      "USER_FLOW_PROOF": "PENDING_C10",
+      "USER_FLOW_PROOF": "C10 SMOKE-01..10 representative; per-rule automated proofs retained, not exhaustive browser assertion",
       "NEGATIVE_PROOF": [
         {
           "RUNNER": "scripts/check-phase2-planned-builder.mjs",
@@ -880,7 +794,7 @@
           "EVIDENCE": "parsePlannedExpenseDraft"
         }
       ],
-      "USER_FLOW_PROOF": "PENDING_C10",
+      "USER_FLOW_PROOF": "C10 SMOKE-01..10 representative; per-rule automated proofs retained, not exhaustive browser assertion",
       "NEGATIVE_PROOF": [
         {
           "RUNNER": "scripts/check-phase2-planned-builder.mjs",
@@ -912,7 +826,7 @@
           "EVIDENCE": "parsePlannedExpenseDraft"
         }
       ],
-      "USER_FLOW_PROOF": "PENDING_C10",
+      "USER_FLOW_PROOF": "C10 SMOKE-01..10 representative; per-rule automated proofs retained, not exhaustive browser assertion",
       "NEGATIVE_PROOF": [
         {
           "RUNNER": "scripts/check-phase2-planned-builder.mjs",
@@ -944,7 +858,7 @@
           "EVIDENCE": "parsePlannedExpenseDraft"
         }
       ],
-      "USER_FLOW_PROOF": "PENDING_C10",
+      "USER_FLOW_PROOF": "C10 SMOKE-01..10 representative; per-rule automated proofs retained, not exhaustive browser assertion",
       "NEGATIVE_PROOF": [
         {
           "RUNNER": "scripts/check-phase2-planned-builder.mjs",
@@ -976,7 +890,7 @@
           "EVIDENCE": "parsePlannedExpenseDraft"
         }
       ],
-      "USER_FLOW_PROOF": "PENDING_C10",
+      "USER_FLOW_PROOF": "C10 SMOKE-01..10 representative; per-rule automated proofs retained, not exhaustive browser assertion",
       "NEGATIVE_PROOF": [
         {
           "RUNNER": "scripts/check-phase2-planned-builder.mjs",
@@ -1008,7 +922,7 @@
           "EVIDENCE": "parsePlannedExpenseDraft"
         }
       ],
-      "USER_FLOW_PROOF": "PENDING_C10",
+      "USER_FLOW_PROOF": "C10 SMOKE-01..10 representative; per-rule automated proofs retained, not exhaustive browser assertion",
       "NEGATIVE_PROOF": [
         {
           "RUNNER": "scripts/check-phase2-planned-builder.mjs",
@@ -1040,7 +954,7 @@
           "EVIDENCE": "parsePlannedExpenseDraft"
         }
       ],
-      "USER_FLOW_PROOF": "PENDING_C10",
+      "USER_FLOW_PROOF": "C10 SMOKE-01..10 representative; per-rule automated proofs retained, not exhaustive browser assertion",
       "NEGATIVE_PROOF": [
         {
           "RUNNER": "scripts/check-phase2-planned-builder.mjs",
@@ -1072,7 +986,7 @@
           "EVIDENCE": "parsePlannedExpenseDraft"
         }
       ],
-      "USER_FLOW_PROOF": "PENDING_C10",
+      "USER_FLOW_PROOF": "C10 SMOKE-01..10 representative; per-rule automated proofs retained, not exhaustive browser assertion",
       "NEGATIVE_PROOF": [
         {
           "RUNNER": "scripts/check-phase2-planned-builder.mjs",
@@ -1104,7 +1018,7 @@
           "EVIDENCE": "trustedFundingResult"
         }
       ],
-      "USER_FLOW_PROOF": "PENDING_C10",
+      "USER_FLOW_PROOF": "C10 SMOKE-01..10 representative; per-rule automated proofs retained, not exhaustive browser assertion",
       "NEGATIVE_PROOF": [
         {
           "RUNNER": "scripts/check-phase2-planned-builder.mjs",
@@ -1136,7 +1050,7 @@
           "EVIDENCE": "AGGREGATE_DESCENDANTS_ACTIVE"
         }
       ],
-      "USER_FLOW_PROOF": "PENDING_C10",
+      "USER_FLOW_PROOF": "C10 SMOKE-01..10 representative; per-rule automated proofs retained, not exhaustive browser assertion",
       "NEGATIVE_PROOF": [
         {
           "RUNNER": "scripts/check-phase2-planned-builder.mjs",
@@ -1168,7 +1082,7 @@
           "EVIDENCE": "AGGREGATE_DESCENDANTS_ACTIVE"
         }
       ],
-      "USER_FLOW_PROOF": "PENDING_C10",
+      "USER_FLOW_PROOF": "C10 SMOKE-01..10 representative; per-rule automated proofs retained, not exhaustive browser assertion",
       "NEGATIVE_PROOF": [
         {
           "RUNNER": "scripts/check-phase2-planned-builder.mjs",
@@ -1200,7 +1114,7 @@
           "EVIDENCE": "AGGREGATE_DESCENDANTS_ACTIVE"
         }
       ],
-      "USER_FLOW_PROOF": "PENDING_C10",
+      "USER_FLOW_PROOF": "C10 SMOKE-01..10 representative; per-rule automated proofs retained, not exhaustive browser assertion",
       "NEGATIVE_PROOF": [
         {
           "RUNNER": "scripts/check-phase2-planned-builder.mjs",
@@ -1232,7 +1146,7 @@
           "EVIDENCE": "AGGREGATE_DESCENDANTS_ACTIVE"
         }
       ],
-      "USER_FLOW_PROOF": "PENDING_C10",
+      "USER_FLOW_PROOF": "C10 SMOKE-01..10 representative; per-rule automated proofs retained, not exhaustive browser assertion",
       "NEGATIVE_PROOF": [
         {
           "RUNNER": "scripts/check-phase2-planned-builder.mjs",
@@ -1264,7 +1178,7 @@
           "EVIDENCE": "AGGREGATE_DESCENDANTS_ACTIVE"
         }
       ],
-      "USER_FLOW_PROOF": "PENDING_C10",
+      "USER_FLOW_PROOF": "C10 SMOKE-01..10 representative; per-rule automated proofs retained, not exhaustive browser assertion",
       "NEGATIVE_PROOF": [
         {
           "RUNNER": "scripts/check-phase2-planned-builder.mjs",
@@ -1296,7 +1210,7 @@
           "EVIDENCE": "AGGREGATE_DESCENDANTS_ACTIVE"
         }
       ],
-      "USER_FLOW_PROOF": "PENDING_C10",
+      "USER_FLOW_PROOF": "C10 SMOKE-01..10 representative; per-rule automated proofs retained, not exhaustive browser assertion",
       "NEGATIVE_PROOF": [
         {
           "RUNNER": "scripts/check-phase2-planned-builder.mjs",
@@ -1328,7 +1242,7 @@
           "EVIDENCE": "draft context change + local Undo"
         }
       ],
-      "USER_FLOW_PROOF": "PENDING_C10",
+      "USER_FLOW_PROOF": "C10 SMOKE-01..10 representative; per-rule automated proofs retained, not exhaustive browser assertion",
       "NEGATIVE_PROOF": [
         {
           "RUNNER": "scripts/check-phase2-planned-builder.mjs",
@@ -1360,7 +1274,7 @@
           "EVIDENCE": "draft context change + local Undo"
         }
       ],
-      "USER_FLOW_PROOF": "PENDING_C10",
+      "USER_FLOW_PROOF": "C10 SMOKE-01..10 representative; per-rule automated proofs retained, not exhaustive browser assertion",
       "NEGATIVE_PROOF": [
         {
           "RUNNER": "scripts/check-phase2-planned-builder.mjs",
@@ -1392,7 +1306,7 @@
           "EVIDENCE": "draft context change + local Undo"
         }
       ],
-      "USER_FLOW_PROOF": "PENDING_C10",
+      "USER_FLOW_PROOF": "C10 SMOKE-01..10 representative; per-rule automated proofs retained, not exhaustive browser assertion",
       "NEGATIVE_PROOF": [
         {
           "RUNNER": "scripts/check-phase2-planned-builder.mjs",
@@ -1424,7 +1338,7 @@
           "EVIDENCE": "draft context change + local Undo"
         }
       ],
-      "USER_FLOW_PROOF": "PENDING_C10",
+      "USER_FLOW_PROOF": "C10 SMOKE-01..10 representative; per-rule automated proofs retained, not exhaustive browser assertion",
       "NEGATIVE_PROOF": [
         {
           "RUNNER": "scripts/check-phase2-planned-builder.mjs",
@@ -1456,7 +1370,7 @@
           "EVIDENCE": "draft context change + local Undo"
         }
       ],
-      "USER_FLOW_PROOF": "PENDING_C10",
+      "USER_FLOW_PROOF": "C10 SMOKE-01..10 representative; per-rule automated proofs retained, not exhaustive browser assertion",
       "NEGATIVE_PROOF": [
         {
           "RUNNER": "scripts/check-phase2-planned-builder.mjs",
@@ -1488,7 +1402,7 @@
           "EVIDENCE": "PARITY"
         }
       ],
-      "USER_FLOW_PROOF": "PENDING_C10",
+      "USER_FLOW_PROOF": "C10 SMOKE-01..10 representative; per-rule automated proofs retained, not exhaustive browser assertion",
       "NEGATIVE_PROOF": [
         {
           "RUNNER": "scripts/check-phase2-planned-finance.mjs",
@@ -1520,7 +1434,7 @@
           "EVIDENCE": "PARITY"
         }
       ],
-      "USER_FLOW_PROOF": "PENDING_C10",
+      "USER_FLOW_PROOF": "C10 SMOKE-01..10 representative; per-rule automated proofs retained, not exhaustive browser assertion",
       "NEGATIVE_PROOF": [
         {
           "RUNNER": "scripts/check-phase2-planned-finance.mjs",
@@ -1552,7 +1466,7 @@
           "EVIDENCE": "PARITY"
         }
       ],
-      "USER_FLOW_PROOF": "PENDING_C10",
+      "USER_FLOW_PROOF": "C10 SMOKE-01..10 representative; per-rule automated proofs retained, not exhaustive browser assertion",
       "NEGATIVE_PROOF": [
         {
           "RUNNER": "scripts/check-phase2-planned-finance.mjs",
@@ -1584,7 +1498,7 @@
           "EVIDENCE": "PARITY"
         }
       ],
-      "USER_FLOW_PROOF": "PENDING_C10",
+      "USER_FLOW_PROOF": "C10 SMOKE-01..10 representative; per-rule automated proofs retained, not exhaustive browser assertion",
       "NEGATIVE_PROOF": [
         {
           "RUNNER": "scripts/check-phase2-planned-finance.mjs",
@@ -1616,7 +1530,7 @@
           "EVIDENCE": "PARITY"
         }
       ],
-      "USER_FLOW_PROOF": "PENDING_C10",
+      "USER_FLOW_PROOF": "C10 SMOKE-01..10 representative; per-rule automated proofs retained, not exhaustive browser assertion",
       "NEGATIVE_PROOF": [
         {
           "RUNNER": "scripts/check-phase2-planned-finance.mjs",
@@ -1648,7 +1562,7 @@
           "EVIDENCE": "PARITY"
         }
       ],
-      "USER_FLOW_PROOF": "PENDING_C10",
+      "USER_FLOW_PROOF": "C10 SMOKE-01..10 representative; per-rule automated proofs retained, not exhaustive browser assertion",
       "NEGATIVE_PROOF": [
         {
           "RUNNER": "scripts/check-phase2-planned-finance.mjs",
@@ -1680,7 +1594,7 @@
           "EVIDENCE": "PARITY"
         }
       ],
-      "USER_FLOW_PROOF": "PENDING_C10",
+      "USER_FLOW_PROOF": "C10 SMOKE-01..10 representative; per-rule automated proofs retained, not exhaustive browser assertion",
       "NEGATIVE_PROOF": [
         {
           "RUNNER": "scripts/check-phase2-planned-finance.mjs",
@@ -1712,7 +1626,7 @@
           "EVIDENCE": "PARITY"
         }
       ],
-      "USER_FLOW_PROOF": "PENDING_C10",
+      "USER_FLOW_PROOF": "C10 SMOKE-01..10 representative; per-rule automated proofs retained, not exhaustive browser assertion",
       "NEGATIVE_PROOF": [
         {
           "RUNNER": "scripts/check-phase2-planned-finance.mjs",
@@ -1744,7 +1658,7 @@
           "EVIDENCE": "netAdditionalImpact.central"
         }
       ],
-      "USER_FLOW_PROOF": "PENDING_C10",
+      "USER_FLOW_PROOF": "C10 SMOKE-01..10 representative; per-rule automated proofs retained, not exhaustive browser assertion",
       "NEGATIVE_PROOF": [
         {
           "RUNNER": "scripts/check-phase2-planned-finance.mjs",
@@ -1776,7 +1690,7 @@
           "EVIDENCE": "netAdditionalImpact.central"
         }
       ],
-      "USER_FLOW_PROOF": "PENDING_C10",
+      "USER_FLOW_PROOF": "C10 SMOKE-01..10 representative; per-rule automated proofs retained, not exhaustive browser assertion",
       "NEGATIVE_PROOF": [
         {
           "RUNNER": "scripts/check-phase2-planned-finance.mjs",
@@ -1808,7 +1722,7 @@
           "EVIDENCE": "netAdditionalImpact.central"
         }
       ],
-      "USER_FLOW_PROOF": "PENDING_C10",
+      "USER_FLOW_PROOF": "C10 SMOKE-01..10 representative; per-rule automated proofs retained, not exhaustive browser assertion",
       "NEGATIVE_PROOF": [
         {
           "RUNNER": "scripts/check-phase2-planned-finance.mjs",
@@ -1840,7 +1754,7 @@
           "EVIDENCE": "netAdditionalImpact.central"
         }
       ],
-      "USER_FLOW_PROOF": "PENDING_C10",
+      "USER_FLOW_PROOF": "C10 SMOKE-01..10 representative; per-rule automated proofs retained, not exhaustive browser assertion",
       "NEGATIVE_PROOF": [
         {
           "RUNNER": "scripts/check-phase2-planned-finance.mjs",
@@ -1872,7 +1786,7 @@
           "EVIDENCE": "Sync child place and route edits"
         }
       ],
-      "USER_FLOW_PROOF": "PENDING_C10",
+      "USER_FLOW_PROOF": "C10 SMOKE-01..10 representative; per-rule automated proofs retained, not exhaustive browser assertion",
       "NEGATIVE_PROOF": [
         {
           "RUNNER": "scripts/check-phase2-planned-routes.mjs",
@@ -1904,7 +1818,7 @@
           "EVIDENCE": "Sync child place and route edits"
         }
       ],
-      "USER_FLOW_PROOF": "PENDING_C10",
+      "USER_FLOW_PROOF": "C10 SMOKE-01..10 representative; per-rule automated proofs retained, not exhaustive browser assertion",
       "NEGATIVE_PROOF": [
         {
           "RUNNER": "scripts/check-phase2-planned-routes.mjs",
@@ -1936,7 +1850,7 @@
           "EVIDENCE": "Sync child place and route edits"
         }
       ],
-      "USER_FLOW_PROOF": "PENDING_C10",
+      "USER_FLOW_PROOF": "C10 SMOKE-01..10 representative; per-rule automated proofs retained, not exhaustive browser assertion",
       "NEGATIVE_PROOF": [
         {
           "RUNNER": "scripts/check-phase2-planned-routes.mjs",
@@ -1968,7 +1882,7 @@
           "EVIDENCE": "Sync child place and route edits"
         }
       ],
-      "USER_FLOW_PROOF": "PENDING_C10",
+      "USER_FLOW_PROOF": "C10 SMOKE-01..10 representative; per-rule automated proofs retained, not exhaustive browser assertion",
       "NEGATIVE_PROOF": [
         {
           "RUNNER": "scripts/check-phase2-planned-routes.mjs",
@@ -2000,7 +1914,7 @@
           "EVIDENCE": "Sync child place and route edits"
         }
       ],
-      "USER_FLOW_PROOF": "PENDING_C10",
+      "USER_FLOW_PROOF": "C10 SMOKE-01..10 representative; per-rule automated proofs retained, not exhaustive browser assertion",
       "NEGATIVE_PROOF": [
         {
           "RUNNER": "scripts/check-phase2-planned-routes.mjs",
@@ -2032,7 +1946,7 @@
           "EVIDENCE": "Sync child place and route edits"
         }
       ],
-      "USER_FLOW_PROOF": "PENDING_C10",
+      "USER_FLOW_PROOF": "C10 SMOKE-01..10 representative; per-rule automated proofs retained, not exhaustive browser assertion",
       "NEGATIVE_PROOF": [
         {
           "RUNNER": "scripts/check-phase2-planned-routes.mjs",
@@ -2064,7 +1978,7 @@
           "EVIDENCE": "Sync child place and route edits"
         }
       ],
-      "USER_FLOW_PROOF": "PENDING_C10",
+      "USER_FLOW_PROOF": "C10 SMOKE-01..10 representative; per-rule automated proofs retained, not exhaustive browser assertion",
       "NEGATIVE_PROOF": [
         {
           "RUNNER": "scripts/check-phase2-planned-routes.mjs",
@@ -2096,7 +2010,7 @@
           "EVIDENCE": "Sync child place and route edits"
         }
       ],
-      "USER_FLOW_PROOF": "PENDING_C10",
+      "USER_FLOW_PROOF": "C10 SMOKE-01..10 representative; per-rule automated proofs retained, not exhaustive browser assertion",
       "NEGATIVE_PROOF": [
         {
           "RUNNER": "scripts/check-phase2-planned-routes.mjs",
@@ -2128,7 +2042,7 @@
           "EVIDENCE": "missingEvidence"
         }
       ],
-      "USER_FLOW_PROOF": "PENDING_C10",
+      "USER_FLOW_PROOF": "C10 SMOKE-01..10 representative; per-rule automated proofs retained, not exhaustive browser assertion",
       "NEGATIVE_PROOF": [
         {
           "RUNNER": "scripts/check-phase2-planned-routes.mjs",
@@ -2160,7 +2074,7 @@
           "EVIDENCE": "missingEvidence"
         }
       ],
-      "USER_FLOW_PROOF": "PENDING_C10",
+      "USER_FLOW_PROOF": "C10 SMOKE-01..10 representative; per-rule automated proofs retained, not exhaustive browser assertion",
       "NEGATIVE_PROOF": [
         {
           "RUNNER": "scripts/check-phase2-planned-routes.mjs",
@@ -2192,7 +2106,7 @@
           "EVIDENCE": "missingEvidence"
         }
       ],
-      "USER_FLOW_PROOF": "PENDING_C10",
+      "USER_FLOW_PROOF": "C10 SMOKE-01..10 representative; per-rule automated proofs retained, not exhaustive browser assertion",
       "NEGATIVE_PROOF": [
         {
           "RUNNER": "scripts/check-phase2-planned-routes.mjs",
@@ -2224,7 +2138,7 @@
           "EVIDENCE": "missingEvidence"
         }
       ],
-      "USER_FLOW_PROOF": "PENDING_C10",
+      "USER_FLOW_PROOF": "C10 SMOKE-01..10 representative; per-rule automated proofs retained, not exhaustive browser assertion",
       "NEGATIVE_PROOF": [
         {
           "RUNNER": "scripts/check-phase2-planned-routes.mjs",
@@ -2256,7 +2170,7 @@
           "EVIDENCE": "confirmPlannedExpenseReality"
         }
       ],
-      "USER_FLOW_PROOF": "PENDING_C10",
+      "USER_FLOW_PROOF": "C10 SMOKE-01..10 representative; per-rule automated proofs retained, not exhaustive browser assertion",
       "NEGATIVE_PROOF": [
         {
           "RUNNER": "scripts/check-phase2-planned-reality.mjs",
@@ -2288,7 +2202,7 @@
           "EVIDENCE": "confirmPlannedExpenseReality"
         }
       ],
-      "USER_FLOW_PROOF": "PENDING_C10",
+      "USER_FLOW_PROOF": "C10 SMOKE-01..10 representative; per-rule automated proofs retained, not exhaustive browser assertion",
       "NEGATIVE_PROOF": [
         {
           "RUNNER": "scripts/check-phase2-planned-reality.mjs",
@@ -2320,7 +2234,7 @@
           "EVIDENCE": "confirmPlannedExpenseReality"
         }
       ],
-      "USER_FLOW_PROOF": "PENDING_C10",
+      "USER_FLOW_PROOF": "C10 SMOKE-01..10 representative; per-rule automated proofs retained, not exhaustive browser assertion",
       "NEGATIVE_PROOF": [
         {
           "RUNNER": "scripts/check-phase2-planned-reality.mjs",
@@ -2352,7 +2266,7 @@
           "EVIDENCE": "confirmPlannedExpenseReality"
         }
       ],
-      "USER_FLOW_PROOF": "PENDING_C10",
+      "USER_FLOW_PROOF": "C10 SMOKE-01..10 representative; per-rule automated proofs retained, not exhaustive browser assertion",
       "NEGATIVE_PROOF": [
         {
           "RUNNER": "scripts/check-phase2-planned-reality.mjs",
@@ -2384,7 +2298,7 @@
           "EVIDENCE": "confirmPlannedExpenseReality"
         }
       ],
-      "USER_FLOW_PROOF": "PENDING_C10",
+      "USER_FLOW_PROOF": "C10 SMOKE-01..10 representative; per-rule automated proofs retained, not exhaustive browser assertion",
       "NEGATIVE_PROOF": [
         {
           "RUNNER": "scripts/check-phase2-planned-reality.mjs",
@@ -2416,7 +2330,7 @@
           "EVIDENCE": "confirmPlannedExpenseReality"
         }
       ],
-      "USER_FLOW_PROOF": "PENDING_C10",
+      "USER_FLOW_PROOF": "C10 SMOKE-01..10 representative; per-rule automated proofs retained, not exhaustive browser assertion",
       "NEGATIVE_PROOF": [
         {
           "RUNNER": "scripts/check-phase2-planned-reality.mjs",
@@ -2448,7 +2362,7 @@
           "EVIDENCE": "confirmPlannedExpenseReality"
         }
       ],
-      "USER_FLOW_PROOF": "PENDING_C10",
+      "USER_FLOW_PROOF": "C10 SMOKE-01..10 representative; per-rule automated proofs retained, not exhaustive browser assertion",
       "NEGATIVE_PROOF": [
         {
           "RUNNER": "scripts/check-phase2-planned-reality.mjs",
@@ -2475,7 +2389,7 @@
           "EVIDENCE": "PARITY"
         }
       ],
-      "USER_FLOW_PROOF": "PENDING_C10",
+      "USER_FLOW_PROOF": "C10 SMOKE-01..10 representative; per-rule automated proofs retained, not exhaustive browser assertion",
       "NEGATIVE_PROOF": [
         {
           "RUNNER": "scripts/check-phase2-planned-reliability.mjs",
@@ -2502,7 +2416,7 @@
           "EVIDENCE": "PARITY"
         }
       ],
-      "USER_FLOW_PROOF": "PENDING_C10",
+      "USER_FLOW_PROOF": "C10 SMOKE-01..10 representative; per-rule automated proofs retained, not exhaustive browser assertion",
       "NEGATIVE_PROOF": [
         {
           "RUNNER": "scripts/check-phase2-planned-reliability.mjs",
@@ -2529,7 +2443,7 @@
           "EVIDENCE": "REALITY_DRAFT_STALE"
         }
       ],
-      "USER_FLOW_PROOF": "PENDING_C10",
+      "USER_FLOW_PROOF": "C10 SMOKE-01..10 representative; per-rule automated proofs retained, not exhaustive browser assertion",
       "NEGATIVE_PROOF": [
         {
           "RUNNER": "scripts/check-phase2-planned-reality.mjs",
@@ -2556,7 +2470,7 @@
           "EVIDENCE": "REALITY_DRAFT_STALE"
         }
       ],
-      "USER_FLOW_PROOF": "PENDING_C10",
+      "USER_FLOW_PROOF": "C10 SMOKE-01..10 representative; per-rule automated proofs retained, not exhaustive browser assertion",
       "NEGATIVE_PROOF": [
         {
           "RUNNER": "scripts/check-phase2-planned-reality.mjs",
@@ -2583,7 +2497,7 @@
           "EVIDENCE": "PARITY"
         }
       ],
-      "USER_FLOW_PROOF": "PENDING_C10",
+      "USER_FLOW_PROOF": "C10 SMOKE-01..10 representative; per-rule automated proofs retained, not exhaustive browser assertion",
       "NEGATIVE_PROOF": [
         {
           "RUNNER": "scripts/check-phase2-planned-reliability.mjs",
@@ -2610,7 +2524,7 @@
           "EVIDENCE": "PARITY"
         }
       ],
-      "USER_FLOW_PROOF": "PENDING_C10",
+      "USER_FLOW_PROOF": "C10 SMOKE-01..10 representative; per-rule automated proofs retained, not exhaustive browser assertion",
       "NEGATIVE_PROOF": [
         {
           "RUNNER": "scripts/check-phase2-planned-reliability.mjs",
@@ -2637,7 +2551,7 @@
           "EVIDENCE": "PARITY"
         }
       ],
-      "USER_FLOW_PROOF": "PENDING_C10",
+      "USER_FLOW_PROOF": "C10 SMOKE-01..10 representative; per-rule automated proofs retained, not exhaustive browser assertion",
       "NEGATIVE_PROOF": [
         {
           "RUNNER": "scripts/check-phase2-planned-reliability.mjs",
@@ -2664,7 +2578,7 @@
           "EVIDENCE": "PARITY"
         }
       ],
-      "USER_FLOW_PROOF": "PENDING_C10",
+      "USER_FLOW_PROOF": "C10 SMOKE-01..10 representative; per-rule automated proofs retained, not exhaustive browser assertion",
       "NEGATIVE_PROOF": [
         {
           "RUNNER": "scripts/check-phase2-planned-reliability.mjs",
@@ -2691,7 +2605,7 @@
           "EVIDENCE": "PARITY"
         }
       ],
-      "USER_FLOW_PROOF": "PENDING_C10",
+      "USER_FLOW_PROOF": "C10 SMOKE-01..10 representative; per-rule automated proofs retained, not exhaustive browser assertion",
       "NEGATIVE_PROOF": [
         {
           "RUNNER": "scripts/check-phase2-planned-reliability.mjs",
@@ -2718,7 +2632,7 @@
           "EVIDENCE": "REALITY_DRAFT_STALE"
         }
       ],
-      "USER_FLOW_PROOF": "PENDING_C10",
+      "USER_FLOW_PROOF": "C10 SMOKE-01..10 representative; per-rule automated proofs retained, not exhaustive browser assertion",
       "NEGATIVE_PROOF": [
         {
           "RUNNER": "scripts/check-phase2-planned-reality.mjs",
@@ -2745,7 +2659,7 @@
           "EVIDENCE": "REALITY_DRAFT_STALE"
         }
       ],
-      "USER_FLOW_PROOF": "PENDING_C10",
+      "USER_FLOW_PROOF": "C10 SMOKE-01..10 representative; per-rule automated proofs retained, not exhaustive browser assertion",
       "NEGATIVE_PROOF": [
         {
           "RUNNER": "scripts/check-phase2-planned-reality.mjs",
@@ -2777,7 +2691,7 @@
           "EVIDENCE": "fresh reload"
         }
       ],
-      "USER_FLOW_PROOF": "PENDING_C10",
+      "USER_FLOW_PROOF": "C10 SMOKE-01..10 representative; per-rule automated proofs retained, not exhaustive browser assertion",
       "NEGATIVE_PROOF": [
         {
           "RUNNER": "scripts/check-phase2-planned-calendar.mjs",
@@ -2809,7 +2723,7 @@
           "EVIDENCE": "fresh reload"
         }
       ],
-      "USER_FLOW_PROOF": "PENDING_C10",
+      "USER_FLOW_PROOF": "C10 SMOKE-01..10 representative; per-rule automated proofs retained, not exhaustive browser assertion",
       "NEGATIVE_PROOF": [
         {
           "RUNNER": "scripts/check-phase2-planned-calendar.mjs",
@@ -2841,7 +2755,7 @@
           "EVIDENCE": "fresh reload"
         }
       ],
-      "USER_FLOW_PROOF": "PENDING_C10",
+      "USER_FLOW_PROOF": "C10 SMOKE-01..10 representative; per-rule automated proofs retained, not exhaustive browser assertion",
       "NEGATIVE_PROOF": [
         {
           "RUNNER": "scripts/check-phase2-planned-calendar.mjs",
@@ -2873,7 +2787,7 @@
           "EVIDENCE": "fresh reload"
         }
       ],
-      "USER_FLOW_PROOF": "PENDING_C10",
+      "USER_FLOW_PROOF": "C10 SMOKE-01..10 representative; per-rule automated proofs retained, not exhaustive browser assertion",
       "NEGATIVE_PROOF": [
         {
           "RUNNER": "scripts/check-phase2-planned-calendar.mjs",
@@ -2905,7 +2819,7 @@
           "EVIDENCE": "fresh reload"
         }
       ],
-      "USER_FLOW_PROOF": "PENDING_C10",
+      "USER_FLOW_PROOF": "C10 SMOKE-01..10 representative; per-rule automated proofs retained, not exhaustive browser assertion",
       "NEGATIVE_PROOF": [
         {
           "RUNNER": "scripts/check-phase2-planned-calendar.mjs",
@@ -2937,7 +2851,7 @@
           "EVIDENCE": "fresh reload"
         }
       ],
-      "USER_FLOW_PROOF": "PENDING_C10",
+      "USER_FLOW_PROOF": "C10 SMOKE-01..10 representative; per-rule automated proofs retained, not exhaustive browser assertion",
       "NEGATIVE_PROOF": [
         {
           "RUNNER": "scripts/check-phase2-planned-calendar.mjs",
@@ -2969,7 +2883,7 @@
           "EVIDENCE": "fresh reload"
         }
       ],
-      "USER_FLOW_PROOF": "PENDING_C10",
+      "USER_FLOW_PROOF": "C10 SMOKE-01..10 representative; per-rule automated proofs retained, not exhaustive browser assertion",
       "NEGATIVE_PROOF": [
         {
           "RUNNER": "scripts/check-phase2-planned-calendar.mjs",
@@ -3001,7 +2915,7 @@
           "EVIDENCE": "fresh reload"
         }
       ],
-      "USER_FLOW_PROOF": "PENDING_C10",
+      "USER_FLOW_PROOF": "C10 SMOKE-01..10 representative; per-rule automated proofs retained, not exhaustive browser assertion",
       "NEGATIVE_PROOF": [
         {
           "RUNNER": "scripts/check-phase2-planned-calendar.mjs",
@@ -3033,7 +2947,7 @@
           "EVIDENCE": "fresh reload"
         }
       ],
-      "USER_FLOW_PROOF": "PENDING_C10",
+      "USER_FLOW_PROOF": "C10 SMOKE-01..10 representative; per-rule automated proofs retained, not exhaustive browser assertion",
       "NEGATIVE_PROOF": [
         {
           "RUNNER": "scripts/check-phase2-planned-calendar.mjs",
@@ -3065,7 +2979,7 @@
           "EVIDENCE": "fresh reload"
         }
       ],
-      "USER_FLOW_PROOF": "PENDING_C10",
+      "USER_FLOW_PROOF": "C10 SMOKE-01..10 representative; per-rule automated proofs retained, not exhaustive browser assertion",
       "NEGATIVE_PROOF": [
         {
           "RUNNER": "scripts/check-phase2-planned-calendar.mjs",
@@ -3097,7 +3011,7 @@
           "EVIDENCE": "fresh reload"
         }
       ],
-      "USER_FLOW_PROOF": "PENDING_C10",
+      "USER_FLOW_PROOF": "C10 SMOKE-01..10 representative; per-rule automated proofs retained, not exhaustive browser assertion",
       "NEGATIVE_PROOF": [
         {
           "RUNNER": "scripts/check-phase2-planned-calendar.mjs",
@@ -3129,7 +3043,7 @@
           "EVIDENCE": "fresh reload"
         }
       ],
-      "USER_FLOW_PROOF": "PENDING_C10",
+      "USER_FLOW_PROOF": "C10 SMOKE-01..10 representative; per-rule automated proofs retained, not exhaustive browser assertion",
       "NEGATIVE_PROOF": [
         {
           "RUNNER": "scripts/check-phase2-planned-calendar.mjs",
@@ -3161,7 +3075,7 @@
           "EVIDENCE": "fresh reload"
         }
       ],
-      "USER_FLOW_PROOF": "PENDING_C10",
+      "USER_FLOW_PROOF": "C10 SMOKE-01..10 representative; per-rule automated proofs retained, not exhaustive browser assertion",
       "NEGATIVE_PROOF": [
         {
           "RUNNER": "scripts/check-phase2-planned-calendar.mjs",
@@ -3193,7 +3107,7 @@
           "EVIDENCE": "fresh reload"
         }
       ],
-      "USER_FLOW_PROOF": "PENDING_C10",
+      "USER_FLOW_PROOF": "C10 SMOKE-01..10 representative; per-rule automated proofs retained, not exhaustive browser assertion",
       "NEGATIVE_PROOF": [
         {
           "RUNNER": "scripts/check-phase2-planned-calendar.mjs",
@@ -3225,7 +3139,7 @@
           "EVIDENCE": "fresh reload"
         }
       ],
-      "USER_FLOW_PROOF": "PENDING_C10",
+      "USER_FLOW_PROOF": "C10 SMOKE-01..10 representative; per-rule automated proofs retained, not exhaustive browser assertion",
       "NEGATIVE_PROOF": [
         {
           "RUNNER": "scripts/check-phase2-planned-calendar.mjs",
@@ -3257,7 +3171,7 @@
           "EVIDENCE": "fresh reload"
         }
       ],
-      "USER_FLOW_PROOF": "PENDING_C10",
+      "USER_FLOW_PROOF": "C10 SMOKE-01..10 representative; per-rule automated proofs retained, not exhaustive browser assertion",
       "NEGATIVE_PROOF": [
         {
           "RUNNER": "scripts/check-phase2-planned-calendar.mjs",
@@ -3289,7 +3203,7 @@
           "EVIDENCE": "fresh reload"
         }
       ],
-      "USER_FLOW_PROOF": "PENDING_C10",
+      "USER_FLOW_PROOF": "C10 SMOKE-01..10 representative; per-rule automated proofs retained, not exhaustive browser assertion",
       "NEGATIVE_PROOF": [
         {
           "RUNNER": "scripts/check-phase2-planned-calendar.mjs",
@@ -3321,7 +3235,7 @@
           "EVIDENCE": "fresh reload"
         }
       ],
-      "USER_FLOW_PROOF": "PENDING_C10",
+      "USER_FLOW_PROOF": "C10 SMOKE-01..10 representative; per-rule automated proofs retained, not exhaustive browser assertion",
       "NEGATIVE_PROOF": [
         {
           "RUNNER": "scripts/check-phase2-planned-calendar.mjs",
@@ -3353,7 +3267,7 @@
           "EVIDENCE": "fresh reload"
         }
       ],
-      "USER_FLOW_PROOF": "PENDING_C10",
+      "USER_FLOW_PROOF": "C10 SMOKE-01..10 representative; per-rule automated proofs retained, not exhaustive browser assertion",
       "NEGATIVE_PROOF": [
         {
           "RUNNER": "scripts/check-phase2-planned-calendar.mjs",
@@ -3385,7 +3299,7 @@
           "EVIDENCE": "fresh reload"
         }
       ],
-      "USER_FLOW_PROOF": "PENDING_C10",
+      "USER_FLOW_PROOF": "C10 SMOKE-01..10 representative; per-rule automated proofs retained, not exhaustive browser assertion",
       "NEGATIVE_PROOF": [
         {
           "RUNNER": "scripts/check-phase2-planned-calendar.mjs",
@@ -3417,7 +3331,7 @@
           "EVIDENCE": "fresh reload"
         }
       ],
-      "USER_FLOW_PROOF": "PENDING_C10",
+      "USER_FLOW_PROOF": "C10 SMOKE-01..10 representative; per-rule automated proofs retained, not exhaustive browser assertion",
       "NEGATIVE_PROOF": [
         {
           "RUNNER": "scripts/check-phase2-planned-calendar.mjs",
@@ -3449,7 +3363,7 @@
           "EVIDENCE": "fresh reload"
         }
       ],
-      "USER_FLOW_PROOF": "PENDING_C10",
+      "USER_FLOW_PROOF": "C10 SMOKE-01..10 representative; per-rule automated proofs retained, not exhaustive browser assertion",
       "NEGATIVE_PROOF": [
         {
           "RUNNER": "scripts/check-phase2-planned-calendar.mjs",
@@ -3481,7 +3395,7 @@
           "EVIDENCE": "fresh reload"
         }
       ],
-      "USER_FLOW_PROOF": "PENDING_C10",
+      "USER_FLOW_PROOF": "C10 SMOKE-01..10 representative; per-rule automated proofs retained, not exhaustive browser assertion",
       "NEGATIVE_PROOF": [
         {
           "RUNNER": "scripts/check-phase2-planned-calendar.mjs",
@@ -3513,7 +3427,7 @@
           "EVIDENCE": "fresh reload"
         }
       ],
-      "USER_FLOW_PROOF": "PENDING_C10",
+      "USER_FLOW_PROOF": "C10 SMOKE-01..10 representative; per-rule automated proofs retained, not exhaustive browser assertion",
       "NEGATIVE_PROOF": [
         {
           "RUNNER": "scripts/check-phase2-planned-calendar.mjs",
@@ -3545,7 +3459,7 @@
           "EVIDENCE": "fresh reload"
         }
       ],
-      "USER_FLOW_PROOF": "PENDING_C10",
+      "USER_FLOW_PROOF": "C10 SMOKE-01..10 representative; per-rule automated proofs retained, not exhaustive browser assertion",
       "NEGATIVE_PROOF": [
         {
           "RUNNER": "scripts/check-phase2-planned-calendar.mjs",
@@ -3577,7 +3491,7 @@
           "EVIDENCE": "fresh reload"
         }
       ],
-      "USER_FLOW_PROOF": "PENDING_C10",
+      "USER_FLOW_PROOF": "C10 SMOKE-01..10 representative; per-rule automated proofs retained, not exhaustive browser assertion",
       "NEGATIVE_PROOF": [
         {
           "RUNNER": "scripts/check-phase2-planned-calendar.mjs",
@@ -3609,7 +3523,7 @@
           "EVIDENCE": "fresh reload"
         }
       ],
-      "USER_FLOW_PROOF": "PENDING_C10",
+      "USER_FLOW_PROOF": "C10 SMOKE-01..10 representative; per-rule automated proofs retained, not exhaustive browser assertion",
       "NEGATIVE_PROOF": [
         {
           "RUNNER": "scripts/check-phase2-planned-calendar.mjs",
@@ -3636,7 +3550,7 @@
           "EVIDENCE": "DD6_"
         }
       ],
-      "USER_FLOW_PROOF": "NOT_APPLICABLE",
+      "USER_FLOW_PROOF": "C10 SMOKE-01..10 representative; per-rule automated proofs retained, not exhaustive browser assertion",
       "NEGATIVE_PROOF": [
         {
           "RUNNER": "supabase/tests/phase2_planned_expenses_rls.sql",
@@ -3658,7 +3572,7 @@
           "EVIDENCE": "DD6_"
         }
       ],
-      "USER_FLOW_PROOF": "NOT_APPLICABLE",
+      "USER_FLOW_PROOF": "C10 SMOKE-01..10 representative; per-rule automated proofs retained, not exhaustive browser assertion",
       "NEGATIVE_PROOF": [
         {
           "RUNNER": "supabase/tests/phase2_planned_expenses_rls.sql",
@@ -3680,7 +3594,7 @@
           "EVIDENCE": "DD6_"
         }
       ],
-      "USER_FLOW_PROOF": "NOT_APPLICABLE",
+      "USER_FLOW_PROOF": "C10 SMOKE-01..10 representative; per-rule automated proofs retained, not exhaustive browser assertion",
       "NEGATIVE_PROOF": [
         {
           "RUNNER": "supabase/tests/phase2_planned_expenses_rls.sql",
@@ -3702,7 +3616,7 @@
           "EVIDENCE": "DD6_"
         }
       ],
-      "USER_FLOW_PROOF": "NOT_APPLICABLE",
+      "USER_FLOW_PROOF": "C10 SMOKE-01..10 representative; per-rule automated proofs retained, not exhaustive browser assertion",
       "NEGATIVE_PROOF": [
         {
           "RUNNER": "supabase/tests/phase2_planned_expenses_rls.sql",
@@ -3724,7 +3638,7 @@
           "EVIDENCE": "DD6_"
         }
       ],
-      "USER_FLOW_PROOF": "NOT_APPLICABLE",
+      "USER_FLOW_PROOF": "C10 SMOKE-01..10 representative; per-rule automated proofs retained, not exhaustive browser assertion",
       "NEGATIVE_PROOF": [
         {
           "RUNNER": "supabase/tests/phase2_planned_expenses_rls.sql",
@@ -3746,7 +3660,7 @@
           "EVIDENCE": "DD6_"
         }
       ],
-      "USER_FLOW_PROOF": "NOT_APPLICABLE",
+      "USER_FLOW_PROOF": "C10 SMOKE-01..10 representative; per-rule automated proofs retained, not exhaustive browser assertion",
       "NEGATIVE_PROOF": [
         {
           "RUNNER": "supabase/tests/phase2_planned_expenses_rls.sql",
@@ -3768,7 +3682,7 @@
           "EVIDENCE": "DD6_"
         }
       ],
-      "USER_FLOW_PROOF": "NOT_APPLICABLE",
+      "USER_FLOW_PROOF": "C10 SMOKE-01..10 representative; per-rule automated proofs retained, not exhaustive browser assertion",
       "NEGATIVE_PROOF": [
         {
           "RUNNER": "supabase/tests/phase2_planned_expenses_rls.sql",
@@ -3790,7 +3704,7 @@
           "EVIDENCE": "DD6_"
         }
       ],
-      "USER_FLOW_PROOF": "NOT_APPLICABLE",
+      "USER_FLOW_PROOF": "C10 SMOKE-01..10 representative; per-rule automated proofs retained, not exhaustive browser assertion",
       "NEGATIVE_PROOF": [
         {
           "RUNNER": "supabase/tests/phase2_planned_expenses_rls.sql",
@@ -3812,7 +3726,7 @@
           "EVIDENCE": "foreign refs"
         }
       ],
-      "USER_FLOW_PROOF": "NOT_APPLICABLE",
+      "USER_FLOW_PROOF": "C10 SMOKE-01..10 representative; per-rule automated proofs retained, not exhaustive browser assertion",
       "NEGATIVE_PROOF": [
         {
           "RUNNER": "scripts/check-phase2-planned-guards.mjs",
@@ -3834,7 +3748,7 @@
           "EVIDENCE": "Preview"
         }
       ],
-      "USER_FLOW_PROOF": "NOT_APPLICABLE",
+      "USER_FLOW_PROOF": "C10 SMOKE-01..10 representative; per-rule automated proofs retained, not exhaustive browser assertion",
       "NEGATIVE_PROOF": [
         {
           "RUNNER": "scripts/check-phase2-planned-guards.mjs",
@@ -3861,7 +3775,7 @@
           "EVIDENCE": "Create"
         }
       ],
-      "USER_FLOW_PROOF": "NOT_APPLICABLE",
+      "USER_FLOW_PROOF": "C10 SMOKE-01..10 representative; per-rule automated proofs retained, not exhaustive browser assertion",
       "NEGATIVE_PROOF": [
         {
           "RUNNER": "scripts/check-phase2-planned-guards.mjs",
@@ -3888,7 +3802,7 @@
           "EVIDENCE": "Update"
         }
       ],
-      "USER_FLOW_PROOF": "NOT_APPLICABLE",
+      "USER_FLOW_PROOF": "C10 SMOKE-01..10 representative; per-rule automated proofs retained, not exhaustive browser assertion",
       "NEGATIVE_PROOF": [
         {
           "RUNNER": "scripts/check-phase2-planned-guards.mjs",
@@ -3915,7 +3829,7 @@
           "EVIDENCE": "Delete"
         }
       ],
-      "USER_FLOW_PROOF": "NOT_APPLICABLE",
+      "USER_FLOW_PROOF": "C10 SMOKE-01..10 representative; per-rule automated proofs retained, not exhaustive browser assertion",
       "NEGATIVE_PROOF": [
         {
           "RUNNER": "scripts/check-phase2-planned-guards.mjs",
@@ -3942,7 +3856,7 @@
           "EVIDENCE": "Declare"
         }
       ],
-      "USER_FLOW_PROOF": "NOT_APPLICABLE",
+      "USER_FLOW_PROOF": "C10 SMOKE-01..10 representative; per-rule automated proofs retained, not exhaustive browser assertion",
       "NEGATIVE_PROOF": [
         {
           "RUNNER": "scripts/check-phase2-planned-guards.mjs",
@@ -3969,7 +3883,7 @@
           "EVIDENCE": "Restore"
         }
       ],
-      "USER_FLOW_PROOF": "NOT_APPLICABLE",
+      "USER_FLOW_PROOF": "C10 SMOKE-01..10 representative; per-rule automated proofs retained, not exhaustive browser assertion",
       "NEGATIVE_PROOF": [
         {
           "RUNNER": "scripts/check-phase2-planned-guards.mjs",
@@ -3996,7 +3910,7 @@
           "EVIDENCE": "Report"
         }
       ],
-      "USER_FLOW_PROOF": "NOT_APPLICABLE",
+      "USER_FLOW_PROOF": "C10 SMOKE-01..10 representative; per-rule automated proofs retained, not exhaustive browser assertion",
       "NEGATIVE_PROOF": [
         {
           "RUNNER": "scripts/check-phase2-planned-guards.mjs",
@@ -4023,7 +3937,7 @@
           "EVIDENCE": "contact TEXT + user-declared place"
         }
       ],
-      "USER_FLOW_PROOF": "NOT_APPLICABLE",
+      "USER_FLOW_PROOF": "C10 SMOKE-01..10 representative; per-rule automated proofs retained, not exhaustive browser assertion",
       "NEGATIVE_PROOF": [
         {
           "RUNNER": "scripts/check-phase2-planned-guards.mjs",
@@ -4050,7 +3964,7 @@
           "EVIDENCE": "child local place"
         }
       ],
-      "USER_FLOW_PROOF": "NOT_APPLICABLE",
+      "USER_FLOW_PROOF": "C10 SMOKE-01..10 representative; per-rule automated proofs retained, not exhaustive browser assertion",
       "NEGATIVE_PROOF": [
         {
           "RUNNER": "scripts/check-phase2-planned-guards.mjs",
@@ -4077,7 +3991,7 @@
           "EVIDENCE": "route/fuel Preview"
         }
       ],
-      "USER_FLOW_PROOF": "NOT_APPLICABLE",
+      "USER_FLOW_PROOF": "C10 SMOKE-01..10 representative; per-rule automated proofs retained, not exhaustive browser assertion",
       "NEGATIVE_PROOF": [
         {
           "RUNNER": "scripts/check-phase2-planned-guards.mjs",
@@ -4104,7 +4018,7 @@
           "EVIDENCE": "route/fuel Save"
         }
       ],
-      "USER_FLOW_PROOF": "NOT_APPLICABLE",
+      "USER_FLOW_PROOF": "C10 SMOKE-01..10 representative; per-rule automated proofs retained, not exhaustive browser assertion",
       "NEGATIVE_PROOF": [
         {
           "RUNNER": "scripts/check-phase2-planned-guards.mjs",
@@ -4131,7 +4045,7 @@
           "EVIDENCE": "draft context change + local Undo"
         }
       ],
-      "USER_FLOW_PROOF": "NOT_APPLICABLE",
+      "USER_FLOW_PROOF": "C10 SMOKE-01..10 representative; per-rule automated proofs retained, not exhaustive browser assertion",
       "NEGATIVE_PROOF": [
         {
           "RUNNER": "scripts/check-phase2-planned-guards.mjs",
@@ -4163,7 +4077,7 @@
           "EVIDENCE": "TEXT remains intention"
         }
       ],
-      "USER_FLOW_PROOF": "NOT_APPLICABLE",
+      "USER_FLOW_PROOF": "C10 SMOKE-01..10 representative; per-rule automated proofs retained, not exhaustive browser assertion",
       "NEGATIVE_PROOF": [
         {
           "RUNNER": "scripts/check-phase2-planned-guards.mjs",
@@ -4195,7 +4109,7 @@
           "EVIDENCE": "TEXT remains intention"
         }
       ],
-      "USER_FLOW_PROOF": "NOT_APPLICABLE",
+      "USER_FLOW_PROOF": "C10 SMOKE-01..10 representative; per-rule automated proofs retained, not exhaustive browser assertion",
       "NEGATIVE_PROOF": [
         {
           "RUNNER": "scripts/check-phase2-planned-guards.mjs",
@@ -4227,7 +4141,7 @@
           "EVIDENCE": "TEXT remains intention"
         }
       ],
-      "USER_FLOW_PROOF": "NOT_APPLICABLE",
+      "USER_FLOW_PROOF": "C10 SMOKE-01..10 representative; per-rule automated proofs retained, not exhaustive browser assertion",
       "NEGATIVE_PROOF": [
         {
           "RUNNER": "scripts/check-phase2-planned-guards.mjs",
@@ -4259,7 +4173,7 @@
           "EVIDENCE": "TEXT remains intention"
         }
       ],
-      "USER_FLOW_PROOF": "NOT_APPLICABLE",
+      "USER_FLOW_PROOF": "C10 SMOKE-01..10 representative; per-rule automated proofs retained, not exhaustive browser assertion",
       "NEGATIVE_PROOF": [
         {
           "RUNNER": "scripts/check-phase2-planned-guards.mjs",
@@ -4291,7 +4205,7 @@
           "EVIDENCE": "TEXT remains intention"
         }
       ],
-      "USER_FLOW_PROOF": "NOT_APPLICABLE",
+      "USER_FLOW_PROOF": "C10 SMOKE-01..10 representative; per-rule automated proofs retained, not exhaustive browser assertion",
       "NEGATIVE_PROOF": [
         {
           "RUNNER": "scripts/check-phase2-planned-guards.mjs",
@@ -4323,7 +4237,7 @@
           "EVIDENCE": "TEXT remains intention"
         }
       ],
-      "USER_FLOW_PROOF": "NOT_APPLICABLE",
+      "USER_FLOW_PROOF": "C10 SMOKE-01..10 representative; per-rule automated proofs retained, not exhaustive browser assertion",
       "NEGATIVE_PROOF": [
         {
           "RUNNER": "scripts/check-phase2-planned-guards.mjs",
@@ -4355,7 +4269,7 @@
           "EVIDENCE": "TEXT remains intention"
         }
       ],
-      "USER_FLOW_PROOF": "NOT_APPLICABLE",
+      "USER_FLOW_PROOF": "C10 SMOKE-01..10 representative; per-rule automated proofs retained, not exhaustive browser assertion",
       "NEGATIVE_PROOF": [
         {
           "RUNNER": "scripts/check-phase2-planned-guards.mjs",
@@ -4377,7 +4291,7 @@
       "HORIZON": "V1.1",
       "DOMAIN_PROOF": [],
       "SERVER_PROOF": [],
-      "USER_FLOW_PROOF": "NOT_APPLICABLE",
+      "USER_FLOW_PROOF": "NOT_APPLICABLE: deferred",
       "NEGATIVE_PROOF": [],
       "METAMORPHIC_PROOF": [],
       "ORACLE": "STATIC_CONTRACT",
@@ -4389,7 +4303,7 @@
       "HORIZON": "V1.1",
       "DOMAIN_PROOF": [],
       "SERVER_PROOF": [],
-      "USER_FLOW_PROOF": "NOT_APPLICABLE",
+      "USER_FLOW_PROOF": "NOT_APPLICABLE: deferred",
       "NEGATIVE_PROOF": [],
       "METAMORPHIC_PROOF": [],
       "ORACLE": "STATIC_CONTRACT",
@@ -4401,7 +4315,7 @@
       "HORIZON": "V1.1",
       "DOMAIN_PROOF": [],
       "SERVER_PROOF": [],
-      "USER_FLOW_PROOF": "NOT_APPLICABLE",
+      "USER_FLOW_PROOF": "NOT_APPLICABLE: deferred",
       "NEGATIVE_PROOF": [],
       "METAMORPHIC_PROOF": [],
       "ORACLE": "STATIC_CONTRACT",
@@ -4413,7 +4327,7 @@
       "HORIZON": "V1.1",
       "DOMAIN_PROOF": [],
       "SERVER_PROOF": [],
-      "USER_FLOW_PROOF": "NOT_APPLICABLE",
+      "USER_FLOW_PROOF": "NOT_APPLICABLE: deferred",
       "NEGATIVE_PROOF": [],
       "METAMORPHIC_PROOF": [],
       "ORACLE": "STATIC_CONTRACT",
@@ -4425,7 +4339,7 @@
       "HORIZON": "V1.1",
       "DOMAIN_PROOF": [],
       "SERVER_PROOF": [],
-      "USER_FLOW_PROOF": "NOT_APPLICABLE",
+      "USER_FLOW_PROOF": "NOT_APPLICABLE: deferred",
       "NEGATIVE_PROOF": [],
       "METAMORPHIC_PROOF": [],
       "ORACLE": "STATIC_CONTRACT",
@@ -4437,7 +4351,7 @@
       "HORIZON": "V1.1",
       "DOMAIN_PROOF": [],
       "SERVER_PROOF": [],
-      "USER_FLOW_PROOF": "NOT_APPLICABLE",
+      "USER_FLOW_PROOF": "NOT_APPLICABLE: deferred",
       "NEGATIVE_PROOF": [],
       "METAMORPHIC_PROOF": [],
       "ORACLE": "STATIC_CONTRACT",
@@ -4449,7 +4363,7 @@
       "HORIZON": "V1.1",
       "DOMAIN_PROOF": [],
       "SERVER_PROOF": [],
-      "USER_FLOW_PROOF": "NOT_APPLICABLE",
+      "USER_FLOW_PROOF": "NOT_APPLICABLE: deferred",
       "NEGATIVE_PROOF": [],
       "METAMORPHIC_PROOF": [],
       "ORACLE": "STATIC_CONTRACT",
@@ -4461,7 +4375,7 @@
       "HORIZON": "V1.1",
       "DOMAIN_PROOF": [],
       "SERVER_PROOF": [],
-      "USER_FLOW_PROOF": "NOT_APPLICABLE",
+      "USER_FLOW_PROOF": "NOT_APPLICABLE: deferred",
       "NEGATIVE_PROOF": [],
       "METAMORPHIC_PROOF": [],
       "ORACLE": "STATIC_CONTRACT",
@@ -4650,121 +4564,415 @@
       "STATUS": "PASS"
     }
   ],
-  "gates": [
+  "browserEvidence": {
+    "checkedAt": "2026-09-30T09:11:58.824Z",
+    "sourceSha256": "29f33248bba050a02e8f358d9b277d7d47022431111105cb26c2bc095c9d3cd0",
+    "headAtExecution": "bed265c2d4f648123054fe4b5e4b2677d61a9498",
+    "status": "PASS",
+    "mechanism": "Existing Codex integrated browser (Cua Playwright locators), normal authenticated app, localhost:3000, real Supabase prospective persistence. No added browser framework or auth bypass.",
+    "executionWindowUTC": {
+      "from": "2026-09-30T08:35:00Z",
+      "to": "2026-09-30T09:09:18.50428+00:00"
+    },
+    "scope": "Desktop representative smokes; browser tool calls and read-only DB rereads in this conversation. Supporting server/RLS proofs are distinguished from browser observations.",
+    "smokes": [
+      {
+        "id": "SMOKE-01",
+        "status": "PASS",
+        "proof": "Browser Save: OWN_HOME known domicile, two explicit basket assets 16 + 2×3 =22, no Transport controls. One saved row, one undated calendar button, forecast +22 and projected remainder -22."
+      },
+      {
+        "id": "SMOKE-02",
+        "status": "PASS",
+        "proof": "Browser required provider blocker before Uber Eats. Quick total25, no fee lines or user route; habitual baseline25, economic impact0. Saved/read one root with provider."
+      },
+      {
+        "id": "SMOKE-03",
+        "status": "PASS",
+        "proof": "Actual browser Lucas birthday: Gift suggestion visible with0items, no gift auto-created. Contact derives home with provenance. Explicit Restaurant child36, TEXT local place, root4stops DIRECT→ROOT→CHILD→DIRECT, manual5/2/6km, fuel2.28 economic-only. Preview gross38.28 vs payable36, one saved dated root."
+      },
+      {
+        "id": "SMOKE-04",
+        "status": "PASS",
+        "proof": "Browser60 Quick→45 meal +15 alcohol: total unchanged, exactly two item lines. Only meal offers Swile; preview reserved45 Swile /15 Bank for this expense, impact60. Saved one dated root."
+      },
+      {
+        "id": "SMOKE-05",
+        "status": "PASS",
+        "proof": "Browser Fontès CAR, explicit return: directed62.962/64.342km,3 observations each,2segments127.30km10.434L cost20.83. July01 observation + P4_NATIONAL_FALLBACK wording visible. Preview payable0 vs gross20.83. One fuel line with no allocation."
+      },
+      {
+        "id": "SMOKE-06",
+        "status": "PASS",
+        "proof": "Browser TAKEAWAY explicit3-stop route with4/4km and1.40fuel→DELIVERY/UberEats. Route retained in local suspension, Preview12 allowed, Add-to-month disabled. Undo restores3stops4/4km and2costlines13.40 without duplicate; previousPreview visibly stale. Draft abandoned, noDBroot."
+      },
+      {
+        "id": "SMOKE-07",
+        "status": "PASS",
+        "proof": "Browser confirms realization of existing delivery25→28. DB reread same PK, single line28.00, DECLARED_REALIZED. Card states without observed transaction; forecast declared28 and planned141.11, no old25 counted."
+      },
+      {
+        "id": "SMOKE-08",
+        "status": "PASS",
+        "proof": "Browser report to Nov05 first rejected absent month meal resources; root staysOct. Explicit synthetic NovSwile/Edenred0; retry samePK datedNov05 cost29.00. ReloadNov onecard/onecalendar event/planned29, monthremaining931.54. ReloadOct deliveryabsent, planned141.11, remaining965.93; month work facts not copied."
+      },
+      {
+        "id": "SMOKE-09",
+        "status": "PASS",
+        "proof": "Browser explicit did-not-happen confirmation deletes only report fixture. Nov card/event both0, planned29→0, habitual baseline freed (remaining931.54→960.54), economic remainder unchanged1444.94, DBrootabsent rather than CANCELLED. Funding boundary targeted server probe verified separately."
+      },
+      {
+        "id": "SMOKE-10",
+        "status": "PASS",
+        "proof": "Browser correction DECLARED28→29 on same root then Remettre en prévu. DB samePK PLANNED29.00, no parallel planned/declared fields. Correction preview Bank reserved73/declared29; after restore forecast declared0, all29 remains planned. Funding lifecycle invariants also independently checked by real service runners."
+      }
+    ],
+    "cleanup": {
+      "browser": "PASS",
+      "counts": {
+        "authUsers": 1,
+        "checkedAt": "2026-09-30T09:09:18.50428+00:00",
+        "smokeRows": 0,
+        "households": 1,
+        "plannedRows": 0,
+        "novemberInputRows": 0,
+        "syntheticHouseholdsRemaining": 0
+      },
+      "projectionReturnedToInitial": "PASS",
+      "consoleErrorsAfterCleanup": []
+    },
+    "screenshots": [
+      "phase2-c10-fixtures.png",
+      "phase2-c10-clean.png"
+    ],
+    "privateEvidence": "Fixture PKs and exact backup stored outside repository; no credentials or real banking payload exported.",
+    "limitations": [
+      "No standalone replayable Playwright/Cypress CLI; use checklist and Cua tools for future browser reruns.",
+      "Native date fill required ordinary ArrowUp/ArrowDown to fire input events; no product keyboard redesign performed.",
+      "Local dev cache caused initial404; fresh cache restored pages. Fresh background tabs recovered browser command timeouts.",
+      "Zero historical write proof comes from per-operation real service boundary probes and live RLS rollback fixtures; global row counters alone are not treated as that proof."
+    ]
+  },
+  "restoration": {
+    "authUsers": 1,
+    "checkedAt": "2026-09-30T09:09:18.50428+00:00",
+    "smokeRows": 0,
+    "households": 1,
+    "plannedRows": 0,
+    "novemberInputRows": 0,
+    "syntheticHouseholdsRemaining": 0,
+    "status": "PASS",
+    "before": {
+      "plannedRows": 0,
+      "novemberInputRows": 0
+    },
+    "restoration": "Exact original absence of November input row restored; guarded delete required same household/month, timestamp and entire synthetic payload. Five browser-created roots all deleted via normal app actions. No preexisting prospective root existed.",
+    "authorization": "Human-approved C10 temporary fixtures and cleanup"
+  },
+  "financialOracle": {
+    "STATUS": "PASS",
+    "durationMs": 7486,
+    "command": "node scripts/check-phase2-planned-finance.mjs",
+    "evidence": "PASS: October resources, certain outflows, scenarios, negative invariants, override propagation and undo\nPASS: C5 FIN-01..08, FIN-UI-01..04, META-03/04/05/09/20, baseline displacement, quantity, language and no BANK reallocation"
+  },
+  "routeOracle": {
+    "checkedAt": "2026-09-30T09:14:16.545Z",
+    "plannedRows": 0,
+    "oracle": "LIVE_CURRENT",
+    "routeOracles": [
+      {
+        "contactKey": "manon_father",
+        "oracle": "LIVE_CURRENT",
+        "directedDistances": [
+          "62.962",
+          "64.342"
+        ],
+        "observationCounts": [
+          3,
+          3
+        ],
+        "fuelCost": "20.83",
+        "status": "KNOWN"
+      },
+      {
+        "contactKey": "lucas",
+        "oracle": "LIVE_CURRENT",
+        "directedDistances": [
+          "6.196",
+          null
+        ],
+        "observationCounts": [
+          1,
+          0
+        ],
+        "fuelCost": null,
+        "status": "PARTIAL"
+      },
+      {
+        "contactKey": "cedric",
+        "oracle": "LIVE_CURRENT",
+        "directedDistances": [
+          "13.169",
+          "14.327"
+        ],
+        "observationCounts": [
+          2,
+          2
+        ],
+        "fuelCost": "4.96",
+        "status": "KNOWN"
+      }
+    ],
+    "fuelObservedAt": "2026-07-01T00:00:00+00:00",
+    "protectedAuthorities": [
+      "operations",
+      "life_events",
+      "moments",
+      "mobility_legs",
+      "mobility_trips",
+      "persons",
+      "referentiel_lieu",
+      "person_place_roles",
+      "fuel_price_observations",
+      "benefit_wallets",
+      "benefit_wallet_ledger_entries",
+      "analytics_query_snapshots",
+      "analytics_artifacts",
+      "analytics_publications"
+    ],
+    "writes": 0
+  },
+  "rls": {
+    "policies": [
+      {
+        "cmd": "DELETE",
+        "qual": "( SELECT private.user_has_household_access(phase2_planned_expenses.household_id) AS user_has_household_access)",
+        "roles": [
+          "authenticated"
+        ],
+        "policyname": "phase2_planned_expenses_delete",
+        "with_check": null
+      },
+      {
+        "cmd": "INSERT",
+        "qual": null,
+        "roles": [
+          "authenticated"
+        ],
+        "policyname": "phase2_planned_expenses_insert",
+        "with_check": "(( SELECT private.user_has_household_access(phase2_planned_expenses.household_id) AS user_has_household_access) AND (created_by = ( SELECT auth.uid() AS uid)) AND (updated_by = ( SELECT auth.uid() AS uid)))"
+      },
+      {
+        "cmd": "SELECT",
+        "qual": "( SELECT private.user_has_household_access(phase2_planned_expenses.household_id) AS user_has_household_access)",
+        "roles": [
+          "authenticated"
+        ],
+        "policyname": "phase2_planned_expenses_read",
+        "with_check": null
+      },
+      {
+        "cmd": "UPDATE",
+        "qual": "( SELECT private.user_has_household_access(phase2_planned_expenses.household_id) AS user_has_household_access)",
+        "roles": [
+          "authenticated"
+        ],
+        "policyname": "phase2_planned_expenses_update",
+        "with_check": "(( SELECT private.user_has_household_access(phase2_planned_expenses.household_id) AS user_has_household_access) AND (updated_by = ( SELECT auth.uid() AS uid)))"
+      }
+    ],
+    "triggers": 0,
+    "authCount": 1,
+    "checkedAt": "2026-09-30T08:47:28.337415+00:00",
+    "migrations": [
+      {
+        "name": "phase2_planned_expenses",
+        "version": "20260928163114"
+      },
+      {
+        "name": "phase2_planned_cost_items_guard",
+        "version": "20260928205006"
+      },
+      {
+        "name": "phase2_planned_cost_items_guard_fix",
+        "version": "20260928210316"
+      },
+      {
+        "name": "phase2_planned_asset_cost_items",
+        "version": "20260929064922"
+      },
+      {
+        "name": "phase2_planned_module_path_v1",
+        "version": "20260929211001"
+      },
+      {
+        "name": "phase2_planned_report_month",
+        "version": "20260929232710"
+      }
+    ],
+    "rlsEnabled": true,
+    "plannedRows": 4,
+    "householdCount": 1,
+    "syntheticHouseholdsRemaining": 0,
+    "sqlSha256": "011997035d1e049352ccaf49f67dba396b20e5200d687ccb4c2053a37bfe752d",
+    "head": "bed265c2d4f648123054fe4b5e4b2677d61a9498",
+    "oracle": "LIVE_CURRENT",
+    "authorization": "Human-approved targeted rollback test rerun during C10",
+    "rlsTwoHouseholds": "PASS",
+    "targetedHistoricalTraces": "PASS",
+    "persistence": "ROLLBACK"
+  },
+  "zeroWrite": [
     {
-      "ID": "GATE-01",
-      "NAME": "Registry/config",
-      "STATUS": "PASS"
+      "operation": "Preview",
+      "prospectiveWrites": 0,
+      "historicalWrites": 0,
+      "targetedRoot": true
     },
     {
-      "ID": "GATE-02",
-      "NAME": "Context resolver",
-      "STATUS": "PASS"
+      "operation": "Create",
+      "prospectiveWrites": 1,
+      "historicalWrites": 0,
+      "targetedRoot": true
     },
     {
-      "ID": "GATE-03",
-      "NAME": "Adaptive Builder/readiness",
-      "STATUS": "PASS"
+      "operation": "Update",
+      "prospectiveWrites": 1,
+      "historicalWrites": 0,
+      "targetedRoot": true
     },
     {
-      "ID": "GATE-04",
-      "NAME": "Places/contacts/social",
-      "STATUS": "PASS"
+      "operation": "Declare",
+      "prospectiveWrites": 1,
+      "historicalWrites": 0,
+      "targetedRoot": true
     },
     {
-      "ID": "GATE-05",
-      "NAME": "Assets/module graph",
-      "STATUS": "PASS"
+      "operation": "Restore",
+      "prospectiveWrites": 1,
+      "historicalWrites": 0,
+      "targetedRoot": true
     },
     {
-      "ID": "GATE-06",
-      "NAME": "Funding/baseline",
-      "STATUS": "PASS"
+      "operation": "Report",
+      "prospectiveWrites": 1,
+      "historicalWrites": 0,
+      "targetedRoot": true
     },
     {
-      "ID": "GATE-07",
-      "NAME": "Financial decision truth",
-      "STATUS": "PASS"
+      "operation": "Delete",
+      "prospectiveWrites": 1,
+      "historicalWrites": 0,
+      "targetedRoot": true
     },
     {
-      "ID": "GATE-08",
-      "NAME": "Child local place/root transport",
-      "STATUS": "PASS"
+      "operation": "contact TEXT + user-declared place",
+      "prospectiveWrites": 1,
+      "historicalWrites": 0,
+      "targetedRoot": true
     },
     {
-      "ID": "GATE-09",
-      "NAME": "Route/fuel",
-      "STATUS": "PASS"
+      "operation": "child local place",
+      "prospectiveWrites": 1,
+      "historicalWrites": 0,
+      "targetedRoot": true
     },
     {
-      "ID": "GATE-10",
-      "NAME": "Lifecycle/reality transition",
-      "STATUS": "PASS"
+      "operation": "route/fuel Preview",
+      "prospectiveWrites": 0,
+      "historicalWrites": 0,
+      "targetedRoot": true
     },
     {
-      "ID": "GATE-11",
-      "NAME": "Persistence/idempotence/stale",
-      "STATUS": "PASS"
+      "operation": "route/fuel Save",
+      "prospectiveWrites": 1,
+      "historicalWrites": 0,
+      "targetedRoot": true
     },
     {
-      "ID": "GATE-12",
-      "NAME": "Server validation",
-      "STATUS": "PASS"
+      "operation": "Declared route",
+      "prospectiveWrites": 1,
+      "historicalWrites": 0,
+      "targetedRoot": true
     },
     {
-      "ID": "GATE-13",
-      "NAME": "MonthScenario/read model",
-      "STATUS": "PASS"
+      "operation": "draft context change + local Undo",
+      "prospectiveWrites": 0,
+      "historicalWrites": 0,
+      "targetedRoot": true
     },
     {
-      "ID": "GATE-14",
-      "NAME": "Calendar/list/forecast",
-      "STATUS": "PASS"
+      "operation": "foreign refs",
+      "prospectiveWrites": 0,
+      "historicalWrites": 0,
+      "targetedRoot": true
     },
     {
-      "ID": "GATE-15",
-      "NAME": "Preview/Save parity",
-      "STATUS": "PASS"
-    },
-    {
-      "ID": "GATE-16",
-      "NAME": "RLS",
-      "STATUS": "PASS"
-    },
-    {
-      "ID": "GATE-17",
-      "NAME": "Targeted historical zero-write",
-      "STATUS": "PASS"
-    },
-    {
-      "ID": "GATE-18",
-      "NAME": "Production build",
-      "STATUS": "PASS"
-    },
-    {
-      "ID": "GATE-19",
-      "NAME": "Rule coverage / ownership",
-      "STATUS": "PASS"
-    },
-    {
-      "ID": "GATE-20",
-      "NAME": "Cleanup no duplicate authority",
-      "STATUS": "PASS"
-    },
-    {
-      "ID": "GATE-21",
-      "NAME": "Representative user flow evidence",
-      "STATUS": "PENDING_C10"
+      "operation": "foreign refs",
+      "prospectiveWrites": 0,
+      "historicalWrites": 0,
+      "targetedRoot": true
     }
   ],
+  "previewSaveParity": {
+    "STATUS": "PASS",
+    "durationMs": 8247,
+    "command": "node scripts/check-phase2-planned-reliability.mjs",
+    "evidence": "PASS: October resources, certain outflows, scenarios, negative invariants, override propagation and undo\nPASS: C6 PARITY-01..04, resolver parity, IDEMP-CREATE-01/02, tampering, live drift, CAS, META-15/16/17, Preview zero-write"
+  },
+  "cleanupReport": "docs/status/phase2-c10-cleanup.md",
+  "remainingShims": [
+    "Read-only compatibility for legacy month settings plannedEvents:[]; nonempty rejects, stripped on write. No active second rule engine."
+  ],
+  "liveDivergences": [],
+  "nonBlockingGaps": [
+    "No configured lint runner (NOT_APPLICABLE).",
+    "Browser smokes use existing integrated automation; no standalone CLI browser replay suite.",
+    "Keyboard extensions and responsive redesign excluded by user; no Vercel verification requested.",
+    "Fuel observations remain dated July2026 estimates, with provenance shown.",
+    "Lucas canonical return pair has no observation: PARTIAL is retained, requiring explicit manual distance; no symmetric return invented."
+  ],
+  "deferredV11": [
+    "Planning Memory and personal presets/recents/repeat/as-last-time/learning; not persisted in V1."
+  ],
+  "deferredV2": [
+    "Observed transaction reconciliation and historical confirmation; prospective declaration does not create banking reality."
+  ],
+  "evidenceHashes": {
+    "phase2-c9-dd6-certification.json": "3396869b42e51752f3f682c3a9a4e452e9b29eb6fb9814e61e0d7f02e91f8419",
+    "phase2-c10-browser-evidence.json": "2de79dec023a2180cab5f8c79bdc56448abd3599474fe34dff702112595572f0",
+    "phase2-c10-restoration.json": "393013a444396ed527148ffbdd612bbe19de1a071ea6fd394cb98f7d2e8042c4",
+    "phase2-c10-database-evidence.json": "7e1f69e48362735bc0946510130a98912711108b1bfb7bb3006bc68a567a930d",
+    "phase2-c10-cleanup.md": "5768c85ba46fc090d074b92f49e87824867b5b245809068bd4371f1826284094"
+  },
   "summary": {
-    "C9_AUTOMATED_DD6": "PASS",
+    "C10_FINALIZATION": "PASS",
+    "HEAD_FINAL": "7f0deb279fdd64d5fd0087e360cf3bc9c02807e5",
+    "AUTOMATED_CERTIFICATION": "PASS",
     "RULE_COVERAGE": "PASS",
     "METAMORPHIC": "PASS",
     "RLS": "PASS",
-    "HISTORICAL_ZERO_WRITE": "PASS",
+    "ZERO_WRITE": "PASS",
     "PREVIEW_SAVE_PARITY": "PASS",
     "PRODUCTION_BUILD": "PASS",
-    "GATE_21_USER_FLOW": "PENDING_C10"
+    "BROWSER_USER_FLOW": "PASS",
+    "CLEANUP": "PASS",
+    "SPEC_CODEX_READY": "YES",
+    "IMPLEMENTATION_CERTIFIED": "YES",
+    "BLOCKERS_REMAINING": [],
+    "NON_BLOCKING_GAPS": [
+      "No configured lint runner (NOT_APPLICABLE).",
+      "Browser smokes use existing integrated automation; no standalone CLI browser replay suite.",
+      "Keyboard extensions and responsive redesign excluded by user; no Vercel verification requested.",
+      "Fuel observations remain dated July2026 estimates, with provenance shown.",
+      "Lucas canonical return pair has no observation: PARTIAL is retained, requiring explicit manual distance; no symmetric return invented."
+    ],
+    "FINAL_EVIDENCE_PATH": "docs/status/phase2-c10-final-evidence.md",
+    "DEFERRED_V1_1": [
+      "Planning Memory and personal presets/recents/repeat/as-last-time/learning; not persisted in V1."
+    ],
+    "DEFERRED_V2": [
+      "Observed transaction reconciliation and historical confirmation; prospective declaration does not create banking reality."
+    ]
   }
 }
