@@ -9,6 +9,7 @@ import { calendarDate, calendarDateLabel, calendarDayDescription, calendarDaySum
   calendarIcon, calendarInitialDay, calendarKeyboardDay, calendarMoney, calendarPopoverPosition, calendarStateLabel,
   orderCalendarItems, visibleCalendarItems } from "./calendar-presentation";
 import { usePlannedExpenseInteractions, type PlannedExpenseInteraction } from "./planned-expense-interactions";
+import { transportPresentation } from "@/domain/phase2/planned-car";
 
 const eventTone = (item: CalendarItem) => item.nature === "DECLARED_REALIZED"
   ? "text-emerald-800" : item.expense?.needsRealityConfirmation
@@ -68,6 +69,7 @@ export function CalendarEventDetails({ item, onAction, expanded = false }: { ite
         <ul className="mt-2 space-y-1 text-xs text-slate-600">{expense.context.route.stops.slice(0, -1).map((stop, index) => <li key={index}>{stop.label} → {expense.context.route!.stops[index + 1]!.label} · {stop.distanceToNextKm ?? "distance non renseignée"}{stop.distanceToNextKm ? " km" : ""}
           {stop.evidence ? ` · estimé à partir de ${stop.evidence.observationCount} trajet(s), dernière référence du ${calendarDate(stop.evidence.lastDate)}` : stop.distanceSource === "MANUAL" ? " · distance renseignée par vous" : ""}</li>)}</ul>
         {expense.context.route.fuelEstimate && <p className="mt-2 text-xs text-slate-600">{expense.context.route.fuelEstimate.distanceKm} km · estimation au prix carburant du {expense.context.route.fuelEstimate.fuelPriceObservedAt ?? "jour non renseigné"}. Ce prix peut avoir évolué ; l’usage estimé n’est pas un plein payé.</p>}
+        {expense.context.route.liveEstimate && <div className="mt-2 grid gap-1 text-sm"><p>Essence utilisée : {expense.context.route.liveEstimate.fuelEconomicCost === null ? "prix indisponible" : `≈ ${calendarMoney(expense.context.route.liveEstimate.fuelEconomicCost)}`} · {expense.context.route.liveEstimate.route.provider === "TOMTOM" ? "route TomTom" : "trajet de repli"}.</p><p>Péage : {transportPresentation(expense).toll === null ? "non disponible" : calendarMoney(transportPresentation(expense).toll!)}.</p><p className="text-xs text-slate-500">Estimation conservée au moment de l’enregistrement ; aucun trajet observé ni paiement n’a été créé.</p></div>}
       </details>}
       <details className={disclosureClass}><summary>Détails du coût</summary><ul className="mt-3 space-y-2" aria-label="Éléments du projet">
         {expense.costItems.map((cost) => <li key={cost.id} className="flex justify-between gap-3"><span>{cost.variantLabel || cost.label}</span>

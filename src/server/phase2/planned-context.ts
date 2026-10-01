@@ -51,7 +51,7 @@ export async function readPlannedContextOptions(client: SupabaseClient, househol
   if (vehicleError) throw vehicleError;
   const vehicle = vehicles?.[0];
   const [placesResult, rolesResult, legsResult, pricesResult, productResult, walletsResult, locations, brandsResult] = await Promise.all([
-    client.from("referentiel_lieu").select("place_id,nom_canonique,commune,nature_lieu,usage_principal,sous_type,private_place")
+    client.from("referentiel_lieu").select("place_id,nom_canonique,commune,nature_lieu,usage_principal,sous_type,private_place,adresse,latitude_canonique,longitude_canonique")
       .order("nom_canonique").limit(500),
     persons.length ? client.from("person_place_roles").select("person_id,place_id,role")
       .in("person_id", persons.map((person) => person.personId)) : Promise.resolve({ data: [], error: null }),
@@ -80,6 +80,8 @@ export async function readPlannedContextOptions(client: SupabaseClient, househol
     placeId: place.place_id, name: place.nom_canonique, commune: place.commune,
     nature: place.nature_lieu, usage: place.usage_principal, subtype: place.sous_type,
     privatePlace: place.private_place,
+    address: place.adresse,
+    ...(place.latitude_canonique != null && place.longitude_canonique != null ? { coordinates: { latitude: Number(place.latitude_canonique), longitude: Number(place.longitude_canonique), source: "CANONICAL" as const } } : {}),
     visits12Months: visits.get(place.place_id)?.size ?? 0,
     lastVisitDate: [...visits.get(place.place_id) ?? []].sort().at(-1) ?? null,
     brandLabel: (brandsResult.data?.find((row) => row.place_id === place.place_id)?.merchants as unknown as { nom_canonique?: string } | undefined)?.nom_canonique ?? null,
@@ -90,18 +92,17 @@ export async function readPlannedContextOptions(client: SupabaseClient, househol
   })).filter((place) => !place.privatePlace || derivePlannedPlaceRoles(place).includes("OWN_HOME") || place.relationships.length > 0
     || SOCIAL_CONTACTS_V1.some((contact) => contact.places.some((link) => link.placeId === place.placeId)));
   let estimatedVehicle: PlannedVehicleEstimate | null = null;
-  if (vehicle && pricesResult.data?.[0]) {
+  if (vehicle) {
     const legs = legsResult.data ?? [];
     const distance = legs.reduce((sum, leg) => sum.plus(leg.distance_km ?? 0), new Big(0));
     const liters = legs.reduce((sum, leg) => sum.plus(leg.estimated_fuel_liters ?? 0), new Big(0));
     const consumption = vehicle.consumption_l_100km ? new Big(vehicle.consumption_l_100km)
       : distance.gt(0) ? liters.times(100).div(distance) : null;
     if (consumption && consumption.gt(0)) {
-      const price = pricesResult.data[0];
-      estimatedVehicle = { label: vehicle.label, consumptionL100Km: consumption.round(3).toFixed(3),
-        fuelPricePerLiter: new Big(price.price_per_liter).toFixed(3),
-        fuelPriceObservedAt: price.observed_at, fuelPriceQuality: price.quality,
-        fuelPriceSource: `Estimation · dernier prix ${new Intl.DateTimeFormat("fr-FR", { month: "long", year: "numeric", timeZone: "UTC" }).format(new Date(price.observed_at))}` };
+      const price = pricesResult.data?.[0];
+      estimatedVehicle = { vehicleId: vehicle.vehicle_id, fuelType: vehicle.fuel_type, label: vehicle.label, consumptionL100Km: consumption.round(3).toFixed(3),
+        fuelPricePerLiter: price ? new Big(price.price_per_liter).toFixed(3) : "0", ...(price ? { fuelPriceObservedAt: price.observed_at, fuelPriceQuality: price.quality } : {}),
+        fuelPriceSource: price ? `Estimation · dernier prix ${new Intl.DateTimeFormat("fr-FR", { month: "long", year: "numeric", timeZone: "UTC" }).format(new Date(price.observed_at))}` : "Prix indisponible" };
     }
   }
   const assetByNeed = OBSERVED_PRICE_ASSETS_V1;

@@ -5,7 +5,7 @@ import { useEffect, useRef, useState, type Dispatch, type SetStateAction } from 
 import Big from "big.js";
 import { CalendarDays, Plus, Trash2 } from "lucide-react";
 import { PLANNED_FAMILIES, PLANNED_SUBTYPE_LABELS, type PlannedExpenseFamily } from "@/domain/phase2/planned-assets";
-import { createBuilderState, changeBuilderRoot, deriveBuilderReadiness, materializeBuilderDraft, synchronizeIntentBuilder } from "@/domain/phase2/planned-builder";
+import { createBuilderState, changeBuilderRoot, deriveBuilderReadiness, materializeBuilderDraft, synchronizeIntentBuilder, adoptBuilderResolvedTransport } from "@/domain/phase2/planned-builder";
 import { projectPlaceLabel, intentForDraft, BUILDER_INTENTS } from "@/domain/phase2/planned-ux";
 import type { PlannedPlaceOption } from "@/domain/phase2/planned-places";
 import type { PlannedPriceSuggestion, PlannedVehicleEstimate, PlannedWalletOption } from "@/domain/phase2/planned-contract";
@@ -130,7 +130,8 @@ export function PlannedExpensesControl({ targetMonth, expenses, persons, places,
     setBusy(true); setError("");
     try { const value = unwrap(await previewPlannedExpense(targetMonth, materializeBuilderDraft(builder, true), editedId));
       if (currentRevision.current !== revision || draftSession.current !== session) return;
-      setPreview(value); setPreviewRevision(revision); setStep(5); }
+      const adopted = synchronizeIntentBuilder(adoptBuilderResolvedTransport(builder, value.resolvedDraft), places, persons);
+      setBuilderState(adopted); setPreview(value); setPreviewRevision(adopted.revision); setStep(5); }
     catch (caught) { if (currentRevision.current === revision && draftSession.current === session) {
       setError(caught instanceof Error ? caught.message : "La simulation n’a pas abouti.");
       setIssue((caught as { issue?: PlannedIssue })?.issue ?? null); } }

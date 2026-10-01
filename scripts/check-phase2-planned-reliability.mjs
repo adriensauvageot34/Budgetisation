@@ -11,7 +11,7 @@ const { projectPlannedExpenseImpact } = require("../src/server/phase2/planned-im
 const { deriveMonthScenario } = require("../src/server/phase2/month-scenario.ts");
 const { resolvePlannedContext } = require("../src/domain/phase2/planned-rules.ts");
 const { plannedMutationIssue } = require("../src/domain/phase2/planned-mutations.ts");
-const { calculateRouteFuel } = require("../src/domain/phase2/planned-routes.ts");
+const { calculateRouteFuel, resolvePlannedRoute } = require("../src/domain/phase2/planned-routes.ts");
 const month = "2026-10";
 const today = new Date().toISOString().slice(0, 10);
 
@@ -85,8 +85,11 @@ const from = randomUUID(), to = randomUUID();
 facts.places = [from, to].map((placeId, index) => ({ placeId, name: `Lieu ${index}`, privatePlace: false,
   nature: "Commerce", usage: "Restaurant", subtype: null, relationships: [] }));
 facts.history = [{ originPlaceId: from, destinationPlaceId: to, distanceKm: "10.000", fuelLiters: "0.800000", method: "HISTORICAL", date: "2026-09-29" }];
-const route = value(await Promise.resolve({ ok: true, value: await a.estimatePlannedRoute(month, [
-  { label: "Lieu 0", placeId: from, distanceToNextKm: null }, { label: "Lieu 1", placeId: to, distanceToNextKm: null }]) }));
+// Legacy persisted rows retain the historical resolver; live action/provider parity has its own car suite.
+const route = resolvePlannedRoute([
+  { label: "Lieu 0", placeId: from, distanceToNextKm: null }, { label: "Lieu 1", placeId: to, distanceToNextKm: null }], facts.history, facts.vehicle);
+await assert.rejects(a.estimatePlannedRoute(month, { ...draft(), context: { transportMode: "FREE" } }), /PLANNED_ROUTE_FORBIDDEN/);
+await assert.rejects(a.estimatePlannedRoute(month, { ...draft(), familyKey: "food", subtypeKey: "fast_food", context: { purchaseMode: "DELIVERY" } }), /PLANNED_ROUTE_FORBIDDEN/);
 const car = { ...draft([item("25.00", null, ["trip"]), { ...item(route.fuelEstimate.cost, "transport:fuel_usage", ["trip"]), priceSource: "CALCULATED" }]),
   familyKey: "visit_trip", subtypeKey: "trip_stay",
   context: { route: { mode: "CAR", stops: route.stops, fuelEstimate: route.fuelEstimate } } };

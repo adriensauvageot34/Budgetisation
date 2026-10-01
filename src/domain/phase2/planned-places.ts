@@ -8,6 +8,7 @@ export type PlannedPlaceOption = Readonly<{ placeId: string; name: string; commu
   nature: string | null; usage: string | null; subtype: string | null; privatePlace: boolean;
   visits12Months?: number; lastVisitDate?: string | null;
   brandLabel?: string | null;
+  address?: string | null; coordinates?: import("./planned-car").RouteCoordinates;
   relationships: readonly { personName: string; role: string }[] }>;
 export type RankedPlannedPlace = Readonly<{ place: PlannedPlaceOption; roles: readonly PlaceRole[];
   rankingTier: "PRIMARY" | "SECONDARY"; reason: "CONTACT_HOME" | "WORK_MEAL_ANCHOR" | "PLACE_ROLE" }>;

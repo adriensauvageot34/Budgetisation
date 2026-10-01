@@ -16,6 +16,8 @@ import { BRING_ITEMS_LENS, DELIVERY_PROVIDERS, FISHING_ASSET_LENS, SOCIAL_CONTAC
 import type { CostItem, FundingAllocation, FundingSource, PlannedBaselineKey, PlannedExpenseContext,
   PlannedExpenseDraft, PriceSource, ModulePath, ProspectivePlaceRef } from "@/domain/phase2/planned-contract";
 import { readPlannedContextOptions, readPlannedRouteHistory } from "./planned-context";
+import { parseCarSnapshot, parseRouteCoordinates, carFuelEstimate, applyCarResult, carEstimateProblems } from "@/domain/phase2/planned-car";
+import { estimatePlannedCar } from "./planned-car-estimation";
 import type { MonthForecastSnapshot } from "./month-forecast-snapshot";
 import { simulatePlannedExpenseScenario, type MonthInputs } from "./month-scenario";
 
@@ -156,7 +158,7 @@ export function parsePlannedExpenseDraft(value: unknown, targetMonth: string,
     const priceSource = item.priceSource;
     if (priceSource !== undefined && !["MANUAL", "SYSTEM_DEFAULT", "LAST_KNOWN", "CALCULATED"].includes(priceSource as string))
       throw new TypeError("PLANNED_EXPENSE_PRICE_SOURCE_INVALID");
-    if (priceSource === "CALCULATED" && assetKey !== "transport:fuel_usage")
+    if (priceSource === "CALCULATED" && assetKey !== "transport:fuel_usage" && assetKey !== "transport:toll")
       throw new TypeError("PLANNED_EXPENSE_PRICE_SOURCE_INVALID");
     return { id, assetKey: assetKey as string | null, label,
       ...(item.variantLabel !== undefined ? { variantLabel: optionalText(item.variantLabel, "PLANNED_EXPENSE_VARIANT_INVALID") } : {}),
@@ -302,13 +304,20 @@ export function parsePlannedExpenseDraft(value: unknown, targetMonth: string,
   }
   if (contextRaw.route !== undefined) {
     const route = object(contextRaw.route, "PLANNED_EXPENSE_ROUTE_INVALID");
-    keysOnly(route, ["mode", "stops", "fuelEstimate"], "PLANNED_EXPENSE_ROUTE_INVALID");
+    keysOnly(route, ["mode", "stops", "fuelEstimate", "liveEstimate", "plannedTime", "timeKind", "preference", "manualFuelPrice", "tollFreeConfirmed"], "PLANNED_EXPENSE_ROUTE_INVALID");
+    const liveEstimate = route.liveEstimate === undefined ? undefined : parseCarSnapshot(route.liveEstimate);
+    if (liveEstimate && route.mode !== "CAR") throw new TypeError("PLANNED_EXPENSE_FUEL_ESTIMATE_MODE_INVALID");
+    if (route.plannedTime != null && (typeof route.plannedTime !== "string" || !/^(?:[01]\d|2[0-3]):[0-5]\d$/u.test(route.plannedTime) || !raw.plannedDate)) throw new TypeError("PLANNED_ROUTE_TIME_INVALID");
+    if (route.timeKind !== undefined && !["DEPARTURE", "ARRIVAL"].includes(String(route.timeKind))) throw new TypeError("PLANNED_ROUTE_TIME_INVALID");
+    if (route.preference !== undefined && (!["FASTEST", "AVOID_TOLLS"].includes(String(route.preference)) || liveEstimate && liveEstimate.preference !== route.preference)) throw new TypeError("PLANNED_ROUTE_PREFERENCE_INVALID");
+    if (route.manualFuelPrice !== undefined && (typeof route.manualFuelPrice !== "string" || !/^\d(?:\.\d{1,3})?$/u.test(route.manualFuelPrice) || new Big(route.manualFuelPrice).lte(0))) throw new TypeError("PLANNED_ROUTE_PRICE_INVALID");
+    if (route.tollFreeConfirmed !== undefined && typeof route.tollFreeConfirmed !== "boolean") throw new TypeError("PLANNED_ROUTE_TOLL_INVALID");
     if (!["CAR", "TRAIN", "BUS", "TAXI"].includes(route.mode as string)
       || !Array.isArray(route.stops) || route.stops.length < 2 || route.stops.length > 12)
       throw new TypeError("PLANNED_EXPENSE_ROUTE_INVALID");
     const stops = route.stops.map((rawStop: unknown, index: number) => {
       const stop = object(rawStop, "PLANNED_EXPENSE_ROUTE_STOP_INVALID");
-      keysOnly(stop, ["label", "placeId", "distanceToNextKm", "endpointSource", "childModule", "distanceSource", "estimatedFuelLiters", "evidence"], "PLANNED_EXPENSE_ROUTE_STOP_INVALID");
+      keysOnly(stop, ["label", "placeId", "distanceToNextKm", "endpointSource", "childModule", "distanceSource", "estimatedFuelLiters", "evidence", "coordinates"], "PLANNED_EXPENSE_ROUTE_STOP_INVALID");
       const label = title(stop.label, "PLANNED_EXPENSE_ROUTE_STOP_INVALID");
       const placeId = stop.placeId === undefined ? undefined : uuid(stop.placeId, "PLANNED_EXPENSE_ROUTE_PLACE_INVALID");
       const km = stop.distanceToNextKm;
@@ -323,7 +332,8 @@ export function parsePlannedExpenseDraft(value: unknown, targetMonth: string,
         throw new TypeError("PLANNED_EXPENSE_ROUTE_ENDPOINT_INVALID");
       if ((source === "CHILD_LOCAL_PLACE") !== (childModule !== undefined))
         throw new TypeError("PLANNED_EXPENSE_ROUTE_ENDPOINT_INVALID");
-      if (stop.distanceSource !== undefined && !["MANUAL", "HISTORICAL_ROUTE"].includes(stop.distanceSource as string))
+      if (stop.distanceSource !== undefined && !["MANUAL", "HISTORICAL_ROUTE", "TOMTOM"].includes(stop.distanceSource as string)
+        || stop.distanceSource === "TOMTOM" && liveEstimate?.route.provider !== "TOMTOM")
         throw new TypeError("PLANNED_EXPENSE_ROUTE_SOURCE_INVALID");
       let evidence;
       let estimatedFuelLiters: string | undefined;
@@ -344,7 +354,8 @@ export function parsePlannedExpenseDraft(value: unknown, targetMonth: string,
       } else if (stop.estimatedFuelLiters !== undefined || stop.evidence !== undefined)
         throw new TypeError("PLANNED_EXPENSE_ROUTE_EVIDENCE_INVALID");
       return { label, ...(placeId ? { placeId } : {}), distanceToNextKm: index === (route.stops as unknown[]).length - 1 ? null : km as string,
-        ...(stop.distanceSource ? { distanceSource: stop.distanceSource as "MANUAL" | "HISTORICAL_ROUTE" } : {}),
+        ...(stop.distanceSource ? { distanceSource: stop.distanceSource as "MANUAL" | "HISTORICAL_ROUTE" | "TOMTOM" } : {}),
+        ...(stop.coordinates ? { coordinates: parseRouteCoordinates(stop.coordinates) } : {}),
         ...(evidence ? { evidence, estimatedFuelLiters } : {}),
         ...(source ? { endpointSource: source as "ROOT_PLACE" | "CHILD_LOCAL_PLACE" | "DIRECT_PLACE" } : {}),
         ...(childModule ? { childModule: childModule as AssetModule } : {}) };
@@ -360,12 +371,12 @@ export function parsePlannedExpenseDraft(value: unknown, targetMonth: string,
       const estimate = object(route.fuelEstimate, "PLANNED_EXPENSE_FUEL_ESTIMATE_INVALID");
       keysOnly(estimate, ["vehicleLabel", "consumptionL100Km", "fuelPricePerLiter", "fuelPriceSource", "fuelPriceObservedAt", "fuelPriceQuality", "distanceKm", "liters", "cost"], "PLANNED_EXPENSE_FUEL_ESTIMATE_INVALID");
       const consumptionL100Km = decimal(estimate.consumptionL100Km, /^(?:0|[1-9]\d{0,2})(?:\.\d{1,3})?$/u, "PLANNED_EXPENSE_FUEL_ESTIMATE_INVALID");
-      const fuelPricePerLiter = decimal(estimate.fuelPricePerLiter, /^(?:0|[1-9]\d{0,2})(?:\.\d{1,3})?$/u, "PLANNED_EXPENSE_FUEL_ESTIMATE_INVALID");
-      const calculated = calculateRouteFuel(stops, { label: title(estimate.vehicleLabel, "PLANNED_EXPENSE_FUEL_ESTIMATE_INVALID"),
+      const fuelPricePerLiter = decimal(estimate.fuelPricePerLiter, /^(?:0|[1-9]\d{0,2})(?:\.\d{1,9})?$/u, "PLANNED_EXPENSE_FUEL_ESTIMATE_INVALID");
+      const calculated = liveEstimate ? carFuelEstimate(liveEstimate) : calculateRouteFuel(stops, { label: title(estimate.vehicleLabel, "PLANNED_EXPENSE_FUEL_ESTIMATE_INVALID"),
         consumptionL100Km, fuelPricePerLiter, fuelPriceSource: title(estimate.fuelPriceSource, "PLANNED_EXPENSE_FUEL_ESTIMATE_INVALID"),
         ...(estimate.fuelPriceObservedAt !== undefined ? { fuelPriceObservedAt: title(estimate.fuelPriceObservedAt, "PLANNED_EXPENSE_FUEL_ESTIMATE_INVALID") } : {}),
         ...(estimate.fuelPriceQuality !== undefined ? { fuelPriceQuality: title(estimate.fuelPriceQuality, "PLANNED_EXPENSE_FUEL_ESTIMATE_INVALID") } : {}) });
-      if (estimate.distanceKm !== calculated.distanceKm || estimate.liters !== calculated.liters
+      if (!calculated || Object.keys(calculated).some((key) => estimate[key] !== calculated[key as keyof typeof calculated]) || estimate.distanceKm !== calculated.distanceKm || estimate.liters !== calculated.liters
         || estimate.cost !== calculated.cost) throw new TypeError("PLANNED_EXPENSE_FUEL_ESTIMATE_MISMATCH");
       fuelEstimate = calculated;
     }
@@ -375,8 +386,19 @@ export function parsePlannedExpenseDraft(value: unknown, targetMonth: string,
     if (route.mode === "CAR" && (!fuelEstimate || fuelItems.length !== 1 || fuelItems[0]!.quantity !== "1"
       || fuelItems[0]!.unitAmount !== fuelEstimate.cost || fuelItems[0]!.priceSource !== "CALCULATED"))
       throw new TypeError("PLANNED_EXPENSE_CAR_ESTIMATE_REQUIRED");
+    if (liveEstimate && (liveEstimate.route.segments.length !== stops.length - 1
+      || liveEstimate.route.provider === "TOMTOM" && stops.slice(0, -1).some((stop, i) => stop.distanceSource !== "TOMTOM" || stop.distanceToNextKm !== liveEstimate.route.segments[i]!.distanceKm))) throw new TypeError("PLANNED_EXPENSE_LIVE_ROUTE_INVALID");
+    const calculatedTolls = costItems.filter((item) => item.assetKey === "transport:toll" && item.priceSource === "CALCULATED");
+    const allTolls = costItems.filter((item) => item.assetKey === "transport:toll");
+    if (calculatedTolls.length && !liveEstimate || liveEstimate && calculatedTolls.some((item) => item.quantity !== "1" || item.unitAmount !== liveEstimate.toll.amount)
+      || liveEstimate && (allTolls.length > 1 || liveEstimate.toll.amount && new Big(liveEstimate.toll.amount).gt(0) && !allTolls.length)) throw new TypeError("PLANNED_ROUTE_TOLL_MISMATCH");
     context.route = { mode: route.mode as NonNullable<PlannedExpenseContext["route"]>["mode"], stops,
-      ...(fuelEstimate ? { fuelEstimate } : {}) };
+      ...(fuelEstimate ? { fuelEstimate } : {}), ...(liveEstimate ? { liveEstimate } : {}),
+      ...(route.plannedTime !== undefined ? { plannedTime: route.plannedTime as string | null } : {}),
+      ...(route.timeKind ? { timeKind: route.timeKind as "DEPARTURE" | "ARRIVAL" } : {}),
+      ...(route.preference ? { preference: route.preference as "FASTEST" | "AVOID_TOLLS" } : {}),
+      ...(route.manualFuelPrice ? { manualFuelPrice: route.manualFuelPrice as string } : {}),
+      ...(route.tollFreeConfirmed !== undefined ? { tollFreeConfirmed: route.tollFreeConfirmed as boolean } : {}) };
   }
   if (purpose === "WRITE" && (familyKey === "visit_trip" && ["family_visit", "friend_visit"].includes(raw.subtypeKey as string))
     && !context.personVisited) throw new TypeError("PLANNED_EXPENSE_VISITED_PERSON_REQUIRED");
@@ -387,6 +409,7 @@ export function parsePlannedExpenseDraft(value: unknown, targetMonth: string,
   if (costItems.some((item) => item.assetKey === "transport:fuel_usage")
     && (context.route?.mode !== "CAR" || !context.route.fuelEstimate))
     throw new TypeError("PLANNED_EXPENSE_CAR_ESTIMATE_REQUIRED");
+  if (costItems.some((item) => item.assetKey === "transport:toll" && item.priceSource === "CALCULATED") && !context.route?.liveEstimate) throw new TypeError("PLANNED_ROUTE_TOLL_MISMATCH");
   const resolved = resolvePlannedContext({ familyKey, subtypeKey: raw.subtypeKey as string | null,
     modifiers: plannedContextModifiers(context) });
   if (!costItems.length && !plannedAllowsNoCost({ familyKey, subtypeKey: raw.subtypeKey as string | null, context })) throw new TypeError("PLANNED_EXPENSE_COST_ITEMS_INVALID");
@@ -576,7 +599,7 @@ async function validateReferences(client: SupabaseClient, householdId: string, d
     }
     if (draft.context.route?.stops.some((stop) => stop.placeId && !options.places.some((place) => place.placeId === stop.placeId)))
       throw new TypeError("PLANNED_EXPENSE_ROUTE_PLACE_INVALID");
-    if (draft.context.route?.fuelEstimate && (!options.vehicle
+    if (!draft.context.route?.liveEstimate && draft.context.route?.fuelEstimate && (!options.vehicle
       || draft.context.route.fuelEstimate.vehicleLabel !== options.vehicle.label
       || draft.context.route.fuelEstimate.consumptionL100Km !== options.vehicle.consumptionL100Km
       || draft.context.route.fuelEstimate.fuelPricePerLiter !== options.vehicle.fuelPricePerLiter
@@ -594,7 +617,7 @@ async function validateReferences(client: SupabaseClient, householdId: string, d
           throw new TypeError("PLANNED_EXPENSE_ROUTE_EVIDENCE_STALE");
       }
     }
-    if (draft.context.route?.fuelEstimate?.fuelPriceObservedAt && (draft.context.route.fuelEstimate.fuelPriceObservedAt !== options.vehicle?.fuelPriceObservedAt
+    if (!draft.context.route?.liveEstimate && draft.context.route?.fuelEstimate?.fuelPriceObservedAt && (draft.context.route.fuelEstimate.fuelPriceObservedAt !== options.vehicle?.fuelPriceObservedAt
       || draft.context.route.fuelEstimate.fuelPriceQuality !== options.vehicle?.fuelPriceQuality))
       throw new TypeError("PLANNED_EXPENSE_FUEL_ESTIMATE_STALE");
   }
@@ -619,7 +642,22 @@ export async function resolvePlannedExpenseDraft(client: SupabaseClient, househo
   const resolved = resolvePlannedContext({ familyKey: draft.familyKey, subtypeKey: draft.subtypeKey, modifiers: plannedContextModifiers(draft.context, personName) });
   if (resolved.baseline.mode === "AUTO" && resolved.baseline.key) draft = { ...draft, costItems: draft.costItems.map((item) =>
     item.modulePath?.length !== 2 && costAllowsBaseline(item) ? { ...item, baselineKey: resolved.baseline.key } : item) };
-  if (draft.context.route?.mode === "CAR") {
+  if (draft.context.route?.liveEstimate) {
+    const reader = createCanonicalReadClient();
+    const people = await client.from("persons").select("person_id,display_name").eq("household_id", householdId);
+    if (people.error) throw people.error;
+    const options = await readPlannedContextOptions(reader, householdId, (people.data ?? []).map((p) => ({ personId: p.person_id, displayName: p.display_name })));
+    const previous = draft.context.route.liveEstimate;
+    const result = await estimatePlannedCar({ stops: draft.context.route.stops, plannedDate: draft.plannedDate,
+      plannedTime: draft.context.route.plannedTime ?? previous.plannedTime, timeKind: draft.context.route.timeKind ?? previous.timeKind,
+      preference: draft.context.route.preference ?? previous.preference, manualFuelPrice: draft.context.route.manualFuelPrice }, { places: options.places, vehicle: options.vehicle, history: await readPlannedRouteHistory(reader, householdId) });
+    if (!result.snapshot || !result.fuelEstimate) throw new TypeError("PLANNED_ROUTE_PRICE_UNAVAILABLE");
+    const changed = previous.vehicleId !== result.snapshot.vehicleId || previous.route.geometryHash !== result.snapshot.route.geometryHash
+      || previous.fuelEconomicCost !== result.snapshot.fuelEconomicCost || previous.toll.amount !== result.snapshot.toll.amount;
+    if (changed && purpose === "WRITE") throw new TypeError("PLANNED_ROUTE_ESTIMATE_CHANGED");
+    draft = parsePlannedExpenseDraft(applyCarResult(draft, result, randomUUID), targetMonth, purpose);
+    if (carEstimateProblems(draft).length) throw new TypeError("PLANNED_ROUTE_COST_INCOMPLETE");
+  } else if (draft.context.route?.mode === "CAR") {
     const options = await readPlannedContextOptions(createCanonicalReadClient(), householdId, []);
     if (!options.vehicle) throw new TypeError("PLANNED_EXPENSE_VEHICLE_PRICE_UNAVAILABLE");
     const route = resolvePlannedRoute(draft.context.route.stops,
@@ -711,10 +749,18 @@ function sameIntent(left: PlannedExpenseDraft, right: PlannedExpenseDraft): bool
     // Live derivations may change between equivalent intent replays.
     if (copy.context.route?.mode === "CAR") {
       delete copy.context.route.fuelEstimate;
-      for (const stop of copy.context.route.stops) if (stop.distanceSource === "HISTORICAL_ROUTE") {
-        delete stop.distanceToNextKm; delete stop.estimatedFuelLiters; delete stop.evidence;
+      if (copy.context.route.liveEstimate) {
+        copy.context.route.selectedPreference = copy.context.route.liveEstimate.preference;
+        copy.context.route.selectedVehicleId = copy.context.route.liveEstimate.vehicleId;
+        delete copy.context.route.liveEstimate;
       }
-      for (const item of copy.cost_items) if (item.assetKey === "transport:fuel_usage") delete item.unitAmount;
+      for (const stop of copy.context.route.stops) {
+        if (stop.coordinates?.source !== "USER_DECLARED") delete stop.coordinates;
+        if (stop.distanceSource === "HISTORICAL_ROUTE" || stop.distanceSource === "TOMTOM") {
+        delete stop.distanceToNextKm; delete stop.estimatedFuelLiters; delete stop.evidence;
+        }
+      }
+      for (const item of copy.cost_items) if (item.assetKey === "transport:fuel_usage" || item.assetKey === "transport:toll" && item.priceSource === "CALCULATED") delete item.unitAmount;
     }
     const canonical = (value: unknown): unknown => Array.isArray(value) ? value.map(canonical)
       : value && typeof value === "object" ? Object.fromEntries(Object.entries(value).sort(([a], [b]) => a.localeCompare(b))

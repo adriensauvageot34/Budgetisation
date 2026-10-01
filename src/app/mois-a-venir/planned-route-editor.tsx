@@ -3,7 +3,9 @@ import { useEffect, useRef, useState, type Dispatch, type SetStateAction } from 
 import { Car, MapPin } from "lucide-react";
 import { addBuilderChildRouteStop, changeBuilderContext, commitBuilderCost, editBuilderDraft, invalidateRouteDistances,
   removeBuilderChild, removeBuilderCost, setBuilderChildPlace, type BuilderState } from "@/domain/phase2/planned-builder";
-import type { PlannedRouteStop, PlannedVehicleEstimate, CostItem } from "@/domain/phase2/planned-contract";
+import type { PlannedRouteStop, PlannedVehicleEstimate } from "@/domain/phase2/planned-contract";
+import { applyCarResult, isDerivedCarCost, selectCarVariant, manualTollCost, type PlannedCarResult } from "@/domain/phase2/planned-car";
+import { PlannedCarSummary } from "./planned-car-summary";
 import { plannedContextModifiers, resolvePlannedContext } from "@/domain/phase2/planned-rules";
 import { placesForChildModule, type PlannedPlaceOption } from "@/domain/phase2/planned-places";
 import { derivePlannedPlaceRoles } from "@/domain/phase2/planned-place-rules";
@@ -15,6 +17,11 @@ import { ChoiceTiles, LocalAssetEditor, OptionalAction, builderButton, builderIn
 
 const childLabel = (child: string) => ({ restaurant: "Restaurant", activity: "Activité", bar: "Bar", club: "Club" } as Record<string, string>)[child] ?? "Complément";
 const modeLabels: Record<string, string> = { CAR: "Voiture", TRAIN: "Train", BUS: "Bus / transport payant", TAXI: "Uber / taxi", OTHER: "Autre", PLANE: "Avion" };
+function ManualCoordinates({ stop, onApply }: { stop: PlannedRouteStop; onApply: (latitude: number, longitude: number) => void }) {
+  const [latitude, setLatitude] = useState(stop.coordinates ? String(stop.coordinates.latitude) : "");
+  const [longitude, setLongitude] = useState(stop.coordinates ? String(stop.coordinates.longitude) : "");
+  return <details className="mt-2 text-xs text-slate-500"><summary>Préciser les coordonnées de ce lieu</summary><div className="mt-2 flex gap-2"><label>Latitude<input type="number" step="any" className={builderInput} value={latitude} onChange={(e) => setLatitude(e.target.value)} /></label><label>Longitude<input type="number" step="any" className={builderInput} value={longitude} onChange={(e) => setLongitude(e.target.value)} /></label><button type="button" className={builderButton} disabled={!latitude || !longitude || !Number.isFinite(Number(latitude)) || !Number.isFinite(Number(longitude)) || Math.abs(Number(latitude)) > 90 || Math.abs(Number(longitude)) > 180} onClick={() => onApply(Number(latitude), Number(longitude))}>Utiliser</button></div></details>;
+}
 export function PlannedRouteEditor({ builder, setBuilder, places, vehicle, targetMonth }: {
   builder: BuilderState; setBuilder: Dispatch<SetStateAction<BuilderState>>; places: readonly PlannedPlaceOption[];
   vehicle: PlannedVehicleEstimate | null; targetMonth: string; persons: readonly { personId: string; displayName: string }[];
@@ -23,7 +30,7 @@ export function PlannedRouteEditor({ builder, setBuilder, places, vehicle, targe
   const [actor, setActor] = useState<"US" | "OTHER">(builder.draft.context.transportMode === "CARPOOL" ? "OTHER" : "US");
   const [paid, setPaid] = useState<boolean | null>(builder.draft.context.transportMode ? builder.draft.context.transportMode !== "FREE" : null);
   const [editing, setEditing] = useState(false);
-  const currentRevision = useRef(builder.revision); currentRevision.current = builder.revision;
+  const [estimate, setEstimate] = useState<PlannedCarResult | null>(null);
   const lastRequested = useRef("");
   const currentRoute = useRef("");
   const draft = builder.draft, route = draft.context.route;
@@ -39,41 +46,44 @@ export function PlannedRouteEditor({ builder, setBuilder, places, vehicle, targe
     // The primary destination is always retained, including when a child stop is removed/reordered.
     const next = ensurePrimaryRouteStop(stops, draft.context.place, draft.context.place ? physicalLabel(draft.context.place) : "", home?.placeId);
     setBuilder((state) => editBuilderDraft(state, { ...state.draft, context: { ...state.draft.context, transportMode: "CAR",
-      route: { mode: "CAR", stops: topology ? invalidateRouteDistances(next) : next } }, costItems: state.draft.costItems.filter((item) => item.assetKey !== "transport:fuel_usage") }));
+      route: { ...state.draft.context.route, mode: "CAR", stops: topology ? invalidateRouteDistances(next) : next,
+        liveEstimate: undefined, fuelEstimate: undefined, tollFreeConfirmed: undefined } }, costItems: state.draft.costItems.filter((item) => !isDerivedCarCost(item)) }));
     setMessage("");
   };
-  const routeSignature = mode === "CAR" && route ? JSON.stringify(route.stops) : "";
+  const routeSignature = mode === "CAR" && route && resolved.transport !== "FORBIDDEN" ? JSON.stringify([route.stops.map((s) => [s.label, s.placeId, s.endpointSource, s.childModule,
+    s.coordinates?.source === "USER_DECLARED" ? s.coordinates : null, s.distanceSource === "MANUAL" ? s.distanceToNextKm : null]), draft.plannedDate, route.plannedTime, route.timeKind, route.manualFuelPrice, route.preference]) : "";
   currentRoute.current = routeSignature;
+  const draftRef = useRef(draft); draftRef.current = draft;
   useEffect(() => {
-    if (!routeSignature || route?.fuelEstimate || !vehicle || lastRequested.current === routeSignature) return;
-    const revision = builder.revision;
-    const stops = route!.stops;
+    if (!routeSignature || route?.fuelEstimate || route?.liveEstimate || !vehicle || lastRequested.current === routeSignature) return;
     const timer = window.setTimeout(async () => {
-      lastRequested.current = routeSignature; setBusy(true); setMessage("");
+      lastRequested.current = routeSignature; setBusy(true); setMessage(""); setEstimate(null);
       try {
-        const result = await estimatePlannedRoute(targetMonth, stops);
-        if (currentRoute.current !== routeSignature) { lastRequested.current = ""; return; }
+        const result = await estimatePlannedRoute(targetMonth, draftRef.current);
+        if (currentRoute.current !== routeSignature) return;
+        setEstimate(result);
         setBuilder((state) => {
-          if (JSON.stringify(state.draft.context.route?.stops) !== routeSignature) return state;
-          const fuel = result.fuelEstimate;
-          const item: CostItem | null = fuel ? { id: crypto.randomUUID(), assetKey: "transport:fuel_usage", label: "Usage carburant estimé",
-            quantity: "1", unitAmount: fuel.cost, baselineKey: null, modulePath: [resolved.rootModule], priceSource: "CALCULATED", priceSourceLabel: fuel.fuelPriceSource } : null;
-          return editBuilderDraft({ ...state, origins: { ...state.origins, ...(item ? { [`cost.${item.id}`]: "AUTO_DERIVED" as const } : {}) } }, { ...state.draft,
-            context: { ...state.draft.context, route: { mode: "CAR", stops: result.stops, ...(fuel ? { fuelEstimate: fuel } : {}) } },
-            costItems: [...state.draft.costItems.filter((item) => item.assetKey !== "transport:fuel_usage"), ...item ? [item] : []] });
+          const next = applyCarResult(state.draft, result, () => crypto.randomUUID());
+          const origins = { ...state.origins };
+          for (const item of next.costItems.filter(isDerivedCarCost)) origins[`cost.${item.id}`] = "AUTO_DERIVED";
+          return editBuilderDraft({ ...state, origins }, next);
         });
-        if (result.status === "PARTIAL") { setMessage("Certains segments n’ont pas de distance connue. Vous pouvez préciser ces kilomètres."); setEditing(true); }
-      } catch { if (currentRevision.current === revision) { setMessage("Le trajet n’a pas pu être calculé. Vérifiez les lieux ou précisez la distance."); setEditing(true); } }
-      finally { setBusy(false); }
+        setMessage(result.messages.join(" "));
+        if (result.status === "PARTIAL") setEditing(true);
+      } catch { if (currentRoute.current === routeSignature) { setMessage("Le trajet n’a pas pu être calculé. Vérifiez les lieux ou précisez la distance."); setEditing(true); } }
+      finally { if (lastRequested.current === routeSignature) setBusy(false); }
     }, 450);
     return () => window.clearTimeout(timer);
-  }, [routeSignature, builder.revision, !!route?.fuelEstimate, targetMonth, !!vehicle]);
+  }, [routeSignature, !!route?.fuelEstimate, !!route?.liveEstimate, targetMonth, !!vehicle]);
+  const refreshCar = () => { lastRequested.current = ""; setEstimate(null); setBuilder((state) => editBuilderDraft(state, {
+    ...state.draft, context: { ...state.draft.context, route: state.draft.context.route ? { ...state.draft.context.route,
+      fuelEstimate: undefined, liveEstimate: undefined } : undefined }, costItems: state.draft.costItems.filter((item) => !isDerivedCarCost(item)) })); };
   const startCar = () => {
     if (!draft.context.place) { setEditing(true); return; }
     const departure: PlannedRouteStop = home ? { label: home.name, placeId: home.placeId, endpointSource: "DIRECT_PLACE" } : { label: "Maison", endpointSource: "DIRECT_PLACE" };
     changeStops([departure, stopForPlace(draft.context.place, physicalLabel(draft.context.place), "ROOT_PLACE"), departure]);
   };
-  const transportCostKeys = actor === "OTHER" && paid ? ["transport:carpool"] : mode === "CAR" ? ["transport:toll", "transport:parking"]
+  const transportCostKeys = actor === "OTHER" && paid ? ["transport:carpool"] : mode === "CAR" ? [...(!route?.liveEstimate || route.liveEstimate.toll.amount === null || manualTollCost(draft.costItems) ? ["transport:toll"] : []), "transport:parking"]
     : mode && mode !== "FREE" ? [`transport:${({ TRAIN: "train", BUS: "bus", TAXI: "uber", CARPOOL: "carpool", OTHER: "other", PLANE: "flight" } as Record<string, string>)[mode]}`] : [];
   return <div id="builder-route" className="grid gap-3">
     {resolved.children.filter((edge) => edge.localPlacePolicy !== "HIDDEN" && draft.costItems.some((item) => item.modulePath?.[1] === edge.childModule)).map((edge) => {
@@ -94,11 +104,17 @@ export function PlannedRouteEditor({ builder, setBuilder, places, vehicle, targe
         {paid === false && <p className="text-sm text-slate-500">Aucun coût de trajet prévu.</p>}
         {mode === "CAR" && !route && <div className="grid gap-3"><p className="text-sm">Précisez la destination pour calculer le trajet voiture.</p><label className="grid gap-1 text-sm">Destination<input className={builderInput} value={draft.context.place?.kind === "TEXT" ? draft.context.place.label : ""} onChange={(event) => setBuilder((state) => changeBuilderContext(state, { ...state.draft.context, place: event.target.value ? { kind: "TEXT", label: event.target.value, provenance: "USER_DECLARED_PROSPECTIVE" } : undefined }))} /></label><button className={builderButton} disabled={!draft.context.place || draft.context.place.kind === "TEXT" && !draft.context.place.label.trim()} onClick={startCar}>Utiliser cette destination</button></div>}
         {mode === "CAR" && route && <section className="rounded-xl bg-white p-4"><h4 className="flex items-center gap-2 text-sm font-bold"><Car size={17} />Trajet voiture</h4><ol className="mt-3 grid gap-2 border-l-2 border-indigo-100 pl-4 text-sm">{route.stops.map((stop, index) => <li key={index} className="flex gap-2"><MapPin size={14} className={stop.endpointSource === "ROOT_PLACE" ? "text-indigo-700" : "text-slate-400"} /><span>{stop.label}<span className="text-xs text-slate-400">{stop.endpointSource === "ROOT_PLACE" ? " · destination" : stop.endpointSource === "CHILD_LOCAL_PLACE" ? " · arrêt" : ""}</span></span></li>)}</ol>
-          <div aria-live="polite" className="mt-3 text-sm">{busy ? "Calcul du trajet…" : route.fuelEstimate ? <><strong>≈ {route.fuelEstimate.distanceKm} km · ≈ {builderMoney(route.fuelEstimate.cost)}</strong><p className="mt-1 text-xs text-slate-500">Estimation économique du trajet, pas un paiement bancaire programmé.</p><details className="mt-2 text-xs text-slate-500"><summary className="cursor-pointer">Comment est calculée cette estimation ?</summary><p className="mt-2">{route.fuelEstimate.liters} L · {route.fuelEstimate.consumptionL100Km} L/100 km · {route.fuelEstimate.fuelPricePerLiter} €/L</p><p>{route.fuelEstimate.fuelPriceSource} · {route.fuelEstimate.fuelPriceObservedAt?.slice(0, 10)} · {route.fuelEstimate.fuelPriceQuality}</p><p>Historique des segments dirigés lorsque disponible ; estimation manuelle pour les autres segments.</p></details></> : "Distance à préciser pour terminer l’estimation."}</div>
-          <button className="mt-3 text-sm font-semibold text-indigo-700 underline" onClick={() => setEditing(!editing)}>{editing ? "Replier le trajet" : "Modifier le trajet"}</button>
+          <div aria-live="polite" className="mt-3 text-sm">{busy ? "Calcul du trajet…" : route.liveEstimate ? <PlannedCarSummary draft={draft} variants={estimate?.variants ?? [route.liveEstimate]} onSelect={(snapshot) => {
+            if (!estimate) return; setBuilder((state) => editBuilderDraft(state, applyCarResult(state.draft, selectCarVariant(estimate, snapshot), () => crypto.randomUUID())));
+          }} onRefresh={refreshCar} onConfirmNoToll={() => setBuilder((state) => editBuilderDraft(state, { ...state.draft, context: { ...state.draft.context,
+            route: { ...state.draft.context.route!, tollFreeConfirmed: true } } }))} /> : route.fuelEstimate ? <><strong>≈ {route.fuelEstimate.distanceKm} km · ≈ {builderMoney(route.fuelEstimate.cost)}</strong><p className="text-xs text-slate-500">Estimation historique conservée · essence utilisée, pas un plein payé.</p><button type="button" className="mt-2 underline" onClick={refreshCar}>Calculer l’itinéraire actuel</button></> : "Le trajet n’est pas encore calculé."}</div>
+          <button className="mt-3 text-sm font-semibold text-indigo-700 underline" onClick={() => setEditing(!editing)}>{editing ? "Replier le trajet" : "Changer l’itinéraire"}</button>
+          {editing && <div className="mt-3 grid grid-cols-2 gap-3"><label className="grid gap-1 text-xs">Heure du trajet (facultative)<input type="time" disabled={!draft.plannedDate} className={builderInput} value={route.plannedTime ?? ""} onChange={(event) => { lastRequested.current = ""; setBuilder((state) => editBuilderDraft(state, { ...state.draft, context: { ...state.draft.context, route: { ...state.draft.context.route!, plannedTime: event.target.value || null, liveEstimate: undefined, fuelEstimate: undefined } }, costItems: state.draft.costItems.filter((i) => !isDerivedCarCost(i)) })); }} /></label><label className="grid gap-1 text-xs">Cet horaire correspond au<select className={builderInput} value={route.timeKind ?? "DEPARTURE"} onChange={(event) => { lastRequested.current = ""; setBuilder((state) => editBuilderDraft(state, { ...state.draft, context: { ...state.draft.context, route: { ...state.draft.context.route!, timeKind: event.target.value as "DEPARTURE" | "ARRIVAL", liveEstimate: undefined, fuelEstimate: undefined } }, costItems: state.draft.costItems.filter((i) => !isDerivedCarCost(i)) })); }}><option value="DEPARTURE">Départ</option><option value="ARRIVAL">Arrivée</option></select></label></div>}
+          {(route.liveEstimate?.fuelEconomicCost === null || route.manualFuelPrice !== undefined) && <label className="mt-3 grid gap-1 text-xs">Prix SP95 au litre (si aucune référence disponible)<input type="number" min="0.001" max="9.999" step="0.001" className={builderInput} value={route.manualFuelPrice ?? ""} onChange={(event) => { lastRequested.current = ""; setBuilder((state) => editBuilderDraft(state, { ...state.draft, context: { ...state.draft.context, route: { ...state.draft.context.route!, manualFuelPrice: event.target.value || undefined, liveEstimate: undefined, fuelEstimate: undefined } } })); }} /></label>}
           {editing && <div className="mt-4 grid gap-3">{route.stops.map((stop, index) => <div key={index} className="grid grid-cols-[1fr_8rem_auto] items-end gap-2"><label className="grid gap-1 text-xs">{index === 0 ? "Départ" : stop.endpointSource === "ROOT_PLACE" ? "Destination" : index === route.stops.length - 1 ? "Retour" : "Arrêt"}<select className={builderInput} disabled={stop.endpointSource === "ROOT_PLACE"} value={stop.placeId ?? "TEXT"} onChange={(event) => { const selected = places.find((place) => place.placeId === event.target.value); changeStops(route.stops.map((part, i) => i === index ? selected ? { label: selected.name, placeId: selected.placeId, endpointSource: "DIRECT_PLACE" } : { label: "", endpointSource: "DIRECT_PLACE" } : part)); }}>
             {places.map((place) => <option key={place.placeId} value={place.placeId}>{place.name}</option>)}<option value="TEXT">Lieu saisi · {stop.label}</option></select>{!stop.placeId && stop.endpointSource !== "ROOT_PLACE" && <input className={builderInput} aria-label={`Nom de l’arrêt ${index + 1}`} value={stop.label} onChange={(event) => changeStops(route.stops.map((part, i) => i === index ? { ...part, label: event.target.value } : part))} />}</label>
-            {index < route.stops.length - 1 && !route.fuelEstimate && <label className="grid gap-1 text-xs">Distance inconnue (km)<input type="number" min="0.001" step="0.001" className={builderInput} value={stop.distanceToNextKm ?? ""} onChange={(event) => changeStops(route.stops.map((part, i) => i === index ? { ...part, distanceToNextKm: event.target.value, distanceSource: "MANUAL", evidence: undefined, estimatedFuelLiters: undefined } : part), false)} /></label>}
+            {!places.find((place) => place.placeId === stop.placeId)?.coordinates && <ManualCoordinates stop={stop} onApply={(latitude, longitude) => changeStops(route.stops.map((part, i) => i === index ? { ...part, coordinates: { latitude, longitude, source: "USER_DECLARED" } } : part))} />}
+            {index < route.stops.length - 1 && !route.fuelEstimate && !busy && <label className="grid gap-1 text-xs">Distance de repli (km)<input type="number" min="0.001" step="0.001" className={builderInput} value={stop.distanceToNextKm ?? ""} onChange={(event) => changeStops(route.stops.map((part, i) => i === index ? { ...part, distanceToNextKm: event.target.value, distanceSource: "MANUAL", evidence: undefined, estimatedFuelLiters: undefined } : part), false)} /></label>}
             <div className="flex gap-1"><button className={builderButton} disabled={index === 0 || index === route.stops.length - 1} aria-label={`Avancer l’arrêt ${index + 1}`} onClick={() => { const next = [...route.stops]; [next[index - 1], next[index]] = [next[index]!, next[index - 1]!]; changeStops(next); }}>↑</button><button className={builderButton} disabled={route.stops.length <= 2 || stop.endpointSource === "ROOT_PLACE"} aria-label={`Retirer l’arrêt ${index + 1}`} onClick={() => changeStops(route.stops.filter((_, i) => i !== index))}>×</button></div>
           </div>)}<button className={`${builderButton} w-fit`} disabled={route.stops.length >= 12} onClick={() => { const next = [...route.stops]; next.splice(Math.max(1, next.length - 1), 0, { label: "", endpointSource: "DIRECT_PLACE" }); changeStops(next); }}>Ajouter un arrêt</button></div>}
         </section>}

@@ -15,8 +15,10 @@ import {
 } from "@/server/phase2/planned-expenses";
 import { plannedMutationIssue, type PlannedResult, type PlannedWriteCommand } from "@/domain/phase2/planned-mutations";
 import { readPlannedRouteHistory, readPlannedContextOptions } from "@/server/phase2/planned-context";
-import { resolvePlannedRoute } from "@/domain/phase2/planned-routes";
-import type { PlannedRouteStop } from "@/domain/phase2/planned-contract";
+import { assertPrimaryRouteStop, routePlaceIdentity, stopForPlace } from "@/domain/phase2/planned-routes";
+import type { PlannedExpenseDraft } from "@/domain/phase2/planned-contract";
+import { resolvePlannedContext, plannedContextModifiers } from "@/domain/phase2/planned-rules";
+import { estimatePlannedCar } from "@/server/phase2/planned-car-estimation";
 
 import { projectPlannedExpenseImpact } from "@/server/phase2/planned-impact";
 
@@ -87,19 +89,27 @@ export async function previewPlannedExpense(targetMonth: string, rawDraft: unkno
 }
 
 export async function estimatePlannedRoute(targetMonth: string,
-  stops: readonly PlannedRouteStop[]) {
+  draft: PlannedExpenseDraft) {
   const context = await monthContext(targetMonth);
+  const resolved = resolvePlannedContext({ familyKey: draft.familyKey, subtypeKey: draft.subtypeKey, modifiers: plannedContextModifiers(draft.context) });
+  if (resolved.transport === "FORBIDDEN" || draft.context.transportMode !== "CAR" || draft.context.route?.mode !== "CAR")
+    throw new TypeError("PLANNED_ROUTE_FORBIDDEN");
+  assertPrimaryRouteStop(draft.context.route.stops, draft.context.place);
+  for (const stop of draft.context.route.stops) if (stop.childModule) {
+    const child = draft.context.childLocalPlaceRefs?.[stop.childModule];
+    const edge = resolved.children.find((e) => e.childModule === stop.childModule);
+    if (!child || !edge || edge.rootTransportStopAvailability === "NEVER"
+      || routePlaceIdentity(stop) !== routePlaceIdentity(stopForPlace(child, "", "CHILD_LOCAL_PLACE", stop.childModule))) throw new TypeError("PLANNED_ROUTE_CHILD_PLACE_INVALID");
+  }
   const { data: people, error } = await context.supabase.from("persons")
     .select("person_id,display_name,status").eq("household_id", context.household.householdId);
   if (error) throw error;
   const options = await readPlannedContextOptions(createCanonicalReadClient(), context.household.householdId,
     (people ?? []).filter((person) => person.status === "active")
       .map((person) => ({ personId: person.person_id, displayName: person.display_name })));
-  if (!options.vehicle) throw new TypeError("PLANNED_EXPENSE_VEHICLE_PRICE_UNAVAILABLE");
-  if (stops.length < 2 || stops.length > 12 || stops.some((stop) => typeof stop.label !== "string" || stop.label.trim().length < 1 || stop.label.length > 120
-    || (stop.placeId && !options.places.some((place) => place.placeId === stop.placeId))))
-    throw new TypeError("PLANNED_ROUTE_STOP_INVALID");
-  return resolvePlannedRoute(stops, await readPlannedRouteHistory(createCanonicalReadClient(), context.household.householdId), options.vehicle);
+  return estimatePlannedCar({ stops: draft.context.route.stops, plannedDate: draft.plannedDate, plannedTime: draft.context.route.plannedTime,
+    timeKind: draft.context.route.timeKind, preference: draft.context.route.preference ?? draft.context.route.liveEstimate?.preference ?? "FASTEST", manualFuelPrice: draft.context.route.manualFuelPrice },
+    { places: options.places, vehicle: options.vehicle, history: await readPlannedRouteHistory(createCanonicalReadClient(), context.household.householdId) });
 }
 
 export async function savePlannedExpense(targetMonth: string, rawDraft: unknown, command: PlannedWriteCommand) {

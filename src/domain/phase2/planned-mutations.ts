@@ -11,6 +11,10 @@ export type RealityConfirmationDraft = { expenseId: string; expectedUpdatedAt: s
 export function plannedMutationIssue(error: unknown): PlannedIssue {
   const raw = error instanceof Error ? error.message : "";
   const code = /^(?:PLANNED_|REALITY_)[A-Z0-9_:]+$/u.test(raw) ? raw : "PLANNED_EXPENSE_REQUEST_FAILED";
+  if (code === "PLANNED_ROUTE_ESTIMATE_CHANGED") return { code, path: "context.route", repairTarget: "route",
+    message: "L’itinéraire, le prix de l’essence ou le péage a changé depuis votre estimation. Recalculez le trajet et examinez les nouveaux montants avant d’enregistrer." };
+  if (code === "PLANNED_ROUTE_COST_INCOMPLETE" || code === "PLANNED_ROUTE_PRICE_UNAVAILABLE") return { code, path: "context.route", repairTarget: "route",
+    message: "Le coût du trajet est incomplet. Précisez le prix de l’essence ou le péage avant de poursuivre." };
   if (code === "PLANNED_EXPENSE_MONTH_RESOURCES_REQUIRED") return { code, path: "month.declaredResources", repairTarget: "month",
     message: "Renseignez les ressources Swile et Edenred du mois choisi avant d’y reporter ce projet. Votre prévision reste dans son mois actuel." };
   if (/STALE|VERSION|IDEMPOTENCY|STATUS_TRANSITION|EDIT_TARGET|NOT_FOUND/u.test(code))

@@ -9,6 +9,7 @@ import { fundingAfterGrossChange } from "./planned-mutations";
 import { rankPlacesForPlannedContext, type PlannedPlaceOption } from "./planned-places";
 import { deriveProjectTitle } from "./planned-ux";
 import { derivePlannedPlaceRoles } from "./planned-place-rules";
+import { carEstimateProblems, isDerivedCarCost } from "./planned-car";
 
 export type DraftOrigin = "AUTO_DERIVED" | "EXPLICIT";
 export type Invalidation = "KEEP" | "RECOMPUTE" | "SUSPEND" | "REMOVE_DERIVED";
@@ -45,7 +46,7 @@ export function createBuilderState(draft: PlannedExpenseDraft): BuilderState {
     costMode: quick || !draft.costItems.length ? "QUICK_TOTAL" : targeted ? "TARGETED_SPLIT" : "ITEMIZED", quickTotal: quick?.unitAmount ?? "",
     quickBaseline: quick?.baselineKey ?? (rootItems.length && rootItems.every((item) => item.baselineKey === rootItems[0].baselineKey) ? rootItems[0].baselineKey : undefined),
     acceptedChildren: [...new Set(draft.costItems.flatMap((item) => item.modulePath?.[1] ? [item.modulePath[1]] : []))],
-    suspended: [], origins: Object.fromEntries(draft.costItems.map((item) => [`baseline.${item.id}`, "EXPLICIT"])),
+    suspended: [], origins: Object.fromEntries(draft.costItems.flatMap((item) => [[`baseline.${item.id}`, "EXPLICIT"], [`cost.${item.id}`, isDerivedCarCost(item) ? "AUTO_DERIVED" : "EXPLICIT"]])),
     undo: null, revision: 0 };
 }
 export function editBuilderDraft(state: BuilderState, draft: PlannedExpenseDraft): BuilderState {
@@ -69,10 +70,20 @@ export function editBuilderDraft(state: BuilderState, draft: PlannedExpenseDraft
       return [stop];
     });
     next = { ...next, context: { ...next.context, route: stops.length >= 2
-      ? { mode: next.context.route.mode, stops: invalidateRouteDistances(stops) } : undefined },
-      costItems: next.costItems.filter((item) => item.assetKey !== "transport:fuel_usage") };
+      ? invalidateBuilderRoute(next.context.route, stops) : undefined },
+      costItems: next.costItems.filter((item) => !isDerivedCarCost(item)) };
   }
-  return touch(state, { draft: next }, !!routeAffected || !!orphanChildren.length || topologyChanged);
+  if (state.draft.context.route?.liveEstimate && next.context.route && state.draft.plannedDate !== next.plannedDate) {
+    next = { ...next, context: { ...next.context, route: { ...next.context.route, liveEstimate: undefined, fuelEstimate: undefined,
+      plannedTime: next.plannedDate ? next.context.route.plannedTime : null, tollFreeConfirmed: undefined, stops: invalidateRouteDistances(next.context.route.stops) } }, costItems: next.costItems.filter((item) => !isDerivedCarCost(item)) };
+  }
+  return touch(state, { draft: next }, !!routeAffected || !!orphanChildren.length || topologyChanged || !!state.draft.context.route?.liveEstimate && state.draft.plannedDate !== next.plannedDate);
+}
+/** Adopt the server's transport revision after Preview, preserving Quick Total and local intent. */
+export function adoptBuilderResolvedTransport(state: BuilderState, resolved: PlannedExpenseDraft): BuilderState {
+  if (!resolved.context.route?.liveEstimate) return state;
+  return touch(state, { draft: { ...state.draft, context: { ...state.draft.context, route: resolved.context.route },
+    costItems: [...state.draft.costItems.filter((item) => !isTransportCost(item)), ...resolved.costItems.filter(isTransportCost)] } });
 }
 export function setBuilderChildPlace(state: BuilderState, child: AssetModule, ref?: ProspectivePlaceRef): BuilderState {
   const edge = resolvedFor(state.draft)?.children.find((candidate) => candidate.childModule === child);
@@ -85,13 +96,16 @@ export function setBuilderChildPlace(state: BuilderState, child: AssetModule, re
   const stops = route?.stops.filter((stop) => stop.childModule !== child);
   const included = route?.stops.some((stop) => stop.childModule === child);
   return touch(state, { draft: { ...state.draft, context: { ...state.draft.context, childLocalPlaceRefs: refs,
-    ...(included ? { route: stops && stops.length >= 2 ? { mode: route!.mode, stops: invalidateRouteDistances(stops) } : undefined } : {}) },
+    ...(included ? { route: stops && stops.length >= 2 ? invalidateBuilderRoute(route!, stops) : undefined } : {}) },
     costItems: route?.stops.some((stop) => stop.childModule === child)
-      ? state.draft.costItems.filter((item) => item.assetKey !== "transport:fuel_usage") : state.draft.costItems } }, true);
+      ? state.draft.costItems.filter((item) => !isDerivedCarCost(item)) : state.draft.costItems } }, true);
 }
 export const invalidateRouteDistances = (stops: NonNullable<PlannedExpenseContext["route"]>["stops"]) =>
   deduplicateRouteStops(stops).map((stop, index, all) => ({ ...stop, distanceToNextKm: index === all.length - 1 ? null : "",
     distanceSource: undefined, estimatedFuelLiters: undefined, evidence: undefined }));
+function invalidateBuilderRoute(route: NonNullable<PlannedExpenseContext["route"]>, stops: NonNullable<PlannedExpenseContext["route"]>["stops"]) {
+  return { ...route, stops: invalidateRouteDistances(stops), liveEstimate: undefined, fuelEstimate: undefined, tollFreeConfirmed: undefined };
+}
 export function addBuilderChildRouteStop(state: BuilderState, child: AssetModule, label: string): BuilderState {
   const edge = resolvedFor(state.draft)?.children.find((candidate) => candidate.childModule === child);
   const ref = state.draft.context.childLocalPlaceRefs?.[child], route = state.draft.context.route;
@@ -102,8 +116,8 @@ export function addBuilderChildRouteStop(state: BuilderState, child: AssetModule
   const closed = routePlaceIdentity(route.stops[0]!) === routePlaceIdentity(route.stops.at(-1)!);
   const stops = closed ? [...route.stops.slice(0, -1), point, route.stops.at(-1)!] : [...route.stops, point];
   return touch(state, { draft: { ...state.draft, context: { ...state.draft.context,
-    route: { mode: route.mode, stops: invalidateRouteDistances(stops) } },
-    costItems: state.draft.costItems.filter((item) => item.assetKey !== "transport:fuel_usage") } }, true);
+    route: invalidateBuilderRoute(route, stops) },
+    costItems: state.draft.costItems.filter((item) => !isDerivedCarCost(item)) } }, true);
 }
 export function removeBuilderChild(state: BuilderState, child: AssetModule): BuilderState {
   const refs = { ...state.draft.context.childLocalPlaceRefs };
@@ -113,8 +127,8 @@ export function removeBuilderChild(state: BuilderState, child: AssetModule): Bui
   const stops = route?.stops.filter((stop) => stop.childModule !== child);
   return touch(state, { acceptedChildren: state.acceptedChildren.filter((module) => module !== child),
     draft: { ...state.draft, context: { ...state.draft.context, childLocalPlaceRefs: refs,
-      ...(included ? { route: stops && stops.length >= 2 ? { mode: route!.mode, stops: invalidateRouteDistances(stops) } : undefined } : {}) },
-      costItems: state.draft.costItems.filter((item) => item.modulePath?.[1] !== child && (!included || item.assetKey !== "transport:fuel_usage")) } }, true);
+      ...(included ? { route: stops && stops.length >= 2 ? invalidateBuilderRoute(route!, stops) : undefined } : {}) },
+      costItems: state.draft.costItems.filter((item) => item.modulePath?.[1] !== child && (!included || !isDerivedCarCost(item))) } }, true);
 }
 export function changeBuilderRoot(state: BuilderState, draft: PlannedExpenseDraft): BuilderState {
   const hasContent = state.draft.costItems.length > 0 || state.quickTotal !== ""
@@ -300,7 +314,7 @@ export function changeBuilderContext(state: BuilderState, context: PlannedExpens
       suspended.push({ path: `cost.${item.id}`, value: clone(item), origin: "EXPLICIT", reason: "Le repas est désormais apporté de chez nous." });
       return false;
     }
-    if (item.assetKey === "transport:fuel_usage" && !nextContext.route) {
+    if (isDerivedCarCost(item) && !nextContext.route) {
       if (origins[`cost.${item.id}`] !== "AUTO_DERIVED") suspended.push({ path: `cost.${item.id}`,
         value: clone(item), origin: "EXPLICIT", reason: "Le trajet a changé." });
       return false;
@@ -374,6 +388,7 @@ export function deriveBuilderReadiness(state: BuilderState, live?: Readonly<{ pl
     issue("BLOCK_SAVE", "CONTACT_LABEL_REQUIRED", "context.personVisited", "Précisez le nom de la personne.", "builder-context");
   if (draft.context.route?.mode === "CAR" && !draft.context.route.fuelEstimate)
     issue("BLOCK_PREVIEW", "ROUTE_ESTIMATE_REQUIRED", "context.route", "Estimez le carburant du trajet.", "builder-addons");
+  for (const message of carEstimateProblems(draft)) issue("BLOCK_PREVIEW", "ROUTE_COST_INCOMPLETE", "context.route", message, "builder-route");
   for (const [child, ref] of Object.entries(draft.context.childLocalPlaceRefs ?? {})) {
     const edge = resolved?.children.find((edge) => edge.childModule === child);
     if (!edge || edge.localPlacePolicy === "HIDDEN" || !draft.costItems.some((item) => item.modulePath?.[1] === child))
@@ -448,7 +463,7 @@ export const availableBuilderChildren = (state: BuilderState): readonly AssetMod
 export const canCollapseCosts = (items: readonly CostItem[]): boolean => items.length <= 1 || items.every((item) =>
   item.baselineKey === items[0]?.baselineKey && JSON.stringify(item.fundingAllocations ?? []) === JSON.stringify(items[0]?.fundingAllocations ?? [])
   && plannedAsset(item.assetKey ?? "")?.fundingEligibility === plannedAsset(items[0]?.assetKey ?? "")?.fundingEligibility
-  && item.assetKey !== "transport:fuel_usage");
+  && !isDerivedCarCost(item));
 
 /** One root answer is propagated to its compatible economic components, never asked per line. */
 export function setBuilderRootBaseline(state: BuilderState, key: PlannedBaselineKey | null): BuilderState {
