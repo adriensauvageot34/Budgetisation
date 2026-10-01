@@ -10,6 +10,7 @@ import { rankPlacesForPlannedContext, type PlannedPlaceOption } from "./planned-
 import { deriveProjectTitle } from "./planned-ux";
 import { derivePlannedPlaceRoles } from "./planned-place-rules";
 import { carEstimateProblems, isDerivedCarCost } from "./planned-car";
+import { isTimedFamilyVisit, visitTimingIssues } from "./planned-visits";
 
 export type DraftOrigin = "AUTO_DERIVED" | "EXPLICIT";
 export type Invalidation = "KEEP" | "RECOMPUTE" | "SUSPEND" | "REMOVE_DERIVED";
@@ -59,6 +60,7 @@ export function editBuilderDraft(state: BuilderState, draft: PlannedExpenseDraft
   const routeTopology = (draft: PlannedExpenseDraft) => draft.context.route?.stops
     .map((stop) => [routePlaceIdentity(stop), stop.endpointSource, stop.childModule]);
   const topologyChanged = JSON.stringify(routeTopology(state.draft)) !== JSON.stringify(routeTopology(draft));
+  const timingChanged = state.draft.plannedDate !== next.plannedDate || JSON.stringify(state.draft.context.visitTiming) !== JSON.stringify(next.context.visitTiming);
   const refs = { ...next.context.childLocalPlaceRefs };
   for (const child of orphanChildren) delete refs[child];
   if (orphanChildren.length) next = { ...next, context: { ...next.context, childLocalPlaceRefs: refs } };
@@ -73,11 +75,11 @@ export function editBuilderDraft(state: BuilderState, draft: PlannedExpenseDraft
       ? invalidateBuilderRoute(next.context.route, stops) : undefined },
       costItems: next.costItems.filter((item) => !isDerivedCarCost(item)) };
   }
-  if (state.draft.context.route?.liveEstimate && next.context.route && state.draft.plannedDate !== next.plannedDate) {
+  if (next.context.route && timingChanged) {
     next = { ...next, context: { ...next.context, route: { ...next.context.route, liveEstimate: undefined, fuelEstimate: undefined,
       plannedTime: next.plannedDate ? next.context.route.plannedTime : null, tollFreeConfirmed: undefined, stops: invalidateRouteDistances(next.context.route.stops) } }, costItems: next.costItems.filter((item) => !isDerivedCarCost(item)) };
   }
-  return touch(state, { draft: next }, !!routeAffected || !!orphanChildren.length || topologyChanged || !!state.draft.context.route?.liveEstimate && state.draft.plannedDate !== next.plannedDate);
+  return touch(state, { draft: next }, !!routeAffected || !!orphanChildren.length || topologyChanged || timingChanged);
 }
 /** Adopt the server's transport revision after Preview, preserving Quick Total and local intent. */
 export function adoptBuilderResolvedTransport(state: BuilderState, resolved: PlannedExpenseDraft): BuilderState {
@@ -114,7 +116,9 @@ export function addBuilderChildRouteStop(state: BuilderState, child: AssetModule
   if (route.stops.some((stop) => stop.childModule === child)) return state;
   const point = stopForPlace(ref, label, "CHILD_LOCAL_PLACE", child);
   const closed = routePlaceIdentity(route.stops[0]!) === routePlaceIdentity(route.stops.at(-1)!);
-  const stops = closed ? [...route.stops.slice(0, -1), point, route.stops.at(-1)!] : [...route.stops, point];
+  const stops = [...route.stops];
+  const insertion = isTimedFamilyVisit(state.draft) ? stops.findIndex((stop) => stop.endpointSource === "ROOT_PLACE") : closed ? stops.length - 1 : stops.length;
+  stops.splice(insertion, 0, point);
   return touch(state, { draft: { ...state.draft, context: { ...state.draft.context,
     route: invalidateBuilderRoute(route, stops) },
     costItems: state.draft.costItems.filter((item) => !isDerivedCarCost(item)) } }, true);
@@ -361,6 +365,12 @@ export function deriveBuilderReadiness(state: BuilderState, live?: Readonly<{ pl
   const draft = materializeBuilderDraft(state);
   const activeDraft = materializeBuilderDraft(state, true);
   const resolved = resolvedFor(draft);
+  if (isTimedFamilyVisit(draft)) {
+    if (!draft.context.participantPersonIds?.length) issue("BLOCK_PREVIEW", "VISIT_PARTICIPANTS_REQUIRED", "context.participantPersonIds", "Choisissez qui va voir la famille.", "visit-participants");
+    for (const problem of visitTimingIssues(draft.context.visitTiming!)) issue("BLOCK_PREVIEW", problem.code, "context.visitTiming", problem.message, problem.repairTarget);
+    if (!draft.context.transportMode) issue("BLOCK_PREVIEW", "VISIT_TRANSPORT_REQUIRED", "context.transportMode", "Choisissez comment vous allez voir la famille.", "builder-route");
+    if (!draft.context.place) issue("BLOCK_PREVIEW", "VISIT_PLACE_REQUIRED", "context.place", "Précisez où vous allez voir la famille.", "visit-place");
+  }
   if (resolved && live && draft.context.place?.kind === "KNOWN") {
     const ref = draft.context.host ?? draft.context.personVisited;
     const compatible = rankPlacesForPlannedContext(live.places, resolved, {

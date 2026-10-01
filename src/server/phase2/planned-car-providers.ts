@@ -29,22 +29,40 @@ async function cached<T>(key: string, ttl: number, enabled: boolean, calculate: 
   return structuredClone(await request);
 }
 const hash = (value: unknown) => createHash("sha256").update(JSON.stringify(value)).digest("hex");
+let tomtomQueue: Promise<void> = Promise.resolve(), nextTomtomStart = 0;
+async function reserveTomtomRequest() {
+  const reservation = tomtomQueue.then(async () => {
+    const wait = Math.max(0, nextTomtomStart - Date.now());
+    if (wait) await new Promise((resolve) => setTimeout(resolve, wait));
+    nextTomtomStart = Date.now() + 350;
+  });
+  tomtomQueue = reservation.catch(() => {});
+  await reservation;
+}
 class ProviderHttp {
   private readonly fetcher: typeof fetch;
   private readonly timeoutMs: number;
-  constructor(private readonly provider: string, options: ProviderOptions) { this.fetcher = options.fetcher ?? fetch; this.timeoutMs = options.timeoutMs ?? 4000; }
+  constructor(private readonly provider: string, options: ProviderOptions) { this.fetcher = options.fetcher ?? fetch; this.timeoutMs = options.timeoutMs ?? 8000; }
   async json(url: URL, init?: RequestInit): Promise<any> {
     for (let attempt = 0; attempt < 2; attempt++) {
+      // Two directions × three time samples must not burst past the provider quota.
+      if (this.provider === "TOMTOM") await reserveTomtomRequest();
       const controller = new AbortController(); const timer = setTimeout(() => controller.abort(), this.timeoutMs);
       try {
         const response = await this.fetcher(url, { ...init, signal: controller.signal, cache: "no-store" });
         if (!response.ok) {
-          if (attempt === 0 && [429, 502, 503, 504].includes(response.status)) continue;
+          if (attempt === 0 && [429, 502, 503, 504].includes(response.status)) {
+            clearTimeout(timer);
+            const retryAfter = Number(response.headers.get("retry-after"));
+            await new Promise((resolve) => setTimeout(resolve, response.status === 429 ? Math.min(2000, Math.max(1000, Number.isFinite(retryAfter) ? retryAfter * 1000 : 1000)) : 250));
+            continue;
+          }
           throw new PlannedProviderError(this.provider, "HTTP", response.status);
         }
         return await response.json();
       } catch (error) {
         if (error instanceof PlannedProviderError) throw error;
+        if (attempt === 0 && controller.signal.aborted) continue;
         // Do not forward fetch errors (they can contain the authenticated URL).
         throw new PlannedProviderError(this.provider, controller.signal.aborted ? "TIMEOUT" : "INVALID_RESPONSE");
       } finally { clearTimeout(timer); }

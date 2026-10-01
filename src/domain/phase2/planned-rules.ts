@@ -113,6 +113,7 @@ export type ContactPlaceLink = Readonly<{ placeId?: string; textPlace?: string;
   provenance: "CANONICAL_PLACE" | "USER_VALIDATED_HISTORY" | "USER_DECLARED_PROSPECTIVE";
   confidence: "HIGH" | "DECLARED" }>;
 export type ProspectiveContact = Readonly<{ key: string; label: string; kind: "FAMILY" | "FRIEND" | "OTHER";
+  relationLabel?: string; familyRelation?: "PARENT" | "GRANDPARENT" | "OTHER";
   relatedTo?: "ADRIEN" | "MANON" | "HOUSEHOLD"; places: readonly ContactPlaceLink[] }>;
 const home = (placeId: string): readonly ContactPlaceLink[] =>
   [{ placeId, relation: "HOME", provenance: "CANONICAL_PLACE", confidence: "HIGH" }];
@@ -126,13 +127,13 @@ export const SOCIAL_CONTACTS_V1: readonly ProspectiveContact[] = [
   { key: "juliette", label: "Juliette", kind: "FRIEND", places: home("5d952dac-8c0b-503c-831b-e1307bd72601") },
   { key: "elsa", label: "Elsa", kind: "FRIEND", places: home("6c435cf6-7fa8-50a1-9b86-a2a5e0cf000c") },
   { key: "greg", label: "Greg", kind: "FRIEND", places: declaredHome("Saint-Jean-de-Védas") },
-  { key: "manon_father", label: "Père de Manon", kind: "FAMILY", relatedTo: "MANON", places: home("9c6b6a7a-3301-5a8c-ad5c-64446f6cbb12") },
-  { key: "manon_mother", label: "Mère de Manon", kind: "FAMILY", relatedTo: "MANON", places: home("45b9c4a9-4da2-5768-9aa0-4f8d32549fbb") },
-  { key: "manon_grandparents", label: "Grands-parents de Manon", kind: "FAMILY", relatedTo: "MANON", places: home("45b9c4a9-4da2-5768-9aa0-4f8d32549fbb") },
+  { key: "manon_father", label: "Marc", relationLabel: "Père de Manon", familyRelation: "PARENT", kind: "FAMILY", relatedTo: "MANON", places: home("9c6b6a7a-3301-5a8c-ad5c-64446f6cbb12") },
+  { key: "manon_mother", label: "Isabelle", relationLabel: "Mère de Manon", familyRelation: "PARENT", kind: "FAMILY", relatedTo: "MANON", places: home("45b9c4a9-4da2-5768-9aa0-4f8d32549fbb") },
+  { key: "manon_grandparents", label: "Grands-parents de Manon", familyRelation: "GRANDPARENT", kind: "FAMILY", relatedTo: "MANON", places: home("45b9c4a9-4da2-5768-9aa0-4f8d32549fbb") },
   { key: "manon_stepfather", label: "Chris", kind: "FAMILY", relatedTo: "MANON", places: home("b965e05a-a35f-54f6-8113-9ff4597cb8bf") },
-  { key: "adrien_father", label: "Père d’Adrien", kind: "FAMILY", relatedTo: "ADRIEN", places: declaredHome("Servian") },
-  { key: "adrien_mother", label: "Mère d’Adrien", kind: "FAMILY", relatedTo: "ADRIEN", places: declaredHome("Dax") },
-  { key: "adrien_grandmother", label: "Grand-mère d’Adrien", kind: "FAMILY", relatedTo: "ADRIEN", places: declaredHome("Servian") },
+  { key: "adrien_father", label: "Père d’Adrien", familyRelation: "PARENT", kind: "FAMILY", relatedTo: "ADRIEN", places: declaredHome("Servian") },
+  { key: "adrien_mother", label: "Mère d’Adrien", familyRelation: "PARENT", kind: "FAMILY", relatedTo: "ADRIEN", places: declaredHome("Dax") },
+  { key: "adrien_grandmother", label: "Grand-mère d’Adrien", familyRelation: "GRANDPARENT", kind: "FAMILY", relatedTo: "ADRIEN", places: declaredHome("Servian") },
 ];
 
 const hiddenFields: Record<PlannedField, FieldPolicy> = { participants: "HIDDEN", visitedContact: "HIDDEN",

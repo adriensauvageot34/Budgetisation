@@ -16,7 +16,8 @@ import { BRING_ITEMS_LENS, DELIVERY_PROVIDERS, FISHING_ASSET_LENS, SOCIAL_CONTAC
 import type { CostItem, FundingAllocation, FundingSource, PlannedBaselineKey, PlannedExpenseContext,
   PlannedExpenseDraft, PriceSource, ModulePath, ProspectivePlaceRef } from "@/domain/phase2/planned-contract";
 import { readPlannedContextOptions, readPlannedRouteHistory } from "./planned-context";
-import { parseCarSnapshot, parseRouteCoordinates, carFuelEstimate, applyCarResult, carEstimateProblems } from "@/domain/phase2/planned-car";
+import { parseCarSnapshot, parseRouteCoordinates, carFuelEstimate, carSegmentProvider, applyCarResult, carEstimateProblems } from "@/domain/phase2/planned-car";
+import { assertVisitTiming, parseVisitTiming, shiftVisitTiming, splitVisitRoute } from "@/domain/phase2/planned-visits";
 import { estimatePlannedCar } from "./planned-car-estimation";
 import type { MonthForecastSnapshot } from "./month-forecast-snapshot";
 import { simulatePlannedExpenseScenario, type MonthInputs } from "./month-scenario";
@@ -172,7 +173,7 @@ export function parsePlannedExpenseDraft(value: unknown, targetMonth: string,
   const contextRaw = object(raw.context, "PLANNED_EXPENSE_CONTEXT_INVALID");
   keysOnly(contextRaw, ["participantPersonIds", "travellingParticipantPersonIds", "additionalGuestCount", "personVisited", "participantRefs", "host", "hostParticipates", "visitedPersonParticipates", "transportMode",
     "place", "purchaseMode", "housePartyPlaceMode", "visitFormat", "socialOccasion", "occasionLabel",
-    "deliveryProviderKey", "deliveryProvider", "seller", "gift", "childLocalPlaceRefs", "route",
+    "deliveryProviderKey", "deliveryProvider", "seller", "gift", "childLocalPlaceRefs", "route", "visitTiming",
     "companionMode", "groceriesNature", "workMealMode", "outingKind", "eventName", "endDate", "noExpense", "purchaseDescription"],
   "PLANNED_EXPENSE_CONTEXT_FIELDS_INVALID");
   const context: { -readonly [K in keyof PlannedExpenseContext]?: PlannedExpenseContext[K] } = {};
@@ -208,6 +209,12 @@ export function parsePlannedExpenseDraft(value: unknown, targetMonth: string,
   };
   if (contextRaw.participantPersonIds !== undefined)
     context.participantPersonIds = personIds(contextRaw.participantPersonIds, "PLANNED_EXPENSE_PARTICIPANTS_INVALID");
+  if (contextRaw.visitTiming !== undefined) {
+    if (familyKey !== "visit_trip" || raw.subtypeKey !== "family_visit") throw new TypeError("PLANNED_VISIT_TIMING_FORBIDDEN");
+    context.visitTiming = parseVisitTiming(contextRaw.visitTiming);
+    assertVisitTiming(context.visitTiming, plannedDate);
+    if (!context.participantPersonIds?.length) throw new TypeError("VISIT_PARTICIPANTS_REQUIRED");
+  }
   if (contextRaw.travellingParticipantPersonIds !== undefined)
     context.travellingParticipantPersonIds = personIds(contextRaw.travellingParticipantPersonIds, "PLANNED_EXPENSE_TRAVELLERS_INVALID");
   if (contextRaw.additionalGuestCount !== undefined) {
@@ -309,6 +316,8 @@ export function parsePlannedExpenseDraft(value: unknown, targetMonth: string,
     if (liveEstimate && route.mode !== "CAR") throw new TypeError("PLANNED_EXPENSE_FUEL_ESTIMATE_MODE_INVALID");
     if (route.plannedTime != null && (typeof route.plannedTime !== "string" || !/^(?:[01]\d|2[0-3]):[0-5]\d$/u.test(route.plannedTime) || !raw.plannedDate)) throw new TypeError("PLANNED_ROUTE_TIME_INVALID");
     if (route.timeKind !== undefined && !["DEPARTURE", "ARRIVAL"].includes(String(route.timeKind))) throw new TypeError("PLANNED_ROUTE_TIME_INVALID");
+    if (context.visitTiming && (route.plannedTime !== undefined && route.plannedTime !== context.visitTiming.outbound.time
+      || route.timeKind !== undefined && route.timeKind !== "DEPARTURE")) throw new TypeError("PLANNED_VISIT_TIMING_INVALID");
     if (route.preference !== undefined && (!["FASTEST", "AVOID_TOLLS"].includes(String(route.preference)) || liveEstimate && liveEstimate.preference !== route.preference)) throw new TypeError("PLANNED_ROUTE_PREFERENCE_INVALID");
     if (route.manualFuelPrice !== undefined && (typeof route.manualFuelPrice !== "string" || !/^\d(?:\.\d{1,3})?$/u.test(route.manualFuelPrice) || new Big(route.manualFuelPrice).lte(0))) throw new TypeError("PLANNED_ROUTE_PRICE_INVALID");
     if (route.tollFreeConfirmed !== undefined && typeof route.tollFreeConfirmed !== "boolean") throw new TypeError("PLANNED_ROUTE_TOLL_INVALID");
@@ -333,7 +342,7 @@ export function parsePlannedExpenseDraft(value: unknown, targetMonth: string,
       if ((source === "CHILD_LOCAL_PLACE") !== (childModule !== undefined))
         throw new TypeError("PLANNED_EXPENSE_ROUTE_ENDPOINT_INVALID");
       if (stop.distanceSource !== undefined && !["MANUAL", "HISTORICAL_ROUTE", "TOMTOM"].includes(stop.distanceSource as string)
-        || stop.distanceSource === "TOMTOM" && liveEstimate?.route.provider !== "TOMTOM")
+        || stop.distanceSource === "TOMTOM" && (!liveEstimate || carSegmentProvider(liveEstimate, index) !== "TOMTOM"))
         throw new TypeError("PLANNED_EXPENSE_ROUTE_SOURCE_INVALID");
       let evidence;
       let estimatedFuelLiters: string | undefined;
@@ -387,7 +396,10 @@ export function parsePlannedExpenseDraft(value: unknown, targetMonth: string,
       || fuelItems[0]!.unitAmount !== fuelEstimate.cost || fuelItems[0]!.priceSource !== "CALCULATED"))
       throw new TypeError("PLANNED_EXPENSE_CAR_ESTIMATE_REQUIRED");
     if (liveEstimate && (liveEstimate.route.segments.length !== stops.length - 1
-      || liveEstimate.route.provider === "TOMTOM" && stops.slice(0, -1).some((stop, i) => stop.distanceSource !== "TOMTOM" || stop.distanceToNextKm !== liveEstimate.route.segments[i]!.distanceKm))) throw new TypeError("PLANNED_EXPENSE_LIVE_ROUTE_INVALID");
+      || stops.slice(0, -1).some((stop, i) => carSegmentProvider(liveEstimate, i) === "TOMTOM" && (stop.distanceSource !== "TOMTOM" || stop.distanceToNextKm !== liveEstimate.route.segments[i]!.distanceKm)))) throw new TypeError("PLANNED_EXPENSE_LIVE_ROUTE_INVALID");
+    if (liveEstimate?.journey && (!context.visitTiming || JSON.stringify(context.visitTiming) !== JSON.stringify(liveEstimate.journey.timing)
+      || liveEstimate.journey.outbound.route.segments.length !== stops.findIndex((stop) => stop.endpointSource === "ROOT_PLACE"))) throw new TypeError("PLANNED_VISIT_SNAPSHOT_MISMATCH");
+    if (context.visitTiming && route.mode === "CAR" && !liveEstimate?.journey) throw new TypeError("PLANNED_VISIT_SNAPSHOT_REQUIRED");
     const calculatedTolls = costItems.filter((item) => item.assetKey === "transport:toll" && item.priceSource === "CALCULATED");
     const allTolls = costItems.filter((item) => item.assetKey === "transport:toll");
     if (calculatedTolls.length && !liveEstimate || liveEstimate && calculatedTolls.some((item) => item.quantity !== "1" || item.unitAmount !== liveEstimate.toll.amount)
@@ -400,6 +412,8 @@ export function parsePlannedExpenseDraft(value: unknown, targetMonth: string,
       ...(route.manualFuelPrice ? { manualFuelPrice: route.manualFuelPrice as string } : {}),
       ...(route.tollFreeConfirmed !== undefined ? { tollFreeConfirmed: route.tollFreeConfirmed as boolean } : {}) };
   }
+  if (context.visitTiming && (!context.transportMode || !context.place || !context.personVisited)) throw new TypeError("PLANNED_VISIT_CONTEXT_REQUIRED");
+  if (context.visitTiming && context.personVisited?.kind === "CONTACT" && !SOCIAL_CONTACTS_V1.some((contact) => contact.key === (context.personVisited as { contactKey: string }).contactKey && contact.kind === "FAMILY")) throw new TypeError("PLANNED_VISIT_CONTACT_INVALID");
   if (purpose === "WRITE" && (familyKey === "visit_trip" && ["family_visit", "friend_visit"].includes(raw.subtypeKey as string))
     && !context.personVisited) throw new TypeError("PLANNED_EXPENSE_VISITED_PERSON_REQUIRED");
   if (familyKey === "food" && raw.subtypeKey === "work_meal" && context.participantPersonIds?.length !== 1)
@@ -574,6 +588,11 @@ async function validateReferences(client: SupabaseClient, householdId: string, d
     || Object.values(draft.context.childLocalPlaceRefs ?? {}).some((ref) => ref?.kind === "KNOWN")) {
     const options = await readPlannedContextOptions(createCanonicalReadClient(), householdId,
       people.map((person) => ({ personId: person.person_id, displayName: person.display_name })));
+    if (draft.context.visitTiming && draft.context.route?.mode === "CAR") {
+      const home = options.places.find((place) => derivePlannedPlaceRoles(place).includes("OWN_HOME"));
+      if (!home) throw new TypeError("PLANNED_VISIT_RETURN_HOME_REQUIRED");
+      splitVisitRoute(draft.context.route.stops, home.placeId);
+    }
     if (draft.context.place?.kind === "KNOWN") {
       const rootPlaceId = draft.context.place.placeId;
       const visitedRef = draft.context.host ?? draft.context.personVisited;
@@ -649,7 +668,7 @@ export async function resolvePlannedExpenseDraft(client: SupabaseClient, househo
     const options = await readPlannedContextOptions(reader, householdId, (people.data ?? []).map((p) => ({ personId: p.person_id, displayName: p.display_name })));
     const previous = draft.context.route.liveEstimate;
     const result = await estimatePlannedCar({ stops: draft.context.route.stops, plannedDate: draft.plannedDate,
-      plannedTime: draft.context.route.plannedTime ?? previous.plannedTime, timeKind: draft.context.route.timeKind ?? previous.timeKind,
+      tripTiming: draft.context.visitTiming, plannedTime: draft.context.route.plannedTime ?? previous.plannedTime, timeKind: draft.context.route.timeKind ?? previous.timeKind,
       preference: draft.context.route.preference ?? previous.preference, manualFuelPrice: draft.context.route.manualFuelPrice }, { places: options.places, vehicle: options.vehicle, history: await readPlannedRouteHistory(reader, householdId) });
     if (!result.snapshot || !result.fuelEstimate) throw new TypeError("PLANNED_ROUTE_PRICE_UNAVAILABLE");
     const changed = previous.vehicleId !== result.snapshot.vehicleId || previous.route.geometryHash !== result.snapshot.route.geometryHash
@@ -823,8 +842,20 @@ export async function reportPlannedExpense(client: SupabaseClient, householdId: 
   assertVersion(previous, expected);
   if (previous.status !== "PLANNED") throw new TypeError("PLANNED_EXPENSE_STATUS_TRANSITION_INVALID");
   const targetMonth = date(plannedDate, "PLANNED_EXPENSE_DATE_INVALID").slice(0, 7);
-  const raw = { familyKey: previous.familyKey, subtypeKey: previous.subtypeKey, title: previous.title,
+  let raw: PlannedExpenseDraft = { familyKey: previous.familyKey, subtypeKey: previous.subtypeKey, title: previous.title,
     plannedDate, costItems: previous.costItems, context: previous.context };
+  if (previous.context.visitTiming) {
+    raw = { ...raw, context: { ...raw.context, visitTiming: shiftVisitTiming(previous.context.visitTiming, plannedDate) } };
+    if (raw.context.route?.mode === "CAR") {
+      const { data: people, error } = await client.from("persons").select("person_id,display_name,status").eq("household_id", householdId);
+      if (error) throw error;
+      const reader = createCanonicalReadClient();
+      const options = await readPlannedContextOptions(reader, householdId, (people ?? []).filter((p) => p.status === "active").map((p) => ({ personId: p.person_id, displayName: p.display_name })));
+      const result = await estimatePlannedCar({ stops: raw.context.route.stops, plannedDate, tripTiming: raw.context.visitTiming,
+        preference: raw.context.route.preference, manualFuelPrice: raw.context.route.manualFuelPrice }, { places: options.places, vehicle: options.vehicle, history: await readPlannedRouteHistory(reader, householdId) });
+      raw = applyCarResult(raw, result, randomUUID);
+    }
+  }
   const draft = await resolvePlannedExpenseDraft(client, householdId, targetMonth, raw);
   await preflight(draft, targetMonth);
   return compareAndSet(client, previous, userId, draft, "PLANNED", expected, targetMonth);

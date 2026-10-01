@@ -2,8 +2,9 @@ import "server-only";
 import Big from "big.js";
 import type { PlannedPlaceOption } from "@/domain/phase2/planned-places";
 import type { PlannedVehicleEstimate, PlannedRouteStop } from "@/domain/phase2/planned-contract";
-import { carFuelEstimate, fuelEconomicCost, parseRouteCoordinates, type CarRouteFacts, type FuelPriceReference,
+import { carFuelEstimate, combineCarJourney, fuelEconomicCost, parseRouteCoordinates, type CarRouteFacts, type FuelPriceReference,
   type PlannedCarRequest, type PlannedCarResult, type PlannedCarSnapshot } from "@/domain/phase2/planned-car";
+import { assertVisitTiming, parseVisitTiming, splitVisitRoute } from "@/domain/phase2/planned-visits";
 import { resolvePlannedRoute, type HistoricalRouteLeg } from "@/domain/phase2/planned-routes";
 import { derivePlannedPlaceRoles } from "@/domain/phase2/planned-place-rules";
 import { ASSET_MODULES } from "@/domain/phase2/planned-assets";
@@ -12,7 +13,7 @@ import { FrenchOfficialFuelPriceProvider, HereTollProvider, TomTomRouteProvider,
 export function parsePlannedCarRequest(raw: unknown): PlannedCarRequest {
   if (!raw || typeof raw !== "object" || Array.isArray(raw)) throw new TypeError("PLANNED_ROUTE_REQUEST_INVALID");
   const value = raw as Record<string, unknown>;
-  if (Object.keys(value).some((key) => !["stops", "plannedDate", "plannedTime", "timeKind", "preference", "manualFuelPrice"].includes(key))
+  if (Object.keys(value).some((key) => !["stops", "plannedDate", "plannedTime", "timeKind", "preference", "manualFuelPrice", "tripTiming"].includes(key))
     || !Array.isArray(value.stops) || value.stops.length < 2 || value.stops.length > 12) throw new TypeError("PLANNED_ROUTE_REQUEST_INVALID");
   if (value.plannedDate !== null && (typeof value.plannedDate !== "string" || !/^\d{4}-\d{2}-\d{2}$/u.test(value.plannedDate)
     || !Number.isFinite(Date.parse(value.plannedDate)))) throw new TypeError("PLANNED_ROUTE_DATE_INVALID");
@@ -37,15 +38,52 @@ export function parsePlannedCarRequest(raw: unknown): PlannedCarRequest {
       distanceToNextKm: stop.distanceToNextKm || null, distanceSource: stop.distanceSource,
       ...(stop.coordinates ? { coordinates: parseRouteCoordinates(stop.coordinates) } : {}) };
   });
-  return { stops, plannedDate: value.plannedDate as string | null, plannedTime: value.plannedTime as string | null | undefined,
+  const tripTiming = value.tripTiming === undefined ? undefined : parseVisitTiming(value.tripTiming);
+  if (tripTiming) {
+    assertVisitTiming(tripTiming, value.plannedDate as string | null);
+    if (value.plannedTime !== undefined && value.plannedTime !== tripTiming.outbound.time
+      || value.timeKind !== undefined && value.timeKind !== "DEPARTURE") throw new TypeError("PLANNED_VISIT_TIMING_INVALID");
+  }
+  return { stops, ...(tripTiming ? { tripTiming } : {}), plannedDate: value.plannedDate as string | null, plannedTime: value.plannedTime as string | null | undefined,
     timeKind: value.timeKind as PlannedCarRequest["timeKind"], preference: value.preference as PlannedCarRequest["preference"], manualFuelPrice: value.manualFuelPrice as string | undefined };
 }
 type Facts = { places: readonly PlannedPlaceOption[]; vehicle: PlannedVehicleEstimate | null; history: readonly HistoricalRouteLeg[] };
-type Providers = { route: TomTomRouteProvider; fuel: FrenchOfficialFuelPriceProvider; toll: HereTollProvider };
+type Providers = { route: Pick<TomTomRouteProvider, "estimateCarRoute" | "geocode">; fuel: Pick<FrenchOfficialFuelPriceProvider, "getReference">; toll: Pick<HereTollProvider, "estimateTolls"> };
 /** Same server service for the builder action, Preview and Save. It writes no canonical fact. */
 export async function estimatePlannedCar(raw: PlannedCarRequest, facts: Facts, providers: Providers = {
   route: new TomTomRouteProvider(), fuel: new FrenchOfficialFuelPriceProvider(), toll: new HereTollProvider(),
 }): Promise<PlannedCarResult> {
+  const input = parsePlannedCarRequest(raw);
+  if (!input.tripTiming) return estimateCarDirection(input, facts, providers);
+  const home = facts.places.find((p) => derivePlannedPlaceRoles(p).includes("OWN_HOME"));
+  if (!home) throw new TypeError("PLANNED_VISIT_RETURN_HOME_REQUIRED");
+  const split = splitVisitRoute(input.stops, home.placeId), timing = input.tripTiming;
+  // Both directions use the same current SP95 reference. The route/toll computations remain independent.
+  const prices = new Map<string, Promise<FuelPriceReference | null>>();
+  const shared = { ...providers, fuel: { getReference(origin: Parameters<Providers["fuel"]["getReference"]>[0]) {
+    const key = JSON.stringify(origin);
+    if (!prices.has(key)) prices.set(key, providers.fuel.getReference(origin));
+    return prices.get(key)!;
+  } } };
+  const directions = async (preference: NonNullable<PlannedCarRequest["preference"]>) => {
+    const [outbound, returning] = await Promise.all([
+      estimateCarDirection({ ...input, tripTiming: undefined, stops: split.outbound, plannedDate: timing.outbound.date, plannedTime: timing.outbound.time, timeKind: "DEPARTURE", preference }, facts, shared, false),
+      estimateCarDirection({ ...input, tripTiming: undefined, stops: split.return, plannedDate: timing.return.date, plannedTime: timing.return.time, timeKind: "DEPARTURE", preference }, facts, shared, false),
+    ]);
+    const snapshot = outbound.snapshot && returning.snapshot ? combineCarJourney(outbound.snapshot, returning.snapshot, timing) : null;
+    return { snapshot, stops: [...outbound.stops.slice(0, -1), ...returning.stops],
+      status: outbound.status === "LIVE" && returning.status === "LIVE" ? "LIVE" as const : snapshot ? "FALLBACK" as const : "PARTIAL" as const,
+      messages: [...outbound.messages.map((m) => `Aller : ${m}`), ...returning.messages.map((m) => `Retour : ${m}`)] };
+  };
+  const primary = await directions(input.preference ?? "FASTEST"), variants: PlannedCarSnapshot[] = primary.snapshot ? [primary.snapshot] : [];
+  if (primary.snapshot?.preference === "FASTEST" && (primary.snapshot.route.hasToll || primary.snapshot.toll.amount && new Big(primary.snapshot.toll.amount).gt(0))) {
+    const alternate = await directions("AVOID_TOLLS");
+    if (alternate.snapshot?.journey?.outbound.route.provider === "TOMTOM" && alternate.snapshot.journey.return.route.provider === "TOMTOM") variants.push(alternate.snapshot);
+    else primary.messages.push("La variante complète sans péage n’est pas disponible pour le moment.");
+  }
+  return { ...primary, variants, fuelEstimate: primary.snapshot ? carFuelEstimate(primary.snapshot) : null };
+}
+async function estimateCarDirection(raw: PlannedCarRequest, facts: Facts, providers: Providers, includeVariants = true): Promise<PlannedCarResult> {
   const input = parsePlannedCarRequest(raw), vehicle = facts.vehicle;
   if (!vehicle?.vehicleId) throw new TypeError("PLANNED_EXPENSE_VEHICLE_UNAVAILABLE");
   // Do not attach the Peugeot model to an unrelated household vehicle.
@@ -105,11 +143,11 @@ export async function estimatePlannedCar(raw: PlannedCarRequest, facts: Facts, p
     toll, fallbacks: [...fallbacks, ...(toll.amount === null ? ["TOLL_UNAVAILABLE"] : [])],
   }; };
   // Work on the likely useful alternate while HERE imports the primary geometry.
-  const pendingAlternate = input.preference !== "AVOID_TOLLS" && route.provider === "TOMTOM" && route.hasToll
+  const pendingAlternate = includeVariants && input.preference !== "AVOID_TOLLS" && route.provider === "TOMTOM" && route.hasToll
     ? providers.route.estimateCarRoute({ ...routeInput, preference: "AVOID_TOLLS" }).then((r) => snapshotFor(r, "AVOID_TOLLS")).catch(() => null) : null;
   const snapshot = await snapshotFor(route, input.preference ?? "FASTEST");
   const variants = [snapshot];
-  if (snapshot.preference === "FASTEST" && route.provider === "TOMTOM" && (route.hasToll || snapshot.toll.amount && new Big(snapshot.toll.amount).gt(0))) {
+  if (includeVariants && snapshot.preference === "FASTEST" && route.provider === "TOMTOM" && (route.hasToll || snapshot.toll.amount && new Big(snapshot.toll.amount).gt(0))) {
     try { const alternate = pendingAlternate ? await pendingAlternate : await snapshotFor(await providers.route.estimateCarRoute({ ...routeInput, preference: "AVOID_TOLLS" }), "AVOID_TOLLS");
       if (alternate) variants.push(alternate); else messages.push("La variante sans péage n’est pas disponible pour le moment."); }
     catch { messages.push("La variante sans péage n’est pas disponible pour le moment."); }

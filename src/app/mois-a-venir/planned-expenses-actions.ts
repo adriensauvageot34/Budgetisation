@@ -90,6 +90,8 @@ export async function previewPlannedExpense(targetMonth: string, rawDraft: unkno
 
 export async function estimatePlannedRoute(targetMonth: string,
   draft: PlannedExpenseDraft) {
+  if (draft.context.visitTiming && (draft.familyKey !== "visit_trip" || draft.subtypeKey !== "family_visit"))
+    throw new TypeError("PLANNED_VISIT_TIMING_INVALID");
   const context = await monthContext(targetMonth);
   const resolved = resolvePlannedContext({ familyKey: draft.familyKey, subtypeKey: draft.subtypeKey, modifiers: plannedContextModifiers(draft.context) });
   if (resolved.transport === "FORBIDDEN" || draft.context.transportMode !== "CAR" || draft.context.route?.mode !== "CAR")
@@ -108,7 +110,7 @@ export async function estimatePlannedRoute(targetMonth: string,
     (people ?? []).filter((person) => person.status === "active")
       .map((person) => ({ personId: person.person_id, displayName: person.display_name })));
   return estimatePlannedCar({ stops: draft.context.route.stops, plannedDate: draft.plannedDate, plannedTime: draft.context.route.plannedTime,
-    timeKind: draft.context.route.timeKind, preference: draft.context.route.preference ?? draft.context.route.liveEstimate?.preference ?? "FASTEST", manualFuelPrice: draft.context.route.manualFuelPrice },
+    tripTiming: draft.context.visitTiming, timeKind: draft.context.route.timeKind, preference: draft.context.route.preference ?? draft.context.route.liveEstimate?.preference ?? "FASTEST", manualFuelPrice: draft.context.route.manualFuelPrice },
     { places: options.places, vehicle: options.vehicle, history: await readPlannedRouteHistory(createCanonicalReadClient(), context.household.householdId) });
 }
 

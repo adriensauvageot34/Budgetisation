@@ -34,7 +34,12 @@ export type PlannedRouteStop = Readonly<{ label: string; placeId?: string; dista
 export type PlannedFuelEstimate = Readonly<{ vehicleLabel: string; consumptionL100Km: string; fuelPricePerLiter: string;
   fuelPriceSource: string; fuelPriceObservedAt?: string; fuelPriceQuality?: string;
   distanceKm: string; liters: string; cost: string }>;
+export type PlannedTripTiming = Readonly<{
+  outbound: Readonly<{ date: string | null; time: string | null }>;
+  return: Readonly<{ required: true; date: string | null; time: string | null }>;
+}>;
 export type PlannedExpenseContext = Readonly<{ participantPersonIds?: readonly string[]; travellingParticipantPersonIds?: readonly string[];
+  visitTiming?: PlannedTripTiming;
   companionMode?: "SOLO" | "COUPLE" | "GROUP";
   groceriesNature?: "USUAL" | "TOP_UP" | "OCCASION";
   workMealMode?: "BOUGHT" | "DELIVERED" | "FROM_HOME";

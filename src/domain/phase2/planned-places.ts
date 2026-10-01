@@ -7,6 +7,7 @@ import { childPlaceRoles, SOCIAL_CONTACTS_V1, type ProspectiveContact,
 export type PlannedPlaceOption = Readonly<{ placeId: string; name: string; commune: string | null;
   nature: string | null; usage: string | null; subtype: string | null; privatePlace: boolean;
   visits12Months?: number; lastVisitDate?: string | null;
+  carVisitDates12Months?: readonly string[];
   brandLabel?: string | null;
   address?: string | null; coordinates?: import("./planned-car").RouteCoordinates;
   relationships: readonly { personName: string; role: string }[] }>;

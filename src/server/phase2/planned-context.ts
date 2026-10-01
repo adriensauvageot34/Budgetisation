@@ -91,6 +91,14 @@ export async function readPlannedContextOptions(client: SupabaseClient, househol
     }),
   })).filter((place) => !place.privatePlace || derivePlannedPlaceRoles(place).includes("OWN_HOME") || place.relationships.length > 0
     || SOCIAL_CONTACTS_V1.some((contact) => contact.places.some((link) => link.placeId === place.placeId)));
+  const home = places.find((place) => derivePlannedPlaceRoles(place).includes("OWN_HOME"));
+  const cutoff = cutoffDate.toISOString().slice(0, 10), today = new Date().toISOString().slice(0, 10);
+  for (let index = 0; index < places.length; index++) {
+    const place = places[index]!;
+    places[index] = { ...place, carVisitDates12Months: [...new Set((legsResult.data ?? [])
+      .filter((leg) => home && leg.origin_place_id === home.placeId && leg.destination_place_id === place.placeId
+        && leg.travel_date >= cutoff && leg.travel_date <= today).map((leg) => leg.travel_date))].sort() };
+  }
   let estimatedVehicle: PlannedVehicleEstimate | null = null;
   if (vehicle) {
     const legs = legsResult.data ?? [];

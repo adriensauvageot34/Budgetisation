@@ -100,7 +100,8 @@ export function PlannedExpensesControl({ targetMonth, expenses, persons, places,
     const label = subtypeLabel(family, subtype) || familyLabel(family);
     setBuilder((state) => { const nextDraft = { familyKey: family, subtypeKey: subtype, title: label,
       plannedDate: state.draft.plannedDate, costItems: [], context: {
-        ...(subtype !== "work_meal" ? { participantPersonIds: persons.map((person) => person.personId) } : { workMealMode: "BOUGHT" as const }),
+        ...(subtype === "family_visit" ? { participantPersonIds: [], visitTiming: { outbound: { date: state.draft.plannedDate, time: null }, return: { required: true as const, date: null, time: null } } }
+          : subtype !== "work_meal" ? { participantPersonIds: persons.map((person) => person.personId) } : { workMealMode: "BOUGHT" as const }),
         ...(subtype === "fast_food" ? { purchaseMode: "IN_STORE" as const } : {}),
         ...(subtype === "groceries" ? { groceriesNature: "USUAL" as const } : {}),
         ...(subtype === "house_party" ? { housePartyPlaceMode: "OWN_HOME" as const } : {}),

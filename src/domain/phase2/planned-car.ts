@@ -1,6 +1,9 @@
 import Big from "big.js";
-import type { CostItem, PlannedExpenseDraft, PlannedFuelEstimate, PlannedRouteStop } from "./planned-contract";
+import { sha256 } from "@noble/hashes/sha2.js";
+import { bytesToHex } from "@noble/hashes/utils.js";
+import type { CostItem, PlannedExpenseDraft, PlannedFuelEstimate, PlannedRouteStop, PlannedTripTiming } from "./planned-contract";
 import { rootAssetModule } from "./planned-assets";
+import { assertVisitTiming, parseVisitTiming } from "./planned-visits";
 
 /** One versioned vehicle model. Historical average consumption remains a fallback only. */
 export const PEUGEOT_207_ROUTING_PROFILE = Object.freeze({
@@ -40,8 +43,10 @@ export type PlannedCarSnapshot = Readonly<{
   plannedDate: string | null; plannedTime: string | null; timeKind: "DEPARTURE" | "ARRIVAL";
   calculatedAt: string; route: CarRouteFacts; fuelPrice: FuelPriceReference | null;
   fuelEconomicCost: string | null; toll: TollEstimate; fallbacks: readonly string[];
+  journey?: Readonly<{ timing: PlannedTripTiming; outbound: PlannedCarSnapshot; return: PlannedCarSnapshot }>;
 }>;
 export type PlannedCarRequest = Readonly<{ stops: readonly PlannedRouteStop[]; plannedDate: string | null;
+  tripTiming?: PlannedTripTiming;
   plannedTime?: string | null; timeKind?: "DEPARTURE" | "ARRIVAL"; preference?: RoutePreference; manualFuelPrice?: string }>;
 export interface PlannedRouteProvider { estimateCarRoute(input: { coordinates: readonly RouteCoordinates[];
   plannedDate: string | null; plannedTime: string | null; timeKind: "DEPARTURE" | "ARRIVAL"; preference: RoutePreference }): Promise<CarRouteFacts> }
@@ -51,6 +56,37 @@ export type PlannedCarResult = Readonly<{ stops: readonly PlannedRouteStop[]; sn
   variants: readonly PlannedCarSnapshot[]; fuelEstimate: PlannedFuelEstimate | null; status: "LIVE" | "FALLBACK" | "PARTIAL"; messages: readonly string[] }>;
 
 export const fuelEconomicCost = (liters: string, price: string): string => new Big(liters).times(price).toFixed(2);
+/** Add independent directed snapshots, including rounded fuel costs. No distance multiplication. */
+export function combineCarJourney(outbound: PlannedCarSnapshot, returning: PlannedCarSnapshot, timing: PlannedTripTiming): PlannedCarSnapshot {
+  assertVisitTiming(timing, outbound.plannedDate);
+  if (outbound.journey || returning.journey || outbound.preference !== returning.preference || outbound.vehicleId !== returning.vehicleId
+    || returning.plannedDate !== timing.return.date || outbound.plannedTime !== timing.outbound.time || returning.plannedTime !== timing.return.time
+    || outbound.timeKind !== "DEPARTURE" || returning.timeKind !== "DEPARTURE") return fail();
+  const sum = (a: string | null, b: string | null, digits?: number) => a === null || b === null ? null
+    : digits === undefined ? new Big(a).plus(b).toString() : new Big(a).plus(b).toFixed(digits);
+  const a = outbound.route, b = returning.route, geometry = [...a.geometry, ...b.geometry];
+  const geometryHash = a.geometryHash && b.geometryHash ? bytesToHex(sha256(new TextEncoder().encode(JSON.stringify(geometry)))) : null;
+  const tollAmount = sum(outbound.toll.amount, returning.toll.amount, 2);
+  const bothTomTom = a.provider === "TOMTOM" && b.provider === "TOMTOM";
+  const bothHere = outbound.toll.provider === "HERE" && returning.toll.provider === "HERE";
+  return { ...outbound, calculatedAt: returning.calculatedAt,
+    route: { ...a, provider: bothTomTom ? "TOMTOM" : a.provider === b.provider ? a.provider : "MANUAL",
+      distanceKm: sum(a.distanceKm, b.distanceKm)!, liters: sum(a.liters, b.liters)!,
+      durationSeconds: a.durationSeconds === null || b.durationSeconds === null ? null : a.durationSeconds + b.durationSeconds,
+      geometry, geometryHash, hasToll: a.hasToll || b.hasToll ? true : a.hasToll === null || b.hasToll === null ? null : false,
+      segments: [...a.segments, ...b.segments], routeMethodRef: "independent-directed-outbound-return@v1",
+      consumptionModelRef: bothTomTom ? PEUGEOT_207_ROUTING_PROFILE.modelKey : "directed-leg-consumption@v1" },
+    fuelPrice: outbound.fuelPrice && returning.fuelPrice ? outbound.fuelPrice : null,
+    fuelEconomicCost: sum(outbound.fuelEconomicCost, returning.fuelEconomicCost, 2),
+    toll: { status: tollAmount === null ? "UNAVAILABLE" : new Big(tollAmount).eq(0) ? "NONE" : "KNOWN", amount: tollAmount, currency: "EUR",
+      provider: bothHere ? "HERE" : "NONE", routeImportedFrom: bothHere ? "TOMTOM" : null,
+      geometryHash: bothHere ? geometryHash : null, methodRef: "independent-directed-toll-sum@v1",
+      components: [...outbound.toll.components.map((c) => ({ ...c, name: `Aller · ${c.name}`.slice(0, 120) })), ...returning.toll.components.map((c) => ({ ...c, name: `Retour · ${c.name}`.slice(0, 120) }))] },
+    fallbacks: [...new Set([...outbound.fallbacks, ...returning.fallbacks])], journey: { timing, outbound, return: returning } };
+}
+export function carSegmentProvider(snapshot: PlannedCarSnapshot, index: number): CarRouteFacts["provider"] {
+  return snapshot.journey ? (index < snapshot.journey.outbound.route.segments.length ? snapshot.journey.outbound.route : snapshot.journey.return.route).provider : snapshot.route.provider;
+}
 export function transportTotals(fuel: string | null, toll: string | null, parking = "0") {
   return { economic: fuel === null || toll === null ? null : new Big(fuel).plus(toll).plus(parking).toFixed(2),
     cash: toll === null ? null : new Big(toll).plus(parking).toFixed(2) };
@@ -117,6 +153,8 @@ export function carEstimateProblems(draft: PlannedExpenseDraft): readonly string
 }
 
 const fail = (): never => { throw new TypeError("PLANNED_EXPENSE_LIVE_ROUTE_INVALID"); };
+const stableValue = (value: unknown): unknown => Array.isArray(value) ? value.map(stableValue)
+  : value && typeof value === "object" ? Object.fromEntries(Object.entries(value).sort(([a], [b]) => a.localeCompare(b)).map(([key, v]) => [key, stableValue(v)])) : value;
 function obj(value: unknown, keys: readonly string[]): Record<string, unknown> {
   if (!value || typeof value !== "object" || Array.isArray(value)) return fail();
   const result = value as Record<string, unknown>;
@@ -141,8 +179,13 @@ export function parseRouteCoordinates(raw: unknown): RouteCoordinates {
   return { latitude: value.latitude, longitude: value.longitude, source: enumeration(value.source, ["CANONICAL", "TOMTOM_GEOCODE", "USER_DECLARED"]) };
 }
 /** Structural read boundary: backward compatible routes continue through the old parser; live snapshots never cause API calls on read. */
-export function parseCarSnapshot(raw: unknown): PlannedCarSnapshot {
-  const value = obj(raw, ["estimateVersion", "preference", "vehicleId", "vehicleLabel", "plannedDate", "plannedTime", "timeKind", "calculatedAt", "route", "fuelPrice", "fuelEconomicCost", "toll", "fallbacks"]);
+export function parseCarSnapshot(raw: unknown, allowJourney = true): PlannedCarSnapshot {
+  const value = obj(raw, ["estimateVersion", "preference", "vehicleId", "vehicleLabel", "plannedDate", "plannedTime", "timeKind", "calculatedAt", "route", "fuelPrice", "fuelEconomicCost", "toll", "fallbacks", ...(allowJourney ? ["journey"] : [])]);
+  let journey: PlannedCarSnapshot["journey"];
+  if (value.journey !== undefined) {
+    const j = obj(value.journey, ["timing", "outbound", "return"]);
+    journey = { timing: parseVisitTiming(j.timing), outbound: parseCarSnapshot(j.outbound, false), return: parseCarSnapshot(j.return, false) };
+  }
   if (value.estimateVersion !== "planned-car-live@v2" || typeof value.vehicleId !== "string" || !/^[a-f0-9]{8}(?:-[a-f0-9]{4}){3}-[a-f0-9]{12}$/iu.test(value.vehicleId)) return fail();
   const route = obj(value.route, ["provider", "distanceKm", "durationSeconds", "liters", "geometry", "geometryHash", "hasToll", "segments", "timeBasis", "sampleTimes", "routeMethodRef", "consumptionModelRef"]);
   if (!Array.isArray(route.geometry) || route.geometry.length > 11 || !Array.isArray(route.segments) || route.segments.length < 1 || route.segments.length > 11
@@ -178,11 +221,17 @@ export function parseCarSnapshot(raw: unknown): PlannedCarSnapshot {
     geometryHash: t.geometryHash === null ? null : text(t.geometryHash, 64), components: t.components.map((c) => { const component = obj(c, ["name", "amount"]); return { name: text(component.name), amount: dec(component.amount) }; }) };
   if ((toll.status === "NONE" && toll.amount !== "0.00") || (["UNAVAILABLE", "UNKNOWN"].includes(toll.status) !== (toll.amount === null))
     || toll.provider === "HERE" && (toll.routeImportedFrom !== "TOMTOM" || toll.geometryHash !== parsedRoute.geometryHash)) return fail();
-  if (value.fuelEconomicCost !== (fuelPrice ? fuelEconomicCost(parsedRoute.liters, fuelPrice.pricePerLiter) : null)) return fail();
+  if (!journey && value.fuelEconomicCost !== (fuelPrice ? fuelEconomicCost(parsedRoute.liters, fuelPrice.pricePerLiter) : null)) return fail();
   if (value.plannedDate !== null && (typeof value.plannedDate !== "string" || !/^\d{4}-\d{2}-\d{2}$/u.test(value.plannedDate))) return fail();
   if (value.plannedTime !== null && (typeof value.plannedTime !== "string" || !/^(?:[01]\d|2[0-3]):[0-5]\d$/u.test(value.plannedTime))) return fail();
-  return { estimateVersion: "planned-car-live@v2", preference: enumeration(value.preference, ["FASTEST", "AVOID_TOLLS"]), vehicleId: value.vehicleId,
+  const parsed: PlannedCarSnapshot = { estimateVersion: "planned-car-live@v2", preference: enumeration(value.preference, ["FASTEST", "AVOID_TOLLS"]), vehicleId: value.vehicleId,
     vehicleLabel: text(value.vehicleLabel), plannedDate: value.plannedDate as string | null, plannedTime: value.plannedTime as string | null,
     timeKind: enumeration(value.timeKind, ["DEPARTURE", "ARRIVAL"]), calculatedAt: timestamp(value.calculatedAt), route: parsedRoute, fuelPrice,
-    fuelEconomicCost: value.fuelEconomicCost as string | null, toll, fallbacks: value.fallbacks.map((f) => text(f)) };
+    fuelEconomicCost: value.fuelEconomicCost === null ? null : dec(value.fuelEconomicCost), toll, fallbacks: value.fallbacks.map((f) => text(f)), ...(journey ? { journey } : {}) };
+  if (journey) {
+    const expected = combineCarJourney(journey.outbound, journey.return, journey.timing);
+    for (const key of ["vehicleId", "preference", "plannedDate", "plannedTime", "timeKind", "route", "fuelPrice", "fuelEconomicCost", "toll"] as const)
+      if (JSON.stringify(stableValue(parsed[key])) !== JSON.stringify(stableValue(expected[key]))) return fail();
+  }
+  return parsed;
 }
