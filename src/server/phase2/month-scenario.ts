@@ -379,9 +379,10 @@ export function deriveMonthScenario(forecast: MonthForecastSnapshot, rawInputs: 
   const confirmedObligations = inputs.confirmedObligations.reduce((total, item) => total.plus(item.amount), new Big(0));
   const rawImpact = purchase ? new Big(purchase.amount).minus(purchase.amountAlreadyCoveredByParentEnvelope) : new Big(0);
   const additiveImpact = rawImpact.gt(0) ? rawImpact : new Big(0);
-  const reserveDifference = new Big(inputs.safetyReserve).minus(forecast.reserve.amount);
   const totalCostDelta = confirmedObligations.plus(additiveImpact).minus(excludedFixedTotal);
-  const spendDelta = totalCostDelta.plus(reserveDifference);
+  // Legacy snapshots may include a policy buffer. Remove it on read. The legacy
+  // safetyReserve input remains readable but goals never deduct a financial cost.
+  const spendDelta = totalCostDelta.minus(forecast.reserve.amount);
   const economicCost: ForecastRange = {
     low: add(forecast.economicCost.low, totalCostDelta), central: add(forecast.economicCost.central, totalCostDelta),
     high: add(forecast.economicCost.high, totalCostDelta),
@@ -393,11 +394,11 @@ export function deriveMonthScenario(forecast: MonthForecastSnapshot, rawInputs: 
   // Prudent cash ignores unconfirmed Benefit; fuel paid is already in the published cash view.
   const cashPrudent: ForecastRange = {
     low: forecast.income.low === null || forecast.cash.grossBeforeUnconfirmedFunding.high === null ? null
-      : euros(new Big(forecast.income.low).minus(forecast.cash.grossBeforeUnconfirmedFunding.high).minus(inputs.safetyReserve).minus(totalCostDelta)),
+      : euros(new Big(forecast.income.low).minus(forecast.cash.grossBeforeUnconfirmedFunding.high).minus(totalCostDelta)),
     central: forecast.income.central === null || forecast.cash.grossBeforeUnconfirmedFunding.central === null ? null
-      : euros(new Big(forecast.income.central).minus(forecast.cash.grossBeforeUnconfirmedFunding.central).minus(inputs.safetyReserve).minus(totalCostDelta)),
+      : euros(new Big(forecast.income.central).minus(forecast.cash.grossBeforeUnconfirmedFunding.central).minus(totalCostDelta)),
     high: forecast.income.high === null || forecast.cash.grossBeforeUnconfirmedFunding.low === null ? null
-      : euros(new Big(forecast.income.high).minus(forecast.cash.grossBeforeUnconfirmedFunding.low).minus(inputs.safetyReserve).minus(totalCostDelta)),
+      : euros(new Big(forecast.income.high).minus(forecast.cash.grossBeforeUnconfirmedFunding.low).minus(totalCostDelta)),
   };
   const benefitPotential = inputs.benefit.currentBalance === null ? null : euros(new Big(inputs.benefit.currentBalance.amount)
     .plus(inputs.benefit.expectedLoading?.amount ?? 0));
@@ -406,7 +407,7 @@ export function deriveMonthScenario(forecast: MonthForecastSnapshot, rawInputs: 
     ? { status: "UNAVAILABLE" as const, value: null, reason: "OPENING_BALANCE_UNKNOWN" }
     : opening.asOfDate !== asOfDate
       ? { status: "UNAVAILABLE" as const, value: null, reason: "CASH_MOVEMENTS_SINCE_OPENING_UNKNOWN" }
-      : { status: "AVAILABLE" as const, value: euros(new Big(opening.amount).minus(inputs.safetyReserve)), asOfDate };
+      : { status: "AVAILABLE" as const, value: euros(new Big(opening.amount)), asOfDate };
   return {
     targetMonth: forecast.meta.targetMonth, publicationId: forecast.meta.sourcePublicationId, inputs,
     whatIf: purchase === null ? null : { amount: purchase.amount, parentEnvelope: purchase.parentEnvelope,

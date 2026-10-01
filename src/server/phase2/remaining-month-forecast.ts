@@ -22,7 +22,7 @@ export type RemainingCategory = Readonly<{ key: string; label: string; alreadyRe
   shift: "UP" | "DOWN" | null; occurrenceDistribution: OccurrenceDistribution | null;
   jointSamples: Readonly<Record<string,string>>;
   remaining: CostRange; projectedMonth: CostRange; baselineProvision: CostRange;
-  habitualProjectGross: string; absorbedByHabit: CostRange;
+  habitualProjectGross: string; habitualPlannedGross: string; habitualDeclaredGross: string; absorbedByHabit: CostRange;
   remainingOpportunities: number | null; probability: number | null;
   expectedOccurrences: Readonly<{ low: number; central: number; high: number }> | null;
   conditionalMedianAmount: string | null; plannedOccurrencesAbsorbingHabit: number; plannedOccurrencesExtra: number;
@@ -92,7 +92,7 @@ export function forecastRemainingMonth(reference: MonthReferencePlan, evidence: 
   const historical = evidence.history.economicEntries.filter(r => r.date.slice(0, 7) >= start && r.date.slice(0, 7) <= historyEnd && r.date<=asOf);
   const current = evidence.currentEconomicEntries.filter(r => r.date.startsWith(month) && r.date <= asOf);
   const slots = (key: string) => {
-    const habitual = new Map<string, { date: string | null; amount: Big }>(), extra = new Set<string>(), occupied = new Set<string>();
+    const habitual = new Map<string, { date: string | null; amount: Big; status: string }>(), extra = new Set<string>(), occupied = new Set<string>();
     for (const expense of expenses) for (const item of expense.costItems) {
       const module = item.modulePath?.at(-1), path = item.modulePath?.join("/") ?? "root";
       const identity = `${expense.id}:${path}`;
@@ -104,7 +104,7 @@ export function forecastRemainingMonth(reference: MonthReferencePlan, evidence: 
         && refs.some(id => evidence.personNamesById[id] === mealPerson);
       if (baseline) {
         const previous = habitual.get(identity);
-        habitual.set(identity, { date: expense.plannedDate ?? null,
+        habitual.set(identity, { date: expense.plannedDate ?? null, status: expense.status,
           amount: (previous?.amount ?? new Big(0)).plus(plannedLineGross(item)) });
       } else if ((key === "household-restaurants" && ["restaurant", "fast_food"].includes(module ?? "")) || samePersonMeal) extra.add(identity);
       // A specifically dated work meal occupies that person's slot even if it is an extra.
@@ -276,7 +276,10 @@ export function forecastRemainingMonth(reference: MonthReferencePlan, evidence: 
     return { key, label: labels[key] ?? key, alreadyRealized: money(observed), remaining,
       method,evidenceMonths:months.length,usualAtThisPoint:optional||key==="manon-work-mobility"?null:money(expected),pace,shift:series.shift,occurrenceDistribution:distribution,jointSamples,
       projectedMonth: range(s => observed.plus(habitGross).plus(remaining[s])), baselineProvision: provision,
-      habitualProjectGross: money(habitGross), absorbedByHabit: absorbed, remainingOpportunities: opportunities, probability,
+      habitualProjectGross: money(habitGross),
+      habitualPlannedGross: money(slot.habitual.filter(s => s.status === "PLANNED").reduce((n, s) => n.plus(s.amount), new Big(0))),
+      habitualDeclaredGross: money(slot.habitual.filter(s => s.status === "DECLARED_REALIZED").reduce((n, s) => n.plus(s.amount), new Big(0))),
+      absorbedByHabit: absorbed, remainingOpportunities: opportunities, probability,
       expectedOccurrences: occurrences, conditionalMedianAmount: unit, plannedOccurrencesAbsorbingHabit: habitualCount,
       plannedOccurrencesExtra: slot.extra, confidence: fallback || support < 5 ? "LOW" as const : support < 20 ? "MEDIUM" as const : "HIGH" as const,
       observationCount: support, explanation: `${explanation} Observations disponibles de ${monthLabel(start)} à ${monthLabel(historyEnd)}.` };

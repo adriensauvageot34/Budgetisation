@@ -7,6 +7,7 @@ import { renderToStaticMarkup } from "react-dom/server";
 import { forecast, inputs } from "./check-phase2-october-contract.mjs";
 import { planningHarness, item } from "./lib/planned-actions-harness.mjs";
 const require = createRequire(import.meta.url);
+require.extensions[".css"] = module => { module.exports = new Proxy({}, { get: (_, key) => key === "__esModule" ? undefined : String(key) }); };
 require.extensions[".tsx"] = (module, filename) => module._compile(ts.transpileModule(fs.readFileSync(filename, "utf8"), {
   compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022, jsx: ts.JsxEmit.ReactJSX, esModuleInterop: true }, fileName: filename,
 }).outputText, filename);
@@ -172,13 +173,14 @@ const props={plan:base,targetMonth:"2026-10",plannedExpenses:[],persons:[],place
 const render=element=>renderToStaticMarkup(React.createElement(AppRouterContext.Provider,{value:{refresh(){},push(){},replace(){},back(){},forward(){},prefetch(){}}},element));
 const html=render(React.createElement(MonthStory,props));
 assert.doesNotMatch(html,/Après nos charges et nos projets|À regarder ensemble|vous pouvez dépenser/);
-assert.match(html,/Tester une dépense/);assert.match(html,/Sections du mois/);assert.match(html,/Conserver cette estimation/);
-assert(html.indexOf("sortie(s) encore possibles")<html.indexOf("Hypothèse pour Restaurants"));
+assert.doesNotMatch(html,/Tester une dépense|Pourquoi \?|Notre hypothèse ce mois|Référence du quotidien nécessaire|Référence des dépenses facultatives/);
+assert.match(html,/Conserver cette estimation/);
 const currentHtml=render(React.createElement(MonthStory,{...props,plan:current,today:"2026-10-15"}));
-assert.match(currentHtml,/Déjà observé/);assert.match(currentHtml,/Total central du mois/);
+assert.match(currentHtml,/Déjà observé/);assert.doesNotMatch(currentHtml,/Total central du mois|imports partiels/);
 const pastHtml=render(React.createElement(PastMonthView,{targetMonth:"2026-04",review}));
 assert.match(pastHtml,/Prévu \/ réalisé \/ écart/);assert.doesNotMatch(pastHtml,/Ce qui pourrait encore|Tester une dépense/);
 const migration=fs.readFileSync("supabase/migrations/20260930183040_phase2_forecast_checkpoints.sql","utf8");
 assert.match(migration,/grant select,insert .*service_role/);assert.match(migration,/before update or delete/);assert.match(migration,/user_has_household_access/);
 assert.doesNotMatch(migration,/grant .*update|insert into .*operations|update .*financial_economic/);
 console.log("PASS V5: temporal modes, cumulative nowcast, cadence/shift/recency, workday caps, occurrence mixture, joint scenarios, assumptions/goal isolation, exact/display reconciliation, versioned memory/idempotence, horizon calibration/no leakage, changes/stability, past review, zero-write simulations, authenticated month actions, RLS contract, UI/conditional attention");
+export { live, inputs, evidence, plan, base, category, render, props, row, settings };

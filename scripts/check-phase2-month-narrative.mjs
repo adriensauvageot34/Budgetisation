@@ -8,6 +8,7 @@ import { renderToStaticMarkup } from "react-dom/server";
 import { forecast, inputs } from "./check-phase2-october-contract.mjs";
 import { planningHarness, value, item } from "./lib/planned-actions-harness.mjs";
 const require = createRequire(import.meta.url);
+require.extensions[".css"] = module => { module.exports = new Proxy({}, { get: (_, key) => key === "__esModule" ? undefined : String(key) }); };
 require.extensions[".tsx"] = (module, filename) => module._compile(ts.transpileModule(fs.readFileSync(filename, "utf8"), {
   compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022, jsx: ts.JsxEmit.ReactJSX, esModuleInterop: true }, fileName: filename,
 }).outputText, filename);
@@ -90,7 +91,16 @@ assert.equal(category(afterMeal,"manon-work-meals").remaining.central,category(b
 const split={...habitual,costItems:[{...habitual.costItems[0],unitAmount:"45.00"},{...habitual.costItems[0],id:randomUUID(),unitAmount:"15.00",assetKey:"restaurant:alcohol_total"}]};
 assert.equal(category(plan("2026-10-01",[split]),"household-restaurants").plannedOccurrencesAbsorbingHabit,1,"a split is still one root/module occurrence");
 const declared=plan("2026-10-01",[{...habitual,status:"DECLARED_REALIZED"}]);
-assert.deepEqual(declared.narrative,withHabit.narrative,"lifecycle is economically neutral");
+const financialNarrative = p => {
+  const result = structuredClone(p.narrative);
+  for (const c of [...result.prediction.essential, ...result.prediction.optional]) {
+    delete c.habitualPlannedGross; delete c.habitualDeclaredGross;
+  }
+  return result;
+};
+assert.deepEqual(financialNarrative(declared), financialNarrative(withHabit), "lifecycle is economically neutral; only presentation buckets move");
+assert.equal(category(declared,"household-restaurants").habitualDeclaredGross, "60.00");
+assert.equal(category(declared,"household-restaurants").habitualPlannedGross, "0.00");
 assert.deepEqual(declared.scenarios,withHabit.scenarios);
 assert.equal(projectMonthCalendar([],projectPlannedExpenseCards([{...habitual,createdAt:"2026-09-30",updatedAt:"2026-09-30"}],"2026-10-01")).entries[0].amount,"60.00");
 assert.deepEqual(simulatePlannedExpenseScenario(live,inputs,[],habitual,"2026-10-01").economicPlan,withHabit);
@@ -145,9 +155,9 @@ const {MonthStory}=require("../src/app/mois-a-venir/month-story.tsx");
 const {AppRouterContext}=require("next/dist/shared/lib/app-router-context.shared-runtime");
 const router={refresh(){},push(){},replace(){},back(){},forward(){},prefetch(){}};
 const html=renderToStaticMarkup(React.createElement(AppRouterContext.Provider,{value:router},React.createElement(MonthStory,{plan:first,targetMonth:"2026-10",plannedExpenses:[],persons:[],places:[],vehicle:null,prices:[],today:"2026-10-01",dateEvidence:{},references:{}})));
-const titles=["Nos ressources","Ce qui part quoi qu’il arrive","Après nos charges certaines","Ajouter quelque chose à notre mois","Calendrier du mois","Ce qu’il nous faut pour le quotidien","Après l’essentiel du mois","Ce qui pourrait encore s’ajouter","Projection de fin de mois"];
+const titles=["Nos ressources","Ce qui part quoi qu’il arrive","Après nos charges certaines","Calendrier du mois","Ce qu’il nous faut pour le quotidien","Après l’essentiel du mois","Ce qui pourrait encore s’ajouter","Projection de fin de mois"];
 let previous=-1;for(const title of titles){const index=html.indexOf(title);assert(index>previous,title);previous=index;}
 assert.doesNotMatch(html,/Comment se construit notre mois|Ce qu’on dépense parfois en plus|Reste projeté en fin de mois/);
-assert.match(html,/Bas plausible/);assert.match(html,/Haut plausible/);assert.match(html,/Scénario habituel/);
+assert.match(html,/Déjà observé/);assert.match(html,/Encore estimé/);assert.match(html,/Mois plus coûteux/);
 assert(fs.readFileSync("src/app/mois-a-venir/month-forecast-view.tsx","utf8").includes("Améliorer la précision du mois"));
 console.log("PASS: V4 narrative order, robust recent quantiles, remaining days/workdays, imported vs future, optional zero/frequency/price, root/slot anti-double-count, marginal impact, lifecycle neutrality, Preview/Save/reload and historical zero-write");

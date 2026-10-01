@@ -4,7 +4,7 @@ import { createContext, useCallback, useContext, useState, type ReactNode } from
 
 export type ExistingExpenseAction = "EDIT" | "DECLARE" | "CORRECT" | "RESTORE" | "REPORT" | "DELETE";
 export type PlannedExpenseInteraction = { id: string; action: ExistingExpenseAction }
-  | { action: "CREATE"; plannedDate: string } | { action: "SIMULATE" };
+  | { action: "CREATE"; plannedDate?: string } | { action: "SIMULATE" };
 const InteractionContext = createContext<{ pending: PlannedExpenseInteraction | null;
   request: (action: PlannedExpenseInteraction) => void; consume: () => void } | null>(null);
 

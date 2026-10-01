@@ -3,11 +3,15 @@ import type { MonthForecastSnapshot } from "@/server/phase2/month-forecast-snaps
 import type { StoredMonthInputs } from "@/server/phase2/month-inputs";
 import type { MonthScenario } from "@/server/phase2/month-scenario";
 import { updateMonthInputs } from "@/app/mois-a-venir/actions";
-import { MonthStory } from "./month-story";
+import { MonthStory, statisticalLabels } from "./month-story";
 import type { PlannedExpenseCard } from "./planned-expenses-projection";
 import type { PlannedPlaceOption } from "@/domain/phase2/planned-places";
 import type { PlannedVehicleEstimate } from "@/server/phase2/planned-context";
 import { calibrateForecast } from "@/server/phase2/forecast-memory";
+import { MonthAssumptionEditor } from "./month-decision-tools";
+import { parseMonthDecisionSettings } from "@/domain/phase2/month-decision-contract";
+import { PlannedExpenseInteractions } from "./planned-expense-interactions";
+import { MonthSectionNav } from "./month-section-nav";
 
 const money = (value: string | null, exact = false) => value === null ? "À confirmer" : new Intl.NumberFormat("fr-FR", {
   style: "currency", currency: "EUR", maximumFractionDigits: exact ? 2 : 0, minimumFractionDigits: exact ? 2 : 0,
@@ -68,26 +72,30 @@ export function MonthForecastView({ forecast, scenario, stored, plannedExpenses,
     && !conditional.some((item) => item.key === part.key));
   const hasBank = stored.inputs.openingBalance !== null;
   const hasSwile = stored.inputs.benefit.currentBalance !== null;
+  const assumptions = scenario.economicPlan?.narrative.prediction;
+  const editableCategories = assumptions ? [...assumptions.essential, ...assumptions.optional]
+    : [...(scenario.economicPlan?.necessaryVariables.items ?? []), ...(scenario.economicPlan?.flexibleVariables.items ?? [])]
+      .map(category => ({ key: category.key, label: statisticalLabels[category.key] ?? "Autre dépense" }));
 
-  return <main className="mx-auto max-w-[1280px] space-y-7 pb-20 text-slate-900">
-    <nav aria-label="Mois préparé" className="flex items-center justify-between gap-3 text-sm font-bold"><a className="underline" href={`/mois-a-venir?month=${new Date(Date.UTC(Number(targetMonth.slice(0, 4)), Number(targetMonth.slice(5, 7)) - 2, 1)).toISOString().slice(0, 7)}`}>Mois précédent</a><span className="capitalize">{monthLabel(targetMonth)}</span><a className="underline" href={`/mois-a-venir?month=${new Date(Date.UTC(Number(targetMonth.slice(0, 4)), Number(targetMonth.slice(5, 7)), 1)).toISOString().slice(0, 7)}`}>Mois suivant</a></nav>
+  return <PlannedExpenseInteractions><main className="mx-auto max-w-[1280px] space-y-7 pb-20 text-slate-900">
+    <nav aria-label="Mois préparé" className="flex items-center justify-between gap-6 py-6 text-sm font-bold"><a className="rounded-xl px-3 py-2 text-slate-500 hover:bg-slate-100 focus-visible:outline-2 focus-visible:outline-emerald-700" href={`/mois-a-venir?month=${new Date(Date.UTC(Number(targetMonth.slice(0, 4)), Number(targetMonth.slice(5, 7)) - 2, 1)).toISOString().slice(0, 7)}`}>‹ Mois précédent</a><h1 className="text-center text-4xl font-black uppercase tracking-tight">{monthLabel(targetMonth)}</h1><a className="rounded-xl px-3 py-2 text-slate-500 hover:bg-slate-100 focus-visible:outline-2 focus-visible:outline-emerald-700" href={`/mois-a-venir?month=${new Date(Date.UTC(Number(targetMonth.slice(0, 4)), Number(targetMonth.slice(5, 7)), 1)).toISOString().slice(0, 7)}`}>Mois suivant ›</a></nav>
     {(!stored.inputs.declaredResources["benefit:swile"] || !stored.inputs.declaredResources["benefit:edenred"])
       && <section className="card p-5"><h2 className="text-xl font-black">Préparer les ressources de {monthLabel(targetMonth)}</h2><p className="mt-2 text-sm">Renseignez vos titres-restaurants prévus pour ce mois, y compris 0 € si vous n’en prévoyez aucun. Les ressources et les exceptions d’un autre mois ne sont pas copiées.</p><ActionForm targetMonth={targetMonth} intent="declare-monthly-benefits" label="Enregistrer les ressources de ce mois"><Field label="Ressource Swile du mois (€)" name="swileResource" type="number" min="0" required value={stored.inputs.declaredResources["benefit:swile"]} /><Field label="Ressource Edenred du mois (€)" name="edenredResource" type="number" min="0" required value={stored.inputs.declaredResources["benefit:edenred"]} /></ActionForm></section>}
+    {scenario.economicPlan && <MonthSectionNav hasProjects={plannedExpenses.length > 0} />}
     <MonthStory plan={scenario.economicPlan} targetMonth={targetMonth} plannedExpenses={plannedExpenses} persons={persons} places={places} vehicle={vehicle} prices={prices} wallets={wallets} today={today} dateEvidence={forecast.referencePlan?.estimatedDays ?? {}}
       settings={stored.inputs.decision} memory={forecast.forecastMemory} calibrated={forecast.predictionEvidence ? Object.keys(calibrateForecast(forecast.forecastMemory ?? [], forecast.predictionEvidence, today)).length > 0 : false}
       references={Object.fromEntries(forecast.components.map((part) => [part.key, { freshnessDate: part.freshnessDate, confidence: part.confidence }]))} />
 
-    <section id="complete-month" className="card p-5 sm:p-7" aria-labelledby="complete-title">
-      <h2 id="complete-title" className="text-2xl font-black">Améliorer la précision du mois</h2>
-      <p className="mt-1 text-sm text-slate-600">Ces informations affinent nos repères, lorsque vous les connaissez.</p>
+    <details id="complete-month" className="rounded-2xl border border-slate-200 p-5" open={!hasBank || !hasSwile || inputError}>
+      <summary id="complete-title" className="cursor-pointer text-lg font-bold">Améliorer la précision du mois</summary>
       {inputError && <p role="alert" className="mt-3 rounded-xl bg-red-50 p-3 text-sm font-semibold text-red-800">Impossible d’enregistrer : vérifiez les montants, les dates et la part déjà prévue.</p>}
       <div className="mt-4 grid gap-3 lg:grid-cols-2">
-        <details id="bank-balance" className="scroll-mt-6 rounded-2xl border border-slate-200 p-4"><summary className="cursor-pointer font-bold">Ajouter ou mettre à jour notre solde actuel · {hasBank ? "renseigné" : "à renseigner"}</summary><ActionForm targetMonth={targetMonth} intent="save-bank-balance" label="Enregistrer le solde"><Field label="Solde bancaire (€)" name="openingAmount" type="number" value={stored.inputs.openingBalance?.amount} /><Field label="Date du solde" name="openingDate" type="date" value={stored.inputs.openingBalance?.asOfDate} /><p className="text-xs text-slate-600">Le disponible aujourd’hui n’est calculable qu’avec un solde daté d’aujourd’hui.</p></ActionForm></details>
-        <details id="swile-balance" className="scroll-mt-6 rounded-2xl border border-slate-200 p-4"><summary className="cursor-pointer font-bold">Mettre à jour nos titres-restaurants · {hasSwile ? "renseigné" : "à renseigner"}</summary><ActionForm targetMonth={targetMonth} intent="save-benefit" label="Enregistrer Swile"><Field label="Solde Swile actuel (€)" name="benefitBalance" type="number" min="0" value={stored.inputs.benefit.currentBalance?.amount} /><Field label="Date du solde" name="benefitDate" type="date" value={stored.inputs.benefit.currentBalance?.asOfDate} /><Field label="Chargement attendu (€), si connu" name="benefitLoading" type="number" min="0" value={stored.inputs.benefit.expectedLoading?.amount} /><Field label="Date prévue du chargement" name="loadingDate" type="date" value={stored.inputs.benefit.expectedLoading?.expectedDate} /></ActionForm></details>
+        <details id="bank-balance" className="scroll-mt-24 rounded-xl border border-slate-200 p-4"><summary className="cursor-pointer font-bold">Solde actuel <span className="ml-2 text-xs font-normal text-slate-500">{hasBank ? "Mettre à jour" : "À renseigner"}</span></summary><ActionForm targetMonth={targetMonth} intent="save-bank-balance" label="Enregistrer le solde"><Field label="Solde bancaire (€)" name="openingAmount" type="number" value={stored.inputs.openingBalance?.amount} /><Field label="Date du solde" name="openingDate" type="date" value={stored.inputs.openingBalance?.asOfDate} /><p className="text-xs text-slate-600">Le disponible aujourd’hui n’est calculable qu’avec un solde daté d’aujourd’hui.</p></ActionForm></details>
+        <details id="swile-balance" className="scroll-mt-24 rounded-xl border border-slate-200 p-4"><summary className="cursor-pointer font-bold">Titres-resto <span className="ml-2 text-xs font-normal text-slate-500">{hasSwile ? "Mettre à jour Swile" : "À renseigner · Swile"}</span></summary><ActionForm targetMonth={targetMonth} intent="save-benefit" label="Enregistrer Swile"><Field label="Solde Swile actuel (€)" name="benefitBalance" type="number" min="0" value={stored.inputs.benefit.currentBalance?.amount} /><Field label="Date du solde" name="benefitDate" type="date" value={stored.inputs.benefit.currentBalance?.asOfDate} /><Field label="Chargement attendu (€), si connu" name="benefitLoading" type="number" min="0" value={stored.inputs.benefit.expectedLoading?.amount} /><Field label="Date prévue du chargement" name="loadingDate" type="date" value={stored.inputs.benefit.expectedLoading?.expectedDate} /></ActionForm></details>
         <details id="month-settings" className="scroll-mt-6 rounded-2xl border border-slate-200 p-4 lg:col-span-2">
           <summary className="cursor-pointer font-bold">Réglages du mois{pending.length > 0 ? ` · ${pending.length} échéance${pending.length > 1 ? "s" : ""} à préciser` : ""}</summary>
           <div className="mt-4 grid gap-3">
-            <details id="reserve" className="scroll-mt-6 rounded-2xl border border-slate-200 p-4"><summary className="cursor-pointer font-bold">Marge de sécurité · {money(stored.inputs.safetyReserve)}</summary><ActionForm targetMonth={targetMonth} intent="save-reserve" label="Enregistrer la réserve"><Field label="Montant à garder en sécurité (€)" name="safetyReserve" type="number" min="0" value={stored.inputs.safetyReserve} required /><p className="mt-2 text-xs text-slate-600">Elle réduit le disponible calculé avec un solde actuel. Elle n’est pas retranchée des montants du parcours ci-dessus.</p></ActionForm></details>
+            <div><h3 className="text-sm font-bold">Nos hypothèses</h3>{editableCategories.map(category => <MonthAssumptionEditor key={category.key} categoryKey={category.key} label={category.label} targetMonth={targetMonth} settings={parseMonthDecisionSettings(stored.inputs.decision)} />)}</div>
       <details id="pending-obligations" className="mt-4 rounded-xl border border-slate-200 p-3"><summary className="cursor-pointer font-bold text-emerald-900">Gérer les charges et échéances du mois</summary>
         <ul className="mt-2 divide-y divide-slate-200">{pending.map((part) => <UndatedRow key={part.key} part={part} kind="Dépense possible" targetMonth={targetMonth} />)}{declined.map((part) => <UndatedRow key={part.key} part={part} kind="Dépense possible" targetMonth={targetMonth} declined />)}{otherObligations.map((part) => <UndatedRow key={part.key} part={part} kind="Dépense possible" targetMonth={targetMonth} />)}{excludedFixed.map((part) => <UndatedRow key={part.key} part={part} kind="Charge fixe" targetMonth={targetMonth} excluded />)}</ul>
         {stored.inputs.confirmedObligations.length > 0 && <div className="mt-3 border-t border-slate-200 pt-3"><h3 className="text-sm font-bold">Échéances confirmées par vous</h3><ul className="mt-1 divide-y divide-slate-100">{stored.inputs.confirmedObligations.map((item) => <li key={item.componentKey} className="flex flex-wrap items-center justify-between gap-2 py-2 text-sm"><span><strong>{obligations.find((part) => part.key === item.componentKey)?.label ?? "Échéance confirmée"}</strong> · {dateLabel(item.dueDate)} · {money(item.amount, true)}</span><span className="flex flex-wrap gap-1"><DecisionForm targetMonth={targetMonth} intent="decline-conditional" componentKey={item.componentKey} label="Non" /><DecisionForm targetMonth={targetMonth} intent="unknown-conditional" componentKey={item.componentKey} label="Je ne sais pas" /></span></li>)}</ul></div>}
@@ -98,7 +106,7 @@ export function MonthForecastView({ forecast, scenario, stored, plannedExpenses,
           </div>
         </details>
       </div>
-    </section>
+    </details>
 
-  </main>;
+  </main></PlannedExpenseInteractions>;
 }

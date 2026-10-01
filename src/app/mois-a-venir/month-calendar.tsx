@@ -146,7 +146,7 @@ export function MonthCalendar({ targetMonth, entries, undated, dailyTotals, toda
 
   return <div className="min-w-0">
     <div className="overflow-hidden rounded-xl border border-slate-200 bg-white [&_button]:text-xs!">
-    <header className="flex items-center justify-between gap-3 border-b border-slate-100 px-3 py-1.5"><h3 className="text-sm font-bold capitalize">{monthTitle}</h3>
+    <header className="flex items-center justify-between gap-3 border-b border-slate-100 px-3 py-1.5"><h2 className="text-sm font-bold">Calendrier</h2>
       <div className="flex gap-0.5" aria-label="Éléments affichés">{([ ["ALL", "Tout"], ["PROJECTS", "Projets"], ["CHARGES", "Charges"] ] as const).map(([value, label]) =>
         <button key={value} type="button" aria-pressed={filter === value} onClick={() => setFilter(value)} className={`rounded-sm px-2 py-0.5 text-xs font-medium focus-visible:outline-2 focus-visible:outline-indigo-700 ${filter === value ? "bg-slate-100 text-slate-800" : "text-slate-500 hover:text-slate-800"}`}>{label}</button>)}</div>
     </header>

@@ -3,7 +3,7 @@ import Big from "big.js";
 import type { MonthDecisionSettings } from "@/domain/phase2/month-decision-contract";
 import type { MonthEconomicPlan } from "./month-scenario";
 import type { PlannedExpenseScenarioEntry } from "./planned-expenses";
-import { explainForecastChange, type ForecastCheckpoint } from "./forecast-memory";
+import { comparableForecastCheckpoints, explainForecastChange, type ForecastCheckpoint } from "./forecast-memory";
 
 /** Reconcile display rounding against a rounded milestone, deterministically.
  * These presentation terms never feed back into the economic calculation. */
@@ -33,15 +33,20 @@ export function projectMonthDecision(plan: MonthEconomicPlan, settings: MonthDec
   const categoryDisplay = Object.fromEntries([...(prediction?.essential ?? []), ...(prediction?.optional ?? [])].map(c => {
     const part = [...essentialParts, ...optionalParts].find(p => p.key === c.key)!;
     const adjustment = part.visible - Math.round(Number(c.baselineProvision.central));
-    const central = new Big(c.remaining.central).eq(0) ? 0 : Math.max(0, Math.round(Number(c.remaining.central)) + adjustment);
-    // Transfer the common reference rounding to the corresponding card. The
-    // observed + explicit habitual project + remaining display is reconciled too.
-    const observed = Math.round(Number(c.alreadyRealized)), habitual = Math.round(Number(c.habitualProjectGross));
+    const projectedCentral = new Big(c.projectedMonth.central).eq(0) ? 0 : Math.max(0, Math.round(Number(c.projectedMonth.central)) + adjustment);
+    // Declared projects change presentation buckets, never canonical observations
+    // or financial absorption. Round the three terms together; preserve exact zeros.
+    const amounts = { observed: new Big(c.alreadyRealized).plus(c.habitualDeclaredGross).toFixed(2),
+      planned: c.habitualPlannedGross, remaining: c.remaining.central };
+    const terms = roundedParts(Object.entries(amounts).filter(([, amount]) => new Big(amount).gt(0))
+      .map(([key, amount]) => ({ key, label: key, amount })), projectedCentral);
+    const term = (key: string) => terms.find(t => t.key === key)?.visible ?? 0;
+    const central = term("remaining");
     return [c.key, { remaining: { low: Math.min(Math.round(Number(c.remaining.low)), central), central,
-      high: Math.max(Math.round(Number(c.remaining.high)), central) }, observed, projectedCentral: observed + habitual + central }];
+      high: Math.max(Math.round(Number(c.remaining.high)), central) }, observed: term("observed"), planned: term("planned"), projectedCentral }];
   }));
   const change = explainForecastChange(plan, memory, targetMonth);
-  const last = memory.filter(r => r.target_month.startsWith(targetMonth)).at(-1);
+  const last = comparableForecastCheckpoints(memory, targetMonth).at(-1);
   const changeTarget = last ? final - Math.round(Number(last.payload.final.central)) : 0;
   const visibleChanges = roundedParts(change.changes.map(c => ({ key: c.key, label: c.label, amount: c.delta })), changeTarget);
   const attention: { key: string; message: string; href: string }[] = [];
@@ -56,7 +61,6 @@ export function projectMonthDecision(plan: MonthEconomicPlan, settings: MonthDec
     message: `${c.label} : les achats observés dépassent de plus de 30 % le rythme habituel à ce stade.`, href: "#necessary-title" });
   if (last && Math.abs(Number(change.delta)) > Math.max(50, Math.abs(Number(last.payload.final.central)) * .1)) attention.push({
     key: "revision", message: "La projection a changé sensiblement depuis la dernière estimation conservée.", href: "#forecast-history" });
-  if (prediction?.currentImportsMissing) attention.push({ key: "coverage", message: "Les imports du mois ne couvrent pas encore toute la période écoulée. La projection complète reste à affiner.", href: "#necessary-title" });
   const exactGoal = settings.goal === null ? null : {
     goal: settings.goal,
     lowConsumption: new Big(plan.narrative.final.lowConsumption).minus(settings.goal).toFixed(2),
@@ -65,7 +69,9 @@ export function projectMonthDecision(plan: MonthEconomicPlan, settings: MonthDec
   };
   return { mode, asOf, showProjectMilestone: !new Big(plan.plannedExpenses.netImpact.central ?? 0).eq(0),
     visible: { afterCertain, afterProjects, afterEssential, final, projectDelta: afterCertain - afterProjects,
-      essentialDelta, optionalDelta, essential: essentialParts, optional: optionalParts, categoryDisplay },
+      essentialDelta, optionalDelta, essential: essentialParts, optional: optionalParts, categoryDisplay,
+      essentialTotal: prediction ? prediction.essential.reduce((sum, c) => sum + categoryDisplay[c.key]!.projectedCentral, 0) : essentialDelta,
+      optionalTotal: prediction ? prediction.optional.reduce((sum, c) => sum + categoryDisplay[c.key]!.projectedCentral, 0) : optionalDelta },
     change: { ...change, visibleDelta: changeTarget, visibleChanges }, attention, goal: exactGoal,
     mealFundingVisible: [plan.plannedFunding.swile, plan.plannedFunding.edenred].some(p => new Big(p.reserved).plus(p.usedDeclared).plus(p.shortfall).gt(0)),
     jointExplanation: prediction?.joint.method === "EMPIRICAL_MONTHS"

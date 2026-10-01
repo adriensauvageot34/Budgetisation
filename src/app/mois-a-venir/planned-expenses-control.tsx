@@ -2,8 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState, type Dispatch, type SetStateAction } from "react";
-import Big from "big.js";
-import { CalendarDays, Plus, Trash2 } from "lucide-react";
+import { CalendarDays, Trash2 } from "lucide-react";
 import { PLANNED_FAMILIES, PLANNED_SUBTYPE_LABELS, type PlannedExpenseFamily } from "@/domain/phase2/planned-assets";
 import { createBuilderState, changeBuilderRoot, deriveBuilderReadiness, materializeBuilderDraft, synchronizeIntentBuilder, adoptBuilderResolvedTransport } from "@/domain/phase2/planned-builder";
 import { projectPlaceLabel, intentForDraft, BUILDER_INTENTS } from "@/domain/phase2/planned-ux";
@@ -19,7 +18,7 @@ import { PlannedImpactCard } from "./planned-impact-card";
 import { usePlannedExpenseInteractions } from "./planned-expense-interactions";
 import { calendarExpenseActions } from "./calendar-presentation";
 import { RestaurantWizard } from "./restaurant-wizard";
-import { PlannedBuilderFrame } from "./planned-wizard-visuals";
+import { PlannedBuilderFrame, type BuilderReturnPoint } from "./planned-wizard-visuals";
 import wizardStyles from "./planned-wizard.module.css";
 
 type Person = { personId: string; displayName: string; isCurrentUser?: boolean };
@@ -71,6 +70,7 @@ export function PlannedExpensesControl({ targetMonth, expenses, persons, places,
   const [reportDate, setReportDate] = useState("");
   const inFlight = useRef(false);
   const draftSession = useRef(0);
+  const returnPoint = useRef<BuilderReturnPoint | null>(null);
   const currentRevision = useRef(builder.revision);
   currentRevision.current = builder.revision;
   const [preview, setPreview] = useState<Preview | null>(null);
@@ -87,14 +87,13 @@ export function PlannedExpensesControl({ targetMonth, expenses, persons, places,
   const contextPersonLabel = persons.find((person) => person.personId === draft.context.participantPersonIds?.[0])?.displayName;
   const readiness = deriveBuilderReadiness(builder, { places, workMealPersonName: isWorkMeal ? contextPersonLabel : undefined });
   const canPreview = readiness.previewReady;
-  const planned = expenses.filter((item) => item.status === "PLANNED");
-  const realized = expenses.filter((item) => item.status === "DECLARED_REALIZED");
   const previewCurrent = preview !== null && previewRevision === builder.revision && preview.targetMonth === targetMonth;
 
   const resetPreview = () => { setPreview(null); setError(""); setIssue(null); };
   const start = (item?: PlannedExpenseCard, mode: "DECLARE" | "CORRECT" | null = null, plannedDate?: string) => {
     setSimulationMode(false);
     if (inFlight.current) return;
+    if (!open) returnPoint.current = { focus: document.activeElement as HTMLElement | null, left: window.scrollX, top: window.scrollY };
     draftSession.current++;
     const next = item ? { familyKey: item.familyKey, subtypeKey: item.subtypeKey, title: item.title,
       plannedDate: item.plannedDate, costItems: item.costItems.map((cost) => ({ ...cost })), context: { ...item.context } } : { ...emptyDraft(), plannedDate: plannedDate ?? null };
@@ -104,7 +103,6 @@ export function PlannedExpensesControl({ targetMonth, expenses, persons, places,
     setCloseRequested(false);
     setRepairRequest({ target: "", serial: 0 });
     setEditedId(item?.id); setPreview(null); setPreviewRevision(null); setError(""); setStep(item ? 3 : 1); setOpen(true);
-    window.setTimeout(() => { const target = document.getElementById("planned-expense-builder"); target?.scrollIntoView({ behavior: "smooth" }); target?.focus(); }, 0);
   };
   const selectSubtype = (family: PlannedExpenseFamily, subtype: string | null) => {
     const label = subtypeLabel(family, subtype) || familyLabel(family);
@@ -188,12 +186,10 @@ export function PlannedExpensesControl({ targetMonth, expenses, persons, places,
     if (pending.action === "CREATE" || pending.action === "SIMULATE") {
       if (inFlight.current || open && builder.revision > 0) {
         setError("Terminez ou fermez le brouillon ouvert avant de prévoir autre chose.");
-        window.setTimeout(() => { const target = document.getElementById("planned-expense-builder"); target?.scrollIntoView({ block: "start" }); target?.focus(); }, 0);
       }
       else {
         start(undefined, null, pending.action === "CREATE" ? pending.plannedDate : undefined);
         setSimulationMode(pending.action === "SIMULATE");
-        window.setTimeout(() => { const target = document.getElementById("planned-expense-builder"); target?.scrollIntoView({ block: "start" }); target?.focus(); }, 0);
       }
       return;
     }
@@ -206,17 +202,22 @@ export function PlannedExpensesControl({ targetMonth, expenses, persons, places,
     } else if (pending.action === "REPORT") { setReportId(item.id); setReportDate(item.plannedDate ?? ""); }
     else if (pending.action === "DELETE") setDeleteId(item.id);
     else start(item, pending.action === "DECLARE" ? "DECLARE" : pending.action === "CORRECT" ? "CORRECT" : null);
-    window.setTimeout(() => {
-      const target = document.getElementById("planned-expense-builder");
-      target?.scrollIntoView({ behavior: "smooth", block: "start" }); target?.focus();
+    if (pending.action === "REPORT" || pending.action === "DELETE") window.setTimeout(() => {
+      const target = document.getElementById(`project-${item.id}`) as HTMLDetailsElement | null;
+      if (target) { target.open = true; target.scrollIntoView({ behavior: "smooth", block: "center" }); target.querySelector<HTMLElement>("button, input")?.focus({ preventScroll: true }); }
     }, 0);
     // Pending is a consumed navigation command, never a second draft authority.
   }, [interactions?.pending]);
 
-  const card = (item: PlannedExpenseCard) => <li key={item.id} className="min-w-0 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
-    <div className="flex flex-wrap items-start justify-between gap-3"><div className="min-w-0 flex-1"><p className="text-xs font-bold text-emerald-900">{familyLabel(item.familyKey)} · {subtypeLabel(item.familyKey, item.subtypeKey)}</p><h4 className="break-words text-base font-black">{item.title}</h4><p className="mt-1 text-xs text-slate-600"><CalendarDays size={13} className="mr-1 inline" aria-hidden="true" />{item.plannedDate ? dateLabel(item.plannedDate) : "Ce mois-ci · sans date précise"}</p></div><strong className="text-lg tabular-nums">{money(item.grossCost)}</strong></div>
-    <p className="mt-2 break-words text-xs text-slate-600">{item.costItems.map((cost) => `${cost.variantLabel || cost.label} · ${cost.quantity} × ${money(cost.unitAmount)}`).join(" · ")}</p>
-    <p className="mt-2 text-xs font-semibold text-slate-700">{item.status === "PLANNED" ? item.needsRealityConfirmation ? "À confirmer · la date est passée" : "Prévue" : "Réalisée · déclarée par vous"}</p>
+  const card = (item: PlannedExpenseCard) => <li key={item.id}>
+    <details id={`project-${item.id}`} className="group rounded-xl border border-slate-200 bg-white px-4">
+      <summary className="flex cursor-pointer list-none items-center gap-4 py-4 focus-visible:outline-2 focus-visible:outline-emerald-700 [&::-webkit-details-marker]:hidden">
+        <h3 className="min-w-0 flex-1 font-bold">{item.title}</h3>
+        <span className={`rounded-full px-2 py-1 text-xs ${item.status === "DECLARED_REALIZED" ? "bg-emerald-50 text-emerald-800" : item.needsRealityConfirmation ? "bg-amber-50 text-amber-900" : "text-slate-500"}`}>{item.status === "DECLARED_REALIZED" ? "Réalisée · déclarée" : item.needsRealityConfirmation ? "À confirmer" : "Prévue"}</span>
+        <span className="w-32 text-right text-sm text-slate-500"><CalendarDays size={13} className="mr-1 inline" aria-hidden="true" />{item.plannedDate ? dateLabel(item.plannedDate) : "Sans date précise"}</span>
+        <strong className="w-24 text-right tabular-nums">{money(item.grossCost)}</strong>
+      </summary>
+      <p className="text-xs text-slate-600">{item.costItems.map((cost) => `${cost.variantLabel || cost.label} · ${cost.quantity} × ${money(cost.unitAmount)}`).join(" · ")}</p>
     <div className="mt-3 flex flex-wrap gap-2 border-t border-slate-100 pt-3">{calendarExpenseActions(item).filter(({ action }) => action !== "DELETE").map(({ action, label }) =>
       <button key={action} type="button" className={secondary} disabled={busy} onClick={() => {
         if (action === "REPORT") { setReportId(item.id); setReportDate(item.plannedDate ?? ""); }
@@ -227,19 +228,19 @@ export function PlannedExpensesControl({ targetMonth, expenses, persons, places,
         : <button type="button" className={secondary} disabled={busy} onClick={() => setDeleteId(item.id)}><Trash2 size={14} className="mr-1 inline" />{calendarExpenseActions(item).find(({ action }) => action === "DELETE")?.label}</button>}
     </div>
     {reportId === item.id && <div className="mt-3 grid gap-2 rounded-xl bg-slate-50 p-3"><label className="grid gap-1 text-sm font-semibold">Nouvelle date prévue<input type="date" className={inputClass} value={reportDate} onChange={(event) => setReportDate(event.target.value)} /></label><p className="text-xs">La même dépense rejoindra le mois choisi. Ses ressources et ses estimations seront revérifiées.</p><div className="flex gap-2"><button className={secondary} disabled={busy || !reportDate} onClick={() => run(async () => { const moved = unwrap(await reportPlannedExpenseAction(targetMonth, { id: item.id, expectedUpdatedAt: item.updatedAt }, reportDate)); setReportId(null); setNotice(`Projet reporté en ${moved.targetMonth}.`); if (moved.targetMonth !== targetMonth) router.push(`/mois-a-venir?month=${moved.targetMonth}`); })}>Confirmer le report</button><button className={secondary} onClick={() => setReportId(null)}>Annuler</button></div></div>}
+    </details>
   </li>;
 
-  return <section id="planned-expense-builder" tabIndex={-1} className="scroll-mt-6 rounded-[1.7rem] bg-sky-50/70 p-5 sm:p-6 focus-visible:outline-2 focus-visible:outline-indigo-700" aria-labelledby="planned-expense-title">
-    <div className="flex flex-wrap items-center justify-between gap-3"><div><p className="text-xs font-bold uppercase tracking-wide text-emerald-800">Nos projets</p><h2 id="planned-expense-title" className="text-2xl font-black">Ajouter quelque chose à notre mois</h2><p className="mt-1 text-sm text-slate-600">Un projet, ses éléments, puis son effet sur le mois.</p></div>
-      {!open && <button type="button" className={primary} onClick={() => start()}><Plus size={16} className="mr-1 inline" />Prévoir une dépense</button>}</div>
+  return <>
     {notice && <p role="status" className="mt-3 rounded-xl bg-emerald-100 p-3 text-sm">{notice}</p>}
     {error && !open && <p role="alert" className="mt-3 rounded-xl bg-red-50 p-3 text-sm text-red-800">{error}{issue?.repairTarget === "reload" && <button className={secondary} onClick={() => router.refresh()}>Recharger la liste</button>}{issue?.repairTarget === "month" && reportDate && <a className="ml-2 underline" href={`/mois-a-venir?month=${reportDate.slice(0, 7)}`}>Préparer les ressources de ce mois</a>}</p>}
-    {open && <PlannedBuilderFrame immersive={restaurantFlow} onDismiss={dismiss}>
-      <div className={restaurantFlow ? wizardStyles.header : "flex items-start justify-between gap-4"}><div><p className="text-xs font-semibold text-indigo-700">Projets{step > 1 && (" › " + (BUILDER_INTENTS.find((intent) => intent.key === intentForDraft(draft))?.label ?? "Projet"))}{step === 5 && " › Aperçu"}</p><h3 className="mt-2 text-2xl font-black tracking-tight">{step === 1 ? "Qu’avez-vous prévu ?" : draft.title}</h3>{step > 2 && !restaurantFlow && <p className="mt-2 text-sm text-slate-500">{[draft.plannedDate ? dateLabel(draft.plannedDate) : "Ce mois-ci", projectPlaceLabel(draft.context, places)].filter(Boolean).join(" · ")}</p>}</div><button type="button" className={secondary} onClick={dismiss}>Fermer</button></div>
+    {expenses.length > 0 && <section aria-labelledby="planned-expense-title" className="scroll-mt-24"><h2 id="planned-expense-title" className="scroll-mt-24 text-2xl font-black">Nos projets</h2><ul className="mt-4 space-y-2">{expenses.map(card)}</ul></section>}
+    {open && <PlannedBuilderFrame immersive returnPoint={returnPoint.current} label={realityMode ? "Confirmer une dépense réalisée" : "Préparer une dépense"} onDismiss={dismiss}>
+      <div className={wizardStyles.header}><div><p className="text-xs font-semibold text-indigo-700">Projets{step > 1 && (" › " + (BUILDER_INTENTS.find((intent) => intent.key === intentForDraft(draft))?.label ?? "Projet"))}{step === 5 && " › Aperçu"}</p><h3 className="mt-2 text-2xl font-black tracking-tight">{step === 1 ? "Qu’avez-vous prévu ?" : draft.title}</h3>{step > 2 && !restaurantFlow && <p className="mt-2 text-sm text-slate-500">{[draft.plannedDate ? dateLabel(draft.plannedDate) : "Ce mois-ci", projectPlaceLabel(draft.context, places)].filter(Boolean).join(" · ")}</p>}</div><button type="button" className={secondary} onClick={dismiss}>Fermer</button></div>
       {closeRequested && <div className="mt-3 rounded-xl bg-amber-50 p-3 text-sm"><p>Quitter et abandonner les modifications de ce brouillon ?</p><button type="button" className={secondary} onClick={() => { setOpen(false); setPreview(null); setCloseRequested(false); }}>Abandonner</button><button type="button" className={secondary} onClick={() => setCloseRequested(false)}>Continuer à préparer</button></div>}
       {realityMode && <p className="mt-3 rounded-xl bg-sky-50 p-3 text-sm">{realityMode === "DECLARE" ? "Vérifiez ce qui a réellement coûté et son financement, puis confirmez la réalisation." : "Corrigez les éléments et le financement de votre déclaration."} Pour un coût détaillé, corrigez les lignes ; aucun écart ne sera réparti automatiquement.</p>}
       {error && <div role="alert" className="mt-3 rounded-xl bg-red-50 p-3 text-sm text-red-800"><p>{error}</p>{issue && <button type="button" className={secondary} onClick={repairServerIssue}>{issue.repairTarget === "reload" ? "Actualiser la liste, garder mon brouillon" : "Aller à la correction"}</button>}{issue?.repairTarget === "reload" && editedId && <button type="button" className={secondary} onClick={() => { const fresh = expenses.find((item) => item.id === editedId); if (fresh) start(fresh, realityMode); }}>Abandonner mon brouillon et reprendre la version affichée</button>}</div>}
-      <div className={restaurantFlow ? wizardStyles.body : undefined}>
+      <div className={restaurantFlow ? wizardStyles.body : "min-h-0 flex-1 overflow-y-auto p-6"}>
       {restaurantFlow && <div className={wizardStyles.body} style={step === 5 ? { display: "none" } : undefined}><RestaurantWizard key={requestId} builder={builder} setBuilder={setBuilder} persons={persons} places={places} wallets={wallets} vehicle={vehicle} targetMonth={targetMonth} busy={busy} onPreview={simulate} repairRequest={repairRequest} /></div>}
       {step <= 4 && !restaurantFlow && <PlannedIntentBuilder key={requestId} builder={builder} setBuilder={setBuilder} step={step} setStep={setStep} selectRoot={selectSubtype} persons={persons} places={places} wallets={wallets} prices={prices} vehicle={vehicle} targetMonth={targetMonth} busy={busy} onPreview={simulate} />}
       {step === 5 && !previewCurrent && <div className="mt-4 rounded-xl bg-amber-50 p-4 text-sm">L’aperçu précédent n’est plus à jour. <button type="button" className={secondary} onClick={() => setStep(4)}>Recalculer après modification</button></div>}
@@ -251,7 +252,5 @@ export function PlannedExpensesControl({ targetMonth, expenses, persons, places,
         }} /></div></div>}
       </div>
     </PlannedBuilderFrame>}
-    <div className="mt-6 grid gap-5 lg:grid-cols-2"><div><h3 className="text-base font-black">À venir / prévues ({planned.length})</h3>{planned.length ? <ul className="mt-3 grid gap-3">{planned.map(card)}</ul> : <p className="mt-2 text-sm text-slate-600">Aucune dépense ajoutée pour l’instant.</p>}</div><div><h3 className="text-base font-black">Réalisées ce mois-ci ({realized.length})</h3>{realized.length ? <ul className="mt-3 grid gap-3">{realized.map(card)}</ul> : <p className="mt-2 text-sm text-slate-600">Aucune prévision marquée comme réalisée.</p>}</div></div>
-    {(new Big(funding.swile.reserved).gt(0) || new Big(funding.edenred.reserved).gt(0) || new Big(funding.swile.usedDeclared).gt(0) || new Big(funding.edenred.usedDeclared).gt(0)) && <p className="mt-4 text-xs text-slate-600">Financement du mois : Swile {money(funding.swile.reserved)} réservés et {money(funding.swile.usedDeclared)} utilisés déclarés ; Edenred {money(funding.edenred.reserved)} réservés et {money(funding.edenred.usedDeclared)} utilisés déclarés. Aucun solde réel n’est débité.</p>}
-  </section>;
+  </>;
 }

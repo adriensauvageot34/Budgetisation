@@ -63,7 +63,7 @@ export type ForecastAuthorities = Readonly<{
 }>;
 
 // P2-13 policy for any target month. It is not an October observation.
-export const DEFAULT_SAFETY_RESERVE = "200";
+export const DEFAULT_SAFETY_RESERVE = "0";
 
 const amount = (value: string | number): number => {
   const parsed = Number(value);

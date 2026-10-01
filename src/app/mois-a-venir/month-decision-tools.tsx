@@ -4,7 +4,6 @@ import { useRouter } from "next/navigation";
 import type { MonthDecisionSettings } from "@/domain/phase2/month-decision-contract";
 import type { MonthDecisionProjection } from "@/server/phase2/month-decision-projection";
 import { preserveMonthForecast, simulateMonthBehavior, updateMonthInputs } from "./actions";
-import { usePlannedExpenseInteractions } from "./planned-expense-interactions";
 
 const money = (value: string | number) => new Intl.NumberFormat("fr-FR", { style: "currency", currency: "EUR", maximumFractionDigits: 0 }).format(Number(value));
 const button = "rounded-xl border border-emerald-200 bg-white px-4 py-2 text-sm font-bold text-emerald-900 hover:bg-emerald-50 disabled:opacity-50";
@@ -14,7 +13,7 @@ export function MonthAssumptionEditor({ categoryKey, label, targetMonth, setting
   categoryKey: string; label: string; targetMonth: string; settings: MonthDecisionSettings }) {
   if (categoryKey === "manon-work-mobility") return null;
   const assumption = settings.assumptions[categoryKey as keyof typeof settings.assumptions];
-  return <details className="mt-3 border-t border-slate-100 pt-3 text-xs"><summary className="cursor-pointer font-semibold text-emerald-900">Notre hypothèse ce mois</summary>
+  return <details className="mt-3 border-t border-slate-100 pt-3 text-xs"><summary className="cursor-pointer font-semibold text-emerald-900">{label} · {assumption ? "hypothèse personnelle" : "comme d’habitude"}</summary>
     <p className="mt-2 text-slate-600">{assumption ? "Hypothèse personnelle active pour ce mois." : "Comme d’habitude : références historiques."} Moins / Plus ajuste de 20 %. Le montant personnel vise le total du mois ; les achats déjà faits et les projets explicites restent comptés.</p>
     <form action={updateMonthInputs} className="mt-3 flex flex-wrap gap-2"><input type="hidden" name="targetMonth" value={targetMonth} /><input type="hidden" name="intent" value="save-month-assumption" /><input type="hidden" name="categoryKey" value={categoryKey} />
       <label><span className="sr-only">Hypothèse pour {label}</span><select className={field} name="assumptionMode" defaultValue={assumption?.mode ?? "LOWER"}><option value="LOWER">Moins ce mois</option><option value="HIGHER">Plus ce mois</option><option value="CUSTOM">Montant personnel</option></select></label>
@@ -25,7 +24,7 @@ export function MonthAssumptionEditor({ categoryKey, label, targetMonth, setting
 }
 
 export function MonthDecisionTools({ targetMonth, settings, decision }: { targetMonth: string; settings: MonthDecisionSettings; decision: MonthDecisionProjection }) {
-  const interactions = usePlannedExpenseInteractions(), router = useRouter();
+  const router = useRouter();
   const [pending, startTransition] = useTransition();
   const [message, setMessage] = useState<string | null>(null);
   const [trial, setTrial] = useState<Awaited<ReturnType<typeof simulateMonthBehavior>> | null>(null);
@@ -34,8 +33,8 @@ export function MonthDecisionTools({ targetMonth, settings, decision }: { target
     catch { setMessage("La simulation n’a pas abouti. Votre mois est inchangé ; réessayez."); }
   });
   return <section id="decision-tools" className="scroll-mt-24 rounded-2xl bg-slate-50 p-6" aria-labelledby="decision-title">
-    <h2 id="decision-title" className="text-2xl font-black">Explorer nos choix</h2><p className="mt-1 text-sm text-slate-600">Les simulations restent temporaires jusqu’à une action explicite.</p>
-    <div className="mt-4 flex flex-wrap gap-2"><button className={button} onClick={() => interactions?.request({ action: "SIMULATE" })}>Tester une dépense</button>
+    <h2 id="decision-title" className="text-2xl font-black">Explorer nos choix</h2>
+    <div className="mt-4 flex flex-wrap gap-2">
       <button className={button} disabled={pending} onClick={() => simulate("restaurant-zero")}>Pas de restaurant supplémentaire</button>
       <button className={button} disabled={pending} onClick={() => simulate("groceries-minus-100")}>Courses : 100 € de moins</button>
       <button className={button} disabled={pending} onClick={() => simulate("tobacco-minus-20")}>Tabac & vape : 20 % de moins</button></div>
@@ -43,7 +42,7 @@ export function MonthDecisionTools({ targetMonth, settings, decision }: { target
       <p className="mt-1 text-xs text-slate-600">Les projets explicites et les achats déjà observés sont conservés. Aucun enregistrement effectué.</p>
       <form action={updateMonthInputs} className="mt-3"><input type="hidden" name="targetMonth" value={targetMonth} /><input type="hidden" name="intent" value="save-month-assumption" /><input type="hidden" name="categoryKey" value={trial.categoryKey} /><input type="hidden" name="assumptionMode" value="CUSTOM" /><input type="hidden" name="assumptionAmount" value={trial.amount} /><button className={button}>Garder comme hypothèse de ce mois</button></form></> : <p>{trial.message}</p>}
       <button className="mt-2 text-xs font-bold underline" onClick={() => setTrial(null)}>Fermer la simulation</button></div>}
-    <details className="mt-5 border-t border-slate-200 pt-4"><summary className="cursor-pointer font-bold">Notre objectif de fin de mois</summary><p className="mt-2 text-xs text-slate-600">Un repère personnel, indépendant du solde bancaire et de la marge de sécurité. Il ne se transmet pas au mois suivant.</p>
+    <details className="mt-5 border-t border-slate-200 pt-4"><summary className="cursor-pointer font-bold">Notre objectif de fin de mois{settings.goal !== null ? ` · ${money(settings.goal)}` : ""}</summary><p className="mt-2 text-xs text-slate-600">Un repère personnel, sans déduction de la projection ni création de dépense. Il ne se transmet pas au mois suivant.</p>
       <form action={updateMonthInputs} className="mt-3 flex items-end gap-2"><input type="hidden" name="targetMonth" value={targetMonth} /><input type="hidden" name="intent" value="save-month-goal" /><label className="text-sm">Garder au moins<input className={`${field} ml-2 w-32`} type="number" min="0" step="0.01" name="monthGoal" required defaultValue={settings.goal ?? ""} /> €</label><button className={button}>Enregistrer l’objectif</button></form>
       {decision.goal && <><dl className="mt-3 grid grid-cols-3 gap-3 text-sm">{([ ["Mois calme", decision.goal.lowConsumption], ["Habituel", decision.goal.central], ["Plus coûteux", decision.goal.highConsumption] ] as const).map(([label, delta]) => <div key={label}><dt>{label} · écart à l’objectif</dt><dd className="font-bold">{Number(delta) >= 0 ? "+" : ""}{money(delta)}</dd></div>)}</dl>
         <details className="mt-2 text-xs"><summary className="cursor-pointer">Calcul exact</summary><p>Chaque projection économique moins l’objectif de {settings.goal} € : {decision.goal.lowConsumption} € / {decision.goal.central} € / {decision.goal.highConsumption} €.</p></details>
@@ -52,7 +51,7 @@ export function MonthDecisionTools({ targetMonth, settings, decision }: { target
     <div className="mt-5 border-t border-slate-200 pt-4"><button className={button} disabled={pending} onClick={() => startTransition(async () => {
       try { const result = await preserveMonthForecast(targetMonth); setMessage(result.message); if (result.ok) router.refresh(); }
       catch { setMessage("L’estimation n’a pas été conservée. Réessayez ; la projection affichée reste disponible."); }
-    })}>{pending ? "Calcul en cours…" : "Conserver cette estimation"}</button><p className="mt-2 text-xs text-slate-600">Conservez des repères au début, au milieu et à la fin du mois. Ils sont immuables ; une consultation seule n’en crée aucun.</p></div>
+    })}>{pending ? "Calcul en cours…" : "Conserver cette estimation"}</button><details className="mt-2 text-xs text-slate-600"><summary className="cursor-pointer">À propos des estimations conservées</summary><p className="mt-2">Conservez des repères au début, au milieu et à la fin du mois. Ils sont immuables ; une consultation seule n’en crée aucun.</p></details></div>
     {message && <p role="status" className="mt-3 text-sm">{message}</p>}
   </section>;
 }

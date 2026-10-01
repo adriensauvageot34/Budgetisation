@@ -58,7 +58,9 @@ export async function updateMonthInputs(form: FormData): Promise<void> {
       },
     };
   } else if (intent === "save-reserve") {
-    next = { ...current, safetyReserve: field(form, "safetyReserve") };
+    // Compatibility for an already-open old form: an explicit reserve is now a
+    // personal goal, never a deduction from projected spending or cash.
+    next = { ...current, decision: parseMonthDecisionSettings({ ...parseMonthDecisionSettings(current.decision), goal: field(form, "safetyReserve") }) };
   } else if (intent === "save-bank-balance") {
     const amount = optionalMoney(form, "openingAmount");
     next = { ...current, openingBalance: amount === null ? null : { amount, asOfDate: field(form, "openingDate") } };

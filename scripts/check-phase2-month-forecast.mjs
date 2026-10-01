@@ -182,7 +182,7 @@ near(forecast.economicCost.low, 2190, 20, "economic low");
 near(forecast.economicCost.central, 2363.51, 0.01, "economic central");
 near(forecast.economicCost.high, 2560, 20, "economic high");
 near(forecast.freeToSpend.central, 985.48, 0.01, "FreeToSpend central");
-assert.equal(forecast.reserve.amount, "200");
+assert.equal(forecast.reserve.amount, "0");
 assert.equal(forecast.economicCost.coverage, "KNOWN_BASELINE_ONLY");
 assert.equal(forecast.availableNow.status, "UNAVAILABLE");
 assert.equal(forecast.events.knowledgeState, "UNKNOWN");

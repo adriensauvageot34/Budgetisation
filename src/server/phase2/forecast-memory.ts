@@ -101,8 +101,12 @@ export function calibrateForecast(memory: readonly ForecastCheckpoint[], evidenc
   }).filter(([, value]) => (value as { count: number }).count >= FORECAST_POLICY.calibrationMonths)) as ForecastCalibration;
 }
 
+export function comparableForecastCheckpoints(memory: readonly ForecastCheckpoint[], targetMonth: string) {
+  return memory.filter(row => row.target_month.startsWith(targetMonth) && row.model_version === FORECAST_MODEL_VERSION);
+}
+
 export function explainForecastChange(plan: MonthEconomicPlan, memory: readonly ForecastCheckpoint[], targetMonth: string) {
-  const rows = memory.filter(row => row.target_month.startsWith(targetMonth));
+  const rows = comparableForecastCheckpoints(memory, targetMonth);
   const previous = rows.at(-1);
   if (!previous) return { changes: [], delta: "0.00", stability: "Pas encore d’estimation conservée pour comparer.", sampleCount: 0 };
   const current = forecastComponents(plan), keys = new Set([...Object.keys(previous.payload.components), ...Object.keys(current)]);

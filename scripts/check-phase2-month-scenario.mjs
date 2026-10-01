@@ -86,7 +86,7 @@ assert.equal(unknown.undeclaredEventDelta, null);
 assert.equal(JSON.stringify(forecast), original, "published payload must stay immutable");
 const withOpening = deriveMonthScenario(forecast, { ...inputs, openingBalance: { amount: "1000", asOfDate: today } }, null, today);
 assert.equal(withOpening.availableNow.status, "AVAILABLE");
-near(withOpening.availableNow.value, 1000 - numeric(inputs.safetyReserve), "AvailableNow current-date opening");
+near(withOpening.availableNow.value, 1000, "AvailableNow current-date opening without a policy buffer");
 console.log(JSON.stringify({ status: "PASS", tests: 3, targetMonth, publicationId: forecast.meta.sourcePublicationId,
   sourceRevision: forecast.meta.sourceRevision, analyticsRevision: forecast.meta.analyticsRevision,
   freeToSpendBefore: base.freeToSpend.central, freeToSpendAfter150: purchase.freeToSpend.central,

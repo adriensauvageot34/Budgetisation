@@ -1,33 +1,51 @@
 import type { RemainingCategory } from "@/server/phase2/remaining-month-forecast";
-import type { MonthDecisionSettings } from "@/domain/phase2/month-decision-contract";
-import { MonthAssumptionEditor } from "./month-decision-tools";
-const money = (value: string | number | null) => value === null ? "À affiner" : new Intl.NumberFormat("fr-FR", { style: "currency", currency: "EUR", maximumFractionDigits: 0 }).format(Number(value));
+import type { MonthDecisionProjection } from "@/server/phase2/month-decision-projection";
+import type { ReactNode } from "react";
 
-export function ForecastTransition({ label, amount, parts }: { label: string; amount: number; parts?: readonly { key: string; label: string; visible: number }[] }) {
-  return <div className="flex items-start justify-between gap-4 border-l-2 border-emerald-200 py-1 pl-4 text-sm text-slate-600"><div><p>{label}</p>{parts && <details className="mt-1 text-xs"><summary className="cursor-pointer font-semibold">Voir la décomposition</summary><ul className="mt-2 space-y-1">{parts.map(p => <li className="flex justify-between gap-4" key={p.key}><span>{p.label}</span><span>{money(p.visible)}</span></li>)}</ul><p className="mt-2">Référence du mois, y compris les achats observés et la part habituelle déjà couverte. Les arrondis se réconcilient avec les jalons ; aucun coût supplémentaire n’est créé.</p></details>}</div><strong className="whitespace-nowrap tabular-nums">{amount >= 0 ? "−" : "+"} {money(Math.abs(amount))}</strong></div>;
+const money = (value: string | number | null) => value === null ? "À affiner" : new Intl.NumberFormat("fr-FR", {
+  style: "currency", currency: "EUR", minimumFractionDigits: 0, maximumFractionDigits: 0,
+}).format(Number(value));
+
+/** Explanations stay opt-in, with a keyboard-accessible disclosure. */
+export function ForecastInfo({ label, children }: { label: string; children: ReactNode }) {
+  return <details className="relative shrink-0 text-xs text-slate-600">
+    <summary aria-label={label} className="flex size-7 cursor-pointer list-none items-center justify-center rounded-full text-base text-slate-500 hover:bg-slate-100 focus-visible:outline-2 focus-visible:outline-emerald-700 [&::-webkit-details-marker]:hidden">ⓘ</summary>
+    <div className="absolute right-0 top-9 z-30 w-80 space-y-2 rounded-xl border border-slate-200 bg-white p-4 leading-relaxed shadow-xl">{children}</div>
+  </details>;
 }
-export function ScenarioMilestone({ title, values, labels, description, incomplete = false, final = false }: { title: string; values: { lowConsumption: string; central: string; highConsumption: string }; labels: readonly [string, string, string]; description: string; incomplete?: boolean; final?: boolean }) {
-  return <section id={final ? "final-projection" : "essential-projection"} aria-label={title} className={`scroll-mt-24 rounded-2xl p-6 ${final ? "border border-emerald-200 bg-white shadow-sm" : "border border-emerald-100 bg-emerald-50/50"}`}><h2 className="text-2xl font-black">{title}</h2><p className="mt-1 text-sm text-slate-600">{description}</p>
-    <dl className="mt-5 grid grid-cols-3 items-end gap-5">{([values.lowConsumption, values.central, values.highConsumption] as const).map((value, index) => <div key={labels[index]} className={index === 1 ? "rounded-xl bg-emerald-50 px-4 py-3" : "py-3"}><dt className={`text-sm ${index === 1 ? "font-bold text-emerald-900" : "text-slate-500"}`}>{labels[index]}</dt><dd className={`mt-2 whitespace-nowrap tabular-nums ${index === 1 ? "text-4xl font-black text-emerald-950" : "text-2xl font-semibold text-slate-600"}`}>{money(incomplete ? null : value)}</dd></div>)}</dl>
-    {!incomplete && final && <div aria-hidden="true" className="mt-4 flex items-center gap-2"><span className="size-2 rounded-full bg-slate-300" /><span className="h-1 flex-1 rounded-full bg-gradient-to-r from-emerald-100 via-emerald-400 to-emerald-100" /><span className="size-2 rounded-full bg-slate-300" /></div>}
-    {incomplete && <p className="mt-3 text-sm text-amber-900">La couverture des imports est incomplète. Les achats connus et les estimations restantes restent visibles ; la projection complète est à affiner.</p>}
-    {final && <p className="mt-3 text-xs text-slate-500">Repères économiques estimés, pas un solde bancaire ni une autorisation de dépenser. La marge de sécurité n’est pas encore retirée.</p>}</section>;
+
+export function ScenarioMilestone({ title, values, description, final = false }: {
+  title: string; values: { lowConsumption: string; central: string; highConsumption: string }; description: string; final?: boolean;
+}) {
+  return <section id={final ? "final-projection" : "essential-projection"} aria-label={title}
+    className={`scroll-mt-24 rounded-2xl p-6 ${final ? "border border-emerald-200 bg-white shadow-sm" : "bg-emerald-50/50"}`}>
+    <div className="flex items-center justify-between gap-3"><h2 className="text-2xl font-black">{title}</h2>
+      <ForecastInfo label={`Comprendre : ${title}`}><p>{description}</p><p>Estimation économique du mois, distincte d’un solde bancaire.</p></ForecastInfo></div>
+    <dl className="mt-4 grid grid-cols-3 items-end gap-5">{([values.lowConsumption, values.central, values.highConsumption] as const).map((value, index) =>
+      <div key={index} className={index === 1 ? "rounded-xl bg-white/80 px-4 py-3" : "py-3"}>
+        <dt className={`text-sm ${index === 1 ? "font-bold text-emerald-900" : "text-slate-500"}`}>{["Mois calme", "Habituel", "Mois plus coûteux"][index]}</dt>
+        <dd className={`mt-2 whitespace-nowrap tabular-nums ${index === 1 ? "text-4xl font-black text-emerald-950" : "text-2xl font-semibold text-slate-600"}`}>≈ {money(value)}</dd>
+      </div>)}</dl>
+  </section>;
 }
-export function RemainingForecastCard({ category, optional = false, importsMissing = false, current = false, targetMonth, settings, display }: { category: RemainingCategory; optional?: boolean; importsMissing?: boolean; current?: boolean; targetMonth?: string; settings?: MonthDecisionSettings; display?: { remaining: { low: number; central: number; high: number }; observed: number; projectedCentral: number } }) {
-  const frequency = new Intl.NumberFormat("fr-FR", { maximumFractionDigits: 1 });
-  const noun = category.key === "household-restaurants" ? "sortie(s)" : "achat(s)";
-  const pace = { BELOW: "En dessous du rythme habituel", USUAL: "Dans le rythme habituel", SLIGHTLY_ABOVE: "Un peu au-dessus du rythme habituel", ABOVE: "Nettement au-dessus du rythme habituel" };
-  return <article className={`min-w-0 rounded-2xl p-5 ${optional ? "bg-slate-50/80" : "bg-white ring-1 ring-slate-100"}`}><h3 className="text-sm font-bold text-slate-700">{category.label}</h3>
-    {optional && <p className="mt-3 text-sm font-semibold text-slate-700">{category.expectedOccurrences ? `0 à ${Math.ceil(category.expectedOccurrences.high)} ${noun} encore possibles` : "Des occasions possibles · fréquence à affiner"}</p>}
-    {optional && category.expectedOccurrences && category.conditionalMedianAmount !== null && <p className="mt-1 text-xs text-slate-500">Habituel : environ {frequency.format(category.expectedOccurrences.central)} × {money(category.conditionalMedianAmount)} lorsque cela arrive.</p>}
-    {!optional && <p className="mt-1 text-xs text-slate-500">{current ? "Reste estimé jusqu’à la fin du mois" : "Estimation pour le mois à venir"}</p>}
-    <dl className="mt-4 grid grid-cols-3 items-end gap-2">{([[optional ? "Calme" : "Bas plausible", display?.remaining.low ?? category.remaining.low], [optional ? "Probable" : "Habituel", display?.remaining.central ?? category.remaining.central], [optional ? "Actif" : "Haut plausible", display?.remaining.high ?? category.remaining.high]] as const).map(([label, value], index) => <div key={label}><dt className={`text-xs ${index === 1 ? "font-bold text-emerald-900" : "text-slate-500"}`}>{label}</dt><dd className={`mt-1 whitespace-nowrap tabular-nums ${index === 1 ? "text-2xl font-black text-emerald-950" : "text-sm font-semibold text-slate-600"}`}>{money(value)}</dd></div>)}</dl>
-    {current && <div className="mt-3 border-t border-slate-100 pt-3 text-xs text-slate-600"><p>Déjà observé : <strong>{money(display?.observed ?? category.alreadyRealized)}</strong>{importsMissing && " · imports partiels"}</p><p className="mt-1">Total central du mois : <strong>{money(display?.projectedCentral ?? category.projectedMonth.central)}</strong>{importsMissing && " · provisoire"} {Number(category.habitualProjectGross) > 0 && "(projets habituels compris)"}</p>{category.pace && <p className="mt-2 font-semibold">{pace[category.pace]}</p>}</div>}
-    {category.plannedOccurrencesAbsorbingHabit > 0 && <p className="mt-2 text-xs text-sky-800">{category.plannedOccurrencesAbsorbingHabit} projet(s) déjà compris dans les habitudes du mois.</p>}{category.plannedOccurrencesExtra > 0 && <p className="mt-1 text-xs text-sky-800">{category.plannedOccurrencesExtra} projet(s) en plus.</p>}
-    <details className="mt-3 text-xs text-slate-600"><summary className="cursor-pointer font-semibold text-emerald-900 focus-visible:outline-2 focus-visible:outline-emerald-700">Pourquoi ?</summary><p className="mt-2">{category.explanation}</p><p className="mt-2">{category.confidence === "LOW" ? "Peu de recul comparable : estimation à affiner." : category.confidence === "MEDIUM" ? "Quelques observations comparables : repère prudent." : "De nombreuses observations comparables soutiennent ce repère."}</p>
-      <dl className="mt-3 space-y-1"><div className="flex justify-between gap-2"><dt>Déjà importé ce mois</dt><dd>{money(category.alreadyRealized)}{importsMissing && " · partiel"}</dd></div><div className="flex justify-between gap-2"><dt>Projets habituels, coût brut</dt><dd>{money(category.habitualProjectGross)}</dd></div><div className="flex justify-between gap-2"><dt>Projection du mois</dt><dd>{money(category.projectedMonth.low)} à {money(category.projectedMonth.high)}{importsMissing && " · provisoire"}</dd></div>
-        {category.usualAtThisPoint !== null && current && <div className="flex justify-between gap-2"><dt>Habituel à ce stade</dt><dd>{money(category.usualAtThisPoint)}</dd></div>}{category.remainingOpportunities !== null && <div className="flex justify-between gap-2"><dt>Opportunités restantes</dt><dd>{frequency.format(category.remainingOpportunities)}</dd></div>}{category.conditionalMedianAmount !== null && <div className="flex justify-between gap-2"><dt>Coût habituel lorsque cela arrive</dt><dd>{money(category.conditionalMedianAmount)}</dd></div>}</dl>
-      {category.occurrenceDistribution && <p className="mt-3">Repère empirique : {[["0", category.occurrenceDistribution.zero], ["1", category.occurrenceDistribution.one], ["2", category.occurrenceDistribution.two], ["3 ou plus", category.occurrenceDistribution.threePlus]].map(([label, value]) => `${label} : environ ${Math.round(Number(value) * 100)} %`).join(" · ")}.</p>}
-      <p className="mt-2">{category.observationCount} observations sur {category.evidenceMonths} mois. Les projets déclarés réalisés restent prospectifs ; aucun débit historique n’est créé.</p></details>
-    {targetMonth && settings && <MonthAssumptionEditor categoryKey={category.key} label={category.label} targetMonth={targetMonth} settings={settings} />}</article>;
+
+export function RemainingForecastCard({ category, optional = false, importsMissing = false, display }: {
+  category: RemainingCategory; optional?: boolean; importsMissing?: boolean;
+  display: MonthDecisionProjection["visible"]["categoryDisplay"][string];
+}) {
+  return <article className={`min-w-0 rounded-2xl p-5 ${optional ? "bg-slate-50/80" : "bg-white ring-1 ring-slate-100"}`}>
+    <div className="flex items-center justify-between gap-3"><h3 className="text-sm font-bold text-slate-700">{category.label}</h3>
+      <ForecastInfo label={`Comprendre l’estimation : ${category.label}`}>
+        <p>{category.explanation}</p><p>{category.observationCount} observations sur {category.evidenceMonths} mois.
+          {category.confidence === "LOW" && " Le recul disponible reste limité."}</p>
+        {importsMissing && <p>Les données importées ne couvrent pas toute la période écoulée ; les habitudes historiques complètent l’estimation.</p>}
+        <p>Une réalisation déclarée est présentée avec l’observé ; elle reste prospective et ne crée aucun débit historique.</p>
+        {optional && <p>Projection du mois : observé {money(display.observed)}, prévu {money(display.planned)}, encore estimé {money(display.remaining.central)}.</p>}
+        <p>Fourchette du mois : {money(category.projectedMonth.low)} à {money(category.projectedMonth.high)}.</p>
+      </ForecastInfo></div>
+    <p className="mt-3 text-3xl font-black tabular-nums text-emerald-950">{optional && <span className="mr-2 text-sm font-medium text-slate-500">Probable</span>}{money(display.projectedCentral)}</p>
+    {!optional && <dl className="mt-4 space-y-2 text-sm">{([
+      ["Déjà observé", display.observed], ["Prévu", display.planned], ["Encore estimé", display.remaining.central],
+    ] as const).map(([label, value]) => <div className="flex justify-between gap-3" key={label}><dt className="text-slate-500">{label}</dt><dd className="font-semibold tabular-nums">{money(value)}</dd></div>)}</dl>}
+  </article>;
 }

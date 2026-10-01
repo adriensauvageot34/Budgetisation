@@ -30,24 +30,26 @@ export function WizardChoice({ label, scene, icon, selected = false, value, comp
   </button>;
 }
 /** Desktop dialog shell. Navigation/estimates remain owned by the existing builder. */
-export function PlannedBuilderFrame({ immersive, onDismiss, children }: { immersive: boolean; onDismiss: () => void; children: ReactNode }) {
+export type BuilderReturnPoint = { focus: HTMLElement | null; left: number; top: number };
+export function PlannedBuilderFrame({ immersive, label = "Préparer une dépense", returnPoint, onDismiss, children }: { immersive: boolean; label?: string; returnPoint?: BuilderReturnPoint | null; onDismiss: () => void; children: ReactNode }) {
   const frame = useRef<HTMLDivElement>(null), dismiss = useRef(onDismiss); dismiss.current = onDismiss;
   useEffect(() => {
     if (!immersive) return;
-    const previous = document.body.style.overflow, previousFocus = document.activeElement as HTMLElement | null;
+    const previous = document.body.style.overflow, previousFocus = returnPoint?.focus ?? document.activeElement as HTMLElement | null;
+    const scrollPosition = { left: returnPoint?.left ?? window.scrollX, top: returnPoint?.top ?? window.scrollY };
     document.body.style.overflow = "hidden";
-    const timer = window.setTimeout(() => frame.current?.querySelector<HTMLElement>("button")?.focus(), 0);
+    const timer = window.setTimeout(() => frame.current?.querySelector<HTMLElement>("button")?.focus({ preventScroll: true }), 0);
     const keys = (event: KeyboardEvent) => {
       if (event.key === "Escape") { event.preventDefault(); dismiss.current(); }
       if (event.key !== "Tab") return;
-      const focusable = [...frame.current?.querySelectorAll<HTMLElement>('button:not(:disabled), input:not(:disabled), select:not(:disabled), a[href], [tabindex="0"]') ?? []].filter((element) => element.getClientRects().length);
+      const focusable = [...frame.current?.querySelectorAll<HTMLElement>('button:not(:disabled), input:not(:disabled), select:not(:disabled), textarea:not(:disabled), summary, a[href], [tabindex="0"]') ?? []].filter((element) => element.getClientRects().length);
       const first = focusable[0], last = focusable.at(-1);
       if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last?.focus(); }
       else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first?.focus(); }
     };
     document.addEventListener("keydown", keys);
-    return () => { window.clearTimeout(timer); document.body.style.overflow = previous; document.removeEventListener("keydown", keys); previousFocus?.focus(); };
+    return () => { window.clearTimeout(timer); document.body.style.overflow = previous; document.removeEventListener("keydown", keys); previousFocus?.focus({ preventScroll: true }); window.scrollTo(scrollPosition); };
   }, [immersive]);
-  return immersive ? <div className={styles.scrim}><div ref={frame} role="dialog" aria-modal="true" aria-label="Préparer une sortie au restaurant" className={styles.frame}>{children}</div></div>
+  return immersive ? <div className={styles.scrim}><div ref={frame} role="dialog" aria-modal="true" aria-label={label} className={styles.frame}>{children}</div></div>
     : <div className="mt-5 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-6">{children}</div>;
 }
