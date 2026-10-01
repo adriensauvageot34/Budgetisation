@@ -1,0 +1,34 @@
+<svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+<g clip-path="url(#clip0_2114_28021)">
+<mask id="mask0_2114_28021" style="mask-type:luminance" maskUnits="userSpaceOnUse" x="0" y="0" width="32" height="32">
+<path d="M25.05 0H6.95C3.11162 0 0 3.11162 0 6.95V25.05C0 28.8884 3.11162 32 6.95 32H25.05C28.8884 32 32 28.8884 32 25.05V6.95C32 3.11162 28.8884 0 25.05 0Z" fill="white"/>
+</mask>
+<g mask="url(#mask0_2114_28021)">
+<path d="M32 0H0V32H32V0Z" fill="white"/>
+<g filter="url(#filter0_f_2114_28021)">
+<path d="M7.66667 -8.25H-8.5V7.91667H7.66667V-8.25Z" fill="#A51CF1"/>
+<path d="M23.8333 -8.25H7.66663V7.91667H23.8333V-8.25Z" fill="#336DFF"/>
+<path d="M40 -8.25H23.8334V7.91667H40V-8.25Z" fill="#31BBFD"/>
+<path d="M40 -8.25V7.91667H23.8334L40 -8.25Z" fill="#3CEAFF"/>
+<path d="M40 7.9165H23.8334V24.0832H40V7.9165Z" fill="#00EAB2"/>
+<path d="M40 24.0835H23.8334V40.2502H40V24.0835Z" fill="#B0E836"/>
+<path d="M23.8333 24.0835H7.66663V40.2502H23.8333V24.0835Z" fill="#FFDA19"/>
+<path d="M7.66667 24.0835H-8.5V40.2502H7.66667V24.0835Z" fill="#FF8D40"/>
+<path d="M-8.5 24.0835H7.66667L-8.5 40.2502V24.0835Z" fill="#FF2055"/>
+<path d="M7.66667 7.9165H-8.5V24.0832H7.66667V7.9165Z" fill="#E40AAF"/>
+</g>
+<path d="M4.00122 12.6142C4.00122 9.59943 4.00122 8.09207 4.58792 6.94059C5.10401 5.92773 5.92749 5.10425 6.94035 4.58817C8.09182 4.00146 9.59918 4.00146 12.6139 4.00146H19.396C22.4108 4.00146 23.9182 4.00146 25.0696 4.58817C26.0824 5.10425 26.906 5.92773 27.4221 6.94059C28.0087 8.09207 28.0087 9.59943 28.0087 12.6142V19.3963C28.0087 22.411 28.0087 23.9184 27.4221 25.0698C26.906 26.0827 26.0824 26.9062 25.0696 27.4224C23.9182 28.009 22.4108 28.009 19.396 28.009H12.6139C9.59918 28.009 8.09182 28.009 6.94035 27.4224C5.92749 26.9062 5.10401 26.0827 4.58792 25.0698C4.00122 23.9184 4.00122 22.411 4.00122 19.3963V12.6142Z" fill="black"/>
+<path d="M18.5 20H13.5C12.6716 20 12 19.3284 12 18.5V13.5C12 12.6716 12.6716 12 13.5 12H18.5C19.3284 12 20 12.6716 20 13.5V18.5C20 19.3284 19.3284 20 18.5 20Z" fill="white"/>
+</g>
+</g>
+<defs>
+<filter id="filter0_f_2114_28021" x="-14.5" y="-14.25" width="60.5" height="60.5" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+<feFlood flood-opacity="0" result="BackgroundImageFix"/>
+<feBlend mode="normal" in="SourceGraphic" in2="BackgroundImageFix" result="shape"/>
+<feGaussianBlur stdDeviation="3" result="effect1_foregroundBlur_2114_28021"/>
+</filter>
+<clipPath id="clip0_2114_28021">
+<rect width="32" height="32" fill="white"/>
+</clipPath>
+</defs>
+</svg>

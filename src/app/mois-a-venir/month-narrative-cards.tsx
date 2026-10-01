@@ -1,6 +1,8 @@
 import type { RemainingCategory } from "@/server/phase2/remaining-month-forecast";
 import type { MonthDecisionProjection } from "@/server/phase2/month-decision-projection";
 import type { ReactNode } from "react";
+import { AnimatedMoney } from "./animated-money";
+import material from "./month-material.module.css";
 
 const money = (value: string | number | null) => value === null ? "À affiner" : new Intl.NumberFormat("fr-FR", {
   style: "currency", currency: "EUR", minimumFractionDigits: 0, maximumFractionDigits: 0,
@@ -8,9 +10,9 @@ const money = (value: string | number | null) => value === null ? "À affiner" :
 
 /** Explanations stay opt-in, with a keyboard-accessible disclosure. */
 export function ForecastInfo({ label, children }: { label: string; children: ReactNode }) {
-  return <details className="relative shrink-0 text-xs text-slate-600">
-    <summary aria-label={label} className="flex size-7 cursor-pointer list-none items-center justify-center rounded-full text-base text-slate-500 hover:bg-slate-100 focus-visible:outline-2 focus-visible:outline-emerald-700 [&::-webkit-details-marker]:hidden">ⓘ</summary>
-    <div className="absolute right-0 top-9 z-30 w-80 space-y-2 rounded-xl border border-slate-200 bg-white p-4 leading-relaxed shadow-xl">{children}</div>
+  return <details className={`${material.disclosure} relative shrink-0 text-xs text-slate-600`}>
+    <summary aria-label={label} className={`${material.iconButton} !rounded-full flex size-7 cursor-pointer list-none text-base [&::-webkit-details-marker]:hidden`}>ⓘ</summary>
+    <div className={`${material.popover} absolute right-0 top-10 z-30 w-80 space-y-2 p-4 leading-relaxed`}>{children}</div>
   </details>;
 }
 
@@ -18,13 +20,13 @@ export function ScenarioMilestone({ title, values, description, final = false }:
   title: string; values: { lowConsumption: string; central: string; highConsumption: string }; description: string; final?: boolean;
 }) {
   return <section id={final ? "final-projection" : "essential-projection"} aria-label={title}
-    className={`scroll-mt-24 rounded-2xl p-6 ${final ? "border border-emerald-200 bg-white shadow-sm" : "bg-emerald-50/50"}`}>
+    className={`${material.glassPrimary} ${final ? material.projection : material.glassQuiet} scroll-mt-24 p-6`}>
     <div className="flex items-center justify-between gap-3"><h2 className="text-2xl font-black">{title}</h2>
       <ForecastInfo label={`Comprendre : ${title}`}><p>{description}</p><p>Estimation économique du mois, distincte d’un solde bancaire.</p></ForecastInfo></div>
     <dl className="mt-4 grid grid-cols-3 items-end gap-5">{([values.lowConsumption, values.central, values.highConsumption] as const).map((value, index) =>
-      <div key={index} className={index === 1 ? "rounded-xl bg-white/80 px-4 py-3" : "py-3"}>
+      <div key={index} className={index === 1 ? `${material.centralScenario} px-4 py-3` : "py-3"}>
         <dt className={`text-sm ${index === 1 ? "font-bold text-emerald-900" : "text-slate-500"}`}>{["Mois calme", "Habituel", "Mois plus coûteux"][index]}</dt>
-        <dd className={`mt-2 whitespace-nowrap tabular-nums ${index === 1 ? "text-4xl font-black text-emerald-950" : "text-2xl font-semibold text-slate-600"}`}>≈ {money(value)}</dd>
+        <dd className={`${material.data} mt-2 whitespace-nowrap ${index === 1 ? "text-4xl font-black" : "text-2xl font-semibold text-slate-600"}`}>≈ <AnimatedMoney value={money(value)} /></dd>
       </div>)}</dl>
   </section>;
 }
@@ -33,7 +35,7 @@ export function RemainingForecastCard({ category, optional = false, importsMissi
   category: RemainingCategory; optional?: boolean; importsMissing?: boolean;
   display: MonthDecisionProjection["visible"]["categoryDisplay"][string];
 }) {
-  return <article className={`min-w-0 rounded-2xl p-5 ${optional ? "bg-slate-50/80" : "bg-white ring-1 ring-slate-100"}`}>
+  return <article className={`${material.dataCard} min-w-0 p-5`}>
     <div className="flex items-center justify-between gap-3"><h3 className="text-sm font-bold text-slate-700">{category.label}</h3>
       <ForecastInfo label={`Comprendre l’estimation : ${category.label}`}>
         <p>{category.explanation}</p><p>{category.observationCount} observations sur {category.evidenceMonths} mois.
@@ -43,9 +45,9 @@ export function RemainingForecastCard({ category, optional = false, importsMissi
         {optional && <p>Projection du mois : observé {money(display.observed)}, prévu {money(display.planned)}, encore estimé {money(display.remaining.central)}.</p>}
         <p>Fourchette du mois : {money(category.projectedMonth.low)} à {money(category.projectedMonth.high)}.</p>
       </ForecastInfo></div>
-    <p className="mt-3 text-3xl font-black tabular-nums text-emerald-950">{optional && <span className="mr-2 text-sm font-medium text-slate-500">Probable</span>}{money(display.projectedCentral)}</p>
+    <p className={`${material.data} mt-3 text-3xl font-black`}>{optional && <span className="mr-2 text-sm font-medium text-slate-500">Probable</span>}<AnimatedMoney value={money(display.projectedCentral)} /></p>
     {!optional && <dl className="mt-4 space-y-2 text-sm">{([
       ["Déjà observé", display.observed], ["Prévu", display.planned], ["Encore estimé", display.remaining.central],
-    ] as const).map(([label, value]) => <div className="flex justify-between gap-3" key={label}><dt className="text-slate-500">{label}</dt><dd className="font-semibold tabular-nums">{money(value)}</dd></div>)}</dl>}
+    ] as const).map(([label, value]) => <div className="flex justify-between gap-3" key={label}><dt className="text-slate-500">{label}</dt><dd className={`${material.data} font-semibold`}><AnimatedMoney value={money(value)} /></dd></div>)}</dl>}
   </article>;
 }

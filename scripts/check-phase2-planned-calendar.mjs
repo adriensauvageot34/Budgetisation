@@ -8,6 +8,8 @@ import { renderToStaticMarkup } from "react-dom/server";
 import { planningHarness, value, item, draft } from "./lib/planned-actions-harness.mjs";
 import { expenseDraft } from "./lib/planned-expense-memory-client.mjs";
 const require = createRequire(import.meta.url);
+// Match the existing narrative harness: CSS modules have no financial behavior in the SSR oracle.
+require.extensions[".css"] = module => { module.exports = new Proxy({}, { get: (_, key) => key === "__esModule" ? undefined : String(key) }); };
 require.extensions[".tsx"] = (module, filename) => module._compile(ts.transpileModule(fs.readFileSync(filename, "utf8"), {
   compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022, jsx: ts.JsxEmit.ReactJSX, esModuleInterop: true }, fileName: filename,
 }).outputText, filename);

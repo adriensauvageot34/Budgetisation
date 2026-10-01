@@ -10,13 +10,15 @@ import { calendarDate, calendarDateLabel, calendarDayDescription, calendarDaySum
   orderCalendarItems, visibleCalendarItems } from "./calendar-presentation";
 import { usePlannedExpenseInteractions, type PlannedExpenseInteraction } from "./planned-expense-interactions";
 import { transportPresentation } from "@/domain/phase2/planned-car";
+import type { CSSProperties } from "react";
+import material from "./month-material.module.css";
 
 const eventTone = (item: CalendarItem) => item.nature === "DECLARED_REALIZED"
   ? "text-emerald-800" : item.expense?.needsRealityConfirmation
     ? "text-amber-800" : item.nature === "PLANNED_EXPENSE"
       ? "text-sky-800" : "text-slate-700";
-const buttonClass = "rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-bold focus-visible:outline-2 focus-visible:outline-indigo-700 disabled:opacity-50";
-const disclosureClass = "border-t border-slate-200 pt-3 text-sm [&>summary]:cursor-pointer [&>summary]:font-semibold";
+const buttonClass = `${material.clayButton} px-3 py-2 text-sm font-bold disabled:opacity-50`;
+const disclosureClass = `${material.disclosure} border-t border-slate-200 pt-3 text-sm [&>summary]:cursor-pointer [&>summary]:font-semibold`;
 const categoryIcons = { Maison: House, Télécom: Smartphone, Assurances: ShieldCheck, Banque: Landmark,
   Abonnements: Layers, Permis: BookOpen, Épargne: PiggyBank };
 const brandWidths: Record<string, number> = { sfr: 28, edf: 28, google: 22, "credit-agricole": 22,
@@ -47,7 +49,7 @@ export function CalendarEventDetails({ item, onAction, expanded = false }: { ite
     <p className="text-xs text-slate-600">{item.dateCertainty === "HISTORICAL_ESTIMATE"
       ? `Date estimée autour du ${item.date ? calendarDate(item.date) : "jour non précisé"}`
       : item.date ? `${calendarDateLabel(item)} · ${calendarDate(item.date)}` : "Ce mois-ci · sans jour précis"}</p>
-    {revealed && <div id={detailId} className="space-y-2">
+    {revealed && <div id={detailId} className={`${material.sectionEnter} space-y-2`}>
     {expense && <>
       {detail?.placeLabel && <p className="text-sm">Lieu : <strong>{detail.placeLabel}</strong></p>}
       {!!detail?.participantLabels?.length && <p className="text-sm">Avec : {detail.participantLabels.join(" · ")}</p>}
@@ -98,7 +100,7 @@ export function MonthCalendar({ targetMonth, entries, undated, dailyTotals, toda
   const eventDetails = useRef(new Map<string, HTMLDivElement>());
   const opener = useRef<HTMLButtonElement | null>(null);
   const panel = useRef<HTMLDivElement | null>(null);
-  const [panelPosition, setPanelPosition] = useState({ left: 12, top: 12 });
+  const [panelPosition, setPanelPosition] = useState({ left: 12, top: 12, origin: "top right" });
   const interactions = usePlannedExpenseInteractions();
   const [year, month] = targetMonth.split("-").map(Number);
   const firstWeekday = (new Date(Date.UTC(year!, month! - 1, 1)).getUTCDay() + 6) % 7;
@@ -122,9 +124,12 @@ export function MonthCalendar({ targetMonth, entries, undated, dailyTotals, toda
     const node = panel.current;
     const reposition = () => {
       const anchor = (focusedKey ? opener.current : opener.current?.closest('[role="gridcell"]') ?? opener.current)?.getBoundingClientRect();
-      if (anchor) setPanelPosition(calendarPopoverPosition(anchor,
-        { width: window.innerWidth, height: window.innerHeight },
-        { width: node.offsetWidth, height: node.offsetHeight }));
+      if (anchor) {
+        const position = calendarPopoverPosition(anchor,
+          { width: window.innerWidth, height: window.innerHeight },
+          { width: node.offsetWidth, height: node.offsetHeight });
+        setPanelPosition({ ...position, origin: `${Math.max(0, Math.min(node.offsetWidth, anchor.left + anchor.width / 2 - position.left))}px ${Math.max(0, Math.min(node.offsetHeight, anchor.top + anchor.height / 2 - position.top))}px` });
+      }
     };
     node.showPopover();
     reposition();
@@ -145,10 +150,10 @@ export function MonthCalendar({ targetMonth, entries, undated, dailyTotals, toda
   const create = (date: string) => onAction?.({ action: "CREATE", plannedDate: date });
 
   return <div className="min-w-0">
-    <div className="overflow-hidden rounded-xl border border-slate-200 bg-white [&_button]:text-xs!">
+    <div className={`${material.calendar} overflow-hidden [&_button]:text-xs!`}>
     <header className="flex items-center justify-between gap-3 border-b border-slate-100 px-3 py-1.5"><h2 className="text-sm font-bold">Calendrier</h2>
       <div className="flex gap-0.5" aria-label="Éléments affichés">{([ ["ALL", "Tout"], ["PROJECTS", "Projets"], ["CHARGES", "Charges"] ] as const).map(([value, label]) =>
-        <button key={value} type="button" aria-pressed={filter === value} onClick={() => setFilter(value)} className={`rounded-sm px-2 py-0.5 text-xs font-medium focus-visible:outline-2 focus-visible:outline-indigo-700 ${filter === value ? "bg-slate-100 text-slate-800" : "text-slate-500 hover:text-slate-800"}`}>{label}</button>)}</div>
+        <button key={value} type="button" aria-pressed={filter === value} onClick={() => setFilter(value)} className={`${material.clayButton} ${material.calendarFilter} px-2 py-0.5 text-xs font-medium`}>{label}</button>)}</div>
     </header>
     <div role="grid" aria-label={`Calendrier de ${monthTitle}`} aria-colcount={7} aria-rowcount={weeks.length + 1}>
       <div role="row" className="grid grid-cols-7 border-b border-slate-200 text-center text-xs font-semibold text-slate-500">
@@ -174,7 +179,7 @@ export function MonthCalendar({ targetMonth, entries, undated, dailyTotals, toda
                 aria-haspopup={allDay.length ? "dialog" : undefined} aria-expanded={allDay.length ? selected === date : undefined}
                 onFocus={() => setActiveDay(day)} onClick={(event) => allDay.length ? open(date, event.currentTarget) : create(date)}
                 className={`flex w-full items-start justify-between pt-1 text-left text-xs tabular-nums focus-visible:outline-2 focus-visible:outline-indigo-700 ${allDay.length ? "h-7" : "absolute inset-0 px-1.5"}`}>
-                <span className={`flex size-5 items-center justify-center ${isToday ? "rounded-full bg-indigo-700 font-bold text-white" : "text-slate-500"}`}>{day}</span>
+                <span className={`flex size-5 items-center justify-center ${isToday ? `${material.todayBadge} rounded-full font-bold text-white` : "text-slate-500"}`}>{day}</span>
                 {dayEntries.length > 1 && <span data-calendar-day-total={date} className="pt-0.5 font-medium text-slate-500">{calendarMoney(summary.grossTotal)}</span>}
                 {!allDay.length && <span className="absolute inset-x-0 top-9 text-center text-xs font-medium text-sky-700 opacity-0 group-hover:opacity-100 group-focus-within:opacity-100">+ Prévoir</span>}
               </button>
@@ -183,7 +188,7 @@ export function MonthCalendar({ targetMonth, entries, undated, dailyTotals, toda
                 title={`${calendarEventLabel(item)} · ${calendarMoney(item.amount)}`}
                 aria-label={`${calendarEventLabel(item)}, ${calendarMoney(item.amount)}, ${calendarStateLabel(item)}`}
                 aria-haspopup="dialog" aria-expanded={selected === date && focusedKey === item.key}
-                onClick={(event) => open(date, event.currentTarget, item.key)} className={`col-span-3 mb-0.5 grid h-6 w-full min-w-0 grid-cols-subgrid cursor-pointer items-center gap-x-1.5 rounded text-left text-xs hover:bg-slate-100 focus-visible:bg-slate-100 focus-visible:outline-2 focus-visible:outline-indigo-700 ${eventTone(item)}`}>
+                onClick={(event) => open(date, event.currentTarget, item.key)} className={`${material.calendarEvent} col-span-3 mb-0.5 grid h-6 w-full min-w-0 grid-cols-subgrid cursor-pointer items-center gap-x-1.5 rounded text-left text-xs focus-visible:bg-slate-100 ${eventTone(item)}`}>
                 <span className="relative flex w-10 items-center justify-center"><span aria-hidden="true" data-calendar-state={item.nature} className="absolute -left-1.5 w-2 text-center text-xs">
                   {item.expense?.needsRealityConfirmation ? "!" : item.nature === "DECLARED_REALIZED" ? "✓" : item.nature === "PLANNED_EXPENSE" ? "●" : ""}</span><EventIcon item={item} /></span>
                 <span className="min-w-0 truncate">{calendarEventLabel(item)}</span>
@@ -201,14 +206,14 @@ export function MonthCalendar({ targetMonth, entries, undated, dailyTotals, toda
     </section>}
     {monthly.length > 0 && <UndatedMonthlyItems items={monthly} />}
     {selected && <div ref={panel} popover="auto" role="dialog" aria-modal="false" aria-labelledby="calendar-panel-title" aria-describedby="calendar-panel-summary"
-      style={{ left: panelPosition.left, top: panelPosition.top }}
-      className="fixed m-0 w-[380px] max-w-[calc(100vw-24px)] max-h-[min(440px,calc(100dvh-24px))] overflow-y-auto rounded-xl border border-slate-200 bg-white p-3 text-slate-900 shadow-xl"
+      style={{ left: panelPosition.left, top: panelPosition.top, "--popover-origin": panelPosition.origin } as CSSProperties}
+      className={`${material.popover} fixed m-0 w-[380px] max-w-[calc(100vw-24px)] max-h-[min(440px,calc(100dvh-24px))] overflow-y-auto p-3`}
       onToggle={(event) => { if (event.newState === "closed" && panel.current === event.currentTarget && !event.currentTarget.matches(":popover-open")) close(); }}
       onKeyDown={(event) => { if (event.key === "Escape") { event.preventDefault(); event.stopPropagation(); close(); } }}>
       <header className="flex items-start justify-between gap-3"><div>
         <h2 id="calendar-panel-title" className="text-base font-bold capitalize">{title}</h2>
         <p id="calendar-panel-summary" className="mt-0.5 text-xs text-slate-600">{selectedEntries.length} élément{selectedEntries.length > 1 ? "s" : ""} · <strong>{calendarMoney(selectedTotal.grossTotal)}</strong></p>
-      </div><button type="button" className="rounded p-1 text-slate-500 hover:bg-slate-100 focus-visible:outline-2 focus-visible:outline-indigo-700" aria-label="Fermer les détails du jour" onClick={close}><X size={16} aria-hidden="true" /></button></header>
+      </div><button type="button" className={`${material.iconButton} p-1 text-slate-600`} aria-label="Fermer les détails du jour" onClick={close}><X size={16} aria-hidden="true" /></button></header>
       <div className="mt-1">{orderCalendarItems(selectedEntries).map((item) => <div key={item.key} tabIndex={-1} ref={(node) => { if (node) eventDetails.current.set(item.key, node); else eventDetails.current.delete(item.key); }}
         className={`scroll-mt-2 focus-visible:outline-2 focus-visible:outline-indigo-700 ${focusedKey === item.key ? "rounded bg-slate-50 px-2" : ""}`}>
         <CalendarEventDetails item={item} onAction={onAction} expanded={focusedKey === item.key} /></div>)}</div>
