@@ -15,6 +15,14 @@
 .choice:focus-visible { outline: 3px solid #476449; outline-offset: 3px; }
 .choice[aria-pressed="true"] { border: 2px solid #49644a; box-shadow: 0 0 0 3px #49644a17; }
 .scene { position: absolute; inset: 0; width: 100%; height: 100%; filter: grayscale(1) blur(1px); }
+/* Root intent artwork stays colored and crisp. The diagonal milk wash protects copy only. */
+.glassArtwork { position: absolute; inset: 0; background-size: cover; background-position: center; }
+.glassIntent { border-color: #ffffffdb; background: #f9f7fc; box-shadow: 0 3px 10px #5941800d, inset 0 1px 0 #fff; }
+.glassIntent .choiceWash { background: linear-gradient(35deg, #fffffff2 0%, #ffffffe0 20%, #ffffff59 43%, transparent 66%); }
+.glassIntent .choiceIcon { color: #594180; background: #ffffffdc; border: 1px solid #ffffffed; box-shadow: 0 2px 6px #59418012; }
+.glassIntent:hover { border-color: #b7a4da; box-shadow: 0 6px 20px #59418021; }
+.glassIntent:focus-visible { outline-color: #6341ac; }
+.glassIntent[aria-pressed="true"] { border-color: #6341ac; box-shadow: 0 0 0 3px #6341ac17; }
 .choiceWash { position: absolute; inset: 0; background: linear-gradient(100deg, #fafaf9e8 0%, #fafaf9b0 38%, #fafaf925 100%); }
 .choiceContent { z-index: 1; position: relative; display: flex; flex-direction: column; justify-content: end; align-items: start; padding: 22px; gap: 10px; width: 100%; }
 .choiceContent strong { font-size: 16px; line-height: 1.25; text-shadow: 0 1px 12px #fff; }

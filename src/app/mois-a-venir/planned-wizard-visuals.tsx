@@ -2,7 +2,7 @@
 import { useEffect, useRef, type ReactNode } from "react";
 import styles from "./planned-wizard.module.css";
 
-/** One generated photographic atlas; each slot is cropped as a 3:2 scene, then covers its card. */
+/** Secondary wizard scenes retain their existing atlas; root intentions use separate glass artwork. */
 export const WIZARD_SCENES = {
   restaurant: 0, fast_food: 1, work_meal: 2, groceries: 3, party: 4, visit: 5, activity: 6,
   purchase: 7, trip: 8, solo: 9, couple: 10, group: 11, date: 12, birthday: 13,
@@ -13,6 +13,12 @@ export const WIZARD_SCENES = {
   wallet: 42, bill: 43, restaurantExterior: 44, road: 45, note: 46, sharing: 47, room: 48,
 } as const;
 export type WizardScene = keyof typeof WIZARD_SCENES;
+export const INTENT_GLASS_BACKGROUNDS = {
+  restaurant: "card-restaurant-glass.webp", fast_food: "card-fastfood-glass.webp",
+  work_meal: "card-repas-travail-glass.webp", groceries: "card-courses-glass.webp",
+  party: "card-soiree-glass.webp", visit: "card-voir-quelquun-glass.webp",
+  activity: "card-activite-glass.webp", purchase: "card-achat-glass.webp", trip: "card-voyage-glass.webp",
+} as const;
 export function WizardBackdrop({ scene, className = "" }: { scene: WizardScene; className?: string }) {
   const index = WIZARD_SCENES[scene];
   return <svg aria-hidden="true" focusable="false" className={`${styles.scene} ${className}`} viewBox="0 0 300 200" preserveAspectRatio="xMidYMid slice">
@@ -23,8 +29,9 @@ export function WizardChoice({ label, scene, icon, selected = false, value, comp
   label: string; scene: WizardScene; icon?: ReactNode; selected?: boolean; value?: string;
   compact?: boolean; onClick: () => void;
 }) {
-  return <button type="button" aria-pressed={selected} className={`${styles.choice} ${compact ? styles.compact : ""}`} onClick={onClick}>
-    <WizardBackdrop scene={scene} /><span className={styles.choiceWash} />
+  const glassBackground = INTENT_GLASS_BACKGROUNDS[scene as keyof typeof INTENT_GLASS_BACKGROUNDS];
+  return <button type="button" aria-pressed={selected} className={`${styles.choice} ${glassBackground ? styles.glassIntent : ""} ${compact ? styles.compact : ""}`} onClick={onClick}>
+    {glassBackground ? <span aria-hidden="true" className={styles.glassArtwork} style={{ backgroundImage: `url(/planned-visuals/${glassBackground})`, backgroundPosition: scene === "visit" ? "center top" : "center" }} /> : <WizardBackdrop scene={scene} />}<span className={styles.choiceWash} />
     <span className={styles.choiceContent}>{icon && <span className={styles.choiceIcon}>{icon}</span>}<strong>{label}</strong>{value && <span className={styles.choiceValue}>{value}</span>}</span>
     {selected && <span className={styles.selectedMark} aria-hidden="true">✓</span>}
   </button>;
