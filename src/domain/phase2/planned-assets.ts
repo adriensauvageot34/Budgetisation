@@ -55,6 +55,7 @@ many("restaurant", [["starter", "Entrée", "🥗", "PER_PERSON", "MEAL"], ["main
 // Honest split categories: a meal subtotal may use meal wallets; alcohol remains bank only.
 many("restaurant", [["meal_total", "Repas et boissons sans alcool", "🍽️", "MANUAL", "MEAL"],
   ["alcohol_total", "Alcool", "🍷"]]);
+many("restaurant", [["menu", "Menu", "🍽️", "PER_PERSON", "MEAL"], ["digestif", "Digestif / alcool", "🥃"]]);
 many("fast_food", [["burger", "Sandwich / burger", "🍔", "PER_PERSON", "MEAL"], ["thai", "Thaï", "🍜", "PER_PERSON", "MEAL"], ["fries", "Accompagnement", "🍟", "PER_PERSON", "MEAL"], ["drink", "Boisson sans alcool", "🥤", "PER_PERSON", "MEAL"], ["tacos", "Tacos / kebab", "🌯", "PER_PERSON", "MEAL"], ["kebab", "Kebab", "🥙", "PER_PERSON", "MEAL"], ["pizza", "Pizza", "🍕", "SHARED", "MEAL"], ["chicken", "Poulet / autre plat", "🍗", "PER_PERSON", "MEAL"], ["sandwich", "Sandwich", "🥪", "PER_PERSON", "MEAL"], ["dessert", "Dessert", "🍰", "PER_PERSON", "MEAL"], ["delivery_fee", "Frais de livraison", "🚚"], ["service_fee", "Frais de service", "💸"]]);
 many("work_meal", [["bakery", "Boulangerie", "🥖", "FIXED", "MEAL"], ["grand_frais", "Grand Frais", "🛒", "FIXED", "MEAL"], ["mcdo", "McDo", "🍔", "FIXED", "MEAL"]]);
 many("transport", [["fuel_usage", "Coût carburant estimé", "⛽"], ["toll", "Péage", "🛣️"], ["parking", "Parking", "🅿️"], ["train", "Train", "🚆", "PER_PERSON"], ["bus", "Bus", "🚌", "PER_PERSON"], ["uber", "Uber / taxi", "🚕"], ["carpool", "Participation covoiturage", "🚗"], ["other", "Autre déplacement payant", "🚏"]]);
@@ -90,8 +91,8 @@ export const ASSET_AGGREGATE_DESCENDANTS: Readonly<Record<string, readonly strin
   "groceries:food": ["groceries:meat", "groceries:fish", "groceries:produce", "groceries:fresh",
     "groceries:pantry", "groceries:drinks", "groceries:snacks"],
   "restaurant:meal_total": ["restaurant:starter", "restaurant:main", "restaurant:dessert",
-    "restaurant:soft", "restaurant:coffee", "restaurant:water"],
-  "restaurant:alcohol_total": ["restaurant:wine_glass", "restaurant:wine_bottle", "restaurant:beer", "restaurant:cocktail"],
+    "restaurant:soft", "restaurant:coffee", "restaurant:water", "restaurant:menu"],
+  "restaurant:alcohol_total": ["restaurant:wine_glass", "restaurant:wine_bottle", "restaurant:beer", "restaurant:cocktail", "restaurant:digestif"],
 };
 export const plannedAsset = (key: string): PlannedAsset | undefined => assets.find((asset) => asset.assetKey === key);
 export const assetsForModule = (module: AssetModule): readonly PlannedAsset[] => assets.filter((asset) => asset.module === module);

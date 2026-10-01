@@ -38,7 +38,15 @@ export type PlannedTripTiming = Readonly<{
   outbound: Readonly<{ date: string | null; time: string | null }>;
   return: Readonly<{ required: true; date: string | null; time: string | null }>;
 }>;
+/** Restaurant intent/provenance only. Wizard navigation and calculated ranges are not persisted. */
+export type PlannedRestaurantContext = Readonly<{
+  locationScope?: "MONTPELLIER" | "ELSEWHERE"; city?: string; restaurantName?: string; cuisine?: string; address?: string;
+  plannedTime?: string | null; timeBucket?: "MORNING" | "LUNCH" | "EVENING"; freeTransportMode?: "TRAM" | "WALK" | "BIKE" | "OTHER";
+  sharedRide?: "NO_CONTRIBUTION" | "CONTRIBUTION";
+  priceBasis?: "KNOWN" | "DETAILED" | "ESTIMATED";
+}>;
 export type PlannedExpenseContext = Readonly<{ participantPersonIds?: readonly string[]; travellingParticipantPersonIds?: readonly string[];
+  restaurant?: PlannedRestaurantContext;
   visitTiming?: PlannedTripTiming;
   companionMode?: "SOLO" | "COUPLE" | "GROUP";
   groceriesNature?: "USUAL" | "TOP_UP" | "OCCASION";

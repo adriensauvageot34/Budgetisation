@@ -17,6 +17,7 @@ import { readMonthPredictionEvidence } from "@/server/phase2/month-prediction-ev
 import { readForecastMemory } from "@/server/phase2/forecast-memory";
 import { projectPastMonthReview } from "@/server/phase2/past-month-review";
 import { PastMonthView } from "./past-month-view";
+import { restaurantSoloPerson } from "@/domain/phase2/planned-restaurant";
 
 export const metadata = { title: "Notre mois à venir" };
 export const dynamic = "force-dynamic";
@@ -58,8 +59,13 @@ export default async function MonthForecastPage({ searchParams }: { searchParams
     supabase.from("persons").select("person_id,display_name,status").eq("household_id", context.household.householdId).order("display_name"),
   ]);
   if (personsResult.error) throw personsResult.error;
-  const persons = (personsResult.data ?? []).filter((person) => person.status === "active")
+  const activePersons = (personsResult.data ?? []).filter((person) => person.status === "active")
     .map((person) => ({ personId: person.person_id, displayName: person.display_name }));
+  const currentPersonId = restaurantSoloPerson(activePersons, {
+    personId: typeof context.user.app_metadata?.person_id === "string" ? context.user.app_metadata.person_id : undefined,
+    displayName: typeof context.user.user_metadata?.display_name === "string" ? context.user.user_metadata.display_name : undefined,
+  });
+  const persons = activePersons.map((person) => ({ ...person, isCurrentUser: person.personId === currentPersonId }));
   const options = await readPlannedContextOptions(client, context.household.householdId, persons);
   const scenario = deriveMonthScenario(forecast, stored.inputs, null, today, plannedExpenses);
   const placeLabel = (ref: import("@/domain/phase2/planned-contract").ProspectivePlaceRef | undefined) =>

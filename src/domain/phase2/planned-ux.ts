@@ -6,6 +6,7 @@ import type { CostItem, FundingAllocation } from "./planned-contract";
 import { costItemCashTreatment } from "./planned-money";
 import { prospectivePersonLabel } from "./planned-product";
 import type { PlannedPlaceOption } from "./planned-places";
+import { restaurantTitle } from "./planned-restaurant";
 
 export type BuilderIntent = "restaurant" | "fast_food" | "work_meal" | "groceries" | "party" | "visit" | "activity" | "purchase" | "trip";
 export const BUILDER_INTENTS: readonly { key: BuilderIntent; label: string; hint: string; icon: string; tint: string; family: PlannedExpenseFamily; subtype: string | null }[] = [
@@ -37,9 +38,7 @@ export function projectPlaceLabel(context: PlannedExpenseContext, places: readon
 type TitleFacts = { draft: PlannedExpenseDraft; personName?: string; place: string; contact: string; merchant: string };
 /** Exactly one title template per entry point; event access converges on one template. */
 export const PROJECT_TITLE_TEMPLATES: Record<BuilderIntent, (facts: TitleFacts) => string> = {
-  restaurant: ({ draft, place }) => draft.context.occasionLabel === "Saint-Valentin" && draft.context.companionMode === "COUPLE"
-    ? "Soirée en amoureux pour la Saint-Valentin" : place ? `Restaurant · ${place}`
-      : draft.context.companionMode ? ({ SOLO: "Restaurant en solo", COUPLE: "Restaurant en amoureux", GROUP: "Restaurant à plusieurs" }[draft.context.companionMode]) : "Restaurant",
+  restaurant: ({ draft, place }) => restaurantTitle(draft, place),
   fast_food: ({ draft, merchant, place }) => `${merchant || place || "Fast-food"}${draft.context.companionMode === "SOLO" ? " en solo" : draft.context.companionMode === "COUPLE" ? " à deux" : ""}`,
   work_meal: ({ personName }) => personName ? `Repas au travail de ${personName}` : "Repas au travail",
   groceries: ({ draft, merchant }) => `${draft.context.groceriesNature === "TOP_UP" ? "Petites courses" : "Courses"}${merchant ? ` ${merchant}` : ""}`,

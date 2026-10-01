@@ -11,6 +11,7 @@ import { deriveProjectTitle } from "./planned-ux";
 import { derivePlannedPlaceRoles } from "./planned-place-rules";
 import { carEstimateProblems, isDerivedCarCost } from "./planned-car";
 import { isTimedFamilyVisit, visitTimingIssues } from "./planned-visits";
+import { restaurantContextIssues, restaurantNeedsAddress } from "./planned-restaurant";
 
 export type DraftOrigin = "AUTO_DERIVED" | "EXPLICIT";
 export type Invalidation = "KEEP" | "RECOMPUTE" | "SUSPEND" | "REMOVE_DERIVED";
@@ -61,6 +62,7 @@ export function editBuilderDraft(state: BuilderState, draft: PlannedExpenseDraft
     .map((stop) => [routePlaceIdentity(stop), stop.endpointSource, stop.childModule]);
   const topologyChanged = JSON.stringify(routeTopology(state.draft)) !== JSON.stringify(routeTopology(draft));
   const timingChanged = state.draft.plannedDate !== next.plannedDate || JSON.stringify(state.draft.context.visitTiming) !== JSON.stringify(next.context.visitTiming);
+  const restaurantTimeChanged = state.draft.context.restaurant?.plannedTime !== next.context.restaurant?.plannedTime;
   const refs = { ...next.context.childLocalPlaceRefs };
   for (const child of orphanChildren) delete refs[child];
   if (orphanChildren.length) next = { ...next, context: { ...next.context, childLocalPlaceRefs: refs } };
@@ -75,11 +77,11 @@ export function editBuilderDraft(state: BuilderState, draft: PlannedExpenseDraft
       ? invalidateBuilderRoute(next.context.route, stops) : undefined },
       costItems: next.costItems.filter((item) => !isDerivedCarCost(item)) };
   }
-  if (next.context.route && timingChanged) {
+  if (next.context.route && (timingChanged || restaurantTimeChanged)) {
     next = { ...next, context: { ...next.context, route: { ...next.context.route, liveEstimate: undefined, fuelEstimate: undefined,
-      plannedTime: next.plannedDate ? next.context.route.plannedTime : null, tollFreeConfirmed: undefined, stops: invalidateRouteDistances(next.context.route.stops) } }, costItems: next.costItems.filter((item) => !isDerivedCarCost(item)) };
+      plannedTime: next.plannedDate ? next.context.restaurant ? next.context.restaurant.plannedTime ?? null : next.context.route.plannedTime : null, tollFreeConfirmed: undefined, stops: invalidateRouteDistances(next.context.route.stops) } }, costItems: next.costItems.filter((item) => !isDerivedCarCost(item)) };
   }
-  return touch(state, { draft: next }, !!routeAffected || !!orphanChildren.length || topologyChanged || timingChanged);
+  return touch(state, { draft: next }, !!routeAffected || !!orphanChildren.length || topologyChanged || timingChanged || restaurantTimeChanged);
 }
 /** Adopt the server's transport revision after Preview, preserving Quick Total and local intent. */
 export function adoptBuilderResolvedTransport(state: BuilderState, resolved: PlannedExpenseDraft): BuilderState {
@@ -365,6 +367,9 @@ export function deriveBuilderReadiness(state: BuilderState, live?: Readonly<{ pl
   const draft = materializeBuilderDraft(state);
   const activeDraft = materializeBuilderDraft(state, true);
   const resolved = resolvedFor(draft);
+  for (const problem of restaurantContextIssues(draft)) issue("BLOCK_PREVIEW", problem.code, "context.restaurant", problem.message, `restaurant-${problem.repairTarget}`);
+  if (draft.context.restaurant && draft.context.transportMode === "CAR" && (!draft.context.route || live && restaurantNeedsAddress(draft.context, live.places)))
+    issue("BLOCK_PREVIEW", "RESTAURANT_ADDRESS_REQUIRED", "context.restaurant.address", "Précisez une adresse pour calculer le trajet.", "restaurant-transportAddress");
   if (isTimedFamilyVisit(draft)) {
     if (!draft.context.participantPersonIds?.length) issue("BLOCK_PREVIEW", "VISIT_PARTICIPANTS_REQUIRED", "context.participantPersonIds", "Choisissez qui va voir la famille.", "visit-participants");
     for (const problem of visitTimingIssues(draft.context.visitTiming!)) issue("BLOCK_PREVIEW", problem.code, "context.visitTiming", problem.message, problem.repairTarget);

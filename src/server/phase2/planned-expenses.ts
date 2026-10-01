@@ -18,6 +18,7 @@ import type { CostItem, FundingAllocation, FundingSource, PlannedBaselineKey, Pl
 import { readPlannedContextOptions, readPlannedRouteHistory } from "./planned-context";
 import { parseCarSnapshot, parseRouteCoordinates, carFuelEstimate, carSegmentProvider, applyCarResult, carEstimateProblems } from "@/domain/phase2/planned-car";
 import { assertVisitTiming, parseVisitTiming, shiftVisitTiming, splitVisitRoute } from "@/domain/phase2/planned-visits";
+import { assertRestaurantEstimate, montpellierRestaurantSuggestions, parseRestaurantContext, restaurantContextIssues, restaurantNeedsAddress } from "@/domain/phase2/planned-restaurant";
 import { estimatePlannedCar } from "./planned-car-estimation";
 import type { MonthForecastSnapshot } from "./month-forecast-snapshot";
 import { simulatePlannedExpenseScenario, type MonthInputs } from "./month-scenario";
@@ -174,9 +175,13 @@ export function parsePlannedExpenseDraft(value: unknown, targetMonth: string,
   keysOnly(contextRaw, ["participantPersonIds", "travellingParticipantPersonIds", "additionalGuestCount", "personVisited", "participantRefs", "host", "hostParticipates", "visitedPersonParticipates", "transportMode",
     "place", "purchaseMode", "housePartyPlaceMode", "visitFormat", "socialOccasion", "occasionLabel",
     "deliveryProviderKey", "deliveryProvider", "seller", "gift", "childLocalPlaceRefs", "route", "visitTiming",
-    "companionMode", "groceriesNature", "workMealMode", "outingKind", "eventName", "endDate", "noExpense", "purchaseDescription"],
+    "companionMode", "groceriesNature", "workMealMode", "outingKind", "eventName", "endDate", "noExpense", "purchaseDescription", "restaurant"],
   "PLANNED_EXPENSE_CONTEXT_FIELDS_INVALID");
   const context: { -readonly [K in keyof PlannedExpenseContext]?: PlannedExpenseContext[K] } = {};
+  if (contextRaw.restaurant !== undefined) {
+    if (familyKey !== "food" || raw.subtypeKey !== "restaurant") throw new TypeError("PLANNED_RESTAURANT_CONTEXT_INVALID");
+    context.restaurant = parseRestaurantContext(contextRaw.restaurant);
+  }
   for (const [field, values] of Object.entries({ companionMode: ["SOLO", "COUPLE", "GROUP"],
     groceriesNature: ["USUAL", "TOP_UP", "OCCASION"], workMealMode: ["BOUGHT", "DELIVERED", "FROM_HOME"], outingKind: ["CLUB", "EVENT"] })) {
     if (contextRaw[field] !== undefined) {
@@ -316,6 +321,8 @@ export function parsePlannedExpenseDraft(value: unknown, targetMonth: string,
     if (liveEstimate && route.mode !== "CAR") throw new TypeError("PLANNED_EXPENSE_FUEL_ESTIMATE_MODE_INVALID");
     if (route.plannedTime != null && (typeof route.plannedTime !== "string" || !/^(?:[01]\d|2[0-3]):[0-5]\d$/u.test(route.plannedTime) || !raw.plannedDate)) throw new TypeError("PLANNED_ROUTE_TIME_INVALID");
     if (route.timeKind !== undefined && !["DEPARTURE", "ARRIVAL"].includes(String(route.timeKind))) throw new TypeError("PLANNED_ROUTE_TIME_INVALID");
+    if (context.restaurant && route.mode === "CAR" && ((route.plannedTime ?? null) !== (context.restaurant.plannedTime ?? null)
+      || route.timeKind !== undefined && route.timeKind !== "DEPARTURE")) throw new TypeError("PLANNED_ROUTE_TIME_INVALID");
     if (context.visitTiming && (route.plannedTime !== undefined && route.plannedTime !== context.visitTiming.outbound.time
       || route.timeKind !== undefined && route.timeKind !== "DEPARTURE")) throw new TypeError("PLANNED_VISIT_TIMING_INVALID");
     if (route.preference !== undefined && (!["FASTEST", "AVOID_TOLLS"].includes(String(route.preference)) || liveEstimate && liveEstimate.preference !== route.preference)) throw new TypeError("PLANNED_ROUTE_PREFERENCE_INVALID");
@@ -524,8 +531,12 @@ export function parsePlannedExpenseDraft(value: unknown, targetMonth: string,
     }
   }
   if (context.route?.mode === "CAR") assertPrimaryRouteStop(context.route.stops, context.place);
-  return { familyKey, subtypeKey: raw.subtypeKey as string | null, title: title(raw.title, "PLANNED_EXPENSE_TITLE_INVALID"),
+  const parsed = { familyKey, subtypeKey: raw.subtypeKey as string | null, title: title(raw.title, "PLANNED_EXPENSE_TITLE_INVALID"),
     plannedDate, costItems, context };
+  const restaurantProblem = restaurantContextIssues(parsed)[0];
+  if (restaurantProblem) throw new TypeError(`PLANNED_${restaurantProblem.code}`);
+  assertRestaurantEstimate(parsed);
+  return parsed;
 }
 
 function parseRow(value: unknown): PlannedExpense {
@@ -588,6 +599,11 @@ async function validateReferences(client: SupabaseClient, householdId: string, d
     || Object.values(draft.context.childLocalPlaceRefs ?? {}).some((ref) => ref?.kind === "KNOWN")) {
     const options = await readPlannedContextOptions(createCanonicalReadClient(), householdId,
       people.map((person) => ({ personId: person.person_id, displayName: person.display_name })));
+    if (draft.context.restaurant && draft.context.transportMode === "CAR" && restaurantNeedsAddress(draft.context, options.places))
+      throw new TypeError("PLANNED_RESTAURANT_ADDRESS_REQUIRED");
+    if (draft.context.restaurant?.locationScope === "MONTPELLIER" && draft.context.place?.kind === "KNOWN"
+      && !montpellierRestaurantSuggestions(options.places).some((place) => place.placeId === (draft.context.place as { placeId: string }).placeId))
+      throw new TypeError("PLANNED_EXPENSE_PLACE_CONTEXT_INVALID");
     if (draft.context.visitTiming && draft.context.route?.mode === "CAR") {
       const home = options.places.find((place) => derivePlannedPlaceRoles(place).includes("OWN_HOME"));
       if (!home) throw new TypeError("PLANNED_VISIT_RETURN_HOME_REQUIRED");

@@ -5,19 +5,16 @@ import type { CostItem, PlannedPriceSuggestion, PlannedWalletOption } from "@/do
 import type { PlannedAsset } from "@/domain/phase2/planned-assets";
 import { localCostGross, walletAllocation, type BUILDER_INTENTS } from "@/domain/phase2/planned-ux";
 import type { BuilderIssue } from "@/domain/phase2/planned-builder";
+import { WizardChoice } from "./planned-wizard-visuals";
 
 export const builderInput = "min-h-11 w-full min-w-0 rounded-xl border border-slate-300 bg-white px-3 text-sm focus-visible:outline-2 focus-visible:outline-indigo-600";
 export const builderButton = "min-h-10 rounded-xl border border-slate-300 bg-white px-4 py-2 text-sm font-semibold hover:bg-slate-50 focus-visible:outline-2 focus-visible:outline-indigo-600";
 export const builderPrimary = "min-h-11 rounded-xl bg-indigo-700 px-5 py-2 text-sm font-bold text-white hover:bg-indigo-800 focus-visible:outline-2 focus-visible:outline-indigo-600 disabled:opacity-50";
 export const builderMoney = (amount: string) => new Intl.NumberFormat("fr-FR", { style: "currency", currency: "EUR" }).format(Number(amount));
 const icons = { Utensils, Sandwich, BriefcaseBusiness, ShoppingBasket, PartyPopper, UsersRound, Ticket, ShoppingBag, Luggage };
-const tints: Record<string, string> = { orange: "bg-orange-100 text-orange-800", amber: "bg-amber-100 text-amber-800", sky: "bg-sky-100 text-sky-800", emerald: "bg-emerald-100 text-emerald-800", violet: "bg-violet-100 text-violet-800", rose: "bg-rose-100 text-rose-800", cyan: "bg-cyan-100 text-cyan-800", pink: "bg-pink-100 text-pink-800", indigo: "bg-indigo-100 text-indigo-800" };
 export function IntentTile({ intent, onClick }: { intent: typeof BUILDER_INTENTS[number]; onClick: () => void }) {
   const Icon = icons[intent.icon as keyof typeof icons];
-  return <button type="button" onClick={onClick} className="group flex min-h-32 items-center gap-4 rounded-2xl border border-slate-200 bg-white p-5 text-left shadow-sm transition hover:border-indigo-400 hover:shadow-md focus-visible:outline-2 focus-visible:outline-indigo-600">
-    <span className={`grid size-14 shrink-0 place-items-center rounded-2xl ${tints[intent.tint]}`}><Icon size={28} strokeWidth={1.7} aria-hidden="true" /></span>
-    <span><strong className="block text-base">{intent.label}</strong><span className="mt-1 block text-xs leading-5 text-slate-500">{intent.hint}</span></span>
-  </button>;
+  return <WizardChoice label={intent.label} scene={intent.key} icon={<Icon size={23} strokeWidth={1.7} aria-hidden="true" />} onClick={onClick} />;
 }
 export function ChoiceTiles({ label, choices, value, onChange }: { label: string; choices: readonly { key: string; label: string }[]; value?: string; onChange: (key: string) => void }) {
   return <fieldset className="grid gap-3"><legend className="mb-3 text-base font-bold">{label}</legend><div className="flex flex-wrap gap-3">{choices.map((choice) => <button key={choice.key} type="button" aria-pressed={choice.key === value} className={`min-h-16 min-w-32 rounded-xl border px-5 py-3 text-left text-sm font-semibold focus-visible:outline-2 focus-visible:outline-indigo-600 ${choice.key === value ? "border-indigo-500 bg-indigo-50 text-indigo-950" : "border-slate-200 bg-white hover:border-indigo-300"}`} onClick={() => onChange(choice.key)}>{choice.label}</button>)}</div></fieldset>;

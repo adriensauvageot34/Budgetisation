@@ -18,8 +18,11 @@ import { type PlannedIssue, type PlannedResult, type RealityConfirmationDraft } 
 import { PlannedImpactCard } from "./planned-impact-card";
 import { usePlannedExpenseInteractions } from "./planned-expense-interactions";
 import { calendarExpenseActions } from "./calendar-presentation";
+import { RestaurantWizard } from "./restaurant-wizard";
+import { PlannedBuilderFrame } from "./planned-wizard-visuals";
+import wizardStyles from "./planned-wizard.module.css";
 
-type Person = { personId: string; displayName: string };
+type Person = { personId: string; displayName: string; isCurrentUser?: boolean };
 type Draft = Pick<PlannedExpenseCard, "familyKey" | "subtypeKey" | "title" | "plannedDate" | "costItems" | "context">;
 type Preview = Extract<Awaited<ReturnType<typeof previewPlannedExpense>>, { ok: true }>["value"];
 type Funding = NonNullable<Preview["funding"]>;
@@ -51,6 +54,7 @@ export function PlannedExpensesControl({ targetMonth, expenses, persons, places,
   const [simulationMode, setSimulationMode] = useState(false);
   const [step, setStep] = useState(1);
   const [closeRequested, setCloseRequested] = useState(false);
+  const [repairRequest, setRepairRequest] = useState({ target: "", serial: 0 });
   const [builder, setBuilderState] = useState(() => createBuilderState(emptyDraft()));
   const draft = builder.draft;
   const setBuilder: Dispatch<SetStateAction<typeof builder>> = (change) => setBuilderState((state) => {
@@ -75,6 +79,11 @@ export function PlannedExpensesControl({ targetMonth, expenses, persons, places,
   const [error, setError] = useState("");
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const isWorkMeal = draft.familyKey === "food" && draft.subtypeKey === "work_meal";
+  const restaurantFlow = draft.familyKey === "food" && draft.subtypeKey === "restaurant" && step > 1;
+  const dismiss = () => { if (builder.revision > 0) setCloseRequested(true); else setOpen(false); };
+  const repairRestaurant = (target: string) => {
+    setRepairRequest((request) => ({ target, serial: request.serial + 1 })); setStep(4);
+  };
   const contextPersonLabel = persons.find((person) => person.personId === draft.context.participantPersonIds?.[0])?.displayName;
   const readiness = deriveBuilderReadiness(builder, { places, workMealPersonName: isWorkMeal ? contextPersonLabel : undefined });
   const canPreview = readiness.previewReady;
@@ -93,6 +102,7 @@ export function PlannedExpensesControl({ targetMonth, expenses, persons, places,
     setRequestId(item?.id ?? crypto.randomUUID()); setExpectedUpdatedAt(item?.updatedAt); setRealityMode(mode);
     setIssue(null); setNotice(""); setReportId(null); setDeleteId(null);
     setCloseRequested(false);
+    setRepairRequest({ target: "", serial: 0 });
     setEditedId(item?.id); setPreview(null); setPreviewRevision(null); setError(""); setStep(item ? 3 : 1); setOpen(true);
     window.setTimeout(() => { const target = document.getElementById("planned-expense-builder"); target?.scrollIntoView({ behavior: "smooth" }); target?.focus(); }, 0);
   };
@@ -156,6 +166,7 @@ export function PlannedExpensesControl({ targetMonth, expenses, persons, places,
   const repairServerIssue = () => {
     if (!issue) return;
     if (issue.repairTarget === "reload") { router.refresh(); return; }
+    if (restaurantFlow) { repairRestaurant(issue.repairTarget === "date" ? "restaurant-datePrecision" : issue.repairTarget); return; }
     const step = issue.repairTarget === "context" || issue.repairTarget === "date" ? 3 : 4;
     setStep(step);
     window.setTimeout(() => {
@@ -223,19 +234,23 @@ export function PlannedExpensesControl({ targetMonth, expenses, persons, places,
       {!open && <button type="button" className={primary} onClick={() => start()}><Plus size={16} className="mr-1 inline" />Prévoir une dépense</button>}</div>
     {notice && <p role="status" className="mt-3 rounded-xl bg-emerald-100 p-3 text-sm">{notice}</p>}
     {error && !open && <p role="alert" className="mt-3 rounded-xl bg-red-50 p-3 text-sm text-red-800">{error}{issue?.repairTarget === "reload" && <button className={secondary} onClick={() => router.refresh()}>Recharger la liste</button>}{issue?.repairTarget === "month" && reportDate && <a className="ml-2 underline" href={`/mois-a-venir?month=${reportDate.slice(0, 7)}`}>Préparer les ressources de ce mois</a>}</p>}
-    {open && <div className="mt-5 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-6">
-      <div className="flex items-start justify-between gap-4"><div><p className="text-xs font-semibold text-indigo-700">Projets{step > 1 && (" › " + (BUILDER_INTENTS.find((intent) => intent.key === intentForDraft(draft))?.label ?? "Projet"))}{step === 5 && " › Aperçu"}</p><h3 className="mt-2 text-2xl font-black tracking-tight">{step === 1 ? "Qu’avez-vous prévu ?" : draft.title}</h3>{step > 2 && <p className="mt-2 text-sm text-slate-500">{[draft.plannedDate ? dateLabel(draft.plannedDate) : "Ce mois-ci", projectPlaceLabel(draft.context, places)].filter(Boolean).join(" · ")}</p>}</div><button type="button" className={secondary} onClick={() => { if (builder.revision > 0) setCloseRequested(true); else setOpen(false); }}>Fermer</button></div>
+    {open && <PlannedBuilderFrame immersive={restaurantFlow} onDismiss={dismiss}>
+      <div className={restaurantFlow ? wizardStyles.header : "flex items-start justify-between gap-4"}><div><p className="text-xs font-semibold text-indigo-700">Projets{step > 1 && (" › " + (BUILDER_INTENTS.find((intent) => intent.key === intentForDraft(draft))?.label ?? "Projet"))}{step === 5 && " › Aperçu"}</p><h3 className="mt-2 text-2xl font-black tracking-tight">{step === 1 ? "Qu’avez-vous prévu ?" : draft.title}</h3>{step > 2 && !restaurantFlow && <p className="mt-2 text-sm text-slate-500">{[draft.plannedDate ? dateLabel(draft.plannedDate) : "Ce mois-ci", projectPlaceLabel(draft.context, places)].filter(Boolean).join(" · ")}</p>}</div><button type="button" className={secondary} onClick={dismiss}>Fermer</button></div>
       {closeRequested && <div className="mt-3 rounded-xl bg-amber-50 p-3 text-sm"><p>Quitter et abandonner les modifications de ce brouillon ?</p><button type="button" className={secondary} onClick={() => { setOpen(false); setPreview(null); setCloseRequested(false); }}>Abandonner</button><button type="button" className={secondary} onClick={() => setCloseRequested(false)}>Continuer à préparer</button></div>}
       {realityMode && <p className="mt-3 rounded-xl bg-sky-50 p-3 text-sm">{realityMode === "DECLARE" ? "Vérifiez ce qui a réellement coûté et son financement, puis confirmez la réalisation." : "Corrigez les éléments et le financement de votre déclaration."} Pour un coût détaillé, corrigez les lignes ; aucun écart ne sera réparti automatiquement.</p>}
       {error && <div role="alert" className="mt-3 rounded-xl bg-red-50 p-3 text-sm text-red-800"><p>{error}</p>{issue && <button type="button" className={secondary} onClick={repairServerIssue}>{issue.repairTarget === "reload" ? "Actualiser la liste, garder mon brouillon" : "Aller à la correction"}</button>}{issue?.repairTarget === "reload" && editedId && <button type="button" className={secondary} onClick={() => { const fresh = expenses.find((item) => item.id === editedId); if (fresh) start(fresh, realityMode); }}>Abandonner mon brouillon et reprendre la version affichée</button>}</div>}
-      {step <= 4 && <PlannedIntentBuilder key={requestId} builder={builder} setBuilder={setBuilder} step={step} setStep={setStep} selectRoot={selectSubtype} persons={persons} places={places} wallets={wallets} prices={prices} vehicle={vehicle} targetMonth={targetMonth} busy={busy} onPreview={simulate} />}
+      <div className={restaurantFlow ? wizardStyles.body : undefined}>
+      {restaurantFlow && <div className={wizardStyles.body} style={step === 5 ? { display: "none" } : undefined}><RestaurantWizard key={requestId} builder={builder} setBuilder={setBuilder} persons={persons} places={places} wallets={wallets} vehicle={vehicle} targetMonth={targetMonth} busy={busy} onPreview={simulate} repairRequest={repairRequest} /></div>}
+      {step <= 4 && !restaurantFlow && <PlannedIntentBuilder key={requestId} builder={builder} setBuilder={setBuilder} step={step} setStep={setStep} selectRoot={selectSubtype} persons={persons} places={places} wallets={wallets} prices={prices} vehicle={vehicle} targetMonth={targetMonth} busy={busy} onPreview={simulate} />}
       {step === 5 && !previewCurrent && <div className="mt-4 rounded-xl bg-amber-50 p-4 text-sm">L’aperçu précédent n’est plus à jour. <button type="button" className={secondary} onClick={() => setStep(4)}>Recalculer après modification</button></div>}
-      {step === 5 && previewCurrent && preview && <div className="mt-4 grid gap-4"><PlannedImpactCard preview={preview} fundingIncomplete={readiness.issues.some((issue) => issue.code === "FUNDING_INCOMPLETE")} />
+      {step === 5 && previewCurrent && preview && <div className={restaurantFlow ? "grid min-h-0 gap-4 overflow-y-auto p-8" : "mt-4 grid gap-4"}><PlannedImpactCard preview={preview} fundingIncomplete={readiness.issues.some((issue) => issue.code === "FUNDING_INCOMPLETE")} />
         <p className="text-xs text-slate-600">La simulation n’enregistre rien.</p><div className="flex flex-wrap gap-2"><button type="button" className={secondary} onClick={() => { setPreview(null); setStep(4); }}>Modifier</button><ContextualBlockerCTA purpose="SAVE" busy={busy} issues={readiness.issues} onClick={save} label={realityMode === "DECLARE" ? "Confirmer la réalisation" : realityMode === "CORRECT" ? "Enregistrer la déclaration corrigée" : editedId ? "Enregistrer la modification" : simulationMode ? "Ajouter réellement au mois" : "Ajouter au mois"} onRepair={(problem) => {
+          if (restaurantFlow) { repairRestaurant(problem.repairTarget); return; }
           const nextStep = problem.repairTarget === "builder-context" || problem.repairTarget === "builder-title" ? 3 : 4;
           setStep(nextStep); window.setTimeout(() => { const target = document.getElementById(problem.repairTarget) ?? document.getElementById(nextStep === 3 ? "builder-context" : "builder-cost"); target?.scrollIntoView({ behavior: "smooth", block: "center" }); target?.querySelector<HTMLElement>("input, select, button")?.focus(); }, 0);
         }} /></div></div>}
-    </div>}
+      </div>
+    </PlannedBuilderFrame>}
     <div className="mt-6 grid gap-5 lg:grid-cols-2"><div><h3 className="text-base font-black">À venir / prévues ({planned.length})</h3>{planned.length ? <ul className="mt-3 grid gap-3">{planned.map(card)}</ul> : <p className="mt-2 text-sm text-slate-600">Aucune dépense ajoutée pour l’instant.</p>}</div><div><h3 className="text-base font-black">Réalisées ce mois-ci ({realized.length})</h3>{realized.length ? <ul className="mt-3 grid gap-3">{realized.map(card)}</ul> : <p className="mt-2 text-sm text-slate-600">Aucune prévision marquée comme réalisée.</p>}</div></div>
     {(new Big(funding.swile.reserved).gt(0) || new Big(funding.edenred.reserved).gt(0) || new Big(funding.swile.usedDeclared).gt(0) || new Big(funding.edenred.usedDeclared).gt(0)) && <p className="mt-4 text-xs text-slate-600">Financement du mois : Swile {money(funding.swile.reserved)} réservés et {money(funding.swile.usedDeclared)} utilisés déclarés ; Edenred {money(funding.edenred.reserved)} réservés et {money(funding.edenred.usedDeclared)} utilisés déclarés. Aucun solde réel n’est débité.</p>}
   </section>;

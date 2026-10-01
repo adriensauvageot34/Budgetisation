@@ -96,6 +96,9 @@ export async function estimatePlannedRoute(targetMonth: string,
   const resolved = resolvePlannedContext({ familyKey: draft.familyKey, subtypeKey: draft.subtypeKey, modifiers: plannedContextModifiers(draft.context) });
   if (resolved.transport === "FORBIDDEN" || draft.context.transportMode !== "CAR" || draft.context.route?.mode !== "CAR")
     throw new TypeError("PLANNED_ROUTE_FORBIDDEN");
+  if (draft.context.restaurant && (draft.familyKey !== "food" || draft.subtypeKey !== "restaurant"
+    || (draft.context.route.plannedTime ?? null) !== (draft.context.restaurant.plannedTime ?? null)
+    || draft.context.route.timeKind !== "DEPARTURE")) throw new TypeError("PLANNED_ROUTE_TIME_INVALID");
   assertPrimaryRouteStop(draft.context.route.stops, draft.context.place);
   for (const stop of draft.context.route.stops) if (stop.childModule) {
     const child = draft.context.childLocalPlaceRefs?.[stop.childModule];
