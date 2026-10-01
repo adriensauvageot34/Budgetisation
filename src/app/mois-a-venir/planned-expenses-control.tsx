@@ -18,6 +18,7 @@ import { PlannedImpactCard } from "./planned-impact-card";
 import { usePlannedExpenseInteractions } from "./planned-expense-interactions";
 import { calendarExpenseActions } from "./calendar-presentation";
 import { RestaurantWizard } from "./restaurant-wizard";
+import { RestaurantPhotoBackground } from "./restaurant-photo-background";
 import { PlannedBuilderFrame, type BuilderReturnPoint } from "./planned-wizard-visuals";
 import wizardStyles from "./planned-wizard.module.css";
 
@@ -209,8 +210,9 @@ export function PlannedExpensesControl({ targetMonth, expenses, persons, places,
     // Pending is a consumed navigation command, never a second draft authority.
   }, [interactions?.pending]);
 
-  const card = (item: PlannedExpenseCard) => <li key={item.id}>
-    <details id={`project-${item.id}`} className="group rounded-xl border border-slate-200 bg-white px-4">
+  const card = (item: PlannedExpenseCard) => <li key={item.id} className="rounded-xl border border-slate-200 bg-white px-4">
+      {item.familyKey === "food" && item.subtypeKey === "restaurant" && <RestaurantPhotoBackground placeId={item.context.restaurant?.googlePlaceId} />}
+    <details id={`project-${item.id}`} className="group">
       <summary className="flex cursor-pointer list-none items-center gap-4 py-4 focus-visible:outline-2 focus-visible:outline-emerald-700 [&::-webkit-details-marker]:hidden">
         <h3 className="min-w-0 flex-1 font-bold">{item.title}</h3>
         <span className={`rounded-full px-2 py-1 text-xs ${item.status === "DECLARED_REALIZED" ? "bg-emerald-50 text-emerald-800" : item.needsRealityConfirmation ? "bg-amber-50 text-amber-900" : "text-slate-500"}`}>{item.status === "DECLARED_REALIZED" ? "Réalisée · déclarée" : item.needsRealityConfirmation ? "À confirmer" : "Prévue"}</span>
@@ -241,7 +243,8 @@ export function PlannedExpensesControl({ targetMonth, expenses, persons, places,
       {realityMode && <p className="mt-3 rounded-xl bg-sky-50 p-3 text-sm">{realityMode === "DECLARE" ? "Vérifiez ce qui a réellement coûté et son financement, puis confirmez la réalisation." : "Corrigez les éléments et le financement de votre déclaration."} Pour un coût détaillé, corrigez les lignes ; aucun écart ne sera réparti automatiquement.</p>}
       {error && <div role="alert" className="mt-3 rounded-xl bg-red-50 p-3 text-sm text-red-800"><p>{error}</p>{issue && <button type="button" className={secondary} onClick={repairServerIssue}>{issue.repairTarget === "reload" ? "Actualiser la liste, garder mon brouillon" : "Aller à la correction"}</button>}{issue?.repairTarget === "reload" && editedId && <button type="button" className={secondary} onClick={() => { const fresh = expenses.find((item) => item.id === editedId); if (fresh) start(fresh, realityMode); }}>Abandonner mon brouillon et reprendre la version affichée</button>}</div>}
       <div className={restaurantFlow ? wizardStyles.body : "min-h-0 flex-1 overflow-y-auto p-6"}>
-      {restaurantFlow && <div className={wizardStyles.body} style={step === 5 ? { display: "none" } : undefined}><RestaurantWizard key={requestId} builder={builder} setBuilder={setBuilder} persons={persons} places={places} wallets={wallets} vehicle={vehicle} targetMonth={targetMonth} busy={busy} onPreview={simulate} repairRequest={repairRequest} /></div>}
+      {restaurantFlow && <div className={wizardStyles.body} style={step === 5 ? { display: "none" } : undefined}><RestaurantWizard key={requestId} builder={builder} setBuilder={setBuilder} persons={persons} places={places} wallets={wallets} vehicle={vehicle} targetMonth={targetMonth} busy={busy} onPreview={simulate} repairRequest={repairRequest}
+        usedRestaurants={expenses.flatMap((item) => { const r = item.context.restaurant; return r?.googlePlaceId && r.restaurantName && r.city ? [{ googlePlaceId: r.googlePlaceId, label: r.restaurantName, city: r.city }] : []; })} /></div>}
       {step <= 4 && !restaurantFlow && <PlannedIntentBuilder key={requestId} builder={builder} setBuilder={setBuilder} step={step} setStep={setStep} selectRoot={selectSubtype} persons={persons} places={places} wallets={wallets} prices={prices} vehicle={vehicle} targetMonth={targetMonth} busy={busy} onPreview={simulate} />}
       {step === 5 && !previewCurrent && <div className="mt-4 rounded-xl bg-amber-50 p-4 text-sm">L’aperçu précédent n’est plus à jour. <button type="button" className={secondary} onClick={() => setStep(4)}>Recalculer après modification</button></div>}
       {step === 5 && previewCurrent && preview && <div className={restaurantFlow ? "grid min-h-0 gap-4 overflow-y-auto p-8" : "mt-4 grid gap-4"}><PlannedImpactCard preview={preview} fundingIncomplete={readiness.issues.some((issue) => issue.code === "FUNDING_INCOMPLETE")} />

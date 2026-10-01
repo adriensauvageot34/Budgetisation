@@ -18,7 +18,8 @@ import type { CostItem, FundingAllocation, FundingSource, PlannedBaselineKey, Pl
 import { readPlannedContextOptions, readPlannedRouteHistory } from "./planned-context";
 import { parseCarSnapshot, parseRouteCoordinates, carFuelEstimate, carSegmentProvider, applyCarResult, carEstimateProblems } from "@/domain/phase2/planned-car";
 import { assertVisitTiming, parseVisitTiming, shiftVisitTiming, splitVisitRoute } from "@/domain/phase2/planned-visits";
-import { assertRestaurantEstimate, montpellierRestaurantSuggestions, parseRestaurantContext, restaurantContextIssues, restaurantNeedsAddress } from "@/domain/phase2/planned-restaurant";
+import { assertRestaurantEstimate, parseRestaurantContext, restaurantContextIssues, restaurantNeedsAddress } from "@/domain/phase2/planned-restaurant";
+import { knownRestaurantSuggestions } from "@/domain/phase2/restaurant-places";
 import { estimatePlannedCar } from "./planned-car-estimation";
 import type { MonthForecastSnapshot } from "./month-forecast-snapshot";
 import { simulatePlannedExpenseScenario, type MonthInputs } from "./month-scenario";
@@ -601,8 +602,8 @@ async function validateReferences(client: SupabaseClient, householdId: string, d
       people.map((person) => ({ personId: person.person_id, displayName: person.display_name })));
     if (draft.context.restaurant && draft.context.transportMode === "CAR" && restaurantNeedsAddress(draft.context, options.places))
       throw new TypeError("PLANNED_RESTAURANT_ADDRESS_REQUIRED");
-    if (draft.context.restaurant?.locationScope === "MONTPELLIER" && draft.context.place?.kind === "KNOWN"
-      && !montpellierRestaurantSuggestions(options.places).some((place) => place.placeId === (draft.context.place as { placeId: string }).placeId))
+    if (draft.context.restaurant?.city && draft.context.place?.kind === "KNOWN"
+      && !knownRestaurantSuggestions(options.places, draft.context.restaurant.city).some((place) => place.placeId === (draft.context.place as { placeId: string }).placeId))
       throw new TypeError("PLANNED_EXPENSE_PLACE_CONTEXT_INVALID");
     if (draft.context.visitTiming && draft.context.route?.mode === "CAR") {
       const home = options.places.find((place) => derivePlannedPlaceRoles(place).includes("OWN_HOME"));
@@ -685,7 +686,8 @@ export async function resolvePlannedExpenseDraft(client: SupabaseClient, househo
     const previous = draft.context.route.liveEstimate;
     const result = await estimatePlannedCar({ stops: draft.context.route.stops, plannedDate: draft.plannedDate,
       tripTiming: draft.context.visitTiming, plannedTime: draft.context.route.plannedTime ?? previous.plannedTime, timeKind: draft.context.route.timeKind ?? previous.timeKind,
-      preference: draft.context.route.preference ?? previous.preference, manualFuelPrice: draft.context.route.manualFuelPrice }, { places: options.places, vehicle: options.vehicle, history: await readPlannedRouteHistory(reader, householdId) });
+      preference: draft.context.route.preference ?? previous.preference, manualFuelPrice: draft.context.route.manualFuelPrice }, { places: options.places, vehicle: options.vehicle,
+        restaurantGooglePlaceId: draft.context.restaurant?.googlePlaceId, history: await readPlannedRouteHistory(reader, householdId) });
     if (!result.snapshot || !result.fuelEstimate) throw new TypeError("PLANNED_ROUTE_PRICE_UNAVAILABLE");
     const changed = previous.vehicleId !== result.snapshot.vehicleId || previous.route.geometryHash !== result.snapshot.route.geometryHash
       || previous.fuelEconomicCost !== result.snapshot.fuelEconomicCost || previous.toll.amount !== result.snapshot.toll.amount;

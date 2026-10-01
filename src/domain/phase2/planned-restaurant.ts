@@ -1,12 +1,12 @@
 import Big from "big.js";
 import type { CostItem, PlannedExpenseContext, PlannedExpenseDraft, PlannedRestaurantContext } from "./planned-contract";
 import type { PlannedPlaceOption } from "./planned-places";
-import { derivePlannedPlaceRoles } from "./planned-place-rules";
 import { isRootCost, isTransportCost, plannedParticipantCount, transportAssetMatchesMode } from "./planned-product";
+import { knownRestaurantSuggestions, validGooglePlaceId } from "./restaurant-places";
 
 export type RestaurantWizardStep = "partySize" | "soloPerson" | "datePrecision" | "dateCalendar" | "participants"
   | "occasion" | "occasionChoice" | "occasionCustom" | "locationScope" | "restaurantAsked" | "restaurantChoice"
-  | "restaurantManual" | "transportCostKind" | "transportMode" | "sharedDriver" | "sharesCosts"
+  | "restaurantCity" | "restaurantManual" | "transportCostKind" | "transportMode" | "sharedDriver" | "sharesCosts"
   | "transportAddress" | "transportDetails" | "priceKnowledge" | "priceTotal" | "priceDetailed"
   | "priceEstimated" | "baseline" | "review";
 export const RESTAURANT_PRICE_POLICY = Object.freeze({ method: "restaurant-range-15-40-per-person@v1", minimum: "15.00", maximum: "40.00", central: "27.50" });
@@ -26,7 +26,8 @@ const invalid = (): never => { throw new TypeError("PLANNED_RESTAURANT_CONTEXT_I
 export function parseRestaurantContext(raw: unknown): PlannedRestaurantContext {
   if (!raw || typeof raw !== "object" || Array.isArray(raw)) return invalid();
   const v = raw as Record<string, unknown>;
-  if (Object.keys(v).some((key) => !["locationScope", "city", "restaurantName", "cuisine", "address", "plannedTime", "timeBucket", "freeTransportMode", "sharedRide", "priceBasis"].includes(key))) return invalid();
+  if (Object.keys(v).some((key) => !["locationScope", "city", "restaurantName", "cuisine", "address", "googlePlaceId", "plannedTime", "timeBucket", "freeTransportMode", "sharedRide", "priceBasis"].includes(key))) return invalid();
+  if (v.googlePlaceId !== undefined && (!validGooglePlaceId(v.googlePlaceId) || v.address !== undefined)) return invalid();
   for (const key of ["city", "restaurantName", "cuisine", "address"] as const)
     if (v[key] !== undefined && (typeof v[key] !== "string" || !v[key].trim() || v[key].length > 120)) return invalid();
   const enumValid = (key: string, allowed: readonly string[]) => v[key] === undefined || typeof v[key] === "string" && allowed.includes(v[key]);
@@ -40,8 +41,7 @@ export function parseRestaurantContext(raw: unknown): PlannedRestaurantContext {
 }
 const sameCity = (a: string | null | undefined, b: string) => a?.trim().toLocaleLowerCase("fr") === b.trim().toLocaleLowerCase("fr");
 export function montpellierRestaurantSuggestions(places: readonly PlannedPlaceOption[]) {
-  return places.filter((place) => !place.privatePlace && sameCity(place.commune, "Montpellier") && derivePlannedPlaceRoles(place).includes("RESTAURANT"))
-    .sort((a, b) => (b.visits12Months ?? 0) - (a.visits12Months ?? 0) || (b.lastVisitDate ?? "").localeCompare(a.lastVisitDate ?? "") || a.name.localeCompare(b.name, "fr"));
+  return knownRestaurantSuggestions(places, "Montpellier");
 }
 /** No email-prefix inference or arbitrary first-person fallback. This is intent, not authorization. */
 export function restaurantSoloPerson(persons: readonly { personId: string; displayName: string }[], identity?: { personId?: string; displayName?: string }) {
@@ -71,7 +71,7 @@ export function assertRestaurantEstimate(draft: PlannedExpenseDraft) {
 }
 export function restaurantNeedsAddress(context: PlannedExpenseContext, places: readonly PlannedPlaceOption[]) {
   const known = context.place?.kind === "KNOWN" ? places.find((place) => place.placeId === (context.place as { placeId: string }).placeId) : undefined;
-  return !known?.coordinates && !known?.address && !context.restaurant?.address;
+  return !known?.coordinates && !known?.address && !context.restaurant?.address && !context.restaurant?.googlePlaceId;
 }
 export function restaurantContextIssues(draft: PlannedExpenseDraft) {
   const info = draft.context.restaurant;
@@ -85,7 +85,7 @@ export function restaurantContextIssues(draft: PlannedExpenseDraft) {
     || draft.context.companionMode === "GROUP" && count < 3) add("RESTAURANT_PARTY_SIZE_INVALID", "Ajustez les personnes prévues pour cette sortie.", "participants");
   if (!info.locationScope || !info.city || info.locationScope === "MONTPELLIER" && !sameCity(info.city, "Montpellier"))
     add("RESTAURANT_CITY_REQUIRED", "Précisez la ville du restaurant.", "locationScope");
-  if (info.locationScope === "ELSEWHERE" && (!info.restaurantName || !info.cuisine)) add("RESTAURANT_DETAILS_REQUIRED", "Précisez le restaurant et son type.", "restaurantManual");
+  if (info.googlePlaceId && (!info.restaurantName || draft.context.place?.kind !== "TEXT")) add("RESTAURANT_DETAILS_REQUIRED", "Choisissez à nouveau le restaurant.", "restaurantChoice");
   if ((info.plannedTime || info.timeBucket) && !draft.plannedDate) add("RESTAURANT_DATE_REQUIRED", "Choisissez une date pour cet horaire.", "dateCalendar");
   if (info.plannedTime && info.timeBucket) add("RESTAURANT_TIME_INVALID", "Choisissez une heure ou un créneau.", "dateCalendar");
   if (!draft.context.transportMode) add("RESTAURANT_TRANSPORT_REQUIRED", "Choisissez le trajet de cette sortie.", "transportCostKind");

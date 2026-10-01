@@ -9,6 +9,7 @@ import { resolvePlannedRoute, type HistoricalRouteLeg } from "@/domain/phase2/pl
 import { derivePlannedPlaceRoles } from "@/domain/phase2/planned-place-rules";
 import { ASSET_MODULES } from "@/domain/phase2/planned-assets";
 import { FrenchOfficialFuelPriceProvider, HereTollProvider, TomTomRouteProvider, unknownToll } from "./planned-car-providers";
+import { GoogleRestaurantPlaces } from "@/server/places/google-places";
 
 export function parsePlannedCarRequest(raw: unknown): PlannedCarRequest {
   if (!raw || typeof raw !== "object" || Array.isArray(raw)) throw new TypeError("PLANNED_ROUTE_REQUEST_INVALID");
@@ -47,8 +48,9 @@ export function parsePlannedCarRequest(raw: unknown): PlannedCarRequest {
   return { stops, ...(tripTiming ? { tripTiming } : {}), plannedDate: value.plannedDate as string | null, plannedTime: value.plannedTime as string | null | undefined,
     timeKind: value.timeKind as PlannedCarRequest["timeKind"], preference: value.preference as PlannedCarRequest["preference"], manualFuelPrice: value.manualFuelPrice as string | undefined };
 }
-type Facts = { places: readonly PlannedPlaceOption[]; vehicle: PlannedVehicleEstimate | null; history: readonly HistoricalRouteLeg[] };
-type Providers = { route: Pick<TomTomRouteProvider, "estimateCarRoute" | "geocode">; fuel: Pick<FrenchOfficialFuelPriceProvider, "getReference">; toll: Pick<HereTollProvider, "estimateTolls"> };
+type Facts = { places: readonly PlannedPlaceOption[]; vehicle: PlannedVehicleEstimate | null; history: readonly HistoricalRouteLeg[]; restaurantGooglePlaceId?: string };
+type Providers = { route: Pick<TomTomRouteProvider, "estimateCarRoute" | "geocode">; fuel: Pick<FrenchOfficialFuelPriceProvider, "getReference">; toll: Pick<HereTollProvider, "estimateTolls">;
+  restaurant?: Pick<GoogleRestaurantPlaces, "details"> };
 /** Same server service for the builder action, Preview and Save. It writes no canonical fact. */
 export async function estimatePlannedCar(raw: PlannedCarRequest, facts: Facts, providers: Providers = {
   route: new TomTomRouteProvider(), fuel: new FrenchOfficialFuelPriceProvider(), toll: new HereTollProvider(),
@@ -94,10 +96,16 @@ async function estimateCarDirection(raw: PlannedCarRequest, facts: Facts, provid
   const home = facts.places.find((p) => derivePlannedPlaceRoles(p).includes("OWN_HOME"));
   const reference = home?.coordinates ?? facts.places.find((p) => p.placeId === input.stops[0]?.placeId)?.coordinates;
   try {
+    // Fresh Google address only as geocoding input. Route snapshots contain TomTom's coordinates and the user's label.
+    const googleAddress = facts.restaurantGooglePlaceId ? (await (providers.restaurant ?? new GoogleRestaurantPlaces()).details(facts.restaurantGooglePlaceId)).formattedAddress : null;
+    if (facts.restaurantGooglePlaceId && !googleAddress) throw new TypeError("RESTAURANT_ADDRESS_UNAVAILABLE");
     stops = await Promise.all(input.stops.map(async (stop) => {
       const place = facts.places.find((p) => p.placeId === stop.placeId);
       const coordinates = place?.coordinates ?? (stop.coordinates?.source === "USER_DECLARED" ? stop.coordinates : undefined)
-        ?? await providers.route.geocode(place ? [place.address, place.commune, "France"].filter(Boolean).join(", ") || place.name : stop.label, reference);
+        ?? await providers.route.geocode(googleAddress && stop.endpointSource === "ROOT_PLACE" ? googleAddress
+          : place ? [place.address, place.commune, "France"].filter(Boolean).join(", ") || place.name : stop.label,
+          // A complete provider address already identifies its city. A home bias can lower the confidence of a valid address elsewhere.
+          googleAddress && stop.endpointSource === "ROOT_PLACE" ? undefined : reference);
       return { ...stop, label: place?.name ?? stop.label, coordinates };
     }));
   } catch { fallbacks.push("GEOCODING_UNAVAILABLE"); messages.push("Précisez une adresse exacte ou les coordonnées des lieux non résolus."); }

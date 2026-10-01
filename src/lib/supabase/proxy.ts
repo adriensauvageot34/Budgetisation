@@ -7,6 +7,8 @@ import { getSupabaseConfig } from "@/lib/supabase/config";
 export async function updateSession(request: NextRequest) {
   let response = NextResponse.next({ request });
   const isApi = request.nextUrl.pathname.startsWith("/api/");
+  // Public provider terms/privacy notice contains no household information.
+  if (request.nextUrl.pathname === "/mentions-places") return response;
 
   // Local P16/P17 browser harness only. Production never bypasses authentication.
   if (process.env.NODE_ENV !== "production"

@@ -9,7 +9,7 @@ export type PlannedPlaceOption = Readonly<{ placeId: string; name: string; commu
   visits12Months?: number; lastVisitDate?: string | null;
   carVisitDates12Months?: readonly string[];
   brandLabel?: string | null;
-  address?: string | null; coordinates?: import("./planned-car").RouteCoordinates;
+  address?: string | null; coordinates?: import("./planned-car").RouteCoordinates; googlePlaceId?: string;
   relationships: readonly { personName: string; role: string }[] }>;
 export type RankedPlannedPlace = Readonly<{ place: PlannedPlaceOption; roles: readonly PlaceRole[];
   rankingTier: "PRIMARY" | "SECONDARY"; reason: "CONTACT_HOME" | "WORK_MEAL_ANCHOR" | "PLACE_ROLE" }>;

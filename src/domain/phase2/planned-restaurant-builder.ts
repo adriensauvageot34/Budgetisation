@@ -4,7 +4,7 @@ import { isRootCost } from "./planned-product";
 import { restaurantEstimatedCost } from "./planned-restaurant";
 import type { PlannedPlaceOption } from "./planned-places";
 import { derivePlannedPlaceRoles } from "./planned-place-rules";
-import { stopForPlace } from "./planned-routes";
+import { routePlaceIdentity, stopForPlace } from "./planned-routes";
 
 /** A deliberate bill replacement keeps the previous bill in the existing local Undo mechanism. */
 export function replaceRestaurantBill(state: BuilderState, items: readonly CostItem[], basis: NonNullable<PlannedRestaurantContext["priceBasis"]>) {
@@ -36,7 +36,13 @@ export function startRestaurantCar(state: BuilderState, places: readonly Planned
   const known = ref.kind === "KNOWN" ? places.find((place) => place.placeId === ref.placeId) : undefined;
   const departure = { label: home.name, placeId: home.placeId, endpointSource: "DIRECT_PLACE" as const };
   const next = changeRestaurantContext(state, { transportMode: "CAR" }, { freeTransportMode: undefined });
+  const primary = stopForPlace(ref, known?.name ?? (ref.kind === "TEXT" ? ref.label : "Restaurant"), "ROOT_PLACE");
+  const existing = next.draft.context.route?.mode === "CAR" ? next.draft.context.route : undefined;
+  if (existing?.stops.some((stop) => stop.endpointSource === "ROOT_PLACE" && routePlaceIdentity(stop) === routePlaceIdentity(primary))) return next;
+  // A city-first change can temporarily remove the root stop. Insert the new destination without dropping explicit detours.
+  const stops = existing?.stops.length && !(existing.stops.length === 1 && existing.stops[0]?.placeId === home.placeId)
+    ? [...existing.stops] : [departure, departure];
+  stops.splice(stops.at(-1)?.placeId === home.placeId ? stops.length - 1 : stops.length, 0, primary);
   return editBuilderDraft(next, { ...next.draft, context: { ...next.draft.context,
-    route: { mode: "CAR", plannedTime: next.draft.context.restaurant?.plannedTime ?? null, timeKind: "DEPARTURE",
-      stops: [departure, stopForPlace(ref, known?.name ?? (ref.kind === "TEXT" ? ref.label : "Restaurant"), "ROOT_PLACE"), departure] } } });
+    route: { ...existing, mode: "CAR", plannedTime: next.draft.context.restaurant?.plannedTime ?? null, timeKind: "DEPARTURE", stops } } });
 }

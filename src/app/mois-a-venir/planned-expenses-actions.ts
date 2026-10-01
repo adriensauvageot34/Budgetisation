@@ -114,7 +114,8 @@ export async function estimatePlannedRoute(targetMonth: string,
       .map((person) => ({ personId: person.person_id, displayName: person.display_name })));
   return estimatePlannedCar({ stops: draft.context.route.stops, plannedDate: draft.plannedDate, plannedTime: draft.context.route.plannedTime,
     tripTiming: draft.context.visitTiming, timeKind: draft.context.route.timeKind, preference: draft.context.route.preference ?? draft.context.route.liveEstimate?.preference ?? "FASTEST", manualFuelPrice: draft.context.route.manualFuelPrice },
-    { places: options.places, vehicle: options.vehicle, history: await readPlannedRouteHistory(createCanonicalReadClient(), context.household.householdId) });
+    { places: options.places, vehicle: options.vehicle, restaurantGooglePlaceId: draft.context.restaurant?.googlePlaceId,
+      history: await readPlannedRouteHistory(createCanonicalReadClient(), context.household.householdId) });
 }
 
 export async function savePlannedExpense(targetMonth: string, rawDraft: unknown, command: PlannedWriteCommand) {

@@ -41,6 +41,8 @@ export type PlannedTripTiming = Readonly<{
 /** Restaurant intent/provenance only. Wizard navigation and calculated ranges are not persisted. */
 export type PlannedRestaurantContext = Readonly<{
   locationScope?: "MONTPELLIER" | "ELSEWHERE"; city?: string; restaurantName?: string; cuisine?: string; address?: string;
+  /** Only the external ID is durable; display/address/photos/Google coordinates stay transient. */
+  googlePlaceId?: string;
   plannedTime?: string | null; timeBucket?: "MORNING" | "LUNCH" | "EVENING"; freeTransportMode?: "TRAM" | "WALK" | "BIKE" | "OTHER";
   sharedRide?: "NO_CONTRIBUTION" | "CONTRIBUTION";
   priceBasis?: "KNOWN" | "DETAILED" | "ESTIMATED";

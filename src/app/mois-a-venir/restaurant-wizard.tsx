@@ -3,7 +3,8 @@ import { useEffect, useRef, useState, type Dispatch, type ReactNode, type SetSta
 import { ArrowLeft, Bike, Bus, Car, Coffee, Footprints, Heart, MapPin, TrainFront, Users, Utensils, Wallet } from "lucide-react";
 import { commitBuilderCost, deriveBuilderReadiness, discardSuspended, editBuilderDraft, materializeBuilderDraft, setBuilderRootBaseline, undoBuilderChange, type BuilderState } from "@/domain/phase2/planned-builder";
 import { changeRestaurantContext, replaceRestaurantBill, startRestaurantCar, useRestaurantEstimate } from "@/domain/phase2/planned-restaurant-builder";
-import { RESTAURANT_OCCASIONS, montpellierRestaurantSuggestions, restaurantNeedsAddress, restaurantPriceRange, type RestaurantWizardStep } from "@/domain/phase2/planned-restaurant";
+import { RESTAURANT_OCCASIONS, restaurantNeedsAddress, restaurantPriceRange, type RestaurantWizardStep } from "@/domain/phase2/planned-restaurant";
+import type { SelectedRestaurantPlace, UsedRestaurantRef } from "@/domain/phase2/restaurant-places";
 import { draftSummary, localCostGross } from "@/domain/phase2/planned-ux";
 import { isRootCost, plannedParticipantCount, prospectivePersonIdentity } from "@/domain/phase2/planned-product";
 import { SOCIAL_CONTACTS_V1 } from "@/domain/phase2/planned-rules";
@@ -13,17 +14,19 @@ import type { PlannedCarResult } from "@/domain/phase2/planned-car";
 import { builderMoney } from "./planned-builder-primitives";
 import { PlannedRouteEditor } from "./planned-route-editor";
 import { RestaurantBillEditor } from "./restaurant-bill-editor";
+import { fetchRestaurantPlace, GoogleMapsAttribution, RestaurantPlaceSearch } from "./restaurant-place-search";
 import { WizardBackdrop, WizardChoice, type WizardScene } from "./planned-wizard-visuals";
 import styles from "./planned-wizard.module.css";
 
 type Props = { builder: BuilderState; setBuilder: Dispatch<SetStateAction<BuilderState>>;
   persons: readonly { personId: string; displayName: string; isCurrentUser?: boolean }[];
   places: readonly PlannedPlaceOption[]; wallets: readonly PlannedWalletOption[]; vehicle: PlannedVehicleEstimate | null;
+  usedRestaurants?: readonly UsedRestaurantRef[];
   targetMonth: string; busy: boolean; onPreview: () => void; repairRequest: { target: string; serial: number } };
 const questions: Record<RestaurantWizardStep, string> = {
   partySize: "Avec qui ?", soloPerson: "Pour qui est cette sortie ?", datePrecision: "Avez-vous une date précise ?", dateCalendar: "Choisissez votre date",
   participants: "Qui vient ?", occasion: "Est-ce une occasion spéciale ?", occasionChoice: "Quelle occasion ?", occasionCustom: "Quelle est l’occasion ?",
-  locationScope: "Où ?", restaurantAsked: "Voulez-vous renseigner le restaurant ?", restaurantChoice: "Quel restaurant à Montpellier ?",
+  locationScope: "Où ?", restaurantCity: "Dans quelle ville ?", restaurantAsked: "Voulez-vous renseigner le restaurant ?", restaurantChoice: "Quel restaurant ?",
   restaurantManual: "Votre restaurant", transportCostKind: "Le trajet est-il gratuit ou payant ?", transportMode: "Comment y allez-vous ?",
   sharedDriver: "Qui prend en charge le trajet ?", sharesCosts: "Partagez-vous les frais ?", transportAddress: "À quelle adresse ?",
   transportDetails: "Votre trajet", priceKnowledge: "Connaissez-vous le prix ?", priceTotal: "Quel est le montant de la note ?",
@@ -44,7 +47,7 @@ function MiniCalendar({ month, value, onPick }: { month: string; value: string |
         aria-pressed={value === date} className={styles.day} onClick={() => onPick(date)}>{index + 1}</button>;
     })}</div></div>;
 }
-export function RestaurantWizard({ builder, setBuilder, persons, places, wallets, vehicle, targetMonth, busy, onPreview, repairRequest }: Props) {
+export function RestaurantWizard({ builder, setBuilder, persons, places, wallets, vehicle, usedRestaurants, targetMonth, busy, onPreview, repairRequest }: Props) {
   const [navigation, setNavigation] = useState<{ step: RestaurantWizardStep; history: RestaurantWizardStep[] }>(() => ({
     step: builder.draft.context.restaurant?.priceBasis && builder.draft.costItems.some(isRootCost) ? "review" : "partySize", history: [],
   }));
@@ -56,6 +59,18 @@ export function RestaurantWizard({ builder, setBuilder, persons, places, wallets
   const [city, setCity] = useState(restaurant.locationScope === "ELSEWHERE" ? restaurant.city ?? "" : "");
   const [restaurantName, setRestaurantName] = useState(restaurant.restaurantName ?? ""), [cuisine, setCuisine] = useState(restaurant.cuisine ?? "");
   const [address, setAddress] = useState(restaurant.address ?? "");
+  const [googlePlace, setGooglePlace] = useState<SelectedRestaurantPlace | null>(null), [googleNotice, setGoogleNotice] = useState("");
+  const loadedGoogleId = useRef<string | null>(null);
+  useEffect(() => {
+    const id = restaurant.googlePlaceId;
+    if (!id) { loadedGoogleId.current = null; setGooglePlace(null); setGoogleNotice(""); return; }
+    if (loadedGoogleId.current === id) return;
+    const controller = new AbortController(); setGooglePlace(null); setGoogleNotice("");
+    void fetchRestaurantPlace(id, undefined, controller.signal).then((place) => {
+      if (!controller.signal.aborted) { loadedGoogleId.current = id; setGooglePlace(place); }
+    }).catch((caught) => { if (!controller.signal.aborted) setGoogleNotice(caught instanceof Error ? caught.message : "Restaurant indisponible. Vous pouvez le saisir manuellement."); });
+    return () => controller.abort();
+  }, [restaurant.googlePlaceId]);
   const rootItems = draft.costItems.filter(isRootCost);
   const [totalAmount, setTotalAmount] = useState(builder.quickTotal || (rootItems.length ? draftSummary(rootItems).gross : ""));
   const [transportAmount, setTransportAmount] = useState(draft.costItems.find((item) => item.assetKey?.startsWith("transport:") && item.priceSource !== "CALCULATED")?.unitAmount ?? "");
@@ -94,12 +109,12 @@ export function RestaurantWizard({ builder, setBuilder, persons, places, wallets
   const applyManualRestaurant = () => {
     const selectedCity = restaurant.locationScope === "MONTPELLIER" ? "Montpellier" : city.trim();
     change({ place: { kind: "TEXT", label: (restaurantName.trim() + ", " + selectedCity).slice(0, 120), provenance: "USER_DECLARED_PROSPECTIVE" } },
-      { city: selectedCity, restaurantName: restaurantName.trim(), cuisine: cuisine.trim() || undefined, address: undefined });
+      { city: selectedCity, restaurantName: restaurantName.trim(), cuisine: cuisine.trim() || undefined, address: undefined, googlePlaceId: undefined });
     go("transportCostKind");
   };
   const carHandoff = () => {
-    if (restaurantNeedsAddress(context, places)) { go("transportAddress"); return; }
-    setBuilder((state) => state.draft.context.route?.mode === "CAR" ? state : startRestaurantCar(state, places));
+    if (restaurantNeedsAddress(context, places) || googlePlace && googlePlace.placeId === restaurant.googlePlaceId && !googlePlace.formattedAddress) { go("transportAddress"); return; }
+    setBuilder((state) => startRestaurantCar(state, places));
     go("transportDetails");
   };
   const chooseMode = (key: string) => {
@@ -159,13 +174,27 @@ export function RestaurantWizard({ builder, setBuilder, persons, places, wallets
   });
   if (step === "occasionCustom") { content = <label className={styles.field + " max-w-xl"}>L’occasion, en quelques mots<input autoFocus className={styles.input} value={customOccasion} maxLength={120} onChange={(e) => setCustomOccasion(e.target.value)} /></label>; nextDisabled = !customOccasion.trim(); next = () => { change({ socialOccasion: "OTHER_SPECIAL", occasionLabel: customOccasion.trim() }); go("locationScope"); }; }
   if (step === "locationScope") content = choices([{ key: "MONTPELLIER", label: "Montpellier", scene: "montpellier", icon: <MapPin size={20} /> }, { key: "ELSEWHERE", label: "Ailleurs", scene: "elsewhere", icon: <MapPin size={20} /> }], (key) => {
-    if (key === "MONTPELLIER") { change({ place: { kind: "TEXT", label: "Montpellier", provenance: "USER_DECLARED_PROSPECTIVE" } }, { locationScope: "MONTPELLIER", city: "Montpellier", restaurantName: undefined, cuisine: undefined, address: undefined }); go("restaurantAsked"); }
-    else { change({}, { locationScope: "ELSEWHERE", city: city.trim() || undefined }); go("restaurantManual"); }
+    if (key === "MONTPELLIER") { change({ place: { kind: "TEXT", label: "Montpellier", provenance: "USER_DECLARED_PROSPECTIVE" } }, { locationScope: "MONTPELLIER", city: "Montpellier", restaurantName: undefined, cuisine: undefined, address: undefined, googlePlaceId: undefined }); go("restaurantAsked"); }
+    else { change({ place: undefined }, { locationScope: "ELSEWHERE", city: city.trim() || undefined, restaurantName: undefined, cuisine: undefined, address: undefined, googlePlaceId: undefined }); go("restaurantCity"); }
   }, restaurant.locationScope);
-  if (step === "restaurantAsked") content = yesNo(() => go("restaurantChoice"), () => { change({}, { restaurantName: undefined, cuisine: undefined }); go("transportCostKind"); }, "restaurantExterior");
-  if (step === "restaurantChoice") content = <><div className={styles.choices}>{montpellierRestaurantSuggestions(places).map((place) => <WizardChoice key={place.placeId} label={place.name} scene="restaurantExterior" selected={context.place?.kind === "KNOWN" && context.place.placeId === place.placeId} onClick={() => {
-    change({ place: { kind: "KNOWN", placeId: place.placeId } }, { restaurantName: place.name, city: "Montpellier", address: undefined }); go("transportCostKind");
-  }} />)}<WizardChoice label="Autre restaurant" scene="note" onClick={() => go("restaurantManual")} /></div>{!montpellierRestaurantSuggestions(places).length && <p className="mt-3 text-xs text-slate-500">Aucun restaurant local connu. Vous pouvez renseigner le vôtre.</p>}</>;
+  const chooseLater = () => {
+    const chosenCity = restaurant.city ?? "Montpellier";
+    change({ place: { kind: "TEXT", label: chosenCity, provenance: "USER_DECLARED_PROSPECTIVE" } }, { restaurantName: undefined, cuisine: undefined, address: undefined, googlePlaceId: undefined });
+    go("transportCostKind");
+  };
+  if (step === "restaurantCity") {
+    content = <label className={styles.field + " max-w-xl"}>Ville<input autoFocus className={styles.input} value={city} maxLength={100} onChange={(e) => setCity(e.target.value)} placeholder="Sète, Paris…" /></label>;
+    nextDisabled = !city.trim(); next = () => { change({ place: { kind: "TEXT", label: city.trim(), provenance: "USER_DECLARED_PROSPECTIVE" } }, { city: city.trim() }); go("restaurantChoice"); };
+  }
+  if (step === "restaurantAsked") content = yesNo(() => go("restaurantChoice"), chooseLater, "restaurantExterior");
+  if (step === "restaurantChoice") content = <RestaurantPlaceSearch city={restaurant.city ?? "Montpellier"} places={places} usedRestaurants={usedRestaurants}
+    onKnown={(place) => { change({ place: { kind: "KNOWN", placeId: place.placeId } }, { restaurantName: place.name, city: restaurant.city, address: undefined, googlePlaceId: undefined }); go("transportCostKind"); }}
+    onGoogle={(place, userQuery) => {
+      loadedGoogleId.current = place.placeId; setGooglePlace(place); setGoogleNotice("");
+      // The durable label is the user's own intent, not a frozen copy of Google's display name/address.
+      change({ place: { kind: "TEXT", label: `${userQuery}, ${restaurant.city}`.slice(0, 120), provenance: "USER_DECLARED_PROSPECTIVE" } },
+        { restaurantName: userQuery.slice(0, 120), googlePlaceId: place.placeId, address: undefined, cuisine: undefined }); go("transportCostKind");
+    }} onManual={(query) => { setRestaurantName(query); go("restaurantManual"); }} onLater={chooseLater} />;
   if (step === "restaurantManual") {
     content = <div className="grid max-w-3xl grid-cols-2 gap-5">{restaurant.locationScope === "ELSEWHERE" && <label className={styles.field}>Ville<input autoFocus className={styles.input} value={city} maxLength={100} onChange={(e) => setCity(e.target.value)} /></label>}
       <label className={styles.field}>Nom du restaurant<input autoFocus={restaurant.locationScope === "MONTPELLIER"} className={styles.input} value={restaurantName} maxLength={100} onChange={(e) => setRestaurantName(e.target.value)} /></label>
@@ -181,13 +210,13 @@ export function RestaurantWizard({ builder, setBuilder, persons, places, wallets
   if (step === "transportAddress") {
     content = <div className="max-w-2xl"><label className={styles.field}>Adresse du restaurant<input autoFocus className={styles.input} maxLength={110} value={address} onChange={(e) => setAddress(e.target.value)} placeholder="Numéro et rue" /></label><p className="mt-3 text-sm text-slate-500">{restaurant.restaurantName ?? "Restaurant"} · {restaurant.city}</p></div>;
     nextDisabled = !address.trim(); next = () => {
-      setBuilder((state) => { const updated = changeRestaurantContext(state, { place: { kind: "TEXT", label: (address.trim() + ", " + restaurant.city).slice(0, 120), provenance: "USER_DECLARED_PROSPECTIVE" } }, { address: address.trim() }); return startRestaurantCar(updated, places); });
+      setBuilder((state) => { const updated = changeRestaurantContext(state, { place: { kind: "TEXT", label: (address.trim() + ", " + restaurant.city).slice(0, 120), provenance: "USER_DECLARED_PROSPECTIVE" } }, { address: address.trim(), googlePlaceId: undefined }); return startRestaurantCar(updated, places); });
       go("transportDetails");
     };
   }
   if (step === "transportDetails") {
     if (context.transportMode === "CAR") {
-      content = <PlannedRouteEditor guided builder={builder} setBuilder={setBuilder} places={places} vehicle={vehicle} targetMonth={targetMonth} persons={persons} estimate={estimate} setEstimate={setEstimate} />;
+      content = <><PlannedRouteEditor guided builder={builder} setBuilder={setBuilder} places={places} vehicle={vehicle} targetMonth={targetMonth} persons={persons} estimate={estimate} setEstimate={setEstimate} />{restaurant.googlePlaceId && <button type="button" className="mt-3 text-xs underline" onClick={() => go("transportAddress")}>Préciser moi-même l’adresse si le trajet reste indisponible</button>}</>;
       const routeIssues = readiness.issues.filter((issue) => issue.scope.startsWith("context.route") || ["RESTAURANT_ADDRESS_REQUIRED", "RESTAURANT_ROUTE_REQUIRED"].includes(issue.code));
       nextDisabled = !!routeIssues.length; next = () => go("priceKnowledge");
     } else {
@@ -232,7 +261,10 @@ export function RestaurantWizard({ builder, setBuilder, persons, places, wallets
   return <div className={styles.stage}><WizardBackdrop scene={step.startsWith("price") || step === "review" ? "restaurant" : step.startsWith("transport") || step === "sharedDriver" ? "road" : "room"} className={styles.ambient} />
     <div className={styles.stageContent}><div key={step} className={styles.motion + " flex min-h-0 flex-1 flex-col"} id={"restaurant-" + step}>
       <p className={styles.eyebrow}>{step.startsWith("price") || step === "baseline" ? "La note" : step.startsWith("transport") || step === "sharedDriver" || step === "sharesCosts" ? "Le trajet" : step === "review" ? "Votre projet" : "La sortie"}</p>
-      <h4 ref={heading} tabIndex={-1} className={styles.question}>{questions[step]}</h4><div className={styles.stepBody}>{content}
+      <h4 ref={heading} tabIndex={-1} className={styles.question}>{questions[step]}</h4><div className={styles.stepBody}>
+        {googlePlace && googlePlace.placeId === restaurant.googlePlaceId && step !== "restaurantChoice" && <div className="mb-4 flex flex-wrap items-center gap-x-3 rounded-xl border border-slate-200 bg-white/90 px-3 py-2 text-sm"><strong>{googlePlace.displayName}</strong><span className="text-xs text-slate-500">{googlePlace.formattedAddress ?? "Adresse à préciser pour le trajet"}</span><GoogleMapsAttribution /></div>}
+        {googleNotice && <div role="status" className="mb-4 text-sm text-amber-900">{googleNotice}<button type="button" className="ml-2 underline" onClick={() => go("restaurantChoice")}>Changer de restaurant</button></div>}
+        {content}
         {blockers.length > 0 && <div className="mt-4 flex flex-wrap gap-3">{blockers.map((issue) => <button type="button" key={issue.code + issue.scope} className="text-left text-xs text-amber-900 underline" onClick={() => jump(issue.repairTarget.startsWith("restaurant-") ? issue.repairTarget.slice(11) as RestaurantWizardStep : issue.code === "BASELINE_ANSWER_REQUIRED" ? "baseline" : issue.scope.startsWith("context.route") ? "transportDetails" : "priceDetailed")}>{issue.message}</button>)}</div>}
       </div></div></div>
     {builder.suspended.length > 0 && <div className="relative flex shrink-0 items-center justify-between gap-3 bg-amber-50 px-8 py-3 text-xs text-amber-900"><p>Des précisions précédentes sont conservées pour annuler ce changement.</p><div className="flex gap-4"><button type="button" className="font-bold underline" onClick={() => setBuilder(undoBuilderChange)}>Annuler</button><button type="button" className="font-bold underline" onClick={() => setBuilder(discardSuspended)}>Valider ce changement</button></div></div>}

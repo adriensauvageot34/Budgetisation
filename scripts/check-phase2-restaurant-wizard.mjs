@@ -47,7 +47,7 @@ assert.throws(() => parse({ ...parsed, subtypeKey: "groceries" }), /RESTAURANT_C
 assert.throws(() => parse({ ...parsed, context: { ...parsed.context, restaurant: { ...parsed.context.restaurant, plannedTime: "18:00" } } }), /RESTAURANT_DATE_REQUIRED/);
 assert.throws(() => parse({ ...parsed, context: { ...parsed.context, transportMode: "CAR", restaurant: { ...parsed.context.restaurant, freeTransportMode: undefined } } }), /RESTAURANT_ROUTE_REQUIRED/);
 assert.throws(() => parse({ ...parsed, context: { ...parsed.context, restaurant: { ...parsed.context.restaurant, sharedRide: "NO_CONTRIBUTION" } } }), /RESTAURANT_SHARED_RIDE_INVALID/);
-assert.throws(() => parse({ ...parsed, context: { ...parsed.context, restaurant: { ...parsed.context.restaurant, locationScope: "ELSEWHERE", city: "Sète" } } }), /RESTAURANT_DETAILS_REQUIRED/);
+assert.doesNotThrow(() => parse({ ...parsed, context: { ...parsed.context, restaurant: { ...parsed.context.restaurant, locationScope: "ELSEWHERE", city: "Sète" } } }), "The Google Places brief permits a restaurant chosen later in the declared city");
 assert.throws(() => parse({ ...parsed, costItems: [{ ...parsed.costItems[0], unitAmount: "30.00" }] }), /RESTAURANT_ESTIMATE_INVALID/);
 assert.throws(() => parse({ ...parsed, costItems: [{ ...parsed.costItems[0], fundingAllocations: [{ source: "SWILE", amount: "27.50" }] }] }), /FUNDING|ESTIMATE/);
 const cost = (assetKey, amount) => ({ id: randomUUID(), assetKey, label: "Élément", quantity: "1", unitAmount: amount, baselineKey: null, modulePath: ["restaurant"], priceSource: "MANUAL" });

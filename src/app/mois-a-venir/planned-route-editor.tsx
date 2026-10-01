@@ -67,7 +67,7 @@ export function PlannedRouteEditor({ builder, setBuilder, places, vehicle, targe
     setMessage("");
   };
   const routeSignature = mode === "CAR" && route && timingReady && resolved.transport !== "FORBIDDEN" ? JSON.stringify([route.stops.map((s) => [s.label, s.placeId, s.endpointSource, s.childModule,
-    s.coordinates?.source === "USER_DECLARED" ? s.coordinates : null, s.distanceSource === "MANUAL" ? s.distanceToNextKm : null]), draft.plannedDate, draft.context.visitTiming, route.plannedTime, route.timeKind, route.manualFuelPrice, route.preference]) : "";
+    s.coordinates?.source === "USER_DECLARED" ? s.coordinates : null, s.distanceSource === "MANUAL" ? s.distanceToNextKm : null]), draft.plannedDate, draft.context.visitTiming, draft.context.restaurant?.googlePlaceId, route.plannedTime, route.timeKind, route.manualFuelPrice, route.preference]) : "";
   currentRoute.current = routeSignature;
   const draftRef = useRef(draft); draftRef.current = draft;
   useEffect(() => {
