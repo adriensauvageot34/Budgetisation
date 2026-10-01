@@ -28,7 +28,7 @@ export const PLANNED_FAMILIES: readonly { key: PlannedExpenseFamily; label: stri
 ];
 
 export const PLANNED_SUBTYPE_LABELS: Record<PlannedExpenseFamily, readonly { key: string; label: string }[]> = {
-  outing: [{ key: "bar", label: "Bar" }, { key: "club_festival", label: "Club / techno / festival" }, { key: "house_party", label: "Soirée à la maison" }, { key: "other_outing", label: "Autre sortie" }],
+  outing: [{ key: "bar", label: "Bar / apéro" }, { key: "club_festival", label: "Club / événement" }, { key: "house_party", label: "Soirée privée" }, { key: "other_outing", label: "Sortie" }],
   food: [{ key: "groceries", label: "Courses" }, { key: "restaurant", label: "Restaurant" }, { key: "fast_food", label: "Fast-food / snack" }, { key: "work_meal", label: "Repas au travail" }],
   visit_trip: [{ key: "family_visit", label: "Visite famille" }, { key: "friend_visit", label: "Visite amis" }, { key: "trip_stay", label: "Voyage / séjour" }, { key: "other_trip", label: "Autre déplacement" }],
   activity: PLANNED_EXPENSE_SUBTYPES.activity.map((key) => ({ key, label: ({ cinema: "Cinéma", bowling: "Bowling", karting: "Karting", mini_golf: "Mini-golf", billiards: "Billard", escape_game: "Escape game", canoe_kayak: "Canoë / kayak", pool: "Piscine", spa: "Spa", theme_park: "Parc d’attractions", show: "Spectacle", match: "Match", sport: "Sport", fishing: "Pêche", creative_workshop: "Atelier / activité créative", photo_outing: "Sortie photo", other_activity: "Autre activité" } as Record<string, string>)[key] })),
@@ -45,7 +45,7 @@ const add = (module: AssetModule, key: string, label: string, icon: string, quan
 const many = (module: AssetModule, rows: readonly [string, string, string, QuantityStrategy?, ("MEAL" | "BANK")?][]) =>
   rows.forEach(([key, label, icon, strategy, funding]) => add(module, key, label, icon, strategy, funding));
 
-many("bar", [["beer", "Bière", "🍺", "PER_PERSON"], ["wine", "Verre de vin", "🍷", "PER_PERSON"], ["cocktail", "Cocktail", "🍹", "PER_PERSON"], ["shot", "Shot", "🥃", "PER_PERSON"], ["tapas", "Planche / tapas", "🍽️", "SHARED", "MEAL"], ["parking", "Parking", "🚗"], ["entry", "Entrée", "🎫"]]);
+many("bar", [["beer", "Bière", "🍺", "PER_PERSON"], ["wine", "Verre de vin", "🍷", "PER_PERSON"], ["cocktail", "Cocktail", "🍹", "PER_PERSON"], ["shot", "Shot", "🥃", "PER_PERSON"], ["tapas", "Planche / tapas", "🍽️", "SHARED", "MEAL"], ["parking", "Parking", "🚗"], ["entry", "Entrée / cover", "🎫"]]);
 many("club", [["ticket", "Ticket / entrée", "🎫", "PER_PERSON"], ["alcohol", "Verre alcool", "🥃", "PER_PERSON"], ["shot", "Shot", "🥃", "PER_PERSON"], ["soft", "Boisson sans alcool", "🥤", "PER_PERSON", "MEAL"], ["water", "Eau", "💧", "PER_PERSON", "MEAL"], ["food", "Nourriture sur place", "🍔", "PER_PERSON", "MEAL"], ["uber_out", "Uber aller", "🚕"], ["uber_back", "Uber retour", "🚕"], ["parking", "Parking", "🚗"], ["cloakroom", "Vestiaire", "🔒"]]);
 add("house_party", "vodka", "Vodka", "🍾", "FIXED", "BANK", { defaultQuantity: "1", defaultUnitAmount: "16.00" });
 add("house_party", "crazy_tiger", "Crazy Tiger sans alcool", "🥤", "FIXED", "MEAL", { defaultQuantity: "2", defaultUnitAmount: "3.00" });
@@ -55,7 +55,7 @@ many("restaurant", [["starter", "Entrée", "🥗", "PER_PERSON", "MEAL"], ["main
 // Honest split categories: a meal subtotal may use meal wallets; alcohol remains bank only.
 many("restaurant", [["meal_total", "Repas et boissons sans alcool", "🍽️", "MANUAL", "MEAL"],
   ["alcohol_total", "Alcool", "🍷"]]);
-many("fast_food", [["burger", "Burger", "🍔", "PER_PERSON", "MEAL"], ["thai", "Thaï", "🍜", "PER_PERSON", "MEAL"], ["fries", "Frites", "🍟", "PER_PERSON", "MEAL"], ["drink", "Boisson sans alcool", "🥤", "PER_PERSON", "MEAL"], ["tacos", "Tacos", "🌯", "PER_PERSON", "MEAL"], ["kebab", "Kebab", "🥙", "PER_PERSON", "MEAL"], ["pizza", "Pizza", "🍕", "SHARED", "MEAL"], ["chicken", "Poulet", "🍗", "PER_PERSON", "MEAL"], ["sandwich", "Sandwich", "🥪", "PER_PERSON", "MEAL"], ["dessert", "Dessert", "🍰", "PER_PERSON", "MEAL"], ["delivery_fee", "Frais de livraison", "🚚"], ["service_fee", "Frais de service", "💸"]]);
+many("fast_food", [["burger", "Sandwich / burger", "🍔", "PER_PERSON", "MEAL"], ["thai", "Thaï", "🍜", "PER_PERSON", "MEAL"], ["fries", "Accompagnement", "🍟", "PER_PERSON", "MEAL"], ["drink", "Boisson sans alcool", "🥤", "PER_PERSON", "MEAL"], ["tacos", "Tacos / kebab", "🌯", "PER_PERSON", "MEAL"], ["kebab", "Kebab", "🥙", "PER_PERSON", "MEAL"], ["pizza", "Pizza", "🍕", "SHARED", "MEAL"], ["chicken", "Poulet / autre plat", "🍗", "PER_PERSON", "MEAL"], ["sandwich", "Sandwich", "🥪", "PER_PERSON", "MEAL"], ["dessert", "Dessert", "🍰", "PER_PERSON", "MEAL"], ["delivery_fee", "Frais de livraison", "🚚"], ["service_fee", "Frais de service", "💸"]]);
 many("work_meal", [["bakery", "Boulangerie", "🥖", "FIXED", "MEAL"], ["grand_frais", "Grand Frais", "🛒", "FIXED", "MEAL"], ["mcdo", "McDo", "🍔", "FIXED", "MEAL"]]);
 many("transport", [["fuel_usage", "Coût carburant estimé", "⛽"], ["toll", "Péage", "🛣️"], ["parking", "Parking", "🅿️"], ["train", "Train", "🚆", "PER_PERSON"], ["bus", "Bus", "🚌", "PER_PERSON"], ["uber", "Uber / taxi", "🚕"], ["carpool", "Participation covoiturage", "🚗"], ["other", "Autre déplacement payant", "🚏"]]);
 many("visit_family", [["breakfast", "Petit-déjeuner", "🥐", "PER_PERSON", "MEAL"], ["brought_groceries", "Courses apportées", "🛒", "SHARED", "MEAL"]]);
@@ -71,6 +71,17 @@ many("gift", [["flowers", "Fleurs", "💐"], ["jewelry", "Bijou", "💍"], ["clo
 many("tech", [["charger", "Chargeur", "🔌"], ["cable", "Câble", "🔌"], ["lighting", "Éclairage", "💡"], ["video_game", "Jeu vidéo", "🎮"]]);
 many("automotive", [["tires", "Pneus", "🛞"], ["motor_oil", "Huile moteur", "🧴"], ["coolant", "Liquide de refroidissement", "🌡️"], ["washer_fluid", "Liquide lave-glace", "💧"], ["bulbs", "Ampoules", "💡"], ["battery", "Batterie", "🔋"], ["wash", "Lavage", "🧼"], ["part", "Pièce", "🔧"]]);
 many("other", [["administrative", "Administratif", "📄"], ["fee", "Frais", "💸"], ["contribution", "Participation", "🤝"]]);
+
+// Canonical economic categories added by the intention Builder; never navigation launchers.
+many("fast_food", [["menu", "Menu", "🍔", "PER_PERSON", "MEAL"], ["water", "Eau", "💧", "PER_PERSON", "MEAL"], ["meal_total", "Repas et boissons sans alcool", "🍽️", "MANUAL", "MEAL"]]);
+many("work_meal", [["meal", "Repas / formule", "🥪", "MANUAL", "MEAL"], ["drink", "Boisson", "🥤", "MANUAL", "MEAL"], ["coffee", "Café", "☕", "MANUAL", "MEAL"], ["dessert", "Dessert", "🍰", "MANUAL", "MEAL"], ["delivery_fee", "Frais de livraison", "🚚"], ["service_fee", "Frais de service", "💳"]]);
+many("groceries", [["bread", "Pain / boulangerie", "🥖", "MANUAL", "MEAL"], ["cleaning", "Entretien", "🧽"], ["delivery_fee", "Frais de livraison", "🚚"], ["service_fee", "Frais de service", "💳"]]);
+many("bar", [["soft", "Soft", "🥤", "MANUAL", "MEAL"], ["water", "Eau", "💧", "MANUAL", "MEAL"]]);
+many("activity", [["food", "Nourriture / snack", "🍿", "MANUAL", "MEAL"]]);
+many("club", [["merch", "Souvenir / merch", "👕"]]);
+many("transport", [["flight", "Billet d’avion", "✈️"]]);
+for (const module of ["beauty", "home", "tech", "automotive", "gift"] as const)
+  many(module, [["delivery_fee", "Frais de livraison", "🚚"], ["service_fee", "Frais de service", "💳"]]);
 
 export const ASSET_CATALOG: readonly PlannedAsset[] = assets;
 export const PLANNED_ASSETS = ASSET_CATALOG;

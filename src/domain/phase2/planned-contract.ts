@@ -34,9 +34,14 @@ export type PlannedFuelEstimate = Readonly<{ vehicleLabel: string; consumptionL1
   fuelPriceSource: string; fuelPriceObservedAt?: string; fuelPriceQuality?: string;
   distanceKm: string; liters: string; cost: string }>;
 export type PlannedExpenseContext = Readonly<{ participantPersonIds?: readonly string[]; travellingParticipantPersonIds?: readonly string[];
+  companionMode?: "SOLO" | "COUPLE" | "GROUP";
+  groceriesNature?: "USUAL" | "TOP_UP" | "OCCASION";
+  workMealMode?: "BOUGHT" | "DELIVERED" | "FROM_HOME";
+  outingKind?: "CLUB" | "EVENT";
+  eventName?: string; endDate?: string; noExpense?: boolean; purchaseDescription?: string;
   participantRefs?: readonly ProspectivePersonRef[]; host?: ProspectivePersonRef;
   hostParticipates?: boolean; visitedPersonParticipates?: boolean;
-  transportMode?: "CAR" | "TRAIN" | "BUS" | "TAXI" | "CARPOOL" | "FREE" | "OTHER";
+  transportMode?: "CAR" | "TRAIN" | "BUS" | "TAXI" | "CARPOOL" | "FREE" | "OTHER" | "PLANE";
   additionalGuestCount?: number; personVisited?: ProspectivePersonRef;
   place?: PlannedExpensePlace; purchaseMode?: "IN_STORE" | "ONLINE" | "TAKEAWAY" | "DELIVERY";
   housePartyPlaceMode?: "OWN_HOME" | "OTHER_HOME"; visitFormat?: "SIMPLE" | "APERO_PARTY" | "MEAL" | "STAY";
@@ -52,3 +57,4 @@ export type PlannedExpenseDraft = Readonly<{ familyKey: PlannedExpenseFamily; su
 export type PlannedVehicleEstimate = Readonly<{ label: string; consumptionL100Km: string;
   fuelPricePerLiter: string; fuelPriceSource: string; fuelPriceObservedAt?: string; fuelPriceQuality?: string }>;
 export type PlannedPriceSuggestion = Readonly<{ assetKey: string; unitAmount: string; sourceLabel: string }>;
+export type PlannedWalletOption = Readonly<{ source: "SWILE" | "EDENRED"; ownerPersonId: string | null }>;

@@ -87,6 +87,6 @@ export default async function MonthForecastPage({ searchParams }: { searchParams
   });
   return <MonthForecastView forecast={forecast} scenario={scenario} stored={stored}
     plannedExpenses={cards} today={today}
-    persons={persons} places={options.places} vehicle={options.vehicle} prices={options.prices}
+    persons={persons} places={options.places} vehicle={options.vehicle} prices={options.prices} wallets={options.wallets}
     inputError={params.inputError === "1"} />;
 }

@@ -8,10 +8,10 @@ import { ASSET_AGGREGATE_DESCENDANTS, ASSET_MODULES, PLANNED_EXPENSE_SUBTYPES, p
   type AssetModule, type PlannedExpenseFamily } from "@/domain/phase2/planned-assets";
 import { costAllowsBaseline } from "@/domain/phase2/planned-product";
 import { plannedLineGross, costItemCashTreatment } from "@/domain/phase2/planned-money";
-import { calculateRouteFuel, resolvePlannedRoute, routePlaceIdentity } from "@/domain/phase2/planned-routes";
+import { calculateRouteFuel, resolvePlannedRoute, routePlaceIdentity, assertPrimaryRouteStop } from "@/domain/phase2/planned-routes";
 import { rankPlacesForPlannedContext } from "@/domain/phase2/planned-places";
 import { derivePlannedPlaceRoles } from "@/domain/phase2/planned-place-rules";
-import { BRING_ITEMS_LENS, DELIVERY_PROVIDERS, FISHING_ASSET_LENS, SOCIAL_CONTACTS_V1, resolvePlannedContext,
+import { BRING_ITEMS_LENS, DELIVERY_PROVIDERS, FISHING_ASSET_LENS, SOCIAL_CONTACTS_V1, resolvePlannedContext, plannedContextModifiers, plannedAllowsNoCost,
   validateModulePath, childPlaceRoles } from "@/domain/phase2/planned-rules";
 import type { CostItem, FundingAllocation, FundingSource, PlannedBaselineKey, PlannedExpenseContext,
   PlannedExpenseDraft, PriceSource, ModulePath, ProspectivePlaceRef } from "@/domain/phase2/planned-contract";
@@ -102,7 +102,7 @@ export function parsePlannedExpenseDraft(value: unknown, targetMonth: string,
     throw new TypeError("PLANNED_EXPENSE_SUBTYPE_INVALID");
   const plannedDate = raw.plannedDate === null ? null : date(raw.plannedDate, "PLANNED_EXPENSE_DATE_INVALID");
   if (plannedDate !== null && !plannedDate.startsWith(`${targetMonth}-`)) throw new TypeError("PLANNED_EXPENSE_DATE_MONTH_INVALID");
-  if (!Array.isArray(raw.costItems) || raw.costItems.length < 1 || raw.costItems.length > 50)
+  if (!Array.isArray(raw.costItems) || raw.costItems.length > 50)
     throw new TypeError("PLANNED_EXPENSE_COST_ITEMS_INVALID");
   const costItems: CostItem[] = raw.costItems.map((value: unknown) => {
     const item = object(value, "PLANNED_EXPENSE_COST_ITEM_INVALID");
@@ -170,9 +170,34 @@ export function parsePlannedExpenseDraft(value: unknown, targetMonth: string,
   const contextRaw = object(raw.context, "PLANNED_EXPENSE_CONTEXT_INVALID");
   keysOnly(contextRaw, ["participantPersonIds", "travellingParticipantPersonIds", "additionalGuestCount", "personVisited", "participantRefs", "host", "hostParticipates", "visitedPersonParticipates", "transportMode",
     "place", "purchaseMode", "housePartyPlaceMode", "visitFormat", "socialOccasion", "occasionLabel",
-    "deliveryProviderKey", "deliveryProvider", "seller", "gift", "childLocalPlaceRefs", "route"],
+    "deliveryProviderKey", "deliveryProvider", "seller", "gift", "childLocalPlaceRefs", "route",
+    "companionMode", "groceriesNature", "workMealMode", "outingKind", "eventName", "endDate", "noExpense", "purchaseDescription"],
   "PLANNED_EXPENSE_CONTEXT_FIELDS_INVALID");
   const context: { -readonly [K in keyof PlannedExpenseContext]?: PlannedExpenseContext[K] } = {};
+  for (const [field, values] of Object.entries({ companionMode: ["SOLO", "COUPLE", "GROUP"],
+    groceriesNature: ["USUAL", "TOP_UP", "OCCASION"], workMealMode: ["BOUGHT", "DELIVERED", "FROM_HOME"], outingKind: ["CLUB", "EVENT"] })) {
+    if (contextRaw[field] !== undefined) {
+      if (!values.includes(contextRaw[field] as string)) throw new TypeError("PLANNED_EXPENSE_INTENT_MODIFIER_INVALID");
+      Object.assign(context, { [field]: contextRaw[field] });
+    }
+  }
+  if (contextRaw.eventName !== undefined) context.eventName = title(contextRaw.eventName, "PLANNED_EXPENSE_EVENT_NAME_INVALID");
+  if (contextRaw.purchaseDescription !== undefined) {
+    if (familyKey !== "purchase") throw new TypeError("PLANNED_EXPENSE_INTENT_MODIFIER_FORBIDDEN");
+    context.purchaseDescription = title(contextRaw.purchaseDescription, "PLANNED_EXPENSE_PURCHASE_DESCRIPTION_INVALID");
+  }
+  if (contextRaw.endDate !== undefined) {
+    context.endDate = date(contextRaw.endDate, "PLANNED_EXPENSE_END_DATE_INVALID");
+    if (familyKey !== "visit_trip" || raw.subtypeKey !== "trip_stay" || plannedDate && context.endDate < plannedDate) throw new TypeError("PLANNED_EXPENSE_END_DATE_INVALID");
+  }
+  if (contextRaw.noExpense !== undefined) {
+    if (typeof contextRaw.noExpense !== "boolean") throw new TypeError("PLANNED_EXPENSE_NO_EXPENSE_INVALID");
+    if (!["activity", "visit_trip"].includes(familyKey)) throw new TypeError("PLANNED_EXPENSE_INTENT_MODIFIER_FORBIDDEN");
+    context.noExpense = contextRaw.noExpense;
+  }
+  if (context.groceriesNature && !(familyKey === "food" && raw.subtypeKey === "groceries")
+    || context.workMealMode && !(familyKey === "food" && raw.subtypeKey === "work_meal")
+    || context.outingKind && !(familyKey === "outing" && raw.subtypeKey === "club_festival")) throw new TypeError("PLANNED_EXPENSE_INTENT_MODIFIER_FORBIDDEN");
   const personIds = (value: unknown, code: string): string[] => {
     if (!Array.isArray(value) || value.length > 20) throw new TypeError(code);
     const ids = value.map((id: unknown) => uuid(id, code));
@@ -217,7 +242,7 @@ export function parsePlannedExpenseDraft(value: unknown, targetMonth: string,
       throw new TypeError("PLANNED_EXPENSE_PARTICIPANTS_INVALID");
   }
   if (contextRaw.transportMode !== undefined) {
-    if (!["CAR", "TRAIN", "BUS", "TAXI", "CARPOOL", "FREE", "OTHER"].includes(contextRaw.transportMode as string))
+    if (!["CAR", "TRAIN", "BUS", "TAXI", "CARPOOL", "FREE", "OTHER", "PLANE"].includes(contextRaw.transportMode as string))
       throw new TypeError("PLANNED_EXPENSE_TRANSPORT_MODE_INVALID");
     context.transportMode = contextRaw.transportMode as PlannedExpenseContext["transportMode"];
   }
@@ -265,15 +290,10 @@ export function parsePlannedExpenseDraft(value: unknown, targetMonth: string,
     }));
   }
   if (purpose === "WRITE" && familyKey === "food" && raw.subtypeKey === "fast_food"
-    && context.purchaseMode !== "TAKEAWAY" && context.purchaseMode !== "DELIVERY")
-    throw new TypeError("PLANNED_EXPENSE_PURCHASE_MODE_REQUIRED");
-  if (purpose === "WRITE" && familyKey === "purchase" && raw.subtypeKey === "clothing"
-    && context.purchaseMode !== "IN_STORE" && context.purchaseMode !== "ONLINE")
+    && context.purchaseMode !== "IN_STORE" && context.purchaseMode !== "TAKEAWAY" && context.purchaseMode !== "DELIVERY")
     throw new TypeError("PLANNED_EXPENSE_PURCHASE_MODE_REQUIRED");
   if (purpose === "WRITE" && context.purchaseMode === "DELIVERY" && !context.deliveryProvider)
     throw new TypeError("PLANNED_EXPENSE_DELIVERY_PROVIDER_REQUIRED");
-  if (purpose === "WRITE" && context.purchaseMode === "ONLINE" && !context.seller)
-    throw new TypeError("PLANNED_EXPENSE_SELLER_REQUIRED");
   if (contextRaw.gift !== undefined) {
     const gift = object(contextRaw.gift, "PLANNED_EXPENSE_GIFT_INVALID");
     keysOnly(gift, ["recipient", "occasion"], "PLANNED_EXPENSE_GIFT_INVALID");
@@ -368,9 +388,9 @@ export function parsePlannedExpenseDraft(value: unknown, targetMonth: string,
     && (context.route?.mode !== "CAR" || !context.route.fuelEstimate))
     throw new TypeError("PLANNED_EXPENSE_CAR_ESTIMATE_REQUIRED");
   const resolved = resolvePlannedContext({ familyKey, subtypeKey: raw.subtypeKey as string | null,
-    modifiers: { housePartyPlaceMode: context.housePartyPlaceMode, purchaseMode: context.purchaseMode,
-      visitFormat: context.visitFormat, socialOccasion: context.socialOccasion,
-      occasionLabel: context.occasionLabel, deliveryProviderKey: context.deliveryProviderKey } });
+    modifiers: plannedContextModifiers(context) });
+  if (!costItems.length && !plannedAllowsNoCost({ familyKey, subtypeKey: raw.subtypeKey as string | null, context })) throw new TypeError("PLANNED_EXPENSE_COST_ITEMS_INVALID");
+  if (context.workMealMode === "FROM_HOME" && costItems.some((item) => (item.modulePath?.at(-1) ?? resolved.rootModule) === "work_meal")) throw new TypeError("PLANNED_EXPENSE_HOME_MEAL_COST_INVALID");
   if (context.host && resolved.fields.host === "HIDDEN") throw new TypeError("PLANNED_EXPENSE_HOST_FORBIDDEN");
   if (purpose === "WRITE" && resolved.fields.host === "REQUIRED" && !context.host) throw new TypeError("PLANNED_EXPENSE_HOST_REQUIRED");
   if (context.hostParticipates && !context.host || context.visitedPersonParticipates && !context.personVisited)
@@ -466,6 +486,7 @@ export function parsePlannedExpenseDraft(value: unknown, targetMonth: string,
         throw new TypeError("PLANNED_EXPENSE_ROUTE_ENDPOINT_INVALID");
     }
   }
+  if (context.route?.mode === "CAR") assertPrimaryRouteStop(context.route.stops, context.place);
   return { familyKey, subtypeKey: raw.subtypeKey as string | null, title: title(raw.title, "PLANNED_EXPENSE_TITLE_INVALID"),
     plannedDate, costItems, context };
 }
@@ -515,6 +536,15 @@ async function validateReferences(client: SupabaseClient, householdId: string, d
     const allowed = name === "Adrien" ? "adrien-work-meals" : "manon-work-meals";
     if (draft.costItems.some((item) => item.baselineKey !== null && item.baselineKey !== allowed))
       throw new TypeError("PLANNED_EXPENSE_WORK_MEAL_BASELINE_PERSON_MISMATCH");
+    const sources = new Set(draft.costItems.flatMap((item) => item.fundingAllocations?.filter((part) => part.source !== "BANK").map((part) => part.source) ?? []));
+    if (sources.size) {
+      // Canonical wallets are not granted to authenticated clients. Read them only
+      // after the active participant has been verified in this authenticated household.
+      const wallets = await createCanonicalReadClient().from("benefit_wallets").select("provider,owner_person_id,status").eq("household_id", householdId);
+      if (wallets.error) throw wallets.error;
+      if ([...sources].some((source) => !wallets.data?.some((wallet) => wallet.provider === source && wallet.owner_person_id === participantIds[0] && wallet.status !== "INACTIVE")))
+        throw new TypeError("PLANNED_EXPENSE_WORK_MEAL_WALLET_PERSON_MISMATCH");
+    }
   }
   if (draft.context.place?.kind === "KNOWN" || draft.context.route?.fuelEstimate
     || draft.context.route?.stops.some((stop) => stop.placeId)
@@ -530,8 +560,7 @@ async function validateReferences(client: SupabaseClient, householdId: string, d
           : visitedRef?.kind === "CONTACT"
             ? SOCIAL_CONTACTS_V1.find((contact) => contact.key === visitedRef.contactKey)?.label : undefined;
       const resolved = resolvePlannedContext({ familyKey: draft.familyKey, subtypeKey: draft.subtypeKey,
-        modifiers: { purchaseMode: draft.context.purchaseMode, housePartyPlaceMode: draft.context.housePartyPlaceMode,
-          visitFormat: draft.context.visitFormat, socialOccasion: draft.context.socialOccasion } });
+        modifiers: plannedContextModifiers(draft.context, draft.subtypeKey === "work_meal" ? label : undefined) });
       const compatible = rankPlacesForPlannedContext(options.places, resolved,
         { contactKey: visitedRef?.kind === "CONTACT" ? visitedRef.contactKey
           : SOCIAL_CONTACTS_V1.find((contact) => contact.label === label)?.key,
@@ -581,6 +610,15 @@ export async function resolvePlannedExpenseDraft(client: SupabaseClient, househo
   targetMonth: string, rawDraft: unknown, purpose: "WRITE" | "PREVIEW" = "WRITE"): Promise<PlannedExpenseDraft> {
   // Parse the incoming estimate first: inconsistent client arithmetic is never trusted.
   let draft = parsePlannedExpenseDraft(rawDraft, targetMonth, purpose);
+  let personName: string | undefined;
+  if (draft.context.workMealMode && draft.context.workMealMode !== "FROM_HOME") {
+    const people = await client.from("persons").select("person_id,display_name").eq("household_id", householdId);
+    if (people.error) throw people.error;
+    personName = people.data?.find((person) => person.person_id === draft.context.participantPersonIds?.[0])?.display_name;
+  }
+  const resolved = resolvePlannedContext({ familyKey: draft.familyKey, subtypeKey: draft.subtypeKey, modifiers: plannedContextModifiers(draft.context, personName) });
+  if (resolved.baseline.mode === "AUTO" && resolved.baseline.key) draft = { ...draft, costItems: draft.costItems.map((item) =>
+    item.modulePath?.length !== 2 && costAllowsBaseline(item) ? { ...item, baselineKey: resolved.baseline.key } : item) };
   if (draft.context.route?.mode === "CAR") {
     const options = await readPlannedContextOptions(createCanonicalReadClient(), householdId, []);
     if (!options.vehicle) throw new TypeError("PLANNED_EXPENSE_VEHICLE_PRICE_UNAVAILABLE");

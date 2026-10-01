@@ -27,6 +27,15 @@ export function projectPlannedExpenseImpact(before: MonthEconomicPlan, after: Mo
     edenred: new Big(after.plannedFunding.edenred.reserved).plus(after.plannedFunding.edenred.usedDeclared)
       .minus(before.plannedFunding.edenred.reserved).minus(before.plannedFunding.edenred.usedDeclared).toFixed(2),
   };
-  return { grossCost: gross.toFixed(2), fuelUsage: fuel.toFixed(2), payableGross: gross.minus(fuel).toFixed(2),
+  const centralImpact = new Big(netAdditionalImpact.central), anticipated = gross.minus(centralImpact);
+  const euro = (value: Big) => new Intl.NumberFormat("fr-FR", { style: "currency", currency: "EUR" }).format(Number(value.toFixed(2)));
+  const effectNarrative = gross.eq(0) ? "Ce projet n’ajoute aucune dépense pour le moment." : centralImpact.lt(0)
+    ? `Une dépense similaire était déjà estimée à environ ${euro(anticipated)}. Votre projet devrait coûter ${euro(gross)} : environ ${euro(centralImpact.abs())} de moins que l’estimation habituelle.`
+    : anticipated.gt(0) ? `Environ ${euro(anticipated)} étaient déjà anticipés dans le mois. Votre projet coûte ${euro(gross)} ; ${euro(centralImpact)} s’ajoutent réellement à la projection.`
+      : `Ce projet s’ajoute aux dépenses prévues : ${euro(centralImpact)} supplémentaires dans la projection du mois.`;
+  return { grossCost: gross.toFixed(2), fuelUsage: fuel.toFixed(2), payableGross: gross.minus(fuel).toFixed(2), effectNarrative,
+    projectionIncomplete: before.narrative.prediction?.currentImportsMissing === true || after.narrative.prediction?.currentImportsMissing === true,
+    remainingDifference: centralImpact.times(-1).toFixed(2),
+    economicLines: draft.costItems.map((item) => ({ id: item.id, label: item.variantLabel || item.label, amount: plannedLineGross(item), economicOnly: costItemCashTreatment(item) === "ECONOMIC_ONLY" })),
     netAdditionalImpact, absorbedByBaseline, projectPayment, before: before.scenarios, after: after.scenarios, funding: after.plannedFunding };
 }

@@ -1,8 +1,22 @@
 import { PLANNED_EXPENSE_SUBTYPES, rootAssetModule, type AssetModule, type PlannedExpenseFamily } from "./planned-assets";
 import type { ContextKey, FieldPolicy, LocalPlacePolicy, ModuleAvailability, ModulePath,
-  PlaceRole, RootTransportStopAvailability } from "./planned-contract";
+  PlaceRole, RootTransportStopAvailability, PlannedExpenseContext, PlannedExpenseDraft } from "./planned-contract";
+
+export const plannedContextModifiers = (context: PlannedExpenseContext, personName?: string): PlannedModifiers => ({
+  ...context, workMealPerson: personName === "Adrien" ? "ADRIEN" : personName === "Manon" ? "MANON" : undefined,
+});
+/** No zero-price placeholder: these intentions may have no active economic component. */
+export function plannedAllowsNoCost(draft: Pick<PlannedExpenseDraft, "familyKey" | "subtypeKey" | "context">): boolean {
+  return draft.familyKey === "visit_trip" && ["family_visit", "friend_visit"].includes(draft.subtypeKey ?? "")
+    || draft.familyKey === "outing" && draft.subtypeKey === "house_party"
+    || draft.familyKey === "food" && draft.subtypeKey === "work_meal" && draft.context.workMealMode === "FROM_HOME"
+    || ["activity", "visit_trip"].includes(draft.familyKey) && draft.context.noExpense === true;
+}
 
 export type PlannedModifiers = Readonly<{
+  groceriesNature?: "USUAL" | "TOP_UP" | "OCCASION";
+  workMealMode?: "BOUGHT" | "DELIVERED" | "FROM_HOME";
+  outingKind?: "CLUB" | "EVENT";
   housePartyPlaceMode?: "OWN_HOME" | "OTHER_HOME";
   purchaseMode?: "IN_STORE" | "ONLINE" | "TAKEAWAY" | "DELIVERY";
   visitFormat?: "SIMPLE" | "APERO_PARTY" | "MEAL" | "STAY";
@@ -17,7 +31,7 @@ export type PlannedField = "participants" | "visitedContact" | "travelCompanions
 export type PlacePolicy = Readonly<{ field: FieldPolicy; allowedRoles: readonly PlaceRole[];
   source: "NONE" | "CANONICAL" | "OWN_HOME" | "CONTACT_HOME" | "WORK_MEAL_ANCHOR" | "DYNAMIC_GIFT";
   physicalDestination: boolean; subtypeHint?: RegExp }>;
-export type BaselinePolicy = Readonly<{ mode: "NONE" | "ASK"; key: "groceries" | "household-restaurants"
+export type BaselinePolicy = Readonly<{ mode: "NONE" | "ASK" | "AUTO"; key: "groceries" | "household-restaurants"
   | "adrien-work-meals" | "manon-work-meals" | null }>;
 export type ModuleEdge = Readonly<{ fromRoot: AssetModule; childModule: Exclude<AssetModule, "transport">;
   availability: Exclude<ModuleAvailability, "FORBIDDEN">;
@@ -49,6 +63,9 @@ const edge = (fromRoot: AssetModule, childModule: ModuleEdge["childModule"],
 
 // Transport is a root capability, never a child. BringItems is a lens, never a node.
 export const MODULE_EDGES: readonly ModuleEdge[] = [
+  edge("visit_family", "activity", "AVAILABLE", "OPTIONAL", "AVAILABLE"),
+  edge("visit_friend", "activity", "AVAILABLE", "OPTIONAL", "AVAILABLE"),
+  edge("club", "house_party", "AVAILABLE"),
   edge("other", "restaurant", "AVAILABLE", "OPTIONAL", "AVAILABLE"),
   edge("other", "activity", "AVAILABLE", "OPTIONAL", "AVAILABLE"),
   edge("other", "gift", "AVAILABLE"),
@@ -79,6 +96,8 @@ export type DeliveryProvider = Readonly<{ key: string; label: string;
   kind: "INTERMEDIARY" | "DIRECT" | "DIRECT_GENERIC" | "UNKNOWN";
   suggestedFeeAssetKeys: readonly string[]; manualFeeAvailable: boolean }>;
 export const DELIVERY_PROVIDERS: readonly DeliveryProvider[] = [
+  { key: "DELIVEROO", label: "Deliveroo", kind: "INTERMEDIARY", suggestedFeeAssetKeys: ["fast_food:delivery_fee", "fast_food:service_fee"], manualFeeAvailable: true },
+  { key: "DIRECT", label: "Directement par le commerce", kind: "DIRECT_GENERIC", suggestedFeeAssetKeys: [], manualFeeAvailable: true },
   { key: "UBER_EATS", label: "Uber Eats", kind: "INTERMEDIARY",
     suggestedFeeAssetKeys: ["fast_food:delivery_fee", "fast_food:service_fee"], manualFeeAvailable: true },
   { key: "LADY_SUSHI", label: "Lady Sushi", kind: "DIRECT", suggestedFeeAssetKeys: [], manualFeeAvailable: true },
@@ -150,8 +169,10 @@ export function resolvePlannedContext(input: Readonly<{ familyKey: PlannedExpens
   const { familyKey, subtypeKey } = entry;
   if (familyKey === "outing") {
     fields.participants = "OPTIONAL";
+    fields.socialOccasion = "OPTIONAL";
     if (subtypeKey === "bar") { selectedPlace = place("OPTIONAL", ["BAR"]); transport = "SUGGESTED"; }
-    else if (subtypeKey === "club_festival") { selectedPlace = place("OPTIONAL", ["NIGHT_OUT"]); transport = "SUGGESTED"; }
+    else if (subtypeKey === "club_festival") { selectedPlace = place("OPTIONAL", ["NIGHT_OUT"], "CANONICAL", true,
+      m.outingKind === "EVENT" ? /festival|événement|arena|expo|concert|spectacle/iu : /club|boîte|discothèque/iu); transport = "SUGGESTED"; }
     else if (subtypeKey === "house_party") {
       fields.host = m.housePartyPlaceMode === "OTHER_HOME" ? "REQUIRED" : "HIDDEN";
       selectedPlace = m.housePartyPlaceMode === "OTHER_HOME"
@@ -160,11 +181,16 @@ export function resolvePlannedContext(input: Readonly<{ familyKey: PlannedExpens
       transport = m.housePartyPlaceMode === "OTHER_HOME" ? "SUGGESTED" : "FORBIDDEN";
     } else { selectedPlace = place("OPTIONAL", ["BAR", "NIGHT_OUT", "ACTIVITY"]); transport = "AVAILABLE"; }
   } else if (familyKey === "food") {
-    if (subtypeKey === "groceries") { selectedPlace = place("OPTIONAL", ["GROCERY"]); baseline = askBaseline("groceries"); transport = "AVAILABLE"; }
+    if (subtypeKey === "groceries") { fields.purchaseMode = "OPTIONAL"; fields.seller = "OPTIONAL"; fields.socialOccasion = "OPTIONAL";
+      selectedPlace = place("OPTIONAL", ["GROCERY"]); baseline = m.groceriesNature && m.groceriesNature !== "OCCASION"
+        ? { mode: "AUTO", key: "groceries" } : askBaseline("groceries"); transport = "AVAILABLE";
+      if (m.purchaseMode === "DELIVERY") { fields.deliveryProvider = "OPTIONAL"; selectedPlace = noPlace; transport = "FORBIDDEN"; } }
     if (subtypeKey === "restaurant") { fields.participants = "OPTIONAL";
+      fields.socialOccasion = "OPTIONAL";
       selectedPlace = place("OPTIONAL", ["RESTAURANT"]); transport = "AVAILABLE";
       baseline = askBaseline("household-restaurants"); }
     if (subtypeKey === "fast_food") { fields.purchaseMode = "REQUIRED";
+      fields.socialOccasion = "OPTIONAL";
       fields.participants = "OPTIONAL"; baseline = askBaseline("household-restaurants");
       if (m.purchaseMode === "DELIVERY") { fields.deliveryProvider = "REQUIRED";
         fields.seller = "OPTIONAL";
@@ -173,7 +199,10 @@ export function resolvePlannedContext(input: Readonly<{ familyKey: PlannedExpens
     }
     if (subtypeKey === "work_meal") { fields.workMealPerson = "REQUIRED";
       selectedPlace = place("OPTIONAL", ["FAST_FOOD", "GROCERY"], "WORK_MEAL_ANCHOR");
-      baseline = { mode: "ASK", key: m.workMealPerson === "ADRIEN" ? "adrien-work-meals"
+      fields.purchaseMode = "OPTIONAL"; fields.seller = "OPTIONAL"; transport = "AVAILABLE";
+      if (m.workMealMode === "DELIVERED") { fields.deliveryProvider = "REQUIRED"; selectedPlace = noPlace; transport = "FORBIDDEN"; }
+      if (m.workMealMode === "FROM_HOME") { selectedPlace = noPlace; transport = "FORBIDDEN"; }
+      baseline = { mode: m.workMealMode === "FROM_HOME" ? "NONE" : m.workMealMode ? "AUTO" : "ASK", key: m.workMealPerson === "ADRIEN" ? "adrien-work-meals"
         : m.workMealPerson === "MANON" ? "manon-work-meals" : null }; }
   } else if (familyKey === "visit_trip") {
     if (subtypeKey === "family_visit" || subtypeKey === "friend_visit") {
@@ -189,7 +218,8 @@ export function resolvePlannedContext(input: Readonly<{ familyKey: PlannedExpens
     selectedPlace = place("OPTIONAL", ["ACTIVITY"], "CANONICAL", true,
       ACTIVITY_PLACE_HINTS[subtypeKey ?? ""]); transport = "SUGGESTED";
   } else if (familyKey === "purchase") {
-    transport = m.purchaseMode === "ONLINE" ? "FORBIDDEN" : "AVAILABLE";
+    fields.purchaseMode = "OPTIONAL"; fields.seller = "OPTIONAL";
+    transport = m.purchaseMode === "ONLINE" || m.purchaseMode === "DELIVERY" ? "FORBIDDEN" : "AVAILABLE";
     if (subtypeKey === "gift") { selectedPlace = place("OPTIONAL", [], "DYNAMIC_GIFT");
       fields.socialOccasion = "OPTIONAL"; }
     else {
@@ -199,6 +229,7 @@ export function resolvePlannedContext(input: Readonly<{ familyKey: PlannedExpens
         automotive: ["AUTO_RETAIL_SERVICE"] };
       selectedPlace = place("OPTIONAL", roles[subtypeKey ?? ""] ?? [], roles[subtypeKey ?? ""] ? "CANONICAL" : "NONE");
     }
+    if (m.purchaseMode === "ONLINE" || m.purchaseMode === "DELIVERY") selectedPlace = noPlace;
     if (subtypeKey === "clothing" || subtypeKey === "tech" || subtypeKey === "home_equipment") {
       fields.purchaseMode = "OPTIONAL";
       if (m.purchaseMode === "ONLINE") { fields.seller = "OPTIONAL"; selectedPlace = noPlace; }

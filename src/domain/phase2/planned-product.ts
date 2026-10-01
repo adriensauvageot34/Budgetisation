@@ -37,7 +37,7 @@ export const costAllowsBaseline = (item: Pick<CostItem, "assetKey">) => !isTrans
 export const transportAssetMatchesMode = (key: string, mode: PlannedExpenseContext["transportMode"]): boolean =>
   ({ CAR: ["transport:fuel_usage", "transport:toll", "transport:parking"], TRAIN: ["transport:train"],
     BUS: ["transport:bus"], TAXI: ["transport:uber"], CARPOOL: ["transport:carpool"],
-    OTHER: ["transport:other"], FREE: [] } as Record<string, readonly string[]>)[mode ?? ""]?.includes(key) ?? false;
+    OTHER: ["transport:other"], PLANE: ["transport:flight"], FREE: [] } as Record<string, readonly string[]>)[mode ?? ""]?.includes(key) ?? false;
 export const isRootCost = (item: CostItem) => item.modulePath?.length !== 2 && !isTransportCost(item)
   && (!(item.modulePath?.[0] === "visit_family" || item.modulePath?.[0] === "visit_friend")
     || !Object.values(BRING_ITEMS_LENS).some((keys) => (keys as readonly string[]).includes(item.assetKey ?? "")))

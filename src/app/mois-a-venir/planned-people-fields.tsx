@@ -26,7 +26,7 @@ export function PlannedParticipants({ context, persons, onChange }: { context: P
     const has = refs.some((part) => prospectivePersonIdentity(part) === prospectivePersonIdentity(ref));
     onChange({ ...context, participantRefs: has ? refs.filter((part) => prospectivePersonIdentity(part) !== prospectivePersonIdentity(ref)) : [...refs, ref] });
   };
-  return <fieldset className="grid gap-3"><legend className="text-sm font-bold">Qui participe aux dépenses ?</legend>
+  return <fieldset className="grid gap-3"><legend className="text-sm font-bold">Qui vient avec nous ?</legend>
     <p className="text-xs text-slate-600">Ces personnes servent à proposer les quantités. Vous pouvez toujours les modifier.</p>
     <div className="flex gap-4">{persons.map((person) => <label key={person.personId} className="flex gap-2 text-sm">
       <input type="checkbox" checked={context.participantPersonIds?.includes(person.personId) ?? false} onChange={() => {
@@ -34,9 +34,9 @@ export function PlannedParticipants({ context, persons, onChange }: { context: P
         onChange({ ...context, participantPersonIds: ids.includes(person.personId) ? ids.filter((id) => id !== person.personId) : [...ids, person.personId] });
       }} />{person.displayName}</label>)}</div>
     {context.host && <label className="flex gap-2 text-sm"><input type="checkbox" checked={context.hostParticipates ?? false}
-      onChange={(event) => onChange({ ...context, hostParticipates: event.target.checked })} />La personne qui reçoit participe aux dépenses</label>}
+      onChange={(event) => onChange({ ...context, hostParticipates: event.target.checked })} />Compter aussi la personne qui reçoit</label>}
     {context.personVisited && <label className="flex gap-2 text-sm"><input type="checkbox" checked={context.visitedPersonParticipates ?? false}
-      onChange={(event) => onChange({ ...context, visitedPersonParticipates: event.target.checked })} />La personne visitée participe aux dépenses</label>}
+      onChange={(event) => onChange({ ...context, visitedPersonParticipates: event.target.checked })} />Compter aussi la personne visitée</label>}
     <details><summary className="cursor-pointer text-sm font-semibold">Ajouter des proches</summary><div className="mt-2 grid grid-cols-3 gap-2">{SOCIAL_CONTACTS_V1.map((contact) =>
       <label key={contact.key} className="flex gap-2 text-sm"><input type="checkbox" checked={refs.some((ref) => ref.kind === "CONTACT" && ref.contactKey === contact.key)}
         onChange={() => toggleContact(contact.key)} />{contact.label}</label>)}</div></details>
@@ -44,7 +44,5 @@ export function PlannedParticipants({ context, persons, onChange }: { context: P
       onChange={(event) => onChange({ ...context, participantRefs: refs.map((part, i) => i === index ? { kind: "TEXT", label: event.target.value } : part) })} />
       <button type="button" className="text-left underline" onClick={() => onChange({ ...context, participantRefs: refs.filter((_, i) => i !== index) })}>Retirer cette personne</button></label>)}
     <button type="button" className="text-left text-sm font-semibold underline" onClick={() => onChange({ ...context, participantRefs: [...refs, { kind: "TEXT", label: "" }] })}>Ajouter une personne par son nom</button>
-    <label className="grid max-w-xs gap-1 text-sm">Invités non nommés<input className={fieldClass} type="number" min="0" max="99" value={context.additionalGuestCount ?? 0}
-      onChange={(event) => onChange({ ...context, additionalGuestCount: Number(event.target.value) })} /></label>
   </fieldset>;
 }

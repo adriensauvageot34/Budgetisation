@@ -1,127 +1,111 @@
 "use client";
-
-import { useState, type Dispatch, type SetStateAction } from "react";
-import { addBuilderChildRouteStop, changeBuilderContext, editBuilderDraft, invalidateRouteDistances, removeBuilderChild,
-  setBuilderChildPlace, type BuilderState } from "@/domain/phase2/planned-builder";
+import { useEffect, useRef, useState, type Dispatch, type SetStateAction } from "react";
+import { Car, MapPin } from "lucide-react";
+import { addBuilderChildRouteStop, changeBuilderContext, commitBuilderCost, editBuilderDraft, invalidateRouteDistances,
+  removeBuilderChild, removeBuilderCost, setBuilderChildPlace, type BuilderState } from "@/domain/phase2/planned-builder";
 import type { PlannedRouteStop, PlannedVehicleEstimate, CostItem } from "@/domain/phase2/planned-contract";
-import { resolvePlannedContext } from "@/domain/phase2/planned-rules";
+import { plannedContextModifiers, resolvePlannedContext } from "@/domain/phase2/planned-rules";
 import { placesForChildModule, type PlannedPlaceOption } from "@/domain/phase2/planned-places";
 import { derivePlannedPlaceRoles } from "@/domain/phase2/planned-place-rules";
-import { deduplicateRouteStops, routeSegments, stopForPlace } from "@/domain/phase2/planned-routes";
+import { ensurePrimaryRouteStop, stopForPlace } from "@/domain/phase2/planned-routes";
+import { plausibleTransportModes } from "@/domain/phase2/planned-ux";
 import { estimatePlannedRoute } from "./planned-expenses-actions";
-import { assetParticipantCount } from "@/domain/phase2/planned-product";
-import { plannedAsset, suggestedAssetQuantity } from "@/domain/phase2/planned-assets";
+import { plannedAsset } from "@/domain/phase2/planned-assets";
+import { ChoiceTiles, LocalAssetEditor, OptionalAction, builderButton, builderInput, builderMoney } from "./planned-builder-primitives";
 
-const inputClass = "min-h-11 w-full rounded-xl border border-slate-300 bg-white px-3";
-const buttonClass = "rounded-xl border border-slate-300 bg-white px-4 py-2 text-sm font-bold disabled:opacity-50";
-const childLabel = (child: string) => ({ restaurant: "Restaurant", activity: "Activité", bar: "Bar", club: "Club" }[child] ?? child);
-export function PlannedRouteEditor({ builder, setBuilder, places, vehicle, targetMonth, persons }: {
+const childLabel = (child: string) => ({ restaurant: "Restaurant", activity: "Activité", bar: "Bar", club: "Club" } as Record<string, string>)[child] ?? "Complément";
+const modeLabels: Record<string, string> = { CAR: "Voiture", TRAIN: "Train", BUS: "Bus / transport payant", TAXI: "Uber / taxi", OTHER: "Autre", PLANE: "Avion" };
+export function PlannedRouteEditor({ builder, setBuilder, places, vehicle, targetMonth }: {
   builder: BuilderState; setBuilder: Dispatch<SetStateAction<BuilderState>>; places: readonly PlannedPlaceOption[];
-  vehicle: PlannedVehicleEstimate | null; targetMonth: string; persons: readonly { personId: string; displayName: string }[] }) {
+  vehicle: PlannedVehicleEstimate | null; targetMonth: string; persons: readonly { personId: string; displayName: string }[];
+}) {
   const [busy, setBusy] = useState(false), [message, setMessage] = useState("");
-  const { draft } = builder;
-  const resolved = resolvePlannedContext({ familyKey: draft.familyKey, subtypeKey: draft.subtypeKey,
-    modifiers: { purchaseMode: draft.context.purchaseMode, housePartyPlaceMode: draft.context.housePartyPlaceMode,
-      visitFormat: draft.context.visitFormat, socialOccasion: draft.context.socialOccasion } });
-  const route = draft.context.route;
-  const transportMode = draft.context.transportMode ?? route?.mode;
+  const [actor, setActor] = useState<"US" | "OTHER">(builder.draft.context.transportMode === "CARPOOL" ? "OTHER" : "US");
+  const [paid, setPaid] = useState<boolean | null>(builder.draft.context.transportMode ? builder.draft.context.transportMode !== "FREE" : null);
+  const [editing, setEditing] = useState(false);
+  const currentRevision = useRef(builder.revision); currentRevision.current = builder.revision;
+  const lastRequested = useRef("");
+  const currentRoute = useRef("");
+  const draft = builder.draft, route = draft.context.route;
+  const resolved = resolvePlannedContext({ familyKey: draft.familyKey, subtypeKey: draft.subtypeKey, modifiers: plannedContextModifiers(draft.context) });
+  const mode = draft.context.transportMode ?? route?.mode;
   const home = places.find((place) => derivePlannedPlaceRoles(place).includes("OWN_HOME"));
-  const physicalLabel = (ref: NonNullable<typeof draft.context.place>) => ref.kind === "TEXT"
-    ? ref.label : places.find((place) => place.placeId === ref.placeId)?.name ?? "Lieu choisi";
-  const changeStops = (stops: readonly PlannedRouteStop[], topologyChanged = false) => {
-    setBuilder((current) => editBuilderDraft(current, { ...current.draft,
-      context: { ...current.draft.context, transportMode: "CAR", route: { mode: "CAR", stops: topologyChanged
-        ? invalidateRouteDistances(stops) : deduplicateRouteStops(stops) } },
-      costItems: current.draft.costItems.filter((item) => item.assetKey !== "transport:fuel_usage") }));
+  const physicalLabel = (ref: NonNullable<typeof draft.context.place>) => ref.kind === "TEXT" ? ref.label : places.find((place) => place.placeId === ref.placeId)?.name ?? "Lieu choisi";
+  const applyMode = (mode?: typeof draft.context.transportMode) => {
+    setBuilder((state) => changeBuilderContext(state, { ...state.draft.context, transportMode: mode }));
     setMessage("");
   };
-  const estimate = async () => {
-    if (!route) return;
-    const revision = builder.revision;
-    setBusy(true); setMessage("");
-    try {
-      const result = await estimatePlannedRoute(targetMonth, route.stops);
-      setBuilder((current) => {
-        if (current.revision !== revision) return current;
-        const fuel = result.fuelEstimate;
-        const item: CostItem | null = fuel ? { id: crypto.randomUUID(), assetKey: "transport:fuel_usage",
-          label: "Usage carburant estimé", quantity: "1", unitAmount: fuel.cost, baselineKey: null,
-          modulePath: [resolved.rootModule], priceSource: "CALCULATED", priceSourceLabel: fuel.fuelPriceSource } : null;
-        return editBuilderDraft({ ...current, origins: { ...current.origins, ...(item ? { [`cost.${item.id}`]: "AUTO_DERIVED" as const } : {}) } }, { ...current.draft, context: { ...current.draft.context,
-          route: { mode: "CAR", stops: result.stops, ...(fuel ? { fuelEstimate: fuel } : {}) } },
-          costItems: [...current.draft.costItems.filter((cost) => cost.assetKey !== "transport:fuel_usage"), ...(item ? [item] : [])] });
-      });
-      setMessage(result.status === "PARTIAL" ? "Trajet partiellement connu : renseignez les kilomètres des segments sans historique, puis recalculez." : "Trajet recalculé dans l’ordre des étapes.");
-    } catch { setMessage("Vérifiez les lieux et les kilomètres saisis. L’estimation n’a pas abouti."); }
-    finally { setBusy(false); }
+  const changeStops = (stops: readonly PlannedRouteStop[], topology = true) => {
+    // The primary destination is always retained, including when a child stop is removed/reordered.
+    const next = ensurePrimaryRouteStop(stops, draft.context.place, draft.context.place ? physicalLabel(draft.context.place) : "", home?.placeId);
+    setBuilder((state) => editBuilderDraft(state, { ...state.draft, context: { ...state.draft.context, transportMode: "CAR",
+      route: { mode: "CAR", stops: topology ? invalidateRouteDistances(next) : next } }, costItems: state.draft.costItems.filter((item) => item.assetKey !== "transport:fuel_usage") }));
+    setMessage("");
   };
+  const routeSignature = mode === "CAR" && route ? JSON.stringify(route.stops) : "";
+  currentRoute.current = routeSignature;
+  useEffect(() => {
+    if (!routeSignature || route?.fuelEstimate || !vehicle || lastRequested.current === routeSignature) return;
+    const revision = builder.revision;
+    const stops = route!.stops;
+    const timer = window.setTimeout(async () => {
+      lastRequested.current = routeSignature; setBusy(true); setMessage("");
+      try {
+        const result = await estimatePlannedRoute(targetMonth, stops);
+        if (currentRoute.current !== routeSignature) { lastRequested.current = ""; return; }
+        setBuilder((state) => {
+          if (JSON.stringify(state.draft.context.route?.stops) !== routeSignature) return state;
+          const fuel = result.fuelEstimate;
+          const item: CostItem | null = fuel ? { id: crypto.randomUUID(), assetKey: "transport:fuel_usage", label: "Usage carburant estimé",
+            quantity: "1", unitAmount: fuel.cost, baselineKey: null, modulePath: [resolved.rootModule], priceSource: "CALCULATED", priceSourceLabel: fuel.fuelPriceSource } : null;
+          return editBuilderDraft({ ...state, origins: { ...state.origins, ...(item ? { [`cost.${item.id}`]: "AUTO_DERIVED" as const } : {}) } }, { ...state.draft,
+            context: { ...state.draft.context, route: { mode: "CAR", stops: result.stops, ...(fuel ? { fuelEstimate: fuel } : {}) } },
+            costItems: [...state.draft.costItems.filter((item) => item.assetKey !== "transport:fuel_usage"), ...item ? [item] : []] });
+        });
+        if (result.status === "PARTIAL") { setMessage("Certains segments n’ont pas de distance connue. Vous pouvez préciser ces kilomètres."); setEditing(true); }
+      } catch { if (currentRevision.current === revision) { setMessage("Le trajet n’a pas pu être calculé. Vérifiez les lieux ou précisez la distance."); setEditing(true); } }
+      finally { setBusy(false); }
+    }, 450);
+    return () => window.clearTimeout(timer);
+  }, [routeSignature, builder.revision, !!route?.fuelEstimate, targetMonth, !!vehicle]);
+  const startCar = () => {
+    if (!draft.context.place) { setEditing(true); return; }
+    const departure: PlannedRouteStop = home ? { label: home.name, placeId: home.placeId, endpointSource: "DIRECT_PLACE" } : { label: "Maison", endpointSource: "DIRECT_PLACE" };
+    changeStops([departure, stopForPlace(draft.context.place, physicalLabel(draft.context.place), "ROOT_PLACE"), departure]);
+  };
+  const transportCostKeys = actor === "OTHER" && paid ? ["transport:carpool"] : mode === "CAR" ? ["transport:toll", "transport:parking"]
+    : mode && mode !== "FREE" ? [`transport:${({ TRAIN: "train", BUS: "bus", TAXI: "uber", CARPOOL: "carpool", OTHER: "other", PLANE: "flight" } as Record<string, string>)[mode]}`] : [];
   return <div id="builder-route" className="grid gap-3">
-    {resolved.children.filter((edge) => edge.localPlacePolicy !== "HIDDEN"
-      && draft.costItems.some((item) => item.modulePath?.[1] === edge.childModule)).map((edge) => {
+    {resolved.children.filter((edge) => edge.localPlacePolicy !== "HIDDEN" && draft.costItems.some((item) => item.modulePath?.[1] === edge.childModule)).map((edge) => {
       const child = edge.childModule, ref = draft.context.childLocalPlaceRefs?.[child];
-      const candidates = placesForChildModule(places, child);
-      return <fieldset key={child} className="rounded-xl border border-slate-200 p-3"><legend className="px-1 font-bold">Lieu du complément · {childLabel(child)}</legend>
-        <p className="mb-2 text-xs text-slate-600">Choisissez son lieu si utile. Le lieu principal n’est pas repris automatiquement.</p>
-        <label className="grid gap-1 text-sm">Lieu connu<select className={inputClass} value={ref?.kind === "KNOWN" ? ref.placeId : ref?.kind === "TEXT" ? "TEXT" : ""}
-          onChange={(event) => setBuilder((current) => setBuilderChildPlace(current, child, event.target.value === "TEXT"
-            ? { kind: "TEXT", label: "", provenance: "USER_DECLARED_PROSPECTIVE" }
-            : event.target.value ? { kind: "KNOWN", placeId: event.target.value } : undefined))}>
-          <option value="">Sans lieu précisé</option>{candidates.map((place) => <option key={place.placeId} value={place.placeId}>{place.name}</option>)}<option value="TEXT">Autre lieu à saisir</option></select></label>
-        {ref?.kind === "TEXT" && <label className="mt-2 grid gap-1 text-sm">Nom du lieu<input className={inputClass} value={ref.label}
-          onChange={(event) => setBuilder((current) => setBuilderChildPlace(current, child, { ...ref, label: event.target.value }))} /></label>}
-        {edge.rootTransportStopAvailability !== "NEVER" && ref && route && <button type="button" className={`${buttonClass} mt-2`}
-          disabled={route.stops.some((stop) => stop.childModule === child) || ref.kind === "TEXT" && !ref.label.trim()}
-          onClick={() => setBuilder((current) => addBuilderChildRouteStop(current, child, physicalLabel(ref)))}>Ajouter au trajet{route.stops.some((stop) => stop.childModule === child) ? " · déjà ajouté" : ""}</button>}
-        <button type="button" className={`${buttonClass} ml-2 mt-2`} onClick={() => setBuilder((current) => removeBuilderChild(current, child))}>Retirer {childLabel(child)}</button>
-      </fieldset>;
+      return <OptionalAction key={child} label={`Préciser le lieu · ${childLabel(child)}`} active={!!ref}>
+        <label className="grid gap-1 text-sm">Où est prévu ce {childLabel(child).toLocaleLowerCase("fr")} ?<select className={builderInput} value={ref?.kind === "KNOWN" ? ref.placeId : ref?.kind === "TEXT" ? "TEXT" : ""}
+          onChange={(event) => setBuilder((state) => setBuilderChildPlace(state, child, event.target.value === "TEXT" ? { kind: "TEXT", label: "", provenance: "USER_DECLARED_PROSPECTIVE" } : event.target.value ? { kind: "KNOWN", placeId: event.target.value } : undefined))}>
+          <option value="">Sans lieu précisé</option>{placesForChildModule(places, child).map((place) => <option key={place.placeId} value={place.placeId}>{place.name}</option>)}<option value="TEXT">Autre lieu à saisir</option></select></label>
+        {ref?.kind === "TEXT" && <input className={`${builderInput} mt-2`} aria-label={`Lieu du ${childLabel(child)}`} value={ref.label} onChange={(event) => setBuilder((state) => setBuilderChildPlace(state, child, { ...ref, label: event.target.value }))} />}
+        {edge.rootTransportStopAvailability !== "NEVER" && ref && route && <button className={`${builderButton} mt-3`} disabled={route.stops.some((stop) => stop.childModule === child) || ref.kind === "TEXT" && !ref.label.trim()} onClick={() => setBuilder((state) => addBuilderChildRouteStop(state, child, physicalLabel(ref)))}>Ajouter cet arrêt au trajet</button>}
+        <button className="ml-3 text-xs underline" onClick={() => setBuilder((state) => removeBuilderChild(state, child))}>Retirer ce complément</button>
+      </OptionalAction>;
     })}
-    {resolved.transport !== "FORBIDDEN" && <details className="rounded-xl border border-slate-200 p-3"><summary className="cursor-pointer font-bold">Faut-il prévoir le déplacement ?</summary>
-      <label className="mt-3 grid gap-1 text-sm font-semibold">Comment se déplacer ?<select className={inputClass} value={transportMode ?? ""} onChange={(event) => { const mode = event.target.value as typeof transportMode; setBuilder((current) => changeBuilderContext(current, { ...current.draft.context, transportMode: mode || undefined })); }}><option value="">Pas de déplacement prévu pour le moment</option><option value="CAR">Voiture</option><option value="TRAIN">Train</option><option value="BUS">Bus / transports en commun</option><option value="TAXI">Uber / taxi</option><option value="CARPOOL">Covoiturage</option><option value="FREE">À pied / gratuit</option><option value="OTHER">Autre déplacement payant</option></select></label>
-      {transportMode === "CAR" && <p className="mt-2 text-xs text-slate-600">Chaque étape rejoint la suivante. L’historique respecte le sens du trajet ; un retour se choisit explicitement.</p>}
-      <fieldset className="mt-2"><legend className="text-sm font-bold">Qui effectue le trajet ?</legend><div className="flex gap-4">{persons.map((person) => <label key={person.personId} className="flex gap-2 text-sm"><input type="checkbox" checked={draft.context.travellingParticipantPersonIds?.includes(person.personId) ?? false}
-        onChange={() => setBuilder((current) => { const previous = current.draft.context.travellingParticipantPersonIds ?? [];
-          return changeBuilderContext(current, { ...current.draft.context, travellingParticipantPersonIds:
-            previous.includes(person.personId) ? previous.filter((id) => id !== person.personId) : [...previous, person.personId] }); })} />{person.displayName}</label>)}</div></fieldset>
-      <div className="mt-3 flex gap-2">{(transportMode === "CAR" ? ["transport:toll", "transport:parking"] : transportMode && transportMode !== "FREE" ? [`transport:${({ TRAIN: "train", BUS: "bus", TAXI: "uber", CARPOOL: "carpool", OTHER: "other" } as Record<string, string>)[transportMode]}`] : []).map((assetKey) => {
-        const asset = plannedAsset(assetKey)!;
-        return <button key={assetKey} type="button" className={buttonClass} disabled={draft.costItems.length >= 50 || draft.costItems.some((item) => item.assetKey === assetKey)} onClick={() => setBuilder((current) => { const id = crypto.randomUUID(); return editBuilderDraft({ ...current, origins: { ...current.origins, [`quantity.${id}`]: "AUTO_DERIVED" } },
-          { ...current.draft, costItems: [...current.draft.costItems, { id, assetKey,
-            label: asset.label, quantity: suggestedAssetQuantity(asset, assetParticipantCount(asset, current.draft.context)), unitAmount: "", baselineKey: null, modulePath: [resolved.rootModule], priceSource: "MANUAL" }] }); })}>Ajouter {asset.label.toLocaleLowerCase("fr")}</button>;
-      })}</div>
-      {transportMode === "FREE" && <p className="text-sm">Aucun coût de déplacement ajouté.</p>}
-      {transportMode === "CAR" && !route && <button type="button" className={`${buttonClass} mt-2`} onClick={() => changeStops([
-        home ? { label: home.name, placeId: home.placeId, endpointSource: "DIRECT_PLACE" } : { label: "Départ à préciser", endpointSource: "DIRECT_PLACE" },
-        draft.context.place ? stopForPlace(draft.context.place, physicalLabel(draft.context.place), "ROOT_PLACE")
-          : { label: "Destination à préciser", endpointSource: "DIRECT_PLACE" }], true)}>Prévoir un trajet voiture</button>}
-      {route && <div className="mt-3 grid gap-3">{route.stops.map((stop, index) => <div key={index} className="grid grid-cols-[1fr_10rem_auto] gap-2 rounded-xl bg-slate-50 p-3">
-        <div><label className="grid gap-1 text-sm">Étape {index + 1}<select className={inputClass} value={stop.endpointSource === "ROOT_PLACE" ? "ROOT" : stop.endpointSource === "CHILD_LOCAL_PLACE" ? `CHILD:${stop.childModule}` : stop.placeId ?? "TEXT"}
-          onChange={(event) => { const value = event.target.value; const ref = value === "ROOT" ? draft.context.place : value.startsWith("CHILD:")
-            ? draft.context.childLocalPlaceRefs?.[value.slice(6) as keyof NonNullable<typeof draft.context.childLocalPlaceRefs>] : undefined;
-            const known = places.find((place) => place.placeId === value);
-            const replacement = ref ? stopForPlace(ref, physicalLabel(ref), value === "ROOT" ? "ROOT_PLACE" : "CHILD_LOCAL_PLACE", value === "ROOT" ? undefined : value.slice(6) as PlannedRouteStop["childModule"])
-              : known ? { label: known.name, placeId: known.placeId, endpointSource: "DIRECT_PLACE" as const } : { label: "", endpointSource: "DIRECT_PLACE" as const };
-            changeStops(route.stops.map((part, i) => i === index ? replacement : part), true); }}>
-          {draft.context.place && <option value="ROOT">Lieu principal · {physicalLabel(draft.context.place)}</option>}
-          {resolved.children.filter((edge) => edge.rootTransportStopAvailability !== "NEVER" && draft.context.childLocalPlaceRefs?.[edge.childModule]).map((edge) => <option key={edge.childModule} value={`CHILD:${edge.childModule}`}>{childLabel(edge.childModule)} · {physicalLabel(draft.context.childLocalPlaceRefs![edge.childModule]!)}</option>)}
-          {places.map((place) => <option key={place.placeId} value={place.placeId}>{place.name}</option>)}<option value="TEXT">Lieu à saisir</option></select></label>
-          {!stop.placeId && stop.endpointSource !== "ROOT_PLACE" && stop.endpointSource !== "CHILD_LOCAL_PLACE" && <label className="mt-1 grid gap-1 text-sm">Nom du lieu<input className={inputClass} value={stop.label} onChange={(event) => changeStops(route.stops.map((part, i) => i === index ? { ...part, label: event.target.value } : part), true)} /></label>}
-        </div>
-        {index < route.stops.length - 1 ? <div><label className="grid gap-1 text-sm">Km vers {route.stops[index + 1]!.label}<input className={inputClass} type="number" min="0.001" step="0.001" value={stop.distanceToNextKm ?? ""}
-          onChange={(event) => changeStops(route.stops.map((part, i) => i === index ? { ...part, distanceToNextKm: event.target.value, distanceSource: "MANUAL", evidence: undefined, estimatedFuelLiters: undefined } : part))} /></label>
-          <p className="mt-1 text-xs">{stop.distanceSource === "HISTORICAL_ROUTE" ? `Historique dirigé · ${stop.evidence?.observationCount} observations` : stop.distanceToNextKm ? "Kilomètres saisis" : "Historique à rechercher ou km à saisir"}</p>
-          {stop.evidence && <details className="text-xs"><summary>Sources</summary><p>{stop.evidence.minimumKm}–{stop.evidence.maximumKm} km · {stop.evidence.firstDate} au {stop.evidence.lastDate} · {stop.evidence.method}</p></details>}</div> : <span className="self-center text-sm">Arrivée</span>}
-        <div className="flex items-center gap-1"><button type="button" className={buttonClass} disabled={index === 0} aria-label={`Monter l’étape ${index + 1}`} onClick={() => { const next = [...route.stops]; [next[index - 1], next[index]] = [next[index]!, next[index - 1]!]; changeStops(next, true); }}>↑</button><button type="button" className={buttonClass} disabled={route.stops.length <= 2} aria-label={`Retirer l’étape ${index + 1}`} onClick={() => changeStops(route.stops.filter((_, i) => i !== index), true)}>×</button></div>
-      </div>)}
-      <div className="flex gap-2"><button type="button" className={buttonClass} disabled={route.stops.length >= 12} onClick={() => changeStops([...route.stops, { label: "", endpointSource: "DIRECT_PLACE" }], true)}>Ajouter une étape</button>
-        {home && <button type="button" className={buttonClass} disabled={route.stops.length >= 12 || route.stops.at(-1)?.placeId === home.placeId} onClick={() => changeStops([...route.stops, { label: home.name, placeId: home.placeId, endpointSource: "DIRECT_PLACE" }], true)}>Ajouter le retour à la maison</button>}
-        <button type="button" className={buttonClass} disabled={busy || !vehicle} onClick={estimate}>{busy ? "Calcul…" : "Rechercher l’historique et recalculer"}</button>
-        <button type="button" className={buttonClass} onClick={() => setBuilder((current) => editBuilderDraft(current, { ...current.draft, context: { ...current.draft.context, route: undefined }, costItems: current.draft.costItems.filter((item) => item.assetKey !== "transport:fuel_usage") }))}>Retirer le trajet</button></div>
-      {message && <p role="status" className="text-sm text-amber-900">{message}</p>}
-      {route.fuelEstimate && <div className="rounded-xl bg-emerald-50 p-3 text-sm"><strong>Usage carburant estimé · {route.fuelEstimate.cost} €</strong>
-        <p>{routeSegments(route.stops).length} segments · {route.fuelEstimate.distanceKm} km · {route.fuelEstimate.liters} L · {route.fuelEstimate.fuelPricePerLiter} €/L</p>
-        <p>{route.fuelEstimate.fuelPriceSource}{route.fuelEstimate.fuelPriceObservedAt && ` · observation ${route.fuelEstimate.fuelPriceObservedAt.slice(0, 10)}`}{route.fuelEstimate.fuelPriceQuality && ` · ${route.fuelEstimate.fuelPriceQuality}`}</p>
-        <p>Les segments historiques utilisent leur consommation observée. Les segments saisis utilisent {route.fuelEstimate.consumptionL100Km} L/100 km.</p><p>Usage économique estimé ; aucun plein ni paiement n’est créé.</p></div>}
-      </div>}
-    </details>}
+    {resolved.transport !== "FORBIDDEN" && <OptionalAction label={draft.subtypeKey === "work_meal" ? "Ajouter un déplacement exceptionnel pour chercher le repas" : "Ajouter un trajet"} active={!!mode}>
+      <div className="grid gap-4"><ChoiceTiles label="Qui prend en charge le trajet ?" value={actor} choices={[{ key: "US", label: "Nous" }, { key: "OTHER", label: "Quelqu’un d’autre" }]} onChange={(key) => { setActor(key as typeof actor); setPaid(null); applyMode(undefined); }} />
+        <ChoiceTiles label={actor === "US" ? "Ce trajet nous coûtera-t-il quelque chose ?" : "Participez-vous aux frais ?"} value={paid === null ? undefined : paid ? "PAID" : "FREE"} choices={actor === "US" ? [{ key: "FREE", label: "Gratuit" }, { key: "PAID", label: "Payant" }] : [{ key: "FREE", label: "Non" }, { key: "PAID", label: "Oui" }]} onChange={(key) => { setPaid(key === "PAID"); applyMode(key === "FREE" ? "FREE" : actor === "OTHER" ? "CARPOOL" : undefined); }} />
+        {paid && actor === "US" && <ChoiceTiles label="Comment vous déplacerez-vous ?" value={mode} choices={plausibleTransportModes(draft, places).map((key) => ({ key, label: modeLabels[key]! }))} onChange={(key) => { applyMode(key as typeof mode); if (key === "CAR") startCar(); }} />}
+        {paid === false && <p className="text-sm text-slate-500">Aucun coût de trajet prévu.</p>}
+        {mode === "CAR" && !route && <div className="grid gap-3"><p className="text-sm">Précisez la destination pour calculer le trajet voiture.</p><label className="grid gap-1 text-sm">Destination<input className={builderInput} value={draft.context.place?.kind === "TEXT" ? draft.context.place.label : ""} onChange={(event) => setBuilder((state) => changeBuilderContext(state, { ...state.draft.context, place: event.target.value ? { kind: "TEXT", label: event.target.value, provenance: "USER_DECLARED_PROSPECTIVE" } : undefined }))} /></label><button className={builderButton} disabled={!draft.context.place || draft.context.place.kind === "TEXT" && !draft.context.place.label.trim()} onClick={startCar}>Utiliser cette destination</button></div>}
+        {mode === "CAR" && route && <section className="rounded-xl bg-white p-4"><h4 className="flex items-center gap-2 text-sm font-bold"><Car size={17} />Trajet voiture</h4><ol className="mt-3 grid gap-2 border-l-2 border-indigo-100 pl-4 text-sm">{route.stops.map((stop, index) => <li key={index} className="flex gap-2"><MapPin size={14} className={stop.endpointSource === "ROOT_PLACE" ? "text-indigo-700" : "text-slate-400"} /><span>{stop.label}<span className="text-xs text-slate-400">{stop.endpointSource === "ROOT_PLACE" ? " · destination" : stop.endpointSource === "CHILD_LOCAL_PLACE" ? " · arrêt" : ""}</span></span></li>)}</ol>
+          <div aria-live="polite" className="mt-3 text-sm">{busy ? "Calcul du trajet…" : route.fuelEstimate ? <><strong>≈ {route.fuelEstimate.distanceKm} km · ≈ {builderMoney(route.fuelEstimate.cost)}</strong><p className="mt-1 text-xs text-slate-500">Estimation économique du trajet, pas un paiement bancaire programmé.</p><details className="mt-2 text-xs text-slate-500"><summary className="cursor-pointer">Comment est calculée cette estimation ?</summary><p className="mt-2">{route.fuelEstimate.liters} L · {route.fuelEstimate.consumptionL100Km} L/100 km · {route.fuelEstimate.fuelPricePerLiter} €/L</p><p>{route.fuelEstimate.fuelPriceSource} · {route.fuelEstimate.fuelPriceObservedAt?.slice(0, 10)} · {route.fuelEstimate.fuelPriceQuality}</p><p>Historique des segments dirigés lorsque disponible ; estimation manuelle pour les autres segments.</p></details></> : "Distance à préciser pour terminer l’estimation."}</div>
+          <button className="mt-3 text-sm font-semibold text-indigo-700 underline" onClick={() => setEditing(!editing)}>{editing ? "Replier le trajet" : "Modifier le trajet"}</button>
+          {editing && <div className="mt-4 grid gap-3">{route.stops.map((stop, index) => <div key={index} className="grid grid-cols-[1fr_8rem_auto] items-end gap-2"><label className="grid gap-1 text-xs">{index === 0 ? "Départ" : stop.endpointSource === "ROOT_PLACE" ? "Destination" : index === route.stops.length - 1 ? "Retour" : "Arrêt"}<select className={builderInput} disabled={stop.endpointSource === "ROOT_PLACE"} value={stop.placeId ?? "TEXT"} onChange={(event) => { const selected = places.find((place) => place.placeId === event.target.value); changeStops(route.stops.map((part, i) => i === index ? selected ? { label: selected.name, placeId: selected.placeId, endpointSource: "DIRECT_PLACE" } : { label: "", endpointSource: "DIRECT_PLACE" } : part)); }}>
+            {places.map((place) => <option key={place.placeId} value={place.placeId}>{place.name}</option>)}<option value="TEXT">Lieu saisi · {stop.label}</option></select>{!stop.placeId && stop.endpointSource !== "ROOT_PLACE" && <input className={builderInput} aria-label={`Nom de l’arrêt ${index + 1}`} value={stop.label} onChange={(event) => changeStops(route.stops.map((part, i) => i === index ? { ...part, label: event.target.value } : part))} />}</label>
+            {index < route.stops.length - 1 && !route.fuelEstimate && <label className="grid gap-1 text-xs">Distance inconnue (km)<input type="number" min="0.001" step="0.001" className={builderInput} value={stop.distanceToNextKm ?? ""} onChange={(event) => changeStops(route.stops.map((part, i) => i === index ? { ...part, distanceToNextKm: event.target.value, distanceSource: "MANUAL", evidence: undefined, estimatedFuelLiters: undefined } : part), false)} /></label>}
+            <div className="flex gap-1"><button className={builderButton} disabled={index === 0 || index === route.stops.length - 1} aria-label={`Avancer l’arrêt ${index + 1}`} onClick={() => { const next = [...route.stops]; [next[index - 1], next[index]] = [next[index]!, next[index - 1]!]; changeStops(next); }}>↑</button><button className={builderButton} disabled={route.stops.length <= 2 || stop.endpointSource === "ROOT_PLACE"} aria-label={`Retirer l’arrêt ${index + 1}`} onClick={() => changeStops(route.stops.filter((_, i) => i !== index))}>×</button></div>
+          </div>)}<button className={`${builderButton} w-fit`} disabled={route.stops.length >= 12} onClick={() => { const next = [...route.stops]; next.splice(Math.max(1, next.length - 1), 0, { label: "", endpointSource: "DIRECT_PLACE" }); changeStops(next); }}>Ajouter un arrêt</button></div>}
+        </section>}
+        {transportCostKeys.map((key) => { const asset = plannedAsset(key); if (!asset) return null; const item = draft.costItems.find((part) => part.assetKey === key); return <OptionalAction key={key} label={actor === "OTHER" ? "Préciser notre participation" : asset.label} active={!!item}><LocalAssetEditor item={item} asset={asset} wallets={[]} categoryAmount onConfirm={(item) => setBuilder((state) => commitBuilderCost(state, { ...item, modulePath: [resolved.rootModule], baselineKey: null }))} onRemove={item ? () => setBuilder((state) => removeBuilderCost(state, item.id)) : undefined} /></OptionalAction>; })}
+        {message && <p role="status" className="text-sm text-amber-900">{message}</p>}{mode === "CAR" && !vehicle && <p className="text-sm text-amber-800">Il manque une référence de véhicule ou de prix de carburant pour estimer ce trajet.</p>}
+        {mode && <button className="w-fit text-xs text-slate-500 underline" onClick={() => { applyMode(undefined); setPaid(null); setMessage("Le trajet précédent reste récupérable avec Annuler."); }}>Retirer le trajet</button>}
+      </div>
+    </OptionalAction>}
   </div>;
 }

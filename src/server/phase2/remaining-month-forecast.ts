@@ -1,5 +1,6 @@
 import "server-only";
 import Big from "big.js";
+import { isAssumedOnsiteWorkday } from "@/domain/phase2/workday-assumption";
 import { referenceQuantile, referenceWorkdays, referenceMobilityDays, RESTAURANT_SUBCATEGORIES,
   TOBACCO_SUBCATEGORIES, type EconomicReferenceEntry, type MonthReferenceEvidence, type MonthReferencePlan,
   type MobilityReferenceLeg } from "./month-reference";
@@ -46,7 +47,7 @@ export function remainingMonthDays(month: string, asOf: string) {
   const [year, m] = month.split("-").map(Number), count = new Date(Date.UTC(year!, m!, 0)).getUTCDate();
   return Array.from({ length: count }, (_, i) => `${month}-${String(i + 1).padStart(2, "0")}`).filter(date => date >= asOf);
 }
-const weekday = (date: string) => ![0, 6].includes(new Date(`${date}T12:00:00Z`).getUTCDay());
+const weekday = isAssumedOnsiteWorkday;
 export const matchesForecastCategory = (key: string, row: EconomicReferenceEntry): boolean => key === "groceries" ? row.subcategory === "Courses alimentaires"
   : key === "tobacco-vape" ? TOBACCO_SUBCATEGORIES.some(s => s === row.subcategory)
     : key === "household-restaurants" ? RESTAURANT_SUBCATEGORIES.some(s => s === row.subcategory)

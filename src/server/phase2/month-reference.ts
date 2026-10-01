@@ -1,6 +1,7 @@
 import "server-only";
 
 import Big from "big.js";
+import { isAssumedOnsiteWorkday } from "@/domain/phase2/workday-assumption";
 import type { ForecastRange } from "./month-forecast";
 
 export const RESTAURANT_SUBCATEGORIES = ["Restaurant", "Fast-food / snack", "Livraison de repas"] as const;
@@ -54,8 +55,7 @@ export const referenceWorkdays = (targetMonth: string): number => {
   const days = new Date(Date.UTC(year!, month!, 0)).getUTCDate();
   let count = 0;
   for (let day = 1; day <= days; day += 1) {
-    const weekday = new Date(Date.UTC(year!, month! - 1, day)).getUTCDay();
-    if (weekday !== 0 && weekday !== 6) count += 1;
+    if (isAssumedOnsiteWorkday(`${targetMonth}-${String(day).padStart(2, "0")}`)) count += 1;
   }
   return count;
 };

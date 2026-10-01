@@ -75,10 +75,10 @@ for (const item of [line("restaurant:main", "30.00", null, [{ source: "SWILE", a
   line("restaurant:main", "30.00", null, [{ source: "SWILE", amount: "15.00" }, { source: "SWILE", amount: "15.00" }]),
   line("restaurant:wine_glass", "30.00", null, [{ source: "EDENRED", amount: "30.00" }])])
   assert.throws(() => parsePlannedExpenseDraft(draft([item]), "2026-10"), /FUNDING/);
-// FIN-UI-01..04: render the real card; central first, variable and identical scenario impacts remain honest.
+// FIN-UI-01..04: render the human project/payment/effect order with honest central comparison.
 for (const data of [h, e, marginal, f]) {
   const html = renderToStaticMarkup(React.createElement(PlannedImpactCard, { preview: { ...data, explanation: "Scénarios du mois" }, fundingIncomplete: false }));
-  const labels = ["Coût prévu", "Effet sur le mois", "Paiement prévu", "Reste projeté en fin de mois", "Fourchette et explications"];
+  const labels = ["VOTRE PROJET", "Coût prévu", "PAIEMENT PRÉVU", "EFFET SUR LE MOIS", "PROJECTION HABITUELLE", "PROJECTION DE FIN DE MOIS", "Comprendre la projection"];
   const indexes = labels.map((label) => html.indexOf(label));
   assert(indexes.every((index) => index >= 0)); assert(indexes.every((index, i) => i === 0 || index > indexes[i - 1]));
   assert(html.includes(money(data.after.central))); assert(html.includes(money(data.netAdditionalImpact.central)));
@@ -86,7 +86,10 @@ for (const data of [h, e, marginal, f]) {
   assert.doesNotMatch(html, /Ressource restante projetée[^<]*solde/iu);
 }
 const pending = renderToStaticMarkup(React.createElement(PlannedImpactCard, { preview: { ...h, explanation: "" }, fundingIncomplete: true }));
-assert.match(pending, /Financement à compléter/); assert.doesNotMatch(pending, /Banque · paiements/);
+assert.match(pending, /financement reste à compléter/i); assert.doesNotMatch(pending, /Banque · paiements/);
+const incomplete = renderToStaticMarkup(React.createElement(PlannedImpactCard, { preview: { ...e, projectionIncomplete: true, explanation: "" }, fundingIncomplete: false }));
+assert.match(incomplete, /À affiner/); assert(!incomplete.includes(money(e.before.central))); assert(!incomplete.includes(money(e.after.central)));
+assert(incomplete.includes(money(e.remainingDifference)));
 const story = fs.readFileSync("src/app/mois-a-venir/month-story.tsx", "utf8");
 assert.doesNotMatch(story, /Total disponible pour le mois|sur nos comptes|safe.to.spend|vous pouvez dépenser|argent libre/iu);
 console.log("PASS: C5 FIN-01..08, FIN-UI-01..04, META-03/04/05/09/20, baseline displacement, quantity, language and no BANK reallocation");

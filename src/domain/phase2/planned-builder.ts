@@ -2,11 +2,13 @@ import Big from "big.js";
 import { ASSET_AGGREGATE_DESCENDANTS, plannedAsset, rootAssetModule, suggestedAssetQuantity, type AssetModule } from "./planned-assets";
 import type { CostItem, PlannedBaselineKey, PlannedExpenseContext, PlannedExpenseDraft, ProspectivePlaceRef } from "./planned-contract";
 import { deduplicateRouteStops, routePlaceIdentity, stopForPlace } from "./planned-routes";
-import { moduleAvailability, resolvePlannedContext, SOCIAL_CONTACTS_V1, type ResolvedPlannedContext } from "./planned-rules";
+import { moduleAvailability, resolvePlannedContext, plannedContextModifiers, plannedAllowsNoCost, SOCIAL_CONTACTS_V1, type ResolvedPlannedContext } from "./planned-rules";
 import { plannedLineGross } from "./planned-money";
 import { assetParticipantCount, costAllowsBaseline, isRootCost, isTransportCost, prospectivePersonLabel, transportAssetMatchesMode } from "./planned-product";
 import { fundingAfterGrossChange } from "./planned-mutations";
 import { rankPlacesForPlannedContext, type PlannedPlaceOption } from "./planned-places";
+import { deriveProjectTitle } from "./planned-ux";
+import { derivePlannedPlaceRoles } from "./planned-place-rules";
 
 export type DraftOrigin = "AUTO_DERIVED" | "EXPLICIT";
 export type Invalidation = "KEEP" | "RECOMPUTE" | "SUSPEND" | "REMOVE_DERIVED";
@@ -30,14 +32,18 @@ const touch = (state: BuilderState, change: Partial<BuilderSnapshot>, reversible
   ({ ...state, ...change, undo: reversible ? snapshot(state) : state.undo, revision: state.revision + 1 });
 const resolvedFor = (draft: PlannedExpenseDraft): ResolvedPlannedContext | null => {
   try { return resolvePlannedContext({ familyKey: draft.familyKey, subtypeKey: draft.subtypeKey,
-    modifiers: { purchaseMode: draft.context.purchaseMode, housePartyPlaceMode: draft.context.housePartyPlaceMode,
-      visitFormat: draft.context.visitFormat, socialOccasion: draft.context.socialOccasion,
-      deliveryProviderKey: draft.context.deliveryProviderKey } }); } catch { return null; }
+    modifiers: plannedContextModifiers(draft.context) }); } catch { return null; }
 };
 
 export function createBuilderState(draft: PlannedExpenseDraft): BuilderState {
-  return { draft: clone(draft), costMode: draft.costItems.length ? "ITEMIZED" : "QUICK_TOTAL", quickTotal: "",
-    quickBaseline: undefined,
+  const rootItems = draft.costItems.filter(isRootCost);
+  const quick = rootItems.length === 1 && rootItems[0].id === "00000000-0000-4000-8000-000000000001"
+    && rootItems[0].assetKey === null && rootItems[0].quantity === "1" && !rootItems[0].fundingAllocations?.length
+    ? rootItems[0] : undefined;
+  const targeted = rootItems.length > 0 && rootItems.every((item) => ["00000000-0000-4000-8000-000000000002", "00000000-0000-4000-8000-000000000003"].includes(item.id));
+  return { draft: clone(quick ? { ...draft, costItems: draft.costItems.filter((item) => item !== quick) } : draft),
+    costMode: quick || !draft.costItems.length ? "QUICK_TOTAL" : targeted ? "TARGETED_SPLIT" : "ITEMIZED", quickTotal: quick?.unitAmount ?? "",
+    quickBaseline: quick?.baselineKey ?? (rootItems.length && rootItems.every((item) => item.baselineKey === rootItems[0].baselineKey) ? rootItems[0].baselineKey : undefined),
     acceptedChildren: [...new Set(draft.costItems.flatMap((item) => item.modulePath?.[1] ? [item.modulePath[1]] : []))],
     suspended: [], origins: Object.fromEntries(draft.costItems.map((item) => [`baseline.${item.id}`, "EXPLICIT"])),
     undo: null, revision: 0 };
@@ -193,18 +199,30 @@ export function splitRestaurantQuickTotal(state: BuilderState, mealAmount: strin
   if (meal.lt(gross)) costItems.push(line("00000000-0000-4000-8000-000000000003", "restaurant:alcohol_total", "Alcool", gross.minus(meal)));
   return touch(state, { draft: { ...state.draft, costItems: [...costItems, ...state.draft.costItems] }, costMode: "TARGETED_SPLIT",
     origins: { ...state.origins, "costItems": "EXPLICIT",
-      ...Object.fromEntries(costItems.map((item) => [`baseline.${item.id}`, "EXPLICIT" as const])) } }, true);
+      ...(state.quickBaseline !== undefined ? Object.fromEntries(costItems.map((item) => [`baseline.${item.id}`, "EXPLICIT" as const])) : {}) } }, true);
 }
 export const itemizeBuilderCosts = (state: BuilderState): BuilderState =>
-  touch(state, { costMode: "ITEMIZED", draft: state.costMode === "QUICK_TOTAL"
-    ? materializeBuilderDraft(state) : state.draft,
+  touch(state, { costMode: "ITEMIZED", draft: state.costMode === "QUICK_TOTAL" || state.costMode === "TARGETED_SPLIT"
+    ? { ...state.draft, costItems: state.draft.costItems.filter((item) => !isRootCost(item)) } : state.draft,
   origins: state.costMode === "QUICK_TOTAL" && state.quickBaseline !== undefined
     ? { ...state.origins, "baseline.00000000-0000-4000-8000-000000000001": "EXPLICIT" } : state.origins }, true);
+const rootMealAggregate = (root: AssetModule): string | undefined => ({ restaurant: "restaurant:meal_total", fast_food: "fast_food:meal_total", work_meal: "work_meal:meal", groceries: "groceries:food" } as Partial<Record<AssetModule, string>>)[root];
+export function canCollapseBuilderCosts(state: BuilderState): boolean {
+  const items = state.draft.costItems.filter(isRootCost);
+  return items.length > 0 && canCollapseCosts(items) && !items.some((item) => item.fundingAllocations?.length)
+    && (items.every((item) => item.assetKey === null) || !!rootMealAggregate(rootAssetModule(state.draft.familyKey, state.draft.subtypeKey))
+      && items.every((item) => plannedAsset(item.assetKey ?? "")?.fundingEligibility === "MEAL"));
+}
 export function collapseBuilderCosts(state: BuilderState): BuilderState {
   const rootItems = state.draft.costItems.filter(isRootCost);
-  if (!canCollapseCosts(rootItems) || rootItems.some((item) => item.fundingAllocations?.length || item.assetKey !== null))
+  if (!canCollapseBuilderCosts(state))
     throw new TypeError("BUILDER_COLLAPSE_INCOMPATIBLE");
   const total = rootItems.reduce((sum, item) => sum.plus(new Big(item.quantity).times(item.unitAmount)), new Big(0));
+  const aggregateKey = rootItems.every((item) => item.assetKey === null) ? undefined : rootMealAggregate(rootAssetModule(state.draft.familyKey, state.draft.subtypeKey));
+  if (aggregateKey) return touch(state, { costMode: "TARGETED_SPLIT", quickTotal: "", quickBaseline: rootItems[0].baselineKey,
+    draft: { ...state.draft, costItems: [{ id: "00000000-0000-4000-8000-000000000002", assetKey: aggregateKey,
+      label: plannedAsset(aggregateKey)!.label, quantity: "1", unitAmount: total.toFixed(2), baselineKey: rootItems[0].baselineKey,
+      modulePath: [rootAssetModule(state.draft.familyKey, state.draft.subtypeKey)], priceSource: "MANUAL" }, ...state.draft.costItems.filter((item) => !isRootCost(item))] } }, true);
   return touch(state, { costMode: "QUICK_TOTAL", quickTotal: total.gt(0) ? total.toFixed(2) : "",
     quickBaseline: rootItems[0]?.baselineKey ?? null,
     draft: { ...state.draft, costItems: state.draft.costItems.filter((item) => !isRootCost(item)) } }, true);
@@ -274,6 +292,14 @@ export function changeBuilderContext(state: BuilderState, context: PlannedExpens
     nextContext.route = undefined;
   }
   const costItems = state.draft.costItems.filter((item) => {
+    if (context.noExpense && !before.noExpense && isRootCost(item)) {
+      suspended.push({ path: `cost.${item.id}`, value: clone(item), origin: "EXPLICIT", reason: "Ce projet est désormais sans dépense principale." });
+      return false;
+    }
+    if (context.workMealMode === "FROM_HOME" && (item.modulePath?.at(-1) ?? resolved.rootModule) === "work_meal") {
+      suspended.push({ path: `cost.${item.id}`, value: clone(item), origin: "EXPLICIT", reason: "Le repas est désormais apporté de chez nous." });
+      return false;
+    }
     if (item.assetKey === "transport:fuel_usage" && !nextContext.route) {
       if (origins[`cost.${item.id}`] !== "AUTO_DERIVED") suspended.push({ path: `cost.${item.id}`,
         value: clone(item), origin: "EXPLICIT", reason: "Le trajet a changé." });
@@ -306,7 +332,10 @@ export function changeBuilderContext(state: BuilderState, context: PlannedExpens
     delete childRefs[child];
   }
   if (nextContext.childLocalPlaceRefs) nextContext.childLocalPlaceRefs = childRefs;
-  return touch(state, { draft: { ...nextDraft, context: nextContext, costItems: countedItems }, suspended, origins }, true);
+  const removeQuick = (context.workMealMode === "FROM_HOME" || context.noExpense && !before.noExpense) && !!state.quickTotal;
+  if (removeQuick) suspended.push({ path: "quickTotal", value: state.quickTotal, origin: "EXPLICIT", reason: "Le budget du repas acheté est conservé pour annuler." });
+  return touch(state, { draft: { ...nextDraft, context: nextContext, costItems: countedItems }, suspended, origins,
+    ...(removeQuick ? { quickTotal: "", quickBaseline: null } : {}) }, true);
 }
 export const discardSuspended = (state: BuilderState): BuilderState => touch(state, { suspended: [] }, true);
 
@@ -329,7 +358,7 @@ export function deriveBuilderReadiness(state: BuilderState, live?: Readonly<{ pl
   }
   if (!resolved) issue("BLOCK_PREVIEW", "CONTEXT_INVALID", "context", "Choisissez un type de projet.", "builder-intent");
   if (!draft.title.trim()) issue("BLOCK_SAVE", "TITLE_REQUIRED", "title", "Donnez un nom à ce projet.", "builder-title");
-  if (!activeDraft.costItems.length) issue("BLOCK_PREVIEW", "COST_REQUIRED", "costItems", "Indiquez un coût estimé.", "builder-cost");
+  if (!activeDraft.costItems.length && !plannedAllowsNoCost(activeDraft)) issue("BLOCK_PREVIEW", "COST_REQUIRED", "costItems", "Indiquez le budget prévu.", "builder-cost");
   if (state.costMode === "QUICK_TOTAL" && state.quickTotal && (!moneyPattern.test(state.quickTotal) || new Big(state.quickTotal).lte(0)))
     issue("BLOCK_PREVIEW", "QUICK_TOTAL_INVALID", "quickTotal", "Corrigez le montant du total rapide.", "builder-cost");
   if (state.costMode === "QUICK_TOTAL" && state.quickTotal && state.draft.costItems.some(isRootCost))
@@ -383,8 +412,6 @@ export function deriveBuilderReadiness(state: BuilderState, live?: Readonly<{ pl
       issue("BLOCK_SAVE", "PURCHASE_MODE_REQUIRED", "context.purchaseMode", "Choisissez comment acheter.", "builder-context");
     if (resolved.fields.deliveryProvider === "REQUIRED" && (!c.deliveryProvider || !c.deliveryProviderKey))
       issue("BLOCK_SAVE", "PROVIDER_REQUIRED", "context.deliveryProvider", "Choisissez qui livre.", "builder-context");
-    if (c.purchaseMode === "ONLINE" && !c.seller)
-      issue("BLOCK_SAVE", "SELLER_REQUIRED", "context.seller", "Précisez la boutique.", "builder-context");
     if ((draft.familyKey === "purchase" && draft.subtypeKey === "gift"
       || draft.costItems.some((item) => item.modulePath?.[1] === "gift")) && !c.gift?.recipient.trim())
       issue("BLOCK_SAVE", "GIFT_RECIPIENT_REQUIRED", "context.gift", "Précisez pour qui est le cadeau.",
@@ -422,3 +449,82 @@ export const canCollapseCosts = (items: readonly CostItem[]): boolean => items.l
   item.baselineKey === items[0]?.baselineKey && JSON.stringify(item.fundingAllocations ?? []) === JSON.stringify(items[0]?.fundingAllocations ?? [])
   && plannedAsset(item.assetKey ?? "")?.fundingEligibility === plannedAsset(items[0]?.assetKey ?? "")?.fundingEligibility
   && item.assetKey !== "transport:fuel_usage");
+
+/** One root answer is propagated to its compatible economic components, never asked per line. */
+export function setBuilderRootBaseline(state: BuilderState, key: PlannedBaselineKey | null): BuilderState {
+  const items = state.draft.costItems.filter((item) => item.modulePath?.length !== 2 && costAllowsBaseline(item));
+  return touch(state, { quickBaseline: key, origins: { ...state.origins,
+    ...Object.fromEntries(items.map((item) => [`baseline.${item.id}`, "EXPLICIT" as const])) },
+    draft: { ...state.draft, costItems: state.draft.costItems.map((item) => items.includes(item) ? { ...item, baselineKey: key } : item) } });
+}
+/** Local editor commits only complete economic lines. A fee decomposes an existing total by default. */
+export function commitBuilderCost(state: BuilderState, item: CostItem, feeIncluded = true): BuilderState {
+  if (!item.label.trim() || !moneyPattern.test(item.unitAmount) || !/^(?:0|[1-9]\d{0,3})(?:\.\d{1,3})?$/u.test(item.quantity)
+    || new Big(item.quantity).lte(0) || new Big(item.unitAmount).lte(0) || !validFunding(item)) throw new TypeError("BUILDER_LOCAL_COST_INVALID");
+  const previous = state.draft.costItems.find((old) => old.id === item.id);
+  const fee = /:(delivery_fee|service_fee)$/u.test(item.assetKey ?? "");
+  const change = new Big(plannedLineGross(item)).minus(previous ? plannedLineGross(previous) : 0);
+  let next = { ...state, draft: { ...state.draft, costItems: state.draft.costItems.filter((old) => old.id !== item.id) },
+    origins: { ...state.origins, [`cost.${item.id}`]: "EXPLICIT" as const, [`price.${item.id}`]: "EXPLICIT" as const,
+      [`quantity.${item.id}`]: "EXPLICIT" as const, ...(state.quickBaseline !== undefined ? { [`baseline.${item.id}`]: "EXPLICIT" as const } : {}) } };
+  if (fee && feeIncluded && state.costMode === "QUICK_TOTAL" && moneyPattern.test(state.quickTotal)) {
+    const remainder = new Big(state.quickTotal).minus(change);
+    if (remainder.lte(0)) throw new TypeError("BUILDER_FEE_EXCEEDS_TOTAL");
+    next = { ...next, quickTotal: remainder.toFixed(2) };
+  }
+  if (fee && feeIncluded && state.costMode === "TARGETED_SPLIT") {
+    const aggregate = next.draft.costItems.find((line) => ["restaurant:meal_total", "fast_food:meal_total", "work_meal:meal", "groceries:food"].includes(line.assetKey ?? "") && line.modulePath?.length !== 2);
+    if (aggregate) {
+      const remainder = new Big(plannedLineGross(aggregate)).minus(change);
+      const wallets = (aggregate.fundingAllocations ?? []).filter((part) => part.source !== "BANK");
+      const funded = wallets.reduce((sum, part) => sum.plus(part.amount), new Big(0));
+      if (remainder.lte(0) || remainder.lt(funded)) throw new TypeError("BUILDER_FEE_EXCEEDS_TOTAL");
+      const allocations = wallets.length ? [...wallets, ...(remainder.gt(funded) ? [{ source: "BANK" as const, amount: remainder.minus(funded).toFixed(2) }] : [])] : undefined;
+      next = { ...next, draft: { ...next.draft, costItems: next.draft.costItems.map((line) => line.id === aggregate.id ? { ...line, quantity: "1", unitAmount: remainder.toFixed(2), fundingAllocations: allocations } : line) } };
+    }
+  }
+  const result = replaceBuilderAggregate(next, item);
+  return { ...result, undo: snapshot(state) };
+}
+export function removeBuilderCost(state: BuilderState, id: string): BuilderState {
+  const item = state.draft.costItems.find((item) => item.id === id);
+  const restoreFee = state.costMode === "QUICK_TOTAL" && /:(delivery_fee|service_fee)$/u.test(item?.assetKey ?? "") && moneyPattern.test(state.quickTotal);
+  let costItems = state.draft.costItems.filter((item) => item.id !== id);
+  if (state.costMode === "TARGETED_SPLIT" && item && /:(delivery_fee|service_fee)$/u.test(item.assetKey ?? "")) {
+    const aggregate = costItems.find((line) => ["restaurant:meal_total", "fast_food:meal_total", "work_meal:meal", "groceries:food"].includes(line.assetKey ?? "") && line.modulePath?.length !== 2);
+    if (aggregate) costItems = costItems.map((line) => line.id === aggregate.id ? { ...line, quantity: "1", unitAmount: new Big(plannedLineGross(line)).plus(plannedLineGross(item)).toFixed(2),
+      fundingAllocations: line.fundingAllocations ? [...line.fundingAllocations.filter((part) => part.source !== "BANK"), { source: "BANK", amount: new Big(line.fundingAllocations.find((part) => part.source === "BANK")?.amount ?? 0).plus(plannedLineGross(item)).toFixed(2) }] : undefined } : line);
+  }
+  return touch(state, { quickTotal: restoreFee ? new Big(state.quickTotal).plus(plannedLineGross(item!)).toFixed(2) : state.quickTotal,
+    draft: { ...state.draft, costItems } }, true);
+}
+/** Funding a total promotes a real eligible catalog aggregate, preserving gross and bank remainder. */
+export function fundBuilderTotal(state: BuilderState, source: "SWILE" | "EDENRED", amount: string, mealAmount?: string): BuilderState {
+  const root = rootAssetModule(state.draft.familyKey, state.draft.subtypeKey);
+  const assetKey = rootMealAggregate(root);
+  if (!assetKey || state.costMode !== "QUICK_TOTAL" || !moneyPattern.test(state.quickTotal) || !moneyPattern.test(amount)) throw new TypeError("BUILDER_TOTAL_FUNDING_INVALID");
+  const eligible = new Big(mealAmount ?? state.quickTotal), wallet = new Big(amount), total = new Big(state.quickTotal);
+  if (eligible.gt(total) || eligible.lte(0) || wallet.lte(0) || wallet.gt(eligible)) throw new TypeError("BUILDER_TOTAL_FUNDING_INVALID");
+  let next = root === "restaurant" ? splitRestaurantQuickTotal(state, eligible.toFixed(2)) : touch(state, { costMode: "TARGETED_SPLIT",
+    draft: { ...state.draft, costItems: [{ id: "00000000-0000-4000-8000-000000000002", assetKey, label: plannedAsset(assetKey)!.label,
+      quantity: "1", unitAmount: eligible.toFixed(2), modulePath: [root], baselineKey: state.quickBaseline ?? null,
+      priceSource: "MANUAL" }, ...state.draft.costItems] } }, true);
+  const id = "00000000-0000-4000-8000-000000000002";
+  next = { ...next, origins: { ...next.origins, ...(state.quickBaseline !== undefined ? { [`baseline.${id}`]: "EXPLICIT" as const } : {}) }, draft: { ...next.draft,
+    costItems: next.draft.costItems.map((item) => item.id === id ? { ...item, fundingAllocations: [
+      { source, amount: wallet.toFixed(2) }, ...(eligible.gt(wallet) ? [{ source: "BANK" as const, amount: eligible.minus(wallet).toFixed(2) }] : [])] } : item) } };
+  return next;
+}
+
+/** Canonical context defaults and presentation are synchronized at an edit boundary, never persisted as a registry. */
+export function synchronizeIntentBuilder(state: BuilderState, places: readonly PlannedPlaceOption[], persons: readonly { personId: string; displayName: string }[]): BuilderState {
+  let next = state;
+  const personName = persons.find((person) => person.personId === state.draft.context.participantPersonIds?.[0])?.displayName;
+  const resolved = resolvePlannedContext({ familyKey: state.draft.familyKey, subtypeKey: state.draft.subtypeKey, modifiers: plannedContextModifiers(state.draft.context, personName) });
+  if (resolved.place.source === "OWN_HOME" && !state.draft.context.place) {
+    const home = places.find((place) => derivePlannedPlaceRoles(place).includes("OWN_HOME"));
+    if (home) next = { ...next, origins: { ...next.origins, place: "AUTO_DERIVED" }, draft: { ...next.draft, context: { ...next.draft.context, place: { kind: "KNOWN", placeId: home.placeId } } } };
+  }
+  if (resolved.baseline.mode === "AUTO" && resolved.baseline.key) next = setBuilderRootBaseline(next, resolved.baseline.key);
+  return { ...next, draft: { ...next.draft, title: deriveProjectTitle(next.draft, places, personName) } };
+}

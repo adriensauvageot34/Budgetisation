@@ -6,6 +6,8 @@ import { childPlaceRoles, SOCIAL_CONTACTS_V1, type ProspectiveContact,
 
 export type PlannedPlaceOption = Readonly<{ placeId: string; name: string; commune: string | null;
   nature: string | null; usage: string | null; subtype: string | null; privatePlace: boolean;
+  visits12Months?: number; lastVisitDate?: string | null;
+  brandLabel?: string | null;
   relationships: readonly { personName: string; role: string }[] }>;
 export type RankedPlannedPlace = Readonly<{ place: PlannedPlaceOption; roles: readonly PlaceRole[];
   rankingTier: "PRIMARY" | "SECONDARY"; reason: "CONTACT_HOME" | "WORK_MEAL_ANCHOR" | "PLACE_ROLE" }>;
@@ -49,6 +51,12 @@ export function rankPlacesForPlannedContext(places: readonly PlannedPlaceOption[
       && candidate.relationships.some((relation) => relation.personName === options.workMealPersonName
         && relation.role === "WORK_MEAL_ANCHOR");
     const roleCompatible = allowed.some((role) => roles.includes(role));
+    if (resolved.place.source === "WORK_MEAL_ANCHOR" && options.workMealPersonName) {
+      const anchors = places.filter((place) => place.relationships.some((relation) => relation.personName === options.workMealPersonName
+        && relation.role === "WORK_MEAL_ANCHOR"));
+      const communes = new Set(anchors.flatMap((place) => place.commune ? [place.commune] : []));
+      if (communes.size && (!candidate.commune || !communes.has(candidate.commune))) continue;
+    }
     if (resolved.place.subtypeHint && !resolved.place.subtypeHint.test(
       `${candidate.subtype ?? ""} ${candidate.usage ?? ""} ${candidate.nature ?? ""}`)) continue;
     if (resolved.place.source === "CONTACT_HOME" && !exactContact) continue;
@@ -61,4 +69,11 @@ export function rankPlacesForPlannedContext(places: readonly PlannedPlaceOption[
   }
   return ranked.sort((a, b) => (a.rankingTier === b.rankingTier ? a.place.name.localeCompare(b.place.name, "fr")
     : a.rankingTier === "PRIMARY" ? -1 : 1));
+}
+
+/** Discovery ranking never weakens compatibility; the full compatible set remains manually reachable. */
+export function habitualPlaceSuggestions(compatible: readonly PlannedPlaceOption[]): readonly PlannedPlaceOption[] {
+  return compatible.filter((place) => (place.visits12Months ?? 0) >= 2).sort((a, b) =>
+    (b.visits12Months ?? 0) - (a.visits12Months ?? 0) || (b.lastVisitDate ?? "").localeCompare(a.lastVisitDate ?? "")
+    || a.name.localeCompare(b.name, "fr"));
 }

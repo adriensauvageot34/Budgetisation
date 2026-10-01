@@ -48,7 +48,7 @@ export function derivePlannedPlaceRoles(place: PlannedPlaceFacts): readonly Plac
   const override = place.name ? PLACE_ROLE_OVERRIDES_V1[place.name] : undefined;
   if (override && !place.privatePlace) { roles.clear(); for (const role of override) roles.add(role); }
   if (roles.has("FAST_FOOD")) roles.delete("RESTAURANT");
-  if (roles.has("NIGHT_OUT")) { roles.delete("BAR"); roles.delete("ACTIVITY"); }
+  if (roles.has("NIGHT_OUT")) { roles.delete("BAR"); if (/arena|festival|expo/iu.test(place.subtype ?? "")) roles.add("ACTIVITY"); else roles.delete("ACTIVITY"); }
   if (roles.has("HAIRDRESSER")) roles.delete("BEAUTY_RETAIL");
   if (place.relationships?.some((relation) => relation.role === "PRIMARY_HOME" || relation.role === "HOUSEHOLD_HOME"))
     roles.add("OWN_HOME");

@@ -54,11 +54,12 @@ function StatisticalCard({ part, tone }: { part: StatisticalComponent; tone: "ne
   </article>;
 }
 
-export function MonthStory({ plan, targetMonth, plannedExpenses, persons, places, vehicle, prices, today, dateEvidence, references, settings: rawSettings, memory = [], calibrated = false }: { plan: MonthEconomicPlan | null; targetMonth: string;
+export function MonthStory({ plan, targetMonth, plannedExpenses, persons, places, vehicle, prices, wallets, today, dateEvidence, references, settings: rawSettings, memory = [], calibrated = false }: { plan: MonthEconomicPlan | null; targetMonth: string;
   settings?: MonthDecisionSettings; memory?: readonly ForecastCheckpoint[]; calibrated?: boolean;
   plannedExpenses: readonly PlannedExpenseCard[]; persons: readonly { personId: string; displayName: string }[];
   places: readonly PlannedPlaceOption[]; vehicle: PlannedVehicleEstimate | null;
   prices: readonly import("@/domain/phase2/planned-contract").PlannedPriceSuggestion[]; today: string;
+  wallets: readonly import("@/domain/phase2/planned-contract").PlannedWalletOption[];
   dateEvidence: Readonly<Record<string, { observationCount: number }>>;
   references: Readonly<Record<string, { freshnessDate: string | null; confidence: string }>> }) {
   if (!plan) return <section className="card p-6" role="status"><h2 className="text-xl font-black">Notre mois n’est pas encore prêt</h2><p className="mt-2 text-slate-600">Il manque encore des informations pour préparer ce mois.</p></section>;
@@ -89,7 +90,7 @@ export function MonthStory({ plan, targetMonth, plannedExpenses, persons, places
       })}</div></section>
 
     <section className="flex items-center justify-between gap-5 rounded-2xl border border-emerald-100 bg-emerald-50/50 px-6 py-5" aria-labelledby="after-title"><div><h2 id="after-title" className="text-xl font-bold">Après nos charges certaines</h2><p className="mt-1 text-xs text-slate-600">Avant le quotidien et nos projets · titres-restaurants compris</p><p className="mt-1 text-xs text-slate-500">Repère arrondi pour la suite : {money(String(decision.visible.afterCertain))}</p></div><p className="whitespace-nowrap text-3xl font-black tabular-nums text-emerald-950">{money(plan.afterCertainOutflows, true)}</p></section>
-    <PlannedExpensesControl targetMonth={targetMonth} expenses={plannedExpenses} persons={persons} places={places} vehicle={vehicle} prices={prices} funding={plan.plannedFunding} />
+    <PlannedExpensesControl targetMonth={targetMonth} expenses={plannedExpenses} persons={persons} places={places} vehicle={vehicle} prices={prices} wallets={wallets} funding={plan.plannedFunding} />
 
     <section id="timeline-title" className="scroll-mt-24" aria-label="Calendrier du mois"><MonthCalendar key={targetMonth} targetMonth={targetMonth} today={today} entries={calendar.entries} undated={calendar.undated} dailyTotals={calendar.dailyTotals} /></section>
 

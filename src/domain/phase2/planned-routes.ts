@@ -10,6 +10,21 @@ export function stopForPlace(ref: ProspectivePlaceRef, label: string,
   return { label: ref.kind === "TEXT" ? ref.label : label, ...(ref.kind === "KNOWN" ? { placeId: ref.placeId } : {}),
     endpointSource: source, ...(childModule ? { childModule } : {}), distanceToNextKm: null };
 }
+export function ensurePrimaryRouteStop(stops: readonly PlannedRouteStop[], place: ProspectivePlaceRef | undefined,
+  label: string, returnPlaceId?: string): PlannedRouteStop[] {
+  const next = deduplicateRouteStops(stops);
+  if (!place) return next;
+  const primary = stopForPlace(place, label, "ROOT_PLACE");
+  if (!next.some((stop) => routePlaceIdentity(stop) === routePlaceIdentity(primary))) {
+    const index = next.length > 1 && returnPlaceId && next.at(-1)?.placeId === returnPlaceId ? next.length - 1 : next.length;
+    next.splice(index, 0, primary);
+  }
+  return next;
+}
+export function assertPrimaryRouteStop(stops: readonly PlannedRouteStop[], place?: ProspectivePlaceRef): void {
+  if (place && !stops.some((stop) => routePlaceIdentity(stop) === routePlaceIdentity(stopForPlace(place, "", "ROOT_PLACE"))))
+    throw new TypeError("PLANNED_EXPENSE_PRIMARY_DESTINATION_MISSING");
+}
 /** Only exact consecutive identities collapse. No fuzzy place matching. */
 export function deduplicateRouteStops(stops: readonly PlannedRouteStop[]): PlannedRouteStop[] {
   const result: PlannedRouteStop[] = [];
