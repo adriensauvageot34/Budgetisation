@@ -35,7 +35,7 @@ export function MonthDecisionTools({ targetMonth, settings, decision }: { target
     try { const result = await simulateMonthBehavior(targetMonth, preset); setTrial(result); setSelectedPreset(result.ok ? preset : null); setMessage(null); }
     catch { setMessage("La simulation n’a pas abouti. Votre mois est inchangé ; réessayez."); }
   });
-  return <section id="decision-tools" className={`${material.glassPrimary} scroll-mt-24 p-6`} aria-labelledby="decision-title">
+  return <section id="decision-tools" className={`${material.glassPremium} scroll-mt-24 p-6`} aria-labelledby="decision-title">
     <h2 id="decision-title" className="text-2xl font-black">Explorer nos choix</h2>
     <div className="mt-4 flex flex-wrap gap-2">
       <button className={`${material.clayChip} px-4 py-3 text-sm font-bold`} aria-pressed={selectedPreset === "restaurant-zero"} disabled={pending} onClick={() => simulate("restaurant-zero")}>Pas de restaurant supplémentaire</button>
