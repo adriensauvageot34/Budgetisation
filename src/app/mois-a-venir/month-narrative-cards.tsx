@@ -20,7 +20,7 @@ export function ScenarioMilestone({ title, values, description, final = false }:
   title: string; values: { lowConsumption: string; central: string; highConsumption: string }; description: string; final?: boolean;
 }) {
   return <section id={final ? "final-projection" : "essential-projection"} aria-label={title}
-    className={`${material.glassPrimary} ${final ? material.projection : material.glassQuiet} scroll-mt-24 p-6`}>
+    className={`${material.glassPrimary} ${final ? material.projection : material.tintedBlue} scroll-mt-24 p-6`}>
     <div className="flex items-center justify-between gap-3"><h2 className="text-2xl font-black">{title}</h2>
       <ForecastInfo label={`Comprendre : ${title}`}><p>{description}</p><p>Estimation économique du mois, distincte d’un solde bancaire.</p></ForecastInfo></div>
     <dl className="mt-4 grid grid-cols-3 items-end gap-5">{([values.lowConsumption, values.central, values.highConsumption] as const).map((value, index) =>

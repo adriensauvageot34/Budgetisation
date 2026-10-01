@@ -79,18 +79,18 @@ export function MonthStory({ plan, targetMonth, plannedExpenses, persons, places
           <ul className="mx-4 border-t border-slate-200 pb-3 pt-2 text-sm">{group.items.map((item) => <li key={item.key} className="flex flex-wrap justify-between gap-x-3 py-1"><span className="min-w-0 break-words">{item.label}<span className="block text-xs text-slate-500">{item.dateCertainty === "DECLARED" ? "Date déclarée" : item.dateCertainty === "HISTORICAL_ESTIMATE" ? "Date habituelle estimée" : "Date à confirmer"}</span></span><strong className="shrink-0 tabular-nums">{money(item.amount, true)}</strong></li>)}</ul></details>;
       })}</div></section>
 
-    <section className={`${material.glassSecondary} ${material.glassQuiet} flex items-center justify-between gap-5 px-6 py-5`} aria-labelledby="after-title"><div><h2 id="after-title" className="text-xl font-bold">Après nos charges certaines</h2></div><p className={`${material.data} whitespace-nowrap text-3xl font-black`}><AnimatedMoney value={money(plan.afterCertainOutflows, true)} /></p></section>
+    <section className={`${material.glassPrimary} ${material.glassQuiet} flex items-center justify-between gap-5 px-6 py-5`} aria-labelledby="after-title"><div><h2 id="after-title" className="text-xl font-bold">Après nos charges certaines</h2></div><p className={`${material.data} whitespace-nowrap text-3xl font-black`}><AnimatedMoney value={money(plan.afterCertainOutflows, true)} /></p></section>
     <div className={material.projectList}><PlannedExpensesControl targetMonth={targetMonth} expenses={plannedExpenses} persons={persons} places={places} vehicle={vehicle} prices={prices} wallets={wallets} funding={plan.plannedFunding} /></div>
 
     <section id="timeline-title" className="scroll-mt-24" aria-label="Calendrier du mois"><MonthCalendar key={targetMonth} targetMonth={targetMonth} today={today} entries={calendar.entries} undated={calendar.undated} dailyTotals={calendar.dailyTotals} /></section>
 
-    <section aria-labelledby="necessary-title" className="scroll-mt-24">
+    <section aria-labelledby="necessary-title" className={`${material.glassPrimary} ${material.tintedBlue} ${material.dataSection} scroll-mt-24 p-5 sm:p-6`}>
       <div className="flex items-center justify-between gap-3"><h2 id="necessary-title" className="scroll-mt-24 text-2xl font-black">Ce qu’il nous faut pour le quotidien</h2><strong className={`${material.data} text-2xl`}>≈ <AnimatedMoney value={money(String(decision.visible.essentialTotal))} /></strong></div>
       <div className="mt-4 grid grid-cols-3 gap-3">{prediction ? prediction.essential.map(category => <RemainingForecastCard key={category.key} category={category} display={decision.visible.categoryDisplay[category.key]!} importsMissing={importsMissing} />) : plan.necessaryVariables.items.map(part => <StatisticalCard key={part.key} part={part} tone="necessary" />)}</div>
     </section>
     <ScenarioMilestone title="Après l’essentiel du mois" values={narrative.remainderAfterEssential}
       description="Après les charges, les projets et le quotidien nécessaire. La part habituelle déjà couverte est comptée une seule fois." />
-    <section aria-labelledby="flexible-title" className="scroll-mt-24">
+    <section aria-labelledby="flexible-title" className={`${material.glassPrimary} ${material.tintedPink} ${material.dataSection} scroll-mt-24 p-5 sm:p-6`}>
       <div className="flex items-center justify-between gap-3"><h2 id="flexible-title" className="scroll-mt-24 text-2xl font-black">Ce qui pourrait encore s’ajouter</h2><strong className={`${material.data} text-2xl`}>≈ <AnimatedMoney value={money(String(decision.visible.optionalTotal))} /></strong></div>
       <div className="mt-4 grid grid-cols-2 gap-3">{prediction ? prediction.optional.map(category => <RemainingForecastCard key={category.key} category={category} display={decision.visible.categoryDisplay[category.key]!} optional importsMissing={importsMissing} />) : plan.flexibleVariables.items.map(part => <StatisticalCard key={part.key} part={part} tone="flexible" />)}</div>
     </section>
