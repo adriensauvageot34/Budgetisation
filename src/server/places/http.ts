@@ -46,12 +46,17 @@ export async function restaurantPlacesRequest(request: Request, kind: "autocompl
     }
     if (!validGooglePlaceId(body.placeId)) throw new TypeError();
     if (kind === "details") return reply({ place: await provider.details(body.placeId, token as string | undefined, placeKind as ProjectPlaceKind) });
+    if (Object.keys(body).some(key => !["placeId", "selectedIndex", "gallery", "maxWidthPx", "maxHeightPx"].includes(key))) throw new TypeError();
     const dimension = (value: unknown, fallback: number) => {
       if (value === undefined) return fallback;
       if (typeof value !== "number" || !Number.isInteger(value) || value < 100 || value > 1600) throw new TypeError();
       return value;
     };
-    return reply({ photo: await provider.photo(body.placeId, dimension(body.maxWidthPx, 1200), dimension(body.maxHeightPx, 500)) });
+    if (body.selectedIndex !== undefined && (!Number.isInteger(body.selectedIndex) || Number(body.selectedIndex) < 0 || Number(body.selectedIndex) > 9)) throw new TypeError();
+    if (body.gallery !== undefined && typeof body.gallery !== "boolean") throw new TypeError();
+    const selectedIndex = body.selectedIndex as number | undefined;
+    return body.gallery ? reply({ photos: await provider.photos(body.placeId, dimension(body.maxWidthPx, 320), dimension(body.maxHeightPx, 200), selectedIndex) })
+      : reply({ photo: await provider.photo(body.placeId, dimension(body.maxWidthPx, 1200), dimension(body.maxHeightPx, 675), selectedIndex) });
   } catch (error) {
     return reply({ message: error instanceof GooglePlacesError ? error.status === 404
       ? "Ce restaurant n’est plus disponible. Choisissez-le à nouveau ou saisissez-le manuellement." : error.message

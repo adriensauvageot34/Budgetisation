@@ -1,5 +1,5 @@
 import "server-only";
-import { isRestaurantType, normalizeRestaurantDetails, normalizeRestaurantSuggestions, photoAuthors, selectRestaurantCardPhoto, validGooglePlaceId } from "@/domain/phase2/restaurant-places";
+import { isRestaurantType, normalizeRestaurantDetails, normalizeRestaurantSuggestions, photoAuthors, restaurantPhotoCandidates, validGooglePlaceId } from "@/domain/phase2/restaurant-places";
 import { TomTomRouteProvider } from "@/server/phase2/planned-car-providers";
 import type { ProjectPlaceKind } from "@/domain/phase2/restaurant-places";
 
@@ -52,17 +52,30 @@ export class GoogleRestaurantPlaces {
     try { return normalizeRestaurantDetails(await this.request(`places/${placeId}?${query}`, DETAILS_MASK), kind); }
     catch (error) { throw error instanceof GooglePlacesError ? error : new GooglePlacesError(422); }
   }
-  async photo(placeId: string, width = 1200, height = 500) {
+  private async photoCandidates(placeId: string) {
     if (!validGooglePlaceId(placeId)) throw new TypeError("GOOGLE_PLACE_ID_INVALID");
     const raw = await this.request(`places/${placeId}`, PHOTO_MASK) as { types?: string[] };
-    if (!Array.isArray(raw.types) || !isRestaurantType(raw.types)) return null;
-    const photo = selectRestaurantCardPhoto(raw);
-    if (!photo) return null;
+    return Array.isArray(raw.types) && isRestaurantType(raw.types) ? restaurantPhotoCandidates(raw, placeId) : [];
+  }
+  private async photoMedia(photo: ReturnType<typeof restaurantPhotoCandidates>[number], width: number, height: number) {
     const query = new URLSearchParams({ maxWidthPx: String(width), maxHeightPx: String(height), skipHttpRedirect: "true" });
     const result = await this.request(`${photo.name}/media?${query}`) as { photoUri?: string };
     let uri: URL;
     try { uri = new URL(result.photoUri!); } catch { return null; }
     if (uri.protocol !== "https:" || !["googleusercontent.com", "ggpht.com"].some((host) => uri.hostname === host || uri.hostname.endsWith(`.${host}`))) return null;
-    return { photoUri: uri.href, authors: photoAuthors(photo.authorAttributions) };
+    const source = typeof photo.googleMapsUri === "string" && /^https:\/\/(?:[\w-]+\.)?google\.com\//u.test(photo.googleMapsUri) ? photo.googleMapsUri : null;
+    return { photoIndex: photo.photoIndex, photoUri: uri.href, authors: photoAuthors(photo.authorAttributions), googleMapsUri: source };
+  }
+  async photos(placeId: string, width = 320, height = 200, selectedIndex?: number) {
+    const candidates = await this.photoCandidates(placeId), choices = candidates.slice(0, 4);
+    const selected = candidates.find(p => p.photoIndex === selectedIndex);
+    if (selected && !choices.includes(selected)) choices[choices.length - 1] = selected;
+    const results = await Promise.allSettled(choices.map(p => this.photoMedia(p, width, height)));
+    return results.flatMap(r => r.status === "fulfilled" && r.value ? [r.value] : []);
+  }
+  async photo(placeId: string, width = 1200, height = 675, selectedIndex?: number) {
+    const candidates = await this.photoCandidates(placeId);
+    const photo = candidates.find(p => p.photoIndex === selectedIndex) ?? candidates[0];
+    return photo ? this.photoMedia(photo, width, height) : null;
   }
 }

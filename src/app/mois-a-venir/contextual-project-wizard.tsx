@@ -18,6 +18,8 @@ import { InlineExpandableAssetGrid } from "./inline-expandable-asset-grid";
 import { DateTimeDecision, ParticipantSelector, ProjectEntitySearch } from "./project-wizard-fields";
 import { plannedExpenseTemporalSummary } from "@/domain/phase2/planned-dates";
 import { ProjectTransportEditor } from "./project-transport-editor";
+import { ProjectVisualPicker } from "./project-visual-picker";
+import { compatibleProjectVisual, projectVisualPlaceId } from "@/domain/phase2/planned-visual";
 import { WizardBackdrop } from "./planned-wizard-visuals";
 import styles from "./project-wizard.module.css";
 import oldStyles from "./planned-wizard.module.css";
@@ -174,6 +176,9 @@ export function ContextualProjectWizard({ builder, setBuilder, session, setSessi
     const openChild = (child: AssetModule) => { if (!builder.acceptedChildren.includes(child)) setBuilder(s => acceptBuilderChild(s, child)); setAddonChild(child); jump("addons"); };
     content = <div><div className={styles.summaryGrid}><div className={styles.summaryCard}><div className={styles.summaryFacts}>{rows.slice(moreFacts ? 6 : 0, moreFacts ? rows.length : 6).map(row => <div className={styles.summaryRow} key={row.label}><span>{row.label}<strong>{row.value}</strong></span>{visibleProjectQuestions(context).some(q => q.id === row.target) && <button onClick={() => jump(row.target)}>Modifier</button>}</div>)}</div>{rows.length > 6 && <button className={styles.textButton} onClick={() => setMoreFacts(!moreFacts)}>{moreFacts ? "Revenir aux informations principales" : `Voir plus (${rows.length - 6})`}</button>}</div><div className={styles.summaryCard}><p className={styles.small}>Coût économique connu</p><p className={styles.summaryTotal}>{c.project?.unpricedComponents?.length && Number(summary.gross) === 0 ? "Non chiffré" : money(summary.gross)}</p><p className={styles.small}>Banque {money(summary.bank)}{Number(summary.swile) > 0 && ` · Swile ${money(summary.swile)}`}{Number(summary.edenred) > 0 && ` · Edenred ${money(summary.edenred)}`}</p>{c.project?.unpricedComponents?.length ? <p className={styles.small}>À préciser : {c.project.unpricedComponents.join(", ")}</p> : null}<button className={styles.textButton} onClick={() => jump("costMode")}>Modifier le budget</button>
       {c.project?.linkedProjectId && <button className={styles.textButton} onClick={() => { setBuilder(s => applyProjectAnswer(s, "link", "NONE", env)); jump("link"); }}>Détacher du projet lié</button>}</div></div>
+      {projectVisualPlaceId(draft) && <ProjectVisualPicker key={projectVisualPlaceId(draft)} placeId={projectVisualPlaceId(draft)!} selectedIndex={compatibleProjectVisual(draft)?.selectedIndex}
+        onChoose={selectedIndex => { const placeId = projectVisualPlaceId(draft)!; setBuilder(s => !s.draft.context.project || projectVisualPlaceId(s.draft) !== placeId || s.draft.context.project.visual?.selectedIndex === selectedIndex ? s
+          : editBuilderDraft(s, { ...s.draft, context: { ...s.draft.context, project: { ...s.draft.context.project, visual: { source: "GOOGLE_PLACE_PHOTO", placeId, selectedIndex } } } })); }} />}
       {(addonChoices.length > 0 || available.length > 0 || canTransport || canBring || canLodge) && <section className={styles.summaryAddons} aria-label="Ajouter au projet"><h5>Ajouter au projet</h5><div className={styles.addonButtons}>
         {canTransport && <button className={styles.pill} onClick={() => jump("transport")}>+ Ajouter un trajet</button>}
         {canBring && <button className={styles.pill} onClick={() => { setBuilder(s => applyProjectAnswer(s, "costMode", "DETAIL", env)); setSession(s => jumpWizard(answerWizard(s, "costMode", "DETAIL"), "costDetails")); }}>+ Apporter quelque chose</button>}

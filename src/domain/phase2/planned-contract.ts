@@ -55,6 +55,8 @@ export type PlannedProjectContext = Readonly<{
   exactTime?: string;
   returnMoment?: "NONE" | "MORNING" | "LUNCH" | "EVENING" | "EXACT";
   returnExactTime?: string;
+  /** User preference only. Google photo resource names/URLs and attributions remain transient. */
+  visual?: Readonly<{ source: "GOOGLE_PLACE_PHOTO"; placeId: string; selectedIndex: number }>;
   channel?: "STORE" | "DELIVERY" | "PICKUP" | "SECOND_HAND" | "UNDECIDED";
   entity?: Readonly<{ kind: "VENUE" | "PRODUCT" | "EVENT" | "DESTINATION" | "SELLER";
     label: string; googlePlaceId?: string; city?: string; address?: string }>;

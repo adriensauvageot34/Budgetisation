@@ -12,6 +12,8 @@ import { calendarItemRange, calendarItemsOnDate, calendarRibbonWeeks } from "./c
 import { plannedExpenseTemporalSummary } from "@/domain/phase2/planned-dates";
 import { usePlannedExpenseInteractions, type PlannedExpenseInteraction } from "./planned-expense-interactions";
 import { transportPresentation } from "@/domain/phase2/planned-car";
+import { RestaurantPhotoBackground } from "./restaurant-photo-background";
+import { compatibleProjectVisual, projectVisualPlaceId } from "@/domain/phase2/planned-visual";
 import type { CSSProperties } from "react";
 import material from "./month-material.module.css";
 
@@ -53,6 +55,7 @@ export function CalendarEventDetails({ item, onAction, expanded = false, viewedM
       : item.date ? `${calendarDateLabel(item)} · ${calendarDate(item.date)}` : "Ce mois-ci · sans jour précis"}</p>}
     {revealed && <div id={detailId} className={`${material.sectionEnter} space-y-2`}>
     {expense && <>
+      {projectVisualPlaceId(expense) && <RestaurantPhotoBackground placeId={projectVisualPlaceId(expense)} selectedIndex={compatibleProjectVisual(expense)?.selectedIndex} className="rounded-xl" />}
       {detail?.placeLabel && <p className="text-sm">Lieu : <strong>{detail.placeLabel}</strong></p>}
       {!!detail?.participantLabels?.length && <p className="text-sm">Avec : {detail.participantLabels.join(" · ")}</p>}
       {!!detail?.childPlaceLabels.length && <p className="text-sm">Lieux des compléments : {detail.childPlaceLabels.join(" · ")}</p>}

@@ -8,13 +8,13 @@ import { parseLocalDate } from "@/core/time";
 export const calendarMoney = (value: string) => new Intl.NumberFormat("fr-FR", {
   style: "currency", currency: "EUR", minimumFractionDigits: 2, maximumFractionDigits: 2,
 }).format(Number(value));
-export const calendarBudgetLabel = (item: CalendarItem) => item.expense?.context.project?.unpricedComponents?.length
+export const calendarBudgetLabel = (item: Pick<CalendarItem, "expense" | "amount">) => item.expense?.context.project?.unpricedComponents?.length
   ? Number(item.amount) === 0 ? "À préciser" : `≥ ${calendarMoney(item.amount)}` : calendarMoney(item.amount);
 export const calendarDate = (date: string) => new Intl.DateTimeFormat("fr-FR", {
   day: "numeric", month: "long", timeZone: "UTC",
 }).format(new Date(`${date}T12:00:00Z`));
 
-export const calendarStateLabel = (item: CalendarItem) => item.nature === "DECLARED_REALIZED"
+export const calendarStateLabel = (item: Pick<CalendarItem, "expense" | "nature">) => item.nature === "DECLARED_REALIZED"
   ? "✓ Réalisée · déclarée par vous" : item.nature === "PLANNED_EXPENSE"
     ? item.expense?.needsRealityConfirmation ? "Prévue · à confirmer" : "Prévue" : "Échéance";
 export const calendarDateLabel = (item: CalendarItem) => item.dateCertainty === "HISTORICAL_ESTIMATE"

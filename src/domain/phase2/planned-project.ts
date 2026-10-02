@@ -2,6 +2,7 @@ import type { CostItem, PlannedExpenseDraft, PlannedProjectContext } from "./pla
 import { validGooglePlaceId, type ProjectPlaceKind } from "./restaurant-places";
 import { intentForDraft } from "./planned-ux";
 import { getPlannedExpenseDateRange } from "./planned-dates";
+import { compatibleProjectVisual } from "./planned-visual";
 
 /** Exact economic identities; a custom lodging line must explicitly carry its purpose. */
 export function projectCostComponent(item: CostItem): "Transport" | "Péages" | "Hébergement" | null {
@@ -31,9 +32,15 @@ const choice = <const T extends string>(v: unknown, values: readonly T[]): T => 
 /** The same structural boundary is used by Server and fixture tests. No registry is stored. */
 export function parsePlannedProject(value: unknown): PlannedProjectContext {
   const raw = object(value);
-  only(raw, ["version", "financialScope", "moment", "exactTime", "returnMoment", "returnExactTime", "channel", "entity", "sellerGooglePlaceId", "unpricedComponents", "tripKind", "lodging", "mealFormat", "groceryFocus", "automotiveKind", "linkedProjectId", "shareTransport"]);
+  only(raw, ["version", "financialScope", "moment", "exactTime", "returnMoment", "returnExactTime", "visual", "channel", "entity", "sellerGooglePlaceId", "unpricedComponents", "tripKind", "lodging", "mealFormat", "groceryFocus", "automotiveKind", "linkedProjectId", "shareTransport"]);
   if (raw.version !== 2) fail();
   const result: { -readonly [K in keyof PlannedProjectContext]?: PlannedProjectContext[K] } = { version: 2 };
+  if (raw.visual !== undefined) {
+    const visual = object(raw.visual); only(visual, ["source", "placeId", "selectedIndex"]);
+    if (visual.source !== "GOOGLE_PLACE_PHOTO" || !validGooglePlaceId(visual.placeId)
+      || !Number.isInteger(visual.selectedIndex) || Number(visual.selectedIndex) < 0 || Number(visual.selectedIndex) > 9) fail();
+    result.visual = { source: "GOOGLE_PLACE_PHOTO", placeId: visual.placeId as string, selectedIndex: Number(visual.selectedIndex) };
+  }
   if (raw.financialScope !== undefined) {
     const scope = object(raw.financialScope); only(scope, ["personIds", "count"]);
     if (!Array.isArray(scope.personIds) || scope.personIds.length > 20 || scope.personIds.some(id => typeof id !== "string" || !uuid.test(id))
@@ -84,6 +91,7 @@ export function parsePlannedProject(value: unknown): PlannedProjectContext {
 export function assertProjectIntent(draft: PlannedExpenseDraft) {
   const p = draft.context.project;
   if (!p) return;
+  if (p.visual && !compatibleProjectVisual(draft)) fail();
   if (p.exactTime && !draft.plannedDate) fail();
   if ((p.returnMoment || p.returnExactTime) && !getPlannedExpenseDateRange(draft).hasReturn) fail();
   const range = getPlannedExpenseDateRange(draft);

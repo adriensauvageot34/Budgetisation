@@ -2,7 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState, type Dispatch, type SetStateAction } from "react";
-import { ArrowLeft, CalendarDays, Trash2, X } from "lucide-react";
+import { ArrowLeft, Trash2, X } from "lucide-react";
 import { PLANNED_FAMILIES, PLANNED_SUBTYPE_LABELS, type PlannedExpenseFamily } from "@/domain/phase2/planned-assets";
 import { createBuilderState, changeBuilderRoot, deriveBuilderReadiness, materializeBuilderDraft, synchronizeIntentBuilder, adoptBuilderResolvedTransport } from "@/domain/phase2/planned-builder";
 import { BUILDER_INTENTS } from "@/domain/phase2/planned-ux";
@@ -10,7 +10,6 @@ import type { PlannedPlaceOption } from "@/domain/phase2/planned-places";
 import type { PlannedPriceSuggestion, PlannedVehicleEstimate, PlannedWalletOption } from "@/domain/phase2/planned-contract";
 import { ContextualProjectWizard, ProjectIntentHub } from "./contextual-project-wizard";
 import { backWizard, beginProjectV2, emptyWizardSession, jumpWizard, projectHasSignificantDraft, wizardHasPreviousUserDecision } from "@/domain/phase2/planned-question-engine";
-import { getPlannedExpenseDateRange, plannedExpenseTemporalSummary } from "@/domain/phase2/planned-dates";
 import { ContextualBlockerCTA } from "./planned-builder-primitives";
 import type { PlannedExpenseCard } from "./planned-expenses-projection";
 import { confirmPlannedExpenseReality, restorePlannedExpenseAction, reportPlannedExpenseAction,
@@ -19,7 +18,7 @@ import { type PlannedIssue, type PlannedResult, type RealityConfirmationDraft } 
 import { PlannedImpactCard } from "./planned-impact-card";
 import { usePlannedExpenseInteractions } from "./planned-expense-interactions";
 import { calendarExpenseActions } from "./calendar-presentation";
-import { RestaurantPhotoBackground } from "./restaurant-photo-background";
+import { ProjectHeroCard } from "./project-hero-card";
 import { PlannedBuilderFrame, type BuilderReturnPoint } from "./planned-wizard-visuals";
 import wizardStyles from "./planned-wizard.module.css";
 import projectStyles from "./project-wizard.module.css";
@@ -34,8 +33,6 @@ type Props = { targetMonth: string; expenses: readonly PlannedExpenseCard[]; per
 
 const money = (value: string) => new Intl.NumberFormat("fr-FR", { style: "currency", currency: "EUR",
   minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(Number(value));
-const dateLabel = (value: string) => new Intl.DateTimeFormat("fr-FR", { day: "numeric", month: "long", timeZone: "UTC" })
-  .format(new Date(`${value}T12:00Z`));
 const inputClass = "min-h-11 min-w-0 w-full rounded-xl border border-slate-300 bg-white px-3 text-base focus-visible:outline-2 focus-visible:outline-emerald-700";
 const secondary = "min-h-10 rounded-xl border border-slate-300 bg-white px-4 py-2 text-sm font-bold text-slate-800 hover:bg-slate-50 focus-visible:outline-2 focus-visible:outline-emerald-700";
 const primary = "min-h-11 rounded-xl bg-emerald-800 px-5 py-2 text-sm font-bold text-white hover:bg-emerald-900 disabled:opacity-50 focus-visible:outline-2 focus-visible:outline-emerald-700";
@@ -204,15 +201,7 @@ export function PlannedExpensesControl({ targetMonth, expenses, persons, places,
     // Pending is a consumed navigation command, never a second draft authority.
   }, [interactions?.pending]);
 
-  const card = (item: PlannedExpenseCard) => <li key={item.id} className="rounded-xl border border-slate-200 bg-white px-4">
-      {item.familyKey === "food" && item.subtypeKey === "restaurant" && <RestaurantPhotoBackground placeId={item.context.restaurant?.googlePlaceId} />}
-    <details id={`project-${item.id}`} className="group">
-      <summary className="flex cursor-pointer list-none items-center gap-4 py-4 focus-visible:outline-2 focus-visible:outline-emerald-700 [&::-webkit-details-marker]:hidden">
-        <h3 className="min-w-0 flex-1 font-bold">{item.title}</h3>
-        <span className={`rounded-full px-2 py-1 text-xs ${item.status === "DECLARED_REALIZED" ? "bg-emerald-50 text-emerald-800" : item.needsRealityConfirmation ? "bg-amber-50 text-amber-900" : "text-slate-500"}`}>{item.status === "DECLARED_REALIZED" ? "Réalisée · déclarée" : item.needsRealityConfirmation ? "À confirmer" : "Prévue"}</span>
-        <span className="max-w-52 text-right text-sm text-slate-500"><CalendarDays size={13} className="mr-1 inline" aria-hidden="true" />{getPlannedExpenseDateRange(item).isRange ? plannedExpenseTemporalSummary(item)[0] : item.plannedDate ? dateLabel(item.plannedDate) : "Sans date précise"}</span>
-        <strong className="w-24 text-right tabular-nums">{item.context.project?.unpricedComponents?.length ? Number(item.grossCost) === 0 ? "À préciser" : `≥ ${money(item.grossCost)}` : money(item.grossCost)}</strong>
-      </summary>
+  const card = (item: PlannedExpenseCard) => <ProjectHeroCard key={item.id} item={item}>
       <p className="text-xs text-slate-600">{item.costItems.map((cost) => `${cost.variantLabel || cost.label} · ${cost.quantity} × ${money(cost.unitAmount)}`).join(" · ")}</p>
     <div className="mt-3 flex flex-wrap gap-2 border-t border-slate-100 pt-3">{calendarExpenseActions(item).filter(({ action }) => action !== "DELETE").map(({ action, label }) =>
       <button key={action} type="button" className={secondary} disabled={busy} onClick={() => {
@@ -224,13 +213,12 @@ export function PlannedExpensesControl({ targetMonth, expenses, persons, places,
         : <button type="button" className={secondary} disabled={busy} onClick={() => setDeleteId(item.id)}><Trash2 size={14} className="mr-1 inline" />{calendarExpenseActions(item).find(({ action }) => action === "DELETE")?.label}</button>}
     </div>
     {reportId === item.id && <div className="mt-3 grid gap-2 rounded-xl bg-slate-50 p-3"><label className="grid gap-1 text-sm font-semibold">Nouvelle date prévue<input type="date" className={inputClass} value={reportDate} onChange={(event) => setReportDate(event.target.value)} /></label><p className="text-xs">La même dépense rejoindra le mois choisi. Ses ressources et ses estimations seront revérifiées.</p><div className="flex gap-2"><button className={secondary} disabled={busy || !reportDate} onClick={() => run(async () => { const moved = unwrap(await reportPlannedExpenseAction(targetMonth, { id: item.id, expectedUpdatedAt: item.updatedAt }, reportDate)); setReportId(null); setNotice(`Projet reporté en ${moved.targetMonth}.`); if (moved.targetMonth !== targetMonth) router.push(`/mois-a-venir?month=${moved.targetMonth}`); })}>Confirmer le report</button><button className={secondary} onClick={() => setReportId(null)}>Annuler</button></div></div>}
-    </details>
-  </li>;
+  </ProjectHeroCard>;
 
   return <>
     {notice && <p role="status" className="mt-3 rounded-xl bg-emerald-100 p-3 text-sm">{notice}</p>}
     {error && !open && <p role="alert" className="mt-3 rounded-xl bg-red-50 p-3 text-sm text-red-800">{error}{issue?.repairTarget === "reload" && <button className={secondary} onClick={() => router.refresh()}>Recharger la liste</button>}{issue?.repairTarget === "month" && reportDate && <a className="ml-2 underline" href={`/mois-a-venir?month=${reportDate.slice(0, 7)}`}>Préparer les ressources de ce mois</a>}</p>}
-    {expenses.length > 0 && <section aria-labelledby="planned-expense-title" className="scroll-mt-24"><h2 id="planned-expense-title" className="scroll-mt-24 text-2xl font-black">Nos projets</h2><ul className="mt-4 space-y-2">{expenses.map(card)}</ul></section>}
+    {expenses.length > 0 && <section aria-labelledby="planned-expense-title" className="scroll-mt-24"><h2 id="planned-expense-title" className="scroll-mt-24 text-2xl font-black">Nos projets</h2><ul className="mt-4 grid items-start gap-4 [grid-template-columns:repeat(auto-fill,minmax(360px,1fr))]">{expenses.map(card)}</ul></section>}
     {open && <PlannedBuilderFrame immersive returnPoint={returnPoint.current} label={realityMode ? "Confirmer une dépense réalisée" : "Préparer une dépense"} onDismiss={dismiss}>
       <div className={projectStyles.header}><h3>{step === 1 ? "Ajouter une dépense" : draft.title}</h3><nav className={projectStyles.topNav} aria-label="Navigation du brouillon">{step !== 1 && (step === 5 || wizardHasPreviousUserDecision(wizardSession)) && <button type="button" disabled={busy} onClick={() => {
         if (step === 5) { setStep(3); setWizardSession(s => jumpWizard(s, "review")); }

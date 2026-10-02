@@ -8,7 +8,7 @@ export type SelectedRestaurantPlace = Readonly<{ provider: "google_places"; plac
   city?: string;
   formattedAddress: string | null; lat: number | null; lng: number | null; primaryType: string | null; types: readonly string[];
   photoAvailable: boolean; photoAttributions: readonly PhotoAuthor[] }>;
-export type RestaurantPhoto = Readonly<{ photoUri: string; authors: readonly PhotoAuthor[] }>;
+export type RestaurantPhoto = Readonly<{ photoIndex: number; photoUri: string; authors: readonly PhotoAuthor[]; googleMapsUri: string | null }>;
 export type ProjectPlaceKind = "RESTAURANT" | "ACTIVITY" | "VENUE" | "DESTINATION" | "RETAIL";
 export function projectPlaceTypeCompatible(types: readonly string[], kind: ProjectPlaceKind) {
   if (kind === "RESTAURANT") return isRestaurantType(types);
@@ -40,9 +40,18 @@ export function normalizeRestaurantSuggestions(raw: unknown, kind: ProjectPlaceK
   });
 }
 export function selectRestaurantCardPhoto(raw: unknown) {
-  const value = record(raw);
-  return (Array.isArray(value.photos) ? value.photos : []).map(record).find((p) => typeof p.name === "string"
-    && /^places\/[A-Za-z0-9_-]+\/photos\/[A-Za-z0-9_-]+$/u.test(p.name));
+  return restaurantPhotoCandidates(raw)[0];
+}
+/** Prefer a usable landscape/resolution, without pretending to infer subject or composition. Original index is user intent. */
+export function restaurantPhotoCandidates(raw: unknown, placeId?: string) {
+  const photos = (Array.isArray(record(raw).photos) ? record(raw).photos : []) as unknown[];
+  const score = (p: Record<string, unknown>) => {
+    const width = Number(p.widthPx), height = Number(p.heightPx);
+    return width > 0 && height > 0 ? Math.min(width * height, 4_000_000) / (1 + Math.abs(Math.log(width / height / (16 / 9))) * 2) : 0;
+  };
+  return photos.slice(0, 10).map((p, photoIndex): Record<string, unknown> & { photoIndex: number } => ({ ...record(p), photoIndex })).filter(p => typeof p.name === "string"
+    && /^places\/[A-Za-z0-9_-]+\/photos\/[A-Za-z0-9_-]+$/u.test(p.name) && (!placeId || p.name.startsWith(`places/${placeId}/photos/`)))
+    .sort((a, b) => score(b) - score(a) || a.photoIndex - b.photoIndex);
 }
 export function normalizeRestaurantDetails(raw: unknown, kind: ProjectPlaceKind = "RESTAURANT"): SelectedRestaurantPlace {
   const v = record(raw), location = record(v.location), types = Array.isArray(v.types) ? v.types.filter((t): t is string => typeof t === "string") : [];

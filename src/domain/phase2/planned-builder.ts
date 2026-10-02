@@ -13,6 +13,7 @@ import { carEstimateProblems, isDerivedCarCost } from "./planned-car";
 import { isTimedFamilyVisit, visitTimingIssues } from "./planned-visits";
 import { restaurantContextIssues, restaurantNeedsAddress } from "./planned-restaurant";
 import { projectCostComponent, projectLodgingAvailable } from "./planned-project";
+import { invalidateProjectVisual } from "./planned-visual";
 
 export type DraftOrigin = "AUTO_DERIVED" | "EXPLICIT";
 export type Invalidation = "KEEP" | "RECOMPUTE" | "SUSPEND" | "REMOVE_DERIVED";
@@ -53,7 +54,7 @@ export function createBuilderState(draft: PlannedExpenseDraft): BuilderState {
     undo: null, revision: 0 };
 }
 export function editBuilderDraft(state: BuilderState, draft: PlannedExpenseDraft): BuilderState {
-  let next = clone(draft);
+  let next = clone(invalidateProjectVisual(draft));
   const placeChanged = JSON.stringify(draft.context.place) !== JSON.stringify(state.draft.context.place);
   const orphanChildren = (Object.keys(next.context.childLocalPlaceRefs ?? {}) as AssetModule[])
     .filter((child) => !next.costItems.some((item) => item.modulePath?.[1] === child));
