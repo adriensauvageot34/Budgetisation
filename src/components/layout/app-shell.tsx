@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import { Landmark } from "lucide-react";
 import { SignOutButton } from "@/features/auth/sign-out-button";
 import { useProductRuntime } from "@/components/runtime";
+import scene from "@/app/mois-a-venir/planned-scroll-scene.module.css";
 
 const modules = [
   { href: "/historique", label: "Historique" },
@@ -17,14 +18,15 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const runtime = useProductRuntime();
   const historyV2 = /^\/historique\/\d{4}-\d{2}$/.test(pathname);
+  const plannedMonth = pathname === "/mois-a-venir";
 
   if (pathname === "/connexion" || pathname === "/acces-refuse") {
     return children;
   }
 
   return (
-    <div className="min-h-screen">
-      <header className="border-b border-[var(--color-border)] bg-white">
+    <div data-planned-shell={plannedMonth ? "" : undefined} className={plannedMonth ? scene.shell : "min-h-screen"}>
+      <header data-planned-header={plannedMonth ? "" : undefined} className={plannedMonth ? scene.header : "border-b border-[var(--color-border)] bg-white"}>
         <div className="mx-auto flex max-w-6xl flex-wrap items-center gap-4 px-[var(--space-page)] py-4">
           <Link href="/historique" className="mr-auto flex items-center gap-3">
             <span className="flex size-10 items-center justify-center rounded-xl bg-[var(--color-primary)] text-white">

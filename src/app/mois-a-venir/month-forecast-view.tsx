@@ -79,7 +79,7 @@ export function MonthForecastView({ forecast, scenario, stored, plannedExpenses,
     : [...(scenario.economicPlan?.necessaryVariables.items ?? []), ...(scenario.economicPlan?.flexibleVariables.items ?? [])]
       .map(category => ({ key: category.key, label: statisticalLabels[category.key] ?? "Autre dépense" }));
 
-  return <PlannedExpenseInteractions><main className={`${material.page} mx-auto max-w-[1280px] space-y-7 pb-20`}>
+  return <PlannedExpenseInteractions><main data-planned-page className={`${material.page} mx-auto max-w-[1280px] space-y-7 pb-20`}>
     {incompleteProjects.length > 0 && <p role="status" className={`${material.glassSoft} p-4 text-sm`}>{incompleteProjects.length} projet(s) ont un budget à compléter. La projection inclut leurs coûts connus ; les montants encore inconnus restent à ajouter.</p>}
     <nav aria-label="Mois préparé" className={`${material.monthHeader} flex items-center justify-between gap-6 text-sm font-bold`}><a className={`${material.monthLink} px-3 py-2 text-slate-600`} href={`/mois-a-venir?month=${new Date(Date.UTC(Number(targetMonth.slice(0, 4)), Number(targetMonth.slice(5, 7)) - 2, 1)).toISOString().slice(0, 7)}`}>‹ Mois précédent</a><h1 className="text-center text-4xl font-black uppercase tracking-tight">{monthLabel(targetMonth)}</h1><a className={`${material.monthLink} px-3 py-2 text-slate-600`} href={`/mois-a-venir?month=${new Date(Date.UTC(Number(targetMonth.slice(0, 4)), Number(targetMonth.slice(5, 7)), 1)).toISOString().slice(0, 7)}`}>Mois suivant ›</a></nav>
     {(!stored.inputs.declaredResources["benefit:swile"] || !stored.inputs.declaredResources["benefit:edenred"])

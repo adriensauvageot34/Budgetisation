@@ -36,20 +36,6 @@
   isolation: isolate;
   color: var(--ink);
 }
-.page::before {
-  content: "";
-  position: absolute;
-  inset: -2rem -1.5rem -5rem;
-  z-index: -1;
-  pointer-events: none;
-  /* Broad mineral folds rather than colored halos. Off-canvas curves have no visible circular contour. */
-  background:
-    linear-gradient(153deg, transparent 3%, #ffffff9c 8%, #a0a5ad1c 12%, transparent 19%, transparent 43%, #ffffffa8 48%, #a0a5ad18 53%, transparent 61%, transparent 78%, #ffffff80 85%, transparent 94%),
-    linear-gradient(24deg, transparent 8%, #9da3ad12 16%, #ffffff85 24%, transparent 33%, transparent 62%, #ffffff94 70%, #a8a4a014 78%, transparent 89%),
-    radial-gradient(ellipse 155% 14% at -65% 24%, #a8adb51f, transparent 72%),
-    radial-gradient(ellipse 145% 17% at 160% 65%, #a5a7ac1f, transparent 74%),
-    linear-gradient(140deg, #f5f4f0, var(--surface-page) 47%, #edeef0);
-}
 /* depth-2: blur is reserved for a small number of structural surfaces. */
 .glassPrimary, .glassPremium, .nav, .popover, .calendar {
   background: var(--glass-primary);
