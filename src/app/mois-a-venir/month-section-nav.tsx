@@ -20,6 +20,7 @@ export function MonthSectionNav({ hasProjects }: { hasProjects: boolean }) {
     <div className={scene.occlusion} aria-hidden="true" />
     <nav ref={toolbar} aria-label="Sections du mois" className={`${material.nav} ${scene.toolbar} sticky z-20 flex items-center justify-between gap-3`}>
       <span className={scene.specular} aria-hidden="true" />
+      <span className={scene.readingProgress} aria-hidden="true" />
       <div className={scene.tabsViewport}><div ref={tabs} className={scene.tabs}>
         <span ref={indicator} className={scene.indicator} aria-hidden="true" />
         {available.map(([id, label]) => <a key={id} href={`#${id}`} aria-current={active === id ? "location" : undefined} className={`${material.tab} rounded-xl px-3 py-2 text-xs font-bold text-slate-600`}>{label}</a>)}

@@ -16,6 +16,7 @@ import { RestaurantPhotoBackground } from "./restaurant-photo-background";
 import { compatibleProjectVisual, projectVisualPlaceId } from "@/domain/phase2/planned-visual";
 import type { CSSProperties } from "react";
 import material from "./month-material.module.css";
+import { LiquidSelectionGroup } from "./liquid-selection-group";
 
 const eventTone = (item: CalendarItem) => item.nature === "DECLARED_REALIZED"
   ? "text-emerald-800" : item.expense?.needsRealityConfirmation
@@ -117,6 +118,8 @@ export function MonthCalendar({ targetMonth, entries, undated, dailyTotals, toda
   const monthEntries = entries.filter((item) => { const r = calendarItemRange(item); return !!r.startDate && !!r.endDate && r.startDate.slice(0, 7) <= targetMonth && r.endDate.slice(0, 7) >= targetMonth; });
   const accepts = (item: CalendarItem) => filter === "ALL" || (filter === "CHARGES" ? !item.expense : !!item.expense);
   const ribbons = calendarRibbonWeeks(monthEntries.filter(accepts), targetMonth);
+  // Reserve the same week geometry across filters; only event content transitions.
+  const layoutRibbons = calendarRibbonWeeks(monthEntries, targetMonth);
   const projects = undated.filter((item) => item.expense && accepts(item));
   const monthly = undated.filter((item) => !item.expense && accepts(item));
   const selectedUndated = selected?.startsWith("undated:") ? undated.find((item) => `undated:${item.key}` === selected) : undefined;
@@ -159,18 +162,18 @@ export function MonthCalendar({ targetMonth, entries, undated, dailyTotals, toda
   return <div className="min-w-0">
     <div className={`${material.calendar} overflow-hidden [&_button]:text-xs!`}>
     <header className="flex items-center justify-between gap-3 border-b border-slate-100 px-3 py-1.5"><h2 className="text-sm font-bold">Calendrier</h2>
-      <div className="flex gap-0.5" aria-label="Éléments affichés">{([ ["ALL", "Tout"], ["PROJECTS", "Projets"], ["CHARGES", "Charges"] ] as const).map(([value, label]) =>
-        <button key={value} type="button" aria-pressed={filter === value} onClick={() => setFilter(value)} className={`${material.clayButton} ${material.calendarFilter} px-2 py-0.5 text-xs font-medium`}>{label}</button>)}</div>
+      <LiquidSelectionGroup value={filter} ariaLabel="Éléments affichés">{([ ["ALL", "Tout"], ["PROJECTS", "Projets"], ["CHARGES", "Charges"] ] as const).map(([value, label]) =>
+        <button key={value} type="button" data-liquid-key={value} aria-pressed={filter === value} onClick={() => setFilter(value)} className={`${material.clayButton} ${material.calendarFilter} px-2 py-0.5 text-xs font-medium`}>{label}</button>)}</LiquidSelectionGroup>
     </header>
     <div role="grid" aria-label={`Calendrier de ${monthTitle}`} aria-colcount={7} aria-rowcount={weeks.length + 1}>
       <div role="row" className="grid grid-cols-7 border-b border-slate-200 text-center text-xs font-semibold text-slate-500">
         {["Lun", "Mar", "Mer", "Jeu", "Ven", "Sam", "Dim"].map((day) => <span role="columnheader" key={day} className="py-2">{day}</span>)}
       </div>
       {weeks.map((week, rowIndex) => {
-        const ribbonWeek = ribbons[rowIndex], lanes = Math.max(0, ...ribbonWeek.segments.map(s => s.lane));
-        const maxEvents = Math.max(...week.map((day) => monthEntries.filter((item) => item.date === `${targetMonth}-${String(day).padStart(2, "0")}` && !calendarItemRange(item).isRange && accepts(item)).length));
-        const height = (maxEvents > 2 || ribbonWeek.ribbonOverflow ? 98 : maxEvents > 1 ? 82 : maxEvents ? 74 : 66) + lanes * 25;
-        return <div role="row" key={rowIndex} className="relative grid grid-cols-7 border-b border-slate-100 last:border-b-0" style={{ minHeight: height }}>
+        const ribbonWeek = ribbons[rowIndex], layoutWeek = layoutRibbons[rowIndex], lanes = Math.max(0, ...layoutWeek.segments.map(s => s.lane));
+        const maxEvents = Math.max(...week.map((day) => monthEntries.filter((item) => item.date === `${targetMonth}-${String(day).padStart(2, "0")}` && !calendarItemRange(item).isRange).length));
+        const height = (maxEvents > 2 || layoutWeek.ribbonOverflow ? 98 : maxEvents > 1 ? 82 : maxEvents ? 74 : 66) + lanes * 25;
+        return <div role="row" key={rowIndex} data-month-motion-item="calendar-week" data-motion-order={rowIndex} className="relative grid grid-cols-7 border-b border-slate-100 last:border-b-0" style={{ minHeight: height }}>
           {week.map((day, columnIndex) => {
             if (day === null) return <div role="gridcell" data-outside-month="true" key={`empty-${columnIndex}`} className="border-r border-slate-100 bg-slate-100/70 opacity-60 last:border-r-0" />;
             const date = `${targetMonth}-${String(day).padStart(2, "0")}`;
@@ -190,10 +193,10 @@ export function MonthCalendar({ targetMonth, entries, undated, dailyTotals, toda
                 className={`flex w-full items-start justify-between pt-1 text-left text-xs tabular-nums focus-visible:outline-2 focus-visible:outline-indigo-700 ${allDay.length ? "h-7" : "absolute inset-0 px-1.5"}`}>
                 <span className={`flex size-5 items-center justify-center ${isToday ? `${material.todayBadge} rounded-full font-bold text-white` : "text-slate-500"}`}>{day}</span>
                 {dayEntries.length > 1 && <span data-calendar-day-total={date} className="pt-0.5 font-medium text-slate-500">{calendarMoney(summary.grossTotal)}</span>}
-                {!allDay.length && <span className="absolute inset-x-0 top-9 text-center text-xs font-medium text-sky-700 opacity-0 group-hover:opacity-100 group-focus-within:opacity-100">+ Prévoir</span>}
+                {!allDay.length && <span className={`${material.calendarCreate} absolute inset-x-0 top-9 text-center text-xs font-medium text-sky-700`}>+ Prévoir</span>}
               </button>
               {lanes > 0 && <div style={{ height: lanes * 25 }} aria-hidden="true" />}
-              <div className="grid grid-cols-[40px_minmax(0,1fr)_max-content] gap-x-1.5">
+              <div key={filter} data-calendar-content className={`${material.calendarContent} grid grid-cols-[40px_minmax(0,1fr)_max-content] gap-x-1.5`}>
               {visible.map((item) => <button key={item.key} type="button" tabIndex={-1} data-calendar-event={item.key}
                 title={`${calendarEventLabel(item)} · ${calendarBudgetLabel(item)}`}
                 aria-label={`${calendarEventLabel(item)}, ${calendarBudgetLabel(item)}, ${calendarStateLabel(item)}`}
@@ -204,10 +207,10 @@ export function MonthCalendar({ targetMonth, entries, undated, dailyTotals, toda
                 <span className="min-w-0 truncate">{calendarEventLabel(item)}</span>
                 <strong className="shrink-0 whitespace-nowrap font-semibold tabular-nums">{calendarBudgetLabel(item)}</strong>
               </button>)}</div>
-              {dayEntries.length - visible.length + overflow > 0 && <button type="button" tabIndex={-1} aria-haspopup="dialog" onClick={(event) => open(date, event.currentTarget)} className="cursor-pointer rounded px-1 text-xs font-medium text-slate-500 hover:bg-slate-100 hover:text-indigo-700 focus-visible:bg-slate-100 focus-visible:outline-2 focus-visible:outline-indigo-700">+{dayEntries.length - visible.length + overflow} {dayEntries.length - visible.length + overflow > 1 ? "autres" : "autre"} <span aria-hidden="true">→</span></button>}
+              {dayEntries.length - visible.length + overflow > 0 && <button type="button" tabIndex={-1} aria-haspopup="dialog" onClick={(event) => open(date, event.currentTarget)} className="block cursor-pointer rounded px-1 text-xs font-medium text-slate-500 hover:bg-slate-100 hover:text-indigo-700 focus-visible:bg-slate-100 focus-visible:outline-2 focus-visible:outline-indigo-700">+{dayEntries.length - visible.length + overflow} {dayEntries.length - visible.length + overflow > 1 ? "autres" : "autre"} <span aria-hidden="true">→</span></button>}
             </div>;
           })}
-          <div className="pointer-events-none absolute inset-x-0 top-7 grid grid-cols-7 gap-y-1 px-0.5" style={{ gridTemplateRows: `repeat(${lanes},21px)` }} aria-label="Projets sur plusieurs jours">
+          <div key={filter} className={`${material.calendarContent} pointer-events-none absolute inset-x-0 top-7 grid grid-cols-7 gap-y-1 px-0.5`} style={{ gridTemplateRows: `repeat(${lanes},21px)` }} aria-label="Projets sur plusieurs jours">
             {ribbonWeek.segments.map(segment => {
               const item = monthEntries.find(item => item.key === segment.ribbonItemId)!;
               const firstColumn = Math.max(segment.startColumn, week.findIndex(d => d !== null) + 1);

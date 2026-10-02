@@ -161,6 +161,39 @@
 .calendar :global([role="grid"]) { background: #ffffff2e; border-radius: var(--radius-sm); }
 .calendar :global([role="gridcell"]):has(button[aria-expanded="true"]) { background: #bdb3e52e; box-shadow: inset 0 0 0 1px #9b8dc55c; }
 .calendarFilter { border-radius: 9px; min-height: 1.5rem; }
+.liquidGroup {
+  position: relative; isolation: isolate; display: inline-flex; flex-wrap: wrap;
+  align-items: center; gap: 4px; max-width: 100%; padding: 3px;
+  border: 1px solid #ffffff9e; border-radius: 17px;
+  background: #ffffff30; box-shadow: inset 0 1px 3px #63517b0c;
+}
+.liquidHighlight {
+  position: absolute; top: 0; left: 0; width: 100px; height: 32px;
+  border-radius: 13px; pointer-events: none; opacity: 0; transform-origin: left center;
+  background: linear-gradient(135deg, #cbb8f2c2, #e3d9ffb3 55%, #d3dcf8a6);
+  box-shadow: inset 0 1px 0 #ffffffdd, inset 0 -1px 2px #76549c24, 0 3px 9px #6341ac19;
+  will-change: transform;
+}
+.liquidHighlight[data-ready="true"] { opacity: 1; }
+.liquidGroup > button, .liquidGroup > button[aria-pressed="true"] {
+  position: relative; z-index: 1; border-color: transparent; background: transparent;
+  box-shadow: none; transform: none; transition: color 180ms, background 180ms;
+}
+.liquidGroup > button[aria-pressed="true"] { color: #493167; }
+.liquidGroup > button:not(:disabled):hover { transform: none; box-shadow: none; background: #ffffff47; }
+.liquidGroup > button:not(:disabled):active { transform: none; box-shadow: none; background: #ffffff70; }
+.calendarContent:not(:empty) { animation: calendarContentEnter 300ms var(--ease-premium) both; }
+.calendarCreate { opacity: 0; transform: translateY(4px); transition: opacity 180ms, transform 220ms var(--ease-premium); }
+.calendar :global([role="gridcell"]):hover .calendarCreate,
+.calendar :global([role="gridcell"]):focus-within .calendarCreate { opacity: 1; transform: translateY(0); }
+.calendar :global([role="gridcell"]):not(:global([data-outside-month])) { position: relative; }
+.calendar :global([role="gridcell"])::after {
+  content: ""; position: absolute; inset: 1px; border: 1px solid #bcb1e24f;
+  border-radius: 7px; background: #dacdf00b; opacity: 0; pointer-events: none;
+  transition: opacity 180ms;
+}
+.calendar :global([role="gridcell"]):not(:global([data-outside-month])):hover::after,
+.calendar :global([role="gridcell"]):focus-within::after { opacity: 1; }
 .calendarEvent { transition: transform var(--motion-fast), background var(--motion-fast); }
 .calendarEvent:hover { transform: translateY(-1px); background: #c6c5e94f; }
 .calendarEvent:active { transform: translateY(1px); }
@@ -178,6 +211,32 @@
 .projectList:empty { display: none; }
 .projectList > section > ul > li { background: var(--glass-secondary); border-color: var(--glass-border); border-radius: var(--radius-md); box-shadow: var(--depth-1); }
 .projectList > section > ul > li > details[open] > :not(summary) { animation: sectionEnter var(--motion-normal) var(--ease-premium) both; }
+.resourceCard { position: relative; }
+.resourceCard::after {
+  content: ""; position: absolute; inset: 1px 17%; pointer-events: none; border-radius: inherit;
+  background: linear-gradient(115deg, transparent 25%, #ffffff40 47%, transparent 69%);
+  opacity: 0; transform: translateX(-15%); transition: opacity 350ms, transform 600ms var(--ease-premium);
+}
+.resourceCard:hover::after, .resourceCard:focus-within::after { opacity: .65; transform: translateX(15%); }
+.roundBadge { transition: transform 320ms var(--ease-premium); }
+.chargeRow > summary:hover .roundBadge, .chargeRow > summary:focus-visible .roundBadge { transform: translateY(-1px) rotate(-5deg) scale(1.06); }
+.projectCard { transition: transform 320ms var(--ease-premium); }
+.projectCard:hover, .projectCard:focus-within { transform: translateY(-3px); }
+.projectCard :global([data-project-hero])::after {
+  content: ""; position: absolute; inset: 0; pointer-events: none;
+  background: linear-gradient(115deg, transparent 30%, #ffffff30 50%, transparent 70%);
+  opacity: 0; transform: translateX(-35%); transition: opacity 400ms, transform 800ms var(--ease-premium);
+}
+.projectCard:hover :global([data-project-hero])::after, .projectCard:focus-within :global([data-project-hero])::after { opacity: .65; transform: translateX(35%); }
+.projectCard :global([data-project-hero]) img, .projectCard :global([data-project-image]) { transition: transform 700ms var(--ease-premium); }
+.projectCard:hover :global([data-project-hero]) img, .projectCard:focus-within :global([data-project-hero]) img,
+.projectCard:hover :global([data-project-image]), .projectCard:focus-within :global([data-project-image]) { transform: scale(1.035); }
+.projectCard :global(figcaption) { z-index: 1; }
+.projectChevron { flex: none; transition: transform 320ms var(--ease-premium); }
+.projectCard > details[open] .projectChevron { transform: rotate(180deg); }
+.resultEnter { animation: resultEnter 420ms var(--ease-premium) both; }
+@keyframes calendarContentEnter { from { opacity: .65; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes resultEnter { from { opacity: .5; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
 @keyframes sectionEnter { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
 @keyframes popoverEnter { from { opacity: 0; transform: scale(.975); } to { opacity: 1; transform: scale(1); } }
 @supports not (backdrop-filter: blur(1px)) {
@@ -192,6 +251,15 @@
   .glassQuiet { flex-wrap: wrap; }
 }
 @media (prefers-reduced-motion: reduce) {
+  .liquidGroup > button, .calendarCreate, .calendar :global([role="gridcell"])::after, .roundBadge,
+  .resourceCard::after, .projectCard, .projectCard :global([data-project-hero])::after,
+  .projectCard :global([data-project-hero]) img, .projectCard :global([data-project-image]), .projectChevron { transition: none; }
+  .calendarCreate, .resourceCard:hover::after, .resourceCard:focus-within::after,
+  .chargeRow > summary:hover .roundBadge, .chargeRow > summary:focus-visible .roundBadge,
+  .projectCard:hover, .projectCard:focus-within, .projectCard:hover :global([data-project-hero])::after, .projectCard:focus-within :global([data-project-hero])::after,
+  .projectCard:hover :global([data-project-hero]) img, .projectCard:focus-within :global([data-project-hero]) img,
+  .projectCard:hover :global([data-project-image]), .projectCard:focus-within :global([data-project-image]) { transform: none; }
+  .calendarContent:not(:empty), .resultEnter { animation: none; }
   .clayButton, .clayChip, .clayPrimary, .iconButton, .tab, .resourceCard, .brandBadge, .chargeRow, .monthLink, .calendarEvent, .precisionAction > summary { transition: none; }
   .clayButton:not(:disabled):hover, .clayChip:not(:disabled):hover, .clayPrimary:not(:disabled):hover, .iconButton:not(:disabled):hover,
   .clayButton:not(:disabled):active, .clayChip:not(:disabled):active, .clayPrimary:not(:disabled):active, .iconButton:not(:disabled):active,

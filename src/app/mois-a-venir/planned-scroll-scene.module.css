@@ -109,6 +109,13 @@
 .specular::before, .cta::after { content: ""; position: absolute; inset: 0; opacity: 0; pointer-events: none; background: linear-gradient(105deg, transparent 43%, #ffffff14 49%, #ffffff05 53%, transparent 59%); }
 .toolbar[data-liquid-sweep] .specular::before { animation: glassSweep 620ms ease-out both; }
 .toolbar[data-liquid-sweep] .cta::after { animation: actionGlint 180ms 440ms ease-out both; }
+.shell .toolbar .cta:hover::after, .shell .toolbar .cta:focus-visible::after { animation: glassSweep 650ms ease-out both; }
+.readingProgress {
+  position: absolute; left: 22px; right: 22px; bottom: 0; z-index: 2; height: 2px;
+  border-radius: 2px; pointer-events: none; transform: scaleX(0); transform-origin: left;
+  background: linear-gradient(90deg, #baa0e9, #8763be 65%, #b3bfe4); opacity: .65;
+}
+@keyframes readingProgress { from { transform: scaleX(0); } to { transform: scaleX(1); } }
 .shell :global([data-planned-page] [id]) { scroll-margin-top: var(--planned-anchor-offset); }
 @keyframes glassSweep { 0% { opacity: 0; transform: translateX(-60%); } 20% { opacity: 1; } 100% { opacity: 0; transform: translateX(60%); } }
 @keyframes actionGlint { 0% { opacity: 0; } 45% { opacity: 1; } 100% { opacity: 0; } }
@@ -118,11 +125,14 @@
 }
 @keyframes headerRetreat { from { transform: translate3d(0, 0, 0); opacity: 1; } to { transform: translate3d(0, -12px, 0); opacity: .82; } }
 @supports (animation-timeline: scroll(root block)) and (animation-range: 0px 200px) {
+  .readingProgress { animation: readingProgress linear both; animation-timeline: scroll(root block); }
   .background { animation: sceneSettle linear both; animation-timeline: scroll(root block); animation-range: 0px var(--planned-lock-at); }
   .shell .header { animation: headerRetreat linear both; animation-timeline: scroll(root block); animation-range: 0px var(--planned-lock-at); }
 }
 @supports not (backdrop-filter: blur(1px)) { .shell .toolbar { background: #f4eef9; } }
 @media (prefers-reduced-motion: reduce) {
+  .readingProgress { display: none; animation: none; }
+  .shell .toolbar .cta:hover::after, .shell .toolbar .cta:focus-visible::after { animation: none; }
   .background, .shell .header { animation: none; transform: none; opacity: 1; }
   .occlusion::before { transform: none; }
   .toolbar::after, .shell .tabs a { transition: none; }

@@ -24,7 +24,7 @@ export function ScenarioMilestone({ title, values, description, final = false }:
     <div className="flex items-center justify-between gap-3"><h2 className="text-2xl font-black">{title}</h2>
       <ForecastInfo label={`Comprendre : ${title}`}><p>{description}</p><p>Estimation économique du mois, distincte d’un solde bancaire.</p></ForecastInfo></div>
     <dl className="mt-4 grid grid-cols-3 items-end gap-5">{([values.lowConsumption, values.central, values.highConsumption] as const).map((value, index) =>
-      <div data-month-motion-item key={index} className={index === 1 ? `${material.centralScenario} px-4 py-3` : "py-3"}>
+      <div data-month-motion-item="scenario" data-motion-order={index} key={index} className={index === 1 ? `${material.centralScenario} px-4 py-3` : "py-3"}>
         <dt className={`text-sm ${index === 1 ? "font-bold text-emerald-900" : "text-slate-500"}`}>{["Mois calme", "Habituel", "Mois plus coûteux"][index]}</dt>
         <dd className={`${material.data} mt-2 whitespace-nowrap ${index === 1 ? "text-4xl font-black" : "text-2xl font-semibold text-slate-600"}`}>≈ <AnimatedMoney value={money(value)} /></dd>
       </div>)}</dl>

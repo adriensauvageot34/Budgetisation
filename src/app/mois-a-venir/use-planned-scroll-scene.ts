@@ -1,9 +1,8 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
+import { moveLiquidHighlight } from "./liquid-highlight";
 
 const clamp = (value: number) => Math.max(0, Math.min(1, value));
-const indicatorTransform = (x: number, y: number, width: number) =>
-  "translate3d(" + x + "px," + y + "px,0) scaleX(" + width / 100 + ")";
 
 /** Presentation only: one scroll subscription, cached geometry, state only on section changes. */
 export function usePlannedScrollScene(sectionIds: readonly string[]) {
@@ -24,26 +23,10 @@ export function usePlannedScrollScene(sectionIds: readonly string[]) {
     let frame = 0, sweepTimer = 0, needsMeasure = true, initialized = false, locked = false;
     let lockAt = 1, offset = 100, endAt = 0, parallax = 16, zoom = .04, previous = -1, activeId = "";
     let pillAnimation: Animation | undefined;
-    let positions: { id: string; top: number; x: number; y: number; width: number }[] = [];
+    let positions: { id: string; top: number; x: number; y: number; width: number; height: number }[] = [];
 
     const moveIndicator = (target: typeof positions[number], immediate: boolean) => {
-      // Read the live pose once when the selection changes, so interrupted moves never jump.
-      const from = pill.getBoundingClientRect(), origin = track.getBoundingClientRect();
-      const x = from.left - origin.left, y = from.top - origin.top;
-      const ready = pill.dataset.ready === "true";
-      pillAnimation?.cancel();
-      const destination = indicatorTransform(target.x, target.y, target.width);
-      pill.style.transform = destination;
-      pill.dataset.ready = "true";
-      if (immediate || reduced.matches || !ready) return;
-      const distance = target.x - x, stretch = Math.min(32, Math.abs(distance) * .22);
-      const middleWidth = Math.max(from.width, target.width) + stretch;
-      const middleX = x + distance * .55 - stretch / 2;
-      pillAnimation = pill.animate([
-        { transform: indicatorTransform(x, y, from.width) },
-        { transform: indicatorTransform(middleX, target.y, middleWidth), offset: .55 },
-        { transform: destination },
-      ], { duration: 420 + Math.min(140, Math.abs(distance) / 4), easing: "cubic-bezier(.22,.75,.18,1)" });
+      pillAnimation = moveLiquidHighlight(pill, track, target, pillAnimation, immediate || reduced.matches);
     };
 
     const update = () => {
@@ -63,10 +46,11 @@ export function usePlannedScrollScene(sectionIds: readonly string[]) {
           const link = track.querySelector<HTMLAnchorElement>('a[href="#' + id + '"]');
           if (!node || !link) return [];
           const section = node.closest("section") ?? node;
-          return [{ id, top: section.getBoundingClientRect().top + scroll, x: link.offsetLeft,
-            y: link.offsetTop, width: link.offsetWidth }];
+          const linkBounds = link.getBoundingClientRect(), trackBounds = track.getBoundingClientRect();
+          return [{ id, top: section.getBoundingClientRect().top + scroll,
+            x: linkBounds.left - trackBounds.left, y: linkBounds.top - trackBounds.top,
+            width: linkBounds.width, height: linkBounds.height }];
         });
-        pill.style.height = (track.querySelector("a")?.offsetHeight ?? 32) + "px";
         shell.style.setProperty("--planned-lock-at", lockAt + "px");
         shell.style.setProperty("--planned-background-start", String(1 + zoom));
         shell.style.setProperty("--planned-background-end-y", -parallax + "px");
