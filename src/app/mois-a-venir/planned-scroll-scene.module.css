@@ -1,14 +1,8 @@
-/* One viewport scene; the same pose is used by the thin top occlusion strip. */
+/* Stable glass surfaces. Continuous motion uses transform/opacity only. */
 .shell {
-  --planned-scroll-progress: 0;
-  --planned-header-progress: 0;
-  --planned-header-follow: 0px;
-  --planned-header-scale: 1;
-  --planned-background-scale: 1.05;
-  --planned-background-y: 0px;
-  --planned-toolbar-bend: 0px;
-  --planned-glass-blur: 14px;
-  --planned-glass-opacity: .16;
+  --planned-lock-at: 228px;
+  --planned-background-start: 1.04;
+  --planned-background-end-y: -16px;
   --planned-sticky-top: 8px;
   --planned-toolbar-height: 64px;
   --planned-toolbar-left: 24px;
@@ -21,29 +15,24 @@
   isolation: isolate;
   min-height: 100vh;
 }
-.shell::before, .occlusion::before {
-  content: "";
+.background, .occlusion::before {
+  position: fixed;
   inset: calc(-1 * var(--planned-scene-overscan));
   background: #f6f1ee var(--planned-background) center / cover no-repeat;
-  transform: translate3d(0, var(--planned-background-y), 0) scale(var(--planned-background-scale));
   transform-origin: center;
   pointer-events: none;
 }
-.shell::before { position: fixed; z-index: -1; }
+.background { z-index: -1; transform: scale(var(--planned-background-start)); }
 .shell .header {
   position: relative;
   z-index: 30;
   margin: 12px clamp(12px, 1.5vw, 24px) 0;
-  border: 1px solid #ffffff91;
-  border-radius: calc(18px + 18px * var(--planned-header-progress));
-  background: linear-gradient(155deg, #ffffff70, rgb(255 255 255 / calc(.3 - .18 * var(--planned-header-progress))));
-  -webkit-backdrop-filter: blur(calc(12px + 6px * var(--planned-header-progress))) saturate(110%);
-  backdrop-filter: blur(calc(12px + 6px * var(--planned-header-progress))) saturate(110%);
-  box-shadow: 0 calc(9px - 5px * var(--planned-header-progress)) calc(28px - 14px * var(--planned-header-progress)) #54416a14, inset 0 1px 0 #ffffffe0;
-  transform: translate3d(0, var(--planned-header-follow), 0) scaleX(calc(1 - .015 * var(--planned-header-progress))) scaleY(var(--planned-header-scale));
-  transform-origin: center top;
+  border: 1px solid #ffffffad;
+  border-radius: 22px;
+  background: linear-gradient(155deg, #ffffffb0, #fffaf78c);
+  /* A moving, full-width blurred header repaints its backdrop on every scroll frame. */
+  box-shadow: 0 7px 24px #54416a12, inset 0 1px 0 #ffffffe0;
 }
-.header > div { opacity: calc(1 - .7 * var(--planned-header-progress)); transform: scaleX(calc(1 - .025 * var(--planned-header-progress))); }
 .anchor { display: block; height: 0; margin: 0 !important; pointer-events: none; }
 .occlusion {
   position: fixed;
@@ -52,32 +41,28 @@
   margin: 0 !important;
   pointer-events: none;
   visibility: hidden;
-  /* Clip the matching scene, not the modules or their fixed dialogs/popovers. */
-  /* Also cover the outside of the rounded top corners; the transparent center ends exactly at sticky-top. */
+  /* Match the frozen scene, including the outside of the rounded top corners. */
   clip-path: polygon(0 0, 100% 0, 100% calc(var(--planned-sticky-top) + var(--planned-toolbar-radius)), calc(100% - var(--planned-toolbar-right)) calc(var(--planned-sticky-top) + var(--planned-toolbar-radius)), calc(100% - var(--planned-toolbar-right) - var(--planned-toolbar-radius)) var(--planned-sticky-top), calc(var(--planned-toolbar-left) + var(--planned-toolbar-radius)) var(--planned-sticky-top), var(--planned-toolbar-left) calc(var(--planned-sticky-top) + var(--planned-toolbar-radius)), 0 calc(var(--planned-sticky-top) + var(--planned-toolbar-radius)));
 }
-.occlusion::before { position: absolute; }
+.occlusion::before { content: ""; transform: translate3d(0, var(--planned-background-end-y), 0); }
 .shell[data-planned-locked="true"] .occlusion { visibility: visible; }
 .shell .toolbar {
   top: var(--planned-sticky-top);
   isolation: isolate;
-  transform: translate3d(0, var(--planned-toolbar-bend), 0);
-  background: linear-gradient(160deg, rgb(255 255 255 / calc(var(--planned-glass-opacity) + .12)), rgb(252 247 255 / var(--planned-glass-opacity)) 55%, rgb(243 233 255 / calc(var(--planned-glass-opacity) + .04)));
-  border-color: rgb(255 255 255 / calc(.60 + .32 * var(--planned-scroll-progress)));
-  -webkit-backdrop-filter: blur(var(--planned-glass-blur)) saturate(calc(112% - 18% * var(--planned-scroll-progress)));
-  backdrop-filter: blur(var(--planned-glass-blur)) saturate(calc(112% - 18% * var(--planned-scroll-progress)));
-  box-shadow: 0 calc(13px - 5px * var(--planned-scroll-progress)) calc(30px - 9px * var(--planned-scroll-progress)) #48375926, 0 2px 4px #50425c0d, inset 0 1px 0 #ffffffef, inset 0 -2px 4px #78549017;
+  /* Never move the sticky plate or vary its filter/gap during scrolling. */
+  background: linear-gradient(160deg, #ffffff61, #fcf7ff45 55%, #f3e9ff50);
+  border-color: #ffffffd6;
+  -webkit-backdrop-filter: blur(20px) saturate(94%);
+  backdrop-filter: blur(20px) saturate(94%);
+  box-shadow: 0 9px 24px #48375924, 0 2px 4px #50425c0d, inset 0 1px 0 #ffffffef, inset 0 -2px 4px #78549017;
 }
-/* Clear center / thicker optical perimeter. Only this narrow rim adds a second blur. */
 .shell .toolbar::before {
   inset: 0;
   z-index: 0;
   padding: 10px;
   border: 0;
   border-radius: inherit;
-  background: linear-gradient(180deg, rgb(255 255 255 / calc(.48 + .3 * var(--planned-scroll-progress))), #ffffff18 38%, #c6a6e521 84%, #ffffff9c);
-  -webkit-backdrop-filter: blur(4px) saturate(90%);
-  backdrop-filter: blur(4px) saturate(90%);
+  background: linear-gradient(180deg, #ffffffc7, #ffffff18 38%, #c6a6e521 84%, #ffffff9c);
   -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
   mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
   -webkit-mask-composite: xor;
@@ -87,39 +72,59 @@
 .shell .toolbar::after {
   inset: 8px;
   z-index: 0;
-  border-color: transparent;
-  border-top-color: rgb(255 255 255 / calc(.32 + .30 * var(--planned-scroll-progress)));
-  border-bottom-color: #87659726;
+  border-color: #ffffff52;
+  background: linear-gradient(155deg, #ffffff18, #cfb7ef12);
   box-shadow: inset 0 1px 2px #ffffff57, inset 0 -2px 3px #71588412;
+  opacity: .25;
+  transition: opacity 320ms ease;
 }
-.toolbar > .tabs, .toolbar > .cta { position: relative; z-index: 1; }
-.shell .tabs { gap: calc(7px - 3px * var(--planned-scroll-progress)); scrollbar-width: thin; }
+.shell[data-planned-locked="true"] .toolbar::after { opacity: 1; }
+.toolbar > .tabsViewport, .toolbar > .cta { position: relative; z-index: 1; }
+.tabsViewport { min-width: 0; scrollbar-width: thin; }
+.shell .tabs { position: relative; display: flex; gap: 6px; width: max-content; }
+.indicator {
+  position: absolute;
+  top: 0; left: 0;
+  width: 100px; height: 32px;
+  border-radius: 13px;
+  pointer-events: none;
+  opacity: 0;
+  transform-origin: left center;
+  background: linear-gradient(135deg, #cbb8f2c2, #e3d9ffb3 55%, #d3dcf8a6);
+  box-shadow: inset 0 1px 0 #ffffffdd, inset 0 -1px 2px #76549c24, 0 3px 9px #6341ac19;
+  /* Only this small, frequently animated surface keeps a compositor layer. */
+  will-change: transform;
+}
+.indicator[data-ready="true"] { opacity: 1; }
+.indicator::after { content: ""; position: absolute; inset: 2px; border-radius: inherit; background: linear-gradient(110deg, #ffffff33, transparent 65%); }
+.shell .tabs a { position: relative; z-index: 1; transition: color 200ms ease, background 200ms ease; }
+.shell .tabs a[aria-current="location"] { border-color: transparent; background: transparent; box-shadow: none; color: #493167; }
+.shell .tabs a:hover { background: #ffffff47; }
 .shell .toolbar .cta {
   overflow: hidden;
-  background: linear-gradient(155deg, hsl(264 43% calc(62% - 9% * var(--planned-scroll-progress))), #6341ac 55%, #482781);
-  box-shadow: 0 calc(8px - 2px * var(--planned-scroll-progress)) calc(20px - 5px * var(--planned-scroll-progress)) #51328238, inset 0 2px 2px #ffffff70, inset 0 -3px 5px #2e185b40;
+  background: linear-gradient(155deg, #8864c6, #6341ac 55%, #482781);
+  box-shadow: 0 7px 17px #51328238, inset 0 2px 2px #ffffff70, inset 0 -3px 5px #2e185b40;
 }
 .specular { position: absolute; inset: 0; z-index: 2; pointer-events: none; overflow: hidden; border-radius: inherit; }
 .specular::before, .cta::after { content: ""; position: absolute; inset: 0; opacity: 0; pointer-events: none; background: linear-gradient(105deg, transparent 43%, #ffffff14 49%, #ffffff05 53%, transparent 59%); }
-.toolbar[data-liquid-snap] { animation: glassLock 210ms cubic-bezier(.2, .7, .2, 1) both; }
-.toolbar[data-liquid-snap] .specular::before { animation: glassSweep 620ms ease-out both; }
-.toolbar[data-liquid-snap] .cta::after { animation: actionGlint 180ms 440ms ease-out both; }
+.toolbar[data-liquid-sweep] .specular::before { animation: glassSweep 620ms ease-out both; }
+.toolbar[data-liquid-sweep] .cta::after { animation: actionGlint 180ms 440ms ease-out both; }
 .shell :global([data-planned-page] [id]) { scroll-margin-top: var(--planned-anchor-offset); }
-@keyframes glassLock { 0% { transform: translate3d(0, -1px, 0); } 45% { transform: translate3d(0, 1.25px, 0); } 100% { transform: translate3d(0, 0, 0); } }
 @keyframes glassSweep { 0% { opacity: 0; transform: translateX(-60%); } 20% { opacity: 1; } 100% { opacity: 0; transform: translateX(60%); } }
 @keyframes actionGlint { 0% { opacity: 0; } 45% { opacity: 1; } 100% { opacity: 0; } }
-@supports not (backdrop-filter: blur(1px)) { .shell .toolbar { background: #f4eef9; } .shell .header { background: #f9f5fc; } }
-@media (min-width: 701px) and (max-width: 1024px) { .shell { --planned-background-scale: 1.025; } }
-@media (max-width: 700px) {
-  .shell { --planned-background-scale: 1; }
-  .shell .header { margin: 8px 8px 0; transform: none; -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); }
-  .header > div { opacity: 1; transform: none; }
-  .shell .toolbar { transform: none; }
-  .shell .toolbar::before { -webkit-backdrop-filter: none; backdrop-filter: none; padding: 8px; }
-  .toolbar[data-liquid-snap], .toolbar[data-liquid-snap] .specular::before, .toolbar[data-liquid-snap] .cta::after { animation: none; }
+@keyframes sceneSettle {
+  from { transform: translate3d(0, 0, 0) scale(var(--planned-background-start)); }
+  to { transform: translate3d(0, var(--planned-background-end-y), 0) scale(1); }
 }
+@keyframes headerRetreat { from { transform: translate3d(0, 0, 0); opacity: 1; } to { transform: translate3d(0, -12px, 0); opacity: .82; } }
+@supports (animation-timeline: scroll(root block)) and (animation-range: 0px 200px) {
+  .background { animation: sceneSettle linear both; animation-timeline: scroll(root block); animation-range: 0px var(--planned-lock-at); }
+  .shell .header { animation: headerRetreat linear both; animation-timeline: scroll(root block); animation-range: 0px var(--planned-lock-at); }
+}
+@supports not (backdrop-filter: blur(1px)) { .shell .toolbar { background: #f4eef9; } }
 @media (prefers-reduced-motion: reduce) {
-  .shell::before, .occlusion::before, .shell .header, .header > div, .shell .toolbar { transform: none; }
-  .header > div { opacity: 1; }
-  .toolbar[data-liquid-snap], .toolbar[data-liquid-snap] .specular::before, .toolbar[data-liquid-snap] .cta::after { animation: none; }
+  .background, .shell .header { animation: none; transform: none; opacity: 1; }
+  .occlusion::before { transform: none; }
+  .toolbar::after, .shell .tabs a { transition: none; }
+  .toolbar[data-liquid-sweep] .specular::before, .toolbar[data-liquid-sweep] .cta::after { animation: none; }
 }

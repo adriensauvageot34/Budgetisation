@@ -24,7 +24,7 @@ export function ScenarioMilestone({ title, values, description, final = false }:
     <div className="flex items-center justify-between gap-3"><h2 className="text-2xl font-black">{title}</h2>
       <ForecastInfo label={`Comprendre : ${title}`}><p>{description}</p><p>Estimation économique du mois, distincte d’un solde bancaire.</p></ForecastInfo></div>
     <dl className="mt-4 grid grid-cols-3 items-end gap-5">{([values.lowConsumption, values.central, values.highConsumption] as const).map((value, index) =>
-      <div key={index} className={index === 1 ? `${material.centralScenario} px-4 py-3` : "py-3"}>
+      <div data-month-motion-item key={index} className={index === 1 ? `${material.centralScenario} px-4 py-3` : "py-3"}>
         <dt className={`text-sm ${index === 1 ? "font-bold text-emerald-900" : "text-slate-500"}`}>{["Mois calme", "Habituel", "Mois plus coûteux"][index]}</dt>
         <dd className={`${material.data} mt-2 whitespace-nowrap ${index === 1 ? "text-4xl font-black" : "text-2xl font-semibold text-slate-600"}`}>≈ <AnimatedMoney value={money(value)} /></dd>
       </div>)}</dl>
@@ -35,7 +35,7 @@ export function RemainingForecastCard({ category, optional = false, importsMissi
   category: RemainingCategory; optional?: boolean; importsMissing?: boolean;
   display: MonthDecisionProjection["visible"]["categoryDisplay"][string];
 }) {
-  return <article className={`${material.dataCard} min-w-0 p-5`}>
+  return <article data-month-motion-item className={`${material.dataCard} min-w-0 p-5`}>
     <div className="flex items-center justify-between gap-3"><h3 className="text-sm font-bold text-slate-700">{category.label}</h3>
       <ForecastInfo label={`Comprendre l’estimation : ${category.label}`}>
         <p>{category.explanation}</p><p>{category.observationCount} observations sur {category.evidenceMonths} mois.

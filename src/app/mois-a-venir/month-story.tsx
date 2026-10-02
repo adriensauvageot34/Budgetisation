@@ -39,7 +39,7 @@ const noteLabels: Record<string, string> = {
 };
 
 function StatisticalCard({ part, tone }: { part: StatisticalComponent; tone: "necessary" | "flexible" }) {
-  return <article className={`${material.dataCard} p-5`}>
+  return <article data-month-motion-item className={`${material.dataCard} p-5`}>
     <div className="flex items-center justify-between gap-3"><h3 className="text-sm font-bold text-slate-700">{statisticalLabels[part.key] ?? "Autre dépense"}</h3>
       <ForecastInfo label={`Comprendre : ${statisticalLabels[part.key] ?? "Autre dépense"}`}><p>{methodLabels[part.method] ?? "Estimation issue des références publiées."}</p><p>{part.observationCount} observations.</p>
         <p>{part.provenance.join(" · ")}</p>{part.note && noteLabels[part.key] && <p>{noteLabels[part.key]}</p>}</ForecastInfo></div>
@@ -65,7 +65,7 @@ export function MonthStory({ plan, targetMonth, plannedExpenses, calendarCarryov
   const decision = projectMonthDecision(plan, settings, targetMonth, today, plannedExpenses, memory);
   const comparable = comparableForecastCheckpoints(memory, targetMonth);
 
-  return <div className="space-y-7 sm:space-y-9">
+  return <div data-month-story className="space-y-7 sm:space-y-9">
 
     <section className={`${material.glassPremium} ${material.glassHero} p-4 sm:p-6`} aria-labelledby="resources-title"><div className="flex flex-wrap items-end justify-between gap-3"><h2 id="resources-title" className="scroll-mt-24 text-2xl font-black">Nos ressources</h2><div className="text-left sm:text-right"><p className={`${material.data} text-3xl font-black tracking-tight`}><AnimatedMoney value={money(plan.economicResources, true)} /></p></div></div>
       <div className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">{plan.resources.map((resource) => <ResourceEditor key={resource.key} resource={resource} targetMonth={targetMonth} />)}</div>
@@ -75,7 +75,7 @@ export function MonthStory({ plan, targetMonth, plannedExpenses, calendarCarryov
       <div className="mt-4 grid gap-2 sm:grid-cols-2">{groups.map((group) => {
         const Icon = groupIcons[group.label as keyof typeof groupIcons] ?? Wallet;
         const savings = group.label === "Épargne";
-        return <details key={group.label} className={`${material.glassSecondary} ${material.chargeRow} ${material.disclosure} group min-w-0 ${savings ? material.glassWarm : ""}`}><summary className="flex min-h-17 cursor-pointer list-none items-center gap-3 p-4 [&::-webkit-details-marker]:hidden"><span className={material.roundBadge}><Icon size={20} aria-hidden="true" /></span><span className="min-w-0 flex-1 font-bold">{savings ? "Épargne voyage" : group.label}<span className="block text-xs font-normal text-slate-600">{savings ? "Objectif du mois" : `${group.items.length} ${group.items.length > 1 ? "éléments" : "élément"}`}</span></span><strong className={`${material.data} shrink-0 text-right text-lg`}><AnimatedMoney value={money(group.total, true)} />{savings && <span className="block text-[11px] font-medium text-amber-900">réservés pour le voyage</span>}</strong><ChevronDown className="size-4 shrink-0 text-slate-500 transition-transform motion-reduce:transition-none group-open:rotate-180" aria-hidden="true" /></summary>
+        return <details key={group.label} className={`${material.glassSecondary} ${material.chargeRow} ${material.disclosure} group min-w-0 ${savings ? material.glassWarm : ""}`}><summary data-month-motion-item className="flex min-h-17 cursor-pointer list-none items-center gap-3 p-4 [&::-webkit-details-marker]:hidden"><span className={material.roundBadge}><Icon size={20} aria-hidden="true" /></span><span className="min-w-0 flex-1 font-bold">{savings ? "Épargne voyage" : group.label}<span className="block text-xs font-normal text-slate-600">{savings ? "Objectif du mois" : `${group.items.length} ${group.items.length > 1 ? "éléments" : "élément"}`}</span></span><strong className={`${material.data} shrink-0 text-right text-lg`}><AnimatedMoney value={money(group.total, true)} />{savings && <span className="block text-[11px] font-medium text-amber-900">réservés pour le voyage</span>}</strong><ChevronDown className="size-4 shrink-0 text-slate-500 transition-transform motion-reduce:transition-none group-open:rotate-180" aria-hidden="true" /></summary>
           <ul className="mx-4 border-t border-slate-200 pb-3 pt-2 text-sm">{group.items.map((item) => <li key={item.key} className="flex flex-wrap justify-between gap-x-3 py-1"><span className="min-w-0 break-words">{item.label}<span className="block text-xs text-slate-500">{item.dateCertainty === "DECLARED" ? "Date déclarée" : item.dateCertainty === "HISTORICAL_ESTIMATE" ? "Date habituelle estimée" : "Date à confirmer"}</span></span><strong className="shrink-0 tabular-nums">{money(item.amount, true)}</strong></li>)}</ul></details>;
       })}</div></section>
 

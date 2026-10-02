@@ -26,6 +26,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
   return (
     <div data-planned-shell={plannedMonth ? "" : undefined} className={plannedMonth ? scene.shell : "min-h-screen"}>
+      {plannedMonth && <div data-planned-background className={scene.background} aria-hidden="true" />}
       <header data-planned-header={plannedMonth ? "" : undefined} className={plannedMonth ? scene.header : "border-b border-[var(--color-border)] bg-white"}>
         <div className="mx-auto flex max-w-6xl flex-wrap items-center gap-4 px-[var(--space-page)] py-4">
           <Link href="/historique" className="mr-auto flex items-center gap-3">

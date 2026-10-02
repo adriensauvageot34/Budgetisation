@@ -128,7 +128,7 @@
 .tab:focus-visible, .monthLink:focus-visible, .disclosure > summary:focus-visible, .calendarEvent:focus-visible, .precisionAction > summary:focus-visible, .field:focus-visible {
   outline: 2px solid var(--accent-focus); outline-offset: 3px;
 }
-.resourceCard { transition: transform var(--motion-normal) var(--ease-premium), box-shadow var(--motion-normal), border-color var(--motion-normal); -webkit-backdrop-filter: blur(6px) saturate(110%); backdrop-filter: blur(6px) saturate(110%); }
+.resourceCard { transition: transform var(--motion-normal) var(--ease-premium), box-shadow var(--motion-normal), border-color var(--motion-normal); }
 .resourceCard:hover { transform: translateY(-1px); border-color: #ffffff; box-shadow: 0 9px 23px #3d49891c, inset 0 1px 0 #fff; }
 .resourceCard[data-tone="adrien"] { background: var(--glass-blue); }
 .resourceCard[data-tone="manon"] { background: var(--glass-pink); }
