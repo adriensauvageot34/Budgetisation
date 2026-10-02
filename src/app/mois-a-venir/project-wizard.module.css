@@ -29,7 +29,13 @@
 .days { display:grid; grid-template-columns:repeat(7,1fr); gap:5px; text-align:center; font-size:12px; }
 .day { border-radius:10px; height:37px; font-size:13px; }
 .day:hover { background:#f0e9fa; }.day[aria-pressed=true] { background:#7653a9; color:white; }.day:disabled { opacity:.3; }
-.dateAside { display:flex; flex-direction:column; justify-content:center; align-items:start; gap:20px; font-size:14px; }
+.dateAside { display:flex; flex-direction:column; justify-content:center; align-items:start; gap:12px; font-size:14px; }
+.dateAside section { width:100%; }.dateAside h5 { font-size:12px; font-weight:650; margin-bottom:6px; }
+.momentChoices,.rangeDates { display:flex; flex-wrap:wrap; gap:6px; }.momentChoices .pill { min-height:30px; font-size:12px; }
+.timeField { width:145px; font-size:12px; }.rangeDates .textButton { flex-basis:100%; margin-top:0; }
+.day[data-in-range=true] { background:#ede5f6; }
+.participantsModule { display:grid; gap:14px; max-width:780px; margin:auto; }.participantsModule>.primary { justify-self:start; }
+.contactChoices { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:8px; }.contactChoices .pill { min-height:36px; font-size:13px; }
 .dateAside label { display:grid; gap:8px; }.dateAside .textButton { margin-top:12px; }
 .entityModule,.assetModule,.transportModule { display:flex; flex-direction:column; gap:15px; min-height:0; }
 .search { display:flex; align-items:center; gap:10px; padding:13px 16px; border-radius:15px; border:1px solid #dcd1e8; background:#fff; color:#8c73ab; }
@@ -48,7 +54,9 @@
 .editorFields { display:flex; align-items:end; gap:18px; }.editorFields label { display:grid; gap:5px; max-width:250px; font-size:12px; }.editorFields input[type=number] { max-width:150px; }.editorTotal { display:block; font-size:21px; color:#69478f; }
 .fundingRow { display:flex; flex-wrap:wrap; align-items:center; gap:8px; }.walletCard { min-height:42px; padding:8px 12px; border:1px solid #ddd2e8; border-radius:10px; display:flex; gap:8px; font-size:12px; font-weight:650; background:linear-gradient(135deg,#fcfaff,#e9def6); }.walletCard[aria-pressed=true] { border:2px solid #8260ac; }
 .pill { min-height:32px; padding:5px 10px; font-size:11px; border-radius:18px; border:1px solid #e1d7eb; }.pill[aria-pressed=true] { background:#eaddf9; border-color:#aa8ecb; }
-.summaryGrid { display:grid; grid-template-columns:1.1fr 1fr; gap:22px; }.summaryCard { padding:18px 22px; border:1px solid #e2dae8; background:#fffc; border-radius:18px; }.summaryRow { display:flex; justify-content:space-between; align-items:center; gap:16px; padding:9px 0; font-size:13px; border-bottom:1px solid #eee8f3; }.summaryRow:last-child { border-bottom:0; }.summaryRow strong { max-width:75%; font-weight:550; }.summaryRow button { color:#79549f; font-size:12px; }
+.summaryGrid { display:grid; grid-template-columns:1.6fr 1fr; gap:18px; }.summaryCard { padding:16px 20px; border:1px solid #e2dae8; background:#fffc; border-radius:18px; }
+.summaryFacts { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:8px 20px; }.summaryRow { display:flex; justify-content:space-between; align-items:start; gap:8px; padding:7px 0; font-size:12px; border-bottom:1px solid #eee8f3; min-width:0; }.summaryRow span { min-width:0; color:#807587; }.summaryRow strong { display:block; font-size:13px; line-height:1.4; color:#44354f; font-weight:550; overflow-wrap:anywhere; margin-top:3px; }.summaryRow button { flex:none; color:#79549f; font-size:11px; margin-top:3px; }
+.reviewShell,.reviewShell .content { overflow:visible; }.summaryAddons { margin-top:14px; padding:10px 18px; border:1px solid #e2dae8; background:#ffffffb5; border-radius:16px; }.summaryAddons h5 { font-size:12px; font-weight:650; margin-bottom:8px; }.addonButtons { display:flex; flex-wrap:wrap; gap:6px 10px; }
 .summaryTotal { font-size:30px; font-weight:750; color:#714b9c; margin:12px 0; }.blocker { display:flex; gap:12px; align-items:center; padding:10px 13px; border-radius:10px; background:#fbf3e6; font-size:12px; margin-top:10px; }
 .routeLine { font-size:13px; line-height:1.5; padding:10px 14px; background:#ffffff8c; border-radius:11px; }.routeCards { display:grid; grid-template-columns:repeat(2,1fr); gap:14px; }.routeCard { display:grid; gap:7px; padding:18px; background:#fffc; border:1px solid #ded2ea; border-radius:15px; text-align:left; font-size:13px; }.routeCard[aria-pressed=true] { border:2px solid #9573bb; }
 .dialogBackdrop { position:absolute; inset:0; z-index:20; background:#42334b55; backdrop-filter:blur(5px); display:grid; place-items:center; }.dialog { max-width:450px; padding:28px; border:1px solid #fff; border-radius:20px; background:#faf7fd; box-shadow:0 16px 50px #42334b38; }.dialog h4 { font-size:20px; font-weight:700; margin-bottom:20px; }

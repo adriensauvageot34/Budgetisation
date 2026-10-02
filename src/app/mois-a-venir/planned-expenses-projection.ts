@@ -3,6 +3,7 @@ import type { PlannedExpense } from "@/server/phase2/planned-expenses";
 import { plannedLineGross, costItemCashTreatment } from "@/domain/phase2/planned-money";
 import { needsRealityConfirmation } from "@/domain/phase2/planned-mutations";
 import { calendarMetadata, type CalendarMetadata } from "./calendar-metadata";
+import { getPlannedExpenseDateRange, getPlannedExpenseCalendarLabel } from "@/domain/phase2/planned-dates";
 
 export type PlannedExpenseCard = Pick<PlannedExpense, "id" | "familyKey" | "subtypeKey" | "title" | "plannedDate" | "status" | "costItems" | "context" | "updatedAt" | "targetMonth"> & {
   grossCost: string; needsRealityConfirmation: boolean;
@@ -32,15 +33,15 @@ export function projectMonthCalendar(outflows: readonly CalendarOutflow[],
     ...outflows.filter((item) => item.date !== null).map((item) => ({ ...calendarMetadata(item.label, item), key: item.key, label: item.label,
       amount: item.amount, date: item.date!, nature: "CERTAIN_OUTFLOW" as const,
       dateCertainty: item.dateCertainty })),
-    ...expenses.filter((item) => item.plannedDate !== null).map((item) => ({ fullLabel: item.title, calendarLabel: item.title, brandKey: null, key: item.id, label: item.title,
-      amount: item.grossCost, date: item.plannedDate!, nature: item.status === "PLANNED"
+    ...expenses.filter((item) => getPlannedExpenseDateRange(item).startDate !== null).map((item) => ({ fullLabel: item.title, calendarLabel: getPlannedExpenseCalendarLabel(item), brandKey: null, key: item.id, label: item.title,
+      amount: item.grossCost, date: getPlannedExpenseDateRange(item).startDate!, nature: item.status === "PLANNED"
         ? "PLANNED_EXPENSE" as const : "DECLARED_REALIZED" as const, dateCertainty: "DECLARED" as const, expense: item })),
   ];
   const totals = new Map<string, Big>();
   for (const item of entries) totals.set(item.date, (totals.get(item.date) ?? new Big(0)).plus(item.amount));
   return { entries, undated: [
     ...outflows.filter((item) => item.date === null).map((item) => ({ ...calendarMetadata(item.label, item), ...item, nature: "CERTAIN_OUTFLOW" as const })),
-    ...expenses.filter((item) => item.plannedDate === null).map((item) => ({ fullLabel: item.title, calendarLabel: item.title, brandKey: null, key: item.id, label: item.title,
+    ...expenses.filter((item) => getPlannedExpenseDateRange(item).startDate === null).map((item) => ({ fullLabel: item.title, calendarLabel: getPlannedExpenseCalendarLabel(item), brandKey: null, key: item.id, label: item.title,
       amount: item.grossCost, date: null, dateCertainty: "UNKNOWN" as const,
       nature: item.status === "PLANNED" ? "PLANNED_EXPENSE" as const : "DECLARED_REALIZED" as const, expense: item })),
   ],

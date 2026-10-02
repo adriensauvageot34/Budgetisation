@@ -176,7 +176,7 @@ assert.match(estimatedDetails,/aria-expanded="true"/);
 assert.doesNotMatch(estimatedDetails,/<summary>Détails<\/summary>/);
 assert.doesNotMatch(renderToStaticMarkup(React.createElement(CalendarEventDetails,{item:{...busy.entries[1],dateEvidenceCount:12}})),/12 prélèvements/);
 const sixWeeks = renderToStaticMarkup(React.createElement(MonthCalendar,{targetMonth:"2026-08",entries:[],undated:[],dailyTotals:{},today:"2026-08-12"}));
-assert.equal((sixWeeks.match(/role="row"/gu)??[]).length,7); assert.match(sixWeeks,/h-\[66px\]/);
+assert.equal((sixWeeks.match(/role="row"/gu)??[]).length,7); assert.match(sixWeeks,/min-height:66px/);
 assert.equal((sixWeeks.match(/data-outside-month="true"/gu)??[]).length,11);
 assert.doesNotMatch(sixWeeks, /data-outside-month="true"[^>]*>\s*<button/);
 const source = fs.readFileSync("src/app/mois-a-venir/month-calendar.tsx","utf8");
@@ -203,5 +203,36 @@ assert.deepEqual(presentation.orderCalendarItems([realizedSmall,futureItem,impor
 const savings = renderCalendar(projectMonthCalendar([{...certain("Épargne voyage","1200.00","UNKNOWN"),date:null,kind:"SAVINGS",group:"Épargne"}],[]));
 assert.match(savings,/Sans jour précis \(1\)/); assert.match(savings,/Objectif du mois/); assert.doesNotMatch(savings,/bg-amber|role="alert"|data-calendar-event/);
 assert.doesNotMatch(source,/line-through|role="region"|set.*Status|declarePlannedExpense/);
+// Temporal spans keep one root, one amount and the same interaction on every day.
+const rangeCard = { ...future, familyKey: "visit_trip", subtypeKey: "family_visit", title: "Voir Isabelle", plannedDate: "2026-10-02", grossCost: "28.50",
+  context: { participantPersonIds: [], visitTiming: { outbound: { date: "2026-10-02", time: null }, return: { required: true, date: "2026-10-04", time: null } }, project: { version: 2, moment: "EVENING" } }, detail: { placeLabel: "Servian", childPlaceLabels: [], funding: [], fuelUsage: "0.00", includedBaseline: "0.00", additionalImpact: "28.50" } };
+const span = projectMonthCalendar([certain("Charge fixture", "10.00")], [rangeCard]);
+assert.equal(span.entries.filter(i => i.expense).length, 1);
+assert.equal(Object.values(span.dailyTotals).reduce((sum, n) => sum + Number(n), 0), 38.5);
+for (const date of ["2026-10-02", "2026-10-03", "2026-10-04"]) assert.equal(presentation.calendarItemsOnDate(span.entries, date).find(i => i.expense)?.key, rangeCard.id);
+assert.equal(presentation.calendarDaySummary(presentation.calendarItemsOnDate(span.entries, "2026-10-03"), "2026-10-03").grossTotal, "0.00");
+const spanHtml = renderCalendar(span);
+assert.match(spanHtml, /data-span-start="2026-10-02" data-span-end="2026-10-04"/); assert.match(spanHtml, /data-calendar-return/);
+assert.equal((spanHtml.match(/<strong[^>]*>28,50/gu) ?? []).length, 1); assert.match(spanHtml, /Voir Isabelle · Servian/);
+const detailHtml = renderToStaticMarkup(React.createElement(CalendarEventDetails, { item: span.entries.find(i => i.expense), expanded: true }));
+assert.match(detailHtml, /Du 2 octobre au 4 octobre/); assert.match(detailHtml, /Retour dim\. 4 octobre/); assert.match(detailHtml, /soir/);
+const long = projectMonthCalendar([], [{ ...rangeCard, context: { ...rangeCard.context, visitTiming: { ...rangeCard.context.visitTiming, return: { required: true, date: "2026-10-07", time: null } } } }]);
+const longHtml = renderCalendar(long); assert.equal((longHtml.match(/data-calendar-span=/gu) ?? []).length, 2); assert.equal((longHtml.match(/<strong[^>]*>28,50/gu) ?? []).length, 1);
+const crowded = projectMonthCalendar([], Array.from({ length: 5 }, (_, i) => ({ ...rangeCard, id: `span-${i}` })));
+const firstWeek = presentation.calendarRibbonWeeks(crowded.entries, "2026-10")[0];
+assert.equal(firstWeek.segments.length, 4); assert.equal(firstWeek.ribbonOverflow, 1); assert.equal(new Set(firstWeek.segments.map(s => s.lane)).size, 4);
+const nextMonth = { ...rangeCard, plannedDate: "2026-10-30", context: { ...rangeCard.context, visitTiming: { outbound: { date: "2026-10-30", time: null }, return: { required: true, date: "2026-11-03", time: null } } } };
+const crossing = projectMonthCalendar([], [nextMonth]);
+assert.equal(presentation.calendarItemsOnDate(crossing.entries, "2026-11-02").length, 1);
+assert.match(renderToStaticMarkup(React.createElement(MonthCalendar, { targetMonth: "2026-11", ...crossing })), /data-calendar-span=/);
+const festival = { ...rangeCard, familyKey: "outing", subtypeKey: "club_festival", context: { endDate: "2026-10-04", outingKind: "EVENT", project: { version: 2 } } };
+assert.doesNotMatch(renderCalendar(projectMonthCalendar([], [festival])), /data-calendar-return/, "a period alone never invents a return");
+const { DateTimeDecision } = require("../src/app/mois-a-venir/project-wizard-fields.tsx");
+const dateScreen = (project, intent) => renderToStaticMarkup(React.createElement(DateTimeDecision, { month: "2026-10", onChoose() {},
+  context: { draft: project, intent, env: { persons: [], places: [] }, session: { answers: {}, history: [], current: "date" } } }));
+assert.match(dateScreen(festival, "party"), /Retour · dim\. 4 oct\./, "editing a legacy period preserves its end date");
+const legacyTimed = { ...rangeCard, context: { visitTiming: { outbound: { date: "2026-10-02", time: "21:00" }, return: { required: true, date: "2026-10-04", time: "18:00" } } } };
+const legacyScreen = dateScreen(legacyTimed, "visit");
+assert.match(legacyScreen, /value="21:00"/); assert.match(legacyScreen, /value="18:00"/, "editing legacy outbound/return preserves both exact times");
 assert(client.writes.every(row=>row.table==="phase2_planned_expenses"));
 console.log("PASS: calendar redesign, compact 2/+N, independent day totals, exact/estimated, labels, salience, today/focus, 6 weeks, lifecycle actions, C8 projection sync and META-20");

@@ -55,11 +55,11 @@ function Field({ label, name, type = "text", value, min, max, required = false }
 }
 
 type Props = { forecast: MonthForecastSnapshot; scenario: MonthScenario; stored: StoredMonthInputs;
-  plannedExpenses: readonly PlannedExpenseCard[]; persons: readonly { personId: string; displayName: string }[];
+  plannedExpenses: readonly PlannedExpenseCard[]; calendarCarryovers?: readonly PlannedExpenseCard[]; persons: readonly { personId: string; displayName: string }[];
   places: readonly PlannedPlaceOption[]; vehicle: PlannedVehicleEstimate | null;
     prices: readonly import("@/domain/phase2/planned-contract").PlannedPriceSuggestion[]; wallets: readonly import("@/domain/phase2/planned-contract").PlannedWalletOption[]; inputError: boolean; today: string };
 
-export function MonthForecastView({ forecast, scenario, stored, plannedExpenses, persons, places, vehicle, prices, wallets, inputError, today }: Props) {
+export function MonthForecastView({ forecast, scenario, stored, plannedExpenses, calendarCarryovers, persons, places, vehicle, prices, wallets, inputError, today }: Props) {
   const targetMonth = forecast.meta.targetMonth;
   const incompleteProjects = plannedExpenses.filter(p => p.context.project?.unpricedComponents?.length);
   const obligations = forecast.components.filter((part) => part.key.startsWith("obligation:"));
@@ -85,7 +85,7 @@ export function MonthForecastView({ forecast, scenario, stored, plannedExpenses,
     {(!stored.inputs.declaredResources["benefit:swile"] || !stored.inputs.declaredResources["benefit:edenred"])
       && <section className={`${material.glassPremium} p-5`}><h2 className="text-xl font-black">Préparer les ressources de {monthLabel(targetMonth)}</h2><p className="mt-2 text-sm">Renseignez vos titres-restaurants prévus pour ce mois, y compris 0 € si vous n’en prévoyez aucun. Les ressources et les exceptions d’un autre mois ne sont pas copiées.</p><ActionForm targetMonth={targetMonth} intent="declare-monthly-benefits" label="Enregistrer les ressources de ce mois"><Field label="Ressource Swile du mois (€)" name="swileResource" type="number" min="0" required value={stored.inputs.declaredResources["benefit:swile"]} /><Field label="Ressource Edenred du mois (€)" name="edenredResource" type="number" min="0" required value={stored.inputs.declaredResources["benefit:edenred"]} /></ActionForm></section>}
     {scenario.economicPlan && <MonthSectionNav hasProjects={plannedExpenses.length > 0} />}
-    <MonthStory plan={scenario.economicPlan} targetMonth={targetMonth} plannedExpenses={plannedExpenses} persons={persons} places={places} vehicle={vehicle} prices={prices} wallets={wallets} today={today} dateEvidence={forecast.referencePlan?.estimatedDays ?? {}}
+    <MonthStory plan={scenario.economicPlan} targetMonth={targetMonth} plannedExpenses={plannedExpenses} calendarCarryovers={calendarCarryovers} persons={persons} places={places} vehicle={vehicle} prices={prices} wallets={wallets} today={today} dateEvidence={forecast.referencePlan?.estimatedDays ?? {}}
       settings={stored.inputs.decision} memory={forecast.forecastMemory} calibrated={forecast.predictionEvidence ? Object.keys(calibrateForecast(forecast.forecastMemory ?? [], forecast.predictionEvidence, today)).length > 0 : false}
       references={Object.fromEntries(forecast.components.map((part) => [part.key, { freshnessDate: part.freshnessDate, confidence: part.confidence }]))} />
 

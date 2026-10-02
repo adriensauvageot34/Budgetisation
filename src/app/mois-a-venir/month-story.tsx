@@ -47,9 +47,9 @@ function StatisticalCard({ part, tone }: { part: StatisticalComponent; tone: "ne
   </article>;
 }
 
-export function MonthStory({ plan, targetMonth, plannedExpenses, persons, places, vehicle, prices, wallets, today, dateEvidence, references, settings: rawSettings, memory = [], calibrated = false }: { plan: MonthEconomicPlan | null; targetMonth: string;
+export function MonthStory({ plan, targetMonth, plannedExpenses, calendarCarryovers = [], persons, places, vehicle, prices, wallets, today, dateEvidence, references, settings: rawSettings, memory = [], calibrated = false }: { plan: MonthEconomicPlan | null; targetMonth: string;
   settings?: MonthDecisionSettings; memory?: readonly ForecastCheckpoint[]; calibrated?: boolean;
-  plannedExpenses: readonly PlannedExpenseCard[]; persons: readonly { personId: string; displayName: string }[];
+  plannedExpenses: readonly PlannedExpenseCard[]; calendarCarryovers?: readonly PlannedExpenseCard[]; persons: readonly { personId: string; displayName: string }[];
   places: readonly PlannedPlaceOption[]; vehicle: PlannedVehicleEstimate | null;
   prices: readonly import("@/domain/phase2/planned-contract").PlannedPriceSuggestion[]; today: string;
   wallets: readonly import("@/domain/phase2/planned-contract").PlannedWalletOption[];
@@ -58,7 +58,7 @@ export function MonthStory({ plan, targetMonth, plannedExpenses, persons, places
   if (!plan) return <section className="card p-6" role="status"><h2 className="text-xl font-black">Notre mois n’est pas encore prêt</h2><p className="mt-2 text-slate-600">Il manque encore des informations pour préparer ce mois.</p></section>;
   const groups = [...plan.certainOutflows.groups].sort((a, b) => groupOrder.indexOf(a.label) - groupOrder.indexOf(b.label));
   const calendar = projectMonthCalendar(plan.certainOutflows.items.map((item) => ({ ...item, ...references[item.key],
-    dateEvidenceCount: item.dateCertainty === "HISTORICAL_ESTIMATE" ? dateEvidence[item.key]?.observationCount : undefined })), plannedExpenses);
+    dateEvidenceCount: item.dateCertainty === "HISTORICAL_ESTIMATE" ? dateEvidence[item.key]?.observationCount : undefined })), [...plannedExpenses, ...calendarCarryovers]);
   const narrative = plan.narrative, prediction = narrative.prediction;
   const importsMissing = prediction?.currentImportsMissing ?? false;
   const settings = parseMonthDecisionSettings(rawSettings);

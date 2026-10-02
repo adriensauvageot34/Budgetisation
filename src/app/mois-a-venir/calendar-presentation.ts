@@ -1,6 +1,9 @@
 import Big from "big.js";
 import type { CalendarItem } from "./planned-expenses-projection";
 import { calendarMetadata } from "./calendar-metadata";
+import { getPlannedExpenseDateRange } from "@/domain/phase2/planned-dates";
+import { layoutCalendarRibbons } from "@/core/calendar-ribbons";
+import { parseLocalDate } from "@/core/time";
 
 export const calendarMoney = (value: string) => new Intl.NumberFormat("fr-FR", {
   style: "currency", currency: "EUR", minimumFractionDigits: 2, maximumFractionDigits: 2,
@@ -33,12 +36,26 @@ export const visibleCalendarItems = (items: readonly CalendarItem[]) =>
   orderCalendarItems(items).slice(0, 2);
 
 /** Date certainty breakdown of positioned amounts, not a cash-flow forecast. */
-export function calendarDaySummary(items: readonly CalendarItem[]) {
+export function calendarDaySummary(items: readonly CalendarItem[], date?: string) {
+  // A continuation is visible that day, but its amount is anchored only once.
+  items = date ? items.filter(item => item.date === date) : items;
   const exact = items.filter((item) => item.dateCertainty === "DECLARED");
   const estimated = items.filter((item) => item.dateCertainty === "HISTORICAL_ESTIMATE");
   const sum = (rows: readonly CalendarItem[]) => rows.reduce((total, item) => total.plus(item.amount), new Big(0)).toFixed(2);
   return { grossTotal: sum(items), exactDateTotal: sum(exact), estimatedDateTotal: sum(estimated),
     exactCount: exact.length, estimatedCount: estimated.length };
+}
+
+export const calendarItemRange = (item: CalendarItem) => item.expense ? getPlannedExpenseDateRange(item.expense)
+  : { startDate: item.date, endDate: item.date, isRange: false, hasReturn: false };
+export function calendarItemsOnDate(items: readonly CalendarItem[], date: string) {
+  return items.filter(item => { const r = calendarItemRange(item); return !!r.startDate && !!r.endDate && date >= r.startDate && date <= r.endDate; });
+}
+export function calendarRibbonWeeks(items: readonly CalendarItem[], month: string) {
+  const end = new Date(Date.UTC(Number(month.slice(0, 4)), Number(month.slice(5, 7)), 0)).toISOString().slice(0, 10);
+  return layoutCalendarRibbons(items.flatMap(item => { const r = calendarItemRange(item); return r.isRange ? [{ calendarItemId: item.key,
+    startDate: parseLocalDate(r.startDate!), endDate: parseLocalDate(r.endDate!), priorityBand: item.expense?.needsRealityConfirmation ? 2 : 1, priorityWeight: 0 }] : []; }),
+    parseLocalDate(`${month}-01`), parseLocalDate(end));
 }
 
 export function calendarInitialDay(targetMonth: string, today: string, items: readonly CalendarItem[]) {

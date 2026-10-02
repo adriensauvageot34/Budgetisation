@@ -1,4 +1,5 @@
 import { Temporal } from "@js-temporal/polyfill";
+import { layoutCalendarRibbons } from "../../../core/calendar-ribbons";
 
 import { computeArtifactInputHash } from "../facts-hash";
 import { emptyCalendarEconomicProjection } from "../calendar-economic/engine";
@@ -17,8 +18,6 @@ import type {
   CalendarDayProjection,
   CalendarLifeEventSource,
   CalendarMomentSource,
-  CalendarRibbonOverflowSegment,
-  CalendarRibbonSegment,
   CalendarRibbonWeek,
   CalendarSemanticEngineInput,
   CalendarSemanticItem,
@@ -491,84 +490,10 @@ function mondayOf(date: LocalDate): LocalDate {
   return addDays(date, 1 - dayOfWeek);
 }
 
-function duration(start: LocalDate, end: LocalDate): number {
-  return Temporal.PlainDate.from(start).until(Temporal.PlainDate.from(end), { largestUnit: "day" }).days + 1;
-}
-
-function buildRibbonWeeks(
-  items: readonly CalendarSemanticItem[],
-  monthStart: LocalDate,
-  monthEnd: LocalDate,
-): readonly CalendarRibbonWeek[] {
-  const ribbons = items.filter((item) =>
-    item.monthVisibility
-    && item.renderMode === "Ribbon"
-    && item.startDate !== undefined
-    && item.endDate !== undefined);
-  const weekStarts = sortedUnique(
-    datesInMonth(mondayOf(monthStart), mondayOf(monthEnd)),
-  ).filter((date) => Temporal.PlainDate.from(date).dayOfWeek === 1) as LocalDate[];
-  const previousLane = new Map<string, 1 | 2 | 3 | 4>();
-  return weekStarts.map((weekStart) => {
-    const weekEnd = addDays(weekStart, 6);
-    const candidates = ribbons
-      .filter((item) => item.startDate! <= weekEnd && item.endDate! >= weekStart)
-      .map((item) => ({
-        item,
-        segmentStart: (item.startDate! < weekStart ? weekStart : item.startDate!) as LocalDate,
-        segmentEnd: (item.endDate! > weekEnd ? weekEnd : item.endDate!) as LocalDate,
-      }))
-      .sort((left, right) =>
-        right.item.priorityBand - left.item.priorityBand
-        || right.item.priorityWeight - left.item.priorityWeight
-        || duration(right.segmentStart, right.segmentEnd) - duration(left.segmentStart, left.segmentEnd)
-        || left.segmentStart.localeCompare(right.segmentStart)
-        || left.item.calendarItemId.localeCompare(right.item.calendarItemId));
-    const laneEnds = new Map<number, LocalDate>();
-    const segments: CalendarRibbonSegment[] = [];
-    const overflowSegments: CalendarRibbonOverflowSegment[] = [];
-    for (const candidate of candidates) {
-      const preferred = previousLane.get(candidate.item.calendarItemId);
-      const laneChoices = sortedUnique([
-        ...(preferred === undefined ? [] : [String(preferred)]),
-        "1", "2", "3", "4",
-      ]).map(Number) as (1 | 2 | 3 | 4)[];
-      const lane = laneChoices.find((value) => {
-        const last = laneEnds.get(value);
-        return last === undefined || last < candidate.segmentStart;
-      });
-      if (lane === undefined) {
-        overflowSegments.push({
-          ribbonItemId: candidate.item.calendarItemId,
-          weekStart,
-          segmentStart: candidate.segmentStart,
-          segmentEnd: candidate.segmentEnd,
-          originalStart: candidate.item.startDate!,
-          originalEnd: candidate.item.endDate!,
-        });
-        continue;
-      }
-      laneEnds.set(lane, candidate.segmentEnd);
-      previousLane.set(candidate.item.calendarItemId, lane);
-      segments.push({
-        ribbonItemId: candidate.item.calendarItemId,
-        weekStart,
-        segmentStart: candidate.segmentStart,
-        segmentEnd: candidate.segmentEnd,
-        originalStart: candidate.item.startDate!,
-        originalEnd: candidate.item.endDate!,
-        startColumn: Temporal.PlainDate.from(candidate.segmentStart).dayOfWeek,
-        endColumn: Temporal.PlainDate.from(candidate.segmentEnd).dayOfWeek,
-        lane,
-      });
-    }
-    return {
-      weekStart,
-      segments,
-      overflowSegments,
-      ribbonOverflow: overflowSegments.length,
-    };
-  });
+function buildRibbonWeeks(items: readonly CalendarSemanticItem[], monthStart: LocalDate, monthEnd: LocalDate): readonly CalendarRibbonWeek[] {
+  return layoutCalendarRibbons(items.filter(item => item.monthVisibility && item.renderMode === "Ribbon"
+    && item.startDate !== undefined && item.endDate !== undefined).map(item => ({ calendarItemId: item.calendarItemId,
+      startDate: item.startDate!, endDate: item.endDate!, priorityBand: item.priorityBand, priorityWeight: item.priorityWeight })), monthStart, monthEnd);
 }
 
 function contextItems(input: CalendarSemanticEngineInput): InternalItem[] {

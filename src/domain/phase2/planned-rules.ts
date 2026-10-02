@@ -65,6 +65,8 @@ const edge = (fromRoot: AssetModule, childModule: ModuleEdge["childModule"],
 
 // Transport is a root capability, never a child. BringItems is a lens, never a node.
 export const MODULE_EDGES: readonly ModuleEdge[] = [
+  edge("restaurant", "activity", "AVAILABLE", "OPTIONAL", "AVAILABLE"),
+  edge("restaurant", "gift", "AVAILABLE", "HIDDEN", "NEVER", { inherit: ["DATE", "OCCASION", "GIFT_CONTEXT"] }),
   edge("visit_family", "activity", "AVAILABLE", "OPTIONAL", "AVAILABLE"),
   edge("visit_friend", "activity", "AVAILABLE", "OPTIONAL", "AVAILABLE"),
   edge("club", "house_party", "AVAILABLE", "OPTIONAL", "AVAILABLE"),

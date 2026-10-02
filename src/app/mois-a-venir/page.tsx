@@ -7,7 +7,7 @@ import { createCanonicalReadClient } from "@/server/canonical/client";
 import { MONTH_FORECAST_RESOURCE, queryMonthForecast, resolvePlanningMonthForecast } from "@/server/phase2/month-forecast-snapshot";
 import { readMonthInputs } from "@/server/phase2/month-inputs";
 import { deriveMonthScenario } from "@/server/phase2/month-scenario";
-import { readPlannedExpenses } from "@/server/phase2/planned-expenses";
+import { readPlannedExpenses, readPlannedCalendarCarryovers } from "@/server/phase2/planned-expenses";
 import { readPlannedContextOptions } from "@/server/phase2/planned-context";
 import { groceryBasketEstimate } from "@/domain/phase2/planned-price-estimates";
 import { projectPlannedExpenseCards, projectExpenseFunding } from "./planned-expenses-projection";
@@ -54,10 +54,11 @@ export default async function MonthForecastPage({ searchParams }: { searchParams
     return <section className="card mx-auto max-w-3xl p-8"><h1 className="text-2xl font-black">Ce mois ne fait pas partie des prévisions</h1><p className="mt-3">Choisissez un mois après la période historique de référence.</p><a className="mt-4 inline-block font-bold underline" href="/mois-a-venir">Revenir au mois à venir</a></section>;
   }
   const { supabase } = await getAuthenticatedBootstrapClient();
-  const [stored, plannedExpenses, personsResult] = await Promise.all([
+  const [stored, plannedExpenses, personsResult, calendarCarryovers] = await Promise.all([
     readMonthInputs(supabase, context.household.householdId, targetMonth),
     readPlannedExpenses(supabase, context.household.householdId, targetMonth),
     supabase.from("persons").select("person_id,display_name,status").eq("household_id", context.household.householdId).order("display_name"),
+    readPlannedCalendarCarryovers(supabase, context.household.householdId, targetMonth),
   ]);
   if (personsResult.error) throw personsResult.error;
   const activePersons = (personsResult.data ?? []).filter((person) => person.status === "active")
@@ -93,7 +94,7 @@ export default async function MonthForecastPage({ searchParams }: { searchParams
       childPlaceLabels: Object.values(card.context.childLocalPlaceRefs ?? {}).map(placeLabel).filter((label): label is string => !!label) } };
   });
   return <MonthForecastView forecast={forecast} scenario={scenario} stored={stored}
-    plannedExpenses={cards} today={today}
+    plannedExpenses={cards} calendarCarryovers={projectPlannedExpenseCards(calendarCarryovers, today)} today={today}
     persons={persons} places={options.places} vehicle={options.vehicle} prices={[...options.prices, ...(() => { const estimate = groceryBasketEstimate(forecast.predictionEvidence?.history.economicEntries ?? []); return estimate ? [estimate] : []; })()]} wallets={options.wallets}
     inputError={params.inputError === "1"} />;
 }

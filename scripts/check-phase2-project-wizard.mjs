@@ -67,7 +67,7 @@ async function golden(name, family, subtype, answers, sideEffects = {}) {
   traces[name] = trace;
   return { state, session, draft };
 }
-const restaurant = await golden("Restaurant", "food", "restaurant", { participants: adrien, date: "2026-10-16", moment: "NONE", occasion: "NONE", entity: { label: "Au Bureau", address: "1 avenue de la mer, Montpellier" }, transport: "CAR", transportDetails: "DONE", costMode: "DETAIL", costDetails: "DONE", addons: "DONE" },
+const restaurant = await golden("Restaurant", "food", "restaurant", { participants: adrien, date: { date: "2026-10-16", moment: "EVENING" }, occasion: "NONE", entity: { label: "Au Bureau", address: "1 avenue de la mer, Montpellier" }, transport: "CAR", transportDetails: "DONE", costMode: "DETAIL", costDetails: "DONE" },
   { transportDetails: manualCar, costDetails: state => commitBuilderCost(state, line("restaurant:starter", ["restaurant"], "4.00")) });
 assert.equal(restaurant.draft.costItems.find(c => c.assetKey === "restaurant:starter").unitAmount, "4.00");
 const fast = await golden("FastFoodDelivery", "food", "fast_food", { channel: "DELIVERY", participants: "BOTH", entity: { label: "Snack choisi" }, date: null, provider: { key: "UBER_EATS", label: "Uber Eats" }, costMode: "TOTAL", costTotal: "25.00", addons: "DONE" });
@@ -81,7 +81,7 @@ const groceries = await golden("UsualGroceries", "food", "groceries", { grocerie
 assert.equal(groceries.draft.costItems[0].baselineKey, "groceries");
 const party = await golden("PrivatePartyLucas", "outing", "bar", { partyKind: "house_party", participants: "BOTH", host: "lucas", occasion: "NONE", date: null, transport: "FREE", costMode: "LATER", addons: "DONE" });
 assert.equal(party.draft.context.place.placeId, lucas.places[0].placeId); assert(!traces.PrivatePartyLucas.includes("entity"));
-const visit = await golden("VisitFontes", "visit_trip", "friend_visit", { participants: "BOTH", contact: marc.key, format: "SIMPLE", occasion: "NONE", date: "2026-10-16", moment: "NONE", visitReturn: { date: "2026-10-16" }, transport: "CAR", transportDetails: "DONE", costMode: "LATER", addons: "DONE" }, { transportDetails: timedCar });
+const visit = await golden("VisitFontes", "visit_trip", "friend_visit", { participants: "BOTH", contact: marc.key, format: "SIMPLE", occasion: "NONE", date: { date: "2026-10-16", endDate: "2026-10-16", moment: "NONE", returnMoment: "NONE" }, transport: "CAR", transportDetails: "DONE", costMode: "LATER" }, { transportDetails: timedCar });
 assert.equal(visit.draft.context.place.placeId, marc.places[0].placeId); assert(!traces.VisitFontes.includes("entity"));
 const cinemaSubtype = inferredActivitySubtype({ types: ["movie_theater"] }); assert.equal(cinemaSubtype, "cinema");
 const activity = await golden("ActivityCinema", "activity", "other_activity", { entity: { label: "Pathé Odysseum", subtype: cinemaSubtype }, participants: "BOTH", date: null, transport: "FREE", costMode: "TOTAL", costTotal: "24.00", addons: "DONE" });
@@ -176,7 +176,9 @@ assert(!/\.from\("(?:operations|life_events|mobility_legs|financial_economic_cos
 // Real Preview/Save/Update/reload/lifecycle boundaries, only I/O replaced by synthetic fixtures.
 const h = planningHarness();
 h.client.persons.push(...env.persons.map(p => ({ person_id: p.personId, display_name: p.displayName, status: "active", household_id: h.householdId })));
-for (const candidate of [fast.draft, work.draft, purchase.draft]) {
+const rangeCandidate = { ...trip.draft, plannedDate: "2026-10-02", context: { ...trip.draft.context, endDate: "2026-10-04",
+  project: { ...trip.draft.context.project, moment: "EVENING", returnMoment: "NONE" } } };
+for (const candidate of [fast.draft, work.draft, purchase.draft, rangeCandidate]) {
   const count = h.client.writes.length, p = value(await h.actions.previewPlannedExpense("2026-10", candidate));
   assert.equal(h.client.writes.length, count, "Preview never writes");
   const saved = value(await h.actions.savePlannedExpense("2026-10", candidate, { id: randomUUID() }));
@@ -184,8 +186,42 @@ for (const candidate of [fast.draft, work.draft, purchase.draft]) {
     (await h.service.readPlannedExpenses(h.client, h.householdId, "2026-10")).filter(i => i.id !== saved.expense.id)).economicPlan;
   const impact = require("../src/server/phase2/planned-impact.ts").projectPlannedExpenseImpact(before, saved.scenario.economicPlan, saved.expense);
   for (const axis of ["grossCost", "fuelUsage", "payableGross", "netAdditionalImpact", "funding"]) assert.deepEqual(impact[axis], p[axis], `V2 parity ${axis}`);
-  assert.deepEqual((await h.service.readPlannedExpenses(h.client, h.householdId, "2026-10")).find(i => i.id === saved.expense.id).context.project, saved.expense.context.project);
+  const reloaded = (await h.service.readPlannedExpenses(h.client, h.householdId, "2026-10")).find(i => i.id === saved.expense.id);
+  assert.deepEqual(reloaded.context, saved.expense.context);
+  assert.equal(reloaded.plannedDate, saved.expense.plannedDate);
 }
+
+// V2.2: social participation is intent, never a quantity/funding multiplier.
+const group = await golden("RestaurantGroup", "food", "restaurant", { participants: "GROUP", socialParticipants: { personIds: [adrien, manon], contactKeys: [lucas.key], guests: 2 },
+  date: { date: "2026-10-10", moment: "EVENING" }, occasion: "NONE", entity: { label: "Comptoir choisi", address: "Montpellier" }, transport: "FREE", costMode: "TOTAL", costTotal: "60.00" });
+assert.equal(require("../src/domain/phase2/planned-product.ts").plannedParticipantCount(group.draft.context), 5);
+assert.equal(group.draft.context.project.financialScope.count, 2);
+assert.equal(draftSummary(group.draft.costItems).gross, "60.00");
+assert(!traces.RestaurantGroup.includes("moment") && !traces.RestaurantGroup.includes("addons") && !traces.RestaurantGroup.includes("groupScope"));
+assert.equal(require("../src/domain/phase2/planned-question-engine.ts").wizardHasPreviousUserDecision(emptyWizardSession()), false);
+assert.equal(require("../src/domain/phase2/planned-question-engine.ts").wizardHasPreviousUserDecision({ ...emptyWizardSession(), intentChosen: true }), true);
+let dates = answerWizard(answerWizard(emptyWizardSession(), "participants", "BOTH"), "date", { date: "2026-10-10", moment: "EVENING" });
+assert.equal(backWizard(dates).current, "date"); assert.equal(backWizard(backWizard(dates)).current, "participants");
+const isabelle = SOCIAL_CONTACTS_V1.find(c => c.label.includes("Isabelle"));
+let servian = applyProjectAnswer(applyProjectAnswer(initialize("visit_trip", "friend_visit"), "participants", "BOTH", env), "contact", isabelle.key, env);
+servian = applyProjectAnswer(servian, "date", { date: "2026-10-02", endDate: "2026-10-04", moment: "EVENING", returnMoment: "NONE" }, env);
+servian = applyProjectAnswer(servian, "costMode", "LATER", env);
+assert.equal(servian.draft.context.visitTiming.return.date, "2026-10-04");
+assert.equal(require("../src/domain/phase2/planned-visits.ts").plannedJourneyTiming(servian.draft).return.date, "2026-10-04");
+const dateSelector = require("../src/domain/phase2/planned-dates.ts");
+assert.equal(dateSelector.getPlannedExpenseDateRange(servian.draft).isRange, true);
+assert.equal(dateSelector.getPlannedExpenseDateRange({ ...servian.draft, context: { ...servian.draft.context, endDate: undefined } }).endDate, "2026-10-04", "old rows remain ranges");
+assert.deepEqual(parsePlannedExpenseDraft(servian.draft, "2026-10", "PREVIEW"), parsePlannedExpenseDraft(servian.draft, "2026-10"));
+assert.throws(() => parsePlannedExpenseDraft({ ...servian.draft, context: { ...servian.draft.context, endDate: "2026-10-05" } }, "2026-10"), /PROJECT_INVALID/);
+assert.throws(() => parsePlannedProject({ version: 2, returnMoment: "EXACT" }), /PROJECT_INVALID/);
+assert.equal(applyProjectAnswer(servian, "date", null, env).draft.context.visitTiming, undefined);
+const crossingProject = { ...rangeCandidate, plannedDate: "2026-10-30", context: { ...rangeCandidate.context, endDate: "2026-11-03" } };
+const crossingSaved = value(await h.actions.savePlannedExpense("2026-10", crossingProject, { id: randomUUID() })).expense;
+const readOnlyCount = h.client.writes.length;
+assert.deepEqual((await h.service.readPlannedCalendarCarryovers(h.client, h.householdId, "2026-11")).map(p => p.id), [crossingSaved.id]);
+assert.equal((await h.service.readPlannedExpenses(h.client, h.householdId, "2026-11")).length, 0, "continuation never becomes a November expense");
+assert.equal((await h.service.readPlannedCalendarCarryovers(h.client, randomUUID(), "2026-11")).length, 0, "carryover references remain household scoped");
+assert.equal(h.client.writes.length, readOnlyCount);
 const partial = { ...fast.draft, costItems: [], context: { ...fast.draft.context, project: { ...fast.draft.context.project, unpricedComponents: ["Budget principal"] } } };
 const partialSaved = value(await h.actions.savePlannedExpense("2026-10", partial, { id: randomUUID() })).expense;
 const updatedPartial = value(await h.actions.savePlannedExpense("2026-10", { ...partial, title: "Budget à compléter" }, { id: partialSaved.id, expectedUpdatedAt: partialSaved.updatedAt })).expense;

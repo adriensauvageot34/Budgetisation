@@ -13,14 +13,15 @@ export { projectNights } from "./planned-project";
 export type KnowledgeState = "KNOWN" | "INFERRED" | "LIKELY" | "AMBIGUOUS" | "IRRELEVANT" | "UNKNOWN";
 export type KnowledgeMeta = Readonly<{ state: KnowledgeState; reason: string }>;
 export type QuestionId = "partyKind" | "groceriesNature" | "tripKind" | "participants" | "workPerson" | "workMode"
-  | "groupScope"
+  | "groupScope" | "socialParticipants"
   | "groceryFocus" | "automotiveKind"
   | "channel" | "contact" | "host" | "format" | "occasion" | "entity" | "date" | "moment" | "visitReturn"
   | "provider" | "seller" | "giftRecipient" | "transport" | "transportDetails" | "lodging" | "lodgingCost" | "costMode" | "costTotal"
   | "costDetails" | "costEstimate" | "addons" | "link" | "review";
 export type WizardAnswer = string | null | Readonly<Record<string, unknown>>;
-export type WizardSession = Readonly<{ answers: Partial<Record<QuestionId, WizardAnswer>>; history: readonly QuestionId[]; current: QuestionId | null; editScope?: readonly QuestionId[] }>;
+export type WizardSession = Readonly<{ answers: Partial<Record<QuestionId, WizardAnswer>>; history: readonly QuestionId[]; current: QuestionId | null; editScope?: readonly QuestionId[]; intentChosen?: boolean }>;
 export const emptyWizardSession = (): WizardSession => ({ answers: {}, history: [], current: null });
+export const wizardHasPreviousUserDecision = (session: WizardSession) => !!session.intentChosen || session.history.length > 0;
 export type WizardEnvironment = Readonly<{ persons: readonly { personId: string; displayName: string }[]; places: readonly PlannedPlaceOption[];
   linkedProjects?: readonly { id: string; draft: PlannedExpenseDraft; status: string }[]; editedId?: string | null }>;
 export type QuestionContext = Readonly<{ draft: PlannedExpenseDraft; session: WizardSession; env: WizardEnvironment; intent: BuilderIntent }>;
@@ -52,7 +53,7 @@ export const PROJECT_QUESTIONS: readonly QuestionContract[] = [
   q("participants", c => c.intent === "fast_food" ? "Pour combien de personnes payons-nous ?" : "Qui vient ?",
     c => c.intent === "trip" ? 40 : c.intent === "activity" || c.intent === "purchase" ? 25 : 15,
     c => c.intent !== "work_meal" && c.intent !== "groceries", [], "AUTO"),
-  q("groupScope", "Qui est inclus dans notre budget ?", 26, c => c.draft.context.companionMode === "GROUP", ["participants"], "EXPLICIT"),
+  q("socialParticipants", "Qui vient ?", 26, c => c.draft.context.companionMode === "GROUP", ["participants"], "EXPLICIT"),
   q("contact", "Qui allez-vous voir ?", 20, intents("visit")),
   q("host", "Où se passe la soirée ?", 20, c => c.intent === "party" && c.draft.subtypeKey === "house_party", ["partyKind"]),
   q("format", "Quel moment ensemble ?", 25, c => c.intent === "visit" || c.intent === "groceries" && c.draft.context.groceriesNature === "OCCASION", ["groceriesNature", "contact"]),
@@ -67,11 +68,7 @@ export const PROJECT_QUESTIONS: readonly QuestionContract[] = [
     ["partyKind", "workPerson", "workMode"], "AUTO"),
   q("date", c => c.intent === "trip" ? "Quand partez-vous ?" : "Quand ?", c => c.intent === "work_meal" ? 20 : 30,
     always, [], "AUTO", c => !!c.draft.plannedDate && c.session.answers.entity != null && typeof c.session.answers.entity === "object" && !!c.session.answers.entity.date),
-  q("moment", "À quel moment ?", 35, c => !!c.draft.plannedDate && c.intent !== "trip", ["date"]),
   q("workMode", "Comment prévoyez-vous votre repas ?", 30, intents("work_meal"), ["workPerson"]),
-  q("visitReturn", "Quand rentrez-vous ?", 45, c => c.intent === "visit" && !!c.draft.plannedDate && !!c.draft.context.place
-    && c.draft.context.place.kind === "KNOWN" && !!c.env.places.find(p => p.placeId === (c.draft.context.place as { placeId: string }).placeId)?.carVisitDates12Months?.length,
-    ["contact", "date"], "EXPLICIT"),
   q("provider", "Qui livre ?", 60, delivery, ["channel", "workMode", "entity"]),
   q("seller", "Quel vendeur ou prestataire ?", 60, c => c.intent === "purchase" && !!c.draft.context.project?.entity && c.draft.context.project.channel !== "UNDECIDED", ["entity", "channel"], "AUTO"),
   q("link", "Ce projet accompagne-t-il un autre projet ?", 65, c => compatibleProjectLinks(c).length > 0, [], "AUTO"),
@@ -86,7 +83,7 @@ export const PROJECT_QUESTIONS: readonly QuestionContract[] = [
   q("costDetails", c => c.intent === "restaurant" ? "Votre note" : c.intent === "groceries" ? "Votre panier" : "À prévoir", 95,
     c => c.session.answers.costMode === "DETAIL", ["costMode"], "EXPLICIT"),
   q("costEstimate", "Une estimation pour commencer", 95, c => c.session.answers.costMode === "ESTIMATE", ["costMode", "participants"], "EXPLICIT"),
-  q("addons", "Autre chose à prévoir ?", 100, always, [], "EXPLICIT"),
+  q("addons", "Compléter votre projet", 100, c => c.session.current === "addons", [], "EXPLICIT"),
   q("review", "Votre projet", 110, always, [], "EXPLICIT"),
 ];
 
@@ -148,8 +145,7 @@ export const jumpWizard = (session: WizardSession, current: QuestionId): WizardS
 
 /** Repair navigation uses the shared question vocabulary, not vanished legacy DOM anchors. */
 export function projectRepairQuestion(c: QuestionContext, path: string): QuestionId {
-  if (/return|visitTiming/u.test(path)) return "visitReturn";
-  if (/exactTime|moment|plannedTime/u.test(path)) return "moment";
+  if (/return|visitTiming|exactTime|moment|plannedTime/u.test(path)) return "date";
   if (/date|timing/u.test(path)) return "date";
   if (/route|transport/u.test(path)) return c.draft.context.transportMode ? "transportDetails" : "transport";
   if (/provider/u.test(path)) return "provider";
@@ -184,6 +180,13 @@ export function applyProjectAnswer(state: BuilderState, id: QuestionId, answer: 
     const count = Number(value.count ?? ids.length), mode = answer === "GROUP" || value.group ? "GROUP" : ids.length === 1 ? "SOLO" : "COUPLE";
     return patch({ participantPersonIds: ids, companionMode: mode, additionalGuestCount: Number(value.guests ?? 0) || undefined },
       { financialScope: { personIds: ids, count: Math.max(1, count) } });
+  }
+  if (id === "socialParticipants") {
+    const value = answer as { personIds: string[]; contactKeys: string[]; guests: number };
+    const ids = value.personIds.filter(id => env.persons.some(p => p.personId === id));
+    const refs: ProspectivePersonRef[] = value.contactKeys.map(contactKey => ({ kind: "CONTACT", contactKey }));
+    return patch({ participantPersonIds: ids, participantRefs: refs, additionalGuestCount: value.guests || undefined },
+      { financialScope: { personIds: ids, count: Math.max(1, ids.length) } });
   }
   if (id === "groupScope") {
     const value = answer as { count: number; guests: number };
@@ -226,9 +229,18 @@ export function applyProjectAnswer(state: BuilderState, id: QuestionId, answer: 
   }
   if (id === "date") {
     const value = typeof answer === "object" && answer ? answer : { date: answer };
-    return editBuilderDraft(state, { ...state.draft, plannedDate: value.date as string | null, context: { ...c,
-      ...(!value.date ? { visitTiming: undefined, ...(c.restaurant ? { restaurant: { ...c.restaurant, plannedTime: null, timeBucket: undefined } } : {}), ...(c.route ? { route: { ...c.route, plannedTime: null } } : {}) } : {}),
-      endDate: value.endDate as string | undefined, project: { ...p, moment: value.date ? p.moment : undefined, exactTime: value.date ? p.exactTime : undefined } } });
+    const date = value.date as string | null, endDate = value.endDate as string | undefined;
+    const moment = date ? (value.moment ?? p.moment ?? "NONE") as PlannedProjectContext["moment"] : undefined;
+    const exactTime = moment === "EXACT" ? (value.exactTime ?? p.exactTime) as string | undefined : undefined;
+    const returnMoment = endDate ? (value.returnMoment ?? "NONE") as PlannedProjectContext["returnMoment"] : undefined;
+    const returnExactTime = returnMoment === "EXACT" ? value.returnExactTime as string | undefined : undefined;
+    return editBuilderDraft(state, { ...state.draft, plannedDate: date, context: { ...c, endDate,
+      visitTiming: intent === "visit" && date && c.personVisited && c.place ? { outbound: { date, time: exactTime ?? null },
+        return: { required: true, date: endDate ?? date, time: returnExactTime ?? null } } : undefined,
+      ...(c.restaurant ? { restaurant: { ...c.restaurant, plannedTime: exactTime ?? null,
+        timeBucket: moment === "MORNING" || moment === "LUNCH" || moment === "EVENING" ? moment : undefined } } : {}),
+      ...(c.route ? { route: { ...c.route, plannedTime: exactTime ?? null } } : {}),
+      project: { ...p, moment, exactTime, returnMoment, returnExactTime } } });
   }
   if (id === "moment") {
     const value = typeof answer === "object" && answer ? answer : { moment: answer };

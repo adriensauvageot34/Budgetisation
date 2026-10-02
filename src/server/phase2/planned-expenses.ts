@@ -741,6 +741,18 @@ export async function readPlannedExpenses(client: SupabaseClient, householdId: s
   return (data ?? []).map(parseRow);
 }
 
+/** Calendar-only continuations. Their costs remain in the root's original monthly scenario. */
+export async function readPlannedCalendarCarryovers(client: SupabaseClient, householdId: string, targetMonth: string): Promise<PlannedExpense[]> {
+  parseTargetMonth(targetMonth);
+  const start = `${targetMonth}-01`;
+  const { data, error } = await client.from("phase2_planned_expenses").select(rowFields)
+    .eq("household_id", uuid(householdId, "PLANNED_EXPENSE_HOUSEHOLD_INVALID"))
+    .lt("planned_date", start).or(`context->>endDate.gte.${start},context->visitTiming->return->>date.gte.${start}`)
+    .order("planned_date").order("planned_expense_id");
+  if (error) throw error;
+  return (data ?? []).map(parseRow);
+}
+
 /** A draft never writes to Supabase. Editing replaces the saved ID in the same financial path. */
 export async function preparePlannedExpenseSimulation(client: SupabaseClient, householdId: string,
   forecast: MonthForecastSnapshot, inputs: MonthInputs, saved: readonly PlannedExpense[],
@@ -893,6 +905,8 @@ export async function reportPlannedExpense(client: SupabaseClient, householdId: 
   const targetMonth = date(plannedDate, "PLANNED_EXPENSE_DATE_INVALID").slice(0, 7);
   let raw: PlannedExpenseDraft = { familyKey: previous.familyKey, subtypeKey: previous.subtypeKey, title: previous.title,
     plannedDate, costItems: previous.costItems, context: previous.context };
+  if (previous.context.endDate && previous.plannedDate) raw = { ...raw, context: { ...raw.context,
+    endDate: new Date(Date.parse(previous.context.endDate) + Date.parse(plannedDate) - Date.parse(previous.plannedDate)).toISOString().slice(0, 10) } };
   if (previous.context.visitTiming) {
     raw = { ...raw, context: { ...raw.context, visitTiming: shiftVisitTiming(previous.context.visitTiming, plannedDate) } };
     if (raw.context.route?.mode === "CAR") {

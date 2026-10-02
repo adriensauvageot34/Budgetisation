@@ -72,11 +72,11 @@ const noBirthday = changeBuilderContext(accepted, { ...accepted.draft.context, s
 assert(noBirthday.acceptedChildren.includes("gift"));
 assert(!suggestedBuilderChildren(noBirthday).includes("gift"));
 // AB-07: forbidden child is excluded from active preview and blocks Save.
-const forged = { ...quick("food", "restaurant"), acceptedChildren: ["gift"] };
+const forged = { ...quick("food", "restaurant"), acceptedChildren: ["bar"] };
 assert(deriveBuilderReadiness(forged).issues.some((issue) => issue.code === "CHILD_FORBIDDEN"));
 assert.equal(deriveBuilderReadiness(forged).saveReady, false);
 const forgedLines = createBuilderState(draft("food", "restaurant", {}, [line("restaurant:main", ["restaurant"]),
-  line("gift:flowers", ["restaurant", "gift"])]));
+  line("bar:beer", ["restaurant", "bar"])]));
 assert.equal(materializeBuilderDraft(forgedLines, true).costItems.length, 1);
 assert.equal(deriveBuilderReadiness(forgedLines).saveReady, false);
 // AB-08/09: derived values may leave; explicit route is suspended and reversible.

@@ -53,6 +53,8 @@ export type PlannedProjectContext = Readonly<{
   financialScope?: Readonly<{ personIds: readonly string[]; count: number }>;
   moment?: "NONE" | "MORNING" | "LUNCH" | "EVENING" | "EXACT";
   exactTime?: string;
+  returnMoment?: "NONE" | "MORNING" | "LUNCH" | "EVENING" | "EXACT";
+  returnExactTime?: string;
   channel?: "STORE" | "DELIVERY" | "PICKUP" | "SECOND_HAND" | "UNDECIDED";
   entity?: Readonly<{ kind: "VENUE" | "PRODUCT" | "EVENT" | "DESTINATION" | "SELLER";
     label: string; googlePlaceId?: string; city?: string; address?: string }>;

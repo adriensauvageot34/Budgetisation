@@ -3,7 +3,9 @@ import { useEffect, useRef, useState } from "react";
 import { Search, ChevronLeft, ChevronRight } from "lucide-react";
 import { ASSET_CATALOG, PLANNED_SUBTYPE_LABELS } from "@/domain/phase2/planned-assets";
 import { inferredActivitySubtype, purchaseSubtypeForAsset, projectEventCandidates } from "@/domain/phase2/planned-project-entities";
-import { plannedContextModifiers, resolvePlannedContext } from "@/domain/phase2/planned-rules";
+import { plannedContextModifiers, resolvePlannedContext, SOCIAL_CONTACTS_V1 } from "@/domain/phase2/planned-rules";
+import { getPlannedExpenseDateRange } from "@/domain/phase2/planned-dates";
+import type { PlannedProjectContext } from "@/domain/phase2/planned-contract";
 import { rankPlacesForPlannedContext, plannedSellerCandidates } from "@/domain/phase2/planned-places";
 import { intentForDraft, PURCHASE_CHOICES } from "@/domain/phase2/planned-ux";
 import { RestaurantSearchSession, type ProjectPlaceKind, type RestaurantSuggestion, type SelectedRestaurantPlace } from "@/domain/phase2/restaurant-places";
@@ -11,22 +13,69 @@ import type { QuestionContext, WizardAnswer } from "@/domain/phase2/planned-ques
 import { GoogleMapsAttribution } from "./restaurant-place-search";
 import styles from "./project-wizard.module.css";
 
-export function ProjectDatePicker({ month, value, range: requiredRange = false, optionalRange = false, endValue, minDate, onChoose }: {
-  month: string; value: string | null; range?: boolean; optionalRange?: boolean; endValue?: string; minDate?: string; onChoose: (v: WizardAnswer) => void;
-}) {
-  const [range, setRange] = useState(requiredRange || !!endValue);
-  const [shown, setShown] = useState(value?.slice(0, 7) ?? month), [start, setStart] = useState(value), [end, setEnd] = useState(endValue ?? "");
+/** One date/moment decision, including an optional return, with no intermediate page. */
+export function DateTimeDecision({ context, month, onChoose }: { context: QuestionContext; month: string; onChoose: (v: WizardAnswer) => void }) {
+  const initial = getPlannedExpenseDateRange(context.draft), p = context.draft.context.project;
+  const requiredRange = context.intent === "trip" || context.intent === "visit";
+  const optionalRange = context.intent === "activity" || context.intent === "party";
+  const [range, setRange] = useState(requiredRange || initial.isRange);
+  const [start, setStart] = useState(initial.startDate), [end, setEnd] = useState(initial.isRange || initial.hasReturn ? initial.endDate : null);
+  const [selecting, setSelecting] = useState<"start" | "end">("start");
+  const [shown, setShown] = useState(initial.startDate?.slice(0, 7) ?? month);
+  const [moment, setMoment] = useState<PlannedProjectContext["moment"]>(p?.moment ?? (initial.startTime ? "EXACT" : initial.startBucket as PlannedProjectContext["moment"]) ?? "NONE");
+  const [returnMoment, setReturnMoment] = useState<PlannedProjectContext["moment"]>(p?.returnMoment ?? (initial.endTime ? "EXACT" : "NONE"));
+  const [time, setTime] = useState(initial.startTime ?? ""), [returnTime, setReturnTime] = useState(initial.endTime ?? "");
   const first = new Date(`${shown}-01T12:00:00Z`), count = new Date(Date.UTC(first.getUTCFullYear(), first.getUTCMonth() + 1, 0)).getUTCDate();
   const shift = (n: number) => setShown(new Date(Date.UTC(first.getUTCFullYear(), first.getUTCMonth() + n, 1)).toISOString().slice(0, 7));
-  return <div className={styles.dateModule}><div className={styles.calendar}>
-    <div className={styles.calendarNav}><button aria-label="Mois précédent" onClick={() => shift(-1)} disabled={shown <= month}><ChevronLeft size={18} /></button><strong>{new Intl.DateTimeFormat("fr-FR", { month: "long", year: "numeric", timeZone: "UTC" }).format(first)}</strong><button aria-label="Mois suivant" onClick={() => shift(1)} disabled={!range && !minDate && shown >= month}><ChevronRight size={18} /></button></div>
+  const complete = (m = moment, rm = returnMoment) => onChoose({ date: start, ...(range ? { endDate: end, returnMoment: rm,
+    ...(rm === "EXACT" ? { returnExactTime: returnTime } : {}) } : {}), moment: m, ...(m === "EXACT" ? { exactTime: time } : {}) });
+  const ready = !!start && (!range || !!end && end >= start) && (moment !== "EXACT" || !!time) && (!range || returnMoment !== "EXACT" || !!returnTime);
+  const shortDate = (date: string | null) => date ? new Intl.DateTimeFormat("fr-FR", { weekday: "short", day: "numeric", month: "short", timeZone: "UTC" }).format(new Date(`${date}T12:00:00Z`)) : "à choisir";
+  const momentChoices = (returning = false) => <div className={styles.momentChoices} aria-label={returning ? "Moment du retour" : "Moment du départ"}>
+    {([ ["NONE", "Sans heure précise"], ["MORNING", "Matin"], ["LUNCH", "Midi"], ["EVENING", "Soir"], ["EXACT", "Heure précise"] ] as const).map(([key, label]) =>
+      <button type="button" key={key} className={styles.pill} aria-pressed={(returning ? returnMoment : moment) === key} onClick={() => {
+        if (returning) { setReturnMoment(key); if (key !== "EXACT" && start && end && end >= start && (moment !== "EXACT" || time)) complete(moment, key); }
+        else { setMoment(key); if (!range && key !== "EXACT") complete(key); }
+      }}>{label}</button>)}
+    {(returning ? returnMoment : moment) === "EXACT" && <label className={styles.timeField}>Heure {returning ? "de retour" : "de départ"}<input type="time" className={styles.input} value={returning ? returnTime : time} onChange={e => returning ? setReturnTime(e.target.value) : setTime(e.target.value)} /></label>}
+  </div>;
+  return <div className={styles.dateModule} data-date-time-decision><div className={styles.calendar}>
+    <div className={styles.calendarNav}><button aria-label="Mois précédent" onClick={() => shift(-1)} disabled={shown <= month}><ChevronLeft size={18} /></button><strong>{new Intl.DateTimeFormat("fr-FR", { month: "long", year: "numeric", timeZone: "UTC" }).format(first)}</strong><button aria-label="Mois suivant" disabled={!range && shown >= month} onClick={() => shift(1)}><ChevronRight size={18} /></button></div>
     <div className={styles.days}>{["L", "M", "M", "J", "V", "S", "D"].map((d, i) => <span key={i}>{d}</span>)}
       {Array.from({ length: (first.getUTCDay() + 6) % 7 }, (_, i) => <span key={`empty${i}`} />)}
       {Array.from({ length: count }, (_, i) => { const date = `${shown}-${String(i + 1).padStart(2, "0")}`;
-        return <button type="button" key={date} aria-label={date} aria-pressed={start === date || end === date} className={styles.day} disabled={!minDate && !start && shown !== month || !!minDate && date < minDate}
-          onClick={() => { if (!range) { setStart(date); onChoose(date); } else if (!start || end || date < start) { setStart(date); setEnd(""); } else setEnd(date); }}>{i + 1}</button>; })}</div>
-    </div><div className={styles.dateAside}>{range && <><p>{start ? `Départ : ${new Date(start + "T12:00Z").toLocaleDateString("fr-FR")}` : "Choisissez le départ, puis le retour."}</p><label>Retour<input className={styles.input} type="date" min={start ?? undefined} value={end} onChange={e => setEnd(e.target.value)} /></label><button className={styles.primary} disabled={!start || !end || end < start} onClick={() => onChoose({ date: start, endDate: end })}>Continuer</button></>}
-      {optionalRange && <button className={styles.textButton} onClick={() => { setRange(!range); setStart(null); setEnd(""); }}>{range ? "Une seule journée" : "Sur plusieurs jours"}</button>}<button className={styles.textButton} onClick={() => onChoose(null)}>Je ne sais pas encore</button></div></div>;
+        return <button type="button" key={date} aria-label={date} aria-pressed={start === date || range && end === date} data-in-range={range && !!start && !!end && date > start && date < end || undefined} className={styles.day}
+          disabled={selecting === "start" ? shown !== month : !!start && date < start} onClick={() => {
+            if (range && selecting === "end") { setEnd(date); setSelecting("start"); }
+            else { setStart(date); if (range) { if (!end || end < date) setEnd(null); setSelecting("end"); } }
+          }}>{i + 1}</button>; })}</div>
+    </div><div className={styles.dateAside}>
+      {range && <div className={styles.rangeDates}><button className={styles.pill} aria-pressed={selecting === "start"} onClick={() => setSelecting("start")}>Départ · {shortDate(start)}</button><button className={styles.pill} aria-pressed={selecting === "end"} disabled={!start} onClick={() => setSelecting("end")}>Retour · {shortDate(end)}</button>{start && !end && <button className={styles.textButton} onClick={() => { setEnd(start); setSelecting("start"); }}>Retour le même jour</button>}</div>}
+      {start && (!range || end) && <><section><h5>{range ? "Moment du départ" : "Moment"}</h5>{momentChoices()}</section>{range && <section><h5>Moment du retour</h5>{momentChoices(true)}</section>}
+        {(range || moment === "EXACT") && <button className={styles.primary} disabled={!ready} onClick={() => complete()}>Continuer</button>}</>}
+      {optionalRange && <button className={styles.textButton} onClick={() => { setRange(!range); setEnd(null); setSelecting(range ? "start" : "end"); }}>{range ? "Une seule journée" : "Sur plusieurs jours"}</button>}
+      <button className={styles.textButton} onClick={() => onChoose(null)}>Je ne sais pas encore</button>
+    </div></div>;
+}
+
+export function ParticipantSelector({ context, onChoose }: { context: QuestionContext; onChoose: (v: WizardAnswer) => void }) {
+  const c = context.draft.context;
+  const [ids, setIds] = useState<readonly string[]>(c.participantPersonIds ?? context.env.persons.map(p => p.personId));
+  const [contacts, setContacts] = useState((c.participantRefs ?? []).flatMap(r => r.kind === "CONTACT" ? [r.contactKey] : []));
+  const [guests, setGuests] = useState(c.additionalGuestCount ?? 0), [query, setQuery] = useState(""), [page, setPage] = useState(0);
+  const [showContacts, setShowContacts] = useState(contacts.length > 0), [showOthers, setShowOthers] = useState(guests > 0);
+  const matches = SOCIAL_CONTACTS_V1.filter(c => c.label.toLocaleLowerCase("fr").includes(query.toLocaleLowerCase("fr")));
+  return <div className={styles.participantsModule}><div className={styles.fundingRow} aria-label="Personnes du foyer">
+    {context.env.persons.map(p => <button className={styles.pill} aria-pressed={ids.includes(p.personId)} key={p.personId} onClick={() => setIds(ids.includes(p.personId) ? ids.filter(id => id !== p.personId) : [...ids, p.personId])}>{p.displayName}</button>)}
+    <button className={styles.pill} aria-pressed={ids.length === context.env.persons.length} onClick={() => setIds(context.env.persons.map(p => p.personId))}>{context.env.persons.map(p => p.displayName).join(" + ")}</button></div>
+    <div className={styles.entityActions}><button className={styles.textButton} onClick={() => setShowContacts(!showContacts)}>+ Ajouter un proche</button><button className={styles.textButton} onClick={() => setShowOthers(!showOthers)}>+ Ajouter d’autres personnes</button></div>
+    {showContacts && <><label className={styles.small}>Rechercher un proche<input className={styles.input} value={query} onChange={e => { setQuery(e.target.value); setPage(0); }} /></label><div className={styles.contactChoices}>
+      {matches.slice(page * 6, page * 6 + 6).map(c => <button key={c.key} className={styles.pill} aria-pressed={contacts.includes(c.key)} onClick={() => setContacts(contacts.includes(c.key) ? contacts.filter(k => k !== c.key) : [...contacts, c.key])}>{c.label}</button>)}</div>
+      {matches.length > 6 && <div className={styles.pagination}><button disabled={!page} onClick={() => setPage(page - 1)}>←</button><button disabled={(page + 1) * 6 >= matches.length} onClick={() => setPage(page + 1)}>→</button></div>}</>}
+    {showOthers && <label className={styles.small}>Autres personnes · sans les nommer<input className={styles.shortInput} type="number" min="0" max="99" value={guests} onChange={e => setGuests(Number(e.target.value))} /></label>}
+    <p className={styles.small}>Le budget concerne les personnes du foyer sélectionnées. Les proches et autres invités ne multiplient pas le prix.</p>
+    <button className={styles.primary} disabled={!ids.length || !Number.isInteger(guests) || guests < 0 || guests > 99} onClick={() => onChoose({ personIds: ids, contactKeys: contacts, guests })}>Continuer</button>
+  </div>;
 }
 
 export function ProjectEntitySearch({ context, onChoose, onCategory, seller = false }: { context: QuestionContext; onChoose: (answer: WizardAnswer) => void; onCategory?: (subtype: string) => void; seller?: boolean }) {

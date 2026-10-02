@@ -1,6 +1,7 @@
 import type { PlannedExpenseDraft, PlannedRouteStop, PlannedTripTiming } from "./planned-contract";
 import type { PlannedPlaceOption } from "./planned-places";
 import { SOCIAL_CONTACTS_V1, type ProspectiveContact } from "./planned-rules";
+import { getPlannedExpenseDateRange } from "./planned-dates";
 
 const invalid = (): never => { throw new TypeError("PLANNED_VISIT_TIMING_INVALID"); };
 const dateValue = (value: unknown): string | null => {
@@ -50,8 +51,9 @@ export const isTimedFamilyVisit = (draft: Pick<PlannedExpenseDraft, "familyKey" 
 /** One prospective timing source for directed routing. Trip return dates are already durable intent. */
 export function plannedJourneyTiming(draft: Pick<PlannedExpenseDraft, "familyKey" | "subtypeKey" | "plannedDate" | "context">): PlannedTripTiming | undefined {
   if (draft.context.visitTiming) return draft.context.visitTiming;
-  if (draft.context.project?.version === 2 && draft.familyKey === "visit_trip" && draft.plannedDate && draft.context.endDate)
-    return { outbound: { date: draft.plannedDate, time: draft.context.project.exactTime ?? null }, return: { required: true, date: draft.context.endDate, time: null } };
+  const range = getPlannedExpenseDateRange(draft);
+  if (draft.context.project?.version === 2 && range.hasReturn && range.startDate && range.endDate)
+    return { outbound: { date: range.startDate, time: range.startTime ?? null }, return: { required: true, date: range.endDate, time: range.endTime ?? null } };
   return undefined;
 }
 

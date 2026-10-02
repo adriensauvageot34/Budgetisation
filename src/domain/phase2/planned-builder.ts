@@ -62,7 +62,8 @@ export function editBuilderDraft(state: BuilderState, draft: PlannedExpenseDraft
   const routeTopology = (draft: PlannedExpenseDraft) => draft.context.route?.stops
     .map((stop) => [routePlaceIdentity(stop), stop.endpointSource, stop.childModule]);
   const topologyChanged = JSON.stringify(routeTopology(state.draft)) !== JSON.stringify(routeTopology(draft));
-  const timingChanged = state.draft.plannedDate !== next.plannedDate || state.draft.context.endDate !== next.context.endDate || JSON.stringify(state.draft.context.visitTiming) !== JSON.stringify(next.context.visitTiming);
+  const timingChanged = state.draft.plannedDate !== next.plannedDate || state.draft.context.endDate !== next.context.endDate || JSON.stringify(state.draft.context.visitTiming) !== JSON.stringify(next.context.visitTiming)
+    || state.draft.context.project?.returnExactTime !== next.context.project?.returnExactTime;
   const restaurantTimeChanged = state.draft.context.restaurant?.plannedTime !== next.context.restaurant?.plannedTime
     || state.draft.context.project?.exactTime !== next.context.project?.exactTime
     || state.draft.context.restaurant?.googlePlaceId !== next.context.restaurant?.googlePlaceId;

@@ -8,8 +8,19 @@ export function plannedExpenseMemoryClient(rows = [], persons = []) {
     assert(["phase2_planned_expenses", "persons"].includes(table), `unexpected authority: ${table}`);
     let operation = "read", payload;
     const filters = [];
+    const readPredicates = [];
     const query = {
       select() { return this; }, eq(key, value) { filters.push([key, value]); return this; }, order() { return this; },
+      lt(key, value) { readPredicates.push(row => row[key] != null && row[key] < value); return this; },
+      or(expression) {
+        const branches = expression.split(",").map(branch => {
+          const match = /^(.*)\.(gte)\.(.*)$/u.exec(branch);
+          assert(match, `unsupported fixture read predicate: ${branch}`);
+          const path = match[1].split(/->>?/u);
+          return row => { const value = path.reduce((value, key) => value?.[key], row); return value != null && value >= match[3]; };
+        });
+        readPredicates.push(row => branches.some(branch => branch(row))); return this;
+      },
       insert(value) { operation = "insert"; payload = structuredClone(value); return this; },
       update(value) { operation = "update"; payload = structuredClone(value); return this; },
       delete() { operation = "delete"; return this; },
@@ -19,7 +30,7 @@ export function plannedExpenseMemoryClient(rows = [], persons = []) {
         if (operation === "update" && client.beforeUpdate) {
           const hook = client.beforeUpdate; client.beforeUpdate = null; hook(rows);
         }
-        const selected = source.filter((row) => filters.every(([key, value]) => row[key] === value));
+        const selected = source.filter((row) => filters.every(([key, value]) => row[key] === value) && readPredicates.every(predicate => predicate(row)));
         if (operation === "insert") {
           if (rows.some((row) => row.planned_expense_id === payload.planned_expense_id))
             return { data: null, error: { code: "23505", message: "duplicate primary key" } };

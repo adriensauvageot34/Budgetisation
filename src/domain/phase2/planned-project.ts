@@ -1,6 +1,7 @@
 import type { CostItem, PlannedExpenseDraft, PlannedProjectContext } from "./planned-contract";
 import { validGooglePlaceId, type ProjectPlaceKind } from "./restaurant-places";
 import { intentForDraft } from "./planned-ux";
+import { getPlannedExpenseDateRange } from "./planned-dates";
 
 /** Exact economic identities; a custom lodging line must explicitly carry its purpose. */
 export function projectCostComponent(item: CostItem): "Transport" | "Péages" | "Hébergement" | null {
@@ -12,10 +13,11 @@ export function projectCostComponent(item: CostItem): "Transport" | "Péages" | 
 
 const uuid = /^[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}$/iu;
 export function projectNights(draft: PlannedExpenseDraft): number {
-  return draft.plannedDate && draft.context.endDate ? Math.max(0, Math.round((Date.parse(draft.context.endDate) - Date.parse(draft.plannedDate)) / 86400000)) : 0;
+  const { startDate, endDate } = getPlannedExpenseDateRange(draft);
+  return startDate && endDate ? Math.max(0, Math.round((Date.parse(endDate) - Date.parse(startDate)) / 86400000)) : 0;
 }
 export const projectAllowsDateRange = (draft: PlannedExpenseDraft): boolean => draft.familyKey === "visit_trip"
-  || draft.familyKey === "activity" || draft.familyKey === "outing" && draft.context.outingKind === "EVENT";
+  || draft.familyKey === "activity" || draft.familyKey === "outing";
 export const projectLodgingAvailable = (draft: PlannedExpenseDraft): boolean => draft.context.project?.version === 2
   && projectAllowsDateRange(draft) && (draft.context.project.tripKind === "STAY" || projectNights(draft) > 0);
 export const projectLodgingAssetAllowed = (draft: PlannedExpenseDraft, item: CostItem): boolean => projectLodgingAvailable(draft)
@@ -29,7 +31,7 @@ const choice = <const T extends string>(v: unknown, values: readonly T[]): T => 
 /** The same structural boundary is used by Server and fixture tests. No registry is stored. */
 export function parsePlannedProject(value: unknown): PlannedProjectContext {
   const raw = object(value);
-  only(raw, ["version", "financialScope", "moment", "exactTime", "channel", "entity", "sellerGooglePlaceId", "unpricedComponents", "tripKind", "lodging", "mealFormat", "groceryFocus", "automotiveKind", "linkedProjectId", "shareTransport"]);
+  only(raw, ["version", "financialScope", "moment", "exactTime", "returnMoment", "returnExactTime", "channel", "entity", "sellerGooglePlaceId", "unpricedComponents", "tripKind", "lodging", "mealFormat", "groceryFocus", "automotiveKind", "linkedProjectId", "shareTransport"]);
   if (raw.version !== 2) fail();
   const result: { -readonly [K in keyof PlannedProjectContext]?: PlannedProjectContext[K] } = { version: 2 };
   if (raw.financialScope !== undefined) {
@@ -45,6 +47,12 @@ export function parsePlannedProject(value: unknown): PlannedProjectContext {
     result.exactTime = raw.exactTime as string;
   }
   if (result.moment === "EXACT" && !result.exactTime) fail();
+  if (raw.returnMoment !== undefined) result.returnMoment = choice(raw.returnMoment, ["NONE", "MORNING", "LUNCH", "EVENING", "EXACT"]);
+  if (raw.returnExactTime !== undefined) {
+    if (typeof raw.returnExactTime !== "string" || !/^(?:[01]\d|2[0-3]):[0-5]\d$/u.test(raw.returnExactTime) || result.returnMoment !== "EXACT") fail();
+    result.returnExactTime = raw.returnExactTime as string;
+  }
+  if (result.returnMoment === "EXACT" && !result.returnExactTime) fail();
   if (raw.channel !== undefined) result.channel = choice(raw.channel, ["STORE", "DELIVERY", "PICKUP", "SECOND_HAND", "UNDECIDED"]);
   if (raw.entity !== undefined) {
     const entity = object(raw.entity); only(entity, ["kind", "label", "googlePlaceId", "city", "address"]);
@@ -77,6 +85,10 @@ export function assertProjectIntent(draft: PlannedExpenseDraft) {
   const p = draft.context.project;
   if (!p) return;
   if (p.exactTime && !draft.plannedDate) fail();
+  if ((p.returnMoment || p.returnExactTime) && !getPlannedExpenseDateRange(draft).hasReturn) fail();
+  const range = getPlannedExpenseDateRange(draft);
+  if (range.startDate === range.endDate && range.startTime && range.endTime && range.endTime < range.startTime) fail();
+  if (draft.context.visitTiming && draft.context.endDate && draft.context.visitTiming.return.date !== draft.context.endDate) fail();
   if (p.sellerGooglePlaceId && !draft.context.seller) fail();
   if (draft.context.route?.plannedTime && draft.context.route.plannedTime !== p.exactTime) fail();
   if (p.tripKind && !(draft.familyKey === "visit_trip" && ["trip_stay", "other_trip"].includes(draft.subtypeKey ?? ""))) fail();
