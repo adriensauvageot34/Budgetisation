@@ -10,6 +10,7 @@ import { derivePlannedPlaceRoles } from "@/domain/phase2/planned-place-rules";
 import { ASSET_MODULES } from "@/domain/phase2/planned-assets";
 import { FrenchOfficialFuelPriceProvider, HereTollProvider, TomTomRouteProvider, unknownToll } from "./planned-car-providers";
 import { GoogleRestaurantPlaces } from "@/server/places/google-places";
+import type { ProjectPlaceKind } from "@/domain/phase2/restaurant-places";
 
 export function parsePlannedCarRequest(raw: unknown): PlannedCarRequest {
   if (!raw || typeof raw !== "object" || Array.isArray(raw)) throw new TypeError("PLANNED_ROUTE_REQUEST_INVALID");
@@ -48,7 +49,7 @@ export function parsePlannedCarRequest(raw: unknown): PlannedCarRequest {
   return { stops, ...(tripTiming ? { tripTiming } : {}), plannedDate: value.plannedDate as string | null, plannedTime: value.plannedTime as string | null | undefined,
     timeKind: value.timeKind as PlannedCarRequest["timeKind"], preference: value.preference as PlannedCarRequest["preference"], manualFuelPrice: value.manualFuelPrice as string | undefined };
 }
-type Facts = { places: readonly PlannedPlaceOption[]; vehicle: PlannedVehicleEstimate | null; history: readonly HistoricalRouteLeg[]; restaurantGooglePlaceId?: string };
+type Facts = { places: readonly PlannedPlaceOption[]; vehicle: PlannedVehicleEstimate | null; history: readonly HistoricalRouteLeg[]; restaurantGooglePlaceId?: string; googleDestination?: { placeId: string; kind: ProjectPlaceKind } };
 type Providers = { route: Pick<TomTomRouteProvider, "estimateCarRoute" | "geocode">; fuel: Pick<FrenchOfficialFuelPriceProvider, "getReference">; toll: Pick<HereTollProvider, "estimateTolls">;
   restaurant?: Pick<GoogleRestaurantPlaces, "details"> };
 /** Same server service for the builder action, Preview and Save. It writes no canonical fact. */
@@ -97,8 +98,9 @@ async function estimateCarDirection(raw: PlannedCarRequest, facts: Facts, provid
   const reference = home?.coordinates ?? facts.places.find((p) => p.placeId === input.stops[0]?.placeId)?.coordinates;
   try {
     // Fresh Google address only as geocoding input. Route snapshots contain TomTom's coordinates and the user's label.
-    const googleAddress = facts.restaurantGooglePlaceId ? (await (providers.restaurant ?? new GoogleRestaurantPlaces()).details(facts.restaurantGooglePlaceId)).formattedAddress : null;
-    if (facts.restaurantGooglePlaceId && !googleAddress) throw new TypeError("RESTAURANT_ADDRESS_UNAVAILABLE");
+    const google = facts.googleDestination ?? (facts.restaurantGooglePlaceId ? { placeId: facts.restaurantGooglePlaceId, kind: "RESTAURANT" as const } : undefined);
+    const googleAddress = google ? (await (providers.restaurant ?? new GoogleRestaurantPlaces()).details(google.placeId, undefined, google.kind)).formattedAddress : null;
+    if (google && !googleAddress) throw new TypeError("RESTAURANT_ADDRESS_UNAVAILABLE");
     stops = await Promise.all(input.stops.map(async (stop) => {
       const place = facts.places.find((p) => p.placeId === stop.placeId);
       const coordinates = place?.coordinates ?? (stop.coordinates?.source === "USER_DECLARED" ? stop.coordinates : undefined)

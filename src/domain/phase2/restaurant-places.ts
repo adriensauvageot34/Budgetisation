@@ -5,9 +5,18 @@ export type RestaurantSuggestion = Readonly<{ source: "google_places"; placeId: 
 export type PhotoAuthor = Readonly<{ displayName: string; uri: string | null }>;
 /** Provider content lives only in the current screen, never in a PlannedExpense. */
 export type SelectedRestaurantPlace = Readonly<{ provider: "google_places"; placeId: string; displayName: string;
+  city?: string;
   formattedAddress: string | null; lat: number | null; lng: number | null; primaryType: string | null; types: readonly string[];
   photoAvailable: boolean; photoAttributions: readonly PhotoAuthor[] }>;
 export type RestaurantPhoto = Readonly<{ photoUri: string; authors: readonly PhotoAuthor[] }>;
+export type ProjectPlaceKind = "RESTAURANT" | "ACTIVITY" | "VENUE" | "DESTINATION" | "RETAIL";
+export function projectPlaceTypeCompatible(types: readonly string[], kind: ProjectPlaceKind) {
+  if (kind === "RESTAURANT") return isRestaurantType(types);
+  if (kind === "DESTINATION") return types.some(t => ["locality", "administrative_area_level_1", "administrative_area_level_2", "natural_feature", "tourist_attraction"].includes(t));
+  if (kind === "RETAIL") return types.some(t => t.endsWith("store") || ["shopping_mall", "supermarket", "pharmacy", "car_repair", "beauty_salon"].includes(t));
+  if (kind === "ACTIVITY") return types.some(t => ["movie_theater", "bowling_alley", "amusement_park", "aquarium", "museum", "park", "spa", "stadium", "tourist_attraction", "sports_complex", "performing_arts_theater", "event_venue"].includes(t));
+  return types.some(t => ["bar", "night_club", "event_venue", "concert_hall", "performing_arts_theater", "stadium"].includes(t));
+}
 export type UsedRestaurantRef = Readonly<{ googlePlaceId: string; label: string; city: string }>;
 export const validGooglePlaceId = (value: unknown): value is string => typeof value === "string" && /^[A-Za-z0-9_-]{5,255}$/u.test(value);
 export const isRestaurantType = (types: readonly string[]) => types.some((type) => type === "restaurant" || type.endsWith("_restaurant")
@@ -20,13 +29,13 @@ export function photoAuthors(value: unknown): PhotoAuthor[] {
     return name ? [{ displayName: name, uri: uri && /^https:\/\//u.test(uri) ? uri : null }] : [];
   });
 }
-export function normalizeRestaurantSuggestions(raw: unknown): RestaurantSuggestion[] {
+export function normalizeRestaurantSuggestions(raw: unknown, kind: ProjectPlaceKind = "RESTAURANT"): RestaurantSuggestion[] {
   const value = record(raw);
   return (Array.isArray(value.suggestions) ? value.suggestions : []).flatMap((entry) => {
     const p = record(record(entry).placePrediction), format = record(p.structuredFormat);
     const types = Array.isArray(p.types) ? p.types.filter((t): t is string => typeof t === "string") : [];
     const primaryText = text(record(format.mainText).text) ?? text(record(p.text).text);
-    return validGooglePlaceId(p.placeId) && primaryText && isRestaurantType(types)
+    return validGooglePlaceId(p.placeId) && primaryText && projectPlaceTypeCompatible(types, kind)
       ? [{ source: "google_places" as const, placeId: p.placeId, primaryText, secondaryText: text(record(format.secondaryText).text) }] : [];
   });
 }
@@ -35,11 +44,12 @@ export function selectRestaurantCardPhoto(raw: unknown) {
   return (Array.isArray(value.photos) ? value.photos : []).map(record).find((p) => typeof p.name === "string"
     && /^places\/[A-Za-z0-9_-]+\/photos\/[A-Za-z0-9_-]+$/u.test(p.name));
 }
-export function normalizeRestaurantDetails(raw: unknown): SelectedRestaurantPlace {
+export function normalizeRestaurantDetails(raw: unknown, kind: ProjectPlaceKind = "RESTAURANT"): SelectedRestaurantPlace {
   const v = record(raw), location = record(v.location), types = Array.isArray(v.types) ? v.types.filter((t): t is string => typeof t === "string") : [];
-  if (!validGooglePlaceId(v.id) || !isRestaurantType(types) || !text(record(v.displayName).text)) throw new TypeError("GOOGLE_RESTAURANT_INVALID");
+  if (!validGooglePlaceId(v.id) || !projectPlaceTypeCompatible(types, kind) || !text(record(v.displayName).text)) throw new TypeError("GOOGLE_RESTAURANT_INVALID");
   const photo = selectRestaurantCardPhoto(v);
   return { provider: "google_places", placeId: v.id, displayName: text(record(v.displayName).text)!, formattedAddress: text(v.formattedAddress),
+    ...(() => { const city = (Array.isArray(v.addressComponents) ? v.addressComponents : []).map(record).find(c => Array.isArray(c.types) && c.types.includes("locality")); return city && text(city.longText) ? { city: text(city.longText)! } : {}; })(),
     lat: typeof location.latitude === "number" && Math.abs(location.latitude) <= 90 ? location.latitude : null,
     lng: typeof location.longitude === "number" && Math.abs(location.longitude) <= 180 ? location.longitude : null,
     primaryType: text(v.primaryType), types, photoAvailable: !!photo, photoAttributions: photoAuthors(photo?.authorAttributions) };

@@ -7,6 +7,7 @@ import React from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { forecast, inputs } from "./check-phase2-october-contract.mjs";
 const require = createRequire(import.meta.url);
+require.extensions[".css"] = module => { module.exports = {}; };
 require.extensions[".tsx"] = (module, filename) => module._compile(ts.transpileModule(fs.readFileSync(filename, "utf8"), {
   compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022, jsx: ts.JsxEmit.ReactJSX, esModuleInterop: true }, fileName: filename,
 }).outputText, filename);
@@ -76,20 +77,23 @@ for (const item of [line("restaurant:main", "30.00", null, [{ source: "SWILE", a
   line("restaurant:wine_glass", "30.00", null, [{ source: "EDENRED", amount: "30.00" }])])
   assert.throws(() => parsePlannedExpenseDraft(draft([item]), "2026-10"), /FUNDING/);
 // FIN-UI-01..04: render the human project/payment/effect order with honest central comparison.
+const displayPreview = data => ({ ...data, explanation: "Scénarios du mois", unpricedComponents: [],
+  availableNow: { status: "UNAVAILABLE" }, plannedAvailable: data.after.central, estimatedEndOfMonth: data.after.central });
 for (const data of [h, e, marginal, f]) {
-  const html = renderToStaticMarkup(React.createElement(PlannedImpactCard, { preview: { ...data, explanation: "Scénarios du mois" }, fundingIncomplete: false }));
-  const labels = ["VOTRE PROJET", "Coût prévu", "PAIEMENT PRÉVU", "EFFET SUR LE MOIS", "PROJECTION HABITUELLE", "PROJECTION DE FIN DE MOIS", "Comprendre la projection"];
+  const html = renderToStaticMarkup(React.createElement(PlannedImpactCard, { preview: displayPreview(data), fundingIncomplete: false }));
+  const labels = ["Coût économique du projet", "Paiements réellement prévus", "Disponible réel", "Disponible prévu", "Estimé en fin de mois", "Comprendre les montants"];
   const indexes = labels.map((label) => html.indexOf(label));
   assert(indexes.every((index) => index >= 0)); assert(indexes.every((index, i) => i === 0 || index > indexes[i - 1]));
-  assert(html.includes(money(data.after.central))); assert(html.includes(money(data.netAdditionalImpact.central)));
+  assert(html.includes(money(data.after.central))); assert(html.includes("Non renseigné"));
   assert.doesNotMatch(html, /cash disponible|safe.to.spend|vous pouvez dépenser|argent libre|solde Swile|solde bancaire projeté|argent disponible/iu);
   assert.doesNotMatch(html, /Ressource restante projetée[^<]*solde/iu);
 }
-const pending = renderToStaticMarkup(React.createElement(PlannedImpactCard, { preview: { ...h, explanation: "" }, fundingIncomplete: true }));
-assert.match(pending, /financement reste à compléter/i); assert.doesNotMatch(pending, /Banque · paiements/);
-const incomplete = renderToStaticMarkup(React.createElement(PlannedImpactCard, { preview: { ...e, projectionIncomplete: true, explanation: "" }, fundingIncomplete: false }));
-assert.match(incomplete, /À affiner/); assert(!incomplete.includes(money(e.before.central))); assert(!incomplete.includes(money(e.after.central)));
-assert(incomplete.includes(money(e.remainingDifference)));
+const pending = renderToStaticMarkup(React.createElement(PlannedImpactCard, { preview: displayPreview(h), fundingIncomplete: true }));
+assert.match(pending, /Financement à compléter/i);
+const incomplete = renderToStaticMarkup(React.createElement(PlannedImpactCard, { preview: { ...displayPreview(e), projectionIncomplete: true }, fundingIncomplete: false }));
+assert.match(incomplete, /Projection partielle/); assert(incomplete.includes(money(e.after.central)), "Known numbers remain visible in a partial projection");
+const unpriced = renderToStaticMarkup(React.createElement(PlannedImpactCard, { preview: { ...displayPreview(e), unpricedComponents: ["Hébergement"] }, fundingIncomplete: false }));
+assert.match(unpriced, /≥/); assert.match(unpriced, /ne sont pas comptés comme gratuits/);
 const story = fs.readFileSync("src/app/mois-a-venir/month-story.tsx", "utf8");
 assert.doesNotMatch(story, /Total disponible pour le mois|sur nos comptes|safe.to.spend|vous pouvez dépenser|argent libre/iu);
 console.log("PASS: C5 FIN-01..08, FIN-UI-01..04, META-03/04/05/09/20, baseline displacement, quantity, language and no BANK reallocation");

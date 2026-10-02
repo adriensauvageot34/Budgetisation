@@ -1,5 +1,6 @@
 "use server";
 
+import { projectGoogleDestination } from "@/domain/phase2/planned-project";
 import Big from "big.js";
 import { revalidatePath } from "next/cache";
 import { getAuthenticatedBootstrapClient } from "@/server/bootstrap/auth";
@@ -19,6 +20,7 @@ import { assertPrimaryRouteStop, routePlaceIdentity, stopForPlace } from "@/doma
 import type { PlannedExpenseDraft } from "@/domain/phase2/planned-contract";
 import { resolvePlannedContext, plannedContextModifiers } from "@/domain/phase2/planned-rules";
 import { estimatePlannedCar } from "@/server/phase2/planned-car-estimation";
+import { plannedJourneyTiming, isTimedFamilyVisit } from "@/domain/phase2/planned-visits";
 
 import { projectPlannedExpenseImpact } from "@/server/phase2/planned-impact";
 
@@ -79,6 +81,10 @@ async function preview(targetMonth: string, rawDraft: unknown, editedId?: string
     ...projection,
     targetMonth,
     resolvedDraft: draft,
+    availableNow: scenario.availableNow,
+    plannedAvailable: after.narrative.remainderAfterProjects,
+    estimatedEndOfMonth: after.narrative.final.central,
+    unpricedComponents: draft.context.project?.unpricedComponents ?? [],
     explanation: restaurantHabitual
       ? `Compté dans votre enveloppe restaurants habituelle. Impact supplémentaire : ${euro(minimum)} à ${euro(maximum)} € selon le scénario.`
       : "Les lignes habituelles utilisent d’abord leur enveloppe du mois ; seul le dépassement s’ajoute au coût prévu.",
@@ -90,7 +96,7 @@ export async function previewPlannedExpense(targetMonth: string, rawDraft: unkno
 
 export async function estimatePlannedRoute(targetMonth: string,
   draft: PlannedExpenseDraft) {
-  if (draft.context.visitTiming && (draft.familyKey !== "visit_trip" || draft.subtypeKey !== "family_visit"))
+  if (draft.context.visitTiming && !isTimedFamilyVisit(draft))
     throw new TypeError("PLANNED_VISIT_TIMING_INVALID");
   const context = await monthContext(targetMonth);
   const resolved = resolvePlannedContext({ familyKey: draft.familyKey, subtypeKey: draft.subtypeKey, modifiers: plannedContextModifiers(draft.context) });
@@ -113,8 +119,8 @@ export async function estimatePlannedRoute(targetMonth: string,
     (people ?? []).filter((person) => person.status === "active")
       .map((person) => ({ personId: person.person_id, displayName: person.display_name })));
   return estimatePlannedCar({ stops: draft.context.route.stops, plannedDate: draft.plannedDate, plannedTime: draft.context.route.plannedTime,
-    tripTiming: draft.context.visitTiming, timeKind: draft.context.route.timeKind, preference: draft.context.route.preference ?? draft.context.route.liveEstimate?.preference ?? "FASTEST", manualFuelPrice: draft.context.route.manualFuelPrice },
-    { places: options.places, vehicle: options.vehicle, restaurantGooglePlaceId: draft.context.restaurant?.googlePlaceId,
+    tripTiming: plannedJourneyTiming(draft), timeKind: draft.context.route.timeKind, preference: draft.context.route.preference ?? draft.context.route.liveEstimate?.preference ?? "FASTEST", manualFuelPrice: draft.context.route.manualFuelPrice },
+    { places: options.places, vehicle: options.vehicle, restaurantGooglePlaceId: draft.context.restaurant?.googlePlaceId, googleDestination: projectGoogleDestination(draft),
       history: await readPlannedRouteHistory(createCanonicalReadClient(), context.household.householdId) });
 }
 

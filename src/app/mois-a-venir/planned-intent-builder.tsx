@@ -1,4 +1,5 @@
 "use client";
+/** Legacy screen kept for compatibility fixtures. New drafts use ContextualProjectWizard. */
 import { useState, type Dispatch, type SetStateAction } from "react";
 import { ArrowLeft, ChevronRight, MapPin } from "lucide-react";
 import { PLANNED_SUBTYPE_LABELS, rootAssetModule, plannedAsset, type AssetModule, type PlannedExpenseFamily } from "@/domain/phase2/planned-assets";

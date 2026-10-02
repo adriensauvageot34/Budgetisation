@@ -11,6 +11,7 @@ export type RealityConfirmationDraft = { expenseId: string; expectedUpdatedAt: s
 export function plannedMutationIssue(error: unknown): PlannedIssue {
   const raw = error instanceof Error ? error.message : "";
   const code = /^(?:PLANNED_|REALITY_|VISIT_)[A-Z0-9_:]+$/u.test(raw) ? raw : "PLANNED_EXPENSE_REQUEST_FAILED";
+  if (code === "PLANNED_REALITY_BUDGET_UNKNOWN") return { code, path: "context.project.unpricedComponents", repairTarget: "cost", message: "Précisez les coûts réels avant de confirmer la réalisation." };
   if (code === "VISIT_RETURN_REQUIRED" || code === "VISIT_DEPARTURE_REQUIRED" || code === "VISIT_RETURN_BEFORE_DEPARTURE") return { code, path: "context.visitTiming", repairTarget: "date",
     message: code === "VISIT_RETURN_BEFORE_DEPARTURE" ? "Le retour doit être après le départ." : code === "VISIT_RETURN_REQUIRED" ? "Indiquez quand vous rentrez pour calculer le trajet retour." : "Indiquez quand vous partez pour calculer le trajet aller." };
   if (code === "PLANNED_ROUTE_ESTIMATE_CHANGED") return { code, path: "context.route", repairTarget: "route",

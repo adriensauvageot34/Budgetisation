@@ -185,10 +185,12 @@ for (const key of ["declared_amount", "declared_funding", "realized_date", "real
   assert(!persistedColumns.has(key));
 assert(client.writes.every(write => write.table === "phase2_planned_expenses"));
 const ui = fs.readFileSync("src/app/mois-a-venir/planned-expenses-control.tsx", "utf8");
-for (const label of ["Oui, ça a eu lieu", "Reporter", "Ça n’a pas eu lieu", "Corriger la déclaration", "Remettre en prévu", "Confirmer la suppression"])
-  assert(ui.includes(label));
+const lifecycleLabels = fs.readFileSync("src/app/mois-a-venir/calendar-presentation.ts", "utf8");
+for (const label of ["Oui, ça a eu lieu", "Reporter", "Ça n’a pas eu lieu", "Corriger", "Remettre en prévu", "Confirmer la suppression"])
+  assert((ui + lifecycleLabels).includes(label));
 assert.doesNotMatch(ui, /changePlannedExpenseStatus|markPlannedExpenseRealized/u, "no split update + mark workflow");
 // Render the real production cards for both statuses and the derived past question.
+require.extensions[".css"] = module => { module.exports = {}; };
 require.extensions[".tsx"] = (module, filename) => module._compile(ts.transpileModule(fs.readFileSync(filename, "utf8"), {
   compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022, jsx: ts.JsxEmit.ReactJSX, esModuleInterop: true }, fileName: filename,
 }).outputText, filename);
@@ -200,6 +202,6 @@ const cards = projectPlannedExpenseCards([newer, { ...changed, status: "DECLARED
 const html = renderToStaticMarkup(React.createElement(PlannedExpensesControl, {
   targetMonth: "2026-10", expenses: cards, persons: [], places: [], vehicle: null, prices: [], funding: (await state()).plan.plannedFunding,
 }));
-for (const label of ["À confirmer", "Oui, ça a eu lieu", "Reporter", "Ça n’a pas eu lieu", "Corriger la déclaration", "Remettre en prévu", "Supprimer la déclaration"])
+for (const label of ["À confirmer", "Oui, ça a eu lieu", "Reporter", "Ça n’a pas eu lieu", "Corriger", "Remettre en prévu", "Supprimer"])
   assert(html.includes(label), `production card: ${label}`);
 console.log("PASS: C7 REAL-01..07, atomic final costs, RESERVED/USED_DECLARED, IDEMP-REAL-01, STALE-REAL-01, REPORT-01/02, delete/restore/status, META-09..13/19, historical zero-write");

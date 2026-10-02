@@ -12,6 +12,7 @@ import { derivePlannedPlaceRoles } from "./planned-place-rules";
 import { carEstimateProblems, isDerivedCarCost } from "./planned-car";
 import { isTimedFamilyVisit, visitTimingIssues } from "./planned-visits";
 import { restaurantContextIssues, restaurantNeedsAddress } from "./planned-restaurant";
+import { projectCostComponent, projectLodgingAvailable } from "./planned-project";
 
 export type DraftOrigin = "AUTO_DERIVED" | "EXPLICIT";
 export type Invalidation = "KEEP" | "RECOMPUTE" | "SUSPEND" | "REMOVE_DERIVED";
@@ -39,7 +40,7 @@ const resolvedFor = (draft: PlannedExpenseDraft): ResolvedPlannedContext | null 
 };
 
 export function createBuilderState(draft: PlannedExpenseDraft): BuilderState {
-  const rootItems = draft.costItems.filter(isRootCost);
+  const rootItems = draft.costItems.filter(i => isRootCost(i) && !(draft.context.project && projectCostComponent(i) === "Hébergement"));
   const quick = rootItems.length === 1 && rootItems[0].id === "00000000-0000-4000-8000-000000000001"
     && rootItems[0].assetKey === null && rootItems[0].quantity === "1" && !rootItems[0].fundingAllocations?.length
     ? rootItems[0] : undefined;
@@ -61,8 +62,9 @@ export function editBuilderDraft(state: BuilderState, draft: PlannedExpenseDraft
   const routeTopology = (draft: PlannedExpenseDraft) => draft.context.route?.stops
     .map((stop) => [routePlaceIdentity(stop), stop.endpointSource, stop.childModule]);
   const topologyChanged = JSON.stringify(routeTopology(state.draft)) !== JSON.stringify(routeTopology(draft));
-  const timingChanged = state.draft.plannedDate !== next.plannedDate || JSON.stringify(state.draft.context.visitTiming) !== JSON.stringify(next.context.visitTiming);
+  const timingChanged = state.draft.plannedDate !== next.plannedDate || state.draft.context.endDate !== next.context.endDate || JSON.stringify(state.draft.context.visitTiming) !== JSON.stringify(next.context.visitTiming);
   const restaurantTimeChanged = state.draft.context.restaurant?.plannedTime !== next.context.restaurant?.plannedTime
+    || state.draft.context.project?.exactTime !== next.context.project?.exactTime
     || state.draft.context.restaurant?.googlePlaceId !== next.context.restaurant?.googlePlaceId;
   const refs = { ...next.context.childLocalPlaceRefs };
   for (const child of orphanChildren) delete refs[child];
@@ -71,7 +73,7 @@ export function editBuilderDraft(state: BuilderState, draft: PlannedExpenseDraft
     const stops = next.context.route.stops.flatMap((stop) => {
       if (stop.childModule && orphanChildren.includes(stop.childModule)) return [];
       if (stop.endpointSource === "ROOT_PLACE" && placeChanged) return next.context.place
-        ? [stopForPlace(next.context.place, stop.label, "ROOT_PLACE")] : [];
+        ? [stopForPlace(next.context.place, next.context.place.kind === "TEXT" ? next.context.place.label : stop.label, "ROOT_PLACE")] : [];
       return [stop];
     });
     next = { ...next, context: { ...next.context, route: stops.length >= 2
@@ -80,9 +82,16 @@ export function editBuilderDraft(state: BuilderState, draft: PlannedExpenseDraft
   }
   if (next.context.route && (timingChanged || restaurantTimeChanged)) {
     next = { ...next, context: { ...next.context, route: { ...next.context.route, liveEstimate: undefined, fuelEstimate: undefined,
-      plannedTime: next.plannedDate ? next.context.restaurant ? next.context.restaurant.plannedTime ?? null : next.context.route.plannedTime : null, tollFreeConfirmed: undefined, stops: invalidateRouteDistances(next.context.route.stops) } }, costItems: next.costItems.filter((item) => !isDerivedCarCost(item)) };
+      plannedTime: next.plannedDate ? next.context.project?.version === 2 ? next.context.project.exactTime ?? null : next.context.restaurant ? next.context.restaurant.plannedTime ?? null : next.context.route.plannedTime : null, tollFreeConfirmed: undefined, stops: invalidateRouteDistances(next.context.route.stops) } }, costItems: next.costItems.filter((item) => !isDerivedCarCost(item)) };
   }
-  return touch(state, { draft: next }, !!routeAffected || !!orphanChildren.length || topologyChanged || timingChanged || restaurantTimeChanged);
+  if (next.context.route?.tollFreeConfirmed && next.context.project) next = { ...next,
+    context: { ...next.context, project: { ...next.context.project, unpricedComponents: next.context.project.unpricedComponents?.filter(v => v !== "Péages") } } };
+  const lostLodging = !!next.context.project?.lodging && !projectLodgingAvailable(next);
+  const lodgingCosts = lostLodging ? next.costItems.filter(i => projectCostComponent(i) === "Hébergement") : [];
+  if (lostLodging) next = { ...next, costItems: next.costItems.filter(i => !lodgingCosts.includes(i)), context: { ...next.context,
+    project: { ...next.context.project!, lodging: undefined, unpricedComponents: next.context.project!.unpricedComponents?.filter(v => v !== "Hébergement") } } };
+  return touch(state, { draft: next, suspended: [...state.suspended, ...lodgingCosts.map(i => ({ path: `cost.${i.id}`, value: i,
+    origin: "EXPLICIT" as const, reason: "La durée du projet ne comporte plus de nuit ; le budget d’hébergement reste récupérable." }))] }, !!routeAffected || !!orphanChildren.length || topologyChanged || timingChanged || restaurantTimeChanged || lostLodging);
 }
 /** Adopt the server's transport revision after Preview, preserving Quick Total and local intent. */
 export function adoptBuilderResolvedTransport(state: BuilderState, resolved: PlannedExpenseDraft): BuilderState {
@@ -254,7 +263,7 @@ export function replaceBuilderAggregate(state: BuilderState, item: CostItem): Bu
   const removed = state.draft.costItems.filter((old) => JSON.stringify(old.modulePath) === JSON.stringify(item.modulePath)
     && (old.id === "00000000-0000-4000-8000-000000000001"
       || ASSET_AGGREGATE_DESCENDANTS[old.assetKey ?? ""]?.includes(item.assetKey ?? "")));
-  return touch(state, { costMode: state.costMode === "QUICK_TOTAL" && isRootCost(item) ? "ITEMIZED" : state.costMode,
+  return touch(state, { costMode: state.costMode === "QUICK_TOTAL" && isRootCost(item) && projectCostComponent(item) !== "Hébergement" ? "ITEMIZED" : state.costMode,
     draft: { ...state.draft, costItems: [...state.draft.costItems.filter((old) => !removed.includes(old)), item] } }, true);
 }
 
@@ -298,7 +307,7 @@ export function changeBuilderContext(state: BuilderState, context: PlannedExpens
       if (nextContext.place) origins.place = "AUTO_DERIVED";
     }
   }
-  if (resolved.transport === "FORBIDDEN" || contactChanged || before.housePartyPlaceMode !== context.housePartyPlaceMode) {
+  if (resolved.transport === "FORBIDDEN" || contactChanged || before.housePartyPlaceMode !== context.housePartyPlaceMode || before.place && !context.place) {
     suspend("route", before.route, "Le trajet utilisateur n’est plus applicable.");
     nextContext.route = undefined;
   }
@@ -313,7 +322,11 @@ export function changeBuilderContext(state: BuilderState, context: PlannedExpens
     nextContext.route = undefined;
   }
   const costItems = state.draft.costItems.filter((item) => {
-    if (context.noExpense && !before.noExpense && isRootCost(item)) {
+    if (/:(delivery_fee|service_fee)$/u.test(item.assetKey ?? "") && context.purchaseMode !== "ONLINE" && context.purchaseMode !== "DELIVERY") {
+      if (origins[`cost.${item.id}`] !== "AUTO_DERIVED") suspended.push({ path: `cost.${item.id}`, value: clone(item), origin: "EXPLICIT", reason: "Ces frais ne correspondent plus au mode d’achat." });
+      return false;
+    }
+    if (context.noExpense && !before.noExpense && isRootCost(item) && projectCostComponent(item) !== "Hébergement") {
       suspended.push({ path: `cost.${item.id}`, value: clone(item), origin: "EXPLICIT", reason: "Ce projet est désormais sans dépense principale." });
       return false;
     }
@@ -515,7 +528,9 @@ export function commitBuilderCost(state: BuilderState, item: CostItem, feeInclud
     }
   }
   const result = replaceBuilderAggregate(next, item);
-  return { ...result, undo: snapshot(state) };
+  const component = projectCostComponent(item), project = result.draft.context.project;
+  return { ...result, undo: snapshot(state), draft: component && project ? { ...result.draft,
+    context: { ...result.draft.context, project: { ...project, unpricedComponents: project.unpricedComponents?.filter(v => v !== component) } } } : result.draft };
 }
 export function removeBuilderCost(state: BuilderState, id: string): BuilderState {
   const item = state.draft.costItems.find((item) => item.id === id);
@@ -556,6 +571,6 @@ export function synchronizeIntentBuilder(state: BuilderState, places: readonly P
     const home = places.find((place) => derivePlannedPlaceRoles(place).includes("OWN_HOME"));
     if (home) next = { ...next, origins: { ...next.origins, place: "AUTO_DERIVED" }, draft: { ...next.draft, context: { ...next.draft.context, place: { kind: "KNOWN", placeId: home.placeId } } } };
   }
-  if (resolved.baseline.mode === "AUTO" && resolved.baseline.key) next = setBuilderRootBaseline(next, resolved.baseline.key);
+  if (resolved.baseline.mode === "AUTO" && resolved.baseline.key || state.draft.context.project?.version === 2) next = setBuilderRootBaseline(next, resolved.baseline.key);
   return { ...next, draft: { ...next.draft, title: deriveProjectTitle(next.draft, places, personName) } };
 }

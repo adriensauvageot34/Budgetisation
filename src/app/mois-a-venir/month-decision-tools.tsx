@@ -2,10 +2,10 @@
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import type { MonthDecisionSettings } from "@/domain/phase2/month-decision-contract";
-import type { MonthDecisionProjection } from "@/server/phase2/month-decision-projection";
 import { preserveMonthForecast, simulateMonthBehavior, updateMonthInputs } from "./actions";
 import { AnimatedMoney } from "./animated-money";
 import material from "./month-material.module.css";
+type MonthDecisionProjection = Extract<Awaited<ReturnType<typeof simulateMonthBehavior>>, { ok: true }>["decision"];
 
 const money = (value: string | number) => new Intl.NumberFormat("fr-FR", { style: "currency", currency: "EUR", maximumFractionDigits: 0 }).format(Number(value));
 const button = `${material.clayButton} px-4 py-2 text-sm font-bold disabled:opacity-50`;

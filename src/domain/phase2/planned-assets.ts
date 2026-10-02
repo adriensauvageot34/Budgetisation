@@ -80,7 +80,7 @@ many("groceries", [["bread", "Pain / boulangerie", "🥖", "MANUAL", "MEAL"], ["
 many("bar", [["soft", "Soft", "🥤", "MANUAL", "MEAL"], ["water", "Eau", "💧", "MANUAL", "MEAL"]]);
 many("activity", [["food", "Nourriture / snack", "🍿", "MANUAL", "MEAL"]]);
 many("club", [["merch", "Souvenir / merch", "👕"]]);
-many("transport", [["flight", "Billet d’avion", "✈️"]]);
+many("transport", [["flight", "Billet d’avion", "✈️", "PER_PERSON"]]);
 for (const module of ["beauty", "home", "tech", "automotive", "gift"] as const)
   many(module, [["delivery_fee", "Frais de livraison", "🚚"], ["service_fee", "Frais de service", "💳"]]);
 

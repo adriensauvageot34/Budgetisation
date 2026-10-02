@@ -1,7 +1,7 @@
 import type { AssetModule } from "./planned-assets";
 import type { PlaceRole } from "./planned-contract";
 import { derivePlannedPlaceRoles } from "./planned-place-rules";
-import { childPlaceRoles, SOCIAL_CONTACTS_V1, type ProspectiveContact,
+import { childPlaceRoles, SOCIAL_CONTACTS_V1, plannedContextModifiers, resolvePlannedContext, type ProspectiveContact,
   type ResolvedPlannedContext } from "./planned-rules";
 
 export type PlannedPlaceOption = Readonly<{ placeId: string; name: string; commune: string | null;
@@ -14,10 +14,19 @@ export type PlannedPlaceOption = Readonly<{ placeId: string; name: string; commu
 export type RankedPlannedPlace = Readonly<{ place: PlannedPlaceOption; roles: readonly PlaceRole[];
   rankingTier: "PRIMARY" | "SECONDARY"; reason: "CONTACT_HOME" | "WORK_MEAL_ANCHOR" | "PLACE_ROLE" }>;
 
+/** A commerce may suggest its name as seller. Selection does not create a place reference. */
+export function plannedSellerCandidates(places: readonly PlannedPlaceOption[], draft: import("./planned-contract").PlannedExpenseDraft, workMealPersonName?: string): readonly PlannedPlaceOption[] {
+  const context = { ...draft.context, purchaseMode: "IN_STORE" as const,
+    ...(draft.context.workMealMode === "DELIVERED" ? { workMealMode: "BOUGHT" as const } : {}) };
+  const resolved = resolvePlannedContext({ familyKey: draft.familyKey, subtypeKey: draft.subtypeKey,
+    modifiers: plannedContextModifiers(context, workMealPersonName) });
+  return rankPlacesForPlannedContext(places, resolved, { workMealPersonName }).map(p => p.place).filter(p => !p.privatePlace);
+}
+
 const contactByKey = (key: string | undefined): ProspectiveContact | undefined =>
   SOCIAL_CONTACTS_V1.find((contact) => contact.key === key);
 export function placesForChildModule(places: readonly PlannedPlaceOption[], child: AssetModule): readonly PlannedPlaceOption[] {
-  return places.filter((place) => !place.privatePlace && childPlaceRoles(child)
+  return places.filter((place) => (!place.privatePlace || child === "house_party") && childPlaceRoles(child)
     .some((role) => derivePlannedPlaceRoles(place).includes(role))).sort((a, b) => a.name.localeCompare(b.name, "fr"));
 }
 const isContactHome = (candidate: PlannedPlaceOption, contact: ProspectiveContact | undefined): boolean => {

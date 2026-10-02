@@ -27,7 +27,8 @@ export function plannedParticipantCount(context: PlannedExpenseContext): number 
   return identities.size + (context.additionalGuestCount ?? 0);
 }
 export const assetParticipantCount = (asset: PlannedAsset, context: PlannedExpenseContext): number => asset.module === "transport"
-  ? context.travellingParticipantPersonIds?.length ?? plannedParticipantCount(context) : plannedParticipantCount(context);
+  ? context.travellingParticipantPersonIds?.length ?? context.project?.financialScope?.count ?? plannedParticipantCount(context)
+  : context.project?.financialScope?.count ?? plannedParticipantCount(context);
 // Read compatibility for old rows only. All new selection happens through root Transport.
 export const LEGACY_TRANSPORT_ASSETS = ["restaurant:uber", "restaurant:parking", "bar:parking", "club:uber_out", "club:uber_back", "club:parking"] as const;
 export const isTransportCost = (item: Pick<CostItem, "assetKey">) => plannedAsset(item.assetKey ?? "")?.module === "transport"
@@ -51,7 +52,7 @@ export function builderAssetChoices(resolved: ResolvedPlannedContext, module: As
     .filter((asset) => !(LEGACY_TRANSPORT_ASSETS as readonly string[]).includes(asset.assetKey)
       && asset.assetKey !== "transport:fuel_usage"
       && (!asset.assetKey.endsWith(":delivery_fee") && !asset.assetKey.endsWith(":service_fee")
-        || context.purchaseMode === "ONLINE" || context.purchaseMode === "DELIVERY" && resolved.suggestedFeeAssetKeys.includes(asset.assetKey)));
+        || context.purchaseMode === "ONLINE" || context.purchaseMode === "DELIVERY"));
 }
 export const baselineQuestion = (module: AssetModule) => module === "restaurant" || module === "fast_food"
   ? "Ce repas est-il prévu en plus de vos sorties habituelles ?" : module === "groceries"

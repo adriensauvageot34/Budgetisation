@@ -51,7 +51,7 @@ export function restaurantSoloPerson(persons: readonly { personId: string; displ
   return named.length === 1 ? named[0]!.personId : persons.length === 1 ? persons[0]!.personId : undefined;
 }
 export function restaurantPriceRange(context: PlannedExpenseContext) {
-  const participants = plannedParticipantCount(context);
+  const participants = context.project?.financialScope?.count ?? plannedParticipantCount(context);
   return { participants, minimum: new Big(RESTAURANT_PRICE_POLICY.minimum).times(participants).toFixed(2),
     maximum: new Big(RESTAURANT_PRICE_POLICY.maximum).times(participants).toFixed(2), central: new Big(RESTAURANT_PRICE_POLICY.central).times(participants).toFixed(2) };
 }
@@ -64,8 +64,9 @@ export function restaurantEstimatedCost(context: PlannedExpenseContext, id: stri
 export function assertRestaurantEstimate(draft: PlannedExpenseDraft) {
   if (draft.context.restaurant?.priceBasis !== "ESTIMATED") return;
   const items = draft.costItems.filter(isRootCost), item = items[0];
-  if (items.length !== 1 || !item || !plannedParticipantCount(draft.context) || item.assetKey !== null
-    || item.quantity !== String(plannedParticipantCount(draft.context)) || item.unitAmount !== RESTAURANT_PRICE_POLICY.central
+  const count = draft.context.project?.financialScope?.count ?? plannedParticipantCount(draft.context);
+  if (items.length !== 1 || !item || !count || item.assetKey !== null
+    || item.quantity !== String(count) || item.unitAmount !== RESTAURANT_PRICE_POLICY.central
     || item.priceSource !== "SYSTEM_DEFAULT" || item.fundingAllocations?.some((part) => part.source !== "BANK"))
     throw new TypeError("PLANNED_RESTAURANT_ESTIMATE_INVALID");
 }
@@ -78,6 +79,13 @@ export function restaurantContextIssues(draft: PlannedExpenseDraft) {
   if (!info) return [];
   const problems: { code: string; message: string; repairTarget: RestaurantWizardStep }[] = [];
   const add = (code: string, message: string, repairTarget: RestaurantWizardStep) => problems.push({ code, message, repairTarget });
+  if (draft.context.project?.version === 2) {
+    if (!draft.context.participantPersonIds?.length) add("RESTAURANT_PARTICIPANTS_REQUIRED", "Choisissez les personnes concernées.", "partySize");
+    if (info.googlePlaceId && (!info.restaurantName || draft.context.place?.kind !== "TEXT")) add("RESTAURANT_DETAILS_REQUIRED", "Choisissez à nouveau le restaurant.", "restaurantChoice");
+    if (draft.context.transportMode === "CAR" && !draft.context.route) add("RESTAURANT_ROUTE_REQUIRED", "Calculez le trajet en voiture.", "transportDetails");
+    if (!info.priceBasis && !draft.context.project.unpricedComponents?.length) add("RESTAURANT_PRICE_REQUIRED", "Précisez le budget de la note.", "priceKnowledge");
+    return problems;
+  }
   const count = plannedParticipantCount(draft.context);
   if (!draft.context.companionMode || !draft.context.participantPersonIds?.length || !count)
     add("RESTAURANT_PARTICIPANTS_REQUIRED", "Choisissez qui vient au restaurant.", "partySize");
@@ -108,5 +116,5 @@ export function restaurantTitle(draft: PlannedExpenseDraft, fallbackPlace: strin
   if (fallbackPlace && !r) return `Restaurant · ${fallbackPlace}`;
   if (c.socialOccasion === "BIRTHDAY") return `Restaurant anniversaire${r?.city ? ` · ${r.city}` : ""}`;
   if (c.occasionLabel) return `Restaurant · ${c.occasionLabel}`;
-  return c.companionMode ? ({ SOLO: "Restaurant solo", COUPLE: "Restaurant en amoureux", GROUP: "Restaurant à plusieurs" }[c.companionMode]) : "Restaurant";
+  return c.companionMode ? ({ SOLO: "Restaurant solo", COUPLE: c.project?.version === 2 ? "Restaurant à deux" : "Restaurant en amoureux", GROUP: "Restaurant à plusieurs" }[c.companionMode]) : "Restaurant";
 }

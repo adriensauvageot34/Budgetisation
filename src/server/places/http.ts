@@ -4,6 +4,7 @@ import { getAuthenticatedBootstrapClient } from "@/server/bootstrap/auth";
 import { getCurrentHousehold } from "@/server/bootstrap/queries";
 import { GooglePlacesError, GoogleRestaurantPlaces } from "./google-places";
 import { validGooglePlaceId } from "@/domain/phase2/restaurant-places";
+import type { ProjectPlaceKind } from "@/domain/phase2/restaurant-places";
 
 const counters = new Map<string, { at: number; count: number }>();
 /** Low-volume per-instance guard, no provider content or search query is cached. */
@@ -33,16 +34,18 @@ export async function restaurantPlacesRequest(request: Request, kind: "autocompl
     const body = JSON.parse(text) as Record<string, unknown>;
     if (!body || typeof body !== "object" || Array.isArray(body)) throw new TypeError();
     const provider = new GoogleRestaurantPlaces();
+    const placeKind = (body.context as { kind?: unknown } | undefined)?.kind ?? "RESTAURANT";
+    if (!["RESTAURANT", "ACTIVITY", "VENUE", "DESTINATION", "RETAIL"].includes(String(placeKind))) throw new TypeError();
     const token = body.sessionToken;
     if (token !== undefined && (typeof token !== "string" || !/^[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}$/iu.test(token))) throw new TypeError();
     if (kind === "autocomplete") {
       const context = body.context as { city?: unknown } | undefined;
       const city = context?.city ?? "Montpellier";
       if (typeof body.input !== "string" || body.input.trim().length < 2 || body.input.length > 120 || !token || typeof city !== "string" || !city.trim() || city.length > 100) throw new TypeError();
-      return reply({ suggestions: await provider.autocomplete(body.input.trim(), String(token), city.trim()) });
+      return reply({ suggestions: await provider.autocomplete(body.input.trim(), String(token), city.trim(), placeKind as ProjectPlaceKind) });
     }
     if (!validGooglePlaceId(body.placeId)) throw new TypeError();
-    if (kind === "details") return reply({ place: await provider.details(body.placeId, token as string | undefined) });
+    if (kind === "details") return reply({ place: await provider.details(body.placeId, token as string | undefined, placeKind as ProjectPlaceKind) });
     const dimension = (value: unknown, fallback: number) => {
       if (value === undefined) return fallback;
       if (typeof value !== "number" || !Number.isInteger(value) || value < 100 || value > 1600) throw new TypeError();

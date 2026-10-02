@@ -2,13 +2,14 @@
 
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState, type Dispatch, type SetStateAction } from "react";
-import { CalendarDays, Trash2 } from "lucide-react";
+import { ArrowLeft, CalendarDays, Trash2, X } from "lucide-react";
 import { PLANNED_FAMILIES, PLANNED_SUBTYPE_LABELS, type PlannedExpenseFamily } from "@/domain/phase2/planned-assets";
 import { createBuilderState, changeBuilderRoot, deriveBuilderReadiness, materializeBuilderDraft, synchronizeIntentBuilder, adoptBuilderResolvedTransport } from "@/domain/phase2/planned-builder";
-import { projectPlaceLabel, intentForDraft, BUILDER_INTENTS } from "@/domain/phase2/planned-ux";
+import { BUILDER_INTENTS } from "@/domain/phase2/planned-ux";
 import type { PlannedPlaceOption } from "@/domain/phase2/planned-places";
 import type { PlannedPriceSuggestion, PlannedVehicleEstimate, PlannedWalletOption } from "@/domain/phase2/planned-contract";
-import { PlannedIntentBuilder } from "./planned-intent-builder";
+import { ContextualProjectWizard, ProjectIntentHub } from "./contextual-project-wizard";
+import { backWizard, beginProjectV2, emptyWizardSession, jumpWizard, projectHasSignificantDraft } from "@/domain/phase2/planned-question-engine";
 import { ContextualBlockerCTA } from "./planned-builder-primitives";
 import type { PlannedExpenseCard } from "./planned-expenses-projection";
 import { confirmPlannedExpenseReality, restorePlannedExpenseAction, reportPlannedExpenseAction,
@@ -17,10 +18,10 @@ import { type PlannedIssue, type PlannedResult, type RealityConfirmationDraft } 
 import { PlannedImpactCard } from "./planned-impact-card";
 import { usePlannedExpenseInteractions } from "./planned-expense-interactions";
 import { calendarExpenseActions } from "./calendar-presentation";
-import { RestaurantWizard } from "./restaurant-wizard";
 import { RestaurantPhotoBackground } from "./restaurant-photo-background";
 import { PlannedBuilderFrame, type BuilderReturnPoint } from "./planned-wizard-visuals";
 import wizardStyles from "./planned-wizard.module.css";
+import projectStyles from "./project-wizard.module.css";
 
 type Person = { personId: string; displayName: string; isCurrentUser?: boolean };
 type Draft = Pick<PlannedExpenseCard, "familyKey" | "subtypeKey" | "title" | "plannedDate" | "costItems" | "context">;
@@ -55,6 +56,7 @@ export function PlannedExpensesControl({ targetMonth, expenses, persons, places,
   const [step, setStep] = useState(1);
   const [closeRequested, setCloseRequested] = useState(false);
   const [repairRequest, setRepairRequest] = useState({ target: "", serial: 0 });
+  const [wizardSession, setWizardSession] = useState(emptyWizardSession);
   const [builder, setBuilderState] = useState(() => createBuilderState(emptyDraft()));
   const draft = builder.draft;
   const setBuilder: Dispatch<SetStateAction<typeof builder>> = (change) => setBuilderState((state) => {
@@ -80,9 +82,10 @@ export function PlannedExpensesControl({ targetMonth, expenses, persons, places,
   const [error, setError] = useState("");
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const isWorkMeal = draft.familyKey === "food" && draft.subtypeKey === "work_meal";
-  const restaurantFlow = draft.familyKey === "food" && draft.subtypeKey === "restaurant" && step > 1;
-  const dismiss = () => { if (builder.revision > 0) setCloseRequested(true); else setOpen(false); };
-  const repairRestaurant = (target: string) => {
+  const restaurantFlow = false; // All nine entry points now use the shared question engine.
+  const wizardEnv = { persons, places, editedId, linkedProjects: expenses.map(item => ({ id: item.id, draft: item, status: item.status })) };
+  const dismiss = () => { if (closeRequested) setCloseRequested(false); else if (editedId || projectHasSignificantDraft(builder, wizardSession)) setCloseRequested(true); else setOpen(false); };
+  const repairDraft = (target: string) => {
     setRepairRequest((request) => ({ target, serial: request.serial + 1 })); setStep(4);
   };
   const contextPersonLabel = persons.find((person) => person.personId === draft.context.participantPersonIds?.[0])?.displayName;
@@ -98,7 +101,8 @@ export function PlannedExpensesControl({ targetMonth, expenses, persons, places,
     draftSession.current++;
     const next = item ? { familyKey: item.familyKey, subtypeKey: item.subtypeKey, title: item.title,
       plannedDate: item.plannedDate, costItems: item.costItems.map((cost) => ({ ...cost })), context: { ...item.context } } : { ...emptyDraft(), plannedDate: plannedDate ?? null };
-    setBuilder(createBuilderState(next));
+    setBuilder(item ? beginProjectV2(createBuilderState(next), { persons, places }) : createBuilderState(next));
+    setWizardSession(item ? jumpWizard(emptyWizardSession(), "review") : emptyWizardSession());
     setRequestId(item?.id ?? crypto.randomUUID()); setExpectedUpdatedAt(item?.updatedAt); setRealityMode(mode);
     setIssue(null); setNotice(""); setReportId(null); setDeleteId(null);
     setCloseRequested(false);
@@ -119,8 +123,9 @@ export function PlannedExpensesControl({ targetMonth, expenses, persons, places,
       const hasExplicit = state.draft.costItems.length || state.quickTotal || state.draft.context.route
         || state.draft.context.personVisited || state.draft.context.host || state.draft.context.seller
         || state.draft.context.socialOccasion || state.draft.context.place;
-      return hasExplicit ? changeBuilderRoot(state, nextDraft) : { ...createBuilderState(nextDraft), revision: state.revision + 1 };
+      return beginProjectV2(hasExplicit ? changeBuilderRoot(state, nextDraft) : { ...createBuilderState(nextDraft), revision: state.revision + 1 }, { persons, places });
     });
+    setWizardSession(emptyWizardSession());
     setStep(3); resetPreview();
   };
   const run = async (action: () => Promise<void>) => {
@@ -165,19 +170,7 @@ export function PlannedExpensesControl({ targetMonth, expenses, persons, places,
   const repairServerIssue = () => {
     if (!issue) return;
     if (issue.repairTarget === "reload") { router.refresh(); return; }
-    if (restaurantFlow) { repairRestaurant(issue.repairTarget === "date" ? "restaurant-datePrecision" : issue.repairTarget); return; }
-    const step = issue.repairTarget === "context" || issue.repairTarget === "date" ? 3 : 4;
-    setStep(step);
-    window.setTimeout(() => {
-      const fundingTarget = readiness.issues.find((problem) => problem.code === "FUNDING_INCOMPLETE")?.repairTarget;
-      const target = issue.repairTarget === "funding"
-        ? fundingTarget ? document.getElementById(fundingTarget) : document.querySelector<HTMLElement>('[id^="funding-"]')
-        : issue.repairTarget === "route" ? document.getElementById("builder-route")
-          : document.getElementById(step === 3 ? "builder-context" : "builder-cost");
-      target?.querySelectorAll("details").forEach((details) => { details.open = true; });
-      target?.scrollIntoView({ behavior: "smooth", block: "center" });
-      target?.querySelector<HTMLInputElement>("input, select, button")?.focus();
-    }, 0);
+    repairDraft(issue.repairTarget);
   };
 
   useEffect(() => {
@@ -217,7 +210,7 @@ export function PlannedExpensesControl({ targetMonth, expenses, persons, places,
         <h3 className="min-w-0 flex-1 font-bold">{item.title}</h3>
         <span className={`rounded-full px-2 py-1 text-xs ${item.status === "DECLARED_REALIZED" ? "bg-emerald-50 text-emerald-800" : item.needsRealityConfirmation ? "bg-amber-50 text-amber-900" : "text-slate-500"}`}>{item.status === "DECLARED_REALIZED" ? "Réalisée · déclarée" : item.needsRealityConfirmation ? "À confirmer" : "Prévue"}</span>
         <span className="w-32 text-right text-sm text-slate-500"><CalendarDays size={13} className="mr-1 inline" aria-hidden="true" />{item.plannedDate ? dateLabel(item.plannedDate) : "Sans date précise"}</span>
-        <strong className="w-24 text-right tabular-nums">{money(item.grossCost)}</strong>
+        <strong className="w-24 text-right tabular-nums">{item.context.project?.unpricedComponents?.length ? Number(item.grossCost) === 0 ? "À préciser" : `≥ ${money(item.grossCost)}` : money(item.grossCost)}</strong>
       </summary>
       <p className="text-xs text-slate-600">{item.costItems.map((cost) => `${cost.variantLabel || cost.label} · ${cost.quantity} × ${money(cost.unitAmount)}`).join(" · ")}</p>
     <div className="mt-3 flex flex-wrap gap-2 border-t border-slate-100 pt-3">{calendarExpenseActions(item).filter(({ action }) => action !== "DELETE").map(({ action, label }) =>
@@ -238,21 +231,20 @@ export function PlannedExpensesControl({ targetMonth, expenses, persons, places,
     {error && !open && <p role="alert" className="mt-3 rounded-xl bg-red-50 p-3 text-sm text-red-800">{error}{issue?.repairTarget === "reload" && <button className={secondary} onClick={() => router.refresh()}>Recharger la liste</button>}{issue?.repairTarget === "month" && reportDate && <a className="ml-2 underline" href={`/mois-a-venir?month=${reportDate.slice(0, 7)}`}>Préparer les ressources de ce mois</a>}</p>}
     {expenses.length > 0 && <section aria-labelledby="planned-expense-title" className="scroll-mt-24"><h2 id="planned-expense-title" className="scroll-mt-24 text-2xl font-black">Nos projets</h2><ul className="mt-4 space-y-2">{expenses.map(card)}</ul></section>}
     {open && <PlannedBuilderFrame immersive returnPoint={returnPoint.current} label={realityMode ? "Confirmer une dépense réalisée" : "Préparer une dépense"} onDismiss={dismiss}>
-      <div className={wizardStyles.header}><div><p className="text-xs font-semibold text-indigo-700">Projets{step > 1 && (" › " + (BUILDER_INTENTS.find((intent) => intent.key === intentForDraft(draft))?.label ?? "Projet"))}{step === 5 && " › Aperçu"}</p><h3 className="mt-2 text-2xl font-black tracking-tight">{step === 1 ? "Qu’avez-vous prévu ?" : draft.title}</h3>{step > 2 && !restaurantFlow && <p className="mt-2 text-sm text-slate-500">{[draft.plannedDate ? dateLabel(draft.plannedDate) : "Ce mois-ci", projectPlaceLabel(draft.context, places)].filter(Boolean).join(" · ")}</p>}</div><button type="button" className={secondary} onClick={dismiss}>Fermer</button></div>
-      {closeRequested && <div className="mt-3 rounded-xl bg-amber-50 p-3 text-sm"><p>Quitter et abandonner les modifications de ce brouillon ?</p><button type="button" className={secondary} onClick={() => { setOpen(false); setPreview(null); setCloseRequested(false); }}>Abandonner</button><button type="button" className={secondary} onClick={() => setCloseRequested(false)}>Continuer à préparer</button></div>}
+      <div className={projectStyles.header}><h3>{step === 1 ? "Ajouter une dépense" : draft.title}</h3><nav className={projectStyles.topNav} aria-label="Navigation du brouillon"><button type="button" disabled={step === 1 || busy} onClick={() => {
+        if (step === 5) { setStep(3); setWizardSession(s => jumpWizard(s, "review")); }
+        else if (wizardSession.history.length) setWizardSession(backWizard);
+        else setStep(1);
+      }}><ArrowLeft size={14} className="mr-1 inline" aria-hidden="true" />Retour</button><button type="button" aria-label="Fermer le brouillon" onClick={dismiss}><X size={18} aria-hidden="true" /></button></nav></div>
+      {closeRequested && <div className={projectStyles.dialogBackdrop}><div role="alertdialog" aria-modal="true" aria-labelledby="project-exit-title" className={projectStyles.dialog}><h4 id="project-exit-title">Quitter ce brouillon ?</h4><div className={projectStyles.editorActions}><button autoFocus type="button" className={projectStyles.primary} onClick={() => setCloseRequested(false)}>Continuer</button><button type="button" className={projectStyles.textButton} onClick={() => { setOpen(false); setPreview(null); setCloseRequested(false); }}>Quitter</button></div></div></div>}
       {realityMode && <p className="mt-3 rounded-xl bg-sky-50 p-3 text-sm">{realityMode === "DECLARE" ? "Vérifiez ce qui a réellement coûté et son financement, puis confirmez la réalisation." : "Corrigez les éléments et le financement de votre déclaration."} Pour un coût détaillé, corrigez les lignes ; aucun écart ne sera réparti automatiquement.</p>}
       {error && <div role="alert" className="mt-3 rounded-xl bg-red-50 p-3 text-sm text-red-800"><p>{error}</p>{issue && <button type="button" className={secondary} onClick={repairServerIssue}>{issue.repairTarget === "reload" ? "Actualiser la liste, garder mon brouillon" : "Aller à la correction"}</button>}{issue?.repairTarget === "reload" && editedId && <button type="button" className={secondary} onClick={() => { const fresh = expenses.find((item) => item.id === editedId); if (fresh) start(fresh, realityMode); }}>Abandonner mon brouillon et reprendre la version affichée</button>}</div>}
-      <div className={restaurantFlow ? wizardStyles.body : "min-h-0 flex-1 overflow-y-auto p-6"}>
-      {restaurantFlow && <div className={wizardStyles.body} style={step === 5 ? { display: "none" } : undefined}><RestaurantWizard key={requestId} builder={builder} setBuilder={setBuilder} persons={persons} places={places} wallets={wallets} vehicle={vehicle} targetMonth={targetMonth} busy={busy} onPreview={simulate} repairRequest={repairRequest}
-        usedRestaurants={expenses.flatMap((item) => { const r = item.context.restaurant; return r?.googlePlaceId && r.restaurantName && r.city ? [{ googlePlaceId: r.googlePlaceId, label: r.restaurantName, city: r.city }] : []; })} /></div>}
-      {step <= 4 && !restaurantFlow && <PlannedIntentBuilder key={requestId} builder={builder} setBuilder={setBuilder} step={step} setStep={setStep} selectRoot={selectSubtype} persons={persons} places={places} wallets={wallets} prices={prices} vehicle={vehicle} targetMonth={targetMonth} busy={busy} onPreview={simulate} />}
+      <div className={wizardStyles.body}>
+      {step === 1 && <ProjectIntentHub onChoose={key => { const intent = BUILDER_INTENTS.find(i => i.key === key)!; selectSubtype(intent.family, intent.subtype ?? (key === "party" ? "bar" : key === "activity" ? "other_activity" : "other_purchase")); }} />}
+      {step > 1 && step <= 4 && <ContextualProjectWizard key={requestId} builder={builder} setBuilder={setBuilder} session={wizardSession} setSession={setWizardSession} env={wizardEnv} wallets={wallets} prices={prices} targetMonth={targetMonth} busy={busy} onPreview={simulate} repairRequest={repairRequest} />}
       {step === 5 && !previewCurrent && <div className="mt-4 rounded-xl bg-amber-50 p-4 text-sm">L’aperçu précédent n’est plus à jour. <button type="button" className={secondary} onClick={() => setStep(4)}>Recalculer après modification</button></div>}
-      {step === 5 && previewCurrent && preview && <div className={restaurantFlow ? "grid min-h-0 gap-4 overflow-y-auto p-8" : "mt-4 grid gap-4"}><PlannedImpactCard preview={preview} fundingIncomplete={readiness.issues.some((issue) => issue.code === "FUNDING_INCOMPLETE")} />
-        <p className="text-xs text-slate-600">La simulation n’enregistre rien.</p><div className="flex flex-wrap gap-2"><button type="button" className={secondary} onClick={() => { setPreview(null); setStep(4); }}>Modifier</button><ContextualBlockerCTA purpose="SAVE" busy={busy} issues={readiness.issues} onClick={save} label={realityMode === "DECLARE" ? "Confirmer la réalisation" : realityMode === "CORRECT" ? "Enregistrer la déclaration corrigée" : editedId ? "Enregistrer la modification" : simulationMode ? "Ajouter réellement au mois" : "Ajouter au mois"} onRepair={(problem) => {
-          if (restaurantFlow) { repairRestaurant(problem.repairTarget); return; }
-          const nextStep = problem.repairTarget === "builder-context" || problem.repairTarget === "builder-title" ? 3 : 4;
-          setStep(nextStep); window.setTimeout(() => { const target = document.getElementById(problem.repairTarget) ?? document.getElementById(nextStep === 3 ? "builder-context" : "builder-cost"); target?.scrollIntoView({ behavior: "smooth", block: "center" }); target?.querySelector<HTMLElement>("input, select, button")?.focus(); }, 0);
-        }} /></div></div>}
+      {step === 5 && previewCurrent && preview && <div className={projectStyles.preview}><PlannedImpactCard preview={preview} fundingIncomplete={readiness.issues.some((issue) => issue.code === "FUNDING_INCOMPLETE")} />
+        <div className={projectStyles.previewActions}><button type="button" className={projectStyles.textButton} onClick={() => { setPreview(null); setStep(3); setWizardSession(s => jumpWizard(s, "review")); }}>Modifier</button><ContextualBlockerCTA purpose="SAVE" busy={busy} issues={readiness.issues} onClick={save} label={realityMode === "DECLARE" ? "Confirmer la réalisation" : realityMode === "CORRECT" ? "Enregistrer la déclaration corrigée" : editedId ? "Enregistrer la modification" : simulationMode ? "Ajouter réellement au mois" : "Ajouter au mois"} onRepair={(problem) => repairDraft(problem.repairTarget)} /></div></div>}
       </div>
     </PlannedBuilderFrame>}
   </>;

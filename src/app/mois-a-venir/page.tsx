@@ -9,6 +9,7 @@ import { readMonthInputs } from "@/server/phase2/month-inputs";
 import { deriveMonthScenario } from "@/server/phase2/month-scenario";
 import { readPlannedExpenses } from "@/server/phase2/planned-expenses";
 import { readPlannedContextOptions } from "@/server/phase2/planned-context";
+import { groceryBasketEstimate } from "@/domain/phase2/planned-price-estimates";
 import { projectPlannedExpenseCards, projectExpenseFunding } from "./planned-expenses-projection";
 import { projectPlannedExpenseImpact } from "@/server/phase2/planned-impact";
 import { prospectivePersonIdentity, prospectivePersonLabel } from "@/domain/phase2/planned-product";
@@ -93,6 +94,6 @@ export default async function MonthForecastPage({ searchParams }: { searchParams
   });
   return <MonthForecastView forecast={forecast} scenario={scenario} stored={stored}
     plannedExpenses={cards} today={today}
-    persons={persons} places={options.places} vehicle={options.vehicle} prices={options.prices} wallets={options.wallets}
+    persons={persons} places={options.places} vehicle={options.vehicle} prices={[...options.prices, ...(() => { const estimate = groceryBasketEstimate(forecast.predictionEvidence?.history.economicEntries ?? []); return estimate ? [estimate] : []; })()]} wallets={options.wallets}
     inputError={params.inputError === "1"} />;
 }

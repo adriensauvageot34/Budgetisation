@@ -45,7 +45,15 @@ export function shiftVisitTiming(timing: PlannedTripTiming, departureDate: strin
   return { outbound: { ...timing.outbound, date: departureDate }, return: { ...timing.return, date: shiftedReturn } };
 }
 export const isTimedFamilyVisit = (draft: Pick<PlannedExpenseDraft, "familyKey" | "subtypeKey" | "context">) =>
-  draft.familyKey === "visit_trip" && draft.subtypeKey === "family_visit" && !!draft.context.visitTiming;
+  draft.familyKey === "visit_trip" && (draft.subtypeKey === "family_visit" || draft.context.project?.version === 2 && draft.subtypeKey === "friend_visit") && !!draft.context.visitTiming;
+
+/** One prospective timing source for directed routing. Trip return dates are already durable intent. */
+export function plannedJourneyTiming(draft: Pick<PlannedExpenseDraft, "familyKey" | "subtypeKey" | "plannedDate" | "context">): PlannedTripTiming | undefined {
+  if (draft.context.visitTiming) return draft.context.visitTiming;
+  if (draft.context.project?.version === 2 && draft.familyKey === "visit_trip" && draft.plannedDate && draft.context.endDate)
+    return { outbound: { date: draft.plannedDate, time: draft.context.project.exactTime ?? null }, return: { required: true, date: draft.context.endDate, time: null } };
+  return undefined;
+}
 
 /** History describes visits to a place, never proof that a named contact attended. */
 export function rankFamilyVisitContacts(places: readonly PlannedPlaceOption[], contacts: readonly ProspectiveContact[] = SOCIAL_CONTACTS_V1) {

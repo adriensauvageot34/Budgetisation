@@ -1,9 +1,10 @@
 import "server-only";
 import { isRestaurantType, normalizeRestaurantDetails, normalizeRestaurantSuggestions, photoAuthors, selectRestaurantCardPhoto, validGooglePlaceId } from "@/domain/phase2/restaurant-places";
 import { TomTomRouteProvider } from "@/server/phase2/planned-car-providers";
+import type { ProjectPlaceKind } from "@/domain/phase2/restaurant-places";
 
 export const AUTOCOMPLETE_MASK = "suggestions.placePrediction.placeId,suggestions.placePrediction.structuredFormat,suggestions.placePrediction.types";
-export const DETAILS_MASK = "id,displayName,formattedAddress,location,primaryType,types,photos";
+export const DETAILS_MASK = "id,displayName,formattedAddress,addressComponents,location,primaryType,types,photos";
 const PHOTO_MASK = "id,types,photos";
 export class GooglePlacesError extends Error {
   constructor(public readonly status = 503) { super("Recherche de restaurants indisponible. Vous pouvez saisir le restaurant manuellement."); }
@@ -34,7 +35,7 @@ export class GoogleRestaurantPlaces {
     }
     throw new GooglePlacesError();
   }
-  async autocomplete(input: string, sessionToken: string, city: string) {
+  async autocomplete(input: string, sessionToken: string, city: string, kind: ProjectPlaceKind = "RESTAURANT") {
     const local = city.trim().toLocaleLowerCase("fr") === "montpellier";
     let center = local ? { latitude: 43.6108, longitude: 3.8767 } : undefined;
     if (!local) try { center = await (this.options.geocode ?? ((city) => new TomTomRouteProvider().geocode(`${city}, France`)))(city); } catch { /* Town text still guides search if city geocoding is unavailable. */ }
@@ -43,12 +44,12 @@ export class GoogleRestaurantPlaces {
       ...(center ? { locationBias: { circle: { center: { latitude: center.latitude, longitude: center.longitude }, radius: 20000 } } } : {}),
     });
     // Filtering response types includes specialized *_restaurant types without an incomplete primary-type restriction.
-    return normalizeRestaurantSuggestions(raw);
+    return normalizeRestaurantSuggestions(raw, kind);
   }
-  async details(placeId: string, sessionToken?: string) {
+  async details(placeId: string, sessionToken?: string, kind: ProjectPlaceKind = "RESTAURANT") {
     if (!validGooglePlaceId(placeId)) throw new TypeError("GOOGLE_PLACE_ID_INVALID");
     const query = new URLSearchParams({ languageCode: "fr", regionCode: "fr", ...(sessionToken ? { sessionToken } : {}) });
-    try { return normalizeRestaurantDetails(await this.request(`places/${placeId}?${query}`, DETAILS_MASK)); }
+    try { return normalizeRestaurantDetails(await this.request(`places/${placeId}?${query}`, DETAILS_MASK), kind); }
     catch (error) { throw error instanceof GooglePlacesError ? error : new GooglePlacesError(422); }
   }
   async photo(placeId: string, width = 1200, height = 500) {

@@ -53,8 +53,18 @@ export const PROJECT_TITLE_TEMPLATES: Record<BuilderIntent, (facts: TitleFacts) 
   trip: ({ draft, place }) => `${draft.subtypeKey === "other_trip" ? "Déplacement" : "Séjour"}${place ? ` à ${place}` : ""}`,
 };
 export function deriveProjectTitle(draft: PlannedExpenseDraft, places: readonly PlannedPlaceOption[], personName?: string): string {
-  return PROJECT_TITLE_TEMPLATES[intentForDraft(draft)]({ draft, personName, place: projectPlaceLabel(draft.context, places),
-    contact: prospectivePersonLabel(draft.context.host ?? draft.context.personVisited) ?? "", merchant: draft.context.seller ?? "" }).slice(0, 120);
+  const intent = intentForDraft(draft), c = draft.context, entity = c.project?.entity;
+  let title = PROJECT_TITLE_TEMPLATES[intent]({ draft, personName, place: projectPlaceLabel(c, places),
+    contact: prospectivePersonLabel(c.host ?? c.personVisited) ?? "", merchant: c.seller ?? entity?.label ?? "" });
+  if (c.project?.version === 2) {
+    if (intent === "activity" && entity) title = entity.label;
+    if (intent === "trip") title = `${c.project.tripKind === "PUNCTUAL" ? "Déplacement" : "Séjour"}${entity?.label ? ` à ${entity.label}` : ""}`;
+    if (c.socialOccasion && c.socialOccasion !== "NONE" && ["restaurant", "party", "groceries"].includes(intent)) {
+      const occasion = c.occasionLabel || ({ BIRTHDAY: "Anniversaire", CHRISTMAS: "Noël", CELEBRATION: "Célébration", OTHER_SPECIAL: "Occasion spéciale" } as const)[c.socialOccasion];
+      title = `${occasion}${entity ? ` · ${entity.label}` : intent === "groceries" ? " · courses" : intent === "restaurant" ? " au restaurant" : c.housePartyPlaceMode === "OWN_HOME" ? " chez nous" : ""}`;
+    }
+  }
+  return title.slice(0, 120);
 }
 export const detailActionLabel = (module: AssetModule) => (({ restaurant: "Détailler la note", groceries: "Détailler le panier",
   fast_food: "Détailler la commande", work_meal: "Détailler le repas", trip: "Détailler le séjour" } as Record<string, string>)[module] ?? "Préciser les éléments");
@@ -72,11 +82,17 @@ export function visibleUxAssets(assets: readonly PlannedAsset[], context: Planne
   const hidden = new Set(["restaurant:meal_total", "restaurant:alcohol_total", "groceries:food", "groceries:special_meal",
     "work_meal:bakery", "work_meal:mcdo", "work_meal:grand_frais", "fast_food:thai", "fast_food:kebab", "fast_food:sandwich",
     "beauty:hairdresser", "automotive:wash", "activity:entry", "fast_food:meal_total", "trip:flight", "trip:hotel", "trip:airbnb", "trip:visits"]);
-  return assets.filter((asset) => !hidden.has(asset.assetKey) && (!/domino/iu.test(context.seller ?? "")
+  const focus = context.project?.groceryFocus;
+  return assets.filter((asset) => (!focus || focus === "OTHER" || asset.module !== "groceries"
+    || (focus === "HYGIENE" ? asset.assetKey === "groceries:hygiene" : focus === "CLEANING" ? asset.assetKey === "groceries:cleaning"
+      : focus === "DRINKS" ? asset.assetKey === "groceries:drinks" : !["groceries:hygiene", "groceries:cleaning"].includes(asset.assetKey)))
+    && !hidden.has(asset.assetKey) && (!/domino/iu.test(context.seller ?? "")
     || asset.module !== "fast_food" || ["fast_food:pizza", "fast_food:fries", "fast_food:drink", "fast_food:dessert", "fast_food:water"].includes(asset.assetKey)));
 }
 export function compatibleWallets(wallets: readonly PlannedWalletOption[], context: PlannedExpenseContext, workMeal: boolean): readonly PlannedWalletOption[] {
-  return wallets.filter((wallet) => !workMeal || !!wallet.ownerPersonId && context.participantPersonIds?.includes(wallet.ownerPersonId));
+  const owners = context.project?.financialScope?.personIds ?? context.participantPersonIds;
+  return wallets.filter((wallet) => !(workMeal || context.project?.version === 2)
+    || !!wallet.ownerPersonId && !!owners?.includes(wallet.ownerPersonId));
 }
 export function plausibleTransportModes(draft: PlannedExpenseDraft, _places: readonly PlannedPlaceOption[]): readonly string[] {
   // No city-name guess: trips suggest Train; an existing explicit Train choice remains editable.

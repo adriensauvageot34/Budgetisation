@@ -10,10 +10,12 @@ export function plannedAllowsNoCost(draft: Pick<PlannedExpenseDraft, "familyKey"
   return draft.familyKey === "visit_trip" && ["family_visit", "friend_visit"].includes(draft.subtypeKey ?? "")
     || draft.familyKey === "outing" && draft.subtypeKey === "house_party"
     || draft.familyKey === "food" && draft.subtypeKey === "work_meal" && draft.context.workMealMode === "FROM_HOME"
-    || ["activity", "visit_trip"].includes(draft.familyKey) && draft.context.noExpense === true;
+    || ["activity", "visit_trip"].includes(draft.familyKey) && draft.context.noExpense === true
+    || draft.context.project?.version === 2 && !!draft.context.project.unpricedComponents?.length;
 }
 
 export type PlannedModifiers = Readonly<{
+  project?: PlannedExpenseContext["project"];
   groceriesNature?: "USUAL" | "TOP_UP" | "OCCASION";
   workMealMode?: "BOUGHT" | "DELIVERED" | "FROM_HOME";
   outingKind?: "CLUB" | "EVENT";
@@ -65,7 +67,7 @@ const edge = (fromRoot: AssetModule, childModule: ModuleEdge["childModule"],
 export const MODULE_EDGES: readonly ModuleEdge[] = [
   edge("visit_family", "activity", "AVAILABLE", "OPTIONAL", "AVAILABLE"),
   edge("visit_friend", "activity", "AVAILABLE", "OPTIONAL", "AVAILABLE"),
-  edge("club", "house_party", "AVAILABLE"),
+  edge("club", "house_party", "AVAILABLE", "OPTIONAL", "AVAILABLE"),
   edge("other", "restaurant", "AVAILABLE", "OPTIONAL", "AVAILABLE"),
   edge("other", "activity", "AVAILABLE", "OPTIONAL", "AVAILABLE"),
   edge("other", "gift", "AVAILABLE"),
@@ -88,6 +90,7 @@ export const MODULE_EDGES: readonly ModuleEdge[] = [
   edge("trip", "restaurant", "AVAILABLE", "OPTIONAL", "AVAILABLE", { baselineOverride: null }),
   edge("trip", "activity", "AVAILABLE", "OPTIONAL", "AVAILABLE"),
   edge("activity", "restaurant", "AVAILABLE", "OPTIONAL", "AVAILABLE"),
+  edge("work_meal", "groceries", "AVAILABLE", "HIDDEN", "NEVER", { baselineOverride: null }),
   edge("gift", "restaurant", "AVAILABLE", "OPTIONAL", "NEVER", { inherit: ["DATE", "GIFT_CONTEXT"],
     baselineOverride: null, fundingOverride: "BANK_ONLY" }),
 ];
@@ -236,6 +239,13 @@ export function resolvePlannedContext(input: Readonly<{ familyKey: PlannedExpens
       if (m.purchaseMode === "ONLINE") { fields.seller = "OPTIONAL"; selectedPlace = noPlace; }
     }
   } else { selectedPlace = place("OPTIONAL", [], "NONE"); }
+  // V2 derives the habitual baseline from context rather than asking a generic budget question.
+  // Existing rows retain their declared baseline decision.
+  if (m.project?.version === 2 && baseline.mode === "ASK") baseline =
+    m.socialOccasion && m.socialOccasion !== "NONE" || m.groceriesNature === "OCCASION"
+      ? noBaseline : { mode: "AUTO", key: baseline.key };
+  if (m.project?.shareTransport) transport = "FORBIDDEN";
+  if (m.project?.version === 2 && subtypeKey === "work_meal") transport = "FORBIDDEN";
   fields.place = selectedPlace.field;
   const children = MODULE_EDGES.filter((item) => item.fromRoot === entry.rootModule
     && (entry.rootModule !== "other" || subtypeKey === "other_outing" && ["restaurant", "activity", "bar", "club", "gift"].includes(item.childModule)
@@ -262,6 +272,7 @@ export function moduleAvailability(resolved: ResolvedPlannedContext, module: Ass
 }
 
 export function childPlaceRoles(module: AssetModule): readonly PlaceRole[] {
+  if (module === "house_party") return ["OWN_HOME", "FRIEND_HOME", "FAMILY_PLACE"];
   const representative: Partial<Record<AssetModule, readonly [PlannedExpenseFamily, string]>> = {
     restaurant: ["food", "restaurant"], bar: ["outing", "bar"], club: ["outing", "club_festival"],
     activity: ["activity", "other_activity"],

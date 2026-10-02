@@ -116,12 +116,21 @@ assert.equal(geocoded, details.formattedAddress); assert.equal(result.stops[1].l
 assert.equal(result.stops[1].coordinates.source, "TOMTOM"); assert.equal(result.stops[1].coordinates.latitude, 43.61);
 assert(!JSON.stringify(result).includes(details.formattedAddress)); assert.equal(result.snapshot.route.provider, "TOMTOM");
 assert.equal(result.fuelEstimate.cost, "1.26");
+const activityAddress = "Adresse de cinéma fixture, autre ville";
+const activityRoute = await car.estimatePlannedCar(input, { places: [home], vehicle, history: [], googleDestination: { placeId: "ChIJactivity_fixture", kind: "ACTIVITY" } }, {
+  restaurant: { details: async (id, token, kind) => { assert.equal(id, "ChIJactivity_fixture"); assert.equal(kind, "ACTIVITY"); return domain.normalizeRestaurantDetails({ ...details, formattedAddress: activityAddress, types: ["movie_theater"] }, kind); } },
+  route: { geocode: async (address, bias) => { if (address === activityAddress) assert.equal(bias, undefined); return { latitude: 43.61, longitude: 3.81, source: "TOMTOM" }; },
+    estimateCarRoute: async () => ({ provider: "TOMTOM", distanceKm: "10", liters: "0.7", durationSeconds: 600, geometry: [], geometryHash: null, hasToll: false,
+      segments: [{ distanceKm: "10", liters: "0.7" }], timeBasis: "FALLBACK", sampleTimes: [], routeMethodRef: "test", consumptionModelRef: "test" }) },
+  fuel: { getReference: async () => null }, toll: { estimateTolls: async () => ({ status: "NO_TOLL", amount: "0.00", currency: "EUR", provider: "NONE", vehicleCategory: "CLASS_1", routeImportedFrom: "TOMTOM", geometryHash: null, methodRef: "test", calculatedAt: new Date().toISOString() }) },
+});
+assert(!JSON.stringify(activityRoute).includes(activityAddress)); assert.equal(activityRoute.fuelEstimate.cost, "1.26");
 
 const { restaurantPlacesRequest, allowPlacesRequest } = require("../src/server/places/http.ts");
 assert.equal((await restaurantPlacesRequest(new Request("https://budget.test/api/places/autocomplete", { method: "POST" }), "autocomplete")).status, 401);
 assert.equal((await restaurantPlacesRequest(new Request("https://budget.test/api/places/autocomplete", { method: "POST", headers: { origin: "https://other.test" } }), "autocomplete")).status, 403);
 assert(allowPlacesRequest("test", 2, 100)); assert(allowPlacesRequest("test", 2, 100)); assert(!allowPlacesRequest("test", 2, 100)); assert(allowPlacesRequest("test", 2, 60101));
-for (const file of ["restaurant-place-search.tsx", "restaurant-photo-background.tsx", "restaurant-wizard.tsx"]) {
+for (const file of ["restaurant-place-search.tsx", "restaurant-photo-background.tsx", "restaurant-wizard.tsx", "project-wizard-fields.tsx", "contextual-project-wizard.tsx"]) {
   const source = fs.readFileSync(new URL(`../src/app/mois-a-venir/${file}`, import.meta.url), "utf8");
   assert(!source.includes("GOOGLE_MAPS_API_KEY")); assert(!source.includes("process.env")); assert(!source.includes("console.log"));
 }

@@ -49,7 +49,8 @@ export function PlannedBuilderFrame({ immersive, label = "Préparer une dépense
     const keys = (event: KeyboardEvent) => {
       if (event.key === "Escape") { event.preventDefault(); dismiss.current(); }
       if (event.key !== "Tab") return;
-      const focusable = [...frame.current?.querySelectorAll<HTMLElement>('button:not(:disabled), input:not(:disabled), select:not(:disabled), textarea:not(:disabled), summary, a[href], [tabindex="0"]') ?? []].filter((element) => element.getClientRects().length);
+      const focusRoot = frame.current?.querySelector<HTMLElement>('[role="alertdialog"]') ?? frame.current;
+      const focusable = [...focusRoot?.querySelectorAll<HTMLElement>('button:not(:disabled), input:not(:disabled), select:not(:disabled), textarea:not(:disabled), summary, a[href], [tabindex="0"]') ?? []].filter((element) => element.getClientRects().length);
       const first = focusable[0], last = focusable.at(-1);
       if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last?.focus(); }
       else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first?.focus(); }

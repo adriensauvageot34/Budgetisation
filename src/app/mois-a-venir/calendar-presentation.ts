@@ -5,6 +5,8 @@ import { calendarMetadata } from "./calendar-metadata";
 export const calendarMoney = (value: string) => new Intl.NumberFormat("fr-FR", {
   style: "currency", currency: "EUR", minimumFractionDigits: 2, maximumFractionDigits: 2,
 }).format(Number(value));
+export const calendarBudgetLabel = (item: CalendarItem) => item.expense?.context.project?.unpricedComponents?.length
+  ? Number(item.amount) === 0 ? "À préciser" : `≥ ${calendarMoney(item.amount)}` : calendarMoney(item.amount);
 export const calendarDate = (date: string) => new Intl.DateTimeFormat("fr-FR", {
   day: "numeric", month: "long", timeZone: "UTC",
 }).format(new Date(`${date}T12:00:00Z`));

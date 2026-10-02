@@ -61,6 +61,7 @@ type Props = { forecast: MonthForecastSnapshot; scenario: MonthScenario; stored:
 
 export function MonthForecastView({ forecast, scenario, stored, plannedExpenses, persons, places, vehicle, prices, wallets, inputError, today }: Props) {
   const targetMonth = forecast.meta.targetMonth;
+  const incompleteProjects = plannedExpenses.filter(p => p.context.project?.unpricedComponents?.length);
   const obligations = forecast.components.filter((part) => part.key.startsWith("obligation:"));
   const conditional = obligations.filter((part) => part.knowledgeState === "CONDITIONAL_UNKNOWN" && /Ornikar|Alma/iu.test(part.label));
   const pending = conditional.filter((part) => !stored.inputs.confirmedObligations.some((item) => item.componentKey === part.key)
@@ -79,6 +80,7 @@ export function MonthForecastView({ forecast, scenario, stored, plannedExpenses,
       .map(category => ({ key: category.key, label: statisticalLabels[category.key] ?? "Autre dépense" }));
 
   return <PlannedExpenseInteractions><main className={`${material.page} mx-auto max-w-[1280px] space-y-7 pb-20`}>
+    {incompleteProjects.length > 0 && <p role="status" className={`${material.glassSoft} p-4 text-sm`}>{incompleteProjects.length} projet(s) ont un budget à compléter. La projection inclut leurs coûts connus ; les montants encore inconnus restent à ajouter.</p>}
     <nav aria-label="Mois préparé" className={`${material.monthHeader} flex items-center justify-between gap-6 text-sm font-bold`}><a className={`${material.monthLink} px-3 py-2 text-slate-600`} href={`/mois-a-venir?month=${new Date(Date.UTC(Number(targetMonth.slice(0, 4)), Number(targetMonth.slice(5, 7)) - 2, 1)).toISOString().slice(0, 7)}`}>‹ Mois précédent</a><h1 className="text-center text-4xl font-black uppercase tracking-tight">{monthLabel(targetMonth)}</h1><a className={`${material.monthLink} px-3 py-2 text-slate-600`} href={`/mois-a-venir?month=${new Date(Date.UTC(Number(targetMonth.slice(0, 4)), Number(targetMonth.slice(5, 7)), 1)).toISOString().slice(0, 7)}`}>Mois suivant ›</a></nav>
     {(!stored.inputs.declaredResources["benefit:swile"] || !stored.inputs.declaredResources["benefit:edenred"])
       && <section className={`${material.glassPremium} p-5`}><h2 className="text-xl font-black">Préparer les ressources de {monthLabel(targetMonth)}</h2><p className="mt-2 text-sm">Renseignez vos titres-restaurants prévus pour ce mois, y compris 0 € si vous n’en prévoyez aucun. Les ressources et les exceptions d’un autre mois ne sont pas copiées.</p><ActionForm targetMonth={targetMonth} intent="declare-monthly-benefits" label="Enregistrer les ressources de ce mois"><Field label="Ressource Swile du mois (€)" name="swileResource" type="number" min="0" required value={stored.inputs.declaredResources["benefit:swile"]} /><Field label="Ressource Edenred du mois (€)" name="edenredResource" type="number" min="0" required value={stored.inputs.declaredResources["benefit:edenred"]} /></ActionForm></section>}

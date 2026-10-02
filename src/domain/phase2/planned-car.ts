@@ -115,7 +115,9 @@ export function applyCarResult(draft: PlannedExpenseDraft, result: PlannedCarRes
     label: "Péage estimé", quantity: "1", unitAmount: toll.amount, baselineKey: null, modulePath: [root],
     priceSource: "CALCULATED", priceSourceLabel: "HERE · route TomTom importée", fundingAllocations: [{ source: "BANK", amount: toll.amount }],
   });
-  return { ...draft, costItems: costs, context: { ...draft.context, route: { ...draft.context.route, mode: "CAR",
+  const tollPriced = toll?.amount != null || draft.context.route?.tollFreeConfirmed || costs.some(i => i.assetKey === "transport:toll");
+  return { ...draft, costItems: costs, context: { ...draft.context,
+    ...(tollPriced && draft.context.project ? { project: { ...draft.context.project, unpricedComponents: draft.context.project.unpricedComponents?.filter(v => v !== "Péages") } } : {}), route: { ...draft.context.route, mode: "CAR",
     stops: result.stops, ...(result.fuelEstimate ? { fuelEstimate: result.fuelEstimate } : { fuelEstimate: undefined }),
     ...(result.snapshot ? { liveEstimate: result.snapshot, preference: result.snapshot.preference } : { liveEstimate: undefined }) } } };
 }
@@ -149,7 +151,8 @@ export function carEstimateProblems(draft: PlannedExpenseDraft): readonly string
   const live = draft.context.route?.liveEstimate;
   if (!live) return [];
   return [...live.fuelEconomicCost === null ? ["Prix carburant indisponible : précisez le prix au litre."] : [],
-    ...live.toll.amount === null && !manualTollCost(draft.costItems) && !draft.context.route?.tollFreeConfirmed ? ["Péage non disponible : saisissez le montant ou confirmez 0 € si le trajet est gratuit."] : []];
+    ...live.toll.amount === null && !manualTollCost(draft.costItems) && !draft.context.route?.tollFreeConfirmed
+      && !draft.context.project?.unpricedComponents?.includes("Péages") ? ["Péage non disponible : saisissez le montant ou confirmez 0 € si le trajet est gratuit."] : []];
 }
 
 const fail = (): never => { throw new TypeError("PLANNED_EXPENSE_LIVE_ROUTE_INVALID"); };

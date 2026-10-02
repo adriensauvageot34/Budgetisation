@@ -17,9 +17,11 @@ import type { CostItem, FundingAllocation, FundingSource, PlannedBaselineKey, Pl
   PlannedExpenseDraft, PriceSource, ModulePath, ProspectivePlaceRef } from "@/domain/phase2/planned-contract";
 import { readPlannedContextOptions, readPlannedRouteHistory } from "./planned-context";
 import { parseCarSnapshot, parseRouteCoordinates, carFuelEstimate, carSegmentProvider, applyCarResult, carEstimateProblems } from "@/domain/phase2/planned-car";
-import { assertVisitTiming, parseVisitTiming, shiftVisitTiming, splitVisitRoute } from "@/domain/phase2/planned-visits";
+import { assertVisitTiming, parseVisitTiming, shiftVisitTiming, splitVisitRoute, plannedJourneyTiming } from "@/domain/phase2/planned-visits";
 import { assertRestaurantEstimate, parseRestaurantContext, restaurantContextIssues, restaurantNeedsAddress } from "@/domain/phase2/planned-restaurant";
 import { knownRestaurantSuggestions } from "@/domain/phase2/restaurant-places";
+import { parsePlannedProject, assertProjectIntent, projectLinkCompatible, projectAllowsDateRange, projectLodgingAssetAllowed, projectGoogleDestination } from "@/domain/phase2/planned-project";
+import { groceryBasketEstimate } from "@/domain/phase2/planned-price-estimates";
 import { estimatePlannedCar } from "./planned-car-estimation";
 import type { MonthForecastSnapshot } from "./month-forecast-snapshot";
 import { simulatePlannedExpenseScenario, type MonthInputs } from "./month-scenario";
@@ -176,9 +178,10 @@ export function parsePlannedExpenseDraft(value: unknown, targetMonth: string,
   keysOnly(contextRaw, ["participantPersonIds", "travellingParticipantPersonIds", "additionalGuestCount", "personVisited", "participantRefs", "host", "hostParticipates", "visitedPersonParticipates", "transportMode",
     "place", "purchaseMode", "housePartyPlaceMode", "visitFormat", "socialOccasion", "occasionLabel",
     "deliveryProviderKey", "deliveryProvider", "seller", "gift", "childLocalPlaceRefs", "route", "visitTiming",
-    "companionMode", "groceriesNature", "workMealMode", "outingKind", "eventName", "endDate", "noExpense", "purchaseDescription", "restaurant"],
+    "companionMode", "groceriesNature", "workMealMode", "outingKind", "eventName", "endDate", "noExpense", "purchaseDescription", "restaurant", "project"],
   "PLANNED_EXPENSE_CONTEXT_FIELDS_INVALID");
   const context: { -readonly [K in keyof PlannedExpenseContext]?: PlannedExpenseContext[K] } = {};
+  if (contextRaw.project !== undefined) context.project = parsePlannedProject(contextRaw.project);
   if (contextRaw.restaurant !== undefined) {
     if (familyKey !== "food" || raw.subtypeKey !== "restaurant") throw new TypeError("PLANNED_RESTAURANT_CONTEXT_INVALID");
     context.restaurant = parseRestaurantContext(contextRaw.restaurant);
@@ -197,7 +200,8 @@ export function parsePlannedExpenseDraft(value: unknown, targetMonth: string,
   }
   if (contextRaw.endDate !== undefined) {
     context.endDate = date(contextRaw.endDate, "PLANNED_EXPENSE_END_DATE_INVALID");
-    if (familyKey !== "visit_trip" || raw.subtypeKey !== "trip_stay" || plannedDate && context.endDate < plannedDate) throw new TypeError("PLANNED_EXPENSE_END_DATE_INVALID");
+    const rangeAllowed = context.project?.version === 2 ? projectAllowsDateRange({ familyKey, subtypeKey: raw.subtypeKey as string | null, title: raw.title as string, plannedDate, context: { ...context, outingKind: contextRaw.outingKind as PlannedExpenseContext["outingKind"] }, costItems }) : familyKey === "visit_trip" && raw.subtypeKey === "trip_stay";
+    if (!rangeAllowed || context.project?.version === 2 && !plannedDate || plannedDate && context.endDate < plannedDate) throw new TypeError("PLANNED_EXPENSE_END_DATE_INVALID");
   }
   if (contextRaw.noExpense !== undefined) {
     if (typeof contextRaw.noExpense !== "boolean") throw new TypeError("PLANNED_EXPENSE_NO_EXPENSE_INVALID");
@@ -216,7 +220,7 @@ export function parsePlannedExpenseDraft(value: unknown, targetMonth: string,
   if (contextRaw.participantPersonIds !== undefined)
     context.participantPersonIds = personIds(contextRaw.participantPersonIds, "PLANNED_EXPENSE_PARTICIPANTS_INVALID");
   if (contextRaw.visitTiming !== undefined) {
-    if (familyKey !== "visit_trip" || raw.subtypeKey !== "family_visit") throw new TypeError("PLANNED_VISIT_TIMING_FORBIDDEN");
+    if (familyKey !== "visit_trip" || raw.subtypeKey !== "family_visit" && !(contextRaw.project && (contextRaw.project as { version?: unknown }).version === 2 && raw.subtypeKey === "friend_visit")) throw new TypeError("PLANNED_VISIT_TIMING_FORBIDDEN");
     context.visitTiming = parseVisitTiming(contextRaw.visitTiming);
     assertVisitTiming(context.visitTiming, plannedDate);
     if (!context.participantPersonIds?.length) throw new TypeError("VISIT_PARTICIPANTS_REQUIRED");
@@ -405,9 +409,10 @@ export function parsePlannedExpenseDraft(value: unknown, targetMonth: string,
       throw new TypeError("PLANNED_EXPENSE_CAR_ESTIMATE_REQUIRED");
     if (liveEstimate && (liveEstimate.route.segments.length !== stops.length - 1
       || stops.slice(0, -1).some((stop, i) => carSegmentProvider(liveEstimate, i) === "TOMTOM" && (stop.distanceSource !== "TOMTOM" || stop.distanceToNextKm !== liveEstimate.route.segments[i]!.distanceKm)))) throw new TypeError("PLANNED_EXPENSE_LIVE_ROUTE_INVALID");
-    if (liveEstimate?.journey && (!context.visitTiming || JSON.stringify(context.visitTiming) !== JSON.stringify(liveEstimate.journey.timing)
+    const journeyTiming = plannedJourneyTiming({ familyKey, subtypeKey: raw.subtypeKey as string | null, plannedDate, context });
+    if (liveEstimate?.journey && (!journeyTiming || JSON.stringify(journeyTiming) !== JSON.stringify(liveEstimate.journey.timing)
       || liveEstimate.journey.outbound.route.segments.length !== stops.findIndex((stop) => stop.endpointSource === "ROOT_PLACE"))) throw new TypeError("PLANNED_VISIT_SNAPSHOT_MISMATCH");
-    if (context.visitTiming && route.mode === "CAR" && !liveEstimate?.journey) throw new TypeError("PLANNED_VISIT_SNAPSHOT_REQUIRED");
+    if (journeyTiming && route.mode === "CAR" && !liveEstimate?.journey) throw new TypeError("PLANNED_VISIT_SNAPSHOT_REQUIRED");
     const calculatedTolls = costItems.filter((item) => item.assetKey === "transport:toll" && item.priceSource === "CALCULATED");
     const allTolls = costItems.filter((item) => item.assetKey === "transport:toll");
     if (calculatedTolls.length && !liveEstimate || liveEstimate && calculatedTolls.some((item) => item.quantity !== "1" || item.unitAmount !== liveEstimate.toll.amount)
@@ -420,8 +425,8 @@ export function parsePlannedExpenseDraft(value: unknown, targetMonth: string,
       ...(route.manualFuelPrice ? { manualFuelPrice: route.manualFuelPrice as string } : {}),
       ...(route.tollFreeConfirmed !== undefined ? { tollFreeConfirmed: route.tollFreeConfirmed as boolean } : {}) };
   }
-  if (context.visitTiming && (!context.transportMode || !context.place || !context.personVisited)) throw new TypeError("PLANNED_VISIT_CONTEXT_REQUIRED");
-  if (context.visitTiming && context.personVisited?.kind === "CONTACT" && !SOCIAL_CONTACTS_V1.some((contact) => contact.key === (context.personVisited as { contactKey: string }).contactKey && contact.kind === "FAMILY")) throw new TypeError("PLANNED_VISIT_CONTACT_INVALID");
+  if (context.visitTiming && ((!context.transportMode && context.project?.version !== 2) || !context.place || !context.personVisited)) throw new TypeError("PLANNED_VISIT_CONTEXT_REQUIRED");
+  if (context.visitTiming && context.personVisited?.kind === "CONTACT" && !SOCIAL_CONTACTS_V1.some((contact) => contact.key === (context.personVisited as { contactKey: string }).contactKey && (contact.kind === "FAMILY" || context.project?.version === 2 && contact.kind === "FRIEND"))) throw new TypeError("PLANNED_VISIT_CONTACT_INVALID");
   if (purpose === "WRITE" && (familyKey === "visit_trip" && ["family_visit", "friend_visit"].includes(raw.subtypeKey as string))
     && !context.personVisited) throw new TypeError("PLANNED_EXPENSE_VISITED_PERSON_REQUIRED");
   if (familyKey === "food" && raw.subtypeKey === "work_meal" && context.participantPersonIds?.length !== 1)
@@ -494,7 +499,7 @@ export function parsePlannedExpenseDraft(value: unknown, targetMonth: string,
       && (FISHING_ASSET_LENS as readonly string[]).includes(item.assetKey);
     if (assetModule !== null && assetModule !== path.at(-1)
       && !(assetModule === "transport" && path.length === 1 && resolved.transport !== "FORBIDDEN")
-      && !fromBringItems && !fromFishing) throw new TypeError("PLANNED_EXPENSE_ASSET_MODULE_INVALID");
+      && !fromBringItems && !fromFishing && !projectLodgingAssetAllowed({ familyKey, subtypeKey: raw.subtypeKey as string | null, title: raw.title as string, plannedDate, context, costItems }, item)) throw new TypeError("PLANNED_EXPENSE_ASSET_MODULE_INVALID");
   }
   for (const [aggregateKey, descendants] of Object.entries(ASSET_AGGREGATE_DESCENDANTS)) {
     const aggregates = costItems.filter((item) => item.assetKey === aggregateKey);
@@ -534,6 +539,7 @@ export function parsePlannedExpenseDraft(value: unknown, targetMonth: string,
   if (context.route?.mode === "CAR") assertPrimaryRouteStop(context.route.stops, context.place);
   const parsed = { familyKey, subtypeKey: raw.subtypeKey as string | null, title: title(raw.title, "PLANNED_EXPENSE_TITLE_INVALID"),
     plannedDate, costItems, context };
+  assertProjectIntent(parsed);
   const restaurantProblem = restaurantContextIssues(parsed)[0];
   if (restaurantProblem) throw new TypeError(`PLANNED_${restaurantProblem.code}`);
   assertRestaurantEstimate(parsed);
@@ -557,9 +563,17 @@ const dateTime = (value: unknown): string => {
   return value;
 };
 
-async function validateReferences(client: SupabaseClient, householdId: string, draft: PlannedExpenseDraft): Promise<void> {
+async function validateReferences(client: SupabaseClient, householdId: string, draft: PlannedExpenseDraft, targetMonth: string): Promise<void> {
+  if (draft.context.project?.linkedProjectId) {
+    const { data: parent, error: linkError } = await client.from("phase2_planned_expenses")
+      .select("planned_expense_id,target_month,status,family_key,subtype_key,context,planned_date,title")
+      .eq("household_id", householdId).eq("planned_expense_id", draft.context.project.linkedProjectId).maybeSingle();
+    if (linkError) throw linkError;
+    if (!parent || parent.status !== "PLANNED" || String(parent.target_month).slice(0, 7) !== targetMonth
+      || !projectLinkCompatible(draft, { familyKey: parent.family_key, subtypeKey: parent.subtype_key, plannedDate: parent.planned_date, title: parent.title, context: parent.context, costItems: [] })) throw new TypeError("PLANNED_PROJECT_LINK_INVALID");
+  }
   const prospectiveRefs = [...draft.context.participantRefs ?? [], ...draft.context.host ? [draft.context.host] : []];
-  const participantIds = [...draft.context.participantPersonIds ?? [], ...prospectiveRefs.flatMap((ref) => ref.kind === "HOUSEHOLD_PERSON" ? [ref.personId] : [])];
+  const participantIds = [...draft.context.participantPersonIds ?? [], ...draft.context.project?.financialScope?.personIds ?? [], ...prospectiveRefs.flatMap((ref) => ref.kind === "HOUSEHOLD_PERSON" ? [ref.personId] : [])];
   const travellerIds = draft.context.travellingParticipantPersonIds ?? [];
   const workMealPeople = new Set(draft.costItems.flatMap((item) => item.baselineKey === "adrien-work-meals" ? ["Adrien"]
     : item.baselineKey === "manon-work-meals" ? ["Manon"] : []));
@@ -579,6 +593,15 @@ async function validateReferences(client: SupabaseClient, householdId: string, d
     throw new TypeError("PLANNED_EXPENSE_PERSON_NOT_IN_HOUSEHOLD");
   if ([...workMealPeople].some((name) => !people.some((person) => person.display_name === name && participantIds.includes(person.person_id))))
     throw new TypeError("PLANNED_EXPENSE_WORK_MEAL_BASELINE_PERSON_MISMATCH");
+  if (draft.context.project?.version === 2) {
+    const sources = new Set(draft.costItems.flatMap(item => item.fundingAllocations?.filter(p => p.source !== "BANK").map(p => p.source) ?? []));
+    if (sources.size) {
+      const wallets = await createCanonicalReadClient().from("benefit_wallets").select("provider,owner_person_id,status").eq("household_id", householdId);
+      if (wallets.error) throw wallets.error;
+      if ([...sources].some(source => !wallets.data?.some(w => w.provider === source && w.status !== "INACTIVE"
+        && draft.context.project?.financialScope?.personIds.includes(w.owner_person_id)))) throw new TypeError("PLANNED_PROJECT_WALLET_OWNER_INVALID");
+    }
+  }
   if (draft.familyKey === "food" && draft.subtypeKey === "work_meal") {
     const name = people.find((person) => person.person_id === participantIds[0])?.display_name;
     if (name !== "Adrien" && name !== "Manon") throw new TypeError("PLANNED_EXPENSE_WORK_MEAL_PERSON_UNSUPPORTED");
@@ -630,7 +653,7 @@ async function validateReferences(client: SupabaseClient, householdId: string, d
     for (const [module, ref] of Object.entries(draft.context.childLocalPlaceRefs ?? {})) if (ref?.kind === "KNOWN") {
       const place = options.places.find((candidate) => candidate.placeId === ref.placeId);
       const roles = place ? derivePlannedPlaceRoles(place) : [];
-      if (!place || place.privatePlace || !childPlaceRoles(module as AssetModule).some((role) => roles.includes(role)))
+      if (!place || place.privatePlace && module !== "house_party" || !childPlaceRoles(module as AssetModule).some((role) => roles.includes(role)))
         throw new TypeError("PLANNED_EXPENSE_CHILD_PLACE_INVALID");
     }
     if (draft.context.route?.stops.some((stop) => stop.placeId && !options.places.some((place) => place.placeId === stop.placeId)))
@@ -676,7 +699,7 @@ export async function resolvePlannedExpenseDraft(client: SupabaseClient, househo
     personName = people.data?.find((person) => person.person_id === draft.context.participantPersonIds?.[0])?.display_name;
   }
   const resolved = resolvePlannedContext({ familyKey: draft.familyKey, subtypeKey: draft.subtypeKey, modifiers: plannedContextModifiers(draft.context, personName) });
-  if (resolved.baseline.mode === "AUTO" && resolved.baseline.key) draft = { ...draft, costItems: draft.costItems.map((item) =>
+  if (resolved.baseline.mode === "AUTO" && resolved.baseline.key || draft.context.project?.version === 2) draft = { ...draft, costItems: draft.costItems.map((item) =>
     item.modulePath?.length !== 2 && costAllowsBaseline(item) ? { ...item, baselineKey: resolved.baseline.key } : item) };
   if (draft.context.route?.liveEstimate) {
     const reader = createCanonicalReadClient();
@@ -685,9 +708,9 @@ export async function resolvePlannedExpenseDraft(client: SupabaseClient, househo
     const options = await readPlannedContextOptions(reader, householdId, (people.data ?? []).map((p) => ({ personId: p.person_id, displayName: p.display_name })));
     const previous = draft.context.route.liveEstimate;
     const result = await estimatePlannedCar({ stops: draft.context.route.stops, plannedDate: draft.plannedDate,
-      tripTiming: draft.context.visitTiming, plannedTime: draft.context.route.plannedTime ?? previous.plannedTime, timeKind: draft.context.route.timeKind ?? previous.timeKind,
+      tripTiming: plannedJourneyTiming(draft), plannedTime: draft.context.route.plannedTime ?? previous.plannedTime, timeKind: draft.context.route.timeKind ?? previous.timeKind,
       preference: draft.context.route.preference ?? previous.preference, manualFuelPrice: draft.context.route.manualFuelPrice }, { places: options.places, vehicle: options.vehicle,
-        restaurantGooglePlaceId: draft.context.restaurant?.googlePlaceId, history: await readPlannedRouteHistory(reader, householdId) });
+        restaurantGooglePlaceId: draft.context.restaurant?.googlePlaceId, googleDestination: projectGoogleDestination(draft), history: await readPlannedRouteHistory(reader, householdId) });
     if (!result.snapshot || !result.fuelEstimate) throw new TypeError("PLANNED_ROUTE_PRICE_UNAVAILABLE");
     const changed = previous.vehicleId !== result.snapshot.vehicleId || previous.route.geometryHash !== result.snapshot.route.geometryHash
       || previous.fuelEconomicCost !== result.snapshot.fuelEconomicCost || previous.toll.amount !== result.snapshot.toll.amount;
@@ -705,7 +728,7 @@ export async function resolvePlannedExpenseDraft(client: SupabaseClient, househo
       costItems: draft.costItems.map((item) => item.assetKey === "transport:fuel_usage"
         ? { ...item, unitAmount: route.fuelEstimate!.cost } : item) }, targetMonth, purpose);
   }
-  await validateReferences(client, uuid(householdId, "PLANNED_EXPENSE_HOUSEHOLD_INVALID"), draft);
+  await validateReferences(client, uuid(householdId, "PLANNED_EXPENSE_HOUSEHOLD_INVALID"), draft, targetMonth);
   return draft;
 }
 
@@ -723,6 +746,11 @@ export async function preparePlannedExpenseSimulation(client: SupabaseClient, ho
   forecast: MonthForecastSnapshot, inputs: MonthInputs, saved: readonly PlannedExpense[],
   rawDraft: unknown, asOfDate: string, editedId?: string, purpose: "WRITE" | "PREVIEW" = "WRITE") {
   const draft = await resolvePlannedExpenseDraft(client, householdId, forecast.meta.targetMonth, rawDraft, purpose);
+  for (const item of draft.costItems) if (draft.context.project?.version === 2 && item.assetKey === "groceries:food" && item.priceSource === "LAST_KNOWN") {
+    const estimate = groceryBasketEstimate(forecast.predictionEvidence?.history.economicEntries ?? []);
+    if (!estimate || item.quantity !== "1" || item.unitAmount !== estimate.unitAmount || item.priceSourceLabel !== estimate.sourceLabel)
+      throw new TypeError("PLANNED_PROJECT_ESTIMATE_CHANGED");
+  }
   const existing = editedId === undefined ? undefined : saved.find((item) => item.id === uuid(editedId, "PLANNED_EXPENSE_ID_INVALID"));
   if (editedId !== undefined && !existing)
     throw new TypeError("PLANNED_EXPENSE_EDIT_TARGET_INVALID");
@@ -739,6 +767,7 @@ export async function createPlannedExpense(client: SupabaseClient, householdId: 
   userId: string, rawDraft: unknown, requestId: string): Promise<PlannedExpense> {
   const id = uuid(requestId, "PLANNED_EXPENSE_ID_INVALID");
   const draft = await resolvePlannedExpenseDraft(client, householdId, targetMonth, rawDraft);
+  if (draft.context.project?.linkedProjectId === id) throw new TypeError("PLANNED_PROJECT_LINK_INVALID");
   const { data, error } = await client.from("phase2_planned_expenses").insert({
     planned_expense_id: id, household_id: householdId, target_month: `${targetMonth}-01`,
     ...draftColumns(draft), status: "PLANNED", created_by: uuid(userId, "PLANNED_EXPENSE_USER_INVALID"), updated_by: userId,
@@ -767,6 +796,7 @@ export async function updatePlannedExpense(client: SupabaseClient, householdId: 
   if (previous.status !== "PLANNED") throw new TypeError("PLANNED_EXPENSE_REALIZED_EDIT_FORBIDDEN");
   assertVersion(previous, expectedUpdatedAt);
   const draft = await resolvePlannedExpenseDraft(client, householdId, previous.targetMonth, rawDraft);
+  if (draft.context.project?.linkedProjectId === id) throw new TypeError("PLANNED_PROJECT_LINK_INVALID");
   return compareAndSet(client, previous, userId, draft, "PLANNED", expectedUpdatedAt);
 }
 export async function deletePlannedExpense(client: SupabaseClient, householdId: string, id: string,
@@ -830,6 +860,7 @@ export async function declarePlannedExpense(client: SupabaseClient, householdId:
   preflight: (draft: PlannedExpenseDraft, previous: PlannedExpense) => Promise<void>, correction = false) {
   const previous = await requireExpense(client, householdId, id);
   const draft = await resolvePlannedExpenseDraft(client, householdId, previous.targetMonth, rawDraft);
+  if (draft.context.project?.unpricedComponents?.length) throw new TypeError("PLANNED_REALITY_BUDGET_UNKNOWN");
   if (!correction && previous.status === "DECLARED_REALIZED" && previous.updatedBy === userId && sameIntent(previous, draft))
     return previous; // identical confirmation replay; no second write or contribution
   assertVersion(previous, expected, true);
@@ -869,7 +900,7 @@ export async function reportPlannedExpense(client: SupabaseClient, householdId: 
       if (error) throw error;
       const reader = createCanonicalReadClient();
       const options = await readPlannedContextOptions(reader, householdId, (people ?? []).filter((p) => p.status === "active").map((p) => ({ personId: p.person_id, displayName: p.display_name })));
-      const result = await estimatePlannedCar({ stops: raw.context.route.stops, plannedDate, tripTiming: raw.context.visitTiming,
+      const result = await estimatePlannedCar({ stops: raw.context.route.stops, plannedDate, tripTiming: plannedJourneyTiming(raw),
         preference: raw.context.route.preference, manualFuelPrice: raw.context.route.manualFuelPrice }, { places: options.places, vehicle: options.vehicle, history: await readPlannedRouteHistory(reader, householdId) });
       raw = applyCarResult(raw, result, randomUUID);
     }

@@ -47,7 +47,27 @@ export type PlannedRestaurantContext = Readonly<{
   sharedRide?: "NO_CONTRIBUTION" | "CONTRIBUTION";
   priceBasis?: "KNOWN" | "DETAILED" | "ESTIMATED";
 }>;
+/** Durable user intent; knowledge and question/navigation state are never persisted. */
+export type PlannedProjectContext = Readonly<{
+  version: 2;
+  financialScope?: Readonly<{ personIds: readonly string[]; count: number }>;
+  moment?: "NONE" | "MORNING" | "LUNCH" | "EVENING" | "EXACT";
+  exactTime?: string;
+  channel?: "STORE" | "DELIVERY" | "PICKUP" | "SECOND_HAND" | "UNDECIDED";
+  entity?: Readonly<{ kind: "VENUE" | "PRODUCT" | "EVENT" | "DESTINATION" | "SELLER";
+    label: string; googlePlaceId?: string; city?: string; address?: string }>;
+  sellerGooglePlaceId?: string;
+  unpricedComponents?: readonly string[];
+  tripKind?: "STAY" | "PUNCTUAL";
+  lodging?: "RELATIVE" | "HOTEL" | "HOSTEL" | "RENTAL" | "OTHER" | "LATER";
+  mealFormat?: "TWO" | "GROUP" | "APERO" | "MEAL";
+  groceryFocus?: "FOOD" | "HYGIENE" | "CLEANING" | "DRINKS" | "OTHER";
+  automotiveKind?: "PRODUCT" | "SERVICE";
+  linkedProjectId?: string;
+  shareTransport?: boolean;
+}>;
 export type PlannedExpenseContext = Readonly<{ participantPersonIds?: readonly string[]; travellingParticipantPersonIds?: readonly string[];
+  project?: PlannedProjectContext;
   restaurant?: PlannedRestaurantContext;
   visitTiming?: PlannedTripTiming;
   companionMode?: "SOLO" | "COUPLE" | "GROUP";

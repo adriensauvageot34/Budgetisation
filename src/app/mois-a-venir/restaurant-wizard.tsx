@@ -1,4 +1,5 @@
 "use client";
+/** Legacy screen kept for compatibility fixtures. New drafts use ContextualProjectWizard. */
 import { useEffect, useRef, useState, type Dispatch, type ReactNode, type SetStateAction } from "react";
 import { ArrowLeft, Bike, Bus, Car, Coffee, Footprints, Heart, MapPin, TrainFront, Users, Utensils, Wallet } from "lucide-react";
 import { commitBuilderCost, deriveBuilderReadiness, discardSuspended, editBuilderDraft, materializeBuilderDraft, setBuilderRootBaseline, undoBuilderChange, type BuilderState } from "@/domain/phase2/planned-builder";
