@@ -5,8 +5,8 @@ import { deduplicateRestaurantSuggestions, knownRestaurantSuggestions, usedResta
   type RestaurantSuggestion, type SelectedRestaurantPlace, type UsedRestaurantRef } from "@/domain/phase2/restaurant-places";
 import styles from "./planned-wizard.module.css";
 
-export function GoogleMapsAttribution() {
-  return <span className="inline-flex items-center gap-2"><span translate="no" style={{ fontFamily: "sans-serif", fontSize: 12, fontWeight: 400, fontStyle: "normal", letterSpacing: "normal", color: "#5e5e5e", whiteSpace: "nowrap" }}>Google Maps</span><a href="/mentions-places" target="_blank" rel="noopener noreferrer" aria-label="Conditions et confidentialité de la recherche de lieux" className="text-xs text-slate-500 underline">ⓘ</a></span>;
+export function GoogleMapsAttribution({ showPolicyLink = true }: { showPolicyLink?: boolean }) {
+  return <span className="inline-flex items-center gap-2"><span translate="no" style={{ fontFamily: "sans-serif", fontSize: 12, fontWeight: 400, fontStyle: "normal", letterSpacing: "normal", color: "#5e5e5e", whiteSpace: "nowrap" }}>Google Maps</span>{showPolicyLink && <a href="/mentions-places" target="_blank" rel="noopener noreferrer" aria-label="Conditions et confidentialité de la recherche de lieux" className="text-xs text-slate-500 underline">ⓘ</a>}</span>;
 }
 export async function fetchRestaurantPlace(placeId: string, sessionToken?: string, signal?: AbortSignal): Promise<SelectedRestaurantPlace> {
   const response = await fetch("/api/places/details", { method: "POST", cache: "no-store", signal,
