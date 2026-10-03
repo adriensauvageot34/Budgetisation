@@ -1,5 +1,7 @@
 # Glass intent backgrounds — generation prompts
 
+> Archive du 2 octobre 2026. Cette direction et ses neuf fichiers sont remplacés par la bibliothèque Clay du 3 octobre ; aucun composant de production ne consomme ces images. Voir README.md et builder/clay/manifest.json.
+
 Built-in `image_gen`, original generation per asset, then built-in edit for the friend scene. Final production exports: 960 × 640 px, WebP quality 88. UI uses its original card proportions with cover cropping; the friend scene uses top alignment to retain both faces. Originals remain in the generated-images directory outside the repository.
 
 ## Shared prompt

@@ -1,0 +1,3372 @@
+{
+  "catalogCount": 210,
+  "choices": [
+    {
+      "assetKey": "intent:restaurant",
+      "label": "Restaurant",
+      "flow": "restaurant",
+      "usage": "Entrée du Builder",
+      "currentAsset": "card-*-glass.webp",
+      "newAssetRequired": "OUI",
+      "illustration": "intent/restaurant"
+    },
+    {
+      "assetKey": "intent:fast_food",
+      "label": "Fast-food / snack",
+      "flow": "fast_food",
+      "usage": "Entrée du Builder",
+      "currentAsset": "card-*-glass.webp",
+      "newAssetRequired": "OUI",
+      "illustration": "intent/fast-food"
+    },
+    {
+      "assetKey": "intent:work_meal",
+      "label": "Repas au travail",
+      "flow": "work_meal",
+      "usage": "Entrée du Builder",
+      "currentAsset": "card-*-glass.webp",
+      "newAssetRequired": "OUI",
+      "illustration": "intent/work-meal"
+    },
+    {
+      "assetKey": "intent:groceries",
+      "label": "Courses",
+      "flow": "groceries",
+      "usage": "Entrée du Builder",
+      "currentAsset": "card-*-glass.webp",
+      "newAssetRequired": "OUI",
+      "illustration": "intent/groceries"
+    },
+    {
+      "assetKey": "intent:party",
+      "label": "Soirée",
+      "flow": "party",
+      "usage": "Entrée du Builder",
+      "currentAsset": "card-*-glass.webp",
+      "newAssetRequired": "OUI",
+      "illustration": "intent/party"
+    },
+    {
+      "assetKey": "intent:visit",
+      "label": "Voir quelqu’un",
+      "flow": "visit",
+      "usage": "Entrée du Builder",
+      "currentAsset": "card-*-glass.webp",
+      "newAssetRequired": "OUI",
+      "illustration": "intent/visit"
+    },
+    {
+      "assetKey": "intent:activity",
+      "label": "Activité",
+      "flow": "activity",
+      "usage": "Entrée du Builder",
+      "currentAsset": "card-*-glass.webp",
+      "newAssetRequired": "OUI",
+      "illustration": "intent/activity"
+    },
+    {
+      "assetKey": "intent:purchase",
+      "label": "Achat",
+      "flow": "purchase",
+      "usage": "Entrée du Builder",
+      "currentAsset": "card-*-glass.webp",
+      "newAssetRequired": "OUI",
+      "illustration": "intent/purchase"
+    },
+    {
+      "assetKey": "intent:trip",
+      "label": "Voyage / déplacement",
+      "flow": "trip",
+      "usage": "Entrée du Builder",
+      "currentAsset": "card-*-glass.webp",
+      "newAssetRequired": "OUI",
+      "illustration": "intent/travel"
+    },
+    {
+      "assetKey": "asset:bar:beer",
+      "label": "Bière",
+      "flow": "bar",
+      "usage": "Catalogue de coûts / recherche produit",
+      "currentAsset": "Icône native / tuile neutre",
+      "newAssetRequired": "OUI",
+      "illustration": "drinks/beer"
+    },
+    {
+      "assetKey": "asset:bar:wine",
+      "label": "Verre de vin",
+      "flow": "bar",
+      "usage": "Catalogue de coûts / recherche produit",
+      "currentAsset": "Icône native / tuile neutre",
+      "newAssetRequired": "OUI",
+      "illustration": "drinks/wine-glass"
+    },
+    {
+      "assetKey": "asset:bar:cocktail",
+      "label": "Cocktail",
+      "flow": "bar",
+      "usage": "Catalogue de coûts / recherche produit",
+      "currentAsset": "Icône native / tuile neutre",
+      "newAssetRequired": "OUI",
+      "illustration": "intent/party"
+    },
+    {
+      "assetKey": "asset:bar:shot",
+      "label": "Shot",
+      "flow": "bar",
+      "usage": "Catalogue de coûts / recherche produit",
+      "currentAsset": "Icône native / tuile neutre",
+      "newAssetRequired": "OUI",
+      "illustration": "drinks/shot"
+    },
+    {
+      "assetKey": "asset:bar:tapas",
+      "label": "Planche / tapas",
+      "flow": "bar",
+      "usage": "Catalogue de coûts / recherche produit",
+      "currentAsset": "Icône native / tuile neutre",
+      "newAssetRequired": "OUI",
+      "illustration": "food/tapas"
+    },
+    {
+      "assetKey": "asset:bar:parking",
+      "label": "Parking",
+      "flow": "bar",
+      "usage": "Catalogue de coûts / recherche produit",
+      "currentAsset": "Icône native / tuile neutre",
+      "newAssetRequired": "OUI",
+      "illustration": "transport/parking"
+    },
+    {
+      "assetKey": "asset:bar:entry",
+      "label": "Entrée / cover",
+      "flow": "bar",
+      "usage": "Catalogue de coûts / recherche produit",
+      "currentAsset": "Icône native / tuile neutre",
+      "newAssetRequired": "OUI",
+      "illustration": "intent/activity"
+    },
+    {
+      "assetKey": "asset:club:ticket",
+      "label": "Ticket / entrée",
+      "flow": "club",
+      "usage": "Catalogue de coûts / recherche produit",
+      "currentAsset": "Icône native / tuile neutre",
+      "newAssetRequired": "OUI",
+      "illustration": "intent/activity"
+    },
+    {
+      "assetKey": "asset:club:alcohol",
+      "label": "Verre alcool",
+      "flow": "club",
+      "usage": "Catalogue de coûts / recherche produit",
+      "currentAsset": "Icône native / tuile neutre",
+      "newAssetRequired": "OUI",
+      "illustration": "drinks/shot"
+    },
+    {
+      "assetKey": "asset:club:shot",
+      "label": "Shot",
+      "flow": "club",
+      "usage": "Catalogue de coûts / recherche produit",
+      "currentAsset": "Icône native / tuile neutre",
+      "newAssetRequired": "OUI",
+      "illustration": "drinks/shot"
+    },
+    {
+      "assetKey": "asset:club:soft",
+      "label": "Boisson sans alcool",
+      "flow": "club",
+      "usage": "Catalogue de coûts / recherche produit",
+      "currentAsset": "Icône native / tuile neutre",
+      "newAssetRequired": "OUI",
+      "illustration": "drinks/soft"
+    },
+    {
+      "assetKey": "asset:club:water",
+      "label": "Eau",
+      "flow": "club",
+      "usage": "Catalogue de coûts / recherche produit",
+      "currentAsset": "Icône native / tuile neutre",
+      "newAssetRequired": "OUI",
+      "illustration": "drinks/water"
+    },
+    {
+      "assetKey": "asset:club:food",
+      "label": "Nourriture sur place",
+      "flow": "club",
+      "usage": "Catalogue de coûts / recherche produit",
+      "currentAsset": "Icône native / tuile neutre",
+      "newAssetRequired": "OUI",
+      "illustration": "intent/fast-food"
+    },
+    {
+      "assetKey": "asset:club:uber_out",
+      "label": "Uber aller",
+      "flow": "club",
+      "usage": "Catalogue de coûts / recherche produit",
+      "currentAsset": "Icône native / tuile neutre",
+      "newAssetRequired": "OUI",
+      "illustration": "transport/car"
+    },
+    {
+      "assetKey": "asset:club:uber_back",
+      "label": "Uber retour",
+      "flow": "club",
+      "usage": "Catalogue de coûts / recherche produit",
+      "currentAsset": "Icône native / tuile neutre",
+      "newAssetRequired": "OUI",
+      "illustration": "transport/car"
+    },
+    {
+      "assetKey": "asset:club:parking",
+      "label": "Parking",
+      "flow": "club",
+      "usage": "Catalogue de coûts / recherche produit",
+      "currentAsset": "Icône native / tuile neutre",
+      "newAssetRequired": "OUI",
+      "illustration": "transport/parking"
+    },
+    {
+      "assetKey": "asset:club:cloakroom",
+      "label": "Vestiaire",
+      "flow": "club",
+      "usage": "Catalogue de coûts / recherche produit",
+      "currentAsset": "Icône native / tuile neutre",
+      "newAssetRequired": "OUI",
+      "illustration": "misc/lockers"
+    },
+    {
+      "assetKey": "asset:house_party:vodka",
+      "label": "Vodka",
+      "flow": "house_party",
+      "usage": "Catalogue de coûts / recherche produit",
+      "currentAsset": "Icône native / tuile neutre",
+      "newAssetRequired": "OUI",
+      "illustration": "drinks/vodka"
+    },
+    {
+      "assetKey": "asset:house_party:crazy_tiger",
+      "label": "Crazy Tiger sans alcool",
+      "flow": "house_party",
+      "usage": "Catalogue de coûts / recherche produit",
+      "currentAsset": "Icône native / tuile neutre",
+      "newAssetRequired": "OUI",
+      "illustration": "drinks/energy"
+    },
+    {
+      "assetKey": "asset:house_party:mixer",
+      "label": "Diluant sans alcool",
+      "flow": "house_party",
+      "usage": "Catalogue de coûts / recherche produit",
+      "currentAsset": "Icône native / tuile neutre",
+      "newAssetRequired": "OUI",
+      "illustration": "drinks/soft"
+    },
+    {
+      "assetKey": "asset:house_party:beer",
+      "label": "Bière",
+      "flow": "house_party",
+      "usage": "Catalogue de coûts / recherche produit",
+      "currentAsset": "Icône native / tuile neutre",
+      "newAssetRequired": "OUI",
+      "illustration": "drinks/beer"
+    },
+    {
+      "assetKey": "asset:house_party:wine",
+      "label": "Vin",
+      "flow": "house_party",
+      "usage": "Catalogue de coûts / recherche produit",
+      "currentAsset": "Icône native / tuile neutre",
+      "newAssetRequired": "OUI",
+      "illustration": "drinks/wine-bottle"
+    },
+    {
+      "assetKey": "asset:house_party:rum",
+      "label": "Rhum",
+      "flow": "house_party",
+      "usage": "Catalogue de coûts / recherche produit",
+      "currentAsset": "Icône native / tuile neutre",
+      "newAssetRequired": "OUI",
+      "illustration": "drinks/rum"
+    },
+    {
+      "assetKey": "asset:house_party:snack",
+      "label": "Snack",
+      "flow": "house_party",
+      "usage": "Catalogue de coûts / recherche produit",
+      "currentAsset": "Icône native / tuile neutre",
+      "newAssetRequired": "OUI",
+      "illustration": "food/snack"
+    },
+    {
+      "assetKey": "asset:house_party:chips",
+      "label": "Chips",
+      "flow": "house_party",
+      "usage": "Catalogue de coûts / recherche produit",
+      "currentAsset": "Icône native / tuile neutre",
+      "newAssetRequired": "OUI",
+      "illustration": "food/chips"
+    },
+    {
+      "assetKey": "asset:groceries:food",
+      "label": "Courses alimentaires",
+      "flow": "groceries",
+      "usage": "Catalogue de coûts / recherche produit",
+      "currentAsset": "Icône native / tuile neutre",
+      "newAssetRequired": "OUI",
+      "illustration": "intent/groceries"
+    },
+    {
+      "assetKey": "asset:groceries:meat",
+      "label": "Viande",
+      "flow": "groceries",
+      "usage": "Catalogue de coûts / recherche produit",
+      "currentAsset": "Icône native / tuile neutre",
+      "newAssetRequired": "OUI",
+      "illustration": "food/meat"
+    },
+    {
+      "assetKey": "asset:groceries:fish",
+      "label": "Poisson",
+      "flow": "groceries",
+      "usage": "Catalogue de coûts / recherche produit",
+      "currentAsset": "Icône native / tuile neutre",
+      "newAssetRequired": "OUI",
+      "illustration": "food/fish"
+    },
+    {
+      "assetKey": "asset:groceries:produce",
+      "label": "Fruits / légumes",
+      "flow": "groceries",
+      "usage": "Catalogue de coûts / recherche produit",
+      "currentAsset": "Icône native / tuile neutre",
+      "newAssetRequired": "OUI",
+      "illustration": "food/produce"
+    },
+    {
+      "assetKey": "asset:groceries:fresh",
+      "label": "Produits frais",
+      "flow": "groceries",
+      "usage": "Catalogue de coûts / recherche produit",
+      "currentAsset": "Icône native / tuile neutre",
+      "newAssetRequired": "OUI",
+      "illustration": "food/fresh"
+    },
+    {
+      "assetKey": "asset:groceries:pantry",
+      "label": "Féculents / épicerie",
+      "flow": "groceries",
+      "usage": "Catalogue de coûts / recherche produit",
+      "currentAsset": "Icône native / tuile neutre",
+      "newAssetRequired": "OUI",
+      "illustration": "food/pantry"
+    },
+    {
+      "assetKey": "asset:groceries:drinks",
+      "label": "Boissons sans alcool",
+      "flow": "groceries",
+      "usage": "Catalogue de coûts / recherche produit",
+      "currentAsset": "Icône native / tuile neutre",
+      "newAssetRequired": "OUI",
+      "illustration": "drinks/soft"
+    },
+    {
+      "assetKey": "asset:groceries:snacks",
+      "label": "Goûters",
+      "flow": "groceries",
+      "usage": "Catalogue de coûts / recherche produit",
+      "currentAsset": "Icône native / tuile neutre",
+      "newAssetRequired": "OUI",
+      "illustration": "food/snack"
+    },
+    {
+      "assetKey": "asset:groceries:dessert",
+      "label": "Dessert à apporter",
+      "flow": "groceries",
+      "usage": "Catalogue de coûts / recherche produit",
+      "currentAsset": "Icône native / tuile neutre",
+      "newAssetRequired": "OUI",
+      "illustration": "food/dessert"
+    },
+    {
+      "assetKey": "asset:groceries:hygiene",
+      "label": "Hygiène / papier",
+      "flow": "groceries",
+      "usage": "Catalogue de coûts / recherche produit",
+      "currentAsset": "Icône native / tuile neutre",
+      "newAssetRequired": "OUI",
+      "illustration": "household/toilet-paper"
+    },
+    {
+      "assetKey": "asset:groceries:special_meal",
+      "label": "Courses pour repas spécial / amis",
+      "flow": "groceries",
+      "usage": "Catalogue de coûts / recherche produit",
+      "currentAsset": "Icône native / tuile neutre",
+      "newAssetRequired": "OUI",
+      "illustration": "food/main"
+    },
+    {
+      "assetKey": "asset:restaurant:starter",
+      "label": "Entrée",
+      "flow": "restaurant",
+      "usage": "Catalogue de coûts / recherche produit",
+      "currentAsset": "Icône native / tuile neutre",
+      "newAssetRequired": "OUI",
+      "illustration": "food/starter"
+    },
+    {
+      "assetKey": "asset:restaurant:main",
+      "label": "Plat",
+      "flow": "restaurant",
+      "usage": "Catalogue de coûts / recherche produit",
+      "currentAsset": "Icône native / tuile neutre",
+      "newAssetRequired": "OUI",
+      "illustration": "food/main"
+    },
+    {
+      "assetKey": "asset:restaurant:dessert",
+      "label": "Dessert",
+      "flow": "restaurant",
+      "usage": "Catalogue de coûts / recherche produit",
+      "currentAsset": "Icône native / tuile neutre",
+      "newAssetRequired": "OUI",
+      "illustration": "food/dessert"
+    },
+    {
+      "assetKey": "asset:restaurant:wine_glass",
+      "label": "Verre de vin",
+      "flow": "restaurant",
+      "usage": "Catalogue de coûts / recherche produit",
+      "currentAsset": "Icône native / tuile neutre",
+      "newAssetRequired": "OUI",
+      "illustration": "drinks/wine-glass"
+    },
+    {
+      "assetKey": "asset:restaurant:wine_bottle",
+      "label": "Bouteille de vin",
+      "flow": "restaurant",
+      "usage": "Catalogue de coûts / recherche produit",
+      "currentAsset": "Icône native / tuile neutre",
+      "newAssetRequired": "OUI",
+      "illustration": "drinks/wine-bottle"
+    },
+    {
+      "assetKey": "asset:restaurant:beer",
+      "label": "Bière",
+      "flow": "restaurant",
+      "usage": "Catalogue de coûts / recherche produit",
+      "currentAsset": "Icône native / tuile neutre",
+      "newAssetRequired": "OUI",
+      "illustration": "drinks/beer"
+    },
+    {
+      "assetKey": "asset:restaurant:cocktail",
+      "label": "Cocktail",
+      "flow": "restaurant",
+      "usage": "Catalogue de coûts / recherche produit",
+      "currentAsset": "Icône native / tuile neutre",
+      "newAssetRequired": "OUI",
+      "illustration": "intent/party"
+    },
+    {
+      "assetKey": "asset:restaurant:soft",
+      "label": "Soft",
+      "flow": "restaurant",
+      "usage": "Catalogue de coûts / recherche produit",
+      "currentAsset": "Icône native / tuile neutre",
+      "newAssetRequired": "OUI",
+      "illustration": "drinks/soft"
+    },
+    {
+      "assetKey": "asset:restaurant:coffee",
+      "label": "Café",
+      "flow": "restaurant",
+      "usage": "Catalogue de coûts / recherche produit",
+      "currentAsset": "Icône native / tuile neutre",
+      "newAssetRequired": "OUI",
+      "illustration": "drinks/coffee"
+    },
+    {
+      "assetKey": "asset:restaurant:water",
+      "label": "Eau",
+      "flow": "restaurant",
+      "usage": "Catalogue de coûts / recherche produit",
+      "currentAsset": "Icône native / tuile neutre",
+      "newAssetRequired": "OUI",
+      "illustration": "drinks/water"
+    },
+    {
+      "assetKey": "asset:restaurant:uber",
+      "label": "Uber",
+      "flow": "restaurant",
+      "usage": "Catalogue de coûts / recherche produit",
+      "currentAsset": "Icône native / tuile neutre",
+      "newAssetRequired": "OUI",
+      "illustration": "transport/car"
+    },
+    {
+      "assetKey": "asset:restaurant:parking",
+      "label": "Parking",
+      "flow": "restaurant",
+      "usage": "Catalogue de coûts / recherche produit",
+      "currentAsset": "Icône native / tuile neutre",
+      "newAssetRequired": "OUI",
+      "illustration": "transport/parking"
+    },
+    {
+      "assetKey": "asset:restaurant:meal_total",
+      "label": "Repas et boissons sans alcool",
+      "flow": "restaurant",
+      "usage": "Catalogue de coûts / recherche produit",
+      "currentAsset": "Icône native / tuile neutre",
+      "newAssetRequired": "OUI",
+      "illustration": "food/main"
+    },
+    {
+      "assetKey": "asset:restaurant:alcohol_total",
+      "label": "Alcool",
+      "flow": "restaurant",
+      "usage": "Catalogue de coûts / recherche produit",
+      "currentAsset": "Icône native / tuile neutre",
+      "newAssetRequired": "OUI",
+      "illustration": "drinks/wine-glass"
+    },
+    {
+      "assetKey": "asset:restaurant:menu",
+      "label": "Menu",
+      "flow": "restaurant",
+      "usage": "Catalogue de coûts / recherche produit",
+      "currentAsset": "Icône native / tuile neutre",
+      "newAssetRequired": "OUI",
+      "illustration": "food/main"
+    },
+    {
+      "assetKey": "asset:restaurant:digestif",
+      "label": "Digestif / alcool",
+      "flow": "restaurant",
+      "usage": "Catalogue de coûts / recherche produit",
+      "currentAsset": "Icône native / tuile neutre",
+      "newAssetRequired": "OUI",
+      "illustration": "drinks/shot"
+    },
+    {
+      "assetKey": "asset:fast_food:burger",
+      "label": "Sandwich / burger",
+      "flow": "fast_food",
+      "usage": "Catalogue de coûts / recherche produit",
+      "currentAsset": "Icône native / tuile neutre",
+      "newAssetRequired": "OUI",
+      "illustration": "intent/fast-food"
+    },
+    {
+      "assetKey": "asset:fast_food:thai",
+      "label": "Thaï",
+      "flow": "fast_food",
+      "usage": "Catalogue de coûts / recherche produit",
+      "currentAsset": "Icône native / tuile neutre",
+      "newAssetRequired": "OUI",
+      "illustration": "food/thai"
+    },
+    {
+      "assetKey": "asset:fast_food:fries",
+      "label": "Accompagnement",
+      "flow": "fast_food",
+      "usage": "Catalogue de coûts / recherche produit",
+      "currentAsset": "Icône native / tuile neutre",
+      "newAssetRequired": "OUI",
+      "illustration": "food/fries"
+    },
+    {
+      "assetKey": "asset:fast_food:drink",
+      "label": "Boisson sans alcool",
+      "flow": "fast_food",
+      "usage": "Catalogue de coûts / recherche produit",
+      "currentAsset": "Icône native / tuile neutre",
+      "newAssetRequired": "OUI",
+      "illustration": "drinks/soft"
+    },
+    {
+      "assetKey": "asset:fast_food:tacos",
+      "label": "Tacos / kebab",
+      "flow": "fast_food",
+      "usage": "Catalogue de coûts / recherche produit",
+      "currentAsset": "Icône native / tuile neutre",
+      "newAssetRequired": "OUI",
+      "illustration": "food/tacos"
+    },
+    {
+      "assetKey": "asset:fast_food:kebab",
+      "label": "Kebab",
+      "flow": "fast_food",
+      "usage": "Catalogue de coûts / recherche produit",
+      "currentAsset": "Icône native / tuile neutre",
+      "newAssetRequired": "OUI",
+      "illustration": "food/kebab"
+    },
+    {
+      "assetKey": "asset:fast_food:pizza",
+      "label": "Pizza",
+      "flow": "fast_food",
+      "usage": "Catalogue de coûts / recherche produit",
+      "currentAsset": "Icône native / tuile neutre",
+      "newAssetRequired": "OUI",
+      "illustration": "food/pizza"
+    },
+    {
+      "assetKey": "asset:fast_food:chicken",
+      "label": "Poulet / autre plat",
+      "flow": "fast_food",
+      "usage": "Catalogue de coûts / recherche produit",
+      "currentAsset": "Icône native / tuile neutre",
+      "newAssetRequired": "OUI",
+      "illustration": "food/chicken"
+    },
+    {
+      "assetKey": "asset:fast_food:sandwich",
+      "label": "Sandwich",
+      "flow": "fast_food",
+      "usage": "Catalogue de coûts / recherche produit",
+      "currentAsset": "Icône native / tuile neutre",
+      "newAssetRequired": "OUI",
+      "illustration": "food/sandwich"
+    },
+    {
+      "assetKey": "asset:fast_food:dessert",
+      "label": "Dessert",
+      "flow": "fast_food",
+      "usage": "Catalogue de coûts / recherche produit",
+      "currentAsset": "Icône native / tuile neutre",
+      "newAssetRequired": "OUI",
+      "illustration": "food/dessert"
+    },
+    {
+      "assetKey": "asset:fast_food:delivery_fee",
+      "label": "Frais de livraison",
+      "flow": "fast_food",
+      "usage": "Catalogue de coûts / recherche produit",
+      "currentAsset": "Icône native / tuile neutre",
+      "newAssetRequired": "OUI",
+      "illustration": "misc/delivery"
+    },
+    {
+      "assetKey": "asset:fast_food:service_fee",
+      "label": "Frais de service",
+      "flow": "fast_food",
+      "usage": "Catalogue de coûts / recherche produit",
+      "currentAsset": "Icône native / tuile neutre",
+      "newAssetRequired": "OUI",
+      "illustration": "misc/receipt"
+    },
+    {
+      "assetKey": "asset:work_meal:bakery",
+      "label": "Boulangerie",
+      "flow": "work_meal",
+      "usage": "Catalogue de coûts / recherche produit",
+      "currentAsset": "Icône native / tuile neutre",
+      "newAssetRequired": "OUI",
+      "illustration": "food/bread"
+    },
+    {
+      "assetKey": "asset:work_meal:grand_frais",
+      "label": "Grand Frais",
+      "flow": "work_meal",
+      "usage": "Catalogue de coûts / recherche produit",
+      "currentAsset": "Icône native / tuile neutre",
+      "newAssetRequired": "OUI",
+      "illustration": "intent/groceries"
+    },
+    {
+      "assetKey": "asset:work_meal:mcdo",
+      "label": "McDo",
+      "flow": "work_meal",
+      "usage": "Catalogue de coûts / recherche produit",
+      "currentAsset": "Icône native / tuile neutre",
+      "newAssetRequired": "OUI",
+      "illustration": "intent/fast-food"
+    },
+    {
+      "assetKey": "asset:transport:fuel_usage",
+      "label": "Coût carburant estimé",
+      "flow": "transport",
+      "usage": "Catalogue de coûts / recherche produit",
+      "currentAsset": "Icône native / tuile neutre",
+      "newAssetRequired": "OUI",
+      "illustration": "transport/fuel"
+    },
+    {
+      "assetKey": "asset:transport:toll",
+      "label": "Péage",
+      "flow": "transport",
+      "usage": "Catalogue de coûts / recherche produit",
+      "currentAsset": "Icône native / tuile neutre",
+      "newAssetRequired": "OUI",
+      "illustration": "transport/toll"
+    },
+    {
+      "assetKey": "asset:transport:parking",
+      "label": "Parking",
+      "flow": "transport",
+      "usage": "Catalogue de coûts / recherche produit",
+      "currentAsset": "Icône native / tuile neutre",
+      "newAssetRequired": "OUI",
+      "illustration": "transport/parking"
+    },
+    {
+      "assetKey": "asset:transport:train",
+      "label": "Train",
+      "flow": "transport",
+      "usage": "Catalogue de coûts / recherche produit",
+      "currentAsset": "Icône native / tuile neutre",
+      "newAssetRequired": "OUI",
+      "illustration": "transport/train"
+    },
+    {
+      "assetKey": "asset:transport:bus",
+      "label": "Bus",
+      "flow": "transport",
+      "usage": "Catalogue de coûts / recherche produit",
+      "currentAsset": "Icône native / tuile neutre",
+      "newAssetRequired": "OUI",
+      "illustration": "transport/bus"
+    },
+    {
+      "assetKey": "asset:transport:uber",
+      "label": "Uber / taxi",
+      "flow": "transport",
+      "usage": "Catalogue de coûts / recherche produit",
+      "currentAsset": "Icône native / tuile neutre",
+      "newAssetRequired": "OUI",
+      "illustration": "transport/car"
+    },
+    {
+      "assetKey": "asset:transport:carpool",
+      "label": "Participation covoiturage",
+      "flow": "transport",
+      "usage": "Catalogue de coûts / recherche produit",
+      "currentAsset": "Icône native / tuile neutre",
+      "newAssetRequired": "OUI",
+      "illustration": "transport/car"
+    },
+    {
+      "assetKey": "asset:transport:other",
+      "label": "Autre déplacement payant",
+      "flow": "transport",
+      "usage": "Catalogue de coûts / recherche produit",
+      "currentAsset": "Icône native / tuile neutre",
+      "newAssetRequired": "OUI",
+      "illustration": "transport/road"
+    },
+    {
+      "assetKey": "asset:visit_family:breakfast",
+      "label": "Petit-déjeuner",
+      "flow": "visit_family",
+      "usage": "Catalogue de coûts / recherche produit",
+      "currentAsset": "Icône native / tuile neutre",
+      "newAssetRequired": "OUI",
+      "illustration": "food/bread"
+    },
+    {
+      "assetKey": "asset:visit_family:brought_groceries",
+      "label": "Courses apportées",
+      "flow": "visit_family",
+      "usage": "Catalogue de coûts / recherche produit",
+      "currentAsset": "Icône native / tuile neutre",
+      "newAssetRequired": "OUI",
+      "illustration": "intent/groceries"
+    },
+    {
+      "assetKey": "asset:visit_friend:brought_drink",
+      "label": "Boisson sans alcool apportée",
+      "flow": "visit_friend",
+      "usage": "Catalogue de coûts / recherche produit",
+      "currentAsset": "Icône native / tuile neutre",
+      "newAssetRequired": "OUI",
+      "illustration": "drinks/soft"
+    },
+    {
+      "assetKey": "asset:visit_friend:brought_food",
+      "label": "Nourriture apportée",
+      "flow": "visit_friend",
+      "usage": "Catalogue de coûts / recherche produit",
+      "currentAsset": "Icône native / tuile neutre",
+      "newAssetRequired": "OUI",
+      "illustration": "food/snack"
+    },
+    {
+      "assetKey": "asset:visit_friend:coffee",
+      "label": "Café",
+      "flow": "visit_friend",
+      "usage": "Catalogue de coûts / recherche produit",
+      "currentAsset": "Icône native / tuile neutre",
+      "newAssetRequired": "OUI",
+      "illustration": "drinks/coffee"
+    },
+    {
+      "assetKey": "asset:trip:flight",
+      "label": "Avion",
+      "flow": "trip",
+      "usage": "Catalogue de coûts / recherche produit",
+      "currentAsset": "Icône native / tuile neutre",
+      "newAssetRequired": "OUI",
+      "illustration": "transport/plane"
+    },
+    {
+      "assetKey": "asset:trip:rental_car",
+      "label": "Location voiture",
+      "flow": "trip",
+      "usage": "Catalogue de coûts / recherche produit",
+      "currentAsset": "Icône native / tuile neutre",
+      "newAssetRequired": "OUI",
+      "illustration": "transport/car"
+    },
+    {
+      "assetKey": "asset:trip:rental_scooter",
+      "label": "Location scooter",
+      "flow": "trip",
+      "usage": "Catalogue de coûts / recherche produit",
+      "currentAsset": "Icône native / tuile neutre",
+      "newAssetRequired": "OUI",
+      "illustration": "transport/scooter"
+    },
+    {
+      "assetKey": "asset:trip:hotel",
+      "label": "Hôtel",
+      "flow": "trip",
+      "usage": "Catalogue de coûts / recherche produit",
+      "currentAsset": "Icône native / tuile neutre",
+      "newAssetRequired": "OUI",
+      "illustration": "lodging/hotel"
+    },
+    {
+      "assetKey": "asset:trip:airbnb",
+      "label": "Airbnb",
+      "flow": "trip",
+      "usage": "Catalogue de coûts / recherche produit",
+      "currentAsset": "Icône native / tuile neutre",
+      "newAssetRequired": "OUI",
+      "illustration": "lodging/rental"
+    },
+    {
+      "assetKey": "asset:trip:breakfast",
+      "label": "Petit-déjeuner",
+      "flow": "trip",
+      "usage": "Catalogue de coûts / recherche produit",
+      "currentAsset": "Icône native / tuile neutre",
+      "newAssetRequired": "OUI",
+      "illustration": "food/bread"
+    },
+    {
+      "assetKey": "asset:trip:visits",
+      "label": "Visites",
+      "flow": "trip",
+      "usage": "Catalogue de coûts / recherche produit",
+      "currentAsset": "Icône native / tuile neutre",
+      "newAssetRequired": "OUI",
+      "illustration": "activities/museum"
+    },
+    {
+      "assetKey": "asset:trip:baggage",
+      "label": "Bagage",
+      "flow": "trip",
+      "usage": "Catalogue de coûts / recherche produit",
+      "currentAsset": "Icône native / tuile neutre",
+      "newAssetRequired": "OUI",
+      "illustration": "intent/travel"
+    },
+    {
+      "assetKey": "asset:trip:fees",
+      "label": "Frais divers",
+      "flow": "trip",
+      "usage": "Catalogue de coûts / recherche produit",
+      "currentAsset": "Icône native / tuile neutre",
+      "newAssetRequired": "OUI",
+      "illustration": "misc/receipt"
+    },
+    {
+      "assetKey": "asset:activity:entry",
+      "label": "Entrée",
+      "flow": "activity",
+      "usage": "Catalogue de coûts / recherche produit",
+      "currentAsset": "Icône native / tuile neutre",
+      "newAssetRequired": "OUI",
+      "illustration": "intent/activity"
+    },
+    {
+      "assetKey": "asset:activity:ticket",
+      "label": "Billet",
+      "flow": "activity",
+      "usage": "Catalogue de coûts / recherche produit",
+      "currentAsset": "Icône native / tuile neutre",
+      "newAssetRequired": "OUI",
+      "illustration": "intent/activity"
+    },
+    {
+      "assetKey": "asset:activity:drink",
+      "label": "Boissons sans alcool",
+      "flow": "activity",
+      "usage": "Catalogue de coûts / recherche produit",
+      "currentAsset": "Icône native / tuile neutre",
+      "newAssetRequired": "OUI",
+      "illustration": "drinks/soft"
+    },
+    {
+      "assetKey": "asset:fishing:bait",
+      "label": "Appâts",
+      "flow": "fishing",
+      "usage": "Catalogue de coûts / recherche produit",
+      "currentAsset": "Icône native / tuile neutre",
+      "newAssetRequired": "OUI",
+      "illustration": "activities/fishing"
+    },
+    {
+      "assetKey": "asset:beauty:setting_spray",
+      "label": "Fixateur de maquillage",
+      "flow": "beauty",
+      "usage": "Catalogue de coûts / recherche produit",
+      "currentAsset": "Icône native / tuile neutre",
+      "newAssetRequired": "OUI",
+      "illustration": "beauty/setting-spray"
+    },
+    {
+      "assetKey": "asset:beauty:face_mask",
+      "label": "Masque visage",
+      "flow": "beauty",
+      "usage": "Catalogue de coûts / recherche produit",
+      "currentAsset": "Icône native / tuile neutre",
+      "newAssetRequired": "OUI",
+      "illustration": "beauty/face-mask"
+    },
+    {
+      "assetKey": "asset:beauty:mascara",
+      "label": "Mascara",
+      "flow": "beauty",
+      "usage": "Catalogue de coûts / recherche produit",
+      "currentAsset": "Icône native / tuile neutre",
+      "newAssetRequired": "OUI",
+      "illustration": "beauty/mascara"
+    },
+    {
+      "assetKey": "asset:beauty:eyebrow_pencil",
+      "label": "Crayon à sourcils",
+      "flow": "beauty",
+      "usage": "Catalogue de coûts / recherche produit",
+      "currentAsset": "Icône native / tuile neutre",
+      "newAssetRequired": "OUI",
+      "illustration": "beauty/eyebrow-pencil"
+    },
+    {
+      "assetKey": "asset:beauty:eyeliner",
+      "label": "Eyeliner",
+      "flow": "beauty",
+      "usage": "Catalogue de coûts / recherche produit",
+      "currentAsset": "Icône native / tuile neutre",
+      "newAssetRequired": "OUI",
+      "illustration": "beauty/eyeliner"
+    },
+    {
+      "assetKey": "asset:beauty:lipstick",
+      "label": "Rouge à lèvres",
+      "flow": "beauty",
+      "usage": "Catalogue de coûts / recherche produit",
+      "currentAsset": "Icône native / tuile neutre",
+      "newAssetRequired": "OUI",
+      "illustration": "beauty/lipstick"
+    },
+    {
+      "assetKey": "asset:beauty:gloss",
+      "label": "Gloss",
+      "flow": "beauty",
+      "usage": "Catalogue de coûts / recherche produit",
+      "currentAsset": "Icône native / tuile neutre",
+      "newAssetRequired": "OUI",
+      "illustration": "beauty/gloss"
+    },
+    {
+      "assetKey": "asset:beauty:foundation",
+      "label": "Fond de teint",
+      "flow": "beauty",
+      "usage": "Catalogue de coûts / recherche produit",
+      "currentAsset": "Icône native / tuile neutre",
+      "newAssetRequired": "OUI",
+      "illustration": "beauty/foundation"
+    },
+    {
+      "assetKey": "asset:beauty:face_cream",
+      "label": "Crème visage",
+      "flow": "beauty",
+      "usage": "Catalogue de coûts / recherche produit",
+      "currentAsset": "Icône native / tuile neutre",
+      "newAssetRequired": "OUI",
+      "illustration": "beauty/face-cream"
+    },
+    {
+      "assetKey": "asset:beauty:body_cream",
+      "label": "Crème corps",
+      "flow": "beauty",
+      "usage": "Catalogue de coûts / recherche produit",
+      "currentAsset": "Icône native / tuile neutre",
+      "newAssetRequired": "OUI",
+      "illustration": "beauty/body-cream"
+    },
+    {
+      "assetKey": "asset:beauty:toothpaste",
+      "label": "Dentifrice",
+      "flow": "beauty",
+      "usage": "Catalogue de coûts / recherche produit",
+      "currentAsset": "Icône native / tuile neutre",
+      "newAssetRequired": "OUI",
+      "illustration": "beauty/toothpaste"
+    },
+    {
+      "assetKey": "asset:beauty:face_cleanser",
+      "label": "Nettoyant visage",
+      "flow": "beauty",
+      "usage": "Catalogue de coûts / recherche produit",
+      "currentAsset": "Icône native / tuile neutre",
+      "newAssetRequired": "OUI",
+      "illustration": "beauty/face-cleanser"
+    },
+    {
+      "assetKey": "asset:beauty:makeup_remover",
+      "label": "Démaquillant",
+      "flow": "beauty",
+      "usage": "Catalogue de coûts / recherche produit",
+      "currentAsset": "Icône native / tuile neutre",
+      "newAssetRequired": "OUI",
+      "illustration": "beauty/makeup-remover"
+    },
+    {
+      "assetKey": "asset:beauty:nail_polish",
+      "label": "Vernis",
+      "flow": "beauty",
+      "usage": "Catalogue de coûts / recherche produit",
+      "currentAsset": "Icône native / tuile neutre",
+      "newAssetRequired": "OUI",
+      "illustration": "beauty/nail-polish"
+    },
+    {
+      "assetKey": "asset:beauty:shampoo",
+      "label": "Shampoing",
+      "flow": "beauty",
+      "usage": "Catalogue de coûts / recherche produit",
+      "currentAsset": "Icône native / tuile neutre",
+      "newAssetRequired": "OUI",
+      "illustration": "beauty/shampoo"
+    },
+    {
+      "assetKey": "asset:beauty:conditioner",
+      "label": "Après-shampoing",
+      "flow": "beauty",
+      "usage": "Catalogue de coûts / recherche produit",
+      "currentAsset": "Icône native / tuile neutre",
+      "newAssetRequired": "OUI",
+      "illustration": "beauty/conditioner"
+    },
+    {
+      "assetKey": "asset:beauty:shower_gel",
+      "label": "Gel douche",
+      "flow": "beauty",
+      "usage": "Catalogue de coûts / recherche produit",
+      "currentAsset": "Icône native / tuile neutre",
+      "newAssetRequired": "OUI",
+      "illustration": "beauty/shower-gel"
+    },
+    {
+      "assetKey": "asset:beauty:cotton_swabs",
+      "label": "Coton-tiges",
+      "flow": "beauty",
+      "usage": "Catalogue de coûts / recherche produit",
+      "currentAsset": "Icône native / tuile neutre",
+      "newAssetRequired": "OUI",
+      "illustration": "beauty/cotton-swabs"
+    },
+    {
+      "assetKey": "asset:beauty:razor_blades",
+      "label": "Lames de rasoir",
+      "flow": "beauty",
+      "usage": "Catalogue de coûts / recherche produit",
+      "currentAsset": "Icône native / tuile neutre",
+      "newAssetRequired": "OUI",
+      "illustration": "beauty/razor-blades"
+    },
+    {
+      "assetKey": "asset:beauty:hair_wax",
+      "label": "Cire coiffante",
+      "flow": "beauty",
+      "usage": "Catalogue de coûts / recherche produit",
+      "currentAsset": "Icône native / tuile neutre",
+      "newAssetRequired": "OUI",
+      "illustration": "beauty/hair-wax"
+    },
+    {
+      "assetKey": "asset:beauty:perfume",
+      "label": "Parfum",
+      "flow": "beauty",
+      "usage": "Catalogue de coûts / recherche produit",
+      "currentAsset": "Icône native / tuile neutre",
+      "newAssetRequired": "OUI",
+      "illustration": "beauty/perfume"
+    },
+    {
+      "assetKey": "asset:beauty:hairdresser",
+      "label": "Coiffeur",
+      "flow": "beauty",
+      "usage": "Catalogue de coûts / recherche produit",
+      "currentAsset": "Icône native / tuile neutre",
+      "newAssetRequired": "OUI",
+      "illustration": "beauty/hairdresser"
+    },
+    {
+      "assetKey": "asset:beauty:deodorant",
+      "label": "Déodorant",
+      "flow": "beauty",
+      "usage": "Catalogue de coûts / recherche produit",
+      "currentAsset": "Icône native / tuile neutre",
+      "newAssetRequired": "OUI",
+      "illustration": "beauty/deodorant"
+    },
+    {
+      "assetKey": "asset:clothing:tshirt",
+      "label": "T-shirt",
+      "flow": "clothing",
+      "usage": "Catalogue de coûts / recherche produit",
+      "currentAsset": "Icône native / tuile neutre",
+      "newAssetRequired": "OUI",
+      "illustration": "clothing/tshirt"
+    },
+    {
+      "assetKey": "asset:clothing:shirt",
+      "label": "Chemise",
+      "flow": "clothing",
+      "usage": "Catalogue de coûts / recherche produit",
+      "currentAsset": "Icône native / tuile neutre",
+      "newAssetRequired": "OUI",
+      "illustration": "clothing/shirt"
+    },
+    {
+      "assetKey": "asset:clothing:pants",
+      "label": "Pantalon",
+      "flow": "clothing",
+      "usage": "Catalogue de coûts / recherche produit",
+      "currentAsset": "Icône native / tuile neutre",
+      "newAssetRequired": "OUI",
+      "illustration": "clothing/pants"
+    },
+    {
+      "assetKey": "asset:clothing:shorts",
+      "label": "Short",
+      "flow": "clothing",
+      "usage": "Catalogue de coûts / recherche produit",
+      "currentAsset": "Icône native / tuile neutre",
+      "newAssetRequired": "OUI",
+      "illustration": "clothing/shorts"
+    },
+    {
+      "assetKey": "asset:clothing:dress",
+      "label": "Robe",
+      "flow": "clothing",
+      "usage": "Catalogue de coûts / recherche produit",
+      "currentAsset": "Icône native / tuile neutre",
+      "newAssetRequired": "OUI",
+      "illustration": "clothing/dress"
+    },
+    {
+      "assetKey": "asset:clothing:jacket",
+      "label": "Veste",
+      "flow": "clothing",
+      "usage": "Catalogue de coûts / recherche produit",
+      "currentAsset": "Icône native / tuile neutre",
+      "newAssetRequired": "OUI",
+      "illustration": "clothing/jacket"
+    },
+    {
+      "assetKey": "asset:clothing:coat",
+      "label": "Manteau",
+      "flow": "clothing",
+      "usage": "Catalogue de coûts / recherche produit",
+      "currentAsset": "Icône native / tuile neutre",
+      "newAssetRequired": "OUI",
+      "illustration": "clothing/coat"
+    },
+    {
+      "assetKey": "asset:clothing:shoes",
+      "label": "Chaussures",
+      "flow": "clothing",
+      "usage": "Catalogue de coûts / recherche produit",
+      "currentAsset": "Icône native / tuile neutre",
+      "newAssetRequired": "OUI",
+      "illustration": "clothing/shoes"
+    },
+    {
+      "assetKey": "asset:clothing:sandals",
+      "label": "Sandales",
+      "flow": "clothing",
+      "usage": "Catalogue de coûts / recherche produit",
+      "currentAsset": "Icône native / tuile neutre",
+      "newAssetRequired": "OUI",
+      "illustration": "clothing/sandals"
+    },
+    {
+      "assetKey": "asset:clothing:socks",
+      "label": "Chaussettes",
+      "flow": "clothing",
+      "usage": "Catalogue de coûts / recherche produit",
+      "currentAsset": "Icône native / tuile neutre",
+      "newAssetRequired": "OUI",
+      "illustration": "clothing/socks"
+    },
+    {
+      "assetKey": "asset:clothing:underwear",
+      "label": "Sous-vêtements",
+      "flow": "clothing",
+      "usage": "Catalogue de coûts / recherche produit",
+      "currentAsset": "Icône native / tuile neutre",
+      "newAssetRequired": "OUI",
+      "illustration": "clothing/underwear"
+    },
+    {
+      "assetKey": "asset:clothing:cap",
+      "label": "Casquette",
+      "flow": "clothing",
+      "usage": "Catalogue de coûts / recherche produit",
+      "currentAsset": "Icône native / tuile neutre",
+      "newAssetRequired": "OUI",
+      "illustration": "clothing/cap"
+    },
+    {
+      "assetKey": "asset:clothing:bag",
+      "label": "Sac",
+      "flow": "clothing",
+      "usage": "Catalogue de coûts / recherche produit",
+      "currentAsset": "Icône native / tuile neutre",
+      "newAssetRequired": "OUI",
+      "illustration": "clothing/bag"
+    },
+    {
+      "assetKey": "asset:clothing:glasses",
+      "label": "Lunettes",
+      "flow": "clothing",
+      "usage": "Catalogue de coûts / recherche produit",
+      "currentAsset": "Icône native / tuile neutre",
+      "newAssetRequired": "OUI",
+      "illustration": "clothing/glasses"
+    },
+    {
+      "assetKey": "asset:clothing:jewelry",
+      "label": "Bijou",
+      "flow": "clothing",
+      "usage": "Catalogue de coûts / recherche produit",
+      "currentAsset": "Icône native / tuile neutre",
+      "newAssetRequired": "OUI",
+      "illustration": "clothing/jewelry"
+    },
+    {
+      "assetKey": "asset:clothing:costume",
+      "label": "Déguisement de soirée",
+      "flow": "clothing",
+      "usage": "Catalogue de coûts / recherche produit",
+      "currentAsset": "Icône native / tuile neutre",
+      "newAssetRequired": "OUI",
+      "illustration": "clothing/costume"
+    },
+    {
+      "assetKey": "asset:clothing:delivery_fee",
+      "label": "Frais de livraison",
+      "flow": "clothing",
+      "usage": "Catalogue de coûts / recherche produit",
+      "currentAsset": "Icône native / tuile neutre",
+      "newAssetRequired": "OUI",
+      "illustration": "misc/delivery"
+    },
+    {
+      "assetKey": "asset:clothing:service_fee",
+      "label": "Frais de service",
+      "flow": "clothing",
+      "usage": "Catalogue de coûts / recherche produit",
+      "currentAsset": "Icône native / tuile neutre",
+      "newAssetRequired": "OUI",
+      "illustration": "misc/receipt"
+    },
+    {
+      "assetKey": "asset:household:laundry",
+      "label": "Lessive",
+      "flow": "household",
+      "usage": "Catalogue de coûts / recherche produit",
+      "currentAsset": "Icône native / tuile neutre",
+      "newAssetRequired": "OUI",
+      "illustration": "household/laundry"
+    },
+    {
+      "assetKey": "asset:household:dish_soap",
+      "label": "Liquide vaisselle",
+      "flow": "household",
+      "usage": "Catalogue de coûts / recherche produit",
+      "currentAsset": "Icône native / tuile neutre",
+      "newAssetRequired": "OUI",
+      "illustration": "household/dish-soap"
+    },
+    {
+      "assetKey": "asset:household:dishwasher",
+      "label": "Pastilles lave-vaisselle",
+      "flow": "household",
+      "usage": "Catalogue de coûts / recherche produit",
+      "currentAsset": "Icône native / tuile neutre",
+      "newAssetRequired": "OUI",
+      "illustration": "household/dishwasher"
+    },
+    {
+      "assetKey": "asset:household:sponge",
+      "label": "Éponges",
+      "flow": "household",
+      "usage": "Catalogue de coûts / recherche produit",
+      "currentAsset": "Icône native / tuile neutre",
+      "newAssetRequired": "OUI",
+      "illustration": "household/sponge"
+    },
+    {
+      "assetKey": "asset:household:floor",
+      "label": "Produit sol",
+      "flow": "household",
+      "usage": "Catalogue de coûts / recherche produit",
+      "currentAsset": "Icône native / tuile neutre",
+      "newAssetRequired": "OUI",
+      "illustration": "household/floor"
+    },
+    {
+      "assetKey": "asset:household:toilet",
+      "label": "Produit WC",
+      "flow": "household",
+      "usage": "Catalogue de coûts / recherche produit",
+      "currentAsset": "Icône native / tuile neutre",
+      "newAssetRequired": "OUI",
+      "illustration": "household/toilet"
+    },
+    {
+      "assetKey": "asset:household:windows",
+      "label": "Produit vitres",
+      "flow": "household",
+      "usage": "Catalogue de coûts / recherche produit",
+      "currentAsset": "Icône native / tuile neutre",
+      "newAssetRequired": "OUI",
+      "illustration": "household/windows"
+    },
+    {
+      "assetKey": "asset:household:trash_bags",
+      "label": "Sacs poubelle",
+      "flow": "household",
+      "usage": "Catalogue de coûts / recherche produit",
+      "currentAsset": "Icône native / tuile neutre",
+      "newAssetRequired": "OUI",
+      "illustration": "household/trash-bags"
+    },
+    {
+      "assetKey": "asset:household:toilet_paper",
+      "label": "Papier toilette",
+      "flow": "household",
+      "usage": "Catalogue de coûts / recherche produit",
+      "currentAsset": "Icône native / tuile neutre",
+      "newAssetRequired": "OUI",
+      "illustration": "household/toilet-paper"
+    },
+    {
+      "assetKey": "asset:household:paper_towels",
+      "label": "Essuie-tout",
+      "flow": "household",
+      "usage": "Catalogue de coûts / recherche produit",
+      "currentAsset": "Icône native / tuile neutre",
+      "newAssetRequired": "OUI",
+      "illustration": "household/paper-towels"
+    },
+    {
+      "assetKey": "asset:household:air_freshener",
+      "label": "Désodorisant",
+      "flow": "household",
+      "usage": "Catalogue de coûts / recherche produit",
+      "currentAsset": "Icône native / tuile neutre",
+      "newAssetRequired": "OUI",
+      "illustration": "household/air-freshener"
+    },
+    {
+      "assetKey": "asset:home:lamp",
+      "label": "Lampe",
+      "flow": "home",
+      "usage": "Catalogue de coûts / recherche produit",
+      "currentAsset": "Icône native / tuile neutre",
+      "newAssetRequired": "OUI",
+      "illustration": "home/lamp"
+    },
+    {
+      "assetKey": "asset:home:furniture",
+      "label": "Meuble",
+      "flow": "home",
+      "usage": "Catalogue de coûts / recherche produit",
+      "currentAsset": "Icône native / tuile neutre",
+      "newAssetRequired": "OUI",
+      "illustration": "home/furniture"
+    },
+    {
+      "assetKey": "asset:home:bedding",
+      "label": "Literie",
+      "flow": "home",
+      "usage": "Catalogue de coûts / recherche produit",
+      "currentAsset": "Icône native / tuile neutre",
+      "newAssetRequired": "OUI",
+      "illustration": "home/bedding"
+    },
+    {
+      "assetKey": "asset:home:storage",
+      "label": "Rangement",
+      "flow": "home",
+      "usage": "Catalogue de coûts / recherche produit",
+      "currentAsset": "Icône native / tuile neutre",
+      "newAssetRequired": "OUI",
+      "illustration": "home/storage"
+    },
+    {
+      "assetKey": "asset:home:decor",
+      "label": "Décoration",
+      "flow": "home",
+      "usage": "Catalogue de coûts / recherche produit",
+      "currentAsset": "Icône native / tuile neutre",
+      "newAssetRequired": "OUI",
+      "illustration": "home/decor"
+    },
+    {
+      "assetKey": "asset:home:plant",
+      "label": "Plante",
+      "flow": "home",
+      "usage": "Catalogue de coûts / recherche produit",
+      "currentAsset": "Icône native / tuile neutre",
+      "newAssetRequired": "OUI",
+      "illustration": "home/plant"
+    },
+    {
+      "assetKey": "asset:home:kitchen",
+      "label": "Cuisine",
+      "flow": "home",
+      "usage": "Catalogue de coûts / recherche produit",
+      "currentAsset": "Icône native / tuile neutre",
+      "newAssetRequired": "OUI",
+      "illustration": "home/kitchen"
+    },
+    {
+      "assetKey": "asset:home:dishes",
+      "label": "Vaisselle",
+      "flow": "home",
+      "usage": "Catalogue de coûts / recherche produit",
+      "currentAsset": "Icône native / tuile neutre",
+      "newAssetRequired": "OUI",
+      "illustration": "home/dishes"
+    },
+    {
+      "assetKey": "asset:home:diy",
+      "label": "Bricolage",
+      "flow": "home",
+      "usage": "Catalogue de coûts / recherche produit",
+      "currentAsset": "Icône native / tuile neutre",
+      "newAssetRequired": "OUI",
+      "illustration": "home/diy"
+    },
+    {
+      "assetKey": "asset:home:electric",
+      "label": "Électricité / multiprise",
+      "flow": "home",
+      "usage": "Catalogue de coûts / recherche produit",
+      "currentAsset": "Icône native / tuile neutre",
+      "newAssetRequired": "OUI",
+      "illustration": "home/electric"
+    },
+    {
+      "assetKey": "asset:gift:flowers",
+      "label": "Fleurs",
+      "flow": "gift",
+      "usage": "Catalogue de coûts / recherche produit",
+      "currentAsset": "Icône native / tuile neutre",
+      "newAssetRequired": "OUI",
+      "illustration": "misc/flowers"
+    },
+    {
+      "assetKey": "asset:gift:jewelry",
+      "label": "Bijou",
+      "flow": "gift",
+      "usage": "Catalogue de coûts / recherche produit",
+      "currentAsset": "Icône native / tuile neutre",
+      "newAssetRequired": "OUI",
+      "illustration": "clothing/jewelry"
+    },
+    {
+      "assetKey": "asset:gift:clothes",
+      "label": "Vêtement",
+      "flow": "gift",
+      "usage": "Catalogue de coûts / recherche produit",
+      "currentAsset": "Icône native / tuile neutre",
+      "newAssetRequired": "OUI",
+      "illustration": "clothing/tshirt"
+    },
+    {
+      "assetKey": "asset:gift:chocolate",
+      "label": "Chocolats",
+      "flow": "gift",
+      "usage": "Catalogue de coûts / recherche produit",
+      "currentAsset": "Icône native / tuile neutre",
+      "newAssetRequired": "OUI",
+      "illustration": "food/chocolate"
+    },
+    {
+      "assetKey": "asset:gift:bottle",
+      "label": "Bouteille",
+      "flow": "gift",
+      "usage": "Catalogue de coûts / recherche produit",
+      "currentAsset": "Icône native / tuile neutre",
+      "newAssetRequired": "OUI",
+      "illustration": "drinks/wine-bottle"
+    },
+    {
+      "assetKey": "asset:gift:ticket",
+      "label": "Billet / spectacle",
+      "flow": "gift",
+      "usage": "Catalogue de coûts / recherche produit",
+      "currentAsset": "Icône native / tuile neutre",
+      "newAssetRequired": "OUI",
+      "illustration": "intent/activity"
+    },
+    {
+      "assetKey": "asset:gift:gift_card",
+      "label": "Carte cadeau",
+      "flow": "gift",
+      "usage": "Catalogue de coûts / recherche produit",
+      "currentAsset": "Icône native / tuile neutre",
+      "newAssetRequired": "OUI",
+      "illustration": "misc/gift-card"
+    },
+    {
+      "assetKey": "asset:gift:money",
+      "label": "Argent",
+      "flow": "gift",
+      "usage": "Catalogue de coûts / recherche produit",
+      "currentAsset": "Icône native / tuile neutre",
+      "newAssetRequired": "OUI",
+      "illustration": "misc/money-gift"
+    },
+    {
+      "assetKey": "asset:gift:book",
+      "label": "Livre",
+      "flow": "gift",
+      "usage": "Catalogue de coûts / recherche produit",
+      "currentAsset": "Icône native / tuile neutre",
+      "newAssetRequired": "OUI",
+      "illustration": "misc/book"
+    },
+    {
+      "assetKey": "asset:gift:game",
+      "label": "Jeu",
+      "flow": "gift",
+      "usage": "Catalogue de coûts / recherche produit",
+      "currentAsset": "Icône native / tuile neutre",
+      "newAssetRequired": "OUI",
+      "illustration": "misc/game"
+    },
+    {
+      "assetKey": "asset:gift:toy",
+      "label": "Jouet",
+      "flow": "gift",
+      "usage": "Catalogue de coûts / recherche produit",
+      "currentAsset": "Icône native / tuile neutre",
+      "newAssetRequired": "OUI",
+      "illustration": "misc/toy"
+    },
+    {
+      "assetKey": "asset:gift:personalized",
+      "label": "Cadeau personnalisé",
+      "flow": "gift",
+      "usage": "Catalogue de coûts / recherche produit",
+      "currentAsset": "Icône native / tuile neutre",
+      "newAssetRequired": "OUI",
+      "illustration": "misc/personalized"
+    },
+    {
+      "assetKey": "asset:tech:charger",
+      "label": "Chargeur",
+      "flow": "tech",
+      "usage": "Catalogue de coûts / recherche produit",
+      "currentAsset": "Icône native / tuile neutre",
+      "newAssetRequired": "OUI",
+      "illustration": "tech/charger"
+    },
+    {
+      "assetKey": "asset:tech:cable",
+      "label": "Câble",
+      "flow": "tech",
+      "usage": "Catalogue de coûts / recherche produit",
+      "currentAsset": "Icône native / tuile neutre",
+      "newAssetRequired": "OUI",
+      "illustration": "tech/cable"
+    },
+    {
+      "assetKey": "asset:tech:lighting",
+      "label": "Éclairage",
+      "flow": "tech",
+      "usage": "Catalogue de coûts / recherche produit",
+      "currentAsset": "Icône native / tuile neutre",
+      "newAssetRequired": "OUI",
+      "illustration": "home/lamp"
+    },
+    {
+      "assetKey": "asset:tech:video_game",
+      "label": "Jeu vidéo",
+      "flow": "tech",
+      "usage": "Catalogue de coûts / recherche produit",
+      "currentAsset": "Icône native / tuile neutre",
+      "newAssetRequired": "OUI",
+      "illustration": "misc/game"
+    },
+    {
+      "assetKey": "asset:automotive:tires",
+      "label": "Pneus",
+      "flow": "automotive",
+      "usage": "Catalogue de coûts / recherche produit",
+      "currentAsset": "Icône native / tuile neutre",
+      "newAssetRequired": "OUI",
+      "illustration": "automotive/tires"
+    },
+    {
+      "assetKey": "asset:automotive:motor_oil",
+      "label": "Huile moteur",
+      "flow": "automotive",
+      "usage": "Catalogue de coûts / recherche produit",
+      "currentAsset": "Icône native / tuile neutre",
+      "newAssetRequired": "OUI",
+      "illustration": "automotive/motor-oil"
+    },
+    {
+      "assetKey": "asset:automotive:coolant",
+      "label": "Liquide de refroidissement",
+      "flow": "automotive",
+      "usage": "Catalogue de coûts / recherche produit",
+      "currentAsset": "Icône native / tuile neutre",
+      "newAssetRequired": "OUI",
+      "illustration": "automotive/coolant"
+    },
+    {
+      "assetKey": "asset:automotive:washer_fluid",
+      "label": "Liquide lave-glace",
+      "flow": "automotive",
+      "usage": "Catalogue de coûts / recherche produit",
+      "currentAsset": "Icône native / tuile neutre",
+      "newAssetRequired": "OUI",
+      "illustration": "automotive/washer-fluid"
+    },
+    {
+      "assetKey": "asset:automotive:bulbs",
+      "label": "Ampoules",
+      "flow": "automotive",
+      "usage": "Catalogue de coûts / recherche produit",
+      "currentAsset": "Icône native / tuile neutre",
+      "newAssetRequired": "OUI",
+      "illustration": "automotive/bulbs"
+    },
+    {
+      "assetKey": "asset:automotive:battery",
+      "label": "Batterie",
+      "flow": "automotive",
+      "usage": "Catalogue de coûts / recherche produit",
+      "currentAsset": "Icône native / tuile neutre",
+      "newAssetRequired": "OUI",
+      "illustration": "automotive/battery"
+    },
+    {
+      "assetKey": "asset:automotive:wash",
+      "label": "Lavage",
+      "flow": "automotive",
+      "usage": "Catalogue de coûts / recherche produit",
+      "currentAsset": "Icône native / tuile neutre",
+      "newAssetRequired": "OUI",
+      "illustration": "automotive/wash"
+    },
+    {
+      "assetKey": "asset:automotive:part",
+      "label": "Pièce",
+      "flow": "automotive",
+      "usage": "Catalogue de coûts / recherche produit",
+      "currentAsset": "Icône native / tuile neutre",
+      "newAssetRequired": "OUI",
+      "illustration": "automotive/part"
+    },
+    {
+      "assetKey": "asset:other:administrative",
+      "label": "Administratif",
+      "flow": "other",
+      "usage": "Catalogue de coûts / recherche produit",
+      "currentAsset": "Icône native / tuile neutre",
+      "newAssetRequired": "OUI",
+      "illustration": "misc/document"
+    },
+    {
+      "assetKey": "asset:other:fee",
+      "label": "Frais",
+      "flow": "other",
+      "usage": "Catalogue de coûts / recherche produit",
+      "currentAsset": "Icône native / tuile neutre",
+      "newAssetRequired": "OUI",
+      "illustration": "misc/receipt"
+    },
+    {
+      "assetKey": "asset:other:contribution",
+      "label": "Participation",
+      "flow": "other",
+      "usage": "Catalogue de coûts / recherche produit",
+      "currentAsset": "Icône native / tuile neutre",
+      "newAssetRequired": "OUI",
+      "illustration": "misc/contribution"
+    },
+    {
+      "assetKey": "asset:fast_food:menu",
+      "label": "Menu",
+      "flow": "fast_food",
+      "usage": "Catalogue de coûts / recherche produit",
+      "currentAsset": "Icône native / tuile neutre",
+      "newAssetRequired": "OUI",
+      "illustration": "intent/fast-food"
+    },
+    {
+      "assetKey": "asset:fast_food:water",
+      "label": "Eau",
+      "flow": "fast_food",
+      "usage": "Catalogue de coûts / recherche produit",
+      "currentAsset": "Icône native / tuile neutre",
+      "newAssetRequired": "OUI",
+      "illustration": "drinks/water"
+    },
+    {
+      "assetKey": "asset:fast_food:meal_total",
+      "label": "Repas et boissons sans alcool",
+      "flow": "fast_food",
+      "usage": "Catalogue de coûts / recherche produit",
+      "currentAsset": "Icône native / tuile neutre",
+      "newAssetRequired": "OUI",
+      "illustration": "food/main"
+    },
+    {
+      "assetKey": "asset:work_meal:meal",
+      "label": "Repas / formule",
+      "flow": "work_meal",
+      "usage": "Catalogue de coûts / recherche produit",
+      "currentAsset": "Icône native / tuile neutre",
+      "newAssetRequired": "OUI",
+      "illustration": "intent/work-meal"
+    },
+    {
+      "assetKey": "asset:work_meal:drink",
+      "label": "Boisson",
+      "flow": "work_meal",
+      "usage": "Catalogue de coûts / recherche produit",
+      "currentAsset": "Icône native / tuile neutre",
+      "newAssetRequired": "OUI",
+      "illustration": "drinks/soft"
+    },
+    {
+      "assetKey": "asset:work_meal:coffee",
+      "label": "Café",
+      "flow": "work_meal",
+      "usage": "Catalogue de coûts / recherche produit",
+      "currentAsset": "Icône native / tuile neutre",
+      "newAssetRequired": "OUI",
+      "illustration": "drinks/coffee"
+    },
+    {
+      "assetKey": "asset:work_meal:dessert",
+      "label": "Dessert",
+      "flow": "work_meal",
+      "usage": "Catalogue de coûts / recherche produit",
+      "currentAsset": "Icône native / tuile neutre",
+      "newAssetRequired": "OUI",
+      "illustration": "food/dessert"
+    },
+    {
+      "assetKey": "asset:work_meal:delivery_fee",
+      "label": "Frais de livraison",
+      "flow": "work_meal",
+      "usage": "Catalogue de coûts / recherche produit",
+      "currentAsset": "Icône native / tuile neutre",
+      "newAssetRequired": "OUI",
+      "illustration": "misc/delivery"
+    },
+    {
+      "assetKey": "asset:work_meal:service_fee",
+      "label": "Frais de service",
+      "flow": "work_meal",
+      "usage": "Catalogue de coûts / recherche produit",
+      "currentAsset": "Icône native / tuile neutre",
+      "newAssetRequired": "OUI",
+      "illustration": "misc/receipt"
+    },
+    {
+      "assetKey": "asset:groceries:bread",
+      "label": "Pain / boulangerie",
+      "flow": "groceries",
+      "usage": "Catalogue de coûts / recherche produit",
+      "currentAsset": "Icône native / tuile neutre",
+      "newAssetRequired": "OUI",
+      "illustration": "food/bread"
+    },
+    {
+      "assetKey": "asset:groceries:cleaning",
+      "label": "Entretien",
+      "flow": "groceries",
+      "usage": "Catalogue de coûts / recherche produit",
+      "currentAsset": "Icône native / tuile neutre",
+      "newAssetRequired": "OUI",
+      "illustration": "household/sponge"
+    },
+    {
+      "assetKey": "asset:groceries:delivery_fee",
+      "label": "Frais de livraison",
+      "flow": "groceries",
+      "usage": "Catalogue de coûts / recherche produit",
+      "currentAsset": "Icône native / tuile neutre",
+      "newAssetRequired": "OUI",
+      "illustration": "misc/delivery"
+    },
+    {
+      "assetKey": "asset:groceries:service_fee",
+      "label": "Frais de service",
+      "flow": "groceries",
+      "usage": "Catalogue de coûts / recherche produit",
+      "currentAsset": "Icône native / tuile neutre",
+      "newAssetRequired": "OUI",
+      "illustration": "misc/receipt"
+    },
+    {
+      "assetKey": "asset:bar:soft",
+      "label": "Soft",
+      "flow": "bar",
+      "usage": "Catalogue de coûts / recherche produit",
+      "currentAsset": "Icône native / tuile neutre",
+      "newAssetRequired": "OUI",
+      "illustration": "drinks/soft"
+    },
+    {
+      "assetKey": "asset:bar:water",
+      "label": "Eau",
+      "flow": "bar",
+      "usage": "Catalogue de coûts / recherche produit",
+      "currentAsset": "Icône native / tuile neutre",
+      "newAssetRequired": "OUI",
+      "illustration": "drinks/water"
+    },
+    {
+      "assetKey": "asset:activity:food",
+      "label": "Nourriture / snack",
+      "flow": "activity",
+      "usage": "Catalogue de coûts / recherche produit",
+      "currentAsset": "Icône native / tuile neutre",
+      "newAssetRequired": "OUI",
+      "illustration": "food/snack"
+    },
+    {
+      "assetKey": "asset:club:merch",
+      "label": "Souvenir / merch",
+      "flow": "club",
+      "usage": "Catalogue de coûts / recherche produit",
+      "currentAsset": "Icône native / tuile neutre",
+      "newAssetRequired": "OUI",
+      "illustration": "clothing/tshirt"
+    },
+    {
+      "assetKey": "asset:transport:flight",
+      "label": "Billet d’avion",
+      "flow": "transport",
+      "usage": "Catalogue de coûts / recherche produit",
+      "currentAsset": "Icône native / tuile neutre",
+      "newAssetRequired": "OUI",
+      "illustration": "transport/plane"
+    },
+    {
+      "assetKey": "asset:beauty:delivery_fee",
+      "label": "Frais de livraison",
+      "flow": "beauty",
+      "usage": "Catalogue de coûts / recherche produit",
+      "currentAsset": "Icône native / tuile neutre",
+      "newAssetRequired": "OUI",
+      "illustration": "misc/delivery"
+    },
+    {
+      "assetKey": "asset:beauty:service_fee",
+      "label": "Frais de service",
+      "flow": "beauty",
+      "usage": "Catalogue de coûts / recherche produit",
+      "currentAsset": "Icône native / tuile neutre",
+      "newAssetRequired": "OUI",
+      "illustration": "misc/receipt"
+    },
+    {
+      "assetKey": "asset:home:delivery_fee",
+      "label": "Frais de livraison",
+      "flow": "home",
+      "usage": "Catalogue de coûts / recherche produit",
+      "currentAsset": "Icône native / tuile neutre",
+      "newAssetRequired": "OUI",
+      "illustration": "misc/delivery"
+    },
+    {
+      "assetKey": "asset:home:service_fee",
+      "label": "Frais de service",
+      "flow": "home",
+      "usage": "Catalogue de coûts / recherche produit",
+      "currentAsset": "Icône native / tuile neutre",
+      "newAssetRequired": "OUI",
+      "illustration": "misc/receipt"
+    },
+    {
+      "assetKey": "asset:tech:delivery_fee",
+      "label": "Frais de livraison",
+      "flow": "tech",
+      "usage": "Catalogue de coûts / recherche produit",
+      "currentAsset": "Icône native / tuile neutre",
+      "newAssetRequired": "OUI",
+      "illustration": "misc/delivery"
+    },
+    {
+      "assetKey": "asset:tech:service_fee",
+      "label": "Frais de service",
+      "flow": "tech",
+      "usage": "Catalogue de coûts / recherche produit",
+      "currentAsset": "Icône native / tuile neutre",
+      "newAssetRequired": "OUI",
+      "illustration": "misc/receipt"
+    },
+    {
+      "assetKey": "asset:automotive:delivery_fee",
+      "label": "Frais de livraison",
+      "flow": "automotive",
+      "usage": "Catalogue de coûts / recherche produit",
+      "currentAsset": "Icône native / tuile neutre",
+      "newAssetRequired": "OUI",
+      "illustration": "misc/delivery"
+    },
+    {
+      "assetKey": "asset:automotive:service_fee",
+      "label": "Frais de service",
+      "flow": "automotive",
+      "usage": "Catalogue de coûts / recherche produit",
+      "currentAsset": "Icône native / tuile neutre",
+      "newAssetRequired": "OUI",
+      "illustration": "misc/receipt"
+    },
+    {
+      "assetKey": "asset:gift:delivery_fee",
+      "label": "Frais de livraison",
+      "flow": "gift",
+      "usage": "Catalogue de coûts / recherche produit",
+      "currentAsset": "Icône native / tuile neutre",
+      "newAssetRequired": "OUI",
+      "illustration": "misc/delivery"
+    },
+    {
+      "assetKey": "asset:gift:service_fee",
+      "label": "Frais de service",
+      "flow": "gift",
+      "usage": "Catalogue de coûts / recherche produit",
+      "currentAsset": "Icône native / tuile neutre",
+      "newAssetRequired": "OUI",
+      "illustration": "misc/receipt"
+    },
+    {
+      "assetKey": "choice:activityCategory:cinema",
+      "label": "Cinéma",
+      "flow": "activityCategory",
+      "usage": "Tuile de contexte",
+      "currentAsset": "Icône native / tuile neutre",
+      "newAssetRequired": "OUI",
+      "illustration": "activities/cinema"
+    },
+    {
+      "assetKey": "choice:activityCategory:bowling",
+      "label": "Bowling",
+      "flow": "activityCategory",
+      "usage": "Tuile de contexte",
+      "currentAsset": "Icône native / tuile neutre",
+      "newAssetRequired": "OUI",
+      "illustration": "activities/bowling"
+    },
+    {
+      "assetKey": "choice:activityCategory:karting",
+      "label": "Karting",
+      "flow": "activityCategory",
+      "usage": "Tuile de contexte",
+      "currentAsset": "Icône native / tuile neutre",
+      "newAssetRequired": "OUI",
+      "illustration": "activities/karting"
+    },
+    {
+      "assetKey": "choice:activityCategory:mini_golf",
+      "label": "Mini-golf",
+      "flow": "activityCategory",
+      "usage": "Tuile de contexte",
+      "currentAsset": "Icône native / tuile neutre",
+      "newAssetRequired": "OUI",
+      "illustration": "activities/mini-golf"
+    },
+    {
+      "assetKey": "choice:activityCategory:billiards",
+      "label": "Billard",
+      "flow": "activityCategory",
+      "usage": "Tuile de contexte",
+      "currentAsset": "Icône native / tuile neutre",
+      "newAssetRequired": "OUI",
+      "illustration": "activities/billiards"
+    },
+    {
+      "assetKey": "choice:activityCategory:escape_game",
+      "label": "Escape game",
+      "flow": "activityCategory",
+      "usage": "Tuile de contexte",
+      "currentAsset": "Icône native / tuile neutre",
+      "newAssetRequired": "OUI",
+      "illustration": "activities/escape-game"
+    },
+    {
+      "assetKey": "choice:activityCategory:canoe_kayak",
+      "label": "Canoë / kayak",
+      "flow": "activityCategory",
+      "usage": "Tuile de contexte",
+      "currentAsset": "Icône native / tuile neutre",
+      "newAssetRequired": "OUI",
+      "illustration": "activities/kayak"
+    },
+    {
+      "assetKey": "choice:activityCategory:pool",
+      "label": "Piscine",
+      "flow": "activityCategory",
+      "usage": "Tuile de contexte",
+      "currentAsset": "Icône native / tuile neutre",
+      "newAssetRequired": "OUI",
+      "illustration": "activities/pool"
+    },
+    {
+      "assetKey": "choice:activityCategory:spa",
+      "label": "Spa",
+      "flow": "activityCategory",
+      "usage": "Tuile de contexte",
+      "currentAsset": "Icône native / tuile neutre",
+      "newAssetRequired": "OUI",
+      "illustration": "activities/spa"
+    },
+    {
+      "assetKey": "choice:activityCategory:theme_park",
+      "label": "Parc d’attractions",
+      "flow": "activityCategory",
+      "usage": "Tuile de contexte",
+      "currentAsset": "Icône native / tuile neutre",
+      "newAssetRequired": "OUI",
+      "illustration": "activities/theme-park"
+    },
+    {
+      "assetKey": "choice:activityCategory:show",
+      "label": "Spectacle",
+      "flow": "activityCategory",
+      "usage": "Tuile de contexte",
+      "currentAsset": "Icône native / tuile neutre",
+      "newAssetRequired": "OUI",
+      "illustration": "activities/show"
+    },
+    {
+      "assetKey": "choice:activityCategory:match",
+      "label": "Match",
+      "flow": "activityCategory",
+      "usage": "Tuile de contexte",
+      "currentAsset": "Icône native / tuile neutre",
+      "newAssetRequired": "OUI",
+      "illustration": "activities/match"
+    },
+    {
+      "assetKey": "choice:activityCategory:sport",
+      "label": "Sport",
+      "flow": "activityCategory",
+      "usage": "Tuile de contexte",
+      "currentAsset": "Icône native / tuile neutre",
+      "newAssetRequired": "OUI",
+      "illustration": "activities/sport"
+    },
+    {
+      "assetKey": "choice:activityCategory:fishing",
+      "label": "Pêche",
+      "flow": "activityCategory",
+      "usage": "Tuile de contexte",
+      "currentAsset": "Icône native / tuile neutre",
+      "newAssetRequired": "OUI",
+      "illustration": "activities/fishing"
+    },
+    {
+      "assetKey": "choice:activityCategory:creative_workshop",
+      "label": "Atelier / activité créative",
+      "flow": "activityCategory",
+      "usage": "Tuile de contexte",
+      "currentAsset": "Icône native / tuile neutre",
+      "newAssetRequired": "OUI",
+      "illustration": "activities/creative"
+    },
+    {
+      "assetKey": "choice:activityCategory:photo_outing",
+      "label": "Sortie photo",
+      "flow": "activityCategory",
+      "usage": "Tuile de contexte",
+      "currentAsset": "Icône native / tuile neutre",
+      "newAssetRequired": "OUI",
+      "illustration": "activities/photo"
+    },
+    {
+      "assetKey": "choice:activityCategory:other_activity",
+      "label": "Autre activité",
+      "flow": "activityCategory",
+      "usage": "Tuile de contexte",
+      "currentAsset": "Icône native / tuile neutre",
+      "newAssetRequired": "OUI",
+      "illustration": "intent/activity"
+    },
+    {
+      "assetKey": "choice:purchaseCategory:beauty",
+      "label": "Beauté / soin",
+      "flow": "purchaseCategory",
+      "usage": "Tuile de contexte",
+      "currentAsset": "Icône native / tuile neutre",
+      "newAssetRequired": "OUI",
+      "illustration": "beauty/face-cream"
+    },
+    {
+      "assetKey": "choice:purchaseCategory:clothing",
+      "label": "Vêtements",
+      "flow": "purchaseCategory",
+      "usage": "Tuile de contexte",
+      "currentAsset": "Icône native / tuile neutre",
+      "newAssetRequired": "OUI",
+      "illustration": "clothing/tshirt"
+    },
+    {
+      "assetKey": "choice:purchaseCategory:household",
+      "label": "Produits ménagers",
+      "flow": "purchaseCategory",
+      "usage": "Tuile de contexte",
+      "currentAsset": "Icône native / tuile neutre",
+      "newAssetRequired": "OUI",
+      "illustration": "household/sponge"
+    },
+    {
+      "assetKey": "choice:purchaseCategory:home_equipment",
+      "label": "Maison / équipement",
+      "flow": "purchaseCategory",
+      "usage": "Tuile de contexte",
+      "currentAsset": "Icône native / tuile neutre",
+      "newAssetRequired": "OUI",
+      "illustration": "home/furniture"
+    },
+    {
+      "assetKey": "choice:purchaseCategory:gift",
+      "label": "Cadeau",
+      "flow": "purchaseCategory",
+      "usage": "Tuile de contexte",
+      "currentAsset": "Icône native / tuile neutre",
+      "newAssetRequired": "OUI",
+      "illustration": "misc/gift"
+    },
+    {
+      "assetKey": "choice:purchaseCategory:tech",
+      "label": "Tech / matériel",
+      "flow": "purchaseCategory",
+      "usage": "Tuile de contexte",
+      "currentAsset": "Icône native / tuile neutre",
+      "newAssetRequired": "OUI",
+      "illustration": "misc/game"
+    },
+    {
+      "assetKey": "choice:purchaseCategory:automotive",
+      "label": "Automobile",
+      "flow": "purchaseCategory",
+      "usage": "Tuile de contexte",
+      "currentAsset": "Icône native / tuile neutre",
+      "newAssetRequired": "OUI",
+      "illustration": "transport/car"
+    },
+    {
+      "assetKey": "choice:purchaseCategory:other_purchase",
+      "label": "Autre achat",
+      "flow": "purchaseCategory",
+      "usage": "Tuile de contexte",
+      "currentAsset": "Icône native / tuile neutre",
+      "newAssetRequired": "OUI",
+      "illustration": "intent/purchase"
+    },
+    {
+      "assetKey": "choice:partyKind:bar",
+      "label": "Bar / apéro",
+      "flow": "partyKind",
+      "usage": "Tuile de contexte",
+      "currentAsset": "Icône native / tuile neutre",
+      "newAssetRequired": "OUI",
+      "illustration": "intent/party"
+    },
+    {
+      "assetKey": "choice:partyKind:club_festival",
+      "label": "Club / boîte",
+      "flow": "partyKind",
+      "usage": "Tuile de contexte",
+      "currentAsset": "Icône native / tuile neutre",
+      "newAssetRequired": "OUI",
+      "illustration": "outing/club"
+    },
+    {
+      "assetKey": "choice:partyKind:house_party",
+      "label": "Soirée privée",
+      "flow": "partyKind",
+      "usage": "Tuile de contexte",
+      "currentAsset": "Icône native / tuile neutre",
+      "newAssetRequired": "OUI",
+      "illustration": "outing/private-party"
+    },
+    {
+      "assetKey": "choice:partyKind:EVENT",
+      "label": "Festival / événement",
+      "flow": "partyKind",
+      "usage": "Tuile de contexte",
+      "currentAsset": "Icône native / tuile neutre",
+      "newAssetRequired": "OUI",
+      "illustration": "outing/festival"
+    },
+    {
+      "assetKey": "choice:groceriesNature:USUAL",
+      "label": "Courses habituelles",
+      "flow": "groceriesNature",
+      "usage": "Tuile de contexte",
+      "currentAsset": "Icône native / tuile neutre",
+      "newAssetRequired": "OUI",
+      "illustration": "intent/groceries"
+    },
+    {
+      "assetKey": "choice:groceriesNature:TOP_UP",
+      "label": "Petites courses / complément",
+      "flow": "groceriesNature",
+      "usage": "Tuile de contexte",
+      "currentAsset": "Icône native / tuile neutre",
+      "newAssetRequired": "OUI",
+      "illustration": "food/pantry"
+    },
+    {
+      "assetKey": "choice:groceriesNature:OCCASION",
+      "label": "Repas ou occasion",
+      "flow": "groceriesNature",
+      "usage": "Tuile de contexte",
+      "currentAsset": "Icône native / tuile neutre",
+      "newAssetRequired": "OUI",
+      "illustration": "food/main"
+    },
+    {
+      "assetKey": "choice:groceryFocus:FOOD",
+      "label": "Alimentation",
+      "flow": "groceryFocus",
+      "usage": "Tuile de contexte",
+      "currentAsset": "Icône native / tuile neutre",
+      "newAssetRequired": "OUI",
+      "illustration": "intent/groceries"
+    },
+    {
+      "assetKey": "choice:groceryFocus:HYGIENE",
+      "label": "Hygiène",
+      "flow": "groceryFocus",
+      "usage": "Tuile de contexte",
+      "currentAsset": "Icône native / tuile neutre",
+      "newAssetRequired": "OUI",
+      "illustration": "beauty/shower-gel"
+    },
+    {
+      "assetKey": "choice:groceryFocus:CLEANING",
+      "label": "Entretien",
+      "flow": "groceryFocus",
+      "usage": "Tuile de contexte",
+      "currentAsset": "Icône native / tuile neutre",
+      "newAssetRequired": "OUI",
+      "illustration": "household/sponge"
+    },
+    {
+      "assetKey": "choice:groceryFocus:DRINKS",
+      "label": "Boissons",
+      "flow": "groceryFocus",
+      "usage": "Tuile de contexte",
+      "currentAsset": "Icône native / tuile neutre",
+      "newAssetRequired": "OUI",
+      "illustration": "drinks/soft"
+    },
+    {
+      "assetKey": "choice:automotiveKind:PRODUCT",
+      "label": "Pièce ou accessoire",
+      "flow": "automotiveKind",
+      "usage": "Tuile de contexte",
+      "currentAsset": "Icône native / tuile neutre",
+      "newAssetRequired": "OUI",
+      "illustration": "automotive/part"
+    },
+    {
+      "assetKey": "choice:automotiveKind:SERVICE",
+      "label": "Entretien ou service",
+      "flow": "automotiveKind",
+      "usage": "Tuile de contexte",
+      "currentAsset": "Icône native / tuile neutre",
+      "newAssetRequired": "OUI",
+      "illustration": "automotive/wash"
+    },
+    {
+      "assetKey": "choice:tripKind:STAY",
+      "label": "Un séjour",
+      "flow": "tripKind",
+      "usage": "Tuile de contexte",
+      "currentAsset": "Icône native / tuile neutre",
+      "newAssetRequired": "OUI",
+      "illustration": "intent/travel"
+    },
+    {
+      "assetKey": "choice:tripKind:PUNCTUAL",
+      "label": "Un déplacement ponctuel",
+      "flow": "tripKind",
+      "usage": "Tuile de contexte",
+      "currentAsset": "Icône native / tuile neutre",
+      "newAssetRequired": "OUI",
+      "illustration": "transport/car"
+    },
+    {
+      "assetKey": "choice:participants:BOTH",
+      "label": "Nous deux",
+      "flow": "participants",
+      "usage": "Tuile de contexte",
+      "currentAsset": "Icône native / tuile neutre",
+      "newAssetRequired": "OUI",
+      "illustration": "intent/visit"
+    },
+    {
+      "assetKey": "choice:participants:GROUP",
+      "label": "Avec d’autres personnes",
+      "flow": "participants",
+      "usage": "Tuile de contexte",
+      "currentAsset": "Icône native / tuile neutre",
+      "newAssetRequired": "OUI",
+      "illustration": "social/group"
+    },
+    {
+      "assetKey": "choice:channel:STORE",
+      "label": "Sur place / en magasin",
+      "flow": "channel",
+      "usage": "Tuile de contexte",
+      "currentAsset": "Icône native / tuile neutre",
+      "newAssetRequired": "OUI",
+      "illustration": "intent/purchase"
+    },
+    {
+      "assetKey": "choice:channel:PICKUP",
+      "label": "À emporter / drive / retrait",
+      "flow": "channel",
+      "usage": "Tuile de contexte",
+      "currentAsset": "Icône native / tuile neutre",
+      "newAssetRequired": "OUI",
+      "illustration": "misc/delivery"
+    },
+    {
+      "assetKey": "choice:channel:DELIVERY",
+      "label": "Livraison",
+      "flow": "channel",
+      "usage": "Tuile de contexte",
+      "currentAsset": "Icône native / tuile neutre",
+      "newAssetRequired": "OUI",
+      "illustration": "misc/delivery"
+    },
+    {
+      "assetKey": "choice:channel:SECOND_HAND",
+      "label": "Seconde main",
+      "flow": "channel",
+      "usage": "Tuile de contexte",
+      "currentAsset": "Icône native / tuile neutre",
+      "newAssetRequired": "OUI",
+      "illustration": "intent/purchase"
+    },
+    {
+      "assetKey": "choice:fastFoodChannel:STORE",
+      "label": "Sur place",
+      "flow": "fastFoodChannel",
+      "usage": "Tuile de contexte",
+      "currentAsset": "Icône native / tuile neutre",
+      "newAssetRequired": "OUI",
+      "illustration": "intent/fast-food"
+    },
+    {
+      "assetKey": "choice:groceriesChannel:STORE",
+      "label": "En magasin",
+      "flow": "groceriesChannel",
+      "usage": "Tuile de contexte",
+      "currentAsset": "Icône native / tuile neutre",
+      "newAssetRequired": "OUI",
+      "illustration": "intent/groceries"
+    },
+    {
+      "assetKey": "choice:workMode:BOUGHT",
+      "label": "Acheté près du travail",
+      "flow": "workMode",
+      "usage": "Tuile de contexte",
+      "currentAsset": "Icône native / tuile neutre",
+      "newAssetRequired": "OUI",
+      "illustration": "food/sandwich"
+    },
+    {
+      "assetKey": "choice:workMode:DELIVERED",
+      "label": "Livré au travail",
+      "flow": "workMode",
+      "usage": "Tuile de contexte",
+      "currentAsset": "Icône native / tuile neutre",
+      "newAssetRequired": "OUI",
+      "illustration": "misc/delivery"
+    },
+    {
+      "assetKey": "choice:workMode:FROM_HOME",
+      "label": "Apporté de chez nous",
+      "flow": "workMode",
+      "usage": "Tuile de contexte",
+      "currentAsset": "Icône native / tuile neutre",
+      "newAssetRequired": "OUI",
+      "illustration": "intent/work-meal"
+    },
+    {
+      "assetKey": "choice:format:SIMPLE",
+      "label": "Visite simple / pour nous deux",
+      "flow": "format",
+      "usage": "Tuile de contexte",
+      "currentAsset": "Icône native / tuile neutre",
+      "newAssetRequired": "OUI",
+      "illustration": "intent/visit"
+    },
+    {
+      "assetKey": "choice:format:APERO_PARTY",
+      "label": "Un apéro",
+      "flow": "format",
+      "usage": "Tuile de contexte",
+      "currentAsset": "Icône native / tuile neutre",
+      "newAssetRequired": "OUI",
+      "illustration": "intent/party"
+    },
+    {
+      "assetKey": "choice:format:MEAL",
+      "label": "Un repas",
+      "flow": "format",
+      "usage": "Tuile de contexte",
+      "currentAsset": "Icône native / tuile neutre",
+      "newAssetRequired": "OUI",
+      "illustration": "food/main"
+    },
+    {
+      "assetKey": "choice:format:STAY",
+      "label": "Rester dormir / plusieurs personnes",
+      "flow": "format",
+      "usage": "Tuile de contexte",
+      "currentAsset": "Icône native / tuile neutre",
+      "newAssetRequired": "OUI",
+      "illustration": "lodging/sleep"
+    },
+    {
+      "assetKey": "choice:groceriesFormat:STAY",
+      "label": "Pour plusieurs personnes",
+      "flow": "groceriesFormat",
+      "usage": "Tuile de contexte",
+      "currentAsset": "Icône native / tuile neutre",
+      "newAssetRequired": "OUI",
+      "illustration": "social/group"
+    },
+    {
+      "assetKey": "choice:occasion:BIRTHDAY",
+      "label": "Anniversaire",
+      "flow": "occasion",
+      "usage": "Tuile de contexte",
+      "currentAsset": "Icône native / tuile neutre",
+      "newAssetRequired": "OUI",
+      "illustration": "social/birthday"
+    },
+    {
+      "assetKey": "choice:occasion:VALENTINE",
+      "label": "Saint-Valentin",
+      "flow": "occasion",
+      "usage": "Tuile de contexte",
+      "currentAsset": "Icône native / tuile neutre",
+      "newAssetRequired": "OUI",
+      "illustration": "social/valentine"
+    },
+    {
+      "assetKey": "choice:occasion:REUNION",
+      "label": "Retrouvailles",
+      "flow": "occasion",
+      "usage": "Tuile de contexte",
+      "currentAsset": "Icône native / tuile neutre",
+      "newAssetRequired": "OUI",
+      "illustration": "intent/visit"
+    },
+    {
+      "assetKey": "choice:occasion:CELEBRATION",
+      "label": "Célébration",
+      "flow": "occasion",
+      "usage": "Tuile de contexte",
+      "currentAsset": "Icône native / tuile neutre",
+      "newAssetRequired": "OUI",
+      "illustration": "social/celebration"
+    },
+    {
+      "assetKey": "choice:transport:CAR",
+      "label": "Voiture",
+      "flow": "transport",
+      "usage": "Tuile de contexte",
+      "currentAsset": "Icône native / tuile neutre",
+      "newAssetRequired": "OUI",
+      "illustration": "transport/car"
+    },
+    {
+      "assetKey": "choice:transport:TRAIN",
+      "label": "Train",
+      "flow": "transport",
+      "usage": "Tuile de contexte",
+      "currentAsset": "Icône native / tuile neutre",
+      "newAssetRequired": "OUI",
+      "illustration": "transport/train"
+    },
+    {
+      "assetKey": "choice:transport:PLANE",
+      "label": "Avion",
+      "flow": "transport",
+      "usage": "Tuile de contexte",
+      "currentAsset": "Icône native / tuile neutre",
+      "newAssetRequired": "OUI",
+      "illustration": "transport/plane"
+    },
+    {
+      "assetKey": "choice:transport:BUS",
+      "label": "Bus / transport payant",
+      "flow": "transport",
+      "usage": "Tuile de contexte",
+      "currentAsset": "Icône native / tuile neutre",
+      "newAssetRequired": "OUI",
+      "illustration": "transport/bus"
+    },
+    {
+      "assetKey": "choice:transport:TAXI",
+      "label": "Taxi / Uber",
+      "flow": "transport",
+      "usage": "Tuile de contexte",
+      "currentAsset": "Icône native / tuile neutre",
+      "newAssetRequired": "OUI",
+      "illustration": "transport/car"
+    },
+    {
+      "assetKey": "choice:transport:FREE",
+      "label": "À pied, vélo ou tram gratuit",
+      "flow": "transport",
+      "usage": "Tuile de contexte",
+      "currentAsset": "Icône native / tuile neutre",
+      "newAssetRequired": "OUI",
+      "illustration": "transport/walking"
+    },
+    {
+      "assetKey": "choice:lodging:RELATIVE",
+      "label": "Chez un proche",
+      "flow": "lodging",
+      "usage": "Tuile de contexte",
+      "currentAsset": "Icône native / tuile neutre",
+      "newAssetRequired": "OUI",
+      "illustration": "social/family"
+    },
+    {
+      "assetKey": "choice:lodging:HOTEL",
+      "label": "Hôtel",
+      "flow": "lodging",
+      "usage": "Tuile de contexte",
+      "currentAsset": "Icône native / tuile neutre",
+      "newAssetRequired": "OUI",
+      "illustration": "lodging/hotel"
+    },
+    {
+      "assetKey": "choice:lodging:HOSTEL",
+      "label": "Auberge",
+      "flow": "lodging",
+      "usage": "Tuile de contexte",
+      "currentAsset": "Icône native / tuile neutre",
+      "newAssetRequired": "OUI",
+      "illustration": "lodging/hostel"
+    },
+    {
+      "assetKey": "choice:lodging:RENTAL",
+      "label": "Appartement / location",
+      "flow": "lodging",
+      "usage": "Tuile de contexte",
+      "currentAsset": "Icône native / tuile neutre",
+      "newAssetRequired": "OUI",
+      "illustration": "lodging/rental"
+    },
+    {
+      "assetKey": "choice:provider:DIRECT",
+      "label": "Directement par le commerce",
+      "flow": "provider",
+      "usage": "Tuile de contexte",
+      "currentAsset": "Icône native / tuile neutre",
+      "newAssetRequired": "OUI",
+      "illustration": "misc/delivery"
+    },
+    {
+      "assetKey": "choice:visitSubtype:visit_family",
+      "label": "Famille",
+      "flow": "visitSubtype",
+      "usage": "Tuile de contexte",
+      "currentAsset": "Icône native / tuile neutre",
+      "newAssetRequired": "OUI",
+      "illustration": "social/family"
+    },
+    {
+      "assetKey": "choice:visitSubtype:visit_friend",
+      "label": "Amis",
+      "flow": "visitSubtype",
+      "usage": "Tuile de contexte",
+      "currentAsset": "Icône native / tuile neutre",
+      "newAssetRequired": "OUI",
+      "illustration": "intent/visit"
+    },
+    {
+      "assetKey": "choice:companions:SOLO",
+      "label": "Seul",
+      "flow": "companions",
+      "usage": "Tuile de contexte",
+      "currentAsset": "Icône native / tuile neutre",
+      "newAssetRequired": "OUI",
+      "illustration": "social/solo"
+    },
+    {
+      "assetKey": "choice:companions:COUPLE",
+      "label": "À deux",
+      "flow": "companions",
+      "usage": "Tuile de contexte",
+      "currentAsset": "Icône native / tuile neutre",
+      "newAssetRequired": "OUI",
+      "illustration": "intent/visit"
+    },
+    {
+      "assetKey": "choice:companions:GROUP",
+      "label": "À plusieurs",
+      "flow": "companions",
+      "usage": "Tuile de contexte",
+      "currentAsset": "Icône native / tuile neutre",
+      "newAssetRequired": "OUI",
+      "illustration": "social/group"
+    },
+    {
+      "assetKey": "choice:channel:IN_STORE",
+      "label": "En magasin",
+      "flow": "channel",
+      "usage": "Tuile de contexte",
+      "currentAsset": "Icône native / tuile neutre",
+      "newAssetRequired": "OUI",
+      "illustration": "intent/purchase"
+    },
+    {
+      "assetKey": "choice:channel:TAKEAWAY",
+      "label": "Drive / retrait",
+      "flow": "channel",
+      "usage": "Tuile de contexte",
+      "currentAsset": "Icône native / tuile neutre",
+      "newAssetRequired": "OUI",
+      "illustration": "misc/delivery"
+    },
+    {
+      "assetKey": "choice:channel:ONLINE",
+      "label": "En ligne",
+      "flow": "channel",
+      "usage": "Tuile de contexte",
+      "currentAsset": "Icône native / tuile neutre",
+      "newAssetRequired": "OUI",
+      "illustration": "misc/delivery"
+    },
+    {
+      "assetKey": "choice:fastFoodChannel:IN_STORE",
+      "label": "Sur place",
+      "flow": "fastFoodChannel",
+      "usage": "Tuile de contexte",
+      "currentAsset": "Icône native / tuile neutre",
+      "newAssetRequired": "OUI",
+      "illustration": "intent/fast-food"
+    },
+    {
+      "assetKey": "choice:fastFoodChannel:TAKEAWAY",
+      "label": "À emporter",
+      "flow": "fastFoodChannel",
+      "usage": "Tuile de contexte",
+      "currentAsset": "Icône native / tuile neutre",
+      "newAssetRequired": "OUI",
+      "illustration": "misc/delivery"
+    },
+    {
+      "assetKey": "choice:fastFoodChannel:DELIVERY",
+      "label": "Livraison",
+      "flow": "fastFoodChannel",
+      "usage": "Tuile de contexte",
+      "currentAsset": "Icône native / tuile neutre",
+      "newAssetRequired": "OUI",
+      "illustration": "misc/delivery"
+    },
+    {
+      "assetKey": "choice:tripKind:trip_stay",
+      "label": "Voyage / séjour",
+      "flow": "tripKind",
+      "usage": "Tuile de contexte",
+      "currentAsset": "Icône native / tuile neutre",
+      "newAssetRequired": "OUI",
+      "illustration": "intent/travel"
+    },
+    {
+      "assetKey": "choice:tripKind:other_trip",
+      "label": "Déplacement ponctuel",
+      "flow": "tripKind",
+      "usage": "Tuile de contexte",
+      "currentAsset": "Icône native / tuile neutre",
+      "newAssetRequired": "OUI",
+      "illustration": "transport/car"
+    },
+    {
+      "assetKey": "choice:occasion:CHRISTMAS",
+      "label": "Noël",
+      "flow": "occasion",
+      "usage": "Tuile de contexte",
+      "currentAsset": "Icône native / tuile neutre",
+      "newAssetRequired": "OUI",
+      "illustration": "misc/gift"
+    },
+    {
+      "assetKey": "module:bar",
+      "label": "bar",
+      "flow": "Tous les flows",
+      "usage": "Complément / lens",
+      "currentAsset": "Icône native / tuile neutre",
+      "newAssetRequired": "OUI",
+      "illustration": "intent/party"
+    },
+    {
+      "assetKey": "module:club",
+      "label": "club",
+      "flow": "Tous les flows",
+      "usage": "Complément / lens",
+      "currentAsset": "Icône native / tuile neutre",
+      "newAssetRequired": "OUI",
+      "illustration": "outing/club"
+    },
+    {
+      "assetKey": "module:house_party",
+      "label": "house_party",
+      "flow": "Tous les flows",
+      "usage": "Complément / lens",
+      "currentAsset": "Icône native / tuile neutre",
+      "newAssetRequired": "OUI",
+      "illustration": "outing/private-party"
+    },
+    {
+      "assetKey": "module:groceries",
+      "label": "groceries",
+      "flow": "Tous les flows",
+      "usage": "Complément / lens",
+      "currentAsset": "Icône native / tuile neutre",
+      "newAssetRequired": "OUI",
+      "illustration": "intent/groceries"
+    },
+    {
+      "assetKey": "module:restaurant",
+      "label": "restaurant",
+      "flow": "Tous les flows",
+      "usage": "Complément / lens",
+      "currentAsset": "Icône native / tuile neutre",
+      "newAssetRequired": "OUI",
+      "illustration": "intent/restaurant"
+    },
+    {
+      "assetKey": "module:fast_food",
+      "label": "fast_food",
+      "flow": "Tous les flows",
+      "usage": "Complément / lens",
+      "currentAsset": "Icône native / tuile neutre",
+      "newAssetRequired": "OUI",
+      "illustration": "intent/fast-food"
+    },
+    {
+      "assetKey": "module:work_meal",
+      "label": "work_meal",
+      "flow": "Tous les flows",
+      "usage": "Complément / lens",
+      "currentAsset": "Icône native / tuile neutre",
+      "newAssetRequired": "OUI",
+      "illustration": "intent/work-meal"
+    },
+    {
+      "assetKey": "module:transport",
+      "label": "transport",
+      "flow": "Tous les flows",
+      "usage": "Complément / lens",
+      "currentAsset": "Icône native / tuile neutre",
+      "newAssetRequired": "OUI",
+      "illustration": "transport/car"
+    },
+    {
+      "assetKey": "module:visit_family",
+      "label": "visit_family",
+      "flow": "Tous les flows",
+      "usage": "Complément / lens",
+      "currentAsset": "Icône native / tuile neutre",
+      "newAssetRequired": "OUI",
+      "illustration": "social/family"
+    },
+    {
+      "assetKey": "module:visit_friend",
+      "label": "visit_friend",
+      "flow": "Tous les flows",
+      "usage": "Complément / lens",
+      "currentAsset": "Icône native / tuile neutre",
+      "newAssetRequired": "OUI",
+      "illustration": "intent/visit"
+    },
+    {
+      "assetKey": "module:trip",
+      "label": "trip",
+      "flow": "Tous les flows",
+      "usage": "Complément / lens",
+      "currentAsset": "Icône native / tuile neutre",
+      "newAssetRequired": "OUI",
+      "illustration": "intent/travel"
+    },
+    {
+      "assetKey": "module:activity",
+      "label": "activity",
+      "flow": "Tous les flows",
+      "usage": "Complément / lens",
+      "currentAsset": "Icône native / tuile neutre",
+      "newAssetRequired": "OUI",
+      "illustration": "intent/activity"
+    },
+    {
+      "assetKey": "module:fishing",
+      "label": "fishing",
+      "flow": "Tous les flows",
+      "usage": "Complément / lens",
+      "currentAsset": "Icône native / tuile neutre",
+      "newAssetRequired": "OUI",
+      "illustration": "activities/fishing"
+    },
+    {
+      "assetKey": "module:beauty",
+      "label": "beauty",
+      "flow": "Tous les flows",
+      "usage": "Complément / lens",
+      "currentAsset": "Icône native / tuile neutre",
+      "newAssetRequired": "OUI",
+      "illustration": "beauty/face-cream"
+    },
+    {
+      "assetKey": "module:clothing",
+      "label": "clothing",
+      "flow": "Tous les flows",
+      "usage": "Complément / lens",
+      "currentAsset": "Icône native / tuile neutre",
+      "newAssetRequired": "OUI",
+      "illustration": "clothing/tshirt"
+    },
+    {
+      "assetKey": "module:household",
+      "label": "household",
+      "flow": "Tous les flows",
+      "usage": "Complément / lens",
+      "currentAsset": "Icône native / tuile neutre",
+      "newAssetRequired": "OUI",
+      "illustration": "household/sponge"
+    },
+    {
+      "assetKey": "module:home",
+      "label": "home",
+      "flow": "Tous les flows",
+      "usage": "Complément / lens",
+      "currentAsset": "Icône native / tuile neutre",
+      "newAssetRequired": "OUI",
+      "illustration": "home/furniture"
+    },
+    {
+      "assetKey": "module:gift",
+      "label": "gift",
+      "flow": "Tous les flows",
+      "usage": "Complément / lens",
+      "currentAsset": "Icône native / tuile neutre",
+      "newAssetRequired": "OUI",
+      "illustration": "misc/gift"
+    },
+    {
+      "assetKey": "module:tech",
+      "label": "tech",
+      "flow": "Tous les flows",
+      "usage": "Complément / lens",
+      "currentAsset": "Icône native / tuile neutre",
+      "newAssetRequired": "OUI",
+      "illustration": "misc/game"
+    },
+    {
+      "assetKey": "module:automotive",
+      "label": "automotive",
+      "flow": "Tous les flows",
+      "usage": "Complément / lens",
+      "currentAsset": "Icône native / tuile neutre",
+      "newAssetRequired": "OUI",
+      "illustration": "transport/car"
+    },
+    {
+      "assetKey": "module:other",
+      "label": "other",
+      "flow": "Tous les flows",
+      "usage": "Complément / lens",
+      "currentAsset": "Icône native / tuile neutre",
+      "newAssetRequired": "OUI",
+      "illustration": "intent/purchase"
+    },
+    {
+      "assetKey": "module:BRING_ITEMS",
+      "label": "BRING_ITEMS",
+      "flow": "Tous les flows",
+      "usage": "Complément / lens",
+      "currentAsset": "Icône native / tuile neutre",
+      "newAssetRequired": "OUI",
+      "illustration": "intent/groceries"
+    },
+    {
+      "assetKey": "scene:restaurant",
+      "label": "restaurant",
+      "flow": "Compatibilité écrans secondaires",
+      "usage": "Scène existante",
+      "currentAsset": "scene-atlas-v1.png",
+      "newAssetRequired": "OUI",
+      "illustration": "intent/restaurant"
+    },
+    {
+      "assetKey": "scene:fast_food",
+      "label": "fast_food",
+      "flow": "Compatibilité écrans secondaires",
+      "usage": "Scène existante",
+      "currentAsset": "scene-atlas-v1.png",
+      "newAssetRequired": "OUI",
+      "illustration": "intent/fast-food"
+    },
+    {
+      "assetKey": "scene:work_meal",
+      "label": "work_meal",
+      "flow": "Compatibilité écrans secondaires",
+      "usage": "Scène existante",
+      "currentAsset": "scene-atlas-v1.png",
+      "newAssetRequired": "OUI",
+      "illustration": "intent/work-meal"
+    },
+    {
+      "assetKey": "scene:groceries",
+      "label": "groceries",
+      "flow": "Compatibilité écrans secondaires",
+      "usage": "Scène existante",
+      "currentAsset": "scene-atlas-v1.png",
+      "newAssetRequired": "OUI",
+      "illustration": "intent/groceries"
+    },
+    {
+      "assetKey": "scene:party",
+      "label": "party",
+      "flow": "Compatibilité écrans secondaires",
+      "usage": "Scène existante",
+      "currentAsset": "scene-atlas-v1.png",
+      "newAssetRequired": "OUI",
+      "illustration": "intent/party"
+    },
+    {
+      "assetKey": "scene:visit",
+      "label": "visit",
+      "flow": "Compatibilité écrans secondaires",
+      "usage": "Scène existante",
+      "currentAsset": "scene-atlas-v1.png",
+      "newAssetRequired": "OUI",
+      "illustration": "intent/visit"
+    },
+    {
+      "assetKey": "scene:activity",
+      "label": "activity",
+      "flow": "Compatibilité écrans secondaires",
+      "usage": "Scène existante",
+      "currentAsset": "scene-atlas-v1.png",
+      "newAssetRequired": "OUI",
+      "illustration": "intent/activity"
+    },
+    {
+      "assetKey": "scene:purchase",
+      "label": "purchase",
+      "flow": "Compatibilité écrans secondaires",
+      "usage": "Scène existante",
+      "currentAsset": "scene-atlas-v1.png",
+      "newAssetRequired": "OUI",
+      "illustration": "intent/purchase"
+    },
+    {
+      "assetKey": "scene:trip",
+      "label": "trip",
+      "flow": "Compatibilité écrans secondaires",
+      "usage": "Scène existante",
+      "currentAsset": "scene-atlas-v1.png",
+      "newAssetRequired": "OUI",
+      "illustration": "intent/travel"
+    },
+    {
+      "assetKey": "scene:solo",
+      "label": "solo",
+      "flow": "Compatibilité écrans secondaires",
+      "usage": "Scène existante",
+      "currentAsset": "scene-atlas-v1.png",
+      "newAssetRequired": "OUI",
+      "illustration": "social/solo"
+    },
+    {
+      "assetKey": "scene:couple",
+      "label": "couple",
+      "flow": "Compatibilité écrans secondaires",
+      "usage": "Scène existante",
+      "currentAsset": "scene-atlas-v1.png",
+      "newAssetRequired": "OUI",
+      "illustration": "intent/visit"
+    },
+    {
+      "assetKey": "scene:group",
+      "label": "group",
+      "flow": "Compatibilité écrans secondaires",
+      "usage": "Scène existante",
+      "currentAsset": "scene-atlas-v1.png",
+      "newAssetRequired": "OUI",
+      "illustration": "social/group"
+    },
+    {
+      "assetKey": "scene:birthday",
+      "label": "birthday",
+      "flow": "Compatibilité écrans secondaires",
+      "usage": "Scène existante",
+      "currentAsset": "scene-atlas-v1.png",
+      "newAssetRequired": "OUI",
+      "illustration": "social/birthday"
+    },
+    {
+      "assetKey": "scene:valentine",
+      "label": "valentine",
+      "flow": "Compatibilité écrans secondaires",
+      "usage": "Scène existante",
+      "currentAsset": "scene-atlas-v1.png",
+      "newAssetRequired": "OUI",
+      "illustration": "social/valentine"
+    },
+    {
+      "assetKey": "scene:spontaneous",
+      "label": "spontaneous",
+      "flow": "Compatibilité écrans secondaires",
+      "usage": "Scène existante",
+      "currentAsset": "scene-atlas-v1.png",
+      "newAssetRequired": "OUI",
+      "illustration": "intent/restaurant"
+    },
+    {
+      "assetKey": "scene:partyOccasion",
+      "label": "partyOccasion",
+      "flow": "Compatibilité écrans secondaires",
+      "usage": "Scène existante",
+      "currentAsset": "scene-atlas-v1.png",
+      "newAssetRequired": "OUI",
+      "illustration": "social/celebration"
+    },
+    {
+      "assetKey": "scene:reunion",
+      "label": "reunion",
+      "flow": "Compatibilité écrans secondaires",
+      "usage": "Scène existante",
+      "currentAsset": "scene-atlas-v1.png",
+      "newAssetRequired": "OUI",
+      "illustration": "intent/visit"
+    },
+    {
+      "assetKey": "scene:celebration",
+      "label": "celebration",
+      "flow": "Compatibilité écrans secondaires",
+      "usage": "Scène existante",
+      "currentAsset": "scene-atlas-v1.png",
+      "newAssetRequired": "OUI",
+      "illustration": "social/celebration"
+    },
+    {
+      "assetKey": "scene:occasion",
+      "label": "occasion",
+      "flow": "Compatibilité écrans secondaires",
+      "usage": "Scène existante",
+      "currentAsset": "scene-atlas-v1.png",
+      "newAssetRequired": "OUI",
+      "illustration": "social/celebration"
+    },
+    {
+      "assetKey": "scene:elsewhere",
+      "label": "elsewhere",
+      "flow": "Compatibilité écrans secondaires",
+      "usage": "Scène existante",
+      "currentAsset": "scene-atlas-v1.png",
+      "newAssetRequired": "OUI",
+      "illustration": "transport/road"
+    },
+    {
+      "assetKey": "scene:tram",
+      "label": "tram",
+      "flow": "Compatibilité écrans secondaires",
+      "usage": "Scène existante",
+      "currentAsset": "scene-atlas-v1.png",
+      "newAssetRequired": "OUI",
+      "illustration": "transport/tram"
+    },
+    {
+      "assetKey": "scene:walk",
+      "label": "walk",
+      "flow": "Compatibilité écrans secondaires",
+      "usage": "Scène existante",
+      "currentAsset": "scene-atlas-v1.png",
+      "newAssetRequired": "OUI",
+      "illustration": "transport/walking"
+    },
+    {
+      "assetKey": "scene:bike",
+      "label": "bike",
+      "flow": "Compatibilité écrans secondaires",
+      "usage": "Scène existante",
+      "currentAsset": "scene-atlas-v1.png",
+      "newAssetRequired": "OUI",
+      "illustration": "transport/bike"
+    },
+    {
+      "assetKey": "scene:car",
+      "label": "car",
+      "flow": "Compatibilité écrans secondaires",
+      "usage": "Scène existante",
+      "currentAsset": "scene-atlas-v1.png",
+      "newAssetRequired": "OUI",
+      "illustration": "transport/car"
+    },
+    {
+      "assetKey": "scene:train",
+      "label": "train",
+      "flow": "Compatibilité écrans secondaires",
+      "usage": "Scène existante",
+      "currentAsset": "scene-atlas-v1.png",
+      "newAssetRequired": "OUI",
+      "illustration": "transport/train"
+    },
+    {
+      "assetKey": "scene:taxi",
+      "label": "taxi",
+      "flow": "Compatibilité écrans secondaires",
+      "usage": "Scène existante",
+      "currentAsset": "scene-atlas-v1.png",
+      "newAssetRequired": "OUI",
+      "illustration": "transport/car"
+    },
+    {
+      "assetKey": "scene:bus",
+      "label": "bus",
+      "flow": "Compatibilité écrans secondaires",
+      "usage": "Scène existante",
+      "currentAsset": "scene-atlas-v1.png",
+      "newAssetRequired": "OUI",
+      "illustration": "transport/bus"
+    },
+    {
+      "assetKey": "scene:transport",
+      "label": "transport",
+      "flow": "Compatibilité écrans secondaires",
+      "usage": "Scène existante",
+      "currentAsset": "scene-atlas-v1.png",
+      "newAssetRequired": "OUI",
+      "illustration": "transport/road"
+    },
+    {
+      "assetKey": "scene:starter",
+      "label": "starter",
+      "flow": "Compatibilité écrans secondaires",
+      "usage": "Scène existante",
+      "currentAsset": "scene-atlas-v1.png",
+      "newAssetRequired": "OUI",
+      "illustration": "food/starter"
+    },
+    {
+      "assetKey": "scene:main",
+      "label": "main",
+      "flow": "Compatibilité écrans secondaires",
+      "usage": "Scène existante",
+      "currentAsset": "scene-atlas-v1.png",
+      "newAssetRequired": "OUI",
+      "illustration": "food/main"
+    },
+    {
+      "assetKey": "scene:dessert",
+      "label": "dessert",
+      "flow": "Compatibilité écrans secondaires",
+      "usage": "Scène existante",
+      "currentAsset": "scene-atlas-v1.png",
+      "newAssetRequired": "OUI",
+      "illustration": "food/dessert"
+    },
+    {
+      "assetKey": "scene:wine_glass",
+      "label": "wine_glass",
+      "flow": "Compatibilité écrans secondaires",
+      "usage": "Scène existante",
+      "currentAsset": "scene-atlas-v1.png",
+      "newAssetRequired": "OUI",
+      "illustration": "drinks/wine-glass"
+    },
+    {
+      "assetKey": "scene:wine_bottle",
+      "label": "wine_bottle",
+      "flow": "Compatibilité écrans secondaires",
+      "usage": "Scène existante",
+      "currentAsset": "scene-atlas-v1.png",
+      "newAssetRequired": "OUI",
+      "illustration": "drinks/wine-bottle"
+    },
+    {
+      "assetKey": "scene:cocktail",
+      "label": "cocktail",
+      "flow": "Compatibilité écrans secondaires",
+      "usage": "Scène existante",
+      "currentAsset": "scene-atlas-v1.png",
+      "newAssetRequired": "OUI",
+      "illustration": "intent/party"
+    },
+    {
+      "assetKey": "scene:soft",
+      "label": "soft",
+      "flow": "Compatibilité écrans secondaires",
+      "usage": "Scène existante",
+      "currentAsset": "scene-atlas-v1.png",
+      "newAssetRequired": "OUI",
+      "illustration": "drinks/soft"
+    },
+    {
+      "assetKey": "scene:water",
+      "label": "water",
+      "flow": "Compatibilité écrans secondaires",
+      "usage": "Scène existante",
+      "currentAsset": "scene-atlas-v1.png",
+      "newAssetRequired": "OUI",
+      "illustration": "drinks/water"
+    },
+    {
+      "assetKey": "scene:coffee",
+      "label": "coffee",
+      "flow": "Compatibilité écrans secondaires",
+      "usage": "Scène existante",
+      "currentAsset": "scene-atlas-v1.png",
+      "newAssetRequired": "OUI",
+      "illustration": "drinks/coffee"
+    },
+    {
+      "assetKey": "scene:menu",
+      "label": "menu",
+      "flow": "Compatibilité écrans secondaires",
+      "usage": "Scène existante",
+      "currentAsset": "scene-atlas-v1.png",
+      "newAssetRequired": "OUI",
+      "illustration": "food/main"
+    },
+    {
+      "assetKey": "scene:digestif",
+      "label": "digestif",
+      "flow": "Compatibilité écrans secondaires",
+      "usage": "Scène existante",
+      "currentAsset": "scene-atlas-v1.png",
+      "newAssetRequired": "OUI",
+      "illustration": "drinks/shot"
+    },
+    {
+      "assetKey": "scene:custom",
+      "label": "custom",
+      "flow": "Compatibilité écrans secondaires",
+      "usage": "Scène existante",
+      "currentAsset": "scene-atlas-v1.png",
+      "newAssetRequired": "OUI",
+      "illustration": "misc/document"
+    },
+    {
+      "assetKey": "scene:restaurantExterior",
+      "label": "restaurantExterior",
+      "flow": "Compatibilité écrans secondaires",
+      "usage": "Scène existante",
+      "currentAsset": "scene-atlas-v1.png",
+      "newAssetRequired": "OUI",
+      "illustration": "intent/restaurant"
+    },
+    {
+      "assetKey": "scene:road",
+      "label": "road",
+      "flow": "Compatibilité écrans secondaires",
+      "usage": "Scène existante",
+      "currentAsset": "scene-atlas-v1.png",
+      "newAssetRequired": "OUI",
+      "illustration": "transport/road"
+    },
+    {
+      "assetKey": "scene:sharing",
+      "label": "sharing",
+      "flow": "Compatibilité écrans secondaires",
+      "usage": "Scène existante",
+      "currentAsset": "scene-atlas-v1.png",
+      "newAssetRequired": "OUI",
+      "illustration": "intent/visit"
+    },
+    {
+      "assetKey": "scene:room",
+      "label": "room",
+      "flow": "Compatibilité écrans secondaires",
+      "usage": "Scène existante",
+      "currentAsset": "scene-atlas-v1.png",
+      "newAssetRequired": "OUI",
+      "illustration": "lodging/sleep"
+    }
+  ],
+  "illustrationCount": 164,
+  "exclusions": [
+    "Servian",
+    "Fontès",
+    "Dax",
+    "Montpellier (lieu spécifique)",
+    "Saint-Jean-de-Védas",
+    "Domicile du foyer",
+    "Amandine",
+    "Cédric",
+    "Lucas",
+    "Florentine",
+    "Juliette",
+    "Elsa",
+    "Greg",
+    "Marc",
+    "Isabelle",
+    "Chris",
+    "Grands-parents de Manon",
+    "Père d’Adrien",
+    "Mère d’Adrien",
+    "Grand-mère d’Adrien",
+    "Adrien",
+    "Manon",
+    "Autres personnes nommées, foyers et lieux personnels / résultats de lieux réels",
+    "Logos Swile, Edenred, Deliveroo, Uber Eats, Lady Sushi, Domino’s et autres marques réelles"
+  ],
+  "nonIllustrated": [
+    "Dates, moments et retours",
+    "Champs libres et adresses",
+    "Prix, quantités, résultats calculés et résumés",
+    "Toggles / paiement / précision / baseline",
+    "Suivant, Retour, pagination et actions",
+    "Liens vers un projet existant",
+    "Pas encore / autre / budget à préciser : fallback neutre",
+    "Cartes de variante de trajet : résultats, pas illustration"
+  ]
+}

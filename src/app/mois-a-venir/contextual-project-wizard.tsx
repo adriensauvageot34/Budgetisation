@@ -21,17 +21,18 @@ import { ProjectTransportEditor } from "./project-transport-editor";
 import { ProjectVisualPicker } from "./project-visual-picker";
 import { compatibleProjectVisual, projectVisualPlaceId } from "@/domain/phase2/planned-visual";
 import { WizardBackdrop } from "./planned-wizard-visuals";
+import { BuilderIllustration, builderChoiceKey } from "./builder-illustrations";
 import styles from "./project-wizard.module.css";
 import oldStyles from "./planned-wizard.module.css";
 
 const money = (v: string) => new Intl.NumberFormat("fr-FR", { style: "currency", currency: "EUR" }).format(Number(v));
 export function ProjectIntentHub({ onChoose }: { onChoose: (key: string) => void }) {
-  return <div className={styles.shell}><h4 className={styles.question}>Qu’avez-vous prévu ?</h4><div className={oldStyles.choices}>{BUILDER_INTENTS.map(i => <IntentTile key={i.key} intent={i} onClick={() => onChoose(i.key)} />)}</div></div>;
+  return <div className={`${styles.shell} ${styles.intentHub}`}><h4 className={styles.question}>Qu’avez-vous prévu ?</h4><div className={oldStyles.choices}>{BUILDER_INTENTS.map(i => <IntentTile key={i.key} intent={i} onClick={() => onChoose(i.key)} />)}</div></div>;
 }
-type Choice = { key: string; label: string; hint?: string };
-function PagedChoices({ choices, onChoose }: { choices: readonly Choice[]; onChoose: (v: string) => void }) {
+type Choice = { key: string; label: string; hint?: string; illustrationKey?: string };
+function PagedChoices({ choices, scope = "personal", onChoose }: { choices: readonly Choice[]; scope?: string; onChoose: (v: string) => void }) {
   const [page, setPage] = useState(0);
-  return <div><div className={styles.choiceGrid}>{choices.slice(page * 9, page * 9 + 9).map(c => <button className={styles.choice} type="button" key={c.key} onClick={() => onChoose(c.key)}>{c.label}{c.hint && <small>{c.hint}</small>}</button>)}</div>{choices.length > 9 && <div className={styles.pagination}><button aria-label="Choix précédents" disabled={!page} onClick={() => setPage(page - 1)}>←</button><button aria-label="Autres choix" disabled={(page + 1) * 9 >= choices.length} onClick={() => setPage(page + 1)}>→</button></div>}</div>;
+  return <div className={styles.choicePage}><div className={styles.choiceGrid}>{choices.slice(page * 9, page * 9 + 9).map(c => <button className={`${styles.choice} ${styles.illustratedChoice}`} type="button" key={c.key} onClick={() => onChoose(c.key)}><BuilderIllustration semanticKey={c.illustrationKey ?? builderChoiceKey(scope, c.key)} /><span className={styles.choiceCopy}><strong>{c.label}</strong>{c.hint && <small>{c.hint}</small>}</span></button>)}</div>{choices.length > 9 && <div className={styles.pagination}><button aria-label="Choix précédents" disabled={!page} onClick={() => setPage(page - 1)}>←</button><button aria-label="Autres choix" disabled={(page + 1) * 9 >= choices.length} onClick={() => setPage(page + 1)}>→</button></div>}</div>;
 }
 type Props = { builder: BuilderState; setBuilder: Dispatch<SetStateAction<BuilderState>>; session: WizardSession; setSession: Dispatch<SetStateAction<WizardSession>>;
   env: WizardEnvironment; wallets: readonly PlannedWalletOption[]; prices: readonly PlannedPriceSuggestion[]; targetMonth: string; busy: boolean;
@@ -80,7 +81,7 @@ function Addons({ builder, setBuilder, context, wallets, prices, onContinue, ini
     <InlineExpandableAssetGrid builder={builder} setBuilder={setBuilder} path={[root, child]} assets={visibleUxAssets(builderAssetChoices(resolved, child, c), c)} wallets={edge?.fundingOverride === "BANK_ONLY" ? [] : wallets} prices={prices} />
     <button className={styles.primary} onClick={onContinue}>Revenir à votre projet</button></div>;
   const choices = [...builder.acceptedChildren, ...suggestions, ...(other ? available : [])];
-  return <div className={styles.entityModule}><PagedChoices choices={[...new Set(choices)].map(key => ({ key, label: labels[key] ?? key, hint: suggestions.includes(key) ? "Suggestion · à ajouter si utile" : builder.acceptedChildren.includes(key) ? "Modifier" : undefined }))} onChoose={choose} />
+  return <div className={styles.entityModule}><PagedChoices scope="module" choices={[...new Set(choices)].map(key => ({ key, label: labels[key] ?? key, hint: suggestions.includes(key) ? "Suggestion · à ajouter si utile" : builder.acceptedChildren.includes(key) ? "Modifier" : undefined }))} onChoose={choose} />
     {!other && available.length > 0 && <button className={styles.textButton} onClick={() => setOther(true)}>Ajouter autre chose</button>}
     {c.purchaseMode === "DELIVERY" || c.purchaseMode === "ONLINE" ? <p className={styles.small}>Les frais éventuels se renseignent dans le détail du budget. Aucun montant n’est ajouté automatiquement.</p> : null}
     <button className={styles.primary} onClick={onContinue}>Voir le résumé</button></div>;
@@ -114,7 +115,10 @@ export function ContextualProjectWizard({ builder, setBuilder, session, setSessi
     jump(projectRepairQuestion(context, target));
   }, [repairRequest?.serial]);
   let content;
-  const choices = (values: readonly Choice[], action: (key: string) => void = choose) => <PagedChoices key={question.id} choices={values} onChoose={action} />;
+  const choices = (values: readonly Choice[], action: (key: string) => void = choose) => <PagedChoices key={question.id} scope={question.id} choices={values.map(value => ({ ...value,
+    ...(question.id === "channel" && value.key === "STORE" && (intent === "fast_food" || intent === "groceries") ? { illustrationKey: builderChoiceKey(intent === "fast_food" ? "fastFoodChannel" : "groceriesChannel", value.key) } : {}),
+    ...(question.id === "format" && value.key === "STAY" && intent === "groceries" ? { illustrationKey: builderChoiceKey("groceriesFormat", value.key) } : {}),
+  }))} onChoose={action} />;
   if (question.id === "partyKind") content = choices([{ key: "bar", label: "Bar / apéro" }, { key: "club_festival", label: "Club / boîte" }, { key: "house_party", label: "Soirée privée" }, { key: "EVENT", label: "Festival / événement" }]);
   if (question.id === "groceriesNature") content = choices([{ key: "USUAL", label: "Courses habituelles" }, { key: "TOP_UP", label: "Petites courses / complément" }, { key: "OCCASION", label: "Repas ou occasion" }]);
   if (question.id === "groceryFocus") content = choices([{ key: "FOOD", label: "Alimentation" }, { key: "HYGIENE", label: "Hygiène" }, { key: "CLEANING", label: "Entretien" }, { key: "DRINKS", label: "Boissons" }, { key: "OTHER", label: "Autre" }]);

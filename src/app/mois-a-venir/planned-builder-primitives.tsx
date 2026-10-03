@@ -6,6 +6,8 @@ import type { PlannedAsset } from "@/domain/phase2/planned-assets";
 import { localCostGross, walletAllocation, type BUILDER_INTENTS } from "@/domain/phase2/planned-ux";
 import type { BuilderIssue } from "@/domain/phase2/planned-builder";
 import { WizardChoice } from "./planned-wizard-visuals";
+import { BuilderIllustration, builderChoiceKey } from "./builder-illustrations";
+import choiceStyles from "./project-wizard.module.css";
 
 export const builderInput = "min-h-11 w-full min-w-0 rounded-xl border border-slate-300 bg-white px-3 text-sm focus-visible:outline-2 focus-visible:outline-indigo-600";
 export const builderButton = "min-h-10 rounded-xl border border-slate-300 bg-white px-4 py-2 text-sm font-semibold hover:bg-slate-50 focus-visible:outline-2 focus-visible:outline-indigo-600";
@@ -14,9 +16,10 @@ export const builderMoney = (amount: string) => new Intl.NumberFormat("fr-FR", {
 const icons = { Utensils, Sandwich, BriefcaseBusiness, ShoppingBasket, PartyPopper, UsersRound, Ticket, ShoppingBag, Luggage };
 export function IntentTile({ intent, onClick }: { intent: typeof BUILDER_INTENTS[number]; onClick: () => void }) {
   const Icon = icons[intent.icon as keyof typeof icons];
-  return <WizardChoice label={intent.label} scene={intent.key} icon={<Icon size={23} strokeWidth={1.7} aria-hidden="true" />} onClick={onClick} />;
+  return <WizardChoice label={intent.label} scene={intent.key} illustrationKey={`intent:${intent.key}`} icon={<Icon size={23} strokeWidth={1.7} aria-hidden="true" />} onClick={onClick} />;
 }
-export function ChoiceTiles({ label, choices, value, onChange }: { label: string; choices: readonly { key: string; label: string }[]; value?: string; onChange: (key: string) => void }) {
+export function ChoiceTiles({ label, choices, scope, value, onChange }: { label: string; choices: readonly { key: string; label: string }[]; scope?: string; value?: string; onChange: (key: string) => void }) {
+  if (scope) return <fieldset className="grid gap-3"><legend className="mb-3 text-base font-bold">{label}</legend><div className={choiceStyles.choiceGrid}>{choices.map(choice => <button key={choice.key} type="button" aria-pressed={choice.key === value} className={`${choiceStyles.choice} ${choiceStyles.illustratedChoice}`} onClick={() => onChange(choice.key)}><BuilderIllustration semanticKey={builderChoiceKey(scope, choice.key)} /><span className={choiceStyles.choiceCopy}><strong>{choice.label}</strong></span></button>)}</div></fieldset>;
   return <fieldset className="grid gap-3"><legend className="mb-3 text-base font-bold">{label}</legend><div className="flex flex-wrap gap-3">{choices.map((choice) => <button key={choice.key} type="button" aria-pressed={choice.key === value} className={`min-h-16 min-w-32 rounded-xl border px-5 py-3 text-left text-sm font-semibold focus-visible:outline-2 focus-visible:outline-indigo-600 ${choice.key === value ? "border-indigo-500 bg-indigo-50 text-indigo-950" : "border-slate-200 bg-white hover:border-indigo-300"}`} onClick={() => onChange(choice.key)}>{choice.label}</button>)}</div></fieldset>;
 }
 export function OptionalAction({ label, children, active = false }: { label: string; children: ReactNode; active?: boolean }) {
@@ -50,7 +53,7 @@ export function LocalAssetEditor({ asset, item, suggestion, wallets, categoryAmo
   const allocations = walletAllocation(gross, wallet, walletAmount);
   const eligible = asset?.fundingEligibility === "MEAL";
   return <div className={`min-w-0 rounded-xl border p-3 ${item ? "border-emerald-300 bg-emerald-50/50" : editing ? "border-indigo-400 bg-indigo-50/40" : "border-slate-200 bg-white"}`}>
-    <button type="button" className="flex w-full items-start justify-between gap-2 text-left text-sm" aria-expanded={editing} onClick={() => setEditing(!editing)}><span><span aria-hidden="true" className="mr-2">{asset?.icon ?? "＋"}</span><strong>{item?.label || asset?.label || "Autre élément"}</strong>{item && <span className="mt-1 block text-xs text-emerald-800">{builderMoney(localCostGross(item.quantity, item.unitAmount) ?? "0")}{item.fundingAllocations?.some((part) => part.source !== "BANK") && ` · ${item.fundingAllocations.filter((part) => part.source !== "BANK").map((part) => `${part.source} ${builderMoney(part.amount)}`).join(" / ")}`}</span>}</span>{item && <Check size={17} className="text-emerald-700" aria-label="Ajouté" />}</button>
+    <button type="button" className={`${choiceStyles.assetTile} ${asset ? choiceStyles.illustratedAsset : ""} w-full`} aria-expanded={editing} onClick={() => setEditing(!editing)}>{asset && <BuilderIllustration semanticKey={`asset:${asset.assetKey}`} />}<span aria-hidden="true" className={choiceStyles.assetIcon}>{asset?.icon ?? "＋"}</span><strong>{item?.label || asset?.label || "Autre élément"}</strong>{item && <><small>{builderMoney(localCostGross(item.quantity, item.unitAmount) ?? "0")}{item.fundingAllocations?.some((part) => part.source !== "BANK") && ` · ${item.fundingAllocations.filter((part) => part.source !== "BANK").map((part) => `${part.source} ${builderMoney(part.amount)}`).join(" / ")}`}</small><Check size={17} className={choiceStyles.check} aria-label="Ajouté" /></>}</button>
     {!editing && suggestion && !item && <p className="mt-2 text-xs text-slate-500">Dernier prix observé : {builderMoney(suggestion.unitAmount)}<button type="button" className="ml-2 font-semibold text-indigo-700 underline" onClick={() => { setPrice(suggestion.unitAmount); setPriceSource("LAST_KNOWN"); setEditing(true); }}>Racheter</button></p>}
     {editing && <div className="mt-3 grid gap-3">
       {!asset && <label className="grid gap-1 text-xs font-semibold">Qu’avez-vous prévu ?<input className={builderInput} maxLength={120} value={label} onChange={(event) => setLabel(event.target.value)} /></label>}

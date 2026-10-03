@@ -8,6 +8,7 @@ import { commitBuilderCost, removeBuilderCost, type BuilderState } from "@/domai
 import { localCostGross, walletAllocation } from "@/domain/phase2/planned-ux";
 import type { CostItem, ModulePath, PlannedPriceSuggestion, PlannedWalletOption } from "@/domain/phase2/planned-contract";
 import styles from "./project-wizard.module.css";
+import { BuilderIllustration } from "./builder-illustrations";
 
 const money = (v: string) => new Intl.NumberFormat("fr-FR", { style: "currency", currency: "EUR" }).format(Number(v));
 type Props = { builder: BuilderState; setBuilder: Dispatch<SetStateAction<BuilderState>>; assets: readonly PlannedAsset[];
@@ -59,8 +60,8 @@ export function InlineExpandableAssetGrid({ builder, setBuilder, assets, path, w
   const selected = choices.find(c => c.key === editing);
   return <div className={styles.assetModule}>
     <div className={styles.assetToolbar}><input aria-label="Rechercher un élément" className={styles.input} placeholder="Rechercher dans ce catalogue" value={query} onChange={e => { setQuery(e.target.value); setPage(0); setEditing(null); }} /><span className={styles.pagination}><button aria-label="Éléments précédents" disabled={!page} onClick={() => { setPage(page - 1); setEditing(null); }}>←</button><button aria-label="Autres éléments" disabled={choices.length <= (page + 1) * 6} onClick={() => { setPage(page + 1); setEditing(null); }}>→</button></span></div>
-    <div className={styles.assetGrid}>{choices.slice(page * 6, page * 6 + 6).map(c => <button type="button" key={c.key} className={styles.assetTile} aria-expanded={editing === c.key} onClick={() => setEditing(editing === c.key ? null : c.key)}>
-      <span aria-hidden="true">{c.asset?.icon ?? <Plus size={18} />}</span><strong>{c.label}</strong>{c.item && <><small>{money(localCostGross(c.item.quantity, c.item.unitAmount)!)}{c.item.fundingAllocations?.some(p => p.source !== "BANK") && " · titre-resto"}</small><Check size={15} className={styles.check} /></>}</button>)}
+    <div className={styles.assetGrid}>{choices.slice(page * 6, page * 6 + 6).map(c => <button type="button" key={c.key} className={`${styles.assetTile} ${c.asset ? styles.illustratedAsset : ""}`} aria-expanded={editing === c.key} onClick={() => setEditing(editing === c.key ? null : c.key)}>
+      {c.asset && <BuilderIllustration semanticKey={`asset:${c.asset.assetKey}`} />}<span aria-hidden="true" className={styles.assetIcon}>{c.asset?.icon ?? <Plus size={18} />}</span><strong>{c.label}</strong>{c.item && <><small>{money(localCostGross(c.item.quantity, c.item.unitAmount)!)}{c.item.fundingAllocations?.some(p => p.source !== "BANK") && " · titre-resto"}</small><Check size={15} className={styles.check} /></>}</button>)}
       {selected && <div ref={editor} className={styles.editorSlot}><InlineEditor key={editing} asset={selected.asset} item={selected.item} suggestion={prices.find(p => p.assetKey === selected.asset?.assetKey)}
         path={path} wallets={wallets} customLabel={customLabel} quantityDefault={quantityDefaults[selected.asset?.assetKey ?? "CUSTOM"] ?? (selected.asset ? suggestedAssetQuantity(selected.asset, assetParticipantCount(selected.asset, builder.draft.context)) : "1")}
         baselineKey={path.length === 2 ? null : builder.quickBaseline ?? null} onClose={() => setEditing(null)}

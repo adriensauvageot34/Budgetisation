@@ -1,0 +1,1569 @@
+{
+  "version": 1,
+  "recipe": {
+    "ratio": "2:1",
+    "width": 1200,
+    "height": 600,
+    "format": "webp",
+    "quality": 82,
+    "composition": "Subject on right 55%; left/bottom 40% quiet.",
+    "style": "Matte soft clay, ivory/cream/pearl, restrained lavender; red Peugeot 207 exception.",
+    "lighting": "Diffuse upper-left studio key; soft lower-right contact shadow."
+  },
+  "illustrations": [
+    {
+      "key": "intent/restaurant",
+      "file": "intent/restaurant.webp",
+      "subject": "One empty round ivory plate with a fine lavender rim, two simple matte ivory cutlery pieces with pale lavender handles. A soft folded napkin underneath, restrained and tactile.",
+      "choices": [
+        "intent:restaurant",
+        "module:restaurant",
+        "scene:restaurant",
+        "scene:spontaneous",
+        "scene:restaurantExterior"
+      ]
+    },
+    {
+      "key": "intent/fast-food",
+      "file": "intent/fast-food.webp",
+      "subject": "One softly rounded clay burger, beige bun, muted natural lettuce, tomato and cheese. Very simplified, warm and appetizing, no fries or branding.",
+      "choices": [
+        "intent:fast_food",
+        "asset:club:food",
+        "asset:fast_food:burger",
+        "asset:work_meal:mcdo",
+        "asset:fast_food:menu",
+        "choice:fastFoodChannel:STORE",
+        "choice:fastFoodChannel:IN_STORE",
+        "module:fast_food",
+        "scene:fast_food"
+      ]
+    },
+    {
+      "key": "intent/work-meal",
+      "file": "intent/work-meal.webp",
+      "subject": "One open ivory clay lunchbox with three compartments: a few simplified rice grains, muted vegetables and soft chicken pieces. Lavender latch. No office scene.",
+      "choices": [
+        "intent:work_meal",
+        "asset:work_meal:meal",
+        "choice:workMode:FROM_HOME",
+        "module:work_meal",
+        "scene:work_meal"
+      ]
+    },
+    {
+      "key": "intent/groceries",
+      "file": "intent/groceries.webp",
+      "subject": "One rounded ivory clay grocery basket with a lavender handle, a small baguette and three simplified muted vegetables inside. Not a crowded basket.",
+      "choices": [
+        "intent:groceries",
+        "asset:groceries:food",
+        "asset:work_meal:grand_frais",
+        "asset:visit_family:brought_groceries",
+        "choice:groceriesNature:USUAL",
+        "choice:groceryFocus:FOOD",
+        "choice:groceriesChannel:STORE",
+        "module:groceries",
+        "module:BRING_ITEMS",
+        "scene:groceries"
+      ]
+    },
+    {
+      "key": "intent/party",
+      "file": "intent/party.webp",
+      "subject": "One matte ivory coupe glass containing pale lavender cocktail, one tiny lemon slice and two very quiet confetti beside the base. No transparent glass effect.",
+      "choices": [
+        "intent:party",
+        "asset:bar:cocktail",
+        "asset:restaurant:cocktail",
+        "choice:partyKind:bar",
+        "choice:format:APERO_PARTY",
+        "module:bar",
+        "scene:party",
+        "scene:cocktail"
+      ]
+    },
+    {
+      "key": "intent/visit",
+      "file": "intent/visit.webp",
+      "subject": "Two generic adult female friends, one brunette with wavy hair and one with warm brown hair in a bun, chatting warmly side by side with two tiny ceramic mugs. Soft sculpted clay busts, lavender and ivory clothing, clearly platonic, no romance, no likeness to real people.",
+      "choices": [
+        "intent:visit",
+        "choice:participants:BOTH",
+        "choice:format:SIMPLE",
+        "choice:occasion:REUNION",
+        "choice:visitSubtype:visit_friend",
+        "choice:companions:COUPLE",
+        "module:visit_friend",
+        "scene:visit",
+        "scene:couple",
+        "scene:reunion",
+        "scene:sharing"
+      ]
+    },
+    {
+      "key": "intent/activity",
+      "file": "intent/activity.webp",
+      "subject": "Two overlapping thick ivory clay entrance tickets with rounded edges and a small lavender embossed star. No writing.",
+      "choices": [
+        "intent:activity",
+        "asset:bar:entry",
+        "asset:club:ticket",
+        "asset:activity:entry",
+        "asset:activity:ticket",
+        "asset:gift:ticket",
+        "choice:activityCategory:other_activity",
+        "module:activity",
+        "scene:activity"
+      ]
+    },
+    {
+      "key": "intent/purchase",
+      "file": "intent/purchase.webp",
+      "subject": "One ivory matte clay shopping bag, rounded edges, lavender handles and a little lavender tissue paper. No logos.",
+      "choices": [
+        "intent:purchase",
+        "choice:purchaseCategory:other_purchase",
+        "choice:channel:STORE",
+        "choice:channel:SECOND_HAND",
+        "choice:channel:IN_STORE",
+        "module:other",
+        "scene:purchase"
+      ]
+    },
+    {
+      "key": "intent/travel",
+      "file": "intent/travel.webp",
+      "subject": "One small rounded ivory clay suitcase, lavender handle and wheels, a tiny blank lavender luggage tag. No airplane or landscape behind it.",
+      "choices": [
+        "intent:trip",
+        "asset:trip:baggage",
+        "choice:tripKind:STAY",
+        "choice:tripKind:trip_stay",
+        "module:trip",
+        "scene:trip"
+      ]
+    },
+    {
+      "key": "social/solo",
+      "file": "social/solo.webp",
+      "subject": "One generic adult clay person with softly simplified friendly facial features, ivory sweater and one lavender mug. No real person likeness.",
+      "choices": [
+        "choice:companions:SOLO",
+        "scene:solo"
+      ]
+    },
+    {
+      "key": "social/group",
+      "file": "social/group.webp",
+      "subject": "Three generic adult friends as a compact group of softly sculpted clay busts, ivory clothing with small lavender details, warm platonic smiles. No specific real people.",
+      "choices": [
+        "choice:participants:GROUP",
+        "choice:groceriesFormat:STAY",
+        "choice:companions:GROUP",
+        "scene:group"
+      ]
+    },
+    {
+      "key": "social/birthday",
+      "file": "social/birthday.webp",
+      "subject": "One small ivory birthday cake with lavender icing trim and a single unlit ivory candle. No writing or numerals.",
+      "choices": [
+        "choice:occasion:BIRTHDAY",
+        "scene:birthday"
+      ]
+    },
+    {
+      "key": "social/valentine",
+      "file": "social/valentine.webp",
+      "subject": "One rounded ivory clay heart resting beside a tiny lavender heart. Calm, minimal, no characters or glitter.",
+      "choices": [
+        "choice:occasion:VALENTINE",
+        "scene:valentine"
+      ]
+    },
+    {
+      "key": "social/celebration",
+      "file": "social/celebration.webp",
+      "subject": "One ivory party popper with a lavender ribbon and three chunky muted confetti, grounded still-life, no flying objects.",
+      "choices": [
+        "choice:occasion:CELEBRATION",
+        "scene:partyOccasion",
+        "scene:celebration",
+        "scene:occasion"
+      ]
+    },
+    {
+      "key": "social/family",
+      "file": "social/family.webp",
+      "subject": "Three generic clay family figures of different adult ages in a close friendly group, ivory clothing and small lavender accents, no likeness to real relatives.",
+      "choices": [
+        "choice:lodging:RELATIVE",
+        "choice:visitSubtype:visit_family",
+        "module:visit_family"
+      ]
+    },
+    {
+      "key": "outing/club",
+      "file": "outing/club.webp",
+      "subject": "One small ivory clay disco ball, entirely matte with subtle round indents rather than reflective facets, on a lavender pedestal. No neon or glitter.",
+      "choices": [
+        "choice:partyKind:club_festival",
+        "module:club"
+      ]
+    },
+    {
+      "key": "outing/private-party",
+      "file": "outing/private-party.webp",
+      "subject": "One ivory bowl of snacks with two small matte lavender party hats beside it. No actual room or personal house.",
+      "choices": [
+        "choice:partyKind:house_party",
+        "module:house_party"
+      ]
+    },
+    {
+      "key": "outing/festival",
+      "file": "outing/festival.webp",
+      "subject": "One miniature rounded ivory clay stage arch with a lavender pennant and a small blank ticket. No crowd, scenery, writing or event branding.",
+      "choices": [
+        "choice:partyKind:EVENT"
+      ]
+    },
+    {
+      "key": "food/starter",
+      "file": "food/starter.webp",
+      "subject": "One small ivory plate holding a very simple clay starter salad with three muted green leaves and two small tomato pieces. Lavender rim.",
+      "choices": [
+        "asset:restaurant:starter",
+        "scene:starter"
+      ]
+    },
+    {
+      "key": "food/main",
+      "file": "food/main.webp",
+      "subject": "One ivory plate holding a compact softly sculpted pasta nest with a few muted green herbs. Lavender rim, no extensive food scene.",
+      "choices": [
+        "asset:groceries:special_meal",
+        "asset:restaurant:main",
+        "asset:restaurant:meal_total",
+        "asset:restaurant:menu",
+        "asset:fast_food:meal_total",
+        "choice:groceriesNature:OCCASION",
+        "choice:format:MEAL",
+        "scene:main",
+        "scene:menu"
+      ]
+    },
+    {
+      "key": "food/dessert",
+      "file": "food/dessert.webp",
+      "subject": "One little clay cake slice, ivory layers and pale lavender icing, on a tiny ivory plate. Simple, soft and tactile.",
+      "choices": [
+        "asset:groceries:dessert",
+        "asset:restaurant:dessert",
+        "asset:fast_food:dessert",
+        "asset:work_meal:dessert",
+        "scene:dessert"
+      ]
+    },
+    {
+      "key": "food/fries",
+      "file": "food/fries.webp",
+      "subject": "One small ivory carton of softly rounded matte golden-beige clay fries, tiny lavender trim, no branding.",
+      "choices": [
+        "asset:fast_food:fries"
+      ]
+    },
+    {
+      "key": "food/thai",
+      "file": "food/thai.webp",
+      "subject": "One small ivory bowl with a simple clay noodle nest and two muted green vegetable pieces, one restrained pair of lavender chopsticks.",
+      "choices": [
+        "asset:fast_food:thai"
+      ]
+    },
+    {
+      "key": "food/tacos",
+      "file": "food/tacos.webp",
+      "subject": "One softly rounded clay folded tortilla wrap containing two simplified muted vegetable pieces, ivory paper band with lavender detail.",
+      "choices": [
+        "asset:fast_food:tacos"
+      ]
+    },
+    {
+      "key": "food/kebab",
+      "file": "food/kebab.webp",
+      "subject": "One ivory-beige clay pita pocket with a few soft simplified filling shapes in muted natural colors. No branding.",
+      "choices": [
+        "asset:fast_food:kebab"
+      ]
+    },
+    {
+      "key": "food/pizza",
+      "file": "food/pizza.webp",
+      "subject": "One thick softly rounded clay pizza slice, ivory cheese, two subdued tomato pieces and a tiny herb. Minimal and not greasy.",
+      "choices": [
+        "asset:fast_food:pizza"
+      ]
+    },
+    {
+      "key": "food/chicken",
+      "file": "food/chicken.webp",
+      "subject": "One pale beige matte clay chicken drumstick with broad simplified rounded shapes and a round bone end, tiny ivory plate with a lavender rim and one small sage broccoli. No roast spots, crispy skin, herbs, grain or photographic food detail.",
+      "choices": [
+        "asset:fast_food:chicken"
+      ]
+    },
+    {
+      "key": "food/sandwich",
+      "file": "food/sandwich.webp",
+      "subject": "One clay triangular sandwich, ivory-beige bread with a simple muted green and cream filling, no extra ingredients.",
+      "choices": [
+        "asset:fast_food:sandwich",
+        "choice:workMode:BOUGHT"
+      ]
+    },
+    {
+      "key": "food/tapas",
+      "file": "food/tapas.webp",
+      "subject": "One small rounded ivory clay serving board with three simple tapas pieces, subdued natural food colors, no many small details.",
+      "choices": [
+        "asset:bar:tapas"
+      ]
+    },
+    {
+      "key": "food/snack",
+      "file": "food/snack.webp",
+      "subject": "One small ivory clay bowl holding three rounded beige crackers, tiny lavender rim. Not a packet with text.",
+      "choices": [
+        "asset:house_party:snack",
+        "asset:groceries:snacks",
+        "asset:visit_friend:brought_food",
+        "asset:activity:food"
+      ]
+    },
+    {
+      "key": "food/chips",
+      "file": "food/chips.webp",
+      "subject": "One blank softly rounded ivory clay chips bag, lavender folded top, with two pale beige clay chips beside it. No logo or lettering.",
+      "choices": [
+        "asset:house_party:chips"
+      ]
+    },
+    {
+      "key": "food/meat",
+      "file": "food/meat.webp",
+      "subject": "One non-graphic softly sculpted pale dusty-red clay steak shape on an ivory tray, broad rounded edges and very little detail.",
+      "choices": [
+        "asset:groceries:meat"
+      ]
+    },
+    {
+      "key": "food/fish",
+      "file": "food/fish.webp",
+      "subject": "One simplified clay fish-shaped food portion on a small ivory plate, pearl-gray and cream tones, friendly non-graphic sculpture.",
+      "choices": [
+        "asset:groceries:fish"
+      ]
+    },
+    {
+      "key": "food/produce",
+      "file": "food/produce.webp",
+      "subject": "One compact trio of rounded clay vegetables and a pear, muted sage green and dusty warm natural tones, on an ivory shallow bowl.",
+      "choices": [
+        "asset:groceries:produce"
+      ]
+    },
+    {
+      "key": "food/fresh",
+      "file": "food/fresh.webp",
+      "subject": "One blank ivory clay milk carton and one small ivory yogurt pot with lavender lids. Rounded corners, no labels.",
+      "choices": [
+        "asset:groceries:fresh"
+      ]
+    },
+    {
+      "key": "food/pantry",
+      "file": "food/pantry.webp",
+      "subject": "One blank ivory clay paper grocery pouch with a few soft beige pasta pieces beside it, tiny lavender folded top.",
+      "choices": [
+        "asset:groceries:pantry",
+        "choice:groceriesNature:TOP_UP"
+      ]
+    },
+    {
+      "key": "food/bread",
+      "file": "food/bread.webp",
+      "subject": "One short rounded beige clay baguette on a small ivory napkin with a lavender edge. Soft matte bread grooves.",
+      "choices": [
+        "asset:work_meal:bakery",
+        "asset:visit_family:breakfast",
+        "asset:trip:breakfast",
+        "asset:groceries:bread"
+      ]
+    },
+    {
+      "key": "food/chocolate",
+      "file": "food/chocolate.webp",
+      "subject": "One small matte brown clay chocolate bar partly wrapped in blank ivory paper with a lavender fold, just a few large square pieces.",
+      "choices": [
+        "asset:gift:chocolate"
+      ]
+    },
+    {
+      "key": "drinks/beer",
+      "file": "drinks/beer.webp",
+      "subject": "One matte ivory clay beer mug with muted pale amber contents and soft ivory foam, rounded lavender handle. No transparent glass or branding.",
+      "choices": [
+        "asset:bar:beer",
+        "asset:house_party:beer",
+        "asset:restaurant:beer"
+      ]
+    },
+    {
+      "key": "drinks/wine-glass",
+      "file": "drinks/wine-glass.webp",
+      "subject": "One simple matte ivory stemmed clay wine glass holding muted dusty-purple wine. Very minimal, not transparent or reflective.",
+      "choices": [
+        "asset:bar:wine",
+        "asset:restaurant:wine_glass",
+        "asset:restaurant:alcohol_total",
+        "scene:wine_glass"
+      ]
+    },
+    {
+      "key": "drinks/wine-bottle",
+      "file": "drinks/wine-bottle.webp",
+      "subject": "One rounded opaque pearl clay wine bottle with a lavender collar and a completely blank ivory label. No brand or writing.",
+      "choices": [
+        "asset:house_party:wine",
+        "asset:restaurant:wine_bottle",
+        "asset:gift:bottle",
+        "scene:wine_bottle"
+      ]
+    },
+    {
+      "key": "drinks/shot",
+      "file": "drinks/shot.webp",
+      "subject": "One small matte ivory clay tumbler containing a tiny amount of pale muted amber liquid, restrained lavender accent at the base.",
+      "choices": [
+        "asset:bar:shot",
+        "asset:club:alcohol",
+        "asset:club:shot",
+        "asset:restaurant:digestif",
+        "scene:digestif"
+      ]
+    },
+    {
+      "key": "drinks/soft",
+      "file": "drinks/soft.webp",
+      "subject": "One ivory clay takeaway drink cup with rounded lid and a pale lavender straw, no label or branding.",
+      "choices": [
+        "asset:club:soft",
+        "asset:house_party:mixer",
+        "asset:groceries:drinks",
+        "asset:restaurant:soft",
+        "asset:fast_food:drink",
+        "asset:visit_friend:brought_drink",
+        "asset:activity:drink",
+        "asset:work_meal:drink",
+        "asset:bar:soft",
+        "choice:groceryFocus:DRINKS",
+        "scene:soft"
+      ]
+    },
+    {
+      "key": "drinks/water",
+      "file": "drinks/water.webp",
+      "subject": "One rounded pearl clay reusable water bottle, pale lavender cap and a tiny embossed droplet. No transparent effect or lettering.",
+      "choices": [
+        "asset:club:water",
+        "asset:restaurant:water",
+        "asset:fast_food:water",
+        "asset:bar:water",
+        "scene:water"
+      ]
+    },
+    {
+      "key": "drinks/coffee",
+      "file": "drinks/coffee.webp",
+      "subject": "One small ivory clay coffee cup with a lavender handle, on a simple ivory saucer, muted brown coffee surface.",
+      "choices": [
+        "asset:restaurant:coffee",
+        "asset:visit_friend:coffee",
+        "asset:work_meal:coffee",
+        "scene:coffee"
+      ]
+    },
+    {
+      "key": "drinks/energy",
+      "file": "drinks/energy.webp",
+      "subject": "One softly rounded opaque ivory clay drink can with lavender pull tab and a tiny lavender lightning shape, no real brand, text or logo.",
+      "choices": [
+        "asset:house_party:crazy_tiger"
+      ]
+    },
+    {
+      "key": "drinks/vodka",
+      "file": "drinks/vodka.webp",
+      "subject": "One simple opaque ivory clay spirit bottle with broad rounded shoulders, a lavender cap and a blank cream label. No branding.",
+      "choices": [
+        "asset:house_party:vodka"
+      ]
+    },
+    {
+      "key": "drinks/rum",
+      "file": "drinks/rum.webp",
+      "subject": "One short rounded opaque warm-pearl clay spirit bottle with a lavender cap, blank ivory label, very subtly amber-toned body. No branding.",
+      "choices": [
+        "asset:house_party:rum"
+      ]
+    },
+    {
+      "key": "transport/car",
+      "file": "transport/car.webp",
+      "subject": "One unmistakable red Peugeot 207 compact hatchback, rounded soft clay miniature, front three-quarter view. Recognizable 207 long swept triangular headlights, rounded hatchback body, broad low oval front grille. Muted warm RED body, pearl windows, matte charcoal tires, small ivory headlamps. No other car, no writing, no showroom, no shiny metal or realistic textures.",
+      "choices": [
+        "asset:club:uber_out",
+        "asset:club:uber_back",
+        "asset:restaurant:uber",
+        "asset:transport:uber",
+        "asset:transport:carpool",
+        "asset:trip:rental_car",
+        "choice:purchaseCategory:automotive",
+        "choice:tripKind:PUNCTUAL",
+        "choice:transport:CAR",
+        "choice:transport:TAXI",
+        "choice:tripKind:other_trip",
+        "module:transport",
+        "module:automotive",
+        "scene:car",
+        "scene:taxi"
+      ]
+    },
+    {
+      "key": "transport/train",
+      "file": "transport/train.webp",
+      "subject": "One small rounded ivory clay passenger train carriage, lavender trim, pearl-gray windows and soft matte wheels, three-quarter front view.",
+      "choices": [
+        "asset:transport:train",
+        "choice:transport:TRAIN",
+        "scene:train"
+      ]
+    },
+    {
+      "key": "transport/tram",
+      "file": "transport/tram.webp",
+      "subject": "One compact ivory clay tram miniature, lavender stripe, large pearl-gray windows and tiny matte wheels. No street, track scene or city.",
+      "choices": [
+        "scene:tram"
+      ]
+    },
+    {
+      "key": "transport/bus",
+      "file": "transport/bus.webp",
+      "subject": "One rounded ivory clay bus miniature with lavender trim, pearl-gray windows and tiny matte wheels. No branding or road scene.",
+      "choices": [
+        "asset:transport:bus",
+        "choice:transport:BUS",
+        "scene:bus"
+      ]
+    },
+    {
+      "key": "transport/plane",
+      "file": "transport/plane.webp",
+      "subject": "One simple ivory clay passenger airplane miniature, small lavender tail and rounded wings, grounded studio sculpture, no airline logo.",
+      "choices": [
+        "asset:trip:flight",
+        "asset:transport:flight",
+        "choice:transport:PLANE"
+      ]
+    },
+    {
+      "key": "transport/bike",
+      "file": "transport/bike.webp",
+      "subject": "One simplified ivory clay bicycle with softly sculpted lavender wheels and a lavender saddle, coherent sturdy toy-like geometry for an adult UI, no rider.",
+      "choices": [
+        "scene:bike"
+      ]
+    },
+    {
+      "key": "transport/walking",
+      "file": "transport/walking.webp",
+      "subject": "One single adult walking sneaker resting flat on the floor, matte ivory clay upper, lavender sole and two simple laces. No protruding legs, feet, arms, face, anthropomorphism or flying shoe. No brand.",
+      "choices": [
+        "choice:transport:FREE",
+        "scene:walk"
+      ]
+    },
+    {
+      "key": "transport/scooter",
+      "file": "transport/scooter.webp",
+      "subject": "One small ivory clay motor scooter with lavender seat and trim, matte charcoal wheels, no rider or real brand.",
+      "choices": [
+        "asset:trip:rental_scooter"
+      ]
+    },
+    {
+      "key": "transport/fuel",
+      "file": "transport/fuel.webp",
+      "subject": "One small ivory clay fuel pump with a lavender hose and a single embossed droplet, blank display, no number, brand or text.",
+      "choices": [
+        "asset:transport:fuel_usage"
+      ]
+    },
+    {
+      "key": "transport/toll",
+      "file": "transport/toll.webp",
+      "subject": "One tiny ivory clay road toll barrier with a lavender striped rounded boom, no actual road or landscape, no signage text.",
+      "choices": [
+        "asset:transport:toll"
+      ]
+    },
+    {
+      "key": "transport/parking",
+      "file": "transport/parking.webp",
+      "subject": "One minimal ivory clay parking meter with a pale lavender top and a blank face. No car or lettering.",
+      "choices": [
+        "asset:bar:parking",
+        "asset:club:parking",
+        "asset:restaurant:parking",
+        "asset:transport:parking"
+      ]
+    },
+    {
+      "key": "transport/road",
+      "file": "transport/road.webp",
+      "subject": "One short gently curved ivory clay road ribbon with a thin lavender center line, grounded miniature, no city or landscape.",
+      "choices": [
+        "asset:transport:other",
+        "scene:elsewhere",
+        "scene:transport",
+        "scene:road"
+      ]
+    },
+    {
+      "key": "lodging/hotel",
+      "file": "lodging/hotel.webp",
+      "subject": "One small softly rounded ivory clay hotel facade sculpture with three broad blank windows and a lavender canopy. No name, writing or detailed room.",
+      "choices": [
+        "asset:trip:hotel",
+        "choice:lodging:HOTEL"
+      ]
+    },
+    {
+      "key": "lodging/rental",
+      "file": "lodging/rental.webp",
+      "subject": "One generic ivory clay house-shaped key fob with a lavender key ring and one simple cream key, no actual personal home or location.",
+      "choices": [
+        "asset:trip:airbnb",
+        "choice:lodging:RENTAL"
+      ]
+    },
+    {
+      "key": "lodging/hostel",
+      "file": "lodging/hostel.webp",
+      "subject": "One tiny rounded ivory clay bunk bed model with two soft cream pillows and lavender blanket edges. No room or people.",
+      "choices": [
+        "choice:lodging:HOSTEL"
+      ]
+    },
+    {
+      "key": "lodging/sleep",
+      "file": "lodging/sleep.webp",
+      "subject": "One soft ivory clay pillow and folded cream blanket with a thin lavender edge, minimal studio still life, no room.",
+      "choices": [
+        "choice:format:STAY",
+        "scene:room"
+      ]
+    },
+    {
+      "key": "misc/delivery",
+      "file": "misc/delivery.webp",
+      "subject": "One ivory clay delivery parcel with rounded corners and a pale lavender ribbon-like sealing strip, no truck, brand, words or numbers.",
+      "choices": [
+        "asset:fast_food:delivery_fee",
+        "asset:clothing:delivery_fee",
+        "asset:work_meal:delivery_fee",
+        "asset:groceries:delivery_fee",
+        "asset:beauty:delivery_fee",
+        "asset:home:delivery_fee",
+        "asset:tech:delivery_fee",
+        "asset:automotive:delivery_fee",
+        "asset:gift:delivery_fee",
+        "choice:channel:PICKUP",
+        "choice:channel:DELIVERY",
+        "choice:workMode:DELIVERED",
+        "choice:provider:DIRECT",
+        "choice:channel:TAKEAWAY",
+        "choice:channel:ONLINE",
+        "choice:fastFoodChannel:TAKEAWAY",
+        "choice:fastFoodChannel:DELIVERY"
+      ]
+    },
+    {
+      "key": "misc/receipt",
+      "file": "misc/receipt.webp",
+      "subject": "One thick ivory clay receipt sheet with a lavender top clip and subtle blank embossed horizontal lines, no actual text, amounts or UI.",
+      "choices": [
+        "asset:fast_food:service_fee",
+        "asset:trip:fees",
+        "asset:clothing:service_fee",
+        "asset:other:fee",
+        "asset:work_meal:service_fee",
+        "asset:groceries:service_fee",
+        "asset:beauty:service_fee",
+        "asset:home:service_fee",
+        "asset:tech:service_fee",
+        "asset:automotive:service_fee",
+        "asset:gift:service_fee"
+      ]
+    },
+    {
+      "key": "misc/document",
+      "file": "misc/document.webp",
+      "subject": "One ivory clay document folder with a lavender tab and one blank pearl sheet, no words or numbers.",
+      "choices": [
+        "asset:other:administrative",
+        "scene:custom"
+      ]
+    },
+    {
+      "key": "misc/contribution",
+      "file": "misc/contribution.webp",
+      "subject": "Two softly sculpted generic clay hands gently meeting in a neutral cooperative gesture, ivory sleeves with tiny lavender cuffs, no money or real people.",
+      "choices": [
+        "asset:other:contribution"
+      ]
+    },
+    {
+      "key": "misc/lockers",
+      "file": "misc/lockers.webp",
+      "subject": "One tiny ivory clay locker door with rounded edges, lavender knob and a small blank key fob. No room or text.",
+      "choices": [
+        "asset:club:cloakroom"
+      ]
+    },
+    {
+      "key": "misc/book",
+      "file": "misc/book.webp",
+      "subject": "One small closed ivory clay book with a lavender spine and a tiny blank bookmark, no title or writing.",
+      "choices": [
+        "asset:gift:book"
+      ]
+    },
+    {
+      "key": "misc/game",
+      "file": "misc/game.webp",
+      "subject": "One simple ivory clay game controller with rounded buttons and lavender grips, no brand or text.",
+      "choices": [
+        "asset:gift:game",
+        "asset:tech:video_game",
+        "choice:purchaseCategory:tech",
+        "module:tech"
+      ]
+    },
+    {
+      "key": "misc/toy",
+      "file": "misc/toy.webp",
+      "subject": "One small rounded ivory clay teddy bear with a tiny lavender bow, restrained friendly sculpture for an adult UI.",
+      "choices": [
+        "asset:gift:toy"
+      ]
+    },
+    {
+      "key": "misc/personalized",
+      "file": "misc/personalized.webp",
+      "subject": "One ivory clay photo frame with a lavender edge, holding a blank embossed lavender star rather than a person or photo.",
+      "choices": [
+        "asset:gift:personalized"
+      ]
+    },
+    {
+      "key": "misc/gift-card",
+      "file": "misc/gift-card.webp",
+      "subject": "One thick ivory clay gift card with softly rounded corners and a small raised lavender ribbon, no lettering or logo.",
+      "choices": [
+        "asset:gift:gift_card"
+      ]
+    },
+    {
+      "key": "misc/money-gift",
+      "file": "misc/money-gift.webp",
+      "subject": "One rounded ivory clay gift envelope with a lavender seal and a blank pearl card partly visible, no denominations or banknotes.",
+      "choices": [
+        "asset:gift:money"
+      ]
+    },
+    {
+      "key": "misc/gift",
+      "file": "misc/gift.webp",
+      "subject": "One ivory clay gift box with rounded edges and a broad matte lavender ribbon, no lettering.",
+      "choices": [
+        "choice:purchaseCategory:gift",
+        "choice:occasion:CHRISTMAS",
+        "module:gift"
+      ]
+    },
+    {
+      "key": "misc/flowers",
+      "file": "misc/flowers.webp",
+      "subject": "One small sculpted bouquet of three ivory and pale lavender clay flowers wrapped in cream paper, no garden or many petals.",
+      "choices": [
+        "asset:gift:flowers"
+      ]
+    },
+    {
+      "key": "activities/cinema",
+      "file": "activities/cinema.webp",
+      "subject": "One small rounded ivory clay cinema clapper board with lavender hinge and blank bands, no writing, numbers or movie branding.",
+      "choices": [
+        "choice:activityCategory:cinema"
+      ]
+    },
+    {
+      "key": "activities/bowling",
+      "file": "activities/bowling.webp",
+      "subject": "One ivory clay bowling pin and one small lavender clay bowling ball, simple matte rounded sculpture.",
+      "choices": [
+        "choice:activityCategory:bowling"
+      ]
+    },
+    {
+      "key": "activities/karting",
+      "file": "activities/karting.webp",
+      "subject": "One single rounded ivory clay racing helmet with a tiny lavender band and solid opaque matte pearl-gray visor. Broad rounded edges, no metallic reflection, glass or mechanical grooves. No car, branding or props.",
+      "choices": [
+        "choice:activityCategory:karting"
+      ]
+    },
+    {
+      "key": "activities/mini-golf",
+      "file": "activities/mini-golf.webp",
+      "subject": "One tiny ivory clay miniature-golf flag on a compact cream putting base, pale lavender flag and one ivory ball, no landscape.",
+      "choices": [
+        "choice:activityCategory:mini_golf"
+      ]
+    },
+    {
+      "key": "activities/billiards",
+      "file": "activities/billiards.webp",
+      "subject": "Two rounded clay billiard balls, ivory and lavender, beside one short simplified ivory cue tip, no number or table scene.",
+      "choices": [
+        "choice:activityCategory:billiards"
+      ]
+    },
+    {
+      "key": "activities/escape-game",
+      "file": "activities/escape-game.webp",
+      "subject": "One large rounded ivory clay padlock with a lavender curved shackle and one tiny pearl key, no numbers or letters.",
+      "choices": [
+        "choice:activityCategory:escape_game"
+      ]
+    },
+    {
+      "key": "activities/kayak",
+      "file": "activities/kayak.webp",
+      "subject": "One simple ivory clay canoe with a lavender rim and one small ivory paddle, no water or person.",
+      "choices": [
+        "choice:activityCategory:canoe_kayak"
+      ]
+    },
+    {
+      "key": "activities/pool",
+      "file": "activities/pool.webp",
+      "subject": "One ivory clay swimming ring with a lavender segment and small pearl goggles, no pool scene.",
+      "choices": [
+        "choice:activityCategory:pool"
+      ]
+    },
+    {
+      "key": "activities/spa",
+      "file": "activities/spa.webp",
+      "subject": "One rolled ivory clay towel and one tiny lavender candle, soft calm sculpture, no room.",
+      "choices": [
+        "choice:activityCategory:spa"
+      ]
+    },
+    {
+      "key": "activities/theme-park",
+      "file": "activities/theme-park.webp",
+      "subject": "One miniature ivory clay Ferris wheel with lavender cabins, very simplified with few spokes, no amusement park background.",
+      "choices": [
+        "choice:activityCategory:theme_park"
+      ]
+    },
+    {
+      "key": "activities/show",
+      "file": "activities/show.webp",
+      "subject": "One ivory clay theatre mask with a gentle smile and a small lavender ticket, simple matte sculpture, no real human face.",
+      "choices": [
+        "choice:activityCategory:show"
+      ]
+    },
+    {
+      "key": "activities/match",
+      "file": "activities/match.webp",
+      "subject": "One ivory clay stadium seat with a lavender cushion and one blank small ivory ticket, no stadium scene or team branding.",
+      "choices": [
+        "choice:activityCategory:match"
+      ]
+    },
+    {
+      "key": "activities/sport",
+      "file": "activities/sport.webp",
+      "subject": "One softly rounded ivory clay football with subtly lavender seams, no brand or writing.",
+      "choices": [
+        "choice:activityCategory:sport"
+      ]
+    },
+    {
+      "key": "activities/fishing",
+      "file": "activities/fishing.webp",
+      "subject": "One small ivory clay fishing float and a short simplified lavender spool, no fish-catching scene or real location.",
+      "choices": [
+        "asset:fishing:bait",
+        "choice:activityCategory:fishing",
+        "module:fishing"
+      ]
+    },
+    {
+      "key": "activities/creative",
+      "file": "activities/creative.webp",
+      "subject": "One thick ivory clay artist palette with three small muted paint dots and a lavender-handled brush, no text.",
+      "choices": [
+        "choice:activityCategory:creative_workshop"
+      ]
+    },
+    {
+      "key": "activities/photo",
+      "file": "activities/photo.webp",
+      "subject": "One simple ivory clay camera miniature, pearl lens and lavender strap, no brand or landscape.",
+      "choices": [
+        "choice:activityCategory:photo_outing"
+      ]
+    },
+    {
+      "key": "activities/museum",
+      "file": "activities/museum.webp",
+      "subject": "One tiny simplified ivory clay museum facade with three round columns and a lavender base, no real named building.",
+      "choices": [
+        "asset:trip:visits"
+      ]
+    },
+    {
+      "key": "beauty/setting-spray",
+      "file": "beauty/setting-spray.webp",
+      "subject": "One rounded ivory clay cosmetic spray bottle with a lavender pump and cap, blank surface.",
+      "choices": [
+        "asset:beauty:setting_spray"
+      ]
+    },
+    {
+      "key": "beauty/face-mask",
+      "file": "beauty/face-mask.webp",
+      "subject": "One blank ivory clay skincare sachet with a softly embossed simplified facial-mask outline and lavender fold, no text.",
+      "choices": [
+        "asset:beauty:face_mask"
+      ]
+    },
+    {
+      "key": "beauty/mascara",
+      "file": "beauty/mascara.webp",
+      "subject": "One ivory clay mascara tube with a lavender cap and its soft simplified brush laid beside it, no logo.",
+      "choices": [
+        "asset:beauty:mascara"
+      ]
+    },
+    {
+      "key": "beauty/eyebrow-pencil",
+      "file": "beauty/eyebrow-pencil.webp",
+      "subject": "One short ivory clay cosmetic pencil with a muted taupe rounded tip and a lavender end cap, no text.",
+      "choices": [
+        "asset:beauty:eyebrow_pencil"
+      ]
+    },
+    {
+      "key": "beauty/eyeliner",
+      "file": "beauty/eyeliner.webp",
+      "subject": "One short ivory clay eyeliner pen with a matte charcoal rounded tip and lavender cap, no brand.",
+      "choices": [
+        "asset:beauty:eyeliner"
+      ]
+    },
+    {
+      "key": "beauty/lipstick",
+      "file": "beauty/lipstick.webp",
+      "subject": "One rounded ivory clay lipstick tube with a muted dusty-rose lipstick tip and tiny lavender base, no shine or text.",
+      "choices": [
+        "asset:beauty:lipstick"
+      ]
+    },
+    {
+      "key": "beauty/gloss",
+      "file": "beauty/gloss.webp",
+      "subject": "One pearl clay lip gloss tube with a lavender cap and its little rounded applicator laid beside it, no transparency or logo.",
+      "choices": [
+        "asset:beauty:gloss"
+      ]
+    },
+    {
+      "key": "beauty/foundation",
+      "file": "beauty/foundation.webp",
+      "subject": "One rounded ivory clay cosmetic pump bottle with a warm cream body and lavender dispenser, no text.",
+      "choices": [
+        "asset:beauty:foundation"
+      ]
+    },
+    {
+      "key": "beauty/face-cream",
+      "file": "beauty/face-cream.webp",
+      "subject": "One small rounded ivory clay face-cream jar with a pale lavender lid, simple matte sculpture.",
+      "choices": [
+        "asset:beauty:face_cream",
+        "choice:purchaseCategory:beauty",
+        "module:beauty"
+      ]
+    },
+    {
+      "key": "beauty/body-cream",
+      "file": "beauty/body-cream.webp",
+      "subject": "One tall softly rounded ivory clay body-lotion pump bottle with a lavender dispenser, no writing.",
+      "choices": [
+        "asset:beauty:body_cream"
+      ]
+    },
+    {
+      "key": "beauty/toothpaste",
+      "file": "beauty/toothpaste.webp",
+      "subject": "One short ivory clay toothpaste tube with rounded lavender cap and a tiny lavender stripe, no text.",
+      "choices": [
+        "asset:beauty:toothpaste"
+      ]
+    },
+    {
+      "key": "beauty/face-cleanser",
+      "file": "beauty/face-cleanser.webp",
+      "subject": "One ivory clay face-cleanser tube with a lavender flip cap and one subtle embossed drop, no branding.",
+      "choices": [
+        "asset:beauty:face_cleanser"
+      ]
+    },
+    {
+      "key": "beauty/makeup-remover",
+      "file": "beauty/makeup-remover.webp",
+      "subject": "One short rounded pearl clay cleansing bottle with a lavender cap and one tiny ivory cotton pad, no transparency.",
+      "choices": [
+        "asset:beauty:makeup_remover"
+      ]
+    },
+    {
+      "key": "beauty/nail-polish",
+      "file": "beauty/nail-polish.webp",
+      "subject": "One small ivory clay nail-polish bottle with a lavender cap and dusty-lavender body, entirely matte, no shine.",
+      "choices": [
+        "asset:beauty:nail_polish"
+      ]
+    },
+    {
+      "key": "beauty/shampoo",
+      "file": "beauty/shampoo.webp",
+      "subject": "One rounded ivory clay shampoo bottle with lavender flip cap and a tiny embossed leaf, blank body.",
+      "choices": [
+        "asset:beauty:shampoo"
+      ]
+    },
+    {
+      "key": "beauty/conditioner",
+      "file": "beauty/conditioner.webp",
+      "subject": "One softly rounded ivory clay conditioner squeeze tube, lavender bottom flip cap and a tiny raised pearl wave, no words.",
+      "choices": [
+        "asset:beauty:conditioner"
+      ]
+    },
+    {
+      "key": "beauty/shower-gel",
+      "file": "beauty/shower-gel.webp",
+      "subject": "One rounded ivory clay shower-gel bottle with a lavender cap and a small softly sculpted droplet, no label.",
+      "choices": [
+        "asset:beauty:shower_gel",
+        "choice:groceryFocus:HYGIENE"
+      ]
+    },
+    {
+      "key": "beauty/cotton-swabs",
+      "file": "beauty/cotton-swabs.webp",
+      "subject": "One tiny ivory clay cup holding three thick rounded pearl cotton swabs, lavender rim, minimal sculpture.",
+      "choices": [
+        "asset:beauty:cotton_swabs"
+      ]
+    },
+    {
+      "key": "beauty/razor-blades",
+      "file": "beauty/razor-blades.webp",
+      "subject": "One softly sculpted ivory clay razor handle with lavender grip and a broad matte pearl cartridge, no sharp detail or brand.",
+      "choices": [
+        "asset:beauty:razor_blades"
+      ]
+    },
+    {
+      "key": "beauty/hair-wax",
+      "file": "beauty/hair-wax.webp",
+      "subject": "One low rounded ivory clay hair-styling wax pot with a lavender lid, blank surface.",
+      "choices": [
+        "asset:beauty:hair_wax"
+      ]
+    },
+    {
+      "key": "beauty/perfume",
+      "file": "beauty/perfume.webp",
+      "subject": "One compact rounded ivory clay perfume bottle with a lavender rounded stopper, fully matte and opaque, no glass facets or branding.",
+      "choices": [
+        "asset:beauty:perfume"
+      ]
+    },
+    {
+      "key": "beauty/hairdresser",
+      "file": "beauty/hairdresser.webp",
+      "subject": "One rounded ivory clay hair comb and one softly sculpted lavender pair of scissors, no sharp metallic blades.",
+      "choices": [
+        "asset:beauty:hairdresser"
+      ]
+    },
+    {
+      "key": "beauty/deodorant",
+      "file": "beauty/deodorant.webp",
+      "subject": "One rounded ivory clay roll-on deodorant bottle with a pale lavender dome cap, no text.",
+      "choices": [
+        "asset:beauty:deodorant"
+      ]
+    },
+    {
+      "key": "clothing/tshirt",
+      "file": "clothing/tshirt.webp",
+      "subject": "One folded ivory clay T-shirt with a lavender collar, soft tactile folds, no person or print.",
+      "choices": [
+        "asset:clothing:tshirt",
+        "asset:gift:clothes",
+        "asset:club:merch",
+        "choice:purchaseCategory:clothing",
+        "module:clothing"
+      ]
+    },
+    {
+      "key": "clothing/shirt",
+      "file": "clothing/shirt.webp",
+      "subject": "One folded ivory clay button-up shirt with a tiny lavender collar detail and three soft cream buttons, no brand.",
+      "choices": [
+        "asset:clothing:shirt"
+      ]
+    },
+    {
+      "key": "clothing/pants",
+      "file": "clothing/pants.webp",
+      "subject": "One softly folded cream clay pair of trousers with a lavender waistband detail, no person.",
+      "choices": [
+        "asset:clothing:pants"
+      ]
+    },
+    {
+      "key": "clothing/shorts",
+      "file": "clothing/shorts.webp",
+      "subject": "One softly folded ivory clay pair of shorts with a lavender waistband, simple matte garment.",
+      "choices": [
+        "asset:clothing:shorts"
+      ]
+    },
+    {
+      "key": "clothing/dress",
+      "file": "clothing/dress.webp",
+      "subject": "One short ivory clay dress on a small lavender hanger, softly rounded folds, no mannequin or person.",
+      "choices": [
+        "asset:clothing:dress"
+      ]
+    },
+    {
+      "key": "clothing/jacket",
+      "file": "clothing/jacket.webp",
+      "subject": "One ivory clay short jacket on a lavender hanger, rounded sleeves and simple front seam, no brand.",
+      "choices": [
+        "asset:clothing:jacket"
+      ]
+    },
+    {
+      "key": "clothing/coat",
+      "file": "clothing/coat.webp",
+      "subject": "One soft ivory clay long coat on a pale lavender hanger, simple rounded collar and two broad folds.",
+      "choices": [
+        "asset:clothing:coat"
+      ]
+    },
+    {
+      "key": "clothing/shoes",
+      "file": "clothing/shoes.webp",
+      "subject": "One pair of ivory clay sneakers with lavender soles and two simplified laces each, no brand.",
+      "choices": [
+        "asset:clothing:shoes"
+      ]
+    },
+    {
+      "key": "clothing/sandals",
+      "file": "clothing/sandals.webp",
+      "subject": "One pair of softly rounded ivory clay sandals with lavender straps, minimal matte footwear.",
+      "choices": [
+        "asset:clothing:sandals"
+      ]
+    },
+    {
+      "key": "clothing/socks",
+      "file": "clothing/socks.webp",
+      "subject": "One softly folded pair of ivory clay socks with lavender cuffs, no lettering.",
+      "choices": [
+        "asset:clothing:socks"
+      ]
+    },
+    {
+      "key": "clothing/underwear",
+      "file": "clothing/underwear.webp",
+      "subject": "One folded ivory clay undergarment with a thin lavender waistband, neutral product still life, no person.",
+      "choices": [
+        "asset:clothing:underwear"
+      ]
+    },
+    {
+      "key": "clothing/cap",
+      "file": "clothing/cap.webp",
+      "subject": "One rounded ivory clay cap with a lavender brim edge, no logo.",
+      "choices": [
+        "asset:clothing:cap"
+      ]
+    },
+    {
+      "key": "clothing/bag",
+      "file": "clothing/bag.webp",
+      "subject": "One rounded ivory clay handbag with a lavender strap and small pearl clasp, no brand.",
+      "choices": [
+        "asset:clothing:bag"
+      ]
+    },
+    {
+      "key": "clothing/glasses",
+      "file": "clothing/glasses.webp",
+      "subject": "One pair of rounded ivory clay glasses with pearl-gray lenses and pale lavender temples, no shiny metal.",
+      "choices": [
+        "asset:clothing:glasses"
+      ]
+    },
+    {
+      "key": "clothing/jewelry",
+      "file": "clothing/jewelry.webp",
+      "subject": "One soft matte ivory clay ring with a small lavender cabochon, no gemstone facets or shine.",
+      "choices": [
+        "asset:clothing:jewelry",
+        "asset:gift:jewelry"
+      ]
+    },
+    {
+      "key": "clothing/costume",
+      "file": "clothing/costume.webp",
+      "subject": "One softly rounded ivory clay costume eye-mask with a lavender ribbon, quiet adult party accessory, no feathers or glitter.",
+      "choices": [
+        "asset:clothing:costume"
+      ]
+    },
+    {
+      "key": "household/laundry",
+      "file": "household/laundry.webp",
+      "subject": "One rounded ivory clay laundry detergent jug with lavender handle and cap, no words.",
+      "choices": [
+        "asset:household:laundry"
+      ]
+    },
+    {
+      "key": "household/dish-soap",
+      "file": "household/dish-soap.webp",
+      "subject": "One ivory clay dish soap bottle with lavender dispenser, beside one tiny cream sponge, no branding.",
+      "choices": [
+        "asset:household:dish_soap"
+      ]
+    },
+    {
+      "key": "household/dishwasher",
+      "file": "household/dishwasher.webp",
+      "subject": "One blank ivory clay pouch with three rounded pearl dishwasher tablets beside it, lavender fold.",
+      "choices": [
+        "asset:household:dishwasher"
+      ]
+    },
+    {
+      "key": "household/sponge",
+      "file": "household/sponge.webp",
+      "subject": "Two softly sculpted clay cleaning sponges, cream with a very pale lavender cleaning face, no abrasive grain.",
+      "choices": [
+        "asset:household:sponge",
+        "asset:groceries:cleaning",
+        "choice:purchaseCategory:household",
+        "choice:groceryFocus:CLEANING",
+        "module:household"
+      ]
+    },
+    {
+      "key": "household/floor",
+      "file": "household/floor.webp",
+      "subject": "One small ivory clay floor-cleaner bottle with lavender cap and one simplified lavender mop head, no actual floor.",
+      "choices": [
+        "asset:household:floor"
+      ]
+    },
+    {
+      "key": "household/toilet",
+      "file": "household/toilet.webp",
+      "subject": "One rounded ivory clay toilet-cleaner bottle with bent lavender neck and cap, no bathroom scene.",
+      "choices": [
+        "asset:household:toilet"
+      ]
+    },
+    {
+      "key": "household/windows",
+      "file": "household/windows.webp",
+      "subject": "One ivory clay window-cleaner spray bottle with lavender trigger and tiny blank pearl cloth.",
+      "choices": [
+        "asset:household:windows"
+      ]
+    },
+    {
+      "key": "household/trash-bags",
+      "file": "household/trash-bags.webp",
+      "subject": "One softly sculpted ivory clay roll of refuse bags with a lavender folded edge, no bin contents.",
+      "choices": [
+        "asset:household:trash_bags"
+      ]
+    },
+    {
+      "key": "household/toilet-paper",
+      "file": "household/toilet-paper.webp",
+      "subject": "One soft ivory clay toilet-paper roll with a tiny lavender embossed flower, no writing.",
+      "choices": [
+        "asset:groceries:hygiene",
+        "asset:household:toilet_paper"
+      ]
+    },
+    {
+      "key": "household/paper-towels",
+      "file": "household/paper-towels.webp",
+      "subject": "One tall ivory clay kitchen-paper roll with a short unrolled end and a subtle lavender edge, no printing.",
+      "choices": [
+        "asset:household:paper_towels"
+      ]
+    },
+    {
+      "key": "household/air-freshener",
+      "file": "household/air-freshener.webp",
+      "subject": "One small ivory clay room fragrance bottle with two thick pearl reeds and a lavender collar, no room.",
+      "choices": [
+        "asset:household:air_freshener"
+      ]
+    },
+    {
+      "key": "home/lamp",
+      "file": "home/lamp.webp",
+      "subject": "One softly rounded ivory clay table lamp with a small lavender base, completely matte, no shiny metal or room.",
+      "choices": [
+        "asset:home:lamp",
+        "asset:tech:lighting"
+      ]
+    },
+    {
+      "key": "home/furniture",
+      "file": "home/furniture.webp",
+      "subject": "One small rounded ivory clay armchair with a pale lavender cushion, no living room.",
+      "choices": [
+        "asset:home:furniture",
+        "choice:purchaseCategory:home_equipment",
+        "module:home"
+      ]
+    },
+    {
+      "key": "home/bedding",
+      "file": "home/bedding.webp",
+      "subject": "One folded ivory clay duvet and two soft cream pillows with lavender piping, no whole bedroom.",
+      "choices": [
+        "asset:home:bedding"
+      ]
+    },
+    {
+      "key": "home/storage",
+      "file": "home/storage.webp",
+      "subject": "One simple ivory clay storage basket with a lavender rim and folded cream cloth, no crowded items.",
+      "choices": [
+        "asset:home:storage"
+      ]
+    },
+    {
+      "key": "home/decor",
+      "file": "home/decor.webp",
+      "subject": "One abstract rounded ivory clay vase with a tiny lavender geometric ornament, no flowers or room.",
+      "choices": [
+        "asset:home:decor"
+      ]
+    },
+    {
+      "key": "home/plant",
+      "file": "home/plant.webp",
+      "subject": "One miniature clay houseplant with three muted sage leaves in an ivory pot with lavender trim, no garden.",
+      "choices": [
+        "asset:home:plant"
+      ]
+    },
+    {
+      "key": "home/kitchen",
+      "file": "home/kitchen.webp",
+      "subject": "One softly rounded ivory clay saucepan with lavender handles and lid knob, no stove or metal shine.",
+      "choices": [
+        "asset:home:kitchen"
+      ]
+    },
+    {
+      "key": "home/dishes",
+      "file": "home/dishes.webp",
+      "subject": "Two nested ivory clay bowls and one small plate with fine lavender rims, no food or table scene.",
+      "choices": [
+        "asset:home:dishes"
+      ]
+    },
+    {
+      "key": "home/diy",
+      "file": "home/diy.webp",
+      "subject": "One small ivory clay hammer with a lavender handle beside a single rounded cream screw, no sharp metal shine.",
+      "choices": [
+        "asset:home:diy"
+      ]
+    },
+    {
+      "key": "home/electric",
+      "file": "home/electric.webp",
+      "subject": "One short ivory clay power strip with two rounded sockets and a lavender switch, no brand or text.",
+      "choices": [
+        "asset:home:electric"
+      ]
+    },
+    {
+      "key": "tech/charger",
+      "file": "tech/charger.webp",
+      "subject": "One small rounded ivory clay charger brick with a short lavender cable and simple cream connector, no brand.",
+      "choices": [
+        "asset:tech:charger"
+      ]
+    },
+    {
+      "key": "tech/cable",
+      "file": "tech/cable.webp",
+      "subject": "One softly coiled ivory clay cable with lavender connector ends, no detailed pins or writing.",
+      "choices": [
+        "asset:tech:cable"
+      ]
+    },
+    {
+      "key": "automotive/tires",
+      "file": "automotive/tires.webp",
+      "subject": "One small matte charcoal clay car tire with a pearl wheel center and very soft tread grooves, lavender accent on the center, no vehicle.",
+      "choices": [
+        "asset:automotive:tires"
+      ]
+    },
+    {
+      "key": "automotive/motor-oil",
+      "file": "automotive/motor-oil.webp",
+      "subject": "One rounded ivory clay engine-oil jug with a short lavender spout and cap, blank body, no brand.",
+      "choices": [
+        "asset:automotive:motor_oil"
+      ]
+    },
+    {
+      "key": "automotive/coolant",
+      "file": "automotive/coolant.webp",
+      "subject": "One small ivory clay coolant jug with lavender handle and cap and a tiny embossed snowflake, no words.",
+      "choices": [
+        "asset:automotive:coolant"
+      ]
+    },
+    {
+      "key": "automotive/washer-fluid",
+      "file": "automotive/washer-fluid.webp",
+      "subject": "One rounded ivory clay windshield-fluid bottle with lavender cap and a small embossed droplet, no vehicle or label.",
+      "choices": [
+        "asset:automotive:washer_fluid"
+      ]
+    },
+    {
+      "key": "automotive/bulbs",
+      "file": "automotive/bulbs.webp",
+      "subject": "One rounded ivory clay automobile lamp bulb with a lavender base, no filaments or shiny metal.",
+      "choices": [
+        "asset:automotive:bulbs"
+      ]
+    },
+    {
+      "key": "automotive/battery",
+      "file": "automotive/battery.webp",
+      "subject": "One rounded ivory clay car battery block with two tiny pale lavender terminals and a blank face, no brand or writing.",
+      "choices": [
+        "asset:automotive:battery"
+      ]
+    },
+    {
+      "key": "automotive/wash",
+      "file": "automotive/wash.webp",
+      "subject": "One small ivory clay bucket with a lavender handle and one cream washing sponge, no vehicle.",
+      "choices": [
+        "asset:automotive:wash",
+        "choice:automotiveKind:SERVICE"
+      ]
+    },
+    {
+      "key": "automotive/part",
+      "file": "automotive/part.webp",
+      "subject": "One softly sculpted ivory clay wrench beside a small lavender cog, no shiny metal, car or mechanical scene.",
+      "choices": [
+        "asset:automotive:part",
+        "choice:automotiveKind:PRODUCT"
+      ]
+    }
+  ],
+  "exclusions": [
+    "Servian",
+    "Fontès",
+    "Dax",
+    "Montpellier (lieu spécifique)",
+    "Saint-Jean-de-Védas",
+    "Domicile du foyer",
+    "Amandine",
+    "Cédric",
+    "Lucas",
+    "Florentine",
+    "Juliette",
+    "Elsa",
+    "Greg",
+    "Marc",
+    "Isabelle",
+    "Chris",
+    "Grands-parents de Manon",
+    "Père d’Adrien",
+    "Mère d’Adrien",
+    "Grand-mère d’Adrien",
+    "Adrien",
+    "Manon",
+    "Autres personnes nommées, foyers et lieux personnels / résultats de lieux réels",
+    "Logos Swile, Edenred, Deliveroo, Uber Eats, Lady Sushi, Domino’s et autres marques réelles"
+  ],
+  "nonIllustrated": [
+    "Dates, moments et retours",
+    "Champs libres et adresses",
+    "Prix, quantités, résultats calculés et résumés",
+    "Toggles / paiement / précision / baseline",
+    "Suivant, Retour, pagination et actions",
+    "Liens vers un projet existant",
+    "Pas encore / autre / budget à préciser : fallback neutre",
+    "Cartes de variante de trajet : résultats, pas illustration"
+  ]
+}

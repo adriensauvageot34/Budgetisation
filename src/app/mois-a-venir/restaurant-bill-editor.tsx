@@ -63,7 +63,7 @@ export function RestaurantBillEditor({ builder, setBuilder, wallets, onPending }
     const asset = plannedAsset(key), active = key === "CUSTOM" ? undefined : items.find((item) => item.assetKey === key);
     const rawScene = key === "CUSTOM" ? "custom" : key.split(":")[1]!;
     const scene: WizardScene = rawScene in WIZARD_SCENES ? rawScene as WizardScene : key === "restaurant:alcohol_total" ? "wine_glass" : "menu";
-    return <WizardChoice key={key} compact label={asset?.label ?? "Autre élément"} scene={scene}
+    return <WizardChoice key={key} compact label={asset?.label ?? "Autre élément"} scene={scene} illustrationKey={asset ? `asset:${asset.assetKey}` : "custom:cost"}
       selected={!!active || selected === key || selectedItem?.assetKey === key} value={active ? builderMoney(localCostGross(active.quantity, active.unitAmount)!) : undefined} onClick={() => select(key)} />;
   })}</div>{items.some((item) => !item.assetKey) && <div className="mt-3 flex flex-wrap gap-2">{items.filter((item) => !item.assetKey).map((item) => <button type="button" key={item.id} className={styles.wallet} onClick={() => select("item:" + item.id)}>{item.label} · {builderMoney(localCostGross(item.quantity, item.unitAmount)!)}</button>)}</div>}</div>
     {selected && selectedKey ? <BillLineEditor key={selectedItem?.id ?? selected} item={selectedItem} assetKey={selectedKey} participants={plannedParticipantCount(builder.draft.context)} baseline={builder.quickBaseline ?? null} wallets={wallets} onPending={reportPending}
