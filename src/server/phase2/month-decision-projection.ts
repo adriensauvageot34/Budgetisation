@@ -27,23 +27,21 @@ export function projectMonthDecision(plan: MonthEconomicPlan, settings: MonthDec
   const afterEssential = Math.round(Number(plan.narrative.remainderAfterEssential.central)), final = Math.round(Number(plan.narrative.final.central));
   const essentialDelta = afterProjects - afterEssential, optionalDelta = afterEssential - final;
   const breakdown = (optional: boolean, total: number) => roundedParts((optional ? prediction?.optional : prediction?.essential)?.map(c => ({
-    key: c.key, label: c.label, amount: c.baselineProvision.central,
+    key: c.key, label: c.label, amount: c.remainingForecastEconomic.central,
   })) ?? [{ key: "reference", label: "Référence publiée", amount: String(total) }], total);
   const essentialParts = breakdown(false, essentialDelta), optionalParts = breakdown(true, optionalDelta);
   const categoryDisplay = Object.fromEntries([...(prediction?.essential ?? []), ...(prediction?.optional ?? [])].map(c => {
     const part = [...essentialParts, ...optionalParts].find(p => p.key === c.key)!;
-    const adjustment = part.visible - Math.round(Number(c.baselineProvision.central));
-    const projectedCentral = new Big(c.projectedMonth.central).eq(0) ? 0 : Math.max(0, Math.round(Number(c.projectedMonth.central)) + adjustment);
-    // Declared projects change presentation buckets, never canonical observations
-    // or financial absorption. Round the three terms together; preserve exact zeros.
-    const amounts = { observed: new Big(c.alreadyRealized).plus(c.habitualDeclaredGross).toFixed(2),
-      planned: c.habitualPlannedGross, remaining: c.remaining.central };
+    const projectedCentral = Math.round(Number(c.projectedMonth.central));
+    const amounts = { observed: c.observedEconomic, declared: c.declaredRealizedEconomic,
+      planned: c.plannedEconomic, pending: c.pendingExpectedEconomic.central, future: c.futureExpectedEconomic.central };
     const terms = roundedParts(Object.entries(amounts).filter(([, amount]) => new Big(amount).gt(0))
       .map(([key, amount]) => ({ key, label: key, amount })), projectedCentral);
     const term = (key: string) => terms.find(t => t.key === key)?.visible ?? 0;
-    const central = term("remaining");
+    const central = part.visible;
     return [c.key, { remaining: { low: Math.min(Math.round(Number(c.remaining.low)), central), central,
-      high: Math.max(Math.round(Number(c.remaining.high)), central) }, observed: term("observed"), planned: term("planned"), projectedCentral }];
+      high: Math.max(Math.round(Number(c.remaining.high)), central) }, observed: term("observed"), declared: term("declared"),
+      planned: term("planned"), pending: term("pending"), future: term("future"), counts: c.opportunityCounts, projectedCentral }];
   }));
   const change = explainForecastChange(plan, memory, targetMonth);
   const last = comparableForecastCheckpoints(memory, targetMonth).at(-1);
@@ -70,13 +68,12 @@ export function projectMonthDecision(plan: MonthEconomicPlan, settings: MonthDec
   return { mode, asOf, showProjectMilestone: !new Big(plan.plannedExpenses.netImpact.central ?? 0).eq(0),
     visible: { afterCertain, afterProjects, afterEssential, final, projectDelta: afterCertain - afterProjects,
       essentialDelta, optionalDelta, essential: essentialParts, optional: optionalParts, categoryDisplay,
-      essentialTotal: prediction ? prediction.essential.reduce((sum, c) => sum + categoryDisplay[c.key]!.projectedCentral, 0) : essentialDelta,
-      optionalTotal: prediction ? prediction.optional.reduce((sum, c) => sum + categoryDisplay[c.key]!.projectedCentral, 0) : optionalDelta },
+      essentialTotal: essentialDelta, optionalTotal: optionalDelta },
     change: { ...change, visibleDelta: changeTarget, visibleChanges }, attention, goal: exactGoal,
     mealFundingVisible: [plan.plannedFunding.swile, plan.plannedFunding.edenred].some(p => new Big(p.reserved).plus(p.usedDeclared).plus(p.shortfall).gt(0)),
     jointExplanation: prediction?.joint.method === "EMPIRICAL_MONTHS"
       ? `Combinaisons observées dans ${prediction.joint.comparableMonths} mois comparables, avec leurs dépenses simultanées. Les montants hauts des catégories ne sont pas additionnés.`
-      : "Trop peu de mois comparables pour un intervalle conjoint : repère provisoire issu des références disponibles.",
+      : "Estimation économique restante, avec les attentes non observées. Les fourchettes restent exploratoires tant que les erreurs par horizon ne sont pas suffisamment calibrées.",
   };
 }
 export type MonthDecisionProjection = ReturnType<typeof projectMonthDecision>;

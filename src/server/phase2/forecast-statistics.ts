@@ -1,6 +1,6 @@
 import "server-only";
 
-export const FORECAST_MODEL_VERSION="month-decision@v5.1/essential@v2/occurrence@v2/joint@v1";
+export const FORECAST_MODEL_VERSION="month-asof@v1/purchase@v1/coverage@v1/opportunity@v1";
 export const FORECAST_POLICY = Object.freeze({ recentWeight:3, previousWeight:1, shiftWeight:6,
   lowerFactor:.8, higherFactor:1.2, minimumMonths:3, calibrationMonths:4 });
 export function weightedQuantile(values: readonly number[], weights: readonly number[], quantile: number): number {

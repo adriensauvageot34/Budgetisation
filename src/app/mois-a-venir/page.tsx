@@ -72,7 +72,7 @@ export default async function MonthForecastPage({ searchParams }: { searchParams
   const scenario = deriveMonthScenario(forecast, stored.inputs, null, today, plannedExpenses);
   const placeLabel = (ref: import("@/domain/phase2/planned-contract").ProspectivePlaceRef | undefined) =>
     ref?.kind === "TEXT" ? ref.label : ref?.kind === "KNOWN" ? options.places.find((place) => place.placeId === ref.placeId)?.name : undefined;
-  const cards = projectPlannedExpenseCards(plannedExpenses, today).map((card) => {
+  const cards = projectPlannedExpenseCards(plannedExpenses, today, scenario.economicPlan?.narrative.prediction?.reconciliation).map((card) => {
     if (!scenario.economicPlan) return card;
     const before = deriveMonthScenario(forecast, stored.inputs, null, today,
       plannedExpenses.filter((row) => row.id !== card.id)).economicPlan;

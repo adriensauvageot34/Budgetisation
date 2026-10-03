@@ -1,0 +1,1800 @@
+{
+  "fixtureVersion": "phase2-temporal-backtest@v1",
+  "coverageMode": "ORACLE_OBSERVATION_CUTOFF_SIMULATION",
+  "excludedFromCalibration": [
+    "manon-work-meals",
+    "SWILE funding",
+    "EDENRED funding",
+    "full bank cash"
+  ],
+  "runs": 42,
+  "training": "five prior calendar months; cutoff observations only",
+  "temporalMAE": 114.38023809523818,
+  "benchmarkMAE": 162.93714285714304,
+  "gainPercent": 29.801004185078707,
+  "horizons": {
+    "1": 151.14000000000013,
+    "5": 145.8228571428572,
+    "10": 128.44285714285724,
+    "15": 81.31142857142859,
+    "20": 96.02285714285723,
+    "25": 83.54142857142857
+  },
+  "tolerancePolicy": "paired per-month MAE differences: max(5€, Student-t 95% standard error, df=6); not a product calibration",
+  "horizonComparisons": [
+    {
+      "later": 25,
+      "earlier": 20,
+      "deltaMAE": -12.481428571428669,
+      "toleranceEuros": 51.09373485833512,
+      "strictlyImproves": true,
+      "withinSamplingTolerance": true
+    },
+    {
+      "later": 20,
+      "earlier": 15,
+      "deltaMAE": 14.71142857142864,
+      "toleranceEuros": 74.41175307302096,
+      "strictlyImproves": false,
+      "withinSamplingTolerance": true
+    },
+    {
+      "later": 15,
+      "earlier": 10,
+      "deltaMAE": -47.13142857142863,
+      "toleranceEuros": 58.58670352999741,
+      "strictlyImproves": true,
+      "withinSamplingTolerance": true
+    }
+  ],
+  "categories": {
+    "groceries": {
+      "temporalMAE": 100.81642857142862,
+      "benchmarkMAE": 124.72857142857137
+    },
+    "tobacco-vape": {
+      "temporalMAE": 60.05119047619048,
+      "benchmarkMAE": 74.50857142857143
+    },
+    "manon-work-mobility": {
+      "temporalMAE": 2.7504761904761894,
+      "benchmarkMAE": 3.831428571428569
+    },
+    "adrien-work-meals": {
+      "temporalMAE": 16.08238095238095,
+      "benchmarkMAE": 20.257142857142846
+    },
+    "adrien-work-coffee": {
+      "temporalMAE": 4.99285714285714,
+      "benchmarkMAE": 6.342857142857143
+    },
+    "household-restaurants": {
+      "temporalMAE": 41.71880952380951,
+      "benchmarkMAE": 72.00000000000003
+    }
+  },
+  "results": [
+    {
+      "month": "2026-01",
+      "day": 1,
+      "temporal": 1138.79,
+      "benchmark": 1183.1399999999999,
+      "actual": 1217.07,
+      "temporalAbsoluteError": 78.27999999999997,
+      "benchmarkAbsoluteError": 33.930000000000064,
+      "categoryErrors": [
+        {
+          "key": "groceries",
+          "temporalAbsoluteError": 141.2600000000001,
+          "benchmarkAbsoluteError": 141.2600000000001
+        },
+        {
+          "key": "tobacco-vape",
+          "temporalAbsoluteError": 155.82999999999998,
+          "benchmarkAbsoluteError": 132.3
+        },
+        {
+          "key": "manon-work-mobility",
+          "temporalAbsoluteError": 2.1900000000000013,
+          "benchmarkAbsoluteError": 1.4200000000000053
+        },
+        {
+          "key": "adrien-work-meals",
+          "temporalAbsoluteError": 14.019999999999989,
+          "benchmarkAbsoluteError": 11.29999999999999
+        },
+        {
+          "key": "adrien-work-coffee",
+          "temporalAbsoluteError": 10.149999999999999,
+          "benchmarkAbsoluteError": 0.5000000000000071
+        },
+        {
+          "key": "household-restaurants",
+          "temporalAbsoluteError": 66.49,
+          "benchmarkAbsoluteError": 12.75
+        }
+      ]
+    },
+    {
+      "month": "2026-01",
+      "day": 5,
+      "temporal": 1123.22,
+      "benchmark": 1183.1399999999999,
+      "actual": 1217.07,
+      "temporalAbsoluteError": 93.84999999999991,
+      "benchmarkAbsoluteError": 33.930000000000064,
+      "categoryErrors": [
+        {
+          "key": "groceries",
+          "temporalAbsoluteError": 189.81000000000012,
+          "benchmarkAbsoluteError": 141.2600000000001
+        },
+        {
+          "key": "tobacco-vape",
+          "temporalAbsoluteError": 193.23000000000002,
+          "benchmarkAbsoluteError": 132.3
+        },
+        {
+          "key": "manon-work-mobility",
+          "temporalAbsoluteError": 3.719999999999999,
+          "benchmarkAbsoluteError": 1.4200000000000053
+        },
+        {
+          "key": "adrien-work-meals",
+          "temporalAbsoluteError": 16.859999999999992,
+          "benchmarkAbsoluteError": 11.29999999999999
+        },
+        {
+          "key": "adrien-work-coffee",
+          "temporalAbsoluteError": 12.18,
+          "benchmarkAbsoluteError": 0.5000000000000071
+        },
+        {
+          "key": "household-restaurants",
+          "temporalAbsoluteError": 64.50999999999999,
+          "benchmarkAbsoluteError": 12.75
+        }
+      ]
+    },
+    {
+      "month": "2026-01",
+      "day": 10,
+      "temporal": 1172.8899999999999,
+      "benchmark": 1183.1399999999999,
+      "actual": 1217.07,
+      "temporalAbsoluteError": 44.180000000000064,
+      "benchmarkAbsoluteError": 33.930000000000064,
+      "categoryErrors": [
+        {
+          "key": "groceries",
+          "temporalAbsoluteError": 104.98000000000013,
+          "benchmarkAbsoluteError": 141.2600000000001
+        },
+        {
+          "key": "tobacco-vape",
+          "temporalAbsoluteError": 164.19,
+          "benchmarkAbsoluteError": 132.3
+        },
+        {
+          "key": "manon-work-mobility",
+          "temporalAbsoluteError": 1.3900000000000006,
+          "benchmarkAbsoluteError": 1.4200000000000053
+        },
+        {
+          "key": "adrien-work-meals",
+          "temporalAbsoluteError": 11.54999999999999,
+          "benchmarkAbsoluteError": 11.29999999999999
+        },
+        {
+          "key": "adrien-work-coffee",
+          "temporalAbsoluteError": 0.0899999999999963,
+          "benchmarkAbsoluteError": 0.5000000000000071
+        },
+        {
+          "key": "household-restaurants",
+          "temporalAbsoluteError": 90.36,
+          "benchmarkAbsoluteError": 12.75
+        }
+      ]
+    },
+    {
+      "month": "2026-01",
+      "day": 15,
+      "temporal": 1161.43,
+      "benchmark": 1183.1399999999999,
+      "actual": 1217.07,
+      "temporalAbsoluteError": 55.63999999999987,
+      "benchmarkAbsoluteError": 33.930000000000064,
+      "categoryErrors": [
+        {
+          "key": "groceries",
+          "temporalAbsoluteError": 132.18000000000006,
+          "benchmarkAbsoluteError": 141.2600000000001
+        },
+        {
+          "key": "tobacco-vape",
+          "temporalAbsoluteError": 117.07999999999998,
+          "benchmarkAbsoluteError": 132.3
+        },
+        {
+          "key": "manon-work-mobility",
+          "temporalAbsoluteError": 0.10000000000000142,
+          "benchmarkAbsoluteError": 1.4200000000000053
+        },
+        {
+          "key": "adrien-work-meals",
+          "temporalAbsoluteError": 8.949999999999989,
+          "benchmarkAbsoluteError": 11.29999999999999
+        },
+        {
+          "key": "adrien-work-coffee",
+          "temporalAbsoluteError": 4.260000000000005,
+          "benchmarkAbsoluteError": 0.5000000000000071
+        },
+        {
+          "key": "household-restaurants",
+          "temporalAbsoluteError": 35.75,
+          "benchmarkAbsoluteError": 12.75
+        }
+      ]
+    },
+    {
+      "month": "2026-01",
+      "day": 20,
+      "temporal": 1183.3,
+      "benchmark": 1183.1399999999999,
+      "actual": 1217.07,
+      "temporalAbsoluteError": 33.76999999999998,
+      "benchmarkAbsoluteError": 33.930000000000064,
+      "categoryErrors": [
+        {
+          "key": "groceries",
+          "temporalAbsoluteError": 114.42000000000007,
+          "benchmarkAbsoluteError": 141.2600000000001
+        },
+        {
+          "key": "tobacco-vape",
+          "temporalAbsoluteError": 88.29000000000002,
+          "benchmarkAbsoluteError": 132.3
+        },
+        {
+          "key": "manon-work-mobility",
+          "temporalAbsoluteError": 0.4299999999999997,
+          "benchmarkAbsoluteError": 1.4200000000000053
+        },
+        {
+          "key": "adrien-work-meals",
+          "temporalAbsoluteError": 8.61999999999999,
+          "benchmarkAbsoluteError": 11.29999999999999
+        },
+        {
+          "key": "adrien-work-coffee",
+          "temporalAbsoluteError": 0.5500000000000043,
+          "benchmarkAbsoluteError": 0.5000000000000071
+        },
+        {
+          "key": "household-restaurants",
+          "temporalAbsoluteError": 0,
+          "benchmarkAbsoluteError": 12.75
+        }
+      ]
+    },
+    {
+      "month": "2026-01",
+      "day": 25,
+      "temporal": 1318.9799999999998,
+      "benchmark": 1183.1399999999999,
+      "actual": 1217.07,
+      "temporalAbsoluteError": 101.90999999999985,
+      "benchmarkAbsoluteError": 33.930000000000064,
+      "categoryErrors": [
+        {
+          "key": "groceries",
+          "temporalAbsoluteError": 88.31999999999994,
+          "benchmarkAbsoluteError": 141.2600000000001
+        },
+        {
+          "key": "tobacco-vape",
+          "temporalAbsoluteError": 32.84,
+          "benchmarkAbsoluteError": 132.3
+        },
+        {
+          "key": "manon-work-mobility",
+          "temporalAbsoluteError": 3.1000000000000014,
+          "benchmarkAbsoluteError": 1.4200000000000053
+        },
+        {
+          "key": "adrien-work-meals",
+          "temporalAbsoluteError": 16.90999999999999,
+          "benchmarkAbsoluteError": 11.29999999999999
+        },
+        {
+          "key": "adrien-work-coffee",
+          "temporalAbsoluteError": 0.7600000000000051,
+          "benchmarkAbsoluteError": 0.5000000000000071
+        },
+        {
+          "key": "household-restaurants",
+          "temporalAbsoluteError": 0,
+          "benchmarkAbsoluteError": 12.75
+        }
+      ]
+    },
+    {
+      "month": "2026-02",
+      "day": 1,
+      "temporal": 1201.8200000000002,
+      "benchmark": 1203.1,
+      "actual": 896.7199999999999,
+      "temporalAbsoluteError": 305.10000000000025,
+      "benchmarkAbsoluteError": 306.38,
+      "categoryErrors": [
+        {
+          "key": "groceries",
+          "temporalAbsoluteError": 119.75000000000017,
+          "benchmarkAbsoluteError": 119.75000000000006
+        },
+        {
+          "key": "tobacco-vape",
+          "temporalAbsoluteError": 5.899999999999977,
+          "benchmarkAbsoluteError": 0.4500000000000455
+        },
+        {
+          "key": "manon-work-mobility",
+          "temporalAbsoluteError": 6.48,
+          "benchmarkAbsoluteError": 4.469999999999999
+        },
+        {
+          "key": "adrien-work-meals",
+          "temporalAbsoluteError": 1.9000000000000057,
+          "benchmarkAbsoluteError": 13.049999999999997
+        },
+        {
+          "key": "adrien-work-coffee",
+          "temporalAbsoluteError": 2.670000000000009,
+          "benchmarkAbsoluteError": 4.049999999999997
+        },
+        {
+          "key": "household-restaurants",
+          "temporalAbsoluteError": 186.7,
+          "benchmarkAbsoluteError": 173.54999999999998
+        }
+      ]
+    },
+    {
+      "month": "2026-02",
+      "day": 5,
+      "temporal": 1256.3000000000002,
+      "benchmark": 1203.1,
+      "actual": 896.7199999999999,
+      "temporalAbsoluteError": 359.58000000000027,
+      "benchmarkAbsoluteError": 306.38,
+      "categoryErrors": [
+        {
+          "key": "groceries",
+          "temporalAbsoluteError": 133.0700000000001,
+          "benchmarkAbsoluteError": 119.75000000000006
+        },
+        {
+          "key": "tobacco-vape",
+          "temporalAbsoluteError": 68.61999999999995,
+          "benchmarkAbsoluteError": 0.4500000000000455
+        },
+        {
+          "key": "manon-work-mobility",
+          "temporalAbsoluteError": 4.43,
+          "benchmarkAbsoluteError": 4.469999999999999
+        },
+        {
+          "key": "adrien-work-meals",
+          "temporalAbsoluteError": 21.180000000000007,
+          "benchmarkAbsoluteError": 13.049999999999997
+        },
+        {
+          "key": "adrien-work-coffee",
+          "temporalAbsoluteError": 2.9399999999999906,
+          "benchmarkAbsoluteError": 4.049999999999997
+        },
+        {
+          "key": "household-restaurants",
+          "temporalAbsoluteError": 138.2,
+          "benchmarkAbsoluteError": 173.54999999999998
+        }
+      ]
+    },
+    {
+      "month": "2026-02",
+      "day": 10,
+      "temporal": 1146.48,
+      "benchmark": 1203.1,
+      "actual": 896.7199999999999,
+      "temporalAbsoluteError": 249.7600000000001,
+      "benchmarkAbsoluteError": 306.38,
+      "categoryErrors": [
+        {
+          "key": "groceries",
+          "temporalAbsoluteError": 89.14000000000016,
+          "benchmarkAbsoluteError": 119.75000000000006
+        },
+        {
+          "key": "tobacco-vape",
+          "temporalAbsoluteError": 27.529999999999973,
+          "benchmarkAbsoluteError": 0.4500000000000455
+        },
+        {
+          "key": "manon-work-mobility",
+          "temporalAbsoluteError": 3.2300000000000004,
+          "benchmarkAbsoluteError": 4.469999999999999
+        },
+        {
+          "key": "adrien-work-meals",
+          "temporalAbsoluteError": 20.60000000000001,
+          "benchmarkAbsoluteError": 13.049999999999997
+        },
+        {
+          "key": "adrien-work-coffee",
+          "temporalAbsoluteError": 3.019999999999996,
+          "benchmarkAbsoluteError": 4.049999999999997
+        },
+        {
+          "key": "household-restaurants",
+          "temporalAbsoluteError": 112.7,
+          "benchmarkAbsoluteError": 173.54999999999998
+        }
+      ]
+    },
+    {
+      "month": "2026-02",
+      "day": 15,
+      "temporal": 978.2299999999999,
+      "benchmark": 1203.1,
+      "actual": 896.7199999999999,
+      "temporalAbsoluteError": 81.50999999999999,
+      "benchmarkAbsoluteError": 306.38,
+      "categoryErrors": [
+        {
+          "key": "groceries",
+          "temporalAbsoluteError": 25.530000000000143,
+          "benchmarkAbsoluteError": 119.75000000000006
+        },
+        {
+          "key": "tobacco-vape",
+          "temporalAbsoluteError": 27.259999999999934,
+          "benchmarkAbsoluteError": 0.4500000000000455
+        },
+        {
+          "key": "manon-work-mobility",
+          "temporalAbsoluteError": 1.4800000000000004,
+          "benchmarkAbsoluteError": 4.469999999999999
+        },
+        {
+          "key": "adrien-work-meals",
+          "temporalAbsoluteError": 17.980000000000004,
+          "benchmarkAbsoluteError": 13.049999999999997
+        },
+        {
+          "key": "adrien-work-coffee",
+          "temporalAbsoluteError": 1.769999999999996,
+          "benchmarkAbsoluteError": 4.049999999999997
+        },
+        {
+          "key": "household-restaurants",
+          "temporalAbsoluteError": 10.45,
+          "benchmarkAbsoluteError": 173.54999999999998
+        }
+      ]
+    },
+    {
+      "month": "2026-02",
+      "day": 20,
+      "temporal": 1038.64,
+      "benchmark": 1203.1,
+      "actual": 896.7199999999999,
+      "temporalAbsoluteError": 141.9200000000002,
+      "benchmarkAbsoluteError": 306.38,
+      "categoryErrors": [
+        {
+          "key": "groceries",
+          "temporalAbsoluteError": 87.25000000000017,
+          "benchmarkAbsoluteError": 119.75000000000006
+        },
+        {
+          "key": "tobacco-vape",
+          "temporalAbsoluteError": 40.60999999999996,
+          "benchmarkAbsoluteError": 0.4500000000000455
+        },
+        {
+          "key": "manon-work-mobility",
+          "temporalAbsoluteError": 0.990000000000002,
+          "benchmarkAbsoluteError": 4.469999999999999
+        },
+        {
+          "key": "adrien-work-meals",
+          "temporalAbsoluteError": 12.560000000000002,
+          "benchmarkAbsoluteError": 13.049999999999997
+        },
+        {
+          "key": "adrien-work-coffee",
+          "temporalAbsoluteError": 0.5099999999999909,
+          "benchmarkAbsoluteError": 4.049999999999997
+        },
+        {
+          "key": "household-restaurants",
+          "temporalAbsoluteError": 0,
+          "benchmarkAbsoluteError": 173.54999999999998
+        }
+      ]
+    },
+    {
+      "month": "2026-02",
+      "day": 25,
+      "temporal": 1086.39,
+      "benchmark": 1203.1,
+      "actual": 896.7199999999999,
+      "temporalAbsoluteError": 189.6700000000002,
+      "benchmarkAbsoluteError": 306.38,
+      "categoryErrors": [
+        {
+          "key": "groceries",
+          "temporalAbsoluteError": 137.92000000000013,
+          "benchmarkAbsoluteError": 119.75000000000006
+        },
+        {
+          "key": "tobacco-vape",
+          "temporalAbsoluteError": 37.70999999999998,
+          "benchmarkAbsoluteError": 0.4500000000000455
+        },
+        {
+          "key": "manon-work-mobility",
+          "temporalAbsoluteError": 2.1799999999999997,
+          "benchmarkAbsoluteError": 4.469999999999999
+        },
+        {
+          "key": "adrien-work-meals",
+          "temporalAbsoluteError": 8.100000000000009,
+          "benchmarkAbsoluteError": 13.049999999999997
+        },
+        {
+          "key": "adrien-work-coffee",
+          "temporalAbsoluteError": 3.759999999999991,
+          "benchmarkAbsoluteError": 4.049999999999997
+        },
+        {
+          "key": "household-restaurants",
+          "temporalAbsoluteError": 0,
+          "benchmarkAbsoluteError": 173.54999999999998
+        }
+      ]
+    },
+    {
+      "month": "2026-03",
+      "day": 1,
+      "temporal": 1061.6200000000001,
+      "benchmark": 1129.74,
+      "actual": 933.1099999999999,
+      "temporalAbsoluteError": 128.51000000000022,
+      "benchmarkAbsoluteError": 196.6300000000001,
+      "categoryErrors": [
+        {
+          "key": "groceries",
+          "temporalAbsoluteError": 196.47000000000003,
+          "benchmarkAbsoluteError": 196.47000000000003
+        },
+        {
+          "key": "tobacco-vape",
+          "temporalAbsoluteError": 38.549999999999955,
+          "benchmarkAbsoluteError": 71.44999999999987
+        },
+        {
+          "key": "manon-work-mobility",
+          "temporalAbsoluteError": 2.9099999999999895,
+          "benchmarkAbsoluteError": 1.3299999999999912
+        },
+        {
+          "key": "adrien-work-meals",
+          "temporalAbsoluteError": 43.88000000000001,
+          "benchmarkAbsoluteError": 45.45000000000001
+        },
+        {
+          "key": "adrien-work-coffee",
+          "temporalAbsoluteError": 2.759999999999998,
+          "benchmarkAbsoluteError": 2.6499999999999915
+        },
+        {
+          "key": "household-restaurants",
+          "temporalAbsoluteError": 20.140000000000008,
+          "benchmarkAbsoluteError": 121.03999999999999
+        }
+      ]
+    },
+    {
+      "month": "2026-03",
+      "day": 5,
+      "temporal": 1041.03,
+      "benchmark": 1129.74,
+      "actual": 933.1099999999999,
+      "temporalAbsoluteError": 107.92000000000007,
+      "benchmarkAbsoluteError": 196.6300000000001,
+      "categoryErrors": [
+        {
+          "key": "groceries",
+          "temporalAbsoluteError": 207.12000000000006,
+          "benchmarkAbsoluteError": 196.47000000000003
+        },
+        {
+          "key": "tobacco-vape",
+          "temporalAbsoluteError": 51.339999999999975,
+          "benchmarkAbsoluteError": 71.44999999999987
+        },
+        {
+          "key": "manon-work-mobility",
+          "temporalAbsoluteError": 2.5599999999999916,
+          "benchmarkAbsoluteError": 1.3299999999999912
+        },
+        {
+          "key": "adrien-work-meals",
+          "temporalAbsoluteError": 42.71000000000001,
+          "benchmarkAbsoluteError": 45.45000000000001
+        },
+        {
+          "key": "adrien-work-coffee",
+          "temporalAbsoluteError": 0.6899999999999977,
+          "benchmarkAbsoluteError": 2.6499999999999915
+        },
+        {
+          "key": "household-restaurants",
+          "temporalAbsoluteError": 1.8999999999999986,
+          "benchmarkAbsoluteError": 121.03999999999999
+        }
+      ]
+    },
+    {
+      "month": "2026-03",
+      "day": 10,
+      "temporal": 982.03,
+      "benchmark": 1129.74,
+      "actual": 933.1099999999999,
+      "temporalAbsoluteError": 48.92000000000007,
+      "benchmarkAbsoluteError": 196.6300000000001,
+      "categoryErrors": [
+        {
+          "key": "groceries",
+          "temporalAbsoluteError": 181.55,
+          "benchmarkAbsoluteError": 196.47000000000003
+        },
+        {
+          "key": "tobacco-vape",
+          "temporalAbsoluteError": 83.77999999999997,
+          "benchmarkAbsoluteError": 71.44999999999987
+        },
+        {
+          "key": "manon-work-mobility",
+          "temporalAbsoluteError": 0.9199999999999875,
+          "benchmarkAbsoluteError": 1.3299999999999912
+        },
+        {
+          "key": "adrien-work-meals",
+          "temporalAbsoluteError": 49.24000000000001,
+          "benchmarkAbsoluteError": 45.45000000000001
+        },
+        {
+          "key": "adrien-work-coffee",
+          "temporalAbsoluteError": 3.210000000000001,
+          "benchmarkAbsoluteError": 2.6499999999999915
+        },
+        {
+          "key": "household-restaurants",
+          "temporalAbsoluteError": 1.8999999999999986,
+          "benchmarkAbsoluteError": 121.03999999999999
+        }
+      ]
+    },
+    {
+      "month": "2026-03",
+      "day": 15,
+      "temporal": 940.04,
+      "benchmark": 1129.74,
+      "actual": 933.1099999999999,
+      "temporalAbsoluteError": 6.930000000000064,
+      "benchmarkAbsoluteError": 196.6300000000001,
+      "categoryErrors": [
+        {
+          "key": "groceries",
+          "temporalAbsoluteError": 185.22000000000003,
+          "benchmarkAbsoluteError": 196.47000000000003
+        },
+        {
+          "key": "tobacco-vape",
+          "temporalAbsoluteError": 117.87999999999994,
+          "benchmarkAbsoluteError": 71.44999999999987
+        },
+        {
+          "key": "manon-work-mobility",
+          "temporalAbsoluteError": 0.44999999999998863,
+          "benchmarkAbsoluteError": 1.3299999999999912
+        },
+        {
+          "key": "adrien-work-meals",
+          "temporalAbsoluteError": 46.84000000000001,
+          "benchmarkAbsoluteError": 45.45000000000001
+        },
+        {
+          "key": "adrien-work-coffee",
+          "temporalAbsoluteError": 1.2199999999999989,
+          "benchmarkAbsoluteError": 2.6499999999999915
+        },
+        {
+          "key": "household-restaurants",
+          "temporalAbsoluteError": 11.899999999999999,
+          "benchmarkAbsoluteError": 121.03999999999999
+        }
+      ]
+    },
+    {
+      "month": "2026-03",
+      "day": 20,
+      "temporal": 1074.3,
+      "benchmark": 1129.74,
+      "actual": 933.1099999999999,
+      "temporalAbsoluteError": 141.19000000000005,
+      "benchmarkAbsoluteError": 196.6300000000001,
+      "categoryErrors": [
+        {
+          "key": "groceries",
+          "temporalAbsoluteError": 139.51,
+          "benchmarkAbsoluteError": 196.47000000000003
+        },
+        {
+          "key": "tobacco-vape",
+          "temporalAbsoluteError": 5.270000000000039,
+          "benchmarkAbsoluteError": 71.44999999999987
+        },
+        {
+          "key": "manon-work-mobility",
+          "temporalAbsoluteError": 2.160000000000011,
+          "benchmarkAbsoluteError": 1.3299999999999912
+        },
+        {
+          "key": "adrien-work-meals",
+          "temporalAbsoluteError": 5.950000000000017,
+          "benchmarkAbsoluteError": 45.45000000000001
+        },
+        {
+          "key": "adrien-work-coffee",
+          "temporalAbsoluteError": 7.600000000000001,
+          "benchmarkAbsoluteError": 2.6499999999999915
+        },
+        {
+          "key": "household-restaurants",
+          "temporalAbsoluteError": 7.399999999999999,
+          "benchmarkAbsoluteError": 121.03999999999999
+        }
+      ]
+    },
+    {
+      "month": "2026-03",
+      "day": 25,
+      "temporal": 1012.37,
+      "benchmark": 1129.74,
+      "actual": 933.1099999999999,
+      "temporalAbsoluteError": 79.2600000000001,
+      "benchmarkAbsoluteError": 196.6300000000001,
+      "categoryErrors": [
+        {
+          "key": "groceries",
+          "temporalAbsoluteError": 96.68,
+          "benchmarkAbsoluteError": 196.47000000000003
+        },
+        {
+          "key": "tobacco-vape",
+          "temporalAbsoluteError": 17.72999999999996,
+          "benchmarkAbsoluteError": 71.44999999999987
+        },
+        {
+          "key": "manon-work-mobility",
+          "temporalAbsoluteError": 3.2800000000000082,
+          "benchmarkAbsoluteError": 1.3299999999999912
+        },
+        {
+          "key": "adrien-work-meals",
+          "temporalAbsoluteError": 2.3700000000000045,
+          "benchmarkAbsoluteError": 45.45000000000001
+        },
+        {
+          "key": "adrien-work-coffee",
+          "temporalAbsoluteError": 6.800000000000004,
+          "benchmarkAbsoluteError": 2.6499999999999915
+        },
+        {
+          "key": "household-restaurants",
+          "temporalAbsoluteError": 7.399999999999999,
+          "benchmarkAbsoluteError": 121.03999999999999
+        }
+      ]
+    },
+    {
+      "month": "2026-04",
+      "day": 1,
+      "temporal": 1037.01,
+      "benchmark": 1075.07,
+      "actual": 886.13,
+      "temporalAbsoluteError": 150.88,
+      "benchmarkAbsoluteError": 188.93999999999994,
+      "categoryErrors": [
+        {
+          "key": "groceries",
+          "temporalAbsoluteError": 11.930000000000007,
+          "benchmarkAbsoluteError": 11.929999999999893
+        },
+        {
+          "key": "tobacco-vape",
+          "temporalAbsoluteError": 115.90000000000003,
+          "benchmarkAbsoluteError": 104.25000000000011
+        },
+        {
+          "key": "manon-work-mobility",
+          "temporalAbsoluteError": 1.379999999999999,
+          "benchmarkAbsoluteError": 0.07000000000000028
+        },
+        {
+          "key": "adrien-work-meals",
+          "temporalAbsoluteError": 17.549999999999997,
+          "benchmarkAbsoluteError": 16.94999999999999
+        },
+        {
+          "key": "adrien-work-coffee",
+          "temporalAbsoluteError": 5.409999999999997,
+          "benchmarkAbsoluteError": 2.8999999999999986
+        },
+        {
+          "key": "household-restaurants",
+          "temporalAbsoluteError": 1.470000000000013,
+          "benchmarkAbsoluteError": 52.980000000000004
+        }
+      ]
+    },
+    {
+      "month": "2026-04",
+      "day": 5,
+      "temporal": 1014.19,
+      "benchmark": 1075.07,
+      "actual": 886.13,
+      "temporalAbsoluteError": 128.06000000000006,
+      "benchmarkAbsoluteError": 188.93999999999994,
+      "categoryErrors": [
+        {
+          "key": "groceries",
+          "temporalAbsoluteError": 1.7300000000000182,
+          "benchmarkAbsoluteError": 11.929999999999893
+        },
+        {
+          "key": "tobacco-vape",
+          "temporalAbsoluteError": 98.66000000000003,
+          "benchmarkAbsoluteError": 104.25000000000011
+        },
+        {
+          "key": "manon-work-mobility",
+          "temporalAbsoluteError": 0.46000000000000085,
+          "benchmarkAbsoluteError": 0.07000000000000028
+        },
+        {
+          "key": "adrien-work-meals",
+          "temporalAbsoluteError": 23.42,
+          "benchmarkAbsoluteError": 16.94999999999999
+        },
+        {
+          "key": "adrien-work-coffee",
+          "temporalAbsoluteError": 7.599999999999994,
+          "benchmarkAbsoluteError": 2.8999999999999986
+        },
+        {
+          "key": "household-restaurants",
+          "temporalAbsoluteError": 2.8899999999999864,
+          "benchmarkAbsoluteError": 52.980000000000004
+        }
+      ]
+    },
+    {
+      "month": "2026-04",
+      "day": 10,
+      "temporal": 982.6099999999999,
+      "benchmark": 1075.07,
+      "actual": 886.13,
+      "temporalAbsoluteError": 96.4799999999999,
+      "benchmarkAbsoluteError": 188.93999999999994,
+      "categoryErrors": [
+        {
+          "key": "groceries",
+          "temporalAbsoluteError": 31.159999999999968,
+          "benchmarkAbsoluteError": 11.929999999999893
+        },
+        {
+          "key": "tobacco-vape",
+          "temporalAbsoluteError": 100.12,
+          "benchmarkAbsoluteError": 104.25000000000011
+        },
+        {
+          "key": "manon-work-mobility",
+          "temporalAbsoluteError": 1.1700000000000017,
+          "benchmarkAbsoluteError": 0.07000000000000028
+        },
+        {
+          "key": "adrien-work-meals",
+          "temporalAbsoluteError": 20.86,
+          "benchmarkAbsoluteError": 16.94999999999999
+        },
+        {
+          "key": "adrien-work-coffee",
+          "temporalAbsoluteError": 3.509999999999991,
+          "benchmarkAbsoluteError": 2.8999999999999986
+        },
+        {
+          "key": "household-restaurants",
+          "temporalAbsoluteError": 1.980000000000004,
+          "benchmarkAbsoluteError": 52.980000000000004
+        }
+      ]
+    },
+    {
+      "month": "2026-04",
+      "day": 15,
+      "temporal": 915.17,
+      "benchmark": 1075.07,
+      "actual": 886.13,
+      "temporalAbsoluteError": 29.039999999999964,
+      "benchmarkAbsoluteError": 188.93999999999994,
+      "categoryErrors": [
+        {
+          "key": "groceries",
+          "temporalAbsoluteError": 5.21999999999997,
+          "benchmarkAbsoluteError": 11.929999999999893
+        },
+        {
+          "key": "tobacco-vape",
+          "temporalAbsoluteError": 42.30000000000001,
+          "benchmarkAbsoluteError": 104.25000000000011
+        },
+        {
+          "key": "manon-work-mobility",
+          "temporalAbsoluteError": 0.5600000000000023,
+          "benchmarkAbsoluteError": 0.07000000000000028
+        },
+        {
+          "key": "adrien-work-meals",
+          "temporalAbsoluteError": 21.200000000000003,
+          "benchmarkAbsoluteError": 16.94999999999999
+        },
+        {
+          "key": "adrien-work-coffee",
+          "temporalAbsoluteError": 2.559999999999995,
+          "benchmarkAbsoluteError": 2.8999999999999986
+        },
+        {
+          "key": "household-restaurants",
+          "temporalAbsoluteError": 32.359999999999985,
+          "benchmarkAbsoluteError": 52.980000000000004
+        }
+      ]
+    },
+    {
+      "month": "2026-04",
+      "day": 20,
+      "temporal": 994.83,
+      "benchmark": 1075.07,
+      "actual": 886.13,
+      "temporalAbsoluteError": 108.70000000000005,
+      "benchmarkAbsoluteError": 188.93999999999994,
+      "categoryErrors": [
+        {
+          "key": "groceries",
+          "temporalAbsoluteError": 80.52000000000004,
+          "benchmarkAbsoluteError": 11.929999999999893
+        },
+        {
+          "key": "tobacco-vape",
+          "temporalAbsoluteError": 49.700000000000045,
+          "benchmarkAbsoluteError": 104.25000000000011
+        },
+        {
+          "key": "manon-work-mobility",
+          "temporalAbsoluteError": 0.8699999999999974,
+          "benchmarkAbsoluteError": 0.07000000000000028
+        },
+        {
+          "key": "adrien-work-meals",
+          "temporalAbsoluteError": 12.43,
+          "benchmarkAbsoluteError": 16.94999999999999
+        },
+        {
+          "key": "adrien-work-coffee",
+          "temporalAbsoluteError": 2.6600000000000037,
+          "benchmarkAbsoluteError": 2.8999999999999986
+        },
+        {
+          "key": "household-restaurants",
+          "temporalAbsoluteError": 30.419999999999987,
+          "benchmarkAbsoluteError": 52.980000000000004
+        }
+      ]
+    },
+    {
+      "month": "2026-04",
+      "day": 25,
+      "temporal": 960.93,
+      "benchmark": 1075.07,
+      "actual": 886.13,
+      "temporalAbsoluteError": 74.79999999999995,
+      "benchmarkAbsoluteError": 188.93999999999994,
+      "categoryErrors": [
+        {
+          "key": "groceries",
+          "temporalAbsoluteError": 53.94,
+          "benchmarkAbsoluteError": 11.929999999999893
+        },
+        {
+          "key": "tobacco-vape",
+          "temporalAbsoluteError": 36.08000000000001,
+          "benchmarkAbsoluteError": 104.25000000000011
+        },
+        {
+          "key": "manon-work-mobility",
+          "temporalAbsoluteError": 1.6600000000000037,
+          "benchmarkAbsoluteError": 0.07000000000000028
+        },
+        {
+          "key": "adrien-work-meals",
+          "temporalAbsoluteError": 10.93,
+          "benchmarkAbsoluteError": 16.94999999999999
+        },
+        {
+          "key": "adrien-work-coffee",
+          "temporalAbsoluteError": 1.6899999999999977,
+          "benchmarkAbsoluteError": 2.8999999999999986
+        },
+        {
+          "key": "household-restaurants",
+          "temporalAbsoluteError": 29.499999999999986,
+          "benchmarkAbsoluteError": 52.980000000000004
+        }
+      ]
+    },
+    {
+      "month": "2026-05",
+      "day": 1,
+      "temporal": 994.2800000000001,
+      "benchmark": 1009.28,
+      "actual": 958.1499999999997,
+      "temporalAbsoluteError": 36.13000000000034,
+      "benchmarkAbsoluteError": 51.13000000000022,
+      "categoryErrors": [
+        {
+          "key": "groceries",
+          "temporalAbsoluteError": 72.15999999999991,
+          "benchmarkAbsoluteError": 72.15999999999991
+        },
+        {
+          "key": "tobacco-vape",
+          "temporalAbsoluteError": 106.69,
+          "benchmarkAbsoluteError": 83.32000000000005
+        },
+        {
+          "key": "manon-work-mobility",
+          "temporalAbsoluteError": 1.8100000000000023,
+          "benchmarkAbsoluteError": 4.75
+        },
+        {
+          "key": "adrien-work-meals",
+          "temporalAbsoluteError": 17.660000000000004,
+          "benchmarkAbsoluteError": 29.749999999999993
+        },
+        {
+          "key": "adrien-work-coffee",
+          "temporalAbsoluteError": 7.030000000000001,
+          "benchmarkAbsoluteError": 10.75
+        },
+        {
+          "key": "household-restaurants",
+          "temporalAbsoluteError": 24.900000000000006,
+          "benchmarkAbsoluteError": 5.280000000000015
+        }
+      ]
+    },
+    {
+      "month": "2026-05",
+      "day": 5,
+      "temporal": 1045.3899999999999,
+      "benchmark": 1009.28,
+      "actual": 958.1499999999997,
+      "temporalAbsoluteError": 87.24000000000012,
+      "benchmarkAbsoluteError": 51.13000000000022,
+      "categoryErrors": [
+        {
+          "key": "groceries",
+          "temporalAbsoluteError": 0.5099999999998772,
+          "benchmarkAbsoluteError": 72.15999999999991
+        },
+        {
+          "key": "tobacco-vape",
+          "temporalAbsoluteError": 96.37,
+          "benchmarkAbsoluteError": 83.32000000000005
+        },
+        {
+          "key": "manon-work-mobility",
+          "temporalAbsoluteError": 1.8900000000000006,
+          "benchmarkAbsoluteError": 4.75
+        },
+        {
+          "key": "adrien-work-meals",
+          "temporalAbsoluteError": 17.440000000000005,
+          "benchmarkAbsoluteError": 29.749999999999993
+        },
+        {
+          "key": "adrien-work-coffee",
+          "temporalAbsoluteError": 6.850000000000001,
+          "benchmarkAbsoluteError": 10.75
+        },
+        {
+          "key": "household-restaurants",
+          "temporalAbsoluteError": 34.80000000000001,
+          "benchmarkAbsoluteError": 5.280000000000015
+        }
+      ]
+    },
+    {
+      "month": "2026-05",
+      "day": 10,
+      "temporal": 1150.99,
+      "benchmark": 1009.28,
+      "actual": 958.1499999999997,
+      "temporalAbsoluteError": 192.84000000000026,
+      "benchmarkAbsoluteError": 51.13000000000022,
+      "categoryErrors": [
+        {
+          "key": "groceries",
+          "temporalAbsoluteError": 128.88000000000017,
+          "benchmarkAbsoluteError": 72.15999999999991
+        },
+        {
+          "key": "tobacco-vape",
+          "temporalAbsoluteError": 93.81,
+          "benchmarkAbsoluteError": 83.32000000000005
+        },
+        {
+          "key": "manon-work-mobility",
+          "temporalAbsoluteError": 2.1799999999999997,
+          "benchmarkAbsoluteError": 4.75
+        },
+        {
+          "key": "adrien-work-meals",
+          "temporalAbsoluteError": 11.259999999999998,
+          "benchmarkAbsoluteError": 29.749999999999993
+        },
+        {
+          "key": "adrien-work-coffee",
+          "temporalAbsoluteError": 7.270000000000003,
+          "benchmarkAbsoluteError": 10.75
+        },
+        {
+          "key": "household-restaurants",
+          "temporalAbsoluteError": 46.2,
+          "benchmarkAbsoluteError": 5.280000000000015
+        }
+      ]
+    },
+    {
+      "month": "2026-05",
+      "day": 15,
+      "temporal": 1120.7599999999998,
+      "benchmark": 1009.28,
+      "actual": 958.1499999999997,
+      "temporalAbsoluteError": 162.61,
+      "benchmarkAbsoluteError": 51.13000000000022,
+      "categoryErrors": [
+        {
+          "key": "groceries",
+          "temporalAbsoluteError": 105.91000000000014,
+          "benchmarkAbsoluteError": 72.15999999999991
+        },
+        {
+          "key": "tobacco-vape",
+          "temporalAbsoluteError": 106.10000000000002,
+          "benchmarkAbsoluteError": 83.32000000000005
+        },
+        {
+          "key": "manon-work-mobility",
+          "temporalAbsoluteError": 1.3200000000000003,
+          "benchmarkAbsoluteError": 4.75
+        },
+        {
+          "key": "adrien-work-meals",
+          "temporalAbsoluteError": 10.370000000000005,
+          "benchmarkAbsoluteError": 29.749999999999993
+        },
+        {
+          "key": "adrien-work-coffee",
+          "temporalAbsoluteError": 3.0700000000000003,
+          "benchmarkAbsoluteError": 10.75
+        },
+        {
+          "key": "household-restaurants",
+          "temporalAbsoluteError": 61.52000000000001,
+          "benchmarkAbsoluteError": 5.280000000000015
+        }
+      ]
+    },
+    {
+      "month": "2026-05",
+      "day": 20,
+      "temporal": 1053.52,
+      "benchmark": 1009.28,
+      "actual": 958.1499999999997,
+      "temporalAbsoluteError": 95.37000000000023,
+      "benchmarkAbsoluteError": 51.13000000000022,
+      "categoryErrors": [
+        {
+          "key": "groceries",
+          "temporalAbsoluteError": 51.480000000000075,
+          "benchmarkAbsoluteError": 72.15999999999991
+        },
+        {
+          "key": "tobacco-vape",
+          "temporalAbsoluteError": 74.34000000000003,
+          "benchmarkAbsoluteError": 83.32000000000005
+        },
+        {
+          "key": "manon-work-mobility",
+          "temporalAbsoluteError": 0.7899999999999991,
+          "benchmarkAbsoluteError": 4.75
+        },
+        {
+          "key": "adrien-work-meals",
+          "temporalAbsoluteError": 2.8000000000000043,
+          "benchmarkAbsoluteError": 29.749999999999993
+        },
+        {
+          "key": "adrien-work-coffee",
+          "temporalAbsoluteError": 0.38000000000000256,
+          "benchmarkAbsoluteError": 10.75
+        },
+        {
+          "key": "household-restaurants",
+          "temporalAbsoluteError": 32.84,
+          "benchmarkAbsoluteError": 5.280000000000015
+        }
+      ]
+    },
+    {
+      "month": "2026-05",
+      "day": 25,
+      "temporal": 939.58,
+      "benchmark": 1009.28,
+      "actual": 958.1499999999997,
+      "temporalAbsoluteError": 18.56999999999971,
+      "benchmarkAbsoluteError": 51.13000000000022,
+      "categoryErrors": [
+        {
+          "key": "groceries",
+          "temporalAbsoluteError": 15.059999999999889,
+          "benchmarkAbsoluteError": 72.15999999999991
+        },
+        {
+          "key": "tobacco-vape",
+          "temporalAbsoluteError": 50.879999999999995,
+          "benchmarkAbsoluteError": 83.32000000000005
+        },
+        {
+          "key": "manon-work-mobility",
+          "temporalAbsoluteError": 1,
+          "benchmarkAbsoluteError": 4.75
+        },
+        {
+          "key": "adrien-work-meals",
+          "temporalAbsoluteError": 9.36,
+          "benchmarkAbsoluteError": 29.749999999999993
+        },
+        {
+          "key": "adrien-work-coffee",
+          "temporalAbsoluteError": 0.22999999999999687,
+          "benchmarkAbsoluteError": 10.75
+        },
+        {
+          "key": "household-restaurants",
+          "temporalAbsoluteError": 45.80000000000001,
+          "benchmarkAbsoluteError": 5.280000000000015
+        }
+      ]
+    },
+    {
+      "month": "2026-06",
+      "day": 1,
+      "temporal": 980.92,
+      "benchmark": 922.3699999999998,
+      "actual": 1278.15,
+      "temporalAbsoluteError": 297.23000000000013,
+      "benchmarkAbsoluteError": 355.7800000000003,
+      "categoryErrors": [
+        {
+          "key": "groceries",
+          "temporalAbsoluteError": 232.32999999999998,
+          "benchmarkAbsoluteError": 232.3300000000001
+        },
+        {
+          "key": "tobacco-vape",
+          "temporalAbsoluteError": 6.740000000000009,
+          "benchmarkAbsoluteError": 111.87
+        },
+        {
+          "key": "manon-work-mobility",
+          "temporalAbsoluteError": 11.519999999999996,
+          "benchmarkAbsoluteError": 11.799999999999997
+        },
+        {
+          "key": "adrien-work-meals",
+          "temporalAbsoluteError": 16.040000000000003,
+          "benchmarkAbsoluteError": 22.899999999999995
+        },
+        {
+          "key": "adrien-work-coffee",
+          "temporalAbsoluteError": 11.93,
+          "benchmarkAbsoluteError": 16.000000000000007
+        },
+        {
+          "key": "household-restaurants",
+          "temporalAbsoluteError": 97.64999999999998,
+          "benchmarkAbsoluteError": 62.27999999999999
+        }
+      ]
+    },
+    {
+      "month": "2026-06",
+      "day": 5,
+      "temporal": 1093.67,
+      "benchmark": 922.3699999999998,
+      "actual": 1278.15,
+      "temporalAbsoluteError": 184.48000000000002,
+      "benchmarkAbsoluteError": 355.7800000000003,
+      "categoryErrors": [
+        {
+          "key": "groceries",
+          "temporalAbsoluteError": 122.70999999999992,
+          "benchmarkAbsoluteError": 232.3300000000001
+        },
+        {
+          "key": "tobacco-vape",
+          "temporalAbsoluteError": 2.6499999999999773,
+          "benchmarkAbsoluteError": 111.87
+        },
+        {
+          "key": "manon-work-mobility",
+          "temporalAbsoluteError": 14.509999999999998,
+          "benchmarkAbsoluteError": 11.799999999999997
+        },
+        {
+          "key": "adrien-work-meals",
+          "temporalAbsoluteError": 15.690000000000001,
+          "benchmarkAbsoluteError": 22.899999999999995
+        },
+        {
+          "key": "adrien-work-coffee",
+          "temporalAbsoluteError": 13.18,
+          "benchmarkAbsoluteError": 16.000000000000007
+        },
+        {
+          "key": "household-restaurants",
+          "temporalAbsoluteError": 107.79999999999998,
+          "benchmarkAbsoluteError": 62.27999999999999
+        }
+      ]
+    },
+    {
+      "month": "2026-06",
+      "day": 10,
+      "temporal": 1049.67,
+      "benchmark": 922.3699999999998,
+      "actual": 1278.15,
+      "temporalAbsoluteError": 228.48000000000002,
+      "benchmarkAbsoluteError": 355.7800000000003,
+      "categoryErrors": [
+        {
+          "key": "groceries",
+          "temporalAbsoluteError": 152.14999999999998,
+          "benchmarkAbsoluteError": 232.3300000000001
+        },
+        {
+          "key": "tobacco-vape",
+          "temporalAbsoluteError": 16.69999999999999,
+          "benchmarkAbsoluteError": 111.87
+        },
+        {
+          "key": "manon-work-mobility",
+          "temporalAbsoluteError": 11.29,
+          "benchmarkAbsoluteError": 11.799999999999997
+        },
+        {
+          "key": "adrien-work-meals",
+          "temporalAbsoluteError": 11.360000000000003,
+          "benchmarkAbsoluteError": 22.899999999999995
+        },
+        {
+          "key": "adrien-work-coffee",
+          "temporalAbsoluteError": 12.43,
+          "benchmarkAbsoluteError": 16.000000000000007
+        },
+        {
+          "key": "household-restaurants",
+          "temporalAbsoluteError": 128.10999999999999,
+          "benchmarkAbsoluteError": 62.27999999999999
+        }
+      ]
+    },
+    {
+      "month": "2026-06",
+      "day": 15,
+      "temporal": 1107.6399999999999,
+      "benchmark": 922.3699999999998,
+      "actual": 1278.15,
+      "temporalAbsoluteError": 170.51000000000022,
+      "benchmarkAbsoluteError": 355.7800000000003,
+      "categoryErrors": [
+        {
+          "key": "groceries",
+          "temporalAbsoluteError": 107,
+          "benchmarkAbsoluteError": 232.3300000000001
+        },
+        {
+          "key": "tobacco-vape",
+          "temporalAbsoluteError": 24.110000000000014,
+          "benchmarkAbsoluteError": 111.87
+        },
+        {
+          "key": "manon-work-mobility",
+          "temporalAbsoluteError": 7.319999999999997,
+          "benchmarkAbsoluteError": 11.799999999999997
+        },
+        {
+          "key": "adrien-work-meals",
+          "temporalAbsoluteError": 1.5500000000000007,
+          "benchmarkAbsoluteError": 22.899999999999995
+        },
+        {
+          "key": "adrien-work-coffee",
+          "temporalAbsoluteError": 3.6000000000000014,
+          "benchmarkAbsoluteError": 16.000000000000007
+        },
+        {
+          "key": "household-restaurants",
+          "temporalAbsoluteError": 100.08999999999997,
+          "benchmarkAbsoluteError": 62.27999999999999
+        }
+      ]
+    },
+    {
+      "month": "2026-06",
+      "day": 20,
+      "temporal": 1193.21,
+      "benchmark": 922.3699999999998,
+      "actual": 1278.15,
+      "temporalAbsoluteError": 84.94000000000005,
+      "benchmarkAbsoluteError": 355.7800000000003,
+      "categoryErrors": [
+        {
+          "key": "groceries",
+          "temporalAbsoluteError": 69.13999999999999,
+          "benchmarkAbsoluteError": 232.3300000000001
+        },
+        {
+          "key": "tobacco-vape",
+          "temporalAbsoluteError": 37.870000000000005,
+          "benchmarkAbsoluteError": 111.87
+        },
+        {
+          "key": "manon-work-mobility",
+          "temporalAbsoluteError": 0.129999999999999,
+          "benchmarkAbsoluteError": 11.799999999999997
+        },
+        {
+          "key": "adrien-work-meals",
+          "temporalAbsoluteError": 5.43,
+          "benchmarkAbsoluteError": 22.899999999999995
+        },
+        {
+          "key": "adrien-work-coffee",
+          "temporalAbsoluteError": 2.6799999999999997,
+          "benchmarkAbsoluteError": 16.000000000000007
+        },
+        {
+          "key": "household-restaurants",
+          "temporalAbsoluteError": 45.68999999999997,
+          "benchmarkAbsoluteError": 62.27999999999999
+        }
+      ]
+    },
+    {
+      "month": "2026-06",
+      "day": 25,
+      "temporal": 1184.79,
+      "benchmark": 922.3699999999998,
+      "actual": 1278.15,
+      "temporalAbsoluteError": 93.36000000000013,
+      "benchmarkAbsoluteError": 355.7800000000003,
+      "categoryErrors": [
+        {
+          "key": "groceries",
+          "temporalAbsoluteError": 57.139999999999986,
+          "benchmarkAbsoluteError": 232.3300000000001
+        },
+        {
+          "key": "tobacco-vape",
+          "temporalAbsoluteError": 8.360000000000014,
+          "benchmarkAbsoluteError": 111.87
+        },
+        {
+          "key": "manon-work-mobility",
+          "temporalAbsoluteError": 1.639999999999997,
+          "benchmarkAbsoluteError": 11.799999999999997
+        },
+        {
+          "key": "adrien-work-meals",
+          "temporalAbsoluteError": 1.9800000000000004,
+          "benchmarkAbsoluteError": 22.899999999999995
+        },
+        {
+          "key": "adrien-work-coffee",
+          "temporalAbsoluteError": 4.009999999999998,
+          "benchmarkAbsoluteError": 16.000000000000007
+        },
+        {
+          "key": "household-restaurants",
+          "temporalAbsoluteError": 27.46999999999997,
+          "benchmarkAbsoluteError": 62.27999999999999
+        }
+      ]
+    },
+    {
+      "month": "2026-07",
+      "day": 1,
+      "temporal": 931.02,
+      "benchmark": 1000.64,
+      "actual": 992.87,
+      "temporalAbsoluteError": 61.85000000000002,
+      "benchmarkAbsoluteError": 7.769999999999982,
+      "categoryErrors": [
+        {
+          "key": "groceries",
+          "temporalAbsoluteError": 99.2000000000001,
+          "benchmarkAbsoluteError": 99.20000000000022
+        },
+        {
+          "key": "tobacco-vape",
+          "temporalAbsoluteError": 16.21999999999997,
+          "benchmarkAbsoluteError": 17.920000000000073
+        },
+        {
+          "key": "manon-work-mobility",
+          "temporalAbsoluteError": 1.3900000000000006,
+          "benchmarkAbsoluteError": 2.9800000000000004
+        },
+        {
+          "key": "adrien-work-meals",
+          "temporalAbsoluteError": 11.82,
+          "benchmarkAbsoluteError": 2.4000000000000057
+        },
+        {
+          "key": "adrien-work-coffee",
+          "temporalAbsoluteError": 11.86,
+          "benchmarkAbsoluteError": 7.550000000000004
+        },
+        {
+          "key": "household-restaurants",
+          "temporalAbsoluteError": 28.5,
+          "benchmarkAbsoluteError": 76.11999999999999
+        }
+      ]
+    },
+    {
+      "month": "2026-07",
+      "day": 5,
+      "temporal": 1052.5,
+      "benchmark": 1000.64,
+      "actual": 992.87,
+      "temporalAbsoluteError": 59.629999999999995,
+      "benchmarkAbsoluteError": 7.769999999999982,
+      "categoryErrors": [
+        {
+          "key": "groceries",
+          "temporalAbsoluteError": 25.280000000000086,
+          "benchmarkAbsoluteError": 99.20000000000022
+        },
+        {
+          "key": "tobacco-vape",
+          "temporalAbsoluteError": 27.55000000000001,
+          "benchmarkAbsoluteError": 17.920000000000073
+        },
+        {
+          "key": "manon-work-mobility",
+          "temporalAbsoluteError": 1.0300000000000011,
+          "benchmarkAbsoluteError": 2.9800000000000004
+        },
+        {
+          "key": "adrien-work-meals",
+          "temporalAbsoluteError": 14.560000000000002,
+          "benchmarkAbsoluteError": 2.4000000000000057
+        },
+        {
+          "key": "adrien-work-coffee",
+          "temporalAbsoluteError": 13.269999999999996,
+          "benchmarkAbsoluteError": 7.550000000000004
+        },
+        {
+          "key": "household-restaurants",
+          "temporalAbsoluteError": 28.5,
+          "benchmarkAbsoluteError": 76.11999999999999
+        }
+      ]
+    },
+    {
+      "month": "2026-07",
+      "day": 10,
+      "temporal": 1031.3100000000002,
+      "benchmark": 1000.64,
+      "actual": 992.87,
+      "temporalAbsoluteError": 38.44000000000017,
+      "benchmarkAbsoluteError": 7.769999999999982,
+      "categoryErrors": [
+        {
+          "key": "groceries",
+          "temporalAbsoluteError": 40.86000000000007,
+          "benchmarkAbsoluteError": 99.20000000000022
+        },
+        {
+          "key": "tobacco-vape",
+          "temporalAbsoluteError": 27.730000000000018,
+          "benchmarkAbsoluteError": 17.920000000000073
+        },
+        {
+          "key": "manon-work-mobility",
+          "temporalAbsoluteError": 4.300000000000001,
+          "benchmarkAbsoluteError": 2.9800000000000004
+        },
+        {
+          "key": "adrien-work-meals",
+          "temporalAbsoluteError": 25.67,
+          "benchmarkAbsoluteError": 2.4000000000000057
+        },
+        {
+          "key": "adrien-work-coffee",
+          "temporalAbsoluteError": 10.5,
+          "benchmarkAbsoluteError": 7.550000000000004
+        },
+        {
+          "key": "household-restaurants",
+          "temporalAbsoluteError": 11.100000000000001,
+          "benchmarkAbsoluteError": 76.11999999999999
+        }
+      ]
+    },
+    {
+      "month": "2026-07",
+      "day": 15,
+      "temporal": 929.93,
+      "benchmark": 1000.64,
+      "actual": 992.87,
+      "temporalAbsoluteError": 62.940000000000055,
+      "benchmarkAbsoluteError": 7.769999999999982,
+      "categoryErrors": [
+        {
+          "key": "groceries",
+          "temporalAbsoluteError": 163.79000000000008,
+          "benchmarkAbsoluteError": 99.20000000000022
+        },
+        {
+          "key": "tobacco-vape",
+          "temporalAbsoluteError": 26.810000000000002,
+          "benchmarkAbsoluteError": 17.920000000000073
+        },
+        {
+          "key": "manon-work-mobility",
+          "temporalAbsoluteError": 1.9899999999999984,
+          "benchmarkAbsoluteError": 2.9800000000000004
+        },
+        {
+          "key": "adrien-work-meals",
+          "temporalAbsoluteError": 21.39,
+          "benchmarkAbsoluteError": 2.4000000000000057
+        },
+        {
+          "key": "adrien-work-coffee",
+          "temporalAbsoluteError": 9.559999999999995,
+          "benchmarkAbsoluteError": 7.550000000000004
+        },
+        {
+          "key": "household-restaurants",
+          "temporalAbsoluteError": 41.099999999999994,
+          "benchmarkAbsoluteError": 76.11999999999999
+        }
+      ]
+    },
+    {
+      "month": "2026-07",
+      "day": 20,
+      "temporal": 926.5999999999999,
+      "benchmark": 1000.64,
+      "actual": 992.87,
+      "temporalAbsoluteError": 66.2700000000001,
+      "benchmarkAbsoluteError": 7.769999999999982,
+      "categoryErrors": [
+        {
+          "key": "groceries",
+          "temporalAbsoluteError": 146.29000000000008,
+          "benchmarkAbsoluteError": 99.20000000000022
+        },
+        {
+          "key": "tobacco-vape",
+          "temporalAbsoluteError": 41.06,
+          "benchmarkAbsoluteError": 17.920000000000073
+        },
+        {
+          "key": "manon-work-mobility",
+          "temporalAbsoluteError": 2.120000000000001,
+          "benchmarkAbsoluteError": 2.9800000000000004
+        },
+        {
+          "key": "adrien-work-meals",
+          "temporalAbsoluteError": 12.100000000000001,
+          "benchmarkAbsoluteError": 2.4000000000000057
+        },
+        {
+          "key": "adrien-work-coffee",
+          "temporalAbsoluteError": 1.0399999999999991,
+          "benchmarkAbsoluteError": 7.550000000000004
+        },
+        {
+          "key": "household-restaurants",
+          "temporalAbsoluteError": 23.700000000000003,
+          "benchmarkAbsoluteError": 76.11999999999999
+        }
+      ]
+    },
+    {
+      "month": "2026-07",
+      "day": 25,
+      "temporal": 965.65,
+      "benchmark": 1000.64,
+      "actual": 992.87,
+      "temporalAbsoluteError": 27.220000000000027,
+      "benchmarkAbsoluteError": 7.769999999999982,
+      "categoryErrors": [
+        {
+          "key": "groceries",
+          "temporalAbsoluteError": 89.72000000000008,
+          "benchmarkAbsoluteError": 99.20000000000022
+        },
+        {
+          "key": "tobacco-vape",
+          "temporalAbsoluteError": 41.76000000000005,
+          "benchmarkAbsoluteError": 17.920000000000073
+        },
+        {
+          "key": "manon-work-mobility",
+          "temporalAbsoluteError": 1.1899999999999977,
+          "benchmarkAbsoluteError": 2.9800000000000004
+        },
+        {
+          "key": "adrien-work-meals",
+          "temporalAbsoluteError": 12.370000000000005,
+          "benchmarkAbsoluteError": 2.4000000000000057
+        },
+        {
+          "key": "adrien-work-coffee",
+          "temporalAbsoluteError": 2.4400000000000013,
+          "benchmarkAbsoluteError": 7.550000000000004
+        },
+        {
+          "key": "household-restaurants",
+          "temporalAbsoluteError": 12,
+          "benchmarkAbsoluteError": 76.11999999999999
+        }
+      ]
+    }
+  ]
+}

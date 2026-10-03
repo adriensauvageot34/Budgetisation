@@ -1,7 +1,7 @@
 import type { previewPlannedExpense } from "./planned-expenses-actions";
 import styles from "./project-wizard.module.css";
 type Preview = Extract<Awaited<ReturnType<typeof previewPlannedExpense>>, { ok: true }>["value"];
-const money = (v: string) => new Intl.NumberFormat("fr-FR", { style: "currency", currency: "EUR" }).format(Number(v));
+const money = (v: string | null) => v === null ? "À confirmer" : new Intl.NumberFormat("fr-FR", { style: "currency", currency: "EUR" }).format(Number(v));
 export function PlannedImpactCard({ preview, fundingIncomplete }: { preview: Preview; fundingIncomplete: boolean }) {
   const partial = preview.projectionIncomplete || preview.unpricedComponents.length > 0;
   return <>
@@ -12,9 +12,10 @@ export function PlannedImpactCard({ preview, fundingIncomplete }: { preview: Pre
         {Number(preview.payableGross) === 0 && <p className={styles.small}>Aucun paiement chiffré.</p>}{fundingIncomplete && <p className={styles.small}>Financement à compléter.</p>}
         {([ ["Swile", preview.funding.swile], ["Edenred", preview.funding.edenred] ] as const).filter(([, p]) => Number(p.shortfall) > 0).map(([label, p]) => <p key={label} className={styles.error}>{label} : {money(p.shortfall)} à financer autrement.</p>)}</section></div>
     <p className={styles.previewNarrative}>{preview.unpricedComponents.length > 0 ? `Effet des coûts connus : ${preview.effectNarrative} Les éléments non chiffrés ne sont pas comptés comme gratuits.` : preview.effectNarrative}</p>
-    <dl className={styles.previewStats}><div><dt>Disponible réel</dt><dd>{preview.availableNow.status === "AVAILABLE" ? money(preview.availableNow.value) : "Non renseigné"}</dd></div><div><dt>Disponible prévu</dt><dd>{money(preview.plannedAvailable)}</dd></div><div><dt>Estimé en fin de mois</dt><dd>≈ {money(preview.estimatedEndOfMonth)}</dd></div></dl>
+    <dl className={styles.previewStats}><div><dt>Disponible réel</dt><dd>{money(preview.bankCash.currentRealBankBalance.amount)}</dd></div><div><dt>Disponible bancaire prévu</dt><dd>{money(preview.bankCash.plannedAvailable.amount)}</dd></div><div><dt>Fin de mois bancaire</dt><dd>{money(preview.bankCash.endOfMonth.central)}</dd></div></dl>
+    <p className={styles.small}>Repère économique en fin de mois : ≈ {money(preview.estimatedEndOfMonth)}. {preview.bankCash.endOfMonth.central === null && "Projection bancaire partielle : solde ou financement à confirmer."}</p>
     {partial && <p className={styles.small}>Projection partielle · {preview.unpricedComponents.length ? "certains budgets restent inconnus" : "imports du mois incomplets"}. Les valeurs connues restent affichées.</p>}
-    <details className={styles.previewDetails}><summary>Comprendre les montants</summary><p>{preview.explanation} Le disponible prévu et la fin de mois sont des projections économiques, distinctes d’un solde bancaire.</p>
+    <details className={styles.previewDetails}><summary>Comprendre les montants</summary><p>{preview.explanation} Le disponible bancaire part du solde réellement observé et des paiements restants. Le repère économique inclut aussi les titres-restaurants et l’usage du carburant.</p>
       {preview.availableNow.status === "UNAVAILABLE" && <p>Le disponible réel nécessite un solde de départ et des mouvements couvrant la période.</p>}
       <p>Fin de mois : {money(preview.after.lowConsumption)} dans un mois plus léger, {money(preview.after.highConsumption)} dans un mois plus coûteux.</p>
       <p>{preview.economicLines.map(l => `${l.label} : ${money(l.amount)}${l.economicOnly ? " (usage économique)" : ""}`).join(" · ")}</p></details>

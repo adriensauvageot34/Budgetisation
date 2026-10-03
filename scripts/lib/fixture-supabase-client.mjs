@@ -145,6 +145,13 @@ class FixtureQuery {
   then(resolve, reject) {
     return this.execute().then(resolve, reject);
   }
+
+  async single() {
+    const result = await this.execute();
+    if (result.error !== null) return { data: null, error: result.error };
+    return result.data.length === 1 ? { data: result.data[0], error: null }
+      : { data: null, error: { code: "PGRST116", message: "Expected exactly one fixture row" } };
+  }
 }
 
 export function loadFixtureTables(directory) {

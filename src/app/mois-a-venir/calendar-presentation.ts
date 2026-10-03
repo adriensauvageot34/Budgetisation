@@ -14,7 +14,9 @@ export const calendarDate = (date: string) => new Intl.DateTimeFormat("fr-FR", {
   day: "numeric", month: "long", timeZone: "UTC",
 }).format(new Date(`${date}T12:00:00Z`));
 
-export const calendarStateLabel = (item: Pick<CalendarItem, "expense" | "nature">) => item.nature === "DECLARED_REALIZED"
+export const calendarStateLabel = (item: Pick<CalendarItem, "expense" | "nature">) => item.expense?.observedMatch
+  ? item.expense.observedMatch.declared ? "Observée · réalisation déclarée conservée" : "Observée"
+  : item.nature === "DECLARED_REALIZED"
   ? "✓ Réalisée · déclarée par vous" : item.nature === "PLANNED_EXPENSE"
     ? item.expense?.needsRealityConfirmation ? "Prévue · à confirmer" : "Prévue" : "Échéance";
 export const calendarDateLabel = (item: CalendarItem) => item.dateCertainty === "HISTORICAL_ESTIMATE"

@@ -17,12 +17,12 @@ export function ForecastInfo({ label, children }: { label: string; children: Rea
 }
 
 export function ScenarioMilestone({ title, values, description, final = false }: {
-  title: string; values: { lowConsumption: string; central: string; highConsumption: string }; description: string; final?: boolean;
+  title: string; values: { lowConsumption: string | null; central: string | null; highConsumption: string | null }; description: string; final?: boolean;
 }) {
   return <section id={final ? "final-projection" : "essential-projection"} aria-label={title}
     className={`${material.glassPremium} ${material.projection} scroll-mt-24 p-6`}>
     <div className="flex items-center justify-between gap-3"><h2 className="text-2xl font-black">{title}</h2>
-      <ForecastInfo label={`Comprendre : ${title}`}><p>{description}</p><p>Estimation économique du mois, distincte d’un solde bancaire.</p></ForecastInfo></div>
+      <ForecastInfo label={`Comprendre : ${title}`}><p>{description}</p></ForecastInfo></div>
     <dl className="mt-4 grid grid-cols-3 items-end gap-5">{([values.lowConsumption, values.central, values.highConsumption] as const).map((value, index) =>
       <div data-month-motion-item="scenario" data-motion-order={index} key={index} className={index === 1 ? `${material.centralScenario} px-4 py-3` : "py-3"}>
         <dt className={`text-sm ${index === 1 ? "font-bold text-emerald-900" : "text-slate-500"}`}>{["Mois calme", "Habituel", "Mois plus coûteux"][index]}</dt>
@@ -41,13 +41,16 @@ export function RemainingForecastCard({ category, optional = false, importsMissi
         <p>{category.explanation}</p><p>{category.observationCount} observations sur {category.evidenceMonths} mois.
           {category.confidence === "LOW" && " Le recul disponible reste limité."}</p>
         {importsMissing && <p>Les données importées ne couvrent pas toute la période écoulée ; les habitudes historiques complètent l’estimation.</p>}
-        <p>Une réalisation déclarée est présentée avec l’observé ; elle reste prospective et ne crée aucun débit historique.</p>
-        {optional && <p>Projection du mois : observé {money(display.observed)}, prévu {money(display.planned)}, encore estimé {money(display.remaining.central)}.</p>}
-        <p>Fourchette du mois : {money(category.projectedMonth.low)} à {money(category.projectedMonth.high)}.</p>
+        <p>Une réalisation déclarée reste distincte d’un débit observé ; elle ne crée aucun historique.</p>
+        <p>Financement bancaire du reste : {money(category.remainingForecastBankCash.central)}. Les titres-restaurants et l’essence consommée restent séparés du cash.</p>
+        <p>Fourchette exploratoire du reste : {money(category.remaining.low)} à {money(category.remaining.high)}.</p>
       </ForecastInfo></div>
-    <p className={`${material.data} mt-3 text-3xl font-black`}>{optional && <span className="mr-2 text-sm font-medium text-slate-500">Probable</span>}<AnimatedMoney value={money(display.projectedCentral)} /></p>
-    {!optional && <dl className="mt-4 space-y-2 text-sm">{([
-      ["Déjà observé", display.observed], ["Prévu", display.planned], ["Encore estimé", display.remaining.central],
-    ] as const).map(([label, value]) => <div className="flex justify-between gap-3" key={label}><dt className="text-slate-500">{label}</dt><dd className={`${material.data} font-semibold`}><AnimatedMoney value={money(value)} /></dd></div>)}</dl>}
+    <p className={`${material.data} mt-3 text-3xl font-black`}><span className="mr-2 text-sm font-medium text-slate-500">Reste estimé</span><AnimatedMoney value={money(display.remaining.central)} /></p>
+    <dl className="mt-4 space-y-2 text-sm">{([
+      ["Déjà observé", display.observed], ["Déclaré réalisé", display.declared], ["Prévu explicitement", display.planned],
+      ["En attente d’observation", display.pending], [category.method === "CUMULATIVE_CURVE" || category.method === "CADENCE" ? "Encore estimé" : "Encore possible", display.future],
+    ] as const).filter(([label, value]) => label !== "Déclaré réalisé" || value > 0).map(([label, value]) => <div className="flex justify-between gap-3" key={label}><dt className="text-slate-500">{label}</dt><dd className={`${material.data} font-semibold`}><AnimatedMoney value={money(value)} /></dd></div>)}</dl>
+    {display.counts && <p className="mt-3 text-xs text-slate-500">{display.counts.observed} jours observés · {display.counts.pending + display.counts.unresolved} en attente · {display.counts.future} encore possibles</p>}
+    {category.expectedOccurrences && <p className="mt-3 text-xs text-slate-500">Environ {new Intl.NumberFormat("fr-FR", { maximumFractionDigits: 1 }).format(category.expectedOccurrences.central)} sorties restantes · {category.plannedOccurrencesAbsorbingHabit} déjà prévues dans l’habitude.</p>}
   </article>;
 }

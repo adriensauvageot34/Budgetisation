@@ -78,13 +78,14 @@ for (const item of [line("restaurant:main", "30.00", null, [{ source: "SWILE", a
   assert.throws(() => parsePlannedExpenseDraft(draft([item]), "2026-10"), /FUNDING/);
 // FIN-UI-01..04: render the human project/payment/effect order with honest central comparison.
 const displayPreview = data => ({ ...data, explanation: "Scénarios du mois", unpricedComponents: [],
+  bankCash: {currentRealBankBalance:{status:"UNKNOWN",amount:null},plannedAvailable:{status:"UNKNOWN",amount:null},endOfMonth:{low:null,central:null,high:null}},
   availableNow: { status: "UNAVAILABLE" }, plannedAvailable: data.after.central, estimatedEndOfMonth: data.after.central });
 for (const data of [h, e, marginal, f]) {
   const html = renderToStaticMarkup(React.createElement(PlannedImpactCard, { preview: displayPreview(data), fundingIncomplete: false }));
-  const labels = ["Coût économique du projet", "Paiements réellement prévus", "Disponible réel", "Disponible prévu", "Estimé en fin de mois", "Comprendre les montants"];
+  const labels = ["Coût économique du projet", "Paiements réellement prévus", "Disponible réel", "Disponible bancaire prévu", "Fin de mois bancaire", "Comprendre les montants"];
   const indexes = labels.map((label) => html.indexOf(label));
   assert(indexes.every((index) => index >= 0)); assert(indexes.every((index, i) => i === 0 || index > indexes[i - 1]));
-  assert(html.includes(money(data.after.central))); assert(html.includes("Non renseigné"));
+  assert(html.includes(money(data.after.central))); assert(html.includes("À confirmer"));
   assert.doesNotMatch(html, /cash disponible|safe.to.spend|vous pouvez dépenser|argent libre|solde Swile|solde bancaire projeté|argent disponible/iu);
   assert.doesNotMatch(html, /Ressource restante projetée[^<]*solde/iu);
 }

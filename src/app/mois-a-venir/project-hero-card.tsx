@@ -4,7 +4,7 @@ import type { PlannedExpenseCard } from "./planned-expenses-projection";
 import { compatibleProjectVisual, projectVisualPlaceId } from "@/domain/phase2/planned-visual";
 import { intentForDraft } from "@/domain/phase2/planned-ux";
 import { plannedExpenseTemporalSummary } from "@/domain/phase2/planned-dates";
-import { calendarBudgetLabel, calendarStateLabel } from "./calendar-presentation";
+import { calendarBudgetLabel, calendarStateLabel, calendarMoney } from "./calendar-presentation";
 import { RestaurantPhotoBackground } from "./restaurant-photo-background";
 import { BuilderIllustration } from "./builder-illustrations";
 import { ChevronDown } from "lucide-react";
@@ -24,7 +24,10 @@ export function ProjectHeroCard({ item, children }: { item: PlannedExpenseCard; 
           <span> · {plannedExpenseTemporalSummary(item)[0]}</span>
         </div><strong className="shrink-0 whitespace-nowrap text-base tabular-nums">{calendarBudgetLabel({ expense: item, amount: item.grossCost })}</strong></div>
       </summary>
-      <div className="bg-white px-4 pb-4 pt-3">{children}</div>
+      <div className="bg-white px-4 pb-4 pt-3">{item.observedMatch && <p className="mb-3 text-sm text-slate-600">
+        Prévu {calendarMoney(item.observedMatch.plannedEconomic)} · Réel {calendarMoney(item.observedMatch.observedEconomic)} · Écart {calendarMoney(item.observedMatch.variance)}.
+        {item.observedMatch.bankObserved ? " Le paiement bancaire observé ne reste pas à réserver." : " La réalité économique est observée ; le paiement bancaire reste à confirmer."}
+      </p>}{children}</div>
     </details>
   </li>;
 }

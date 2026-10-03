@@ -202,6 +202,6 @@ const cards = projectPlannedExpenseCards([newer, { ...changed, status: "DECLARED
 const html = renderToStaticMarkup(React.createElement(PlannedExpensesControl, {
   targetMonth: "2026-10", expenses: cards, persons: [], places: [], vehicle: null, prices: [], funding: (await state()).plan.plannedFunding,
 }));
-for (const label of ["À confirmer", "Oui, ça a eu lieu", "Reporter", "Ça n’a pas eu lieu", "Corriger", "Remettre en prévu", "Supprimer"])
+for (const label of ["Prévue · à confirmer", "Oui, ça a eu lieu", "Reporter", "Ça n’a pas eu lieu", "Corriger", "Remettre en prévu", "Supprimer"])
   assert(html.includes(label), `production card: ${label}`);
 console.log("PASS: C7 REAL-01..07, atomic final costs, RESERVED/USED_DECLARED, IDEMP-REAL-01, STALE-REAL-01, REPORT-01/02, delete/restore/status, META-09..13/19, historical zero-write");

@@ -9,6 +9,10 @@ import { plannedLineGross, costItemCashTreatment } from "@/domain/phase2/planned
 import { forecastRemainingMonth, type CostRange, type RemainingMonthPrediction } from "./remaining-month-forecast";
 import { parseMonthDecisionSettings, type MonthDecisionSettings } from "@/domain/phase2/month-decision-contract";
 import { calibrateForecast } from "./forecast-memory";
+import { reconcilePlannedObservations, reconcileFixedOccurrences, coherentPlannedObservation, economicObservations, type FixedOccurrence } from "./planned-observation-reconciliation";
+import { matchesForecastCategory } from "./remaining-month-forecast";
+import { makeAsOfContext } from "./forecast-opportunities";
+import { projectBankCashAsOf, resolveRealBankBalance, resolveIncomeOccurrences, type BankCashProjection } from "./bank-cash-projection";
 
 export type MonthInputs = Readonly<{
   decision?: MonthDecisionSettings;
@@ -135,9 +139,12 @@ const add = (value: string | null, delta: Big): string | null => value === null 
 type PlanResource = Readonly<{ key: string; label: string; amount: string; sourceAmount: string | null;
   provenance: "SNAPSHOT" | "USER_DECLARED" | "MONTH_OVERRIDE"; pocket: "BANK_CASH" | "MEAL_BENEFIT" }>;
 type PlanOutflow = Readonly<{ key: string; label: string; amount: string; group: string;
+  state?: FixedOccurrence["state"]; observedAmount?: string | null;
   date: string | null; dateCertainty: "DECLARED" | "HISTORICAL_ESTIMATE" | "UNKNOWN";
   provenance: "SNAPSHOT" | "USER_DECLARED" | "MONTH_OVERRIDE"; kind: "FIXED" | "INSTALLMENT" | "SAVINGS" }>;
 export type MonthEconomicPlan = Readonly<{ resources: readonly PlanResource[]; salaryCash: string; mealBenefits: string;
+  bankCash: BankCashProjection;
+  observationCandidates: Readonly<Record<string, readonly { kind: "OPERATION" | "PURCHASE_EVENT"; id: string; date: string; amount: string; label: string }[]>>;
   narrative: MonthNarrativeProjection;
   economicResources: string; certainOutflows: { items: readonly PlanOutflow[];
     groups: readonly { label: string; total: string; items: readonly PlanOutflow[] }[];
@@ -169,6 +176,10 @@ function deriveEconomicPlan(forecast: MonthForecastSnapshot, inputs: MonthInputs
   if (!reference) return null; // Older snapshots remain readable until their normal republication.
   if (reference.targetMonth !== forecast.meta.targetMonth)
     throw new TypeError("PLANNED_EXPENSE_BASELINE_MONTH_INVALID");
+  const evidence = forecast.predictionEvidence;
+  const asOf = makeAsOfContext(forecast.meta.targetMonth, asOfDate, evidence?.timezone, evidence?.coverageBySource);
+  const reconciliation = reconcilePlannedObservations(plannedExpenses, evidence?.currentEconomicEntries.filter(r => r.date <= asOfDate) ?? [], matchesForecastCategory, evidence?.personNamesById ?? {});
+  const activeExpenses = reconciliation.unmatchedExpenses;
   const incomeKeys = [
     ["income:Digital Learning Contest", "Salaire Adrien"],
     ["income:Promotrans", "Salaire Manon"],
@@ -222,6 +233,9 @@ function deriveEconomicPlan(forecast: MonthForecastSnapshot, inputs: MonthInputs
       date: outflow.dueDate, dateCertainty: outflow.dueDate ? "DECLARED" : "UNKNOWN",
       provenance: "USER_DECLARED", kind: "SAVINGS" });
   }
+  const fixedOccurrences = reconcileFixedOccurrences(items, evidence?.bankObservations ?? [], forecast.meta.targetMonth, asOfDate,
+    asOf.coverageBySource.BANK.coverageStatus === "FULL" ? asOf.coverageBySource.BANK.safeThrough : null);
+  items.forEach((item, index) => { const occurrence = fixedOccurrences[index]!; items[index] = { ...item, amount: occurrence.amount, state: occurrence.state, observedAmount: occurrence.observedAmount }; });
   const certainOutflows = items.reduce((sum, item) => sum.plus(item.amount), new Big(0));
   const groups = [...new Set(items.map((item) => item.group))].map((label) => {
     const groupItems = items.filter((item) => item.group === label);
@@ -233,7 +247,7 @@ function deriveEconomicPlan(forecast: MonthForecastSnapshot, inputs: MonthInputs
   let declaredRealizedGross = new Big(0);
   const funding = { BANK: new Big(0), SWILE: new Big(0), EDENRED: new Big(0) };
   const usedDeclared = { BANK: new Big(0), SWILE: new Big(0), EDENRED: new Big(0) };
-  for (const expense of plannedExpenses) {
+  for (const expense of activeExpenses) {
     for (const item of expense.costItems) {
       const amount = new Big(plannedLineGross(item));
       if (item.baselineKey === null) extra = extra.plus(amount);
@@ -287,13 +301,23 @@ function deriveEconomicPlan(forecast: MonthForecastSnapshot, inputs: MonthInputs
   const central = afterCertain.minus(necessary.central!).minus(flexible.central!).minus(centralImpact);
   const highConsumption = afterCertain.minus(necessary.high!).minus(flexible.high!).minus(highImpact);
   const final = { lowConsumption: euros(lowConsumption), central: euros(central), highConsumption: euros(highConsumption) };
-  const essentialCost = necessary as CostRange, optionalCost = flexible as CostRange;
-  const afterProjects = afterCertain.minus(centralImpact);
+  const essentialCost = prediction?.essentialRemaining ?? necessary as CostRange, optionalCost = prediction?.optionalRemaining ?? flexible as CostRange;
+  const afterProjects = prediction ? afterCertain.minus(prediction.importedEssential).minus(prediction.importedOptional).minus(gross) : afterCertain.minus(centralImpact);
   const narrative: MonthNarrativeProjection = { prediction, remainderAfterProjects: euros(afterProjects), essentialCost, optionalCost,
-    remainderAfterEssential: { lowConsumption: euros(afterCertain.minus(lowImpact).minus(essentialCost.low)),
-      central: euros(afterProjects.minus(essentialCost.central)), highConsumption: euros(afterCertain.minus(highImpact).minus(essentialCost.high)) },
+    remainderAfterEssential: { lowConsumption: euros(afterProjects.minus(essentialCost.low)),
+      central: euros(afterProjects.minus(essentialCost.central)), highConsumption: euros(afterProjects.minus(essentialCost.high)) },
     final, coverage: prediction ? "REMAINING_MONTH" : "PUBLISHED_REFERENCE_SHIM" };
-  return { narrative, resources, salaryCash: euros(salaryCash), mealBenefits: euros(mealBenefits), economicResources: euros(economicResources),
+  const bankCash = projectBankCashAsOf({ context: asOf,
+    balance: resolveRealBankBalance({ observation: inputs.openingBalance ?? evidence?.manualBankBalanceObservation ?? null, today: asOfDate, bank: evidence?.bankObservations ?? [], intervals: evidence?.bankCoverageIntervals }),
+    income: resolveIncomeOccurrences(resources, evidence?.bankObservations ?? [], asOf), fixed: fixedOccurrences,
+    expenses: plannedExpenses, matchedExpenseIds: reconciliation.matches.map(m => m.plannedExpenseId),
+    reconciliation: reconciliation.matches, observedPurchases: evidence?.currentEconomicEntries,
+    essential: prediction?.essential ?? [], optional: prediction?.optional ?? [], forecastAvailable: prediction !== null });
+  const observations = economicObservations(evidence?.currentEconomicEntries.filter(r => r.date <= asOfDate) ?? []);
+  const observationCandidates = Object.fromEntries(plannedExpenses.map(expense => [expense.id, observations.filter(row => coherentPlannedObservation(expense, row, matchesForecastCategory, evidence?.personNamesById ?? {}))
+    .map(row => ({ kind: row.purchaseEventId ? "PURCHASE_EVENT" as const : "OPERATION" as const, id: row.purchaseEventId ?? row.operationId,
+      date: row.date, amount: row.amount, label: row.merchant ?? row.subcategory }))]));
+  return { observationCandidates, bankCash, narrative, resources, salaryCash: euros(salaryCash), mealBenefits: euros(mealBenefits), economicResources: euros(economicResources),
     certainOutflows: { items, groups, total: euros(certainOutflows), excludedKeys: inputs.excludedFixedObligations },
     afterCertainOutflows: euros(afterCertain), necessaryVariables: { items: reference.necessary, total: necessary },
     flexibleVariables: { items: reference.flexible, total: flexible },
@@ -308,8 +332,8 @@ function deriveEconomicPlan(forecast: MonthForecastSnapshot, inputs: MonthInputs
       bankUsedDeclared: euros(usedDeclared.BANK),
       fundingToComplete: euros(new Big(swile.shortfall).plus(edenred.shortfall)), swile, edenred },
     monthlyLayers: { afterCertainOutflows: euros(afterCertain), declaredRealized: euros(declaredRealizedGross),
-      stillPlanned: euros(plannedGross), remainingDailyLife: euros(new Big(necessary.central!).plus(flexible.central!)
-        .minus(gross.minus(centralImpact))), projectedRemainder: euros(central) },
+      stillPlanned: euros(plannedGross), remainingDailyLife: prediction ? euros(new Big(prediction.essentialRemaining.central).plus(prediction.optionalRemaining.central))
+        : euros(new Big(necessary.central!).plus(flexible.central!).minus(gross.minus(centralImpact))), projectedRemainder: euros(central) },
     automaticEventProvision: "0.00", declaredEventImpact: euros(centralImpact) };
 }
 
@@ -402,12 +426,10 @@ export function deriveMonthScenario(forecast: MonthForecastSnapshot, rawInputs: 
   };
   const benefitPotential = inputs.benefit.currentBalance === null ? null : euros(new Big(inputs.benefit.currentBalance.amount)
     .plus(inputs.benefit.expectedLoading?.amount ?? 0));
-  const opening = inputs.openingBalance;
-  const availableNow = opening === null
-    ? { status: "UNAVAILABLE" as const, value: null, reason: "OPENING_BALANCE_UNKNOWN" }
-    : opening.asOfDate !== asOfDate
-      ? { status: "UNAVAILABLE" as const, value: null, reason: "CASH_MOVEMENTS_SINCE_OPENING_UNKNOWN" }
-      : { status: "AVAILABLE" as const, value: euros(new Big(opening.amount)), asOfDate };
+  const balance = resolveRealBankBalance({ observation: inputs.openingBalance ?? forecast.predictionEvidence?.manualBankBalanceObservation ?? null, today: asOfDate,
+    bank: forecast.predictionEvidence?.bankObservations ?? [], intervals: forecast.predictionEvidence?.bankCoverageIntervals });
+  const availableNow = balance.status === "KNOWN" ? { status: "AVAILABLE" as const, value: balance.amount, asOfDate }
+    : { status: "UNAVAILABLE" as const, value: null, reason: balance.reason };
   return {
     targetMonth: forecast.meta.targetMonth, publicationId: forecast.meta.sourcePublicationId, inputs,
     whatIf: purchase === null ? null : { amount: purchase.amount, parentEnvelope: purchase.parentEnvelope,

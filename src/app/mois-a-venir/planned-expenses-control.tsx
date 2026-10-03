@@ -29,7 +29,8 @@ type Preview = Extract<Awaited<ReturnType<typeof previewPlannedExpense>>, { ok: 
 type Funding = NonNullable<Preview["funding"]>;
 type Props = { targetMonth: string; expenses: readonly PlannedExpenseCard[]; persons: readonly Person[];
   places: readonly PlannedPlaceOption[]; vehicle: PlannedVehicleEstimate | null;
-  prices: readonly PlannedPriceSuggestion[]; wallets: readonly PlannedWalletOption[]; funding: Funding };
+  prices: readonly PlannedPriceSuggestion[]; wallets: readonly PlannedWalletOption[]; funding: Funding;
+  observationCandidates?: import("@/server/phase2/month-scenario").MonthEconomicPlan["observationCandidates"] };
 
 const money = (value: string) => new Intl.NumberFormat("fr-FR", { style: "currency", currency: "EUR",
   minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(Number(value));
@@ -46,7 +47,7 @@ function unwrap<T>(result: PlannedResult<T>): T {
   return result.value;
 }
 
-export function PlannedExpensesControl({ targetMonth, expenses, persons, places, vehicle, prices, wallets, funding }: Props) {
+export function PlannedExpensesControl({ targetMonth, expenses, persons, places, vehicle, prices, wallets, funding, observationCandidates = {} }: Props) {
   const router = useRouter();
   const interactions = usePlannedExpenseInteractions();
   const [open, setOpen] = useState(false);
@@ -227,6 +228,14 @@ export function PlannedExpensesControl({ targetMonth, expenses, persons, places,
       }}><ArrowLeft size={14} className="mr-1 inline" aria-hidden="true" />Retour</button>}<button type="button" aria-label="Fermer le brouillon" onClick={dismiss}><X size={18} aria-hidden="true" /></button></nav></div>
       {closeRequested && <div className={projectStyles.dialogBackdrop}><div role="alertdialog" aria-modal="true" aria-labelledby="project-exit-title" className={projectStyles.dialog}><h4 id="project-exit-title">Quitter ce brouillon ?</h4><div className={projectStyles.editorActions}><button autoFocus type="button" className={projectStyles.primary} onClick={() => setCloseRequested(false)}>Continuer</button><button type="button" className={projectStyles.textButton} onClick={() => { setOpen(false); setPreview(null); setCloseRequested(false); }}>Quitter</button></div></div></div>}
       {realityMode && <p className="mt-3 rounded-xl bg-sky-50 p-3 text-sm">{realityMode === "DECLARE" ? "Vérifiez ce qui a réellement coûté et son financement, puis confirmez la réalisation." : "Corrigez les éléments et le financement de votre déclaration."} Pour un coût détaillé, corrigez les lignes ; aucun écart ne sera réparti automatiquement.</p>}
+      {editedId && ((observationCandidates[editedId]?.length ?? 0) > 0 || draft.context.realityLink) && <label className="mt-3 grid gap-2 rounded-xl bg-sky-50 p-3 text-sm font-semibold">Rapprocher d’un achat observé
+        <select className={inputClass} value={draft.context.realityLink ? `${draft.context.realityLink.kind}:${draft.context.realityLink.id}` : ""} onChange={event => {
+          const selected = observationCandidates[editedId]?.find(o => `${o.kind}:${o.id}` === event.target.value);
+          setPreview(null);
+          setBuilder(state => { const { realityLink: previous, ...context } = state.draft.context; return { ...state, draft: { ...state.draft,
+            context: selected ? { ...context, realityLink: { kind: selected.kind, id: selected.id, linkedAt: new Date().toISOString(), linkMode: "USER_CONFIRMED" } } : context } }; });
+        }}><option value="">Aucun rapprochement confirmé</option>{observationCandidates[editedId]?.map(o => <option key={`${o.kind}:${o.id}`} value={`${o.kind}:${o.id}`}>{o.date} · {o.label} · {money(o.amount)}</option>)}</select>
+        <span className="text-xs font-normal">L’achat observé remplace la prévision économique. Son débit bancaire doit être observé séparément pour être considéré payé.</span></label>}
       {error && <div role="alert" className="mt-3 rounded-xl bg-red-50 p-3 text-sm text-red-800"><p>{error}</p>{issue && <button type="button" className={secondary} onClick={repairServerIssue}>{issue.repairTarget === "reload" ? "Actualiser la liste, garder mon brouillon" : "Aller à la correction"}</button>}{issue?.repairTarget === "reload" && editedId && <button type="button" className={secondary} onClick={() => { const fresh = expenses.find((item) => item.id === editedId); if (fresh) start(fresh, realityMode); }}>Abandonner mon brouillon et reprendre la version affichée</button>}</div>}
       <div className={wizardStyles.body}>
       {step === 1 && <ProjectIntentHub onChoose={key => { const intent = BUILDER_INTENTS.find(i => i.key === key)!; selectSubtype(intent.family, intent.subtype ?? (key === "party" ? "bar" : key === "activity" ? "other_activity" : "other_purchase")); }} />}

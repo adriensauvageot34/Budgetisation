@@ -71,6 +71,7 @@ export type PlannedProjectContext = Readonly<{
   shareTransport?: boolean;
 }>;
 export type PlannedExpenseContext = Readonly<{ participantPersonIds?: readonly string[]; travellingParticipantPersonIds?: readonly string[];
+  realityLink?: Readonly<{ kind: "OPERATION" | "PURCHASE_EVENT"; id: string; linkedAt: string; linkMode: "USER_CONFIRMED" }>;
   project?: PlannedProjectContext;
   restaurant?: PlannedRestaurantContext;
   visitTiming?: PlannedTripTiming;

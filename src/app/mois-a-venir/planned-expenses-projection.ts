@@ -4,9 +4,11 @@ import { plannedLineGross, costItemCashTreatment } from "@/domain/phase2/planned
 import { needsRealityConfirmation } from "@/domain/phase2/planned-mutations";
 import { calendarMetadata, type CalendarMetadata } from "./calendar-metadata";
 import { getPlannedExpenseDateRange, getPlannedExpenseCalendarLabel } from "@/domain/phase2/planned-dates";
+import type { PlannedObservationMatch } from "@/server/phase2/planned-observation-reconciliation";
 
 export type PlannedExpenseCard = Pick<PlannedExpense, "id" | "familyKey" | "subtypeKey" | "title" | "plannedDate" | "status" | "costItems" | "context" | "updatedAt" | "targetMonth"> & {
   grossCost: string; needsRealityConfirmation: boolean;
+  observedMatch?: PlannedObservationMatch;
   detail?: { additionalImpact: string; includedBaseline: string; fuelUsage: string;
     funding: readonly { source: "BANK" | "SWILE" | "EDENRED"; amount: string }[];
     placeLabel?: string; childPlaceLabels: readonly string[]; participantLabels?: readonly string[] };
@@ -19,12 +21,17 @@ export type CalendarEntry = CalendarItem & { readonly date: string };
 export type CalendarOutflow = Readonly<{ key: string; label: string; amount: string; date: string | null;
   dateCertainty: "DECLARED" | "HISTORICAL_ESTIMATE" | "UNKNOWN" }> & CalendarMetadata;
 
-export const projectPlannedExpenseCards = (expenses: readonly PlannedExpense[], today = new Date().toISOString().slice(0, 10)): PlannedExpenseCard[] =>
-  expenses.map((expense) => ({ id: expense.id, familyKey: expense.familyKey, subtypeKey: expense.subtypeKey,
+export const projectPlannedExpenseCards = (expenses: readonly PlannedExpense[], today = new Date().toISOString().slice(0, 10),
+  matches: readonly PlannedObservationMatch[] = []): PlannedExpenseCard[] =>
+  expenses.map((expense) => {
+    const observedMatch = matches.find(match => match.plannedExpenseId === expense.id);
+    return { id: expense.id, familyKey: expense.familyKey, subtypeKey: expense.subtypeKey,
     title: expense.title, plannedDate: expense.plannedDate, status: expense.status,
     costItems: expense.costItems, context: expense.context, updatedAt: expense.updatedAt, targetMonth: expense.targetMonth,
-    needsRealityConfirmation: needsRealityConfirmation(expense, today),
-    grossCost: expense.costItems.reduce((sum, item) => sum.plus(plannedLineGross(item)), new Big(0)).toFixed(2) }));
+    needsRealityConfirmation: !observedMatch && needsRealityConfirmation(expense, today),
+    ...(observedMatch ? { observedMatch } : {}),
+    grossCost: observedMatch?.observedEconomic ?? expense.costItems.reduce((sum, item) => sum.plus(plannedLineGross(item)), new Big(0)).toFixed(2) };
+  });
 
 export function projectMonthCalendar(outflows: readonly CalendarOutflow[],
   expenses: readonly PlannedExpenseCard[]): { entries: CalendarEntry[]; undated: CalendarItem[];

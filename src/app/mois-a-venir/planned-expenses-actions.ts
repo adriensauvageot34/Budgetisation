@@ -82,6 +82,7 @@ async function preview(targetMonth: string, rawDraft: unknown, editedId?: string
     targetMonth,
     resolvedDraft: draft,
     availableNow: scenario.availableNow,
+    bankCash: after.bankCash,
     plannedAvailable: after.narrative.remainderAfterProjects,
     estimatedEndOfMonth: after.narrative.final.central,
     unpricedComponents: draft.context.project?.unpricedComponents ?? [],

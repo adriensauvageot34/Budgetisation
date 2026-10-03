@@ -25,6 +25,9 @@ import { groceryBasketEstimate } from "@/domain/phase2/planned-price-estimates";
 import { estimatePlannedCar } from "./planned-car-estimation";
 import type { MonthForecastSnapshot } from "./month-forecast-snapshot";
 import { simulatePlannedExpenseScenario, type MonthInputs } from "./month-scenario";
+import { readMonthPredictionEvidence } from "./month-prediction-evidence";
+import { matchesForecastCategory } from "./remaining-month-forecast";
+import { coherentPlannedObservation, economicObservations } from "./planned-observation-reconciliation";
 
 export { PLANNED_EXPENSE_SUBTYPES };
 export type { PlannedExpenseFamily };
@@ -178,9 +181,16 @@ export function parsePlannedExpenseDraft(value: unknown, targetMonth: string,
   keysOnly(contextRaw, ["participantPersonIds", "travellingParticipantPersonIds", "additionalGuestCount", "personVisited", "participantRefs", "host", "hostParticipates", "visitedPersonParticipates", "transportMode",
     "place", "purchaseMode", "housePartyPlaceMode", "visitFormat", "socialOccasion", "occasionLabel",
     "deliveryProviderKey", "deliveryProvider", "seller", "gift", "childLocalPlaceRefs", "route", "visitTiming",
-    "companionMode", "groceriesNature", "workMealMode", "outingKind", "eventName", "endDate", "noExpense", "purchaseDescription", "restaurant", "project"],
+    "companionMode", "groceriesNature", "workMealMode", "outingKind", "eventName", "endDate", "noExpense", "purchaseDescription", "restaurant", "project", "realityLink"],
   "PLANNED_EXPENSE_CONTEXT_FIELDS_INVALID");
   const context: { -readonly [K in keyof PlannedExpenseContext]?: PlannedExpenseContext[K] } = {};
+  if (contextRaw.realityLink !== undefined) {
+    const link = object(contextRaw.realityLink, "PLANNED_REALITY_LINK_INVALID");
+    keysOnly(link, ["kind", "id", "linkedAt", "linkMode"], "PLANNED_REALITY_LINK_INVALID");
+    if (!["OPERATION", "PURCHASE_EVENT"].includes(String(link.kind)) || link.linkMode !== "USER_CONFIRMED"
+      || typeof link.linkedAt !== "string" || !/^\d{4}-\d{2}-\d{2}T/u.test(link.linkedAt) || !Number.isFinite(Date.parse(link.linkedAt))) throw new TypeError("PLANNED_REALITY_LINK_INVALID");
+    context.realityLink = { kind: link.kind as "OPERATION" | "PURCHASE_EVENT", id: uuid(link.id, "PLANNED_REALITY_LINK_ID_INVALID"), linkedAt: link.linkedAt, linkMode: "USER_CONFIRMED" };
+  }
   if (contextRaw.project !== undefined) context.project = parsePlannedProject(contextRaw.project);
   if (contextRaw.restaurant !== undefined) {
     if (familyKey !== "food" || raw.subtypeKey !== "restaurant") throw new TypeError("PLANNED_RESTAURANT_CONTEXT_INVALID");
@@ -564,6 +574,12 @@ const dateTime = (value: unknown): string => {
 };
 
 async function validateReferences(client: SupabaseClient, householdId: string, draft: PlannedExpenseDraft, targetMonth: string): Promise<void> {
+  if (draft.context.realityLink) {
+    const link = draft.context.realityLink;
+    const evidence = await readMonthPredictionEvidence(createCanonicalReadClient(), householdId, targetMonth, true);
+    const fact = economicObservations(evidence.currentEconomicEntries).find(r => link.kind === "PURCHASE_EVENT" ? r.purchaseEventId === link.id : r.operationId === link.id);
+    if (!fact || !coherentPlannedObservation(draft, fact, matchesForecastCategory, evidence.personNamesById)) throw new TypeError("PLANNED_REALITY_LINK_NOT_COHERENT_IN_HOUSEHOLD");
+  }
   if (draft.context.project?.linkedProjectId) {
     const { data: parent, error: linkError } = await client.from("phase2_planned_expenses")
       .select("planned_expense_id,target_month,status,family_key,subtype_key,context,planned_date,title")
@@ -768,6 +784,10 @@ export async function preparePlannedExpenseSimulation(client: SupabaseClient, ho
     throw new TypeError("PLANNED_EXPENSE_EDIT_TARGET_INVALID");
   if (saved.some((item) => item.householdId !== householdId || item.targetMonth !== forecast.meta.targetMonth))
     throw new TypeError("PLANNED_EXPENSE_SAVED_SCOPE_INVALID");
+  const realityLink = draft.context.realityLink;
+  if (realityLink && saved.some(item => item.id !== editedId
+    && item.context.realityLink?.kind === realityLink.kind && item.context.realityLink.id === realityLink.id))
+    throw new TypeError("PLANNED_REALITY_LINK_ALREADY_CLAIMED");
   return { draft, scenario: simulatePlannedExpenseScenario(forecast, inputs, saved,
     { id: existing?.id ?? randomUUID(), targetMonth: forecast.meta.targetMonth,
       status: existing?.status ?? "PLANNED", costItems: draft.costItems, plannedDate: draft.plannedDate, context: draft.context }, asOfDate) };

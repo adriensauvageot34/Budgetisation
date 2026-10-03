@@ -90,6 +90,15 @@ try {
   }
 
   const fixtureTables = loadFixtureTables(fixturePath);
+  // The private bank snapshot predates some Benefit merchant references. Reuse
+  // the frozen source adapter's exact canonical names for those imported IDs.
+  // This supplies presentation metadata only; no economic oracle is rewritten.
+  const merchants = new Map((fixtureTables.get("merchants") ?? []).map(row => [row.merchant_id, row]));
+  for (const { merchant } of dto.purchases) if (!merchants.has(merchant.id))
+    merchants.set(merchant.id, { merchant_id: merchant.id, nom_canonique: merchant.name });
+  pilotTables.merchants = [...merchants.values()];
+  pilotTables.import_batches = [...(fixtureTables.get("import_batches") ?? []),
+    ...(await query("select * from public.import_batches")).rows];
   const household = fixtureTables.get("households")?.[0];
   assert.equal(dto.batch.householdId, household.household_id);
   const revision = fixtureTables.get("household_revisions")?.find(({ household_id }) => household_id === household.household_id);
@@ -203,6 +212,9 @@ try {
         actual: actual?.[field], baseline: baseline?.[field], exactKnown: knowledge?.exactKnownSubtotal,
         expectedKnowledge: row.target_knowledge_state, actualKnowledge: knowledge?.status }];
   });
+  assert.deepEqual(mismatches, [], "C4: all 36 monthly stream oracles must pass in every execution mode");
+  if (process.env.C5_FAST === "1") console.log(JSON.stringify({ c4FinancialOracle: "PASS",
+    monthStreamOraclePassCount: oracle.length, globalCandidateEquality: "NOT_TESTED_IN_FAST_MODE" }));
   assert.equal(food.annual.amountKnowledge.total.exactKnownSubtotal, "8443.82");
   assert.equal(food.annual.total, "8546.07");
   assert.equal(food.months.filter(({ quality }) => quality.financialKnowledge === "KNOWN").length, 6);

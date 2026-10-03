@@ -10,8 +10,11 @@ export const REFERENCE_SUBCATEGORIES = ["Courses alimentaires", ...TOBACCO_SUBCA
   ...RESTAURANT_SUBCATEGORIES, "Boulangerie", "Café au travail"] as const;
 
 export type EconomicReferenceEntry = Readonly<{ operationId: string; date: string; amount: string;
-  subcategory: string; person: string | null; preciseType: string | null; merchant: string | null }>;
-export type MobilityReferenceLeg = Readonly<{ date: string; origin: string; destination: string; fuelCost: string }>;
+  subcategory: string; person: string | null; preciseType: string | null; merchant: string | null;
+  purchaseEventId?: string; canonicalComponentKey?: string; need?: string | null; merchantId?: string | null;
+  amountStatus?: "KNOWN" | "PARTIAL"; funding?: Readonly<Partial<Record<"BANK" | "SWILE" | "EDENRED", string>>>;
+  fundingComplete?: boolean; occurrenceCount?: number; bankPaymentObserved?: boolean }>;
+export type MobilityReferenceLeg = Readonly<{ date: string; origin: string; destination: string; fuelCost: string; id?: string }>;
 export type MonthReferenceEvidence = Readonly<{ startMonth: string; endMonth: string;
   economicEntries: readonly EconomicReferenceEntry[]; mobilityLegs: readonly MobilityReferenceLeg[] }>;
 export type StatisticalComponent = ForecastRange & Readonly<{ key: string; method: string;
