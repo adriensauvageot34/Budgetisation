@@ -18,6 +18,7 @@ export type MobilityReferenceLeg = Readonly<{ date: string; origin: string; dest
 export type MonthReferenceEvidence = Readonly<{ startMonth: string; endMonth: string;
   economicEntries: readonly EconomicReferenceEntry[]; mobilityLegs: readonly MobilityReferenceLeg[] }>;
 export type StatisticalComponent = ForecastRange & Readonly<{ key: string; method: string;
+  decisionCapabilities?: import("@/domain/phase2/month-choice-contract").CategoryDecisionCapabilities;
   observationCount: number; provenance: readonly string[]; note: string | null }>;
 export type MonthReferencePlan = Readonly<{ targetMonth: string; necessary: readonly StatisticalComponent[];
   flexible: readonly StatisticalComponent[]; necessaryTotal: ForecastRange; flexibleTotal: ForecastRange;

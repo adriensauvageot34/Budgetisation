@@ -4,7 +4,7 @@ import { referenceQuantile, referenceMobilityDays, RESTAURANT_SUBCATEGORIES, TOB
   type EconomicReferenceEntry, type MonthReferenceEvidence, type MonthReferencePlan, type MobilityReferenceLeg } from "./month-reference";
 import type { PlannedExpenseScenarioEntry } from "./planned-expenses";
 import { plannedLineGross } from "@/domain/phase2/planned-money";
-import type { MonthDecisionSettings, ForecastCategoryKey } from "@/domain/phase2/month-decision-contract";
+import type { MonthDecisionSettings } from "@/domain/phase2/month-decision-contract";
 import { FORECAST_POLICY, occurrenceDistribution, type OccurrenceDistribution } from "./forecast-statistics";
 import { forecastTemporalPolicy, type ForecastTemporalMode } from "./forecast-temporal-policy";
 import { makeAsOfContext, opportunityState, requiredForecastSources, safeToExpire, emptyCostRange, sumCostRanges,
@@ -27,6 +27,7 @@ export type MonthPredictionEvidence = Readonly<{ history: MonthReferenceEvidence
   explicitWorkSchedule?: readonly { date: string; person: "Adrien" | "Manon"; onsite: boolean }[] }>;
 export type OpportunityCounts = Readonly<Record<"future" | "planned" | "pending" | "observed" | "expired" | "cancelled" | "unresolved", number>>;
 export type RemainingCategory = Readonly<{ key: string; label: string; alreadyRealized: string;
+  decisionCapabilities?: import("@/domain/phase2/month-choice-contract").CategoryDecisionCapabilities;
   method: "CUMULATIVE_CURVE" | "CADENCE" | "WORKDAYS" | "CONDITIONAL_OCCURRENCES" | "PUBLISHED_FALLBACK";
   evidenceMonths: number; usualAtThisPoint: string | null; pace: "BELOW" | "USUAL" | "SLIGHTLY_ABOVE" | "ABOVE" | null;
   shift: "UP" | "DOWN" | null; occurrenceDistribution: OccurrenceDistribution | null; jointSamples: Readonly<Record<string, string>>;
@@ -372,7 +373,7 @@ export function forecastRemainingMonth(reference: MonthReferencePlan, evidence: 
     const absorption = range(k => new Big(datedWorkAbsorption[k]).plus(new Big(freeBaseline[k]).lt(typeof availableAbsorption === "string" ? availableAbsorption : availableAbsorption[k])
       ? freeBaseline[k] : typeof availableAbsorption === "string" ? availableAbsorption : availableAbsorption[k]));
     let remaining = range(k => positive(new Big(baseBeforeSlots[k]).minus(absorption[k])));
-    const assumption = assumptions[key as ForecastCategoryKey];
+    const assumption = assumptions[key];
     if (assumption) remaining = range(k => assumption.mode === "CUSTOM" ? assumption.amount! : new Big(remaining[k]).times(assumption.mode === "LOWER" ? FORECAST_POLICY.lowerFactor : FORECAST_POLICY.higherFactor));
     const horizon = policy.calibrationHorizon(asOf, month);
     const correction = calibration[`${key}:${horizon}`] ?? calibration[key];
@@ -394,7 +395,7 @@ export function forecastRemainingMonth(reference: MonthReferencePlan, evidence: 
     const usual = months.length ? referenceQuantile(months.map(m => rows.filter(r => r.date.startsWith(m) && Number(r.date.slice(8)) < (context.daysElapsed + 1)).reduce((n, r) => n + Number(r.amount), 0)), .5) : null;
     const safe = context.daysElapsed > 0 && requiredSources.every(s => context.coverageBySource[s].safeThrough !== null && context.coverageBySource[s].safeThrough! >= allDays[Math.max(0, context.daysElapsed - 1)]!);
     const ratio = usual && safe ? observed.toNumber() / usual : null;
-    return { key, label: labels[key] ?? key, method, alreadyRealized: money(observed), observedEconomic: money(observed),
+    return { key, label: part.decisionCapabilities?.label ?? labels[key] ?? key, ...(part.decisionCapabilities ? { decisionCapabilities: part.decisionCapabilities } : {}), method, alreadyRealized: money(observed), observedEconomic: money(observed),
       declaredRealizedEconomic: money(declared), plannedEconomic: money(planned), pendingExpectedEconomic: pending,
       futureExpectedEconomic: future, remainingForecastEconomic: remaining, remaining,
       expiredExpectedEconomic: money(resolvedOpportunities.filter(o => o.state === "EXPIRED").reduce((n, o) => n.plus(o.expectedEconomic.central), new Big(0))), cancelledEconomic: "0.00",

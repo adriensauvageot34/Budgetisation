@@ -1,8 +1,9 @@
 import "server-only";
 import Big from "big.js";
-import type { MonthDecisionSettings } from "@/domain/phase2/month-decision-contract";
+import { parseMonthDecisionSettings, type MonthDecisionSettings } from "@/domain/phase2/month-decision-contract";
 import type { MonthEconomicPlan } from "./month-scenario";
 import type { PlannedExpenseScenarioEntry } from "./planned-expenses";
+import { categoryTargetGap, projectCategoryControls } from "./month-category-controls";
 import { comparableForecastCheckpoints, explainForecastChange, type ForecastCheckpoint } from "./forecast-memory";
 
 /** Reconcile display rounding against a rounded milestone, deterministically.
@@ -19,9 +20,11 @@ export function roundedParts(parts: readonly { key: string; label: string; amoun
   return rounded;
 }
 
-export function projectMonthDecision(plan: MonthEconomicPlan, settings: MonthDecisionSettings, targetMonth: string,
+export function projectMonthDecision(plan: MonthEconomicPlan, rawSettings: MonthDecisionSettings, targetMonth: string,
   asOf: string, expenses: readonly PlannedExpenseScenarioEntry[], memory: readonly ForecastCheckpoint[] = []) {
+  const settings = parseMonthDecisionSettings(rawSettings);
   const prediction = plan.narrative.prediction;
+  const categoryControls = projectCategoryControls(plan, settings);
   const mode = targetMonth > asOf.slice(0, 7) ? "FUTURE_MONTH" : targetMonth < asOf.slice(0, 7) ? "PAST_MONTH" : "CURRENT_MONTH";
   const afterCertain = Math.round(Number(plan.afterCertainOutflows)), afterSavings = Math.round(Number(plan.afterSavingsAllocations)), afterProjects = Math.round(Number(plan.narrative.remainderAfterProjects));
   const afterEssential = Math.round(Number(plan.narrative.remainderAfterEssential.central)), final = Math.round(Number(plan.narrative.final.central));
@@ -68,7 +71,7 @@ export function projectMonthDecision(plan: MonthEconomicPlan, settings: MonthDec
     central: new Big(plan.narrative.final.central).minus(settings.goal).toFixed(2),
     highConsumption: new Big(plan.narrative.final.highConsumption).minus(settings.goal).toFixed(2),
   };
-  return { mode, asOf, showProjectMilestone: !new Big(plan.plannedExpenses.netImpact.central ?? 0).eq(0),
+  return { mode, asOf, categoryControls, totalCategoryGap: categoryTargetGap(categoryControls), showProjectMilestone: !new Big(plan.plannedExpenses.netImpact.central ?? 0).eq(0),
     visible: { afterCertain, afterSavings, savingsDelta: afterCertain - afterSavings, afterProjects, afterEssential, final, projectDelta: afterSavings - afterProjects,
       essentialDelta, optionalDelta, essential: essentialParts, optional: optionalParts, categoryDisplay,
       essentialTotal: essentialDelta, optionalTotal: optionalDelta },

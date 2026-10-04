@@ -3,6 +3,8 @@ import type { MonthDecisionProjection } from "@/server/phase2/month-decision-pro
 import type { ReactNode } from "react";
 import { AnimatedMoney } from "./animated-money";
 import material from "./month-material.module.css";
+import { CategoryTargetEditor } from "./month-decision-tools";
+import type { MonthCategoryControl } from "@/server/phase2/month-category-controls";
 
 const money = (value: string | number | null) => value === null ? "À affiner" : new Intl.NumberFormat("fr-FR", {
   style: "currency", currency: "EUR", minimumFractionDigits: 0, maximumFractionDigits: 0,
@@ -31,7 +33,8 @@ export function ScenarioMilestone({ title, values, description, final = false }:
   </section>;
 }
 
-export function RemainingForecastCard({ category, optional = false, importsMissing = false, display }: {
+export function RemainingForecastCard({ category, optional = false, importsMissing = false, display, control, targetMonth }: {
+  control?: MonthCategoryControl; targetMonth?: string;
   category: RemainingCategory; optional?: boolean; importsMissing?: boolean;
   display: MonthDecisionProjection["visible"]["categoryDisplay"][string];
 }) {
@@ -53,5 +56,6 @@ export function RemainingForecastCard({ category, optional = false, importsMissi
     ] as const).filter(([label, value]) => label !== "Déclaré réalisé" || value > 0).map(([label, value]) => <div className="flex justify-between gap-3" key={label}><dt className="text-slate-500">{label}</dt><dd className={`${material.data} font-semibold`}><AnimatedMoney value={money(value)} /></dd></div>)}</dl>
     {display.counts && <p className="mt-3 text-xs text-slate-500">{display.counts.observed} jours observés · {display.counts.pending + display.counts.unresolved} en attente · {display.counts.future} encore possibles</p>}
     {category.expectedOccurrences && <p className="mt-3 text-xs text-slate-500">Environ {new Intl.NumberFormat("fr-FR", { maximumFractionDigits: 1 }).format(category.expectedOccurrences.central)} sorties restantes · {category.plannedOccurrencesAbsorbingHabit} déjà prévues dans l’habitude.</p>}
+    {control && targetMonth && <CategoryTargetEditor control={control} targetMonth={targetMonth} />}
   </article>;
 }

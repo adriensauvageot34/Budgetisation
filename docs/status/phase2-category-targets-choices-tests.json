@@ -1,0 +1,173 @@
+{
+  "status": "PASS",
+  "scope": "Offline synthetic fixtures; real server actions and monthly JSON persistence",
+  "historicalWrites": 0,
+  "monthlyWrites": 5,
+  "plannedExpenseWrites": 0,
+  "results": [
+    {
+      "id": "CHOICE-001",
+      "status": "PASS"
+    },
+    {
+      "id": "CHOICE-002",
+      "status": "PASS"
+    },
+    {
+      "id": "CHOICE-003",
+      "status": "PASS"
+    },
+    {
+      "id": "CHOICE-004",
+      "status": "PASS"
+    },
+    {
+      "id": "CHOICE-005",
+      "status": "PASS"
+    },
+    {
+      "id": "CHOICE-006",
+      "status": "PASS"
+    },
+    {
+      "id": "CHOICE-007",
+      "status": "PASS"
+    },
+    {
+      "id": "CHOICE-008",
+      "status": "PASS"
+    },
+    {
+      "id": "CHOICE-009",
+      "status": "PASS"
+    },
+    {
+      "id": "CHOICE-010",
+      "status": "PASS"
+    },
+    {
+      "id": "CHOICE-011",
+      "status": "PASS"
+    },
+    {
+      "id": "CHOICE-012",
+      "status": "PASS"
+    },
+    {
+      "id": "CHOICE-013",
+      "status": "PASS"
+    },
+    {
+      "id": "CHOICE-014",
+      "status": "PASS"
+    },
+    {
+      "id": "CHOICE-015",
+      "status": "PASS"
+    },
+    {
+      "id": "CHOICE-016",
+      "status": "PASS"
+    },
+    {
+      "id": "CHOICE-017",
+      "status": "PASS"
+    },
+    {
+      "id": "CHOICE-018",
+      "status": "PASS"
+    },
+    {
+      "id": "CHOICE-019",
+      "status": "PASS"
+    },
+    {
+      "id": "CHOICE-020",
+      "status": "PASS"
+    },
+    {
+      "id": "CHOICE-021",
+      "status": "PASS"
+    },
+    {
+      "id": "CHOICE-022",
+      "status": "PASS"
+    },
+    {
+      "id": "CHOICE-023",
+      "status": "PASS"
+    },
+    {
+      "id": "CHOICE-024",
+      "status": "PASS"
+    },
+    {
+      "id": "CHOICE-025",
+      "status": "PASS"
+    },
+    {
+      "id": "CHOICE-026",
+      "status": "PASS"
+    },
+    {
+      "id": "CHOICE-027",
+      "status": "PASS"
+    },
+    {
+      "id": "CHOICE-028",
+      "status": "PASS"
+    },
+    {
+      "id": "CHOICE-029",
+      "status": "PASS"
+    },
+    {
+      "id": "CHOICE-030",
+      "status": "PASS"
+    },
+    {
+      "id": "CHOICE-031",
+      "status": "PASS"
+    },
+    {
+      "id": "CHOICE-032",
+      "status": "PASS"
+    },
+    {
+      "id": "CHOICE-033",
+      "status": "PASS"
+    },
+    {
+      "id": "CHOICE-034",
+      "status": "PASS"
+    },
+    {
+      "id": "CHOICE-035",
+      "status": "PASS"
+    },
+    {
+      "id": "CHOICE-036",
+      "status": "PASS"
+    }
+  ],
+  "baseline": "c9b2d6ab6d1a15edceabbd31fa3df743424452d0",
+  "regressionSummary": {
+    "monthDecisionV1": "FAIL_PREEXISTING",
+    "savings": "PASS",
+    "benefitWallets": "PASS",
+    "octoberContract": "PASS",
+    "monthNarrative": "PASS",
+    "plannedFinance": "PASS",
+    "plannedReliability": "PASS",
+    "plannedGuards": "PASS",
+    "projectWizard": "PASS",
+    "forecastTemporalMode": "PASS",
+    "temporalForecast": "PASS",
+    "architecture": "PASS",
+    "typecheck": "PASS",
+    "productionBuild": "PASS",
+    "browser": "NOT_TESTED",
+    "liveWrites": 0,
+    "migrationRequired": "NO"
+  }
+}

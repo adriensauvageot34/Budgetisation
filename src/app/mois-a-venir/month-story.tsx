@@ -16,6 +16,7 @@ import { AnimatedMoney } from "./animated-money";
 import { MonthSavingsSection } from "./month-savings-section";
 import { BenefitWalletFunding } from "./benefit-wallet-editor";
 import material from "./month-material.module.css";
+import type { MonthChoiceOffer } from "@/server/phase2/month-choices";
 
 const money = (value: string | null, exact = false) => value === null ? "À confirmer" : new Intl.NumberFormat("fr-FR", {
   style: "currency", currency: "EUR", maximumFractionDigits: exact ? 2 : 0, minimumFractionDigits: exact ? 2 : 0,
@@ -49,7 +50,8 @@ function StatisticalCard({ part, tone }: { part: StatisticalComponent; tone: "ne
   </article>;
 }
 
-export function MonthStory({ plan, targetMonth, plannedExpenses, calendarCarryovers = [], persons, places, vehicle, prices, wallets, today, dateEvidence, references, settings: rawSettings, memory = [], calibrated = false }: { plan: MonthEconomicPlan | null; targetMonth: string;
+export function MonthStory({ plan, targetMonth, plannedExpenses, calendarCarryovers = [], persons, places, vehicle, prices, wallets, today, dateEvidence, references, settings: rawSettings, memory = [], calibrated = false, choiceOffers = [] }: { plan: MonthEconomicPlan | null; targetMonth: string;
+  choiceOffers?: readonly MonthChoiceOffer[];
   settings?: MonthDecisionSettings; memory?: readonly ForecastCheckpoint[]; calibrated?: boolean;
   plannedExpenses: readonly PlannedExpenseCard[]; calendarCarryovers?: readonly PlannedExpenseCard[]; persons: readonly { personId: string; displayName: string }[];
   places: readonly PlannedPlaceOption[]; vehicle: PlannedVehicleEstimate | null;
@@ -92,13 +94,13 @@ export function MonthStory({ plan, targetMonth, plannedExpenses, calendarCarryov
 
     <section aria-labelledby="necessary-title" className={`${material.glassSoft} ${material.dataSection} scroll-mt-24 p-5 sm:p-6`}>
       <div className="flex items-center justify-between gap-3"><h2 id="necessary-title" className="scroll-mt-24 text-2xl font-black">Ce qu’il nous faut pour le quotidien</h2><strong className={`${material.data} text-2xl`}>≈ <AnimatedMoney value={money(String(decision.visible.essentialTotal))} /></strong></div>
-      <div className="mt-4 grid grid-cols-3 gap-3">{prediction ? prediction.essential.map(category => <RemainingForecastCard key={category.key} category={category} display={decision.visible.categoryDisplay[category.key]!} importsMissing={importsMissing} />) : plan.necessaryVariables.items.map(part => <StatisticalCard key={part.key} part={part} tone="necessary" />)}</div>
+      <div className="mt-4 grid grid-cols-3 gap-3">{prediction ? prediction.essential.map(category => <RemainingForecastCard key={category.key} category={category} display={decision.visible.categoryDisplay[category.key]!} control={decision.categoryControls.find(row => row.key === category.key)} targetMonth={targetMonth} importsMissing={importsMissing} />) : plan.necessaryVariables.items.map(part => <StatisticalCard key={part.key} part={part} tone="necessary" />)}</div>
     </section>
     <ScenarioMilestone title="Après l’essentiel du mois" values={cash.afterEssential.central !== null ? cashRange(cash.afterEssential) : narrative.remainderAfterEssential}
       description={cash.afterEssential.central !== null ? "Projection bancaire après les paiements des projets et le financement bancaire du quotidien restant. Fourchette affichée seulement après calibration suffisante." : "Projection économique du mois. Le financement bancaire restant est encore partiellement inconnu ; ce repère ne représente pas un solde disponible."} />
     <section aria-labelledby="flexible-title" className={`${material.glassSoft} ${material.dataSection} scroll-mt-24 p-5 sm:p-6`}>
       <div className="flex items-center justify-between gap-3"><h2 id="flexible-title" className="scroll-mt-24 text-2xl font-black">Ce qui pourrait encore s’ajouter</h2><strong className={`${material.data} text-2xl`}>≈ <AnimatedMoney value={money(String(decision.visible.optionalTotal))} /></strong></div>
-      <div className="mt-4 grid grid-cols-2 gap-3">{prediction ? prediction.optional.map(category => <RemainingForecastCard key={category.key} category={category} display={decision.visible.categoryDisplay[category.key]!} optional importsMissing={importsMissing} />) : plan.flexibleVariables.items.map(part => <StatisticalCard key={part.key} part={part} tone="flexible" />)}</div>
+      <div className="mt-4 grid grid-cols-2 gap-3">{prediction ? prediction.optional.map(category => <RemainingForecastCard key={category.key} category={category} display={decision.visible.categoryDisplay[category.key]!} control={decision.categoryControls.find(row => row.key === category.key)} targetMonth={targetMonth} optional importsMissing={importsMissing} />) : plan.flexibleVariables.items.map(part => <StatisticalCard key={part.key} part={part} tone="flexible" />)}</div>
     </section>
     <ScenarioMilestone title="Projection de fin de mois" values={cash.endOfMonth.central !== null ? cashRange(cash.endOfMonth) : narrative.final} final description={cash.endOfMonth.central !== null ? "Projection bancaire depuis le solde actuel, les revenus non reçus et les paiements restants. Les bornes ne sont affichées que si calibrées." : `${decision.jointExplanation} Projection économique partielle, distincte d’un solde bancaire.`} />
     <details className={`${material.glassSecondary} ${material.disclosure} p-5`}><summary className="cursor-pointer text-sm font-bold">Disponible prévu et paiements restants</summary><dl className="mt-3 space-y-2 text-sm">{([
@@ -123,6 +125,6 @@ export function MonthStory({ plan, targetMonth, plannedExpenses, calendarCarryov
         <ul className="mt-2 space-y-1">{comparable.map(r => <li key={r.checkpoint_id}>{r.as_of_date} · {money(r.payload.final.central)}</li>)}</ul>
       </details>
     </details>}
-    <MonthDecisionTools key={`${targetMonth}:${plan.narrative.final.central}:${JSON.stringify(settings)}`} targetMonth={targetMonth} settings={settings} decision={decision} />
+    <MonthDecisionTools key={`${targetMonth}:${plan.narrative.final.central}:${JSON.stringify(settings)}:${choiceOffers[0]?.preview.baseDigest ?? today}`} targetMonth={targetMonth} settings={settings} decision={decision} offers={choiceOffers} />
   </div>;
 }

@@ -12,10 +12,11 @@ import { deriveMonthScenario, monthInputsSchema, type MonthInputs } from "@/serv
 import { readPlannedExpenses } from "@/server/phase2/planned-expenses";
 
 import { planningDate } from "@/server/phase2/planning-date";
-import { parseMonthDecisionSettings, type MonthDecisionSettings } from "@/domain/phase2/month-decision-contract";
+import { parseMonthDecisionSettings } from "@/domain/phase2/month-decision-contract";
+import { simulateMonthChoice, monthChoiceDigest } from "@/server/phase2/month-choices";
+import type { MonthChoice } from "@/domain/phase2/month-choice-contract";
 import { makeForecastCheckpoint, insertForecastCheckpoint } from "@/server/phase2/forecast-memory";
 import { projectMonthDecision } from "@/server/phase2/month-decision-projection";
-import Big from "big.js";
 import { parseBenefitProvider, benefitResourceKey, type BenefitProvider, type MonthlyBenefitWalletInputs } from "@/domain/phase2/benefit-wallets";
 import { parseSavingsMetadata } from "@/domain/phase2/savings-allocations";
 
@@ -56,15 +57,18 @@ export async function updateMonthInputs(form: FormData): Promise<void> {
       expectedLoading: loading === null ? walletInputs.SWILE.expectedLoading : { amount: loading, expectedDate: field(form, "loadingDate") || null } } };
   };
   let next: MonthInputs;
-  if (intent === "save-month-assumption" || intent === "clear-month-assumption" || intent === "save-month-goal" || intent === "clear-month-goal") {
+  if (["save-month-assumption", "clear-month-assumption", "save-month-goal", "clear-month-goal", "save-category-target", "clear-category-target"].includes(intent)) {
     if (targetMonth < planningDate(household.timezone).slice(0, 7)) throw new TypeError("MONTH_DECISION_PAST_READ_ONLY");
     const decision = parseMonthDecisionSettings(current.decision);
     const assumptions = { ...decision.assumptions };
+    const categoryTargets = { ...decision.categoryTargets };
     const key = field(form, "categoryKey") as keyof typeof assumptions;
     if (intent === "clear-month-assumption") delete assumptions[key];
+    if (intent === "clear-category-target") delete categoryTargets[key];
+    if (intent === "save-category-target") categoryTargets[key] = field(form, "categoryTarget");
     if (intent === "save-month-assumption") assumptions[key] = field(form, "assumptionMode") === "CUSTOM"
       ? { mode: "CUSTOM", amount: field(form, "assumptionAmount") } : { mode: field(form, "assumptionMode") as "LOWER" | "HIGHER" };
-    next = { ...current, decision: parseMonthDecisionSettings({ ...decision, assumptions,
+    next = { ...current, decision: parseMonthDecisionSettings({ ...decision, assumptions, categoryTargets,
       goal: intent === "clear-month-goal" ? null : intent === "save-month-goal" ? field(form, "monthGoal") : decision.goal }) };
   } else if (intent === "settings") {
     const openingAmount = optionalMoney(form, "openingAmount");
@@ -179,7 +183,7 @@ async function decisionContext(targetMonth: string) {
   if (targetMonth < asOf.slice(0, 7)) throw new TypeError("MONTH_DECISION_PAST_READ_ONLY");
   const forecast = await resolvePlanningMonthForecast(createCanonicalReadClient(), household.householdId, targetMonth);
   const [stored, expenses] = await Promise.all([readMonthInputs(supabase, household.householdId, targetMonth), readPlannedExpenses(supabase, household.householdId, targetMonth)]);
-  return { user, household, asOf, forecast, stored, expenses };
+  return { supabase, user, household, asOf, forecast, stored, expenses };
 }
 
 /** Explicit conservation only; consultation and simulation never write. */
@@ -195,20 +199,31 @@ export async function preserveMonthForecast(targetMonth: string): Promise<{ ok: 
 
 export async function simulateMonthBehavior(targetMonth: string, preset: string) {
   const ctx = await decisionContext(targetMonth);
-  const normal = deriveMonthScenario(ctx.forecast, ctx.stored.inputs, null, ctx.asOf, ctx.expenses).economicPlan;
-  if (!normal?.narrative.prediction) return { ok: false as const, message: "Complétez les ressources du mois avant de simuler." };
   const categoryKey = preset === "restaurant-zero" ? "household-restaurants" : preset === "groceries-minus-100" ? "groceries" : preset === "tobacco-minus-20" ? "tobacco-vape" : null;
   if (!categoryKey) throw new TypeError("MONTH_BEHAVIOR_PRESET_INVALID");
-  const category = [...normal.narrative.prediction.essential, ...normal.narrative.prediction.optional].find(c => c.key === categoryKey)!;
-  const observed = new Big(category.alreadyRealized), total = new Big(category.projectedMonth.central);
-  // Existing observations and explicit projects cannot be undone by a behavioral scenario.
-  const floor = observed.plus(category.habitualProjectGross);
-  const target = preset === "restaurant-zero" ? floor : preset === "groceries-minus-100" ? total.minus(100) : total.minus(observed).times(.8).plus(observed);
-  const amount = (target.lt(floor) ? floor : target).toFixed(2);
-  const settings: MonthDecisionSettings = parseMonthDecisionSettings({ ...parseMonthDecisionSettings(ctx.stored.inputs.decision),
-    assumptions: { ...ctx.stored.inputs.decision?.assumptions, [categoryKey]: { mode: "CUSTOM", amount } } });
-  const plan = deriveMonthScenario(ctx.forecast, { ...ctx.stored.inputs, decision: settings }, null, ctx.asOf, ctx.expenses).economicPlan!;
-  return { ok: true as const, categoryKey, amount, projection: plan.narrative.final,
-    delta: new Big(plan.narrative.final.central).minus(normal.narrative.final.central).toFixed(2),
-    decision: projectMonthDecision(plan, settings, targetMonth, ctx.asOf, ctx.expenses, ctx.forecast.forecastMemory) };
+  // Compatibility for an old open UI. The shared engine owns all arithmetic.
+  const choice: MonthChoice = { operations: [preset === "groceries-minus-100"
+    ? { kind: "CATEGORY", categoryKey, strategy: "REDUCE_AMOUNT", amount: "100.00" }
+    : { kind: "CATEGORY", categoryKey, strategy: "REDUCE_PERCENT", percent: preset === "restaurant-zero" ? "100" : "20" }] };
+  const result = simulateMonthChoice({ forecast: ctx.forecast, inputs: ctx.stored.inputs, expenses: ctx.expenses, asOf: ctx.asOf }, choice);
+  return { ok: true as const, categoryKey, amount: result.nextInputs.decision!.assumptions[categoryKey]!.amount!,
+    projection: result.view.after, delta: result.view.delta,
+    decision: projectMonthDecision(result.plan, result.nextInputs.decision!, targetMonth, ctx.asOf, ctx.expenses, ctx.forecast.forecastMemory) };
+}
+
+export async function previewMonthChoice(targetMonth: string, choice: unknown) {
+  const ctx = await decisionContext(targetMonth);
+  return simulateMonthChoice({ forecast: ctx.forecast, inputs: ctx.stored.inputs, expenses: ctx.expenses, asOf: ctx.asOf }, choice).view;
+}
+
+/** Explicit adoption re-reads all authorities and rejects a stale preview. */
+export async function applyMonthChoice(targetMonth: string, choice: unknown, expectedDigest: string) {
+  const ctx = await decisionContext(targetMonth);
+  const context = { forecast: ctx.forecast, inputs: ctx.stored.inputs, expenses: ctx.expenses, asOf: ctx.asOf };
+  if (expectedDigest !== monthChoiceDigest(context)) return { ok: false as const, message: "Le mois a changé. Relancez la simulation avant d’adopter ce choix." };
+  const result = simulateMonthChoice(context, choice);
+  if (!result.view.applicable) return { ok: false as const, message: "Ce choix dépend d’un plan annuel : simulation disponible, adoption non disponible." };
+  await saveMonthInputs(ctx.supabase, ctx.household.householdId, targetMonth, ctx.user.id, result.nextInputs);
+  revalidatePath("/mois-a-venir");
+  return { ok: true as const, preview: result.view, message: "Choix adopté pour ce mois." };
 }

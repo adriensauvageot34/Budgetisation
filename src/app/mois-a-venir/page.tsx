@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import { withProductAuthentication } from "@/app/product-query";
 import { MonthForecastView } from "./month-forecast-view";
+import { proposeMonthChoices } from "@/server/phase2/month-choices";
 import { getBootstrapContext } from "@/server/bootstrap/context";
 import { getAuthenticatedBootstrapClient } from "@/server/bootstrap/auth";
 import { createCanonicalReadClient } from "@/server/canonical/client";
@@ -94,6 +95,7 @@ export default async function MonthForecastPage({ searchParams }: { searchParams
       childPlaceLabels: Object.values(card.context.childLocalPlaceRefs ?? {}).map(placeLabel).filter((label): label is string => !!label) } };
   });
   return <MonthForecastView forecast={forecast} scenario={scenario} stored={stored}
+    choiceOffers={proposeMonthChoices({ forecast, inputs: stored.inputs, expenses: plannedExpenses, asOf: today })}
     plannedExpenses={cards} calendarCarryovers={projectPlannedExpenseCards(calendarCarryovers, today)} today={today}
     persons={persons} places={options.places} vehicle={options.vehicle} prices={[...options.prices, ...(() => { const estimate = groceryBasketEstimate(forecast.predictionEvidence?.history.economicEntries ?? []); return estimate ? [estimate] : []; })()]} wallets={options.wallets}
     inputError={params.inputError === "1"} />;

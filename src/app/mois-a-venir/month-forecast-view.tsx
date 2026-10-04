@@ -14,6 +14,7 @@ import { PlannedExpenseInteractions } from "./planned-expense-interactions";
 import { MonthSectionNav } from "./month-section-nav";
 import { BenefitWalletEditor } from "./benefit-wallet-editor";
 import material from "./month-material.module.css";
+import type { MonthChoiceOffer } from "@/server/phase2/month-choices";
 
 const money = (value: string | null, exact = false) => value === null ? "À confirmer" : new Intl.NumberFormat("fr-FR", {
   style: "currency", currency: "EUR", maximumFractionDigits: exact ? 2 : 0, minimumFractionDigits: exact ? 2 : 0,
@@ -56,11 +57,12 @@ function Field({ label, name, type = "text", value, min, max, required = false }
 }
 
 type Props = { forecast: MonthForecastSnapshot; scenario: MonthScenario; stored: StoredMonthInputs;
+  choiceOffers?: readonly MonthChoiceOffer[];
   plannedExpenses: readonly PlannedExpenseCard[]; calendarCarryovers?: readonly PlannedExpenseCard[]; persons: readonly { personId: string; displayName: string }[];
   places: readonly PlannedPlaceOption[]; vehicle: PlannedVehicleEstimate | null;
     prices: readonly import("@/domain/phase2/planned-contract").PlannedPriceSuggestion[]; wallets: readonly import("@/domain/phase2/planned-contract").PlannedWalletOption[]; inputError: boolean; today: string };
 
-export function MonthForecastView({ forecast, scenario, stored, plannedExpenses, calendarCarryovers, persons, places, vehicle, prices, wallets, inputError, today }: Props) {
+export function MonthForecastView({ forecast, scenario, stored, plannedExpenses, calendarCarryovers, persons, places, vehicle, prices, wallets, inputError, today, choiceOffers = [] }: Props) {
   const targetMonth = forecast.meta.targetMonth;
   const incompleteProjects = plannedExpenses.filter(p => p.context.project?.unpricedComponents?.length);
   const obligations = forecast.components.filter((part) => part.key.startsWith("obligation:"));
@@ -79,7 +81,7 @@ export function MonthForecastView({ forecast, scenario, stored, plannedExpenses,
   const assumptions = scenario.economicPlan?.narrative.prediction;
   const editableCategories = assumptions ? [...assumptions.essential, ...assumptions.optional]
     : [...(scenario.economicPlan?.necessaryVariables.items ?? []), ...(scenario.economicPlan?.flexibleVariables.items ?? [])]
-      .map(category => ({ key: category.key, label: statisticalLabels[category.key] ?? "Autre dépense" }));
+      .map(category => ({ key: category.key, label: category.decisionCapabilities?.label ?? statisticalLabels[category.key] ?? "Autre dépense", decisionCapabilities: category.decisionCapabilities }));
 
   return <PlannedExpenseInteractions><main data-planned-page className={`${material.page} mx-auto max-w-[1280px] space-y-7 pb-20`}>
     {incompleteProjects.length > 0 && <p role="status" className={`${material.glassSoft} p-4 text-sm`}>{incompleteProjects.length} projet(s) ont un budget à compléter. La projection inclut leurs coûts connus ; les montants encore inconnus restent à ajouter.</p>}
@@ -89,6 +91,7 @@ export function MonthForecastView({ forecast, scenario, stored, plannedExpenses,
     {!scenario.economicPlan && <section className={`${material.glassSecondary} p-5`} aria-label="Solde bancaire observé"><h2 className="font-bold">Disponible réel Banque</h2><p className="mt-2 text-2xl font-black">{money(scenario.availableNow.value, true)}</p><p className="mt-2 text-xs text-slate-600">Le solde daté reste indépendant des ressources économiques à compléter. Les titres-restaurants n’y sont pas inclus.</p></section>}
     {scenario.economicPlan && <MonthSectionNav hasProjects={plannedExpenses.length > 0} />}
     <MonthStory plan={scenario.economicPlan} targetMonth={targetMonth} plannedExpenses={plannedExpenses} calendarCarryovers={calendarCarryovers} persons={persons} places={places} vehicle={vehicle} prices={prices} wallets={wallets} today={today} dateEvidence={forecast.referencePlan?.estimatedDays ?? {}}
+      choiceOffers={choiceOffers}
       settings={stored.inputs.decision} memory={forecast.forecastMemory} calibrated={forecast.predictionEvidence ? Object.keys(calibrateForecast(forecast.forecastMemory ?? [], forecast.predictionEvidence, today)).length > 0 : false}
       references={Object.fromEntries(forecast.components.map((part) => [part.key, { freshnessDate: part.freshnessDate, confidence: part.confidence }]))} />
 
@@ -102,7 +105,7 @@ export function MonthForecastView({ forecast, scenario, stored, plannedExpenses,
         <details id="month-settings" className={`${material.precisionAction} ${material.disclosure} scroll-mt-24 lg:col-span-2`}>
           <summary className="cursor-pointer font-bold">Réglages du mois{pending.length > 0 ? ` · ${pending.length} échéance${pending.length > 1 ? "s" : ""} à préciser` : ""}</summary>
           <div className="mt-4 grid gap-3">
-            <div><h3 className="text-sm font-bold">Nos hypothèses</h3>{editableCategories.map(category => <MonthAssumptionEditor key={category.key} categoryKey={category.key} label={category.label} targetMonth={targetMonth} settings={parseMonthDecisionSettings(stored.inputs.decision)} />)}</div>
+            <div><h3 className="text-sm font-bold">Nos hypothèses</h3>{editableCategories.map(category => <MonthAssumptionEditor key={category.key} categoryKey={category.key} label={category.label} capabilities={category.decisionCapabilities} targetMonth={targetMonth} settings={parseMonthDecisionSettings(stored.inputs.decision)} />)}</div>
       <details id="pending-obligations" className="mt-4 rounded-xl border border-slate-200 p-3"><summary className="cursor-pointer font-bold text-emerald-900">Gérer les charges et échéances du mois</summary>
         <ul className="mt-2 divide-y divide-slate-200">{pending.map((part) => <UndatedRow key={part.key} part={part} kind="Dépense possible" targetMonth={targetMonth} />)}{declined.map((part) => <UndatedRow key={part.key} part={part} kind="Dépense possible" targetMonth={targetMonth} declined />)}{otherObligations.map((part) => <UndatedRow key={part.key} part={part} kind="Dépense possible" targetMonth={targetMonth} />)}{excludedFixed.map((part) => <UndatedRow key={part.key} part={part} kind="Charge fixe" targetMonth={targetMonth} excluded />)}</ul>
         {stored.inputs.confirmedObligations.length > 0 && <div className="mt-3 border-t border-slate-200 pt-3"><h3 className="text-sm font-bold">Échéances confirmées par vous</h3><ul className="mt-1 divide-y divide-slate-100">{stored.inputs.confirmedObligations.map((item) => <li key={item.componentKey} className="flex flex-wrap items-center justify-between gap-2 py-2 text-sm"><span><strong>{obligations.find((part) => part.key === item.componentKey)?.label ?? "Échéance confirmée"}</strong> · {dateLabel(item.dueDate)} · {money(item.amount, true)}</span><span className="flex flex-wrap gap-1"><DecisionForm targetMonth={targetMonth} intent="decline-conditional" componentKey={item.componentKey} label="Non" /><DecisionForm targetMonth={targetMonth} intent="unknown-conditional" componentKey={item.componentKey} label="Je ne sais pas" /></span></li>)}</ul></div>}

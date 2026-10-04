@@ -7,7 +7,7 @@ import type { StatisticalComponent } from "./month-reference";
 import type { PlannedExpenseScenarioEntry, PlannedBaselineKey } from "./planned-expenses";
 import { plannedLineGross, costItemCashTreatment } from "@/domain/phase2/planned-money";
 import { forecastRemainingMonth, type CostRange, type RemainingMonthPrediction } from "./remaining-month-forecast";
-import { parseMonthDecisionSettings, type MonthDecisionSettings } from "@/domain/phase2/month-decision-contract";
+import { parseMonthDecisionSettings, assertMonthDecisionReferences, type MonthDecisionSettings } from "@/domain/phase2/month-decision-contract";
 import { calibrateForecast } from "./forecast-memory";
 import { reconcilePlannedObservations, reconcileFixedOccurrences, coherentPlannedObservation, economicObservations, type FixedOccurrence } from "./planned-observation-reconciliation";
 import { matchesForecastCategory } from "./remaining-month-forecast";
@@ -380,6 +380,7 @@ export function deriveMonthScenario(forecast: MonthForecastSnapshot, rawInputs: 
     availableNow: { status: "AVAILABLE"; value: string; asOfDate: string } | { status: "UNAVAILABLE"; value: null; reason: string };
   }> {
   const inputs = monthInputsSchema.parse(rawInputs);
+  assertMonthDecisionReferences(inputs.decision!, [...(forecast.referencePlan?.necessary ?? []), ...(forecast.referencePlan?.flexible ?? [])]);
   if (inputs.plannedEvents.length !== 0) throw new TypeError("LEGACY_PLANNED_EVENTS_CUTOVER_REQUIRED");
   if (new Set(plannedExpenses.map((item) => item.id)).size !== plannedExpenses.length
     || plannedExpenses.some((item) => item.targetMonth !== forecast.meta.targetMonth
