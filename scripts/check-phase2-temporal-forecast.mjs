@@ -16,7 +16,7 @@ const {FORECAST_MODEL_VERSION}=require("@/server/phase2/forecast-statistics.ts")
 const results=[];
 async function test(id,work){await work();results.push({id,status:"PASS"});}
 const date="2026-07-20",month="2026-07",base=fixtureCase(month,date);
-const run=(evidence=base.evidence,asOf=date,expenses=[])=>forecastRemainingMonth(base.reference,evidence,asOf,expenses);
+const run=(evidence=base.evidence,asOf=date,expenses=[])=>forecastRemainingMonth(base.reference,evidence,asOf,expenses,{},{},"AS_OF_TEMPORAL");
 const cat=(p,key)=>[...p.essential,...p.optional].find(c=>c.key===key);
 const row=(amount="42.50",override={})=>({operationId:randomUUID(),date:"2026-07-15",amount,subcategory:"Restaurant",person:null,preciseType:null,merchant:"Exact seller",funding:{BANK:amount},fundingComplete:true,...override});
 const expense=(amount="40.00",override={})=>({id:randomUUID(),targetMonth:month,status:"PLANNED",plannedDate:"2026-07-15",context:{},costItems:[{id:randomUUID(),label:"Meal",quantity:"1",unitAmount:amount,assetKey:"restaurant:main",modulePath:["restaurant"],baselineKey:"household-restaurants",fundingAllocations:[{source:"BANK",amount}]}],...override});
@@ -88,12 +88,12 @@ await test("CASH-009-UNLINKED-PURCHASE",()=>{
 await test("MATCH-INCOHERENT-LINK",()=>{const r=row("42.50",{subcategory:"Courses alimentaires"}),p=expense("40.00",{context:{realityLink:link(r)}});assert.equal(reconcilePlannedObservations([p],[r],matchesForecastCategory,{}).matches.length,0);});
 await test("MATCH-MIXED-COMPONENTS",()=>{const r=row("20.00"),p=expense("40.00",{context:{realityLink:link(r)}});assert.equal(reconcilePlannedObservations([p],[r,{...r,subcategory:"Courses alimentaires"}],matchesForecastCategory,{}).matches.length,0);});
 await test("CALIBRATION-HORIZON-SELECTOR",()=>{const before=run(),c=cat(before,"groceries"),horizon=require("@/server/phase2/forecast-statistics.ts").forecastHorizon(date,month);
-  const after=forecastRemainingMonth(base.reference,base.evidence,date,[],{},{[`groceries:${horizon}`]:{bias:"10.00",absoluteError:"5.00",count:10,horizon}});
+  const after=forecastRemainingMonth(base.reference,base.evidence,date,[],{},{[`groceries:${horizon}`]:{bias:"10.00",absoluteError:"5.00",count:10,horizon}},"AS_OF_TEMPORAL");
   assert.equal((Number(cat(after,"groceries").remaining.central)-Number(c.remaining.central)).toFixed(2),"10.00");
 });
 await test("MATCH-AMBIGUOUS",()=>{const r=row("40.00"),p=expense("40.00",{context:{seller:"Exact seller"}});assert.equal(reconcilePlannedObservations([p],[r],matchesForecastCategory,{}).matches.length,1);assert.equal(reconcilePlannedObservations([p],[r,{...r,operationId:randomUUID()}],matchesForecastCategory,{}).matches.length,0);});
 await test("CLOSED-UNRESOLVED",()=>{const c=cat(run({...base.evidence,coverageBySource:{}},"2026-08-05"),"adrien-work-coffee");assert(c.opportunityCounts.unresolved>0);assert(Number(c.pendingExpectedEconomic.central)>0);});
-await test("CALIBRATION-SOURCE-ISOLATION",()=>{const memory=["2026-01","2026-02","2026-03","2026-04"].map(m=>({checkpoint_id:randomUUID(),target_month:`${m}-01`,as_of_date:`${m}-10`,computed_at:`${m}-10T12:00:00Z`,model_version:FORECAST_MODEL_VERSION,input_digest:"0".repeat(64),payload:{categories:[{key:"adrien-work-meals",label:"Meal",projected:{low:"0.00",central:"10.00",high:"20.00"}}],components:{},final:{lowConsumption:"0",central:"0",highConsumption:"0"},provenance:{hasUserAssumptions:false}}}));assert.deepEqual(calibrateForecast(memory,{...base.evidence,completeMonths:memory.map(m=>m.target_month.slice(0,7)),completeMonthsBySource:{BANK:memory.map(m=>m.target_month.slice(0,7))}},date),{});});
+await test("CALIBRATION-SOURCE-ISOLATION",()=>{const memory=["2026-01","2026-02","2026-03","2026-04"].map(m=>({checkpoint_id:randomUUID(),target_month:`${m}-01`,as_of_date:`${m}-10`,computed_at:`${m}-10T12:00:00Z`,model_version:FORECAST_MODEL_VERSION,input_digest:"0".repeat(64),payload:{categories:[{key:"adrien-work-meals",label:"Meal",projected:{low:"0.00",central:"10.00",high:"20.00"}}],components:{},final:{lowConsumption:"0",central:"0",highConsumption:"0"},provenance:{hasUserAssumptions:false}}}));assert.deepEqual(calibrateForecast(memory,{...base.evidence,completeMonths:memory.map(m=>m.target_month.slice(0,7)),completeMonthsBySource:{BANK:memory.map(m=>m.target_month.slice(0,7))}},date,"AS_OF_TEMPORAL"),{});});
 // Real existing action stack: authenticated household, CRUD, parser, finance and reload.
 const {planningHarness,value,item}=await import("./lib/planned-actions-harness.mjs");
 const h=planningHarness();

@@ -5,7 +5,8 @@ import { referenceQuantile, referenceMobilityDays, RESTAURANT_SUBCATEGORIES, TOB
 import type { PlannedExpenseScenarioEntry } from "./planned-expenses";
 import { plannedLineGross } from "@/domain/phase2/planned-money";
 import type { MonthDecisionSettings, ForecastCategoryKey } from "@/domain/phase2/month-decision-contract";
-import { FORECAST_MODEL_VERSION, FORECAST_POLICY, occurrenceDistribution, forecastHorizon, type OccurrenceDistribution } from "./forecast-statistics";
+import { FORECAST_POLICY, occurrenceDistribution, type OccurrenceDistribution } from "./forecast-statistics";
+import { forecastTemporalPolicy, type ForecastTemporalMode } from "./forecast-temporal-policy";
 import { makeAsOfContext, opportunityState, requiredForecastSources, safeToExpire, emptyCostRange, sumCostRanges,
   type AsOfContext, type EvidenceSource, type SourceCoverage, type ForecastOpportunity, type OpportunityState } from "./forecast-opportunities";
 import { economicObservations, reconcilePlannedObservations, type BankObservation, type PlannedObservationMatch } from "./planned-observation-reconciliation";
@@ -44,7 +45,7 @@ export type RemainingCategory = Readonly<{ key: string; label: string; alreadyRe
 export type RemainingMonthPrediction = Readonly<{ essential: readonly RemainingCategory[]; optional: readonly RemainingCategory[];
   joint: { method: "EMPIRICAL_MONTHS" | "CATEGORY_FALLBACK"; comparableMonths: number;
     low: { essential: string; optional: string; impact: string }; high: { essential: string; optional: string; impact: string } };
-  modelVersion: string; temporalMode: AsOfContext["temporalMode"]; asOfContext: AsOfContext; reconciliation: readonly PlannedObservationMatch[];
+  modelVersion: string; forecastTemporalMode: ForecastTemporalMode; temporalMode: AsOfContext["temporalMode"]; asOfContext: AsOfContext; reconciliation: readonly PlannedObservationMatch[];
   essentialProvision: CostRange; optionalProvision: CostRange; projectImpact: CostRange; absorbedByHabit: CostRange;
   essentialRemaining: CostRange; optionalRemaining: CostRange; importedEssential: string; importedOptional: string;
   remainingDays: number; remainingWorkdays: number; observedThrough: string | null; latestObservedBookingDate: string | null;
@@ -98,8 +99,15 @@ function expectedFunding(key: string, remaining: CostRange, rows: readonly Econo
 /** Sole remaining-forecast owner. Models are conditioned on a civil as-of day, source proof,
  * real observations and explicit unobserved slots. Five prior calendar months train each run. */
 export function forecastRemainingMonth(reference: MonthReferencePlan, evidence: MonthPredictionEvidence, asOf: string,
-  expenses: readonly PlannedExpenseScenarioEntry[], assumptions: MonthDecisionSettings["assumptions"] = {}, calibration: ForecastCalibration = {}): RemainingMonthPrediction {
+  expenses: readonly PlannedExpenseScenarioEntry[], assumptions: MonthDecisionSettings["assumptions"] = {}, calibration: ForecastCalibration = {},
+  mode?: ForecastTemporalMode): RemainingMonthPrediction {
+  const policy = forecastTemporalPolicy(mode);
   const month = reference.targetMonth, context = makeAsOfContext(month, asOf, evidence.timezone, evidence.coverageBySource);
+  // Same owner and same historical models: evaluate an unconsumed full-month prior.
+  // Only explicit facts consume this envelope in SAFE mode, never calendar silence.
+  const monthlyPrior = policy.preserveMonthlyHabit ? forecastRemainingMonth(reference,
+    { ...evidence, currentEconomicEntries: [], currentMobilityLegs: [], coverageBySource: {} },
+    context.monthStart, [], {}, {}, "AS_OF_TEMPORAL") : null;
   const allDays = remainingMonthDays(month, `${month}-01`), days = allDays.filter(d => d >= asOf), working = days.filter(workday);
   // Even on the last day, the current month is not a closed training month.
   const boundary = month < asOf.slice(0, 7) ? month : asOf.slice(0, 7);
@@ -148,7 +156,7 @@ export function forecastRemainingMonth(reference: MonthReferencePlan, evidence: 
     const draftOpportunities: ForecastOpportunity[] = [];
     const cadences: NonNullable<RemainingCategory["cadences"]>[number][] = [];
     const add = (date: string | null, probabilityValue: number, expected: CostRange, observedAmount = "0.00", observedRef?: ForecastOpportunity["observedRef"], idSuffix = "", cancelled = false) => {
-      const state = opportunityState({ date, observed: observedRef !== undefined, planned: date !== null && slot.occupied.has(date), cancelled }, context, requiredSources);
+      const state = opportunityState({ date, observed: observedRef !== undefined, planned: date !== null && slot.occupied.has(date), cancelled }, context, requiredSources, policy.behavioralExpiration);
       draftOpportunities.push({ id: `${month}:${key}:${date ?? "undated"}:${idSuffix}`, categoryKey: key, date, state,
         probability: Math.max(0, Math.min(1, probabilityValue)), expectedEconomic: expected,
         expectedFunding: expectedFunding(key, expected, rows, months, evidence), requiredSources,
@@ -158,7 +166,42 @@ export function forecastRemainingMonth(reference: MonthReferencePlan, evidence: 
         futureExpectedEconomic: state === "FUTURE" ? expected.central : "0.00", ...(observedRef ? { observedRef } : {}), confidence, limitationCodes: [...limitations] });
     };
     let basePending = emptyCostRange(), baseFuture = emptyCostRange(), baseline = emptyCostRange();
-    if (key === "groceries") {
+    const prior = monthlyPrior && [...monthlyPrior.essential, ...monthlyPrior.optional].find(c => c.key === key);
+    if (prior) {
+      method = prior.method; unit = prior.conditionalMedianAmount; probability = prior.probability;
+      confidence = prior.confidence; cadences.push(...(prior.cadences ?? []));
+      prior.limitationCodes.filter(code => code.includes("RARE_CADENCE") || code.includes("SPARSE") || code.includes("UNIDENTIFIED"))
+        .forEach(code => limitations.add(code));
+      limitations.add("FULL_MONTH_SAFE_NO_TIME_DECAY");
+      const mobility = key === "manon-work-mobility";
+      if (mobility) observed = actualMobility.reduce((n, r) => n.plus(r.commute).plus(r.detour ?? 0), new Big(0));
+      for (const opportunity of prior.opportunities) {
+        const suffix = opportunity.id.split(":").at(-1)!;
+        const actual = actualRows.filter(r => r.date === opportunity.date && (key !== "tobacco-vape" || r.subcategory === suffix));
+        const trip = mobility ? actualMobility.find(r => r.date === opportunity.date) : undefined;
+        const fact = actual[0];
+        const ref = trip ? { kind: "MOBILITY" as const, id: `commute:${trip.date}` }
+          : fact ? { kind: fact.purchaseEventId ? "PURCHASE_EVENT" as const : "OPERATION" as const, id: fact.purchaseEventId ?? fact.operationId } : undefined;
+        const amount = trip ? money(new Big(trip.commute).plus(trip.detour ?? 0)) : money(actual.reduce((n, r) => n.plus(r.amount), new Big(0)));
+        add(opportunity.date, opportunity.probability, opportunity.expectedEconomic, amount, ref, suffix, opportunity.state === "CANCELLED");
+      }
+      const publishedFallback = new Big(prior.remaining.high).eq(0) && new Big(part.high ?? 0).gt(0) && prior.observationCount < 3;
+      if (publishedFallback) { limitations.add("SAFE_PUBLISHED_MONTHLY_PRIOR"); confidence = "LOW"; }
+      const envelope = publishedFallback ? range(k => part[k] ?? 0) : prior.remaining;
+      const unconsumed = range(k => positive(new Big(envelope[k]).minus(observed)));
+      // Bucket placement can move with the civil date; their sum cannot decay.
+      const pendingWeight = draftOpportunities.filter(o => ["PENDING_OBSERVATION", "UNRESOLVED"].includes(o.state))
+        .reduce((n, o) => n + Number(o.expectedEconomic.central), 0);
+      const futureWeight = draftOpportunities.filter(o => o.state === "FUTURE").reduce((n, o) => n + Number(o.expectedEconomic.central), 0);
+      const pendingShare = pendingWeight + futureWeight > 0 ? pendingWeight / (pendingWeight + futureWeight)
+        : context.daysElapsed > 0 ? 1 : 0;
+      basePending = range(k => new Big(unconsumed[k]).times(pendingShare));
+      baseFuture = range(k => new Big(unconsumed[k]).minus(basePending[k]));
+      const observedCount = mobility ? actualMobility.length : economicObservations(actualRows).reduce((n, r) => n + (r.occurrenceCount ?? 1), 0);
+      expectedOccurrences = prior.expectedOccurrences ? Object.fromEntries(keys.map(k => [k,
+        Math.max(0, prior.expectedOccurrences![k] - observedCount - slot.habitual.length)])) as NonNullable<RemainingCategory["expectedOccurrences"]> : null;
+      opportunities = prior.remainingOpportunities === null ? null : Math.max(0, prior.remainingOpportunities - observedCount - slot.habitual.length);
+    } else if (key === "groceries") {
       method = "CUMULATIVE_CURVE";
       // Historical tails are the curve. No daily pro-rata and no arbitrary early nowcast.
       const futureTails = months.map(m => rows.filter(r => r.date.startsWith(m) && Number(r.date.slice(8)) >= (context.temporalMode === "FUTURE_MONTH" ? 1 : context.temporalMode === "PAST_MONTH" ? 32 : Number(asOf.slice(8))))
@@ -293,11 +336,11 @@ export function forecastRemainingMonth(reference: MonthReferencePlan, evidence: 
       }
       if (mobility) observed = actualMobility.reduce((n, r) => n.plus(r.commute).plus(r.detour ?? 0), new Big(0));
     }
-    if (draftOpportunities.length) {
+    if (!prior && draftOpportunities.length) {
       basePending = sumCostRanges(draftOpportunities.filter(o => ["PENDING_OBSERVATION", "UNRESOLVED"].includes(o.state)).map(o => o.expectedEconomic));
       baseFuture = sumCostRanges(draftOpportunities.filter(o => o.state === "FUTURE").map(o => o.expectedEconomic));
     }
-    if (key === "household-restaurants" && rows.length < 3) {
+    if (!prior && key === "household-restaurants" && rows.length < 3) {
       // An older published economic prior is a documented sparse-history fallback,
       // never a learned occurrence count or a fabricated zero-probability estimate.
       method = "PUBLISHED_FALLBACK"; confidence = "LOW"; unit = null;
@@ -312,19 +355,22 @@ export function forecastRemainingMonth(reference: MonthReferencePlan, evidence: 
     if (rows.length < 3 && key !== "manon-work-mobility") { confidence = "LOW"; limitations.add("HISTORY_SPARSE"); }
     if (rows.some(r => r.amountStatus === "PARTIAL")) { confidence = "LOW"; limitations.add("PURCHASE_AMOUNT_LOWER_BOUND"); }
     // A dated work slot already displaced its exact opportunity. Other slots absorb only remaining compatible capacity.
-    const datedWorkAbsorption = sumCostRanges(draftOpportunities.filter(o => o.state === "PLANNED").map(o => o.expectedEconomic));
-    const baseBeforeSlots = sumCostRanges([baseline, datedWorkAbsorption]);
+    const datedCapacity = sumCostRanges(draftOpportunities.filter(o => o.state === "PLANNED").map(o => o.expectedEconomic));
+    const datedWorkAbsorption = prior ? range(k => Math.min(Number(baseline[k]), Number(datedCapacity[k]))) : datedCapacity;
+    const freeBaseline = prior ? range(k => positive(new Big(baseline[k]).minus(datedWorkAbsorption[k]))) : baseline;
+    const baseBeforeSlots = sumCostRanges([freeBaseline, datedWorkAbsorption]);
     const capacity = key === "household-restaurants" && unit !== null ? range(k => new Big(unit!).times(slot.habitual.length)) : habitGross.toFixed(2);
     const undatedHabit = slot.habitual.filter(s => !draftOpportunities.some(o => o.state === "PLANNED" && o.date === s.date));
     const availableAbsorption = typeof capacity === "string" ? undatedHabit.reduce((n, s) => n.plus(s.amount), new Big(0)).toFixed(2) : capacity;
     // big.js has no static min; keep the bound explicit and auditable.
-    const absorption = range(k => new Big(datedWorkAbsorption[k]).plus(new Big(baseline[k]).lt(typeof availableAbsorption === "string" ? availableAbsorption : availableAbsorption[k])
-      ? baseline[k] : typeof availableAbsorption === "string" ? availableAbsorption : availableAbsorption[k]));
+    const absorption = range(k => new Big(datedWorkAbsorption[k]).plus(new Big(freeBaseline[k]).lt(typeof availableAbsorption === "string" ? availableAbsorption : availableAbsorption[k])
+      ? freeBaseline[k] : typeof availableAbsorption === "string" ? availableAbsorption : availableAbsorption[k]));
     let remaining = range(k => positive(new Big(baseBeforeSlots[k]).minus(absorption[k])));
     const assumption = assumptions[key as ForecastCategoryKey];
     if (assumption) remaining = range(k => assumption.mode === "CUSTOM" ? assumption.amount! : new Big(remaining[k]).times(assumption.mode === "LOWER" ? FORECAST_POLICY.lowerFactor : FORECAST_POLICY.higherFactor));
-    const correction = calibration[`${key}:${forecastHorizon(asOf, month)}`] ?? calibration[key];
-    if (!assumption && correction && correction.count >= FORECAST_POLICY.calibrationMonths && correction.horizon === forecastHorizon(asOf, month)) {
+    const horizon = policy.calibrationHorizon(asOf, month);
+    const correction = calibration[`${key}:${horizon}`] ?? calibration[key];
+    if (!assumption && correction && correction.count >= FORECAST_POLICY.calibrationMonths && correction.horizon === horizon) {
       const central = positive(new Big(remaining.central).plus(correction.bias));
       remaining = { low: money(positive(central.minus(correction.absoluteError))), central: money(central), high: money(central.plus(correction.absoluteError)) };
     }
@@ -351,13 +397,15 @@ export function forecastRemainingMonth(reference: MonthReferencePlan, evidence: 
       habitualProjectGross: money(habitGross), habitualPlannedGross: money(planned), habitualDeclaredGross: money(declared), absorbedByHabit: absorption,
       evidenceMonths: months.length, observationCount: key === "manon-work-mobility" ? historicalMobility.length : rows.length,
       usualAtThisPoint: usual === null ? null : money(usual), pace: ratio === null ? null : ratio < .85 ? "BELOW" : ratio <= 1.1 ? "USUAL" : ratio <= 1.3 ? "SLIGHTLY_ABOVE" : "ABOVE",
-      shift: null, jointSamples: {}, occurrenceDistribution: key === "household-restaurants" ? occurrenceDistribution(months.map(m => economicObservations(rows.filter(r => r.date.startsWith(m))).length), months.map(() => 1), allDays.length ? days.length / allDays.length : 0, slot.habitual.length) : null,
+      shift: null, jointSamples: {}, occurrenceDistribution: key === "household-restaurants" ? occurrenceDistribution(months.map(m => economicObservations(rows.filter(r => r.date.startsWith(m))).length), months.map(() => 1), prior ? 1 : allDays.length ? days.length / allDays.length : 0,
+        slot.habitual.length + (prior ? economicObservations(actualRows).reduce((n, r) => n + (r.occurrenceCount ?? 1), 0) : 0)) : null,
       remainingOpportunities: opportunities, probability, expectedOccurrences, conditionalMedianAmount: unit,
       plannedOccurrencesAbsorbingHabit: slot.habitual.length, plannedOccurrencesExtra: slot.extra, confidence,
       opportunityCounts: draftOpportunities.length ? counts : null, opportunities: resolvedOpportunities,
       coverage: { requiredSources, sufficientForExpiration: safe, limitationCodes: [...limitations].sort() }, limitationCodes: [...limitations].sort(),
       ...(cadences.length ? { cadences } : {}),
-      explanation: method === "CUMULATIVE_CURVE" ? "Le reste suit les achats historiques situés après cette date, avec les attentes non observées conservées selon la couverture."
+      explanation: prior ? "L’estimation conserve le budget habituel du mois entier. Seuls les achats observés et les projets explicites remplacent la partie correspondante ; le passage des jours ne crée aucune économie."
+        : method === "CUMULATIVE_CURVE" ? "Le reste suit les achats historiques situés après cette date, avec les attentes non observées conservées selon la couverture."
         : method === "CADENCE" ? "Tabac, cannabis et vape suivent chacun leurs délais entre achats ; un achat observé relance sa cadence."
           : method === "WORKDAYS" ? "Chaque journée distingue observation, projet, attente et possibilité future. La présence dépend du jour de semaine observé."
             : "Les sorties restantes dépendent du nombre de sessions, de leur position dans le mois et des projets déjà prévus." } satisfies RemainingCategory;
@@ -367,7 +415,7 @@ export function forecastRemainingMonth(reference: MonthReferencePlan, evidence: 
   const gross = activeExpenses.reduce((n, e) => e.costItems.reduce((s, i) => s.plus(plannedLineGross(i)), n), new Big(0));
   const projectImpact = range(k => gross.minus(absorbedByHabit[k]));
   const essentialProvision = sumCostRanges(essential.map(c => c.baselineProvision)), optionalProvision = sumCostRanges(optional.map(c => c.baselineProvision));
-  return { essential, optional, modelVersion: FORECAST_MODEL_VERSION, temporalMode: context.temporalMode, asOfContext: context,
+  return { essential, optional, modelVersion: policy.modelVersion, forecastTemporalMode: policy.mode, temporalMode: context.temporalMode, asOfContext: context,
     reconciliation: reconciliation.matches, trainingMonths: months, joint: { method: "CATEGORY_FALLBACK", comparableMonths: months.length,
       low: { essential: essentialProvision.low, optional: optionalProvision.low, impact: projectImpact.low },
       high: { essential: essentialProvision.high, optional: optionalProvision.high, impact: projectImpact.high } },

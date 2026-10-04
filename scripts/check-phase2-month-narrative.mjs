@@ -7,6 +7,8 @@ import React from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { forecast, inputs } from "./check-phase2-october-contract.mjs";
 import { planningHarness, value, item } from "./lib/planned-actions-harness.mjs";
+// Preserve every temporal assertion and action parity under the explicit temporal mode.
+process.env.PHASE2_FORECAST_TEMPORAL_MODE = "AS_OF_TEMPORAL";
 const require = createRequire(import.meta.url);
 require.extensions[".css"] = module => { module.exports = new Proxy({}, { get: (_, key) => key === "__esModule" ? undefined : String(key) }); };
 require.extensions[".tsx"] = (module, filename) => module._compile(ts.transpileModule(fs.readFileSync(filename, "utf8"), {

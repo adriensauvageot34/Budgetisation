@@ -7,13 +7,15 @@ import type { MonthEconomicPlan, MonthInputs } from "./month-scenario";
 import type { MonthForecastSnapshot } from "./month-forecast-snapshot";
 import { matchesForecastCategory, type ForecastCalibration, type MonthPredictionEvidence } from "./remaining-month-forecast";
 import { referenceMobilityDays, referenceQuantile } from "./month-reference";
-import { FORECAST_MODEL_VERSION, FORECAST_POLICY, forecastHorizon } from "./forecast-statistics";
+import { FORECAST_POLICY } from "./forecast-statistics";
+import { forecastTemporalPolicy, type ForecastTemporalMode } from "./forecast-temporal-policy";
 import { requiredForecastSources } from "./forecast-opportunities";
 
 type CheckpointPayload = Readonly<{
   categories: readonly { key: string; label: string; projected: { low: string; central: string; high: string };
     buckets?: Pick<import("./remaining-month-forecast").RemainingCategory, "observedEconomic" | "declaredRealizedEconomic" | "plannedEconomic" | "pendingExpectedEconomic" | "futureExpectedEconomic" | "remainingForecastEconomic" | "coverage" | "limitationCodes"> }[];
   bankCash?: MonthEconomicPlan["bankCash"];
+  forecastTemporalMode?: ForecastTemporalMode;
   components: Readonly<Record<string, { label: string; amount: string }>>;
   final: MonthEconomicPlan["narrative"]["final"];
   provenance: { publicationId: string; sourceRevision: number; hasUserAssumptions: boolean; evidenceDigest: string };
@@ -41,8 +43,9 @@ export function forecastComponents(plan: MonthEconomicPlan): CheckpointPayload["
 }
 
 export function makeForecastCheckpoint(forecast: MonthForecastSnapshot, inputs: MonthInputs,
-  plan: MonthEconomicPlan, asOf: string): { inputDigest: string; payload: CheckpointPayload } {
+  plan: MonthEconomicPlan, asOf: string): { inputDigest: string; modelVersion: string; payload: CheckpointPayload } {
   const evidenceDigest = digest(forecast.predictionEvidence ?? null);
+  const policy = forecastTemporalPolicy(plan.narrative.prediction?.forecastTemporalMode);
   const payload: CheckpointPayload = {
     categories: [...(plan.narrative.prediction?.essential ?? []), ...(plan.narrative.prediction?.optional ?? [])]
       .map(c => ({ key: c.key, label: c.label, projected: c.projectedMonth, buckets: {
@@ -50,12 +53,13 @@ export function makeForecastCheckpoint(forecast: MonthForecastSnapshot, inputs: 
         pendingExpectedEconomic: c.pendingExpectedEconomic, futureExpectedEconomic: c.futureExpectedEconomic,
         remainingForecastEconomic: c.remainingForecastEconomic, coverage: c.coverage, limitationCodes: c.limitationCodes } })),
     bankCash: plan.bankCash,
+    forecastTemporalMode: policy.mode,
     components: forecastComponents(plan), final: plan.narrative.final,
     provenance: { publicationId: forecast.meta.sourcePublicationId, sourceRevision: forecast.meta.sourceRevision,
       hasUserAssumptions: Object.keys(inputs.decision?.assumptions ?? {}).length > 0 || new Big(plan.plannedExpenses.grossCost).gt(0)
         || (plan.narrative.prediction?.reconciliation.length ?? 0) > 0, evidenceDigest },
   };
-  return { payload, inputDigest: digest({ inputs, payload, asOf, version: FORECAST_MODEL_VERSION }) };
+  return { payload, modelVersion: policy.modelVersion, inputDigest: digest({ inputs, payload, asOf, version: policy.modelVersion }) };
 }
 
 /** Caller supplies an authenticated household. Read is always scoped, even with the server client. */
@@ -79,21 +83,23 @@ export async function insertForecastCheckpoint(client: SupabaseClient, household
   targetMonth: string, asOf: string, checkpoint: ReturnType<typeof makeForecastCheckpoint>): Promise<void> {
   if (Buffer.byteLength(JSON.stringify(checkpoint.payload), "utf8") > 120000) throw new TypeError("FORECAST_CHECKPOINT_PAYLOAD_TOO_LARGE");
   const result = await client.from("phase2_forecast_checkpoints").insert({ household_id: householdId,
-    created_by: userId, target_month: `${targetMonth}-01`, as_of_date: asOf, model_version: FORECAST_MODEL_VERSION,
+    created_by: userId, target_month: `${targetMonth}-01`, as_of_date: asOf, model_version: checkpoint.modelVersion,
     input_digest: checkpoint.inputDigest, payload: checkpoint.payload });
   if (result.error && result.error.code !== "23505") throw result.error;
 }
 
 /** Errors exist only for preserved predictions followed by explicitly FULL imports.
  * One month contributes at most once at each horizon. Intent overrides never train history. */
-export function calibrateForecast(memory: readonly ForecastCheckpoint[], evidence: MonthPredictionEvidence, asOf: string): ForecastCalibration {
+export function calibrateForecast(memory: readonly ForecastCheckpoint[], evidence: MonthPredictionEvidence, asOf: string,
+  mode?: ForecastTemporalMode): ForecastCalibration {
+  const policy = forecastTemporalPolicy(mode);
   const samples = new Map<string, Map<string, number>>();
   for (const row of [...memory].sort((a, b) => a.computed_at.localeCompare(b.computed_at) || a.checkpoint_id.localeCompare(b.checkpoint_id))) {
     const month = row.target_month.slice(0, 7);
-    if (row.model_version !== FORECAST_MODEL_VERSION || month >= asOf.slice(0, 7)
+    if (row.model_version !== policy.modelVersion || month >= asOf.slice(0, 7)
       || row.payload.provenance.hasUserAssumptions
       || row.as_of_date.slice(0, 7) > month) continue;
-    const horizon = forecastHorizon(row.as_of_date, month);
+    const horizon = policy.calibrationHorizon(row.as_of_date, month);
     for (const category of row.payload.categories) {
       if (!requiredForecastSources(category.key).every(source => evidence.completeMonthsBySource?.[source]?.includes(month))) continue;
       if (category.buckets?.limitationCodes.includes("MANON_MEAL_FREQUENCY_UNIDENTIFIED")) continue;
@@ -112,12 +118,12 @@ export function calibrateForecast(memory: readonly ForecastCheckpoint[], evidenc
   }).filter(([, value]) => (value as { count: number }).count >= FORECAST_POLICY.calibrationMonths)) as ForecastCalibration;
 }
 
-export function comparableForecastCheckpoints(memory: readonly ForecastCheckpoint[], targetMonth: string) {
-  return memory.filter(row => row.target_month.startsWith(targetMonth) && row.model_version === FORECAST_MODEL_VERSION);
+export function comparableForecastCheckpoints(memory: readonly ForecastCheckpoint[], targetMonth: string, mode?: ForecastTemporalMode) {
+  return memory.filter(row => row.target_month.startsWith(targetMonth) && row.model_version === forecastTemporalPolicy(mode).modelVersion);
 }
 
 export function explainForecastChange(plan: MonthEconomicPlan, memory: readonly ForecastCheckpoint[], targetMonth: string) {
-  const rows = comparableForecastCheckpoints(memory, targetMonth);
+  const rows = comparableForecastCheckpoints(memory, targetMonth, plan.narrative.prediction?.forecastTemporalMode);
   const previous = rows.at(-1);
   if (!previous) return { changes: [], delta: "0.00", stability: "Pas encore d’estimation conservée pour comparer.", sampleCount: 0 };
   const current = forecastComponents(plan), keys = new Set([...Object.keys(previous.payload.components), ...Object.keys(current)]);

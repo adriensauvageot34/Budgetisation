@@ -1,0 +1,58 @@
+{
+  "results": [
+    {
+      "id": "MODE-01-DEFAULT",
+      "status": "PASS"
+    },
+    {
+      "id": "MODE-02-NO-TIME-DECAY",
+      "status": "PASS"
+    },
+    {
+      "id": "MODE-03-OBSERVED-REPLACEMENT",
+      "status": "PASS"
+    },
+    {
+      "id": "MODE-04-PLANNED-ABSORPTION",
+      "status": "PASS"
+    },
+    {
+      "id": "MODE-05-DECLARED-STILL-ACTIVE",
+      "status": "PASS"
+    },
+    {
+      "id": "MODE-06-NO-OBSERVED-PLANNED-DOUBLE-COUNT",
+      "status": "PASS"
+    },
+    {
+      "id": "MODE-07-EXPIRATION-DISABLED-REAL-HISTORY",
+      "status": "PASS"
+    },
+    {
+      "id": "MODE-08-FIXED-LIFECYCLE",
+      "status": "PASS"
+    },
+    {
+      "id": "MODE-09-REACTIVATION",
+      "status": "PASS"
+    },
+    {
+      "id": "MODE-10-MEMORY-ISOLATION",
+      "status": "PASS"
+    },
+    {
+      "id": "MODE-11-PREVIEW-SAVE-RELOAD-FULL_MONTH_SAFE",
+      "status": "PASS"
+    },
+    {
+      "id": "MODE-11-PREVIEW-SAVE-RELOAD-AS_OF_TEMPORAL",
+      "status": "PASS"
+    },
+    {
+      "id": "MODE-12-NO-MUTATION",
+      "status": "PASS"
+    }
+  ],
+  "historicalWrites": 0,
+  "liveDatabaseWrites": 0
+}

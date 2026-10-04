@@ -78,12 +78,12 @@ export type ForecastOpportunity = Readonly<{ id: string; categoryKey: string; da
   pendingExpectedEconomic: string; futureExpectedEconomic: string; observedRef?: ObservationRef; plannedExpenseId?: string;
   confidence: "LOW" | "MEDIUM" | "HIGH"; limitationCodes: readonly string[] }>;
 export function opportunityState(input: { date: string | null; observed?: boolean; planned?: boolean; cancelled?: boolean },
-  context: AsOfContext, sources: readonly EvidenceSource[]): OpportunityState {
+  context: AsOfContext, sources: readonly EvidenceSource[], allowExpiration = true): OpportunityState {
   if (input.observed) return "OBSERVED";
   if (input.planned) return "PLANNED";
   if (input.cancelled) return "CANCELLED";
   if (input.date !== null && input.date >= context.today) return "FUTURE";
-  if (input.date !== null && safeToExpire(input.date, context, sources)) return "EXPIRED";
+  if (allowExpiration && input.date !== null && safeToExpire(input.date, context, sources)) return "EXPIRED";
   return context.temporalMode === "PAST_MONTH" ? "UNRESOLVED" : "PENDING_OBSERVATION";
 }
 export const emptyCostRange = (): CostRange => ({ low: "0.00", central: "0.00", high: "0.00" });

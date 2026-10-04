@@ -8,7 +8,7 @@ const checkpoints=[1,5,10,15,20,25],months=["2026-01","2026-02","2026-03","2026-
 const evaluated=["groceries","tobacco-vape","manon-work-mobility","adrien-work-meals","adrien-work-coffee","household-restaurants"],results=[];
 for(const month of months)for(const day of checkpoints){
   const asOf=`${month}-${String(day).padStart(2,"0")}`,{reference,evidence}=fixtureCase(month,asOf);
-  const result=forecastRemainingMonth(reference,evidence,asOf,[]);
+  const result=forecastRemainingMonth(reference,evidence,asOf,[],{},{},"AS_OF_TEMPORAL");
   assert(result.trainingMonths.length<=5&&result.trainingMonths.every(m=>m<month));
   let temporal=0,benchmark=0;
   const categoryErrors=[];
@@ -34,7 +34,7 @@ const horizonComparisons=[[25,20],[20,15],[15,10]].map(([later,earlier])=>{
   const toleranceEuros=Math.max(5,2.447*Math.sqrt(variance/deltas.length));
   return {later,earlier,deltaMAE,toleranceEuros,strictlyImproves:deltaMAE<0,withinSamplingTolerance:deltaMAE<toleranceEuros};
 });
-const report={fixtureVersion:fixture.version,coverageMode:fixture.provenance.coverageMode,excludedFromCalibration:["manon-work-meals","SWILE funding","EDENRED funding","full bank cash"],
+const report={forecastTemporalMode:"AS_OF_TEMPORAL",fixtureVersion:fixture.version,coverageMode:fixture.provenance.coverageMode,excludedFromCalibration:["manon-work-meals","SWILE funding","EDENRED funding","full bank cash"],
   runs:results.length,training:"five prior calendar months; cutoff observations only",temporalMAE,benchmarkMAE,gainPercent:100*(1-temporalMAE/benchmarkMAE),horizons,
   tolerancePolicy:"paired per-month MAE differences: max(5€, Student-t 95% standard error, df=6); not a product calibration",horizonComparisons,
   categories:Object.fromEntries(evaluated.map(key=>[key,{temporalMAE:mean(results.flatMap(r=>r.categoryErrors.filter(c=>c.key===key).map(c=>c.temporalAbsoluteError))),benchmarkMAE:mean(results.flatMap(r=>r.categoryErrors.filter(c=>c.key===key).map(c=>c.benchmarkAbsoluteError)))}])),results};
