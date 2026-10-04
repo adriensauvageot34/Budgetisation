@@ -2,10 +2,10 @@ import { isDecisionCategoryKey, parseMonthChoice, type MonthChoiceOperation, typ
 
 export const MONTH_CONTROL_SECTIONS = ["choices", "update", "understand"] as const;
 export type MonthControlSection = typeof MONTH_CONTROL_SECTIONS[number];
-export type MonthControlSectionInput = MonthControlSection | "overview" | "settings" | "resources" | "reliability";
+export type MonthControlSectionInput = MonthControlSection | "center" | "overview" | "settings" | "resources" | "reliability";
 export const monthControlSection = (value: unknown): MonthControlSection | null => {
   if (typeof value !== "string") return null;
-  const aliases: Record<string, MonthControlSection> = { overview: "choices", choices: "choices", settings: "update", resources: "update", reliability: "understand", update: "update", understand: "understand" };
+  const aliases: Record<string, MonthControlSection> = { center: "choices", overview: "choices", choices: "choices", settings: "update", resources: "update", reliability: "understand", update: "update", understand: "understand" };
   return Object.hasOwn(aliases, value) ? aliases[value]! : null;
 };
 /** URL compatibility and local focus only; never a financial rule or persisted state. */
@@ -32,6 +32,18 @@ export function parseMonthControlPurpose(raw: unknown): MonthControlPurpose {
   return { kind: row.kind as "NONE" | "GLOBAL_GOAL" | "FREE_EXPLORATION" };
 }
 export const monthChoiceTarget = (op: MonthChoiceOperation) => op.kind === "CATEGORY" ? `category:${op.categoryKey}` : `savings:${op.savingsId}`;
+/** One workspace; legacy sections survive only as URL adapters and external intents. */
+export function monthWorkspaceFocus(section: MonthControlSectionInput, rawFocus?: string | null): string | null {
+  const focus = rawFocus ?? null;
+  if (focus === "info" || focus === "pilot" || focus === "update" || focus?.startsWith("pilot:") || focus?.startsWith("update:")) return focus;
+  const destination = monthControlDestination(section, focus);
+  if (destination.focus === "savings" || destination.focus?.startsWith("savings:") || destination.focus?.startsWith("reserve-") || destination.focus === "global-goal") return destination.focus;
+  if (destination.section === "understand") return "info";
+  if (destination.section === "update") return destination.focus ? `update:item:${destination.focus}` : "update";
+  if (!destination.focus) return null;
+  if (["goals", "simulator", "adjustments"].includes(destination.focus)) return "pilot";
+  return destination.focus.startsWith("category:") || destination.focus.startsWith("choice:") ? `pilot:category:${destination.focus.slice(destination.focus.indexOf(":") + 1)}` : "pilot";
+}
 export function parseMonthControlDraft(raw: unknown): readonly MonthChoiceOperation[] {
   if (!Array.isArray(raw)) throw new TypeError("MONTH_CONTROL_DRAFT_INVALID");
   return raw.length === 0 ? [] : parseMonthChoice({ operations: raw }).operations;
@@ -45,9 +57,9 @@ export function replaceMonthControlOperation(current: readonly MonthChoiceOperat
 }
 export function monthControlUrl(current: string, section: MonthControlSectionInput | null, focus?: string | null): string {
   const url = new URL(current, "http://month.local");
-  const destination = section ? monthControlDestination(section, focus) : null;
-  if (destination) url.searchParams.set("control", destination.section); else url.searchParams.delete("control");
-  if (destination?.focus && /^[a-zA-Z0-9:-]{1,100}$/u.test(destination.focus)) url.searchParams.set("focus", destination.focus); else url.searchParams.delete("focus");
+  const destination = section ? monthWorkspaceFocus(section, focus) : null;
+  if (section) url.searchParams.set("control", "center"); else url.searchParams.delete("control");
+  if (destination && /^[a-zA-Z0-9:-]{1,160}$/u.test(destination)) url.searchParams.set("focus", destination); else url.searchParams.delete("focus");
   url.searchParams.delete("inputError");
   return `${url.pathname}${url.search}${url.hash}`;
 }

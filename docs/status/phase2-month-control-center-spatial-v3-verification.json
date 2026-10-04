@@ -1,0 +1,96 @@
+{
+  "baseline": "8f25956dfd72c8feba908adc7da965aebd66f621",
+  "desktopOnly": true,
+  "migrationRequired": false,
+  "liveWrites": 0,
+  "historicalWrites": 0,
+  "screenshots": 40,
+  "viewports": [
+    "1728x900",
+    "1920x1080",
+    "1440x900"
+  ],
+  "noVerticalScroll": true,
+  "noClippedActions": true,
+  "typecheck": "PASS",
+  "productionBuild": "PASS",
+  "browserScope": "Navigation, editors and server Preview; no live Save/Apply",
+  "suites": [
+    {
+      "name": "check-phase2-month-control-center",
+      "exitCode": 0
+    },
+    {
+      "name": "check-phase2-category-targets-choices",
+      "exitCode": 0
+    },
+    {
+      "name": "check-phase2-benefit-wallets",
+      "exitCode": 0
+    },
+    {
+      "name": "check-phase2-savings-allocations",
+      "exitCode": 0
+    },
+    {
+      "name": "check-phase2-october-contract",
+      "exitCode": 0
+    },
+    {
+      "name": "check-phase2-month-narrative",
+      "exitCode": 0
+    },
+    {
+      "name": "check-phase2-planned-finance",
+      "exitCode": 0
+    },
+    {
+      "name": "check-phase2-planned-reliability",
+      "exitCode": 0
+    },
+    {
+      "name": "check-phase2-planned-guards",
+      "exitCode": 0
+    },
+    {
+      "name": "check-phase2-project-wizard",
+      "exitCode": 0
+    },
+    {
+      "name": "check-phase2-forecast-temporal-mode",
+      "exitCode": 0
+    },
+    {
+      "name": "check-phase2-temporal-forecast",
+      "exitCode": 0
+    },
+    {
+      "name": "check-global-v2-frontend",
+      "exitCode": 0
+    },
+    {
+      "name": "check-architecture-imports",
+      "exitCode": 0
+    },
+    {
+      "name": "check-phase2-month-decision-engine",
+      "exitCode": 1
+    },
+    {
+      "name": "check-phase2-month-control-center-spatial-ux",
+      "exitCode": 0
+    },
+    {
+      "name": "check-phase2-month-control-center-choices-ux",
+      "exitCode": 0
+    },
+    {
+      "name": "check-phase2-month-control-center-human-ux",
+      "exitCode": 0
+    },
+    {
+      "name": "check-phase2-month-control-center-ux",
+      "exitCode": 0
+    }
+  ]
+}

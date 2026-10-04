@@ -10,7 +10,6 @@ import type { PlannedVehicleEstimate } from "@/server/phase2/planned-context";
 import { PlannedExpenseInteractions } from "./planned-expense-interactions";
 import { MonthSectionNav } from "./month-section-nav";
 import { MonthControlCenter, MonthControlLink } from "./month-control-center";
-import { MonthUpdatePanel, MonthReliabilityPanel } from "./month-control-panels";
 import material from "./month-material.module.css";
 
 const money = (value: string | null) => value === null ? "À confirmer" : new Intl.NumberFormat("fr-FR", { style: "currency", currency: "EUR" }).format(Number(value));
@@ -25,9 +24,7 @@ type Props = { forecast: MonthForecastSnapshot; scenario: MonthScenario; stored:
 export function MonthForecastView({ forecast, scenario, stored, plannedExpenses, calendarCarryovers, persons, places, vehicle, prices, wallets, inputError, today, controlModel, initialSection, initialFocus }: Props) {
   const targetMonth = forecast.meta.targetMonth;
   const model = controlModel ?? projectMonthControlCenter({ forecast, inputs: stored.inputs, expenses: plannedExpenses, asOf: today });
-  return <PlannedExpenseInteractions><MonthControlCenter key={targetMonth} model={model} initialSection={initialSection} initialFocus={initialFocus} inputError={inputError}
-    update={<MonthUpdatePanel forecast={forecast} scenario={scenario} model={model} today={today} />}
-    understand={<MonthReliabilityPanel model={model} />}>
+  return <PlannedExpenseInteractions><MonthControlCenter key={targetMonth} model={model} initialSection={initialSection} initialFocus={initialFocus} inputError={inputError}>
     <main data-planned-page className={`${material.page} mx-auto max-w-[1280px] space-y-7 pb-20`}>
     <nav aria-label="Mois préparé" className={`${material.monthHeader} flex items-center justify-between gap-6 text-sm font-bold`}><a className={`${material.monthLink} px-3 py-2 text-slate-600`} href={`/mois-a-venir?month=${new Date(Date.UTC(Number(targetMonth.slice(0, 4)), Number(targetMonth.slice(5, 7)) - 2, 1)).toISOString().slice(0, 7)}`}>‹ Mois précédent</a><h1 className="text-center text-4xl font-black uppercase tracking-tight">{monthLabel(targetMonth)}</h1><a className={`${material.monthLink} px-3 py-2 text-slate-600`} href={`/mois-a-venir?month=${new Date(Date.UTC(Number(targetMonth.slice(0, 4)), Number(targetMonth.slice(5, 7)), 1)).toISOString().slice(0, 7)}`}>Mois suivant ›</a></nav>
     <MonthSectionNav hasProjects={plannedExpenses.length > 0} actionableCount={model.actionableCount} />

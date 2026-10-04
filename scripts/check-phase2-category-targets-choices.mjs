@@ -167,7 +167,7 @@ await test("CHOICE-036", () => {
   assert(trial.offers.some(row => row.preview.choice.operations.some(op => op.savingsId === saving.id)));
   assert(!trial.offers.some(row => row.preview.choice.operations.some(op => op.savingsId === current.declaredOutflows[0].id)));
   const ui = fs.readFileSync("src/app/mois-a-venir/month-control-center.tsx", "utf8");
-  assert(ui.includes("Mes choix")); assert(fs.readFileSync("src/app/mois-a-venir/month-control-simulator.tsx", "utf8").includes("Que voulez-vous changer ?")); assert(trial.offers.length <= 8);
+  assert(ui.includes("MonthPilotCategory")); assert(fs.readFileSync("src/app/mois-a-venir/month-control-simulator.tsx", "utf8").includes("Que voulez-vous changer ?")); assert(trial.offers.length <= 8);
 });
 if (configured !== undefined) process.env.PHASE2_FORECAST_TEMPORAL_MODE = configured;
 fs.mkdirSync("outputs", { recursive: true });

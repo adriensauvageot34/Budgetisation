@@ -8,6 +8,8 @@ import { monthChoiceDigest, simulateMonthChoice, proposeMonthChoices, type Month
 import { projectMonthDecision } from "./month-decision-projection";
 import { comparableForecastCheckpoints, calibrateForecast } from "./forecast-memory";
 import { forecastTemporalPolicy } from "./forecast-temporal-policy";
+import { projectMonthUpdatePresentation } from "./month-update-presentation";
+import { projectCategoryObservedHistory } from "./month-category-history";
 
 import { controlDate, controlResourceLabel } from "@/domain/phase2/month-control-display";
 
@@ -26,6 +28,7 @@ const settingsDestination = (focus: string): Destination => ({ section: "update"
 export function projectMonthControlCenter(ctx: MonthChoiceContext) {
   const scenario = deriveMonthScenario(ctx.forecast, ctx.inputs, null, ctx.asOf, ctx.expenses), inputs = scenario.inputs;
   const settings = parseMonthDecisionSettings(inputs.decision), plan = scenario.economicPlan;
+  const update = projectMonthUpdatePresentation(ctx.forecast, scenario);
   const decision = plan ? projectMonthDecision(plan, settings, ctx.forecast.meta.targetMonth, ctx.asOf, ctx.expenses, ctx.forecast.forecastMemory) : null;
   const categoryControls = decision?.categoryControls ?? [];
   // Presentation reference for relative draft controls. The existing forecast owner
@@ -114,7 +117,7 @@ export function projectMonthControlCenter(ctx: MonthChoiceContext) {
     headline: !plan ? "Complétons les ressources pour préparer ce mois" : goalState === "NO_GOALS_DEFINED" ? "Vous n’avez pas encore défini de repères pour ce mois."
       : goalState === "ALL_GOALS_MET" ? "Vos objectifs sont respectés dans la projection actuelle."
       : `${tensions.length} objectif${tensions.length > 1 ? "s demandent" : " demande"} votre attention.`,
-    actionableCount: tensions.length + rootCauses.filter(row => row.actionable).length,
+    actionableCount: update.needsUpdateCount, update,
     projectionSummary: { economic: plan?.narrative.final ?? null, bank: plan?.bankCash.endOfMonth ?? null,
       globalGoal: settings.goal, globalDelta, globalGap, globalSatisfied: globalDelta !== null && new Big(globalDelta).gte(0),
       remainingDailyLife: plan?.monthlyLayers.remainingDailyLife ?? null, categoryGap: decision?.totalCategoryGap ?? "0.00", protectedSavings: plan?.savingsAllocations.protectedTotal ?? null, totalSavings: plan?.savingsAllocations.total ?? null },
@@ -125,10 +128,12 @@ export function projectMonthControlCenter(ctx: MonthChoiceContext) {
     forecastNature: "FORECAST" as const,
     activeIntentions: activeIntentions.map(row => ({ ...row, actionLabel: "Modifier" })),
     activeDecisions: activeDecisions.map(row => ({ ...row, actionLabel: row.key.startsWith("excluded:") ? "Rétablir" : "Modifier" })), reservations: reservations.map(row => ({ ...row, actionLabel: "Voir" })), categoryControls, habitualControls, settings, savings, defaultPurpose,
+    categoryHistory: Object.fromEntries(categoryControls.map(row => [row.key, projectCategoryObservedHistory(row.key, ctx.forecast.predictionEvidence, plan?.narrative.prediction?.trainingMonths ?? [], ctx.asOf, scenario.targetMonth)])),
     resourceInputs: { openingBalance: inputs.openingBalance, wallets: inputs.benefitWallets!, projections: scenario.benefitWallets },
     reliability: { mode: forecastTemporalPolicy().mode, modeLabel: forecastTemporalPolicy().mode === "FULL_MONTH_SAFE" ? "Mode prudent actif" : "Estimation au fil du mois active",
       modeExplanation: forecastTemporalPolicy().mode === "FULL_MONTH_SAFE" ? "L’absence de dépenses récentes ne réduit pas automatiquement les habitudes prévues du mois." : "Les estimations utilisent le moteur temporel actif, avec les données disponibles à cette date.",
       importsMissing: plan?.narrative.prediction?.currentImportsMissing ?? null, computedAt: ctx.forecast.meta.computedAt,
+      exploitableMonths: ctx.forecast.predictionEvidence?.completeMonths?.filter(month => month < ctx.asOf.slice(0, 7) && month < scenario.targetMonth).length ?? 0,
       publicationId: ctx.forecast.meta.sourcePublicationId, revision: ctx.forecast.meta.analyticsRevision,
       checkpoints: comparableForecastCheckpoints(ctx.forecast.forecastMemory ?? [], scenario.targetMonth).map(row => ({ date: row.as_of_date, central: row.payload.final.central })),
       calibrationAvailable: !!ctx.forecast.predictionEvidence && Object.keys(ctx.forecast.calibration ?? calibrateForecast(ctx.forecast.forecastMemory ?? [], ctx.forecast.predictionEvidence, ctx.asOf)).length > 0,

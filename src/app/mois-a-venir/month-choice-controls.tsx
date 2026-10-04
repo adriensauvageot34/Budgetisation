@@ -7,11 +7,11 @@ import styles from "./month-control-center.module.css";
 
 export const primary = `${material.clayPrimary} ${styles.primaryAction}`;
 export const secondary = `${material.clayButton} ${styles.secondaryAction}`;
-export function LocalChoiceScreen({ title, subtitle, back, children, footer, step, total, kind = "intention" }: {
-  title: string; subtitle?: ReactNode; back: () => void; children: ReactNode; footer?: ReactNode; step?: number; total?: number; kind?: string;
+export function LocalChoiceScreen({ title, subtitle, back, backLabel = "Retour au Centre", children, footer, step, total, kind = "intention" }: {
+  title: string; subtitle?: ReactNode; back: () => void; backLabel?: string; children: ReactNode; footer?: ReactNode; step?: number; total?: number; kind?: string;
 }) {
   return <section className={styles.choiceScreen} data-choice-view={kind}>
-    <header className={styles.localHeader}><button type="button" className={styles.localBack} onClick={back}>← Retour</button>
+    <header className={styles.localHeader}><button type="button" className={styles.localBack} onClick={back}>← {backLabel}</button>
       <div><h2 className={styles.localTitle}>{title}</h2>{subtitle && <p className={styles.localSubtitle}>{subtitle}</p>}</div>
       {step !== undefined && <span className={styles.wizardProgress}>Étape {step} sur {total}</span>}
     </header>

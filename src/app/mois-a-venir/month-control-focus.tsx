@@ -4,7 +4,7 @@ import type { MonthControlSection } from "@/domain/phase2/month-control-contract
 
 export type LocalControlFocus = { section: MonthControlSection; entity: string | null; openEntity: (entity: string | null) => void };
 const FocusContext = createContext<LocalControlFocus>({ section: "choices", entity: null, openEntity() {} });
-/** Children can change only the entity inside their current tab. No tab navigation API. */
+/** Local workspace navigation only; no persisted navigation state. */
 export function MonthLocalFocusProvider({ value, children }: { value: LocalControlFocus; children: ReactNode }) {
   return <FocusContext.Provider value={value}>{children}</FocusContext.Provider>;
 }

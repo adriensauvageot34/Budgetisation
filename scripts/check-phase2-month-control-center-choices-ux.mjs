@@ -65,10 +65,11 @@ const form = values => { const f = new FormData(); for (const [key, value] of Ob
 
 const React = require("react"), { renderToStaticMarkup } = require("react-dom/server"), { AppRouterContext } = require("next/dist/shared/lib/app-router-context.shared-runtime");
 const { MonthLocalFocusProvider } = require("@/app/mois-a-venir/month-control-focus.tsx");
-const { MonthControlCenter, MONTH_CONTROL_TABS } = require("@/app/mois-a-venir/month-control-center.tsx");
+const { MonthControlCenter } = require("@/app/mois-a-venir/month-control-center.tsx");
 const { monthControlSection, monthControlDestination, monthControlUrl } = require("@/domain/phase2/month-control-contract.ts");
 const { projectMonthControlCenter: model, projectMonthControlWorkbench: wb } = require("@/server/phase2/month-control-center.ts");
-const { MonthChoicesHub, MonthControlLimits, MonthControlActiveChoices, MonthControlSavings, MonthChoiceFocus } = require("@/app/mois-a-venir/month-control-choices.tsx");
+const { MonthControlSavings, MonthChoiceFocus } = require("@/app/mois-a-venir/month-control-choices.tsx");
+const { MonthWorkspaceRoot: MonthChoicesHub, MonthPilotIndex: MonthControlLimits, MonthPilotIndex: MonthControlActiveChoices } = require("@/app/mois-a-venir/month-control-workspace.tsx");
 const { MonthUpdatePanel, MonthReliabilityPanel } = require("@/app/mois-a-venir/month-control-panels.tsx");
 const { WalletBalanceForm, WalletLoadingForm } = require("@/app/mois-a-venir/month-control-update.tsx");
 const { stepCurrencyDraft, CurrencyStepper, HumanDateField } = require("@/app/mois-a-venir/currency-stepper.tsx");
@@ -95,12 +96,12 @@ const first = wb(base, { kind: "FREE_EXPLORATION" }, [restaurant]), second = wb(
 const simHtml = trial => html(MonthControlSimulator, { model: trial.model, trial, purpose: trial.purpose, operations: trial.operations, pending: false, replaceDraft() {}, recalculate() {}, apply() {} });
 await test("CHOICES-UX-001", () => assert(!centerHtml.includes("Comprendre, décider et comparer")), "SSR");
 await test("CHOICES-UX-002", () => assert(!centerHtml.includes("contextSummary")), "SSR");
-for (const [id, text] of [["003", "Fin de mois"], ["004", "Objectif"], ["005", "à actualiser"]]) await test(`CHOICES-UX-${id}`, () => assert(centerHtml.slice(0, centerHtml.indexOf('data-overlay-content')).includes(text)), "SSR");
+for (const [id, text] of [["003", "Fin de mois"], ["004", "Objectif"], ["005", "État des données"]]) await test(`CHOICES-UX-${id}`, () => assert(centerHtml.slice(0, centerHtml.indexOf('data-overlay-content')).includes(text)), "SSR");
 await test("CHOICES-UX-006", () => { assert(center.includes("setToast")); assert(center.includes("2800")); assert(css.includes(".saveToast, .status, .pendingNotice { position: absolute")); }, "STATIC");
 await test("CHOICES-UX-010", () => assert(!hub.includes("<h2")), "SSR");
-await test("CHOICES-UX-011", () => assert.equal((hub.match(/data-control-hub=/gu) ?? []).length, 4), "SSR");
-for (const [id, text] of [["012", "Mes repères"], ["013", "Tester un scénario"], ["014", "Mes ajustements"], ["015", "Mes cagnottes"]]) await test(`CHOICES-UX-${id}`, () => assert(hub.includes(text)), "SSR");
-await test("CHOICES-UX-016", () => { for (const tag of ["<form", "<input", "<select"]) assert(!hub.includes(tag)); assert.equal((hub.match(/<button /gu) ?? []).length, 4); }, "SSR");
+await test("CHOICES-UX-011", () => assert.equal((hub.match(/data-control-hub=/gu) ?? []).length, 3), "SSR");
+for (const [id, text] of [["012", "Piloter mon mois"], ["013", "Mettre à jour"], ["014", "Tester, se fixer un repère"], ["015", "Mes cagnottes"]]) await test(`CHOICES-UX-${id}`, () => assert(hub.includes(text)), "SSR");
+await test("CHOICES-UX-016", () => { for (const tag of ["<form", "<input", "<select"]) assert(!hub.includes(tag)); assert.equal((hub.match(/<button /gu) ?? []).length, 3); }, "SSR");
 const targetHtml = choiceFocusHtml("category:groceries"), goalHtml = choiceFocusHtml("global-goal");
 await test("CHOICES-UX-020", () => { assert(targetHtml.includes("de 5 %")); assert.equal(relativeAmountDraft("497.00", -20), "397.60"); assert.equal(relativeAmountDraft("497.06", -20), "397.65"); });
 await test("CHOICES-UX-021", () => assert(!targetHtml.includes("25 €")), "SSR");
@@ -112,8 +113,8 @@ await test("CHOICES-UX-026", async () => { reset(); const value = relativeAmount
 await test("CHOICES-UX-027", () => { assert.equal(require("@/domain/phase2/month-control-display.ts").controlMoney("810.55"), "811 €"); assert.equal(require("@/domain/phase2/month-control-display.ts").controlMoney("810.55", true), "810,55 €"); });
 const targeted = model(withTarget("398.00", "497.00"));
 await test("CHOICES-UX-030", () => assert(html(MonthControlLimits, { model: targeted }).includes('aria-pressed="true"')), "SSR");
-await test("CHOICES-UX-031", () => { const rendered = html(MonthControlLimits, { model: targeted }); for (const text of ["Prévu", "Votre repère", "au-dessus", "projection", "repère"]) assert(rendered.includes(text)); }, "SSR");
-await test("CHOICES-UX-032", () => { const rendered = html(MonthControlLimits, { model: m }); assert(rendered.includes("À suivre")); assert(!rendered.includes("Trajets travail")); }, "SSR");
+await test("CHOICES-UX-031", () => { const rendered = html(MonthControlLimits, { model: targeted }); for (const text of ["estimés", "Repère", "au-dessus"]) assert(rendered.includes(text)); });
+await test("CHOICES-UX-032", () => { const rendered = html(MonthControlLimits, { model: m }); assert(rendered.includes("Poste à suivre")); assert(rendered.includes("Trajets travail")); });
 await test("CHOICES-UX-033", () => { const future = { ...m.categoryControls[0], key: "new-category", label: "Nouveau poste", target: "1.00" }; assert.equal(rankChoiceCategories([...m.categoryControls, future])[0].key, future.key); assert.equal(choicePage(Array.from({ length: 17 }, (_, i) => i), 2).length, 5); });
 await test("CHOICES-UX-034", () => { const rows = Array.from({ length: 17 }, (_, i) => i); assert.deepEqual([0, 1, 2].flatMap(page => choicePage(rows, page)), rows); assert(html(ChoicePages, { count: 17, page: 0, setPage() {} }).includes("Autres postes")); });
 await test("CHOICES-UX-040", () => { const rendered = simHtml(wb(base, { kind: "FREE_EXPLORATION" }, [])); assert(rendered.includes("Que voulez-vous changer")); assert(!rendered.includes("Plus aucune dépense")); assert(!rendered.includes("<select")); assert(!rendered.includes("Appliquer ce scénario")); }, "SSR");
@@ -131,8 +132,8 @@ await test("CHOICES-UX-055", () => { assert(!simulator.includes("<select")); ass
 await test("CHOICES-UX-056", () => { for (const stage of ["HOW", "PERCENT", "AMOUNT"]) assert(simulator.includes(`stage === "${stage}"`)); }, "STATIC");
 await test("CHOICES-UX-057", () => assert(simulator.includes('capabilities.strategies.includes("REDUCE_PERCENT")')), "STATIC");
 await test("CHOICES-UX-058", () => assert(simulator.includes('capabilities.strategies.includes("REDUCE_AMOUNT")')), "STATIC");
-await test("CHOICES-UX-060", () => { const rendered = html(MonthControlActiveChoices, { model: targeted }); assert(rendered.includes("Courses")); assert(!rendered.includes("Tabac")); }, "SSR");
-await test("CHOICES-UX-061", () => { const rendered = html(MonthControlActiveChoices, { model: m }); assert(rendered.includes("Aucun ajustement actif")); assert(!rendered.includes("Courses")); assert(!rendered.includes("<form")); }, "SSR");
+await test("CHOICES-UX-060", () => { const rendered = html(MonthControlActiveChoices, { model: targeted }); assert(rendered.includes("Courses")); assert(rendered.includes("Ajustement actif")); });
+await test("CHOICES-UX-061", () => { const rendered = html(MonthControlActiveChoices, { model: m }); assert(rendered.includes("Aucun repère")); assert(!rendered.includes("Ajustement actif")); assert(!rendered.includes("<form")); });
 for (const [id, direction] of [["062", "LOWER"], ["063", "HIGHER"]]) await test(`CHOICES-UX-${id}`, () => { assert(editors.includes(`step === "${direction}"`)); assert(editors.includes("<PercentStepper")); assert(editors.includes("model.habitualControls")); }, "STATIC");
 await test("CHOICES-UX-064", () => assert(editors.includes('Reste habituel prévu (€)')), "STATIC");
 await test("CHOICES-UX-065", async () => { reset(); assert((await actions.updateMonthControlInputs(form({ intent: "save-month-assumption", categoryKey: "groceries", assumptionMode: "CUSTOM", assumptionAmount: "0.00" }))).ok); assert((await actions.updateMonthControlInputs(form({ intent: "clear-month-assumption", categoryKey: "groceries" }))).ok); assert.equal(h.facts.inputs["2026-10"].decision.assumptions.groceries, undefined); reset(); });
