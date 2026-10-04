@@ -19,15 +19,17 @@ export function MonthSectionNav({ hasProjects, actionableCount }: { hasProjects:
   return <>
     <span ref={anchor} className={scene.anchor} aria-hidden="true" />
     <div className={scene.occlusion} aria-hidden="true" />
-    <nav ref={toolbar} aria-label="Sections du mois" className={`${material.nav} ${scene.toolbar} sticky z-20 flex items-center justify-between gap-3`}>
+    <nav ref={toolbar} aria-label="Sections du mois" className={`${material.nav} ${scene.toolbar} sticky z-20 flex items-center gap-3`}>
       <span className={scene.specular} aria-hidden="true" />
       <span className={scene.readingProgress} aria-hidden="true" />
-      <div className={scene.tabsViewport}><div ref={tabs} className={scene.tabs}>
+      <div className={`${scene.tabsViewport} flex-1`}><div ref={tabs} className={scene.tabs}>
         <span ref={indicator} className={scene.indicator} aria-hidden="true" />
         {available.map(([id, label]) => <a key={id} href={`#${id}`} aria-current={active === id ? "location" : undefined} className={`${material.tab} rounded-xl px-3 py-2 text-xs font-bold text-slate-600`}>{label}</a>)}
       </div></div>
+      <div data-month-actions className="relative z-10 ml-auto flex shrink-0 items-center gap-2.5">
       <MonthControlLink section="overview" actionableCount={actionableCount} className={`${material.clayButton} shrink-0 px-3 py-3 text-xs font-bold`} />
       <button type="button" onClick={() => interactions?.request({ action: "CREATE" })} className={`${material.clayPrimary} ${scene.cta} shrink-0 px-4 py-3 text-sm font-bold`}>+ Ajouter une dépense</button>
+      </div>
     </nav>
   </>;
 }

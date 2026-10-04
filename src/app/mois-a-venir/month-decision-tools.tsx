@@ -4,7 +4,7 @@ import { useRouter } from "next/navigation";
 import type { MonthDecisionSettings } from "@/domain/phase2/month-decision-contract";
 import { preserveMonthForecast, updateMonthInputs, type simulateMonthBehavior } from "./actions";
 import { categoryDecisionCapabilities, type CategoryDecisionCapabilities } from "@/domain/phase2/month-choice-contract";
-import { AnimatedMoney } from "./animated-money";
+import { controlMoney } from "@/domain/phase2/month-control-display";
 import material from "./month-material.module.css";
 type MonthDecisionProjection = Extract<Awaited<ReturnType<typeof simulateMonthBehavior>>, { ok: true }>["decision"];
 type MonthCategoryControl = MonthDecisionProjection["categoryControls"][number];
@@ -17,7 +17,7 @@ export function MonthAssumptionEditor({ categoryKey, label, targetMonth, setting
   categoryKey: string; label: string; targetMonth: string; settings: MonthDecisionSettings; capabilities?: CategoryDecisionCapabilities }) {
   if (categoryDecisionCapabilities(categoryKey, capabilities)?.adjustability !== "ADJUSTABLE") return null;
   const assumption = settings.assumptions[categoryKey as keyof typeof settings.assumptions];
-  return <details className={`${material.disclosure} mt-3 border-t border-slate-100 pt-3 text-xs`}><summary className="cursor-pointer font-semibold text-emerald-900">{label} · {assumption ? "hypothèse personnelle" : "comme d’habitude"}</summary>
+  return <details className={`${material.disclosure} mt-3 border-t border-slate-100 pt-3 text-sm`}><summary className="cursor-pointer font-semibold text-emerald-900">{label} · {assumption ? assumption.mode === "CUSTOM" ? `Reste fixé à ${controlMoney(assumption.amount, true)}` : assumption.mode === "LOWER" ? "Reste réduit de 20 %" : "Reste augmenté de 20 %" : "Ajuster"}</summary>
     <p className="mt-2 text-slate-600">{assumption ? "Hypothèse personnelle active pour ce mois." : "Comme d’habitude : références historiques."} Moins / Plus ajuste le reste de 20 %. Le montant personnel vise le reste à dépenser ; les achats déjà faits et les projets explicites restent comptés.</p>
     <form action={updateMonthInputs} className="mt-3 flex flex-wrap gap-2"><input type="hidden" name="targetMonth" value={targetMonth} /><input type="hidden" name="intent" value="save-month-assumption" /><input type="hidden" name="categoryKey" value={categoryKey} />
       <label><span className="sr-only">Hypothèse pour {label}</span><select className={field} name="assumptionMode" defaultValue={assumption?.mode ?? "LOWER"}><option value="LOWER">Moins ce mois</option><option value="HIGHER">Plus ce mois</option><option value="CUSTOM">Montant personnel</option></select></label>
@@ -29,20 +29,14 @@ export function MonthAssumptionEditor({ categoryKey, label, targetMonth, setting
 
 export function CategoryTargetEditor({ control, targetMonth }: { control: MonthCategoryControl; targetMonth: string }) {
   if (!control.capabilities.targetAllowed) return null;
-  return <div className="mt-4 border-t border-violet-100 pt-3 text-sm">
-    {control.target !== null && <div className={`${material.glassSoft} rounded-2xl p-3`}>
-      <dl className="space-y-1">{[["Objectif", control.target], ["Réel", control.realized], ["Prévu ce mois", control.forecast]].map(([label, amount]) =>
-        <div className="flex justify-between gap-2" key={label}><dt>{label}</dt><dd className="font-bold">{money(amount!)}</dd></div>)}</dl>
-      <p className={`mt-2 font-bold ${control.status === "UNDER_TARGET" || control.status === "ON_TARGET" ? "text-emerald-800" : "text-amber-900"}`}>
-        {control.status === "ALREADY_OVER_TARGET" ? `Objectif déjà dépassé de ${money(control.realizedOverTarget)}`
-          : control.status === "FORECAST_OVER_TARGET" ? `Dépassement prévu : +${money(control.varianceToTarget!)}`
-          : control.status === "ON_TARGET" ? "Projection à l’objectif" : `Marge prévue : ${money(control.marginToTarget!)}`}</p>
-      <p className="mt-1 text-xs text-slate-600">Réel = observé + déclaré réalisé, après rapprochement. Une déclaration n’est pas un débit bancaire.</p>
-    </div>}
-    <details className={`${material.disclosure} mt-2`}><summary className="cursor-pointer font-bold text-violet-900">{control.target === null ? "Définir un objectif" : "Modifier l’objectif"}</summary>
+  return <div className="mt-2 text-sm">
+    <p className="text-slate-600">Déjà réalisé : <strong>{money(control.realized)}</strong> · Prévu ce mois : <strong>≈ {money(control.forecast)}</strong></p>
+    {control.target === null ? <p className="mt-1 text-slate-500">Aucun objectif défini</p> : <p className="mt-1 font-semibold">Objectif : {controlMoney(control.target, true)} · <span className={control.status === "UNDER_TARGET" || control.status === "ON_TARGET" ? "text-emerald-800" : "text-amber-900"}>
+      {control.status === "ALREADY_OVER_TARGET" ? `Déjà dépassé de ${money(control.realizedOverTarget)}` : control.status === "FORECAST_OVER_TARGET" ? `≈ ${money(control.varianceToTarget!)} au-dessus` : control.status === "ON_TARGET" ? "À l’objectif" : `≈ ${money(control.marginToTarget!)} de marge`}</span></p>}
+    <details className={`${material.disclosure} mt-2`}><summary className="cursor-pointer font-bold text-violet-900">{control.target === null ? "Définir un objectif" : "Modifier"}</summary>
       <form action={updateMonthInputs} className="mt-2 flex flex-wrap items-end gap-2">
         <input type="hidden" name="targetMonth" value={targetMonth} /><input type="hidden" name="intent" value="save-category-target" /><input type="hidden" name="categoryKey" value={control.key} />
-        <label className="grid gap-1 text-xs">Objectif {control.label} (€)<input className={`${field} w-32`} type="number" name="categoryTarget" min="0" step="0.01" required defaultValue={control.target ?? ""} /></label>
+        <label className="grid gap-1 text-sm">Objectif {control.label} (€)<input className={`${field} w-32`} type="number" name="categoryTarget" min="0" step="0.01" required defaultValue={control.target ?? ""} /></label>
         <button className={button}>Enregistrer</button></form>
       <p className="mt-2 text-xs text-slate-600">Un repère pour ce mois, sans création de dépense ni copie au mois suivant.</p>
     </details>

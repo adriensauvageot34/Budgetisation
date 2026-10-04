@@ -20,7 +20,7 @@ export function MonthSavingsSection({ savings, targetMonth, controls = true }: {
     {savings.items.length === 0 ? <p className="mt-4 text-sm text-slate-600">Aucune cagnotte affectée à ce mois.</p> :
       <ul className="mt-4 space-y-3">{savings.items.map((item, index) => <li data-control-focus={`reserve-${index + 1}`} key={item.id} data-month-motion-item className={`${material.dataCard} flex items-center gap-4 p-4`}>
         <div className="flex-1"><h3 className="font-bold">{item.label}</h3>
-          <p className="mt-1 flex items-center gap-1.5 text-xs text-slate-600">{item.adjustability === "PROTECTED" ? <><LockKeyhole size={14} aria-hidden="true" />Protégée · non négociable</> : "Ajustable · réservée pour ce mois"}</p>
+          <p className="mt-1 flex items-center gap-1.5 text-xs text-slate-600">{item.adjustability === "PROTECTED" ? <><LockKeyhole size={14} aria-hidden="true" />Protégée des ajustements automatiques</> : "Ajustable · réservée pour ce mois"}</p>
           {item.dueDate && <p className="mt-1 text-xs text-slate-600">Mise de côté le {new Intl.DateTimeFormat("fr-FR", { day: "numeric", month: "long", timeZone: "Europe/Paris" }).format(new Date(`${item.dueDate}T12:00:00Z`))}</p>}
         </div>
         <strong className={`${material.data} text-lg`}><AnimatedMoney value={money(item.amount)} /></strong>
@@ -36,7 +36,7 @@ export function MonthSavingsSection({ savings, targetMonth, controls = true }: {
         <label className="text-xs font-semibold">Pour quoi ?<input className={`${material.field} field mt-1 w-full`} name="outflowLabel" required maxLength={120} placeholder="Vacances, Noël…" /></label>
         <label className="text-xs font-semibold">Montant (€)<input className={`${material.field} field mt-1 w-full`} name="outflowAmount" type="number" required min="0" max="999999999.99" step="0.01" /></label>
         <label className="text-xs font-semibold">Date (facultative)<input className={`${material.field} field mt-1 w-full`} name="outflowDate" type="date" min={`${targetMonth}-01`} max={new Date(Date.UTC(Number(targetMonth.slice(0, 4)), Number(targetMonth.slice(5)), 0)).toISOString().slice(0, 10)} /></label>
-        <label className="text-xs font-semibold">Protection<select className={`${material.field} field mt-1 w-full`} name="outflowAdjustability" defaultValue="PROTECTED"><option value="PROTECTED">Protégée · non négociable</option><option value="ADJUSTABLE">Ajustable</option></select></label>
+        <label className="text-xs font-semibold">Protection<select className={`${material.field} field mt-1 w-full`} name="outflowAdjustability" defaultValue="PROTECTED"><option value="PROTECTED">Protégée des ajustements automatiques</option><option value="ADJUSTABLE">Ajustable</option></select></label>
         <button className={`${material.clayPrimary} justify-self-start px-4 py-2 text-sm font-bold`}>Mettre de côté</button>
       </form>
     </details> : <MonthControlLink section="resources" focus="savings" className="mt-4 text-sm font-bold underline">Gérer nos cagnottes</MonthControlLink>}

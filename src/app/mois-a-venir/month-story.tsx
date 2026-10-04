@@ -11,7 +11,6 @@ import { RemainingForecastCard, ScenarioMilestone, ForecastInfo } from "./month-
 import { parseMonthDecisionSettings, type MonthDecisionSettings } from "@/domain/phase2/month-decision-contract";
 import { projectMonthDecision } from "@/server/phase2/month-decision-projection";
 import type { ForecastCheckpoint } from "@/server/phase2/forecast-memory";
-import { MonthControlLink } from "./month-control-center";
 import { AnimatedMoney } from "./animated-money";
 import { MonthSavingsSection } from "./month-savings-section";
 import material from "./month-material.module.css";
@@ -99,8 +98,6 @@ export function MonthStory({ plan, targetMonth, plannedExpenses, calendarCarryov
       <div className="mt-4 grid grid-cols-2 gap-3">{prediction ? prediction.optional.map(category => <RemainingForecastCard key={category.key} category={category} display={decision.visible.categoryDisplay[category.key]!} control={decision.categoryControls.find(row => row.key === category.key)} targetMonth={targetMonth} optional importsMissing={importsMissing} />) : plan.flexibleVariables.items.map(part => <StatisticalCard key={part.key} part={part} tone="flexible" />)}</div>
     </section>
     <ScenarioMilestone title="Projection de fin de mois" values={cash.endOfMonth.central !== null ? cashRange(cash.endOfMonth) : narrative.final} final description={cash.endOfMonth.central !== null ? "Projection bancaire depuis le solde actuel, les revenus non reçus et les paiements restants. Les bornes ne sont affichées que si calibrées." : `${decision.jointExplanation} Projection économique partielle, distincte d’un solde bancaire.`} />
-    <div className="flex flex-wrap gap-4 text-sm"><MonthControlLink section="resources" focus="BANK">Préciser le disponible bancaire</MonthControlLink>
-      <MonthControlLink section="settings" focus="obligations">Gérer les charges du mois</MonthControlLink>
-      <MonthControlLink section="reliability">Comprendre la fiabilité</MonthControlLink></div>
+
   </div>;
 }

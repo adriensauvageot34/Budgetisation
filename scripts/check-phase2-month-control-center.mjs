@@ -66,7 +66,7 @@ const form = values => { const f = new FormData(); for (const [key, value] of Ob
 const { projectMonthControlCenter: model, projectMonthControlWorkbench: workbench } = require("@/server/phase2/month-control-center.ts");
 const { monthControlUrl, monthControlSection, parseMonthControlPurpose, parseMonthControlDraft, replaceMonthControlOperation, monthChoiceTarget } = require("@/domain/phase2/month-control-contract.ts");
 const source = path => fs.readFileSync(`src/${path}`, "utf8");
-const ui = source("app/mois-a-venir/month-control-center.tsx"), view = source("app/mois-a-venir/month-forecast-view.tsx"), story = source("app/mois-a-venir/month-story.tsx"),
+const ui = source("app/mois-a-venir/month-control-center.tsx") + source("app/mois-a-venir/month-control-overview.tsx") + source("app/mois-a-venir/month-control-simulator.tsx"), view = source("app/mois-a-venir/month-forecast-view.tsx"), story = source("app/mois-a-venir/month-story.tsx"),
   panels = source("app/mois-a-venir/month-control-panels.tsx"), nav = source("app/mois-a-venir/month-section-nav.tsx"), cards = source("app/mois-a-venir/month-narrative-cards.tsx");
 const offset = { kind: "CATEGORY_OVERAGE_OFFSET", categoryKey: "groceries" }, correction = { kind: "CATEGORY_CORRECTION", categoryKey: "groceries" };
 const base = withTarget("300.00", "342.00"), restaurant = choice("household-restaurants", "REDUCE_ONE_OCCURRENCE").operations[0], groceries = choice("groceries", "REDUCE_AMOUNT", "14.00").operations[0];
@@ -140,7 +140,7 @@ await test("CC-064", () => { const p = wb([savingsChoice().operations[0]]); asse
 await test("CC-065", () => { const p = wb([groceries]); assert.equal(p.scenario.projectionSummary.protectedSavings, p.model.projectionSummary.protectedSavings); });
 await test("CC-066", () => { const early = wb([groceries], correction, { ...base, asOf: "2026-10-01" }), late = wb([groceries], correction, { ...base, asOf: "2026-10-28" }); assert.deepEqual(early.preview.after, late.preview.after); assert.equal(early.model.reliability.mode, "FULL_MONTH_SAFE"); });
 await test("CC-067", () => { process.env.PHASE2_FORECAST_TEMPORAL_MODE = "AS_OF_TEMPORAL"; try { const p = wb([restaurant]); assert.deepEqual(p.preview, simulate(base, { operations: [restaurant] }).view); assert.equal(p.model.reliability.mode, "AS_OF_TEMPORAL"); } finally { delete process.env.PHASE2_FORECAST_TEMPORAL_MODE; } });
-await test("CC-068", () => { assert(model(base).reliability.modeLabel.includes("prudent")); assert(panels.includes("Détails techniques")); }, "STATIC");
+await test("CC-068", () => { assert(model(base).reliability.modeLabel.includes("prudent")); assert(panels.includes("Voir le diagnostic")); assert(!panels.includes("reliability.publicationId")); }, "STATIC");
 await test("CC-069", () => assert(panels.includes("<PreserveForecastButton")), "STATIC");
 await test("CC-070", async () => { const before = noWrites(); await actions.previewMonthControlCenter("2026-10", offset, []); model(base); assert.equal(noWrites(), before); assert(!view.includes("preserveMonthForecast(")); });
 await test("CC-071", () => { const ctx = { ...base, inputs: defaultMonthInputs() }, m = model(ctx); assert.equal(m.monthState, "INCOMPLETE"); assert.equal(m.projectionSummary.economic, null); assert(view.includes("<MonthSectionNav")); assert(panels.includes("total: null")); });

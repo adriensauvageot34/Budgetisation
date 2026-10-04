@@ -1,4 +1,4 @@
-import { isDecisionCategoryKey, parseMonthChoice, type MonthChoiceOperation } from "./month-choice-contract";
+import { isDecisionCategoryKey, parseMonthChoice, type MonthChoiceOperation, type CategoryDecisionCapabilities } from "./month-choice-contract";
 
 export const MONTH_CONTROL_SECTIONS = ["overview", "choices", "settings", "resources", "reliability"] as const;
 export type MonthControlSection = typeof MONTH_CONTROL_SECTIONS[number];
@@ -36,4 +36,19 @@ export function monthControlUrl(current: string, section: MonthControlSection | 
   if (section && focus && /^[a-zA-Z0-9:-]{1,100}$/u.test(focus)) url.searchParams.set("focus", focus); else url.searchParams.delete("focus");
   url.searchParams.delete("inputError");
   return `${url.pathname}${url.search}${url.hash}`;
+}
+
+/** UX constructors only. Eligibility and every consequence stay with the shared choice engine. */
+export function monthControlCategoryPresets(key: string, label: string, capabilities: CategoryDecisionCapabilities) {
+  if (capabilities.adjustability !== "ADJUSTABLE") return [];
+  const category = { kind: "CATEGORY" as const, categoryKey: key };
+  const percent = (value: string, title: string) => ({ label: title, operation: { ...category, strategy: "REDUCE_PERCENT" as const, percent: value } });
+  const amount = (value: string) => ({ label: `Courses −${value} €`, operation: { ...category, strategy: "REDUCE_AMOUNT" as const, amount: value } });
+  const presets = key === "household-restaurants" ? [
+    { label: "Plus aucun restaurant pour le reste du mois", operation: { ...category, strategy: "REDUCE_PERCENT" as const, percent: "100" } },
+    { label: "Une sortie en moins", operation: { ...category, strategy: "REDUCE_ONE_OCCURRENCE" as const } },
+    percent("50", "Moitié moins pour le reste du mois"),
+  ] : key === "tobacco-vape" ? ["5", "10", "20"].map(value => percent(value, `Tabac & vape −${value} %`))
+    : key === "groceries" ? ["25", "50", "100"].map(amount) : [percent("5", `${label} −5 %`)];
+  return presets.filter(row => capabilities.strategies.includes(row.operation.strategy));
 }

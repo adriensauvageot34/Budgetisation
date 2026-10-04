@@ -209,7 +209,7 @@ await test("SAVE-021-UI", () => {
   const { MonthSavingsSection } = require("@/app/mois-a-venir/month-savings-section.tsx");
   const plan = run({ ...inputs, declaredOutflows: [...inputs.declaredOutflows, adjustable] });
   const html = renderToStaticMarkup(React.createElement(MonthSavingsSection, { savings: plan.savingsAllocations, targetMonth: "2026-10" }));
-  for (const text of ["Ce qu’on met de côté", "Épargne voyage", "Noël", "Protégée · non négociable", "Ajustable · réservée", "outflowAdjustability", "remove-declared-outflow"])
+  for (const text of ["Ce qu’on met de côté", "Épargne voyage", "Noël", "Protégée des ajustements automatiques", "Ajustable · réservée", "outflowAdjustability", "remove-declared-outflow"])
     assert(html.includes(text), text);
   assert(html.includes('value="PROTECTED" selected=""'), "new allocations default protected");
   const source = fs.readFileSync("src/app/mois-a-venir/month-story.tsx", "utf8");

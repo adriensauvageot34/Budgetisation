@@ -1,0 +1,294 @@
+{
+  "status": "PASS",
+  "scope": "Synthetic fixtures, real generic engine/server actions, SSR presentation and explicit static boundaries; no live writes.",
+  "historicalWrites": 0,
+  "plannedExpenseWrites": 0,
+  "monthlyFixtureWrites": 1,
+  "results": [
+    {
+      "id": "UX-001",
+      "kind": "STATIC",
+      "status": "PASS"
+    },
+    {
+      "id": "UX-002",
+      "kind": "STATIC",
+      "status": "PASS"
+    },
+    {
+      "id": "UX-003",
+      "kind": "BEHAVIOR",
+      "status": "PASS"
+    },
+    {
+      "id": "UX-004",
+      "kind": "BEHAVIOR",
+      "status": "PASS"
+    },
+    {
+      "id": "UX-005",
+      "kind": "BEHAVIOR",
+      "status": "PASS"
+    },
+    {
+      "id": "UX-006",
+      "kind": "BEHAVIOR",
+      "status": "PASS"
+    },
+    {
+      "id": "UX-007",
+      "kind": "BEHAVIOR",
+      "status": "PASS"
+    },
+    {
+      "id": "UX-008",
+      "kind": "BEHAVIOR",
+      "status": "PASS"
+    },
+    {
+      "id": "UX-009",
+      "kind": "BEHAVIOR",
+      "status": "PASS"
+    },
+    {
+      "id": "UX-010",
+      "kind": "BEHAVIOR",
+      "status": "PASS"
+    },
+    {
+      "id": "UX-011",
+      "kind": "BEHAVIOR",
+      "status": "PASS"
+    },
+    {
+      "id": "UX-012",
+      "kind": "BEHAVIOR",
+      "status": "PASS"
+    },
+    {
+      "id": "UX-013",
+      "kind": "BEHAVIOR",
+      "status": "PASS"
+    },
+    {
+      "id": "UX-014",
+      "kind": "BEHAVIOR",
+      "status": "PASS"
+    },
+    {
+      "id": "UX-015",
+      "kind": "BEHAVIOR",
+      "status": "PASS"
+    },
+    {
+      "id": "UX-016",
+      "kind": "BEHAVIOR",
+      "status": "PASS"
+    },
+    {
+      "id": "UX-017",
+      "kind": "BEHAVIOR",
+      "status": "PASS"
+    },
+    {
+      "id": "UX-018",
+      "kind": "BEHAVIOR",
+      "status": "PASS"
+    },
+    {
+      "id": "UX-019",
+      "kind": "BEHAVIOR",
+      "status": "PASS"
+    },
+    {
+      "id": "UX-TOBACCO-5",
+      "kind": "BEHAVIOR",
+      "status": "PASS"
+    },
+    {
+      "id": "UX-TOBACCO-10",
+      "kind": "BEHAVIOR",
+      "status": "PASS"
+    },
+    {
+      "id": "UX-TOBACCO-20",
+      "kind": "BEHAVIOR",
+      "status": "PASS"
+    },
+    {
+      "id": "UX-GROCERIES-25",
+      "kind": "BEHAVIOR",
+      "status": "PASS"
+    },
+    {
+      "id": "UX-GROCERIES-50",
+      "kind": "BEHAVIOR",
+      "status": "PASS"
+    },
+    {
+      "id": "UX-GROCERIES-100",
+      "kind": "BEHAVIOR",
+      "status": "PASS"
+    },
+    {
+      "id": "UX-020",
+      "kind": "BEHAVIOR",
+      "status": "PASS"
+    },
+    {
+      "id": "UX-021",
+      "kind": "BEHAVIOR",
+      "status": "PASS"
+    },
+    {
+      "id": "UX-022",
+      "kind": "BEHAVIOR",
+      "status": "PASS"
+    },
+    {
+      "id": "UX-023",
+      "kind": "BEHAVIOR",
+      "status": "PASS"
+    },
+    {
+      "id": "UX-024",
+      "kind": "BEHAVIOR",
+      "status": "PASS"
+    },
+    {
+      "id": "UX-025",
+      "kind": "BEHAVIOR",
+      "status": "PASS"
+    },
+    {
+      "id": "UX-026",
+      "kind": "STATIC",
+      "status": "PASS"
+    },
+    {
+      "id": "UX-027",
+      "kind": "BEHAVIOR",
+      "status": "PASS"
+    },
+    {
+      "id": "UX-028",
+      "kind": "BEHAVIOR",
+      "status": "PASS"
+    },
+    {
+      "id": "UX-029",
+      "kind": "BEHAVIOR",
+      "status": "PASS"
+    },
+    {
+      "id": "UX-030",
+      "kind": "BEHAVIOR",
+      "status": "PASS"
+    },
+    {
+      "id": "UX-031",
+      "kind": "BEHAVIOR",
+      "status": "PASS"
+    },
+    {
+      "id": "UX-032",
+      "kind": "BEHAVIOR",
+      "status": "PASS"
+    },
+    {
+      "id": "UX-033",
+      "kind": "BEHAVIOR",
+      "status": "PASS"
+    },
+    {
+      "id": "UX-034",
+      "kind": "BEHAVIOR",
+      "status": "PASS"
+    },
+    {
+      "id": "UX-035",
+      "kind": "BEHAVIOR",
+      "status": "PASS"
+    },
+    {
+      "id": "UX-036",
+      "kind": "BEHAVIOR",
+      "status": "PASS"
+    },
+    {
+      "id": "UX-037",
+      "kind": "BEHAVIOR",
+      "status": "PASS"
+    },
+    {
+      "id": "UX-038",
+      "kind": "BEHAVIOR",
+      "status": "PASS"
+    },
+    {
+      "id": "UX-039",
+      "kind": "BEHAVIOR",
+      "status": "PASS"
+    },
+    {
+      "id": "UX-040",
+      "kind": "BEHAVIOR",
+      "status": "PASS"
+    },
+    {
+      "id": "UX-041",
+      "kind": "BEHAVIOR",
+      "status": "PASS"
+    },
+    {
+      "id": "UX-042",
+      "kind": "BEHAVIOR",
+      "status": "PASS"
+    },
+    {
+      "id": "UX-043",
+      "kind": "BEHAVIOR",
+      "status": "PASS"
+    },
+    {
+      "id": "UX-044",
+      "kind": "BEHAVIOR",
+      "status": "PASS"
+    },
+    {
+      "id": "UX-045",
+      "kind": "BEHAVIOR",
+      "status": "PASS"
+    },
+    {
+      "id": "UX-046",
+      "kind": "STATIC",
+      "status": "PASS"
+    },
+    {
+      "id": "UX-047",
+      "kind": "BEHAVIOR",
+      "status": "PASS"
+    },
+    {
+      "id": "UX-048",
+      "kind": "BEHAVIOR",
+      "status": "PASS"
+    },
+    {
+      "id": "UX-049",
+      "kind": "STATIC",
+      "status": "PASS"
+    },
+    {
+      "id": "UX-050",
+      "kind": "BEHAVIOR",
+      "status": "PASS"
+    },
+    {
+      "id": "UX-051",
+      "kind": "BEHAVIOR",
+      "status": "PASS"
+    }
+  ]
+}

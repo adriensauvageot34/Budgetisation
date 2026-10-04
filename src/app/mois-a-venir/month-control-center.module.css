@@ -1,17 +1,39 @@
 .frame { align-self: center; width: min(1260px, 94vw) !important; height: 88dvh; max-height: 88dvh !important; border-radius: 28px !important; background: linear-gradient(135deg, #fbf9ff, #fffdfa) !important; box-shadow: 0 32px 100px #44307030, inset 0 1px 0 #fff; }
 .frame :global(.ui-overlay-content) { flex: 1; display: flex; padding: 0; overflow: hidden; }
-.layout { display: grid; grid-template-columns: 210px minmax(0, 1fr); width: 100%; min-height: 0; }
+.layout { display: grid; grid-template-columns: 228px minmax(0, 1fr); width: 100%; min-height: 0; }
 .sidebar { display: flex; flex-direction: column; gap: 8px; padding: 22px 16px; border-right: 1px solid #ddd2f07a; background: #f2edf969; }
 .tab { border-radius: 16px; padding: 13px 15px; text-align: left; font-size: 14px; font-weight: 700; color: #554c65; transition: background 160ms, color 160ms; }
 .tab[aria-current="page"] { background: #e7dbfa; color: #51278e; box-shadow: inset 0 1px 0 #fff, 0 4px 14px #7141ab12; }
 .tab:focus-visible { outline: 2px solid #7c3aed; outline-offset: 3px; }
 .content { min-width: 0; overflow: auto; overscroll-behavior: contain; padding: 24px 28px 36px; scroll-behavior: smooth; }
-.content [data-control-focus] { scroll-margin-top: 18px; }
+.content [data-control-focus] { scroll-margin-top: 64px; }
 .content [data-control-highlight="true"] { outline: 2px solid #ab87db; outline-offset: 5px; border-radius: 16px; }
-.status { position: sticky; top: -24px; z-index: 2; background: #faf7fff5; padding: 10px 14px; border-radius: 14px; margin-bottom: 16px; font-size: 14px; }
+.status { position: sticky; top: 23px; z-index: 3; background: #faf7fff5; padding: 10px 14px; border-radius: 14px; margin-bottom: 16px; font-size: 14px; }
 .compare { border-collapse: separate; border-spacing: 0; width: 100%; font-size: 14px; }
 .compare th, .compare td { padding: 10px 12px; border-bottom: 1px solid #e6deef; text-align: right; font-variant-numeric: tabular-nums; }
 .compare th:first-child { text-align: left; }
 @media (prefers-reduced-motion: reduce) { .content { scroll-behavior: auto; } .tab { transition: none; } }
 
 .frame :global(.ui-overlay-header) { grid-template-columns: minmax(0, 1fr) auto; }
+
+.controlTrigger { position: relative; overflow: visible !important; white-space: nowrap; background-color: #fff9; }
+.notificationBadge { position: absolute; top: -6px; right: -6px; display: grid; place-items: center; min-width: 21px; height: 21px; padding: 0 4px; border-radius: 50%; background: #7250b2; color: white; border: 2px solid #faf7ff; font-size: 11px; line-height: 1; font-weight: 800; box-shadow: 0 2px 6px #5c32802b; }
+.contextSummary { position: sticky; top: -24px; z-index: 2; display: flex; align-items: center; gap: 24px; margin: -24px -28px 24px; padding: 13px 28px; border-bottom: 1px solid #e6dfef; background: #fbf9fff5; color: #655975; font-size: 13px; }
+.contextSummary strong { color: #472768; }
+.reading { max-width: 68ch; }
+.overview { display: flex; flex-direction: column; gap: 22px; }
+.causeRow { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 11px 0; }
+.textAction { color: #623ba0; font-size: 14px; font-weight: 700; white-space: nowrap; text-decoration: underline; text-underline-offset: 3px; }
+.textAction:disabled { opacity: .5; }
+.knowledge { padding: 12px 16px; border-radius: 16px; background: #f0edf65c; }
+.objectives { padding: 18px 20px; border-radius: 20px; border: 1px solid #e9e1ef; background: #ffffff5c; }
+.objectiveRow { padding: 12px 0; border-bottom: 1px solid #e8e0ee; }
+.simulator { position: relative; padding: 22px; }
+.shortcutGroup { padding: 12px; border: 1px solid #e8def3; border-radius: 17px; background: #faf7ff99; }
+.shortcut { display: block; width: 100%; border-radius: 12px; padding: 10px 12px; text-align: left; font-size: 14px; font-weight: 600; background: #fff9; border: 1px solid #e8def3; color: #473657; transition: background 160ms ease; }
+.shortcut:hover { background: #eee4ff; }
+.shortcut:disabled { opacity: .5; }
+.shortcut:focus-visible, .textAction:focus-visible { outline: 2px solid #7c3aed; outline-offset: 3px; }
+.result { margin-top: 20px; padding: 18px; border-radius: 18px; background: #eee8fb9c; }
+.applyFooter { position: sticky; bottom: -36px; z-index: 3; display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 16px 0 16px; margin-top: 22px; border-top: 1px solid #e8dfef; background: #fbf8fffa; box-shadow: 0 -12px 20px #fbf8ffcc; }
+@media (prefers-reduced-motion: reduce) { .shortcut { transition: none; } }
