@@ -1,0 +1,2851 @@
+{
+  "headBefore": "57fc3d2d9e49312046ca5ffe3fc8517c4261ad08",
+  "branch": "main",
+  "migrationRequired": false,
+  "commands": [
+    {
+      "command": "node scripts/check-phase2-month-control-center-human-ux.mjs",
+      "exitCode": 0,
+      "status": "PASS"
+    },
+    {
+      "command": "node scripts/check-phase2-month-control-center-ux.mjs",
+      "exitCode": 0,
+      "status": "PASS"
+    },
+    {
+      "command": "node scripts/check-phase2-month-control-center.mjs",
+      "exitCode": 0,
+      "status": "PASS"
+    },
+    {
+      "command": "node scripts/check-phase2-category-targets-choices.mjs",
+      "exitCode": 0,
+      "status": "PASS"
+    },
+    {
+      "command": "node scripts/check-phase2-savings-allocations.mjs",
+      "exitCode": 0,
+      "status": "PASS"
+    },
+    {
+      "command": "node scripts/check-phase2-benefit-wallets.mjs",
+      "exitCode": 0,
+      "status": "PASS"
+    },
+    {
+      "command": "node scripts/check-phase2-month-narrative.mjs",
+      "exitCode": 0,
+      "status": "PASS"
+    },
+    {
+      "command": "node scripts/check-phase2-october-contract.mjs",
+      "exitCode": 0,
+      "status": "PASS"
+    },
+    {
+      "command": "node scripts/check-phase2-planned-finance.mjs",
+      "exitCode": 0,
+      "status": "PASS"
+    },
+    {
+      "command": "node scripts/check-phase2-planned-reliability.mjs",
+      "exitCode": 0,
+      "status": "PASS"
+    },
+    {
+      "command": "node scripts/check-phase2-planned-guards.mjs",
+      "exitCode": 0,
+      "status": "PASS"
+    },
+    {
+      "command": "node scripts/check-phase2-project-wizard.mjs",
+      "exitCode": 0,
+      "status": "PASS"
+    },
+    {
+      "command": "node scripts/check-phase2-forecast-temporal-mode.mjs",
+      "exitCode": 0,
+      "status": "PASS"
+    },
+    {
+      "command": "node scripts/check-phase2-temporal-forecast.mjs",
+      "exitCode": 0,
+      "status": "PASS"
+    },
+    {
+      "command": "node scripts/check-global-v2-frontend.mjs",
+      "exitCode": 0,
+      "status": "PASS"
+    },
+    {
+      "command": "node scripts/check-architecture-imports.mjs",
+      "exitCode": 0,
+      "status": "PASS"
+    },
+    {
+      "command": "node scripts/check-phase2-month-control-center-choices-ux.mjs",
+      "exitCode": 0,
+      "status": "PASS"
+    },
+    {
+      "command": "node scripts/check-phase2-month-decision-engine.mjs",
+      "exitCode": 1,
+      "status": "SAME_PREEXISTING_FAILURE"
+    },
+    {
+      "command": "node node_modules/typescript/bin/tsc --noEmit",
+      "exitCode": 0,
+      "status": "PASS"
+    },
+    {
+      "command": "node node_modules/next/dist/bin/next build",
+      "exitCode": 0,
+      "status": "PASS"
+    }
+  ],
+  "choicesUxTests": [
+    {
+      "id": "CHOICES-UX-001",
+      "kind": "SSR",
+      "status": "PASS"
+    },
+    {
+      "id": "CHOICES-UX-002",
+      "kind": "SSR",
+      "status": "PASS"
+    },
+    {
+      "id": "CHOICES-UX-003",
+      "kind": "SSR",
+      "status": "PASS"
+    },
+    {
+      "id": "CHOICES-UX-004",
+      "kind": "SSR",
+      "status": "PASS"
+    },
+    {
+      "id": "CHOICES-UX-005",
+      "kind": "SSR",
+      "status": "PASS"
+    },
+    {
+      "id": "CHOICES-UX-006",
+      "kind": "STATIC",
+      "status": "PASS"
+    },
+    {
+      "id": "CHOICES-UX-010",
+      "kind": "SSR",
+      "status": "PASS"
+    },
+    {
+      "id": "CHOICES-UX-011",
+      "kind": "SSR",
+      "status": "PASS"
+    },
+    {
+      "id": "CHOICES-UX-012",
+      "kind": "SSR",
+      "status": "PASS"
+    },
+    {
+      "id": "CHOICES-UX-013",
+      "kind": "SSR",
+      "status": "PASS"
+    },
+    {
+      "id": "CHOICES-UX-014",
+      "kind": "SSR",
+      "status": "PASS"
+    },
+    {
+      "id": "CHOICES-UX-015",
+      "kind": "SSR",
+      "status": "PASS"
+    },
+    {
+      "id": "CHOICES-UX-016",
+      "kind": "SSR",
+      "status": "PASS"
+    },
+    {
+      "id": "CHOICES-UX-020",
+      "kind": "BEHAVIOR",
+      "status": "PASS"
+    },
+    {
+      "id": "CHOICES-UX-021",
+      "kind": "SSR",
+      "status": "PASS"
+    },
+    {
+      "id": "CHOICES-UX-022",
+      "kind": "SSR",
+      "status": "PASS"
+    },
+    {
+      "id": "CHOICES-UX-023",
+      "kind": "BEHAVIOR",
+      "status": "PASS"
+    },
+    {
+      "id": "CHOICES-UX-024",
+      "kind": "SSR_STATIC",
+      "status": "PASS"
+    },
+    {
+      "id": "CHOICES-UX-025",
+      "kind": "SSR",
+      "status": "PASS"
+    },
+    {
+      "id": "CHOICES-UX-026",
+      "kind": "BEHAVIOR",
+      "status": "PASS"
+    },
+    {
+      "id": "CHOICES-UX-027",
+      "kind": "BEHAVIOR",
+      "status": "PASS"
+    },
+    {
+      "id": "CHOICES-UX-030",
+      "kind": "SSR",
+      "status": "PASS"
+    },
+    {
+      "id": "CHOICES-UX-031",
+      "kind": "SSR",
+      "status": "PASS"
+    },
+    {
+      "id": "CHOICES-UX-032",
+      "kind": "SSR",
+      "status": "PASS"
+    },
+    {
+      "id": "CHOICES-UX-033",
+      "kind": "BEHAVIOR",
+      "status": "PASS"
+    },
+    {
+      "id": "CHOICES-UX-034",
+      "kind": "BEHAVIOR",
+      "status": "PASS"
+    },
+    {
+      "id": "CHOICES-UX-040",
+      "kind": "SSR",
+      "status": "PASS"
+    },
+    {
+      "id": "CHOICES-UX-041",
+      "kind": "STATIC",
+      "status": "PASS"
+    },
+    {
+      "id": "CHOICES-UX-042",
+      "kind": "SSR",
+      "status": "PASS"
+    },
+    {
+      "id": "CHOICES-UX-043",
+      "kind": "SSR",
+      "status": "PASS"
+    },
+    {
+      "id": "CHOICES-UX-044",
+      "kind": "SSR",
+      "status": "PASS"
+    },
+    {
+      "id": "CHOICES-UX-045",
+      "kind": "SSR",
+      "status": "PASS"
+    },
+    {
+      "id": "CHOICES-UX-046",
+      "kind": "SSR",
+      "status": "PASS"
+    },
+    {
+      "id": "CHOICES-UX-047",
+      "kind": "SSR_STATIC",
+      "status": "PASS"
+    },
+    {
+      "id": "CHOICES-UX-048",
+      "kind": "SSR",
+      "status": "PASS"
+    },
+    {
+      "id": "CHOICES-UX-049",
+      "kind": "BEHAVIOR",
+      "status": "PASS"
+    },
+    {
+      "id": "CHOICES-UX-050",
+      "kind": "BEHAVIOR",
+      "status": "PASS"
+    },
+    {
+      "id": "CHOICES-UX-055",
+      "kind": "STATIC",
+      "status": "PASS"
+    },
+    {
+      "id": "CHOICES-UX-056",
+      "kind": "STATIC",
+      "status": "PASS"
+    },
+    {
+      "id": "CHOICES-UX-057",
+      "kind": "STATIC",
+      "status": "PASS"
+    },
+    {
+      "id": "CHOICES-UX-058",
+      "kind": "STATIC",
+      "status": "PASS"
+    },
+    {
+      "id": "CHOICES-UX-060",
+      "kind": "SSR",
+      "status": "PASS"
+    },
+    {
+      "id": "CHOICES-UX-061",
+      "kind": "SSR",
+      "status": "PASS"
+    },
+    {
+      "id": "CHOICES-UX-062",
+      "kind": "STATIC",
+      "status": "PASS"
+    },
+    {
+      "id": "CHOICES-UX-063",
+      "kind": "STATIC",
+      "status": "PASS"
+    },
+    {
+      "id": "CHOICES-UX-064",
+      "kind": "STATIC",
+      "status": "PASS"
+    },
+    {
+      "id": "CHOICES-UX-065",
+      "kind": "BEHAVIOR",
+      "status": "PASS"
+    },
+    {
+      "id": "CHOICES-UX-070",
+      "kind": "SSR",
+      "status": "PASS"
+    },
+    {
+      "id": "CHOICES-UX-071",
+      "kind": "STATIC",
+      "status": "PASS"
+    },
+    {
+      "id": "CHOICES-UX-072",
+      "kind": "STATIC",
+      "status": "PASS"
+    },
+    {
+      "id": "CHOICES-UX-073",
+      "kind": "STATIC",
+      "status": "PASS"
+    },
+    {
+      "id": "CHOICES-UX-074",
+      "kind": "STATIC",
+      "status": "PASS"
+    },
+    {
+      "id": "CHOICES-UX-075",
+      "kind": "STATIC",
+      "status": "PASS"
+    },
+    {
+      "id": "CHOICES-UX-076",
+      "kind": "SSR",
+      "status": "PASS"
+    },
+    {
+      "id": "CHOICES-UX-077",
+      "kind": "SSR",
+      "status": "PASS"
+    },
+    {
+      "id": "CHOICES-UX-078",
+      "kind": "BEHAVIOR",
+      "status": "PASS"
+    },
+    {
+      "id": "CHOICES-UX-079",
+      "kind": "BEHAVIOR",
+      "status": "PASS"
+    },
+    {
+      "id": "CHOICES-UX-080",
+      "kind": "BEHAVIOR",
+      "status": "PASS"
+    },
+    {
+      "id": "CHOICES-UX-081",
+      "kind": "BEHAVIOR",
+      "status": "PASS"
+    },
+    {
+      "id": "CHOICES-UX-082",
+      "kind": "BEHAVIOR",
+      "status": "PASS"
+    },
+    {
+      "id": "CHOICES-UX-083",
+      "kind": "BEHAVIOR",
+      "status": "PASS"
+    },
+    {
+      "id": "CHOICES-UX-084",
+      "kind": "STATIC",
+      "status": "PASS"
+    },
+    {
+      "id": "CHOICES-UX-085",
+      "kind": "BEHAVIOR",
+      "status": "PASS"
+    },
+    {
+      "id": "CHOICES-UX-086",
+      "kind": "BEHAVIOR",
+      "status": "PASS"
+    },
+    {
+      "id": "CHOICES-UX-087",
+      "kind": "BEHAVIOR",
+      "status": "PASS"
+    },
+    {
+      "id": "CHOICES-UX-088",
+      "kind": "BEHAVIOR",
+      "status": "PASS"
+    },
+    {
+      "id": "CHOICES-UX-089",
+      "kind": "BEHAVIOR",
+      "status": "PASS"
+    },
+    {
+      "id": "CHOICES-UX-090",
+      "kind": "STATIC_BROWSER_REGRESSION",
+      "status": "PASS"
+    }
+  ],
+  "browser": {
+    "scope": "Local authenticated browser. Navigation, draft controls, server Preview, wizard until confirmation. Other intentional saves and Apply are fixture-tested, not certified live.",
+    "visualIterations": 4,
+    "requiredViews": [
+      "root",
+      "reperes",
+      "courses",
+      "global-goal",
+      "simulation-step1",
+      "simulation-step2",
+      "simulation-result-one",
+      "simulation-add-second",
+      "simulation-result-two",
+      "adjustments",
+      "savings-index",
+      "new-saving-step1",
+      "new-saving-step2",
+      "new-saving-step3",
+      "new-saving-step4",
+      "existing-saving-amount"
+    ],
+    "viewports": [
+      "1728x900",
+      "1920x1080",
+      "1440x900"
+    ],
+    "measurementCount": 112,
+    "contentClipped": false,
+    "allMeasuredCtasVisible": true,
+    "measurements": [
+      {
+        "view": "reperes",
+        "viewport": "1728x900",
+        "noScroll": true,
+        "ctaVisible": true,
+        "clipped": [],
+        "heights": [
+          [
+            790,
+            790
+          ],
+          [
+            707,
+            707
+          ],
+          [
+            659,
+            659
+          ]
+        ]
+      },
+      {
+        "view": "courses",
+        "viewport": "1728x900",
+        "noScroll": true,
+        "ctaVisible": true,
+        "clipped": [],
+        "heights": [
+          [
+            790,
+            790
+          ],
+          [
+            707,
+            707
+          ],
+          [
+            659,
+            659
+          ]
+        ]
+      },
+      {
+        "view": "courses-minus20",
+        "viewport": "1728x900",
+        "noScroll": true,
+        "ctaVisible": true,
+        "clipped": [],
+        "heights": [
+          [
+            790,
+            790
+          ],
+          [
+            707,
+            707
+          ],
+          [
+            659,
+            659
+          ]
+        ]
+      },
+      {
+        "view": "courses-exact",
+        "viewport": "1728x900",
+        "noScroll": true,
+        "ctaVisible": true,
+        "clipped": [],
+        "heights": [
+          [
+            790,
+            790
+          ],
+          [
+            707,
+            707
+          ],
+          [
+            659,
+            659
+          ]
+        ]
+      },
+      {
+        "view": "global-goal",
+        "viewport": "1728x900",
+        "noScroll": true,
+        "ctaVisible": true,
+        "clipped": [],
+        "heights": [
+          [
+            790,
+            790
+          ],
+          [
+            707,
+            707
+          ],
+          [
+            659,
+            659
+          ]
+        ]
+      },
+      {
+        "view": "global-goal-plus10",
+        "viewport": "1728x900",
+        "noScroll": true,
+        "ctaVisible": true,
+        "clipped": [],
+        "heights": [
+          [
+            790,
+            790
+          ],
+          [
+            707,
+            707
+          ],
+          [
+            659,
+            659
+          ]
+        ]
+      },
+      {
+        "view": "simulation-step1",
+        "viewport": "1728x900",
+        "noScroll": true,
+        "ctaVisible": true,
+        "clipped": [],
+        "heights": [
+          [
+            790,
+            790
+          ],
+          [
+            707,
+            707
+          ],
+          [
+            659,
+            659
+          ]
+        ]
+      },
+      {
+        "view": "simulation-step2",
+        "viewport": "1728x900",
+        "noScroll": true,
+        "ctaVisible": true,
+        "clipped": [],
+        "heights": [
+          [
+            790,
+            790
+          ],
+          [
+            707,
+            707
+          ],
+          [
+            659,
+            659
+          ]
+        ]
+      },
+      {
+        "view": "simulation-result-one",
+        "viewport": "1728x900",
+        "noScroll": true,
+        "ctaVisible": true,
+        "clipped": [],
+        "heights": [
+          [
+            790,
+            790
+          ],
+          [
+            707,
+            707
+          ],
+          [
+            659,
+            659
+          ]
+        ]
+      },
+      {
+        "view": "simulation-add-second",
+        "viewport": "1728x900",
+        "noScroll": true,
+        "ctaVisible": true,
+        "clipped": [],
+        "heights": [
+          [
+            790,
+            790
+          ],
+          [
+            707,
+            707
+          ],
+          [
+            659,
+            659
+          ]
+        ]
+      },
+      {
+        "view": "root",
+        "viewport": "1728x900",
+        "noScroll": true,
+        "ctaVisible": true,
+        "clipped": [],
+        "heights": [
+          [
+            790,
+            790
+          ],
+          [
+            707,
+            707
+          ],
+          [
+            490,
+            490
+          ]
+        ]
+      },
+      {
+        "view": "root",
+        "viewport": "1920x1080",
+        "noScroll": true,
+        "ctaVisible": true,
+        "clipped": [],
+        "heights": [
+          [
+            790,
+            790
+          ],
+          [
+            707,
+            707
+          ],
+          [
+            490,
+            490
+          ]
+        ]
+      },
+      {
+        "view": "root",
+        "viewport": "1440x900",
+        "noScroll": true,
+        "ctaVisible": true,
+        "clipped": [],
+        "heights": [
+          [
+            790,
+            790
+          ],
+          [
+            707,
+            707
+          ],
+          [
+            490,
+            490
+          ]
+        ]
+      },
+      {
+        "view": "adjustments",
+        "viewport": "1728x900",
+        "noScroll": true,
+        "ctaVisible": true,
+        "clipped": [],
+        "heights": [
+          [
+            790,
+            790
+          ],
+          [
+            707,
+            707
+          ],
+          [
+            659,
+            659
+          ]
+        ]
+      },
+      {
+        "view": "adjustments",
+        "viewport": "1920x1080",
+        "noScroll": true,
+        "ctaVisible": true,
+        "clipped": [],
+        "heights": [
+          [
+            790,
+            790
+          ],
+          [
+            707,
+            707
+          ],
+          [
+            659,
+            659
+          ]
+        ]
+      },
+      {
+        "view": "adjustments",
+        "viewport": "1440x900",
+        "noScroll": true,
+        "ctaVisible": true,
+        "clipped": [],
+        "heights": [
+          [
+            790,
+            790
+          ],
+          [
+            707,
+            707
+          ],
+          [
+            659,
+            659
+          ]
+        ]
+      },
+      {
+        "view": "savings-index",
+        "viewport": "1728x900",
+        "noScroll": true,
+        "ctaVisible": true,
+        "clipped": [],
+        "heights": [
+          [
+            790,
+            790
+          ],
+          [
+            707,
+            707
+          ],
+          [
+            659,
+            659
+          ]
+        ]
+      },
+      {
+        "view": "savings-index",
+        "viewport": "1920x1080",
+        "noScroll": true,
+        "ctaVisible": true,
+        "clipped": [],
+        "heights": [
+          [
+            790,
+            790
+          ],
+          [
+            707,
+            707
+          ],
+          [
+            659,
+            659
+          ]
+        ]
+      },
+      {
+        "view": "savings-index",
+        "viewport": "1440x900",
+        "noScroll": true,
+        "ctaVisible": true,
+        "clipped": [],
+        "heights": [
+          [
+            790,
+            790
+          ],
+          [
+            707,
+            707
+          ],
+          [
+            659,
+            659
+          ]
+        ]
+      },
+      {
+        "view": "new-saving-step1",
+        "viewport": "1728x900",
+        "noScroll": true,
+        "ctaVisible": true,
+        "clipped": [],
+        "heights": [
+          [
+            790,
+            790
+          ],
+          [
+            707,
+            707
+          ],
+          [
+            659,
+            659
+          ]
+        ]
+      },
+      {
+        "view": "new-saving-step1",
+        "viewport": "1920x1080",
+        "noScroll": true,
+        "ctaVisible": true,
+        "clipped": [],
+        "heights": [
+          [
+            790,
+            790
+          ],
+          [
+            707,
+            707
+          ],
+          [
+            659,
+            659
+          ]
+        ]
+      },
+      {
+        "view": "new-saving-step1",
+        "viewport": "1440x900",
+        "noScroll": true,
+        "ctaVisible": true,
+        "clipped": [],
+        "heights": [
+          [
+            790,
+            790
+          ],
+          [
+            707,
+            707
+          ],
+          [
+            659,
+            659
+          ]
+        ]
+      },
+      {
+        "view": "new-saving-step2",
+        "viewport": "1728x900",
+        "noScroll": true,
+        "ctaVisible": true,
+        "clipped": [],
+        "heights": [
+          [
+            790,
+            790
+          ],
+          [
+            707,
+            707
+          ],
+          [
+            659,
+            659
+          ]
+        ]
+      },
+      {
+        "view": "new-saving-step2",
+        "viewport": "1920x1080",
+        "noScroll": true,
+        "ctaVisible": true,
+        "clipped": [],
+        "heights": [
+          [
+            790,
+            790
+          ],
+          [
+            707,
+            707
+          ],
+          [
+            659,
+            659
+          ]
+        ]
+      },
+      {
+        "view": "new-saving-step2",
+        "viewport": "1440x900",
+        "noScroll": true,
+        "ctaVisible": true,
+        "clipped": [],
+        "heights": [
+          [
+            790,
+            790
+          ],
+          [
+            707,
+            707
+          ],
+          [
+            659,
+            659
+          ]
+        ]
+      },
+      {
+        "view": "new-saving-step3",
+        "viewport": "1728x900",
+        "noScroll": true,
+        "ctaVisible": true,
+        "clipped": [],
+        "heights": [
+          [
+            790,
+            790
+          ],
+          [
+            707,
+            707
+          ],
+          [
+            659,
+            659
+          ]
+        ]
+      },
+      {
+        "view": "new-saving-step3",
+        "viewport": "1920x1080",
+        "noScroll": true,
+        "ctaVisible": true,
+        "clipped": [],
+        "heights": [
+          [
+            790,
+            790
+          ],
+          [
+            707,
+            707
+          ],
+          [
+            659,
+            659
+          ]
+        ]
+      },
+      {
+        "view": "new-saving-step3",
+        "viewport": "1440x900",
+        "noScroll": true,
+        "ctaVisible": true,
+        "clipped": [],
+        "heights": [
+          [
+            790,
+            790
+          ],
+          [
+            707,
+            707
+          ],
+          [
+            659,
+            659
+          ]
+        ]
+      },
+      {
+        "view": "new-saving-step4",
+        "viewport": "1728x900",
+        "noScroll": true,
+        "ctaVisible": true,
+        "clipped": [],
+        "heights": [
+          [
+            790,
+            790
+          ],
+          [
+            707,
+            707
+          ],
+          [
+            659,
+            659
+          ]
+        ]
+      },
+      {
+        "view": "new-saving-step4",
+        "viewport": "1920x1080",
+        "noScroll": true,
+        "ctaVisible": true,
+        "clipped": [],
+        "heights": [
+          [
+            790,
+            790
+          ],
+          [
+            707,
+            707
+          ],
+          [
+            659,
+            659
+          ]
+        ]
+      },
+      {
+        "view": "new-saving-step4",
+        "viewport": "1440x900",
+        "noScroll": true,
+        "ctaVisible": true,
+        "clipped": [],
+        "heights": [
+          [
+            790,
+            790
+          ],
+          [
+            707,
+            707
+          ],
+          [
+            659,
+            659
+          ]
+        ]
+      },
+      {
+        "view": "new-saving-date",
+        "viewport": "1728x900",
+        "noScroll": true,
+        "ctaVisible": true,
+        "clipped": [],
+        "heights": [
+          [
+            790,
+            790
+          ],
+          [
+            707,
+            707
+          ],
+          [
+            659,
+            659
+          ]
+        ]
+      },
+      {
+        "view": "new-saving-date",
+        "viewport": "1920x1080",
+        "noScroll": true,
+        "ctaVisible": true,
+        "clipped": [],
+        "heights": [
+          [
+            790,
+            790
+          ],
+          [
+            707,
+            707
+          ],
+          [
+            659,
+            659
+          ]
+        ]
+      },
+      {
+        "view": "new-saving-date",
+        "viewport": "1440x900",
+        "noScroll": true,
+        "ctaVisible": true,
+        "clipped": [],
+        "heights": [
+          [
+            790,
+            790
+          ],
+          [
+            707,
+            707
+          ],
+          [
+            659,
+            659
+          ]
+        ]
+      },
+      {
+        "view": "new-saving-confirmation",
+        "viewport": "1728x900",
+        "noScroll": true,
+        "ctaVisible": true,
+        "clipped": [],
+        "heights": [
+          [
+            790,
+            790
+          ],
+          [
+            707,
+            707
+          ],
+          [
+            659,
+            659
+          ]
+        ]
+      },
+      {
+        "view": "new-saving-confirmation",
+        "viewport": "1920x1080",
+        "noScroll": true,
+        "ctaVisible": true,
+        "clipped": [],
+        "heights": [
+          [
+            790,
+            790
+          ],
+          [
+            707,
+            707
+          ],
+          [
+            659,
+            659
+          ]
+        ]
+      },
+      {
+        "view": "new-saving-confirmation",
+        "viewport": "1440x900",
+        "noScroll": true,
+        "ctaVisible": true,
+        "clipped": [],
+        "heights": [
+          [
+            790,
+            790
+          ],
+          [
+            707,
+            707
+          ],
+          [
+            659,
+            659
+          ]
+        ]
+      },
+      {
+        "view": "existing-saving-amount",
+        "viewport": "1728x900",
+        "noScroll": true,
+        "ctaVisible": true,
+        "clipped": [],
+        "heights": [
+          [
+            790,
+            790
+          ],
+          [
+            707,
+            707
+          ],
+          [
+            659,
+            659
+          ]
+        ]
+      },
+      {
+        "view": "existing-saving-amount",
+        "viewport": "1920x1080",
+        "noScroll": true,
+        "ctaVisible": true,
+        "clipped": [],
+        "heights": [
+          [
+            790,
+            790
+          ],
+          [
+            707,
+            707
+          ],
+          [
+            659,
+            659
+          ]
+        ]
+      },
+      {
+        "view": "existing-saving-amount",
+        "viewport": "1440x900",
+        "noScroll": true,
+        "ctaVisible": true,
+        "clipped": [],
+        "heights": [
+          [
+            790,
+            790
+          ],
+          [
+            707,
+            707
+          ],
+          [
+            659,
+            659
+          ]
+        ]
+      },
+      {
+        "view": "existing-saving-minus10",
+        "viewport": "1728x900",
+        "noScroll": true,
+        "ctaVisible": true,
+        "clipped": [],
+        "heights": [
+          [
+            790,
+            790
+          ],
+          [
+            707,
+            707
+          ],
+          [
+            659,
+            659
+          ]
+        ]
+      },
+      {
+        "view": "existing-saving-minus10",
+        "viewport": "1920x1080",
+        "noScroll": true,
+        "ctaVisible": true,
+        "clipped": [],
+        "heights": [
+          [
+            790,
+            790
+          ],
+          [
+            707,
+            707
+          ],
+          [
+            659,
+            659
+          ]
+        ]
+      },
+      {
+        "view": "existing-saving-minus10",
+        "viewport": "1440x900",
+        "noScroll": true,
+        "ctaVisible": true,
+        "clipped": [],
+        "heights": [
+          [
+            790,
+            790
+          ],
+          [
+            707,
+            707
+          ],
+          [
+            659,
+            659
+          ]
+        ]
+      },
+      {
+        "view": "existing-saving-date",
+        "viewport": "1728x900",
+        "noScroll": true,
+        "ctaVisible": true,
+        "clipped": [],
+        "heights": [
+          [
+            790,
+            790
+          ],
+          [
+            707,
+            707
+          ],
+          [
+            659,
+            659
+          ]
+        ]
+      },
+      {
+        "view": "existing-saving-date",
+        "viewport": "1920x1080",
+        "noScroll": true,
+        "ctaVisible": true,
+        "clipped": [],
+        "heights": [
+          [
+            790,
+            790
+          ],
+          [
+            707,
+            707
+          ],
+          [
+            659,
+            659
+          ]
+        ]
+      },
+      {
+        "view": "existing-saving-date",
+        "viewport": "1440x900",
+        "noScroll": true,
+        "ctaVisible": true,
+        "clipped": [],
+        "heights": [
+          [
+            790,
+            790
+          ],
+          [
+            707,
+            707
+          ],
+          [
+            659,
+            659
+          ]
+        ]
+      },
+      {
+        "view": "reperes",
+        "viewport": "1920x1080",
+        "noScroll": true,
+        "ctaVisible": true,
+        "clipped": [],
+        "heights": [
+          [
+            790,
+            790
+          ],
+          [
+            707,
+            707
+          ],
+          [
+            659,
+            659
+          ]
+        ]
+      },
+      {
+        "view": "reperes",
+        "viewport": "1440x900",
+        "noScroll": true,
+        "ctaVisible": true,
+        "clipped": [],
+        "heights": [
+          [
+            790,
+            790
+          ],
+          [
+            707,
+            707
+          ],
+          [
+            659,
+            659
+          ]
+        ]
+      },
+      {
+        "view": "courses",
+        "viewport": "1920x1080",
+        "noScroll": true,
+        "ctaVisible": true,
+        "clipped": [],
+        "heights": [
+          [
+            790,
+            790
+          ],
+          [
+            707,
+            707
+          ],
+          [
+            659,
+            659
+          ]
+        ]
+      },
+      {
+        "view": "courses",
+        "viewport": "1440x900",
+        "noScroll": true,
+        "ctaVisible": true,
+        "clipped": [],
+        "heights": [
+          [
+            790,
+            790
+          ],
+          [
+            707,
+            707
+          ],
+          [
+            659,
+            659
+          ]
+        ]
+      },
+      {
+        "view": "courses-minus20",
+        "viewport": "1920x1080",
+        "noScroll": true,
+        "ctaVisible": true,
+        "clipped": [],
+        "heights": [
+          [
+            790,
+            790
+          ],
+          [
+            707,
+            707
+          ],
+          [
+            659,
+            659
+          ]
+        ]
+      },
+      {
+        "view": "courses-minus20",
+        "viewport": "1440x900",
+        "noScroll": true,
+        "ctaVisible": true,
+        "clipped": [],
+        "heights": [
+          [
+            790,
+            790
+          ],
+          [
+            707,
+            707
+          ],
+          [
+            659,
+            659
+          ]
+        ]
+      },
+      {
+        "view": "global-goal",
+        "viewport": "1920x1080",
+        "noScroll": true,
+        "ctaVisible": true,
+        "clipped": [],
+        "heights": [
+          [
+            790,
+            790
+          ],
+          [
+            707,
+            707
+          ],
+          [
+            659,
+            659
+          ]
+        ]
+      },
+      {
+        "view": "global-goal",
+        "viewport": "1440x900",
+        "noScroll": true,
+        "ctaVisible": true,
+        "clipped": [],
+        "heights": [
+          [
+            790,
+            790
+          ],
+          [
+            707,
+            707
+          ],
+          [
+            659,
+            659
+          ]
+        ]
+      },
+      {
+        "view": "global-goal-plus10",
+        "viewport": "1920x1080",
+        "noScroll": true,
+        "ctaVisible": true,
+        "clipped": [],
+        "heights": [
+          [
+            790,
+            790
+          ],
+          [
+            707,
+            707
+          ],
+          [
+            659,
+            659
+          ]
+        ]
+      },
+      {
+        "view": "global-goal-plus10",
+        "viewport": "1440x900",
+        "noScroll": true,
+        "ctaVisible": true,
+        "clipped": [],
+        "heights": [
+          [
+            790,
+            790
+          ],
+          [
+            707,
+            707
+          ],
+          [
+            659,
+            659
+          ]
+        ]
+      },
+      {
+        "view": "simulation-step1",
+        "viewport": "1920x1080",
+        "noScroll": true,
+        "ctaVisible": true,
+        "clipped": [],
+        "heights": [
+          [
+            790,
+            790
+          ],
+          [
+            707,
+            707
+          ],
+          [
+            659,
+            659
+          ]
+        ]
+      },
+      {
+        "view": "simulation-step1",
+        "viewport": "1440x900",
+        "noScroll": true,
+        "ctaVisible": true,
+        "clipped": [],
+        "heights": [
+          [
+            790,
+            790
+          ],
+          [
+            707,
+            707
+          ],
+          [
+            659,
+            659
+          ]
+        ]
+      },
+      {
+        "view": "simulation-step2",
+        "viewport": "1920x1080",
+        "noScroll": true,
+        "ctaVisible": true,
+        "clipped": [],
+        "heights": [
+          [
+            790,
+            790
+          ],
+          [
+            707,
+            707
+          ],
+          [
+            659,
+            659
+          ]
+        ]
+      },
+      {
+        "view": "simulation-step2",
+        "viewport": "1440x900",
+        "noScroll": true,
+        "ctaVisible": true,
+        "clipped": [],
+        "heights": [
+          [
+            790,
+            790
+          ],
+          [
+            707,
+            707
+          ],
+          [
+            659,
+            659
+          ]
+        ]
+      },
+      {
+        "view": "simulation-result-one",
+        "viewport": "1920x1080",
+        "noScroll": true,
+        "ctaVisible": true,
+        "clipped": [],
+        "heights": [
+          [
+            790,
+            790
+          ],
+          [
+            707,
+            707
+          ],
+          [
+            659,
+            659
+          ]
+        ]
+      },
+      {
+        "view": "simulation-result-one",
+        "viewport": "1440x900",
+        "noScroll": true,
+        "ctaVisible": true,
+        "clipped": [],
+        "heights": [
+          [
+            790,
+            790
+          ],
+          [
+            707,
+            707
+          ],
+          [
+            659,
+            659
+          ]
+        ]
+      },
+      {
+        "view": "simulation-add-second",
+        "viewport": "1920x1080",
+        "noScroll": true,
+        "ctaVisible": true,
+        "clipped": [],
+        "heights": [
+          [
+            790,
+            790
+          ],
+          [
+            707,
+            707
+          ],
+          [
+            659,
+            659
+          ]
+        ]
+      },
+      {
+        "view": "simulation-add-second",
+        "viewport": "1440x900",
+        "noScroll": true,
+        "ctaVisible": true,
+        "clipped": [],
+        "heights": [
+          [
+            790,
+            790
+          ],
+          [
+            707,
+            707
+          ],
+          [
+            659,
+            659
+          ]
+        ]
+      },
+      {
+        "view": "simulation-result-two",
+        "viewport": "1728x900",
+        "noScroll": true,
+        "ctaVisible": true,
+        "clipped": [],
+        "heights": [
+          [
+            790,
+            790
+          ],
+          [
+            707,
+            707
+          ],
+          [
+            659,
+            659
+          ]
+        ]
+      },
+      {
+        "view": "simulation-result-two",
+        "viewport": "1920x1080",
+        "noScroll": true,
+        "ctaVisible": true,
+        "clipped": [],
+        "heights": [
+          [
+            790,
+            790
+          ],
+          [
+            707,
+            707
+          ],
+          [
+            659,
+            659
+          ]
+        ]
+      },
+      {
+        "view": "simulation-result-two",
+        "viewport": "1440x900",
+        "noScroll": true,
+        "ctaVisible": true,
+        "clipped": [],
+        "heights": [
+          [
+            790,
+            790
+          ],
+          [
+            707,
+            707
+          ],
+          [
+            659,
+            659
+          ]
+        ]
+      },
+      {
+        "view": "simulation-details",
+        "viewport": "1728x900",
+        "noScroll": true,
+        "ctaVisible": true,
+        "clipped": [],
+        "heights": [
+          [
+            790,
+            790
+          ],
+          [
+            707,
+            707
+          ],
+          [
+            659,
+            659
+          ]
+        ]
+      },
+      {
+        "view": "simulation-details",
+        "viewport": "1920x1080",
+        "noScroll": true,
+        "ctaVisible": true,
+        "clipped": [],
+        "heights": [
+          [
+            790,
+            790
+          ],
+          [
+            707,
+            707
+          ],
+          [
+            659,
+            659
+          ]
+        ]
+      },
+      {
+        "view": "simulation-details",
+        "viewport": "1440x900",
+        "noScroll": true,
+        "ctaVisible": true,
+        "clipped": [],
+        "heights": [
+          [
+            790,
+            790
+          ],
+          [
+            707,
+            707
+          ],
+          [
+            659,
+            659
+          ]
+        ]
+      },
+      {
+        "view": "simulation-more",
+        "viewport": "1728x900",
+        "noScroll": true,
+        "ctaVisible": true,
+        "clipped": [],
+        "heights": [
+          [
+            790,
+            790
+          ],
+          [
+            707,
+            707
+          ],
+          [
+            659,
+            659
+          ]
+        ]
+      },
+      {
+        "view": "simulation-more",
+        "viewport": "1920x1080",
+        "noScroll": true,
+        "ctaVisible": true,
+        "clipped": [],
+        "heights": [
+          [
+            790,
+            790
+          ],
+          [
+            707,
+            707
+          ],
+          [
+            659,
+            659
+          ]
+        ]
+      },
+      {
+        "view": "simulation-more",
+        "viewport": "1440x900",
+        "noScroll": true,
+        "ctaVisible": true,
+        "clipped": [],
+        "heights": [
+          [
+            790,
+            790
+          ],
+          [
+            707,
+            707
+          ],
+          [
+            659,
+            659
+          ]
+        ]
+      },
+      {
+        "view": "simulation-estimation",
+        "viewport": "1728x900",
+        "noScroll": true,
+        "ctaVisible": true,
+        "clipped": [],
+        "heights": [
+          [
+            790,
+            790
+          ],
+          [
+            707,
+            707
+          ],
+          [
+            659,
+            659
+          ]
+        ]
+      },
+      {
+        "view": "simulation-estimation",
+        "viewport": "1920x1080",
+        "noScroll": true,
+        "ctaVisible": true,
+        "clipped": [],
+        "heights": [
+          [
+            790,
+            790
+          ],
+          [
+            707,
+            707
+          ],
+          [
+            659,
+            659
+          ]
+        ]
+      },
+      {
+        "view": "simulation-estimation",
+        "viewport": "1440x900",
+        "noScroll": true,
+        "ctaVisible": true,
+        "clipped": [],
+        "heights": [
+          [
+            790,
+            790
+          ],
+          [
+            707,
+            707
+          ],
+          [
+            659,
+            659
+          ]
+        ]
+      },
+      {
+        "view": "adjustment-mode",
+        "viewport": "1728x900",
+        "noScroll": true,
+        "ctaVisible": true,
+        "clipped": [],
+        "heights": [
+          [
+            790,
+            790
+          ],
+          [
+            707,
+            707
+          ],
+          [
+            659,
+            659
+          ]
+        ]
+      },
+      {
+        "view": "adjustment-mode",
+        "viewport": "1920x1080",
+        "noScroll": true,
+        "ctaVisible": true,
+        "clipped": [],
+        "heights": [
+          [
+            790,
+            790
+          ],
+          [
+            707,
+            707
+          ],
+          [
+            659,
+            659
+          ]
+        ]
+      },
+      {
+        "view": "adjustment-mode",
+        "viewport": "1440x900",
+        "noScroll": true,
+        "ctaVisible": true,
+        "clipped": [],
+        "heights": [
+          [
+            790,
+            790
+          ],
+          [
+            707,
+            707
+          ],
+          [
+            659,
+            659
+          ]
+        ]
+      },
+      {
+        "view": "adjustment-lower",
+        "viewport": "1728x900",
+        "noScroll": true,
+        "ctaVisible": true,
+        "clipped": [],
+        "heights": [
+          [
+            790,
+            790
+          ],
+          [
+            707,
+            707
+          ],
+          [
+            659,
+            659
+          ]
+        ]
+      },
+      {
+        "view": "adjustment-lower",
+        "viewport": "1920x1080",
+        "noScroll": true,
+        "ctaVisible": true,
+        "clipped": [],
+        "heights": [
+          [
+            790,
+            790
+          ],
+          [
+            707,
+            707
+          ],
+          [
+            659,
+            659
+          ]
+        ]
+      },
+      {
+        "view": "adjustment-lower",
+        "viewport": "1440x900",
+        "noScroll": true,
+        "ctaVisible": true,
+        "clipped": [],
+        "heights": [
+          [
+            790,
+            790
+          ],
+          [
+            707,
+            707
+          ],
+          [
+            659,
+            659
+          ]
+        ]
+      },
+      {
+        "view": "adjustment-higher",
+        "viewport": "1728x900",
+        "noScroll": true,
+        "ctaVisible": true,
+        "clipped": [],
+        "heights": [
+          [
+            790,
+            790
+          ],
+          [
+            707,
+            707
+          ],
+          [
+            659,
+            659
+          ]
+        ]
+      },
+      {
+        "view": "adjustment-higher",
+        "viewport": "1920x1080",
+        "noScroll": true,
+        "ctaVisible": true,
+        "clipped": [],
+        "heights": [
+          [
+            790,
+            790
+          ],
+          [
+            707,
+            707
+          ],
+          [
+            659,
+            659
+          ]
+        ]
+      },
+      {
+        "view": "adjustment-higher",
+        "viewport": "1440x900",
+        "noScroll": true,
+        "ctaVisible": true,
+        "clipped": [],
+        "heights": [
+          [
+            790,
+            790
+          ],
+          [
+            707,
+            707
+          ],
+          [
+            659,
+            659
+          ]
+        ]
+      },
+      {
+        "view": "adjustment-custom",
+        "viewport": "1728x900",
+        "noScroll": true,
+        "ctaVisible": true,
+        "clipped": [],
+        "heights": [
+          [
+            790,
+            790
+          ],
+          [
+            707,
+            707
+          ],
+          [
+            659,
+            659
+          ]
+        ]
+      },
+      {
+        "view": "adjustment-custom",
+        "viewport": "1920x1080",
+        "noScroll": true,
+        "ctaVisible": true,
+        "clipped": [],
+        "heights": [
+          [
+            790,
+            790
+          ],
+          [
+            707,
+            707
+          ],
+          [
+            659,
+            659
+          ]
+        ]
+      },
+      {
+        "view": "adjustment-custom",
+        "viewport": "1440x900",
+        "noScroll": true,
+        "ctaVisible": true,
+        "clipped": [],
+        "heights": [
+          [
+            790,
+            790
+          ],
+          [
+            707,
+            707
+          ],
+          [
+            659,
+            659
+          ]
+        ]
+      },
+      {
+        "view": "adjustment-none",
+        "viewport": "1728x900",
+        "noScroll": true,
+        "ctaVisible": true,
+        "clipped": [],
+        "heights": [
+          [
+            790,
+            790
+          ],
+          [
+            707,
+            707
+          ],
+          [
+            659,
+            659
+          ]
+        ]
+      },
+      {
+        "view": "adjustment-none",
+        "viewport": "1920x1080",
+        "noScroll": true,
+        "ctaVisible": true,
+        "clipped": [],
+        "heights": [
+          [
+            790,
+            790
+          ],
+          [
+            707,
+            707
+          ],
+          [
+            659,
+            659
+          ]
+        ]
+      },
+      {
+        "view": "adjustment-none",
+        "viewport": "1440x900",
+        "noScroll": true,
+        "ctaVisible": true,
+        "clipped": [],
+        "heights": [
+          [
+            790,
+            790
+          ],
+          [
+            707,
+            707
+          ],
+          [
+            659,
+            659
+          ]
+        ]
+      },
+      {
+        "view": "simulation-custom-how",
+        "viewport": "1728x900",
+        "noScroll": true,
+        "ctaVisible": true,
+        "clipped": [],
+        "heights": [
+          [
+            790,
+            790
+          ],
+          [
+            707,
+            707
+          ],
+          [
+            659,
+            659
+          ]
+        ]
+      },
+      {
+        "view": "simulation-custom-how",
+        "viewport": "1920x1080",
+        "noScroll": true,
+        "ctaVisible": true,
+        "clipped": [],
+        "heights": [
+          [
+            790,
+            790
+          ],
+          [
+            707,
+            707
+          ],
+          [
+            659,
+            659
+          ]
+        ]
+      },
+      {
+        "view": "simulation-custom-how",
+        "viewport": "1440x900",
+        "noScroll": true,
+        "ctaVisible": true,
+        "clipped": [],
+        "heights": [
+          [
+            790,
+            790
+          ],
+          [
+            707,
+            707
+          ],
+          [
+            659,
+            659
+          ]
+        ]
+      },
+      {
+        "view": "simulation-custom-percent",
+        "viewport": "1728x900",
+        "noScroll": true,
+        "ctaVisible": true,
+        "clipped": [],
+        "heights": [
+          [
+            790,
+            790
+          ],
+          [
+            707,
+            707
+          ],
+          [
+            659,
+            659
+          ]
+        ]
+      },
+      {
+        "view": "simulation-custom-percent",
+        "viewport": "1920x1080",
+        "noScroll": true,
+        "ctaVisible": true,
+        "clipped": [],
+        "heights": [
+          [
+            790,
+            790
+          ],
+          [
+            707,
+            707
+          ],
+          [
+            659,
+            659
+          ]
+        ]
+      },
+      {
+        "view": "simulation-custom-percent",
+        "viewport": "1440x900",
+        "noScroll": true,
+        "ctaVisible": true,
+        "clipped": [],
+        "heights": [
+          [
+            790,
+            790
+          ],
+          [
+            707,
+            707
+          ],
+          [
+            659,
+            659
+          ]
+        ]
+      },
+      {
+        "view": "simulation-custom-amount",
+        "viewport": "1728x900",
+        "noScroll": true,
+        "ctaVisible": true,
+        "clipped": [],
+        "heights": [
+          [
+            790,
+            790
+          ],
+          [
+            707,
+            707
+          ],
+          [
+            659,
+            659
+          ]
+        ]
+      },
+      {
+        "view": "simulation-custom-amount",
+        "viewport": "1920x1080",
+        "noScroll": true,
+        "ctaVisible": true,
+        "clipped": [],
+        "heights": [
+          [
+            790,
+            790
+          ],
+          [
+            707,
+            707
+          ],
+          [
+            659,
+            659
+          ]
+        ]
+      },
+      {
+        "view": "simulation-custom-amount",
+        "viewport": "1440x900",
+        "noScroll": true,
+        "ctaVisible": true,
+        "clipped": [],
+        "heights": [
+          [
+            790,
+            790
+          ],
+          [
+            707,
+            707
+          ],
+          [
+            659,
+            659
+          ]
+        ]
+      },
+      {
+        "view": "simulation-custom-exact",
+        "viewport": "1728x900",
+        "noScroll": true,
+        "ctaVisible": true,
+        "clipped": [],
+        "heights": [
+          [
+            790,
+            790
+          ],
+          [
+            707,
+            707
+          ],
+          [
+            659,
+            659
+          ]
+        ]
+      },
+      {
+        "view": "simulation-custom-exact",
+        "viewport": "1920x1080",
+        "noScroll": true,
+        "ctaVisible": true,
+        "clipped": [],
+        "heights": [
+          [
+            790,
+            790
+          ],
+          [
+            707,
+            707
+          ],
+          [
+            659,
+            659
+          ]
+        ]
+      },
+      {
+        "view": "simulation-custom-exact",
+        "viewport": "1440x900",
+        "noScroll": true,
+        "ctaVisible": true,
+        "clipped": [],
+        "heights": [
+          [
+            790,
+            790
+          ],
+          [
+            707,
+            707
+          ],
+          [
+            659,
+            659
+          ]
+        ]
+      },
+      {
+        "view": "root-at-850",
+        "viewport": "1440x850",
+        "noScroll": true,
+        "ctaVisible": true,
+        "clipped": [],
+        "heights": [
+          [
+            778,
+            778
+          ],
+          [
+            695,
+            695
+          ],
+          [
+            490,
+            490
+          ]
+        ]
+      },
+      {
+        "view": "root-small-height",
+        "viewport": "1440x720",
+        "noScroll": true,
+        "ctaVisible": true,
+        "clipped": [],
+        "heights": [
+          [
+            688,
+            688
+          ],
+          [
+            605,
+            605
+          ],
+          [
+            490,
+            490
+          ]
+        ]
+      },
+      {
+        "view": "root-final",
+        "viewport": "1728x900",
+        "noScroll": true,
+        "ctaVisible": true,
+        "clipped": [],
+        "heights": [
+          [
+            790,
+            790
+          ],
+          [
+            707,
+            707
+          ],
+          [
+            490,
+            490
+          ]
+        ]
+      },
+      {
+        "view": "simulation-edit-options",
+        "viewport": "1728x900",
+        "noScroll": true,
+        "ctaVisible": true,
+        "clipped": [],
+        "heights": [
+          [
+            790,
+            790
+          ],
+          [
+            707,
+            707
+          ],
+          [
+            659,
+            659
+          ]
+        ]
+      },
+      {
+        "view": "simulation-edit-options",
+        "viewport": "1920x1080",
+        "noScroll": true,
+        "ctaVisible": true,
+        "clipped": [],
+        "heights": [
+          [
+            790,
+            790
+          ],
+          [
+            707,
+            707
+          ],
+          [
+            659,
+            659
+          ]
+        ]
+      },
+      {
+        "view": "simulation-edit-options",
+        "viewport": "1440x900",
+        "noScroll": true,
+        "ctaVisible": true,
+        "clipped": [],
+        "heights": [
+          [
+            790,
+            790
+          ],
+          [
+            707,
+            707
+          ],
+          [
+            659,
+            659
+          ]
+        ]
+      },
+      {
+        "view": "simulation-custom-percent-final",
+        "viewport": "1728x900",
+        "noScroll": true,
+        "ctaVisible": true,
+        "clipped": [],
+        "heights": [
+          [
+            790,
+            790
+          ],
+          [
+            707,
+            707
+          ],
+          [
+            659,
+            659
+          ]
+        ]
+      },
+      {
+        "view": "simulation-custom-percent-final",
+        "viewport": "1920x1080",
+        "noScroll": true,
+        "ctaVisible": true,
+        "clipped": [],
+        "heights": [
+          [
+            790,
+            790
+          ],
+          [
+            707,
+            707
+          ],
+          [
+            659,
+            659
+          ]
+        ]
+      },
+      {
+        "view": "simulation-custom-percent-final",
+        "viewport": "1440x900",
+        "noScroll": true,
+        "ctaVisible": true,
+        "clipped": [],
+        "heights": [
+          [
+            790,
+            790
+          ],
+          [
+            707,
+            707
+          ],
+          [
+            659,
+            659
+          ]
+        ]
+      }
+    ],
+    "liveWrites": "INCIDENT_RESTORED",
+    "incident": {
+      "monthlyInputWrites": 2,
+      "historicalWrites": 0,
+      "schemaChanges": 0,
+      "restored": true,
+      "correctedWizardThenReloadNoCreation": true
+    }
+  },
+  "v1Failure": "asOf excludes future history as well as future actuals",
+  "protectedSavingsGuard": "PASS_SYNTHETIC",
+  "zeroPreviewWrite": "PASS_SYNTHETIC",
+  "atomicApply": "PASS_SYNTHETIC",
+  "stalePreviewGuard": "PASS_SYNTHETIC",
+  "irreversibleFloor": "PASS_SYNTHETIC",
+  "fullMonthSafe": "PASS_SYNTHETIC",
+  "asOfTemporalCompatibility": "PASS_SYNTHETIC",
+  "financialOwnersChanged": false,
+  "mobilityEngineChanged": false
+}

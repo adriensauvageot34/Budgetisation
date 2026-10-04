@@ -24,6 +24,7 @@ export type OverlayKind = (typeof overlayKinds)[number];
 export type OverlayFrameProps<NavigationIntent = never> = {
   readonly title: string;
   readonly subtitle?: string;
+  readonly headerAside?: ReactNode;
   readonly label?: string;
   readonly kind: OverlayKind;
   readonly children: ReactNode;
@@ -43,6 +44,7 @@ export type OverlayFrameProps<NavigationIntent = never> = {
 export function OverlayFrame<NavigationIntent = never>({
   title,
   subtitle,
+  headerAside,
   label,
   kind,
   children,
@@ -150,6 +152,7 @@ export function OverlayFrame<NavigationIntent = never>({
           title={title}
           titleId={titleId}
           subtitle={subtitle}
+          aside={headerAside}
           closeAction={closeAction}
           backAction={backAction}
         />

@@ -1,76 +1,52 @@
 "use client";
 import { useState } from "react";
 import type { MonthControlModel } from "./month-control-center";
-import { useMonthLocalFocus, ControlBack } from "./month-control-focus";
-import { CurrencyStepper, ControlFormFields, HumanDateField } from "./currency-stepper";
-import { MonthAssumptionEditor } from "./month-decision-tools";
+import { useMonthLocalFocus } from "./month-control-focus";
+import { ControlFormFields } from "./currency-stepper";
 import { updateMonthInputs } from "./actions";
-import { controlMoney as money, controlMonth } from "@/domain/phase2/month-control-display";
-import material from "./month-material.module.css";
+import { controlMoney as money } from "@/domain/phase2/month-control-display";
+import { choicePage, rankChoiceCategories } from "@/domain/phase2/month-choice-ui-draft";
+import { LocalChoiceScreen, ChoiceTile, ChoicePages, TargetGauge, secondary } from "./month-choice-controls";
+import { TargetFocus, GoalFocus, AdjustmentFocus, SavingsFocus } from "./month-choice-editors";
 import styles from "./month-control-center.module.css";
 
-export function MonthControlLimits({ model }: { model: MonthControlModel }) {
+export function MonthChoicesHub({ model, draftCount, gain }: { model: MonthControlModel; draftCount: number; gain?: string }) {
   const { openEntity } = useMonthLocalFocus();
-  return <section aria-label="Mes limites" className={styles.choiceSection}><h3 className="text-xl font-black">Mes limites</h3><div className="mt-4 grid grid-cols-2 gap-x-7">
-    {model.categoryControls.filter(row => row.capabilities.targetAllowed).map(row => <button type="button" key={row.key} className={styles.controlRow} onClick={() => openEntity(`category:${row.key}`)}><span><strong>{row.label}</strong><span className="mt-1 block text-sm text-slate-600">Prévu ce mois ≈ {money(row.forecast)} · Déjà réalisé {money(row.realized, true)}</span><span className="mt-1 block text-sm">Votre limite : {row.target === null ? "Pas encore définie" : money(row.target, true)}</span>{row.capabilities.adjustability === "FIXED" && <span className="mt-1 block text-sm text-slate-600">Suivi uniquement</span>}</span><span className="text-sm font-bold text-violet-900">{row.target === null ? "Fixer une limite" : "Modifier"} →</span></button>)}
-  </div><button type="button" className={styles.controlRow} onClick={() => openEntity("global-goal")}><span><strong>Combien garder en fin de mois ?</strong><span className="mt-1 block text-sm">{model.settings.goal === null ? "Pas encore d’objectif" : `${money(model.settings.goal, true)} · ${model.projectionSummary.globalSatisfied ? "✓ Objectif atteint" : `Il manque ≈ ${money(model.projectionSummary.globalGap)}`}`}</span></span><span className="font-bold text-violet-900">{model.settings.goal === null ? "Définir" : "Modifier"} →</span></button></section>;
-}
-
-export function MonthControlActiveChoices({ model }: { model: MonthControlModel }) {
-  const { openEntity } = useMonthLocalFocus();
-  const [adding, setAdding] = useState(false);
   const active = model.categoryControls.filter(row => model.settings.assumptions[row.key]);
-  return <section aria-label="Mes choix actifs" className={styles.choiceSection}><h3 className="text-xl font-black">Mes choix pour {controlMonth(model.targetMonth)}</h3>
-    {!active.length && <p className="mt-3 text-sm text-slate-600">Comme d’habitude pour l’instant. Un scénario devient un choix actif seulement après application.</p>}
-    {active.map(row => { const setting = model.settings.assumptions[row.key]!; return <div key={row.key} className={styles.controlRow}><div><strong>{row.label}</strong><p className="mt-1 text-sm">{setting.mode === "CUSTOM" ? setting.amount === "0.00" || setting.amount === "0" ? "Plus rien de prévu pour le reste du mois" : `Reste prévu fixé à ${money(setting.amount, true)}` : setting.mode === "LOWER" ? "20 % de moins que d’habitude" : "20 % de plus que d’habitude"}</p></div><div className="flex gap-4"><button type="button" className={styles.textAction} onClick={() => openEntity(`choice:${row.key}`)}>Modifier</button><form action={updateMonthInputs}><ControlFormFields month={model.targetMonth} intent="clear-month-assumption" values={{ categoryKey: row.key }} /><button className={styles.textAction}>Revenir comme d’habitude</button></form></div></div>; })}
-    <button type="button" className={`${material.clayButton} mt-3 px-4 py-2 text-sm font-bold`} onClick={() => setAdding(!adding)}>Modifier une autre habitude</button>
-    {adding && <div className="mt-3 flex flex-wrap gap-2">{model.categoryControls.filter(row => row.capabilities.adjustability === "ADJUSTABLE" && !model.settings.assumptions[row.key]).map(row => <button key={row.key} type="button" className={`${material.clayChip} px-4 py-2`} onClick={() => openEntity(`choice:${row.key}`)}>{row.label}</button>)}</div>}
-  </section>;
+  const top = rankChoiceCategories(model.categoryControls).filter(row => row.capabilities.adjustability === "ADJUSTABLE").slice(0, 2);
+  const hubs = [
+    { icon: "🎯", title: "Mes repères", focus: "goals", summary: model.goalCount ? `${model.goalCount} repère${model.goalCount > 1 ? "s" : ""} défini${model.goalCount > 1 ? "s" : ""}` : "Aucun repère défini", detail: model.goalCount ? `${model.tensions.length} dépassé${model.tensions.length > 1 ? "s" : ""}` : top.map(row => `${row.label} ≈ ${money(row.forecast)}`).join(" · "), cta: "Gérer" },
+    { icon: "✨", title: "Tester un scénario", focus: "simulator", summary: draftCount ? `${draftCount} choix en cours` : "Aucune simulation en cours", detail: draftCount && gain ? `+${money(gain)} estimés en fin de mois` : "Voir l’impact d’un mois différent", cta: draftCount ? "Continuer" : "Tester" },
+    { icon: "✓", title: "Mes ajustements", focus: "adjustments", summary: active.length ? `${active.length} ajustement${active.length > 1 ? "s" : ""} actif${active.length > 1 ? "s" : ""}` : "Aucun ajustement actif", detail: active.length ? active.slice(0, 2).map(row => row.label).join(" · ") : "Vos habitudes habituelles restent utilisées.", cta: "Gérer" },
+    { icon: "🔒", title: "Mes cagnottes", focus: "savings", summary: model.savings.length ? `${model.savings.length} cagnotte${model.savings.length > 1 ? "s" : ""}` : "Aucune cagnotte pour ce mois", detail: model.savings.length === 1 ? `${model.savings[0]!.label} · ${money(model.savings[0]!.amount, true)}` : model.savings.length ? `${money(model.projectionSummary.totalSavings, true)} mis de côté` : "Mettre de l’argent de côté pour un projet", cta: "Gérer" },
+  ];
+  return <div className={styles.hubGrid} data-choices-root="">{hubs.map(hub => <button type="button" key={hub.focus} className={styles.hubCard} data-control-hub={hub.focus} onClick={() => openEntity(hub.focus)}><span className={styles.hubIcon} aria-hidden="true">{hub.icon}</span><h3>{hub.title}</h3><p className={styles.hubSummary}>{hub.summary}</p><p className={styles.hubDetail}>{hub.detail}</p><span className={styles.hubCta}>{hub.cta} →</span></button>)}</div>;
+}
+export function MonthControlLimits({ model }: { model: MonthControlModel }) {
+  const { openEntity } = useMonthLocalFocus(), [page, setPage] = useState(0), [tracking, setTracking] = useState(false);
+  const all = rankChoiceCategories(model.categoryControls.filter(row => row.capabilities.targetAllowed));
+  const rows = all.filter(row => (row.capabilities.adjustability === "FIXED") === tracking);
+  return <LocalChoiceScreen title={tracking ? "Les postes à suivre" : "Mes repères"} back={() => tracking ? (setTracking(false), setPage(0)) : openEntity(null)} subtitle="Des repères pour ce mois, sans modifier les dépenses prévues." footer={<><button type="button" className={secondary} onClick={() => openEntity("global-goal")}>Objectif de fin de mois{model.settings.goal !== null && ` · ${money(model.settings.goal, true)}`}</button>{all.some(row => row.capabilities.adjustability === "FIXED") && !tracking && <button type="button" className={styles.textAction} onClick={() => { setTracking(true); setPage(0); }}>À suivre →</button>}</>}>
+    <div className={styles.tileGrid}>{choicePage(rows, page).map(row => <ChoiceTile key={row.key} title={row.label} active={row.target !== null} onClick={() => openEntity(`category:${row.key}`)}><span>Prévu {money(row.forecast)}</span>{row.target !== null ? <><span>Votre repère {money(row.target, true)}</span><span>{Number(row.varianceToTarget) > 0 ? `${money(row.varianceToTarget)} au-dessus` : "Dans votre repère"}</span><TargetGauge forecast={row.forecast} realized={row.realized} target={row.target} /></> : <span>Définir un repère →</span>}</ChoiceTile>)}</div><ChoicePages count={rows.length} page={page} setPage={setPage} />
+  </LocalChoiceScreen>;
+}
+export function MonthControlActiveChoices({ model }: { model: MonthControlModel }) {
+  const { openEntity } = useMonthLocalFocus(), [page, setPage] = useState(0), [adding, setAdding] = useState(false);
+  const active = model.categoryControls.filter(row => model.settings.assumptions[row.key]);
+  const candidates = rankChoiceCategories(model.categoryControls.filter(row => row.capabilities.adjustability === "ADJUSTABLE" && !model.settings.assumptions[row.key]));
+  return <LocalChoiceScreen kind="persisted" title={adding ? "Quelle habitude ajuster ?" : "Mes ajustements"} back={() => adding ? (setAdding(false), setPage(0)) : openEntity(null)} footer={!adding ? <button type="button" className={secondary} onClick={() => { setAdding(true); setPage(0); }}>Ajouter un ajustement</button> : undefined}>
+    {adding ? <><div className={styles.tileGrid}>{choicePage(candidates, page).map(row => <ChoiceTile key={row.key} title={row.label} onClick={() => openEntity(`choice:${row.key}`)} />)}</div><ChoicePages count={candidates.length} page={page} setPage={setPage} /></> : active.length ? <><div className={styles.adjustmentList}>{choicePage(active, page, 4).map(row => { const setting = model.settings.assumptions[row.key]!; return <article key={row.key} className={styles.activeAdjustment}><div><h3>{row.label}</h3><p>{setting.mode === "CUSTOM" ? Number(setting.amount) === 0 ? "Aucune autre dépense habituelle prévue ce mois" : `Reste prévu fixé à ${money(setting.amount, true)}` : setting.mode === "LOWER" ? "20 % de moins que d’habitude" : "20 % de plus que d’habitude"}</p></div><button type="button" className={secondary} onClick={() => openEntity(`choice:${row.key}`)}>Modifier</button><form action={updateMonthInputs}><ControlFormFields month={model.targetMonth} intent="clear-month-assumption" values={{ categoryKey: row.key }} /><button className={styles.textAction}>Annuler</button></form></article>; })}</div><ChoicePages size={4} count={active.length} page={page} setPage={setPage} /></> : <div className={styles.emptyChoice}><span aria-hidden="true">✓</span><h3>Aucun ajustement actif</h3><p>Vos habitudes habituelles servent actuellement de référence.</p></div>}
+  </LocalChoiceScreen>;
 }
 export function MonthControlSavings({ model }: { model: MonthControlModel }) {
-  const { openEntity } = useMonthLocalFocus();
-  return <section data-control-focus="savings" aria-label="Ce qu’on met de côté" className={styles.choiceSection}><h3 className="text-xl font-black">Ce qu’on met de côté</h3>
-    {model.savings.length === 0 && <p className="mt-3 text-sm text-slate-600">Aucune cagnotte affectée à ce mois.</p>}
-    {model.savings.map(row => <button type="button" key={row.id} className={styles.controlRow} onClick={() => openEntity(`savings:${row.id}`)}><span><strong>{row.adjustability === "PROTECTED" ? "🔒 " : ""}{row.label}</strong><span className="mt-1 block text-sm text-slate-600">{row.adjustability === "PROTECTED" ? "Protégée des ajustements automatiques" : "Ajustable"}</span></span><span className="text-lg font-bold">{money(row.amount, true)} <span className="ml-4 text-sm text-violet-900">Modifier →</span></span></button>)}
-    <button type="button" className={`${material.clayButton} mt-3 px-4 py-2 font-bold`} onClick={() => openEntity("savings:new")}>Ajouter une cagnotte</button></section>;
+  const { openEntity } = useMonthLocalFocus(), [page, setPage] = useState(0);
+  return <LocalChoiceScreen title="Mes cagnottes" back={() => openEntity(null)} footer={<button type="button" className={secondary} onClick={() => openEntity("savings:new")}>Ajouter une cagnotte</button>}>
+    {model.savings.length ? <><div className={styles.optionGrid}>{choicePage(model.savings, page, 4).map(row => <ChoiceTile key={row.id} title={`${row.adjustability === "PROTECTED" ? "🔒 " : ""}${row.label}`} onClick={() => openEntity(`savings:${row.id}`)}><strong className={styles.savingAmount}>{money(row.amount, true)}</strong><span>{row.adjustability === "PROTECTED" ? "Protégée" : "Ajustable"}</span><span>Modifier →</span></ChoiceTile>)}</div><ChoicePages size={4} count={model.savings.length} page={page} setPage={setPage} /></> : <div className={styles.emptyChoice}><span aria-hidden="true">🔒</span><h3>Votre prochain projet commence ici</h3><p>Aucune cagnotte affectée à ce mois.</p></div>}
+  </LocalChoiceScreen>;
 }
-
 export function MonthChoiceFocus({ model }: { model: MonthControlModel }) {
-  const { entity } = useMonthLocalFocus();
-  const category = model.categoryControls.find(row => row.capabilities.targetAllowed && entity === `category:${row.key}`), choice = model.categoryControls.find(row => entity === `choice:${row.key}`);
-  const saving = model.savings.find(row => entity === `savings:${row.id}` || entity === `reserve-${model.savings.indexOf(row) + 1}`);
-  return <div className={`${styles.focusPane} ${styles.choiceFocus}`} data-local-focus={entity}><ControlBack label="Mes choix" />
-    {category ? <TargetFocus key={`${category.key}:${category.target}`} model={model} category={category} /> : entity === "global-goal" ? <GoalFocus key={model.settings.goal} model={model} />
-      : choice ? <MonthAssumptionEditor categoryKey={choice.key} label={choice.label} targetMonth={model.targetMonth} settings={model.settings} capabilities={choice.capabilities} />
-      : saving || entity === "savings:new" ? <SavingsFocus key={`${saving?.id}:${saving?.amount}:${saving?.adjustability}`} model={model} saving={saving} /> : <p>Choisissez un élément à modifier.</p>}
-  </div>;
-}
-function TargetFocus({ model, category }: { model: MonthControlModel; category: MonthControlModel["categoryControls"][number] }) {
-  const [value, setValue] = useState(category.target ?? category.forecast);
-  return <section><h2 className="text-2xl font-black">Votre limite · {category.label}</h2><p className="mt-3 text-slate-600">≈ {money(category.forecast)} prévus · {money(category.realized, true)} déjà réalisés</p>
-    {category.capabilities.adjustability === "FIXED" && <p className="mt-3">Suivi uniquement : ce poste n’est pas utilisé comme levier automatique.</p>}
-    <form action={updateMonthInputs} className="mt-6 space-y-6"><ControlFormFields month={model.targetMonth} intent="save-category-target" values={{ categoryKey: category.key }} /><CurrencyStepper label={`l’objectif ${category.label}`} name="categoryTarget" value={value} onChange={setValue} percent />
-      <button className={`${material.clayPrimary} px-5 py-3 font-bold`}>Enregistrer la limite</button></form>
-    {category.target !== null && <form action={updateMonthInputs} className="mt-5"><ControlFormFields month={model.targetMonth} intent="clear-category-target" values={{ categoryKey: category.key }} /><button className={styles.textAction}>Retirer cette limite</button></form>}
-  </section>;
-}
-function GoalFocus({ model }: { model: MonthControlModel }) {
-  const [value, setValue] = useState(model.settings.goal ?? (Number(model.projectionSummary.economic?.central) > 0 ? model.projectionSummary.economic!.central : "0.00"));
-  return <section><h2 className="text-2xl font-black">Combien souhaitez-vous garder à la fin du mois ?</h2><p className="mt-3 text-slate-600">Projection actuelle : ≈ {money(model.projectionSummary.economic?.central)}</p>
-    <form action={updateMonthInputs} className="mt-6 space-y-6"><ControlFormFields month={model.targetMonth} intent="save-month-goal" /><CurrencyStepper value={value} onChange={setValue} step={50} label="l’objectif de fin de mois" name="monthGoal" /><button className={`${material.clayPrimary} px-5 py-3 font-bold`}>Enregistrer l’objectif</button></form>
-    {model.settings.goal !== null && <><p className="mt-5 font-bold">{model.projectionSummary.globalSatisfied ? "✓ Objectif atteint" : `Il manque ≈ ${money(model.projectionSummary.globalGap)}`}</p><form action={updateMonthInputs} className="mt-4"><ControlFormFields month={model.targetMonth} intent="clear-month-goal" /><button className={styles.textAction}>Retirer l’objectif</button></form></>}
-  </section>;
-}
-function SavingsFocus({ model, saving }: { model: MonthControlModel; saving?: MonthControlModel["savings"][number] }) {
-  const [amount, setAmount] = useState(saving?.amount ?? "0.00"), [protection, setProtection] = useState(saving?.adjustability ?? "PROTECTED"), [options, setOptions] = useState(false);
-  return <section><h2 className="text-2xl font-black">{saving?.label ?? "Une nouvelle cagnotte"}</h2><p className="mt-3 text-slate-600">De l’argent réservé pour un projet, qui reste à vous.</p>
-    <form action={updateMonthInputs} className="mt-6 space-y-6"><ControlFormFields month={model.targetMonth} intent={saving ? "update-declared-savings" : "add-declared-savings"} values={{ ...(saving ? { outflowId: saving.id } : {}), outflowAdjustability: protection }} />
-      <label className="block font-semibold">Pour quoi ?<input className={`${material.field} ml-3 px-3 py-2`} name="outflowLabel" required maxLength={120} defaultValue={saving?.label} placeholder="Voyage, Noël…" /></label>
-      <CurrencyStepper value={amount} onChange={setAmount} step={50} label={`la cagnotte ${saving?.label ?? "à créer"}`} name="outflowAmount" />
-      <div className="flex gap-3">{(["PROTECTED", "ADJUSTABLE"] as const).map(key => <button type="button" key={key} aria-pressed={protection === key} className={`${material.clayChip} px-4 py-3 font-bold`} onClick={() => setProtection(key)}>{key === "PROTECTED" ? "🔒 Protégée" : "Ajustable"}</button>)}</div>
-      <p className="text-sm text-slate-600">Une cagnotte protégée n’est jamais utilisée dans les suggestions de compensation.</p>
-      <HumanDateField optional name="outflowDate" label="Date de mise de côté" today={model.asOf} initial={saving?.dueDate} />
-      <button className={`${material.clayPrimary} px-5 py-3 font-bold`}>Confirmer la cagnotte</button></form>
-    {saving && <div className="mt-8 border-t border-violet-100 pt-5"><button type="button" className={styles.textAction} onClick={() => setOptions(!options)}>Plus d’options</button>{options && <form action={updateMonthInputs} className="mt-4"><ControlFormFields month={model.targetMonth} intent="remove-declared-outflow" values={{ outflowId: saving.id }} /><button className="text-sm font-semibold text-rose-800 underline">Supprimer cette cagnotte</button></form>}</div>}
-  </section>;
+  const { entity, openEntity } = useMonthLocalFocus();
+  const category = model.categoryControls.find(row => row.capabilities.targetAllowed && entity === `category:${row.key}`), choice = model.categoryControls.find(row => row.capabilities.adjustability === "ADJUSTABLE" && entity === `choice:${row.key}`);
+  const saving = model.savings.find((row, index) => entity === `savings:${row.id}` || entity === `reserve-${index + 1}`);
+  return <div className={styles.localChoiceContainer} data-local-focus={entity}>{category ? <TargetFocus key={`${category.key}:${category.target}`} model={model} category={category} /> : entity === "global-goal" ? <GoalFocus key={model.settings.goal} model={model} /> : choice ? <AdjustmentFocus key={`${choice.key}:${JSON.stringify(model.settings.assumptions[choice.key])}`} model={model} category={choice} /> : saving || entity === "savings:new" ? <SavingsFocus key={`${saving?.id}:${saving?.amount}:${saving?.adjustability}`} model={model} saving={saving} /> : <LocalChoiceScreen title="Ce choix n’est plus disponible" back={() => openEntity(null)}><p>Revenez aux actions du mois.</p></LocalChoiceScreen>}</div>;
 }

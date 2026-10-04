@@ -1,4 +1,5 @@
 import { ArrowLeft, X } from "lucide-react";
+import type { ReactNode } from "react";
 import { IconButton, type UiAction } from "../primitives";
 
 export type OverlayHeaderProps<NavigationIntent = never> = {
@@ -7,6 +8,7 @@ export type OverlayHeaderProps<NavigationIntent = never> = {
   readonly subtitle?: string;
   readonly closeAction?: UiAction<NavigationIntent>;
   readonly backAction?: UiAction<NavigationIntent>;
+  readonly aside?: ReactNode;
 };
 
 export function OverlayHeader<NavigationIntent = never>({
@@ -15,6 +17,7 @@ export function OverlayHeader<NavigationIntent = never>({
   subtitle,
   closeAction,
   backAction,
+  aside,
 }: OverlayHeaderProps<NavigationIntent>) {
   return (
     <header className="ui-overlay-header">
@@ -25,6 +28,7 @@ export function OverlayHeader<NavigationIntent = never>({
         <h2 id={titleId} data-overlay-title="" tabIndex={-1}>{title}</h2>
         {subtitle ? <p>{subtitle}</p> : null}
       </div>
+      {aside}
       {closeAction ? (
         <IconButton icon={X} label="Fermer" action={closeAction} />
       ) : null}

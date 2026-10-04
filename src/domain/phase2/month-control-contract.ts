@@ -12,9 +12,9 @@ export const monthControlSection = (value: unknown): MonthControlSection | null 
 export function monthControlDestination(raw: MonthControlSectionInput, focus?: string | null) {
   let section = monthControlSection(raw)!;
   let entity = focus ?? null;
-  if (entity && (["savings", "global-goal", "goals", "simulator"].includes(entity) || entity.startsWith("reserve-") || entity.startsWith("savings:"))) return { section: "choices" as const, focus: entity };
+  if (entity && (["savings", "global-goal", "goals", "simulator", "adjustments"].includes(entity) || entity.startsWith("reserve-") || entity.startsWith("savings:"))) return { section: "choices" as const, focus: entity };
   if (entity && raw === "settings" && isDecisionCategoryKey(entity) && !["obligations", "history", "imports"].includes(entity)) { section = "choices"; entity = `choice:${entity}`; }
-  if (section === "choices" && entity && isDecisionCategoryKey(entity) && !["global-goal", "goals", "savings", "simulator"].includes(entity) && !entity.startsWith("reserve-")) entity = `category:${entity}`;
+  if (section === "choices" && entity && isDecisionCategoryKey(entity) && !["global-goal", "goals", "savings", "simulator", "adjustments"].includes(entity) && !entity.startsWith("reserve-")) entity = `category:${entity}`;
   return { section, focus: entity };
 }
 export type MonthControlPurpose = Readonly<{ kind: "NONE" | "GLOBAL_GOAL" | "FREE_EXPLORATION" }>

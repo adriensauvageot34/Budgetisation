@@ -28,6 +28,12 @@ export function projectMonthControlCenter(ctx: MonthChoiceContext) {
   const settings = parseMonthDecisionSettings(inputs.decision), plan = scenario.economicPlan;
   const decision = plan ? projectMonthDecision(plan, settings, ctx.forecast.meta.targetMonth, ctx.asOf, ctx.expenses, ctx.forecast.forecastMemory) : null;
   const categoryControls = decision?.categoryControls ?? [];
+  // Presentation reference for relative draft controls. The existing forecast owner
+  // publishes the usual remainder; the client never reverses an applied assumption.
+  const referencePlan = Object.keys(settings.assumptions).length ? deriveMonthScenario(ctx.forecast,
+    { ...inputs, decision: { ...settings, assumptions: {} } }, null, ctx.asOf, ctx.expenses).economicPlan : plan;
+  const habitualControls = !Object.keys(settings.assumptions).length ? categoryControls : referencePlan ? projectMonthDecision(referencePlan, { ...settings, assumptions: {} },
+    ctx.forecast.meta.targetMonth, ctx.asOf, ctx.expenses, ctx.forecast.forecastMemory).categoryControls : [];
   const globalDelta = decision?.goal?.central ?? null;
   const globalGap = globalDelta === null ? "0.00" : positive(new Big(globalDelta).times(-1)).toFixed(2);
   const categoryTensions = categoryControls.filter(row => row.varianceToTarget !== null && new Big(row.varianceToTarget).gt(0)).map(row => ({
@@ -111,14 +117,14 @@ export function projectMonthControlCenter(ctx: MonthChoiceContext) {
     actionableCount: tensions.length + rootCauses.filter(row => row.actionable).length,
     projectionSummary: { economic: plan?.narrative.final ?? null, bank: plan?.bankCash.endOfMonth ?? null,
       globalGoal: settings.goal, globalDelta, globalGap, globalSatisfied: globalDelta !== null && new Big(globalDelta).gte(0),
-      remainingDailyLife: plan?.monthlyLayers.remainingDailyLife ?? null, categoryGap: decision?.totalCategoryGap ?? "0.00", protectedSavings: plan?.savingsAllocations.protectedTotal ?? null },
+      remainingDailyLife: plan?.monthlyLayers.remainingDailyLife ?? null, categoryGap: decision?.totalCategoryGap ?? "0.00", protectedSavings: plan?.savingsAllocations.protectedTotal ?? null, totalSavings: plan?.savingsAllocations.total ?? null },
     tensions, categoryTensions, globalTensions, rootCauses, knowledgeIssues: rootCauses, scopedReliability,
     observations: [{ key: "bank", label: "Solde Banque", nature: "FACT" as const, amount: inputs.openingBalance?.amount ?? null, date: inputs.openingBalance?.asOfDate ?? null },
       ...Object.values(scenario.benefitWallets).map(wallet => ({ key: wallet.provider, label: wallet.provider === "SWILE" ? "Solde Swile" : "Solde Edenred", nature: "FACT" as const,
         amount: wallet.latestObservation?.amount ?? null, date: wallet.latestObservation?.asOfDate ?? null }))].filter(row => row.amount !== null && row.date !== null),
     forecastNature: "FORECAST" as const,
     activeIntentions: activeIntentions.map(row => ({ ...row, actionLabel: "Modifier" })),
-    activeDecisions: activeDecisions.map(row => ({ ...row, actionLabel: row.key.startsWith("excluded:") ? "Rétablir" : "Modifier" })), reservations: reservations.map(row => ({ ...row, actionLabel: "Voir" })), categoryControls, settings, savings, defaultPurpose,
+    activeDecisions: activeDecisions.map(row => ({ ...row, actionLabel: row.key.startsWith("excluded:") ? "Rétablir" : "Modifier" })), reservations: reservations.map(row => ({ ...row, actionLabel: "Voir" })), categoryControls, habitualControls, settings, savings, defaultPurpose,
     resourceInputs: { openingBalance: inputs.openingBalance, wallets: inputs.benefitWallets!, projections: scenario.benefitWallets },
     reliability: { mode: forecastTemporalPolicy().mode, modeLabel: forecastTemporalPolicy().mode === "FULL_MONTH_SAFE" ? "Mode prudent actif" : "Estimation au fil du mois active",
       modeExplanation: forecastTemporalPolicy().mode === "FULL_MONTH_SAFE" ? "L’absence de dépenses récentes ne réduit pas automatiquement les habitudes prévues du mois." : "Les estimations utilisent le moteur temporel actif, avec les données disponibles à cette date.",
