@@ -1,0 +1,273 @@
+{
+  "status": "PASS",
+  "scope": "Synthetic fixtures, real monthly owner actions, SSR and explicitly identified static checks. Browser interaction/live writes are reported separately.",
+  "historicalWrites": 0,
+  "plannedExpenseWrites": 0,
+  "results": [
+    {
+      "id": "HUX-001",
+      "kind": "BEHAVIOR",
+      "status": "PASS"
+    },
+    {
+      "id": "HUX-002",
+      "kind": "BEHAVIOR",
+      "status": "PASS"
+    },
+    {
+      "id": "HUX-003",
+      "kind": "BEHAVIOR",
+      "status": "PASS"
+    },
+    {
+      "id": "HUX-004",
+      "kind": "BEHAVIOR",
+      "status": "PASS"
+    },
+    {
+      "id": "HUX-005",
+      "kind": "BEHAVIOR",
+      "status": "PASS"
+    },
+    {
+      "id": "HUX-006",
+      "kind": "BEHAVIOR",
+      "status": "PASS"
+    },
+    {
+      "id": "HUX-007",
+      "kind": "STATIC",
+      "status": "PASS"
+    },
+    {
+      "id": "HUX-008",
+      "kind": "BEHAVIOR",
+      "status": "PASS"
+    },
+    {
+      "id": "HUX-009",
+      "kind": "BEHAVIOR",
+      "status": "PASS"
+    },
+    {
+      "id": "HUX-010",
+      "kind": "BEHAVIOR",
+      "status": "PASS"
+    },
+    {
+      "id": "HUX-011",
+      "kind": "BEHAVIOR",
+      "status": "PASS"
+    },
+    {
+      "id": "HUX-012",
+      "kind": "STATIC",
+      "status": "PASS"
+    },
+    {
+      "id": "HUX-013",
+      "kind": "STATIC",
+      "status": "PASS"
+    },
+    {
+      "id": "HUX-014",
+      "kind": "STATIC",
+      "status": "PASS"
+    },
+    {
+      "id": "HUX-015",
+      "kind": "STATIC",
+      "status": "PASS"
+    },
+    {
+      "id": "HUX-016",
+      "kind": "STATIC",
+      "status": "PASS"
+    },
+    {
+      "id": "HUX-017",
+      "kind": "STATIC",
+      "status": "PASS"
+    },
+    {
+      "id": "HUX-018",
+      "kind": "BEHAVIOR",
+      "status": "PASS"
+    },
+    {
+      "id": "HUX-019",
+      "kind": "SSR_STATIC",
+      "status": "PASS"
+    },
+    {
+      "id": "HUX-020",
+      "kind": "BEHAVIOR",
+      "status": "PASS"
+    },
+    {
+      "id": "HUX-021",
+      "kind": "BEHAVIOR",
+      "status": "PASS"
+    },
+    {
+      "id": "HUX-022",
+      "kind": "BEHAVIOR",
+      "status": "PASS"
+    },
+    {
+      "id": "HUX-023",
+      "kind": "BEHAVIOR",
+      "status": "PASS"
+    },
+    {
+      "id": "HUX-024",
+      "kind": "BEHAVIOR",
+      "status": "PASS"
+    },
+    {
+      "id": "HUX-025",
+      "kind": "BEHAVIOR",
+      "status": "PASS"
+    },
+    {
+      "id": "HUX-026",
+      "kind": "BEHAVIOR",
+      "status": "PASS"
+    },
+    {
+      "id": "HUX-027",
+      "kind": "BEHAVIOR",
+      "status": "PASS"
+    },
+    {
+      "id": "HUX-028",
+      "kind": "BEHAVIOR",
+      "status": "PASS"
+    },
+    {
+      "id": "HUX-029",
+      "kind": "BEHAVIOR",
+      "status": "PASS"
+    },
+    {
+      "id": "HUX-030",
+      "kind": "BEHAVIOR",
+      "status": "PASS"
+    },
+    {
+      "id": "HUX-031",
+      "kind": "BEHAVIOR",
+      "status": "PASS"
+    },
+    {
+      "id": "HUX-032",
+      "kind": "BEHAVIOR",
+      "status": "PASS"
+    },
+    {
+      "id": "HUX-033",
+      "kind": "BEHAVIOR",
+      "status": "PASS"
+    },
+    {
+      "id": "HUX-034",
+      "kind": "BEHAVIOR",
+      "status": "PASS"
+    },
+    {
+      "id": "HUX-035",
+      "kind": "BEHAVIOR",
+      "status": "PASS"
+    },
+    {
+      "id": "HUX-036",
+      "kind": "BEHAVIOR",
+      "status": "PASS"
+    },
+    {
+      "id": "HUX-037",
+      "kind": "BEHAVIOR",
+      "status": "PASS"
+    },
+    {
+      "id": "HUX-038",
+      "kind": "BEHAVIOR",
+      "status": "PASS"
+    },
+    {
+      "id": "HUX-039",
+      "kind": "BEHAVIOR",
+      "status": "PASS"
+    },
+    {
+      "id": "HUX-040",
+      "kind": "BEHAVIOR",
+      "status": "PASS"
+    },
+    {
+      "id": "HUX-041",
+      "kind": "BEHAVIOR",
+      "status": "PASS"
+    },
+    {
+      "id": "HUX-042",
+      "kind": "BEHAVIOR",
+      "status": "PASS"
+    },
+    {
+      "id": "HUX-043",
+      "kind": "BEHAVIOR",
+      "status": "PASS"
+    },
+    {
+      "id": "HUX-044",
+      "kind": "BEHAVIOR",
+      "status": "PASS"
+    },
+    {
+      "id": "HUX-045",
+      "kind": "BEHAVIOR",
+      "status": "PASS"
+    },
+    {
+      "id": "HUX-046",
+      "kind": "BEHAVIOR",
+      "status": "PASS"
+    },
+    {
+      "id": "HUX-047",
+      "kind": "BEHAVIOR",
+      "status": "PASS"
+    },
+    {
+      "id": "HUX-048",
+      "kind": "STATIC",
+      "status": "PASS"
+    },
+    {
+      "id": "HUX-049",
+      "kind": "BEHAVIOR",
+      "status": "PASS"
+    },
+    {
+      "id": "HUX-050",
+      "kind": "BEHAVIOR",
+      "status": "PASS"
+    },
+    {
+      "id": "HUX-051",
+      "kind": "BEHAVIOR",
+      "status": "PASS"
+    },
+    {
+      "id": "HUX-052",
+      "kind": "BEHAVIOR",
+      "status": "PASS"
+    },
+    {
+      "id": "HUX-053",
+      "kind": "BEHAVIOR",
+      "status": "PASS"
+    }
+  ]
+}

@@ -27,7 +27,7 @@ export function MonthSavingsSection({ savings, targetMonth, controls = true }: {
         {controls ? <form action={updateMonthInputs}>
           <input type="hidden" name="targetMonth" value={targetMonth} /><input type="hidden" name="intent" value="remove-declared-outflow" /><input type="hidden" name="outflowId" value={item.id} />
           <button className="rounded-lg px-3 py-2 text-xs font-semibold text-slate-600 hover:bg-white/60" aria-label={`Supprimer la cagnotte ${item.label}`}>Supprimer</button>
-        </form> : <MonthControlLink section="resources" focus={`reserve-${index + 1}`} className="text-xs font-bold underline">Gérer</MonthControlLink>}
+        </form> : <MonthControlLink section="choices" focus={`savings:${item.id}`} className="text-xs font-bold underline">Gérer</MonthControlLink>}
       </li>)}</ul>}
     {controls ? <details className={`${material.disclosure} mt-4`}>
       <summary className="cursor-pointer text-sm font-bold">Ajouter une cagnotte</summary>
@@ -39,6 +39,6 @@ export function MonthSavingsSection({ savings, targetMonth, controls = true }: {
         <label className="text-xs font-semibold">Protection<select className={`${material.field} field mt-1 w-full`} name="outflowAdjustability" defaultValue="PROTECTED"><option value="PROTECTED">Protégée des ajustements automatiques</option><option value="ADJUSTABLE">Ajustable</option></select></label>
         <button className={`${material.clayPrimary} justify-self-start px-4 py-2 text-sm font-bold`}>Mettre de côté</button>
       </form>
-    </details> : <MonthControlLink section="resources" focus="savings" className="mt-4 text-sm font-bold underline">Gérer nos cagnottes</MonthControlLink>}
+    </details> : <MonthControlLink section="choices" focus="savings" className="mt-4 text-sm font-bold underline">Gérer nos cagnottes</MonthControlLink>}
   </section>;
 }

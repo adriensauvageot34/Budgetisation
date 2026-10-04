@@ -5,6 +5,7 @@ import type { MonthDecisionSettings } from "@/domain/phase2/month-decision-contr
 import { preserveMonthForecast, updateMonthInputs, type simulateMonthBehavior } from "./actions";
 import { categoryDecisionCapabilities, type CategoryDecisionCapabilities } from "@/domain/phase2/month-choice-contract";
 import { controlMoney } from "@/domain/phase2/month-control-display";
+import { CurrencyStepper, ControlFormFields } from "./currency-stepper";
 import material from "./month-material.module.css";
 type MonthDecisionProjection = Extract<Awaited<ReturnType<typeof simulateMonthBehavior>>, { ok: true }>["decision"];
 type MonthCategoryControl = MonthDecisionProjection["categoryControls"][number];
@@ -17,14 +18,18 @@ export function MonthAssumptionEditor({ categoryKey, label, targetMonth, setting
   categoryKey: string; label: string; targetMonth: string; settings: MonthDecisionSettings; capabilities?: CategoryDecisionCapabilities }) {
   if (categoryDecisionCapabilities(categoryKey, capabilities)?.adjustability !== "ADJUSTABLE") return null;
   const assumption = settings.assumptions[categoryKey as keyof typeof settings.assumptions];
-  return <details className={`${material.disclosure} mt-3 border-t border-slate-100 pt-3 text-sm`}><summary className="cursor-pointer font-semibold text-emerald-900">{label} · {assumption ? assumption.mode === "CUSTOM" ? `Reste fixé à ${controlMoney(assumption.amount, true)}` : assumption.mode === "LOWER" ? "Reste réduit de 20 %" : "Reste augmenté de 20 %" : "Ajuster"}</summary>
-    <p className="mt-2 text-slate-600">{assumption ? "Hypothèse personnelle active pour ce mois." : "Comme d’habitude : références historiques."} Moins / Plus ajuste le reste de 20 %. Le montant personnel vise le reste à dépenser ; les achats déjà faits et les projets explicites restent comptés.</p>
-    <form action={updateMonthInputs} className="mt-3 flex flex-wrap gap-2"><input type="hidden" name="targetMonth" value={targetMonth} /><input type="hidden" name="intent" value="save-month-assumption" /><input type="hidden" name="categoryKey" value={categoryKey} />
-      <label><span className="sr-only">Hypothèse pour {label}</span><select className={field} name="assumptionMode" defaultValue={assumption?.mode ?? "LOWER"}><option value="LOWER">Moins ce mois</option><option value="HIGHER">Plus ce mois</option><option value="CUSTOM">Montant personnel</option></select></label>
-      <label><span className="sr-only">Reste à dépenser pour {label}</span><input className={`${field} w-32`} name="assumptionAmount" type="number" min="0" step="0.01" placeholder="Reste en €" defaultValue={assumption?.amount ?? ""} /></label>
-      <button className={button}>Appliquer ce mois</button></form>
-    {assumption && <form action={updateMonthInputs} className="mt-2"><input type="hidden" name="targetMonth" value={targetMonth} /><input type="hidden" name="intent" value="clear-month-assumption" /><input type="hidden" name="categoryKey" value={categoryKey} /><button className="font-bold underline">Revenir aux habitudes historiques</button></form>}
-  </details>;
+  return <ActiveChoiceEditor key={`${categoryKey}:${assumption?.mode}:${assumption?.amount}`} categoryKey={categoryKey} label={label} targetMonth={targetMonth} initialMode={assumption?.mode ?? "NONE"} initialAmount={assumption?.amount ?? "0.00"} />;
+}
+
+function ActiveChoiceEditor({ categoryKey, label, targetMonth, initialMode, initialAmount }: { categoryKey: string; label: string; targetMonth: string; initialMode: "NONE" | "LOWER" | "HIGHER" | "CUSTOM"; initialAmount: string }) {
+  const [mode, setMode] = useState(initialMode), [amount, setAmount] = useState(initialAmount);
+  return <section><h3 className="text-2xl font-black">Comment voyez-vous {label} ce mois-ci ?</h3>
+    <p className="mt-3 text-sm text-slate-600">Un choix pour ce mois. Les achats réalisés et les projets explicites restent comptés.</p>
+    <form action={updateMonthInputs} className="mt-6 space-y-6"><ControlFormFields month={targetMonth} intent={mode === "NONE" ? "clear-month-assumption" : "save-month-assumption"} values={{ categoryKey, assumptionMode: mode }} />
+      <div className="flex flex-wrap gap-3">{([["LOWER", "Moins"], ["NONE", "Comme d’habitude"], ["HIGHER", "Plus"], ["CUSTOM", "Montant précis"]] as const).map(([key, title]) => <button type="button" key={key} aria-pressed={mode === key} className={`${material.clayChip} px-4 py-3 font-bold`} onClick={() => setMode(key)}>{title}</button>)}</div>
+      {mode === "LOWER" || mode === "HIGHER" ? <p className="text-lg font-bold">{mode === "LOWER" ? "−20 %" : "+20 %"} sur le reste habituel</p> : mode === "CUSTOM" ? <CurrencyStepper value={amount} onChange={setAmount} name="assumptionAmount" label={`le reste prévu ${label}`} /> : <p>Les habitudes connues servent de référence.</p>}
+      <button className={`${material.clayPrimary} px-5 py-3 font-bold`}>Enregistrer mon choix</button></form>
+  </section>;
 }
 
 export function CategoryTargetEditor({ control, targetMonth }: { control: MonthCategoryControl; targetMonth: string }) {

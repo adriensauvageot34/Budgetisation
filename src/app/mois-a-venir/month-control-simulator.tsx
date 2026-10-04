@@ -5,29 +5,12 @@ import type { MonthControlModel } from "./month-control-center";
 import type { previewMonthControlCenter } from "./actions";
 import type { MonthChoiceOperation, CategoryChoiceStrategy } from "@/domain/phase2/month-choice-contract";
 import { monthChoiceTarget, type MonthControlPurpose } from "@/domain/phase2/month-control-contract";
-import { controlMonth, controlMoney as money } from "@/domain/phase2/month-control-display";
-import { CategoryTargetEditor, MonthGoalEditor } from "./month-decision-tools";
+import { controlMoney as money } from "@/domain/phase2/month-control-display";
+
 import material from "./month-material.module.css";
 import styles from "./month-control-center.module.css";
 type Workbench = Awaited<ReturnType<typeof previewMonthControlCenter>>;
 const button = `${material.clayButton} px-4 py-2 text-sm font-bold disabled:opacity-50`;
-
-export function MonthControlObjectives({ model, choosePurpose }: { model: MonthControlModel; choosePurpose: (purpose: MonthControlPurpose) => void }) {
-  const active = model.categoryControls.filter(row => row.target !== null), available = model.categoryControls.filter(row => row.target === null);
-  const category = (row: MonthControlModel["categoryControls"][number]) => <article data-control-focus={row.key} key={row.key} className={styles.objectiveRow}>
-    <h4 className="font-bold">{row.label}</h4><CategoryTargetEditor control={row} targetMonth={model.targetMonth} />
-    {row.capabilities.adjustability === "FIXED" && <p className="mt-2 text-sm text-slate-600"><strong>Suivi uniquement.</strong> Vous pouvez définir un repère, mais ce poste n’est pas utilisé comme levier automatique.</p>}
-    {model.categoryTensions.some(tension => tension.categoryKey === row.key) && <div className="mt-2 flex gap-3 text-sm">{row.capabilities.adjustability === "ADJUSTABLE" && <button className={styles.textAction} onClick={() => choosePurpose({ kind: "CATEGORY_CORRECTION", categoryKey: row.key })}>Corriger ce poste</button>}
-      <button className={styles.textAction} onClick={() => choosePurpose({ kind: "CATEGORY_OVERAGE_OFFSET", categoryKey: row.key })}>Compenser ailleurs</button></div>}
-  </article>;
-  return <section data-control-focus="goals" className={styles.objectives} aria-labelledby="objectives-title"><header className="flex items-center justify-between gap-3"><h3 id="objectives-title" className="text-xl font-black">Mes objectifs</h3><span className="text-sm text-slate-600">Enregistrés pour {controlMonth(model.targetMonth)}</span></header>
-    {model.goalState === "NO_GOALS_DEFINED" && <p className="mt-3 text-sm text-slate-600">Aucun repère défini pour l’instant.</p>}
-    {active.length > 0 && <div className="mt-3 grid grid-cols-2 gap-x-5 gap-y-3">{active.map(category)}</div>}
-    {available.length > 0 && <details className="mt-3 text-sm"><summary className="cursor-pointer font-bold text-violet-900">Ajouter un objectif</summary><div className="mt-3 grid grid-cols-2 gap-x-5 gap-y-3">{available.map(category)}</div></details>}
-    <div data-control-focus="global-goal" className="mt-3">{model.settings.goal !== null ? <MonthGoalEditor targetMonth={model.targetMonth} settings={model.settings} goal={model.projectionSummary} />
-      : <details className="text-sm"><summary className="cursor-pointer font-bold text-violet-900">Définir un objectif de fin de mois</summary><MonthGoalEditor targetMonth={model.targetMonth} settings={model.settings} goal={model.projectionSummary} /></details>}</div>
-  </section>;
-}
 
 export function MonthControlSimulator({ model, trial, purpose, operations, pending, replaceDraft, recalculate, apply }: {
   model: MonthControlModel; trial: Workbench | null; purpose: MonthControlPurpose; operations: readonly MonthChoiceOperation[]; pending: boolean;
@@ -45,7 +28,7 @@ export function MonthControlSimulator({ model, trial, purpose, operations, pendi
   const savings = trial?.offers.filter(row => row.operation.kind === "SAVINGS") ?? [];
   const goalOffers = trial?.offers.filter(row => row.operation.kind === "CATEGORY" && row.operation.strategy === "REDUCE_AMOUNT") ?? [];
   return <section data-control-focus="simulator" className={`${material.glassPremium} ${styles.simulator}`} aria-labelledby="workbench-title">
-    <header><p className="text-sm font-bold text-violet-800">Simulation temporaire</p><h3 id="workbench-title" className="mt-1 text-2xl font-black">{operations.length ? `Votre scénario · ${operations.length} choix sur 2` : "Tester un scénario"}</h3>
+    <header><p className="text-sm font-bold text-violet-800">Simulation</p><h3 id="workbench-title" className="mt-1 text-2xl font-black">{operations.length ? `Votre scénario · ${operations.length} choix sur 2` : "Et si ce mois-ci…"}</h3>
       <p className={`${styles.reading} mt-3 text-sm text-slate-600`}>Modifiez virtuellement une ou deux habitudes pour voir l’impact sur votre fin de mois. Rien n’est enregistré tant que vous ne validez pas.</p>
       {!operations.length && <p className="mt-2 text-sm">Vous pouvez combiner jusqu’à 2 choix.</p>}
       {purpose.kind !== "FREE_EXPLORATION" && purpose.kind !== "NONE" && <div className="mt-3 flex items-center gap-3 text-sm"><p>{trial?.offerContext}</p><button className={styles.textAction} onClick={() => recalculate(operations, { kind: "FREE_EXPLORATION" })}>Explorer librement</button></div>}
@@ -64,7 +47,7 @@ export function MonthControlSimulator({ model, trial, purpose, operations, pendi
       </li>;
     })}</ul>}
     {trial?.preview && <div className={styles.result}>
-      <p className="text-2xl font-black text-violet-900">+ ≈ {money(trial.budgetMarginGain)} de marge</p>
+      <p className="text-sm font-bold text-violet-800">Reste prévu en fin de mois</p><p className="mt-1 text-2xl font-black text-violet-900">≈ {money(trial.model.projectionSummary.economic?.central)} → ≈ {money(trial.scenario.projectionSummary.economic?.central)}</p><p className="mt-2 font-semibold">+ ≈ {money(trial.budgetMarginGain)} de marge</p>
       <table className={`${styles.compare} mt-4`} aria-label="Comparaison actuel et votre scénario"><thead><tr><th>Repère</th><th>Actuel</th><th>Votre scénario</th></tr></thead><tbody>
         <tr><th>Reste prévu en fin de mois</th><td>≈ {money(trial.model.projectionSummary.economic?.central)}</td><td>≈ {money(trial.scenario.projectionSummary.economic?.central)}</td></tr>
         <tr><th>Quotidien restant prévu</th><td>≈ {money(trial.model.projectionSummary.remainingDailyLife)}</td><td>≈ {money(trial.scenario.projectionSummary.remainingDailyLife)}</td></tr>
@@ -79,10 +62,10 @@ export function MonthControlSimulator({ model, trial, purpose, operations, pendi
     {!trial && operations.length > 0 && <button className={`${button} mt-4`} disabled={pending} onClick={() => recalculate(operations, purpose)}>Recalculer le scénario</button>}
     {operations.length === 2 && <p className="mt-4 text-sm">Retirez ou remplacez un choix pour en tester un autre.</p>}
     {operations.length === 1 && !trial?.resolved && <h4 className="mt-5 font-bold">Ajouter un deuxième choix</h4>}
-    {goalOffers.length > 0 && purpose.kind !== "FREE_EXPLORATION" && <div className="mt-4 space-y-2">{goalOffers.map(offer => <button key={offer.id} className={`${material.clayChip} block w-full p-3 text-left text-sm`} disabled={pending} onClick={() => replaceDraft(offer.operation)}><strong>{offer.label}</strong> · ≈ {money(offer.preview.delta)} de marge · reste ≈ {money(offer.remainingNeedAfter)}</button>)}</div>}
-    <div className="mt-4 grid grid-cols-3 gap-3">{groups.filter(key => mainKeys.includes(key)).map(key => <div key={key} className={styles.shortcutGroup}><h4 className="font-bold">{trial!.shortcuts.find(row => row.categoryKey === key)!.categoryLabel}</h4><div className="mt-2 space-y-2">{trial!.shortcuts.filter(row => row.categoryKey === key).map(row => <button className={styles.shortcut} disabled={pending} key={row.label} onClick={() => replaceDraft(row.operation)}><span>{row.label}</span><span className="block text-sm text-violet-700">≈ {money(row.preview.delta)} de marge</span></button>)}</div></div>)}</div>
-    {groups.some(key => !mainKeys.includes(key)) && <details className="mt-4 text-sm"><summary className="cursor-pointer font-semibold">Tester une autre habitude</summary><div className="mt-3 grid grid-cols-2 gap-3">{trial!.shortcuts.filter(row => !mainKeys.includes(row.categoryKey)).map(row => <button key={row.label} className={styles.shortcut} disabled={pending} onClick={() => replaceDraft(row.operation)}>{row.label} · ≈ {money(row.preview.delta)} de marge</button>)}</div></details>}
-    {savings.length > 0 && <details className="mt-4 text-sm"><summary className="cursor-pointer font-semibold">Tester une réservation ajustable</summary><p className="mt-2 text-slate-600">Une réservation libérée augmente la marge du mois ; ce n’est pas une dépense évitée.</p><div className="mt-3 space-y-2">{savings.map(row => <button key={row.id} className={styles.shortcut} disabled={pending} onClick={() => replaceDraft(row.operation)}>{row.label} · {money(row.preview.reservationRelease, true)} libérés</button>)}</div></details>}
+    {goalOffers.length > 0 && purpose.kind !== "FREE_EXPLORATION" && <div className="mt-4 space-y-2">{goalOffers.map(offer => <button key={offer.id} className={`${material.clayChip} block w-full p-3 text-left text-sm`} disabled={pending} onClick={() => replaceDraft(offer.operation)}><strong>{offer.label}</strong><span className="mt-2 block font-bold">Fin de mois ≈ {money(offer.preview.before.central)} → ≈ {money(offer.preview.after.central)}</span><span className="mt-1 block">+≈ {money(offer.preview.delta)} de marge · reste ≈ {money(offer.remainingNeedAfter)} à couvrir</span></button>)}</div>}
+    <div className="mt-4 grid grid-cols-3 gap-3">{groups.filter(key => mainKeys.includes(key)).map(key => <div key={key} className={styles.shortcutGroup}><h4 className="font-bold">{trial!.shortcuts.find(row => row.categoryKey === key)!.categoryLabel}</h4><div className="mt-2 space-y-2">{trial!.shortcuts.filter(row => row.categoryKey === key).map(row => <button className={styles.shortcut} disabled={pending} key={row.label} onClick={() => replaceDraft(row.operation)}><span>{row.label}</span><span className="mt-2 block text-base font-bold text-violet-900">Fin de mois ≈ {money(row.preview.before.central)} → ≈ {money(row.preview.after.central)}</span><span className="mt-1 block text-sm text-violet-700">+≈ {money(row.preview.delta)}</span></button>)}</div></div>)}</div>
+    {groups.some(key => !mainKeys.includes(key)) && <details className="mt-4 text-sm"><summary className="cursor-pointer font-semibold">Tester une autre habitude</summary><div className="mt-3 grid grid-cols-2 gap-3">{trial!.shortcuts.filter(row => !mainKeys.includes(row.categoryKey)).map(row => <button key={row.label} className={styles.shortcut} disabled={pending} onClick={() => replaceDraft(row.operation)}><span>{row.label}</span><span className="mt-2 block font-bold">Fin de mois ≈ {money(row.preview.before.central)} → ≈ {money(row.preview.after.central)}</span><span className="mt-1 block">+≈ {money(row.preview.delta)} de marge</span></button>)}</div></details>}
+    {savings.length > 0 && <details className="mt-4 text-sm"><summary className="cursor-pointer font-semibold">Tester une réservation ajustable</summary><p className="mt-2 text-slate-600">Une réservation libérée augmente la marge du mois ; ce n’est pas une dépense évitée.</p><div className="mt-3 space-y-2">{savings.map(row => <button key={row.id} className={styles.shortcut} disabled={pending} onClick={() => replaceDraft(row.operation)}><span>{row.label}</span><span className="mt-2 block font-bold">Fin de mois ≈ {money(row.preview.before.central)} → ≈ {money(row.preview.after.central)}</span><span className="mt-1 block">{money(row.preview.reservationRelease, true)} libérés</span></button>)}</div></details>}
     {operations.length < 2 && selectable.length > 0 && !trial?.resolved && <details className="mt-4 text-sm"><summary className="cursor-pointer font-bold text-violet-900">Créer mon scénario</summary><form className="mt-3 flex flex-wrap items-end gap-3" onSubmit={event => {
       event.preventDefault(); if (!custom || !strategy) return; const value = String(new FormData(event.currentTarget).get("reduction"));
       replaceDraft({ kind: "CATEGORY", categoryKey: custom.key, ...(strategy === "REDUCE_PERCENT" ? { strategy, percent: value } : strategy === "REDUCE_AMOUNT" ? { strategy, amount: value } : { strategy }) });

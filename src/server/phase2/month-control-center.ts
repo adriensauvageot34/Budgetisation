@@ -19,8 +19,8 @@ type RootCause = Readonly<{ key: string; label: string; explanation: string; sym
 type ActiveItem = Readonly<{ key: string; label: string; value: string; nature: "INTENTION" | "DECISION" | "RESERVATION"; destination: Destination; actionLabel?: string }>;
 const positive = (value: Big) => value.gt(0) ? value : new Big(0);
 const money = (value: string) => new Intl.NumberFormat("fr-FR", { style: "currency", currency: "EUR", maximumFractionDigits: 2 }).format(Number(value));
-const resources = (focus: string): Destination => ({ section: "resources", focus });
-const settingsDestination = (focus: string): Destination => ({ section: "settings", focus });
+const resources = (focus: string): Destination => ({ section: "update", focus });
+const settingsDestination = (focus: string): Destination => ({ section: "update", focus });
 
 /** Interpretation only. Amounts are supplied by the existing scenario owners. */
 export function projectMonthControlCenter(ctx: MonthChoiceContext) {
@@ -66,14 +66,14 @@ export function projectMonthControlCenter(ctx: MonthChoiceContext) {
     if (expense.context?.project?.unpricedComponents?.length) symptoms.push("Budget à compléter");
     if (symptoms.length) causes.push({ key: `project:${expense.id}`, label: "title" in expense && typeof expense.title === "string" ? expense.title : "Projet à préciser", symptoms,
       explanation: "Ouvrez le projet pour compléter ou confirmer son intention auprès de son éditeur habituel.", priority: "STRUCTURAL",
-      scopes: ["ECONOMIC_MONTH", `PROJECT:${expense.id}`], actionable: true, destination: { section: "overview", focus: "projects" }, projectId: expense.id });
+      scopes: ["ECONOMIC_MONTH", `PROJECT:${expense.id}`], actionable: true, destination: { section: "update", focus: "projects" }, projectId: expense.id });
   }
   if (plan?.narrative.prediction?.currentImportsMissing) causes.push({ key: "imports", label: "Imports récents incomplets",
     explanation: "Les habitudes historiques complètent les données manquantes ; absence d’import ne signifie pas zéro dépense.", symptoms: ["Couverture récente incomplète"],
-    priority: "STRUCTURAL", scopes: ["ECONOMIC_MONTH", "BANK_CASH"], actionable: false, destination: { section: "reliability", focus: "imports" } });
+    priority: "STRUCTURAL", scopes: ["ECONOMIC_MONTH", "BANK_CASH"], actionable: false, destination: { section: "understand", focus: "imports" } });
   if (decision?.attention.some(row => row.key === "revision")) causes.push({ key: "forecast-change", label: "Projection sensiblement révisée",
     explanation: "Comparez les estimations conservées pour comprendre cette évolution.", symptoms: ["Variation depuis un checkpoint comparable"],
-    priority: "INFORMATIONAL", scopes: ["ECONOMIC_MONTH"], actionable: false, destination: { section: "reliability", focus: "history" } });
+    priority: "INFORMATIONAL", scopes: ["ECONOMIC_MONTH"], actionable: false, destination: { section: "understand", focus: "history" } });
   const priorities = { BLOCKING: 0, STRUCTURAL: 1, USEFUL: 2, INFORMATIONAL: 3 };
   const rootCauses = [...new Map(causes.map(row => [row.key, row])).values()].sort((a, b) => priorities[a.priority] - priorities[b.priority] || a.key.localeCompare(b.key));
   const labelFor = (key: string) => categoryControls.find(row => row.key === key)?.label ?? categoryDecisionCapabilities(key)?.label
@@ -85,7 +85,7 @@ export function projectMonthControlCenter(ctx: MonthChoiceContext) {
   if (settings.goal !== null) activeIntentions.push({ key: "goal", label: "Objectif de fin de mois", value: money(settings.goal), nature: "INTENTION", destination: { section: "choices", focus: "global-goal" } });
   const activeDecisions: ActiveItem[] = Object.entries(settings.assumptions).map(([key, value]) => ({ key: `assumption:${key}`, label: humanLabel(key),
     value: value.mode === "CUSTOM" ? `Reste limité à ${money(value.amount!)}` : value.mode === "LOWER" ? "Reste réduit de 20 %" : "Reste augmenté de 20 %",
-    nature: "DECISION", destination: settingsDestination(key) }));
+    nature: "DECISION", destination: { section: "choices", focus: `choice:${key}` } }));
   for (const [key, amount] of Object.entries(inputs.resourceOverrides)) activeDecisions.push({ key: `resource:${key}`, label: humanLabel(key), value: `Prévision du mois : ${money(amount)}`, nature: "DECISION", destination: resources("income") });
   for (const [key, row] of Object.entries(inputs.fixedAmountOverrides)) activeDecisions.push({ key: `fixed:${key}`, label: humanLabel(key), value: `Ajustée à ${money(row.amount)} ce mois`, nature: "DECISION", destination: settingsDestination(key) });
   for (const key of inputs.excludedFixedObligations) activeDecisions.push({ key: `excluded:${key}`, label: humanLabel(key), value: "Retirée de ce mois", nature: "DECISION", destination: settingsDestination(key) });
@@ -93,7 +93,7 @@ export function projectMonthControlCenter(ctx: MonthChoiceContext) {
   for (const row of inputs.confirmedObligations) activeDecisions.push({ key: `confirmed:${row.componentKey}`, label: humanLabel(row.componentKey), value: `Confirmée · ${money(row.amount)} · ${controlDate(row.dueDate)}`, nature: "DECISION", destination: settingsDestination(row.componentKey) });
   const savings = plan?.savingsAllocations.items ?? inputs.declaredOutflows.map(row => ({ ...row, adjustability: row.adjustability!, source: row.source!, annualGoalRef: row.annualGoalRef! }));
   const reservations: ActiveItem[] = savings.map((row, index) => ({ key: `reservation:${row.id}`, label: row.label,
-    value: `${money(row.amount)} ${row.adjustability === "PROTECTED" ? "protégés" : "réservés, ajustables"}`, nature: "RESERVATION", destination: resources(`reserve-${index + 1}`) }));
+    value: `${money(row.amount)} ${row.adjustability === "PROTECTED" ? "protégés" : "réservés, ajustables"}`, nature: "RESERVATION", destination: { section: "choices", focus: `reserve-${index + 1}` } }));
   const economicFragile = !plan || rootCauses.some(row => row.scopes.includes("ECONOMIC_MONTH") && row.priority !== "INFORMATIONAL");
   const scopedReliability = { economic: !plan ? "UNAVAILABLE" : economicFragile ? "FRAGILE" : "USABLE",
     bank: !plan || plan.bankCash.endOfMonth.central === null || scenario.availableNow.value === null ? "FRAGILE" : "USABLE",

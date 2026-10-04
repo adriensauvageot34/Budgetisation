@@ -150,6 +150,18 @@ async function mutateMonthInputs(form: FormData, controlCenter = false): Promise
         dueDate: field(form, "obligationDate") || null, reason: "MONTH_EXCEPTION" };
     }
     next = { ...current, fixedAmountOverrides };
+  } else if (intent === "set-month-fixed-state") {
+    const key = field(form, "componentKey"), state = field(form, "fixedState");
+    if (!["EXPECTED", "ABSENT", "DIFFERENT"].includes(state) || !forecast.components.some(part => part.key === key && part.nature === "CONTRACTUAL_EXPECTED" && part.additiveGroup === "obligations" && part.central !== null)) throw new TypeError("FIXED_OVERRIDE_TARGET_INVALID");
+    const fixedAmountOverrides = { ...current.fixedAmountOverrides };
+    if (state === "DIFFERENT") fixedAmountOverrides[key] = { amount: field(form, "obligationAmount"), dueDate: field(form, "obligationDate") || null, reason: "MONTH_EXCEPTION" };
+    else delete fixedAmountOverrides[key];
+    next = { ...current, fixedAmountOverrides, excludedFixedObligations: state === "ABSENT" ? [...new Set([...current.excludedFixedObligations, key])] : current.excludedFixedObligations.filter(item => item !== key) };
+  } else if (intent === "update-declared-savings") {
+    const id = field(form, "outflowId");
+    if (!current.declaredOutflows.some(item => item.id === id && item.kind === "SAVINGS")) throw new TypeError("SAVINGS_TARGET_INVALID");
+    const metadata = parseSavingsMetadata({ adjustability: field(form, "outflowAdjustability") });
+    next = { ...current, declaredOutflows: current.declaredOutflows.map(item => item.id === id ? { ...item, label: field(form, "outflowLabel"), amount: field(form, "outflowAmount"), dueDate: field(form, "outflowDate") || null, adjustability: metadata.adjustability } : item) };
   } else if (intent === "add-declared-savings") {
     next = { ...current, declaredOutflows: [...current.declaredOutflows, {
       id: randomUUID(), label: field(form, "outflowLabel"), amount: field(form, "outflowAmount"),

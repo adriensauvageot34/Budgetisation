@@ -4,26 +4,25 @@ import { createContext, useCallback, useContext, useEffect, useRef, useState, us
 import { useRouter } from "next/navigation";
 import { SlidersHorizontal } from "lucide-react";
 import { OverlayFrame } from "@/ui/overlays/overlay-frame";
-import { monthControlSection, monthControlUrl, replaceMonthControlOperation,
-  type MonthControlSection, type MonthControlPurpose } from "@/domain/phase2/month-control-contract";
+import { monthControlSection, monthControlDestination, monthControlUrl, replaceMonthControlOperation,
+  type MonthControlSection, type MonthControlSectionInput, type MonthControlPurpose } from "@/domain/phase2/month-control-contract";
 import type { MonthChoiceOperation } from "@/domain/phase2/month-choice-contract";
 import { previewMonthControlCenter, applyMonthChoice, updateMonthControlInputs } from "./actions";
-import { usePlannedExpenseInteractions } from "./planned-expense-interactions";
-import { MonthControlObjectives, MonthControlSimulator } from "./month-control-simulator";
-import { MonthControlOverview } from "./month-control-overview";
+import { MonthControlSimulator } from "./month-control-simulator";
+import { MonthControlLimits, MonthControlActiveChoices, MonthControlSavings, MonthChoiceFocus } from "./month-control-choices";
+import { MonthLocalFocusProvider } from "./month-control-focus";
 import { controlMoney } from "@/domain/phase2/month-control-display";
 import material from "./month-material.module.css";
 import styles from "./month-control-center.module.css";
 
 type Workbench = Awaited<ReturnType<typeof previewMonthControlCenter>>;
 export type MonthControlModel = Workbench["model"];
-type Destination = { section: MonthControlSection; focus?: string };
+type Destination = { section: MonthControlSectionInput; focus?: string };
 const ControlContext = createContext<{ open: (destination: Destination, invoker?: HTMLElement) => void } | null>(null);
-const sections = [["overview", "À piloter"], ["choices", "Objectifs & choix"], ["settings", "Hypothèses & exceptions"],
-  ["resources", "Ressources & réserves"], ["reliability", "Données & fiabilité"]] as const;
+export const MONTH_CONTROL_TABS = [["choices", "Mes choix"], ["update", "Mettre à jour"], ["understand", "Comprendre"]] as const;
 const button = `${material.clayButton} px-4 py-2 text-sm font-bold disabled:opacity-50`;
 
-export function MonthControlLink({ section = "overview", focus, children, className, actionableCount }: Destination & {
+export function MonthControlLink({ section = "choices", focus, children, className, actionableCount }: Destination & {
   children?: ReactNode; className?: string; actionableCount?: number }) {
   const center = useContext(ControlContext);
   return <button type="button" data-month-control-trigger={children === undefined ? "" : undefined} className={`${className ?? button} ${children === undefined ? styles.controlTrigger : ""}`} onClick={event => center?.open({ section, focus }, event.currentTarget)}>
@@ -31,14 +30,15 @@ export function MonthControlLink({ section = "overview", focus, children, classN
   </button>;
 }
 
-export function MonthControlCenter({ model, initialSection = null, initialFocus = null, inputError = false, resources, settings, reliability, children }: {
+export function MonthControlCenter({ model, initialSection = null, initialFocus = null, inputError = false, update, understand, children }: {
   model: MonthControlModel; initialSection?: MonthControlSection | null; initialFocus?: string | null; inputError?: boolean;
-  resources: ReactNode; settings: ReactNode; reliability: ReactNode; children: ReactNode;
+  update: ReactNode; understand: ReactNode; children: ReactNode;
 }) {
-  const router = useRouter(), interactions = usePlannedExpenseInteractions();
+  const router = useRouter();
   const background = useRef<HTMLDivElement>(null), content = useRef<HTMLDivElement>(null), fallback = useRef<HTMLButtonElement>(null), invoker = useRef<HTMLElement>(null);
-  const [open, setOpen] = useState(initialSection !== null), [section, setSection] = useState<MonthControlSection>(initialSection ?? "overview");
-  const [focus, setFocus] = useState(initialFocus), [message, setMessage] = useState<string | null>(inputError ? "Vérifiez la saisie du contrôle concerné." : null);
+  const initial = monthControlDestination(initialSection ?? "choices", initialFocus);
+  const [open, setOpen] = useState(initialSection !== null), [section, setSection] = useState<MonthControlSection>(initial.section);
+  const [focus, setFocus] = useState(initial.focus), [message, setMessage] = useState<string | null>(inputError ? "Vérifiez la saisie du contrôle concerné." : null);
   const [purpose, setPurpose] = useState<MonthControlPurpose>(model.defaultPurpose), [operations, setOperations] = useState<readonly MonthChoiceOperation[]>([]);
   const [trial, setTrial] = useState<Workbench | null>(null), [pending, startTransition] = useTransition();
   const request = useRef(0), requested = useRef<string | null>(null), previousDigest = useRef(model.baseDigest);
@@ -48,13 +48,15 @@ export function MonthControlCenter({ model, initialSection = null, initialFocus 
   }, [model.targetMonth]);
   const navigate = useCallback((destination: Destination, origin?: HTMLElement) => {
     if (origin) invoker.current = origin;
-    setSection(destination.section); setFocus(destination.focus ?? null); setOpen(true); updateLocation(destination.section, destination.focus);
+    const next = monthControlDestination(destination.section, destination.focus);
+    setSection(next.section); setFocus(next.focus); setOpen(true); updateLocation(next.section, next.focus);
   }, [updateLocation]);
+  const openEntity = (entity: string | null) => { setFocus(entity); updateLocation(section, entity); };
   const close = () => { setOpen(false); updateLocation(null); };
   useEffect(() => { fallback.current = background.current?.querySelector<HTMLButtonElement>("[data-month-control-trigger]") ?? null; }, [model.targetMonth]);
   useEffect(() => {
     const restore = () => { const url = new URL(window.location.href), value = monthControlSection(url.searchParams.get("control"));
-      setOpen(value !== null); if (value) { setSection(value); setFocus(url.searchParams.get("focus")); } };
+      setOpen(value !== null); if (value) { const destination = monthControlDestination(url.searchParams.get("control") as MonthControlSectionInput, url.searchParams.get("focus")); setSection(destination.section); setFocus(destination.focus); } };
     restore(); window.addEventListener("popstate", restore); return () => window.removeEventListener("popstate", restore);
   }, [model.targetMonth]);
   useEffect(() => {
@@ -79,23 +81,22 @@ export function MonthControlCenter({ model, initialSection = null, initialFocus 
     if (requested.current !== key) recalculate(operations, purpose);
   }, [open, section, operations, purpose, recalculate, model.baseDigest, model.editable]);
   useEffect(() => {
-    if (!open || !focus) return;
+    if (!open) return;
+    if (!focus) { content.current?.scrollTo({ top: 0, behavior: "instant" }); return; }
     const frame = requestAnimationFrame(() => {
-      const elements = content.current?.querySelectorAll<HTMLElement>("[data-control-focus]");
-      const target = elements && [...elements].find(row => row.dataset.controlFocus === focus);
+      const elements = content.current?.querySelectorAll<HTMLElement>("[data-local-focus],[data-control-focus]");
+      const target = elements && [...elements].find(row => row.dataset.localFocus === focus || row.dataset.controlFocus === focus);
       content.current?.querySelectorAll<HTMLElement>("[data-control-highlight]").forEach(row => delete row.dataset.controlHighlight);
       if (!target) return;
       target.dataset.controlHighlight = "true";
       for (let parent = target.parentElement; parent && parent !== content.current; parent = parent.parentElement)
         if (parent instanceof HTMLDetailsElement) parent.open = true;
       if (target instanceof HTMLDetailsElement) target.open = true;
-      target.querySelectorAll<HTMLDetailsElement>("details").forEach(row => { row.open = true; });
       target.scrollIntoView({ block: "start", behavior: "auto" });
       target.querySelector<HTMLElement>("input:not([type=hidden]),select,button,summary")?.focus({ preventScroll: true });
     });
     return () => cancelAnimationFrame(frame);
   }, [open, section, focus]);
-  const choosePurpose = (next: MonthControlPurpose) => { navigate({ section: "choices", focus: "categoryKey" in next ? next.categoryKey : "global-goal" }); recalculate(operations, next); };
   const replaceDraft = (operation: MonthChoiceOperation) => {
     try { recalculate(replaceMonthControlOperation(operations, operation), purpose); }
     catch { setMessage("Vérifiez cette réduction. Deux cibles différentes au maximum peuvent être simulées."); }
@@ -123,25 +124,27 @@ export function MonthControlCenter({ model, initialSection = null, initialFocus 
       catch { setMessage("Enregistrement impossible pour le moment. Votre saisie est conservée."); }
     });
   };
-  const showProject = (id: string) => { close(); interactions?.request({ action: "EDIT", id }); };
+  const updateCount = model.rootCauses.filter(row => row.actionable && row.destination.section === "update" && !row.projectId).length;
   return <ControlContext.Provider value={{ open: navigate }}>
     <div ref={background}>{children}</div>
     <OverlayFrame open={open} kind="exploration" title={`Centre de contrôle — ${new Intl.DateTimeFormat("fr-FR", { month: "long", year: "numeric", timeZone: "UTC" }).format(new Date(`${model.targetMonth}-01T12:00:00Z`))}`}
       subtitle="Comprendre, décider et comparer les conséquences pour ce mois" className={`${material.page} ${styles.frame}`}
       closeAction={{ kind: "callback", onAction: close }} backgroundRootRef={background} restoreFocusRef={invoker} semanticFallbackRef={fallback} closeOnBackdrop>
       <div className={styles.layout}>
-        <nav aria-label="Zones du centre de contrôle" className={styles.sidebar}>{sections.map(([key, label]) =>
+        <nav aria-label="Zones du centre de contrôle" className={styles.sidebar}>{MONTH_CONTROL_TABS.map(([key, label]) =>
           <button key={key} className={styles.tab} aria-current={section === key ? "page" : undefined}
-            onClick={() => navigate({ section: key })}>{label}{(key === "resources" && model.rootCauses.some(row => row.actionable && row.destination.section === key)) && <span className="ml-2 text-violet-600" aria-label="Informations à compléter">•</span>}</button>)}</nav>
+            onClick={() => navigate({ section: key })}>{label}{key === "update" && updateCount > 0 && <span className="ml-2 text-violet-600" aria-label="Informations à actualiser">{updateCount}</span>}</button>)}</nav>
         <div ref={content} className={styles.content} onSubmitCapture={sendForm}>
-          <div className={styles.contextSummary} aria-label="Résumé du mois"><span>Reste prévu <strong>≈ {controlMoney(model.projectionSummary.economic?.central)}</strong></span><span>Objectif {model.settings.goal === null ? "—" : controlMoney(model.settings.goal)}</span><span>{model.rootCauses.filter(row => row.actionable).length} infos à compléter</span></div>
+          <div className={styles.contextSummary} aria-label="Résumé du mois"><span>Reste prévu <strong>≈ {controlMoney(model.projectionSummary.economic?.central)}</strong></span><span>Objectif {model.settings.goal === null ? "—" : controlMoney(model.settings.goal)}</span><span>{model.rootCauses.filter(row => row.actionable).length} informations à actualiser</span></div>
           {message && <p role="status" className={styles.status}>{message}</p>}
-          {section === "overview" && <MonthControlOverview model={model} navigate={navigate} choosePurpose={choosePurpose} showProject={showProject} />}
-          {section === "choices" && <div className="space-y-5"><h2 className="text-2xl font-black">Objectifs & choix</h2>
-            <MonthControlObjectives model={model} choosePurpose={choosePurpose} />
+          <MonthLocalFocusProvider value={{ section, entity: focus, openEntity }}>
+          {section === "choices" && (focus && !["goals", "savings", "simulator"].includes(focus) ? <MonthChoiceFocus model={model} /> : <div className="space-y-7"><header><h2 className="text-2xl font-black">Mes choix</h2><p className="mt-3 text-slate-600">Que voulons-nous décider ou tester pour ce mois ?</p></header>
+            <MonthControlLimits model={model} />
             <MonthControlSimulator model={model} trial={activeTrial} purpose={purpose} operations={operations} pending={pending} replaceDraft={replaceDraft} recalculate={recalculate} apply={apply} />
-          </div>}
-          {section === "settings" && settings}{section === "resources" && resources}{section === "reliability" && reliability}
+            <MonthControlActiveChoices model={model} /><MonthControlSavings model={model} />
+          </div>)}
+          {section === "update" && update}{section === "understand" && understand}
+          </MonthLocalFocusProvider>
           {pending && <p role="status" className="mt-4 text-sm">Recalcul en cours…</p>}
         </div>
       </div>

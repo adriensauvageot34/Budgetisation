@@ -47,7 +47,7 @@ export function BenefitWalletEditor({ wallet, projection, targetMonth, today, fu
   </article>;
 }
 
-function BenefitWalletFundingDetails({ wallet, funding }: { wallet: BenefitWalletProjection; funding: MonthEconomicPlan["plannedFunding"]["swile"] }) {
+export function BenefitWalletFundingDetails({ wallet, funding }: { wallet: BenefitWalletProjection; funding: MonthEconomicPlan["plannedFunding"]["swile"] }) {
   return <div>
       {wallet.latestObservation && <p className="mt-1 text-sm text-slate-600">Dernier solde observé : {money(wallet.latestObservation.amount)} au {dateLabel(wallet.latestObservation.asOfDate)}.</p>}
       <dl className="mt-2 space-y-1 text-sm">{([
@@ -65,7 +65,7 @@ function BenefitWalletFundingDetails({ wallet, funding }: { wallet: BenefitWalle
       {wallet.limitations.includes("BENEFIT_LOADING_DATE_UNKNOWN") && <p className="mt-2 text-sm text-slate-600">Date du chargement à préciser : ce flux n’est pas ajouté au stock.</p>}
       {wallet.limitations.includes("PLANNED_WALLET_DATE_UNRESOLVED") && <p className="mt-2 text-sm text-slate-600">Un projet sans date ou passé demande une confirmation de son financement.</p>}
       {wallet.limitations.includes("PLANNED_WALLET_DATE_INELIGIBLE") && <p className="mt-2 text-sm text-amber-900">Une allocation tombe un jour non éligible selon la règle du foyer.</p>}
-      {wallet.ownerPersonId === null && <p className="mt-2 text-sm text-slate-600">Propriétaire non résolu : aucun repas personnel n’est automatiquement affecté à cette carte.</p>}
+      {wallet.ownerPersonId === null && <p className="mt-2 text-sm text-slate-600">Titulaire à confirmer : aucun repas personnel n’est automatiquement affecté à cette carte.</p>}
   </div>;
 }
 

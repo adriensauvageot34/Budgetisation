@@ -2,7 +2,7 @@ import { notFound } from "next/navigation";
 import { withProductAuthentication } from "@/app/product-query";
 import { MonthForecastView } from "./month-forecast-view";
 import { projectMonthControlCenter } from "@/server/phase2/month-control-center";
-import { monthControlSection } from "@/domain/phase2/month-control-contract";
+import { monthControlSection, monthControlDestination, type MonthControlSectionInput } from "@/domain/phase2/month-control-contract";
 import { getBootstrapContext } from "@/server/bootstrap/context";
 import { getAuthenticatedBootstrapClient } from "@/server/bootstrap/auth";
 import { createCanonicalReadClient } from "@/server/canonical/client";
@@ -95,9 +95,10 @@ export default async function MonthForecastPage({ searchParams }: { searchParams
       funding: projectExpenseFunding(card), placeLabel: placeLabel(card.context.place), participantLabels,
       childPlaceLabels: Object.values(card.context.childLocalPlaceRefs ?? {}).map(placeLabel).filter((label): label is string => !!label) } };
   });
+  const control = monthControlSection(params.control) === null ? null : monthControlDestination(params.control as MonthControlSectionInput, typeof params.focus === "string" ? params.focus : null);
   return <MonthForecastView forecast={forecast} scenario={scenario} stored={stored}
     controlModel={projectMonthControlCenter({ forecast, inputs: stored.inputs, expenses: plannedExpenses, asOf: today })}
-    initialSection={monthControlSection(params.control)} initialFocus={typeof params.focus === "string" ? params.focus : null}
+    initialSection={control?.section ?? null} initialFocus={control?.focus ?? null}
     plannedExpenses={cards} calendarCarryovers={projectPlannedExpenseCards(calendarCarryovers, today)} today={today}
     persons={persons} places={options.places} vehicle={options.vehicle} prices={[...options.prices, ...(() => { const estimate = groceryBasketEstimate(forecast.predictionEvidence?.history.economicEntries ?? []); return estimate ? [estimate] : []; })()]} wallets={options.wallets}
     inputError={params.inputError === "1"} />;

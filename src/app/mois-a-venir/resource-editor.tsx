@@ -68,7 +68,7 @@ export function ResourceEditor({ resource, targetMonth, walletObservation = null
         </span>
         <div className="min-w-0"><p className="truncate text-sm font-bold">{resource.label}</p><p className="text-xs text-slate-600">{meal ? "Chargement prévu du mois" : "Salaire prévu du mois"}</p></div>
       </div>
-      {!controls ? <MonthControlLink section="resources" focus={controlFocus} className={`${material.iconButton} !p-2`}><span className="sr-only">Modifier {resource.label}</span><Pencil size={16} /></MonthControlLink> : !editing && <button type="button" className={`${material.iconButton} shrink-0 !p-2`} title={`Modifier ${resource.label}`} aria-label={`Modifier ${resource.label}`} onClick={() => { setError(null); setEditing(true); }}><Pencil size={16} /></button>}
+      {!controls ? <MonthControlLink section="update" focus={controlFocus} className={`${material.iconButton} !p-2`}><span className="sr-only">Modifier {resource.label}</span><Pencil size={16} /></MonthControlLink> : !editing && <button type="button" className={`${material.iconButton} shrink-0 !p-2`} title={`Modifier ${resource.label}`} aria-label={`Modifier ${resource.label}`} onClick={() => { setError(null); setEditing(true); }}><Pencil size={16} /></button>}
     </div>
     {editing ? <form className={`${material.sectionEnter} mt-3 space-y-2`} onSubmit={(event) => { event.preventDefault(); send("set-resource-override", inputRef.current?.value.trim()); }}>
       <label htmlFor={`resource-${resource.key}`} className="text-xs font-bold text-slate-700">Montant de {resource.label} pour ce mois (€)</label>

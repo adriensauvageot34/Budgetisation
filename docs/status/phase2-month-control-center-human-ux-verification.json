@@ -1,0 +1,213 @@
+{
+  "headBefore": "3c0a3e70f18f1ab80943e450ccdddcc32e93b43a",
+  "deliveryCommit": "Commit containing this report: feat(phase2): simplify monthly control center UX",
+  "migrationRequired": false,
+  "scope": "UI navigation, local drafts, presentation, targeted mutations in existing monthly owner. No financial engine change.",
+  "commands": [
+    {
+      "suite": "phase2-month-control-center-human-ux",
+      "exit": 0,
+      "command": "node scripts/check-phase2-month-control-center-human-ux.mjs",
+      "status": "PASS"
+    },
+    {
+      "suite": "phase2-month-control-center-ux",
+      "exit": 0,
+      "command": "node scripts/check-phase2-month-control-center-ux.mjs",
+      "status": "PASS"
+    },
+    {
+      "suite": "phase2-month-control-center",
+      "exit": 0,
+      "command": "node scripts/check-phase2-month-control-center.mjs",
+      "status": "PASS"
+    },
+    {
+      "suite": "phase2-category-targets-choices",
+      "exit": 0,
+      "command": "node scripts/check-phase2-category-targets-choices.mjs",
+      "status": "PASS"
+    },
+    {
+      "suite": "phase2-savings-allocations",
+      "exit": 0,
+      "command": "node scripts/check-phase2-savings-allocations.mjs",
+      "status": "PASS"
+    },
+    {
+      "suite": "phase2-benefit-wallets",
+      "exit": 0,
+      "command": "node scripts/check-phase2-benefit-wallets.mjs",
+      "status": "PASS"
+    },
+    {
+      "suite": "phase2-month-narrative",
+      "exit": 0,
+      "command": "node scripts/check-phase2-month-narrative.mjs",
+      "status": "PASS"
+    },
+    {
+      "suite": "phase2-october-contract",
+      "exit": 0,
+      "command": "node scripts/check-phase2-october-contract.mjs",
+      "status": "PASS"
+    },
+    {
+      "suite": "phase2-planned-finance",
+      "exit": 0,
+      "command": "node scripts/check-phase2-planned-finance.mjs",
+      "status": "PASS"
+    },
+    {
+      "suite": "phase2-planned-reliability",
+      "exit": 0,
+      "command": "node scripts/check-phase2-planned-reliability.mjs",
+      "status": "PASS"
+    },
+    {
+      "suite": "phase2-planned-guards",
+      "exit": 0,
+      "command": "node scripts/check-phase2-planned-guards.mjs",
+      "status": "PASS"
+    },
+    {
+      "suite": "phase2-project-wizard",
+      "exit": 0,
+      "command": "node scripts/check-phase2-project-wizard.mjs",
+      "status": "PASS"
+    },
+    {
+      "suite": "phase2-forecast-temporal-mode",
+      "exit": 0,
+      "command": "node scripts/check-phase2-forecast-temporal-mode.mjs",
+      "status": "PASS"
+    },
+    {
+      "suite": "phase2-temporal-forecast",
+      "exit": 0,
+      "command": "node scripts/check-phase2-temporal-forecast.mjs",
+      "status": "PASS"
+    },
+    {
+      "suite": "global-v2-frontend",
+      "exit": 0,
+      "command": "node scripts/check-global-v2-frontend.mjs",
+      "status": "PASS"
+    },
+    {
+      "suite": "architecture-imports",
+      "exit": 0,
+      "command": "node scripts/check-architecture-imports.mjs",
+      "status": "PASS"
+    },
+    {
+      "suite": "phase2-month-decision-engine",
+      "exit": 1,
+      "command": "node scripts/check-phase2-month-decision-engine.mjs",
+      "status": "SAME_PREEXISTING_FAILURE"
+    },
+    {
+      "name": "typecheck",
+      "exit": 0,
+      "command": "node node_modules/typescript/bin/tsc --noEmit",
+      "status": "PASS"
+    },
+    {
+      "name": "build",
+      "exit": 0,
+      "command": "node node_modules/next/dist/bin/next build",
+      "status": "PASS"
+    },
+    {
+      "command": "git diff --check",
+      "status": "PASS"
+    }
+  ],
+  "humanUx": {
+    "status": "PASS",
+    "passed": 53,
+    "kinds": {
+      "STATIC": 8,
+      "SSR_STATIC": 1,
+      "BEHAVIOR": 44
+    }
+  },
+  "browser": {
+    "status": "PASS",
+    "scope": "Read, navigation and simulation on localhost:3001 with existing authenticated session. No live save/apply/checkpoint/delete.",
+    "smokes": [
+      {
+        "case": "Principal trigger opens Mes choix with exactly three tabs and no home",
+        "status": "PASS"
+      },
+      {
+        "case": "Category focus +25 and precise input; local Return without save",
+        "status": "PASS"
+      },
+      {
+        "case": "Global goal focus with +/-50 draft controls",
+        "status": "PASS"
+      },
+      {
+        "case": "Restaurant one fewer + Courses -25; full server replay; two choices; reset",
+        "status": "PASS"
+      },
+      {
+        "case": "Human habit focus without save",
+        "status": "PASS"
+      },
+      {
+        "case": "Compact Update list; Bank editor/details; local Return",
+        "status": "PASS"
+      },
+      {
+        "case": "Swile loading -> balance -> date; one editor; Edenred independent",
+        "status": "PASS"
+      },
+      {
+        "case": "Income focus with usual amount and +/-50 draft controls",
+        "status": "PASS"
+      },
+      {
+        "case": "Fixed and conditional charges; chips change local fields without save",
+        "status": "PASS"
+      },
+      {
+        "case": "Understand three scopes/mode/history/explicit checkpoint without mutation",
+        "status": "PASS"
+      },
+      {
+        "case": "Page links to Swile, savings ID and category target",
+        "status": "PASS"
+      },
+      {
+        "case": "Legacy settings+groceries opens human choice focus",
+        "status": "PASS"
+      }
+    ],
+    "liveWrites": "NOT_TESTED",
+    "consoleErrors": 0,
+    "screenshotsOutsideGit": [
+      "mes-choix.jpg",
+      "mettre-a-jour.jpg",
+      "comprendre.jpg",
+      "swile-focus.jpg"
+    ]
+  },
+  "v1After": "SAME_PREEXISTING_FAILURE",
+  "v1Failure": "asOf excludes future history as well as future actuals",
+  "v1Comparison": "Baseline and after assertion outputs identical after stack path normalization; subsequent assertions not certified.",
+  "zeroWrite": {
+    "preview": "PASS_SYNTHETIC_OWNER_ACTIONS",
+    "historicalWritesInHarness": 0,
+    "liveWritesPerformed": 0,
+    "liveDatabaseProbe": "NOT_TESTED"
+  },
+  "remainingCompatibilityDisplays": "Legacy CategoryTargetEditor/MonthGoalEditor/BenefitWalletEditor/BenefitWalletFunding remain for fixtures; not mounted by delivered Center, no independent business rules.",
+  "limitations": [
+    "No live Apply, save, delete or checkpoint/reload validation",
+    "Preexisting V1 failure unchanged",
+    "Existing dev logo dimension warnings; no console error in Center flows",
+    "Desktop scope"
+  ]
+}

@@ -7,3 +7,10 @@ export const controlDate = (value: string | null | undefined, year = false) => !
 }).format(new Date(`${value.slice(0, 10)}T12:00:00Z`));
 export const controlMonth = (value: string) => new Intl.DateTimeFormat("fr-FR", { month: "long", timeZone: "UTC" }).format(new Date(`${value}-01T12:00:00Z`));
 export const controlResourceLabel = (value: string) => value.replace(/^(?:Nextly|Nexity)\s*[–—-]\s*/iu, "");
+/** Short display labels only; canonical keys and contractual references stay unchanged. */
+export function controlObligationLabel(value: string) {
+  if (/Ornikar/iu.test(value)) return "Ornikar";
+  if (/Google.*AI Pro/iu.test(value)) return "Google AI Pro";
+  if (/Qobuz/iu.test(value)) return "Qobuz";
+  return controlResourceLabel(value).replace(/\s*\((?:carte|contrat)[^)]*\)/giu, "");
+}
