@@ -1,4 +1,4 @@
-import { ChevronDown, House, Landmark, PiggyBank, ShieldCheck, Smartphone, Sparkles, Wallet, BookOpen } from "lucide-react";
+import { ChevronDown, House, Landmark, ShieldCheck, Smartphone, Sparkles, Wallet, BookOpen } from "lucide-react";
 import type { MonthEconomicPlan } from "@/server/phase2/month-scenario";
 import type { StatisticalComponent } from "@/server/phase2/month-reference";
 import { ResourceEditor } from "./resource-editor";
@@ -13,14 +13,15 @@ import { projectMonthDecision } from "@/server/phase2/month-decision-projection"
 import { comparableForecastCheckpoints, type ForecastCheckpoint } from "@/server/phase2/forecast-memory";
 import { MonthDecisionTools } from "./month-decision-tools";
 import { AnimatedMoney } from "./animated-money";
+import { MonthSavingsSection } from "./month-savings-section";
 import material from "./month-material.module.css";
 
 const money = (value: string | null, exact = false) => value === null ? "À confirmer" : new Intl.NumberFormat("fr-FR", {
   style: "currency", currency: "EUR", maximumFractionDigits: exact ? 2 : 0, minimumFractionDigits: exact ? 2 : 0,
 }).format(Number(value));
-const groupOrder = ["Maison", "Télécom", "Assurances", "Banque", "Abonnements", "Permis", "Épargne"];
+const groupOrder = ["Maison", "Télécom", "Assurances", "Banque", "Abonnements", "Permis"];
 const groupIcons = { Maison: House, Télécom: Smartphone, Assurances: ShieldCheck, Banque: Landmark,
-  Abonnements: Sparkles, Permis: BookOpen, Épargne: PiggyBank };
+  Abonnements: Sparkles, Permis: BookOpen };
 export const statisticalLabels: Readonly<Record<string, string>> = {
   groceries: "Courses", "tobacco-vape": "Tabac & vape", "manon-work-mobility": "Trajets travail · Manon",
   "adrien-work-meals": "Repas travail · Adrien", "manon-work-meals": "Repas travail · Manon",
@@ -77,12 +78,13 @@ export function MonthStory({ plan, targetMonth, plannedExpenses, calendarCarryov
     <section aria-labelledby="outflows-title"><div className="flex flex-wrap items-end justify-between gap-2"><h2 id="outflows-title" className="scroll-mt-24 text-2xl font-black">Ce qui part quoi qu’il arrive</h2><p className={`${material.data} text-2xl font-black`}><AnimatedMoney value={money(plan.certainOutflows.total, true)} /></p></div>
       <div className="mt-4 grid gap-2 sm:grid-cols-2">{groups.map((group, groupIndex) => {
         const Icon = groupIcons[group.label as keyof typeof groupIcons] ?? Wallet;
-        const savings = group.label === "Épargne";
-        return <details key={group.label} className={`${material.glassSecondary} ${material.chargeRow} ${material.disclosure} group min-w-0 ${savings ? material.glassWarm : ""}`}><summary data-month-motion-item="charge" data-motion-order={groupIndex} className="flex min-h-17 cursor-pointer list-none items-center gap-3 p-4 [&::-webkit-details-marker]:hidden"><span className={material.roundBadge}><Icon size={20} aria-hidden="true" /></span><span className="min-w-0 flex-1 font-bold">{savings ? "Épargne voyage" : group.label}<span className="block text-xs font-normal text-slate-600">{savings ? "Objectif du mois" : `${group.items.length} ${group.items.length > 1 ? "éléments" : "élément"}`}</span></span><strong className={`${material.data} shrink-0 text-right text-lg`}><AnimatedMoney value={money(group.total, true)} />{savings && <span className="block text-[11px] font-medium text-amber-900">réservés pour le voyage</span>}</strong><ChevronDown className="size-4 shrink-0 text-slate-500 transition-transform motion-reduce:transition-none group-open:rotate-180" aria-hidden="true" /></summary>
+        return <details key={group.label} className={`${material.glassSecondary} ${material.chargeRow} ${material.disclosure} group min-w-0`}><summary data-month-motion-item="charge" data-motion-order={groupIndex} className="flex min-h-17 cursor-pointer list-none items-center gap-3 p-4 [&::-webkit-details-marker]:hidden"><span className={material.roundBadge}><Icon size={20} aria-hidden="true" /></span><span className="min-w-0 flex-1 font-bold">{group.label}<span className="block text-xs font-normal text-slate-600">{`${group.items.length} ${group.items.length > 1 ? "éléments" : "élément"}`}</span></span><strong className={`${material.data} shrink-0 text-right text-lg`}><AnimatedMoney value={money(group.total, true)} /></strong><ChevronDown className="size-4 shrink-0 text-slate-500 transition-transform motion-reduce:transition-none group-open:rotate-180" aria-hidden="true" /></summary>
           <ul className="mx-4 border-t border-slate-200 pb-3 pt-2 text-sm">{group.items.map((item) => <li key={item.key} className="flex flex-wrap justify-between gap-x-3 py-1"><span className="min-w-0 break-words">{item.label}<span className="block text-xs text-slate-500">{item.state === "OBSERVED" ? "Déjà débité" : item.state === "OVERDUE_UNOBSERVED" ? "Échéance passée, débit non observé · montant réservé" : item.state === "PENDING_OBSERVATION" ? "En attente du débit · montant réservé" : "À venir"} · {item.dateCertainty === "DECLARED" ? "Date déclarée" : item.dateCertainty === "HISTORICAL_ESTIMATE" ? "Date habituelle estimée" : "Date à confirmer"}</span></span><strong className="shrink-0 tabular-nums">{money(item.amount, true)}</strong></li>)}</ul></details>;
       })}</div></section>
 
-    <section className={`${material.glassPremium} ${material.glassQuiet} flex items-center justify-between gap-5 px-6 py-5`} aria-labelledby="after-title"><div><h2 id="after-title" className="text-xl font-bold">Après nos charges certaines</h2><p className="mt-1 text-xs text-slate-600">{cash.afterCertain.status === "KNOWN" ? "Projection bancaire · seuls les débits restant à payer sont retirés" : "Repère économique du mois · le solde bancaire reste à confirmer"}</p></div><p className={`${material.data} whitespace-nowrap text-3xl font-black`}><AnimatedMoney value={money(cash.afterCertain.amount ?? plan.afterCertainOutflows, true)} /></p></section>
+    <section className={`${material.glassPremium} ${material.glassQuiet} flex items-center justify-between gap-5 px-6 py-5`} aria-labelledby="after-title"><div><h2 id="after-title" className="text-xl font-bold">Après nos charges certaines</h2><p className="mt-1 text-xs text-slate-600">Ressources économiques après les charges certaines · distinctes du solde bancaire</p></div><p className={`${material.data} whitespace-nowrap text-3xl font-black`}><AnimatedMoney value={money(plan.afterCertainOutflows, true)} /></p></section>
+    <MonthSavingsSection savings={plan.savingsAllocations} targetMonth={targetMonth} />
+    <section className={`${material.glassPremium} ${material.glassQuiet} flex items-center justify-between gap-5 px-6 py-5`} aria-labelledby="after-savings-title"><div><h2 id="after-savings-title" className="text-xl font-bold">Après nos cagnottes</h2><p className="mt-1 text-xs text-slate-600">Ce qu’il reste pour vivre le mois après les charges et l’argent volontairement mis de côté.</p></div><p className={`${material.data} whitespace-nowrap text-3xl font-black`}><AnimatedMoney value={money(plan.afterSavingsAllocations, true)} /></p></section>
     <div className={material.projectList}><PlannedExpensesControl targetMonth={targetMonth} expenses={plannedExpenses} persons={persons} places={places} vehicle={vehicle} prices={prices} wallets={wallets} funding={plan.plannedFunding} observationCandidates={plan.observationCandidates} /></div>
 
     <section id="timeline-title" className="scroll-mt-24" aria-label="Calendrier du mois"><MonthCalendar key={targetMonth} targetMonth={targetMonth} today={today} entries={calendar.entries} undated={calendar.undated} dailyTotals={calendar.dailyTotals} /></section>
@@ -99,11 +101,13 @@ export function MonthStory({ plan, targetMonth, plannedExpenses, calendarCarryov
     </section>
     <ScenarioMilestone title="Projection de fin de mois" values={cash.endOfMonth.central !== null ? cashRange(cash.endOfMonth) : narrative.final} final description={cash.endOfMonth.central !== null ? "Projection bancaire depuis le solde actuel, les revenus non reçus et les paiements restants. Les bornes ne sont affichées que si calibrées." : `${decision.jointExplanation} Projection économique partielle, distincte d’un solde bancaire.`} />
     <details className={`${material.glassSecondary} ${material.disclosure} p-5`}><summary className="cursor-pointer text-sm font-bold">Disponible prévu et paiements restants</summary><dl className="mt-3 space-y-2 text-sm">{([
+      ["Argent réservé aux cagnottes (budget)", cash.savingsBudgetReservation.amount], ["Disponible bancaire après cagnottes", cash.afterSavings.amount],
       ["Revenus bancaires non reçus", cash.futureKnownBankIncome.amount], ["Charges restant à débiter", cash.remainingCertainBankOutflows.amount],
       ["Achats ou réalisations déclarées, débit non observé", cash.pendingBankOutflows.amount], ["Paiements bancaires des projets", cash.plannedBankCashRemaining.amount],
       ["Disponible prévu après les projets", cash.plannedAvailable.amount], ["Quotidien restant financé par banque", cash.remainingEssentialBankCash.central],
       ["Possibilités restantes financées par banque", cash.remainingOptionalBankCash.central], ["Fin de mois bancaire", cash.endOfMonth.central],
     ] as const).map(([label, amount]) => <div className="flex justify-between gap-4" key={label}><dt>{label}</dt><dd className="font-semibold">{money(amount, true)}</dd></div>)}</dl>
+      {cash.limitations.includes("BANK_BALANCE_SAVINGS_SCOPE_UNRESOLVED") && <p className="mt-3 text-xs text-slate-600">Le budget réservé aux cagnottes est connu. Le périmètre du solde bancaire observé ne précise pas si l’argent mis de côté est déjà exclu : le disponible bancaire après cagnottes reste à confirmer, sans retirer cet argent une deuxième fois.</p>}
       {cash.limitations.length > 0 && <p className="mt-3 text-xs text-slate-600">Projection partielle : un solde, une date de revenu ou un financement restent à confirmer. Les montants connus restent visibles.</p>}
       <ul className="mt-3 space-y-1 text-xs text-slate-600">{cash.incomeOccurrences.map(income => <li key={income.key}>{plan.resources.find(resource => resource.key === income.key)?.label ?? "Revenu"} : {money(income.amount, true)} · {income.state === "RECEIVED" ? "déjà reçu, inclus dans le solde" : income.state === "EXPECTED" ? "encore attendu" : income.state === "CANCELLED" ? "annulé" : "date ou réception à confirmer"}.</li>)}</ul>
       {prediction?.reconciliation.map(match => <p key={match.plannedExpenseId} className="mt-2 text-xs">Projet rapproché de l’observation : prévu {money(match.plannedEconomic, true)}, observé {money(match.observedEconomic, true)}, écart {money(match.variance, true)}{match.declared ? " · Réalisation déclarée conservée comme provenance" : ""}.</p>)}</details>

@@ -15,6 +15,9 @@ type CheckpointPayload = Readonly<{
   categories: readonly { key: string; label: string; projected: { low: string; central: string; high: string };
     buckets?: Pick<import("./remaining-month-forecast").RemainingCategory, "observedEconomic" | "declaredRealizedEconomic" | "plannedEconomic" | "pendingExpectedEconomic" | "futureExpectedEconomic" | "remainingForecastEconomic" | "coverage" | "limitationCodes"> }[];
   bankCash?: MonthEconomicPlan["bankCash"];
+  budgetLayersVersion?: "month-budget-layers@v2";
+  savingsAllocations?: MonthEconomicPlan["savingsAllocations"];
+  monthlyLayers?: MonthEconomicPlan["monthlyLayers"];
   forecastTemporalMode?: ForecastTemporalMode;
   components: Readonly<Record<string, { label: string; amount: string }>>;
   final: MonthEconomicPlan["narrative"]["final"];
@@ -30,13 +33,15 @@ export function forecastComponents(plan: MonthEconomicPlan): CheckpointPayload["
   const terms: Record<string, { label: string; amount: string }> = {};
   for (const resource of plan.resources) terms[resource.key] = { label: resource.label, amount: resource.amount };
   for (const item of plan.certainOutflows.items) terms[item.key] = { label: item.label, amount: new Big(item.amount).neg().toFixed(2) };
+  // Keep legacy savings component IDs so reclassification creates no fake change.
+  for (const item of plan.savingsAllocations.items) terms[item.id] = { label: item.label, amount: new Big(item.amount).neg().toFixed(2) };
   if (prediction) {
     for (const category of [...prediction.essential, ...prediction.optional]) terms[category.key] = {
       label: category.label, amount: new Big(category.projectedMonth.central).neg().toFixed(2),
     };
     const habitual = [...prediction.essential, ...prediction.optional].reduce((sum, c) => sum.plus(c.habitualProjectGross), new Big(0));
     terms.projects = { label: "Projets en plus", amount: new Big(plan.plannedExpenses.grossCost).minus(habitual).neg().toFixed(2) };
-  } else terms.variables = { label: "Quotidien et projets", amount: new Big(plan.afterCertainOutflows).minus(plan.narrative.final.central).neg().toFixed(2) };
+  } else terms.variables = { label: "Quotidien et projets", amount: new Big(plan.afterSavingsAllocations).minus(plan.narrative.final.central).neg().toFixed(2) };
   const sum = Object.values(terms).reduce((total, part) => total.plus(part.amount), new Big(0));
   if (!sum.eq(plan.narrative.final.central)) throw new TypeError("FORECAST_COMPONENT_RECONCILIATION_FAILED");
   return terms;
@@ -52,7 +57,8 @@ export function makeForecastCheckpoint(forecast: MonthForecastSnapshot, inputs: 
         observedEconomic: c.observedEconomic, declaredRealizedEconomic: c.declaredRealizedEconomic, plannedEconomic: c.plannedEconomic,
         pendingExpectedEconomic: c.pendingExpectedEconomic, futureExpectedEconomic: c.futureExpectedEconomic,
         remainingForecastEconomic: c.remainingForecastEconomic, coverage: c.coverage, limitationCodes: c.limitationCodes } })),
-    bankCash: plan.bankCash,
+    bankCash: plan.bankCash, budgetLayersVersion: "month-budget-layers@v2",
+    savingsAllocations: plan.savingsAllocations, monthlyLayers: plan.monthlyLayers,
     forecastTemporalMode: policy.mode,
     components: forecastComponents(plan), final: plan.narrative.final,
     provenance: { publicationId: forecast.meta.sourcePublicationId, sourceRevision: forecast.meta.sourceRevision,

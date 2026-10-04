@@ -14,6 +14,8 @@ import { matchesForecastCategory } from "./remaining-month-forecast";
 import { makeAsOfContext } from "./forecast-opportunities";
 import { projectBankCashAsOf, resolveRealBankBalance, resolveIncomeOccurrences, type BankCashProjection } from "./bank-cash-projection";
 
+import { parseSavingsMetadata, type DeclaredSavingsInput, type SavingsAllocation } from "@/domain/phase2/savings-allocations";
+
 export type MonthInputs = Readonly<{
   decision?: MonthDecisionSettings;
   safetyReserve: string;
@@ -26,7 +28,7 @@ export type MonthInputs = Readonly<{
   declaredResources: Readonly<Partial<Record<"benefit:swile" | "benefit:edenred", string>>>;
   resourceOverrides: Readonly<Record<string, string>>;
   fixedAmountOverrides: Readonly<Record<string, { amount: string; dueDate: string | null; reason: "MONTH_EXCEPTION" }>>;
-  declaredOutflows: readonly { id: string; label: string; amount: string; dueDate: string | null; kind: "SAVINGS" }[];
+  declaredOutflows: readonly DeclaredSavingsInput[];
 }>;
 const record = (value: unknown): Record<string, unknown> => {
   if (typeof value !== "object" || value === null || Array.isArray(value)) throw new TypeError("MONTH_INPUT_OBJECT_INVALID");
@@ -113,7 +115,7 @@ export const monthInputsSchema = { parse(value: unknown): MonthInputs {
         || typeof item.label !== "string" || item.label.trim().length < 1 || item.label.length > 120
         || item.kind !== "SAVINGS") throw new TypeError("MONTH_INPUT_DECLARED_OUTFLOW_INVALID");
       return { id: item.id, label: item.label.trim(), amount: parseMoney(item.amount),
-        dueDate: item.dueDate === null ? null : parseDate(item.dueDate), kind: "SAVINGS" as const };
+        dueDate: item.dueDate === null ? null : parseDate(item.dueDate), kind: "SAVINGS" as const, ...parseSavingsMetadata(item) };
     }),
   };
 }};
@@ -141,7 +143,7 @@ type PlanResource = Readonly<{ key: string; label: string; amount: string; sourc
 type PlanOutflow = Readonly<{ key: string; label: string; amount: string; group: string;
   state?: FixedOccurrence["state"]; observedAmount?: string | null;
   date: string | null; dateCertainty: "DECLARED" | "HISTORICAL_ESTIMATE" | "UNKNOWN";
-  provenance: "SNAPSHOT" | "USER_DECLARED" | "MONTH_OVERRIDE"; kind: "FIXED" | "INSTALLMENT" | "SAVINGS" }>;
+  provenance: "SNAPSHOT" | "USER_DECLARED" | "MONTH_OVERRIDE"; kind: "FIXED" | "INSTALLMENT" }>;
 export type MonthEconomicPlan = Readonly<{ resources: readonly PlanResource[]; salaryCash: string; mealBenefits: string;
   bankCash: BankCashProjection;
   observationCandidates: Readonly<Record<string, readonly { kind: "OPERATION" | "PURCHASE_EVENT"; id: string; date: string; amount: string; label: string }[]>>;
@@ -149,12 +151,13 @@ export type MonthEconomicPlan = Readonly<{ resources: readonly PlanResource[]; s
   economicResources: string; certainOutflows: { items: readonly PlanOutflow[];
     groups: readonly { label: string; total: string; items: readonly PlanOutflow[] }[];
     total: string; excludedKeys: readonly string[] };
-  afterCertainOutflows: string; necessaryVariables: { items: readonly StatisticalComponent[]; total: ForecastRange };
+  savingsAllocations: { items: readonly SavingsAllocation[]; total: string; protectedTotal: string; adjustableTotal: string };
+  afterCertainOutflows: string; afterSavingsAllocations: string; necessaryVariables: { items: readonly StatisticalComponent[]; total: ForecastRange };
   flexibleVariables: { items: readonly StatisticalComponent[]; total: ForecastRange };
   scenarios: { lowConsumption: string; central: string; highConsumption: string };
   plannedExpenses: { grossCost: string; plannedGross: string; declaredRealizedGross: string;
     netImpact: ForecastRange; absorbedByBaseline: ForecastRange };
-  monthlyLayers: { afterCertainOutflows: string; declaredRealized: string; stillPlanned: string;
+  monthlyLayers: { afterCertainOutflows: string; afterSavingsAllocations: string; declaredRealized: string; stillPlanned: string;
     remainingDailyLife: string; projectedRemainder: string };
   plannedFunding: { bankAllocated: string; bankReserved: string; bankUsedDeclared: string; fundingToComplete: string;
     swile: { resource: string; reserved: string; usedDeclared: string; availableAfter: string; shortfall: string };
@@ -226,13 +229,12 @@ function deriveEconomicPlan(forecast: MonthForecastSnapshot, inputs: MonthInputs
     items.push({ key: obligation.componentKey, label: component?.label ?? "Échéance confirmée", amount: obligation.amount,
       group: "Permis", date: obligation.dueDate, dateCertainty: "DECLARED", provenance: "USER_DECLARED", kind: "INSTALLMENT" });
   }
-  for (const outflow of inputs.declaredOutflows) {
-    if (outflow.dueDate && !outflow.dueDate.startsWith(forecast.meta.targetMonth))
-      throw new TypeError("DECLARED_OUTFLOW_MONTH_INVALID");
-    items.push({ key: outflow.id, label: outflow.label, amount: outflow.amount, group: "Épargne",
-      date: outflow.dueDate, dateCertainty: outflow.dueDate ? "DECLARED" : "UNKNOWN",
-      provenance: "USER_DECLARED", kind: "SAVINGS" });
-  }
+  const savingsItems: SavingsAllocation[] = inputs.declaredOutflows.map(({ kind: _kind, ...item }) => ({ ...item, ...parseSavingsMetadata(item) }));
+  const savingsTotal = savingsItems.reduce((sum, item) => sum.plus(item.amount), new Big(0));
+  const protectedTotal = savingsItems.filter(item => item.adjustability === "PROTECTED")
+    .reduce((sum, item) => sum.plus(item.amount), new Big(0));
+  const savingsAllocations = { items: savingsItems, total: euros(savingsTotal), protectedTotal: euros(protectedTotal),
+    adjustableTotal: euros(savingsTotal.minus(protectedTotal)) };
   const fixedOccurrences = reconcileFixedOccurrences(items, evidence?.bankObservations ?? [], forecast.meta.targetMonth, asOfDate,
     asOf.coverageBySource.BANK.coverageStatus === "FULL" ? asOf.coverageBySource.BANK.safeThrough : null);
   items.forEach((item, index) => { const occurrence = fixedOccurrences[index]!; items[index] = { ...item, amount: occurrence.amount, state: occurrence.state, observedAmount: occurrence.observedAmount }; });
@@ -295,19 +297,20 @@ function deriveEconomicPlan(forecast: MonthForecastSnapshot, inputs: MonthInputs
   const swile = fundingPocket("benefit:swile", funding.SWILE, usedDeclared.SWILE);
   const edenred = fundingPocket("benefit:edenred", funding.EDENRED, usedDeclared.EDENRED);
   const afterCertain = economicResources.minus(certainOutflows);
+  const afterSavings = afterCertain.minus(savingsTotal);
   const necessary = prediction ? {low:prediction.joint.low.essential,central:prediction.essentialProvision.central,high:prediction.joint.high.essential} : reference.necessaryTotal;
   const flexible = prediction ? {low:prediction.joint.low.optional,central:prediction.optionalProvision.central,high:prediction.joint.high.optional} : reference.flexibleTotal;
-  const lowConsumption = afterCertain.minus(necessary.low!).minus(flexible.low!).minus(lowImpact);
-  const central = afterCertain.minus(necessary.central!).minus(flexible.central!).minus(centralImpact);
-  const highConsumption = afterCertain.minus(necessary.high!).minus(flexible.high!).minus(highImpact);
+  const lowConsumption = afterSavings.minus(necessary.low!).minus(flexible.low!).minus(lowImpact);
+  const central = afterSavings.minus(necessary.central!).minus(flexible.central!).minus(centralImpact);
+  const highConsumption = afterSavings.minus(necessary.high!).minus(flexible.high!).minus(highImpact);
   const final = { lowConsumption: euros(lowConsumption), central: euros(central), highConsumption: euros(highConsumption) };
   const essentialCost = prediction?.essentialRemaining ?? necessary as CostRange, optionalCost = prediction?.optionalRemaining ?? flexible as CostRange;
-  const afterProjects = prediction ? afterCertain.minus(prediction.importedEssential).minus(prediction.importedOptional).minus(gross) : afterCertain.minus(centralImpact);
+  const afterProjects = prediction ? afterSavings.minus(prediction.importedEssential).minus(prediction.importedOptional).minus(gross) : afterSavings.minus(centralImpact);
   const narrative: MonthNarrativeProjection = { prediction, remainderAfterProjects: euros(afterProjects), essentialCost, optionalCost,
     remainderAfterEssential: { lowConsumption: euros(afterProjects.minus(essentialCost.low)),
       central: euros(afterProjects.minus(essentialCost.central)), highConsumption: euros(afterProjects.minus(essentialCost.high)) },
     final, coverage: prediction ? "REMAINING_MONTH" : "PUBLISHED_REFERENCE_SHIM" };
-  const bankCash = projectBankCashAsOf({ context: asOf,
+  const bankCash = projectBankCashAsOf({ context: asOf, savingsBudgetReservation: euros(savingsTotal),
     balance: resolveRealBankBalance({ observation: inputs.openingBalance ?? evidence?.manualBankBalanceObservation ?? null, today: asOfDate, bank: evidence?.bankObservations ?? [], intervals: evidence?.bankCoverageIntervals }),
     income: resolveIncomeOccurrences(resources, evidence?.bankObservations ?? [], asOf), fixed: fixedOccurrences,
     expenses: plannedExpenses, matchedExpenseIds: reconciliation.matches.map(m => m.plannedExpenseId),
@@ -319,7 +322,7 @@ function deriveEconomicPlan(forecast: MonthForecastSnapshot, inputs: MonthInputs
       date: row.date, amount: row.amount, label: row.merchant ?? row.subcategory }))]));
   return { observationCandidates, bankCash, narrative, resources, salaryCash: euros(salaryCash), mealBenefits: euros(mealBenefits), economicResources: euros(economicResources),
     certainOutflows: { items, groups, total: euros(certainOutflows), excludedKeys: inputs.excludedFixedObligations },
-    afterCertainOutflows: euros(afterCertain), necessaryVariables: { items: reference.necessary, total: necessary },
+    savingsAllocations, afterCertainOutflows: euros(afterCertain), afterSavingsAllocations: euros(afterSavings), necessaryVariables: { items: reference.necessary, total: necessary },
     flexibleVariables: { items: reference.flexible, total: flexible },
     scenarios: final,
     plannedExpenses: { grossCost: euros(gross), plannedGross: euros(plannedGross), declaredRealizedGross: euros(declaredRealizedGross),
@@ -331,7 +334,7 @@ function deriveEconomicPlan(forecast: MonthForecastSnapshot, inputs: MonthInputs
     plannedFunding: { bankAllocated: euros(funding.BANK), bankReserved: euros(funding.BANK.minus(usedDeclared.BANK)),
       bankUsedDeclared: euros(usedDeclared.BANK),
       fundingToComplete: euros(new Big(swile.shortfall).plus(edenred.shortfall)), swile, edenred },
-    monthlyLayers: { afterCertainOutflows: euros(afterCertain), declaredRealized: euros(declaredRealizedGross),
+    monthlyLayers: { afterCertainOutflows: euros(afterCertain), afterSavingsAllocations: euros(afterSavings), declaredRealized: euros(declaredRealizedGross),
       stillPlanned: euros(plannedGross), remainingDailyLife: prediction ? euros(new Big(prediction.essentialRemaining.central).plus(prediction.optionalRemaining.central))
         : euros(new Big(necessary.central!).plus(flexible.central!).minus(gross.minus(centralImpact))), projectedRemainder: euros(central) },
     automaticEventProvision: "0.00", declaredEventImpact: euros(centralImpact) };

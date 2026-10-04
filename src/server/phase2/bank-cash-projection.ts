@@ -14,6 +14,7 @@ export type IncomeOccurrence = Readonly<{ key: string; amount: string; date: str
 export type BankCashProjection = Readonly<{ currentRealBankBalance: MoneyKnowledge; futureKnownBankIncome: MoneyKnowledge;
   remainingCertainBankOutflows: MoneyKnowledge; pendingBankOutflows: MoneyKnowledge; plannedBankCashRemaining: MoneyKnowledge;
   remainingEssentialBankCash: FundingRange; remainingOptionalBankCash: FundingRange; afterCertain: MoneyKnowledge;
+  savingsBudgetReservation: MoneyKnowledge; afterSavings: MoneyKnowledge;
   plannedAvailable: MoneyKnowledge; afterEssential: FundingRange; endOfMonth: FundingRange;
   incomeOccurrences: readonly IncomeOccurrence[]; calibrated: false; limitations: readonly string[] }>;
 const known = (amount: string | Big, provenance: string[], asOfDate?: string): MoneyKnowledge => ({ status: "KNOWN", amount: new Big(amount).toFixed(2), provenance, ...(asOfDate ? { asOfDate } : {}) });
@@ -56,7 +57,7 @@ const subtract = (from: MoneyKnowledge, cost: FundingRange): FundingRange => Obj
   from.status === "UNKNOWN" || cost[k] === null ? null : new Big(from.amount).minus(cost[k]!).toFixed(2)])) as FundingRange;
 /** Pure bank layer. Never includes wallet resources, fuel usage or baseline absorption as cash. */
 export function projectBankCashAsOf(input: { context: AsOfContext; balance: MoneyKnowledge; income: readonly IncomeOccurrence[];
-  fixed: readonly FixedOccurrence[]; expenses: readonly PlannedExpenseScenarioEntry[]; matchedExpenseIds: readonly string[];
+  fixed: readonly FixedOccurrence[]; savingsBudgetReservation?: string; expenses: readonly PlannedExpenseScenarioEntry[]; matchedExpenseIds: readonly string[];
   reconciliation?: readonly PlannedObservationMatch[]; forecastAvailable?: boolean; observedPurchases?: readonly EconomicReferenceEntry[];
   essential: readonly RemainingCategory[]; optional: readonly RemainingCategory[] }): BankCashProjection {
   const limitations = new Set<string>();
@@ -87,7 +88,13 @@ export function projectBankCashAsOf(input: { context: AsOfContext; balance: Mone
   if (input.context.temporalMode !== "CURRENT_MONTH") limitations.add("OTHER_MONTH_BANK_BRIDGE_UNCERTIFIED");
   const afterCertain = input.context.temporalMode === "CURRENT_MONTH" && input.balance.status === "KNOWN" && income.status === "KNOWN" ? known(new Big(input.balance.amount).plus(income.amount).minus(certain.amount!), ["currentBalance+futureIncome-remainingCertain"])
     : unknown("BANK_PROJECTION_INPUT_UNKNOWN");
-  const available = afterCertain.status === "KNOWN" && !pendingUnknown && !unpriced ? known(new Big(afterCertain.amount).minus(planned).minus(pending), ["afterCertain-pending-plannedCash"]) : unknown("BANK_PROJECTION_INPUT_UNKNOWN");
+  // A reservation is known budget intent. The observed stock has no account scope
+  // proving whether savings were already transferred out; never deduct them twice.
+  const savingsBudgetReservation = known(input.savingsBudgetReservation ?? "0", ["monthlySavingsBudgetIntent"]);
+  const hasSavings = new Big(savingsBudgetReservation.amount!).gt(0);
+  const afterSavings = hasSavings ? unknown("BANK_BALANCE_SAVINGS_SCOPE_UNRESOLVED") : afterCertain;
+  if (hasSavings) limitations.add("BANK_BALANCE_SAVINGS_SCOPE_UNRESOLVED");
+  const available = afterSavings.status === "KNOWN" && !pendingUnknown && !unpriced ? known(new Big(afterSavings.amount).minus(planned).minus(pending), ["afterSavings-pending-plannedCash"]) : unknown(hasSavings ? "BANK_BALANCE_SAVINGS_SCOPE_UNRESOLVED" : "BANK_PROJECTION_INPUT_UNKNOWN");
   const missingForecast: FundingRange = { low: null, central: null, high: null };
   const essential = input.forecastAvailable === false ? missingForecast : sumFunding(input.essential),
     optional = input.forecastAvailable === false ? missingForecast : sumFunding(input.optional), afterEssential = subtract(available, essential);
@@ -95,5 +102,5 @@ export function projectBankCashAsOf(input: { context: AsOfContext; balance: Mone
   if (essential.central === null || optional.central === null) limitations.add("EXPECTED_BANK_FUNDING_UNKNOWN");
   return { currentRealBankBalance: input.balance, futureKnownBankIncome: income, remainingCertainBankOutflows: certain,
     pendingBankOutflows, plannedBankCashRemaining, remainingEssentialBankCash: essential, remainingOptionalBankCash: optional,
-    afterCertain, plannedAvailable: available, afterEssential, endOfMonth: end, incomeOccurrences: input.income, calibrated: false, limitations: [...limitations].sort() };
+    afterCertain, savingsBudgetReservation, afterSavings, plannedAvailable: available, afterEssential, endOfMonth: end, incomeOccurrences: input.income, calibrated: false, limitations: [...limitations].sort() };
 }

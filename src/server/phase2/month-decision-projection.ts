@@ -23,7 +23,7 @@ export function projectMonthDecision(plan: MonthEconomicPlan, settings: MonthDec
   asOf: string, expenses: readonly PlannedExpenseScenarioEntry[], memory: readonly ForecastCheckpoint[] = []) {
   const prediction = plan.narrative.prediction;
   const mode = targetMonth > asOf.slice(0, 7) ? "FUTURE_MONTH" : targetMonth < asOf.slice(0, 7) ? "PAST_MONTH" : "CURRENT_MONTH";
-  const afterCertain = Math.round(Number(plan.afterCertainOutflows)), afterProjects = Math.round(Number(plan.narrative.remainderAfterProjects));
+  const afterCertain = Math.round(Number(plan.afterCertainOutflows)), afterSavings = Math.round(Number(plan.afterSavingsAllocations)), afterProjects = Math.round(Number(plan.narrative.remainderAfterProjects));
   const afterEssential = Math.round(Number(plan.narrative.remainderAfterEssential.central)), final = Math.round(Number(plan.narrative.final.central));
   const essentialDelta = afterProjects - afterEssential, optionalDelta = afterEssential - final;
   const breakdown = (optional: boolean, total: number) => roundedParts((optional ? prediction?.optional : prediction?.essential)?.map(c => ({
@@ -66,7 +66,7 @@ export function projectMonthDecision(plan: MonthEconomicPlan, settings: MonthDec
     highConsumption: new Big(plan.narrative.final.highConsumption).minus(settings.goal).toFixed(2),
   };
   return { mode, asOf, showProjectMilestone: !new Big(plan.plannedExpenses.netImpact.central ?? 0).eq(0),
-    visible: { afterCertain, afterProjects, afterEssential, final, projectDelta: afterCertain - afterProjects,
+    visible: { afterCertain, afterSavings, savingsDelta: afterCertain - afterSavings, afterProjects, afterEssential, final, projectDelta: afterSavings - afterProjects,
       essentialDelta, optionalDelta, essential: essentialParts, optional: optionalParts, categoryDisplay,
       essentialTotal: essentialDelta, optionalTotal: optionalDelta },
     change: { ...change, visibleDelta: changeTarget, visibleChanges }, attention, goal: exactGoal,

@@ -1,0 +1,169 @@
+{
+  "results": [
+    {
+      "id": "SAVE-001",
+      "status": "PASS"
+    },
+    {
+      "id": "SAVE-002",
+      "status": "PASS"
+    },
+    {
+      "id": "SAVE-003",
+      "status": "PASS"
+    },
+    {
+      "id": "SAVE-004",
+      "status": "PASS"
+    },
+    {
+      "id": "SAVE-005",
+      "status": "PASS"
+    },
+    {
+      "id": "SAVE-006",
+      "status": "PASS"
+    },
+    {
+      "id": "SAVE-007",
+      "status": "PASS"
+    },
+    {
+      "id": "SAVE-008",
+      "status": "PASS"
+    },
+    {
+      "id": "SAVE-009",
+      "status": "PASS"
+    },
+    {
+      "id": "SAVE-010",
+      "status": "PASS"
+    },
+    {
+      "id": "SAVE-011",
+      "status": "PASS"
+    },
+    {
+      "id": "SAVE-012",
+      "status": "PASS"
+    },
+    {
+      "id": "SAVE-013",
+      "status": "PASS"
+    },
+    {
+      "id": "SAVE-015",
+      "status": "PASS"
+    },
+    {
+      "id": "SAVE-016",
+      "status": "PASS"
+    },
+    {
+      "id": "SAVE-014",
+      "status": "PASS"
+    },
+    {
+      "id": "SAVE-017-INVALID-METADATA",
+      "status": "PASS"
+    },
+    {
+      "id": "SAVE-018-ANNUAL-CONTRACT",
+      "status": "PASS"
+    },
+    {
+      "id": "SAVE-019-CALENDAR",
+      "status": "PASS"
+    },
+    {
+      "id": "SAVE-020-CHECKPOINT-COMPATIBILITY",
+      "status": "PASS"
+    },
+    {
+      "id": "SAVE-021-UI",
+      "status": "PASS"
+    }
+  ],
+  "historicalWrites": 0,
+  "liveDatabaseWrites": 0,
+  "monthlyWrites": 5,
+  "plannedWrites": 2,
+  "headBefore": "2670143b8a8f39ad7cb7a82e31aa14c4590f997a",
+  "migrationRequired": false,
+  "commands": [
+    {
+      "command": "node scripts/check-phase2-savings-allocations.mjs",
+      "status": "PASS",
+      "exitCode": 0
+    },
+    {
+      "command": "node scripts/check-phase2-october-contract.mjs",
+      "status": "PASS",
+      "exitCode": 0
+    },
+    {
+      "command": "node scripts/check-phase2-month-narrative.mjs",
+      "status": "PASS",
+      "exitCode": 0
+    },
+    {
+      "command": "node scripts/check-phase2-month-decisions.mjs",
+      "status": "PASS",
+      "exitCode": 0
+    },
+    {
+      "command": "node scripts/check-phase2-planned-calendar.mjs",
+      "status": "PASS",
+      "exitCode": 0
+    },
+    {
+      "command": "node scripts/check-phase2-planned-finance.mjs",
+      "status": "PASS",
+      "exitCode": 0
+    },
+    {
+      "command": "node scripts/check-phase2-forecast-temporal-mode.mjs",
+      "status": "PASS",
+      "exitCode": 0
+    },
+    {
+      "command": "node scripts/check-phase2-temporal-forecast.mjs",
+      "status": "PASS",
+      "exitCode": 0
+    },
+    {
+      "command": "node scripts/check-phase2-planned-reliability.mjs",
+      "status": "PASS",
+      "exitCode": 0
+    },
+    {
+      "command": "node scripts/check-phase2-planned-guards.mjs",
+      "status": "PASS",
+      "exitCode": 0
+    },
+    {
+      "command": "node scripts/check-architecture-imports.mjs",
+      "status": "PASS",
+      "exitCode": 0
+    },
+    {
+      "command": "node node_modules/typescript/bin/tsc --noEmit",
+      "status": "PASS",
+      "exitCode": 0
+    },
+    {
+      "command": "node node_modules/next/dist/bin/next build",
+      "status": "PASS",
+      "exitCode": 0
+    }
+  ],
+  "bankScopeLimitation": "BANK_BALANCE_SAVINGS_SCOPE_UNRESOLVED",
+  "browserVerification": "NOT_RUN",
+  "knownPreexistingFailure": {
+    "command": "node scripts/check-phase2-month-decision-engine.mjs",
+    "assertion": "shift = DOWN",
+    "rerun": false,
+    "source": "docs/status/phase2-full-month-safe-mode.md"
+  }
+}

@@ -152,8 +152,9 @@ if (args.has("--round-trip")) {
     assert.ok(queried.referencePlan, "October reference plan was not published");
     assert.ok(plan, "October declared resources are missing");
     assert.equal(plan.economicResources, "3928.99");
-    assert.equal(plan.certainOutflows.total, "2047.23");
-    assert.equal(plan.afterCertainOutflows, "1881.76");
+    assert.equal(plan.certainOutflows.total, "847.23");
+    assert.equal(plan.afterCertainOutflows, "3081.76");
+    assert.equal(plan.afterSavingsAllocations, "1881.76");
     assert.deepEqual(plan.necessaryVariables.total, { low: "632.00", central: "788.00", high: "929.00" });
     assert.deepEqual(plan.flexibleVariables.total, { low: "79.00", central: "177.93", high: "397.00" });
     assert.deepEqual(plan.scenarios, { lowConsumption: "1170.76", central: "915.83", highConsumption: "555.76" });

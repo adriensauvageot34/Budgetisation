@@ -16,6 +16,7 @@ import { parseMonthDecisionSettings, type MonthDecisionSettings } from "@/domain
 import { makeForecastCheckpoint, insertForecastCheckpoint } from "@/server/phase2/forecast-memory";
 import { projectMonthDecision } from "@/server/phase2/month-decision-projection";
 import Big from "big.js";
+import { parseSavingsMetadata } from "@/domain/phase2/savings-allocations";
 
 const field = (form: FormData, key: string): string => String(form.get(key) ?? "").trim();
 const optionalMoney = (form: FormData, key: string): string | null => field(form, key) || null;
@@ -126,6 +127,7 @@ export async function updateMonthInputs(form: FormData): Promise<void> {
     next = { ...current, declaredOutflows: [...current.declaredOutflows, {
       id: randomUUID(), label: field(form, "outflowLabel"), amount: field(form, "outflowAmount"),
       dueDate: field(form, "outflowDate") || null, kind: "SAVINGS" as const,
+      ...parseSavingsMetadata({ adjustability: field(form, "outflowAdjustability") || undefined }),
     }] };
   } else if (intent === "remove-declared-outflow") {
     next = { ...current, declaredOutflows: current.declaredOutflows.filter((item) => item.id !== field(form, "outflowId")) };

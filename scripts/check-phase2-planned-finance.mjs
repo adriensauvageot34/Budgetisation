@@ -57,7 +57,7 @@ assert.equal(realized.plannedFunding.swile.reserved, "0.00");
 assert.equal(planned.monthlyLayers.stillPlanned, "60.00"); assert.equal(realized.monthlyLayers.declaredRealized, "60.00");
 assert.equal(planned.monthlyLayers.remainingDailyLife, realized.monthlyLayers.remainingDailyLife);
 for (const p of [planned, realized, plan([another, expense(extra)])])
-  assert.equal((Number(p.monthlyLayers.afterCertainOutflows) - Number(p.monthlyLayers.declaredRealized)
+  assert.equal((Number(p.monthlyLayers.afterSavingsAllocations) - Number(p.monthlyLayers.declaredRealized)
     - Number(p.monthlyLayers.stillPlanned) - Number(p.monthlyLayers.remainingDailyLife)).toFixed(2), p.monthlyLayers.projectedRemainder);
 // FIN-06, META-05: fuel usage affects economics, not payments. Toll and parking remain payable.
 const withFuel = draft([...extra.costItems, line("transport:fuel_usage", "10.00"), line("transport:toll", "5.00"), line("transport:parking", "3.00")]);

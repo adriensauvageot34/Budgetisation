@@ -48,8 +48,9 @@ const plan = (date="2026-10-01",projects=[],f=live) => deriveMonthScenario({...f
   coverageBySource:Object.fromEntries(FORECAST_SOURCES.map(source=>[source,sourceCoverage(source,"2026-10-01",date,[{start:"2026-10-01",end:date}],"FULL",date)]))}},inputs,null,date,projects).economicPlan;
 const category = (p,key) => [...p.narrative.prediction.essential,...p.narrative.prediction.optional].find(c=>c.key===key);
 const first=plan(), twentieth=plan("2026-10-20");
-assert.equal(first.economicResources,"3928.99"); assert.equal(first.certainOutflows.total,"2047.23");
-assert.equal(first.afterCertainOutflows,"1881.76");
+assert.equal(first.economicResources,"3928.99"); assert.equal(first.certainOutflows.total,"847.23");
+assert.equal(first.afterCertainOutflows,"3081.76");
+assert.equal(first.afterSavingsAllocations,"1881.76");
 assert(Number(category(first,"groceries").remaining.high)<1000,"outlier is not a raw max bound");
 assert(Number(category(first,"groceries").remaining.central)<1000,"robust central survives atypical month");
 assert(Number(category(twentieth,"groceries").remaining.central)<Number(category(first,"groceries").remaining.central));

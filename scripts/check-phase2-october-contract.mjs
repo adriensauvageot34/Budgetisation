@@ -113,8 +113,8 @@ assert.deepEqual(baseline.resources.map((item) => item.amount), ["1988.39", "156
 assert.equal(baseline.salaryCash, "3548.99");
 assert.equal(baseline.mealBenefits, "380.00");
 assert.equal(baseline.economicResources, "3928.99");
-assert.equal(baseline.certainOutflows.total, "2047.23");
-assert.equal(baseline.afterCertainOutflows, "1881.76");
+assert.equal(baseline.certainOutflows.total, "847.23");
+assert.equal(baseline.afterCertainOutflows, "3081.76");
 assert.deepEqual(baseline.scenarios, { lowConsumption: "1170.76", central: "915.83", highConsumption: "555.76" });
 assert.equal(baseline.automaticEventProvision, "0.00");
 assert.equal(baseline.certainOutflows.items.find((item) => item.key === "obligation:rent")?.amount, "255.74");
@@ -122,14 +122,17 @@ assert.equal(baseline.certainOutflows.items.find((item) => item.key === "obligat
 assert.deepEqual(baseline.certainOutflows.items.filter((item) => item.key === "obligation:edf")
   .map((item) => [item.date, item.dateCertainty]), [["2026-10-04", "HISTORICAL_ESTIMATE"]]);
 assert.equal(baseline.certainOutflows.items.filter((item) => item.key === "obligation:ornikar").length, 1);
-assert.equal(baseline.certainOutflows.items.find((item) => item.kind === "SAVINGS")?.date, null);
+assert.equal(baseline.certainOutflows.items.some((item) => item.kind === "SAVINGS"), false);
+assert.equal(baseline.savingsAllocations.items[0].dueDate, null);
+assert.equal(baseline.savingsAllocations.protectedTotal, "1200.00");
+assert.equal(baseline.afterSavingsAllocations, "1881.76");
 assert.ok(baseline.certainOutflows.items.some((item) => item.key === "obligation:google-one"));
 assert.ok(!baseline.certainOutflows.items.some((item) => ["obligation:qobuz", "obligation:google-ai"].includes(item.key)));
 assert.ok(!baseline.flexibleVariables.items.some((item) => item.key === "manon-work-coffee"));
 assert.deepEqual(forecast.referencePlan.restaurantCorpus, ["Restaurant", "Fast-food / snack", "Livraison de repas"]);
 const changed = plan({ ...inputs, resourceOverrides: { "income:Digital Learning Contest": "2150.00" } });
 assert.equal(changed.economicResources, "4090.60");
-assert.equal(changed.afterCertainOutflows, "2043.37");
+assert.equal(changed.afterCertainOutflows, "3243.37");
 assert.equal(changed.scenarios.central, "1077.44");
 assert.deepEqual(plan(), baseline, "removing an override restores the source plan");
 for (const [key, amount, expectedPocket] of [
@@ -144,7 +147,7 @@ for (const [key, amount, expectedPocket] of [
   assert.equal(changed[0].pocket, expectedPocket);
   assert.equal(changed[0].provenance, "MONTH_OVERRIDE");
   assert.equal(overridden.economicResources, "4090.60");
-  assert.equal(overridden.afterCertainOutflows, "2043.37");
+  assert.equal(overridden.afterCertainOutflows, "3243.37");
   assert.equal(overridden.scenarios.central, "1077.44");
   assert.deepEqual(plan(), baseline);
 }
