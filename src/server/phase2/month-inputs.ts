@@ -2,6 +2,7 @@ import "server-only";
 
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { defaultMonthInputs, monthInputsSchema, type MonthInputs } from "./month-scenario";
+import { validateWalletMonth } from "@/domain/phase2/benefit-wallets";
 
 export type StoredMonthInputs = Readonly<{ inputs: MonthInputs; updatedAt: string | null; updatedBy: string | null }>;
 
@@ -16,8 +17,9 @@ export async function readMonthInputs(client: SupabaseClient, householdId: strin
 export async function saveMonthInputs(client: SupabaseClient, householdId: string, targetMonth: string,
   userId: string, inputs: MonthInputs): Promise<StoredMonthInputs> {
   const payload = monthInputsSchema.parse(inputs);
+  validateWalletMonth(payload.benefitWallets!, targetMonth);
   if (payload.plannedEvents.length !== 0) throw new TypeError("LEGACY_PLANNED_EVENTS_CUTOVER_REQUIRED");
-  const { plannedEvents: _legacyPlannedEvents, ...settingsPayload } = payload;
+  const { plannedEvents: _legacyPlannedEvents, benefit: _legacyBenefit, ...settingsPayload } = payload;
   const updatedAt = new Date().toISOString();
   const { error } = await client.from("phase2_month_inputs").upsert({
     household_id: householdId, target_month: `${targetMonth}-01`, payload: settingsPayload,

@@ -16,11 +16,16 @@ import { projectBankCashAsOf, resolveRealBankBalance, resolveIncomeOccurrences, 
 
 import { parseSavingsMetadata, type DeclaredSavingsInput, type SavingsAllocation } from "@/domain/phase2/savings-allocations";
 
+import { parseMonthlyBenefitWallets, validateWalletMonth, benefitResourceKey, type MonthlyBenefitWalletInputs } from "@/domain/phase2/benefit-wallets";
+
+import { projectMonthlyBenefitWallets, type BenefitWalletProjections } from "./benefit-wallet-funding";
+
 export type MonthInputs = Readonly<{
   decision?: MonthDecisionSettings;
   safetyReserve: string;
   openingBalance: { amount: string; asOfDate: string } | null;
-  benefit: { currentBalance: { amount: string; asOfDate: string } | null; expectedLoading: { amount: string; expectedDate: string } | null };
+  benefit: { currentBalance: { amount: string; asOfDate: string } | null; expectedLoading: { amount: string; expectedDate: string | null } | null };
+  benefitWallets?: MonthlyBenefitWalletInputs;
   plannedEvents: readonly { id: string; label: string; plannedCost: string; baselineDisplaced: string; parentEnvelope: string | null; plannedDate: string }[];
   confirmedObligations: readonly { componentKey: string; amount: string; dueDate: string }[];
   excludedFixedObligations: readonly string[];
@@ -57,7 +62,7 @@ const parseParent = (value: unknown): string | null => {
 };
 export const monthInputsSchema = { parse(value: unknown): MonthInputs {
   const input = record(value);
-  const benefit = record(input.benefit);
+  const benefit = input.benefitWallets !== undefined || input.benefit === undefined ? { currentBalance: null, expectedLoading: null } : record(input.benefit);
   const legacyPlannedEvents = input.plannedEvents ?? [];
   if (!Array.isArray(legacyPlannedEvents) || legacyPlannedEvents.length > 30
     || !Array.isArray(input.confirmedObligations) || input.confirmedObligations.length > 10) throw new TypeError("MONTH_INPUT_LIST_INVALID");
@@ -84,11 +89,24 @@ export const monthInputsSchema = { parse(value: unknown): MonthInputs {
   if (Object.keys(fixedAmountOverrides).length > 30) throw new TypeError("MONTH_INPUT_FIXED_OVERRIDE_LIMIT");
   const rawOutflows = input.declaredOutflows ?? [];
   if (!Array.isArray(rawOutflows) || rawOutflows.length > 20) throw new TypeError("MONTH_INPUT_DECLARED_OUTFLOWS_INVALID");
+  const declaredResources = parseAmounts(input.declaredResources, key => key === "benefit:swile" || key === "benefit:edenred");
+  const benefitWallets = parseMonthlyBenefitWallets(input.benefitWallets, {
+    currentBalance: parseDated(benefit.currentBalance, "asOfDate"),
+    expectedLoading: benefit.expectedLoading === null ? null : { amount: parseMoney(record(benefit.expectedLoading).amount),
+      expectedDate: record(benefit.expectedLoading).expectedDate === null ? null : parseDate(record(benefit.expectedLoading).expectedDate) },
+  }, declaredResources);
+  for (const wallet of Object.values(benefitWallets)) {
+    const key = benefitResourceKey(wallet.provider);
+    if (wallet.expectedLoading) declaredResources[key] = wallet.expectedLoading.amount;
+    else delete declaredResources[key];
+  }
+  const latestSwile = benefitWallets.SWILE.balanceObservations.at(-1);
   return {
+    benefitWallets,
     decision: parseMonthDecisionSettings(input.decision),
     safetyReserve: parseMoney(input.safetyReserve), openingBalance: parseDated(input.openingBalance, "asOfDate", true),
-    benefit: { currentBalance: parseDated(benefit.currentBalance, "asOfDate"),
-      expectedLoading: parseDated(benefit.expectedLoading, "expectedDate") },
+    benefit: { currentBalance: latestSwile ? { amount: latestSwile.amount, asOfDate: latestSwile.asOfDate } : null,
+      expectedLoading: benefitWallets.SWILE.expectedLoading },
     plannedEvents: legacyPlannedEvents.map((raw: unknown) => {
       const item = record(raw);
       if (typeof item.id !== "string" || !/^[0-9a-f-]{36}$/iu.test(item.id)
@@ -105,7 +123,7 @@ export const monthInputsSchema = { parse(value: unknown): MonthInputs {
     }),
     excludedFixedObligations: parseKeys(input.excludedFixedObligations),
     declinedConditionalObligations: parseKeys(input.declinedConditionalObligations),
-    declaredResources: parseAmounts(input.declaredResources, (key) => key === "benefit:swile" || key === "benefit:edenred"),
+    declaredResources,
     resourceOverrides: parseAmounts(input.resourceOverrides, (key) => key.startsWith("income:")
       || key === "benefit:swile" || key === "benefit:edenred"),
     fixedAmountOverrides,
@@ -146,6 +164,7 @@ type PlanOutflow = Readonly<{ key: string; label: string; amount: string; group:
   provenance: "SNAPSHOT" | "USER_DECLARED" | "MONTH_OVERRIDE"; kind: "FIXED" | "INSTALLMENT" }>;
 export type MonthEconomicPlan = Readonly<{ resources: readonly PlanResource[]; salaryCash: string; mealBenefits: string;
   bankCash: BankCashProjection;
+  benefitWallets: BenefitWalletProjections;
   observationCandidates: Readonly<Record<string, readonly { kind: "OPERATION" | "PURCHASE_EVENT"; id: string; date: string; amount: string; label: string }[]>>;
   narrative: MonthNarrativeProjection;
   economicResources: string; certainOutflows: { items: readonly PlanOutflow[];
@@ -160,8 +179,8 @@ export type MonthEconomicPlan = Readonly<{ resources: readonly PlanResource[]; s
   monthlyLayers: { afterCertainOutflows: string; afterSavingsAllocations: string; declaredRealized: string; stillPlanned: string;
     remainingDailyLife: string; projectedRemainder: string };
   plannedFunding: { bankAllocated: string; bankReserved: string; bankUsedDeclared: string; fundingToComplete: string;
-    swile: { resource: string; reserved: string; usedDeclared: string; availableAfter: string; shortfall: string };
-    edenred: { resource: string; reserved: string; usedDeclared: string; availableAfter: string; shortfall: string } };
+    swile: { resource: string; reserved: string; usedDeclared: string; availableAfter: string | null; shortfall: string; fundingToComplete: string };
+    edenred: { resource: string; reserved: string; usedDeclared: string; availableAfter: string | null; shortfall: string; fundingToComplete: string } };
   automaticEventProvision: "0.00"; declaredEventImpact: string }>;
 
 export type MonthNarrativeProjection = Readonly<{ prediction: RemainingMonthPrediction | null;
@@ -278,8 +297,15 @@ function deriveEconomicPlan(forecast: MonthForecastSnapshot, inputs: MonthInputs
     }
     return impact;
   };
-  const prediction = forecast.predictionEvidence ? forecastRemainingMonth(reference, forecast.predictionEvidence, asOfDate, plannedExpenses,
+  const predictionBase = forecast.predictionEvidence ? forecastRemainingMonth(reference, forecast.predictionEvidence, asOfDate, plannedExpenses,
     inputs.decision?.assumptions, forecast.calibration ?? calibrateForecast(forecast.forecastMemory ?? [], forecast.predictionEvidence, asOfDate)) : null;
+  const walletFunding = projectMonthlyBenefitWallets({ wallets: inputs.benefitWallets!, resourceOverrides: inputs.resourceOverrides,
+    evidence: evidence?.benefitWalletEvidence, context: asOf, personNamesById: evidence?.personNamesById ?? {}, expenses: activeExpenses,
+    categories: [...(predictionBase?.essential ?? []), ...(predictionBase?.optional ?? [])] });
+  const benefitWallets = walletFunding.wallets;
+  const prediction = predictionBase ? { ...predictionBase,
+    essential: walletFunding.categories.filter(category => predictionBase.essential.some(old => old.key === category.key)),
+    optional: walletFunding.categories.filter(category => predictionBase.optional.some(old => old.key === category.key)) } : null;
   for (const key of baselines.keys()) if (baselinePart(key)?.central == null)
     throw new TypeError(`PLANNED_EXPENSE_BASELINE_MISSING:${key}`);
   // Differential compatibility shim for published snapshots without request-local
@@ -288,14 +314,14 @@ function deriveEconomicPlan(forecast: MonthForecastSnapshot, inputs: MonthInputs
   const centralImpact = new Big(prediction?.projectImpact.central ?? plannedImpact("central"));
   const highImpact = new Big(prediction?.joint.high.impact ?? prediction?.projectImpact.high ?? plannedImpact("high"));
   const economicResources = salaryCash.plus(mealBenefits);
-  const fundingPocket = (key: "benefit:swile" | "benefit:edenred", total: Big, used: Big) => {
-    const resource = new Big(resources.find((part) => part.key === key)?.amount ?? "0");
-    const remaining = resource.minus(total);
-    return { resource: euros(resource), reserved: euros(total.minus(used)), usedDeclared: euros(used), availableAfter: euros(remaining.gt(0) ? remaining : new Big(0)),
-      shortfall: euros(remaining.lt(0) ? remaining.abs() : new Big(0)) };
+  const fundingPocket = (provider: "SWILE" | "EDENRED", total: Big, used: Big) => {
+    const resource = resources.find(part => part.key === benefitResourceKey(provider))?.amount ?? "0.00";
+    const wallet = benefitWallets[provider];
+    return { resource, reserved: euros(total.minus(used)), usedDeclared: euros(used), availableAfter: wallet.availableCapacity,
+      shortfall: wallet.shortfall, fundingToComplete: wallet.fundingToComplete };
   };
-  const swile = fundingPocket("benefit:swile", funding.SWILE, usedDeclared.SWILE);
-  const edenred = fundingPocket("benefit:edenred", funding.EDENRED, usedDeclared.EDENRED);
+  const swile = fundingPocket("SWILE", funding.SWILE, usedDeclared.SWILE);
+  const edenred = fundingPocket("EDENRED", funding.EDENRED, usedDeclared.EDENRED);
   const afterCertain = economicResources.minus(certainOutflows);
   const afterSavings = afterCertain.minus(savingsTotal);
   const necessary = prediction ? {low:prediction.joint.low.essential,central:prediction.essentialProvision.central,high:prediction.joint.high.essential} : reference.necessaryTotal;
@@ -320,7 +346,7 @@ function deriveEconomicPlan(forecast: MonthForecastSnapshot, inputs: MonthInputs
   const observationCandidates = Object.fromEntries(plannedExpenses.map(expense => [expense.id, observations.filter(row => coherentPlannedObservation(expense, row, matchesForecastCategory, evidence?.personNamesById ?? {}))
     .map(row => ({ kind: row.purchaseEventId ? "PURCHASE_EVENT" as const : "OPERATION" as const, id: row.purchaseEventId ?? row.operationId,
       date: row.date, amount: row.amount, label: row.merchant ?? row.subcategory }))]));
-  return { observationCandidates, bankCash, narrative, resources, salaryCash: euros(salaryCash), mealBenefits: euros(mealBenefits), economicResources: euros(economicResources),
+  return { observationCandidates, bankCash, benefitWallets, narrative, resources, salaryCash: euros(salaryCash), mealBenefits: euros(mealBenefits), economicResources: euros(economicResources),
     certainOutflows: { items, groups, total: euros(certainOutflows), excludedKeys: inputs.excludedFixedObligations },
     savingsAllocations, afterCertainOutflows: euros(afterCertain), afterSavingsAllocations: euros(afterSavings), necessaryVariables: { items: reference.necessary, total: necessary },
     flexibleVariables: { items: reference.flexible, total: flexible },
@@ -333,7 +359,7 @@ function deriveEconomicPlan(forecast: MonthForecastSnapshot, inputs: MonthInputs
       })) as CostRange },
     plannedFunding: { bankAllocated: euros(funding.BANK), bankReserved: euros(funding.BANK.minus(usedDeclared.BANK)),
       bankUsedDeclared: euros(usedDeclared.BANK),
-      fundingToComplete: euros(new Big(swile.shortfall).plus(edenred.shortfall)), swile, edenred },
+      fundingToComplete: euros(new Big(swile.fundingToComplete).plus(edenred.fundingToComplete)), swile, edenred },
     monthlyLayers: { afterCertainOutflows: euros(afterCertain), afterSavingsAllocations: euros(afterSavings), declaredRealized: euros(declaredRealizedGross),
       stillPlanned: euros(plannedGross), remainingDailyLife: prediction ? euros(new Big(prediction.essentialRemaining.central).plus(prediction.optionalRemaining.central))
         : euros(new Big(necessary.central!).plus(flexible.central!).minus(gross.minus(centralImpact))), projectedRemainder: euros(central) },
@@ -348,6 +374,7 @@ export function deriveMonthScenario(forecast: MonthForecastSnapshot, rawInputs: 
     userPlannedEventDelta: string | null; undeclaredEventDelta: null;
     fixedExpenseTotal: string | null; excludedFixedTotal: string;
     economicPlan: MonthEconomicPlan | null;
+    benefitWallets: BenefitWalletProjections;
     economicCost: ForecastRange; freeToSpend: ForecastRange; cashPrudent: ForecastRange;
     benefitPotential: string | null;
     availableNow: { status: "AVAILABLE"; value: string; asOfDate: string } | { status: "UNAVAILABLE"; value: null; reason: string };
@@ -358,6 +385,7 @@ export function deriveMonthScenario(forecast: MonthForecastSnapshot, rawInputs: 
     || plannedExpenses.some((item) => item.targetMonth !== forecast.meta.targetMonth
       || (item.status !== "PLANNED" && item.status !== "DECLARED_REALIZED")))
     throw new TypeError("PLANNED_EXPENSE_SCENARIO_INPUT_INVALID");
+  validateWalletMonth(inputs.benefitWallets!, forecast.meta.targetMonth);
   parseDate(asOfDate);
   const purchase = rawPurchase === null ? null : whatIfPurchaseSchema.parse(rawPurchase);
   if (purchase?.parentEnvelope === null && purchase.amountAlreadyCoveredByParentEnvelope !== "0" && new Big(purchase.amountAlreadyCoveredByParentEnvelope).gt(0))
@@ -427,8 +455,18 @@ export function deriveMonthScenario(forecast: MonthForecastSnapshot, rawInputs: 
     high: forecast.income.high === null || forecast.cash.grossBeforeUnconfirmedFunding.low === null ? null
       : euros(new Big(forecast.income.high).minus(forecast.cash.grossBeforeUnconfirmedFunding.low).minus(totalCostDelta)),
   };
-  const benefitPotential = inputs.benefit.currentBalance === null ? null : euros(new Big(inputs.benefit.currentBalance.amount)
-    .plus(inputs.benefit.expectedLoading?.amount ?? 0));
+  const economicPlan = deriveEconomicPlan(forecast, inputs, plannedExpenses, asOfDate);
+  const evidence = forecast.predictionEvidence;
+  // Stock remains readable even while monthly economic resources are incomplete.
+  const benefitWallets = economicPlan?.benefitWallets ?? projectMonthlyBenefitWallets({
+    wallets: inputs.benefitWallets!, resourceOverrides: inputs.resourceOverrides, evidence: evidence?.benefitWalletEvidence,
+    context: makeAsOfContext(forecast.meta.targetMonth, asOfDate, evidence?.timezone),
+    personNamesById: evidence?.personNamesById ?? {},
+    expenses: reconcilePlannedObservations(plannedExpenses, evidence?.currentEconomicEntries.filter(row => row.date <= asOfDate) ?? [],
+      matchesForecastCategory, evidence?.personNamesById ?? {}).unmatchedExpenses, categories: [],
+  }).wallets;
+  // Legacy DTO reuses the same resolved stock, never a balance plus a past credit.
+  const benefitPotential = benefitWallets.SWILE.currentBalanceKnowledge.amount;
   const balance = resolveRealBankBalance({ observation: inputs.openingBalance ?? forecast.predictionEvidence?.manualBankBalanceObservation ?? null, today: asOfDate,
     bank: forecast.predictionEvidence?.bankObservations ?? [], intervals: forecast.predictionEvidence?.bankCoverageIntervals });
   const availableNow = balance.status === "KNOWN" ? { status: "AVAILABLE" as const, value: balance.amount, asOfDate }
@@ -440,7 +478,7 @@ export function deriveMonthScenario(forecast: MonthForecastSnapshot, rawInputs: 
     userPlannedEventDelta: null,
     undeclaredEventDelta: null, fixedExpenseTotal: forecast.obligations.central === null ? null
       : euros(new Big(forecast.obligations.central).minus(excludedFixedTotal)), excludedFixedTotal: euros(excludedFixedTotal),
-    economicPlan: deriveEconomicPlan(forecast, inputs, plannedExpenses, asOfDate),
+    economicPlan, benefitWallets,
     economicCost, freeToSpend, cashPrudent, benefitPotential, availableNow,
   };
 }

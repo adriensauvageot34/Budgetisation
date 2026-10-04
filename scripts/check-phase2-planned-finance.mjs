@@ -67,9 +67,12 @@ assert.equal(f.funding.bankAllocated, "8.00"); assert.equal(f.funding.swile.rese
 // FIN-07/META-20: calendar retains gross even when marginal impact is zero.
 const calendar = projectMonthCalendar([], projectPlannedExpenseCards([expense(habitual)]));
 assert.equal(calendar.entries.length, 1); assert.equal(calendar.entries[0].amount, "60.00"); assert.equal(h.netAdditionalImpact.central, "0.00");
-// FIN-08: resource reduction creates a shortage and never changes the user's allocations to BANK.
+// FIN-08: monthly flow is not current stock. Unknown stock cannot certify funding;
+// the shared daily cap can still prove a shortage without rewriting allocations.
 const reduced = plan([expense(habitual)], { ...inputs, resourceOverrides: { "benefit:swile": "40.00" } });
-assert.equal(reduced.plannedFunding.swile.shortfall, "20.00"); assert.equal(reduced.plannedFunding.fundingToComplete, "20.00");
+assert.equal(reduced.plannedFunding.swile.shortfall, "35.00"); assert.equal(reduced.plannedFunding.fundingToComplete, "60.00");
+assert.equal(reduced.benefitWallets.SWILE.currentBalanceKnowledge.status, "UNKNOWN");
+assert.equal(reduced.plannedFunding.swile.availableAfter, null);
 assert.equal(reduced.plannedFunding.bankAllocated, "0.00"); assert.equal(reduced.plannedFunding.swile.reserved, "60.00");
 // Constructible invalid payment payloads are rejected by the shared server boundary.
 for (const item of [line("restaurant:main", "30.00", null, [{ source: "SWILE", amount: "29.00" }]),

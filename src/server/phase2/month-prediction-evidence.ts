@@ -7,6 +7,8 @@ import { sourceCoverage, continuousCoverage, addCalendarDays, DEFAULT_BANK_GRACE
 import { planningDate } from "./planning-date";
 import type { EconomicReferenceEntry, MobilityReferenceLeg } from "./month-reference";
 import type { MonthPredictionEvidence } from "./remaining-month-forecast";
+import { BENEFIT_PROVIDERS, type BenefitProvider } from "@/domain/phase2/benefit-wallets";
+import type { CanonicalBenefitWallet, BenefitLedgerEntry } from "./benefit-wallet-funding";
 import { monthInputsSchema } from "./month-scenario";
 
 /** Purchase identity replaces its bank components; funding never adds a second cost. */
@@ -56,8 +58,8 @@ export async function readMonthPredictionEvidence(client: SupabaseClient, househ
     client.from("subcategories").select("subcategory_id,nom_canonique"),
     client.from("needs").select("need_id,name,personne_concernee"),
     client.from("persons").select("person_id,display_name").eq("household_id", householdId),
-    client.from("import_batches").select("source_system,period_start,period_end,coverage_status,status").eq("household_id", householdId),
-    client.from("benefit_wallets").select("benefit_wallet_id,provider,owner_person_id").eq("household_id", householdId),
+    client.from("import_batches").select("import_batch_id,source_instance_key,source_system,period_start,period_end,coverage_status,status").eq("household_id", householdId),
+    client.from("benefit_wallets").select("benefit_wallet_id,provider,owner_person_id,currency,status,source_instance_key,import_batch_id,coverage_start,coverage_end,opening_balance,opening_balance_status,closing_balance,closing_balance_status").eq("household_id", householdId),
     client.from("mobility_datasets").select("period_start,period_end").eq("household_id", householdId),
     page(offset => client.from("phase2_month_inputs").select("payload,target_month").eq("household_id", householdId)
       .order("target_month", { ascending: false }).range(offset, offset + 999)),
@@ -72,7 +74,7 @@ export async function readMonthPredictionEvidence(client: SupabaseClient, househ
   const needById = new Map((needs.data ?? []).map(r => [r.need_id, r]));
   const personNamesById = Object.fromEntries((people.data ?? []).map(r => [r.person_id, r.display_name]));
   const walletById = new Map((wallets.data ?? []).map(r => [r.benefit_wallet_id, r]));
-  const [operations, costs, events, memberships, timings, funding, legs] = await Promise.all([
+  const [operations, costs, events, memberships, timings, funding, legs, benefitLedger] = await Promise.all([
     page(offset => client.from("operations").select("operation_id,date_bancaire,personne_concernee,type_precis,marchand,merchant_id,need_id,montant,flux,recurrence_series_id,reference_contrat,transfert_associe_operation_id,source_system")
       .gte("date_bancaire", startDate).lt("date_bancaire", endExclusive).lte("date_bancaire", asOf).order("operation_id").range(offset, offset + 999)),
     page(offset => client.from("financial_economic_cost_canonical").select("operation_id,subcategory_id,canonical_economic_net,canonical_component_key")
@@ -88,6 +90,9 @@ export async function readMonthPredictionEvidence(client: SupabaseClient, househ
     page(offset => client.from("mobility_legs").select("travel_date,origin_source_label,destination_source_label,estimated_fuel_cost,mobility_leg_id")
       .eq("household_id", householdId).eq("status", "CERTIFIED_SOURCE").gte("travel_date", startDate).lt("travel_date", endExclusive)
       .lte("travel_date", asOf).order("mobility_leg_id").range(offset, offset + 999)),
+    page(offset => client.from("benefit_wallet_ledger_entries").select("benefit_wallet_ledger_entry_id,benefit_wallet_id,event_date,entry_kind,amount,currency,purchase_event_id")
+      .eq("household_id", householdId).gte("event_date", startDate).lte("event_date", asOf)
+      .order("benefit_wallet_ledger_entry_id").range(offset, offset + 999)),
   ]);
   const operationById = new Map(operations.map(r => [r.operation_id, r]));
   const bank: EconomicReferenceEntry[] = costs.flatMap(cost => {
@@ -156,8 +161,28 @@ export async function readMonthPredictionEvidence(client: SupabaseClient, househ
     }
     return [source, months];
   })) as Record<EvidenceSource, string[]>;
+  const canonicalWallets: CanonicalBenefitWallet[] = (wallets.data ?? []).filter(wallet => BENEFIT_PROVIDERS.includes(wallet.provider as BenefitProvider)).map(wallet => ({
+    id: wallet.benefit_wallet_id, provider: wallet.provider as BenefitProvider, ownerPersonId: wallet.owner_person_id ?? null,
+    currency: wallet.currency ?? "UNKNOWN", status: wallet.status ?? "UNKNOWN", coverageStart: wallet.coverage_start ?? null, coverageEnd: wallet.coverage_end ?? null,
+    openingBalance: wallet.opening_balance_status === "KNOWN" && wallet.opening_balance != null ? String(wallet.opening_balance) : null,
+    closingBalance: wallet.closing_balance_status === "KNOWN" && wallet.closing_balance != null ? String(wallet.closing_balance) : null,
+    coverageIntervals: imported.filter(batch => batch.source_system === wallet.provider && batch.coverage_status === "FULL" && batch.period_start && batch.period_end
+      && (batch.import_batch_id === wallet.import_batch_id && wallet.import_batch_id != null
+        || batch.source_instance_key === wallet.source_instance_key && wallet.source_instance_key != null && batch.source_system === wallet.provider))
+      .map(batch => ({ start: batch.period_start < startDate ? startDate : batch.period_start, end: batch.period_end < asOf ? batch.period_end : asOf }))
+      .filter(interval => interval.start <= interval.end),
+  }));
+  const ledger: BenefitLedgerEntry[] = benefitLedger.filter(row => row.currency === "EUR" && canonicalWallets.some(wallet => wallet.id === row.benefit_wallet_id))
+    .map(row => ({ id: row.benefit_wallet_ledger_entry_id, walletId: row.benefit_wallet_id, date: row.event_date,
+      amount: String(row.amount), kind: row.entry_kind as "CREDIT" | "PURCHASE_DEBIT", purchaseEventId: row.purchase_event_id }));
+  const openingObservations = Object.fromEntries(BENEFIT_PROVIDERS.map(provider => [provider,
+    balanceRows.flatMap(row => monthInputsSchema.parse(row.payload).benefitWallets?.[provider].balanceObservations ?? [])
+      .filter(row => row.asOfDate < `${targetMonth}-01` && row.asOfDate <= asOf)
+      .sort((a, b) => b.asOfDate.localeCompare(a.asOfDate) || a.id.localeCompare(b.id))
+      .filter((row, index, all) => all.findIndex(other => other.asOfDate === row.asOfDate) === index),
+  ]));
   const latestObservedBookingDate = operations.map(o => o.date_bancaire).sort().at(-1) ?? null;
-  return { timezone, asOfDate: asOf, manualBankBalanceObservation, history: { startMonth: startDate.slice(0, 7), endMonth,
+  return { benefitWalletEvidence: { wallets: canonicalWallets, ledger, openingObservations }, timezone, asOfDate: asOf, manualBankBalanceObservation, history: { startMonth: startDate.slice(0, 7), endMonth,
     economicEntries: rows.filter(r => r.date.slice(0, 7) <= endMonth), mobilityLegs: mobility.filter(l => l.date.slice(0, 7) <= endMonth) },
     currentEconomicEntries: rows.filter(r => r.date.startsWith(targetMonth)), currentMobilityLegs: mobility.filter(l => l.date.startsWith(targetMonth)),
     bankObservations: operations.map(o => ({ id: o.operation_id, date: o.date_bancaire, amount: String(o.montant),

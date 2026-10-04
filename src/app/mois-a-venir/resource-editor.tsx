@@ -22,7 +22,8 @@ const resourceBrands: Record<string, { logo: string; label: string; tone: string
   "benefit:edenred": { logo: "edenred.png", label: "Edenred", tone: "edenred" },
 };
 
-export function ResourceEditor({ resource, targetMonth }: { resource: Resource; targetMonth: string }) {
+export function ResourceEditor({ resource, targetMonth, walletObservation = null }: { resource: Resource; targetMonth: string;
+  walletObservation?: Readonly<{ amount: string; asOfDate: string }> | null }) {
   const router = useRouter();
   const inputRef = useRef<HTMLInputElement>(null);
   const [editing, setEditing] = useState(false);
@@ -62,7 +63,7 @@ export function ResourceEditor({ resource, targetMonth }: { resource: Resource; 
         <span className={material.brandBadge} aria-hidden="true" title={brand?.label}>
           {brand ? <Image src={`/brands/${brand.logo}`} width={40} height={32} alt="" /> : meal ? <Ticket size={19} /> : <BriefcaseBusiness size={19} />}
         </span>
-        <div className="min-w-0"><p className="truncate text-sm font-bold">{resource.label}</p><p className="text-xs text-slate-600">{meal ? "Ressource repas prévue" : "Salaire prévu du mois"}</p></div>
+        <div className="min-w-0"><p className="truncate text-sm font-bold">{resource.label}</p><p className="text-xs text-slate-600">{meal ? "Chargement prévu du mois" : "Salaire prévu du mois"}</p></div>
       </div>
       {!editing && <button type="button" className={`${material.iconButton} shrink-0 !p-2`} aria-label={`Modifier ${resource.label}`} onClick={() => { setError(null); setEditing(true); }}><Pencil size={16} /></button>}
     </div>
@@ -73,6 +74,7 @@ export function ResourceEditor({ resource, targetMonth }: { resource: Resource; 
         <button className={`${material.iconButton} !min-h-10 !px-2`} type="button" aria-label={`Annuler la modification de ${resource.label}`} disabled={pending} onClick={() => setEditing(false)}><X size={17} /></button></div>
     </form> : <p className={`${material.data} mt-4 break-words text-2xl font-black tracking-tight sm:text-[1.8rem]`}><AnimatedMoney value={money(resource.amount)} /></p>}
     <div className="mt-2 min-h-5 text-xs text-slate-600">{overridden ? `Modifié pour ${monthName}` : resource.provenance === "USER_DECLARED" ? `Déclaré pour ${monthName}` : `Prévu pour ${monthName}`}</div>
+    {meal && walletObservation && <p className="mt-2 text-xs text-slate-600">Solde observé : {money(walletObservation.amount)} au {new Intl.DateTimeFormat("fr-FR", { day: "numeric", month: "long", timeZone: "UTC" }).format(new Date(`${walletObservation.asOfDate}T12:00:00Z`))} · distinct du chargement.</p>}
     {overridden && !editing && <button type="button" className="mt-2 inline-flex min-h-9 items-center gap-1 text-xs font-bold text-emerald-900 underline underline-offset-2" disabled={pending} onClick={() => send("clear-resource-override")}><RotateCcw size={13} />{pending ? "Restauration…" : `Revenir à ${resource.sourceAmount === null ? "la prévision" : money(resource.sourceAmount)}`}</button>}
     {error && <p role="alert" className="mt-2 text-xs font-semibold text-red-800">{error}</p>}
   </div>;

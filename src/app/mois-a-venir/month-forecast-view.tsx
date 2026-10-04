@@ -12,6 +12,7 @@ import { MonthAssumptionEditor } from "./month-decision-tools";
 import { parseMonthDecisionSettings } from "@/domain/phase2/month-decision-contract";
 import { PlannedExpenseInteractions } from "./planned-expense-interactions";
 import { MonthSectionNav } from "./month-section-nav";
+import { BenefitWalletEditor } from "./benefit-wallet-editor";
 import material from "./month-material.module.css";
 
 const money = (value: string | null, exact = false) => value === null ? "À confirmer" : new Intl.NumberFormat("fr-FR", {
@@ -73,7 +74,8 @@ export function MonthForecastView({ forecast, scenario, stored, plannedExpenses,
   const otherObligations = obligations.filter((part) => !fixed.some((item) => item.key === part.key)
     && !conditional.some((item) => item.key === part.key));
   const hasBank = stored.inputs.openingBalance !== null;
-  const hasSwile = stored.inputs.benefit.currentBalance !== null;
+  const walletInputs = scenario.inputs.benefitWallets!;
+  const hasWalletBalances = Object.values(walletInputs).every(wallet => wallet.balanceObservations.length > 0);
   const assumptions = scenario.economicPlan?.narrative.prediction;
   const editableCategories = assumptions ? [...assumptions.essential, ...assumptions.optional]
     : [...(scenario.economicPlan?.necessaryVariables.items ?? []), ...(scenario.economicPlan?.flexibleVariables.items ?? [])]
@@ -82,20 +84,21 @@ export function MonthForecastView({ forecast, scenario, stored, plannedExpenses,
   return <PlannedExpenseInteractions><main data-planned-page className={`${material.page} mx-auto max-w-[1280px] space-y-7 pb-20`}>
     {incompleteProjects.length > 0 && <p role="status" className={`${material.glassSoft} p-4 text-sm`}>{incompleteProjects.length} projet(s) ont un budget à compléter. La projection inclut leurs coûts connus ; les montants encore inconnus restent à ajouter.</p>}
     <nav aria-label="Mois préparé" className={`${material.monthHeader} flex items-center justify-between gap-6 text-sm font-bold`}><a className={`${material.monthLink} px-3 py-2 text-slate-600`} href={`/mois-a-venir?month=${new Date(Date.UTC(Number(targetMonth.slice(0, 4)), Number(targetMonth.slice(5, 7)) - 2, 1)).toISOString().slice(0, 7)}`}>‹ Mois précédent</a><h1 className="text-center text-4xl font-black uppercase tracking-tight">{monthLabel(targetMonth)}</h1><a className={`${material.monthLink} px-3 py-2 text-slate-600`} href={`/mois-a-venir?month=${new Date(Date.UTC(Number(targetMonth.slice(0, 4)), Number(targetMonth.slice(5, 7)), 1)).toISOString().slice(0, 7)}`}>Mois suivant ›</a></nav>
-    {(!stored.inputs.declaredResources["benefit:swile"] || !stored.inputs.declaredResources["benefit:edenred"])
-      && <section className={`${material.glassPremium} p-5`}><h2 className="text-xl font-black">Préparer les ressources de {monthLabel(targetMonth)}</h2><p className="mt-2 text-sm">Renseignez vos titres-restaurants prévus pour ce mois, y compris 0 € si vous n’en prévoyez aucun. Les ressources et les exceptions d’un autre mois ne sont pas copiées.</p><ActionForm targetMonth={targetMonth} intent="declare-monthly-benefits" label="Enregistrer les ressources de ce mois"><Field label="Ressource Swile du mois (€)" name="swileResource" type="number" min="0" required value={stored.inputs.declaredResources["benefit:swile"]} /><Field label="Ressource Edenred du mois (€)" name="edenredResource" type="number" min="0" required value={stored.inputs.declaredResources["benefit:edenred"]} /></ActionForm></section>}
+    {(scenario.inputs.declaredResources["benefit:swile"] === undefined || scenario.inputs.declaredResources["benefit:edenred"] === undefined)
+      && <section className={`${material.glassPremium} p-5`}><h2 className="text-xl font-black">Préparer les ressources de {monthLabel(targetMonth)}</h2><p className="mt-2 text-sm">Renseignez les chargements de titres-restaurants prévus pour ce mois, y compris 0 € si vous n’en prévoyez aucun. Les ressources et les exceptions d’un autre mois ne sont pas copiées.</p><ActionForm targetMonth={targetMonth} intent="declare-monthly-benefits" label="Enregistrer les ressources de ce mois"><Field label="Chargement Swile du mois (€)" name="swileResource" type="number" min="0" required value={stored.inputs.declaredResources["benefit:swile"]} /><Field label="Chargement Edenred du mois (€)" name="edenredResource" type="number" min="0" required value={stored.inputs.declaredResources["benefit:edenred"]} /></ActionForm></section>}
     {!scenario.economicPlan && <section className={`${material.glassSecondary} p-5`} aria-label="Solde bancaire observé"><h2 className="font-bold">Disponible réel Banque</h2><p className="mt-2 text-2xl font-black">{money(scenario.availableNow.value, true)}</p><p className="mt-2 text-xs text-slate-600">Le solde daté reste indépendant des ressources économiques à compléter. Les titres-restaurants n’y sont pas inclus.</p></section>}
     {scenario.economicPlan && <MonthSectionNav hasProjects={plannedExpenses.length > 0} />}
     <MonthStory plan={scenario.economicPlan} targetMonth={targetMonth} plannedExpenses={plannedExpenses} calendarCarryovers={calendarCarryovers} persons={persons} places={places} vehicle={vehicle} prices={prices} wallets={wallets} today={today} dateEvidence={forecast.referencePlan?.estimatedDays ?? {}}
       settings={stored.inputs.decision} memory={forecast.forecastMemory} calibrated={forecast.predictionEvidence ? Object.keys(calibrateForecast(forecast.forecastMemory ?? [], forecast.predictionEvidence, today)).length > 0 : false}
       references={Object.fromEntries(forecast.components.map((part) => [part.key, { freshnessDate: part.freshnessDate, confidence: part.confidence }]))} />
 
-    <details id="complete-month" className={`${material.glassSoft} ${material.disclosure} p-5`} open={!hasBank || !hasSwile || inputError}>
+    <details id="complete-month" className={`${material.glassSoft} ${material.disclosure} p-5`} open={!hasBank || !hasWalletBalances || inputError}>
       <summary id="complete-title" className="cursor-pointer text-lg font-bold">Améliorer la précision du mois</summary>
       {inputError && <p role="alert" className="mt-3 rounded-xl bg-red-50 p-3 text-sm font-semibold text-red-800">Impossible d’enregistrer : vérifiez les montants, les dates et la part déjà prévue.</p>}
       <div className="mt-4 grid gap-3 lg:grid-cols-2">
         <details id="bank-balance" className={`${material.precisionAction} ${material.disclosure} scroll-mt-24`}><summary className="cursor-pointer font-bold">Solde actuel <span className="ml-2 text-xs font-normal text-slate-500">{hasBank ? "Mettre à jour" : "À renseigner"}</span></summary><ActionForm targetMonth={targetMonth} intent="save-bank-balance" label="Enregistrer le solde"><Field label="Solde bancaire (€)" name="openingAmount" type="number" value={stored.inputs.openingBalance?.amount} /><Field label="Date du solde" name="openingDate" type="date" value={stored.inputs.openingBalance?.asOfDate} /><p className="text-xs text-slate-600">Le disponible aujourd’hui n’est calculable qu’avec un solde daté d’aujourd’hui.</p></ActionForm></details>
-        <details id="swile-balance" className={`${material.precisionAction} ${material.disclosure} scroll-mt-24`}><summary className="cursor-pointer font-bold">Titres-resto <span className="ml-2 text-xs font-normal text-slate-500">{hasSwile ? "Mettre à jour Swile" : "À renseigner · Swile"}</span></summary><ActionForm targetMonth={targetMonth} intent="save-benefit" label="Enregistrer Swile"><Field label="Solde Swile actuel (€)" name="benefitBalance" type="number" min="0" value={stored.inputs.benefit.currentBalance?.amount} /><Field label="Date du solde" name="benefitDate" type="date" value={stored.inputs.benefit.currentBalance?.asOfDate} /><Field label="Chargement attendu (€), si connu" name="benefitLoading" type="number" min="0" value={stored.inputs.benefit.expectedLoading?.amount} /><Field label="Date prévue du chargement" name="loadingDate" value={stored.inputs.benefit.expectedLoading?.expectedDate} type="date" /></ActionForm></details>
+        {Object.values(walletInputs).map(wallet => <BenefitWalletEditor key={wallet.provider} wallet={wallet}
+          projection={scenario.benefitWallets[wallet.provider]} targetMonth={targetMonth} today={today} />)}
         <details id="month-settings" className={`${material.precisionAction} ${material.disclosure} scroll-mt-24 lg:col-span-2`}>
           <summary className="cursor-pointer font-bold">Réglages du mois{pending.length > 0 ? ` · ${pending.length} échéance${pending.length > 1 ? "s" : ""} à préciser` : ""}</summary>
           <div className="mt-4 grid gap-3">

@@ -53,8 +53,11 @@ export function projectMonthDecision(plan: MonthEconomicPlan, settings: MonthDec
   for (const [label, pocket] of [["Swile", plan.plannedFunding.swile], ["Edenred", plan.plannedFunding.edenred]] as const) {
     const resource = new Big(pocket.resource), committed = new Big(pocket.reserved).plus(pocket.usedDeclared);
     if (new Big(pocket.shortfall).gt(0) || (resource.gt(0) && committed.gte(resource.times(.9)))) attention.push({
-      key: label, message: `${label} : ${new Big(pocket.shortfall).gt(0) ? "affectation supérieure à la ressource déclarée" : "au moins 90 % de la ressource déjà affectée"}.`, href: "#meal-funding" });
+      key: label, message: `${label} : ${new Big(pocket.shortfall).gt(0) ? "une partie des projets dépasse la capacité utilisable" : "au moins 90 % de la ressource déjà affectée"}.`, href: "#meal-funding" });
   }
+  for (const [label, wallet] of [["Swile", plan.benefitWallets.SWILE], ["Edenred", plan.benefitWallets.EDENRED]] as const)
+    if (new Big(wallet.fundingToComplete).gt(wallet.shortfall)) attention.push({ key: `${label}-unresolved`,
+      message: `${label} : le stock ou la date d’un projet restent à confirmer pour son financement.`, href: "#meal-funding" });
   for (const c of prediction?.essential ?? []) if (c.pace === "ABOVE") attention.push({ key: c.key,
     message: `${c.label} : les achats observés dépassent de plus de 30 % le rythme habituel à ce stade.`, href: "#necessary-title" });
   if (last && Math.abs(Number(change.delta)) > Math.max(50, Math.abs(Number(last.payload.final.central)) * .1)) attention.push({

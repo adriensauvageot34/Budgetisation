@@ -75,7 +75,9 @@ const meal = { ...draft([item("60.00", "restaurant:main", ["restaurant"], [{ sou
 const p = value(await a.previewPlannedExpense(month, meal));
 facts.inputs[month].resourceOverrides = { ...facts.inputs[month].resourceOverrides, "benefit:swile": "10.00" };
 const current = value(await a.savePlannedExpense(month, meal, { id: randomUUID() }));
-assert.notEqual(current.scenario.economicPlan.plannedFunding.swile.shortfall, p.funding.swile.shortfall);
+assert.notEqual(current.scenario.economicPlan.plannedFunding.swile.resource, p.funding.swile.resource);
+assert.equal(current.scenario.economicPlan.plannedFunding.swile.availableAfter, null,
+  "a refreshed monthly flow does not certify unknown current stock");
 assert.equal(current.expense.costItems[0].fundingAllocations[0].source, "SWILE");
 assert.match(current.notice, /ressources du mois/u);
 // Current route/fuel truth replaces old but internally valid estimates.

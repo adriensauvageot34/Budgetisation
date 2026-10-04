@@ -15,6 +15,8 @@ type CheckpointPayload = Readonly<{
   categories: readonly { key: string; label: string; projected: { low: string; central: string; high: string };
     buckets?: Pick<import("./remaining-month-forecast").RemainingCategory, "observedEconomic" | "declaredRealizedEconomic" | "plannedEconomic" | "pendingExpectedEconomic" | "futureExpectedEconomic" | "remainingForecastEconomic" | "coverage" | "limitationCodes"> }[];
   bankCash?: MonthEconomicPlan["bankCash"];
+  benefitWalletsVersion?: "benefit-wallets@v1";
+  benefitWallets?: MonthEconomicPlan["benefitWallets"];
   budgetLayersVersion?: "month-budget-layers@v2";
   savingsAllocations?: MonthEconomicPlan["savingsAllocations"];
   monthlyLayers?: MonthEconomicPlan["monthlyLayers"];
@@ -57,6 +59,7 @@ export function makeForecastCheckpoint(forecast: MonthForecastSnapshot, inputs: 
         observedEconomic: c.observedEconomic, declaredRealizedEconomic: c.declaredRealizedEconomic, plannedEconomic: c.plannedEconomic,
         pendingExpectedEconomic: c.pendingExpectedEconomic, futureExpectedEconomic: c.futureExpectedEconomic,
         remainingForecastEconomic: c.remainingForecastEconomic, coverage: c.coverage, limitationCodes: c.limitationCodes } })),
+    benefitWalletsVersion: "benefit-wallets@v1", benefitWallets: plan.benefitWallets,
     bankCash: plan.bankCash, budgetLayersVersion: "month-budget-layers@v2",
     savingsAllocations: plan.savingsAllocations, monthlyLayers: plan.monthlyLayers,
     forecastTemporalMode: policy.mode,
@@ -132,6 +135,13 @@ export function explainForecastChange(plan: MonthEconomicPlan, memory: readonly 
   const rows = comparableForecastCheckpoints(memory, targetMonth, plan.narrative.prediction?.forecastTemporalMode);
   const previous = rows.at(-1);
   if (!previous) return { changes: [], delta: "0.00", stability: "Pas encore d’estimation conservée pour comparer.", sampleCount: 0 };
+  const previousWallets = previous.payload.benefitWallets;
+  const walletKnowledgeChanged = previous.payload.benefitWalletsVersion !== "benefit-wallets@v1"
+    || (["SWILE", "EDENRED"] as const).some(provider =>
+      previousWallets?.[provider].currentBalanceKnowledge.status !== plan.benefitWallets[provider].currentBalanceKnowledge.status
+      || previousWallets?.[provider].currentBalanceKnowledge.amount !== plan.benefitWallets[provider].currentBalanceKnowledge.amount
+      || previousWallets?.[provider].ownerPersonId !== plan.benefitWallets[provider].ownerPersonId);
+  const fundingNote = walletKnowledgeChanged ? " La connaissance des wallets a changé ; leur financement n’est pas directement comparable à cette estimation conservée." : "";
   const current = forecastComponents(plan), keys = new Set([...Object.keys(previous.payload.components), ...Object.keys(current)]);
   const changes = [...keys].map(key => ({ key, label: current[key]?.label ?? previous.payload.components[key]!.label,
     delta: new Big(current[key]?.amount ?? 0).minus(previous.payload.components[key]?.amount ?? 0).toFixed(2) })).filter(c => c.delta !== "0.00");
@@ -140,6 +150,6 @@ export function explainForecastChange(plan: MonthEconomicPlan, memory: readonly 
   const byDay = new Map(rows.map(r => [r.as_of_date, r]));
   const distinct = [...byDay.values()].sort((a,b) => a.as_of_date.localeCompare(b.as_of_date)).slice(-3);
   const stable = distinct.length >= 3 && distinct.every(r => new Big(r.payload.final.central).minus(plan.narrative.final.central).abs().lte(10));
-  return { changes, delta, sampleCount: rows.length, stability: stable ? "Les trois dernières estimations conservées sur des jours distincts varient de moins de 10 €."
-    : distinct.length < 3 ? "Il faut des estimations conservées sur au moins trois jours pour juger la stabilité." : "La projection a évolué ; les écarts ci-dessous expliquent sa révision." };
+  return { changes, delta, sampleCount: rows.length, stability: (stable ? "Les trois dernières estimations conservées sur des jours distincts varient de moins de 10 €."
+    : distinct.length < 3 ? "Il faut des estimations conservées sur au moins trois jours pour juger la stabilité." : "La projection a évolué ; les écarts ci-dessous expliquent sa révision.") + fundingNote };
 }

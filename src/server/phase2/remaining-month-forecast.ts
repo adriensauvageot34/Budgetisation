@@ -19,6 +19,7 @@ export type MonthPredictionEvidence = Readonly<{ history: MonthReferenceEvidence
   latestObservedBookingDate?: string | null; timezone?: string; asOfDate?: string;
   manualBankBalanceObservation?: Readonly<{ amount: string; asOfDate: string }> | null;
   personNamesById: Readonly<Record<string, string>>; bankObservations?: readonly BankObservation[];
+  benefitWalletEvidence?: import("./benefit-wallet-funding").BenefitWalletEvidence;
   bankCoverageIntervals?: readonly import("./forecast-opportunities").CoverageInterval[];
   coverageBySource?: Readonly<Partial<Record<EvidenceSource, SourceCoverage>>>;
   completeMonthsBySource?: Readonly<Partial<Record<EvidenceSource, readonly string[]>>>;
@@ -38,7 +39,8 @@ export type RemainingCategory = Readonly<{ key: string; label: string; alreadyRe
   observedEconomic: string; declaredRealizedEconomic: string; plannedEconomic: string;
   pendingExpectedEconomic: CostRange; futureExpectedEconomic: CostRange; remainingForecastEconomic: CostRange;
   expiredExpectedEconomic: string; cancelledEconomic: string; plannedBankCash: string;
-  remainingForecastBankCash: FundingRange; expectedFunding: Readonly<Record<"BANK" | "SWILE" | "EDENRED", FundingRange>>;
+  remainingForecastBankCash: FundingRange; expectedFunding: Readonly<Record<"BANK" | "SWILE" | "EDENRED", FundingRange>> & Readonly<{ UNKNOWN?: FundingRange }>;
+  fundingToComplete?: FundingRange;
   opportunityCounts: OpportunityCounts | null; opportunities: readonly ForecastOpportunity[];
   coverage: Readonly<{ requiredSources: readonly EvidenceSource[]; sufficientForExpiration: boolean; limitationCodes: readonly string[] }>;
   limitationCodes: readonly string[]; cadences?: readonly { subcategory: string; medianGapDays: number | null; support: number; confidence: "LOW" | "MEDIUM" | "HIGH" }[] }>;
@@ -83,13 +85,17 @@ function expectedFunding(key: string, remaining: CostRange, rows: readonly Econo
   if (key === "manon-work-mobility") return { BANK: fundingZero(), SWILE: fundingZero(), EDENRED: fundingZero() };
   if (key === "tobacco-vape") return { BANK: remaining, SWILE: fundingZero(), EDENRED: fundingZero() };
   if (new Big(remaining.high).eq(0)) return { BANK: fundingZero(), SWILE: fundingZero(), EDENRED: fundingZero() };
+  // Dated personal meal funding is resolved once in benefit-wallet-funding.ts.
+  if (key === "adrien-work-meals" || key === "manon-work-meals") return {
+    BANK: { low: "0.00", central: null, high: remaining.high },
+    SWILE: { low: "0.00", central: null, high: remaining.high },
+    EDENRED: { low: "0.00", central: null, high: remaining.high },
+  };
   const sources = requiredForecastSources(key);
   const complete = months.filter(month => sources.every(source => evidence.completeMonthsBySource?.[source]?.includes(month)));
   const eligible = rows.filter(row => complete.includes(row.date.slice(0, 7)) && row.fundingComplete && row.amountStatus !== "PARTIAL");
   const total = eligible.reduce((n, row) => n + Number(row.amount), 0);
   return Object.fromEntries((["BANK", "SWILE", "EDENRED"] as const).map(source => {
-    const impossible = (key.startsWith("adrien-") && source === "EDENRED") || (key.startsWith("manon-") && source === "SWILE");
-    if (impossible) return [source, fundingZero()];
     if (complete.length < FORECAST_POLICY.minimumMonths || total <= 0) return [source, { low: "0.00", central: null, high: remaining.high }];
     const ratio = Math.min(1, eligible.reduce((n, row) => n + Number(row.funding?.[source] ?? 0), 0) / total);
     return [source, range(k => new Big(remaining[k]).times(ratio))];

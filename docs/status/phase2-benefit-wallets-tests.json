@@ -1,0 +1,151 @@
+{
+  "status": "PASS",
+  "historicalWrites": 0,
+  "scope": "offline synthetic fixtures; no live Supabase writes",
+  "results": [
+    {
+      "id": "WALLET-001",
+      "status": "PASS"
+    },
+    {
+      "id": "WALLET-002",
+      "status": "PASS"
+    },
+    {
+      "id": "WALLET-003",
+      "status": "PASS"
+    },
+    {
+      "id": "WALLET-004",
+      "status": "PASS"
+    },
+    {
+      "id": "WALLET-005",
+      "status": "PASS"
+    },
+    {
+      "id": "WALLET-006",
+      "status": "PASS"
+    },
+    {
+      "id": "WALLET-007",
+      "status": "PASS"
+    },
+    {
+      "id": "WALLET-008",
+      "status": "PASS"
+    },
+    {
+      "id": "WALLET-009",
+      "status": "PASS"
+    },
+    {
+      "id": "WALLET-010",
+      "status": "PASS"
+    },
+    {
+      "id": "WALLET-011",
+      "status": "PASS"
+    },
+    {
+      "id": "WALLET-012",
+      "status": "PASS"
+    },
+    {
+      "id": "WALLET-013",
+      "status": "PASS"
+    },
+    {
+      "id": "WALLET-014",
+      "status": "PASS"
+    },
+    {
+      "id": "WALLET-015",
+      "status": "PASS"
+    },
+    {
+      "id": "WALLET-016",
+      "status": "PASS"
+    },
+    {
+      "id": "WALLET-017",
+      "status": "PASS"
+    },
+    {
+      "id": "WALLET-018",
+      "status": "PASS"
+    },
+    {
+      "id": "WALLET-019",
+      "status": "PASS"
+    },
+    {
+      "id": "WALLET-020",
+      "status": "PASS"
+    },
+    {
+      "id": "WALLET-021",
+      "status": "PASS"
+    },
+    {
+      "id": "WALLET-022",
+      "status": "PASS"
+    },
+    {
+      "id": "WALLET-023",
+      "status": "PASS"
+    },
+    {
+      "id": "WALLET-024",
+      "status": "PASS"
+    },
+    {
+      "id": "WALLET-025",
+      "status": "PASS"
+    },
+    {
+      "id": "WALLET-026-BOUNDARY-NEGATIVES",
+      "status": "PASS"
+    },
+    {
+      "id": "WALLET-027-FUTURE-RELEASE-AND-CAP",
+      "status": "PASS"
+    },
+    {
+      "id": "WALLET-028-CANONICAL-ANCHORS",
+      "status": "PASS"
+    },
+    {
+      "id": "WALLET-029-RESERVATIONS-BEFORE-FORECAST",
+      "status": "PASS"
+    },
+    {
+      "id": "WALLET-030-OLD-FORM-AND-DELETE",
+      "status": "PASS"
+    },
+    {
+      "id": "WALLET-031-CHECKPOINTS",
+      "status": "PASS"
+    },
+    {
+      "id": "WALLET-032-UI",
+      "status": "PASS"
+    },
+    {
+      "id": "WALLET-033-READ-ONLY-ADAPTER",
+      "status": "PASS"
+    },
+    {
+      "id": "WALLET-034-RESERVATION-AND-EARLY-LOADING",
+      "status": "PASS"
+    },
+    {
+      "id": "WALLET-035-STOCK-WITHOUT-MONTHLY-FLOW",
+      "status": "PASS"
+    },
+    {
+      "id": "WALLET-036-PERSISTED-MONTH-BOUNDARY",
+      "status": "PASS"
+    }
+  ]
+}

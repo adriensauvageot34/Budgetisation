@@ -43,6 +43,7 @@ export function RemainingForecastCard({ category, optional = false, importsMissi
         {importsMissing && <p>Les données importées ne couvrent pas toute la période écoulée ; les habitudes historiques complètent l’estimation.</p>}
         <p>Une réalisation déclarée reste distincte d’un débit observé ; elle ne crée aucun historique.</p>
         <p>Financement bancaire du reste : {money(category.remainingForecastBankCash.central)}. Les titres-restaurants et l’essence consommée restent séparés du cash.</p>
+        {(category.key === "adrien-work-meals" || category.key === "manon-work-meals") && <p>Repas potentiellement financés par titres-restaurants : Swile {money(category.expectedFunding.SWILE.central)}, Edenred {money(category.expectedFunding.EDENRED.central)}. À compléter ou confirmer : {money(category.expectedFunding.UNKNOWN?.central ?? null)}. Le coût économique reste inchangé.</p>}
         <p>Fourchette exploratoire du reste : {money(category.remaining.low)} à {money(category.remaining.high)}.</p>
       </ForecastInfo></div>
     <p className={`${material.data} mt-3 text-3xl font-black`}><span className="mr-2 text-sm font-medium text-slate-500">Reste estimé</span><AnimatedMoney value={money(display.remaining.central)} /></p>

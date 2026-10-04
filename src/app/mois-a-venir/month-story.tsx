@@ -14,6 +14,7 @@ import { comparableForecastCheckpoints, type ForecastCheckpoint } from "@/server
 import { MonthDecisionTools } from "./month-decision-tools";
 import { AnimatedMoney } from "./animated-money";
 import { MonthSavingsSection } from "./month-savings-section";
+import { BenefitWalletFunding } from "./benefit-wallet-editor";
 import material from "./month-material.module.css";
 
 const money = (value: string | null, exact = false) => value === null ? "À confirmer" : new Intl.NumberFormat("fr-FR", {
@@ -71,7 +72,7 @@ export function MonthStory({ plan, targetMonth, plannedExpenses, calendarCarryov
   return <div data-month-story className="space-y-7 sm:space-y-9">
 
     <section className={`${material.glassPremium} ${material.glassHero} p-4 sm:p-6`} aria-labelledby="resources-title"><div className="flex flex-wrap items-end justify-between gap-3"><h2 id="resources-title" className="scroll-mt-24 text-2xl font-black">Nos ressources</h2><div className="text-left sm:text-right"><p className={`${material.data} text-3xl font-black tracking-tight`}><AnimatedMoney value={money(plan.economicResources, true)} /></p></div></div>
-      <div className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">{plan.resources.map((resource) => <ResourceEditor key={resource.key} resource={resource} targetMonth={targetMonth} />)}</div>
+      <div className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">{plan.resources.map((resource) => <ResourceEditor key={resource.key} resource={resource} targetMonth={targetMonth} walletObservation={resource.key === "benefit:swile" ? plan.benefitWallets.SWILE.latestObservation : resource.key === "benefit:edenred" ? plan.benefitWallets.EDENRED.latestObservation : null} />)}</div>
       <p className="mt-4 text-sm text-slate-600">Ressources économiques du mois · Disponible réel aujourd’hui : <strong>{money(cash.currentRealBankBalance.amount, true)}</strong>. Les titres-restaurants ne sont pas un solde bancaire.</p>
     </section>
 
@@ -111,7 +112,7 @@ export function MonthStory({ plan, targetMonth, plannedExpenses, calendarCarryov
       {cash.limitations.length > 0 && <p className="mt-3 text-xs text-slate-600">Projection partielle : un solde, une date de revenu ou un financement restent à confirmer. Les montants connus restent visibles.</p>}
       <ul className="mt-3 space-y-1 text-xs text-slate-600">{cash.incomeOccurrences.map(income => <li key={income.key}>{plan.resources.find(resource => resource.key === income.key)?.label ?? "Revenu"} : {money(income.amount, true)} · {income.state === "RECEIVED" ? "déjà reçu, inclus dans le solde" : income.state === "EXPECTED" ? "encore attendu" : income.state === "CANCELLED" ? "annulé" : "date ou réception à confirmer"}.</li>)}</ul>
       {prediction?.reconciliation.map(match => <p key={match.plannedExpenseId} className="mt-2 text-xs">Projet rapproché de l’observation : prévu {money(match.plannedEconomic, true)}, observé {money(match.observedEconomic, true)}, écart {money(match.variance, true)}{match.declared ? " · Réalisation déclarée conservée comme provenance" : ""}.</p>)}</details>
-    {decision.mealFundingVisible && <details id="meal-funding" className={`${material.glassSecondary} ${material.disclosure} scroll-mt-24 p-5`}><summary className="cursor-pointer text-sm font-bold">Titres-restaurants affectés aux projets</summary><p className="mt-1 text-xs text-slate-600">Les affectations explicites aux projets sont comptées ici. Les futurs repas estimés ne réservent pas automatiquement de titres-restaurants.</p><div className="mt-3 grid grid-cols-2 gap-4">{([["Swile", plan.plannedFunding.swile], ["Edenred", plan.plannedFunding.edenred]] as const).map(([label, pocket]) => <dl className="space-y-1 text-sm" key={label}><dt className="font-bold">{label}</dt><dd>Ressource : {money(pocket.resource, true)}</dd><dd>Réservé aux projets : {money(pocket.reserved, true)}</dd><dd>Usage déclaré : {money(pocket.usedDeclared, true)}</dd><dd>Disponible après affectations : {money(pocket.availableAfter, true)}</dd>{Number(pocket.shortfall) > 0 && <dd className="text-amber-900">À financer autrement : {money(pocket.shortfall, true)}</dd>}</dl>)}</div></details>}
+    <BenefitWalletFunding wallets={plan.benefitWallets} funding={plan.plannedFunding} />
     {decision.attention.length > 0 && <section aria-labelledby="attention-title" className={`${material.alertPanel} ${material.sectionEnter} p-5`}><h2 id="attention-title" className="text-lg font-bold">À regarder ensemble</h2><ul className="mt-3 space-y-2 text-sm">{decision.attention.map(item => <li key={item.key}><a className="underline underline-offset-2" href={item.href}>{item.message}</a></li>)}</ul></section>}
     {decision.change.sampleCount > 0 && <details id="forecast-history" className={`${material.glassSecondary} ${material.disclosure} scroll-mt-24 p-5`}>
       <summary className="cursor-pointer font-bold">Comment notre projection évolue</summary>

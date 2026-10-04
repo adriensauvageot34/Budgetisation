@@ -8,7 +8,7 @@ import { getCurrentHousehold } from "@/server/bootstrap/queries";
 import { createCanonicalReadClient } from "@/server/canonical/client";
 import { queryMonthForecast, resolvePlanningMonthForecast } from "@/server/phase2/month-forecast-snapshot";
 import { readMonthInputs, saveMonthInputs } from "@/server/phase2/month-inputs";
-import { deriveMonthScenario, type MonthInputs } from "@/server/phase2/month-scenario";
+import { deriveMonthScenario, monthInputsSchema, type MonthInputs } from "@/server/phase2/month-scenario";
 import { readPlannedExpenses } from "@/server/phase2/planned-expenses";
 
 import { planningDate } from "@/server/phase2/planning-date";
@@ -16,6 +16,7 @@ import { parseMonthDecisionSettings, type MonthDecisionSettings } from "@/domain
 import { makeForecastCheckpoint, insertForecastCheckpoint } from "@/server/phase2/forecast-memory";
 import { projectMonthDecision } from "@/server/phase2/month-decision-projection";
 import Big from "big.js";
+import { parseBenefitProvider, benefitResourceKey, type BenefitProvider, type MonthlyBenefitWalletInputs } from "@/domain/phase2/benefit-wallets";
 import { parseSavingsMetadata } from "@/domain/phase2/savings-allocations";
 
 const field = (form: FormData, key: string): string => String(form.get(key) ?? "").trim();
@@ -34,8 +35,26 @@ export async function updateMonthInputs(form: FormData): Promise<void> {
     forecast = await resolvePlanningMonthForecast(createCanonicalReadClient(), household.householdId, targetMonth);
   }
   const stored = await readMonthInputs(supabase, household.householdId, targetMonth);
-  const current: MonthInputs = stored.inputs;
+  const current: MonthInputs = monthInputsSchema.parse(stored.inputs);
   const intent = field(form, "intent");
+  const walletInputs = current.benefitWallets!;
+  const withLoading = (provider: BenefitProvider, amount: string | null, date: string | null): MonthInputs => {
+    const key = benefitResourceKey(provider), declaredResources = { ...current.declaredResources }, resourceOverrides = { ...current.resourceOverrides };
+    if (amount === null) delete declaredResources[key]; else declaredResources[key] = amount;
+    delete resourceOverrides[key];
+    return { ...current, declaredResources, resourceOverrides, benefitWallets: { ...walletInputs, [provider]: {
+      ...walletInputs[provider], expectedLoading: amount === null ? null : { amount, expectedDate: date } } } };
+  };
+  const legacySwile = (): MonthlyBenefitWalletInputs => {
+    const amount = optionalMoney(form, "benefitBalance"), date = field(form, "benefitDate");
+    const observations = walletInputs.SWILE.balanceObservations;
+    const row = amount === null ? null : { id: observations.find(row => row.asOfDate === date)?.id ?? randomUUID(), amount, asOfDate: date,
+      provenance: "USER_DECLARED" as const, ...(date < `${targetMonth}-01` ? { isOpeningObservation: true } : {}) };
+    const loading = optionalMoney(form, "benefitLoading");
+    return { ...walletInputs, SWILE: { ...walletInputs.SWILE,
+      balanceObservations: row ? [...observations.filter(old => old.asOfDate !== date), row] : observations,
+      expectedLoading: loading === null ? walletInputs.SWILE.expectedLoading : { amount: loading, expectedDate: field(form, "loadingDate") || null } } };
+  };
   let next: MonthInputs;
   if (intent === "save-month-assumption" || intent === "clear-month-assumption" || intent === "save-month-goal" || intent === "clear-month-goal") {
     if (targetMonth < planningDate(household.timezone).slice(0, 7)) throw new TypeError("MONTH_DECISION_PAST_READ_ONLY");
@@ -49,14 +68,9 @@ export async function updateMonthInputs(form: FormData): Promise<void> {
       goal: intent === "clear-month-goal" ? null : intent === "save-month-goal" ? field(form, "monthGoal") : decision.goal }) };
   } else if (intent === "settings") {
     const openingAmount = optionalMoney(form, "openingAmount");
-    const benefitBalance = optionalMoney(form, "benefitBalance");
-    const benefitLoading = optionalMoney(form, "benefitLoading");
     next = { ...current, safetyReserve: field(form, "safetyReserve"),
       openingBalance: openingAmount === null ? null : { amount: openingAmount, asOfDate: field(form, "openingDate") },
-      benefit: {
-        currentBalance: benefitBalance === null ? null : { amount: benefitBalance, asOfDate: field(form, "benefitDate") },
-        expectedLoading: benefitLoading === null ? null : { amount: benefitLoading, expectedDate: field(form, "loadingDate") },
-      },
+      benefitWallets: legacySwile(),
     };
   } else if (intent === "save-reserve") {
     // Compatibility for an already-open old form: an explicit reserve is now a
@@ -66,12 +80,22 @@ export async function updateMonthInputs(form: FormData): Promise<void> {
     const amount = optionalMoney(form, "openingAmount");
     next = { ...current, openingBalance: amount === null ? null : { amount, asOfDate: field(form, "openingDate") } };
   } else if (intent === "save-benefit") {
-    const balance = optionalMoney(form, "benefitBalance");
-    const loading = optionalMoney(form, "benefitLoading");
-    next = { ...current, benefit: {
-      currentBalance: balance === null ? null : { amount: balance, asOfDate: field(form, "benefitDate") },
-      expectedLoading: loading === null ? null : { amount: loading, expectedDate: field(form, "loadingDate") },
-    } };
+    next = { ...current, benefitWallets: legacySwile() };
+  } else if (intent === "add-wallet-balance-observation" || intent === "remove-wallet-balance-observation") {
+    const provider = parseBenefitProvider(field(form, "provider")), wallet = walletInputs[provider];
+    let observations = wallet.balanceObservations;
+    if (intent === "remove-wallet-balance-observation") observations = observations.filter(row => row.id !== field(form, "observationId"));
+    else {
+      const date = field(form, "walletBalanceDate");
+      if (date > planningDate(household.timezone)) throw new TypeError("BENEFIT_OBSERVATION_IN_FUTURE");
+      const id = observations.find(row => row.asOfDate === date)?.id ?? randomUUID();
+      observations = [...observations.filter(row => row.asOfDate !== date), { id, amount: field(form, "walletBalanceAmount"), asOfDate: date,
+        provenance: "USER_DECLARED" as const, ...(field(form, "walletOpeningObservation") === "on" ? { isOpeningObservation: true } : {}) }];
+    }
+    next = { ...current, benefitWallets: { ...walletInputs, [provider]: { ...wallet, balanceObservations: observations } } };
+  } else if (intent === "save-wallet-expected-loading" || intent === "clear-wallet-expected-loading") {
+    const provider = parseBenefitProvider(field(form, "provider"));
+    next = withLoading(provider, intent === "clear-wallet-expected-loading" ? null : field(form, "walletLoadingAmount"), field(form, "walletLoadingDate") || null);
   } else if (intent === "add-event" || intent === "remove-event") {
     throw new TypeError("LEGACY_PLANNED_EVENT_WRITE_DISABLED");
   } else if (intent === "confirm-obligation") {
@@ -97,8 +121,10 @@ export async function updateMonthInputs(form: FormData): Promise<void> {
       ? [...new Set([...current.excludedFixedObligations, key])]
       : current.excludedFixedObligations.filter((item) => item !== key) };
   } else if (intent === "declare-monthly-benefits") {
-    next = { ...current, declaredResources: { ...current.declaredResources,
-      "benefit:swile": field(form, "swileResource"), "benefit:edenred": field(form, "edenredResource") } };
+    next = { ...current, benefitWallets: {
+      SWILE: { ...walletInputs.SWILE, expectedLoading: { amount: field(form, "swileResource"), expectedDate: walletInputs.SWILE.expectedLoading?.expectedDate ?? null } },
+      EDENRED: { ...walletInputs.EDENRED, expectedLoading: { amount: field(form, "edenredResource"), expectedDate: walletInputs.EDENRED.expectedLoading?.expectedDate ?? null } },
+    } };
   } else if (intent === "set-resource-override" || intent === "clear-resource-override") {
     const key = field(form, "resourceKey");
     const supported = forecast.income.components.some((part) => part.key === key && part.central !== null)
@@ -111,7 +137,7 @@ export async function updateMonthInputs(form: FormData): Promise<void> {
   } else if (intent === "declare-meal-resource") {
     const key = field(form, "resourceKey");
     if (key !== "benefit:swile" && key !== "benefit:edenred") throw new TypeError("DECLARED_RESOURCE_TARGET_INVALID");
-    next = { ...current, declaredResources: { ...current.declaredResources, [key]: field(form, "resourceAmount") } };
+    next = withLoading(key === "benefit:swile" ? "SWILE" : "EDENRED", field(form, "resourceAmount"), walletInputs[key === "benefit:swile" ? "SWILE" : "EDENRED"].expectedLoading?.expectedDate ?? null);
   } else if (intent === "set-fixed-amount-override" || intent === "clear-fixed-amount-override") {
     const key = field(form, "componentKey");
     const fixedAmountOverrides = { ...current.fixedAmountOverrides };
