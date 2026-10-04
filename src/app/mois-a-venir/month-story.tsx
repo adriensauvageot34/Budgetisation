@@ -10,13 +10,11 @@ import type { PlannedVehicleEstimate } from "@/server/phase2/planned-context";
 import { RemainingForecastCard, ScenarioMilestone, ForecastInfo } from "./month-narrative-cards";
 import { parseMonthDecisionSettings, type MonthDecisionSettings } from "@/domain/phase2/month-decision-contract";
 import { projectMonthDecision } from "@/server/phase2/month-decision-projection";
-import { comparableForecastCheckpoints, type ForecastCheckpoint } from "@/server/phase2/forecast-memory";
-import { MonthDecisionTools } from "./month-decision-tools";
+import type { ForecastCheckpoint } from "@/server/phase2/forecast-memory";
+import { MonthControlLink } from "./month-control-center";
 import { AnimatedMoney } from "./animated-money";
 import { MonthSavingsSection } from "./month-savings-section";
-import { BenefitWalletFunding } from "./benefit-wallet-editor";
 import material from "./month-material.module.css";
-import type { MonthChoiceOffer } from "@/server/phase2/month-choices";
 
 const money = (value: string | null, exact = false) => value === null ? "À confirmer" : new Intl.NumberFormat("fr-FR", {
   style: "currency", currency: "EUR", maximumFractionDigits: exact ? 2 : 0, minimumFractionDigits: exact ? 2 : 0,
@@ -50,8 +48,7 @@ function StatisticalCard({ part, tone }: { part: StatisticalComponent; tone: "ne
   </article>;
 }
 
-export function MonthStory({ plan, targetMonth, plannedExpenses, calendarCarryovers = [], persons, places, vehicle, prices, wallets, today, dateEvidence, references, settings: rawSettings, memory = [], calibrated = false, choiceOffers = [] }: { plan: MonthEconomicPlan | null; targetMonth: string;
-  choiceOffers?: readonly MonthChoiceOffer[];
+export function MonthStory({ plan, targetMonth, plannedExpenses, calendarCarryovers = [], persons, places, vehicle, prices, wallets, today, dateEvidence, references, settings: rawSettings, memory = [], calibrated = false }: { plan: MonthEconomicPlan | null; targetMonth: string;
   settings?: MonthDecisionSettings; memory?: readonly ForecastCheckpoint[]; calibrated?: boolean;
   plannedExpenses: readonly PlannedExpenseCard[]; calendarCarryovers?: readonly PlannedExpenseCard[]; persons: readonly { personId: string; displayName: string }[];
   places: readonly PlannedPlaceOption[]; vehicle: PlannedVehicleEstimate | null;
@@ -67,14 +64,13 @@ export function MonthStory({ plan, targetMonth, plannedExpenses, calendarCarryov
   const importsMissing = prediction?.currentImportsMissing ?? false;
   const settings = parseMonthDecisionSettings(rawSettings);
   const decision = projectMonthDecision(plan, settings, targetMonth, today, plannedExpenses, memory);
-  const comparable = comparableForecastCheckpoints(memory, targetMonth);
   const cash = plan.bankCash;
   const cashRange = (range: typeof cash.endOfMonth) => ({ lowConsumption: cash.calibrated ? range.low : null, central: range.central, highConsumption: cash.calibrated ? range.high : null });
 
   return <div data-month-story className="space-y-7 sm:space-y-9">
 
     <section className={`${material.glassPremium} ${material.glassHero} p-4 sm:p-6`} aria-labelledby="resources-title"><div className="flex flex-wrap items-end justify-between gap-3"><h2 id="resources-title" className="scroll-mt-24 text-2xl font-black">Nos ressources</h2><div className="text-left sm:text-right"><p className={`${material.data} text-3xl font-black tracking-tight`}><AnimatedMoney value={money(plan.economicResources, true)} /></p></div></div>
-      <div className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">{plan.resources.map((resource) => <ResourceEditor key={resource.key} resource={resource} targetMonth={targetMonth} walletObservation={resource.key === "benefit:swile" ? plan.benefitWallets.SWILE.latestObservation : resource.key === "benefit:edenred" ? plan.benefitWallets.EDENRED.latestObservation : null} />)}</div>
+      <div className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">{plan.resources.map((resource) => <ResourceEditor key={resource.key} resource={resource} targetMonth={targetMonth} controls={false} walletObservation={resource.key === "benefit:swile" ? plan.benefitWallets.SWILE.latestObservation : resource.key === "benefit:edenred" ? plan.benefitWallets.EDENRED.latestObservation : null} />)}</div>
       <p className="mt-4 text-sm text-slate-600">Ressources économiques du mois · Disponible réel aujourd’hui : <strong>{money(cash.currentRealBankBalance.amount, true)}</strong>. Les titres-restaurants ne sont pas un solde bancaire.</p>
     </section>
 
@@ -86,7 +82,7 @@ export function MonthStory({ plan, targetMonth, plannedExpenses, calendarCarryov
       })}</div></section>
 
     <section className={`${material.glassPremium} ${material.glassQuiet} flex items-center justify-between gap-5 px-6 py-5`} aria-labelledby="after-title"><div><h2 id="after-title" className="text-xl font-bold">Après nos charges certaines</h2><p className="mt-1 text-xs text-slate-600">Ressources économiques après les charges certaines · distinctes du solde bancaire</p></div><p className={`${material.data} whitespace-nowrap text-3xl font-black`}><AnimatedMoney value={money(plan.afterCertainOutflows, true)} /></p></section>
-    <MonthSavingsSection savings={plan.savingsAllocations} targetMonth={targetMonth} />
+    <MonthSavingsSection savings={plan.savingsAllocations} targetMonth={targetMonth} controls={false} />
     <section className={`${material.glassPremium} ${material.glassQuiet} flex items-center justify-between gap-5 px-6 py-5`} aria-labelledby="after-savings-title"><div><h2 id="after-savings-title" className="text-xl font-bold">Après nos cagnottes</h2><p className="mt-1 text-xs text-slate-600">Ce qu’il reste pour vivre le mois après les charges et l’argent volontairement mis de côté.</p></div><p className={`${material.data} whitespace-nowrap text-3xl font-black`}><AnimatedMoney value={money(plan.afterSavingsAllocations, true)} /></p></section>
     <div className={material.projectList}><PlannedExpensesControl targetMonth={targetMonth} expenses={plannedExpenses} persons={persons} places={places} vehicle={vehicle} prices={prices} wallets={wallets} funding={plan.plannedFunding} observationCandidates={plan.observationCandidates} /></div>
 
@@ -103,28 +99,8 @@ export function MonthStory({ plan, targetMonth, plannedExpenses, calendarCarryov
       <div className="mt-4 grid grid-cols-2 gap-3">{prediction ? prediction.optional.map(category => <RemainingForecastCard key={category.key} category={category} display={decision.visible.categoryDisplay[category.key]!} control={decision.categoryControls.find(row => row.key === category.key)} targetMonth={targetMonth} optional importsMissing={importsMissing} />) : plan.flexibleVariables.items.map(part => <StatisticalCard key={part.key} part={part} tone="flexible" />)}</div>
     </section>
     <ScenarioMilestone title="Projection de fin de mois" values={cash.endOfMonth.central !== null ? cashRange(cash.endOfMonth) : narrative.final} final description={cash.endOfMonth.central !== null ? "Projection bancaire depuis le solde actuel, les revenus non reçus et les paiements restants. Les bornes ne sont affichées que si calibrées." : `${decision.jointExplanation} Projection économique partielle, distincte d’un solde bancaire.`} />
-    <details className={`${material.glassSecondary} ${material.disclosure} p-5`}><summary className="cursor-pointer text-sm font-bold">Disponible prévu et paiements restants</summary><dl className="mt-3 space-y-2 text-sm">{([
-      ["Argent réservé aux cagnottes (budget)", cash.savingsBudgetReservation.amount], ["Disponible bancaire après cagnottes", cash.afterSavings.amount],
-      ["Revenus bancaires non reçus", cash.futureKnownBankIncome.amount], ["Charges restant à débiter", cash.remainingCertainBankOutflows.amount],
-      ["Achats ou réalisations déclarées, débit non observé", cash.pendingBankOutflows.amount], ["Paiements bancaires des projets", cash.plannedBankCashRemaining.amount],
-      ["Disponible prévu après les projets", cash.plannedAvailable.amount], ["Quotidien restant financé par banque", cash.remainingEssentialBankCash.central],
-      ["Possibilités restantes financées par banque", cash.remainingOptionalBankCash.central], ["Fin de mois bancaire", cash.endOfMonth.central],
-    ] as const).map(([label, amount]) => <div className="flex justify-between gap-4" key={label}><dt>{label}</dt><dd className="font-semibold">{money(amount, true)}</dd></div>)}</dl>
-      {cash.limitations.includes("BANK_BALANCE_SAVINGS_SCOPE_UNRESOLVED") && <p className="mt-3 text-xs text-slate-600">Le budget réservé aux cagnottes est connu. Le périmètre du solde bancaire observé ne précise pas si l’argent mis de côté est déjà exclu : le disponible bancaire après cagnottes reste à confirmer, sans retirer cet argent une deuxième fois.</p>}
-      {cash.limitations.length > 0 && <p className="mt-3 text-xs text-slate-600">Projection partielle : un solde, une date de revenu ou un financement restent à confirmer. Les montants connus restent visibles.</p>}
-      <ul className="mt-3 space-y-1 text-xs text-slate-600">{cash.incomeOccurrences.map(income => <li key={income.key}>{plan.resources.find(resource => resource.key === income.key)?.label ?? "Revenu"} : {money(income.amount, true)} · {income.state === "RECEIVED" ? "déjà reçu, inclus dans le solde" : income.state === "EXPECTED" ? "encore attendu" : income.state === "CANCELLED" ? "annulé" : "date ou réception à confirmer"}.</li>)}</ul>
-      {prediction?.reconciliation.map(match => <p key={match.plannedExpenseId} className="mt-2 text-xs">Projet rapproché de l’observation : prévu {money(match.plannedEconomic, true)}, observé {money(match.observedEconomic, true)}, écart {money(match.variance, true)}{match.declared ? " · Réalisation déclarée conservée comme provenance" : ""}.</p>)}</details>
-    <BenefitWalletFunding wallets={plan.benefitWallets} funding={plan.plannedFunding} />
-    {decision.attention.length > 0 && <section aria-labelledby="attention-title" className={`${material.alertPanel} ${material.sectionEnter} p-5`}><h2 id="attention-title" className="text-lg font-bold">À regarder ensemble</h2><ul className="mt-3 space-y-2 text-sm">{decision.attention.map(item => <li key={item.key}><a className="underline underline-offset-2" href={item.href}>{item.message}</a></li>)}</ul></section>}
-    {decision.change.sampleCount > 0 && <details id="forecast-history" className={`${material.glassSecondary} ${material.disclosure} scroll-mt-24 p-5`}>
-      <summary className="cursor-pointer font-bold">Comment notre projection évolue</summary>
-      <p className="mt-3 text-sm">Depuis l’estimation du {comparable.at(-1)!.as_of_date} : <strong>{money(comparable.at(-1)!.payload.final.central)} → {money(narrative.final.central)}</strong></p>
-      {decision.change.visibleChanges.length > 0 && <ul className="mt-3 space-y-1 text-sm">{decision.change.visibleChanges.map(item => <li key={item.key} className="flex justify-between gap-4"><span>{item.label}</span><strong>{item.visible > 0 ? "+" : ""}{money(String(item.visible))}</strong></li>)}</ul>}
-      <details className="mt-3 text-xs text-slate-600"><summary className="cursor-pointer">Repères et méthode</summary><p className="mt-2">{decision.change.stability}</p>
-        <p className="mt-2">{calibrated ? "Les erreurs des mois terminés suffisamment documentés ajustent les estimations." : "Les références historiques restent utilisées, sans calibration personnelle suffisante."}</p>
-        <ul className="mt-2 space-y-1">{comparable.map(r => <li key={r.checkpoint_id}>{r.as_of_date} · {money(r.payload.final.central)}</li>)}</ul>
-      </details>
-    </details>}
-    <MonthDecisionTools key={`${targetMonth}:${plan.narrative.final.central}:${JSON.stringify(settings)}:${choiceOffers[0]?.preview.baseDigest ?? today}`} targetMonth={targetMonth} settings={settings} decision={decision} offers={choiceOffers} />
+    <div className="flex flex-wrap gap-4 text-sm"><MonthControlLink section="resources" focus="BANK">Préciser le disponible bancaire</MonthControlLink>
+      <MonthControlLink section="settings" focus="obligations">Gérer les charges du mois</MonthControlLink>
+      <MonthControlLink section="reliability">Comprendre la fiabilité</MonthControlLink></div>
   </div>;
 }

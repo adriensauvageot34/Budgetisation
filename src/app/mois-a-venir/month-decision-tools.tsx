@@ -1,16 +1,13 @@
 "use client";
-import { useRef, useState, useTransition } from "react";
+import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import type { MonthDecisionSettings } from "@/domain/phase2/month-decision-contract";
-import { preserveMonthForecast, previewMonthChoice, applyMonthChoice, updateMonthInputs, type simulateMonthBehavior } from "./actions";
+import { preserveMonthForecast, updateMonthInputs, type simulateMonthBehavior } from "./actions";
 import { categoryDecisionCapabilities, type CategoryDecisionCapabilities } from "@/domain/phase2/month-choice-contract";
 import { AnimatedMoney } from "./animated-money";
 import material from "./month-material.module.css";
-import { LiquidSelectionGroup } from "./liquid-selection-group";
 type MonthDecisionProjection = Extract<Awaited<ReturnType<typeof simulateMonthBehavior>>, { ok: true }>["decision"];
 type MonthCategoryControl = MonthDecisionProjection["categoryControls"][number];
-type MonthChoicePreview = Awaited<ReturnType<typeof previewMonthChoice>>;
-type MonthChoiceOffer = { id: string; label: string; preview: MonthChoicePreview };
 
 const money = (value: string | number) => new Intl.NumberFormat("fr-FR", { style: "currency", currency: "EUR", maximumFractionDigits: 0 }).format(Number(value));
 const button = `${material.clayButton} px-4 py-2 text-sm font-bold disabled:opacity-50`;
@@ -53,53 +50,24 @@ export function CategoryTargetEditor({ control, targetMonth }: { control: MonthC
   </div>;
 }
 
-export function MonthDecisionTools({ targetMonth, settings, decision, offers = [] }: { targetMonth: string; settings: MonthDecisionSettings; decision: MonthDecisionProjection; offers?: readonly MonthChoiceOffer[] }) {
-  const router = useRouter();
-  const [pending, startTransition] = useTransition();
-  const [message, setMessage] = useState<string | null>(null);
-  const [trial, setTrial] = useState<MonthChoicePreview | null>(null);
-  const [selectedPreset, setSelectedPreset] = useState<string | null>(null);
-  const request = useRef(0);
-  const simulate = (offer: MonthChoiceOffer) => {
-    const sequence = ++request.current;
-    setTrial(null); setSelectedPreset(offer.id);
-    startTransition(async () => {
-    try { const result = await previewMonthChoice(targetMonth, offer.preview.choice); if (sequence === request.current) { setTrial(result); setMessage(null); } }
-    catch { setMessage("La simulation n’a pas abouti. Votre mois est inchangé ; réessayez."); }
-  }); };
-  return <section id="decision-tools" className={`${material.glassPremium} scroll-mt-24 p-6`} aria-labelledby="decision-title">
-    <h2 id="decision-title" className="text-2xl font-black">Explorer nos choix</h2>
-    <p className="mt-2 text-sm text-slate-600">Des choix hypothétiques pour ce mois. Les dépenses réalisées et les projets explicites restent comptés.</p>
-    {decision.categoryControls.some(row => row.target !== null) && <div className={`${material.glassSoft} mt-4 p-4 text-sm`}>
-      <h3 className="font-bold">Nos objectifs</h3><ul className="mt-2 space-y-1">{decision.categoryControls.filter(row => Number(row.varianceToTarget) > 0).map(row =>
-        <li key={row.key}>{row.label} · {money(row.target!)} visés · {money(row.forecast)} prévus · <strong>+{money(row.varianceToTarget!)}</strong></li>)}</ul>
-      <p className="mt-2 font-bold">{Number(decision.totalCategoryGap) > 0 ? `Comment compenser environ ${money(decision.totalCategoryGap)} ?` : "Les projections respectent vos objectifs de catégorie."}</p>
-    </div>}
-    {offers.length > 0 ? <LiquidSelectionGroup value={selectedPreset} ariaLabel="Scénarios à explorer" className="mt-4">
-      {offers.map(offer => <button key={offer.id} data-liquid-key={offer.id} className={`${material.clayChip} px-4 py-3 text-left text-sm font-bold`} aria-pressed={selectedPreset === offer.id} disabled={pending} onClick={() => simulate(offer)}>
-        {offer.label}<span className="mt-1 block text-xs font-normal">≈ {money(offer.preview.delta)} de marge en plus{Number(offer.preview.gapToCompensate) > 0 && ` · reste ≈ ${money(offer.preview.gapRemaining)}`}</span></button>)}
-    </LiquidSelectionGroup> : <p className="mt-4 text-sm">Aucun levier chiffrable disponible avec les données actuelles. Les cagnottes protégées restent réservées.</p>}
-    {trial && <div key={selectedPreset} role="status" className={`${material.dataCard} ${material.resultEnter} mt-4 space-y-2 p-4 text-sm`}>
-      <p>Scénario temporaire : projection centrale <strong><AnimatedMoney value={money(trial.after.central)} /></strong> (≈ +<AnimatedMoney value={money(trial.delta)} />).</p>
-      {Number(trial.spendingReduction) > 0 && <p>Consommation prévue réduite d’environ {money(trial.spendingReduction)}.</p>}
-      {Number(trial.reservationRelease) > 0 && <p>{money(trial.reservationRelease)} de budget libéré par la cagnotte. La consommation économique ne diminue pas.</p>}
-      {Number(trial.gapToCompensate) > 0 && <p>Environ {money(trial.gapCovered)} compensés · reste {money(trial.gapRemaining)} à compenser. Dépassements de catégories après ce choix : {money(trial.categoryGapAfter)}.</p>}
-      <details className={material.disclosure}><summary className="cursor-pointer font-bold">Comprendre cette simulation</summary><ul className="mt-2 space-y-1">{trial.limitations.map(note => <li key={note}>{note}</li>)}</ul></details>
-      <button className={button} disabled={pending || !trial.applicable} onClick={() => startTransition(async () => {
-        try { const result = await applyMonthChoice(targetMonth, trial.choice, trial.baseDigest); setMessage(result.message); setTrial(null); setSelectedPreset(null); if (result.ok) router.refresh(); }
-        catch { setMessage("Ce choix n’a pas été enregistré. Relancez la simulation et réessayez."); setTrial(null); }
-      })}>Adopter ce choix pour ce mois</button>
-      <button className="ml-3 text-xs font-bold underline focus-visible:outline-2" onClick={() => { ++request.current; setTrial(null); setSelectedPreset(null); }}>Fermer la simulation</button></div>}
-    <details className={`${material.disclosure} mt-5 border-t border-slate-200 pt-4`}><summary className="cursor-pointer font-bold">Notre objectif de fin de mois{settings.goal !== null ? ` · ${money(settings.goal)}` : ""}</summary><p className="mt-2 text-xs text-slate-600">Un repère personnel, sans déduction de la projection ni création de dépense. Il ne se transmet pas au mois suivant.</p>
-      <form action={updateMonthInputs} className="mt-3 flex items-end gap-2"><input type="hidden" name="targetMonth" value={targetMonth} /><input type="hidden" name="intent" value="save-month-goal" /><label className="text-sm">Garder au moins<input className={`${field} ml-2 w-32`} type="number" min="0" step="0.01" name="monthGoal" required defaultValue={settings.goal ?? ""} /> €</label><button className={button}>Enregistrer l’objectif</button></form>
-      {decision.goal && <><dl className="mt-3 grid grid-cols-3 gap-3 text-sm">{([ ["Mois calme", decision.goal.lowConsumption], ["Habituel", decision.goal.central], ["Plus coûteux", decision.goal.highConsumption] ] as const).map(([label, delta]) => <div key={label}><dt>{label} · écart à l’objectif</dt><dd className="font-bold">{Number(delta) >= 0 ? "+" : ""}{money(delta)}</dd></div>)}</dl>
-        <details className="mt-2 text-xs"><summary className="cursor-pointer">Calcul exact</summary><p>Chaque projection économique moins l’objectif de {settings.goal} € : {decision.goal.lowConsumption} € / {decision.goal.central} € / {decision.goal.highConsumption} €.</p></details>
-        <form action={updateMonthInputs} className="mt-2"><input type="hidden" name="targetMonth" value={targetMonth} /><input type="hidden" name="intent" value="clear-month-goal" /><button className="text-xs font-bold underline">Retirer l’objectif</button></form></>}
-    </details>
-    <div className="mt-5 border-t border-slate-200 pt-4"><button className={button} disabled={pending} onClick={() => startTransition(async () => {
-      try { const result = await preserveMonthForecast(targetMonth); setMessage(result.message); if (result.ok) router.refresh(); }
-      catch { setMessage("L’estimation n’a pas été conservée. Réessayez ; la projection affichée reste disponible."); }
-    })}>{pending ? "Calcul en cours…" : "Conserver cette estimation"}</button><details className="mt-2 text-xs text-slate-600"><summary className="cursor-pointer">À propos des estimations conservées</summary><p className="mt-2">Conservez des repères au début, au milieu et à la fin du mois. Ils sont immuables ; une consultation seule n’en crée aucun.</p></details></div>
-    {message && <p role="status" className="mt-3 text-sm">{message}</p>}
+export function MonthGoalEditor({ targetMonth, settings, goal }: { targetMonth: string; settings: MonthDecisionSettings;
+  goal: { globalDelta: string | null; globalSatisfied: boolean } }) {
+  return <section className={`${material.glassSoft} p-4`}><h3 className="font-bold">Notre objectif de fin de mois</h3>
+    <p className="mt-2 text-xs text-slate-600">Un repère personnel, sans déduction ni création de dépense. Il ne se transmet pas au mois suivant.</p>
+    <form action={updateMonthInputs} className="mt-3 flex items-end gap-2"><input type="hidden" name="targetMonth" value={targetMonth} /><input type="hidden" name="intent" value="save-month-goal" />
+      <label className="text-sm">Garder au moins<input className={`${field} ml-2 w-32`} type="number" min="0" step="0.01" name="monthGoal" required defaultValue={settings.goal ?? ""} /> €</label><button className={button}>Enregistrer l’objectif</button></form>
+    {settings.goal !== null && <><p className="mt-3 text-sm">{goal.globalSatisfied ? "Objectif respecté" : "Écart à l’objectif"} · {goal.globalDelta === null ? "Projection à compléter" : money(goal.globalDelta)}</p>
+      <form action={updateMonthInputs} className="mt-2"><input type="hidden" name="targetMonth" value={targetMonth} /><input type="hidden" name="intent" value="clear-month-goal" /><button className="text-xs font-bold underline">Retirer l’objectif</button></form></>}
   </section>;
+}
+
+export function PreserveForecastButton({ targetMonth }: { targetMonth: string }) {
+  const router = useRouter(), [pending, startTransition] = useTransition(), [message, setMessage] = useState<string | null>(null);
+  return <div className="mt-5"><button className={button} disabled={pending} onClick={() => startTransition(async () => {
+    try { const result = await preserveMonthForecast(targetMonth); setMessage(result.message); if (result.ok) router.refresh(); }
+    catch { setMessage("L’estimation n’a pas été conservée. Réessayez."); }
+  })}>{pending ? "Enregistrement…" : "Conserver cette estimation"}</button>
+    <p className="mt-2 text-xs text-slate-600">Un repère immuable, créé uniquement sur votre action explicite. Une consultation n’enregistre rien.</p>
+    {message && <p role="status" className="mt-2 text-sm">{message}</p>}
+  </div>;
 }

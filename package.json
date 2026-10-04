@@ -3,6 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
+    "check:phase2-month-control-center": "node scripts/check-phase2-month-control-center.mjs",
     "check:phase2-forecast-temporal-mode": "node scripts/check-phase2-forecast-temporal-mode.mjs",
     "check:phase2-temporal-forecast": "node scripts/check-phase2-temporal-forecast.mjs",
     "backtest:phase2-temporal-forecast": "node scripts/backtest-phase2-temporal-forecast.mjs",

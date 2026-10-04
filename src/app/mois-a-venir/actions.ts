@@ -6,7 +6,7 @@ import { redirect } from "next/navigation";
 import { getAuthenticatedBootstrapClient } from "@/server/bootstrap/auth";
 import { getCurrentHousehold } from "@/server/bootstrap/queries";
 import { createCanonicalReadClient } from "@/server/canonical/client";
-import { queryMonthForecast, resolvePlanningMonthForecast } from "@/server/phase2/month-forecast-snapshot";
+import { readPlanningMonthForecast } from "@/server/phase2/month-planning-read";
 import { readMonthInputs, saveMonthInputs } from "@/server/phase2/month-inputs";
 import { deriveMonthScenario, monthInputsSchema, type MonthInputs } from "@/server/phase2/month-scenario";
 import { readPlannedExpenses } from "@/server/phase2/planned-expenses";
@@ -14,6 +14,7 @@ import { readPlannedExpenses } from "@/server/phase2/planned-expenses";
 import { planningDate } from "@/server/phase2/planning-date";
 import { parseMonthDecisionSettings } from "@/domain/phase2/month-decision-contract";
 import { simulateMonthChoice, monthChoiceDigest } from "@/server/phase2/month-choices";
+import { projectMonthControlWorkbench } from "@/server/phase2/month-control-center";
 import type { MonthChoice } from "@/domain/phase2/month-choice-contract";
 import { makeForecastCheckpoint, insertForecastCheckpoint } from "@/server/phase2/forecast-memory";
 import { projectMonthDecision } from "@/server/phase2/month-decision-projection";
@@ -23,18 +24,14 @@ import { parseSavingsMetadata } from "@/domain/phase2/savings-allocations";
 const field = (form: FormData, key: string): string => String(form.get(key) ?? "").trim();
 const optionalMoney = (form: FormData, key: string): string | null => field(form, key) || null;
 
-export async function updateMonthInputs(form: FormData): Promise<void> {
+async function mutateMonthInputs(form: FormData, controlCenter = false): Promise<void> {
   const targetMonth = field(form, "targetMonth");
   if (!/^\d{4}-(0[1-9]|1[0-2])$/u.test(targetMonth)) throw new TypeError("MONTH_INPUT_TARGET_INVALID");
   const { supabase, user } = await getAuthenticatedBootstrapClient();
   const household = await getCurrentHousehold(supabase);
   if (!household) throw new TypeError("MONTH_INPUT_HOUSEHOLD_MISSING");
-  let forecast;
-  try { forecast = await queryMonthForecast(createCanonicalReadClient(), household.householdId, targetMonth); }
-  catch (error) {
-    if (!(error instanceof Error) || error.message !== "FORECAST_ACTIVE_MONTH_SNAPSHOT_MISSING") throw error;
-    forecast = await resolvePlanningMonthForecast(createCanonicalReadClient(), household.householdId, targetMonth);
-  }
+  if (controlCenter && targetMonth < planningDate(household.timezone).slice(0, 7)) throw new TypeError("MONTH_DECISION_PAST_READ_ONLY");
+  const forecast = await readPlanningMonthForecast(createCanonicalReadClient(), household.householdId, targetMonth);
   const stored = await readMonthInputs(supabase, household.householdId, targetMonth);
   const current: MonthInputs = monthInputsSchema.parse(stored.inputs);
   const intent = field(form, "intent");
@@ -167,11 +164,26 @@ export async function updateMonthInputs(form: FormData): Promise<void> {
     const plannedExpenses = await readPlannedExpenses(supabase, household.householdId, targetMonth);
     deriveMonthScenario(forecast, next, null, planningDate(household.timezone), plannedExpenses);
   } catch (error) {
-    if (error instanceof TypeError) redirect(`/mois-a-venir?month=${targetMonth}&inputError=1`);
+    if (error instanceof TypeError) {
+      if (controlCenter) throw error;
+      redirect(`/mois-a-venir?month=${targetMonth}&inputError=1`);
+    }
     throw error;
   }
   await saveMonthInputs(supabase, household.householdId, targetMonth, user.id, next);
   revalidatePath("/mois-a-venir");
+}
+
+export async function updateMonthInputs(form: FormData): Promise<void> {
+  await mutateMonthInputs(form);
+}
+
+/** Same monthly mutation owner; structured errors keep the modal's local context. */
+export async function updateMonthControlInputs(form: FormData) {
+  try { await mutateMonthInputs(form, true); return { ok: true as const, message: "Modification enregistrée pour ce mois." }; }
+  catch (error) { return { ok: false as const, message: error instanceof TypeError
+    ? "Vérifiez le montant, la date et le contrôle concerné. Les mois passés restent en lecture seule."
+    : "Enregistrement impossible pour le moment. Réessayez ; votre saisie est conservée." }; }
 }
 
 async function decisionContext(targetMonth: string) {
@@ -181,7 +193,7 @@ async function decisionContext(targetMonth: string) {
   if (!household) throw new TypeError("MONTH_INPUT_HOUSEHOLD_MISSING");
   const asOf = planningDate(household.timezone);
   if (targetMonth < asOf.slice(0, 7)) throw new TypeError("MONTH_DECISION_PAST_READ_ONLY");
-  const forecast = await resolvePlanningMonthForecast(createCanonicalReadClient(), household.householdId, targetMonth);
+  const forecast = await readPlanningMonthForecast(createCanonicalReadClient(), household.householdId, targetMonth);
   const [stored, expenses] = await Promise.all([readMonthInputs(supabase, household.householdId, targetMonth), readPlannedExpenses(supabase, household.householdId, targetMonth)]);
   return { supabase, user, household, asOf, forecast, stored, expenses };
 }
@@ -216,11 +228,16 @@ export async function previewMonthChoice(targetMonth: string, choice: unknown) {
   return simulateMonthChoice({ forecast: ctx.forecast, inputs: ctx.stored.inputs, expenses: ctx.expenses, asOf: ctx.asOf }, choice).view;
 }
 
+export async function previewMonthControlCenter(targetMonth: string, purpose: unknown, operations: unknown) {
+  const ctx = await decisionContext(targetMonth);
+  return projectMonthControlWorkbench({ forecast: ctx.forecast, inputs: ctx.stored.inputs, expenses: ctx.expenses, asOf: ctx.asOf }, purpose, operations);
+}
+
 /** Explicit adoption re-reads all authorities and rejects a stale preview. */
 export async function applyMonthChoice(targetMonth: string, choice: unknown, expectedDigest: string) {
   const ctx = await decisionContext(targetMonth);
   const context = { forecast: ctx.forecast, inputs: ctx.stored.inputs, expenses: ctx.expenses, asOf: ctx.asOf };
-  if (expectedDigest !== monthChoiceDigest(context)) return { ok: false as const, message: "Le mois a changé. Relancez la simulation avant d’adopter ce choix." };
+  if (expectedDigest !== monthChoiceDigest(context)) return { ok: false as const, code: "STALE_PREVIEW" as const, message: "Le mois a changé. Relancez la simulation avant d’adopter ce choix." };
   const result = simulateMonthChoice(context, choice);
   if (!result.view.applicable) return { ok: false as const, message: "Ce choix dépend d’un plan annuel : simulation disponible, adoption non disponible." };
   await saveMonthInputs(ctx.supabase, ctx.household.householdId, targetMonth, ctx.user.id, result.nextInputs);

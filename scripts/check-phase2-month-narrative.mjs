@@ -171,5 +171,8 @@ const titles=["Nos ressources","Ce qui part quoi qu’il arrive","Après nos cha
 let previous=-1;for(const title of titles){const index=html.indexOf(title);assert(index>previous,title);previous=index;}
 assert.doesNotMatch(html,/Comment se construit notre mois|Ce qu’on dépense parfois en plus|Reste projeté en fin de mois/);
 assert.match(html,/Déjà observé/);assert.match(html,/Encore possible/);assert.match(html,/Mois plus coûteux/);
-assert(fs.readFileSync("src/app/mois-a-venir/month-forecast-view.tsx","utf8").includes("Améliorer la précision du mois"));
+// Precision controls now belong to the existing OverlayFrame, outside the narrative.
+assert(!fs.readFileSync("src/app/mois-a-venir/month-forecast-view.tsx","utf8").includes("Améliorer la précision du mois"));
+assert(fs.readFileSync("src/app/mois-a-venir/month-control-panels.tsx","utf8").includes("Enregistrer le solde"));
+assert(fs.readFileSync("src/app/mois-a-venir/month-control-center.tsx","utf8").includes("<OverlayFrame"));
 console.log("PASS: V4 narrative order, robust recent quantiles, remaining days/workdays, imported vs future, optional zero/frequency/price, root/slot anti-double-count, marginal impact, lifecycle neutrality, Preview/Save/reload and historical zero-write");

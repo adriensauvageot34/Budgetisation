@@ -4,7 +4,8 @@ import { useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { BriefcaseBusiness, Pencil, RotateCcw, Ticket, X } from "lucide-react";
 import Image from "next/image";
-import { updateMonthInputs } from "./actions";
+import { updateMonthControlInputs } from "./actions";
+import { MonthControlLink } from "./month-control-center";
 import { AnimatedMoney } from "./animated-money";
 import material from "./month-material.module.css";
 
@@ -22,8 +23,8 @@ const resourceBrands: Record<string, { logo: string; label: string; tone: string
   "benefit:edenred": { logo: "edenred.png", label: "Edenred", tone: "edenred" },
 };
 
-export function ResourceEditor({ resource, targetMonth, walletObservation = null }: { resource: Resource; targetMonth: string;
-  walletObservation?: Readonly<{ amount: string; asOfDate: string }> | null }) {
+export function ResourceEditor({ resource, targetMonth, walletObservation = null, controls = true }: { resource: Resource; targetMonth: string;
+  controls?: boolean; walletObservation?: Readonly<{ amount: string; asOfDate: string }> | null }) {
   const router = useRouter();
   const inputRef = useRef<HTMLInputElement>(null);
   const [editing, setEditing] = useState(false);
@@ -31,6 +32,7 @@ export function ResourceEditor({ resource, targetMonth, walletObservation = null
   const [pending, startTransition] = useTransition();
   const meal = resource.pocket === "MEAL_BENEFIT";
   const brand = resourceBrands[resource.key];
+  const controlFocus = meal ? resource.key === "benefit:swile" ? "SWILE" : "EDENRED" : `resource-${resource.key.replace(/[^a-zA-Z0-9:-]/gu, "-")}`;
   const overridden = resource.provenance === "MONTH_OVERRIDE";
   const monthName = new Intl.DateTimeFormat("fr-FR", { month: "long", timeZone: "UTC" }).format(new Date(`${targetMonth}-01T12:00:00Z`));
 
@@ -48,7 +50,8 @@ export function ResourceEditor({ resource, targetMonth, walletObservation = null
     if (value !== undefined) form.set("resourceAmount", value.replace(",", "."));
     startTransition(async () => {
       try {
-        await updateMonthInputs(form);
+        const result = await updateMonthControlInputs(form);
+        if (!result.ok) { setError(result.message); return; }
         setEditing(false);
         router.refresh();
       } catch {
@@ -57,7 +60,7 @@ export function ResourceEditor({ resource, targetMonth, walletObservation = null
     });
   }
 
-  return <div data-month-motion-item="resource" data-tone={brand?.tone} className={`${material.glassSecondary} ${material.resourceCard} min-w-0 p-4 sm:p-5`}>
+  return <div data-control-focus={meal ? `loading-${controlFocus}` : controlFocus} data-month-motion-item="resource" data-tone={brand?.tone} className={`${material.glassSecondary} ${material.resourceCard} min-w-0 p-4 sm:p-5`}>
     <div className="flex items-start justify-between gap-2">
       <div className="flex min-w-0 items-center gap-2.5">
         <span className={material.brandBadge} aria-hidden="true" title={brand?.label}>
@@ -65,7 +68,7 @@ export function ResourceEditor({ resource, targetMonth, walletObservation = null
         </span>
         <div className="min-w-0"><p className="truncate text-sm font-bold">{resource.label}</p><p className="text-xs text-slate-600">{meal ? "Chargement prévu du mois" : "Salaire prévu du mois"}</p></div>
       </div>
-      {!editing && <button type="button" className={`${material.iconButton} shrink-0 !p-2`} aria-label={`Modifier ${resource.label}`} onClick={() => { setError(null); setEditing(true); }}><Pencil size={16} /></button>}
+      {!controls ? <MonthControlLink section="resources" focus={controlFocus} className={`${material.iconButton} !p-2`}><span className="sr-only">Modifier {resource.label}</span><Pencil size={16} /></MonthControlLink> : !editing && <button type="button" className={`${material.iconButton} shrink-0 !p-2`} aria-label={`Modifier ${resource.label}`} onClick={() => { setError(null); setEditing(true); }}><Pencil size={16} /></button>}
     </div>
     {editing ? <form className={`${material.sectionEnter} mt-3 space-y-2`} onSubmit={(event) => { event.preventDefault(); send("set-resource-override", inputRef.current?.value.trim()); }}>
       <label htmlFor={`resource-${resource.key}`} className="text-xs font-bold text-slate-700">Montant de {resource.label} pour ce mois (€)</label>
@@ -75,7 +78,7 @@ export function ResourceEditor({ resource, targetMonth, walletObservation = null
     </form> : <p className={`${material.data} mt-4 break-words text-2xl font-black tracking-tight sm:text-[1.8rem]`}><AnimatedMoney value={money(resource.amount)} /></p>}
     <div className="mt-2 min-h-5 text-xs text-slate-600">{overridden ? `Modifié pour ${monthName}` : resource.provenance === "USER_DECLARED" ? `Déclaré pour ${monthName}` : `Prévu pour ${monthName}`}</div>
     {meal && walletObservation && <p className="mt-2 text-xs text-slate-600">Solde observé : {money(walletObservation.amount)} au {new Intl.DateTimeFormat("fr-FR", { day: "numeric", month: "long", timeZone: "UTC" }).format(new Date(`${walletObservation.asOfDate}T12:00:00Z`))} · distinct du chargement.</p>}
-    {overridden && !editing && <button type="button" className="mt-2 inline-flex min-h-9 items-center gap-1 text-xs font-bold text-emerald-900 underline underline-offset-2" disabled={pending} onClick={() => send("clear-resource-override")}><RotateCcw size={13} />{pending ? "Restauration…" : `Revenir à ${resource.sourceAmount === null ? "la prévision" : money(resource.sourceAmount)}`}</button>}
+    {controls && overridden && !editing && <button type="button" className="mt-2 inline-flex min-h-9 items-center gap-1 text-xs font-bold text-emerald-900 underline underline-offset-2" disabled={pending} onClick={() => send("clear-resource-override")}><RotateCcw size={13} />{pending ? "Restauration…" : `Revenir à ${resource.sourceAmount === null ? "la prévision" : money(resource.sourceAmount)}`}</button>}
     {error && <p role="alert" className="mt-2 text-xs font-semibold text-red-800">{error}</p>}
   </div>;
 }

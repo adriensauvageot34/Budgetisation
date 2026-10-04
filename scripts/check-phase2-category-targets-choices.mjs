@@ -158,14 +158,16 @@ await test("CHOICE-034", () => { const ctx = withTarget("300", "342"), offers = 
   assert.equal(combination.preview.gapCovered, Math.min(42, Number(combination.preview.delta)).toFixed(2)); });
 await test("CHOICE-035", () => { const ctx = context(), snapshot = JSON.stringify(ctx); propose(ctx); assert.equal(JSON.stringify(ctx), snapshot);
   assert(writes.every(row => row.table === "phase2_month_inputs")); assert.equal(h.client.writes.length, 0); });
-await test("CHOICE-036", () => { const { AppRouterContext } = require("next/dist/shared/lib/app-router-context.shared-runtime.js");
-  const ctx = withTarget("300", "342"), plan = run(ctx), offers = propose(ctx);
-  const { MonthDecisionTools } = require("@/app/mois-a-venir/month-decision-tools.tsx");
-  const html = renderToStaticMarkup(React.createElement(AppRouterContext.Provider, { value: { refresh() {} } },
-    React.createElement(MonthDecisionTools, { targetMonth: "2026-10", settings: ctx.inputs.decision,
-      decision: projectMonthDecision(plan, ctx.inputs.decision, "2026-10", ctx.asOf, []), offers })));
-  assert(html.includes("Explorer nos choix")); assert(html.includes("Nos objectifs")); assert(html.includes("Noël"));
-  assert(!html.includes("Voyage : réduire")); assert(!html.includes("restaurant-zero")); assert(offers.length <= 9);
+// The inline Explorer is intentionally replaced by the control center. Finance oracles above are unchanged.
+await test("CHOICE-036", () => {
+  const { projectMonthControlCenter, projectMonthControlWorkbench } = require("@/server/phase2/month-control-center.ts");
+  const ctx = withTarget("300", "342"), state = projectMonthControlCenter(ctx);
+  const trial = projectMonthControlWorkbench(ctx, { kind: "CATEGORY_OVERAGE_OFFSET", categoryKey: "groceries" }, []);
+  assert.equal(state.categoryTensions[0].amount, "42.00");
+  assert(trial.offers.some(row => row.preview.choice.operations.some(op => op.savingsId === saving.id)));
+  assert(!trial.offers.some(row => row.preview.choice.operations.some(op => op.savingsId === current.declaredOutflows[0].id)));
+  const ui = fs.readFileSync("src/app/mois-a-venir/month-control-center.tsx", "utf8");
+  assert(ui.includes("Objectifs & choix")); assert(ui.includes("Scénario en cours")); assert(trial.offers.length <= 8);
 });
 if (configured !== undefined) process.env.PHASE2_FORECAST_TEMPORAL_MODE = configured;
 fs.mkdirSync("outputs", { recursive: true });

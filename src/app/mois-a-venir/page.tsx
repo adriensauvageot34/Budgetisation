@@ -1,11 +1,13 @@
 import { notFound } from "next/navigation";
 import { withProductAuthentication } from "@/app/product-query";
 import { MonthForecastView } from "./month-forecast-view";
-import { proposeMonthChoices } from "@/server/phase2/month-choices";
+import { projectMonthControlCenter } from "@/server/phase2/month-control-center";
+import { monthControlSection } from "@/domain/phase2/month-control-contract";
 import { getBootstrapContext } from "@/server/bootstrap/context";
 import { getAuthenticatedBootstrapClient } from "@/server/bootstrap/auth";
 import { createCanonicalReadClient } from "@/server/canonical/client";
-import { MONTH_FORECAST_RESOURCE, queryMonthForecast, resolvePlanningMonthForecast } from "@/server/phase2/month-forecast-snapshot";
+import { MONTH_FORECAST_RESOURCE } from "@/server/phase2/month-forecast-snapshot";
+import { readPlanningMonthForecast } from "@/server/phase2/month-planning-read";
 import { readMonthInputs } from "@/server/phase2/month-inputs";
 import { deriveMonthScenario } from "@/server/phase2/month-scenario";
 import { readPlannedExpenses, readPlannedCalendarCarryovers } from "@/server/phase2/planned-expenses";
@@ -48,8 +50,7 @@ export default async function MonthForecastPage({ searchParams }: { searchParams
   }
   let forecast;
   try {
-    forecast = targetMonth === activeMonth ? await queryMonthForecast(client, context.household.householdId, targetMonth)
-      : await resolvePlanningMonthForecast(client, context.household.householdId, targetMonth);
+    forecast = await readPlanningMonthForecast(client, context.household.householdId, targetMonth);
   } catch (error) {
     if (!(error instanceof Error) || error.message !== "FORECAST_TARGET_MONTH_NOT_FUTURE") throw error;
     return <section className="card mx-auto max-w-3xl p-8"><h1 className="text-2xl font-black">Ce mois ne fait pas partie des prévisions</h1><p className="mt-3">Choisissez un mois après la période historique de référence.</p><a className="mt-4 inline-block font-bold underline" href="/mois-a-venir">Revenir au mois à venir</a></section>;
@@ -95,7 +96,8 @@ export default async function MonthForecastPage({ searchParams }: { searchParams
       childPlaceLabels: Object.values(card.context.childLocalPlaceRefs ?? {}).map(placeLabel).filter((label): label is string => !!label) } };
   });
   return <MonthForecastView forecast={forecast} scenario={scenario} stored={stored}
-    choiceOffers={proposeMonthChoices({ forecast, inputs: stored.inputs, expenses: plannedExpenses, asOf: today })}
+    controlModel={projectMonthControlCenter({ forecast, inputs: stored.inputs, expenses: plannedExpenses, asOf: today })}
+    initialSection={monthControlSection(params.control)} initialFocus={typeof params.focus === "string" ? params.focus : null}
     plannedExpenses={cards} calendarCarryovers={projectPlannedExpenseCards(calendarCarryovers, today)} today={today}
     persons={persons} places={options.places} vehicle={options.vehicle} prices={[...options.prices, ...(() => { const estimate = groceryBasketEstimate(forecast.predictionEvidence?.history.economicEntries ?? []); return estimate ? [estimate] : []; })()]} wallets={options.wallets}
     inputError={params.inputError === "1"} />;

@@ -16,6 +16,7 @@ const positive = (value: Big) => value.gt(0) ? value : new Big(0);
 const min = (a: Big, b: Big) => a.lt(b) ? a : b;
 const digest = (value: unknown) => createHash("sha256").update(canonicalSerializeGlobal(value)).digest("hex");
 export const monthChoiceDigest = (ctx: MonthChoiceContext) => digest(JSON.parse(JSON.stringify({ ...ctx,
+  forecast: { ...ctx.forecast, meta: { ...ctx.forecast.meta, computedAt: undefined } },
   inputs: monthInputsSchema.parse(ctx.inputs), temporalMode: forecastTemporalPolicy().mode })));
 
 /** Pure scenario replay, with no persistence or synthetic facts. */
@@ -77,13 +78,15 @@ export type MonthChoicePreview = ReturnType<typeof simulateMonthChoice>["view"];
 export type MonthChoiceOffer = Readonly<{ id: string; label: string; preview: MonthChoicePreview }>;
 
 /** Bounded deterministic proposals from actually published capabilities. */
-export function proposeMonthChoices(ctx: MonthChoiceContext): readonly MonthChoiceOffer[] {
+export function proposeMonthChoices(ctx: MonthChoiceContext, options: { gap?: string; onlyCategory?: string;
+  excludeTargets?: readonly string[]; allowCombination?: boolean } = {}): readonly MonthChoiceOffer[] {
   const plan = deriveMonthScenario(ctx.forecast, ctx.inputs, null, ctx.asOf, ctx.expenses).economicPlan;
   if (!plan?.narrative.prediction) return [];
   const controls = projectCategoryControls(plan, parseMonthDecisionSettings(ctx.inputs.decision));
-  const gap = new Big(categoryTargetGap(controls)), candidates: { label: string; operation: MonthChoiceOperation }[] = [];
+  const gap = new Big(options.gap ?? categoryTargetGap(controls)), candidates: { label: string; operation: MonthChoiceOperation }[] = [];
   const ranked = [...controls].sort((a, b) => Number(b.varianceToTarget ?? 0) - Number(a.varianceToTarget ?? 0) || a.key.localeCompare(b.key));
   for (const row of ranked) {
+    if (options.onlyCategory && row.key !== options.onlyCategory || options.excludeTargets?.includes(`category:${row.key}`)) continue;
     if (row.capabilities.adjustability !== "ADJUSTABLE" || new Big(row.reducibleRemaining).lte(0)) continue;
     const category = [...plan.narrative.prediction.essential, ...plan.narrative.prediction.optional].find(c => c.key === row.key)!;
     if (row.capabilities.strategies.includes("REDUCE_ONE_OCCURRENCE") && category.conditionalMedianAmount
@@ -91,7 +94,7 @@ export function proposeMonthChoices(ctx: MonthChoiceContext): readonly MonthChoi
       candidates.push({ label: `${row.label} : une sortie en moins`, operation: { kind: "CATEGORY", categoryKey: row.key, strategy: "REDUCE_ONE_OCCURRENCE" } });
     if (row.capabilities.strategies.includes("REDUCE_PERCENT")) candidates.push({ label: `${row.label} : −5 % du reste`,
       operation: { kind: "CATEGORY", categoryKey: row.key, strategy: "REDUCE_PERCENT", percent: "5" } });
-    if (gap.gt(0) && row.capabilities.strategies.includes("REDUCE_AMOUNT")) candidates.push({ label: `${row.label} : réduire le reste pour compenser`,
+    if (gap.gt(0) && row.capabilities.strategies.includes("REDUCE_AMOUNT")) candidates.push({ label: `${row.label} : réduire le reste ${options.onlyCategory ? "jusqu’au repère" : "pour retrouver de la marge"}`,
       operation: { kind: "CATEGORY", categoryKey: row.key, strategy: "REDUCE_AMOUNT", amount: gap.toFixed(2) } });
   }
   const offers: MonthChoiceOffer[] = [];
@@ -107,13 +110,14 @@ export function proposeMonthChoices(ctx: MonthChoiceContext): readonly MonthChoi
     if (seen.has(key)) continue;
     seen.add(key); add({ operations: [candidate.operation] }, candidate.label);
   }
-  for (const savings of plan.savingsAllocations.items.filter(row => row.adjustability === "ADJUSTABLE" && new Big(row.amount).gt(0)).slice(0, 2))
+  for (const savings of plan.savingsAllocations.items.filter(row => !options.onlyCategory && row.adjustability === "ADJUSTABLE"
+    && !options.excludeTargets?.includes(`savings:${row.id}`) && new Big(row.amount).gt(0)).slice(0, 2))
     add({ operations: [{ kind: "SAVINGS", savingsId: savings.id, strategy: "ADJUST_SAVINGS", amount: (gap.gt(0) ? gap : new Big(savings.amount).times(.1)).toFixed(2) }] }, `${savings.label} : réduire la contribution du mois`);
   for (const candidate of candidates.filter(row => row.operation.strategy === "REDUCE_AMOUNT").slice(0, Math.max(0, 8 - offers.length)))
     add({ operations: [candidate.operation] }, candidate.label);
   const selected = offers.slice(0, 8);
   const pair = selected.filter(row => row.preview.choice.operations[0]?.kind === "CATEGORY").slice(0, 2);
-  if (gap.gt(0) && pair.length === 2) {
+  if (options.allowCombination !== false && gap.gt(0) && pair.length === 2) {
     const combined = simulateMonthChoice(ctx, { operations: pair.flatMap(row => row.preview.choice.operations) }).view;
     selected.push({ id: digest(combined.choice).slice(0, 16), label: `${pair[0]!.label} + ${pair[1]!.label}`, preview: combined });
   }

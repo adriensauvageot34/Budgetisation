@@ -3,7 +3,7 @@ import type { MonthDecisionProjection } from "@/server/phase2/month-decision-pro
 import type { ReactNode } from "react";
 import { AnimatedMoney } from "./animated-money";
 import material from "./month-material.module.css";
-import { CategoryTargetEditor } from "./month-decision-tools";
+import { MonthControlLink } from "./month-control-center";
 import type { MonthCategoryControl } from "@/server/phase2/month-category-controls";
 
 const money = (value: string | number | null) => value === null ? "À affiner" : new Intl.NumberFormat("fr-FR", {
@@ -56,6 +56,10 @@ export function RemainingForecastCard({ category, optional = false, importsMissi
     ] as const).filter(([label, value]) => label !== "Déclaré réalisé" || value > 0).map(([label, value]) => <div className="flex justify-between gap-3" key={label}><dt className="text-slate-500">{label}</dt><dd className={`${material.data} font-semibold`}><AnimatedMoney value={money(value)} /></dd></div>)}</dl>
     {display.counts && <p className="mt-3 text-xs text-slate-500">{display.counts.observed} jours observés · {display.counts.pending + display.counts.unresolved} en attente · {display.counts.future} encore possibles</p>}
     {category.expectedOccurrences && <p className="mt-3 text-xs text-slate-500">Environ {new Intl.NumberFormat("fr-FR", { maximumFractionDigits: 1 }).format(category.expectedOccurrences.central)} sorties restantes · {category.plannedOccurrencesAbsorbingHabit} déjà prévues dans l’habitude.</p>}
-    {control && targetMonth && <CategoryTargetEditor control={control} targetMonth={targetMonth} />}
+    {control && targetMonth && <div className="mt-4 border-t border-white/60 pt-3 text-xs">
+      {control.target !== null && <p>Votre objectif : <strong>{money(control.target)}</strong> · Prévision du mois : {money(control.forecast)}
+        {control.varianceToTarget !== null && <span> · Écart : {money(control.varianceToTarget)}</span>}</p>}
+      <MonthControlLink section="choices" focus={control.key} className="mt-2 font-bold underline">{control.target === null ? "Fixer un repère" : "Piloter cet objectif"}</MonthControlLink>
+    </div>}
   </article>;
 }
