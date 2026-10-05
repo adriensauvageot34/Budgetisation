@@ -49,7 +49,6 @@ export function MonthControlCenter({ model, initialSection = null, initialFocus 
   const lastFocus = useRef<string | null>(null);
   const previewTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [toast, setToast] = useState<string | null>(null);
-  useEffect(() => { if (!toast) return; const timer = setTimeout(() => setToast(null), 10000); return () => clearTimeout(timer); }, [toast]);
   const [purpose, setPurpose] = useState<MonthControlPurpose>(model.defaultPurpose), [operations, setOperations] = useState<readonly MonthChoiceOperation[]>([]);
   const [trial, setTrial] = useState<Workbench | null>(null), [pending, startTransition] = useTransition();
   useEffect(() => { if (!toast || pending) return; const timer = setTimeout(() => setToast(null), 10000); return () => clearTimeout(timer); }, [toast, pending]);
