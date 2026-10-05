@@ -4,7 +4,7 @@ import { createContext, useCallback, useContext, useEffect, useRef, useState, us
 import { useRouter } from "next/navigation";
 import { SlidersHorizontal, Info } from "lucide-react";
 import { OverlayFrame } from "@/ui/overlays/overlay-frame";
-import { monthControlSection, monthWorkspaceFocus, monthControlUrl, replaceMonthControlOperation,
+import { monthControlSection, monthWorkspaceFocus, monthControlUrl, replaceMonthControlOperation, parseMonthControlDraft, parseMonthControlPurpose,
   type MonthControlSection, type MonthControlSectionInput, type MonthControlPurpose } from "@/domain/phase2/month-control-contract";
 import type { MonthChoiceOperation } from "@/domain/phase2/month-choice-contract";
 import { previewMonthControlCenter, applyMonthChoice, undoMonthChoice, updateMonthControlInputs } from "./actions";
@@ -46,12 +46,21 @@ export function MonthControlCenter({ model, initialSection = null, initialFocus 
   const [refreshingDigest, setRefreshingDigest] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(inputError ? "Vérifiez la saisie du contrôle concerné." : null);
   const [undoToken, setUndoToken] = useState<string | null>(null);
-  const undoSessionKey = `month-control:undo:${model.targetMonth}`;
+  const undoSessionKey = `month-control:${model.reliability.publicationId}:${model.targetMonth}:undo`;
   const clearUndoSession = () => { try { sessionStorage.removeItem(undoSessionKey); } catch { /* Session storage may be disabled. */ } };
   const lastFocus = useRef<string | null>(null);
   const previewTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [toast, setToast] = useState<string | null>(null);
   const [purpose, setPurpose] = useState<MonthControlPurpose>(model.defaultPurpose), [operations, setOperations] = useState<readonly MonthChoiceOperation[]>([]);
+  const draftSessionKey = `month-control:${model.reliability.publicationId}:${model.targetMonth}:draft`;
+  const [sessionReady, setSessionReady] = useState(false);
+  useEffect(() => {
+    try { const saved = JSON.parse(sessionStorage.getItem(draftSessionKey) ?? "null");
+      if (saved && saved.expires > Date.now()) { setOperations(parseMonthControlDraft(saved.operations)); setPurpose(parseMonthControlPurpose(saved.purpose)); }
+      else sessionStorage.removeItem(draftSessionKey);
+    } catch { try { sessionStorage.removeItem(draftSessionKey); } catch {} }
+    setSessionReady(true);
+  }, [draftSessionKey]);
   const [trial, setTrial] = useState<Workbench | null>(null), [pending, startTransition] = useTransition();
   useEffect(() => {
     try { const saved = JSON.parse(sessionStorage.getItem(undoSessionKey) ?? "null");
@@ -95,18 +104,19 @@ export function MonthControlCenter({ model, initialSection = null, initialFocus 
     const sequence = ++request.current;
     requested.current = JSON.stringify([model.baseDigest, nextPurpose, nextOperations]);
     setOperations(nextOperations); setPurpose(nextPurpose); setTrial(null);
+    try { if (nextOperations.length) sessionStorage.setItem(draftSessionKey, JSON.stringify({ operations: nextOperations, purpose: nextPurpose, expires: Date.now() + 60 * 60_000 })); else sessionStorage.removeItem(draftSessionKey); } catch {}
     if (previewTimer.current) clearTimeout(previewTimer.current);
     previewTimer.current = setTimeout(() => startTransition(async () => {
       try { const result = await previewMonthControlCenter(model.targetMonth, nextPurpose, nextOperations);
         if (sequence === request.current) { setTrial(result); setMessage(null); if (result.baseDigest !== model.baseDigest) router.refresh(); } }
       catch { if (sequence === request.current) setMessage("Le scénario ne peut pas encore être calculé. Vérifiez ses choix ou réinitialisez-le ; le mois enregistré reste inchangé."); }
     }), nextOperations.length ? 180 : 0);
-  }, [model.baseDigest, model.targetMonth, router]);
+  }, [model.baseDigest, model.targetMonth, router, draftSessionKey]);
   useEffect(() => {
-    if (!open || section !== "choices" || !model.editable) return;
+    if (!sessionReady || !open || section !== "choices" || !model.editable) return;
     const key = JSON.stringify([model.baseDigest, purpose, operations]);
     if (requested.current !== key) recalculate(operations, purpose);
-  }, [open, section, operations, purpose, recalculate, model.baseDigest, model.editable]);
+  }, [sessionReady, open, section, operations, purpose, recalculate, model.baseDigest, model.editable]);
   useEffect(() => () => { if (previewTimer.current) clearTimeout(previewTimer.current); }, []);
   useEffect(() => {
     if (!open) return;
@@ -142,7 +152,7 @@ export function MonthControlCenter({ model, initialSection = null, initialFocus 
     if (!activeTrial?.preview || pending || !activeTrial.applicable) return;
     startTransition(async () => {
       try { const result = await applyMonthChoice(model.targetMonth, { operations }, activeTrial.baseDigest);
-        if (result.ok) { ++request.current; setOperations([]); setTrial(null); requested.current = null; setMessage(null); setUndoToken(result.undoToken); try { sessionStorage.setItem(undoSessionKey, JSON.stringify({ token: result.undoToken, expires: Date.now() + 10 * 60_000 })); } catch {} setToast(`Scénario appliqué · +${controlMoney(activeTrial.budgetMarginGain)} de marge estimée`); router.refresh(); }
+        if (result.ok) { ++request.current; setOperations([]); try { sessionStorage.removeItem(draftSessionKey); } catch {} setTrial(null); requested.current = null; setMessage(null); setUndoToken(result.undoToken); try { sessionStorage.setItem(undoSessionKey, JSON.stringify({ token: result.undoToken, expires: Date.now() + 10 * 60_000 })); } catch {} setToast(`Scénario appliqué · +${controlMoney(activeTrial.budgetMarginGain)} de marge estimée`); router.refresh(); }
         else { setMessage(result.message); setTrial(null); requested.current = null; router.refresh(); } }
       catch { setMessage("Ce scénario n’a pas été enregistré. Recalculez-le avant de réessayer."); setTrial(null); }
     });
