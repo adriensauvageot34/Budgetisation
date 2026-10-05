@@ -56,6 +56,8 @@ const total = (parts: readonly StatisticalComponent[]): ForecastRange => ({
   central: parts.reduce((sum, part) => sum.plus(part.central!), new Big(0)).toFixed(2),
   high: parts.reduce((sum, part) => sum.plus(part.high!), new Big(0)).toFixed(2),
 });
+/** Shared aggregation for request-local Planner reference subsets. */
+export const sumReferenceComponents = total;
 export const referenceWorkdays = (targetMonth: string): number => {
   const [year, month] = targetMonth.split("-").map(Number);
   const days = new Date(Date.UTC(year!, month!, 0)).getUTCDate();
