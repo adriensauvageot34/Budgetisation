@@ -3,7 +3,7 @@ export const MONTH_UPDATE_STATUSES = ["NEEDS_UPDATE", "MODIFIED", "DISABLED", "C
 export type MonthUpdateStatus = typeof MONTH_UPDATE_STATUSES[number];
 export type MonthUpdateItem = Readonly<{
   id: string; label: string; status: MonthUpdateStatus | null; summary: string;
-  amount: string | null; date: string | null; priority: number; focus: string;
+  amount: string | null; beforeAmount?: string | null; date: string | null; priority: number; focus: string;
   sourceKind: "BANK" | "WALLET" | "INCOME" | "FIXED" | "CONDITIONAL"; provenance: string;
 }>;
 /** A plain forecast is reference-only, never proof of explicit confirmation. */

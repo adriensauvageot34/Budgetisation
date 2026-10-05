@@ -33,7 +33,7 @@ export function HumanDateField({ name, label = "Date", today, initial, optional 
   return <fieldset className="mt-5"><legend className="text-sm font-bold">{label}</legend><div className="mt-2 flex gap-2">
     {optional && <button type="button" aria-pressed={mode === "NONE"} className={`${material.clayChip} px-4 py-2`} onClick={() => setMode("NONE")}>Non précisée</button>}
     {!optional && <button type="button" aria-pressed={mode === "TODAY"} className={`${material.clayChip} px-4 py-2`} onClick={() => setMode("TODAY")}>Aujourd’hui</button>}
-    <button type="button" aria-pressed={mode === "CUSTOM"} className={`${material.clayChip} px-4 py-2`} onClick={() => setMode("CUSTOM")}>Choisir une date</button></div>
+    <button type="button" aria-pressed={mode === "CUSTOM"} className={`${material.clayChip} px-4 py-2`} onClick={() => setMode("CUSTOM")}>Autre date</button></div>
     {mode === "CUSTOM" ? <label className="mt-3 block text-sm">{label}<input autoFocus className={`${material.field} ml-3 px-3 py-2`} name={name} type="date" required={!optional} value={date} min={min} max={max} onChange={event => setDate(event.target.value)} /></label>
       : <input type="hidden" name={name} value={mode === "NONE" ? "" : today} />}</fieldset>;
 }

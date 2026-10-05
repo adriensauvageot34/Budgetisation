@@ -1,7 +1,7 @@
 .frame { align-self: center; width: min(1260px, 94vw) !important; height: 88dvh; max-height: 88dvh !important; border-radius: 28px !important; background: linear-gradient(135deg, #fbf9ff, #fffdfa) !important; box-shadow: 0 32px 100px #44307030, inset 0 1px 0 #fff; }
 .frame :global(.ui-overlay-content) { flex: 1; display: flex; padding: 0; overflow: hidden; }
 .layout { display: flex; width: 100%; min-height: 0; }
-.content { min-width: 0; overflow: auto; overscroll-behavior: contain; padding: 24px 28px 36px; scroll-behavior: smooth; }
+.content { min-width: 0; overflow: visible; padding: 24px 28px 36px; }
 .content [data-control-focus] { scroll-margin-top: 64px; }
 .content [data-control-highlight="true"] { outline: 2px solid #ab87db; outline-offset: 5px; border-radius: 16px; }
 .status { position: sticky; top: 23px; z-index: 3; background: #faf7fff5; padding: 10px 14px; border-radius: 14px; margin-bottom: 16px; font-size: 14px; }
@@ -24,8 +24,7 @@ button.controlRow:focus-visible { outline: 2px solid #7c3aed; outline-offset: 3p
 .content button[aria-pressed="true"] { background: #e5d8f7; box-shadow: inset 0 0 0 1px #bca1dc; color: #51278e; }
 .factFocus button[aria-pressed="true"] { background: #deebf4; color: #26435d; box-shadow: inset 0 0 0 1px #a9c3d6; }
 
-/* Choices application shell: each question owns a bounded screen. Content stays
-   scrollable as an accessible safety net; desktop evidence verifies it fits. */
+/* Desktop surfaces own their available height, including short Windows viewports. */
 .frame { width: min(1280px, 94vw) !important; height: min(790px, calc(100dvh - 72px)); max-height: calc(100dvh - 72px) !important; }
 .frame :global(.ui-overlay-header) { grid-template-columns: minmax(0, 1fr) auto auto; align-items: center; gap: 20px; padding: 20px 24px; }
 .frame :global(.ui-overlay-header h2) { font-size: 22px; white-space: nowrap; }
@@ -100,13 +99,6 @@ button.controlRow:focus-visible { outline: 2px solid #7c3aed; outline-offset: 3p
 .resultLinks { display: flex; gap: 20px; align-items: center; }
 .simulationDetails { width: 100%; display: grid; gap: 25px; }.simulationDetails > div { display: flex; gap: 20px; align-items: center; padding-bottom: 16px; border-bottom: 1px solid #e5ddea; }.simulationDetails strong { flex: 1; }.simulationDetails span { font-size: 14px; color: #8f78a2; }.estimationNote { display: grid; gap: 14px; color: #7e698e; font-size: 17px; }
 .hubCard:focus-visible, .choiceTile:focus-visible, .localBack:focus-visible, .smallChoice:focus-visible { outline: 2px solid #865abd; outline-offset: 3px; }
-@media (max-height: 849px) {
-  .frame { height: calc(100dvh - 32px); max-height: calc(100dvh - 32px) !important; }
-  .content[data-section="choices"] { display: block; }
-  .choiceScreen { min-height: 640px; }
-  .hubGrid { margin: 8px auto; }
-  .choiceBody { min-height: 420px; }
-}
 @media (prefers-reduced-motion: reduce) { .hubCard { transition: none; } .hubCard:hover { transform: none; } }
 
 /* Desktop spatial workspace. The height fallback is accessibility for short
@@ -148,5 +140,68 @@ button.controlRow:focus-visible { outline: 2px solid #7c3aed; outline-offset: 3p
 .statusDetail > article { text-align: center; display: flex; flex-direction: column; align-items: center; gap: 18px; padding: 30px; border-radius: 24px; background: #f8f4fc; min-height: 310px; }.statusDetail h3 { font-size: 25px; font-weight: 800; }.detailIcon { font-size: 30px; color: #8e77a2; }.detailAmount { font-size: 36px; font-weight: 800; }.detailActions { display: flex; gap: 18px; margin-top: 12px; }.statusDetail article[data-status="DISABLED"] { background: #f1eff4; color: #8b8193; }.statusDetail article[data-status="CONFIRMED"] { background: #eef4ef; }
 .updateEditor { flex: 1; display: flex; min-height: 0; align-items: center; }.updateEditor .focusPane { padding: 0; max-width: 820px; }.updateEditor section > h2 { font-size: 24px; }.updateEditor .focusPane > .localBack { margin-bottom: 20px; }.updateEditor section > .mt-6, .updateEditor form.mt-7, .updateEditor div.mt-7 { margin-top: 20px; }.triageCount { color: #9b829f; font-size: 13px; margin-bottom: 18px; }
 .horizontalCards { display: flex; flex-wrap: nowrap; overflow-x: auto; width: 100%; padding: 8px 4px 18px; gap: 18px; scroll-snap-type: x proximity; }.horizontalCards > button { flex: 0 0 280px; min-height: 210px; scroll-snap-align: start; }
-@media (max-height: 849px) { .content { display: block; }.workspaceRoot { min-height: 600px; }.updateEditor { min-height: 620px; } }
 @media (prefers-reduced-motion: reduce) { .statusZone { transition: none; }.statusZone:hover { transform: none; } }
+
+/* Shared desktop density: no vertical overflow fallback and no clipped content. */
+.frame { --space-1: 6px; --space-2: 12px; --space-3: 18px; --space-4: 24px; --radius-card: 16px; --radius-zone: 22px; --height-card-compact: 96px; height: min(790px, calc(100dvh - 32px)); max-height: calc(100dvh - 32px) !important; font-variant-numeric: tabular-nums; }
+.frame :global(.ui-overlay-content) { overflow: visible; min-height: 0; }
+.frame :global(.ui-overlay-header) { padding: 14px 24px; gap: 16px; }
+.content { padding: 16px 24px; }
+.choiceScreen { max-width: 1050px; }
+.localHeader { gap: 6px; }
+.localBack { margin: 0 0 6px; display: inline-flex; align-items: center; gap: 6px; }
+.localTitle { font-size: 24px; }
+.localSubtitle { margin-top: 4px; }
+.choiceBody { gap: 12px; padding: 14px 0; }
+.actionFooter { min-height: 52px; padding-top: 12px; gap: 12px; }
+.primaryAction, .secondaryAction { padding: 10px 16px; }
+.workspaceRoot { padding: 12px 4px; gap: 16px; }
+.workspaceRoot .hubCard { padding: 24px; }
+.hubIcon { display: flex; }.hubCard:hover { transform: translateY(-2px); }
+.pilotGrid { grid-template-rows: repeat(3, var(--height-card-compact)); gap: 12px; }
+.pilotGrid > button { min-height: var(--height-card-compact); padding: 12px 16px; gap: 4px; }
+.choiceTile > span > span + span { margin-top: 3px; }
+.pilotWorkbench { grid-template-columns: 255px minmax(0, 1fr); gap: 20px; }
+.pilotReference { padding: 16px; gap: 8px; }
+.pilotReference > strong { font-size: 30px; }
+.pilotInteraction { gap: 12px; padding: 0; }
+.pilotConsequence { min-height: 80px; padding: 12px; gap: 18px; }
+.pilotConsequence strong { font-size: 21px; }.pilotConsequence > div { gap: 5px; }
+.categoryHistory { padding-top: 10px; }.categoryHistory > div { margin: 7px auto; }
+.categoryHistory > p { font-size: 12px; }
+.centerInteraction, .percentControl { gap: 12px; }
+.spatialMap { gap: 14px; max-height: 390px; }
+.statusZone { padding: 16px 20px; }.statusZone > header { margin-bottom: 10px; }.statusZone ul { gap: 6px; }
+.statusDetail { gap: 14px; }.statusDetail > article { padding: 20px; min-height: 220px; gap: 10px; }
+.statusDetail[data-zone="NEEDS_UPDATE"] { flex: 1; min-height: 0; }
+.statusDetail .updateEditor { align-items: flex-start; }
+.updateEditor { width: 100%; align-items: flex-start; }
+.updateEditor .focusPane { max-width: 100%; margin: 0; }
+.updateEditor .focusPane > .localBack { margin-bottom: 12px; }
+.updateEditor section > .mt-6, .updateEditor form.mt-7, .updateEditor div.mt-7 { margin-top: 12px; }
+.updateEditor :global(.mt-5), .updateEditor :global(.mt-6), .updateEditor :global(.mt-7) { margin-top: 12px; }
+.updateEditor form { display: grid; grid-template-columns: minmax(250px, 1fr) minmax(250px, 1fr); gap: 12px 24px; align-items: start; }
+.updateEditor form > input[type="hidden"] { display: none; }
+.updateEditor form > button[type="submit"] { justify-self: start; grid-column: 1 / -1; margin-top: 4px; }
+.updateEditor form > label { margin-top: 0; }
+.updateEditor fieldset { margin-top: 0; }
+.updateEditor section > h2 { font-size: 22px; }
+.triageCount { margin-bottom: 8px; }.itemRail { padding-bottom: 8px; }
+.horizontalCards > button { min-height: 160px; }
+.simulationResult { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.selectedChoices, .resultLinks { grid-column: 1 / -1; }
+.impactHero > strong { font-size: 36px; }.simulationDetails { gap: 16px; }
+.exactLabel { gap: 8px; }.exactLabel input { padding: 10px 14px; }
+.goalWorkbench { display: grid; grid-template-columns: 1fr 1fr; gap: 30px; align-items: center; width: 100%; }
+.goalWorkbench > div { display: grid; gap: 14px; }.goalWorkbench strong { font-size: 28px; }
+.decisionState { display: flex; gap: 14px; align-items: center; font-size: 13px; color: #755a89; }
+.fixedCategory { background: #f4f3f5; color: #857b8e; }
+.returnFocus { outline: 2px solid #bba0d8; outline-offset: 2px; }
+.headerGoal { color: #644289; border-radius: 10px; padding: 5px 8px; }
+.headerGoal:focus-visible { outline: 2px solid #865abd; }
+.surfaceMotion { flex: 1; min-height: 0; display: flex; animation: controlZoom 180ms ease-out; transform-origin: var(--zone-origin, 50% 35%); }
+@keyframes controlZoom { from { opacity: .5; transform: scale(.985); } to { opacity: 1; transform: scale(1); } }
+@media (prefers-reduced-motion: reduce) { .surfaceMotion { animation: none; } }
+.saveToast { top: auto; bottom: 70px; display: flex; align-items: center; gap: 14px; }
+.closeDraft { position: absolute; inset: 0; z-index: 15; display: grid; place-content: center; gap: 18px; background: #fcfafff7; text-align: center; border-radius: 20px; }
+.closeDraft > div { display: flex; gap: 14px; justify-content: center; }

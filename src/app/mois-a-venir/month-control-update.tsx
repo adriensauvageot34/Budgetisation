@@ -21,13 +21,13 @@ function obligationState(row: MonthUpdateData["obligations"][number], inputs: Mo
   return row.conditional ? confirmed ? { state: "YES", label: "Confirmé", amount: confirmed.amount, date: confirmed.dueDate } : inputs.declinedConditionalObligations.includes(row.key) ? { state: "NO", label: "Pas prévu ce mois-ci", amount: null, date: null } : { state: "UNKNOWN", label: "À confirmer", amount: null, date: null }
     : inputs.excludedFixedObligations.includes(row.key) ? { state: "ABSENT", label: "Pas payé ce mois-ci", amount: null, date: null } : override ? { state: "DIFFERENT", label: "Montant ajusté", amount: override.amount, date: override.dueDate } : { state: "EXPECTED", label: "Comme prévu", amount: row.amount, date: null };
 }
-export function MonthUpdateControls({ model, data, focus, back, triage = false }: { model: MonthControlModel; data: MonthUpdateData; focus?: string; back?: () => void; triage?: boolean }) {
+export function MonthUpdateControls({ model, data, focus, back, triage = false, embedded = false }: { model: MonthControlModel; data: MonthUpdateData; focus?: string; back?: () => void; triage?: boolean; embedded?: boolean }) {
   const local = useMonthLocalFocus(), entity = focus ?? local.entity;
   const resource = data.resources.find(row => resourceFocusKey(row.key) === entity || entity === row.key || entity === `income:${row.key}`);
   const obligation = data.obligations.find(row => row.key === entity);
   const provider = entity === "SWILE" || entity === "EDENRED" ? entity : null;
   return <UpdateTriageContext.Provider value={triage}><div className={`${styles.focusPane} ${styles.factFocus}`} data-local-focus={entity}>
-    <button type="button" className={styles.localBack} onClick={back ?? (() => local.openEntity("update"))}>← Retour à Mettre à jour</button>
+    {!embedded && <button type="button" className={styles.localBack} onClick={back ?? (() => local.openEntity("update"))}>← Mettre à jour</button>}
     {triage && <p className={styles.triageCount}>{model.update.needsUpdateCount} information{model.update.needsUpdateCount > 1 ? "s" : ""} à actualiser</p>}
     {provider ? <WalletFocus key={provider} model={model} provider={provider} data={data} /> : entity === "BANK" ? <BankFocus model={model} data={data} /> : resource ? <IncomeFocus key={`${resource.key}:${resource.amount}`} model={model} resource={resource} /> : obligation ? <ObligationFocus key={`${obligation.key}:${JSON.stringify(obligationState(obligation, data.inputs))}`} model={model} row={obligation} inputs={data.inputs} /> : <p>Cette information n’est plus disponible.</p>}
   </div></UpdateTriageContext.Provider>;
@@ -41,7 +41,7 @@ function IncomeFocus({ model, resource }: { model: MonthControlModel; resource: 
 }
 function BankFocus({ model, data }: { model: MonthControlModel; data: MonthUpdateData }) {
   const [detail, setDetail] = useState(false);
-  return <section><h2 className="text-2xl font-black">Quel est votre solde bancaire aujourd’hui ?</h2><p className="mt-3 text-slate-600">Solde actuellement déclaré : {money(data.inputs.openingBalance?.amount, true)}</p>
+  return <section><h2 className="text-2xl font-black">Quel est votre solde bancaire aujourd’hui ?</h2><p className="mt-3 text-slate-600">Disponible bancaire aujourd’hui : {model.update.items.find(row => row.id === "BANK")?.status === "NEEDS_UPDATE" ? "À confirmer" : money(data.bank?.currentRealBankBalance.amount, true)}</p>{data.inputs.openingBalance && <p className="mt-3 text-slate-600">Dernière observation : <strong>{money(data.inputs.openingBalance.amount, true)}</strong> au {controlDate(data.inputs.openingBalance.asOfDate)}{model.update.items.find(row => row.id === "BANK")?.status === "NEEDS_UPDATE" && " · Mouvements récents à consolider"}</p>}
     {!detail ? <form action={updateMonthInputs} className="mt-6"><ControlFormFields month={model.targetMonth} intent="save-bank-balance" /><label className="font-semibold">Solde bancaire (€)<input className={field} name="openingAmount" type="number" step="0.01" required defaultValue={data.inputs.openingBalance?.amount ?? ""} /></label><HumanDateField name="openingDate" today={model.asOf} max={model.asOf} /><UpdateSaveButton>Enregistrer le solde</UpdateSaveButton></form> : <BankDetails bank={data.bank} />}
     <button type="button" className={`${styles.textAction} mt-6`} onClick={() => setDetail(!detail)}>{detail ? "Revenir au solde" : "Voir comment le disponible est calculé"}</button>
   </section>;
@@ -51,7 +51,7 @@ function BankDetails({ bank }: { bank: MonthUpdateData["bank"] }) {
   return <dl className="mt-6 space-y-4">{([ ["Disponible après cagnottes", bank.afterSavings.amount], ["Charges restant à débiter", bank.remainingCertainBankOutflows.amount], ["Paiements des projets", bank.plannedBankCashRemaining.amount], ["Fin de mois bancaire", bank.endOfMonth.central] ] as const).map(([label, amount]) => <div key={label} className="flex justify-between gap-4"><dt>{label}</dt><dd className="font-bold">{money(amount, true)}</dd></div>)}<p className="text-sm text-slate-600">Le disponible bancaire, le coût économique et les titres-restaurants restent distincts.</p></dl>;
 }
 function WalletFocus({ model, provider, data }: { model: MonthControlModel; provider: "SWILE" | "EDENRED"; data: MonthUpdateData }) {
-  const [editor, setEditor] = useState<"NONE" | "BALANCE" | "LOADING" | "FUNDING" | "OBSERVATIONS">(model.update.groups.NEEDS_UPDATE.some(row => row.id === provider) ? model.resourceInputs.projections[provider].currentBalanceKnowledge.amount === null ? "BALANCE" : "LOADING" : "NONE");
+  const [editor, setEditor] = useState<"NONE" | "BALANCE" | "LOADING" | "FUNDING" | "OBSERVATIONS">(model.update.groups.NEEDS_UPDATE.some(row => row.id === provider) && model.resourceInputs.projections[provider].currentBalanceKnowledge.amount !== null ? "LOADING" : "BALANCE");
   const wallet = model.resourceInputs.wallets[provider], projection = model.resourceInputs.projections[provider], label = provider === "SWILE" ? "Swile" : "Edenred";
   return <section data-wallet-focus={provider}><h2 className="text-2xl font-black">{label}</h2>
     <div className="mt-6 flex flex-wrap gap-3">{([["BALANCE", "Solde"], ["LOADING", "Chargement"], ["FUNDING", "Financement"]] as const).map(([key, title]) => <button type="button" key={key} aria-pressed={editor === key} className={`${material.clayChip} px-4 py-3 font-bold`} onClick={() => setEditor(key)}>{title}</button>)}</div>

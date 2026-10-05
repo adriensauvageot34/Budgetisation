@@ -1,4 +1,5 @@
 "use client";
+import { LockKeyhole, Plus } from "lucide-react";
 import type { MonthControlModel } from "./month-control-center";
 import { useMonthLocalFocus } from "./month-control-focus";
 import { controlMoney as money } from "@/domain/phase2/month-control-display";
@@ -8,8 +9,8 @@ import styles from "./month-control-center.module.css";
 
 export function MonthControlSavings({ model }: { model: MonthControlModel }) {
   const { openEntity } = useMonthLocalFocus();
-  return <LocalChoiceScreen title="Mes cagnottes" back={() => openEntity(null)} footer={<button type="button" className={secondary} onClick={() => openEntity("savings:new")}>Ajouter une cagnotte</button>}>
-    {model.savings.length ? <div className={styles.horizontalCards}>{model.savings.map(row => <ChoiceTile key={row.id} title={`${row.adjustability === "PROTECTED" ? "🔒 " : ""}${row.label}`} onClick={() => openEntity(`savings:${row.id}`)}><strong className={styles.savingAmount}>{money(row.amount, true)}</strong><span>{row.adjustability === "PROTECTED" ? "Protégée" : "Ajustable"}</span></ChoiceTile> )}</div> : <div className={styles.emptyChoice}><span aria-hidden="true">🔒</span><h3>Votre prochain projet commence ici</h3><p>Aucune cagnotte affectée à ce mois.</p></div>}
+  return <LocalChoiceScreen title="Mes cagnottes" subtitle={`${money(model.projectionSummary.totalSavings, true)} mis de côté`} back={() => openEntity(null)}>
+    {model.savings.length ? <div className={styles.horizontalCards}>{model.savings.map(row => <ChoiceTile key={row.id} title={row.label} onClick={() => openEntity(`savings:${row.id}`)}>{row.adjustability === "PROTECTED" && <LockKeyhole size={20} aria-label="Protégée" />}<strong className={styles.savingAmount}>{money(row.amount, true)}</strong><span>{row.adjustability === "PROTECTED" ? "Intouchable ce mois-ci" : "Ajustable si nécessaire"}</span><span>{money(row.amount, true)} retirés du disponible</span></ChoiceTile> )}<ChoiceTile title="Ajouter une cagnotte" onClick={() => openEntity("savings:new")}><Plus size={24} /></ChoiceTile></div> : <div className={styles.emptyChoice}><span aria-hidden="true"><LockKeyhole size={26} /></span><h3>Votre prochain projet commence ici</h3><p>Aucune cagnotte affectée à ce mois.</p></div>}
   </LocalChoiceScreen>;
 }
 export function MonthChoiceFocus({ model }: { model: MonthControlModel }) {

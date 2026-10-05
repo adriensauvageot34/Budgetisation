@@ -20,6 +20,7 @@ import { makeForecastCheckpoint, insertForecastCheckpoint } from "@/server/phase
 import { projectMonthDecision } from "@/server/phase2/month-decision-projection";
 import { parseBenefitProvider, benefitResourceKey, type BenefitProvider, type MonthlyBenefitWalletInputs } from "@/domain/phase2/benefit-wallets";
 import { parseSavingsMetadata } from "@/domain/phase2/savings-allocations";
+import { makeMonthChoiceUndo, restoreMonthChoiceUndo } from "@/server/phase2/month-choice-undo";
 
 const field = (form: FormData, key: string): string => String(form.get(key) ?? "").trim();
 const optionalMoney = (form: FormData, key: string): string | null => field(form, key) || null;
@@ -252,7 +253,19 @@ export async function applyMonthChoice(targetMonth: string, choice: unknown, exp
   if (expectedDigest !== monthChoiceDigest(context)) return { ok: false as const, code: "STALE_PREVIEW" as const, message: "Le mois a changé. Relancez la simulation avant d’adopter ce choix." };
   const result = simulateMonthChoice(context, choice);
   if (!result.view.applicable) return { ok: false as const, message: "Ce choix dépend d’un plan annuel : simulation disponible, adoption non disponible." };
+  const undoToken = makeMonthChoiceUndo(context, result.nextInputs, choice, ctx.household.householdId, ctx.user.id);
   await saveMonthInputs(ctx.supabase, ctx.household.householdId, targetMonth, ctx.user.id, result.nextInputs);
   revalidatePath("/mois-a-venir");
-  return { ok: true as const, preview: result.view, message: "Choix adopté pour ce mois." };
+  return { ok: true as const, preview: result.view, undoToken, message: "Choix adopté pour ce mois." };
+}
+
+export async function undoMonthChoice(targetMonth: string, token: string) {
+  const ctx = await decisionContext(targetMonth);
+  try {
+    const next = restoreMonthChoiceUndo({ forecast: ctx.forecast, inputs: ctx.stored.inputs, expenses: ctx.expenses, asOf: ctx.asOf }, token, ctx.household.householdId, ctx.user.id);
+    deriveMonthScenario(ctx.forecast, next, null, ctx.asOf, ctx.expenses);
+    await saveMonthInputs(ctx.supabase, ctx.household.householdId, targetMonth, ctx.user.id, next);
+    revalidatePath("/mois-a-venir");
+    return { ok: true as const };
+  } catch { return { ok: false as const, message: "Le mois a changé ou le délai d’annulation est dépassé. L’état enregistré est conservé." }; }
 }

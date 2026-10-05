@@ -1,4 +1,5 @@
 "use client";
+import { ArrowLeft } from "lucide-react";
 import { useState, type ReactNode } from "react";
 import { relativeAmountDraft, relativePercentDraft } from "@/domain/phase2/month-choice-ui-draft";
 import { controlMoney as money } from "@/domain/phase2/month-control-display";
@@ -7,11 +8,11 @@ import styles from "./month-control-center.module.css";
 
 export const primary = `${material.clayPrimary} ${styles.primaryAction}`;
 export const secondary = `${material.clayButton} ${styles.secondaryAction}`;
-export function LocalChoiceScreen({ title, subtitle, back, backLabel = "Retour au Centre", children, footer, step, total, kind = "intention" }: {
+export function LocalChoiceScreen({ title, subtitle, back, backLabel = "Centre", children, footer, step, total, kind = "intention" }: {
   title: string; subtitle?: ReactNode; back: () => void; backLabel?: string; children: ReactNode; footer?: ReactNode; step?: number; total?: number; kind?: string;
 }) {
   return <section className={styles.choiceScreen} data-choice-view={kind}>
-    <header className={styles.localHeader}><button type="button" className={styles.localBack} onClick={back}>← {backLabel}</button>
+    <header className={styles.localHeader}><button type="button" className={styles.localBack} onClick={back}><ArrowLeft size={16} aria-hidden="true" />{backLabel.replace(/^Retour (?:au|à) /u, "")}</button>
       <div><h2 className={styles.localTitle}>{title}</h2>{subtitle && <p className={styles.localSubtitle}>{subtitle}</p>}</div>
       {step !== undefined && <span className={styles.wizardProgress}>Étape {step} sur {total}</span>}
     </header>
@@ -19,8 +20,8 @@ export function LocalChoiceScreen({ title, subtitle, back, backLabel = "Retour a
     {footer && <footer className={styles.actionFooter}>{footer}</footer>}
   </section>;
 }
-export function ChoiceTile({ title, children, onClick, active, disabled }: { title: string; children?: ReactNode; onClick: () => void; active?: boolean; disabled?: boolean }) {
-  return <button type="button" className={styles.choiceTile} onClick={onClick} aria-pressed={active} disabled={disabled}><strong>{title}</strong>{children && <span>{children}</span>}</button>;
+export function ChoiceTile({ title, children, onClick, active, disabled, focusKey, quiet }: { title: string; children?: ReactNode; onClick: () => void; active?: boolean; disabled?: boolean; focusKey?: string; quiet?: boolean }) {
+  return <button type="button" data-return-key={focusKey} className={`${styles.choiceTile} ${quiet ? styles.fixedCategory : ""}`} onClick={onClick} aria-pressed={active} disabled={disabled}><strong>{title}</strong>{children && <span>{children}</span>}</button>;
 }
 export function ChoicePages({ count, page, setPage, size = 6 }: { count: number; page: number; setPage: (page: number) => void; size?: number }) {
   const pages = Math.ceil(count / size);
@@ -48,7 +49,7 @@ export function RelativeAmountControl({ reference, initial, name, label, onChang
 }
 export function TargetGauge({ forecast, realized = "0", target }: { forecast: string; realized?: string; target: string }) {
   const scale = Math.max(Number(forecast), Number(realized), Number(target), 1);
-  return <div className={styles.gauge} role="img" aria-label={`Réalisé ${money(realized, true)}, projection ${money(forecast)}, repère ${money(target, true)}`}>
+  return <div className={styles.gauge} role="img" aria-label={`Réalisé ${money(realized, true)}, projection ${money(forecast)}, budget cible ${money(target, true)}`}>
     <span className={styles.projectedGauge} style={{ width: `${Number(forecast) / scale * 100}%` }} /><span className={styles.realizedGauge} style={{ width: `${Number(realized) / scale * 100}%` }} /><span className={styles.targetMarker} style={{ left: `${Math.min(98, Number(target) / scale * 100)}%` }} />
   </div>;
 }

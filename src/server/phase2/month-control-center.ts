@@ -113,7 +113,7 @@ export function projectMonthControlCenter(ctx: MonthChoiceContext) {
   const defaultPurpose: MonthControlPurpose = globalTensions.length ? { kind: "GLOBAL_GOAL" } : categoryTensions.length ? { kind: "CATEGORY_CORRECTION", categoryKey: categoryTensions[0]!.categoryKey } : plan ? { kind: "FREE_EXPLORATION" } : { kind: "NONE" };
   return { targetMonth: scenario.targetMonth, asOf: ctx.asOf, baseDigest: monthChoiceDigest(ctx), editable: scenario.targetMonth >= ctx.asOf.slice(0, 7),
     monthState: !plan ? "INCOMPLETE" : globalTensions.length ? "GLOBAL_ATTENTION" : categoryTensions.length ? "CATEGORY_ATTENTION" : "CALM",
-    goalState, goalCount,
+    goalState, goalCount, appliedMarginGain: plan && referencePlan ? new Big(plan.narrative.final.central).minus(referencePlan.narrative.final.central).toFixed(2) : null,
     headline: !plan ? "Complétons les ressources pour préparer ce mois" : goalState === "NO_GOALS_DEFINED" ? "Vous n’avez pas encore défini de repères pour ce mois."
       : goalState === "ALL_GOALS_MET" ? "Vos objectifs sont respectés dans la projection actuelle."
       : `${tensions.length} objectif${tensions.length > 1 ? "s demandent" : " demande"} votre attention.`,
