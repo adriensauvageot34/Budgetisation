@@ -1,3 +1,4 @@
+const { MonthPilotEditor } = require("@/app/mois-a-venir/month-pilot-editor.tsx");
 import assert from "node:assert/strict";
 import fs from "node:fs";
 import { randomUUID } from "node:crypto";
@@ -83,7 +84,7 @@ const choiceFocusHtml = entity => html(MonthChoiceFocus, { model: m }, "choices"
 const reset = () => { h.facts.inputs["2026-10"] = structuredClone(current); };
 const countWrites = () => writes.length + h.client.writes.length;
 
-const { MonthWorkspaceRoot, MonthPilotIndex, MonthPilotCategory, MonthInfoFacts } = require("@/app/mois-a-venir/month-control-workspace.tsx");
+const { MonthWorkspaceRoot, MonthPilotIndex, MonthInfoFacts } = require("@/app/mois-a-venir/month-control-workspace.tsx");
 const { MonthUpdateSpatial } = require("@/app/mois-a-venir/month-update-spatial.tsx");
 const { classifyMonthUpdateItem: classify, groupMonthUpdateItems: group, nextMonthUpdateItem: next, MONTH_UPDATE_STATUSES: statuses } = require("@/domain/phase2/month-update-status.ts");
 const { monthWorkspaceFocus: focusAdapter } = require("@/domain/phase2/month-control-contract.ts");
@@ -92,7 +93,7 @@ const root = html(MonthWorkspaceRoot, { model: m, draftCount: 0 });
 const spatial = html(MonthUpdateSpatial, { model: m, refreshing: false }, "update", "update");
 const info = html(MonthInfoFacts, { model: m });
 const pilot = html(MonthPilotIndex, { model: m, draftCount: 0 });
-const ui = src("month-control-workspace.tsx"), spatialSource = src("month-update-spatial.tsx");
+const ui = src("month-control-workspace.tsx") + src("month-pilot-editor.tsx"), spatialSource = src("month-update-spatial.tsx");
 await test("CONTROL-V3-001", () => assert(!center.includes("styles.sidebar")), "STATIC");
 await test("CONTROL-V3-002", () => assert(!center.includes("MONTH_CONTROL_TABS")), "STATIC");
 for (const [id,label] of [["003","Piloter mon mois"],["004","Mes cagnottes"],["005","Mettre à jour"]]) await test("CONTROL-V3-"+id, () => assert(root.includes(label)), "SSR");
@@ -147,10 +148,10 @@ const targeted=model(withTarget("250.00","300.00"));
 await test("PILOT-003",()=>assert(html(MonthPilotIndex,{model:targeted,draftCount:0}).includes("Budget cible")),"SSR");
 await test("PILOT-004",()=>assert(html(MonthPilotIndex,{model:targeted,draftCount:0}).includes("Ajustement appliqué")),"SSR");
 const operation=choice().operations[0],trial=wb(base,{kind:"FREE_EXPLORATION"},[operation]);
-const pilotCategory=html(MonthPilotCategory,{model:m,category:m.categoryControls.find(row=>row.key==="groceries"),trial,operations:[operation],pending:false,replaceDraft(){},reset(){},apply(){}});
+const pilotCategory=html(MonthPilotEditor,{model:m,category:m.categoryControls.find(row=>row.key==="groceries"),trial,operations:[operation],pending:false,replaceDraft(){},reset(){},apply(){}});
 await test("PILOT-005",async()=>{reset();const before=countWrites();await actions.previewMonthControlCenter("2026-10",{kind:"FREE_EXPLORATION"},[operation]);assert.equal(countWrites(),before);});
-await test("PILOT-006",()=>assert(pilotCategory.includes("Avec ce scénario")),"SSR");
-await test("PILOT-007",()=>assert(pilotCategory.includes('value="save-category-target"')&&pilotCategory.includes("Garder comme budget cible")),"SSR");
+await test("PILOT-006",()=>assert(pilotCategory.includes("Prévu → Testé")),"SSR");
+await test("PILOT-007",()=>assert(pilotCategory.includes('value="save-category-target"')&&pilotCategory.includes("Définir ce budget cible")),"SSR");
 await test("PILOT-008",()=>assert(pilotCategory.includes("Appliquer à octobre")),"SSR");
 await test("PILOT-009",()=>assert.deepEqual(trial.preview,simulate(base,{operations:[operation]}).view));
 await test("PILOT-010",()=>{assert(!ui.includes("simulateMonthChoice("));assert(!ui.includes("deriveMonthScenario("));assert(ui.includes("trial.scenario"));},"STATIC");
@@ -183,7 +184,7 @@ await test("POLISH-UNDO-07",()=>{assert(!token.includes("fixture-household"));as
 if(originalSecret===undefined)delete process.env.SUPABASE_SECRET_KEY;else process.env.SUPABASE_SECRET_KEY=originalSecret;
 await test("POLISH-DIRECT-EDITOR",()=>{const rendered=html(MonthUpdateSpatial,{model:m,refreshing:false},"update","update:status:NEEDS_UPDATE");assert(rendered.includes('name="openingAmount"'));assert(!rendered.includes("Renseigner cette information"))},"SSR");
 await test("POLISH-PROTECTED-READONLY",()=>{const protectedSaving=m.savings.find(row=>row.adjustability==="PROTECTED");const rendered=choiceFocusHtml('savings:'+protectedSaving.id);assert(!rendered.includes('<form'));assert(!rendered.includes('<input'));assert(rendered.includes('Intouchable ce mois-ci'))},"SSR");
-await test("POLISH-OBSERVED-INCOMPLETE",()=>assert(html(MonthPilotCategory,{model:{...m,reliability:{...m.reliability,importsMissing:true}},category:m.categoryControls[0],trial:null,operations:[],pending:false,replaceDraft(){},reset(){},apply(){}}).includes('À consolider')),"SSR");
+await test("POLISH-OBSERVED-INCOMPLETE",()=>assert(html(MonthPilotEditor,{model:{...m,reliability:{...m.reliability,importsMissing:true}},category:m.categoryControls[0],trial:null,operations:[],pending:false,replaceDraft(){},reset(){},apply(){}}).includes('À consolider')),"SSR");
 await test("POLISH-HISTORY-PLACEHOLDER",()=>{assert(pilotCategory.includes('Mois bas'));assert(pilotCategory.includes('Médiane'));assert(pilotCategory.includes('Mois haut'));assert(pilotCategory.includes('sur 3 nécessaires'))},"SSR");
 await test("POLISH-NAVIGATION-RESET",()=>{assert(center.includes('root.scrollTop = 0'));assert(!center.includes('scrollIntoView'));assert(center.includes('preventScroll: true'))},"STATIC");
 await test("POLISH-PREVIEW-SEQUENCE",()=>{assert(center.includes('sequence === request.current'));assert(center.includes('clearTimeout(previewTimer.current)'));assert(center.includes('nextOperations.length ? 180'))},"STATIC");

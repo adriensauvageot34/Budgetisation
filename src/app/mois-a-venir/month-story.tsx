@@ -13,6 +13,7 @@ import { projectMonthDecision } from "@/server/phase2/month-decision-projection"
 import type { ForecastCheckpoint } from "@/server/phase2/forecast-memory";
 import { AnimatedMoney } from "./animated-money";
 import { MonthSavingsSection } from "./month-savings-section";
+import { BankStockCard } from "./bank-stock-card";
 import material from "./month-material.module.css";
 
 const money = (value: string | null, exact = false) => value === null ? "À confirmer" : new Intl.NumberFormat("fr-FR", {
@@ -68,9 +69,12 @@ export function MonthStory({ plan, targetMonth, plannedExpenses, calendarCarryov
 
   return <div data-month-story className="space-y-7 sm:space-y-9">
 
-    <section className={`${material.glassPremium} ${material.glassHero} p-4 sm:p-6`} aria-labelledby="resources-title"><div className="flex flex-wrap items-end justify-between gap-3"><h2 id="resources-title" className="scroll-mt-24 text-2xl font-black">Nos ressources</h2><div className="text-left sm:text-right"><p className={`${material.data} text-3xl font-black tracking-tight`}><AnimatedMoney value={money(plan.economicResources, true)} /></p></div></div>
+    <section className={`${material.glassPremium} ${material.glassHero} p-6`} aria-labelledby="resources-title"><h2 id="resources-title" className="scroll-mt-24 text-2xl font-black">Nos ressources</h2>
+      <h3 className="mt-4 text-sm font-bold">Disponible aujourd’hui</h3>
+      <BankStockCard balance={cash.currentRealBankBalance} />
+      <div className="mt-5 flex items-end justify-between gap-3"><h3 className="font-bold">Ressources du mois</h3><p className={`${material.data} text-3xl font-black tracking-tight`}><AnimatedMoney value={money(plan.economicResources, true)} /></p></div>
       <div className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">{plan.resources.map((resource) => <ResourceEditor key={resource.key} resource={resource} targetMonth={targetMonth} controls={false} walletObservation={resource.key === "benefit:swile" ? plan.benefitWallets.SWILE.latestObservation : resource.key === "benefit:edenred" ? plan.benefitWallets.EDENRED.latestObservation : null} />)}</div>
-      <p className="mt-4 text-sm text-slate-600">Ressources économiques du mois · Disponible réel aujourd’hui : <strong>{money(cash.currentRealBankBalance.amount, true)}</strong>. Les titres-restaurants ne sont pas un solde bancaire.</p>
+      <p className="mt-4 text-sm text-slate-600">Le solde bancaire est un stock distinct des ressources économiques du mois. Les titres-restaurants ne sont pas un solde bancaire.</p>
     </section>
 
     <section aria-labelledby="outflows-title"><div className="flex flex-wrap items-end justify-between gap-2"><h2 id="outflows-title" className="scroll-mt-24 text-2xl font-black">Ce qui part quoi qu’il arrive</h2><p className={`${material.data} text-2xl font-black`}><AnimatedMoney value={money(plan.certainOutflows.total, true)} /></p></div>

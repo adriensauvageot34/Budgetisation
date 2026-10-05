@@ -1,5 +1,5 @@
 /** Capabilities describe permitted decisions, not a second category taxonomy. */
-export const CATEGORY_CHOICE_STRATEGIES = ["REDUCE_PERCENT", "REDUCE_AMOUNT", "REDUCE_ONE_OCCURRENCE"] as const;
+export const CATEGORY_CHOICE_STRATEGIES = ["REDUCE_PERCENT", "REDUCE_AMOUNT", "REDUCE_ONE_OCCURRENCE", "TEST_AMOUNT"] as const;
 export type CategoryChoiceStrategy = typeof CATEGORY_CHOICE_STRATEGIES[number];
 export type CategoryDecisionCapabilities = Readonly<{
   label: string; role: "BEHAVIORAL" | "CONSTRAINED"; targetAllowed: boolean;
@@ -30,7 +30,8 @@ export function categoryDecisionCapabilities(key: string, published?: CategoryDe
 }
 export type MonthChoiceOperation = Readonly<{ kind: "CATEGORY"; categoryKey: string } & (
   { strategy: "REDUCE_PERCENT"; percent: string } | { strategy: "REDUCE_AMOUNT"; amount: string } | { strategy: "REDUCE_ONE_OCCURRENCE" }
-)> | Readonly<{ kind: "SAVINGS"; savingsId: string; strategy: "ADJUST_SAVINGS"; amount: string }>;
+  | { strategy: "TEST_AMOUNT"; amount: string; testOrigin?: Readonly<{ kind: "percentagePreset" | "amountDelta" | "habitualPreset"; value: string }> }
+)> | Readonly<{ kind: "SAVINGS"; savingsId: string; strategy: "ADJUST_SAVINGS" | "TEST_SAVINGS"; amount: string }>;
 export type MonthChoice = Readonly<{ operations: readonly MonthChoiceOperation[] }>;
 const record = (raw: unknown): Record<string, unknown> => {
   if (!raw || typeof raw !== "object" || Array.isArray(raw)) throw new TypeError("MONTH_CHOICE_INVALID");
@@ -48,7 +49,7 @@ export function parseMonthChoice(raw: unknown): MonthChoice {
     const row = record(raw), strategy = row.strategy;
     if (row.kind === "CATEGORY") {
       if (typeof row.categoryKey !== "string" || !isDecisionCategoryKey(row.categoryKey)) throw new TypeError("MONTH_CHOICE_CATEGORY_INVALID");
-      const keys = ["kind", "categoryKey", "strategy", ...(strategy === "REDUCE_PERCENT" ? ["percent"] : strategy === "REDUCE_AMOUNT" ? ["amount"] : [])];
+      const keys = ["kind", "categoryKey", "strategy", ...(strategy === "REDUCE_PERCENT" ? ["percent"] : strategy === "TEST_AMOUNT" ? ["amount", "testOrigin"] : strategy === "REDUCE_AMOUNT" ? ["amount"] : [])];
       if (!CATEGORY_CHOICE_STRATEGIES.includes(strategy as CategoryChoiceStrategy) || Object.keys(row).some(key => !keys.includes(key))) throw new TypeError("MONTH_CHOICE_INVALID");
       const base = { kind: "CATEGORY" as const, categoryKey: row.categoryKey };
       if (strategy === "REDUCE_PERCENT") {
@@ -57,9 +58,18 @@ export function parseMonthChoice(raw: unknown): MonthChoice {
         return { ...base, strategy, percent };
       }
       if (strategy === "REDUCE_AMOUNT") return { ...base, strategy, amount: choiceAmount(row.amount) };
+      if (strategy === "TEST_AMOUNT") {
+        const amount = choiceAmount(row.amount);
+        if (row.testOrigin === undefined) return { ...base, strategy, amount };
+        const origin = record(row.testOrigin);
+        if (!["percentagePreset", "amountDelta", "habitualPreset"].includes(String(origin.kind)) || Object.keys(origin).some(key => !["kind", "value"].includes(key))
+          || typeof origin.value !== "string" || !/^-?(?:0|[1-9]\d{0,8})(?:\.\d{1,2})?$/u.test(origin.value)
+          || origin.kind === "percentagePreset" && (Number(origin.value) < -100 || Number(origin.value) > 500)) throw new TypeError("MONTH_CHOICE_ORIGIN_INVALID");
+        return { ...base, strategy, amount, testOrigin: { kind: origin.kind as "percentagePreset" | "amountDelta" | "habitualPreset", value: origin.value } };
+      }
       return { ...base, strategy: "REDUCE_ONE_OCCURRENCE" as const };
     }
-    if (row.kind !== "SAVINGS" || strategy !== "ADJUST_SAVINGS" || typeof row.savingsId !== "string"
+    if (row.kind !== "SAVINGS" || (strategy !== "ADJUST_SAVINGS" && strategy !== "TEST_SAVINGS") || typeof row.savingsId !== "string"
       || !/^[0-9a-f-]{36}$/iu.test(row.savingsId) || Object.keys(row).some(key => !["kind", "strategy", "savingsId", "amount"].includes(key))) throw new TypeError("MONTH_CHOICE_INVALID");
     return { kind: "SAVINGS" as const, savingsId: row.savingsId, strategy, amount: choiceAmount(row.amount) };
   });

@@ -36,6 +36,10 @@ async function mutateMonthInputs(form: FormData, controlCenter = false): Promise
   const stored = await readMonthInputs(supabase, household.householdId, targetMonth);
   const current: MonthInputs = monthInputsSchema.parse(stored.inputs);
   const intent = field(form, "intent");
+  if (["update-declared-savings", "remove-declared-outflow"].includes(intent)) {
+    const saving = current.declaredOutflows.find(item => item.id === field(form, "outflowId"));
+    if (!saving || saving.adjustability === "PROTECTED") throw new TypeError("MONTH_CHOICE_SAVINGS_PROTECTED_OR_UNKNOWN");
+  }
   const walletInputs = current.benefitWallets!;
   const withLoading = (provider: BenefitProvider, amount: string | null, date: string | null): MonthInputs => {
     const key = benefitResourceKey(provider), declaredResources = { ...current.declaredResources }, resourceOverrides = { ...current.resourceOverrides };
@@ -175,6 +179,8 @@ async function mutateMonthInputs(form: FormData, controlCenter = false): Promise
   // Validate the derived scenario against the published authority before writing.
   try {
     const plannedExpenses = await readPlannedExpenses(supabase, household.householdId, targetMonth);
+    const expectedDigest = field(form, "expectedDigest");
+    if (expectedDigest && expectedDigest !== monthChoiceDigest({ forecast, inputs: current, expenses: plannedExpenses, asOf: planningDate(household.timezone) })) throw new TypeError("STALE_PREVIEW");
     deriveMonthScenario(forecast, next, null, planningDate(household.timezone), plannedExpenses);
   } catch (error) {
     if (error instanceof TypeError) {

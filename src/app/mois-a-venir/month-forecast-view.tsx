@@ -10,6 +10,7 @@ import type { PlannedVehicleEstimate } from "@/server/phase2/planned-context";
 import { PlannedExpenseInteractions } from "./planned-expense-interactions";
 import { MonthSectionNav } from "./month-section-nav";
 import { MonthControlCenter, MonthControlLink } from "./month-control-center";
+import { BankStockCard } from "./bank-stock-card";
 import material from "./month-material.module.css";
 
 const money = (value: string | null) => value === null ? "À confirmer" : new Intl.NumberFormat("fr-FR", { style: "currency", currency: "EUR" }).format(Number(value));
@@ -30,7 +31,7 @@ export function MonthForecastView({ forecast, scenario, stored, plannedExpenses,
     <MonthSectionNav hasProjects={plannedExpenses.length > 0} actionableCount={model.actionableCount} />
     {!scenario.economicPlan && <section className={`${material.glassSecondary} p-5`} role="status"><h2 className="font-bold">Compléter les ressources du mois</h2>
       <p className="mt-2 text-sm">Il manque des informations pour préparer ce mois. Le solde bancaire daté reste indépendant des ressources à compléter.</p>
-      <p className="mt-2 text-xl font-black">Disponible réel Banque : {money(scenario.availableNow.value)}</p>
+      <h3 className="mt-3 font-bold">Disponible aujourd’hui</h3><BankStockCard balance={scenario.availableNow.value === null ? { status: "UNKNOWN", amount: null, reason: "BANK_BALANCE_UNKNOWN" } : { status: "KNOWN", amount: scenario.availableNow.value, asOfDate: scenario.availableNow.asOfDate, provenance: ["AVAILABLE_NOW_AUTHORITY"] }} />
       <MonthControlLink section="update" focus="income" className="mt-3 text-sm font-bold underline">Renseigner les ressources</MonthControlLink></section>}
     <MonthStory plan={scenario.economicPlan} targetMonth={targetMonth} plannedExpenses={plannedExpenses} calendarCarryovers={calendarCarryovers} persons={persons} places={places} vehicle={vehicle} prices={prices} wallets={wallets} today={today} dateEvidence={forecast.referencePlan?.estimatedDays ?? {}}
       settings={stored.inputs.decision} memory={forecast.forecastMemory}

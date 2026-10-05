@@ -121,6 +121,16 @@ export function projectMonthControlCenter(ctx: MonthChoiceContext) {
     projectionSummary: { economic: plan?.narrative.final ?? null, bank: plan?.bankCash.endOfMonth ?? null,
       globalGoal: settings.goal, globalDelta, globalGap, globalSatisfied: globalDelta !== null && new Big(globalDelta).gte(0),
       remainingDailyLife: plan?.monthlyLayers.remainingDailyLife ?? null, categoryGap: decision?.totalCategoryGap ?? "0.00", protectedSavings: plan?.savingsAllocations.protectedTotal ?? null, totalSavings: plan?.savingsAllocations.total ?? null },
+    categoryTestPresets: Object.fromEntries(categoryControls.map(row => {
+      if (row.capabilities.adjustability !== "ADJUSTABLE" || !row.capabilities.strategies.includes("REDUCE_AMOUNT")) return [row.key, []];
+      const base = new Big(row.forecast), floor = new Big(row.irreversibleFloor);
+      const candidates = [
+        ...(base.gt(0) ? [-10, -5, 5, 10].map(percent => ({ label: `${percent > 0 ? "+" : "−"}${Math.abs(percent)} %`, amount: base.times(100 + percent).div(100).toFixed(2), testOrigin: { kind: "percentagePreset" as const, value: String(percent) } })) : []),
+        ...[-50, -25, 25, 50].map(delta => ({ label: `${delta > 0 ? "+" : "−"}${Math.abs(delta)} €`, amount: base.plus(delta).toFixed(2), testOrigin: { kind: "amountDelta" as const, value: String(delta) } })),
+        ...(!base.gt(0) && new Big(habitualControls.find(item => item.key === row.key)?.forecast ?? 0).gt(0) ? [{ label: `Revenir à l’habitude · ${money(habitualControls.find(item => item.key === row.key)!.forecast)}`, amount: habitualControls.find(item => item.key === row.key)!.forecast, testOrigin: { kind: "habitualPreset" as const, value: "0" } }] : []),
+      ];
+      return [row.key, candidates.filter(item => new Big(item.amount).gte(floor) && !new Big(item.amount).eq(base))];
+    })),
     tensions, categoryTensions, globalTensions, rootCauses, knowledgeIssues: rootCauses, scopedReliability,
     observations: [{ key: "bank", label: "Solde Banque", nature: "FACT" as const, amount: inputs.openingBalance?.amount ?? null, date: inputs.openingBalance?.asOfDate ?? null },
       ...Object.values(scenario.benefitWallets).map(wallet => ({ key: wallet.provider, label: wallet.provider === "SWILE" ? "Solde Swile" : "Solde Edenred", nature: "FACT" as const,

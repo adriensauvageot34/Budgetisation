@@ -4,13 +4,14 @@ import { createContext, useCallback, useContext, useEffect, useRef, useState, us
 import { useRouter } from "next/navigation";
 import { SlidersHorizontal, Info } from "lucide-react";
 import { OverlayFrame } from "@/ui/overlays/overlay-frame";
-import { monthControlSection, monthWorkspaceFocus, monthControlUrl, replaceMonthControlOperation, parseMonthControlDraft, parseMonthControlPurpose,
+import { monthControlHeaderPolicy, monthControlSection, monthWorkspaceFocus, monthControlUrl, replaceMonthControlOperation, parseMonthControlDraft, parseMonthControlPurpose,
   type MonthControlSection, type MonthControlSectionInput, type MonthControlPurpose } from "@/domain/phase2/month-control-contract";
 import type { MonthChoiceOperation } from "@/domain/phase2/month-choice-contract";
 import { previewMonthControlCenter, applyMonthChoice, undoMonthChoice, updateMonthControlInputs } from "./actions";
 import { MonthControlSimulator } from "./month-control-simulator";
 import { MonthControlSavings, MonthChoiceFocus } from "./month-control-choices";
-import { MonthWorkspaceRoot, MonthPilotIndex, MonthPilotCategory, MonthInfoFacts } from "./month-control-workspace";
+import { MonthPilotEditor } from "./month-pilot-editor";
+import { MonthWorkspaceRoot, MonthPilotIndex, MonthInfoFacts } from "./month-control-workspace";
 import { MonthUpdateSpatial } from "./month-update-spatial";
 import { TargetFocus, AdjustmentFocus } from "./month-choice-editors";
 import { MonthLocalFocusProvider } from "./month-control-focus";
@@ -97,7 +98,7 @@ export function MonthControlCenter({ model, initialSection = null, initialFocus 
   useEffect(() => {
     if (previousDigest.current === model.baseDigest) return;
     previousDigest.current = model.baseDigest; ++request.current; requested.current = null; setTrial(null);
-    if (operations.length) setMessage("Le mois a changé. Votre simulation est recalculée…");
+    if (operations.length) setMessage(null);
     else setPurpose(model.defaultPurpose);
   }, [model.baseDigest, model.defaultPurpose, operations.length]);
   const recalculate = useCallback((nextOperations: readonly MonthChoiceOperation[], nextPurpose: MonthControlPurpose) => {
@@ -152,7 +153,7 @@ export function MonthControlCenter({ model, initialSection = null, initialFocus 
     if (!activeTrial?.preview || pending || !activeTrial.applicable) return;
     startTransition(async () => {
       try { const result = await applyMonthChoice(model.targetMonth, { operations }, activeTrial.baseDigest);
-        if (result.ok) { ++request.current; setOperations([]); try { sessionStorage.removeItem(draftSessionKey); } catch {} setTrial(null); requested.current = null; setMessage(null); setUndoToken(result.undoToken); try { sessionStorage.setItem(undoSessionKey, JSON.stringify({ token: result.undoToken, expires: Date.now() + 10 * 60_000 })); } catch {} setToast(`Scénario appliqué · +${controlMoney(activeTrial.budgetMarginGain)} de marge estimée`); router.refresh(); }
+        if (result.ok) { ++request.current; setOperations([]); try { sessionStorage.removeItem(draftSessionKey); } catch {} setTrial(null); requested.current = null; setMessage(null); setUndoToken(result.undoToken); try { sessionStorage.setItem(undoSessionKey, JSON.stringify({ token: result.undoToken, expires: Date.now() + 10 * 60_000 })); } catch {} setToast(`Scénario appliqué · ${Number(activeTrial.budgetMarginGain) > 0 ? "+" : ""}${controlMoney(activeTrial.budgetMarginGain)} en fin de mois`); router.refresh(); }
         else { setMessage(result.message); setTrial(null); requested.current = null; router.refresh(); } }
       catch { setMessage("Ce scénario n’a pas été enregistré. Recalculez-le avant de réessayer."); setTrial(null); }
     });
@@ -177,26 +178,27 @@ export function MonthControlCenter({ model, initialSection = null, initialFocus 
       catch { setMessage("Enregistrement impossible pour le moment. Votre saisie est conservée."); }
     });
   };
+  const headerPolicy = monthControlHeaderPolicy(focus);
   const pilotCategory = model.categoryControls.find(row => focus === `pilot:category:${row.key}`);
   const targetCategory = model.categoryControls.find(row => focus === `pilot:target:${row.key}`);
   const adjustmentCategory = model.categoryControls.find(row => focus === `pilot:adjustment:${row.key}`);
   return <ControlContext.Provider value={{ open: navigate }}>
     <div ref={background}>{children}</div>
     <OverlayFrame open={open} kind="exploration" title={`Centre de contrôle — ${new Intl.DateTimeFormat("fr-FR", { month: "long", year: "numeric", timeZone: "UTC" }).format(new Date(`${model.targetMonth}-01T12:00:00Z`))}`}
-      headerAside={<div className={styles.headerSummary} aria-label="Résumé du mois"><span>Fin de mois <strong>≈ {controlMoney(model.projectionSummary.economic?.central)}</strong></span><button type="button" className={styles.headerGoal} onClick={() => openEntity("global-goal")}>{model.settings.goal === null ? "+ Définir un objectif" : `Objectif ${controlMoney(model.settings.goal)}`}</button>{model.settings.goal !== null && <span>{Number(model.projectionSummary.globalDelta) >= 0 ? "+" : ""}{controlMoney(model.projectionSummary.globalDelta)}</span>}<div ref={infoRoot} className={styles.infoAnchor}><button ref={infoButton} type="button" aria-label="État des données" aria-expanded={info} aria-controls="month-control-info" className={styles.infoButton} onClick={() => { setInfo(!info); updateLocation("center", !info ? "info" : focus); }}><Info size={18} aria-hidden="true" /></button>{info && <section id="month-control-info" className={styles.infoPopover} aria-label="État des données"><MonthInfoFacts model={model} /></section>}</div></div>} className={`${material.page} ${styles.frame}`}
+      headerAside={<div className={styles.headerSummary} aria-label="Résumé du mois"><span>Fin de mois <strong>≈ {controlMoney(model.projectionSummary.economic?.central)}</strong></span>{headerPolicy.globalGoal && <button type="button" className={styles.headerGoal} onClick={() => openEntity("global-goal")}>{model.settings.goal === null ? "+ Définir un objectif" : `Objectif ${controlMoney(model.settings.goal)}`}</button>}{headerPolicy.globalGoal && model.settings.goal !== null && <span>{Number(model.projectionSummary.globalDelta) >= 0 ? "+" : ""}{controlMoney(model.projectionSummary.globalDelta)}</span>}{headerPolicy.information && <div ref={infoRoot} className={styles.infoAnchor}><button ref={infoButton} type="button" aria-label="État des données" aria-expanded={info} aria-controls="month-control-info" className={styles.infoButton} onClick={() => { setInfo(!info); updateLocation("center", !info ? "info" : focus); }}><Info size={18} aria-hidden="true" /></button>{info && <section id="month-control-info" className={styles.infoPopover} aria-label="État des données"><MonthInfoFacts model={model} /></section>}</div>}</div>} className={`${material.page} ${styles.frame}`}
       closeAction={{ kind: "callback", onAction: close }} backgroundRootRef={background} restoreFocusRef={invoker} semanticFallbackRef={fallback} closeOnBackdrop>
       <div className={styles.layout}>
         <div ref={content} className={styles.content} data-control-content="" data-section={section} onSubmitCapture={sendForm}>
           {toast && <div role="status" className={styles.saveToast}>{toast}{undoToken && <button type="button" className={styles.textAction} disabled={pending} onClick={() => startTransition(async () => { const result = await undoMonthChoice(model.targetMonth, undoToken); if (result.ok) { setUndoToken(null); clearUndoSession(); setToast("Scénario annulé"); router.refresh(); } else setMessage(result.message); })}>Annuler</button>}</div>}
           {message && <p role="status" className={styles.status}>{message}</p>}
           <div key={focus ?? "root"} className={styles.surfaceMotion} style={{ "--zone-origin": focus?.includes("MODIFIED") ? "80% 20%" : focus?.includes("DISABLED") ? "20% 80%" : focus?.includes("CONFIRMED") ? "80% 80%" : "20% 20%" } as React.CSSProperties}><MonthLocalFocusProvider value={{ section, entity: focus, openEntity }}>
-          {section === "update" ? <MonthUpdateSpatial model={model} refreshing={refreshingDigest === model.baseDigest} /> : focus === "pilot" ? <MonthPilotIndex model={model} draftCount={operations.length} /> : focus === "savings" ? <MonthControlSavings model={model} />
-            : pilotCategory ? <MonthPilotCategory key={pilotCategory.key} model={model} category={pilotCategory} trial={activeTrial} operations={operations} pending={pending} replaceDraft={replaceDraft} reset={() => recalculate(operations.filter(row => row.kind !== "CATEGORY" || row.categoryKey !== pilotCategory.key), { kind: "FREE_EXPLORATION" })} apply={apply} />
+          {section === "update" ? <MonthUpdateSpatial model={model} refreshing={refreshingDigest === model.baseDigest} /> : focus === "pilot" ? <MonthPilotIndex model={model} draftCount={operations.length} trial={activeTrial} operations={operations} /> : focus === "savings" ? <MonthControlSavings model={model} />
+            : pilotCategory ? <MonthPilotEditor key={`${pilotCategory.key}:${pilotCategory.forecast}:${operations.length === 0}`} model={model} category={pilotCategory} trial={activeTrial} operations={operations} pending={pending} replaceDraft={replaceDraft} reset={() => recalculate(operations.filter(row => row.kind !== "CATEGORY" || row.categoryKey !== pilotCategory.key), { kind: "FREE_EXPLORATION" })} apply={apply} />
             : targetCategory ? <TargetFocus key={`${targetCategory.key}:${targetCategory.target}`} model={model} category={targetCategory} /> : adjustmentCategory ? <AdjustmentFocus key={adjustmentCategory.key} model={model} category={adjustmentCategory} />
-            : focus === "pilot:review" ? <MonthControlSimulator model={model} trial={activeTrial} purpose={purpose} operations={operations} pending={pending} replaceDraft={replaceDraft} recalculate={recalculate} apply={apply} />
+            : (focus === "pilot:review" || focus === "pilot:add") ? <MonthControlSimulator initialAdd={focus === "pilot:add"} model={model} trial={activeTrial} purpose={purpose} operations={operations} pending={pending} replaceDraft={replaceDraft} recalculate={recalculate} apply={apply} />
             : focus ? <MonthChoiceFocus model={model} /> : <MonthWorkspaceRoot model={model} draftCount={operations.length} />}
           </MonthLocalFocusProvider></div>
-          {pending && <p role="status" className={styles.pendingNotice}>Recalcul en cours…</p>}
+
         </div>
       </div>
     </OverlayFrame>

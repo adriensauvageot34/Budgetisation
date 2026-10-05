@@ -158,7 +158,12 @@ await test("SAVE-016", async () => {
     assert.deepEqual(reload, saved.scenario.economicPlan);
     assert.equal(reload.savingsAllocations.total, "1360.00");
   }
-  for (const row of current.declaredOutflows.slice(1)) await actions.updateMonthInputs(form({ intent: "remove-declared-outflow", outflowId: row.id }));
+  for (const row of current.declaredOutflows.slice(1)) {
+    if (row.adjustability === "PROTECTED") await assert.rejects(actions.updateMonthInputs(form({ intent: "remove-declared-outflow", outflowId: row.id })), /PROTECTED/);
+    else await actions.updateMonthInputs(form({ intent: "remove-declared-outflow", outflowId: row.id }));
+  }
+  // Cleanup is confined to the synthetic in-memory fixture.
+  h.facts.inputs["2026-10"].declaredOutflows = structuredClone(monthInputsSchema.parse(inputs).declaredOutflows);
   assert.deepEqual((await realReadInputs(h.client, h.householdId, "2026-10")).inputs.declaredOutflows, monthInputsSchema.parse(inputs).declaredOutflows);
   delete process.env.PHASE2_FORECAST_TEMPORAL_MODE;
 });

@@ -31,16 +31,28 @@ export function simulateMonthChoice(ctx: MonthChoiceContext, rawChoice: unknown)
     if (op.kind === "SAVINGS") {
       const savings = before.savingsAllocations.items.find(row => row.id === op.savingsId);
       if (!savings || savings.adjustability !== "ADJUSTABLE") throw new TypeError("MONTH_CHOICE_SAVINGS_PROTECTED_OR_UNKNOWN");
-      const reduction = min(new Big(savings.amount), new Big(op.amount));
+      const reduction = op.strategy === "TEST_SAVINGS" ? new Big(savings.amount).minus(op.amount) : min(new Big(savings.amount), new Big(op.amount));
       declaredOutflows = declaredOutflows.map(row => row.id === savings.id ? { ...row, amount: new Big(row.amount).minus(reduction).toFixed(2) } : row);
       if (savings.source === "ANNUAL_PLAN") { applicable = false; limitations.push("Simulation uniquement : l’adoption attend le contrat de la page annuelle."); }
       continue;
     }
     const control = controls.find(row => row.key === op.categoryKey);
-    if (!control || control.capabilities.adjustability !== "ADJUSTABLE" || !control.capabilities.strategies.includes(op.strategy))
+    if (!control || control.capabilities.adjustability !== "ADJUSTABLE" || !(op.strategy === "TEST_AMOUNT" ? control.capabilities.strategies.includes("REDUCE_AMOUNT") : control.capabilities.strategies.includes(op.strategy)))
       throw new TypeError("MONTH_CHOICE_CATEGORY_FORBIDDEN");
     const category = [...before.narrative.prediction.essential, ...before.narrative.prediction.optional].find(row => row.key === op.categoryKey)!;
     const remaining = new Big(categoryDecisionFacts(category).reducibleRemaining);
+    if (op.strategy === "TEST_AMOUNT") {
+      const origin = op.testOrigin;
+      const habitual = origin?.kind === "habitualPreset" ? deriveMonthScenario(ctx.forecast, { ...inputs, decision: { ...settings, assumptions: {} } }, null, ctx.asOf, ctx.expenses).economicPlan : null;
+      const tested = origin?.kind === "percentagePreset" ? new Big(control.forecast).times(new Big(100).plus(origin.value)).div(100).round(2)
+        : origin?.kind === "amountDelta" ? new Big(control.forecast).plus(origin.value)
+        : origin?.kind === "habitualPreset" ? new Big(projectCategoryControls(habitual!, settings).find(row => row.key === op.categoryKey)!.forecast)
+        : new Big(op.amount), floor = new Big(control.irreversibleFloor);
+      if (tested.lt(floor)) throw new TypeError("MONTH_CHOICE_BELOW_IRREVERSIBLE_FLOOR");
+      assumptions[op.categoryKey] = { mode: "CUSTOM", amount: tested.minus(floor).toFixed(2) };
+      limitations.push(...control.limitations);
+      continue;
+    }
     let reduction: Big;
     if (op.strategy === "REDUCE_PERCENT") reduction = remaining.times(op.percent).div(100);
     else if (op.strategy === "REDUCE_AMOUNT") reduction = min(remaining, new Big(op.amount));
