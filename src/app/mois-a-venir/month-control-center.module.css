@@ -205,3 +205,9 @@ button.controlRow:focus-visible { outline: 2px solid #7c3aed; outline-offset: 3p
 .saveToast { top: auto; bottom: 70px; display: flex; align-items: center; gap: 14px; }
 .closeDraft { position: absolute; inset: 0; z-index: 15; display: grid; place-content: center; gap: 18px; background: #fcfafff7; text-align: center; border-radius: 20px; }
 .closeDraft > div { display: flex; gap: 14px; justify-content: center; }
+
+/* Desktop wallet editors: heading and local choices share one row. */
+.walletHeader { display: flex; align-items: center; justify-content: space-between; gap: 24px; }
+.updateEditor .walletHeader > div { margin-top: 0; }
+.walletHeader button { padding: 7px 16px; }
+.updateEditor [data-wallet-editor="LOADING"] > h3 { font-size: 20px; line-height: 1.3; }

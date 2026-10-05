@@ -28,7 +28,7 @@ export function MonthUpdateControls({ model, data, focus, back, triage = false, 
   const provider = entity === "SWILE" || entity === "EDENRED" ? entity : null;
   return <UpdateTriageContext.Provider value={triage}><div className={`${styles.focusPane} ${styles.factFocus}`} data-local-focus={entity}>
     {!embedded && <button type="button" className={styles.localBack} onClick={back ?? (() => local.openEntity("update"))}>← Mettre à jour</button>}
-    {triage && <p className={styles.triageCount}>{model.update.needsUpdateCount} information{model.update.needsUpdateCount > 1 ? "s" : ""} à actualiser</p>}
+    {triage && !embedded && <p className={styles.triageCount}>{model.update.needsUpdateCount} information{model.update.needsUpdateCount > 1 ? "s" : ""} à actualiser</p>}
     {provider ? <WalletFocus key={provider} model={model} provider={provider} data={data} /> : entity === "BANK" ? <BankFocus model={model} data={data} /> : resource ? <IncomeFocus key={`${resource.key}:${resource.amount}`} model={model} resource={resource} /> : obligation ? <ObligationFocus key={`${obligation.key}:${JSON.stringify(obligationState(obligation, data.inputs))}`} model={model} row={obligation} inputs={data.inputs} /> : <p>Cette information n’est plus disponible.</p>}
   </div></UpdateTriageContext.Provider>;
 }
@@ -53,8 +53,8 @@ function BankDetails({ bank }: { bank: MonthUpdateData["bank"] }) {
 function WalletFocus({ model, provider, data }: { model: MonthControlModel; provider: "SWILE" | "EDENRED"; data: MonthUpdateData }) {
   const [editor, setEditor] = useState<"NONE" | "BALANCE" | "LOADING" | "FUNDING" | "OBSERVATIONS">(model.update.groups.NEEDS_UPDATE.some(row => row.id === provider) && model.resourceInputs.projections[provider].currentBalanceKnowledge.amount !== null ? "LOADING" : "BALANCE");
   const wallet = model.resourceInputs.wallets[provider], projection = model.resourceInputs.projections[provider], label = provider === "SWILE" ? "Swile" : "Edenred";
-  return <section data-wallet-focus={provider}><h2 className="text-2xl font-black">{label}</h2>
-    <div className="mt-6 flex flex-wrap gap-3">{([["BALANCE", "Solde"], ["LOADING", "Chargement"], ["FUNDING", "Financement"]] as const).map(([key, title]) => <button type="button" key={key} aria-pressed={editor === key} className={`${material.clayChip} px-4 py-3 font-bold`} onClick={() => setEditor(key)}>{title}</button>)}</div>
+  return <section data-wallet-focus={provider}><header className={styles.walletHeader}><h2 className="text-2xl font-black">{label}</h2>
+    <div className="mt-6 flex flex-wrap gap-3">{([["BALANCE", "Solde"], ["LOADING", "Chargement"], ["FUNDING", "Financement"]] as const).map(([key, title]) => <button type="button" key={key} aria-pressed={editor === key} className={`${material.clayChip} px-4 py-3 font-bold`} onClick={() => setEditor(key)}>{title}</button>)}</div></header>
     {editor === "NONE" && <dl className="mt-7 space-y-5"><div><dt className="text-sm text-slate-600">Solde actuel</dt><dd className="mt-1 text-xl font-bold">{money(projection.currentBalanceKnowledge.amount, true)}</dd></div><div><dt className="text-sm text-slate-600">Chargement de {controlMonth(model.targetMonth)}</dt><dd className="mt-1 text-xl font-bold">{money(projection.expectedLoading?.amount, true)}</dd></div><div><dt className="text-sm text-slate-600">Peut encore financer</dt><dd className="mt-1 text-xl font-bold">{money(projection.usableCapacity, true)}</dd></div><p className="text-sm text-slate-600">Le chargement est un flux prévu ; il n’est jamais confondu avec le solde actuel.</p></dl>}
     {editor === "BALANCE" && <WalletBalanceForm key={`${projection.currentBalanceKnowledge.amount}:${wallet.balanceObservations.length}`} model={model} provider={provider} />}
     {editor === "LOADING" && <WalletLoadingForm key={`${projection.expectedLoading?.amount}:${projection.expectedLoading?.expectedDate}`} model={model} provider={provider} />}
