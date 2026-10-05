@@ -108,9 +108,9 @@ Commande : `npm run check:phase2-planner-kernel`.
 | BASE-001..007 — consommation occurrence, SET_STATE, montant optionnel, dépassement, UNKNOWN, immutabilité C1, réserve préservée | PASS |
 | FIN-001 / 002 / 005 / 006 — owner financier, épargne sans consommation, external intent unique avec Plan actif, neutralisation legacy | PASS |
 | C2-001..007 — 40 contrôles, Preview sans persistence, entrées sans rows, neutralisation unique, stale zéro writes, manifest déterministe, direct V2 | PASS |
-| 16 groupes KERNEL supplémentaires | PASS |
+| 17 groupes KERNEL supplémentaires | PASS |
 
-Total : **39 groupes PASS**, dont les 23 oracles demandés. Les contrôles supplémentaires
+Total : **40 groupes PASS**, dont les 23 oracles demandés. Les contrôles supplémentaires
 couvrent retries, quatre relations, coûts inconnus, épargne protégée, normalisation,
 capacité totale, changement de preuve seul, cutoff de prix, mapping ambigu, observations
 déjà réalisées, relecture à sources changées, CAS après relecture, retry concurrent,
