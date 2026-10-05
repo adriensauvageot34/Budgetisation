@@ -214,3 +214,5 @@ button.controlRow:focus-visible { outline: 2px solid #7c3aed; outline-offset: 3p
 
 .updateEditor [data-wallet-focus] dl { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: 32px; row-gap: 8px; }
 .updateEditor [data-wallet-focus] dl > div { margin-top: 0; }
+
+.updateEditor [data-wallet-focus] h3 { font-size: 20px; line-height: 1.3; margin-bottom: 12px; }
