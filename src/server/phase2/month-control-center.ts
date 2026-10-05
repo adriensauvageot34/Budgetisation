@@ -121,6 +121,8 @@ export function projectMonthControlCenter(ctx: MonthChoiceContext) {
     projectionSummary: { economic: plan?.narrative.final ?? null, bank: plan?.bankCash.endOfMonth ?? null,
       globalGoal: settings.goal, globalDelta, globalGap, globalSatisfied: globalDelta !== null && new Big(globalDelta).gte(0),
       remainingDailyLife: plan?.monthlyLayers.remainingDailyLife ?? null, categoryGap: decision?.totalCategoryGap ?? "0.00", protectedSavings: plan?.savingsAllocations.protectedTotal ?? null, totalSavings: plan?.savingsAllocations.total ?? null },
+    pilotCandidates: plan ? [...categoryControls.filter(row => row.capabilities.adjustability === "ADJUSTABLE" && row.capabilities.strategies.includes("REDUCE_AMOUNT") && new Big(row.forecast).gte(row.irreversibleFloor)).map(row => ({ target: `category:${row.key}`, label: row.label, focus: `pilot:category:${row.key}` })),
+      ...savings.filter(row => row.adjustability === "ADJUSTABLE" && row.source === "MONTH_INPUT").map(row => ({ target: `savings:${row.id}`, label: row.label, focus: `pilot:saving:${row.id}` }))] : [],
     categoryTestPresets: Object.fromEntries(categoryControls.map(row => {
       if (row.capabilities.adjustability !== "ADJUSTABLE" || !row.capabilities.strategies.includes("REDUCE_AMOUNT")) return [row.key, []];
       const base = new Big(row.forecast), floor = new Big(row.irreversibleFloor);

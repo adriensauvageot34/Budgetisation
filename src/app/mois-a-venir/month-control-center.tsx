@@ -8,7 +8,7 @@ import { monthControlHeaderPolicy, monthControlSection, monthWorkspaceFocus, mon
   type MonthControlSection, type MonthControlSectionInput, type MonthControlPurpose } from "@/domain/phase2/month-control-contract";
 import type { MonthChoiceOperation } from "@/domain/phase2/month-choice-contract";
 import { previewMonthControlCenter, applyMonthChoice, undoMonthChoice, updateMonthControlInputs } from "./actions";
-import { MonthControlSimulator } from "./month-control-simulator";
+import { MonthPilotAdd, MonthPilotReview, MonthPilotSaving } from "./month-pilot-scenario";
 import { MonthControlSavings, MonthChoiceFocus } from "./month-control-choices";
 import { MonthPilotEditor } from "./month-pilot-editor";
 import { MonthWorkspaceRoot, MonthPilotIndex, MonthInfoFacts } from "./month-control-workspace";
@@ -62,6 +62,7 @@ export function MonthControlCenter({ model, initialSection = null, initialFocus 
     } catch { try { sessionStorage.removeItem(draftSessionKey); } catch {} }
     setSessionReady(true);
   }, [draftSessionKey]);
+  const [trialKey, setTrialKey] = useState<string | null>(null);
   const [trial, setTrial] = useState<Workbench | null>(null), [pending, startTransition] = useTransition();
   useEffect(() => {
     try { const saved = JSON.parse(sessionStorage.getItem(undoSessionKey) ?? "null");
@@ -109,7 +110,7 @@ export function MonthControlCenter({ model, initialSection = null, initialFocus 
     if (previewTimer.current) clearTimeout(previewTimer.current);
     previewTimer.current = setTimeout(() => startTransition(async () => {
       try { const result = await previewMonthControlCenter(model.targetMonth, nextPurpose, nextOperations);
-        if (sequence === request.current) { setTrial(result); setMessage(null); if (result.baseDigest !== model.baseDigest) router.refresh(); } }
+        if (sequence === request.current) { setTrial(result); setTrialKey(JSON.stringify([result.baseDigest, nextPurpose, nextOperations])); setMessage(null); if (result.baseDigest !== model.baseDigest) router.refresh(); } }
       catch { if (sequence === request.current) setMessage("Le scénario ne peut pas encore être calculé. Vérifiez ses choix ou réinitialisez-le ; le mois enregistré reste inchangé."); }
     }), nextOperations.length ? 180 : 0);
   }, [model.baseDigest, model.targetMonth, router, draftSessionKey]);
@@ -148,14 +149,24 @@ export function MonthControlCenter({ model, initialSection = null, initialFocus 
     try { recalculate(replaceMonthControlOperation(operations, operation), { kind: "FREE_EXPLORATION" }); }
     catch { setMessage("Vérifiez cette réduction. Deux cibles différentes au maximum peuvent être simulées."); }
   };
-  const activeTrial = trial?.baseDigest === model.baseDigest ? trial : null;
+  const activeTrial = trial?.baseDigest === model.baseDigest && trialKey === JSON.stringify([model.baseDigest, purpose, operations]) ? trial : null;
+  const previewPending = pending || operations.length > 0 && !activeTrial;
+  const removeDraft = (target: string | null) => recalculate(target === null ? [] : operations.filter(row => (row.kind === "CATEGORY" ? `category:${row.categoryKey}` : `savings:${row.savingsId}`) !== target), { kind: "FREE_EXPLORATION" });
+  useEffect(() => { if (sessionReady && operations.length === 0 && focus === "pilot:review") { setFocus("pilot"); updateLocation("center", "pilot"); } }, [sessionReady, operations.length, focus, updateLocation]);
+  useEffect(() => {
+    if (!activeTrial?.preview || pending) return;
+    const changed = operations.filter(op => op.kind === "CATEGORY"
+      ? Number(activeTrial.scenario.categoryControls.find(row => row.key === op.categoryKey)?.forecast) !== Number(model.categoryControls.find(row => row.key === op.categoryKey)?.forecast)
+      : Number(activeTrial.scenario.savings.find(row => row.id === op.savingsId)?.amount) !== Number(model.savings.find(row => row.id === op.savingsId)?.amount));
+    if (changed.length !== operations.length) recalculate(changed, { kind: "FREE_EXPLORATION" });
+  }, [activeTrial, pending, operations, model.categoryControls, model.savings, recalculate]);
   const apply = () => {
-    if (!activeTrial?.preview || pending || !activeTrial.applicable) return;
+    if (!operations.length || !activeTrial?.preview || pending || !activeTrial.applicable) return;
     startTransition(async () => {
       try { const result = await applyMonthChoice(model.targetMonth, { operations }, activeTrial.baseDigest);
-        if (result.ok) { ++request.current; setOperations([]); try { sessionStorage.removeItem(draftSessionKey); } catch {} setTrial(null); requested.current = null; setMessage(null); setUndoToken(result.undoToken); try { sessionStorage.setItem(undoSessionKey, JSON.stringify({ token: result.undoToken, expires: Date.now() + 10 * 60_000 })); } catch {} setToast(`Scénario appliqué · ${Number(activeTrial.budgetMarginGain) > 0 ? "+" : ""}${controlMoney(activeTrial.budgetMarginGain)} en fin de mois`); router.refresh(); }
+        if (result.ok) { ++request.current; setOperations([]); try { sessionStorage.removeItem(draftSessionKey); } catch {} setTrial(null); requested.current = null; setMessage(null); setUndoToken(result.undoToken); try { sessionStorage.setItem(undoSessionKey, JSON.stringify({ token: result.undoToken, expires: Date.now() + 10 * 60_000 })); } catch {} setFocus("pilot"); setInfo(false); updateLocation("center", "pilot"); setToast(`${operations.length} changement${operations.length > 1 ? "s" : ""} appliqué${operations.length > 1 ? "s" : ""} · ${Number(activeTrial.budgetMarginGain) > 0 ? "+" : ""}${controlMoney(activeTrial.budgetMarginGain)} en fin de mois`); router.refresh(); }
         else { setMessage(result.message); setTrial(null); requested.current = null; router.refresh(); } }
-      catch { setMessage("Ce scénario n’a pas été enregistré. Recalculez-le avant de réessayer."); setTrial(null); }
+      catch { setMessage("Enregistrement impossible pour le moment. Vos montants testés sont conservés."); recalculate(operations, purpose); }
     });
   };
   const sendForm = (event: React.FormEvent<HTMLDivElement>) => {
@@ -180,6 +191,7 @@ export function MonthControlCenter({ model, initialSection = null, initialFocus 
   };
   const headerPolicy = monthControlHeaderPolicy(focus);
   const pilotCategory = model.categoryControls.find(row => focus === `pilot:category:${row.key}`);
+  const pilotSaving = model.savings.find(row => focus === `pilot:saving:${row.id}` && row.adjustability === "ADJUSTABLE" && row.source === "MONTH_INPUT");
   const targetCategory = model.categoryControls.find(row => focus === `pilot:target:${row.key}`);
   const adjustmentCategory = model.categoryControls.find(row => focus === `pilot:adjustment:${row.key}`);
   return <ControlContext.Provider value={{ open: navigate }}>
@@ -192,10 +204,12 @@ export function MonthControlCenter({ model, initialSection = null, initialFocus 
           {toast && <div role="status" className={styles.saveToast}>{toast}{undoToken && <button type="button" className={styles.textAction} disabled={pending} onClick={() => startTransition(async () => { const result = await undoMonthChoice(model.targetMonth, undoToken); if (result.ok) { setUndoToken(null); clearUndoSession(); setToast("Scénario annulé"); router.refresh(); } else setMessage(result.message); })}>Annuler</button>}</div>}
           {message && <p role="status" className={styles.status}>{message}</p>}
           <div key={focus ?? "root"} className={styles.surfaceMotion} style={{ "--zone-origin": focus?.includes("MODIFIED") ? "80% 20%" : focus?.includes("DISABLED") ? "20% 80%" : focus?.includes("CONFIRMED") ? "80% 80%" : "20% 20%" } as React.CSSProperties}><MonthLocalFocusProvider value={{ section, entity: focus, openEntity }}>
-          {section === "update" ? <MonthUpdateSpatial model={model} refreshing={refreshingDigest === model.baseDigest} /> : focus === "pilot" ? <MonthPilotIndex model={model} draftCount={operations.length} trial={activeTrial} operations={operations} /> : focus === "savings" ? <MonthControlSavings model={model} />
-            : pilotCategory ? <MonthPilotEditor key={`${pilotCategory.key}:${pilotCategory.forecast}:${operations.length === 0}`} model={model} category={pilotCategory} trial={activeTrial} operations={operations} pending={pending} replaceDraft={replaceDraft} reset={() => recalculate(operations.filter(row => row.kind !== "CATEGORY" || row.categoryKey !== pilotCategory.key), { kind: "FREE_EXPLORATION" })} apply={apply} />
+          {section === "update" ? <MonthUpdateSpatial model={model} refreshing={refreshingDigest === model.baseDigest} /> : (focus === "pilot" || focus === "pilot:review" && operations.length === 0) ? <MonthPilotIndex model={model} draftCount={operations.length} trial={activeTrial} operations={operations} pending={previewPending} apply={apply} remove={removeDraft} /> : focus === "savings" ? <MonthControlSavings model={model} />
+            : pilotCategory ? <MonthPilotEditor key={`${pilotCategory.key}:${pilotCategory.forecast}:${operations.length === 0}`} model={model} category={pilotCategory} trial={activeTrial} operations={operations} pending={previewPending} replaceDraft={replaceDraft} reset={() => recalculate(operations.filter(row => row.kind !== "CATEGORY" || row.categoryKey !== pilotCategory.key), { kind: "FREE_EXPLORATION" })} apply={apply} />
             : targetCategory ? <TargetFocus key={`${targetCategory.key}:${targetCategory.target}`} model={model} category={targetCategory} /> : adjustmentCategory ? <AdjustmentFocus key={adjustmentCategory.key} model={model} category={adjustmentCategory} />
-            : (focus === "pilot:review" || focus === "pilot:add") ? <MonthControlSimulator initialAdd={focus === "pilot:add"} model={model} trial={activeTrial} purpose={purpose} operations={operations} pending={pending} replaceDraft={replaceDraft} recalculate={recalculate} apply={apply} />
+            : focus === "pilot:add" ? <MonthPilotAdd model={model} operations={operations} />
+            : focus === "pilot:review" ? <MonthPilotReview model={model} operations={operations} trial={activeTrial} pending={previewPending} apply={apply} remove={removeDraft} />
+            : pilotSaving ? <MonthPilotSaving key={`${pilotSaving.id}:${pilotSaving.amount}`} model={model} saving={pilotSaving} operations={operations} trial={activeTrial} pending={previewPending} replaceDraft={replaceDraft} remove={removeDraft} apply={apply} />
             : focus ? <MonthChoiceFocus model={model} /> : <MonthWorkspaceRoot model={model} draftCount={operations.length} />}
           </MonthLocalFocusProvider></div>
 

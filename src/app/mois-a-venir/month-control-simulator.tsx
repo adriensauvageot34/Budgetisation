@@ -1,4 +1,5 @@
 "use client";
+// Legacy presentation retained for regression tests. No production call site in Piloter V5.
 import { useState } from "react";
 import type { MonthControlModel } from "./month-control-center";
 import type { previewMonthControlCenter } from "./actions";
