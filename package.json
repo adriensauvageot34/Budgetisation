@@ -3,6 +3,9 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
+    "check:planner-c0-contracts": "node scripts/check-planner-c0-contracts.mjs",
+    "check:planner-c0-persistence": "node scripts/check-planner-c0-persistence.mjs",
+    "check:planner-c0": "node scripts/check-planner-c0-contracts.mjs && node scripts/check-planner-c0-persistence.mjs",
     "check:phase2-month-control-center-v4": "node scripts/check-phase2-month-control-center-v4.mjs",
     "check:phase2-month-control-center-choices-ux": "node scripts/check-phase2-month-control-center-choices-ux.mjs",
     "check:phase2-month-control-center-human-ux": "node scripts/check-phase2-month-control-center-human-ux.mjs",
@@ -143,6 +146,7 @@
     "recharts": "^2.15.0"
   },
   "devDependencies": {
+    "@electric-sql/pglite": "0.5.8",
     "@tailwindcss/postcss": "4.2.1",
     "@types/big.js": "7.0.0",
     "@types/node": "22.19.19",
