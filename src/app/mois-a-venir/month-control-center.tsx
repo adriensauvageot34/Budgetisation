@@ -46,12 +46,20 @@ export function MonthControlCenter({ model, initialSection = null, initialFocus 
   const [refreshingDigest, setRefreshingDigest] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(inputError ? "Vérifiez la saisie du contrôle concerné." : null);
   const [undoToken, setUndoToken] = useState<string | null>(null);
+  const undoSessionKey = `month-control:undo:${model.targetMonth}`;
+  const clearUndoSession = () => { try { sessionStorage.removeItem(undoSessionKey); } catch { /* Session storage may be disabled. */ } };
   const lastFocus = useRef<string | null>(null);
   const previewTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [toast, setToast] = useState<string | null>(null);
   const [purpose, setPurpose] = useState<MonthControlPurpose>(model.defaultPurpose), [operations, setOperations] = useState<readonly MonthChoiceOperation[]>([]);
   const [trial, setTrial] = useState<Workbench | null>(null), [pending, startTransition] = useTransition();
-  useEffect(() => { if (!toast || pending) return; const timer = setTimeout(() => setToast(null), 10000); return () => clearTimeout(timer); }, [toast, pending]);
+  useEffect(() => {
+    try { const saved = JSON.parse(sessionStorage.getItem(undoSessionKey) ?? "null");
+      if (saved && typeof saved.token === "string" && saved.expires > Date.now()) { setUndoToken(saved.token); setToast("Scénario appliqué"); }
+      else sessionStorage.removeItem(undoSessionKey);
+    } catch { /* Undo remains available in component state if storage is disabled. */ }
+  }, [undoSessionKey]);
+  useEffect(() => { if (!toast || pending) return; const timer = setTimeout(() => { setToast(null); try { sessionStorage.removeItem(undoSessionKey); } catch {} }, 10000); return () => clearTimeout(timer); }, [toast, pending, undoSessionKey]);
   const request = useRef(0), requested = useRef<string | null>(null), previousDigest = useRef(model.baseDigest);
   const updateLocation = useCallback((next: MonthControlSectionInput | null, nextFocus?: string | null) => {
     const url = new URL(window.location.href); url.searchParams.set("month", model.targetMonth);
@@ -134,7 +142,7 @@ export function MonthControlCenter({ model, initialSection = null, initialFocus 
     if (!activeTrial?.preview || pending || !activeTrial.applicable) return;
     startTransition(async () => {
       try { const result = await applyMonthChoice(model.targetMonth, { operations }, activeTrial.baseDigest);
-        if (result.ok) { ++request.current; setOperations([]); setTrial(null); requested.current = null; setMessage(null); setUndoToken(result.undoToken); setToast(`Scénario appliqué · +${controlMoney(activeTrial.budgetMarginGain)} de marge estimée`); router.refresh(); }
+        if (result.ok) { ++request.current; setOperations([]); setTrial(null); requested.current = null; setMessage(null); setUndoToken(result.undoToken); try { sessionStorage.setItem(undoSessionKey, JSON.stringify({ token: result.undoToken, expires: Date.now() + 10 * 60_000 })); } catch {} setToast(`Scénario appliqué · +${controlMoney(activeTrial.budgetMarginGain)} de marge estimée`); router.refresh(); }
         else { setMessage(result.message); setTrial(null); requested.current = null; router.refresh(); } }
       catch { setMessage("Ce scénario n’a pas été enregistré. Recalculez-le avant de réessayer."); setTrial(null); }
     });
@@ -148,7 +156,7 @@ export function MonthControlCenter({ model, initialSection = null, initialFocus 
     const triage = form.closest<HTMLElement>('[data-update-triage="true"]')?.dataset.updateItem;
     startTransition(async () => {
       try { const result = await updateMonthControlInputs(data);
-        if (result.ok) { ++request.current; setTrial(null); requested.current = null; setMessage(null); setUndoToken(null);
+        if (result.ok) { ++request.current; setTrial(null); requested.current = null; setMessage(null); setUndoToken(null); clearUndoSession();
           const intent = String(data.get("intent"));
           setToast(intent.includes("target") || intent.includes("goal") ? intent.includes("goal") ? "Objectif enregistré" : "Budget cible enregistré" : intent.includes("savings") ? intent.startsWith("add-") ? "✓ Cagnotte créée" : "✓ Cagnotte modifiée" : intent.includes("assumption") ? "✓ Ajustement enregistré" : "✓ Modification enregistrée");
           const after = triage ? `update:next:${triage}` : form.dataset.afterSave;
@@ -169,7 +177,7 @@ export function MonthControlCenter({ model, initialSection = null, initialFocus 
       closeAction={{ kind: "callback", onAction: close }} backgroundRootRef={background} restoreFocusRef={invoker} semanticFallbackRef={fallback} closeOnBackdrop>
       <div className={styles.layout}>
         <div ref={content} className={styles.content} data-control-content="" data-section={section} onSubmitCapture={sendForm}>
-          {toast && <div role="status" className={styles.saveToast}>{toast}{undoToken && <button type="button" className={styles.textAction} disabled={pending} onClick={() => startTransition(async () => { const result = await undoMonthChoice(model.targetMonth, undoToken); if (result.ok) { setUndoToken(null); setToast("Scénario annulé"); router.refresh(); } else setMessage(result.message); })}>Annuler</button>}</div>}
+          {toast && <div role="status" className={styles.saveToast}>{toast}{undoToken && <button type="button" className={styles.textAction} disabled={pending} onClick={() => startTransition(async () => { const result = await undoMonthChoice(model.targetMonth, undoToken); if (result.ok) { setUndoToken(null); clearUndoSession(); setToast("Scénario annulé"); router.refresh(); } else setMessage(result.message); })}>Annuler</button>}</div>}
           {message && <p role="status" className={styles.status}>{message}</p>}
           <div key={focus ?? "root"} className={styles.surfaceMotion} style={{ "--zone-origin": focus?.includes("MODIFIED") ? "80% 20%" : focus?.includes("DISABLED") ? "20% 80%" : focus?.includes("CONFIRMED") ? "80% 80%" : "20% 20%" } as React.CSSProperties}><MonthLocalFocusProvider value={{ section, entity: focus, openEntity }}>
           {section === "update" ? <MonthUpdateSpatial model={model} refreshing={refreshingDigest === model.baseDigest} /> : focus === "pilot" ? <MonthPilotIndex model={model} draftCount={operations.length} /> : focus === "savings" ? <MonthControlSavings model={model} />
