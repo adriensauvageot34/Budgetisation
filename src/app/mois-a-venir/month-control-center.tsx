@@ -52,6 +52,7 @@ export function MonthControlCenter({ model, initialSection = null, initialFocus 
   useEffect(() => { if (!toast) return; const timer = setTimeout(() => setToast(null), 10000); return () => clearTimeout(timer); }, [toast]);
   const [purpose, setPurpose] = useState<MonthControlPurpose>(model.defaultPurpose), [operations, setOperations] = useState<readonly MonthChoiceOperation[]>([]);
   const [trial, setTrial] = useState<Workbench | null>(null), [pending, startTransition] = useTransition();
+  useEffect(() => { if (!toast || pending) return; const timer = setTimeout(() => setToast(null), 10000); return () => clearTimeout(timer); }, [toast, pending]);
   const request = useRef(0), requested = useRef<string | null>(null), previousDigest = useRef(model.baseDigest);
   const updateLocation = useCallback((next: MonthControlSectionInput | null, nextFocus?: string | null) => {
     const url = new URL(window.location.href); url.searchParams.set("month", model.targetMonth);
