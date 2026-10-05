@@ -1,20 +1,34 @@
 import type { PlannerJsonObject } from "./json";
 import type { PlannerDiagnostic, PlannerKnowledge, PlannerProvenance } from "./diagnostics";
 
-/** Source-specific evidence/value/capability envelopes are refined by C1/C3, without a second fact store. */
-export type BaselineSourceRef = PlannerJsonObject;
-export type BaselineStructuralFact = PlannerJsonObject;
-export type BaselineSavingsReservation = PlannerJsonObject;
-export type ExternalKnownContext = PlannerJsonObject;
-export type UnresolvedBehavioralReserve = PlannerJsonObject;
-export type HistoricalReferenceSet = PlannerJsonObject;
-export type PlanSlotValue = PlannerJsonObject;
-export type SlotCapability = PlannerJsonObject;
+export type BaselineSourceRef = Readonly<{ sourceKey: string; owner: string; digest: string;
+  evidenceRefs: readonly string[] }>;
+export type BaselineRange = Readonly<{ low: string | null; central: string | null; high: string | null }>;
+export type BaselineStructuralFact = Readonly<{ factKey: string; label: string; value: BaselineRange;
+  knowledge: PlannerKnowledge; provenance: readonly PlannerProvenance[]; sourceRefs: readonly string[];
+  dueDate: string | null; metadata: PlannerJsonObject }>;
+export type BaselineSavingsReservation = Readonly<{ reservationId: string; label: string; amount: string;
+  dueDate: string | null; adjustability: "PROTECTED" | "ADJUSTABLE"; source: "MONTH_INPUT" | "ANNUAL_PLAN";
+  annualGoalRef: string | null; provenance: "CANONICAL_FACT"; sourceRefs: readonly string[] }>;
+/** An external intent is carried once; its prices/displacement never become Baseline facts. */
+export type ExternalKnownContext = Readonly<{ externalContextId: string; owner: "phase2_planned_expenses" | "legacy_month_event";
+  status: string; targetMonth: string; intent: PlannerJsonObject; sourceRefs: readonly string[] }>;
+export type HistoricalReferenceSet = Readonly<{ policyVersion: string; basis: "ECONOMIC_AMOUNT" | "OCCURRENCE_COUNT" | "GROSS_MOBILITY_USAGE";
+  requiredSources: readonly string[]; comparableMonths: readonly string[];
+  samples: readonly Readonly<{ month: string; value: string | null; minimum: string | null; evidenceRefs: readonly string[] }>[];
+  range: BaselineRange; evidenceRefs: readonly string[]; hardFloor: false }>;
+export type UnresolvedBehavioralReserve = Readonly<{ reserveKey: string; reason: string; knowledge: PlannerKnowledge;
+  value: BaselineRange; historicalReferences: HistoricalReferenceSet; sourceRefs: readonly string[];
+  replacesSlotKey: string | null }>;
+export type PlanSlotValue = Readonly<{ amount: string | null; count: string | null; unitAmount: string | null;
+  minimumAmount: string | null; dueState: "UNKNOWN" | null }>;
+export type SlotCapability = Readonly<{ action: "SET_AMOUNT" | "SET_COUNT" | "REVIEW_REFERENCE";
+  availability: "AVAILABLE" | "UNAVAILABLE"; reason: string | null }>;
 export type PlanningPlanSlot = Readonly<{ planSlotId: string; slotIdentityKey: string; controlKey: string | null;
   kind: "AMOUNT" | "OCCURRENCE" | "CONDITIONAL_OCCURRENCE"; semanticKey: string;
   scope: Readonly<{ kind: "HOUSEHOLD" | "PERSON"; personId?: string }>;
   inclusion: "CENTRAL" | "CONDITIONAL" | "SUGGESTION_ONLY" | "UNRESOLVED_RESERVE";
-  baselineValue: PlanSlotValue; historicalReferences?: HistoricalReferenceSet; knowledge: PlannerKnowledge;
+  baselineValue: PlanSlotValue; historicalReferences?: HistoricalReferenceSet; sourceRefs: readonly string[]; knowledge: PlannerKnowledge;
   provenance: readonly PlannerProvenance[]; capabilities: readonly SlotCapability[] }>;
 export type PlanningBaselineV1 = Readonly<{ version: "planning-baseline@v1"; householdId: string; targetMonth: string;
   knowledgeCutoff: string; digest: string; sourceRefs: readonly BaselineSourceRef[];

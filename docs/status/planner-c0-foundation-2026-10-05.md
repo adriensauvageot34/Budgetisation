@@ -11,7 +11,7 @@ Scope : master M20/M21, C0 seulement. Aucun Compiler, Baseline calculée, regist
 | HEAD_AFTER | Commit `feat(phase2): add planner contracts and plan revisions` contenant ce rapport ; SHA exacte dans le rapport de livraison et `git log -1 --format=%H -- docs/status/planner-c0-foundation-2026-10-05.md` |
 | BRANCH | `main` |
 | MIGRATION_REQUIRED | YES — `20261005202346_phase2_month_plan_foundation.sql` |
-| REMOTE_MIGRATION_APPLIED | NO — validation humaine attendue |
+| REMOTE_MIGRATION_APPLIED | YES — après validation humaine ; version distante `20261005204529` |
 | TYPECHECK | PASS — `tsc --noEmit` |
 | BUILD | PASS — Next.js production build |
 | ZERO_HISTORICAL_WRITE | YES — distant en lecture seule ; tests SQL en mémoire sur fixtures synthétiques |
