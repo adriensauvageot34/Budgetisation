@@ -1,0 +1,132 @@
+{
+  "date": "2026-10-05",
+  "scope": "Desktop Centre de controle",
+  "baseline": "4f6ef2765c68e35417e3c6ebdad4d8630781aaea",
+  "testedProductionHead": "ecb43e78dc05b2dd4637d1a78e20836653b38778",
+  "viewports": [
+    {
+      "width": 1440,
+      "height": 700
+    },
+    {
+      "width": 1728,
+      "height": 760
+    },
+    {
+      "width": 1728,
+      "height": 780
+    },
+    {
+      "width": 1728,
+      "height": 800
+    },
+    {
+      "width": 1728,
+      "height": 820
+    },
+    {
+      "width": 1920,
+      "height": 850
+    }
+  ],
+  "scrollChecks": 246,
+  "scrollFailures": 0,
+  "views": [
+    "courses-simulation",
+    "draft-reopen",
+    "pilot-index",
+    "scenario-one",
+    "scenario-picker",
+    "scenario-savings-editor",
+    "scenario-two",
+    "goal-editor",
+    "goal-saved",
+    "root-home",
+    "savings-index",
+    "protected-savings",
+    "adjustable-savings",
+    "savings-policy",
+    "savings-review",
+    "savings-saved-reopen",
+    "update-grid",
+    "bank-form",
+    "bank-after-save",
+    "confirmed-nonempty",
+    "bank-confirmed-reopen",
+    "swile-balance-form",
+    "swile-after-save",
+    "disabled",
+    "charge-reactivated",
+    "references",
+    "swile-loading-final",
+    "swile-loading-custom-date",
+    "swile-loading-exact-date",
+    "edenred-loading",
+    "modified",
+    "conditional-charge-editor",
+    "modified-fixed",
+    "fixed-charge-editor",
+    "confirmed-empty",
+    "courses-no-simulation",
+    "courses-exact-dirty",
+    "swile-funding-final-corrected",
+    "undo-after-save",
+    "rapid-preview-final-20",
+    "draft-reresolved-after-live-change"
+  ],
+  "liveMutations": [
+    {
+      "test": "bank",
+      "status": "PASS",
+      "inputsRestored": true
+    },
+    {
+      "test": "swile balance",
+      "status": "PASS",
+      "inputsRestored": true
+    },
+    {
+      "test": "month goal",
+      "status": "PASS",
+      "inputsRestored": true
+    },
+    {
+      "test": "category target",
+      "status": "PASS",
+      "inputsRestored": true
+    },
+    {
+      "test": "adjustable savings",
+      "status": "PASS",
+      "inputsRestored": true
+    },
+    {
+      "test": "disabled charge restore",
+      "status": "PASS",
+      "inputsRestored": true
+    },
+    {
+      "test": "combined scenario",
+      "status": "PASS",
+      "inputsRestored": true
+    },
+    {
+      "test": "scenario undo",
+      "status": "PASS",
+      "inputsRestored": true
+    }
+  ],
+  "exactPayloadAndMetadataRestoration": "PASS",
+  "historicalLiveMutations": "NONE",
+  "historicalAutomatedWriteProbe": "PASS",
+  "protectedSavings": "UNCHANGED",
+  "mobileWork": "NONE",
+  "privateEvidenceDirectory": "C:/Users/Manon/Documents/Codex/2026-09-28/ve/evidence/phase2-control-polish-2026-10-05",
+  "knownGaps": [
+    "No live household with completely empty read model",
+    "Unlimited wallet observations not browser-certified",
+    "Sufficient comparable history tested synthetically",
+    "Existing upsert boundary; no new transactional CAS"
+  ],
+  "draftReloadAndLiveRecalculation": "PASS"
+}

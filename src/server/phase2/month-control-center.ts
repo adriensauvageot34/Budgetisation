@@ -43,7 +43,7 @@ export function projectMonthControlCenter(ctx: MonthChoiceContext) {
     key: `category:${row.key}`, kind: "CATEGORY_TARGET" as const, categoryKey: row.key, label: row.label, target: row.target!,
     forecast: row.forecast, realized: row.realized, amount: row.varianceToTarget!, alreadyOver: row.status === "ALREADY_OVER_TARGET",
     explanation: row.status === "ALREADY_OVER_TARGET" ? `Objectif déjà dépassé de ${money(row.realizedOverTarget)}. Seul le reste du mois peut être limité.`
-      : `${row.label} dépasse votre repère d’environ ${money(row.varianceToTarget!)}.`,
+      : `${row.label} dépasse votre budget cible d’environ ${money(row.varianceToTarget!)}.`,
     destination: { section: "choices" as const, focus: row.key } }));
   const globalTensions = new Big(globalGap).gt(0) ? [{ key: "global-goal", kind: "GLOBAL_GOAL" as const,
     label: "Objectif de fin de mois", amount: globalGap, explanation: `Il manque environ ${money(globalGap)} pour atteindre votre objectif de fin de mois.`,
@@ -114,7 +114,7 @@ export function projectMonthControlCenter(ctx: MonthChoiceContext) {
   return { targetMonth: scenario.targetMonth, asOf: ctx.asOf, baseDigest: monthChoiceDigest(ctx), editable: scenario.targetMonth >= ctx.asOf.slice(0, 7),
     monthState: !plan ? "INCOMPLETE" : globalTensions.length ? "GLOBAL_ATTENTION" : categoryTensions.length ? "CATEGORY_ATTENTION" : "CALM",
     goalState, goalCount, appliedMarginGain: plan && referencePlan ? new Big(plan.narrative.final.central).minus(referencePlan.narrative.final.central).toFixed(2) : null,
-    headline: !plan ? "Complétons les ressources pour préparer ce mois" : goalState === "NO_GOALS_DEFINED" ? "Vous n’avez pas encore défini de repères pour ce mois."
+    headline: !plan ? "Complétons les ressources pour préparer ce mois" : goalState === "NO_GOALS_DEFINED" ? "Vous n’avez pas encore défini de budgets cibles pour ce mois."
       : goalState === "ALL_GOALS_MET" ? "Vos objectifs sont respectés dans la projection actuelle."
       : `${tensions.length} objectif${tensions.length > 1 ? "s demandent" : " demande"} votre attention.`,
     actionableCount: update.needsUpdateCount, update,
