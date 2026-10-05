@@ -183,7 +183,8 @@ export async function readMonthPredictionEvidence(client: SupabaseClient, househ
   ]));
   const latestObservedBookingDate = operations.map(o => o.date_bancaire).sort().at(-1) ?? null;
   return { benefitWalletEvidence: { wallets: canonicalWallets, ledger, openingObservations }, timezone, asOfDate: asOf, manualBankBalanceObservation, history: { startMonth: startDate.slice(0, 7), endMonth,
-    economicEntries: rows.filter(r => r.date.slice(0, 7) <= endMonth), mobilityLegs: mobility.filter(l => l.date.slice(0, 7) <= endMonth) },
+    economicEntries: rows.filter(r => r.date.slice(0, 7) <= endMonth),
+    incompleteMobilityLegs: legs.filter(l => l.estimated_fuel_cost === null && l.travel_date.slice(0, 7) <= endMonth).map(l => ({ id: l.mobility_leg_id, date: l.travel_date, origin: l.origin_source_label, destination: l.destination_source_label })), mobilityLegs: mobility.filter(l => l.date.slice(0, 7) <= endMonth) },
     currentEconomicEntries: rows.filter(r => r.date.startsWith(targetMonth)), currentMobilityLegs: mobility.filter(l => l.date.startsWith(targetMonth)),
     bankObservations: operations.map(o => ({ id: o.operation_id, date: o.date_bancaire, amount: String(o.montant),
       direction: o.flux === "Revenu" ? "IN" as const : o.flux === "Dépense" ? "OUT" as const : "TRANSFER" as const,

@@ -140,7 +140,7 @@ export function projectMonthControlCenter(ctx: MonthChoiceContext) {
     forecastNature: "FORECAST" as const,
     activeIntentions: activeIntentions.map(row => ({ ...row, actionLabel: "Modifier" })),
     activeDecisions: activeDecisions.map(row => ({ ...row, actionLabel: row.key.startsWith("excluded:") ? "Rétablir" : "Modifier" })), reservations: reservations.map(row => ({ ...row, actionLabel: "Voir" })), categoryControls, habitualControls, settings, savings, defaultPurpose,
-    categoryHistory: Object.fromEntries(categoryControls.map(row => [row.key, projectCategoryObservedHistory(row.key, ctx.forecast.predictionEvidence, plan?.narrative.prediction?.trainingMonths ?? [], ctx.asOf, scenario.targetMonth)])),
+    categoryHistory: Object.fromEntries(categoryControls.map(row => [row.key, projectCategoryObservedHistory(row.key, ctx.forecast.predictionEvidence, ctx.asOf, scenario.targetMonth)])),
     resourceInputs: { openingBalance: inputs.openingBalance, wallets: inputs.benefitWallets!, projections: scenario.benefitWallets },
     reliability: { mode: forecastTemporalPolicy().mode, modeLabel: forecastTemporalPolicy().mode === "FULL_MONTH_SAFE" ? "Mode prudent actif" : "Estimation au fil du mois active",
       modeExplanation: forecastTemporalPolicy().mode === "FULL_MONTH_SAFE" ? "L’absence de dépenses récentes ne réduit pas automatiquement les habitudes prévues du mois." : "Les estimations utilisent le moteur temporel actif, avec les données disponibles à cette date.",

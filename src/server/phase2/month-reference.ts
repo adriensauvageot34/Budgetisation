@@ -16,7 +16,9 @@ export type EconomicReferenceEntry = Readonly<{ operationId: string; date: strin
   fundingComplete?: boolean; occurrenceCount?: number; bankPaymentObserved?: boolean }>;
 export type MobilityReferenceLeg = Readonly<{ date: string; origin: string; destination: string; fuelCost: string; id?: string }>;
 export type MonthReferenceEvidence = Readonly<{ startMonth: string; endMonth: string;
-  economicEntries: readonly EconomicReferenceEntry[]; mobilityLegs: readonly MobilityReferenceLeg[] }>;
+  economicEntries: readonly EconomicReferenceEntry[]; mobilityLegs: readonly MobilityReferenceLeg[];
+  /** Read-only local history diagnostic. Never used as a forecast fuel estimate. */
+  incompleteMobilityLegs?: readonly Omit<MobilityReferenceLeg, "fuelCost">[] }>;
 export type StatisticalComponent = ForecastRange & Readonly<{ key: string; method: string;
   decisionCapabilities?: import("@/domain/phase2/month-choice-contract").CategoryDecisionCapabilities;
   observationCount: number; provenance: readonly string[]; note: string | null }>;
@@ -66,15 +68,21 @@ export const referenceWorkdays = (targetMonth: string): number => {
 const workdays = referenceWorkdays;
 
 /** Same certified route identities for the monthly reference and remaining-month forecast. */
-export function referenceMobilityDays(legs: readonly MobilityReferenceLeg[]) {
+export function isReferenceWorkMobilityLeg(leg: Pick<MobilityReferenceLeg, "origin" | "destination">): "outbound" | "inbound" | "lunchOut" | "lunchIn" | false {
   const home = "Domicile Adrien & Manon", office = "Promotrans – Montpellier", lunch = "Marie Blachère – Montpellier sud";
+  if (leg.origin === home && leg.destination === office) return "outbound";
+  if (leg.origin === office && leg.destination === home) return "inbound";
+  if (leg.origin === office && leg.destination === lunch) return "lunchOut";
+  if (leg.origin === lunch && leg.destination === office) return "lunchIn";
+  return false;
+}
+
+export function referenceMobilityDays(legs: readonly MobilityReferenceLeg[]) {
   const days = new Map<string, { outbound?: number; inbound?: number; lunchOut?: number; lunchIn?: number }>();
   for (const leg of legs) {
     const day = days.get(leg.date) ?? {}, value = numeric(leg.fuelCost);
-    if (leg.origin === home && leg.destination === office) day.outbound = (day.outbound ?? 0) + value;
-    if (leg.origin === office && leg.destination === home) day.inbound = (day.inbound ?? 0) + value;
-    if (leg.origin === office && leg.destination === lunch) day.lunchOut = (day.lunchOut ?? 0) + value;
-    if (leg.origin === lunch && leg.destination === office) day.lunchIn = (day.lunchIn ?? 0) + value;
+    const role = isReferenceWorkMobilityLeg(leg);
+    if (role) day[role] = (day[role] ?? 0) + value;
     days.set(leg.date, day);
   }
   return [...days].flatMap(([date, day]) => day.outbound === undefined || day.inbound === undefined ? [] : [{ date,

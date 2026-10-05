@@ -6,7 +6,9 @@ const { readMonthPredictionEvidence } = require("@/server/phase2/month-predictio
 const { projectCategoryObservedHistory } = require("@/server/phase2/month-category-history.ts");
 const { MONTH_CATEGORY_CAPABILITIES } = require("@/domain/phase2/month-choice-contract.ts");
 const { planningDate } = require("@/server/phase2/planning-date.ts");
-const client = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SECRET_KEY, {auth:{persistSession:false,autoRefreshToken:false}});
+const requests = [];
+const readOnlyFetch = (input, init) => { const method=(init?.method ?? (input instanceof Request ? input.method : "GET")).toUpperCase(); if(!["GET","HEAD"].includes(method)) throw new Error("READ_ONLY_AUDIT_MUTATION_REFUSED"); requests.push(method); return fetch(input,init); };
+const client = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SECRET_KEY, {auth:{persistSession:false,autoRefreshToken:false},global:{fetch:readOnlyFetch}});
 const {data:households, error} = await client.from("households").select("household_id").limit(2);
 if(error) throw error;
 if(households?.length !== 1) throw new Error("Select an explicit household scope before this audit");
@@ -16,8 +18,8 @@ const evidence = await readMonthPredictionEvidence(client, data.household_id, mo
 const {data:batches,error:batchError}=await client.from("import_batches").select("source_system,status,coverage_status,period_start,period_end").eq("household_id",data.household_id);
 if(batchError) throw batchError;
 const importProof = Object.fromEntries(["BANK","SWILE","EDENRED","MOBILITY"].map(source=>[source,(batches??[]).filter(row=>row.source_system===source).map(row=>({status:row.status,coverageStatus:row.coverage_status,start:row.period_start,end:row.period_end}))]));
-const report = {importProof,asOf, targetMonth:month, writes:0, sourceCoverage:evidence.completeMonthsBySource,
-  categories:Object.fromEntries(Object.entries(MONTH_CATEGORY_CAPABILITIES).map(([key,cap])=>[key,{label:cap.label,...projectCategoryObservedHistory(key,evidence,[],asOf,month)}]))};
+const report = {requestMethods:[...new Set(requests)],canonicalWindow:{start:evidence.history.startMonth,end:evidence.history.endMonth},canonicalCorpus:{economicEntries:evidence.history.economicEntries.length,purchaseEntries:evidence.history.economicEntries.filter(row=>row.purchaseEventId).length,partialEntries:evidence.history.economicEntries.filter(row=>row.amountStatus==="PARTIAL").length,incompleteMobilityLegs:evidence.history.incompleteMobilityLegs?.length??0},importProof,asOf, targetMonth:month, writes:0, sourceCoverage:evidence.completeMonthsBySource,
+  categories:Object.fromEntries(Object.entries(MONTH_CATEGORY_CAPABILITIES).map(([key,cap])=>[key,{label:cap.label,...projectCategoryObservedHistory(key,evidence,asOf,month)}]))};
 const destination = process.argv[2];
 if(destination) fs.writeFileSync(destination, JSON.stringify(report,null,2));
 console.log(JSON.stringify(report,null,2));

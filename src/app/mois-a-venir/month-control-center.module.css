@@ -128,7 +128,7 @@ button.controlRow:focus-visible { outline: 2px solid #7c3aed; outline-offset: 3p
 .contextShortcut:hover { background: #ede3f5; }
 .contextShortcut:focus-visible, .historyValues button:focus-visible { outline: 2px solid #8a5cba; outline-offset: 3px; }
 .pilotConsequence:empty { background: transparent; }
-.historyValues button { display: grid; gap: 3px; padding: 3px 12px; border-radius: 8px; }
+.historyValues button, .historyValues > span { display: grid; gap: 3px; padding: 3px 12px; border-radius: 8px; }
 .historyValues button:hover:not(:disabled) { background: #ede3f5; }
 .categoryHistory .historyRail { position: relative; display: block; height: 2px; margin: 12px auto 10px; width: 80%; background: #dacbe5; }
 .historyRail > span { position: absolute; top: -4px; width: 10px; height: 10px; border-radius: 50%; background: #9473b3; transform: translateX(-50%); }
