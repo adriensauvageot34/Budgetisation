@@ -33,8 +33,8 @@ export function closedMonths(s: PlanningBaselineSources, sources: readonly Evide
 export function sourceRef(sourceKey: string, owner: string, value: unknown, evidenceRefs: readonly string[] = []): BaselineSourceRef {
   return { sourceKey, owner, digest: plannerDigest(parsePlannerJson(value)), evidenceRefs: unique(evidenceRefs) };
 }
-export function diagnostic(code: string, targetRef: string, evidenceRefs: readonly string[] = []): PlannerDiagnostic {
-  return { code, severity: "WARN", targetRef, message: code, evidenceRefs: unique(evidenceRefs) };
+export function diagnostic(code: string, targetRef: string, evidenceRefs: readonly string[] = [], message = code): PlannerDiagnostic {
+  return { code, severity: "WARN", targetRef, message, evidenceRefs: unique(evidenceRefs) };
 }
 /** Samples are local to their owner and source mask. A covered empty month may be zero;
  * absence of coverage or an unknown amount never supplies a zero sample. */

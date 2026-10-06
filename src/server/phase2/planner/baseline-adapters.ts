@@ -10,6 +10,7 @@ import { resolveGlobalPersonaProductObservations } from "@/server/analytics/glob
 import { resolveGlobalM2NeedSubjects } from "@/server/analytics/global-v2-need-subject-authority";
 import { loadMonthForecastAuthorities } from "../live-month-forecast";
 import { assembleMonthForecast } from "../month-forecast";
+import type { MonthForecast } from "../month-forecast";
 import { readMonthPredictionEvidence } from "../month-prediction-evidence";
 import { readMonthInputs } from "../month-inputs";
 import type { MonthInputs } from "../month-scenario";
@@ -48,7 +49,7 @@ export async function readPersonHabitAssertions(client: SupabaseClient, househol
  * context. Habit assertions require its trusted server read client (existing SELECT grants).
  * No new credential, Plan read, materialization, migration, or financial evaluation occurs. */
 export async function readPlanningBaselineSources(repository: CanonicalRepository, targetMonth: string,
-  knowledgeCutoff: string, options: Readonly<{ simpleOccurrences?: boolean; renewals?: boolean }> = {}): Promise<PlanningBaselineSources> {
+  knowledgeCutoff: string, options: Readonly<{ simpleOccurrences?: boolean; renewals?: boolean; forecast?: MonthForecast }> = {}): Promise<PlanningBaselineSources> {
   const month = plannerMonth(targetMonth), cutoff = Temporal.Instant.from(knowledgeCutoff);
   const { client, context } = repository, householdId = String(context.householdId);
   const today = cutoff.toZonedDateTimeISO(context.timezone).toPlainDate();
@@ -72,6 +73,7 @@ export async function readPlanningBaselineSources(repository: CanonicalRepositor
     repository.loadPurchaseAwareCanonical(range, "PURCHASE_AWARE_PILOT"),
     simpleRead(),
   ]);
+  const forecast = options.forecast ? admitPlanningForecast(authorities.publication, month, options.forecast) : assembleMonthForecast(authorities, month);
   if (canonicalPurchases.status !== "PASS") throw new TypeError("BASELINE_PURCHASE_OWNER_BLOCKED");
   // Product owner has already verified the Canonical household scope; resolve the same
   // Need subjects from Canonical person_id, without inferring them from legacy names.
@@ -96,11 +98,22 @@ export async function readPlanningBaselineSources(repository: CanonicalRepositor
   const personalMobility = buildGlobalM7PersonalMobilityAuthority({ mobilityLegs: closedLegs, contextLinks: mobilityContexts,
     presenceResolutions: mobilityContext.presenceResolutions.filter(p => legIds.has(p.mobilityLegId)) });
   return { householdId, targetMonth: month, knowledgeCutoff: cutoff.toString(), timezone: context.timezone,
-    forecast: assembleMonthForecast(authorities, month), monthInputs: storedInputs.inputs,
+    forecast, monthInputs: storedInputs.inputs,
     periods: context.periods, evidence, food: authorities.background.food,
     purchaseFacts: canonicalPurchases.facts.filter(f => f.fact === "fct_purchase_aware_economic_component"), habitAssertions, productObservations,
     needSubjects, mobilityLegs: closedLegs, mobilityContexts, personalMobility, plannedExpenses,
     ...(simpleOccurrences ? { simpleOccurrences } : {}) };
+}
+
+/** A published snapshot is already certified by its owner. Match its generation,
+ * rather than rebuilding its amounts under today's policies. Both C1 and the
+ * financial owner consume this exact admitted forecast for the same read. */
+export function admitPlanningForecast(publication: Readonly<{ publication_id: string; source_revision: number; published_analytics_revision: number }>,
+  targetMonth: string, forecast: MonthForecast): MonthForecast {
+  if (forecast.meta.targetMonth !== targetMonth || forecast.meta.sourcePublicationId !== publication.publication_id
+    || forecast.meta.sourceRevision !== publication.source_revision || forecast.meta.analyticsRevision !== publication.published_analytics_revision)
+    throw new TypeError("PLANNER_WORLD_AUTHORITIES_CHANGED_DURING_READ");
+  return forecast;
 }
 
 export async function readPlanningBaseline(repository: CanonicalRepository, targetMonth: string, knowledgeCutoff: string) {

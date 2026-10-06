@@ -5,7 +5,7 @@ import { require } from "./lib/phase2-ts-loader.mjs";
 import { fixture, months, adrien, manon } from "./fixtures/planner-baseline.mjs";
 const { buildPlanningBaseline, planningBaselineDigest } = require("@/server/phase2/planner/baseline.ts");
 const { plannerDigest } = require("@/domain/phase2/planner/json.ts");
-const { legacySeedDecisions, readPersonHabitAssertions, readPlanningBaseline } = require("@/server/phase2/planner/baseline-adapters.ts");
+const { legacySeedDecisions, readPersonHabitAssertions, readPlanningBaseline, readPlanningBaselineSources } = require("@/server/phase2/planner/baseline-adapters.ts");
 const passed = [], test = async (id, run) => { await run(); passed.push(id); };
 const clone = value => structuredClone(value), slot = (b, key) => b.slots.find(s => s.semanticKey === key);
 
@@ -126,14 +126,15 @@ await test("BASE-ADAPT-001", async () => {
   await assert.rejects(() => readPersonHabitAssertions(client, fixture().householdId, [manon], fixture().knowledgeCutoff), /PERSON_SCOPE/);
 });
 await test("BASE-ADAPT-002", async () => {
-  const s = fixture(), restores = [], reads = [];
+  const s = fixture(), restores = [], reads = []; let assembledReads = 0;
   const replace = (name, key, value) => {
     const module = require(name), previous = module[key]; module[key] = value; restores.push(() => module[key] = previous);
   };
   replace("@/server/phase2/live-month-forecast.ts", "loadMonthForecastAuthorities", async (_client, household) => {
-    assert.equal(household, s.householdId); return { background: { food: s.food } };
+    assert.equal(household, s.householdId); return { background: { food: s.food }, publication: {
+      publication_id: s.forecast.meta.sourcePublicationId, source_revision: s.forecast.meta.sourceRevision, published_analytics_revision: s.forecast.meta.analyticsRevision } };
   });
-  replace("@/server/phase2/month-forecast.ts", "assembleMonthForecast", (_authorities, month) => { assert.equal(month, s.targetMonth); return s.forecast; });
+  replace("@/server/phase2/month-forecast.ts", "assembleMonthForecast", (_authorities, month) => { assembledReads++; assert.equal(month, s.targetMonth); return s.forecast; });
   replace("@/server/phase2/month-inputs.ts", "readMonthInputs", async (_client, household, month) => {
     assert.equal(household, s.householdId); assert.equal(month, s.targetMonth); return { inputs: s.monthInputs };
   });
@@ -168,9 +169,25 @@ await test("BASE-ADAPT-002", async () => {
   const repository = { client, context: { householdId: s.householdId, timezone: s.timezone, periods: s.periods, personIds: [adrien, manon] },
     async loadMobilityLegFacts(range) { assert.deepEqual(range, { start: "2026-01-01", endExclusive: "2026-07-01" }); return s.mobilityLegs; },
     async loadPurchaseAwareCanonical(range, visibility) { assert.equal(visibility, "PURCHASE_AWARE_PILOT"); assert.equal(range.endExclusive, "2026-07-01"); return { status: "PASS", facts: [] }; } };
-  try { assert.deepEqual(await readPlanningBaseline(repository, s.targetMonth, s.knowledgeCutoff), buildPlanningBaseline(s)); }
+  try {
+    assert.deepEqual(await readPlanningBaseline(repository, s.targetMonth, s.knowledgeCutoff), buildPlanningBaseline(s));
+    assert.deepEqual(reads.sort(), ["needs", "person_habit_assertions"]);
+    const cached = { ...clone(s.forecast), reserve: { amount: "50.00", source: "POLICY" } };
+    const admitted = await readPlanningBaselineSources(repository, s.targetMonth, s.knowledgeCutoff, { forecast: cached });
+    assert.strictEqual(admitted.forecast, cached); assert.equal(assembledReads, 1, "published forecast must not be rebuilt under a newer reserve policy");
+    await assert.rejects(() => readPlanningBaselineSources(repository, s.targetMonth, s.knowledgeCutoff,
+      { forecast: { ...cached, meta: { ...cached.meta, sourceRevision: cached.meta.sourceRevision + 1 } } }), /PLANNER_WORLD_AUTHORITIES_CHANGED_DURING_READ/);
+  }
   finally { restores.reverse().forEach(restore => restore()); }
-  assert.deepEqual(reads.sort(), ["needs", "person_habit_assertions"]);
+});
+await test("BASE-UNMAPPED-PRODUCT", () => {
+  const s = fixture(); s.productObservations.push({ ...s.productObservations[0], observationId: "unmapped", needKey: "unmapped-product" });
+  const baseline = buildPlanningBaseline(s);
+  assert.ok(baseline.diagnostics.some(d => d.code === "BASELINE_NEED_MAPPING_UNAVAILABLE"));
+  assert.ok(!baseline.slots.some(s => s.semanticKey === "need:unmapped-product"));
+  assert.ok(baseline.sourceRefs.some(ref => ref.evidenceRefs.includes(s.productObservations[0].evidenceRefs[0])));
+  const conflict = fixture(); conflict.needSubjects["synthetic-need"].personId = adrien;
+  assert.throws(() => buildPlanningBaseline(conflict), /BASELINE_NEED_SUBJECT_CONFLICT/);
 });
 await test("BASE-BOUNDARY-001", () => {
   const folder = path.resolve("src/server/phase2/planner");

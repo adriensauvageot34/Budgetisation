@@ -3,28 +3,18 @@ import { Temporal } from "@js-temporal/polyfill";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { CanonicalRepository } from "@/server/canonical/repository";
 import { readPlanningMonthForecast } from "../month-planning-read";
-import type { MonthForecastSnapshot } from "../month-forecast-snapshot";
 import { readMonthInputs } from "../month-inputs";
 import { readPlannedExpenses } from "../planned-expenses";
 import { buildRenewalPlanningBaseline } from "./renewal-baseline";
 import { readPlanningBaselineSources } from "./baseline-adapters";
 import { createPlanApplyRepository } from "./repository";
 import type { EffectiveMonthDependencies } from "./effective-month-scenario";
-import { plannerDigest } from "@/domain/phase2/planner/json";
-import { jsonEnvelope } from "./compiler";
 import { buildProspectiveMobilityFacts } from "./mobility-adapter";
 import { preparePlanningMobility } from "./prospective-mobility-pricing";
 import { readPlannedContextOptions } from "../planned-context";
 import { expandComposableContexts } from "./context-compiler";
 import { materializePlanSlots } from "./plan-slot-resolver";
 import { resolveJourneyRequirements } from "./journey-resolver";
-
-const commonForecastDigest = (snapshot: MonthForecastSnapshot) => {
-  const { publicationMeta: _publication, resourceMeta: _resource, predictionEvidence: _evidence,
-    forecastMemory: _memory, calibration: _calibration, meta, ...facts } = snapshot;
-  const { computedAt: _clock, ...identity } = meta;
-  return plannerDigest(jsonEnvelope({ ...facts, meta: identity }));
-};
 
 /** Canonical may use its trusted read client; Plan writes always use the authenticated
  * household client supplied separately by the authorized server entry point. */
@@ -36,10 +26,8 @@ export function createPlannerDependencies(canonical: CanonicalRepository, authen
   return { repository: createPlanApplyRepository(authenticatedClient), async readWorld(householdId, targetMonth) {
     scope(householdId);
     const cutoff = Temporal.Instant.from(clock()), asOfDate = cutoff.toZonedDateTimeISO(canonical.context.timezone).toPlainDate().toString();
-    const [sources, forecast] = await Promise.all([readPlanningBaselineSources(canonical, targetMonth, cutoff.toString(), { simpleOccurrences: true, renewals: true }),
-      readPlanningMonthForecast(canonical.client, householdId, targetMonth)]);
-    if (commonForecastDigest(sources.forecast as MonthForecastSnapshot) !== commonForecastDigest(forecast))
-      throw new TypeError("PLANNER_WORLD_AUTHORITIES_CHANGED_DURING_READ");
+    const forecast = await readPlanningMonthForecast(canonical.client, householdId, targetMonth);
+    const sources = await readPlanningBaselineSources(canonical, targetMonth, cutoff.toString(), { simpleOccurrences: true, renewals: true, forecast });
     // One admitted canonical evidence read for both C1 and financial calculation.
     return { baseline: buildRenewalPlanningBaseline(sources), forecast: { ...forecast, predictionEvidence: sources.evidence },
       monthInputs: sources.monthInputs, externalIntents: sources.plannedExpenses, asOfDate, costQuotes: {},

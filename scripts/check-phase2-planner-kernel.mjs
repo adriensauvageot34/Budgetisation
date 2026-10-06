@@ -180,7 +180,7 @@ try {
     const replace=(name,key,value)=>{const module=require(name),old=module[key];module[key]=value;restores.push(()=>module[key]=old);};
     const source={householdId,knowledgeCutoff:"2026-10-05T10:00:00Z",mobilityLegs:[],personalMobility:{outputHash:"synthetic-personal"},forecast:world.forecast,monthInputs:world.monthInputs,plannedExpenses:world.externalIntents,evidence:{synthetic:"single-cutoff-evidence"}};
     replace("@/server/phase2/planner/baseline-adapters","readPlanningBaselineSources",async(repository,month,cutoff,options)=>{
-      assert.deepEqual(options,{simpleOccurrences:true,renewals:true});
+      assert.deepEqual(options,{simpleOccurrences:true,renewals:true,forecast:published});source.forecast=options.forecast;
       assert.equal(repository.client,canonicalClient);assert.equal(month,"2026-11");assert.equal(cutoff,"2026-10-05T10:00:00Z");reads.push("C1");return source;});
     replace("@/server/phase2/planner/renewal-baseline","buildRenewalPlanningBaseline",s=>{assert.equal(s,source);return world.baseline;});
     let published=world.forecast;
@@ -193,11 +193,16 @@ try {
     try{const {createPlannerDependencies}=require("@/server/phase2/planner/world-reader");
       const actual=createPlannerDependencies({client:canonicalClient,context:{householdId,timezone:"Europe/Paris"}},saved.client,()=>"2026-10-05T10:00:00Z");
       const assembled=await actual.readWorld(householdId,"2026-11");assert.equal(assembled.baseline,world.baseline);
-      assert.equal(assembled.forecast.predictionEvidence,source.evidence);assert.equal(assembled.asOfDate,"2026-10-05");assert.deepEqual(reads,["C1","V2_FORECAST"]);
+      assert.equal(assembled.forecast.predictionEvidence,source.evidence);assert.equal(assembled.asOfDate,"2026-10-05");assert.deepEqual(reads,["V2_FORECAST","C1"]);
       reads.length=0;const direct=await actual.readDirectWorld(householdId,"2026-11");assert.equal(direct.forecast,world.forecast);
       assert.deepEqual(reads,["V2_FORECAST","MONTH_INPUTS","EXTERNAL_INTENTS"]);
       published=structuredClone(world.forecast);published.components[0].central="501.00";
-      await assert.rejects(()=>actual.readWorld(householdId,"2026-11"),/PLANNER_WORLD_AUTHORITIES_CHANGED_DURING_READ/u);
+      const refreshed=await actual.readWorld(householdId,"2026-11");assert.strictEqual(source.forecast,published);assert.equal(refreshed.forecast.components[0].central,"501.00");
+      const {admitPlanningForecast}=require("@/server/phase2/planner/baseline-adapters");
+      const publication={publication_id:published.meta.sourcePublicationId,source_revision:published.meta.sourceRevision,published_analytics_revision:published.meta.analyticsRevision};
+      assert.strictEqual(admitPlanningForecast(publication,"2026-11",published),published);
+      for(const change of [{sourcePublicationId:uuid(777)},{sourceRevision:published.meta.sourceRevision+1},{analyticsRevision:published.meta.analyticsRevision+1},{targetMonth:"2026-12"}])
+        assert.throws(()=>admitPlanningForecast(publication,"2026-11",{...published,meta:{...published.meta,...change}}),/PLANNER_WORLD_AUTHORITIES_CHANGED_DURING_READ/u);
       await assert.rejects(()=>actual.readWorld(uuid(555),"2026-11"),/PLANNER_AUTHORIZED_HOUSEHOLD_MISMATCH/u);
     }finally{restores.reverse().forEach(restore=>restore());}});
   await test("KERNEL-WRITE-BOUNDARY",()=>{const names=["compiler","cost-resolver","plan-slot-resolver","constraint-engine","financial-adapter","preview","world-reader","effective-month-scenario"];

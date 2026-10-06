@@ -4,7 +4,7 @@ import type { PlanningPlanSlot } from "@/domain/phase2/planner/baseline-contract
 import type { PlanningBaselineSources } from "./baseline-sources";
 import { closedMonths, compare, diagnostic, emptyValue, makeSlot, money, sourceRef, unique } from "./baseline-evidence";
 
-export const BASELINE_HABIT_MODEL = "planner-canonical-habit-assertions@v1";
+export const BASELINE_HABIT_MODEL = "planner-canonical-habit-assertions@v2";
 export function buildHabitBaseline(s: PlanningBaselineSources) {
   const slots: PlanningPlanSlot[] = [], sourceRefs = [], diagnostics = [];
   const assertions = [...s.habitAssertions].filter(a => Temporal.Instant.compare(a.validatedAt, s.knowledgeCutoff) <= 0)
@@ -41,9 +41,14 @@ export function buildHabitBaseline(s: PlanningBaselineSources) {
     const subject = first.subject, key = `need-observations:${group}`;
     const subjects = Object.values(s.needSubjects).filter(n => n.needKey === first.needKey);
     const personId = subject.kind === "PERSON" ? String(subject.personId) : null;
-    if (subjects.length !== 1 || subjects[0]!.personId !== personId) throw new TypeError("BASELINE_NEED_SUBJECT_CONFLICT");
     const evidence = unique(rows.flatMap(o => o.evidenceRefs));
     sourceRefs.push(sourceRef(key, "Needs+ProductObservations", { rows, comparableMonths: months }, evidence));
+    if (!subjects.length) {
+      diagnostics.push(diagnostic("BASELINE_NEED_MAPPING_UNAVAILABLE", key, evidence,
+        "Observation historique sans Need canonique correspondant : référence conservée, habitude non déduite."));
+      continue;
+    }
+    if (subjects.length !== 1 || subjects[0]!.personId !== personId) throw new TypeError("BASELINE_NEED_SUBJECT_CONFLICT");
     slots.push(makeSlot({ semanticKey: `need:${first.needKey}`, controlKey: null, kind: "CONDITIONAL_OCCURRENCE",
       scope: personId ? { kind: "PERSON", personId } : { kind: "HOUSEHOLD" }, inclusion: "CONDITIONAL",
       baselineValue: { ...emptyValue(), dueState: "UNKNOWN" }, knowledge: "UNKNOWN", provenance: ["CANONICAL_HISTORY"],

@@ -205,6 +205,16 @@ try {
     const w = fixture(); w.sources.productObservations[0].subject.personId = uuid(999); assert.throws(() => buildRenewalReadModel(w.sources), /SCOPE/);
     const other = fixture(); other.sources.needSubjects['synthetic-need:mascara'].personId = adrien; assert.throws(() => buildRenewalReadModel(other.sources), /SUBJECT_CONFLICT/);
   });
+  await test('C6-EXTRA-UNMAPPED-OBSERVATION', () => {
+    const w = fixture(); w.sources.productObservations.push({ ...w.sources.productObservations[0],
+      observationId: 'legacy-unmapped-observation', needKey: 'legacy-unmapped-product', observedAt: '2026-08-01', evidenceRefs: ['product-observation:legacy-unmapped-observation'] });
+    rebuild(w);
+    assert.ok(w.baseline.renewals.diagnostics.some(d => d.code === 'RENEWAL_NEED_MAPPING_UNAVAILABLE' && d.evidenceRefs.includes('product-observation:legacy-unmapped-observation')));
+    assert.ok(!w.baseline.renewals.needOccurrences.some(n => n.needKey === 'legacy-unmapped-product'));
+    assert.ok(!w.baseline.renewals.acquisitionEpisodes.some(e => e.observationIds.includes('legacy-unmapped-observation')));
+    assert.ok(!w.baseline.slots.some(s => s.semanticKey === 'need:legacy-unmapped-product'));
+    assert.ok(w.baseline.sourceRefs.some(r => r.evidenceRefs.includes('product-observation:legacy-unmapped-observation')));
+  });
   await test('C6-EXTRA-PRICE-NOT-BANK', () => {
     const w = fixture(); w.sources.productObservations.filter(o => o.observedAt === '2026-09-25').forEach(o => o.evidenceRefs.push('operation:shared-basket-35.15'));
     rebuild(w); assert.equal(profile(w, 'mascara').referenceUnitAmount, '32.00'); assert.equal(profile(w, 'brows').referenceUnitAmount, '9.99');

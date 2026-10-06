@@ -8,7 +8,7 @@ import type { PlanningBaselineSources } from "./baseline-sources";
 import { compare, diagnostic, knowledgeDate, money, unique } from "./baseline-evidence";
 import { referenceQuantile } from "../month-reference";
 
-export const RENEWAL_MODEL_VERSION = "planner-renewals@v1";
+export const RENEWAL_MODEL_VERSION = "planner-renewals@v2";
 export const RENEWAL_NEED_KEYS = ["maquillage_manon_mascara", "maquillage_manon_sourcils", "maquillage_manon_eyeliner",
   "cire_adrien", "haircare_adrien_cire", "skincare_manon", "haircare_manon"] as const;
 const autoProducts = new Set<string>(["maquillage_manon_mascara", "maquillage_manon_sourcils"]);
@@ -48,7 +48,13 @@ export function buildRenewalReadModel(s: PlanningBaselineSources): RenewalReadMo
   if (new Set(subjects.map(([, n]) => `${n.needKey}:${n.personId}`)).size !== subjects.length) throw new TypeError("RENEWAL_NEED_IDENTITY_CONFLICT");
   for (const o of byId.values()) {
     const personId = o.subject.kind === "PERSON" ? String(o.subject.personId) : null;
-    if (!subjects.some(([, n]) => n.needKey === o.needKey && n.personId === personId)) throw new TypeError("RENEWAL_NEED_SUBJECT_CONFLICT");
+    const mapped = subjects.filter(([, n]) => n.needKey === o.needKey);
+    if (!mapped.length) {
+      diagnostics.push(diagnostic("RENEWAL_NEED_MAPPING_UNAVAILABLE", `product-observation:${o.observationId}`, o.evidenceRefs,
+        "Cette observation historique n’a pas de Need canonique correspondant. Aucun renouvellement automatique n’est déduit."));
+      continue;
+    }
+    if (!mapped.some(([, n]) => n.personId === personId)) throw new TypeError("RENEWAL_NEED_SUBJECT_CONFLICT");
   }
   for (const [needId, n] of subjects) {
     if (n.personId && !Object.hasOwn(s.evidence.personNamesById, n.personId)) throw new TypeError("RENEWAL_NEED_PERSON_SCOPE_INVALID");
