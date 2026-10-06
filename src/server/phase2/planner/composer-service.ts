@@ -1,4 +1,5 @@
 import "server-only";
+import Big from "big.js";
 import type { ComposerEditor, ComposerField, ComposerRequest, ComposerResponse, ComposerUiModel } from "@/domain/phase2/planner/composer-ui-contract";
 import type { MonthComposerReadModel } from "@/domain/phase2/planner/composer-contract";
 import type { ComposerCardView } from "@/domain/phase2/planner/composer-contract";
@@ -87,7 +88,13 @@ function dropMutation(model: MonthComposerReadModel, request: Extract<ComposerRe
   const slot = resolveContextTemplate(card!.templateKey).componentSlots.find(s => s.slotKey === target.slotKey)!;
   const option = slot.options.find(o => o.optionKey === asset.optionKey && o.kind === asset.optionKind)!;
   const current = card!.sockets.find(s => s.slotKey === target.slotKey)!.currentItems;
-  const previous = current.find(i => i.selectionId === request.selectionId && i.optionKey === option.optionKey);
+  const previous = (request.sourceSocket ? model.board.contexts.find(c => c.contextOccurrenceId === request.sourceSocket!.contextOccurrenceId)
+    ?.sockets.find(s => s.slotKey === request.sourceSocket!.slotKey)?.currentItems.find(i => i.selectionId === request.sourceSocket!.selectionId) : undefined)
+    ?? current.find(i => i.selectionId === request.selectionId && i.optionKey === option.optionKey);
+  const patchSelection = (selection: ComponentSelectionV1): SemanticMutation => ({ kind: "PATCH_CONTEXT", contextOccurrenceId: target.contextOccurrenceId!, slotKey: target.slotKey!,
+    items: slot.cardinality === "REPEATING" ? [...current.filter(i => i.selectionId !== selection.selectionId && i.kind !== "UNRESOLVED"), selection] : [selection] });
+  // Moving/accepting an existing selection retains the complete server decision, including funding and journey declarations.
+  if (request.sourceSocket && previous) return patchSelection({ ...previous, provenance: "EXPLICIT_USER_DECISION" });
   const amount = values.amount?.trim() ? decisionAmount(values.amount) : null;
   const quote = previous?.kind === "COMPONENT" ? previous.cost : previous?.kind === "MOBILITY_INTENT" ? previous.pricing?.fare : undefined;
   const cost = values.costMode === "UNKNOWN" ? { kind: "UNKNOWN" as const } : amount === null ? quote?.kind === "QUOTE" ? quote : { kind: "UNKNOWN" as const } : { kind: "MANUAL" as const, unitAmount: amount };
@@ -106,8 +113,7 @@ function dropMutation(model: MonthComposerReadModel, request: Extract<ComposerRe
         fundingAllocations: funding, preference: values.preference === "AVOID_TOLLS" ? "AVOID_TOLLS" : "FASTEST" }) } : {}),
       ...(values.targetIntentId ? { journey: { relation: "SHARES_JOURNEY" as const, certainty: "CERTAIN" as const, targetIntentId: values.targetIntentId,
         externalExpenseId: null, externalCostLineIds: [], choice: null, stopIndex: null, accessLegIndex: null } } : {}) };
-  return { kind: "PATCH_CONTEXT", contextOccurrenceId: target.contextOccurrenceId!, slotKey: target.slotKey!,
-    items: slot.cardinality === "REPEATING" ? [...current.filter(i => i.selectionId !== selection.selectionId && i.kind !== "UNRESOLVED"), selection] : [selection] };
+  return patchSelection(selection);
 }
 
 export async function handleComposerRequest(deps: PlannerDependencies, household: string, request: ComposerRequest): Promise<ComposerResponse> {
@@ -134,8 +140,18 @@ export async function handleComposerRequest(deps: PlannerDependencies, household
       } else throw new TypeError("COMPOSER_USE_DROP_CAPABILITY");
       state = mutatePlanSemanticState(state, mutation); mutationKind = mutation.kind;
     } else if (request.kind === "DROP") {
+      if (request.sourceSocket) {
+        const source = composerPresentation(model).dragSources[`satellite:${request.sourceSocket.contextOccurrenceId}:${request.sourceSocket.slotKey}:${request.sourceSocket.selectionId}`];
+        if (!source || source.protected || source.assetKey !== request.assetKey || source.selection?.selectionId !== request.selectionId)
+          throw new TypeError("COMPOSER_SOURCE_LOCKED");
+      }
       const resolution = resolveComposerDrop(model, request.assetKey, request.target, dropMutation(model, request));
       if (!resolution.semanticMutation) throw new TypeError("COMPOSER_DROP_BLOCKED");
+      if (request.sourceSocket && (request.sourceSocket.contextOccurrenceId !== request.target.contextOccurrenceId || request.sourceSocket.slotKey !== request.target.slotKey)) {
+        const source = model.board.contexts.find(c => c.contextOccurrenceId === request.sourceSocket!.contextOccurrenceId)!.sockets.find(s => s.slotKey === request.sourceSocket!.slotKey)!;
+        state = mutatePlanSemanticState(state, { kind: "PATCH_CONTEXT", contextOccurrenceId: source.contextOccurrenceId, slotKey: source.slotKey,
+          items: source.currentItems.filter(i => i.selectionId !== request.sourceSocket!.selectionId) });
+      }
       state = mutatePlanSemanticState(state, resolution.semanticMutation); mutationKind = resolution.semanticMutation.kind;
       if (mutationKind === "REMOVE_CONTEXT") {
         const active = await deps.repository.readActivePlan(household, month);
@@ -164,7 +180,10 @@ export async function handleComposerRequest(deps: PlannerDependencies, household
       state = accepted.semanticState; suggestions = accepted.suggestions;
     } else if (request.kind !== "READ") throw new TypeError("COMPOSER_REQUEST_INVALID");
     const next = state === model.semanticState ? model : await readMonthComposer(deps, household, month, state);
-    return { ok: true, sequence: request.sequence, model: await composerUiModel(deps, household, next), suggestions, mutationKind };
+    const before = model.board.cockpit.plan.economicMonthEndRemainder, after = next.board.cockpit.plan.economicMonthEndRemainder;
+    // Difference of two real Compiler projections, just as for an assistant candidate.
+    const interactionImpact = before === null || after === null ? null : new Big(after).minus(before).toFixed(2);
+    return { ok: true, sequence: request.sequence, model: await composerUiModel(deps, household, next), suggestions, mutationKind, interactionImpact };
   } catch (error) {
     const code = error instanceof TypeError ? error.message : "COMPOSER_UNAVAILABLE";
     return { ok: false, sequence: request.sequence, code,

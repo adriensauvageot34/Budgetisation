@@ -6,7 +6,7 @@ import { require } from './lib/phase2-ts-loader.mjs';
 import { createKernelPostgres } from './lib/planner-kernel-postgres.mjs';
 import { simpleMonth, nightMonth, weekendMonth, renewalMonth, externalMonth, householdId } from './fixtures/planner-headless.mjs';
 import { providers } from './fixtures/planner-mobility.mjs';
-import { atomicMonth } from './fixtures/planner-atomic-ui.mjs';
+import { atomicMonth, interactionMonth } from './fixtures/planner-atomic-ui.mjs';
 const { handleComposerRequest } = require('@/server/phase2/planner/composer-service');
 const { createPlanApplyRepository } = require('@/server/phase2/planner/repository');
 const { preparePlanningMobility } = require('@/server/phase2/planner/prospective-mobility-pricing');
@@ -29,7 +29,8 @@ await build({ entryPoints: ['scripts/lib/planner-composer-browser-entry.tsx'], b
 const globalCss = fs.readdirSync('.next/static/chunks').filter(n=>n.endsWith('.css')).map(n=>fs.readFileSync(`.next/static/chunks/${n}`,'utf8')).find(css=>css.includes('.h-dvh{'));
 if (!globalCss) throw new Error('Build Next.js first: production globals containing h-dvh are required for actual AppShell height checks.');
 fs.writeFileSync(path.join(out,'global.css'),globalCss);
-const stores = new Map(), fixtures = { A: simpleMonth, B: nightMonth, C: weekendMonth, D: renewalMonth, E: externalMonth, R: atomicMonth };
+const stores = new Map(), fixtures = { A: simpleMonth, B: nightMonth, C: weekendMonth, D: renewalMonth, E: externalMonth, R: atomicMonth,
+  RA: interactionMonth, RB: nightMonth, RC: weekendMonth, RR: atomicMonth };
 const uiPayloadKeys = new Set(['x','y','screenX','screenY','uiPosition','boardPosition','orbit','presentation','focusedContext']);
 function uiPayloadFields(value) {
   if (!value || typeof value !== 'object') return [];
@@ -55,10 +56,12 @@ const server = http.createServer(async (request, response) => {
       const result = await handleComposerRequest(s.deps, householdId, command);
       await s.pg.verifyCanaries();
       s.log.push({ kind: command.kind, sequence: command.sequence, mutationKind: result.mutationKind ?? null,
+        gesture: command.kind === 'DROP' ? {assetKey:command.assetKey,target:command.target,sourceSocket:command.sourceSocket??null} : null,
+        interactionImpact: result.interactionImpact ?? null,
         uiPayloadFields: uiPayloadFields(command),
         ok: result.ok, digest: result.ok ? result.model.board.draft.semanticStateDigest : result.code,
         projection: result.ok ? result.model.board.cockpit : null });
-      if (url.searchParams.get('delayHover') === 'true' && command.kind === 'MUTATE') await new Promise(resolve => setTimeout(resolve, 800));
+      if (url.searchParams.get('delayHover') === 'true' && command.kind === 'MUTATE' || url.searchParams.get('delayDrop') === 'true' && command.kind === 'DROP') await new Promise(resolve => setTimeout(resolve, 800));
       response.setHeader('Content-Type', 'application/json'); response.end(JSON.stringify(result)); return;
     }
     if (url.pathname === '/evidence') {

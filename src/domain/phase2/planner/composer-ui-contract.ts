@@ -2,6 +2,7 @@ import type { MonthComposerReadModel, DropTarget } from "./composer-contract";
 import type { PlannerApplyCommand } from "./compiler-contract";
 import type { PlanSemanticStateV1 } from "./semantic-state";
 import type { PlanBalanceSuggestions, SemanticMutation } from "./adjustment-contract";
+import type { ComponentSelectionV1 } from "./component-contract";
 
 export type ComposerField = Readonly<{ key: string; label: string; kind: "TEXT" | "DATE" | "AMOUNT" | "CHOICE";
   required: boolean; choices?: readonly Readonly<{ value: string; label: string }>[]; initial?: string }>;
@@ -14,12 +15,12 @@ export type ComposerObjectPresentation = Readonly<{
   protectedSavings: boolean;
   reservationGauge: Readonly<{ percent: number | null; referenceAmount: string | null }> | null;
   choiceGauge: Readonly<{ percent: number | null; referenceAmount: string | null }> | null;
-  occurrenceStack: Readonly<{ bubbles: readonly ("AVAILABLE" | "LINKED")[]; overflow: string | null; links: readonly Readonly<{ componentId: string; count: string | null }>[] }> | null;
+  occurrenceStack: Readonly<{ bubbles: readonly ("AVAILABLE" | "LINKED")[]; overflow: string | null; links: readonly Readonly<{ componentId: string; count: string | null; contextOccurrenceId: string | null; selectionId: string | null; label: string }>[] }> | null;
 }>;
 export type ComposerSatellitePresentation = Readonly<{
   selectionId: string; label: string; iconKey: string;
   state: "CHOSEN" | "SUGGESTED" | "DERIVED" | "UNRESOLVED";
-  economicAmount: string | null; details: readonly string[];
+  economicAmount: string | null; costCaption: string | null; details: readonly string[];
   editableAssetKey: string | null; canRemove: boolean; canAccept: boolean;
   childContextOccurrenceId: string | null;
 }>;
@@ -35,6 +36,16 @@ export type ComposerPresentation = Readonly<{
   goalMargin: string | null;
   objects: Readonly<Record<string, ComposerObjectPresentation>>;
   sockets: Readonly<Record<string, ComposerSocketPresentation>>;
+  unresolvedRefs: readonly string[];
+  dragSources: Readonly<Record<string, ComposerDragSource>>;
+}>;
+/** Presentation of an existing capability, not a new semantic mutation owner. */
+export type ComposerDragSource = Readonly<{
+  sourceKey: string; assetKey: string; label: string; iconKey: string; economicAmount: string | null;
+  selection?: ComponentSelectionV1;
+  sourceSocket?: Readonly<{ contextOccurrenceId: string; slotKey: string; selectionId: string }>;
+  removeOperation?: ComposerOperation; protected: boolean;
+  pack?: readonly Readonly<{ label: string; iconKey: string; provenance: string }>[];
 }>;
 /** Excludes Baseline snapshots, canonical evidence and financial adapter entries. */
 export type ComposerUiModel = Omit<MonthComposerReadModel, "preview"> & Readonly<{
@@ -48,7 +59,7 @@ export type ComposerUiModel = Omit<MonthComposerReadModel, "preview"> & Readonly
 export type ComposerRequest = Readonly<{ sequence: number; targetMonth: string; draft?: PlanSemanticStateV1 }> & (
   | Readonly<{ kind: "READ" }>
   | Readonly<{ kind: "MUTATE"; mutation: SemanticMutation }>
-  | Readonly<{ kind: "DROP"; assetKey: string; target: DropTarget; values: Readonly<Record<string, string>>; identity: string; selectionId: string }>
+  | Readonly<{ kind: "DROP"; assetKey: string; target: DropTarget; values: Readonly<Record<string, string>>; identity: string; selectionId: string; sourceSocket?: Readonly<{ contextOccurrenceId: string; slotKey: string; selectionId: string }> }>
   | Readonly<{ kind: "CLEAR_SOCKET"; contextOccurrenceId: string; slotKey: string; selectionId: string }>
   | Readonly<{ kind: "EDIT_CONTEXT"; contextOccurrenceId: string; values: Readonly<Record<string, string>> }>
   | Readonly<{ kind: "PRESERVE"; targetRef: string; preserve: boolean }>
@@ -57,7 +68,7 @@ export type ComposerRequest = Readonly<{ sequence: number; targetMonth: string; 
   | Readonly<{ kind: "APPLY"; command: PlannerApplyCommand }>
 );
 export type ComposerResponse = Readonly<{ sequence: number }> & (
-  | Readonly<{ ok: true; model: ComposerUiModel; suggestions?: PlanBalanceSuggestions; applied?: boolean; mutationKind?: string }>
+  | Readonly<{ ok: true; model: ComposerUiModel; suggestions?: PlanBalanceSuggestions; applied?: boolean; mutationKind?: string; interactionImpact?: string | null }>
   | Readonly<{ ok: false; code: string; message: string }>
 );
 export type ComposerTransport = (request: ComposerRequest) => Promise<ComposerResponse>;

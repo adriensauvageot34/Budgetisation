@@ -20,6 +20,7 @@ const semanticLabels: Record<string, string> = { "adrien-work-coffee": "Café au
 const needLabels: Record<string, string> = { hairdresser: "Coiffeur", maquillage_manon_mascara: "Mascara Manon", maquillage_manon_sourcils: "Sourcils Manon", maquillage_manon_eyeliner: "Eyeliner Manon", cire_adrien: "Cire coiffante Adrien", haircare_adrien_cire: "Cire coiffante Adrien", skincare_manon: "Soins de peau Manon", haircare_manon: "Soins des cheveux Manon" };
 export const composerNeedLabel = (needKey: string) => needLabels[needKey] ?? "Besoin à préciser";
 const socketLabels: Record<string, string> = { meal: "Repas", extras: "Compléments", transport: "Transport", main: "Moment principal", hospitality: "Contribution", activities: "Activités", item: "Achat", before: "Avant la soirée", food: "Repas", outbound: "Aller", return: "Retour", lodging: "Hébergement", groceries: "Courses du séjour", restaurants: "Restaurants", purchases: "Achats", products: "Produits & besoins", items: "Équipements", services: "Services", components: "Contributions", children: "Autres moments" };
+export const composerSocketLabel = (key: string) => socketLabels[key] ?? key;
 
 /** All Board totals are the exact projection. Cards publish semantic controls and
  * evidence, never independently calculated money or client deltas. */

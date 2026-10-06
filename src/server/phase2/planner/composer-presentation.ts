@@ -1,7 +1,11 @@
 import "server-only";
 import Big from "big.js";
 import type { MonthComposerReadModel, ComposerAssetView } from "@/domain/phase2/planner/composer-contract";
-import type { ComposerPresentation, ComposerObjectPresentation, ComposerSocketPresentation } from "@/domain/phase2/planner/composer-ui-contract";
+import type { ComposerPresentation, ComposerObjectPresentation, ComposerSocketPresentation, ComposerDragSource } from "@/domain/phase2/planner/composer-ui-contract";
+import { resolveContextTemplate } from "./context-registry";
+import { componentId, mobilityIntentId } from "@/domain/phase2/planner/identity";
+import { composerSocketLabel } from "./read-model";
+import { transportTotals } from "@/domain/phase2/planned-car";
 
 // Icon identities are presentation aliases, never compatibility or pricing rules.
 const iconAliases: Readonly<Record<string, string>> = {
@@ -37,7 +41,15 @@ export function composerPresentation(model: MonthComposerReadModel): ComposerPre
     const slot = model.preview.compiled.planSlots.find(s => s.baseline.slotIdentityKey === card.targetRef)!;
     const reservation = model.preview.baseline.structuralFacts.savingsReservations.find(r => `savings:${r.reservationId}` === card.targetRef);
     const links = model.preview.compiled.financialAdapterInput.adapterManifest.baselineConsumptions
-      .filter(c => c.planSlotId === slot.baseline.planSlotId && c.count !== null).map(c => ({ componentId: c.componentId, count: c.count }));
+      .filter(c => c.planSlotId === slot.baseline.planSlotId && c.count !== null).map(c => {
+        const component = model.preview.compiled.components.find(p => p.componentId === c.componentId);
+        const context = model.board.contexts.find(p => p.contextOccurrenceId === component?.contextOccurrenceId);
+        const parent = model.board.contexts.find(p => p.contextOccurrenceId === context?.parentContextOccurrenceId);
+        const selection = context?.sockets.flatMap(s => s.currentItems.map(i => ({ item: i, slotKey: s.slotKey })))
+          .find(s => componentId(context.contextOccurrenceId, s.slotKey, s.item.selectionId) === c.componentId);
+        return { componentId: c.componentId, count: c.count, contextOccurrenceId: context?.contextOccurrenceId ?? null,
+          selectionId: selection?.item.selectionId ?? null, label: `${new Intl.NumberFormat("fr-FR").format(Number(c.count))} occurrence habituelle rattachée à ${parent?.label ?? context?.label ?? "un moment explicite"}` };
+      });
     const count = slot.effectiveCount === null ? null : new Big(slot.effectiveCount);
     const linked = links.reduce((sum, link) => sum.plus(link.count!), new Big(0));
     objects[card.targetRef] = {
@@ -80,14 +92,25 @@ export function composerPresentation(model: MonthComposerReadModel): ComposerPre
       satellites: socket.currentItems.map(item => {
         const asset = assets.find(a => a.optionKey === item.optionKey);
         const child = item.kind === "CHILD_CONTEXT" ? model.board.contexts.find(c => c.contextOccurrenceId === item.childContextOccurrenceId) : null;
-        const amount = socket.evaluations?.find(e => e.selectionId === item.selectionId)?.economicAmount ?? null;
+        const intentId = item.kind === "MOBILITY_INTENT" ? mobilityIntentId(card.contextOccurrenceId, socket.slotKey) : null;
+        const journey = intentId ? model.preview.compiled.journeys.find(j => j.participatingIntentIds.includes(intentId)) : null;
+        const price = journey ? model.preview.compiled.journeyPrices.find(p => p.journeyId === journey.physicalJourneyRequirementId) : null;
+        const ownsPrice = !!journey && journey.ownerIntentId === intentId && !journey.externalExpenseId;
+        // Reuse the existing physical-journey owner. A shared leg does not gain a second amount.
+        const amount = item.kind === "MOBILITY_INTENT" ? ownsPrice && price
+          ? journey.mode === "CAR" ? price.parking === null ? null : transportTotals(price.economicFuel, price.toll, price.parking).economic : price.fare : null
+          : socket.evaluations?.find(e => e.selectionId === item.selectionId)?.economicAmount ?? null;
         const suggested = item.provenance === "PERSONAL_SUGGESTION";
         const derived = card.readOnly || socket.visualState === "DERIVED" || asset?.provenance === "DERIVED_CONSEQUENCE";
         return { selectionId: item.selectionId, label: child?.label ?? (item.kind === "COMPONENT" ? item.label : asset?.label ?? socket.label ?? item.optionKey),
           iconKey: child ? icon(child.templateKey) : asset ? composerAssetIcon(asset, model) : icon(socket.slotKey),
-          state: suggested ? "SUGGESTED" : derived ? "DERIVED" : item.kind === "UNRESOLVED" || item.kind === "COMPONENT" && amount === null ? "UNRESOLVED" : "CHOSEN",
+          state: suggested ? "SUGGESTED" : derived ? "DERIVED" : item.kind === "UNRESOLVED" || item.kind === "COMPONENT" && amount === null
+            || item.kind === "MOBILITY_INTENT" && (!journey || journey.pricingState !== "RESOLVED") ? "UNRESOLVED" : "CHOSEN",
           economicAmount: suggested ? null : amount,
-          details: suggested ? ["Suggestion personnelle · hors coût tant que non acceptée"] : item.kind === "MOBILITY_INTENT" ? ["Mobilité évaluée par le serveur dans le mois"]
+          costCaption: journey && !ownsPrice ? `Montant déjà compté avec ${model.board.contexts.find(c => c.contextOccurrenceId === journey.ownerContextOccurrenceId)?.label ?? "l’intention liée"}` : null,
+          details: suggested ? ["Suggestion personnelle · hors coût tant que non acceptée"] : item.kind === "MOBILITY_INTENT" ? [
+            journey && !ownsPrice ? `Trajet partagé · compté une fois dans ${model.board.contexts.find(c => c.contextOccurrenceId === journey.ownerContextOccurrenceId)?.label ?? "son intention propriétaire"}` : "Mobilité évaluée par le serveur dans le mois",
+            ...(journey?.mode === "CAR" ? ["Usage économique du carburant · sans débit Banque automatique"] : [])]
             : item.kind === "COMPONENT" ? [`Quantité : ${item.quantity}`, ...(item.cost.kind === "UNKNOWN" ? ["Montant à préciser"] : [])] : [],
           editableAssetKey: writable && !derived && item.kind !== "CHILD_CONTEXT" && asset ? asset.assetKey : null,
           // Child contexts retain their own TRASH/reparent capability and identity.
@@ -98,8 +121,39 @@ export function composerPresentation(model: MonthComposerReadModel): ComposerPre
   const gap = model.board.cockpit.goal.gapToGoal;
   // A sign inversion of C7's signed gap for the label "Marge"; no new calculation.
   const goalMargin = gap === null ? null : Number(gap) === 0 ? gap : gap.startsWith("-") ? gap.slice(1) : `-${gap}`;
-  return { elementCount: controls.length + roots.length,
-    unresolvedCount: controls.filter(c => !c.value.owned && (c.knowledge === "UNKNOWN" || c.knowledge === "PARTIAL")).length
-      + roots.filter(c => c.knowledge === "UNKNOWN" || c.knowledge === "PARTIAL").length,
+  const unresolvedRefs = [...controls.filter(c => !c.value.owned && (c.knowledge === "UNKNOWN" || c.knowledge === "PARTIAL")).map(c => c.targetRef),
+    ...roots.filter(c => c.knowledge === "UNKNOWN" || c.knowledge === "PARTIAL").map(c => c.contextOccurrenceId)];
+  const dragSources: Record<string, ComposerDragSource> = {};
+  for (const asset of model.library.searchableAssets) {
+    if (asset.kind !== "CONTEXT_ASSET" && asset.kind !== "SLOT_OPTION_ASSET") continue;
+    dragSources[asset.assetKey] = { sourceKey: asset.assetKey, assetKey: asset.assetKey, label: asset.label,
+      iconKey: composerAssetIcon(asset, model), economicAmount: null, protected: false,
+      ...(asset.kind === "CONTEXT_ASSET" ? { pack: Object.entries(resolveContextTemplate(asset.templateKey!).structuralDefaults).flatMap(([key, value]) => value.items.map(item => ({
+        label: composerSocketLabel(key),
+        iconKey: icon(key), provenance: item.provenance }))) } : {}) };
+  }
+  for (const card of model.board.contexts.filter(c => !c.readOnly)) {
+    const key = `context-occurrence:${card.contextOccurrenceId}`;
+    const removable = model.dropCapabilities.some(d => d.sourceAssetKey === key && d.target.kind === "TRASH" && d.resolution !== "BLOCKED");
+    dragSources[key] = { sourceKey: key, assetKey: key, label: card.label, iconKey: objects[card.contextOccurrenceId].iconKey,
+      economicAmount: null, protected: !removable,
+      ...(removable ? { removeOperation: { kind: "DROP", assetKey: key, target: { kind: "TRASH" }, values: {}, identity: card.contextOccurrenceId, selectionId: card.contextOccurrenceId } as const } : {}) };
+    for (const socket of card.sockets) for (const satellite of sockets[`${card.contextOccurrenceId}:${socket.slotKey}`].satellites) {
+      const item = socket.currentItems.find(i => i.selectionId === satellite.selectionId)!;
+      if (item.kind === "CHILD_CONTEXT" || item.kind === "UNRESOLVED" || satellite.state === "DERIVED") continue;
+      const assetKey = satellite.editableAssetKey;
+      if (!assetKey) continue;
+      const sourceKey = `satellite:${card.contextOccurrenceId}:${socket.slotKey}:${item.selectionId}`;
+      dragSources[sourceKey] = { sourceKey, assetKey, label: satellite.label, iconKey: satellite.iconKey, economicAmount: satellite.economicAmount,
+        selection: item, sourceSocket: { contextOccurrenceId: card.contextOccurrenceId, slotKey: socket.slotKey, selectionId: item.selectionId }, protected: false,
+        ...(satellite.canRemove ? { removeOperation: { kind: "CLEAR_SOCKET", contextOccurrenceId: card.contextOccurrenceId, slotKey: socket.slotKey, selectionId: item.selectionId } as const } : {}) };
+    }
+  }
+  for (const card of controls) if (objects[card.targetRef].protectedSavings || model.semanticState.preferences.flexibility[card.targetRef] === "PRESERVE") {
+    const key = `control:${card.targetRef}`;
+    dragSources[key] = { sourceKey: key, assetKey: key, label: card.label, iconKey: objects[card.targetRef].iconKey,
+      economicAmount: typeof card.value.amount === "string" ? card.value.amount : null, protected: true };
+  }
+  return { elementCount: controls.length + roots.length, unresolvedCount: unresolvedRefs.length, unresolvedRefs, dragSources,
     goalMargin, objects, sockets };
 }

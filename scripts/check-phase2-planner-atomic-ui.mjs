@@ -67,7 +67,7 @@ try {
     const card = m.board.discretionaryControls.find(c => c.label === 'Restaurants'), stack = m.presentation.objects[card.targetRef].occurrenceStack;
     assert.ok(stack.links.length > 0); assert.ok(stack.bubbles.includes('LINKED'));
     const source = await readMonthComposer(deps, householdId, '2026-11', fixture.semantic);
-    assert.deepEqual(stack.links, source.preview.compiled.financialAdapterInput.adapterManifest.baselineConsumptions.filter(c => c.planSlotId === card.cardId && c.count !== null).map(c => ({ componentId:c.componentId,count:c.count })));
+    assert.deepEqual(stack.links.map(({componentId,count})=>({componentId,count})), source.preview.compiled.financialAdapterInput.adapterManifest.baselineConsumptions.filter(c => c.planSlotId === card.cardId && c.count !== null).map(c => ({ componentId:c.componentId,count:c.count })));
     for (const socket of Object.values(m.presentation.sockets)) for (const satellite of socket.satellites) if (satellite.childContextOccurrenceId) {
       assert.equal(satellite.canRemove, false, 'Child context removal retains its own TRASH owner');
       assert.equal(satellite.editableAssetKey, null, 'Child context cannot become a component through its parent editor');

@@ -109,23 +109,24 @@ try {
     run('click', 'dialog[open] button[aria-label="Fermer"]'); });
   run('click', '[data-balance]'); ready(); run('snapshot', '-i');
   const candidates = evaluate('[...document.querySelectorAll("[data-candidate]")].map(e=>e.dataset.candidate)'); assert.ok(candidates.length);
-  run('click', `[data-candidate="${candidates[0]}"] button`); ready(); run('snapshot', '-i');
+  run('click', `[data-candidate="${candidates[0]}"]`); ready(); run('snapshot', '-i');
   assert.notDeepEqual(evaluate('[...document.querySelectorAll("[data-candidate]")].map(e=>e.dataset.candidate)'), candidates); passed.push('C8-ASSISTANT-BROWSER');
-  run('click', 'dialog[open] button[aria-label="Fermer"]'); run('snapshot', '-i');
+  run('click', 'button[aria-label="Fermer les suggestions"]'); run('snapshot', '-i');
   // Real native drag and drop of a Library asset onto the structured Board.
   run('fill', 'input[aria-label="Rechercher une intention"]', 'Activité'); run('snapshot', '-i');
-  run('drag', '[data-asset="template:activity"]', '[data-board-drop]'); run('snapshot', '-i'); assert.equal(evaluate('!!document.querySelector("dialog[open]")'), true);
+  run('drag', '[data-asset="template:activity"]', '[data-add-element]'); ready(); run('snapshot', '-i'); assert.equal(evaluate('!!document.querySelector("[data-context]")'), true);
+  run('click', '[data-context] button[aria-label^="Modifier les informations"]');
   run('fill', 'dialog[open] input[name="label"]', 'Balade du samedi'); run('click', 'dialog[open] [data-submit]'); formCompleted();
   const activityId = evaluate('[...document.querySelectorAll("[data-context]")].find(e=>e.querySelector("h3")?.textContent==="Balade du samedi").dataset.context');
   chooseSocket(activityId, 'main', 'option:activity:main:activity', { amount: '12', quantity: '1' }); passed.push('IGT-001-BROWSER'); passed.push('IGT-002-BROWSER');
-  run('click', `[data-context="${activityId}"] button[aria-label="Retirer Balade du samedi"]`); ready(); assert.equal(evaluate(`!!document.querySelector('[data-context="${activityId}"]')`), false); passed.push('C8-014-BROWSER');
+  run('click', `[data-context="${activityId}"] [data-context-actions]`); run('click', `[data-context="${activityId}"] button[aria-label="Retirer Balade du samedi"]`); ready(); assert.equal(evaluate(`!!document.querySelector('[data-context="${activityId}"]')`), false); passed.push('C8-014-BROWSER');
   // Composite fixture with ONE_OF replacement through a socket.
   navigate(`${origin}/?scenario=B`); run('snapshot', '-i');
   const nightId = evaluate('document.querySelector("[data-context]").dataset.context');
   chooseSocket(nightId, 'outbound', 'option:night-out:outbound:train', { amount: '2', origin: 'Maison', destination: 'Centre' });
   assert.equal(evaluate(`document.querySelector('[data-socket="${nightId}:outbound"]').querySelectorAll('[data-selection]').length`), 1); passed.push('C8-015-BROWSER');
   run('click', '[data-apply]'); ready(); assert.equal(evaluate('document.querySelector("[data-composer]").dataset.revision'), '1');
-  run('click', `[data-context="${nightId}"] button[aria-label^="Retirer "]`); ready();
+  run('click', `[data-context="${nightId}"] [data-context-actions]`); run('click', `[data-context="${nightId}"] button[aria-label^="Retirer "]`); ready();
   const cancelled = await evidence('B'); assert.equal(cancelled.log.at(-1).mutationKind, 'CANCEL_CONTEXT'); run('click', '[data-apply]'); ready();
   const history = await evidence('B'); assert.ok(history.active.activeRevision.changeSet.some(c => c.kind === 'CANCEL_CONTEXT')); passed.push('C8-013-BROWSER');
   // Dense composite and actual available CSS height at all requested desktop sizes.

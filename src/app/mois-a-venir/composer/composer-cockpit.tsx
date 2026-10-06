@@ -4,10 +4,10 @@ import styles from "./composer.module.css";
 const signedMoney = (value: string | null) => value === null ? "À préciser" : `${Number(value) > 0 ? "+" : ""}${money(value)}`;
 const tone = (value: string | null) => value === null ? "unknown" : value.startsWith("-") ? "negative" : "positive";
 /** The former permanent cockpit is now a header HUD, using the same C7 fields. */
-export function ComposerCockpit({ projection, goalMargin, temporary }: { projection: PlanProjectionV1; goalMargin: string | null; temporary: boolean }) {
-  return <div className={styles.financialHud} data-cockpit data-temporary={temporary} aria-label="Projection financière du mois">
-    <div className={styles.hudMain}><span>{temporary ? "Aperçu temporaire" : "Fin de mois"}</span><strong data-remainder>{money(projection.plan.economicMonthEndRemainder)}</strong>
-      <span className={styles.hudImpact} data-tone={tone(projection.plan.impactOnMonthEnd)}>{signedMoney(projection.plan.impactOnMonthEnd)} <small>vs sans changements</small></span></div>
+export function ComposerCockpit({ projection, goalMargin, temporary, pending, canonicalRemainder, interactionImpact, variant }: { projection: PlanProjectionV1; goalMargin: string | null; temporary: boolean; pending?: boolean; canonicalRemainder?: string | null; interactionImpact?: string | null; variant?: boolean }) {
+  return <div className={styles.financialHud} data-cockpit data-temporary={temporary} data-calculating={pending} aria-label="Projection financière du mois">
+    <div className={styles.hudMain}><span>{variant ? "Variante" : "Fin de mois"}{pending && <i className={styles.calculating}>Calcul…</i>}</span><strong data-remainder>{temporary && <small data-canonical-remainder>{money(canonicalRemainder ?? null)} → </small>}{money(projection.plan.economicMonthEndRemainder)}</strong>
+      <span className={styles.hudImpact} data-gesture-impact={temporary || undefined} data-tone={tone(temporary ? interactionImpact ?? null : projection.plan.impactOnMonthEnd)}>{signedMoney(temporary ? interactionImpact ?? null : projection.plan.impactOnMonthEnd)} <small>{temporary ? "impact de ce geste" : "vs sans changements"}</small></span></div>
     <div className={styles.hudSecondary}><span>Objectif <b>{money(projection.goal.targetMonthEnd)}</b></span><span data-tone={tone(goalMargin)}>Marge <b>{signedMoney(goalMargin)}</b></span>
       <span className={styles.hudKnowledge}>{projection.projectionCompleteness === "COMPLETE" ? "Projection complète" : "Projection à compléter"}</span></div>
   </div>;
