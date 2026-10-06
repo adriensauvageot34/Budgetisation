@@ -38,7 +38,12 @@ export function ContextCard({ card, model, busy, selected, focused, focus, drag,
       <span className={styles.contextState} title={knowledgeLabel(card.knowledge)} aria-label={knowledgeLabel(card.knowledge)}>{preserved ? <LockKeyhole size={12} /> : card.readOnly ? <Link2 size={12} /> : card.knowledge === "UNKNOWN" ? <i /> : null}</span></div>
       <div className={styles.contextTools}>{!card.readOnly && <><button className={styles.iconButton} disabled={busy} aria-label={`${preserved ? "Libérer" : "Préserver"} ${card.label}`} aria-pressed={preserved} onClick={() => request({ kind: "PRESERVE", targetRef: card.contextOccurrenceId, preserve: !preserved })}><Pin size={15} /></button>
         <button className={styles.iconButton} disabled={busy || !card.capabilityRefs.includes("PATCH_CONTEXT")} aria-label={`Modifier les informations de ${card.label}`} onClick={() => edit(card)}><Pencil size={14} /></button>
-        <button className={styles.dragHandle} disabled={busy} {...handle} aria-label={`Déplacer ${card.label}`} onClick={() => drag(selected === instance ? null : instance)}><GripVertical size={17} /></button>
+        <button className={styles.dragHandle} disabled={busy} {...handle} aria-label={`Déplacer ${card.label}`} onClick={e => {
+          // A child can be chosen from its satellite popover. Free the Board so
+          // the next click can reach a destination without losing that choice.
+          e.currentTarget.closest<HTMLElement>("[popover]")?.hidePopover();
+          drag(selected === instance ? null : instance);
+        }}><GripVertical size={17} /></button>
         <AtomicPopover utility label={`Actions de ${card.label}`} state="ACTIONS" focus={() => focus(card.contextOccurrenceId)} icon={<MoreHorizontal size={15} />}>{close => <div className={styles.popoverActions}>
           {removable && <button disabled={busy} aria-label={`Retirer ${card.label}`} onClick={() => { close(); drop({ kind: "TRASH" }, instance); }}>Retirer ce moment</button>}
           {reparentTargets.map(d => <button key={`${d.target.contextOccurrenceId}:${d.target.slotKey}`} disabled={busy} onClick={() => { close(); drop(d.target, instance); }}>Rattacher à {model.board.contexts.find(c => c.contextOccurrenceId === d.target.contextOccurrenceId)?.label} · {model.board.contexts.find(c => c.contextOccurrenceId === d.target.contextOccurrenceId)?.sockets.find(s => s.slotKey === d.target.slotKey)?.label}</button>)}

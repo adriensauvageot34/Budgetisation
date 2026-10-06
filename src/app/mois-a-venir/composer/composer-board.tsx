@@ -23,14 +23,6 @@ export function ComposerBoard({ model, busy, selected, focused, focus, edit, cho
   const trashVisible = !!interaction?.grabbed && (!!interaction.grabbed.removeOperation || interaction.grabbed.protected);
   const boardTarget: DropTarget = { kind: "BOARD_ZONE" }, trashTarget: DropTarget = { kind: "TRASH" };
   return <section className={styles.board} aria-label="Board du mois">
-    <header className={styles.boardHeader}><div><span className={styles.boardEyebrow}>L’inventaire du mois</span><h2>Vos objets, vos moments.</h2></div>
-      <div className={styles.boardTools}><button data-add-element className={styles.addInventory} disabled={busy}
-        onDragOver={e => { if (boardAccepts && !busy) { e.preventDefault(); interaction?.over(boardTarget); } }}
-        onDragLeave={e => { if (leftSurface(e)) interaction?.over(null); }}
-        onDrop={e => { e.preventDefault(); if (boardAccepts && !busy) { if (interaction?.grabbed) interaction.place(boardTarget); else drop(boardTarget, e.dataTransfer.getData("application/x-planner-asset")); } }}
-        onClick={boardAccepts ? () => drop(boardTarget) : add}><Plus size={15} /><span>Ajouter un élément</span></button><button data-preview className={styles.textButton} disabled={busy} onClick={preview}>Prévisualiser le mois</button>
-        <button data-balance className={styles.textButton} disabled={busy} onClick={balance}>Explorer les ajustements</button>
-        <button data-financial-details className={styles.textButton} disabled={busy} onClick={details}>Détail financier</button></div></header>
     <BoardCarousel model={model} focused={focused} emptyClick={() => focus(null)} dropProps={{ "data-compatible": boardAccepts,
       "data-drag-over": sameTarget(interaction?.overTarget ?? null, boardTarget),
       onDragOver: e => { if (boardAccepts && !busy) { e.preventDefault(); e.dataTransfer.dropEffect = "move"; interaction?.over(boardTarget); } else interaction?.over(null); },
@@ -44,8 +36,8 @@ export function ComposerBoard({ model, busy, selected, focused, focus, edit, cho
       {interaction?.grabbed?.pack && <article className={styles.packGhost} data-pack-ghost aria-label={`Aperçu de ${interaction.grabbed.label}`}><PlannerIcon iconKey={interaction.grabbed.iconKey} /><h3>{interaction.grabbed.label}</h3>
           <div>{interaction.grabbed.pack.map((s, index) => <span key={`${s.label}:${index}`} title={`${s.label} · ${s.provenance}`}><PlannerIcon iconKey={s.iconKey} scale="SATELLITE" /><small>{s.label}</small></span>)}</div><p>Estimation après ajout</p></article>}
     </BoardCarousel>
-    <div className={styles.paletteDock} data-palette-dock>{focusedCard ? <ContextPalette card={focusedCard} model={model} busy={busy} choose={choose} close={() => focus(null)} />
-      : <p className={styles.paletteHint}>Sélectionnez un moment pour l’équiper. Les repères du mois restent accessibles dans les détails des cartes.</p>}</div>
+    {model.presentation.elementCount < 4 && <button data-add-element className={styles.emptyInvitation} disabled={busy} onClick={add}><Plus size={14} /> Ajouter à votre mois</button>}
+    {focusedCard && <div className={styles.paletteDock} data-palette-dock><ContextPalette card={focusedCard} model={model} busy={busy} choose={choose} close={() => focus(null)} /></div>}
     {trashVisible && <div className={styles.trash} data-trash data-protected={interaction?.grabbed?.protected} data-compatible={trashAccepts || !!interaction?.grabbed?.removeOperation} data-drag-over={sameTarget(interaction?.overTarget ?? null, trashTarget)}
       role="status" aria-label={interaction?.grabbed?.protected ? "Protégée · retrait interdit" : "Retirer l’élément saisi"}
       onDragOver={e => { e.stopPropagation(); if (!busy && !interaction?.grabbed?.protected) { e.preventDefault(); interaction?.over(trashTarget); } }}

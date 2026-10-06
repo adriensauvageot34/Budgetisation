@@ -21,7 +21,7 @@ export function ContextPalette({ card, model, busy, choose, close }: { card: Com
         return <button key={asset.assetKey} data-palette-asset={asset.assetKey} data-option-state={option.state} disabled={busy} title={option.state === "ALTERNATIVE" ? `Remplacer par ${asset.label}` : asset.label}
           draggable={!busy} data-drag-source={sourceKey} data-grabbed={interaction?.grabbed?.sourceKey === sourceKey} onDragStart={e => interaction?.start(sourceKey, e)} onDragEnd={() => interaction?.end()}
           onClick={() => interaction ? interaction.equip(sourceKey, { kind: "CONTEXT_SOCKET", contextOccurrenceId: card.contextOccurrenceId, slotKey: socket.slotKey }) : choose(asset, { kind: "CONTEXT_SOCKET", contextOccurrenceId: card.contextOccurrenceId, slotKey: socket.slotKey })}>
-          <PlannerIcon iconKey={asset.iconKey} scale="SATELLITE" /><span>{asset.label}</span>
+          <PlannerIcon iconKey={asset.iconKey} scale="PALETTE" /><span>{asset.label}</span>
           {option.state === "EQUIPPED" ? <Check size={11} /> : option.state === "SUGGESTED" ? <Sparkle size={11} /> : option.state === "ALTERNATIVE" ? <ArrowLeftRight size={12} /> : null}
         </button>;
       })}</div>)}</div>

@@ -6,24 +6,33 @@ d'état : focus, lien, verrou, recherche, undo/redo, fermeture et retrait.
 
 | Token | Usage |
 | --- | --- |
-| `--clay-ivory: #fffdf8` | Matière des cartes |
-| `--clay-pearl: #f5f1f6` | Plateau doux |
-| `--clay-shadow: #59436512` | Ombre diffuse, sans contour noir |
-| `--clay-focus: #a591bc` | Focus lavande |
-| `--clay-savings: #eef1e7` | Réservation, sans promesse de rendement |
-| 54 / 30 / 34 px | Objet / satellite / Library et palette |
-| 20–26 px | Rayon des cartes ; satellites ronds |
+| `--ink: #252d48` | Texte navy |
+| `--focus: #9b82c1` | Focus lavande |
+| `--amber: #a77834` | Inconnue / attention |
+| 52 / 30 / 34 / 32 px | Objet / satellite / palette / Library |
+| 15–20 px | Rayon des cartes ; satellites ronds |
 
-Les SVG partagent `ClayFrame`, le viewBox 64×64, l'ombre au sol et les extrémités
-arrondies. Les faces claires sont orientées en haut à gauche ; les volumes gardent
-les tons ivoire, sauge, lavande et sable. Les détails restent lisibles à 30 px.
+Les SVG partagent `ClayFrame`, le viewBox 64×64, deux ellipses de contact et les
+extrémités arrondies. Les peintures mates emploient trois tons peu espacés, de
+haut-gauche vers bas-droite : ivoire/perle et un ou deux accents lavande, sauge,
+bleu, pêche ou or. Les identifiants de gradient sont uniques via useId ; le
+registre est memoized. Aucun filtre SVG coûteux ou bitmap. Les détails restent lisibles à 30 px.
 Les montants sont tabulaires et proviennent exclusivement du serveur.
 
-Motion : hover 120 ms, lift 140 ms, focus/palette 190 ms, snap/plateau/reparent
-210 ms, corbeille 180 ms. Le dwell de pagination pendant drag dure 600 ms.
+Motion : hover/lift 140 ms, focus/palette 190 ms, snap 240 ms, page/reparent
+210 ms, changement de valeur 300 ms, corbeille 180 ms. Le dwell de pagination pendant drag dure 600 ms.
 Reduced-motion supprime les transitions. Le mouvement ne modifie ni identité,
 ni décision, ni compatibilité, ni couleur métier.
 
-La palette réserve 104 px et les contrôles de plateau 32 px. Sélectionner une
-carte ne modifie pas la hauteur disponible. Le packing utilise des dimensions
-DOM et un ordre déterministe, exclusivement dans la couche de présentation.
+La palette est un overlay de 104 px : aucun espace réservé lorsqu'elle est
+fermée. La pagination de 30 px apparaît seulement en débordement. La sélection
+reste active et la palette garde son Context lors d'un changement de page.
+Les pages restent montées, les pages inactives sont inert, pour conserver la
+source du drag natif. Le packing alterne les silhouettes dans un ordre stable,
+exclusivement visuel. Largeurs : SIMPLE 196, HABIT 212, COMPOSITE 288, SAVINGS 236 px.
+
+Couches CSS : `--z-board:0` < `--z-card:1` < `--z-selected:2` <
+`--z-satellite:3` < `--z-ghost:4` < `--z-palette:5` < `--z-popover:6` <
+`--z-trash:7` < `--z-modal:8`. Les popovers/dialogs natifs utilisent aussi la
+top layer du navigateur. Les cellules et cartes gardent overflow visible ;
+seul le viewport du carousel contient les pages inactives.

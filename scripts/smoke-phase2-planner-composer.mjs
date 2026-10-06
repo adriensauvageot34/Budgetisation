@@ -30,7 +30,21 @@ const check = (id, fn) => { fn(); passed.push(id); console.log(`${id} PASS`); };
 const evidence = async key => (await fetch(`${origin}/evidence?scenario=${key}`)).json();
 const controls = () => evaluate('[...document.querySelectorAll("[data-control]")].map(e=>({key:e.dataset.control,label:e.querySelector("h3").textContent}))');
 function tabTo(expression) { for (let i = 0; i < 65; i++) { if (evaluate(expression)) return; run('press', 'Tab'); } throw new Error('Keyboard target unreachable'); }
-function navigate(url) { run('close'); run('open', url); run('set', 'viewport', '1440', '900'); run('wait', '[data-composer]'); ready(); }
+function navigate(url) { run('tab', 'new', url); run('set', 'viewport', '1440', '900'); run('wait', '[data-composer]'); ready(); }
+function dragToBoard(selector) {
+  run('scrollintoview', selector);
+  const source = evaluate(`document.querySelector(${JSON.stringify(selector)}).getBoundingClientRect().toJSON()`);
+  const target = evaluate('document.querySelector("[data-board-drop]").getBoundingClientRect().toJSON()');
+  run('mouse', 'move', String(Math.round(source.x + source.width / 2)), String(Math.round(source.y + source.height / 2)));
+  run('mouse', 'down');
+  run('mouse', 'move', String(Math.round(source.x + source.width / 2 + 18)), String(Math.round(source.y + source.height / 2 - 3)));
+  run('wait', '--fn', 'document.querySelector("[data-composer]").dataset.dragging === "true"');
+  // Drop on the blank Board, away from card sockets and the dwell page edges.
+  run('mouse', 'move', String(Math.round(target.left + 45)), String(Math.round(target.bottom - 14)));
+  run('mouse', 'move', String(Math.round(target.left + 46)), String(Math.round(target.bottom - 14)));
+  run('wait', '--fn', 'document.querySelector("[data-board-drop]").dataset.dragOver === "true"');
+  run('mouse', 'up'); ready();
+}
 function formCompleted() {
   run('wait', '--fn', '!document.querySelector("dialog[open]") || !!document.querySelector("dialog[open] [role=alert]")');
   ready(); assert.equal(evaluate('document.querySelector("dialog[open] [role=alert]")?.textContent ?? null'), null);
@@ -61,7 +75,7 @@ function chooseSocket(id, slot, asset, fields = {}) {
 function cockpitEquals(record) {
   const text = evaluate('document.querySelector("[data-remainder]").textContent');
   const remainder = record.log.at(-1).projection.plan.economicMonthEndRemainder;
-  assert.equal(text, remainder === null ? 'À préciser' : new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR', maximumFractionDigits: 2 }).format(Number(remainder)));
+  assert.equal(text, remainder === null ? '—' : new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR', maximumFractionDigits: 2 }).format(Number(remainder)));
 }
 try {
   run('close');
@@ -70,7 +84,7 @@ try {
   check('R1-UNIFIED-BOARD', () => {
     assert.equal(evaluate('document.querySelectorAll("[data-composer] aside").length'), 1);
     assert.equal(evaluate('[...document.querySelectorAll("[data-composer] h2")].some(e=>["Socle du mois","Vie & envies","Contexts & projets","Cagnottes","Cap du mois"].includes(e.textContent))'), false);
-    assert.equal(evaluate('!!document.querySelector("[data-mosaic]") && !!document.querySelector("[data-add-element]")'), true);
+    assert.equal(evaluate('!!document.querySelector("[data-mosaic]") && !!document.querySelector("[data-board-drop]")'), true);
     assert.equal(evaluate('document.querySelector("[data-cockpit]").closest("header") !== null'), true);
   });
   check('R1-DETAILS-FOCUS', () => { run('click', '[data-financial-details]'); run('snapshot', '-i');
@@ -79,7 +93,7 @@ try {
     run('press', 'Escape'); assert.equal(evaluate('document.activeElement.hasAttribute("data-financial-details")'), true);
   });
   check('R1-ADD-ENTRY', () => { const before = evaluate('document.querySelector("[data-composer]").dataset.digest');
-    run('click', '[data-add-element]'); assert.equal(evaluate('document.activeElement.getAttribute("aria-label")'), 'Rechercher une intention');
+    run('click', '[data-library-open]'); assert.equal(evaluate('document.activeElement.getAttribute("aria-label")'), 'Rechercher une intention');
     assert.equal(evaluate('document.querySelector("[data-composer]").dataset.digest'), before);
     run('click', '[data-asset="template:activity"]'); run('snapshot', '-i');
     assert.equal(evaluate('document.querySelector("dialog[open] h2").textContent'), 'Composer Activité');
@@ -87,9 +101,10 @@ try {
   });
   check('C8-020', () => { assert.equal(evaluate('!!document.querySelector("[data-apply]") && document.querySelector("[data-apply]").getBoundingClientRect().bottom <= innerHeight'), true); });
   const originalDigest = evaluate('document.querySelector("[data-composer]").dataset.digest');
-  check('IGT-008', () => { tabTo('document.activeElement.textContent.trim()==="Ajuster" && document.activeElement.closest("[data-control]")?.querySelector("h3").textContent==="Courses"');
-    assert.notEqual(evaluate('getComputedStyle(document.activeElement).outlineStyle'), 'none'); run('press', 'Enter'); run('snapshot', '-i'); assert.equal(evaluate('!!document.querySelector("dialog[open]")'), true);
-    run('fill', 'dialog[open] input[name="amount"]', '310'); tabTo('document.activeElement.textContent.trim()==="Prévisualiser ce choix"'); run('press', 'Enter'); ready(); assert.equal(evaluate('!!document.querySelector("dialog[open]")'), false); });
+  check('IGT-008', () => { tabTo('document.activeElement.hasAttribute("data-value-edit") && document.activeElement.closest("[data-control]")?.querySelector("h3").textContent==="Courses"');
+    assert.notEqual(evaluate('getComputedStyle(document.activeElement).outlineStyle'), 'none'); run('press', 'Enter'); run('snapshot', '-i');
+    tabTo('document.activeElement.matches("[data-amount-inline] input")');const course=controls().find(c=>c.label==='Courses');run('fill', `[data-control="${course.key}"] [data-amount-inline] input`, '310');
+    tabTo('document.activeElement.getAttribute("aria-label")==="Prévisualiser le montant de Courses"');run('press','Enter');ready();assert.equal(evaluate('!!document.querySelector("dialog[open]")'), false); });
   const changedDigest = evaluate('document.querySelector("[data-composer]").dataset.digest'); assert.notEqual(changedDigest, originalDigest);
   check('C8-UNDO-REDO', () => { run('click', 'button[aria-label="Annuler la dernière modification du brouillon"]'); ready(); assert.equal(evaluate('document.querySelector("[data-composer]").dataset.digest'), originalDigest);
     run('click', 'button[aria-label="Rétablir la modification du brouillon"]'); ready(); assert.equal(evaluate('document.querySelector("[data-composer]").dataset.digest'), changedDigest); });
@@ -98,9 +113,11 @@ try {
     assert.equal(evaluate('document.querySelector("[data-composer]").dataset.digest'), changedDigest); });
   run('click', '[data-preview]'); ready(); cockpitEquals(await evidence('A'));
   run('click', '[data-apply]'); ready(); assert.equal(evaluate('document.querySelector("[data-composer]").dataset.revision'), '1');
+  assert.match(evaluate('document.querySelector("[data-draft-status]").textContent'), /Appliqué.*1/u);
   const appliedDigest = evaluate('document.querySelector("[data-composer]").dataset.digest'); cockpitEquals(await evidence('A'));
-  navigate(origin); assert.equal(evaluate('document.querySelector("[data-composer]").dataset.digest'), appliedDigest); passed.push('C8-APPLY-RELOAD-BROWSER');
-  adjust('Courses', '320'); run('click', '[data-apply]'); ready(); assert.equal(evaluate('document.querySelector("[data-composer]").dataset.revision'), '2'); cockpitEquals(await evidence('A')); passed.push('C8-SECOND-REVISION-BROWSER');
+  navigate(origin); assert.equal(evaluate('document.querySelector("[data-composer]").dataset.digest'), appliedDigest); assert.match(evaluate('document.querySelector("[data-draft-status]").textContent'), /Appliqué.*1/u); passed.push('C8-APPLY-RELOAD-BROWSER');
+  run('screenshot', path.join(out, 'applied-reloaded.png'));
+  adjust('Courses', '320'); assert.equal(evaluate('document.querySelector("[data-draft-status]").textContent'), 'Nouvelle modification'); run('click', '[data-apply]'); ready(); assert.equal(evaluate('document.querySelector("[data-composer]").dataset.revision'), '2'); assert.match(evaluate('document.querySelector("[data-draft-status]").textContent'), /Appliqué.*2/u); cockpitEquals(await evidence('A')); passed.push('C8-SECOND-REVISION-BROWSER','R5-036');
   check('C8-PRESET-COMMIT-BROWSER', () => { const before = evaluate('document.querySelector("[data-composer]").dataset.digest'), card = controls().find(c => c.label === 'Restaurants');
     run('hover', `[data-control="${card.key}"] [data-preset]`); run('wait', '300');
     run('click', `[data-control="${card.key}"] [data-preset]`); ready();
@@ -120,7 +137,7 @@ try {
   run('click', 'button[aria-label="Fermer les suggestions"]'); run('snapshot', '-i');
   // Real native drag and drop of a Library asset onto the structured Board.
   run('fill', 'input[aria-label="Rechercher une intention"]', 'Activité'); run('snapshot', '-i');
-  run('drag', '[data-asset="template:activity"]', '[data-add-element]'); ready(); run('snapshot', '-i'); assert.equal(evaluate('!!document.querySelector("[data-context]")'), true);
+  dragToBoard('[data-asset="template:activity"]'); run('snapshot', '-i'); assert.equal(evaluate('!!document.querySelector("[data-context]")'), true);
   run('click', '[data-context] button[aria-label^="Modifier les informations"]');
   run('fill', 'dialog[open] input[name="label"]', 'Balade du samedi'); run('click', 'dialog[open] [data-submit]'); formCompleted();
   const activityId = evaluate('[...document.querySelectorAll("[data-context]")].find(e=>e.querySelector("h3")?.textContent==="Balade du samedi").dataset.context');
@@ -139,10 +156,10 @@ try {
   navigate(`${origin}/?scenario=C`); run('snapshot', '-i');
   for (const [width, height] of [[1920,1080],[1728,900],[1440,900],[1440,760]]) {
     run('set', 'viewport', String(width), String(height));
-    const metrics = evaluate('({width:innerWidth,height:innerHeight,rootHeight:document.querySelector("#root").getBoundingClientRect().height,workspaceHeight:document.querySelector("[data-composer]").getBoundingClientRect().height,workspaceWidth:document.querySelector("[data-composer]").getBoundingClientRect().width,hostHeaderHeight:document.querySelector("#root>div>header").getBoundingClientRect().height,boardHeight:document.querySelector("[data-board-scroll]").getBoundingClientRect().height,boardWidth:document.querySelector("[data-board-scroll]").getBoundingClientRect().width,libraryWidth:document.querySelector("[data-composer] aside").getBoundingClientRect().width,hud:document.querySelector("[data-cockpit]").getBoundingClientRect().toJSON(),apply:document.querySelector("[data-apply]").getBoundingClientRect().toJSON(),overflow:document.documentElement.scrollWidth>innerWidth,vertical:document.documentElement.scrollHeight>innerHeight})');
+    const metrics = evaluate('({width:innerWidth,height:innerHeight,rootHeight:document.querySelector("#root").getBoundingClientRect().height,workspaceHeight:document.querySelector("[data-composer]").getBoundingClientRect().height,workspaceWidth:document.querySelector("[data-composer]").getBoundingClientRect().width,hostHeaderHeight:document.querySelector("#root>div>header")?.getBoundingClientRect().height ?? 0,boardHeight:document.querySelector("[data-board-scroll]").getBoundingClientRect().height,boardWidth:document.querySelector("[data-board-scroll]").getBoundingClientRect().width,libraryWidth:document.querySelector("[data-composer] aside").getBoundingClientRect().width,hud:document.querySelector("[data-cockpit]").getBoundingClientRect().toJSON(),apply:document.querySelector("[data-apply]").getBoundingClientRect().toJSON(),overflow:document.documentElement.scrollWidth>innerWidth,vertical:document.documentElement.scrollHeight>innerHeight})');
     assert.equal(metrics.overflow, false); assert.equal(metrics.vertical, false); assert.ok(metrics.apply.bottom <= height && metrics.apply.top >= 0);
     assert.ok(metrics.boardHeight > 250); sizes.push(metrics); run('screenshot', path.join(out, `composer-${width}x${height}.png`));
-    assert.ok(metrics.libraryWidth >= 230 && metrics.libraryWidth <= 280);
+    assert.equal(metrics.hostHeaderHeight, 0); assert.ok(metrics.libraryWidth >= 270 && metrics.libraryWidth <= 300);
     assert.ok(metrics.boardWidth > metrics.workspaceWidth - 576, 'Board must recover the former right cockpit space');
     assert.ok(metrics.hud.left >= 0 && metrics.hud.right <= width && metrics.hud.bottom <= height);
     assert.equal(evaluate('(()=>{const el=document.querySelector("[data-apply]"),r=el.getBoundingClientRect();return el.contains(document.elementFromPoint(r.x+r.width/2,r.y+r.height/2))})()'), true);

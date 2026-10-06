@@ -16,9 +16,9 @@ const digest=()=>evaluate('document.querySelector("[data-composer]").dataset.dig
 const check=(id,fn)=>{fn();passed.push(id);console.log(`${id} PASS`);};
 const evidence=async scenario=>(await fetch(`${origin}/evidence?scenario=${scenario}`)).json();
 const screenshot=name=>run('screenshot',path.join(out,`${name}.png`));
-function navigate(scenario,extra=''){run('close');run('open',`${origin}/?scenario=${scenario}${extra}`);run('set','viewport','1440','900');run('wait','[data-composer]');ready();run('snapshot','-i');}
+function navigate(scenario,extra=''){run('tab','new',`${origin}/?scenario=${scenario}${extra}`);run('set','viewport','1440','900');run('wait','[data-composer]');ready();run('snapshot','-i');}
 function box(selector){return evaluate(`document.querySelector(${JSON.stringify(selector)}).getBoundingClientRect().toJSON()`);}
-function move(selector){reveal(selector);const r=box(selector);run('mouse','move',String(Math.round(r.x+r.width/2)),String(Math.round(r.y+r.height/2)));run('mouse','move',String(Math.round(r.x+r.width/2+1)),String(Math.round(r.y+r.height/2)));}
+function move(selector){reveal(selector);const r=box(selector),x=selector==='[data-board-drop]'?r.left+45:r.x+r.width/2,y=selector==='[data-board-drop]'?r.bottom-14:r.y+r.height/2;run('mouse','move',String(Math.round(x)),String(Math.round(y)));run('mouse','move',String(Math.round(x+1)),String(Math.round(y)));}
 function begin(selector){run('scrollintoview',selector);move(selector);run('mouse','down');const r=box(selector);run('mouse','move',String(Math.round(r.x+r.width/2+9)),String(Math.round(r.y+r.height/2-5)));run('mouse','move',String(Math.round(r.x+r.width/2+18)),String(Math.round(r.y+r.height/2-3)));
   run('wait','--fn','document.querySelector("[data-composer]").dataset.dragging==="true"');}
 const release=()=>{run('mouse','up');ready();};
@@ -27,11 +27,14 @@ const redo=()=>{run('click','button[aria-label="Rétablir la modification du bro
 function adjust(amount){const target=evaluate('[...document.querySelectorAll("[data-control]")].find(e=>e.querySelector("h3").textContent==="Courses").dataset.control');
   run('scrollintoview',`[data-control="${target}"]`);run('click',`[data-control="${target}"] [data-card-edit]`);run('fill','dialog[open] input[name=amount]',amount);run('click','dialog[open] [data-submit]');ready();assert.equal(evaluate('!!document.querySelector("dialog[open]")'),false);}
 try{
+  run('close');
   navigate('RR','&delayDrop=true');const night=evaluate('document.querySelector("[data-context]").dataset.context');run('click',`[data-context="${night}"] [data-context-focus]`);
   const before=`[data-socket="${night}:before"] [data-satellite]`,nucleus=`[data-context="${night}"] [data-context-focus]`,initial=digest(),canonical=evaluate('document.querySelector("[data-remainder]").textContent');
   check('R3-006-BROWSER',()=>assert.equal(evaluate('!!document.querySelector("[data-trash]")'),false));
   begin(before);move(nucleus);run('wait','--fn','document.querySelector("[data-cockpit]").dataset.temporary==="true"');
-  check('R3-003-BROWSER',()=>{assert.equal(digest(),initial);assert.equal(evaluate('document.querySelector("[data-gesture-impact] small").textContent'),'impact de ce geste');});screenshot('before-hover');
+  check('R3-003-BROWSER',()=>{assert.equal(digest(),initial);assert.ok(evaluate('document.querySelector("[data-gesture-impact]").title.includes("Impact de ce geste")'));});
+  const gestureImpact=(await evidence('RR')).log.at(-1).interactionImpact;
+  assert.equal(evaluate('document.querySelector("[data-gesture-impact] b").textContent'),gestureImpact===null?'—':`${Number(gestureImpact)>0?'+':''}${new Intl.NumberFormat('fr-FR',{style:'currency',currency:'EUR',maximumFractionDigits:2}).format(Number(gestureImpact))}`);screenshot('before-hover');
   move('h1');run('wait','--fn','document.querySelector("[data-cockpit]").dataset.temporary==="false"');
   check('R3-005-BROWSER',()=>assert.equal(evaluate('document.querySelector("[data-remainder]").textContent'),canonical));
   move(nucleus);move('h1');run('wait','1200');
@@ -53,14 +56,14 @@ try{
   undo();run('focus',tram);run('press','Enter');ready();
   check('R3-021-BROWSER',()=>assert.match(evaluate(`document.querySelector(${JSON.stringify(transport)}).title`),/Train/));
   // Library -> independent context -> existing REPARENT, keeping exactly the same identity.
-  navigate('RC');const stay=evaluate('document.querySelector("[data-context]").dataset.context');run('fill','input[aria-label="Rechercher une intention"]','Restaurant');run('snapshot','-i');run('scrollintoview','[data-add-element]');
-  begin('[data-asset="template:restaurant"]');assert.equal(evaluate('document.querySelector("[data-pack-ghost]").textContent.includes("Estimation après ajout")'),true);move('[data-add-element]');release();
+  navigate('RC');const stay=evaluate('document.querySelector("[data-context]").dataset.context');run('fill','input[aria-label="Rechercher une intention"]','Restaurant');run('snapshot','-i');run('scrollintoview','[data-board-drop]');
+  begin('[data-asset="template:restaurant"]');assert.equal(evaluate('document.querySelector("[data-pack-ghost]").textContent.includes("Estimation après ajout")'),true);move('[data-board-drop]');release();
   const independent=evaluate('[...document.querySelectorAll("[data-context]")].find(e=>!e.parentElement.closest("[data-context]")&&e.querySelector("h3").textContent==="Restaurant").dataset.context');
   run('scrollintoview',`[data-context="${stay}"]`);run('snapshot','-i');begin(`[data-context="${independent}"] button[aria-label^="Déplacer "]`);
   run('scrollintoview',`[data-context="${stay}"]`);move(`[data-context="${stay}"] [data-context-focus]`);run('wait','--fn','document.querySelector("[data-cockpit]").dataset.temporary==="true"');screenshot('restaurant-reparent-preview');release();
   check('R3-011-BROWSER',()=>{assert.equal(evaluate(`document.querySelectorAll('[data-context="${independent}"]').length`),1);assert.equal(evaluate(`!!document.querySelector('[data-context="${stay}"] [data-context="${independent}"]')`),true);});
   // Structural ghosts never invent an accepted component or a pack total.
-  run('fill','input[aria-label="Rechercher une intention"]','Soirée');run('scrollintoview','[data-add-element]');run('snapshot','-i');const ghostDigest=digest();begin('[data-asset="template:night-out"]');move('[data-add-element]');screenshot('night-pack-ghost');
+  run('fill','input[aria-label="Rechercher une intention"]','Soirée');run('scrollintoview','[data-board-drop]');run('snapshot','-i');const ghostDigest=digest();begin('[data-asset="template:night-out"]');move('[data-board-drop]');screenshot('night-pack-ghost');
   check('R3-012-BROWSER',()=>{assert.equal(digest(),ghostDigest);assert.ok(evaluate('!!document.querySelector("[data-pack-ghost]")'));assert.equal(evaluate('document.querySelector("[data-pack-ghost]").textContent.includes("Estimation après ajout")'),true);});move('h1');release();assert.equal(digest(),ghostDigest);
   // Small suggestion hand, actual ACCEPT owner and candidate regeneration.
   navigate('RA');run('click','[data-balance]');ready();run('snapshot','-i');const oldSet=evaluate('document.querySelector("[data-candidate-set]").dataset.candidateSet');screenshot('assistant-hand');
@@ -70,7 +73,7 @@ try{
   check('R3-016-BROWSER',()=>assert.notEqual(evaluate('document.querySelector("[data-candidate-set]").dataset.candidateSet'),oldSet));run('click','[data-candidate]');ready();passed.push('R3-ASSISTANT-CLICK-BROWSER');run('click','button[aria-label="Fermer les suggestions"]');
   const comparisonBase=digest();assert.equal(evaluate('document.querySelector("[data-cockpit] [data-tone=positive] b").textContent.includes("€")'),true);
   run('click','[data-compare]');assert.equal(evaluate('!!document.querySelector("[data-apply]")'),false);adjust('800');const firstVariant=digest();assert.notEqual(firstVariant,comparisonBase);screenshot('compare-variant');
-  assert.equal(evaluate('!!document.querySelector("[data-cockpit] [data-tone=negative] b")'),true);passed.push('R3-GOAL-TENSION-BROWSER');
+  assert.equal(evaluate('!!document.querySelector("[data-cockpit] [data-tone=attention] b")'),true);passed.push('R3-GOAL-TENSION-BROWSER');
   undo();assert.equal(digest(),comparisonBase);redo();assert.equal(digest(),firstVariant);run('click','[data-compare-exit]');
   check('R3-017-BROWSER',()=>assert.equal(digest(),comparisonBase));run('click','[data-compare]');adjust('285');const kept=digest();run('click','[data-compare-keep]');
   check('R3-018-BROWSER',()=>{assert.equal(digest(),kept);assert.equal(evaluate('document.querySelector("[data-composer]").dataset.comparing'),'false');});undo();assert.equal(digest(),comparisonBase);

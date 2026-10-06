@@ -3,6 +3,8 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
+    "check:phase2-planner-visual-fidelity": "node scripts/check-phase2-planner-visual-fidelity.mjs",
+    "smoke:phase2-planner-visual-fidelity": "node scripts/smoke-phase2-planner-visual-fidelity.mjs",
     "check:phase2-planner-final-polish": "node scripts/check-phase2-planner-final-polish.mjs",
     "smoke:phase2-planner-final-polish": "node scripts/smoke-phase2-planner-final-polish.mjs",
     "check:phase2-planner-atomic-ui": "node scripts/check-phase2-planner-atomic-ui.mjs",

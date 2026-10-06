@@ -1,6 +1,6 @@
 "use client";
 import { useState, useRef, useEffect, type DragEvent } from "react";
-import { ArrowLeft, Undo2, Redo2, X, Sparkles } from "lucide-react";
+import { ArrowLeft, ArrowLeftRight, Undo2, Redo2, X, Sparkles, MoreHorizontal, LockKeyhole } from "lucide-react";
 import type { ComposerUiModel, ComposerTransport, ComposerRequest, ComposerOperation, ComposerField, ComposerDragSource } from "@/domain/phase2/planner/composer-ui-contract";
 import type { ComposerAssetView, ComposerCardView, ComposerContextCardView, DropTarget } from "@/domain/phase2/planner/composer-contract";
 import type { ComponentSelectionV1 } from "@/domain/phase2/planner/component-contract";
@@ -17,12 +17,13 @@ import { ComposerInteractionContext, preparedDrop, publishedDrop, sameTarget } f
 import { PlannerIcon } from "./planner-icons/planner-icon";
 import { money } from "./display";
 import { finishComparison, type ComparisonSnapshot } from "./comparison";
+import { AtomicPopover } from "./atomic-popover";
 
 type Editor = { title: string; compact?: boolean; fields: readonly ComposerField[]; values: Record<string, string>; operation: (values: Record<string, string>) => ComposerOperation };
 export function ComposerShell({ initialModel, transport }: { initialModel: ComposerUiModel; transport: ComposerTransport }) {
   const [model, setModel] = useState(initialModel), current = useRef(initialModel);
   const [busy, setBusy] = useState(false), busyRef = useRef(false);
-  const [selected, setSelected] = useState<string | null>(null), [message, setMessage] = useState("Votre brouillon est prêt à composer.");
+  const [selected, setSelected] = useState<string | null>(null), [message, setMessage] = useState("");
   const [focusedContext, setFocusedContext] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [past, setPast] = useState<PlanSemanticStateV1[]>([]), [future, setFuture] = useState<PlanSemanticStateV1[]>([]);
@@ -44,6 +45,15 @@ export function ComposerShell({ initialModel, transport }: { initialModel: Compo
   const install = (next: ComposerUiModel) => { current.current = next; setModel(next); };
   const clearHover = () => { if (timer.current) clearTimeout(timer.current); if (!busyRef.current) gate.current.invalidate(); setHoverModel(null); setHoverPending(false); setInteractionImpact(null); };
   useEffect(() => () => { if (timer.current) clearTimeout(timer.current); if (motionTimer.current) clearTimeout(motionTimer.current); gate.current.invalidate(); }, []);
+  useEffect(() => {
+    const historyKey = (event: KeyboardEvent) => {
+      if (!(event.ctrlKey || event.metaKey) || event.key.toLowerCase() !== "z" || event.altKey || busyRef.current || event.target instanceof Element && event.target.closest("input,textarea,select,[contenteditable=true],dialog[open]")) return;
+      event.preventDefault();
+      if (event.shiftKey && future.length) void run({ kind: "READ" }, "redo", future.at(-1));
+      else if (!event.shiftKey && past.length) void run({ kind: "READ" }, "undo", past.at(-1));
+    };
+    window.addEventListener("keydown", historyKey); return () => window.removeEventListener("keydown", historyKey);
+  }, [past, future]);
   useEffect(() => {
     const escape = (event: KeyboardEvent) => { if (event.key === "Escape") { setCompletenessFocus(false);
       if (!document.querySelector("[popover]:popover-open,dialog[open]")) setFocusedContext(null); endDrag(); } };
@@ -126,7 +136,8 @@ export function ComposerShell({ initialModel, transport }: { initialModel: Compo
     // Populate the native cursor-following image synchronously, before dragstart ends.
     if (dragImage.current) {
       dragImage.current.querySelector<HTMLElement>("[data-drag-label]")!.textContent = source.label;
-      dragImage.current.querySelector<HTMLElement>("[data-drag-amount]")!.textContent = money(source.economicAmount);
+      dragImage.current.querySelector<HTMLElement>("[data-drag-amount]")!.textContent = source.protected ? "Protégée" : money(source.economicAmount);
+      dragImage.current.dataset.protected = String(source.protected);
       dragImage.current.querySelectorAll<HTMLElement>("[data-drag-icon]").forEach(node => { node.style.display = node.dataset.dragIcon === source.iconKey ? "inline-flex" : "none"; });
       event.dataTransfer.setDragImage(dragImage.current, 24, 28);
     }
@@ -227,6 +238,11 @@ export function ComposerShell({ initialModel, transport }: { initialModel: Compo
     if (applyAttempt.current?.key !== key) applyAttempt.current = { key, applyRequestId: crypto.randomUUID() };
     void run({ kind: "APPLY", command: { ...model.proof, applyRequestId: applyAttempt.current.applyRequestId } }, "none");
   }
+  const applyDisabled = busy || !!hoverModel || !!grabbed || !model.board.draft.dirty || model.board.cockpit.applyReadiness === "BLOCKED";
+  const applyReason = busy ? "La prévisualisation serveur est en cours." : hoverModel || grabbed ? "Terminez le geste pour appliquer le mois."
+    : !model.board.draft.dirty ? model.activeRevisionNumber ? "Le mois est déjà appliqué. Modifiez un élément pour créer une nouvelle révision." : `Composez un premier choix pour appliquer votre mois.${model.presentation.unresolvedCount ? ` ${model.presentation.unresolvedCount} éléments à préciser.` : ""}`
+    : model.presentation.unresolvedCount ? `${model.presentation.unresolvedCount} éléments restent à préciser avant l’application.`
+    : "Les contraintes signalées doivent être précisées avant l’application.";
   return <ComposerInteractionContext.Provider value={{ grabbed, overTarget, motion, motionTarget, completenessFocus, unresolvedRefs: model.presentation.unresolvedRefs,
     start: startDrag, end: endDrag, over, place, equip,
     canTarget: ref => assistantGrab.current?.targetRef === ref, reject: () => animate("recoil", grab.current?.sourceKey ?? null),
@@ -235,25 +251,36 @@ export function ComposerShell({ initialModel, transport }: { initialModel: Compo
   <div className={styles.workspace} data-composer data-digest={model.board.draft.semanticStateDigest} data-dragging={!!grabbed} data-comparing={!!comparison} data-motion={motion} data-revision={model.activeRevisionNumber} aria-busy={busy}
     onDragOverCapture={e => { if (grab.current && e.target instanceof Element && !e.target.closest("[data-board-drop],[data-trash]")) { over(null); if (assistantOver.current) { assistantOver.current = null; clearHover(); } } }}>
     <header className={styles.workspaceHeader}><div className={styles.headerIdentity}><a href={`/mois-a-venir?month=${model.semanticState.targetMonth}&control=center`} className={styles.backLink}><ArrowLeft size={14} /> Centre de contrôle</a>
-      <h1>Composer <span>{monthLabel(model.semanticState.targetMonth)}</span></h1><div className={styles.headerMeta}>{comparison && <span className={styles.variantMarker} data-variant-marker>VARIANTE</span>}<span className={styles.draftStatus}>{model.board.draft.dirty || !model.activeRevisionNumber ? "Brouillon" : `Révision ${model.activeRevisionNumber}`}</span>
+      <h1>Composer <span>{monthLabel(model.semanticState.targetMonth)}</span></h1><div className={styles.headerMeta}>{comparison && <span className={styles.variantMarker} data-variant-marker>VARIANTE</span>}<span className={styles.draftStatus} data-draft-status>{!model.activeRevisionNumber ? "Brouillon" : model.board.draft.dirty ? "Nouvelle modification" : `Appliqué · révision ${model.activeRevisionNumber}`}</span>
         <span data-object-count>{model.presentation.elementCount} éléments · <button className={styles.completenessToggle} data-completeness-toggle aria-pressed={completenessFocus} disabled={!model.presentation.unresolvedCount} onClick={() => setCompletenessFocus(v => !v)}>{model.presentation.unresolvedCount} à préciser</button></span>
         {model.board.cockpit.projectionCompleteness === "COMPLETE" && model.board.cockpit.applyReadiness === "READY" && <span data-plan-ready>Plan prêt ✓</span>}</div></div>
       <div className={styles.hudContainer} data-compare-header>{comparison && <div className={styles.compareCurrent}><span>Plan actuel</span><strong>{money(comparison.model.board.cockpit.plan.economicMonthEndRemainder)}</strong></div>}
       <ComposerCockpit projection={(hoverModel ?? model).board.cockpit} goalMargin={(hoverModel ?? model).presentation.goalMargin} temporary={!!hoverModel} pending={hoverPending}
-        canonicalRemainder={model.board.cockpit.plan.economicMonthEndRemainder} interactionImpact={interactionImpact} variant={!!comparison} /></div>
+        canonicalRemainder={model.board.cockpit.plan.economicMonthEndRemainder} interactionImpact={interactionImpact} variant={!!comparison} details={() => { clearHover(); setProjectionOpen(true); }} /></div>
       <div className={styles.toolbar}><div className={styles.historyTools}>
-        <button className={styles.historyButton} title="Annuler" aria-label="Annuler la dernière modification du brouillon" disabled={busy || !past.length} onClick={() => void run({ kind: "READ" }, "undo", past.at(-1))}><Undo2 size={17} /></button>
-        <button className={styles.historyButton} title="Rétablir" aria-label="Rétablir la modification du brouillon" disabled={busy || !future.length} onClick={() => void run({ kind: "READ" }, "redo", future.at(-1))}><Redo2 size={17} /></button></div>
+        <button className={styles.historyButton} title="Annuler (Ctrl/Cmd+Z)" aria-label="Annuler la dernière modification du brouillon" disabled={busy || !past.length} onClick={() => void run({ kind: "READ" }, "undo", past.at(-1))}><Undo2 size={17} /></button>
+        <button className={styles.historyButton} title="Rétablir (Ctrl/Cmd+Shift+Z)" aria-label="Rétablir la modification du brouillon" disabled={busy || !future.length} onClick={() => void run({ kind: "READ" }, "redo", future.at(-1))}><Redo2 size={17} /></button></div>
         {comparison ? <div className={styles.compareActions}><button data-compare-keep className={styles.secondary} disabled={busy} onClick={() => compare(true)}>Garder cette variante</button><button data-compare-exit className={styles.textButton} disabled={busy} onClick={() => compare(false)}>Quitter la comparaison</button></div>
-          : <><button data-compare className={styles.textButton} disabled={busy} onClick={() => compare()}>Comparer</button><button className={styles.primary} data-apply disabled={busy || !!hoverModel || !!grabbed || !model.board.draft.dirty || model.board.cockpit.applyReadiness === "BLOCKED"} onClick={apply}>{busy ? "Validation en cours…" : "Appliquer mon mois"}</button></>}</div></header>
+          : <><button data-compare className={styles.compareButton} disabled={busy} onClick={() => compare()}><ArrowLeftRight size={14} /> Comparer</button>
+            <div className={styles.applyControl} tabIndex={applyDisabled ? 0 : undefined} aria-label={applyDisabled ? applyReason : undefined} data-apply-control>
+              <button className={styles.primary} data-apply disabled={applyDisabled} aria-describedby={applyDisabled ? "apply-disabled-reason" : undefined} onClick={apply}>{busy ? "Validation…" : "Appliquer mon mois"}</button>
+              {applyDisabled && <div className={styles.applyReason} role="group" aria-label="Application indisponible" data-apply-reason><p id="apply-disabled-reason">{applyReason}</p>
+                {!!model.presentation.unresolvedCount && <button data-show-unresolved onClick={() => setCompletenessFocus(true)}>Afficher les éléments</button>}</div>}
+            </div></>}
+        <AtomicPopover utility label="Autres actions du mois" state="ACTIONS" focus={() => {}} icon={<MoreHorizontal size={17} />}>{close => <div className={styles.popoverActions}>
+          <button data-preview disabled={busy} onClick={() => { close(); void run({ kind: "READ" }, "none"); }}>Actualiser la prévisualisation</button>
+          <button data-balance disabled={busy} onClick={() => { close(); clearHover(); setBalanceOpen(v => !v); if (!balanceOpen) void run({ kind: "SUGGESTIONS" }, "none"); }}>Suggestions pour mon mois</button>
+          <button data-financial-menu onClick={() => { close(); clearHover(); setProjectionOpen(true); }}>Détail financier</button></div>}</AtomicPopover>
+      </div></header>
     <div className={styles.columns}><ComposerLibrary model={model} openToken={libraryOpenToken} busy={busy} selected={selected} choose={asset => choose(asset)} drag={key => { clearHover(); setSelected(key); }} />
       <ComposerBoard model={model} busy={busy} selected={selected} focused={focusedContext} focus={setFocusedContext} edit={edit} editContext={editContext} choose={choose} drag={setSelected} drop={drop} request={operation => void run(operation)} hover={hover}
         add={() => { clearHover(); setLibraryOpenToken(n => n + 1); }} preview={() => void run({ kind: "READ" }, "none")}
         balance={() => { clearHover(); setBalanceOpen(v => !v); if (!balanceOpen) void run({ kind: "SUGGESTIONS" }, "none"); }} details={() => { clearHover(); setProjectionOpen(true); }} /></div>
     {balanceOpen && (!suggestions || suggestions.candidates.length > 0) && <section className={styles.suggestionHand} data-suggestion-hand aria-label="Pistes pour votre mois"><header><span><Sparkles size={14} /> Quelques façons de retrouver de la marge</span><button className={styles.iconButton} aria-label="Fermer les suggestions" onClick={() => setBalanceOpen(false)}><X size={16} /></button></header>
       {suggestions ? <BalanceLayer suggestions={suggestions} busy={busy} accept={candidateId => void run({ kind: "ACCEPT", candidateSetDigest: suggestions.candidateSetDigest, candidateId })} /> : <p role="status">Le serveur resimule les pistes…</p>}</section>}
-    <div ref={dragImage} className={styles.dragPreview} data-drag-preview aria-hidden="true">{[...new Set(Object.values(model.presentation.dragSources).map(s => s.iconKey))].map(key => <span key={key} data-drag-icon={key} style={{ display: grabbed?.iconKey === key ? "inline-flex" : "none" }}><PlannerIcon iconKey={key} scale="SATELLITE" /></span>)}<span><b data-drag-label>{grabbed?.label}</b><small data-drag-amount>{money(grabbed?.economicAmount ?? null)}</small></span></div>
-    <div className={styles.statusBar} role="status" aria-live="polite"><Sparkles size={13} /> {message}</div>
+    <div ref={dragImage} className={styles.dragPreview} data-drag-preview data-protected={grabbed?.protected} aria-hidden="true">{[...new Set(Object.values(model.presentation.dragSources).map(s => s.iconKey))].map(key => <span key={key} data-drag-icon={key} style={{ display: grabbed?.iconKey === key ? "inline-flex" : "none" }}><PlannerIcon iconKey={key} scale="SATELLITE" /></span>)}<span><b data-drag-label>{grabbed?.label}</b><small data-drag-amount>{grabbed?.protected ? <><LockKeyhole size={11} /> Protégée</> : money(grabbed?.economicAmount ?? null)}</small></span></div>
+    <div className={styles.statusBar} role="status" aria-live="polite">{message}</div>
+    {errorMessage && !editor && <div className={styles.errorNotice} role="alert">{errorMessage}<button className={styles.iconButton} aria-label="Fermer le message" onClick={() => setErrorMessage(null)}><X size={14} /></button></div>}
     <dialog ref={dialog} className={styles.dialog} data-compact-editor={editor?.compact || undefined} aria-labelledby="composer-dialog-title" onCancel={e => { e.preventDefault(); closeDialog(); }}>
       <header><h2 id="composer-dialog-title">{editor?.title ?? (projectionOpen ? "Le détail de votre mois" : "Des pistes pour votre mois")}</h2><button className={styles.iconButton} disabled={busy} aria-label="Fermer" onClick={closeDialog}><X size={19} /></button></header>
       {errorMessage && <p role="alert" className={styles.formError}>{errorMessage}</p>}

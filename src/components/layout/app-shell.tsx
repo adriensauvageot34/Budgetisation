@@ -25,6 +25,10 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     return children;
   }
 
+  // The Composer owns its compact navigation; other routes retain the full shell.
+  if (composer) return <main ref={runtime.backgroundRootRef} data-composer-app-shell
+    style={{ height: "100dvh", padding: "12px 24px 20px", overflow: "hidden", background: "#fdfcfb" }}>{children}</main>;
+
   return (
     <div data-planned-shell={plannedMonth ? "" : undefined} className={composer ? "flex h-dvh flex-col overflow-hidden" : plannedMonth ? scene.shell : "min-h-screen"}>
       {plannedMonth && <div data-planned-background className={scene.background} aria-hidden="true" />}

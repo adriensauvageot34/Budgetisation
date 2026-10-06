@@ -46,7 +46,7 @@ const icons: Readonly<Record<string, ComponentType<ClayIconProps>>> = {
   "home": HomeIcon,
   food: MealIcon, delivery: MealIcon, "fast-food": MealIcon,
 };
-const sizes = { CARD: 54, SATELLITE: 30, PALETTE: 34 } as const;
+const sizes = { CARD: 52, SATELLITE: 30, PALETTE: 34, LIBRARY: 32 } as const;
 export const PlannerIcon = memo(function PlannerIcon({ iconKey, scale = "CARD", className }: { iconKey: string; scale?: keyof typeof sizes; className?: string }) {
   const Icon = icons[iconKey] ?? ActivityIcon;
   return <span data-planner-icon={iconKey} data-icon-scale={scale} className={className} aria-hidden="true"><Icon size={sizes[scale]} /></span>;
