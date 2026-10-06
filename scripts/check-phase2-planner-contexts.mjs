@@ -40,8 +40,8 @@ try {
     assert.equal(a.compiled.mobilityIntents.length, 1); assert.equal(b.compiled.mobilityIntents.length, 1);
     assert.equal(a.compiled.mobilityIntents[0].mobilityIntentId, b.compiled.mobilityIntents[0].mobilityIntentId);
     assert.equal(b.compiled.mobilityIntents[0].mode, 'TRAIN'); assert.equal(b.compiled.mobilityIntents[0].role, 'RETURN');
-    assert.equal(b.compiled.components.length, 1); assert.equal(b.projection.economic.explicitContexts, '20.00');
-    assert.deepEqual(b.compiled.journeys, []); warning(b, 'CONTEXT_MOBILITY_PRICING_PENDING_C5');
+    assert.equal(b.compiled.components.filter(c => !c.physicalJourneyRequirementId).length, 1); assert.equal(b.projection.economic.explicitContexts, '20.00');
+    assert.equal(b.compiled.journeys.length, 1); warning(b, 'MOBILITY_PRICING_UNRESOLVED');
   });
   await test('CTX-002', async () => {
     const first = state([], [stay(300, '100.00', { restaurants: selections(component('restaurant', '20.00', 'dinner')) })]);
@@ -215,8 +215,8 @@ try {
     const places = { origin: { kind: 'TEXT', label: 'Synthetic origin' }, destination: { kind: 'TEXT', label: 'Synthetic destination' } };
     const semantic = state([], [night(400, '20.00', { outbound: selections(mobility('car', 'out', places)), return: selections(mobility('car', 'back', places)) })]);
     const p = await roundTrip(semantic); assert.equal(p.compiled.mobilityIntents.length, 2);
-    assert.equal(new Set(p.compiled.mobilityIntents.map(i => i.mobilityIntentId)).size, 2); assert.deepEqual(p.compiled.journeys, []);
-    assert.equal(p.projection.plan.economicMonthEndRemainder, null); assert.equal(p.compiled.components.length, 1);
+    assert.equal(new Set(p.compiled.mobilityIntents.map(i => i.mobilityIntentId)).size, 2); assert.equal(p.compiled.journeys.length, 2);
+    assert.equal(p.projection.plan.economicMonthEndRemainder, null); assert.equal(p.compiled.components.filter(c => !c.physicalJourneyRequirementId).length, 1);
     const unknown = evaluate(state([], [night(400, '20.00', { return: selections(mobility('unknown')) })]));
     assert.equal(unknown.compiled.mobilityIntents[0].knowledge, 'UNKNOWN');
     const suggested = state([], [night(400, '20.00', { return: selections(mobility('free', 'suggested', { ...places, provenance: 'PERSONAL_SUGGESTION' })) })]);

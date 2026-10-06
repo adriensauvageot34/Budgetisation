@@ -9,7 +9,8 @@ import { evaluatePlanScenario } from "./preview";
 import { assertRevisionEvidence } from "./revision-evidence";
 
 export type PlannerDependencies = Readonly<{ repository: PlanRepository;
-  readWorld(householdId: string, targetMonth: string): Promise<PlanningWorldFacts> }>;
+  readWorld(householdId: string, targetMonth: string): Promise<PlanningWorldFacts>;
+  prepareWorld?(world: PlanningWorldFacts, state: PlanSemanticStateV1): Promise<PlanningWorldFacts> }>;
 export type AppliedPlanScenario = Readonly<{ revision: PlanRevision; projectionEvidence: PlanRevision["projectionEvidence"]; replayed: boolean }>;
 function replayEvidence(previous: PlanRevision, state: PlanSemanticStateV1, baselineDigest: string, previewDigest: string,
   activeId: string | null, activeNumber: number): AppliedPlanScenario {
@@ -22,7 +23,8 @@ export async function previewPlanScenario(deps: PlannerDependencies, householdId
   const household = plannerUuid(householdId), state = parsePlanSemanticState(rawState);
   const [world, active] = await Promise.all([deps.readWorld(household, state.targetMonth), deps.repository.readActivePlan(household, state.targetMonth)]);
   if (world.baseline.householdId !== household) throw new TypeError("PLANNER_WORLD_HOUSEHOLD_INVALID");
-  return evaluatePlanScenario(world, state, { expectedActiveRevisionId: active?.plan.activeRevisionId ?? null,
+  const prepared = deps.prepareWorld ? await deps.prepareWorld(world, state) : world;
+  return evaluatePlanScenario(prepared, state, { expectedActiveRevisionId: active?.plan.activeRevisionId ?? null,
     expectedActiveRevisionNumber: active?.plan.activeRevisionNumber ?? 0 });
 }
 export async function applyPlanScenario(deps: PlannerDependencies, householdId: string, rawState: PlanSemanticStateV1,

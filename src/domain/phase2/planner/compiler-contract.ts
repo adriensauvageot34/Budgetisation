@@ -1,6 +1,10 @@
 import type { PlanningBaselineV1, PlanningPlanSlot } from "./baseline-contract";
 import type { CostEvaluation, ContextualEffect, CompiledComponentSlot, ComponentDefaultProvenance } from "./component-contract";
-import type { MobilityIntent } from "./mobility-contract";
+import type { MobilityIntent, PhysicalJourneyRequirement, JourneyDependency, JourneyPrice } from "./mobility-contract";
+import type { PlannedPlaceOption } from "../planned-places";
+import type { PlannedVehicleEstimate } from "../planned-contract";
+import type { HistoricalRouteLeg } from "../planned-routes";
+import type { GlobalM7PersonalMobilityAuthority } from "@/analytics/global-v2/personal-mobility";
 import type { ConstraintResult, PlannerDiagnostic } from "./diagnostics";
 import type { PlannerJsonObject } from "./json";
 import type { PlanSemanticStateV1 } from "./semantic-state";
@@ -12,7 +16,11 @@ import type { PlanProjectionV1 } from "./projection-contract";
 export type PlanningWorldFacts = Readonly<{ baseline: PlanningBaselineV1; forecast: MonthForecastSnapshot;
   monthInputs: MonthInputs; externalIntents: readonly PlannedExpense[]; asOfDate: string;
   costQuotes: Readonly<Record<string, Readonly<{ unitAmount: string; evidenceRef: string; modelVersion: string; observedAt: string }>>>;
-  modelVersions: Readonly<Record<string, string>> }>;
+  modelVersions: Readonly<Record<string, string>>;
+  mobilityFacts?: Readonly<{ places: readonly PlannedPlaceOption[]; vehicle: PlannedVehicleEstimate | null;
+    history: readonly HistoricalRouteLeg[]; vehicleHistory?: Readonly<Record<string, readonly HistoricalRouteLeg[]>>;
+    personalAuthority: GlobalM7PersonalMobilityAuthority; evidenceRefs: readonly string[] }>;
+  journeyPrices?: Readonly<Record<string, JourneyPrice>> }>;
 export type SlotBinding = Readonly<{ slotIdentityKey: string | null; relation: ContextualEffect["slotRelation"];
   displacement: "KNOWN" | "UNKNOWN"; amount: string | null; count: string | null }>;
 export type KernelCost = Readonly<{ kind: "MANUAL"; unitAmount: string }> | Readonly<{ kind: "QUOTE"; quoteKey: string }>
@@ -20,7 +28,8 @@ export type KernelCost = Readonly<{ kind: "MANUAL"; unitAmount: string }> | Read
 export type ComponentRequest = Readonly<{ componentId: string; ownerRef: string; contextOccurrenceId: string | null;
   externalEntryId: string | null; externalLineId: string | null; role: string; label: string; quantity: string;
   cost: KernelCost; binding: SlotBinding; fundingAllocations: readonly FundingAllocation[]; plannedDate: string | null;
-  selectionProvenance?: ComponentDefaultProvenance; bindingEvidenceRefs?: readonly string[] }>;
+  selectionProvenance?: ComponentDefaultProvenance; bindingEvidenceRefs?: readonly string[];
+  assetKey?: string; physicalJourneyRequirementId?: string }>;
 export type CompiledComponent = ComponentRequest & Readonly<{ evaluation: CostEvaluation }>;
 export type CompiledPlanSlot = { baseline: PlanningPlanSlot; role: "BEHAVIOR" | "SAVINGS"; financeKey: string | null;
   owned: boolean; decisionId: string | null; effectiveAmount: string | null; effectiveCount: string | null;
@@ -38,7 +47,8 @@ export type CompiledContext = Readonly<{ contextOccurrenceId: string; templateKe
   status?: "ACTIVE" | "SUGGESTED"; componentSlots?: readonly CompiledComponentSlot[] }>;
 export type CompiledSemanticPlanV1 = Readonly<{ version: "compiled-semantic-plan@v1"; targetMonth: string;
   semanticStateDigest: string; planSlots: readonly CompiledPlanSlot[]; contexts: readonly CompiledContext[];
-  components: readonly CompiledComponent[]; needs: readonly never[]; mobilityIntents: readonly MobilityIntent[]; journeys: readonly never[];
+  components: readonly CompiledComponent[]; needs: readonly never[]; mobilityIntents: readonly MobilityIntent[]; journeys: readonly PhysicalJourneyRequirement[];
+  journeyDependencies: readonly JourneyDependency[]; journeyPrices: readonly JourneyPrice[];
   contextualEffects: readonly ContextualEffect[]; constraints: readonly ConstraintResult[]; diagnostics: readonly PlannerDiagnostic[];
   financialAdapterInput: FinancialScenarioAdapterInputV1; manifest: PlannerJsonObject; manifestDigest: string }>;
 export type CompilePlanInputV1 = Readonly<{ baseline: PlanningBaselineV1; semanticState: PlanSemanticStateV1;

@@ -5,8 +5,9 @@ import type { CompiledComponent, CompiledPlanSlot, PlanningWorldFacts } from "@/
 import type { ContextualEffect } from "@/domain/phase2/planner/component-contract";
 import { matchesForecastCategory } from "../remaining-month-forecast";
 import { slotReferenceKeys } from "./plan-slot-resolver";
+import { costItemCashTreatment } from "@/domain/phase2/planned-money";
 
-export const KERNEL_CONSTRAINT_POLICY = "planner-kernel-constraints@v3-composable-contexts";
+export const KERNEL_CONSTRAINT_POLICY = "planner-kernel-constraints@v4-economic-mobility";
 export function evaluatePlanConstraints(world: PlanningWorldFacts, slots: readonly CompiledPlanSlot[],
   components: readonly CompiledComponent[], effects: readonly ContextualEffect[]): ConstraintResult[] {
   const results: ConstraintResult[] = [];
@@ -54,7 +55,7 @@ export function evaluatePlanConstraints(world: PlanningWorldFacts, slots: readon
     if (component.fundingAllocations.length && component.evaluation.economicAmount !== null
       && !component.fundingAllocations.reduce((n, a) => n.plus(a.amount), new Big(0)).eq(component.evaluation.economicAmount))
       add("BLOCK", "COMPONENT_FUNDING_SUM_INVALID", component.componentId);
-    if (!component.fundingAllocations.length && component.externalEntryId === null)
+    if (!component.fundingAllocations.length && component.externalEntryId === null && costItemCashTreatment({ assetKey: component.assetKey ?? null }) !== "ECONOMIC_ONLY")
       add("WARN", "COMPONENT_FUNDING_UNKNOWN", component.componentId);
   }
   for (const effect of effects) if (effect.economicRelation === "UNKNOWN")

@@ -7,6 +7,7 @@ import type { PlanProjectionV1 } from "@/domain/phase2/planner/projection-contra
 import type { PlanningWorldFacts, PlannerExpectedBase, PlanScenarioPreview } from "@/domain/phase2/planner/compiler-contract";
 import { compileSemanticPlan, jsonEnvelope, PLANNER_COMPILER_VERSION } from "./compiler";
 import { deriveCompiledMonthScenario } from "./financial-adapter";
+import { costItemCashTreatment } from "@/domain/phase2/planned-money";
 
 /** Pure evaluation shared by Preview, server Apply and active Plan reload. */
 export function evaluatePlanScenario(world: PlanningWorldFacts, semanticState: PlanSemanticStateV1, base: PlannerExpectedBase): PlanScenarioPreview {
@@ -22,9 +23,12 @@ export function evaluatePlanScenario(world: PlanningWorldFacts, semanticState: P
   const hasUnknownFinancialBasis = (plan: typeof compiled) => plan.constraints.some(c => c.code === "COMPONENT_COST_UNKNOWN" || c.code === "OWNED_SLOT_COST_UNKNOWN"
     || c.code === "OWNED_SLOT_FINANCIAL_REFERENCE_UNRESOLVED" || c.code === "OWNED_SLOT_OBSERVED_RECONCILIATION_REQUIRED"
     || c.code === "OWNED_SLOT_CONDITION_UNRESOLVED" || c.code === "OWNED_SLOT_FINANCIAL_MAPPING_AMBIGUOUS"
-    || c.code === "CONTEXT_COMPONENT_SLOT_UNRESOLVED" || c.code === "CONTEXT_SLOT_BINDING_UNRESOLVED" || c.code === "CONTEXT_MOBILITY_PRICING_PENDING_C5");
+    || c.code === "CONTEXT_COMPONENT_SLOT_UNRESOLVED" || c.code === "CONTEXT_SLOT_BINDING_UNRESOLVED"
+    || c.code === "MOBILITY_PRICING_UNRESOLVED" || c.code === "MOBILITY_RELATION_NEEDS_CHOICE" || c.code === "MOBILITY_DIRECTION_UNRESOLVED");
   const remainder = hasUnknownFinancialBasis(compiled) ? null : plan?.scenarios.central ?? null;
   const baselineRemainder = hasUnknownFinancialBasis(baselineCompiled) ? null : before?.scenarios.central ?? null;
+  const mobilityTotal = (key: "economicFuel" | "cashTransport") => compiled.journeyPrices.length !== compiled.journeys.length
+    || compiled.journeyPrices.some(p => p[key] === null) ? null : compiled.journeyPrices.reduce((n, p) => n.plus(p[key]!), new Big(0)).toFixed(2);
   const diagnostics = [...compiled.diagnostics, ...(baselineRemainder === null ? [{ code: "BASELINE_FINANCIAL_COMPARISON_UNKNOWN", severity: "WARN" as const,
     targetRef: null, message: "BASELINE_FINANCIAL_COMPARISON_UNKNOWN", evidenceRefs: [] }] : []), ...(!plan ? [{ code: "FINANCIAL_SCENARIO_UNRESOLVED", severity: "BLOCK" as const,
     targetRef: null, message: "FINANCIAL_SCENARIO_UNRESOLVED", evidenceRefs: [] }] : [])];
@@ -34,17 +38,18 @@ export function evaluatePlanScenario(world: PlanningWorldFacts, semanticState: P
       ? new Big(remainder).minus(baselineRemainder).toFixed(2) : null },
     economic: { resources: plan?.economicResources ?? null, certainCommitments: plan?.certainOutflows.total ?? null,
       savingsReservations: plan?.savingsAllocations.total ?? null, needsAndHabits: null, discretionaryLife: null,
-      explicitContexts: compiled.components.some(c => c.evaluation.economicAmount === null) || compiled.constraints.some(c => c.code === "CONTEXT_COMPONENT_SLOT_UNRESOLVED")
-        ? null : compiled.components.filter(c => c.externalEntryId === null)
+      explicitContexts: compiled.components.some(c => !c.physicalJourneyRequirementId && c.evaluation.economicAmount === null) || compiled.constraints.some(c => c.code === "CONTEXT_COMPONENT_SLOT_UNRESOLVED")
+        ? null : compiled.components.filter(c => c.externalEntryId === null && !c.physicalJourneyRequirementId)
         .reduce((n, c) => n.plus(c.evaluation.economicAmount!), new Big(0)).toFixed(2),
-      mobilityUsageEconomicCost: null, unresolvedEconomicAmount: null },
+      mobilityUsageEconomicCost: mobilityTotal("economicFuel"), unresolvedEconomicAmount: null },
     funding: jsonEnvelope({ status: "PARTIAL", financialOwner: plan?.plannedFunding ?? null,
       knownSyntheticCostWithUnknownFunding: compiled.financialAdapterInput.plannedExpenseEntries
-        .filter(e => e.id.startsWith("planner:")).flatMap(e => e.costItems).filter(c => c.fundingAllocations?.length === 0)
+        .filter(e => e.id.startsWith("planner:")).flatMap(e => e.costItems).filter(c => c.fundingAllocations?.length === 0 && costItemCashTreatment(c) !== "ECONOMIC_ONLY")
         .reduce((n, c) => n.plus(c.unitAmount), new Big(0)).toFixed(2),
       anonymousSlotFunding: "UNKNOWN", unresolvedReserves: world.baseline.unresolvedReserves }),
     cash: { knowledge: "UNKNOWN", openingBalance: world.monthInputs.openingBalance?.amount ?? null, lowPointAmount: null, lowPointDate: null },
-    mobility: { usageEconomicCost: null, cashTransportCosts: null, journeyCount: 0, unresolvedJourneyCount: 0 },
+    mobility: { usageEconomicCost: mobilityTotal("economicFuel"), cashTransportCosts: mobilityTotal("cashTransport"), journeyCount: compiled.journeys.length,
+      unresolvedJourneyCount: compiled.journeys.filter(j => j.pricingState !== "RESOLVED").length },
     goal: { targetMonthEnd: world.monthInputs.decision?.goal ?? null,
       gapToGoal: remainder !== null && world.monthInputs.decision?.goal !== null && world.monthInputs.decision?.goal !== undefined
         ? new Big(world.monthInputs.decision.goal).minus(remainder).toFixed(2) : null },

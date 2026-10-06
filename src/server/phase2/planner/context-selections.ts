@@ -7,6 +7,7 @@ import type { PlannedContextState, PlanSemanticStateV1 } from "@/domain/phase2/p
 import type { ProspectivePlaceRef } from "@/domain/phase2/planned-contract";
 import { parseKernelCost, parseKernelFunding } from "./cost-resolver";
 import { resolveContextTemplate } from "./context-registry";
+import { parseJourneyDeclaration, parseMobilityPricing, mobilityTime } from "./mobility-selections";
 
 export function contextDate(raw: unknown, targetMonth: string): string | null {
   if (raw == null) return null;
@@ -19,7 +20,7 @@ export function contextDate(raw: unknown, targetMonth: string): string | null {
 function place(raw: unknown): ProspectivePlaceRef | null {
   if (raw == null) return null;
   const value = plannerRecord(raw);
-  if (value.kind === "KNOWN") { plannerKeys(value, ["kind", "placeId"]); return { kind: "KNOWN", placeId: plannerString(value.placeId) }; }
+  if (value.kind === "KNOWN") { plannerKeys(value, ["kind", "placeId"]); return { kind: "KNOWN", placeId: plannerUuid(value.placeId) }; }
   plannerKeys(value, ["kind", "label", "provenance"], ["kind", "label"]);
   if (value.kind !== "TEXT" || value.provenance !== undefined && value.provenance !== "USER_DECLARED_PROSPECTIVE") throw new TypeError("CONTEXT_MOBILITY_PLACE_INVALID");
   return { kind: "TEXT", label: plannerString(value.label), provenance: "USER_DECLARED_PROSPECTIVE" };
@@ -43,9 +44,13 @@ function selection(raw: unknown, slot: ComponentSlotDefinition): ComponentSelect
   const option = slot.options.find(o => o.optionKey === optionKey && o.kind === value.kind);
   if (!option) throw new TypeError("CONTEXT_COMPONENT_CAPABILITY_FORBIDDEN");
   if (value.kind === "MOBILITY_INTENT") {
-    plannerKeys(value, [...common, "origin", "destination", "returnRequired"], common);
+    plannerKeys(value, [...common, "origin", "destination", "returnRequired", "journey", "pricing", "plannedTime", "returnTime"], common);
     if (value.returnRequired !== undefined && typeof value.returnRequired !== "boolean") throw new TypeError("CONTEXT_MOBILITY_RETURN_INVALID");
-    return { ...identity, kind: "MOBILITY_INTENT", origin: place(value.origin), destination: place(value.destination), returnRequired: value.returnRequired === true };
+    if (value.returnTime != null && value.returnRequired !== true) throw new TypeError("JOURNEY_RETURN_TIME_REQUIRES_RETURN");
+    return { ...identity, kind: "MOBILITY_INTENT", origin: place(value.origin), destination: place(value.destination), returnRequired: value.returnRequired === true,
+      ...(value.journey === undefined ? {} : { journey: parseJourneyDeclaration(value.journey) }),
+      ...(value.pricing === undefined ? {} : { pricing: parseMobilityPricing(value.pricing) }),
+      plannedTime: mobilityTime(value.plannedTime), returnTime: mobilityTime(value.returnTime) };
   }
   plannerKeys(value, [...common, "label", "quantity", "cost", "binding", "fundingAllocations"], [...common, "label", "quantity", "cost"]);
   const quantity = decisionAmount(value.quantity);
@@ -88,6 +93,12 @@ export function readContextSelections(context: PlannedContextState, targetMonth:
       if (!items.length && slot.cardinality === "REQUIRED_ONE") items = template.structuralDefaults[slot.slotKey].items;
     }
     if (new Set(items.map(item => item.selectionId)).size !== items.length) throw new TypeError("CONTEXT_SELECTION_ID_DUPLICATE");
+    for (const item of items) if (item.kind === "MOBILITY_INTENT") {
+      if (item.plannedTime && !(slot.mobilityRole === "RETURN" ? end ?? start : start) || item.returnTime && !start)
+        throw new TypeError("JOURNEY_TIME_REQUIRES_DATE");
+      if (item.returnRequired && (!end || end === start) && item.plannedTime && item.returnTime && item.returnTime < item.plannedTime)
+        throw new TypeError("JOURNEY_RETURN_BEFORE_DEPARTURE");
+    }
     return [slot.slotKey, [...items].sort((a, b) => a.selectionId < b.selectionId ? -1 : a.selectionId > b.selectionId ? 1 : 0)];
   }));
 }

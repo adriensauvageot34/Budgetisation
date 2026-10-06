@@ -2,7 +2,7 @@ import "server-only";
 import type { ComponentOptionDefinition, ComponentSlotDefinition } from "@/domain/phase2/planner/component-contract";
 import type { ContextCapability, ContextFieldDefinition, ContextRegistryV1, ContextTemplateV1 } from "@/domain/phase2/planner/context-contract";
 
-export const CONTEXT_REGISTRY_VERSION = "planner-context-registry@v1";
+export const CONTEXT_REGISTRY_VERSION = "planner-context-registry@v2-mobility";
 const commonFields: readonly ContextFieldDefinition[] = [
   { fieldKey: "label", kind: "TEXT", required: false }, { fieldKey: "plannedDate", kind: "DATE", required: false }];
 const foodTemplates = ["restaurant", "fast-food", "delivery"];
@@ -46,7 +46,8 @@ const templates: ContextTemplateV1[] = [
     slot("before", "OPTIONAL_ONE", [component("before", "Before")], ["activity", "friend-visit"]),
     slot("main", "REQUIRED_ONE", [component("main", "Entrée ou événement")], ["activity"]),
     slot("food", "OPTIONAL_ONE", mealOptions, foodTemplates), mobility("outbound"), mobility("return", "RETURN"),
-    slot("extras", "REPEATING", [component("extra", "Vestiaire, boissons ou complément")])]),
+    slot("extras", "REPEATING", [component("extra", "Vestiaire, boissons ou complément")])],
+    [{ fieldKey: "endDate", kind: "DATE", required: false }]),
   template("short-stay", "Séjour court", "TRAVEL", [
     slot("lodging", "REQUIRED_ONE", [component("lodging", "Hébergement")]),
     slot("groceries", "OPTIONAL_ONE", [component("groceries", "Courses du séjour", "groceries", "REQUIRES_CONFIRMATION")]),

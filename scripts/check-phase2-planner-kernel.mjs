@@ -178,7 +178,7 @@ try {
     await assert.rejects(()=>resolveEffectiveMonthScenario({...deps,repository:{...deps.repository,readActivePlan:async()=>tampered}},householdId,"2026-11"),/PLANNER_STORED_EVIDENCE_INVALID/u);});
   await test("KERNEL-WORLD-READERS",async()=>{const world=fixture(),restores=[],reads=[],canonicalClient={from(){throw new Error("UNEXPECTED_CANONICAL_TABLE");}};
     const replace=(name,key,value)=>{const module=require(name),old=module[key];module[key]=value;restores.push(()=>module[key]=old);};
-    const source={forecast:world.forecast,monthInputs:world.monthInputs,plannedExpenses:world.externalIntents,evidence:{synthetic:"single-cutoff-evidence"}};
+    const source={householdId,knowledgeCutoff:"2026-10-05T10:00:00Z",mobilityLegs:[],personalMobility:{outputHash:"synthetic-personal"},forecast:world.forecast,monthInputs:world.monthInputs,plannedExpenses:world.externalIntents,evidence:{synthetic:"single-cutoff-evidence"}};
     replace("@/server/phase2/planner/baseline-adapters","readPlanningBaselineSources",async(repository,month,cutoff,options)=>{
       assert.deepEqual(options,{simpleOccurrences:true});
       assert.equal(repository.client,canonicalClient);assert.equal(month,"2026-11");assert.equal(cutoff,"2026-10-05T10:00:00Z");reads.push("C1");return source;});

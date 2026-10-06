@@ -9,7 +9,7 @@ import { resolveContextTemplate, CONTEXT_REGISTRY_VERSION } from "./context-regi
 import { contextDate, validateContextGraph } from "./context-selections";
 import { resolveComponentCost } from "./cost-resolver";
 
-export const CONTEXT_COMPILER_VERSION = "planner-context-compiler@v1";
+export const CONTEXT_COMPILER_VERSION = "planner-context-compiler@v2-mobility";
 function resolveBinding(option: ComponentOptionDefinition, domain: string | null, item: Extract<ComponentSelectionV1, { kind: "COMPONENT" }>,
   request: ComponentRequest, slots: readonly CompiledPlanSlot[], world: PlanningWorldFacts): SlotBinding {
   const mode = item.binding?.mode ?? "AUTO";
@@ -61,9 +61,11 @@ export function expandComposableContexts(state: PlanSemanticStateV1, world: Plan
           const date = slot.mobilityRole === "RETURN" ? contextDate(context.fields.endDate, state.targetMonth) ?? plannedDate : plannedDate;
           mobilityIntents.push({ mobilityIntentId: id, contextOccurrenceId: context.contextOccurrenceId, role: slot.mobilityRole!,
             origin: item.origin ?? null, destination: item.destination ?? null, returnRequired: item.returnRequired === true,
-            mode: option.mobilityMode!, timing: date ? { kind: "DATED", date, time: null } : { kind: "MONTH_UNSCHEDULED", targetMonth: state.targetMonth },
+            slotKey: slot.slotKey, journey: item.journey, pricing: item.pricing,
+            returnTiming: item.returnRequired ? date ? { kind: "DATED", date: contextDate(context.fields.endDate, state.targetMonth) ?? date, time: item.returnTime ?? null }
+              : { kind: "MONTH_UNSCHEDULED", targetMonth: state.targetMonth } : null,
+            mode: option.mobilityMode!, timing: date ? { kind: "DATED", date, time: item.plannedTime ?? null } : { kind: "MONTH_UNSCHEDULED", targetMonth: state.targetMonth },
             knowledge: option.mobilityMode === "FREE" ? "DECLARED" : option.mobilityMode === "UNKNOWN" ? "UNKNOWN" : "PARTIAL" });
-          if (option.mobilityMode !== "FREE") add("CONTEXT_MOBILITY_PRICING_PENDING_C5", id);
           continue;
         }
         const id = componentId(context.contextOccurrenceId, slot.slotKey, item.selectionId); componentIds.push(id);

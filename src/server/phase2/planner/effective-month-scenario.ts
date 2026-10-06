@@ -25,7 +25,8 @@ export async function resolveEffectiveMonthScenario(deps: EffectiveMonthDependen
   const world = await deps.readWorld(household, month), revision = stored.activeRevision;
   assertRevisionEvidence(revision);
   if (world.baseline.householdId !== household) throw new TypeError("PLANNER_WORLD_HOUSEHOLD_INVALID");
-  const preview = evaluatePlanScenario(world, revision.semanticState, { expectedActiveRevisionId: stored.plan.activeRevisionId,
+  const prepared = deps.prepareWorld ? await deps.prepareWorld(world, revision.semanticState) : world;
+  const preview = evaluatePlanScenario(prepared, revision.semanticState, { expectedActiveRevisionId: stored.plan.activeRevisionId,
     expectedActiveRevisionNumber: stored.plan.activeRevisionNumber });
   const evidence = revision.projectionEvidence;
   const sameAuthorities = preview.compiledManifestDigest === revision.compiledManifestDigest;

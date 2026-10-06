@@ -12,6 +12,12 @@ import { createPlanApplyRepository } from "./repository";
 import type { EffectiveMonthDependencies } from "./effective-month-scenario";
 import { plannerDigest } from "@/domain/phase2/planner/json";
 import { jsonEnvelope } from "./compiler";
+import { buildProspectiveMobilityFacts } from "./mobility-adapter";
+import { preparePlanningMobility } from "./prospective-mobility-pricing";
+import { readPlannedContextOptions } from "../planned-context";
+import { expandComposableContexts } from "./context-compiler";
+import { materializePlanSlots } from "./plan-slot-resolver";
+import { resolveJourneyRequirements } from "./journey-resolver";
 
 const commonForecastDigest = (snapshot: MonthForecastSnapshot) => {
   const { publicationMeta: _publication, resourceMeta: _resource, predictionEvidence: _evidence,
@@ -37,7 +43,20 @@ export function createPlannerDependencies(canonical: CanonicalRepository, authen
     // One admitted canonical evidence read for both C1 and financial calculation.
     return { baseline: buildSimplePlanningBaseline(sources), forecast: { ...forecast, predictionEvidence: sources.evidence },
       monthInputs: sources.monthInputs, externalIntents: sources.plannedExpenses, asOfDate, costQuotes: {},
+      mobilityFacts: buildProspectiveMobilityFacts(sources),
       modelVersions: { financialOwner: "deriveMonthScenario@v2", forecast: forecast.resourceMeta.contractVersion } };
+  }, async prepareWorld(world, state) {
+    scope(world.baseline.householdId);
+    const intents = expandComposableContexts(state, world, materializePlanSlots(world.baseline, state)).mobilityIntents;
+    if (!intents.length) return world;
+    const requirements = resolveJourneyRequirements(intents, world).journeys;
+    if (!requirements.some(j => !j.externalExpenseId && !j.relationUnresolved && j.stops.length >= 2
+      && (j.mode === "CAR" || j.stops.some(ref => ref.kind === "KNOWN")))) return preparePlanningMobility(world, state);
+    const options = await readPlannedContextOptions(canonical.client, world.baseline.householdId, canonical.context.persons);
+    if (!world.mobilityFacts) throw new TypeError("MOBILITY_AUTHORITY_MISSING");
+    const vehicle = options.vehicle;
+    return preparePlanningMobility({ ...world, mobilityFacts: { ...world.mobilityFacts, places: options.places, vehicle,
+      history: vehicle?.vehicleId ? world.mobilityFacts.vehicleHistory?.[vehicle.vehicleId] ?? [] : [] } }, state);
   }, async readDirectWorld(householdId, targetMonth) {
     scope(householdId);
     const [forecast, inputs, externalIntents] = await Promise.all([readPlanningMonthForecast(canonical.client, householdId, targetMonth),
