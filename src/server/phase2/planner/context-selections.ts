@@ -52,7 +52,7 @@ function selection(raw: unknown, slot: ComponentSlotDefinition): ComponentSelect
       ...(value.pricing === undefined ? {} : { pricing: parseMobilityPricing(value.pricing) }),
       plannedTime: mobilityTime(value.plannedTime), returnTime: mobilityTime(value.returnTime) };
   }
-  plannerKeys(value, [...common, "label", "quantity", "cost", "binding", "fundingAllocations"], [...common, "label", "quantity", "cost"]);
+  plannerKeys(value, [...common, "label", "quantity", "cost", "binding", "fundingAllocations", ...(slot.acceptsNeedOccurrence ? ["needOccurrenceId"] : [])], [...common, "label", "quantity", "cost"]);
   const quantity = decisionAmount(value.quantity);
   if (new Big(quantity).lte(0) || new Big(quantity).gt(9999)) throw new TypeError("PLANNER_QUANTITY_INVALID");
   const binding = value.binding === undefined ? { mode: "AUTO" as const } : (() => {
@@ -61,7 +61,8 @@ function selection(raw: unknown, slot: ComponentSlotDefinition): ComponentSelect
     return { mode: candidate.mode as "AUTO" | "CONFIRMED_CONSUMPTION" | "EXTRA_TO_SLOT" | "NO_RELATED_SLOT" };
   })();
   return { ...identity, kind: "COMPONENT", label: plannerString(value.label), quantity, cost: parseKernelCost(value.cost), binding,
-    fundingAllocations: parseKernelFunding(value.fundingAllocations ?? []) };
+    fundingAllocations: parseKernelFunding(value.fundingAllocations ?? []),
+    ...(value.needOccurrenceId === undefined ? {} : { needOccurrenceId: plannerString(value.needOccurrenceId) }) };
 }
 export function readContextSelections(context: PlannedContextState, targetMonth: string): ReadonlyMap<string, readonly ComponentSelectionV1[]> {
   const template = resolveContextTemplate(context.templateKey);

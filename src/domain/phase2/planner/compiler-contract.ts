@@ -12,6 +12,7 @@ import type { MonthInputs, MonthScenario } from "@/server/phase2/month-scenario"
 import type { MonthForecastSnapshot } from "@/server/phase2/month-forecast-snapshot";
 import type { PlannedExpense, PlannedExpenseScenarioEntry, FundingAllocation } from "@/server/phase2/planned-expenses";
 import type { PlanProjectionV1 } from "./projection-contract";
+import type { NeedOccurrence } from "./renewal-contract";
 
 export type PlanningWorldFacts = Readonly<{ baseline: PlanningBaselineV1; forecast: MonthForecastSnapshot;
   monthInputs: MonthInputs; externalIntents: readonly PlannedExpense[]; asOfDate: string;
@@ -29,11 +30,12 @@ export type ComponentRequest = Readonly<{ componentId: string; ownerRef: string;
   externalEntryId: string | null; externalLineId: string | null; role: string; label: string; quantity: string;
   cost: KernelCost; binding: SlotBinding; fundingAllocations: readonly FundingAllocation[]; plannedDate: string | null;
   selectionProvenance?: ComponentDefaultProvenance; bindingEvidenceRefs?: readonly string[];
-  assetKey?: string; physicalJourneyRequirementId?: string }>;
+  assetKey?: string; physicalJourneyRequirementId?: string; needOccurrenceId?: string }>;
 export type CompiledComponent = ComponentRequest & Readonly<{ evaluation: CostEvaluation }>;
 export type CompiledPlanSlot = { baseline: PlanningPlanSlot; role: "BEHAVIOR" | "SAVINGS"; financeKey: string | null;
   owned: boolean; decisionId: string | null; effectiveAmount: string | null; effectiveCount: string | null;
-  remainingAmount: string | null; remainingCount: string | null; remainingEconomicAmount: string | null; effectiveUnitAmount: string | null };
+  remainingAmount: string | null; remainingCount: string | null; remainingEconomicAmount: string | null; effectiveUnitAmount: string | null;
+  conditionalAccepted?: boolean };
 export type BaselineConsumptionManifest = { componentId: string; planSlotId: string; amount: string | null;
   count: string | null; displacedAmount: string | null; evidenceRefs: readonly string[] };
 export type FinancialScenarioAdapterInputV1 = Readonly<{ effectiveMonthInputs: MonthInputs;
@@ -47,7 +49,7 @@ export type CompiledContext = Readonly<{ contextOccurrenceId: string; templateKe
   status?: "ACTIVE" | "SUGGESTED"; componentSlots?: readonly CompiledComponentSlot[] }>;
 export type CompiledSemanticPlanV1 = Readonly<{ version: "compiled-semantic-plan@v1"; targetMonth: string;
   semanticStateDigest: string; planSlots: readonly CompiledPlanSlot[]; contexts: readonly CompiledContext[];
-  components: readonly CompiledComponent[]; needs: readonly never[]; mobilityIntents: readonly MobilityIntent[]; journeys: readonly PhysicalJourneyRequirement[];
+  components: readonly CompiledComponent[]; needs: readonly NeedOccurrence[]; mobilityIntents: readonly MobilityIntent[]; journeys: readonly PhysicalJourneyRequirement[];
   journeyDependencies: readonly JourneyDependency[]; journeyPrices: readonly JourneyPrice[];
   contextualEffects: readonly ContextualEffect[]; constraints: readonly ConstraintResult[]; diagnostics: readonly PlannerDiagnostic[];
   financialAdapterInput: FinancialScenarioAdapterInputV1; manifest: PlannerJsonObject; manifestDigest: string }>;

@@ -7,7 +7,7 @@ import { matchesForecastCategory } from "../remaining-month-forecast";
 import { slotReferenceKeys } from "./plan-slot-resolver";
 import { costItemCashTreatment } from "@/domain/phase2/planned-money";
 
-export const KERNEL_CONSTRAINT_POLICY = "planner-kernel-constraints@v4-economic-mobility";
+export const KERNEL_CONSTRAINT_POLICY = "planner-kernel-constraints@v5-renewals";
 export function evaluatePlanConstraints(world: PlanningWorldFacts, slots: readonly CompiledPlanSlot[],
   components: readonly CompiledComponent[], effects: readonly ContextualEffect[]): ConstraintResult[] {
   const results: ConstraintResult[] = [];
@@ -23,8 +23,9 @@ export function evaluatePlanConstraints(world: PlanningWorldFacts, slots: readon
         add("BLOCK", "PROTECTED_SAVINGS_LOCKED", slot.baseline.planSlotId, reservation.sourceRefs);
     } else {
       const simple = slot.baseline.simpleAuthority;
+      const renewal = slot.baseline.renewalAuthority;
       const explicitInput = !!slot.decisionId && slot.remainingEconomicAmount !== null;
-      if (slot.baseline.inclusion !== "CENTRAL" && !simple?.optionalBudget && !(simple?.gate === "NEEDS_NEW_INPUT" && explicitInput))
+      if (slot.baseline.inclusion !== "CENTRAL" && !renewal && !simple?.optionalBudget && !(simple?.gate === "NEEDS_NEW_INPUT" && explicitInput))
         add("BLOCK", "OWNED_SLOT_CONDITION_UNRESOLVED", slot.baseline.planSlotId, slot.baseline.sourceRefs);
       if (simple?.hardFloor && slot.effectiveAmount !== null && new Big(slot.effectiveAmount).lt(simple.hardFloor.amount))
         add("BLOCK", "SIMPLE_REAL_HARD_FLOOR_VIOLATED", slot.baseline.planSlotId, simple.hardFloor.evidenceRefs);
@@ -34,7 +35,7 @@ export function evaluatePlanConstraints(world: PlanningWorldFacts, slots: readon
       const reference = world.forecast.referencePlan;
       const keys = slotReferenceKeys(slot);
       const matches = [...(reference?.necessary ?? []), ...(reference?.flexible ?? [])].filter(p => keys.includes(p.key));
-      if (simple?.optionalBudget ? matches.length > 1 : matches.length !== 1)
+      if (simple?.optionalBudget || renewal ? matches.length > 1 : matches.length !== 1)
         add("BLOCK", "OWNED_SLOT_FINANCIAL_REFERENCE_UNRESOLVED", slot.baseline.planSlotId);
       // C2's bridge certifies generic unobserved capacity. Reconciliation with already observed
       // occurrences belongs to domain adapters; never silently count them a second time.

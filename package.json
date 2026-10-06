@@ -3,6 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
+    "check:phase2-planner-renewals": "node scripts/check-phase2-planner-renewals.mjs",
     "check:phase2-planner-mobility": "node scripts/check-phase2-planner-mobility.mjs",
     "check:phase2-planner-contexts": "node scripts/check-phase2-planner-contexts.mjs",
     "check:phase2-planner-simple-levers": "node scripts/check-phase2-planner-simple-levers.mjs",

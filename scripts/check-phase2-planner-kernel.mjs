@@ -180,9 +180,9 @@ try {
     const replace=(name,key,value)=>{const module=require(name),old=module[key];module[key]=value;restores.push(()=>module[key]=old);};
     const source={householdId,knowledgeCutoff:"2026-10-05T10:00:00Z",mobilityLegs:[],personalMobility:{outputHash:"synthetic-personal"},forecast:world.forecast,monthInputs:world.monthInputs,plannedExpenses:world.externalIntents,evidence:{synthetic:"single-cutoff-evidence"}};
     replace("@/server/phase2/planner/baseline-adapters","readPlanningBaselineSources",async(repository,month,cutoff,options)=>{
-      assert.deepEqual(options,{simpleOccurrences:true});
+      assert.deepEqual(options,{simpleOccurrences:true,renewals:true});
       assert.equal(repository.client,canonicalClient);assert.equal(month,"2026-11");assert.equal(cutoff,"2026-10-05T10:00:00Z");reads.push("C1");return source;});
-    replace("@/server/phase2/planner/simple-baseline","buildSimplePlanningBaseline",s=>{assert.equal(s,source);return world.baseline;});
+    replace("@/server/phase2/planner/renewal-baseline","buildRenewalPlanningBaseline",s=>{assert.equal(s,source);return world.baseline;});
     let published=world.forecast;
     replace("@/server/phase2/month-planning-read","readPlanningMonthForecast",async(client,household,month)=>{
       assert.equal(client,canonicalClient);assert.equal(household,householdId);assert.equal(month,"2026-11");reads.push("V2_FORECAST");return published;});

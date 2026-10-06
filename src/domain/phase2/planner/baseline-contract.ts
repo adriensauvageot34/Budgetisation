@@ -1,6 +1,7 @@
 import type { PlannerJsonObject } from "./json";
 import type { PlannerDiagnostic, PlannerKnowledge, PlannerProvenance } from "./diagnostics";
 import type { SimpleSlotAuthority } from "./simple-lever-contract";
+import type { NeedOccurrence, RenewalSlotAuthority, RenewalReadModel } from "./renewal-contract";
 
 export type BaselineSourceRef = Readonly<{ sourceKey: string; owner: string; digest: string;
   evidenceRefs: readonly string[] }>;
@@ -22,7 +23,7 @@ export type UnresolvedBehavioralReserve = Readonly<{ reserveKey: string; reason:
   value: BaselineRange; historicalReferences: HistoricalReferenceSet; sourceRefs: readonly string[];
   replacesSlotKey: string | null }>;
 export type PlanSlotValue = Readonly<{ amount: string | null; count: string | null; unitAmount: string | null;
-  minimumAmount: string | null; dueState: "UNKNOWN" | null }>;
+  minimumAmount: string | null; dueState: NeedOccurrence["dueState"] | null }>;
 export type SlotCapability = Readonly<{ action: "SET_AMOUNT" | "SET_COUNT" | "REVIEW_REFERENCE";
   availability: "AVAILABLE" | "UNAVAILABLE"; reason: string | null }>;
 export type PlanningPlanSlot = Readonly<{ planSlotId: string; slotIdentityKey: string; controlKey: string | null;
@@ -30,10 +31,11 @@ export type PlanningPlanSlot = Readonly<{ planSlotId: string; slotIdentityKey: s
   scope: Readonly<{ kind: "HOUSEHOLD" | "PERSON"; personId?: string }>;
   inclusion: "CENTRAL" | "CONDITIONAL" | "SUGGESTION_ONLY" | "UNRESOLVED_RESERVE";
   baselineValue: PlanSlotValue; historicalReferences?: HistoricalReferenceSet; sourceRefs: readonly string[]; knowledge: PlannerKnowledge;
-  provenance: readonly PlannerProvenance[]; capabilities: readonly SlotCapability[]; simpleAuthority?: SimpleSlotAuthority }>;
+  provenance: readonly PlannerProvenance[]; capabilities: readonly SlotCapability[]; simpleAuthority?: SimpleSlotAuthority;
+  renewalAuthority?: RenewalSlotAuthority }>;
 export type PlanningBaselineV1 = Readonly<{ version: "planning-baseline@v1"; householdId: string; targetMonth: string;
   knowledgeCutoff: string; digest: string; sourceRefs: readonly BaselineSourceRef[];
   structuralFacts: Readonly<{ resources: readonly BaselineStructuralFact[]; obligations: readonly BaselineStructuralFact[];
     savingsReservations: readonly BaselineSavingsReservation[]; externalKnownContexts: readonly ExternalKnownContext[] }>;
   slots: readonly PlanningPlanSlot[]; unresolvedReserves: readonly UnresolvedBehavioralReserve[];
-  modelVersions: Readonly<Record<string, string>>; diagnostics: readonly PlannerDiagnostic[] }>;
+  modelVersions: Readonly<Record<string, string>>; diagnostics: readonly PlannerDiagnostic[]; renewals?: RenewalReadModel }>;

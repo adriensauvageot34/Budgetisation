@@ -17,6 +17,7 @@ import { readPlannedExpenses } from "../planned-expenses";
 import type { PersonHabitAssertion, PlanningBaselineSources } from "./baseline-sources";
 import { buildPlanningBaseline } from "./baseline";
 import { parseActivityCausalFinancialLinks } from "@/analytics/facts";
+import { RENEWAL_NEED_KEYS } from "./renewal-engine";
 
 /** Explicit downstream compatibility payload; never accepted by the Baseline builder. */
 export const legacySeedDecisions = (inputs: MonthInputs) => parsePlannerJsonObject(inputs.decision ?? {});
@@ -47,7 +48,7 @@ export async function readPersonHabitAssertions(client: SupabaseClient, househol
  * context. Habit assertions require its trusted server read client (existing SELECT grants).
  * No new credential, Plan read, materialization, migration, or financial evaluation occurs. */
 export async function readPlanningBaselineSources(repository: CanonicalRepository, targetMonth: string,
-  knowledgeCutoff: string, options: Readonly<{ simpleOccurrences?: boolean }> = {}): Promise<PlanningBaselineSources> {
+  knowledgeCutoff: string, options: Readonly<{ simpleOccurrences?: boolean; renewals?: boolean }> = {}): Promise<PlanningBaselineSources> {
   const month = plannerMonth(targetMonth), cutoff = Temporal.Instant.from(knowledgeCutoff);
   const { client, context } = repository, householdId = String(context.householdId);
   const today = cutoff.toZonedDateTimeISO(context.timezone).toPlainDate();
@@ -74,7 +75,7 @@ export async function readPlanningBaselineSources(repository: CanonicalRepositor
   if (canonicalPurchases.status !== "PASS") throw new TypeError("BASELINE_PURCHASE_OWNER_BLOCKED");
   // Product owner has already verified the Canonical household scope; resolve the same
   // Need subjects from Canonical person_id, without inferring them from legacy names.
-  const needKeys = [...new Set(productObservations.map(o => o.needKey))].sort();
+  const needKeys = [...new Set([...productObservations.map(o => o.needKey), ...(options.renewals ? RENEWAL_NEED_KEYS : [])])].sort();
   const needRows: import("@/server/canonical/record").CanonicalRecord[] = [];
   for (let offset = 0; offset < needKeys.length; offset += 100) {
     const { data, error } = await client.from("needs").select("need_id,need_key,person_id").in("need_key", needKeys.slice(offset, offset + 100));

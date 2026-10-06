@@ -14,3 +14,5 @@ export const prospectiveJourneyId = (householdId: string, month: string, ownerId
   identity("journey", [plannerUuid(householdId), plannerMonth(month), plannerString(ownerIdentity)]);
 export const needOccurrenceId = (needId: string, sourceAcquisitionEpisodeId: string | null): string =>
   identity("need-occurrence", [plannerString(needId), sourceAcquisitionEpisodeId === null ? null : plannerString(sourceAcquisitionEpisodeId)]);
+export const acquisitionEpisodeId = (needId: string, acquisitionDate: string): string =>
+  identity("acquisition-episode", [plannerString(needId), plannerString(acquisitionDate)]);

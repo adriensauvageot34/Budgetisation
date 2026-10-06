@@ -20,8 +20,9 @@ import { publishContextRegistry, CONTEXT_REGISTRY_VERSION } from "./context-regi
 import { compileMobility } from "./mobility-compiler";
 import { JOURNEY_RESOLVER_VERSION } from "./journey-resolver";
 import { PROSPECTIVE_MOBILITY_PRICING_VERSION } from "./prospective-mobility-pricing";
+import { validateRenewalComponentConsumptions } from "./renewal-compiler";
 
-export const PLANNER_COMPILER_VERSION = "planner-semantic-compiler@v4-prospective-mobility";
+export const PLANNER_COMPILER_VERSION = "planner-semantic-compiler@v5-renewals";
 /** Typed owner outputs may have optional undefined fields. Persist only their JSON representation. */
 export const jsonEnvelope = (value: unknown) => parsePlannerJsonObject(JSON.parse(JSON.stringify(value)));
 export function financeAuthorityEvidence(input: CompilePlanInputV1) {
@@ -113,6 +114,7 @@ export function compileSemanticPlan(input: CompilePlanInputV1): CompiledSemantic
   requests.sort((a, b) => Number(b.externalEntryId !== null) - Number(a.externalEntryId !== null) || compare(a.componentId, b.componentId));
   contexts.sort((a, b) => compare(a.contextOccurrenceId, b.contextOccurrenceId));
   if (new Set(requests.map(r => r.componentId)).size !== requests.length) throw new TypeError("PLANNER_COMPONENT_ID_DUPLICATE");
+  validateRenewalComponentConsumptions(requests, slots);
   const consumptions = bindPlanSlots(slots, requests);
   expandSimpleOwnership(slots);
   const components = requests.map(request => ({ ...request, evaluation: { ...resolveComponentCost(request, world),
@@ -137,9 +139,10 @@ export function compileSemanticPlan(input: CompilePlanInputV1): CompiledSemantic
     semanticState: state, semanticStateDigest: semanticStateDigest(state), planSlots: slots, contexts, components,
     contextualEffects: effects, constraints, diagnostics, unresolvedReserves: baseline.unresolvedReserves, financialAdapterInput,
     simpleCapabilities: publishSimpleCapabilities(baseline), contextRegistry: publishContextRegistry(), mobilityIntents: composable.mobilityIntents,
-    journeys: mobility.journeys, journeyDependencies: mobility.dependencies, journeyPrices: mobility.prices });
+    journeys: mobility.journeys, journeyDependencies: mobility.dependencies, journeyPrices: mobility.prices,
+    needs: baseline.renewals?.needOccurrences ?? [], renewalProfiles: baseline.renewals?.replenishmentProfiles ?? [] });
   return { version: "compiled-semantic-plan@v1", targetMonth: state.targetMonth, semanticStateDigest: semanticStateDigest(state),
-    planSlots: slots, contexts, components, needs: [], mobilityIntents: composable.mobilityIntents, journeys: mobility.journeys,
+    planSlots: slots, contexts, components, needs: baseline.renewals?.needOccurrences ?? [], mobilityIntents: composable.mobilityIntents, journeys: mobility.journeys,
     journeyDependencies: mobility.dependencies, journeyPrices: mobility.prices, contextualEffects: effects, constraints,
     diagnostics, financialAdapterInput, manifest, manifestDigest: plannerDigest(manifest) };
 }

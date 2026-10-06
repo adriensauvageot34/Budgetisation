@@ -9,7 +9,7 @@ export type ContextBindingDecision = Readonly<{ mode: "AUTO" | "CONFIRMED_CONSUM
 type SelectionIdentity = Readonly<{ selectionId: string; optionKey: string; provenance: ComponentDefaultProvenance }>;
 export type ComponentSelectionV1 = SelectionIdentity & (
   | Readonly<{ kind: "COMPONENT"; label: string; quantity: string; cost: KernelCost;
-      binding?: ContextBindingDecision; fundingAllocations?: readonly FundingAllocation[] }>
+      binding?: ContextBindingDecision; fundingAllocations?: readonly FundingAllocation[]; needOccurrenceId?: string }>
   | Readonly<{ kind: "CHILD_CONTEXT"; childContextOccurrenceId: string }>
   | Readonly<{ kind: "MOBILITY_INTENT"; origin?: ProspectivePlaceRef | null; destination?: ProspectivePlaceRef | null; returnRequired?: boolean;
       journey?: JourneyDeclaration; pricing?: MobilityPricingDecision; plannedTime?: string | null; returnTime?: string | null }>
@@ -23,7 +23,7 @@ export type ComponentSlotDefinition = Readonly<{ slotKey: string; role: string;
   cardinality: "REQUIRED_ONE" | "OPTIONAL_ONE" | "REPEATING";
   optionSource: "STATIC" | "CAPABILITY_PROVIDER" | "CHILD_CONTEXT";
   options: readonly ComponentOptionDefinition[]; allowedChildTemplates: readonly string[];
-  mobilityRole?: "PRIMARY" | "ACCESS" | "LOCAL_STOP" | "RETURN" }>;
+  mobilityRole?: "PRIMARY" | "ACCESS" | "LOCAL_STOP" | "RETURN"; acceptsNeedOccurrence?: boolean }>;
 export type { ContextTemplateV1 } from "./context-contract";
 export type CompiledComponentSlot = Readonly<{ contextOccurrenceId: string; slotKey: string; role: string;
   cardinality: ComponentSlotDefinition["cardinality"]; state: "EMPTY" | "UNRESOLVED" | "SUGGESTED" | "RESOLVED";

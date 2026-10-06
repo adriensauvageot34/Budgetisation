@@ -32,10 +32,12 @@ export function materializePlanSlots(baseline: PlanningBaselineV1, state: PlanSe
       const action = slot.kind === "AMOUNT" ? "SET_AMOUNT" : "SET_COUNT";
       const protectedSaving = slot.slotIdentityKey.startsWith("savings:") && !slot.capabilities.length;
       if (!protectedSaving && !slot.capabilities.some(c => c.action === action && c.availability === "AVAILABLE")) throw new TypeError("PLANNER_SLOT_CONTROL_UNAVAILABLE");
-      const allowPriceInput = slot.kind !== "AMOUNT" && slot.simpleAuthority?.gate === "NEEDS_NEW_INPUT";
+      const allowPriceInput = slot.kind !== "AMOUNT" && (slot.simpleAuthority?.gate === "NEEDS_NEW_INPUT" || !!slot.renewalAuthority && slot.baselineValue.unitAmount === null);
       plannerKeys(plannerRecord(decision.value), slot.kind === "AMOUNT" ? ["amount"] : allowPriceInput ? ["count", "unitAmount"] : ["count"],
         slot.kind === "AMOUNT" ? ["amount"] : ["count"]);
       if (slot.simpleAuthority && slot.kind !== "AMOUNT" && !new Big(decisionAmount(decision.value.count)).round(0).eq(decisionAmount(decision.value.count))) throw new TypeError("SIMPLE_OCCURRENCE_COUNT_MUST_BE_INTEGER");
+      if (slot.renewalAuthority && (!new Big(decisionAmount(decision.value.count)).round(0).eq(decisionAmount(decision.value.count))
+        || slot.renewalAuthority.conditional && new Big(decisionAmount(decision.value.count)).gt(1))) throw new TypeError("RENEWAL_OCCURRENCE_COUNT_INVALID");
       pending.delete(decision.decisionSlotKey);
     }
     const effectiveAmount = slot.kind === "AMOUNT" ? decision ? decisionAmount(decision.value.amount) : slot.baselineValue.amount : null;
@@ -44,9 +46,11 @@ export function materializePlanSlots(baseline: PlanningBaselineV1, state: PlanSe
     const role = slot.slotIdentityKey.startsWith("savings:") ? "SAVINGS" as const : "BEHAVIOR" as const;
     const financeKey = role === "SAVINGS" ? null : isDecisionCategoryKey(slot.controlKey ?? "") ? slot.controlKey
       : isDecisionCategoryKey(slot.semanticKey) ? slot.semanticKey : null;
-    return { baseline: slot, role, financeKey, owned: !!decision || forced.includes(slot.slotIdentityKey), decisionId: decision?.decisionId ?? null,
+    const conditional = slot.renewalAuthority?.conditional === true;
+    return { baseline: slot, role, financeKey, owned: !!decision || forced.includes(slot.slotIdentityKey) || slot.renewalAuthority?.conditional === false, decisionId: decision?.decisionId ?? null,
       effectiveAmount, effectiveCount, effectiveUnitAmount, remainingAmount: effectiveAmount, remainingCount: effectiveCount,
-      remainingEconomicAmount: role === "SAVINGS" ? null : slot.kind === "AMOUNT" ? effectiveAmount
+      ...(conditional ? { conditionalAccepted: !!decision } : {}),
+      remainingEconomicAmount: role === "SAVINGS" ? null : conditional && !decision ? "0.00" : slot.kind === "AMOUNT" ? effectiveAmount
         : effectiveCount !== null && new Big(effectiveCount).eq(0) ? "0.00"
         : effectiveCount !== null && effectiveUnitAmount !== null ? cents(new Big(effectiveCount).times(effectiveUnitAmount)) : null };
   });
@@ -55,7 +59,7 @@ export function materializePlanSlots(baseline: PlanningBaselineV1, state: PlanSe
   return resolved.sort((a, b) => compare(a.baseline.slotIdentityKey, b.baseline.slotIdentityKey));
 }
 
-export const slotReferenceKeys = (slot: CompiledPlanSlot): readonly string[] => slot.baseline.simpleAuthority?.referenceKeys ?? (slot.financeKey ? [slot.financeKey] : []);
+export const slotReferenceKeys = (slot: CompiledPlanSlot): readonly string[] => slot.baseline.renewalAuthority?.referenceKeys ?? slot.baseline.simpleAuthority?.referenceKeys ?? (slot.financeKey ? [slot.financeKey] : []);
 /** Legacy dining is one reference component. Any owned member replaces the entire
  * aggregate with all three distinct capacities exactly once. */
 export function expandSimpleOwnership(slots: CompiledPlanSlot[]): void {
@@ -73,6 +77,11 @@ export function bindPlanSlots(slots: CompiledPlanSlot[], requests: readonly Comp
     const slot = slots.find(s => s.baseline.slotIdentityKey === binding.slotIdentityKey);
     if (!slot || slot.role === "SAVINGS") throw new TypeError("PLANNER_BINDING_TARGET_INVALID");
     slot.owned = true;
+    if (slot.baseline.renewalAuthority?.conditional && !slot.conditionalAccepted) {
+      slot.conditionalAccepted = true;
+      slot.remainingEconomicAmount = slot.effectiveCount !== null && slot.effectiveUnitAmount !== null
+        ? cents(new Big(slot.effectiveCount).times(slot.effectiveUnitAmount)) : null;
+    }
     let amount: string | null = null, count: string | null = null;
     if (slot.baseline.kind === "AMOUNT") {
       if (binding.amount === null || binding.count !== null) throw new TypeError("PLANNER_AMOUNT_CONSUMPTION_INVALID");

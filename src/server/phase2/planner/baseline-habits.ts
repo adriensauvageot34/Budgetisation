@@ -24,7 +24,7 @@ export function buildHabitBaseline(s: PlanningBaselineSources) {
       capabilities: [{ action: "SET_COUNT", availability: "AVAILABLE", reason: null }] }));
   }
   // Product history supplies evidence of acquisition, never a fabricated renewal due-window.
-  // C4 owns episodes/profiles. These conditional unknown slots remain visible for C2.
+  // C6's renewal enrichment replaces these uncalibrated reference slots.
   const months = closedMonths(s, ["BANK"]);
   const groups = new Map<string, typeof s.productObservations[number][]>();
   for (const o of s.productObservations.filter(o => months.includes(o.observedAt.slice(0, 7)))) {

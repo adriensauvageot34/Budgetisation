@@ -8,8 +8,9 @@ import type { MobilityIntent } from "@/domain/phase2/planner/mobility-contract";
 import { resolveContextTemplate, CONTEXT_REGISTRY_VERSION } from "./context-registry";
 import { contextDate, validateContextGraph } from "./context-selections";
 import { resolveComponentCost } from "./cost-resolver";
+import { resolveRenewalComponentBinding } from "./renewal-compiler";
 
-export const CONTEXT_COMPILER_VERSION = "planner-context-compiler@v2-mobility";
+export const CONTEXT_COMPILER_VERSION = "planner-context-compiler@v3-renewals";
 function resolveBinding(option: ComponentOptionDefinition, domain: string | null, item: Extract<ComponentSelectionV1, { kind: "COMPONENT" }>,
   request: ComponentRequest, slots: readonly CompiledPlanSlot[], world: PlanningWorldFacts): SlotBinding {
   const mode = item.binding?.mode ?? "AUTO";
@@ -77,10 +78,12 @@ export function expandComposableContexts(state: PlanSemanticStateV1, world: Plan
             `decision:${context.contextOccurrenceId}:${slot.slotKey}:${item.selectionId}`] };
         const purchaseDomain = template.templateKey === "purchase" && slot.slotKey === "item" && context.fields.budgetDomain !== "other"
           ? context.fields.budgetDomain as string | undefined : undefined;
-        const binding = resolveBinding(purchaseDomain ? { ...option, bindingPolicy: "CERTAIN_DOMAIN" } : option,
-          option.baselineDomain ?? purchaseDomain ?? null, item, request, planSlots, world);
+        const binding = item.needOccurrenceId ? resolveRenewalComponentBinding(item, planSlots, world)
+          : resolveBinding(purchaseDomain ? { ...option, bindingPolicy: "CERTAIN_DOMAIN" } : option,
+            option.baselineDomain ?? purchaseDomain ?? null, item, request, planSlots, world);
         if (binding.relation === "UNRESOLVED") add("CONTEXT_SLOT_BINDING_UNRESOLVED", id);
-        requests.push({ ...request, binding });
+        requests.push({ ...request, binding, ...(item.needOccurrenceId ? { needOccurrenceId: item.needOccurrenceId,
+          bindingEvidenceRefs: [...request.bindingEvidenceRefs!, ...world.baseline.renewals!.needOccurrences.find(n => n.needOccurrenceId === item.needOccurrenceId)!.evidenceRefs] } : {}) });
       }
       compiledSlots.push({ contextOccurrenceId: context.contextOccurrenceId, slotKey: slot.slotKey, role: slot.role, cardinality: slot.cardinality,
         state: unresolved ? "UNRESOLVED" : accepted.some(item => item.kind !== "UNRESOLVED") ? "RESOLVED" : items.length ? "SUGGESTED" : "EMPTY",
