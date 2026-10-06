@@ -16,7 +16,7 @@ export function materializePlanSlots(baseline: PlanningBaselineV1, state: PlanSe
     const key = `savings:${r.reservationId}`;
     return { planSlotId: planSlotId(key), slotIdentityKey: key, controlKey: key, semanticKey: key, kind: "AMOUNT" as const, scope: { kind: "HOUSEHOLD" as const },
       inclusion: "CENTRAL" as const, baselineValue: { ...emptyValue(), amount: r.amount }, knowledge: "KNOWN" as const, provenance: ["CANONICAL_FACT" as const],
-      sourceRefs: r.sourceRefs, capabilities: [{ action: "SET_AMOUNT" as const, availability: "AVAILABLE" as const, reason: r.adjustability }] };
+      sourceRefs: r.sourceRefs, capabilities: r.adjustability === "PROTECTED" ? [] : [{ action: "SET_AMOUNT" as const, availability: "AVAILABLE" as const, reason: r.adjustability }] };
   })];
   if (new Set(slots.map(s => s.slotIdentityKey)).size !== slots.length) throw new TypeError("PLANNER_SLOT_DUPLICATE");
   const controls = new Map(state.controls.map(c => [c.decisionSlotKey, c]));
@@ -30,22 +30,37 @@ export function materializePlanSlots(baseline: PlanningBaselineV1, state: PlanSe
       if (assigned.has(decision.decisionSlotKey)) throw new TypeError("PLANNER_CONTROL_TARGET_AMBIGUOUS");
       assigned.add(decision.decisionSlotKey);
       const action = slot.kind === "AMOUNT" ? "SET_AMOUNT" : "SET_COUNT";
-      if (!slot.capabilities.some(c => c.action === action && c.availability === "AVAILABLE")) throw new TypeError("PLANNER_SLOT_CONTROL_UNAVAILABLE");
-      plannerKeys(plannerRecord(decision.value), [slot.kind === "AMOUNT" ? "amount" : "count"]);
+      const protectedSaving = slot.slotIdentityKey.startsWith("savings:") && !slot.capabilities.length;
+      if (!protectedSaving && !slot.capabilities.some(c => c.action === action && c.availability === "AVAILABLE")) throw new TypeError("PLANNER_SLOT_CONTROL_UNAVAILABLE");
+      const allowPriceInput = slot.kind !== "AMOUNT" && slot.simpleAuthority?.gate === "NEEDS_NEW_INPUT";
+      plannerKeys(plannerRecord(decision.value), slot.kind === "AMOUNT" ? ["amount"] : allowPriceInput ? ["count", "unitAmount"] : ["count"],
+        slot.kind === "AMOUNT" ? ["amount"] : ["count"]);
+      if (slot.simpleAuthority && slot.kind !== "AMOUNT" && !new Big(decisionAmount(decision.value.count)).round(0).eq(decisionAmount(decision.value.count))) throw new TypeError("SIMPLE_OCCURRENCE_COUNT_MUST_BE_INTEGER");
       pending.delete(decision.decisionSlotKey);
     }
     const effectiveAmount = slot.kind === "AMOUNT" ? decision ? decisionAmount(decision.value.amount) : slot.baselineValue.amount : null;
     const effectiveCount = slot.kind === "AMOUNT" ? null : decision ? decisionAmount(decision.value.count) : slot.baselineValue.count;
+    const effectiveUnitAmount = decision?.value.unitAmount !== undefined ? decisionAmount(decision.value.unitAmount) : slot.baselineValue.unitAmount;
     const role = slot.slotIdentityKey.startsWith("savings:") ? "SAVINGS" as const : "BEHAVIOR" as const;
     const financeKey = role === "SAVINGS" ? null : isDecisionCategoryKey(slot.controlKey ?? "") ? slot.controlKey
       : isDecisionCategoryKey(slot.semanticKey) ? slot.semanticKey : null;
     return { baseline: slot, role, financeKey, owned: !!decision || forced.includes(slot.slotIdentityKey), decisionId: decision?.decisionId ?? null,
-      effectiveAmount, effectiveCount, remainingAmount: effectiveAmount, remainingCount: effectiveCount,
+      effectiveAmount, effectiveCount, effectiveUnitAmount, remainingAmount: effectiveAmount, remainingCount: effectiveCount,
       remainingEconomicAmount: role === "SAVINGS" ? null : slot.kind === "AMOUNT" ? effectiveAmount
-        : effectiveCount !== null && slot.baselineValue.unitAmount !== null ? cents(new Big(effectiveCount).times(slot.baselineValue.unitAmount)) : null };
+        : effectiveCount !== null && new Big(effectiveCount).eq(0) ? "0.00"
+        : effectiveCount !== null && effectiveUnitAmount !== null ? cents(new Big(effectiveCount).times(effectiveUnitAmount)) : null };
   });
   if (pending.size) throw new TypeError(`PLANNER_CONTROL_TARGET_UNKNOWN:${[...pending][0]}`);
+  expandSimpleOwnership(resolved);
   return resolved.sort((a, b) => compare(a.baseline.slotIdentityKey, b.baseline.slotIdentityKey));
+}
+
+export const slotReferenceKeys = (slot: CompiledPlanSlot): readonly string[] => slot.baseline.simpleAuthority?.referenceKeys ?? (slot.financeKey ? [slot.financeKey] : []);
+/** Legacy dining is one reference component. Any owned member replaces the entire
+ * aggregate with all three distinct capacities exactly once. */
+export function expandSimpleOwnership(slots: CompiledPlanSlot[]): void {
+  const groups = new Set(slots.filter(s => s.owned && s.baseline.simpleAuthority).map(s => s.baseline.simpleAuthority!.ownershipGroup));
+  for (const slot of slots) if (slot.baseline.simpleAuthority && groups.has(slot.baseline.simpleAuthority.ownershipGroup)) slot.owned = true;
 }
 
 /** Semantic allocation precedes price resolution. Amount/count capacities are independent
@@ -79,7 +94,7 @@ export function resolveContextualEffects(slots: CompiledPlanSlot[], components: 
     let displaced: string | null = binding.relation === "CONSUMES_SLOT" ? null : "0.00";
     if (allocation && slot && binding.displacement === "KNOWN" && gross !== null) {
       displaced = slot.baseline.kind === "AMOUNT" ? allocation.amount === null ? null : cents(new Big(allocation.amount).gt(gross) ? new Big(gross) : new Big(allocation.amount))
-        : allocation.count !== null && slot.baseline.baselineValue.unitAmount !== null ? cents(new Big(allocation.count).times(slot.baseline.baselineValue.unitAmount)) : null;
+        : allocation.count !== null && slot.effectiveUnitAmount !== null ? cents(new Big(allocation.count).times(slot.effectiveUnitAmount)) : null;
       if (displaced !== null && slot.remainingEconomicAmount !== null) slot.remainingEconomicAmount = cents(new Big(slot.remainingEconomicAmount).minus(displaced));
       allocation.displacedAmount = displaced;
     }

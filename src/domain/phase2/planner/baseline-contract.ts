@@ -1,5 +1,6 @@
 import type { PlannerJsonObject } from "./json";
 import type { PlannerDiagnostic, PlannerKnowledge, PlannerProvenance } from "./diagnostics";
+import type { SimpleSlotAuthority } from "./simple-lever-contract";
 
 export type BaselineSourceRef = Readonly<{ sourceKey: string; owner: string; digest: string;
   evidenceRefs: readonly string[] }>;
@@ -29,7 +30,7 @@ export type PlanningPlanSlot = Readonly<{ planSlotId: string; slotIdentityKey: s
   scope: Readonly<{ kind: "HOUSEHOLD" | "PERSON"; personId?: string }>;
   inclusion: "CENTRAL" | "CONDITIONAL" | "SUGGESTION_ONLY" | "UNRESOLVED_RESERVE";
   baselineValue: PlanSlotValue; historicalReferences?: HistoricalReferenceSet; sourceRefs: readonly string[]; knowledge: PlannerKnowledge;
-  provenance: readonly PlannerProvenance[]; capabilities: readonly SlotCapability[] }>;
+  provenance: readonly PlannerProvenance[]; capabilities: readonly SlotCapability[]; simpleAuthority?: SimpleSlotAuthority }>;
 export type PlanningBaselineV1 = Readonly<{ version: "planning-baseline@v1"; householdId: string; targetMonth: string;
   knowledgeCutoff: string; digest: string; sourceRefs: readonly BaselineSourceRef[];
   structuralFacts: Readonly<{ resources: readonly BaselineStructuralFact[]; obligations: readonly BaselineStructuralFact[];

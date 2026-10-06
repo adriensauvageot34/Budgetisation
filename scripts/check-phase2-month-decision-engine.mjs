@@ -6,6 +6,9 @@ import React from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { forecast, inputs } from "./check-phase2-october-contract.mjs";
 import { planningHarness, item } from "./lib/planned-actions-harness.mjs";
+// This suite certifies the historical ASOF contract. SAFE has its own temporal suite.
+const configuredTemporalMode = process.env.PHASE2_FORECAST_TEMPORAL_MODE;
+process.env.PHASE2_FORECAST_TEMPORAL_MODE = "AS_OF_TEMPORAL";
 const require = createRequire(import.meta.url);
 require.extensions[".css"] = module => { module.exports = new Proxy({}, { get: (_, key) => key === "__esModule" ? undefined : String(key) }); };
 require.extensions[".tsx"] = (module, filename) => module._compile(ts.transpileModule(fs.readFileSync(filename, "utf8"), {
@@ -35,57 +38,66 @@ for (const [index, month] of months.entries()) {
   }
 }
 const history = { startMonth: months[0], endMonth: months.at(-1), economicEntries: entries, mobilityLegs: legs };
-const evidence = { history, currentEconomicEntries: [], currentMobilityLegs: [], observedThrough: "2026-09-30", coverageThrough: "2026-09-30", completeMonths: months, personNamesById: { adrien: "Adrien", manon: "Manon" } };
+const coverage = through => Object.fromEntries(["BANK", "SWILE", "EDENRED", "MOBILITY"].map(source => [source, {
+  source, latestObserved: through, coverageThrough: through, safeThrough: through, continuousFrom: "2026-04-01", coverageStatus: "FULL", limitationCodes: [],
+}]));
+const evidence = { history, currentEconomicEntries: [], currentMobilityLegs: [], observedThrough: "2026-09-30", coverageThrough: "2026-09-30", completeMonths: months,
+  completeMonthsBySource: Object.fromEntries(["BANK", "SWILE", "EDENRED", "MOBILITY"].map(source => [source, months])), coverageBySource: coverage("2026-09-30"), personNamesById: { adrien: "Adrien", manon: "Manon" } };
 const live = { ...forecast, meta: { ...forecast.meta, sourceRevision: 1 }, predictionEvidence: evidence, forecastMemory: [] };
 const category = (p, key) => [...p.narrative.prediction.essential, ...p.narrative.prediction.optional].find(c => c.key === key);
 const plan = (asOf = "2026-09-30", expenses = [], settings = defaultMonthDecisionSettings(), facts = live) => deriveMonthScenario(facts, { ...inputs, decision: settings }, null, asOf, expenses).economicPlan;
 const base = plan();
 const contaminated = { ...evidence, history: { ...history, endMonth: "2026-11", economicEntries: [...entries,{...entries[0],date:"2026-11-02",amount:"999999.00"}] } };
-assert.deepEqual(forecastRemainingMonth(live.referencePlan, contaminated,"2026-09-30",[]), base.narrative.prediction,"asOf excludes future history as well as future actuals");
+// Compare the same owner stage: deriveMonthScenario enriches personal meal funding.
+assert.deepEqual(forecastRemainingMonth(live.referencePlan, contaminated,"2026-09-30",[]), forecastRemainingMonth(live.referencePlan, evidence,"2026-09-30",[]),"asOf excludes future history as well as future actuals");
 assert.equal(base.narrative.prediction.temporalMode, "FUTURE_MONTH");
 assert.equal(base.narrative.prediction.currentImportsMissing, false);
 assert.equal(category(base,"groceries").remaining.central, "300.00");
 assert.equal(category(base,"groceries").method, "CUMULATIVE_CURVE");
-assert.equal(category(base,"tobacco-vape").shift, "DOWN");
-assert(Number(category(base,"tobacco-vape").remaining.central) < 30, "persistent recent price decrease wins over older median");
-assert.equal(category(base,"manon-work-mobility").remainingOpportunities, 22);
+assert.equal(category(base,"tobacco-vape").shift, null, "five training months cannot prove the six-month shift criterion");
+assert(Number(category(base,"tobacco-vape").remaining.central) < Number(live.referencePlan.necessary.find(c => c.key === "tobacco-vape").central), "recent lower tickets reduce the cadence provision");
+assert.equal(category(base,"manon-work-mobility").remainingOpportunities.toFixed(2), "5.07", "onsite evidence replaces an arbitrary every-workday assumption");
 assert.equal(recentSeries([100,100,100,20,20,20]).shift, "DOWN");
 assert.equal(recentSeries([100,100,100,100,100,20]).shift, null, "a single atypical month is not a shift");
 const mid = plan("2026-10-15");
 assert.equal(mid.narrative.prediction.temporalMode, "CURRENT_MONTH");
-assert.equal(category(mid,"groceries").remaining.central, "200.00", "not 300 times 16/31");
+assert.equal(category(mid,"groceries").remaining.central, "300.00", "uncovered elapsed purchases stay pending instead of disappearing");
 assert.equal(mid.narrative.prediction.currentImportsMissing, true);
-const currentEvidence = { ...evidence, coverageThrough: "2026-10-15", observedThrough: "2026-10-15", currentEconomicEntries: [
+const currentEvidence = { ...evidence, coverageThrough: "2026-10-15", observedThrough: "2026-10-15", coverageBySource: coverage("2026-10-15"), currentEconomicEntries: [
   { ...entries[0], operationId: "observed", date: "2026-10-02", amount: "50.00" },
   { ...entries[0], operationId: "future", date: "2026-10-25", amount: "999.00" },
 ] };
 const current = plan("2026-10-15", [], undefined, { ...live, predictionEvidence: currentEvidence });
 assert.equal(category(current,"groceries").alreadyRealized, "50.00");
-assert.equal(category(current,"groceries").remaining.central, "175.00");
-assert.equal(category(current,"groceries").projectedMonth.central, "225.00");
-assert.equal(category(current,"groceries").pace, "BELOW");
-assert.equal(current.narrative.prediction.currentImportsMissing, false);
+assert.equal(category(current,"groceries").remaining.central, "200.00", "constant historical prefixes do not justify a nowcast adjustment");
+assert.equal(category(current,"groceries").projectedMonth.central, "250.00");
+assert.equal(category(current,"groceries").pace, null, "bank grace leaves elapsed days without full evidence");
+assert.equal(current.narrative.prediction.currentImportsMissing, true);
 const past = plan("2026-11-01");
 assert.equal(past.narrative.prediction.temporalMode, "PAST_MONTH");
-assert(past.narrative.prediction.essential.every(c => c.remaining.central === "0.00"));
+assert(past.narrative.prediction.essential.some(c => Number(c.remaining.central) > 0), "a past month without source coverage retains unresolved costs");
 const distribution = occurrenceDistribution([0,1,2,3,4], [1,1,1,1,1], 1);
 for (const [key,value] of Object.entries({ zero: .2, one: .2, two: .2, threePlus: .4 })) assert(Math.abs(distribution[key]-value)<1e-10);
 const thinned = occurrenceDistribution([0,1,2,3], [1,2,3,4], .5, 1);
 assert(Math.abs(Object.values(thinned).reduce((a,b) => a+b,0) - 1) < 1e-10);
 assert(thinned.zero > distribution.zero);
 assert(base.narrative.prediction.optional.every(c => c.remaining.low === "0.00"));
-assert.equal(base.narrative.prediction.joint.method, "EMPIRICAL_MONTHS");
+assert.equal(base.narrative.prediction.joint.method, "CATEGORY_FALLBACK", "an unidentified Manon meal branch prevents a certified joint empirical scenario");
 assert(base.narrative.prediction.joint.high.optional <= base.narrative.prediction.optionalProvision.high);
 const settings = parseMonthDecisionSettings({ version: "month-decision@v1", assumptions: { groceries: { mode: "CUSTOM", amount: "210.00" } }, goal: "500.00" });
 const custom = plan("2026-10-15", [], settings, { ...live, predictionEvidence: currentEvidence });
-assert.equal(category(custom,"groceries").projectedMonth.central, "210.00");
+assert.equal(category(custom,"groceries").remaining.central, "210.00", "ASOF legacy CUSTOM describes the remaining unobserved envelope");
+assert.equal(category(custom,"groceries").projectedMonth.central, "260.00", "observed consumption stays in addition to the explicit remaining envelope");
 assert.deepEqual(monthInputsSchema.parse(inputs).decision, defaultMonthDecisionSettings(), "old-row compatibility");
 assert.deepEqual(defaultMonthInputs().decision.assumptions, {}, "no next-month auto-learning");
 assert.throws(() => parseMonthDecisionSettings({ ...settings, assumptions: { groceries: { mode: "CUSTOM", amount: "-1" } } }));
 assert.throws(() => parseMonthDecisionSettings({ ...settings, assumptions: { "manon-work-mobility": { mode: "LOWER" } } }));
 assert.throws(() => parseMonthDecisionSettings({ ...settings, observed: {} }));
 const higher = plan("2026-09-30", [], { ...settings, assumptions: { "adrien-work-meals": { mode: "HIGHER" } } });
-const hm = category(higher,"adrien-work-meals"); assert(hm.expectedOccurrences.high <= hm.remainingOpportunities);
+const hm = category(higher,"adrien-work-meals");
+assert.equal(hm.expectedOccurrences, null, "dated work opportunities do not publish a restaurant count distribution");
+assert(hm.opportunities.every(o => o.probability >= 0 && o.probability <= 1));
+assert(hm.remainingOpportunities <= 31, "work opportunity exposure stays within the month");
 const expense = { id: "root", targetMonth: "2026-10", status: "PLANNED", familyKey: "food", subtypeKey: "restaurant", title: "Fixture", plannedDate: "2026-10-22", context: {}, costItems: [{ ...item("60.00","restaurant:main",["restaurant"]), baselineKey: "household-restaurants" }] };
 const withHabit = plan("2026-09-30", [expense]);
 const split = { ...expense, costItems: [{ ...expense.costItems[0], unitAmount: "45.00" }, { ...expense.costItems[0], id: "split", unitAmount: "15.00" }] };
@@ -97,7 +109,7 @@ assert(Number(overfull.scenarios.central) < Number(withHabit.scenarios.central))
 for (const p of [base, mid, current, custom, withHabit, higher, overfull]) {
   const projection = projectMonthDecision(p, settings, "2026-10", "2026-09-30", []);
   const v = projection.visible;
-  assert.equal(v.afterCertain - v.projectDelta - v.essentialDelta - v.optionalDelta, v.final);
+  assert.equal(v.afterCertain - v.savingsDelta - v.projectDelta - v.essentialDelta - v.optionalDelta, v.final);
   assert.equal(v.essential.reduce((sum,p)=>sum+p.visible,0), v.essentialDelta);
   assert.equal(v.optional.reduce((sum,p)=>sum+p.visible,0), v.optionalDelta);
   assert(Math.abs(Object.values(forecastComponents(p)).reduce((n,c)=>n+Number(c.amount),0)-Number(p.narrative.final.central)) < .011);
@@ -109,7 +121,7 @@ assert.equal(projectMonthDecision(base, defaultMonthDecisionSettings(), "2026-10
 const display = projectMonthDecision(base, settings, "2026-10", "2026-09-30", []).visible;
 assert.equal(base.narrative.prediction.optional.reduce((n,c)=>n+display.categoryDisplay[c.key].remaining.central,0),display.optionalDelta,"card amounts and transition share the same rounding");
 assert.equal(base.narrative.prediction.essential.reduce((n,c)=>n+display.categoryDisplay[c.key].remaining.central,0),display.essentialDelta);
-for(const c of current.narrative.prediction.essential){const d=projectMonthDecision(current,settings,"2026-10","2026-10-15",[]).visible.categoryDisplay[c.key];assert.equal(d.observed+Math.round(Number(c.habitualProjectGross))+d.remaining.central,d.projectedCentral);}
+for(const c of current.narrative.prediction.essential){const d=projectMonthDecision(current,settings,"2026-10","2026-10-15",[]).visible.categoryDisplay[c.key];assert.equal(d.observed+d.declared+d.planned+d.pending+d.future,d.projectedCentral,"card terms use their own reconciled rounding");}
 assert.equal(projectMonthDecision(base, settings, "2026-10", "2026-09-30", []).showProjectMilestone,false);
 assert(projectMonthDecision(mid, settings,"2026-10","2026-10-15", [{...expense,plannedDate:"2026-10-03"}]).attention.some(a=>a.key==="past-plan"));
 const saturated = { ...base, plannedFunding: { ...base.plannedFunding, swile: { resource: "100.00", reserved: "91.00", usedDeclared:"0.00", availableAfter:"9.00",shortfall:"0.00" } } };
@@ -128,7 +140,7 @@ assert.equal(roundedChange.visibleChanges.reduce((n,c)=>n+c.visible,0),roundedCh
 const errors = months.slice(0,4).map((month,index)=>({ ...row,checkpoint_id:String(index),target_month:`${month}-01`,as_of_date:`${month}-01`,computed_at:`${month}-01T10:00:00Z`,payload:{ ...cp.payload,categories:[{key:"groceries",label:"Courses",projected:{low:"200.00",central:"280.00",high:"400.00"}}] } }));
 const calibration = calibrateForecast(errors,evidence,"2026-10-01");
 assert.equal(calibration["groceries:START"].bias,"20.00");assert.equal(calibration["groceries:START"].count,4);
-assert.deepEqual(calibrateForecast(errors,{...evidence,completeMonths:[]},"2026-10-01"),{});
+assert.deepEqual(calibrateForecast(errors,{...evidence,completeMonths:[],completeMonthsBySource:{}},"2026-10-01"),{});
 assert.deepEqual(calibrateForecast(errors.map(e=>({...e,model_version:"older"})),evidence,"2026-10-01"),{});
 assert.deepEqual(calibrateForecast(errors.map(e=>({...e,payload:{...e.payload,provenance:{...e.payload.provenance,hasUserAssumptions:true}}})),evidence,"2026-10-01"),{});
 assert.deepEqual(calibrateForecast(errors.slice(0,3),evidence,"2026-10-01"),{});
@@ -140,7 +152,7 @@ assert.equal(explicit.essential.find(c=>c.key==="groceries").projectedMonth.cent
 const pastFacts = { ...evidence,currentEconomicEntries:entries.filter(e=>e.date.startsWith("2026-04")),currentMobilityLegs:legs.filter(e=>e.date.startsWith("2026-04")) };
 const review = projectPastMonthReview("2026-04",pastFacts,errors);
 assert.equal(review.categories.find(c=>c.key==="groceries").difference,"20.00");
-assert.equal(projectPastMonthReview("2026-04",{...pastFacts,completeMonths:[]},errors).categories[0].difference,null);
+assert.equal(projectPastMonthReview("2026-04",{...pastFacts,completeMonths:[],completeMonthsBySource:{}},errors).categories[0].difference,null);
 assert.equal(projectPastMonthReview("2026-04",pastFacts,[]).categories[0].expected,null);
 const writes=[], remote=[];
 const memoryClient = { from(table) { assert.equal(table,"phase2_forecast_checkpoints"); const q={ select(){return q;},eq(k,v){q.filter=v;return q;},gte(){return q;},lte(){return q;},order(){return q;},range(){return q;},then(resolve,reject){return Promise.resolve({data:remote.filter(r=>r.household_id===q.filter),error:null}).then(resolve,reject);},async insert(value){writes.push({table,value});if(remote.some(r=>r.input_digest===value.input_digest&&r.household_id===value.household_id))return{error:{code:"23505"}};remote.push(value);return{error:null};} };return q; } };
@@ -148,6 +160,7 @@ await insertForecastCheckpoint(memoryClient,"household","user","2026-10","2026-0
 await insertForecastCheckpoint(memoryClient,"household","user","2026-10","2026-09-30",cp);
 assert.equal(remote.length,1);assert.equal((await readForecastMemory(memoryClient,"other-household","2026-10")).length,0);
 const h=planningHarness(), snapshots=require("../src/server/phase2/month-forecast-snapshot.ts");
+snapshots.queryMonthForecast=async()=>live;
 snapshots.resolvePlanningMonthForecast=async()=>live;
 require("../src/server/phase2/planning-date.ts").planningDate=()=>"2026-09-30";
 require("../src/server/canonical/client.ts").createCanonicalReadClient=()=>memoryClient;
@@ -174,7 +187,7 @@ const render=element=>renderToStaticMarkup(React.createElement(AppRouterContext.
 const html=render(React.createElement(MonthStory,props));
 assert.doesNotMatch(html,/Après nos charges et nos projets|À regarder ensemble|vous pouvez dépenser/);
 assert.doesNotMatch(html,/Tester une dépense|Pourquoi \?|Notre hypothèse ce mois|Référence du quotidien nécessaire|Référence des dépenses facultatives/);
-assert.match(html,/Conserver cette estimation/);
+assert.match(html,/data-month-story="true"/); assert.match(html,/Projection de fin de mois/);
 const currentHtml=render(React.createElement(MonthStory,{...props,plan:current,today:"2026-10-15"}));
 assert.match(currentHtml,/Déjà observé/);assert.doesNotMatch(currentHtml,/Total central du mois|imports partiels/);
 const pastHtml=render(React.createElement(PastMonthView,{targetMonth:"2026-04",review}));
@@ -183,4 +196,6 @@ const migration=fs.readFileSync("supabase/migrations/20260930183040_phase2_forec
 assert.match(migration,/grant select,insert .*service_role/);assert.match(migration,/before update or delete/);assert.match(migration,/user_has_household_access/);
 assert.doesNotMatch(migration,/grant .*update|insert into .*operations|update .*financial_economic/);
 console.log("PASS V5: temporal modes, cumulative nowcast, cadence/shift/recency, workday caps, occurrence mixture, joint scenarios, assumptions/goal isolation, exact/display reconciliation, versioned memory/idempotence, horizon calibration/no leakage, changes/stability, past review, zero-write simulations, authenticated month actions, RLS contract, UI/conditional attention");
+if (configuredTemporalMode === undefined) delete process.env.PHASE2_FORECAST_TEMPORAL_MODE;
+else process.env.PHASE2_FORECAST_TEMPORAL_MODE = configuredTemporalMode;
 export { live, inputs, evidence, plan, base, category, render, props, row, settings };

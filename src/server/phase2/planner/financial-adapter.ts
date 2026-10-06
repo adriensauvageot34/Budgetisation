@@ -6,11 +6,12 @@ import type { PlannedExpenseScenarioEntry } from "../planned-expenses";
 import { deriveMonthScenario, monthInputsSchema } from "../month-scenario";
 import { sumReferenceComponents } from "../month-reference";
 import { compare } from "./baseline-evidence";
+import { slotReferenceKeys } from "./plan-slot-resolver";
 
-export const FINANCIAL_ADAPTER_VERSION = "planner-financial-adapter@v1";
+export const FINANCIAL_ADAPTER_VERSION = "planner-financial-adapter@v2-simple-mappings";
 export function buildFinancialAdapterInput(world: PlanningWorldFacts, slots: readonly CompiledPlanSlot[],
   components: readonly CompiledComponent[], consumptions: readonly BaselineConsumptionManifest[]): FinancialScenarioAdapterInputV1 {
-  const owned = slots.filter(s => s.owned), keys = new Set(owned.flatMap(s => s.financeKey ? [s.financeKey] : []));
+  const owned = slots.filter(s => s.owned), keys = new Set(owned.flatMap(slotReferenceKeys));
   const raw = structuredClone(world.monthInputs);
   const neutralized = Object.keys(raw.decision?.assumptions ?? {}).filter(key => keys.has(key));
   const effectiveMonthInputs = monthInputsSchema.parse({ ...raw, ...(raw.decision ? { decision: { ...raw.decision,
@@ -49,7 +50,7 @@ export function buildFinancialAdapterInput(world: PlanningWorldFacts, slots: rea
 export function financialAdapterForecast(world: PlanningWorldFacts, slots: readonly CompiledPlanSlot[]) {
   const reference = world.forecast.referencePlan;
   if (!reference) throw new TypeError("PLANNER_FINANCIAL_REFERENCE_MISSING");
-  const owned = new Set(slots.filter(s => s.owned).flatMap(s => s.financeKey ? [s.financeKey] : []));
+  const owned = new Set(slots.filter(s => s.owned).flatMap(slotReferenceKeys));
   const necessary = reference.necessary.filter(p => !owned.has(p.key)), flexible = reference.flexible.filter(p => !owned.has(p.key));
   return { ...world.forecast, referencePlan: { ...reference, necessary, flexible,
     necessaryTotal: sumReferenceComponents(necessary), flexibleTotal: sumReferenceComponents(flexible) } };

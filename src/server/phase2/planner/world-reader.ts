@@ -6,7 +6,7 @@ import { readPlanningMonthForecast } from "../month-planning-read";
 import type { MonthForecastSnapshot } from "../month-forecast-snapshot";
 import { readMonthInputs } from "../month-inputs";
 import { readPlannedExpenses } from "../planned-expenses";
-import { buildPlanningBaseline } from "./baseline";
+import { buildSimplePlanningBaseline } from "./simple-baseline";
 import { readPlanningBaselineSources } from "./baseline-adapters";
 import { createPlanApplyRepository } from "./repository";
 import type { EffectiveMonthDependencies } from "./effective-month-scenario";
@@ -30,12 +30,12 @@ export function createPlannerDependencies(canonical: CanonicalRepository, authen
   return { repository: createPlanApplyRepository(authenticatedClient), async readWorld(householdId, targetMonth) {
     scope(householdId);
     const cutoff = Temporal.Instant.from(clock()), asOfDate = cutoff.toZonedDateTimeISO(canonical.context.timezone).toPlainDate().toString();
-    const [sources, forecast] = await Promise.all([readPlanningBaselineSources(canonical, targetMonth, cutoff.toString()),
+    const [sources, forecast] = await Promise.all([readPlanningBaselineSources(canonical, targetMonth, cutoff.toString(), { simpleOccurrences: true }),
       readPlanningMonthForecast(canonical.client, householdId, targetMonth)]);
     if (commonForecastDigest(sources.forecast as MonthForecastSnapshot) !== commonForecastDigest(forecast))
       throw new TypeError("PLANNER_WORLD_AUTHORITIES_CHANGED_DURING_READ");
     // One admitted canonical evidence read for both C1 and financial calculation.
-    return { baseline: buildPlanningBaseline(sources), forecast: { ...forecast, predictionEvidence: sources.evidence },
+    return { baseline: buildSimplePlanningBaseline(sources), forecast: { ...forecast, predictionEvidence: sources.evidence },
       monthInputs: sources.monthInputs, externalIntents: sources.plannedExpenses, asOfDate, costQuotes: {},
       modelVersions: { financialOwner: "deriveMonthScenario@v2", forecast: forecast.resourceMeta.contractVersion } };
   }, async readDirectWorld(householdId, targetMonth) {

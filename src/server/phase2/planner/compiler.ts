@@ -8,20 +8,24 @@ import type { CompilePlanInputV1, CompiledContext, CompiledSemanticPlanV1, Compo
 import type { FundingAllocation } from "../planned-expenses";
 import { plannedLineGross } from "@/domain/phase2/planned-money";
 import { parseKernelCost, resolveComponentCost } from "./cost-resolver";
-import { bindPlanSlots, materializePlanSlots, resolveContextualEffects } from "./plan-slot-resolver";
+import { bindPlanSlots, materializePlanSlots, resolveContextualEffects, expandSimpleOwnership, slotReferenceKeys } from "./plan-slot-resolver";
 import { evaluatePlanConstraints, KERNEL_CONSTRAINT_POLICY } from "./constraint-engine";
 import { buildFinancialAdapterInput, FINANCIAL_ADAPTER_VERSION, financialAdapterForecast } from "./financial-adapter";
 import { compare } from "./baseline-evidence";
 import { planningBaselineDigest } from "./baseline";
+import { externalDiningDomain } from "./simple-mappings";
+import { publishSimpleCapabilities } from "./simple-capabilities";
+import { forecastTemporalPolicy } from "../forecast-temporal-policy";
 
-export const PLANNER_COMPILER_VERSION = "planner-semantic-compiler@v1";
+export const PLANNER_COMPILER_VERSION = "planner-semantic-compiler@v2-simple-levers";
 /** Typed owner outputs may have optional undefined fields. Persist only their JSON representation. */
 export const jsonEnvelope = (value: unknown) => parsePlannerJsonObject(JSON.parse(JSON.stringify(value)));
 export function financeAuthorityEvidence(input: CompilePlanInputV1) {
   const forecast = structuredClone(input.world.forecast);
   const { computedAt: _clock, ...meta } = forecast.meta;
   return jsonEnvelope({ forecast: { ...forecast, meta }, monthInputs: input.world.monthInputs, asOfDate: input.world.asOfDate,
-    externalIntents: [...input.externalIntents].sort((a, b) => compare(a.id, b.id)), costQuotes: input.world.costQuotes });
+    externalIntents: [...input.externalIntents].sort((a, b) => compare(a.id, b.id)), costQuotes: input.world.costQuotes,
+    financialTemporalPolicy: forecastTemporalPolicy() });
 }
 function binding(raw: unknown): SlotBinding {
   const value = plannerRecord(raw);
@@ -86,18 +90,32 @@ export function compileSemanticPlan(input: CompilePlanInputV1): CompiledSemantic
   // External intents keep their identity. They acquire a binding only when C2 owns their existing
   // financial reference; their DB row and historical facts remain untouched.
   const consumedKeys = new Set(requests.filter(r => r.binding.relation === "CONSUMES_SLOT").map(r => r.binding.slotIdentityKey));
+  for (const slot of slots) if (consumedKeys.has(slot.baseline.slotIdentityKey)) slot.owned = true;
+  expandSimpleOwnership(slots);
+  const externalOccurrences = new Set<string>();
   for (const expense of external) for (const line of expense.costItems) {
-    const slot = slots.find(s => s.financeKey === line.baselineKey && (s.owned || consumedKeys.has(s.baseline.slotIdentityKey)));
+    let candidates = slots.filter(s => slotReferenceKeys(s).includes(line.baselineKey ?? "") && s.owned);
+    if (candidates.some(s => s.baseline.simpleAuthority?.ownershipGroup === "household-dining")) {
+      const domain = externalDiningDomain(expense, line);
+      candidates = candidates.filter(s => s.baseline.simpleAuthority?.domain === domain);
+      if (!domain || !candidates.length) throw new TypeError("SIMPLE_EXTERNAL_DINING_MAPPING_UNRESOLVED");
+    }
+    if (candidates.length > 1) throw new TypeError("PLANNER_EXTERNAL_MAPPING_AMBIGUOUS");
+    const slot = candidates[0];
     if (!slot) continue;
     if (expense.status !== "PLANNED") throw new TypeError("PLANNER_EXTERNAL_REALIZED_RECONCILIATION_REQUIRED");
+    const occurrenceKey = `${expense.id}:${slot.baseline.slotIdentityKey}`;
+    const count = slot.baseline.simpleAuthority ? externalOccurrences.has(occurrenceKey) ? "0" : "1" : line.quantity;
+    externalOccurrences.add(occurrenceKey);
     requests.push({ componentId: `external:${expense.id}:${line.id}`, ownerRef: expense.id, contextOccurrenceId: null,
       externalEntryId: expense.id, externalLineId: line.id, role: "external", label: line.label, quantity: line.quantity,
       cost: { kind: "MANUAL", unitAmount: line.unitAmount }, plannedDate: expense.plannedDate,
       fundingAllocations: line.fundingAllocations ?? [], binding: { slotIdentityKey: slot.baseline.slotIdentityKey, relation: "CONSUMES_SLOT", displacement: "KNOWN",
-        amount: slot.baseline.kind === "AMOUNT" ? plannedLineGross(line) : null, count: slot.baseline.kind === "AMOUNT" ? null : line.quantity } });
+        amount: slot.baseline.kind === "AMOUNT" ? plannedLineGross(line) : null, count: slot.baseline.kind === "AMOUNT" ? null : count } });
   }
   requests.sort((a, b) => Number(b.externalEntryId !== null) - Number(a.externalEntryId !== null) || compare(a.componentId, b.componentId));
   const consumptions = bindPlanSlots(slots, requests);
+  expandSimpleOwnership(slots);
   const components = requests.map(request => ({ ...request, evaluation: { ...resolveComponentCost(request, world),
     ...(request.externalEntryId ? { provenance: ["CANONICAL_FACT" as const] } : {}) } }));
   const effects = resolveContextualEffects(slots, components, consumptions);
@@ -112,7 +130,8 @@ export function compileSemanticPlan(input: CompilePlanInputV1): CompiledSemantic
       financialAdapter: FINANCIAL_ADAPTER_VERSION, constraints: KERNEL_CONSTRAINT_POLICY }, baselineDigest: baseline.digest,
     authorityEvidence: financeAuthorityEvidence(input), effectiveForecast: { ...effectiveForecast, meta: effectiveMeta },
     semanticState: state, semanticStateDigest: semanticStateDigest(state), planSlots: slots, contexts, components,
-    contextualEffects: effects, constraints, diagnostics, unresolvedReserves: baseline.unresolvedReserves, financialAdapterInput });
+    contextualEffects: effects, constraints, diagnostics, unresolvedReserves: baseline.unresolvedReserves, financialAdapterInput,
+    simpleCapabilities: publishSimpleCapabilities(baseline) });
   return { version: "compiled-semantic-plan@v1", targetMonth: state.targetMonth, semanticStateDigest: semanticStateDigest(state),
     planSlots: slots, contexts, components, needs: [], mobilityIntents: [], journeys: [], contextualEffects: effects, constraints,
     diagnostics, financialAdapterInput, manifest, manifestDigest: plannerDigest(manifest) };

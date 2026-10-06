@@ -4,8 +4,9 @@ import type { ConstraintResult } from "@/domain/phase2/planner/diagnostics";
 import type { CompiledComponent, CompiledPlanSlot, PlanningWorldFacts } from "@/domain/phase2/planner/compiler-contract";
 import type { ContextualEffect } from "@/domain/phase2/planner/component-contract";
 import { matchesForecastCategory } from "../remaining-month-forecast";
+import { slotReferenceKeys } from "./plan-slot-resolver";
 
-export const KERNEL_CONSTRAINT_POLICY = "planner-kernel-constraints@v1";
+export const KERNEL_CONSTRAINT_POLICY = "planner-kernel-constraints@v2-simple-levers";
 export function evaluatePlanConstraints(world: PlanningWorldFacts, slots: readonly CompiledPlanSlot[],
   components: readonly CompiledComponent[], effects: readonly ContextualEffect[]): ConstraintResult[] {
   const results: ConstraintResult[] = [];
@@ -17,17 +18,27 @@ export function evaluatePlanConstraints(world: PlanningWorldFacts, slots: readon
       const reservation = world.baseline.structuralFacts.savingsReservations.find(r => `savings:${r.reservationId}` === slot.baseline.slotIdentityKey)!;
       if (reservation.adjustability === "PROTECTED" && new Big(slot.effectiveAmount!).lt(reservation.amount))
         add("BLOCK", "PROTECTED_SAVINGS_RELEASE_FORBIDDEN", slot.baseline.planSlotId, reservation.sourceRefs);
+      else if (reservation.adjustability === "PROTECTED" && slot.decisionId)
+        add("BLOCK", "PROTECTED_SAVINGS_LOCKED", slot.baseline.planSlotId, reservation.sourceRefs);
     } else {
-      if (slot.baseline.inclusion !== "CENTRAL") add("BLOCK", "OWNED_SLOT_CONDITION_UNRESOLVED", slot.baseline.planSlotId, slot.baseline.sourceRefs);
+      const simple = slot.baseline.simpleAuthority;
+      const explicitInput = !!slot.decisionId && slot.remainingEconomicAmount !== null;
+      if (slot.baseline.inclusion !== "CENTRAL" && !simple?.optionalBudget && !(simple?.gate === "NEEDS_NEW_INPUT" && explicitInput))
+        add("BLOCK", "OWNED_SLOT_CONDITION_UNRESOLVED", slot.baseline.planSlotId, slot.baseline.sourceRefs);
+      if (simple?.hardFloor && slot.effectiveAmount !== null && new Big(slot.effectiveAmount).lt(simple.hardFloor.amount))
+        add("BLOCK", "SIMPLE_REAL_HARD_FLOOR_VIOLATED", slot.baseline.planSlotId, simple.hardFloor.evidenceRefs);
       if (slot.financeKey && slots.filter(s => s.financeKey === slot.financeKey).length !== 1)
         add("BLOCK", "OWNED_SLOT_FINANCIAL_MAPPING_AMBIGUOUS", slot.baseline.planSlotId);
       if (slot.remainingEconomicAmount === null) add("BLOCK", "OWNED_SLOT_COST_UNKNOWN", slot.baseline.planSlotId, slot.baseline.sourceRefs);
       const reference = world.forecast.referencePlan;
-      const matches = [...(reference?.necessary ?? []), ...(reference?.flexible ?? [])].filter(p => p.key === slot.financeKey);
-      if (matches.length !== 1) add("BLOCK", "OWNED_SLOT_FINANCIAL_REFERENCE_UNRESOLVED", slot.baseline.planSlotId);
+      const keys = slotReferenceKeys(slot);
+      const matches = [...(reference?.necessary ?? []), ...(reference?.flexible ?? [])].filter(p => keys.includes(p.key));
+      if (simple?.optionalBudget ? matches.length > 1 : matches.length !== 1)
+        add("BLOCK", "OWNED_SLOT_FINANCIAL_REFERENCE_UNRESOLVED", slot.baseline.planSlotId);
       // C2's bridge certifies generic unobserved capacity. Reconciliation with already observed
       // occurrences belongs to domain adapters; never silently count them a second time.
-      if (slot.financeKey && world.forecast.predictionEvidence?.currentEconomicEntries.some(e => e.date <= world.asOfDate && matchesForecastCategory(slot.financeKey!, e)))
+      if (world.forecast.predictionEvidence?.currentEconomicEntries.some(e => e.date.startsWith(world.baseline.targetMonth)
+        && e.date <= world.asOfDate && keys.some(key => matchesForecastCategory(key, e))))
         add("BLOCK", "OWNED_SLOT_OBSERVED_RECONCILIATION_REQUIRED", slot.baseline.planSlotId);
     }
   }

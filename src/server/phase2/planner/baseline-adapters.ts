@@ -16,6 +16,7 @@ import type { MonthInputs } from "../month-scenario";
 import { readPlannedExpenses } from "../planned-expenses";
 import type { PersonHabitAssertion, PlanningBaselineSources } from "./baseline-sources";
 import { buildPlanningBaseline } from "./baseline";
+import { parseActivityCausalFinancialLinks } from "@/analytics/facts";
 
 /** Explicit downstream compatibility payload; never accepted by the Baseline builder. */
 export const legacySeedDecisions = (inputs: MonthInputs) => parsePlannerJsonObject(inputs.decision ?? {});
@@ -46,7 +47,7 @@ export async function readPersonHabitAssertions(client: SupabaseClient, househol
  * context. Habit assertions require its trusted server read client (existing SELECT grants).
  * No new credential, Plan read, materialization, migration, or financial evaluation occurs. */
 export async function readPlanningBaselineSources(repository: CanonicalRepository, targetMonth: string,
-  knowledgeCutoff: string): Promise<PlanningBaselineSources> {
+  knowledgeCutoff: string, options: Readonly<{ simpleOccurrences?: boolean }> = {}): Promise<PlanningBaselineSources> {
   const month = plannerMonth(targetMonth), cutoff = Temporal.Instant.from(knowledgeCutoff);
   const { client, context } = repository, householdId = String(context.householdId);
   const today = cutoff.toZonedDateTimeISO(context.timezone).toPlainDate();
@@ -55,13 +56,20 @@ export async function readPlanningBaselineSources(repository: CanonicalRepositor
   const firstMonth = context.periods.map(p => p.month.slice(0, 7)).sort()[0];
   if (!firstMonth || `${firstMonth}-01` > through.toString()) throw new TypeError("BASELINE_CANONICAL_PERIODS_UNAVAILABLE");
   const range = { start: parseLocalDate(`${firstMonth}-01`), endExclusive: parseLocalDate(through.add({ days: 1 }).toString()) };
-  const [authorities, storedInputs, evidence, plannedExpenses, habitAssertions, productObservations, mobilityLegs, mobilityContext, canonicalPurchases] = await Promise.all([
+  const simpleRead = async () => {
+    if (!options.simpleOccurrences) return undefined;
+    const occurrences = await repository.loadActivityOccurrences(range);
+    const links = parseActivityCausalFinancialLinks(await repository.loadActivityCausalFinancialLinkRows(occurrences.map(e => e.lifeEventId)));
+    return { occurrences, links };
+  };
+  const [authorities, storedInputs, evidence, plannedExpenses, habitAssertions, productObservations, mobilityLegs, mobilityContext, canonicalPurchases, simpleOccurrences] = await Promise.all([
     loadMonthForecastAuthorities(client, householdId), readMonthInputs(client, householdId, month),
     readMonthPredictionEvidence(client, householdId, month, true, { asOfDate: today.toString(), timezone: context.timezone }),
     readPlannedExpenses(client, householdId, month), readPersonHabitAssertions(client, householdId, context.personIds.map(String), cutoff.toString()),
     resolveGlobalPersonaProductObservations({ repository, certifiedThrough: parseLocalDate(through.toString()) }),
     repository.loadMobilityLegFacts(range), resolveGlobalM7MobilityContextAuthority({ repository, certifiedThrough: through.toString() }),
     repository.loadPurchaseAwareCanonical(range, "PURCHASE_AWARE_PILOT"),
+    simpleRead(),
   ]);
   if (canonicalPurchases.status !== "PASS") throw new TypeError("BASELINE_PURCHASE_OWNER_BLOCKED");
   // Product owner has already verified the Canonical household scope; resolve the same
@@ -90,7 +98,8 @@ export async function readPlanningBaselineSources(repository: CanonicalRepositor
     forecast: assembleMonthForecast(authorities, month), monthInputs: storedInputs.inputs,
     periods: context.periods, evidence, food: authorities.background.food,
     purchaseFacts: canonicalPurchases.facts.filter(f => f.fact === "fct_purchase_aware_economic_component"), habitAssertions, productObservations,
-    needSubjects, mobilityLegs: closedLegs, mobilityContexts, personalMobility, plannedExpenses };
+    needSubjects, mobilityLegs: closedLegs, mobilityContexts, personalMobility, plannedExpenses,
+    ...(simpleOccurrences ? { simpleOccurrences } : {}) };
 }
 
 export async function readPlanningBaseline(repository: CanonicalRepository, targetMonth: string, knowledgeCutoff: string) {

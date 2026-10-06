@@ -22,7 +22,7 @@ export type ComponentRequest = Readonly<{ componentId: string; ownerRef: string;
 export type CompiledComponent = ComponentRequest & Readonly<{ evaluation: CostEvaluation }>;
 export type CompiledPlanSlot = { baseline: PlanningPlanSlot; role: "BEHAVIOR" | "SAVINGS"; financeKey: string | null;
   owned: boolean; decisionId: string | null; effectiveAmount: string | null; effectiveCount: string | null;
-  remainingAmount: string | null; remainingCount: string | null; remainingEconomicAmount: string | null };
+  remainingAmount: string | null; remainingCount: string | null; remainingEconomicAmount: string | null; effectiveUnitAmount: string | null };
 export type BaselineConsumptionManifest = { componentId: string; planSlotId: string; amount: string | null;
   count: string | null; displacedAmount: string | null; evidenceRefs: readonly string[] };
 export type FinancialScenarioAdapterInputV1 = Readonly<{ effectiveMonthInputs: MonthInputs;
