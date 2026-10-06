@@ -178,8 +178,11 @@ try {
   });
   await check('C8-016', async () => { const source = fs.readFileSync('src/app/mois-a-venir/composer/composer-cockpit.tsx', 'utf8');
     assert.ok(!/reduce\(|new Big|parseFloat|\.plus\(|\.minus\(/u.test(source)); assert.match(source, /projection\.plan\.economicMonthEndRemainder/u); });
-  await check('C8-017', async () => { for (const name of fs.readdirSync('src/app/mois-a-venir/composer')) if (/\.(css|tsx|ts)$/u.test(name))
-    assert.ok(!/@media|isMobile|useMediaQuery|touchstart/u.test(fs.readFileSync(`src/app/mois-a-venir/composer/${name}`, 'utf8')), name); });
+  await check('C8-017', async () => { for (const name of fs.readdirSync('src/app/mois-a-venir/composer')) if (/\.(css|tsx|ts)$/u.test(name)) {
+    const source = fs.readFileSync(`src/app/mois-a-venir/composer/${name}`, 'utf8');
+    // Desktop accessibility preference only; viewport/mobile branches remain forbidden.
+    assert.ok(!/@media|isMobile|useMediaQuery|touchstart/u.test(source.replace(/@media\s*\(prefers-reduced-motion:\s*reduce\)/gu, '')), name);
+  } });
   await check('C8-HISTORICAL-WRITES', async () => { await pg.verifyCanaries(); });
   const report = { gate: 'PLANNER_V3_READY', kernelChecks: passed, rpcEnvironment: 'PGLITE_SYNTHETIC_ONLY', remoteWrites: 0, historicalCanaryWrites: 0, counts: await pg.counts() };
   if (process.env.PLANNER_C8_REPORT_PATH) fs.writeFileSync(process.env.PLANNER_C8_REPORT_PATH, JSON.stringify(report, null, 2));

@@ -3,6 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
+    "check:phase2-planner-atomic-ui": "node scripts/check-phase2-planner-atomic-ui.mjs",
     "check:phase2-planner-composer": "node scripts/check-phase2-planner-composer.mjs",
     "smoke:phase2-planner-composer": "node scripts/smoke-phase2-planner-composer.mjs",
     "check:phase2-planner-headless": "node scripts/check-phase2-planner-headless.mjs",

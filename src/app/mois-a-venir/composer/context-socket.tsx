@@ -1,27 +1,47 @@
-import { Plus, X } from "lucide-react";
+import { Plus, Check, Link2, Sparkle, ArrowLeftRight } from "lucide-react";
 import type { ContextSocketView, DropTarget, ComposerAssetView } from "@/domain/phase2/planner/composer-contract";
 import type { ComponentSelectionV1 } from "@/domain/phase2/planner/component-contract";
+import type { ComposerSocketPresentation } from "@/domain/phase2/planner/composer-ui-contract";
 import { money } from "./display";
 import styles from "./composer.module.css";
 import { PlannerIcon } from "./planner-icons/planner-icon";
-export function ContextSocket({ socket, busy, compatible, assets, drop, choose, remove, accept, child }: { socket: ContextSocketView; busy: boolean; compatible: boolean;
+import { AtomicPopover } from "./atomic-popover";
+export function ContextSocket({ socket, presentation, busy, compatible, assets, drop, choose, remove, accept, child, focus }: {
+  socket: ContextSocketView; presentation: ComposerSocketPresentation; busy: boolean; compatible: boolean; focus: () => void;
   assets: readonly ComposerAssetView[]; drop: (target: DropTarget, key?: string) => void; choose: (asset: ComposerAssetView, target: DropTarget, selection?: ComponentSelectionV1) => void;
-  remove: (selection: ComponentSelectionV1) => void; accept: (selection: ComponentSelectionV1) => void; child: (id: string) => React.ReactNode }) {
+  remove: (selection: ComponentSelectionV1) => void; accept: (selection: ComponentSelectionV1) => void; child: (id: string) => React.ReactNode;
+}) {
   const target: DropTarget = { kind: "CONTEXT_SOCKET", contextOccurrenceId: socket.contextOccurrenceId, slotKey: socket.slotKey };
-  const [first] = assets;
+  const choices = (close: () => void) => <div className={styles.socketActions}>
+    {compatible && <button data-snap disabled={busy} onClick={() => { close(); drop(target); }} className={styles.snapButton}>Placer la carte sélectionnée ici</button>}
+    {presentation.canAdd && <select data-socket-choice aria-label={`Choisir pour ${socket.label ?? socket.slotKey}`} disabled={busy} value="" onChange={e => {
+      const asset = assets.find(a => a.assetKey === e.target.value); if (asset) { close(); choose(asset, target); }
+    }}><option value="">{socket.cardinality === "REPEATING" ? "+ Ajouter" : "Choisir / remplacer"}</option>{presentation.options.map(option => {
+      const asset = assets.find(a => a.assetKey === option.assetKey)!; return <option key={asset.assetKey} value={asset.assetKey}>{asset.label}</option>;
+    })}</select>}
+  </div>;
   return <section className={styles.socket} data-socket={`${socket.contextOccurrenceId}:${socket.slotKey}`} data-compatible={compatible} data-visual-state={socket.visualState}
     onDragOver={e => { if (compatible && !busy) { e.preventDefault(); e.stopPropagation(); e.dataTransfer.dropEffect = "move"; } }}
     onDrop={e => { e.preventDefault(); e.stopPropagation(); if (compatible && !busy) drop(target, e.dataTransfer.getData("application/x-planner-asset")); }}>
-    <div className={styles.socketHeader}><h4>{socket.label ?? socket.slotKey}</h4><span>{socket.cardinality === "REPEATING" ? "Plusieurs possibles" : socket.cardinality === "REQUIRED_ONE" ? "À choisir" : "Facultatif"}</span></div>
-    {socket.currentItems.map(item => item.kind === "CHILD_CONTEXT" ? <div key={item.selectionId}>{child(item.childContextOccurrenceId)}</div> : item.kind === "UNRESOLVED" ? <p key={item.selectionId} className={styles.ghost}>Un élément à choisir</p> : <div key={item.selectionId} className={`${styles.selection} ${item.provenance === "PERSONAL_SUGGESTION" ? styles.ghost : ""}`} data-selection={item.selectionId}>
-      <PlannerIcon iconKey={assets.find(a => a.optionKey === item.optionKey)?.iconKey ?? socket.slotKey} scale="SATELLITE" />
-      <span>{item.kind === "COMPONENT" ? item.label : assets.find(a => a.optionKey === item.optionKey)?.label ?? item.optionKey}<small>{item.provenance === "PERSONAL_SUGGESTION" ? "Suggestion · hors coût tant que non acceptée" : item.kind === "COMPONENT" ? `${money(socket.evaluations?.find(e => e.selectionId === item.selectionId)?.economicAmount)}${item.quantity !== "1.00" && item.quantity !== "1" ? ` · ${item.quantity} unités` : ""}` : "Mobilité évaluée par le serveur"}</small></span>
-      {item.provenance === "PERSONAL_SUGGESTION" ? <button disabled={busy} onClick={() => accept(item)}>Accepter</button> : assets.find(a => a.optionKey === item.optionKey) && <button disabled={busy} onClick={() => choose(assets.find(a => a.optionKey === item.optionKey)!, target, item)}>Modifier</button>}
-      <button className={styles.iconButton} disabled={busy || !assets.length} aria-label={`Retirer ${item.kind === "COMPONENT" ? item.label : "le transport"}`} onClick={() => remove(item)}><X size={13} /></button>
-    </div>)}
-    {!socket.currentItems.length && <p className={styles.ghost}>Glissez une carte ou choisissez ci-dessous</p>}
-    <div className={styles.socketActions}>{compatible && <button disabled={busy} onClick={() => drop(target)} className={styles.snapButton}>Placer la carte sélectionnée ici</button>}
-      {!!first && <select aria-label={`Choisir pour ${socket.label ?? socket.slotKey}`} disabled={busy} value="" onChange={e => { const asset = assets.find(a => a.assetKey === e.target.value); if (asset) choose(asset, target); }}><option value="">{socket.cardinality === "REPEATING" ? "+ Ajouter" : "Choisir / remplacer"}</option>{assets.map(a => <option key={a.assetKey} value={a.assetKey}>{a.label}</option>)}</select>}
-    </div>
+    {presentation.satellites.map(satellite => {
+      const item = socket.currentItems.find(i => i.selectionId === satellite.selectionId)!;
+      const editAsset = assets.find(a => a.assetKey === satellite.editableAssetKey);
+      const stateLabel = { CHOSEN: "Choisi", SUGGESTED: "Suggestion personnelle", DERIVED: "Dérivé", UNRESOLVED: "À préciser" }[satellite.state];
+      return <AtomicPopover key={item.selectionId} label={`${satellite.label} · ${stateLabel}`} state={satellite.state} selectionId={item.selectionId} focus={focus}
+        icon={<><PlannerIcon iconKey={satellite.iconKey} scale="SATELLITE" /><span className={styles.satelliteMarker} aria-hidden="true">
+          {satellite.state === "SUGGESTED" ? <Sparkle size={10} /> : satellite.state === "DERIVED" ? <Link2 size={10} /> : satellite.state === "UNRESOLVED" ? <i /> : <Check size={9} />}</span></>}>
+        {close => <><p className={styles.popoverAmount}>{satellite.state === "SUGGESTED" ? "Hors coût · à accepter" : `Retenu : ${money(satellite.economicAmount)}`}</p>
+          {satellite.details.map(line => <p key={line} className={styles.popoverNote}>{line}</p>)}
+          {satellite.childContextOccurrenceId && child(satellite.childContextOccurrenceId)}
+          <div className={styles.popoverActions}>{satellite.canAccept && <button disabled={busy} onClick={() => { close(); accept(item); }}>Accepter</button>}
+            {editAsset && !satellite.canAccept && <button disabled={busy} onClick={() => { close(); choose(editAsset, target, item); }}>Modifier</button>}
+            {satellite.canRemove && <button disabled={busy} onClick={() => { close(); remove(item); }}>Retirer de ce moment</button>}</div>
+          {choices(close)}</>}
+      </AtomicPopover>;
+    })}
+    {presentation.canAdd && (socket.cardinality === "REPEATING" || !socket.currentItems.length) && <AtomicPopover label={`Ajouter · ${socket.label ?? socket.slotKey}`} state="EMPTY" empty focus={focus}
+      icon={<Plus size={16} aria-hidden="true" />}>{close => <><p className={styles.popoverNote}>Choisissez un élément pour ce moment.</p>{choices(close)}</>}</AtomicPopover>}
+    {compatible && !presentation.satellites.length && !presentation.canAdd && <AtomicPopover label={`Placer · ${socket.label ?? socket.slotKey}`} state="EMPTY" empty focus={focus}
+      icon={<ArrowLeftRight size={16} />}>{close => choices(close)}</AtomicPopover>}
   </section>;
 }

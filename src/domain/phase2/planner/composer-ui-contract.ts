@@ -13,12 +13,28 @@ export type ComposerObjectPresentation = Readonly<{
   baselineCount: string | null;
   protectedSavings: boolean;
   reservationGauge: Readonly<{ percent: number | null; referenceAmount: string | null }> | null;
+  choiceGauge: Readonly<{ percent: number | null; referenceAmount: string | null }> | null;
+  occurrenceStack: Readonly<{ bubbles: readonly ("AVAILABLE" | "LINKED")[]; overflow: string | null; links: readonly Readonly<{ componentId: string; count: string | null }>[] }> | null;
+}>;
+export type ComposerSatellitePresentation = Readonly<{
+  selectionId: string; label: string; iconKey: string;
+  state: "CHOSEN" | "SUGGESTED" | "DERIVED" | "UNRESOLVED";
+  economicAmount: string | null; details: readonly string[];
+  editableAssetKey: string | null; canRemove: boolean; canAccept: boolean;
+  childContextOccurrenceId: string | null;
+}>;
+export type ComposerSocketPresentation = Readonly<{
+  orbit: "NORTH" | "WEST" | "EAST" | "SOUTH";
+  canAdd: boolean;
+  satellites: readonly ComposerSatellitePresentation[];
+  options: readonly Readonly<{ assetKey: string; state: "AVAILABLE" | "EQUIPPED" | "SUGGESTED" | "ALTERNATIVE" }>[];
 }>;
 /** Display metadata only. Counts describe top-level objects; no financial authority. */
 export type ComposerPresentation = Readonly<{
   elementCount: number; unresolvedCount: number;
   goalMargin: string | null;
   objects: Readonly<Record<string, ComposerObjectPresentation>>;
+  sockets: Readonly<Record<string, ComposerSocketPresentation>>;
 }>;
 /** Excludes Baseline snapshots, canonical evidence and financial adapter entries. */
 export type ComposerUiModel = Omit<MonthComposerReadModel, "preview"> & Readonly<{

@@ -37,9 +37,11 @@ function adjust(label, amount) {
 }
 function chooseSocket(id, slot, asset, fields = {}) {
   const target = `[data-socket="${id}:${slot}"]`;
-  const labels = evaluate(`Array.from(document.querySelector(${JSON.stringify(`${target} > div:last-child select`)}).options, option => option.textContent)`);
+  run('click', `${target} > button:first-of-type`);
+  const choice = '[data-atomic-popover]:popover-open [data-socket-choice]';
+  const labels = evaluate(`Array.from(document.querySelector(${JSON.stringify(choice)}).options, option => option.textContent)`);
   assert.equal(new Set(labels).size, labels.length, 'Socket choices must not repeat the same option from other templates');
-  run('select', `${target} > div:last-child select`, asset); run('snapshot', '-i');
+  run('select', choice, asset); run('snapshot', '-i');
   const visibleSubmit = () => evaluate('(()=>{const button=document.querySelector("dialog[open] [data-submit]"),rect=button.getBoundingClientRect();return rect.top>=0 && rect.bottom<=innerHeight && button.contains(document.elementFromPoint(rect.x+rect.width/2,rect.y+rect.height/2))})()');
   assert.equal(visibleSubmit(), true);
   if (asset.includes(':outbound:')) {
@@ -143,21 +145,70 @@ try {
   evaluate('(()=>{const board=document.querySelector("[data-board-scroll]"),card=document.querySelector("[data-context]");board.scrollTop+=card.getBoundingClientRect().top-board.getBoundingClientRect().top-12;return true})()');
   run('screenshot', path.join(out, 'composite-context.png')); cockpitEquals(await evidence('C'));
   const c = await evidence('C'); assert.equal(c.log.at(-1).projection.mobility.journeyCount, 1); passed.push('C8-COMPOSITE-BROWSER');
+  check('R2-NESTED-EDITOR-BROWSER', () => {
+    run('click', `[data-socket="${rootContext}:restaurants"] > button[data-selection]`);
+    assert.equal(evaluate('[...document.querySelector("[data-atomic-popover]:popover-open").children].filter(e=>e.tagName==="DIV").some(e=>[...e.querySelectorAll("button")].some(b=>b.textContent==="Modifier"))'), false);
+    run('click', '[data-atomic-popover]:popover-open [data-context] button[aria-label^="Modifier les informations"]');
+    assert.equal(evaluate('!!document.querySelector("dialog[open] input[name=label]")'), true);
+    run('press', 'Escape'); assert.equal(evaluate('document.activeElement.hasAttribute("data-satellite")'), true);
+    assert.equal(evaluate('document.activeElement.getClientRects().length>0'), true);
+  });
   run('fill', 'input[aria-label="Rechercher une intention"]', 'Séjour'); run('click', '[data-asset="template:short-stay"]');
   run('fill', 'dialog[open] input[name="label"]', 'Séjour complémentaire'); run('click', 'dialog[open] [data-submit]'); formCompleted();
   const parentId = evaluate('[...document.querySelectorAll("[data-context]")].find(e=>e.querySelector("h3")?.textContent==="Séjour complémentaire").dataset.context');
   const childId = evaluate(`[...document.querySelectorAll('[data-context="${rootContext}"] [data-context]')].find(e=>e.querySelector('h3').textContent==='Synthetic activity').dataset.context`);
+  run('click', `[data-socket="${rootContext}:activities"] > button[data-selection]`);
   evaluate(`document.querySelector('[data-context="${childId}"] button[aria-label^="Déplacer "]').scrollIntoView({block:'center',behavior:'instant'})`);
   run('click', `[data-context="${childId}"] button[aria-label^="Déplacer "]`);
-  evaluate(`document.querySelector('[data-socket="${parentId}:activities"] > div:last-child button').scrollIntoView({block:'center',behavior:'instant'})`);
-  run('click', `[data-socket="${parentId}:activities"] > div:last-child button`);
+  run('click', `[data-socket="${parentId}:activities"] > button:first-of-type`);
+  run('click', '[data-atomic-popover]:popover-open [data-snap]');
   run('wait', '--fn', `!!document.querySelector('[data-context="${parentId}"] [data-context="${childId}"]')`); ready();
   assert.equal(evaluate(`document.querySelectorAll('[data-context="${childId}"]').length`), 1);
   assert.equal(evaluate(`!!document.querySelector('[data-context="${parentId}"] [data-context="${childId}"]')`), true);
   passed.push('C8-REPARENT-CLICK-BROWSER');
   for (const scenario of ['D','E']) { navigate(`${origin}/?scenario=${scenario}`); run('snapshot', '-i'); cockpitEquals(await evidence(scenario)); run('screenshot', path.join(out, `scenario-${scenario}.png`)); passed.push(`C8-FIXTURE-${scenario}-BROWSER`); }
+  // Atomic grammar uses the actual production components and certified synthetic owners.
+  navigate(`${origin}/?scenario=R`); run('snapshot', '-i');
+  check('R2-008-BROWSER', () => assert.equal(evaluate('!!document.querySelector("[data-context-palette]")'), false));
+  run('screenshot', path.join(out, 'board-rest.png'));
+  const atomicId = evaluate('document.querySelector("[data-context]").dataset.context');
+  check('R2-001-BROWSER', () => { assert.equal(evaluate(`document.querySelector('[data-context="${atomicId}"]').querySelectorAll('[data-satellite][data-selection]').length`), 4);
+    assert.equal(evaluate(`document.querySelector('[data-socket="${atomicId}:before"]').parentElement.dataset.orbit`), 'NORTH'); });
+  check('R2-002-BROWSER', () => assert.equal(evaluate(`document.querySelector('[data-context="${atomicId}"]').querySelectorAll('[data-satellite][data-empty]').length`), 2));
+  run('click', `[data-context="${atomicId}"] [data-context-focus]`);
+  check('R2-007-BROWSER', () => { assert.equal(evaluate('document.querySelector("[data-context-palette]").dataset.contextPalette'), atomicId);
+    assert.equal(evaluate(`document.querySelector('[data-context="${atomicId}"]').dataset.focused`), 'true');
+    assert.equal(evaluate(`(()=>{const card=document.querySelector('[data-context="${atomicId}"]').getBoundingClientRect(),board=document.querySelector('[data-board-scroll]').getBoundingClientRect();return card.top>=board.top && card.bottom<=board.bottom})()`), true);
+  });
+  run('screenshot', path.join(out, 'night-selected.png'));
+  check('R2-009-BROWSER', () => assert.ok(evaluate('document.querySelectorAll("[data-context-palette] [data-option-state=ALTERNATIVE]").length') > 0));
+  check('R2-003-BROWSER', () => assert.equal(evaluate(`document.querySelector('[data-socket="${atomicId}:before"] [data-satellite]').dataset.state`), 'SUGGESTED'));
+  check('R2-012-BROWSER', () => { run('focus', `[data-socket="${atomicId}:before"] [data-satellite]`); run('press', 'Enter');
+    assert.equal(evaluate('!!document.querySelector("[data-atomic-popover]:popover-open")'), true);
+    assert.equal(evaluate('!!document.activeElement.closest("[data-atomic-popover]:popover-open")'), true);
+    const rect = evaluate('document.querySelector("[data-atomic-popover]:popover-open").getBoundingClientRect().toJSON()');
+    assert.ok(rect.left >= 0 && rect.right <= 1440 && rect.top >= 0 && rect.bottom <= 900);
+    run('screenshot', path.join(out, 'before-popover.png')); run('press', 'Escape');
+    assert.equal(evaluate('!!document.querySelector("[data-atomic-popover]:popover-open")'), false);
+    assert.equal(evaluate('document.activeElement.dataset.state'), 'SUGGESTED');
+  });
+  check('R2-005-BROWSER', () => { run('click', `[data-socket="${atomicId}:food"] [data-satellite]`);
+    assert.equal(evaluate('document.querySelector("[data-atomic-popover]:popover-open").textContent.includes("Retenu : À préciser")'), true); run('press', 'Escape'); });
+  check('R2-PROTECTED-BROWSER', () => { assert.equal(evaluate('!!document.querySelector("[data-protected=true] [data-card-edit]")'), false);
+    assert.equal(evaluate('!!document.querySelector("[data-protected=true] button[aria-label^=Retirer]")'), false);
+    run('click', '[data-context-palette] button[aria-label="Quitter la sélection du moment"]');
+    evaluate('document.querySelector("[data-protected=true]").scrollIntoView({block:"center",behavior:"instant"})');
+    run('screenshot', path.join(out, 'protected-savings.png'));
+  });
+  check('R2-011-BROWSER', () => assert.equal(evaluate('/\\p{Extended_Pictographic}/u.test(document.querySelector("[data-composer]").textContent)'), false));
+  const atomicEvidence = await evidence('R'); assert.equal(atomicEvidence.rpcCalls, 0); assert.equal(atomicEvidence.counts.plans, 0);
+  passed.push('R2-READ-ZERO-WRITES-BROWSER');
+  navigate(`${origin}/?scenario=C`); run('click', '[data-context]:not([data-context] [data-context]) [data-context-focus]');
+  run('screenshot', path.join(out, 'weekend-composite.png'));
+  for (const scenario of ['A','B','C','D','E','R']) assert.ok((await evidence(scenario)).log.every(request => request.uiPayloadFields.length === 0));
+  passed.push('R2-013-BROWSER');
   const errors = run('errors'); assert.ok(!JSON.stringify(errors).includes('Uncaught')); passed.push('C8-CONSOLE');
   const report = { passed, sizes, environment: 'ISOLATED_ACTUAL_COMPOSER_COMPONENTS_REAL_C0_PGLITE', remoteWrites: 0,
-    historicalCanaryWrites: 0, fixtures: Object.fromEntries(await Promise.all(['A','B','C','D','E'].map(async key => { const e = await evidence(key); return [key, { counts:e.counts,rpcCalls:e.rpcCalls,remoteWrites:e.remoteWrites,historicalCanaryWrites:e.historicalCanaryWrites }]; }))) };
+    historicalCanaryWrites: 0, fixtures: Object.fromEntries(await Promise.all(['A','B','C','D','E','R'].map(async key => { const e = await evidence(key); return [key, { counts:e.counts,rpcCalls:e.rpcCalls,remoteWrites:e.remoteWrites,historicalCanaryWrites:e.historicalCanaryWrites }]; }))) };
   fs.writeFileSync(path.join(out, 'browser-verification.json'), JSON.stringify(report, null, 2)); console.log(`Browser C8 PASS (${passed.length})`);
 } finally { run('close'); }

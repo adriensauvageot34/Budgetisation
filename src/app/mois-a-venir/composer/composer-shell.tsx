@@ -14,11 +14,12 @@ import { ComposerResponseGate } from "./draft-controller";
 import { monthLabel } from "./display";
 import styles from "./composer.module.css";
 
-type Editor = { title: string; fields: readonly ComposerField[]; values: Record<string, string>; operation: (values: Record<string, string>) => ComposerOperation };
+type Editor = { title: string; compact?: boolean; fields: readonly ComposerField[]; values: Record<string, string>; operation: (values: Record<string, string>) => ComposerOperation };
 export function ComposerShell({ initialModel, transport }: { initialModel: ComposerUiModel; transport: ComposerTransport }) {
   const [model, setModel] = useState(initialModel), current = useRef(initialModel);
   const [busy, setBusy] = useState(false), busyRef = useRef(false);
   const [selected, setSelected] = useState<string | null>(null), [message, setMessage] = useState("Votre brouillon est prêt à composer.");
+  const [focusedContext, setFocusedContext] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [past, setPast] = useState<PlanSemanticStateV1[]>([]), [future, setFuture] = useState<PlanSemanticStateV1[]>([]);
   const [editor, setEditor] = useState<Editor | null>(null), [balanceOpen, setBalanceOpen] = useState(false), [suggestions, setSuggestions] = useState<PlanBalanceSuggestions | null>(null);
@@ -69,11 +70,22 @@ export function ComposerShell({ initialModel, transport }: { initialModel: Compo
       } catch { /* Transient hover failures do not replace the accepted draft. */ }
     }, 200);
   }
+  function prepareDialogFocus() {
+    // A nested popover disappears when a modal opens. Restore to its visible root invoker.
+    let origin = document.activeElement as HTMLElement | null;
+    let container = origin?.closest<HTMLElement>("[popover]");
+    while (container) {
+      origin = document.querySelector<HTMLElement>(`button[aria-controls="${CSS.escape(container.id)}"]`);
+      container = origin?.closest<HTMLElement>("[popover]");
+    }
+    document.querySelectorAll<HTMLElement>("[popover]:popover-open").forEach(node => { if (node.matches(":popover-open")) node.hidePopover(); });
+    origin?.focus();
+  }
   function choose(asset: ComposerAssetView, target: DropTarget = { kind: "BOARD_ZONE" }, selection?: ComponentSelectionV1) {
     clearHover();
     if (["PLAN_CONTROL", "RESERVATION_CONTROL"].includes(asset.kind)) {
       const card = [...model.board.baselineControls, ...model.board.discretionaryControls, ...model.board.savings].find(c => c.targetRef === asset.capabilityRef);
-      if (card) document.querySelector<HTMLElement>(`[data-control="${CSS.escape(card.targetRef)}"]`)?.scrollIntoView({ block: "center", behavior: "smooth" });
+      if (card) document.querySelector<HTMLElement>(`[data-control="${CSS.escape(card.targetRef)}"]`)?.scrollIntoView({ block: "center", behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "instant" : "smooth" });
       if (card?.capability?.actions.length && card.capability.flexibility !== "LOCKED") edit(card);
       return;
     }
@@ -83,6 +95,7 @@ export function ComposerShell({ initialModel, transport }: { initialModel: Compo
     if (selection?.kind === "COMPONENT") Object.assign(values, { label: selection.label, quantity: selection.quantity, amount: selection.cost.kind === "MANUAL" ? selection.cost.unitAmount : "", funding: selection.fundingAllocations?.[0]?.source ?? "", fundingAmount: selection.fundingAllocations?.[0]?.amount ?? "", binding: selection.binding?.mode ?? "AUTO", needOccurrenceId: selection.needOccurrenceId ?? "" });
     if (selection?.kind === "MOBILITY_INTENT") Object.assign(values, { origin: selection.origin?.kind === "TEXT" ? selection.origin.label : "", destination: selection.destination?.kind === "TEXT" ? selection.destination.label : "", amount: selection.pricing?.fare.kind === "MANUAL" ? selection.pricing.fare.unitAmount : "", funding: selection.pricing?.fundingAllocations[0]?.source ?? "", fundingAmount: selection.pricing?.fundingAllocations[0]?.amount ?? "", returnRequired: String(selection.returnRequired === true), targetIntentId: selection.journey?.targetIntentId ?? "", plannedTime: selection.plannedTime ?? "", returnTime: selection.returnTime ?? "", preference: selection.pricing?.preference ?? "FASTEST", parkingMode: selection.pricing?.parking.kind === "MANUAL" ? selection.pricing.parking.unitAmount === "0" || selection.pricing.parking.unitAmount === "0.00" ? "NO" : "YES" : "UNKNOWN", parkingAmount: selection.pricing?.parking.kind === "MANUAL" ? selection.pricing.parking.unitAmount : "" });
     const identity = crypto.randomUUID(), selectionId = selection?.selectionId ?? crypto.randomUUID();
+    prepareDialogFocus();
     setEditor({ title: selection ? `Modifier ${asset.label}` : `Composer ${asset.label}`, fields: model.editors.find(e => e.assetKey === asset.assetKey)?.fields ?? [], values,
       operation: values => ({ kind: "DROP", assetKey: asset.assetKey, target, values, identity, selectionId }) });
   }
@@ -96,13 +109,15 @@ export function ComposerShell({ initialModel, transport }: { initialModel: Compo
   function edit(card: ComposerCardView) {
     clearHover();
     if (!card.capability?.actions.length || card.capability.flexibility === "LOCKED") return;
-    setEditor({ title: `Ajuster ${card.label}`, fields: model.controlEditors.find(e => e.targetRef === card.targetRef)?.fields ?? [],
+    prepareDialogFocus();
+    setEditor({ title: `Ajuster ${card.label}`, compact: card.kind === "SAVINGS", fields: model.controlEditors.find(e => e.targetRef === card.targetRef)?.fields ?? [],
       values: Object.fromEntries(["amount", "count", "unitAmount"].map(key => [key, typeof card.value[key] === "string" ? card.value[key] as string : ""])),
       operation: values => ({ kind: "MUTATE", mutation: { kind: "SET_STATE", targetRef: card.targetRef, value: Object.fromEntries(model.controlEditors.find(e => e.targetRef === card.targetRef)!.fields.map(f => [f.key, values[f.key]])) } }) });
   }
   const closeDialog = () => { if (!busyRef.current) { setEditor(null); setBalanceOpen(false); setProjectionOpen(false); setErrorMessage(null); } };
   function editContext(card: ComposerContextCardView) {
     clearHover();
+    prepareDialogFocus();
     setEditor({ title: `Modifier ${card.label}`, fields: model.editors.find(e => e.assetKey === `template:${card.templateKey}`)?.fields ?? [],
       values: Object.fromEntries(Object.entries(card.fields).filter((entry): entry is [string, string] => typeof entry[1] === "string")),
       operation: values => ({ kind: "EDIT_CONTEXT", contextOccurrenceId: card.contextOccurrenceId, values }) });
@@ -122,11 +137,11 @@ export function ComposerShell({ initialModel, transport }: { initialModel: Compo
         <button className={styles.historyButton} title="Rétablir" aria-label="Rétablir la modification du brouillon" disabled={busy || !future.length} onClick={() => void run({ kind: "READ" }, "redo", future.at(-1))}><Redo2 size={17} /></button></div>
         <button className={styles.primary} data-apply disabled={busy || !!hoverModel || !model.board.draft.dirty || model.board.cockpit.applyReadiness === "BLOCKED"} onClick={apply}>{busy ? "Validation en cours…" : "Appliquer mon mois"}</button></div></header>
     <div className={styles.columns}><ComposerLibrary model={model} openToken={libraryOpenToken} busy={busy} selected={selected} choose={asset => choose(asset)} drag={key => { clearHover(); setSelected(key); }} />
-      <ComposerBoard model={model} busy={busy} selected={selected} edit={edit} editContext={editContext} choose={choose} drag={setSelected} drop={drop} request={operation => void run(operation)} hover={hover}
+      <ComposerBoard model={model} busy={busy} selected={selected} focused={focusedContext} focus={setFocusedContext} edit={edit} editContext={editContext} choose={choose} drag={setSelected} drop={drop} request={operation => void run(operation)} hover={hover}
         add={() => { clearHover(); setLibraryOpenToken(n => n + 1); }} preview={() => void run({ kind: "READ" }, "none")}
         balance={() => { clearHover(); setBalanceOpen(true); void run({ kind: "SUGGESTIONS" }, "none"); }} details={() => { clearHover(); setProjectionOpen(true); }} /></div>
     <div className={styles.statusBar} role="status" aria-live="polite"><Sparkles size={13} /> {message}</div>
-    <dialog ref={dialog} className={styles.dialog} aria-labelledby="composer-dialog-title" onCancel={e => { e.preventDefault(); closeDialog(); }}>
+    <dialog ref={dialog} className={styles.dialog} data-compact-editor={editor?.compact || undefined} aria-labelledby="composer-dialog-title" onCancel={e => { e.preventDefault(); closeDialog(); }}>
       <header><h2 id="composer-dialog-title">{editor?.title ?? (projectionOpen ? "Le détail de votre mois" : "Des pistes pour votre mois")}</h2><button className={styles.iconButton} disabled={busy} aria-label="Fermer" onClick={closeDialog}><X size={19} /></button></header>
       {errorMessage && <p role="alert" className={styles.formError}>{errorMessage}</p>}
       {editor ? <form onSubmit={e => { e.preventDefault(); const values = Object.fromEntries(new FormData(e.currentTarget).entries()) as Record<string, string>; void run(editor.operation(values)); }}>
