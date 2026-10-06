@@ -6,7 +6,7 @@ import type { ContextualEffect } from "@/domain/phase2/planner/component-contrac
 import { matchesForecastCategory } from "../remaining-month-forecast";
 import { slotReferenceKeys } from "./plan-slot-resolver";
 
-export const KERNEL_CONSTRAINT_POLICY = "planner-kernel-constraints@v2-simple-levers";
+export const KERNEL_CONSTRAINT_POLICY = "planner-kernel-constraints@v3-composable-contexts";
 export function evaluatePlanConstraints(world: PlanningWorldFacts, slots: readonly CompiledPlanSlot[],
   components: readonly CompiledComponent[], effects: readonly ContextualEffect[]): ConstraintResult[] {
   const results: ConstraintResult[] = [];
@@ -48,7 +48,9 @@ export function evaluatePlanConstraints(world: PlanningWorldFacts, slots: readon
       if (quote && (!Number.isFinite(Date.parse(quote.observedAt)) || Date.parse(quote.observedAt) > Date.parse(world.baseline.knowledgeCutoff)))
         add("BLOCK", "QUOTE_OUTSIDE_KNOWLEDGE_CUTOFF", component.componentId, component.evaluation.support);
     }
-    if (component.evaluation.economicAmount === null) add("BLOCK", "COMPONENT_COST_UNKNOWN", component.componentId, component.evaluation.support);
+    // An unresolved C4 valuation preserves the explicit life intention with an unknown
+    // projection. The C2 generic bridge retains its certified refusal boundary.
+    if (component.evaluation.economicAmount === null) add(component.selectionProvenance ? "WARN" : "BLOCK", "COMPONENT_COST_UNKNOWN", component.componentId, component.evaluation.support);
     if (component.fundingAllocations.length && component.evaluation.economicAmount !== null
       && !component.fundingAllocations.reduce((n, a) => n.plus(a.amount), new Big(0)).eq(component.evaluation.economicAmount))
       add("BLOCK", "COMPONENT_FUNDING_SUM_INVALID", component.componentId);

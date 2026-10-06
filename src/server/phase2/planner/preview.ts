@@ -21,7 +21,8 @@ export function evaluatePlanScenario(world: PlanningWorldFacts, semanticState: P
   const blocked = compiled.diagnostics.some(d => d.severity === "BLOCK") || plan === null;
   const hasUnknownFinancialBasis = (plan: typeof compiled) => plan.constraints.some(c => c.code === "COMPONENT_COST_UNKNOWN" || c.code === "OWNED_SLOT_COST_UNKNOWN"
     || c.code === "OWNED_SLOT_FINANCIAL_REFERENCE_UNRESOLVED" || c.code === "OWNED_SLOT_OBSERVED_RECONCILIATION_REQUIRED"
-    || c.code === "OWNED_SLOT_CONDITION_UNRESOLVED" || c.code === "OWNED_SLOT_FINANCIAL_MAPPING_AMBIGUOUS");
+    || c.code === "OWNED_SLOT_CONDITION_UNRESOLVED" || c.code === "OWNED_SLOT_FINANCIAL_MAPPING_AMBIGUOUS"
+    || c.code === "CONTEXT_COMPONENT_SLOT_UNRESOLVED" || c.code === "CONTEXT_SLOT_BINDING_UNRESOLVED" || c.code === "CONTEXT_MOBILITY_PRICING_PENDING_C5");
   const remainder = hasUnknownFinancialBasis(compiled) ? null : plan?.scenarios.central ?? null;
   const baselineRemainder = hasUnknownFinancialBasis(baselineCompiled) ? null : before?.scenarios.central ?? null;
   const diagnostics = [...compiled.diagnostics, ...(baselineRemainder === null ? [{ code: "BASELINE_FINANCIAL_COMPARISON_UNKNOWN", severity: "WARN" as const,
@@ -33,7 +34,8 @@ export function evaluatePlanScenario(world: PlanningWorldFacts, semanticState: P
       ? new Big(remainder).minus(baselineRemainder).toFixed(2) : null },
     economic: { resources: plan?.economicResources ?? null, certainCommitments: plan?.certainOutflows.total ?? null,
       savingsReservations: plan?.savingsAllocations.total ?? null, needsAndHabits: null, discretionaryLife: null,
-      explicitContexts: compiled.components.some(c => c.evaluation.economicAmount === null) ? null : compiled.components.filter(c => c.externalEntryId === null)
+      explicitContexts: compiled.components.some(c => c.evaluation.economicAmount === null) || compiled.constraints.some(c => c.code === "CONTEXT_COMPONENT_SLOT_UNRESOLVED")
+        ? null : compiled.components.filter(c => c.externalEntryId === null)
         .reduce((n, c) => n.plus(c.evaluation.economicAmount!), new Big(0)).toFixed(2),
       mobilityUsageEconomicCost: null, unresolvedEconomicAmount: null },
     funding: jsonEnvelope({ status: "PARTIAL", financialOwner: plan?.plannedFunding ?? null,

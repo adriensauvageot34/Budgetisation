@@ -103,6 +103,6 @@ export function resolveContextualEffects(slots: CompiledPlanSlot[], components: 
     return { componentId: component.componentId, baselinePlanSlotId: slot?.baseline.planSlotId ?? null, slotRelation: binding.relation,
       economicRelation: displaced === null || gross === null ? "UNKNOWN" : new Big(displaced).eq(0) ? "INCREMENTAL" : new Big(gross).gt(displaced) ? "MIXED" : "DISPLACEMENT",
       grossAmount: gross, displacedAmount: displaced, incrementalAmount: incremental, knowledge: displaced === null ? "PARTIAL" : component.evaluation.knowledge,
-      evidenceRefs: [...component.evaluation.support, ...(slot?.baseline.sourceRefs ?? [])] };
+      evidenceRefs: [...component.evaluation.support, ...(component.bindingEvidenceRefs ?? []), ...(slot?.baseline.sourceRefs ?? [])] };
   });
 }
