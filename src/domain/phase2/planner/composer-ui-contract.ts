@@ -6,6 +6,20 @@ import type { PlanBalanceSuggestions, SemanticMutation } from "./adjustment-cont
 export type ComposerField = Readonly<{ key: string; label: string; kind: "TEXT" | "DATE" | "AMOUNT" | "CHOICE";
   required: boolean; choices?: readonly Readonly<{ value: string; label: string }>[]; initial?: string }>;
 export type ComposerEditor = Readonly<{ assetKey: string; fields: readonly ComposerField[] }>;
+export type ComposerObjectPresentation = Readonly<{
+  iconKey: string;
+  variant: "SIMPLE" | "HABIT" | "COMPOSITE" | "SAVINGS";
+  baselineAmount: string | null;
+  baselineCount: string | null;
+  protectedSavings: boolean;
+  reservationGauge: Readonly<{ percent: number | null; referenceAmount: string | null }> | null;
+}>;
+/** Display metadata only. Counts describe top-level objects; no financial authority. */
+export type ComposerPresentation = Readonly<{
+  elementCount: number; unresolvedCount: number;
+  goalMargin: string | null;
+  objects: Readonly<Record<string, ComposerObjectPresentation>>;
+}>;
 /** Excludes Baseline snapshots, canonical evidence and financial adapter entries. */
 export type ComposerUiModel = Omit<MonthComposerReadModel, "preview"> & Readonly<{
   proof: Omit<PlannerApplyCommand, "applyRequestId">;
@@ -13,6 +27,7 @@ export type ComposerUiModel = Omit<MonthComposerReadModel, "preview"> & Readonly
   editors: readonly ComposerEditor[];
   controlEditors: readonly Readonly<{ targetRef: string; fields: readonly ComposerField[] }>[];
   sectionLabels: Readonly<Record<string, string>>;
+  presentation: ComposerPresentation;
 }>;
 export type ComposerRequest = Readonly<{ sequence: number; targetMonth: string; draft?: PlanSemanticStateV1 }> & (
   | Readonly<{ kind: "READ" }>

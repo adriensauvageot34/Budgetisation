@@ -8,7 +8,7 @@ import type { PlanSemanticStateV1 } from "@/domain/phase2/planner/semantic-state
 import type { SemanticMutation, PlanBalanceSuggestions } from "@/domain/phase2/planner/adjustment-contract";
 import { ComposerLibrary } from "./composer-library";
 import { ComposerBoard } from "./composer-board";
-import { ComposerCockpit } from "./composer-cockpit";
+import { ComposerCockpit, ComposerProjectionDetails } from "./composer-cockpit";
 import { BalanceLayer } from "./balance-layer";
 import { ComposerResponseGate } from "./draft-controller";
 import { monthLabel } from "./display";
@@ -22,6 +22,7 @@ export function ComposerShell({ initialModel, transport }: { initialModel: Compo
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [past, setPast] = useState<PlanSemanticStateV1[]>([]), [future, setFuture] = useState<PlanSemanticStateV1[]>([]);
   const [editor, setEditor] = useState<Editor | null>(null), [balanceOpen, setBalanceOpen] = useState(false), [suggestions, setSuggestions] = useState<PlanBalanceSuggestions | null>(null);
+  const [projectionOpen, setProjectionOpen] = useState(false), [libraryOpenToken, setLibraryOpenToken] = useState(0);
   const [hoverModel, setHoverModel] = useState<ComposerUiModel | null>(null), gate = useRef(new ComposerResponseGate()), timer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const dialog = useRef<HTMLDialogElement>(null), invoker = useRef<HTMLElement | null>(null);
   const applyAttempt = useRef<{ key: string; applyRequestId: string } | null>(null);
@@ -34,9 +35,9 @@ export function ComposerShell({ initialModel, transport }: { initialModel: Compo
     window.addEventListener("beforeunload", warn); return () => window.removeEventListener("beforeunload", warn);
   }, [model.board.draft.dirty]);
   useEffect(() => {
-    if (editor || balanceOpen) { invoker.current = document.activeElement as HTMLElement; dialog.current?.showModal(); }
+    if (editor || balanceOpen || projectionOpen) { invoker.current = document.activeElement as HTMLElement; dialog.current?.showModal(); }
     else { dialog.current?.close(); invoker.current?.focus(); }
-  }, [!!editor, balanceOpen]);
+  }, [!!editor, balanceOpen, projectionOpen]);
   async function run(operation: ComposerOperation, history: "push" | "undo" | "redo" | "none" = "push", draft?: PlanSemanticStateV1) {
     if (busyRef.current) return;
     clearHover(); busyRef.current = true; setBusy(true); setSuggestions(null); setErrorMessage(null);
@@ -59,7 +60,7 @@ export function ComposerShell({ initialModel, transport }: { initialModel: Compo
   }
   function hover(mutation: SemanticMutation | null) {
     clearHover();
-    if (!mutation || busyRef.current || editor || balanceOpen) return;
+    if (!mutation || busyRef.current || editor || balanceOpen || projectionOpen) return;
     const before = current.current, ticket = gate.current.next(before.board.draft.semanticStateDigest);
     timer.current = setTimeout(async () => {
       try {
@@ -99,7 +100,7 @@ export function ComposerShell({ initialModel, transport }: { initialModel: Compo
       values: Object.fromEntries(["amount", "count", "unitAmount"].map(key => [key, typeof card.value[key] === "string" ? card.value[key] as string : ""])),
       operation: values => ({ kind: "MUTATE", mutation: { kind: "SET_STATE", targetRef: card.targetRef, value: Object.fromEntries(model.controlEditors.find(e => e.targetRef === card.targetRef)!.fields.map(f => [f.key, values[f.key]])) } }) });
   }
-  const closeDialog = () => { if (!busyRef.current) { setEditor(null); setBalanceOpen(false); setErrorMessage(null); } };
+  const closeDialog = () => { if (!busyRef.current) { setEditor(null); setBalanceOpen(false); setProjectionOpen(false); setErrorMessage(null); } };
   function editContext(card: ComposerContextCardView) {
     clearHover();
     setEditor({ title: `Modifier ${card.label}`, fields: model.editors.find(e => e.assetKey === `template:${card.templateKey}`)?.fields ?? [],
@@ -112,25 +113,28 @@ export function ComposerShell({ initialModel, transport }: { initialModel: Compo
     void run({ kind: "APPLY", command: { ...model.proof, applyRequestId: applyAttempt.current.applyRequestId } }, "none");
   }
   return <div className={styles.workspace} data-composer data-digest={model.board.draft.semanticStateDigest} data-revision={model.activeRevisionNumber} aria-busy={busy}>
-    <header className={styles.workspaceHeader}><div><a href={`/mois-a-venir?month=${model.semanticState.targetMonth}`} className={styles.backLink}><ArrowLeft size={14} /> Vue du mois</a><h1>Composer <span>{monthLabel(model.semanticState.targetMonth)}</span></h1></div>
-      <div className={styles.toolbar}><span className={styles.draftStatus}>{model.board.draft.dirty ? "Brouillon non appliqué" : model.activeRevisionNumber ? `Revision ${model.activeRevisionNumber}` : "Votre point de départ"}</span>
-        <button className={styles.secondary} aria-label="Annuler la dernière modification du brouillon" disabled={busy || !past.length} onClick={() => void run({ kind: "READ" }, "undo", past.at(-1))}><Undo2 size={16} /> Annuler</button>
-        <button className={styles.secondary} aria-label="Rétablir la modification du brouillon" disabled={busy || !future.length} onClick={() => void run({ kind: "READ" }, "redo", future.at(-1))}><Redo2 size={16} /> Rétablir</button></div></header>
-    <div className={styles.columns}><ComposerLibrary model={model} busy={busy} selected={selected} choose={asset => choose(asset)} drag={key => { clearHover(); setSelected(key); }} />
-      <ComposerBoard model={model} busy={busy} selected={selected} edit={edit} editContext={editContext} choose={choose} drag={setSelected} drop={drop} request={operation => void run(operation)} hover={hover} />
-      <ComposerCockpit projection={(hoverModel ?? model).board.cockpit} temporary={!!hoverModel} busy={busy} dirty={model.board.draft.dirty} revision={model.activeRevisionNumber}
-        preview={() => void run({ kind: "READ" }, "none")} apply={apply}
-        balance={() => { clearHover(); setBalanceOpen(true); void run({ kind: "SUGGESTIONS" }, "none"); }} /></div>
+    <header className={styles.workspaceHeader}><div className={styles.headerIdentity}><a href={`/mois-a-venir?month=${model.semanticState.targetMonth}&control=center`} className={styles.backLink}><ArrowLeft size={14} /> Centre de contrôle</a>
+      <h1>Composer <span>{monthLabel(model.semanticState.targetMonth)}</span></h1><div className={styles.headerMeta}><span className={styles.draftStatus}>{model.board.draft.dirty || !model.activeRevisionNumber ? "Brouillon" : `Révision ${model.activeRevisionNumber}`}</span>
+        <span data-object-count>{model.presentation.elementCount} éléments · {model.presentation.unresolvedCount} à préciser</span></div></div>
+      <ComposerCockpit projection={(hoverModel ?? model).board.cockpit} goalMargin={(hoverModel ?? model).presentation.goalMargin} temporary={!!hoverModel} />
+      <div className={styles.toolbar}><div className={styles.historyTools}>
+        <button className={styles.historyButton} title="Annuler" aria-label="Annuler la dernière modification du brouillon" disabled={busy || !past.length} onClick={() => void run({ kind: "READ" }, "undo", past.at(-1))}><Undo2 size={17} /></button>
+        <button className={styles.historyButton} title="Rétablir" aria-label="Rétablir la modification du brouillon" disabled={busy || !future.length} onClick={() => void run({ kind: "READ" }, "redo", future.at(-1))}><Redo2 size={17} /></button></div>
+        <button className={styles.primary} data-apply disabled={busy || !!hoverModel || !model.board.draft.dirty || model.board.cockpit.applyReadiness === "BLOCKED"} onClick={apply}>{busy ? "Validation en cours…" : "Appliquer mon mois"}</button></div></header>
+    <div className={styles.columns}><ComposerLibrary model={model} openToken={libraryOpenToken} busy={busy} selected={selected} choose={asset => choose(asset)} drag={key => { clearHover(); setSelected(key); }} />
+      <ComposerBoard model={model} busy={busy} selected={selected} edit={edit} editContext={editContext} choose={choose} drag={setSelected} drop={drop} request={operation => void run(operation)} hover={hover}
+        add={() => { clearHover(); setLibraryOpenToken(n => n + 1); }} preview={() => void run({ kind: "READ" }, "none")}
+        balance={() => { clearHover(); setBalanceOpen(true); void run({ kind: "SUGGESTIONS" }, "none"); }} details={() => { clearHover(); setProjectionOpen(true); }} /></div>
     <div className={styles.statusBar} role="status" aria-live="polite"><Sparkles size={13} /> {message}</div>
     <dialog ref={dialog} className={styles.dialog} aria-labelledby="composer-dialog-title" onCancel={e => { e.preventDefault(); closeDialog(); }}>
-      <header><h2 id="composer-dialog-title">{editor?.title ?? "Des pistes pour votre mois"}</h2><button className={styles.iconButton} disabled={busy} aria-label="Fermer" onClick={closeDialog}><X size={19} /></button></header>
+      <header><h2 id="composer-dialog-title">{editor?.title ?? (projectionOpen ? "Le détail de votre mois" : "Des pistes pour votre mois")}</h2><button className={styles.iconButton} disabled={busy} aria-label="Fermer" onClick={closeDialog}><X size={19} /></button></header>
       {errorMessage && <p role="alert" className={styles.formError}>{errorMessage}</p>}
       {editor ? <form onSubmit={e => { e.preventDefault(); const values = Object.fromEntries(new FormData(e.currentTarget).entries()) as Record<string, string>; void run(editor.operation(values)); }}>
         <p className={styles.helper}>Une valeur vide reste inconnue. Une date absente reste à préciser.</p>
         <div className={styles.formFields}>{editor.fields.map(f => <label key={f.key}>{f.label}{f.kind === "CHOICE" ? <select name={f.key} defaultValue={editor.values[f.key] ?? f.choices?.[0]?.value ?? ""} required={f.required}>{f.choices?.map(c => <option value={c.value} key={c.value}>{c.label}</option>)}</select>
           : <input name={f.key} defaultValue={editor.values[f.key] ?? f.initial ?? ""} type={f.kind === "DATE" ? "date" : "text"} inputMode={f.kind === "AMOUNT" ? "decimal" : undefined} required={f.required} autoComplete="off" />}</label>)}</div>
         <footer><button type="button" className={styles.secondary} disabled={busy} onClick={closeDialog}>Retour au mois</button><button data-submit className={styles.primary} disabled={busy}>Prévisualiser ce choix</button></footer>
-      </form> : suggestions ? <BalanceLayer suggestions={suggestions} busy={busy} accept={candidateId => void run({ kind: "ACCEPT", candidateSetDigest: suggestions.candidateSetDigest, candidateId })} /> : <p role="status">{busy ? "Le serveur explore les ajustements…" : message}</p>}
+      </form> : projectionOpen ? <ComposerProjectionDetails projection={model.board.cockpit} /> : suggestions ? <BalanceLayer suggestions={suggestions} busy={busy} accept={candidateId => void run({ kind: "ACCEPT", candidateSetDigest: suggestions.candidateSetDigest, candidateId })} /> : <p role="status">{busy ? "Le serveur explore les ajustements…" : message}</p>}
     </dialog>
   </div>;
 }

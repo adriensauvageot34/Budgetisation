@@ -4,6 +4,7 @@ import type { ComponentSelectionV1 } from "@/domain/phase2/planner/component-con
 import type { ComposerUiModel, ComposerOperation } from "@/domain/phase2/planner/composer-ui-contract";
 import { ContextSocket } from "./context-socket";
 import { knowledgeLabel } from "./display";
+import { PlannerIcon } from "./planner-icons/planner-icon";
 import styles from "./composer.module.css";
 export function ContextCard({ card, model, busy, selected, drag, drop, choose, request, edit }: { card: ComposerContextCardView; model: ComposerUiModel; busy: boolean;
   selected: string | null; drag: (key: string | null) => void; drop: (target: DropTarget, key?: string) => void;
@@ -13,7 +14,9 @@ export function ContextCard({ card, model, busy, selected, drag, drop, choose, r
   const removable = model.dropCapabilities.some(d => d.sourceAssetKey === instance && d.target.kind === "TRASH" && d.resolution !== "BLOCKED");
   const preserved = model.semanticState.preferences.flexibility[card.contextOccurrenceId] === "PRESERVE";
   const children = (id: string) => { const child = model.board.contexts.find(c => c.contextOccurrenceId === id); return child ? <ContextCard card={child} model={model} busy={busy} selected={selected} drag={drag} drop={drop} choose={choose} request={request} edit={edit} /> : null; };
-  return <article className={styles.contextCard} data-context={card.contextOccurrenceId} data-state={card.readOnly ? "derived" : card.knowledge === "UNKNOWN" ? "unresolved" : "chosen"}>
+  const presentation = model.presentation.objects[card.contextOccurrenceId];
+  return <article className={styles.contextCard} data-context={card.contextOccurrenceId} data-variant={presentation.variant} data-state={card.readOnly ? "derived" : card.knowledge === "UNKNOWN" ? "unresolved" : "chosen"}>
+    <PlannerIcon iconKey={presentation.iconKey} className={styles.contextObjectIcon} />
     <header className={styles.contextHeader}><div><span className={styles.badge}>{card.readOnly ? "Intention externe" : model.appliedContextIds.includes(card.contextOccurrenceId) ? "Appliqué" : "Brouillon"} · {knowledgeLabel(card.knowledge)}</span><h3>{card.label}</h3>{typeof card.fields.plannedDate === "string" && <p>{new Intl.DateTimeFormat("fr-FR", { day: "numeric", month: "short", timeZone: "UTC" }).format(new Date(`${card.fields.plannedDate}T12:00:00Z`))}</p>}</div>
       <div className={styles.contextTools}>{!card.readOnly && <><button className={styles.iconButton} disabled={busy} aria-label={`${preserved ? "Libérer" : "Préserver"} ${card.label}`} aria-pressed={preserved} onClick={() => request({ kind: "PRESERVE", targetRef: card.contextOccurrenceId, preserve: !preserved })}><Pin size={15} /></button>
         <button className={styles.iconButton} disabled={busy || !card.capabilityRefs.includes("PATCH_CONTEXT")} aria-label={`Modifier les informations de ${card.label}`} onClick={() => edit(card)}><Pencil size={14} /></button>

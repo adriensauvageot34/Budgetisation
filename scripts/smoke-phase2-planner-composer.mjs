@@ -59,6 +59,24 @@ try {
   run('close');
   run('open', `${origin}/?delayHover=true`); run('set', 'viewport', '1440', '900'); run('wait', '[data-composer]'); ready();
   fs.writeFileSync(path.join(out, 'initial-accessibility.json'), JSON.stringify(run('snapshot', '-i'), null, 2));
+  check('R1-UNIFIED-BOARD', () => {
+    assert.equal(evaluate('document.querySelectorAll("[data-composer] aside").length'), 1);
+    assert.equal(evaluate('[...document.querySelectorAll("[data-composer] h2")].some(e=>["Socle du mois","Vie & envies","Contexts & projets","Cagnottes","Cap du mois"].includes(e.textContent))'), false);
+    assert.equal(evaluate('!!document.querySelector("[data-mosaic]") && !!document.querySelector("[data-add-element]")'), true);
+    assert.equal(evaluate('document.querySelector("[data-cockpit]").closest("header") !== null'), true);
+  });
+  check('R1-DETAILS-FOCUS', () => { run('click', '[data-financial-details]'); run('snapshot', '-i');
+    assert.equal(evaluate('document.querySelector("dialog[open] h2").textContent'), 'Le détail de votre mois');
+    assert.equal(evaluate('document.querySelector("dialog[open]").textContent.includes("Financement & timing")'), true);
+    run('press', 'Escape'); assert.equal(evaluate('document.activeElement.hasAttribute("data-financial-details")'), true);
+  });
+  check('R1-ADD-ENTRY', () => { const before = evaluate('document.querySelector("[data-composer]").dataset.digest');
+    run('click', '[data-add-element]'); assert.equal(evaluate('document.activeElement.getAttribute("aria-label")'), 'Rechercher une intention');
+    assert.equal(evaluate('document.querySelector("[data-composer]").dataset.digest'), before);
+    run('click', '[data-asset="template:activity"]'); run('snapshot', '-i');
+    assert.equal(evaluate('document.querySelector("dialog[open] h2").textContent'), 'Composer Activité');
+    run('press', 'Escape');
+  });
   check('C8-020', () => { assert.equal(evaluate('!!document.querySelector("[data-apply]") && document.querySelector("[data-apply]").getBoundingClientRect().bottom <= innerHeight'), true); });
   const originalDigest = evaluate('document.querySelector("[data-composer]").dataset.digest');
   check('IGT-008', () => { tabTo('document.activeElement.textContent.trim()==="Ajuster" && document.activeElement.closest("[data-control]")?.querySelector("h3").textContent==="Courses"');
@@ -112,9 +130,13 @@ try {
   navigate(`${origin}/?scenario=C`); run('snapshot', '-i');
   for (const [width, height] of [[1920,1080],[1728,900],[1440,900],[1440,760]]) {
     run('set', 'viewport', String(width), String(height));
-    const metrics = evaluate('({width:innerWidth,height:innerHeight,rootHeight:document.querySelector("#root").getBoundingClientRect().height,workspaceHeight:document.querySelector("[data-composer]").getBoundingClientRect().height,hostHeaderHeight:document.querySelector("#root>div>header").getBoundingClientRect().height,boardHeight:document.querySelector("[data-board-scroll]").getBoundingClientRect().height,apply:document.querySelector("[data-apply]").getBoundingClientRect().toJSON(),overflow:document.documentElement.scrollWidth>innerWidth,vertical:document.documentElement.scrollHeight>innerHeight})');
+    const metrics = evaluate('({width:innerWidth,height:innerHeight,rootHeight:document.querySelector("#root").getBoundingClientRect().height,workspaceHeight:document.querySelector("[data-composer]").getBoundingClientRect().height,workspaceWidth:document.querySelector("[data-composer]").getBoundingClientRect().width,hostHeaderHeight:document.querySelector("#root>div>header").getBoundingClientRect().height,boardHeight:document.querySelector("[data-board-scroll]").getBoundingClientRect().height,boardWidth:document.querySelector("[data-board-scroll]").getBoundingClientRect().width,libraryWidth:document.querySelector("[data-composer] aside").getBoundingClientRect().width,hud:document.querySelector("[data-cockpit]").getBoundingClientRect().toJSON(),apply:document.querySelector("[data-apply]").getBoundingClientRect().toJSON(),overflow:document.documentElement.scrollWidth>innerWidth,vertical:document.documentElement.scrollHeight>innerHeight})');
     assert.equal(metrics.overflow, false); assert.equal(metrics.vertical, false); assert.ok(metrics.apply.bottom <= height && metrics.apply.top >= 0);
     assert.ok(metrics.boardHeight > 250); sizes.push(metrics); run('screenshot', path.join(out, `composer-${width}x${height}.png`));
+    assert.ok(metrics.libraryWidth >= 250 && metrics.libraryWidth <= 280);
+    assert.ok(metrics.boardWidth > metrics.workspaceWidth - 576, 'Board must recover the former right cockpit space');
+    assert.ok(metrics.hud.left >= 0 && metrics.hud.right <= width && metrics.hud.bottom <= height);
+    assert.equal(evaluate('(()=>{const el=document.querySelector("[data-apply]"),r=el.getBoundingClientRect();return el.contains(document.elementFromPoint(r.x+r.width/2,r.y+r.height/2))})()'), true);
   }
   passed.push('C8-DESKTOP-HEIGHTS');
   const rootContext = evaluate('document.querySelector("[data-context]").dataset.context');

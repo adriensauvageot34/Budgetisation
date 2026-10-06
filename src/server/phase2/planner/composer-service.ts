@@ -14,6 +14,7 @@ import { publishContextRegistry, resolveContextTemplate } from "./context-regist
 import { mutatePlanSemanticState } from "./semantic-mutations";
 import { acceptPlanBalanceSuggestion, readPlanBalanceSuggestions } from "./balance-assistant";
 import { parseMobilityPricing } from "./mobility-selections";
+import { composerAssetIcon, composerPresentation } from "./composer-presentation";
 
 const field = (key: string, label: string, kind: ComposerField["kind"] = "TEXT", required = false): ComposerField => ({ key, label, kind, required });
 const choice = (key: string, label: string, choices: readonly (readonly [string, string])[]): ComposerField => ({ ...field(key, label, "CHOICE"), choices: choices.map(([value, label]) => ({ value, label })) });
@@ -56,7 +57,8 @@ export async function composerUiModel(deps: PlannerDependencies, household: stri
     naturalPresets: card.capability.naturalPresets.map(p => ({ ...p, label: ({ low: "Repère bas", median: "Repère médian", high: "Repère haut" } as Record<string, string>)[p.label]
       ?? (p.label === "central" ? "Repère médian" : p.label.startsWith("allocation ×") && p.semanticMutation.kind === "SET_STATE" && typeof p.semanticMutation.value.amount === "string"
         ? `Réserver ${new Intl.NumberFormat("fr-FR", { style: "currency", currency: "EUR" }).format(Number(p.semanticMutation.value.amount))}` : p.label) })) } : null });
-  return { ...view, library: { ...view.library, sections: [
+  return { ...view, presentation: composerPresentation(model), library: { ...view.library,
+    searchableAssets: view.library.searchableAssets.map(asset => ({ ...asset, iconKey: composerAssetIcon(asset, model) })), sections: [
     ...groups.map(family => ({ sectionKey: family, assetKeys: templates.filter(t => t.family === family).map(t => `template:${t.templateKey}`) })),
     { sectionKey: "options", assetKeys: view.library.searchableAssets.filter(a => a.kind === "SLOT_OPTION_ASSET").map(a => a.assetKey) },
     { sectionKey: "controls", assetKeys: view.library.searchableAssets.filter(a => ["PLAN_CONTROL", "RESERVATION_CONTROL"].includes(a.kind)).map(a => a.assetKey) }] },
