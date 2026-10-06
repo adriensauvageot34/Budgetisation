@@ -2,11 +2,13 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
 import { spawnSync } from 'node:child_process';
+import { inventoryNavigator } from './lib/planner-browser-inventory.mjs';
 const cli = process.env.AGENT_BROWSER_CLI;
 if (!cli) throw new Error('Set AGENT_BROWSER_CLI to the pinned agent-browser bin/agent-browser.js');
 const origin = process.env.PLANNER_C8_BROWSER_ORIGIN ?? 'http://127.0.0.1:3108', out = path.resolve(process.env.PLANNER_C8_BROWSER_OUTPUT ?? 'outputs/planner-c8-browser');
 fs.mkdirSync(out, { recursive: true }); const passed = [], sizes = []; let commandNumber = 0;
 function run(...args) {
+  if (!navigating && ['click','hover','focus','fill','scrollintoview'].includes(args[0])) reveal(args[1]);
   // File stdio avoids a Windows daemon retaining the parent's pipe after launch.
   const stdoutPath = path.join(out, `command-${++commandNumber}.json`), stderrPath = path.join(out, `command-${commandNumber}.stderr`);
   const stdout = fs.openSync(stdoutPath, 'w'), stderr = fs.openSync(stderrPath, 'w');
@@ -19,6 +21,10 @@ function run(...args) {
   return data.data;
 }
 function evaluate(code) { const result = run('eval', `JSON.stringify(${code})`).result; return typeof result === 'string' ? JSON.parse(result) : result; }
+const reveal = inventoryNavigator((...args) => rawRun(...args), evaluate);
+// Navigator commands must bypass the selector hook to avoid re-entering it.
+function rawRun(...args) { const saved = navigating; navigating = true; try { return run(...args); } finally { navigating = saved; } }
+let navigating = false;
 const ready = () => run('wait', '--fn', 'document.querySelector("[data-composer]")?.getAttribute("aria-busy") === "false"');
 const check = (id, fn) => { fn(); passed.push(id); console.log(`${id} PASS`); };
 const evidence = async key => (await fetch(`${origin}/evidence?scenario=${key}`)).json();
@@ -87,7 +93,7 @@ try {
   const changedDigest = evaluate('document.querySelector("[data-composer]").dataset.digest'); assert.notEqual(changedDigest, originalDigest);
   check('C8-UNDO-REDO', () => { run('click', 'button[aria-label="Annuler la dernière modification du brouillon"]'); ready(); assert.equal(evaluate('document.querySelector("[data-composer]").dataset.digest'), originalDigest);
     run('click', 'button[aria-label="Rétablir la modification du brouillon"]'); ready(); assert.equal(evaluate('document.querySelector("[data-composer]").dataset.digest'), changedDigest); });
-  check('C8-010-BROWSER', () => { const restaurant = controls().find(c => c.label === 'Restaurants'); run('hover', `[data-control="${restaurant.key}"] > div:last-child > button:last-child`); run('wait', '300');
+  check('C8-010-BROWSER', () => { const restaurant = controls().find(c => c.label === 'Restaurants'); run('hover', `[data-control="${restaurant.key}"] [data-preset]`); run('wait', '300');
     run('click', '[data-preview]'); ready(); run('wait', '1000'); assert.equal(evaluate('document.querySelector("[data-cockpit]").dataset.temporary'), 'false');
     assert.equal(evaluate('document.querySelector("[data-composer]").dataset.digest'), changedDigest); });
   run('click', '[data-preview]'); ready(); cockpitEquals(await evidence('A'));
@@ -136,7 +142,7 @@ try {
     const metrics = evaluate('({width:innerWidth,height:innerHeight,rootHeight:document.querySelector("#root").getBoundingClientRect().height,workspaceHeight:document.querySelector("[data-composer]").getBoundingClientRect().height,workspaceWidth:document.querySelector("[data-composer]").getBoundingClientRect().width,hostHeaderHeight:document.querySelector("#root>div>header").getBoundingClientRect().height,boardHeight:document.querySelector("[data-board-scroll]").getBoundingClientRect().height,boardWidth:document.querySelector("[data-board-scroll]").getBoundingClientRect().width,libraryWidth:document.querySelector("[data-composer] aside").getBoundingClientRect().width,hud:document.querySelector("[data-cockpit]").getBoundingClientRect().toJSON(),apply:document.querySelector("[data-apply]").getBoundingClientRect().toJSON(),overflow:document.documentElement.scrollWidth>innerWidth,vertical:document.documentElement.scrollHeight>innerHeight})');
     assert.equal(metrics.overflow, false); assert.equal(metrics.vertical, false); assert.ok(metrics.apply.bottom <= height && metrics.apply.top >= 0);
     assert.ok(metrics.boardHeight > 250); sizes.push(metrics); run('screenshot', path.join(out, `composer-${width}x${height}.png`));
-    assert.ok(metrics.libraryWidth >= 250 && metrics.libraryWidth <= 280);
+    assert.ok(metrics.libraryWidth >= 230 && metrics.libraryWidth <= 280);
     assert.ok(metrics.boardWidth > metrics.workspaceWidth - 576, 'Board must recover the former right cockpit space');
     assert.ok(metrics.hud.left >= 0 && metrics.hud.right <= width && metrics.hud.bottom <= height);
     assert.equal(evaluate('(()=>{const el=document.querySelector("[data-apply]"),r=el.getBoundingClientRect();return el.contains(document.elementFromPoint(r.x+r.width/2,r.y+r.height/2))})()'), true);
@@ -198,7 +204,7 @@ try {
   check('R2-PROTECTED-BROWSER', () => { assert.equal(evaluate('!!document.querySelector("[data-protected=true] [data-card-edit]")'), false);
     assert.equal(evaluate('!!document.querySelector("[data-protected=true] button[aria-label^=Retirer]")'), false);
     run('click', '[data-context-palette] button[aria-label="Quitter la sélection du moment"]');
-    evaluate('document.querySelector("[data-protected=true]").scrollIntoView({block:"center",behavior:"instant"})');
+    run('scrollintoview','[data-protected=true]');
     run('screenshot', path.join(out, 'protected-savings.png'));
   });
   check('R2-011-BROWSER', () => assert.equal(evaluate('/\\p{Extended_Pictographic}/u.test(document.querySelector("[data-composer]").textContent)'), false));

@@ -6,6 +6,7 @@ import { item } from "./lib/planned-actions-harness.mjs";
 const require = createRequire(import.meta.url);
 const { deriveMonthScenario, defaultMonthInputs } = require("../src/server/phase2/month-scenario.ts");
 const { defaultMonthDecisionSettings } = require("../src/domain/phase2/month-decision-contract.ts");
+const { forecastTemporalPolicy } = require("../src/server/phase2/forecast-temporal-policy.ts");
 const { projectMonthDecision } = require("../src/server/phase2/month-decision-projection.ts");
 const { MonthForecastView } = require("../src/app/mois-a-venir/month-forecast-view.tsx");
 const { MonthStory } = require("../src/app/mois-a-venir/month-story.tsx");
@@ -33,9 +34,9 @@ for (const [key, module, amount, context] of [
   assert.equal(category(r, key).projectedMonth.central, category(p, key).projectedMonth.central);
   assert.equal(p.narrative.final.central, r.narrative.final.central, "declaration cannot grow the projection");
   assert.equal(dp.planned, Number(amount)); assert.equal(dp.observed, 0);
-  assert.equal(dr.planned, 0); assert.equal(dr.observed, Number(amount));
+  assert.equal(dr.planned, 0); assert.equal(dr.observed, 0); assert.equal(dr.declared, Number(amount));
   assert.equal(dp.remaining.central, dr.remaining.central);
-  for (const d of [dp, dr]) assert.equal(d.observed + d.planned + d.remaining.central, d.projectedCentral);
+  for (const d of [dp, dr]) assert.equal(d.observed + d.declared + d.planned + d.remaining.central, d.projectedCentral);
   assert.equal(category(r, key).alreadyRealized, "0.00", "declared does not mutate canonical observed facts");
 }
 // Fractional observations, explicit plans and exhausted estimates must remain nonnegative and sum visibly.
@@ -45,7 +46,7 @@ for (const amount of ["0.49", "50.49", "300.49", "500.99"]) {
     currentEconomicEntries: [{ operationId: "fraction", date: "2026-10-01", subcategory: "Courses alimentaires", amount: "0.49", person: null, preciseType: null, merchant: null }] } };
   const scenario = plan("2026-10-01", [p], settings, facts);
   const d = display(scenario, [p]).visible.categoryDisplay.groceries;
-  assert.equal(d.observed + d.planned + d.remaining.central, d.projectedCentral);
+  assert.equal(d.observed + d.declared + d.planned + d.remaining.central, d.projectedCentral);
   assert(d.observed >= 0 && d.planned >= 0 && d.remaining.central >= 0);
 }
 const early = plan("2026-10-01");
@@ -54,12 +55,14 @@ assert(early.narrative.final.central !== null && Number.isFinite(Number(early.na
 assert(!display(early).attention.some(a => a.key === "coverage"));
 assert.equal(display(early).attention.length, 0);
 assert.equal(display(early, [], undefined, [{ ...row, model_version: "obsolete" }]).change.sampleCount, 0);
-assert.equal(display(early, [], undefined, [row]).change.sampleCount, 1);
+// The imported temporal fixture is not comparable to FULL_MONTH_SAFE.
+assert.equal(display(early, [], undefined, [row]).change.sampleCount, 0);
+assert.equal(display(early, [], undefined, [{...row,model_version:forecastTemporalPolicy(early.narrative.prediction.forecastTemporalMode).modelVersion}]).change.sampleCount, 1);
 for (const p of [early, base]) {
   const d = display(p).visible;
   for (const c of [...p.narrative.prediction.essential, ...p.narrative.prediction.optional]) {
     const terms = d.categoryDisplay[c.key];
-    assert.equal(terms.observed + terms.planned + terms.remaining.central, terms.projectedCentral);
+    assert.equal(terms.observed + terms.declared + terms.planned + terms.remaining.central, terms.projectedCentral);
   }
   assert.equal(p.narrative.prediction.essential.reduce((n, c) => n + d.categoryDisplay[c.key].projectedCentral, 0), d.essentialTotal);
   assert.equal(p.narrative.prediction.optional.reduce((n, c) => n + d.categoryDisplay[c.key].projectedCentral, 0), d.optionalTotal);
@@ -82,13 +85,15 @@ const viewProps = { forecast: { ...live, meta: { ...live.meta, computedAt: "2026
   vehicle: null, prices: [], wallets: [], today: "2026-10-01", inputError: false };
 const html = render(React.createElement(MonthForecastView, viewProps));
 assert.equal((html.match(/<h1 /g) ?? []).length, 1);
-assert.match(html, /sticky top-2/); assert.match(html, /\+ Ajouter une dépense/);
+assert.match(html, /class="[^"]*\bsticky\b/); assert.match(html, /\+ Ajouter une dépense/);
 assert.doesNotMatch(html, /id="planned-expense-title"|href="#planned-expense-title"|Ajouter quelque chose à notre mois|Aucun projet|Aucune prévision|Aucune dépense/);
-assert.doesNotMatch(html, /Référence du quotidien nécessaire|Référence des dépenses facultatives|Total central du mois|imports partiels|Pourquoi \?|Tester une dépense|À regarder ensemble|Comment notre projection évolue|Marge de sécurité|À affiner/);
-assert.match(html, /Nos hypothèses/);
+// Unknown wallet stock must retain its uncertainty label even on a priced month.
+assert.doesNotMatch(html, /Référence du quotidien nécessaire|Référence des dépenses facultatives|Total central du mois|imports partiels|Pourquoi \?|Tester une dépense|À regarder ensemble|Comment notre projection évolue|Marge de sécurité/);
+// The existing V2 writer now lives in the lazy Centre; it is not inline at rest.
+assert.match(html, /data-month-control-trigger/);
 const story = html.slice(html.indexOf('id="necessary-title"'), html.indexOf('id="complete-month"'));
 assert.doesNotMatch(story, /name="assumptionMode"/, "assumptions moved to settings");
-for (const text of ["Pas de restaurant supplémentaire", "Courses : 100 € de moins", "Tabac &amp; vape : 20 % de moins"]) assert(html.includes(text));
+assert.doesNotMatch(story, /name="assumptionAmount"/, "legacy inputs remain in the Centre writer");
 const grocery = expense("groceries", "groceries", "50.00");
 const card = { ...grocery, grossCost: "50.00", updatedAt: "2026-10-01T00:00:00Z", needsRealityConfirmation: false };
 const withProject = render(React.createElement(MonthForecastView, { ...viewProps, plannedExpenses: [card],
@@ -96,8 +101,11 @@ const withProject = render(React.createElement(MonthForecastView, { ...viewProps
 assert.match(withProject, /id="planned-expense-title"/); assert.match(withProject, /href="#planned-expense-title"/);
 assert.equal((withProject.match(/<h2[^>]*>Nos projets<\/h2>/g) ?? []).length, 1);
 assert.doesNotMatch(withProject, /À venir \/ prévues|Réalisées ce mois-ci/);
-const historic = render(React.createElement(MonthStory, { ...props, plan: early, today: "2026-10-01", settings, memory: [row] }));
-assert.match(historic, /Comment notre projection évolue/);
+const historic = render(React.createElement(MonthStory, { ...props, plan: early, today: "2026-10-01", settings,
+  memory: [{...row,model_version:forecastTemporalPolicy(early.narrative.prediction.forecastTemporalMode).modelVersion}] }));
+// History is now reached through the Centre; the pure read-model retains it.
+assert.equal(display(early,[],undefined,[{...row,model_version:forecastTemporalPolicy(early.narrative.prediction.forecastTemporalMode).modelVersion}]).change.sampleCount,1);
+assert.match(historic, /data-month-story/);
 const shell = render(React.createElement(PlannedBuilderFrame, { immersive: true, onDismiss() {}, label: "Préparer une dépense" }, React.createElement("button", null, "Fermer")));
 assert.match(shell, /role="dialog"/); assert.match(shell, /aria-modal="true"/);
 console.log("PASS month simplification: category absorption/declaration/rounding, early estimates, conditional sections, one header, CTA/overlay markup, settings, goal and legacy buffer isolation, comparable memory; V5 modes and simulations rerun.");

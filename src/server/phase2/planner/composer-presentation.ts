@@ -124,6 +124,8 @@ export function composerPresentation(model: MonthComposerReadModel): ComposerPre
   const unresolvedRefs = [...controls.filter(c => !c.value.owned && (c.knowledge === "UNKNOWN" || c.knowledge === "PARTIAL")).map(c => c.targetRef),
     ...roots.filter(c => c.knowledge === "UNKNOWN" || c.knowledge === "PARTIAL").map(c => c.contextOccurrenceId)];
   const dragSources: Record<string, ComposerDragSource> = {};
+  const availableReservationRefs = model.board.savings.filter(c => !c.value.owned && typeof c.value.amount === "string" && new Big(c.value.amount).eq(0)
+    && c.capability?.actions.includes("SET_SAVINGS_ALLOCATION") && c.capability.flexibility !== "LOCKED").map(c => c.targetRef);
   for (const asset of model.library.searchableAssets) {
     if (asset.kind !== "CONTEXT_ASSET" && asset.kind !== "SLOT_OPTION_ASSET") continue;
     dragSources[asset.assetKey] = { sourceKey: asset.assetKey, assetKey: asset.assetKey, label: asset.label,
@@ -154,6 +156,12 @@ export function composerPresentation(model: MonthComposerReadModel): ComposerPre
     dragSources[key] = { sourceKey: key, assetKey: key, label: card.label, iconKey: objects[card.targetRef].iconKey,
       economicAmount: typeof card.value.amount === "string" ? card.value.amount : null, protected: true };
   }
-  return { elementCount: controls.length + roots.length, unresolvedCount: unresolvedRefs.length, unresolvedRefs, dragSources,
+  for (const ref of availableReservationRefs) {
+    const card = model.board.savings.find(c => c.targetRef === ref)!, key = `control:${ref}`;
+    // A published C3 allocation capability opens its existing editor. Dropping never invents an amount or writes an allocation.
+    dragSources[key] = { sourceKey: key, assetKey: key, label: card.label, iconKey: objects[ref].iconKey, economicAmount: null, protected: false,
+      editorTargetRef: ref, editorDropTarget: { kind: "BOARD_ZONE" } };
+  }
+  return { elementCount: controls.length + roots.length - availableReservationRefs.length, unresolvedCount: unresolvedRefs.length, unresolvedRefs, dragSources, availableReservationRefs,
     goalMargin, objects, sockets };
 }

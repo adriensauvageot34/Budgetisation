@@ -153,7 +153,11 @@ assert.equal(moved.id, restored.id); assert.equal(moved.targetMonth, "2026-11");
 assert(facts.monthReads.includes("2026-11"), "destination forecast re-resolved from its own month");
 assert(!(await state()).rows.some(row => row.id === moved.id));
 assert.equal((await state("2026-11")).rows.length, 1); assert.equal(monthShift.scenario.economicPlan.plannedFunding.swile.resource, "20.00");
-assert.equal(monthShift.scenario.economicPlan.plannedFunding.swile.shortfall, "47.00");
+// Monthly flow is not current wallet stock. The dated €67 allocation exceeds
+// the existing shared €25/day capacity; unknown stock is still not certified.
+assert.equal(monthShift.scenario.economicPlan.plannedFunding.swile.shortfall, "42.00");
+assert.equal(monthShift.scenario.economicPlan.plannedFunding.swile.availableAfter, null);
+assert.equal(monthShift.scenario.economicPlan.plannedFunding.swile.fundingToComplete, "67.00");
 assert.equal(projectMonthCalendar([], (await state("2026-11")).cards).entries[0].date, "2026-11-05");
 assert.equal((await state()).plan.plannedFunding.swile.reserved, "0.00");
 assert.notDeepEqual(h.forecastFor("2026-11").referencePlan.flexibleTotal, h.forecast.referencePlan.flexibleTotal,

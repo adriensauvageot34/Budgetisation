@@ -1,4 +1,4 @@
-import type { ComponentType } from "react";
+import { memo, type ComponentType } from "react";
 import type { ClayIconProps } from "./clay-frame";
 import { GroceriesIcon } from "./icons/groceries";
 import { TobaccoIcon } from "./icons/tobacco";
@@ -47,7 +47,7 @@ const icons: Readonly<Record<string, ComponentType<ClayIconProps>>> = {
   food: MealIcon, delivery: MealIcon, "fast-food": MealIcon,
 };
 const sizes = { CARD: 54, SATELLITE: 30, PALETTE: 34 } as const;
-export function PlannerIcon({ iconKey, scale = "CARD", className }: { iconKey: string; scale?: keyof typeof sizes; className?: string }) {
+export const PlannerIcon = memo(function PlannerIcon({ iconKey, scale = "CARD", className }: { iconKey: string; scale?: keyof typeof sizes; className?: string }) {
   const Icon = icons[iconKey] ?? ActivityIcon;
   return <span data-planner-icon={iconKey} data-icon-scale={scale} className={className} aria-hidden="true"><Icon size={sizes[scale]} /></span>;
-}
+});

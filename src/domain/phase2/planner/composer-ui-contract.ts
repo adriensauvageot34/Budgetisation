@@ -38,6 +38,7 @@ export type ComposerPresentation = Readonly<{
   sockets: Readonly<Record<string, ComposerSocketPresentation>>;
   unresolvedRefs: readonly string[];
   dragSources: Readonly<Record<string, ComposerDragSource>>;
+  availableReservationRefs: readonly string[];
 }>;
 /** Presentation of an existing capability, not a new semantic mutation owner. */
 export type ComposerDragSource = Readonly<{
@@ -45,6 +46,7 @@ export type ComposerDragSource = Readonly<{
   selection?: ComponentSelectionV1;
   sourceSocket?: Readonly<{ contextOccurrenceId: string; slotKey: string; selectionId: string }>;
   removeOperation?: ComposerOperation; protected: boolean;
+  editorTargetRef?: string; editorDropTarget?: DropTarget;
   pack?: readonly Readonly<{ label: string; iconKey: string; provenance: string }>[];
 }>;
 /** Excludes Baseline snapshots, canonical evidence and financial adapter entries. */

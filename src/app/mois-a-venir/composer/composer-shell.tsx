@@ -45,7 +45,8 @@ export function ComposerShell({ initialModel, transport }: { initialModel: Compo
   const clearHover = () => { if (timer.current) clearTimeout(timer.current); if (!busyRef.current) gate.current.invalidate(); setHoverModel(null); setHoverPending(false); setInteractionImpact(null); };
   useEffect(() => () => { if (timer.current) clearTimeout(timer.current); if (motionTimer.current) clearTimeout(motionTimer.current); gate.current.invalidate(); }, []);
   useEffect(() => {
-    const escape = (event: KeyboardEvent) => { if (event.key === "Escape") { setCompletenessFocus(false); clearHover(); grab.current = null; setGrabbed(null); setSelected(null); setOverTarget(null); overRef.current = null; } };
+    const escape = (event: KeyboardEvent) => { if (event.key === "Escape") { setCompletenessFocus(false);
+      if (!document.querySelector("[popover]:popover-open,dialog[open]")) setFocusedContext(null); endDrag(); } };
     window.addEventListener("keydown", escape); return () => window.removeEventListener("keydown", escape);
   }, []);
   useEffect(() => {
@@ -143,6 +144,10 @@ export function ComposerShell({ initialModel, transport }: { initialModel: Compo
     previewGesture(target ? dragOperation(target) : null);
   }
   function place(target: DropTarget) {
+    const source = grab.current;
+    if (source?.editorTargetRef && source.editorDropTarget && sameTarget(source.editorDropTarget, target)) {
+      const asset = model.library.searchableAssets.find(a => a.assetKey === source.assetKey); endDrag(); if (asset) choose(asset); return;
+    }
     const operation = dragOperation(target);
     if (!operation) { if (grab.current?.protected) animate("recoil", grab.current.sourceKey); endDrag(); return; }
     nextMotionTarget.current = target.contextOccurrenceId ?? (operation.kind === "DROP" ? operation.identity : null);
@@ -179,7 +184,7 @@ export function ComposerShell({ initialModel, transport }: { initialModel: Compo
     clearHover();
     if (["PLAN_CONTROL", "RESERVATION_CONTROL"].includes(asset.kind)) {
       const card = [...model.board.baselineControls, ...model.board.discretionaryControls, ...model.board.savings].find(c => c.targetRef === asset.capabilityRef);
-      if (card) document.querySelector<HTMLElement>(`[data-control="${CSS.escape(card.targetRef)}"]`)?.scrollIntoView({ block: "center", behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "instant" : "smooth" });
+      if (card) setFocusedContext(card.targetRef);
       if (card?.capability?.actions.length && card.capability.flexibility !== "LOCKED") edit(card);
       return;
     }
@@ -230,7 +235,7 @@ export function ComposerShell({ initialModel, transport }: { initialModel: Compo
   <div className={styles.workspace} data-composer data-digest={model.board.draft.semanticStateDigest} data-dragging={!!grabbed} data-comparing={!!comparison} data-motion={motion} data-revision={model.activeRevisionNumber} aria-busy={busy}
     onDragOverCapture={e => { if (grab.current && e.target instanceof Element && !e.target.closest("[data-board-drop],[data-trash]")) { over(null); if (assistantOver.current) { assistantOver.current = null; clearHover(); } } }}>
     <header className={styles.workspaceHeader}><div className={styles.headerIdentity}><a href={`/mois-a-venir?month=${model.semanticState.targetMonth}&control=center`} className={styles.backLink}><ArrowLeft size={14} /> Centre de contrôle</a>
-      <h1>Composer <span>{monthLabel(model.semanticState.targetMonth)}</span></h1><div className={styles.headerMeta}><span className={styles.draftStatus}>{model.board.draft.dirty || !model.activeRevisionNumber ? "Brouillon" : `Révision ${model.activeRevisionNumber}`}</span>
+      <h1>Composer <span>{monthLabel(model.semanticState.targetMonth)}</span></h1><div className={styles.headerMeta}>{comparison && <span className={styles.variantMarker} data-variant-marker>VARIANTE</span>}<span className={styles.draftStatus}>{model.board.draft.dirty || !model.activeRevisionNumber ? "Brouillon" : `Révision ${model.activeRevisionNumber}`}</span>
         <span data-object-count>{model.presentation.elementCount} éléments · <button className={styles.completenessToggle} data-completeness-toggle aria-pressed={completenessFocus} disabled={!model.presentation.unresolvedCount} onClick={() => setCompletenessFocus(v => !v)}>{model.presentation.unresolvedCount} à préciser</button></span>
         {model.board.cockpit.projectionCompleteness === "COMPLETE" && model.board.cockpit.applyReadiness === "READY" && <span data-plan-ready>Plan prêt ✓</span>}</div></div>
       <div className={styles.hudContainer} data-compare-header>{comparison && <div className={styles.compareCurrent}><span>Plan actuel</span><strong>{money(comparison.model.board.cockpit.plan.economicMonthEndRemainder)}</strong></div>}
@@ -245,7 +250,7 @@ export function ComposerShell({ initialModel, transport }: { initialModel: Compo
       <ComposerBoard model={model} busy={busy} selected={selected} focused={focusedContext} focus={setFocusedContext} edit={edit} editContext={editContext} choose={choose} drag={setSelected} drop={drop} request={operation => void run(operation)} hover={hover}
         add={() => { clearHover(); setLibraryOpenToken(n => n + 1); }} preview={() => void run({ kind: "READ" }, "none")}
         balance={() => { clearHover(); setBalanceOpen(v => !v); if (!balanceOpen) void run({ kind: "SUGGESTIONS" }, "none"); }} details={() => { clearHover(); setProjectionOpen(true); }} /></div>
-    {balanceOpen && <section className={styles.suggestionHand} data-suggestion-hand aria-label="Pistes pour votre mois"><header><span><Sparkles size={14} /> Quelques façons de retrouver de la marge</span><button className={styles.iconButton} aria-label="Fermer les suggestions" onClick={() => setBalanceOpen(false)}><X size={16} /></button></header>
+    {balanceOpen && (!suggestions || suggestions.candidates.length > 0) && <section className={styles.suggestionHand} data-suggestion-hand aria-label="Pistes pour votre mois"><header><span><Sparkles size={14} /> Quelques façons de retrouver de la marge</span><button className={styles.iconButton} aria-label="Fermer les suggestions" onClick={() => setBalanceOpen(false)}><X size={16} /></button></header>
       {suggestions ? <BalanceLayer suggestions={suggestions} busy={busy} accept={candidateId => void run({ kind: "ACCEPT", candidateSetDigest: suggestions.candidateSetDigest, candidateId })} /> : <p role="status">Le serveur resimule les pistes…</p>}</section>}
     <div ref={dragImage} className={styles.dragPreview} data-drag-preview aria-hidden="true">{[...new Set(Object.values(model.presentation.dragSources).map(s => s.iconKey))].map(key => <span key={key} data-drag-icon={key} style={{ display: grabbed?.iconKey === key ? "inline-flex" : "none" }}><PlannerIcon iconKey={key} scale="SATELLITE" /></span>)}<span><b data-drag-label>{grabbed?.label}</b><small data-drag-amount>{money(grabbed?.economicAmount ?? null)}</small></span></div>
     <div className={styles.statusBar} role="status" aria-live="polite"><Sparkles size={13} /> {message}</div>

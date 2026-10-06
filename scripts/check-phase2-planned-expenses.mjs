@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import "./lib/phase2-ts-loader.mjs";
 import { expenseDraft } from "./lib/planned-expense-memory-client.mjs";
 import { randomUUID } from "node:crypto";
 import { createRequire } from "node:module";

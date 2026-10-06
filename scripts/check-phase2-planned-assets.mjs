@@ -58,13 +58,14 @@ assert.throws(() => parsePlannedExpenseDraft(draft("food", "restaurant", [
   line("restaurant:wine_glass", "1", "15.00", [{ source: "SWILE", amount: "15.00" }]),
 ]), month), /FUNDING_INELIGIBLE/);
 
-// ASSET-06: a reservation over the planned pocket is an explicit financing shortfall.
-const swileResource = new Big(plan([]).plannedFunding.swile.resource);
-const oversized = swileResource.plus(35).toFixed(2);
-const shortagePlan = plan([saved([line("restaurant:main", "1", oversized,
-  [{ source: "SWILE", amount: oversized }])])]);
+// ASSET-06: flow is not stock. A dated allocation above the shared daily
+// capacity proves a shortage, while unknown stock leaves all funding unconfirmed.
+const oversized = "60.00";
+const shortagePlan = plan([{...saved([line("restaurant:main", "1", oversized,
+  [{ source: "SWILE", amount: oversized }])]), plannedDate:"2026-10-20"}]);
 assert.equal(shortagePlan.plannedFunding.swile.shortfall, "35.00");
-assert.equal(shortagePlan.plannedFunding.fundingToComplete, "35.00");
+assert.equal(shortagePlan.plannedFunding.fundingToComplete, "60.00");
+assert.equal(shortagePlan.plannedFunding.swile.availableAfter, null);
 assert.equal(shortagePlan.plannedFunding.swile.resource, plan([]).plannedFunding.swile.resource);
 
 const place = (name, usage, subtype, relationships = [], privatePlace = false) => ({

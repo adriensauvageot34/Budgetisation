@@ -182,7 +182,7 @@
 .card:not([data-variant=SAVINGS]) .gaugeTrack span { background:#bbadcd; }
 .card:not([data-variant=SAVINGS]) .reservationGauge small { color:#9787a3; }
 .atomicPopover { position:fixed; inset:auto; margin:0; width:290px; max-width:calc(100vw - 24px); max-height:calc(100dvh - 24px); overflow-y:auto; padding:15px; border:1px solid #d9cce4; border-radius:17px; background:#fffcff; color:var(--ink); box-shadow:0 12px 36px #44345428; z-index:20; }
-.atomicPopover header { display:flex; align-items:start; justify-content:space-between; gap:8px; }
+.atomicPopover>header { display:flex; align-items:start; justify-content:space-between; gap:8px; }
 .atomicPopover h4 { margin:3px 0 9px; font-size:12px; line-height:1.5; }
 .popoverAmount { font-size:14px; font-weight:650; margin:5px 0 9px; }
 .popoverNote { font-size:10px; color:#94839e; line-height:1.6; margin:7px 0; }
@@ -261,6 +261,95 @@
 @keyframes equip-undo { from { opacity:.65; transform:translateY(3px) scale(.98); } to { opacity:1; transform:translateY(0) scale(1); } }
 @keyframes protected-recoil { 50% { transform:translateY(-3px) scale(.985); } }
 @keyframes trash-in { from { opacity:0; transform:translate(-50%,12px); } to { opacity:1; transform:translate(-50%,0); } }
+/* R4 tokens: pearl/ivory material, top-left light, soft violet focus. Status colors describe knowledge, never moral value. */
+.workspace { --clay-ivory:#fffdf8; --clay-pearl:#f5f1f6; --clay-shadow:#59436512; --clay-focus:#a591bc; --clay-savings:#eef1e7; --motion-plateau:210ms; }
+.workspaceHeader { grid-template-columns:minmax(290px,1fr) minmax(430px,1.3fr) auto; gap:18px; padding-bottom:17px; }
+.financialHud { height:94px; display:flex; flex-direction:column; justify-content:center; padding:11px 15px; }
+.hudMain strong,.compareCurrent strong,.cardValue { font-variant-numeric:tabular-nums; font-feature-settings:"tnum"; }
+.hudMain strong { min-width:8ch; font-size:26px; }
+.hudImpact { font-size:11px; }
+.hudMain strong>small { font-size:11px; }
+.compareCurrent { flex:0 0 116px; padding:8px 11px; }
+.compareCurrent strong { font-size:17px; }
+.variantMarker { border:1px solid #d3c4e1; color:#78618e; background:#eee6f6; border-radius:6px; padding:3px 6px; font-size:8px; letter-spacing:1px; }
+.columns { grid-template-columns:244px minmax(0,1fr); gap:20px; }
+.panelHeader { padding:18px 17px 10px; }
+.panelHeader h2 { font-size:14px; }
+.library .helper { font-size:10px; margin:0 17px 11px; }
+.search { margin:0 14px 10px; padding:9px 10px; }
+.tabs { margin:0 12px 4px; }
+.assetGroup { padding-top:12px; }
+.assetGroup h3 { margin-bottom:7px; letter-spacing:1.05px; }
+.asset { padding:7px 8px; margin-bottom:6px; border-radius:12px; }
+.asset>span:nth-child(2) { font-size:11px; }
+.asset small { font-size:8px; margin-top:3px; }
+.libraryFooter { padding:11px 17px; font-size:9px; }
+.boardHeader { padding:15px 18px 12px; }
+.boardHeader h2 { font-size:16px; margin-top:4px; }
+.boardEyebrow { font-size:9px; letter-spacing:1.3px; }
+.boardTools { max-width:none; gap:5px 10px; }
+.addInventory { display:flex; align-items:center; gap:5px; border:1px solid #dacde5; border-radius:9px; color:#7e668f; padding:7px 9px; background:#fcf8ff; font-size:10px!important; }
+.carouselViewport { position:relative; min-height:0; flex:1; overflow:hidden; }
+.plateauTrack { display:flex; width:100%; height:100%; transition:transform var(--motion-plateau) ease-out; }
+.plateau { flex:0 0 100%; width:100%; height:100%; min-width:0; overflow-y:auto; overflow-x:hidden; padding:12px 18px; overscroll-behavior:contain; scrollbar-gutter:stable; }
+.mosaic { gap:13px; }
+.inventoryCell { min-width:0; }
+.inventoryCell>.card,.inventoryCell>.contextCard { width:100%; grid-column:auto; }
+.card { min-height:166px; padding:11px 13px; border-radius:20px; background:var(--clay-ivory); box-shadow:0 4px 12px var(--clay-shadow),inset 0 1px #fff; }
+.card[data-variant=SIMPLE],.card[data-variant=SAVINGS] { min-height:166px; }
+.card[data-focused=true] { background:#f6f0fb!important; border-color:var(--clay-focus)!important; box-shadow:0 0 0 3px #d9c8e63d,0 5px 12px var(--clay-shadow); }
+.cardTop { min-height:19px; }
+.cardUtility { display:flex; align-items:center; gap:2px; color:#92859f; }
+.cardUtility>svg { margin:0 5px; }
+.cardUtility button { padding:3px; }
+.objectIcon { top:33px; right:11px; }
+.card h3 { font-size:12px; margin:12px 48px 5px 0; line-height:1.35; }
+.cardValue { font-size:21px; letter-spacing:-.5px; line-height:1.3; }
+.card[data-variant=SIMPLE] .cardValue { font-size:21px; }
+.occurrenceStack { margin-top:7px; }
+.occurrenceStack>span { width:21px; height:21px; }
+.compactEdit { display:inline-flex; align-items:center; gap:4px; border:0; border-radius:7px; background:#f3edf7; color:#8b759a; font-size:9px!important; padding:5px 7px; margin-top:8px; }
+.reservationGauge { margin-top:12px; }
+.gaugeTrack { height:5px; }
+.reservationLabel { display:block; margin-top:9px; font-size:9px; color:#7d896a; }
+.savingsInline { display:flex; align-items:center; gap:5px; margin-top:10px; width:128px; padding:3px 4px 3px 7px; border:1px solid #ced8c0; border-radius:8px; background:#fbfdf7; color:#7d886d; }
+.savingsInline input { border:0; background:transparent; min-width:0; width:78px; color:#677857; font-size:10px; font-variant-numeric:tabular-nums; outline:0; }
+.savingsInline span { font-size:10px; }
+.savingsInline button { display:flex; border:0; padding:3px; border-radius:5px; color:#748764; background:#e9efdf; }
+.contextCard { min-height:242px; padding:11px; background:#fffbff; }
+.contextOrbit { grid-template-columns:42px minmax(0,1fr) 42px; grid-template-rows:minmax(40px,auto) minmax(110px,auto) minmax(40px,auto); }
+.contextHeader h3 { font-size:13px; }
+.contextTools { margin-top:2px; }
+.contextTools button { padding:3px; }
+.externalNote { margin:4px 0 0; }
+.satellite { width:40px; height:40px; }
+.satellite[data-empty=true] { opacity:.27; }
+.contextCard[data-compatible=true] .satellite[data-empty=true],.contextCard[data-focused=true] .satellite[data-empty=true] { opacity:.8; }
+.paletteDock { flex:0 0 104px; height:104px; min-width:0; border-top:1px solid #e2d9e9; background:#f7f3fb; overflow:hidden; }
+.contextPalette { height:100%; border:0; padding:10px 16px 8px; }
+.contextPalette header p { display:none; }
+.contextPalette h3 { font-size:11px; }
+.paletteOptions { max-height:68px; padding-top:3px; padding-bottom:5px; }
+.paletteGroup { padding-top:14px; }
+.paletteGroup button { padding:3px 7px 3px 3px; font-size:9px; }
+.paletteHint { display:flex; align-items:center; justify-content:center; margin:0 auto; height:100%; max-width:480px; padding:16px; text-align:center; color:#a294ad; font-size:10px; line-height:1.7; }
+.plateauNavigation { flex:0 0 32px; display:flex; align-items:center; justify-content:center; gap:8px; min-width:0; border-top:1px solid #e6dfeb; color:#96849f; }
+.plateauNavigation>span { font-size:10px; min-width:67px; font-variant-numeric:tabular-nums; }
+.plateauNavigation small { color:#b0a1b9; }
+.plateauNavigation>div { display:flex; gap:1px; max-width:45%; overflow-x:auto; }
+.plateauNavigation [data-page-index] { display:flex; align-items:center; justify-content:center; flex-shrink:0; padding:6px; width:19px; height:26px; border:0; background:transparent; border-radius:6px; }
+.plateauNavigation i { width:6px; height:6px; border:1px solid #c9b9d6; border-radius:50%; background:transparent; }
+.plateauNavigation [aria-current=page] i { background:#aa93c0; border-color:#aa93c0; }
+.pageEdge { position:absolute; z-index:4; top:0; bottom:0; width:28px; display:flex; align-items:center; justify-content:center; color:#a18db4; background:linear-gradient(90deg,#e5d7f160,#e5d7f100); }
+.pageEdge[data-board-edge=previous] { left:0; }
+.pageEdge[data-board-edge=next] { right:0; background:linear-gradient(90deg,#e5d7f100,#e5d7f160); }
+.pageEdge[data-available=false] { opacity:.2; pointer-events:none; }
+.packGhost { position:absolute; z-index:3; bottom:16px; right:35px; width:255px; padding:18px; }
+.trash { bottom:151px; }
+.suggestionHand { left:264px; bottom:151px; padding:10px 14px; }
+.suggestionCard { min-width:190px; padding:10px 12px; }
+.mosaic[data-completeness-focus=true]>.inventoryCell:not(:has(>[data-unresolved=true])) { opacity:.45; }
+.mosaic[data-completeness-focus=true]>.inventoryCell>[data-unresolved=true] { box-shadow:0 0 0 2px #d2b78566; }
 @media (prefers-reduced-motion: reduce) {
   .workspace *, .workspace *::before, .workspace *::after { transition:none!important; animation:none!important; scroll-behavior:auto!important; }
 }

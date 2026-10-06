@@ -2,12 +2,15 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
 import { spawnSync } from 'node:child_process';
+import { inventoryNavigator } from './lib/planner-browser-inventory.mjs';
 const cli=process.env.AGENT_BROWSER_CLI,origin=process.env.PLANNER_C8_BROWSER_ORIGIN??'http://127.0.0.1:3115',out=path.resolve(process.env.PLANNER_C8_BROWSER_OUTPUT??'outputs/planner-r3-browser');
 if(!cli)throw new Error('AGENT_BROWSER_CLI required');fs.mkdirSync(out,{recursive:true});let number=0;const passed=[];
-function run(...args){const filename=path.join(out,`r3-command-${++number}.json`),stderr=path.join(out,`r3-command-${number}.stderr`),a=fs.openSync(filename,'w'),b=fs.openSync(stderr,'w');let result;
+function run(...args){if(!navigating&&['click','focus','hover','fill','scrollintoview'].includes(args[0]))reveal(args[1]);const filename=path.join(out,`r3-command-${++number}.json`),stderr=path.join(out,`r3-command-${number}.stderr`),a=fs.openSync(filename,'w'),b=fs.openSync(stderr,'w');let result;
   try{result=spawnSync(process.execPath,[cli,'--session','planner-r3-smoke','--json',...args],{stdio:['ignore',a,b],windowsHide:true,timeout:60000});}finally{fs.closeSync(a);fs.closeSync(b);}
   if(result.error)throw result.error;const data=JSON.parse(fs.readFileSync(filename,'utf8'));assert.equal(data.success,true,`${args.join(' ')}: ${JSON.stringify(data)}`);return data.data;}
 const evaluate=code=>{const value=run('eval',`JSON.stringify(${code})`).result;return typeof value==='string'?JSON.parse(value):value;};
+let navigating=false;
+const reveal=inventoryNavigator((...args)=>{navigating=true;try{return run(...args);}finally{navigating=false;}},evaluate);
 const ready=()=>run('wait','--fn','document.querySelector("[data-composer]")?.getAttribute("aria-busy")==="false"');
 const digest=()=>evaluate('document.querySelector("[data-composer]").dataset.digest');
 const check=(id,fn)=>{fn();passed.push(id);console.log(`${id} PASS`);};
@@ -15,7 +18,7 @@ const evidence=async scenario=>(await fetch(`${origin}/evidence?scenario=${scena
 const screenshot=name=>run('screenshot',path.join(out,`${name}.png`));
 function navigate(scenario,extra=''){run('close');run('open',`${origin}/?scenario=${scenario}${extra}`);run('set','viewport','1440','900');run('wait','[data-composer]');ready();run('snapshot','-i');}
 function box(selector){return evaluate(`document.querySelector(${JSON.stringify(selector)}).getBoundingClientRect().toJSON()`);}
-function move(selector){const r=box(selector);run('mouse','move',String(Math.round(r.x+r.width/2)),String(Math.round(r.y+r.height/2)));run('mouse','move',String(Math.round(r.x+r.width/2+1)),String(Math.round(r.y+r.height/2)));}
+function move(selector){reveal(selector);const r=box(selector);run('mouse','move',String(Math.round(r.x+r.width/2)),String(Math.round(r.y+r.height/2)));run('mouse','move',String(Math.round(r.x+r.width/2+1)),String(Math.round(r.y+r.height/2)));}
 function begin(selector){run('scrollintoview',selector);move(selector);run('mouse','down');const r=box(selector);run('mouse','move',String(Math.round(r.x+r.width/2+9)),String(Math.round(r.y+r.height/2-5)));run('mouse','move',String(Math.round(r.x+r.width/2+18)),String(Math.round(r.y+r.height/2-3)));
   run('wait','--fn','document.querySelector("[data-composer]").dataset.dragging==="true"');}
 const release=()=>{run('mouse','up');ready();};
