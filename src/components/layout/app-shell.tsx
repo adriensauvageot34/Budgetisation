@@ -19,13 +19,14 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const runtime = useProductRuntime();
   const historyV2 = /^\/historique\/\d{4}-\d{2}$/.test(pathname);
   const plannedMonth = pathname === "/mois-a-venir";
+  const composer = pathname === "/mois-a-venir/composer";
 
   if (pathname === "/connexion" || pathname === "/acces-refuse") {
     return children;
   }
 
   return (
-    <div data-planned-shell={plannedMonth ? "" : undefined} className={plannedMonth ? scene.shell : "min-h-screen"}>
+    <div data-planned-shell={plannedMonth ? "" : undefined} className={composer ? "flex h-dvh flex-col overflow-hidden" : plannedMonth ? scene.shell : "min-h-screen"}>
       {plannedMonth && <div data-planned-background className={scene.background} aria-hidden="true" />}
       <header data-planned-header={plannedMonth ? "" : undefined} className={plannedMonth ? scene.header : "border-b border-[var(--color-border)] bg-white"}>
         <div className="mx-auto flex max-w-6xl flex-wrap items-center gap-4 px-[var(--space-page)] py-4">
@@ -69,7 +70,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
       <main
         ref={runtime.backgroundRootRef}
-        className={historyV2
+        className={composer ? "min-h-0 flex-1 px-6 py-4" : historyV2
           ? "min-h-[calc(100vh-73px)] py-6"
           : pathname === "/mois-a-venir"
             ? "mx-auto min-h-[calc(100vh-73px)] max-w-[1360px] px-[var(--space-page)] py-8"

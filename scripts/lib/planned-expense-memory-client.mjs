@@ -5,6 +5,13 @@ import assert from "node:assert/strict";
 export function plannedExpenseMemoryClient(rows = [], persons = []) {
   const writes = [];
   const client = { rows, persons, writes, beforeUpdate: null, from(table) {
+    // V2 fixtures explicitly have no Plan. This authority permits scoped reads only.
+    if (table === "phase2_month_plans") {
+      const filters = [];
+      return { select() { return this; }, eq(key, value) { filters.push([key, value]); return this; },
+        maybeSingle() { assert.deepEqual(filters.map(([key]) => key), ["household_id", "target_month"]);
+          return Promise.resolve({ data: null, error: null }); } };
+    }
     assert(["phase2_planned_expenses", "persons"].includes(table), `unexpected authority: ${table}`);
     let operation = "read", payload;
     const filters = [];

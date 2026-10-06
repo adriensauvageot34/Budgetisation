@@ -46,7 +46,7 @@ const h = planningHarness(), originalFrom = h.client.from.bind(h.client);
 h.facts.inputs["2026-10"] = structuredClone(current);
 h.client.from = table => {
   touched.push(table);
-  assert(["phase2_month_inputs", "phase2_planned_expenses", "persons"].includes(table), `Historical authority reached: ${table}`);
+  assert(["phase2_month_inputs", "phase2_planned_expenses", "persons", "phase2_month_plans"].includes(table), `Historical authority reached: ${table}`);
   if (table !== "phase2_month_inputs") return originalFrom(table);
   const filters = {};
   return { select() { return this; }, eq(key, value) { filters[key] = value; return this; },
@@ -152,7 +152,7 @@ await test("CC-076", () => assert(!ui.includes("Probable ce mois") && !panels.in
 await test("CC-077", () => assert(!ui.includes("contextualEffect") && !source("server/phase2/month-control-center.ts").includes("contextualEffect")), "STATIC");
 await test("CC-078", () => { const p = wb([restaurant]); assert.deepEqual(p.preview.after, simulate(base, { operations: [restaurant] }).view.after); assert(!source("server/phase2/month-control-center.ts").includes("referenceQuantile(")); assert.equal(typeof p.model.reliability.calibrationAvailable, "boolean"); });
 await test("CC-079", () => assert(!source("server/phase2/month-control-center.ts").includes("deriveMobility") && !ui.includes("routeSegments")), "STATIC");
-await test("CC-080", () => { assert(touched.every(table => ["phase2_month_inputs", "phase2_planned_expenses", "persons"].includes(table))); assert.equal(h.client.writes.length, 0); assert(!writes.some(row => row.table !== "phase2_month_inputs")); });
+await test("CC-080", () => { assert(touched.every(table => ["phase2_month_inputs", "phase2_planned_expenses", "persons", "phase2_month_plans"].includes(table))); assert.equal(h.client.writes.length, 0); assert(!writes.some(row => row.table !== "phase2_month_inputs")); });
 await test("CC-081", () => { const { monthChoiceDigest } = require("@/server/phase2/month-choices.ts"); const timestampOnly = { ...base, forecast: { ...base.forecast, meta: { ...base.forecast.meta, computedAt: "2026-10-18T23:59:59Z" } } }; assert.equal(monthChoiceDigest(base), monthChoiceDigest(timestampOnly)); assert.notEqual(monthChoiceDigest(base), monthChoiceDigest({ ...base, forecast: { ...base.forecast, meta: { ...base.forecast.meta, sourceRevision: 2 } } })); });
 await test("CC-082", () => { const helper = source("server/phase2/month-planning-read.ts"); assert(helper.includes("export async function readPlanningMonthForecast")); assert(source("app/mois-a-venir/page.tsx").includes("await readPlanningMonthForecast")); assert(source("app/mois-a-venir/actions.ts").includes("await readPlanningMonthForecast")); assert(helper.includes('error.message !== "FORECAST_ACTIVE_MONTH_SNAPSHOT_MISSING"')); }, "STATIC");
 await test("CC-083", async () => {

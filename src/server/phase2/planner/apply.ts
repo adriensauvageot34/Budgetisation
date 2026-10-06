@@ -1,5 +1,5 @@
 import "server-only";
-import { parsePlanSemanticState, semanticStateDigest, type PlanSemanticStateV1 } from "@/domain/phase2/planner/semantic-state";
+import { emptyPlanSemanticState, parsePlanSemanticState, semanticStateDigest, type PlanSemanticStateV1 } from "@/domain/phase2/planner/semantic-state";
 import { plannerDigest, plannerDigestString, plannerInteger, plannerMonth, plannerUuid } from "@/domain/phase2/planner/json";
 import type { PlanningWorldFacts, PlannerApplyCommand, PlanScenarioPreview } from "@/domain/phase2/planner/compiler-contract";
 import type { PlanRevision } from "@/domain/phase2/planner/plan-contract";
@@ -7,6 +7,7 @@ import type { PlanRepository } from "./repository";
 import { jsonEnvelope, PLANNER_COMPILER_VERSION } from "./compiler";
 import { evaluatePlanScenario } from "./preview";
 import { assertRevisionEvidence } from "./revision-evidence";
+import { revisionChangeSet } from "./change-set";
 
 export type PlannerDependencies = Readonly<{ repository: PlanRepository;
   readWorld(householdId: string, targetMonth: string): Promise<PlanningWorldFacts>;
@@ -41,13 +42,19 @@ export async function applyPlanScenario(deps: PlannerDependencies, householdId: 
   if (preview.baseActiveRevisionId !== activeId || preview.baseRevisionNumber !== activeNumber) throw new TypeError("PLANNER_ACTIVE_REVISION_STALE");
   if (preview.baselineDigest !== baselineDigest || preview.previewDigest !== previewDigest) throw new TypeError("PLANNER_PREVIEW_STALE");
   if (preview.projection.applyReadiness === "BLOCKED") throw new TypeError("PLANNER_APPLY_BLOCKED");
+  const authorityDate = (preview.compiled.manifest.authorityEvidence as { asOfDate: string }).asOfDate;
+  if (month < authorityDate.slice(0, 7)) throw new TypeError("PLANNER_PAST_MONTH_READ_ONLY");
+  const parent = await deps.repository.readActivePlan(household, month);
+  if ((parent?.plan.activeRevisionId ?? null) !== activeId || (parent?.plan.activeRevisionNumber ?? 0) !== activeNumber)
+    throw new TypeError("PLANNER_ACTIVE_REVISION_STALE");
+  const changeSet = revisionChangeSet(parent?.activeRevision?.semanticState ?? emptyPlanSemanticState(month), state);
   // Re-read/recompile above, then exactly one atomic C0 RPC. No MonthInputs or PlannedExpense writer.
   const worldBaseline = jsonEnvelope(preview.baseline);
   const evidence = jsonEnvelope({ version: "planner-projection-evidence@v1", projection: preview.projection,
     projectionDigest: preview.projectionDigest, compiledManifestDigest: preview.compiledManifestDigest });
   const payload = { householdId: household, targetMonth: month, expectedActiveRevisionId: activeId,
     expectedActiveRevisionNumber: activeNumber, applyRequestId: requestId, baselineDigest, baselineSnapshot: worldBaseline,
-    semanticState: state, semanticStateDigest: preview.semanticStateDigest, changeSet: [], compiledManifest: preview.compiled.manifest,
+    semanticState: state, semanticStateDigest: preview.semanticStateDigest, changeSet, compiledManifest: preview.compiled.manifest,
     compiledManifestDigest: preview.compiledManifestDigest, projectionEvidence: evidence, previewDigest,
     compilerVersion: PLANNER_COMPILER_VERSION, modelVersions: preview.compiled.manifest.modelVersions as Record<string, string> };
   let result;

@@ -47,7 +47,7 @@ const h = planningHarness(), originalFrom = h.client.from.bind(h.client);
 h.facts.inputs["2026-10"] = structuredClone(current);
 h.client.from = table => {
   touched.push(table);
-  assert(["phase2_month_inputs", "phase2_planned_expenses", "persons"].includes(table), `Historical authority reached: ${table}`);
+  assert(["phase2_month_inputs", "phase2_planned_expenses", "persons", "phase2_month_plans"].includes(table), `Historical authority reached: ${table}`);
   if (table !== "phase2_month_inputs") return originalFrom(table);
   const filters = {};
   return { select() { return this; }, eq(key, value) { filters[key] = value; return this; },
@@ -166,7 +166,7 @@ await test("PILOT-HISTORY-005",()=>{for(const historyMonths of [[],historicalMon
 await test("DEEP-LINKS",()=>{assert.equal(focusAdapter("understand","history"),"info");assert.equal(focusAdapter("update","SWILE"),"update:item:SWILE");assert.equal(focusAdapter("choices","groceries"),"pilot:category:groceries");assert.equal(focusAdapter("choices","adjustments"),"pilot");assert(!monthControlUrl("/mois-a-venir?control=choices","choices","groceries").includes("control=choices"));});
 await test("SPATIAL-ALL-ITEMS",()=>{const rendered=html(MonthUpdateSpatial,{model:manyModel,refreshing:false},"update","update:status:MODIFIED");for(const row of many)assert(rendered.includes(row.label));assert(!rendered.includes("Page 1/"));assert(!spatialSource.includes("classifyMonthUpdateItem("));},"SSR_STATIC");
 await test("HISTORY-INCOMPLETE-PROVENANCE",()=>{const partial={...observedEvidence,history:{...observedEvidence.history,economicEntries:observedEvidence.history.economicEntries.map(row=>({...row,amountStatus:"PARTIAL"}))}};assert.equal(history("groceries",partial,base.asOf,"2026-10").status,"INSUFFICIENT");const ambiguous={...observedEvidence,history:{...observedEvidence.history,economicEntries:historicalMonths.map(month=>({...entries[0],date:month+"-01",person:null,need:"Repas du midi au travail"}))}};assert.equal(history("manon-work-meals",ambiguous,base.asOf,"2026-10").status,"INSUFFICIENT");const future = history("groceries",{...observedEvidence,history:{...observedEvidence.history,endMonth:"2026-11",economicEntries:[...observedEvidence.history.economicEntries,...["2026-10","2026-11"].map(month=>({...entries[0],date:month+"-01"}))]}},base.asOf,"2026-10"); assert.equal(future.count,3); assert(future.diagnostic.rejectedMonths.filter(row => ["2026-10","2026-11"].includes(row.month)).every(row => row.reasons.includes(row.month === "2026-10" ? "CURRENT_MONTH_NOT_CLOSED" : "FUTURE_MONTH")));});
-await test("ZERO-HISTORICAL-WRITE",()=>{assert.equal(h.client.writes.length,0);assert(writes.every(row=>row.table==="phase2_month_inputs"));assert(touched.every(table=>["phase2_month_inputs","phase2_planned_expenses","persons"].includes(table)));});
+await test("ZERO-HISTORICAL-WRITE",()=>{assert.equal(h.client.writes.length,0);assert(writes.every(row=>row.table==="phase2_month_inputs"));assert(touched.every(table=>["phase2_month_inputs","phase2_planned_expenses","persons","phase2_month_plans"].includes(table)));});
 
 const undo = require("@/server/phase2/month-choice-undo.ts");
 const originalSecret = process.env.SUPABASE_SECRET_KEY;

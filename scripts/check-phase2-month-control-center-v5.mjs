@@ -46,7 +46,7 @@ const h = planningHarness(), originalFrom = h.client.from.bind(h.client);
 h.facts.inputs["2026-10"] = structuredClone(current);
 h.client.from = table => {
   touched.push(table);
-  assert(["phase2_month_inputs", "phase2_planned_expenses", "persons"].includes(table), `Historical authority reached: ${table}`);
+  assert(["phase2_month_inputs", "phase2_planned_expenses", "persons", "phase2_month_plans"].includes(table), `Historical authority reached: ${table}`);
   if (table !== "phase2_month_inputs") return originalFrom(table);
   const filters = {};
   return { select() { return this; }, eq(key, value) { filters[key] = value; return this; },

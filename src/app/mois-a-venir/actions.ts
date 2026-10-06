@@ -1,4 +1,7 @@
 "use server";
+import { assertLegacyMonthInputsWrite } from "@/server/phase2/planner/cutover";
+import { createPlanRepository } from "@/server/phase2/planner/repository";
+import { assertRevisionEvidence } from "@/server/phase2/planner/revision-evidence";
 
 import { randomUUID } from "node:crypto";
 import { revalidatePath } from "next/cache";
@@ -189,6 +192,7 @@ async function mutateMonthInputs(form: FormData, controlCenter = false): Promise
     }
     throw error;
   }
+  await assertLegacyMonthInputsWrite(supabase, household.householdId, targetMonth, current, next);
   await saveMonthInputs(supabase, household.householdId, targetMonth, user.id, next);
   revalidatePath("/mois-a-venir");
 }
@@ -200,7 +204,9 @@ export async function updateMonthInputs(form: FormData): Promise<void> {
 /** Same monthly mutation owner; structured errors keep the modal's local context. */
 export async function updateMonthControlInputs(form: FormData) {
   try { await mutateMonthInputs(form, true); return { ok: true as const, message: "Modification enregistrée pour ce mois." }; }
-  catch (error) { return { ok: false as const, message: error instanceof TypeError
+  catch (error) { return { ok: false as const, code: error instanceof TypeError ? error.message : "MONTH_WRITE_FAILED", message: error instanceof TypeError && error.message === "PLAN_V3_ACTIVE_READ_ONLY"
+    ? "Ce contrôle est piloté dans Composer mon mois. Ouvrez le Composer pour le modifier."
+    : error instanceof TypeError
     ? "Vérifiez le montant, la date et le contrôle concerné. Les mois passés restent en lecture seule."
     : "Enregistrement impossible pour le moment. Réessayez ; votre saisie est conservée." }; }
 }
@@ -220,6 +226,11 @@ async function decisionContext(targetMonth: string) {
 /** Explicit conservation only; consultation and simulation never write. */
 export async function preserveMonthForecast(targetMonth: string): Promise<{ ok: boolean; message: string }> {
   const ctx = await decisionContext(targetMonth);
+  const storedPlan = await createPlanRepository(ctx.supabase).readActivePlan(ctx.household.householdId, targetMonth);
+  if (storedPlan?.activeRevision) {
+    assertRevisionEvidence(storedPlan.activeRevision);
+    return { ok: true, message: "Le scénario appliqué est déjà conservé avec ses preuves dans la Revision du Plan." };
+  }
   const plan = deriveMonthScenario(ctx.forecast, ctx.stored.inputs, null, ctx.asOf, ctx.expenses).economicPlan;
   if (!plan) return { ok: false, message: "Complétez les ressources du mois avant de conserver une estimation." };
   await insertForecastCheckpoint(createCanonicalReadClient(), ctx.household.householdId, ctx.user.id, targetMonth, ctx.asOf,
@@ -259,6 +270,8 @@ export async function applyMonthChoice(targetMonth: string, choice: unknown, exp
   if (expectedDigest !== monthChoiceDigest(context)) return { ok: false as const, code: "STALE_PREVIEW" as const, message: "Le mois a changé. Relancez la simulation avant d’adopter ce choix." };
   const result = simulateMonthChoice(context, choice);
   if (!result.view.applicable) return { ok: false as const, message: "Ce choix dépend d’un plan annuel : simulation disponible, adoption non disponible." };
+  try { await assertLegacyMonthInputsWrite(ctx.supabase, ctx.household.householdId, targetMonth, ctx.stored.inputs, result.nextInputs); }
+  catch (error) { if (error instanceof TypeError && error.message === "PLAN_V3_ACTIVE_READ_ONLY") return { ok: false as const, code: "PLAN_V3_ACTIVE_READ_ONLY" as const, message: "Ce contrôle est piloté dans Composer mon mois." }; throw error; }
   const undoToken = makeMonthChoiceUndo(context, result.nextInputs, choice, ctx.household.householdId, ctx.user.id);
   await saveMonthInputs(ctx.supabase, ctx.household.householdId, targetMonth, ctx.user.id, result.nextInputs);
   revalidatePath("/mois-a-venir");
@@ -270,6 +283,7 @@ export async function undoMonthChoice(targetMonth: string, token: string) {
   try {
     const next = restoreMonthChoiceUndo({ forecast: ctx.forecast, inputs: ctx.stored.inputs, expenses: ctx.expenses, asOf: ctx.asOf }, token, ctx.household.householdId, ctx.user.id);
     deriveMonthScenario(ctx.forecast, next, null, ctx.asOf, ctx.expenses);
+    await assertLegacyMonthInputsWrite(ctx.supabase, ctx.household.householdId, targetMonth, ctx.stored.inputs, next);
     await saveMonthInputs(ctx.supabase, ctx.household.householdId, targetMonth, ctx.user.id, next);
     revalidatePath("/mois-a-venir");
     return { ok: true as const };

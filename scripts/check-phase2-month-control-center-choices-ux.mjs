@@ -46,7 +46,7 @@ const h = planningHarness(), originalFrom = h.client.from.bind(h.client);
 h.facts.inputs["2026-10"] = structuredClone(current);
 h.client.from = table => {
   touched.push(table);
-  assert(["phase2_month_inputs", "phase2_planned_expenses", "persons"].includes(table), `Historical authority reached: ${table}`);
+  assert(["phase2_month_inputs", "phase2_planned_expenses", "persons", "phase2_month_plans"].includes(table), `Historical authority reached: ${table}`);
   if (table !== "phase2_month_inputs") return originalFrom(table);
   const filters = {};
   return { select() { return this; }, eq(key, value) { filters[key] = value; return this; },
@@ -155,7 +155,7 @@ await test("CHOICES-UX-084", () => { assert(!css.includes("min-height: 640px"));
 await test("CHOICES-UX-085", () => { const ctx = { ...base, inputs: schema.parse({ ...current, decision: { ...current.decision, assumptions: { groceries: { mode: "CUSTOM", amount: "0.00" } } } }) }; const original = model(base), revised = model(ctx); assert.equal(revised.habitualControls.find(row => row.key === "groceries").forecast, original.categoryControls.find(row => row.key === "groceries").forecast); assert.equal(revised.categoryControls.find(row => row.key === "groceries").reducibleRemaining, "0.00"); });
 await test("CHOICES-UX-086", () => { const ctx = withTarget("100", "350", "96"), result = simulate(ctx, choice("groceries", "REDUCE_AMOUNT", "999")); assert.equal(cat(result.plan, "groceries").observedEconomic, "96.00"); assert.equal(cat(result.plan, "groceries").projectedMonth.central, "96.00"); });
 await test("CHOICES-UX-087", () => { process.env.PHASE2_FORECAST_TEMPORAL_MODE = "AS_OF_TEMPORAL"; try { assert.deepEqual(wb(base, { kind: "FREE_EXPLORATION" }, [restaurant]).preview, simulate(base, { operations: [restaurant] }).view); } finally { delete process.env.PHASE2_FORECAST_TEMPORAL_MODE; } });
-await test("CHOICES-UX-088", () => { assert.equal(m.reliability.mode, "FULL_MONTH_SAFE"); assert.equal(h.client.writes.length, 0); assert(writes.every(row => row.table === "phase2_month_inputs")); assert(touched.every(table => ["phase2_month_inputs", "phase2_planned_expenses", "persons"].includes(table))); });
+await test("CHOICES-UX-088", () => { assert.equal(m.reliability.mode, "FULL_MONTH_SAFE"); assert.equal(h.client.writes.length, 0); assert(writes.every(row => row.table === "phase2_month_inputs")); assert(touched.every(table => ["phase2_month_inputs", "phase2_planned_expenses", "persons", "phase2_month_plans"].includes(table))); });
 await test("CHOICES-UX-089", () => assert.deepEqual(monthControlDestination("choices", "adjustments"), { section: "choices", focus: "adjustments" }));
 await test("CHOICES-UX-090", () => { assert(editors.includes('key="confirm-saving" type="submit"')); assert(editors.includes('key="continue-saving"')); assert(editors.includes('event.preventDefault(); setStep(step + 1)')); }, "STATIC_BROWSER_REGRESSION");
 if (configured !== undefined) process.env.PHASE2_FORECAST_TEMPORAL_MODE = configured;

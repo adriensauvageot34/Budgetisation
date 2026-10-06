@@ -13,6 +13,9 @@ export type ComposerLibraryView = Readonly<{ sections: readonly Readonly<{ secti
 export type ComposerCardView = Readonly<{ cardId: string; targetRef: string; label: string; kind: "BASELINE_CONTROL" | "DISCRETIONARY_CONTROL" | "SAVINGS";
   value: PlannerJsonObject; knowledge: PlannerKnowledge; capability: AdjustmentCapability | null; historicalReferences: PlannerJsonObject | null }>;
 export type ContextSocketView = Readonly<{ contextOccurrenceId: string; slotKey: string;
+  label?: string;
+  choiceAssetKeys?: readonly string[];
+  evaluations?: readonly Readonly<{ selectionId: string; economicAmount: string | null }>[];
   cardinality: ComponentSlotDefinition["cardinality"]; visualState: "HABITUAL" | "SUGGESTED" | "CHOSEN" | "DERIVED" | "UNRESOLVED";
   currentItems: readonly ComponentSelectionV1[]; capabilityRefs: readonly string[] }>;
 export type ComposerContextCardView = Readonly<{ contextOccurrenceId: string; templateKey: string; label: string;

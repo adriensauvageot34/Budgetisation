@@ -33,9 +33,10 @@ export function MonthControlLink({ section = "choices", focus, children, classNa
   </button>;
 }
 
-export function MonthControlCenter({ model, initialSection = null, initialFocus = null, inputError = false, children }: {
+export function MonthControlCenter({ model, initialSection = null, initialFocus = null, inputError = false, children, composerHref, planOwnership }: {
   model: MonthControlModel; initialSection?: MonthControlSection | null; initialFocus?: string | null; inputError?: boolean;
   update?: ReactNode; understand?: ReactNode; children: ReactNode;
+  composerHref?: string; planOwnership?: { categoryKeys: string[]; savingsIds: string[] };
 }) {
   const router = useRouter();
   const background = useRef<HTMLDivElement>(null), content = useRef<HTMLDivElement>(null), fallback = useRef<HTMLButtonElement>(null), invoker = useRef<HTMLElement>(null);
@@ -77,11 +78,12 @@ export function MonthControlCenter({ model, initialSection = null, initialFocus 
     window.history.replaceState(null, "", monthControlUrl(url.href, next, nextFocus));
   }, [model.targetMonth]);
   const navigate = useCallback((destination: Destination, origin?: HTMLElement) => {
+    if (composerHref && destination.focus?.startsWith("pilot")) { router.push(composerHref); return; }
     if (origin) invoker.current = origin;
     const next = monthWorkspaceFocus(destination.section, destination.focus);
     setFocus(next === "info" ? null : next); setInfo(next === "info"); setOpen(true); updateLocation("center", next);
-  }, [updateLocation]);
-  const openEntity = (entity: string | null) => { lastFocus.current = focus; const next = monthWorkspaceFocus("center", entity); setFocus(next); setInfo(false); updateLocation("center", next); };
+  }, [updateLocation, composerHref, router]);
+  const openEntity = (entity: string | null) => { if (composerHref && entity?.startsWith("pilot")) { router.push(composerHref); return; } lastFocus.current = focus; const next = monthWorkspaceFocus("center", entity); setFocus(next); setInfo(false); updateLocation("center", next); };
   const close = () => { setOpen(false); setInfo(false); updateLocation(null); };
   useEffect(() => {
     if (!info || !open) return;
@@ -116,9 +118,11 @@ export function MonthControlCenter({ model, initialSection = null, initialFocus 
   }, [model.baseDigest, model.targetMonth, router, draftSessionKey]);
   useEffect(() => {
     if (!sessionReady || !open || section !== "choices" || !model.editable) return;
+    if (composerHref && focus?.startsWith("pilot")) return;
     const key = JSON.stringify([model.baseDigest, purpose, operations]);
     if (requested.current !== key) recalculate(operations, purpose);
-  }, [sessionReady, open, section, operations, purpose, recalculate, model.baseDigest, model.editable]);
+  }, [sessionReady, open, section, operations, purpose, recalculate, model.baseDigest, model.editable, composerHref, focus]);
+  useEffect(() => { if (open && composerHref && focus?.startsWith("pilot")) router.replace(composerHref); }, [open, composerHref, focus, router]);
   useEffect(() => () => { if (previewTimer.current) clearTimeout(previewTimer.current); }, []);
   useEffect(() => {
     if (!open) return;
@@ -194,6 +198,9 @@ export function MonthControlCenter({ model, initialSection = null, initialFocus 
   const pilotSaving = model.savings.find(row => focus === `pilot:saving:${row.id}` && row.adjustability === "ADJUSTABLE" && row.source === "MONTH_INPUT");
   const targetCategory = model.categoryControls.find(row => focus === `pilot:target:${row.key}`);
   const adjustmentCategory = model.categoryControls.find(row => focus === `pilot:adjustment:${row.key}`);
+  const planOwnedFocus = !!([...model.categoryControls].some(row => planOwnership?.categoryKeys.includes(row.key) &&
+    [`category:${row.key}`, `choice:${row.key}`, `pilot:category:${row.key}`, `pilot:target:${row.key}`, `pilot:adjustment:${row.key}`].includes(focus ?? "")) ||
+    model.savings.some((row, index) => planOwnership?.savingsIds.includes(row.id) && [`savings:${row.id}`, `pilot:saving:${row.id}`, `reserve-${index + 1}`].includes(focus ?? "")));
   return <ControlContext.Provider value={{ open: navigate }}>
     <div ref={background}>{children}</div>
     <OverlayFrame open={open} kind="exploration" title={`Centre de contrôle — ${new Intl.DateTimeFormat("fr-FR", { month: "long", year: "numeric", timeZone: "UTC" }).format(new Date(`${model.targetMonth}-01T12:00:00Z`))}`}
@@ -204,13 +211,13 @@ export function MonthControlCenter({ model, initialSection = null, initialFocus 
           {toast && <div role="status" className={styles.saveToast}>{toast}{undoToken && <button type="button" className={styles.textAction} disabled={pending} onClick={() => startTransition(async () => { const result = await undoMonthChoice(model.targetMonth, undoToken); if (result.ok) { setUndoToken(null); clearUndoSession(); setToast("Scénario annulé"); router.refresh(); } else setMessage(result.message); })}>Annuler</button>}</div>}
           {message && <p role="status" className={styles.status}>{message}</p>}
           <div key={focus ?? "root"} className={styles.surfaceMotion} style={{ "--zone-origin": focus?.includes("MODIFIED") ? "80% 20%" : focus?.includes("DISABLED") ? "20% 80%" : focus?.includes("CONFIRMED") ? "80% 80%" : "20% 20%" } as React.CSSProperties}><MonthLocalFocusProvider value={{ section, entity: focus, openEntity }}>
-          {section === "update" ? <MonthUpdateSpatial model={model} refreshing={refreshingDigest === model.baseDigest} /> : (focus === "pilot" || focus === "pilot:review" && operations.length === 0) ? <MonthPilotIndex model={model} draftCount={operations.length} trial={activeTrial} operations={operations} pending={previewPending} apply={apply} remove={removeDraft} /> : focus === "savings" ? <MonthControlSavings model={model} />
+          {section === "update" ? <MonthUpdateSpatial model={model} refreshing={refreshingDigest === model.baseDigest} /> : planOwnedFocus ? <section data-plan-writer-state="PLAN_V3_ACTIVE_READ_ONLY"><h2>Piloté dans Composer mon mois</h2><p>Ce contrôle appartient au Plan appliqué.</p>{composerHref && <a href={composerHref} className={button}>Ouvrir Composer mon mois</a>}</section> : (focus === "pilot" || focus === "pilot:review" && operations.length === 0) ? <MonthPilotIndex model={model} draftCount={operations.length} trial={activeTrial} operations={operations} pending={previewPending} apply={apply} remove={removeDraft} /> : focus === "savings" ? <MonthControlSavings model={model} />
             : pilotCategory ? <MonthPilotEditor key={`${pilotCategory.key}:${pilotCategory.forecast}:${operations.length === 0}`} model={model} category={pilotCategory} trial={activeTrial} operations={operations} pending={previewPending} replaceDraft={replaceDraft} reset={() => recalculate(operations.filter(row => row.kind !== "CATEGORY" || row.categoryKey !== pilotCategory.key), { kind: "FREE_EXPLORATION" })} apply={apply} />
             : targetCategory ? <TargetFocus key={`${targetCategory.key}:${targetCategory.target}`} model={model} category={targetCategory} /> : adjustmentCategory ? <AdjustmentFocus key={adjustmentCategory.key} model={model} category={adjustmentCategory} />
             : focus === "pilot:add" ? <MonthPilotAdd model={model} operations={operations} />
             : focus === "pilot:review" ? <MonthPilotReview model={model} operations={operations} trial={activeTrial} pending={previewPending} apply={apply} remove={removeDraft} />
             : pilotSaving ? <MonthPilotSaving key={`${pilotSaving.id}:${pilotSaving.amount}`} model={model} saving={pilotSaving} operations={operations} trial={activeTrial} pending={previewPending} replaceDraft={replaceDraft} remove={removeDraft} apply={apply} />
-            : focus ? <MonthChoiceFocus model={model} /> : <MonthWorkspaceRoot model={model} draftCount={operations.length} />}
+            : focus ? <MonthChoiceFocus model={model} composerHref={composerHref} planOwnership={planOwnership} /> : <MonthWorkspaceRoot model={model} draftCount={operations.length} />}
           </MonthLocalFocusProvider></div>
 
         </div>

@@ -22,6 +22,9 @@ import { readForecastMemory } from "@/server/phase2/forecast-memory";
 import { projectPastMonthReview } from "@/server/phase2/past-month-review";
 import { PastMonthView } from "./past-month-view";
 import { restaurantSoloPerson } from "@/domain/phase2/planned-restaurant";
+import { authorizedPlanner } from "@/server/phase2/planner/runtime";
+import { resolveEffectiveMonthScenario } from "@/server/phase2/planner/effective-month-scenario";
+import { plannerComposerEnabled, legacyPlanOwnership } from "@/server/phase2/planner/cutover";
 
 export const metadata = { title: "Notre mois à venir" };
 export const dynamic = "force-dynamic";
@@ -71,11 +74,15 @@ export default async function MonthForecastPage({ searchParams }: { searchParams
   });
   const persons = activePersons.map((person) => ({ ...person, isCurrentUser: person.personId === currentPersonId }));
   const options = await readPlannedContextOptions(client, context.household.householdId, persons);
-  const scenario = deriveMonthScenario(forecast, stored.inputs, null, today, plannedExpenses);
+  const planner = await authorizedPlanner();
+  const effective = await resolveEffectiveMonthScenario({ ...planner.deps,
+    readDirectWorld: async () => ({ forecast, monthInputs: stored.inputs, externalIntents: plannedExpenses, asOfDate: today }) }, planner.householdId, targetMonth);
+  const scenario = effective.scenario;
+  const ownership = await legacyPlanOwnership(planner.deps.repository, planner.householdId, targetMonth);
   const placeLabel = (ref: import("@/domain/phase2/planned-contract").ProspectivePlaceRef | undefined) =>
     ref?.kind === "TEXT" ? ref.label : ref?.kind === "KNOWN" ? options.places.find((place) => place.placeId === ref.placeId)?.name : undefined;
   const cards = projectPlannedExpenseCards(plannedExpenses, today, scenario.economicPlan?.narrative.prediction?.reconciliation).map((card) => {
-    if (!scenario.economicPlan) return card;
+    if (!scenario.economicPlan || effective.owner === "PLAN_V1") return card;
     const before = deriveMonthScenario(forecast, stored.inputs, null, today,
       plannedExpenses.filter((row) => row.id !== card.id)).economicPlan;
     if (!before) return card;
@@ -97,7 +104,9 @@ export default async function MonthForecastPage({ searchParams }: { searchParams
   });
   const control = monthControlSection(params.control) === null ? null : monthControlDestination(params.control as MonthControlSectionInput, typeof params.focus === "string" ? params.focus : null);
   return <MonthForecastView forecast={forecast} scenario={scenario} stored={stored}
-    controlModel={projectMonthControlCenter({ forecast, inputs: stored.inputs, expenses: plannedExpenses, asOf: today })}
+    controlModel={projectMonthControlCenter({ forecast, inputs: scenario.inputs, expenses: plannedExpenses, asOf: today }, effective.owner === "PLAN_V1" ? scenario : undefined, effective.projection ?? undefined)}
+    appliedProjection={effective.projection ?? undefined} appliedSemanticState={effective.semanticState ?? undefined} activeRevisionNumber={effective.revision?.revisionNumber}
+    composerEnabled={plannerComposerEnabled()} planOwnership={ownership} activePlan={effective.owner === "PLAN_V1"}
     initialSection={control?.section ?? null} initialFocus={control?.focus ?? null}
     plannedExpenses={cards} calendarCarryovers={projectPlannedExpenseCards(calendarCarryovers, today)} today={today}
     persons={persons} places={options.places} vehicle={options.vehicle} prices={[...options.prices, ...(() => { const estimate = groceryBasketEstimate(forecast.predictionEvidence?.history.economicEntries ?? []); return estimate ? [estimate] : []; })()]} wallets={options.wallets}

@@ -1,4 +1,5 @@
 import "server-only";
+import type { PlanProjectionV1 } from "@/domain/phase2/planner/projection-contract";
 import Big from "big.js";
 import { parseMonthDecisionSettings } from "@/domain/phase2/month-decision-contract";
 import { categoryDecisionCapabilities, type MonthChoiceOperation } from "@/domain/phase2/month-choice-contract";
@@ -25,19 +26,19 @@ const resources = (focus: string): Destination => ({ section: "update", focus })
 const settingsDestination = (focus: string): Destination => ({ section: "update", focus });
 
 /** Interpretation only. Amounts are supplied by the existing scenario owners. */
-export function projectMonthControlCenter(ctx: MonthChoiceContext) {
-  const scenario = deriveMonthScenario(ctx.forecast, ctx.inputs, null, ctx.asOf, ctx.expenses), inputs = scenario.inputs;
+export function projectMonthControlCenter(ctx: MonthChoiceContext, effectiveScenario?: ReturnType<typeof deriveMonthScenario>, appliedProjection?: PlanProjectionV1) {
+  const scenario = effectiveScenario ?? deriveMonthScenario(ctx.forecast, ctx.inputs, null, ctx.asOf, ctx.expenses), inputs = scenario.inputs;
   const settings = parseMonthDecisionSettings(inputs.decision), plan = scenario.economicPlan;
   const update = projectMonthUpdatePresentation(ctx.forecast, scenario);
   const decision = plan ? projectMonthDecision(plan, settings, ctx.forecast.meta.targetMonth, ctx.asOf, ctx.expenses, ctx.forecast.forecastMemory) : null;
   const categoryControls = decision?.categoryControls ?? [];
   // Presentation reference for relative draft controls. The existing forecast owner
   // publishes the usual remainder; the client never reverses an applied assumption.
-  const referencePlan = Object.keys(settings.assumptions).length ? deriveMonthScenario(ctx.forecast,
+  const referencePlan = !effectiveScenario && Object.keys(settings.assumptions).length ? deriveMonthScenario(ctx.forecast,
     { ...inputs, decision: { ...settings, assumptions: {} } }, null, ctx.asOf, ctx.expenses).economicPlan : plan;
   const habitualControls = !Object.keys(settings.assumptions).length ? categoryControls : referencePlan ? projectMonthDecision(referencePlan, { ...settings, assumptions: {} },
     ctx.forecast.meta.targetMonth, ctx.asOf, ctx.expenses, ctx.forecast.forecastMemory).categoryControls : [];
-  const globalDelta = decision?.goal?.central ?? null;
+  const globalDelta = appliedProjection?.plan.economicMonthEndRemainder === null ? null : decision?.goal?.central ?? null;
   const globalGap = globalDelta === null ? "0.00" : positive(new Big(globalDelta).times(-1)).toFixed(2);
   const categoryTensions = categoryControls.filter(row => row.varianceToTarget !== null && new Big(row.varianceToTarget).gt(0)).map(row => ({
     key: `category:${row.key}`, kind: "CATEGORY_TARGET" as const, categoryKey: row.key, label: row.label, target: row.target!,
@@ -49,6 +50,10 @@ export function projectMonthControlCenter(ctx: MonthChoiceContext) {
     label: "Objectif de fin de mois", amount: globalGap, explanation: `Il manque environ ${money(globalGap)} pour atteindre votre objectif de fin de mois.`,
     destination: { section: "choices" as const, focus: "global-goal" } }] : [];
   const causes: RootCause[] = [];
+  if (appliedProjection?.plan.economicMonthEndRemainder === null) causes.push({ key: "planner-unknown", label: "Projection du Plan à préciser",
+    explanation: "Des informations du Planner restent inconnues. Consultez les diagnostics dans Composer mon mois.",
+    symptoms: ["Reste économique non établi"], priority: "STRUCTURAL", scopes: ["ECONOMIC_MONTH"], actionable: true,
+    destination: { section: "choices", focus: "pilot" } });
   if (scenario.availableNow.value === null) causes.push({ key: "bank-balance", label: "Solde Banque à confirmer",
     explanation: "Le solde absent ou insuffisamment daté empêche de certifier le disponible bancaire, sans effacer la projection économique.",
     symptoms: ["Solde actuel non confirmé pour cette date"], priority: "STRUCTURAL", scopes: ["BANK_CASH"], actionable: true, destination: resources("BANK") });
@@ -113,12 +118,13 @@ export function projectMonthControlCenter(ctx: MonthChoiceContext) {
   const defaultPurpose: MonthControlPurpose = globalTensions.length ? { kind: "GLOBAL_GOAL" } : categoryTensions.length ? { kind: "CATEGORY_CORRECTION", categoryKey: categoryTensions[0]!.categoryKey } : plan ? { kind: "FREE_EXPLORATION" } : { kind: "NONE" };
   return { targetMonth: scenario.targetMonth, asOf: ctx.asOf, baseDigest: monthChoiceDigest(ctx), editable: scenario.targetMonth >= ctx.asOf.slice(0, 7),
     monthState: !plan ? "INCOMPLETE" : globalTensions.length ? "GLOBAL_ATTENTION" : categoryTensions.length ? "CATEGORY_ATTENTION" : "CALM",
-    goalState, goalCount, appliedMarginGain: plan && referencePlan ? new Big(plan.narrative.final.central).minus(referencePlan.narrative.final.central).toFixed(2) : null,
+    goalState, goalCount, appliedMarginGain: appliedProjection ? appliedProjection.plan.impactOnMonthEnd : plan && referencePlan ? new Big(plan.narrative.final.central).minus(referencePlan.narrative.final.central).toFixed(2) : null,
     headline: !plan ? "Complétons les ressources pour préparer ce mois" : goalState === "NO_GOALS_DEFINED" ? "Vous n’avez pas encore défini de budgets cibles pour ce mois."
       : goalState === "ALL_GOALS_MET" ? "Vos objectifs sont respectés dans la projection actuelle."
       : `${tensions.length} objectif${tensions.length > 1 ? "s demandent" : " demande"} votre attention.`,
     actionableCount: update.needsUpdateCount, update,
-    projectionSummary: { economic: plan?.narrative.final ?? null, bank: plan?.bankCash.endOfMonth ?? null,
+    projectionSummary: { economic: appliedProjection?.plan.economicMonthEndRemainder === null ? null : plan?.narrative.final ?? null,
+      bank: appliedProjection?.cash.knowledge === "UNKNOWN" ? null : plan?.bankCash.endOfMonth ?? null,
       globalGoal: settings.goal, globalDelta, globalGap, globalSatisfied: globalDelta !== null && new Big(globalDelta).gte(0),
       remainingDailyLife: plan?.monthlyLayers.remainingDailyLife ?? null, categoryGap: decision?.totalCategoryGap ?? "0.00", protectedSavings: plan?.savingsAllocations.protectedTotal ?? null, totalSavings: plan?.savingsAllocations.total ?? null },
     pilotCandidates: plan ? [...categoryControls.filter(row => row.capabilities.adjustability === "ADJUSTABLE" && row.capabilities.strategies.includes("REDUCE_AMOUNT") && new Big(row.forecast).gte(row.irreversibleFloor)).map(row => ({ target: `category:${row.key}`, label: row.label, focus: `pilot:category:${row.key}` })),

@@ -11,7 +11,7 @@ export type DirectMonthFacts = Readonly<{ forecast: MonthForecastSnapshot; month
   externalIntents: readonly PlannedExpenseScenarioEntry[]; asOfDate: string }>;
 export type EffectiveMonthDependencies = PlannerDependencies & Readonly<{
   readDirectWorld(householdId: string, targetMonth: string): Promise<DirectMonthFacts> }>;
-/** Final headless owner. Routes/UI cutover is a later lot. With no active Plan, invoke the
+/** Applied-month owner shared by Composer and the monthly view. With no active Plan, invoke the
  * existing V2 flow exactly, without requiring C1 owners or altering its inputs. */
 export async function resolveEffectiveMonthScenario(deps: EffectiveMonthDependencies, householdId: string, targetMonth: string) {
   const household = plannerUuid(householdId), month = plannerMonth(targetMonth);

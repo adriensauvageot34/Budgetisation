@@ -265,11 +265,16 @@ try {
     };
     try {
       const actions = require('@/app/mois-a-venir/planner-actions');
+      const composerActions = require('@/app/mois-a-venir/composer/actions');
+      const composer = await composerActions.composerInteraction({ kind: 'READ', targetMonth: '2026-11', sequence: 0, draft: semantic });
+      assert.equal(composer.ok, true); assert.equal(pg.rpcCalls, writes);
       const model = await actions.readMonthComposer('2026-11', semantic), p = await actions.previewPlanScenario('2026-11', semantic);
       assert.equal(model.preview.projectionDigest, p.projectionDigest);
       await actions.readPlanBalanceSuggestions('2026-11', semantic);
       auth.changed = true; await assert.rejects(() => actions.readMonthComposer('2026-11'), /SESSION_CHANGED/);
+      await assert.rejects(() => composerActions.composerInteraction({ kind: 'READ', targetMonth: '2026-11', sequence: 1 }), /SESSION_CHANGED/);
       auth.changed = false; auth.denied = true; await assert.rejects(() => actions.applyPlanScenario('2026-11', semantic, command(p)), /AUTH_REQUIRED/);
+      await assert.rejects(() => composerActions.composerInteraction({ kind: 'READ', targetMonth: '2026-11', sequence: 2 }), /AUTH_REQUIRED/);
       await assert.rejects(() => actions.previewPlanScenario('2026-12', semantic), /DRAFT_MONTH_INVALID/);
       assert.equal(pg.rpcCalls, writes);
       auth.denied = false;

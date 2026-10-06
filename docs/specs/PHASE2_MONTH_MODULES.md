@@ -201,3 +201,22 @@ confirmation spécifique puis suppriment uniquement la root prospective. Liste,
 calendrier, baseline et financement sont reconstruits depuis les lignes restantes.
 Aucun statut CANCELLED, amount parallèle, realizedDate, brouillon cloud ou
 écriture historique n'est ajouté.
+
+## Planner V3 — Composer C8 (6 octobre 2026)
+
+Le workspace desktop `/mois-a-venir/composer` expose les capabilities et
+PlanProjection du noyau Planner certifié C7. Les intentions de l'interface sont
+validées et recompilées par `composer-service.ts` ; React ne calcule pas le
+scénario financier. Seul Apply, après relecture et parité, utilise la RPC C0.
+
+Les surfaces mensuelles appliquées lisent `resolveEffectiveMonthScenario()`.
+Sans Plan actif, leur scénario V2 reste identique. Avec Plan actif, l'ancien
+writer protège uniquement les targets possédés par ses slots, sous le code
+`PLAN_V3_ACTIVE_READ_ONLY`. Banque, Wallets, ressources, facts et intents externes
+gardent leurs propriétaires existants.
+
+`PLANNER_COMPOSER_ENABLED=false` masque l'entrée et la route du Composer ; un
+Plan déjà appliqué conserve son autorité. Cette étape C8 du Planner M21 est
+distincte des anciens lots de mutations PlannedExpense décrits plus haut.
+Voir `docs/status/planner-c8-composer-2026-10-06.md` pour les oracles, preuves
+desktop et limites de la certification isolée.

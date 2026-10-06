@@ -46,7 +46,7 @@ const h = planningHarness(), originalFrom = h.client.from.bind(h.client);
 h.facts.inputs["2026-10"] = structuredClone(current);
 h.client.from = table => {
   touched.push(table);
-  assert(["phase2_month_inputs", "phase2_planned_expenses", "persons"].includes(table), `Historical authority reached: ${table}`);
+  assert(["phase2_month_inputs", "phase2_planned_expenses", "persons", "phase2_month_plans"].includes(table), `Historical authority reached: ${table}`);
   if (table !== "phase2_month_inputs") return originalFrom(table);
   const filters = {};
   return { select() { return this; }, eq(key, value) { filters[key] = value; return this; },
@@ -130,7 +130,7 @@ await test("UX-039", () => { const rendered = html(MonthReliabilityPanel, { mode
 await test("UX-040", async () => { const before = countWrites(), snapshot = JSON.stringify(h.facts.inputs); await actions.previewMonthControlCenter("2026-10", purpose, [restaurant100, tobacco20]); assert.equal(countWrites(), before); assert.equal(JSON.stringify(h.facts.inputs), snapshot); });
 await test("UX-041", async () => { const preview = await actions.previewMonthControlCenter("2026-10", purpose, [restaurant100, tobacco20]), before = countWrites(); assert((await actions.applyMonthChoice("2026-10", { operations: [restaurant100, tobacco20] }, preview.baseDigest)).ok); assert.equal(countWrites() - before, 1); const reload = await realRead(h.client, h.householdId, "2026-10"); assert.deepEqual(run({ ...base, inputs: reload.inputs }).narrative.final, preview.preview.after); h.facts.inputs["2026-10"] = structuredClone(current); });
 await test("UX-042", async () => { const preview = await actions.previewMonthControlCenter("2026-10", purpose, [restaurant100]), before = countWrites(); h.facts.inputs["2026-10"].openingBalance = { amount: "200", asOfDate: "2026-10-18" }; const result = await actions.applyMonthChoice("2026-10", { operations: [restaurant100] }, preview.baseDigest); assert.equal(result.code, "STALE_PREVIEW"); assert.equal(countWrites(), before); h.facts.inputs["2026-10"] = structuredClone(current); });
-await test("UX-043", () => { assert.equal(h.client.writes.length, 0); assert(touched.every(table => ["phase2_month_inputs", "phase2_planned_expenses", "persons"].includes(table))); assert(writes.every(row => row.table === "phase2_month_inputs")); });
+await test("UX-043", () => { assert.equal(h.client.writes.length, 0); assert(touched.every(table => ["phase2_month_inputs", "phase2_planned_expenses", "persons", "phase2_month_plans"].includes(table))); assert(writes.every(row => row.table === "phase2_month_inputs")); });
 await test("UX-044", () => { assert.equal(m.reliability.mode, "FULL_MONTH_SAFE"); assert.deepEqual(wb({ ...base, asOf: "2026-10-01" }, purpose, [restaurant100]).preview.after, wb({ ...base, asOf: "2026-10-28" }, purpose, [restaurant100]).preview.after); });
 await test("UX-045", () => { process.env.PHASE2_FORECAST_TEMPORAL_MODE = "AS_OF_TEMPORAL"; try { assert.deepEqual(wb(base, purpose, [restaurant100]).preview, simulate(base, { operations: [restaurant100] }).view); } finally { delete process.env.PHASE2_FORECAST_TEMPORAL_MODE; } });
 await test("UX-046", () => { for (const source of [ui, simulator, src("app/mois-a-venir/month-control-choices.tsx")]) { assert(!source.includes("new Big")); assert(!source.includes("deriveMonthScenario(")); assert(!source.includes("simulateMonthChoice(")); } assert(src("server/phase2/month-control-center.ts").includes("simulateMonthChoice(scenarioCtx")); }, "STATIC");
