@@ -8,7 +8,7 @@ import { sumReferenceComponents } from "../month-reference";
 import { compare } from "./baseline-evidence";
 import { slotReferenceKeys } from "./plan-slot-resolver";
 
-export const FINANCIAL_ADAPTER_VERSION = "planner-financial-adapter@v3-economic-mobility";
+export const FINANCIAL_ADAPTER_VERSION = "planner-financial-adapter@v4-explicit-funding";
 export function buildFinancialAdapterInput(world: PlanningWorldFacts, slots: readonly CompiledPlanSlot[],
   components: readonly CompiledComponent[], consumptions: readonly BaselineConsumptionManifest[]): FinancialScenarioAdapterInputV1 {
   const owned = slots.filter(s => s.owned), keys = new Set(owned.flatMap(slotReferenceKeys));
@@ -37,7 +37,8 @@ export function buildFinancialAdapterInput(world: PlanningWorldFacts, slots: rea
     synthetic(component.componentId, component.evaluation.economicAmount, component.label, component.fundingAllocations, component.plannedDate, component.assetKey ?? null);
   for (const external of world.externalIntents) entries.push({ id: external.id, targetMonth: external.targetMonth,
     status: external.status, plannedDate: external.plannedDate, context: external.context,
-    costItems: external.costItems.map(line => keys.has(line.baselineKey ?? "") ? { ...line, baselineKey: null } : line) });
+    costItems: external.costItems.map(line => ({ ...line, fundingAllocations: line.fundingAllocations ?? [],
+      ...(keys.has(line.baselineKey ?? "") ? { baselineKey: null } : {}) })) });
   if (new Set(entries.map(e => e.id)).size !== entries.length) throw new TypeError("PLANNER_FINANCIAL_ENTRY_DUPLICATE");
   return { effectiveMonthInputs, plannedExpenseEntries: entries.sort((a, b) => compare(a.id, b.id)), adapterManifest: {
     planOwnedDecisionSlots: owned.map(s => s.baseline.slotIdentityKey), baselineConsumptions: consumptions,

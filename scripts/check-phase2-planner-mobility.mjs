@@ -115,7 +115,9 @@ try {
       visit(101, { journey: { relation: 'SHARES_JOURNEY', certainty: 'CERTAIN', externalExpenseId: external.id, externalCostLineIds: [uuid(802), uuid(801)] } })]);
     const p = await evaluate(semantic, world); assert.equal(p.compiled.journeys.length, 1); assert.equal(p.owner.calls.routes.length, 0);
     assert.equal(p.projection.mobility.usageEconomicCost, '2.00'); assert.equal(p.projection.mobility.cashTransportCosts, '3.00');
-    assert.equal(p.compiled.financialAdapterInput.plannedExpenseEntries.length, 1); assert.deepEqual(p.compiled.financialAdapterInput.plannedExpenseEntries[0].costItems, external.costItems);
+    assert.equal(p.compiled.financialAdapterInput.plannedExpenseEntries.length, 1);
+    assert.deepEqual(p.compiled.financialAdapterInput.plannedExpenseEntries[0].costItems, external.costItems.map(c => ({ ...c, fundingAllocations: c.fundingAllocations ?? [] })));
+    assert.equal(p.scenario.economicPlan.plannedFunding.bankAllocated, '3.00', 'Only explicit toll funding; unknown activity funding stays unknown');
     assert.equal(p.projection.plan.impactOnMonthEnd, '0.00'); assert.equal(p.compiled.components.length, 0); await roundTrip(semantic, world);
     const incomplete = structuredClone(semantic); incomplete.contexts[0].slotSelections.transport.items[0].journey.externalCostLineIds = [uuid(801)];
     await assert.rejects(() => evaluate(incomplete, world), /JOURNEY_EXTERNAL_TRANSPORT_PROOF_REQUIRED/);

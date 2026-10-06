@@ -3,58 +3,39 @@ import Big from "big.js";
 import { plannerDigest } from "@/domain/phase2/planner/json";
 import { emptyPlanSemanticState, parsePlanSemanticState } from "@/domain/phase2/planner/semantic-state";
 import type { PlanSemanticStateV1 } from "@/domain/phase2/planner/semantic-state";
-import type { PlanProjectionV1 } from "@/domain/phase2/planner/projection-contract";
 import type { PlanningWorldFacts, PlannerExpectedBase, PlanScenarioPreview } from "@/domain/phase2/planner/compiler-contract";
 import { compileSemanticPlan, jsonEnvelope, PLANNER_COMPILER_VERSION } from "./compiler";
 import { deriveCompiledMonthScenario } from "./financial-adapter";
-import { costItemCashTreatment } from "@/domain/phase2/planned-money";
+import { buildPlanProjection, PLAN_PROJECTION_MODEL } from "./projection";
+import { mutatePlanSemanticState } from "./semantic-mutations";
 
-/** Pure evaluation shared by Preview, server Apply and active Plan reload. */
+/** Same pure evaluation for preview, server apply, assistant and immediate reload. */
 export function evaluatePlanScenario(world: PlanningWorldFacts, semanticState: PlanSemanticStateV1, base: PlannerExpectedBase): PlanScenarioPreview {
   const state = parsePlanSemanticState(semanticState);
   const input = { baseline: world.baseline, semanticState: state, externalIntents: world.externalIntents, world,
-    compilerVersion: PLANNER_COMPILER_VERSION, modelVersions: world.modelVersions };
+    compilerVersion: PLANNER_COMPILER_VERSION, modelVersions: { ...world.modelVersions, projection: PLAN_PROJECTION_MODEL } };
   const compiled = compileSemanticPlan(input);
   const baselineCompiled = compileSemanticPlan({ ...input, semanticState: emptyPlanSemanticState(state.targetMonth),
     forcedOwnedSlotKeys: compiled.financialAdapterInput.adapterManifest.planOwnedDecisionSlots });
   const scenario = deriveCompiledMonthScenario(world, compiled), baselineScenario = deriveCompiledMonthScenario(world, baselineCompiled);
-  const plan = scenario.economicPlan, before = baselineScenario.economicPlan;
-  const blocked = compiled.diagnostics.some(d => d.severity === "BLOCK") || plan === null;
-  const hasUnknownFinancialBasis = (plan: typeof compiled) => plan.constraints.some(c => c.code === "COMPONENT_COST_UNKNOWN" || c.code === "OWNED_SLOT_COST_UNKNOWN"
-    || c.code === "OWNED_SLOT_FINANCIAL_REFERENCE_UNRESOLVED" || c.code === "OWNED_SLOT_OBSERVED_RECONCILIATION_REQUIRED"
-    || c.code === "OWNED_SLOT_CONDITION_UNRESOLVED" || c.code === "OWNED_SLOT_FINANCIAL_MAPPING_AMBIGUOUS"
-    || c.code === "CONTEXT_COMPONENT_SLOT_UNRESOLVED" || c.code === "CONTEXT_SLOT_BINDING_UNRESOLVED"
-    || c.code === "MOBILITY_PRICING_UNRESOLVED" || c.code === "MOBILITY_RELATION_NEEDS_CHOICE" || c.code === "MOBILITY_DIRECTION_UNRESOLVED");
-  const remainder = hasUnknownFinancialBasis(compiled) ? null : plan?.scenarios.central ?? null;
-  const baselineRemainder = hasUnknownFinancialBasis(baselineCompiled) ? null : before?.scenarios.central ?? null;
-  const mobilityTotal = (key: "economicFuel" | "cashTransport") => compiled.journeyPrices.length !== compiled.journeys.length
-    || compiled.journeyPrices.some(p => p[key] === null) ? null : compiled.journeyPrices.reduce((n, p) => n.plus(p[key]!), new Big(0)).toFixed(2);
-  const diagnostics = [...compiled.diagnostics, ...(baselineRemainder === null ? [{ code: "BASELINE_FINANCIAL_COMPARISON_UNKNOWN", severity: "WARN" as const,
-    targetRef: null, message: "BASELINE_FINANCIAL_COMPARISON_UNKNOWN", evidenceRefs: [] }] : []), ...(!plan ? [{ code: "FINANCIAL_SCENARIO_UNRESOLVED", severity: "BLOCK" as const,
-    targetRef: null, message: "FINANCIAL_SCENARIO_UNRESOLVED", evidenceRefs: [] }] : [])];
-  const projection: PlanProjectionV1 = { version: "plan-projection@v1", targetMonth: state.targetMonth,
-    baseline: { digest: world.baseline.digest, economicMonthEndRemainder: baselineRemainder },
-    plan: { economicMonthEndRemainder: remainder, impactOnMonthEnd: remainder !== null && baselineRemainder !== null
-      ? new Big(remainder).minus(baselineRemainder).toFixed(2) : null },
-    economic: { resources: plan?.economicResources ?? null, certainCommitments: plan?.certainOutflows.total ?? null,
-      savingsReservations: plan?.savingsAllocations.total ?? null, needsAndHabits: null, discretionaryLife: null,
-      explicitContexts: compiled.components.some(c => !c.physicalJourneyRequirementId && c.evaluation.economicAmount === null) || compiled.constraints.some(c => c.code === "CONTEXT_COMPONENT_SLOT_UNRESOLVED")
-        ? null : compiled.components.filter(c => c.externalEntryId === null && !c.physicalJourneyRequirementId)
-        .reduce((n, c) => n.plus(c.evaluation.economicAmount!), new Big(0)).toFixed(2),
-      mobilityUsageEconomicCost: mobilityTotal("economicFuel"), unresolvedEconomicAmount: null },
-    funding: jsonEnvelope({ status: "PARTIAL", financialOwner: plan?.plannedFunding ?? null,
-      knownSyntheticCostWithUnknownFunding: compiled.financialAdapterInput.plannedExpenseEntries
-        .filter(e => e.id.startsWith("planner:")).flatMap(e => e.costItems).filter(c => c.fundingAllocations?.length === 0 && costItemCashTreatment(c) !== "ECONOMIC_ONLY")
-        .reduce((n, c) => n.plus(c.unitAmount), new Big(0)).toFixed(2),
-      anonymousSlotFunding: "UNKNOWN", unresolvedReserves: world.baseline.unresolvedReserves }),
-    cash: { knowledge: "UNKNOWN", openingBalance: world.monthInputs.openingBalance?.amount ?? null, lowPointAmount: null, lowPointDate: null },
-    mobility: { usageEconomicCost: mobilityTotal("economicFuel"), cashTransportCosts: mobilityTotal("cashTransport"), journeyCount: compiled.journeys.length,
-      unresolvedJourneyCount: compiled.journeys.filter(j => j.pricingState !== "RESOLVED").length },
-    goal: { targetMonthEnd: world.monthInputs.decision?.goal ?? null,
-      gapToGoal: remainder !== null && world.monthInputs.decision?.goal !== null && world.monthInputs.decision?.goal !== undefined
-        ? new Big(world.monthInputs.decision.goal).minus(remainder).toFixed(2) : null },
-    impacts: compiled.contextualEffects.map(jsonEnvelope), diagnostics,
-    projectionCompleteness: remainder === null ? "UNKNOWN" : "PARTIAL", applyReadiness: blocked ? "BLOCKED" : "READY_WITH_WARNINGS" };
+  const initial = buildPlanProjection(world, state, compiled, scenario, baselineCompiled, baselineScenario);
+  const marginal = (targetRef: string, makeState: () => PlanSemanticStateV1) => {
+    try {
+      const without = makeState(), alternative = compileSemanticPlan({ ...input, semanticState: without });
+      const alternativeScenario = deriveCompiledMonthScenario(world, alternative);
+      const after = buildPlanProjection(world, without, alternative, alternativeScenario, baselineCompiled, baselineScenario).plan.economicMonthEndRemainder;
+      const current = initial.plan.economicMonthEndRemainder;
+      return jsonEnvelope({ targetRef, marginalImpactOnMonthEnd: current !== null && after !== null ? new Big(current).minus(after).toFixed(2) : null,
+        rationaleCode: current !== null && after !== null ? "REAL_COMPILER_MARGINAL" : "MARGINAL_UNRESOLVED",
+        comparisonSemanticStateDigest: alternative.semanticStateDigest });
+    } catch (error) {
+      if (!(error instanceof TypeError)) throw error;
+      return jsonEnvelope({ targetRef, marginalImpactOnMonthEnd: null, rationaleCode: "MARGINAL_REQUIRES_RESOLUTION", resolution: error.message });
+    }
+  };
+  const projection = { ...initial, impacts: [...compiled.contextualEffects.map(jsonEnvelope),
+    ...state.controls.map(c => marginal(c.decisionId, () => parsePlanSemanticState({ ...state, controls: state.controls.filter(item => item.decisionId !== c.decisionId) }))),
+    ...state.contexts.map(c => marginal(c.contextOccurrenceId, () => mutatePlanSemanticState(state, { kind: "REMOVE_CONTEXT", contextOccurrenceId: c.contextOccurrenceId })))] };
   const projectionDigest = plannerDigest(projection);
   const previewDigest = plannerDigest({ version: "planner-preview@v1", baselineDigest: world.baseline.digest,
     semanticStateDigest: compiled.semanticStateDigest, compiledManifestDigest: compiled.manifestDigest, projectionDigest,

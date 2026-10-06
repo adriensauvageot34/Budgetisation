@@ -22,7 +22,7 @@ import { JOURNEY_RESOLVER_VERSION } from "./journey-resolver";
 import { PROSPECTIVE_MOBILITY_PRICING_VERSION } from "./prospective-mobility-pricing";
 import { validateRenewalComponentConsumptions } from "./renewal-compiler";
 
-export const PLANNER_COMPILER_VERSION = "planner-semantic-compiler@v5-renewals";
+export const PLANNER_COMPILER_VERSION = "planner-semantic-compiler@v6-headless";
 /** Typed owner outputs may have optional undefined fields. Persist only their JSON representation. */
 export const jsonEnvelope = (value: unknown) => parsePlannerJsonObject(JSON.parse(JSON.stringify(value)));
 export function financeAuthorityEvidence(input: CompilePlanInputV1) {
