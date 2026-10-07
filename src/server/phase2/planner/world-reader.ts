@@ -26,8 +26,13 @@ export function createPlannerDependencies(canonical: CanonicalRepository, authen
   return { repository: createPlanApplyRepository(authenticatedClient), async readWorld(householdId, targetMonth) {
     scope(householdId);
     const cutoff = Temporal.Instant.from(clock()), asOfDate = cutoff.toZonedDateTimeISO(canonical.context.timezone).toPlainDate().toString();
-    const forecast = await readPlanningMonthForecast(canonical.client, householdId, targetMonth);
-    const sources = await readPlanningBaselineSources(canonical, targetMonth, cutoff.toString(), { simpleOccurrences: true, renewals: true, forecast });
+    const forecastPromise = readPlanningMonthForecast(canonical.client, householdId, targetMonth);
+    const sourcesPromise = readPlanningBaselineSources(canonical, targetMonth, cutoff.toString(), { simpleOccurrences: true, renewals: true, forecast: forecastPromise });
+    // Observe early source rejection while retaining the original Forecast-first
+    // failure boundary. Await the original Promise below; no error is replaced.
+    sourcesPromise.catch(() => undefined);
+    const forecast = await forecastPromise;
+    const sources = await sourcesPromise;
     // One admitted canonical evidence read for both C1 and financial calculation.
     return { baseline: buildRenewalPlanningBaseline(sources), forecast: { ...forecast, predictionEvidence: sources.evidence },
       monthInputs: sources.monthInputs, externalIntents: sources.plannedExpenses, asOfDate, costQuotes: {},

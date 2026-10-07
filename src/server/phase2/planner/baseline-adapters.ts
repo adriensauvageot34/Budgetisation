@@ -49,7 +49,7 @@ export async function readPersonHabitAssertions(client: SupabaseClient, househol
  * context. Habit assertions require its trusted server read client (existing SELECT grants).
  * No new credential, Plan read, materialization, migration, or financial evaluation occurs. */
 export async function readPlanningBaselineSources(repository: CanonicalRepository, targetMonth: string,
-  knowledgeCutoff: string, options: Readonly<{ simpleOccurrences?: boolean; renewals?: boolean; forecast?: MonthForecast }> = {}): Promise<PlanningBaselineSources> {
+  knowledgeCutoff: string, options: Readonly<{ simpleOccurrences?: boolean; renewals?: boolean; forecast?: MonthForecast | Promise<MonthForecast> }> = {}): Promise<PlanningBaselineSources> {
   const month = plannerMonth(targetMonth), cutoff = Temporal.Instant.from(knowledgeCutoff);
   const { client, context } = repository, householdId = String(context.householdId);
   const today = cutoff.toZonedDateTimeISO(context.timezone).toPlainDate();
@@ -73,7 +73,10 @@ export async function readPlanningBaselineSources(repository: CanonicalRepositor
     repository.loadPurchaseAwareCanonical(range, "PURCHASE_AWARE_PILOT"),
     simpleRead(),
   ]);
-  const forecast = options.forecast ? admitPlanningForecast(authorities.publication, month, options.forecast) : assembleMonthForecast(authorities, month);
+  // Source reads depend on the authorized scope/cutoff, not the pending forecast.
+  // Admit that exact published generation before exposing any Baseline facts.
+  const suppliedForecast = await options.forecast;
+  const forecast = suppliedForecast ? admitPlanningForecast(authorities.publication, month, suppliedForecast) : assembleMonthForecast(authorities, month);
   if (canonicalPurchases.status !== "PASS") throw new TypeError("BASELINE_PURCHASE_OWNER_BLOCKED");
   // Product owner has already verified the Canonical household scope; resolve the same
   // Need subjects from Canonical person_id, without inferring them from legacy names.
