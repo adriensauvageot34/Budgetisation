@@ -64,7 +64,9 @@ export function MonthControlCenter({ model, initialSection = null, initialFocus 
     setSessionReady(true);
   }, [draftSessionKey]);
   const [trialKey, setTrialKey] = useState<string | null>(null);
-  const [trial, setTrial] = useState<Workbench | null>(null), [pending, startTransition] = useTransition();
+  const [trial, setTrial] = useState<Workbench | null>(null), [mutationPending, startTransition] = useTransition();
+  const [previewCalculating, setPreviewCalculating] = useState(false);
+  const pending = mutationPending || previewCalculating;
   useEffect(() => {
     try { const saved = JSON.parse(sessionStorage.getItem(undoSessionKey) ?? "null");
       if (saved && typeof saved.token === "string" && saved.expires > Date.now()) { setUndoToken(saved.token); setToast("Scénario appliqué"); }
@@ -72,19 +74,39 @@ export function MonthControlCenter({ model, initialSection = null, initialFocus 
     } catch { /* Undo remains available in component state if storage is disabled. */ }
   }, [undoSessionKey]);
   useEffect(() => { if (!toast || pending) return; const timer = setTimeout(() => { setToast(null); try { sessionStorage.removeItem(undoSessionKey); } catch {} }, 10000); return () => clearTimeout(timer); }, [toast, pending, undoSessionKey]);
-  const request = useRef(0), requested = useRef<string | null>(null), previousDigest = useRef(model.baseDigest);
+  const previewScope = JSON.stringify([model.targetMonth, model.reliability.publicationId, model.baseDigest]);
+  const request = useRef(0), requested = useRef<string | null>(null), previousScope = useRef(previewScope);
+  const mounted = useRef(true), leaving = useRef(false), authority = useRef(previewScope);
+  const [previewEpoch, setPreviewEpoch] = useState(0);
+  authority.current = previewScope;
+  const previewKey = useCallback((baseDigest: string, nextPurpose: MonthControlPurpose, nextOperations: readonly MonthChoiceOperation[]) =>
+    JSON.stringify([model.targetMonth, model.reliability.publicationId, baseDigest, nextPurpose, nextOperations]), [model.targetMonth, model.reliability.publicationId]);
+  const cancelPreview = useCallback((departing = true) => {
+    if (previewTimer.current !== null) clearTimeout(previewTimer.current);
+    previewTimer.current = null; ++request.current; requested.current = null; leaving.current = departing;
+    if (mounted.current) setPreviewCalculating(false);
+  }, []);
+  const resumePreview = useCallback(() => {
+    if (leaving.current) setPreviewEpoch(value => value + 1);
+    leaving.current = false;
+  }, []);
+  useEffect(() => {
+    mounted.current = true; leaving.current = false;
+    return () => { mounted.current = false; cancelPreview(); };
+  }, [cancelPreview]);
   const updateLocation = useCallback((next: MonthControlSectionInput | null, nextFocus?: string | null) => {
     const url = new URL(window.location.href); url.searchParams.set("month", model.targetMonth);
     window.history.replaceState(null, "", monthControlUrl(url.href, next, nextFocus));
   }, [model.targetMonth]);
   const navigate = useCallback((destination: Destination, origin?: HTMLElement) => {
-    if (composerHref && destination.focus?.startsWith("pilot")) { router.push(composerHref); return; }
+    if (composerHref && destination.focus?.startsWith("pilot")) { cancelPreview(); router.push(composerHref); return; }
+    resumePreview();
     if (origin) invoker.current = origin;
     const next = monthWorkspaceFocus(destination.section, destination.focus);
     setFocus(next === "info" ? null : next); setInfo(next === "info"); setOpen(true); updateLocation("center", next);
-  }, [updateLocation, composerHref, router]);
-  const openEntity = (entity: string | null) => { if (composerHref && entity?.startsWith("pilot")) { router.push(composerHref); return; } lastFocus.current = focus; const next = monthWorkspaceFocus("center", entity); setFocus(next); setInfo(false); updateLocation("center", next); };
-  const close = () => { setOpen(false); setInfo(false); updateLocation(null); };
+  }, [updateLocation, composerHref, router, cancelPreview, resumePreview]);
+  const openEntity = (entity: string | null) => { if (composerHref && entity?.startsWith("pilot")) { cancelPreview(); router.push(composerHref); return; } resumePreview(); lastFocus.current = focus; const next = monthWorkspaceFocus("center", entity); setFocus(next); setInfo(false); updateLocation("center", next); };
+  const close = () => { cancelPreview(); setOpen(false); setInfo(false); updateLocation(null); };
   useEffect(() => {
     if (!info || !open) return;
     const key = (event: KeyboardEvent) => { if (event.key === "Escape") { event.preventDefault(); event.stopPropagation(); setInfo(false); updateLocation("center", focus); infoButton.current?.focus(); } };
@@ -94,36 +116,46 @@ export function MonthControlCenter({ model, initialSection = null, initialFocus 
   }, [info, open, focus, updateLocation]);
   useEffect(() => { fallback.current = background.current?.querySelector<HTMLButtonElement>("[data-month-control-trigger]") ?? null; }, [model.targetMonth]);
   useEffect(() => {
-    const restore = () => { const url = new URL(window.location.href), value = monthControlSection(url.searchParams.get("control"));
+    const restore = () => { resumePreview(); cancelPreview(false); const url = new URL(window.location.href), value = monthControlSection(url.searchParams.get("control"));
       setOpen(value !== null); if (value) { const next = monthWorkspaceFocus(url.searchParams.get("control") as MonthControlSectionInput, url.searchParams.get("focus")); setFocus(next === "info" ? null : next); setInfo(next === "info"); updateLocation("center", next); } };
     restore(); window.addEventListener("popstate", restore); return () => window.removeEventListener("popstate", restore);
-  }, [model.targetMonth, updateLocation]);
+  }, [model.targetMonth, updateLocation, cancelPreview, resumePreview]);
   useEffect(() => {
-    if (previousDigest.current === model.baseDigest) return;
-    previousDigest.current = model.baseDigest; ++request.current; requested.current = null; setTrial(null);
+    if (previousScope.current === previewScope) return;
+    previousScope.current = previewScope; cancelPreview(leaving.current); setTrial(null);
     if (operations.length) setMessage(null);
     else setPurpose(model.defaultPurpose);
-  }, [model.baseDigest, model.defaultPurpose, operations.length]);
-  const recalculate = useCallback((nextOperations: readonly MonthChoiceOperation[], nextPurpose: MonthControlPurpose) => {
+  }, [previewScope, model.defaultPurpose, operations.length, cancelPreview]);
+  const recalculate = useCallback((nextOperations: readonly MonthChoiceOperation[], nextPurpose: MonthControlPurpose, deferRoot = false) => {
     const sequence = ++request.current;
-    requested.current = JSON.stringify([model.baseDigest, nextPurpose, nextOperations]);
+    requested.current = previewKey(model.baseDigest, nextPurpose, nextOperations);
     setOperations(nextOperations); setPurpose(nextPurpose); setTrial(null);
     try { if (nextOperations.length) sessionStorage.setItem(draftSessionKey, JSON.stringify({ operations: nextOperations, purpose: nextPurpose, expires: Date.now() + 60 * 60_000 })); else sessionStorage.removeItem(draftSessionKey); } catch {}
-    if (previewTimer.current) clearTimeout(previewTimer.current);
-    previewTimer.current = setTimeout(() => startTransition(async () => {
+    if (previewTimer.current !== null) clearTimeout(previewTimer.current);
+    const current = () => mounted.current && !leaving.current && sequence === request.current && authority.current === previewScope;
+    // The neutral root renders the server model. Give a quick destination choice time to cancel;
+    // focused views and explicit draft edits retain the immediate/180ms V2 behavior.
+    previewTimer.current = setTimeout(() => {
+      if (!current()) return;
+      previewTimer.current = null;
+      setPreviewCalculating(true);
+      // Track only this preview: an obsolete slow action must not keep the current UI pending.
+      void (async () => {
       try { const result = await previewMonthControlCenter(model.targetMonth, nextPurpose, nextOperations);
-        if (sequence === request.current) { setTrial(result); setTrialKey(JSON.stringify([result.baseDigest, nextPurpose, nextOperations])); setMessage(null); if (result.baseDigest !== model.baseDigest) router.refresh(); } }
-      catch { if (sequence === request.current) setMessage("Le scénario ne peut pas encore être calculé. Vérifiez ses choix ou réinitialisez-le ; le mois enregistré reste inchangé."); }
-    }), nextOperations.length ? 180 : 0);
-  }, [model.baseDigest, model.targetMonth, router, draftSessionKey]);
+        if (current()) { setTrial(result); setTrialKey(previewKey(result.baseDigest, nextPurpose, nextOperations)); setMessage(null); if (result.baseDigest !== model.baseDigest) router.refresh(); } }
+      catch { if (current()) setMessage("Le scénario ne peut pas encore être calculé. Vérifiez ses choix ou réinitialisez-le ; le mois enregistré reste inchangé."); }
+      finally { if (current()) setPreviewCalculating(false); }
+      })();
+    }, nextOperations.length ? 180 : deferRoot ? 800 : 0);
+  }, [model.baseDigest, model.targetMonth, router, draftSessionKey, previewKey, previewScope]);
   useEffect(() => {
-    if (!sessionReady || !open || section !== "choices" || !model.editable) return;
+    if (!sessionReady || !open || leaving.current || section !== "choices" || !model.editable) return;
     if (composerHref && focus?.startsWith("pilot")) return;
-    const key = JSON.stringify([model.baseDigest, purpose, operations]);
-    if (requested.current !== key) recalculate(operations, purpose);
-  }, [sessionReady, open, section, operations, purpose, recalculate, model.baseDigest, model.editable, composerHref, focus]);
-  useEffect(() => { if (open && composerHref && focus?.startsWith("pilot")) router.replace(composerHref); }, [open, composerHref, focus, router]);
-  useEffect(() => () => { if (previewTimer.current) clearTimeout(previewTimer.current); }, []);
+    const key = previewKey(model.baseDigest, purpose, operations);
+    const deferRoot = !!composerHref && focus === null && operations.length === 0;
+    if (requested.current !== key || !deferRoot && previewTimer.current !== null) recalculate(operations, purpose, deferRoot);
+  }, [sessionReady, open, section, operations, purpose, recalculate, model.baseDigest, model.editable, composerHref, focus, previewKey, previewEpoch]);
+  useEffect(() => { if (open && composerHref && focus?.startsWith("pilot")) { cancelPreview(); router.replace(composerHref); } }, [open, composerHref, focus, router, cancelPreview]);
   useEffect(() => {
     if (!open) return;
     const frame = requestAnimationFrame(() => {
@@ -153,7 +185,7 @@ export function MonthControlCenter({ model, initialSection = null, initialFocus 
     try { recalculate(replaceMonthControlOperation(operations, operation), { kind: "FREE_EXPLORATION" }); }
     catch { setMessage("Vérifiez cette réduction. Deux cibles différentes au maximum peuvent être simulées."); }
   };
-  const activeTrial = trial?.baseDigest === model.baseDigest && trialKey === JSON.stringify([model.baseDigest, purpose, operations]) ? trial : null;
+  const activeTrial = trial?.baseDigest === model.baseDigest && trialKey === previewKey(model.baseDigest, purpose, operations) ? trial : null;
   const previewPending = pending || operations.length > 0 && !activeTrial;
   const removeDraft = (target: string | null) => recalculate(target === null ? [] : operations.filter(row => (row.kind === "CATEGORY" ? `category:${row.categoryKey}` : `savings:${row.savingsId}`) !== target), { kind: "FREE_EXPLORATION" });
   useEffect(() => { if (sessionReady && operations.length === 0 && focus === "pilot:review") { setFocus("pilot"); updateLocation("center", "pilot"); } }, [sessionReady, operations.length, focus, updateLocation]);
