@@ -36,7 +36,7 @@ globalThis.__composerPerf = function(name, fn) {
         const raw = JSON.stringify(child); if (raw) groups[key] = { bytes: Buffer.byteLength(raw), gzipBytes: zlib.gzipSync(raw).length };
       }
       emit({ type: 'payload', root: context.root, bytes: Buffer.byteLength(payload), gzipBytes: zlib.gzipSync(payload).length,
-        groups, digest: value.board?.draft?.semanticStateDigest, cards: (value.board?.baselineControls?.length??0)+(value.board?.discretionaryControls?.length??0)+(value.board?.savings?.length??0),
+        groups, fullUiDigest: hash(payload), digest: value.board?.draft?.semanticStateDigest, cards: (value.board?.baselineControls?.length??0)+(value.board?.discretionaryControls?.length??0)+(value.board?.savings?.length??0),
         contexts: value.board?.contexts?.length, assets: value.library?.searchableAssets?.length });
     }
     return value;
