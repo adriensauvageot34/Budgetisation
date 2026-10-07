@@ -6,6 +6,7 @@ export type {
   YearMonth,
 } from "./types";
 export {
+  createHouseholdTimeZoneValidationScope,
   addDays,
   addMonths,
   compareYearMonth,
@@ -19,6 +20,7 @@ export {
   parseYearMonth,
   yearMonthOf,
 } from "./values";
+export type { HouseholdTimeZoneValidationScope } from "./values";
 export {
   endExclusiveOfLocalDate,
   endExclusiveOfYearMonth,

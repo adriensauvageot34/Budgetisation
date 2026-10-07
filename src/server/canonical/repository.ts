@@ -46,7 +46,7 @@ import type {
   OperationId,
   PersonId,
 } from "@/core/identity";
-import { addDays, parseLocalDate, yearMonthOf, type LocalDate, type YearMonth } from "@/core/time";
+import { addDays, createHouseholdTimeZoneValidationScope, parseLocalDate, yearMonthOf, type LocalDate, type YearMonth } from "@/core/time";
 import type { AuthorizedRuntimeContext } from "./context";
 import {
   type CanonicalSourceHealth,
@@ -417,6 +417,8 @@ export class CanonicalRepository {
     this.household = {
       householdId: context.householdId,
       householdTimeZone: context.timezone,
+      // Repository instances already belong to one authorized user/request.
+      timeZoneValidation: createHouseholdTimeZoneValidationScope(context.householdId),
     };
   }
 
@@ -926,7 +928,7 @@ export class CanonicalRepository {
         personLinks: personLinksBySource.get(`${sourceKind}:${sourceId}`) ?? [],
         authorizedPersonIds: this.context.personIds,
       });
-    }));
+    }), this.household.timeZoneValidation);
   }
 
   loadEconomicFactsByComponentKeys(
@@ -1087,7 +1089,7 @@ export class CanonicalRepository {
     const byTiming = [...timingComponentKeys]
       .sort()
       .flatMap((key) => byComponentKey.get(key) ?? []);
-    return dedupeEconomicComponents([...byOperation, ...byTiming]);
+    return dedupeEconomicComponents([...byOperation, ...byTiming], this.household.timeZoneValidation);
   }
 
   async loadEconomicComponentClassifications(
@@ -1268,7 +1270,7 @@ export class CanonicalRepository {
             personDay,
             person,
           });
-        }),
+        }), this.household.timeZoneValidation,
       );
     });
   }
@@ -1336,7 +1338,7 @@ export class CanonicalRepository {
             },
             person,
           });
-        }),
+        }), this.household.timeZoneValidation,
       );
     });
   }
@@ -1519,7 +1521,7 @@ export class CanonicalRepository {
           participations: participationsByEvent.get(eventId) ?? [],
         });
         return fact === null ? [] : [fact];
-      }),
+      }), this.household.timeZoneValidation,
     );
   }
 
@@ -1618,7 +1620,7 @@ export class CanonicalRepository {
             timingAssertions: timingByEvent.get(id) ?? [],
             economicComponents,
           });
-        }),
+        }), this.household.timeZoneValidation,
       );
     });
   }

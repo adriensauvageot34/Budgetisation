@@ -29,6 +29,7 @@ import {
   parseLocalDate,
   parseYearMonth,
   type HouseholdTimeZone,
+  type HouseholdTimeZoneValidationScope,
   type LocalDate,
   type YearMonth,
 } from "../../core/time";
@@ -113,6 +114,7 @@ type CanonicalTimingControlStatus =
 export type CanonicalHouseholdContext = {
   readonly householdId: HouseholdId;
   readonly householdTimeZone: HouseholdTimeZone;
+  readonly timeZoneValidation?: HouseholdTimeZoneValidationScope;
 };
 
 type ParsedEconomicComponentRow = {
@@ -1002,7 +1004,7 @@ export function projectEconomicComponentFact(
     necessity: textDimension(operation.necessity),
     behavior: textDimension(operation.behavior),
     lifeScope: textDimension(operation.lifeScope),
-  });
+  }, input.household.timeZoneValidation);
 }
 
 function parsePersonMembership(
@@ -1073,7 +1075,7 @@ export function projectPersonDayFact(input: {
     personId: source.personId,
     localDate: source.localDate,
     locationObservability: source.locationObservability,
-  });
+  }, input.household.timeZoneValidation);
 }
 
 const timePrecisionMap = {
@@ -1167,7 +1169,7 @@ export function projectPlaceVisitFact(input: {
     interval,
     timePrecision: timePrecisionMap[precision],
     sequenceIndex,
-  });
+  }, input.household.timeZoneValidation);
 }
 
 export type ActivityOccurrenceCanonicalCandidate = {
@@ -1348,7 +1350,7 @@ export function projectActivityOccurrenceFact(input: {
     endDate: candidate.endDate,
     validationStatus: candidate.validationStatus,
     participantIds: candidate.participantIds,
-  });
+  }, input.household.timeZoneValidation);
 }
 
 export type PurchaseEventCanonicalSource = {
@@ -1547,7 +1549,7 @@ export function projectPurchaseEventFact(input: {
       new Set(["EXPLICIT_USER_ASSERTION", "STRUCTURED_CANONICAL_SOURCE", "CONTROLLED_BACKFILL"] as const),
       "purchase_events.provenance",
     ),
-  });
+  }, input.household.timeZoneValidation);
 }
 
 export function assertCanonicalSourceAttributionControls(

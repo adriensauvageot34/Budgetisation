@@ -133,6 +133,28 @@ export function parseHouseholdTimeZone(value: unknown): HouseholdTimeZone {
   return value as HouseholdTimeZone;
 }
 
+export type HouseholdTimeZoneValidationScope = Readonly<{
+  parse: (value: unknown, sourceHouseholdId: unknown) => HouseholdTimeZone;
+}>;
+
+/** A fresh scope belongs to one authorized request/build, never to the process.
+ * Only successful results of this exact validator are reused; literals/aliases
+ * remain unchanged. A foreign household takes the ordinary validation path. */
+export function createHouseholdTimeZoneValidationScope(householdId: string): HouseholdTimeZoneValidationScope {
+  const validated = new Map<string, HouseholdTimeZone>();
+  const validate = parseHouseholdTimeZone;
+  return Object.freeze({
+    parse(value: unknown, sourceHouseholdId: unknown): HouseholdTimeZone {
+      if (sourceHouseholdId !== householdId || typeof value !== "string") return validate(value);
+      const cached = validated.get(value);
+      if (cached !== undefined) return cached;
+      const result = validate(value);
+      validated.set(value, result);
+      return result;
+    },
+  });
+}
+
 export function isHouseholdTimeZone(value: unknown): value is HouseholdTimeZone {
   try {
     parseHouseholdTimeZone(value);

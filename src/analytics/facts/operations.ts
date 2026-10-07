@@ -1,4 +1,5 @@
 import type { CategoryId, PlaceId } from "../../core/identity";
+import type { HouseholdTimeZoneValidationScope } from "../../core/time";
 import {
   addMoney,
   compareMoney,
@@ -51,10 +52,11 @@ function dedupeParsedFacts<Fact>(
 
 export function dedupeEconomicComponents(
   values: readonly unknown[],
+  timeZoneValidation?: HouseholdTimeZoneValidationScope,
 ): readonly EconomicComponentFact[] {
   return dedupeParsedFacts(
     values,
-    parseEconomicComponentFact,
+    value => parseEconomicComponentFact(value, timeZoneValidation),
     (fact) => `${fact.householdId}:${fact.canonicalComponentKey}`,
     "fct_economic_component",
   );
@@ -62,10 +64,11 @@ export function dedupeEconomicComponents(
 
 export function dedupeActivityOccurrences(
   values: readonly unknown[],
+  timeZoneValidation?: HouseholdTimeZoneValidationScope,
 ): readonly ActivityOccurrenceFact[] {
   return dedupeParsedFacts(
     values,
-    parseActivityOccurrenceFact,
+    value => parseActivityOccurrenceFact(value, timeZoneValidation),
     (fact) => `${fact.householdId}:${fact.lifeEventId}`,
     "fct_activity_occurrence",
   );
@@ -73,10 +76,11 @@ export function dedupeActivityOccurrences(
 
 export function dedupePersonDays(
   values: readonly unknown[],
+  timeZoneValidation?: HouseholdTimeZoneValidationScope,
 ): readonly PersonDayFact[] {
   return dedupeParsedFacts(
     values,
-    parsePersonDayFact,
+    value => parsePersonDayFact(value, timeZoneValidation),
     (fact) => `${fact.householdId}:${fact.personId}:${fact.localDate}`,
     "fct_person_day",
   );
@@ -84,10 +88,11 @@ export function dedupePersonDays(
 
 export function dedupePurchaseEvents(
   values: readonly unknown[],
+  timeZoneValidation?: HouseholdTimeZoneValidationScope,
 ): readonly PurchaseEventFact[] {
   return dedupeParsedFacts(
     values,
-    parsePurchaseEventFact,
+    value => parsePurchaseEventFact(value, timeZoneValidation),
     (fact) => `${fact.householdId}:${fact.purchaseEventId}`,
     "fct_purchase_event",
   );
@@ -95,10 +100,11 @@ export function dedupePurchaseEvents(
 
 export function dedupePlaceVisits(
   values: readonly unknown[],
+  timeZoneValidation?: HouseholdTimeZoneValidationScope,
 ): readonly PlaceVisitFact[] {
   return dedupeParsedFacts(
     values,
-    parsePlaceVisitFact,
+    value => parsePlaceVisitFact(value, timeZoneValidation),
     (fact) => `${fact.householdId}:${fact.visitKey}`,
     "fct_place_visit",
   );

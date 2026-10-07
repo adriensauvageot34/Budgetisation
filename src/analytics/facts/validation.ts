@@ -24,7 +24,9 @@ import {
   parseInstant,
   parseLocalDate,
   parseYearMonth,
+  type HouseholdTimeZoneValidationScope,
 } from "../../core/time";
+
 import {
   createRuntimeSchema,
   hasOwn,
@@ -65,6 +67,11 @@ import type {
   PurchaseEventSource,
 } from "./types";
 import { parseMobilityLegFact } from "./mobility";
+
+function parseFactHouseholdTimeZone(value: unknown, record: Readonly<Record<string, unknown>>,
+  scope?: HouseholdTimeZoneValidationScope) {
+  return scope ? scope.parse(value, record.householdId) : parseHouseholdTimeZone(value);
+}
 
 const dimensionKinds = new Set([
   "resolved",
@@ -567,6 +574,7 @@ function normalizeIds<Id extends string>(
 
 export function parseEconomicComponentFact(
   value: unknown,
+  timeZoneValidation?: HouseholdTimeZoneValidationScope,
 ): EconomicComponentFact {
   const record = parseStrictRecord(
     value,
@@ -644,12 +652,12 @@ export function parseEconomicComponentFact(
     householdId: parseHouseholdId(
       requireProperty(record, "householdId", "EconomicComponentFact"),
     ),
-    householdTimeZone: parseHouseholdTimeZone(
+    householdTimeZone: parseFactHouseholdTimeZone(
       requireProperty(
         record,
         "householdTimeZone",
         "EconomicComponentFact",
-      ),
+      ), record, timeZoneValidation,
     ),
     canonicalComponentKey: parseCanonicalComponentKey(
       requireProperty(
@@ -716,6 +724,7 @@ export function parseEconomicComponentFact(
 
 export function parseActivityOccurrenceFact(
   value: unknown,
+  timeZoneValidation?: HouseholdTimeZoneValidationScope,
 ): ActivityOccurrenceFact {
   const record = parseStrictRecord(
     value,
@@ -753,12 +762,12 @@ export function parseActivityOccurrenceFact(
     householdId: parseHouseholdId(
       requireProperty(record, "householdId", "ActivityOccurrenceFact"),
     ),
-    householdTimeZone: parseHouseholdTimeZone(
+    householdTimeZone: parseFactHouseholdTimeZone(
       requireProperty(
         record,
         "householdTimeZone",
         "ActivityOccurrenceFact",
-      ),
+      ), record, timeZoneValidation,
     ),
     lifeEventId: parseLifeEventId(
       requireProperty(record, "lifeEventId", "ActivityOccurrenceFact"),
@@ -790,7 +799,7 @@ export function parseActivityOccurrenceFact(
   };
 }
 
-export function parsePersonDayFact(value: unknown): PersonDayFact {
+export function parsePersonDayFact(value: unknown, timeZoneValidation?: HouseholdTimeZoneValidationScope): PersonDayFact {
   const record = parseStrictRecord(
     value,
     [
@@ -813,8 +822,8 @@ export function parsePersonDayFact(value: unknown): PersonDayFact {
     householdId: parseHouseholdId(
       requireProperty(record, "householdId", "PersonDayFact"),
     ),
-    householdTimeZone: parseHouseholdTimeZone(
-      requireProperty(record, "householdTimeZone", "PersonDayFact"),
+    householdTimeZone: parseFactHouseholdTimeZone(
+      requireProperty(record, "householdTimeZone", "PersonDayFact"), record, timeZoneValidation,
     ),
     personDayId: parseCanonicalUuidKey<PersonDayId>(
       requireProperty(record, "personDayId", "PersonDayFact"),
@@ -912,7 +921,7 @@ function normalizePurchaseEventSources(
   });
 }
 
-export function parsePurchaseEventFact(value: unknown): PurchaseEventFact {
+export function parsePurchaseEventFact(value: unknown, timeZoneValidation?: HouseholdTimeZoneValidationScope): PurchaseEventFact {
   const record = parseStrictRecord(
     value,
     [
@@ -936,8 +945,8 @@ export function parsePurchaseEventFact(value: unknown): PurchaseEventFact {
     householdId: parseHouseholdId(
       requireProperty(record, "householdId", "PurchaseEventFact"),
     ),
-    householdTimeZone: parseHouseholdTimeZone(
-      requireProperty(record, "householdTimeZone", "PurchaseEventFact"),
+    householdTimeZone: parseFactHouseholdTimeZone(
+      requireProperty(record, "householdTimeZone", "PurchaseEventFact"), record, timeZoneValidation,
     ),
     purchaseEventId: parsePurchaseEventId(
       requireProperty(record, "purchaseEventId", "PurchaseEventFact"),
@@ -1003,7 +1012,7 @@ export function parsePurchaseEventFact(value: unknown): PurchaseEventFact {
   };
 }
 
-export function parsePlaceVisitFact(value: unknown): PlaceVisitFact {
+export function parsePlaceVisitFact(value: unknown, timeZoneValidation?: HouseholdTimeZoneValidationScope): PlaceVisitFact {
   const record = parseStrictRecord(
     value,
     [
@@ -1086,8 +1095,8 @@ export function parsePlaceVisitFact(value: unknown): PlaceVisitFact {
     householdId: parseHouseholdId(
       requireProperty(record, "householdId", "PlaceVisitFact"),
     ),
-    householdTimeZone: parseHouseholdTimeZone(
-      requireProperty(record, "householdTimeZone", "PlaceVisitFact"),
+    householdTimeZone: parseFactHouseholdTimeZone(
+      requireProperty(record, "householdTimeZone", "PlaceVisitFact"), record, timeZoneValidation,
     ),
     visitKey: parseCanonicalUuidKey<PlaceVisitKey>(
       requireProperty(record, "visitKey", "PlaceVisitFact"),
