@@ -7,7 +7,7 @@ if(!endpoint||!targetId||!out)throw new Error('endpoint targetId output base mod
 fs.mkdirSync(out,{recursive:true});
 const socket=new WebSocket(endpoint); await new Promise((resolve,reject)=>{socket.onopen=resolve;socket.onerror=reject;});
 let seq=0,session, pending=new Map(), network=[], errors=[], blocked=0;
-function send(method,params={},sessionId=session){return new Promise((resolve,reject)=>{const id=++seq;const timer=setTimeout(()=>{pending.delete(id);reject(new Error('CDP_METHOD_TIMEOUT:'+method));},30000);pending.set(id,{resolve:v=>{clearTimeout(timer);resolve(v)},reject:e=>{clearTimeout(timer);reject(e)},method});socket.send(JSON.stringify({id,method,params,...(sessionId?{sessionId}:{})}));});}
+function send(method,params={},sessionId=session){return new Promise((resolve,reject)=>{const id=++seq;const timer=setTimeout(()=>{pending.delete(id);reject(new Error('CDP_METHOD_TIMEOUT:'+method));},Number(process.env.COMPOSER_PERF_CDP_METHOD_TIMEOUT_MS??30000));pending.set(id,{resolve:v=>{clearTimeout(timer);resolve(v)},reject:e=>{clearTimeout(timer);reject(e)},method});socket.send(JSON.stringify({id,method,params,...(sessionId?{sessionId}:{})}));});}
 socket.onmessage=async event=>{
   const data=JSON.parse(event.data);
   if(data.id){const p=pending.get(data.id);pending.delete(data.id);if(data.error)p?.reject(new Error(p.method+': '+JSON.stringify(data.error)));else p?.resolve(data.result);return;}

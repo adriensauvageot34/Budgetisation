@@ -3,6 +3,11 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
+    "check:mobility-build-memo": "node scripts/check-mobility-build-memo.mjs",
+    "check:timezone-validation-scope": "node scripts/check-timezone-validation-scope.mjs",
+    "check:planner-neutral-evaluation": "node scripts/check-planner-neutral-evaluation.mjs",
+    "check:planner-performance-parity": "node scripts/check-planner-performance-parity.mjs",
+    "check:planner-performance-p2a": "npm run check:mobility-build-memo && npm run check:timezone-validation-scope && npm run check:planner-neutral-evaluation && npm run check:planner-performance-parity",
     "check:phase2-planner-visual-fidelity": "node scripts/check-phase2-planner-visual-fidelity.mjs",
     "smoke:phase2-planner-visual-fidelity": "node scripts/smoke-phase2-planner-visual-fidelity.mjs",
     "check:phase2-planner-final-polish": "node scripts/check-phase2-planner-final-polish.mjs",
