@@ -1,13 +1,30 @@
 import "server-only";
 import Big from "big.js";
-import { plannerDigest } from "@/domain/phase2/planner/json";
+import { canonicalPlannerJson, plannerDigest } from "@/domain/phase2/planner/json";
 import { emptyPlanSemanticState, parsePlanSemanticState } from "@/domain/phase2/planner/semantic-state";
 import type { PlanSemanticStateV1 } from "@/domain/phase2/planner/semantic-state";
-import type { PlanningWorldFacts, PlannerExpectedBase, PlanScenarioPreview } from "@/domain/phase2/planner/compiler-contract";
+import type { PlanningWorldFacts, PlannerExpectedBase, PlanScenarioPreview, CompiledSemanticPlanV1 } from "@/domain/phase2/planner/compiler-contract";
 import { compileSemanticPlan, jsonEnvelope, PLANNER_COMPILER_VERSION } from "./compiler";
 import { deriveCompiledMonthScenario } from "./financial-adapter";
 import { buildPlanProjection, PLAN_PROJECTION_MODEL } from "./projection";
 import { mutatePlanSemanticState } from "./semantic-mutations";
+import { materializePlanSlots } from "./plan-slot-resolver";
+
+/** The branches share all authorities/versions. In the audited v6 Compiler,
+ * forcedOwnedSlotKeys only affects materialization. Compare both complete slot
+ * results and the entire normalized state, including preferences. Structural
+ * ownership can be repeated without changing slots; any difference fails closed.
+ * A future Compiler must establish this equivalence again before reuse. */
+function isSemanticallyNeutralPlanEvaluation(world: PlanningWorldFacts, state: PlanSemanticStateV1, reference: PlanSemanticStateV1,
+  compiled: CompiledSemanticPlanV1, compilerVersion: string): boolean {
+  const manifest = compiled.financialAdapterInput.adapterManifest;
+  return compilerVersion === "planner-semantic-compiler@v6-headless"
+    && canonicalPlannerJson(state) === canonicalPlannerJson(reference)
+    && manifest.baselineConsumptions.length === 0
+    && manifest.neutralizedLegacyAssumptions.length === 0
+    && canonicalPlannerJson(jsonEnvelope({ slots: materializePlanSlots(world.baseline, state) }))
+      === canonicalPlannerJson(jsonEnvelope({ slots: materializePlanSlots(world.baseline, reference, manifest.planOwnedDecisionSlots) }));
+}
 
 /** Same pure evaluation for preview, server apply, assistant and immediate reload. */
 export function evaluatePlanScenario(world: PlanningWorldFacts, semanticState: PlanSemanticStateV1, base: PlannerExpectedBase): PlanScenarioPreview {
@@ -15,9 +32,12 @@ export function evaluatePlanScenario(world: PlanningWorldFacts, semanticState: P
   const input = { baseline: world.baseline, semanticState: state, externalIntents: world.externalIntents, world,
     compilerVersion: PLANNER_COMPILER_VERSION, modelVersions: { ...world.modelVersions, projection: PLAN_PROJECTION_MODEL } };
   const compiled = compileSemanticPlan(input);
-  const baselineCompiled = compileSemanticPlan({ ...input, semanticState: emptyPlanSemanticState(state.targetMonth),
+  const referenceState = emptyPlanSemanticState(state.targetMonth);
+  const baselineCompiled = isSemanticallyNeutralPlanEvaluation(world, state, referenceState, compiled, input.compilerVersion)
+    ? compiled : compileSemanticPlan({ ...input, semanticState: referenceState,
     forcedOwnedSlotKeys: compiled.financialAdapterInput.adapterManifest.planOwnedDecisionSlots });
-  const scenario = deriveCompiledMonthScenario(world, compiled), baselineScenario = deriveCompiledMonthScenario(world, baselineCompiled);
+  const scenario = deriveCompiledMonthScenario(world, compiled), baselineScenario = baselineCompiled === compiled
+    ? scenario : deriveCompiledMonthScenario(world, baselineCompiled);
   const initial = buildPlanProjection(world, state, compiled, scenario, baselineCompiled, baselineScenario);
   const marginal = (targetRef: string, makeState: () => PlanSemanticStateV1) => {
     try {
