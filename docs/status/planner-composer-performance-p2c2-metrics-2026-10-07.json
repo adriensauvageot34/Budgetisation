@@ -1,0 +1,407 @@
+{
+  "schema": "composer-p2c2-lean-v1",
+  "headBefore": "f568aaa3fd5d8ca79c46b5972e8b6c46353dd4c9",
+  "headAfterProduct": "baf3762277c84b321ecbde63f908ca8454ff2b56",
+  "cutoff": "2026-10-06T21:00:00Z",
+  "fieldReduction": {
+    "selection": "operation_id,date_bancaire,mois_analytique_force,date_transaction_reelle,date_transaction_precision,merchant_id,importance,nature_fixe_variable,contexte_vie,montant,montant_bancaire_exact:montant::text,libelle_bancaire,category_id,subcategory_id,type_precis,operation_mixte,mode_prevision,recurrence_series_id,need_id,annual_event_id,provision_pool_id,marchand,description_precise",
+    "metrics": {
+      "get": 13,
+      "rows": 1490,
+      "beforeBytes": 3737600,
+      "afterBytes": 1266788,
+      "beforeFields": 67,
+      "afterFields": 23
+    },
+    "large": {
+      "get": 12,
+      "rows": 1436,
+      "beforeBytes": 3603183,
+      "afterBytes": 1221089
+    },
+    "networkFallback": false,
+    "captureUntouched": true
+  },
+  "replay": {
+    "headBefore": "f568aaa3fd5d8ca79c46b5972e8b6c46353dd4c9",
+    "cutoff": "2026-10-06T21:00:00Z",
+    "replays": 5,
+    "parity": "PASS",
+    "networkFallback": false,
+    "before": [
+      {
+        "total": {
+          "get": 313,
+          "rows": 38377,
+          "bytes": 15773984
+        },
+        "operations": {
+          "get": 13,
+          "rows": 1490,
+          "bytes": 3737600
+        },
+        "writes": 0
+      }
+    ],
+    "after": [
+      {
+        "total": {
+          "get": 313,
+          "rows": 38377,
+          "bytes": 13303172
+        },
+        "operations": {
+          "get": 13,
+          "rows": 1490,
+          "bytes": 1266788
+        },
+        "writes": 0
+      },
+      {
+        "total": {
+          "get": 313,
+          "rows": 38377,
+          "bytes": 13303172
+        },
+        "operations": {
+          "get": 13,
+          "rows": 1490,
+          "bytes": 1266788
+        },
+        "writes": 0
+      },
+      {
+        "total": {
+          "get": 313,
+          "rows": 38377,
+          "bytes": 13303172
+        },
+        "operations": {
+          "get": 13,
+          "rows": 1490,
+          "bytes": 1266788
+        },
+        "writes": 0
+      },
+      {
+        "total": {
+          "get": 313,
+          "rows": 38377,
+          "bytes": 13303172
+        },
+        "operations": {
+          "get": 13,
+          "rows": 1490,
+          "bytes": 1266788
+        },
+        "writes": 0
+      },
+      {
+        "total": {
+          "get": 313,
+          "rows": 38377,
+          "bytes": 13303172
+        },
+        "operations": {
+          "get": 13,
+          "rows": 1490,
+          "bytes": 1266788
+        },
+        "writes": 0
+      }
+    ],
+    "semanticOwners": [
+      {
+        "name": "loadEconomicFacts",
+        "beforeCalls": 1,
+        "afterCalls": 5,
+        "digests": [
+          "db7b262cac662f42a7bd11c90cc809043d5d27e58c5ea37c15b4f66617b3923f"
+        ]
+      },
+      {
+        "name": "loadPurchaseAwareCanonical",
+        "beforeCalls": 1,
+        "afterCalls": 5,
+        "digests": [
+          "5c7c4267f020ab78d4c24bf057bd247eb80515f0e744ede83d07f4fa6926f316"
+        ]
+      },
+      {
+        "name": "readMonthComposer",
+        "beforeCalls": 1,
+        "afterCalls": 5,
+        "digests": [
+          "8d35049cf667465ed42e384b6994fa9be17a833b0e5ab0e6edef83a607a74e58"
+        ]
+      }
+    ],
+    "fullUiDigest": "a6213449261e89ae852a15c7f1679af24b5f21e6bbbdda09a6e719c0e7ecb5c6",
+    "uiBytes": 273000
+  },
+  "liveBatch": {
+    "liveReadonlyBatchParity": "PASS",
+    "get": 1,
+    "rows": 120,
+    "fields": 23,
+    "bytes": 102355,
+    "beforeCapturedBytes": 300573,
+    "householdAuthorization": "PASS",
+    "monetaryCast": "UNCHANGED",
+    "remoteBusinessWrites": 0
+  },
+  "sourceComparison": {
+    "files": 903,
+    "different": [
+      "src/server/canonical/repository.ts"
+    ],
+    "headBefore": "f568aaa3fd5d8ca79c46b5972e8b6c46353dd4c9",
+    "headAfterProduct": "baf3762"
+  },
+  "queryShapeParity": [
+    {
+      "id": "p2c2-direct-1",
+      "narrowed": 13,
+      "normalizedOnlySelectHash": "43c02ddae06070c793dfb7b10bb46f2b436ef3136462a5356e5db23729198433"
+    },
+    {
+      "id": "p2c2-direct-2",
+      "narrowed": 13,
+      "normalizedOnlySelectHash": "43c02ddae06070c793dfb7b10bb46f2b436ef3136462a5356e5db23729198433"
+    },
+    {
+      "id": "p2c2-direct-3",
+      "narrowed": 13,
+      "normalizedOnlySelectHash": "43c02ddae06070c793dfb7b10bb46f2b436ef3136462a5356e5db23729198433"
+    },
+    {
+      "id": "p2c2-client-1",
+      "narrowed": 13,
+      "normalizedOnlySelectHash": "43c02ddae06070c793dfb7b10bb46f2b436ef3136462a5356e5db23729198433"
+    },
+    {
+      "id": "p2c2-client-2",
+      "narrowed": 13,
+      "normalizedOnlySelectHash": "43c02ddae06070c793dfb7b10bb46f2b436ef3136462a5356e5db23729198433"
+    },
+    {
+      "id": "p2c2-client-3",
+      "narrowed": 13,
+      "normalizedOnlySelectHash": "43c02ddae06070c793dfb7b10bb46f2b436ef3136462a5356e5db23729198433"
+    }
+  ],
+  "browser": {
+    "beforeSource": "P2B6 after-direct-1/2/3, identical product except repository SELECT",
+    "before": [
+      {
+        "id": "after-direct-1",
+        "mode": "hard",
+        "composerGETs": 291,
+        "previewGETs": 0,
+        "centreGETs": 0,
+        "rscMs": 13703.9013671875,
+        "boardMs": 14227.699951171875,
+        "ttiMs": 15190,
+        "fullUiDigest": "b51c6c528e97eb4b5d155c9a5dc0bc4351a4e11929c276c9b2d1d8c207cfaadb",
+        "dtoBytes": 273000,
+        "remoteBusinessErrors": 0,
+        "blocked": 0,
+        "previewActions": 0,
+        "browserExceptions": 0
+      },
+      {
+        "id": "after-direct-2",
+        "mode": "hard",
+        "composerGETs": 291,
+        "previewGETs": 0,
+        "centreGETs": 0,
+        "rscMs": 17449.586181640625,
+        "boardMs": 18031.699951171875,
+        "ttiMs": 18757,
+        "fullUiDigest": "b51c6c528e97eb4b5d155c9a5dc0bc4351a4e11929c276c9b2d1d8c207cfaadb",
+        "dtoBytes": 273000,
+        "remoteBusinessErrors": 0,
+        "blocked": 0,
+        "previewActions": 0,
+        "browserExceptions": 0
+      },
+      {
+        "id": "after-direct-3",
+        "mode": "hard",
+        "composerGETs": 291,
+        "previewGETs": 0,
+        "centreGETs": 0,
+        "rscMs": 13088.664794921875,
+        "boardMs": 13604.599853515625,
+        "ttiMs": 14409,
+        "fullUiDigest": "b51c6c528e97eb4b5d155c9a5dc0bc4351a4e11929c276c9b2d1d8c207cfaadb",
+        "dtoBytes": 273000,
+        "remoteBusinessErrors": 0,
+        "blocked": 0,
+        "previewActions": 0,
+        "browserExceptions": 0
+      }
+    ],
+    "after": [
+      {
+        "id": "p2c2-direct-1",
+        "mode": "hard",
+        "composerGETs": 291,
+        "previewGETs": 0,
+        "centreGETs": 0,
+        "rscMs": 17336.9716796875,
+        "boardMs": 17685.60009765625,
+        "ttiMs": 18346,
+        "fullUiDigest": "b51c6c528e97eb4b5d155c9a5dc0bc4351a4e11929c276c9b2d1d8c207cfaadb",
+        "dtoBytes": 273000,
+        "remoteBusinessErrors": 0,
+        "blocked": 0,
+        "previewActions": 0,
+        "browserExceptions": 0
+      },
+      {
+        "id": "p2c2-direct-2",
+        "mode": "hard",
+        "composerGETs": 291,
+        "previewGETs": 0,
+        "centreGETs": 0,
+        "rscMs": 13646.8564453125,
+        "boardMs": 13920.400146484375,
+        "ttiMs": 14441,
+        "fullUiDigest": "b51c6c528e97eb4b5d155c9a5dc0bc4351a4e11929c276c9b2d1d8c207cfaadb",
+        "dtoBytes": 273000,
+        "remoteBusinessErrors": 0,
+        "blocked": 0,
+        "previewActions": 0,
+        "browserExceptions": 0
+      },
+      {
+        "id": "p2c2-direct-3",
+        "mode": "hard",
+        "composerGETs": 291,
+        "previewGETs": 0,
+        "centreGETs": 0,
+        "rscMs": 13599.416259765625,
+        "boardMs": 13845.400146484375,
+        "ttiMs": 14383,
+        "fullUiDigest": "b51c6c528e97eb4b5d155c9a5dc0bc4351a4e11929c276c9b2d1d8c207cfaadb",
+        "dtoBytes": 273000,
+        "remoteBusinessErrors": 0,
+        "blocked": 0,
+        "previewActions": 0,
+        "browserExceptions": 0
+      },
+      {
+        "id": "p2c2-client-1",
+        "mode": "client",
+        "composerGETs": 291,
+        "previewGETs": 0,
+        "centreGETs": 45,
+        "rscMs": 15209.537841796875,
+        "boardMs": 15513.900146484375,
+        "ttiMs": 15677,
+        "fullUiDigest": "b51c6c528e97eb4b5d155c9a5dc0bc4351a4e11929c276c9b2d1d8c207cfaadb",
+        "dtoBytes": 273000,
+        "remoteBusinessErrors": 0,
+        "blocked": 0,
+        "previewActions": 0,
+        "browserExceptions": 0
+      },
+      {
+        "id": "p2c2-client-2",
+        "mode": "client",
+        "composerGETs": 291,
+        "previewGETs": 0,
+        "centreGETs": 45,
+        "rscMs": 11867.775634765625,
+        "boardMs": 12151.7998046875,
+        "ttiMs": 12334,
+        "fullUiDigest": "b51c6c528e97eb4b5d155c9a5dc0bc4351a4e11929c276c9b2d1d8c207cfaadb",
+        "dtoBytes": 273000,
+        "remoteBusinessErrors": 0,
+        "blocked": 0,
+        "previewActions": 0,
+        "browserExceptions": 0
+      },
+      {
+        "id": "p2c2-client-3",
+        "mode": "client",
+        "composerGETs": 291,
+        "previewGETs": 0,
+        "centreGETs": 45,
+        "rscMs": 11674.57568359375,
+        "boardMs": 11954.099853515625,
+        "ttiMs": 12115,
+        "fullUiDigest": "b51c6c528e97eb4b5d155c9a5dc0bc4351a4e11929c276c9b2d1d8c207cfaadb",
+        "dtoBytes": 273000,
+        "remoteBusinessErrors": 0,
+        "blocked": 0,
+        "previewActions": 0,
+        "browserExceptions": 0
+      }
+    ],
+    "stats": {
+      "directBefore": {
+        "rscMs": {
+          "n": 3,
+          "min": 13088.664794921875,
+          "median": 13703.9013671875,
+          "max": 17449.586181640625
+        },
+        "boardMs": {
+          "n": 3,
+          "min": 13604.599853515625,
+          "median": 14227.699951171875,
+          "max": 18031.699951171875
+        },
+        "ttiMs": {
+          "n": 3,
+          "min": 14409,
+          "median": 15190,
+          "max": 18757
+        }
+      },
+      "directAfter": {
+        "rscMs": {
+          "n": 3,
+          "min": 13599.416259765625,
+          "median": 13646.8564453125,
+          "max": 17336.9716796875
+        },
+        "boardMs": {
+          "n": 3,
+          "min": 13845.400146484375,
+          "median": 13920.400146484375,
+          "max": 17685.60009765625
+        },
+        "ttiMs": {
+          "n": 3,
+          "min": 14383,
+          "median": 14441,
+          "max": 18346
+        }
+      },
+      "clientAfter": {
+        "rscMs": {
+          "n": 3,
+          "min": 11674.57568359375,
+          "median": 11867.775634765625,
+          "max": 15209.537841796875
+        },
+        "boardMs": {
+          "n": 3,
+          "min": 11954.099853515625,
+          "median": 12151.7998046875,
+          "max": 15513.900146484375
+        },
+        "ttiMs": {
+          "n": 3,
+          "min": 12115,
+          "median": 12334,
+          "max": 15677
+        }
+      }
+    }
+  },
+  "remoteBusinessWrites": 0
+}
