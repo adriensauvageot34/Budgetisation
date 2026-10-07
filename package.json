@@ -3,6 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
+    "check:control-center-preview-lifecycle": "node scripts/check-control-center-preview-lifecycle.mjs",
     "check:mobility-presence-index": "node scripts/check-mobility-presence-index.mjs",
     "check:presence-index-scaling": "node scripts/check-presence-index-scaling.mjs",
     "check:planner-performance-p2b": "npm run check:mobility-presence-index && npm run check:presence-index-scaling && npm run check:planner-performance-p2a",
