@@ -172,6 +172,19 @@ export type CanonicalOperationBundle = {
 
 const classificationAxes = ["NECESSITY", "BEHAVIOR", "LIFE_SCOPE"] as const;
 
+// Fields consumed by the repository's by-ID economic, classification, planning,
+// calendar and operation presentation projections. Bank-range reads keep their
+// separate contract. Preserve the exact monetary alias used by operation rows.
+const operationByIdProjectionSelection = [
+  "operation_id", "date_bancaire", "mois_analytique_force",
+  "date_transaction_reelle", "date_transaction_precision", "merchant_id",
+  "importance", "nature_fixe_variable", "contexte_vie", "montant",
+  "montant_bancaire_exact:montant::text", "libelle_bancaire", "category_id",
+  "subcategory_id", "type_precis", "operation_mixte", "mode_prevision",
+  "recurrence_series_id", "need_id", "annual_event_id", "provision_pool_id",
+  "marchand", "description_precise",
+].join(",");
+
 function classificationAxisColumn(axis: ComponentClassificationAxis): EconomicDimensionKey {
   return axis === "NECESSITY"
     ? "importance"
@@ -650,7 +663,7 @@ export class CanonicalRepository {
       (batch) =>
         this.client
           .from("operations")
-          .select("*,montant_bancaire_exact:montant::text")
+          .select(operationByIdProjectionSelection)
           .in("operation_id", batch)
           .order("operation_id", { ascending: true }),
       batchSize,
