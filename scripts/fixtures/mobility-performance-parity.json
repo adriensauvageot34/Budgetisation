@@ -1,0 +1,116 @@
+{
+  "repeated": {
+    "inputHash": "9a36bbe6b7d30bdd7030fc75ad7fd58bec7d178f9cdfb9e795a7c512960b4a19",
+    "outputHash": "6dabc5fec15ec80554a38d7bf1349d1a6dbddff73f3118cba57ec9921b4a6196",
+    "physicalTotals": {
+      "physicalLegCount": 8,
+      "distanceKm": "80",
+      "estimatedFuelLiters": "8",
+      "estimatedFuelCost": "16"
+    }
+  },
+  "adjacent": {
+    "inputHash": "794a1787153e595fd78afd86b953ca202f748db54df64dd71e59eac2bd5326ba",
+    "outputHash": "2ff5443c6dd8fa21e1ae51b67aa91b48dfda5040100a0a46fcb98e742375d39c",
+    "physicalTotals": {
+      "physicalLegCount": 1,
+      "distanceKm": "10",
+      "estimatedFuelLiters": "1",
+      "estimatedFuelCost": "2"
+    }
+  },
+  "overlap": {
+    "inputHash": "8033d9d30910e3b2da64816c0b757e8e5d7d0cc5670b2778440f8d9bf4f36e20",
+    "outputHash": "d9f4fbbad6b33ffbe4017183a00f502ff527f803a2b75e6705d1ff55a4042695",
+    "physicalTotals": {
+      "physicalLegCount": 1,
+      "distanceKm": "10",
+      "estimatedFuelLiters": "1",
+      "estimatedFuelCost": "2"
+    }
+  },
+  "equivalentOffsets": {
+    "inputHash": "502e2a4727967952ab5330a2383f660d797fdc7b778c8675bfa3a1b6ad6959c0",
+    "outputHash": "2a6639bddc00f7de94b3307efbc51b5590c0739d18aaa4c833a4e024e4faf62f",
+    "physicalTotals": {
+      "physicalLegCount": 1,
+      "distanceKm": "10",
+      "estimatedFuelLiters": "1",
+      "estimatedFuelCost": "2"
+    }
+  },
+  "unknown": {
+    "inputHash": "a978949fb6dfd1617367ad8bd69ef3ccc3c1f71631422129f0a48a1d60414380",
+    "outputHash": "bba1e076de0de50d9a702fb602fe8c93688fbebed272cfc1295fb424f3651283",
+    "physicalTotals": {
+      "physicalLegCount": 1,
+      "distanceKm": "10",
+      "estimatedFuelLiters": "1",
+      "estimatedFuelCost": "2"
+    }
+  },
+  "invalidStart": {
+    "error": {
+      "name": "RangeError",
+      "message": "invalid RFC 9557 string: invalid"
+    }
+  },
+  "invalidEnd": {
+    "error": {
+      "name": "RangeError",
+      "message": "invalid RFC 9557 string: invalid"
+    }
+  },
+  "inverted": {
+    "error": {
+      "name": "TypeError",
+      "message": "MOBILITY_CONTEXT_INVALID_INTERVAL"
+    }
+  },
+  "invalidZone": {
+    "error": {
+      "name": "RangeError",
+      "message": "Unrecognized time zone Invalid/Zone"
+    }
+  },
+  "newYork": {
+    "inputHash": "4bf0d2b403d67a467c8259ab95419144d6c546dbd617ba2cffb315bb19922f49",
+    "outputHash": "10ddb993105658b500949a971782303bbd10e3418b1e96af6b6b61748cbb98cf",
+    "physicalTotals": {
+      "physicalLegCount": 1,
+      "distanceKm": "10",
+      "estimatedFuelLiters": "1",
+      "estimatedFuelCost": "2"
+    }
+  },
+  "midnight": {
+    "inputHash": "624352275b285a6143f742b5fafa854bb1de0e02e558651946b05831dc9236bc",
+    "outputHash": "ff1acaa33c71f14bf8c213ea960ce80c0bb3c27eee65dfd193acd01fd77c0ad4",
+    "physicalTotals": {
+      "physicalLegCount": 1,
+      "distanceKm": "10",
+      "estimatedFuelLiters": "1",
+      "estimatedFuelCost": "2"
+    }
+  },
+  "dstFall": {
+    "inputHash": "01d4c8e724cda5da7c49b3e15e6aa21f130fca0f6f447f90f4c234206889044e",
+    "outputHash": "5a1f8f3a5846b78e64a3b6dd2f241f551effaf395acafd7db3bb3bd30f6528c2",
+    "physicalTotals": {
+      "physicalLegCount": 1,
+      "distanceKm": "10",
+      "estimatedFuelLiters": "1",
+      "estimatedFuelCost": "2"
+    }
+  },
+  "dstSpring": {
+    "inputHash": "0ddf9cbc95228ebdfbc71df3cbb8c5ab4a0905849738b99971605b9ca449b980",
+    "outputHash": "89acb659fe0687e72d35bcdefa9e9d9f8c0e69dcd3b24688b81739936b879b6b",
+    "physicalTotals": {
+      "physicalLegCount": 1,
+      "distanceKm": "10",
+      "estimatedFuelLiters": "1",
+      "estimatedFuelCost": "2"
+    }
+  }
+}

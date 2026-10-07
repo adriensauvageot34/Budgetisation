@@ -124,8 +124,16 @@ export function resolveMobilityPurposeFromTypeKey(typeKey: string): MobilityPurp
   return purposeByTypeKey[typeKey] ?? "UNKNOWN";
 }
 
-function instant(value: string): Temporal.Instant {
-  return Temporal.Instant.from(value);
+type InstantMemo = Map<string, Temporal.Instant>;
+
+function instant(value: string, memo: InstantMemo): Temporal.Instant {
+  const cached = memo.get(value);
+  if (cached !== undefined) return cached;
+  // This parser has no timezone/options. Keep literal offsets in the key;
+  // civil-time conversions in legInstant remain separate. Errors are not cached.
+  const parsed = Temporal.Instant.from(value);
+  memo.set(value, parsed);
+  return parsed;
 }
 
 function legInstant(leg: MobilityLegFact, householdTimeZone: string): Temporal.Instant | null {
@@ -133,9 +141,9 @@ function legInstant(leg: MobilityLegFact, householdTimeZone: string): Temporal.I
   return Temporal.PlainDateTime.from(leg.time.observedTime).toZonedDateTime(householdTimeZone).toInstant();
 }
 
-function overlaps(startA: string, endA: string, startB: string, endB: string): boolean {
-  return Temporal.Instant.compare(instant(startA), instant(endB)) < 0
-    && Temporal.Instant.compare(instant(startB), instant(endA)) < 0;
+function overlaps(startA: string, endA: string, startB: string, endB: string, memo: InstantMemo): boolean {
+  return Temporal.Instant.compare(instant(startA, memo), instant(endB, memo)) < 0
+    && Temporal.Instant.compare(instant(startB, memo), instant(endA, memo)) < 0;
 }
 
 function exactVisitInterval(visit: PlaceVisitFact): { readonly startAt: string; readonly endAt: string } | null {
@@ -178,8 +186,9 @@ function pointCompatible(
   point: Temporal.Instant,
   interval: { readonly startAt: string; readonly endAt: string },
   relation: MobilityTemporalRelation,
+  memo: InstantMemo,
 ): boolean {
-  const start = instant(interval.startAt), end = instant(interval.endAt);
+  const start = instant(interval.startAt, memo), end = instant(interval.endAt, memo);
   if (Temporal.Instant.compare(end, start) < 0) throw new TypeError("MOBILITY_CONTEXT_INVALID_INTERVAL");
   const tolerance = { minutes: GLOBAL_M7_MOBILITY_CONTEXT_POLICY.observedBoundaryToleranceMinutes };
   if (relation === "ARRIVAL_TO_CONTEXT") {
@@ -199,7 +208,7 @@ function linkTemporalAssessment(input: {
   readonly interval: { readonly startAt: string; readonly endAt: string } | null;
   readonly precision: MobilityLifeEventParticipationAuthority["timePrecision"] | PlaceVisitFact["timePrecision"];
   readonly relation: MobilityTemporalRelation;
-}) {
+}, memo: InstantMemo) {
   if (input.leg.time.authority === "PROXY") {
     return { compatible: true, linkState: "AMBIGUOUS" as const, quality: "PROXY" as const };
   }
@@ -207,7 +216,7 @@ function linkTemporalAssessment(input: {
   if (point === null || input.interval === null) {
     return { compatible: true, linkState: "AMBIGUOUS" as const, quality: "DATE_ONLY" as const };
   }
-  if (!pointCompatible(point, input.interval, input.relation)) {
+  if (!pointCompatible(point, input.interval, input.relation, memo)) {
     return { compatible: false, linkState: "UNLINKED" as const, quality: "EXACT" as const };
   }
   const exact = input.precision === "EXACT" || input.precision === "exact";
@@ -258,7 +267,7 @@ function resolvePairwisePresence(input: {
   readonly events: ReadonlyMap<string, MobilityLifeEventContextAuthority>;
   readonly visits: ReadonlyMap<string, PlaceVisitFact>;
   readonly visitsByPerson: ReadonlyMap<string, readonly PlaceVisitFact[]>;
-}): readonly MobilityPresenceResolution[] {
+}, memo: InstantMemo): readonly MobilityPresenceResolution[] {
   const subject = input.link.subjectPersonId;
   if (subject === null) return [];
   const contextInterval = contextIntervalForPresence(input.link, input.events, input.visits);
@@ -275,7 +284,7 @@ function resolvePairwisePresence(input: {
       const otherParticipationInterval = otherParticipation === undefined ? null : participationInterval(otherParticipation);
       if (otherParticipation !== undefined && contextInterval !== null && otherParticipationInterval !== null
         && otherParticipation.timePrecision === "EXACT"
-        && overlaps(contextInterval.startAt, contextInterval.endAt, otherParticipationInterval.startAt, otherParticipationInterval.endAt)) {
+        && overlaps(contextInterval.startAt, contextInterval.endAt, otherParticipationInterval.startAt, otherParticipationInterval.endAt, memo)) {
         state = "CO_PRESENT_CONFIRMED";
         quality = "EXACT";
         evidence.push(otherParticipation.evidenceRef);
@@ -285,7 +294,7 @@ function resolvePairwisePresence(input: {
           : new Set(input.link.contextRef === null ? [] : [String(input.visits.get(input.link.contextRef)?.placeId ?? "")]);
         const overlapping = (input.visitsByPerson.get(other) ?? []).flatMap((visit) => {
           const interval = exactVisitInterval(visit);
-          return interval !== null && overlaps(contextInterval.startAt, contextInterval.endAt, interval.startAt, interval.endAt)
+          return interval !== null && overlaps(contextInterval.startAt, contextInterval.endAt, interval.startAt, interval.endAt, memo)
             ? [{ visit, interval }]
             : [];
         });
@@ -343,6 +352,8 @@ export function buildGlobalM7MobilityContextAuthority(input: {
   readonly placeVisits: readonly PlaceVisitFact[];
   readonly personDays: readonly PersonDayFact[];
 }): GlobalM7MobilityContextAuthority {
+  // One immutable Instant per successfully parsed literal, for this build only.
+  const instantMemo: InstantMemo = new Map();
   const personIds = unique(input.householdPersonIds);
   const personSet = new Set(personIds);
   const events = new Map<string, MobilityLifeEventContextAuthority>();
@@ -382,7 +393,7 @@ export function buildGlobalM7MobilityContextAuthority(input: {
             interval: participationInterval(participation),
             precision: participation.timePrecision,
             relation,
-          }),
+          }, instantMemo),
         })).filter(({ temporal }) => temporal.compatible);
         if (assessments.length === 0) continue;
         const chosen = assessments.find(({ temporal }) => temporal.linkState === "LINKED") ?? assessments[0];
@@ -413,7 +424,7 @@ export function buildGlobalM7MobilityContextAuthority(input: {
       const interval = visit.interval.kind === "known"
         ? { startAt: String(visit.interval.startedAt), endAt: String(visit.interval.endedAt) }
         : null;
-      const temporal = linkTemporalAssessment({ leg, householdTimeZone: input.householdTimeZone, interval, precision: visit.timePrecision, relation });
+      const temporal = linkTemporalAssessment({ leg, householdTimeZone: input.householdTimeZone, interval, precision: visit.timePrecision, relation }, instantMemo);
       if (!temporal.compatible) continue;
       links.push({
         contextResolutionId: contextId(leg.legId, "PERSON_PLACE_PRESENCE", String(visit.visitKey), String(visit.personId)),
@@ -452,7 +463,7 @@ export function buildGlobalM7MobilityContextAuthority(input: {
     events,
     visits: visitById,
     visitsByPerson: readonlyVisitsByPerson,
-  })).sort((left, right) => left.mobilityLegId.localeCompare(right.mobilityLegId)
+  }, instantMemo)).sort((left, right) => left.mobilityLegId.localeCompare(right.mobilityLegId)
     || left.subjectPersonId.localeCompare(right.subjectPersonId)
     || left.otherPersonId.localeCompare(right.otherPersonId)
     || left.contextResolutionId.localeCompare(right.contextResolutionId));
