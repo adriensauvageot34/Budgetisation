@@ -6,6 +6,9 @@ import { intervalCases, presenceFixture, visit } from './fixtures/m7-presence-in
 const before = loadPresenceAudit(true), after = loadPresenceAudit();
 const hash = value => crypto.createHash('sha256').update(JSON.stringify(value)).digest('hex');
 const pairs = result => result.pairs.map(JSON.stringify).sort();
+function tagged(value,test,path='',rows=[]){if(value&&typeof value==='object')for(const[k,v]of Object.entries(value)){const p=`${path}/${k}`;if(test(k))rows.push([p,v]);tagged(v,test,p,rows);}return rows;}
+const authorityHashes=a=>({sourceRefsHash:hash(tagged(a,k=>/evidenceRefs|sourceRefs/.test(k))),
+  unknownHash:hash(tagged(a,k=>/state|State|quality|Quality/.test(k))),identitiesHash:hash(tagged(a,k=>/Id$|Ref$/.test(k))),contextLinksHash:hash(a.contextLinks),presenceResolutionsHash:hash(a.presenceResolutions)});
 const cases = intervalCases();
 // Deterministic random intervals include zero/inverted intervals. No day buckets.
 let seed = 0x73c254ab;
@@ -32,6 +35,15 @@ assert.equal(after(cases['same-time-distinct-visits']).pairs.length, 2);
 assert.equal(after(cases['conflicting-places']).authority.presenceResolutions[0].state, 'UNKNOWN');
 assert.equal(after(cases['invalid-short-circuit']).error, undefined);
 assert.equal(after(cases['invalid-start']).error?.name, 'RangeError');
+const first=cases.identical,changed=structuredClone(first);
+changed.placeVisits[0].interval={kind:'known',startedAt:'2026-06-11T10:00:00Z',endedAt:'2026-06-11T12:00:00Z'};
+assert.equal(after(first).pairs.length,1);assert.equal(after(changed).pairs.length,0);
+assert.equal(after(first).pairs.length,1,'New publication/build must not reuse prior candidates');
+const foreign=structuredClone(first);foreign.householdId='household-2';
+foreign.mobilityLegs.forEach(v=>v.householdId='household-2');foreign.placeVisits.forEach(v=>v.householdId='household-2');
+assert.deepEqual(after(foreign).authority,before(foreign).authority,'Different household has independent index');
+foreign.placeVisits[0].householdId='household-3';
+assert.deepEqual(after(foreign).error,before(foreign).error,'Existing household admission error retained');
 const privateFile = process.argv[2];
 let real;
 if (privateFile) {
@@ -41,6 +53,7 @@ if (privateFile) {
   assert.deepEqual(pairs(b), pairs(a), 'Captured real exact matched pairs');
   real = { before: { counts: a.counts, pairsHash: hash(pairs(a)), authorityHash: hash(a.authority), outputHash: a.authority.outputHash },
     after: { counts: b.counts, pairsHash: hash(pairs(b)), authorityHash: hash(b.authority), outputHash: b.authority.outputHash } };
+  Object.assign(real.before,authorityHashes(a.authority));Object.assign(real.after,authorityHashes(b.authority));
   if (process.argv[3]) fs.writeFileSync(process.argv[3], JSON.stringify(real, null, 2) + '\n');
 }
 console.log(JSON.stringify({ cases: Object.keys(cases).length, positivePairs: positive, exactPairParity: 'PASS', completeAuthorityParity: 'PASS', real }));

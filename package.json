@@ -3,6 +3,9 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
+    "check:mobility-presence-index": "node scripts/check-mobility-presence-index.mjs",
+    "check:presence-index-scaling": "node scripts/check-presence-index-scaling.mjs",
+    "check:planner-performance-p2b": "npm run check:mobility-presence-index && npm run check:presence-index-scaling && npm run check:planner-performance-p2a",
     "check:mobility-build-memo": "node scripts/check-mobility-build-memo.mjs",
     "check:timezone-validation-scope": "node scripts/check-timezone-validation-scope.mjs",
     "check:planner-neutral-evaluation": "node scripts/check-planner-neutral-evaluation.mjs",

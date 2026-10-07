@@ -4,6 +4,7 @@ import { sha256 } from "@noble/hashes/sha2.js";
 import { bytesToHex, utf8ToBytes } from "@noble/hashes/utils.js";
 import type { MobilityLegFact, PersonDayFact, PlaceVisitFact } from "../facts";
 import { canonicalSerializeGlobal } from "../../core/global-v2";
+import { createPresenceIntervalIndex } from "./mobility-presence-index";
 
 export const GLOBAL_M7_MOBILITY_CONTEXT_METHOD_VERSION = "global_m7_mobility_context@v1" as const;
 export const GLOBAL_M7_MOBILITY_CONTEXT_POLICY = Object.freeze({
@@ -267,6 +268,7 @@ function resolvePairwisePresence(input: {
   readonly events: ReadonlyMap<string, MobilityLifeEventContextAuthority>;
   readonly visits: ReadonlyMap<string, PlaceVisitFact>;
   readonly visitsByPerson: ReadonlyMap<string, readonly PlaceVisitFact[]>;
+  readonly presenceCandidates: (personId: string, interval: { readonly startAt: string; readonly endAt: string }) => readonly PlaceVisitFact[];
 }, memo: InstantMemo): readonly MobilityPresenceResolution[] {
   const subject = input.link.subjectPersonId;
   if (subject === null) return [];
@@ -292,7 +294,7 @@ function resolvePairwisePresence(input: {
         const subjectPlaceIds = input.link.contextKind === "LIFE_EVENT"
           ? new Set(event?.placeIds ?? [])
           : new Set(input.link.contextRef === null ? [] : [String(input.visits.get(input.link.contextRef)?.placeId ?? "")]);
-        const overlapping = (input.visitsByPerson.get(other) ?? []).flatMap((visit) => {
+        const overlapping = input.presenceCandidates(other, contextInterval).flatMap((visit) => {
           const interval = exactVisitInterval(visit);
           return interval !== null && overlaps(contextInterval.startAt, contextInterval.endAt, interval.startAt, interval.endAt, memo)
             ? [{ visit, interval }]
@@ -457,12 +459,23 @@ export function buildGlobalM7MobilityContextAuthority(input: {
       || (left.contextRef ?? "").localeCompare(right.contextRef ?? "")
       || (left.subjectPersonId ?? "").localeCompare(right.subjectPersonId ?? ""));
   const readonlyVisitsByPerson = new Map<string, readonly PlaceVisitFact[]>(visitsByPerson);
+  // Lazy per-person indexes live only in this household-authorized M7 build.
+  const presenceIndexes = new Map<string, ReturnType<typeof createPresenceIntervalIndex>>();
+  const presenceCandidates = (personId: string, interval: { readonly startAt: string; readonly endAt: string }) => {
+    let index = presenceIndexes.get(personId);
+    if (index === undefined) {
+      index = createPresenceIntervalIndex(readonlyVisitsByPerson.get(personId) ?? [], exactVisitInterval, value => instant(value, instantMemo));
+      presenceIndexes.set(personId, index);
+    }
+    return index(interval);
+  };
   const presenceResolutions = contextLinks.flatMap((link) => resolvePairwisePresence({
     link,
     householdPersonIds: personIds,
     events,
     visits: visitById,
     visitsByPerson: readonlyVisitsByPerson,
+    presenceCandidates,
   }, instantMemo)).sort((left, right) => left.mobilityLegId.localeCompare(right.mobilityLegId)
     || left.subjectPersonId.localeCompare(right.subjectPersonId)
     || left.otherPersonId.localeCompare(right.otherPersonId)

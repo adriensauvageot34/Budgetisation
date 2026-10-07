@@ -2,7 +2,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import Module from 'node:module';
-import { execFileSync } from 'node:child_process';
+import crypto from 'node:crypto';
 import ts from 'typescript';
 import './phase2-ts-loader.mjs';
 export const beforeRef = '47a59e0fda43f39e2107bbcde33091a27fb3ebdd';
@@ -16,7 +16,7 @@ export function replaceFunction(code, name, transform) {
 }
 export function instrumentPresenceSource(code, { pairs = false } = {}) {
   code = replaceFunction(code, 'overlaps', body => `{const result=(()=>{${body}})();
-    const c=__presenceCounts();c.overlapCalls=(c.overlapCalls??0)+1;
+    const c=__presenceCounts();c.finalOverlapCalls=(c.finalOverlapCalls??0)+1;
     if(result)c.positiveOverlaps=(c.positiveOverlaps??0)+1;return result;}`);
   code = replaceFunction(code, 'resolvePairwisePresence', body => `{
     const c=__presenceCounts();c.resolvePairwiseCalls=(c.resolvePairwiseCalls??0)+1;${body}}`);
@@ -41,8 +41,10 @@ export function instrumentPresenceSource(code, { pairs = false } = {}) {
     export {__presenceAudit};\n`;
 }
 export function loadPresenceAudit(before = false) {
-  const code = before ? execFileSync('git', ['show', `${beforeRef}:${presenceFile}`], { encoding: 'utf8', windowsHide: true })
-    : fs.readFileSync(presenceFile, 'utf8');
+  const reference = before ? JSON.parse(fs.readFileSync(new URL('../fixtures/m7-presence-bruteforce-source.json', import.meta.url), 'utf8')) : null;
+  if (reference && (reference.gitRef !== beforeRef || crypto.createHash('sha256').update(reference.source).digest('hex') !== reference.sha256))
+    throw new Error('PINNED_BRUTE_FORCE_SOURCE_INVALID');
+  const code = reference?.source ?? fs.readFileSync(presenceFile, 'utf8');
   const filename = path.resolve(path.dirname(presenceFile), before ? 'presence-audit-before.js' : 'presence-audit-after.js');
   const module = new Module(filename); module.filename = filename; module.paths = Module._nodeModulePaths(path.dirname(filename));
   module._compile(ts.transpileModule(instrumentPresenceSource(code, { pairs: true }), {
