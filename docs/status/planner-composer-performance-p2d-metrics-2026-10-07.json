@@ -1,0 +1,852 @@
+{
+  "schema": "composer-p2d-lean-v1",
+  "headBefore": "bf6d3db4906cd6169925cc993797e4f3c57f9510",
+  "headAfterProduct": "25358cb51e1720b8023ea4d49a451fe60f4d1238",
+  "sourceComparison": {
+    "files": 903,
+    "different": [
+      "src/server/phase2/planner/baseline-adapters.ts",
+      "src/server/phase2/planner/world-reader.ts"
+    ]
+  },
+  "queryScopeParity": "PASS",
+  "composerGET": 291,
+  "browserUiDigest": "b51c6c528e97eb4b5d155c9a5dc0bc4351a4e11929c276c9b2d1d8c207cfaadb",
+  "beforeBranches": {
+    "requestMs": {
+      "n": 3,
+      "min": 19810.18408203125,
+      "median": 20250.973388671875,
+      "max": 34923.075439453125
+    },
+    "criticalPathMs": {
+      "n": 3,
+      "min": 15149.3134765625,
+      "median": 17885.668701171875,
+      "max": 32116.313720703125
+    },
+    "forecastWaitBeforeSourcesMs": {
+      "n": 3,
+      "min": 2665.468505859375,
+      "median": 2779.05810546875,
+      "max": 4100.12841796875
+    },
+    "needsWaitAfterProductMs": {
+      "n": 3,
+      "min": 11320.855224609375,
+      "median": 12918.87109375,
+      "max": 28458.592529296875
+    },
+    "purchaseTailAfterLegacyMs": {
+      "n": 3,
+      "min": 1276.12353515625,
+      "median": 1362.212158203125,
+      "max": 6981.368408203125
+    },
+    "maxInFlightToHeaders": {
+      "n": 3,
+      "min": 38,
+      "median": 45,
+      "max": 46
+    },
+    "maxWorldInFlightToHeaders": {
+      "n": 3,
+      "min": 38,
+      "median": 45,
+      "max": 46
+    },
+    "maxPurchaseInFlightToHeaders": {
+      "n": 3,
+      "min": 33,
+      "median": 33,
+      "max": 33
+    }
+  },
+  "afterBranches": {
+    "requestMs": {
+      "n": 3,
+      "min": 13319.703369140625,
+      "median": 14443.715087890625,
+      "max": 20585.5810546875
+    },
+    "criticalPathMs": {
+      "n": 3,
+      "min": 12384.416015625,
+      "median": 13463.06201171875,
+      "max": 17750.952880859375
+    },
+    "forecastWaitBeforeSourcesMs": {
+      "n": 3,
+      "min": 0.247802734375,
+      "median": 0.30712890625,
+      "max": 8.205810546875
+    },
+    "needsWaitAfterProductMs": {
+      "n": 3,
+      "min": 11703.95703125,
+      "median": 12861.93310546875,
+      "max": 15954.7021484375
+    },
+    "purchaseTailAfterLegacyMs": {
+      "n": 3,
+      "min": 1157.757568359375,
+      "median": 1341.023681640625,
+      "max": 4977.367431640625
+    },
+    "maxInFlightToHeaders": {
+      "n": 3,
+      "min": 39,
+      "median": 45,
+      "max": 46
+    },
+    "maxWorldInFlightToHeaders": {
+      "n": 3,
+      "min": 39,
+      "median": 45,
+      "max": 46
+    },
+    "maxPurchaseInFlightToHeaders": {
+      "n": 3,
+      "min": 33,
+      "median": 33,
+      "max": 33
+    }
+  },
+  "beforeSpans": [
+    {
+      "name": "queryMonthForecast",
+      "startOffsetMs": {
+        "n": 3,
+        "min": 0.09326171875,
+        "median": 0.19482421875,
+        "max": 10.53369140625
+      },
+      "durationMs": {
+        "n": 3,
+        "min": 2665.051513671875,
+        "median": 2767.610595703125,
+        "max": 4099.8974609375
+      },
+      "readyOffsetMs": {
+        "n": 3,
+        "min": 2665.246337890625,
+        "median": 2778.144287109375,
+        "max": 4099.99072265625
+      }
+    },
+    {
+      "name": "readPlanningBaselineSources",
+      "startOffsetMs": {
+        "n": 3,
+        "min": 2665.468505859375,
+        "median": 2779.05810546875,
+        "max": 4100.12841796875
+      },
+      "durationMs": {
+        "n": 3,
+        "min": 12415.90283203125,
+        "median": 13755.36865234375,
+        "max": 29273.04443359375
+      },
+      "readyOffsetMs": {
+        "n": 3,
+        "min": 15081.371337890625,
+        "median": 17855.4970703125,
+        "max": 32052.1025390625
+      }
+    },
+    {
+      "name": "loadMonthForecastAuthorities",
+      "startOffsetMs": {
+        "n": 3,
+        "min": 2665.73974609375,
+        "median": 2782.55615234375,
+        "max": 4100.325439453125
+      },
+      "durationMs": {
+        "n": 3,
+        "min": 4605.4990234375,
+        "median": 6087.0615234375,
+        "max": 17901.52392578125
+      },
+      "readyOffsetMs": {
+        "n": 3,
+        "min": 7271.23876953125,
+        "median": 10187.386962890625,
+        "max": 20684.080078125
+      }
+    },
+    {
+      "name": "resolveGlobalPersonaProductObservations",
+      "startOffsetMs": {
+        "n": 3,
+        "min": 2666.435546875,
+        "median": 2784.717529296875,
+        "max": 4100.705078125
+      },
+      "durationMs": {
+        "n": 3,
+        "min": 693.440185546875,
+        "median": 727.84765625,
+        "max": 990.255859375
+      },
+      "readyOffsetMs": {
+        "n": 3,
+        "min": 3478.15771484375,
+        "median": 3656.69140625,
+        "max": 4828.552734375
+      }
+    },
+    {
+      "name": "resolveGlobalM7MobilityContextAuthority",
+      "startOffsetMs": {
+        "n": 3,
+        "min": 2666.531982421875,
+        "median": 2786.385986328125,
+        "max": 4100.78173828125
+      },
+      "durationMs": {
+        "n": 3,
+        "min": 10672.275146484375,
+        "median": 11615.478515625,
+        "max": 23040.56396484375
+      },
+      "readyOffsetMs": {
+        "n": 3,
+        "min": 13338.80712890625,
+        "median": 15716.26025390625,
+        "max": 25826.949951171875
+      }
+    },
+    {
+      "name": "buildGlobalM7MobilityContextAuthority",
+      "startOffsetMs": {
+        "n": 3,
+        "min": 12569.929931640625,
+        "median": 14885.984375,
+        "max": 24982.783935546875
+      },
+      "durationMs": {
+        "n": 3,
+        "min": 768.788818359375,
+        "median": 830.24951171875,
+        "max": 844.128173828125
+      },
+      "readyOffsetMs": {
+        "n": 3,
+        "min": 13338.71875,
+        "median": 15716.23388671875,
+        "max": 25826.912109375
+      }
+    },
+    {
+      "name": "loadEconomicFacts",
+      "startOffsetMs": {
+        "n": 3,
+        "min": 2666.879638671875,
+        "median": 2791.42822265625,
+        "max": 4100.9716796875
+      },
+      "durationMs": {
+        "n": 3,
+        "min": 11033.90771484375,
+        "median": 12283.844970703125,
+        "max": 22163.519287109375
+      },
+      "readyOffsetMs": {
+        "n": 3,
+        "min": 13700.787353515625,
+        "median": 16384.816650390625,
+        "max": 24954.947509765625
+      }
+    },
+    {
+      "name": "loadPurchaseAwareCanonical",
+      "startOffsetMs": {
+        "n": 3,
+        "min": 2666.871337890625,
+        "median": 2789.930419921875,
+        "max": 4100.966796875
+      },
+      "durationMs": {
+        "n": 3,
+        "min": 12310.03955078125,
+        "median": 13646.06201171875,
+        "max": 29146.385498046875
+      },
+      "readyOffsetMs": {
+        "n": 3,
+        "min": 14976.910888671875,
+        "median": 17747.02880859375,
+        "max": 31936.31591796875
+      }
+    },
+    {
+      "name": "buildRenewalPlanningBaseline",
+      "startOffsetMs": {
+        "n": 3,
+        "min": 15081.4130859375,
+        "median": 17855.521484375,
+        "max": 32052.133056640625
+      },
+      "durationMs": {
+        "n": 3,
+        "min": 30.063232421875,
+        "median": 63.92041015625,
+        "max": 67.7314453125
+      },
+      "readyOffsetMs": {
+        "n": 3,
+        "min": 15149.14453125,
+        "median": 17885.584716796875,
+        "max": 32116.053466796875
+      }
+    },
+    {
+      "name": "compileSemanticPlan",
+      "startOffsetMs": {
+        "n": 3,
+        "min": 15149.999755859375,
+        "median": 17886.006103515625,
+        "max": 32119.468994140625
+      },
+      "durationMs": {
+        "n": 3,
+        "min": 227.77685546875,
+        "median": 241.906005859375,
+        "max": 515.00830078125
+      },
+      "readyOffsetMs": {
+        "n": 3,
+        "min": 15665.008056640625,
+        "median": 18113.782958984375,
+        "max": 32361.375
+      }
+    }
+  ],
+  "afterSpans": [
+    {
+      "name": "queryMonthForecast",
+      "startOffsetMs": {
+        "n": 3,
+        "min": 0.095947265625,
+        "median": 0.103759765625,
+        "max": 6.780029296875
+      },
+      "durationMs": {
+        "n": 3,
+        "min": 2964.850341796875,
+        "median": 4048.16259765625,
+        "max": 4504.87646484375
+      },
+      "readyOffsetMs": {
+        "n": 3,
+        "min": 2964.9462890625,
+        "median": 4048.266357421875,
+        "max": 4511.656494140625
+      }
+    },
+    {
+      "name": "readPlanningBaselineSources",
+      "startOffsetMs": {
+        "n": 3,
+        "min": 0.247802734375,
+        "median": 0.30712890625,
+        "max": 8.205810546875
+      },
+      "durationMs": {
+        "n": 3,
+        "min": 12356.4951171875,
+        "median": 13428.83642578125,
+        "max": 17671.9873046875
+      },
+      "readyOffsetMs": {
+        "n": 3,
+        "min": 12356.742919921875,
+        "median": 13429.1435546875,
+        "max": 17680.193115234375
+      }
+    },
+    {
+      "name": "loadMonthForecastAuthorities",
+      "startOffsetMs": {
+        "n": 3,
+        "min": 0.406494140625,
+        "median": 0.91650390625,
+        "max": 13.2880859375
+      },
+      "durationMs": {
+        "n": 3,
+        "min": 4522.903564453125,
+        "median": 4675.10986328125,
+        "max": 5289.357666015625
+      },
+      "readyOffsetMs": {
+        "n": 3,
+        "min": 4523.820068359375,
+        "median": 4675.516357421875,
+        "max": 5302.645751953125
+      }
+    },
+    {
+      "name": "resolveGlobalPersonaProductObservations",
+      "startOffsetMs": {
+        "n": 3,
+        "min": 0.672119140625,
+        "median": 2.072021484375,
+        "max": 18.21435546875
+      },
+      "durationMs": {
+        "n": 3,
+        "min": 465.410888671875,
+        "median": 556.48681640625,
+        "max": 1593.342529296875
+      },
+      "readyOffsetMs": {
+        "n": 3,
+        "min": 467.48291015625,
+        "median": 557.158935546875,
+        "max": 1611.556884765625
+      }
+    },
+    {
+      "name": "resolveGlobalM7MobilityContextAuthority",
+      "startOffsetMs": {
+        "n": 3,
+        "min": 0.7353515625,
+        "median": 2.22802734375,
+        "max": 20.17822265625
+      },
+      "durationMs": {
+        "n": 3,
+        "min": 10739.3193359375,
+        "median": 11635.449951171875,
+        "max": 12208.9443359375
+      },
+      "readyOffsetMs": {
+        "n": 3,
+        "min": 10740.0546875,
+        "median": 11637.677978515625,
+        "max": 12229.12255859375
+      }
+    },
+    {
+      "name": "buildGlobalM7MobilityContextAuthority",
+      "startOffsetMs": {
+        "n": 3,
+        "min": 10056.144287109375,
+        "median": 10914.32958984375,
+        "max": 11265.85546875
+      },
+      "durationMs": {
+        "n": 3,
+        "min": 683.879150390625,
+        "median": 723.251220703125,
+        "max": 963.2314453125
+      },
+      "readyOffsetMs": {
+        "n": 3,
+        "min": 10740.0234375,
+        "median": 11637.580810546875,
+        "max": 12229.0869140625
+      }
+    },
+    {
+      "name": "loadEconomicFacts",
+      "startOffsetMs": {
+        "n": 3,
+        "min": 0.90478515625,
+        "median": 2.8525390625,
+        "max": 23.3486328125
+      },
+      "durationMs": {
+        "n": 3,
+        "min": 11101.85791015625,
+        "median": 11985.173828125,
+        "max": 12565.1083984375
+      },
+      "readyOffsetMs": {
+        "n": 3,
+        "min": 11102.7626953125,
+        "median": 11988.0263671875,
+        "max": 12588.45703125
+      }
+    },
+    {
+      "name": "loadPurchaseAwareCanonical",
+      "startOffsetMs": {
+        "n": 3,
+        "min": 0.8994140625,
+        "median": 2.845458984375,
+        "max": 22.793701171875
+      },
+      "durationMs": {
+        "n": 3,
+        "min": 12259.620849609375,
+        "median": 13326.20458984375,
+        "max": 17543.03076171875
+      },
+      "readyOffsetMs": {
+        "n": 3,
+        "min": 12260.520263671875,
+        "median": 13329.050048828125,
+        "max": 17565.824462890625
+      }
+    },
+    {
+      "name": "buildRenewalPlanningBaseline",
+      "startOffsetMs": {
+        "n": 3,
+        "min": 12356.777587890625,
+        "median": 13429.1748046875,
+        "max": 17680.231201171875
+      },
+      "durationMs": {
+        "n": 3,
+        "min": 27.5751953125,
+        "median": 33.82373046875,
+        "max": 70.359130859375
+      },
+      "readyOffsetMs": {
+        "n": 3,
+        "min": 12384.352783203125,
+        "median": 13462.99853515625,
+        "max": 17750.59033203125
+      }
+    },
+    {
+      "name": "compileSemanticPlan",
+      "startOffsetMs": {
+        "n": 3,
+        "min": 12384.677734375,
+        "median": 13463.378662109375,
+        "max": 17754.608642578125
+      },
+      "durationMs": {
+        "n": 3,
+        "min": 214.199462890625,
+        "median": 235.14208984375,
+        "max": 301.568115234375
+      },
+      "readyOffsetMs": {
+        "n": 3,
+        "min": 12598.877197265625,
+        "median": 13698.520751953125,
+        "max": 18056.1767578125
+      }
+    }
+  ],
+  "browser": {
+    "rows": [
+      {
+        "id": "p2d-before-direct-1",
+        "mode": "hard",
+        "tti": 35854,
+        "rscCompletedVsClickMs": 34948.20263671875,
+        "boardVsClickMs": 35249.5,
+        "composerServerMs": 34923.075439453125,
+        "GET": 291,
+        "previewGET": 0,
+        "centreGET": 0,
+        "queryHash": "b441d3fe0bc2d9ff343eeefddf9792a267c0583839b3ccb643edc704d8e0885a",
+        "uiDigest": "b51c6c528e97eb4b5d155c9a5dc0bc4351a4e11929c276c9b2d1d8c207cfaadb",
+        "dtoBytes": 273000,
+        "maxInFlight": 46
+      },
+      {
+        "id": "p2d-before-direct-2",
+        "mode": "hard",
+        "tti": 21641,
+        "rscCompletedVsClickMs": 19829.201416015625,
+        "boardVsClickMs": 20220.5,
+        "composerServerMs": 19810.18408203125,
+        "GET": 291,
+        "previewGET": 0,
+        "centreGET": 0,
+        "queryHash": "b441d3fe0bc2d9ff343eeefddf9792a267c0583839b3ccb643edc704d8e0885a",
+        "uiDigest": "b51c6c528e97eb4b5d155c9a5dc0bc4351a4e11929c276c9b2d1d8c207cfaadb",
+        "dtoBytes": 273000,
+        "maxInFlight": 45
+      },
+      {
+        "id": "p2d-before-direct-3",
+        "mode": "hard",
+        "tti": 21233,
+        "rscCompletedVsClickMs": 20264.527099609375,
+        "boardVsClickMs": 20618.39990234375,
+        "composerServerMs": 20250.973388671875,
+        "GET": 291,
+        "previewGET": 0,
+        "centreGET": 0,
+        "queryHash": "b441d3fe0bc2d9ff343eeefddf9792a267c0583839b3ccb643edc704d8e0885a",
+        "uiDigest": "b51c6c528e97eb4b5d155c9a5dc0bc4351a4e11929c276c9b2d1d8c207cfaadb",
+        "dtoBytes": 273000,
+        "maxInFlight": 38
+      },
+      {
+        "id": "p2d-after-direct-1",
+        "mode": "hard",
+        "tti": 21597,
+        "rscCompletedVsClickMs": 20617.674560546875,
+        "boardVsClickMs": 20930.800048828125,
+        "composerServerMs": 20585.5810546875,
+        "GET": 291,
+        "previewGET": 0,
+        "centreGET": 0,
+        "queryHash": "b441d3fe0bc2d9ff343eeefddf9792a267c0583839b3ccb643edc704d8e0885a",
+        "uiDigest": "b51c6c528e97eb4b5d155c9a5dc0bc4351a4e11929c276c9b2d1d8c207cfaadb",
+        "dtoBytes": 273000,
+        "maxInFlight": 45
+      },
+      {
+        "id": "p2d-after-direct-2",
+        "mode": "hard",
+        "tti": 15283,
+        "rscCompletedVsClickMs": 14459.31884765625,
+        "boardVsClickMs": 14758.900146484375,
+        "composerServerMs": 14443.715087890625,
+        "GET": 291,
+        "previewGET": 0,
+        "centreGET": 0,
+        "queryHash": "b441d3fe0bc2d9ff343eeefddf9792a267c0583839b3ccb643edc704d8e0885a",
+        "uiDigest": "b51c6c528e97eb4b5d155c9a5dc0bc4351a4e11929c276c9b2d1d8c207cfaadb",
+        "dtoBytes": 273000,
+        "maxInFlight": 46
+      },
+      {
+        "id": "p2d-after-direct-3",
+        "mode": "hard",
+        "tti": 14131,
+        "rscCompletedVsClickMs": 13333.498291015625,
+        "boardVsClickMs": 13622.60009765625,
+        "composerServerMs": 13319.703369140625,
+        "GET": 291,
+        "previewGET": 0,
+        "centreGET": 0,
+        "queryHash": "b441d3fe0bc2d9ff343eeefddf9792a267c0583839b3ccb643edc704d8e0885a",
+        "uiDigest": "b51c6c528e97eb4b5d155c9a5dc0bc4351a4e11929c276c9b2d1d8c207cfaadb",
+        "dtoBytes": 273000,
+        "maxInFlight": 39
+      },
+      {
+        "id": "p2d-after-client-1",
+        "mode": "client",
+        "tti": 15012,
+        "rscCompletedVsClickMs": 14512.475830078125,
+        "boardVsClickMs": 14802.60009765625,
+        "composerServerMs": 14462.742919921875,
+        "GET": 291,
+        "previewGET": 0,
+        "centreGET": 45,
+        "queryHash": "b441d3fe0bc2d9ff343eeefddf9792a267c0583839b3ccb643edc704d8e0885a",
+        "uiDigest": "b51c6c528e97eb4b5d155c9a5dc0bc4351a4e11929c276c9b2d1d8c207cfaadb",
+        "dtoBytes": 273000,
+        "maxInFlight": 36
+      },
+      {
+        "id": "p2d-after-client-2",
+        "mode": "client",
+        "tti": 13806,
+        "rscCompletedVsClickMs": 13326.046875,
+        "boardVsClickMs": 13640.300048828125,
+        "composerServerMs": 13313.8818359375,
+        "GET": 291,
+        "previewGET": 0,
+        "centreGET": 45,
+        "queryHash": "b441d3fe0bc2d9ff343eeefddf9792a267c0583839b3ccb643edc704d8e0885a",
+        "uiDigest": "b51c6c528e97eb4b5d155c9a5dc0bc4351a4e11929c276c9b2d1d8c207cfaadb",
+        "dtoBytes": 273000,
+        "maxInFlight": 43
+      },
+      {
+        "id": "p2d-after-client-3",
+        "mode": "client",
+        "tti": 12128,
+        "rscCompletedVsClickMs": 11681.555908203125,
+        "boardVsClickMs": 11974.699951171875,
+        "composerServerMs": 11662.474609375,
+        "GET": 291,
+        "previewGET": 0,
+        "centreGET": 45,
+        "queryHash": "b441d3fe0bc2d9ff343eeefddf9792a267c0583839b3ccb643edc704d8e0885a",
+        "uiDigest": "b51c6c528e97eb4b5d155c9a5dc0bc4351a4e11929c276c9b2d1d8c207cfaadb",
+        "dtoBytes": 273000,
+        "maxInFlight": 38
+      }
+    ],
+    "beforeDirect": {
+      "tti": {
+        "n": 3,
+        "min": 21233,
+        "median": 21641,
+        "max": 35854
+      },
+      "rscCompletedVsClickMs": {
+        "n": 3,
+        "min": 19829.201416015625,
+        "median": 20264.527099609375,
+        "max": 34948.20263671875
+      },
+      "boardVsClickMs": {
+        "n": 3,
+        "min": 20220.5,
+        "median": 20618.39990234375,
+        "max": 35249.5
+      },
+      "composerServerMs": {
+        "n": 3,
+        "min": 19810.18408203125,
+        "median": 20250.973388671875,
+        "max": 34923.075439453125
+      }
+    },
+    "afterDirect": {
+      "tti": {
+        "n": 3,
+        "min": 14131,
+        "median": 15283,
+        "max": 21597
+      },
+      "rscCompletedVsClickMs": {
+        "n": 3,
+        "min": 13333.498291015625,
+        "median": 14459.31884765625,
+        "max": 20617.674560546875
+      },
+      "boardVsClickMs": {
+        "n": 3,
+        "min": 13622.60009765625,
+        "median": 14758.900146484375,
+        "max": 20930.800048828125
+      },
+      "composerServerMs": {
+        "n": 3,
+        "min": 13319.703369140625,
+        "median": 14443.715087890625,
+        "max": 20585.5810546875
+      }
+    },
+    "afterClient": {
+      "tti": {
+        "n": 3,
+        "min": 12128,
+        "median": 13806,
+        "max": 15012
+      },
+      "rscCompletedVsClickMs": {
+        "n": 3,
+        "min": 11681.555908203125,
+        "median": 13326.046875,
+        "max": 14512.475830078125
+      },
+      "boardVsClickMs": {
+        "n": 3,
+        "min": 11974.699951171875,
+        "median": 13640.300048828125,
+        "max": 14802.60009765625
+      },
+      "composerServerMs": {
+        "n": 3,
+        "min": 11662.474609375,
+        "median": 13313.8818359375,
+        "max": 14462.742919921875
+      }
+    }
+  },
+  "note": "Sequential local production samples, n=3. Spans are inclusive; medians cannot be summed. CriticalPath is readWorld start to ready, while requestMs includes Auth/boot/compile/response. Fetch concurrency is start-to-headers; Next bodies unobserved. All canceled HTTP 200 streams retained. Fixed replay clocks and byte/row parity are in replay certification.",
+  "remoteBusinessWrites": 0,
+  "p2b6": "PASS (3/3 rapid exits, zero preview)",
+  "replay": {
+    "replayParity": "PASS",
+    "replays": 5,
+    "cutoff": "2026-10-06T21:00:00Z",
+    "networkFallback": false,
+    "before": {
+      "GET": 313,
+      "rows": 38377,
+      "bytes": 13303172,
+      "queryHash": "2168d42298f994f6b706201f3233eb16911f55c797e5a84080a0b16c08640633",
+      "fullUiDigest": "a6213449261e89ae852a15c7f1679af24b5f21e6bbbdda09a6e719c0e7ecb5c6"
+    },
+    "after": [
+      {
+        "GET": 313,
+        "rows": 38377,
+        "bytes": 13303172,
+        "queryHash": "2168d42298f994f6b706201f3233eb16911f55c797e5a84080a0b16c08640633",
+        "fullUiDigest": "a6213449261e89ae852a15c7f1679af24b5f21e6bbbdda09a6e719c0e7ecb5c6"
+      },
+      {
+        "GET": 313,
+        "rows": 38377,
+        "bytes": 13303172,
+        "queryHash": "2168d42298f994f6b706201f3233eb16911f55c797e5a84080a0b16c08640633",
+        "fullUiDigest": "a6213449261e89ae852a15c7f1679af24b5f21e6bbbdda09a6e719c0e7ecb5c6"
+      },
+      {
+        "GET": 313,
+        "rows": 38377,
+        "bytes": 13303172,
+        "queryHash": "2168d42298f994f6b706201f3233eb16911f55c797e5a84080a0b16c08640633",
+        "fullUiDigest": "a6213449261e89ae852a15c7f1679af24b5f21e6bbbdda09a6e719c0e7ecb5c6"
+      },
+      {
+        "GET": 313,
+        "rows": 38377,
+        "bytes": 13303172,
+        "queryHash": "2168d42298f994f6b706201f3233eb16911f55c797e5a84080a0b16c08640633",
+        "fullUiDigest": "a6213449261e89ae852a15c7f1679af24b5f21e6bbbdda09a6e719c0e7ecb5c6"
+      },
+      {
+        "GET": 313,
+        "rows": 38377,
+        "bytes": 13303172,
+        "queryHash": "2168d42298f994f6b706201f3233eb16911f55c797e5a84080a0b16c08640633",
+        "fullUiDigest": "a6213449261e89ae852a15c7f1679af24b5f21e6bbbdda09a6e719c0e7ecb5c6"
+      }
+    ],
+    "semanticOwners": [
+      {
+        "name": "loadPurchaseAwareCanonical",
+        "beforeCalls": 1,
+        "afterCalls": 5,
+        "digest": "5c7c4267f020ab78d4c24bf057bd247eb80515f0e744ede83d07f4fa6926f316"
+      },
+      {
+        "name": "readPlanningBaselineSources",
+        "beforeCalls": 1,
+        "afterCalls": 5,
+        "digest": "5a8dd17d2caa526c0844aa300459ffe3fea0a10c09dc74cca1b835604696d65d"
+      },
+      {
+        "name": "readWorld",
+        "beforeCalls": 1,
+        "afterCalls": 5,
+        "digest": "6afdc72c92315bc47586d4f079008431d4e26344aa2e4fd0c394fbc03c9aef7c"
+      },
+      {
+        "name": "readMonthComposer",
+        "beforeCalls": 1,
+        "afterCalls": 5,
+        "digest": "8d35049cf667465ed42e384b6994fa9be17a833b0e5ab0e6edef83a607a74e58"
+      }
+    ],
+    "harness": {
+      "asOf": "2026-10-06T21:00:00Z",
+      "semanticDigest": "b97f6c274627901f9fc5179900b97b87981896fb9dad89f80a0928613db331b9",
+      "baselineDigest": "c27f43b48ee9511c8c7327008fcb1fe52ca49c8cf207549f4372561ce310b4ff",
+      "projectionDigest": "2cb51bb83000eb0b84a6ba08b0e2d52c222b5719ec3e7dd50fbafbba77451fb7",
+      "cardsDigest": "968cbee0b2f3eb2fa17060a482bc4828f342f0701415f7df3e324e166c1c994f",
+      "capabilitiesDigest": "f587ccefac1249fc674bf79520088c9a5a9aea5a44c7be732e71ff3253565e2e",
+      "manifestDigest": "34360075778b2f89e41083fe6219908b657ed99599f4413ff1ac9a1337beefc1",
+      "uiBytes": 273000,
+      "unknownDigest": "5e577b95b4c0a77597a468ff708042cbc9d19468c8e759804070bc9435dec0f8",
+      "counts": {
+        "cards": 15,
+        "contexts": 0,
+        "assets": 141
+      }
+    },
+    "remoteBusinessWrites": 0
+  }
+}
