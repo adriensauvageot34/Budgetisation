@@ -43,15 +43,17 @@ function summarize(profile,offset,window){
  assert.ok(included>0,'Profile must intersect measured clock window');
  return{window,wallMs:window[1]-window[0],sampledMs:included/1000,mappedSelfSampleMs:mapped/1000,buckets,top:[...groups.values()].sort((a,b)=>b.ms-a.ms).slice(0,15)};
 }
-const result={schema:'composer-navigation-profiles@1',note:'One profiled pair, retained in the main latency series. Sampled time is not a sum of request wall times. Server profile covers the whole process, including concurrent V2 action, GC and audit overhead. Source-mapped M7 subtree uses ancestry; other minified frames are not assigned guessed names. Browser (program) includes native/unattributed work. Browser production maps are absent.',profiles:[]};
+const result={schema:'composer-navigation-profiles@1',note:'One profiled run per variant, retained in the main latency series. Sampled time is not a sum of request wall times. Server profile covers the whole process, including any concurrent V2 action, GC and audit overhead. Source-mapped M7 subtree uses ancestry; other minified frames are not assigned guessed names. Browser (program) includes native/unattributed work. Browser production maps are absent.',profiles:[]};
 for(const variant of ['a','b']){
- const run=runs.find(r=>r.id==='pair01-'+variant);assert.ok(run?.profile);
+ const run=runs.find(r=>r.variant===variant&&r.profile&&!r.failed);assert.ok(run?.profile);
  const files=fs.readdirSync(path.join(root,'server-'+variant)).filter(f=>/^server-.*\.jsonl$/.test(f));
  const events=files.flatMap(f=>fs.readFileSync(path.join(root,'server-'+variant,f),'utf8').trim().split('\n').filter(Boolean).map(JSON.parse));
  const owner=events.find(e=>e.type==='http'&&e.name==='http:GET:/mois-a-venir/composer'&&e.start>=run.clickAt-100&&e.start<=run.interactiveAt);
  const startup=events.find(e=>e.type==='startup'&&e.pid===owner?.pid);assert.ok(startup?.hrtimeMicro);
  for(const kind of ['server','browser']){
-  const profile=JSON.parse(fs.readFileSync(path.join(root,'controlled',run.id+'-'+kind+'.cpuprofile'),'utf8'));
+  const filename=run.id+'-'+kind+'.cpuprofile';
+  const directory=fs.existsSync(path.join(root,'controlled',filename))?'controlled':variant==='a'?'before':'after';
+  const profile=JSON.parse(fs.readFileSync(path.join(root,directory,filename),'utf8'));
   const offset=kind==='server'?startup.epoch-startup.hrtimeMicro/1000:run.network[0].wall-run.network[0].start;
   result.profiles.push({variant,kind,fullProfileMs:(profile.endTime-profile.startTime)/1000,client:summarize(profile,offset,[run.clickAt,run.interactiveAt]),beforeClick:summarize(profile,offset,[run.trialStart,run.clickAt])});
  }

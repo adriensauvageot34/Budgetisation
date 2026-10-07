@@ -2,6 +2,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import assert from 'node:assert/strict';
+import crypto from 'node:crypto';
 const [connectionFile,planFile,out]=process.argv.slice(2);
 if(!connectionFile||!planFile||!out)throw new Error('CONNECTION_PLAN_OUTPUT_REQUIRED');
 const connection=JSON.parse(fs.readFileSync(connectionFile,'utf8')),plan=JSON.parse(fs.readFileSync(planFile,'utf8'));
@@ -18,7 +19,7 @@ const oldHarness=fs.readFileSync(new URL('./audit-composer-performance-browser.m
 const observer=oldHarness.match(/const observer=`([\s\S]*?)`;/)?.[1];assert.ok(observer,'Unchanged P2-A TTI observer required');
 const pause=ms=>new Promise(r=>setTimeout(r,ms));
 const actionIds={};
-for(const variant of ['a','b']){const manifest=JSON.parse(fs.readFileSync(path.join(plan.runtimes[variant],'.next/server/server-reference-manifest.json'),'utf8'));
+for(const variant of new Set(plan.trials.map(t=>t.variant))){const manifest=JSON.parse(fs.readFileSync(path.join(plan.runtimes[variant],'.next/server/server-reference-manifest.json'),'utf8'));
  actionIds[variant]=Object.entries(manifest.node).filter(([,v])=>v.exportedName==='previewMonthControlCenter').map(([id])=>id);assert.equal(actionIds[variant].length,1)}
 let session,network=[],errors=[],blocked=0,allowedPost=0,requested=[];
 const header=(headers,key)=>Object.entries(headers??{}).find(([k])=>k.toLowerCase()===key.toLowerCase())?.[1];
@@ -46,13 +47,16 @@ const evaluate=async expression=>{const r=await call('Runtime.evaluate',{express
 async function until(expression,label,timeout=240000){const start=Date.now();while(Date.now()-start<timeout){try{if(await evaluate(expression))return}catch{}await pause(100)}throw new Error(label+'_TIMEOUT')}
 async function click(selector){const point=await evaluate(`(()=>{const b=document.querySelector(${JSON.stringify(selector)});if(!b)return null;const r=b.getBoundingClientRect();return{x:r.x+r.width/2,y:r.y+r.height/2}})()`);assert.ok(point,'Observed interaction target required');await call('Input.dispatchMouseEvent',{type:'mousePressed',...point,button:'left',clickCount:1});await call('Input.dispatchMouseEvent',{type:'mouseReleased',...point,button:'left',clickCount:1})}
 async function serverProfiler(variant){const targets=await(await fetch(`http://127.0.0.1:${plan.inspectorPorts[variant]}/json/list`)).json(),c=new CDP(targets[0].webSocketDebuggerUrl);await c.ready;await c.send('Profiler.enable');await c.send('Profiler.start');return c}
+async function serverCounters(variant){const targets=await(await fetch(`http://127.0.0.1:${plan.inspectorPorts[variant]}/json/list`)).json(),c=new CDP(targets[0].webSocketDebuggerUrl);await c.ready;return c}
+async function cpu(c){return(await c.send('Runtime.evaluate',{expression:'({cpu:process.cpuUsage(),at:Date.now()})',returnByValue:true})).result.value}
 const resultsFile=path.join(out,'runs.json'),results=fs.existsSync(resultsFile)?JSON.parse(fs.readFileSync(resultsFile,'utf8')):[];
 assert.ok(results.length<=plan.trials.length);
 assert.ok(results.every((r,i)=>!r.failed&&r.id===plan.trials[i].id),'Failed/inconsistent series must remain separate, never skipped on resume');
 for(const trial of plan.trials.slice(results.length)){
- const base=plan.origins[trial.variant];let context,target,serverProfile,started=Date.now();
+ const base=plan.origins[trial.variant];let context,target,serverProfile,counters,started=Date.now();
  network=[];errors=[];blocked=0;allowedPost=0;let result={...trial,trialStart:started};
  try{
+  if(plan.processCPU){counters=await serverCounters(trial.variant);result.serverCpuBefore=await cpu(counters)}
   context=(await browser.send('Target.createBrowserContext')).browserContextId;
   await browser.send('Storage.setCookies',{browserContextId:context,cookies:cookies.map(c=>({...c,url:undefined}))});
   target=(await browser.send('Target.createTarget',{url:'about:blank',browserContextId:context})).targetId;
@@ -62,19 +66,30 @@ for(const trial of plan.trials.slice(results.length)){
   await call('Fetch.enable',{patterns:[{urlPattern:'*'}]});await call('Page.addScriptToEvaluateOnNewDocument',{source:observer});
   if(trial.profile){serverProfile=await serverProfiler(trial.variant);await call('Profiler.enable');await call('Profiler.start')}
   let composerUrl=base+'/mois-a-venir/composer?month='+plan.month;
-  if(trial.mode==='client'){
+  if(trial.mode==='client'||trial.mode==='center'){
    await call('Page.navigate',{url:base+'/mois-a-venir?month='+plan.month});
    await until('(()=>{const b=document.querySelector("[data-month-control-trigger]");return !!b&&Object.keys(b).some(k=>k.startsWith("__reactProps$"))})()','CENTRE_HYDRATION');
    result.centreReady=Date.now();
    const href=await evaluate('(()=>{const a=[...document.querySelectorAll("a")].find(a=>a.getAttribute("href")?.includes("/mois-a-venir/composer"));return a?.getAttribute("href")})()');assert.ok(href);composerUrl=new URL(href,base).href;
    assert.equal(new URL(composerUrl).searchParams.get('month'),plan.month,'Same requested month in all paths');
    result.centreOpen=Date.now();await click('[data-month-control-trigger]');await until('!!document.querySelector("[data-control-hub=pilot]")','PILOT_VISIBLE');
-   await pause(100); // Predeclared rapid path; no wait for the concurrent preview.
+   result.pilotVisibleAt=Date.now();
+   const centreText=await evaluate('document.querySelector("[data-control-content]")?.textContent??""');
+   result.centreInitialUiDigest=crypto.createHash('sha256').update(centreText).digest('hex');
+   if(trial.centerInteraction)await click('[data-control-hub=savings]');
+   await pause(trial.clickDelayMs??100); // Predeclared path; no wait for a rapid preview.
    if(trial.waitPreview){const wait=Date.now();while(Date.now()-wait<180000){const post=network.find(n=>n.method==='POST'&&n.path==='/mois-a-venir');if(post?.end)break;await pause(100)}
     assert.ok(network.some(n=>n.method==='POST'&&n.path==='/mois-a-venir'&&n.end),'Completed preview required for quiet control');await pause(500)}
    await evaluate(`window.__auditClientStart=performance.now();${observer}`);
   }
   result.clickAt=Date.now();result.composerUrl=new URL(composerUrl).pathname+'?month='+plan.month;
+  if(trial.mode==='center'){
+   const text=await evaluate('document.querySelector("[data-control-content]")?.textContent??""');
+   result.centreFinalUiDigest=crypto.createHash('sha256').update(text).digest('hex');
+   result.interactiveAt=Date.now();result.tti=result.interactiveAt-result.centreOpen;result.endToEnd=result.interactiveAt-result.trialStart;
+   result.page=await evaluate('({audit:window.__audit,timeOrigin:performance.timeOrigin,viewport:{width:innerWidth,height:innerHeight}})');
+   result.interaction={empty:true,centerStayed:true,changedView:!!trial.centerInteraction};
+  }else{
   if(trial.mode==='client')await click('[data-control-hub=pilot]');else await call('Page.navigate',{url:composerUrl});
   await until('!!document.querySelector("[data-composer]")&&!!window.__audit?.marks.hydrated','COMPOSER_READY');
   await click('[data-library] input');await call('Input.insertText',{text:'zzzz-perf'});await pause(80);
@@ -83,6 +98,8 @@ for(const trial of plan.trials.slice(results.length)){
   result.interactiveAt=Date.now();result.tti=result.interactiveAt-result.clickAt;result.endToEnd=result.interactiveAt-result.trialStart;
   result.page=await evaluate('({audit:window.__audit,timeOrigin:performance.timeOrigin,clientStart:window.__auditClientStart??0,navigation:performance.getEntriesByType("navigation")[0]?.toJSON(),viewport:{width:innerWidth,height:innerHeight},dom:document.querySelectorAll("*").length,fonts:document.fonts.status})');
   result.interaction=interaction;assert.ok(interaction.empty,'Unchanged native Library interaction must complete');
+  }
+  if(counters)result.serverCpuAfter=await cpu(counters);
   if(trial.profile){const b=(await call('Profiler.stop')).profile;fs.writeFileSync(path.join(out,trial.id+'-browser.cpuprofile'),JSON.stringify(b));const p=(await serverProfile.send('Profiler.stop')).profile;fs.writeFileSync(path.join(out,trial.id+'-server.cpuprofile'),JSON.stringify(p))}
   // Keep all background requests in the trace and give them time to finish.
   const drain=Date.now();while(Date.now()-drain<15000&&network.some(n=>!n.end))await pause(100);
@@ -93,7 +110,7 @@ for(const trial of plan.trials.slice(results.length)){
    try{const p=(await call('Profiler.stop')).profile;fs.writeFileSync(path.join(out,trial.id+'-failed-browser.cpuprofile'),JSON.stringify(p))}catch{}
    if(serverProfile)try{const p=(await serverProfile.send('Profiler.stop')).profile;fs.writeFileSync(path.join(out,trial.id+'-failed-server.cpuprofile'),JSON.stringify(p))}catch{}
   }
-  serverProfile?.close();result.trialEnd=Date.now();result.network=network;result.errors=errors;result.blocked=blocked;result.allowedPost=allowedPost;
+  serverProfile?.close();counters?.close();result.trialEnd=Date.now();result.network=network;result.errors=errors;result.blocked=blocked;result.allowedPost=allowedPost;
   results.push(result);fs.writeFileSync(resultsFile,JSON.stringify(results,null,2)+'\n');
   console.log(JSON.stringify({id:trial.id,variant:trial.variant,mode:trial.mode,waitPreview:trial.waitPreview,tti:result.tti,failed:result.failed??null,allowedPost,blocked}));
   if(context)await browser.send('Target.disposeBrowserContext',{browserContextId:context});session=null;await pause(500);
