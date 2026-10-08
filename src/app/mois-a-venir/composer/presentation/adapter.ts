@@ -4,8 +4,8 @@ import type { AtomicNode, ClusterFamily, ComposerPresentationNode, VisualCluster
 import { stableVisualIdentity } from "../planner-icons/visual-identity";
 
 const clusterLook: Readonly<Record<ClusterFamily, Pick<VisualClusterNode, "title" | "iconKey" | "width" | "height">>> = {
-  BEAUTY: { title: "Beauté", iconKey: "beauty", width: 390, height: 178 },
-  FOOD: { title: "Restauration", iconKey: "restaurant", width: 430, height: 178 },
+  BEAUTY: { title: "Beauté", iconKey: "beauty", width: 530, height: 168 },
+  FOOD: { title: "Restauration", iconKey: "restaurant", width: 460, height: 168 },
 };
 
 function rank(node: ComposerPresentationNode, model: ComposerUiModel): number {
@@ -24,15 +24,18 @@ export function composePresentationNodes(model: ComposerUiModel): ComposerPresen
     ...model.board.contexts.filter(context => !context.parentContextOccurrenceId).map(context => ({
       id: context.contextOccurrenceId, kind: "CONTEXT" as const, context,
       iconKey: model.presentation.objects[context.contextOccurrenceId].iconKey,
-      width: ["gift", "family-visit"].includes(context.templateKey) ? 260 : model.presentation.objects[context.contextOccurrenceId].variant === "COMPOSITE" ? 340 : 230,
-      height: ["gift", "family-visit"].includes(context.templateKey) ? 178 : model.presentation.objects[context.contextOccurrenceId].variant === "COMPOSITE" ? 225 : 178,
+      width: ["gift", "family-visit"].includes(context.templateKey) ? 240 : context.templateKey === "short-stay" ? 360
+        : context.templateKey === "night-out" ? 350 : 260,
+      height: ["gift", "family-visit"].includes(context.templateKey) ? 158 : context.templateKey === "activity" ? 205
+        : model.presentation.objects[context.contextOccurrenceId].variant === "COMPOSITE" ? 220 : 170,
     })),
     ...[...model.board.baselineControls, ...model.board.discretionaryControls, ...model.board.savings]
       .filter(control => !available.has(control.targetRef)).map(control => ({
         id: control.targetRef, kind: "CONTROL" as const, control,
         iconKey: model.presentation.objects[control.targetRef].iconKey,
-        width: control.kind === "SAVINGS" ? 290 : 230,
-        height: control.kind === "SAVINGS" ? 170 : 170,
+        width: control.kind === "SAVINGS" ? 290 : stableVisualIdentity(control.targetRef) === "adrien-work-coffee" ? 220
+          : model.presentation.objects[control.targetRef].iconKey === "groceries" ? 240 : model.presentation.objects[control.targetRef].iconKey === "haircut" ? 220 : 230,
+        height: control.kind === "SAVINGS" ? 170 : 160,
       })),
   ];
   const groups: Record<ClusterFamily, AtomicNode[]> = { BEAUTY: [], FOOD: [] };

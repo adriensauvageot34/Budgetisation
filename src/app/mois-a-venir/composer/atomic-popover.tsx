@@ -1,4 +1,4 @@
-import { useId, useRef, useEffect, type ReactNode } from "react";
+import { useId, useRef, useEffect, useState, type ReactNode } from "react";
 import { X } from "lucide-react";
 import styles from "./composer.module.css";
 import { useDragHandle } from "./interactions";
@@ -8,7 +8,7 @@ export function AtomicPopover({ label, state, selectionId, empty, children, icon
   label: string; state: string; selectionId?: string; empty?: boolean; icon: ReactNode;
   children: (close: () => void) => ReactNode; focus: () => void; dragSourceKey?: string; utility?: boolean;
 }) {
-  const id = useId(), trigger = useRef<HTMLButtonElement>(null), panel = useRef<HTMLDivElement>(null);
+  const id = useId(), trigger = useRef<HTMLButtonElement>(null), panel = useRef<HTMLDivElement>(null), [open, setOpen] = useState(false);
   const titleId = `${id}-title`;
   const dragProps = useDragHandle(dragSourceKey);
   const close = () => panel.current?.hidePopover();
@@ -22,19 +22,20 @@ export function AtomicPopover({ label, state, selectionId, empty, children, icon
       node.style.top = `${Math.max(margin, Math.min(innerHeight - box.height - margin, below + box.height <= innerHeight - margin ? below : anchor.top - box.height - 9))}px`;
     };
     const toggle = (event: Event) => {
-      if ((event as ToggleEvent).newState === "open") { place(); node?.querySelector<HTMLElement>("[data-popover-title]")?.focus(); }
-      else if (!document.querySelector("dialog[open]") && (!document.activeElement || document.activeElement === document.body || node?.contains(document.activeElement))) trigger.current?.focus();
+      if ((event as ToggleEvent).newState === "open") { setOpen(true); place(); window.addEventListener("resize", place); window.addEventListener("scroll", place, true);
+        node?.querySelector<HTMLElement>("[data-popover-title]")?.focus(); }
+      else { setOpen(false); window.removeEventListener("resize", place); window.removeEventListener("scroll", place, true);
+        if (!document.querySelector("dialog[open]") && (!document.activeElement || document.activeElement === document.body || node?.contains(document.activeElement))) trigger.current?.focus(); }
     };
     node?.addEventListener("toggle", toggle);
-    window.addEventListener("resize", place); window.addEventListener("scroll", place, true);
     return () => { node?.removeEventListener("toggle", toggle); window.removeEventListener("resize", place); window.removeEventListener("scroll", place, true); };
   }, []);
   return <>
     <button ref={trigger} type="button" className={utility ? styles.iconButton : styles.satellite} data-context-actions={utility || undefined} data-satellite={utility ? undefined : true} data-selection={selectionId} data-state={state} data-empty={empty || undefined} {...dragProps}
-      title={label} aria-label={label} aria-haspopup="dialog" aria-controls={id} onClick={() => { focus(); panel.current?.togglePopover(); }}>{icon}</button>
+      title={label} aria-label={label} aria-haspopup="dialog" aria-controls={id} aria-expanded={open} onClick={() => { focus(); panel.current?.togglePopover(); }}>{icon}</button>
     <div ref={panel} id={id} popover="auto" role="dialog" aria-labelledby={titleId} className={styles.atomicPopover} data-atomic-popover>
       <header><h4 id={titleId} tabIndex={-1} data-popover-title>{label}</h4><button type="button" className={styles.iconButton} aria-label="Fermer les détails" onClick={() => { close(); trigger.current?.focus(); }}><X size={15} /></button></header>
-      {children(() => { close(); trigger.current?.focus(); })}
+      {open && children(() => { close(); trigger.current?.focus(); })}
     </div>
   </>;
 }

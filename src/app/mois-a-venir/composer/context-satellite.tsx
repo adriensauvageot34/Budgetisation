@@ -8,23 +8,23 @@ import { useComposerInteractions } from "./interactions";
 import { PlannerIcon } from "./planner-icons/planner-icon";
 import styles from "./composer.module.css";
 
-export function ContextSatellite({ satellite, item, target, editAsset, busy, focus, choose, remove, accept, child, moveTargets }: {
+export function ContextSatellite({ satellite, item, target, editAsset, busy, focus, choose, remove, accept, child, moveTargets, slotLabel }: {
   satellite: ComposerSatellitePresentation; item: ComponentSelectionV1; target: DropTarget;
-  editAsset?: ComposerAssetView; busy: boolean; focus: () => void;
+  editAsset?: ComposerAssetView; busy: boolean; focus: () => void; slotLabel?: string | null;
   choose: (asset: ComposerAssetView, target: DropTarget, selection?: ComponentSelectionV1) => void;
   remove: (selection: ComponentSelectionV1) => void; accept: (selection: ComponentSelectionV1) => void;
   child: (id: string) => React.ReactNode;
   moveTargets: readonly Readonly<{ target: DropTarget; label: string }>[];
 }) {
   const interaction = useComposerInteractions();
-  const title = satellite.label.replace(/^Synthetic\s+/i, "").replace(/^./, letter => letter.toUpperCase());
+  const title = satellite.label.startsWith("Synthetic ") && slotLabel ? slotLabel : satellite.label;
   const sourceKey = satellite.state === "DERIVED" ? undefined : satellite.childContextOccurrenceId
     ? `context-occurrence:${satellite.childContextOccurrenceId}` : satellite.editableAssetKey
       ? `satellite:${target.contextOccurrenceId}:${target.slotKey}:${item.selectionId}` : undefined;
   const stateText = satellite.state === "SUGGESTED" ? "Suggestion à confirmer" : satellite.state === "DERIVED" ? "Lié à un autre objet"
     : satellite.state === "UNRESOLVED" ? "À préciser" : "Équipé pour ce moment";
   return <AtomicPopover label={title} state={satellite.state} selectionId={item.selectionId} focus={focus} dragSourceKey={sourceKey}
-    icon={<><PlannerIcon iconKey={satellite.iconKey} scale="SATELLITE" /><span className={styles.satelliteMarker} aria-hidden="true">
+    icon={<><PlannerIcon iconKey={satellite.iconKey} scale="SATELLITE" /><span className={styles.equipmentName}>{title}</span><span className={styles.satelliteMarker} aria-hidden="true">
       {satellite.state === "SUGGESTED" ? <Sparkle size={10} /> : satellite.state === "DERIVED" ? <Link2 size={10} /> : satellite.state === "UNRESOLVED" ? <i /> : <Check size={9} />}</span></>}>
     {close => <div className={styles.objectSheet} data-object-sheet>
       <p className={styles.objectSheetState}>{stateText}</p>

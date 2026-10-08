@@ -9,6 +9,14 @@ import styles from "./composer.module.css";
 import { AtomicPopover } from "./atomic-popover";
 import { useComposerInteractions, useDragHandle, leftSurface } from "./interactions";
 import { visibleEmptySocketKeys } from "./presentation/socket-visibility";
+
+/** Stable presentation order; the published socket list and identities stay intact. */
+const equipmentOrder: Readonly<Record<string, readonly string[]>> = {
+  "night-out": ["main", "before", "outbound", "return", "food", "extras"],
+  "short-stay": ["lodging", "transport", "activities", "restaurants", "groceries", "purchases"],
+  gift: ["item", "extras"],
+  "family-visit": ["hospitality", "activities", "transport"],
+};
 export function ContextCard({ card, model, busy, selected, focused, focus, drag, drop, choose, request, edit }: { card: ComposerContextCardView; model: ComposerUiModel; busy: boolean;
   focused: string | null; focus: (id: string | null) => void;
   selected: string | null; drag: (key: string | null) => void; drop: (target: DropTarget, key?: string) => void;
@@ -25,6 +33,11 @@ export function ContextCard({ card, model, busy, selected, focused, focus, drag,
   const targets = selected ? model.dropCapabilities.filter(d => d.sourceAssetKey === selected && d.target.kind === "CONTEXT_SOCKET" && d.target.contextOccurrenceId === card.contextOccurrenceId && d.resolution !== "BLOCKED") : [];
   const magnetic = targets.length === 1 ? targets[0].target : null;
   const reparentTargets = model.dropCapabilities.filter(d => d.sourceAssetKey === instance && d.target.kind === "CONTEXT_SOCKET" && d.resolution !== "BLOCKED");
+  const order = equipmentOrder[card.templateKey] ?? [];
+  const sockets = [...card.sockets].sort((a, b) => {
+    const left = order.indexOf(a.slotKey), right = order.indexOf(b.slotKey);
+    return (left < 0 ? 100 : left) - (right < 0 ? 100 : right) || a.slotKey.localeCompare(b.slotKey);
+  });
   return <article className={styles.contextCard} data-context={card.contextOccurrenceId} data-template-key={card.templateKey} data-focused={focused === card.contextOccurrenceId} data-variant={presentation.variant} data-state={card.readOnly ? "derived" : card.knowledge === "UNKNOWN" ? "unresolved" : "chosen"}
     data-compatible={targets.length > 0 || interaction?.canTarget(card.contextOccurrenceId)} data-magnetic={interaction?.overTarget?.contextOccurrenceId === card.contextOccurrenceId}
     data-unresolved={interaction?.unresolvedRefs.includes(card.contextOccurrenceId)} data-snap={interaction?.motionTarget === card.contextOccurrenceId ? interaction.motion : undefined}
@@ -34,8 +47,8 @@ export function ContextCard({ card, model, busy, selected, focused, focus, drag,
     onDrop={e => { e.preventDefault(); e.stopPropagation(); if (interaction?.canTarget(card.contextOccurrenceId) && !busy) interaction.placeAssistant(card.contextOccurrenceId); else if (magnetic && interaction?.grabbed && !busy) interaction.place(magnetic); }}
     onClick={e => { if (e.target instanceof Element && !e.target.closest("button,input,select,a,[popover]")) focus(card.contextOccurrenceId); }}>
     {magnetic && interaction?.grabbed && <span className={styles.magneticLabel}>Rattacher à {card.label}</span>}
-    <div className={styles.contextOrbit}>
-    <div className={styles.contextNucleus}>
+    <div className={styles.contextComposition}>
+    <div className={styles.contextHero}>
     <PlannerIcon iconKey={presentation.iconKey} className={styles.contextObjectIcon} />
     <header className={styles.contextHeader}><div><h3><button data-context-focus aria-pressed={focused === card.contextOccurrenceId} onClick={() => focus(focused === card.contextOccurrenceId ? null : card.contextOccurrenceId)}>{card.label}</button></h3>{typeof card.fields.plannedDate === "string" && <p>{new Intl.DateTimeFormat("fr-FR", { day: "numeric", month: "short", timeZone: "UTC" }).format(new Date(`${card.fields.plannedDate}T12:00:00Z`))}</p>}
       <span className={styles.contextState} title={knowledgeLabel(card.knowledge)} aria-label={knowledgeLabel(card.knowledge)}>{preserved ? <LockKeyhole size={12} /> : card.readOnly ? <Link2 size={12} /> : card.knowledge === "UNKNOWN" ? <i /> : null}</span></div>
@@ -53,7 +66,8 @@ export function ContextCard({ card, model, busy, selected, focused, focus, drag,
           {!removable && <p>Moment protégé dans ce brouillon.</p>}</div>}</AtomicPopover></>}</div></header>
     {card.readOnly && <p className={styles.externalNote}>Intention déjà connue · comptée une fois</p>}
     </div>
-    {(["NORTH", "WEST", "EAST", "SOUTH"] as const).map(orbit => <div key={orbit} className={styles.orbitGroup} data-orbit={orbit}>{card.sockets.filter(s => model.presentation.sockets[`${card.contextOccurrenceId}:${s.slotKey}`].orbit === orbit).map(socket => {
+    <div className={styles.contextEquipmentRow} data-context-equipment-row aria-label={`Équipements de ${card.label}`}>
+    {sockets.map(socket => {
       const socketPresentation = model.presentation.sockets[`${card.contextOccurrenceId}:${socket.slotKey}`];
       const assets = socketPresentation.options.map(o => model.library.searchableAssets.find(a => a.assetKey === o.assetKey)!);
       const compatible = !!selected && model.dropCapabilities.some(d => d.sourceAssetKey === selected && d.target.kind === "CONTEXT_SOCKET"
@@ -66,7 +80,8 @@ export function ContextCard({ card, model, busy, selected, focused, focus, drag,
           .map(d => ({ selectionId: item.selectionId, target: d.target, label: `${model.board.contexts.find(c => c.contextOccurrenceId === d.target.contextOccurrenceId)?.label} · ${model.board.contexts.find(c => c.contextOccurrenceId === d.target.contextOccurrenceId)?.sockets.find(s => s.slotKey === d.target.slotKey)?.label}` })))}
         remove={item => request({ kind: "CLEAR_SOCKET", contextOccurrenceId: card.contextOccurrenceId, slotKey: socket.slotKey, selectionId: item.selectionId })}
         accept={item => request({ kind: "MUTATE", mutation: { kind: "PATCH_CONTEXT", contextOccurrenceId: card.contextOccurrenceId, slotKey: socket.slotKey, items: socket.currentItems.map(i => i.selectionId === item.selectionId ? { ...i, provenance: "EXPLICIT_USER_DECISION" } : i) } })} child={children} />;
-    })}</div>)}
+    })}
+    </div>
     </div>
   </article>;
 }

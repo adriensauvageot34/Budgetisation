@@ -5,6 +5,8 @@
   "scripts": {
     "check:composer-r6-p3": "node scripts/check-composer-r6-p3.mjs",
     "check:composer-r6-p35": "node scripts/check-composer-r6-p35.mjs",
+    "check:composer-r6-p4": "node scripts/check-composer-r6-p4.mjs",
+    "check:phase2-planner-interactions": "node scripts/check-phase2-planner-interactions.mjs",
     "check:composer-r6-presentation": "node scripts/check-composer-r6-presentation.mjs",
     "check:control-center-preview-lifecycle": "node scripts/check-control-center-preview-lifecycle.mjs",
     "check:mobility-presence-index": "node scripts/check-mobility-presence-index.mjs",

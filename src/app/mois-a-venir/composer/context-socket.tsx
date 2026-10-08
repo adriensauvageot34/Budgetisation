@@ -30,12 +30,12 @@ export function ContextSocket({ socket, presentation, busy, compatible, showEmpt
     {presentation.satellites.map(satellite => {
       const item = socket.currentItems.find(i => i.selectionId === satellite.selectionId)!;
       const editAsset = assets.find(a => a.assetKey === satellite.editableAssetKey);
-      return <ContextSatellite key={item.selectionId} satellite={satellite} item={item} target={target} editAsset={editAsset} busy={busy} focus={focus}
+      return <ContextSatellite key={item.selectionId} satellite={satellite} item={item} target={target} editAsset={editAsset} busy={busy} focus={focus} slotLabel={socket.label}
         choose={choose} remove={remove} accept={accept} child={child} moveTargets={moveTargets.filter(t => t.selectionId === item.selectionId)} />;
     })}
     {showEmpty && presentation.canAdd && (socket.cardinality === "REPEATING" || !socket.currentItems.length) && <AtomicPopover label={`Ajouter · ${socket.label ?? socket.slotKey}`} state="EMPTY" empty focus={focus}
-      icon={<Plus size={16} aria-hidden="true" />}>{close => <><p className={styles.popoverNote}>Choisissez un élément pour ce moment.</p>{choices(close)}</>}</AtomicPopover>}
+      icon={<><Plus size={17} aria-hidden="true" /><span className={styles.equipmentName}>Ajouter</span></>}>{close => <><p className={styles.popoverNote}>Choisissez un élément pour ce moment.</p>{choices(close)}</>}</AtomicPopover>}
     {showEmpty && compatible && !presentation.satellites.length && !presentation.canAdd && <AtomicPopover label={`Placer · ${socket.label ?? socket.slotKey}`} state="EMPTY" empty focus={focus}
-      icon={<ArrowLeftRight size={16} />}>{close => choices(close)}</AtomicPopover>}
+      icon={<><ArrowLeftRight size={16} /><span className={styles.equipmentName}>Placer</span></>}>{close => choices(close)}</AtomicPopover>}
   </section>;
 }

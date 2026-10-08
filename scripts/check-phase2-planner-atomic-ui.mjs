@@ -27,7 +27,8 @@ try {
   const model = await read(), id = model.board.contexts[0].contextOccurrenceId, socket = key => model.presentation.sockets[`${id}:${key}`];
   await check('R2-001', () => { const output = html(model);
     for (const s of model.board.contexts[0].sockets) for (const item of s.currentItems) assert.ok(output.includes(`data-selection="${item.selectionId}"`));
-    assert.match(output, /data-orbit="NORTH"/); assert.equal(socket('before').orbit, 'NORTH'); assert.equal(socket('main').orbit, 'WEST');
+    assert.match(output, /data-context-equipment-row/); assert.ok(!output.includes('data-orbit='));
+    assert.equal(socket('before').orbit, 'NORTH'); assert.equal(socket('main').orbit, 'WEST');
   });
   await check('R2-002', () => { for (const card of model.board.contexts) for (const s of card.sockets) {
     const view = model.presentation.sockets[`${card.contextOccurrenceId}:${s.slotKey}`];
@@ -46,7 +47,7 @@ try {
     assert.match(output, /data-state="DERIVED"/); assert.ok(!output.includes('>Modifier</button>')); assert.ok(!output.includes('Retirer de ce moment'));
   });
   await check('R2-005', () => { const unknown = socket('food').satellites[0]; assert.equal(unknown.state, 'UNRESOLVED'); assert.equal(unknown.economicAmount, null);
-    assert.match(html(model), /Montant non disponible/); });
+    assert.match(html(model), /data-state="UNRESOLVED"/); assert.match(fs.readFileSync('src/app/mois-a-venir/composer/context-satellite.tsx','utf8'),/Montant non disponible/); });
   await check('R2-006', () => { const source = ['context-socket.tsx', 'context-satellite.tsx'].map(name => fs.readFileSync(`src/app/mois-a-venir/composer/${name}`, 'utf8')).join('\n');
     assert.ok(!/new Big|parseFloat|\.reduce\(|\.plus\(|\.minus\(/u.test(source)); assert.match(source, /money\(satellite\.economicAmount\)/); });
   await check('R2-007', () => { const output = html(model, id); assert.match(output, new RegExp(`data-context-palette="${id}"`)); assert.match(output, /Équiper · Soirée/); assert.match(output, /data-focused="true"/); });

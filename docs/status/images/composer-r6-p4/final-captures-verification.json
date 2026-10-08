@@ -1,0 +1,24 @@
+{
+  "result": {
+    "final-captures": {
+      "restEmpty": 0,
+      "selectedEmpty": 1,
+      "preservedSelection": "main",
+      "popoverFocusReturn": true,
+      "compare": true
+    },
+    "keyboard-library-edit": {
+      "slashFocus": true,
+      "search": true,
+      "arrowNavigation": true,
+      "focusedAsset": "template:delivery",
+      "outline": "solid",
+      "edit": true
+    },
+    "reduced-motion": {
+      "transition": "0s",
+      "animation": "0s"
+    }
+  },
+  "errors": []
+}

@@ -439,3 +439,129 @@
 .contextCard[data-template-key="night-out"] .contextNucleus { position:relative; isolation:isolate; }
 .contextCard[data-template-key="night-out"] .contextNucleus::before { content:""; position:absolute; z-index:-1; left:50%; top:37%; width:164px; height:136px; transform:translate(-50%,-50%); border-radius:50%; background:radial-gradient(circle,#e0cbffb8 0,#e9dcff75 48%,#f8f3ff00 74%); pointer-events:none; }
 .clusterDialog .paletteDock { height:120px; }
+
+/* R6 P4: semantic objects. A context is one object with its equipment attached. */
+.workspace { --motion-hover:145ms; --muted:#59617d; }
+.card { min-height:0; height:100%; padding:11px 15px; }
+.card[data-variant=SIMPLE],.card[data-variant=HABIT] { border-color:#e8ebf3; box-shadow:0 6px 18px #2634540c,0 1px 3px #26345407; }
+.card:hover,.contextCard:hover { transform:translateY(-1px); box-shadow:0 12px 26px #332b621b; }
+.objectIdentity { min-height:58px; margin-bottom:4px; }
+.objectIcon { width:59px; height:59px; flex-basis:59px; }
+.objectIcon svg { width:59px; height:59px; }
+.card h3 { font-size:15px; }
+.cardValue { font-size:21px; }
+.habitReference { font-size:11px; color:#525e7c; }
+.personChip { font-size:10px; font-weight:700; padding:3px 7px; color:#5b4384; background:#ece7fa; border-radius:999px; }
+.occurrenceStack { margin-top:7px; }
+.occurrenceStack>span { width:14px; height:14px; opacity:.55; }
+.card:hover .occurrenceStack>span,.card:focus-within .occurrenceStack>span { opacity:1; }
+.cardUtility { opacity:0; }
+.card[data-protected=true] .cardUtility { opacity:.72; }
+.card[data-variant=SAVINGS] { background:linear-gradient(145deg,#f6fcf7,#eaf6ef); border-color:#d8eadd; }
+.card[data-variant=SAVINGS] .objectIdentity { min-height:65px; }
+.card[data-variant=SAVINGS] .objectIcon { width:68px; height:68px; flex-basis:68px; }
+.card[data-variant=SAVINGS] .objectIcon svg { width:68px; height:68px; }
+
+.contextCard { height:170px; padding:12px 13px; border-color:#e9e4f2; background:linear-gradient(155deg,#faf7ff,#f5f1fd); }
+.contextCard[data-variant=COMPOSITE] { height:220px; background:radial-gradient(circle at 50% 24%,#e7d6ff 0,#f4edff 48%,#faf7ff 100%); }
+.contextCard[data-template-key=short-stay] { background:radial-gradient(circle at 50% 25%,#e5f0ea 0,#f1f6f5 50%,#f8f9ff 100%); }
+.contextCard[data-template-key=activity] { height:205px; }
+.contextCard[data-template-key=gift],.contextCard[data-template-key=family-visit] { height:158px; background:linear-gradient(155deg,#f9f6ff,#f4effb); }
+.contextComposition { display:flex; flex-direction:column; height:100%; min-width:0; }
+.contextHero { flex:1; min-height:0; display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; position:relative; }
+.contextObjectIcon,.contextCard[data-variant=COMPOSITE] .contextObjectIcon,.contextCard[data-template-key=gift] .contextObjectIcon,.contextCard[data-template-key=family-visit] .contextObjectIcon { display:grid; place-items:center; height:83px; width:100px; transform:none; }
+.contextObjectIcon svg { width:83px; height:83px; }
+.contextCard[data-variant=COMPOSITE] .contextObjectIcon { height:89px; }
+.contextCard[data-variant=COMPOSITE] .contextObjectIcon svg { width:89px; height:89px; }
+.contextCard[data-template-key=gift] .contextObjectIcon,.contextCard[data-template-key=family-visit] .contextObjectIcon { height:75px; }
+.contextCard[data-template-key=gift] .contextObjectIcon svg,.contextCard[data-template-key=family-visit] .contextObjectIcon svg { width:75px; height:75px; }
+.contextHeader h3,.contextCard[data-variant=COMPOSITE] .contextHeader h3 { margin:0; font-size:16px; line-height:1.15; }
+.contextHeader p { margin:3px 0 0; font-size:10px; color:#58627f; }
+.contextState { position:absolute; top:5px; left:6px; }
+.contextState:empty { display:none; }
+.contextTools { position:absolute; top:-7px; right:-8px; margin:0; opacity:0; }
+.contextCard:hover .contextTools,.contextCard:focus-within .contextTools,.contextCard[data-focused=true] .contextTools { opacity:1; }
+.contextEquipmentRow { flex:0 0 57px; min-width:0; display:flex; align-items:center; justify-content:center; gap:5px; border-top:1px solid #d9cde980; padding:6px 0 0; overflow-x:auto; overflow-y:visible; scrollbar-width:thin; scrollbar-color:#c6b6dc transparent; }
+.contextEquipmentRow:empty { display:none; }
+.contextCard[data-template-key=short-stay] .contextEquipmentRow { border-color:#cadfd288; }
+.contextEquipmentRow .socket { flex:0 0 auto; flex-wrap:nowrap; gap:4px; border-radius:11px; }
+.contextEquipmentRow .satellite,.contextCard[data-variant=COMPOSITE] .satellite { width:71px; height:48px; display:flex; flex-direction:column; gap:0; border-radius:11px; padding:2px 3px; border:1px solid #d8cbe9; background:#ffffffc9; box-shadow:0 3px 8px #49326713; opacity:1; }
+.contextEquipmentRow .satellite [data-planner-icon] { height:28px; display:grid; place-items:center; }
+.contextEquipmentRow .satellite [data-planner-icon] svg { width:29px; height:29px; }
+.equipmentName { display:block; width:100%; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; color:#392c5e; font-size:9px; font-weight:700; line-height:1.3; text-align:center; }
+.contextEquipmentRow .satellite[data-state=SUGGESTED] { border-style:dashed; background:#f9f2ff; }
+.contextEquipmentRow .satellite[data-state=DERIVED] { border-color:#c7dce7; background:#f1f8fb; }
+.contextEquipmentRow .satellite[data-empty=true],.contextCard[data-variant=COMPOSITE] .satellite[data-empty=true] { width:54px; height:47px; border-style:dashed; background:#ffffff88; opacity:.8; box-shadow:none; color:#704bc0; }
+.contextEquipmentRow .satellite[data-empty=true]>.equipmentName { color:#704bc0; }
+.contextEquipmentRow .satelliteMarker { right:2px; top:2px; bottom:auto; width:12px; height:12px; background:#fffdfd; }
+.contextEquipmentRow .satellite:hover,.contextEquipmentRow .satellite:focus-visible { transform:translateY(-1px); border-color:#ad8ee0; box-shadow:0 5px 11px #50378324; }
+.contextCard[data-template-key=short-stay] .satellite { width:61px; }
+.contextCard[data-template-key=gift] .contextEquipmentRow { flex-basis:51px; }
+.contextCard[data-template-key=gift] .satellite { width:95px; }
+.contextCard[data-template-key=gift] .contextHero { flex-direction:row; gap:5px; }
+.contextCard[data-template-key=gift] .contextObjectIcon { width:65px; height:65px; }
+.contextCard[data-template-key=gift] .contextObjectIcon svg { width:65px; height:65px; }
+.contextCard[data-template-key=activity] .contextEquipmentRow { flex-basis:53px; }
+.contextCard[data-template-key=night-out] .contextHero::before { content:""; position:absolute; z-index:-1; top:15%; left:50%; width:160px; height:125px; transform:translateX(-50%); border-radius:50%; background:radial-gradient(circle,#dfc6ffab,#dfc6ff00 72%); pointer-events:none; }
+.contextCard[data-focused=true] { background-color:#f8f4ff!important; }
+.contextCard[data-focused=true] .contextEquipmentRow { border-color:#c7adeb; }
+.equipmentName { display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; white-space:normal; line-height:1.05; }
+.contextEquipmentRow .satellite [data-planner-icon] { height:25px; }
+.contextEquipmentRow .satellite [data-planner-icon] svg { width:26px; height:26px; }
+
+/* R6 P4: the library and the belt support the board without competing with it. */
+.library { background:#fafaff; border-color:#eef0f7; box-shadow:inset 0 1px #fff; }
+.panelHeader { padding-bottom:10px; }
+.panelHeader h2 { font-size:16px; }
+.search { border-color:#e5e8f2; box-shadow:0 2px 7px #2f365006; }
+.assetGroup { padding-top:17px; }
+.assetGroup h3 { font-size:10px; color:#596483; letter-spacing:.8px; }
+.asset { min-height:84px; border-color:transparent; background:#ffffffb8; box-shadow:0 2px 7px #25315108; }
+.asset:has([data-planner-icon="night-out"]),.asset:has([data-planner-icon="restaurant"]),.asset:has([data-planner-icon="fast-food"]),.asset:has([data-planner-icon="delivery"]),.asset:has([data-planner-icon="beauty"]),.asset:has([data-planner-icon="gift"]) { background:#ffffffb8; }
+.asset:hover,.asset:focus-visible { transform:translateY(-1px); border-color:#bea6e8; background:#fff; box-shadow:0 8px 17px #47358518; }
+.asset[data-selected=true] { background:#f3edff; border-color:#a67bf2; }
+.assetIcon { width:41px; height:41px; }
+.paletteDock { flex-basis:114px; height:114px; border-color:#e5dcf0; background:#fffdff; box-shadow:0 7px 22px #4f387516; }
+.contextPalette { padding:5px 12px 3px; }
+.contextPalette header { height:30px; }
+.paletteHeading>[data-planner-icon] { transform:none; width:24px; height:24px; flex-basis:24px; }
+.paletteOptions { height:73px; gap:20px; padding-top:2px; }
+.paletteGroup + .paletteGroup { border-color:#eee8f5; padding-left:20px; }
+.paletteGroup>span { color:#59427e; }
+.paletteGroup .equipmentTile { width:136px; height:56px; flex-basis:136px; border-color:#eee8f5; box-shadow:0 2px 6px #432c730c; background:#fff; }
+.paletteGroup .equipmentTile>[data-planner-icon] { width:38px; height:38px; flex-basis:38px; }
+.paletteGroup .equipmentTile>[data-planner-icon] svg { width:38px; height:38px; }
+.clusterDialog .paletteDock { height:114px; }
+
+/* Cluster children form an inset shelf instead of generic white bubbles. */
+.visualCluster { height:168px; padding:10px 16px; border-radius:20px; }
+.clusterHero { width:98px; height:98px; }
+.clusterInfo { gap:3px; }
+.clusterInfo>span { color:#5d5f7a; font-size:11px; font-weight:650; }
+.clusterMiniatures { gap:3px; width:max-content; max-width:100%; padding:3px 5px; border-radius:11px; background:#ffffff75; box-shadow:inset 0 0 0 1px #ffffffb8; }
+.clusterMiniatures>span { width:37px; height:37px; border-radius:8px; background:transparent; box-shadow:none; }
+.clusterMiniatures>span [data-planner-icon] svg { width:35px; height:35px; }
+.clusterMiniatures small { min-width:26px; padding:3px 4px; border-radius:7px; background:#fff9; text-align:center; }
+.visualCluster[data-visual-cluster=FOOD] .clusterMiniatures { background:#fff9f0b8; }
+
+/* A financial capsule with one dominant value and quiet, readable companions. */
+.workspaceHeader h1 { font-size:25px; font-weight:790; letter-spacing:-.9px; }
+.workspaceHeader h1 span { font-weight:440; }
+.headerMeta { font-size:11px; gap:9px; color:#53617f; }
+.draftStatus { padding:3px 9px; font-size:10px; font-weight:700; color:#6442ab; background:#f1ebff; }
+.financialHud { grid-template-columns:136px 108px 91px 89px 89px; height:62px; padding:7px 2px; border-color:#e9e7f2; border-radius:17px; box-shadow:0 8px 24px #2631540c; }
+.financialHud>div,.financialHud>button { border-right:0; padding:0 10px; }
+.financialHud .hudMetric { position:relative; }
+.financialHud .hudMetric::before { content:""; position:absolute; left:0; top:11px; width:1px; height:25px; background:#e8e4ef; }
+.financialHud span { font-size:10px; color:#56627f; }
+.financialHud .hudMain strong { font-size:23px; }
+.financialHud .hudMetric b { font-size:13px; }
+.workspace[data-comparing=true] .compareCurrent { padding:8px 12px; border:1px solid #d8c6f3; border-radius:15px; background:#f8f4ff; }
+.workspace[data-comparing=true] .compareCurrent span { font-size:10px; color:#604a91; font-weight:740; text-transform:uppercase; letter-spacing:.35px; }
+.workspace[data-comparing=true] .compareCurrent strong { font-size:19px; }
+.workspace[data-comparing=true] .financialHud { border-color:#cbb3ed; background:#fbf8ff; }
+.workspace[data-comparing=true] .financialHud .hudMain strong { color:#5633b2; }
+.workspace[data-comparing=true] .financialHud .hudMetric { opacity:.58; }
+.workspace :is(button,input,select,a,summary,[tabindex]):focus-visible { outline:3px solid #7448d8; outline-offset:2px; }
+.workspace .contextEquipmentRow :focus-visible { outline-offset:-1px; }
+.mosaic { margin-inline:auto; }
