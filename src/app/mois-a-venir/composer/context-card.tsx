@@ -8,6 +8,7 @@ import { PlannerIcon } from "./planner-icons/planner-icon";
 import styles from "./composer.module.css";
 import { AtomicPopover } from "./atomic-popover";
 import { useComposerInteractions, useDragHandle, leftSurface } from "./interactions";
+import { visibleEmptySocketKeys } from "./presentation/socket-visibility";
 export function ContextCard({ card, model, busy, selected, focused, focus, drag, drop, choose, request, edit }: { card: ComposerContextCardView; model: ComposerUiModel; busy: boolean;
   focused: string | null; focus: (id: string | null) => void;
   selected: string | null; drag: (key: string | null) => void; drop: (target: DropTarget, key?: string) => void;
@@ -19,6 +20,8 @@ export function ContextCard({ card, model, busy, selected, focused, focus, drag,
   const children = (id: string) => { const child = model.board.contexts.find(c => c.contextOccurrenceId === id); return child ? <ContextCard card={child} model={model} busy={busy} selected={selected} focused={focused} focus={focus} drag={drag} drop={drop} choose={choose} request={request} edit={edit} /> : null; };
   const presentation = model.presentation.objects[card.contextOccurrenceId];
   const interaction = useComposerInteractions(), handle = useDragHandle(instance);
+  const displayPhase = interaction?.grabbed ? "DRAGGING" : focused === card.contextOccurrenceId ? "SELECTED" : "REST";
+  const visibleEmpty = visibleEmptySocketKeys(card, model, displayPhase, interaction?.grabbed?.assetKey ?? null);
   const targets = selected ? model.dropCapabilities.filter(d => d.sourceAssetKey === selected && d.target.kind === "CONTEXT_SOCKET" && d.target.contextOccurrenceId === card.contextOccurrenceId && d.resolution !== "BLOCKED") : [];
   const magnetic = targets.length === 1 ? targets[0].target : null;
   const reparentTargets = model.dropCapabilities.filter(d => d.sourceAssetKey === instance && d.target.kind === "CONTEXT_SOCKET" && d.resolution !== "BLOCKED");
@@ -55,7 +58,9 @@ export function ContextCard({ card, model, busy, selected, focused, focus, drag,
       const assets = socketPresentation.options.map(o => model.library.searchableAssets.find(a => a.assetKey === o.assetKey)!);
       const compatible = !!selected && model.dropCapabilities.some(d => d.sourceAssetKey === selected && d.target.kind === "CONTEXT_SOCKET"
         && d.target.contextOccurrenceId === card.contextOccurrenceId && d.target.slotKey === socket.slotKey && d.resolution !== "BLOCKED");
-      return <ContextSocket key={socket.slotKey} socket={socket} presentation={socketPresentation} focus={() => focus(card.contextOccurrenceId)} busy={busy} compatible={compatible} assets={assets} drop={drop} choose={choose}
+      const showEmpty = visibleEmpty.has(socket.slotKey);
+      if (!socketPresentation.satellites.length && !showEmpty) return null;
+      return <ContextSocket key={socket.slotKey} socket={socket} presentation={socketPresentation} focus={() => focus(card.contextOccurrenceId)} busy={busy} compatible={compatible} showEmpty={showEmpty} assets={assets} drop={drop} choose={choose}
         moveTargets={socketPresentation.satellites.flatMap(item => model.dropCapabilities.filter(d => d.sourceAssetKey === item.editableAssetKey && d.target.kind === "CONTEXT_SOCKET"
           && d.resolution !== "BLOCKED" && (d.target.contextOccurrenceId !== card.contextOccurrenceId || d.target.slotKey !== socket.slotKey))
           .map(d => ({ selectionId: item.selectionId, target: d.target, label: `${model.board.contexts.find(c => c.contextOccurrenceId === d.target.contextOccurrenceId)?.label} · ${model.board.contexts.find(c => c.contextOccurrenceId === d.target.contextOccurrenceId)?.sockets.find(s => s.slotKey === d.target.slotKey)?.label}` })))}

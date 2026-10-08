@@ -7,7 +7,7 @@ import { createKernelPostgres } from './lib/planner-kernel-postgres.mjs';
 import { simpleMonth, nightMonth, weekendMonth, renewalMonth, externalMonth, householdId } from './fixtures/planner-headless.mjs';
 import { providers } from './fixtures/planner-mobility.mjs';
 import { atomicMonth, interactionMonth, richMonth, savingsMonth } from './fixtures/planner-atomic-ui.mjs';
-import { visualMonth, sparseMonth, unreadyMonth } from './fixtures/planner-visual-fidelity.mjs';
+import { visualMonth, visualThreeBeautyMonth, sparseMonth, unreadyMonth } from './fixtures/planner-visual-fidelity.mjs';
 const { handleComposerRequest } = require('@/server/phase2/planner/composer-service');
 const { createPlanApplyRepository } = require('@/server/phase2/planner/repository');
 const { preparePlanningMobility } = require('@/server/phase2/planner/prospective-mobility-pricing');
@@ -31,7 +31,7 @@ const globalCss = fs.readdirSync('.next/static/chunks').filter(n=>n.endsWith('.c
 if (!globalCss) throw new Error('Build Next.js first: production globals containing h-dvh are required for actual AppShell height checks.');
 fs.writeFileSync(path.join(out,'global.css'),globalCss);
 const stores = new Map(), fixtures = { A: simpleMonth, B: nightMonth, C: weekendMonth, D: renewalMonth, E: externalMonth, R: atomicMonth,
-  RA: interactionMonth, RB: nightMonth, RC: weekendMonth, RR: atomicMonth, RICH:richMonth, SAVINGS:savingsMonth, VISUAL:visualMonth, SPARSE:sparseMonth, UNREADY:unreadyMonth };
+  RA: interactionMonth, RB: nightMonth, RC: weekendMonth, RR: atomicMonth, RICH:richMonth, SAVINGS:savingsMonth, VISUAL:visualMonth, DISSOLVE_BEAUTY:visualThreeBeautyMonth, SPARSE:sparseMonth, UNREADY:unreadyMonth };
 const uiPayloadKeys = new Set(['x','y','screenX','screenY','uiPosition','boardPosition','orbit','presentation','focusedContext','page','pageIndex','carousel','plateau']);
 function uiPayloadFields(value) {
   if (!value || typeof value !== 'object') return [];

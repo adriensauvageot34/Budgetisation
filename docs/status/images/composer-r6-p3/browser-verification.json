@@ -1,0 +1,133 @@
+{
+  "results": {
+    "visual": {
+      "rest": 0,
+      "selected": 2,
+      "options": 26,
+      "boardBottom": 750,
+      "dockTop": 762
+    },
+    "popover": {
+      "noWrite": true,
+      "focusRestored": true
+    },
+    "weekend-clusters": {
+      "weekendSelectedEmpty": 2,
+      "clusters": [
+        "BEAUTY",
+        "FOOD"
+      ]
+    },
+    "other-widths": {
+      "captured": [
+        "1920x1080",
+        "1440x900"
+      ]
+    },
+    "drag-equip": {
+      "foodEquipped": true,
+      "drop": {
+        "kind": "DROP",
+        "mutationKind": "PATCH_CONTEXT",
+        "gesture": {
+          "assetKey": "option:night-out:food:restaurant",
+          "target": {
+            "kind": "CONTEXT_SOCKET",
+            "contextOccurrenceId": "00000000-0000-4000-8000-000000000400",
+            "slotKey": "food"
+          },
+          "sourceSocket": null
+        },
+        "ok": true
+      }
+    },
+    "replace": {
+      "labels": [
+        "Voiture"
+      ],
+      "drop": {
+        "kind": "DROP",
+        "mutationKind": "PATCH_CONTEXT",
+        "gesture": {
+          "assetKey": "option:night-out:outbound:car",
+          "target": {
+            "kind": "CONTEXT_SOCKET",
+            "contextOccurrenceId": "00000000-0000-4000-8000-000000000400",
+            "slotKey": "outbound"
+          },
+          "sourceSocket": null
+        },
+        "ok": true
+      }
+    },
+    "move-satellite": {
+      "identity": "uber",
+      "command": {
+        "kind": "DROP",
+        "mutationKind": "PATCH_CONTEXT",
+        "gesture": {
+          "assetKey": "option:night-out:outbound:taxi",
+          "target": {
+            "kind": "CONTEXT_SOCKET",
+            "contextOccurrenceId": "00000000-0000-4000-8000-000000000400",
+            "slotKey": "return"
+          },
+          "sourceSocket": {
+            "contextOccurrenceId": "00000000-0000-4000-8000-000000000400",
+            "slotKey": "outbound",
+            "selectionId": "uber"
+          }
+        },
+        "ok": true
+      }
+    },
+    "trash-satellite": {
+      "command": {
+        "kind": "CLEAR_SOCKET",
+        "mutationKind": "PATCH_CONTEXT",
+        "gesture": null,
+        "ok": true
+      }
+    },
+    "protected-trash": {
+      "noWrite": true,
+      "trashLabel": "Protégée"
+    },
+    "cluster-dissolve": {
+      "beautyTopLevel": 2,
+      "command": {
+        "kind": "DROP",
+        "mutationKind": "REMOVE_CONTEXT",
+        "gesture": {
+          "assetKey": "context-occurrence:00000000-0000-4000-8000-000000000500",
+          "target": {
+            "kind": "TRASH"
+          },
+          "sourceSocket": null
+        },
+        "ok": true
+      }
+    },
+    "cluster-child-drag-trash": {
+      "command": {
+        "kind": "DROP",
+        "mutationKind": "REMOVE_CONTEXT",
+        "gesture": {
+          "assetKey": "context-occurrence:00000000-0000-4000-8000-000000000500",
+          "target": {
+            "kind": "TRASH"
+          },
+          "sourceSocket": null
+        },
+        "ok": true
+      },
+      "clusterDissolved": true
+    },
+    "keyboard-history-compare": {
+      "keyboardEquip": true,
+      "undoRedo": true,
+      "compare": true
+    }
+  },
+  "errors": []
+}

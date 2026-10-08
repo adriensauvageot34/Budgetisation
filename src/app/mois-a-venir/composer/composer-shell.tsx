@@ -134,7 +134,9 @@ export function ComposerShell({ initialModel, transport }: { initialModel: Compo
     dragIdentity.current = { identity: crypto.randomUUID(), selectionId: crypto.randomUUID() };
     event.dataTransfer.setData("application/x-planner-asset", key); event.dataTransfer.effectAllowed = "move";
     // Populate the native cursor-following image synchronously, before dragstart ends.
-    if (dragImage.current) {
+    // A modal dialog makes elements outside its top layer inert. Chromium can
+    // stall a native drag if its custom image lives outside that dialog.
+    if (dragImage.current && !event.currentTarget.closest("dialog[open]")) {
       dragImage.current.querySelector<HTMLElement>("[data-drag-label]")!.textContent = source.label;
       dragImage.current.querySelector<HTMLElement>("[data-drag-amount]")!.textContent = source.protected ? "Protégée" : money(source.economicAmount);
       dragImage.current.dataset.protected = String(source.protected);

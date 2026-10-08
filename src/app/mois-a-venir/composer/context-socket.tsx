@@ -1,14 +1,13 @@
-import { Plus, Check, Link2, Sparkle, ArrowLeftRight } from "lucide-react";
+import { Plus, ArrowLeftRight } from "lucide-react";
 import type { ContextSocketView, DropTarget, ComposerAssetView } from "@/domain/phase2/planner/composer-contract";
 import type { ComponentSelectionV1 } from "@/domain/phase2/planner/component-contract";
 import type { ComposerSocketPresentation } from "@/domain/phase2/planner/composer-ui-contract";
-import { money } from "./display";
 import styles from "./composer.module.css";
-import { PlannerIcon } from "./planner-icons/planner-icon";
 import { AtomicPopover } from "./atomic-popover";
 import { useComposerInteractions, sameTarget, leftSurface } from "./interactions";
-export function ContextSocket({ socket, presentation, busy, compatible, assets, drop, choose, remove, accept, child, focus, moveTargets = [] }: {
-  socket: ContextSocketView; presentation: ComposerSocketPresentation; busy: boolean; compatible: boolean; focus: () => void;
+import { ContextSatellite } from "./context-satellite";
+export function ContextSocket({ socket, presentation, busy, compatible, showEmpty, assets, drop, choose, remove, accept, child, focus, moveTargets = [] }: {
+  socket: ContextSocketView; presentation: ComposerSocketPresentation; busy: boolean; compatible: boolean; showEmpty: boolean; focus: () => void;
   assets: readonly ComposerAssetView[]; drop: (target: DropTarget, key?: string) => void; choose: (asset: ComposerAssetView, target: DropTarget, selection?: ComponentSelectionV1) => void;
   remove: (selection: ComponentSelectionV1) => void; accept: (selection: ComponentSelectionV1) => void; child: (id: string) => React.ReactNode;
   moveTargets?: readonly Readonly<{ selectionId: string; target: DropTarget; label: string }>[];
@@ -31,25 +30,12 @@ export function ContextSocket({ socket, presentation, busy, compatible, assets, 
     {presentation.satellites.map(satellite => {
       const item = socket.currentItems.find(i => i.selectionId === satellite.selectionId)!;
       const editAsset = assets.find(a => a.assetKey === satellite.editableAssetKey);
-      const stateLabel = { CHOSEN: "Choisi", SUGGESTED: "Suggestion personnelle", DERIVED: "Dérivé", UNRESOLVED: "À préciser" }[satellite.state];
-      return <AtomicPopover key={item.selectionId} label={`${satellite.label} · ${stateLabel}`} state={satellite.state} selectionId={item.selectionId} focus={focus}
-        dragSourceKey={satellite.state === "DERIVED" ? undefined : satellite.childContextOccurrenceId ? `context-occurrence:${satellite.childContextOccurrenceId}` : satellite.editableAssetKey ? `satellite:${socket.contextOccurrenceId}:${socket.slotKey}:${item.selectionId}` : undefined}
-        icon={<><PlannerIcon iconKey={satellite.iconKey} scale="SATELLITE" /><span className={styles.satelliteMarker} aria-hidden="true">
-          {satellite.state === "SUGGESTED" ? <Sparkle size={10} /> : satellite.state === "DERIVED" ? <Link2 size={10} /> : satellite.state === "UNRESOLVED" ? <i /> : <Check size={9} />}</span></>}>
-        {close => <><p className={styles.popoverAmount}>{satellite.state === "SUGGESTED" ? "Hors coût · à accepter" : satellite.costCaption ?? `Retenu : ${money(satellite.economicAmount)}`}</p>
-          {satellite.details.map(line => <p key={line} className={styles.popoverNote}>{line}</p>)}
-          {satellite.childContextOccurrenceId && child(satellite.childContextOccurrenceId)}
-          <div className={styles.popoverActions}>{satellite.canAccept && <button disabled={busy} onClick={() => { close(); accept(item); }}>Accepter</button>}
-            {editAsset && !satellite.canAccept && <button disabled={busy} onClick={() => { close(); choose(editAsset, target, item); }}>Modifier</button>}
-            {satellite.canRemove && <button disabled={busy} onClick={() => { close(); remove(item); }}>Retirer de ce moment</button>}
-            {moveTargets.filter(t => t.selectionId === item.selectionId).map(t => <button key={`${t.target.contextOccurrenceId}:${t.target.slotKey}`} disabled={busy}
-              onClick={() => { close(); interaction?.equip(`satellite:${socket.contextOccurrenceId}:${socket.slotKey}:${item.selectionId}`, t.target); }}>Rattacher à {t.label}</button>)}</div>
-          {choices(close)}</>}
-      </AtomicPopover>;
+      return <ContextSatellite key={item.selectionId} satellite={satellite} item={item} target={target} editAsset={editAsset} busy={busy} focus={focus}
+        choose={choose} remove={remove} accept={accept} child={child} moveTargets={moveTargets.filter(t => t.selectionId === item.selectionId)} />;
     })}
-    {presentation.canAdd && (socket.cardinality === "REPEATING" || !socket.currentItems.length) && <AtomicPopover label={`Ajouter · ${socket.label ?? socket.slotKey}`} state="EMPTY" empty focus={focus}
+    {showEmpty && presentation.canAdd && (socket.cardinality === "REPEATING" || !socket.currentItems.length) && <AtomicPopover label={`Ajouter · ${socket.label ?? socket.slotKey}`} state="EMPTY" empty focus={focus}
       icon={<Plus size={16} aria-hidden="true" />}>{close => <><p className={styles.popoverNote}>Choisissez un élément pour ce moment.</p>{choices(close)}</>}</AtomicPopover>}
-    {compatible && !presentation.satellites.length && !presentation.canAdd && <AtomicPopover label={`Placer · ${socket.label ?? socket.slotKey}`} state="EMPTY" empty focus={focus}
+    {showEmpty && compatible && !presentation.satellites.length && !presentation.canAdd && <AtomicPopover label={`Placer · ${socket.label ?? socket.slotKey}`} state="EMPTY" empty focus={focus}
       icon={<ArrowLeftRight size={16} />}>{close => choices(close)}</AtomicPopover>}
   </section>;
 }

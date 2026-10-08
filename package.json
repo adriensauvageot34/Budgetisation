@@ -3,6 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
+    "check:composer-r6-p3": "node scripts/check-composer-r6-p3.mjs",
     "check:composer-r6-presentation": "node scripts/check-composer-r6-presentation.mjs",
     "check:control-center-preview-lifecycle": "node scripts/check-control-center-preview-lifecycle.mjs",
     "check:mobility-presence-index": "node scripts/check-mobility-presence-index.mjs",

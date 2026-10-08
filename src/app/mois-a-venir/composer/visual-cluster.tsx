@@ -17,7 +17,16 @@ export function VisualClusterCard({ node, open }: { node: VisualClusterNode; ope
 
 export function VisualClusterOverlay({ node, close, renderChild, palette, trash }: { node: VisualClusterNode; close: () => void; renderChild: (child: AtomicNode) => ReactNode; palette?: ReactNode; trash?: ReactNode }) {
   const dialog = useRef<HTMLDialogElement>(null);
-  useEffect(() => { const element = dialog.current; element?.showModal(); return () => { if (element?.open) element.close(); }; }, []);
+  useEffect(() => { const element = dialog.current, opener = document.activeElement as HTMLElement | null; element?.showModal();
+    return () => { if (element?.open) element.close(); requestAnimationFrame(() => {
+      if (document.querySelector("dialog[open]")) return;
+      if (opener?.isConnected) { opener.focus(); return; }
+      // A dissolved cluster has no trigger: return to one of its surviving children.
+      for (const child of node.children) {
+        const target = document.querySelector<HTMLElement>(`[data-inventory-id="${CSS.escape(child.id)}"] [data-context-focus], [data-inventory-id="${CSS.escape(child.id)}"] [data-context-actions]`);
+        if (target) { target.focus(); break; }
+      }
+    }); }; }, [node.id]);
   return <dialog ref={dialog} className={styles.clusterDialog} data-cluster-overlay={node.family} aria-label={`${node.title}, ${node.children.length} éléments`}
     onClose={close} onCancel={event => { event.preventDefault(); close(); }} onClick={event => { if (event.target === event.currentTarget) close(); }}>
     <header><div><span className={styles.clusterEyebrow}>Groupe visuel</span><h2>{node.title}</h2><p>{node.children.length} objets indépendants · montants dans chaque objet</p></div>

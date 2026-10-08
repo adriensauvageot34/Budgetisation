@@ -6,7 +6,7 @@ import { inventoryItems, inventoryPages, inventoryPageFor, type InventoryItem } 
 import { useComposerInteractions } from "./interactions";
 import styles from "./composer.module.css";
 
-export function BoardCarousel({ model, focused, render, emptyClick, children, dropProps }: { model: ComposerUiModel; focused: string | null;
+export function BoardCarousel({ model, focused, paletteOpen = false, render, emptyClick, children, dropProps }: { model: ComposerUiModel; focused: string | null; paletteOpen?: boolean;
   render: (item: InventoryItem) => ReactNode; emptyClick: () => void; children?: ReactNode; dropProps: React.HTMLAttributes<HTMLDivElement> & { [key: `data-${string}`]: boolean | string | number | undefined } }) {
   const viewport = useRef<HTMLDivElement>(null), [size, setSize] = useState({ width: 1000, height: 470 }), [page, setPage] = useState(0);
   const interaction = useComposerInteractions(), dwell = useRef<ReturnType<typeof setTimeout> | null>(null), dwellEdge = useRef<number | null>(null);
@@ -21,10 +21,10 @@ export function BoardCarousel({ model, focused, render, emptyClick, children, dr
     // Measure the stable Board, so conditional pagination cannot shrink the
     // measured viewport and trigger a ResizeObserver feedback loop.
     const node = viewport.current?.parentElement; if (!node) return;
-    const observe = () => { const box = node.getBoundingClientRect(); const value = { width: Math.max(1, box.width - 44), height: Math.max(1, box.height - 36) };
+    const observe = () => { const box = node.getBoundingClientRect(); const value = { width: Math.max(1, box.width - 44), height: Math.max(1, box.height - 36 - (paletteOpen ? 108 : 0)) };
       setSize(old => old.width === value.width && old.height === value.height ? old : value); };
     observe(); const observer = new ResizeObserver(observe); observer.observe(node); return () => observer.disconnect();
-  }, []);
+  }, [paletteOpen]);
   const focusPage = inventoryPageFor(pages, focused, model);
   useEffect(() => { if (focusPage >= 0) setPage(focusPage); }, [focused]);
   useEffect(() => { const added = items.find(item => !previousIds.current.has(item.id)); previousIds.current = new Set(items.map(item => item.id));

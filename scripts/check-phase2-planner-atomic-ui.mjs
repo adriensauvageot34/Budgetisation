@@ -46,8 +46,8 @@ try {
     assert.match(output, /data-state="DERIVED"/); assert.ok(!output.includes('>Modifier</button>')); assert.ok(!output.includes('Retirer de ce moment'));
   });
   await check('R2-005', () => { const unknown = socket('food').satellites[0]; assert.equal(unknown.state, 'UNRESOLVED'); assert.equal(unknown.economicAmount, null);
-    assert.match(html(model), /Retenu : À préciser/); });
-  await check('R2-006', () => { const source = fs.readFileSync('src/app/mois-a-venir/composer/context-socket.tsx', 'utf8');
+    assert.match(html(model), /Montant non disponible/); });
+  await check('R2-006', () => { const source = ['context-socket.tsx', 'context-satellite.tsx'].map(name => fs.readFileSync(`src/app/mois-a-venir/composer/${name}`, 'utf8')).join('\n');
     assert.ok(!/new Big|parseFloat|\.reduce\(|\.plus\(|\.minus\(/u.test(source)); assert.match(source, /money\(satellite\.economicAmount\)/); });
   await check('R2-007', () => { const output = html(model, id); assert.match(output, new RegExp(`data-context-palette="${id}"`)); assert.match(output, /Équiper · Soirée/); assert.match(output, /data-focused="true"/); });
   await check('R2-008', () => assert.ok(!html(model).includes('data-context-palette')));

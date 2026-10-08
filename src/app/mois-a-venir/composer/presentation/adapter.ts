@@ -4,8 +4,8 @@ import type { AtomicNode, ClusterFamily, ComposerPresentationNode, VisualCluster
 import { stableVisualIdentity } from "../planner-icons/visual-identity";
 
 const clusterLook: Readonly<Record<ClusterFamily, Pick<VisualClusterNode, "title" | "iconKey" | "width" | "height">>> = {
-  BEAUTY: { title: "Beauté", iconKey: "beauty", width: 390, height: 220 },
-  FOOD: { title: "Restauration", iconKey: "restaurant", width: 430, height: 220 },
+  BEAUTY: { title: "Beauté", iconKey: "beauty", width: 390, height: 178 },
+  FOOD: { title: "Restauration", iconKey: "restaurant", width: 430, height: 178 },
 };
 
 function rank(node: ComposerPresentationNode, model: ComposerUiModel): number {
@@ -25,14 +25,14 @@ export function composePresentationNodes(model: ComposerUiModel): ComposerPresen
       id: context.contextOccurrenceId, kind: "CONTEXT" as const, context,
       iconKey: model.presentation.objects[context.contextOccurrenceId].iconKey,
       width: ["gift", "family-visit"].includes(context.templateKey) ? 260 : model.presentation.objects[context.contextOccurrenceId].variant === "COMPOSITE" ? 340 : 230,
-      height: ["gift", "family-visit"].includes(context.templateKey) ? 205 : model.presentation.objects[context.contextOccurrenceId].variant === "COMPOSITE" ? 255 : 205,
+      height: ["gift", "family-visit"].includes(context.templateKey) ? 178 : model.presentation.objects[context.contextOccurrenceId].variant === "COMPOSITE" ? 235 : 178,
     })),
     ...[...model.board.baselineControls, ...model.board.discretionaryControls, ...model.board.savings]
       .filter(control => !available.has(control.targetRef)).map(control => ({
         id: control.targetRef, kind: "CONTROL" as const, control,
         iconKey: model.presentation.objects[control.targetRef].iconKey,
         width: control.kind === "SAVINGS" ? 290 : 230,
-        height: control.kind === "SAVINGS" ? 190 : 184,
+        height: control.kind === "SAVINGS" ? 170 : 170,
       })),
   ];
   const groups: Record<ClusterFamily, AtomicNode[]> = { BEAUTY: [], FOOD: [] };
