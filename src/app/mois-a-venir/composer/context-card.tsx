@@ -22,7 +22,7 @@ export function ContextCard({ card, model, busy, selected, focused, focus, drag,
   const targets = selected ? model.dropCapabilities.filter(d => d.sourceAssetKey === selected && d.target.kind === "CONTEXT_SOCKET" && d.target.contextOccurrenceId === card.contextOccurrenceId && d.resolution !== "BLOCKED") : [];
   const magnetic = targets.length === 1 ? targets[0].target : null;
   const reparentTargets = model.dropCapabilities.filter(d => d.sourceAssetKey === instance && d.target.kind === "CONTEXT_SOCKET" && d.resolution !== "BLOCKED");
-  return <article className={styles.contextCard} data-context={card.contextOccurrenceId} data-focused={focused === card.contextOccurrenceId} data-variant={presentation.variant} data-state={card.readOnly ? "derived" : card.knowledge === "UNKNOWN" ? "unresolved" : "chosen"}
+  return <article className={styles.contextCard} data-context={card.contextOccurrenceId} data-template-key={card.templateKey} data-focused={focused === card.contextOccurrenceId} data-variant={presentation.variant} data-state={card.readOnly ? "derived" : card.knowledge === "UNKNOWN" ? "unresolved" : "chosen"}
     data-compatible={targets.length > 0 || interaction?.canTarget(card.contextOccurrenceId)} data-magnetic={interaction?.overTarget?.contextOccurrenceId === card.contextOccurrenceId}
     data-unresolved={interaction?.unresolvedRefs.includes(card.contextOccurrenceId)} data-snap={interaction?.motionTarget === card.contextOccurrenceId ? interaction.motion : undefined}
     data-grabbed={interaction?.grabbed?.sourceKey === instance} data-recoil={interaction?.motion === "recoil" && interaction.motionTarget === instance}

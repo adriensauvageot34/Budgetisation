@@ -1,0 +1,45 @@
+{
+  "status": "PASS",
+  "results": [
+    {
+      "clusters": [
+        "BEAUTY",
+        "FOOD"
+      ],
+      "cards": 11,
+      "pages": 2,
+      "viewport": [
+        1920,
+        1080
+      ],
+      "overflow": false
+    },
+    {
+      "clusters": [
+        "BEAUTY",
+        "FOOD"
+      ],
+      "cards": 11,
+      "pages": 2,
+      "viewport": [
+        1728,
+        900
+      ],
+      "overflow": false
+    },
+    {
+      "clusters": [
+        "BEAUTY",
+        "FOOD"
+      ],
+      "cards": 9,
+      "pages": 2,
+      "viewport": [
+        1440,
+        900
+      ],
+      "overflow": false
+    }
+  ],
+  "errors": []
+}

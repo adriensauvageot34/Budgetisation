@@ -1,4 +1,4 @@
 import { ClayFrame, type ClayIconProps } from "../clay-frame";
 export function GroceriesIcon(props: ClayIconProps) {
-  return <ClayFrame {...props}><path d="M14 23h36l-3 29H17z" fill="var(--sculpture-ivory)"/><path d="M24 27V17a8 8 0 0 1 16 0v10" stroke="var(--sculpture-gold)" strokeWidth="4"/><ellipse cx="39" cy="19" rx="9" ry="8" fill="var(--sculpture-sage)"/><path d="M21 11c-4 0-7 5-7 14h11c3-9 0-14-4-14" fill="var(--sculpture-gold)"/><path d="M19 32h26l-2 16H21z" fill="var(--sculpture-ivory)"/></ClayFrame>;
+  return <ClayFrame {...props}><path d="M12 27h40l-5 25H17z" fill="var(--sculpture-sage)"/><path d="M22 28V18a10 10 0 0 1 20 0v10" stroke="var(--sculpture-sage)" strokeWidth="5"/><circle cx="25" cy="22" r="7" fill="var(--sculpture-coral)"/><path d="M23 16c1-4 4-5 6-5" stroke="var(--sculpture-sage)" strokeWidth="3"/><path d="M35 19c2-8 8-9 13-7-2 8-7 11-13 10" fill="var(--sculpture-sage)"/><path d="M43 15c7 2 9 7 7 13l-8 3-4-11" fill="var(--sculpture-gold)"/><path d="M13 30h38M24 32v17m8-17v18m8-18v17" stroke="var(--sculpture-sage)" strokeWidth="3"/></ClayFrame>;
 }

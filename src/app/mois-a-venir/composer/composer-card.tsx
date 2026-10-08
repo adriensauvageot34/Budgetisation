@@ -47,7 +47,7 @@ export function ComposerCard({ card, presentation, busy, preserved, focused = fa
           {!locked && <div className={styles.popoverActions}><button data-card-edit disabled={busy} onClick={() => { close(); edit(); }}>Ajuster</button>{card.capability?.naturalPresets.map(p => <button disabled={busy} key={p.label} data-preset={p.label} onMouseEnter={() => hover(p.semanticMutation)} onFocus={() => hover(p.semanticMutation)} onMouseLeave={() => hover(null)} onBlur={() => hover(null)} onClick={() => { close(); mutate(p.semanticMutation); }}>{p.label}</button>)}</div>}
         </>}</AtomicPopover>
       </div></div>
-    <div className={styles.objectIdentity}><PlannerIcon iconKey={presentation.iconKey} className={styles.objectIcon} />
+    <div className={styles.objectIdentity}><PlannerIcon iconKey={presentation.iconKey} identityRef={card.targetRef} className={styles.objectIcon} />
       <div><h3>{label.title}</h3>{label.person && <span className={styles.personChip}>{label.person}</span>}</div></div>
     {count != null || hasAmount ? <button className={styles.valueButton} data-value-edit disabled={locked || busy} onClick={inlineAmount ? focus : edit}>
       <strong key={`${card.value.amount}:${count}`} className={styles.cardValue}>{count != null ? `${quantityLabel(count)} occurrence${count === "1.00" || count === "1" ? "" : "s"}` : money(card.value.amount)}</strong>

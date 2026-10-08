@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Plus, Trash2, LockKeyhole } from "lucide-react";
 import type { ComposerUiModel, ComposerOperation } from "@/domain/phase2/planner/composer-ui-contract";
 import type { ComposerCardView, ComposerContextCardView, DropTarget, ComposerAssetView } from "@/domain/phase2/planner/composer-contract";
@@ -10,6 +11,9 @@ import styles from "./composer.module.css";
 import { useComposerInteractions, sameTarget, leftSurface } from "./interactions";
 import { PlannerIcon } from "./planner-icons/planner-icon";
 import { BoardCarousel } from "./board-carousel";
+import { inventoryItems } from "./inventory-layout";
+import type { AtomicNode, VisualClusterNode } from "./presentation/node-types";
+import { VisualClusterCard, VisualClusterOverlay } from "./visual-cluster";
 export function ComposerBoard({ model, busy, selected, focused, focus, edit, choose, drag, drop, request, hover, editContext, add, preview, balance, details }: { model: ComposerUiModel; busy: boolean; selected: string | null;
   focused: string | null; focus: (id: string | null) => void;
   edit: (card: ComposerCardView) => void; choose: (asset: ComposerAssetView, target: DropTarget, selection?: ComponentSelectionV1) => void;
@@ -22,27 +26,34 @@ export function ComposerBoard({ model, busy, selected, focused, focus, edit, cho
   const interaction = useComposerInteractions();
   const trashVisible = !!interaction?.grabbed && (!!interaction.grabbed.removeOperation || interaction.grabbed.protected);
   const boardTarget: DropTarget = { kind: "BOARD_ZONE" }, trashTarget: DropTarget = { kind: "TRASH" };
+  const [openClusterId, setOpenClusterId] = useState<string | null>(null);
+  const openCluster = inventoryItems(model).find((item): item is VisualClusterNode => item.kind === "CLUSTER" && item.id === openClusterId);
+  const focusedInCluster = !!openCluster?.children.some(child => child.id === focusedCard?.contextOccurrenceId);
+  const renderAtomic = (item: AtomicNode, inCluster = false) => item.context ? <ContextCard card={item.context} model={model} busy={busy} selected={selected} focused={focusedCard?.contextOccurrenceId ?? null} focus={focus} drag={drag} drop={drop} choose={choose} request={request} edit={card => { if (inCluster) setOpenClusterId(null); editContext(card); }} />
+    : <ComposerCard card={item.control!} presentation={model.presentation.objects[item.id]} busy={busy} focused={focused === item.id} focus={() => focus(item.id)}
+      preserved={model.semanticState.preferences.flexibility[item.id] === "PRESERVE"} edit={() => { if (inCluster) setOpenClusterId(null); edit(item.control!); }}
+      preserve={() => request({ kind: "PRESERVE", targetRef: item.id, preserve: model.semanticState.preferences.flexibility[item.id] !== "PRESERVE" })}
+      mutate={mutation => request({ kind: "MUTATE", mutation })} hover={hover} />;
+  const palette = focusedCard && <div className={styles.paletteDock} data-palette-dock><ContextPalette card={focusedCard} model={model} busy={busy} choose={choose} close={() => focus(null)} /></div>;
+  const trashZone = trashVisible && <div className={styles.trash} data-trash data-protected={interaction?.grabbed?.protected} data-compatible={trashAccepts || !!interaction?.grabbed?.removeOperation} data-drag-over={sameTarget(interaction?.overTarget ?? null, trashTarget)}
+    role="status" aria-label={interaction?.grabbed?.protected ? "Protégée · retrait interdit" : "Retirer l’élément saisi"}
+    onDragOver={e => { e.stopPropagation(); if (!busy && !interaction?.grabbed?.protected) { e.preventDefault(); interaction?.over(trashTarget); } }}
+    onDragEnter={() => { if (interaction?.grabbed?.protected) interaction.reject(); }}
+    onDragLeave={() => interaction?.over(null)} onDrop={e => { e.preventDefault(); e.stopPropagation(); if (!busy) interaction?.place(trashTarget); }}>
+    {interaction?.grabbed?.protected ? <LockKeyhole size={17} /> : <Trash2 size={17} />}{interaction?.grabbed?.protected ? "Protégée" : "Retirer"}</div>;
   return <section className={styles.board} aria-label="Board du mois">
     <BoardCarousel model={model} focused={focused} emptyClick={() => focus(null)} dropProps={{ "data-compatible": boardAccepts,
       "data-drag-over": sameTarget(interaction?.overTarget ?? null, boardTarget),
       onDragOver: e => { if (boardAccepts && !busy) { e.preventDefault(); e.dataTransfer.dropEffect = "move"; interaction?.over(boardTarget); } else interaction?.over(null); },
       onDragLeave: e => { if (leftSurface(e)) interaction?.over(null); },
       onDrop: e => { e.preventDefault(); if (boardAccepts && !busy) { if (interaction?.grabbed) interaction.place(boardTarget); else drop(boardTarget, e.dataTransfer.getData("application/x-planner-asset")); } }
-    }} render={item => item.context ? <ContextCard card={item.context} model={model} busy={busy} selected={selected} focused={focusedCard?.contextOccurrenceId ?? null} focus={focus} drag={drag} drop={drop} choose={choose} request={request} edit={editContext} />
-      : <ComposerCard card={item.control!} presentation={model.presentation.objects[item.id]} busy={busy} focused={focused === item.id} focus={() => focus(item.id)}
-        preserved={model.semanticState.preferences.flexibility[item.id] === "PRESERVE"} edit={() => edit(item.control!)}
-        preserve={() => request({ kind: "PRESERVE", targetRef: item.id, preserve: model.semanticState.preferences.flexibility[item.id] !== "PRESERVE" })}
-        mutate={mutation => request({ kind: "MUTATE", mutation })} hover={hover} />}>
+    }} render={item => item.kind === "CLUSTER" ? <VisualClusterCard node={item} open={() => setOpenClusterId(item.id)} /> : renderAtomic(item)}>
       {interaction?.grabbed?.pack && <article className={styles.packGhost} data-pack-ghost aria-label={`Aperçu de ${interaction.grabbed.label}`}><PlannerIcon iconKey={interaction.grabbed.iconKey} /><h3>{interaction.grabbed.label}</h3>
           <div>{interaction.grabbed.pack.map((s, index) => <span key={`${s.label}:${index}`} title={`${s.label} · ${s.provenance}`}><PlannerIcon iconKey={s.iconKey} scale="SATELLITE" /><small>{s.label}</small></span>)}</div><p>Estimation après ajout</p></article>}
     </BoardCarousel>
+    {openCluster && <VisualClusterOverlay node={openCluster} close={() => setOpenClusterId(null)} renderChild={item => renderAtomic(item, true)} palette={focusedInCluster ? palette : null} trash={trashZone} />}
     {model.presentation.elementCount < 4 && <button data-add-element className={styles.emptyInvitation} disabled={busy} onClick={add}><Plus size={14} /> Ajouter à votre mois</button>}
-    {focusedCard && <div className={styles.paletteDock} data-palette-dock><ContextPalette card={focusedCard} model={model} busy={busy} choose={choose} close={() => focus(null)} /></div>}
-    {trashVisible && <div className={styles.trash} data-trash data-protected={interaction?.grabbed?.protected} data-compatible={trashAccepts || !!interaction?.grabbed?.removeOperation} data-drag-over={sameTarget(interaction?.overTarget ?? null, trashTarget)}
-      role="status" aria-label={interaction?.grabbed?.protected ? "Protégée · retrait interdit" : "Retirer l’élément saisi"}
-      onDragOver={e => { e.stopPropagation(); if (!busy && !interaction?.grabbed?.protected) { e.preventDefault(); interaction?.over(trashTarget); } }}
-      onDragEnter={() => { if (interaction?.grabbed?.protected) interaction.reject(); }}
-      onDragLeave={() => interaction?.over(null)} onDrop={e => { e.preventDefault(); e.stopPropagation(); if (!busy) interaction?.place(trashTarget); }}>
-      {interaction?.grabbed?.protected ? <LockKeyhole size={17} /> : <Trash2 size={17} />}{interaction?.grabbed?.protected ? "Protégée" : "Retirer"}</div>}
+    {!focusedInCluster && palette}
+    {!openCluster && trashZone}
   </section>;
 }

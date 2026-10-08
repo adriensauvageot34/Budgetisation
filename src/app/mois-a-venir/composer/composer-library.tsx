@@ -47,7 +47,7 @@ export function ComposerLibrary({ model, openToken, busy, selected, choose, drag
           draggable={draggable && !busy} data-drag-source={asset.assetKey} data-grabbed={interaction?.grabbed?.sourceKey === asset.assetKey}
           onDragStart={e => { if (interaction) interaction.start(asset.assetKey, e); else { e.dataTransfer.setData("application/x-planner-asset", asset.assetKey); drag(asset.assetKey); } }}
           onDragEnd={() => { interaction?.end(); drag(null); }} onClick={() => choose(asset)}>
-          <PlannerIcon iconKey={asset.iconKey} scale="LIBRARY" className={styles.assetIcon} /><span>{asset.label}</span>
+          <PlannerIcon iconKey={asset.iconKey} identityRef={asset.capabilityRef} scale="LIBRARY" className={styles.assetIcon} /><span>{asset.label}</span>
         </button>;
       })}</div></section>)}{!groups.length && <p className={styles.searchEmpty}>Aucun élément trouvé.</p>}</div>
   </aside>;
