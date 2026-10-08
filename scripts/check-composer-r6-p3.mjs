@@ -34,7 +34,7 @@ try {
   check('R6-P3-001', () => { for (const card of model.board.contexts) assert.equal(visibleEmptySocketKeys(card, model, 'REST').size, 0);
     assert.equal(emptyCount(html(null)), 0); });
   check('R6-P3-002', () => { for (const card of model.board.contexts) assert.ok(visibleEmptySocketKeys(card, model, 'SELECTED').size <= 2);
-    assert.equal(visibleEmptySocketKeys(night, model, 'SELECTED').size, 2); assert.equal(emptyCount(html(night.contextOccurrenceId)), 2); });
+    assert.equal(visibleEmptySocketKeys(night, model, 'SELECTED').size, 1); assert.equal(emptyCount(html(night.contextOccurrenceId)), 1); });
   check('R6-P3-003', () => { const dragged = 'option:night-out:food:restaurant';
     assert.ok(visibleEmptySocketKeys(night, model, 'DRAGGING', dragged).has('food'));
     for (const card of [night, weekend]) for (const socket of card.sockets) {

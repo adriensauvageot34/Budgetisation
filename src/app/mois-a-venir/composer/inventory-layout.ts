@@ -6,14 +6,13 @@ import type { ComposerPresentationNode } from "./presentation/node-types";
 export type InventoryItem = ComposerPresentationNode;
 export const inventoryItems = composePresentationNodes;
 export function inventoryPages(items: readonly InventoryItem[], width: number, height: number): InventoryItem[][] {
-  const availableHeight = Math.max(218, height), availableWidth = Math.max(212, Math.min(1330, width)), gap = 14;
-  const pages: InventoryItem[][] = []; let page: InventoryItem[] = [], row: InventoryItem[] = [], used = 0, rowHeight = 0, consumed = 0, rows = 0;
-  const finishRow = () => { page.push(...row); consumed += (consumed ? gap : 0) + rowHeight; rows++; row = []; used = 0; rowHeight = 0; };
-  const finishPage = () => { if (page.length) pages.push(page); page = []; consumed = 0; rows = 0; };
+  const availableHeight = Math.max(218, height), availableWidth = Math.max(212, Math.min(1330, width)), gap = 10;
+  const pages: InventoryItem[][] = []; let page: InventoryItem[] = [], row: InventoryItem[] = [], used = 0, rowHeight = 0, consumed = 0;
+  const finishRow = () => { page.push(...row); consumed += (consumed ? gap : 0) + rowHeight; row = []; used = 0; rowHeight = 0; };
+  const finishPage = () => { if (page.length) pages.push(page); page = []; consumed = 0; };
   for (const item of items) {
     const itemWidth = Math.min(availableWidth, item.width);
     if (row.length && used + gap + itemWidth > availableWidth) finishRow();
-    if (!row.length && rows === 3) finishPage();
     const candidateHeight = Math.max(rowHeight, item.height);
     if (consumed && consumed + gap + candidateHeight > availableHeight) { if (row.length) finishRow(); finishPage(); }
     row.push(item); used += (row.length > 1 ? gap : 0) + itemWidth; rowHeight = Math.max(rowHeight, item.height);

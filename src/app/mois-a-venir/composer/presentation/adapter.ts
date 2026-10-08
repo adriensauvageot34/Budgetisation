@@ -25,7 +25,7 @@ export function composePresentationNodes(model: ComposerUiModel): ComposerPresen
       id: context.contextOccurrenceId, kind: "CONTEXT" as const, context,
       iconKey: model.presentation.objects[context.contextOccurrenceId].iconKey,
       width: ["gift", "family-visit"].includes(context.templateKey) ? 260 : model.presentation.objects[context.contextOccurrenceId].variant === "COMPOSITE" ? 340 : 230,
-      height: ["gift", "family-visit"].includes(context.templateKey) ? 178 : model.presentation.objects[context.contextOccurrenceId].variant === "COMPOSITE" ? 235 : 178,
+      height: ["gift", "family-visit"].includes(context.templateKey) ? 178 : model.presentation.objects[context.contextOccurrenceId].variant === "COMPOSITE" ? 225 : 178,
     })),
     ...[...model.board.baselineControls, ...model.board.discretionaryControls, ...model.board.savings]
       .filter(control => !available.has(control.targetRef)).map(control => ({

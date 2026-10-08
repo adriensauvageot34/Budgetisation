@@ -31,7 +31,10 @@ const globalCss = fs.readdirSync('.next/static/chunks').filter(n=>n.endsWith('.c
 if (!globalCss) throw new Error('Build Next.js first: production globals containing h-dvh are required for actual AppShell height checks.');
 fs.writeFileSync(path.join(out,'global.css'),globalCss);
 const stores = new Map(), fixtures = { A: simpleMonth, B: nightMonth, C: weekendMonth, D: renewalMonth, E: externalMonth, R: atomicMonth,
-  RA: interactionMonth, RB: nightMonth, RC: weekendMonth, RR: atomicMonth, RICH:richMonth, SAVINGS:savingsMonth, VISUAL:visualMonth, DISSOLVE_BEAUTY:visualThreeBeautyMonth, SPARSE:sparseMonth, UNREADY:unreadyMonth };
+  RA: interactionMonth, RB: nightMonth, RC: weekendMonth, RR: atomicMonth, RICH:richMonth, SAVINGS:savingsMonth,
+  VISUAL:visualMonth, VISUAL_P35_CLICK:visualMonth, VISUAL_P35_DRAG:visualMonth, VISUAL_P35_MULTI_DRAG:visualMonth, VISUAL_P35_REPLACE:visualMonth,
+  VISUAL_P35_HISTORY:visualMonth, VISUAL_P35_PROTECTED:visualMonth, DISSOLVE_BEAUTY:visualThreeBeautyMonth,
+  SPARSE:sparseMonth, UNREADY:unreadyMonth };
 const uiPayloadKeys = new Set(['x','y','screenX','screenY','uiPosition','boardPosition','orbit','presentation','focusedContext','page','pageIndex','carousel','plateau']);
 function uiPayloadFields(value) {
   if (!value || typeof value !== 'object') return [];

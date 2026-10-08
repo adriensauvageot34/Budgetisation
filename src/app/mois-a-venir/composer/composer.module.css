@@ -391,3 +391,51 @@
 .objectSheetDetails .popoverActions { margin-top:8px; }
 .trash { bottom:126px; padding:9px 18px; font-size:11px; }
 .clusterDialog .paletteDock { height:108px; flex:none; margin:14px 0 0; }
+
+/* R6 P3.5: the carousel measures this real viewport and the dock owns its space. */
+.plateau { padding:12px 18px 16px; }
+.plateauNavigation[data-single-page=true] { visibility:hidden; }
+.mosaic { gap:10px; }
+.card { padding:11px 15px; }
+.objectIdentity { min-height:68px; margin-bottom:4px; }
+.objectIcon { width:68px; height:68px; flex-basis:68px; }
+.occurrenceStack { margin-top:5px; }
+.contextCard[data-variant=COMPOSITE] { height:225px; }
+.contextCard[data-variant=COMPOSITE] .contextOrbit { grid-template-rows:35px 107px 35px; grid-template-columns:45px minmax(0,1fr) 45px; gap:4px; }
+.contextCard[data-variant=COMPOSITE] .contextObjectIcon { height:82px; transform:scale(1.17); }
+.contextCard[data-variant=COMPOSITE] .orbitGroup[data-orbit=WEST] { transform:translateX(5px); }
+.contextCard[data-variant=COMPOSITE] .orbitGroup[data-orbit=EAST] { transform:translateX(-5px); }
+.contextCard[data-variant=COMPOSITE] .orbitGroup[data-orbit=NORTH] { transform:translateY(4px); }
+.contextCard[data-variant=COMPOSITE] .orbitGroup[data-orbit=SOUTH] { transform:translateY(-4px); }
+.contextCard[data-variant=COMPOSITE] .satellite[data-empty=true] { width:38px; height:38px; border-color:#b9a3dc; background:#ffffffa8; }
+.contextCard[data-focused=true] .satellite[data-empty=true] { opacity:.48; }
+.contextCard[data-focused=true] .satellite[data-empty=true]:hover,.contextCard[data-focused=true] .satellite[data-empty=true]:focus-visible { opacity:1; }
+.paletteDock { flex:0 0 120px; height:120px; border-radius:19px; border-color:#dcd0ef; background:linear-gradient(180deg,#fffefe,#faf7ff); box-shadow:0 9px 26px #4f38751a; }
+.contextPalette { padding:5px 10px 3px; }
+.contextPalette header { height:34px; }
+.paletteHeading>[data-planner-icon] { width:20px; height:20px; flex-basis:20px; transform:translateY(-5px) scale(.85); }
+.contextPalette h3 { font-size:13px; }
+.contextPalette header p { font-size:10px; }
+.paletteOptions { height:76px; gap:16px; padding:1px 4px 4px; scroll-snap-type:x proximity; }
+.paletteGroup { gap:3px; }
+.paletteGroup + .paletteGroup { border-left:1px solid #e8ddf4; padding-left:16px; }
+.paletteGroup>span { font-size:10px; letter-spacing:.65px; color:#5e498e; }
+.paletteGroup>div { gap:7px; }
+.paletteGroup .equipmentTile { width:140px; height:62px; flex:0 0 140px; gap:6px; padding:5px 6px; border-color:#e6def0; border-radius:13px; background:linear-gradient(145deg,#fff,#faf7ff); box-shadow:0 3px 8px #432c7311; color:#241c47; font-size:11px; scroll-snap-align:start; }
+.paletteGroup .equipmentTile:hover,.paletteGroup .equipmentTile:focus-visible { background:#f4edff; border-color:#bda5ed; box-shadow:0 5px 13px #432c7324; }
+.paletteGroup .equipmentTile>[data-planner-icon] { width:42px; height:42px; flex-basis:42px; }
+.paletteGroup .equipmentTile>svg:last-child { color:#6840c7; }
+.paletteGroup .equipmentTile[aria-haspopup=dialog]>svg:last-child { color:#8b73ab; }
+.equipmentChoices { position:fixed; inset:auto; margin:0; width:240px; padding:11px; border:1px solid #d6c5ed; border-radius:15px; background:#fff; box-shadow:0 13px 34px #25193b3b; color:#241c47; }
+.equipmentChoices strong { display:block; font-size:13px; margin-bottom:2px; }
+.equipmentChoices p { margin:0 0 9px; color:#665d79; font-size:10px; line-height:1.3; }
+.equipmentChoices button { width:100%; display:flex; align-items:center; gap:8px; margin-top:5px; padding:5px 8px; border:1px solid #ebe3f5; border-radius:10px; background:#fbf9ff; color:#241c47; text-align:left; font-size:11px; }
+.equipmentChoices button:hover,.equipmentChoices button:focus-visible { border-color:#bda5ed; background:#f2ecff; }
+.equipmentChoices button>[data-planner-icon] { width:34px; height:34px; flex:0 0 34px; }
+.equipmentChoices button>span { flex:1; }
+.contextCard[data-template-key="gift"],.contextCard[data-template-key="family-visit"] { height:178px; }
+.contextCard[data-template-key="gift"] .contextOrbit,.contextCard[data-template-key="family-visit"] .contextOrbit { grid-template-rows:25px 100px 25px; gap:2px; }
+.contextCard[data-template-key="gift"] .contextObjectIcon,.contextCard[data-template-key="family-visit"] .contextObjectIcon { height:70px; transform:none; }
+.contextCard[data-template-key="night-out"] .contextNucleus { position:relative; isolation:isolate; }
+.contextCard[data-template-key="night-out"] .contextNucleus::before { content:""; position:absolute; z-index:-1; left:50%; top:37%; width:164px; height:136px; transform:translate(-50%,-50%); border-radius:50%; background:radial-gradient(circle,#e0cbffb8 0,#e9dcff75 48%,#f8f3ff00 74%); pointer-events:none; }
+.clusterDialog .paletteDock { height:120px; }

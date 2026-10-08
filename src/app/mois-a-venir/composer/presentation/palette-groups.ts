@@ -38,3 +38,34 @@ export function equipmentGroups(card: ComposerContextCardView, model: ComposerUi
     return (view?.options ?? []).map(option => ({ socket, option }));
   }) })).filter(group => group.entries.length > 0);
 }
+
+export type EquipmentRoute = EquipmentGroup["entries"][number];
+export type EquipmentTile = Readonly<{ visualKey: string; routes: readonly EquipmentRoute[] }>;
+export type DisplayEquipmentGroup = Readonly<{ key: string; title: string; tiles: readonly EquipmentTile[] }>;
+
+/** Only these published identities share one visual object in a given group. */
+function visualEquipmentKey(group: string, assetKey: string): string {
+  if (group === "meal") {
+    const meal = /^(?:template:|option:night-out:food:)(restaurant|fast-food|delivery)$/.exec(assetKey);
+    if (meal) return `meal:${meal[1]}`;
+  }
+  if (group === "travel") {
+    const journey = /^option:night-out:(?:outbound|return):(.+)$/.exec(assetKey);
+    if (journey) return `travel:${journey[1]}`;
+  }
+  return assetKey;
+}
+
+/** Presentation-only projection: every published option remains a route. */
+export function displayEquipmentGroups(card: ComposerContextCardView, model: ComposerUiModel): readonly DisplayEquipmentGroup[] {
+  return equipmentGroups(card, model).map(group => {
+    const tiles = new Map<string, EquipmentRoute[]>();
+    for (const route of group.entries) {
+      const key = visualEquipmentKey(group.key, route.option.assetKey);
+      const routes = tiles.get(key) ?? [];
+      routes.push(route);
+      tiles.set(key, routes);
+    }
+    return { key: group.key, title: group.title, tiles: [...tiles].map(([visualKey, routes]) => ({ visualKey, routes })) };
+  });
+}

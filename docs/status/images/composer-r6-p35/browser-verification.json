@@ -1,0 +1,97 @@
+{
+  "results": {
+    "visual-1728": {
+      "bottom": [
+        {
+          "id": "cluster:food",
+          "bottom": 697
+        },
+        {
+          "id": "00000000-0000-4000-8000-000000006100",
+          "bottom": 697
+        },
+        {
+          "id": "00000000-0000-4000-8000-000000006101",
+          "bottom": 697
+        }
+      ],
+      "safeBottom": 720,
+      "dockTop": 750,
+      "selectedEmpty": 1,
+      "mealTiles": [
+        "Livraison",
+        "Fast-food",
+        "Restaurant"
+      ],
+      "allTiles": 16
+    },
+    "widths-and-pagination": {
+      "captures": [
+        "1920x1080",
+        "1440x900"
+      ],
+      "secondPageReachable": true
+    },
+    "restaurant-routes-click": {
+      "visibleRestaurant": 1,
+      "routes": 2,
+      "command": {
+        "assetKey": "option:night-out:food:restaurant",
+        "target": {
+          "kind": "CONTEXT_SOCKET",
+          "contextOccurrenceId": "00000000-0000-4000-8000-000000000400",
+          "slotKey": "food"
+        },
+        "sourceSocket": null
+      },
+      "restEmpty": 0
+    },
+    "drag-equip": {
+      "command": {
+        "assetKey": "option:night-out:extras:extra",
+        "target": {
+          "kind": "CONTEXT_SOCKET",
+          "contextOccurrenceId": "00000000-0000-4000-8000-000000000400",
+          "slotKey": "extras"
+        },
+        "sourceSocket": null
+      }
+    },
+    "multi-route-drag": {
+      "command": {
+        "assetKey": "option:night-out:food:restaurant",
+        "target": {
+          "kind": "CONTEXT_SOCKET",
+          "contextOccurrenceId": "00000000-0000-4000-8000-000000000400",
+          "slotKey": "food"
+        },
+        "sourceSocket": null
+      }
+    },
+    "multi-target-replace": {
+      "outboundAndReturn": true,
+      "lastCommand": {
+        "assetKey": "option:night-out:return:car",
+        "target": {
+          "kind": "CONTEXT_SOCKET",
+          "contextOccurrenceId": "00000000-0000-4000-8000-000000000400",
+          "slotKey": "return"
+        },
+        "sourceSocket": null
+      }
+    },
+    "weekend-and-clusters": {
+      "weekendEmpty": 1,
+      "clustersOpen": true
+    },
+    "history-compare-trash": {
+      "undoRedo": true,
+      "compare": true,
+      "trash": true
+    },
+    "protected-trash": {
+      "refusedWithoutWrite": true
+    }
+  },
+  "errors": []
+}

@@ -25,5 +25,8 @@ export function visibleEmptySocketKeys(card: ComposerContextCardView, model: Com
     const aPriority = order.indexOf(a.slotKey), bPriority = order.indexOf(b.slotKey);
     return (aPriority < 0 ? 100 : aPriority) - (bPriority < 0 ? 100 : bPriority) || a.slotKey.localeCompare(b.slotKey);
   });
-  return new Set(candidates.slice(0, 2).map(socket => socket.slotKey));
+  // The palette is exhaustive. One quiet invitation is enough until a drag
+  // reveals every compatible destination. Other templates retain two slots.
+  const limit = card.templateKey === "night-out" || card.templateKey === "short-stay" ? 1 : 2;
+  return new Set(candidates.slice(0, limit).map(socket => socket.slotKey));
 }
