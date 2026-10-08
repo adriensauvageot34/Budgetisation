@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Plus, Trash2, LockKeyhole } from "lucide-react";
 import type { ComposerUiModel, ComposerOperation } from "@/domain/phase2/planner/composer-ui-contract";
 import type { ComposerCardView, ComposerContextCardView, DropTarget, ComposerAssetView } from "@/domain/phase2/planner/composer-contract";
@@ -28,6 +28,7 @@ export function ComposerBoard({ model, busy, selected, focused, focus, edit, cho
   const boardTarget: DropTarget = { kind: "BOARD_ZONE" }, trashTarget: DropTarget = { kind: "TRASH" };
   const [openClusterId, setOpenClusterId] = useState<string | null>(null);
   const openCluster = inventoryItems(model).find((item): item is VisualClusterNode => item.kind === "CLUSTER" && item.id === openClusterId);
+  useEffect(() => { if (openClusterId && !openCluster) setOpenClusterId(null); }, [openClusterId, openCluster]);
   const focusedInCluster = !!openCluster?.children.some(child => child.id === focusedCard?.contextOccurrenceId);
   const renderAtomic = (item: AtomicNode, inCluster = false) => item.context ? <ContextCard card={item.context} model={model} busy={busy} selected={selected} focused={focusedCard?.contextOccurrenceId ?? null} focus={focus} drag={drag} drop={drop} choose={choose} request={request} edit={card => { if (inCluster) setOpenClusterId(null); editContext(card); }} />
     : <ComposerCard card={item.control!} presentation={model.presentation.objects[item.id]} busy={busy} focused={focused === item.id} focus={() => focus(item.id)}

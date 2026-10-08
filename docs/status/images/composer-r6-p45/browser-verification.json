@@ -1,0 +1,59 @@
+{
+  "results": {
+    "viewports": {
+      "1920x1080": {
+        "items": 17,
+        "pages": 1,
+        "boardBottom": 952
+      },
+      "1728x900": {
+        "items": 12,
+        "pages": 2,
+        "boardBottom": 761
+      },
+      "1440x900": {
+        "items": 9,
+        "pages": 2,
+        "boardBottom": 729
+      }
+    },
+    "objects-and-states": {
+      "contextEquipment": 1,
+      "beautyAndFood": true,
+      "compare": true
+    },
+    "hud-focus-unknown": {
+      "outline": "3px"
+    },
+    "unknown": {
+      "unknown": true
+    },
+    "dissolve": {
+      "original": {
+        "x": 1018,
+        "y": 536.5,
+        "width": 574.5,
+        "height": 145
+      },
+      "survivors": [
+        {
+          "id": "PERSON:33333333-3333-4333-8333-333333333333:need:maquillage_manon_mascara",
+          "x": 1018,
+          "y": 476.5
+        },
+        {
+          "id": "PERSON:33333333-3333-4333-8333-333333333333:need:maquillage_manon_sourcils",
+          "x": 1268.5,
+          "y": 526.5
+        }
+      ],
+      "focused": "BUTTON",
+      "undoRedo": true
+    },
+    "reduced-motion": {
+      "enabled": true,
+      "running": 0
+    }
+  },
+  "errors": []
+}

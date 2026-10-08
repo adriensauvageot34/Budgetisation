@@ -32,13 +32,14 @@ export function ClayFrame({ size = 52, className, children }: ClayIconProps & { 
   return <svg width={size} height={size} viewBox="0 0 64 64" className={className} style={paints} aria-hidden="true" focusable="false" fill="none" data-clay-icon data-clay-material="matte-sculpture">
     <defs>{palette.map(key => {
       const colors = materials[key];
-      return <linearGradient key={key} id={`${id}-${key}`} x1=".08" y1=".04" x2=".92" y2=".98">
-        <stop offset="0" stopColor={colors[0]} /><stop offset=".23" stopColor={colors[0]} />
-        <stop offset=".58" stopColor={colors[1]} /><stop offset="1" stopColor={colors[2]} />
+      return <linearGradient key={key} id={`${id}-${key}`} x1=".06" y1=".03" x2=".94" y2=".98">
+        <stop offset="0" stopColor="#fff" /><stop offset=".09" stopColor={colors[0]} />
+        <stop offset=".43" stopColor={colors[1]} /><stop offset=".76" stopColor={colors[1]} />
+        <stop offset="1" stopColor={colors[2]} />
       </linearGradient>;
     })}</defs>
-    <ellipse cx="33" cy="58" rx="22" ry="4" fill="#5a3d66" opacity=".17" />
-    <ellipse cx="32" cy="57" rx="14" ry="2" fill="#3b2f50" opacity=".14" />
+    <ellipse cx="33" cy="58" rx="22" ry="4" fill="#5a3d66" opacity=".14" />
+    <ellipse cx="32" cy="56" rx="13" ry="2.5" fill="#3b2f50" opacity=".19" />
     <g strokeLinejoin="round" strokeLinecap="round">{children}</g>
   </svg>;
 }

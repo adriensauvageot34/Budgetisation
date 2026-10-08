@@ -565,3 +565,50 @@
 .workspace :is(button,input,select,a,summary,[tabindex]):focus-visible { outline:3px solid #7448d8; outline-offset:2px; }
 .workspace .contextEquipmentRow :focus-visible { outline-offset:-1px; }
 .mosaic { margin-inline:auto; }
+
+/* R6 P4.5: deterministic semantic packing and restrained spatial transitions. */
+.plateau { display:flex; flex-direction:column; }
+.mosaic { display:grid; width:100%; max-width:1330px; grid-template-columns:repeat(var(--board-columns),minmax(0,1fr)); grid-auto-rows:5px; column-gap:10px; row-gap:5px; align-content:start; margin-inline:auto; }
+.plateau .mosaic { margin-block:auto; }
+.inventoryCell { width:auto; height:auto; max-width:none; min-width:0; min-height:0; }
+.inventoryCell>.card,.inventoryCell>.contextCard,.inventoryCell>.visualCluster { width:100%; height:100%; }
+.inventoryCell[data-density=SPARSE] .objectIdentity { min-height:55px; }
+.inventoryCell[data-density=SPARSE] .objectIcon,.inventoryCell[data-density=SPARSE] .objectIcon svg { width:52px; height:52px; flex-basis:52px; }
+.inventoryCell[data-density=SPARSE] .unknownBudget { margin-top:3px; color:#7b603e; font-weight:680; }
+.inventoryCell[data-density=SPARSE] .contextHero { padding-bottom:0; }
+.inventoryCell[data-spatial-family=FOOD] .card { background:#fffaf5; border-color:#f0e5d8; }
+.inventoryCell[data-spatial-family=PURCHASES] .card { background:#fcfaff; }
+.inventoryCell[data-spatial-family=HOME] .card { background:#fbfbff; }
+.card,.contextCard,.visualCluster { transition-duration:145ms; }
+.card:hover,.contextCard:hover,.visualCluster:hover { transform:translateY(-1px); }
+.card[data-focused=true],.contextCard[data-focused=true] { box-shadow:0 0 0 2px #a77cf038,0 13px 28px #332b6219; }
+.personChip { display:inline-flex; align-items:center; gap:4px; border:1px solid #ded9ef; border-radius:999px; color:#55477d; background:#f5f2fc; font-size:10px; font-weight:720; padding:2px 7px; }
+.unknownBudget i,.contextState i { width:7px; height:7px; background:#c78c40; box-shadow:0 0 0 2px #fff0d8; }
+.card[data-protected=true] { border-color:#dce4da; }
+.card[data-protected=true] .cardUtility { opacity:.54; }
+.card[data-protected=true]:hover .cardUtility,.card[data-protected=true]:focus-within .cardUtility { opacity:1; }
+.contextEquipmentRow { scrollbar-width:thin; }
+.contextEquipmentRow .satellite { border-color:#d9cfe8; background:linear-gradient(155deg,#fff,#f9f6ff); }
+.contextEquipmentRow .satellite[data-state=CHOSEN] { box-shadow:0 3px 7px #49326718,inset 0 1px #fff; }
+.contextEquipmentRow .satellite[data-state=SUGGESTED] { background:#f5edff; }
+.contextEquipmentRow .satellite[data-empty=true] { border-color:#ae91dc; background:#f8f3ff; }
+.clusterMiniatures { background:#ffffff9e; border:1px solid #fff; padding:4px 6px; }
+.clusterInfo>span { text-decoration:underline; text-underline-offset:3px; }
+.visualCluster { box-shadow:0 9px 22px #50365a13,inset 0 1px #fff; }
+.library { background:linear-gradient(180deg,#fbfbff,#f8f9fd); border-color:#f0f0f7; }
+.asset { min-height:74px; padding:6px 9px; border-color:transparent; background:#ffffff92; box-shadow:none; }
+.assetGroup { padding-top:15px; }
+.assetGroup h3 { color:#626d86; }
+.paletteDock { border-color:#e7dff2; background:linear-gradient(180deg,#fffefe,#fbf9ff); }
+.paletteGroup + .paletteGroup { border-left-color:#eee9f6; }
+.paletteGroup .equipmentTile { background:#ffffffd4; box-shadow:none; }
+.paletteGroup .equipmentTile:hover,.paletteGroup .equipmentTile:focus-visible { box-shadow:0 5px 12px #49326716; }
+.financialHud { border-color:#ebe8f2; box-shadow:0 9px 24px #2631540c,inset 0 1px #fff; }
+.financialHud .hudMetric::before { background:linear-gradient(180deg,transparent,#e7e1ef,transparent); }
+.financialHud .hudMain strong { font-size:24px; }
+.financialHud .hudMetric b { font-size:13px; }
+.workspace[data-comparing=true] .compareCurrent { background:linear-gradient(155deg,#f8f3ff,#f2ebff); box-shadow:0 5px 14px #39255c13; }
+.workspace[data-comparing=true] .financialHud { box-shadow:0 8px 24px #5e3b8511; }
+@media (prefers-reduced-motion: reduce) {
+  .mosaic,.inventoryCell { scroll-behavior:auto!important; }
+}

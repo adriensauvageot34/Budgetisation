@@ -10,7 +10,7 @@ const { handleComposerRequest } = require('@/server/phase2/planner/composer-serv
 const { createPlanApplyRepository } = require('@/server/phase2/planner/repository');
 const { preparePlanningMobility } = require('@/server/phase2/planner/prospective-mobility-pricing');
 const { visibleEmptySocketKeys } = require('@/app/mois-a-venir/composer/presentation/socket-visibility');
-const { inventoryItems, inventoryPages } = require('@/app/mois-a-venir/composer/inventory-layout');
+const { inventoryItems, inventoryPages, inventoryLayoutPages, inventoryColumns } = require('@/app/mois-a-venir/composer/inventory-layout');
 const { iconRegistry, resolveVisualIcon } = require('@/app/mois-a-venir/composer/planner-icons/icon-registry');
 const { finishComparison } = require('@/app/mois-a-venir/composer/comparison');
 const base = 'src/app/mois-a-venir/composer/';
@@ -43,9 +43,14 @@ try {
     for (const selector of ['.card[data-variant=SIMPLE]','.contextCard','.visualCluster','.card[data-variant=SAVINGS]']) assert.ok(css.includes(selector),selector); });
   check('R6-P4-009', () => { assert.doesNotMatch(JSON.stringify(model.semanticState),/"(x|y|width|height|position)"\s*:/); assert.doesNotMatch(read('inventory-layout.ts'),/localStorage|sessionStorage/); });
   check('R6-P4-010', () => { assert.deepEqual(inventoryItems(model),nodes); assert.deepEqual(pages(1320,600),pages(1320,600)); });
-  check('R6-P4-011', () => { for (const [width,height] of [[1330,760],[1320,600],[1070,600]]) for (const page of pages(width,height)) {
-    const rowHeights=[]; let used=0,rowHeight=0; for (const node of page) { if (used&&used+10+node.width>width) {rowHeights.push(rowHeight);used=0;rowHeight=0;} used+=(used?10:0)+node.width;rowHeight=Math.max(rowHeight,node.height); } if (used)rowHeights.push(rowHeight);
-    assert.ok(rowHeights.reduce((sum,h)=>sum+h,0)+10*Math.max(0,rowHeights.length-1)<=height);
+  check('R6-P4-011', () => { for (const [width,height] of [[1330,760],[1320,600],[1070,600]]) for (const page of inventoryLayoutPages(nodes,width,height)) {
+    const occupied = new Set(); for (const placement of page) {
+      assert.ok(placement.column + placement.columnSpan - 1 <= inventoryColumns(width));
+      assert.ok((placement.row + placement.rowSpan - 1) * 10 - 5 <= height + 5);
+      for (let row=placement.row;row<placement.row+placement.rowSpan;row++) for(let column=placement.column;column<placement.column+placement.columnSpan;column++) {
+        const cell=`${row}:${column}`; assert.ok(!occupied.has(cell),`overlap ${cell}`); occupied.add(cell);
+      }
+    }
   } });
   check('R6-P4-012', () => { const cockpit=before.match(/"cockpit":\{[^]*?\},"/)?.[0]; assert.ok(cockpit); assert.equal(JSON.stringify(model),before); assert.match(read('composer-cockpit.tsx'),/money\(/); });
   check('R6-P4-013', () => { const snapshot={model,past:[],future:[],suggestions:null}; assert.equal(finishComparison(snapshot,model,false),snapshot);
