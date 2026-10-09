@@ -16,7 +16,7 @@ import { externalDiningDomain } from "./simple-mappings";
 import { publishSimpleCapabilities } from "./simple-capabilities";
 import { forecastTemporalPolicy } from "../forecast-temporal-policy";
 import { expandComposableContexts, CONTEXT_COMPILER_VERSION } from "./context-compiler";
-import { publishContextRegistry, CONTEXT_REGISTRY_VERSION } from "./context-registry";
+import { manifestContextRegistry, CONTEXT_REGISTRY_VERSION } from "./context-registry";
 import { compileMobility } from "./mobility-compiler";
 import { JOURNEY_RESOLVER_VERSION } from "./journey-resolver";
 import { PROSPECTIVE_MOBILITY_PRICING_VERSION } from "./prospective-mobility-pricing";
@@ -138,7 +138,7 @@ export function compileSemanticPlan(input: CompilePlanInputV1): CompiledSemantic
     authorityEvidence: financeAuthorityEvidence(input), effectiveForecast: { ...effectiveForecast, meta: effectiveMeta },
     semanticState: state, semanticStateDigest: semanticStateDigest(state), planSlots: slots, contexts, components,
     contextualEffects: effects, constraints, diagnostics, unresolvedReserves: baseline.unresolvedReserves, financialAdapterInput,
-    simpleCapabilities: publishSimpleCapabilities(baseline), contextRegistry: publishContextRegistry(), mobilityIntents: composable.mobilityIntents,
+    simpleCapabilities: publishSimpleCapabilities(baseline), contextRegistry: manifestContextRegistry(state), mobilityIntents: composable.mobilityIntents,
     journeys: mobility.journeys, journeyDependencies: mobility.dependencies, journeyPrices: mobility.prices,
     needs: baseline.renewals?.needOccurrences ?? [], renewalProfiles: baseline.renewals?.replenishmentProfiles ?? [] });
   return { version: "compiled-semantic-plan@v1", targetMonth: state.targetMonth, semanticStateDigest: semanticStateDigest(state),

@@ -8,10 +8,12 @@ import { jsonEnvelope, PLANNER_COMPILER_VERSION } from "./compiler";
 import { evaluatePlanScenario } from "./preview";
 import { assertRevisionEvidence } from "./revision-evidence";
 import { revisionChangeSet } from "./change-set";
+import { knownContextReferences } from "./context-selections";
 
 export type PlannerDependencies = Readonly<{ repository: PlanRepository;
   readWorld(householdId: string, targetMonth: string): Promise<PlanningWorldFacts>;
-  prepareWorld?(world: PlanningWorldFacts, state: PlanSemanticStateV1): Promise<PlanningWorldFacts> }>;
+  prepareWorld?(world: PlanningWorldFacts, state: PlanSemanticStateV1): Promise<PlanningWorldFacts>;
+  validateContextReferences?(householdId: string, refs: Readonly<{ personIds: readonly string[]; placeIds: readonly string[] }>): Promise<void> }>;
 export type AppliedPlanScenario = Readonly<{ revision: PlanRevision; projectionEvidence: PlanRevision["projectionEvidence"]; replayed: boolean }>;
 function replayEvidence(previous: PlanRevision, state: PlanSemanticStateV1, baselineDigest: string, previewDigest: string,
   activeId: string | null, activeNumber: number): AppliedPlanScenario {
@@ -38,6 +40,11 @@ export async function applyPlanScenario(deps: PlannerDependencies, householdId: 
   // An idempotent retry returns immutable evidence, even if authorities or the active Plan have advanced.
   const previous = await deps.repository.readAppliedRequest(household, month, requestId);
   if (previous) return replayEvidence(previous, state, baselineDigest, previewDigest, activeId, activeNumber);
+  const knownRefs = knownContextReferences(state);
+  if (knownRefs.personIds.length || knownRefs.placeIds.length) {
+    if (!deps.validateContextReferences) throw new TypeError("CONTEXT_REFERENCE_OWNER_UNAVAILABLE");
+    await deps.validateContextReferences(household, knownRefs);
+  }
   const preview = await previewPlanScenario(deps, household, state);
   if (preview.baseActiveRevisionId !== activeId || preview.baseRevisionNumber !== activeNumber) throw new TypeError("PLANNER_ACTIVE_REVISION_STALE");
   if (preview.baselineDigest !== baselineDigest || preview.previewDigest !== previewDigest) throw new TypeError("PLANNER_PREVIEW_STALE");

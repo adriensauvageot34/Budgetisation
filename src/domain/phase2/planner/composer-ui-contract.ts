@@ -1,6 +1,7 @@
 import type { MonthComposerReadModel, DropTarget } from "./composer-contract";
 import type { PlannerApplyCommand } from "./compiler-contract";
 import type { PlanSemanticStateV1 } from "./semantic-state";
+import type { PlannerJson } from "./json";
 import type { PlanBalanceSuggestions, SemanticMutation } from "./adjustment-contract";
 import type { ComponentSelectionV1 } from "./component-contract";
 
@@ -63,7 +64,7 @@ export type ComposerRequest = Readonly<{ sequence: number; targetMonth: string; 
   | Readonly<{ kind: "MUTATE"; mutation: SemanticMutation }>
   | Readonly<{ kind: "DROP"; assetKey: string; target: DropTarget; values: Readonly<Record<string, string>>; identity: string; selectionId: string; sourceSocket?: Readonly<{ contextOccurrenceId: string; slotKey: string; selectionId: string }> }>
   | Readonly<{ kind: "CLEAR_SOCKET"; contextOccurrenceId: string; slotKey: string; selectionId: string }>
-  | Readonly<{ kind: "EDIT_CONTEXT"; contextOccurrenceId: string; values: Readonly<Record<string, string>> }>
+  | Readonly<{ kind: "EDIT_CONTEXT"; contextOccurrenceId: string; values: Readonly<Record<string, PlannerJson>> }>
   | Readonly<{ kind: "PRESERVE"; targetRef: string; preserve: boolean }>
   | Readonly<{ kind: "SUGGESTIONS" }>
   | Readonly<{ kind: "ACCEPT"; candidateSetDigest: string; candidateId: string }>

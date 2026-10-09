@@ -1,10 +1,17 @@
 import "server-only";
 import type { ComponentOptionDefinition, ComponentSlotDefinition } from "@/domain/phase2/planner/component-contract";
 import type { ContextCapability, ContextFieldDefinition, ContextRegistryV1, ContextTemplateV1 } from "@/domain/phase2/planner/context-contract";
+import type { PlanSemanticStateV1 } from "@/domain/phase2/planner/semantic-state";
 
 export const CONTEXT_REGISTRY_VERSION = "planner-context-registry@v3-renewals";
 const commonFields: readonly ContextFieldDefinition[] = [
-  { fieldKey: "label", kind: "TEXT", required: false }, { fieldKey: "plannedDate", kind: "DATE", required: false }];
+  { fieldKey: "label", kind: "TEXT", required: false }, { fieldKey: "plannedDate", kind: "DATE", required: false },
+  { fieldKey: "fieldSchemaVersion", kind: "CHOICE", required: false, choices: ["context-fields@v2"] }];
+const person = (fieldKey: string): ContextFieldDefinition => ({ fieldKey, kind: "PERSON_REF", required: false });
+const people: ContextFieldDefinition = { fieldKey: "participantRefs", kind: "PERSON_REFS", required: false };
+const place = (fieldKey: string): ContextFieldDefinition => ({ fieldKey, kind: "PLACE_REF", required: false });
+const text = (fieldKey: string): ContextFieldDefinition => ({ fieldKey, kind: "TEXT", required: false });
+const sharedFields = [people, place("placeRef")] as const;
 const foodTemplates = ["restaurant", "fast-food", "delivery"];
 const component = (optionKey: string, label: string, baselineDomain: string | null = null,
   bindingPolicy: ComponentOptionDefinition["bindingPolicy"] = baselineDomain ? "CERTAIN_DOMAIN" : "NONE"): ComponentOptionDefinition =>
@@ -33,29 +40,35 @@ function template(templateKey: string, label: string, family: ContextTemplateV1[
 }
 const templates: ContextTemplateV1[] = [
   ...foodTemplates.map(key => template(key, key, "FOOD", [slot("meal", "REQUIRED_ONE", mealOptions.filter(o => o.optionKey === key)),
-    slot("extras", "REPEATING", [component("extra", "Complément de repas")]), ...(key === "delivery" ? [] : [mobility("transport")])])),
+    slot("extras", "REPEATING", [component("extra", "Complément de repas")]), ...(key === "delivery" ? [] : [mobility("transport")])], sharedFields)),
   template("activity", "Activité", "ACTIVITY", [slot("main", "REQUIRED_ONE", [component("activity", "Activité")]),
-    slot("extras", "REPEATING", [component("extra", "Complément")]), mobility("transport")]),
+    slot("extras", "REPEATING", [component("extra", "Complément")]), mobility("transport")], sharedFields),
   ...["family-visit", "friend-visit"].map(key => template(key, key, "VISIT", [
     slot("hospitality", "OPTIONAL_ONE", [component("hospitality", "Contribution à la visite")]),
-    slot("activities", "REPEATING", [], ["activity", ...foodTemplates, "purchase", "gift"]), mobility("transport")])),
+    slot("activities", "REPEATING", [], ["activity", ...foodTemplates, "purchase", "gift"]), mobility("transport")],
+    [person("personVisitedRef"), people, place("placeRef"), text("timingNote")])),
   template("purchase", "Achat", "PURCHASE", [slot("item", "REQUIRED_ONE", [component("item", "Achat")]),
     slot("extras", "REPEATING", [component("extra", "Frais ou complément")]), mobility("transport")],
-    [{ fieldKey: "budgetDomain", kind: "CHOICE", required: false, choices: ["clothing", "home-small", "games-digital", "other"] }]),
+    [{ fieldKey: "budgetDomain", kind: "CHOICE", required: false, choices: ["clothing", "home-small", "games-digital", "other"] },
+      text("productLabel"), text("merchantLabel"), place("placeRef")]),
   template("night-out", "Soirée", "SOCIAL", [
     slot("before", "OPTIONAL_ONE", [component("before", "Before")], ["activity", "friend-visit"]),
     slot("main", "REQUIRED_ONE", [component("main", "Entrée ou événement")], ["activity"]),
     slot("food", "OPTIONAL_ONE", mealOptions, foodTemplates), mobility("outbound"), mobility("return", "RETURN"),
     slot("extras", "REPEATING", [component("extra", "Vestiaire, boissons ou complément")])],
-    [{ fieldKey: "endDate", kind: "DATE", required: false }]),
+    [{ fieldKey: "endDate", kind: "DATE", required: false }, people, place("placeRef"), text("timingNote")]),
   template("short-stay", "Séjour court", "TRAVEL", [
     slot("lodging", "REQUIRED_ONE", [component("lodging", "Hébergement")]),
     slot("groceries", "OPTIONAL_ONE", [component("groceries", "Courses du séjour", "groceries", "REQUIRES_CONFIRMATION")]),
     slot("restaurants", "REPEATING", mealOptions, foodTemplates), slot("activities", "REPEATING", [], ["activity"]),
     slot("purchases", "REPEATING", [], ["purchase", "gift", "beauty-restock"]), mobility("transport")],
-    [{ fieldKey: "endDate", kind: "DATE", required: false }]),
+    [{ fieldKey: "endDate", kind: "DATE", required: false }, people, place("destinationRef"),
+      { fieldKey: "nightCount", kind: "COUNT", required: false },
+      { fieldKey: "lodgingKind", kind: "CHOICE", required: false, choices: ["RELATIVE", "HOTEL", "HOSTEL", "RENTAL", "OTHER", "LATER"] },
+      text("timingNote")]),
   template("beauty-restock", "Réapprovisionnement beauté", "BEAUTY", [{ ...slot("products", "REPEATING", [component("product", "Produit")]), acceptsNeedOccurrence: true }, mobility("transport")], [], 1),
-  template("gift", "Cadeau", "PURCHASE", [slot("item", "REQUIRED_ONE", [component("gift", "Cadeau")]), slot("extras", "REPEATING", [component("extra", "Complément")])]),
+  template("gift", "Cadeau", "PURCHASE", [slot("item", "REQUIRED_ONE", [component("gift", "Cadeau")]), slot("extras", "REPEATING", [component("extra", "Complément")])],
+    [person("recipientRef"), text("occasion"), text("objectLabel")]),
   template("home-project", "Projet maison", "HOME", [slot("items", "REPEATING", [component("item", "Équipement du projet")]),
     slot("services", "REPEATING", [component("service", "Service")]), slot("purchases", "REPEATING", [], ["purchase"]), mobility("transport")], [], 1),
   template("other-context", "Autre intention", "OTHER", [slot("components", "REPEATING", [component("other", "Contribution")]),
@@ -67,6 +80,18 @@ function freeze<T>(value: T): T {
 }
 const registry = freeze<ContextRegistryV1>({ version: CONTEXT_REGISTRY_VERSION, templates: templates.sort((a, b) => a.templateKey < b.templateKey ? -1 : a.templateKey > b.templateKey ? 1 : 0) });
 export const publishContextRegistry = (): ContextRegistryV1 => registry;
+/** C0 stores the whole registry in the immutable manifest. Keep its pre-P02 shape for old states. */
+export function isLegacyContextField(templateKey: string, fieldKey: string): boolean {
+  return ["label", "plannedDate"].includes(fieldKey)
+    || templateKey === "purchase" && fieldKey === "budgetDomain"
+    || ["night-out", "short-stay"].includes(templateKey) && fieldKey === "endDate";
+}
+const legacyRegistry = freeze<ContextRegistryV1>({ version: CONTEXT_REGISTRY_VERSION,
+  templates: registry.templates.map(template => ({ ...template,
+    fields: template.fields.filter(field => isLegacyContextField(template.templateKey, field.fieldKey)) })) });
+export function manifestContextRegistry(state: PlanSemanticStateV1): ContextRegistryV1 {
+  return state.contexts.some(context => context.fields.fieldSchemaVersion === "context-fields@v2") ? registry : legacyRegistry;
+}
 export function resolveContextTemplate(key: string): ContextTemplateV1 {
   const found = registry.templates.find(t => t.templateKey === key);
   if (!found) throw new TypeError(`PLANNER_CONTEXT_TEMPLATE_UNSUPPORTED:${key}`);

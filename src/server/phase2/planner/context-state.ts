@@ -1,10 +1,10 @@
 import "server-only";
-import { parsePlannerJsonObject, plannerString } from "@/domain/phase2/planner/json";
+import { parsePlannerJsonObject, plannerKeys, plannerRecord, plannerString } from "@/domain/phase2/planner/json";
 import { parsePlanSemanticState } from "@/domain/phase2/planner/semantic-state";
 import type { PlanSemanticStateV1, PlannedContextState } from "@/domain/phase2/planner/semantic-state";
 import type { ComponentSelectionV1 } from "@/domain/phase2/planner/component-contract";
-import { resolveContextTemplate } from "./context-registry";
-import { validateContextGraph } from "./context-selections";
+import { isLegacyContextField, resolveContextTemplate } from "./context-registry";
+import { parseContextField, validateContextGraph } from "./context-selections";
 
 const children = (items: readonly ComponentSelectionV1[]): string[] => items.flatMap(item => item.kind === "CHILD_CONTEXT" ? [item.childContextOccurrenceId] : []);
 function prune(contexts: readonly PlannedContextState[], removedIds: readonly string[]): PlannedContextState[] {
@@ -18,6 +18,33 @@ function prune(contexts: readonly PlannedContextState[], removedIds: readonly st
 const finish = (state: PlanSemanticStateV1): PlanSemanticStateV1 => {
   const parsed = parsePlanSemanticState(state); validateContextGraph(parsed); return parsed;
 };
+/** Semantic editor view only: no hover, canvas coordinates, wizard navigation or computed totals. */
+export function readContextEditorPayload(raw: PlanSemanticStateV1, contextId: string) {
+  const state = finish(raw), context = state.contexts.find(item => item.contextOccurrenceId === contextId);
+  if (!context) throw new TypeError("CONTEXT_EDIT_TARGET_UNKNOWN");
+  return { contextOccurrenceId: context.contextOccurrenceId, templateKey: context.templateKey,
+    parentContextOccurrenceId: context.parentContextOccurrenceId ?? null, fieldSchemaVersion: context.fields.fieldSchemaVersion ?? null,
+    provenance: context.provenance, fields: structuredClone(context.fields), slotSelections: structuredClone(context.slotSelections) };
+}
+/** Explicit partial patch. Omitted keys survive; null remains unknown; an empty UI string clears. */
+export function patchContextEditorFields(raw: PlanSemanticStateV1, contextId: string, rawPatch: unknown): PlanSemanticStateV1 {
+  const state = finish(raw), context = state.contexts.find(item => item.contextOccurrenceId === contextId);
+  if (!context) throw new TypeError("CONTEXT_EDIT_TARGET_UNKNOWN");
+  const template = resolveContextTemplate(context.templateKey), patch = plannerRecord(rawPatch);
+  plannerKeys(patch, template.fields.filter(field => field.fieldKey !== "fieldSchemaVersion").map(field => field.fieldKey), []);
+  const fields = { ...context.fields };
+  for (const [key, value] of Object.entries(patch)) {
+    const definition = template.fields.find(field => field.fieldKey === key)!;
+    if (value === undefined) throw new TypeError("CONTEXT_FIELD_UNDEFINED");
+    if (value === "") delete fields[key];
+    else if (value === null) fields[key] = null;
+    else fields[key] = parsePlannerJsonObject({ value: parseContextField(value, definition, state.targetMonth) }).value;
+  }
+  const rich = Object.keys(fields).some(key => !isLegacyContextField(context.templateKey, key));
+  if (rich) fields.fieldSchemaVersion = "context-fields@v2";
+  return finish({ ...state, contexts: state.contexts.map(item => item.contextOccurrenceId === contextId
+    ? { ...item, fields } : item) });
+}
 function withItems(context: PlannedContextState, slotKey: string, items: readonly ComponentSelectionV1[]): PlannedContextState {
   return { ...context, slotSelections: { ...context.slotSelections, [slotKey]: parsePlannerJsonObject({ items }) } };
 }
