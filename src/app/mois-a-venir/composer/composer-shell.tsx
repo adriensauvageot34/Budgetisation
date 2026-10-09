@@ -53,7 +53,11 @@ export function ComposerShell({ initialModel, transport }: { initialModel: Compo
   const currentAuthority = () => ({ draftDigest: semanticStateDigest(localDraft.current), targetMonth: localDraft.current.targetMonth,
     worldVersion: `${current.current.proof.expectedBaselineDigest}:${current.current.proof.expectedActiveRevisionId}:${current.current.proof.expectedActiveRevisionNumber}` });
   function schedulePreview(draft: PlanSemanticStateV1) {
-    scheduler.current.schedule(draft, currentAuthority().worldVersion, transport, currentAuthority, setPreviewStatus, response => {
+    scheduler.current.schedule(draft, currentAuthority().worldVersion, transport, currentAuthority, status => {
+      setPreviewStatus(status);
+      if (status === "FAILED") { const failure = "Simulation indisponible. Votre brouillon est conservé ; réessayez une modification pour relancer la prévisualisation."; setMessage(failure); setErrorMessage(failure); }
+      if (status === "STALE") setMessage("Projection obsolète. Votre brouillon est conservé ; relancez la prévisualisation avant d’appliquer le mois.");
+    }, response => {
       if (!response.ok) { setMessage(response.message); setErrorMessage(response.message); return; }
       install(response.model); setErrorMessage(null); setMessage("Brouillon simulé par le Compiler/V2.");
     });
@@ -298,6 +302,8 @@ export function ComposerShell({ initialModel, transport }: { initialModel: Compo
   };
   const applyReason = busy ? "La prévisualisation serveur est en cours." : hoverModel || grabbed ? "Terminez le geste pour appliquer le mois."
     : editor ? "Terminez ou fermez le panneau de configuration avant d’appliquer le mois."
+    : previewStatus === "FAILED" ? "La simulation a échoué. Le brouillon est conservé ; relancez la prévisualisation avant d’appliquer."
+    : previewStatus === "STALE" ? "La projection est obsolète. Relancez la prévisualisation avant d’appliquer."
     : previewStatus !== "FRESH" ? "La projection du brouillon attend une simulation serveur fraîche."
     : !model.board.draft.dirty ? model.activeRevisionNumber ? "Le mois est déjà appliqué. Modifiez un élément pour créer une nouvelle révision." : `Composez un premier choix pour appliquer votre mois.${model.presentation.unresolvedCount ? ` ${model.presentation.unresolvedCount} éléments à préciser.` : ""}`
     : model.presentation.unresolvedCount ? `${model.presentation.unresolvedCount} éléments restent à préciser avant l’application.`
@@ -314,7 +320,7 @@ export function ComposerShell({ initialModel, transport }: { initialModel: Compo
         <span data-object-count>{shown.presentation.elementCount} éléments · <button className={styles.completenessToggle} data-completeness-toggle aria-pressed={completenessFocus} disabled={!model.presentation.unresolvedCount} onClick={() => setCompletenessFocus(v => !v)}>{model.presentation.unresolvedCount} à préciser</button></span>
         {previewStatus === "FRESH" && model.board.cockpit.projectionCompleteness === "COMPLETE" && model.board.cockpit.applyReadiness === "READY" && <span data-plan-ready>Plan prêt ✓</span>}</div></div>
       <div className={styles.hudContainer} data-compare-header>{comparison && <div className={styles.compareCurrent}><span>Actuel</span><strong>{money(comparison.model.board.cockpit.plan.economicMonthEndRemainder)}</strong></div>}
-      <ComposerCockpit projection={(hoverModel ?? model).board.cockpit} goalMargin={(hoverModel ?? model).presentation.goalMargin} temporary={!!hoverModel} pending={hoverPending || previewStatus === "PENDING"} stale={previewStatus !== "FRESH" && previewStatus !== "BLOCKED"}
+      <ComposerCockpit projection={(hoverModel ?? model).board.cockpit} goalMargin={(hoverModel ?? model).presentation.goalMargin} temporary={!!hoverModel} pending={hoverPending || previewStatus === "PENDING"} stale={previewStatus !== "FRESH" && previewStatus !== "BLOCKED"} staleLabel={previewStatus === "FAILED" ? "Projection indisponible après un échec de simulation" : previewStatus === "STALE" ? "Projection obsolète" : undefined}
         canonicalRemainder={model.board.cockpit.plan.economicMonthEndRemainder} interactionImpact={interactionImpact} variant={!!comparison} details={openProjectionDetails} /></div>
       <div className={styles.toolbar}><div className={styles.historyTools}>
         <button className={styles.historyButton} title="Annuler (Ctrl/Cmd+Z)" aria-label="Annuler la dernière modification du brouillon" disabled={busy || !past.length} onClick={() => stage({ kind: "READ" }, "undo", past.at(-1))}><Undo2 size={17} /></button>

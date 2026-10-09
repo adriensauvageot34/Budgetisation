@@ -6,8 +6,8 @@ const tone = (value: string | null) => value === null ? "unknown" : value.starts
 const hudMoney = (value: string | null) => value === null ? "—" : money(value);
 const unknownHint = "Disponible lorsque les éléments nécessaires sont renseignés.";
 /** The former permanent cockpit is now a header HUD, using the same C7 fields. */
-export function ComposerCockpit({ projection, goalMargin, temporary, pending, stale = false, canonicalRemainder, interactionImpact, variant, details }: { projection: PlanProjectionV1; goalMargin: string | null; temporary: boolean; pending?: boolean; stale?: boolean; canonicalRemainder?: string | null; interactionImpact?: string | null; variant?: boolean; details?: () => void }) {
-  return <div className={styles.financialHud} data-cockpit data-temporary={temporary} data-calculating={pending} data-stale={stale} aria-label={stale ? "Projection en attente de simulation" : "Projection financière du mois"}>
+export function ComposerCockpit({ projection, goalMargin, temporary, pending, stale = false, staleLabel, canonicalRemainder, interactionImpact, variant, details }: { projection: PlanProjectionV1; goalMargin: string | null; temporary: boolean; pending?: boolean; stale?: boolean; staleLabel?: string; canonicalRemainder?: string | null; interactionImpact?: string | null; variant?: boolean; details?: () => void }) {
+  return <div className={styles.financialHud} data-cockpit data-temporary={temporary} data-calculating={pending} data-stale={stale} aria-label={stale ? staleLabel ?? "Projection en attente de simulation" : "Projection financière du mois"}>
     <button className={styles.hudMain} data-financial-details onClick={details} title={projection.plan.economicMonthEndRemainder === null ? unknownHint : "Voir le détail financier"}>
       <span>{temporary ? "Hypothèse" : variant ? "Variante" : "Fin de mois"}{pending && <i className={styles.calculating}>Calcul…</i>}</span>
       <strong key={stale ? "stale" : projection.plan.economicMonthEndRemainder} data-remainder>{stale ? "—" : hudMoney(projection.plan.economicMonthEndRemainder)}</strong>
