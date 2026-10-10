@@ -1,5 +1,6 @@
 import type { PlanProjectionV1 } from "@/domain/phase2/planner/projection-contract";
 import type { PlanSemanticStateV1 } from "@/domain/phase2/planner/semantic-state";
+import type { AppliedPlanControl } from "@/server/phase2/planner/applied-plan-read";
 import type { MonthEconomicPlan } from "@/server/phase2/month-scenario";
 import type { ComponentProps } from "react";
 import { BankStockCard } from "./bank-stock-card";
@@ -12,8 +13,8 @@ import material from "./month-material.module.css";
 
 /** Applied financial values come directly from C7, including unknowns. Existing
  * independent resource and external-intent editors retain their owners. */
-export function AppliedMonthView({ projection, semanticState, plan, external, revision, composerHref, today, calendarCarryovers = [] }: {
-  projection: PlanProjectionV1; semanticState: PlanSemanticStateV1; plan: MonthEconomicPlan | null;
+export function AppliedMonthView({ projection, semanticState, controls = [], plan, external, revision, composerHref, today, calendarCarryovers = [] }: {
+  projection: PlanProjectionV1; semanticState: PlanSemanticStateV1; controls?: readonly AppliedPlanControl[]; plan: MonthEconomicPlan | null;
   external?: ComponentProps<typeof PlannedExpensesControl>; revision: number; composerHref?: string; today: string;
   calendarCarryovers?: readonly PlannedExpenseCard[];
 }) {
@@ -32,6 +33,16 @@ export function AppliedMonthView({ projection, semanticState, plan, external, re
     <section className={`${material.glassSecondary} p-6`}><h2 className="text-xl font-black">Les postes du même scénario</h2>
       <dl className="mt-4 grid grid-cols-2 gap-4">{rows.map(([label, amount]) => <div key={label}><dt className="text-sm text-slate-600">{label}</dt><dd className="text-xl font-bold">{money(amount)}</dd></div>)}</dl>
       <p className="mt-4 text-sm text-slate-600">Ces vues expliquent le scénario. Le montant de fin de mois est celui calculé par le Planner.</p>
+    </section>
+    <section className={`${material.glassSecondary} p-6`} aria-labelledby="my-plan-title" data-my-plan>
+      <h2 id="my-plan-title" className="text-xl font-black">Mon Plan</h2>
+      <p className="mt-2 text-sm text-slate-600">Décisions de la révision appliquée · les repères historiques ne sont pas des choix validés.</p>
+      {controls.length ? <ul className="mt-4 space-y-3">{controls.map(control => <li key={control.planSlotId} data-plan-control={control.slotIdentityKey}>
+        <strong>{control.label}</strong>
+        <span className="ml-3">{control.amount !== null ? money(control.amount) : control.count !== null ? `${control.count} occurrence(s)${control.unitAmount !== null ? ` · ${money(control.unitAmount)} par occurrence` : " · montant unitaire non décidé"}` : "Valeur inconnue"}</span>
+        <small className="ml-3 text-slate-600">Décision explicite</small>
+      </li>)}</ul> : <p className="mt-3 text-sm text-slate-600">Aucun contrôle explicite dans cette révision.</p>}
+      {composerHref && <a className="mt-4 inline-block font-bold underline" href={composerHref}>Rééditer mon Plan</a>}
     </section>
     <section className={`${material.glassSecondary} p-6`}><h2 id="resources-title" className="text-xl font-black">Banque & ressources</h2>
       {plan ? <><div className="mt-4"><BankStockCard balance={plan.bankCash.currentRealBankBalance} /></div>

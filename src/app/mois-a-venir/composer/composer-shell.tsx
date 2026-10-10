@@ -21,7 +21,9 @@ import { AtomicPopover } from "./atomic-popover";
 import { stageLocalDecision, visualDraftModel } from "./local-draft";
 import { ComposerPreviewScheduler, type PreviewStatus } from "./preview-scheduler";
 
-type Editor = { title: string; compact?: boolean; side?: boolean; fields: readonly ComposerField[]; values: Record<string, string>; operation: (values: Record<string, string>) => ComposerOperation };
+type Editor = { title: string; compact?: boolean; side?: boolean; fields: readonly ComposerField[]; values: Record<string, string>;
+  coursesReference?: { central: string | null; firstMonth: string | null; lastMonth: string | null; comparableCount: number; basis: string; sources: string[] };
+  operation: (values: Record<string, string>) => ComposerOperation };
 export function ComposerShell({ initialModel, transport }: { initialModel: ComposerUiModel; transport: ComposerTransport }) {
   const [model, setModel] = useState(initialModel), current = useRef(initialModel);
   const [draftState, setDraftState] = useState(initialModel.semanticState), localDraft = useRef(initialModel.semanticState);
@@ -113,7 +115,8 @@ export function ComposerShell({ initialModel, transport }: { initialModel: Compo
     try {
       const response = await transport({ ...operation, sequence: ticket.sequence, targetMonth: beforeDraft.targetMonth, draft: draft ?? beforeDraft } as ComposerRequest);
       if (!gate.current.accepts(ticket, response.sequence, semanticStateDigest(localDraft.current))) return;
-      if (!response.ok) { setPreviewStatus(/STALE|CHANGED/u.test(response.code) ? "STALE" : "FAILED"); setMessage(response.message); setErrorMessage(response.message); return; }
+      if (!response.ok) { if (response.applied) applyAttempt.current = null;
+        setPreviewStatus(response.applied || /STALE|CHANGED/u.test(response.code) ? "STALE" : "FAILED"); setMessage(response.message); setErrorMessage(response.message); return; }
       const changed = sourceDigest !== response.model.board.draft.semanticStateDigest;
       if (response.applied) { applyAttempt.current = null; setPast([]); setFuture([]); setMessage(`Revision ${response.model.activeRevisionNumber} appliquée. Le mois a été relu avec le même scénario.`); }
       else {
@@ -276,7 +279,14 @@ export function ComposerShell({ initialModel, transport }: { initialModel: Compo
     clearHover();
     if (!card.capability?.actions.length || card.capability.flexibility === "LOCKED") return;
     prepareDialogFocus();
+    const historical = card.targetRef === "HOUSEHOLD:household:groceries" ? card.historicalReferences : null;
+    const range = historical?.range && typeof historical.range === "object" && !Array.isArray(historical.range) ? historical.range as Record<string, unknown> : null;
+    const months = Array.isArray(historical?.comparableMonths) ? historical.comparableMonths.filter((value): value is string => typeof value === "string") : [];
+    const sources = Array.isArray(historical?.requiredSources) ? historical.requiredSources.filter((value): value is string => typeof value === "string") : [];
     setEditor({ title: `Ajuster ${card.label}`, side: card.kind !== "SAVINGS", compact: card.kind === "SAVINGS", fields: model.controlEditors.find(e => e.targetRef === card.targetRef)?.fields ?? [],
+      ...(historical ? { coursesReference: { central: typeof range?.central === "string" ? range.central : null,
+        firstMonth: months[0] ?? null, lastMonth: months.at(-1) ?? null, comparableCount: months.length,
+        basis: historical.basis === "ECONOMIC_AMOUNT" ? "€ par mois" : "unité à préciser", sources } } : {}),
       values: Object.fromEntries(["amount", "count", "unitAmount"].map(key => [key, typeof card.value[key] === "string" ? card.value[key] as string : ""])),
       operation: values => ({ kind: "MUTATE", mutation: { kind: "SET_STATE", targetRef: card.targetRef, value: Object.fromEntries(model.controlEditors.find(e => e.targetRef === card.targetRef)!.fields.map(f => [f.key, values[f.key]])) } }) });
   }
@@ -327,7 +337,7 @@ export function ComposerShell({ initialModel, transport }: { initialModel: Compo
         <button className={styles.historyButton} title="Rétablir (Ctrl/Cmd+Shift+Z)" aria-label="Rétablir la modification du brouillon" disabled={busy || !future.length} onClick={() => stage({ kind: "READ" }, "redo", future.at(-1))}><Redo2 size={17} /></button></div>
         {comparison ? <div className={styles.compareActions}><button data-compare-keep className={styles.secondary} disabled={busy} onClick={() => compare(true)}>Garder cette variante</button><button data-compare-exit className={styles.textButton} disabled={busy} onClick={() => compare(false)}>Quitter la comparaison</button></div>
           : <><button data-compare className={styles.compareButton} disabled={busy || previewStatus !== "FRESH"} onClick={() => compare()}><ArrowLeftRight size={14} /> Comparer</button>
-            <div className={styles.applyControl} tabIndex={applyDisabled ? 0 : undefined} aria-label={applyDisabled ? applyReason : undefined} data-apply-control>
+            <div className={styles.applyControl} tabIndex={applyDisabled ? 0 : undefined} aria-label={applyDisabled ? applyReason : undefined} data-apply-control data-unavailable={applyDisabled}>
               <button className={styles.primary} data-apply disabled={applyDisabled} aria-describedby={applyDisabled ? "apply-disabled-reason" : undefined} onClick={apply}>{busy ? "Validation…" : "Appliquer mon mois"}</button>
               {applyDisabled && <div className={styles.applyReason} role="group" aria-label="Application indisponible" data-apply-reason><p id="apply-disabled-reason">{applyReason}</p>
                 {!!model.presentation.unresolvedCount && <button data-show-unresolved onClick={() => setCompletenessFocus(true)}>Afficher les éléments</button>}</div>}
@@ -350,6 +360,11 @@ export function ComposerShell({ initialModel, transport }: { initialModel: Compo
       <header><h2 id="composer-dialog-title">{editor?.title ?? (projectionOpen ? "Le détail de votre mois" : "Des pistes pour votre mois")}</h2><button className={styles.iconButton} disabled={busy} aria-label="Fermer" onClick={closeDialog}><X size={19} /></button></header>
       {errorMessage && <p role="alert" className={styles.formError}>{errorMessage}</p>}
       {editor ? <form onSubmit={e => { e.preventDefault(); const values = Object.fromEntries(new FormData(e.currentTarget).entries()) as Record<string, string>; stage(editor.operation(values)); setEditor(null); }}>
+        {editor.coursesReference && <aside className={styles.coursesReference} data-courses-reference aria-label="Repère historique Courses">
+          <strong>Repère historique proposé : {money(editor.coursesReference.central)}</strong>
+          <p>{editor.coursesReference.comparableCount > 0 ? `${editor.coursesReference.comparableCount} mois comparables · ${editor.coursesReference.firstMonth} à ${editor.coursesReference.lastMonth}` : "Aucun mois comparable qualifié"} · {editor.coursesReference.basis}</p>
+          <p>Sources : {editor.coursesReference.sources.join(", ") || "non renseignées"}. Ce repère ne devient pas une décision. Seule votre validation du montant crée un choix explicite.</p>
+        </aside>}
         <p className={styles.helper}>Une valeur vide reste inconnue. Une date absente reste à préciser.</p>
         <div className={styles.formFields}>{editor.fields.map(f => <label key={f.key}>{f.label}{f.kind === "CHOICE" ? <select name={f.key} defaultValue={editor.values[f.key] ?? f.choices?.[0]?.value ?? ""} required={f.required}>{f.choices?.map(c => <option value={c.value} key={c.value}>{c.label}</option>)}</select>
           : <input name={f.key} defaultValue={editor.values[f.key] ?? f.initial ?? ""} type={f.kind === "DATE" ? "date" : "text"} inputMode={f.kind === "AMOUNT" ? "decimal" : undefined} required={f.required} autoComplete="off" />}</label>)}</div>

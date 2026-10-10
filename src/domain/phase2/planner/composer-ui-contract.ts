@@ -72,7 +72,7 @@ export type ComposerRequest = Readonly<{ sequence: number; targetMonth: string; 
 );
 export type ComposerResponse = Readonly<{ sequence: number }> & (
   | Readonly<{ ok: true; model: ComposerUiModel; suggestions?: PlanBalanceSuggestions; applied?: boolean; mutationKind?: string; interactionImpact?: string | null }>
-  | Readonly<{ ok: false; code: string; message: string }>
+  | Readonly<{ ok: false; code: string; message: string; applied?: boolean; revisionNumber?: number }>
 );
 export type ComposerTransport = (request: ComposerRequest) => Promise<ComposerResponse>;
 export type ComposerOperation = ComposerRequest extends infer Request ? Request extends ComposerRequest ? Omit<Request, "sequence" | "targetMonth" | "draft"> : never : never;

@@ -49,9 +49,9 @@ export function ComposerCard({ card, presentation, busy, preserved, focused = fa
       </div></div>
     <div className={styles.objectIdentity}><PlannerIcon iconKey={presentation.iconKey} identityRef={card.targetRef} className={styles.objectIcon} />
       <div><h3>{label.title}</h3>{label.person && <span className={styles.personChip}>{label.person}</span>}</div></div>
-    {count != null || hasAmount ? <button className={styles.valueButton} data-value-edit disabled={locked || busy} onClick={inlineAmount ? focus : edit}>
+    {count != null || hasAmount ? <button className={styles.valueButton} data-value-edit disabled={locked || busy} onClick={card.targetRef === "HOUSEHOLD:household:groceries" ? edit : inlineAmount ? focus : edit}>
       <strong key={`${card.value.amount}:${count}`} className={styles.cardValue}>{count != null ? `${quantityLabel(count)} occurrence${count === "1.00" || count === "1" ? "" : "s"}` : money(card.value.amount)}</strong>
-    </button> : <button className={styles.unknownBudget} data-budget-unknown disabled={locked || busy} onClick={inlineAmount ? focus : edit}><i /> Budget à préciser</button>}
+    </button> : <button className={styles.unknownBudget} data-budget-unknown disabled={locked || busy} onClick={card.targetRef === "HOUSEHOLD:household:groceries" ? edit : inlineAmount ? focus : edit}><i /> Budget à préciser</button>}
     {presentation.variant === "HABIT" && (presentation.baselineAmount !== null || presentation.baselineCount !== null) && <small className={styles.habitReference}>Habituel {presentation.baselineCount !== null ? `${quantityLabel(presentation.baselineCount)} occurrence(s)` : money(presentation.baselineAmount)}</small>}
     {presentation.occurrenceStack && <div className={styles.occurrenceStack} data-occurrence-stack aria-label={`${quantityLabel(count)} occurrences · ${presentation.occurrenceStack.links.length ? "reliées à des moments explicites" : "enveloppe du mois"}`}>
       {presentation.occurrenceStack.bubbles.map((state, index) => <span key={index} data-occurrence-state={state} title={state === "LINKED" ? presentation.occurrenceStack!.links.map(l => l.label).join(" · ") : "Occurrence disponible"}>{state === "LINKED" && <Link2 size={11} />}</span>)}

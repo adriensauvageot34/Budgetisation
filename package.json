@@ -24,6 +24,7 @@
     "smoke:phase2-planner-final-polish": "node scripts/smoke-phase2-planner-final-polish.mjs",
     "check:phase2-planner-atomic-ui": "node scripts/check-phase2-planner-atomic-ui.mjs",
     "check:phase2-planner-composer": "node scripts/check-phase2-planner-composer.mjs",
+    "check:phase2-planner-p04": "node scripts/check-phase2-planner-p04.mjs",
     "smoke:phase2-planner-composer": "node scripts/smoke-phase2-planner-composer.mjs",
     "check:phase2-planner-headless": "node scripts/check-phase2-planner-headless.mjs",
     "check:phase2-planner-renewals": "node scripts/check-phase2-planner-renewals.mjs",

@@ -134,8 +134,15 @@ export async function handleComposerRequest(deps: PlannerDependencies, household
     let suggestions;
     if (request.kind === "APPLY") {
       if (!request.draft) throw new TypeError("COMPOSER_DRAFT_REQUIRED");
-      await applyPlanScenario(deps, household, state, request.command);
-      return { ok: true, sequence: request.sequence, applied: true, model: await composerUiModel(deps, household, await readMonthComposer(deps, household, month)) };
+      const committed = await applyPlanScenario(deps, household, state, request.command);
+      try {
+        return { ok: true, sequence: request.sequence, applied: true, model: await composerUiModel(deps, household, await readMonthComposer(deps, household, month)) };
+      } catch {
+        // The immutable revision is committed. A failed read must never be reported as a failed Apply or retried as a write.
+        return { ok: false, sequence: request.sequence, applied: true, revisionNumber: committed.revision.revisionNumber,
+          code: "COMPOSER_APPLIED_RELOAD_UNAVAILABLE",
+          message: `Révision ${committed.revision.revisionNumber} enregistrée, mais sa relecture est indisponible. Actualisez la prévisualisation avant toute autre action.` };
+      }
     }
     if (request.kind === "MUTATE") {
       const mutation = request.mutation;

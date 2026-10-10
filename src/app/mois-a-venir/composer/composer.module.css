@@ -51,6 +51,9 @@
 .textButton { border:0; background:transparent; padding:5px; color:#78688f; font-size:10px!important; }
 .textButton:hover:not(:disabled) { text-decoration:underline; text-underline-offset:3px; }
 .applyControl { position:relative; border-radius:10px; }
+.applyControl[data-unavailable="true"] .primary { background:#e5e0eb; color:#625c69; box-shadow:none; opacity:1; }
+.coursesReference { margin:0 0 16px; padding:14px; border:1px solid #dfd6e8; border-radius:12px; background:#f7f3fb; color:#342d3d; font-size:13px; line-height:1.5; }
+.coursesReference p { margin:6px 0 0; }
 .applyReason { position:absolute; z-index:var(--z-popover); top:calc(100% + 8px); right:0; width:270px; padding:12px 14px; background:#fff; border:1px solid #e0d8e9; border-radius:12px; box-shadow:0 6px 20px #35254a17; display:none; }
 .applyReason p { margin:0 0 8px; font-size:11px; line-height:1.5; }
 .applyReason::before { content:""; position:absolute; top:-10px; left:0; right:0; height:10px; }
