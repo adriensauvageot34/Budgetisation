@@ -11,6 +11,7 @@ import { publishAdjustmentCapabilities } from "./balance-assistant";
 import { publishContextRegistry, resolveContextTemplate } from "./context-registry";
 import { jsonEnvelope } from "./compiler";
 import { mutatePlanSemanticState } from "./semantic-mutations";
+import { projectCardKnowledge } from "./card-knowledge";
 export const COMPOSER_READ_MODEL = "planner-composer@v1-headless";
 const contextAssetKey = (key: string) => `template:${key}`;
 const optionAssetKey = (template: string, slot: string, option: string) => `option:${template}:${slot}:${option}`;
@@ -110,7 +111,7 @@ export async function readMonthComposer(deps: PlannerDependencies, householdId: 
     }
   }
   const original = read.active?.activeRevision?.semanticState ?? emptyPlanSemanticState(targetMonth);
-  return { version: COMPOSER_READ_MODEL, semanticState: state,
+  return { version: COMPOSER_READ_MODEL, semanticState: state, cardKnowledge: projectCardKnowledge(prepared, assets),
     library: { sections: [{ sectionKey: "contexts", assetKeys: assets.filter(a => a.kind === "CONTEXT_ASSET").map(a => a.assetKey) },
       { sectionKey: "options", assetKeys: assets.filter(a => a.kind === "SLOT_OPTION_ASSET").map(a => a.assetKey) },
       { sectionKey: "controls", assetKeys: assets.filter(a => a.kind === "PLAN_CONTROL" || a.kind === "RESERVATION_CONTROL").map(a => a.assetKey) }],

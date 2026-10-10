@@ -6,16 +6,19 @@ import { assetsForModule, PLANNED_ASSET_CATALOG_VERSION, type PlannedAssetRef } 
 import type { ComponentSelectionV1 } from "@/domain/phase2/planner/component-contract";
 import type { PlannedContextState } from "@/domain/phase2/planner/semantic-state";
 import type { ComposerOperation } from "@/domain/phase2/planner/composer-ui-contract";
+import type { CardKnowledgeRead } from "@/domain/phase2/planner/card-knowledge-contract";
 import { PlannedContactField } from "../planned-people-fields";
 import { ChoiceTiles, builderInput } from "../planned-builder-primitives";
 import styles from "./composer.module.css";
+import { CardKnowledgePanel } from "./card-knowledge-panel";
 
 const occasionChoices = ["Sans occasion particulière", "Anniversaire", "Noël", "Fête ou célébration"];
 const giftAssets = assetsForModule("gift").filter(asset => !/(?:delivery_fee|service_fee)$/u.test(asset.assetKey));
 const string = (value: unknown): string => typeof value === "string" ? value : "";
 
-export function GiftEditor({ context, householdPersons, busy, onSave, onCancel }: {
+export function GiftEditor({ context, householdPersons, knowledge, busy, onSave, onCancel }: {
   context: PlannedContextState; householdPersons: readonly { personId: string; displayName: string }[];
+  knowledge?: CardKnowledgeRead;
   busy: boolean; onSave: (operation: ComposerOperation) => void; onCancel: () => void;
 }) {
   const existing = (Array.isArray(context.slotSelections.item?.items) ? context.slotSelections.item.items : [])
@@ -58,6 +61,7 @@ export function GiftEditor({ context, householdPersons, busy, onSave, onCancel }
           ? { catalogVersion: PLANNED_ASSET_CATALOG_VERSION, assetKey, labelAtSelection: selectedAsset?.label ?? "",
             provenance: "EXPLICIT_USER_DECISION" } : "" }) }, item });
   }}>
+    <CardKnowledgePanel knowledge={knowledge} />
     <p className={styles.helper}>Le cadeau est une intention du Plan. Son coût provient uniquement de l’objet et de ses éventuels compléments.</p>
     <div className={styles.formFields}>
       <PlannedContactField label="Pour qui est ce cadeau ?" value={recipient} householdPersons={householdPersons} onChange={setRecipient} />

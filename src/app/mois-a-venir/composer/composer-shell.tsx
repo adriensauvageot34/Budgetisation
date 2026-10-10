@@ -21,10 +21,11 @@ import { AtomicPopover } from "./atomic-popover";
 import { stageLocalDecision, visualDraftModel } from "./local-draft";
 import { ComposerPreviewScheduler, type PreviewStatus } from "./preview-scheduler";
 import { GiftEditor } from "./gift-editor";
+import { CardKnowledgePanel } from "./card-knowledge-panel";
 
 type Editor = { title: string; compact?: boolean; side?: boolean; fields: readonly ComposerField[]; values: Record<string, string>;
   giftContextId?: string;
-  coursesReference?: { central: string | null; firstMonth: string | null; lastMonth: string | null; comparableCount: number; basis: string; sources: string[] };
+  cardKey?: string;
   operation: (values: Record<string, string>) => ComposerOperation };
 export function ComposerShell({ initialModel, transport }: { initialModel: ComposerUiModel; transport: ComposerTransport }) {
   const [model, setModel] = useState(initialModel), current = useRef(initialModel);
@@ -261,6 +262,7 @@ export function ComposerShell({ initialModel, transport }: { initialModel: Compo
       if (admitted) {
         setFocusedContext(identity); setSelected(null); prepareDialogFocus();
         setEditor({ title: `Configurer ${asset.label}`, side: !["night-out", "short-stay", "family-visit"].includes(asset.templateKey ?? ""),
+          cardKey: asset.assetKey,
           ...(asset.templateKey === "gift" ? { giftContextId: identity } : {}),
           fields: model.editors.find(e => e.assetKey === asset.assetKey)?.fields ?? [], values: {},
           operation: values => ({ kind: "EDIT_CONTEXT", contextOccurrenceId: identity, values }) });
@@ -268,7 +270,11 @@ export function ComposerShell({ initialModel, transport }: { initialModel: Compo
       }
     }
     prepareDialogFocus();
-    setEditor({ title: selection ? `Modifier ${asset.label}` : `Composer ${asset.label}`, fields: model.editors.find(e => e.assetKey === asset.assetKey)?.fields ?? [], values,
+    const knowledgeTemplate = ["restaurant", "fast-food", "delivery"].includes(asset.optionKey ?? "")
+      ? asset.optionKey : asset.templateKey;
+    setEditor({ title: selection ? `Modifier ${asset.label}` : `Composer ${asset.label}`,
+      cardKey: asset.kind === "SLOT_OPTION_ASSET" && knowledgeTemplate ? `template:${knowledgeTemplate}` : asset.assetKey,
+      fields: model.editors.find(e => e.assetKey === asset.assetKey)?.fields ?? [], values,
       operation: values => ({ kind: "DROP", assetKey: asset.assetKey, target, values, identity, selectionId }) });
   }
   function drop(target: DropTarget, key = selected ?? "") {
@@ -282,14 +288,8 @@ export function ComposerShell({ initialModel, transport }: { initialModel: Compo
     clearHover();
     if (!card.capability?.actions.length || card.capability.flexibility === "LOCKED") return;
     prepareDialogFocus();
-    const historical = card.targetRef === "HOUSEHOLD:household:groceries" ? card.historicalReferences : null;
-    const range = historical?.range && typeof historical.range === "object" && !Array.isArray(historical.range) ? historical.range as Record<string, unknown> : null;
-    const months = Array.isArray(historical?.comparableMonths) ? historical.comparableMonths.filter((value): value is string => typeof value === "string") : [];
-    const sources = Array.isArray(historical?.requiredSources) ? historical.requiredSources.filter((value): value is string => typeof value === "string") : [];
-    setEditor({ title: `Ajuster ${card.label}`, side: card.kind !== "SAVINGS", compact: card.kind === "SAVINGS", fields: model.controlEditors.find(e => e.targetRef === card.targetRef)?.fields ?? [],
-      ...(historical ? { coursesReference: { central: typeof range?.central === "string" ? range.central : null,
-        firstMonth: months[0] ?? null, lastMonth: months.at(-1) ?? null, comparableCount: months.length,
-        basis: historical.basis === "ECONOMIC_AMOUNT" ? "€ par mois" : "unité à préciser", sources } } : {}),
+    setEditor({ title: `Ajuster ${card.label}`, side: card.kind !== "SAVINGS", compact: card.kind === "SAVINGS", cardKey: `control:${card.targetRef}`,
+      fields: model.controlEditors.find(e => e.targetRef === card.targetRef)?.fields ?? [],
       values: Object.fromEntries(["amount", "count", "unitAmount"].map(key => [key, typeof card.value[key] === "string" ? card.value[key] as string : ""])),
       operation: values => ({ kind: "MUTATE", mutation: { kind: "SET_STATE", targetRef: card.targetRef, value: Object.fromEntries(model.controlEditors.find(e => e.targetRef === card.targetRef)!.fields.map(f => [f.key, values[f.key]])) } }) });
   }
@@ -298,6 +298,7 @@ export function ComposerShell({ initialModel, transport }: { initialModel: Compo
     clearHover();
     prepareDialogFocus();
     setEditor({ title: `Modifier ${card.label}`, side: !["night-out", "short-stay", "family-visit"].includes(card.templateKey),
+      cardKey: `template:${card.templateKey}`,
       ...(card.templateKey === "gift" ? { giftContextId: card.contextOccurrenceId } : {}), fields: model.editors.find(e => e.assetKey === `template:${card.templateKey}`)?.fields ?? [],
       values: Object.fromEntries(Object.entries(card.fields).filter((entry): entry is [string, string] => typeof entry[1] === "string")),
       operation: values => ({ kind: "EDIT_CONTEXT", contextOccurrenceId: card.contextOccurrenceId, values }) });
@@ -368,13 +369,14 @@ export function ComposerShell({ initialModel, transport }: { initialModel: Compo
       {errorMessage && <p role="alert" className={styles.formError}>{errorMessage}</p>}
       {editor?.giftContextId && draftState.contexts.find(context => context.contextOccurrenceId === editor.giftContextId)
         ? <GiftEditor key={editor.giftContextId} context={draftState.contexts.find(context => context.contextOccurrenceId === editor.giftContextId)!}
-          householdPersons={model.householdPersons} busy={busy} onCancel={closeDialog} onSave={operation => { stage(operation); setEditor(null); }} />
+          householdPersons={model.householdPersons} knowledge={model.cardKnowledge[editor.cardKey ?? ""]}
+          busy={busy} onCancel={closeDialog} onSave={operation => { stage(operation); setEditor(null); }} />
         : editor ? <form onSubmit={e => { e.preventDefault(); const values = Object.fromEntries(new FormData(e.currentTarget).entries()) as Record<string, string>; stage(editor.operation(values)); setEditor(null); }}>
-        {editor.coursesReference && <aside className={styles.coursesReference} data-courses-reference aria-label="Repère historique Courses">
-          <strong>Repère historique proposé : {money(editor.coursesReference.central)}</strong>
-          <p>{editor.coursesReference.comparableCount > 0 ? `${editor.coursesReference.comparableCount} mois comparables · ${editor.coursesReference.firstMonth} à ${editor.coursesReference.lastMonth}` : "Aucun mois comparable qualifié"} · {editor.coursesReference.basis}</p>
-          <p>Sources : {editor.coursesReference.sources.join(", ") || "non renseignées"}. Ce repère ne devient pas une décision. Seule votre validation du montant crée un choix explicite.</p>
-        </aside>}
+        {editor.cardKey &&
+          <CardKnowledgePanel knowledge={model.cardKnowledge[editor.cardKey]} onPrefill={(field, value) => {
+            const input = dialog.current?.querySelector<HTMLInputElement>(`input[name="${field}"]`);
+            if (input) { input.value = value; input.focus(); }
+          }} />}
         <p className={styles.helper}>Une valeur vide reste inconnue. Une date absente reste à préciser.</p>
         <div className={styles.formFields}>{editor.fields.map(f => <label key={f.key}>{f.label}{f.kind === "CHOICE" ? <select name={f.key} defaultValue={editor.values[f.key] ?? f.choices?.[0]?.value ?? ""} required={f.required}>{f.choices?.map(c => <option value={c.value} key={c.value}>{c.label}</option>)}</select>
           : <input name={f.key} defaultValue={editor.values[f.key] ?? f.initial ?? ""} type={f.kind === "DATE" ? "date" : "text"} inputMode={f.kind === "AMOUNT" ? "decimal" : undefined} required={f.required} autoComplete="off" />}</label>)}</div>
