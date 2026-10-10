@@ -619,4 +619,5 @@
 /* P03: the ordinary card editor leaves the R6 board visible and interactive. */
 .dialog[data-side-panel=true] { inset:96px 16px 18px auto; margin:0; width:min(390px,calc(100vw - 32px)); max-height:calc(100dvh - 114px); border-radius:18px; box-shadow:0 18px 50px #25204438; }
 .dialog[data-side-panel=true]::backdrop { background:transparent; backdrop-filter:none; }
+.giftOccasion button { min-height:40px; min-width:110px; padding:8px 10px; }
 .financialHud[data-stale=true] { border-color:#dcccae; background:#fffcf5; }

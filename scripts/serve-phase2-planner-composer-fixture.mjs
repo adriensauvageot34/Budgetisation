@@ -39,6 +39,7 @@ fs.writeFileSync(path.join(out,'global.css'),globalCss);
 } else if (['app.js','app.css','global.css'].some(name => !fs.existsSync(path.join(out,name)))) throw new Error('PLANNER_C8_PREBUILT_ASSETS_MISSING');
 const stores = new Map(), fixtures = { A: simpleMonth, B: nightMonth, C: weekendMonth, D: renewalMonth, E: externalMonth, R: atomicMonth,
   P04: () => ({ world: plannerFixture(), semantic: plannerState() }),
+  P05: () => ({ world: plannerFixture(), semantic: plannerState() }),
   RA: interactionMonth, RB: nightMonth, RC: weekendMonth, RR: atomicMonth, RICH:richMonth, SAVINGS:savingsMonth,
   VISUAL:visualMonth, VISUAL_P35_CLICK:visualMonth, VISUAL_P35_DRAG:visualMonth, VISUAL_P35_MULTI_DRAG:visualMonth, VISUAL_P35_REPLACE:visualMonth,
   VISUAL_P35_HISTORY:visualMonth, VISUAL_P35_PROTECTED:visualMonth, DISSOLVE_BEAUTY:visualThreeBeautyMonth,
@@ -51,7 +52,11 @@ function uiPayloadFields(value) {
 async function store(key) {
   if (!stores.has(key)) stores.set(key, (async () => {
     const pg = await createKernelPostgres(), fixture = (fixtures[key] ?? fixtures.A)(), owner = providers();
-    return { pg, fixture, log: [], deps: { repository: createPlanApplyRepository(pg.client), readWorld: async () => fixture.world,
+    return { pg, fixture, log: [], deps: { repository: createPlanApplyRepository(pg.client),
+      householdPersons: [{ personId: '00000000-0000-4000-8000-000000000001', displayName: 'Alice Fixture' }],
+      validateContextReferences: async (_household, refs) => {
+        if (refs.personIds.some(id => id !== '00000000-0000-4000-8000-000000000001')) throw new TypeError('CONTEXT_PERSON_NOT_IN_HOUSEHOLD');
+      }, readWorld: async () => fixture.world,
       prepareWorld: (world, state) => preparePlanningMobility(world, state, owner.value) } };
   })());
   return stores.get(key);
@@ -106,9 +111,10 @@ const server = http.createServer(async (request, response) => {
       const controls = appliedPlanControls(effective.preview.compiled, effective.semanticState, effective.preview.baseline);
       const markup = renderToStaticMarkup(React.createElement(AppliedMonthView, { projection: effective.projection,
         semanticState: effective.semanticState, controls, plan: null,
+        persons: s.deps.householdPersons,
         revision: effective.revision.revisionNumber, today: s.fixture.world.asOfDate,
         composerHref: `/?scenario=${encodeURIComponent(key)}` }));
-      response.end(`<!doctype html><html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Mois à venir · fixture P04</title><link rel="stylesheet" href="/global.css"><link rel="stylesheet" href="/app.css"></head><body><main style="max-width:1100px;margin:24px auto;padding:16px">${markup}</main></body></html>`);
+      response.end(`<!doctype html><html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Mois à venir · fixture ${key}</title><link rel="stylesheet" href="/global.css"><link rel="stylesheet" href="/app.css"></head><body><main style="max-width:1100px;margin:24px auto;padding:16px">${markup}</main></body></html>`);
       return;
     }
     if (['/app.js', '/app.css', '/global.css', '/app.js.map', '/app.css.map'].includes(url.pathname)) {

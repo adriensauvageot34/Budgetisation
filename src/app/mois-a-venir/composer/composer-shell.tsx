@@ -20,8 +20,10 @@ import { finishComparison, type ComparisonSnapshot } from "./comparison";
 import { AtomicPopover } from "./atomic-popover";
 import { stageLocalDecision, visualDraftModel } from "./local-draft";
 import { ComposerPreviewScheduler, type PreviewStatus } from "./preview-scheduler";
+import { GiftEditor } from "./gift-editor";
 
 type Editor = { title: string; compact?: boolean; side?: boolean; fields: readonly ComposerField[]; values: Record<string, string>;
+  giftContextId?: string;
   coursesReference?: { central: string | null; firstMonth: string | null; lastMonth: string | null; comparableCount: number; basis: string; sources: string[] };
   operation: (values: Record<string, string>) => ComposerOperation };
 export function ComposerShell({ initialModel, transport }: { initialModel: ComposerUiModel; transport: ComposerTransport }) {
@@ -259,6 +261,7 @@ export function ComposerShell({ initialModel, transport }: { initialModel: Compo
       if (admitted) {
         setFocusedContext(identity); setSelected(null); prepareDialogFocus();
         setEditor({ title: `Configurer ${asset.label}`, side: !["night-out", "short-stay", "family-visit"].includes(asset.templateKey ?? ""),
+          ...(asset.templateKey === "gift" ? { giftContextId: identity } : {}),
           fields: model.editors.find(e => e.assetKey === asset.assetKey)?.fields ?? [], values: {},
           operation: values => ({ kind: "EDIT_CONTEXT", contextOccurrenceId: identity, values }) });
         return;
@@ -294,7 +297,8 @@ export function ComposerShell({ initialModel, transport }: { initialModel: Compo
   function editContext(card: ComposerContextCardView) {
     clearHover();
     prepareDialogFocus();
-    setEditor({ title: `Modifier ${card.label}`, side: !["night-out", "short-stay", "family-visit"].includes(card.templateKey), fields: model.editors.find(e => e.assetKey === `template:${card.templateKey}`)?.fields ?? [],
+    setEditor({ title: `Modifier ${card.label}`, side: !["night-out", "short-stay", "family-visit"].includes(card.templateKey),
+      ...(card.templateKey === "gift" ? { giftContextId: card.contextOccurrenceId } : {}), fields: model.editors.find(e => e.assetKey === `template:${card.templateKey}`)?.fields ?? [],
       values: Object.fromEntries(Object.entries(card.fields).filter((entry): entry is [string, string] => typeof entry[1] === "string")),
       operation: values => ({ kind: "EDIT_CONTEXT", contextOccurrenceId: card.contextOccurrenceId, values }) });
   }
@@ -314,6 +318,9 @@ export function ComposerShell({ initialModel, transport }: { initialModel: Compo
     : editor ? "Terminez ou fermez le panneau de configuration avant d’appliquer le mois."
     : previewStatus === "FAILED" ? "La simulation a échoué. Le brouillon est conservé ; relancez la prévisualisation avant d’appliquer."
     : previewStatus === "STALE" ? "La projection est obsolète. Relancez la prévisualisation avant d’appliquer."
+    : previewStatus === "BLOCKED" ? model.board.cockpit.diagnostics.some(diagnostic => diagnostic.code === "COMPONENT_FUNDING_SUM_INVALID")
+      ? "Le financement déclaré ne correspond pas au coût du cadeau. Ajustez-le avant d’appliquer."
+      : "La projection est calculée, mais des contraintes empêchent l’application. Consultez le détail financier."
     : previewStatus !== "FRESH" ? "La projection du brouillon attend une simulation serveur fraîche."
     : !model.board.draft.dirty ? model.activeRevisionNumber ? "Le mois est déjà appliqué. Modifiez un élément pour créer une nouvelle révision." : `Composez un premier choix pour appliquer votre mois.${model.presentation.unresolvedCount ? ` ${model.presentation.unresolvedCount} éléments à préciser.` : ""}`
     : model.presentation.unresolvedCount ? `${model.presentation.unresolvedCount} éléments restent à préciser avant l’application.`
@@ -359,7 +366,10 @@ export function ComposerShell({ initialModel, transport }: { initialModel: Compo
     <dialog ref={dialog} className={styles.dialog} data-side-panel={editor?.side || undefined} data-compact-editor={editor?.compact || undefined} aria-labelledby="composer-dialog-title" onCancel={e => { e.preventDefault(); closeDialog(); }} onKeyDown={e => { if (e.key === "Escape" && editor?.side) { e.preventDefault(); closeDialog(); } }}>
       <header><h2 id="composer-dialog-title">{editor?.title ?? (projectionOpen ? "Le détail de votre mois" : "Des pistes pour votre mois")}</h2><button className={styles.iconButton} disabled={busy} aria-label="Fermer" onClick={closeDialog}><X size={19} /></button></header>
       {errorMessage && <p role="alert" className={styles.formError}>{errorMessage}</p>}
-      {editor ? <form onSubmit={e => { e.preventDefault(); const values = Object.fromEntries(new FormData(e.currentTarget).entries()) as Record<string, string>; stage(editor.operation(values)); setEditor(null); }}>
+      {editor?.giftContextId && draftState.contexts.find(context => context.contextOccurrenceId === editor.giftContextId)
+        ? <GiftEditor key={editor.giftContextId} context={draftState.contexts.find(context => context.contextOccurrenceId === editor.giftContextId)!}
+          householdPersons={model.householdPersons} busy={busy} onCancel={closeDialog} onSave={operation => { stage(operation); setEditor(null); }} />
+        : editor ? <form onSubmit={e => { e.preventDefault(); const values = Object.fromEntries(new FormData(e.currentTarget).entries()) as Record<string, string>; stage(editor.operation(values)); setEditor(null); }}>
         {editor.coursesReference && <aside className={styles.coursesReference} data-courses-reference aria-label="Repère historique Courses">
           <strong>Repère historique proposé : {money(editor.coursesReference.central)}</strong>
           <p>{editor.coursesReference.comparableCount > 0 ? `${editor.coursesReference.comparableCount} mois comparables · ${editor.coursesReference.firstMonth} à ${editor.coursesReference.lastMonth}` : "Aucun mois comparable qualifié"} · {editor.coursesReference.basis}</p>

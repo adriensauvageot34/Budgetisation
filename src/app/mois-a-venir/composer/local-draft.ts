@@ -1,5 +1,6 @@
 import { parsePlanSemanticState, semanticStateDigest, type PlanSemanticStateV1 } from "@/domain/phase2/planner/semantic-state";
 import { plannerDigest } from "@/domain/phase2/planner/json";
+import type { PlannerJson } from "@/domain/phase2/planner/json";
 import type { ComposerOperation, ComposerUiModel } from "@/domain/phase2/planner/composer-ui-contract";
 
 /** Draft decisions only. The Compiler/V2 server remains the sole financial authority. */
@@ -28,6 +29,20 @@ export function stageLocalDecision(model: ComposerUiModel, raw: PlanSemanticStat
       }
       return { ...c, fields };
     }) });
+  }
+  if (operation.kind === "EDIT_GIFT") {
+    const context = state.contexts.find(c => c.contextOccurrenceId === operation.contextOccurrenceId);
+    if (context?.templateKey !== "gift" || operation.item.kind !== "COMPONENT" || operation.item.optionKey !== "gift"
+      || Object.keys(operation.values).some(key => !["label", "plannedDate", "recipientRef", "occasion", "objectLabel"].includes(key))) return null;
+    const prior = context.slotSelections.item?.items;
+    if (Array.isArray(prior) && prior.some(item => item && typeof item === "object" && !Array.isArray(item)
+      && item.kind === "COMPONENT" && item.selectionId !== operation.item.selectionId)) return null;
+    const fields: Record<string, PlannerJson> = { ...context.fields, fieldSchemaVersion: "context-fields@v2" };
+    for (const [key, value] of Object.entries(operation.values)) {
+      if (value === "") delete fields[key]; else fields[key] = value;
+    }
+    return parsePlanSemanticState({ ...state, contexts: state.contexts.map(c => c.contextOccurrenceId === context.contextOccurrenceId
+      ? { ...c, fields, slotSelections: { ...c.slotSelections, item: { items: [operation.item] } } } : c) });
   }
   if (operation.kind === "MUTATE" && operation.mutation.kind === "SET_STATE") {
     const targetRef = operation.mutation.targetRef;

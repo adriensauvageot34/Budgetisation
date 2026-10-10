@@ -15,7 +15,7 @@ import { publishContextRegistry, resolveContextTemplate } from "./context-regist
 import { mutatePlanSemanticState } from "./semantic-mutations";
 import { acceptPlanBalanceSuggestion, readPlanBalanceSuggestions } from "./balance-assistant";
 import { parseMobilityPricing } from "./mobility-selections";
-import { patchContextEditorFields } from "./context-state";
+import { patchContextEditorFields, setContextSlotSelections } from "./context-state";
 import { composerAssetIcon, composerPresentation } from "./composer-presentation";
 
 const field = (key: string, label: string, kind: ComposerField["kind"] = "TEXT", required = false): ComposerField => ({ key, label, kind, required });
@@ -62,7 +62,7 @@ export async function composerUiModel(deps: PlannerDependencies, household: stri
     naturalPresets: card.capability.naturalPresets.map(p => ({ ...p, label: ({ low: "Repère bas", median: "Repère médian", high: "Repère haut" } as Record<string, string>)[p.label]
       ?? (p.label === "central" ? "Repère médian" : p.label.startsWith("allocation ×") && p.semanticMutation.kind === "SET_STATE" && typeof p.semanticMutation.value.amount === "string"
         ? `Réserver ${new Intl.NumberFormat("fr-FR", { style: "currency", currency: "EUR" }).format(Number(p.semanticMutation.value.amount))}` : p.label) })) } : null });
-  return { ...view, presentation: composerPresentation(model), library: { ...view.library,
+  return { ...view, householdPersons: deps.householdPersons ?? [], presentation: composerPresentation(model), library: { ...view.library,
     searchableAssets: view.library.searchableAssets.map(asset => ({ ...asset, iconKey: composerAssetIcon(asset, model) })), sections: [
     ...groups.map(family => ({ sectionKey: family, assetKeys: templates.filter(t => t.family === family).map(t => `template:${t.templateKey}`) })),
     { sectionKey: "options", assetKeys: view.library.searchableAssets.filter(a => a.kind === "SLOT_OPTION_ASSET").map(a => a.assetKey) },
@@ -178,6 +178,16 @@ export async function handleComposerRequest(deps: PlannerDependencies, household
       const socket = card.sockets.find(s => s.slotKey === request.slotKey)!;
       state = mutatePlanSemanticState(state, { kind: "PATCH_CONTEXT", contextOccurrenceId: card.contextOccurrenceId, slotKey: socket.slotKey,
         items: socket.currentItems.filter(i => i.selectionId !== request.selectionId) });
+      mutationKind = "PATCH_CONTEXT";
+    } else if (request.kind === "EDIT_GIFT") {
+      const card = model.board.contexts.find(c => c.contextOccurrenceId === request.contextOccurrenceId);
+      if (card?.templateKey !== "gift" || !card.capabilityRefs.includes("PATCH_CONTEXT")) throw new TypeError("COMPOSER_GIFT_TARGET_INVALID");
+      const prior = card.sockets.find(socket => socket.slotKey === "item")?.currentItems ?? [];
+      if (request.item.kind !== "COMPONENT" || request.item.optionKey !== "gift"
+        || prior.some(item => item.kind === "COMPONENT" && item.selectionId !== request.item.selectionId))
+        throw new TypeError("COMPOSER_GIFT_ITEM_INVALID");
+      state = setContextSlotSelections(patchContextEditorFields(state, card.contextOccurrenceId, request.values),
+        card.contextOccurrenceId, "item", [request.item]);
       mutationKind = "PATCH_CONTEXT";
     } else if (request.kind === "EDIT_CONTEXT") {
       const card = model.board.contexts.find(c => c.contextOccurrenceId === request.contextOccurrenceId);

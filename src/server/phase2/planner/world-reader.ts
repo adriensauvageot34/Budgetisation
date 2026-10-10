@@ -23,7 +23,8 @@ export function createPlannerDependencies(canonical: CanonicalRepository, authen
   const scope = (householdId: string) => {
     if (householdId !== String(canonical.context.householdId)) throw new TypeError("PLANNER_AUTHORIZED_HOUSEHOLD_MISMATCH");
   };
-  return { repository: createPlanApplyRepository(authenticatedClient), async validateContextReferences(householdId, refs) {
+  return { repository: createPlanApplyRepository(authenticatedClient), householdPersons: (canonical.context.persons ?? []).map(person =>
+    ({ personId: String(person.personId), displayName: person.displayName })), async validateContextReferences(householdId, refs) {
     scope(householdId);
     const persons = new Set(canonical.context.persons.map(person => String(person.personId)));
     if (refs.personIds.some(id => !persons.has(id))) throw new TypeError("CONTEXT_PERSON_NOT_IN_HOUSEHOLD");

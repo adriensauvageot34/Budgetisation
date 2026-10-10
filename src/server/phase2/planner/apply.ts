@@ -11,6 +11,7 @@ import { revisionChangeSet } from "./change-set";
 import { knownContextReferences } from "./context-selections";
 
 export type PlannerDependencies = Readonly<{ repository: PlanRepository;
+  householdPersons?: readonly Readonly<{ personId: string; displayName: string }>[];
   readWorld(householdId: string, targetMonth: string): Promise<PlanningWorldFacts>;
   prepareWorld?(world: PlanningWorldFacts, state: PlanSemanticStateV1): Promise<PlanningWorldFacts>;
   validateContextReferences?(householdId: string, refs: Readonly<{ personIds: readonly string[]; placeIds: readonly string[] }>): Promise<void> }>;
