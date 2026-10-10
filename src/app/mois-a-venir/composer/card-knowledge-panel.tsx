@@ -51,7 +51,7 @@ export function CardKnowledgePanel({ knowledge, onPrefill }: {
       <p>{unitLabel[dimension.unit]} · {dimension.suggestionPolicy === "OFFER_PREFILL" ? "reprise possible sur choix explicite" : dimension.suggestionPolicy === "REFERENCE_ONLY" ? "repère indicatif" : "indisponible"}.
         {dimension.p25 !== null && dimension.p75 !== null ? ` Fourchette publiée : ${display(dimension, dimension.p25)} à ${display(dimension, dimension.p75)}.` : ""}</p>
       <p>{dimension.reasonCodes.map(reason => reasonLabel[reason] ?? reason).join(" ")}</p>
-      <p>Owner : {dimension.sourceAuthority}. Sources : {dimension.sourceRefs.join(", ") || "aucune source admissible"}.
+      <p className={styles.knowledgeProvenance}>Owner : {dimension.sourceAuthority}. Sources : {dimension.sourceRefs.join(", ") || "aucune source admissible"}.
         {dimension.sourceDigests.length ? ` Révisions : ${dimension.sourceDigests.join(", ")}.` : ""}</p>
     </div>)}</details>
     <p>Une référence affichée ne modifie ni le Draft ni la simulation. Validez le formulaire pour décider.</p>
