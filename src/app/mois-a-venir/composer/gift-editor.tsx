@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import type { ProspectivePersonRef } from "@/domain/phase2/planned-contract";
-import { assetsForModule } from "@/domain/phase2/planned-assets";
+import { assetsForModule, PLANNED_ASSET_CATALOG_VERSION, type PlannedAssetRef } from "@/domain/phase2/planned-assets";
 import type { ComponentSelectionV1 } from "@/domain/phase2/planner/component-contract";
 import type { PlannedContextState } from "@/domain/phase2/planner/semantic-state";
 import type { ComposerOperation } from "@/domain/phase2/planner/composer-ui-contract";
@@ -25,6 +25,10 @@ export function GiftEditor({ context, householdPersons, busy, onSave, onCancel }
     context.fields.recipientRef && typeof context.fields.recipientRef === "object" && !Array.isArray(context.fields.recipientRef)
       ? context.fields.recipientRef as ProspectivePersonRef : undefined);
   const [occasion, setOccasion] = useState(string(context.fields.occasion));
+  const rawAssetRef = context.fields.objectAssetRef;
+  const existingAssetRef = rawAssetRef && typeof rawAssetRef === "object" && !Array.isArray(rawAssetRef)
+    ? rawAssetRef as PlannedAssetRef : undefined;
+  const [assetKey, setAssetKey] = useState(existingAssetRef?.assetKey ?? "");
   const [objectLabel, setObjectLabel] = useState(string(context.fields.objectLabel) || existing?.label || "");
   const [date, setDate] = useState(string(context.fields.plannedDate));
   const [quantity, setQuantity] = useState(existing?.quantity ?? "1");
@@ -35,7 +39,7 @@ export function GiftEditor({ context, householdPersons, busy, onSave, onCancel }
   const [fundingMode, setFundingMode] = useState(existingFunding.some(part => part.source !== "BANK") ? "EXISTING" : existingFunding.length ? "BANK" : "UNDECIDED");
   const [fundingAmount, setFundingAmount] = useState(existingFunding.find(part => part.source === "BANK")?.amount ?? "");
   const [error, setError] = useState("");
-  const selectedAsset = giftAssets.find(asset => asset.label === objectLabel);
+  const selectedAsset = giftAssets.find(asset => asset.assetKey === assetKey);
   return <form data-gift-editor onSubmit={event => {
     event.preventDefault();
     if (recipient?.kind === "TEXT" && !recipient.label.trim()) { setError("Indiquez le nom du destinataire ou retirez cette sélection."); return; }
@@ -49,7 +53,10 @@ export function GiftEditor({ context, householdPersons, busy, onSave, onCancel }
       provenance: "EXPLICIT_USER_DECISION", label: objectLabel.trim(), quantity: quantity.trim(), unitBasis, cost,
       fundingAllocations: fundingMode === "EXISTING" ? existingFunding : fundingMode === "BANK" ? [{ source: "BANK", amount: fundingAmount.trim() }] : [] };
     onSave({ kind: "EDIT_GIFT", contextOccurrenceId: context.contextOccurrenceId,
-      values: { recipientRef: recipient ?? "", occasion: occasion.trim(), objectLabel: objectLabel.trim(), plannedDate: date || "" }, item });
+      values: { recipientRef: recipient ?? "", occasion: occasion.trim(), objectLabel: objectLabel.trim(), plannedDate: date || "",
+        ...(assetKey === (existingAssetRef?.assetKey ?? "") ? {} : { objectAssetRef: assetKey
+          ? { catalogVersion: PLANNED_ASSET_CATALOG_VERSION, assetKey, labelAtSelection: selectedAsset?.label ?? "",
+            provenance: "EXPLICIT_USER_DECISION" } : "" }) }, item });
   }}>
     <p className={styles.helper}>Le cadeau est une intention du Plan. Son coût provient uniquement de l’objet et de ses éventuels compléments.</p>
     <div className={styles.formFields}>
@@ -58,10 +65,14 @@ export function GiftEditor({ context, householdPersons, busy, onSave, onCancel }
         value={occasionChoices.includes(occasion) ? String(occasionChoices.indexOf(occasion)) : "OTHER"}
         onChange={key => setOccasion(key === "OTHER" ? "" : occasionChoices[Number(key)] ?? "")} />
         {!occasionChoices.includes(occasion) && <label>Précisez l’occasion<input className={builderInput} value={occasion} onChange={event => setOccasion(event.target.value)} maxLength={120} /></label>}</div>
-      <label>Idées d’objets · remplit le libellé<select value={selectedAsset?.assetKey ?? ""} onChange={event => {
+      <label>Type d’objet · catalogue Budgetisation<select value={assetKey} onChange={event => {
         const asset = giftAssets.find(candidate => candidate.assetKey === event.target.value);
-        if (asset) setObjectLabel(asset.label);
-      }}><option value="">Choisir ou saisir librement</option>{giftAssets.map(asset => <option key={asset.assetKey} value={asset.assetKey}>{asset.label}</option>)}</select></label>
+        setAssetKey(event.target.value);
+        if (asset && !objectLabel.trim()) setObjectLabel(asset.label);
+      }}><option value="">Sans classification choisie</option>
+        {assetKey && !selectedAsset && <option value={assetKey}>Référence indisponible · {existingAssetRef?.labelAtSelection ?? assetKey} ({assetKey})</option>}
+        {giftAssets.map(asset => <option key={asset.assetKey} value={asset.assetKey}>{asset.label}</option>)}</select></label>
+      {assetKey && !selectedAsset && <p role="status" className={styles.helper}>Cette référence de catalogue n’est plus disponible. Elle reste conservée tant que vous ne choisissez pas un autre type.</p>}
       <label>Quel objet ou produit ?<input value={objectLabel} onChange={event => setObjectLabel(event.target.value)} maxLength={120} /></label>
       <label>Date prévue (facultative)<input type="date" value={date} onChange={event => setDate(event.target.value)} /></label>
       <label>Quantité<input type="number" min="0.001" max="9999" step="0.001" value={quantity} onChange={event => setQuantity(event.target.value)} required /></label>

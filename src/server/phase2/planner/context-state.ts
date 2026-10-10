@@ -3,6 +3,7 @@ import { parsePlannerJsonObject, plannerKeys, plannerRecord, plannerString } fro
 import { parsePlanSemanticState } from "@/domain/phase2/planner/semantic-state";
 import type { PlanSemanticStateV1, PlannedContextState } from "@/domain/phase2/planner/semantic-state";
 import type { ComponentSelectionV1 } from "@/domain/phase2/planner/component-contract";
+import { plannedAsset, type PlannedAssetRef } from "@/domain/phase2/planned-assets";
 import { isLegacyContextField, resolveContextTemplate } from "./context-registry";
 import { parseContextField, validateContextGraph } from "./context-selections";
 
@@ -38,10 +39,21 @@ export function patchContextEditorFields(raw: PlanSemanticStateV1, contextId: st
     if (value === undefined) throw new TypeError("CONTEXT_FIELD_UNDEFINED");
     if (value === "") delete fields[key];
     else if (value === null) fields[key] = null;
-    else fields[key] = parsePlannerJsonObject({ value: parseContextField(value, definition, state.targetMonth) }).value;
+    else {
+      const parsed = parseContextField(value, definition, state.targetMonth);
+      if (key === "objectAssetRef" && parsed !== null) {
+        const ref = parsed as PlannedAssetRef;
+        const asset = plannedAsset(ref.assetKey);
+        if (context.templateKey !== "gift" || asset?.module !== "gift" || asset.label !== ref.labelAtSelection)
+          throw new TypeError("CONTEXT_GIFT_ASSET_UNKNOWN");
+      }
+      fields[key] = parsePlannerJsonObject({ value: parsed }).value;
+    }
   }
   const rich = Object.keys(fields).some(key => !isLegacyContextField(context.templateKey, key));
-  if (rich) fields.fieldSchemaVersion = "context-fields@v2";
+  if (context.fields.fieldSchemaVersion === "context-fields@v3" || Object.hasOwn(fields, "objectAssetRef"))
+    fields.fieldSchemaVersion = "context-fields@v3";
+  else if (rich) fields.fieldSchemaVersion = "context-fields@v2";
   return finish({ ...state, contexts: state.contexts.map(item => item.contextOccurrenceId === contextId
     ? { ...item, fields } : item) });
 }

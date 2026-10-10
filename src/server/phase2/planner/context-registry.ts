@@ -4,9 +4,10 @@ import type { ContextCapability, ContextFieldDefinition, ContextRegistryV1, Cont
 import type { PlanSemanticStateV1 } from "@/domain/phase2/planner/semantic-state";
 
 export const CONTEXT_REGISTRY_VERSION = "planner-context-registry@v3-renewals";
+export const GIFT_ASSET_CONTEXT_REGISTRY_VERSION = "planner-context-registry@v4-gift-asset";
 const commonFields: readonly ContextFieldDefinition[] = [
   { fieldKey: "label", kind: "TEXT", required: false }, { fieldKey: "plannedDate", kind: "DATE", required: false },
-  { fieldKey: "fieldSchemaVersion", kind: "CHOICE", required: false, choices: ["context-fields@v2"] }];
+  { fieldKey: "fieldSchemaVersion", kind: "CHOICE", required: false, choices: ["context-fields@v2", "context-fields@v3"] }];
 const person = (fieldKey: string): ContextFieldDefinition => ({ fieldKey, kind: "PERSON_REF", required: false });
 const people: ContextFieldDefinition = { fieldKey: "participantRefs", kind: "PERSON_REFS", required: false };
 const place = (fieldKey: string): ContextFieldDefinition => ({ fieldKey, kind: "PLACE_REF", required: false });
@@ -68,7 +69,7 @@ const templates: ContextTemplateV1[] = [
       text("timingNote")]),
   template("beauty-restock", "Réapprovisionnement beauté", "BEAUTY", [{ ...slot("products", "REPEATING", [component("product", "Produit")]), acceptsNeedOccurrence: true }, mobility("transport")], [], 1),
   template("gift", "Cadeau", "PURCHASE", [slot("item", "REQUIRED_ONE", [component("gift", "Cadeau")]), slot("extras", "REPEATING", [component("extra", "Complément")])],
-    [person("recipientRef"), text("occasion"), text("objectLabel")]),
+    [person("recipientRef"), text("occasion"), text("objectLabel"), { fieldKey: "objectAssetRef", kind: "PLANNED_ASSET_REF", required: false }]),
   template("home-project", "Projet maison", "HOME", [slot("items", "REPEATING", [component("item", "Équipement du projet")]),
     slot("services", "REPEATING", [component("service", "Service")]), slot("purchases", "REPEATING", [], ["purchase"]), mobility("transport")], [], 1),
   template("other-context", "Autre intention", "OTHER", [slot("components", "REPEATING", [component("other", "Contribution")]),
@@ -78,8 +79,16 @@ function freeze<T>(value: T): T {
   if (value && typeof value === "object") { for (const child of Object.values(value)) freeze(child); Object.freeze(value); }
   return value;
 }
-const registry = freeze<ContextRegistryV1>({ version: CONTEXT_REGISTRY_VERSION, templates: templates.sort((a, b) => a.templateKey < b.templateKey ? -1 : a.templateKey > b.templateKey ? 1 : 0) });
+const registry = freeze<ContextRegistryV1>({ version: GIFT_ASSET_CONTEXT_REGISTRY_VERSION,
+  templates: templates.map(template => template.templateKey === "gift" ? { ...template, version: "gift@v2" } : template)
+    .sort((a, b) => a.templateKey < b.templateKey ? -1 : a.templateKey > b.templateKey ? 1 : 0) });
 export const publishContextRegistry = (): ContextRegistryV1 => registry;
+/** Preserve the exact registry manifest previously emitted for v2 revisions. */
+const v2Registry = freeze<ContextRegistryV1>({ version: CONTEXT_REGISTRY_VERSION,
+  templates: registry.templates.map(template => ({ ...template,
+    version: template.templateKey === "gift" ? "gift@v1" : template.version,
+    fields: template.fields.filter(field => field.fieldKey !== "objectAssetRef").map(field => field.fieldKey === "fieldSchemaVersion"
+      ? { ...field, choices: ["context-fields@v2"] } : field) })) });
 /** C0 stores the whole registry in the immutable manifest. Keep its pre-P02 shape for old states. */
 export function isLegacyContextField(templateKey: string, fieldKey: string): boolean {
   return ["label", "plannedDate"].includes(fieldKey)
@@ -87,10 +96,11 @@ export function isLegacyContextField(templateKey: string, fieldKey: string): boo
     || ["night-out", "short-stay"].includes(templateKey) && fieldKey === "endDate";
 }
 const legacyRegistry = freeze<ContextRegistryV1>({ version: CONTEXT_REGISTRY_VERSION,
-  templates: registry.templates.map(template => ({ ...template,
+  templates: v2Registry.templates.map(template => ({ ...template,
     fields: template.fields.filter(field => isLegacyContextField(template.templateKey, field.fieldKey)) })) });
 export function manifestContextRegistry(state: PlanSemanticStateV1): ContextRegistryV1 {
-  return state.contexts.some(context => context.fields.fieldSchemaVersion === "context-fields@v2") ? registry : legacyRegistry;
+  if (state.contexts.some(context => context.fields.fieldSchemaVersion === "context-fields@v3")) return registry;
+  return state.contexts.some(context => context.fields.fieldSchemaVersion === "context-fields@v2") ? v2Registry : legacyRegistry;
 }
 export function resolveContextTemplate(key: string): ContextTemplateV1 {
   const found = registry.templates.find(t => t.templateKey === key);

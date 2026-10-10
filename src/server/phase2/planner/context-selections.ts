@@ -7,6 +7,7 @@ import type { ContextFieldDefinition } from "@/domain/phase2/planner/context-con
 import type { PlannedContextState, PlanSemanticStateV1 } from "@/domain/phase2/planner/semantic-state";
 import type { ProspectivePlaceRef } from "@/domain/phase2/planned-contract";
 import type { ProspectivePersonRef } from "@/domain/phase2/planned-contract";
+import { PLANNED_ASSET_CATALOG_VERSION, type PlannedAssetRef } from "@/domain/phase2/planned-assets";
 import { SOCIAL_CONTACTS_V1 } from "@/domain/phase2/planned-rules";
 import { parseKernelCost, parseKernelFunding } from "./cost-resolver";
 import { isLegacyContextField, resolveContextTemplate } from "./context-registry";
@@ -45,8 +46,19 @@ function person(raw: unknown): ProspectivePersonRef | null {
   if (value.kind !== "TEXT") throw new TypeError("CONTEXT_PERSON_REF_INVALID");
   return { kind: "TEXT", label: plannerString(value.label) };
 }
+function giftAssetRef(raw: unknown): PlannedAssetRef {
+  const value = plannerRecord(raw);
+  plannerKeys(value, ["catalogVersion", "assetKey", "labelAtSelection", "provenance"],
+    ["catalogVersion", "assetKey", "labelAtSelection", "provenance"]);
+  const assetKey = plannerString(value.assetKey);
+  const labelAtSelection = plannerString(value.labelAtSelection);
+  if (value.catalogVersion !== PLANNED_ASSET_CATALOG_VERSION || value.provenance !== "EXPLICIT_USER_DECISION"
+    || !/^gift:[a-z0-9_]+$/u.test(assetKey) || !labelAtSelection.trim()) throw new TypeError("CONTEXT_GIFT_ASSET_REF_INVALID");
+  return { catalogVersion: PLANNED_ASSET_CATALOG_VERSION, assetKey, labelAtSelection, provenance: "EXPLICIT_USER_DECISION" };
+}
 export function parseContextField(raw: unknown, field: ContextFieldDefinition, targetMonth: string): unknown {
   if (raw == null) return null;
+  if (field.kind === "PLANNED_ASSET_REF") return giftAssetRef(raw);
   if (field.kind === "DATE") return contextDate(raw, targetMonth);
   if (field.kind === "PERSON_REF") return person(raw);
   if (field.kind === "PLACE_REF") return place(raw);
@@ -111,8 +123,9 @@ export function readContextSelections(context: PlannedContextState, targetMonth:
   const template = resolveContextTemplate(context.templateKey);
   plannerKeys(plannerRecord(context.fields), template.fields.map(f => f.fieldKey), template.fields.filter(f => f.required).map(f => f.fieldKey));
   for (const field of template.fields) if (Object.hasOwn(context.fields, field.fieldKey)) {
-    if (!isLegacyContextField(context.templateKey, field.fieldKey) && field.fieldKey !== "fieldSchemaVersion"
-      && context.fields.fieldSchemaVersion !== "context-fields@v2")
+    if (field.fieldKey === "objectAssetRef" && context.fields.fieldSchemaVersion !== "context-fields@v3"
+      || !isLegacyContextField(context.templateKey, field.fieldKey) && field.fieldKey !== "fieldSchemaVersion"
+      && !["context-fields@v2", "context-fields@v3"].includes(String(context.fields.fieldSchemaVersion)))
       throw new TypeError("CONTEXT_FIELD_VERSION_REQUIRED");
     parseContextField(context.fields[field.fieldKey], field, targetMonth);
   }

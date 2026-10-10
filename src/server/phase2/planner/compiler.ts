@@ -16,7 +16,7 @@ import { externalDiningDomain } from "./simple-mappings";
 import { publishSimpleCapabilities } from "./simple-capabilities";
 import { forecastTemporalPolicy } from "../forecast-temporal-policy";
 import { expandComposableContexts, CONTEXT_COMPILER_VERSION } from "./context-compiler";
-import { manifestContextRegistry, CONTEXT_REGISTRY_VERSION } from "./context-registry";
+import { manifestContextRegistry } from "./context-registry";
 import { compileMobility } from "./mobility-compiler";
 import { JOURNEY_RESOLVER_VERSION } from "./journey-resolver";
 import { PROSPECTIVE_MOBILITY_PRICING_VERSION } from "./prospective-mobility-pricing";
@@ -130,15 +130,16 @@ export function compileSemanticPlan(input: CompilePlanInputV1): CompiledSemantic
   const financialAdapterInput = buildFinancialAdapterInput(world, slots, components, consumptions);
   const effectiveForecast = financialAdapterForecast(world, slots);
   const { computedAt: _clock, ...effectiveMeta } = effectiveForecast.meta;
+  const contextRegistry = manifestContextRegistry(state);
   const manifest = jsonEnvelope({ version: "planner-manifest@v1", compilerVersion: input.compilerVersion,
     modelVersions: { ...baseline.modelVersions, ...world.modelVersions, ...input.modelVersions,
       financialAdapter: FINANCIAL_ADAPTER_VERSION, constraints: KERNEL_CONSTRAINT_POLICY,
-      contextCompiler: CONTEXT_COMPILER_VERSION, contextRegistry: CONTEXT_REGISTRY_VERSION,
+      contextCompiler: CONTEXT_COMPILER_VERSION, contextRegistry: contextRegistry.version,
       journeyResolver: JOURNEY_RESOLVER_VERSION, mobilityPricing: PROSPECTIVE_MOBILITY_PRICING_VERSION }, baselineDigest: baseline.digest,
     authorityEvidence: financeAuthorityEvidence(input), effectiveForecast: { ...effectiveForecast, meta: effectiveMeta },
     semanticState: state, semanticStateDigest: semanticStateDigest(state), planSlots: slots, contexts, components,
     contextualEffects: effects, constraints, diagnostics, unresolvedReserves: baseline.unresolvedReserves, financialAdapterInput,
-    simpleCapabilities: publishSimpleCapabilities(baseline), contextRegistry: manifestContextRegistry(state), mobilityIntents: composable.mobilityIntents,
+    simpleCapabilities: publishSimpleCapabilities(baseline), contextRegistry, mobilityIntents: composable.mobilityIntents,
     journeys: mobility.journeys, journeyDependencies: mobility.dependencies, journeyPrices: mobility.prices,
     needs: baseline.renewals?.needOccurrences ?? [], renewalProfiles: baseline.renewals?.replenishmentProfiles ?? [] });
   return { version: "compiled-semantic-plan@v1", targetMonth: state.targetMonth, semanticStateDigest: semanticStateDigest(state),

@@ -10,6 +10,7 @@ import { MonthCalendar } from "./month-calendar";
 import { projectMonthCalendar, type PlannedExpenseCard } from "./planned-expenses-projection";
 import { money } from "./composer/display";
 import { SOCIAL_CONTACTS_V1 } from "@/domain/phase2/planned-rules";
+import { plannedAsset } from "@/domain/phase2/planned-assets";
 import material from "./month-material.module.css";
 
 const record = (value: unknown): Record<string, unknown> | null => value && typeof value === "object" && !Array.isArray(value) ? value as Record<string, unknown> : null;
@@ -27,6 +28,13 @@ const costLabel = (value: unknown) => {
   const cost = record(value);
   return cost?.kind === "MANUAL" && typeof cost.unitAmount === "string" ? `${money(cost.unitAmount)} par unité · montant déclaré`
     : cost?.kind === "QUOTE" ? "Prix issu d’un devis conservé" : "Prix inconnu";
+};
+const giftAssetLabel = (value: unknown) => {
+  const ref = record(value);
+  if (!ref || typeof ref.assetKey !== "string") return "Non classé";
+  const asset = plannedAsset(ref.assetKey);
+  const label = typeof ref.labelAtSelection === "string" ? ref.labelAtSelection : ref.assetKey;
+  return asset?.module === "gift" ? `Achat · Cadeau · ${label}` : `Référence de catalogue indisponible · ${label} (${ref.assetKey})`;
 };
 
 /** Applied financial values come directly from C7, including unknowns. Existing
@@ -66,6 +74,7 @@ export function AppliedMonthView({ projection, semanticState, controls = [], pla
         return <article key={context.contextOccurrenceId} data-plan-gift={context.contextOccurrenceId} className="mt-4 rounded-xl border border-slate-200 p-4">
           <h3 className="font-bold">Cadeau · {personLabel(context.fields.recipientRef, persons)}</h3>
           <dl className="mt-2 grid gap-1 text-sm"><div><dt className="inline font-semibold">Occasion : </dt><dd className="inline">{typeof context.fields.occasion === "string" ? context.fields.occasion : "À préciser"}</dd></div>
+            <div><dt className="inline font-semibold">Type d’objet : </dt><dd className="inline">{giftAssetLabel(context.fields.objectAssetRef)}</dd></div>
             <div><dt className="inline font-semibold">Objet : </dt><dd className="inline">{typeof context.fields.objectLabel === "string" ? context.fields.objectLabel : typeof gift?.label === "string" ? gift.label : "À préciser"}</dd></div>
             <div><dt className="inline font-semibold">Date : </dt><dd className="inline">{typeof context.fields.plannedDate === "string" ? context.fields.plannedDate : "Non fixée"}</dd></div>
             <div><dt className="inline font-semibold">Budget : </dt><dd className="inline">{gift ? `${costLabel(gift.cost)} · quantité ${String(gift.quantity)} · ${gift.unitBasis === "PERSON" ? "par personne" : gift.unitBasis === "SHARED" ? "montant commun" : "par objet"}` : "À préciser"}</dd></div>
