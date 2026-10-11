@@ -14,6 +14,6 @@ export async function authorizedPlanner() {
   if (bootstrap.user.id !== user.id) throw new TypeError("PLANNER_SESSION_CHANGED");
   const now = new Date().toISOString();
   const context = createAuthorizedRuntimeContext(bootstrap, parseInstant(now));
-  return { householdId: String(context.householdId),
+  return { householdId: String(context.householdId), userId: user.id, supabase,
     deps: createPlannerDependencies(new CanonicalRepository(createCanonicalReadClient(), context), supabase, () => now) };
 }

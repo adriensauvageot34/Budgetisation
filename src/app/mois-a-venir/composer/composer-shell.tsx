@@ -22,12 +22,18 @@ import { stageLocalDecision, visualDraftModel } from "./local-draft";
 import { ComposerPreviewScheduler, type PreviewStatus } from "./preview-scheduler";
 import { GiftEditor } from "./gift-editor";
 import { CardKnowledgePanel } from "./card-knowledge-panel";
+import { useDurableDraft, type DraftTransport } from "./durable-draft";
+import type { ComposerDraftSnapshot, StoredComposerDraft } from "@/domain/phase2/planner/composer-draft-contract";
 
 type Editor = { title: string; compact?: boolean; side?: boolean; fields: readonly ComposerField[]; values: Record<string, string>;
   giftContextId?: string;
   cardKey?: string;
   operation: (values: Record<string, string>) => ComposerOperation };
-export function ComposerShell({ initialModel, transport }: { initialModel: ComposerUiModel; transport: ComposerTransport }) {
+type DraftConfirmation = { kind: "ABANDON" | "RESTART" | "RESTORE" | "LOAD_SERVER"; draftId?: string; version?: number };
+export function ComposerShell({ initialModel, transport, initialDrafts = null, draftTransport = null }: {
+  initialModel: ComposerUiModel; transport: ComposerTransport;
+  initialDrafts?: ComposerDraftSnapshot | null; draftTransport?: DraftTransport | null;
+}) {
   const [model, setModel] = useState(initialModel), current = useRef(initialModel);
   const [draftState, setDraftState] = useState(initialModel.semanticState), localDraft = useRef(initialModel.semanticState);
   const [previewStatus, setPreviewStatus] = useState<PreviewStatus>(initialModel.board.cockpit.applyReadiness === "BLOCKED" ? "BLOCKED" : "FRESH");
@@ -43,6 +49,11 @@ export function ComposerShell({ initialModel, transport }: { initialModel: Compo
   const dialog = useRef<HTMLDialogElement>(null), invoker = useRef<HTMLElement | null>(null);
   const applyAttempt = useRef<{ key: string; applyRequestId: string } | null>(null);
   const [comparison, setComparison] = useState<ComparisonSnapshot | null>(null);
+  const durable = useDurableDraft(draftTransport, initialDrafts, initialModel.semanticState.targetMonth, draftState, !!comparison);
+  const skipUnloadWarning = useRef(false);
+  const confirmationDialog = useRef<HTMLDialogElement>(null);
+  const [draftConfirmation, setDraftConfirmation] = useState<DraftConfirmation | null>(null);
+  const [draftConfirmationBusy, setDraftConfirmationBusy] = useState(false);
   const [completenessFocus, setCompletenessFocus] = useState(false);
   const [grabbed, setGrabbed] = useState<ComposerDragSource | null>(null), grab = useRef<ComposerDragSource | null>(null);
   const [overTarget, setOverTarget] = useState<DropTarget | null>(null), overRef = useRef<DropTarget | null>(null);
@@ -99,10 +110,43 @@ export function ComposerShell({ initialModel, transport }: { initialModel: Compo
     window.addEventListener("keydown", escape); return () => window.removeEventListener("keydown", escape);
   }, []);
   useEffect(() => {
-    if (!shown.board.draft.dirty) return;
+    if (!(draftTransport ? durable.unsaved : shown.board.draft.dirty) || skipUnloadWarning.current) return;
     const warn = (event: BeforeUnloadEvent) => { event.preventDefault(); };
     window.addEventListener("beforeunload", warn); return () => window.removeEventListener("beforeunload", warn);
-  }, [shown.board.draft.dirty]);
+  }, [durable.unsaved, shown.board.draft.dirty, draftTransport]);
+  function archiveDraft(returnToCenter: boolean) {
+    const active = durable.snapshot?.active;
+    if (active) setDraftConfirmation({ kind: returnToCenter ? "ABANDON" : "RESTART", draftId: active.draftId, version: active.version });
+  }
+  function restoreDraft(draft: StoredComposerDraft) {
+    if (durable.snapshot?.active) { setMessage("Archivez d’abord le brouillon actif avant d’en restaurer un autre."); return; }
+    setDraftConfirmation({ kind: "RESTORE", draftId: draft.draftId, version: draft.version });
+  }
+  async function confirmDraftAction() {
+    const action = draftConfirmation;
+    if (!action || draftConfirmationBusy) return;
+    if (action.kind === "LOAD_SERVER") { skipUnloadWarning.current = true; window.location.reload(); return; }
+    const draft = action.kind === "RESTORE"
+      ? durable.snapshot?.archives.find(item => item.draftId === action.draftId)
+      : durable.snapshot?.active;
+    if (!draft || draft.draftId !== action.draftId || draft.version !== action.version) {
+      setDraftConfirmation(null); setMessage("Le brouillon a changé. Relisez sa version avant de continuer."); return;
+    }
+    setDraftConfirmationBusy(true);
+    try {
+      const done = await durable.lifecycle(action.kind === "RESTORE" ? "RESTORE" : "ARCHIVE", draft,
+        action.kind !== "RESTORE" && durable.unsaved);
+      if (!done) { setDraftConfirmation(null); return; }
+      skipUnloadWarning.current = true;
+      if (action.kind === "ABANDON") window.location.assign(`/mois-a-venir?month=${initialModel.semanticState.targetMonth}&control=center`);
+      else if (action.kind === "RESTART") window.location.assign(`/mois-a-venir/composer?month=${initialModel.semanticState.targetMonth}`);
+      else window.location.reload();
+    } finally { setDraftConfirmationBusy(false); }
+  }
+  useEffect(() => {
+    if (draftConfirmation && !confirmationDialog.current?.open) confirmationDialog.current?.showModal();
+    else if (!draftConfirmation && confirmationDialog.current?.open) confirmationDialog.current.close();
+  }, [draftConfirmation]);
   useEffect(() => {
     if (editor || projectionOpen) { invoker.current = document.activeElement as HTMLElement;
       if (dialog.current?.open) dialog.current.close();
@@ -304,18 +348,22 @@ export function ComposerShell({ initialModel, transport }: { initialModel: Compo
       operation: values => ({ kind: "EDIT_CONTEXT", contextOccurrenceId: card.contextOccurrenceId, values }) });
   }
   function apply() {
-    if (comparison || grab.current || editor || previewStatus !== "FRESH" || semanticStateDigest(localDraft.current) !== model.board.draft.semanticStateDigest) return;
+    if (comparison || grab.current || editor || previewStatus !== "FRESH" || semanticStateDigest(localDraft.current) !== model.board.draft.semanticStateDigest
+      || draftTransport && (durable.status !== "SAVED" || !navigator.onLine || durable.snapshot?.baseStale)) return;
     const key = `${model.board.draft.semanticStateDigest}:${model.proof.expectedPreviewDigest}:${model.proof.expectedActiveRevisionId}`;
     if (applyAttempt.current?.key !== key) applyAttempt.current = { key, applyRequestId: crypto.randomUUID() };
     void run({ kind: "APPLY", command: { ...model.proof, applyRequestId: applyAttempt.current.applyRequestId } }, "none");
   }
-  const applyDisabled = busy || !!editor || previewStatus !== "FRESH" || !!hoverModel || !!grabbed || !shown.board.draft.dirty || model.board.cockpit.applyReadiness === "BLOCKED";
+  const applyDisabled = busy || !!editor || previewStatus !== "FRESH" || !!hoverModel || !!grabbed || !shown.board.draft.dirty || model.board.cockpit.applyReadiness === "BLOCKED"
+    || !!draftTransport && (durable.status !== "SAVED" || !durable.online || !!durable.snapshot?.baseStale);
   const openProjectionDetails = () => {
     clearHover();
     if (previewStatus !== "FRESH" && previewStatus !== "BLOCKED") { setMessage("Projection en attente d’une simulation à jour."); return; }
     setEditor(null); setProjectionOpen(true);
   };
-  const applyReason = busy ? "La prévisualisation serveur est en cours." : hoverModel || grabbed ? "Terminez le geste pour appliquer le mois."
+  const applyReason = busy ? "La prévisualisation serveur est en cours." : draftTransport && (durable.status !== "SAVED" || !durable.online || durable.snapshot?.baseStale)
+    ? "Attendez la sauvegarde confirmée du brouillon et une connexion active avant d’appliquer."
+    : hoverModel || grabbed ? "Terminez le geste pour appliquer le mois."
     : editor ? "Terminez ou fermez le panneau de configuration avant d’appliquer le mois."
     : previewStatus === "FAILED" ? "La simulation a échoué. Le brouillon est conservé ; relancez la prévisualisation avant d’appliquer."
     : previewStatus === "STALE" ? "La projection est obsolète. Relancez la prévisualisation avant d’appliquer."
@@ -331,10 +379,10 @@ export function ComposerShell({ initialModel, transport }: { initialModel: Compo
     canTarget: ref => assistantGrab.current?.targetRef === ref, reject: () => animate("recoil", grab.current?.sourceKey ?? null),
     overAssistant: ref => { if (ref === assistantOver.current) return; assistantOver.current = ref; clearHover(); },
     placeAssistant: ref => { if (assistantGrab.current?.targetRef !== ref) return; const operation = assistantGrab.current.operation; nextMotionTarget.current = ref; endDrag(); void run(operation); } }}>
-  <div className={styles.workspace} data-composer data-digest={shown.board.draft.semanticStateDigest} data-preview-state={previewStatus} data-world-version={worldVersion} data-exploratory-digest={hoverModel?.board.draft.semanticStateDigest} data-dragging={!!grabbed} data-comparing={!!comparison} data-motion={motion} data-revision={model.activeRevisionNumber} aria-busy={busy}
+  <div className={styles.workspace} data-composer data-digest={shown.board.draft.semanticStateDigest} data-preview-state={previewStatus} data-save-state={durable.status} data-world-version={worldVersion} data-exploratory-digest={hoverModel?.board.draft.semanticStateDigest} data-dragging={!!grabbed} data-comparing={!!comparison} data-motion={motion} data-revision={model.activeRevisionNumber} aria-busy={busy}
     onDragOverCapture={e => { if (grab.current && e.target instanceof Element && !e.target.closest("[data-board-drop],[data-trash]")) { over(null); if (assistantOver.current) { assistantOver.current = null; clearHover(); } } }}>
     <header className={styles.workspaceHeader}><div className={styles.headerIdentity}><a href={`/mois-a-venir?month=${model.semanticState.targetMonth}&control=center`} className={styles.backLink}><ArrowLeft size={14} /> Centre de contrôle</a>
-      <h1>Composer <span>{monthLabel(model.semanticState.targetMonth)}</span></h1><div className={styles.headerMeta}>{comparison && <span className={styles.variantMarker} data-variant-marker>VARIANTE</span>}<span className={styles.draftStatus} data-draft-status>{!model.activeRevisionNumber ? "Brouillon" : shown.board.draft.dirty ? "Nouvelle modification" : `Appliqué · révision ${model.activeRevisionNumber}`}</span>
+      <h1>Composer <span>{monthLabel(model.semanticState.targetMonth)}</span></h1><div className={styles.headerMeta}>{comparison && <span className={styles.variantMarker} data-variant-marker>VARIANTE</span>}<span className={styles.draftStatus} data-draft-status>{draftTransport ? ({ CLEAN: "Aucun brouillon sauvegardé", DIRTY: "Modifications non enregistrées", SAVING: "Sauvegarde en cours…", SAVED: "Brouillon sauvegardé", ERROR: "Erreur de sauvegarde", CONFLICT: "Conflit de brouillon", OFFLINE: "Hors ligne · non enregistré" }[durable.status]) : !model.activeRevisionNumber ? "Brouillon" : shown.board.draft.dirty ? "Nouvelle modification" : `Appliqué · révision ${model.activeRevisionNumber}`}</span>
         <span data-object-count>{shown.presentation.elementCount} éléments · <button className={styles.completenessToggle} data-completeness-toggle aria-pressed={completenessFocus} disabled={!model.presentation.unresolvedCount} onClick={() => setCompletenessFocus(v => !v)}>{model.presentation.unresolvedCount} à préciser</button></span>
         {previewStatus === "FRESH" && model.board.cockpit.projectionCompleteness === "COMPLETE" && model.board.cockpit.applyReadiness === "READY" && <span data-plan-ready>Plan prêt ✓</span>}</div></div>
       <div className={styles.hudContainer} data-compare-header>{comparison && <div className={styles.compareCurrent}><span>Actuel</span><strong>{money(comparison.model.board.cockpit.plan.economicMonthEndRemainder)}</strong></div>}
@@ -354,6 +402,17 @@ export function ComposerShell({ initialModel, transport }: { initialModel: Compo
           <button data-preview disabled={busy} onClick={() => { close(); void run({ kind: "READ" }, "none"); }}>Actualiser la prévisualisation</button>
           <button data-balance disabled={busy} onClick={() => { close(); clearHover(); setBalanceOpen(v => !v); if (!balanceOpen) void run({ kind: "SUGGESTIONS" }, "none"); }}>Suggestions pour mon mois</button>
           <button data-financial-menu onClick={() => { close(); openProjectionDetails(); }}>Détail financier</button></div>}</AtomicPopover>
+        {draftTransport && <div className={styles.durableActions}>
+          {(durable.status === "ERROR" || durable.status === "OFFLINE") && <button data-save-retry onClick={durable.retry}>Réessayer la sauvegarde</button>}
+          {durable.status === "CONFLICT" && <><button data-save-refresh onClick={() => void durable.refresh()}>Relire le brouillon</button>
+            <button data-save-load-server onClick={() => setDraftConfirmation({ kind: "LOAD_SERVER" })}>Charger la version sauvegardée</button></>}
+          {durable.snapshot?.active && <><button data-draft-abandon onClick={() => archiveDraft(true)}>Abandonner mes essais</button>
+            <button data-draft-restart onClick={() => archiveDraft(false)}>Repartir du Plan actif</button></>}
+          {!!durable.snapshot?.archives.length && <details data-draft-archives><summary>Brouillons archivés ({durable.snapshot.archives.length})</summary>
+            {durable.snapshot.archives.map(draft => <div key={draft.draftId}><span>{new Date(draft.lastSavedAt).toLocaleString("fr-FR", { timeZone: "Europe/Paris" })}</span>
+              <button disabled={!!durable.snapshot?.active} onClick={() => restoreDraft(draft)}>Restaurer</button></div>)}</details>}
+        </div>}
+        {draftTransport && ["ERROR", "CONFLICT", "OFFLINE"].includes(durable.status) && <span className={styles.saveMessage} data-save-message role="status">{durable.message}</span>}
       </div></header>
     <div className={styles.columns}><ComposerLibrary model={shown} openToken={libraryOpenToken} busy={busy} selected={selected} choose={asset => choose(asset)} drag={key => { clearHover(); setSelected(key); }} />
       <ComposerBoard model={shown} busy={busy} selected={selected} focused={focusedContext} focus={setFocusedContext} edit={edit} editContext={editContext} choose={choose} drag={setSelected} drop={drop} request={operation => stage(operation)} hover={hover}
@@ -382,6 +441,20 @@ export function ComposerShell({ initialModel, transport }: { initialModel: Compo
           : <input name={f.key} defaultValue={editor.values[f.key] ?? f.initial ?? ""} type={f.kind === "DATE" ? "date" : "text"} inputMode={f.kind === "AMOUNT" ? "decimal" : undefined} required={f.required} autoComplete="off" />}</label>)}</div>
         <footer><button type="button" className={styles.secondary} disabled={busy} onClick={closeDialog}>Retour au mois</button><button data-submit className={styles.primary} disabled={busy}>Prévisualiser ce choix</button></footer>
       </form> : projectionOpen ? <ComposerProjectionDetails projection={model.board.cockpit} /> : null}
+    </dialog>
+    <dialog ref={confirmationDialog} className={styles.dialog} data-compact-editor aria-labelledby="draft-confirmation-title"
+      onCancel={e => { e.preventDefault(); if (!draftConfirmationBusy) setDraftConfirmation(null); }}>
+      <header><h2 id="draft-confirmation-title">{draftConfirmation?.kind === "ABANDON" ? "Abandonner mes essais" : draftConfirmation?.kind === "RESTART" ? "Repartir du Plan actif" : draftConfirmation?.kind === "RESTORE" ? "Restaurer ce brouillon" : "Charger la version sauvegardée"}</h2></header>
+      <p className={styles.helper}>{draftConfirmation?.kind === "LOAD_SERVER"
+        ? "Les modifications locales non enregistrées seront perdues. La version sauvegardée sera relue."
+        : draftConfirmation?.kind === "RESTORE"
+          ? "Cette archive redeviendra le brouillon actif. Aucun autre brouillon actif ne sera écrasé."
+          : "Le brouillon actif sera archivé et restera récupérable. Aucun Plan officiel ne sera appliqué."}</p>
+      {draftConfirmation?.kind !== "LOAD_SERVER" && draftConfirmation?.kind !== "RESTORE" && durable.unsaved &&
+        <p className={styles.formError}>Les modifications locales non enregistrées seront perdues.</p>}
+      <footer><button type="button" className={styles.secondary} disabled={draftConfirmationBusy} onClick={() => setDraftConfirmation(null)}>Annuler</button>
+        <button type="button" className={styles.primary} data-confirm-draft-action disabled={draftConfirmationBusy || !durable.online || durable.status === "SAVING"}
+          onClick={() => void confirmDraftAction()}>{draftConfirmationBusy ? "Vérification…" : "Confirmer"}</button></footer>
     </dialog>
   </div></ComposerInteractionContext.Provider>;
 }

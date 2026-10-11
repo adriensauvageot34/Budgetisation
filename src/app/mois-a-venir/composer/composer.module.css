@@ -622,3 +622,11 @@
 .dialog[data-side-panel=true]::backdrop { background:transparent; backdrop-filter:none; }
 .giftOccasion button { min-height:40px; min-width:110px; padding:8px 10px; }
 .financialHud[data-stale=true] { border-color:#dcccae; background:#fffcf5; }
+.durableActions { display:flex; align-items:center; flex-wrap:wrap; gap:6px; }
+.durableActions button { border:1px solid #d9d2e5; border-radius:9px; padding:6px 9px; background:#fff; color:#493e64; font-size:11px; cursor:pointer; }
+.durableActions button:disabled { opacity:.5; cursor:not-allowed; }
+.durableActions details { position:relative; font-size:11px; color:#493e64; }
+.durableActions details[open] { background:#fff; padding:7px; border:1px solid #d9d2e5; border-radius:9px; }
+.durableActions details>div { display:flex; align-items:center; gap:8px; margin-top:6px; }
+.workspace[data-save-state=ERROR] .draftStatus,.workspace[data-save-state=CONFLICT] .draftStatus,.workspace[data-save-state=OFFLINE] .draftStatus { color:#9a442c; }
+.saveMessage { max-width:320px; font-size:11px; color:#9a442c; line-height:1.3; }

@@ -1,6 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import http from 'node:http';
+import crypto from 'node:crypto';
 import { pathToFileURL } from 'node:url';
 import React from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
@@ -16,6 +17,7 @@ const { preparePlanningMobility } = require('@/server/phase2/planner/prospective
 const { resolveEffectiveMonthScenario } = require('@/server/phase2/planner/effective-month-scenario');
 const { appliedPlanControls } = require('@/server/phase2/planner/applied-plan-read');
 const { AppliedMonthView } = require('@/app/mois-a-venir/applied-month-view');
+const { semanticStateDigest, parsePlanSemanticState } = require('@/domain/phase2/planner/semantic-state');
 // Every prospective provider is synthetic. Reject any accidental server network call.
 globalThis.fetch = async () => { throw new Error('FIXTURE_NETWORK_FORBIDDEN'); };
 const out = path.resolve(process.env.PLANNER_C8_BROWSER_OUTPUT ?? 'outputs/planner-c8-browser');
@@ -44,6 +46,13 @@ const stores = new Map(), fixtures = { A: simpleMonth, B: nightMonth, C: weekend
   VISUAL:visualMonth, VISUAL_P35_CLICK:visualMonth, VISUAL_P35_DRAG:visualMonth, VISUAL_P35_MULTI_DRAG:visualMonth, VISUAL_P35_REPLACE:visualMonth,
   VISUAL_P35_HISTORY:visualMonth, VISUAL_P35_PROTECTED:visualMonth, DISSOLVE_BEAUTY:visualThreeBeautyMonth,
   SPARSE:sparseMonth, UNREADY:unreadyMonth };
+const draftStores = new Map();
+function draftStore(key) {
+  if (!draftStores.has(key)) draftStores.set(key, { active: null, archives: [], lostOnce: false, log: [] });
+  return draftStores.get(key);
+}
+function draftSnapshot(s) { return { active: s.active, archives: s.archives,
+  activePlanRevisionId: null, activePlanRevisionNumber: 0, baseStale: false }; }
 const uiPayloadKeys = new Set(['x','y','screenX','screenY','uiPosition','boardPosition','orbit','presentation','focusedContext','page','pageIndex','carousel','plateau']);
 function uiPayloadFields(value) {
   if (!value || typeof value !== 'object') return [];
@@ -67,6 +76,53 @@ const server = http.createServer(async (request, response) => {
     const url = new URL(request.url, 'http://127.0.0.1');
     const referringScenario = request.headers.referer ? new URL(request.headers.referer).searchParams.get('scenario') : null;
     const key = url.searchParams.get('scenario') ?? referringScenario ?? 'A';
+    if (url.pathname === '/draft') {
+      const s = draftStore(key);
+      response.setHeader('Content-Type', 'application/json');
+      response.setHeader('Cache-Control', 'no-store');
+      if (request.method === 'GET') { response.end(JSON.stringify(draftSnapshot(s))); return; }
+      const chunks = []; for await (const chunk of request) chunks.push(chunk);
+      const { kind, command } = JSON.parse(Buffer.concat(chunks).toString());
+      const conflict = () => ({ ok:false, code:'CONFLICT', message:'Version obsolète.', latest:draftSnapshot(s) });
+      let row;
+      if (kind === 'SAVE') {
+        const semanticState = parsePlanSemanticState(command.semanticState);
+        if (semanticStateDigest(semanticState) !== command.digest || semanticState.targetMonth !== '2026-11') throw Error('FIXTURE_DRAFT_DIGEST_INVALID');
+        const old = s.active;
+        if (old?.lastMutationRequestId === command.requestId && old.digest === command.digest) {
+          response.end(JSON.stringify({ok:true,draft:old,replayed:true})); return;
+        }
+        if ((old?.draftId ?? null) !== command.expectedDraftId || (old?.version ?? 0) !== command.expectedDraftVersion) {
+          response.end(JSON.stringify(conflict())); return;
+        }
+        if (url.searchParams.get('draftFail') === '1') { response.writeHead(503); response.end('Fixture network failure'); return; }
+        row = { draftId: old?.draftId ?? crypto.randomUUID(), version:(old?.version ?? 0)+1,
+          lifecycle:'ACTIVE', semanticState, digest:command.digest, baseRevisionId:null, baseRevisionNumber:0,
+          lastSavedAt:new Date().toISOString(), archivedAt:null, lastMutationRequestId:command.requestId,
+          lastMutationExpectedVersion:command.expectedDraftVersion, lastMutationKind:'SAVE' };
+        s.active = row;
+      } else if (kind === 'ARCHIVE') {
+        if (!s.active || s.active.draftId !== command.draftId || s.active.version !== command.expectedDraftVersion) {
+          response.end(JSON.stringify(conflict())); return;
+        }
+        row = { ...s.active, version:s.active.version+1, lifecycle:'ABANDONED', archivedAt:new Date().toISOString(),
+          lastMutationRequestId:command.requestId, lastMutationExpectedVersion:command.expectedDraftVersion, lastMutationKind:'ARCHIVE' };
+        s.archives = [row, ...s.archives]; s.active = null;
+      } else if (kind === 'RESTORE') {
+        const old = s.archives.find(d => d.draftId === command.draftId);
+        if (s.active || !old || old.version !== command.expectedDraftVersion) { response.end(JSON.stringify(conflict())); return; }
+        row = { ...old, version:old.version+1, lifecycle:'ACTIVE', archivedAt:null,
+          lastMutationRequestId:command.requestId, lastMutationExpectedVersion:command.expectedDraftVersion, lastMutationKind:'RESTORE' };
+        s.archives = s.archives.filter(d => d.draftId !== row.draftId); s.active = row;
+      } else throw Error('FIXTURE_DRAFT_KIND_INVALID');
+      s.log.push({ kind, draftId:row.draftId, version:row.version, digest:row.digest });
+      if (url.searchParams.get('draftLoseAfterCommit') === '1' && !s.lostOnce) {
+        s.lostOnce = true; response.writeHead(503); response.end('Synthetic response lost after commit'); return;
+      }
+      const delay = Number(url.searchParams.get('draftDelay') ?? 0);
+      if (delay > 0) await new Promise(resolve => setTimeout(resolve, Math.min(delay,5000)));
+      response.end(JSON.stringify({ok:true,draft:row,replayed:false})); return;
+    }
     if (url.pathname === '/interaction') {
       const chunks = []; for await (const chunk of request) chunks.push(chunk);
       const command = JSON.parse(Buffer.concat(chunks).toString()), s = await store(key);
@@ -100,6 +156,8 @@ const server = http.createServer(async (request, response) => {
     if (url.pathname === '/evidence') {
       const s = await store(key); await s.pg.verifyCanaries(); response.setHeader('Content-Type', 'application/json');
       response.end(JSON.stringify({ counts: await s.pg.counts(), rpcCalls: s.pg.rpcCalls, remoteWrites: 0, historicalCanaryWrites: 0, log: s.log,
+        drafts: { active: draftStore(key).active && { id:draftStore(key).active.draftId, version:draftStore(key).active.version, digest:draftStore(key).active.digest },
+          archives:draftStore(key).archives.length, events:draftStore(key).log },
         active: await s.deps.repository.readActivePlan(householdId, '2026-11') })); return;
     }
     if (url.pathname === '/mois-a-venir') {
