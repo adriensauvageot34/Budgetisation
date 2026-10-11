@@ -51,6 +51,10 @@
 .textButton { border:0; background:transparent; padding:5px; color:#78688f; font-size:10px!important; }
 .textButton:hover:not(:disabled) { text-decoration:underline; text-underline-offset:3px; }
 .applyControl { position:relative; border-radius:10px; }
+.applyControl[data-unavailable="true"] .primary { background:#e5e0eb; color:#625c69; box-shadow:none; opacity:1; }
+.coursesReference { margin:0 0 16px; padding:14px; border:1px solid #dfd6e8; border-radius:12px; background:#f7f3fb; color:#342d3d; font-size:13px; line-height:1.5; }
+.coursesReference p { margin:6px 0 0; }
+.knowledgeProvenance { overflow-wrap:anywhere; }
 .applyReason { position:absolute; z-index:var(--z-popover); top:calc(100% + 8px); right:0; width:270px; padding:12px 14px; background:#fff; border:1px solid #e0d8e9; border-radius:12px; box-shadow:0 6px 20px #35254a17; display:none; }
 .applyReason p { margin:0 0 8px; font-size:11px; line-height:1.5; }
 .applyReason::before { content:""; position:absolute; top:-10px; left:0; right:0; height:10px; }
@@ -612,3 +616,17 @@
 @media (prefers-reduced-motion: reduce) {
   .mosaic,.inventoryCell { scroll-behavior:auto!important; }
 }
+
+/* P03: the ordinary card editor leaves the R6 board visible and interactive. */
+.dialog[data-side-panel=true] { inset:96px 16px 18px auto; margin:0; width:min(390px,calc(100vw - 32px)); max-height:calc(100dvh - 114px); border-radius:18px; box-shadow:0 18px 50px #25204438; }
+.dialog[data-side-panel=true]::backdrop { background:transparent; backdrop-filter:none; }
+.giftOccasion button { min-height:40px; min-width:110px; padding:8px 10px; }
+.financialHud[data-stale=true] { border-color:#dcccae; background:#fffcf5; }
+.durableActions { display:flex; align-items:center; flex-wrap:wrap; gap:6px; }
+.durableActions button { border:1px solid #d9d2e5; border-radius:9px; padding:6px 9px; background:#fff; color:#493e64; font-size:11px; cursor:pointer; }
+.durableActions button:disabled { opacity:.5; cursor:not-allowed; }
+.durableActions details { position:relative; font-size:11px; color:#493e64; }
+.durableActions details[open] { background:#fff; padding:7px; border:1px solid #d9d2e5; border-radius:9px; }
+.durableActions details>div { display:flex; align-items:center; gap:8px; margin-top:6px; }
+.workspace[data-save-state=ERROR] .draftStatus,.workspace[data-save-state=CONFLICT] .draftStatus,.workspace[data-save-state=OFFLINE] .draftStatus { color:#9a442c; }
+.saveMessage { max-width:320px; font-size:11px; color:#9a442c; line-height:1.3; }

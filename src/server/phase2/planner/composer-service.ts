@@ -6,7 +6,7 @@ import type { ComposerCardView } from "@/domain/phase2/planner/composer-contract
 import type { ComponentSelectionV1 } from "@/domain/phase2/planner/component-contract";
 import type { SemanticMutation } from "@/domain/phase2/planner/adjustment-contract";
 import { parsePlanSemanticState } from "@/domain/phase2/planner/semantic-state";
-import { plannerMonth, plannerUuid } from "@/domain/phase2/planner/json";
+import { plannerKeys, plannerMonth, plannerRecord, plannerUuid } from "@/domain/phase2/planner/json";
 import { decisionAmount } from "@/domain/phase2/month-decision-contract";
 import type { PlannerDependencies } from "./apply";
 import { applyPlanScenario } from "./apply";
@@ -15,6 +15,7 @@ import { publishContextRegistry, resolveContextTemplate } from "./context-regist
 import { mutatePlanSemanticState } from "./semantic-mutations";
 import { acceptPlanBalanceSuggestion, readPlanBalanceSuggestions } from "./balance-assistant";
 import { parseMobilityPricing } from "./mobility-selections";
+import { patchContextEditorFields, setContextSlotSelections } from "./context-state";
 import { composerAssetIcon, composerPresentation } from "./composer-presentation";
 
 const field = (key: string, label: string, kind: ComposerField["kind"] = "TEXT", required = false): ComposerField => ({ key, label, kind, required });
@@ -28,14 +29,17 @@ export async function composerUiModel(deps: PlannerDependencies, household: stri
   const { preview, ...view } = model;
   const templates = publishContextRegistry().templates;
   const editors = view.library.searchableAssets.flatMap<ComposerEditor>(asset => {
-    if (asset.kind === "CONTEXT_ASSET") return [{ assetKey: asset.assetKey, fields: resolveContextTemplate(asset.templateKey!).fields.map(f => ({
+    if (asset.kind === "CONTEXT_ASSET") return [{ assetKey: asset.assetKey, fields: resolveContextTemplate(asset.templateKey!).fields
+      .filter(f => f.fieldKey !== "fieldSchemaVersion" && ["TEXT", "DATE", "CHOICE"].includes(f.kind)).map(f => ({
       key: f.fieldKey, label: fieldLabels[f.fieldKey] ?? f.fieldKey, kind: f.kind, required: f.required,
-      ...(f.choices ? { choices: f.choices.map(value => ({ value, label: value })) } : {}) })) }];
+      ...(f.choices ? { choices: f.choices.map(value => ({ value, label: value })) } : {}) })) as ComposerField[] }];
     if (asset.kind !== "SLOT_OPTION_ASSET") return [];
     const template = resolveContextTemplate(asset.templateKey!), parts = asset.assetKey.split(":"), slot = template.componentSlots.find(s => s.slotKey === parts[2])!;
     const option = slot.options.find(o => o.optionKey === asset.optionKey)!;
     const costMode = choice("costMode", "Connaissance du prix", [["AUTO", "Montant renseigné / devis existant"], ["UNKNOWN", "Prix à préciser"]]);
-    const fields: ComposerField[] = option.kind === "COMPONENT" ? [field("label", "Libellé"), costMode, field("amount", "Montant unitaire (€) — vide si inconnu ou devis conservé", "AMOUNT"), { ...field("quantity", "Quantité", "AMOUNT", true), initial: "1" }, fundingField, field("fundingAmount", "Montant financé (€), si déclaré", "AMOUNT"),
+    const fields: ComposerField[] = option.kind === "COMPONENT" ? [field("label", "Libellé"), costMode, field("amount", "Montant unitaire (€) — vide si inconnu ou devis conservé", "AMOUNT"), { ...field("quantity", "Quantité", "AMOUNT", true), initial: "1" },
+      choice("unitBasis", "Unité du prix", [["", "Non précisée"], ["ITEM", "Par élément"], ["PERSON", "Par personne"], ["SHARED", "Montant commun"]]),
+      fundingField, field("fundingAmount", "Montant financé (€), si déclaré", "AMOUNT"),
       ...(option.bindingPolicy === "REQUIRES_CONFIRMATION" ? [choice("binding", "Relation avec l’enveloppe du mois", [["AUTO", "À confirmer"], ["CONFIRMED_CONSUMPTION", "Consomme l’enveloppe"], ["EXTRA_TO_SLOT", "S’ajoute à l’enveloppe"]])] : []),
       ...(slot.acceptsNeedOccurrence ? [choice("needOccurrenceId", "Besoin couvert (facultatif)", [["", "Achat libre"], ...preview.compiled.needs.map(n => [n.needOccurrenceId, composerNeedLabel(n.needKey)] as const)])] : [])]
       : [field("origin", "Départ (lieu enregistré conservé si vide)"), field("destination", "Destination (lieu enregistré conservé si vide)"),
@@ -58,7 +62,7 @@ export async function composerUiModel(deps: PlannerDependencies, household: stri
     naturalPresets: card.capability.naturalPresets.map(p => ({ ...p, label: ({ low: "Repère bas", median: "Repère médian", high: "Repère haut" } as Record<string, string>)[p.label]
       ?? (p.label === "central" ? "Repère médian" : p.label.startsWith("allocation ×") && p.semanticMutation.kind === "SET_STATE" && typeof p.semanticMutation.value.amount === "string"
         ? `Réserver ${new Intl.NumberFormat("fr-FR", { style: "currency", currency: "EUR" }).format(Number(p.semanticMutation.value.amount))}` : p.label) })) } : null });
-  return { ...view, presentation: composerPresentation(model), library: { ...view.library,
+  return { ...view, householdPersons: deps.householdPersons ?? [], presentation: composerPresentation(model), library: { ...view.library,
     searchableAssets: view.library.searchableAssets.map(asset => ({ ...asset, iconKey: composerAssetIcon(asset, model) })), sections: [
     ...groups.map(family => ({ sectionKey: family, assetKeys: templates.filter(t => t.family === family).map(t => `template:${t.templateKey}`) })),
     { sectionKey: "options", assetKeys: view.library.searchableAssets.filter(a => a.kind === "SLOT_OPTION_ASSET").map(a => a.assetKey) },
@@ -78,8 +82,10 @@ function dropMutation(model: MonthComposerReadModel, request: Extract<ComposerRe
   if (!asset) throw new TypeError("COMPOSER_ASSET_MISSING");
   if (asset.kind === "CONTEXT_ASSET") {
     const definition = resolveContextTemplate(asset.templateKey!);
+    plannerKeys(plannerRecord(values), definition.fields.filter(f => f.fieldKey !== "fieldSchemaVersion" && ["TEXT", "DATE", "CHOICE"].includes(f.kind)).map(f => f.fieldKey), []);
     const context = { contextOccurrenceId: plannerUuid(request.identity), templateKey: definition.templateKey, status: "ACTIVE" as const,
-      parentContextOccurrenceId: null, fields: Object.fromEntries(definition.fields.filter(f => values[f.fieldKey]?.trim()).map(f => [f.fieldKey, values[f.fieldKey].trim()])),
+      parentContextOccurrenceId: null,
+      fields: { fieldSchemaVersion: "context-fields@v2", ...Object.fromEntries(definition.fields.filter(f => values[f.fieldKey]?.trim()).map(f => [f.fieldKey, values[f.fieldKey].trim()])) },
       slotSelections: {}, provenance: "EXPLICIT_USER_DECISION" as const };
     return target.kind === "BOARD_ZONE" ? { kind: "ADD_CONTEXT", context } : { kind: "ATTACH_CONTEXT", context,
       parentContextOccurrenceId: target.contextOccurrenceId!, slotKey: target.slotKey!, selectionId: request.selectionId };
@@ -104,6 +110,8 @@ function dropMutation(model: MonthComposerReadModel, request: Extract<ComposerRe
   const common = { selectionId: request.selectionId, optionKey: option.optionKey, provenance: "EXPLICIT_USER_DECISION" as const };
   const selection: ComponentSelectionV1 = option.kind === "COMPONENT" ? { ...common, kind: "COMPONENT", label: values.label?.trim() || option.label,
     quantity: decisionAmount(values.quantity || "1"), cost, fundingAllocations: funding, ...(values.binding ? { binding: { mode: values.binding as "AUTO" | "CONFIRMED_CONSUMPTION" | "EXTRA_TO_SLOT" } } : {}),
+    ...(values.unitBasis || previous?.kind === "COMPONENT" && previous.unitBasis
+      ? { unitBasis: (values.unitBasis || (previous?.kind === "COMPONENT" ? previous.unitBasis : undefined)) as "ITEM" | "PERSON" | "SHARED" } : {}),
     ...(values.needOccurrenceId ? { needOccurrenceId: values.needOccurrenceId } : {}) }
     : { ...common, kind: "MOBILITY_INTENT", origin: values.origin?.trim() ? { kind: "TEXT", label: values.origin.trim() } : previous?.kind === "MOBILITY_INTENT" && previous.origin?.kind === "KNOWN" ? previous.origin : null,
       destination: values.destination?.trim() ? { kind: "TEXT", label: values.destination.trim() } : previous?.kind === "MOBILITY_INTENT" && previous.destination?.kind === "KNOWN" ? previous.destination : null, returnRequired: values.returnRequired === "true",
@@ -126,8 +134,15 @@ export async function handleComposerRequest(deps: PlannerDependencies, household
     let suggestions;
     if (request.kind === "APPLY") {
       if (!request.draft) throw new TypeError("COMPOSER_DRAFT_REQUIRED");
-      await applyPlanScenario(deps, household, state, request.command);
-      return { ok: true, sequence: request.sequence, applied: true, model: await composerUiModel(deps, household, await readMonthComposer(deps, household, month)) };
+      const committed = await applyPlanScenario(deps, household, state, request.command);
+      try {
+        return { ok: true, sequence: request.sequence, applied: true, model: await composerUiModel(deps, household, await readMonthComposer(deps, household, month)) };
+      } catch {
+        // The immutable revision is committed. A failed read must never be reported as a failed Apply or retried as a write.
+        return { ok: false, sequence: request.sequence, applied: true, revisionNumber: committed.revision.revisionNumber,
+          code: "COMPOSER_APPLIED_RELOAD_UNAVAILABLE",
+          message: `Révision ${committed.revision.revisionNumber} enregistrée, mais sa relecture est indisponible. Actualisez la prévisualisation avant toute autre action.` };
+      }
     }
     if (request.kind === "MUTATE") {
       const mutation = request.mutation;
@@ -164,12 +179,22 @@ export async function handleComposerRequest(deps: PlannerDependencies, household
       state = mutatePlanSemanticState(state, { kind: "PATCH_CONTEXT", contextOccurrenceId: card.contextOccurrenceId, slotKey: socket.slotKey,
         items: socket.currentItems.filter(i => i.selectionId !== request.selectionId) });
       mutationKind = "PATCH_CONTEXT";
+    } else if (request.kind === "EDIT_GIFT") {
+      const card = model.board.contexts.find(c => c.contextOccurrenceId === request.contextOccurrenceId);
+      if (card?.templateKey !== "gift" || !card.capabilityRefs.includes("PATCH_CONTEXT")) throw new TypeError("COMPOSER_GIFT_TARGET_INVALID");
+      const prior = card.sockets.find(socket => socket.slotKey === "item")?.currentItems ?? [];
+      if (request.item.kind !== "COMPONENT" || request.item.optionKey !== "gift"
+        || prior.some(item => item.kind === "COMPONENT" && item.selectionId !== request.item.selectionId))
+        throw new TypeError("COMPOSER_GIFT_ITEM_INVALID");
+      state = setContextSlotSelections(patchContextEditorFields(state, card.contextOccurrenceId, request.values),
+        card.contextOccurrenceId, "item", [request.item]);
+      mutationKind = "PATCH_CONTEXT";
     } else if (request.kind === "EDIT_CONTEXT") {
       const card = model.board.contexts.find(c => c.contextOccurrenceId === request.contextOccurrenceId);
       if (!card?.capabilityRefs.includes("PATCH_CONTEXT")) throw new TypeError("COMPOSER_CONTEXT_LOCKED");
       const template = resolveContextTemplate(card.templateKey);
-      const fields = Object.fromEntries(template.fields.filter(f => request.values[f.fieldKey]?.trim()).map(f => [f.fieldKey, request.values[f.fieldKey].trim()]));
-      state = parsePlanSemanticState({ ...state, contexts: state.contexts.map(c => c.contextOccurrenceId === card.contextOccurrenceId ? { ...c, fields } : c) });
+      plannerKeys(plannerRecord(request.values), template.fields.filter(f => f.fieldKey !== "fieldSchemaVersion").map(f => f.fieldKey), []);
+      state = patchContextEditorFields(state, card.contextOccurrenceId, request.values);
       mutationKind = "PATCH_CONTEXT";
     } else if (request.kind === "PRESERVE") {
       if (![...model.board.contexts.map(c => c.contextOccurrenceId), ...model.board.baselineControls.map(c => c.targetRef), ...model.board.discretionaryControls.map(c => c.targetRef), ...model.board.savings.map(c => c.targetRef)].includes(request.targetRef)) throw new TypeError("COMPOSER_PREFERENCE_TARGET_UNKNOWN");

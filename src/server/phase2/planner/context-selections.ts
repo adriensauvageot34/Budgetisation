@@ -1,12 +1,16 @@
 import "server-only";
 import Big from "big.js";
 import { decisionAmount } from "@/domain/phase2/month-decision-contract";
-import { plannerDigest, plannerKeys, plannerRecord, plannerString, plannerUuid } from "@/domain/phase2/planner/json";
+import { plannerDigest, plannerInteger, plannerKeys, plannerRecord, plannerString, plannerUuid } from "@/domain/phase2/planner/json";
 import type { ComponentSelectionV1, ComponentSlotDefinition } from "@/domain/phase2/planner/component-contract";
+import type { ContextFieldDefinition } from "@/domain/phase2/planner/context-contract";
 import type { PlannedContextState, PlanSemanticStateV1 } from "@/domain/phase2/planner/semantic-state";
 import type { ProspectivePlaceRef } from "@/domain/phase2/planned-contract";
+import type { ProspectivePersonRef } from "@/domain/phase2/planned-contract";
+import { PLANNED_ASSET_CATALOG_VERSION, type PlannedAssetRef } from "@/domain/phase2/planned-assets";
+import { SOCIAL_CONTACTS_V1 } from "@/domain/phase2/planned-rules";
 import { parseKernelCost, parseKernelFunding } from "./cost-resolver";
-import { resolveContextTemplate } from "./context-registry";
+import { isLegacyContextField, resolveContextTemplate } from "./context-registry";
 import { parseJourneyDeclaration, parseMobilityPricing, mobilityTime } from "./mobility-selections";
 
 export function contextDate(raw: unknown, targetMonth: string): string | null {
@@ -24,6 +28,55 @@ function place(raw: unknown): ProspectivePlaceRef | null {
   plannerKeys(value, ["kind", "label", "provenance"], ["kind", "label"]);
   if (value.kind !== "TEXT" || value.provenance !== undefined && value.provenance !== "USER_DECLARED_PROSPECTIVE") throw new TypeError("CONTEXT_MOBILITY_PLACE_INVALID");
   return { kind: "TEXT", label: plannerString(value.label), provenance: "USER_DECLARED_PROSPECTIVE" };
+}
+function person(raw: unknown): ProspectivePersonRef | null {
+  if (raw == null) return null;
+  const value = plannerRecord(raw);
+  if (value.kind === "HOUSEHOLD_PERSON") {
+    plannerKeys(value, ["kind", "personId"]);
+    return { kind: "HOUSEHOLD_PERSON", personId: plannerUuid(value.personId) };
+  }
+  if (value.kind === "CONTACT") {
+    plannerKeys(value, ["kind", "contactKey"]);
+    const contactKey = plannerString(value.contactKey);
+    if (!SOCIAL_CONTACTS_V1.some(contact => contact.key === contactKey)) throw new TypeError("CONTEXT_CONTACT_UNKNOWN");
+    return { kind: "CONTACT", contactKey };
+  }
+  plannerKeys(value, ["kind", "label"]);
+  if (value.kind !== "TEXT") throw new TypeError("CONTEXT_PERSON_REF_INVALID");
+  return { kind: "TEXT", label: plannerString(value.label) };
+}
+function giftAssetRef(raw: unknown): PlannedAssetRef {
+  const value = plannerRecord(raw);
+  plannerKeys(value, ["catalogVersion", "assetKey", "labelAtSelection", "provenance"],
+    ["catalogVersion", "assetKey", "labelAtSelection", "provenance"]);
+  const assetKey = plannerString(value.assetKey);
+  const labelAtSelection = plannerString(value.labelAtSelection);
+  if (value.catalogVersion !== PLANNED_ASSET_CATALOG_VERSION || value.provenance !== "EXPLICIT_USER_DECISION"
+    || !/^gift:[a-z0-9_]+$/u.test(assetKey) || !labelAtSelection.trim()) throw new TypeError("CONTEXT_GIFT_ASSET_REF_INVALID");
+  return { catalogVersion: PLANNED_ASSET_CATALOG_VERSION, assetKey, labelAtSelection, provenance: "EXPLICIT_USER_DECISION" };
+}
+export function parseContextField(raw: unknown, field: ContextFieldDefinition, targetMonth: string): unknown {
+  if (raw == null) return null;
+  if (field.kind === "PLANNED_ASSET_REF") return giftAssetRef(raw);
+  if (field.kind === "DATE") return contextDate(raw, targetMonth);
+  if (field.kind === "PERSON_REF") return person(raw);
+  if (field.kind === "PLACE_REF") return place(raw);
+  if (field.kind === "PERSON_REFS") {
+    if (!Array.isArray(raw) || raw.length > 50) throw new TypeError("CONTEXT_PARTICIPANTS_INVALID");
+    const values = raw.map(person);
+    if (values.some(value => value === null) || new Set(values.map(value => plannerDigest(value))).size !== values.length)
+      throw new TypeError("CONTEXT_PARTICIPANTS_INVALID");
+    return values;
+  }
+  if (field.kind === "COUNT") {
+    const count = plannerInteger(raw, 1);
+    if (count > 366) throw new TypeError("CONTEXT_COUNT_INVALID");
+    return count;
+  }
+  const value = plannerString(raw);
+  if (field.kind === "CHOICE" && !field.choices?.includes(value)) throw new TypeError("CONTEXT_FIELD_INVALID");
+  return value;
 }
 function selection(raw: unknown, slot: ComponentSlotDefinition): ComponentSelectionV1 {
   const value = plannerRecord(raw), common = ["selectionId", "optionKey", "kind", "provenance"];
@@ -52,9 +105,10 @@ function selection(raw: unknown, slot: ComponentSlotDefinition): ComponentSelect
       ...(value.pricing === undefined ? {} : { pricing: parseMobilityPricing(value.pricing) }),
       plannedTime: mobilityTime(value.plannedTime), returnTime: mobilityTime(value.returnTime) };
   }
-  plannerKeys(value, [...common, "label", "quantity", "cost", "binding", "fundingAllocations", ...(slot.acceptsNeedOccurrence ? ["needOccurrenceId"] : [])], [...common, "label", "quantity", "cost"]);
+  plannerKeys(value, [...common, "label", "quantity", "cost", "binding", "fundingAllocations", "unitBasis", ...(slot.acceptsNeedOccurrence ? ["needOccurrenceId"] : [])], [...common, "label", "quantity", "cost"]);
   const quantity = decisionAmount(value.quantity);
   if (new Big(quantity).lte(0) || new Big(quantity).gt(9999)) throw new TypeError("PLANNER_QUANTITY_INVALID");
+  if (value.unitBasis !== undefined && !["ITEM", "PERSON", "SHARED"].includes(String(value.unitBasis))) throw new TypeError("CONTEXT_UNIT_BASIS_INVALID");
   const binding = value.binding === undefined ? { mode: "AUTO" as const } : (() => {
     const candidate = plannerRecord(value.binding); plannerKeys(candidate, ["mode"]);
     if (!["AUTO", "CONFIRMED_CONSUMPTION", "EXTRA_TO_SLOT", "NO_RELATED_SLOT"].includes(String(candidate.mode))) throw new TypeError("CONTEXT_BINDING_DECISION_INVALID");
@@ -62,15 +116,18 @@ function selection(raw: unknown, slot: ComponentSlotDefinition): ComponentSelect
   })();
   return { ...identity, kind: "COMPONENT", label: plannerString(value.label), quantity, cost: parseKernelCost(value.cost), binding,
     fundingAllocations: parseKernelFunding(value.fundingAllocations ?? []),
+    ...(value.unitBasis === undefined ? {} : { unitBasis: value.unitBasis as "ITEM" | "PERSON" | "SHARED" }),
     ...(value.needOccurrenceId === undefined ? {} : { needOccurrenceId: plannerString(value.needOccurrenceId) }) };
 }
 export function readContextSelections(context: PlannedContextState, targetMonth: string): ReadonlyMap<string, readonly ComponentSelectionV1[]> {
   const template = resolveContextTemplate(context.templateKey);
   plannerKeys(plannerRecord(context.fields), template.fields.map(f => f.fieldKey), template.fields.filter(f => f.required).map(f => f.fieldKey));
-  for (const field of template.fields) if (context.fields[field.fieldKey] != null) {
-    const raw = context.fields[field.fieldKey];
-    if (field.kind === "DATE") contextDate(raw, targetMonth);
-    else if (field.kind === "CHOICE" ? !field.choices?.includes(plannerString(raw)) : !plannerString(raw)) throw new TypeError("CONTEXT_FIELD_INVALID");
+  for (const field of template.fields) if (Object.hasOwn(context.fields, field.fieldKey)) {
+    if (field.fieldKey === "objectAssetRef" && context.fields.fieldSchemaVersion !== "context-fields@v3"
+      || !isLegacyContextField(context.templateKey, field.fieldKey) && field.fieldKey !== "fieldSchemaVersion"
+      && !["context-fields@v2", "context-fields@v3"].includes(String(context.fields.fieldSchemaVersion)))
+      throw new TypeError("CONTEXT_FIELD_VERSION_REQUIRED");
+    parseContextField(context.fields[field.fieldKey], field, targetMonth);
   }
   const start = contextDate(context.fields.plannedDate, targetMonth), end = contextDate(context.fields.endDate, targetMonth);
   if (start && end && end < start) throw new TypeError("CONTEXT_DATE_RANGE_INVALID");
@@ -117,4 +174,25 @@ export function validateContextGraph(state: PlanSemanticStateV1) {
   }
   for (const context of state.contexts) if (context.parentContextOccurrenceId && !links.has(context.contextOccurrenceId)) throw new TypeError("CONTEXT_PARENT_SOCKET_REQUIRED");
   return { selections, links };
+}
+
+/** These IDs need household owner evidence before a new revision may be committed. */
+export function knownContextReferences(state: PlanSemanticStateV1): { personIds: string[]; placeIds: string[] } {
+  const personIds = new Set<string>(), placeIds = new Set<string>();
+  for (const context of state.contexts) {
+    if (context.templateKey === "kernel.generic") continue;
+    const template = resolveContextTemplate(context.templateKey);
+    for (const field of template.fields) {
+      const raw = context.fields[field.fieldKey];
+      if (raw == null) continue;
+      if (field.kind === "PERSON_REF" || field.kind === "PERSON_REFS") {
+        const refs = (field.kind === "PERSON_REFS" ? parseContextField(raw, field, state.targetMonth) : [parseContextField(raw, field, state.targetMonth)]) as ProspectivePersonRef[];
+        for (const ref of refs) if (ref?.kind === "HOUSEHOLD_PERSON") personIds.add(ref.personId);
+      } else if (field.kind === "PLACE_REF") {
+        const ref = parseContextField(raw, field, state.targetMonth) as ProspectivePlaceRef | null;
+        if (ref?.kind === "KNOWN") placeIds.add(ref.placeId);
+      }
+    }
+  }
+  return { personIds: [...personIds].sort(), placeIds: [...placeIds].sort() };
 }

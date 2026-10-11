@@ -1,21 +1,29 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import http from 'node:http';
+import crypto from 'node:crypto';
 import { pathToFileURL } from 'node:url';
+import React from 'react';
+import { renderToStaticMarkup } from 'react-dom/server';
 import { require } from './lib/phase2-ts-loader.mjs';
 import { createKernelPostgres } from './lib/planner-kernel-postgres.mjs';
-import { simpleMonth, nightMonth, weekendMonth, renewalMonth, externalMonth, householdId } from './fixtures/planner-headless.mjs';
+import { fixture as plannerFixture, state as plannerState, simpleMonth, nightMonth, weekendMonth, renewalMonth, externalMonth, householdId } from './fixtures/planner-headless.mjs';
 import { providers } from './fixtures/planner-mobility.mjs';
 import { atomicMonth, interactionMonth, richMonth, savingsMonth } from './fixtures/planner-atomic-ui.mjs';
 import { visualMonth, visualThreeBeautyMonth, sparseMonth, unreadyMonth } from './fixtures/planner-visual-fidelity.mjs';
 const { handleComposerRequest } = require('@/server/phase2/planner/composer-service');
 const { createPlanApplyRepository } = require('@/server/phase2/planner/repository');
 const { preparePlanningMobility } = require('@/server/phase2/planner/prospective-mobility-pricing');
+const { resolveEffectiveMonthScenario } = require('@/server/phase2/planner/effective-month-scenario');
+const { appliedPlanControls } = require('@/server/phase2/planner/applied-plan-read');
+const { AppliedMonthView } = require('@/app/mois-a-venir/applied-month-view');
+const { semanticStateDigest, parsePlanSemanticState } = require('@/domain/phase2/planner/semantic-state');
 // Every prospective provider is synthetic. Reject any accidental server network call.
 globalThis.fetch = async () => { throw new Error('FIXTURE_NETWORK_FORBIDDEN'); };
-const { build } = await import(process.env.PLANNER_BROWSER_TOOLS ? pathToFileURL(path.join(process.env.PLANNER_BROWSER_TOOLS, 'node_modules/esbuild/lib/main.js')).href : 'esbuild');
 const out = path.resolve(process.env.PLANNER_C8_BROWSER_OUTPUT ?? 'outputs/planner-c8-browser');
 fs.mkdirSync(out, { recursive: true });
+if (process.env.PLANNER_C8_PREBUILT !== '1') {
+const { build } = await import(process.env.PLANNER_BROWSER_TOOLS ? pathToFileURL(path.join(process.env.PLANNER_BROWSER_TOOLS, 'node_modules/esbuild/lib/main.js')).href : 'esbuild');
 const mocks = {
   'next/link': 'import React from "react"; export default function Link({children,...props}) { return React.createElement("a",props,children); }',
   'next/navigation': 'export const usePathname = () => "/mois-a-venir/composer";',
@@ -30,11 +38,21 @@ await build({ entryPoints: ['scripts/lib/planner-composer-browser-entry.tsx'], b
 const globalCss = fs.readdirSync('.next/static/chunks').filter(n=>n.endsWith('.css')).map(n=>fs.readFileSync(`.next/static/chunks/${n}`,'utf8')).find(css=>css.includes('.h-dvh{'));
 if (!globalCss) throw new Error('Build Next.js first: production globals containing h-dvh are required for actual AppShell height checks.');
 fs.writeFileSync(path.join(out,'global.css'),globalCss);
+} else if (['app.js','app.css','global.css'].some(name => !fs.existsSync(path.join(out,name)))) throw new Error('PLANNER_C8_PREBUILT_ASSETS_MISSING');
 const stores = new Map(), fixtures = { A: simpleMonth, B: nightMonth, C: weekendMonth, D: renewalMonth, E: externalMonth, R: atomicMonth,
+  P04: () => ({ world: plannerFixture(), semantic: plannerState() }),
+  P05: () => ({ world: plannerFixture(), semantic: plannerState() }),
   RA: interactionMonth, RB: nightMonth, RC: weekendMonth, RR: atomicMonth, RICH:richMonth, SAVINGS:savingsMonth,
   VISUAL:visualMonth, VISUAL_P35_CLICK:visualMonth, VISUAL_P35_DRAG:visualMonth, VISUAL_P35_MULTI_DRAG:visualMonth, VISUAL_P35_REPLACE:visualMonth,
   VISUAL_P35_HISTORY:visualMonth, VISUAL_P35_PROTECTED:visualMonth, DISSOLVE_BEAUTY:visualThreeBeautyMonth,
   SPARSE:sparseMonth, UNREADY:unreadyMonth };
+const draftStores = new Map();
+function draftStore(key) {
+  if (!draftStores.has(key)) draftStores.set(key, { active: null, archives: [], lostOnce: false, log: [] });
+  return draftStores.get(key);
+}
+function draftSnapshot(s) { return { active: s.active, archives: s.archives,
+  activePlanRevisionId: null, activePlanRevisionNumber: 0, baseStale: false }; }
 const uiPayloadKeys = new Set(['x','y','screenX','screenY','uiPosition','boardPosition','orbit','presentation','focusedContext','page','pageIndex','carousel','plateau']);
 function uiPayloadFields(value) {
   if (!value || typeof value !== 'object') return [];
@@ -43,21 +61,81 @@ function uiPayloadFields(value) {
 async function store(key) {
   if (!stores.has(key)) stores.set(key, (async () => {
     const pg = await createKernelPostgres(), fixture = (fixtures[key] ?? fixtures.A)(), owner = providers();
-    return { pg, fixture, log: [], deps: { repository: createPlanApplyRepository(pg.client), readWorld: async () => fixture.world,
+    return { pg, fixture, log: [], deps: { repository: createPlanApplyRepository(pg.client),
+      householdPersons: [{ personId: '00000000-0000-4000-8000-000000000001', displayName: 'Alice Fixture' }],
+      validateContextReferences: async (_household, refs) => {
+        if (refs.personIds.some(id => id !== '00000000-0000-4000-8000-000000000001')) throw new TypeError('CONTEXT_PERSON_NOT_IN_HOUSEHOLD');
+      }, readWorld: async () => fixture.world,
       prepareWorld: (world, state) => preparePlanningMobility(world, state, owner.value) } };
   })());
   return stores.get(key);
 }
-const host = `<!doctype html><html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Composer mon mois — fixtures C8</title><link rel="stylesheet" href="/global.css"><link rel="stylesheet" href="/app.css"></head><body><div id="root"></div><script type="module" src="/app.js"></script></body></html>`;
+const host = `<!doctype html><html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Composer mon mois — fixtures C8</title><link rel="stylesheet" href="/global.css"><link rel="stylesheet" href="/app.css"></head><body><div id="root"></div><script type="module" src="/app.js?v=${encodeURIComponent(process.env.PLANNER_C8_ASSET_VERSION ?? 'base')}"></script></body></html>`;
 const server = http.createServer(async (request, response) => {
   try {
-    const url = new URL(request.url, 'http://127.0.0.1'), key = url.searchParams.get('scenario') ?? 'A';
+    const url = new URL(request.url, 'http://127.0.0.1');
+    const referringScenario = request.headers.referer ? new URL(request.headers.referer).searchParams.get('scenario') : null;
+    const key = url.searchParams.get('scenario') ?? referringScenario ?? 'A';
+    if (url.pathname === '/draft') {
+      const s = draftStore(key);
+      response.setHeader('Content-Type', 'application/json');
+      response.setHeader('Cache-Control', 'no-store');
+      if (request.method === 'GET') { response.end(JSON.stringify(draftSnapshot(s))); return; }
+      const chunks = []; for await (const chunk of request) chunks.push(chunk);
+      const { kind, command } = JSON.parse(Buffer.concat(chunks).toString());
+      const conflict = () => ({ ok:false, code:'CONFLICT', message:'Version obsolète.', latest:draftSnapshot(s) });
+      let row;
+      if (kind === 'SAVE') {
+        const semanticState = parsePlanSemanticState(command.semanticState);
+        if (semanticStateDigest(semanticState) !== command.digest || semanticState.targetMonth !== '2026-11') throw Error('FIXTURE_DRAFT_DIGEST_INVALID');
+        const old = s.active;
+        if (old?.lastMutationRequestId === command.requestId && old.digest === command.digest) {
+          response.end(JSON.stringify({ok:true,draft:old,replayed:true})); return;
+        }
+        if ((old?.draftId ?? null) !== command.expectedDraftId || (old?.version ?? 0) !== command.expectedDraftVersion) {
+          response.end(JSON.stringify(conflict())); return;
+        }
+        if (url.searchParams.get('draftFail') === '1') { response.writeHead(503); response.end('Fixture network failure'); return; }
+        row = { draftId: old?.draftId ?? crypto.randomUUID(), version:(old?.version ?? 0)+1,
+          lifecycle:'ACTIVE', semanticState, digest:command.digest, baseRevisionId:null, baseRevisionNumber:0,
+          lastSavedAt:new Date().toISOString(), archivedAt:null, lastMutationRequestId:command.requestId,
+          lastMutationExpectedVersion:command.expectedDraftVersion, lastMutationKind:'SAVE' };
+        s.active = row;
+      } else if (kind === 'ARCHIVE') {
+        if (!s.active || s.active.draftId !== command.draftId || s.active.version !== command.expectedDraftVersion) {
+          response.end(JSON.stringify(conflict())); return;
+        }
+        row = { ...s.active, version:s.active.version+1, lifecycle:'ABANDONED', archivedAt:new Date().toISOString(),
+          lastMutationRequestId:command.requestId, lastMutationExpectedVersion:command.expectedDraftVersion, lastMutationKind:'ARCHIVE' };
+        s.archives = [row, ...s.archives]; s.active = null;
+      } else if (kind === 'RESTORE') {
+        const old = s.archives.find(d => d.draftId === command.draftId);
+        if (s.active || !old || old.version !== command.expectedDraftVersion) { response.end(JSON.stringify(conflict())); return; }
+        row = { ...old, version:old.version+1, lifecycle:'ACTIVE', archivedAt:null,
+          lastMutationRequestId:command.requestId, lastMutationExpectedVersion:command.expectedDraftVersion, lastMutationKind:'RESTORE' };
+        s.archives = s.archives.filter(d => d.draftId !== row.draftId); s.active = row;
+      } else throw Error('FIXTURE_DRAFT_KIND_INVALID');
+      s.log.push({ kind, draftId:row.draftId, version:row.version, digest:row.digest });
+      if (url.searchParams.get('draftLoseAfterCommit') === '1' && !s.lostOnce) {
+        s.lostOnce = true; response.writeHead(503); response.end('Synthetic response lost after commit'); return;
+      }
+      const delay = Number(url.searchParams.get('draftDelay') ?? 0);
+      if (delay > 0) await new Promise(resolve => setTimeout(resolve, Math.min(delay,5000)));
+      response.end(JSON.stringify({ok:true,draft:row,replayed:false})); return;
+    }
     if (url.pathname === '/interaction') {
       const chunks = []; for await (const chunk of request) chunks.push(chunk);
       const command = JSON.parse(Buffer.concat(chunks).toString()), s = await store(key);
-      if (command.kind === 'READ' && !command.draft && !(await s.deps.repository.readActivePlan(householdId, '2026-11'))?.activeRevision) command.draft = s.fixture.semantic;
+      const initialRead = command.kind === 'READ' && !command.draft;
+      if (initialRead && !(await s.deps.repository.readActivePlan(householdId, '2026-11'))?.activeRevision) command.draft = s.fixture.semantic;
+      if (!initialRead && command.kind === 'READ' && url.searchParams.has('networkFailSequence') && Number(url.searchParams.get('networkFailSequence')) === command.sequence) {
+        s.log.push({ kind: 'NETWORK_FAILURE', sequence: command.sequence, at: Date.now() });
+        response.writeHead(503, { 'Content-Type': 'text/plain' }); response.end('P03B_SYNTHETIC_NETWORK_FAILURE'); return;
+      }
       // Delays only in this isolated host, to exercise stale hover responses in the actual UI.
-      const result = await handleComposerRequest(s.deps, householdId, command);
+      const rejectSequence = Number(url.searchParams.get('rejectSequence'));
+      const syntheticReject = !initialRead && command.kind === 'READ' && url.searchParams.has('rejectSequence') && rejectSequence === command.sequence;
+      const result = syntheticReject ? { ok:false, sequence:command.sequence, code:'P03B_SYNTHETIC_REJECTION', message:'Simulation de test rejetée' } : await handleComposerRequest(s.deps, householdId, command);
       await s.pg.verifyCanaries();
       s.log.push({ kind: command.kind, sequence: command.sequence, mutationKind: result.mutationKind ?? null,
         gesture: command.kind === 'DROP' ? {assetKey:command.assetKey,target:command.target,sourceSocket:command.sourceSocket??null} : null,
@@ -65,18 +143,40 @@ const server = http.createServer(async (request, response) => {
         uiPayloadFields: uiPayloadFields(command),
         ok: result.ok, digest: result.ok ? result.model.board.draft.semanticStateDigest : result.code,
         projection: result.ok ? result.model.board.cockpit : null });
+      const sequenceDelays = Object.fromEntries((url.searchParams.get('delaySequence') ?? '').split(',').filter(Boolean).map(item => item.split(':').map(Number)));
+      const readDelay = !initialRead && command.kind === 'READ' ? Number(sequenceDelays[command.sequence] ?? url.searchParams.get('delayRead') ?? 0) : 0;
+      if (readDelay > 0) await new Promise(resolve => setTimeout(resolve, Math.min(readDelay, 5000)));
       if (command.kind === 'MUTATE' && ['true', 'loading'].includes(url.searchParams.get('delayHover'))
         || url.searchParams.get('delayDrop') === 'true' && command.kind === 'DROP') {
         await new Promise(resolve => setTimeout(resolve, url.searchParams.get('delayHover') === 'loading' ? 3000 : 800));
       }
+      s.log.push({ kind: 'RESPONSE', commandKind: command.kind, sequence: command.sequence, at: Date.now(), ok: result.ok });
       response.setHeader('Content-Type', 'application/json'); response.end(JSON.stringify(result)); return;
     }
     if (url.pathname === '/evidence') {
       const s = await store(key); await s.pg.verifyCanaries(); response.setHeader('Content-Type', 'application/json');
       response.end(JSON.stringify({ counts: await s.pg.counts(), rpcCalls: s.pg.rpcCalls, remoteWrites: 0, historicalCanaryWrites: 0, log: s.log,
+        drafts: { active: draftStore(key).active && { id:draftStore(key).active.draftId, version:draftStore(key).active.version, digest:draftStore(key).active.digest },
+          archives:draftStore(key).archives.length, events:draftStore(key).log },
         active: await s.deps.repository.readActivePlan(householdId, '2026-11') })); return;
     }
+    if (url.pathname === '/mois-a-venir') {
+      const s = await store(key), effective = await resolveEffectiveMonthScenario({ ...s.deps,
+        readDirectWorld: async () => ({ forecast: s.fixture.world.forecast, monthInputs: s.fixture.world.monthInputs,
+          externalIntents: s.fixture.world.externalIntents, asOfDate: s.fixture.world.asOfDate }) }, householdId, '2026-11');
+      response.setHeader('Content-Type', 'text/html; charset=utf-8');
+      if (effective.owner !== 'PLAN_V1') { response.end('<p>Aucune révision appliquée sur cette fixture.</p>'); return; }
+      const controls = appliedPlanControls(effective.preview.compiled, effective.semanticState, effective.preview.baseline);
+      const markup = renderToStaticMarkup(React.createElement(AppliedMonthView, { projection: effective.projection,
+        semanticState: effective.semanticState, controls, plan: null,
+        persons: s.deps.householdPersons,
+        revision: effective.revision.revisionNumber, today: s.fixture.world.asOfDate,
+        composerHref: `/?scenario=${encodeURIComponent(key)}` }));
+      response.end(`<!doctype html><html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Mois à venir · fixture ${key}</title><link rel="stylesheet" href="/global.css"><link rel="stylesheet" href="/app.css"></head><body><main style="max-width:1100px;margin:24px auto;padding:16px">${markup}</main></body></html>`);
+      return;
+    }
     if (['/app.js', '/app.css', '/global.css', '/app.js.map', '/app.css.map'].includes(url.pathname)) {
+      response.setHeader('Cache-Control', 'no-store');
       response.setHeader('Content-Type', url.pathname.endsWith('.css') ? 'text/css' : 'application/javascript'); response.end(fs.readFileSync(path.join(out, url.pathname.slice(1)))); return;
     }
     response.setHeader('Content-Type', 'text/html'); response.end(host);

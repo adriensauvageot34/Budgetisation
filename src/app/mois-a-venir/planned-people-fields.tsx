@@ -5,13 +5,15 @@ import { prospectivePersonIdentity } from "@/domain/phase2/planned-product";
 import { SOCIAL_CONTACTS_V1 } from "@/domain/phase2/planned-rules";
 
 const fieldClass = "min-h-11 w-full rounded-xl border border-slate-300 bg-white px-3";
-export function PlannedContactField({ label, value, onChange }: { label: string; value?: ProspectivePersonRef;
+export function PlannedContactField({ label, value, onChange, householdPersons = [] }: { label: string; value?: ProspectivePersonRef;
+  householdPersons?: readonly { personId: string; displayName: string }[];
   onChange: (ref?: ProspectivePersonRef) => void }) {
   return <div className="grid gap-2"><label className="grid gap-1 text-sm font-semibold">{label}
-    <select className={fieldClass} value={value?.kind === "CONTACT" ? value.contactKey : value?.kind === "TEXT" ? "TEXT" : ""}
+    <select className={fieldClass} value={value?.kind === "HOUSEHOLD_PERSON" ? `HOUSEHOLD:${value.personId}` : value?.kind === "CONTACT" ? value.contactKey : value?.kind === "TEXT" ? "TEXT" : ""}
       onChange={(event) => onChange(event.target.value === "TEXT" ? { kind: "TEXT", label: "" }
+        : event.target.value.startsWith("HOUSEHOLD:") ? { kind: "HOUSEHOLD_PERSON", personId: event.target.value.slice(10) }
         : event.target.value ? { kind: "CONTACT", contactKey: event.target.value } : undefined)}>
-      <option value="">Choisir une personne</option>{SOCIAL_CONTACTS_V1.map((contact) => <option key={contact.key} value={contact.key}>{contact.label}</option>)}
+      <option value="">Choisir une personne</option>{householdPersons.map(person => <option key={person.personId} value={`HOUSEHOLD:${person.personId}`}>{person.displayName} · foyer</option>)}{SOCIAL_CONTACTS_V1.map((contact) => <option key={contact.key} value={contact.key}>{contact.label}</option>)}
       <option value="TEXT">Autre personne à saisir</option></select></label>
     {value?.kind === "TEXT" && <label className="grid gap-1 text-sm">Son nom<input className={fieldClass} value={value.label}
       onChange={(event) => onChange({ kind: "TEXT", label: event.target.value })} /></label>}

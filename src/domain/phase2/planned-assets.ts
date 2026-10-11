@@ -1,4 +1,9 @@
 /** Versioned suggestions for the prospective builder. No historical or database authority. */
+export const PLANNED_ASSET_CATALOG_VERSION = "planned-assets@v1" as const;
+/** A selected catalogue identity and its display snapshot; the free-form object label remains separate.
+ * Bump the catalogue version when changing the meaning of an existing asset key. */
+export type PlannedAssetRef = Readonly<{ catalogVersion: typeof PLANNED_ASSET_CATALOG_VERSION;
+  assetKey: string; labelAtSelection: string; provenance: "EXPLICIT_USER_DECISION" }>;
 export const PLANNED_EXPENSE_SUBTYPES = {
   outing: ["bar", "club_festival", "house_party", "other_outing"],
   food: ["groceries", "restaurant", "fast_food", "work_meal"],

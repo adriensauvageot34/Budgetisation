@@ -3,6 +3,7 @@ import { createRoot } from "react-dom/client";
 import { ComposerShell } from "../../src/app/mois-a-venir/composer/composer-shell";
 import { AppShell } from "../../src/components/layout/app-shell";
 import type { ComposerRequest } from "../../src/domain/phase2/planner/composer-ui-contract";
+import type { ComposerDraftLifecycleCommand, ComposerDraftResult, ComposerDraftSaveCommand, ComposerDraftSnapshot } from "../../src/domain/phase2/planner/composer-draft-contract";
 
 /** Isolated synthetic host; actual production Composer, no production auth bypass. */
 async function transport(request: ComposerRequest) {
@@ -10,7 +11,31 @@ async function transport(request: ComposerRequest) {
   if (!response.ok) throw new Error("FIXTURE_TRANSPORT_FAILED");
   return response.json();
 }
-const initial = await transport({ kind: "READ", sequence: 0, targetMonth: "2026-11" });
+const durableFixture = new URLSearchParams(location.search).get("durable") === "1";
+const draftUrl = `/draft${location.search}`;
+const draftRead = async (): Promise<ComposerDraftSnapshot> => {
+  const response = await fetch(draftUrl);
+  if (!response.ok) throw new Error("FIXTURE_DRAFT_READ_FAILED");
+  return response.json();
+};
+const draftCall = async (kind: string, command: ComposerDraftSaveCommand | ComposerDraftLifecycleCommand): Promise<ComposerDraftResult> => {
+  const response = await fetch(draftUrl, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ kind, command }) });
+  if (response.ok) return response.json();
+  // A response may be lost after the fixture committed. Inspect the request ID before retrying.
+  const latest = await draftRead();
+  const row = [latest.active, ...latest.archives].find(item => item?.lastMutationRequestId === command.requestId);
+  if (row) return { ok: true, draft: row, replayed: true };
+  return { ok: false, code: "UNAVAILABLE", message: "Réponse non confirmée.", latest };
+};
+const draftTransport = durableFixture ? {
+  read: (_month: string) => draftRead(),
+  save: (command: ComposerDraftSaveCommand) => draftCall("SAVE", command),
+  archive: (command: ComposerDraftLifecycleCommand) => draftCall("ARCHIVE", command),
+  restore: (command: ComposerDraftLifecycleCommand) => draftCall("RESTORE", command),
+} : null;
+const initialDrafts = durableFixture ? await draftRead() : null;
+const initial = await transport({ kind: "READ", sequence: 0, targetMonth: "2026-11",
+  ...(initialDrafts?.active ? { draft: initialDrafts.active.semanticState } : {}) });
 if (!initial.ok) throw new Error(initial.code);
 // Component contract only: C7 does not yet publish COMPLETE. No Apply may use
 // this DTO; ordinary scenarios always use the unmodified compiler response.
@@ -19,4 +44,4 @@ const model = readyContract ? { ...initial.model, board: { ...initial.model.boar
   cockpit: { ...initial.model.board.cockpit, projectionCompleteness: "COMPLETE", applyReadiness: "READY" } } } : initial.model;
 const fixtureTransport = readyContract ? async (request: ComposerRequest) => ({ ok: false, sequence: request.sequence,
   code: "UI_CONTRACT_ONLY", message: "Fixture de présentation uniquement : aucune application autorisée." }) : transport;
-createRoot(document.getElementById("root")!).render(<AppShell><div data-ui-contract={readyContract ? "ready-presentation-only" : undefined} style={{height:"100%"}}><ComposerShell initialModel={model} transport={fixtureTransport} /></div></AppShell>);
+createRoot(document.getElementById("root")!).render(<AppShell><div data-ui-contract={readyContract ? "ready-presentation-only" : undefined} style={{height:"100%"}}><ComposerShell initialModel={model} transport={fixtureTransport} initialDrafts={initialDrafts} draftTransport={draftTransport} /></div></AppShell>);

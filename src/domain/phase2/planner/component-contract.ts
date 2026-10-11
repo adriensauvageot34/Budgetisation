@@ -9,7 +9,8 @@ export type ContextBindingDecision = Readonly<{ mode: "AUTO" | "CONFIRMED_CONSUM
 type SelectionIdentity = Readonly<{ selectionId: string; optionKey: string; provenance: ComponentDefaultProvenance }>;
 export type ComponentSelectionV1 = SelectionIdentity & (
   | Readonly<{ kind: "COMPONENT"; label: string; quantity: string; cost: KernelCost;
-      binding?: ContextBindingDecision; fundingAllocations?: readonly FundingAllocation[]; needOccurrenceId?: string }>
+      binding?: ContextBindingDecision; fundingAllocations?: readonly FundingAllocation[]; needOccurrenceId?: string;
+      unitBasis?: "ITEM" | "PERSON" | "SHARED" }>
   | Readonly<{ kind: "CHILD_CONTEXT"; childContextOccurrenceId: string }>
   | Readonly<{ kind: "MOBILITY_INTENT"; origin?: ProspectivePlaceRef | null; destination?: ProspectivePlaceRef | null; returnRequired?: boolean;
       journey?: JourneyDeclaration; pricing?: MobilityPricingDecision; plannedTime?: string | null; returnTime?: string | null }>

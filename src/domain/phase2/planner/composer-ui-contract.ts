@@ -1,6 +1,7 @@
 import type { MonthComposerReadModel, DropTarget } from "./composer-contract";
 import type { PlannerApplyCommand } from "./compiler-contract";
 import type { PlanSemanticStateV1 } from "./semantic-state";
+import type { PlannerJson } from "./json";
 import type { PlanBalanceSuggestions, SemanticMutation } from "./adjustment-contract";
 import type { ComponentSelectionV1 } from "./component-contract";
 
@@ -51,6 +52,7 @@ export type ComposerDragSource = Readonly<{
 }>;
 /** Excludes Baseline snapshots, canonical evidence and financial adapter entries. */
 export type ComposerUiModel = Omit<MonthComposerReadModel, "preview"> & Readonly<{
+  householdPersons: readonly Readonly<{ personId: string; displayName: string }>[];
   proof: Omit<PlannerApplyCommand, "applyRequestId">;
   appliedContextIds: readonly string[];
   editors: readonly ComposerEditor[];
@@ -63,7 +65,8 @@ export type ComposerRequest = Readonly<{ sequence: number; targetMonth: string; 
   | Readonly<{ kind: "MUTATE"; mutation: SemanticMutation }>
   | Readonly<{ kind: "DROP"; assetKey: string; target: DropTarget; values: Readonly<Record<string, string>>; identity: string; selectionId: string; sourceSocket?: Readonly<{ contextOccurrenceId: string; slotKey: string; selectionId: string }> }>
   | Readonly<{ kind: "CLEAR_SOCKET"; contextOccurrenceId: string; slotKey: string; selectionId: string }>
-  | Readonly<{ kind: "EDIT_CONTEXT"; contextOccurrenceId: string; values: Readonly<Record<string, string>> }>
+  | Readonly<{ kind: "EDIT_CONTEXT"; contextOccurrenceId: string; values: Readonly<Record<string, PlannerJson>> }>
+  | Readonly<{ kind: "EDIT_GIFT"; contextOccurrenceId: string; values: Readonly<Record<string, PlannerJson>>; item: ComponentSelectionV1 }>
   | Readonly<{ kind: "PRESERVE"; targetRef: string; preserve: boolean }>
   | Readonly<{ kind: "SUGGESTIONS" }>
   | Readonly<{ kind: "ACCEPT"; candidateSetDigest: string; candidateId: string }>
@@ -71,7 +74,7 @@ export type ComposerRequest = Readonly<{ sequence: number; targetMonth: string; 
 );
 export type ComposerResponse = Readonly<{ sequence: number }> & (
   | Readonly<{ ok: true; model: ComposerUiModel; suggestions?: PlanBalanceSuggestions; applied?: boolean; mutationKind?: string; interactionImpact?: string | null }>
-  | Readonly<{ ok: false; code: string; message: string }>
+  | Readonly<{ ok: false; code: string; message: string; applied?: boolean; revisionNumber?: number }>
 );
 export type ComposerTransport = (request: ComposerRequest) => Promise<ComposerResponse>;
 export type ComposerOperation = ComposerRequest extends infer Request ? Request extends ComposerRequest ? Omit<Request, "sequence" | "targetMonth" | "draft"> : never : never;

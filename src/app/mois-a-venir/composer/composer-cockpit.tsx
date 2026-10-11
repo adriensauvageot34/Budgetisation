@@ -6,16 +6,16 @@ const tone = (value: string | null) => value === null ? "unknown" : value.starts
 const hudMoney = (value: string | null) => value === null ? "—" : money(value);
 const unknownHint = "Disponible lorsque les éléments nécessaires sont renseignés.";
 /** The former permanent cockpit is now a header HUD, using the same C7 fields. */
-export function ComposerCockpit({ projection, goalMargin, temporary, pending, canonicalRemainder, interactionImpact, variant, details }: { projection: PlanProjectionV1; goalMargin: string | null; temporary: boolean; pending?: boolean; canonicalRemainder?: string | null; interactionImpact?: string | null; variant?: boolean; details?: () => void }) {
-  return <div className={styles.financialHud} data-cockpit data-temporary={temporary} data-calculating={pending} aria-label="Projection financière du mois">
+export function ComposerCockpit({ projection, goalMargin, temporary, pending, stale = false, staleLabel, canonicalRemainder, interactionImpact, variant, details }: { projection: PlanProjectionV1; goalMargin: string | null; temporary: boolean; pending?: boolean; stale?: boolean; staleLabel?: string; canonicalRemainder?: string | null; interactionImpact?: string | null; variant?: boolean; details?: () => void }) {
+  return <div className={styles.financialHud} data-cockpit data-temporary={temporary} data-calculating={pending} data-stale={stale} aria-label={stale ? staleLabel ?? "Projection en attente de simulation" : "Projection financière du mois"}>
     <button className={styles.hudMain} data-financial-details onClick={details} title={projection.plan.economicMonthEndRemainder === null ? unknownHint : "Voir le détail financier"}>
-      <span>{variant ? "Variante" : "Fin de mois"}{pending && <i className={styles.calculating}>Calcul…</i>}</span>
-      <strong key={projection.plan.economicMonthEndRemainder} data-remainder>{hudMoney(projection.plan.economicMonthEndRemainder)}</strong>
-      {temporary && <small data-canonical-remainder>Actuel {hudMoney(canonicalRemainder ?? null)}</small>}</button>
-    <div className={styles.hudMetric} title={projection.baseline.economicMonthEndRemainder === null ? unknownHint : undefined}><span>Sans changements</span><b>{hudMoney(projection.baseline.economicMonthEndRemainder)}</b></div>
-    <div className={styles.hudMetric} data-gesture-impact={temporary || undefined} data-tone={tone(temporary ? interactionImpact ?? null : projection.plan.impactOnMonthEnd)} title={temporary ? "Impact de ce geste, calculé par le serveur" : "Impact par rapport au mois sans changements"}><span>Impact</span><b>{signedMoney(temporary ? interactionImpact ?? null : projection.plan.impactOnMonthEnd)}</b></div>
-    <div className={styles.hudMetric} title={projection.goal.targetMonthEnd === null ? unknownHint : undefined}><span>Objectif</span><b>{hudMoney(projection.goal.targetMonthEnd)}</b></div>
-    <div className={styles.hudMetric} data-tone={tone(goalMargin)} title={goalMargin === null ? unknownHint : undefined}><span>Marge</span><b>{signedMoney(goalMargin)}</b></div>
+      <span>{temporary ? "Hypothèse" : variant ? "Variante" : "Fin de mois"}{pending && <i className={styles.calculating}>Calcul…</i>}</span>
+      <strong key={stale ? "stale" : projection.plan.economicMonthEndRemainder} data-remainder>{stale ? "—" : hudMoney(projection.plan.economicMonthEndRemainder)}</strong>
+      {temporary && !stale && <small data-canonical-remainder>Actuel {hudMoney(canonicalRemainder ?? null)}</small>}</button>
+    <div className={styles.hudMetric} title={stale || projection.baseline.economicMonthEndRemainder === null ? unknownHint : undefined}><span>Sans changements</span><b>{stale ? "—" : hudMoney(projection.baseline.economicMonthEndRemainder)}</b></div>
+    <div className={styles.hudMetric} data-gesture-impact={temporary || undefined} data-tone={stale ? "unknown" : tone(temporary ? interactionImpact ?? null : projection.plan.impactOnMonthEnd)} title={temporary ? "Impact de ce geste, calculé par le serveur" : "Impact par rapport au mois sans changements"}><span>Impact</span><b>{stale ? "—" : signedMoney(temporary ? interactionImpact ?? null : projection.plan.impactOnMonthEnd)}</b></div>
+    <div className={styles.hudMetric} title={stale || projection.goal.targetMonthEnd === null ? unknownHint : undefined}><span>Objectif</span><b>{stale ? "—" : hudMoney(projection.goal.targetMonthEnd)}</b></div>
+    <div className={styles.hudMetric} data-tone={stale ? "unknown" : tone(goalMargin)} title={stale || goalMargin === null ? unknownHint : undefined}><span>Marge</span><b>{stale ? "—" : signedMoney(goalMargin)}</b></div>
   </div>;
 }
 /** All original financing, timing and diagnostic information remains reachable. */

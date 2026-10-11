@@ -1,4 +1,5 @@
 import type { PlannerJsonObject } from "./json";
+import type { CardKnowledgeRead } from "./card-knowledge-contract";
 import type { PlanSemanticStateV1 } from "./semantic-state";
 import type { PlannerDiagnostic, PlannerKnowledge } from "./diagnostics";
 import type { PlanProjectionV1 } from "./projection-contract";
@@ -33,4 +34,5 @@ export type DropCapability = Readonly<{ sourceAssetKey: string; target: DropTarg
 export type DropResolution = Readonly<{ capability: DropCapability; semanticMutation: SemanticMutation | null }>;
 export type MonthComposerReadModel = Readonly<{ version: string; semanticState: PlanSemanticStateV1;
   library: ComposerLibraryView; board: ComposerBoardView; dropCapabilities: readonly DropCapability[];
+  cardKnowledge: Readonly<Record<string, CardKnowledgeRead>>;
   preview: PlanScenarioPreview; activeRevisionId: string | null; activeRevisionNumber: number }>;
