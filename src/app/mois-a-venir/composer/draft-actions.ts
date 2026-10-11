@@ -1,11 +1,12 @@
 "use server";
 import type { ComposerDraftLifecycleCommand, ComposerDraftSaveCommand } from "@/domain/phase2/planner/composer-draft-contract";
 import { authorizedPlanner } from "@/server/phase2/planner/runtime";
+import { composerDraftAutosaveEnabledFor } from "@/server/phase2/planner/composer-draft-cutover";
 import { changeComposerDraftLifecycle, readComposerDrafts, saveComposerDraft } from "@/server/phase2/planner/composer-draft-service";
 
 async function scope() {
-  if (process.env.COMPOSER_DRAFT_AUTOSAVE_ENABLED !== "true") throw new TypeError("COMPOSER_DRAFT_DISABLED");
   const { supabase, userId, householdId } = await authorizedPlanner();
+  if (!composerDraftAutosaveEnabledFor(userId)) throw new TypeError("COMPOSER_DRAFT_DISABLED");
   return { supabase, userId, householdId };
 }
 
