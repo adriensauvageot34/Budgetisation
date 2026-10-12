@@ -21,9 +21,13 @@ export function parseProspectiveRoute(raw: unknown): ProspectiveRouteDecision | 
     ...(value.manualFuelPrice === undefined ? {} : { manualFuelPrice: value.manualFuelPrice }) });
   if (parsed.manualFuelPrice !== undefined) parsePlannedCarRequest({ stops: [{ label: "Départ" }, { label: "Destination" }],
     plannedDate: null, manualFuelPrice: parsed.manualFuelPrice });
+  // The owner's parser has optional undefined fields and default null distances. Keep the admitted JSON
+  // shape for copying/reparenting decisions: absence must not become undefined or a newly declared value.
+  const stops = parsed.stops.map((stop, index) => Object.fromEntries(Object.entries(stop)
+    .filter(([key, item]) => item !== undefined && Object.hasOwn((value.stops as object[])[index], key)))) as unknown as ProspectiveRouteDecision["stops"];
   return { version: "composer-mobility-route@v1", vehicleRef: vehicle ? { vehicleId: plannerUuid(vehicle.vehicleId),
     labelAtSelection: plannerString(vehicle.labelAtSelection), provenance: "EXPLICIT_USER_DECISION" } : null,
-    stops: parsed.stops, ...(parsed.manualFuelPrice === undefined ? {} : { manualFuelPrice: parsed.manualFuelPrice }),
+    stops, ...(parsed.manualFuelPrice === undefined ? {} : { manualFuelPrice: parsed.manualFuelPrice }),
     ...(value.toll === undefined ? {} : { toll: parseKernelCost(value.toll) }) };
 }
 

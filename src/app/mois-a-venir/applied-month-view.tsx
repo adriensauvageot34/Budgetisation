@@ -174,7 +174,8 @@ export function AppliedMonthView({ projection, semanticState, controls = [], pla
           {!!stops.length && <ol className="ml-4 list-decimal">{stops.map((stop, i) => <li key={i}>{String(stop.label)}{stop.endpointSource === "ROOT_PLACE" ? " · destination de la visite" : ""}</li>)}</ol>}
           <p>Financement des frais : {fundingLabel(record(transport?.pricing)?.fundingAllocations)}</p>
           <p className="text-xs text-slate-500">Estimation conservée lors de l’application de cette révision. Le conteneur Visite n’ajoute aucun coût propre.</p>
-          <MobilityEstimateSummary summary={snapshot} />
+          {transport?.optionKey === "free" && transport.provenance !== "PERSONAL_SUGGESTION" ? <p>Déplacement déclaré gratuit. Aucun coût de trajet ajouté.</p>
+            : <MobilityEstimateSummary summary={snapshot} />}
           <ul className="ml-4 list-disc">{renderParts(context)}</ul>
         </article>;
       })}

@@ -158,7 +158,8 @@ export function FamilyVisitEditor({ context, targetMonth, householdPersons, opti
           {mode !== "free" && <><label>Financement des frais payables<select value={funding} onChange={event => setFunding(event.target.value)}><option value="">À préciser</option><option value="BANK">Banque déclarée</option></select></label>
             {funding === "BANK" && <label>Montant Banque (€)<input inputMode="decimal" value={fundingAmount} onChange={event => setFundingAmount(event.target.value)} /></label>}</>}
         </>}
-        <MobilityEstimateSummary summary={summary} fresh={fresh && initialInputs.current === JSON.stringify(transportInputs) && (initialMode === undefined || initialMode === original?.optionKey)} />
+        {mode === "free" ? <p>Déplacement déclaré gratuit. Aucun coût de trajet ajouté.</p>
+          : <MobilityEstimateSummary summary={summary} fresh={fresh && initialInputs.current === JSON.stringify(transportInputs) && (initialMode === undefined || initialMode === original?.optionKey)} />}
         <p className={styles.helper}>La simulation utilise Mobility et Finance V2. Carburant utilisé, péages et billet restent distincts. Une panne fournisseur conserve le brouillon et les autres composants.</p>
       </section>
     </div>
