@@ -11,11 +11,13 @@ import { fixture as plannerFixture, state as plannerState, simpleMonth, nightMon
 import { providers } from './fixtures/planner-mobility.mjs';
 import { atomicMonth, interactionMonth, richMonth, savingsMonth } from './fixtures/planner-atomic-ui.mjs';
 import { visualMonth, visualThreeBeautyMonth, sparseMonth, unreadyMonth } from './fixtures/planner-visual-fidelity.mjs';
+import { p10Month } from './fixtures/planner-p10.mjs';
 import { p09CompatibilityMonth, p09ReadbackMonth } from './fixtures/planner-p09.mjs';
 const { handleComposerRequest } = require('@/server/phase2/planner/composer-service');
 const { createPlanApplyRepository } = require('@/server/phase2/planner/repository');
 const { preparePlanningMobility } = require('@/server/phase2/planner/prospective-mobility-pricing');
 const { resolveEffectiveMonthScenario } = require('@/server/phase2/planner/effective-month-scenario');
+const { appliedMobilitySummaries } = require('@/server/phase2/planner/mobility-presentation');
 const { appliedPlanControls } = require('@/server/phase2/planner/applied-plan-read');
 const { AppliedMonthView } = require('@/app/mois-a-venir/applied-month-view');
 const { semanticStateDigest, parsePlanSemanticState } = require('@/domain/phase2/planner/semantic-state');
@@ -49,6 +51,7 @@ const stores = new Map(), fixtures = { A: simpleMonth, B: nightMonth, C: weekend
   P09C: p09CompatibilityMonth,
   P09S: p09CompatibilityMonth,
   P09R: p09ReadbackMonth,
+  P10:p10Month, P10OUT:p10Month,
   RA: interactionMonth, RB: nightMonth, RC: weekendMonth, RR: atomicMonth, RICH:richMonth, SAVINGS:savingsMonth,
   VISUAL:visualMonth, VISUAL_P35_CLICK:visualMonth, VISUAL_P35_DRAG:visualMonth, VISUAL_P35_MULTI_DRAG:visualMonth, VISUAL_P35_REPLACE:visualMonth,
   VISUAL_P35_HISTORY:visualMonth, VISUAL_P35_PROTECTED:visualMonth, DISSOLVE_BEAUTY:visualThreeBeautyMonth,
@@ -68,9 +71,12 @@ function uiPayloadFields(value) {
 async function store(key) {
   if (!stores.has(key)) stores.set(key, (async () => {
     const pg = await createKernelPostgres(), fixture = (fixtures[key] ?? fixtures.A)(), owner = providers();
+    if(key==='P10OUT') owner.settings.routeUnavailable=true;
     return { pg, fixture, log: [], deps: { repository: createPlanApplyRepository(pg.client),
       householdPersons: [{ personId: '00000000-0000-4000-8000-000000000001', displayName: 'Alice Fixture' }],
+      readMobilityOptions: async()=>({places:fixture.world.mobilityFacts?.places ?? [],vehicle:fixture.world.mobilityFacts?.vehicle ?? null}),
       validateContextReferences: async (_household, refs) => {
+        if (refs.placeIds.some(id=>!fixture.world.mobilityFacts?.places.some(p=>p.placeId===id))) throw new TypeError('CONTEXT_PLACE_NOT_ADMITTED');
         if (refs.personIds.some(id => id !== '00000000-0000-4000-8000-000000000001')) throw new TypeError('CONTEXT_PERSON_NOT_IN_HOUSEHOLD');
       }, readWorld: async () => fixture.world,
       prepareWorld: (world, state) => preparePlanningMobility(world, state, owner.value) } };
@@ -178,7 +184,7 @@ const server = http.createServer(async (request, response) => {
       response.setHeader('Content-Type', 'text/html; charset=utf-8');
       if (effective.owner !== 'PLAN_V1') { response.end('<p>Aucune révision appliquée sur cette fixture.</p>'); return; }
       const controls = appliedPlanControls(effective.preview.compiled, effective.semanticState, effective.revision.baselineSnapshot);
-      const markup = renderToStaticMarkup(React.createElement(AppliedMonthView, { projection: effective.projection,
+      const markup = renderToStaticMarkup(React.createElement(AppliedMonthView, { projection: effective.projection, places: s.fixture.world.mobilityFacts?.places ?? [], mobility: effective.revision ? appliedMobilitySummaries(effective.revision.compiledManifest) : [],
         semanticState: effective.semanticState, controls, plan: null,
         persons: s.deps.householdPersons,
         revision: effective.revision.revisionNumber, today: s.fixture.world.asOfDate,

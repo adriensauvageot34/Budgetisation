@@ -1,7 +1,35 @@
 import "server-only";
 import { plannerInteger, plannerKeys, plannerRecord, plannerString, plannerUuid } from "@/domain/phase2/planner/json";
-import type { JourneyDeclaration, MobilityPricingDecision } from "@/domain/phase2/planner/mobility-contract";
+import type { JourneyDeclaration, MobilityPricingDecision, ProspectiveRouteDecision } from "@/domain/phase2/planner/mobility-contract";
 import { parseKernelCost, parseKernelFunding } from "./cost-resolver";
+import { parsePlannedCarRequest } from "../planned-car-estimation";
+
+export function parseProspectiveRoute(raw: unknown): ProspectiveRouteDecision | undefined {
+  if (raw === undefined) return undefined;
+  const value = plannerRecord(raw);
+  plannerKeys(value, ["version", "vehicleRef", "stops", "manualFuelPrice", "toll"], ["version", "vehicleRef", "stops"]);
+  if (value.version !== "composer-mobility-route@v1") throw new TypeError("COMPOSER_ROUTE_VERSION_INVALID");
+  const vehicle = value.vehicleRef == null ? null : plannerRecord(value.vehicleRef);
+  if (vehicle) {
+    plannerKeys(vehicle, ["vehicleId", "labelAtSelection", "provenance"]);
+    if (vehicle.provenance !== "EXPLICIT_USER_DECISION") throw new TypeError("COMPOSER_VEHICLE_PROVENANCE_INVALID");
+  }
+  // Reuse the owner's structural validators without the expense writer or its readiness gate.
+  const parsed = Array.isArray(value.stops) && value.stops.length === 0
+    ? { stops: [], ...(value.manualFuelPrice === undefined ? {} : { manualFuelPrice: value.manualFuelPrice as string }) }
+    : parsePlannedCarRequest({ stops: value.stops, plannedDate: null,
+    ...(value.manualFuelPrice === undefined ? {} : { manualFuelPrice: value.manualFuelPrice }) });
+  if (parsed.manualFuelPrice !== undefined) parsePlannedCarRequest({ stops: [{ label: "Départ" }, { label: "Destination" }],
+    plannedDate: null, manualFuelPrice: parsed.manualFuelPrice });
+  // The owner's parser has optional undefined fields and default null distances. Keep the admitted JSON
+  // shape for copying/reparenting decisions: absence must not become undefined or a newly declared value.
+  const stops = parsed.stops.map((stop, index) => Object.fromEntries(Object.entries(stop)
+    .filter(([key, item]) => item !== undefined && Object.hasOwn((value.stops as object[])[index], key)))) as unknown as ProspectiveRouteDecision["stops"];
+  return { version: "composer-mobility-route@v1", vehicleRef: vehicle ? { vehicleId: plannerUuid(vehicle.vehicleId),
+    labelAtSelection: plannerString(vehicle.labelAtSelection), provenance: "EXPLICIT_USER_DECISION" } : null,
+    stops, ...(parsed.manualFuelPrice === undefined ? {} : { manualFuelPrice: parsed.manualFuelPrice }),
+    ...(value.toll === undefined ? {} : { toll: parseKernelCost(value.toll) }) };
+}
 
 export function parseJourneyDeclaration(raw: unknown): JourneyDeclaration | undefined {
   if (raw === undefined) return undefined;

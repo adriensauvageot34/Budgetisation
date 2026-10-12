@@ -9,9 +9,12 @@ import { evaluatePlanScenario } from "./preview";
 import { assertRevisionEvidence } from "./revision-evidence";
 import { revisionChangeSet } from "./change-set";
 import { knownContextReferences } from "./context-selections";
+import type { PlannedPlaceOption } from "@/domain/phase2/planned-places";
+import type { PlannedVehicleEstimate } from "@/domain/phase2/planned-contract";
 
 export type PlannerDependencies = Readonly<{ repository: PlanRepository;
   householdPersons?: readonly Readonly<{ personId: string; displayName: string }>[];
+  readMobilityOptions?(householdId: string): Promise<Readonly<{ places: readonly PlannedPlaceOption[]; vehicle: PlannedVehicleEstimate | null }>>;
   readWorld(householdId: string, targetMonth: string): Promise<PlanningWorldFacts>;
   prepareWorld?(world: PlanningWorldFacts, state: PlanSemanticStateV1): Promise<PlanningWorldFacts>;
   validateContextReferences?(householdId: string, refs: Readonly<{ personIds: readonly string[]; placeIds: readonly string[] }>): Promise<void> }>;

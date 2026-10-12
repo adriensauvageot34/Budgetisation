@@ -6,7 +6,7 @@ import type { PlanSemanticStateV1 } from "@/domain/phase2/planner/semantic-state
 import { plannerDigest } from "@/domain/phase2/planner/json";
 import { stopForPlace } from "@/domain/phase2/planned-routes";
 import { plannedLineGross, costItemCashTreatment } from "@/domain/phase2/planned-money";
-import { transportTotals } from "@/domain/phase2/planned-car";
+import { transportTotals, combineProspectiveCarJourney } from "@/domain/phase2/planned-car";
 import { estimatePlannedCar } from "../planned-car-estimation";
 import { TomTomRouteProvider, FrenchOfficialFuelPriceProvider, HereTollProvider } from "../planned-car-providers";
 import { resolveComponentCost } from "./cost-resolver";
@@ -19,12 +19,16 @@ export type MobilityProviders = Parameters<typeof estimatePlannedCar>[2];
 /** Provider calculation clocks are operational metadata, not a new authority on every re-read. */
 export function stableMobilityEvidence<T>(value: T): ClocklessMobilityEvidence<T> {
   if (Array.isArray(value)) return value.map(stableMobilityEvidence) as ClocklessMobilityEvidence<T>;
-  if (value && typeof value === "object") return Object.fromEntries(Object.entries(value).filter(([key]) => key !== "calculatedAt")
-    .map(([key, item]) => [key, stableMobilityEvidence(item)])) as ClocklessMobilityEvidence<T>;
+  if (value && typeof value === "object") {
+    const price = value as Record<string, unknown>;
+    return Object.fromEntries(Object.entries(value).filter(([key]) => key !== "calculatedAt")
+      .map(([key, item]) => [key, key === "observedAt" && price.source === "MANUAL" && Object.hasOwn(price, "pricePerLiter")
+        ? "USER_DECLARED_PROSPECTIVE_PRICE_DATE_UNKNOWN" : stableMobilityEvidence(item)])) as ClocklessMobilityEvidence<T>;
+  }
   return value as ClocklessMobilityEvidence<T>;
 }
 export function journeyPricingDigest(journey: PhysicalJourneyRequirement, intent: MobilityIntent, world: PlanningWorldFacts) {
-  return plannerDigest(JSON.parse(JSON.stringify({ journey, pricing: intent.pricing ?? null,
+  return plannerDigest(JSON.parse(JSON.stringify({ journey, pricing: intent.pricing ?? null, ...(intent.route ? { route: intent.route } : {}),
     costQuotes: world.costQuotes, authority: world.mobilityFacts ? { vehicle: world.mobilityFacts.vehicle, places: world.mobilityFacts.places, history: world.mobilityFacts.history,
       personalAuthority: world.mobilityFacts.personalAuthority.outputHash, evidenceRefs: world.mobilityFacts.evidenceRefs } : null })));
 }
@@ -66,28 +70,43 @@ export async function preparePlanningMobility(world: PlanningWorldFacts, state: 
     let fare: string | null = null, toll: string | null = null, parking: string | null = null;
     let snapshot: JourneyPrice["snapshot"] = null, evidence: unknown = { owner: "declared-prospective-fare" };
     if (!journey.relationUnresolved && journey.stops.length >= 2) {
-      if (journey.mode === "CAR" && world.mobilityFacts?.vehicle) {
+      if (journey.mode === "CAR" && world.mobilityFacts?.vehicle
+        && (!intent.route || intent.route.vehicleRef?.vehicleId === world.mobilityFacts.vehicle.vehicleId)) {
         const rawFacts = world.mobilityFacts, vehicle = rawFacts.vehicle!;
         const facts = { ...rawFacts, history: rawFacts.history.filter(leg => leg.date <= world.baseline.knowledgeCutoff.slice(0, 10)),
           vehicle: vehicle.fuelPriceObservedAt && Date.parse(vehicle.fuelPriceObservedAt) > cutoff ? { ...vehicle, fuelPricePerLiter: "0" } : vehicle };
         const anchor = journey.stops.findIndex((ref, index) => index > 0 && plannerDigest(ref) === plannerDigest(intent.destination));
-        const stops = journey.stops.map((ref, index) => stopForPlace(ref, ref.kind === "KNOWN" ? facts.places.find(p => p.placeId === ref.placeId)?.name ?? ref.placeId : ref.label,
+        const stops = intent.route?.stops ?? journey.stops.map((ref, index) => stopForPlace(ref, ref.kind === "KNOWN" ? facts.places.find(p => p.placeId === ref.placeId)?.name ?? ref.placeId : ref.label,
           index === anchor ? "ROOT_PLACE" : "DIRECT_PLACE"));
         const date = journey.outbound.kind === "DATED" ? journey.outbound.date : null;
         try {
-          const result = await estimatePlannedCar({ stops, plannedDate: date,
+          const input = { stops, plannedDate: date,
             plannedTime: journey.outbound.kind === "DATED" ? journey.outbound.time : null, preference: intent.pricing?.preference ?? "FASTEST",
-            ...(journey.returnLeg ? { tripTiming: { outbound: { date, time: journey.outbound.kind === "DATED" ? journey.outbound.time : null },
-              return: { required: true as const, date: journey.returnLeg.kind === "DATED" ? journey.returnLeg.date : null,
-                time: journey.returnLeg.kind === "DATED" ? journey.returnLeg.time : null } } } : {}) }, facts, admittedProviders);
+            ...(intent.route?.manualFuelPrice ? { manualFuelPrice: intent.route.manualFuelPrice } : {}) };
+          const timing = journey.returnLeg ? { outbound: { date, time: journey.outbound.kind === "DATED" ? journey.outbound.time : null },
+            return: { required: true as const, date: journey.returnLeg.kind === "DATED" ? journey.returnLeg.date : null,
+              time: journey.returnLeg.kind === "DATED" ? journey.returnLeg.time : null } } : null;
+          // Both directed legs use the existing owner even without fixed dates. Never double a one-way distance.
+          const result = timing && intent.route ? await (async () => {
+            const split = journey.returnAnchorIndex!;
+            const [outbound, returning] = await Promise.all([
+              estimatePlannedCar({ ...input, stops: stops.slice(0, split + 1) }, facts, admittedProviders),
+              estimatePlannedCar({ ...input, stops: stops.slice(split), plannedDate: timing.return.date, plannedTime: timing.return.time }, facts, admittedProviders) ]);
+            return { ...outbound, status: outbound.status === "LIVE" && returning.status === "LIVE" ? "LIVE" as const : "PARTIAL" as const,
+              snapshot: outbound.snapshot && returning.snapshot ? combineProspectiveCarJourney(outbound.snapshot, returning.snapshot, timing) : null };
+          })() : await estimatePlannedCar({ ...input, ...(timing ? { tripTiming: timing } : {}) }, facts, admittedProviders);
           snapshot = result.snapshot ? stableMobilityEvidence(result.snapshot) : null;
-          economicFuel = result.snapshot?.fuelEconomicCost ?? null; toll = result.snapshot?.toll.amount ?? null;
+          economicFuel = result.snapshot?.fuelEconomicCost ?? null;
+          toll = intent.route?.toll ? declaredCost(intent.route.toll, world) : result.snapshot?.toll.amount ?? null;
           // A missing canonical price observation date stays explicitly undated; it must not become a changing clock authority.
           if (snapshot?.fuelPrice?.source === "CANONICAL_OBSERVATION" && !facts.vehicle?.fuelPriceObservedAt)
             snapshot = { ...snapshot, fuelPrice: { ...snapshot.fuelPrice, observedAt: "CANONICAL_OBSERVATION_DATE_UNKNOWN" } };
+          if (snapshot?.fuelPrice?.source === "MANUAL") snapshot = { ...snapshot, fuelPrice: { ...snapshot.fuelPrice,
+            observedAt: "USER_DECLARED_PROSPECTIVE_PRICE_DATE_UNKNOWN" } };
           parking = declaredCost(intent.pricing?.parking ?? { kind: "MANUAL", unitAmount: "0" }, world);
           cashTransport = parking === null ? null : transportTotals(economicFuel, toll, parking).cash;
           evidence = { owner: "estimatePlannedCar@planned-car-live-v2", status: result.status, snapshot,
+            ...(intent.route?.toll ? { tollDecision: intent.route.toll } : {}),
             canonicalEvidenceRefs: facts.evidenceRefs, personalMobilityMethod: facts.personalAuthority.methodVersion,
             personalMobilityOutputHash: facts.personalAuthority.outputHash };
         } catch (error) {

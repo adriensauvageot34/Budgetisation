@@ -23,13 +23,17 @@ export function createPlannerDependencies(canonical: CanonicalRepository, authen
   const scope = (householdId: string) => {
     if (householdId !== String(canonical.context.householdId)) throw new TypeError("PLANNER_AUTHORIZED_HOUSEHOLD_MISMATCH");
   };
+  // One owner read within this server request, shared by validation, pricing and editor options. No persistent cache.
+  let optionsPromise: ReturnType<typeof readPlannedContextOptions> | undefined;
+  const mobilityOptions = (householdId: string) => { scope(householdId); return optionsPromise ??=
+    readPlannedContextOptions(canonical.client, householdId, canonical.context.persons); };
   return { repository: createPlanApplyRepository(authenticatedClient), householdPersons: (canonical.context.persons ?? []).map(person =>
-    ({ personId: String(person.personId), displayName: person.displayName })), async validateContextReferences(householdId, refs) {
+    ({ personId: String(person.personId), displayName: person.displayName })), readMobilityOptions: mobilityOptions, async validateContextReferences(householdId, refs) {
     scope(householdId);
     const persons = new Set(canonical.context.persons.map(person => String(person.personId)));
     if (refs.personIds.some(id => !persons.has(id))) throw new TypeError("CONTEXT_PERSON_NOT_IN_HOUSEHOLD");
     if (refs.placeIds.length) {
-      const options = await readPlannedContextOptions(canonical.client, householdId, canonical.context.persons);
+      const options = await mobilityOptions(householdId);
       const places = new Set(options.places.map(place => place.placeId));
       if (refs.placeIds.some(id => !places.has(id))) throw new TypeError("CONTEXT_PLACE_NOT_ADMITTED");
     }
@@ -55,7 +59,7 @@ export function createPlannerDependencies(canonical: CanonicalRepository, authen
     const requirements = resolveJourneyRequirements(intents, world).journeys;
     if (!requirements.some(j => !j.externalExpenseId && !j.relationUnresolved && j.stops.length >= 2
       && (j.mode === "CAR" || j.stops.some(ref => ref.kind === "KNOWN")))) return preparePlanningMobility(world, state);
-    const options = await readPlannedContextOptions(canonical.client, world.baseline.householdId, canonical.context.persons);
+    const options = await mobilityOptions(world.baseline.householdId);
     if (!world.mobilityFacts) throw new TypeError("MOBILITY_AUTHORITY_MISSING");
     const vehicle = options.vehicle;
     return preparePlanningMobility({ ...world, mobilityFacts: { ...world.mobilityFacts, places: options.places, vehicle,

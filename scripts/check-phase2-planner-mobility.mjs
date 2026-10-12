@@ -22,7 +22,7 @@ async function evaluate(semantic, world = fixture(), owner = providers()) {
   return { ...result, prepared, owner };
 }
 const pg = await createKernelPostgres(); let current = fixture(), owner = providers(), requestId = 9500;
-const deps = { repository: createPlanApplyRepository(pg.client), readWorld: async () => structuredClone(current),
+const deps = { validateContextReferences:async(h,refs)=>{assert.equal(h,householdId);assert.ok(refs.placeIds.every(id=>current.mobilityFacts.places.some(p=>p.placeId===id)));}, repository: createPlanApplyRepository(pg.client), readWorld: async () => structuredClone(current),
   prepareWorld: (world, semantic) => preparePlanningMobility(world, semantic, owner.value),
   readDirectWorld: async () => ({ forecast: current.forecast, monthInputs: current.monthInputs, externalIntents: current.externalIntents, asOfDate: current.asOfDate }) };
 const command = p => ({ expectedActiveRevisionId: p.baseActiveRevisionId, expectedActiveRevisionNumber: p.baseRevisionNumber,
@@ -290,7 +290,10 @@ try {
       assert.equal(optionsReads, 1);
       const paid = state([], [context(100, 'family-visit', { transport: selections(mobility('taxi', 'taxi', { origin: home, destination,
         pricing: { fare: { kind: 'MANUAL', unitAmount: '12' } } })) })]);
-      assert.equal(evaluatePlanScenario(await actual.prepareWorld(world, paid), paid, base).projection.mobility.cashTransportCosts, '12.00'); assert.equal(optionsReads, 2);
+      assert.equal(evaluatePlanScenario(await actual.prepareWorld(world, paid), paid, base).projection.mobility.cashTransportCosts, '12.00');
+      assert.equal(optionsReads, 1, 'Same request shares the existing owner read');
+      const nextRequest = createPlannerDependencies({ client: canonicalClient, context: { householdId, persons } }, pg.client);
+      await nextRequest.prepareWorld(world, paid); assert.equal(optionsReads, 2, 'No options survive into a new request');
     } finally { optionsModule.readPlannedContextOptions = oldOptions; pricingModule.preparePlanningMobility = oldPricing; }
   });
   await test('C5-EXTRA-GROSS-HISTORY-NOT-ADDITIVE', async () => {

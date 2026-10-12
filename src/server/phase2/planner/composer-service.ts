@@ -7,6 +7,9 @@ import type { ComponentSelectionV1 } from "@/domain/phase2/planner/component-con
 import type { SemanticMutation } from "@/domain/phase2/planner/adjustment-contract";
 import { parsePlanSemanticState } from "@/domain/phase2/planner/semantic-state";
 import { editNightOut } from "@/domain/phase2/planner/night-out-edit";
+import { editFamilyVisit } from "@/domain/phase2/planner/family-visit-edit";
+import { mobilitySummaries } from "./mobility-presentation";
+import { knownContextReferences } from "./context-selections";
 import { plannerKeys, plannerMonth, plannerRecord, plannerUuid } from "@/domain/phase2/planner/json";
 import { decisionAmount } from "@/domain/phase2/month-decision-contract";
 import type { PlannerDependencies } from "./apply";
@@ -63,7 +66,14 @@ export async function composerUiModel(deps: PlannerDependencies, household: stri
     naturalPresets: card.capability.naturalPresets.map(p => ({ ...p, label: ({ low: "Repère bas", median: "Repère médian", high: "Repère haut" } as Record<string, string>)[p.label]
       ?? (p.label === "central" ? "Repère médian" : p.label.startsWith("allocation ×") && p.semanticMutation.kind === "SET_STATE" && typeof p.semanticMutation.value.amount === "string"
         ? `Réserver ${new Intl.NumberFormat("fr-FR", { style: "currency", currency: "EUR" }).format(Number(p.semanticMutation.value.amount))}` : p.label) })) } : null });
-  return { ...view, householdPersons: deps.householdPersons ?? [], presentation: composerPresentation(model), library: { ...view.library,
+  const mobilityOptions = view.semanticState.contexts.some(c => c.templateKey === "family-visit") && deps.readMobilityOptions
+    ? await deps.readMobilityOptions(household) : undefined;
+  return { ...view, householdPersons: deps.householdPersons ?? [],
+    ...(mobilityOptions ? { mobilityOptions: { vehicle: mobilityOptions.vehicle, places: mobilityOptions.places.map(p => ({
+      placeId: p.placeId, name: p.name, commune: p.commune, nature: p.nature, usage: p.usage, subtype: p.subtype, privatePlace: p.privatePlace,
+      relationships: p.relationships, ...(p.address ? { address: p.address } : {}) })) } } : {}),
+    mobilitySummaries: mobilitySummaries(preview.compiled.journeys, preview.compiled.journeyPrices),
+    presentation: composerPresentation(model), library: { ...view.library,
     searchableAssets: view.library.searchableAssets.map(asset => ({ ...asset, iconKey: composerAssetIcon(asset, model) })), sections: [
     ...groups.map(family => ({ sectionKey: family, assetKeys: templates.filter(t => t.family === family).map(t => `template:${t.templateKey}`) })),
     { sectionKey: "options", assetKeys: view.library.searchableAssets.filter(a => a.kind === "SLOT_OPTION_ASSET").map(a => a.assetKey) },
@@ -203,6 +213,23 @@ export async function handleComposerRequest(deps: PlannerDependencies, household
       if (card?.templateKey !== "night-out") throw new TypeError("COMPOSER_NIGHT_OUT_TARGET_INVALID");
       if (!card.capabilityRefs.includes("PATCH_CONTEXT")) throw new TypeError("COMPOSER_CONTEXT_LOCKED");
       state = editNightOut(state, request.edit);
+      mutationKind = "PATCH_CONTEXT";
+    } else if (request.kind === "EDIT_FAMILY_VISIT") {
+      const card = model.board.contexts.find(c => c.contextOccurrenceId === request.edit.contextOccurrenceId);
+      if (card?.templateKey !== "family-visit" || !card.capabilityRefs.includes("PATCH_CONTEXT")) throw new TypeError("COMPOSER_CONTEXT_LOCKED");
+      state = editFamilyVisit(state, request.edit);
+      const refs = knownContextReferences(state);
+      if (refs.personIds.length || refs.placeIds.length) {
+        if (!deps.validateContextReferences) throw new TypeError("CONTEXT_REFERENCE_OWNER_UNAVAILABLE");
+        await deps.validateContextReferences(household, refs);
+      }
+      const vehicleRef = request.edit.transport?.route?.vehicleRef;
+      if (vehicleRef && request.edit.transport?.optionKey === "car") {
+        const old = model.semanticState.contexts.find(c => c.contextOccurrenceId === card.contextOccurrenceId)?.slotSelections.transport?.items;
+        const priorId = Array.isArray(old) ? (old[0] as Extract<ComponentSelectionV1, { kind: "MOBILITY_INTENT" }> | undefined)?.route?.vehicleRef?.vehicleId : null;
+        const options = await deps.readMobilityOptions?.(household);
+        if (vehicleRef.vehicleId !== priorId && vehicleRef.vehicleId !== options?.vehicle?.vehicleId) throw new TypeError("COMPOSER_VEHICLE_NOT_ADMITTED");
+      }
       mutationKind = "PATCH_CONTEXT";
     } else if (request.kind === "EDIT_CONTEXT") {
       const card = model.board.contexts.find(c => c.contextOccurrenceId === request.contextOccurrenceId);
