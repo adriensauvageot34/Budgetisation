@@ -73,6 +73,14 @@ export type ComposerUiModel = Omit<MonthComposerReadModel, "preview"> & Readonly
   sectionLabels: Readonly<Record<string, string>>;
   presentation: ComposerPresentation;
 }>;
+/** A committed revision is evidence of Apply even when the subsequent World read fails. */
+export type ComposerApplyReceipt = Readonly<{
+  applyRequestId: string; planRevisionId: string; revisionNumber: number; parentRevisionId: string | null;
+  semanticStateDigest: string; baselineDigest: string; previewDigest: string;
+  outcome: "APPLIED" | "REPLAYED";
+  headStatus: "ACTIVE" | "SUPERSEDED" | "UNAVAILABLE";
+  activeRevisionId: string | null; activeRevisionNumber: number | null;
+}>;
 export type ComposerRequest = Readonly<{ sequence: number; targetMonth: string; draft?: PlanSemanticStateV1 }> & (
   | Readonly<{ kind: "READ" }>
   | Readonly<{ kind: "MUTATE"; mutation: SemanticMutation }>
@@ -87,10 +95,11 @@ export type ComposerRequest = Readonly<{ sequence: number; targetMonth: string; 
   | Readonly<{ kind: "SUGGESTIONS" }>
   | Readonly<{ kind: "ACCEPT"; candidateSetDigest: string; candidateId: string }>
   | Readonly<{ kind: "APPLY"; command: PlannerApplyCommand }>
+  | Readonly<{ kind: "CHECK_APPLY"; command: PlannerApplyCommand }>
 );
 export type ComposerResponse = Readonly<{ sequence: number }> & (
-  | Readonly<{ ok: true; model: ComposerUiModel; suggestions?: PlanBalanceSuggestions; applied?: boolean; mutationKind?: string; interactionImpact?: string | null }>
-  | Readonly<{ ok: false; code: string; message: string; applied?: boolean; revisionNumber?: number }>
+  | Readonly<{ ok: true; model: ComposerUiModel; suggestions?: PlanBalanceSuggestions; applied?: boolean; applyReceipt?: ComposerApplyReceipt; mutationKind?: string; interactionImpact?: string | null }>
+  | Readonly<{ ok: false; code: string; message: string; applied?: boolean; applyReceipt?: ComposerApplyReceipt; revisionNumber?: number }>
 );
 export type ComposerTransport = (request: ComposerRequest) => Promise<ComposerResponse>;
 export type ComposerOperation = ComposerRequest extends infer Request ? Request extends ComposerRequest ? Omit<Request, "sequence" | "targetMonth" | "draft"> : never : never;

@@ -2,8 +2,7 @@ import { appliedMobilitySummaries } from "@/server/phase2/planner/mobility-prese
 import { notFound } from "next/navigation";
 import { withProductAuthentication } from "@/app/product-query";
 import { MonthForecastView } from "./month-forecast-view";
-import { appliedPlanControls } from "@/server/phase2/planner/applied-plan-read";
-import type { PlanningBaselineV1 } from "@/domain/phase2/planner/baseline-contract";
+import { appliedPlanRevisionControls } from "@/server/phase2/planner/applied-plan-read";
 import { projectMonthControlCenter } from "@/server/phase2/month-control-center";
 import { monthControlSection, monthControlDestination, type MonthControlSectionInput } from "@/domain/phase2/month-control-contract";
 import { getBootstrapContext } from "@/server/bootstrap/context";
@@ -106,13 +105,17 @@ export default async function MonthForecastPage({ searchParams }: { searchParams
       childPlaceLabels: Object.values(card.context.childLocalPlaceRefs ?? {}).map(placeLabel).filter((label): label is string => !!label) } };
   });
   const control = monthControlSection(params.control) === null ? null : monthControlDestination(params.control as MonthControlSectionInput, typeof params.focus === "string" ? params.focus : null);
-  const appliedControls = effective.owner === "PLAN_V1" && effective.preview && effective.semanticState
-    // resolveEffectiveMonthScenario has already validated the immutable revision evidence.
-    ? appliedPlanControls(effective.preview.compiled, effective.semanticState,
-      effective.revision.baselineSnapshot as unknown as PlanningBaselineV1) : undefined;
+  const appliedControls = effective.revision ? appliedPlanRevisionControls(effective.revision) : undefined;
+  const historicalEvidence = effective.revision?.projectionEvidence.projection;
+  const historicalPlan = historicalEvidence && typeof historicalEvidence === "object" && !Array.isArray(historicalEvidence)
+    ? (historicalEvidence as Record<string, unknown>).plan : null;
+  const historicalRemainder = historicalPlan && typeof historicalPlan === "object" && !Array.isArray(historicalPlan)
+    && typeof (historicalPlan as Record<string, unknown>).economicMonthEndRemainder === "string"
+    ? (historicalPlan as Record<string, string>).economicMonthEndRemainder : null;
   return <MonthForecastView forecast={forecast} scenario={scenario} stored={stored}
     controlModel={projectMonthControlCenter({ forecast, inputs: scenario.inputs, expenses: plannedExpenses, asOf: today }, effective.owner === "PLAN_V1" ? scenario : undefined, effective.projection ?? undefined)}
     appliedProjection={effective.projection ?? undefined} appliedSemanticState={effective.semanticState ?? undefined} appliedControls={appliedControls} appliedMobility={effective.revision ? appliedMobilitySummaries(effective.revision.compiledManifest) : undefined} activeRevisionNumber={effective.revision?.revisionNumber}
+    appliedEvidenceStatus={effective.evidenceStatus} historicalRemainder={historicalRemainder}
     composerEnabled={plannerComposerEnabled()} planOwnership={ownership} activePlan={effective.owner === "PLAN_V1"}
     initialSection={control?.section ?? null} initialFocus={control?.focus ?? null}
     plannedExpenses={cards} calendarCarryovers={projectPlannedExpenseCards(calendarCarryovers, today)} today={today}

@@ -80,9 +80,10 @@ const giftAssetLabel = (value: unknown) => {
 
 /** Applied financial values come directly from C7, including unknowns. Existing
  * independent resource and external-intent editors retain their owners. */
-export function AppliedMonthView({ projection, semanticState, controls = [], plan, external, revision, composerHref, today, calendarCarryovers = [], persons = [], mobility = [], places = [] }: {
+export function AppliedMonthView({ projection, semanticState, controls = [], plan, external, revision, evidenceStatus = "EXACT", historicalRemainder = null, composerHref, today, calendarCarryovers = [], persons = [], mobility = [], places = [] }: {
   projection: PlanProjectionV1; semanticState: PlanSemanticStateV1; controls?: readonly AppliedPlanControl[]; plan: MonthEconomicPlan | null;
-  external?: ComponentProps<typeof PlannedExpensesControl>; revision: number; composerHref?: string; today: string;
+  external?: ComponentProps<typeof PlannedExpensesControl>; revision: number; evidenceStatus?: "EXACT" | "CHANGED_AUTHORITIES" | "NOT_APPLICABLE";
+  historicalRemainder?: string | null; composerHref?: string; today: string;
   calendarCarryovers?: readonly PlannedExpenseCard[]; persons?: readonly { personId: string; displayName: string }[];
   mobility?: readonly ComposerMobilitySummary[]; places?: readonly import("@/domain/phase2/planned-places").PlannedPlaceOption[];
 }) {
@@ -91,9 +92,12 @@ export function AppliedMonthView({ projection, semanticState, controls = [], pla
     ["Contexts explicites", projection.economic.explicitContexts], ["Usage mobilité", projection.economic.mobilityUsageEconomicCost],
     ["Cagnottes réservées", projection.economic.savingsReservations]];
   return <div data-applied-month className="space-y-7">
-    <section className={`${material.glassPremium} p-6`}><p className="text-sm text-slate-600">Plan appliqué · Revision {revision}</p>
-      <h2 id="final-projection" className="mt-2 text-2xl font-black">Projection de fin de mois</h2>
+    <section className={`${material.glassPremium} p-6`}><p className="text-sm text-slate-600">Plan appliqué · Révision {revision}</p>
+      <h2 id="final-projection" className="mt-2 text-2xl font-black">{evidenceStatus === "CHANGED_AUTHORITIES" ? "Projection actuelle de fin de mois" : "Projection de fin de mois"}</h2>
       <p data-applied-remainder className="mt-3 text-4xl font-black">{money(projection.plan.economicMonthEndRemainder)}</p>
+      {evidenceStatus === "CHANGED_AUTHORITIES" && <p data-applied-authorities-changed className="mt-2 text-sm text-amber-800">
+        Les sources financières ont changé depuis l’application. Le montant affiché est recalculé ; le reste estimé enregistré avec la révision était {money(historicalRemainder)}. Les décisions ci-dessous restent celles de la révision.
+      </p>}
       <p className="mt-2 text-sm text-slate-600">Reste économique · impact vs socle : {money(projection.plan.impactOnMonthEnd)}</p>
       <p className="mt-2 text-sm">{projection.projectionCompleteness === "COMPLETE" ? "Projection complète" : "Des informations restent à préciser dans Composer."}</p>
       {composerHref && <a className="mt-4 inline-block font-bold underline" href={composerHref}>Modifier dans Composer mon mois</a>}

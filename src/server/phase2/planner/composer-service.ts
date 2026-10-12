@@ -1,6 +1,6 @@
 import "server-only";
 import Big from "big.js";
-import type { ComposerEditor, ComposerField, ComposerRequest, ComposerResponse, ComposerUiModel } from "@/domain/phase2/planner/composer-ui-contract";
+import type { ComposerApplyReceipt, ComposerEditor, ComposerField, ComposerRequest, ComposerResponse, ComposerUiModel } from "@/domain/phase2/planner/composer-ui-contract";
 import type { MonthComposerReadModel } from "@/domain/phase2/planner/composer-contract";
 import type { ComposerCardView } from "@/domain/phase2/planner/composer-contract";
 import type { ComponentSelectionV1 } from "@/domain/phase2/planner/component-contract";
@@ -15,7 +15,7 @@ import { plannerDigest, plannerKeys, plannerMonth, plannerRecord, plannerUuid } 
 import { decisionAmount } from "@/domain/phase2/month-decision-contract";
 import { declareComponentQuantity } from "@/domain/phase2/planner/component-quantity";
 import type { PlannerDependencies } from "./apply";
-import { applyPlanScenario } from "./apply";
+import { applyPlanScenario, readAppliedPlanScenario, type AppliedPlanScenario } from "./apply";
 import { composerNeedLabel, readMonthComposer, resolveComposerDrop } from "./read-model";
 import { publishContextRegistry, resolveContextTemplate } from "./context-registry";
 import { mutatePlanSemanticState } from "./semantic-mutations";
@@ -183,26 +183,44 @@ function dropMutation(model: MonthComposerReadModel, request: Extract<ComposerRe
   return patchSelection(selection);
 }
 
+function applyReceipt(committed: AppliedPlanScenario, model?: ComposerUiModel): ComposerApplyReceipt {
+  const revision = committed.revision;
+  const activeRevisionId = model?.activeRevisionId ?? null, activeRevisionNumber = model?.activeRevisionNumber ?? null;
+  return { applyRequestId: revision.applyRequestId, planRevisionId: revision.planRevisionId,
+    revisionNumber: revision.revisionNumber, parentRevisionId: revision.parentRevisionId,
+    semanticStateDigest: revision.semanticStateDigest, baselineDigest: revision.baselineDigest, previewDigest: revision.previewDigest,
+    outcome: committed.replayed ? "REPLAYED" : "APPLIED",
+    headStatus: !model ? "UNAVAILABLE" : activeRevisionId === revision.planRevisionId && activeRevisionNumber === revision.revisionNumber
+      ? "ACTIVE" : "SUPERSEDED", activeRevisionId, activeRevisionNumber };
+}
+
 export async function handleComposerRequest(deps: PlannerDependencies, household: string, request: ComposerRequest): Promise<ComposerResponse> {
   try {
     if (!Number.isSafeInteger(request.sequence) || request.sequence < 0) throw new TypeError("COMPOSER_SEQUENCE_INVALID");
     const month = plannerMonth(request.targetMonth);
     if (request.draft && parsePlanSemanticState(request.draft).targetMonth !== month) throw new TypeError("PLANNER_DRAFT_MONTH_INVALID");
-    const model = await readMonthComposer(deps, household, month, request.draft);
-    let state = model.semanticState, mutationKind: string | undefined;
-    let suggestions;
-    if (request.kind === "APPLY") {
+    if (request.kind === "APPLY" || request.kind === "CHECK_APPLY") {
       if (!request.draft) throw new TypeError("COMPOSER_DRAFT_REQUIRED");
-      const committed = await applyPlanScenario(deps, household, state, request.command);
+      const state = parsePlanSemanticState(request.draft);
+      const committed = request.kind === "APPLY"
+        ? await applyPlanScenario(deps, household, state, request.command)
+        : await readAppliedPlanScenario(deps, household, state, request.command);
+      if (!committed) return { ok: false, sequence: request.sequence, code: "COMPOSER_APPLY_UNCONFIRMED",
+        message: "Aucune révision n’est encore confirmée pour cette demande. Votre brouillon est conservé ; vérifiez de nouveau ou relancez explicitement la même demande avec son identité inchangée." };
       try {
-        return { ok: true, sequence: request.sequence, applied: true, model: await composerUiModel(deps, household, await readMonthComposer(deps, household, month)) };
+        const model = await composerUiModel(deps, household, await readMonthComposer(deps, household, month));
+        return { ok: true, sequence: request.sequence, applied: true, applyReceipt: applyReceipt(committed, model), model };
       } catch {
         // The immutable revision is committed. A failed read must never be reported as a failed Apply or retried as a write.
         return { ok: false, sequence: request.sequence, applied: true, revisionNumber: committed.revision.revisionNumber,
+          applyReceipt: applyReceipt(committed),
           code: "COMPOSER_APPLIED_RELOAD_UNAVAILABLE",
           message: `Révision ${committed.revision.revisionNumber} enregistrée, mais sa relecture est indisponible. Actualisez la prévisualisation avant toute autre action.` };
       }
     }
+    const model = await readMonthComposer(deps, household, month, request.draft);
+    let state = model.semanticState, mutationKind: string | undefined;
+    let suggestions;
     if (request.kind === "MUTATE") {
       const mutation = request.mutation;
       // UI controls must use a published capability; the Compiler independently enforces hard constraints.
@@ -303,8 +321,18 @@ export async function handleComposerRequest(deps: PlannerDependencies, household
     return { ok: true, sequence: request.sequence, model: await composerUiModel(deps, household, next), suggestions, mutationKind, interactionImpact };
   } catch (error) {
     const code = error instanceof TypeError ? error.message : "COMPOSER_UNAVAILABLE";
+    if (request.kind === "APPLY" && ![
+      "PLANNER_IDEMPOTENCY_CONFLICT", "PLANNER_ACTIVE_REVISION_STALE", "PLANNER_PREVIEW_STALE",
+      "PLANNER_APPLY_BLOCKED", "PLANNER_PAST_MONTH_READ_ONLY", "PLANNER_EXPECTED_BASE_INVALID",
+      "COMPOSER_DRAFT_REQUIRED", "PLANNER_DRAFT_MONTH_INVALID", "CONTEXT_REFERENCE_OWNER_UNAVAILABLE",
+    ].includes(code)) return { ok: false, sequence: request.sequence, code: "COMPOSER_APPLY_UNCONFIRMED",
+      message: "L’issue de l’application reste inconnue. Votre brouillon est conservé ; vérifiez la révision par l’identité de la demande avant toute nouvelle écriture." };
+    if (request.kind === "CHECK_APPLY" && code === "COMPOSER_UNAVAILABLE")
+      return { ok: false, sequence: request.sequence, code: "COMPOSER_APPLY_VERIFICATION_UNAVAILABLE",
+        message: "La vérification de l’application est temporairement indisponible. Votre brouillon est conservé ; aucune nouvelle écriture n’a été lancée." };
     return { ok: false, sequence: request.sequence, code,
-      message: code === "COMPOSER_SHARED_JOURNEY_OWNER_PRICES" ? "Un trajet partagé reprend le prix et le financement de son trajet propriétaire. Retirez le prix ou financement séparé, ou choisissez un trajet propre."
+      message: code === "PLANNER_IDEMPOTENCY_CONFLICT" ? "Cette demande d’application a déjà servi pour un autre contenu. Votre brouillon est conservé ; actualisez la prévisualisation."
+        : code === "COMPOSER_SHARED_JOURNEY_OWNER_PRICES" ? "Un trajet partagé reprend le prix et le financement de son trajet propriétaire. Retirez le prix ou financement séparé, ou choisissez un trajet propre."
         : code === "COMPOSER_PERSON_QUANTITY_USE_NIGHT_EDITOR" ? "Modifiez cette quantité par personne dans la configuration complète de la Soirée pour conserver le nombre de personnes retenu."
         : /STALE|CHANGED/u.test(code) ? "Le mois a changé. Rechargez la prévisualisation avant d’appliquer ; votre brouillon est conservé."
         : /LOCKED|BLOCKED/u.test(code) ? "Cette action n’est pas disponible. Vérifiez les contraintes et les informations manquantes."

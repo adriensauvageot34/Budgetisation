@@ -6,6 +6,6 @@ import { handleComposerRequest } from "@/server/phase2/planner/composer-service"
 export async function composerInteraction(request: ComposerRequest) {
   const { deps, householdId } = await authorizedPlanner();
   const response = await handleComposerRequest(deps, householdId, request);
-  if (response.ok && response.applied) revalidatePath("/mois-a-venir", "layout");
+  if (response.applied) revalidatePath("/mois-a-venir", "layout");
   return response;
 }
