@@ -26,6 +26,17 @@ function replayEvidence(previous: PlanRevision, state: PlanSemanticStateV1, base
     || previous.parentRevisionId !== activeId || previous.revisionNumber !== activeNumber + 1) throw new TypeError("PLANNER_IDEMPOTENCY_CONFLICT");
   return { revision: previous, projectionEvidence: previous.projectionEvidence, replayed: true };
 }
+/** Read-only recovery for an Apply whose response was lost. Never calls the writer or readWorld. */
+export async function readAppliedPlanScenario(deps: PlannerDependencies, householdId: string, rawState: PlanSemanticStateV1,
+  command: PlannerApplyCommand): Promise<AppliedPlanScenario | null> {
+  const household = plannerUuid(householdId), state = parsePlanSemanticState(rawState), month = plannerMonth(state.targetMonth);
+  const requestId = plannerUuid(command.applyRequestId);
+  const previous = await deps.repository.readAppliedRequest(household, month, requestId);
+  if (!previous) return null;
+  const activeId = command.expectedActiveRevisionId === null ? null : plannerUuid(command.expectedActiveRevisionId);
+  return replayEvidence(previous, state, plannerDigestString(command.expectedBaselineDigest),
+    plannerDigestString(command.expectedPreviewDigest), activeId, plannerInteger(command.expectedActiveRevisionNumber));
+}
 export async function previewPlanScenario(deps: PlannerDependencies, householdId: string, rawState: PlanSemanticStateV1): Promise<PlanScenarioPreview> {
   const household = plannerUuid(householdId), state = parsePlanSemanticState(rawState);
   const [world, active] = await Promise.all([deps.readWorld(household, state.targetMonth), deps.repository.readActivePlan(household, state.targetMonth)]);

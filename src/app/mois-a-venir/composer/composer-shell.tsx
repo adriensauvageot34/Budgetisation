@@ -28,12 +28,15 @@ import { FamilyVisitEditor } from "./family-visit-editor";
 import { CardKnowledgePanel } from "./card-knowledge-panel";
 import { useDurableDraft, type DraftTransport } from "./durable-draft";
 import type { ComposerDraftSnapshot, StoredComposerDraft } from "@/domain/phase2/planner/composer-draft-contract";
+import type { PlannerApplyCommand } from "@/domain/phase2/planner/compiler-contract";
+import type { ComposerApplyReceipt } from "@/domain/phase2/planner/composer-ui-contract";
 
 type Editor = { title: string; compact?: boolean; side?: boolean; fields: readonly ComposerField[]; values: Record<string, string>;
   giftContextId?: string; nightContextId?: string; familyContextId?: string; stayContextId?: string; catalogContextId?: string; familyMode?: string;
   cardKey?: string;
   operation: (values: Record<string, string>) => ComposerOperation };
 type DraftConfirmation = { kind: "ABANDON" | "RESTART" | "RESTORE" | "LOAD_SERVER"; draftId?: string; version?: number };
+type PendingApply = { draft: PlanSemanticStateV1; command: PlannerApplyCommand; checkedAbsent?: boolean };
 export function ComposerShell({ initialModel, transport, initialDrafts = null, draftTransport = null }: {
   initialModel: ComposerUiModel; transport: ComposerTransport;
   initialDrafts?: ComposerDraftSnapshot | null; draftTransport?: DraftTransport | null;
@@ -52,6 +55,8 @@ export function ComposerShell({ initialModel, transport, initialDrafts = null, d
   const [hoverModel, setHoverModel] = useState<ComposerUiModel | null>(null), gate = useRef(new ComposerResponseGate()), timer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const dialog = useRef<HTMLDialogElement>(null), invoker = useRef<HTMLElement | null>(null);
   const applyAttempt = useRef<{ key: string; applyRequestId: string } | null>(null);
+  const [pendingApply, setPendingApply] = useState<PendingApply | null>(null);
+  const [applyReceipt, setApplyReceipt] = useState<ComposerApplyReceipt | null>(null);
   const [comparison, setComparison] = useState<ComparisonSnapshot | null>(null);
   const durable = useDurableDraft(draftTransport, initialDrafts, initialModel.semanticState.targetMonth, draftState, !!comparison);
   const skipUnloadWarning = useRef(false);
@@ -157,6 +162,39 @@ export function ComposerShell({ initialModel, transport, initialDrafts = null, d
       if (editor?.side && !projectionOpen) dialog.current?.show(); else dialog.current?.showModal(); }
     else { dialog.current?.close(); invoker.current?.focus(); }
   }, [!!editor, editor?.side, projectionOpen]);
+  async function checkApply(pending: PendingApply) {
+    const ticket = gate.current.next(semanticStateDigest(localDraft.current));
+    try {
+      const response = await transport({ kind: "CHECK_APPLY", sequence: ticket.sequence, targetMonth: pending.draft.targetMonth,
+        draft: pending.draft, command: pending.command });
+      if (!gate.current.accepts(ticket, response.sequence, semanticStateDigest(localDraft.current))) return;
+      if (response.applied && response.applyReceipt) {
+        setApplyReceipt(response.applyReceipt);
+        if (response.ok && response.applyReceipt.headStatus === "ACTIVE") {
+          install(response.model); setPendingApply(null); applyAttempt.current = null; setPast([]); setFuture([]);
+          setPreviewStatus(response.model.board.cockpit.applyReadiness === "BLOCKED" ? "BLOCKED" : "FRESH");
+          setMessage(`Révision ${response.applyReceipt.revisionNumber} confirmée et relue. Aucune seconde application créée.`);
+          setErrorMessage(null);
+        } else {
+          setPreviewStatus("STALE");
+          setMessage(response.applyReceipt.headStatus === "SUPERSEDED"
+            ? `La demande avait enregistré la révision ${response.applyReceipt.revisionNumber}, mais une révision plus récente est active. Votre brouillon est conservé.`
+            : `Révision ${response.applyReceipt.revisionNumber} enregistrée. La relecture du Plan actif reste indisponible ; votre brouillon est conservé.`);
+          setPendingApply(response.applyReceipt.headStatus === "UNAVAILABLE" ? pending : null);
+          if (response.applyReceipt.headStatus === "SUPERSEDED") applyAttempt.current = null;
+          setErrorMessage(null);
+        }
+      } else {
+        setPreviewStatus("STALE");
+        if (!response.ok && response.code === "COMPOSER_APPLY_UNCONFIRMED") setPendingApply({ ...pending, checkedAbsent: true });
+        setMessage(response.ok ? "La vérification n’a pas confirmé cette application. Votre brouillon est conservé." : response.message);
+        setErrorMessage(null);
+      }
+    } catch {
+      setPreviewStatus("STALE");
+      setMessage("Issue de l’application encore inconnue. Votre brouillon est conservé ; vérifiez de nouveau. Aucune seconde écriture n’a été lancée.");
+    }
+  }
   async function run(operation: ComposerOperation, history: "push" | "undo" | "redo" | "none" = "push", draft?: PlanSemanticStateV1) {
     if (busyRef.current) return;
     scheduler.current.cancel();
@@ -166,10 +204,29 @@ export function ComposerShell({ initialModel, transport, initialDrafts = null, d
     try {
       const response = await transport({ ...operation, sequence: ticket.sequence, targetMonth: beforeDraft.targetMonth, draft: draft ?? beforeDraft } as ComposerRequest);
       if (!gate.current.accepts(ticket, response.sequence, semanticStateDigest(localDraft.current))) return;
-      if (!response.ok) { if (response.applied) applyAttempt.current = null;
-        setPreviewStatus(response.applied || /STALE|CHANGED/u.test(response.code) ? "STALE" : "FAILED"); setMessage(response.message); setErrorMessage(response.message); return; }
+      if (!response.ok) {
+        if (operation.kind === "APPLY" && response.code === "COMPOSER_APPLY_UNCONFIRMED") {
+          const pending = { draft: draft ?? beforeDraft, command: operation.command };
+          setPendingApply(pending); setPreviewStatus("STALE"); setMessage(response.message);
+          await checkApply(pending); return;
+        }
+        if (response.applied) {
+          applyAttempt.current = null; setApplyReceipt(response.applyReceipt ?? null);
+          if (operation.kind === "APPLY") setPendingApply({ draft: draft ?? beforeDraft, command: operation.command });
+        } else if (operation.kind === "APPLY") setPendingApply(null);
+        setPreviewStatus(response.applied || /STALE|CHANGED/u.test(response.code) ? "STALE" : "FAILED");
+        setMessage(response.message); setErrorMessage(response.message); return;
+      }
+      if (response.applied && response.applyReceipt?.headStatus === "SUPERSEDED") {
+        setApplyReceipt(response.applyReceipt); setPendingApply(null); applyAttempt.current = null; setPreviewStatus("STALE");
+        setMessage(`La demande avait enregistré la révision ${response.applyReceipt.revisionNumber}, mais la révision active a changé. Votre brouillon est conservé.`);
+        return;
+      }
       const changed = sourceDigest !== response.model.board.draft.semanticStateDigest;
-      if (response.applied) { applyAttempt.current = null; setPast([]); setFuture([]); setMessage(`Revision ${response.model.activeRevisionNumber} appliquée. Le mois a été relu avec le même scénario.`); }
+      if (response.applied) { applyAttempt.current = null; setPendingApply(null); setApplyReceipt(response.applyReceipt ?? null);
+        setPast([]); setFuture([]); setMessage(response.applyReceipt?.outcome === "REPLAYED"
+          ? `Révision ${response.model.activeRevisionNumber} déjà appliquée. Aucune nouvelle révision créée.`
+          : `Révision ${response.model.activeRevisionNumber} appliquée et relue.`); }
       else {
         if (changed && history === "push") { setPast(p => [...p, beforeDraft]); setFuture([]); }
         else if (history === "undo") { setPast(p => p.slice(0, -1)); setFuture(f => [...f, beforeDraft]); }
@@ -188,7 +245,15 @@ export function ComposerShell({ initialModel, transport, initialDrafts = null, d
           }
         } catch { setMessage("Brouillon conservé. Rouvrez les pistes pour actualiser les suggestions."); }
       }
-    } catch { const message = "Connexion interrompue. Votre brouillon est conservé ; rechargez la prévisualisation avant de réessayer."; setPreviewStatus("FAILED"); setMessage(message); setErrorMessage(message); }
+    } catch {
+      if (operation.kind === "APPLY") {
+        const pending = { draft: draft ?? beforeDraft, command: operation.command };
+        setPendingApply(pending); setPreviewStatus("STALE");
+        setMessage("Réponse d’application perdue. Vérification de la révision sans nouvelle écriture…");
+        await checkApply(pending);
+      } else { const message = "Connexion interrompue. Votre brouillon est conservé ; rechargez la prévisualisation avant de réessayer.";
+        setPreviewStatus("FAILED"); setMessage(message); setErrorMessage(message); }
+    }
     finally { busyRef.current = false; setBusy(false); }
   }
   function hover(mutation: SemanticMutation | null) {
@@ -390,20 +455,26 @@ export function ComposerShell({ initialModel, transport, initialDrafts = null, d
       operation: values => ({ kind: "EDIT_CONTEXT", contextOccurrenceId: card.contextOccurrenceId, values }) });
   }
   function apply() {
-    if (comparison || grab.current || editor || previewStatus !== "FRESH" || semanticStateDigest(localDraft.current) !== model.board.draft.semanticStateDigest
+    if (pendingApply || comparison || grab.current || editor || previewStatus !== "FRESH" || model.board.cockpit.applyReadiness === "BLOCKED"
+      || semanticStateDigest(localDraft.current) !== model.board.draft.semanticStateDigest
       || draftTransport && (durable.status !== "SAVED" || !navigator.onLine || durable.snapshot?.baseStale)) return;
+    if (model.board.cockpit.applyReadiness === "READY_WITH_WARNINGS") {
+      const warnings = model.board.cockpit.diagnostics.filter(item => item.severity === "WARN").map(item => item.message ?? item.code);
+      if (!window.confirm(`Appliquer ce mois malgré les avertissements ?\n\n${warnings.join("\n")}`)) return;
+    }
     const key = `${model.board.draft.semanticStateDigest}:${model.proof.expectedPreviewDigest}:${model.proof.expectedActiveRevisionId}`;
     if (applyAttempt.current?.key !== key) applyAttempt.current = { key, applyRequestId: crypto.randomUUID() };
     void run({ kind: "APPLY", command: { ...model.proof, applyRequestId: applyAttempt.current.applyRequestId } }, "none");
   }
-  const applyDisabled = busy || !!editor || previewStatus !== "FRESH" || !!hoverModel || !!grabbed || !shown.board.draft.dirty || model.board.cockpit.applyReadiness === "BLOCKED"
+  const applyDisabled = busy || !!pendingApply || !!editor || previewStatus !== "FRESH" || !!hoverModel || !!grabbed || !shown.board.draft.dirty || model.board.cockpit.applyReadiness === "BLOCKED"
     || !!draftTransport && (durable.status !== "SAVED" || !durable.online || !!durable.snapshot?.baseStale);
   const openProjectionDetails = () => {
     clearHover();
     if (previewStatus !== "FRESH" && previewStatus !== "BLOCKED") { setMessage("Projection en attente d’une simulation à jour."); return; }
     setEditor(null); setProjectionOpen(true);
   };
-  const applyReason = busy ? "La prévisualisation serveur est en cours." : draftTransport && (durable.status !== "SAVED" || !durable.online || durable.snapshot?.baseStale)
+  const applyReason = busy ? "La prévisualisation serveur est en cours." : pendingApply ? "L’issue de la demande précédente doit être vérifiée avant toute nouvelle application."
+    : draftTransport && (durable.status !== "SAVED" || !durable.online || durable.snapshot?.baseStale)
     ? "Attendez la sauvegarde confirmée du brouillon et une connexion active avant d’appliquer."
     : hoverModel || grabbed ? "Terminez le geste pour appliquer le mois."
     : editor ? "Terminez ou fermez le panneau de configuration avant d’appliquer le mois."
@@ -463,7 +534,14 @@ export function ComposerShell({ initialModel, transport, initialDrafts = null, d
     {balanceOpen && (!suggestions || suggestions.candidates.length > 0) && <section className={styles.suggestionHand} data-suggestion-hand aria-label="Pistes pour votre mois"><header><span><Sparkles size={14} /> Quelques façons de retrouver de la marge</span><button className={styles.iconButton} aria-label="Fermer les suggestions" onClick={() => setBalanceOpen(false)}><X size={16} /></button></header>
       {suggestions ? <BalanceLayer suggestions={suggestions} busy={busy} accept={candidateId => void run({ kind: "ACCEPT", candidateSetDigest: suggestions.candidateSetDigest, candidateId })} /> : <p role="status">Le serveur resimule les pistes…</p>}</section>}
     <div ref={dragImage} className={styles.dragPreview} data-drag-preview data-protected={grabbed?.protected} aria-hidden="true">{[...new Set(Object.values(shown.presentation.dragSources).map(s => s.iconKey))].map(key => <span key={key} data-drag-icon={key} style={{ display: grabbed?.iconKey === key ? "inline-flex" : "none" }}><PlannerIcon iconKey={key} scale="SATELLITE" /></span>)}<span><b data-drag-label>{grabbed?.label}</b><small data-drag-amount>{grabbed?.protected ? <><LockKeyhole size={11} /> Protégée</> : money(grabbed?.economicAmount ?? null)}</small></span></div>
-    <div className={styles.statusBar} role="status" aria-live="polite">{message}</div>
+    <div className={styles.statusBar} role="status" aria-live="polite">{message}
+      {applyReceipt && <span data-apply-receipt data-revision-id={applyReceipt.planRevisionId}> · Preuve de révision {applyReceipt.revisionNumber} ({applyReceipt.headStatus === "ACTIVE" ? "active" : applyReceipt.headStatus === "SUPERSEDED" ? "remplacée" : "état actif à relire"})</span>}
+      {pendingApply && <button data-check-apply disabled={busy} onClick={() => void checkApply(pendingApply)}>Vérifier l’application</button>}
+      {pendingApply?.checkedAbsent && semanticStateDigest(draftState) === semanticStateDigest(pendingApply.draft)
+        && <button data-retry-same-apply disabled={busy || !!draftTransport && (durable.status !== "SAVED" || !durable.online || !!durable.snapshot?.baseStale)}
+          onClick={() => void run({ kind: "APPLY", command: pendingApply.command }, "none", pendingApply.draft)}>
+          Relancer la même demande sécurisée</button>}
+    </div>
     {errorMessage && !editor && <div className={styles.errorNotice} role="alert">{errorMessage}<button className={styles.iconButton} aria-label="Fermer le message" onClick={() => setErrorMessage(null)}><X size={14} /></button></div>}
     <dialog ref={dialog} className={styles.dialog} data-night-editor={!!editor?.nightContextId || !!editor?.familyContextId || !!editor?.stayContextId || undefined} data-side-panel={editor?.side || undefined} data-compact-editor={editor?.compact || undefined} aria-labelledby="composer-dialog-title" onCancel={e => { e.preventDefault(); closeDialog(); }} onKeyDown={e => { if (e.key === "Escape" && editor?.side) { e.preventDefault(); closeDialog(); } }}>
       <header><h2 id="composer-dialog-title">{editor?.title ?? (projectionOpen ? "Le détail de votre mois" : "Des pistes pour votre mois")}</h2><button className={styles.iconButton} disabled={busy} aria-label="Fermer" onClick={closeDialog}><X size={19} /></button></header>
