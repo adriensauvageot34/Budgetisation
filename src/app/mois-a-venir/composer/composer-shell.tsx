@@ -436,7 +436,10 @@ export function ComposerShell({ initialModel, transport, initialDrafts = null, d
             const input = dialog.current?.querySelector<HTMLInputElement>(`input[name="${field}"]`);
             if (input) { input.value = value; input.focus(); }
           }} />}
-        <p className={styles.helper}>Une valeur vide reste inconnue. Une date absente reste à préciser.</p>
+        {editor.cardKey?.startsWith("control:savings:") ? <p className={styles.helper} data-savings-editor-origin>
+          Réservation {model.board.savings.find(card => `control:${card.targetRef}` === editor.cardKey)?.value.reservationSource === "ANNUAL_PLAN" ? "issue d’un objectif annuel" : "déclarée pour le mois"}.
+          Le montant choisi modifie seulement ce scénario ; aucun mouvement bancaire n’est créé. La projection sera recalculée par Finance V2.
+        </p> : <p className={styles.helper}>Une valeur vide reste inconnue. Une date absente reste à préciser.</p>}
         <div className={styles.formFields}>{editor.fields.map(f => <label key={f.key}>{f.label}{f.kind === "CHOICE" ? <select name={f.key} defaultValue={editor.values[f.key] ?? f.choices?.[0]?.value ?? ""} required={f.required}>{f.choices?.map(c => <option value={c.value} key={c.value}>{c.label}</option>)}</select>
           : <input name={f.key} defaultValue={editor.values[f.key] ?? f.initial ?? ""} type={f.kind === "DATE" ? "date" : "text"} inputMode={f.kind === "AMOUNT" ? "decimal" : undefined} required={f.required} autoComplete="off" />}</label>)}</div>
         <footer><button type="button" className={styles.secondary} disabled={busy} onClick={closeDialog}>Retour au mois</button><button data-submit className={styles.primary} disabled={busy}>Prévisualiser ce choix</button></footer>

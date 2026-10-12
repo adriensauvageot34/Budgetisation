@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import { withProductAuthentication } from "@/app/product-query";
 import { MonthForecastView } from "./month-forecast-view";
 import { appliedPlanControls } from "@/server/phase2/planner/applied-plan-read";
+import type { PlanningBaselineV1 } from "@/domain/phase2/planner/baseline-contract";
 import { projectMonthControlCenter } from "@/server/phase2/month-control-center";
 import { monthControlSection, monthControlDestination, type MonthControlSectionInput } from "@/domain/phase2/month-control-contract";
 import { getBootstrapContext } from "@/server/bootstrap/context";
@@ -105,7 +106,9 @@ export default async function MonthForecastPage({ searchParams }: { searchParams
   });
   const control = monthControlSection(params.control) === null ? null : monthControlDestination(params.control as MonthControlSectionInput, typeof params.focus === "string" ? params.focus : null);
   const appliedControls = effective.owner === "PLAN_V1" && effective.preview && effective.semanticState
-    ? appliedPlanControls(effective.preview.compiled, effective.semanticState, effective.preview.baseline) : undefined;
+    // resolveEffectiveMonthScenario has already validated the immutable revision evidence.
+    ? appliedPlanControls(effective.preview.compiled, effective.semanticState,
+      effective.revision.baselineSnapshot as unknown as PlanningBaselineV1) : undefined;
   return <MonthForecastView forecast={forecast} scenario={scenario} stored={stored}
     controlModel={projectMonthControlCenter({ forecast, inputs: scenario.inputs, expenses: plannedExpenses, asOf: today }, effective.owner === "PLAN_V1" ? scenario : undefined, effective.projection ?? undefined)}
     appliedProjection={effective.projection ?? undefined} appliedSemanticState={effective.semanticState ?? undefined} appliedControls={appliedControls} activeRevisionNumber={effective.revision?.revisionNumber}

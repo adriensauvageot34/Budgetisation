@@ -35,8 +35,10 @@ await build({ entryPoints: ['scripts/lib/planner-composer-browser-entry.tsx'], b
   external: ['/planned-visuals/*'],
   plugins: [{name:'fixture-host-only',setup(builder){ builder.onResolve({filter:/^(next\/link|next\/navigation|@\/components\/runtime|@\/features\/auth\/sign-out-button)$/},args=>({path:args.path,namespace:'fixture-host'}));
     builder.onLoad({filter:/.*/,namespace:'fixture-host'},args=>({contents:mocks[args.path],loader:'js',resolveDir:process.cwd()})); }}] });
-const globalCss = fs.readdirSync('.next/static/chunks').filter(n=>n.endsWith('.css')).map(n=>fs.readFileSync(`.next/static/chunks/${n}`,'utf8')).find(css=>css.includes('.h-dvh{'));
-if (!globalCss) throw new Error('Build Next.js first: production globals containing h-dvh are required for actual AppShell height checks.');
+const globalCss = process.env.PLANNER_C8_GLOBAL_CSS
+  ? fs.readFileSync(process.env.PLANNER_C8_GLOBAL_CSS, 'utf8')
+  : fs.readdirSync('.next/static/chunks').filter(n=>n.endsWith('.css')).map(n=>fs.readFileSync(`.next/static/chunks/${n}`,'utf8')).find(css=>css.includes('.h-dvh{'));
+if (!globalCss?.includes('.h-dvh{')) throw new Error('A production global stylesheet containing h-dvh is required for AppShell checks.');
 fs.writeFileSync(path.join(out,'global.css'),globalCss);
 } else if (['app.js','app.css','global.css'].some(name => !fs.existsSync(path.join(out,name)))) throw new Error('PLANNER_C8_PREBUILT_ASSETS_MISSING');
 const stores = new Map(), fixtures = { A: simpleMonth, B: nightMonth, C: weekendMonth, D: renewalMonth, E: externalMonth, R: atomicMonth,
@@ -166,7 +168,7 @@ const server = http.createServer(async (request, response) => {
           externalIntents: s.fixture.world.externalIntents, asOfDate: s.fixture.world.asOfDate }) }, householdId, '2026-11');
       response.setHeader('Content-Type', 'text/html; charset=utf-8');
       if (effective.owner !== 'PLAN_V1') { response.end('<p>Aucune révision appliquée sur cette fixture.</p>'); return; }
-      const controls = appliedPlanControls(effective.preview.compiled, effective.semanticState, effective.preview.baseline);
+      const controls = appliedPlanControls(effective.preview.compiled, effective.semanticState, effective.revision.baselineSnapshot);
       const markup = renderToStaticMarkup(React.createElement(AppliedMonthView, { projection: effective.projection,
         semanticState: effective.semanticState, controls, plan: null,
         persons: s.deps.householdPersons,
