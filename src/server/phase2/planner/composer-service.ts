@@ -150,6 +150,11 @@ export async function handleComposerRequest(deps: PlannerDependencies, household
       if (mutation.kind === "SET_STATE") {
         const card = [...model.board.baselineControls, ...model.board.discretionaryControls, ...model.board.savings].find(c => c.targetRef === mutation.targetRef);
         if (!card?.capability?.actions.length || card.capability.flexibility === "LOCKED") throw new TypeError("COMPOSER_CONTROL_LOCKED");
+        if (card.kind === "SAVINGS") {
+          if (!card.capability.actions.includes("SET_SAVINGS_ALLOCATION")) throw new TypeError("COMPOSER_SAVINGS_CAPABILITY_UNAVAILABLE");
+          plannerKeys(plannerRecord(mutation.value), ["amount"], ["amount"]);
+          decisionAmount(mutation.value.amount);
+        }
       } else if (mutation.kind === "PATCH_CONTEXT" || mutation.kind === "REMOVE_CONTEXT") {
         if (!model.board.contexts.find(c => c.contextOccurrenceId === mutation.contextOccurrenceId)?.capabilityRefs.includes(mutation.kind)) throw new TypeError("COMPOSER_CONTEXT_LOCKED");
       } else throw new TypeError("COMPOSER_USE_DROP_CAPABILITY");

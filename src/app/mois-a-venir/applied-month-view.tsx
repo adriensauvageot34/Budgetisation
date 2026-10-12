@@ -67,6 +67,10 @@ export function AppliedMonthView({ projection, semanticState, controls = [], pla
         <strong>{control.label}</strong>
         <span className="ml-3">{control.amount !== null ? money(control.amount) : control.count !== null ? `${control.count} occurrence(s)${control.unitAmount !== null ? ` · ${money(control.unitAmount)} par occurrence` : " · montant unitaire non décidé"}` : "Valeur inconnue"}</span>
         <small className="ml-3 text-slate-600">Décision explicite</small>
+        {control.savings && <p className="mt-1 text-sm text-slate-600" data-plan-saving={control.savings.reservationId}>
+          Réservation {control.savings.adjustability === "PROTECTED" ? "protégée" : "ajustable"} · montant déclaré {money(control.savings.declaredAmount)} ·
+          {control.savings.source === "ANNUAL_PLAN" ? " objectif annuel" : " déclaration du mois"} · aucun mouvement bancaire créé
+        </p>}
       </li>)}</ul> : <p className="mt-3 text-sm text-slate-600">Aucun ajustement mensuel explicite dans cette révision.</p>}
       {semanticState.contexts.filter(context => context.templateKey === "gift").map(context => {
         const gift = componentItems(context, "item")[0], extras = componentItems(context, "extras");

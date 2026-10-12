@@ -41,6 +41,11 @@ export function ComposerCard({ card, presentation, busy, preserved, focused = fa
           <p className={styles.popoverAmount}>{count != null ? `${quantityLabel(count)} occurrence(s) · ${money(card.value.unitAmount)} / occurrence` : money(card.value.amount)}</p>
           {presentation.variant === "HABIT" && <p className={styles.popoverNote}>Habituel : {presentation.baselineCount !== null ? `${quantityLabel(presentation.baselineCount)} occurrence(s)` : money(presentation.baselineAmount)}</p>}
           {gauge && <p className={styles.popoverNote}>Repère initial : {money(gauge.referenceAmount)} → choix du mois : {money(card.value.amount)}</p>}
+          {presentation.variant === "SAVINGS" && <p className={styles.popoverNote}>
+            {card.value.reservationSource === "ANNUAL_PLAN" ? "Objectif annuel" : "Déclaration du mois"} ·
+            {locked ? " réservation protégée, lecture seule" : " réservation ajustable pour ce scénario"}.
+            Aucun mouvement bancaire n’est créé.
+          </p>}
           {card.historicalReferences && <details className={styles.references}><summary>Repères historiques</summary><p>Bas : {reference(range?.low)} · médian : {reference(range?.central)} · haut : {reference(range?.high)}</p><p>Mois clos comparables · les repères restent fixes.</p></details>}
           {locked && <p className={styles.popoverNote}>{preserved ? "Préservé dans ce brouillon" : "Socle protégé / suivi structurel"}</p>}
           {card.value.conditionalAccepted === false && <p className={styles.popoverNote}>Besoin conditionnel · à confirmer</p>}
@@ -58,10 +63,12 @@ export function ComposerCard({ card, presentation, busy, preserved, focused = fa
       {presentation.occurrenceStack.overflow !== null && <small>+{presentation.occurrenceStack.overflow}</small>}</div>}
     {presentation.variant === "SAVINGS" && gauge?.percent !== null && gauge && <div className={styles.reservationGauge}><div className={styles.gaugeTrack} role="progressbar" aria-label={`${card.label}, repère initial du mois`} aria-valuemin={0} aria-valuemax={100} aria-valuenow={gauge.percent} aria-valuetext={`${money(gauge.referenceAmount)} → ${money(card.value.amount)}`}><span style={{ width: `${gauge.percent}%` }} /></div></div>}
     {inlineAmount ? <form className={styles.savingsInline} data-savings-inline={presentation.variant === "SAVINGS" || undefined} data-amount-inline onSubmit={e => { e.preventDefault(); if (!busy && allocation.trim()) mutate(allocationMutation(allocation)); }}>
-      <input aria-label={`Montant mensuel de ${card.label}`} inputMode="decimal" value={allocation} disabled={busy} onFocus={focus}
+      <input aria-label={`Montant mensuel de ${card.label}`} inputMode="decimal" pattern="(?:0|[1-9][0-9]{0,8})(?:\.[0-9]{1,2})?" value={allocation} disabled={busy} onFocus={focus}
         onChange={e => { setAllocation(e.target.value); hover(e.target.value.trim() ? allocationMutation(e.target.value) : null); }} onBlur={() => hover(null)} />
       <span>€</span><button aria-label={`Prévisualiser le montant de ${card.label}`} disabled={busy || !allocation.trim()}><Check size={14} /></button>
     </form> : !locked ? <button className={styles.compactEdit} disabled={busy} onClick={edit}><SlidersHorizontal size={12} /> Ajuster</button> : null}
-    {presentation.variant === "SAVINGS" && locked && <small className={styles.reservationLabel}>Réservation {preserved ? "préservée" : "protégée"}</small>}
+    {presentation.variant === "SAVINGS" && <small className={styles.reservationLabel}>
+      {locked ? "Réservation protégée · lecture seule" : `Ajustable · déclaré ${money(card.value.declaredAmount as string ?? null)}`}
+    </small>}
   </article>;
 }

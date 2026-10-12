@@ -41,6 +41,8 @@ export async function readMonthComposer(deps: PlannerDependencies, householdId: 
   const baselineControls: ComposerCardView[] = [], discretionaryControls: ComposerCardView[] = [], savings: ComposerCardView[] = [];
   for (const slot of preview.compiled.planSlots) {
     const capability = capabilities.find(c => c.targetRef === slot.baseline.slotIdentityKey) ?? null;
+    const reservation = slot.role === "SAVINGS" ? prepared.baseline.structuralFacts.savingsReservations
+      .find(item => `savings:${item.reservationId}` === slot.baseline.slotIdentityKey) : undefined;
     const discretionary = !!slot.baseline.simpleAuthority && ["restaurants", "fast-food", "delivery", "clothing", "home-small", "games-digital"].includes(slot.baseline.simpleAuthority.domain);
     const kind = slot.role === "SAVINGS" ? "SAVINGS" as const : discretionary ? "DISCRETIONARY_CONTROL" as const : "BASELINE_CONTROL" as const;
     const card: ComposerCardView = { cardId: slot.baseline.planSlotId, targetRef: slot.baseline.slotIdentityKey,
@@ -49,6 +51,8 @@ export async function readMonthComposer(deps: PlannerDependencies, householdId: 
       value: jsonEnvelope({ amount: slot.effectiveAmount, count: slot.effectiveCount, unitAmount: slot.effectiveUnitAmount,
         remainingAmount: slot.remainingAmount, remainingCount: slot.remainingCount, conditionalAccepted: slot.conditionalAccepted ?? null,
         owned: slot.owned, inclusion: slot.baseline.inclusion, dueState: slot.baseline.baselineValue.dueState,
+        ...(reservation ? { reservationSource: reservation.source, reservationAdjustability: reservation.adjustability,
+          annualGoalRef: reservation.annualGoalRef, declaredAmount: reservation.amount } : {}),
         needOccurrence: preview.compiled.needs.find(n => n.needOccurrenceId === slot.baseline.renewalAuthority?.needOccurrenceId) ?? null,
         sourceRefs: slot.baseline.sourceRefs }) };
     (kind === "SAVINGS" ? savings : discretionary ? discretionaryControls : baselineControls).push(card);
