@@ -1,5 +1,4 @@
 import "server-only";
-import Big from "big.js";
 import { decisionAmount } from "@/domain/phase2/month-decision-contract";
 import { plannerDigest, plannerInteger, plannerKeys, plannerRecord, plannerString, plannerUuid } from "@/domain/phase2/planner/json";
 import type { ComponentSelectionV1, ComponentSlotDefinition } from "@/domain/phase2/planner/component-contract";
@@ -12,6 +11,7 @@ import { SOCIAL_CONTACTS_V1 } from "@/domain/phase2/planned-rules";
 import { parseKernelCost, parseKernelFunding } from "./cost-resolver";
 import { isLegacyContextField, resolveContextTemplate } from "./context-registry";
 import { parseJourneyDeclaration, parseMobilityPricing, mobilityTime } from "./mobility-selections";
+import { validateComponentQuantity } from "@/domain/phase2/planner/component-quantity";
 
 export function contextDate(raw: unknown, targetMonth: string): string | null {
   if (raw == null) return null;
@@ -54,6 +54,15 @@ function giftAssetRef(raw: unknown): PlannedAssetRef {
   const labelAtSelection = plannerString(value.labelAtSelection);
   if (value.catalogVersion !== PLANNED_ASSET_CATALOG_VERSION || value.provenance !== "EXPLICIT_USER_DECISION"
     || !/^gift:[a-z0-9_]+$/u.test(assetKey) || !labelAtSelection.trim()) throw new TypeError("CONTEXT_GIFT_ASSET_REF_INVALID");
+  return { catalogVersion: PLANNED_ASSET_CATALOG_VERSION, assetKey, labelAtSelection, provenance: "EXPLICIT_USER_DECISION" };
+}
+function nightProductAssetRef(raw: unknown): PlannedAssetRef {
+  const value = plannerRecord(raw);
+  plannerKeys(value, ["catalogVersion", "assetKey", "labelAtSelection", "provenance"]);
+  const assetKey = plannerString(value.assetKey), labelAtSelection = plannerString(value.labelAtSelection);
+  if (value.catalogVersion !== PLANNED_ASSET_CATALOG_VERSION || value.provenance !== "EXPLICIT_USER_DECISION"
+    || !/^(bar|club|house_party):[a-z0-9_]+$/u.test(assetKey) || !labelAtSelection.trim())
+    throw new TypeError("CONTEXT_PRODUCT_ASSET_REF_INVALID");
   return { catalogVersion: PLANNED_ASSET_CATALOG_VERSION, assetKey, labelAtSelection, provenance: "EXPLICIT_USER_DECISION" };
 }
 export function parseContextField(raw: unknown, field: ContextFieldDefinition, targetMonth: string): unknown {
@@ -105,10 +114,12 @@ function selection(raw: unknown, slot: ComponentSlotDefinition): ComponentSelect
       ...(value.pricing === undefined ? {} : { pricing: parseMobilityPricing(value.pricing) }),
       plannedTime: mobilityTime(value.plannedTime), returnTime: mobilityTime(value.returnTime) };
   }
-  plannerKeys(value, [...common, "label", "quantity", "cost", "binding", "fundingAllocations", "unitBasis", ...(slot.acceptsNeedOccurrence ? ["needOccurrenceId"] : [])], [...common, "label", "quantity", "cost"]);
+  plannerKeys(value, [...common, "label", "quantity", "cost", "binding", "fundingAllocations", "unitBasis", "quantityEvidenceVersion", "quantityPerPerson", "pricedParticipantCount", "productAssetRef", ...(slot.acceptsNeedOccurrence ? ["needOccurrenceId"] : [])], [...common, "label", "quantity", "cost"]);
   const quantity = decisionAmount(value.quantity);
-  if (new Big(quantity).lte(0) || new Big(quantity).gt(9999)) throw new TypeError("PLANNER_QUANTITY_INVALID");
   if (value.unitBasis !== undefined && !["ITEM", "PERSON", "SHARED"].includes(String(value.unitBasis))) throw new TypeError("CONTEXT_UNIT_BASIS_INVALID");
+  validateComponentQuantity(quantity, value.unitBasis, value.quantityEvidenceVersion, value.quantityPerPerson, value.pricedParticipantCount);
+  const perPerson = value.quantityPerPerson === undefined ? null : decisionAmount(value.quantityPerPerson);
+  const participantCount = value.pricedParticipantCount === undefined ? null : plannerInteger(value.pricedParticipantCount, 1);
   const binding = value.binding === undefined ? { mode: "AUTO" as const } : (() => {
     const candidate = plannerRecord(value.binding); plannerKeys(candidate, ["mode"]);
     if (!["AUTO", "CONFIRMED_CONSUMPTION", "EXTRA_TO_SLOT", "NO_RELATED_SLOT"].includes(String(candidate.mode))) throw new TypeError("CONTEXT_BINDING_DECISION_INVALID");
@@ -117,6 +128,8 @@ function selection(raw: unknown, slot: ComponentSlotDefinition): ComponentSelect
   return { ...identity, kind: "COMPONENT", label: plannerString(value.label), quantity, cost: parseKernelCost(value.cost), binding,
     fundingAllocations: parseKernelFunding(value.fundingAllocations ?? []),
     ...(value.unitBasis === undefined ? {} : { unitBasis: value.unitBasis as "ITEM" | "PERSON" | "SHARED" }),
+    ...(perPerson === null ? {} : { quantityEvidenceVersion: "component-quantity@v1" as const, quantityPerPerson: perPerson, pricedParticipantCount: participantCount! }),
+    ...(value.productAssetRef === undefined ? {} : { productAssetRef: nightProductAssetRef(value.productAssetRef) }),
     ...(value.needOccurrenceId === undefined ? {} : { needOccurrenceId: plannerString(value.needOccurrenceId) }) };
 }
 export function readContextSelections(context: PlannedContextState, targetMonth: string): ReadonlyMap<string, readonly ComponentSelectionV1[]> {

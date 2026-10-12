@@ -11,6 +11,7 @@ import { fixture as plannerFixture, state as plannerState, simpleMonth, nightMon
 import { providers } from './fixtures/planner-mobility.mjs';
 import { atomicMonth, interactionMonth, richMonth, savingsMonth } from './fixtures/planner-atomic-ui.mjs';
 import { visualMonth, visualThreeBeautyMonth, sparseMonth, unreadyMonth } from './fixtures/planner-visual-fidelity.mjs';
+import { p09CompatibilityMonth, p09ReadbackMonth } from './fixtures/planner-p09.mjs';
 const { handleComposerRequest } = require('@/server/phase2/planner/composer-service');
 const { createPlanApplyRepository } = require('@/server/phase2/planner/repository');
 const { preparePlanningMobility } = require('@/server/phase2/planner/prospective-mobility-pricing');
@@ -44,6 +45,10 @@ fs.writeFileSync(path.join(out,'global.css'),globalCss);
 const stores = new Map(), fixtures = { A: simpleMonth, B: nightMonth, C: weekendMonth, D: renewalMonth, E: externalMonth, R: atomicMonth,
   P04: () => ({ world: plannerFixture(), semantic: plannerState() }),
   P05: () => ({ world: plannerFixture(), semantic: plannerState() }),
+  P09: () => ({ world: plannerFixture(), semantic: plannerState() }),
+  P09C: p09CompatibilityMonth,
+  P09S: p09CompatibilityMonth,
+  P09R: p09ReadbackMonth,
   RA: interactionMonth, RB: nightMonth, RC: weekendMonth, RR: atomicMonth, RICH:richMonth, SAVINGS:savingsMonth,
   VISUAL:visualMonth, VISUAL_P35_CLICK:visualMonth, VISUAL_P35_DRAG:visualMonth, VISUAL_P35_MULTI_DRAG:visualMonth, VISUAL_P35_REPLACE:visualMonth,
   VISUAL_P35_HISTORY:visualMonth, VISUAL_P35_PROTECTED:visualMonth, DISSOLVE_BEAUTY:visualThreeBeautyMonth,
@@ -137,7 +142,11 @@ const server = http.createServer(async (request, response) => {
       // Delays only in this isolated host, to exercise stale hover responses in the actual UI.
       const rejectSequence = Number(url.searchParams.get('rejectSequence'));
       const syntheticReject = !initialRead && command.kind === 'READ' && url.searchParams.has('rejectSequence') && rejectSequence === command.sequence;
-      const result = syntheticReject ? { ok:false, sequence:command.sequence, code:'P03B_SYNTHETIC_REJECTION', message:'Simulation de test rejetée' } : await handleComposerRequest(s.deps, householdId, command);
+      let result = syntheticReject ? { ok:false, sequence:command.sequence, code:'P03B_SYNTHETIC_REJECTION', message:'Simulation de test rejetée' } : await handleComposerRequest(s.deps, householdId, command);
+      // Test transport integrity only: a deliberately mismatched proof must never become the current projection.
+      if (!initialRead && command.kind === 'READ' && result.ok && url.searchParams.has('staleSequence')
+        && Number(url.searchParams.get('staleSequence')) === command.sequence) result = { ...result,
+          model: { ...result.model, board: { ...result.model.board, draft: { ...result.model.board.draft, semanticStateDigest: 'P09_SYNTHETIC_STALE_DIGEST' } } } };
       await s.pg.verifyCanaries();
       s.log.push({ kind: command.kind, sequence: command.sequence, mutationKind: result.mutationKind ?? null,
         gesture: command.kind === 'DROP' ? {assetKey:command.assetKey,target:command.target,sourceSocket:command.sourceSocket??null} : null,

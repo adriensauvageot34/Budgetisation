@@ -254,6 +254,22 @@
 .dialog .helper { margin:0 0 15px; flex-shrink:0; }
 .formFields { display:grid; gap:14px; min-height:0; overflow-y:auto; padding:4px; }
 .formError { color:#a16445; background:#fff2e7; border:1px solid #efd6bc; padding:12px; border-radius:10px; font-size:12px; line-height:1.6; }
+.nightEditor { display:flex; flex-direction:column; min-height:0; max-height:calc(100vh - 140px); }
+.dialog[data-night-editor] { width:min(820px,calc(100vw - 40px)); }
+.nightNav { display:flex; flex-wrap:wrap; gap:6px; margin:0 0 10px; flex-shrink:0; }
+.nightNav button { border:1px solid #e4d8ef; background:#faf6ff; color:#5c3d81; border-radius:7px; font-size:11px; padding:7px 11px; }
+.nightSection:focus { outline:2px solid #9068db; outline-offset:2px; }
+.nightEditorScroll { overflow-y:auto; min-height:0; display:grid; gap:18px; padding:4px 7px 4px 2px; }
+.nightSection { border:1px solid #e9e0ee; border-radius:13px; padding:14px; display:grid; gap:11px; min-width:0; }
+.nightSection h3,.nightSection h4 { margin:0; color:#452c67; }
+.nightSection h3 { font-size:15px; }.nightSection h4 { font-size:13px; }
+.nightSection label,.nightComponent label { display:grid; gap:5px; color:#654e79; font-size:12px; }
+.nightSection input,.nightSection select,.nightComponent input,.nightComponent select { border:1px solid #e3d5ec; border-radius:8px; padding:9px; background:white; color:#563e68; min-width:0; width:100%; }
+.nightComponent { border:1px solid #e9def3; border-radius:10px; padding:10px; min-width:0; display:grid; gap:9px; }
+.nightComponent legend { padding:0 5px; font-weight:700; font-size:12px; color:#593977; }
+.nightComponentGrid { display:grid; grid-template-columns:repeat(auto-fit,minmax(min(220px,100%),1fr)); gap:10px; min-width:0; }
+.nightParticipants { display:grid; gap:9px; }.nightParticipant { display:flex; flex-wrap:wrap; gap:9px; align-items:end; }.nightParticipant>div { flex:1 1 260px; }
+.nightSection .nightCheck { display:flex; align-items:center; gap:8px; }.nightSection .nightCheck input { width:auto; }
 .formFields label { display:flex; flex-direction:column; gap:6px; color:#8e759d; font-size:12px; }
 .formFields input,.formFields select { border:1px solid #e3d5ec; border-radius:8px; padding:10px; background:white; color:#563e68; min-width:0; }
 .dialog footer { display:flex; justify-content:flex-end; gap:8px; margin-top:22px; flex-shrink:0; }

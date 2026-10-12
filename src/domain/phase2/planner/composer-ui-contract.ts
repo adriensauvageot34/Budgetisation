@@ -4,6 +4,7 @@ import type { PlanSemanticStateV1 } from "./semantic-state";
 import type { PlannerJson } from "./json";
 import type { PlanBalanceSuggestions, SemanticMutation } from "./adjustment-contract";
 import type { ComponentSelectionV1 } from "./component-contract";
+import type { NightOutEdit } from "./night-out-edit";
 
 export type ComposerField = Readonly<{ key: string; label: string; kind: "TEXT" | "DATE" | "AMOUNT" | "CHOICE";
   required: boolean; choices?: readonly Readonly<{ value: string; label: string }>[]; initial?: string }>;
@@ -67,6 +68,7 @@ export type ComposerRequest = Readonly<{ sequence: number; targetMonth: string; 
   | Readonly<{ kind: "CLEAR_SOCKET"; contextOccurrenceId: string; slotKey: string; selectionId: string }>
   | Readonly<{ kind: "EDIT_CONTEXT"; contextOccurrenceId: string; values: Readonly<Record<string, PlannerJson>> }>
   | Readonly<{ kind: "EDIT_GIFT"; contextOccurrenceId: string; values: Readonly<Record<string, PlannerJson>>; item: ComponentSelectionV1 }>
+  | Readonly<{ kind: "EDIT_NIGHT_OUT"; edit: NightOutEdit }>
   | Readonly<{ kind: "PRESERVE"; targetRef: string; preserve: boolean }>
   | Readonly<{ kind: "SUGGESTIONS" }>
   | Readonly<{ kind: "ACCEPT"; candidateSetDigest: string; candidateId: string }>

@@ -6,6 +6,7 @@ import type { ComposerCardView } from "@/domain/phase2/planner/composer-contract
 import type { ComponentSelectionV1 } from "@/domain/phase2/planner/component-contract";
 import type { SemanticMutation } from "@/domain/phase2/planner/adjustment-contract";
 import { parsePlanSemanticState } from "@/domain/phase2/planner/semantic-state";
+import { editNightOut } from "@/domain/phase2/planner/night-out-edit";
 import { plannerKeys, plannerMonth, plannerRecord, plannerUuid } from "@/domain/phase2/planner/json";
 import { decisionAmount } from "@/domain/phase2/month-decision-contract";
 import type { PlannerDependencies } from "./apply";
@@ -108,7 +109,10 @@ function dropMutation(model: MonthComposerReadModel, request: Extract<ComposerRe
   if (option.kind === "MOBILITY_INTENT" && values.targetIntentId && (amount !== null || funding.length || values.parkingMode === "YES"))
     throw new TypeError("COMPOSER_SHARED_JOURNEY_OWNER_PRICES");
   const common = { selectionId: request.selectionId, optionKey: option.optionKey, provenance: "EXPLICIT_USER_DECISION" as const };
-  const selection: ComponentSelectionV1 = option.kind === "COMPONENT" ? { ...common, kind: "COMPONENT", label: values.label?.trim() || option.label,
+  const priorComponent = previous?.kind === "COMPONENT" ? previous : undefined;
+  if (priorComponent?.quantityPerPerson && (!new Big(values.quantity || priorComponent.quantity).eq(priorComponent.quantity)
+    || values.unitBasis && values.unitBasis !== "PERSON")) throw new TypeError("COMPOSER_PERSON_QUANTITY_USE_NIGHT_EDITOR");
+  const selection: ComponentSelectionV1 = option.kind === "COMPONENT" ? { ...priorComponent, ...common, kind: "COMPONENT", label: values.label?.trim() || option.label,
     quantity: decisionAmount(values.quantity || "1"), cost, fundingAllocations: funding, ...(values.binding ? { binding: { mode: values.binding as "AUTO" | "CONFIRMED_CONSUMPTION" | "EXTRA_TO_SLOT" } } : {}),
     ...(values.unitBasis || previous?.kind === "COMPONENT" && previous.unitBasis
       ? { unitBasis: (values.unitBasis || (previous?.kind === "COMPONENT" ? previous.unitBasis : undefined)) as "ITEM" | "PERSON" | "SHARED" } : {}),
@@ -194,6 +198,12 @@ export async function handleComposerRequest(deps: PlannerDependencies, household
       state = setContextSlotSelections(patchContextEditorFields(state, card.contextOccurrenceId, request.values),
         card.contextOccurrenceId, "item", [request.item]);
       mutationKind = "PATCH_CONTEXT";
+    } else if (request.kind === "EDIT_NIGHT_OUT") {
+      const card = model.board.contexts.find(c => c.contextOccurrenceId === request.edit.contextOccurrenceId);
+      if (card?.templateKey !== "night-out") throw new TypeError("COMPOSER_NIGHT_OUT_TARGET_INVALID");
+      if (!card.capabilityRefs.includes("PATCH_CONTEXT")) throw new TypeError("COMPOSER_CONTEXT_LOCKED");
+      state = editNightOut(state, request.edit);
+      mutationKind = "PATCH_CONTEXT";
     } else if (request.kind === "EDIT_CONTEXT") {
       const card = model.board.contexts.find(c => c.contextOccurrenceId === request.contextOccurrenceId);
       if (!card?.capabilityRefs.includes("PATCH_CONTEXT")) throw new TypeError("COMPOSER_CONTEXT_LOCKED");
@@ -218,6 +228,7 @@ export async function handleComposerRequest(deps: PlannerDependencies, household
     const code = error instanceof TypeError ? error.message : "COMPOSER_UNAVAILABLE";
     return { ok: false, sequence: request.sequence, code,
       message: code === "COMPOSER_SHARED_JOURNEY_OWNER_PRICES" ? "Un trajet partagé reprend le prix et le financement de son trajet propriétaire. Retirez le prix ou financement séparé, ou choisissez un trajet propre."
+        : code === "COMPOSER_PERSON_QUANTITY_USE_NIGHT_EDITOR" ? "Modifiez cette quantité par personne dans la configuration complète de la Soirée pour conserver le nombre de personnes retenu."
         : /STALE|CHANGED/u.test(code) ? "Le mois a changé. Rechargez la prévisualisation avant d’appliquer ; votre brouillon est conservé."
         : /LOCKED|BLOCKED/u.test(code) ? "Cette action n’est pas disponible. Vérifiez les contraintes et les informations manquantes."
         : "Cette proposition n’a pas pu être validée. Votre brouillon est conservé ; vérifiez les champs et réessayez." };
