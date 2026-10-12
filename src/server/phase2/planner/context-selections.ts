@@ -10,7 +10,7 @@ import { PLANNED_ASSET_CATALOG_VERSION, type PlannedAssetRef } from "@/domain/ph
 import { SOCIAL_CONTACTS_V1 } from "@/domain/phase2/planned-rules";
 import { parseKernelCost, parseKernelFunding } from "./cost-resolver";
 import { isLegacyContextField, resolveContextTemplate } from "./context-registry";
-import { parseJourneyDeclaration, parseMobilityPricing, mobilityTime } from "./mobility-selections";
+import { parseJourneyDeclaration, parseMobilityPricing, parseProspectiveRoute, mobilityTime } from "./mobility-selections";
 import { validateComponentQuantity } from "@/domain/phase2/planner/component-quantity";
 
 export function contextDate(raw: unknown, targetMonth: string): string | null {
@@ -106,12 +106,16 @@ function selection(raw: unknown, slot: ComponentSlotDefinition): ComponentSelect
   const option = slot.options.find(o => o.optionKey === optionKey && o.kind === value.kind);
   if (!option) throw new TypeError("CONTEXT_COMPONENT_CAPABILITY_FORBIDDEN");
   if (value.kind === "MOBILITY_INTENT") {
-    plannerKeys(value, [...common, "origin", "destination", "returnRequired", "journey", "pricing", "plannedTime", "returnTime"], common);
+    plannerKeys(value, [...common, "origin", "destination", "returnRequired", "journey", "pricing", "plannedTime", "returnTime", "route"], common);
     if (value.returnRequired !== undefined && typeof value.returnRequired !== "boolean") throw new TypeError("CONTEXT_MOBILITY_RETURN_INVALID");
     if (value.returnTime != null && value.returnRequired !== true) throw new TypeError("JOURNEY_RETURN_TIME_REQUIRES_RETURN");
+    if (value.route !== undefined && (option.mobilityMode !== "CAR"
+      || value.journey !== undefined && parseJourneyDeclaration(value.journey)?.relation !== "OWNS_JOURNEY"))
+      throw new TypeError("COMPOSER_ROUTE_OWNER_REQUIRED");
     return { ...identity, kind: "MOBILITY_INTENT", origin: place(value.origin), destination: place(value.destination), returnRequired: value.returnRequired === true,
       ...(value.journey === undefined ? {} : { journey: parseJourneyDeclaration(value.journey) }),
       ...(value.pricing === undefined ? {} : { pricing: parseMobilityPricing(value.pricing) }),
+      ...(value.route === undefined ? {} : { route: parseProspectiveRoute(value.route) }),
       plannedTime: mobilityTime(value.plannedTime), returnTime: mobilityTime(value.returnTime) };
   }
   plannerKeys(value, [...common, "label", "quantity", "cost", "binding", "fundingAllocations", "unitBasis", "quantityEvidenceVersion", "quantityPerPerson", "pricedParticipantCount", "productAssetRef", ...(slot.acceptsNeedOccurrence ? ["needOccurrenceId"] : [])], [...common, "label", "quantity", "cost"]);
@@ -138,7 +142,7 @@ export function readContextSelections(context: PlannedContextState, targetMonth:
   for (const field of template.fields) if (Object.hasOwn(context.fields, field.fieldKey)) {
     if (field.fieldKey === "objectAssetRef" && context.fields.fieldSchemaVersion !== "context-fields@v3"
       || !isLegacyContextField(context.templateKey, field.fieldKey) && field.fieldKey !== "fieldSchemaVersion"
-      && !["context-fields@v2", "context-fields@v3"].includes(String(context.fields.fieldSchemaVersion)))
+      && !["context-fields@v2", "context-fields@v3", ...(context.templateKey === "family-visit" ? ["context-fields@v4"] : [])].includes(String(context.fields.fieldSchemaVersion)))
       throw new TypeError("CONTEXT_FIELD_VERSION_REQUIRED");
     parseContextField(context.fields[field.fieldKey], field, targetMonth);
   }
@@ -205,6 +209,11 @@ export function knownContextReferences(state: PlanSemanticStateV1): { personIds:
         const ref = parseContextField(raw, field, state.targetMonth) as ProspectivePlaceRef | null;
         if (ref?.kind === "KNOWN") placeIds.add(ref.placeId);
       }
+    }
+    for (const items of readContextSelections(context, state.targetMonth).values()) for (const item of items) {
+      if (item.kind !== "MOBILITY_INTENT") continue;
+      for (const ref of [item.origin, item.destination]) if (ref?.kind === "KNOWN") placeIds.add(ref.placeId);
+      for (const stop of item.route?.stops ?? []) if (stop.placeId) placeIds.add(stop.placeId);
     }
   }
   return { personIds: [...personIds].sort(), placeIds: [...placeIds].sort() };

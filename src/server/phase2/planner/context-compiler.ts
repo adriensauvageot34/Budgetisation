@@ -62,8 +62,9 @@ export function expandComposableContexts(state: PlanSemanticStateV1, world: Plan
           const date = slot.mobilityRole === "RETURN" ? contextDate(context.fields.endDate, state.targetMonth) ?? plannedDate : plannedDate;
           mobilityIntents.push({ mobilityIntentId: id, contextOccurrenceId: context.contextOccurrenceId, role: slot.mobilityRole!,
             origin: item.origin ?? null, destination: item.destination ?? null, returnRequired: item.returnRequired === true,
-            slotKey: slot.slotKey, journey: item.journey, pricing: item.pricing,
-            returnTiming: item.returnRequired ? date ? { kind: "DATED", date: contextDate(context.fields.endDate, state.targetMonth) ?? date, time: item.returnTime ?? null }
+            slotKey: slot.slotKey, journey: item.journey, pricing: item.pricing, ...(item.route ? { route: item.route } : {}),
+            returnTiming: item.returnRequired ? (item.route ? contextDate(context.fields.endDate, state.targetMonth) : date)
+              ? { kind: "DATED", date: contextDate(context.fields.endDate, state.targetMonth) ?? date!, time: item.returnTime ?? null }
               : { kind: "MONTH_UNSCHEDULED", targetMonth: state.targetMonth } : null,
             mode: option.mobilityMode!, timing: date ? { kind: "DATED", date, time: item.plannedTime ?? null } : { kind: "MONTH_UNSCHEDULED", targetMonth: state.targetMonth },
             knowledge: option.mobilityMode === "FREE" ? "DECLARED" : option.mobilityMode === "UNKNOWN" ? "UNKNOWN" : "PARTIAL" });

@@ -18,11 +18,25 @@ export function resolveJourneyRequirements(intents: readonly MobilityIntent[], w
     targetRef: id, candidate: null, reference: null, evidenceRefs: [], confidence: "HIGH", remediation: null, policyVersion: JOURNEY_RESOLVER_VERSION });
   const own = (intent: MobilityIntent, unresolved = false): Journey => {
     const id = prospectiveJourneyId(world.baseline.householdId, world.baseline.targetMonth, intent.mobilityIntentId);
-    const stops = intent.origin && intent.destination ? [intent.origin, intent.destination, ...(intent.returnRequired ? [intent.origin] : [])] : [];
+    let stops = intent.origin && intent.destination ? [intent.origin, intent.destination, ...(intent.returnRequired ? [intent.origin] : [])] : [];
+    if (intent.route?.stops.length) {
+      const selected = intent.route.stops.map(stop => stop.placeId ? { kind: "KNOWN" as const, placeId: stop.placeId }
+        : { kind: "TEXT" as const, label: stop.label, provenance: "USER_DECLARED_PROSPECTIVE" as const });
+      const anchor = intent.route.stops.findIndex(stop => stop.endpointSource === "ROOT_PLACE");
+      const equivalent = (a: unknown, b: unknown) => plannerDigest(a) === plannerDigest(b);
+      const plain = (ref: typeof intent.origin) => ref?.kind === "TEXT" ? { ...ref, provenance: "USER_DECLARED_PROSPECTIVE" } : ref;
+      if (!intent.origin || !intent.destination || anchor < 1 || !equivalent(selected[0], plain(intent.origin))
+        || !equivalent(selected[anchor], plain(intent.destination))
+        || intent.route.stops.filter(stop => stop.endpointSource === "ROOT_PLACE").length !== 1
+        || intent.returnRequired && (anchor >= selected.length - 1 || !equivalent(selected.at(-1), plain(intent.origin)))
+        || !intent.returnRequired && anchor !== selected.length - 1) throw new TypeError("COMPOSER_ROUTE_TOPOLOGY_INVALID");
+      stops = selected;
+    }
     const journey: Journey = { physicalJourneyRequirementId: id, ownerContextOccurrenceId: intent.contextOccurrenceId, ownerIntentId: intent.mobilityIntentId,
       participatingIntentIds: [intent.mobilityIntentId], stops, mode: intent.mode, outbound: intent.timing,
       returnLeg: intent.returnRequired ? intent.returnTiming ?? intent.timing : null, pricingState: "UNKNOWN", externalExpenseId: null,
-      externalCostLineIds: [], relationUnresolved: unresolved, returnAnchorIndex: intent.returnRequired ? 1 : null };
+      externalCostLineIds: [], relationUnresolved: unresolved, returnAnchorIndex: intent.returnRequired
+        ? intent.route?.stops.findIndex(stop => stop.endpointSource === "ROOT_PLACE") ?? 1 : null };
     journeys.set(id, journey); return journey;
   };
   const external = (intent: MobilityIntent): Journey => {

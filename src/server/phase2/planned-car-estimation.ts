@@ -145,7 +145,11 @@ async function estimateCarDirection(raw: PlannedCarRequest, facts: Facts, provid
   await pricePromise;
   if (!route) return { stops, status: "PARTIAL", variants: [], snapshot: null, fuelEstimate: null, messages };
   const snapshotFor = async (r: CarRouteFacts, preference: NonNullable<PlannedCarRequest["preference"]>): Promise<PlannedCarSnapshot> => {
-    const toll = r.provider === "TOMTOM" ? await providers.toll.estimateTolls(r) : unknownToll(r);
+    let toll = unknownToll(r);
+    if (r.provider === "TOMTOM") {
+      try { toll = await providers.toll.estimateTolls(r); }
+      catch { messages.push("Le service de péage est indisponible ; le coût carburant calculé reste conservé."); }
+    }
     return {
     estimateVersion: "planned-car-live@v2", vehicleId: vehicle.vehicleId!, vehicleLabel: vehicle.label, preference,
     plannedDate: input.plannedDate, plannedTime: input.plannedTime ?? null, timeKind: input.timeKind ?? "DEPARTURE", calculatedAt: new Date().toISOString(),

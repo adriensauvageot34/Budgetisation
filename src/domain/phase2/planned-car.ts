@@ -59,6 +59,16 @@ export const fuelEconomicCost = (liters: string, price: string): string => new B
 /** Add independent directed snapshots, including rounded fuel costs. No distance multiplication. */
 export function combineCarJourney(outbound: PlannedCarSnapshot, returning: PlannedCarSnapshot, timing: PlannedTripTiming): PlannedCarSnapshot {
   assertVisitTiming(timing, outbound.plannedDate);
+  return combineDirectedCarSnapshots(outbound, returning, timing);
+}
+/** Composer can retain unknown dates. Use the same owner sum without inventing a departure day. */
+export function combineProspectiveCarJourney(outbound: PlannedCarSnapshot, returning: PlannedCarSnapshot, raw: PlannedTripTiming): PlannedCarSnapshot {
+  const timing = parseVisitTiming(raw);
+  if (outbound.plannedDate !== timing.outbound.date || timing.outbound.date && timing.return.date && timing.return.date < timing.outbound.date)
+    return fail();
+  return combineDirectedCarSnapshots(outbound, returning, timing);
+}
+function combineDirectedCarSnapshots(outbound: PlannedCarSnapshot, returning: PlannedCarSnapshot, timing: PlannedTripTiming): PlannedCarSnapshot {
   if (outbound.journey || returning.journey || outbound.preference !== returning.preference || outbound.vehicleId !== returning.vehicleId
     || returning.plannedDate !== timing.return.date || outbound.plannedTime !== timing.outbound.time || returning.plannedTime !== timing.return.time
     || outbound.timeKind !== "DEPARTURE" || returning.timeKind !== "DEPARTURE") return fail();

@@ -5,6 +5,15 @@ import type { PlannerJson } from "./json";
 import type { PlanBalanceSuggestions, SemanticMutation } from "./adjustment-contract";
 import type { ComponentSelectionV1 } from "./component-contract";
 import type { NightOutEdit } from "./night-out-edit";
+import type { FamilyVisitEdit } from "./family-visit-edit";
+import type { PlannedPlaceOption } from "../planned-places";
+import type { PlannedVehicleEstimate } from "../planned-contract";
+
+export type ComposerMobilitySummary = Readonly<{ contextOccurrenceId: string; journeyId: string; requestDigest: string;
+  status: "RESOLVED" | "PARTIAL" | "UNKNOWN"; distanceKm: string | null; economicFuel: string | null;
+  toll: string | null; parking: string | null; fare: string | null; cashTransport: string | null;
+  routeSource: string | null; fuelSource: string | null; tollSource: string | null; vehicleLabel: string | null;
+  methodRef: string | null; timeBasis: string | null; fallbacks: readonly string[] }>;
 
 export type ComposerField = Readonly<{ key: string; label: string; kind: "TEXT" | "DATE" | "AMOUNT" | "CHOICE";
   required: boolean; choices?: readonly Readonly<{ value: string; label: string }>[]; initial?: string }>;
@@ -54,6 +63,8 @@ export type ComposerDragSource = Readonly<{
 /** Excludes Baseline snapshots, canonical evidence and financial adapter entries. */
 export type ComposerUiModel = Omit<MonthComposerReadModel, "preview"> & Readonly<{
   householdPersons: readonly Readonly<{ personId: string; displayName: string }>[];
+  mobilityOptions?: Readonly<{ places: readonly PlannedPlaceOption[]; vehicle: PlannedVehicleEstimate | null }>;
+  mobilitySummaries?: readonly ComposerMobilitySummary[];
   proof: Omit<PlannerApplyCommand, "applyRequestId">;
   appliedContextIds: readonly string[];
   editors: readonly ComposerEditor[];
@@ -69,6 +80,7 @@ export type ComposerRequest = Readonly<{ sequence: number; targetMonth: string; 
   | Readonly<{ kind: "EDIT_CONTEXT"; contextOccurrenceId: string; values: Readonly<Record<string, PlannerJson>> }>
   | Readonly<{ kind: "EDIT_GIFT"; contextOccurrenceId: string; values: Readonly<Record<string, PlannerJson>>; item: ComponentSelectionV1 }>
   | Readonly<{ kind: "EDIT_NIGHT_OUT"; edit: NightOutEdit }>
+  | Readonly<{ kind: "EDIT_FAMILY_VISIT"; edit: FamilyVisitEdit }>
   | Readonly<{ kind: "PRESERVE"; targetRef: string; preserve: boolean }>
   | Readonly<{ kind: "SUGGESTIONS" }>
   | Readonly<{ kind: "ACCEPT"; candidateSetDigest: string; candidateId: string }>

@@ -22,12 +22,13 @@ import { stageLocalDecision, visualDraftModel } from "./local-draft";
 import { ComposerPreviewScheduler, type PreviewStatus } from "./preview-scheduler";
 import { GiftEditor } from "./gift-editor";
 import { NightOutEditor } from "./night-out-editor";
+import { FamilyVisitEditor } from "./family-visit-editor";
 import { CardKnowledgePanel } from "./card-knowledge-panel";
 import { useDurableDraft, type DraftTransport } from "./durable-draft";
 import type { ComposerDraftSnapshot, StoredComposerDraft } from "@/domain/phase2/planner/composer-draft-contract";
 
 type Editor = { title: string; compact?: boolean; side?: boolean; fields: readonly ComposerField[]; values: Record<string, string>;
-  giftContextId?: string; nightContextId?: string;
+  giftContextId?: string; nightContextId?: string; familyContextId?: string; familyMode?: string;
   cardKey?: string;
   operation: (values: Record<string, string>) => ComposerOperation };
 type DraftConfirmation = { kind: "ABANDON" | "RESTART" | "RESTORE" | "LOAD_SERVER"; draftId?: string; version?: number };
@@ -290,6 +291,12 @@ export function ComposerShell({ initialModel, transport, initialDrafts = null, d
   }
   function choose(asset: ComposerAssetView, target: DropTarget = { kind: "BOARD_ZONE" }, selection?: ComponentSelectionV1, stableId?: string) {
     clearHover();
+    if (asset.kind === "SLOT_OPTION_ASSET" && asset.optionKind === "MOBILITY_INTENT") {
+      const owner = shown.board.contexts.find(card => card.contextOccurrenceId === target.contextOccurrenceId && card.templateKey === "family-visit");
+      if (owner?.capabilityRefs.includes("PATCH_CONTEXT")) {
+        editContext(owner); setEditor(current => current ? { ...current, familyMode: asset.optionKey } : current); return;
+      }
+    }
     if (selection?.kind === "COMPONENT" && selection.quantityPerPerson) {
       const owner = shown.board.contexts.find(card => card.contextOccurrenceId === target.contextOccurrenceId);
       const parent = owner?.templateKey === "night-out" ? owner : shown.board.contexts.find(card => card.contextOccurrenceId === owner?.parentContextOccurrenceId && card.templateKey === "night-out"
@@ -316,6 +323,7 @@ export function ComposerShell({ initialModel, transport, initialDrafts = null, d
           cardKey: asset.assetKey,
           ...(asset.templateKey === "gift" ? { giftContextId: identity } : {}),
           ...(asset.templateKey === "night-out" ? { nightContextId: identity } : {}),
+          ...(asset.templateKey === "family-visit" ? { familyContextId: identity } : {}),
           fields: model.editors.find(e => e.assetKey === asset.assetKey)?.fields ?? [], values: {},
           operation: values => ({ kind: "EDIT_CONTEXT", contextOccurrenceId: identity, values }) });
         return;
@@ -353,6 +361,7 @@ export function ComposerShell({ initialModel, transport, initialDrafts = null, d
       cardKey: `template:${card.templateKey}`,
       ...(card.templateKey === "gift" ? { giftContextId: card.contextOccurrenceId } : {}),
       ...(card.templateKey === "night-out" ? { nightContextId: card.contextOccurrenceId } : {}),
+      ...(card.templateKey === "family-visit" ? { familyContextId: card.contextOccurrenceId } : {}),
       fields: model.editors.find(e => e.assetKey === `template:${card.templateKey}`)?.fields ?? [],
       values: Object.fromEntries(Object.entries(card.fields).filter((entry): entry is [string, string] => typeof entry[1] === "string")),
       operation: values => ({ kind: "EDIT_CONTEXT", contextOccurrenceId: card.contextOccurrenceId, values }) });
@@ -433,10 +442,15 @@ export function ComposerShell({ initialModel, transport, initialDrafts = null, d
     <div ref={dragImage} className={styles.dragPreview} data-drag-preview data-protected={grabbed?.protected} aria-hidden="true">{[...new Set(Object.values(shown.presentation.dragSources).map(s => s.iconKey))].map(key => <span key={key} data-drag-icon={key} style={{ display: grabbed?.iconKey === key ? "inline-flex" : "none" }}><PlannerIcon iconKey={key} scale="SATELLITE" /></span>)}<span><b data-drag-label>{grabbed?.label}</b><small data-drag-amount>{grabbed?.protected ? <><LockKeyhole size={11} /> Protégée</> : money(grabbed?.economicAmount ?? null)}</small></span></div>
     <div className={styles.statusBar} role="status" aria-live="polite">{message}</div>
     {errorMessage && !editor && <div className={styles.errorNotice} role="alert">{errorMessage}<button className={styles.iconButton} aria-label="Fermer le message" onClick={() => setErrorMessage(null)}><X size={14} /></button></div>}
-    <dialog ref={dialog} className={styles.dialog} data-night-editor={!!editor?.nightContextId || undefined} data-side-panel={editor?.side || undefined} data-compact-editor={editor?.compact || undefined} aria-labelledby="composer-dialog-title" onCancel={e => { e.preventDefault(); closeDialog(); }} onKeyDown={e => { if (e.key === "Escape" && editor?.side) { e.preventDefault(); closeDialog(); } }}>
+    <dialog ref={dialog} className={styles.dialog} data-night-editor={!!editor?.nightContextId || !!editor?.familyContextId || undefined} data-side-panel={editor?.side || undefined} data-compact-editor={editor?.compact || undefined} aria-labelledby="composer-dialog-title" onCancel={e => { e.preventDefault(); closeDialog(); }} onKeyDown={e => { if (e.key === "Escape" && editor?.side) { e.preventDefault(); closeDialog(); } }}>
       <header><h2 id="composer-dialog-title">{editor?.title ?? (projectionOpen ? "Le détail de votre mois" : "Des pistes pour votre mois")}</h2><button className={styles.iconButton} disabled={busy} aria-label="Fermer" onClick={closeDialog}><X size={19} /></button></header>
       {errorMessage && <p role="alert" className={styles.formError}>{errorMessage}</p>}
-      {editor?.nightContextId && draftState.contexts.find(context => context.contextOccurrenceId === editor.nightContextId)
+      {editor?.familyContextId && draftState.contexts.find(context => context.contextOccurrenceId === editor.familyContextId)
+        ? <FamilyVisitEditor key={`${editor.familyContextId}:${editor.familyMode ?? "edit"}`} context={draftState.contexts.find(context => context.contextOccurrenceId === editor.familyContextId)!}
+          targetMonth={draftState.targetMonth} householdPersons={model.householdPersons} options={model.mobilityOptions} initialMode={editor.familyMode}
+          summary={model.mobilitySummaries?.find(item => item.contextOccurrenceId === editor.familyContextId)} fresh={previewStatus === "FRESH"}
+          knowledge={model.cardKnowledge[editor.cardKey ?? ""]} busy={busy} onCancel={closeDialog} onSave={operation => { stage(operation); setEditor(null); }} />
+        : editor?.nightContextId && draftState.contexts.find(context => context.contextOccurrenceId === editor.nightContextId)
         ? <NightOutEditor key={editor.nightContextId} context={draftState.contexts.find(context => context.contextOccurrenceId === editor.nightContextId)!}
           semanticState={draftState} householdPersons={model.householdPersons} knowledge={model.cardKnowledge[editor.cardKey ?? ""]}
           busy={busy} onCancel={closeDialog} onSave={operation => { stage(operation); setEditor(null); }} />

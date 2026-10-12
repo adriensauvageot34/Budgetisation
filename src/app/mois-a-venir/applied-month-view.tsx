@@ -12,6 +12,8 @@ import { money } from "./composer/display";
 import { SOCIAL_CONTACTS_V1 } from "@/domain/phase2/planned-rules";
 import { plannedAsset } from "@/domain/phase2/planned-assets";
 import material from "./month-material.module.css";
+import type { ComposerMobilitySummary } from "@/domain/phase2/planner/composer-ui-contract";
+import { MobilityEstimateSummary } from "./composer/mobility-estimate-summary";
 
 const record = (value: unknown): Record<string, unknown> | null => value && typeof value === "object" && !Array.isArray(value) ? value as Record<string, unknown> : null;
 const componentItems = (context: PlanSemanticStateV1["contexts"][number], slot: string) => {
@@ -48,10 +50,11 @@ const giftAssetLabel = (value: unknown) => {
 
 /** Applied financial values come directly from C7, including unknowns. Existing
  * independent resource and external-intent editors retain their owners. */
-export function AppliedMonthView({ projection, semanticState, controls = [], plan, external, revision, composerHref, today, calendarCarryovers = [], persons = [] }: {
+export function AppliedMonthView({ projection, semanticState, controls = [], plan, external, revision, composerHref, today, calendarCarryovers = [], persons = [], mobility = [], places = [] }: {
   projection: PlanProjectionV1; semanticState: PlanSemanticStateV1; controls?: readonly AppliedPlanControl[]; plan: MonthEconomicPlan | null;
   external?: ComponentProps<typeof PlannedExpensesControl>; revision: number; composerHref?: string; today: string;
   calendarCarryovers?: readonly PlannedExpenseCard[]; persons?: readonly { personId: string; displayName: string }[];
+  mobility?: readonly ComposerMobilitySummary[]; places?: readonly import("@/domain/phase2/planned-places").PlannedPlaceOption[];
 }) {
   const rows = [["Ressources", projection.economic.resources], ["Engagements certains", projection.economic.certainCommitments],
     ["Besoins & habitudes", projection.economic.needsAndHabits], ["Vie & envies", projection.economic.discretionaryLife],
@@ -143,6 +146,36 @@ export function AppliedMonthView({ projection, semanticState, controls = [], pla
             {selectionItems(context, slot).length ? <ul className="ml-4 list-inside list-disc">{selectionItems(context, slot).map((item, index) => renderItem(item, `${slot}:${index}`))}</ul>
               : <span className="text-slate-500">À préciser</span>}
           </dd></div>)}</dl>
+        </article>;
+      })}
+      {semanticState.contexts.filter(c => c.templateKey === "family-visit").map(context => {
+        const transport = selectionItems(context, "transport")[0], route = record(transport?.route);
+        const stops = Array.isArray(route?.stops) ? route.stops.map(record).filter((s): s is Record<string, unknown> => !!s) : [];
+        const destination = record(context.fields.placeRef), participants = Array.isArray(context.fields.participantRefs) ? context.fields.participantRefs : [];
+        const snapshot = mobility.find(s => s.contextOccurrenceId === context.contextOccurrenceId);
+        const renderParts = (owner: PlanSemanticStateV1["contexts"][number], depth = 0): React.ReactNode => depth > 10 ? null
+          : Object.keys(owner.slotSelections).filter(slot => slot !== "transport").flatMap(slot => selectionItems(owner, slot).map(item => {
+            const child = semanticState.contexts.find(c => c.contextOccurrenceId === item.childContextOccurrenceId);
+            return <li key={`${slot}:${String(item.selectionId)}`}>
+              {item.provenance === "PERSONAL_SUGGESTION" ? "Proposition exploratoire non retenue" : child ? <>{String(child.fields.label ?? child.templateKey)}<ul className="ml-4 list-disc">{renderParts(child, depth + 1)}</ul></>
+                : item.kind === "COMPONENT" ? `${String(item.label)} · quantité ${String(item.quantity)} · ${costLabel(item.cost)} · ${fundingLabel(item.fundingAllocations)}` : "À préciser"}
+            </li>;
+          }));
+        return <article key={context.contextOccurrenceId} data-plan-family-visit={context.contextOccurrenceId} className="mt-4 rounded-xl border border-slate-200 p-4">
+          <h3 className="font-bold">Visite famille · {String(context.fields.label ?? "sans nom")}</h3>
+          <p>Proche visité : {context.fields.personVisitedRef ? personLabel(context.fields.personVisitedRef, persons) : "à préciser"}</p>
+          <p>Personnes concernées : {participants.length ? participants.map(ref => personLabel(ref, persons)).join(", ") : "à préciser"}</p>
+          <p>Destination : {destination?.kind === "TEXT" ? String(destination.label) : destination?.kind === "KNOWN"
+            ? String(stops.find(stop => stop.endpointSource === "ROOT_PLACE")?.label ?? places.find(p => p.placeId === destination.placeId)?.name ?? "lieu lié indisponible") : "à préciser"}</p>
+          <p>Départ : {String(context.fields.plannedDate ?? "date non fixée")} · Retour : {String(context.fields.endDate ?? "date non fixée")}
+            {context.fields.timingNote ? ` · ${String(context.fields.timingNote)}` : ""}</p>
+          <p>Transport : {transport?.provenance === "PERSONAL_SUGGESTION" ? "proposition non retenue" : journeyLabels[String(transport?.optionKey)] ?? "à préciser"}
+            {transport?.returnRequired === true ? " · aller-retour" : ""}</p>
+          {!!stops.length && <ol className="ml-4 list-decimal">{stops.map((stop, i) => <li key={i}>{String(stop.label)}{stop.endpointSource === "ROOT_PLACE" ? " · destination de la visite" : ""}</li>)}</ol>}
+          <p>Financement des frais : {fundingLabel(record(transport?.pricing)?.fundingAllocations)}</p>
+          <p className="text-xs text-slate-500">Estimation conservée lors de l’application de cette révision. Le conteneur Visite n’ajoute aucun coût propre.</p>
+          <MobilityEstimateSummary summary={snapshot} />
+          <ul className="ml-4 list-disc">{renderParts(context)}</ul>
         </article>;
       })}
       {composerHref && <a className="mt-4 inline-block font-bold underline" href={composerHref}>Rééditer mon Plan</a>}
