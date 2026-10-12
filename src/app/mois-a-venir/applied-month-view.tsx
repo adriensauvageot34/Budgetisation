@@ -18,6 +18,10 @@ const componentItems = (context: PlanSemanticStateV1["contexts"][number], slot: 
   const raw = context.slotSelections[slot]?.items;
   return Array.isArray(raw) ? raw.map(record).filter((item): item is Record<string, unknown> => item !== null && item.kind === "COMPONENT") : [];
 };
+const selectionItems = (context: PlanSemanticStateV1["contexts"][number], slot: string): Record<string, unknown>[] => {
+  const raw = context.slotSelections[slot]?.items;
+  return Array.isArray(raw) ? raw.map(record).filter((item): item is Record<string, unknown> => item !== null) : [];
+};
 const personLabel = (value: unknown, persons: readonly { personId: string; displayName: string }[]) => {
   const ref = record(value);
   return ref?.kind === "HOUSEHOLD_PERSON" ? persons.find(person => person.personId === ref.personId)?.displayName ?? "Personne du foyer à identifier"
@@ -29,6 +33,11 @@ const costLabel = (value: unknown) => {
   return cost?.kind === "MANUAL" && typeof cost.unitAmount === "string" ? `${money(cost.unitAmount)} par unité · montant déclaré`
     : cost?.kind === "QUOTE" ? "Prix issu d’un devis conservé" : "Prix inconnu";
 };
+const fundingLabel = (value: unknown) => {
+  const parts = Array.isArray(value) ? value.map(record).filter((part): part is Record<string, unknown> => part !== null) : [];
+  return parts.length ? parts.map(part => `${part.source === "BANK" ? "Banque" : String(part.source)} ${typeof part.amount === "string" ? money(part.amount) : "montant inconnu"}`).join(" · ") : "financement à préciser";
+};
+const journeyLabels: Readonly<Record<string, string>> = { car: "Voiture", train: "Train / tram", bus: "Bus", taxi: "Taxi / Uber", free: "À pied / gratuit", other: "Autre transport", unknown: "Transport à préciser" };
 const giftAssetLabel = (value: unknown) => {
   const ref = record(value);
   if (!ref || typeof ref.assetKey !== "string") return "Non classé";
@@ -84,6 +93,56 @@ export function AppliedMonthView({ projection, semanticState, controls = [], pla
             <div><dt className="inline font-semibold">Budget : </dt><dd className="inline">{gift ? `${costLabel(gift.cost)} · quantité ${String(gift.quantity)} · ${gift.unitBasis === "PERSON" ? "par personne" : gift.unitBasis === "SHARED" ? "montant commun" : "par objet"}` : "À préciser"}</dd></div>
             <div><dt className="inline font-semibold">Financement : </dt><dd className="inline">{funding.length ? funding.map(part => `${part.source === "BANK" ? "Banque" : String(part.source)} ${typeof part.amount === "string" ? money(part.amount) : "montant inconnu"}`).join(" · ") : "À préciser"}</dd></div></dl>
           {extras.length > 0 && <div className="mt-3 text-sm"><strong>Compléments</strong><ul className="mt-1 list-inside list-disc">{extras.map(extra => <li key={String(extra.selectionId)} data-plan-gift-extra={String(extra.selectionId)}>{String(extra.label)} · {costLabel(extra.cost)} · quantité {String(extra.quantity)}</li>)}</ul></div>}
+        </article>;
+      })}
+      {semanticState.contexts.filter(context => context.templateKey === "night-out").map(context => {
+        const refs = Array.isArray(context.fields.participantRefs) ? context.fields.participantRefs : [];
+        const place = record(context.fields.placeRef);
+        const slots = [["before", "Before"], ["main", "Entrée ou activité"], ["food", "Repas"],
+          ["extras", "Boissons et extras"], ["outbound", "Aller"], ["return", "Retour"]] as const;
+        const renderItem = (item: Record<string, unknown>, key: string) => {
+          if (item.provenance === "PERSONAL_SUGGESTION") return <li key={key} data-plan-night-suggestion={String(item.selectionId)}>
+            {typeof item.label === "string" ? item.label : "Suggestion"} · proposition exploratoire non retenue</li>;
+          if (item.kind === "UNRESOLVED") return <li key={key}>Choix à préciser</li>;
+          if (item.kind === "CHILD_CONTEXT") {
+            const child = semanticState.contexts.find(candidate => candidate.contextOccurrenceId === item.childContextOccurrenceId);
+            return <li key={key} data-plan-night-child={String(item.childContextOccurrenceId)}>
+              {typeof child?.fields.label === "string" ? child.fields.label : child?.templateKey ?? "Contexte enfant indisponible"}
+              {child && <ul className="ml-5 list-inside list-disc">{["main", "extras", "meal", "transport"].flatMap(slot => selectionItems(child, slot).map((nested, index) => renderItem(nested, `${slot}:${index}`)))}</ul>}
+            </li>;
+          }
+          if (item.kind === "MOBILITY_INTENT") {
+            const origin = record(item.origin), destination = record(item.destination), pricing = record(item.pricing);
+            const shared = record(item.journey)?.relation === "SHARES_JOURNEY";
+            return <li key={key} data-plan-night-journey={String(item.selectionId)}>{journeyLabels[String(item.optionKey)] ?? "Transport"} ·
+              {origin?.kind === "TEXT" ? ` de ${String(origin.label)}` : origin?.kind === "KNOWN" ? " départ lié" : " origine à préciser"} ·
+              {destination?.kind === "TEXT" ? ` vers ${String(destination.label)}` : destination?.kind === "KNOWN" ? " destination liée" : " destination à préciser"} ·
+              {shared ? "prix et financement portés par le trajet lié" : `${pricing ? costLabel(pricing.fare) : "Prix inconnu"} · ${fundingLabel(pricing?.fundingAllocations)}`}
+              {typeof item.plannedTime === "string" ? ` · départ ${item.plannedTime}` : ""}
+              {item.returnRequired === true ? " · aller-retour demandé" : ""}
+              {typeof item.returnTime === "string" ? ` · retour ${item.returnTime}` : ""}</li>;
+          }
+          const cost = record(item.cost), product = record(item.productAssetRef);
+          return <li key={key} data-plan-night-component={String(item.selectionId)}>{String(item.label ?? item.optionKey)} ·
+            {product ? ` type ${String(product.labelAtSelection)}${typeof product.assetKey === "string" && !plannedAsset(product.assetKey) ? " · référence indisponible" : ""} ·` : ""}
+            {item.quantityPerPerson !== undefined ? ` ${String(item.quantityPerPerson)} par personne × ${String(item.pricedParticipantCount)} personnes · ${String(item.quantity)} unités au total`
+              : ` quantité ${String(item.quantity ?? "à préciser")}${item.unitBasis === "SHARED" ? " · budget partagé" : ""}`} ·
+            {costLabel(cost)} · {fundingLabel(item.fundingAllocations)}
+            {record(item.binding)?.mode === "CONFIRMED_CONSUMPTION" ? " · consomme une enveloppe" : record(item.binding)?.mode === "EXTRA_TO_SLOT" ? " · supplément à l’enveloppe" : ""}
+          </li>;
+        };
+        return <article key={context.contextOccurrenceId} data-plan-night-out={context.contextOccurrenceId} className="mt-4 rounded-xl border border-slate-200 p-4">
+          <h3 className="font-bold">Soirée · {typeof context.fields.label === "string" ? context.fields.label : "sans nom"}</h3>
+          <p className="mt-1 text-sm text-slate-600">Participants : {refs.length ? refs.map(ref => personLabel(ref, persons)).join(", ") : "à préciser"} ·
+            Lieu : {place?.kind === "TEXT" ? String(place.label) : place?.kind === "KNOWN" ? "lieu lié" : "à préciser"} ·
+            Date : {typeof context.fields.plannedDate === "string" ? context.fields.plannedDate : "non fixée"}
+            {typeof context.fields.endDate === "string" ? ` · fin ${context.fields.endDate}` : ""}
+            {typeof context.fields.timingNote === "string" ? ` · ${context.fields.timingNote}` : ""}</p>
+          <p className="mt-1 text-xs text-slate-500">Le conteneur Soirée n’ajoute aucun coût propre. Les prix viennent des composants conservés.</p>
+          <dl className="mt-3 grid gap-2 text-sm">{slots.map(([slot, label]) => <div key={slot}><dt className="font-semibold">{label}</dt><dd>
+            {selectionItems(context, slot).length ? <ul className="ml-4 list-inside list-disc">{selectionItems(context, slot).map((item, index) => renderItem(item, `${slot}:${index}`))}</ul>
+              : <span className="text-slate-500">À préciser</span>}
+          </dd></div>)}</dl>
         </article>;
       })}
       {composerHref && <a className="mt-4 inline-block font-bold underline" href={composerHref}>Rééditer mon Plan</a>}

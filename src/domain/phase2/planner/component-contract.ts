@@ -3,6 +3,7 @@ import type { PlannerConfidence, PlannerKnowledge, PlannerProvenance } from "./d
 import type { KernelCost } from "./compiler-contract";
 import type { FundingAllocation, ProspectivePlaceRef } from "../planned-contract";
 import type { JourneyDeclaration, MobilityPricingDecision } from "./mobility-contract";
+import type { PlannedAssetRef } from "../planned-assets";
 
 export type ComponentDefaultProvenance = "STRUCTURAL_DEFAULT" | "PERSONAL_SUGGESTION" | "EXPLICIT_USER_DECISION";
 export type ContextBindingDecision = Readonly<{ mode: "AUTO" | "CONFIRMED_CONSUMPTION" | "EXTRA_TO_SLOT" | "NO_RELATED_SLOT" }>;
@@ -10,7 +11,10 @@ type SelectionIdentity = Readonly<{ selectionId: string; optionKey: string; prov
 export type ComponentSelectionV1 = SelectionIdentity & (
   | Readonly<{ kind: "COMPONENT"; label: string; quantity: string; cost: KernelCost;
       binding?: ContextBindingDecision; fundingAllocations?: readonly FundingAllocation[]; needOccurrenceId?: string;
-      unitBasis?: "ITEM" | "PERSON" | "SHARED" }>
+      unitBasis?: "ITEM" | "PERSON" | "SHARED";
+      /** Optional P09 quantity evidence. `quantity` remains the exact economic total used by the Compiler. */
+      quantityEvidenceVersion?: "component-quantity@v1"; quantityPerPerson?: string; pricedParticipantCount?: number;
+      productAssetRef?: PlannedAssetRef }>
   | Readonly<{ kind: "CHILD_CONTEXT"; childContextOccurrenceId: string }>
   | Readonly<{ kind: "MOBILITY_INTENT"; origin?: ProspectivePlaceRef | null; destination?: ProspectivePlaceRef | null; returnRequired?: boolean;
       journey?: JourneyDeclaration; pricing?: MobilityPricingDecision; plannedTime?: string | null; returnTime?: string | null }>

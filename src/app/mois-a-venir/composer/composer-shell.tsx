@@ -21,12 +21,13 @@ import { AtomicPopover } from "./atomic-popover";
 import { stageLocalDecision, visualDraftModel } from "./local-draft";
 import { ComposerPreviewScheduler, type PreviewStatus } from "./preview-scheduler";
 import { GiftEditor } from "./gift-editor";
+import { NightOutEditor } from "./night-out-editor";
 import { CardKnowledgePanel } from "./card-knowledge-panel";
 import { useDurableDraft, type DraftTransport } from "./durable-draft";
 import type { ComposerDraftSnapshot, StoredComposerDraft } from "@/domain/phase2/planner/composer-draft-contract";
 
 type Editor = { title: string; compact?: boolean; side?: boolean; fields: readonly ComposerField[]; values: Record<string, string>;
-  giftContextId?: string;
+  giftContextId?: string; nightContextId?: string;
   cardKey?: string;
   operation: (values: Record<string, string>) => ComposerOperation };
 type DraftConfirmation = { kind: "ABANDON" | "RESTART" | "RESTORE" | "LOAD_SERVER"; draftId?: string; version?: number };
@@ -289,6 +290,12 @@ export function ComposerShell({ initialModel, transport, initialDrafts = null, d
   }
   function choose(asset: ComposerAssetView, target: DropTarget = { kind: "BOARD_ZONE" }, selection?: ComponentSelectionV1, stableId?: string) {
     clearHover();
+    if (selection?.kind === "COMPONENT" && selection.quantityPerPerson) {
+      const owner = shown.board.contexts.find(card => card.contextOccurrenceId === target.contextOccurrenceId);
+      const parent = owner?.templateKey === "night-out" ? owner : shown.board.contexts.find(card => card.contextOccurrenceId === owner?.parentContextOccurrenceId && card.templateKey === "night-out"
+        && card.sockets.find(socket => socket.slotKey === "before")?.currentItems.some(item => item.kind === "CHILD_CONTEXT" && item.childContextOccurrenceId === owner?.contextOccurrenceId));
+      if (parent) { editContext(parent); return; }
+    }
     if (["PLAN_CONTROL", "RESERVATION_CONTROL"].includes(asset.kind)) {
       const card = [...shown.board.baselineControls, ...shown.board.discretionaryControls, ...shown.board.savings].find(c => c.targetRef === asset.capabilityRef);
       if (card) setFocusedContext(card.targetRef);
@@ -308,6 +315,7 @@ export function ComposerShell({ initialModel, transport, initialDrafts = null, d
         setEditor({ title: `Configurer ${asset.label}`, side: !["night-out", "short-stay", "family-visit"].includes(asset.templateKey ?? ""),
           cardKey: asset.assetKey,
           ...(asset.templateKey === "gift" ? { giftContextId: identity } : {}),
+          ...(asset.templateKey === "night-out" ? { nightContextId: identity } : {}),
           fields: model.editors.find(e => e.assetKey === asset.assetKey)?.fields ?? [], values: {},
           operation: values => ({ kind: "EDIT_CONTEXT", contextOccurrenceId: identity, values }) });
         return;
@@ -343,7 +351,9 @@ export function ComposerShell({ initialModel, transport, initialDrafts = null, d
     prepareDialogFocus();
     setEditor({ title: `Modifier ${card.label}`, side: !["night-out", "short-stay", "family-visit"].includes(card.templateKey),
       cardKey: `template:${card.templateKey}`,
-      ...(card.templateKey === "gift" ? { giftContextId: card.contextOccurrenceId } : {}), fields: model.editors.find(e => e.assetKey === `template:${card.templateKey}`)?.fields ?? [],
+      ...(card.templateKey === "gift" ? { giftContextId: card.contextOccurrenceId } : {}),
+      ...(card.templateKey === "night-out" ? { nightContextId: card.contextOccurrenceId } : {}),
+      fields: model.editors.find(e => e.assetKey === `template:${card.templateKey}`)?.fields ?? [],
       values: Object.fromEntries(Object.entries(card.fields).filter((entry): entry is [string, string] => typeof entry[1] === "string")),
       operation: values => ({ kind: "EDIT_CONTEXT", contextOccurrenceId: card.contextOccurrenceId, values }) });
   }
@@ -368,7 +378,7 @@ export function ComposerShell({ initialModel, transport, initialDrafts = null, d
     : previewStatus === "FAILED" ? "La simulation a échoué. Le brouillon est conservé ; relancez la prévisualisation avant d’appliquer."
     : previewStatus === "STALE" ? "La projection est obsolète. Relancez la prévisualisation avant d’appliquer."
     : previewStatus === "BLOCKED" ? model.board.cockpit.diagnostics.some(diagnostic => diagnostic.code === "COMPONENT_FUNDING_SUM_INVALID")
-      ? "Le financement déclaré ne correspond pas au coût du cadeau. Ajustez-le avant d’appliquer."
+      ? "Le financement déclaré ne correspond pas au coût du composant. Ajustez-le avant d’appliquer."
       : "La projection est calculée, mais des contraintes empêchent l’application. Consultez le détail financier."
     : previewStatus !== "FRESH" ? "La projection du brouillon attend une simulation serveur fraîche."
     : !model.board.draft.dirty ? model.activeRevisionNumber ? "Le mois est déjà appliqué. Modifiez un élément pour créer une nouvelle révision." : `Composez un premier choix pour appliquer votre mois.${model.presentation.unresolvedCount ? ` ${model.presentation.unresolvedCount} éléments à préciser.` : ""}`
@@ -423,10 +433,14 @@ export function ComposerShell({ initialModel, transport, initialDrafts = null, d
     <div ref={dragImage} className={styles.dragPreview} data-drag-preview data-protected={grabbed?.protected} aria-hidden="true">{[...new Set(Object.values(shown.presentation.dragSources).map(s => s.iconKey))].map(key => <span key={key} data-drag-icon={key} style={{ display: grabbed?.iconKey === key ? "inline-flex" : "none" }}><PlannerIcon iconKey={key} scale="SATELLITE" /></span>)}<span><b data-drag-label>{grabbed?.label}</b><small data-drag-amount>{grabbed?.protected ? <><LockKeyhole size={11} /> Protégée</> : money(grabbed?.economicAmount ?? null)}</small></span></div>
     <div className={styles.statusBar} role="status" aria-live="polite">{message}</div>
     {errorMessage && !editor && <div className={styles.errorNotice} role="alert">{errorMessage}<button className={styles.iconButton} aria-label="Fermer le message" onClick={() => setErrorMessage(null)}><X size={14} /></button></div>}
-    <dialog ref={dialog} className={styles.dialog} data-side-panel={editor?.side || undefined} data-compact-editor={editor?.compact || undefined} aria-labelledby="composer-dialog-title" onCancel={e => { e.preventDefault(); closeDialog(); }} onKeyDown={e => { if (e.key === "Escape" && editor?.side) { e.preventDefault(); closeDialog(); } }}>
+    <dialog ref={dialog} className={styles.dialog} data-night-editor={!!editor?.nightContextId || undefined} data-side-panel={editor?.side || undefined} data-compact-editor={editor?.compact || undefined} aria-labelledby="composer-dialog-title" onCancel={e => { e.preventDefault(); closeDialog(); }} onKeyDown={e => { if (e.key === "Escape" && editor?.side) { e.preventDefault(); closeDialog(); } }}>
       <header><h2 id="composer-dialog-title">{editor?.title ?? (projectionOpen ? "Le détail de votre mois" : "Des pistes pour votre mois")}</h2><button className={styles.iconButton} disabled={busy} aria-label="Fermer" onClick={closeDialog}><X size={19} /></button></header>
       {errorMessage && <p role="alert" className={styles.formError}>{errorMessage}</p>}
-      {editor?.giftContextId && draftState.contexts.find(context => context.contextOccurrenceId === editor.giftContextId)
+      {editor?.nightContextId && draftState.contexts.find(context => context.contextOccurrenceId === editor.nightContextId)
+        ? <NightOutEditor key={editor.nightContextId} context={draftState.contexts.find(context => context.contextOccurrenceId === editor.nightContextId)!}
+          semanticState={draftState} householdPersons={model.householdPersons} knowledge={model.cardKnowledge[editor.cardKey ?? ""]}
+          busy={busy} onCancel={closeDialog} onSave={operation => { stage(operation); setEditor(null); }} />
+        : editor?.giftContextId && draftState.contexts.find(context => context.contextOccurrenceId === editor.giftContextId)
         ? <GiftEditor key={editor.giftContextId} context={draftState.contexts.find(context => context.contextOccurrenceId === editor.giftContextId)!}
           householdPersons={model.householdPersons} knowledge={model.cardKnowledge[editor.cardKey ?? ""]}
           busy={busy} onCancel={closeDialog} onSave={operation => { stage(operation); setEditor(null); }} />

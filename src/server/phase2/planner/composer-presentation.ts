@@ -111,7 +111,10 @@ export function composerPresentation(model: MonthComposerReadModel): ComposerPre
           details: suggested ? ["Suggestion personnelle · hors coût tant que non acceptée"] : item.kind === "MOBILITY_INTENT" ? [
             journey && !ownsPrice ? `Trajet partagé · compté une fois dans ${model.board.contexts.find(c => c.contextOccurrenceId === journey.ownerContextOccurrenceId)?.label ?? "son intention propriétaire"}` : "Mobilité évaluée par le serveur dans le mois",
             ...(journey?.mode === "CAR" ? ["Usage économique du carburant · sans débit Banque automatique"] : [])]
-            : item.kind === "COMPONENT" ? [`Quantité : ${item.quantity}`, ...(item.cost.kind === "UNKNOWN" ? ["Montant à préciser"] : [])] : [],
+            : item.kind === "COMPONENT" ? [`Quantité totale : ${item.quantity}`,
+              ...(item.quantityPerPerson ? [`${item.quantityPerPerson} unité(s) par personne · ${item.pricedParticipantCount} personne(s) retenue(s)`] : []),
+              ...(item.unitBasis === "SHARED" ? ["Budget total partagé · compté une seule fois"] : []),
+              ...(item.cost.kind === "UNKNOWN" ? ["Montant à préciser"] : [])] : [],
           editableAssetKey: writable && !derived && item.kind !== "CHILD_CONTEXT" && asset ? asset.assetKey : null,
           // Child contexts retain their own TRASH/reparent capability and identity.
           canRemove: writable && !derived && item.kind !== "CHILD_CONTEXT", canAccept: writable && !derived && suggested,
