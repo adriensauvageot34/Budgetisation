@@ -38,7 +38,9 @@ export function stageLocalDecision(model: ComposerUiModel, raw: PlanSemanticStat
     if (!capability || !asset?.templateKey) return null;
     const allowed = new Set(model.editors.find(e => e.assetKey === asset.assetKey)?.fields.map(f => f.key) ?? []);
     if (Object.keys(operation.values).some(key => !allowed.has(key))) return null;
-    const fields = { fieldSchemaVersion: "context-fields@v2", ...Object.fromEntries(Object.entries(operation.values).filter(([, value]) => value.trim()).map(([key, value]) => [key, value.trim()])) };
+    const fields = { fieldSchemaVersion: asset.templateKey === "short-stay" ? "context-fields@v5"
+      : asset.templateKey === "family-visit" ? "context-fields@v4" : "context-fields@v2",
+      ...Object.fromEntries(Object.entries(operation.values).filter(([, value]) => value.trim()).map(([key, value]) => [key, value.trim()])) };
     return parsePlanSemanticState({ ...state, contexts: [...state.contexts, { contextOccurrenceId: operation.identity, templateKey: asset.templateKey,
       status: "ACTIVE", parentContextOccurrenceId: null, fields, slotSelections: {}, provenance: "EXPLICIT_USER_DECISION" }] });
   }

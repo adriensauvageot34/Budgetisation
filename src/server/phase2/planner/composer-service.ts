@@ -11,8 +11,9 @@ import { editShortStay } from "@/domain/phase2/planner/short-stay-edit";
 import { editFamilyVisit } from "@/domain/phase2/planner/family-visit-edit";
 import { mobilitySummaries } from "./mobility-presentation";
 import { knownContextReferences } from "./context-selections";
-import { plannerKeys, plannerMonth, plannerRecord, plannerUuid } from "@/domain/phase2/planner/json";
+import { plannerDigest, plannerKeys, plannerMonth, plannerRecord, plannerUuid } from "@/domain/phase2/planner/json";
 import { decisionAmount } from "@/domain/phase2/month-decision-contract";
+import { declareComponentQuantity } from "@/domain/phase2/planner/component-quantity";
 import type { PlannerDependencies } from "./apply";
 import { applyPlanScenario } from "./apply";
 import { composerNeedLabel, readMonthComposer, resolveComposerDrop } from "./read-model";
@@ -26,7 +27,10 @@ import { composerAssetIcon, composerPresentation } from "./composer-presentation
 const field = (key: string, label: string, kind: ComposerField["kind"] = "TEXT", required = false): ComposerField => ({ key, label, kind, required });
 const choice = (key: string, label: string, choices: readonly (readonly [string, string])[]): ComposerField => ({ ...field(key, label, "CHOICE"), choices: choices.map(([value, label]) => ({ value, label })) });
 const fundingField = choice("funding", "Financement déclaré", [["", "À préciser"], ["BANK", "Banque"]]);
-const fieldLabels: Record<string, string> = { label: "Nom de l’intention", plannedDate: "Date prévue (facultative)", endDate: "Date de fin (facultative)", budgetDomain: "Enveloppe concernée" };
+const fieldLabels: Record<string, string> = { label: "Nom de l’intention", plannedDate: "Date prévue (facultative)", endDate: "Date de fin (facultative)", budgetDomain: "Enveloppe concernée",
+  participantRefs: "Personnes concernées", personVisitedRef: "Personne visitée", placeRef: "Lieu ou destination", destinationRef: "Destination",
+  productLabel: "Produit ou objet", merchantLabel: "Commerce ou vendeur", timingNote: "Repère de temps", nightCount: "Nombre de nuits", lodgingKind: "Type d’hébergement" };
+const choiceLabels: Record<string, string> = { clothing: "Vêtements", "home-small": "Maison petit", "games-digital": "Jeux et numérique", other: "Autre" };
 const familyLabels: Record<string, string> = { FOOD: "Sortir & manger", ACTIVITY: "Activités", VISIT: "Voir quelqu’un", PURCHASE: "Acheter", SOCIAL: "Sortir", TRAVEL: "Partir", BEAUTY: "Prendre soin", HOME: "Maison", OTHER: "Autres envies" };
 
 export async function composerUiModel(deps: PlannerDependencies, household: string, model: MonthComposerReadModel): Promise<ComposerUiModel> {
@@ -35,15 +39,16 @@ export async function composerUiModel(deps: PlannerDependencies, household: stri
   const templates = publishContextRegistry().templates;
   const editors = view.library.searchableAssets.flatMap<ComposerEditor>(asset => {
     if (asset.kind === "CONTEXT_ASSET") return [{ assetKey: asset.assetKey, fields: resolveContextTemplate(asset.templateKey!).fields
-      .filter(f => f.fieldKey !== "fieldSchemaVersion" && ["TEXT", "DATE", "CHOICE"].includes(f.kind)).map(f => ({
-      key: f.fieldKey, label: fieldLabels[f.fieldKey] ?? f.fieldKey, kind: f.kind, required: f.required,
-      ...(f.choices ? { choices: f.choices.map(value => ({ value, label: value })) } : {}) })) as ComposerField[] }];
+      .filter(f => f.fieldKey !== "fieldSchemaVersion" && f.kind !== "PLANNED_ASSET_REF").map(f => ({
+      key: f.fieldKey, label: fieldLabels[f.fieldKey] ?? f.fieldKey, kind: f.kind as ComposerField["kind"], required: f.required,
+      ...(f.choices ? { choices: f.choices.map(value => ({ value, label: choiceLabels[value] ?? value })) } : {}) })) as ComposerField[] }];
     if (asset.kind !== "SLOT_OPTION_ASSET") return [];
     const template = resolveContextTemplate(asset.templateKey!), parts = asset.assetKey.split(":"), slot = template.componentSlots.find(s => s.slotKey === parts[2])!;
     const option = slot.options.find(o => o.optionKey === asset.optionKey)!;
     const costMode = choice("costMode", "Connaissance du prix", [["AUTO", "Montant renseigné / devis existant"], ["UNKNOWN", "Prix à préciser"]]);
-    const fields: ComposerField[] = option.kind === "COMPONENT" ? [field("label", "Libellé"), costMode, field("amount", "Montant unitaire (€) — vide si inconnu ou devis conservé", "AMOUNT"), { ...field("quantity", "Quantité", "AMOUNT", true), initial: "1" },
+    const fields: ComposerField[] = option.kind === "COMPONENT" ? [field("label", "Libellé"), costMode, field("amount", "Prix par unité (€) — vide si inconnu ou devis conservé", "AMOUNT"), { ...field("quantity", "Quantité totale ou par personne selon l’unité", "AMOUNT", true), initial: "1" },
       choice("unitBasis", "Unité du prix", [["", "Non précisée"], ["ITEM", "Par élément"], ["PERSON", "Par personne"], ["SHARED", "Montant commun"]]),
+      field("personCount", "Nombre de personnes retenues si prix par personne", "AMOUNT"),
       fundingField, field("fundingAmount", "Montant financé (€), si déclaré", "AMOUNT"),
       ...(option.bindingPolicy === "REQUIRES_CONFIRMATION" ? [choice("binding", "Relation avec l’enveloppe du mois", [["AUTO", "À confirmer"], ["CONFIRMED_CONSUMPTION", "Consomme l’enveloppe"], ["EXTRA_TO_SLOT", "S’ajoute à l’enveloppe"]])] : []),
       ...(slot.acceptsNeedOccurrence ? [choice("needOccurrenceId", "Besoin couvert (facultatif)", [["", "Achat libre"], ...preview.compiled.needs.map(n => [n.needOccurrenceId, composerNeedLabel(n.needKey)] as const)])] : [])]
@@ -67,7 +72,7 @@ export async function composerUiModel(deps: PlannerDependencies, household: stri
     naturalPresets: card.capability.naturalPresets.map(p => ({ ...p, label: ({ low: "Repère bas", median: "Repère médian", high: "Repère haut" } as Record<string, string>)[p.label]
       ?? (p.label === "central" ? "Repère médian" : p.label.startsWith("allocation ×") && p.semanticMutation.kind === "SET_STATE" && typeof p.semanticMutation.value.amount === "string"
         ? `Réserver ${new Intl.NumberFormat("fr-FR", { style: "currency", currency: "EUR" }).format(Number(p.semanticMutation.value.amount))}` : p.label) })) } : null });
-  const mobilityOptions = view.semanticState.contexts.some(c => ["family-visit", "short-stay"].includes(c.templateKey)) && deps.readMobilityOptions
+  const mobilityOptions = view.semanticState.contexts.some(c => resolveContextTemplate(c.templateKey).fields.some(f => f.kind === "PLACE_REF")) && deps.readMobilityOptions
     ? await deps.readMobilityOptions(household) : undefined;
   return { ...view, householdPersons: deps.householdPersons ?? [],
     ...(mobilityOptions ? { mobilityOptions: { vehicle: mobilityOptions.vehicle, places: mobilityOptions.places.map(p => ({
@@ -97,7 +102,9 @@ function dropMutation(model: MonthComposerReadModel, request: Extract<ComposerRe
     plannerKeys(plannerRecord(values), definition.fields.filter(f => f.fieldKey !== "fieldSchemaVersion" && ["TEXT", "DATE", "CHOICE"].includes(f.kind)).map(f => f.fieldKey), []);
     const context = { contextOccurrenceId: plannerUuid(request.identity), templateKey: definition.templateKey, status: "ACTIVE" as const,
       parentContextOccurrenceId: null,
-      fields: { fieldSchemaVersion: "context-fields@v2", ...Object.fromEntries(definition.fields.filter(f => values[f.fieldKey]?.trim()).map(f => [f.fieldKey, values[f.fieldKey].trim()])) },
+      fields: { fieldSchemaVersion: asset.templateKey === "short-stay" ? "context-fields@v5"
+        : asset.templateKey === "family-visit" ? "context-fields@v4" : "context-fields@v2",
+      ...Object.fromEntries(definition.fields.filter(f => values[f.fieldKey]?.trim()).map(f => [f.fieldKey, values[f.fieldKey].trim()])) },
       slotSelections: {}, provenance: "EXPLICIT_USER_DECISION" as const };
     return target.kind === "BOARD_ZONE" ? { kind: "ADD_CONTEXT", context } : { kind: "ATTACH_CONTEXT", context,
       parentContextOccurrenceId: target.contextOccurrenceId!, slotKey: target.slotKey!, selectionId: request.selectionId };
@@ -108,34 +115,71 @@ function dropMutation(model: MonthComposerReadModel, request: Extract<ComposerRe
   const current = card!.sockets.find(s => s.slotKey === target.slotKey)!.currentItems;
   const previous = (request.sourceSocket ? model.board.contexts.find(c => c.contextOccurrenceId === request.sourceSocket!.contextOccurrenceId)
     ?.sockets.find(s => s.slotKey === request.sourceSocket!.slotKey)?.currentItems.find(i => i.selectionId === request.sourceSocket!.selectionId) : undefined)
-    ?? current.find(i => i.selectionId === request.selectionId && i.optionKey === option.optionKey);
+    ?? current.find(i => i.selectionId === request.selectionId);
   const patchSelection = (selection: ComponentSelectionV1): SemanticMutation => ({ kind: "PATCH_CONTEXT", contextOccurrenceId: target.contextOccurrenceId!, slotKey: target.slotKey!,
     items: slot.cardinality === "REPEATING" ? [...current.filter(i => i.selectionId !== selection.selectionId && i.kind !== "UNRESOLVED"), selection] : [selection] });
   // Moving/accepting an existing selection retains the complete server decision, including funding and journey declarations.
   if (request.sourceSocket && previous) return patchSelection({ ...previous, provenance: "EXPLICIT_USER_DECISION" });
   const amount = values.amount?.trim() ? decisionAmount(values.amount) : null;
-  const quote = previous?.kind === "COMPONENT" ? previous.cost : previous?.kind === "MOBILITY_INTENT" ? previous.pricing?.fare : undefined;
-  const cost = values.costMode === "UNKNOWN" ? { kind: "UNKNOWN" as const } : amount === null ? quote?.kind === "QUOTE" ? quote : { kind: "UNKNOWN" as const } : { kind: "MANUAL" as const, unitAmount: amount };
-  const funding = !values.funding ? [] : [{ source: values.funding as "BANK" | "SWILE" | "EDENRED", amount: decisionAmount(values.fundingAmount) }];
+  const sameOption = previous?.optionKey === option.optionKey;
+  const quote = sameOption && previous?.kind === "COMPONENT" ? previous.cost
+    : sameOption && previous?.kind === "MOBILITY_INTENT" ? previous.pricing?.fare : undefined;
+  const cost = values.costMode === "UNKNOWN" ? { kind: "UNKNOWN" as const } : amount === null
+    ? values.amount === undefined && quote ? quote : quote?.kind === "QUOTE" ? quote : { kind: "UNKNOWN" as const }
+    : { kind: "MANUAL" as const, unitAmount: amount };
+  const previousFunding = sameOption && previous?.kind === "COMPONENT" ? previous.fundingAllocations ?? []
+    : sameOption && previous?.kind === "MOBILITY_INTENT" ? previous.pricing?.fundingAllocations ?? [] : [];
+  const funding = values.funding === undefined || values.funding === "EXISTING" && previousFunding.length ? previousFunding
+    : !values.funding ? [] : values.funding === "BANK" ? [{ source: "BANK" as const, amount: decisionAmount(values.fundingAmount) }]
+      : (() => { throw new TypeError("COMPOSER_FUNDING_NOT_ADMITTED"); })();
+  if (values.funding === "EXISTING" && (previousFunding.length === 0 || values.fundingAmount && values.fundingAmount !== previousFunding[0]?.amount))
+    throw new TypeError("COMPOSER_FUNDING_NOT_ADMITTED");
   if (option.kind === "MOBILITY_INTENT" && values.targetIntentId && (amount !== null || funding.length || values.parkingMode === "YES"))
     throw new TypeError("COMPOSER_SHARED_JOURNEY_OWNER_PRICES");
   const common = { selectionId: request.selectionId, optionKey: option.optionKey, provenance: "EXPLICIT_USER_DECISION" as const };
-  const priorComponent = previous?.kind === "COMPONENT" ? previous : undefined;
-  if (priorComponent?.quantityPerPerson && (!new Big(values.quantity || priorComponent.quantity).eq(priorComponent.quantity)
-    || values.unitBasis && values.unitBasis !== "PERSON")) throw new TypeError("COMPOSER_PERSON_QUANTITY_USE_NIGHT_EDITOR");
-  const selection: ComponentSelectionV1 = option.kind === "COMPONENT" ? { ...priorComponent, ...common, kind: "COMPONENT", label: values.label?.trim() || option.label,
-    quantity: decisionAmount(values.quantity || "1"), cost, fundingAllocations: funding, ...(values.binding ? { binding: { mode: values.binding as "AUTO" | "CONFIRMED_CONSUMPTION" | "EXTRA_TO_SLOT" } } : {}),
-    ...(values.unitBasis || previous?.kind === "COMPONENT" && previous.unitBasis
-      ? { unitBasis: (values.unitBasis || (previous?.kind === "COMPONENT" ? previous.unitBasis : undefined)) as "ITEM" | "PERSON" | "SHARED" } : {}),
-    ...(values.needOccurrenceId ? { needOccurrenceId: values.needOccurrenceId } : {}) }
-    : { ...common, kind: "MOBILITY_INTENT", origin: values.origin?.trim() ? { kind: "TEXT", label: values.origin.trim() } : previous?.kind === "MOBILITY_INTENT" && previous.origin?.kind === "KNOWN" ? previous.origin : null,
-      destination: values.destination?.trim() ? { kind: "TEXT", label: values.destination.trim() } : previous?.kind === "MOBILITY_INTENT" && previous.destination?.kind === "KNOWN" ? previous.destination : null, returnRequired: values.returnRequired === "true",
-      plannedTime: values.plannedTime || null, returnTime: values.returnTime || null,
-      ...(!values.targetIntentId ? { pricing: parseMobilityPricing({ fare: cost, ...(option.mobilityMode === "CAR" ? { parking: values.parkingMode === "NO" ? { kind: "MANUAL" as const, unitAmount: "0" }
-        : values.parkingAmount?.trim() ? { kind: "MANUAL" as const, unitAmount: decisionAmount(values.parkingAmount) } : { kind: "UNKNOWN" as const } } : {}),
-        fundingAllocations: funding, preference: values.preference === "AVOID_TOLLS" ? "AVOID_TOLLS" : "FASTEST" }) } : {}),
-      ...(values.targetIntentId ? { journey: { relation: "SHARES_JOURNEY" as const, certainty: "CERTAIN" as const, targetIntentId: values.targetIntentId,
-        externalExpenseId: null, externalCostLineIds: [], choice: null, stopIndex: null, accessLegIndex: null } } : {}) };
+  const priorComponent = sameOption && previous?.kind === "COMPONENT" ? previous : undefined;
+  const { quantityEvidenceVersion: _oldEvidence, quantityPerPerson: _oldPerPerson, pricedParticipantCount: _oldCount,
+    needOccurrenceId: _oldNeed, ...preservedComponent } = priorComponent ?? {};
+  if (values.unitBasis && !["ITEM", "PERSON", "SHARED"].includes(values.unitBasis)) throw new TypeError("CONTEXT_UNIT_BASIS_INVALID");
+  const unitBasis = (values.unitBasis || priorComponent?.unitBasis) as "ITEM" | "PERSON" | "SHARED" | undefined;
+  const inputQuantity = values.quantity ?? priorComponent?.quantityPerPerson ?? priorComponent?.quantity ?? "1";
+  const perPersonInput = unitBasis === "PERSON" && priorComponent?.quantityPerPerson && values.personCount === undefined
+    && values.quantity && new Big(values.quantity).eq(priorComponent.quantity) ? priorComponent.quantityPerPerson : inputQuantity;
+  const legacyPerson = unitBasis === "PERSON" && priorComponent?.unitBasis === "PERSON" && !priorComponent.quantityPerPerson
+    && !values.personCount && new Big(inputQuantity).eq(priorComponent.quantity);
+  const declaredQuantity = legacyPerson ? { quantity: priorComponent.quantity }
+    : declareComponentQuantity(unitBasis === "PERSON" ? "PER_PERSON" : "TOTAL_UNITS", perPersonInput,
+      unitBasis === "PERSON" ? Number(values.personCount ?? priorComponent?.pricedParticipantCount) : undefined);
+  const priorMobility = previous?.kind === "MOBILITY_INTENT" ? previous : undefined;
+  const origin = values.origin === undefined ? priorMobility?.origin ?? null
+    : values.origin.trim() ? { kind: "TEXT" as const, label: values.origin.trim() }
+      : priorMobility?.origin?.kind === "KNOWN" ? priorMobility.origin : null;
+  const destination = values.destination === undefined ? priorMobility?.destination ?? null
+    : values.destination.trim() ? { kind: "TEXT" as const, label: values.destination.trim() }
+      : priorMobility?.destination?.kind === "KNOWN" ? priorMobility.destination : null;
+  const returnRequired = values.returnRequired === undefined ? priorMobility?.returnRequired === true : values.returnRequired === "true";
+  const plannedTime = values.plannedTime === undefined ? priorMobility?.plannedTime ?? null : values.plannedTime || null;
+  const returnTime = values.returnTime === undefined ? priorMobility?.returnTime ?? null : values.returnTime || null;
+  const sameJourney = priorMobility?.optionKey === option.optionKey && plannerDigest(origin) === plannerDigest(priorMobility.origin)
+    && plannerDigest(destination) === plannerDigest(priorMobility.destination) && returnRequired === priorMobility.returnRequired
+    && plannedTime === priorMobility.plannedTime && returnTime === priorMobility.returnTime;
+  const targetIntentId = values.targetIntentId === undefined ? sameOption && priorMobility?.journey?.relation === "SHARES_JOURNEY"
+    ? priorMobility.journey.targetIntentId : "" : values.targetIntentId;
+  const parking = option.mobilityMode === "CAR" ? values.parkingMode === "NO" ? { kind: "MANUAL" as const, unitAmount: "0" }
+    : values.parkingAmount?.trim() ? { kind: "MANUAL" as const, unitAmount: decisionAmount(values.parkingAmount) }
+      : values.parkingMode === undefined ? priorMobility?.pricing?.parking ?? { kind: "UNKNOWN" as const } : { kind: "UNKNOWN" as const } : undefined;
+  const selection: ComponentSelectionV1 = option.kind === "COMPONENT" ? { ...preservedComponent, ...common, kind: "COMPONENT", label: values.label?.trim() || priorComponent?.label || option.label,
+    ...declaredQuantity, cost, fundingAllocations: funding, ...(values.binding ? { binding: { mode: values.binding as "AUTO" | "CONFIRMED_CONSUMPTION" | "EXTRA_TO_SLOT" } } : {}),
+    ...(unitBasis ? { unitBasis } : {}), ...(slot.acceptsNeedOccurrence && values.needOccurrenceId ? { needOccurrenceId: values.needOccurrenceId }
+      : values.needOccurrenceId === undefined && priorComponent?.needOccurrenceId ? { needOccurrenceId: priorComponent.needOccurrenceId } : {}) }
+    : { ...common, kind: "MOBILITY_INTENT", origin, destination, returnRequired, plannedTime, returnTime,
+      ...(!targetIntentId ? { pricing: parseMobilityPricing({ fare: cost, ...(parking ? { parking } : {}), fundingAllocations: funding,
+        preference: values.preference === "AVOID_TOLLS" ? "AVOID_TOLLS" : values.preference === undefined ? priorMobility?.pricing?.preference ?? "FASTEST" : "FASTEST" }) } : {}),
+      ...(targetIntentId ? { journey: sameJourney && priorMobility?.journey?.relation === "SHARES_JOURNEY" && priorMobility.journey.targetIntentId === targetIntentId
+        ? priorMobility.journey : { relation: "SHARES_JOURNEY" as const, certainty: "CERTAIN" as const, targetIntentId,
+          externalExpenseId: null, externalCostLineIds: [], choice: null, stopIndex: null, accessLegIndex: null } }
+        : sameJourney && priorMobility?.journey?.relation === "OWNS_JOURNEY" ? { journey: priorMobility.journey } : {}),
+      ...(option.mobilityMode === "CAR" && sameJourney && priorMobility?.route && !targetIntentId ? { route: priorMobility.route } : {}) };
   return patchSelection(selection);
 }
 
@@ -238,6 +282,11 @@ export async function handleComposerRequest(deps: PlannerDependencies, household
       const template = resolveContextTemplate(card.templateKey);
       plannerKeys(plannerRecord(request.values), template.fields.filter(f => f.fieldKey !== "fieldSchemaVersion").map(f => f.fieldKey), []);
       state = patchContextEditorFields(state, card.contextOccurrenceId, request.values);
+      const refs = knownContextReferences(state);
+      if (refs.personIds.length || refs.placeIds.length) {
+        if (!deps.validateContextReferences) throw new TypeError("CONTEXT_REFERENCE_OWNER_UNAVAILABLE");
+        await deps.validateContextReferences(household, refs);
+      }
       mutationKind = "PATCH_CONTEXT";
     } else if (request.kind === "PRESERVE") {
       if (![...model.board.contexts.map(c => c.contextOccurrenceId), ...model.board.baselineControls.map(c => c.targetRef), ...model.board.discretionaryControls.map(c => c.targetRef), ...model.board.savings.map(c => c.targetRef)].includes(request.targetRef)) throw new TypeError("COMPOSER_PREFERENCE_TARGET_UNKNOWN");

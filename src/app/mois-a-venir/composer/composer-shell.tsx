@@ -23,13 +23,14 @@ import { ComposerPreviewScheduler, type PreviewStatus } from "./preview-schedule
 import { GiftEditor } from "./gift-editor";
 import { NightOutEditor } from "./night-out-editor";
 import { ShortStayEditor } from "./short-stay-editor";
+import { CatalogContextEditor } from "./catalog-context-editor";
 import { FamilyVisitEditor } from "./family-visit-editor";
 import { CardKnowledgePanel } from "./card-knowledge-panel";
 import { useDurableDraft, type DraftTransport } from "./durable-draft";
 import type { ComposerDraftSnapshot, StoredComposerDraft } from "@/domain/phase2/planner/composer-draft-contract";
 
 type Editor = { title: string; compact?: boolean; side?: boolean; fields: readonly ComposerField[]; values: Record<string, string>;
-  giftContextId?: string; nightContextId?: string; familyContextId?: string; stayContextId?: string; familyMode?: string;
+  giftContextId?: string; nightContextId?: string; familyContextId?: string; stayContextId?: string; catalogContextId?: string; familyMode?: string;
   cardKey?: string;
   operation: (values: Record<string, string>) => ComposerOperation };
 type DraftConfirmation = { kind: "ABANDON" | "RESTART" | "RESTORE" | "LOAD_SERVER"; draftId?: string; version?: number };
@@ -318,8 +319,20 @@ export function ComposerShell({ initialModel, transport, initialDrafts = null, d
     const capability = shown.dropCapabilities.find(d => d.sourceAssetKey === asset.assetKey && d.target.kind === target.kind && d.target.contextOccurrenceId === target.contextOccurrenceId && d.target.slotKey === target.slotKey);
     if (!capability || capability.resolution === "BLOCKED") { setSelected(asset.assetKey); setMessage(`Carte ${asset.label} sélectionnée. Choisissez un emplacement compatible sur le mois.`); return; }
     const values: Record<string, string> = {};
-    if (selection?.kind === "COMPONENT") Object.assign(values, { label: selection.label, quantity: selection.quantity, amount: selection.cost.kind === "MANUAL" ? selection.cost.unitAmount : "", unitBasis: selection.unitBasis ?? "", funding: selection.fundingAllocations?.[0]?.source ?? "", fundingAmount: selection.fundingAllocations?.[0]?.amount ?? "", binding: selection.binding?.mode ?? "AUTO", needOccurrenceId: selection.needOccurrenceId ?? "" });
-    if (selection?.kind === "MOBILITY_INTENT") Object.assign(values, { origin: selection.origin?.kind === "TEXT" ? selection.origin.label : "", destination: selection.destination?.kind === "TEXT" ? selection.destination.label : "", amount: selection.pricing?.fare.kind === "MANUAL" ? selection.pricing.fare.unitAmount : "", funding: selection.pricing?.fundingAllocations[0]?.source ?? "", fundingAmount: selection.pricing?.fundingAllocations[0]?.amount ?? "", returnRequired: String(selection.returnRequired === true), targetIntentId: selection.journey?.targetIntentId ?? "", plannedTime: selection.plannedTime ?? "", returnTime: selection.returnTime ?? "", preference: selection.pricing?.preference ?? "FASTEST", parkingMode: selection.pricing?.parking.kind === "MANUAL" ? selection.pricing.parking.unitAmount === "0" || selection.pricing.parking.unitAmount === "0.00" ? "NO" : "YES" : "UNKNOWN", parkingAmount: selection.pricing?.parking.kind === "MANUAL" ? selection.pricing.parking.unitAmount : "" });
+    if (selection?.kind === "COMPONENT" && selection.optionKey === asset.optionKey) Object.assign(values, { label: selection.label, quantity: selection.quantityPerPerson ?? selection.quantity,
+      personCount: selection.pricedParticipantCount?.toString() ?? "", amount: selection.cost.kind === "MANUAL" ? selection.cost.unitAmount : "",
+      unitBasis: selection.unitBasis ?? "", funding: selection.fundingAllocations?.some(part => part.source !== "BANK") ? "EXISTING"
+        : selection.fundingAllocations?.length ? "BANK" : "", fundingAmount: selection.fundingAllocations?.[0]?.amount ?? "",
+      binding: selection.binding?.mode ?? "AUTO", needOccurrenceId: selection.needOccurrenceId ?? "" });
+    if (selection?.kind === "MOBILITY_INTENT") Object.assign(values, { origin: selection.origin?.kind === "TEXT" ? selection.origin.label : "", destination: selection.destination?.kind === "TEXT" ? selection.destination.label : "",
+      amount: selection.optionKey === asset.optionKey && selection.pricing?.fare.kind === "MANUAL" ? selection.pricing.fare.unitAmount : "",
+      funding: selection.optionKey === asset.optionKey && selection.pricing?.fundingAllocations.some(part => part.source !== "BANK") ? "EXISTING"
+        : selection.optionKey === asset.optionKey && selection.pricing?.fundingAllocations.length ? "BANK" : "",
+      fundingAmount: selection.optionKey === asset.optionKey ? selection.pricing?.fundingAllocations[0]?.amount ?? "" : "",
+      returnRequired: String(selection.returnRequired === true), targetIntentId: selection.optionKey === asset.optionKey ? selection.journey?.targetIntentId ?? "" : "",
+      plannedTime: selection.plannedTime ?? "", returnTime: selection.returnTime ?? "", preference: selection.optionKey === asset.optionKey ? selection.pricing?.preference ?? "FASTEST" : "FASTEST",
+      parkingMode: selection.optionKey === asset.optionKey && selection.pricing?.parking.kind === "MANUAL" ? selection.pricing.parking.unitAmount === "0" || selection.pricing.parking.unitAmount === "0.00" ? "NO" : "YES" : "UNKNOWN",
+      parkingAmount: selection.optionKey === asset.optionKey && selection.pricing?.parking.kind === "MANUAL" ? selection.pricing.parking.unitAmount : "" });
     const identity = stableId ?? crypto.randomUUID(), selectionId = selection?.selectionId ?? crypto.randomUUID();
     if (asset.kind === "CONTEXT_ASSET" && target.kind === "BOARD_ZONE" && !selection) {
       const admitted = stage({ kind: "DROP", assetKey: asset.assetKey, target, values: {}, identity, selectionId });
@@ -331,6 +344,7 @@ export function ComposerShell({ initialModel, transport, initialDrafts = null, d
           ...(asset.templateKey === "night-out" ? { nightContextId: identity } : {}),
           ...(asset.templateKey === "short-stay" ? { stayContextId: identity } : {}),
           ...(asset.templateKey === "family-visit" ? { familyContextId: identity } : {}),
+          ...(!["gift", "night-out", "short-stay", "family-visit"].includes(asset.templateKey ?? "") ? { catalogContextId: identity } : {}),
           fields: model.editors.find(e => e.assetKey === asset.assetKey)?.fields ?? [], values: {},
           operation: values => ({ kind: "EDIT_CONTEXT", contextOccurrenceId: identity, values }) });
         return;
@@ -370,6 +384,7 @@ export function ComposerShell({ initialModel, transport, initialDrafts = null, d
       ...(card.templateKey === "night-out" ? { nightContextId: card.contextOccurrenceId } : {}),
       ...(card.templateKey === "short-stay" ? { stayContextId: card.contextOccurrenceId } : {}),
       ...(card.templateKey === "family-visit" ? { familyContextId: card.contextOccurrenceId } : {}),
+      ...(!["gift", "night-out", "short-stay", "family-visit"].includes(card.templateKey) ? { catalogContextId: card.contextOccurrenceId } : {}),
       fields: model.editors.find(e => e.assetKey === `template:${card.templateKey}`)?.fields ?? [],
       values: Object.fromEntries(Object.entries(card.fields).filter((entry): entry is [string, string] => typeof entry[1] === "string")),
       operation: values => ({ kind: "EDIT_CONTEXT", contextOccurrenceId: card.contextOccurrenceId, values }) });
@@ -471,6 +486,11 @@ export function ComposerShell({ initialModel, transport, initialDrafts = null, d
         ? <GiftEditor key={editor.giftContextId} context={draftState.contexts.find(context => context.contextOccurrenceId === editor.giftContextId)!}
           householdPersons={model.householdPersons} knowledge={model.cardKnowledge[editor.cardKey ?? ""]}
           busy={busy} onCancel={closeDialog} onSave={operation => { stage(operation); setEditor(null); }} />
+        : editor?.catalogContextId && draftState.contexts.find(context => context.contextOccurrenceId === editor.catalogContextId)
+        ? <CatalogContextEditor key={editor.catalogContextId} context={draftState.contexts.find(context => context.contextOccurrenceId === editor.catalogContextId)!}
+          editor={{ assetKey: editor.cardKey ?? "", fields: editor.fields }} targetMonth={draftState.targetMonth} householdPersons={model.householdPersons}
+          options={model.mobilityOptions} knowledge={model.cardKnowledge[editor.cardKey ?? ""]} busy={busy} onCancel={closeDialog}
+          onSave={operation => { stage(operation); setEditor(null); }} />
         : editor ? <form onSubmit={e => { e.preventDefault(); const values = Object.fromEntries(new FormData(e.currentTarget).entries()) as Record<string, string>; stage(editor.operation(values)); setEditor(null); }}>
         {editor.cardKey &&
           <CardKnowledgePanel knowledge={model.cardKnowledge[editor.cardKey]} onPrefill={(field, value) => {
@@ -481,7 +501,7 @@ export function ComposerShell({ initialModel, transport, initialDrafts = null, d
           Réservation {model.board.savings.find(card => `control:${card.targetRef}` === editor.cardKey)?.value.reservationSource === "ANNUAL_PLAN" ? "issue d’un objectif annuel" : "déclarée pour le mois"}.
           Le montant choisi modifie seulement ce scénario ; aucun mouvement bancaire n’est créé. La projection sera recalculée par Finance V2.
         </p> : <p className={styles.helper}>Une valeur vide reste inconnue. Une date absente reste à préciser.</p>}
-        <div className={styles.formFields}>{editor.fields.map(f => <label key={f.key}>{f.label}{f.kind === "CHOICE" ? <select name={f.key} defaultValue={editor.values[f.key] ?? f.choices?.[0]?.value ?? ""} required={f.required}>{f.choices?.map(c => <option value={c.value} key={c.value}>{c.label}</option>)}</select>
+        <div className={styles.formFields}>{editor.fields.map(f => <label key={f.key}>{f.label}{f.kind === "CHOICE" ? <select name={f.key} defaultValue={editor.values[f.key] ?? f.choices?.[0]?.value ?? ""} required={f.required}>{[...(f.choices ?? []), ...(f.key === "funding" && editor.values.funding === "EXISTING" ? [{ value: "EXISTING", label: "Conserver le financement antérieur (lecture seule)" }] : [])].map(c => <option value={c.value} key={c.value}>{c.label}</option>)}</select>
           : <input name={f.key} defaultValue={editor.values[f.key] ?? f.initial ?? ""} type={f.kind === "DATE" ? "date" : "text"} inputMode={f.kind === "AMOUNT" ? "decimal" : undefined} required={f.required} autoComplete="off" />}</label>)}</div>
         <footer><button type="button" className={styles.secondary} disabled={busy} onClick={closeDialog}>Retour au mois</button><button data-submit className={styles.primary} disabled={busy}>Prévisualiser ce choix</button></footer>
       </form> : projectionOpen ? <ComposerProjectionDetails projection={model.board.cockpit} /> : null}

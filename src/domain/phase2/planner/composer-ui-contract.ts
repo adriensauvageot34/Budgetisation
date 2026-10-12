@@ -16,7 +16,7 @@ export type ComposerMobilitySummary = Readonly<{ contextOccurrenceId: string; jo
   routeSource: string | null; fuelSource: string | null; tollSource: string | null; vehicleLabel: string | null;
   methodRef: string | null; timeBasis: string | null; fallbacks: readonly string[] }>;
 
-export type ComposerField = Readonly<{ key: string; label: string; kind: "TEXT" | "DATE" | "AMOUNT" | "CHOICE";
+export type ComposerField = Readonly<{ key: string; label: string; kind: "TEXT" | "DATE" | "AMOUNT" | "CHOICE" | "COUNT" | "PERSON_REF" | "PERSON_REFS" | "PLACE_REF";
   required: boolean; choices?: readonly Readonly<{ value: string; label: string }>[]; initial?: string }>;
 export type ComposerEditor = Readonly<{ assetKey: string; fields: readonly ComposerField[] }>;
 export type ComposerObjectPresentation = Readonly<{
