@@ -41,6 +41,34 @@ const fundingLabel = (value: unknown) => {
 };
 const contextLabels: Readonly<Record<string, string>> = { activity: "Activité", restaurant: "Restaurant", "fast-food": "Restauration rapide", delivery: "Livraison", purchase: "Achat", gift: "Cadeau", "short-stay": "Week-end / séjour", "family-visit": "Visite famille", "friend-visit": "Visite amis", "night-out": "Soirée", "beauty-restock": "Réapprovisionnement beauté", "home-project": "Projet maison", "other-context": "Autre intention" };
 const contextLabel = (context: PlanSemanticStateV1["contexts"][number]) => String(context.fields.label ?? contextLabels[context.templateKey] ?? "Moment du Plan");
+const genericFieldLabels: Readonly<Record<string, string>> = { plannedDate: "Date", endDate: "Fin", participantRefs: "Personnes concernées",
+  personVisitedRef: "Personne visitée", placeRef: "Lieu", destinationRef: "Destination", budgetDomain: "Enveloppe",
+  productLabel: "Produit", merchantLabel: "Commerce", timingNote: "Repère de temps", nightCount: "Nuits", lodgingKind: "Hébergement" };
+const genericSlotLabels: Readonly<Record<string, string>> = { meal: "Repas", extras: "Compléments", transport: "Transport", main: "Moment principal",
+  hospitality: "Contribution", activities: "Activités", item: "Achat", before: "Avant la soirée", food: "Repas", outbound: "Aller",
+  return: "Retour", lodging: "Hébergement", groceries: "Courses du séjour", restaurants: "Restaurants", purchases: "Achats",
+  products: "Produits et besoins", items: "Équipements", services: "Services", components: "Contributions", children: "Autres moments" };
+const genericChoiceLabels: Readonly<Record<string, string>> = { clothing: "Vêtements", "home-small": "Maison petit", "games-digital": "Jeux et numérique", other: "Autre" };
+const genericFieldLabel = (key: string) => genericFieldLabels[key] ?? key;
+const genericFieldValue = (key: string, value: unknown, persons: readonly { personId: string; displayName: string }[],
+  places: readonly import("@/domain/phase2/planned-places").PlannedPlaceOption[]) => {
+  if (value === null || value === undefined || value === "") return "À préciser";
+  if (key === "participantRefs" && Array.isArray(value)) return value.length ? value.map(ref => personLabel(ref, persons)).join(", ") : "À préciser";
+  if (key === "personVisitedRef" || key === "recipientRef") return personLabel(value, persons);
+  const ref = record(value);
+  if (ref?.kind === "TEXT" && typeof ref.label === "string") return ref.label;
+  if (ref?.kind === "KNOWN") return places.find(place => place.placeId === ref.placeId)?.name ?? "Lieu lié indisponible";
+  return typeof value === "string" || typeof value === "number" ? genericChoiceLabels[String(value)] ?? String(value) : "À préciser";
+};
+const genericSelectionLabel = (item: Record<string, unknown>, contexts: PlanSemanticStateV1["contexts"]) => {
+  if (item.kind === "CHILD_CONTEXT") {
+    const child = contexts.find(context => context.contextOccurrenceId === item.childContextOccurrenceId);
+    return child ? `Moment lié : ${contextLabel(child)}` : "Moment lié indisponible";
+  }
+  if (item.kind === "UNRESOLVED") return "Choix à préciser";
+  if (item.kind === "MOBILITY_INTENT") return "Déplacement";
+  return typeof item.label === "string" ? item.label : String(item.optionKey ?? "Choix");
+};
 const journeyLabels: Readonly<Record<string, string>> = { car: "Voiture", train: "Train / tram", bus: "Bus", taxi: "Taxi / Uber", free: "À pied / gratuit", other: "Autre transport", unknown: "Transport à préciser" };
 const giftAssetLabel = (value: unknown) => {
   const ref = record(value);
@@ -182,6 +210,25 @@ export function AppliedMonthView({ projection, semanticState, controls = [], pla
           <ul className="ml-4 list-disc">{renderParts(context)}</ul>
         </article>;
       })}
+      {semanticState.contexts.filter(context => !["gift", "night-out", "family-visit", "short-stay"].includes(context.templateKey)).map(context =>
+        <article key={context.contextOccurrenceId} data-plan-catalog-context={context.contextOccurrenceId} className="mt-4 rounded-xl border border-slate-200 p-4">
+          <h3 className="font-bold">{contextLabel(context)}</h3>
+          <p className="mt-1 text-xs text-slate-500">{contextLabels[context.templateKey] ?? context.templateKey} · décision conservée dans la révision · le conteneur n’ajoute aucun coût propre.</p>
+          <dl className="mt-2 grid gap-1 text-sm">{Object.entries(context.fields).filter(([key]) => !["fieldSchemaVersion", "label"].includes(key)).map(([key, value]) =>
+            <div key={key}><dt className="inline font-semibold">{genericFieldLabel(key)} : </dt><dd className="inline">{genericFieldValue(key, value, persons, places)}</dd></div>)}</dl>
+          {Object.entries(context.slotSelections).map(([slot, raw]) => <div key={slot} className="mt-2 text-sm"><strong>{genericSlotLabels[slot] ?? slot}</strong>
+            <ul className="ml-4 list-disc">{(Array.isArray(raw.items) ? raw.items.map(record).filter((item): item is Record<string, unknown> => item !== null) : []).map((item, index) => {
+              const exploratory = item.provenance === "PERSONAL_SUGGESTION", pricing = record(item.pricing);
+              return <li key={String(item.selectionId ?? index)} data-plan-catalog-selection={String(item.selectionId ?? index)}>
+                {genericSelectionLabel(item, semanticState.contexts)} · {exploratory ? "proposition exploratoire non retenue"
+                  : item.kind === "COMPONENT" ? <>{costLabel(item.cost)} · {item.quantityPerPerson !== undefined
+                    ? `${String(item.quantityPerPerson)} par personne × ${String(item.pricedParticipantCount)} personnes`
+                    : `quantité ${String(item.quantity ?? "à préciser")}`} · {fundingLabel(item.fundingAllocations)}</>
+                    : item.kind === "MOBILITY_INTENT" ? <>{journeyLabels[String(item.optionKey)] ?? "Transport"} ·
+                      {record(item.journey)?.relation === "SHARES_JOURNEY" ? "prix porté par le trajet lié" : `${costLabel(pricing?.fare)} · ${fundingLabel(pricing?.fundingAllocations)}`}</>
+                      : item.kind === "CHILD_CONTEXT" ? "identité et détails conservés dans ce Plan" : "information à préciser"}</li>;
+            })}</ul></div>)}
+        </article>)}
       {composerHref && <a className="mt-4 inline-block font-bold underline" href={composerHref}>Rééditer mon Plan</a>}
     </section>
     <section className={`${material.glassSecondary} p-6`}><h2 id="resources-title" className="text-xl font-black">Banque & ressources</h2>
