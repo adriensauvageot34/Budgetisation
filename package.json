@@ -163,7 +163,8 @@
     "check:phase2-planned-routes": "node scripts/check-phase2-planned-routes.mjs",
     "check:phase2-planned-finance": "node scripts/check-phase2-planned-finance.mjs",
     "check:phase2-month-control-center-v5": "node scripts/check-phase2-month-control-center-v5.mjs",
-    "check:phase2-planner-p10": "node scripts/check-phase2-planner-p10.mjs"
+    "check:phase2-planner-p10": "node scripts/check-phase2-planner-p10.mjs",
+    "check:phase2-planner-p11": "node scripts/check-phase2-planner-p11.mjs"
   },
   "dependencies": {
     "@js-temporal/polyfill": "0.5.1",

@@ -17,7 +17,7 @@ import { CardKnowledgePanel } from "./card-knowledge-panel";
 import styles from "./composer.module.css";
 
 type Component = Extract<ComponentSelectionV1, { kind: "COMPONENT" }>;
-type Row = { id: string; existing?: Component; edited: boolean; label: string; quantity: string; unitBasis: "ITEM" | "PERSON" | "SHARED" | "LEGACY_PERSON";
+export type Row = { id: string; existing?: Component; edited: boolean; label: string; quantity: string; unitBasis: "ITEM" | "PERSON" | "SHARED" | "LEGACY_PERSON";
   personCount: string; costMode: "MANUAL" | "UNKNOWN" | "QUOTE"; amount: string; fundingMode: "UNDECIDED" | "BANK" | "EXISTING";
   fundingAmount: string; binding: "AUTO" | "CONFIRMED_CONSUMPTION" | "EXTRA_TO_SLOT" | "NO_RELATED_SLOT"; assetRef?: PlannedAssetRef };
 const beforeAssets = assetsForModule("house_party");
@@ -30,9 +30,9 @@ const component = (value: unknown): Component | undefined => {
 };
 const items = (context: PlannedContextState, key: string): readonly ComponentSelectionV1[] =>
   (context.slotSelections[key]?.items as ComponentSelectionV1[] | undefined) ?? [];
-const fresh = (label = ""): Row => ({ id: crypto.randomUUID(), edited: true, label, quantity: "1", unitBasis: "ITEM", personCount: "",
+export const fresh = (label = ""): Row => ({ id: crypto.randomUUID(), edited: true, label, quantity: "1", unitBasis: "ITEM", personCount: "",
   costMode: "UNKNOWN", amount: "", fundingMode: "UNDECIDED", fundingAmount: "", binding: "AUTO" });
-const fromSelection = (selection: Component): Row => ({ id: selection.selectionId, existing: selection, edited: false, label: selection.label,
+export const fromSelection = (selection: Component): Row => ({ id: selection.selectionId, existing: selection, edited: false, label: selection.label,
   quantity: selection.quantityPerPerson ?? selection.quantity, unitBasis: selection.unitBasis === "PERSON" && !selection.quantityPerPerson ? "LEGACY_PERSON" : selection.unitBasis ?? "ITEM",
   personCount: selection.pricedParticipantCount?.toString() ?? "", costMode: selection.cost.kind,
   amount: selection.cost.kind === "MANUAL" ? selection.cost.unitAmount : "",
@@ -45,9 +45,9 @@ const refLabel = (ref: ProspectivePersonRef, persons: readonly { personId: strin
     : ref.contactKey;
 const isPerson = (value: unknown): value is ProspectivePersonRef => !!record(value) && ["TEXT", "HOUSEHOLD_PERSON", "CONTACT"].includes(String(record(value)?.kind));
 
-function ComponentRow({ title, row, participantCount, onChange, onRemove, removable = true, bindingChoices = false, productAssets = [] }: {
+export function ComponentRow({ title, row, participantCount, onChange, onRemove, removable = true, bindingChoices = false, productAssets = [], fixedQuantity = false, priceLabel }: {
   title: string; row: Row; participantCount: number; onChange: (row: Row) => void; onRemove: () => void; removable?: boolean; bindingChoices?: boolean;
-  productAssets?: readonly PlannedAsset[];
+  productAssets?: readonly PlannedAsset[]; fixedQuantity?: boolean; priceLabel?: string;
 }) {
   const update = <K extends keyof Row>(key: K, value: Row[K]) => onChange({ ...row, edited: true, [key]: value });
   return <fieldset className={styles.nightComponent} data-night-component={title}>
@@ -63,7 +63,7 @@ function ComponentRow({ title, row, participantCount, onChange, onRemove, remova
         {row.assetRef && !productAssets.some(asset => asset.assetKey === row.assetRef?.assetKey) && <option value={row.assetRef.assetKey}>Référence indisponible · {row.assetRef.labelAtSelection}</option>}
         {productAssets.map(asset => <option key={asset.assetKey} value={asset.assetKey}>{asset.label} · {asset.module === "bar" ? "bar" : asset.module === "club" ? "club" : "before"}</option>)}</select></label>}
       <label>Produit ou activité<input value={row.label} maxLength={120} onChange={event => update("label", event.target.value)} /></label>
-      <label>Mode de quantité<select value={row.unitBasis} onChange={event => onChange({ ...row, edited: true, unitBasis: event.target.value as Row["unitBasis"],
+      {!fixedQuantity && <><label>Mode de quantité<select value={row.unitBasis} onChange={event => onChange({ ...row, edited: true, unitBasis: event.target.value as Row["unitBasis"],
         personCount: event.target.value === "PERSON" && !row.personCount && participantCount ? String(participantCount) : row.personCount })}>
         <option value="ITEM">Unités au total</option><option value="PERSON">Unités par personne</option><option value="SHARED">Prix partagé / budget global</option>
         {row.existing?.unitBasis === "PERSON" && !row.existing.quantityPerPerson && <option value="LEGACY_PERSON">Quantité totale antérieure · prix individuel</option>}</select></label>
@@ -72,10 +72,11 @@ function ComponentRow({ title, row, participantCount, onChange, onRemove, remova
       {row.unitBasis === "PERSON" && <label>Personnes concernées<input type="number" min="1" max="50" step="1"
         value={row.personCount} placeholder={participantCount ? String(participantCount) : "À indiquer"}
         onChange={event => update("personCount", event.target.value)} /></label>}
+      </>}
       <label>Prix<select value={row.costMode} onChange={event => update("costMode", event.target.value as Row["costMode"])}>
         <option value="UNKNOWN">Encore inconnu</option><option value="MANUAL">Déclaré par moi</option>
         {row.existing?.cost.kind === "QUOTE" && <option value="QUOTE">Conserver le devis</option>}</select></label>
-      {row.costMode === "MANUAL" && <label>{row.unitBasis === "SHARED" ? "Montant par lot partagé (€)" : "Prix par unité (€)"}
+      {row.costMode === "MANUAL" && <label>{priceLabel ?? (row.unitBasis === "SHARED" ? "Montant par lot partagé (€)" : "Prix par unité (€)")}
         <input inputMode="decimal" value={row.amount} onChange={event => update("amount", event.target.value)} /></label>}
       <label>Financement<select value={row.fundingMode} onChange={event => update("fundingMode", event.target.value as Row["fundingMode"])}>
         <option value="UNDECIDED">À préciser</option><option value="BANK">Banque déclarée</option>
@@ -93,6 +94,27 @@ function ComponentRow({ title, row, participantCount, onChange, onRemove, remova
     {removable && <button type="button" className={styles.secondary} onClick={onRemove}>Retirer ce composant</button>}
   </fieldset>;
 }
+
+export const buildComponentRow = (row: Row, optionKey: string): Component => {
+    if (row.existing && !row.edited && row.existing.optionKey === optionKey) return row.existing;
+    if (!row.label.trim()) throw new Error("Indiquez le nom de chaque composant.");
+    const count = row.unitBasis === "PERSON" ? Number(row.personCount) : 0;
+    if (row.unitBasis === "PERSON" && (!Number.isInteger(count) || count < 1 || count > 50))
+      throw new Error("Indiquez le nombre de personnes concernées par le prix individuel.");
+    const declaredQuantity = declareComponentQuantity(row.unitBasis === "PERSON" ? "PER_PERSON" : "TOTAL_UNITS",
+      row.quantity.trim().replace(",", "."), count);
+    if (row.costMode === "MANUAL" && !row.amount.trim()) throw new Error("Indiquez un prix ou choisissez « encore inconnu ».");
+    if (row.fundingMode === "BANK" && !row.fundingAmount.trim()) throw new Error("Indiquez le montant Banque déclaré.");
+    const cost = row.costMode === "QUOTE" && row.existing?.cost.kind === "QUOTE" ? row.existing.cost
+      : row.costMode === "MANUAL" ? { kind: "MANUAL" as const, unitAmount: decisionAmount(row.amount.trim().replace(",", ".")) } : { kind: "UNKNOWN" as const };
+    const { quantityEvidenceVersion: _oldVersion, quantityPerPerson: _oldUnits, pricedParticipantCount: _oldCount, productAssetRef: _oldAsset, ...preserved } = row.existing ?? {};
+    return { ...preserved, selectionId: row.id, optionKey, kind: "COMPONENT", provenance: "EXPLICIT_USER_DECISION",
+      label: row.label.trim(), ...declaredQuantity, unitBasis: row.unitBasis === "LEGACY_PERSON" ? "PERSON" : row.unitBasis, cost,
+      ...(row.assetRef ? { productAssetRef: row.assetRef } : {}),
+      fundingAllocations: row.fundingMode === "EXISTING" ? row.existing?.fundingAllocations ?? []
+        : row.fundingMode === "BANK" ? [{ source: "BANK", amount: decisionAmount(row.fundingAmount.trim().replace(",", ".")) }] : [],
+      binding: { mode: row.binding } };
+  };
 
 export function NightOutEditor({ context, semanticState, householdPersons, knowledge, busy, onSave, onCancel }: {
   context: PlannedContextState; semanticState: PlanSemanticStateV1;
@@ -127,26 +149,7 @@ export function NightOutEditor({ context, semanticState, householdPersons, knowl
   const [error, setError] = useState("");
   const scroll = useRef<HTMLDivElement>(null);
   const changeRow = (rows: Row[], setRows: (rows: Row[]) => void, id: string, updated: Row) => setRows(rows.map(row => row.id === id ? updated : row));
-  const build = (row: Row, optionKey: string): Component => {
-    if (row.existing && !row.edited && row.existing.optionKey === optionKey) return row.existing;
-    if (!row.label.trim()) throw new Error("Indiquez le nom de chaque composant.");
-    const count = row.unitBasis === "PERSON" ? Number(row.personCount) : 0;
-    if (row.unitBasis === "PERSON" && (!Number.isInteger(count) || count < 1 || count > 50))
-      throw new Error("Indiquez le nombre de personnes concernées par le prix individuel.");
-    const declaredQuantity = declareComponentQuantity(row.unitBasis === "PERSON" ? "PER_PERSON" : "TOTAL_UNITS",
-      row.quantity.trim().replace(",", "."), count);
-    if (row.costMode === "MANUAL" && !row.amount.trim()) throw new Error("Indiquez un prix ou choisissez « encore inconnu ».");
-    if (row.fundingMode === "BANK" && !row.fundingAmount.trim()) throw new Error("Indiquez le montant Banque déclaré.");
-    const cost = row.costMode === "QUOTE" && row.existing?.cost.kind === "QUOTE" ? row.existing.cost
-      : row.costMode === "MANUAL" ? { kind: "MANUAL" as const, unitAmount: decisionAmount(row.amount.trim().replace(",", ".")) } : { kind: "UNKNOWN" as const };
-    const { quantityEvidenceVersion: _oldVersion, quantityPerPerson: _oldUnits, pricedParticipantCount: _oldCount, productAssetRef: _oldAsset, ...preserved } = row.existing ?? {};
-    return { ...preserved, selectionId: row.id, optionKey, kind: "COMPONENT", provenance: "EXPLICIT_USER_DECISION",
-      label: row.label.trim(), ...declaredQuantity, unitBasis: row.unitBasis === "LEGACY_PERSON" ? "PERSON" : row.unitBasis, cost,
-      ...(row.assetRef ? { productAssetRef: row.assetRef } : {}),
-      fundingAllocations: row.fundingMode === "EXISTING" ? row.existing?.fundingAllocations ?? []
-        : row.fundingMode === "BANK" ? [{ source: "BANK", amount: decisionAmount(row.fundingAmount.trim().replace(",", ".")) }] : [],
-      binding: { mode: row.binding } };
-  };
+  const build = buildComponentRow;
   const save = () => {
     try {
       setError("");

@@ -3,6 +3,7 @@ import { plannerDigest } from "@/domain/phase2/planner/json";
 import type { PlannerJson } from "@/domain/phase2/planner/json";
 import type { ComposerOperation, ComposerUiModel } from "@/domain/phase2/planner/composer-ui-contract";
 import { editNightOut } from "@/domain/phase2/planner/night-out-edit";
+import { editShortStay } from "@/domain/phase2/planner/short-stay-edit";
 import { editFamilyVisit } from "@/domain/phase2/planner/family-visit-edit";
 import type { ComponentSelectionV1 } from "@/domain/phase2/planner/component-contract";
 
@@ -70,6 +71,13 @@ export function stageLocalDecision(model: ComposerUiModel, raw: PlanSemanticStat
       ? "context-fields@v3" : "context-fields@v2";
     return parsePlanSemanticState({ ...state, contexts: state.contexts.map(c => c.contextOccurrenceId === context.contextOccurrenceId
       ? { ...c, fields, slotSelections: { ...c.slotSelections, item: { items: [operation.item] } } } : c) });
+  }
+  if (operation.kind === "EDIT_SHORT_STAY") {
+    const card = model.board.contexts.find(c => c.contextOccurrenceId === operation.edit.contextOccurrenceId);
+    const context = state.contexts.find(c => c.contextOccurrenceId === operation.edit.contextOccurrenceId);
+    if (context?.templateKey !== "short-stay" || (card ? !card.capabilityRefs.includes("PATCH_CONTEXT") || card.readOnly
+      : !model.dropCapabilities.some(drop => drop.sourceAssetKey === "template:short-stay" && drop.target.kind === "BOARD_ZONE" && drop.resolution !== "BLOCKED"))) return null;
+    return editShortStay(state, operation.edit);
   }
   if (operation.kind === "EDIT_FAMILY_VISIT") {
     const card = model.board.contexts.find(c => c.contextOccurrenceId === operation.edit.contextOccurrenceId);

@@ -51,7 +51,7 @@ const stores = new Map(), fixtures = { A: simpleMonth, B: nightMonth, C: weekend
   P09C: p09CompatibilityMonth,
   P09S: p09CompatibilityMonth,
   P09R: p09ReadbackMonth,
-  P10:p10Month, P10OUT:p10Month,
+  P10:p10Month, P10OUT:p10Month, P11:p10Month, P11OUT:p10Month,
   RA: interactionMonth, RB: nightMonth, RC: weekendMonth, RR: atomicMonth, RICH:richMonth, SAVINGS:savingsMonth,
   VISUAL:visualMonth, VISUAL_P35_CLICK:visualMonth, VISUAL_P35_DRAG:visualMonth, VISUAL_P35_MULTI_DRAG:visualMonth, VISUAL_P35_REPLACE:visualMonth,
   VISUAL_P35_HISTORY:visualMonth, VISUAL_P35_PROTECTED:visualMonth, DISSOLVE_BEAUTY:visualThreeBeautyMonth,
@@ -71,7 +71,7 @@ function uiPayloadFields(value) {
 async function store(key) {
   if (!stores.has(key)) stores.set(key, (async () => {
     const pg = await createKernelPostgres(), fixture = (fixtures[key] ?? fixtures.A)(), owner = providers();
-    if(key==='P10OUT') owner.settings.routeUnavailable=true;
+    if(key==='P10OUT'||key==='P11OUT') owner.settings.routeUnavailable=true;
     return { pg, fixture, log: [], deps: { repository: createPlanApplyRepository(pg.client),
       householdPersons: [{ personId: '00000000-0000-4000-8000-000000000001', displayName: 'Alice Fixture' }],
       readMobilityOptions: async()=>({places:fixture.world.mobilityFacts?.places ?? [],vehicle:fixture.world.mobilityFacts?.vehicle ?? null}),

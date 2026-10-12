@@ -118,10 +118,20 @@ function selection(raw: unknown, slot: ComponentSlotDefinition): ComponentSelect
       ...(value.route === undefined ? {} : { route: parseProspectiveRoute(value.route) }),
       plannedTime: mobilityTime(value.plannedTime), returnTime: mobilityTime(value.returnTime) };
   }
-  plannerKeys(value, [...common, "label", "quantity", "cost", "binding", "fundingAllocations", "unitBasis", "quantityEvidenceVersion", "quantityPerPerson", "pricedParticipantCount", "productAssetRef", ...(slot.acceptsNeedOccurrence ? ["needOccurrenceId"] : [])], [...common, "label", "quantity", "cost"]);
+  plannerKeys(value, [...common, "label", "quantity", "cost", "binding", "fundingAllocations", "unitBasis", "quantityEvidenceVersion", "quantityPerPerson", "pricedParticipantCount", "productAssetRef", "lodgingPricing", ...(slot.acceptsNeedOccurrence ? ["needOccurrenceId"] : [])], [...common, "label", "quantity", "cost"]);
   const quantity = decisionAmount(value.quantity);
   if (value.unitBasis !== undefined && !["ITEM", "PERSON", "SHARED"].includes(String(value.unitBasis))) throw new TypeError("CONTEXT_UNIT_BASIS_INVALID");
   validateComponentQuantity(quantity, value.unitBasis, value.quantityEvidenceVersion, value.quantityPerPerson, value.pricedParticipantCount);
+  const lodgingPricing = value.lodgingPricing === undefined ? undefined : (() => {
+    const pricing = plannerRecord(value.lodgingPricing); plannerKeys(pricing, ["version", "basis", "nightCount"]);
+    if (slot.slotKey !== "lodging" || pricing.version !== "lodging-pricing@v1" || !["TOTAL", "PER_NIGHT"].includes(String(pricing.basis)))
+      throw new TypeError("CONTEXT_LODGING_PRICING_INVALID");
+    const nightCount = pricing.nightCount === null ? null : plannerInteger(pricing.nightCount, 1);
+    if (nightCount !== null && nightCount > 366 || value.unitBasis !== "ITEM" || value.quantityPerPerson !== undefined
+      || quantity !== decisionAmount(pricing.basis === "PER_NIGHT" && nightCount !== null ? String(nightCount) : "1"))
+      throw new TypeError("CONTEXT_LODGING_QUANTITY_INVALID");
+    return { version: "lodging-pricing@v1" as const, basis: pricing.basis as "TOTAL" | "PER_NIGHT", nightCount };
+  })();
   const perPerson = value.quantityPerPerson === undefined ? null : decisionAmount(value.quantityPerPerson);
   const participantCount = value.pricedParticipantCount === undefined ? null : plannerInteger(value.pricedParticipantCount, 1);
   const binding = value.binding === undefined ? { mode: "AUTO" as const } : (() => {
@@ -133,6 +143,7 @@ function selection(raw: unknown, slot: ComponentSlotDefinition): ComponentSelect
     fundingAllocations: parseKernelFunding(value.fundingAllocations ?? []),
     ...(value.unitBasis === undefined ? {} : { unitBasis: value.unitBasis as "ITEM" | "PERSON" | "SHARED" }),
     ...(perPerson === null ? {} : { quantityEvidenceVersion: "component-quantity@v1" as const, quantityPerPerson: perPerson, pricedParticipantCount: participantCount! }),
+    ...(lodgingPricing ? { lodgingPricing } : {}),
     ...(value.productAssetRef === undefined ? {} : { productAssetRef: nightProductAssetRef(value.productAssetRef) }),
     ...(value.needOccurrenceId === undefined ? {} : { needOccurrenceId: plannerString(value.needOccurrenceId) }) };
 }
@@ -142,7 +153,7 @@ export function readContextSelections(context: PlannedContextState, targetMonth:
   for (const field of template.fields) if (Object.hasOwn(context.fields, field.fieldKey)) {
     if (field.fieldKey === "objectAssetRef" && context.fields.fieldSchemaVersion !== "context-fields@v3"
       || !isLegacyContextField(context.templateKey, field.fieldKey) && field.fieldKey !== "fieldSchemaVersion"
-      && !["context-fields@v2", "context-fields@v3", ...(context.templateKey === "family-visit" ? ["context-fields@v4"] : [])].includes(String(context.fields.fieldSchemaVersion)))
+      && !["context-fields@v2", "context-fields@v3", ...(context.templateKey === "family-visit" ? ["context-fields@v4"] : context.templateKey === "short-stay" ? ["context-fields@v5"] : [])].includes(String(context.fields.fieldSchemaVersion)))
       throw new TypeError("CONTEXT_FIELD_VERSION_REQUIRED");
     parseContextField(context.fields[field.fieldKey], field, targetMonth);
   }
@@ -168,6 +179,12 @@ export function readContextSelections(context: PlannedContextState, targetMonth:
       if (!items.length && slot.cardinality === "REQUIRED_ONE") items = template.structuralDefaults[slot.slotKey].items;
     }
     if (new Set(items.map(item => item.selectionId)).size !== items.length) throw new TypeError("CONTEXT_SELECTION_ID_DUPLICATE");
+    for (const item of items) if (item.kind === "COMPONENT" && item.lodgingPricing) {
+      if (context.fields.fieldSchemaVersion !== "context-fields@v5" || item.lodgingPricing.nightCount !== (context.fields.nightCount ?? null))
+        throw new TypeError("CONTEXT_LODGING_NIGHTS_MISMATCH");
+    }
+    if (context.templateKey === "short-stay" && slot.slotKey === "extras" && items.length && context.fields.fieldSchemaVersion !== "context-fields@v5")
+      throw new TypeError("CONTEXT_FIELD_VERSION_REQUIRED");
     for (const item of items) if (item.kind === "MOBILITY_INTENT") {
       if (item.plannedTime && !(slot.mobilityRole === "RETURN" ? end ?? start : start) || item.returnTime && !start)
         throw new TypeError("JOURNEY_TIME_REQUIRES_DATE");

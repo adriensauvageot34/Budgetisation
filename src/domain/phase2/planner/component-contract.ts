@@ -14,7 +14,8 @@ export type ComponentSelectionV1 = SelectionIdentity & (
       unitBasis?: "ITEM" | "PERSON" | "SHARED";
       /** Optional P09 quantity evidence. `quantity` remains the exact economic total used by the Compiler. */
       quantityEvidenceVersion?: "component-quantity@v1"; quantityPerPerson?: string; pricedParticipantCount?: number;
-      productAssetRef?: PlannedAssetRef }>
+      productAssetRef?: PlannedAssetRef;
+      lodgingPricing?: Readonly<{ version: "lodging-pricing@v1"; basis: "TOTAL" | "PER_NIGHT"; nightCount: number | null }> }>
   | Readonly<{ kind: "CHILD_CONTEXT"; childContextOccurrenceId: string }>
   | Readonly<{ kind: "MOBILITY_INTENT"; origin?: ProspectivePlaceRef | null; destination?: ProspectivePlaceRef | null; returnRequired?: boolean;
       journey?: JourneyDeclaration; pricing?: MobilityPricingDecision; plannedTime?: string | null; returnTime?: string | null;

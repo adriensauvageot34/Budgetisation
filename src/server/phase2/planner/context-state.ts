@@ -51,7 +51,9 @@ export function patchContextEditorFields(raw: PlanSemanticStateV1, contextId: st
     }
   }
   const rich = Object.keys(fields).some(key => !isLegacyContextField(context.templateKey, key));
-  if (context.fields.fieldSchemaVersion === "context-fields@v3" || Object.hasOwn(fields, "objectAssetRef"))
+  if (context.fields.fieldSchemaVersion === "context-fields@v5") fields.fieldSchemaVersion = "context-fields@v5";
+  else if (context.fields.fieldSchemaVersion === "context-fields@v4") fields.fieldSchemaVersion = "context-fields@v4";
+  else if (context.fields.fieldSchemaVersion === "context-fields@v3" || Object.hasOwn(fields, "objectAssetRef"))
     fields.fieldSchemaVersion = "context-fields@v3";
   else if (rich) fields.fieldSchemaVersion = "context-fields@v2";
   return finish({ ...state, contexts: state.contexts.map(item => item.contextOccurrenceId === contextId

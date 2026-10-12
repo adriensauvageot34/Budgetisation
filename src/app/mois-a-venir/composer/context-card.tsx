@@ -13,7 +13,7 @@ import { visibleEmptySocketKeys } from "./presentation/socket-visibility";
 /** Stable presentation order; the published socket list and identities stay intact. */
 const equipmentOrder: Readonly<Record<string, readonly string[]>> = {
   "night-out": ["main", "before", "outbound", "return", "food", "extras"],
-  "short-stay": ["lodging", "transport", "activities", "restaurants", "groceries", "purchases"],
+  "short-stay": ["lodging", "transport", "activities", "restaurants", "groceries", "purchases", "extras"],
   gift: ["item", "extras"],
   "family-visit": ["hospitality", "activities", "transport"],
 };
