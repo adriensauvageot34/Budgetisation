@@ -7,6 +7,7 @@ import type { ComponentSelectionV1 } from "@/domain/phase2/planner/component-con
 import type { SemanticMutation } from "@/domain/phase2/planner/adjustment-contract";
 import { parsePlanSemanticState } from "@/domain/phase2/planner/semantic-state";
 import { editNightOut } from "@/domain/phase2/planner/night-out-edit";
+import { editShortStay } from "@/domain/phase2/planner/short-stay-edit";
 import { editFamilyVisit } from "@/domain/phase2/planner/family-visit-edit";
 import { mobilitySummaries } from "./mobility-presentation";
 import { knownContextReferences } from "./context-selections";
@@ -66,7 +67,7 @@ export async function composerUiModel(deps: PlannerDependencies, household: stri
     naturalPresets: card.capability.naturalPresets.map(p => ({ ...p, label: ({ low: "Repère bas", median: "Repère médian", high: "Repère haut" } as Record<string, string>)[p.label]
       ?? (p.label === "central" ? "Repère médian" : p.label.startsWith("allocation ×") && p.semanticMutation.kind === "SET_STATE" && typeof p.semanticMutation.value.amount === "string"
         ? `Réserver ${new Intl.NumberFormat("fr-FR", { style: "currency", currency: "EUR" }).format(Number(p.semanticMutation.value.amount))}` : p.label) })) } : null });
-  const mobilityOptions = view.semanticState.contexts.some(c => c.templateKey === "family-visit") && deps.readMobilityOptions
+  const mobilityOptions = view.semanticState.contexts.some(c => ["family-visit", "short-stay"].includes(c.templateKey)) && deps.readMobilityOptions
     ? await deps.readMobilityOptions(household) : undefined;
   return { ...view, householdPersons: deps.householdPersons ?? [],
     ...(mobilityOptions ? { mobilityOptions: { vehicle: mobilityOptions.vehicle, places: mobilityOptions.places.map(p => ({
@@ -214,10 +215,10 @@ export async function handleComposerRequest(deps: PlannerDependencies, household
       if (!card.capabilityRefs.includes("PATCH_CONTEXT")) throw new TypeError("COMPOSER_CONTEXT_LOCKED");
       state = editNightOut(state, request.edit);
       mutationKind = "PATCH_CONTEXT";
-    } else if (request.kind === "EDIT_FAMILY_VISIT") {
+    } else if (request.kind === "EDIT_FAMILY_VISIT" || request.kind === "EDIT_SHORT_STAY") {
       const card = model.board.contexts.find(c => c.contextOccurrenceId === request.edit.contextOccurrenceId);
-      if (card?.templateKey !== "family-visit" || !card.capabilityRefs.includes("PATCH_CONTEXT")) throw new TypeError("COMPOSER_CONTEXT_LOCKED");
-      state = editFamilyVisit(state, request.edit);
+      if (card?.templateKey !== (request.kind === "EDIT_SHORT_STAY" ? "short-stay" : "family-visit") || !card.capabilityRefs.includes("PATCH_CONTEXT")) throw new TypeError("COMPOSER_CONTEXT_LOCKED");
+      state = request.kind === "EDIT_SHORT_STAY" ? editShortStay(state, request.edit) : editFamilyVisit(state, request.edit);
       const refs = knownContextReferences(state);
       if (refs.personIds.length || refs.placeIds.length) {
         if (!deps.validateContextReferences) throw new TypeError("CONTEXT_REFERENCE_OWNER_UNAVAILABLE");

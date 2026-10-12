@@ -71,10 +71,14 @@ export function expandComposableContexts(state: PlanSemanticStateV1, world: Plan
           continue;
         }
         const id = componentId(context.contextOccurrenceId, slot.slotKey, item.selectionId); componentIds.push(id);
+        const durationUnknown = item.lodgingPricing?.basis === "PER_NIGHT" && item.lodgingPricing.nightCount === null;
+        if (durationUnknown) add("CONTEXT_LODGING_DURATION_UNKNOWN", id);
         const request: ComponentRequest = { componentId: id, ownerRef: context.contextOccurrenceId, contextOccurrenceId: context.contextOccurrenceId,
-          externalEntryId: null, externalLineId: null, role: slot.role, label: item.label, quantity: item.quantity, cost: item.cost,
+          externalEntryId: null, externalLineId: null, role: slot.role, label: item.label, quantity: item.quantity,
+          // A nightly price with an unknown duration is retained in the Draft, but has no invented total.
+          cost: durationUnknown ? { kind: "UNKNOWN" } : item.cost,
           binding: { slotIdentityKey: null, relation: "NO_RELATED_SLOT", displacement: "KNOWN", amount: null, count: null },
-          fundingAllocations: item.fundingAllocations ?? [], plannedDate, selectionProvenance: item.provenance,
+          fundingAllocations: durationUnknown ? [] : item.fundingAllocations ?? [], plannedDate, selectionProvenance: item.provenance,
           bindingEvidenceRefs: [`capability:${CONTEXT_REGISTRY_VERSION}:${template.templateKey}:${slot.slotKey}:${item.optionKey}`,
             `decision:${context.contextOccurrenceId}:${slot.slotKey}:${item.selectionId}`] };
         const purchaseDomain = template.templateKey === "purchase" && slot.slotKey === "item" && context.fields.budgetDomain !== "other"

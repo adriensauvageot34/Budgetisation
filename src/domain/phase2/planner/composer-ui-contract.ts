@@ -5,6 +5,7 @@ import type { PlannerJson } from "./json";
 import type { PlanBalanceSuggestions, SemanticMutation } from "./adjustment-contract";
 import type { ComponentSelectionV1 } from "./component-contract";
 import type { NightOutEdit } from "./night-out-edit";
+import type { ShortStayEdit } from "./short-stay-edit";
 import type { FamilyVisitEdit } from "./family-visit-edit";
 import type { PlannedPlaceOption } from "../planned-places";
 import type { PlannedVehicleEstimate } from "../planned-contract";
@@ -81,6 +82,7 @@ export type ComposerRequest = Readonly<{ sequence: number; targetMonth: string; 
   | Readonly<{ kind: "EDIT_GIFT"; contextOccurrenceId: string; values: Readonly<Record<string, PlannerJson>>; item: ComponentSelectionV1 }>
   | Readonly<{ kind: "EDIT_NIGHT_OUT"; edit: NightOutEdit }>
   | Readonly<{ kind: "EDIT_FAMILY_VISIT"; edit: FamilyVisitEdit }>
+  | Readonly<{ kind: "EDIT_SHORT_STAY"; edit: ShortStayEdit }>
   | Readonly<{ kind: "PRESERVE"; targetRef: string; preserve: boolean }>
   | Readonly<{ kind: "SUGGESTIONS" }>
   | Readonly<{ kind: "ACCEPT"; candidateSetDigest: string; candidateId: string }>

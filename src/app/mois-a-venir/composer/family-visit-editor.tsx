@@ -1,5 +1,5 @@
 "use client";
-import { useRef, useState } from "react";
+import { useRef, useState, type ReactNode } from "react";
 import type { PlannedContextState } from "@/domain/phase2/planner/semantic-state";
 import type { ComponentSelectionV1 } from "@/domain/phase2/planner/component-contract";
 import type { ComposerMobilitySummary, ComposerOperation, ComposerUiModel } from "@/domain/phase2/planner/composer-ui-contract";
@@ -23,9 +23,9 @@ const availableRef = (ref?: ProspectivePlaceRef) => ref && (ref.kind === "KNOWN"
 const amount = (raw: string) => decisionAmount(raw.trim().replace(",", "."));
 const modeLabels: Record<string, string> = { car: "Voiture", train: "Train / tram", bus: "Bus", taxi: "Taxi / Uber", free: "À pied / gratuit", other: "Autre transport", unknown: "À préciser" };
 
-export function FamilyVisitEditor({ context, targetMonth, householdPersons, options, summary, fresh, knowledge, initialMode, busy, onSave, onCancel }: {
+export function ProspectiveContextEditor({ stay = false, posts, context, targetMonth, householdPersons, options, summary, fresh, knowledge, initialMode, busy, onSave, onCancel }: {
   context: PlannedContextState; householdPersons: ComposerUiModel["householdPersons"]; options?: ComposerUiModel["mobilityOptions"];
-  targetMonth: string;
+  targetMonth: string; stay?: boolean; posts?: ReactNode;
   summary?: ComposerMobilitySummary; fresh: boolean; knowledge?: CardKnowledgeRead; initialMode?: string; busy: boolean;
   onSave: (operation: ComposerOperation) => void; onCancel: () => void;
 }) {
@@ -35,7 +35,7 @@ export function FamilyVisitEditor({ context, targetMonth, householdPersons, opti
   const [endDate, setEndDate] = useState(text(context.fields.endDate)), [note, setNote] = useState(text(context.fields.timingNote));
   const [visited, setVisited] = useState(context.fields.personVisitedRef as ProspectivePersonRef | undefined);
   const [people, setPeople] = useState((context.fields.participantRefs ?? []) as unknown as ProspectivePersonRef[]);
-  const [destination, setDestination] = useState((context.fields.placeRef ?? original?.destination ?? undefined) as ProspectivePlaceRef | undefined);
+  const [destination, setDestination] = useState((context.fields[stay ? "destinationRef" : "placeRef"] ?? original?.destination ?? undefined) as ProspectivePlaceRef | undefined);
   const [origin, setOrigin] = useState(original?.origin ?? undefined), [mode, setMode] = useState(initialMode ?? original?.optionKey ?? "");
   const [returnRequired, setReturnRequired] = useState(original?.returnRequired ?? false);
   const [outTime, setOutTime] = useState(original?.plannedTime ?? ""), [returnTime, setReturnTime] = useState(original?.returnTime ?? "");
@@ -66,7 +66,7 @@ export function FamilyVisitEditor({ context, targetMonth, householdPersons, opti
       for (const [key, value, baseline] of [["label", label.trim(), text(context.fields.label)], ["plannedDate", date, text(context.fields.plannedDate)],
         ["endDate", endDate, text(context.fields.endDate)], ["timingNote", note.trim(), text(context.fields.timingNote)]] as const)
         if (value !== baseline) fields[key] = value || null;
-      for (const [key, value] of [["personVisitedRef", visited], ["participantRefs", people], ["placeRef", destination]] as const)
+      for (const [key, value] of [...(stay ? [] : [["personVisitedRef", visited] as const]), ["participantRefs", people], [stay ? "destinationRef" : "placeRef", destination]] as const)
         if (!equal(value, context.fields[key])) fields[key] = (value ?? null) as unknown as PlannerJson;
       if (people.some(p => p.kind === "TEXT" && !p.label.trim()) || visited?.kind === "TEXT" && !visited.label.trim()) throw Error("Précisez le nom des personnes choisies.");
       if (destination?.kind === "TEXT" && !destination.label.trim() || origin?.kind === "TEXT" && !origin.label.trim()) throw Error("Précisez les lieux saisis, ou laissez-les inconnus.");
@@ -98,36 +98,37 @@ export function FamilyVisitEditor({ context, targetMonth, householdPersons, opti
       const transportChanged = initialMode !== undefined && initialMode !== original?.optionKey || initialInputs.current !== JSON.stringify(transportInputs)
         || date !== text(context.fields.plannedDate) && !!original?.plannedTime || endDate !== text(context.fields.endDate) && !!original?.returnTime;
       if (!transportChanged && original) transport = original;
-      onSave({ kind: "EDIT_FAMILY_VISIT", edit: { contextOccurrenceId: context.contextOccurrenceId, fields,
+      onSave({ kind: stay ? "EDIT_SHORT_STAY" : "EDIT_FAMILY_VISIT", edit: { contextOccurrenceId: context.contextOccurrenceId, fields,
         ...(transportChanged ? { transport } : {}) } });
     } catch (failure) { setError(failure instanceof Error && failure.message === "MONTH_DECISION_AMOUNT_INVALID"
       ? "Précisez un montant positif ou nul avec deux décimales au maximum." : failure instanceof Error ? failure.message : "Vérifiez les champs."); }
   };
-  return <div data-family-visit-editor className={styles.nightEditor}>
+  return <div data-short-stay-editor={stay || undefined} data-family-visit-editor={!stay || undefined} className={styles.nightEditor}>
     <CardKnowledgePanel knowledge={knowledge} />
-    <p className={styles.helper}>Une visite est votre intention. Un trajet historique ou un véhicule disponible ne décide ni la visite ni ses participants.</p>
-    <nav className={styles.nightNav} aria-label="Sections de la visite">{[["people", "Personnes"], ["place", "Destination"], ["timing", "Dates"], ["route", "Déplacement"]].map(([key, caption]) =>
+    <p className={styles.helper}>{stay ? "Le séjour regroupe ses postes sans coût supplémentaire. Aucun prix, participant ou date n’est décidé automatiquement. Les séjours intermois sont hors périmètre." : "Une visite est votre intention. Un trajet historique ou un véhicule disponible ne décide ni la visite ni ses participants."}</p>
+    <nav className={styles.nightNav} aria-label={stay ? "Sections du séjour" : "Sections de la visite"}>{[["people", "Personnes"], ["place", "Destination"], ["timing", "Dates"], ...(stay ? [["posts", "Hébergement et postes"]] : []), ["route", "Déplacement"]].map(([key, caption]) =>
       <button key={key} type="button" onClick={() => { const section = scroll.current?.querySelector<HTMLElement>(`[data-visit-section="${key}"]`); section?.scrollIntoView({ block: "start" }); section?.focus({ preventScroll: true }); }}>{caption}</button>)}</nav>
     <div ref={scroll} className={styles.nightEditorScroll}>
-      <section className={styles.nightSection} data-visit-section="people" tabIndex={-1}><h3>Qui allez-vous voir ?</h3>
-        <label>Nom de la visite<input value={label} maxLength={120} onChange={event => setLabel(event.target.value)} /></label>
-        <PlannedContactField label="Proche visité" value={visited} householdPersons={householdPersons} onChange={setVisited} />
+      <section className={styles.nightSection} data-visit-section="people" tabIndex={-1}><h3>{stay ? "Votre séjour et ses participants" : "Qui allez-vous voir ?"}</h3>
+        <label>{stay ? "Nom du séjour" : "Nom de la visite"}<input value={label} maxLength={120} onChange={event => setLabel(event.target.value)} /></label>
+        {!stay && <PlannedContactField label="Proche visité" value={visited} householdPersons={householdPersons} onChange={setVisited} />}
         <h4>Personnes concernées</h4>{people.map((ref, index) => <div key={index} className={styles.nightParticipant}>
           <PlannedContactField label={`Personne ${index + 1}`} value={ref} householdPersons={householdPersons} onChange={value => setPeople(people.map((p, i) => i === index ? value ?? { kind: "TEXT", label: "" } : p))} />
           <button type="button" onClick={() => setPeople(people.filter((_, i) => i !== index))}>Retirer cette personne</button></div>)}
         <button type="button" onClick={() => setPeople([...people, { kind: "TEXT", label: "" }])}>Ajouter une personne</button>
       </section>
-      <section className={styles.nightSection} data-visit-section="place" tabIndex={-1}><h3>Où aura lieu la visite ?</h3>
-        <PlannedPlaceField label="Destination de la visite" places={places} value={destination} onChange={setDestination} exact />
+      <section className={styles.nightSection} data-visit-section="place" tabIndex={-1}><h3>{stay ? "Destination du séjour" : "Où aura lieu la visite ?"}</h3>
+        <PlannedPlaceField label={stay ? "Destination du séjour" : "Destination de la visite"} places={places} value={destination} onChange={setDestination} exact />
         {!options && <p role="status">Les lieux admissibles sont en cours de lecture. Une destination libre reste possible.</p>}
       </section>
-      <section className={styles.nightSection} data-visit-section="timing" tabIndex={-1}><h3>Quand ?</h3><p>Vous pouvez conserver une visite sans jour fixé. Le retour reste indépendant du départ.</p>
+      <section className={styles.nightSection} data-visit-section="timing" tabIndex={-1}><h3>Quand ?</h3><p>Vous pouvez conserver cette intention sans jour fixé. Le retour reste indépendant du départ.</p>
         <div className={styles.nightComponentGrid}><label>Date de départ (facultative)<input type="date" value={date} onChange={event => { setDate(event.target.value); if (!event.target.value) setOutTime(""); }} /></label>
           <label>Heure de départ<input type="time" disabled={!date} value={outTime} onChange={event => setOutTime(event.target.value)} /></label>
           <label>Date de retour (facultative)<input type="date" value={endDate} onChange={event => { setEndDate(event.target.value); if (!event.target.value) setReturnTime(""); }} /></label>
           <label>Heure de retour<input type="time" disabled={!endDate} value={returnTime} onChange={event => setReturnTime(event.target.value)} /></label>
           <label>Repère de temps<input value={note} maxLength={160} onChange={event => setNote(event.target.value)} placeholder="Par exemple : un dimanche" /></label></div>
       </section>
+      {stay && <section className={styles.nightSection} data-visit-section="posts" tabIndex={-1}>{posts}</section>}
       <section className={styles.nightSection} data-visit-section="route" tabIndex={-1}><h3>Déplacement prospectif</h3>
         {original?.journey && original.journey.relation !== "OWNS_JOURNEY" && <><p>Le trajet existant est lié à un autre propriétaire. Ses prix sont conservés.</p>
           <label className={styles.nightCheck}><input type="checkbox" checked={ownJourney} onChange={event => setOwnJourney(event.target.checked)} />Choisir un trajet propre pour cette visite</label></>}
@@ -164,6 +165,8 @@ export function FamilyVisitEditor({ context, targetMonth, householdPersons, opti
       </section>
     </div>
     {error && <p role="alert" className={styles.formError}>{error}</p>}
-    <footer><button type="button" className={styles.secondary} disabled={busy} onClick={onCancel}>Retour au mois</button><button type="button" className={styles.primary} disabled={busy} onClick={save}>Prévisualiser la visite</button></footer>
+    <footer><button type="button" className={styles.secondary} disabled={busy} onClick={onCancel}>Retour au mois</button><button type="button" className={styles.primary} disabled={busy} onClick={save}>{stay ? "Prévisualiser le séjour" : "Prévisualiser la visite"}</button></footer>
   </div>;
 }
+
+export const FamilyVisitEditor = ProspectiveContextEditor;

@@ -39,6 +39,8 @@ const fundingLabel = (value: unknown) => {
   const parts = Array.isArray(value) ? value.map(record).filter((part): part is Record<string, unknown> => part !== null) : [];
   return parts.length ? parts.map(part => `${part.source === "BANK" ? "Banque" : String(part.source)} ${typeof part.amount === "string" ? money(part.amount) : "montant inconnu"}`).join(" · ") : "financement à préciser";
 };
+const contextLabels: Readonly<Record<string, string>> = { activity: "Activité", restaurant: "Restaurant", "fast-food": "Restauration rapide", delivery: "Livraison", purchase: "Achat", gift: "Cadeau", "short-stay": "Week-end / séjour", "family-visit": "Visite famille", "friend-visit": "Visite amis", "night-out": "Soirée", "beauty-restock": "Réapprovisionnement beauté", "home-project": "Projet maison", "other-context": "Autre intention" };
+const contextLabel = (context: PlanSemanticStateV1["contexts"][number]) => String(context.fields.label ?? contextLabels[context.templateKey] ?? "Moment du Plan");
 const journeyLabels: Readonly<Record<string, string>> = { car: "Voiture", train: "Train / tram", bus: "Bus", taxi: "Taxi / Uber", free: "À pied / gratuit", other: "Autre transport", unknown: "Transport à préciser" };
 const giftAssetLabel = (value: unknown) => {
   const ref = record(value);
@@ -110,7 +112,7 @@ export function AppliedMonthView({ projection, semanticState, controls = [], pla
           if (item.kind === "CHILD_CONTEXT") {
             const child = semanticState.contexts.find(candidate => candidate.contextOccurrenceId === item.childContextOccurrenceId);
             return <li key={key} data-plan-night-child={String(item.childContextOccurrenceId)}>
-              {typeof child?.fields.label === "string" ? child.fields.label : child?.templateKey ?? "Contexte enfant indisponible"}
+              {typeof child?.fields.label === "string" ? child.fields.label : child ? contextLabel(child) : "Contexte enfant indisponible"}
               {child && <ul className="ml-5 list-inside list-disc">{["main", "extras", "meal", "transport"].flatMap(slot => selectionItems(child, slot).map((nested, index) => renderItem(nested, `${slot}:${index}`)))}</ul>}
             </li>;
           }
@@ -148,22 +150,23 @@ export function AppliedMonthView({ projection, semanticState, controls = [], pla
           </dd></div>)}</dl>
         </article>;
       })}
-      {semanticState.contexts.filter(c => c.templateKey === "family-visit").map(context => {
+      {semanticState.contexts.filter(c => ["family-visit", "short-stay"].includes(c.templateKey)).map(context => {
         const transport = selectionItems(context, "transport")[0], route = record(transport?.route);
         const stops = Array.isArray(route?.stops) ? route.stops.map(record).filter((s): s is Record<string, unknown> => !!s) : [];
-        const destination = record(context.fields.placeRef), participants = Array.isArray(context.fields.participantRefs) ? context.fields.participantRefs : [];
+        const stay = context.templateKey === "short-stay", destination = record(context.fields[stay ? "destinationRef" : "placeRef"]), participants = Array.isArray(context.fields.participantRefs) ? context.fields.participantRefs : [];
         const snapshot = mobility.find(s => s.contextOccurrenceId === context.contextOccurrenceId);
         const renderParts = (owner: PlanSemanticStateV1["contexts"][number], depth = 0): React.ReactNode => depth > 10 ? null
-          : Object.keys(owner.slotSelections).filter(slot => slot !== "transport").flatMap(slot => selectionItems(owner, slot).map(item => {
+          : Object.keys(owner.slotSelections).filter(slot => owner.contextOccurrenceId !== context.contextOccurrenceId || slot !== "transport").flatMap(slot => selectionItems(owner, slot).map(item => {
             const child = semanticState.contexts.find(c => c.contextOccurrenceId === item.childContextOccurrenceId);
             return <li key={`${slot}:${String(item.selectionId)}`}>
-              {item.provenance === "PERSONAL_SUGGESTION" ? "Proposition exploratoire non retenue" : child ? <>{String(child.fields.label ?? child.templateKey)}<ul className="ml-4 list-disc">{renderParts(child, depth + 1)}</ul></>
-                : item.kind === "COMPONENT" ? `${String(item.label)} · quantité ${String(item.quantity)} · ${costLabel(item.cost)} · ${fundingLabel(item.fundingAllocations)}` : "À préciser"}
+              {item.provenance === "PERSONAL_SUGGESTION" ? "Proposition exploratoire non retenue" : child ? <>{contextLabel(child)}<ul className="ml-4 list-disc">{renderParts(child, depth + 1)}</ul></>
+                : item.kind === "COMPONENT" ? `${String(item.label)} · ${record(item.lodgingPricing)?.basis === "PER_NIGHT" ? `tarif par nuit · ${record(item.lodgingPricing)?.nightCount ?? "nombre de nuits inconnu, total inconnu"}` : record(item.lodgingPricing)?.basis === "TOTAL" ? "budget total" : `quantité ${String(item.quantity)}`} · ${costLabel(item.cost)} · ${record(item.lodgingPricing)?.basis === "PER_NIGHT" && record(item.lodgingPricing)?.nightCount === null ? `financement conservé, non appliqué tant que la durée est inconnue (${fundingLabel(item.fundingAllocations)})` : fundingLabel(item.fundingAllocations)}` : item.kind === "MOBILITY_INTENT" ? <>{journeyLabels[String(item.optionKey)] ?? "Transport"} · {record(item.journey)?.relation === "SHARES_JOURNEY" ? "trajet partagé, prix porté par le propriétaire" : "trajet propre"}<MobilityEstimateSummary summary={mobility.find(s => s.contextOccurrenceId === owner.contextOccurrenceId)} /></> : "À préciser"}
             </li>;
           }));
-        return <article key={context.contextOccurrenceId} data-plan-family-visit={context.contextOccurrenceId} className="mt-4 rounded-xl border border-slate-200 p-4">
-          <h3 className="font-bold">Visite famille · {String(context.fields.label ?? "sans nom")}</h3>
-          <p>Proche visité : {context.fields.personVisitedRef ? personLabel(context.fields.personVisitedRef, persons) : "à préciser"}</p>
+        return <article key={context.contextOccurrenceId} data-plan-family-visit={!stay ? context.contextOccurrenceId : undefined} data-plan-short-stay={stay ? context.contextOccurrenceId : undefined} className="mt-4 rounded-xl border border-slate-200 p-4">
+          <h3 className="font-bold">{stay ? "Week-end / séjour" : "Visite famille"} · {String(context.fields.label ?? "sans nom")}</h3>
+          {!stay && <p>Proche visité : {context.fields.personVisitedRef ? personLabel(context.fields.personVisitedRef, persons) : "à préciser"}</p>}
+          {stay && <p>Hébergement : {({ RELATIVE: "chez un proche", HOTEL: "hôtel", HOSTEL: "auberge", RENTAL: "location", OTHER: "autre", LATER: "à préciser" } as Record<string, string>)[String(context.fields.lodgingKind)] ?? "à préciser"} · nuits : {String(context.fields.nightCount ?? "inconnues")}</p>}
           <p>Personnes concernées : {participants.length ? participants.map(ref => personLabel(ref, persons)).join(", ") : "à préciser"}</p>
           <p>Destination : {destination?.kind === "TEXT" ? String(destination.label) : destination?.kind === "KNOWN"
             ? String(stops.find(stop => stop.endpointSource === "ROOT_PLACE")?.label ?? places.find(p => p.placeId === destination.placeId)?.name ?? "lieu lié indisponible") : "à préciser"}</p>
@@ -171,9 +174,9 @@ export function AppliedMonthView({ projection, semanticState, controls = [], pla
             {context.fields.timingNote ? ` · ${String(context.fields.timingNote)}` : ""}</p>
           <p>Transport : {transport?.provenance === "PERSONAL_SUGGESTION" ? "proposition non retenue" : journeyLabels[String(transport?.optionKey)] ?? "à préciser"}
             {transport?.returnRequired === true ? " · aller-retour" : ""}</p>
-          {!!stops.length && <ol className="ml-4 list-decimal">{stops.map((stop, i) => <li key={i}>{String(stop.label)}{stop.endpointSource === "ROOT_PLACE" ? " · destination de la visite" : ""}</li>)}</ol>}
+          {!!stops.length && <ol className="ml-4 list-decimal">{stops.map((stop, i) => <li key={i}>{String(stop.label)}{stop.endpointSource === "ROOT_PLACE" ? (stay ? " · destination du séjour" : " · destination de la visite") : ""}</li>)}</ol>}
           <p>Financement des frais : {fundingLabel(record(transport?.pricing)?.fundingAllocations)}</p>
-          <p className="text-xs text-slate-500">Estimation conservée lors de l’application de cette révision. Le conteneur Visite n’ajoute aucun coût propre.</p>
+          <p className="text-xs text-slate-500">Estimation conservée lors de l’application de cette révision. Le conteneur n’ajoute aucun coût propre.</p>
           {transport?.optionKey === "free" && transport.provenance !== "PERSONAL_SUGGESTION" ? <p>Déplacement déclaré gratuit. Aucun coût de trajet ajouté.</p>
             : <MobilityEstimateSummary summary={snapshot} />}
           <ul className="ml-4 list-disc">{renderParts(context)}</ul>
@@ -189,7 +192,7 @@ export function AppliedMonthView({ projection, semanticState, controls = [], pla
     </section>
     <section className={`${material.glassSecondary} p-6`}><h2 id="plan-contexts" className="text-xl font-black">Moments du Plan</h2>
       <ul className="mt-4 space-y-3">{semanticState.contexts.map(context => <li key={context.contextOccurrenceId}>
-        <strong>{typeof context.fields.label === "string" ? context.fields.label : context.templateKey === "gift" ? `Cadeau pour ${personLabel(context.fields.recipientRef, persons)}` : context.templateKey}</strong>
+        <strong>{typeof context.fields.label === "string" ? context.fields.label : context.templateKey === "gift" ? `Cadeau pour ${personLabel(context.fields.recipientRef, persons)}` : contextLabels[context.templateKey] ?? "Moment du Plan"}</strong>
         <span className="ml-3 text-sm text-slate-600">{typeof context.fields.plannedDate === "string" ? context.fields.plannedDate : "Date à préciser"}</span>
       </li>)}</ul>
       {!semanticState.contexts.length && <p className="mt-3 text-sm text-slate-600">Aucun Context explicite dans cette Revision.</p>}

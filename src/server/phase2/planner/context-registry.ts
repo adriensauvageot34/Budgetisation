@@ -82,10 +82,15 @@ function freeze<T>(value: T): T {
 const giftRegistry = freeze<ContextRegistryV1>({ version: GIFT_ASSET_CONTEXT_REGISTRY_VERSION,
   templates: templates.map(template => template.templateKey === "gift" ? { ...template, version: "gift@v2" } : template)
     .sort((a, b) => a.templateKey < b.templateKey ? -1 : a.templateKey > b.templateKey ? 1 : 0) });
-const registry = freeze<ContextRegistryV1>({ version: "planner-context-registry@v5-family-mobility",
+const familyRegistry = freeze<ContextRegistryV1>({ version: "planner-context-registry@v5-family-mobility",
   templates: giftRegistry.templates.map(t => t.templateKey !== "family-visit" ? t : { ...t, version: "family-visit@v2",
     fields: [...t.fields.map(f => f.fieldKey === "fieldSchemaVersion" ? { ...f, choices: ["context-fields@v2", "context-fields@v3", "context-fields@v4"] } : f),
       { fieldKey: "endDate", kind: "DATE", required: false }] }) });
+const registry = freeze<ContextRegistryV1>({ version: "planner-context-registry@v6-short-stay",
+  templates: familyRegistry.templates.map(t => t.templateKey !== "short-stay" ? t : { ...t, version: "short-stay@v2",
+    fields: t.fields.map(f => f.fieldKey === "fieldSchemaVersion" ? { ...f, choices: ["context-fields@v2", "context-fields@v3", "context-fields@v5"] } : f),
+    componentSlots: [...t.componentSlots, slot("extras", "REPEATING", [component("extra", "Extra du séjour")])],
+    capabilities: [...t.capabilities, { slotKey: "extras", cardinality: "REPEATING", selectionMode: "MANY", action: "SELECT_COMPONENT", optionKeys: ["extra"], childTemplateKeys: [] }] }) });
 export const publishContextRegistry = (): ContextRegistryV1 => registry;
 /** Preserve the exact registry manifest previously emitted for v2 revisions. */
 const v2Registry = freeze<ContextRegistryV1>({ version: CONTEXT_REGISTRY_VERSION,
@@ -103,7 +108,8 @@ const legacyRegistry = freeze<ContextRegistryV1>({ version: CONTEXT_REGISTRY_VER
   templates: v2Registry.templates.map(template => ({ ...template,
     fields: template.fields.filter(field => isLegacyContextField(template.templateKey, field.fieldKey)) })) });
 export function manifestContextRegistry(state: PlanSemanticStateV1): ContextRegistryV1 {
-  if (state.contexts.some(context => context.fields.fieldSchemaVersion === "context-fields@v4")) return registry;
+  if (state.contexts.some(context => context.fields.fieldSchemaVersion === "context-fields@v5")) return registry;
+  if (state.contexts.some(context => context.fields.fieldSchemaVersion === "context-fields@v4")) return familyRegistry;
   if (state.contexts.some(context => context.fields.fieldSchemaVersion === "context-fields@v3")) return giftRegistry;
   return state.contexts.some(context => context.fields.fieldSchemaVersion === "context-fields@v2") ? v2Registry : legacyRegistry;
 }
