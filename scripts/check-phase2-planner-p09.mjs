@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { require } from './lib/phase2-ts-loader.mjs';
 import { createKernelPostgres } from './lib/planner-kernel-postgres.mjs';
-import { fixture, state, uuid, householdId, externalMonth } from './fixtures/planner-headless.mjs';
+import { fixture, state, uuid, householdId, externalMonth, nightMonth } from './fixtures/planner-headless.mjs';
 import { p09CompatibilityMonth } from './fixtures/planner-p09.mjs';
 const { handleComposerRequest } = require('@/server/phase2/planner/composer-service');
 const { createPlanApplyRepository } = require('@/server/phase2/planner/repository');
@@ -9,6 +9,7 @@ const { resolveEffectiveMonthScenario } = require('@/server/phase2/planner/effec
 const { stageLocalDecision, visualDraftModel } = require('@/app/mois-a-venir/composer/local-draft');
 const { previewPlanScenario } = require('@/server/phase2/planner/apply');
 const { AppliedMonthView } = require('@/app/mois-a-venir/applied-month-view');
+const { ComposerShell } = require('@/app/mois-a-venir/composer/composer-shell');
 const { ComposerResponseGate } = require('@/app/mois-a-venir/composer/draft-controller');
 const React = require('react'), { renderToStaticMarkup } = require('react-dom/server');
 const { PLANNED_ASSET_CATALOG_VERSION } = require('@/domain/phase2/planned-assets');
@@ -95,6 +96,21 @@ try {
     assert.equal(compiled.components.filter(c => [id.night, id.before].includes(c.contextOccurrenceId)).length, 6);
     assert.equal(compiled.components.find(c => c.selectionId === id.drink)?.evaluation.economicAmount ??
       compiled.components.find(c => c.label === 'Verres').evaluation.economicAmount, '20.00');
+  });
+  await check('NIGHT-FUNDING-INVALID-BLOCKS-APPLY-WITH-CONTEXT-NEUTRAL-MESSAGE', async () => {
+    const before = child(configured);
+    const invalid = ok(await request({kind:'EDIT_NIGHT_OUT',edit:{contextOccurrenceId:id.night,fields:{},before:{
+      childContextOccurrenceId:id.before,selectionId:id.beforeLink,
+      bottle:{...before.slotSelections.main.items[0],cost:cost('21.00')},extras:before.slotSelections.extras.items
+    }}}, configured.semanticState));
+    assert.equal(invalid.board.cockpit.applyReadiness, 'BLOCKED');
+    const html = renderToStaticMarkup(React.createElement(ComposerShell, {initialModel:invalid,transport:async()=>{throw Error('SSR_TRANSPORT_FORBIDDEN');}}));
+    assert.match(html, /coût du composant/u); assert.doesNotMatch(html, /coût du cadeau/u);
+    const wallet = await request({kind:'EDIT_NIGHT_OUT',edit:{contextOccurrenceId:id.night,fields:{},before:{
+      childContextOccurrenceId:id.before,selectionId:id.beforeLink,
+      bottle:{...before.slotSelections.main.items[0],fundingAllocations:[{source:'SWILE',amount:'20.00'}]},extras:before.slotSelections.extras.items
+    }}}, configured.semanticState);
+    assert.equal(wallet.ok, false); assert.equal(wallet.code, 'PLANNER_WALLET_ELIGIBILITY_UNRESOLVED');
   });
   const restaurantChildId = uuid(9940);
   const withRestaurant = ok(await request({ kind: 'DROP', assetKey: 'template:restaurant', target: { kind: 'CONTEXT_SOCKET',
@@ -245,6 +261,24 @@ try {
         extras: child(readable).slotSelections.extras.items } } }, readable.semanticState));
     assert.equal(child(amended).slotSelections.main.items[0].productAssetRef.assetKey, 'house_party:old_missing_type');
     assert.equal(child(amended).slotSelections.main.items[0].label, 'Bouteille de vodka');
+  });
+  await check('NIGHT-LEGACY-BEFORE-PROMOTION-PRESERVES-UNAVAILABLE-REFERENCE', async () => {
+    const legacy = nightMonth().semantic, parentId = uuid(400), newChildId = uuid(9980);
+    const parent = legacy.contexts.find(c => c.contextOccurrenceId === parentId), before = parent.slotSelections.before.items[0];
+    before.productAssetRef = {catalogVersion:PLANNED_ASSET_CATALOG_VERSION,assetKey:'house_party:old_missing_type',
+      labelAtSelection:'Type retiré',provenance:'EXPLICIT_USER_DECISION'};
+    const readable = ok(await request({kind:'READ'},legacy));
+    const promoted = ok(await request({kind:'EDIT_NIGHT_OUT',edit:{contextOccurrenceId:parentId,fields:{},before:{
+      childContextOccurrenceId:newChildId,selectionId:before.selectionId,
+      bottle:{...before,selectionId:uuid(9981),optionKey:'activity'},extras:[part(uuid(9982),'extra','Diluant','1','3.00')]
+    }}},readable.semanticState));
+    const root = promoted.semanticState.contexts.find(c=>c.contextOccurrenceId===parentId), activity = promoted.semanticState.contexts.find(c=>c.contextOccurrenceId===newChildId);
+    assert.equal(root.slotSelections.before.items[0].kind,'CHILD_CONTEXT');
+    assert.equal(root.slotSelections.before.items[0].selectionId,before.selectionId);
+    assert.equal(activity.slotSelections.main.items[0].productAssetRef.assetKey,'house_party:old_missing_type');
+    assert.equal(activity.slotSelections.main.items[0].cost.unitAmount,'8.00');
+    const compiled = (await previewPlanScenario(deps,householdId,promoted.semanticState)).compiled;
+    assert.equal(compiled.components.filter(c=>c.contextOccurrenceId===newChildId).length,2);
   });
   await check('NIGHT-16-APPLY-RELOAD-MON-PLAN-REEDIT', async () => {
     const applied = ok(await request({ kind: 'APPLY', command: { ...switched.proof, applyRequestId: uuid(9930) } }, switched.semanticState));

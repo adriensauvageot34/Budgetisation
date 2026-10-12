@@ -78,7 +78,10 @@ export function editNightOut(raw: PlanSemanticStateV1, edit: NightOutEdit): Plan
       const ref = item.productAssetRef as unknown as { catalogVersion: string; assetKey: string; labelAtSelection: string; provenance: string };
       const old = Array.isArray(prior?.slotSelections[slot]?.items) ? prior.slotSelections[slot].items.find(candidate =>
         candidate && typeof candidate === "object" && !Array.isArray(candidate) && candidate.selectionId === item.selectionId) : null;
-      const oldRef = old && typeof old === "object" && !Array.isArray(old) ? old.productAssetRef : null;
+      const promotedRef = context.contextOccurrenceId === newChild?.contextOccurrenceId && slot === "main"
+        && formerBefore && typeof formerBefore === "object" && !Array.isArray(formerBefore) && formerBefore.kind === "COMPONENT"
+        ? formerBefore.productAssetRef : null;
+      const oldRef = old && typeof old === "object" && !Array.isArray(old) ? old.productAssetRef : promotedRef;
       if (plannerDigest(oldRef ?? null) === plannerDigest(item.productAssetRef)) continue;
       const asset = plannedAsset(ref.assetKey);
       if (!asset || !["bar", "club", "house_party"].includes(asset.module) || ref.catalogVersion !== PLANNED_ASSET_CATALOG_VERSION

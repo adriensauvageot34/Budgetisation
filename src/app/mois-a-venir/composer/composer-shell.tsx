@@ -378,7 +378,7 @@ export function ComposerShell({ initialModel, transport, initialDrafts = null, d
     : previewStatus === "FAILED" ? "La simulation a échoué. Le brouillon est conservé ; relancez la prévisualisation avant d’appliquer."
     : previewStatus === "STALE" ? "La projection est obsolète. Relancez la prévisualisation avant d’appliquer."
     : previewStatus === "BLOCKED" ? model.board.cockpit.diagnostics.some(diagnostic => diagnostic.code === "COMPONENT_FUNDING_SUM_INVALID")
-      ? "Le financement déclaré ne correspond pas au coût du cadeau. Ajustez-le avant d’appliquer."
+      ? "Le financement déclaré ne correspond pas au coût du composant. Ajustez-le avant d’appliquer."
       : "La projection est calculée, mais des contraintes empêchent l’application. Consultez le détail financier."
     : previewStatus !== "FRESH" ? "La projection du brouillon attend une simulation serveur fraîche."
     : !model.board.draft.dirty ? model.activeRevisionNumber ? "Le mois est déjà appliqué. Modifiez un élément pour créer une nouvelle révision." : `Composez un premier choix pour appliquer votre mois.${model.presentation.unresolvedCount ? ` ${model.presentation.unresolvedCount} éléments à préciser.` : ""}`
