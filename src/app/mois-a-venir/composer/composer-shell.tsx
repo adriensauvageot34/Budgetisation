@@ -20,11 +20,8 @@ import { finishComparison, type ComparisonSnapshot } from "./comparison";
 import { AtomicPopover } from "./atomic-popover";
 import { stageLocalDecision, visualDraftModel } from "./local-draft";
 import { ComposerPreviewScheduler, composerInteractionReuseEnabled, type PreviewStatus } from "./preview-scheduler";
-import { GiftEditor } from "./gift-editor";
+import { editorChunks, type EditorChunkKind, type LoadedEditorChunks } from "./editor-chunks";
 import { NightOutEditor } from "./night-out-editor";
-import { ShortStayEditor } from "./short-stay-editor";
-import { CatalogContextEditor } from "./catalog-context-editor";
-import { FamilyVisitEditor } from "./family-visit-editor";
 import { CardKnowledgePanel } from "./card-knowledge-panel";
 import { useDurableDraft, type DraftTransport } from "./durable-draft";
 import type { ComposerDraftSnapshot, StoredComposerDraft } from "@/domain/phase2/planner/composer-draft-contract";
@@ -52,6 +49,22 @@ export function ComposerShell({ initialModel, transport, initialDrafts = null, d
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [past, setPast] = useState<PlanSemanticStateV1[]>([]), [future, setFuture] = useState<PlanSemanticStateV1[]>([]);
   const [editor, setEditor] = useState<Editor | null>(null), [balanceOpen, setBalanceOpen] = useState(false), [suggestions, setSuggestions] = useState<PlanBalanceSuggestions | null>(null);
+  const [loadedEditors, setLoadedEditors] = useState<LoadedEditorChunks>({});
+  const [editorLoadError, setEditorLoadError] = useState<EditorChunkKind | null>(null);
+  const [editorLoadRetry, setEditorLoadRetry] = useState(0);
+  const editorKind: EditorChunkKind | null = editor?.stayContextId ? "stay" : editor?.familyContextId ? "family"
+    : editor?.giftContextId ? "gift" : editor?.catalogContextId ? "catalog" : null;
+  useEffect(() => {
+    if (!editorKind || loadedEditors[editorKind]) return;
+    let current = true;
+    setEditorLoadError(null);
+    void editorChunks[editorKind]().then(component => {
+      if (current) setLoadedEditors(previous => ({ ...previous, [editorKind]: component }) as LoadedEditorChunks);
+    }).catch(() => { if (current) setEditorLoadError(editorKind); });
+    return () => { current = false; };
+  }, [editorKind, editorLoadRetry, loadedEditors]);
+  const FamilyVisitEditor = loadedEditors.family;
+  const ShortStayEditor = loadedEditors.stay, GiftEditor = loadedEditors.gift, CatalogContextEditor = loadedEditors.catalog;
   const [projectionOpen, setProjectionOpen] = useState(false), [libraryOpenToken, setLibraryOpenToken] = useState(0);
   const [hoverModel, setHoverModel] = useState<ComposerUiModel | null>(null), gate = useRef(new ComposerResponseGate()), timer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const pendingHover = useRef<{ key: string; draftDigest: string; worldVersion: string; sequence: number } | null>(null);
@@ -62,6 +75,15 @@ export function ComposerShell({ initialModel, transport, initialDrafts = null, d
   const [comparison, setComparison] = useState<ComparisonSnapshot | null>(null);
   const durable = useDurableDraft(draftTransport, initialDrafts, initialModel.semanticState.targetMonth, draftState, !!comparison);
   const skipUnloadWarning = useRef(false);
+  const editorReloadSafe = editorLoadError !== null && !!draftTransport && !comparison && durable.online && durable.status === "SAVED" && !durable.unsaved
+    && durable.snapshot?.active?.digest === semanticStateDigest(draftState);
+  function reloadSavedEditor() {
+    // A browser can remember a failed module import for this document. Reload
+    // only a server-confirmed Draft, never an unconfirmed in-memory decision.
+    if (!editorReloadSafe || durable.snapshot?.active?.digest !== semanticStateDigest(localDraft.current)) return;
+    skipUnloadWarning.current = true;
+    window.location.reload();
+  }
   const confirmationDialog = useRef<HTMLDialogElement>(null);
   const [draftConfirmation, setDraftConfirmation] = useState<DraftConfirmation | null>(null);
   const [draftConfirmationBusy, setDraftConfirmationBusy] = useState(false);
@@ -570,12 +592,22 @@ export function ComposerShell({ initialModel, transport, initialDrafts = null, d
     <dialog ref={dialog} className={styles.dialog} data-night-editor={!!editor?.nightContextId || !!editor?.familyContextId || !!editor?.stayContextId || undefined} data-side-panel={editor?.side || undefined} data-compact-editor={editor?.compact || undefined} aria-labelledby="composer-dialog-title" onCancel={e => { e.preventDefault(); closeDialog(); }} onKeyDown={e => { if (e.key === "Escape" && editor?.side) { e.preventDefault(); closeDialog(); } }}>
       <header><h2 id="composer-dialog-title">{editor?.title ?? (projectionOpen ? "Le détail de votre mois" : "Des pistes pour votre mois")}</h2><button className={styles.iconButton} disabled={busy} aria-label="Fermer" onClick={closeDialog}><X size={19} /></button></header>
       {errorMessage && <p role="alert" className={styles.formError}>{errorMessage}</p>}
-      {editor?.stayContextId && draftState.contexts.find(context => context.contextOccurrenceId === editor.stayContextId)
+      {editorKind && !loadedEditors[editorKind]
+        ? <section className={styles.editorLoading} role={editorLoadError === editorKind ? "alert" : "status"} aria-live="polite" data-editor-loading={editorKind}>
+          <p>{editorLoadError === editorKind ? "Le formulaire n’a pas pu être chargé. Votre brouillon et votre carte sont conservés." : "Chargement du formulaire…"}</p>
+          {editorLoadError === editorKind && <button type="button" className={styles.secondary} onClick={() => setEditorLoadRetry(value => value + 1)}>Réessayer le chargement</button>}
+          {editorLoadError === editorKind && <>
+            <p>{editorReloadSafe ? "Votre brouillon est sauvegardé. Vous pouvez recharger Composer, puis rouvrir cette carte."
+              : "Gardez cette page ouverte : un rechargement attend la sauvegarde confirmée de votre brouillon."}</p>
+            {editorReloadSafe && <button type="button" className={styles.secondary} onClick={reloadSavedEditor}>Recharger Composer avec mon brouillon sauvegardé</button>}
+          </>}
+        </section>
+        : editor?.stayContextId && ShortStayEditor && draftState.contexts.find(context => context.contextOccurrenceId === editor.stayContextId)
         ? <ShortStayEditor key={`${editor.stayContextId}:${editor.familyMode ?? "edit"}`} context={draftState.contexts.find(context => context.contextOccurrenceId === editor.stayContextId)!}
           semanticState={draftState} targetMonth={draftState.targetMonth} householdPersons={model.householdPersons} options={model.mobilityOptions} initialMode={editor.familyMode}
           summary={model.mobilitySummaries?.find(item => item.contextOccurrenceId === editor.stayContextId)} fresh={previewStatus === "FRESH"}
           knowledge={model.cardKnowledge[editor.cardKey ?? ""]} busy={busy} onCancel={closeDialog} onSave={operation => { stage(operation); setEditor(null); }} />
-        : editor?.familyContextId && draftState.contexts.find(context => context.contextOccurrenceId === editor.familyContextId)
+        : editor?.familyContextId && FamilyVisitEditor && draftState.contexts.find(context => context.contextOccurrenceId === editor.familyContextId)
         ? <FamilyVisitEditor key={`${editor.familyContextId}:${editor.familyMode ?? "edit"}`} context={draftState.contexts.find(context => context.contextOccurrenceId === editor.familyContextId)!}
           targetMonth={draftState.targetMonth} householdPersons={model.householdPersons} options={model.mobilityOptions} initialMode={editor.familyMode}
           summary={model.mobilitySummaries?.find(item => item.contextOccurrenceId === editor.familyContextId)} fresh={previewStatus === "FRESH"}
@@ -584,11 +616,11 @@ export function ComposerShell({ initialModel, transport, initialDrafts = null, d
         ? <NightOutEditor key={editor.nightContextId} context={draftState.contexts.find(context => context.contextOccurrenceId === editor.nightContextId)!}
           semanticState={draftState} householdPersons={model.householdPersons} knowledge={model.cardKnowledge[editor.cardKey ?? ""]}
           busy={busy} onCancel={closeDialog} onSave={operation => { stage(operation); setEditor(null); }} />
-        : editor?.giftContextId && draftState.contexts.find(context => context.contextOccurrenceId === editor.giftContextId)
+        : editor?.giftContextId && GiftEditor && draftState.contexts.find(context => context.contextOccurrenceId === editor.giftContextId)
         ? <GiftEditor key={editor.giftContextId} context={draftState.contexts.find(context => context.contextOccurrenceId === editor.giftContextId)!}
           householdPersons={model.householdPersons} knowledge={model.cardKnowledge[editor.cardKey ?? ""]}
           busy={busy} onCancel={closeDialog} onSave={operation => { stage(operation); setEditor(null); }} />
-        : editor?.catalogContextId && draftState.contexts.find(context => context.contextOccurrenceId === editor.catalogContextId)
+        : editor?.catalogContextId && CatalogContextEditor && draftState.contexts.find(context => context.contextOccurrenceId === editor.catalogContextId)
         ? <CatalogContextEditor key={editor.catalogContextId} context={draftState.contexts.find(context => context.contextOccurrenceId === editor.catalogContextId)!}
           editor={{ assetKey: editor.cardKey ?? "", fields: editor.fields }} targetMonth={draftState.targetMonth} householdPersons={model.householdPersons}
           options={model.mobilityOptions} knowledge={model.cardKnowledge[editor.cardKey ?? ""]} busy={busy} onCancel={closeDialog}

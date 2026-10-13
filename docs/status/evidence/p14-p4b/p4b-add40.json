@@ -1,0 +1,1197 @@
+{
+  "samples": [
+    {
+      "label": "template:night-out",
+      "at": 186652.30000001192,
+      "trusted": true,
+      "stateMs": 7.300000011920929,
+      "commitMs": 28.099999964237213,
+      "domMs": 72.30000001192093,
+      "paintUpperMs": 158.89999997615814,
+      "status": "PENDING",
+      "nodes": 2053,
+      "visibility": "visible",
+      "viewport": [
+        1280,
+        720
+      ]
+    },
+    {
+      "label": "Fermer",
+      "at": 187020.30000001192,
+      "trusted": true,
+      "commitMs": 3.300000011920929,
+      "domMs": 20.30000001192093,
+      "paintUpperMs": 41.89999997615814,
+      "status": "PENDING",
+      "nodes": 1996,
+      "visibility": "visible",
+      "viewport": [
+        1280,
+        720
+      ]
+    },
+    {
+      "label": "Annuler la dernière modification du brouillon",
+      "at": 187353.60000002384,
+      "trusted": true,
+      "stateMs": 7.899999976158142,
+      "commitMs": 28.399999976158142,
+      "domMs": 34.89999997615814,
+      "paintUpperMs": 40.799999952316284,
+      "status": "PENDING",
+      "nodes": 1944,
+      "visibility": "visible",
+      "viewport": [
+        1280,
+        720
+      ]
+    },
+    {
+      "label": "template:night-out",
+      "at": 187686.10000002384,
+      "trusted": true,
+      "stateMs": 8,
+      "commitMs": 43.09999996423721,
+      "domMs": 103.69999998807907,
+      "paintUpperMs": 177.19999998807907,
+      "status": "PENDING",
+      "nodes": 2053,
+      "visibility": "visible",
+      "viewport": [
+        1280,
+        720
+      ]
+    },
+    {
+      "label": "Fermer",
+      "at": 188023.10000002384,
+      "trusted": true,
+      "commitMs": 5.099999964237213,
+      "domMs": 26.5,
+      "paintUpperMs": 41.5,
+      "status": "PENDING",
+      "nodes": 1996,
+      "visibility": "visible",
+      "viewport": [
+        1280,
+        720
+      ]
+    },
+    {
+      "label": "Annuler la dernière modification du brouillon",
+      "at": 188325.5,
+      "trusted": true,
+      "stateMs": 6.600000023841858,
+      "commitMs": 24.30000001192093,
+      "domMs": 26.600000023841858,
+      "paintUpperMs": 31.100000023841858,
+      "status": "PENDING",
+      "nodes": 1944,
+      "visibility": "visible",
+      "viewport": [
+        1280,
+        720
+      ]
+    },
+    {
+      "label": "template:night-out",
+      "at": 188646.10000002384,
+      "trusted": true,
+      "stateMs": 6.5,
+      "commitMs": 27.299999952316284,
+      "domMs": 68.69999998807907,
+      "paintUpperMs": 142,
+      "status": "PENDING",
+      "nodes": 2053,
+      "visibility": "visible",
+      "viewport": [
+        1280,
+        720
+      ]
+    },
+    {
+      "label": "Fermer",
+      "at": 188989.30000001192,
+      "trusted": true,
+      "commitMs": 3.300000011920929,
+      "domMs": 28.30000001192093,
+      "paintUpperMs": 41.80000001192093,
+      "status": "PENDING",
+      "nodes": 1996,
+      "visibility": "visible",
+      "viewport": [
+        1280,
+        720
+      ]
+    },
+    {
+      "label": "Annuler la dernière modification du brouillon",
+      "at": 189235,
+      "trusted": true,
+      "stateMs": 6.100000023841858,
+      "commitMs": 21.600000023841858,
+      "domMs": 25.100000023841858,
+      "paintUpperMs": 31.30000001192093,
+      "status": "PENDING",
+      "nodes": 1944,
+      "visibility": "visible",
+      "viewport": [
+        1280,
+        720
+      ]
+    },
+    {
+      "label": "template:night-out",
+      "at": 189568.5,
+      "trusted": true,
+      "stateMs": 7.199999988079071,
+      "commitMs": 30.600000023841858,
+      "domMs": 69.10000002384186,
+      "paintUpperMs": 147.19999998807907,
+      "status": "PENDING",
+      "nodes": 2053,
+      "visibility": "visible",
+      "viewport": [
+        1280,
+        720
+      ]
+    },
+    {
+      "label": "Fermer",
+      "at": 189915.19999998808,
+      "trusted": true,
+      "commitMs": 3.100000023841858,
+      "domMs": 19.600000023841858,
+      "paintUpperMs": 32.69999998807907,
+      "status": "PENDING",
+      "nodes": 1996,
+      "visibility": "visible",
+      "viewport": [
+        1280,
+        720
+      ]
+    },
+    {
+      "label": "Annuler la dernière modification du brouillon",
+      "at": 190203.5,
+      "trusted": true,
+      "stateMs": 7.699999988079071,
+      "commitMs": 21.399999976158142,
+      "domMs": 25,
+      "paintUpperMs": 30.100000023841858,
+      "status": "PENDING",
+      "nodes": 1944,
+      "visibility": "visible",
+      "viewport": [
+        1280,
+        720
+      ]
+    },
+    {
+      "label": "template:night-out",
+      "at": 190537.5,
+      "trusted": true,
+      "stateMs": 5.899999976158142,
+      "commitMs": 25.19999998807907,
+      "domMs": 81.69999998807907,
+      "paintUpperMs": 162,
+      "status": "PENDING",
+      "nodes": 2053,
+      "visibility": "visible",
+      "viewport": [
+        1280,
+        720
+      ]
+    },
+    {
+      "label": "Fermer",
+      "at": 190876.5,
+      "trusted": true,
+      "commitMs": 2.699999988079071,
+      "domMs": 13.800000011920929,
+      "paintUpperMs": 33.10000002384186,
+      "status": "PENDING",
+      "nodes": 1996,
+      "visibility": "visible",
+      "viewport": [
+        1280,
+        720
+      ]
+    },
+    {
+      "label": "Annuler la dernière modification du brouillon",
+      "at": 191169.5,
+      "trusted": true,
+      "stateMs": 12.100000023841858,
+      "commitMs": 27.30000001192093,
+      "domMs": 30.69999998807907,
+      "paintUpperMs": 40.39999997615814,
+      "status": "PENDING",
+      "nodes": 1944,
+      "visibility": "visible",
+      "viewport": [
+        1280,
+        720
+      ]
+    },
+    {
+      "label": "template:night-out",
+      "at": 191499.89999997616,
+      "trusted": true,
+      "stateMs": 6.900000035762787,
+      "commitMs": 46.5,
+      "domMs": 116.30000001192093,
+      "paintUpperMs": 199.60000002384186,
+      "status": "PENDING",
+      "nodes": 2053,
+      "visibility": "visible",
+      "viewport": [
+        1280,
+        720
+      ]
+    },
+    {
+      "label": "Fermer",
+      "at": 191860.80000001192,
+      "trusted": true,
+      "commitMs": 4.399999976158142,
+      "domMs": 22.399999976158142,
+      "paintUpperMs": 30.399999976158142,
+      "status": "PENDING",
+      "nodes": 1996,
+      "visibility": "visible",
+      "viewport": [
+        1280,
+        720
+      ]
+    },
+    {
+      "label": "Annuler la dernière modification du brouillon",
+      "at": 192173.30000001192,
+      "trusted": true,
+      "stateMs": 10.199999988079071,
+      "commitMs": 28.099999964237213,
+      "domMs": 31.80000001192093,
+      "paintUpperMs": 46.09999996423721,
+      "status": "PENDING",
+      "nodes": 1944,
+      "visibility": "visible",
+      "viewport": [
+        1280,
+        720
+      ]
+    },
+    {
+      "label": "template:night-out",
+      "at": 192472.10000002384,
+      "trusted": true,
+      "stateMs": 9.199999988079071,
+      "commitMs": 42.89999997615814,
+      "domMs": 96.89999997615814,
+      "paintUpperMs": 180.5,
+      "status": "PENDING",
+      "nodes": 2053,
+      "visibility": "visible",
+      "viewport": [
+        1280,
+        720
+      ]
+    },
+    {
+      "label": "Fermer",
+      "at": 192833.69999998808,
+      "trusted": true,
+      "commitMs": 3.199999988079071,
+      "domMs": 20,
+      "paintUpperMs": 31.400000035762787,
+      "status": "PENDING",
+      "nodes": 1996,
+      "visibility": "visible",
+      "viewport": [
+        1280,
+        720
+      ]
+    },
+    {
+      "label": "Annuler la dernière modification du brouillon",
+      "at": 193132.80000001192,
+      "trusted": true,
+      "stateMs": 7.5,
+      "commitMs": 21.80000001192093,
+      "domMs": 25,
+      "paintUpperMs": 32.09999996423721,
+      "status": "PENDING",
+      "nodes": 1944,
+      "visibility": "visible",
+      "viewport": [
+        1280,
+        720
+      ]
+    },
+    {
+      "label": "template:night-out",
+      "at": 193511.30000001192,
+      "trusted": true,
+      "stateMs": 9.599999964237213,
+      "commitMs": 34.39999997615814,
+      "domMs": 79.19999998807907,
+      "paintUpperMs": 161.19999998807907,
+      "status": "PENDING",
+      "nodes": 2053,
+      "visibility": "visible",
+      "viewport": [
+        1280,
+        720
+      ]
+    },
+    {
+      "label": "Fermer",
+      "at": 193805.30000001192,
+      "trusted": true,
+      "commitMs": 2.699999988079071,
+      "domMs": 17.099999964237213,
+      "paintUpperMs": 31.80000001192093,
+      "status": "PENDING",
+      "nodes": 1996,
+      "visibility": "visible",
+      "viewport": [
+        1280,
+        720
+      ]
+    },
+    {
+      "label": "Annuler la dernière modification du brouillon",
+      "at": 194344.10000002384,
+      "trusted": true,
+      "stateMs": 3.599999964237213,
+      "commitMs": 14.5,
+      "domMs": 16.899999976158142,
+      "paintUpperMs": 60.299999952316284,
+      "status": "PENDING",
+      "nodes": 1944,
+      "visibility": "visible",
+      "viewport": [
+        1280,
+        720
+      ]
+    },
+    {
+      "label": "template:night-out",
+      "at": 194598.10000002384,
+      "trusted": true,
+      "stateMs": 5.899999976158142,
+      "commitMs": 24.099999964237213,
+      "domMs": 70.89999997615814,
+      "paintUpperMs": 97.19999998807907,
+      "status": "PENDING",
+      "nodes": 2928,
+      "visibility": "visible",
+      "viewport": [
+        1280,
+        720
+      ]
+    },
+    {
+      "label": "Fermer",
+      "at": 194939.5,
+      "trusted": true,
+      "commitMs": 4.300000011920929,
+      "domMs": 19.600000023841858,
+      "paintUpperMs": 38,
+      "status": "PENDING",
+      "nodes": 1996,
+      "visibility": "visible",
+      "viewport": [
+        1280,
+        720
+      ]
+    },
+    {
+      "label": "Annuler la dernière modification du brouillon",
+      "at": 195278.19999998808,
+      "trusted": true,
+      "stateMs": 9.5,
+      "commitMs": 23.80000001192093,
+      "domMs": 26.600000023841858,
+      "paintUpperMs": 36.30000001192093,
+      "status": "PENDING",
+      "nodes": 1944,
+      "visibility": "visible",
+      "viewport": [
+        1280,
+        720
+      ]
+    },
+    {
+      "label": "template:night-out",
+      "at": 195614.60000002384,
+      "trusted": true,
+      "stateMs": 7.599999964237213,
+      "commitMs": 45.09999996423721,
+      "domMs": 105.5,
+      "paintUpperMs": 192.19999998807907,
+      "status": "PENDING",
+      "nodes": 2053,
+      "visibility": "visible",
+      "viewport": [
+        1280,
+        720
+      ]
+    },
+    {
+      "label": "Fermer",
+      "at": 195986.39999997616,
+      "trusted": true,
+      "commitMs": 2.300000011920929,
+      "domMs": 16.700000047683716,
+      "paintUpperMs": 32.5,
+      "status": "PENDING",
+      "nodes": 1996,
+      "visibility": "visible",
+      "viewport": [
+        1280,
+        720
+      ]
+    },
+    {
+      "label": "Annuler la dernière modification du brouillon",
+      "at": 196311,
+      "trusted": true,
+      "stateMs": 8.5,
+      "commitMs": 23.100000023841858,
+      "domMs": 26.80000001192093,
+      "paintUpperMs": 38.80000001192093,
+      "status": "PENDING",
+      "nodes": 1944,
+      "visibility": "visible",
+      "viewport": [
+        1280,
+        720
+      ]
+    },
+    {
+      "label": "template:night-out",
+      "at": 200527.89999997616,
+      "trusted": true,
+      "stateMs": 6.200000047683716,
+      "commitMs": 36.90000003576279,
+      "domMs": 86.5,
+      "paintUpperMs": 165.70000004768372,
+      "status": "PENDING",
+      "nodes": 2053,
+      "visibility": "visible",
+      "viewport": [
+        1280,
+        720
+      ]
+    },
+    {
+      "label": "Fermer",
+      "at": 200888.30000001192,
+      "trusted": true,
+      "commitMs": 5.599999964237213,
+      "domMs": 25.30000001192093,
+      "paintUpperMs": 39.80000001192093,
+      "status": "PENDING",
+      "nodes": 1996,
+      "visibility": "visible",
+      "viewport": [
+        1280,
+        720
+      ]
+    },
+    {
+      "label": "Annuler la dernière modification du brouillon",
+      "at": 201211,
+      "trusted": true,
+      "stateMs": 14.899999976158142,
+      "commitMs": 33.39999997615814,
+      "domMs": 36.5,
+      "paintUpperMs": 42.89999997615814,
+      "status": "PENDING",
+      "nodes": 1944,
+      "visibility": "visible",
+      "viewport": [
+        1280,
+        720
+      ]
+    },
+    {
+      "label": "template:night-out",
+      "at": 201546.5,
+      "trusted": true,
+      "stateMs": 7.800000011920929,
+      "commitMs": 48.39999997615814,
+      "domMs": 103.60000002384186,
+      "paintUpperMs": 180.39999997615814,
+      "status": "PENDING",
+      "nodes": 2053,
+      "visibility": "visible",
+      "viewport": [
+        1280,
+        720
+      ]
+    },
+    {
+      "label": "Fermer",
+      "at": 201893,
+      "trusted": true,
+      "commitMs": 2.699999988079071,
+      "domMs": 15.199999988079071,
+      "paintUpperMs": 32.19999998807907,
+      "status": "PENDING",
+      "nodes": 1996,
+      "visibility": "visible",
+      "viewport": [
+        1280,
+        720
+      ]
+    },
+    {
+      "label": "Annuler la dernière modification du brouillon",
+      "at": 202201.80000001192,
+      "trusted": true,
+      "stateMs": 5.599999964237213,
+      "commitMs": 17.19999998807907,
+      "domMs": 20.19999998807907,
+      "paintUpperMs": 33,
+      "status": "PENDING",
+      "nodes": 1944,
+      "visibility": "visible",
+      "viewport": [
+        1280,
+        720
+      ]
+    },
+    {
+      "label": "template:night-out",
+      "at": 202528.5,
+      "trusted": true,
+      "stateMs": 4.399999976158142,
+      "commitMs": 25.19999998807907,
+      "domMs": 83.89999997615814,
+      "paintUpperMs": 227.69999998807907,
+      "status": "PENDING",
+      "nodes": 2053,
+      "visibility": "visible",
+      "viewport": [
+        1280,
+        720
+      ]
+    },
+    {
+      "label": "Fermer",
+      "at": 203230,
+      "trusted": true,
+      "commitMs": 5.600000023841858,
+      "domMs": 28.19999998807907,
+      "paintUpperMs": 54.89999997615814,
+      "status": "PENDING",
+      "nodes": 1996,
+      "visibility": "visible",
+      "viewport": [
+        1280,
+        720
+      ]
+    },
+    {
+      "label": "Annuler la dernière modification du brouillon",
+      "at": 203420.69999998808,
+      "trusted": true,
+      "stateMs": 5.900000035762787,
+      "commitMs": 17.19999998807907,
+      "domMs": 19.600000023841858,
+      "paintUpperMs": 24.100000023841858,
+      "status": "PENDING",
+      "nodes": 1944,
+      "visibility": "visible",
+      "viewport": [
+        1280,
+        720
+      ]
+    },
+    {
+      "label": "template:night-out",
+      "at": 203719.60000002384,
+      "trusted": true,
+      "stateMs": 5.399999976158142,
+      "commitMs": 42.59999996423721,
+      "domMs": 104.79999995231628,
+      "paintUpperMs": 179,
+      "status": "PENDING",
+      "nodes": 2053,
+      "visibility": "visible",
+      "viewport": [
+        1280,
+        720
+      ]
+    },
+    {
+      "label": "Fermer",
+      "at": 204064.5,
+      "trusted": true,
+      "commitMs": 2.600000023841858,
+      "domMs": 19.399999976158142,
+      "paintUpperMs": 43.39999997615814,
+      "status": "PENDING",
+      "nodes": 1996,
+      "visibility": "visible",
+      "viewport": [
+        1280,
+        720
+      ]
+    },
+    {
+      "label": "Annuler la dernière modification du brouillon",
+      "at": 204336.5,
+      "trusted": true,
+      "stateMs": 4.300000011920929,
+      "commitMs": 16.100000023841858,
+      "domMs": 18.899999976158142,
+      "paintUpperMs": 31.30000001192093,
+      "status": "PENDING",
+      "nodes": 1944,
+      "visibility": "visible",
+      "viewport": [
+        1280,
+        720
+      ]
+    },
+    {
+      "label": "template:night-out",
+      "at": 204677.69999998808,
+      "trusted": true,
+      "stateMs": 6.300000011920929,
+      "commitMs": 23.30000001192093,
+      "domMs": 70.10000002384186,
+      "paintUpperMs": 162.69999998807907,
+      "status": "PENDING",
+      "nodes": 2053,
+      "visibility": "visible",
+      "viewport": [
+        1280,
+        720
+      ]
+    },
+    {
+      "label": "Fermer",
+      "at": 205015.39999997616,
+      "trusted": true,
+      "commitMs": 2,
+      "domMs": 13.600000023841858,
+      "paintUpperMs": 30,
+      "status": "PENDING",
+      "nodes": 1996,
+      "visibility": "visible",
+      "viewport": [
+        1280,
+        720
+      ]
+    },
+    {
+      "label": "Annuler la dernière modification du brouillon",
+      "at": 205320.80000001192,
+      "trusted": true,
+      "stateMs": 10.399999976158142,
+      "commitMs": 34.89999997615814,
+      "domMs": 39.30000001192093,
+      "paintUpperMs": 47,
+      "status": "PENDING",
+      "nodes": 1944,
+      "visibility": "visible",
+      "viewport": [
+        1280,
+        720
+      ]
+    },
+    {
+      "label": "template:night-out",
+      "at": 205604.69999998808,
+      "trusted": true,
+      "stateMs": 8.5,
+      "commitMs": 40.30000001192093,
+      "domMs": 97.60000002384186,
+      "paintUpperMs": 170.80000001192093,
+      "status": "PENDING",
+      "nodes": 2053,
+      "visibility": "visible",
+      "viewport": [
+        1280,
+        720
+      ]
+    },
+    {
+      "label": "Fermer",
+      "at": 205939.39999997616,
+      "trusted": true,
+      "commitMs": 2.5,
+      "domMs": 14.400000035762787,
+      "paintUpperMs": 31.100000023841858,
+      "status": "PENDING",
+      "nodes": 1996,
+      "visibility": "visible",
+      "viewport": [
+        1280,
+        720
+      ]
+    },
+    {
+      "label": "Annuler la dernière modification du brouillon",
+      "at": 206289.30000001192,
+      "trusted": true,
+      "stateMs": 7.199999988079071,
+      "commitMs": 17.30000001192093,
+      "domMs": 23.099999964237213,
+      "paintUpperMs": 37,
+      "status": "PENDING",
+      "nodes": 1944,
+      "visibility": "visible",
+      "viewport": [
+        1280,
+        720
+      ]
+    },
+    {
+      "label": "template:night-out",
+      "at": 206605.10000002384,
+      "trusted": true,
+      "stateMs": 9,
+      "commitMs": 38.59999996423721,
+      "domMs": 79.5,
+      "paintUpperMs": 159.0999999642372,
+      "status": "PENDING",
+      "nodes": 2053,
+      "visibility": "visible",
+      "viewport": [
+        1280,
+        720
+      ]
+    },
+    {
+      "label": "Fermer",
+      "at": 206923.80000001192,
+      "trusted": true,
+      "commitMs": 3.099999964237213,
+      "domMs": 23.80000001192093,
+      "paintUpperMs": 35.5,
+      "status": "PENDING",
+      "nodes": 1996,
+      "visibility": "visible",
+      "viewport": [
+        1280,
+        720
+      ]
+    },
+    {
+      "label": "Annuler la dernière modification du brouillon",
+      "at": 207341.30000001192,
+      "trusted": true,
+      "stateMs": 7,
+      "commitMs": 23.099999964237213,
+      "domMs": 25.30000001192093,
+      "paintUpperMs": 30.30000001192093,
+      "status": "PENDING",
+      "nodes": 1944,
+      "visibility": "visible",
+      "viewport": [
+        1280,
+        720
+      ]
+    },
+    {
+      "label": "template:night-out",
+      "at": 207582.89999997616,
+      "trusted": true,
+      "stateMs": 7.700000047683716,
+      "commitMs": 20.400000035762787,
+      "domMs": 69.60000002384186,
+      "paintUpperMs": 147.60000002384186,
+      "status": "PENDING",
+      "nodes": 2053,
+      "visibility": "visible",
+      "viewport": [
+        1280,
+        720
+      ]
+    },
+    {
+      "label": "Fermer",
+      "at": 207883.5,
+      "trusted": true,
+      "commitMs": 1.899999976158142,
+      "domMs": 19.100000023841858,
+      "paintUpperMs": 32.69999998807907,
+      "status": "PENDING",
+      "nodes": 1996,
+      "visibility": "visible",
+      "viewport": [
+        1280,
+        720
+      ]
+    },
+    {
+      "label": "Annuler la dernière modification du brouillon",
+      "at": 208194.39999997616,
+      "trusted": true,
+      "stateMs": 9.700000047683716,
+      "commitMs": 21.30000001192093,
+      "domMs": 23.600000023841858,
+      "paintUpperMs": 32.700000047683716,
+      "status": "PENDING",
+      "nodes": 1944,
+      "visibility": "visible",
+      "viewport": [
+        1280,
+        720
+      ]
+    },
+    {
+      "label": "template:night-out",
+      "at": 208533.5,
+      "trusted": true,
+      "stateMs": 4,
+      "commitMs": 21.5,
+      "domMs": 68.89999997615814,
+      "paintUpperMs": 93.89999997615814,
+      "status": "PENDING",
+      "nodes": 2928,
+      "visibility": "visible",
+      "viewport": [
+        1280,
+        720
+      ]
+    },
+    {
+      "label": "Fermer",
+      "at": 208846.39999997616,
+      "trusted": true,
+      "commitMs": 2.700000047683716,
+      "domMs": 21.200000047683716,
+      "paintUpperMs": 33.40000003576279,
+      "status": "PENDING",
+      "nodes": 1996,
+      "visibility": "visible",
+      "viewport": [
+        1280,
+        720
+      ]
+    },
+    {
+      "label": "Annuler la dernière modification du brouillon",
+      "at": 209138,
+      "trusted": true,
+      "stateMs": 5,
+      "commitMs": 16.399999976158142,
+      "domMs": 19.899999976158142,
+      "paintUpperMs": 31,
+      "status": "PENDING",
+      "nodes": 1944,
+      "visibility": "visible",
+      "viewport": [
+        1280,
+        720
+      ]
+    },
+    {
+      "label": "template:night-out",
+      "at": 209455.19999998808,
+      "trusted": true,
+      "stateMs": 8.400000035762787,
+      "commitMs": 35.60000002384186,
+      "domMs": 110.69999998807907,
+      "paintUpperMs": 202.9000000357628,
+      "status": "PENDING",
+      "nodes": 2053,
+      "visibility": "visible",
+      "viewport": [
+        1280,
+        720
+      ]
+    },
+    {
+      "label": "Fermer",
+      "at": 209782.30000001192,
+      "trusted": true,
+      "commitMs": 2.399999976158142,
+      "domMs": 18.599999964237213,
+      "paintUpperMs": 30.69999998807907,
+      "status": "PENDING",
+      "nodes": 1996,
+      "visibility": "visible",
+      "viewport": [
+        1280,
+        720
+      ]
+    },
+    {
+      "label": "Annuler la dernière modification du brouillon",
+      "at": 210101.39999997616,
+      "trusted": true,
+      "stateMs": 3.400000035762787,
+      "commitMs": 16,
+      "domMs": 19.600000023841858,
+      "paintUpperMs": 33.200000047683716,
+      "status": "PENDING",
+      "nodes": 1944,
+      "visibility": "visible",
+      "viewport": [
+        1280,
+        720
+      ]
+    }
+  ],
+  "editorReady": [
+    {
+      "asset": "template:night-out",
+      "ms": 71.69999998807907,
+      "chunk": "ready"
+    },
+    {
+      "asset": "template:night-out",
+      "ms": 103.5,
+      "chunk": "ready"
+    },
+    {
+      "asset": "template:night-out",
+      "ms": 68.5,
+      "chunk": "ready"
+    },
+    {
+      "asset": "template:night-out",
+      "ms": 68.89999997615814,
+      "chunk": "ready"
+    },
+    {
+      "asset": "template:night-out",
+      "ms": 81.39999997615814,
+      "chunk": "ready"
+    },
+    {
+      "asset": "template:night-out",
+      "ms": 116,
+      "chunk": "ready"
+    },
+    {
+      "asset": "template:night-out",
+      "ms": 96.59999996423721,
+      "chunk": "ready"
+    },
+    {
+      "asset": "template:night-out",
+      "ms": 78.89999997615814,
+      "chunk": "ready"
+    },
+    {
+      "asset": "template:night-out",
+      "ms": 70.59999996423721,
+      "chunk": "ready"
+    },
+    {
+      "asset": "template:night-out",
+      "ms": 105.19999998807907,
+      "chunk": "ready"
+    },
+    {
+      "asset": "template:night-out",
+      "ms": 85,
+      "chunk": "ready"
+    },
+    {
+      "asset": "template:night-out",
+      "ms": 102.80000001192093,
+      "chunk": "ready"
+    },
+    {
+      "asset": "template:night-out",
+      "ms": 83.60000002384186,
+      "chunk": "ready"
+    },
+    {
+      "asset": "template:night-out",
+      "ms": 104.19999998807907,
+      "chunk": "ready"
+    },
+    {
+      "asset": "template:night-out",
+      "ms": 68.60000002384186,
+      "chunk": "ready"
+    },
+    {
+      "asset": "template:night-out",
+      "ms": 97.40000003576279,
+      "chunk": "ready"
+    },
+    {
+      "asset": "template:night-out",
+      "ms": 78,
+      "chunk": "ready"
+    },
+    {
+      "asset": "template:night-out",
+      "ms": 69.20000004768372,
+      "chunk": "ready"
+    },
+    {
+      "asset": "template:night-out",
+      "ms": 68.69999998807907,
+      "chunk": "ready"
+    },
+    {
+      "asset": "template:night-out",
+      "ms": 110.40000003576279,
+      "chunk": "ready"
+    }
+  ],
+  "resources": [
+    {
+      "name": "/app.js",
+      "transfer": 344028,
+      "decoded": 343728,
+      "ms": 92.10000002384186
+    },
+    {
+      "name": "/chunks/chunk-4Z42ZKHL.js",
+      "transfer": 19833,
+      "decoded": 19533,
+      "ms": 8.800000011920929
+    },
+    {
+      "name": "/chunks/chunk-GNSHWBQE.js",
+      "transfer": 1070,
+      "decoded": 770,
+      "ms": 10.800000011920929
+    },
+    {
+      "name": "/chunks/chunk-T5GCAS2K.js",
+      "transfer": 52584,
+      "decoded": 52284,
+      "ms": 13.800000011920929
+    }
+  ],
+  "spans": {
+    "stage": {
+      "calls": 40,
+      "ms": 286.5000002980232
+    },
+    "composePresentationNodes": {
+      "calls": 40,
+      "ms": 16.20000010728836
+    },
+    "inventoryLayoutPages": {
+      "calls": 80,
+      "ms": 37.60000002384186
+    }
+  },
+  "renders": {},
+  "profiles": [],
+  "longTasks": [
+    78,
+    72,
+    108,
+    58,
+    71,
+    70,
+    72,
+    77,
+    86,
+    72,
+    119,
+    53,
+    90,
+    106,
+    52,
+    72,
+    85,
+    86,
+    73,
+    83,
+    108,
+    53,
+    96,
+    83,
+    107,
+    52,
+    87,
+    87,
+    63,
+    72,
+    71,
+    109,
+    65,
+    80,
+    56,
+    82,
+    100,
+    77,
+    88,
+    66,
+    72,
+    66,
+    71,
+    65,
+    114,
+    56,
+    75
+  ],
+  "requests": [
+    {
+      "kind": "READ",
+      "sequence": 4,
+      "ms": 7913.399999976158,
+      "status": 200
+    },
+    {
+      "kind": "READ",
+      "sequence": 6,
+      "ms": 7379.400000035763,
+      "status": 200
+    },
+    {
+      "kind": "READ",
+      "sequence": 8,
+      "ms": 6795.299999952316,
+      "status": 200
+    },
+    {
+      "kind": "READ",
+      "sequence": 10,
+      "ms": 14651.399999976158,
+      "status": 200
+    },
+    {
+      "kind": "READ",
+      "sequence": 16,
+      "ms": 13370.100000023842,
+      "status": 200
+    },
+    {
+      "kind": "READ",
+      "sequence": 18,
+      "ms": 13159.800000011921,
+      "status": 200
+    },
+    {
+      "kind": "READ",
+      "sequence": 12,
+      "ms": 14461.799999952316,
+      "status": 200
+    },
+    {
+      "kind": "READ",
+      "sequence": 14,
+      "ms": 18234,
+      "status": 200
+    },
+    {
+      "kind": "READ",
+      "sequence": 22,
+      "ms": 16474.69999998808,
+      "status": 200
+    }
+  ],
+  "rectCalls": 0,
+  "rectMs": 0,
+  "heapStart": 21713284,
+  "heapEnd": 39166328
+}

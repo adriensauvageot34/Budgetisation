@@ -1,0 +1,104 @@
+{
+  "samples": [
+    {
+      "label": "template:night-out",
+      "at": 53758.5,
+      "trusted": true,
+      "stateMs": 19.30000001192093,
+      "commitMs": 76.69999998807907,
+      "domMs": 313.10000002384186,
+      "paintUpperMs": 451.69999998807907,
+      "status": "PENDING",
+      "nodes": 2908,
+      "visibility": "visible",
+      "viewport": [
+        1280,
+        720
+      ]
+    },
+    {
+      "label": "Fermer",
+      "at": 163476.10000002384,
+      "trusted": true,
+      "commitMs": 8.699999988079071,
+      "domMs": 41.299999952316284,
+      "paintUpperMs": 60.39999997615814,
+      "status": "FRESH",
+      "nodes": 3391,
+      "visibility": "visible",
+      "viewport": [
+        1280,
+        720
+      ]
+    }
+  ],
+  "editorReady": [
+    {
+      "asset": "template:night-out",
+      "ms": 312.80000001192093,
+      "chunk": "ready"
+    }
+  ],
+  "resources": [
+    {
+      "name": "/app.js",
+      "transfer": 344028,
+      "decoded": 343728,
+      "ms": 92.10000002384186
+    },
+    {
+      "name": "/chunks/chunk-4Z42ZKHL.js",
+      "transfer": 19833,
+      "decoded": 19533,
+      "ms": 8.800000011920929
+    },
+    {
+      "name": "/chunks/chunk-GNSHWBQE.js",
+      "transfer": 1070,
+      "decoded": 770,
+      "ms": 10.800000011920929
+    },
+    {
+      "name": "/chunks/chunk-T5GCAS2K.js",
+      "transfer": 52584,
+      "decoded": 52284,
+      "ms": 13.800000011920929
+    }
+  ],
+  "spans": {
+    "stage": {
+      "calls": 1,
+      "ms": 18.099999964237213
+    },
+    "composePresentationNodes": {
+      "calls": 2,
+      "ms": 0.7999999523162842
+    },
+    "inventoryLayoutPages": {
+      "calls": 3,
+      "ms": 2.099999964237213
+    }
+  },
+  "renders": {},
+  "profiles": [],
+  "longTasks": [
+    318,
+    58,
+    62,
+    51,
+    65,
+    70
+  ],
+  "requests": [
+    {
+      "kind": "READ",
+      "sequence": 2,
+      "ms": 3669,
+      "status": 200
+    }
+  ],
+  "rectCalls": 0,
+  "rectMs": 0,
+  "heapStart": 14540056,
+  "heapEnd": 22694069
+}

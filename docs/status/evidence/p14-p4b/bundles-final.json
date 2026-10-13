@@ -1,0 +1,121 @@
+[
+  {
+    "directory": "outputs/p14-p4b-reference-final",
+    "initial": {
+      "files": 1,
+      "bytes": 480927,
+      "gzip": 146027
+    },
+    "all": {
+      "files": 1,
+      "bytes": 480927,
+      "gzip": 146027
+    },
+    "files": [
+      {
+        "file": "app.js",
+        "bytes": 480927,
+        "gzip": 146027,
+        "initial": true,
+        "imports": []
+      }
+    ]
+  },
+  {
+    "directory": "outputs/p14-p4b-commit-bundle",
+    "initial": {
+      "files": 4,
+      "bytes": 417543,
+      "gzip": 131559
+    },
+    "all": {
+      "files": 11,
+      "bytes": 486089,
+      "gzip": 153626
+    },
+    "files": [
+      {
+        "file": "app.js",
+        "bytes": 344956,
+        "gzip": 105899,
+        "initial": true,
+        "imports": [
+          "family-visit-editor-3BN3G36Z.js",
+          "short-stay-editor-QN3O2OQY.js",
+          "gift-editor-MKR4XFBM.js",
+          "catalog-context-editor-DK5BVAO4.js"
+        ]
+      },
+      {
+        "file": "chunks/catalog-context-editor-DK5BVAO4.js",
+        "bytes": 4130,
+        "gzip": 1858,
+        "initial": false,
+        "imports": []
+      },
+      {
+        "file": "chunks/chunk-352ZP42E.js",
+        "bytes": 3051,
+        "gzip": 1295,
+        "initial": false,
+        "imports": []
+      },
+      {
+        "file": "chunks/chunk-4Z42ZKHL.js",
+        "bytes": 19533,
+        "gzip": 6193,
+        "initial": true,
+        "imports": []
+      },
+      {
+        "file": "chunks/chunk-DBZ3WGMM.js",
+        "bytes": 28221,
+        "gzip": 6902,
+        "initial": false,
+        "imports": []
+      },
+      {
+        "file": "chunks/chunk-GNSHWBQE.js",
+        "bytes": 770,
+        "gzip": 504,
+        "initial": true,
+        "imports": []
+      },
+      {
+        "file": "chunks/chunk-KDZN4YZK.js",
+        "bytes": 19191,
+        "gzip": 6321,
+        "initial": false,
+        "imports": []
+      },
+      {
+        "file": "chunks/chunk-T5GCAS2K.js",
+        "bytes": 52284,
+        "gzip": 18963,
+        "initial": true,
+        "imports": []
+      },
+      {
+        "file": "chunks/family-visit-editor-3BN3G36Z.js",
+        "bytes": 268,
+        "gzip": 199,
+        "initial": false,
+        "imports": []
+      },
+      {
+        "file": "chunks/gift-editor-MKR4XFBM.js",
+        "bytes": 6724,
+        "gzip": 2597,
+        "initial": false,
+        "imports": []
+      },
+      {
+        "file": "chunks/short-stay-editor-QN3O2OQY.js",
+        "bytes": 6961,
+        "gzip": 2895,
+        "initial": false,
+        "imports": []
+      }
+    ]
+  }
+]

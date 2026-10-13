@@ -1,0 +1,5 @@
+
+> budgetisation@0.1.0 typecheck
+> tsc --noEmit
+
+src/app/mois-a-venir/composer/composer-shell.tsx(601,37): error TS2774: This condition will always return true since this function is always defined. Did you mean to call it instead?

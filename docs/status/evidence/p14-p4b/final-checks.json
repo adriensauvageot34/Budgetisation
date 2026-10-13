@@ -1,0 +1,16 @@
+{
+  "base": "33fc974fb698bed46affbd823b6bf85942066575",
+  "branch": "codex/composer-v3-p14-p4b-progressive-ui",
+  "typecheckExit": 0,
+  "nextBuildExit": 0,
+  "C8": "EXECUTED_PASS_35_FIXTURE",
+  "R6P45": "EXECUTED_PASS_30_LOCAL",
+  "R6Presentation": "EXECUTED_PASS_LOCAL",
+  "atomicUI": "EXECUTED_PASS_14_LOCAL",
+  "progressiveImports": "EXECUTED_PASS_4_LOCAL",
+  "browserAuthenticated": "NOT_RUN",
+  "nativeDrag": "NOT_CERTIFIED",
+  "globalVisualP95": "NOT_CERTIFIED",
+  "historicalReuse": "0",
+  "status": "SAFE_LOCAL_IMPROVEMENT_REAL_GAIN_NOT_CERTIFIED"
+}

@@ -1,0 +1,74 @@
+[
+  {
+    "command": "node scripts/check-planner-performance-parity.mjs",
+    "exitCode": 0,
+    "status": "EXECUTED_PASS_FIXTURE_ONLY",
+    "logBytes": 65
+  },
+  {
+    "command": "node scripts/check-phase2-planner-p11.mjs",
+    "exitCode": 0,
+    "status": "EXECUTED_PASS_FIXTURE_ONLY",
+    "logBytes": 1769
+  },
+  {
+    "command": "node scripts/check-phase2-planner-p12.mjs",
+    "exitCode": 0,
+    "status": "EXECUTED_PASS_FIXTURE_ONLY",
+    "logBytes": 528
+  },
+  {
+    "command": "node scripts/check-phase2-planner-p13.mjs",
+    "exitCode": 0,
+    "status": "EXECUTED_PASS_FIXTURE_ONLY",
+    "logBytes": 391
+  },
+  {
+    "command": "node scripts/check-composer-p14-p1-read-reuse.mjs",
+    "exitCode": 0,
+    "status": "EXECUTED_PASS_FIXTURE_ONLY",
+    "logBytes": 2639
+  },
+  {
+    "command": "node scripts/check-composer-p14-p3-history.mjs",
+    "exitCode": 0,
+    "status": "EXECUTED_PASS_FIXTURE_ONLY",
+    "logBytes": 6758
+  },
+  {
+    "command": "node scripts/check-composer-p14-p2-mutation.mjs",
+    "exitCode": 0,
+    "status": "EXECUTED_PASS_FIXTURE_ONLY",
+    "logBytes": 10850
+  },
+  {
+    "command": "node scripts/check-composer-p14-p2-scheduler.mjs",
+    "exitCode": 0,
+    "status": "EXECUTED_PASS_FIXTURE_ONLY",
+    "logBytes": 5005
+  },
+  {
+    "command": "node scripts/check-composer-p14-p2-presentation.mjs",
+    "exitCode": 0,
+    "status": "EXECUTED_PASS_FIXTURE_ONLY",
+    "logBytes": 4476
+  },
+  {
+    "command": "node scripts/check-composer-p14-p2-durable.mjs",
+    "exitCode": 0,
+    "status": "EXECUTED_PASS_FIXTURE_ONLY",
+    "logBytes": 942
+  },
+  {
+    "command": "node scripts/check-phase2-planner-contexts.mjs",
+    "exitCode": 0,
+    "status": "EXECUTED_PASS_FIXTURE_ONLY",
+    "logBytes": 752
+  },
+  {
+    "command": "node scripts/check-phase2-planner-interactions.mjs",
+    "exitCode": 1,
+    "status": "FAIL_PREEXISTING_R3_008",
+    "logBytes": 1111
+  }
+]

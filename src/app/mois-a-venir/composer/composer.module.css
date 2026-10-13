@@ -72,6 +72,9 @@
 .libraryScroll { min-height:0; flex:1; overflow-y:auto; overscroll-behavior:contain; scrollbar-gutter:stable; padding:0 12px 16px; }
 .assetGroup { padding-top:15px; }
 .assetGroup h3 { font-size:9px; font-weight:650; text-transform:uppercase; letter-spacing:1.15px; color:#7f7492; margin:0 4px 8px; }
+.assetGroupToggle { width:100%; display:flex; align-items:center; gap:7px; border:0; padding:5px 4px; background:transparent; color:inherit; font:inherit; font-weight:inherit; letter-spacing:inherit; text-align:left; text-transform:inherit; cursor:pointer; border-radius:6px; }
+.assetGroupToggle:hover,.assetGroupToggle:focus-visible { color:#49316d; background:#eee9f7; }
+.assetGroupToggle small { margin-left:auto; font-size:10px; letter-spacing:normal; }
 .assetGrid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:7px; }
 .asset { min-width:0; width:100%; min-height:73px; display:flex; flex-direction:column; align-items:flex-start; justify-content:center; text-align:left; gap:3px; border:1px solid #eae4f0; background:#fff; border-radius:11px; padding:7px 10px; color:var(--ink); transition:transform var(--motion-hover),box-shadow var(--motion-hover),border-color var(--motion-hover); }
 .asset[draggable=true] { cursor:grab; }
@@ -81,6 +84,7 @@
 .asset>span:nth-child(2) { min-width:0; font-size:10px; font-weight:650; line-height:1.25; }
 .assetIcon { display:flex; height:32px; width:32px; flex-shrink:0; }
 .searchEmpty { padding:15px 4px; font-size:11px; color:var(--muted); }
+.editorLoading { padding:20px; min-height:110px; }
 .board { position:relative; z-index:var(--z-board); min-height:0; min-width:0; display:flex; flex-direction:column; background:transparent; border:0; border-radius:0; }
 /* clip prevents native drag autoscroll from bypassing the controlled page transform. */
 .carouselViewport { position:relative; min-height:0; flex:1; overflow:clip; border-radius:10px; }

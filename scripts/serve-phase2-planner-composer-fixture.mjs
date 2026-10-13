@@ -36,21 +36,25 @@ const mocks = {
   '@/components/runtime': 'import {useRef} from "react"; export function useProductRuntime(){return {backgroundRootRef:useRef(null)}}',
   '@/features/auth/sign-out-button': 'import React from "react"; export const SignOutButton = () => React.createElement("button",{disabled:true},"Déconnexion");'
 };
-await build({ entryPoints: [p4Measuring ? 'scripts/lib/planner-composer-p14-p4a-browser-entry.tsx' : p2Measuring ? 'scripts/lib/planner-composer-p14-p2-browser-entry.tsx' : 'scripts/lib/planner-composer-browser-entry.tsx'], bundle: true, format: 'esm', target: 'chrome120', jsx: 'automatic',
+const p4Split = p4Measuring && process.env.PLANNER_P14_P4B_SPLIT === '1';
+const built = await build({ entryPoints: [p4Measuring ? 'scripts/lib/planner-composer-p14-p4a-browser-entry.tsx' : p2Measuring ? 'scripts/lib/planner-composer-p14-p2-browser-entry.tsx' : 'scripts/lib/planner-composer-browser-entry.tsx'], bundle: true, format: 'esm', target: 'chrome120', jsx: 'automatic',
   define: { 'process.env.NEXT_PUBLIC_COMPOSER_P14_P2_INTERACTIONS': JSON.stringify(process.env.NEXT_PUBLIC_COMPOSER_P14_P2_INTERACTIONS ?? '1'),
     ...(p4Measuring?{'process.env.NODE_ENV':'"production"','process.env.P4_DIAGNOSTICS':JSON.stringify(process.env.PLANNER_P14_P4A_DIAGNOSTICS==='1'),
       'process.env.NEXT_PUBLIC_COMPOSER_P14_P4A_PAGES':JSON.stringify(process.env.NEXT_PUBLIC_COMPOSER_P14_P4A_PAGES ?? 'neighbors')}: {}) },
   minify:p4Measuring,
-  outfile: path.join(out, 'app.js'), loader: { '.css': 'local-css' }, sourcemap: true,
+  ...(p4Split ? { outdir:out, entryNames:'app', chunkNames:'chunks/[name]-[hash]', splitting:true, metafile:true } : { outfile: path.join(out, 'app.js') }),
+  loader: { '.css': 'local-css' }, sourcemap: true,
   external: ['/planned-visuals/*'],
   plugins: [p4FixturePlugin(),p2FixturePlugin(), {name:'fixture-host-only',setup(builder){ builder.onResolve({filter:/^(next\/link|next\/navigation|@\/components\/runtime|@\/features\/auth\/sign-out-button)$/},args=>({path:args.path,namespace:'fixture-host'}));
     builder.onLoad({filter:/.*/,namespace:'fixture-host'},args=>({contents:mocks[args.path],loader:'js',resolveDir:process.cwd()})); }}] });
+if(p4Split)fs.writeFileSync(path.join(out,'bundle-meta.json'),JSON.stringify(built.metafile,null,2));
 const globalCss = process.env.PLANNER_C8_GLOBAL_CSS
   ? fs.readFileSync(process.env.PLANNER_C8_GLOBAL_CSS, 'utf8')
   : fs.readdirSync('.next/static/chunks').filter(n=>n.endsWith('.css')).map(n=>fs.readFileSync(`.next/static/chunks/${n}`,'utf8')).find(css=>css.includes('.h-dvh{'));
 if (!globalCss?.includes('.h-dvh{')) throw new Error('A production global stylesheet containing h-dvh is required for AppShell checks.');
 fs.writeFileSync(path.join(out,'global.css'),globalCss);
 } else if (['app.js','app.css','global.css'].some(name => !fs.existsSync(path.join(out,name)))) throw new Error('PLANNER_C8_PREBUILT_ASSETS_MISSING');
+if (process.env.PLANNER_C8_BUILD_ONLY === '1') process.exit(0);
 const stores = new Map(), fixtures = { A: simpleMonth, B: nightMonth, C: weekendMonth, D: renewalMonth, E: externalMonth, R: atomicMonth,
   P04: () => ({ world: plannerFixture(), semantic: plannerState() }),
   P05: () => ({ world: plannerFixture(), semantic: plannerState() }),
@@ -91,7 +95,8 @@ async function store(key) {
   })());
   return stores.get(key);
 }
-const host = `<!doctype html><html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Composer mon mois — fixtures C8</title><link rel="stylesheet" href="/global.css"><link rel="stylesheet" href="/app.css"></head><body><div id="root"></div><script type="module" src="/app.js?v=${encodeURIComponent(process.env.PLANNER_C8_ASSET_VERSION ?? 'base')}"></script></body></html>`;
+const assetOrigin = process.env.PLANNER_C8_ASSET_ORIGIN ?? '';
+const host = `<!doctype html><html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Composer mon mois — fixtures C8</title><link rel="stylesheet" href="/global.css"><link rel="stylesheet" href="${assetOrigin}/app.css"></head><body><div id="root"></div><script type="module" src="${assetOrigin}/app.js?v=${encodeURIComponent(process.env.PLANNER_C8_ASSET_VERSION ?? 'base')}"></script></body></html>`;
 const server = http.createServer(async (request, response) => {
   try {
     const url = new URL(request.url, 'http://127.0.0.1');
@@ -172,7 +177,7 @@ const server = http.createServer(async (request, response) => {
       const rejectSequence = Number(url.searchParams.get('rejectSequence'));
       const syntheticReject = !initialRead && command.kind === 'READ' && url.searchParams.has('rejectSequence') && rejectSequence === command.sequence;
       let result = syntheticReject ? { ok:false, sequence:command.sequence, code:'P03B_SYNTHETIC_REJECTION', message:'Simulation de test rejetée' } : await p2Interaction(command, () => handleComposerRequest(s.deps, householdId, command));
-      if(p4Measuring&&initialRead&&key.startsWith('P4')&&result.ok){
+      if(p4Measuring&&initialRead&&key.startsWith('P4')&&result.ok&&!draftStore(key).active){
         const target=key.includes('40')?40:20;let n=0;
         if(result.model.presentation.elementCount>target)throw Error('P4_INITIAL_DENSITY_EXCEEDS_TARGET');
         while(result.model.presentation.elementCount<target&&n<40){s.fixture.semantic.contexts.push(p4Extra(++n));command.draft=s.fixture.semantic;
@@ -222,11 +227,13 @@ const server = http.createServer(async (request, response) => {
       response.end(`<!doctype html><html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Mois à venir · fixture ${key}</title><link rel="stylesheet" href="/global.css"><link rel="stylesheet" href="/app.css"></head><body><main style="max-width:1100px;margin:24px auto;padding:16px">${markup}</main></body></html>`);
       return;
     }
-    if (['/app.js', '/app.css', '/global.css', '/app.js.map', '/app.css.map'].includes(url.pathname)) {
+    if (['/app.js', '/app.css', '/global.css', '/app.js.map', '/app.css.map'].includes(url.pathname) || /^\/chunks\/[a-zA-Z0-9_-]+\.js(?:\.map)?$/.test(url.pathname)) {
       response.setHeader('Cache-Control', 'no-store');
       response.setHeader('Content-Type', url.pathname.endsWith('.css') ? 'text/css' : 'application/javascript'); response.end(fs.readFileSync(path.join(out, url.pathname.slice(1)))); return;
     }
-    response.setHeader('Content-Type', 'text/html'); response.end(host);
+    const variantOrigin = p4Measuring && assetOrigin ? url.searchParams.get('ui') === 'P4A' ? process.env.PLANNER_C8_REFERENCE_ASSET_ORIGIN
+      : url.searchParams.get('ui') === 'FAULT' ? process.env.PLANNER_C8_FAULT_ASSET_ORIGIN : null : null;
+    response.setHeader('Content-Type', 'text/html'); response.end(variantOrigin ? host.replaceAll(assetOrigin, variantOrigin) : host);
   } catch (error) { console.error(error.message); response.writeHead(500); response.end('Fixture failed'); }
 });
 await store('A');
