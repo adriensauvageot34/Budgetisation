@@ -3,6 +3,8 @@ import { Temporal } from "@js-temporal/polyfill";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { CanonicalRepository } from "@/server/canonical/repository";
 import { readPlanningMonthForecast } from "../month-planning-read";
+import { readMonthPredictionEvidence } from "../month-prediction-evidence";
+import { planningDate } from "../planning-date";
 import { readMonthInputs } from "../month-inputs";
 import { readPlannedExpenses } from "../planned-expenses";
 import { buildRenewalPlanningBaseline } from "./renewal-baseline";
@@ -40,8 +42,17 @@ export function createPlannerDependencies(canonical: CanonicalRepository, authen
   }, async readWorld(householdId, targetMonth) {
     scope(householdId);
     const cutoff = Temporal.Instant.from(clock()), asOfDate = cutoff.toZonedDateTimeISO(canonical.context.timezone).toPlainDate().toString();
-    const forecastPromise = readPlanningMonthForecast(canonical.client, householdId, targetMonth);
-    const sourcesPromise = readPlanningBaselineSources(canonical, targetMonth, cutoff.toString(), { simpleOccurrences: true, renewals: true, forecast: forecastPromise });
+    // Forecast requires history; Baseline permits empty history. When the two readers
+    // use the same household day, a successful strict read satisfies both contracts.
+    // A clock crossing the calendar boundary keeps the original independent reads.
+    const predictionEvidence = asOfDate === planningDate(canonical.context.timezone)
+      ? readMonthPredictionEvidence(canonical.client, householdId, targetMonth, false,
+        { asOfDate, timezone: canonical.context.timezone }) : undefined;
+    predictionEvidence?.catch(() => undefined);
+    const forecastPromise = readPlanningMonthForecast(canonical.client, householdId, targetMonth, predictionEvidence);
+    const sourcesPromise = readPlanningBaselineSources(canonical, targetMonth, cutoff.toString(),
+      { simpleOccurrences: true, renewals: true, forecast: forecastPromise,
+        ...(predictionEvidence ? { predictionEvidence } : {}) });
     // Observe early source rejection while retaining the original Forecast-first
     // failure boundary. Await the original Promise below; no error is replaced.
     sourcesPromise.catch(() => undefined);

@@ -12,6 +12,7 @@ import { loadMonthForecastAuthorities } from "../live-month-forecast";
 import { assembleMonthForecast } from "../month-forecast";
 import type { MonthForecast } from "../month-forecast";
 import { readMonthPredictionEvidence } from "../month-prediction-evidence";
+import type { MonthPredictionEvidence } from "../remaining-month-forecast";
 import { readMonthInputs } from "../month-inputs";
 import type { MonthInputs } from "../month-scenario";
 import { readPlannedExpenses } from "../planned-expenses";
@@ -49,7 +50,8 @@ export async function readPersonHabitAssertions(client: SupabaseClient, househol
  * context. Habit assertions require its trusted server read client (existing SELECT grants).
  * No new credential, Plan read, materialization, migration, or financial evaluation occurs. */
 export async function readPlanningBaselineSources(repository: CanonicalRepository, targetMonth: string,
-  knowledgeCutoff: string, options: Readonly<{ simpleOccurrences?: boolean; renewals?: boolean; forecast?: MonthForecast | Promise<MonthForecast> }> = {}): Promise<PlanningBaselineSources> {
+  knowledgeCutoff: string, options: Readonly<{ simpleOccurrences?: boolean; renewals?: boolean; forecast?: MonthForecast | Promise<MonthForecast>;
+    predictionEvidence?: Promise<MonthPredictionEvidence> }> = {}): Promise<PlanningBaselineSources> {
   const month = plannerMonth(targetMonth), cutoff = Temporal.Instant.from(knowledgeCutoff);
   const { client, context } = repository, householdId = String(context.householdId);
   const today = cutoff.toZonedDateTimeISO(context.timezone).toPlainDate();
@@ -66,7 +68,7 @@ export async function readPlanningBaselineSources(repository: CanonicalRepositor
   };
   const [authorities, storedInputs, evidence, plannedExpenses, habitAssertions, productObservations, mobilityLegs, mobilityContext, canonicalPurchases, simpleOccurrences] = await Promise.all([
     loadMonthForecastAuthorities(client, householdId), readMonthInputs(client, householdId, month),
-    readMonthPredictionEvidence(client, householdId, month, true, { asOfDate: today.toString(), timezone: context.timezone }),
+    options.predictionEvidence ?? readMonthPredictionEvidence(client, householdId, month, true, { asOfDate: today.toString(), timezone: context.timezone }),
     readPlannedExpenses(client, householdId, month), readPersonHabitAssertions(client, householdId, context.personIds.map(String), cutoff.toString()),
     resolveGlobalPersonaProductObservations({ repository, certifiedThrough: parseLocalDate(through.toString()) }),
     repository.loadMobilityLegFacts(range), resolveGlobalM7MobilityContextAuthority({ repository, certifiedThrough: through.toString() }),
