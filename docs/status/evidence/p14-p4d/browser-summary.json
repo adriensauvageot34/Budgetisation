@@ -1,0 +1,1192 @@
+{
+  "P4B": {
+    "file": "outputs/p14-p4d/browser-reference.json",
+    "completed": true,
+    "error": null,
+    "origin": "production React fixture, programmatic semantic gestures",
+    "simple": {
+      "local": {
+        "n": 40,
+        "p50": 0.800000011920929,
+        "p95": 7.900000035762787
+      },
+      "wait": {
+        "n": 40,
+        "p50": 172.5,
+        "p95": 185.10000002384186
+      },
+      "response": {
+        "n": 40,
+        "p50": 268.10000002384186,
+        "p95": 426.39999997615814
+      },
+      "admission": {
+        "n": 40,
+        "p50": 0.800000011920929,
+        "p95": 1.5
+      },
+      "commit": {
+        "n": 40,
+        "p50": 10.200000047683716,
+        "p95": 21.600000023841858
+      },
+      "fresh": {
+        "n": 40,
+        "p50": 462.19999998807907,
+        "p95": 639.6000000238419
+      },
+      "paintUpper": {
+        "n": 40,
+        "p50": 690.1999999880791,
+        "p95": 1310
+      }
+    },
+    "server": {
+      "wall": {
+        "n": 44,
+        "p50": 221.84560000000056,
+        "p95": 348.7804999999935
+      },
+      "world": {
+        "n": 44,
+        "p50": 69.75969999999506,
+        "p95": 75.30909999999858
+      },
+      "evaluationInclusive": {
+        "n": 44,
+        "p50": 133.52979999996023,
+        "p95": 252.77390000000014
+      },
+      "compiler": {
+        "n": 44,
+        "p50": 119.67389999993611,
+        "p95": 216.5133000000351
+      },
+      "finance": {
+        "n": 44,
+        "p50": 7.43939999997383,
+        "p95": 13.816699999966659
+      },
+      "prepare": {
+        "n": 44,
+        "p50": 0.35190000000875443,
+        "p95": 1.035600000002887
+      },
+      "bytes": {
+        "n": 44,
+        "p50": 319769,
+        "p95": 319776
+      },
+      "worldReads": [
+        1
+      ],
+      "financeCalls": [
+        5
+      ]
+    },
+    "requests": [
+      {
+        "kind": "READ",
+        "sequence": 0,
+        "ms": 618.0999999642372,
+        "worldReads": 1,
+        "financeCalls": 5,
+        "serverMs": 464.3286999999982,
+        "bytes": 319354,
+        "error": false
+      },
+      {
+        "kind": "READ",
+        "sequence": 2,
+        "ms": 426.39999997615814,
+        "worldReads": 1,
+        "financeCalls": 5,
+        "serverMs": 348.7804999999935,
+        "bytes": 319756,
+        "error": false
+      },
+      {
+        "kind": "READ",
+        "sequence": 4,
+        "ms": 336.0999999642372,
+        "worldReads": 1,
+        "financeCalls": 5,
+        "serverMs": 284.0549000000028,
+        "bytes": 319764,
+        "error": false
+      },
+      {
+        "kind": "READ",
+        "sequence": 6,
+        "ms": 292.60000002384186,
+        "worldReads": 1,
+        "financeCalls": 5,
+        "serverMs": 249.16870000000927,
+        "bytes": 319764,
+        "error": false
+      },
+      {
+        "kind": "READ",
+        "sequence": 8,
+        "ms": 241.10000002384186,
+        "worldReads": 1,
+        "financeCalls": 5,
+        "serverMs": 201.00309999998717,
+        "bytes": 319773,
+        "error": false
+      },
+      {
+        "kind": "READ",
+        "sequence": 10,
+        "ms": 220.5,
+        "worldReads": 1,
+        "financeCalls": 5,
+        "serverMs": 192.1012000000046,
+        "bytes": 319770,
+        "error": false
+      },
+      {
+        "kind": "READ",
+        "sequence": 12,
+        "ms": 232,
+        "worldReads": 1,
+        "financeCalls": 5,
+        "serverMs": 194.71250000000873,
+        "bytes": 319769,
+        "error": false
+      },
+      {
+        "kind": "READ",
+        "sequence": 14,
+        "ms": 247,
+        "worldReads": 1,
+        "financeCalls": 5,
+        "serverMs": 207.59189999999944,
+        "bytes": 319777,
+        "error": false
+      },
+      {
+        "kind": "READ",
+        "sequence": 16,
+        "ms": 250.5999999642372,
+        "worldReads": 1,
+        "financeCalls": 5,
+        "serverMs": 211.07609999999113,
+        "bytes": 319773,
+        "error": false
+      },
+      {
+        "kind": "READ",
+        "sequence": 18,
+        "ms": 238.80000001192093,
+        "worldReads": 1,
+        "financeCalls": 5,
+        "serverMs": 186.96779999999853,
+        "bytes": 319770,
+        "error": false
+      },
+      {
+        "kind": "READ",
+        "sequence": 20,
+        "ms": 326.4000000357628,
+        "worldReads": 1,
+        "financeCalls": 5,
+        "serverMs": 270.44139999999607,
+        "bytes": 319773,
+        "error": false
+      },
+      {
+        "kind": "READ",
+        "sequence": 22,
+        "ms": 301,
+        "worldReads": 1,
+        "financeCalls": 5,
+        "serverMs": 228.98609999998007,
+        "bytes": 319770,
+        "error": false
+      },
+      {
+        "kind": "READ",
+        "sequence": 24,
+        "ms": 174.10000002384186,
+        "worldReads": 1,
+        "financeCalls": 5,
+        "serverMs": 139.5757000000158,
+        "bytes": 319771,
+        "error": false
+      },
+      {
+        "kind": "READ",
+        "sequence": 26,
+        "ms": 174.19999998807907,
+        "worldReads": 1,
+        "financeCalls": 5,
+        "serverMs": 151.99030000000494,
+        "bytes": 319762,
+        "error": false
+      },
+      {
+        "kind": "READ",
+        "sequence": 28,
+        "ms": 162.19999998807907,
+        "worldReads": 1,
+        "financeCalls": 5,
+        "serverMs": 143.44560000000638,
+        "bytes": 319771,
+        "error": false
+      },
+      {
+        "kind": "READ",
+        "sequence": 30,
+        "ms": 161.60000002384186,
+        "worldReads": 1,
+        "financeCalls": 5,
+        "serverMs": 141.9782000000123,
+        "bytes": 319766,
+        "error": false
+      },
+      {
+        "kind": "READ",
+        "sequence": 32,
+        "ms": 170.10000002384186,
+        "worldReads": 1,
+        "financeCalls": 5,
+        "serverMs": 150.47589999999036,
+        "bytes": 319773,
+        "error": false
+      },
+      {
+        "kind": "READ",
+        "sequence": 34,
+        "ms": 137.69999998807907,
+        "worldReads": 1,
+        "financeCalls": 5,
+        "serverMs": 122.60269999998854,
+        "bytes": 319766,
+        "error": false
+      },
+      {
+        "kind": "READ",
+        "sequence": 36,
+        "ms": 149,
+        "worldReads": 1,
+        "financeCalls": 5,
+        "serverMs": 125.44779999999446,
+        "bytes": 319741,
+        "error": false
+      },
+      {
+        "kind": "READ",
+        "sequence": 38,
+        "ms": 133.79999995231628,
+        "worldReads": 1,
+        "financeCalls": 5,
+        "serverMs": 115.22479999999632,
+        "bytes": 319764,
+        "error": false
+      },
+      {
+        "kind": "READ",
+        "sequence": 40,
+        "ms": 141.80000001192093,
+        "worldReads": 1,
+        "financeCalls": 5,
+        "serverMs": 125.38850000000093,
+        "bytes": 319769,
+        "error": false
+      },
+      {
+        "kind": "READ",
+        "sequence": 42,
+        "ms": 450.7999999523163,
+        "worldReads": 1,
+        "financeCalls": 5,
+        "serverMs": 357.6993000000366,
+        "bytes": 319762,
+        "error": false
+      },
+      {
+        "kind": "READ",
+        "sequence": 44,
+        "ms": 308.0999999642372,
+        "worldReads": 1,
+        "financeCalls": 5,
+        "serverMs": 242.58170000003884,
+        "bytes": 319773,
+        "error": false
+      },
+      {
+        "kind": "READ",
+        "sequence": 46,
+        "ms": 307.19999998807907,
+        "worldReads": 1,
+        "financeCalls": 5,
+        "serverMs": 221.84560000000056,
+        "bytes": 319775,
+        "error": false
+      },
+      {
+        "kind": "READ",
+        "sequence": 48,
+        "ms": 327.69999998807907,
+        "worldReads": 1,
+        "financeCalls": 5,
+        "serverMs": 279.4438000000082,
+        "bytes": 319772,
+        "error": false
+      },
+      {
+        "kind": "READ",
+        "sequence": 50,
+        "ms": 273.30000001192093,
+        "worldReads": 1,
+        "financeCalls": 5,
+        "serverMs": 224.21860000002198,
+        "bytes": 319769,
+        "error": false
+      },
+      {
+        "kind": "READ",
+        "sequence": 52,
+        "ms": 260.0999999642372,
+        "worldReads": 1,
+        "financeCalls": 5,
+        "serverMs": 215.1553000000422,
+        "bytes": 319771,
+        "error": false
+      },
+      {
+        "kind": "READ",
+        "sequence": 54,
+        "ms": 297.30000001192093,
+        "worldReads": 1,
+        "financeCalls": 5,
+        "serverMs": 249.0744999999879,
+        "bytes": 319772,
+        "error": false
+      },
+      {
+        "kind": "READ",
+        "sequence": 56,
+        "ms": 278.4000000357628,
+        "worldReads": 1,
+        "financeCalls": 5,
+        "serverMs": 229.59219999995548,
+        "bytes": 319767,
+        "error": false
+      },
+      {
+        "kind": "READ",
+        "sequence": 58,
+        "ms": 262.60000002384186,
+        "worldReads": 1,
+        "financeCalls": 5,
+        "serverMs": 217.88870000001043,
+        "bytes": 319756,
+        "error": false
+      },
+      {
+        "kind": "READ",
+        "sequence": 60,
+        "ms": 280.7999999523163,
+        "worldReads": 1,
+        "financeCalls": 5,
+        "serverMs": 232.12469999998575,
+        "bytes": 319776,
+        "error": false
+      },
+      {
+        "kind": "READ",
+        "sequence": 62,
+        "ms": 1181.199999988079,
+        "worldReads": 1,
+        "financeCalls": 5,
+        "serverMs": 671.1611999999732,
+        "bytes": 319760,
+        "error": false
+      },
+      {
+        "kind": "READ",
+        "sequence": 64,
+        "ms": 319.4000000357628,
+        "worldReads": 1,
+        "financeCalls": 5,
+        "serverMs": 263.5019999999786,
+        "bytes": 319770,
+        "error": false
+      },
+      {
+        "kind": "READ",
+        "sequence": 66,
+        "ms": 295.7000000476837,
+        "worldReads": 1,
+        "financeCalls": 5,
+        "serverMs": 244.64949999999953,
+        "bytes": 319772,
+        "error": false
+      },
+      {
+        "kind": "READ",
+        "sequence": 68,
+        "ms": 315.69999998807907,
+        "worldReads": 1,
+        "financeCalls": 5,
+        "serverMs": 248.125,
+        "bytes": 319759,
+        "error": false
+      },
+      {
+        "kind": "READ",
+        "sequence": 70,
+        "ms": 195,
+        "worldReads": 1,
+        "financeCalls": 5,
+        "serverMs": 163.28489999996964,
+        "bytes": 319768,
+        "error": false
+      },
+      {
+        "kind": "READ",
+        "sequence": 72,
+        "ms": 262.5,
+        "worldReads": 1,
+        "financeCalls": 5,
+        "serverMs": 204.84820000000764,
+        "bytes": 319768,
+        "error": false
+      },
+      {
+        "kind": "READ",
+        "sequence": 74,
+        "ms": 328.69999998807907,
+        "worldReads": 1,
+        "financeCalls": 5,
+        "serverMs": 260.1238000000012,
+        "bytes": 319769,
+        "error": false
+      },
+      {
+        "kind": "READ",
+        "sequence": 76,
+        "ms": 331.2999999523163,
+        "worldReads": 1,
+        "financeCalls": 5,
+        "serverMs": 286.7081000000471,
+        "bytes": 319768,
+        "error": false
+      },
+      {
+        "kind": "READ",
+        "sequence": 78,
+        "ms": 268.10000002384186,
+        "worldReads": 1,
+        "financeCalls": 5,
+        "serverMs": 224.5983000000124,
+        "bytes": 319755,
+        "error": false
+      },
+      {
+        "kind": "READ",
+        "sequence": 80,
+        "ms": 272.80000001192093,
+        "worldReads": 1,
+        "financeCalls": 5,
+        "serverMs": 229.65030000003753,
+        "bytes": 319771,
+        "error": false
+      },
+      {
+        "kind": "READ",
+        "sequence": 86,
+        "ms": 309.0999999642372,
+        "worldReads": 1,
+        "financeCalls": 5,
+        "serverMs": 244.76429999998072,
+        "bytes": 319772,
+        "error": false
+      },
+      {
+        "kind": "READ",
+        "sequence": 88,
+        "ms": 316.5,
+        "worldReads": 1,
+        "financeCalls": 5,
+        "serverMs": 277.65909999998985,
+        "bytes": 319766,
+        "error": false
+      },
+      {
+        "kind": "READ",
+        "sequence": 90,
+        "ms": 226.19999998807907,
+        "worldReads": 1,
+        "financeCalls": 5,
+        "serverMs": 189.64749999996275,
+        "bytes": 319773,
+        "error": false
+      },
+      {
+        "kind": "SUGGESTIONS",
+        "sequence": 92,
+        "ms": 1770.800000011921,
+        "worldReads": 2,
+        "financeCalls": 63,
+        "serverMs": 1722.8331999999937,
+        "bytes": 486026,
+        "error": false
+      },
+      {
+        "kind": "READ",
+        "sequence": 291,
+        "ms": 220.5,
+        "worldReads": 1,
+        "financeCalls": 5,
+        "serverMs": 181.44000000000233,
+        "bytes": 319776,
+        "error": false
+      }
+    ],
+    "burst": [
+      {
+        "label": "burst-a",
+        "sent": false,
+        "accepted": false,
+        "fresh": null
+      },
+      {
+        "label": "burst-b",
+        "sent": false,
+        "accepted": false,
+        "fresh": null
+      },
+      {
+        "label": "burst-last",
+        "sent": true,
+        "accepted": true,
+        "fresh": 495
+      }
+    ],
+    "undoRedo": [
+      {
+        "label": "undo",
+        "ms": 506,
+        "status": "FRESH"
+      },
+      {
+        "label": "redo",
+        "ms": 403.2999999523163,
+        "status": "FRESH"
+      }
+    ],
+    "memory": [
+      {
+        "actions": 20,
+        "heap": 18777900
+      },
+      {
+        "actions": 50,
+        "heap": 19138091
+      },
+      {
+        "actions": 100,
+        "heap": 22233943
+      }
+    ],
+    "errors": 0
+  },
+  "P4D": {
+    "file": "outputs/p14-p4d/browser-candidate.json",
+    "completed": true,
+    "error": null,
+    "origin": "production React fixture, programmatic semantic gestures",
+    "simple": {
+      "local": {
+        "n": 40,
+        "p50": 1.100000023841858,
+        "p95": 11.200000047683716
+      },
+      "wait": {
+        "n": 40,
+        "p50": 174.69999998807907,
+        "p95": 190.39999997615814
+      },
+      "response": {
+        "n": 40,
+        "p50": 304,
+        "p95": 421
+      },
+      "admission": {
+        "n": 40,
+        "p50": 1,
+        "p95": 2.099999964237213
+      },
+      "commit": {
+        "n": 40,
+        "p50": 13.699999988079071,
+        "p95": 22.30000001192093
+      },
+      "fresh": {
+        "n": 40,
+        "p50": 498.19999998807907,
+        "p95": 797.2000000476837
+      },
+      "paintUpper": {
+        "n": 40,
+        "p50": 1019.7000000476837,
+        "p95": 1385.300000011921
+      }
+    },
+    "server": {
+      "wall": {
+        "n": 44,
+        "p50": 245.1893000000273,
+        "p95": 353.6682000000146
+      },
+      "world": {
+        "n": 44,
+        "p50": 67.81659999999101,
+        "p95": 75.92770000000019
+      },
+      "evaluationInclusive": {
+        "n": 44,
+        "p50": 152.92959999997402,
+        "p95": 247.16719999999623
+      },
+      "compiler": {
+        "n": 44,
+        "p50": 138.46899999998277,
+        "p95": 225.27780000001076
+      },
+      "finance": {
+        "n": 44,
+        "p50": 8.366299999994226,
+        "p95": 13.52349999989383
+      },
+      "prepare": {
+        "n": 44,
+        "p50": 0.41849999999976717,
+        "p95": 4.315800000040326
+      },
+      "bytes": {
+        "n": 44,
+        "p50": 319768,
+        "p95": 319773
+      },
+      "worldReads": [
+        1
+      ],
+      "financeCalls": [
+        5
+      ]
+    },
+    "requests": [
+      {
+        "kind": "READ",
+        "sequence": 0,
+        "ms": 318.80000001192093,
+        "worldReads": 1,
+        "financeCalls": 5,
+        "serverMs": 269.22720000000845,
+        "bytes": 319362,
+        "error": false
+      },
+      {
+        "kind": "READ",
+        "sequence": 2,
+        "ms": 393.60000002384186,
+        "worldReads": 1,
+        "financeCalls": 5,
+        "serverMs": 324.9290000000037,
+        "bytes": 319754,
+        "error": false
+      },
+      {
+        "kind": "READ",
+        "sequence": 4,
+        "ms": 339.5999999642372,
+        "worldReads": 1,
+        "financeCalls": 5,
+        "serverMs": 267.06159999998636,
+        "bytes": 319765,
+        "error": false
+      },
+      {
+        "kind": "READ",
+        "sequence": 6,
+        "ms": 320.10000002384186,
+        "worldReads": 1,
+        "financeCalls": 5,
+        "serverMs": 265.7839999999851,
+        "bytes": 319768,
+        "error": false
+      },
+      {
+        "kind": "READ",
+        "sequence": 8,
+        "ms": 306.10000002384186,
+        "worldReads": 1,
+        "financeCalls": 5,
+        "serverMs": 252.79699999999139,
+        "bytes": 319769,
+        "error": false
+      },
+      {
+        "kind": "READ",
+        "sequence": 10,
+        "ms": 316.7000000476837,
+        "worldReads": 1,
+        "financeCalls": 5,
+        "serverMs": 256.9182000000146,
+        "bytes": 319770,
+        "error": false
+      },
+      {
+        "kind": "READ",
+        "sequence": 12,
+        "ms": 292.9000000357628,
+        "worldReads": 1,
+        "financeCalls": 5,
+        "serverMs": 243.11350000000675,
+        "bytes": 319768,
+        "error": false
+      },
+      {
+        "kind": "READ",
+        "sequence": 14,
+        "ms": 312.80000001192093,
+        "worldReads": 1,
+        "financeCalls": 5,
+        "serverMs": 265.7112999999954,
+        "bytes": 319768,
+        "error": false
+      },
+      {
+        "kind": "READ",
+        "sequence": 16,
+        "ms": 275.19999998807907,
+        "worldReads": 1,
+        "financeCalls": 5,
+        "serverMs": 223.3637999999919,
+        "bytes": 319772,
+        "error": false
+      },
+      {
+        "kind": "READ",
+        "sequence": 18,
+        "ms": 286.0999999642372,
+        "worldReads": 1,
+        "financeCalls": 5,
+        "serverMs": 232.98059999998077,
+        "bytes": 319756,
+        "error": false
+      },
+      {
+        "kind": "READ",
+        "sequence": 20,
+        "ms": 303.39999997615814,
+        "worldReads": 1,
+        "financeCalls": 5,
+        "serverMs": 231.1082999999926,
+        "bytes": 319770,
+        "error": false
+      },
+      {
+        "kind": "READ",
+        "sequence": 22,
+        "ms": 923.4000000357628,
+        "worldReads": 1,
+        "financeCalls": 5,
+        "serverMs": 576.8911999999837,
+        "bytes": 319763,
+        "error": false
+      },
+      {
+        "kind": "READ",
+        "sequence": 24,
+        "ms": 304,
+        "worldReads": 1,
+        "financeCalls": 5,
+        "serverMs": 244.13310000000638,
+        "bytes": 319769,
+        "error": false
+      },
+      {
+        "kind": "READ",
+        "sequence": 26,
+        "ms": 300.5,
+        "worldReads": 1,
+        "financeCalls": 5,
+        "serverMs": 262.2737999999954,
+        "bytes": 319769,
+        "error": false
+      },
+      {
+        "kind": "READ",
+        "sequence": 28,
+        "ms": 277.7999999523163,
+        "worldReads": 1,
+        "financeCalls": 5,
+        "serverMs": 230.39029999999912,
+        "bytes": 319770,
+        "error": false
+      },
+      {
+        "kind": "READ",
+        "sequence": 30,
+        "ms": 222.5,
+        "worldReads": 1,
+        "financeCalls": 5,
+        "serverMs": 188.44699999998556,
+        "bytes": 319762,
+        "error": false
+      },
+      {
+        "kind": "READ",
+        "sequence": 32,
+        "ms": 272.60000002384186,
+        "worldReads": 1,
+        "financeCalls": 5,
+        "serverMs": 214.4076000000059,
+        "bytes": 319770,
+        "error": false
+      },
+      {
+        "kind": "READ",
+        "sequence": 34,
+        "ms": 276.5999999642372,
+        "worldReads": 1,
+        "financeCalls": 5,
+        "serverMs": 223.80019999999786,
+        "bytes": 319769,
+        "error": false
+      },
+      {
+        "kind": "READ",
+        "sequence": 36,
+        "ms": 376.7000000476837,
+        "worldReads": 1,
+        "financeCalls": 5,
+        "serverMs": 300.1444999999949,
+        "bytes": 319766,
+        "error": false
+      },
+      {
+        "kind": "READ",
+        "sequence": 38,
+        "ms": 251.60000002384186,
+        "worldReads": 1,
+        "financeCalls": 5,
+        "serverMs": 206.28089999998338,
+        "bytes": 319771,
+        "error": false
+      },
+      {
+        "kind": "READ",
+        "sequence": 40,
+        "ms": 272.7999999523163,
+        "worldReads": 1,
+        "financeCalls": 5,
+        "serverMs": 211.84030000001076,
+        "bytes": 319769,
+        "error": false
+      },
+      {
+        "kind": "READ",
+        "sequence": 42,
+        "ms": 421,
+        "worldReads": 1,
+        "financeCalls": 5,
+        "serverMs": 353.6682000000146,
+        "bytes": 319760,
+        "error": false
+      },
+      {
+        "kind": "READ",
+        "sequence": 44,
+        "ms": 323.30000001192093,
+        "worldReads": 1,
+        "financeCalls": 5,
+        "serverMs": 256.6319000000367,
+        "bytes": 319770,
+        "error": false
+      },
+      {
+        "kind": "READ",
+        "sequence": 46,
+        "ms": 411.5,
+        "worldReads": 1,
+        "financeCalls": 5,
+        "serverMs": 236.6706000000122,
+        "bytes": 319773,
+        "error": false
+      },
+      {
+        "kind": "READ",
+        "sequence": 48,
+        "ms": 333.4000000357628,
+        "worldReads": 1,
+        "financeCalls": 5,
+        "serverMs": 279.7746000000043,
+        "bytes": 319766,
+        "error": false
+      },
+      {
+        "kind": "READ",
+        "sequence": 50,
+        "ms": 261.19999998807907,
+        "worldReads": 1,
+        "financeCalls": 5,
+        "serverMs": 208.97389999998268,
+        "bytes": 319773,
+        "error": false
+      },
+      {
+        "kind": "READ",
+        "sequence": 52,
+        "ms": 300.60000002384186,
+        "worldReads": 1,
+        "financeCalls": 5,
+        "serverMs": 246.0920000000042,
+        "bytes": 319768,
+        "error": false
+      },
+      {
+        "kind": "READ",
+        "sequence": 54,
+        "ms": 349.5,
+        "worldReads": 1,
+        "financeCalls": 5,
+        "serverMs": 272.0260000000126,
+        "bytes": 319767,
+        "error": false
+      },
+      {
+        "kind": "READ",
+        "sequence": 56,
+        "ms": 306.69999998807907,
+        "worldReads": 1,
+        "financeCalls": 5,
+        "serverMs": 241.78090000001248,
+        "bytes": 319768,
+        "error": false
+      },
+      {
+        "kind": "READ",
+        "sequence": 58,
+        "ms": 288.10000002384186,
+        "worldReads": 1,
+        "financeCalls": 5,
+        "serverMs": 236.5107999999891,
+        "bytes": 319771,
+        "error": false
+      },
+      {
+        "kind": "READ",
+        "sequence": 60,
+        "ms": 274.60000002384186,
+        "worldReads": 1,
+        "financeCalls": 5,
+        "serverMs": 226.91599999996834,
+        "bytes": 319769,
+        "error": false
+      },
+      {
+        "kind": "READ",
+        "sequence": 62,
+        "ms": 719.3000000119209,
+        "worldReads": 1,
+        "financeCalls": 5,
+        "serverMs": 448.23340000002645,
+        "bytes": 319764,
+        "error": false
+      },
+      {
+        "kind": "READ",
+        "sequence": 64,
+        "ms": 311.89999997615814,
+        "worldReads": 1,
+        "financeCalls": 5,
+        "serverMs": 267.07300000003306,
+        "bytes": 319763,
+        "error": false
+      },
+      {
+        "kind": "READ",
+        "sequence": 66,
+        "ms": 227.60000002384186,
+        "worldReads": 1,
+        "financeCalls": 5,
+        "serverMs": 183.57549999997718,
+        "bytes": 319773,
+        "error": false
+      },
+      {
+        "kind": "READ",
+        "sequence": 68,
+        "ms": 260.39999997615814,
+        "worldReads": 1,
+        "financeCalls": 5,
+        "serverMs": 213.44940000004135,
+        "bytes": 319768,
+        "error": false
+      },
+      {
+        "kind": "READ",
+        "sequence": 70,
+        "ms": 290.19999998807907,
+        "worldReads": 1,
+        "financeCalls": 5,
+        "serverMs": 227.52740000002086,
+        "bytes": 319770,
+        "error": false
+      },
+      {
+        "kind": "READ",
+        "sequence": 72,
+        "ms": 347.4000000357628,
+        "worldReads": 1,
+        "financeCalls": 5,
+        "serverMs": 244.6748999999836,
+        "bytes": 319767,
+        "error": false
+      },
+      {
+        "kind": "READ",
+        "sequence": 74,
+        "ms": 296.89999997615814,
+        "worldReads": 1,
+        "financeCalls": 5,
+        "serverMs": 247.15119999996386,
+        "bytes": 319767,
+        "error": false
+      },
+      {
+        "kind": "READ",
+        "sequence": 76,
+        "ms": 322.5999999642372,
+        "worldReads": 1,
+        "financeCalls": 5,
+        "serverMs": 265.5553999999538,
+        "bytes": 319772,
+        "error": false
+      },
+      {
+        "kind": "READ",
+        "sequence": 78,
+        "ms": 326.2000000476837,
+        "worldReads": 1,
+        "financeCalls": 5,
+        "serverMs": 253.00870000000577,
+        "bytes": 319770,
+        "error": false
+      },
+      {
+        "kind": "READ",
+        "sequence": 80,
+        "ms": 304.89999997615814,
+        "worldReads": 1,
+        "financeCalls": 5,
+        "serverMs": 245.1893000000273,
+        "bytes": 319765,
+        "error": false
+      },
+      {
+        "kind": "READ",
+        "sequence": 86,
+        "ms": 298.0999999642372,
+        "worldReads": 1,
+        "financeCalls": 5,
+        "serverMs": 250.61609999998473,
+        "bytes": 319771,
+        "error": false
+      },
+      {
+        "kind": "READ",
+        "sequence": 88,
+        "ms": 282.69999998807907,
+        "worldReads": 1,
+        "financeCalls": 5,
+        "serverMs": 230.913899999985,
+        "bytes": 319760,
+        "error": false
+      },
+      {
+        "kind": "READ",
+        "sequence": 90,
+        "ms": 321.80000001192093,
+        "worldReads": 1,
+        "financeCalls": 5,
+        "serverMs": 274.44270000001416,
+        "bytes": 319768,
+        "error": false
+      },
+      {
+        "kind": "SUGGESTIONS",
+        "sequence": 92,
+        "ms": 1879.3999999761581,
+        "worldReads": 1,
+        "financeCalls": 58,
+        "serverMs": 1792.7066999999806,
+        "bytes": 485007,
+        "error": false
+      },
+      {
+        "kind": "READ",
+        "sequence": 291,
+        "ms": 340.80000001192093,
+        "worldReads": 1,
+        "financeCalls": 5,
+        "serverMs": 270.85470000002533,
+        "bytes": 319773,
+        "error": false
+      }
+    ],
+    "burst": [
+      {
+        "label": "burst-a",
+        "sent": false,
+        "accepted": false,
+        "fresh": null
+      },
+      {
+        "label": "burst-b",
+        "sent": false,
+        "accepted": false,
+        "fresh": null
+      },
+      {
+        "label": "burst-last",
+        "sent": true,
+        "accepted": true,
+        "fresh": 479.60000002384186
+      }
+    ],
+    "undoRedo": [
+      {
+        "label": "undo",
+        "ms": 472.5,
+        "status": "FRESH"
+      },
+      {
+        "label": "redo",
+        "ms": 499.89999997615814,
+        "status": "FRESH"
+      }
+    ],
+    "memory": [
+      {
+        "actions": 20,
+        "heap": 18019152
+      },
+      {
+        "actions": 50,
+        "heap": 18660272
+      },
+      {
+        "actions": 100,
+        "heap": 22277685
+      }
+    ],
+    "errors": 0
+  }
+}

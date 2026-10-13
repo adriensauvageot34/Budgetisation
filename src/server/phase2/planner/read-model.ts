@@ -28,7 +28,12 @@ export const composerSocketLabel = (key: string) => socketLabels[key] ?? key;
 export async function readMonthComposer(deps: PlannerDependencies, householdId: string, targetMonth: string,
   draft?: PlanSemanticStateV1): Promise<MonthComposerReadModel> {
   const read = await readPlannerDraft(deps, householdId, targetMonth, draft);
+  return composerFromDraftRead(read);
+}
+/** Pure projection of a read admitted in this same request. No source cache. */
+export function composerFromDraftRead(read: Awaited<ReturnType<typeof readPlannerDraft>>): MonthComposerReadModel {
   const { preview, state, prepared } = read;
+  const targetMonth = state.targetMonth;
   const capabilities = publishAdjustmentCapabilities(prepared, state, preview);
   const registry = publishContextRegistry();
   const assets: ComposerAssetView[] = registry.templates.flatMap(t => [

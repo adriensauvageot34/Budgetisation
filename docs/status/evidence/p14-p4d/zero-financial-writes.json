@@ -1,0 +1,22 @@
+[
+  {
+    "fixture": "A",
+    "counts": {
+      "plans": 0,
+      "revisions": 0
+    },
+    "rpcCalls": 0,
+    "remoteWrites": 0,
+    "historicalCanaryWrites": 0
+  },
+  {
+    "fixture": "B",
+    "counts": {
+      "plans": 0,
+      "revisions": 0
+    },
+    "rpcCalls": 0,
+    "remoteWrites": 0,
+    "historicalCanaryWrites": 0
+  }
+]

@@ -1,0 +1,107 @@
+[
+  {
+    "command": "node scripts/check-composer-p14-p1-opening.mjs",
+    "status": "EXECUTED_PASS_LIMITED_FIXTURE",
+    "log": "check-composer-p14-p1-opening.mjs.log"
+  },
+  {
+    "command": "node scripts/check-composer-p14-p1-read-reuse.mjs",
+    "status": "EXECUTED_PASS_LIMITED_FIXTURE",
+    "log": "check-composer-p14-p1-read-reuse.mjs.log"
+  },
+  {
+    "command": "node scripts/check-composer-p14-p2-durable.mjs",
+    "status": "EXECUTED_PASS_LIMITED_FIXTURE",
+    "log": "check-composer-p14-p2-durable.mjs.log"
+  },
+  {
+    "command": "node scripts/check-composer-p14-p2-mutation.mjs",
+    "status": "EXECUTED_PASS_LIMITED_FIXTURE",
+    "log": "check-composer-p14-p2-mutation.mjs.log"
+  },
+  {
+    "command": "node scripts/check-composer-p14-p2-presentation.mjs",
+    "status": "EXECUTED_PASS_LIMITED_FIXTURE",
+    "log": "check-composer-p14-p2-presentation.mjs.log"
+  },
+  {
+    "command": "node scripts/check-composer-p14-p2-scheduler.mjs",
+    "status": "EXECUTED_PASS_LIMITED_FIXTURE",
+    "log": "check-composer-p14-p2-scheduler.mjs.log"
+  },
+  {
+    "command": "node scripts/check-composer-p14-p3-history.mjs",
+    "status": "EXECUTED_PASS_LIMITED_FIXTURE",
+    "log": "check-composer-p14-p3-history.mjs.log"
+  },
+  {
+    "command": "node scripts/check-composer-p14-p4b-progressive.mjs",
+    "status": "EXECUTED_PASS_LIMITED_FIXTURE",
+    "log": "check-composer-p14-p4b-progressive.mjs.log"
+  },
+  {
+    "command": "node scripts/check-composer-r6-p45.mjs",
+    "status": "EXECUTED_PASS_LIMITED_FIXTURE",
+    "log": "check-composer-r6-p45.mjs.log"
+  },
+  {
+    "command": "node scripts/check-composer-r6-presentation.mjs",
+    "status": "EXECUTED_PASS_LIMITED_FIXTURE",
+    "log": "check-composer-r6-presentation.mjs.log"
+  },
+  {
+    "command": "node scripts/check-phase2-planner-atomic-ui.mjs",
+    "status": "EXECUTED_PASS_LIMITED_FIXTURE",
+    "log": "check-phase2-planner-atomic-ui.mjs.log"
+  },
+  {
+    "command": "node scripts/check-phase2-planner-composer.mjs",
+    "status": "EXECUTED_PASS_LIMITED_FIXTURE",
+    "log": "check-phase2-planner-composer.mjs.log"
+  },
+  {
+    "command": "node scripts/check-phase2-planner-contexts.mjs",
+    "status": "EXECUTED_PASS_LIMITED_FIXTURE",
+    "log": "check-phase2-planner-contexts.mjs.log"
+  },
+  {
+    "command": "node scripts/check-phase2-planner-interactions.mjs",
+    "status": "FAIL_PREEXISTING_R3_008",
+    "log": "check-phase2-planner-interactions.mjs.log"
+  },
+  {
+    "command": "node scripts/check-phase2-planner-kernel.mjs",
+    "status": "EXECUTED_PASS_LIMITED_FIXTURE",
+    "log": "check-phase2-planner-kernel.mjs.log"
+  },
+  {
+    "command": "node scripts/check-phase2-planner-mobility.mjs",
+    "status": "EXECUTED_PASS_LIMITED_FIXTURE",
+    "log": "check-phase2-planner-mobility.mjs.log"
+  },
+  {
+    "command": "node scripts/check-phase2-planner-p02-conservation.mjs",
+    "status": "EXECUTED_PASS_LIMITED_FIXTURE",
+    "log": "check-phase2-planner-p02-conservation.mjs.log"
+  },
+  {
+    "command": "node scripts/check-phase2-planner-p11.mjs",
+    "status": "EXECUTED_PASS_LIMITED_FIXTURE",
+    "log": "check-phase2-planner-p11.mjs.log"
+  },
+  {
+    "command": "node scripts/check-phase2-planner-p12.mjs",
+    "status": "EXECUTED_PASS_LIMITED_FIXTURE",
+    "log": "check-phase2-planner-p12.mjs.log"
+  },
+  {
+    "command": "node scripts/check-phase2-planner-p13.mjs",
+    "status": "EXECUTED_PASS_LIMITED_FIXTURE",
+    "log": "check-phase2-planner-p13.mjs.log"
+  },
+  {
+    "command": "node scripts/check-planner-performance-parity.mjs",
+    "status": "EXECUTED_PASS_LIMITED_FIXTURE",
+    "log": "check-planner-performance-parity.mjs.log"
+  }
+]

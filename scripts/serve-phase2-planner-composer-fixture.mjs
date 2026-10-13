@@ -16,6 +16,7 @@ import { p09CompatibilityMonth, p09ReadbackMonth } from './fixtures/planner-p09.
 import { p2Measuring, p2FixturePlugin, p2World, p2Interaction } from './lib/planner-p14-p2-fixture-tools.mjs';
 import { p4Measuring, p4FixturePlugin } from './lib/planner-p14-p4a-fixture-tools.mjs';
 import { p4Fixture, p4Extra } from './fixtures/planner-p14-p4a.mjs';
+import { p4dMeasuring, p4dFixturePlugin, p4dInteraction } from './lib/planner-p14-p4d-fixture-tools.mjs';
 const { handleComposerRequest } = require('@/server/phase2/planner/composer-service');
 const { createPlanApplyRepository } = require('@/server/phase2/planner/repository');
 const { preparePlanningMobility } = require('@/server/phase2/planner/prospective-mobility-pricing');
@@ -37,7 +38,7 @@ const mocks = {
   '@/features/auth/sign-out-button': 'import React from "react"; export const SignOutButton = () => React.createElement("button",{disabled:true},"Déconnexion");'
 };
 const p4Split = p4Measuring && process.env.PLANNER_P14_P4B_SPLIT === '1';
-const built = await build({ entryPoints: [p4Measuring ? 'scripts/lib/planner-composer-p14-p4a-browser-entry.tsx' : p2Measuring ? 'scripts/lib/planner-composer-p14-p2-browser-entry.tsx' : 'scripts/lib/planner-composer-browser-entry.tsx'], bundle: true, format: 'esm', target: 'chrome120', jsx: 'automatic',
+const built = await build({ entryPoints: [p4dMeasuring ? 'scripts/lib/planner-composer-p14-p4d-browser-entry.tsx' : p4Measuring ? 'scripts/lib/planner-composer-p14-p4a-browser-entry.tsx' : p2Measuring ? 'scripts/lib/planner-composer-p14-p2-browser-entry.tsx' : 'scripts/lib/planner-composer-browser-entry.tsx'], bundle: true, format: 'esm', target: 'chrome120', jsx: 'automatic',
   define: { 'process.env.NEXT_PUBLIC_COMPOSER_P14_P2_INTERACTIONS': JSON.stringify(process.env.NEXT_PUBLIC_COMPOSER_P14_P2_INTERACTIONS ?? '1'),
     ...(p4Measuring?{'process.env.NODE_ENV':'"production"','process.env.P4_DIAGNOSTICS':JSON.stringify(process.env.PLANNER_P14_P4A_DIAGNOSTICS==='1'),
       'process.env.NEXT_PUBLIC_COMPOSER_P14_P4A_PAGES':JSON.stringify(process.env.NEXT_PUBLIC_COMPOSER_P14_P4A_PAGES ?? 'neighbors')}: {}) },
@@ -45,7 +46,7 @@ const built = await build({ entryPoints: [p4Measuring ? 'scripts/lib/planner-com
   ...(p4Split ? { outdir:out, entryNames:'app', chunkNames:'chunks/[name]-[hash]', splitting:true, metafile:true } : { outfile: path.join(out, 'app.js') }),
   loader: { '.css': 'local-css' }, sourcemap: true,
   external: ['/planned-visuals/*'],
-  plugins: [p4FixturePlugin(),p2FixturePlugin(), {name:'fixture-host-only',setup(builder){ builder.onResolve({filter:/^(next\/link|next\/navigation|@\/components\/runtime|@\/features\/auth\/sign-out-button)$/},args=>({path:args.path,namespace:'fixture-host'}));
+  plugins: [p4dFixturePlugin(),p4FixturePlugin(),p2FixturePlugin(), {name:'fixture-host-only',setup(builder){ builder.onResolve({filter:/^(next\/link|next\/navigation|@\/components\/runtime|@\/features\/auth\/sign-out-button)$/},args=>({path:args.path,namespace:'fixture-host'}));
     builder.onLoad({filter:/.*/,namespace:'fixture-host'},args=>({contents:mocks[args.path],loader:'js',resolveDir:process.cwd()})); }}] });
 if(p4Split)fs.writeFileSync(path.join(out,'bundle-meta.json'),JSON.stringify(built.metafile,null,2));
 const globalCss = process.env.PLANNER_C8_GLOBAL_CSS
@@ -176,7 +177,8 @@ const server = http.createServer(async (request, response) => {
       // Delays only in this isolated host, to exercise stale hover responses in the actual UI.
       const rejectSequence = Number(url.searchParams.get('rejectSequence'));
       const syntheticReject = !initialRead && command.kind === 'READ' && url.searchParams.has('rejectSequence') && rejectSequence === command.sequence;
-      let result = syntheticReject ? { ok:false, sequence:command.sequence, code:'P03B_SYNTHETIC_REJECTION', message:'Simulation de test rejetée' } : await p2Interaction(command, () => handleComposerRequest(s.deps, householdId, command));
+      let result = syntheticReject ? { ok:false, sequence:command.sequence, code:'P03B_SYNTHETIC_REJECTION', message:'Simulation de test rejetée' } : await p4dInteraction(command,url.searchParams.get('variant')??'P4D',s.deps,householdId,
+        () => p2Interaction(command, () => handleComposerRequest(s.deps, householdId, command)));
       if(p4Measuring&&initialRead&&key.startsWith('P4')&&result.ok&&!draftStore(key).active){
         const target=key.includes('40')?40:20;let n=0;
         if(result.model.presentation.elementCount>target)throw Error('P4_INITIAL_DENSITY_EXCEEDS_TARGET');

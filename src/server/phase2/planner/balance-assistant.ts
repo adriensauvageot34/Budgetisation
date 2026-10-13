@@ -125,6 +125,12 @@ async function simulateSuggestions(deps: PlannerDependencies, world: PlanningWor
 export async function readPlanBalanceSuggestions(deps: PlannerDependencies, householdId: string, targetMonth: string,
   draft?: PlanSemanticStateV1): Promise<PlanBalanceSuggestions> {
   const read = await readPlannerDraft(deps, householdId, targetMonth, draft);
+  return balanceSuggestionsFromDraftRead(deps, read);
+}
+/** Shares only the current authoritative evaluation. Each candidate still
+ * prepares its own semantic state and runs the owner Compiler/Finance V2. */
+export function balanceSuggestionsFromDraftRead(deps: PlannerDependencies,
+  read: Awaited<ReturnType<typeof readPlannerDraft>>): Promise<PlanBalanceSuggestions> {
   return simulateSuggestions(deps, read.world, read.state, read.base, read.preview);
 }
 /** Accept into a new in-memory draft, never apply implicitly. Re-read, reject stale

@@ -1,0 +1,30 @@
+[
+  {
+    "path": "src/server/phase2/planner/composer-service.ts",
+    "sha256": "C9CE6B3D7CA39E160A89F23DE0D669E84E3980F00A887EA1FD022A9662DD9B52"
+  },
+  {
+    "path": "src/server/phase2/planner/read-model.ts",
+    "sha256": "4CBE513568D3021EBF277DE96F2487D38F9E25BD93477EF73E30E29DA4C7DF58"
+  },
+  {
+    "path": "src/server/phase2/planner/balance-assistant.ts",
+    "sha256": "AA985F3E04078EAD011E20A94C058D71A31B04AEF703349A6FB9ACE11262919F"
+  },
+  {
+    "path": "src/app/mois-a-venir/composer/composer-shell.tsx",
+    "sha256": "46DA13B5C33786F22CAFA36705479089E34CD3599E63D3444012BC667E3CB2DE"
+  },
+  {
+    "path": "src/app/mois-a-venir/composer/preview-scheduler.ts",
+    "sha256": "DF02A007443E3D4676CC71B6233FAC1165FA9E158FC965369214A4E144DAB2DF"
+  },
+  {
+    "path": "src/app/mois-a-venir/composer/durable-draft.ts",
+    "sha256": "3C7F2E3FB1FD0FB70D45D9685007F084EC920C7EE6307092514B7A9B6EAE3898"
+  },
+  {
+    "path": "src/app/mois-a-venir/composer/editor-chunks.ts",
+    "sha256": "4CB280206072EB5A6E009BF73AEE06CA53C1459442D666806099B76481459A82"
+  }
+]

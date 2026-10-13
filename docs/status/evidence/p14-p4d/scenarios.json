@@ -1,0 +1,3491 @@
+{
+  "records": [
+    {
+      "case": "simple",
+      "n": 4,
+      "pairs": [
+        {
+          "P4B": {
+            "variant": "P4B",
+            "worldReads": 1,
+            "activeReads": 2,
+            "prepareCalls": 1,
+            "spans": [
+              {
+                "label": "active-plan",
+                "start": 6.568699999999808,
+                "ms": 11.286599999999453
+              },
+              {
+                "label": "world",
+                "start": 5.532499999999345,
+                "ms": 69.44230000000061
+              },
+              {
+                "label": "prepare-world-mobility",
+                "start": 75.22299999999996,
+                "ms": 6.760299999999916
+              },
+              {
+                "label": "compiler",
+                "start": 82.97599999999875,
+                "ms": 41.8705000000009
+              },
+              {
+                "label": "compiler",
+                "start": 125.31259999999929,
+                "ms": 28.02560000000085
+              },
+              {
+                "label": "finance-v2",
+                "start": 153.35699999999997,
+                "ms": 21.28060000000005
+              },
+              {
+                "label": "finance-v2",
+                "start": 174.65999999999985,
+                "ms": 4.022899999999936
+              },
+              {
+                "label": "compiler",
+                "start": 183.6867000000002,
+                "ms": 27.96389999999883
+              },
+              {
+                "label": "finance-v2",
+                "start": 211.67189999999937,
+                "ms": 3.89049999999952
+              },
+              {
+                "label": "evaluation",
+                "start": 82.11719999999877,
+                "ms": 136.6194000000014
+              },
+              {
+                "label": "active-plan",
+                "start": 251.90799999999945,
+                "ms": 3.145699999999124
+              }
+            ],
+            "serverMs": 299.72999999999956,
+            "responseBytes": 316029,
+            "serializationMs": 7.05199999999968,
+            "evaluations": 1,
+            "financeCalls": 3,
+            "fingerprint": "14db9a826d778f44af597a8f7aa0265632437ca7009f49d51d0286d1a77b104e",
+            "providerCalls": {
+              "routes": 0,
+              "fuel": 0,
+              "toll": 0
+            }
+          },
+          "P4D": {
+            "variant": "P4D",
+            "worldReads": 1,
+            "activeReads": 2,
+            "prepareCalls": 1,
+            "spans": [
+              {
+                "label": "active-plan",
+                "start": 2.0904000000009546,
+                "ms": 2.8518000000003667
+              },
+              {
+                "label": "world",
+                "start": 1.9665999999997439,
+                "ms": 60.5607
+              },
+              {
+                "label": "prepare-world-mobility",
+                "start": 62.67309999999998,
+                "ms": 0.6807000000007974
+              },
+              {
+                "label": "compiler",
+                "start": 63.716599999999744,
+                "ms": 25.732700000000477
+              },
+              {
+                "label": "compiler",
+                "start": 89.65670000000136,
+                "ms": 30.228299999998853
+              },
+              {
+                "label": "finance-v2",
+                "start": 119.96709999999985,
+                "ms": 3.6916000000001077
+              },
+              {
+                "label": "finance-v2",
+                "start": 123.67370000000119,
+                "ms": 3.341899999999441
+              },
+              {
+                "label": "compiler",
+                "start": 128.45989999999983,
+                "ms": 28.230199999999968
+              },
+              {
+                "label": "finance-v2",
+                "start": 156.70700000000033,
+                "ms": 3.0807000000004336
+              },
+              {
+                "label": "evaluation",
+                "start": 63.36620000000039,
+                "ms": 99.19740000000093
+              },
+              {
+                "label": "active-plan",
+                "start": 184.89580000000024,
+                "ms": 3.285299999999552
+              }
+            ],
+            "serverMs": 197.73190000000068,
+            "responseBytes": 316029,
+            "serializationMs": 5.498499999999694,
+            "evaluations": 1,
+            "financeCalls": 3,
+            "fingerprint": "14db9a826d778f44af597a8f7aa0265632437ca7009f49d51d0286d1a77b104e",
+            "providerCalls": {
+              "routes": 0,
+              "fuel": 0,
+              "toll": 0
+            }
+          }
+        },
+        {
+          "P4D": {
+            "variant": "P4D",
+            "worldReads": 1,
+            "activeReads": 2,
+            "prepareCalls": 1,
+            "spans": [
+              {
+                "label": "active-plan",
+                "start": 0.30370000000039,
+                "ms": 3.3870999999999185
+              },
+              {
+                "label": "world",
+                "start": 0.16049999999995634,
+                "ms": 61.67439999999988
+              },
+              {
+                "label": "prepare-world-mobility",
+                "start": 61.96399999999994,
+                "ms": 1.5557000000007974
+              },
+              {
+                "label": "compiler",
+                "start": 63.594199999999546,
+                "ms": 28.984700000000885
+              },
+              {
+                "label": "compiler",
+                "start": 92.9398000000001,
+                "ms": 22.709100000000035
+              },
+              {
+                "label": "finance-v2",
+                "start": 115.66719999999987,
+                "ms": 2.7245999999995547
+              },
+              {
+                "label": "finance-v2",
+                "start": 118.39860000000044,
+                "ms": 2.1656000000002678
+              },
+              {
+                "label": "compiler",
+                "start": 122.05589999999938,
+                "ms": 24.870500000000902
+              },
+              {
+                "label": "finance-v2",
+                "start": 146.95010000000002,
+                "ms": 2.864799999999377
+              },
+              {
+                "label": "evaluation",
+                "start": 63.53509999999915,
+                "ms": 88.40640000000167
+              },
+              {
+                "label": "active-plan",
+                "start": 165.36329999999907,
+                "ms": 2.2683000000015454
+              }
+            ],
+            "serverMs": 171.58719999999994,
+            "responseBytes": 316029,
+            "serializationMs": 4.178099999999176,
+            "evaluations": 1,
+            "financeCalls": 3,
+            "fingerprint": "14db9a826d778f44af597a8f7aa0265632437ca7009f49d51d0286d1a77b104e",
+            "providerCalls": {
+              "routes": 0,
+              "fuel": 0,
+              "toll": 0
+            }
+          },
+          "P4B": {
+            "variant": "P4B",
+            "worldReads": 1,
+            "activeReads": 2,
+            "prepareCalls": 1,
+            "spans": [
+              {
+                "label": "active-plan",
+                "start": 0.22409999999945285,
+                "ms": 2.174300000000585
+              },
+              {
+                "label": "world",
+                "start": 0.10629999999946449,
+                "ms": 65.28240000000005
+              },
+              {
+                "label": "prepare-world-mobility",
+                "start": 65.48719999999958,
+                "ms": 0.43950000000040745
+              },
+              {
+                "label": "compiler",
+                "start": 65.97129999999925,
+                "ms": 19.347200000000157
+              },
+              {
+                "label": "compiler",
+                "start": 85.44629999999961,
+                "ms": 16.97019999999975
+              },
+              {
+                "label": "finance-v2",
+                "start": 102.42870000000039,
+                "ms": 1.4519000000000233
+              },
+              {
+                "label": "finance-v2",
+                "start": 103.88639999999941,
+                "ms": 1.2793000000001484
+              },
+              {
+                "label": "compiler",
+                "start": 106.10199999999895,
+                "ms": 16.805500000000393
+              },
+              {
+                "label": "finance-v2",
+                "start": 122.92569999999978,
+                "ms": 1.444499999999607
+              },
+              {
+                "label": "evaluation",
+                "start": 65.9336000000003,
+                "ms": 61.45099999999911
+              },
+              {
+                "label": "active-plan",
+                "start": 140.86019999999917,
+                "ms": 2.4258000000008906
+              }
+            ],
+            "serverMs": 147.21429999999964,
+            "responseBytes": 316029,
+            "serializationMs": 4.990299999999479,
+            "evaluations": 1,
+            "financeCalls": 3,
+            "fingerprint": "14db9a826d778f44af597a8f7aa0265632437ca7009f49d51d0286d1a77b104e",
+            "providerCalls": {
+              "routes": 0,
+              "fuel": 0,
+              "toll": 0
+            }
+          }
+        },
+        {
+          "P4B": {
+            "variant": "P4B",
+            "worldReads": 1,
+            "activeReads": 2,
+            "prepareCalls": 1,
+            "spans": [
+              {
+                "label": "active-plan",
+                "start": 0.3559000000004744,
+                "ms": 2.350000000000364
+              },
+              {
+                "label": "world",
+                "start": 0.19169999999940046,
+                "ms": 70.53089999999975
+              },
+              {
+                "label": "prepare-world-mobility",
+                "start": 70.84799999999996,
+                "ms": 0.33250000000043656
+              },
+              {
+                "label": "compiler",
+                "start": 71.22370000000046,
+                "ms": 23.202699999999822
+              },
+              {
+                "label": "compiler",
+                "start": 94.61590000000069,
+                "ms": 24.72400000000016
+              },
+              {
+                "label": "finance-v2",
+                "start": 119.36230000000069,
+                "ms": 2.326499999999214
+              },
+              {
+                "label": "finance-v2",
+                "start": 121.69939999999951,
+                "ms": 1.7605000000003201
+              },
+              {
+                "label": "compiler",
+                "start": 125.08090000000084,
+                "ms": 21.044699999998556
+              },
+              {
+                "label": "finance-v2",
+                "start": 146.14079999999922,
+                "ms": 1.4361000000008062
+              },
+              {
+                "label": "evaluation",
+                "start": 71.1875,
+                "ms": 80.41810000000078
+              },
+              {
+                "label": "active-plan",
+                "start": 165.10980000000018,
+                "ms": 3.3099999999994907
+              }
+            ],
+            "serverMs": 171.83530000000064,
+            "responseBytes": 316029,
+            "serializationMs": 3.74120000000039,
+            "evaluations": 1,
+            "financeCalls": 3,
+            "fingerprint": "14db9a826d778f44af597a8f7aa0265632437ca7009f49d51d0286d1a77b104e",
+            "providerCalls": {
+              "routes": 0,
+              "fuel": 0,
+              "toll": 0
+            }
+          },
+          "P4D": {
+            "variant": "P4D",
+            "worldReads": 1,
+            "activeReads": 2,
+            "prepareCalls": 1,
+            "spans": [
+              {
+                "label": "active-plan",
+                "start": 0.20900000000074215,
+                "ms": 2.182699999999386
+              },
+              {
+                "label": "world",
+                "start": 0.10810000000128639,
+                "ms": 73.2542999999987
+              },
+              {
+                "label": "prepare-world-mobility",
+                "start": 73.50300000000061,
+                "ms": 0.4319999999988795
+              },
+              {
+                "label": "compiler",
+                "start": 74.01150000000052,
+                "ms": 21.03060000000005
+              },
+              {
+                "label": "compiler",
+                "start": 95.21000000000095,
+                "ms": 20.208300000000236
+              },
+              {
+                "label": "finance-v2",
+                "start": 115.43870000000061,
+                "ms": 1.956899999999223
+              },
+              {
+                "label": "finance-v2",
+                "start": 117.40620000000126,
+                "ms": 1.6902999999983876
+              },
+              {
+                "label": "compiler",
+                "start": 120.41240000000107,
+                "ms": 23.781699999999546
+              },
+              {
+                "label": "finance-v2",
+                "start": 144.21219999999994,
+                "ms": 1.6264000000010128
+              },
+              {
+                "label": "evaluation",
+                "start": 73.94620000000032,
+                "ms": 74.15580000000045
+              },
+              {
+                "label": "active-plan",
+                "start": 162.1298999999999,
+                "ms": 2.8989000000001397
+              }
+            ],
+            "serverMs": 170.51350000000093,
+            "responseBytes": 316029,
+            "serializationMs": 5.298099999999977,
+            "evaluations": 1,
+            "financeCalls": 3,
+            "fingerprint": "14db9a826d778f44af597a8f7aa0265632437ca7009f49d51d0286d1a77b104e",
+            "providerCalls": {
+              "routes": 0,
+              "fuel": 0,
+              "toll": 0
+            }
+          }
+        },
+        {
+          "P4D": {
+            "variant": "P4D",
+            "worldReads": 1,
+            "activeReads": 2,
+            "prepareCalls": 1,
+            "spans": [
+              {
+                "label": "active-plan",
+                "start": 0.4703000000008615,
+                "ms": 2.5288999999993393
+              },
+              {
+                "label": "world",
+                "start": 0.15140000000064902,
+                "ms": 68.09829999999965
+              },
+              {
+                "label": "prepare-world-mobility",
+                "start": 68.44710000000123,
+                "ms": 0.700699999999415
+              },
+              {
+                "label": "compiler",
+                "start": 69.26770000000033,
+                "ms": 36.28150000000096
+              },
+              {
+                "label": "compiler",
+                "start": 105.84670000000006,
+                "ms": 31.724600000001374
+              },
+              {
+                "label": "finance-v2",
+                "start": 137.59390000000167,
+                "ms": 1.9287999999996828
+              },
+              {
+                "label": "finance-v2",
+                "start": 139.53290000000015,
+                "ms": 1.7458000000005995
+              },
+              {
+                "label": "compiler",
+                "start": 142.8096000000005,
+                "ms": 25.650400000000445
+              },
+              {
+                "label": "finance-v2",
+                "start": 168.47630000000026,
+                "ms": 1.2200000000011642
+              },
+              {
+                "label": "evaluation",
+                "start": 69.16250000000036,
+                "ms": 103.41589999999997
+              },
+              {
+                "label": "active-plan",
+                "start": 186.97330000000147,
+                "ms": 1.8699999999989814
+              }
+            ],
+            "serverMs": 191.89370000000054,
+            "responseBytes": 316029,
+            "serializationMs": 3.8307000000004336,
+            "evaluations": 1,
+            "financeCalls": 3,
+            "fingerprint": "14db9a826d778f44af597a8f7aa0265632437ca7009f49d51d0286d1a77b104e",
+            "providerCalls": {
+              "routes": 0,
+              "fuel": 0,
+              "toll": 0
+            }
+          },
+          "P4B": {
+            "variant": "P4B",
+            "worldReads": 1,
+            "activeReads": 2,
+            "prepareCalls": 1,
+            "spans": [
+              {
+                "label": "active-plan",
+                "start": 0.43179999999847496,
+                "ms": 2.3752000000004045
+              },
+              {
+                "label": "world",
+                "start": 0.18209999999999127,
+                "ms": 72.05749999999898
+              },
+              {
+                "label": "prepare-world-mobility",
+                "start": 72.3885999999984,
+                "ms": 0.48650000000088767
+              },
+              {
+                "label": "compiler",
+                "start": 72.94859999999971,
+                "ms": 23.698099999999613
+              },
+              {
+                "label": "compiler",
+                "start": 96.8117999999995,
+                "ms": 23.182800000000498
+              },
+              {
+                "label": "finance-v2",
+                "start": 120.01549999999952,
+                "ms": 1.8259999999991123
+              },
+              {
+                "label": "finance-v2",
+                "start": 121.85379999999896,
+                "ms": 1.7371000000002823
+              },
+              {
+                "label": "compiler",
+                "start": 125.02369999999974,
+                "ms": 29.413000000000466
+              },
+              {
+                "label": "finance-v2",
+                "start": 154.46109999999862,
+                "ms": 1.7424000000009983
+              },
+              {
+                "label": "evaluation",
+                "start": 72.88789999999972,
+                "ms": 86.08829999999944
+              },
+              {
+                "label": "active-plan",
+                "start": 172.63709999999992,
+                "ms": 2.976199999999153
+              }
+            ],
+            "serverMs": 180.19959999999992,
+            "responseBytes": 316029,
+            "serializationMs": 6.14010000000053,
+            "evaluations": 1,
+            "financeCalls": 3,
+            "fingerprint": "14db9a826d778f44af597a8f7aa0265632437ca7009f49d51d0286d1a77b104e",
+            "providerCalls": {
+              "routes": 0,
+              "fuel": 0,
+              "toll": 0
+            }
+          }
+        }
+      ],
+      "status": "PARITY_PASS_SYNTHETIC_LATENCY_NOT_CERTIFIED"
+    },
+    {
+      "case": "night-configured",
+      "n": 4,
+      "pairs": [
+        {
+          "P4B": {
+            "variant": "P4B",
+            "worldReads": 1,
+            "activeReads": 2,
+            "prepareCalls": 1,
+            "spans": [
+              {
+                "label": "active-plan",
+                "start": 0.9850999999998749,
+                "ms": 4.15480000000025
+              },
+              {
+                "label": "world",
+                "start": 0.8422000000009575,
+                "ms": 74.30379999999968
+              },
+              {
+                "label": "prepare-world-mobility",
+                "start": 75.38000000000102,
+                "ms": 8.6882999999998
+              },
+              {
+                "label": "compiler",
+                "start": 84.21260000000075,
+                "ms": 24.57549999999901
+              },
+              {
+                "label": "compiler",
+                "start": 109.03989999999976,
+                "ms": 18.539200000001074
+              },
+              {
+                "label": "finance-v2",
+                "start": 127.60430000000088,
+                "ms": 2.1255999999993946
+              },
+              {
+                "label": "finance-v2",
+                "start": 129.73639999999978,
+                "ms": 1.2813999999998487
+              },
+              {
+                "label": "compiler",
+                "start": 134.76870000000054,
+                "ms": 21.723799999999756
+              },
+              {
+                "label": "finance-v2",
+                "start": 156.51170000000093,
+                "ms": 1.4171999999998661
+              },
+              {
+                "label": "evaluation",
+                "start": 84.07790000000023,
+                "ms": 76.32819999999992
+              },
+              {
+                "label": "active-plan",
+                "start": 179.17309999999998,
+                "ms": 2.423399999999674
+              }
+            ],
+            "serverMs": 189.9331999999995,
+            "responseBytes": 575807,
+            "serializationMs": 10.388899999999921,
+            "evaluations": 1,
+            "financeCalls": 3,
+            "fingerprint": "14fd0b2567f6c148984d207522544168f84fef185e0e7c6fe5387b3f7c8c80ed",
+            "providerCalls": {
+              "routes": 0,
+              "fuel": 0,
+              "toll": 0
+            }
+          },
+          "P4D": {
+            "variant": "P4D",
+            "worldReads": 1,
+            "activeReads": 2,
+            "prepareCalls": 1,
+            "spans": [
+              {
+                "label": "active-plan",
+                "start": 0.42669999999998254,
+                "ms": 2.9390000000003056
+              },
+              {
+                "label": "world",
+                "start": 0.3073999999996886,
+                "ms": 69.54969999999958
+              },
+              {
+                "label": "prepare-world-mobility",
+                "start": 70.10039999999935,
+                "ms": 2.104300000000876
+              },
+              {
+                "label": "compiler",
+                "start": 72.34959999999955,
+                "ms": 25.39090000000033
+              },
+              {
+                "label": "compiler",
+                "start": 97.9987000000001,
+                "ms": 22.434299999998984
+              },
+              {
+                "label": "finance-v2",
+                "start": 120.44789999999921,
+                "ms": 2.0310000000008586
+              },
+              {
+                "label": "finance-v2",
+                "start": 122.48599999999897,
+                "ms": 1.3299000000006345
+              },
+              {
+                "label": "compiler",
+                "start": 125.87039999999979,
+                "ms": 24.288399999999456
+              },
+              {
+                "label": "finance-v2",
+                "start": 150.17849999999999,
+                "ms": 1.7523999999993976
+              },
+              {
+                "label": "evaluation",
+                "start": 72.21529999999984,
+                "ms": 82.23489999999947
+              },
+              {
+                "label": "active-plan",
+                "start": 171.2476000000006,
+                "ms": 2.650599999999031
+              }
+            ],
+            "serverMs": 180.17519999999968,
+            "responseBytes": 575807,
+            "serializationMs": 8.992899999999281,
+            "evaluations": 1,
+            "financeCalls": 3,
+            "fingerprint": "14fd0b2567f6c148984d207522544168f84fef185e0e7c6fe5387b3f7c8c80ed",
+            "providerCalls": {
+              "routes": 0,
+              "fuel": 0,
+              "toll": 0
+            }
+          }
+        },
+        {
+          "P4D": {
+            "variant": "P4D",
+            "worldReads": 1,
+            "activeReads": 2,
+            "prepareCalls": 1,
+            "spans": [
+              {
+                "label": "active-plan",
+                "start": 0.28409999999894353,
+                "ms": 2.76890000000094
+              },
+              {
+                "label": "world",
+                "start": 0.2076999999990221,
+                "ms": 68.59740000000056
+              },
+              {
+                "label": "prepare-world-mobility",
+                "start": 69.01339999999982,
+                "ms": 1.904500000000553
+              },
+              {
+                "label": "compiler",
+                "start": 71.05519999999888,
+                "ms": 30.410100000000966
+              },
+              {
+                "label": "compiler",
+                "start": 101.79190000000017,
+                "ms": 27.5703999999987
+              },
+              {
+                "label": "finance-v2",
+                "start": 129.41040000000066,
+                "ms": 2.311099999998987
+              },
+              {
+                "label": "finance-v2",
+                "start": 131.73259999999937,
+                "ms": 1.7160000000003492
+              },
+              {
+                "label": "compiler",
+                "start": 136.20629999999983,
+                "ms": 37.29290000000037
+              },
+              {
+                "label": "finance-v2",
+                "start": 173.53989999999976,
+                "ms": 2.3114000000005035
+              },
+              {
+                "label": "evaluation",
+                "start": 70.92909999999938,
+                "ms": 108.56700000000092
+              },
+              {
+                "label": "active-plan",
+                "start": 200.79449999999997,
+                "ms": 3.2700999999997293
+              }
+            ],
+            "serverMs": 211.01879999999983,
+            "responseBytes": 575807,
+            "serializationMs": 10.303299999999581,
+            "evaluations": 1,
+            "financeCalls": 3,
+            "fingerprint": "14fd0b2567f6c148984d207522544168f84fef185e0e7c6fe5387b3f7c8c80ed",
+            "providerCalls": {
+              "routes": 0,
+              "fuel": 0,
+              "toll": 0
+            }
+          },
+          "P4B": {
+            "variant": "P4B",
+            "worldReads": 1,
+            "activeReads": 2,
+            "prepareCalls": 1,
+            "spans": [
+              {
+                "label": "active-plan",
+                "start": 0.40089999999872816,
+                "ms": 2.75170000000071
+              },
+              {
+                "label": "world",
+                "start": 0.3055000000003929,
+                "ms": 64.90200000000004
+              },
+              {
+                "label": "prepare-world-mobility",
+                "start": 65.41189999999915,
+                "ms": 1.3348000000005413
+              },
+              {
+                "label": "compiler",
+                "start": 66.88960000000043,
+                "ms": 24.641499999999724
+              },
+              {
+                "label": "compiler",
+                "start": 91.80229999999938,
+                "ms": 23.42369999999937
+              },
+              {
+                "label": "finance-v2",
+                "start": 115.24269999999888,
+                "ms": 1.9936000000016065
+              },
+              {
+                "label": "finance-v2",
+                "start": 117.24419999999918,
+                "ms": 1.4729999999999563
+              },
+              {
+                "label": "compiler",
+                "start": 120.95759999999973,
+                "ms": 18.99669999999969
+              },
+              {
+                "label": "finance-v2",
+                "start": 139.97949999999946,
+                "ms": 1.0640999999995984
+              },
+              {
+                "label": "evaluation",
+                "start": 66.7565999999988,
+                "ms": 76.42900000000009
+              },
+              {
+                "label": "active-plan",
+                "start": 156.9367000000002,
+                "ms": 2.6713999999992666
+              }
+            ],
+            "serverMs": 164.98270000000048,
+            "responseBytes": 575807,
+            "serializationMs": 8.09610000000066,
+            "evaluations": 1,
+            "financeCalls": 3,
+            "fingerprint": "14fd0b2567f6c148984d207522544168f84fef185e0e7c6fe5387b3f7c8c80ed",
+            "providerCalls": {
+              "routes": 0,
+              "fuel": 0,
+              "toll": 0
+            }
+          }
+        },
+        {
+          "P4B": {
+            "variant": "P4B",
+            "worldReads": 1,
+            "activeReads": 2,
+            "prepareCalls": 1,
+            "spans": [
+              {
+                "label": "active-plan",
+                "start": 0.2734999999993306,
+                "ms": 2.141700000000128
+              },
+              {
+                "label": "world",
+                "start": 0.20160000000032596,
+                "ms": 64.90109999999913
+              },
+              {
+                "label": "prepare-world-mobility",
+                "start": 65.29969999999958,
+                "ms": 1.8271000000004278
+              },
+              {
+                "label": "compiler",
+                "start": 67.23239999999896,
+                "ms": 24.06260000000111
+              },
+              {
+                "label": "compiler",
+                "start": 91.57809999999881,
+                "ms": 21.29950000000099
+              },
+              {
+                "label": "finance-v2",
+                "start": 112.89019999999982,
+                "ms": 1.8781999999991967
+              },
+              {
+                "label": "finance-v2",
+                "start": 114.77469999999994,
+                "ms": 1.2678999999989173
+              },
+              {
+                "label": "compiler",
+                "start": 117.5589,
+                "ms": 22.314000000000306
+              },
+              {
+                "label": "finance-v2",
+                "start": 139.89099999999962,
+                "ms": 1.4143000000003667
+              },
+              {
+                "label": "evaluation",
+                "start": 67.13630000000012,
+                "ms": 76.439699999999
+              },
+              {
+                "label": "active-plan",
+                "start": 156.36949999999888,
+                "ms": 2.137400000001435
+              }
+            ],
+            "serverMs": 162.9928,
+            "responseBytes": 575807,
+            "serializationMs": 8.036799999999857,
+            "evaluations": 1,
+            "financeCalls": 3,
+            "fingerprint": "14fd0b2567f6c148984d207522544168f84fef185e0e7c6fe5387b3f7c8c80ed",
+            "providerCalls": {
+              "routes": 0,
+              "fuel": 0,
+              "toll": 0
+            }
+          },
+          "P4D": {
+            "variant": "P4D",
+            "worldReads": 1,
+            "activeReads": 2,
+            "prepareCalls": 1,
+            "spans": [
+              {
+                "label": "active-plan",
+                "start": 0.2849999999998545,
+                "ms": 2.1453999999994267
+              },
+              {
+                "label": "world",
+                "start": 0.20889999999963038,
+                "ms": 75.03679999999986
+              },
+              {
+                "label": "prepare-world-mobility",
+                "start": 75.55449999999837,
+                "ms": 2.0253000000011525
+              },
+              {
+                "label": "compiler",
+                "start": 77.73610000000008,
+                "ms": 36.60999999999876
+              },
+              {
+                "label": "compiler",
+                "start": 114.92449999999917,
+                "ms": 22.321599999999307
+              },
+              {
+                "label": "finance-v2",
+                "start": 137.2581999999984,
+                "ms": 1.4779000000016822
+              },
+              {
+                "label": "finance-v2",
+                "start": 138.74259999999958,
+                "ms": 1.307199999999284
+              },
+              {
+                "label": "compiler",
+                "start": 141.2541999999994,
+                "ms": 17.76169999999911
+              },
+              {
+                "label": "finance-v2",
+                "start": 159.03299999999945,
+                "ms": 1.217399999999543
+              },
+              {
+                "label": "evaluation",
+                "start": 77.59429999999884,
+                "ms": 84.95080000000053
+              },
+              {
+                "label": "active-plan",
+                "start": 176.87029999999868,
+                "ms": 2.3440000000009604
+              }
+            ],
+            "serverMs": 183.93489999999838,
+            "responseBytes": 575807,
+            "serializationMs": 9.308899999999994,
+            "evaluations": 1,
+            "financeCalls": 3,
+            "fingerprint": "14fd0b2567f6c148984d207522544168f84fef185e0e7c6fe5387b3f7c8c80ed",
+            "providerCalls": {
+              "routes": 0,
+              "fuel": 0,
+              "toll": 0
+            }
+          }
+        },
+        {
+          "P4D": {
+            "variant": "P4D",
+            "worldReads": 1,
+            "activeReads": 2,
+            "prepareCalls": 1,
+            "spans": [
+              {
+                "label": "active-plan",
+                "start": 0.40530000000035216,
+                "ms": 2.3845000000001164
+              },
+              {
+                "label": "world",
+                "start": 0.32890000000043074,
+                "ms": 67.78939999999966
+              },
+              {
+                "label": "prepare-world-mobility",
+                "start": 68.30919999999969,
+                "ms": 1.3382000000001426
+              },
+              {
+                "label": "compiler",
+                "start": 69.79069999999956,
+                "ms": 25.33129999999983
+              },
+              {
+                "label": "compiler",
+                "start": 95.35069999999905,
+                "ms": 21.689500000000407
+              },
+              {
+                "label": "finance-v2",
+                "start": 117.0560000000005,
+                "ms": 1.7541000000001077
+              },
+              {
+                "label": "finance-v2",
+                "start": 118.8173999999999,
+                "ms": 5.7150000000001455
+              },
+              {
+                "label": "compiler",
+                "start": 126.50120000000061,
+                "ms": 21.728900000000067
+              },
+              {
+                "label": "finance-v2",
+                "start": 148.24209999999948,
+                "ms": 1.3947000000007392
+              },
+              {
+                "label": "evaluation",
+                "start": 69.65710000000036,
+                "ms": 82.24330000000009
+              },
+              {
+                "label": "active-plan",
+                "start": 165.91430000000037,
+                "ms": 2.5635000000002037
+              }
+            ],
+            "serverMs": 172.6329999999998,
+            "responseBytes": 575807,
+            "serializationMs": 9.588599999999133,
+            "evaluations": 1,
+            "financeCalls": 3,
+            "fingerprint": "14fd0b2567f6c148984d207522544168f84fef185e0e7c6fe5387b3f7c8c80ed",
+            "providerCalls": {
+              "routes": 0,
+              "fuel": 0,
+              "toll": 0
+            }
+          },
+          "P4B": {
+            "variant": "P4B",
+            "worldReads": 1,
+            "activeReads": 2,
+            "prepareCalls": 1,
+            "spans": [
+              {
+                "label": "active-plan",
+                "start": 0.3613000000004831,
+                "ms": 2.972799999999552
+              },
+              {
+                "label": "world",
+                "start": 0.2651000000005297,
+                "ms": 74.4403999999995
+              },
+              {
+                "label": "prepare-world-mobility",
+                "start": 74.8619000000017,
+                "ms": 1.2474999999994907
+              },
+              {
+                "label": "compiler",
+                "start": 76.19260000000031,
+                "ms": 31.924700000001394
+              },
+              {
+                "label": "compiler",
+                "start": 108.34130000000005,
+                "ms": 18.444400000000314
+              },
+              {
+                "label": "finance-v2",
+                "start": 126.79900000000089,
+                "ms": 1.9290000000000873
+              },
+              {
+                "label": "finance-v2",
+                "start": 128.7385000000013,
+                "ms": 1.9265999999988708
+              },
+              {
+                "label": "compiler",
+                "start": 132.28490000000056,
+                "ms": 22.58129999999983
+              },
+              {
+                "label": "finance-v2",
+                "start": 154.89140000000043,
+                "ms": 1.3800000000010186
+              },
+              {
+                "label": "evaluation",
+                "start": 76.1179000000011,
+                "ms": 82.17679999999928
+              },
+              {
+                "label": "active-plan",
+                "start": 168.56560000000172,
+                "ms": 1.7067999999999302
+              }
+            ],
+            "serverMs": 173.64420000000064,
+            "responseBytes": 575807,
+            "serializationMs": 9.92699999999968,
+            "evaluations": 1,
+            "financeCalls": 3,
+            "fingerprint": "14fd0b2567f6c148984d207522544168f84fef185e0e7c6fe5387b3f7c8c80ed",
+            "providerCalls": {
+              "routes": 0,
+              "fuel": 0,
+              "toll": 0
+            }
+          }
+        }
+      ],
+      "status": "PARITY_PASS_SYNTHETIC_LATENCY_NOT_CERTIFIED"
+    },
+    {
+      "case": "asset-configured",
+      "n": 4,
+      "pairs": [
+        {
+          "P4B": {
+            "variant": "P4B",
+            "worldReads": 1,
+            "activeReads": 2,
+            "prepareCalls": 1,
+            "spans": [
+              {
+                "label": "active-plan",
+                "start": 0.4205000000001746,
+                "ms": 2.5712000000003172
+              },
+              {
+                "label": "world",
+                "start": 0.341099999999642,
+                "ms": 63.477600000000166
+              },
+              {
+                "label": "prepare-world-mobility",
+                "start": 64.03260000000046,
+                "ms": 1.2399999999997817
+              },
+              {
+                "label": "compiler",
+                "start": 65.39700000000084,
+                "ms": 22.31659999999829
+              },
+              {
+                "label": "compiler",
+                "start": 87.99909999999909,
+                "ms": 23.54190000000017
+              },
+              {
+                "label": "finance-v2",
+                "start": 111.5601000000006,
+                "ms": 1.9494999999988067
+              },
+              {
+                "label": "finance-v2",
+                "start": 113.52549999999974,
+                "ms": 0.9956999999994878
+              },
+              {
+                "label": "compiler",
+                "start": 115.87299999999959,
+                "ms": 22.67280000000028
+              },
+              {
+                "label": "finance-v2",
+                "start": 138.5653000000002,
+                "ms": 1.6563999999998487
+              },
+              {
+                "label": "evaluation",
+                "start": 65.28210000000036,
+                "ms": 77.1955999999991
+              },
+              {
+                "label": "active-plan",
+                "start": 158.30799999999908,
+                "ms": 2.2494000000006054
+              }
+            ],
+            "serverMs": 166.88400000000001,
+            "responseBytes": 579585,
+            "serializationMs": 8.550500000001193,
+            "evaluations": 1,
+            "financeCalls": 3,
+            "fingerprint": "022ca80a9b06a2ea9f2753f410aad973132dc1fb38d671154377c0921da8f39f",
+            "providerCalls": {
+              "routes": 0,
+              "fuel": 0,
+              "toll": 0
+            }
+          },
+          "P4D": {
+            "variant": "P4D",
+            "worldReads": 1,
+            "activeReads": 2,
+            "prepareCalls": 1,
+            "spans": [
+              {
+                "label": "active-plan",
+                "start": 0.3915999999990163,
+                "ms": 3.233799999999974
+              },
+              {
+                "label": "world",
+                "start": 0.2963999999992666,
+                "ms": 62.50989999999911
+              },
+              {
+                "label": "prepare-world-mobility",
+                "start": 62.96929999999884,
+                "ms": 1.0861999999997352
+              },
+              {
+                "label": "compiler",
+                "start": 64.14629999999852,
+                "ms": 25.20640000000094
+              },
+              {
+                "label": "compiler",
+                "start": 89.5638999999992,
+                "ms": 17.896699999999328
+              },
+              {
+                "label": "finance-v2",
+                "start": 107.47809999999845,
+                "ms": 1.6406999999999243
+              },
+              {
+                "label": "finance-v2",
+                "start": 109.1299999999992,
+                "ms": 1.0944999999992433
+              },
+              {
+                "label": "compiler",
+                "start": 111.44709999999941,
+                "ms": 19.686999999999898
+              },
+              {
+                "label": "finance-v2",
+                "start": 131.15039999999863,
+                "ms": 1.0492000000012922
+              },
+              {
+                "label": "evaluation",
+                "start": 64.0640999999996,
+                "ms": 69.77809999999954
+              },
+              {
+                "label": "active-plan",
+                "start": 143.2544999999991,
+                "ms": 2.035200000000259
+              }
+            ],
+            "serverMs": 149.18589999999858,
+            "responseBytes": 579585,
+            "serializationMs": 9.593899999999849,
+            "evaluations": 1,
+            "financeCalls": 3,
+            "fingerprint": "022ca80a9b06a2ea9f2753f410aad973132dc1fb38d671154377c0921da8f39f",
+            "providerCalls": {
+              "routes": 0,
+              "fuel": 0,
+              "toll": 0
+            }
+          }
+        },
+        {
+          "P4D": {
+            "variant": "P4D",
+            "worldReads": 1,
+            "activeReads": 2,
+            "prepareCalls": 1,
+            "spans": [
+              {
+                "label": "active-plan",
+                "start": 0.38990000000012515,
+                "ms": 2.959100000000035
+              },
+              {
+                "label": "world",
+                "start": 0.29949999999917054,
+                "ms": 59.92820000000029
+              },
+              {
+                "label": "prepare-world-mobility",
+                "start": 60.408799999999246,
+                "ms": 1.4392000000007101
+              },
+              {
+                "label": "compiler",
+                "start": 61.96049999999923,
+                "ms": 24.117700000000696
+              },
+              {
+                "label": "compiler",
+                "start": 86.46069999999963,
+                "ms": 17.89940000000024
+              },
+              {
+                "label": "finance-v2",
+                "start": 104.37459999999919,
+                "ms": 1.2313000000012835
+              },
+              {
+                "label": "finance-v2",
+                "start": 105.61210000000028,
+                "ms": 1.0403999999998632
+              },
+              {
+                "label": "compiler",
+                "start": 108.47609999999986,
+                "ms": 20.68289999999979
+              },
+              {
+                "label": "finance-v2",
+                "start": 129.17499999999927,
+                "ms": 1.6784000000006927
+              },
+              {
+                "label": "evaluation",
+                "start": 61.85789999999906,
+                "ms": 71.52690000000075
+              },
+              {
+                "label": "active-plan",
+                "start": 149.40250000000015,
+                "ms": 2.0710999999992055
+              }
+            ],
+            "serverMs": 155.6242000000002,
+            "responseBytes": 579585,
+            "serializationMs": 8.19340000000011,
+            "evaluations": 1,
+            "financeCalls": 3,
+            "fingerprint": "022ca80a9b06a2ea9f2753f410aad973132dc1fb38d671154377c0921da8f39f",
+            "providerCalls": {
+              "routes": 0,
+              "fuel": 0,
+              "toll": 0
+            }
+          },
+          "P4B": {
+            "variant": "P4B",
+            "worldReads": 1,
+            "activeReads": 2,
+            "prepareCalls": 1,
+            "spans": [
+              {
+                "label": "active-plan",
+                "start": 0.2889999999988504,
+                "ms": 2.1687000000001717
+              },
+              {
+                "label": "world",
+                "start": 0.20060000000012224,
+                "ms": 70.23300000000017
+              },
+              {
+                "label": "prepare-world-mobility",
+                "start": 70.68099999999868,
+                "ms": 1.6812000000008993
+              },
+              {
+                "label": "compiler",
+                "start": 72.49809999999889,
+                "ms": 24.642400000000634
+              },
+              {
+                "label": "compiler",
+                "start": 97.4997000000003,
+                "ms": 18.235199999999168
+              },
+              {
+                "label": "finance-v2",
+                "start": 115.74759999999878,
+                "ms": 1.0618000000013126
+              },
+              {
+                "label": "finance-v2",
+                "start": 116.81660000000011,
+                "ms": 0.7178000000003522
+              },
+              {
+                "label": "compiler",
+                "start": 118.95899999999892,
+                "ms": 21.565599999999904
+              },
+              {
+                "label": "finance-v2",
+                "start": 140.54029999999875,
+                "ms": 1.37630000000172
+              },
+              {
+                "label": "evaluation",
+                "start": 72.37379999999939,
+                "ms": 71.69579999999951
+              },
+              {
+                "label": "active-plan",
+                "start": 157.64909999999873,
+                "ms": 2.0570000000006985
+              }
+            ],
+            "serverMs": 163.90710000000036,
+            "responseBytes": 579585,
+            "serializationMs": 8.448099999999613,
+            "evaluations": 1,
+            "financeCalls": 3,
+            "fingerprint": "022ca80a9b06a2ea9f2753f410aad973132dc1fb38d671154377c0921da8f39f",
+            "providerCalls": {
+              "routes": 0,
+              "fuel": 0,
+              "toll": 0
+            }
+          }
+        },
+        {
+          "P4B": {
+            "variant": "P4B",
+            "worldReads": 1,
+            "activeReads": 2,
+            "prepareCalls": 1,
+            "spans": [
+              {
+                "label": "active-plan",
+                "start": 0.28980000000046857,
+                "ms": 2.178699999998571
+              },
+              {
+                "label": "world",
+                "start": 0.21849999999903957,
+                "ms": 66.1236000000008
+              },
+              {
+                "label": "prepare-world-mobility",
+                "start": 66.52030000000013,
+                "ms": 1.3510000000005675
+              },
+              {
+                "label": "compiler",
+                "start": 68.02160000000003,
+                "ms": 38.02939999999944
+              },
+              {
+                "label": "compiler",
+                "start": 106.37409999999909,
+                "ms": 31.91360000000168
+              },
+              {
+                "label": "finance-v2",
+                "start": 138.30349999999999,
+                "ms": 1.6213999999999942
+              },
+              {
+                "label": "finance-v2",
+                "start": 139.9326999999994,
+                "ms": 1.2023000000008324
+              },
+              {
+                "label": "compiler",
+                "start": 142.98019999999997,
+                "ms": 24.61319999999978
+              },
+              {
+                "label": "finance-v2",
+                "start": 167.60950000000048,
+                "ms": 1.2384999999994761
+              },
+              {
+                "label": "evaluation",
+                "start": 67.8809999999994,
+                "ms": 103.27920000000086
+              },
+              {
+                "label": "active-plan",
+                "start": 184.38210000000072,
+                "ms": 1.9584999999988213
+              }
+            ],
+            "serverMs": 189.78650000000016,
+            "responseBytes": 579585,
+            "serializationMs": 7.473500000000058,
+            "evaluations": 1,
+            "financeCalls": 3,
+            "fingerprint": "022ca80a9b06a2ea9f2753f410aad973132dc1fb38d671154377c0921da8f39f",
+            "providerCalls": {
+              "routes": 0,
+              "fuel": 0,
+              "toll": 0
+            }
+          },
+          "P4D": {
+            "variant": "P4D",
+            "worldReads": 1,
+            "activeReads": 2,
+            "prepareCalls": 1,
+            "spans": [
+              {
+                "label": "active-plan",
+                "start": 0.3164999999989959,
+                "ms": 2.0967000000000553
+              },
+              {
+                "label": "world",
+                "start": 0.2525000000005093,
+                "ms": 65.57719999999972
+              },
+              {
+                "label": "prepare-world-mobility",
+                "start": 65.98999999999978,
+                "ms": 1.072599999999511
+              },
+              {
+                "label": "compiler",
+                "start": 67.15359999999964,
+                "ms": 22.449099999999817
+              },
+              {
+                "label": "compiler",
+                "start": 89.88709999999992,
+                "ms": 23.377800000000207
+              },
+              {
+                "label": "finance-v2",
+                "start": 113.27739999999903,
+                "ms": 1.3847999999998137
+              },
+              {
+                "label": "finance-v2",
+                "start": 114.66870000000017,
+                "ms": 0.9741999999987456
+              },
+              {
+                "label": "compiler",
+                "start": 117.00560000000041,
+                "ms": 18.735899999999674
+              },
+              {
+                "label": "finance-v2",
+                "start": 135.7551000000003,
+                "ms": 0.804599999999482
+              },
+              {
+                "label": "evaluation",
+                "start": 67.07099999999991,
+                "ms": 71.59679999999935
+              },
+              {
+                "label": "active-plan",
+                "start": 149.2554,
+                "ms": 1.6384999999991123
+              }
+            ],
+            "serverMs": 154.9411,
+            "responseBytes": 579585,
+            "serializationMs": 9.129800000000614,
+            "evaluations": 1,
+            "financeCalls": 3,
+            "fingerprint": "022ca80a9b06a2ea9f2753f410aad973132dc1fb38d671154377c0921da8f39f",
+            "providerCalls": {
+              "routes": 0,
+              "fuel": 0,
+              "toll": 0
+            }
+          }
+        },
+        {
+          "P4D": {
+            "variant": "P4D",
+            "worldReads": 1,
+            "activeReads": 2,
+            "prepareCalls": 1,
+            "spans": [
+              {
+                "label": "active-plan",
+                "start": 0.24920000000020082,
+                "ms": 1.9513000000006286
+              },
+              {
+                "label": "world",
+                "start": 0.183100000000195,
+                "ms": 70.97090000000026
+              },
+              {
+                "label": "prepare-world-mobility",
+                "start": 71.34779999999955,
+                "ms": 1.3845000000001164
+              },
+              {
+                "label": "compiler",
+                "start": 72.84640000000036,
+                "ms": 25.170799999999872
+              },
+              {
+                "label": "compiler",
+                "start": 98.4364999999998,
+                "ms": 18.051100000000588
+              },
+              {
+                "label": "finance-v2",
+                "start": 116.5020999999997,
+                "ms": 1.738600000000588
+              },
+              {
+                "label": "finance-v2",
+                "start": 118.25530000000072,
+                "ms": 1.6850999999987835
+              },
+              {
+                "label": "compiler",
+                "start": 122.28039999999964,
+                "ms": 21.01680000000124
+              },
+              {
+                "label": "finance-v2",
+                "start": 143.3124000000007,
+                "ms": 1.0856999999996333
+              },
+              {
+                "label": "evaluation",
+                "start": 72.74200000000019,
+                "ms": 73.84519999999975
+              },
+              {
+                "label": "active-plan",
+                "start": 159.00890000000072,
+                "ms": 1.7819999999992433
+              }
+            ],
+            "serverMs": 163.94540000000052,
+            "responseBytes": 579585,
+            "serializationMs": 7.008499999999913,
+            "evaluations": 1,
+            "financeCalls": 3,
+            "fingerprint": "022ca80a9b06a2ea9f2753f410aad973132dc1fb38d671154377c0921da8f39f",
+            "providerCalls": {
+              "routes": 0,
+              "fuel": 0,
+              "toll": 0
+            }
+          },
+          "P4B": {
+            "variant": "P4B",
+            "worldReads": 1,
+            "activeReads": 2,
+            "prepareCalls": 1,
+            "spans": [
+              {
+                "label": "active-plan",
+                "start": 0.21969999999964784,
+                "ms": 1.4632999999994354
+              },
+              {
+                "label": "world",
+                "start": 0.16120000000046275,
+                "ms": 63.12149999999929
+              },
+              {
+                "label": "prepare-world-mobility",
+                "start": 63.88639999999941,
+                "ms": 1.9992000000002008
+              },
+              {
+                "label": "compiler",
+                "start": 65.97899999999936,
+                "ms": 30.223900000000867
+              },
+              {
+                "label": "compiler",
+                "start": 96.51519999999982,
+                "ms": 21.902000000000044
+              },
+              {
+                "label": "finance-v2",
+                "start": 118.43130000000019,
+                "ms": 1.5100000000002183
+              },
+              {
+                "label": "finance-v2",
+                "start": 119.946899999999,
+                "ms": 0.9962000000014086
+              },
+              {
+                "label": "compiler",
+                "start": 122.48329999999987,
+                "ms": 21.27930000000015
+              },
+              {
+                "label": "finance-v2",
+                "start": 143.77700000000004,
+                "ms": 1.2083000000002357
+              },
+              {
+                "label": "evaluation",
+                "start": 65.89500000000044,
+                "ms": 81.41009999999915
+              },
+              {
+                "label": "active-plan",
+                "start": 167.8158999999996,
+                "ms": 3.0650000000005093
+              }
+            ],
+            "serverMs": 176.7484999999997,
+            "responseBytes": 579585,
+            "serializationMs": 15.50460000000021,
+            "evaluations": 1,
+            "financeCalls": 3,
+            "fingerprint": "022ca80a9b06a2ea9f2753f410aad973132dc1fb38d671154377c0921da8f39f",
+            "providerCalls": {
+              "routes": 0,
+              "fuel": 0,
+              "toll": 0
+            }
+          }
+        }
+      ],
+      "status": "PARITY_PASS_SYNTHETIC_LATENCY_NOT_CERTIFIED"
+    },
+    {
+      "case": "undo",
+      "n": 4,
+      "pairs": [
+        {
+          "P4B": {
+            "variant": "P4B",
+            "worldReads": 1,
+            "activeReads": 2,
+            "prepareCalls": 1,
+            "spans": [
+              {
+                "label": "active-plan",
+                "start": 0.22340000000076543,
+                "ms": 3.271099999999933
+              },
+              {
+                "label": "world",
+                "start": 0.11449999999967986,
+                "ms": 68.23199999999997
+              },
+              {
+                "label": "prepare-world-mobility",
+                "start": 68.47940000000017,
+                "ms": 0.5333000000009633
+              },
+              {
+                "label": "compiler",
+                "start": 69.05509999999958,
+                "ms": 28.257900000000518
+              },
+              {
+                "label": "finance-v2",
+                "start": 106.52729999999974,
+                "ms": 1.1629000000011729
+              },
+              {
+                "label": "evaluation",
+                "start": 69.02530000000115,
+                "ms": 41.428399999998874
+              },
+              {
+                "label": "active-plan",
+                "start": 122.34300000000076,
+                "ms": 1.9868999999998778
+              }
+            ],
+            "serverMs": 127.64880000000085,
+            "responseBytes": 314314,
+            "serializationMs": 6.419200000000274,
+            "evaluations": 1,
+            "financeCalls": 1,
+            "fingerprint": "1dff178e9ac46f4d985d17ad8e47018da8692f2b23fbf5ba6f5ff0fa8bb37eec",
+            "providerCalls": {
+              "routes": 0,
+              "fuel": 0,
+              "toll": 0
+            }
+          },
+          "P4D": {
+            "variant": "P4D",
+            "worldReads": 1,
+            "activeReads": 2,
+            "prepareCalls": 1,
+            "spans": [
+              {
+                "label": "active-plan",
+                "start": 0.14290000000073633,
+                "ms": 2.0596999999997934
+              },
+              {
+                "label": "world",
+                "start": 0.07099999999991269,
+                "ms": 70.03379999999925
+              },
+              {
+                "label": "prepare-world-mobility",
+                "start": 70.18139999999948,
+                "ms": 0.4158999999999651
+              },
+              {
+                "label": "compiler",
+                "start": 70.63689999999951,
+                "ms": 28.208300000000236
+              },
+              {
+                "label": "finance-v2",
+                "start": 108.27189999999973,
+                "ms": 1.6515999999992346
+              },
+              {
+                "label": "evaluation",
+                "start": 70.60909999999967,
+                "ms": 41.39440000000104
+              },
+              {
+                "label": "active-plan",
+                "start": 122.69410000000062,
+                "ms": 2.137699999999313
+              }
+            ],
+            "serverMs": 127.96459999999934,
+            "responseBytes": 314314,
+            "serializationMs": 5.091000000000349,
+            "evaluations": 1,
+            "financeCalls": 1,
+            "fingerprint": "1dff178e9ac46f4d985d17ad8e47018da8692f2b23fbf5ba6f5ff0fa8bb37eec",
+            "providerCalls": {
+              "routes": 0,
+              "fuel": 0,
+              "toll": 0
+            }
+          }
+        },
+        {
+          "P4D": {
+            "variant": "P4D",
+            "worldReads": 1,
+            "activeReads": 2,
+            "prepareCalls": 1,
+            "spans": [
+              {
+                "label": "active-plan",
+                "start": 0.16429999999854772,
+                "ms": 2.4094999999997526
+              },
+              {
+                "label": "world",
+                "start": 0.08329999999841675,
+                "ms": 70.9348000000009
+              },
+              {
+                "label": "prepare-world-mobility",
+                "start": 71.08579999999893,
+                "ms": 0.35350000000107684
+              },
+              {
+                "label": "compiler",
+                "start": 71.47099999999955,
+                "ms": 22.534899999998743
+              },
+              {
+                "label": "finance-v2",
+                "start": 100.18739999999889,
+                "ms": 0.9449000000004162
+              },
+              {
+                "label": "evaluation",
+                "start": 71.4489999999987,
+                "ms": 31.194100000000617
+              },
+              {
+                "label": "active-plan",
+                "start": 110.84349999999904,
+                "ms": 1.9640999999992346
+              }
+            ],
+            "serverMs": 116.14439999999922,
+            "responseBytes": 314314,
+            "serializationMs": 4.931000000000495,
+            "evaluations": 1,
+            "financeCalls": 1,
+            "fingerprint": "1dff178e9ac46f4d985d17ad8e47018da8692f2b23fbf5ba6f5ff0fa8bb37eec",
+            "providerCalls": {
+              "routes": 0,
+              "fuel": 0,
+              "toll": 0
+            }
+          },
+          "P4B": {
+            "variant": "P4B",
+            "worldReads": 1,
+            "activeReads": 2,
+            "prepareCalls": 1,
+            "spans": [
+              {
+                "label": "active-plan",
+                "start": 0.16079999999965366,
+                "ms": 2.211700000001656
+              },
+              {
+                "label": "world",
+                "start": 0.08079999999972642,
+                "ms": 70.12690000000111
+              },
+              {
+                "label": "prepare-world-mobility",
+                "start": 70.26230000000032,
+                "ms": 0.3569000000006781
+              },
+              {
+                "label": "compiler",
+                "start": 70.65149999999994,
+                "ms": 40.230100000000675
+              },
+              {
+                "label": "finance-v2",
+                "start": 120.5515000000014,
+                "ms": 0.8277999999991152
+              },
+              {
+                "label": "evaluation",
+                "start": 70.62900000000081,
+                "ms": 54.19739999999911
+              },
+              {
+                "label": "active-plan",
+                "start": 132.6275000000005,
+                "ms": 1.5635999999994965
+              }
+            ],
+            "serverMs": 136.39869999999974,
+            "responseBytes": 314314,
+            "serializationMs": 5.844699999999648,
+            "evaluations": 1,
+            "financeCalls": 1,
+            "fingerprint": "1dff178e9ac46f4d985d17ad8e47018da8692f2b23fbf5ba6f5ff0fa8bb37eec",
+            "providerCalls": {
+              "routes": 0,
+              "fuel": 0,
+              "toll": 0
+            }
+          }
+        },
+        {
+          "P4B": {
+            "variant": "P4B",
+            "worldReads": 1,
+            "activeReads": 2,
+            "prepareCalls": 1,
+            "spans": [
+              {
+                "label": "active-plan",
+                "start": 0.12820000000101572,
+                "ms": 1.8449999999993452
+              },
+              {
+                "label": "world",
+                "start": 0.06350000000020373,
+                "ms": 64.71689999999944
+              },
+              {
+                "label": "prepare-world-mobility",
+                "start": 64.91229999999996,
+                "ms": 0.556800000000294
+              },
+              {
+                "label": "compiler",
+                "start": 65.5007000000005,
+                "ms": 23.437200000000303
+              },
+              {
+                "label": "finance-v2",
+                "start": 98.3150999999998,
+                "ms": 1.5138000000006286
+              },
+              {
+                "label": "evaluation",
+                "start": 65.47819999999956,
+                "ms": 36.41480000000047
+              },
+              {
+                "label": "active-plan",
+                "start": 115.62490000000071,
+                "ms": 2.555399999999281
+              }
+            ],
+            "serverMs": 121.45260000000053,
+            "responseBytes": 314314,
+            "serializationMs": 5.179000000000087,
+            "evaluations": 1,
+            "financeCalls": 1,
+            "fingerprint": "1dff178e9ac46f4d985d17ad8e47018da8692f2b23fbf5ba6f5ff0fa8bb37eec",
+            "providerCalls": {
+              "routes": 0,
+              "fuel": 0,
+              "toll": 0
+            }
+          },
+          "P4D": {
+            "variant": "P4D",
+            "worldReads": 1,
+            "activeReads": 2,
+            "prepareCalls": 1,
+            "spans": [
+              {
+                "label": "active-plan",
+                "start": 0.16599999999925785,
+                "ms": 2.0192000000006374
+              },
+              {
+                "label": "world",
+                "start": 0.0830999999998312,
+                "ms": 73.35009999999966
+              },
+              {
+                "label": "prepare-world-mobility",
+                "start": 73.52299999999923,
+                "ms": 0.4389000000010128
+              },
+              {
+                "label": "compiler",
+                "start": 73.9992999999995,
+                "ms": 22.494000000000597
+              },
+              {
+                "label": "finance-v2",
+                "start": 104.00840000000062,
+                "ms": 1.1229999999995925
+              },
+              {
+                "label": "evaluation",
+                "start": 73.97240000000056,
+                "ms": 33.191100000000006
+              },
+              {
+                "label": "active-plan",
+                "start": 116.10709999999926,
+                "ms": 2.1076000000011845
+              }
+            ],
+            "serverMs": 122.04390000000058,
+            "responseBytes": 314314,
+            "serializationMs": 5.214200000000346,
+            "evaluations": 1,
+            "financeCalls": 1,
+            "fingerprint": "1dff178e9ac46f4d985d17ad8e47018da8692f2b23fbf5ba6f5ff0fa8bb37eec",
+            "providerCalls": {
+              "routes": 0,
+              "fuel": 0,
+              "toll": 0
+            }
+          }
+        },
+        {
+          "P4D": {
+            "variant": "P4D",
+            "worldReads": 1,
+            "activeReads": 2,
+            "prepareCalls": 1,
+            "spans": [
+              {
+                "label": "active-plan",
+                "start": 0.2914999999993597,
+                "ms": 2.324300000000221
+              },
+              {
+                "label": "world",
+                "start": 0.08959999999933643,
+                "ms": 60.88119999999981
+              },
+              {
+                "label": "prepare-world-mobility",
+                "start": 61.05209999999897,
+                "ms": 0.40279999999984284
+              },
+              {
+                "label": "compiler",
+                "start": 61.487599999998565,
+                "ms": 22.390300000000934
+              },
+              {
+                "label": "finance-v2",
+                "start": 93.13869999999952,
+                "ms": 1.2610999999997148
+              },
+              {
+                "label": "evaluation",
+                "start": 61.464200000000346,
+                "ms": 34.996799999998984
+              },
+              {
+                "label": "active-plan",
+                "start": 110.12099999999919,
+                "ms": 2.9240000000008877
+              }
+            ],
+            "serverMs": 117.39599999999882,
+            "responseBytes": 314314,
+            "serializationMs": 5.974599999999555,
+            "evaluations": 1,
+            "financeCalls": 1,
+            "fingerprint": "1dff178e9ac46f4d985d17ad8e47018da8692f2b23fbf5ba6f5ff0fa8bb37eec",
+            "providerCalls": {
+              "routes": 0,
+              "fuel": 0,
+              "toll": 0
+            }
+          },
+          "P4B": {
+            "variant": "P4B",
+            "worldReads": 1,
+            "activeReads": 2,
+            "prepareCalls": 1,
+            "spans": [
+              {
+                "label": "active-plan",
+                "start": 0.18399999999928696,
+                "ms": 2.2273000000004686
+              },
+              {
+                "label": "world",
+                "start": 0.08090000000083819,
+                "ms": 69.83950000000004
+              },
+              {
+                "label": "prepare-world-mobility",
+                "start": 69.98459999999977,
+                "ms": 0.3710000000010041
+              },
+              {
+                "label": "compiler",
+                "start": 70.38899999999921,
+                "ms": 25.846600000000763
+              },
+              {
+                "label": "finance-v2",
+                "start": 108.55099999999948,
+                "ms": 1.7762000000002445
+              },
+              {
+                "label": "evaluation",
+                "start": 70.36559999999918,
+                "ms": 43.02649999999994
+              },
+              {
+                "label": "active-plan",
+                "start": 131.58109999999942,
+                "ms": 3.5138999999999214
+              }
+            ],
+            "serverMs": 141.70529999999962,
+            "responseBytes": 314314,
+            "serializationMs": 7.6098000000001775,
+            "evaluations": 1,
+            "financeCalls": 1,
+            "fingerprint": "1dff178e9ac46f4d985d17ad8e47018da8692f2b23fbf5ba6f5ff0fa8bb37eec",
+            "providerCalls": {
+              "routes": 0,
+              "fuel": 0,
+              "toll": 0
+            }
+          }
+        }
+      ],
+      "status": "PARITY_PASS_SYNTHETIC_LATENCY_NOT_CERTIFIED"
+    },
+    {
+      "case": "car-return",
+      "n": 4,
+      "pairs": [
+        {
+          "P4B": {
+            "variant": "P4B",
+            "worldReads": 1,
+            "activeReads": 2,
+            "prepareCalls": 1,
+            "spans": [
+              {
+                "label": "active-plan",
+                "start": 0.6797000000005937,
+                "ms": 3.944499999999607
+              },
+              {
+                "label": "world",
+                "start": 0.4943999999995867,
+                "ms": 61.70290000000023
+              },
+              {
+                "label": "prepare-world-mobility",
+                "start": 62.47180000000117,
+                "ms": 13.155699999999342
+              },
+              {
+                "label": "compiler",
+                "start": 75.75610000000052,
+                "ms": 31.77809999999954
+              },
+              {
+                "label": "compiler",
+                "start": 107.85400000000118,
+                "ms": 32.83509999999842
+              },
+              {
+                "label": "finance-v2",
+                "start": 140.71169999999984,
+                "ms": 1.7061000000012427
+              },
+              {
+                "label": "finance-v2",
+                "start": 142.4296000000013,
+                "ms": 1.2439999999987776
+              },
+              {
+                "label": "compiler",
+                "start": 145.51289999999972,
+                "ms": 23.240900000000693
+              },
+              {
+                "label": "finance-v2",
+                "start": 168.77220000000125,
+                "ms": 1.462599999998929
+              },
+              {
+                "label": "evaluation",
+                "start": 75.64220000000023,
+                "ms": 96.97910000000047
+              },
+              {
+                "label": "active-plan",
+                "start": 185.59890000000087,
+                "ms": 2.3876000000000204
+              }
+            ],
+            "serverMs": 194.09610000000066,
+            "responseBytes": 452289,
+            "serializationMs": 8.178400000000693,
+            "evaluations": 1,
+            "financeCalls": 3,
+            "fingerprint": "a60445b80b20dd391b176d423e62d5622ed58fec99799908ba6cefe01f88f044",
+            "providerCalls": {
+              "routes": 1,
+              "fuel": 1,
+              "toll": 1
+            }
+          },
+          "P4D": {
+            "variant": "P4D",
+            "worldReads": 1,
+            "activeReads": 2,
+            "prepareCalls": 1,
+            "spans": [
+              {
+                "label": "active-plan",
+                "start": 0.2692000000006374,
+                "ms": 2.370199999999386
+              },
+              {
+                "label": "world",
+                "start": 0.16930000000138534,
+                "ms": 67.42189999999937
+              },
+              {
+                "label": "prepare-world-mobility",
+                "start": 67.82719999999972,
+                "ms": 5.183500000001004
+              },
+              {
+                "label": "compiler",
+                "start": 73.13930000000073,
+                "ms": 29.539300000000367
+              },
+              {
+                "label": "compiler",
+                "start": 103.058500000001,
+                "ms": 28.04819999999927
+              },
+              {
+                "label": "finance-v2",
+                "start": 131.1293000000005,
+                "ms": 1.7846000000008644
+              },
+              {
+                "label": "finance-v2",
+                "start": 132.92389999999978,
+                "ms": 1.4680000000007567
+              },
+              {
+                "label": "compiler",
+                "start": 137.8659000000007,
+                "ms": 33.90560000000005
+              },
+              {
+                "label": "finance-v2",
+                "start": 171.79390000000058,
+                "ms": 1.6306000000004133
+              },
+              {
+                "label": "evaluation",
+                "start": 73.02450000000135,
+                "ms": 102.99629999999888
+              },
+              {
+                "label": "active-plan",
+                "start": 189.7446,
+                "ms": 1.958599999999933
+              }
+            ],
+            "serverMs": 196.21640000000116,
+            "responseBytes": 452289,
+            "serializationMs": 9.170200000000477,
+            "evaluations": 1,
+            "financeCalls": 3,
+            "fingerprint": "a60445b80b20dd391b176d423e62d5622ed58fec99799908ba6cefe01f88f044",
+            "providerCalls": {
+              "routes": 1,
+              "fuel": 1,
+              "toll": 1
+            }
+          }
+        },
+        {
+          "P4D": {
+            "variant": "P4D",
+            "worldReads": 1,
+            "activeReads": 2,
+            "prepareCalls": 1,
+            "spans": [
+              {
+                "label": "active-plan",
+                "start": 0.3284000000003289,
+                "ms": 3.744199999999182
+              },
+              {
+                "label": "world",
+                "start": 0.22839999999996508,
+                "ms": 69.16589999999997
+              },
+              {
+                "label": "prepare-world-mobility",
+                "start": 69.63349999999991,
+                "ms": 3.8929000000007363
+              },
+              {
+                "label": "compiler",
+                "start": 73.66480000000047,
+                "ms": 28.469699999999648
+              },
+              {
+                "label": "compiler",
+                "start": 102.49409999999989,
+                "ms": 28.762500000000728
+              },
+              {
+                "label": "finance-v2",
+                "start": 131.27590000000055,
+                "ms": 1.7601999999988038
+              },
+              {
+                "label": "finance-v2",
+                "start": 133.04279999999926,
+                "ms": 1.4909999999999854
+              },
+              {
+                "label": "compiler",
+                "start": 136.0660000000007,
+                "ms": 33.900799999999435
+              },
+              {
+                "label": "finance-v2",
+                "start": 169.9917000000005,
+                "ms": 1.9578999999994267
+              },
+              {
+                "label": "evaluation",
+                "start": 73.54320000000007,
+                "ms": 101.00710000000072
+              },
+              {
+                "label": "active-plan",
+                "start": 190.59909999999945,
+                "ms": 2.9588000000003376
+              }
+            ],
+            "serverMs": 203.76159999999982,
+            "responseBytes": 452289,
+            "serializationMs": 8.416600000000471,
+            "evaluations": 1,
+            "financeCalls": 3,
+            "fingerprint": "a60445b80b20dd391b176d423e62d5622ed58fec99799908ba6cefe01f88f044",
+            "providerCalls": {
+              "routes": 1,
+              "fuel": 1,
+              "toll": 1
+            }
+          },
+          "P4B": {
+            "variant": "P4B",
+            "worldReads": 1,
+            "activeReads": 2,
+            "prepareCalls": 1,
+            "spans": [
+              {
+                "label": "active-plan",
+                "start": 0.23910000000068976,
+                "ms": 2.2085000000006403
+              },
+              {
+                "label": "world",
+                "start": 0.1680000000014843,
+                "ms": 63.92069999999876
+              },
+              {
+                "label": "prepare-world-mobility",
+                "start": 64.23230000000149,
+                "ms": 2.0032999999984895
+              },
+              {
+                "label": "compiler",
+                "start": 66.3679000000011,
+                "ms": 25.128099999999904
+              },
+              {
+                "label": "compiler",
+                "start": 91.78020000000106,
+                "ms": 23.666400000000067
+              },
+              {
+                "label": "finance-v2",
+                "start": 115.48559999999998,
+                "ms": 1.3635000000012951
+              },
+              {
+                "label": "finance-v2",
+                "start": 116.8684000000012,
+                "ms": 0.9994999999998981
+              },
+              {
+                "label": "compiler",
+                "start": 119.15940000000046,
+                "ms": 19.717899999999645
+              },
+              {
+                "label": "finance-v2",
+                "start": 138.91580000000067,
+                "ms": 1.6065999999991618
+              },
+              {
+                "label": "evaluation",
+                "start": 66.25210000000152,
+                "ms": 76.17269999999917
+              },
+              {
+                "label": "active-plan",
+                "start": 153.07170000000042,
+                "ms": 2.0593000000008033
+              }
+            ],
+            "serverMs": 158.25810000000092,
+            "responseBytes": 452289,
+            "serializationMs": 7.363599999998769,
+            "evaluations": 1,
+            "financeCalls": 3,
+            "fingerprint": "a60445b80b20dd391b176d423e62d5622ed58fec99799908ba6cefe01f88f044",
+            "providerCalls": {
+              "routes": 1,
+              "fuel": 1,
+              "toll": 1
+            }
+          }
+        },
+        {
+          "P4B": {
+            "variant": "P4B",
+            "worldReads": 1,
+            "activeReads": 2,
+            "prepareCalls": 1,
+            "spans": [
+              {
+                "label": "active-plan",
+                "start": 0.2959999999984575,
+                "ms": 2.8181000000004133
+              },
+              {
+                "label": "world",
+                "start": 0.20869999999922584,
+                "ms": 65.01920000000064
+              },
+              {
+                "label": "prepare-world-mobility",
+                "start": 65.40509999999995,
+                "ms": 2.6454999999987194
+              },
+              {
+                "label": "compiler",
+                "start": 68.16179999999986,
+                "ms": 25.0645999999997
+              },
+              {
+                "label": "compiler",
+                "start": 93.44049999999879,
+                "ms": 21.03150000000096
+              },
+              {
+                "label": "finance-v2",
+                "start": 114.48589999999967,
+                "ms": 1.2991000000001804
+              },
+              {
+                "label": "finance-v2",
+                "start": 115.79259999999886,
+                "ms": 1.1540999999997439
+              },
+              {
+                "label": "compiler",
+                "start": 117.89289999999892,
+                "ms": 18.72900000000118
+              },
+              {
+                "label": "finance-v2",
+                "start": 136.6380999999983,
+                "ms": 1.208600000001752
+              },
+              {
+                "label": "evaluation",
+                "start": 68.0625,
+                "ms": 71.83179999999993
+              },
+              {
+                "label": "active-plan",
+                "start": 151.98149999999987,
+                "ms": 2.0471999999990658
+              }
+            ],
+            "serverMs": 159.65740000000005,
+            "responseBytes": 452289,
+            "serializationMs": 8.010299999999916,
+            "evaluations": 1,
+            "financeCalls": 3,
+            "fingerprint": "a60445b80b20dd391b176d423e62d5622ed58fec99799908ba6cefe01f88f044",
+            "providerCalls": {
+              "routes": 1,
+              "fuel": 1,
+              "toll": 1
+            }
+          },
+          "P4D": {
+            "variant": "P4D",
+            "worldReads": 1,
+            "activeReads": 2,
+            "prepareCalls": 1,
+            "spans": [
+              {
+                "label": "active-plan",
+                "start": 0.27999999999883585,
+                "ms": 2.4161000000003696
+              },
+              {
+                "label": "world",
+                "start": 0.19389999999839347,
+                "ms": 63.83150000000023
+              },
+              {
+                "label": "prepare-world-mobility",
+                "start": 64.1987999999983,
+                "ms": 2.28650000000016
+              },
+              {
+                "label": "compiler",
+                "start": 66.60319999999956,
+                "ms": 23.78650000000016
+              },
+              {
+                "label": "compiler",
+                "start": 90.57789999999841,
+                "ms": 20.200000000000728
+              },
+              {
+                "label": "finance-v2",
+                "start": 110.79979999999887,
+                "ms": 1.7132999999994354
+              },
+              {
+                "label": "finance-v2",
+                "start": 112.52219999999943,
+                "ms": 0.7919999999994616
+              },
+              {
+                "label": "compiler",
+                "start": 114.33489999999983,
+                "ms": 20.625099999999293
+              },
+              {
+                "label": "finance-v2",
+                "start": 134.97849999999926,
+                "ms": 0.9750000000003638
+              },
+              {
+                "label": "evaluation",
+                "start": 66.4994999999999,
+                "ms": 71.20229999999901
+              },
+              {
+                "label": "active-plan",
+                "start": 149.93009999999958,
+                "ms": 2.6247999999995955
+              }
+            ],
+            "serverMs": 157.03449999999975,
+            "responseBytes": 452289,
+            "serializationMs": 7.665600000000268,
+            "evaluations": 1,
+            "financeCalls": 3,
+            "fingerprint": "a60445b80b20dd391b176d423e62d5622ed58fec99799908ba6cefe01f88f044",
+            "providerCalls": {
+              "routes": 1,
+              "fuel": 1,
+              "toll": 1
+            }
+          }
+        },
+        {
+          "P4D": {
+            "variant": "P4D",
+            "worldReads": 1,
+            "activeReads": 2,
+            "prepareCalls": 1,
+            "spans": [
+              {
+                "label": "active-plan",
+                "start": 0.29320000000006985,
+                "ms": 2.5179000000007363
+              },
+              {
+                "label": "world",
+                "start": 0.19650000000001455,
+                "ms": 74.53960000000006
+              },
+              {
+                "label": "prepare-world-mobility",
+                "start": 74.97680000000037,
+                "ms": 2.3075000000008004
+              },
+              {
+                "label": "compiler",
+                "start": 77.42430000000058,
+                "ms": 28.8791999999994
+              },
+              {
+                "label": "compiler",
+                "start": 106.65170000000035,
+                "ms": 30.52260000000024
+              },
+              {
+                "label": "finance-v2",
+                "start": 137.19370000000163,
+                "ms": 1.3799999999991996
+              },
+              {
+                "label": "finance-v2",
+                "start": 138.58110000000124,
+                "ms": 1.9359999999996944
+              },
+              {
+                "label": "compiler",
+                "start": 141.77200000000084,
+                "ms": 17.527099999999336
+              },
+              {
+                "label": "finance-v2",
+                "start": 159.32110000000102,
+                "ms": 0.9256999999997788
+              },
+              {
+                "label": "evaluation",
+                "start": 77.3010000000013,
+                "ms": 84.47869999999966
+              },
+              {
+                "label": "active-plan",
+                "start": 172.72850000000108,
+                "ms": 2.0679000000000087
+              }
+            ],
+            "serverMs": 179.22130000000107,
+            "responseBytes": 452289,
+            "serializationMs": 4.931899999999587,
+            "evaluations": 1,
+            "financeCalls": 3,
+            "fingerprint": "a60445b80b20dd391b176d423e62d5622ed58fec99799908ba6cefe01f88f044",
+            "providerCalls": {
+              "routes": 1,
+              "fuel": 1,
+              "toll": 1
+            }
+          },
+          "P4B": {
+            "variant": "P4B",
+            "worldReads": 1,
+            "activeReads": 2,
+            "prepareCalls": 1,
+            "spans": [
+              {
+                "label": "active-plan",
+                "start": 0.27480000000105065,
+                "ms": 2.344600000000355
+              },
+              {
+                "label": "world",
+                "start": 0.19030000000020664,
+                "ms": 69.07880000000114
+              },
+              {
+                "label": "prepare-world-mobility",
+                "start": 69.48329999999987,
+                "ms": 2.19590000000062
+              },
+              {
+                "label": "compiler",
+                "start": 71.81700000000092,
+                "ms": 32.10099999999875
+              },
+              {
+                "label": "compiler",
+                "start": 104.2465000000011,
+                "ms": 25.679299999999785
+              },
+              {
+                "label": "finance-v2",
+                "start": 129.96119999999974,
+                "ms": 1.6909000000014203
+              },
+              {
+                "label": "finance-v2",
+                "start": 131.66020000000026,
+                "ms": 1.156699999999546
+              },
+              {
+                "label": "compiler",
+                "start": 134.41710000000057,
+                "ms": 28.880800000000818
+              },
+              {
+                "label": "finance-v2",
+                "start": 163.33420000000115,
+                "ms": 1.424299999998766
+              },
+              {
+                "label": "evaluation",
+                "start": 71.69830000000002,
+                "ms": 95.08710000000065
+              },
+              {
+                "label": "active-plan",
+                "start": 180.16820000000007,
+                "ms": 2.4488000000001193
+              }
+            ],
+            "serverMs": 186.3658000000014,
+            "responseBytes": 452289,
+            "serializationMs": 6.386399999999412,
+            "evaluations": 1,
+            "financeCalls": 3,
+            "fingerprint": "a60445b80b20dd391b176d423e62d5622ed58fec99799908ba6cefe01f88f044",
+            "providerCalls": {
+              "routes": 1,
+              "fuel": 1,
+              "toll": 1
+            }
+          }
+        }
+      ],
+      "status": "PARITY_PASS_SYNTHETIC_LATENCY_NOT_CERTIFIED"
+    },
+    {
+      "case": "car-provider-failure",
+      "n": 4,
+      "pairs": [
+        {
+          "P4B": {
+            "variant": "P4B",
+            "worldReads": 1,
+            "activeReads": 2,
+            "prepareCalls": 1,
+            "spans": [
+              {
+                "label": "active-plan",
+                "start": 0.2842999999993481,
+                "ms": 2.9394000000011147
+              },
+              {
+                "label": "world",
+                "start": 0.20360000000073342,
+                "ms": 61.49510000000009
+              },
+              {
+                "label": "prepare-world-mobility",
+                "start": 61.85349999999926,
+                "ms": 7.272100000000137
+              },
+              {
+                "label": "compiler",
+                "start": 69.32560000000012,
+                "ms": 42.13509999999951
+              },
+              {
+                "label": "compiler",
+                "start": 111.83029999999962,
+                "ms": 35.45269999999982
+              },
+              {
+                "label": "finance-v2",
+                "start": 147.3107,
+                "ms": 1.6843000000008033
+              },
+              {
+                "label": "finance-v2",
+                "start": 149.00450000000092,
+                "ms": 1.326999999999316
+              },
+              {
+                "label": "compiler",
+                "start": 151.89110000000073,
+                "ms": 27.385800000000017
+              },
+              {
+                "label": "finance-v2",
+                "start": 179.30589999999938,
+                "ms": 1.520700000000943
+              },
+              {
+                "label": "evaluation",
+                "start": 69.14409999999953,
+                "ms": 114.46880000000056
+              },
+              {
+                "label": "active-plan",
+                "start": 196.91200000000026,
+                "ms": 1.977600000000166
+              }
+            ],
+            "serverMs": 204.51130000000012,
+            "responseBytes": 458666,
+            "serializationMs": 5.896999999999025,
+            "evaluations": 1,
+            "financeCalls": 3,
+            "fingerprint": "4d7f87f056b9200e77e29b97c89ad4d862fcb772a4bd2520c076806511ecc188",
+            "providerCalls": {
+              "routes": 1,
+              "fuel": 1,
+              "toll": 0
+            }
+          },
+          "P4D": {
+            "variant": "P4D",
+            "worldReads": 1,
+            "activeReads": 2,
+            "prepareCalls": 1,
+            "spans": [
+              {
+                "label": "active-plan",
+                "start": 0.2397000000000844,
+                "ms": 2.085399999999936
+              },
+              {
+                "label": "world",
+                "start": 0.1643000000003667,
+                "ms": 60.73979999999938
+              },
+              {
+                "label": "prepare-world-mobility",
+                "start": 61.036299999999756,
+                "ms": 1.4671000000016647
+              },
+              {
+                "label": "compiler",
+                "start": 62.65819999999985,
+                "ms": 24.828600000000733
+              },
+              {
+                "label": "compiler",
+                "start": 87.66849999999977,
+                "ms": 21.161400000000867
+              },
+              {
+                "label": "finance-v2",
+                "start": 108.86050000000068,
+                "ms": 1.3253999999997177
+              },
+              {
+                "label": "finance-v2",
+                "start": 110.20529999999962,
+                "ms": 1.0611000000008062
+              },
+              {
+                "label": "compiler",
+                "start": 112.60990000000129,
+                "ms": 28.72389999999905
+              },
+              {
+                "label": "finance-v2",
+                "start": 141.35210000000006,
+                "ms": 1.597700000000259
+              },
+              {
+                "label": "evaluation",
+                "start": 62.511099999999715,
+                "ms": 83.31720000000132
+              },
+              {
+                "label": "active-plan",
+                "start": 159.47350000000006,
+                "ms": 3.6638999999995576
+              }
+            ],
+            "serverMs": 167.9339,
+            "responseBytes": 458666,
+            "serializationMs": 7.78309999999874,
+            "evaluations": 1,
+            "financeCalls": 3,
+            "fingerprint": "4d7f87f056b9200e77e29b97c89ad4d862fcb772a4bd2520c076806511ecc188",
+            "providerCalls": {
+              "routes": 1,
+              "fuel": 1,
+              "toll": 0
+            }
+          }
+        },
+        {
+          "P4D": {
+            "variant": "P4D",
+            "worldReads": 1,
+            "activeReads": 2,
+            "prepareCalls": 1,
+            "spans": [
+              {
+                "label": "active-plan",
+                "start": 0.4742000000005646,
+                "ms": 3.7691999999988184
+              },
+              {
+                "label": "world",
+                "start": 0.3202999999994063,
+                "ms": 63.4375
+              },
+              {
+                "label": "prepare-world-mobility",
+                "start": 64.03820000000087,
+                "ms": 2.885999999998603
+              },
+              {
+                "label": "compiler",
+                "start": 67.08410000000003,
+                "ms": 38.679700000000594
+              },
+              {
+                "label": "compiler",
+                "start": 106.185300000001,
+                "ms": 38.55529999999999
+              },
+              {
+                "label": "finance-v2",
+                "start": 144.76239999999962,
+                "ms": 1.6167999999997846
+              },
+              {
+                "label": "finance-v2",
+                "start": 146.39170000000013,
+                "ms": 1.3122000000003027
+              },
+              {
+                "label": "compiler",
+                "start": 149.3809000000001,
+                "ms": 28.746000000001004
+              },
+              {
+                "label": "finance-v2",
+                "start": 178.14880000000085,
+                "ms": 1.468799999998737
+              },
+              {
+                "label": "evaluation",
+                "start": 66.9413999999997,
+                "ms": 115.47100000000137
+              },
+              {
+                "label": "active-plan",
+                "start": 196.5082999999995,
+                "ms": 5.200600000000122
+              }
+            ],
+            "serverMs": 205.29780000000028,
+            "responseBytes": 458666,
+            "serializationMs": 6.570600000000923,
+            "evaluations": 1,
+            "financeCalls": 3,
+            "fingerprint": "4d7f87f056b9200e77e29b97c89ad4d862fcb772a4bd2520c076806511ecc188",
+            "providerCalls": {
+              "routes": 1,
+              "fuel": 1,
+              "toll": 0
+            }
+          },
+          "P4B": {
+            "variant": "P4B",
+            "worldReads": 1,
+            "activeReads": 2,
+            "prepareCalls": 1,
+            "spans": [
+              {
+                "label": "active-plan",
+                "start": 0.21640000000115833,
+                "ms": 2.1502000000000407
+              },
+              {
+                "label": "world",
+                "start": 0.13950000000113505,
+                "ms": 61.849599999999555
+              },
+              {
+                "label": "prepare-world-mobility",
+                "start": 62.16179999999986,
+                "ms": 2.0055000000011205
+              },
+              {
+                "label": "compiler",
+                "start": 64.29000000000087,
+                "ms": 27.984199999998964
+              },
+              {
+                "label": "compiler",
+                "start": 92.50950000000012,
+                "ms": 27.035100000000966
+              },
+              {
+                "label": "finance-v2",
+                "start": 119.57549999999901,
+                "ms": 1.905400000003283
+              },
+              {
+                "label": "finance-v2",
+                "start": 121.49330000000191,
+                "ms": 1.6721999999972468
+              },
+              {
+                "label": "compiler",
+                "start": 125.00170000000071,
+                "ms": 34.99919999999838
+              },
+              {
+                "label": "finance-v2",
+                "start": 160.02300000000105,
+                "ms": 1.2793999999994412
+              },
+              {
+                "label": "evaluation",
+                "start": 64.1807000000008,
+                "ms": 99.69250000000102
+              },
+              {
+                "label": "active-plan",
+                "start": 176.64540000000125,
+                "ms": 2.8333999999995285
+              }
+            ],
+            "serverMs": 183.34519999999975,
+            "responseBytes": 458666,
+            "serializationMs": 8.902900000000955,
+            "evaluations": 1,
+            "financeCalls": 3,
+            "fingerprint": "4d7f87f056b9200e77e29b97c89ad4d862fcb772a4bd2520c076806511ecc188",
+            "providerCalls": {
+              "routes": 1,
+              "fuel": 1,
+              "toll": 0
+            }
+          }
+        },
+        {
+          "P4B": {
+            "variant": "P4B",
+            "worldReads": 1,
+            "activeReads": 2,
+            "prepareCalls": 1,
+            "spans": [
+              {
+                "label": "active-plan",
+                "start": 0.22439999999915017,
+                "ms": 2.5064999999995052
+              },
+              {
+                "label": "world",
+                "start": 0.1690999999991618,
+                "ms": 64.60589999999866
+              },
+              {
+                "label": "prepare-world-mobility",
+                "start": 64.92589999999836,
+                "ms": 1.1909000000014203
+              },
+              {
+                "label": "compiler",
+                "start": 66.17429999999877,
+                "ms": 30.394100000001345
+              },
+              {
+                "label": "compiler",
+                "start": 96.81229999999778,
+                "ms": 26.037899999999354
+              },
+              {
+                "label": "finance-v2",
+                "start": 122.8757000000005,
+                "ms": 1.7634999999972933
+              },
+              {
+                "label": "finance-v2",
+                "start": 124.65090000000055,
+                "ms": 1.399199999999837
+              },
+              {
+                "label": "compiler",
+                "start": 127.60699999999997,
+                "ms": 31.892400000000634
+              },
+              {
+                "label": "finance-v2",
+                "start": 159.51789999999892,
+                "ms": 1.5233999999982188
+              },
+              {
+                "label": "evaluation",
+                "start": 66.12329999999929,
+                "ms": 97.56869999999981
+              },
+              {
+                "label": "active-plan",
+                "start": 180.64949999999953,
+                "ms": 2.079600000000937
+              }
+            ],
+            "serverMs": 186.49919999999838,
+            "responseBytes": 458666,
+            "serializationMs": 8.231999999999971,
+            "evaluations": 1,
+            "financeCalls": 3,
+            "fingerprint": "4d7f87f056b9200e77e29b97c89ad4d862fcb772a4bd2520c076806511ecc188",
+            "providerCalls": {
+              "routes": 1,
+              "fuel": 1,
+              "toll": 0
+            }
+          },
+          "P4D": {
+            "variant": "P4D",
+            "worldReads": 1,
+            "activeReads": 2,
+            "prepareCalls": 1,
+            "spans": [
+              {
+                "label": "active-plan",
+                "start": 0.400099999998929,
+                "ms": 3.4398000000001048
+              },
+              {
+                "label": "world",
+                "start": 0.29279999999926076,
+                "ms": 74.8269999999975
+              },
+              {
+                "label": "prepare-world-mobility",
+                "start": 75.29809999999998,
+                "ms": 1.8364999999976135
+              },
+              {
+                "label": "compiler",
+                "start": 77.25659999999698,
+                "ms": 23.96900000000096
+              },
+              {
+                "label": "compiler",
+                "start": 101.41339999999764,
+                "ms": 21.82170000000042
+              },
+              {
+                "label": "finance-v2",
+                "start": 123.24889999999868,
+                "ms": 1.0911999999989348
+              },
+              {
+                "label": "finance-v2",
+                "start": 124.34449999999924,
+                "ms": 0.8597000000008848
+              },
+              {
+                "label": "compiler",
+                "start": 126.83419999999751,
+                "ms": 26.6846000000005
+              },
+              {
+                "label": "finance-v2",
+                "start": 153.53389999999854,
+                "ms": 1.250400000000809
+              },
+              {
+                "label": "evaluation",
+                "start": 77.14909999999873,
+                "ms": 79.91679999999906
+              },
+              {
+                "label": "active-plan",
+                "start": 169.3409999999967,
+                "ms": 2.1812000000027183
+              }
+            ],
+            "serverMs": 175.2551999999996,
+            "responseBytes": 458666,
+            "serializationMs": 6.5966000000007625,
+            "evaluations": 1,
+            "financeCalls": 3,
+            "fingerprint": "4d7f87f056b9200e77e29b97c89ad4d862fcb772a4bd2520c076806511ecc188",
+            "providerCalls": {
+              "routes": 1,
+              "fuel": 1,
+              "toll": 0
+            }
+          }
+        },
+        {
+          "P4D": {
+            "variant": "P4D",
+            "worldReads": 1,
+            "activeReads": 2,
+            "prepareCalls": 1,
+            "spans": [
+              {
+                "label": "active-plan",
+                "start": 0.18369999999777065,
+                "ms": 2.892600000002858
+              },
+              {
+                "label": "world",
+                "start": 0.1268999999992957,
+                "ms": 66.92559999999867
+              },
+              {
+                "label": "prepare-world-mobility",
+                "start": 67.2515999999996,
+                "ms": 1.9647000000004482
+              },
+              {
+                "label": "compiler",
+                "start": 69.31229999999778,
+                "ms": 24.14350000000195
+              },
+              {
+                "label": "compiler",
+                "start": 93.68349999999919,
+                "ms": 23.908699999999953
+              },
+              {
+                "label": "finance-v2",
+                "start": 117.60979999999836,
+                "ms": 1.2664000000004307
+              },
+              {
+                "label": "finance-v2",
+                "start": 118.8826999999983,
+                "ms": 1.0702999999994063
+              },
+              {
+                "label": "compiler",
+                "start": 121.13390000000072,
+                "ms": 24.095699999998033
+              },
+              {
+                "label": "finance-v2",
+                "start": 145.2502999999997,
+                "ms": 1.4451999999982945
+              },
+              {
+                "label": "evaluation",
+                "start": 69.22539999999935,
+                "ms": 80.0138999999981
+              },
+              {
+                "label": "active-plan",
+                "start": 165.29429999999775,
+                "ms": 2.0732000000025437
+              }
+            ],
+            "serverMs": 171.14860000000044,
+            "responseBytes": 458666,
+            "serializationMs": 7.5666999999994005,
+            "evaluations": 1,
+            "financeCalls": 3,
+            "fingerprint": "4d7f87f056b9200e77e29b97c89ad4d862fcb772a4bd2520c076806511ecc188",
+            "providerCalls": {
+              "routes": 1,
+              "fuel": 1,
+              "toll": 0
+            }
+          },
+          "P4B": {
+            "variant": "P4B",
+            "worldReads": 1,
+            "activeReads": 2,
+            "prepareCalls": 1,
+            "spans": [
+              {
+                "label": "active-plan",
+                "start": 0.32300000000032014,
+                "ms": 2.590299999999843
+              },
+              {
+                "label": "world",
+                "start": 0.24070000000210712,
+                "ms": 64.38609999999971
+              },
+              {
+                "label": "prepare-world-mobility",
+                "start": 64.91830000000118,
+                "ms": 2.7448999999978696
+              },
+              {
+                "label": "compiler",
+                "start": 67.8153999999995,
+                "ms": 39.03440000000046
+              },
+              {
+                "label": "compiler",
+                "start": 107.2468000000008,
+                "ms": 34.1987999999983
+              },
+              {
+                "label": "finance-v2",
+                "start": 141.47999999999956,
+                "ms": 1.9583999999995285
+              },
+              {
+                "label": "finance-v2",
+                "start": 143.45279999999912,
+                "ms": 1.640800000001036
+              },
+              {
+                "label": "compiler",
+                "start": 146.95539999999892,
+                "ms": 34.762800000000425
+              },
+              {
+                "label": "finance-v2",
+                "start": 181.73949999999968,
+                "ms": 1.2690000000002328
+              },
+              {
+                "label": "evaluation",
+                "start": 67.68000000000029,
+                "ms": 118.14199999999983
+              },
+              {
+                "label": "active-plan",
+                "start": 200.89800000000105,
+                "ms": 2.841099999997823
+              }
+            ],
+            "serverMs": 208.92250000000058,
+            "responseBytes": 458666,
+            "serializationMs": 8.242099999999482,
+            "evaluations": 1,
+            "financeCalls": 3,
+            "fingerprint": "4d7f87f056b9200e77e29b97c89ad4d862fcb772a4bd2520c076806511ecc188",
+            "providerCalls": {
+              "routes": 1,
+              "fuel": 1,
+              "toll": 0
+            }
+          }
+        }
+      ],
+      "status": "PARITY_PASS_SYNTHETIC_LATENCY_NOT_CERTIFIED"
+    }
+  ],
+  "remoteWrites": 0,
+  "applyRpcCalls": 0,
+  "realSupabase": "NOT_RUN",
+  "realMobilityProviders": "NOT_RUN",
+  "P3": "0"
+}
