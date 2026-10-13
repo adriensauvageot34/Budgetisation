@@ -9,6 +9,7 @@ import styles from "./composer.module.css";
 import { AtomicPopover } from "./atomic-popover";
 import { useComposerInteractions, useDragHandle, leftSurface } from "./interactions";
 import { visibleEmptySocketKeys } from "./presentation/socket-visibility";
+import { composerRenderIndex } from "./render-index";
 
 /** Stable presentation order; the published socket list and identities stay intact. */
 const equipmentOrder: Readonly<Record<string, readonly string[]>> = {
@@ -23,16 +24,17 @@ export function ContextCard({ card, model, busy, selected, focused, focus, drag,
   choose: (asset: ComposerAssetView, target: DropTarget, selection?: ComponentSelectionV1) => void;
   request: (operation: ComposerOperation) => void; edit: (card: ComposerContextCardView) => void }) {
   const instance = `context-occurrence:${card.contextOccurrenceId}`;
-  const removable = model.dropCapabilities.some(d => d.sourceAssetKey === instance && d.target.kind === "TRASH" && d.resolution !== "BLOCKED");
+  const index=composerRenderIndex(model), ownDrops=index.drops.get(instance) ?? [];
+  const removable = ownDrops.some(d => d.target.kind === "TRASH" && d.resolution !== "BLOCKED");
   const preserved = model.semanticState.preferences.flexibility[card.contextOccurrenceId] === "PRESERVE";
-  const children = (id: string) => { const child = model.board.contexts.find(c => c.contextOccurrenceId === id); return child ? <ContextCard card={child} model={model} busy={busy} selected={selected} focused={focused} focus={focus} drag={drag} drop={drop} choose={choose} request={request} edit={edit} /> : null; };
+  const children = (id: string) => { const child = index.contexts.get(id); return child ? <ContextCard card={child} model={model} busy={busy} selected={selected} focused={focused} focus={focus} drag={drag} drop={drop} choose={choose} request={request} edit={edit} /> : null; };
   const presentation = model.presentation.objects[card.contextOccurrenceId];
   const interaction = useComposerInteractions(), handle = useDragHandle(instance);
   const displayPhase = interaction?.grabbed ? "DRAGGING" : focused === card.contextOccurrenceId ? "SELECTED" : "REST";
   const visibleEmpty = visibleEmptySocketKeys(card, model, displayPhase, interaction?.grabbed?.assetKey ?? null);
-  const targets = selected ? model.dropCapabilities.filter(d => d.sourceAssetKey === selected && d.target.kind === "CONTEXT_SOCKET" && d.target.contextOccurrenceId === card.contextOccurrenceId && d.resolution !== "BLOCKED") : [];
+  const targets = selected ? (index.drops.get(selected) ?? []).filter(d => d.target.kind === "CONTEXT_SOCKET" && d.target.contextOccurrenceId === card.contextOccurrenceId && d.resolution !== "BLOCKED") : [];
   const magnetic = targets.length === 1 ? targets[0].target : null;
-  const reparentTargets = model.dropCapabilities.filter(d => d.sourceAssetKey === instance && d.target.kind === "CONTEXT_SOCKET" && d.resolution !== "BLOCKED");
+  const reparentTargets = ownDrops.filter(d => d.target.kind === "CONTEXT_SOCKET" && d.resolution !== "BLOCKED");
   const order = equipmentOrder[card.templateKey] ?? [];
   const sockets = [...card.sockets].sort((a, b) => {
     const left = order.indexOf(a.slotKey), right = order.indexOf(b.slotKey);
@@ -69,13 +71,13 @@ export function ContextCard({ card, model, busy, selected, focused, focus, drag,
     <div className={styles.contextEquipmentRow} data-context-equipment-row aria-label={`Équipements de ${card.label}`}>
     {sockets.map(socket => {
       const socketPresentation = model.presentation.sockets[`${card.contextOccurrenceId}:${socket.slotKey}`];
-      const assets = socketPresentation.options.map(o => model.library.searchableAssets.find(a => a.assetKey === o.assetKey)!);
-      const compatible = !!selected && model.dropCapabilities.some(d => d.sourceAssetKey === selected && d.target.kind === "CONTEXT_SOCKET"
+      const assets = socketPresentation.options.map(o => index.assets.get(o.assetKey)!);
+      const compatible = !!selected && (index.drops.get(selected) ?? []).some(d => d.target.kind === "CONTEXT_SOCKET"
         && d.target.contextOccurrenceId === card.contextOccurrenceId && d.target.slotKey === socket.slotKey && d.resolution !== "BLOCKED");
       const showEmpty = visibleEmpty.has(socket.slotKey);
       if (!socketPresentation.satellites.length && !showEmpty) return null;
       return <ContextSocket key={socket.slotKey} socket={socket} presentation={socketPresentation} focus={() => focus(card.contextOccurrenceId)} busy={busy} compatible={compatible} showEmpty={showEmpty} assets={assets} drop={drop} choose={choose}
-        moveTargets={socketPresentation.satellites.flatMap(item => model.dropCapabilities.filter(d => d.sourceAssetKey === item.editableAssetKey && d.target.kind === "CONTEXT_SOCKET"
+        moveTargets={socketPresentation.satellites.flatMap(item => (index.drops.get(item.editableAssetKey ?? "") ?? []).filter(d => d.target.kind === "CONTEXT_SOCKET"
           && d.resolution !== "BLOCKED" && (d.target.contextOccurrenceId !== card.contextOccurrenceId || d.target.slotKey !== socket.slotKey))
           .map(d => ({ selectionId: item.selectionId, target: d.target, label: `${model.board.contexts.find(c => c.contextOccurrenceId === d.target.contextOccurrenceId)?.label} · ${model.board.contexts.find(c => c.contextOccurrenceId === d.target.contextOccurrenceId)?.sockets.find(s => s.slotKey === d.target.slotKey)?.label}` })))}
         remove={item => request({ kind: "CLEAR_SOCKET", contextOccurrenceId: card.contextOccurrenceId, slotKey: socket.slotKey, selectionId: item.selectionId })}

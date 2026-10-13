@@ -1,16 +1,18 @@
-import { useState, useRef, useEffect, useMemo } from "react";
+import { memo, useState, useRef, useEffect, useMemo } from "react";
 import { Search } from "lucide-react";
 import type { ComposerUiModel } from "@/domain/phase2/planner/composer-ui-contract";
 import type { ComposerAssetView } from "@/domain/phase2/planner/composer-contract";
 import styles from "./composer.module.css";
 import { PlannerIcon } from "./planner-icons/planner-icon";
 import { useComposerInteractions } from "./interactions";
+import { composerRenderIndex } from "./render-index";
 
 // These aliases only order and name existing server groups. They admit no assets.
 const groupOrder = ["SOCIAL", "FOOD", "ACTIVITY", "PURCHASE", "BEAUTY", "VISIT", "TRAVEL", "HOME", "OTHER", "controls", "options"];
 const groupName = (key: string, label: string) => key === "controls" ? "Habitudes & cagnottes" : key === "options" ? "Équipements" : label;
 const normalize = (text: string) => text.normalize("NFD").replace(/\p{Diacritic}/gu, "").toLocaleLowerCase("fr");
-export function ComposerLibrary({ model, openToken, busy, selected, choose, drag }: { model: ComposerUiModel; openToken: number; busy: boolean; selected: string | null;
+export const ComposerLibrary=memo(ComposerLibraryView);
+function ComposerLibraryView({ model, openToken, busy, selected, choose, drag }: { model: ComposerUiModel; openToken: number; busy: boolean; selected: string | null;
   choose: (asset: ComposerAssetView) => void; drag: (key: string | null) => void }) {
   const [query, setQuery] = useState("");
   const [activeAsset, setActiveAsset] = useState<string | null>(null);
@@ -36,7 +38,7 @@ export function ComposerLibrary({ model, openToken, busy, selected, choose, drag
     <div className={styles.libraryScroll}>{groups.map(section => <section key={section.sectionKey} className={styles.assetGroup} data-library-group>
       <h3>{section.label}</h3><div className={styles.assetGrid}>{section.assets.map(asset => {
         const source = model.presentation.dragSources[asset.assetKey];
-        const draggable = (!!source?.editorDropTarget || model.dropCapabilities.some(d => d.sourceAssetKey === asset.assetKey && d.resolution !== "BLOCKED")) && asset.provenance !== "DERIVED_CONSEQUENCE";
+        const draggable = (!!source?.editorDropTarget || (composerRenderIndex(model).drops.get(asset.assetKey) ?? []).some(d => d.resolution !== "BLOCKED")) && asset.provenance !== "DERIVED_CONSEQUENCE";
         return <button type="button" className={styles.asset} key={asset.assetKey} data-asset={asset.assetKey} data-selected={selected === asset.assetKey} disabled={busy}
           title={`${asset.label}${source?.editorTargetRef ? " · choisir une allocation" : ""} · parcourir avec les flèches`}
           tabIndex={activeKey === asset.assetKey ? 0 : -1} onFocus={() => setActiveAsset(asset.assetKey)}

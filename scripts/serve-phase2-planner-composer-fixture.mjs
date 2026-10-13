@@ -14,6 +14,8 @@ import { visualMonth, visualThreeBeautyMonth, sparseMonth, unreadyMonth } from '
 import { p10Month } from './fixtures/planner-p10.mjs';
 import { p09CompatibilityMonth, p09ReadbackMonth } from './fixtures/planner-p09.mjs';
 import { p2Measuring, p2FixturePlugin, p2World, p2Interaction } from './lib/planner-p14-p2-fixture-tools.mjs';
+import { p4Measuring, p4FixturePlugin } from './lib/planner-p14-p4a-fixture-tools.mjs';
+import { p4Fixture, p4Extra } from './fixtures/planner-p14-p4a.mjs';
 const { handleComposerRequest } = require('@/server/phase2/planner/composer-service');
 const { createPlanApplyRepository } = require('@/server/phase2/planner/repository');
 const { preparePlanningMobility } = require('@/server/phase2/planner/prospective-mobility-pricing');
@@ -34,11 +36,14 @@ const mocks = {
   '@/components/runtime': 'import {useRef} from "react"; export function useProductRuntime(){return {backgroundRootRef:useRef(null)}}',
   '@/features/auth/sign-out-button': 'import React from "react"; export const SignOutButton = () => React.createElement("button",{disabled:true},"Déconnexion");'
 };
-await build({ entryPoints: [p2Measuring ? 'scripts/lib/planner-composer-p14-p2-browser-entry.tsx' : 'scripts/lib/planner-composer-browser-entry.tsx'], bundle: true, format: 'esm', target: 'chrome120', jsx: 'automatic',
-  define: { 'process.env.NEXT_PUBLIC_COMPOSER_P14_P2_INTERACTIONS': JSON.stringify(process.env.NEXT_PUBLIC_COMPOSER_P14_P2_INTERACTIONS ?? '1') },
+await build({ entryPoints: [p4Measuring ? 'scripts/lib/planner-composer-p14-p4a-browser-entry.tsx' : p2Measuring ? 'scripts/lib/planner-composer-p14-p2-browser-entry.tsx' : 'scripts/lib/planner-composer-browser-entry.tsx'], bundle: true, format: 'esm', target: 'chrome120', jsx: 'automatic',
+  define: { 'process.env.NEXT_PUBLIC_COMPOSER_P14_P2_INTERACTIONS': JSON.stringify(process.env.NEXT_PUBLIC_COMPOSER_P14_P2_INTERACTIONS ?? '1'),
+    ...(p4Measuring?{'process.env.NODE_ENV':'"production"','process.env.P4_DIAGNOSTICS':JSON.stringify(process.env.PLANNER_P14_P4A_DIAGNOSTICS==='1'),
+      'process.env.NEXT_PUBLIC_COMPOSER_P14_P4A_PAGES':JSON.stringify(process.env.NEXT_PUBLIC_COMPOSER_P14_P4A_PAGES ?? 'neighbors')}: {}) },
+  minify:p4Measuring,
   outfile: path.join(out, 'app.js'), loader: { '.css': 'local-css' }, sourcemap: true,
   external: ['/planned-visuals/*'],
-  plugins: [p2FixturePlugin(), {name:'fixture-host-only',setup(builder){ builder.onResolve({filter:/^(next\/link|next\/navigation|@\/components\/runtime|@\/features\/auth\/sign-out-button)$/},args=>({path:args.path,namespace:'fixture-host'}));
+  plugins: [p4FixturePlugin(),p2FixturePlugin(), {name:'fixture-host-only',setup(builder){ builder.onResolve({filter:/^(next\/link|next\/navigation|@\/components\/runtime|@\/features\/auth\/sign-out-button)$/},args=>({path:args.path,namespace:'fixture-host'}));
     builder.onLoad({filter:/.*/,namespace:'fixture-host'},args=>({contents:mocks[args.path],loader:'js',resolveDir:process.cwd()})); }}] });
 const globalCss = process.env.PLANNER_C8_GLOBAL_CSS
   ? fs.readFileSync(process.env.PLANNER_C8_GLOBAL_CSS, 'utf8')
@@ -73,7 +78,7 @@ function uiPayloadFields(value) {
 }
 async function store(key) {
   if (!stores.has(key)) stores.set(key, (async () => {
-    const pg = await createKernelPostgres(), fixture = (p2Measuring && key.startsWith('P2') ? fixtures.P2 : fixtures[key] ?? fixtures.A)(), owner = providers();
+    const pg = await createKernelPostgres(), fixture = (p4Measuring&&key.startsWith('P4')?p4Fixture:p2Measuring && key.startsWith('P2') ? fixtures.P2 : fixtures[key] ?? fixtures.A)(), owner = providers();
     if(key==='P10OUT'||key==='P11OUT') owner.settings.routeUnavailable=true;
     return { pg, fixture, log: [], deps: { repository: createPlanApplyRepository(pg.client),
       householdPersons: [{ personId: '00000000-0000-4000-8000-000000000001', displayName: 'Alice Fixture' }],
@@ -92,6 +97,14 @@ const server = http.createServer(async (request, response) => {
     const url = new URL(request.url, 'http://127.0.0.1');
     const referringScenario = request.headers.referer ? new URL(request.headers.referer).searchParams.get('scenario') : null;
     const key = url.searchParams.get('scenario') ?? referringScenario ?? 'A';
+    if(p4Measuring&&url.pathname==='/p4-metrics'&&request.method==='POST'){
+      if(!/^P4_[a-zA-Z0-9_-]{1,80}$/.test(key))throw Error('P4_SCENARIO_INVALID');
+      const chunks=[];let bytes=0;for await(const chunk of request){bytes+=chunk.length;if(bytes>1000000)throw Error('P4_METRICS_TOO_LARGE');chunks.push(chunk);}
+      const data=JSON.parse(Buffer.concat(chunks).toString());
+      const width=Number(data.samples?.[0]?.viewport?.[0]);
+      const suffix=Number.isInteger(width)&&width>=320&&width<=4096?`-w${width}`:'';
+      fs.writeFileSync(path.join(out,key+suffix+'-client.json'),JSON.stringify(data,null,2));response.end('Recorded local synthetic measures');return;
+    }
     if (p2Measuring && url.pathname === '/p2-metrics' && request.method === 'POST') {
       if (!/^P2_[a-zA-Z0-9_-]{1,80}$/.test(key)) throw Error('P2_FIXTURE_SCENARIO_INVALID');
       const chunks=[];let bytes=0;for await(const chunk of request){bytes+=chunk.length;if(bytes>2000000)throw Error('P2_FIXTURE_PROBE_TOO_LARGE');chunks.push(chunk);}
@@ -159,6 +172,12 @@ const server = http.createServer(async (request, response) => {
       const rejectSequence = Number(url.searchParams.get('rejectSequence'));
       const syntheticReject = !initialRead && command.kind === 'READ' && url.searchParams.has('rejectSequence') && rejectSequence === command.sequence;
       let result = syntheticReject ? { ok:false, sequence:command.sequence, code:'P03B_SYNTHETIC_REJECTION', message:'Simulation de test rejetée' } : await p2Interaction(command, () => handleComposerRequest(s.deps, householdId, command));
+      if(p4Measuring&&initialRead&&key.startsWith('P4')&&result.ok){
+        const target=key.includes('40')?40:20;let n=0;
+        if(result.model.presentation.elementCount>target)throw Error('P4_INITIAL_DENSITY_EXCEEDS_TARGET');
+        while(result.model.presentation.elementCount<target&&n<40){s.fixture.semantic.contexts.push(p4Extra(++n));command.draft=s.fixture.semantic;
+          result=await handleComposerRequest(s.deps,householdId,command);if(!result.ok)throw Error(result.code);}
+      }
       // Test transport integrity only: a deliberately mismatched proof must never become the current projection.
       if (!initialRead && command.kind === 'READ' && result.ok && url.searchParams.has('staleSequence')
         && Number(url.searchParams.get('staleSequence')) === command.sequence) result = { ...result,

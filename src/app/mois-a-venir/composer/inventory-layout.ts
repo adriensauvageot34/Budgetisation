@@ -6,6 +6,20 @@ import type { ComposerPresentationNode } from "./presentation/node-types";
 export type InventoryItem = ComposerPresentationNode;
 export type InventoryPlacement = Readonly<{ item: InventoryItem; column: number; row: number; columnSpan: number; rowSpan: number }>;
 export const inventoryItems = composePresentationNodes;
+/** Geometry only. Current item data is rebound after reuse so a fresh amount,
+ * knowledge, capability or socket projection cannot be hidden by this key. */
+export function inventorySpatialKey(items: readonly InventoryItem[]) {
+  return JSON.stringify(items.map(item => [item.id,item.kind,item.width,item.height,item.density,item.spatialFamily,
+    item.kind === "CLUSTER" ? item.family : null]));
+}
+export function bindInventoryLayout(pages: readonly (readonly InventoryPlacement[])[], items: readonly InventoryItem[]): InventoryPlacement[][] {
+  const current = new Map(items.map(item => [item.id,item]));
+  return pages.map(page => page.map(placement => ({...placement,item:current.get(placement.item.id)!})));
+}
+export function inventoryMountedPage(index: number, active: number, departing: number, mode: "all" | "neighbors", pinned: ReadonlySet<number>) {
+  return mode === "all" || pinned.has(index)
+    || Math.abs(index-active) <= 1 || index >= Math.min(active,departing) && index <= Math.max(active,departing);
+}
 const columnGap = 10, rowGap = 5, rowTrack = 5;
 
 export const inventoryColumns = (width: number) => Math.max(2, Math.min(16, Math.floor((Math.max(212, width) + columnGap) / 83)));

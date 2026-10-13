@@ -2,25 +2,49 @@
 import { useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import type { ComposerUiModel } from "@/domain/phase2/planner/composer-ui-contract";
-import { inventoryItems, inventoryLayoutPages, inventoryPageFor, inventoryColumns, type InventoryItem } from "./inventory-layout";
+import { inventoryItems, inventoryLayoutPages, inventoryPageFor, inventoryColumns, inventorySpatialKey, bindInventoryLayout, inventoryMountedPage, type InventoryItem } from "./inventory-layout";
 import { useComposerInteractions } from "./interactions";
 import styles from "./composer.module.css";
 
-export function BoardCarousel({ model, focused, render, emptyClick, children, dropProps }: { model: ComposerUiModel; focused: string | null;
+export function BoardCarousel({ model, inventory, focused, render, emptyClick, children, dropProps }: { model: ComposerUiModel; inventory?: readonly InventoryItem[]; focused: string | null;
   render: (item: InventoryItem) => ReactNode; emptyClick: () => void; children?: ReactNode; dropProps: React.HTMLAttributes<HTMLDivElement> & { [key: `data-${string}`]: boolean | string | number | undefined } }) {
   const viewport = useRef<HTMLDivElement>(null), [size, setSize] = useState({ width: 1000, height: 470 }), [page, setPage] = useState(0);
   const interaction = useComposerInteractions(), dwell = useRef<ReturnType<typeof setTimeout> | null>(null), dwellEdge = useRef<number | null>(null);
-  const projected = useMemo(() => inventoryItems(model), [model]);
+  const projected = useMemo(() => inventory ?? inventoryItems(model), [model,inventory]);
   const stableItems = useRef(projected), stableSize = useRef(size);
   const dragging = !!interaction?.grabbed;
   const items = dragging ? stableItems.current : projected, layoutSize = dragging ? stableSize.current : size;
-  const layouts = useMemo(() => inventoryLayoutPages(items, layoutSize.width, layoutSize.height), [items, layoutSize]);
+  const spatialKey = inventorySpatialKey(items);
+  const geometry = useMemo(() => inventoryLayoutPages(items, layoutSize.width, layoutSize.height), [spatialKey,layoutSize.width,layoutSize.height]);
+  const layouts = useMemo(() => bindInventoryLayout(geometry,items), [geometry,items]);
   const pages = useMemo(() => layouts.map(layout => layout.map(placement => placement.item)), [layouts]);
   useLayoutEffect(() => { if (!dragging) { stableItems.current = projected; stableSize.current = size; } }, [dragging, projected, size]);
   const active = Math.min(page, pages.length - 1), previousIds = useRef(new Set(items.map(item => item.id)));
+  const [departing,setDeparting] = useState(0), [dirtyItems,setDirtyItems] = useState<readonly string[]>([]);
+  const [dragOrigin,setDragOrigin] = useState<number|null>(null);
+  // On a small Board the mount/unmount bookkeeping costs more than the
+  // invisible cards. Keep the full page tree until it becomes dense.
+  const mode = process.env.NEXT_PUBLIC_COMPOSER_P14_P4A_PAGES === "0" || items.length < 24 ? "all" : "neighbors";
+  const pinned = new Set(layouts.flatMap((layout,index) => layout.some(p => dirtyItems.includes(p.item.id)) ? [index] : []));
+  if (dragOrigin !== null && dragging) pinned.add(dragOrigin);
+  const captureDirty = () => {
+    const ids=[...viewport.current?.querySelectorAll<HTMLElement>("[data-inline-dirty=true]") ?? []]
+      .map(node => node.closest<HTMLElement>("[data-inventory-id]")?.dataset.inventoryId).filter((id):id is string => !!id).sort();
+    setDirtyItems(old => old.length === ids.length && old.every((id,i) => id === ids[i]) ? old : ids);
+  };
   const previousScene = useRef<{ page:number; rects:Map<string, DOMRect>; clusters:Map<string, readonly string[]> }>({ page:-1, rects:new Map(), clusters:new Map() });
   const cancelDwell = () => { if (dwell.current) { clearTimeout(dwell.current); dwell.current = null; } };
-  const go = (next: number) => { cancelDwell(); document.querySelectorAll<HTMLElement>("[popover]:popover-open").forEach(p => p.hidePopover()); setPage(Math.max(0, Math.min(pages.length - 1, next))); };
+  const go = (next: number) => { cancelDwell(); captureDirty(); document.querySelectorAll<HTMLElement>("[popover]:popover-open").forEach(p => p.hidePopover()); setDeparting(active); setPage(Math.max(0, Math.min(pages.length - 1, next))); };
+  useEffect(() => { const timer=setTimeout(()=>setDeparting(active),300);return()=>clearTimeout(timer); },[active]);
+  useLayoutEffect(captureDirty,[model]);
+  useLayoutEffect(() => {
+    if (!dragging) { setDragOrigin(null); return; }
+    const sourceKey = interaction?.grabbed?.sourceKey;
+    const source = [...viewport.current?.querySelectorAll<HTMLElement>("[data-drag-source]") ?? []]
+      .find(node => node.dataset.dragSource === sourceKey);
+    const id = source?.closest<HTMLElement>("[data-inventory-id]")?.dataset.inventoryId;
+    if (id) setDragOrigin(layouts.findIndex(layout => layout.some(placement => placement.item.id === id)));
+  }, [dragging, interaction?.grabbed?.sourceKey]);
   useLayoutEffect(() => {
     // Pagination always reserves its 30px strip, even on a single page. The
     // flex viewport therefore has a stable real height with or without a dock.
@@ -66,7 +90,7 @@ export function BoardCarousel({ model, focused, render, emptyClick, children, dr
     }
     previousScene.current = { page:active, rects, clusters:new Map(layouts[active]?.filter(placement => placement.item.kind === "CLUSTER")
       .map(placement => [placement.item.id, placement.item.kind === "CLUSTER" ? placement.item.children.map(child => child.id) : []] as const) ?? []) };
-  }, [layouts, active, dragging]);
+  }, [geometry, active, dragging]);
   const focusPage = inventoryPageFor(pages, focused, model);
   useEffect(() => { if (focusPage >= 0) setPage(focusPage); }, [focused]);
   useEffect(() => { const added = items.find(item => !previousIds.current.has(item.id)); previousIds.current = new Set(items.map(item => item.id));
@@ -79,12 +103,12 @@ export function BoardCarousel({ model, focused, render, emptyClick, children, dr
   return <>
     <div ref={viewport} className={styles.carouselViewport} data-board-scroll data-board-drop data-board-page-active={active} {...dropProps}
       onClick={e => { if (e.target === e.currentTarget || e.target instanceof Element && e.target.matches("[data-mosaic],[data-board-page]")) emptyClick(); }}>
-      <div className={styles.plateauTrack} style={{ transform: `translateX(-${active * 100}%)` }} data-plateau-track>
+      <div className={styles.plateauTrack} style={{ transform: `translateX(-${active * 100}%)` }} data-plateau-track onTransitionEnd={event=>{if(event.target===event.currentTarget)setDeparting(active);}}>
         {layouts.map((inventory, index) => <section key={index} className={styles.plateau} data-board-page={index} data-single-page={layouts.length === 1} aria-label={`Page ${index + 1} sur ${pages.length}`}
           aria-hidden={index !== active} inert={index !== active}>
           <div className={styles.mosaic} data-mosaic data-has-focus={!!focused} data-completeness-focus={interaction?.completenessFocus}
             style={{ "--board-columns":inventoryColumns(layoutSize.width) } as React.CSSProperties}>
-            {inventory.map(({ item, column, row, columnSpan, rowSpan }) => <div key={item.id} className={styles.inventoryCell} data-inventory-id={item.id}
+            {inventoryMountedPage(index,active,departing,mode,pinned) && inventory.map(({ item, column, row, columnSpan, rowSpan }) => <div key={item.id} className={styles.inventoryCell} data-inventory-id={item.id}
               data-density={item.density} data-spatial-family={item.spatialFamily}
               style={{ gridColumn:`${column} / span ${columnSpan}`, gridRow:`${row} / span ${rowSpan}` }}>{render(item)}</div>)}
           </div>

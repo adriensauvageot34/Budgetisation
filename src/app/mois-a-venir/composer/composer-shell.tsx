@@ -30,6 +30,7 @@ import { useDurableDraft, type DraftTransport } from "./durable-draft";
 import type { ComposerDraftSnapshot, StoredComposerDraft } from "@/domain/phase2/planner/composer-draft-contract";
 import type { PlannerApplyCommand } from "@/domain/phase2/planner/compiler-contract";
 import type { ComposerApplyReceipt } from "@/domain/phase2/planner/composer-ui-contract";
+import { useCommittedEvent } from "./use-committed-event";
 
 type Editor = { title: string; compact?: boolean; side?: boolean; fields: readonly ComposerField[]; values: Record<string, string>;
   giftContextId?: string; nightContextId?: string; familyContextId?: string; stayContextId?: string; catalogContextId?: string; familyMode?: string;
@@ -499,11 +500,23 @@ export function ComposerShell({ initialModel, transport, initialDrafts = null, d
     : !model.board.draft.dirty ? model.activeRevisionNumber ? "Le mois est déjà appliqué. Modifiez un élément pour créer une nouvelle révision." : `Composez un premier choix pour appliquer votre mois.${model.presentation.unresolvedCount ? ` ${model.presentation.unresolvedCount} éléments à préciser.` : ""}`
     : model.presentation.unresolvedCount ? `${model.presentation.unresolvedCount} éléments restent à préciser avant l’application.`
     : "Les contraintes signalées doivent être précisées avant l’application.";
-  return <ComposerInteractionContext.Provider value={{ grabbed, overTarget, motion, motionTarget, completenessFocus, unresolvedRefs: model.presentation.unresolvedRefs,
-    start: startDrag, end: endDrag, over, place, equip,
-    canTarget: ref => assistantGrab.current?.targetRef === ref, reject: () => animate("recoil", grab.current?.sourceKey ?? null),
-    overAssistant: ref => { if (ref === assistantOver.current) return; assistantOver.current = ref; clearHover(); },
-    placeAssistant: ref => { if (assistantGrab.current?.targetRef !== ref) return; const operation = assistantGrab.current.operation; nextMotionTarget.current = ref; endDrag(); void run(operation); } }}>
+  const stableStart=useCommittedEvent(startDrag),stableEnd=useCommittedEvent(endDrag),stableOver=useCommittedEvent(over),stablePlace=useCommittedEvent(place),stableEquip=useCommittedEvent(equip);
+  const stableCanTarget=useCommittedEvent((ref:string)=>assistantGrab.current?.targetRef===ref);
+  const stableReject=useCommittedEvent(()=>animate("recoil",grab.current?.sourceKey??null));
+  const stableOverAssistant=useCommittedEvent((ref:string|null)=>{if(ref===assistantOver.current)return;assistantOver.current=ref;clearHover();});
+  const stablePlaceAssistant=useCommittedEvent((ref:string)=>{if(assistantGrab.current?.targetRef!==ref)return;const operation=assistantGrab.current.operation;nextMotionTarget.current=ref;endDrag();void run(operation);});
+  const interactionView=useMemo(()=>({grabbed,overTarget,motion,motionTarget,completenessFocus,unresolvedRefs:model.presentation.unresolvedRefs,
+    start:stableStart,end:stableEnd,over:stableOver,place:stablePlace,equip:stableEquip,canTarget:stableCanTarget,reject:stableReject,overAssistant:stableOverAssistant,placeAssistant:stablePlaceAssistant}),
+    [grabbed,overTarget,motion,motionTarget,completenessFocus,model.presentation.unresolvedRefs,stableStart,stableEnd,stableOver,stablePlace,stableEquip,stableCanTarget,stableReject,stableOverAssistant,stablePlaceAssistant]);
+  const stableChoose=useCommittedEvent(choose),stableEdit=useCommittedEvent(edit),stableEditContext=useCommittedEvent(editContext),stableDrop=useCommittedEvent(drop),stableHover=useCommittedEvent(hover);
+  const stableRequest=useCommittedEvent((operation:ComposerOperation)=>stage(operation));
+  const stableLibraryChoose=useCommittedEvent((asset:ComposerAssetView)=>choose(asset));
+  const stableLibraryDrag=useCommittedEvent((key:string|null)=>{clearHover();setSelected(key);});
+  const stableAdd=useCommittedEvent(()=>{clearHover();setLibraryOpenToken(n=>n+1);});
+  const stablePreview=useCommittedEvent(()=>void run({kind:"READ"},"none"));
+  const stableBalance=useCommittedEvent(()=>{clearHover();setBalanceOpen(v=>!v);if(!balanceOpen)void run({kind:"SUGGESTIONS"},"none");});
+  const stableDetails=useCommittedEvent(openProjectionDetails);
+  return <ComposerInteractionContext.Provider value={interactionView}>
   <div className={styles.workspace} data-composer data-digest={shown.board.draft.semanticStateDigest} data-preview-state={previewStatus} data-save-state={durable.status} data-world-version={worldVersion} data-exploratory-digest={hoverModel?.board.draft.semanticStateDigest} data-dragging={!!grabbed} data-comparing={!!comparison} data-motion={motion} data-revision={model.activeRevisionNumber} aria-busy={busy}
     onDragOverCapture={e => { if (grab.current && e.target instanceof Element && !e.target.closest("[data-board-drop],[data-trash]")) { over(null); if (assistantOver.current) { assistantOver.current = null; clearHover(); } } }}>
     <header className={styles.workspaceHeader}><div className={styles.headerIdentity}><a href={`/mois-a-venir?month=${model.semanticState.targetMonth}&control=center`} className={styles.backLink}><ArrowLeft size={14} /> Centre de contrôle</a>
@@ -539,10 +552,9 @@ export function ComposerShell({ initialModel, transport, initialDrafts = null, d
         </div>}
         {draftTransport && ["ERROR", "CONFLICT", "OFFLINE"].includes(durable.status) && <span className={styles.saveMessage} data-save-message role="status">{durable.message}</span>}
       </div></header>
-    <div className={styles.columns}><ComposerLibrary model={shown} openToken={libraryOpenToken} busy={busy} selected={selected} choose={asset => choose(asset)} drag={key => { clearHover(); setSelected(key); }} />
-      <ComposerBoard model={shown} busy={busy} selected={selected} focused={focusedContext} focus={setFocusedContext} edit={edit} editContext={editContext} choose={choose} drag={setSelected} drop={drop} request={operation => stage(operation)} hover={hover}
-        add={() => { clearHover(); setLibraryOpenToken(n => n + 1); }} preview={() => void run({ kind: "READ" }, "none")}
-        balance={() => { clearHover(); setBalanceOpen(v => !v); if (!balanceOpen) void run({ kind: "SUGGESTIONS" }, "none"); }} details={openProjectionDetails} /></div>
+    <div className={styles.columns}><ComposerLibrary model={shown} openToken={libraryOpenToken} busy={busy} selected={selected} choose={stableLibraryChoose} drag={stableLibraryDrag} />
+      <ComposerBoard model={shown} busy={busy} selected={selected} focused={focusedContext} focus={setFocusedContext} edit={stableEdit} editContext={stableEditContext} choose={stableChoose} drag={setSelected} drop={stableDrop} request={stableRequest} hover={stableHover}
+        add={stableAdd} preview={stablePreview} balance={stableBalance} details={stableDetails} /></div>
     {balanceOpen && (!suggestions || suggestions.candidates.length > 0) && <section className={styles.suggestionHand} data-suggestion-hand aria-label="Pistes pour votre mois"><header><span><Sparkles size={14} /> Quelques façons de retrouver de la marge</span><button className={styles.iconButton} aria-label="Fermer les suggestions" onClick={() => setBalanceOpen(false)}><X size={16} /></button></header>
       {suggestions ? <BalanceLayer suggestions={suggestions} busy={busy} accept={candidateId => void run({ kind: "ACCEPT", candidateSetDigest: suggestions.candidateSetDigest, candidateId })} /> : <p role="status">Le serveur resimule les pistes…</p>}</section>}
     <div ref={dragImage} className={styles.dragPreview} data-drag-preview data-protected={grabbed?.protected} aria-hidden="true">{[...new Set(Object.values(shown.presentation.dragSources).map(s => s.iconKey))].map(key => <span key={key} data-drag-icon={key} style={{ display: grabbed?.iconKey === key ? "inline-flex" : "none" }}><PlannerIcon iconKey={key} scale="SATELLITE" /></span>)}<span><b data-drag-label>{grabbed?.label}</b><small data-drag-amount>{grabbed?.protected ? <><LockKeyhole size={11} /> Protégée</> : money(grabbed?.economicAmount ?? null)}</small></span></div>
