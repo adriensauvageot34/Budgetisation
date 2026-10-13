@@ -1,4 +1,5 @@
 import "server-only";
+import { composerMutationDependencies } from "./composer-mutation-world";
 import Big from "big.js";
 import type { ComposerApplyReceipt, ComposerEditor, ComposerField, ComposerRequest, ComposerResponse, ComposerUiModel } from "@/domain/phase2/planner/composer-ui-contract";
 import type { MonthComposerReadModel } from "@/domain/phase2/planner/composer-contract";
@@ -218,7 +219,10 @@ export async function handleComposerRequest(deps: PlannerDependencies, household
           message: `Révision ${committed.revision.revisionNumber} enregistrée, mais sa relecture est indisponible. Actualisez la prévisualisation avant toute autre action.` };
       }
     }
-    const model = await readMonthComposer(deps, household, month, request.draft);
+    const mutationRead = ["MUTATE", "DROP", "CLEAR_SOCKET", "EDIT_GIFT", "EDIT_NIGHT_OUT", "EDIT_SHORT_STAY", "EDIT_FAMILY_VISIT", "EDIT_CONTEXT", "PRESERVE"].includes(request.kind);
+    const readDeps = mutationRead && process.env.COMPOSER_P14_P2_SINGLE_WORLD !== "0"
+      ? composerMutationDependencies(deps, household, month) : deps;
+    const model = await readMonthComposer(readDeps, household, month, request.draft);
     let state = model.semanticState, mutationKind: string | undefined;
     let suggestions;
     if (request.kind === "MUTATE") {
@@ -314,7 +318,7 @@ export async function handleComposerRequest(deps: PlannerDependencies, household
       const accepted = await acceptPlanBalanceSuggestion(deps, household, month, state, request.candidateSetDigest, request.candidateId);
       state = accepted.semanticState; suggestions = accepted.suggestions;
     } else if (request.kind !== "READ") throw new TypeError("COMPOSER_REQUEST_INVALID");
-    const next = state === model.semanticState ? model : await readMonthComposer(deps, household, month, state);
+    const next = state === model.semanticState ? model : await readMonthComposer(readDeps, household, month, state);
     const before = model.board.cockpit.plan.economicMonthEndRemainder, after = next.board.cockpit.plan.economicMonthEndRemainder;
     // Difference of two real Compiler projections, just as for an assistant candidate.
     const interactionImpact = before === null || after === null ? null : new Big(after).minus(before).toFixed(2);

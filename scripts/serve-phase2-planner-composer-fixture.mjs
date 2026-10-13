@@ -13,6 +13,7 @@ import { atomicMonth, interactionMonth, richMonth, savingsMonth } from './fixtur
 import { visualMonth, visualThreeBeautyMonth, sparseMonth, unreadyMonth } from './fixtures/planner-visual-fidelity.mjs';
 import { p10Month } from './fixtures/planner-p10.mjs';
 import { p09CompatibilityMonth, p09ReadbackMonth } from './fixtures/planner-p09.mjs';
+import { p2Measuring, p2FixturePlugin, p2World, p2Interaction } from './lib/planner-p14-p2-fixture-tools.mjs';
 const { handleComposerRequest } = require('@/server/phase2/planner/composer-service');
 const { createPlanApplyRepository } = require('@/server/phase2/planner/repository');
 const { preparePlanningMobility } = require('@/server/phase2/planner/prospective-mobility-pricing');
@@ -33,10 +34,11 @@ const mocks = {
   '@/components/runtime': 'import {useRef} from "react"; export function useProductRuntime(){return {backgroundRootRef:useRef(null)}}',
   '@/features/auth/sign-out-button': 'import React from "react"; export const SignOutButton = () => React.createElement("button",{disabled:true},"Déconnexion");'
 };
-await build({ entryPoints: ['scripts/lib/planner-composer-browser-entry.tsx'], bundle: true, format: 'esm', target: 'chrome120', jsx: 'automatic',
+await build({ entryPoints: [p2Measuring ? 'scripts/lib/planner-composer-p14-p2-browser-entry.tsx' : 'scripts/lib/planner-composer-browser-entry.tsx'], bundle: true, format: 'esm', target: 'chrome120', jsx: 'automatic',
+  define: { 'process.env.NEXT_PUBLIC_COMPOSER_P14_P2_INTERACTIONS': JSON.stringify(process.env.NEXT_PUBLIC_COMPOSER_P14_P2_INTERACTIONS ?? '1') },
   outfile: path.join(out, 'app.js'), loader: { '.css': 'local-css' }, sourcemap: true,
   external: ['/planned-visuals/*'],
-  plugins: [{name:'fixture-host-only',setup(builder){ builder.onResolve({filter:/^(next\/link|next\/navigation|@\/components\/runtime|@\/features\/auth\/sign-out-button)$/},args=>({path:args.path,namespace:'fixture-host'}));
+  plugins: [p2FixturePlugin(), {name:'fixture-host-only',setup(builder){ builder.onResolve({filter:/^(next\/link|next\/navigation|@\/components\/runtime|@\/features\/auth\/sign-out-button)$/},args=>({path:args.path,namespace:'fixture-host'}));
     builder.onLoad({filter:/.*/,namespace:'fixture-host'},args=>({contents:mocks[args.path],loader:'js',resolveDir:process.cwd()})); }}] });
 const globalCss = process.env.PLANNER_C8_GLOBAL_CSS
   ? fs.readFileSync(process.env.PLANNER_C8_GLOBAL_CSS, 'utf8')
@@ -51,6 +53,7 @@ const stores = new Map(), fixtures = { A: simpleMonth, B: nightMonth, C: weekend
   P09C: p09CompatibilityMonth,
   P09S: p09CompatibilityMonth,
   P09R: p09ReadbackMonth,
+  P2:p10Month,
   P10:p10Month, P10OUT:p10Month, P11:p10Month, P11OUT:p10Month,
   RA: interactionMonth, RB: nightMonth, RC: weekendMonth, RR: atomicMonth, RICH:richMonth, SAVINGS:savingsMonth,
   VISUAL:visualMonth, VISUAL_P35_CLICK:visualMonth, VISUAL_P35_DRAG:visualMonth, VISUAL_P35_MULTI_DRAG:visualMonth, VISUAL_P35_REPLACE:visualMonth,
@@ -70,7 +73,7 @@ function uiPayloadFields(value) {
 }
 async function store(key) {
   if (!stores.has(key)) stores.set(key, (async () => {
-    const pg = await createKernelPostgres(), fixture = (fixtures[key] ?? fixtures.A)(), owner = providers();
+    const pg = await createKernelPostgres(), fixture = (p2Measuring && key.startsWith('P2') ? fixtures.P2 : fixtures[key] ?? fixtures.A)(), owner = providers();
     if(key==='P10OUT'||key==='P11OUT') owner.settings.routeUnavailable=true;
     return { pg, fixture, log: [], deps: { repository: createPlanApplyRepository(pg.client),
       householdPersons: [{ personId: '00000000-0000-4000-8000-000000000001', displayName: 'Alice Fixture' }],
@@ -78,7 +81,7 @@ async function store(key) {
       validateContextReferences: async (_household, refs) => {
         if (refs.placeIds.some(id=>!fixture.world.mobilityFacts?.places.some(p=>p.placeId===id))) throw new TypeError('CONTEXT_PLACE_NOT_ADMITTED');
         if (refs.personIds.some(id => id !== '00000000-0000-4000-8000-000000000001')) throw new TypeError('CONTEXT_PERSON_NOT_IN_HOUSEHOLD');
-      }, readWorld: async () => fixture.world,
+      }, readWorld: async () => p2World(() => fixture.world),
       prepareWorld: (world, state) => preparePlanningMobility(world, state, owner.value) } };
   })());
   return stores.get(key);
@@ -89,6 +92,13 @@ const server = http.createServer(async (request, response) => {
     const url = new URL(request.url, 'http://127.0.0.1');
     const referringScenario = request.headers.referer ? new URL(request.headers.referer).searchParams.get('scenario') : null;
     const key = url.searchParams.get('scenario') ?? referringScenario ?? 'A';
+    if (p2Measuring && url.pathname === '/p2-metrics' && request.method === 'POST') {
+      if (!/^P2_[a-zA-Z0-9_-]{1,80}$/.test(key)) throw Error('P2_FIXTURE_SCENARIO_INVALID');
+      const chunks=[];let bytes=0;for await(const chunk of request){bytes+=chunk.length;if(bytes>2000000)throw Error('P2_FIXTURE_PROBE_TOO_LARGE');chunks.push(chunk);}
+      const metrics=JSON.parse(Buffer.concat(chunks).toString());
+      fs.writeFileSync(path.join(out,key+'-client.json'),JSON.stringify(metrics,null,2));
+      response.end('Recorded synthetic probe');return;
+    }
     if (url.pathname === '/draft') {
       const s = draftStore(key);
       response.setHeader('Content-Type', 'application/json');
@@ -148,7 +158,7 @@ const server = http.createServer(async (request, response) => {
       // Delays only in this isolated host, to exercise stale hover responses in the actual UI.
       const rejectSequence = Number(url.searchParams.get('rejectSequence'));
       const syntheticReject = !initialRead && command.kind === 'READ' && url.searchParams.has('rejectSequence') && rejectSequence === command.sequence;
-      let result = syntheticReject ? { ok:false, sequence:command.sequence, code:'P03B_SYNTHETIC_REJECTION', message:'Simulation de test rejetée' } : await handleComposerRequest(s.deps, householdId, command);
+      let result = syntheticReject ? { ok:false, sequence:command.sequence, code:'P03B_SYNTHETIC_REJECTION', message:'Simulation de test rejetée' } : await p2Interaction(command, () => handleComposerRequest(s.deps, householdId, command));
       // Test transport integrity only: a deliberately mismatched proof must never become the current projection.
       if (!initialRead && command.kind === 'READ' && result.ok && url.searchParams.has('staleSequence')
         && Number(url.searchParams.get('staleSequence')) === command.sequence) result = { ...result,
@@ -157,6 +167,7 @@ const server = http.createServer(async (request, response) => {
       s.log.push({ kind: command.kind, sequence: command.sequence, mutationKind: result.mutationKind ?? null,
         gesture: command.kind === 'DROP' ? {assetKey:command.assetKey,target:command.target,sourceSocket:command.sourceSocket??null} : null,
         interactionImpact: result.interactionImpact ?? null,
+        ...(p2Measuring ? { fixturePerformance:result.fixturePerformance } : {}),
         uiPayloadFields: uiPayloadFields(command),
         ok: result.ok, digest: result.ok ? result.model.board.draft.semanticStateDigest : result.code,
         projection: result.ok ? result.model.board.cockpit : null });

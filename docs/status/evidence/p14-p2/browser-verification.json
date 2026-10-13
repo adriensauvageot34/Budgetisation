@@ -1,0 +1,13 @@
+{
+  "scope": "LOCAL_ISOLATED_FIXTURE_NOT_AUTHENTICATED_SUPABASE",
+  "reload": {"status": "PASS", "cards": 20, "preview": "FRESH", "save": "SAVED", "digest": "2a8997919c3499714a389a18c900398c1d8109465e51fc267c2253715f420472"},
+  "archiveRestore": {"status": "PASS", "draftId": "6c478bde-ec95-4375-9a42-cda3e20c26ba", "versions": [7, 8, 9], "sameDigest": true, "sameIdentity": true, "explicitConfirmations": true},
+  "realLibraryClick": {"status": "PASS", "dialog": "Configurer Soirée", "suggestionsMarked": true, "previewIndependent": true},
+  "lostResponse": {"status": "PASS", "fixtureResponse": "503_AFTER_COMMIT", "recoveredByRead": true, "saveEvents": 1, "version": 1, "preview": "FRESH", "save": "SAVED", "consoleErrorsCaptured": 0},
+  "imageCapture": {"status": "TOOL_FAILED", "message": "Unable to capture screenshot"},
+  "remoteWrites": 0,
+  "applyRpcCalls": 0,
+  "nativeDragBenchmark": "NOT_RUN",
+  "browserOfflinePhysical": "NOT_RUN",
+  "authenticatedSupabase": "NOT_RUN"
+}

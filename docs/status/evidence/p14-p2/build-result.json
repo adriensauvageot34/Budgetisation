@@ -1,0 +1,5 @@
+{
+  "environment": "Windows Node22.18 Next16.2.6 installed dependencies reused",
+  "exitCode": 0,
+  "command": "node node_modules/next/dist/bin/next build"
+}

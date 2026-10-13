@@ -19,7 +19,7 @@ import { money } from "./display";
 import { finishComparison, type ComparisonSnapshot } from "./comparison";
 import { AtomicPopover } from "./atomic-popover";
 import { stageLocalDecision, visualDraftModel } from "./local-draft";
-import { ComposerPreviewScheduler, type PreviewStatus } from "./preview-scheduler";
+import { ComposerPreviewScheduler, composerInteractionReuseEnabled, type PreviewStatus } from "./preview-scheduler";
 import { GiftEditor } from "./gift-editor";
 import { NightOutEditor } from "./night-out-editor";
 import { ShortStayEditor } from "./short-stay-editor";
@@ -53,6 +53,7 @@ export function ComposerShell({ initialModel, transport, initialDrafts = null, d
   const [editor, setEditor] = useState<Editor | null>(null), [balanceOpen, setBalanceOpen] = useState(false), [suggestions, setSuggestions] = useState<PlanBalanceSuggestions | null>(null);
   const [projectionOpen, setProjectionOpen] = useState(false), [libraryOpenToken, setLibraryOpenToken] = useState(0);
   const [hoverModel, setHoverModel] = useState<ComposerUiModel | null>(null), gate = useRef(new ComposerResponseGate()), timer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const pendingHover = useRef<{ key: string; draftDigest: string; worldVersion: string; sequence: number } | null>(null);
   const dialog = useRef<HTMLDialogElement>(null), invoker = useRef<HTMLElement | null>(null);
   const applyAttempt = useRef<{ key: string; applyRequestId: string } | null>(null);
   const [pendingApply, setPendingApply] = useState<PendingApply | null>(null);
@@ -91,8 +92,10 @@ export function ComposerShell({ initialModel, transport, initialDrafts = null, d
     const before = localDraft.current;
     const next = restored ?? stageLocalDecision(current.current, before, operation);
     if (!next) { void run(operation, history, restored); return false; }
+    const beforeDigest = semanticStateDigest(before), nextDigest = semanticStateDigest(next);
+    if (composerInteractionReuseEnabled && beforeDigest === nextDigest && ["FRESH", "BLOCKED", "PENDING"].includes(previewStatus)) return true;
     clearHover(); gate.current.invalidate(); scheduler.current.cancel();
-    if (semanticStateDigest(before) !== semanticStateDigest(next)) {
+    if (beforeDigest !== nextDigest) {
       if (history === "push") { setPast(p => [...p, before]); setFuture([]); }
       else if (history === "undo") { setPast(p => p.slice(0, -1)); setFuture(f => [...f, before]); }
       else { setFuture(f => f.slice(0, -1)); setPast(p => [...p, before]); }
@@ -102,7 +105,7 @@ export function ComposerShell({ initialModel, transport, initialDrafts = null, d
     schedulePreview(next);
     return true;
   }
-  const clearHover = () => { if (timer.current) clearTimeout(timer.current); if (!busyRef.current) gate.current.invalidate(); setHoverModel(null); setHoverPending(false); setInteractionImpact(null); };
+  const clearHover = () => { if (timer.current) clearTimeout(timer.current); pendingHover.current = null; if (!busyRef.current) gate.current.invalidate(); setHoverModel(null); setHoverPending(false); setInteractionImpact(null); };
   useEffect(() => { scheduler.current.revive(); return () => { if (timer.current) clearTimeout(timer.current); if (motionTimer.current) clearTimeout(motionTimer.current); gate.current.invalidate(); scheduler.current.dispose(); }; }, []);
   useEffect(() => {
     const historyKey = (event: KeyboardEvent) => {
@@ -260,9 +263,17 @@ export function ComposerShell({ initialModel, transport, initialDrafts = null, d
     previewGesture(mutation ? { kind: "MUTATE", mutation } : null);
   }
   function previewGesture(operation: ComposerOperation | null) {
+    const same = pendingHover.current;
+    if (composerInteractionReuseEnabled && operation && same?.key === JSON.stringify(operation)
+      && same.draftDigest === current.current.board.draft.semanticStateDigest && same.worldVersion === currentAuthority().worldVersion
+      && gate.current.accepts({ sequence: same.sequence, sourceDigest: same.draftDigest }, same.sequence, same.draftDigest)) return;
     clearHover();
-    if (!operation || operation.kind === "APPLY" || busyRef.current || previewStatus !== "FRESH" || editor || projectionOpen) return;
+    if (!operation || operation.kind === "APPLY" || busyRef.current || previewStatus !== "FRESH" || editor || projectionOpen
+      || composerInteractionReuseEnabled && scheduler.current.pending()) return;
     const before = current.current, ticket = gate.current.next(before.board.draft.semanticStateDigest);
+    const hovering = { key: JSON.stringify(operation), draftDigest: before.board.draft.semanticStateDigest,
+      worldVersion: currentAuthority().worldVersion, sequence: ticket.sequence };
+    pendingHover.current = hovering;
     setHoverPending(true);
     timer.current = setTimeout(async () => {
       try {
@@ -271,6 +282,7 @@ export function ComposerShell({ initialModel, transport, initialDrafts = null, d
           setHoverPending(false); if (response.ok) { setHoverModel(response.model); setInteractionImpact(response.interactionImpact ?? null); }
         }
       } catch { if (gate.current.accepts(ticket, ticket.sequence, current.current.board.draft.semanticStateDigest)) setHoverPending(false); }
+      finally { if (pendingHover.current === hovering) pendingHover.current = null; }
     }, 200);
   }
   function animate(kind: "snap" | "undo" | "redo" | "recoil", target: string | null) {
