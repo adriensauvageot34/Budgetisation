@@ -83,7 +83,8 @@ export class CanonicalRequestKeyReads<Row> {
   private readonly scopes = new Map<string, Map<string, Promise<readonly Row[] | undefined>>>();
 
   async read(namespace: string, options: CanonicalInBatchReadOptions<Row>,
-    keyOf: (row: Row) => string, resultLimit: number): Promise<readonly Row[]> {
+    keyOf: (row: Row) => string, resultLimit: number,
+    onComplete?: (rows: readonly Row[]) => void): Promise<readonly Row[]> {
     if (!Number.isInteger(resultLimit) || resultLimit <= 0) throw new RangeError("Canonical result limit must be positive.");
     const keys = normalizeCanonicalInValues(options.values);
     let scope = this.scopes.get(namespace);
@@ -121,6 +122,8 @@ export class CanonicalRequestKeyReads<Row> {
       // back once to the original full-key query, preserving its result/order.
       return missing.length === keys.length && ownRead ? ownRead : readCanonicalInBatches(options);
     }
-    return mergeCanonicalBatchRows((rows as readonly (readonly Row[])[]).flat(), options.rowIdentity, options.compareRows);
+    const merged = mergeCanonicalBatchRows((rows as readonly (readonly Row[])[]).flat(), options.rowIdentity, options.compareRows);
+    onComplete?.(merged);
+    return merged;
   }
 }

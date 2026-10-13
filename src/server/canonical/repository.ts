@@ -76,6 +76,8 @@ import {
   type CanonicalRecord,
 } from "./record";
 import { safeRuntimeEnvironment } from "@/server/runtime-environment";
+import { HistoricalRequestRows, ACTIVITY_EVENT_COLUMNS, PARTICIPATION_FACT_COLUMNS, PARTICIPATION_ENTITY_COLUMNS,
+  projectHistoricalColumns, type HistoricalReadReuse } from "./historical-request-rows";
 import {
   CANONICAL_ECONOMIC_IN_BATCH_SIZE,
   CANONICAL_IN_BATCH_SIZE,
@@ -422,13 +424,14 @@ function compareCanonicalBatchRows(
 export class CanonicalRepository {
   private readonly cache = new Map<string, Promise<unknown>>();
   private readonly keyedReads = new CanonicalRequestKeyReads<CanonicalRecord>();
+  private readonly historicalRows = new HistoricalRequestRows();
   private readonly household: CanonicalHouseholdContext;
   private economicFactsClosure: EconomicFactsClosureState | undefined;
 
   constructor(
     readonly client: SupabaseClient,
     readonly context: AuthorizedRuntimeContext,
-    private readonly readOptions: Readonly<{ shareEconomicReads?: boolean }> = {},
+    private readonly readOptions: Readonly<{ shareEconomicReads?: boolean; historicalReads?: HistoricalReadReuse }> = {},
   ) {
     this.household = {
       householdId: context.householdId,
@@ -500,7 +503,7 @@ export class CanonicalRepository {
     orderColumns: readonly string[],
     query: (batch: readonly string[]) => PromiseLike<CanonicalQueryResult>,
     batchSize = CANONICAL_IN_BATCH_SIZE,
-    shared?: Readonly<{ namespace: string; keyColumn: string }>,
+    shared?: Readonly<{ namespace: string; keyColumn: string; historical?: boolean; onComplete?: (rows: readonly CanonicalRecord[]) => void }>,
   ): Promise<readonly CanonicalRecord[]> {
     return this.cached(key, () => {
       const options = {
@@ -511,8 +514,8 @@ export class CanonicalRepository {
           left, right, [...orderColumns, ...identityColumns]),
         batchSize,
       };
-      return this.readOptions.shareEconomicReads && shared
-        ? this.keyedReads.read(shared.namespace, options, row => canonicalString(row, [shared.keyColumn], source), CANONICAL_PAGE_SIZE)
+      return shared && (shared.historical ? !!this.readOptions.historicalReads : this.readOptions.shareEconomicReads)
+        ? this.keyedReads.read(shared.namespace, options, row => canonicalString(row, [shared.keyColumn], source), CANONICAL_PAGE_SIZE, shared.onComplete)
         : readCanonicalInBatches(options);
     });
   }
@@ -1308,6 +1311,7 @@ export class CanonicalRepository {
       const personDays = await this.loadPersonDays(range);
       if (personDays.length === 0) return [];
       const personDayIds = personDays.map(({ personDayId }) => personDayId);
+      let occurrencesComplete = false;
       const occurrences = await this.readRowsByInBatches(
         `location-occurrences:${personDayIds.join(",")}`,
         "places",
@@ -1324,6 +1328,9 @@ export class CanonicalRepository {
             .eq("occurrence_type", "Présence")
             .order("person_day_id", { ascending: true })
             .order("sequence_index", { ascending: true }),
+        CANONICAL_IN_BATCH_SIZE,
+        { namespace: "historical:presence-by-day", keyColumn: "person_day_id", historical: true,
+          onComplete: () => { occurrencesComplete = true; } },
       );
       const dayById = new Map(personDays.map((day) => [day.personDayId, day]));
       const personById = new Map(
@@ -1332,7 +1339,7 @@ export class CanonicalRepository {
           { person_id: person.personId, household_id: person.householdId },
         ]),
       );
-      return dedupePlaceVisits(
+      const projected = dedupePlaceVisits(
         occurrences.map((occurrence) => {
           const personDayId = canonicalString(
             occurrence,
@@ -1366,6 +1373,10 @@ export class CanonicalRepository {
           });
         }), this.household.timeZoneValidation,
       );
+      if (this.readOptions.historicalReads === "projected" && occurrencesComplete) {
+        this.historicalRows.observe("localization:place", "localization_id", "localization_id,place_id", occurrences);
+      }
+      return projected;
     });
   }
 
@@ -1374,21 +1385,27 @@ export class CanonicalRepository {
   ): Promise<readonly ActivityOccurrenceFact[]> {
     return this.cached(`facts:activities:${range.start}:${range.endExclusive}`, async () => {
       await this.assertAuthorizedCanonicalHouseholdScope();
-      const lifeEvents = await this.readRows(
+      const loadEvents = () => this.readRows(
         `life-events:${range.start}:${range.endExclusive}`,
         "life_events",
         () =>
           this.client
             .from("life_events")
             .select(
-              "life_event_id,life_event_type_id,life_event_series_id,parent_life_event_id,start_date,end_date,validation_status",
+              ACTIVITY_EVENT_COLUMNS,
             )
             .lte("start_date", addDays(range.endExclusive, -1))
             .gte("end_date", range.start)
             .order("start_date", { ascending: true })
             .order("life_event_id", { ascending: true }),
       );
-      return this.projectActivityOccurrenceRows(lifeEvents);
+      const lifeEvents = this.readOptions.historicalReads === "projected"
+        ? await this.historicalRows.events(range.start, range.endExclusive, loadEvents, CANONICAL_PAGE_SIZE) : await loadEvents();
+      const projected = await this.projectActivityOccurrenceRows(lifeEvents);
+      if (this.readOptions.historicalReads === "projected" && lifeEvents.length < CANONICAL_PAGE_SIZE) {
+        this.historicalRows.observe("life-event:activity", "life_event_id", ACTIVITY_EVENT_COLUMNS, lifeEvents);
+      }
+      return projected;
     });
   }
 
@@ -1468,14 +1485,16 @@ export class CanonicalRepository {
   ): Promise<ActivityOccurrenceFact | null> {
     return this.cached(`facts:activity:${lifeEventId}`, async () => {
       await this.assertAuthorizedCanonicalHouseholdScope();
-      const lifeEvents = await this.readRows(
+      const known = this.readOptions.historicalReads === "projected"
+        ? this.historicalRows.known("life-event:activity", [lifeEventId]) : undefined;
+      const lifeEvents = known ?? await this.readRows(
         `life-event-fact:${lifeEventId}`,
         "life_events",
         () =>
           this.client
             .from("life_events")
             .select(
-              "life_event_id,life_event_type_id,life_event_series_id,parent_life_event_id,start_date,end_date,validation_status",
+              ACTIVITY_EVENT_COLUMNS,
             )
             .eq("life_event_id", lifeEventId)
             .limit(1),
@@ -1497,7 +1516,8 @@ export class CanonicalRepository {
         canonicalString(row, ["life_event_type_id"], "life_events"),
       ),
     );
-    const [eventTypes, participations] = await Promise.all([
+    const fullParticipations = this.readOptions.historicalReads === "projected";
+    const [eventTypes, loadedParticipations] = await Promise.all([
       this.readRowsByInBatches(
         `life-event-types:${typeIds.join(",")}`,
         "life_events",
@@ -1520,12 +1540,18 @@ export class CanonicalRepository {
         (batch) =>
         this.client
           .from("life_event_participations")
-          .select("life_event_id,person_day_id,person_id,participation_status")
+          .select(fullParticipations ? PARTICIPATION_ENTITY_COLUMNS : PARTICIPATION_FACT_COLUMNS)
           .in("life_event_id", batch)
           .order("life_event_id", { ascending: true })
           .order("person_id", { ascending: true }),
+        CANONICAL_IN_BATCH_SIZE,
+        { namespace: fullParticipations ? "historical:participations:entities" : "historical:participations:facts",
+          keyColumn: "life_event_id", historical: true },
       ),
     ]);
+    // Extra transport columns never change the facts' original projection.
+    const participations = fullParticipations
+      ? loadedParticipations.map(row => projectHistoricalColumns(row, PARTICIPATION_FACT_COLUMNS)) : loadedParticipations;
     const typeById = byUniqueKey(eventTypes, "life_event_type_id", "life_events");
     const participationsByEvent = groupBy(participations, "life_event_id");
     return dedupeActivityOccurrences(
@@ -2557,10 +2583,12 @@ export class CanonicalRepository {
       (batch) =>
       this.client
         .from("life_event_participations")
-        .select("life_event_id,person_day_id,person_id,start_at,end_at,time_precision,participation_role,participation_status")
+        .select(PARTICIPATION_ENTITY_COLUMNS)
         .in("life_event_id", batch)
         .order("life_event_id", { ascending: true })
-        .order("person_id", { ascending: true }));
+        .order("person_id", { ascending: true }),
+      CANONICAL_IN_BATCH_SIZE,
+      { namespace: "historical:participations:entities", keyColumn: "life_event_id", historical: true });
   }
 
   /**
@@ -2603,11 +2631,15 @@ export class CanonicalRepository {
           .select("life_event_id,localization_id")
           .in("life_event_id", batch)
           .order("life_event_id", { ascending: true })
-          .order("localization_id", { ascending: true }));
+          .order("localization_id", { ascending: true }),
+        CANONICAL_IN_BATCH_SIZE,
+        { namespace: "historical:localization-links", keyColumn: "life_event_id", historical: true });
       const localizationIds = unique(links.map((row) =>
         canonicalString(row, ["localization_id"], "life_events")));
       if (localizationIds.length === 0) return [];
-      const occurrences = await this.readRowsByInBatches(
+      const known = this.readOptions.historicalReads === "projected"
+        ? this.historicalRows.known("localization:place", localizationIds) : undefined;
+      const occurrences = known ?? await this.readRowsByInBatches(
         `life-event-localizations:occurrences:${localizationIds.join(",")}`,
         "life_events",
         localizationIds,
@@ -2619,7 +2651,9 @@ export class CanonicalRepository {
           .select("localization_id,place_id")
           .in("localization_id", batch)
           .order("localization_id", { ascending: true })
-          .order("place_id", { ascending: true }));
+          .order("place_id", { ascending: true }),
+        CANONICAL_IN_BATCH_SIZE,
+        { namespace: "historical:localization-places", keyColumn: "localization_id", historical: true });
       const placesByLocalization = groupBy(occurrences, "localization_id");
       const resolved = new Map<string, CanonicalRecord>();
       for (const link of links) {
@@ -2725,7 +2759,12 @@ export class CanonicalRepository {
         .from("life_events")
         .select("*")
         .in("life_event_id", batch)
-        .order("life_event_id", { ascending: true }));
+        .order("life_event_id", { ascending: true }),
+      CANONICAL_IN_BATCH_SIZE,
+      { namespace: "historical:life-event-records", keyColumn: "life_event_id", historical: true,
+        onComplete: rows => { if (this.readOptions.historicalReads === "projected") {
+          this.historicalRows.observe("life-event:activity", "life_event_id", ACTIVITY_EVENT_COLUMNS, rows);
+        } } });
   }
 
   async loadLifeEventRecord(lifeEventId: string): Promise<CanonicalRecord | null> {

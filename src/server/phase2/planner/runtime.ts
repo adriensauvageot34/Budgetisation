@@ -16,5 +16,10 @@ export async function authorizedPlanner() {
   const context = createAuthorizedRuntimeContext(bootstrap, parseInstant(now));
   return { householdId: String(context.householdId), userId: user.id, supabase,
     deps: createPlannerDependencies(new CanonicalRepository(createCanonicalReadClient(), context,
-      { shareEconomicReads: process.env.COMPOSER_P14_P1_READ_REUSE !== "0" }), supabase, () => now) };
+      { shareEconomicReads: process.env.COMPOSER_P14_P1_READ_REUSE !== "0",
+        // Keep P3 opt-in until the real opening latency is validated. The
+        // Preview experiment reduced reads but showed slower, variable World.
+        ...(!["1", "2"].includes(process.env.COMPOSER_P14_P3_HISTORICAL_REUSE ?? "") ? {} : {
+          historicalReads: process.env.COMPOSER_P14_P3_HISTORICAL_REUSE === "1" ? "keys" as const : "projected" as const,
+        }) }), supabase, () => now) };
 }

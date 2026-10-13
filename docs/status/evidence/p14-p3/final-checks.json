@@ -1,0 +1,22 @@
+[
+  {
+    "test": "check-composer-p14-p1-read-reuse",
+    "exitCode": 0
+  },
+  {
+    "test": "check-phase2-planner-p13",
+    "exitCode": 0
+  },
+  {
+    "test": "check-phase2-planner-composer",
+    "exitCode": 0
+  },
+  {
+    "test": "check-planner-performance-parity",
+    "exitCode": 0
+  },
+  {
+    "test": "tsc --noEmit",
+    "exitCode": 0
+  }
+]

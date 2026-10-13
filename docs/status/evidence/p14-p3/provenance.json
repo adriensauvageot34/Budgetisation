@@ -1,0 +1,37 @@
+{
+  "baseCommit": "37055156f0a9bf59700405e349fee0c55c0363b0",
+  "branch": "codex/composer-v3-p14-p3-historical-readers",
+  "mainUntouched": "578adc2efcef8b29b5ee8a794772e15fcdf66d98",
+  "previewReference": "dpl_DougtTp4ey2i5PpRDAA9UDGQe2VY",
+  "previewCandidate": "dpl_DxUzEzxEP864cktcyFL5mjBHHzv3",
+  "region": "fra1",
+  "p1Flag": "1",
+  "previewP3Flags": [
+    "0",
+    "2"
+  ],
+  "finalP3Default": "disabled",
+  "probePresentInProduct": false,
+  "files": [
+    {
+      "path": "src/server/canonical/in-batches.ts",
+      "sha256": "8EAE622B2F5B27685E82548CE6F2A77CB37E6886E2300D2928FA7A3A876F0BBC"
+    },
+    {
+      "path": "src/server/canonical/repository.ts",
+      "sha256": "71BE55BBE716BAD5A0222F1EB921C3CFA1D47F3B33D42205D4A1231AEBCAF0BE"
+    },
+    {
+      "path": "src/server/canonical/historical-request-rows.ts",
+      "sha256": "F163AA1992C661CDA8730CF85A6E35F70156A5709C9BA485F25EB55408A3F508"
+    },
+    {
+      "path": "src/server/phase2/planner/runtime.ts",
+      "sha256": "929FB68B344F02B0348EE3A04837635CE66E4B90F8B6A1DD1A39A0DCA9379601"
+    },
+    {
+      "path": "scripts/p14-p3-instrument-preview.mjs",
+      "sha256": "0E0F0A98133D67A77B6231A8C427CFCABD0373AC214559B0E0DCBBF16BE23CFA"
+    }
+  ]
+}

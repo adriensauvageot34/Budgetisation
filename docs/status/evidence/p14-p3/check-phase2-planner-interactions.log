@@ -1,0 +1,41 @@
+R3-001 PASS
+R3-002 PASS
+R3-003 PASS
+R3-004 PASS
+R3-005 PASS
+R3-006 PASS
+R3-007 PASS
+R3-009 PASS
+R3-010 PASS
+R3-011 PASS
+R3-012 PASS
+R3-013 PASS
+R3-014 PASS
+R3-015 PASS
+R3-016 PASS
+R3-017 PASS
+R3-018 PASS
+R3-019 PASS
+R3-020 PASS
+R3-021 PASS
+R3-022 PASS
+node:internal/modules/run_main:123
+    triggerUncaughtException(
+    ^
+
+AssertionError [ERR_ASSERTION]: CONTEXT_REFERENCE_OWNER_UNAVAILABLE
+
+false !== true
+
+    at ok (file:///C:/Users/AdrienSauvageot/Documents/Codex/p14-c4-candidate/scripts/check-phase2-planner-interactions.mjs:25:33)
+    at file:///C:/Users/AdrienSauvageot/Documents/Codex/p14-c4-candidate/scripts/check-phase2-planner-interactions.mjs:116:85
+    at async check (file:///C:/Users/AdrienSauvageot/Documents/Codex/p14-c4-candidate/scripts/check-phase2-planner-interactions.mjs:27:35)
+    at async file:///C:/Users/AdrienSauvageot/Documents/Codex/p14-c4-candidate/scripts/check-phase2-planner-interactions.mjs:116:3 {
+  generatedMessage: false,
+  code: 'ERR_ASSERTION',
+  actual: false,
+  expected: true,
+  operator: 'strictEqual'
+}
+
+Node.js v22.18.0
