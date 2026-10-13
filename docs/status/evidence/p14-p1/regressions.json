@@ -1,0 +1,46 @@
+[
+  {
+    "exitCode": 0,
+    "test": "check-canonical-in-batching"
+  },
+  {
+    "exitCode": 0,
+    "test": "check-history-v2-canonical-contracts"
+  },
+  {
+    "exitCode": 0,
+    "test": "check-composer-orchestration"
+  },
+  {
+    "exitCode": 0,
+    "test": "check-phase2-forecast-temporal-mode"
+  },
+  {
+    "exitCode": 0,
+    "test": "check-phase2-temporal-forecast"
+  },
+  {
+    "exitCode": 0,
+    "test": "check-phase2-planner-baseline"
+  },
+  {
+    "exitCode": 0,
+    "test": "check-phase2-planner-kernel"
+  },
+  {
+    "exitCode": 0,
+    "test": "check-planner-performance-parity"
+  },
+  {
+    "exitCode": 0,
+    "test": "check-phase2-planner-p11"
+  },
+  {
+    "exitCode": 0,
+    "test": "check-phase2-planner-p13"
+  },
+  {
+    "exitCode": 0,
+    "test": "check-composer-r6-presentation"
+  }
+]

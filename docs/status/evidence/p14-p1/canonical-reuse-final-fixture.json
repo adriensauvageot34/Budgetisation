@@ -1,0 +1,180 @@
+{
+  "status": "PASS_SYNTHETIC_ONLY",
+  "checks": [
+    "P1-RAW-FACTS-PARITY",
+    "P1-UNKNOWN-IDENTITY-PROVENANCE",
+    "P1-PARTIAL-OVERLAP-MISSING-DIRECT",
+    "P1-PARTIAL-PERSON-SHARES",
+    "P1-FRESH-REQUEST-RETROACTIVE-CHANGE",
+    "P1-NEW-TIMEZONE-CONTEXT",
+    "P1-EMPTY-HISTORY-NOT-INVENTED",
+    "P1-TIMEOUT-NO-PARTIAL-SUCCESS",
+    "P1-CONCURRENT-KEYS-ONE-READ",
+    "P1-FAILED-GROUP-IS-ATOMIC",
+    "P1-NAMESPACES-AND-SESSIONS-ISOLATED",
+    "P1-ORDER-ONE-TO-MANY-EMPTY",
+    "P1-CAPPED-RESULT-NOT-REUSED-AS-COMPLETE"
+  ],
+  "n": 12,
+  "delayPerSyntheticReadMs": 8,
+  "pairs": [
+    {
+      "before": {
+        "ms": 235.08820000000014,
+        "reads": 34,
+        "bytes": 620422
+      },
+      "after": {
+        "ms": 176.64869999999974,
+        "reads": 23,
+        "bytes": 413646
+      }
+    },
+    {
+      "after": {
+        "ms": 190.90089999999873,
+        "reads": 23,
+        "bytes": 413646
+      },
+      "before": {
+        "ms": 229.95120000000134,
+        "reads": 34,
+        "bytes": 620422
+      }
+    },
+    {
+      "before": {
+        "ms": 222.8755999999994,
+        "reads": 34,
+        "bytes": 620422
+      },
+      "after": {
+        "ms": 188.6146000000008,
+        "reads": 23,
+        "bytes": 413646
+      }
+    },
+    {
+      "after": {
+        "ms": 178.80439999999908,
+        "reads": 23,
+        "bytes": 413646
+      },
+      "before": {
+        "ms": 200.0713999999989,
+        "reads": 34,
+        "bytes": 620422
+      }
+    },
+    {
+      "before": {
+        "ms": 231.03299999999945,
+        "reads": 34,
+        "bytes": 620422
+      },
+      "after": {
+        "ms": 176.83659999999873,
+        "reads": 23,
+        "bytes": 413646
+      }
+    },
+    {
+      "after": {
+        "ms": 178.20160000000033,
+        "reads": 23,
+        "bytes": 413646
+      },
+      "before": {
+        "ms": 232.4948000000004,
+        "reads": 34,
+        "bytes": 620422
+      }
+    },
+    {
+      "before": {
+        "ms": 217.99209999999948,
+        "reads": 34,
+        "bytes": 620422
+      },
+      "after": {
+        "ms": 192.46279999999933,
+        "reads": 23,
+        "bytes": 413646
+      }
+    },
+    {
+      "after": {
+        "ms": 177.04949999999917,
+        "reads": 23,
+        "bytes": 413646
+      },
+      "before": {
+        "ms": 242.8721999999998,
+        "reads": 34,
+        "bytes": 620422
+      }
+    },
+    {
+      "before": {
+        "ms": 226.3607000000011,
+        "reads": 34,
+        "bytes": 620422
+      },
+      "after": {
+        "ms": 216.15730000000076,
+        "reads": 23,
+        "bytes": 413646
+      }
+    },
+    {
+      "after": {
+        "ms": 179.03739999999925,
+        "reads": 23,
+        "bytes": 413646
+      },
+      "before": {
+        "ms": 183.55729999999858,
+        "reads": 34,
+        "bytes": 620422
+      }
+    },
+    {
+      "before": {
+        "ms": 195.53539999999884,
+        "reads": 34,
+        "bytes": 620422
+      },
+      "after": {
+        "ms": 178.24099999999999,
+        "reads": 23,
+        "bytes": 413646
+      }
+    },
+    {
+      "after": {
+        "ms": 181.9198000000015,
+        "reads": 23,
+        "bytes": 413646
+      },
+      "before": {
+        "ms": 250.57120000000032,
+        "reads": 34,
+        "bytes": 620422
+      }
+    }
+  ],
+  "before": {
+    "p50": 226.3607000000011,
+    "p95": 250.57120000000032,
+    "reads": 34,
+    "bytes": 620422
+  },
+  "after": {
+    "p50": 178.80439999999908,
+    "p95": 216.15730000000076,
+    "reads": 23,
+    "bytes": 413646
+  },
+  "remoteWrites": 0,
+  "sqlMeasured": false
+}

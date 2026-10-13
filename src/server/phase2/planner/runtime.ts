@@ -15,5 +15,6 @@ export async function authorizedPlanner() {
   const now = new Date().toISOString();
   const context = createAuthorizedRuntimeContext(bootstrap, parseInstant(now));
   return { householdId: String(context.householdId), userId: user.id, supabase,
-    deps: createPlannerDependencies(new CanonicalRepository(createCanonicalReadClient(), context), supabase, () => now) };
+    deps: createPlannerDependencies(new CanonicalRepository(createCanonicalReadClient(), context,
+      { shareEconomicReads: process.env.COMPOSER_P14_P1_READ_REUSE !== "0" }), supabase, () => now) };
 }

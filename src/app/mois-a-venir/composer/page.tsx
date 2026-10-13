@@ -4,6 +4,8 @@ import { authorizedPlanner } from "@/server/phase2/planner/runtime";
 import { composerDraftAutosaveEnabledFor } from "@/server/phase2/planner/composer-draft-cutover";
 import { readMonthComposer } from "@/server/phase2/planner/read-model";
 import { composerUiModel } from "@/server/phase2/planner/composer-service";
+import { readComposerOpening } from "@/server/phase2/planner/composer-opening";
+import { readComposerDrafts } from "@/server/phase2/planner/composer-draft-service";
 import { plannerComposerEnabled } from "@/server/phase2/planner/cutover";
 import { ComposerShell } from "./composer-shell";
 import { composerInteraction } from "./actions";
@@ -15,7 +17,9 @@ export default async function ComposerPage({ searchParams }: { searchParams: Pro
   const params = await searchParams;
   const month = typeof params.month === "string" && /^\d{4}-(0[1-9]|1[0-2])$/u.test(params.month) ? params.month : new Date().toISOString().slice(0, 7);
   const { model, drafts } = await withProductAuthentication(async () => {
-    const { deps, householdId, userId } = await authorizedPlanner();
+    const { deps, householdId, userId, supabase } = await authorizedPlanner();
+    if (process.env.COMPOSER_P14_P1_READ_REUSE !== "0") return readComposerOpening(deps, householdId, month,
+      () => composerDraftAutosaveEnabledFor(userId) ? readComposerDrafts({ supabase, userId, householdId }, month) : Promise.resolve(null));
     const drafts = composerDraftAutosaveEnabledFor(userId) ? await composerDraftRead(month) : null;
     const model = await composerUiModel(deps, householdId,
       await readMonthComposer(deps, householdId, month, drafts?.active?.semanticState));

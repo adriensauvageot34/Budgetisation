@@ -1,0 +1,2 @@
+PASS: October resources, certain outflows, scenarios, negative invariants, override propagation and undo
+PASS TEMPORAL_UNIT_INTEGRATION: 63 checks; cutoff, coverage, purchase dedup, lifecycle, funding/cash, real Preview/Save/reload, read-only adapter and UI buckets

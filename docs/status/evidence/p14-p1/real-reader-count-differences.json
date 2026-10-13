@@ -1,0 +1,29 @@
+{
+ "conditions":"same authenticated account, month, region and financial fingerprints; identical counts across completed openings",
+ "canonicalTables":[
+  {"table":"cash_economic_uses","before":13,"after":12,"bytesBefore":34678,"bytesAfter":34676},
+  {"table":"financial_canonical_reconciliation_control","before":13,"after":12,"bytesBefore":219471,"bytesAfter":211502},
+  {"table":"financial_economic_cost_canonical","before":18,"after":17,"bytesBefore":1244684,"bytesAfter":1216794},
+  {"table":"financial_economic_timing_canonical","before":15,"after":14,"bytesBefore":487602,"bytesAfter":470362},
+  {"table":"financial_economic_timing_control","before":14,"after":13,"bytesBefore":452410,"bytesAfter":436412},
+  {"table":"financial_source_person_links","before":16,"after":15,"bytesBefore":26506,"bytesAfter":25788},
+  {"table":"operation_allocations","before":13,"after":12,"bytesBefore":39439,"bytesAfter":39437},
+  {"table":"operation_items","before":13,"after":12,"bytesBefore":64517,"bytesAfter":64515},
+  {"table":"operation_place_canonical","before":14,"after":13,"bytesBefore":281714,"bytesAfter":271090},
+  {"table":"operations","before":26,"after":25,"bytesBefore":2469313,"bytesAfter":2423455},
+  {"table":"payment_components","before":13,"after":12,"bytesBefore":1731,"bytesAfter":1729}
+ ],
+ "avoidedRepeatedAuthorizationReads":[
+  {"table":"analysis_periods","before":2,"after":1},
+  {"table":"household_revisions","before":2,"after":1},
+  {"table":"households","before":3,"after":2},
+  {"table":"persons","before":3,"after":2},
+  {"table":"auth","before":4,"after":2}
+ ],
+ "remainingCanonicalExamples":[
+  {"table":"location_occurrences","before":22,"after":22,"bytes":943186},
+  {"table":"life_event_participations","before":20,"after":20,"bytes":604696},
+  {"table":"life_events","before":11,"after":11,"bytes":765762}
+ ],
+ "sqlQueriesAvoided":"NOT_MEASURED; fetch GETs are not SQL SELECT counts"
+}

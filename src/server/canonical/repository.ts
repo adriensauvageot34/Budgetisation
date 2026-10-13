@@ -80,6 +80,7 @@ import {
   CANONICAL_ECONOMIC_IN_BATCH_SIZE,
   CANONICAL_IN_BATCH_SIZE,
   readCanonicalInBatches,
+  CanonicalRequestKeyReads,
 } from "./in-batches";
 import {
   MOBILITY_LEG_SELECTION,
@@ -420,12 +421,14 @@ function compareCanonicalBatchRows(
 
 export class CanonicalRepository {
   private readonly cache = new Map<string, Promise<unknown>>();
+  private readonly keyedReads = new CanonicalRequestKeyReads<CanonicalRecord>();
   private readonly household: CanonicalHouseholdContext;
   private economicFactsClosure: EconomicFactsClosureState | undefined;
 
   constructor(
     readonly client: SupabaseClient,
     readonly context: AuthorizedRuntimeContext,
+    private readonly readOptions: Readonly<{ shareEconomicReads?: boolean }> = {},
   ) {
     this.household = {
       householdId: context.householdId,
@@ -497,18 +500,21 @@ export class CanonicalRepository {
     orderColumns: readonly string[],
     query: (batch: readonly string[]) => PromiseLike<CanonicalQueryResult>,
     batchSize = CANONICAL_IN_BATCH_SIZE,
+    shared?: Readonly<{ namespace: string; keyColumn: string }>,
   ): Promise<readonly CanonicalRecord[]> {
-    return this.cached(key, () => readCanonicalInBatches({
-      values,
-      executeBatch: (batch) => this.queryRows(source, () => query(batch)),
-      rowIdentity: (row) => canonicalBatchRowIdentity(row, identityColumns, source),
-      compareRows: (left, right) => compareCanonicalBatchRows(
-        left,
-        right,
-        [...orderColumns, ...identityColumns],
-      ),
-      batchSize,
-    }));
+    return this.cached(key, () => {
+      const options = {
+        values,
+        executeBatch: (batch: readonly string[]) => this.queryRows(source, () => query(batch)),
+        rowIdentity: (row: CanonicalRecord) => canonicalBatchRowIdentity(row, identityColumns, source),
+        compareRows: (left: CanonicalRecord, right: CanonicalRecord) => compareCanonicalBatchRows(
+          left, right, [...orderColumns, ...identityColumns]),
+        batchSize,
+      };
+      return this.readOptions.shareEconomicReads && shared
+        ? this.keyedReads.read(shared.namespace, options, row => canonicalString(row, [shared.keyColumn], source), CANONICAL_PAGE_SIZE)
+        : readCanonicalInBatches(options);
+    });
   }
 
   private assertAuthorizedCanonicalHouseholdScope(): Promise<void> {
@@ -667,6 +673,7 @@ export class CanonicalRepository {
           .in("operation_id", batch)
           .order("operation_id", { ascending: true }),
       batchSize,
+      { namespace: "economic-operation-hydration", keyColumn: "operation_id" },
     );
   }
 
@@ -700,6 +707,7 @@ export class CanonicalRepository {
           .in("operation_id", batch)
           .order("canonical_component_key", { ascending: true }),
       CANONICAL_ECONOMIC_IN_BATCH_SIZE,
+      { namespace: "economic-components-by-operation", keyColumn: "operation_id" },
     );
   }
 
@@ -768,6 +776,7 @@ export class CanonicalRepository {
           .order("canonical_component_key", { ascending: true })
           .order("economic_segment_id", { ascending: true }),
       CANONICAL_ECONOMIC_IN_BATCH_SIZE,
+      { namespace: "economic-timing-by-key", keyColumn: "canonical_component_key" },
     );
   }
 
@@ -800,6 +809,7 @@ export class CanonicalRepository {
           .order("person_id", { ascending: true })
           .order("relation_type", { ascending: true }),
         CANONICAL_ECONOMIC_IN_BATCH_SIZE,
+        { namespace: `economic-person-links:${sourceKind}`, keyColumn: idColumn },
       );
     }));
     return rowsBySource.flat();
@@ -831,7 +841,8 @@ export class CanonicalRepository {
             .select("canonical_component_key,operation_id,place_id,resolution_state")
             .in("canonical_component_key", batch)
             .order("canonical_component_key", { ascending: true }),
-          CANONICAL_ECONOMIC_IN_BATCH_SIZE),
+          CANONICAL_ECONOMIC_IN_BATCH_SIZE,
+          { namespace: "economic-place-by-key", keyColumn: "canonical_component_key" }),
         this.loadTimingRowsByKeys(componentKeys),
         this.readRowsByInBatches(
           `timing-controls:${componentKeys.join(",")}`,
@@ -845,7 +856,8 @@ export class CanonicalRepository {
             .select("canonical_component_key,canonical_economic_net::text,segment_count,known_count,partial_count,unknown_count,household_count,household_mismatch_count,segment_amount_sum::text,amount_delta::text,status")
             .in("canonical_component_key", batch)
             .order("canonical_component_key", { ascending: true }),
-          CANONICAL_ECONOMIC_IN_BATCH_SIZE),
+          CANONICAL_ECONOMIC_IN_BATCH_SIZE,
+          { namespace: "economic-timing-control-by-key", keyColumn: "canonical_component_key" }),
         this.readRowsByInBatches(
           `reconciliation:${operationIds.join(",")}`,
           "economic",
@@ -858,7 +870,8 @@ export class CanonicalRepository {
             .select("operation_id,economic_gross_delta::text,economic_refund_resolution,economic_status")
             .in("operation_id", batch)
             .order("operation_id", { ascending: true }),
-          CANONICAL_ECONOMIC_IN_BATCH_SIZE),
+          CANONICAL_ECONOMIC_IN_BATCH_SIZE,
+          { namespace: "economic-reconciliation-by-operation", keyColumn: "operation_id" }),
         this.loadComposition("operation_allocations", operationIds, CANONICAL_ECONOMIC_IN_BATCH_SIZE),
         this.loadComposition("operation_items", operationIds, CANONICAL_ECONOMIC_IN_BATCH_SIZE),
         this.loadComposition("payment_components", operationIds, CANONICAL_ECONOMIC_IN_BATCH_SIZE),
@@ -2313,6 +2326,7 @@ export class CanonicalRepository {
         .order(mapping.foreignOperationKey, { ascending: true })
         .order(mapping.stableId, { ascending: true }),
       batchSize,
+      { namespace: `economic-composition:${table}`, keyColumn: mapping.foreignOperationKey },
     );
   }
 
