@@ -81,24 +81,24 @@
     "short-stay-unresolved": {
       "baseline": "192b2bc08889e1bb6f8ce824b0d67ee35813a1eb14006d478fe75501ba505656",
       "semantic": "d3af14e471e45f76834bcd8a60625177c3ae5f27f0d4b77577d6fd35d584f838",
-      "manifest": "2dd2ff333776a4ebee1850c88c89e94294c1f7c343f8e7346937be3bc2da44d5",
+      "manifest": "64e192c9463d967880107da1ff8642737bfd424550e57ca432b7d4fd64c0d8a7",
       "projection": "020329f449c145e07e1e9e1578e13bce9364f7ecc586a1f1c0ad5318f2482c34",
-      "preview": "dff8d2956aa64cd6c7c2bd01d3e49f297feddf281b2d8e058294b20e38316736",
-      "fullBusiness": "f9b94d783f5c7a5ed5589564c085b3c013e82aa9f06a32b12e01222cbc7d15da",
+      "preview": "ae52d43a8bd13caa12ec0618f3c80a669008048f416b3779252dbbf7123e22ca",
+      "fullBusiness": "00a18763abb888b11a6d9a5a1dfae21ad5576eb87786343f8ea8e02641882dd6",
       "capabilities": "f52682ec72627e61e49cc9158cda8b1a6793138fb4eabda96d132de9aa26a897",
       "knowledge": "3aba162176190f5ab84d3f654a0e413cd8b3e9cf8391e63f3e0912ef971aeaba",
-      "identities": "5b41de70e8f49cdc01f1a060021ab16ac04ecae746854d59c0417fb4e08e9cf0"
+      "identities": "41265134ad14cbe7252d96611bfaeffa1fbda88c4a62ec62d954348590bff40b"
     },
     "short-stay-confirmed-consumption": {
       "baseline": "192b2bc08889e1bb6f8ce824b0d67ee35813a1eb14006d478fe75501ba505656",
       "semantic": "53a9df76806e9ff7c2360d6f389750c2fd38d75ed44cc7cecbcd389f6a3b197f",
-      "manifest": "76db381766c6ab79e9e0c33afc81a2b58284ff1eab8ab8ff3027d9f374c9cdd7",
+      "manifest": "cbf54033ea53d9c130b9c7b12f8a00da2ce069e60606e2c42437b310571dafe9",
       "projection": "ddd59abd4547161ef5121ee025a20241dc82919b27810004769a305cc1839fb1",
-      "preview": "bc2d8a985a5f1d9ec1b533f7c98fa3925907076db6c17ab26415fbb66a011893",
-      "fullBusiness": "2eddbd4c2422f11ba676c4ad8a328ec47ba9f0b99c2e156f9e11c8cad7e32b92",
+      "preview": "063de59a064b5752d488800d8317118a964cb8eb6316f47e17a5d9076c688e53",
+      "fullBusiness": "3ebf622955fea28f393dc9666a0c010def3a11f3c295bcfcd5c3057218a35937",
       "capabilities": "f52682ec72627e61e49cc9158cda8b1a6793138fb4eabda96d132de9aa26a897",
       "knowledge": "f561ad5ba80e3454ed2f3d5f435bf0643038daa5f43e3df06235ecf5d1c09b74",
-      "identities": "f12c1467ab65d21006d602d6ed07f960342d011518c9326e30417cdae9152354"
+      "identities": "f004308d62469c05feedc2f0bf0c8420da2443c72faa4e2daf00cde055059dd6"
     },
     "needs-two-in-one-purchase": {
       "baseline": "1abea60798ae8f29fbe424c751c22a8f1a9b0b386933aa03dec8cc5e1a9ede64",
