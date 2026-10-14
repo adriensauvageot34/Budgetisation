@@ -1,0 +1,3434 @@
+{
+  "status": "EXECUTED_PASS_NATIVE_POSTGRESQL_17_SYNTHETIC_ONLY",
+  "checks": [
+    {
+      "name": "01-DISABLED-THEN-EXACT-HIT",
+      "status": "PASS"
+    },
+    {
+      "name": "02-ALL-FOUR-TABLES-INSERT-UPDATE-DELETE-TRUNCATE-ROLLBACK",
+      "status": "PASS"
+    },
+    {
+      "name": "03-RETROACTIVE-AND-REPLICA-WRITERS",
+      "status": "PASS"
+    },
+    {
+      "name": "04-MUTATION-DURING-PREPARATION-REJECTED",
+      "status": "PASS"
+    },
+    {
+      "name": "05-TWO-ACTUAL-CONCURRENT-PUBLISHERS-CAS",
+      "status": "PASS"
+    },
+    {
+      "name": "06-WRITER-LOCK-OVERLAP-WITH-PUBLISH-AND-READ",
+      "status": "PASS"
+    },
+    {
+      "name": "07-PUBLICATION-FAILURE-AND-LOST-RESPONSE-RECOVERY",
+      "status": "PASS"
+    },
+    {
+      "name": "08-TWO-INDEPENDENT-PROCESSES-PERSISTED-HIT",
+      "status": "PASS"
+    },
+    {
+      "name": "09-NATIVE-PERMISSIONS-RLS-AND-CURRENT-MEMBERSHIP",
+      "status": "PASS"
+    },
+    {
+      "name": "10-SCOPE-TIMEZONE-PERIOD-METHOD-PERSON",
+      "status": "PASS"
+    },
+    {
+      "name": "11-CORRUPTION-INCOMPLETE-PAGE-NULL-PAYLOAD",
+      "status": "PASS"
+    },
+    {
+      "name": "12-DISABLE-DDL-PROTOCOL-AND-EXACT-OFF",
+      "status": "PASS"
+    },
+    {
+      "name": "13-EXISTING-PUBLICATIONS-REVISIONS-UNCHANGED",
+      "status": "PASS"
+    },
+    {
+      "name": "14-BOUNDED-NATIVE-COSTS-AND-IMPORT-COALESCING",
+      "status": "PASS"
+    },
+    {
+      "name": "15-SNAP1-SNAP2-SAME-NATIVE-ENGINE-CONSUMPTION",
+      "status": "PASS"
+    },
+    {
+      "name": "16-INTEGRATED-WORLD-LIVE-OWNERS-FINANCE-AND-APPLY",
+      "status": "PASS"
+    },
+    {
+      "name": "17-CANDIDATE-OWNERS-SEARCH-PATH-GRANTS-RLS",
+      "status": "PASS"
+    }
+  ],
+  "races": [
+    {
+      "kind": "simultaneous-publish",
+      "ms": 621.4754999999986,
+      "accepted": [
+        false,
+        true
+      ]
+    },
+    {
+      "kind": "writer-blocks-publish",
+      "observedBlockingPid": true,
+      "ms": 454.7412000000004
+    }
+  ],
+  "independent": [
+    {
+      "pid": 18844,
+      "backend": 12832,
+      "status": "PASS",
+      "digest": "a9b5f49d5cabeff442cc97ea2ed8510e310575edb4dcd0ad596f86fdbb9bf35f",
+      "sourceReads": 0
+    },
+    {
+      "pid": 17180,
+      "backend": 23008,
+      "status": "PASS",
+      "digest": "a9b5f49d5cabeff442cc97ea2ed8510e310575edb4dcd0ad596f86fdbb9bf35f",
+      "sourceReads": 0
+    }
+  ],
+  "databaseVersion": "17.11",
+  "segment": {
+    "direct": {
+      "n": 40,
+      "p50": 57.25580000000264,
+      "p95": 72.97049999999945,
+      "min": 43.42119999999704,
+      "max": 87.91010000000097,
+      "reads": 9,
+      "bytes": 196372
+    },
+    "hit": {
+      "n": 40,
+      "p50": 34.936900000000605,
+      "p95": 37.60139999999956,
+      "min": 27.674999999999272,
+      "max": 42.26390000000174,
+      "reads": 1,
+      "bytes": 133437
+    }
+  },
+  "validation": {
+    "n": 40,
+    "p50": 13.348699999998644,
+    "p95": 15.411900000002788,
+    "min": 9.685499999999593,
+    "max": 16.38509999999951
+  },
+  "decode": {
+    "n": 40,
+    "p50": 21.15270000000237,
+    "p95": 22.841699999997218,
+    "min": 16.026300000001356,
+    "max": 25.662599999999657
+  },
+  "mutation": {
+    "n": 20,
+    "p50": 1.6671999999998661,
+    "p95": 2.3867000000027474,
+    "min": 1.428299999999581,
+    "max": 5.402900000000955
+  },
+  "miss": {
+    "n": 20,
+    "p50": 81.4175000000032,
+    "p95": 107.78809999999794,
+    "min": 71.92859999999928,
+    "max": 113.15389999999752
+  },
+  "publication": {
+    "n": 47,
+    "p50": 314.02230000000054,
+    "p95": 363.6296999999995,
+    "min": 80.98480000000018,
+    "max": 378.1739000000016
+  },
+  "sameEngine": {
+    "description": "Unchanged SNAP1 admission/store SQL on native PG17 through test bridge; same fixture, decoder and process as SNAP2. Historical PGlite timings are not directly comparable.",
+    "snap1": {
+      "n": 40,
+      "p50": 31.4571999999971,
+      "p95": 38.779899999994086,
+      "min": 26.953099999998813,
+      "max": 50.93630000000121
+    },
+    "snap2": {
+      "n": 40,
+      "p50": 35.61609999999928,
+      "p95": 46.0457000000024,
+      "min": 31.722900000000664,
+      "max": 48.71759999999631
+    },
+    "pairs": [
+      {
+        "snap1": {
+          "ms": 31.23080000000482,
+          "digest": "a9b5f49d5cabeff442cc97ea2ed8510e310575edb4dcd0ad596f86fdbb9bf35f",
+          "events": [
+            {
+              "status": "HIT",
+              "validationMs": 8.279300000001967,
+              "decodeMs": 22.668999999994412
+            }
+          ],
+          "reads": 0,
+          "sourceReads": 0,
+          "bytes": 0
+        },
+        "snap2": {
+          "ms": 46.99289999999746,
+          "digest": "a9b5f49d5cabeff442cc97ea2ed8510e310575edb4dcd0ad596f86fdbb9bf35f",
+          "events": [
+            {
+              "status": "HIT",
+              "validationMs": 20.036099999997532,
+              "decodeMs": 26.693700000003446
+            }
+          ],
+          "reads": 1,
+          "sourceReads": 0,
+          "bytes": 133437
+        }
+      },
+      {
+        "snap2": {
+          "ms": 35.61609999999928,
+          "digest": "a9b5f49d5cabeff442cc97ea2ed8510e310575edb4dcd0ad596f86fdbb9bf35f",
+          "events": [
+            {
+              "status": "HIT",
+              "validationMs": 14.347000000001572,
+              "decodeMs": 21.06289999999717
+            }
+          ],
+          "reads": 1,
+          "sourceReads": 0,
+          "bytes": 133437
+        },
+        "snap1": {
+          "ms": 31.458200000000943,
+          "digest": "a9b5f49d5cabeff442cc97ea2ed8510e310575edb4dcd0ad596f86fdbb9bf35f",
+          "events": [
+            {
+              "status": "HIT",
+              "validationMs": 8.126899999995658,
+              "decodeMs": 23.11699999999837
+            }
+          ],
+          "reads": 0,
+          "sourceReads": 0,
+          "bytes": 0
+        }
+      },
+      {
+        "snap1": {
+          "ms": 30.788000000000466,
+          "digest": "a9b5f49d5cabeff442cc97ea2ed8510e310575edb4dcd0ad596f86fdbb9bf35f",
+          "events": [
+            {
+              "status": "HIT",
+              "validationMs": 8.117400000002817,
+              "decodeMs": 22.31989999999496
+            }
+          ],
+          "reads": 0,
+          "sourceReads": 0,
+          "bytes": 0
+        },
+        "snap2": {
+          "ms": 35.7416000000012,
+          "digest": "a9b5f49d5cabeff442cc97ea2ed8510e310575edb4dcd0ad596f86fdbb9bf35f",
+          "events": [
+            {
+              "status": "HIT",
+              "validationMs": 13.851800000004005,
+              "decodeMs": 21.662799999998242
+            }
+          ],
+          "reads": 1,
+          "sourceReads": 0,
+          "bytes": 133437
+        }
+      },
+      {
+        "snap2": {
+          "ms": 36.31970000000001,
+          "digest": "a9b5f49d5cabeff442cc97ea2ed8510e310575edb4dcd0ad596f86fdbb9bf35f",
+          "events": [
+            {
+              "status": "HIT",
+              "validationMs": 14.029300000001967,
+              "decodeMs": 22.03070000000298
+            }
+          ],
+          "reads": 1,
+          "sourceReads": 0,
+          "bytes": 133437
+        },
+        "snap1": {
+          "ms": 30.577499999999418,
+          "digest": "a9b5f49d5cabeff442cc97ea2ed8510e310575edb4dcd0ad596f86fdbb9bf35f",
+          "events": [
+            {
+              "status": "HIT",
+              "validationMs": 8.484599999996135,
+              "decodeMs": 21.869299999998475
+            }
+          ],
+          "reads": 0,
+          "sourceReads": 0,
+          "bytes": 0
+        }
+      },
+      {
+        "snap1": {
+          "ms": 31.020199999999022,
+          "digest": "a9b5f49d5cabeff442cc97ea2ed8510e310575edb4dcd0ad596f86fdbb9bf35f",
+          "events": [
+            {
+              "status": "HIT",
+              "validationMs": 8.16990000000078,
+              "decodeMs": 22.63060000000405
+            }
+          ],
+          "reads": 0,
+          "sourceReads": 0,
+          "bytes": 0
+        },
+        "snap2": {
+          "ms": 42.92840000000433,
+          "digest": "a9b5f49d5cabeff442cc97ea2ed8510e310575edb4dcd0ad596f86fdbb9bf35f",
+          "events": [
+            {
+              "status": "HIT",
+              "validationMs": 18.598500000000058,
+              "decodeMs": 24.03059999999823
+            }
+          ],
+          "reads": 1,
+          "sourceReads": 0,
+          "bytes": 133437
+        }
+      },
+      {
+        "snap2": {
+          "ms": 42.64959999999701,
+          "digest": "a9b5f49d5cabeff442cc97ea2ed8510e310575edb4dcd0ad596f86fdbb9bf35f",
+          "events": [
+            {
+              "status": "HIT",
+              "validationMs": 18.021199999995588,
+              "decodeMs": 24.365599999997357
+            }
+          ],
+          "reads": 1,
+          "sourceReads": 0,
+          "bytes": 133437
+        },
+        "snap1": {
+          "ms": 33.17710000000079,
+          "digest": "a9b5f49d5cabeff442cc97ea2ed8510e310575edb4dcd0ad596f86fdbb9bf35f",
+          "events": [
+            {
+              "status": "HIT",
+              "validationMs": 9.061399999998685,
+              "decodeMs": 23.891199999998207
+            }
+          ],
+          "reads": 0,
+          "sourceReads": 0,
+          "bytes": 0
+        }
+      },
+      {
+        "snap1": {
+          "ms": 32.98659999999654,
+          "digest": "a9b5f49d5cabeff442cc97ea2ed8510e310575edb4dcd0ad596f86fdbb9bf35f",
+          "events": [
+            {
+              "status": "HIT",
+              "validationMs": 9.52900000000227,
+              "decodeMs": 23.216300000000047
+            }
+          ],
+          "reads": 0,
+          "sourceReads": 0,
+          "bytes": 0
+        },
+        "snap2": {
+          "ms": 36.83839999999327,
+          "digest": "a9b5f49d5cabeff442cc97ea2ed8510e310575edb4dcd0ad596f86fdbb9bf35f",
+          "events": [
+            {
+              "status": "HIT",
+              "validationMs": 12.538399999997637,
+              "decodeMs": 24.084499999997206
+            }
+          ],
+          "reads": 1,
+          "sourceReads": 0,
+          "bytes": 133437
+        }
+      },
+      {
+        "snap2": {
+          "ms": 35.51120000000083,
+          "digest": "a9b5f49d5cabeff442cc97ea2ed8510e310575edb4dcd0ad596f86fdbb9bf35f",
+          "events": [
+            {
+              "status": "HIT",
+              "validationMs": 13.514000000002852,
+              "decodeMs": 21.76600000000326
+            }
+          ],
+          "reads": 1,
+          "sourceReads": 0,
+          "bytes": 133437
+        },
+        "snap1": {
+          "ms": 29.440099999999802,
+          "digest": "a9b5f49d5cabeff442cc97ea2ed8510e310575edb4dcd0ad596f86fdbb9bf35f",
+          "events": [
+            {
+              "status": "HIT",
+              "validationMs": 7.396600000000035,
+              "decodeMs": 21.773000000001048
+            }
+          ],
+          "reads": 0,
+          "sourceReads": 0,
+          "bytes": 0
+        }
+      },
+      {
+        "snap1": {
+          "ms": 38.779899999994086,
+          "digest": "a9b5f49d5cabeff442cc97ea2ed8510e310575edb4dcd0ad596f86fdbb9bf35f",
+          "events": [
+            {
+              "status": "HIT",
+              "validationMs": 11.64589999999589,
+              "decodeMs": 26.882000000005064
+            }
+          ],
+          "reads": 0,
+          "sourceReads": 0,
+          "bytes": 0
+        },
+        "snap2": {
+          "ms": 43.46500000000378,
+          "digest": "a9b5f49d5cabeff442cc97ea2ed8510e310575edb4dcd0ad596f86fdbb9bf35f",
+          "events": [
+            {
+              "status": "HIT",
+              "validationMs": 15.514000000002852,
+              "decodeMs": 27.218800000002375
+            }
+          ],
+          "reads": 1,
+          "sourceReads": 0,
+          "bytes": 133437
+        }
+      },
+      {
+        "snap2": {
+          "ms": 38.43590000000404,
+          "digest": "a9b5f49d5cabeff442cc97ea2ed8510e310575edb4dcd0ad596f86fdbb9bf35f",
+          "events": [
+            {
+              "status": "HIT",
+              "validationMs": 16.127300000000105,
+              "decodeMs": 21.94550000000163
+            }
+          ],
+          "reads": 1,
+          "sourceReads": 0,
+          "bytes": 133437
+        },
+        "snap1": {
+          "ms": 32.44789999999921,
+          "digest": "a9b5f49d5cabeff442cc97ea2ed8510e310575edb4dcd0ad596f86fdbb9bf35f",
+          "events": [
+            {
+              "status": "HIT",
+              "validationMs": 9.412799999998242,
+              "decodeMs": 22.80229999999574
+            }
+          ],
+          "reads": 0,
+          "sourceReads": 0,
+          "bytes": 0
+        }
+      },
+      {
+        "snap1": {
+          "ms": 50.93630000000121,
+          "digest": "a9b5f49d5cabeff442cc97ea2ed8510e310575edb4dcd0ad596f86fdbb9bf35f",
+          "events": [
+            {
+              "status": "HIT",
+              "validationMs": 13.484199999998964,
+              "decodeMs": 37.146099999998114
+            }
+          ],
+          "reads": 0,
+          "sourceReads": 0,
+          "bytes": 0
+        },
+        "snap2": {
+          "ms": 35.673299999994924,
+          "digest": "a9b5f49d5cabeff442cc97ea2ed8510e310575edb4dcd0ad596f86fdbb9bf35f",
+          "events": [
+            {
+              "status": "HIT",
+              "validationMs": 14.335500000001048,
+              "decodeMs": 21.100800000000163
+            }
+          ],
+          "reads": 1,
+          "sourceReads": 0,
+          "bytes": 133437
+        }
+      },
+      {
+        "snap2": {
+          "ms": 35.0144999999975,
+          "digest": "a9b5f49d5cabeff442cc97ea2ed8510e310575edb4dcd0ad596f86fdbb9bf35f",
+          "events": [
+            {
+              "status": "HIT",
+              "validationMs": 13.492899999997462,
+              "decodeMs": 21.269500000002154
+            }
+          ],
+          "reads": 1,
+          "sourceReads": 0,
+          "bytes": 133437
+        },
+        "snap1": {
+          "ms": 29.89600000000064,
+          "digest": "a9b5f49d5cabeff442cc97ea2ed8510e310575edb4dcd0ad596f86fdbb9bf35f",
+          "events": [
+            {
+              "status": "HIT",
+              "validationMs": 8.673499999997148,
+              "decodeMs": 21.024399999994785
+            }
+          ],
+          "reads": 0,
+          "sourceReads": 0,
+          "bytes": 0
+        }
+      },
+      {
+        "snap1": {
+          "ms": 28.79450000000361,
+          "digest": "a9b5f49d5cabeff442cc97ea2ed8510e310575edb4dcd0ad596f86fdbb9bf35f",
+          "events": [
+            {
+              "status": "HIT",
+              "validationMs": 6.256499999995867,
+              "decodeMs": 22.351800000004005
+            }
+          ],
+          "reads": 0,
+          "sourceReads": 0,
+          "bytes": 0
+        },
+        "snap2": {
+          "ms": 38.96389999999519,
+          "digest": "a9b5f49d5cabeff442cc97ea2ed8510e310575edb4dcd0ad596f86fdbb9bf35f",
+          "events": [
+            {
+              "status": "HIT",
+              "validationMs": 15.94419999999809,
+              "decodeMs": 22.77780000000348
+            }
+          ],
+          "reads": 1,
+          "sourceReads": 0,
+          "bytes": 133437
+        }
+      },
+      {
+        "snap2": {
+          "ms": 34.49760000000242,
+          "digest": "a9b5f49d5cabeff442cc97ea2ed8510e310575edb4dcd0ad596f86fdbb9bf35f",
+          "events": [
+            {
+              "status": "HIT",
+              "validationMs": 12.360599999999977,
+              "decodeMs": 21.91610000000219
+            }
+          ],
+          "reads": 1,
+          "sourceReads": 0,
+          "bytes": 133437
+        },
+        "snap1": {
+          "ms": 30.264799999997194,
+          "digest": "a9b5f49d5cabeff442cc97ea2ed8510e310575edb4dcd0ad596f86fdbb9bf35f",
+          "events": [
+            {
+              "status": "HIT",
+              "validationMs": 8.19560000000638,
+              "decodeMs": 21.860999999997148
+            }
+          ],
+          "reads": 0,
+          "sourceReads": 0,
+          "bytes": 0
+        }
+      },
+      {
+        "snap1": {
+          "ms": 29.106100000004517,
+          "digest": "a9b5f49d5cabeff442cc97ea2ed8510e310575edb4dcd0ad596f86fdbb9bf35f",
+          "events": [
+            {
+              "status": "HIT",
+              "validationMs": 8.140200000001641,
+              "decodeMs": 20.749000000003434
+            }
+          ],
+          "reads": 0,
+          "sourceReads": 0,
+          "bytes": 0
+        },
+        "snap2": {
+          "ms": 36.552300000003015,
+          "digest": "a9b5f49d5cabeff442cc97ea2ed8510e310575edb4dcd0ad596f86fdbb9bf35f",
+          "events": [
+            {
+              "status": "HIT",
+              "validationMs": 12.264400000000023,
+              "decodeMs": 24.0370000000039
+            }
+          ],
+          "reads": 1,
+          "sourceReads": 0,
+          "bytes": 133437
+        }
+      },
+      {
+        "snap2": {
+          "ms": 36.64110000000073,
+          "digest": "a9b5f49d5cabeff442cc97ea2ed8510e310575edb4dcd0ad596f86fdbb9bf35f",
+          "events": [
+            {
+              "status": "HIT",
+              "validationMs": 12.556100000001607,
+              "decodeMs": 23.85070000000269
+            }
+          ],
+          "reads": 1,
+          "sourceReads": 0,
+          "bytes": 133437
+        },
+        "snap1": {
+          "ms": 35.53779999999824,
+          "digest": "a9b5f49d5cabeff442cc97ea2ed8510e310575edb4dcd0ad596f86fdbb9bf35f",
+          "events": [
+            {
+              "status": "HIT",
+              "validationMs": 10.169099999999162,
+              "decodeMs": 24.921399999999267
+            }
+          ],
+          "reads": 0,
+          "sourceReads": 0,
+          "bytes": 0
+        }
+      },
+      {
+        "snap1": {
+          "ms": 33.24210000000312,
+          "digest": "a9b5f49d5cabeff442cc97ea2ed8510e310575edb4dcd0ad596f86fdbb9bf35f",
+          "events": [
+            {
+              "status": "HIT",
+              "validationMs": 9.25050000000192,
+              "decodeMs": 23.74430000000575
+            }
+          ],
+          "reads": 0,
+          "sourceReads": 0,
+          "bytes": 0
+        },
+        "snap2": {
+          "ms": 37.980499999997846,
+          "digest": "a9b5f49d5cabeff442cc97ea2ed8510e310575edb4dcd0ad596f86fdbb9bf35f",
+          "events": [
+            {
+              "status": "HIT",
+              "validationMs": 14.985500000002503,
+              "decodeMs": 22.76140000000305
+            }
+          ],
+          "reads": 1,
+          "sourceReads": 0,
+          "bytes": 133437
+        }
+      },
+      {
+        "snap2": {
+          "ms": 35.409099999997125,
+          "digest": "a9b5f49d5cabeff442cc97ea2ed8510e310575edb4dcd0ad596f86fdbb9bf35f",
+          "events": [
+            {
+              "status": "HIT",
+              "validationMs": 13.37829999999667,
+              "decodeMs": 21.825699999993958
+            }
+          ],
+          "reads": 1,
+          "sourceReads": 0,
+          "bytes": 133437
+        },
+        "snap1": {
+          "ms": 36.855100000000675,
+          "digest": "a9b5f49d5cabeff442cc97ea2ed8510e310575edb4dcd0ad596f86fdbb9bf35f",
+          "events": [
+            {
+              "status": "HIT",
+              "validationMs": 10.723700000002282,
+              "decodeMs": 25.865600000004633
+            }
+          ],
+          "reads": 0,
+          "sourceReads": 0,
+          "bytes": 0
+        }
+      },
+      {
+        "snap1": {
+          "ms": 35.9487999999983,
+          "digest": "a9b5f49d5cabeff442cc97ea2ed8510e310575edb4dcd0ad596f86fdbb9bf35f",
+          "events": [
+            {
+              "status": "HIT",
+              "validationMs": 9.74380000000383,
+              "decodeMs": 25.9800000000032
+            }
+          ],
+          "reads": 0,
+          "sourceReads": 0,
+          "bytes": 0
+        },
+        "snap2": {
+          "ms": 48.71759999999631,
+          "digest": "a9b5f49d5cabeff442cc97ea2ed8510e310575edb4dcd0ad596f86fdbb9bf35f",
+          "events": [
+            {
+              "status": "HIT",
+              "validationMs": 18.43499999999767,
+              "decodeMs": 29.970200000003388
+            }
+          ],
+          "reads": 1,
+          "sourceReads": 0,
+          "bytes": 133437
+        }
+      },
+      {
+        "snap2": {
+          "ms": 46.0457000000024,
+          "digest": "a9b5f49d5cabeff442cc97ea2ed8510e310575edb4dcd0ad596f86fdbb9bf35f",
+          "events": [
+            {
+              "status": "HIT",
+              "validationMs": 16.405500000000757,
+              "decodeMs": 29.33419999999751
+            }
+          ],
+          "reads": 1,
+          "sourceReads": 0,
+          "bytes": 133437
+        },
+        "snap1": {
+          "ms": 34.78689999999915,
+          "digest": "a9b5f49d5cabeff442cc97ea2ed8510e310575edb4dcd0ad596f86fdbb9bf35f",
+          "events": [
+            {
+              "status": "HIT",
+              "validationMs": 9.921300000001793,
+              "decodeMs": 24.586800000004587
+            }
+          ],
+          "reads": 0,
+          "sourceReads": 0,
+          "bytes": 0
+        }
+      },
+      {
+        "snap1": {
+          "ms": 41.01079999999638,
+          "digest": "a9b5f49d5cabeff442cc97ea2ed8510e310575edb4dcd0ad596f86fdbb9bf35f",
+          "events": [
+            {
+              "status": "HIT",
+              "validationMs": 12.190300000002026,
+              "decodeMs": 28.552700000000186
+            }
+          ],
+          "reads": 0,
+          "sourceReads": 0,
+          "bytes": 0
+        },
+        "snap2": {
+          "ms": 42.60399999999936,
+          "digest": "a9b5f49d5cabeff442cc97ea2ed8510e310575edb4dcd0ad596f86fdbb9bf35f",
+          "events": [
+            {
+              "status": "HIT",
+              "validationMs": 15.748699999996461,
+              "decodeMs": 26.55420000000595
+            }
+          ],
+          "reads": 1,
+          "sourceReads": 0,
+          "bytes": 133437
+        }
+      },
+      {
+        "snap2": {
+          "ms": 44.022100000001956,
+          "digest": "a9b5f49d5cabeff442cc97ea2ed8510e310575edb4dcd0ad596f86fdbb9bf35f",
+          "events": [
+            {
+              "status": "HIT",
+              "validationMs": 17.008999999998196,
+              "decodeMs": 26.718000000000757
+            }
+          ],
+          "reads": 1,
+          "sourceReads": 0,
+          "bytes": 133437
+        },
+        "snap1": {
+          "ms": 31.21310000000085,
+          "digest": "a9b5f49d5cabeff442cc97ea2ed8510e310575edb4dcd0ad596f86fdbb9bf35f",
+          "events": [
+            {
+              "status": "HIT",
+              "validationMs": 9.535400000000664,
+              "decodeMs": 21.452400000001944
+            }
+          ],
+          "reads": 0,
+          "sourceReads": 0,
+          "bytes": 0
+        }
+      },
+      {
+        "snap1": {
+          "ms": 26.953099999998813,
+          "digest": "a9b5f49d5cabeff442cc97ea2ed8510e310575edb4dcd0ad596f86fdbb9bf35f",
+          "events": [
+            {
+              "status": "HIT",
+              "validationMs": 5.679000000003725,
+              "decodeMs": 21.069499999997788
+            }
+          ],
+          "reads": 0,
+          "sourceReads": 0,
+          "bytes": 0
+        },
+        "snap2": {
+          "ms": 33.77180000000226,
+          "digest": "a9b5f49d5cabeff442cc97ea2ed8510e310575edb4dcd0ad596f86fdbb9bf35f",
+          "events": [
+            {
+              "status": "HIT",
+              "validationMs": 12.485799999994924,
+              "decodeMs": 21.01369999999588
+            }
+          ],
+          "reads": 1,
+          "sourceReads": 0,
+          "bytes": 133437
+        }
+      },
+      {
+        "snap2": {
+          "ms": 31.908900000002177,
+          "digest": "a9b5f49d5cabeff442cc97ea2ed8510e310575edb4dcd0ad596f86fdbb9bf35f",
+          "events": [
+            {
+              "status": "HIT",
+              "validationMs": 11.039599999996426,
+              "decodeMs": 20.659599999999045
+            }
+          ],
+          "reads": 1,
+          "sourceReads": 0,
+          "bytes": 133437
+        },
+        "snap1": {
+          "ms": 28.346199999999953,
+          "digest": "a9b5f49d5cabeff442cc97ea2ed8510e310575edb4dcd0ad596f86fdbb9bf35f",
+          "events": [
+            {
+              "status": "HIT",
+              "validationMs": 7.1995999999999185,
+              "decodeMs": 20.961100000000442
+            }
+          ],
+          "reads": 0,
+          "sourceReads": 0,
+          "bytes": 0
+        }
+      },
+      {
+        "snap1": {
+          "ms": 29.069200000005367,
+          "digest": "a9b5f49d5cabeff442cc97ea2ed8510e310575edb4dcd0ad596f86fdbb9bf35f",
+          "events": [
+            {
+              "status": "HIT",
+              "validationMs": 7.538000000000466,
+              "decodeMs": 21.34100000000035
+            }
+          ],
+          "reads": 0,
+          "sourceReads": 0,
+          "bytes": 0
+        },
+        "snap2": {
+          "ms": 33.155699999995704,
+          "digest": "a9b5f49d5cabeff442cc97ea2ed8510e310575edb4dcd0ad596f86fdbb9bf35f",
+          "events": [
+            {
+              "status": "HIT",
+              "validationMs": 12.428700000004028,
+              "decodeMs": 20.522900000003574
+            }
+          ],
+          "reads": 1,
+          "sourceReads": 0,
+          "bytes": 133437
+        }
+      },
+      {
+        "snap2": {
+          "ms": 34.001600000003236,
+          "digest": "a9b5f49d5cabeff442cc97ea2ed8510e310575edb4dcd0ad596f86fdbb9bf35f",
+          "events": [
+            {
+              "status": "HIT",
+              "validationMs": 12.56529999999475,
+              "decodeMs": 21.24880000000121
+            }
+          ],
+          "reads": 1,
+          "sourceReads": 0,
+          "bytes": 133437
+        },
+        "snap1": {
+          "ms": 30.346700000001874,
+          "digest": "a9b5f49d5cabeff442cc97ea2ed8510e310575edb4dcd0ad596f86fdbb9bf35f",
+          "events": [
+            {
+              "status": "HIT",
+              "validationMs": 8.93250000000262,
+              "decodeMs": 21.22370000000228
+            }
+          ],
+          "reads": 0,
+          "sourceReads": 0,
+          "bytes": 0
+        }
+      },
+      {
+        "snap1": {
+          "ms": 31.034899999998743,
+          "digest": "a9b5f49d5cabeff442cc97ea2ed8510e310575edb4dcd0ad596f86fdbb9bf35f",
+          "events": [
+            {
+              "status": "HIT",
+              "validationMs": 10.011700000002747,
+              "decodeMs": 20.822699999996985
+            }
+          ],
+          "reads": 0,
+          "sourceReads": 0,
+          "bytes": 0
+        },
+        "snap2": {
+          "ms": 35.1281999999992,
+          "digest": "a9b5f49d5cabeff442cc97ea2ed8510e310575edb4dcd0ad596f86fdbb9bf35f",
+          "events": [
+            {
+              "status": "HIT",
+              "validationMs": 12.495900000001711,
+              "decodeMs": 22.443200000001525
+            }
+          ],
+          "reads": 1,
+          "sourceReads": 0,
+          "bytes": 133437
+        }
+      },
+      {
+        "snap2": {
+          "ms": 32.361000000004424,
+          "digest": "a9b5f49d5cabeff442cc97ea2ed8510e310575edb4dcd0ad596f86fdbb9bf35f",
+          "events": [
+            {
+              "status": "HIT",
+              "validationMs": 11.293299999997544,
+              "decodeMs": 20.852500000000873
+            }
+          ],
+          "reads": 1,
+          "sourceReads": 0,
+          "bytes": 133437
+        },
+        "snap1": {
+          "ms": 32.57829999999376,
+          "digest": "a9b5f49d5cabeff442cc97ea2ed8510e310575edb4dcd0ad596f86fdbb9bf35f",
+          "events": [
+            {
+              "status": "HIT",
+              "validationMs": 10.186599999993632,
+              "decodeMs": 22.18370000000141
+            }
+          ],
+          "reads": 0,
+          "sourceReads": 0,
+          "bytes": 0
+        }
+      },
+      {
+        "snap1": {
+          "ms": 32.36909999999625,
+          "digest": "a9b5f49d5cabeff442cc97ea2ed8510e310575edb4dcd0ad596f86fdbb9bf35f",
+          "events": [
+            {
+              "status": "HIT",
+              "validationMs": 10.304700000000594,
+              "decodeMs": 21.879000000000815
+            }
+          ],
+          "reads": 0,
+          "sourceReads": 0,
+          "bytes": 0
+        },
+        "snap2": {
+          "ms": 38.647900000003574,
+          "digest": "a9b5f49d5cabeff442cc97ea2ed8510e310575edb4dcd0ad596f86fdbb9bf35f",
+          "events": [
+            {
+              "status": "HIT",
+              "validationMs": 15.27610000000277,
+              "decodeMs": 23.103799999997136
+            }
+          ],
+          "reads": 1,
+          "sourceReads": 0,
+          "bytes": 133437
+        }
+      },
+      {
+        "snap2": {
+          "ms": 33.081700000002456,
+          "digest": "a9b5f49d5cabeff442cc97ea2ed8510e310575edb4dcd0ad596f86fdbb9bf35f",
+          "events": [
+            {
+              "status": "HIT",
+              "validationMs": 12.376100000001315,
+              "decodeMs": 20.53310000000056
+            }
+          ],
+          "reads": 1,
+          "sourceReads": 0,
+          "bytes": 133437
+        },
+        "snap1": {
+          "ms": 31.755300000004354,
+          "digest": "a9b5f49d5cabeff442cc97ea2ed8510e310575edb4dcd0ad596f86fdbb9bf35f",
+          "events": [
+            {
+              "status": "HIT",
+              "validationMs": 10.16870000000199,
+              "decodeMs": 21.393599999995786
+            }
+          ],
+          "reads": 0,
+          "sourceReads": 0,
+          "bytes": 0
+        }
+      },
+      {
+        "snap1": {
+          "ms": 31.519200000002456,
+          "digest": "a9b5f49d5cabeff442cc97ea2ed8510e310575edb4dcd0ad596f86fdbb9bf35f",
+          "events": [
+            {
+              "status": "HIT",
+              "validationMs": 10.263499999993655,
+              "decodeMs": 21.04529999999795
+            }
+          ],
+          "reads": 0,
+          "sourceReads": 0,
+          "bytes": 0
+        },
+        "snap2": {
+          "ms": 33.850100000003295,
+          "digest": "a9b5f49d5cabeff442cc97ea2ed8510e310575edb4dcd0ad596f86fdbb9bf35f",
+          "events": [
+            {
+              "status": "HIT",
+              "validationMs": 12.705999999998312,
+              "decodeMs": 20.95679999999993
+            }
+          ],
+          "reads": 1,
+          "sourceReads": 0,
+          "bytes": 133437
+        }
+      },
+      {
+        "snap2": {
+          "ms": 35.54520000000048,
+          "digest": "a9b5f49d5cabeff442cc97ea2ed8510e310575edb4dcd0ad596f86fdbb9bf35f",
+          "events": [
+            {
+              "status": "HIT",
+              "validationMs": 11.921900000001187,
+              "decodeMs": 23.43119999999908
+            }
+          ],
+          "reads": 1,
+          "sourceReads": 0,
+          "bytes": 133437
+        },
+        "snap1": {
+          "ms": 31.343399999997928,
+          "digest": "a9b5f49d5cabeff442cc97ea2ed8510e310575edb4dcd0ad596f86fdbb9bf35f",
+          "events": [
+            {
+              "status": "HIT",
+              "validationMs": 10.186699999998382,
+              "decodeMs": 20.90679999999702
+            }
+          ],
+          "reads": 0,
+          "sourceReads": 0,
+          "bytes": 0
+        }
+      },
+      {
+        "snap1": {
+          "ms": 30.317699999999604,
+          "digest": "a9b5f49d5cabeff442cc97ea2ed8510e310575edb4dcd0ad596f86fdbb9bf35f",
+          "events": [
+            {
+              "status": "HIT",
+              "validationMs": 9.729800000000978,
+              "decodeMs": 20.399499999999534
+            }
+          ],
+          "reads": 0,
+          "sourceReads": 0,
+          "bytes": 0
+        },
+        "snap2": {
+          "ms": 31.722900000000664,
+          "digest": "a9b5f49d5cabeff442cc97ea2ed8510e310575edb4dcd0ad596f86fdbb9bf35f",
+          "events": [
+            {
+              "status": "HIT",
+              "validationMs": 11.19890000000305,
+              "decodeMs": 20.306700000001
+            }
+          ],
+          "reads": 1,
+          "sourceReads": 0,
+          "bytes": 133437
+        }
+      },
+      {
+        "snap2": {
+          "ms": 31.914600000003702,
+          "digest": "a9b5f49d5cabeff442cc97ea2ed8510e310575edb4dcd0ad596f86fdbb9bf35f",
+          "events": [
+            {
+              "status": "HIT",
+              "validationMs": 11.425400000000081,
+              "decodeMs": 20.30949999999575
+            }
+          ],
+          "reads": 1,
+          "sourceReads": 0,
+          "bytes": 133437
+        },
+        "snap1": {
+          "ms": 31.276499999999942,
+          "digest": "a9b5f49d5cabeff442cc97ea2ed8510e310575edb4dcd0ad596f86fdbb9bf35f",
+          "events": [
+            {
+              "status": "HIT",
+              "validationMs": 9.76640000000043,
+              "decodeMs": 21.335800000000745
+            }
+          ],
+          "reads": 0,
+          "sourceReads": 0,
+          "bytes": 0
+        }
+      },
+      {
+        "snap1": {
+          "ms": 32.347900000000664,
+          "digest": "a9b5f49d5cabeff442cc97ea2ed8510e310575edb4dcd0ad596f86fdbb9bf35f",
+          "events": [
+            {
+              "status": "HIT",
+              "validationMs": 10.805899999999383,
+              "decodeMs": 21.353399999999965
+            }
+          ],
+          "reads": 0,
+          "sourceReads": 0,
+          "bytes": 0
+        },
+        "snap2": {
+          "ms": 34.39749999999913,
+          "digest": "a9b5f49d5cabeff442cc97ea2ed8510e310575edb4dcd0ad596f86fdbb9bf35f",
+          "events": [
+            {
+              "status": "HIT",
+              "validationMs": 13.204899999996996,
+              "decodeMs": 20.97649999999703
+            }
+          ],
+          "reads": 1,
+          "sourceReads": 0,
+          "bytes": 133437
+        }
+      },
+      {
+        "snap2": {
+          "ms": 34.17639999999665,
+          "digest": "a9b5f49d5cabeff442cc97ea2ed8510e310575edb4dcd0ad596f86fdbb9bf35f",
+          "events": [
+            {
+              "status": "HIT",
+              "validationMs": 11.795099999995728,
+              "decodeMs": 22.18420000000333
+            }
+          ],
+          "reads": 1,
+          "sourceReads": 0,
+          "bytes": 133437
+        },
+        "snap1": {
+          "ms": 30.174400000003516,
+          "digest": "a9b5f49d5cabeff442cc97ea2ed8510e310575edb4dcd0ad596f86fdbb9bf35f",
+          "events": [
+            {
+              "status": "HIT",
+              "validationMs": 9.197399999997288,
+              "decodeMs": 20.78229999999894
+            }
+          ],
+          "reads": 0,
+          "sourceReads": 0,
+          "bytes": 0
+        }
+      },
+      {
+        "snap1": {
+          "ms": 31.4571999999971,
+          "digest": "a9b5f49d5cabeff442cc97ea2ed8510e310575edb4dcd0ad596f86fdbb9bf35f",
+          "events": [
+            {
+              "status": "HIT",
+              "validationMs": 9.876000000003842,
+              "decodeMs": 21.367900000004738
+            }
+          ],
+          "reads": 0,
+          "sourceReads": 0,
+          "bytes": 0
+        },
+        "snap2": {
+          "ms": 40.99609999999666,
+          "digest": "a9b5f49d5cabeff442cc97ea2ed8510e310575edb4dcd0ad596f86fdbb9bf35f",
+          "events": [
+            {
+              "status": "HIT",
+              "validationMs": 12.908400000000256,
+              "decodeMs": 27.868799999996554
+            }
+          ],
+          "reads": 1,
+          "sourceReads": 0,
+          "bytes": 133437
+        }
+      },
+      {
+        "snap2": {
+          "ms": 38.273300000000745,
+          "digest": "a9b5f49d5cabeff442cc97ea2ed8510e310575edb4dcd0ad596f86fdbb9bf35f",
+          "events": [
+            {
+              "status": "HIT",
+              "validationMs": 15.192300000002433,
+              "decodeMs": 22.77520000000368
+            }
+          ],
+          "reads": 1,
+          "sourceReads": 0,
+          "bytes": 133437
+        },
+        "snap1": {
+          "ms": 31.83729999999923,
+          "digest": "a9b5f49d5cabeff442cc97ea2ed8510e310575edb4dcd0ad596f86fdbb9bf35f",
+          "events": [
+            {
+              "status": "HIT",
+              "validationMs": 10.427100000000792,
+              "decodeMs": 21.197500000002037
+            }
+          ],
+          "reads": 0,
+          "sourceReads": 0,
+          "bytes": 0
+        }
+      },
+      {
+        "snap1": {
+          "ms": 32.27339999999822,
+          "digest": "a9b5f49d5cabeff442cc97ea2ed8510e310575edb4dcd0ad596f86fdbb9bf35f",
+          "events": [
+            {
+              "status": "HIT",
+              "validationMs": 10.509799999999814,
+              "decodeMs": 21.541799999999057
+            }
+          ],
+          "reads": 0,
+          "sourceReads": 0,
+          "bytes": 0
+        },
+        "snap2": {
+          "ms": 33.71600000000035,
+          "digest": "a9b5f49d5cabeff442cc97ea2ed8510e310575edb4dcd0ad596f86fdbb9bf35f",
+          "events": [
+            {
+              "status": "HIT",
+              "validationMs": 12.124400000000605,
+              "decodeMs": 21.427599999995437
+            }
+          ],
+          "reads": 1,
+          "sourceReads": 0,
+          "bytes": 133437
+        }
+      },
+      {
+        "snap2": {
+          "ms": 32.710199999994074,
+          "digest": "a9b5f49d5cabeff442cc97ea2ed8510e310575edb4dcd0ad596f86fdbb9bf35f",
+          "events": [
+            {
+              "status": "HIT",
+              "validationMs": 11.771200000002864,
+              "decodeMs": 20.754300000000512
+            }
+          ],
+          "reads": 1,
+          "sourceReads": 0,
+          "bytes": 133437
+        },
+        "snap1": {
+          "ms": 31.53469999999652,
+          "digest": "a9b5f49d5cabeff442cc97ea2ed8510e310575edb4dcd0ad596f86fdbb9bf35f",
+          "events": [
+            {
+              "status": "HIT",
+              "validationMs": 10.064500000000407,
+              "decodeMs": 21.2928000000029
+            }
+          ],
+          "reads": 0,
+          "sourceReads": 0,
+          "bytes": 0
+        }
+      }
+    ]
+  },
+  "world": {
+    "checks": [
+      "World/Baseline/M7/Compiler/Finance: four drafts, exact models and digests",
+      "MonthInputs / declared Wallet resource / Forecast publication / PlannedExpense change; artifact generation unchanged",
+      "Live semantic Draft changes Preview, no historical invalidation",
+      "Apply / commit recovery stay authoritative direct; no writer invoked"
+    ],
+    "benchmarks": [
+      {
+        "direct": {
+          "ms": 301.71659999999974,
+          "reads": 15,
+          "raw": 15,
+          "inspect": 0,
+          "slot": "HOUSEHOLD:household:groceries",
+          "digest": "875ca571324fbd933f2021b72a3f43b508226a2e48e67c14d1d2357464a9abf3"
+        },
+        "hit": {
+          "ms": 261.38520000000426,
+          "reads": 8,
+          "raw": 7,
+          "inspect": 1,
+          "slot": "HOUSEHOLD:household:groceries",
+          "digest": "875ca571324fbd933f2021b72a3f43b508226a2e48e67c14d1d2357464a9abf3"
+        }
+      },
+      {
+        "hit": {
+          "ms": 322.16739999999845,
+          "reads": 8,
+          "raw": 7,
+          "inspect": 1,
+          "slot": "HOUSEHOLD:household:groceries",
+          "digest": "875ca571324fbd933f2021b72a3f43b508226a2e48e67c14d1d2357464a9abf3"
+        },
+        "direct": {
+          "ms": 304.96229999999923,
+          "reads": 15,
+          "raw": 15,
+          "inspect": 0,
+          "slot": "HOUSEHOLD:household:groceries",
+          "digest": "875ca571324fbd933f2021b72a3f43b508226a2e48e67c14d1d2357464a9abf3"
+        }
+      },
+      {
+        "direct": {
+          "ms": 290.5627999999997,
+          "reads": 15,
+          "raw": 15,
+          "inspect": 0,
+          "slot": "HOUSEHOLD:household:groceries",
+          "digest": "875ca571324fbd933f2021b72a3f43b508226a2e48e67c14d1d2357464a9abf3"
+        },
+        "hit": {
+          "ms": 268.96100000000297,
+          "reads": 8,
+          "raw": 7,
+          "inspect": 1,
+          "slot": "HOUSEHOLD:household:groceries",
+          "digest": "875ca571324fbd933f2021b72a3f43b508226a2e48e67c14d1d2357464a9abf3"
+        }
+      },
+      {
+        "hit": {
+          "ms": 261.14860000000044,
+          "reads": 8,
+          "raw": 7,
+          "inspect": 1,
+          "slot": "HOUSEHOLD:household:groceries",
+          "digest": "875ca571324fbd933f2021b72a3f43b508226a2e48e67c14d1d2357464a9abf3"
+        },
+        "direct": {
+          "ms": 287.1339000000007,
+          "reads": 15,
+          "raw": 15,
+          "inspect": 0,
+          "slot": "HOUSEHOLD:household:groceries",
+          "digest": "875ca571324fbd933f2021b72a3f43b508226a2e48e67c14d1d2357464a9abf3"
+        }
+      },
+      {
+        "direct": {
+          "ms": 289.950499999999,
+          "reads": 15,
+          "raw": 15,
+          "inspect": 0,
+          "slot": "HOUSEHOLD:household:groceries",
+          "digest": "875ca571324fbd933f2021b72a3f43b508226a2e48e67c14d1d2357464a9abf3"
+        },
+        "hit": {
+          "ms": 270.93870000000607,
+          "reads": 8,
+          "raw": 7,
+          "inspect": 1,
+          "slot": "HOUSEHOLD:household:groceries",
+          "digest": "875ca571324fbd933f2021b72a3f43b508226a2e48e67c14d1d2357464a9abf3"
+        }
+      },
+      {
+        "hit": {
+          "ms": 255.01369999999588,
+          "reads": 8,
+          "raw": 7,
+          "inspect": 1,
+          "slot": "HOUSEHOLD:household:groceries",
+          "digest": "875ca571324fbd933f2021b72a3f43b508226a2e48e67c14d1d2357464a9abf3"
+        },
+        "direct": {
+          "ms": 272.7934000000023,
+          "reads": 15,
+          "raw": 15,
+          "inspect": 0,
+          "slot": "HOUSEHOLD:household:groceries",
+          "digest": "875ca571324fbd933f2021b72a3f43b508226a2e48e67c14d1d2357464a9abf3"
+        }
+      },
+      {
+        "direct": {
+          "ms": 297.4077999999936,
+          "reads": 15,
+          "raw": 15,
+          "inspect": 0,
+          "slot": "HOUSEHOLD:household:groceries",
+          "digest": "875ca571324fbd933f2021b72a3f43b508226a2e48e67c14d1d2357464a9abf3"
+        },
+        "hit": {
+          "ms": 273.98679999999877,
+          "reads": 8,
+          "raw": 7,
+          "inspect": 1,
+          "slot": "HOUSEHOLD:household:groceries",
+          "digest": "875ca571324fbd933f2021b72a3f43b508226a2e48e67c14d1d2357464a9abf3"
+        }
+      },
+      {
+        "hit": {
+          "ms": 270.8920999999973,
+          "reads": 8,
+          "raw": 7,
+          "inspect": 1,
+          "slot": "HOUSEHOLD:household:groceries",
+          "digest": "875ca571324fbd933f2021b72a3f43b508226a2e48e67c14d1d2357464a9abf3"
+        },
+        "direct": {
+          "ms": 283.1275000000023,
+          "reads": 15,
+          "raw": 15,
+          "inspect": 0,
+          "slot": "HOUSEHOLD:household:groceries",
+          "digest": "875ca571324fbd933f2021b72a3f43b508226a2e48e67c14d1d2357464a9abf3"
+        }
+      },
+      {
+        "direct": {
+          "ms": 298.7299000000057,
+          "reads": 15,
+          "raw": 15,
+          "inspect": 0,
+          "slot": "HOUSEHOLD:household:groceries",
+          "digest": "875ca571324fbd933f2021b72a3f43b508226a2e48e67c14d1d2357464a9abf3"
+        },
+        "hit": {
+          "ms": 291.35859999999957,
+          "reads": 8,
+          "raw": 7,
+          "inspect": 1,
+          "slot": "HOUSEHOLD:household:groceries",
+          "digest": "875ca571324fbd933f2021b72a3f43b508226a2e48e67c14d1d2357464a9abf3"
+        }
+      },
+      {
+        "hit": {
+          "ms": 260.30169999999634,
+          "reads": 8,
+          "raw": 7,
+          "inspect": 1,
+          "slot": "HOUSEHOLD:household:groceries",
+          "digest": "875ca571324fbd933f2021b72a3f43b508226a2e48e67c14d1d2357464a9abf3"
+        },
+        "direct": {
+          "ms": 288.1429999999964,
+          "reads": 15,
+          "raw": 15,
+          "inspect": 0,
+          "slot": "HOUSEHOLD:household:groceries",
+          "digest": "875ca571324fbd933f2021b72a3f43b508226a2e48e67c14d1d2357464a9abf3"
+        }
+      },
+      {
+        "direct": {
+          "ms": 279.9985000000015,
+          "reads": 15,
+          "raw": 15,
+          "inspect": 0,
+          "slot": "HOUSEHOLD:household:groceries",
+          "digest": "875ca571324fbd933f2021b72a3f43b508226a2e48e67c14d1d2357464a9abf3"
+        },
+        "hit": {
+          "ms": 260.6707000000024,
+          "reads": 8,
+          "raw": 7,
+          "inspect": 1,
+          "slot": "HOUSEHOLD:household:groceries",
+          "digest": "875ca571324fbd933f2021b72a3f43b508226a2e48e67c14d1d2357464a9abf3"
+        }
+      },
+      {
+        "hit": {
+          "ms": 261.6414999999979,
+          "reads": 8,
+          "raw": 7,
+          "inspect": 1,
+          "slot": "HOUSEHOLD:household:groceries",
+          "digest": "875ca571324fbd933f2021b72a3f43b508226a2e48e67c14d1d2357464a9abf3"
+        },
+        "direct": {
+          "ms": 283.0720000000001,
+          "reads": 15,
+          "raw": 15,
+          "inspect": 0,
+          "slot": "HOUSEHOLD:household:groceries",
+          "digest": "875ca571324fbd933f2021b72a3f43b508226a2e48e67c14d1d2357464a9abf3"
+        }
+      }
+    ],
+    "authenticated": "NOT_RUN",
+    "financialWrites": 0,
+    "segment": {
+      "direct": {
+        "n": 12,
+        "p50": 288.1429999999964,
+        "p95": 304.96229999999923,
+        "min": 272.7934000000023,
+        "max": 304.96229999999923,
+        "reads": 15
+      },
+      "hit": {
+        "n": 12,
+        "p50": 261.6414999999979,
+        "p95": 322.16739999999845,
+        "min": 255.01369999999588,
+        "max": 322.16739999999845,
+        "reads": 8
+      }
+    }
+  },
+  "artifactBytes": 133184,
+  "preparations": [
+    {
+      "ok": true,
+      "ms": 281.0621000000001,
+      "reads": 9,
+      "events": [
+        {
+          "status": "PUBLISHED",
+          "preparationMs": 280.8100000000004
+        }
+      ]
+    },
+    {
+      "ok": true,
+      "ms": 185.65570000000025,
+      "reads": 9,
+      "events": [
+        {
+          "status": "PUBLISHED",
+          "preparationMs": 185.52629999999954
+        }
+      ]
+    },
+    {
+      "ok": true,
+      "ms": 182.1209000000008,
+      "reads": 9,
+      "events": [
+        {
+          "status": "PUBLISHED",
+          "preparationMs": 182.0618000000004
+        }
+      ]
+    },
+    {
+      "ok": true,
+      "ms": 189.76090000000022,
+      "reads": 9,
+      "events": [
+        {
+          "status": "PUBLISHED",
+          "preparationMs": 189.71980000000076
+        }
+      ]
+    },
+    {
+      "ok": true,
+      "ms": 179.02019999999993,
+      "reads": 9,
+      "events": [
+        {
+          "status": "PUBLISHED",
+          "preparationMs": 178.96710000000076
+        }
+      ]
+    },
+    {
+      "ok": true,
+      "ms": 185.3689000000004,
+      "reads": 9,
+      "events": [
+        {
+          "status": "PUBLISHED",
+          "preparationMs": 185.3182999999999
+        }
+      ]
+    },
+    {
+      "ok": true,
+      "ms": 422.3126999999995,
+      "reads": 9,
+      "events": [
+        {
+          "status": "PUBLISHED",
+          "preparationMs": 422.2573000000002
+        }
+      ]
+    },
+    {
+      "ok": true,
+      "ms": 423.5653999999995,
+      "reads": 9,
+      "events": [
+        {
+          "status": "PUBLISHED",
+          "preparationMs": 423.2474000000002
+        }
+      ]
+    },
+    {
+      "ok": true,
+      "ms": 431.65829999999914,
+      "reads": 9,
+      "events": [
+        {
+          "status": "PUBLISHED",
+          "preparationMs": 431.57360000000153
+        }
+      ]
+    },
+    {
+      "ok": true,
+      "ms": 400.1417000000001,
+      "reads": 9,
+      "events": [
+        {
+          "status": "PUBLISHED",
+          "preparationMs": 399.78240000000005
+        }
+      ]
+    },
+    {
+      "ok": true,
+      "ms": 402.8822999999993,
+      "reads": 9,
+      "events": [
+        {
+          "status": "PUBLISHED",
+          "preparationMs": 402.84119999999893
+        }
+      ]
+    },
+    {
+      "ok": true,
+      "ms": 414.39480000000003,
+      "reads": 9,
+      "events": [
+        {
+          "status": "PUBLISHED",
+          "preparationMs": 414.35009999999966
+        }
+      ]
+    },
+    {
+      "ok": true,
+      "ms": 418.08510000000024,
+      "reads": 9,
+      "events": [
+        {
+          "status": "PUBLISHED",
+          "preparationMs": 418.0436000000009
+        }
+      ]
+    },
+    {
+      "ok": true,
+      "ms": 402.96429999999964,
+      "reads": 9,
+      "events": [
+        {
+          "status": "PUBLISHED",
+          "preparationMs": 402.927099999999
+        }
+      ]
+    },
+    {
+      "ok": false,
+      "ms": 408.2975000000006,
+      "reads": 9,
+      "events": [
+        {
+          "status": "PUBLICATION_REJECTED",
+          "preparationMs": 408.2631999999994
+        }
+      ]
+    },
+    {
+      "ok": true,
+      "ms": 402.0167000000001,
+      "reads": 9,
+      "events": [
+        {
+          "status": "PUBLISHED",
+          "preparationMs": 401.98070000000007
+        }
+      ]
+    },
+    {
+      "ok": true,
+      "ms": 425.7963,
+      "reads": 9,
+      "events": [
+        {
+          "status": "PUBLISHED",
+          "preparationMs": 425.7556999999997
+        }
+      ]
+    },
+    {
+      "ok": true,
+      "ms": 427.3680000000022,
+      "reads": 9,
+      "events": [
+        {
+          "status": "PUBLISHED",
+          "preparationMs": 427.3191999999981
+        }
+      ]
+    },
+    {
+      "ok": true,
+      "ms": 417.8239999999969,
+      "reads": 9,
+      "events": [
+        {
+          "status": "PUBLISHED",
+          "preparationMs": 417.7858000000015
+        }
+      ]
+    },
+    {
+      "ok": true,
+      "ms": 408.2327000000005,
+      "reads": 9,
+      "events": [
+        {
+          "status": "PUBLISHED",
+          "preparationMs": 408.1945000000014
+        }
+      ]
+    },
+    {
+      "ok": true,
+      "ms": 425.7299000000021,
+      "reads": 9,
+      "events": [
+        {
+          "status": "PUBLISHED",
+          "preparationMs": 425.6909000000014
+        }
+      ]
+    },
+    {
+      "ok": true,
+      "ms": 414.6638000000021,
+      "reads": 9,
+      "events": [
+        {
+          "status": "PUBLISHED",
+          "preparationMs": 414.6261999999988
+        }
+      ]
+    },
+    {
+      "ok": true,
+      "ms": 407.30379999999786,
+      "reads": 9,
+      "events": [
+        {
+          "status": "PUBLISHED",
+          "preparationMs": 407.2645999999986
+        }
+      ]
+    },
+    {
+      "ok": true,
+      "ms": 413.3904000000002,
+      "reads": 9,
+      "events": [
+        {
+          "status": "PUBLISHED",
+          "preparationMs": 413.35199999999895
+        }
+      ]
+    },
+    {
+      "ok": true,
+      "ms": 389.492000000002,
+      "reads": 9,
+      "events": [
+        {
+          "status": "PUBLISHED",
+          "preparationMs": 389.4451000000008
+        }
+      ]
+    },
+    {
+      "ok": true,
+      "ms": 399.2855000000018,
+      "reads": 9,
+      "events": [
+        {
+          "status": "PUBLISHED",
+          "preparationMs": 399.2547999999988
+        }
+      ]
+    },
+    {
+      "ok": true,
+      "ms": 393.3715999999986,
+      "reads": 9,
+      "events": [
+        {
+          "status": "PUBLISHED",
+          "preparationMs": 393.3380000000034
+        }
+      ]
+    },
+    {
+      "ok": true,
+      "ms": 417.0564999999988,
+      "reads": 9,
+      "events": [
+        {
+          "status": "PUBLISHED",
+          "preparationMs": 417.01820000000225
+        }
+      ]
+    },
+    {
+      "ok": true,
+      "ms": 404.95560000000114,
+      "reads": 9,
+      "events": [
+        {
+          "status": "PUBLISHED",
+          "preparationMs": 404.912900000003
+        }
+      ]
+    },
+    {
+      "ok": true,
+      "ms": 399.331299999998,
+      "reads": 9,
+      "events": [
+        {
+          "status": "PUBLISHED",
+          "preparationMs": 399.2963000000018
+        }
+      ]
+    },
+    {
+      "ok": true,
+      "ms": 394.581600000005,
+      "reads": 9,
+      "events": [
+        {
+          "status": "PUBLISHED",
+          "preparationMs": 394.54909999999654
+        }
+      ]
+    },
+    {
+      "ok": true,
+      "ms": 456.01320000000123,
+      "reads": 9,
+      "events": [
+        {
+          "status": "PUBLISHED",
+          "preparationMs": 455.9783000000025
+        }
+      ]
+    },
+    {
+      "ok": true,
+      "ms": 424.2890000000043,
+      "reads": 9,
+      "events": [
+        {
+          "status": "PUBLISHED",
+          "preparationMs": 424.2468999999983
+        }
+      ]
+    },
+    {
+      "ok": true,
+      "ms": 413.28719999999885,
+      "reads": 9,
+      "events": [
+        {
+          "status": "PUBLISHED",
+          "preparationMs": 413.2528999999995
+        }
+      ]
+    },
+    {
+      "ok": true,
+      "ms": 402.25990000000456,
+      "reads": 9,
+      "events": [
+        {
+          "status": "PUBLISHED",
+          "preparationMs": 402.2159000000029
+        }
+      ]
+    },
+    {
+      "ok": true,
+      "ms": 478.3648999999932,
+      "reads": 9,
+      "events": [
+        {
+          "status": "PUBLISHED",
+          "preparationMs": 478.3202999999994
+        }
+      ]
+    },
+    {
+      "ok": true,
+      "ms": 445.44170000000304,
+      "reads": 9,
+      "events": [
+        {
+          "status": "PUBLISHED",
+          "preparationMs": 445.3894
+        }
+      ]
+    },
+    {
+      "ok": true,
+      "ms": 484.0882999999958,
+      "reads": 9,
+      "events": [
+        {
+          "status": "PUBLISHED",
+          "preparationMs": 484.0488999999943
+        }
+      ]
+    },
+    {
+      "ok": true,
+      "ms": 469.1134999999995,
+      "reads": 9,
+      "events": [
+        {
+          "status": "PUBLISHED",
+          "preparationMs": 469.07219999999506
+        }
+      ]
+    },
+    {
+      "ok": true,
+      "ms": 405.44940000000497,
+      "reads": 9,
+      "events": [
+        {
+          "status": "PUBLISHED",
+          "preparationMs": 405.41100000000006
+        }
+      ]
+    },
+    {
+      "ok": true,
+      "ms": 454.79879999999685,
+      "reads": 9,
+      "events": [
+        {
+          "status": "PUBLISHED",
+          "preparationMs": 454.75820000000385
+        }
+      ]
+    },
+    {
+      "ok": true,
+      "ms": 437.26110000000335,
+      "reads": 9,
+      "events": [
+        {
+          "status": "PUBLISHED",
+          "preparationMs": 437.2218000000066
+        }
+      ]
+    },
+    {
+      "ok": true,
+      "ms": 395.0425000000032,
+      "reads": 9,
+      "events": [
+        {
+          "status": "PUBLISHED",
+          "preparationMs": 395.0055000000066
+        }
+      ]
+    }
+  ],
+  "benchmarks": [
+    {
+      "direct": {
+        "ms": 57.5627999999997,
+        "digest": "a9b5f49d5cabeff442cc97ea2ed8510e310575edb4dcd0ad596f86fdbb9bf35f",
+        "events": [
+          {
+            "status": "OFF"
+          }
+        ],
+        "reads": 9,
+        "sourceReads": 9,
+        "bytes": 196372
+      },
+      "hit": {
+        "ms": 42.26390000000174,
+        "digest": "a9b5f49d5cabeff442cc97ea2ed8510e310575edb4dcd0ad596f86fdbb9bf35f",
+        "events": [
+          {
+            "status": "HIT",
+            "validationMs": 16.38509999999951,
+            "decodeMs": 25.662599999999657
+          }
+        ],
+        "reads": 1,
+        "sourceReads": 0,
+        "bytes": 133437
+      }
+    },
+    {
+      "hit": {
+        "ms": 37.495999999999185,
+        "digest": "a9b5f49d5cabeff442cc97ea2ed8510e310575edb4dcd0ad596f86fdbb9bf35f",
+        "events": [
+          {
+            "status": "HIT",
+            "validationMs": 14.740099999999074,
+            "decodeMs": 22.539300000000367
+          }
+        ],
+        "reads": 1,
+        "sourceReads": 0,
+        "bytes": 133437
+      },
+      "direct": {
+        "ms": 72.97049999999945,
+        "digest": "a9b5f49d5cabeff442cc97ea2ed8510e310575edb4dcd0ad596f86fdbb9bf35f",
+        "events": [
+          {
+            "status": "OFF"
+          }
+        ],
+        "reads": 9,
+        "sourceReads": 9,
+        "bytes": 196372
+      }
+    },
+    {
+      "direct": {
+        "ms": 87.91010000000097,
+        "digest": "a9b5f49d5cabeff442cc97ea2ed8510e310575edb4dcd0ad596f86fdbb9bf35f",
+        "events": [
+          {
+            "status": "OFF"
+          }
+        ],
+        "reads": 9,
+        "sourceReads": 9,
+        "bytes": 196372
+      },
+      "hit": {
+        "ms": 38.050100000000384,
+        "digest": "a9b5f49d5cabeff442cc97ea2ed8510e310575edb4dcd0ad596f86fdbb9bf35f",
+        "events": [
+          {
+            "status": "HIT",
+            "validationMs": 14.221399999998539,
+            "decodeMs": 23.514999999999418
+          }
+        ],
+        "reads": 1,
+        "sourceReads": 0,
+        "bytes": 133437
+      }
+    },
+    {
+      "hit": {
+        "ms": 34.43080000000191,
+        "digest": "a9b5f49d5cabeff442cc97ea2ed8510e310575edb4dcd0ad596f86fdbb9bf35f",
+        "events": [
+          {
+            "status": "HIT",
+            "validationMs": 13.2345000000023,
+            "decodeMs": 20.98120000000199
+          }
+        ],
+        "reads": 1,
+        "sourceReads": 0,
+        "bytes": 133437
+      },
+      "direct": {
+        "ms": 55.445599999999104,
+        "digest": "a9b5f49d5cabeff442cc97ea2ed8510e310575edb4dcd0ad596f86fdbb9bf35f",
+        "events": [
+          {
+            "status": "OFF"
+          }
+        ],
+        "reads": 9,
+        "sourceReads": 9,
+        "bytes": 196372
+      }
+    },
+    {
+      "direct": {
+        "ms": 43.42119999999704,
+        "digest": "a9b5f49d5cabeff442cc97ea2ed8510e310575edb4dcd0ad596f86fdbb9bf35f",
+        "events": [
+          {
+            "status": "OFF"
+          }
+        ],
+        "reads": 9,
+        "sourceReads": 9,
+        "bytes": 196372
+      },
+      "hit": {
+        "ms": 29.02860000000146,
+        "digest": "a9b5f49d5cabeff442cc97ea2ed8510e310575edb4dcd0ad596f86fdbb9bf35f",
+        "events": [
+          {
+            "status": "HIT",
+            "validationMs": 12.7458000000006,
+            "decodeMs": 16.026300000001356
+          }
+        ],
+        "reads": 1,
+        "sourceReads": 0,
+        "bytes": 133437
+      }
+    },
+    {
+      "hit": {
+        "ms": 27.674999999999272,
+        "digest": "a9b5f49d5cabeff442cc97ea2ed8510e310575edb4dcd0ad596f86fdbb9bf35f",
+        "events": [
+          {
+            "status": "HIT",
+            "validationMs": 9.685499999999593,
+            "decodeMs": 17.76589999999851
+          }
+        ],
+        "reads": 1,
+        "sourceReads": 0,
+        "bytes": 133437
+      },
+      "direct": {
+        "ms": 52.079499999999825,
+        "digest": "a9b5f49d5cabeff442cc97ea2ed8510e310575edb4dcd0ad596f86fdbb9bf35f",
+        "events": [
+          {
+            "status": "OFF"
+          }
+        ],
+        "reads": 9,
+        "sourceReads": 9,
+        "bytes": 196372
+      }
+    },
+    {
+      "direct": {
+        "ms": 59.328599999997095,
+        "digest": "a9b5f49d5cabeff442cc97ea2ed8510e310575edb4dcd0ad596f86fdbb9bf35f",
+        "events": [
+          {
+            "status": "OFF"
+          }
+        ],
+        "reads": 9,
+        "sourceReads": 9,
+        "bytes": 196372
+      },
+      "hit": {
+        "ms": 34.40450000000055,
+        "digest": "a9b5f49d5cabeff442cc97ea2ed8510e310575edb4dcd0ad596f86fdbb9bf35f",
+        "events": [
+          {
+            "status": "HIT",
+            "validationMs": 13.52349999999933,
+            "decodeMs": 20.644000000000233
+          }
+        ],
+        "reads": 1,
+        "sourceReads": 0,
+        "bytes": 133437
+      }
+    },
+    {
+      "hit": {
+        "ms": 34.892400000000634,
+        "digest": "a9b5f49d5cabeff442cc97ea2ed8510e310575edb4dcd0ad596f86fdbb9bf35f",
+        "events": [
+          {
+            "status": "HIT",
+            "validationMs": 13.27100000000064,
+            "decodeMs": 21.413000000000466
+          }
+        ],
+        "reads": 1,
+        "sourceReads": 0,
+        "bytes": 133437
+      },
+      "direct": {
+        "ms": 56.93709999999919,
+        "digest": "a9b5f49d5cabeff442cc97ea2ed8510e310575edb4dcd0ad596f86fdbb9bf35f",
+        "events": [
+          {
+            "status": "OFF"
+          }
+        ],
+        "reads": 9,
+        "sourceReads": 9,
+        "bytes": 196372
+      }
+    },
+    {
+      "direct": {
+        "ms": 59.278699999998935,
+        "digest": "a9b5f49d5cabeff442cc97ea2ed8510e310575edb4dcd0ad596f86fdbb9bf35f",
+        "events": [
+          {
+            "status": "OFF"
+          }
+        ],
+        "reads": 9,
+        "sourceReads": 9,
+        "bytes": 196372
+      },
+      "hit": {
+        "ms": 37.50080000000162,
+        "digest": "a9b5f49d5cabeff442cc97ea2ed8510e310575edb4dcd0ad596f86fdbb9bf35f",
+        "events": [
+          {
+            "status": "HIT",
+            "validationMs": 15.411900000002788,
+            "decodeMs": 21.85900000000038
+          }
+        ],
+        "reads": 1,
+        "sourceReads": 0,
+        "bytes": 133437
+      }
+    },
+    {
+      "hit": {
+        "ms": 37.60139999999956,
+        "digest": "a9b5f49d5cabeff442cc97ea2ed8510e310575edb4dcd0ad596f86fdbb9bf35f",
+        "events": [
+          {
+            "status": "HIT",
+            "validationMs": 15.275300000001153,
+            "decodeMs": 22.086299999999028
+          }
+        ],
+        "reads": 1,
+        "sourceReads": 0,
+        "bytes": 133437
+      },
+      "direct": {
+        "ms": 61.11460000000079,
+        "digest": "a9b5f49d5cabeff442cc97ea2ed8510e310575edb4dcd0ad596f86fdbb9bf35f",
+        "events": [
+          {
+            "status": "OFF"
+          }
+        ],
+        "reads": 9,
+        "sourceReads": 9,
+        "bytes": 196372
+      }
+    },
+    {
+      "direct": {
+        "ms": 56.69180000000051,
+        "digest": "a9b5f49d5cabeff442cc97ea2ed8510e310575edb4dcd0ad596f86fdbb9bf35f",
+        "events": [
+          {
+            "status": "OFF"
+          }
+        ],
+        "reads": 9,
+        "sourceReads": 9,
+        "bytes": 196372
+      },
+      "hit": {
+        "ms": 34.11490000000049,
+        "digest": "a9b5f49d5cabeff442cc97ea2ed8510e310575edb4dcd0ad596f86fdbb9bf35f",
+        "events": [
+          {
+            "status": "HIT",
+            "validationMs": 12.405099999999948,
+            "decodeMs": 21.478399999999965
+          }
+        ],
+        "reads": 1,
+        "sourceReads": 0,
+        "bytes": 133437
+      }
+    },
+    {
+      "hit": {
+        "ms": 35.213299999999435,
+        "digest": "a9b5f49d5cabeff442cc97ea2ed8510e310575edb4dcd0ad596f86fdbb9bf35f",
+        "events": [
+          {
+            "status": "HIT",
+            "validationMs": 13.573300000000017,
+            "decodeMs": 21.41359999999986
+          }
+        ],
+        "reads": 1,
+        "sourceReads": 0,
+        "bytes": 133437
+      },
+      "direct": {
+        "ms": 57.070299999999406,
+        "digest": "a9b5f49d5cabeff442cc97ea2ed8510e310575edb4dcd0ad596f86fdbb9bf35f",
+        "events": [
+          {
+            "status": "OFF"
+          }
+        ],
+        "reads": 9,
+        "sourceReads": 9,
+        "bytes": 196372
+      }
+    },
+    {
+      "direct": {
+        "ms": 52.56630000000223,
+        "digest": "a9b5f49d5cabeff442cc97ea2ed8510e310575edb4dcd0ad596f86fdbb9bf35f",
+        "events": [
+          {
+            "status": "OFF"
+          }
+        ],
+        "reads": 9,
+        "sourceReads": 9,
+        "bytes": 196372
+      },
+      "hit": {
+        "ms": 34.17329999999856,
+        "digest": "a9b5f49d5cabeff442cc97ea2ed8510e310575edb4dcd0ad596f86fdbb9bf35f",
+        "events": [
+          {
+            "status": "HIT",
+            "validationMs": 13.348699999998644,
+            "decodeMs": 20.59270000000106
+          }
+        ],
+        "reads": 1,
+        "sourceReads": 0,
+        "bytes": 133437
+      }
+    },
+    {
+      "hit": {
+        "ms": 36.602100000000064,
+        "digest": "a9b5f49d5cabeff442cc97ea2ed8510e310575edb4dcd0ad596f86fdbb9bf35f",
+        "events": [
+          {
+            "status": "HIT",
+            "validationMs": 14.194200000001729,
+            "decodeMs": 22.225100000003295
+          }
+        ],
+        "reads": 1,
+        "sourceReads": 0,
+        "bytes": 133437
+      },
+      "direct": {
+        "ms": 58.12739999999758,
+        "digest": "a9b5f49d5cabeff442cc97ea2ed8510e310575edb4dcd0ad596f86fdbb9bf35f",
+        "events": [
+          {
+            "status": "OFF"
+          }
+        ],
+        "reads": 9,
+        "sourceReads": 9,
+        "bytes": 196372
+      }
+    },
+    {
+      "direct": {
+        "ms": 57.29579999999987,
+        "digest": "a9b5f49d5cabeff442cc97ea2ed8510e310575edb4dcd0ad596f86fdbb9bf35f",
+        "events": [
+          {
+            "status": "OFF"
+          }
+        ],
+        "reads": 9,
+        "sourceReads": 9,
+        "bytes": 196372
+      },
+      "hit": {
+        "ms": 35.033400000000256,
+        "digest": "a9b5f49d5cabeff442cc97ea2ed8510e310575edb4dcd0ad596f86fdbb9bf35f",
+        "events": [
+          {
+            "status": "HIT",
+            "validationMs": 12.632900000000518,
+            "decodeMs": 22.22849999999744
+          }
+        ],
+        "reads": 1,
+        "sourceReads": 0,
+        "bytes": 133437
+      }
+    },
+    {
+      "hit": {
+        "ms": 34.14419999999882,
+        "digest": "a9b5f49d5cabeff442cc97ea2ed8510e310575edb4dcd0ad596f86fdbb9bf35f",
+        "events": [
+          {
+            "status": "HIT",
+            "validationMs": 13.166500000002998,
+            "decodeMs": 20.797099999999773
+          }
+        ],
+        "reads": 1,
+        "sourceReads": 0,
+        "bytes": 133437
+      },
+      "direct": {
+        "ms": 56.82150000000183,
+        "digest": "a9b5f49d5cabeff442cc97ea2ed8510e310575edb4dcd0ad596f86fdbb9bf35f",
+        "events": [
+          {
+            "status": "OFF"
+          }
+        ],
+        "reads": 9,
+        "sourceReads": 9,
+        "bytes": 196372
+      }
+    },
+    {
+      "direct": {
+        "ms": 56.24439999999959,
+        "digest": "a9b5f49d5cabeff442cc97ea2ed8510e310575edb4dcd0ad596f86fdbb9bf35f",
+        "events": [
+          {
+            "status": "OFF"
+          }
+        ],
+        "reads": 9,
+        "sourceReads": 9,
+        "bytes": 196372
+      },
+      "hit": {
+        "ms": 36.48070000000007,
+        "digest": "a9b5f49d5cabeff442cc97ea2ed8510e310575edb4dcd0ad596f86fdbb9bf35f",
+        "events": [
+          {
+            "status": "HIT",
+            "validationMs": 13.029500000000553,
+            "decodeMs": 22.841699999997218
+          }
+        ],
+        "reads": 1,
+        "sourceReads": 0,
+        "bytes": 133437
+      }
+    },
+    {
+      "hit": {
+        "ms": 35.0199999999968,
+        "digest": "a9b5f49d5cabeff442cc97ea2ed8510e310575edb4dcd0ad596f86fdbb9bf35f",
+        "events": [
+          {
+            "status": "HIT",
+            "validationMs": 13.031699999999546,
+            "decodeMs": 21.773300000000745
+          }
+        ],
+        "reads": 1,
+        "sourceReads": 0,
+        "bytes": 133437
+      },
+      "direct": {
+        "ms": 56.233000000000175,
+        "digest": "a9b5f49d5cabeff442cc97ea2ed8510e310575edb4dcd0ad596f86fdbb9bf35f",
+        "events": [
+          {
+            "status": "OFF"
+          }
+        ],
+        "reads": 9,
+        "sourceReads": 9,
+        "bytes": 196372
+      }
+    },
+    {
+      "direct": {
+        "ms": 57.47560000000158,
+        "digest": "a9b5f49d5cabeff442cc97ea2ed8510e310575edb4dcd0ad596f86fdbb9bf35f",
+        "events": [
+          {
+            "status": "OFF"
+          }
+        ],
+        "reads": 9,
+        "sourceReads": 9,
+        "bytes": 196372
+      },
+      "hit": {
+        "ms": 36.883200000000215,
+        "digest": "a9b5f49d5cabeff442cc97ea2ed8510e310575edb4dcd0ad596f86fdbb9bf35f",
+        "events": [
+          {
+            "status": "HIT",
+            "validationMs": 14.43409999999858,
+            "decodeMs": 22.187999999998283
+          }
+        ],
+        "reads": 1,
+        "sourceReads": 0,
+        "bytes": 133437
+      }
+    },
+    {
+      "hit": {
+        "ms": 35.846300000001065,
+        "digest": "a9b5f49d5cabeff442cc97ea2ed8510e310575edb4dcd0ad596f86fdbb9bf35f",
+        "events": [
+          {
+            "status": "HIT",
+            "validationMs": 13.267199999998411,
+            "decodeMs": 22.36699999999837
+          }
+        ],
+        "reads": 1,
+        "sourceReads": 0,
+        "bytes": 133437
+      },
+      "direct": {
+        "ms": 57.94509999999718,
+        "digest": "a9b5f49d5cabeff442cc97ea2ed8510e310575edb4dcd0ad596f86fdbb9bf35f",
+        "events": [
+          {
+            "status": "OFF"
+          }
+        ],
+        "reads": 9,
+        "sourceReads": 9,
+        "bytes": 196372
+      }
+    },
+    {
+      "direct": {
+        "ms": 54.73409999999785,
+        "digest": "a9b5f49d5cabeff442cc97ea2ed8510e310575edb4dcd0ad596f86fdbb9bf35f",
+        "events": [
+          {
+            "status": "OFF"
+          }
+        ],
+        "reads": 9,
+        "sourceReads": 9,
+        "bytes": 196372
+      },
+      "hit": {
+        "ms": 34.48250000000189,
+        "digest": "a9b5f49d5cabeff442cc97ea2ed8510e310575edb4dcd0ad596f86fdbb9bf35f",
+        "events": [
+          {
+            "status": "HIT",
+            "validationMs": 14.613400000002002,
+            "decodeMs": 19.682099999998172
+          }
+        ],
+        "reads": 1,
+        "sourceReads": 0,
+        "bytes": 133437
+      }
+    },
+    {
+      "hit": {
+        "ms": 34.302700000000186,
+        "digest": "a9b5f49d5cabeff442cc97ea2ed8510e310575edb4dcd0ad596f86fdbb9bf35f",
+        "events": [
+          {
+            "status": "HIT",
+            "validationMs": 13.422200000000885,
+            "decodeMs": 20.69079999999667
+          }
+        ],
+        "reads": 1,
+        "sourceReads": 0,
+        "bytes": 133437
+      },
+      "direct": {
+        "ms": 57.16790000000037,
+        "digest": "a9b5f49d5cabeff442cc97ea2ed8510e310575edb4dcd0ad596f86fdbb9bf35f",
+        "events": [
+          {
+            "status": "OFF"
+          }
+        ],
+        "reads": 9,
+        "sourceReads": 9,
+        "bytes": 196372
+      }
+    },
+    {
+      "direct": {
+        "ms": 57.25580000000264,
+        "digest": "a9b5f49d5cabeff442cc97ea2ed8510e310575edb4dcd0ad596f86fdbb9bf35f",
+        "events": [
+          {
+            "status": "OFF"
+          }
+        ],
+        "reads": 9,
+        "sourceReads": 9,
+        "bytes": 196372
+      },
+      "hit": {
+        "ms": 34.44520000000193,
+        "digest": "a9b5f49d5cabeff442cc97ea2ed8510e310575edb4dcd0ad596f86fdbb9bf35f",
+        "events": [
+          {
+            "status": "HIT",
+            "validationMs": 13.021499999998923,
+            "decodeMs": 21.22070000000167
+          }
+        ],
+        "reads": 1,
+        "sourceReads": 0,
+        "bytes": 133437
+      }
+    },
+    {
+      "hit": {
+        "ms": 34.936900000000605,
+        "digest": "a9b5f49d5cabeff442cc97ea2ed8510e310575edb4dcd0ad596f86fdbb9bf35f",
+        "events": [
+          {
+            "status": "HIT",
+            "validationMs": 13.79399999999805,
+            "decodeMs": 20.92659999999887
+          }
+        ],
+        "reads": 1,
+        "sourceReads": 0,
+        "bytes": 133437
+      },
+      "direct": {
+        "ms": 58.684299999997165,
+        "digest": "a9b5f49d5cabeff442cc97ea2ed8510e310575edb4dcd0ad596f86fdbb9bf35f",
+        "events": [
+          {
+            "status": "OFF"
+          }
+        ],
+        "reads": 9,
+        "sourceReads": 9,
+        "bytes": 196372
+      }
+    },
+    {
+      "direct": {
+        "ms": 54.788000000000466,
+        "digest": "a9b5f49d5cabeff442cc97ea2ed8510e310575edb4dcd0ad596f86fdbb9bf35f",
+        "events": [
+          {
+            "status": "OFF"
+          }
+        ],
+        "reads": 9,
+        "sourceReads": 9,
+        "bytes": 196372
+      },
+      "hit": {
+        "ms": 36.33429999999862,
+        "digest": "a9b5f49d5cabeff442cc97ea2ed8510e310575edb4dcd0ad596f86fdbb9bf35f",
+        "events": [
+          {
+            "status": "HIT",
+            "validationMs": 14.301199999998062,
+            "decodeMs": 21.825300000000425
+          }
+        ],
+        "reads": 1,
+        "sourceReads": 0,
+        "bytes": 133437
+      }
+    },
+    {
+      "hit": {
+        "ms": 34.2525999999998,
+        "digest": "a9b5f49d5cabeff442cc97ea2ed8510e310575edb4dcd0ad596f86fdbb9bf35f",
+        "events": [
+          {
+            "status": "HIT",
+            "validationMs": 12.977699999999459,
+            "decodeMs": 21.09189999999944
+          }
+        ],
+        "reads": 1,
+        "sourceReads": 0,
+        "bytes": 133437
+      },
+      "direct": {
+        "ms": 66.50049999999828,
+        "digest": "a9b5f49d5cabeff442cc97ea2ed8510e310575edb4dcd0ad596f86fdbb9bf35f",
+        "events": [
+          {
+            "status": "OFF"
+          }
+        ],
+        "reads": 9,
+        "sourceReads": 9,
+        "bytes": 196372
+      }
+    },
+    {
+      "direct": {
+        "ms": 78.78690000000279,
+        "digest": "a9b5f49d5cabeff442cc97ea2ed8510e310575edb4dcd0ad596f86fdbb9bf35f",
+        "events": [
+          {
+            "status": "OFF"
+          }
+        ],
+        "reads": 9,
+        "sourceReads": 9,
+        "bytes": 196372
+      },
+      "hit": {
+        "ms": 37.0512000000017,
+        "digest": "a9b5f49d5cabeff442cc97ea2ed8510e310575edb4dcd0ad596f86fdbb9bf35f",
+        "events": [
+          {
+            "status": "HIT",
+            "validationMs": 15.434900000000198,
+            "decodeMs": 21.330200000000332
+          }
+        ],
+        "reads": 1,
+        "sourceReads": 0,
+        "bytes": 133437
+      }
+    },
+    {
+      "hit": {
+        "ms": 36.5653999999995,
+        "digest": "a9b5f49d5cabeff442cc97ea2ed8510e310575edb4dcd0ad596f86fdbb9bf35f",
+        "events": [
+          {
+            "status": "HIT",
+            "validationMs": 14.294600000001083,
+            "decodeMs": 22.063099999999395
+          }
+        ],
+        "reads": 1,
+        "sourceReads": 0,
+        "bytes": 133437
+      },
+      "direct": {
+        "ms": 58.285400000000664,
+        "digest": "a9b5f49d5cabeff442cc97ea2ed8510e310575edb4dcd0ad596f86fdbb9bf35f",
+        "events": [
+          {
+            "status": "OFF"
+          }
+        ],
+        "reads": 9,
+        "sourceReads": 9,
+        "bytes": 196372
+      }
+    },
+    {
+      "direct": {
+        "ms": 55.78650000000198,
+        "digest": "a9b5f49d5cabeff442cc97ea2ed8510e310575edb4dcd0ad596f86fdbb9bf35f",
+        "events": [
+          {
+            "status": "OFF"
+          }
+        ],
+        "reads": 9,
+        "sourceReads": 9,
+        "bytes": 196372
+      },
+      "hit": {
+        "ms": 35.27839999999924,
+        "digest": "a9b5f49d5cabeff442cc97ea2ed8510e310575edb4dcd0ad596f86fdbb9bf35f",
+        "events": [
+          {
+            "status": "HIT",
+            "validationMs": 13.89060000000245,
+            "decodeMs": 21.15270000000237
+          }
+        ],
+        "reads": 1,
+        "sourceReads": 0,
+        "bytes": 133437
+      }
+    },
+    {
+      "hit": {
+        "ms": 32.9346000000005,
+        "digest": "a9b5f49d5cabeff442cc97ea2ed8510e310575edb4dcd0ad596f86fdbb9bf35f",
+        "events": [
+          {
+            "status": "HIT",
+            "validationMs": 12.205699999998615,
+            "decodeMs": 20.547999999998865
+          }
+        ],
+        "reads": 1,
+        "sourceReads": 0,
+        "bytes": 133437
+      },
+      "direct": {
+        "ms": 58.67120000000068,
+        "digest": "a9b5f49d5cabeff442cc97ea2ed8510e310575edb4dcd0ad596f86fdbb9bf35f",
+        "events": [
+          {
+            "status": "OFF"
+          }
+        ],
+        "reads": 9,
+        "sourceReads": 9,
+        "bytes": 196372
+      }
+    },
+    {
+      "direct": {
+        "ms": 55.2954000000027,
+        "digest": "a9b5f49d5cabeff442cc97ea2ed8510e310575edb4dcd0ad596f86fdbb9bf35f",
+        "events": [
+          {
+            "status": "OFF"
+          }
+        ],
+        "reads": 9,
+        "sourceReads": 9,
+        "bytes": 196372
+      },
+      "hit": {
+        "ms": 32.67189999999755,
+        "digest": "a9b5f49d5cabeff442cc97ea2ed8510e310575edb4dcd0ad596f86fdbb9bf35f",
+        "events": [
+          {
+            "status": "HIT",
+            "validationMs": 12.867199999996956,
+            "decodeMs": 19.60399999999936
+          }
+        ],
+        "reads": 1,
+        "sourceReads": 0,
+        "bytes": 133437
+      }
+    },
+    {
+      "hit": {
+        "ms": 35.50209999999788,
+        "digest": "a9b5f49d5cabeff442cc97ea2ed8510e310575edb4dcd0ad596f86fdbb9bf35f",
+        "events": [
+          {
+            "status": "HIT",
+            "validationMs": 14.759199999996781,
+            "decodeMs": 20.530800000000454
+          }
+        ],
+        "reads": 1,
+        "sourceReads": 0,
+        "bytes": 133437
+      },
+      "direct": {
+        "ms": 61.10189999999784,
+        "digest": "a9b5f49d5cabeff442cc97ea2ed8510e310575edb4dcd0ad596f86fdbb9bf35f",
+        "events": [
+          {
+            "status": "OFF"
+          }
+        ],
+        "reads": 9,
+        "sourceReads": 9,
+        "bytes": 196372
+      }
+    },
+    {
+      "direct": {
+        "ms": 55.08770000000004,
+        "digest": "a9b5f49d5cabeff442cc97ea2ed8510e310575edb4dcd0ad596f86fdbb9bf35f",
+        "events": [
+          {
+            "status": "OFF"
+          }
+        ],
+        "reads": 9,
+        "sourceReads": 9,
+        "bytes": 196372
+      },
+      "hit": {
+        "ms": 34.68760000000111,
+        "digest": "a9b5f49d5cabeff442cc97ea2ed8510e310575edb4dcd0ad596f86fdbb9bf35f",
+        "events": [
+          {
+            "status": "HIT",
+            "validationMs": 13.33100000000195,
+            "decodeMs": 21.11869999999908
+          }
+        ],
+        "reads": 1,
+        "sourceReads": 0,
+        "bytes": 133437
+      }
+    },
+    {
+      "hit": {
+        "ms": 33.73370000000068,
+        "digest": "a9b5f49d5cabeff442cc97ea2ed8510e310575edb4dcd0ad596f86fdbb9bf35f",
+        "events": [
+          {
+            "status": "HIT",
+            "validationMs": 12.37170000000333,
+            "decodeMs": 21.143499999998312
+          }
+        ],
+        "reads": 1,
+        "sourceReads": 0,
+        "bytes": 133437
+      },
+      "direct": {
+        "ms": 55.733500000002095,
+        "digest": "a9b5f49d5cabeff442cc97ea2ed8510e310575edb4dcd0ad596f86fdbb9bf35f",
+        "events": [
+          {
+            "status": "OFF"
+          }
+        ],
+        "reads": 9,
+        "sourceReads": 9,
+        "bytes": 196372
+      }
+    },
+    {
+      "direct": {
+        "ms": 57.7554999999993,
+        "digest": "a9b5f49d5cabeff442cc97ea2ed8510e310575edb4dcd0ad596f86fdbb9bf35f",
+        "events": [
+          {
+            "status": "OFF"
+          }
+        ],
+        "reads": 9,
+        "sourceReads": 9,
+        "bytes": 196372
+      },
+      "hit": {
+        "ms": 34.99359999999797,
+        "digest": "a9b5f49d5cabeff442cc97ea2ed8510e310575edb4dcd0ad596f86fdbb9bf35f",
+        "events": [
+          {
+            "status": "HIT",
+            "validationMs": 13.858299999999872,
+            "decodeMs": 20.937999999998283
+          }
+        ],
+        "reads": 1,
+        "sourceReads": 0,
+        "bytes": 133437
+      }
+    },
+    {
+      "hit": {
+        "ms": 35.19800000000032,
+        "digest": "a9b5f49d5cabeff442cc97ea2ed8510e310575edb4dcd0ad596f86fdbb9bf35f",
+        "events": [
+          {
+            "status": "HIT",
+            "validationMs": 14.14470000000074,
+            "decodeMs": 20.84519999999975
+          }
+        ],
+        "reads": 1,
+        "sourceReads": 0,
+        "bytes": 133437
+      },
+      "direct": {
+        "ms": 62.177999999999884,
+        "digest": "a9b5f49d5cabeff442cc97ea2ed8510e310575edb4dcd0ad596f86fdbb9bf35f",
+        "events": [
+          {
+            "status": "OFF"
+          }
+        ],
+        "reads": 9,
+        "sourceReads": 9,
+        "bytes": 196372
+      }
+    },
+    {
+      "direct": {
+        "ms": 54.95839999999953,
+        "digest": "a9b5f49d5cabeff442cc97ea2ed8510e310575edb4dcd0ad596f86fdbb9bf35f",
+        "events": [
+          {
+            "status": "OFF"
+          }
+        ],
+        "reads": 9,
+        "sourceReads": 9,
+        "bytes": 196372
+      },
+      "hit": {
+        "ms": 33.35699999999997,
+        "digest": "a9b5f49d5cabeff442cc97ea2ed8510e310575edb4dcd0ad596f86fdbb9bf35f",
+        "events": [
+          {
+            "status": "HIT",
+            "validationMs": 12.595100000002276,
+            "decodeMs": 20.543399999998655
+          }
+        ],
+        "reads": 1,
+        "sourceReads": 0,
+        "bytes": 133437
+      }
+    },
+    {
+      "hit": {
+        "ms": 35.79690000000119,
+        "digest": "a9b5f49d5cabeff442cc97ea2ed8510e310575edb4dcd0ad596f86fdbb9bf35f",
+        "events": [
+          {
+            "status": "HIT",
+            "validationMs": 13.460899999998219,
+            "decodeMs": 22.161000000000058
+          }
+        ],
+        "reads": 1,
+        "sourceReads": 0,
+        "bytes": 133437
+      },
+      "direct": {
+        "ms": 58.68579999999929,
+        "digest": "a9b5f49d5cabeff442cc97ea2ed8510e310575edb4dcd0ad596f86fdbb9bf35f",
+        "events": [
+          {
+            "status": "OFF"
+          }
+        ],
+        "reads": 9,
+        "sourceReads": 9,
+        "bytes": 196372
+      }
+    },
+    {
+      "direct": {
+        "ms": 62.965400000000955,
+        "digest": "a9b5f49d5cabeff442cc97ea2ed8510e310575edb4dcd0ad596f86fdbb9bf35f",
+        "events": [
+          {
+            "status": "OFF"
+          }
+        ],
+        "reads": 9,
+        "sourceReads": 9,
+        "bytes": 196372
+      },
+      "hit": {
+        "ms": 33.473699999998644,
+        "digest": "a9b5f49d5cabeff442cc97ea2ed8510e310575edb4dcd0ad596f86fdbb9bf35f",
+        "events": [
+          {
+            "status": "HIT",
+            "validationMs": 11.244200000001001,
+            "decodeMs": 21.832299999998213
+          }
+        ],
+        "reads": 1,
+        "sourceReads": 0,
+        "bytes": 133437
+      }
+    },
+    {
+      "hit": {
+        "ms": 33.70209999999861,
+        "digest": "a9b5f49d5cabeff442cc97ea2ed8510e310575edb4dcd0ad596f86fdbb9bf35f",
+        "events": [
+          {
+            "status": "HIT",
+            "validationMs": 13.122999999999593,
+            "decodeMs": 20.417599999997037
+          }
+        ],
+        "reads": 1,
+        "sourceReads": 0,
+        "bytes": 133437
+      },
+      "direct": {
+        "ms": 54.90550000000076,
+        "digest": "a9b5f49d5cabeff442cc97ea2ed8510e310575edb4dcd0ad596f86fdbb9bf35f",
+        "events": [
+          {
+            "status": "OFF"
+          }
+        ],
+        "reads": 9,
+        "sourceReads": 9,
+        "bytes": 196372
+      }
+    }
+  ],
+  "costs": [
+    {
+      "mutation": 5.402900000000955,
+      "miss": 80.29590000000098,
+      "validation": 13.356800000001385
+    },
+    {
+      "mutation": 2.3382999999994354,
+      "miss": 86.18000000000029,
+      "validation": 15.01850000000195
+    },
+    {
+      "mutation": 1.919499999999971,
+      "miss": 72.87349999999788,
+      "validation": 13.11989999999787
+    },
+    {
+      "mutation": 2.322599999999511,
+      "miss": 89.01469999999972,
+      "validation": 15.67069999999876
+    },
+    {
+      "mutation": 1.448899999999412,
+      "miss": 78.30479999999807,
+      "validation": 12.43199999999706
+    },
+    {
+      "mutation": 1.4517999999989115,
+      "miss": 85.05389999999898,
+      "validation": 12.309000000001106
+    },
+    {
+      "mutation": 1.6671999999998661,
+      "miss": 92.74400000000242,
+      "validation": 16.221199999999953
+    },
+    {
+      "mutation": 1.9380000000019209,
+      "miss": 85.55939999999828,
+      "validation": 13.806000000004133
+    },
+    {
+      "mutation": 1.5079999999943539,
+      "miss": 78.06680000000051,
+      "validation": 12.53360000000248
+    },
+    {
+      "mutation": 1.8101999999998952,
+      "miss": 81.15190000000439,
+      "validation": 13.28179999999702
+    },
+    {
+      "mutation": 1.5743000000002212,
+      "miss": 77.74410000000353,
+      "validation": 12.30439999999362
+    },
+    {
+      "mutation": 1.5745999999999185,
+      "miss": 77.99619999999413,
+      "validation": 10.756000000001222
+    },
+    {
+      "mutation": 1.5020999999978812,
+      "miss": 80.6675000000032,
+      "validation": 13.671699999998964
+    },
+    {
+      "mutation": 1.8798999999999069,
+      "miss": 81.72410000000673,
+      "validation": 12.12489999999525
+    },
+    {
+      "mutation": 1.5221999999994296,
+      "miss": 81.4175000000032,
+      "validation": 13.324300000000221
+    },
+    {
+      "mutation": 1.9236000000018976,
+      "miss": 113.15389999999752,
+      "validation": 16.35410000000411
+    },
+    {
+      "mutation": 2.3867000000027474,
+      "miss": 92.05320000000211,
+      "validation": 16.082000000002154
+    },
+    {
+      "mutation": 1.428299999999581,
+      "miss": 107.78809999999794,
+      "validation": 14.425300000002608
+    },
+    {
+      "mutation": 1.6527999999962049,
+      "miss": 71.92859999999928,
+      "validation": 10.2016999999978
+    },
+    {
+      "mutation": 2.227099999996426,
+      "miss": 85.76050000000396,
+      "validation": 11.973399999995308
+    },
+    {
+      "unrelatedPeriodMutation": 1.9830000000001746
+    }
+  ],
+  "importBatch": {
+    "writes": 10,
+    "reconstructionsAutomaticallyTriggered": 0,
+    "explicitPreparations": 1
+  },
+  "nativeRLS": "EXECUTED_PASS_SYNTHETIC_ROLES",
+  "supabaseJWT": "NOT_RUN",
+  "remoteWrites": 0,
+  "flags": {
+    "P3": "0",
+    "snapshotRuntimeDefault": "OFF",
+    "productionAdapterWiring": "NONE"
+  },
+  "sqlProperties": {
+    "functions": [
+      {
+        "schema": "private",
+        "name": "activity_history_canonical_json",
+        "owner": "postgres",
+        "definer": false,
+        "settings": [
+          "search_path=\"\""
+        ]
+      },
+      {
+        "schema": "private",
+        "name": "activity_history_proof",
+        "owner": "postgres",
+        "definer": false,
+        "settings": [
+          "search_path=\"\""
+        ]
+      },
+      {
+        "schema": "private",
+        "name": "activity_history_scope_allowed",
+        "owner": "postgres",
+        "definer": true,
+        "settings": [
+          "search_path=\"\""
+        ]
+      },
+      {
+        "schema": "private",
+        "name": "activity_history_writer_coverage",
+        "owner": "postgres",
+        "definer": false,
+        "settings": [
+          "search_path=\"\""
+        ]
+      },
+      {
+        "schema": "private",
+        "name": "bump_planner_activity_history",
+        "owner": "postgres",
+        "definer": true,
+        "settings": [
+          "search_path=\"\""
+        ]
+      },
+      {
+        "schema": "private",
+        "name": "fence_planner_activity_history_configuration",
+        "owner": "postgres",
+        "definer": false,
+        "settings": [
+          "search_path=\"\""
+        ]
+      },
+      {
+        "schema": "public",
+        "name": "inspect_planner_activity_history_v1",
+        "owner": "postgres",
+        "definer": true,
+        "settings": [
+          "search_path=\"\""
+        ]
+      },
+      {
+        "schema": "public",
+        "name": "publish_planner_activity_history_v1",
+        "owner": "postgres",
+        "definer": true,
+        "settings": [
+          "search_path=\"\""
+        ]
+      }
+    ],
+    "tables": [
+      {
+        "relname": "planner_activity_history_artifacts",
+        "relrowsecurity": true
+      },
+      {
+        "relname": "planner_activity_history_state",
+        "relrowsecurity": true
+      }
+    ],
+    "grants": {
+      "auth_inspect": true,
+      "anon_inspect": false,
+      "auth_publish": false,
+      "service_publish": true,
+      "service_direct_dml": false
+    }
+  }
+}

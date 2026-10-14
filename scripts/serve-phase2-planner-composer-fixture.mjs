@@ -13,6 +13,10 @@ import { atomicMonth, interactionMonth, richMonth, savingsMonth } from './fixtur
 import { visualMonth, visualThreeBeautyMonth, sparseMonth, unreadyMonth } from './fixtures/planner-visual-fidelity.mjs';
 import { p10Month } from './fixtures/planner-p10.mjs';
 import { p09CompatibilityMonth, p09ReadbackMonth } from './fixtures/planner-p09.mjs';
+import { p2Measuring, p2FixturePlugin, p2World, p2Interaction } from './lib/planner-p14-p2-fixture-tools.mjs';
+import { p4Measuring, p4FixturePlugin } from './lib/planner-p14-p4a-fixture-tools.mjs';
+import { p4Fixture, p4Extra } from './fixtures/planner-p14-p4a.mjs';
+import { p4dMeasuring, p4dFixturePlugin, p4dInteraction } from './lib/planner-p14-p4d-fixture-tools.mjs';
 const { handleComposerRequest } = require('@/server/phase2/planner/composer-service');
 const { createPlanApplyRepository } = require('@/server/phase2/planner/repository');
 const { preparePlanningMobility } = require('@/server/phase2/planner/prospective-mobility-pricing');
@@ -33,17 +37,25 @@ const mocks = {
   '@/components/runtime': 'import {useRef} from "react"; export function useProductRuntime(){return {backgroundRootRef:useRef(null)}}',
   '@/features/auth/sign-out-button': 'import React from "react"; export const SignOutButton = () => React.createElement("button",{disabled:true},"Déconnexion");'
 };
-await build({ entryPoints: ['scripts/lib/planner-composer-browser-entry.tsx'], bundle: true, format: 'esm', target: 'chrome120', jsx: 'automatic',
-  outfile: path.join(out, 'app.js'), loader: { '.css': 'local-css' }, sourcemap: true,
+const p4Split = p4Measuring && process.env.PLANNER_P14_P4B_SPLIT === '1';
+const built = await build({ entryPoints: [p4dMeasuring ? 'scripts/lib/planner-composer-p14-p4d-browser-entry.tsx' : p4Measuring ? 'scripts/lib/planner-composer-p14-p4a-browser-entry.tsx' : p2Measuring ? 'scripts/lib/planner-composer-p14-p2-browser-entry.tsx' : 'scripts/lib/planner-composer-browser-entry.tsx'], bundle: true, format: 'esm', target: 'chrome120', jsx: 'automatic',
+  define: { 'process.env.NEXT_PUBLIC_COMPOSER_P14_P2_INTERACTIONS': JSON.stringify(process.env.NEXT_PUBLIC_COMPOSER_P14_P2_INTERACTIONS ?? '1'),
+    ...(p4Measuring?{'process.env.NODE_ENV':'"production"','process.env.P4_DIAGNOSTICS':JSON.stringify(process.env.PLANNER_P14_P4A_DIAGNOSTICS==='1'),
+      'process.env.NEXT_PUBLIC_COMPOSER_P14_P4A_PAGES':JSON.stringify(process.env.NEXT_PUBLIC_COMPOSER_P14_P4A_PAGES ?? 'neighbors')}: {}) },
+  minify:p4Measuring,
+  ...(p4Split ? { outdir:out, entryNames:'app', chunkNames:'chunks/[name]-[hash]', splitting:true, metafile:true } : { outfile: path.join(out, 'app.js') }),
+  loader: { '.css': 'local-css' }, sourcemap: true,
   external: ['/planned-visuals/*'],
-  plugins: [{name:'fixture-host-only',setup(builder){ builder.onResolve({filter:/^(next\/link|next\/navigation|@\/components\/runtime|@\/features\/auth\/sign-out-button)$/},args=>({path:args.path,namespace:'fixture-host'}));
+  plugins: [p4dFixturePlugin(),p4FixturePlugin(),p2FixturePlugin(), {name:'fixture-host-only',setup(builder){ builder.onResolve({filter:/^(next\/link|next\/navigation|@\/components\/runtime|@\/features\/auth\/sign-out-button)$/},args=>({path:args.path,namespace:'fixture-host'}));
     builder.onLoad({filter:/.*/,namespace:'fixture-host'},args=>({contents:mocks[args.path],loader:'js',resolveDir:process.cwd()})); }}] });
+if(p4Split)fs.writeFileSync(path.join(out,'bundle-meta.json'),JSON.stringify(built.metafile,null,2));
 const globalCss = process.env.PLANNER_C8_GLOBAL_CSS
   ? fs.readFileSync(process.env.PLANNER_C8_GLOBAL_CSS, 'utf8')
   : fs.readdirSync('.next/static/chunks').filter(n=>n.endsWith('.css')).map(n=>fs.readFileSync(`.next/static/chunks/${n}`,'utf8')).find(css=>css.includes('.h-dvh{'));
 if (!globalCss?.includes('.h-dvh{')) throw new Error('A production global stylesheet containing h-dvh is required for AppShell checks.');
 fs.writeFileSync(path.join(out,'global.css'),globalCss);
 } else if (['app.js','app.css','global.css'].some(name => !fs.existsSync(path.join(out,name)))) throw new Error('PLANNER_C8_PREBUILT_ASSETS_MISSING');
+if (process.env.PLANNER_C8_BUILD_ONLY === '1') process.exit(0);
 const stores = new Map(), fixtures = { A: simpleMonth, B: nightMonth, C: weekendMonth, D: renewalMonth, E: externalMonth, R: atomicMonth,
   P04: () => ({ world: plannerFixture(), semantic: plannerState() }),
   P05: () => ({ world: plannerFixture(), semantic: plannerState() }),
@@ -51,6 +63,7 @@ const stores = new Map(), fixtures = { A: simpleMonth, B: nightMonth, C: weekend
   P09C: p09CompatibilityMonth,
   P09S: p09CompatibilityMonth,
   P09R: p09ReadbackMonth,
+  P2:p10Month,
   P10:p10Month, P10OUT:p10Month, P11:p10Month, P11OUT:p10Month,
   RA: interactionMonth, RB: nightMonth, RC: weekendMonth, RR: atomicMonth, RICH:richMonth, SAVINGS:savingsMonth,
   VISUAL:visualMonth, VISUAL_P35_CLICK:visualMonth, VISUAL_P35_DRAG:visualMonth, VISUAL_P35_MULTI_DRAG:visualMonth, VISUAL_P35_REPLACE:visualMonth,
@@ -70,7 +83,7 @@ function uiPayloadFields(value) {
 }
 async function store(key) {
   if (!stores.has(key)) stores.set(key, (async () => {
-    const pg = await createKernelPostgres(), fixture = (fixtures[key] ?? fixtures.A)(), owner = providers();
+    const pg = await createKernelPostgres(), fixture = (p4Measuring&&key.startsWith('P4')?p4Fixture:p2Measuring && key.startsWith('P2') ? fixtures.P2 : fixtures[key] ?? fixtures.A)(), owner = providers();
     if(key==='P10OUT'||key==='P11OUT') owner.settings.routeUnavailable=true;
     return { pg, fixture, log: [], deps: { repository: createPlanApplyRepository(pg.client),
       householdPersons: [{ personId: '00000000-0000-4000-8000-000000000001', displayName: 'Alice Fixture' }],
@@ -78,17 +91,33 @@ async function store(key) {
       validateContextReferences: async (_household, refs) => {
         if (refs.placeIds.some(id=>!fixture.world.mobilityFacts?.places.some(p=>p.placeId===id))) throw new TypeError('CONTEXT_PLACE_NOT_ADMITTED');
         if (refs.personIds.some(id => id !== '00000000-0000-4000-8000-000000000001')) throw new TypeError('CONTEXT_PERSON_NOT_IN_HOUSEHOLD');
-      }, readWorld: async () => fixture.world,
+      }, readWorld: async () => p2World(() => fixture.world),
       prepareWorld: (world, state) => preparePlanningMobility(world, state, owner.value) } };
   })());
   return stores.get(key);
 }
-const host = `<!doctype html><html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Composer mon mois — fixtures C8</title><link rel="stylesheet" href="/global.css"><link rel="stylesheet" href="/app.css"></head><body><div id="root"></div><script type="module" src="/app.js?v=${encodeURIComponent(process.env.PLANNER_C8_ASSET_VERSION ?? 'base')}"></script></body></html>`;
+const assetOrigin = process.env.PLANNER_C8_ASSET_ORIGIN ?? '';
+const host = `<!doctype html><html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Composer mon mois — fixtures C8</title><link rel="stylesheet" href="/global.css"><link rel="stylesheet" href="${assetOrigin}/app.css"></head><body><div id="root"></div><script type="module" src="${assetOrigin}/app.js?v=${encodeURIComponent(process.env.PLANNER_C8_ASSET_VERSION ?? 'base')}"></script></body></html>`;
 const server = http.createServer(async (request, response) => {
   try {
     const url = new URL(request.url, 'http://127.0.0.1');
     const referringScenario = request.headers.referer ? new URL(request.headers.referer).searchParams.get('scenario') : null;
     const key = url.searchParams.get('scenario') ?? referringScenario ?? 'A';
+    if(p4Measuring&&url.pathname==='/p4-metrics'&&request.method==='POST'){
+      if(!/^P4_[a-zA-Z0-9_-]{1,80}$/.test(key))throw Error('P4_SCENARIO_INVALID');
+      const chunks=[];let bytes=0;for await(const chunk of request){bytes+=chunk.length;if(bytes>1000000)throw Error('P4_METRICS_TOO_LARGE');chunks.push(chunk);}
+      const data=JSON.parse(Buffer.concat(chunks).toString());
+      const width=Number(data.samples?.[0]?.viewport?.[0]);
+      const suffix=Number.isInteger(width)&&width>=320&&width<=4096?`-w${width}`:'';
+      fs.writeFileSync(path.join(out,key+suffix+'-client.json'),JSON.stringify(data,null,2));response.end('Recorded local synthetic measures');return;
+    }
+    if (p2Measuring && url.pathname === '/p2-metrics' && request.method === 'POST') {
+      if (!/^P2_[a-zA-Z0-9_-]{1,80}$/.test(key)) throw Error('P2_FIXTURE_SCENARIO_INVALID');
+      const chunks=[];let bytes=0;for await(const chunk of request){bytes+=chunk.length;if(bytes>2000000)throw Error('P2_FIXTURE_PROBE_TOO_LARGE');chunks.push(chunk);}
+      const metrics=JSON.parse(Buffer.concat(chunks).toString());
+      fs.writeFileSync(path.join(out,key+'-client.json'),JSON.stringify(metrics,null,2));
+      response.end('Recorded synthetic probe');return;
+    }
     if (url.pathname === '/draft') {
       const s = draftStore(key);
       response.setHeader('Content-Type', 'application/json');
@@ -148,7 +177,14 @@ const server = http.createServer(async (request, response) => {
       // Delays only in this isolated host, to exercise stale hover responses in the actual UI.
       const rejectSequence = Number(url.searchParams.get('rejectSequence'));
       const syntheticReject = !initialRead && command.kind === 'READ' && url.searchParams.has('rejectSequence') && rejectSequence === command.sequence;
-      let result = syntheticReject ? { ok:false, sequence:command.sequence, code:'P03B_SYNTHETIC_REJECTION', message:'Simulation de test rejetée' } : await handleComposerRequest(s.deps, householdId, command);
+      let result = syntheticReject ? { ok:false, sequence:command.sequence, code:'P03B_SYNTHETIC_REJECTION', message:'Simulation de test rejetée' } : await p4dInteraction(command,url.searchParams.get('variant')??'P4D',s.deps,householdId,
+        () => p2Interaction(command, () => handleComposerRequest(s.deps, householdId, command)));
+      if(p4Measuring&&initialRead&&key.startsWith('P4')&&result.ok&&!draftStore(key).active){
+        const target=key.includes('40')?40:20;let n=0;
+        if(result.model.presentation.elementCount>target)throw Error('P4_INITIAL_DENSITY_EXCEEDS_TARGET');
+        while(result.model.presentation.elementCount<target&&n<40){s.fixture.semantic.contexts.push(p4Extra(++n));command.draft=s.fixture.semantic;
+          result=await handleComposerRequest(s.deps,householdId,command);if(!result.ok)throw Error(result.code);}
+      }
       // Test transport integrity only: a deliberately mismatched proof must never become the current projection.
       if (!initialRead && command.kind === 'READ' && result.ok && url.searchParams.has('staleSequence')
         && Number(url.searchParams.get('staleSequence')) === command.sequence) result = { ...result,
@@ -157,6 +193,7 @@ const server = http.createServer(async (request, response) => {
       s.log.push({ kind: command.kind, sequence: command.sequence, mutationKind: result.mutationKind ?? null,
         gesture: command.kind === 'DROP' ? {assetKey:command.assetKey,target:command.target,sourceSocket:command.sourceSocket??null} : null,
         interactionImpact: result.interactionImpact ?? null,
+        ...(p2Measuring ? { fixturePerformance:result.fixturePerformance } : {}),
         uiPayloadFields: uiPayloadFields(command),
         ok: result.ok, digest: result.ok ? result.model.board.draft.semanticStateDigest : result.code,
         projection: result.ok ? result.model.board.cockpit : null });
@@ -192,11 +229,13 @@ const server = http.createServer(async (request, response) => {
       response.end(`<!doctype html><html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Mois à venir · fixture ${key}</title><link rel="stylesheet" href="/global.css"><link rel="stylesheet" href="/app.css"></head><body><main style="max-width:1100px;margin:24px auto;padding:16px">${markup}</main></body></html>`);
       return;
     }
-    if (['/app.js', '/app.css', '/global.css', '/app.js.map', '/app.css.map'].includes(url.pathname)) {
+    if (['/app.js', '/app.css', '/global.css', '/app.js.map', '/app.css.map'].includes(url.pathname) || /^\/chunks\/[a-zA-Z0-9_-]+\.js(?:\.map)?$/.test(url.pathname)) {
       response.setHeader('Cache-Control', 'no-store');
       response.setHeader('Content-Type', url.pathname.endsWith('.css') ? 'text/css' : 'application/javascript'); response.end(fs.readFileSync(path.join(out, url.pathname.slice(1)))); return;
     }
-    response.setHeader('Content-Type', 'text/html'); response.end(host);
+    const variantOrigin = p4Measuring && assetOrigin ? url.searchParams.get('ui') === 'P4A' ? process.env.PLANNER_C8_REFERENCE_ASSET_ORIGIN
+      : url.searchParams.get('ui') === 'FAULT' ? process.env.PLANNER_C8_FAULT_ASSET_ORIGIN : null : null;
+    response.setHeader('Content-Type', 'text/html'); response.end(variantOrigin ? host.replaceAll(assetOrigin, variantOrigin) : host);
   } catch (error) { console.error(error.message); response.writeHead(500); response.end('Fixture failed'); }
 });
 await store('A');

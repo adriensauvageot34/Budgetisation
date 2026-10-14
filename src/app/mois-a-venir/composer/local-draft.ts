@@ -135,13 +135,19 @@ export function stageLocalDecision(model: ComposerUiModel, raw: PlanSemanticStat
 
 /** Geometry and labels only; no calculated amount, capability, or financial projection is created. */
 export function visualDraftModel(model: ComposerUiModel, draft: PlanSemanticStateV1): ComposerUiModel {
-  if (semanticStateDigest(draft) === model.board.draft.semanticStateDigest) return model;
+  const digest = semanticStateDigest(draft);
+  if (digest === model.board.draft.semanticStateDigest) return model;
   const known = new Set(model.board.contexts.map(c => c.contextOccurrenceId));
   const visible = new Set([...draft.contexts.map(c => c.contextOccurrenceId), ...model.board.contexts.filter(c => c.readOnly).map(c => c.contextOccurrenceId)]);
   const additions = draft.contexts.filter(c => !known.has(c.contextOccurrenceId));
+  const previousContexts = new Map(model.semanticState.contexts.map(c => [c.contextOccurrenceId, c]));
   const contextCards = [...model.board.contexts.filter(c => visible.has(c.contextOccurrenceId)).map(c => {
     if (c.readOnly) return c;
     const latest = draft.contexts.find(item => item.contextOccurrenceId === c.contextOccurrenceId)!;
+    // A validated, identical context needs no new card/socket representation.
+    // String order differences merely miss this fast path; no financial values
+    // are recomputed here and changed contexts keep the original projection path.
+    if (JSON.stringify(latest) === JSON.stringify(previousContexts.get(c.contextOccurrenceId))) return c;
     const sockets = c.sockets.map(socket => {
       const items = latest.slotSelections[socket.slotKey]?.items;
       return Array.isArray(items) ? { ...socket, currentItems: items as ComponentSelectionV1[] } : socket;
@@ -168,6 +174,7 @@ export function visualDraftModel(model: ComposerUiModel, draft: PlanSemanticStat
     const key = `${card.contextOccurrenceId}:${socket.slotKey}`;
     const priorSocket = model.board.contexts.find(c => c.contextOccurrenceId === card.contextOccurrenceId)?.sockets.find(s => s.slotKey === socket.slotKey);
     const priorPresentation = sockets[key];
+    if (priorSocket?.currentItems === socket.currentItems) continue;
     if (!priorPresentation || plannerDigest(priorSocket?.currentItems ?? []) === plannerDigest(socket.currentItems)) continue;
     for (const sourceKey of Object.keys(dragSources)) if (sourceKey.startsWith(`satellite:${key}:`)) delete dragSources[sourceKey];
     sockets[key] = { ...priorPresentation, options: priorPresentation.options.map(option => {
@@ -209,7 +216,6 @@ export function visualDraftModel(model: ComposerUiModel, draft: PlanSemanticStat
       protected: false, removeOperation: { kind: "DROP", assetKey: key, target: { kind: "TRASH" }, values: {}, identity: c.contextOccurrenceId, selectionId: c.contextOccurrenceId } };
     drops.push({ sourceAssetKey: key, target: { kind: "TRASH" }, resolution: "ACCEPTED", semanticAction: "REMOVE_CONTEXT", previewSupported: true, constraint: null, choices: [] });
   }
-  const digest = semanticStateDigest(draft);
   return { ...model, semanticState: draft, board: { ...model.board, contexts: contextCards,
     baselineControls: patchControls(model.board.baselineControls), discretionaryControls: patchControls(model.board.discretionaryControls), savings: patchControls(model.board.savings),
     draft: { ...model.board.draft, dirty: digest !== model.board.draft.semanticStateDigest || model.board.draft.dirty, semanticStateDigest: digest } },

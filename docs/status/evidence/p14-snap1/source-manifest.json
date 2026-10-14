@@ -1,0 +1,54 @@
+{
+  "base": "6ae0b54633403481be872f40b0c5b25d070c7d7c",
+  "branch": "codex/composer-v3-p14-snap1-historical-artifact",
+  "files": [
+    {
+      "path": ".gitignore",
+      "sha256": "DD9706334214EC01653B97E28C1B9A56ED4616790722072BAE36F748BDAD2CAB"
+    },
+    {
+      "path": "src/server/phase2/planner/activity-history-artifact.ts",
+      "sha256": "3E8B8F28D810E7E852FA21F51CE8778DAABB9072AEC0A561AB315AA3D322B520"
+    },
+    {
+      "path": "src/server/phase2/planner/apply.ts",
+      "sha256": "5B5CFA858F204FF1AAE11B11581DF56A85BAD640E2D9F5AB29D44105D4DFFAFA"
+    },
+    {
+      "path": "src/server/phase2/planner/baseline-adapters.ts",
+      "sha256": "97CF4FB68117586A5213DCBAC03CACCF9E766EA66BF04559421601D02EAAA6E9"
+    },
+    {
+      "path": "src/server/phase2/planner/world-reader.ts",
+      "sha256": "3416CBA279D14A30435D4BE5EC281C07D518EE5EEB7B9B36D77C9AE86CEA4247"
+    },
+    {
+      "path": "src/server/phase2/planner/composer-opening.ts",
+      "sha256": "3D2C2B525D3B649934B7803BCB345292EE87C90903D60F77ABD1D281F2FC6DC1"
+    },
+    {
+      "path": "src/server/phase2/planner/composer-service.ts",
+      "sha256": "A7F778631ACFF544302A33AA77636821B1FD37A4381D7ECE814B005D9B504C1B"
+    },
+    {
+      "path": "src/server/analytics/global-v2-mobility-context-authority.ts",
+      "sha256": "9BF9E61FB0D5BCECAC02728B9352CCACCD51E16647B3F6B71DC70F0B2F20C474"
+    },
+    {
+      "path": "scripts/check-composer-p14-snap1.mjs",
+      "sha256": "1068D314960346F2D30ABA641CCD7224CD958ACEB2ACDB546E49CE03F3306BC1"
+    },
+    {
+      "path": "scripts/lib/snap1-isolated-store.mjs",
+      "sha256": "24B2ACC6AD27E35B97FC335CEA4BB49C018DF0AB04B5B38B5274558BF44D00B2"
+    },
+    {
+      "path": "scripts/fixtures/snap1-isolated.sql",
+      "sha256": "3801433A6768AEFBE7B987FEC81BAB1A61ACEF451C652760DB913568F04B45EF"
+    }
+  ],
+  "measured": "outputs/p14-snap1/final-code",
+  "P3": "0",
+  "SNAP1": "1_on_fixture_only",
+  "remoteWrites": 0
+}

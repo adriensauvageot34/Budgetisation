@@ -1,0 +1,127 @@
+{
+  "verifiedAt": "2026-10-14T12:18Z",
+  "notes": "Actual read-only Supabase metadata. No source rows or user identifiers exported. Counters are supplementary evidence, not a database checksum.",
+  "control": [
+    {
+      "final_control": {
+        "snapshots": [
+          {
+            "bytes": 96150,
+            "start": "2025-08-01",
+            "cutoff": "2026-10-14",
+            "digest": "df306fd92bbfeebd1599f32400745d0eb7ae0f74e7e37a8961f847fb2a3f87f6",
+            "generation": 1,
+            "endExclusive": "2026-10-01"
+          },
+          {
+            "bytes": 96151,
+            "start": "2025-08-01",
+            "cutoff": "2026-10-14",
+            "digest": "e34c916f0bc5e2f9c2d4d4b38e167a0a7961db90b18438ddf94707a64f97b146",
+            "generation": 1,
+            "endExclusive": "2026-10-15"
+          }
+        ],
+        "stats_reset": null,
+        "source_stats": [
+          {
+            "table": "operations",
+            "delete": 0,
+            "insert": 0,
+            "schema": "public",
+            "update": 0
+          },
+          {
+            "table": "life_event_types",
+            "delete": 0,
+            "insert": 0,
+            "schema": "public",
+            "update": 0
+          },
+          {
+            "table": "life_events",
+            "delete": 0,
+            "insert": 0,
+            "schema": "public",
+            "update": 0
+          },
+          {
+            "table": "life_event_participations",
+            "delete": 0,
+            "insert": 0,
+            "schema": "public",
+            "update": 0
+          },
+          {
+            "table": "life_event_financial_links",
+            "delete": 0,
+            "insert": 0,
+            "schema": "public",
+            "update": 0
+          },
+          {
+            "table": "mobility_legs",
+            "delete": 0,
+            "insert": 1368,
+            "schema": "public",
+            "update": 0
+          },
+          {
+            "table": "benefit_wallets",
+            "delete": 0,
+            "insert": 2,
+            "schema": "public",
+            "update": 1
+          },
+          {
+            "table": "benefit_wallet_ledger_entries",
+            "delete": 0,
+            "insert": 213,
+            "schema": "public",
+            "update": 0
+          },
+          {
+            "table": "phase2_month_inputs",
+            "delete": 1,
+            "insert": 2,
+            "schema": "public",
+            "update": 44
+          },
+          {
+            "table": "phase2_planned_expenses",
+            "delete": 25,
+            "insert": 32,
+            "schema": "public",
+            "update": 37
+          },
+          {
+            "table": "phase2_forecast_checkpoints",
+            "delete": 0,
+            "insert": 0,
+            "schema": "public",
+            "update": 0
+          },
+          {
+            "table": "phase2_month_plans",
+            "delete": 0,
+            "insert": 0,
+            "schema": "public",
+            "update": 0
+          },
+          {
+            "table": "phase2_composer_drafts",
+            "delete": 0,
+            "insert": 4,
+            "schema": "public",
+            "update": 25
+          }
+        ],
+        "snapshot_state": {
+          "enabled": true,
+          "coverage": true,
+          "revision": 1
+        }
+      }
+    }
+  ]
+}

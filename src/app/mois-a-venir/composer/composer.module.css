@@ -10,8 +10,8 @@
 .workspace button { cursor:pointer; }
 .workspace button:disabled { cursor:default; opacity:.48; }
 .workspace :is(button,input,select,a,summary,[tabindex]):focus-visible { outline:2px solid var(--focus); outline-offset:3px; }
-.workspaceHeader { display:grid; grid-template-columns:minmax(290px,1fr) auto auto; align-items:center; gap:18px; flex:0 0 80px; min-height:80px; max-height:80px; padding:0 2px 10px; min-width:0; }
-.headerIdentity { min-width:0; }
+.workspaceHeader { display:flex; flex-wrap:wrap; align-items:center; align-content:center; gap:8px 18px; flex:0 0 auto; min-height:80px; padding:0 2px; min-width:0; }
+.headerIdentity { flex:1 1 290px; min-width:min(100%,290px); }
 .backLink { display:inline-flex; align-items:center; gap:5px; font-size:10px!important; color:var(--muted); text-decoration:none; }
 .backLink:hover { color:var(--ink); }
 .workspaceHeader h1 { font-size:20px; font-weight:740; line-height:1.25; margin:3px 0 4px; letter-spacing:-.65px; white-space:nowrap; }
@@ -22,10 +22,11 @@
 .completenessToggle { border:0; background:transparent; color:inherit; padding:0; font-size:inherit; border-radius:3px; }
 .completenessToggle:hover,.completenessToggle[aria-pressed=true] { color:var(--amber); text-decoration:underline; text-underline-offset:3px; }
 .toolbar,.historyTools { display:flex; align-items:center; gap:6px; }
+.toolbar { flex:0 0 auto; margin-left:auto; }
 .historyTools { gap:1px; }
 .historyButton { border:0; border-radius:8px; background:transparent; color:#746b86; display:grid; place-items:center; width:29px; height:34px; }
 .historyButton:hover:not(:disabled) { background:#f0ebf7; }
-.hudContainer { display:flex; min-width:0; gap:8px; align-items:center; }
+.hudContainer { display:flex; flex:0 1 auto; min-width:0; max-width:100%; gap:8px; align-items:center; overflow-x:auto; overflow-y:hidden; }
 .financialHud { display:grid; grid-template-columns:118px 104px 86px 88px 88px; height:58px; border:1px solid var(--line); border-radius:12px; background:#fff; padding:8px 0; min-width:0; }
 .financialHud>div,.financialHud>button { padding:0 10px; display:flex; flex-direction:column; justify-content:center; gap:4px; min-width:0; border:0; border-right:1px solid #eeedf2; background:transparent; text-align:left; color:inherit; }
 .financialHud>*:last-child { border-right:0; }
@@ -71,6 +72,9 @@
 .libraryScroll { min-height:0; flex:1; overflow-y:auto; overscroll-behavior:contain; scrollbar-gutter:stable; padding:0 12px 16px; }
 .assetGroup { padding-top:15px; }
 .assetGroup h3 { font-size:9px; font-weight:650; text-transform:uppercase; letter-spacing:1.15px; color:#7f7492; margin:0 4px 8px; }
+.assetGroupToggle { width:100%; display:flex; align-items:center; gap:7px; border:0; padding:5px 4px; background:transparent; color:inherit; font:inherit; font-weight:inherit; letter-spacing:inherit; text-align:left; text-transform:inherit; cursor:pointer; border-radius:6px; }
+.assetGroupToggle:hover,.assetGroupToggle:focus-visible { color:#49316d; background:#eee9f7; }
+.assetGroupToggle small { margin-left:auto; font-size:10px; letter-spacing:normal; }
 .assetGrid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:7px; }
 .asset { min-width:0; width:100%; min-height:73px; display:flex; flex-direction:column; align-items:flex-start; justify-content:center; text-align:left; gap:3px; border:1px solid #eae4f0; background:#fff; border-radius:11px; padding:7px 10px; color:var(--ink); transition:transform var(--motion-hover),box-shadow var(--motion-hover),border-color var(--motion-hover); }
 .asset[draggable=true] { cursor:grab; }
@@ -80,6 +84,7 @@
 .asset>span:nth-child(2) { min-width:0; font-size:10px; font-weight:650; line-height:1.25; }
 .assetIcon { display:flex; height:32px; width:32px; flex-shrink:0; }
 .searchEmpty { padding:15px 4px; font-size:11px; color:var(--muted); }
+.editorLoading { padding:20px; min-height:110px; }
 .board { position:relative; z-index:var(--z-board); min-height:0; min-width:0; display:flex; flex-direction:column; background:transparent; border:0; border-radius:0; }
 /* clip prevents native drag autoscroll from bypassing the controlled page transform. */
 .carouselViewport { position:relative; min-height:0; flex:1; overflow:clip; border-radius:10px; }
@@ -638,6 +643,7 @@
 .dialog[data-side-panel=true]::backdrop { background:transparent; backdrop-filter:none; }
 .giftOccasion button { min-height:40px; min-width:110px; padding:8px 10px; }
 .financialHud[data-stale=true] { border-color:#dcccae; background:#fffcf5; }
+
 .durableActions { display:flex; align-items:center; flex-wrap:wrap; gap:6px; }
 .durableActions button { border:1px solid #d9d2e5; border-radius:9px; padding:6px 9px; background:#fff; color:#493e64; font-size:11px; cursor:pointer; }
 .durableActions button:disabled { opacity:.5; cursor:not-allowed; }

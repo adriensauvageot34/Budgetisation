@@ -1,0 +1,2329 @@
+{
+  "counts": {
+    "plans": 0,
+    "revisions": 0
+  },
+  "rpcCalls": 0,
+  "remoteWrites": 0,
+  "historicalCanaryWrites": 0,
+  "log": [
+    {
+      "kind": "READ",
+      "sequence": 0,
+      "mutationKind": null,
+      "gesture": null,
+      "interactionImpact": "0.00",
+      "fixturePerformance": {
+        "kind": "READ",
+        "sequence": 0,
+        "started": 494171.0758,
+        "worldReads": 1,
+        "evaluations": 1,
+        "financeCalls": 1,
+        "evaluationsMs": 73.96119999996154,
+        "financeCallsMs": 3.2110000000102445,
+        "events": [
+          {
+            "event": "world-start",
+            "at": 494171.2288
+          },
+          {
+            "event": "world-end",
+            "at": 494303.3441
+          }
+        ],
+        "digests": [
+          {
+            "preview": "282c9ff9520bf747c4078cd615f3e1805067674cf8a2835236ca248200401598",
+            "projection": "6d0878b567179b8a6e2bb43ebeeb757142ede28839af33874e8f42bb9d9bba66",
+            "manifest": "65ea622231656f293f82718d4efae433158cf6cb4f0668a7a939fb826ad46177"
+          }
+        ],
+        "ms": 471.1545000000042,
+        "simulatedGets": 20
+      },
+      "uiPayloadFields": [],
+      "ok": true,
+      "digest": "7ed03c37b4d9acc359e6679482b53e9d5dfc1855282de89d6ad897235c6a9e85"
+    },
+    {
+      "kind": "RESPONSE",
+      "commandKind": "READ",
+      "sequence": 0,
+      "at": 1791900026582,
+      "ok": true
+    },
+    {
+      "kind": "READ",
+      "sequence": 2,
+      "mutationKind": null,
+      "gesture": null,
+      "interactionImpact": null,
+      "fixturePerformance": {
+        "kind": "READ",
+        "sequence": 2,
+        "started": 555136.0456,
+        "worldReads": 1,
+        "evaluations": 1,
+        "financeCalls": 3,
+        "evaluationsMs": 396.60129999998026,
+        "financeCallsMs": 15.195900000049733,
+        "events": [
+          {
+            "event": "world-start",
+            "at": 555138.3239
+          },
+          {
+            "event": "world-end",
+            "at": 555289.9374
+          }
+        ],
+        "digests": [
+          {
+            "preview": "ca3a0e2cfc675909667ed07e5c9b7017ee795bdbe53889243d43c75c73669be6",
+            "projection": "e3e63769e64f1b4457c06950de606f8a3c7313318cb73aac75dcbde0692d878f",
+            "manifest": "40b5a59d3b90a3006fccb50d886d2966178e786e72db0b539ba035d5f766f1b6"
+          }
+        ],
+        "ms": 683.985900000087,
+        "simulatedGets": 20
+      },
+      "uiPayloadFields": [],
+      "ok": true,
+      "digest": "9f97038a58c156264c191c2e188c28f9a27a976c69f512b33e43781ec4e92ac6"
+    },
+    {
+      "kind": "RESPONSE",
+      "commandKind": "READ",
+      "sequence": 2,
+      "at": 1791900087706,
+      "ok": true
+    },
+    {
+      "kind": "DROP",
+      "sequence": 4,
+      "mutationKind": "PATCH_CONTEXT",
+      "gesture": {
+        "assetKey": "option:night-out:main:main",
+        "target": {
+          "kind": "CONTEXT_SOCKET",
+          "contextOccurrenceId": "00000000-0000-4000-8000-000000050001",
+          "slotKey": "main"
+        },
+        "sourceSocket": null
+      },
+      "interactionImpact": null,
+      "fixturePerformance": {
+        "kind": "DROP",
+        "sequence": 4,
+        "started": 556442.6731,
+        "worldReads": 1,
+        "evaluations": 2,
+        "financeCalls": 6,
+        "evaluationsMs": 232.72420000005513,
+        "financeCallsMs": 9.081600000034086,
+        "events": [
+          {
+            "event": "world-start",
+            "at": 556444.325
+          },
+          {
+            "event": "world-end",
+            "at": 556574.7914
+          }
+        ],
+        "digests": [
+          {
+            "preview": "ca3a0e2cfc675909667ed07e5c9b7017ee795bdbe53889243d43c75c73669be6",
+            "projection": "e3e63769e64f1b4457c06950de606f8a3c7313318cb73aac75dcbde0692d878f",
+            "manifest": "40b5a59d3b90a3006fccb50d886d2966178e786e72db0b539ba035d5f766f1b6"
+          },
+          {
+            "preview": "8c24c72fe95113af056115b898315852f31ce443543677a9dd273fc269adb65d",
+            "projection": "679b03d3709a7e3b1048d8791c6b9784e8a3281f328e7b5e932efc5a1c22145d",
+            "manifest": "093a85fbca12eb9cdc8e2ee29c0b52494791c609b9dd58b2ac5ae406a2c1a0e6"
+          }
+        ],
+        "ms": 475.03350000001956,
+        "simulatedGets": 20
+      },
+      "uiPayloadFields": [],
+      "ok": true,
+      "digest": "959bd26a8d7d0cef1097e8b1f99891f9fd1b6bb4e635ab640081c7f31ef62edc"
+    },
+    {
+      "kind": "RESPONSE",
+      "commandKind": "DROP",
+      "sequence": 4,
+      "at": 1791900088794,
+      "ok": true
+    },
+    {
+      "kind": "DROP",
+      "sequence": 6,
+      "mutationKind": "PATCH_CONTEXT",
+      "gesture": {
+        "assetKey": "option:night-out:extras:extra",
+        "target": {
+          "kind": "CONTEXT_SOCKET",
+          "contextOccurrenceId": "00000000-0000-4000-8000-000000050001",
+          "slotKey": "extras"
+        },
+        "sourceSocket": null
+      },
+      "interactionImpact": "-12.00",
+      "fixturePerformance": {
+        "kind": "DROP",
+        "sequence": 6,
+        "started": 557402.5525,
+        "worldReads": 1,
+        "evaluations": 2,
+        "financeCalls": 6,
+        "evaluationsMs": 250.89700000011362,
+        "financeCallsMs": 15.209799999953248,
+        "events": [
+          {
+            "event": "world-start",
+            "at": 557402.8927
+          },
+          {
+            "event": "world-end",
+            "at": 557534.3576
+          }
+        ],
+        "digests": [
+          {
+            "preview": "8c24c72fe95113af056115b898315852f31ce443543677a9dd273fc269adb65d",
+            "projection": "679b03d3709a7e3b1048d8791c6b9784e8a3281f328e7b5e932efc5a1c22145d",
+            "manifest": "093a85fbca12eb9cdc8e2ee29c0b52494791c609b9dd58b2ac5ae406a2c1a0e6"
+          },
+          {
+            "preview": "a110e346a96d824067de8e4050afde18b74ddc685cf8a32a4acff78723d1d88d",
+            "projection": "50aa463d8c3206aa6650a090413ae9f043ebe9367042e7586835498570b8825f",
+            "manifest": "0f592cf2e3ad26fcac8ea53fa3a216330efae086e0d8fde7fcf3c5caa7116cfb"
+          }
+        ],
+        "ms": 457.9708999999566,
+        "simulatedGets": 20
+      },
+      "uiPayloadFields": [],
+      "ok": true,
+      "digest": "bec768ca77304ec281894303517c015b7be4396517b95695fffee719636c53b2"
+    },
+    {
+      "kind": "RESPONSE",
+      "commandKind": "DROP",
+      "sequence": 6,
+      "at": 1791900089740,
+      "ok": true
+    },
+    {
+      "kind": "DROP",
+      "sequence": 8,
+      "mutationKind": "PATCH_CONTEXT",
+      "gesture": {
+        "assetKey": "option:night-out:extras:extra",
+        "target": {
+          "kind": "CONTEXT_SOCKET",
+          "contextOccurrenceId": "00000000-0000-4000-8000-000000050001",
+          "slotKey": "extras"
+        },
+        "sourceSocket": null
+      },
+      "interactionImpact": "-12.00",
+      "fixturePerformance": {
+        "kind": "DROP",
+        "sequence": 8,
+        "started": 558335.8841,
+        "worldReads": 1,
+        "evaluations": 2,
+        "financeCalls": 6,
+        "evaluationsMs": 219.69659999990836,
+        "financeCallsMs": 10.383700000005774,
+        "events": [
+          {
+            "event": "world-start",
+            "at": 558336.0981
+          },
+          {
+            "event": "world-end",
+            "at": 558457.1862
+          }
+        ],
+        "digests": [
+          {
+            "preview": "a110e346a96d824067de8e4050afde18b74ddc685cf8a32a4acff78723d1d88d",
+            "projection": "50aa463d8c3206aa6650a090413ae9f043ebe9367042e7586835498570b8825f",
+            "manifest": "0f592cf2e3ad26fcac8ea53fa3a216330efae086e0d8fde7fcf3c5caa7116cfb"
+          },
+          {
+            "preview": "73f2b30b26d06c69cf3e2ac96474cb05d6b35d2fc305c6973fc458208971bc0c",
+            "projection": "230021e518ad5cf5a77c16a1f5fa67b8f1a26b50994fc3c4fa065e3130618397",
+            "manifest": "fff3f3dcb7b49525eae530171cf5f7cbb354f2913ddbfeb03a4d6f89b0d17ce1"
+          }
+        ],
+        "ms": 395.02269999997225,
+        "simulatedGets": 20
+      },
+      "uiPayloadFields": [],
+      "ok": true,
+      "digest": "cb007c09eaf67983d9dda94b06e9a5c04ce17ab44099f0f8cf04bdc07b8f6096"
+    },
+    {
+      "kind": "RESPONSE",
+      "commandKind": "DROP",
+      "sequence": 8,
+      "at": 1791900090608,
+      "ok": true
+    },
+    {
+      "kind": "DROP",
+      "sequence": 10,
+      "mutationKind": "PATCH_CONTEXT",
+      "gesture": {
+        "assetKey": "option:night-out:extras:extra",
+        "target": {
+          "kind": "CONTEXT_SOCKET",
+          "contextOccurrenceId": "00000000-0000-4000-8000-000000050001",
+          "slotKey": "extras"
+        },
+        "sourceSocket": null
+      },
+      "interactionImpact": "-24.00",
+      "fixturePerformance": {
+        "kind": "DROP",
+        "sequence": 10,
+        "started": 559172.877,
+        "worldReads": 1,
+        "evaluations": 2,
+        "financeCalls": 6,
+        "evaluationsMs": 227.12670000002254,
+        "financeCallsMs": 11.640599999926053,
+        "events": [
+          {
+            "event": "world-start",
+            "at": 559173.2108
+          },
+          {
+            "event": "world-end",
+            "at": 559302.796
+          }
+        ],
+        "digests": [
+          {
+            "preview": "73f2b30b26d06c69cf3e2ac96474cb05d6b35d2fc305c6973fc458208971bc0c",
+            "projection": "230021e518ad5cf5a77c16a1f5fa67b8f1a26b50994fc3c4fa065e3130618397",
+            "manifest": "fff3f3dcb7b49525eae530171cf5f7cbb354f2913ddbfeb03a4d6f89b0d17ce1"
+          },
+          {
+            "preview": "9eeeb857292180c9e9c2e791ea5ae23609b7333294b45e992206df76e0292f0d",
+            "projection": "df9fd5cf8bb9f7455bb7ffb5129bc268f7e988619409fe801cb9dbd5e8093bbb",
+            "manifest": "63bae007d7494a1bda4b3fac16941509ccb043a48778efab6564021abeaab0e5"
+          }
+        ],
+        "ms": 397.8908999999985,
+        "simulatedGets": 20
+      },
+      "uiPayloadFields": [],
+      "ok": true,
+      "digest": "4f2552df2d154338ea3405a4604d32c87354a8b5165e9141e64654b74d1eceef"
+    },
+    {
+      "kind": "RESPONSE",
+      "commandKind": "DROP",
+      "sequence": 10,
+      "at": 1791900091445,
+      "ok": true
+    },
+    {
+      "kind": "READ",
+      "sequence": 8,
+      "mutationKind": null,
+      "gesture": null,
+      "interactionImpact": "0.00",
+      "fixturePerformance": {
+        "kind": "READ",
+        "sequence": 8,
+        "started": 560197.1251,
+        "worldReads": 1,
+        "evaluations": 1,
+        "financeCalls": 4,
+        "evaluationsMs": 131.6508999998914,
+        "financeCallsMs": 5.2126000000862405,
+        "events": [
+          {
+            "event": "world-start",
+            "at": 560197.2999
+          },
+          {
+            "event": "world-end",
+            "at": 560328.5814
+          }
+        ],
+        "digests": [
+          {
+            "preview": "47c4ee07681549cfda379caf11db864ac6f889736629b764e04cad5a8e99a4bd",
+            "projection": "1c7ff4ea822804adc5279dcffdb230913df4610e0e8ea91b98771f2458ee40cf",
+            "manifest": "ec932bbb3a1802772c31907cab00cf7e96853840ff0a6506d7fc56ab430cf8fb"
+          }
+        ],
+        "ms": 291.8809000001056,
+        "simulatedGets": 20
+      },
+      "uiPayloadFields": [],
+      "ok": true,
+      "digest": "0c1c1761774ded4f32d6a8ec964f4ae0011880807a48ef033e469adb39f248d1"
+    },
+    {
+      "kind": "RESPONSE",
+      "commandKind": "READ",
+      "sequence": 8,
+      "at": 1791900092365,
+      "ok": true
+    },
+    {
+      "kind": "READ",
+      "sequence": 10,
+      "mutationKind": null,
+      "gesture": null,
+      "interactionImpact": null,
+      "fixturePerformance": {
+        "kind": "READ",
+        "sequence": 10,
+        "started": 560930.7043,
+        "worldReads": 1,
+        "evaluations": 1,
+        "financeCalls": 5,
+        "evaluationsMs": 165.8865999999689,
+        "financeCallsMs": 7.227900000056252,
+        "events": [
+          {
+            "event": "world-start",
+            "at": 560930.8567
+          },
+          {
+            "event": "world-end",
+            "at": 561062.5865
+          }
+        ],
+        "digests": [
+          {
+            "preview": "1c2adb8642e50deb7e2066a476c3a6dcfa608bdf7a85da3b8ac210264330e64e",
+            "projection": "9fac7bceb8b938ea8e0260397d1bd50bdc59615271adb6777a7f4bde4d55e7aa",
+            "manifest": "48c42d2c8ca7522a8e93ac9027920d344e158dbe18b1099d491c3d407e84e813"
+          }
+        ],
+        "ms": 332.13140000007115,
+        "simulatedGets": 20
+      },
+      "uiPayloadFields": [],
+      "ok": true,
+      "digest": "edcf819cfed7cb345f176c33eb9b117b077177187529aa9af6bc645e7fc908a0"
+    },
+    {
+      "kind": "RESPONSE",
+      "commandKind": "READ",
+      "sequence": 10,
+      "at": 1791900093142,
+      "ok": true
+    },
+    {
+      "kind": "READ",
+      "sequence": 12,
+      "mutationKind": null,
+      "gesture": null,
+      "interactionImpact": null,
+      "fixturePerformance": {
+        "kind": "READ",
+        "sequence": 12,
+        "started": 561796.2941,
+        "worldReads": 1,
+        "evaluations": 1,
+        "financeCalls": 6,
+        "evaluationsMs": 236.37649999989662,
+        "financeCallsMs": 10.899300000164658,
+        "events": [
+          {
+            "event": "world-start",
+            "at": 561796.6291
+          },
+          {
+            "event": "world-end",
+            "at": 561918.5984
+          }
+        ],
+        "digests": [
+          {
+            "preview": "bc73180ea575032fb4139b5bdc3f0aad95238822930e5c4f9e0a113480cd3016",
+            "projection": "16992a89178457573b76119125f5951ccc79bfd36255836ceb9dc4f8355dc8d6",
+            "manifest": "c41ea6d7351a7fbd1a54e493e5204c590bc6f68e647b6e2ab3a459c8b1d6272b"
+          }
+        ],
+        "ms": 388.169399999897,
+        "simulatedGets": 20
+      },
+      "uiPayloadFields": [],
+      "ok": true,
+      "digest": "6237242ee7239041001b528ead16e05d9da4a9becb20d3cb6b4560e3cc2476ac"
+    },
+    {
+      "kind": "RESPONSE",
+      "commandKind": "READ",
+      "sequence": 12,
+      "at": 1791900094059,
+      "ok": true
+    },
+    {
+      "kind": "READ",
+      "sequence": 14,
+      "mutationKind": null,
+      "gesture": null,
+      "interactionImpact": null,
+      "fixturePerformance": {
+        "kind": "READ",
+        "sequence": 14,
+        "started": 562220.6009,
+        "worldReads": 1,
+        "evaluations": 1,
+        "financeCalls": 6,
+        "evaluationsMs": 212.87170000001788,
+        "financeCallsMs": 9.23120000003837,
+        "events": [
+          {
+            "event": "world-start",
+            "at": 562220.7978
+          },
+          {
+            "event": "world-end",
+            "at": 562347.6984
+          }
+        ],
+        "digests": [
+          {
+            "preview": "b3fbbc2a26efd95f7132ddb5721f71c338c4cf40759423993aa799e58ad15f7b",
+            "projection": "d0a34a8e78706adefa3e744bee3e25bcaf1c9536b8b0756a80c4f8bf7ade5b68",
+            "manifest": "592e95ce516f8fc6c129b00ea1f1d2d5605ad22cf82a54c7e2884846b6cd7440"
+          }
+        ],
+        "ms": 364.5926000000909,
+        "simulatedGets": 20
+      },
+      "uiPayloadFields": [],
+      "ok": true,
+      "digest": "3226584db3eb56308b5574d9aa468df121d94c336710287b5cba110b50aec476"
+    },
+    {
+      "kind": "RESPONSE",
+      "commandKind": "READ",
+      "sequence": 14,
+      "at": 1791900094459,
+      "ok": true
+    },
+    {
+      "kind": "READ",
+      "sequence": 16,
+      "mutationKind": null,
+      "gesture": null,
+      "interactionImpact": null,
+      "fixturePerformance": {
+        "kind": "READ",
+        "sequence": 16,
+        "started": 562224.3325,
+        "worldReads": 1,
+        "evaluations": 1,
+        "financeCalls": 6,
+        "evaluationsMs": 195.1205000000773,
+        "financeCallsMs": 9.262499999837019,
+        "events": [
+          {
+            "event": "world-start",
+            "at": 562224.5134
+          },
+          {
+            "event": "world-end",
+            "at": 562618.6421
+          }
+        ],
+        "digests": [
+          {
+            "preview": "80e3af3a15521b2576f3db68b40b7edd51042d3048ed1121b9bbe378d265a05f",
+            "projection": "7e66ecd0ae845d2801f907525c1fd8f6ecb6f2311c5b19dd42c30b48dd9407fc",
+            "manifest": "daf5b100bd62852dbc7bbe6e52e88f0e4eee27a7b74b235009629976bb92b492"
+          }
+        ],
+        "ms": 616.1720000000205,
+        "simulatedGets": 20
+      },
+      "uiPayloadFields": [],
+      "ok": true,
+      "digest": "8469e9206af84a2824ec2e8813acd4fecc691d86101f5d52fdef32e680f0564d"
+    },
+    {
+      "kind": "RESPONSE",
+      "commandKind": "READ",
+      "sequence": 16,
+      "at": 1791900094719,
+      "ok": true
+    },
+    {
+      "kind": "READ",
+      "sequence": 18,
+      "mutationKind": null,
+      "gesture": null,
+      "interactionImpact": null,
+      "fixturePerformance": {
+        "kind": "READ",
+        "sequence": 18,
+        "started": 562879.8538,
+        "worldReads": 1,
+        "evaluations": 1,
+        "financeCalls": 6,
+        "evaluationsMs": 190.48990000004414,
+        "financeCallsMs": 9.800999999977648,
+        "events": [
+          {
+            "event": "world-start",
+            "at": 562880.0693
+          },
+          {
+            "event": "world-end",
+            "at": 563015.8809
+          }
+        ],
+        "digests": [
+          {
+            "preview": "034b85020671ee8d4c7b9ff86a761f8d925a122c4330e68b4da38da9403fd4b2",
+            "projection": "82ab49be71464a0d71d715aca80131b00b33981ea218137559e86022acff873c",
+            "manifest": "b00dcd1971682f1dfec4c15b540c2ce31961111f6b9fb36e1ed0a1e62dda984a"
+          }
+        ],
+        "ms": 349.62979999999516,
+        "simulatedGets": 20
+      },
+      "uiPayloadFields": [],
+      "ok": true,
+      "digest": "6e70029f1ceb5ffc428d9de412777f65522b52ffbb24b7f86a2043f5e3556226"
+    },
+    {
+      "kind": "RESPONSE",
+      "commandKind": "READ",
+      "sequence": 18,
+      "at": 1791900095103,
+      "ok": true
+    },
+    {
+      "kind": "READ",
+      "sequence": 20,
+      "mutationKind": null,
+      "gesture": null,
+      "interactionImpact": null,
+      "fixturePerformance": {
+        "kind": "READ",
+        "sequence": 20,
+        "started": 562883.3791,
+        "worldReads": 1,
+        "evaluations": 1,
+        "financeCalls": 6,
+        "evaluationsMs": 196.03380000009201,
+        "financeCallsMs": 8.427900000009686,
+        "events": [
+          {
+            "event": "world-start",
+            "at": 562883.539
+          },
+          {
+            "event": "world-end",
+            "at": 563263.8297
+          }
+        ],
+        "digests": [
+          {
+            "preview": "2a33606880c7ee0e870c38a8f5fce61bd37f8875efedd33678c12aab7c8658c6",
+            "projection": "094a023bc04a467e988d002142293cbcf3bdfd2d9775b2110bfb86a879207d55",
+            "manifest": "500d77376285aa2d7211f3b3c8278cb62bb5a50560c864c648624bc4fe625932"
+          }
+        ],
+        "ms": 602.5496000000276,
+        "simulatedGets": 20
+      },
+      "uiPayloadFields": [],
+      "ok": true,
+      "digest": "9f9cd36d75957d30086b04a015693619f17f7ca09c752c0b214ae198b1ef952e"
+    },
+    {
+      "kind": "RESPONSE",
+      "commandKind": "READ",
+      "sequence": 20,
+      "at": 1791900095367,
+      "ok": true
+    },
+    {
+      "kind": "READ",
+      "sequence": 22,
+      "mutationKind": null,
+      "gesture": null,
+      "interactionImpact": null,
+      "fixturePerformance": {
+        "kind": "READ",
+        "sequence": 22,
+        "started": 564194.5035,
+        "worldReads": 1,
+        "evaluations": 1,
+        "financeCalls": 6,
+        "evaluationsMs": 234.10429999988992,
+        "financeCallsMs": 12.222100000130013,
+        "events": [
+          {
+            "event": "world-start",
+            "at": 564194.7115
+          },
+          {
+            "event": "world-end",
+            "at": 564324.8165
+          }
+        ],
+        "digests": [
+          {
+            "preview": "babcf576ca6ace2b596d7576b7187ffafaffa1360d8311c2e10ba6ca8d49c9d9",
+            "projection": "c44aa09cc5c543ec6513dee8c80f91f09ed40738da0a5ad86a6d5d0ef0db84b6",
+            "manifest": "b2ac722400453ad967c91bb487b77020aaeff6e2eec3ba8b98da74798eb54dc8"
+          }
+        ],
+        "ms": 396.61699999996927,
+        "simulatedGets": 20
+      },
+      "uiPayloadFields": [],
+      "ok": true,
+      "digest": "316db7b18e2da6f7c630981f3f6e95bf8f0131edd0e59e887cd5fe01b089b7a1"
+    },
+    {
+      "kind": "RESPONSE",
+      "commandKind": "READ",
+      "sequence": 22,
+      "at": 1791900096471,
+      "ok": true
+    },
+    {
+      "kind": "READ",
+      "sequence": 24,
+      "mutationKind": null,
+      "gesture": null,
+      "interactionImpact": null,
+      "fixturePerformance": {
+        "kind": "READ",
+        "sequence": 24,
+        "started": 564635.2166,
+        "worldReads": 1,
+        "evaluations": 1,
+        "financeCalls": 6,
+        "evaluationsMs": 209.36899999994785,
+        "financeCallsMs": 17.362599999993108,
+        "events": [
+          {
+            "event": "world-start",
+            "at": 564635.7448
+          },
+          {
+            "event": "world-end",
+            "at": 564758.8112
+          }
+        ],
+        "digests": [
+          {
+            "preview": "fc8d9e0856141d2800b0fea92e26a3b49a8ead013b8aeedc236711be90c020f3",
+            "projection": "aad6cfe7d1d9986ed3ae7f4040d4562e48609afea2fc6ff9f22d8b0bed3940b3",
+            "manifest": "10457c6bed5e26add5491b336f8a1e9b9a37ec5ed4a88c31a46658102ff595ee"
+          }
+        ],
+        "ms": 364.69490000000224,
+        "simulatedGets": 20
+      },
+      "uiPayloadFields": [],
+      "ok": true,
+      "digest": "f345e824b76cf2aa4ae1939014978693acdb7d0e980bb8075140aee4d901f9e8"
+    },
+    {
+      "kind": "RESPONSE",
+      "commandKind": "READ",
+      "sequence": 24,
+      "at": 1791900096880,
+      "ok": true
+    },
+    {
+      "kind": "READ",
+      "sequence": 26,
+      "mutationKind": null,
+      "gesture": null,
+      "interactionImpact": null,
+      "fixturePerformance": {
+        "kind": "READ",
+        "sequence": 26,
+        "started": 564642.8498,
+        "worldReads": 1,
+        "evaluations": 1,
+        "financeCalls": 6,
+        "evaluationsMs": 205.44670000008773,
+        "financeCallsMs": 8.961699999985285,
+        "events": [
+          {
+            "event": "world-start",
+            "at": 564643.1102
+          },
+          {
+            "event": "world-end",
+            "at": 565061.5503
+          }
+        ],
+        "digests": [
+          {
+            "preview": "0c75b4e3dcb21e0fe64ed4eb93e929f2accb5d4e217aa40f73ea96ea4b4f81e7",
+            "projection": "7e6c99a5961268c78591b25e2040220640c6e9eb5e53853a5e6561da382ba1ab",
+            "manifest": "46106cf5740a7a1bbb10865a1d78aeb14e835d95a60021b2a793a95cd8cd1938"
+          }
+        ],
+        "ms": 648.1356999999844,
+        "simulatedGets": 20
+      },
+      "uiPayloadFields": [],
+      "ok": true,
+      "digest": "8cb0e1f25de2a0c489a1f9ceecb4dd614dd797418259086adb0e1ec00ead28ec"
+    },
+    {
+      "kind": "RESPONSE",
+      "commandKind": "READ",
+      "sequence": 26,
+      "at": 1791900097167,
+      "ok": true
+    },
+    {
+      "kind": "READ",
+      "sequence": 28,
+      "mutationKind": null,
+      "gesture": null,
+      "interactionImpact": null,
+      "fixturePerformance": {
+        "kind": "READ",
+        "sequence": 28,
+        "started": 565047.087,
+        "worldReads": 1,
+        "evaluations": 1,
+        "financeCalls": 6,
+        "evaluationsMs": 195.65780000004452,
+        "financeCallsMs": 8.955300000030547,
+        "events": [
+          {
+            "event": "world-start",
+            "at": 565047.2714
+          },
+          {
+            "event": "world-end",
+            "at": 565329.812
+          }
+        ],
+        "digests": [
+          {
+            "preview": "da2d2dfb3895d94204ff5955188db517ac5f0338b2fdd993ccd1cca4b3a0a64a",
+            "projection": "b1971829f8a6b36f9adc1ef7f92391dfb03e41929c8d82ceee635635d28d0575",
+            "manifest": "5705fd38a628919b62072ca947023000d476fceb5563f7fcb861b6371ec629f7"
+          }
+        ],
+        "ms": 506.4798999999184,
+        "simulatedGets": 20
+      },
+      "uiPayloadFields": [],
+      "ok": true,
+      "digest": "fd292ea365edcfe9d92c4212f1899d8b13c89d4fad6f6f758837b80b7b6f756c"
+    },
+    {
+      "kind": "RESPONSE",
+      "commandKind": "READ",
+      "sequence": 28,
+      "at": 1791900097428,
+      "ok": true
+    },
+    {
+      "kind": "READ",
+      "sequence": 30,
+      "mutationKind": null,
+      "gesture": null,
+      "interactionImpact": null,
+      "fixturePerformance": {
+        "kind": "READ",
+        "sequence": 30,
+        "started": 565052.8086,
+        "worldReads": 1,
+        "evaluations": 1,
+        "financeCalls": 6,
+        "evaluationsMs": 206.58960000006482,
+        "financeCallsMs": 10.162100000074133,
+        "events": [
+          {
+            "event": "world-start",
+            "at": 565053.1041
+          },
+          {
+            "event": "world-end",
+            "at": 565587.678
+          }
+        ],
+        "digests": [
+          {
+            "preview": "c98900a857e5d956538374aeb2e7437529e6b82578fd95471cd467e7390d3646",
+            "projection": "f6f5b7891cba44f416013eda5d2ee7a0c1e48afa4684fac996e5ba3894810476",
+            "manifest": "fd39a9c782d5e5ad548020176cd98a957a7f28d769c0ae3c8e16a0d68dcc26e1"
+          }
+        ],
+        "ms": 772.4438999999547,
+        "simulatedGets": 20
+      },
+      "uiPayloadFields": [],
+      "ok": true,
+      "digest": "557d53af49ace658c241a0613f8a0a7c24479ae84ff1b96b5114efb0b725f7ec"
+    },
+    {
+      "kind": "RESPONSE",
+      "commandKind": "READ",
+      "sequence": 30,
+      "at": 1791900097700,
+      "ok": true
+    },
+    {
+      "kind": "READ",
+      "sequence": 32,
+      "mutationKind": null,
+      "gesture": null,
+      "interactionImpact": null,
+      "fixturePerformance": {
+        "kind": "READ",
+        "sequence": 32,
+        "started": 565327.0102,
+        "worldReads": 1,
+        "evaluations": 1,
+        "financeCalls": 6,
+        "evaluationsMs": 276.4070000000065,
+        "financeCallsMs": 16.094199999934062,
+        "events": [
+          {
+            "event": "world-start",
+            "at": 565327.2296
+          },
+          {
+            "event": "world-end",
+            "at": 565881.0684
+          }
+        ],
+        "digests": [
+          {
+            "preview": "0a0a533d698f55117632eb27f1979d3cd384d5330c67a9f5f499360c564afa6c",
+            "projection": "835f03a1e027b3590d87be3fc005cb5e0cd24cbba220f38133fe304104211232",
+            "manifest": "4d031e77dff5b84924d5737cc297ddc61a40a3a49cd6cb86fe9cb70e9f678090"
+          }
+        ],
+        "ms": 859.3939000000246,
+        "simulatedGets": 20
+      },
+      "uiPayloadFields": [],
+      "ok": true,
+      "digest": "4a9e01125aaf33fb49469f3725c3cd14349a3e4347fa5d72515d0be6721bd449"
+    },
+    {
+      "kind": "RESPONSE",
+      "commandKind": "READ",
+      "sequence": 32,
+      "at": 1791900098061,
+      "ok": true
+    },
+    {
+      "kind": "READ",
+      "sequence": 36,
+      "mutationKind": null,
+      "gesture": null,
+      "interactionImpact": null,
+      "fixturePerformance": {
+        "kind": "READ",
+        "sequence": 36,
+        "started": 565863.9099,
+        "worldReads": 1,
+        "evaluations": 1,
+        "financeCalls": 6,
+        "evaluationsMs": 192.29840000008699,
+        "financeCallsMs": 9.177900000126101,
+        "events": [
+          {
+            "event": "world-start",
+            "at": 565864.1677
+          },
+          {
+            "event": "world-end",
+            "at": 566222.6858
+          }
+        ],
+        "digests": [
+          {
+            "preview": "1976760868ec9a1d9a9aaccbc742b406489ea9c393937928a26fb75f646aaf2d",
+            "projection": "4b201d79234dffca753efe368f5db04405c9fac808479dc0a27880440f5194f6",
+            "manifest": "e9ae357845a06f6f073862b886f729ce612614528a394044495a7ec671321d83"
+          }
+        ],
+        "ms": 577.8215000000782,
+        "simulatedGets": 20
+      },
+      "uiPayloadFields": [],
+      "ok": true,
+      "digest": "8574dc05454cb12bce7e9cc2e92bbd571afd4ab71c4ed02b63d4161e33be7560"
+    },
+    {
+      "kind": "RESPONSE",
+      "commandKind": "READ",
+      "sequence": 36,
+      "at": 1791900098316,
+      "ok": true
+    },
+    {
+      "kind": "READ",
+      "sequence": 38,
+      "mutationKind": null,
+      "gesture": null,
+      "interactionImpact": null,
+      "fixturePerformance": {
+        "kind": "READ",
+        "sequence": 38,
+        "started": 565869.7601,
+        "worldReads": 1,
+        "evaluations": 1,
+        "financeCalls": 6,
+        "evaluationsMs": 191.39480000000913,
+        "financeCallsMs": 11.042200000025332,
+        "events": [
+          {
+            "event": "world-start",
+            "at": 565870.1018
+          },
+          {
+            "event": "world-end",
+            "at": 566478.1788
+          }
+        ],
+        "digests": [
+          {
+            "preview": "ab76ae1a59389a1fa114dc193e5b72efa25821fd8223c910c4c5eb0bc24d1e54",
+            "projection": "8dfa1cf929dfa79628f9a29389a4cf5291d7f78dfb74ef3617b0c979d5c4883d",
+            "manifest": "dc97f95cf9fe1a0a8cefe0097ee0c81b6aac8d090583d511236358bc85f872aa"
+          }
+        ],
+        "ms": 824.5510000000941,
+        "simulatedGets": 20
+      },
+      "uiPayloadFields": [],
+      "ok": true,
+      "digest": "85129d02db0cc7546282c2ed87016f8f40a5ebdefe76010f99be0d9014e71a5d"
+    },
+    {
+      "kind": "RESPONSE",
+      "commandKind": "READ",
+      "sequence": 38,
+      "at": 1791900098568,
+      "ok": true
+    },
+    {
+      "kind": "READ",
+      "sequence": 40,
+      "mutationKind": null,
+      "gesture": null,
+      "interactionImpact": null,
+      "fixturePerformance": {
+        "kind": "READ",
+        "sequence": 40,
+        "started": 565876.5936,
+        "worldReads": 1,
+        "evaluations": 1,
+        "financeCalls": 6,
+        "evaluationsMs": 207.05900000000838,
+        "financeCallsMs": 9.48949999990873,
+        "events": [
+          {
+            "event": "world-start",
+            "at": 565877.1691
+          },
+          {
+            "event": "world-end",
+            "at": 566727.0222
+          }
+        ],
+        "digests": [
+          {
+            "preview": "7ab097c2a3476344ee207ace87c75288d5b4a65421c9a6df247e86adb66abb25",
+            "projection": "4882bb4dd70db7db03952f69c9cc15a0788537ee8328de496b66e79765745652",
+            "manifest": "ecb5f89970f0af6df8b87bbc0672d377d98e460c262b99c9cf26946335617d1b"
+          }
+        ],
+        "ms": 1084.9124999999767,
+        "simulatedGets": 20
+      },
+      "uiPayloadFields": [],
+      "ok": true,
+      "digest": "490daae0879331ae8ba3354f8ddece9d814ec138f242b9f821a86f16db987901"
+    },
+    {
+      "kind": "RESPONSE",
+      "commandKind": "READ",
+      "sequence": 40,
+      "at": 1791900098838,
+      "ok": true
+    },
+    {
+      "kind": "READ",
+      "sequence": 42,
+      "mutationKind": null,
+      "gesture": null,
+      "interactionImpact": null,
+      "fixturePerformance": {
+        "kind": "READ",
+        "sequence": 42,
+        "started": 567582.0277,
+        "worldReads": 1,
+        "evaluations": 1,
+        "financeCalls": 7,
+        "evaluationsMs": 307.0991999999387,
+        "financeCallsMs": 14.26210000005085,
+        "events": [
+          {
+            "event": "world-start",
+            "at": 567582.2113
+          },
+          {
+            "event": "world-end",
+            "at": 567718.5108
+          }
+        ],
+        "digests": [
+          {
+            "preview": "87073edc6e5d1daf66d6dac04a0b9bd55b0ceafc28a5a2e80d75268a51035130",
+            "projection": "c4a327245afad6ad400e364ce051482e782c14349ed6cd7858c4858d4fc376f0",
+            "manifest": "8edffb6e3f68bce3e8d9266bac0d1860154b50167695f6b6daad64b3c1bef49c"
+          }
+        ],
+        "ms": 474.47849999996834,
+        "simulatedGets": 20
+      },
+      "uiPayloadFields": [],
+      "ok": true,
+      "digest": "8394b1912d60e23430d2e63842f6d175278f8c6b2c7a866cd2bbffa1a7bc1649"
+    },
+    {
+      "kind": "RESPONSE",
+      "commandKind": "READ",
+      "sequence": 42,
+      "at": 1791900099933,
+      "ok": true
+    },
+    {
+      "kind": "READ",
+      "sequence": 44,
+      "mutationKind": null,
+      "gesture": null,
+      "interactionImpact": null,
+      "fixturePerformance": {
+        "kind": "READ",
+        "sequence": 44,
+        "started": 568107.3378,
+        "worldReads": 1,
+        "evaluations": 1,
+        "financeCalls": 8,
+        "evaluationsMs": 289.65200000000186,
+        "financeCallsMs": 13.467800000100397,
+        "events": [
+          {
+            "event": "world-start",
+            "at": 568107.5777
+          },
+          {
+            "event": "world-end",
+            "at": 568236.981
+          }
+        ],
+        "digests": [
+          {
+            "preview": "0ac6d573d313381b8b8498e4383b1aaae43522bc90d732327a2cc6701aee79d7",
+            "projection": "f6e4de451f22d9a84aa0260796e423a4d09d44b9e43167abbdc44a83e166b581",
+            "manifest": "f281daf266b208e2492e5677ae9230c47089ae2344a1ebdee98efad702e1555b"
+          }
+        ],
+        "ms": 454.0297000000719,
+        "simulatedGets": 20
+      },
+      "uiPayloadFields": [],
+      "ok": true,
+      "digest": "ce57dde6c66c67586801cf4a359cbe9991411a0c877ba5945f5cd58ba58316b7"
+    },
+    {
+      "kind": "RESPONSE",
+      "commandKind": "READ",
+      "sequence": 44,
+      "at": 1791900100440,
+      "ok": true
+    },
+    {
+      "kind": "READ",
+      "sequence": 46,
+      "mutationKind": null,
+      "gesture": null,
+      "interactionImpact": null,
+      "fixturePerformance": {
+        "kind": "READ",
+        "sequence": 46,
+        "started": 568189.4784,
+        "worldReads": 1,
+        "evaluations": 1,
+        "financeCalls": 9,
+        "evaluationsMs": 388.3551999999909,
+        "financeCallsMs": 17.330399999860674,
+        "events": [
+          {
+            "event": "world-start",
+            "at": 568189.6939
+          },
+          {
+            "event": "world-end",
+            "at": 568634.4842
+          }
+        ],
+        "digests": [
+          {
+            "preview": "8d821c3981388df799104506d86a185372eabf8aabaea53520d349b994749096",
+            "projection": "f8caae9e9344c97249227ced45ac5761d379190cfa679821a44fd03e8454c76f",
+            "manifest": "7534b15ad06f5fb1cb61067e240ec979bb30e6d1c597d9ee701c3ee8079377fa"
+          }
+        ],
+        "ms": 919.9886999999871,
+        "simulatedGets": 20
+      },
+      "uiPayloadFields": [],
+      "ok": true,
+      "digest": "f89985225d2f2dd8aebd259e7398b01ecf2f31ee45801de7042eee78b35d9f8f"
+    },
+    {
+      "kind": "RESPONSE",
+      "commandKind": "READ",
+      "sequence": 46,
+      "at": 1791900100994,
+      "ok": true
+    },
+    {
+      "kind": "READ",
+      "sequence": 48,
+      "mutationKind": null,
+      "gesture": null,
+      "interactionImpact": null,
+      "fixturePerformance": {
+        "kind": "READ",
+        "sequence": 48,
+        "started": 568628.2261,
+        "worldReads": 1,
+        "evaluations": 1,
+        "financeCalls": 10,
+        "evaluationsMs": 367.6437000000151,
+        "financeCallsMs": 16.975799999781884,
+        "events": [
+          {
+            "event": "world-start",
+            "at": 568628.9192
+          },
+          {
+            "event": "world-end",
+            "at": 569191.4795
+          }
+        ],
+        "digests": [
+          {
+            "preview": "4f8f0ed7ee81188c94927524b6db88c3e74888ad04e1c819892de0f4ee221646",
+            "projection": "c78e88215fdb8925d9b5eae02552e17ebeea6f3f1eab9c4ef89de518ed55dbfe",
+            "manifest": "923eda1ca265c17ac79b5f340c62c7dc55742ce87c58a478cf176fab108476cb"
+          }
+        ],
+        "ms": 971.2695000000531,
+        "simulatedGets": 20
+      },
+      "uiPayloadFields": [],
+      "ok": true,
+      "digest": "664e44c3a9738e4f13309d745ad96e8487a17a32c6dbdc6ad47bb55b8a8479b8"
+    },
+    {
+      "kind": "RESPONSE",
+      "commandKind": "READ",
+      "sequence": 48,
+      "at": 1791900101480,
+      "ok": true
+    },
+    {
+      "kind": "READ",
+      "sequence": 50,
+      "mutationKind": null,
+      "gesture": null,
+      "interactionImpact": null,
+      "fixturePerformance": {
+        "kind": "READ",
+        "sequence": 50,
+        "started": 569183.131,
+        "worldReads": 1,
+        "evaluations": 1,
+        "financeCalls": 11,
+        "evaluationsMs": 462.02599999995437,
+        "financeCallsMs": 25.249900000053458,
+        "events": [
+          {
+            "event": "world-start",
+            "at": 569183.392
+          },
+          {
+            "event": "world-end",
+            "at": 569667.2326
+          }
+        ],
+        "digests": [
+          {
+            "preview": "cedf3c5cec368b47e1bb8d22d336e0747991b2ab8a37ded3e6a42992bda411f3",
+            "projection": "d54b2c9f041f2a1030f20e58eed2b0a90d9717dc9f86dbf2855d0d7af796f5da",
+            "manifest": "a1137a786d381b9cdceca5885598800c10a25ec39f2281b3a12b1292fa524b4e"
+          }
+        ],
+        "ms": 992.4391999999061,
+        "simulatedGets": 20
+      },
+      "uiPayloadFields": [],
+      "ok": true,
+      "digest": "181eff8105ebbdb0d06beda4101ad7a81ac1bbe42ddd9ee50ad5c528feaada26"
+    },
+    {
+      "kind": "RESPONSE",
+      "commandKind": "READ",
+      "sequence": 50,
+      "at": 1791900102055,
+      "ok": true
+    },
+    {
+      "kind": "READ",
+      "sequence": 52,
+      "mutationKind": null,
+      "gesture": null,
+      "interactionImpact": null,
+      "fixturePerformance": {
+        "kind": "READ",
+        "sequence": 52,
+        "started": 569188.1774,
+        "worldReads": 1,
+        "evaluations": 1,
+        "financeCalls": 12,
+        "evaluationsMs": 543.0971999999601,
+        "financeCallsMs": 23.372499999939464,
+        "events": [
+          {
+            "event": "world-start",
+            "at": 569188.471
+          },
+          {
+            "event": "world-end",
+            "at": 570242.9077
+          }
+        ],
+        "digests": [
+          {
+            "preview": "c7f7ddcc08cf70ecc23791c3b01dbc9df8aea7b0042455b596cd7989cbd7c3f5",
+            "projection": "d5ab02b93e16571c3c96582e51cb5e7e794a761339b01918900be1178a1cdb1c",
+            "manifest": "74d09e90b1d0318d27e0fb87bfaf0303b5862949cbc37e98037b6016b16eb0c8"
+          }
+        ],
+        "ms": 1649.8646999999182,
+        "simulatedGets": 20
+      },
+      "uiPayloadFields": [],
+      "ok": true,
+      "digest": "c65b30382830db9a644a443507f455ecf4370f729c8bc8f608ea8c80a71a24cb"
+    },
+    {
+      "kind": "RESPONSE",
+      "commandKind": "READ",
+      "sequence": 52,
+      "at": 1791900102715,
+      "ok": true
+    },
+    {
+      "kind": "READ",
+      "sequence": 54,
+      "mutationKind": null,
+      "gesture": null,
+      "interactionImpact": null,
+      "fixturePerformance": {
+        "kind": "READ",
+        "sequence": 54,
+        "started": 569664.5411,
+        "worldReads": 1,
+        "evaluations": 1,
+        "financeCalls": 13,
+        "evaluationsMs": 610.3571999999695,
+        "financeCallsMs": 31.43889999971725,
+        "events": [
+          {
+            "event": "world-start",
+            "at": 569664.773
+          },
+          {
+            "event": "world-end",
+            "at": 570953.0523
+          }
+        ],
+        "digests": [
+          {
+            "preview": "b4d570ab9526d9b6d173b80eb00da8649c0194bbbe7f0f8353d2a0aa8a335bc0",
+            "projection": "f6cd241d5ff233c9c65615b73932819e3e65442f5ff5e8aa83c6d8c9fe7572d5",
+            "manifest": "edee55562a47f935a11e84115ae0c5bd278203369e9052d20bd8978ef695e0b1"
+          }
+        ],
+        "ms": 1964.357799999998,
+        "simulatedGets": 20
+      },
+      "uiPayloadFields": [],
+      "ok": true,
+      "digest": "a4225e5704ddfd3f59b8ac899a638cf6c9712c173b9d826a3cda88790a98a789"
+    },
+    {
+      "kind": "RESPONSE",
+      "commandKind": "READ",
+      "sequence": 54,
+      "at": 1791900103505,
+      "ok": true
+    },
+    {
+      "kind": "READ",
+      "sequence": 56,
+      "mutationKind": null,
+      "gesture": null,
+      "interactionImpact": null,
+      "fixturePerformance": {
+        "kind": "READ",
+        "sequence": 56,
+        "started": 570925.8991,
+        "worldReads": 1,
+        "evaluations": 1,
+        "financeCalls": 14,
+        "evaluationsMs": 631.7388999999966,
+        "financeCallsMs": 26.600700000068173,
+        "events": [
+          {
+            "event": "world-start",
+            "at": 570926.51
+          },
+          {
+            "event": "world-end",
+            "at": 571715.0455
+          }
+        ],
+        "digests": [
+          {
+            "preview": "8c44c294f182791bce77e950b0c008523af8524f19130f23847d2bdc76c65510",
+            "projection": "7fae4f0b021a5e787cbcb3efe20388c7bd8c24e4ed5dd5aabdb9b3fd0aeab65f",
+            "manifest": "d5dba8d2c03a1456c14d9f99e99764e659d9c8ea55d53514d77e43b4448dea31"
+          }
+        ],
+        "ms": 1474.9233999999706,
+        "simulatedGets": 20
+      },
+      "uiPayloadFields": [],
+      "ok": true,
+      "digest": "cb74739b9c34b09e3c33f6c12a98a602aa61e92377d0a688c8e6b106e9f702c7"
+    },
+    {
+      "kind": "RESPONSE",
+      "commandKind": "READ",
+      "sequence": 56,
+      "at": 1791900104277,
+      "ok": true
+    },
+    {
+      "kind": "READ",
+      "sequence": 58,
+      "mutationKind": null,
+      "gesture": null,
+      "interactionImpact": null,
+      "fixturePerformance": {
+        "kind": "READ",
+        "sequence": 58,
+        "started": 570933.0945,
+        "worldReads": 1,
+        "evaluations": 1,
+        "financeCalls": 15,
+        "evaluationsMs": 698.0853999999817,
+        "financeCallsMs": 26.671600000117905,
+        "events": [
+          {
+            "event": "world-start",
+            "at": 570933.5258
+          },
+          {
+            "event": "world-end",
+            "at": 572525.1121
+          }
+        ],
+        "digests": [
+          {
+            "preview": "00cb19995fc630500a0a45412fdb2c37dbc67a76d673f67d19399f117d6768c8",
+            "projection": "52bb208c3d6d5e02b3a7bae191b22e1681fa97303d41b2fabfc6a203eb1afbc6",
+            "manifest": "f89027c451caa4e90ff3c60d7edce810e259bfe03356ad3839b06d4c98c09d86"
+          }
+        ],
+        "ms": 2345.1419999999925,
+        "simulatedGets": 20
+      },
+      "uiPayloadFields": [],
+      "ok": true,
+      "digest": "b877a89fd18ad5c780dc52320fff706c76fa64004c406ca2000963b9f7cccf29"
+    },
+    {
+      "kind": "RESPONSE",
+      "commandKind": "READ",
+      "sequence": 58,
+      "at": 1791900105150,
+      "ok": true
+    },
+    {
+      "kind": "READ",
+      "sequence": 62,
+      "mutationKind": null,
+      "gesture": null,
+      "interactionImpact": null,
+      "fixturePerformance": {
+        "kind": "READ",
+        "sequence": 62,
+        "started": 570940.6513,
+        "worldReads": 1,
+        "evaluations": 1,
+        "financeCalls": 17,
+        "evaluationsMs": 722.7871999999043,
+        "financeCallsMs": 27.055099999764934,
+        "events": [
+          {
+            "event": "world-start",
+            "at": 570940.9286
+          },
+          {
+            "event": "world-end",
+            "at": 573347.574
+          }
+        ],
+        "digests": [
+          {
+            "preview": "b595268a5263be51488152a16a576491b82f039b03df731ea2dda261314f79bf",
+            "projection": "779d3e4fb3ca502e995e6d952ad47d3c24801394695cae97c8e13e3bb0ecf5e5",
+            "manifest": "2e76bd8ec19264a1311ed1a6dfb7b0e175072150a9af4ddf31cf3ad8ad9508aa"
+          }
+        ],
+        "ms": 3209.199099999969,
+        "simulatedGets": 20
+      },
+      "uiPayloadFields": [],
+      "ok": true,
+      "digest": "36204e1afd297edfb56628e95457afd77c64b7ad5afa7a3b2cebd2f849fdf5aa"
+    },
+    {
+      "kind": "RESPONSE",
+      "commandKind": "READ",
+      "sequence": 62,
+      "at": 1791900106023,
+      "ok": true
+    },
+    {
+      "kind": "READ",
+      "sequence": 60,
+      "mutationKind": null,
+      "gesture": null,
+      "interactionImpact": null,
+      "fixturePerformance": {
+        "kind": "READ",
+        "sequence": 60,
+        "started": 570948.6578,
+        "worldReads": 1,
+        "evaluations": 1,
+        "financeCalls": 16,
+        "evaluationsMs": 700.4627999999793,
+        "financeCallsMs": 30.094200000050478,
+        "events": [
+          {
+            "event": "world-start",
+            "at": 570949.0164
+          },
+          {
+            "event": "world-end",
+            "at": 574244.233
+          }
+        ],
+        "digests": [
+          {
+            "preview": "d31dd17ce58305ba928992abdcb54ca2c768bf99a2c3cb32db9fb0952db2e464",
+            "projection": "e750576565a64d39f572d4cd1a4700755416278fe07d5ada75fa8b5b5cc188a0",
+            "manifest": "74cff593dc95cca5c0cc22382251b7b6d1b4f37d35ae19232abcbf45febc1d6a"
+          }
+        ],
+        "ms": 4083.0547999999253,
+        "simulatedGets": 20
+      },
+      "uiPayloadFields": [],
+      "ok": true,
+      "digest": "e015be93aae251b83836b3302218f9d169f1935824f2a4aeab627c890c7b72f1"
+    },
+    {
+      "kind": "RESPONSE",
+      "commandKind": "READ",
+      "sequence": 60,
+      "at": 1791900106914,
+      "ok": true
+    },
+    {
+      "kind": "READ",
+      "sequence": 64,
+      "mutationKind": null,
+      "gesture": null,
+      "interactionImpact": null,
+      "fixturePerformance": {
+        "kind": "READ",
+        "sequence": 64,
+        "started": 571711.085,
+        "worldReads": 1,
+        "evaluations": 1,
+        "financeCalls": 18,
+        "evaluationsMs": 824.2825000000885,
+        "financeCallsMs": 31.901700000395067,
+        "events": [
+          {
+            "event": "world-start",
+            "at": 571711.4943
+          },
+          {
+            "event": "world-end",
+            "at": 575149.3133
+          }
+        ],
+        "digests": [
+          {
+            "preview": "89c3688f0749d5d092c0b62b81488fb87d2d560c213f93cde36da1b6e71b1a25",
+            "projection": "691f04def486a2b07b8443add23d484c88f3ef3e02163c60f15106e8a4fd58c5",
+            "manifest": "3ec1da6a5dbbd07eaa68afddb0d3e004f5d9a5622c1b15b044091439e1ea0420"
+          }
+        ],
+        "ms": 4348.422300000093,
+        "simulatedGets": 20
+      },
+      "uiPayloadFields": [],
+      "ok": true,
+      "digest": "9c51dca682cc5b0b72f3679e45958ae9c4066da417bc0e024d48a74a6047d353"
+    },
+    {
+      "kind": "RESPONSE",
+      "commandKind": "READ",
+      "sequence": 64,
+      "at": 1791900107932,
+      "ok": true
+    },
+    {
+      "kind": "READ",
+      "sequence": 66,
+      "mutationKind": null,
+      "gesture": null,
+      "interactionImpact": null,
+      "fixturePerformance": {
+        "kind": "READ",
+        "sequence": 66,
+        "started": 575133.2963,
+        "worldReads": 1,
+        "evaluations": 1,
+        "financeCalls": 19,
+        "evaluationsMs": 788.7903999999398,
+        "financeCallsMs": 30.03289999975823,
+        "events": [
+          {
+            "event": "world-start",
+            "at": 575133.5768
+          },
+          {
+            "event": "world-end",
+            "at": 576171.3615
+          }
+        ],
+        "digests": [
+          {
+            "preview": "d925b8333d583d33117a8a94077c42d292e0574adcb192fb61744085d3022e5e",
+            "projection": "70349f9027e98e1e5a2093322ff39698d480d36abd81bde60685c0bc19405d2d",
+            "manifest": "0d95884e02004b925fa671d57584f738ca02cdb428f5bc810865be28922a4ae5"
+          }
+        ],
+        "ms": 1941.6004999999423,
+        "simulatedGets": 20
+      },
+      "uiPayloadFields": [],
+      "ok": true,
+      "digest": "b8ec31aaa41b85a81fa64beeab388e3e7f0a03ae630fd8c922b2791d0aff011e"
+    },
+    {
+      "kind": "RESPONSE",
+      "commandKind": "READ",
+      "sequence": 66,
+      "at": 1791900108952,
+      "ok": true
+    },
+    {
+      "kind": "READ",
+      "sequence": 68,
+      "mutationKind": null,
+      "gesture": null,
+      "interactionImpact": null,
+      "fixturePerformance": {
+        "kind": "READ",
+        "sequence": 68,
+        "started": 575137.8534,
+        "worldReads": 1,
+        "evaluations": 1,
+        "financeCalls": 20,
+        "evaluationsMs": 881.8940999999177,
+        "financeCallsMs": 37.24229999980889,
+        "events": [
+          {
+            "event": "world-start",
+            "at": 575138.1466
+          },
+          {
+            "event": "world-end",
+            "at": 577210.1308
+          }
+        ],
+        "digests": [
+          {
+            "preview": "821f3d43d417f2be9d16dd03a160e8d35d38026c217c0abbd9d7a196e2c5957a",
+            "projection": "3d92d3588006a7d39dd29d79b22127fc9666a1ca4dad4987add83b494d384aa5",
+            "manifest": "2d18b0853168be77708659d8535faa29fa00d777e1703ed837fa447e1cb0e679"
+          }
+        ],
+        "ms": 3071.731299999985,
+        "simulatedGets": 20
+      },
+      "uiPayloadFields": [],
+      "ok": true,
+      "digest": "9539183497565c08c5dd6876c74d60216c83b7b8df7a0616a6370048cdd6ed85"
+    },
+    {
+      "kind": "RESPONSE",
+      "commandKind": "READ",
+      "sequence": 68,
+      "at": 1791900110083,
+      "ok": true
+    },
+    {
+      "kind": "READ",
+      "sequence": 70,
+      "mutationKind": null,
+      "gesture": null,
+      "interactionImpact": null,
+      "fixturePerformance": {
+        "kind": "READ",
+        "sequence": 70,
+        "started": 575143.4427,
+        "worldReads": 1,
+        "evaluations": 1,
+        "financeCalls": 21,
+        "evaluationsMs": 1078.5888000000268,
+        "financeCallsMs": 37.30520000052638,
+        "events": [
+          {
+            "event": "world-start",
+            "at": 575143.6489
+          },
+          {
+            "event": "world-end",
+            "at": 578326.3565
+          }
+        ],
+        "digests": [
+          {
+            "preview": "133a169130d19986c41868affed44f02f3876712ba8c7ea20d31041c22721978",
+            "projection": "79419e80ef213d453dd8678ca66368b23cbb2e31d92701a19b8cf0ddccf8849b",
+            "manifest": "352378d634c83781ef8b55bc26f7d12a4b5d7ec57610a8a4e1ac4807b3444078"
+          }
+        ],
+        "ms": 4378.191499999957,
+        "simulatedGets": 20
+      },
+      "uiPayloadFields": [],
+      "ok": true,
+      "digest": "81039379bbaf4b136644fb2d1fa0c3e35aeaf68e04cdd6e29c43eb4f65b5ada5"
+    },
+    {
+      "kind": "RESPONSE",
+      "commandKind": "READ",
+      "sequence": 70,
+      "at": 1791900111399,
+      "ok": true
+    },
+    {
+      "kind": "READ",
+      "sequence": 72,
+      "mutationKind": null,
+      "gesture": null,
+      "interactionImpact": null,
+      "fixturePerformance": {
+        "kind": "READ",
+        "sequence": 72,
+        "started": 575146.8043,
+        "worldReads": 1,
+        "evaluations": 1,
+        "financeCalls": 22,
+        "evaluationsMs": 1073.5246999999508,
+        "financeCallsMs": 41.604599999962375,
+        "events": [
+          {
+            "event": "world-start",
+            "at": 575147.0266
+          },
+          {
+            "event": "world-end",
+            "at": 579652.7921
+          }
+        ],
+        "digests": [
+          {
+            "preview": "b2f4463e27d213117a93f8c2aa8213fdc3c15e7a13af92f999ecda2bc58b7298",
+            "projection": "53739b5964d958af05c8a15deb776b41eb0e1b0b5104f27cd67294c9e07e9c74",
+            "manifest": "a0f31edac53bcd29e90b34d7227d8e943c9dd9ca7bc497f5f0100b772effd865"
+          }
+        ],
+        "ms": 5737.974000000046,
+        "simulatedGets": 20
+      },
+      "uiPayloadFields": [],
+      "ok": true,
+      "digest": "7062e24131782aaa1ac5fd4c0c4d49b779ee3e9b880878e1711e04487a15c8e5"
+    },
+    {
+      "kind": "RESPONSE",
+      "commandKind": "READ",
+      "sequence": 72,
+      "at": 1791900112760,
+      "ok": true
+    },
+    {
+      "kind": "READ",
+      "sequence": 74,
+      "mutationKind": null,
+      "gesture": null,
+      "interactionImpact": null,
+      "fixturePerformance": {
+        "kind": "READ",
+        "sequence": 74,
+        "started": 576165.5291,
+        "worldReads": 1,
+        "evaluations": 1,
+        "financeCalls": 23,
+        "evaluationsMs": 1062.3837000000058,
+        "financeCallsMs": 39.57589999982156,
+        "events": [
+          {
+            "event": "world-start",
+            "at": 576165.77
+          },
+          {
+            "event": "world-end",
+            "at": 581047.7936
+          }
+        ],
+        "digests": [
+          {
+            "preview": "252fcb83431ed722a00549dfa18f89490dbd0a31aa61460bf36c5251e886180e",
+            "projection": "02a81875be8b08d6effaea076bc0f6d50de1a7d024cd529aacb23289c73fe896",
+            "manifest": "9d6768033627007031a84f2dc6a1077866d9297b061745125a916109c98a5b4a"
+          }
+        ],
+        "ms": 6063.585899999947,
+        "simulatedGets": 20
+      },
+      "uiPayloadFields": [],
+      "ok": true,
+      "digest": "2a8997919c3499714a389a18c900398c1d8109465e51fc267c2253715f420472"
+    },
+    {
+      "kind": "RESPONSE",
+      "commandKind": "READ",
+      "sequence": 74,
+      "at": 1791900114100,
+      "ok": true
+    },
+    {
+      "kind": "READ",
+      "sequence": 76,
+      "mutationKind": null,
+      "gesture": null,
+      "interactionImpact": null,
+      "fixturePerformance": {
+        "kind": "READ",
+        "sequence": 76,
+        "started": 584226.1722,
+        "worldReads": 1,
+        "evaluations": 1,
+        "financeCalls": 22,
+        "evaluationsMs": 1440.2227999999886,
+        "financeCallsMs": 42.51909999991767,
+        "events": [
+          {
+            "event": "world-start",
+            "at": 584226.4335
+          },
+          {
+            "event": "world-end",
+            "at": 584347.5495
+          }
+        ],
+        "digests": [
+          {
+            "preview": "b2f4463e27d213117a93f8c2aa8213fdc3c15e7a13af92f999ecda2bc58b7298",
+            "projection": "53739b5964d958af05c8a15deb776b41eb0e1b0b5104f27cd67294c9e07e9c74",
+            "manifest": "a0f31edac53bcd29e90b34d7227d8e943c9dd9ca7bc497f5f0100b772effd865"
+          }
+        ],
+        "ms": 1767.1378999999724,
+        "simulatedGets": 20
+      },
+      "uiPayloadFields": [],
+      "ok": true,
+      "digest": "7062e24131782aaa1ac5fd4c0c4d49b779ee3e9b880878e1711e04487a15c8e5"
+    },
+    {
+      "kind": "RESPONSE",
+      "commandKind": "READ",
+      "sequence": 76,
+      "at": 1791900117884,
+      "ok": true
+    },
+    {
+      "kind": "READ",
+      "sequence": 78,
+      "mutationKind": null,
+      "gesture": null,
+      "interactionImpact": null,
+      "fixturePerformance": {
+        "kind": "READ",
+        "sequence": 78,
+        "started": 586144.1989,
+        "worldReads": 1,
+        "evaluations": 1,
+        "financeCalls": 21,
+        "evaluationsMs": 777.3135000000475,
+        "financeCallsMs": 28.288499999791384,
+        "events": [
+          {
+            "event": "world-start",
+            "at": 586144.3866
+          },
+          {
+            "event": "world-end",
+            "at": 586271.6183
+          }
+        ],
+        "digests": [
+          {
+            "preview": "133a169130d19986c41868affed44f02f3876712ba8c7ea20d31041c22721978",
+            "projection": "79419e80ef213d453dd8678ca66368b23cbb2e31d92701a19b8cf0ddccf8849b",
+            "manifest": "352378d634c83781ef8b55bc26f7d12a4b5d7ec57610a8a4e1ac4807b3444078"
+          }
+        ],
+        "ms": 1060.4520000000484,
+        "simulatedGets": 20
+      },
+      "uiPayloadFields": [],
+      "ok": true,
+      "digest": "81039379bbaf4b136644fb2d1fa0c3e35aeaf68e04cdd6e29c43eb4f65b5ada5"
+    },
+    {
+      "kind": "RESPONSE",
+      "commandKind": "READ",
+      "sequence": 78,
+      "at": 1791900119077,
+      "ok": true
+    },
+    {
+      "kind": "READ",
+      "sequence": 80,
+      "mutationKind": null,
+      "gesture": null,
+      "interactionImpact": null,
+      "fixturePerformance": {
+        "kind": "READ",
+        "sequence": 80,
+        "started": 592093.68,
+        "worldReads": 1,
+        "evaluations": 1,
+        "financeCalls": 22,
+        "evaluationsMs": 1137.0595000000903,
+        "financeCallsMs": 39.93359999998938,
+        "events": [
+          {
+            "event": "world-start",
+            "at": 592093.9397
+          },
+          {
+            "event": "world-end",
+            "at": 592222.2943
+          }
+        ],
+        "digests": [
+          {
+            "preview": "b2f4463e27d213117a93f8c2aa8213fdc3c15e7a13af92f999ecda2bc58b7298",
+            "projection": "53739b5964d958af05c8a15deb776b41eb0e1b0b5104f27cd67294c9e07e9c74",
+            "manifest": "a0f31edac53bcd29e90b34d7227d8e943c9dd9ca7bc497f5f0100b772effd865"
+          }
+        ],
+        "ms": 1548.0505999999586,
+        "simulatedGets": 20
+      },
+      "uiPayloadFields": [],
+      "ok": true,
+      "digest": "7062e24131782aaa1ac5fd4c0c4d49b779ee3e9b880878e1711e04487a15c8e5"
+    },
+    {
+      "kind": "RESPONSE",
+      "commandKind": "READ",
+      "sequence": 80,
+      "at": 1791900125521,
+      "ok": true
+    },
+    {
+      "kind": "READ",
+      "sequence": 82,
+      "mutationKind": null,
+      "gesture": null,
+      "interactionImpact": null,
+      "fixturePerformance": {
+        "kind": "READ",
+        "sequence": 82,
+        "started": 593814.9717,
+        "worldReads": 1,
+        "evaluations": 1,
+        "financeCalls": 23,
+        "evaluationsMs": 1364.5533000000287,
+        "financeCallsMs": 45.37979999987874,
+        "events": [
+          {
+            "event": "world-start",
+            "at": 593815.4279
+          },
+          {
+            "event": "world-end",
+            "at": 593944.9369
+          }
+        ],
+        "digests": [
+          {
+            "preview": "252fcb83431ed722a00549dfa18f89490dbd0a31aa61460bf36c5251e886180e",
+            "projection": "02a81875be8b08d6effaea076bc0f6d50de1a7d024cd529aacb23289c73fe896",
+            "manifest": "9d6768033627007031a84f2dc6a1077866d9297b061745125a916109c98a5b4a"
+          }
+        ],
+        "ms": 1668.7351999999955,
+        "simulatedGets": 20
+      },
+      "uiPayloadFields": [],
+      "ok": true,
+      "digest": "2a8997919c3499714a389a18c900398c1d8109465e51fc267c2253715f420472"
+    },
+    {
+      "kind": "RESPONSE",
+      "commandKind": "READ",
+      "sequence": 82,
+      "at": 1791900127358,
+      "ok": true
+    },
+    {
+      "kind": "READ",
+      "sequence": 84,
+      "mutationKind": null,
+      "gesture": null,
+      "interactionImpact": null,
+      "fixturePerformance": {
+        "kind": "READ",
+        "sequence": 84,
+        "started": 593820.0784,
+        "worldReads": 1,
+        "evaluations": 1,
+        "financeCalls": 22,
+        "evaluationsMs": 1112.9738999999827,
+        "financeCallsMs": 42.16279999993276,
+        "events": [
+          {
+            "event": "world-start",
+            "at": 593820.4407
+          },
+          {
+            "event": "world-end",
+            "at": 595626.7413
+          }
+        ],
+        "digests": [
+          {
+            "preview": "b2f4463e27d213117a93f8c2aa8213fdc3c15e7a13af92f999ecda2bc58b7298",
+            "projection": "53739b5964d958af05c8a15deb776b41eb0e1b0b5104f27cd67294c9e07e9c74",
+            "manifest": "a0f31edac53bcd29e90b34d7227d8e943c9dd9ca7bc497f5f0100b772effd865"
+          }
+        ],
+        "ms": 3046.646599999978,
+        "simulatedGets": 20
+      },
+      "uiPayloadFields": [],
+      "ok": true,
+      "digest": "7062e24131782aaa1ac5fd4c0c4d49b779ee3e9b880878e1711e04487a15c8e5"
+    },
+    {
+      "kind": "RESPONSE",
+      "commandKind": "READ",
+      "sequence": 84,
+      "at": 1791900128747,
+      "ok": true
+    },
+    {
+      "kind": "READ",
+      "sequence": 86,
+      "mutationKind": null,
+      "gesture": null,
+      "interactionImpact": null,
+      "fixturePerformance": {
+        "kind": "READ",
+        "sequence": 86,
+        "started": 597024.5815,
+        "worldReads": 1,
+        "evaluations": 1,
+        "financeCalls": 21,
+        "evaluationsMs": 1283.9649000000209,
+        "financeCallsMs": 50.9001000005519,
+        "events": [
+          {
+            "event": "world-start",
+            "at": 597025.1317
+          },
+          {
+            "event": "world-end",
+            "at": 597159.136
+          }
+        ],
+        "digests": [
+          {
+            "preview": "133a169130d19986c41868affed44f02f3876712ba8c7ea20d31041c22721978",
+            "projection": "79419e80ef213d453dd8678ca66368b23cbb2e31d92701a19b8cf0ddccf8849b",
+            "manifest": "352378d634c83781ef8b55bc26f7d12a4b5d7ec57610a8a4e1ac4807b3444078"
+          }
+        ],
+        "ms": 1547.3366999999853,
+        "simulatedGets": 20
+      },
+      "uiPayloadFields": [],
+      "ok": true,
+      "digest": "81039379bbaf4b136644fb2d1fa0c3e35aeaf68e04cdd6e29c43eb4f65b5ada5"
+    },
+    {
+      "kind": "RESPONSE",
+      "commandKind": "READ",
+      "sequence": 86,
+      "at": 1791900130449,
+      "ok": true
+    },
+    {
+      "kind": "READ",
+      "sequence": 88,
+      "mutationKind": null,
+      "gesture": null,
+      "interactionImpact": null,
+      "fixturePerformance": {
+        "kind": "READ",
+        "sequence": 88,
+        "started": 597041.7875,
+        "worldReads": 1,
+        "evaluations": 1,
+        "financeCalls": 22,
+        "evaluationsMs": 1445.6845999999205,
+        "financeCallsMs": 48.528400000184774,
+        "events": [
+          {
+            "event": "world-start",
+            "at": 597042.1682
+          },
+          {
+            "event": "world-end",
+            "at": 598715.7252
+          }
+        ],
+        "digests": [
+          {
+            "preview": "b2f4463e27d213117a93f8c2aa8213fdc3c15e7a13af92f999ecda2bc58b7298",
+            "projection": "53739b5964d958af05c8a15deb776b41eb0e1b0b5104f27cd67294c9e07e9c74",
+            "manifest": "a0f31edac53bcd29e90b34d7227d8e943c9dd9ca7bc497f5f0100b772effd865"
+          }
+        ],
+        "ms": 3295.0235000000102,
+        "simulatedGets": 20
+      },
+      "uiPayloadFields": [],
+      "ok": true,
+      "digest": "7062e24131782aaa1ac5fd4c0c4d49b779ee3e9b880878e1711e04487a15c8e5"
+    },
+    {
+      "kind": "RESPONSE",
+      "commandKind": "READ",
+      "sequence": 88,
+      "at": 1791900132222,
+      "ok": true
+    },
+    {
+      "kind": "READ",
+      "sequence": 90,
+      "mutationKind": null,
+      "gesture": null,
+      "interactionImpact": null,
+      "fixturePerformance": {
+        "kind": "READ",
+        "sequence": 90,
+        "started": 597046.7383,
+        "worldReads": 1,
+        "evaluations": 1,
+        "financeCalls": 23,
+        "evaluationsMs": 1216.6038000000408,
+        "financeCallsMs": 42.28350000025239,
+        "events": [
+          {
+            "event": "world-start",
+            "at": 597046.9563
+          },
+          {
+            "event": "world-end",
+            "at": 600460.8132
+          }
+        ],
+        "digests": [
+          {
+            "preview": "252fcb83431ed722a00549dfa18f89490dbd0a31aa61460bf36c5251e886180e",
+            "projection": "02a81875be8b08d6effaea076bc0f6d50de1a7d024cd529aacb23289c73fe896",
+            "manifest": "9d6768033627007031a84f2dc6a1077866d9297b061745125a916109c98a5b4a"
+          }
+        ],
+        "ms": 4791.488499999978,
+        "simulatedGets": 20
+      },
+      "uiPayloadFields": [],
+      "ok": true,
+      "digest": "2a8997919c3499714a389a18c900398c1d8109465e51fc267c2253715f420472"
+    },
+    {
+      "kind": "RESPONSE",
+      "commandKind": "READ",
+      "sequence": 90,
+      "at": 1791900133710,
+      "ok": true
+    },
+    {
+      "kind": "MUTATE",
+      "sequence": 96,
+      "mutationKind": "SET_STATE",
+      "gesture": null,
+      "interactionImpact": null,
+      "fixturePerformance": {
+        "kind": "MUTATE",
+        "sequence": 96,
+        "started": 607533.6749,
+        "worldReads": 1,
+        "evaluations": 2,
+        "financeCalls": 46,
+        "evaluationsMs": 2158.811999999918,
+        "financeCallsMs": 73.65969999996014,
+        "events": [
+          {
+            "event": "world-start",
+            "at": 607540.8335
+          },
+          {
+            "event": "world-end",
+            "at": 607660.3884
+          }
+        ],
+        "digests": [
+          {
+            "preview": "252fcb83431ed722a00549dfa18f89490dbd0a31aa61460bf36c5251e886180e",
+            "projection": "02a81875be8b08d6effaea076bc0f6d50de1a7d024cd529aacb23289c73fe896",
+            "manifest": "9d6768033627007031a84f2dc6a1077866d9297b061745125a916109c98a5b4a"
+          },
+          {
+            "preview": "2bd575f2b302c53bead1317cde6731885f02e17da03ff3a15c545b0f175c22cf",
+            "projection": "2eacd0d55795bf95b3f2965f17bab502e7b1c4dade7776bbf9c1ad068b28b146",
+            "manifest": "313a3ac14ebd0b0dde1ee6ff8a5cdd5c3024f131c4a75a756e84e8f15b481db4"
+          }
+        ],
+        "ms": 2573.714900000021,
+        "simulatedGets": 20
+      },
+      "uiPayloadFields": [],
+      "ok": true,
+      "digest": "b017d9d3a14a63dca87386290a16758ce57aeaec245d27a96193d085d1c6f06d"
+    },
+    {
+      "kind": "RESPONSE",
+      "commandKind": "MUTATE",
+      "sequence": 96,
+      "at": 1791900141982,
+      "ok": true
+    }
+  ],
+  "drafts": {
+    "active": {
+      "id": "6c478bde-ec95-4375-9a42-cda3e20c26ba",
+      "version": 7,
+      "digest": "2a8997919c3499714a389a18c900398c1d8109465e51fc267c2253715f420472"
+    },
+    "archives": 0,
+    "events": [
+      {
+        "kind": "SAVE",
+        "draftId": "6c478bde-ec95-4375-9a42-cda3e20c26ba",
+        "version": 1,
+        "digest": "9f97038a58c156264c191c2e188c28f9a27a976c69f512b33e43781ec4e92ac6"
+      },
+      {
+        "kind": "SAVE",
+        "draftId": "6c478bde-ec95-4375-9a42-cda3e20c26ba",
+        "version": 2,
+        "digest": "6e70029f1ceb5ffc428d9de412777f65522b52ffbb24b7f86a2043f5e3556226"
+      },
+      {
+        "kind": "SAVE",
+        "draftId": "6c478bde-ec95-4375-9a42-cda3e20c26ba",
+        "version": 3,
+        "digest": "9f9cd36d75957d30086b04a015693619f17f7ca09c752c0b214ae198b1ef952e"
+      },
+      {
+        "kind": "SAVE",
+        "draftId": "6c478bde-ec95-4375-9a42-cda3e20c26ba",
+        "version": 4,
+        "digest": "490daae0879331ae8ba3354f8ddece9d814ec138f242b9f821a86f16db987901"
+      },
+      {
+        "kind": "SAVE",
+        "draftId": "6c478bde-ec95-4375-9a42-cda3e20c26ba",
+        "version": 5,
+        "digest": "2a8997919c3499714a389a18c900398c1d8109465e51fc267c2253715f420472"
+      },
+      {
+        "kind": "SAVE",
+        "draftId": "6c478bde-ec95-4375-9a42-cda3e20c26ba",
+        "version": 6,
+        "digest": "81039379bbaf4b136644fb2d1fa0c3e35aeaf68e04cdd6e29c43eb4f65b5ada5"
+      },
+      {
+        "kind": "SAVE",
+        "draftId": "6c478bde-ec95-4375-9a42-cda3e20c26ba",
+        "version": 7,
+        "digest": "2a8997919c3499714a389a18c900398c1d8109465e51fc267c2253715f420472"
+      }
+    ]
+  },
+  "active": null
+}

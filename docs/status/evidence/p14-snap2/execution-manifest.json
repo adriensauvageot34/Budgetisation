@@ -1,0 +1,38 @@
+{
+  "base": "c87560db9557ab3e0965c7cf8b095f44ec798645",
+  "branch": "codex/composer-v3-p14-snap2-durable-publication",
+  "date": "2026-10-14",
+  "node": "v22.18.0",
+  "native": "PostgreSQL 17.11, 127.0.0.1:55434, synthetic snap2_final",
+  "hashes": {
+    "supabase/candidates/P14_SNAP2_ACTIVITY_HISTORY_DO_NOT_APPLY.sql": "3c1251a8fc391624dfbf8ddee5ca9022ed0773ac492d6b467d42db6149e76329",
+    "scripts/check-composer-p14-snap2.mjs": "d10642e3431f2acf898d23075dcc0e70372fc2de4e811ea012646ae8783a93c9",
+    "scripts/check-composer-p14-snap2-unrelated.mjs": "c03cff7e7071c072862db10e21d17a4d863aab7801721414d0d4d45bb3a184fd",
+    "scripts/lib/snap2-native-postgres.mjs": "084ffd9e657dd78457e4b45acfa24c328ce2bfe6bc0e2bd127e15d2ffd0bdb30",
+    "scripts/lib/snap2-world-check.mjs": "0ff3baec9e608db4411bd7e1a8ee5e6517ab3f35b157b685f0a5e3a9e83e90cf",
+    "src/server/phase2/planner/activity-history-store.ts": "863e73ea6828a573bcf42533528d34a34e167ed8e91ec84c2c4b1851c3ca2e09",
+    "src/server/phase2/planner/activity-history-artifact.ts": "3e7bbe5e18496b219908983faa7da160979391cc61afde7b8926c14920f9214f"
+  },
+  "commands": {
+    "native": "$env:SNAP2_LOCAL_DATABASE='snap2_final'; node scripts/check-composer-p14-snap2.mjs *> outputs/p14-snap2/native-verified.log",
+    "supplement": "$env:SNAP2_LOCAL_DATABASE='snap2_final'; node scripts/check-composer-p14-snap2-unrelated.mjs *> outputs/p14-snap2/unrelated-period.log",
+    "snap1": "$env:P14_SNAP1_OUTPUT='outputs/p14-snap2/snap1-regression-final'; node scripts/check-composer-p14-snap1.mjs *> outputs/p14-snap2/snap1-regression.log",
+    "typecheck": "npm.cmd run typecheck",
+    "build": "$env:NEXT_TELEMETRY_DISABLED='1'; $env:COMPOSER_P14_P3_HISTORICAL_REUSE='0'; $env:COMPOSER_P14_SNAP1_ACTIVITY_HISTORY='0'; npm.cmd run build *> outputs/p14-snap2/build.log"
+  },
+  "exits": {
+    "native": 0,
+    "supplement": 0,
+    "snap1": 0,
+    "typecheck": 0,
+    "build": 0,
+    "postgresStop": 0
+  },
+  "supabaseAuth": "NOT_RUN",
+  "browserFresh": "NOT_RUN",
+  "remoteConnections": 0,
+  "remoteWrites": 0,
+  "snapshotDefault": "OFF",
+  "P3": "0",
+  "localClusterAfterTests": "STOPPED_CLEANLY_PRESERVED_SYNTHETIC_DATABASES"
+}

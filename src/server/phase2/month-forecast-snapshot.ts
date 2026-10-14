@@ -81,7 +81,8 @@ export async function materializeMonthForecast(client: SupabaseClient, household
 
 /** Validate the published forecast, then attach request-local canonical evidence.
  * No prediction or enriched snapshot is written back. */
-export async function queryMonthForecast(client: SupabaseClient, householdId: string, targetMonth: string): Promise<MonthForecastSnapshot> {
+export async function queryMonthForecast(client: SupabaseClient, householdId: string, targetMonth: string,
+  predictionEvidencePromise?: Promise<MonthPredictionEvidence>): Promise<MonthForecastSnapshot> {
   const params = parseGlobalV2QueryParams(MONTH_FORECAST_RESOURCE, { targetMonth });
   const identity = await activeIdentity(client, householdId);
   const contract = globalV2QueryRegistry[MONTH_FORECAST_RESOURCE];
@@ -105,7 +106,7 @@ export async function queryMonthForecast(client: SupabaseClient, householdId: st
     || payload.publicationMeta.factsHash !== identity.publicationMeta.factsHash
     || payload.publicationMeta.manifestHash !== identity.publicationMeta.manifestHash) throw new TypeError("FORECAST_SNAPSHOT_PAYLOAD_MISMATCH");
   const [predictionEvidence, forecastMemory] = await Promise.all([
-    readMonthPredictionEvidence(client, householdId, targetMonth), readForecastMemory(client, householdId, targetMonth),
+    predictionEvidencePromise ?? readMonthPredictionEvidence(client, householdId, targetMonth), readForecastMemory(client, householdId, targetMonth),
   ]);
   return { ...payload, predictionEvidence, forecastMemory };
 }
@@ -113,7 +114,7 @@ export async function queryMonthForecast(client: SupabaseClient, householdId: st
 /** A report target may not have a published monthly cache yet. Resolve its own
  * month from the current canonical authorities, without writing a snapshot. */
 export async function resolvePlanningMonthForecast(client: SupabaseClient, householdId: string,
-  targetMonth: string): Promise<MonthForecastSnapshot> {
+  targetMonth: string, predictionEvidencePromise?: Promise<MonthPredictionEvidence>): Promise<MonthForecastSnapshot> {
   parseGlobalV2QueryParams(MONTH_FORECAST_RESOURCE, { targetMonth });
   const [authorities, identity] = await Promise.all([
     loadMonthForecastAuthorities(client, householdId), activeIdentity(client, householdId),
@@ -128,7 +129,7 @@ export async function resolvePlanningMonthForecast(client: SupabaseClient, house
       resourceInputHash: sha256({ publicationId: forecast.meta.sourcePublicationId, sourceRevision: forecast.meta.sourceRevision,
         analyticsRevision: forecast.meta.analyticsRevision, targetMonth, methodSignature }) } }) as MonthForecastSnapshot;
   const [predictionEvidence, forecastMemory] = await Promise.all([
-    readMonthPredictionEvidence(client, householdId, targetMonth), readForecastMemory(client, householdId, targetMonth),
+    predictionEvidencePromise ?? readMonthPredictionEvidence(client, householdId, targetMonth), readForecastMemory(client, householdId, targetMonth),
   ]);
   return { ...payload, predictionEvidence, forecastMemory };
 }

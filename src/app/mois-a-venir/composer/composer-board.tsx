@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { memo, useCallback, useEffect, useMemo, useState } from "react";
 import { Plus, Trash2, LockKeyhole } from "lucide-react";
 import type { ComposerUiModel, ComposerOperation } from "@/domain/phase2/planner/composer-ui-contract";
 import type { ComposerCardView, ComposerContextCardView, DropTarget, ComposerAssetView } from "@/domain/phase2/planner/composer-contract";
@@ -14,6 +14,18 @@ import { BoardCarousel } from "./board-carousel";
 import { inventoryItems } from "./inventory-layout";
 import type { AtomicNode, VisualClusterNode } from "./presentation/node-types";
 import { VisualClusterCard, VisualClusterOverlay } from "./visual-cluster";
+import { composerRenderIndex } from "./render-index";
+type BoardProps=Parameters<typeof ComposerBoard>[0];
+const InventoryAtomic = memo(function InventoryAtomic({item,inCluster,closeCluster,...props}:Pick<BoardProps,"model"|"busy"|"selected"|"focused"|"focus"|"edit"|"editContext"|"choose"|"drag"|"drop"|"request"|"hover"> & {item:AtomicNode;inCluster:boolean;closeCluster:()=>void}) {
+  const {model,busy,selected,focused,focus,edit,editContext,choose,drag,drop,request,hover}=props,index=composerRenderIndex(model);
+  // The drag geometry may be held, but card values always use the current model.
+  if(item.context){const card=index.contexts.get(item.id);return card?<ContextCard card={card} model={model} busy={busy} selected={selected} focused={focused} focus={focus} drag={drag} drop={drop} choose={choose} request={request} edit={value=>{if(inCluster)closeCluster();editContext(value);}}/>:null;}
+  const card=index.controls.get(item.id);if(!card)return null;
+  return <ComposerCard card={card} presentation={model.presentation.objects[item.id]} busy={busy} focused={focused===item.id} focus={()=>focus(item.id)}
+    preserved={model.semanticState.preferences.flexibility[item.id]==="PRESERVE"} edit={()=>{if(inCluster)closeCluster();edit(card);}}
+    preserve={()=>request({kind:"PRESERVE",targetRef:item.id,preserve:model.semanticState.preferences.flexibility[item.id]!=="PRESERVE"})}
+    mutate={mutation=>request({kind:"MUTATE",mutation})} hover={hover}/>;
+});
 export function ComposerBoard({ model, busy, selected, focused, focus, edit, choose, drag, drop, request, hover, editContext, add, preview, balance, details }: { model: ComposerUiModel; busy: boolean; selected: string | null;
   focused: string | null; focus: (id: string | null) => void;
   edit: (card: ComposerCardView) => void; choose: (asset: ComposerAssetView, target: DropTarget, selection?: ComponentSelectionV1) => void;
@@ -27,14 +39,12 @@ export function ComposerBoard({ model, busy, selected, focused, focus, edit, cho
   const trashVisible = !!interaction?.grabbed && (!!interaction.grabbed.removeOperation || interaction.grabbed.protected);
   const boardTarget: DropTarget = { kind: "BOARD_ZONE" }, trashTarget: DropTarget = { kind: "TRASH" };
   const [openClusterId, setOpenClusterId] = useState<string | null>(null);
-  const openCluster = inventoryItems(model).find((item): item is VisualClusterNode => item.kind === "CLUSTER" && item.id === openClusterId);
+  const items=useMemo(()=>inventoryItems(model),[model]),closeCluster=useCallback(()=>setOpenClusterId(null),[]);
+  const openCluster = items.find((item): item is VisualClusterNode => item.kind === "CLUSTER" && item.id === openClusterId);
   useEffect(() => { if (openClusterId && !openCluster) setOpenClusterId(null); }, [openClusterId, openCluster]);
   const focusedInCluster = !!openCluster?.children.some(child => child.id === focusedCard?.contextOccurrenceId);
-  const renderAtomic = (item: AtomicNode, inCluster = false) => item.context ? <ContextCard card={item.context} model={model} busy={busy} selected={selected} focused={focusedCard?.contextOccurrenceId ?? null} focus={focus} drag={drag} drop={drop} choose={choose} request={request} edit={card => { if (inCluster) setOpenClusterId(null); editContext(card); }} />
-    : <ComposerCard card={item.control!} presentation={model.presentation.objects[item.id]} busy={busy} focused={focused === item.id} focus={() => focus(item.id)}
-      preserved={model.semanticState.preferences.flexibility[item.id] === "PRESERVE"} edit={() => { if (inCluster) setOpenClusterId(null); edit(item.control!); }}
-      preserve={() => request({ kind: "PRESERVE", targetRef: item.id, preserve: model.semanticState.preferences.flexibility[item.id] !== "PRESERVE" })}
-      mutate={mutation => request({ kind: "MUTATE", mutation })} hover={hover} />;
+  const renderAtomic = (item:AtomicNode,inCluster=false)=><InventoryAtomic item={item} inCluster={inCluster} closeCluster={closeCluster}
+    model={model} busy={busy} selected={selected} focused={focused} focus={focus} drag={drag} drop={drop} choose={choose} request={request} edit={edit} editContext={editContext} hover={hover}/>;
   const palette = focusedCard && <div className={styles.paletteDock} data-palette-dock><ContextPalette card={focusedCard} model={model} busy={busy} choose={choose} close={() => focus(null)} /></div>;
   const trashZone = trashVisible && <div className={styles.trash} data-trash data-protected={interaction?.grabbed?.protected} data-compatible={trashAccepts || !!interaction?.grabbed?.removeOperation} data-drag-over={sameTarget(interaction?.overTarget ?? null, trashTarget)}
     role="status" aria-label={interaction?.grabbed?.protected ? "Protégée · retrait interdit" : "Retirer l’élément saisi"}
@@ -43,7 +53,7 @@ export function ComposerBoard({ model, busy, selected, focused, focus, edit, cho
     onDragLeave={() => interaction?.over(null)} onDrop={e => { e.preventDefault(); e.stopPropagation(); if (!busy) interaction?.place(trashTarget); }}>
     {interaction?.grabbed?.protected ? <LockKeyhole size={17} /> : <Trash2 size={17} />}{interaction?.grabbed?.protected ? "Protégée" : "Retirer"}</div>;
   return <section className={styles.board} aria-label="Board du mois">
-    <BoardCarousel model={model} focused={focused} emptyClick={() => focus(null)} dropProps={{ "data-compatible": boardAccepts,
+    <BoardCarousel model={model} inventory={items} focused={focused} emptyClick={() => focus(null)} dropProps={{ "data-compatible": boardAccepts,
       "data-drag-over": sameTarget(interaction?.overTarget ?? null, boardTarget),
       onDragOver: e => { if (boardAccepts && !busy) { e.preventDefault(); e.dataTransfer.dropEffect = "move"; interaction?.over(boardTarget); } else interaction?.over(null); },
       onDragLeave: e => { if (leftSurface(e)) interaction?.over(null); },

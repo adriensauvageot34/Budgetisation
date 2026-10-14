@@ -23,7 +23,7 @@ function load(file, imports) {
   }, exports);
   return exports;
 }
-function fixture({ missingPeriods = false, unknown = false, conflict = false } = {}) {
+function fixture({ missingPeriods = false, unknown = false, conflict = false, shareEvidence = true, timezone = 'Europe/Paris' } = {}) {
   const gates = Object.fromEntries(keys.map(key => {
     let resolve, reject;
     const promise = new Promise((a, b) => { resolve = a; reject = b; });
@@ -31,6 +31,11 @@ function fixture({ missingPeriods = false, unknown = false, conflict = false } =
   }));
   const calls = [], reads = [];
   const owner = key => (...args) => { calls.push({ key, args }); return gates[key].promise; };
+  const forecastRead = (_client, _household, _month, suppliedEvidence) => {
+    const forecast = owner('forecast')();
+    const evidence = suppliedEvidence ?? owner('evidence')();
+    return Promise.all([forecast, evidence]).then(([value]) => value);
+  };
   const forecast = { meta: { targetMonth: '2026-10', sourcePublicationId: 'publication-a', sourceRevision: 3, analyticsRevision: 4 },
     resourceMeta: { contractVersion: 'forecast-fixture' }, marker: 'published amounts unchanged' };
   const product = { needKey: 'synthetic-need', price: unknown ? null : '12.00', evidenceRefs: ['observation:synthetic'] };
@@ -53,7 +58,7 @@ function fixture({ missingPeriods = false, unknown = false, conflict = false } =
     };
     return q;
   } };
-  const repository = { client, context: { householdId, timezone: 'Europe/Paris', personIds: [personId], persons: [],
+  const repository = { client, context: { householdId, timezone, personIds: [personId], persons: [],
     periods: missingPeriods ? [] : [{ month: '2026-09', isClosed: true, sourceRevision: 3, locationStatus: 'complete' }] },
     loadActivityOccurrences: owner('activities'), loadActivityCausalFinancialLinkRows: async ids => { reads.push({ table: 'activity_links', ids }); return []; },
     loadMobilityLegFacts: owner('legs'), loadPurchaseAwareCanonical: owner('purchase') };
@@ -74,7 +79,11 @@ function fixture({ missingPeriods = false, unknown = false, conflict = false } =
     './renewal-engine': { RENEWAL_NEED_KEYS: ['synthetic-auto'] },
   });
   const world = load('src/server/phase2/planner/world-reader.ts', {
-    'server-only': {}, '@js-temporal/polyfill': { Temporal }, '../month-planning-read': { readPlanningMonthForecast: owner('forecast') },
+    'server-only': {}, '@js-temporal/polyfill': { Temporal }, '../month-planning-read': { readPlanningMonthForecast: forecastRead },
+    '../month-prediction-evidence': { readMonthPredictionEvidence: owner('evidence') },
+    '../planning-date': { planningDate: () => shareEvidence
+      ? Temporal.Instant.from(cutoff).toZonedDateTimeISO(timezone).toPlainDate().toString()
+      : '2026-10-08' },
     '../month-inputs': { readMonthInputs: owner('inputs') }, '../planned-expenses': { readPlannedExpenses: owner('planned') },
     './renewal-baseline': { buildRenewalPlanningBaseline: value => value }, './baseline-adapters': baseline,
     './repository': { createPlanApplyRepository: () => ({}) }, './mobility-adapter': { buildProspectiveMobilityFacts: sources => sources.personalMobility },
@@ -95,6 +104,7 @@ try {
     const output = await pending;
     assert.ok(early.includes('purchase') && early.includes('products'), 'Independent sources must start before Forecast is ready');
     assert.strictEqual(output.forecast.predictionEvidence, f.values.evidence);
+    assert.equal(f.calls.filter(c => c.key === 'evidence').length, 1, 'Forecast and Baseline share one strict evidence read');
     assert.strictEqual(output.baseline.forecast, f.values.forecast);
     assert.deepEqual(output.baseline.purchaseFacts, f.values.purchase.facts);
     assert.deepEqual(output.baseline.productObservations, f.values.products);
@@ -110,15 +120,45 @@ try {
     if (unknown) assert.equal(output.baseline.purchaseFacts[0].amount, null);
     passed++;
   }
+  {
+    const outputs = [];
+    for (const shareEvidence of [false, true]) {
+      const f = fixture({ shareEvidence }), pending = f.dependencies.readWorld(householdId, '2026-10');
+      for (const key of keys) { settle(f, key); await tick(); }
+      outputs.push(await pending);
+      assert.equal(f.calls.filter(c => c.key === 'evidence').length, shareEvidence ? 1 : 2);
+    }
+    assert.deepEqual(outputs[1], outputs[0], 'Request-local sharing preserves World fields and digests');
+    passed++;
+  }
+  for (const timezone of ['Europe/Paris', 'America/Los_Angeles', 'Pacific/Auckland']) {
+    const outputs = [];
+    for (const shareEvidence of [false, true]) {
+      const f = fixture({ shareEvidence, timezone });
+      f.values.purchase.facts[0].knowledge = 'PARTIAL';
+      f.values.evidence.diagnostics = ['PARTIAL_COVERAGE'];
+      const pending = f.dependencies.readWorld(householdId, '2026-10');
+      for (const key of [...keys].reverse()) { settle(f, key); await tick(); }
+      const output = await pending;
+      outputs.push(output);
+      assert.equal(f.calls.filter(c => c.key === 'evidence').length, shareEvidence ? 1 : 2);
+      assert.equal(output.baseline.purchaseFacts[0].knowledge, 'PARTIAL');
+      assert.equal(output.asOfDate, Temporal.Instant.from(cutoff).toZonedDateTimeISO(timezone).toPlainDate().toString());
+      assert.ok(f.calls.filter(c => c.key === 'evidence').every(c => c.args[4]?.timezone === timezone || c.args[4] === undefined));
+    }
+    assert.deepEqual(outputs[1], outputs[0], `${timezone}: date boundary and PARTIAL evidence preserve World`);
+    passed++;
+  }
   for (const failures of [
     { forecast: new Error('FORECAST_FAILED') }, { purchase: new Error('PURCHASE_FAILED') },
     { products: new Error('PRODUCTS_FAILED') },
+    { evidence: new Error('EVIDENCE_FAILED') },
     { forecast: new Error('FORECAST_FIRST'), purchase: new Error('PURCHASE_SECOND') },
   ]) for (const order of [keys, [...keys].reverse()]) {
     const f = fixture(), pending = f.dependencies.readWorld(householdId, '2026-10');
     const captured = pending.then(() => null, error => error);
     for (const key of order) { settle(f, key, failures); await tick(); }
-    assert.strictEqual(await captured, failures.forecast ?? failures.purchase ?? failures.products, 'Original Forecast-first failure boundary must remain');
+    assert.strictEqual(await captured, failures.forecast ?? failures.purchase ?? failures.products ?? failures.evidence, 'Original Forecast-first failure boundary must remain');
     passed++;
   }
   for (const opts of [{ missingPeriods: true }, { conflict: true }]) {
@@ -133,6 +173,31 @@ try {
   for (const key of [...keys].reverse()) settle(f, key);
   assert.equal((await changed).message, 'PLANNER_WORLD_AUTHORITIES_CHANGED_DURING_READ');
   passed++;
+  {
+    const forwarded = [], shared = Promise.resolve({ synthetic: true });
+    const helper = load('src/server/phase2/month-planning-read.ts', {
+      'server-only': {}, './month-forecast-snapshot': {
+        queryMonthForecast: async (...args) => { forwarded.push(args[3]); throw new TypeError('FORECAST_ACTIVE_MONTH_SNAPSHOT_MISSING'); },
+        resolvePlanningMonthForecast: async (...args) => { forwarded.push(args[3]); return 'resolved'; },
+      },
+    });
+    assert.equal(await helper.readPlanningMonthForecast({}, householdId, '2026-10', shared), 'resolved');
+    assert.deepEqual(forwarded, [shared, shared], 'Missing snapshot must retain the same request-local evidence');
+    passed++;
+  }
+  {
+    const invalid = new TypeError('FORECAST_SNAPSHOT_PAYLOAD_MISMATCH');
+    let fallbackCalls = 0;
+    const helper = load('src/server/phase2/month-planning-read.ts', {
+      'server-only': {}, './month-forecast-snapshot': {
+        queryMonthForecast: async () => { throw invalid; },
+        resolvePlanningMonthForecast: async () => { fallbackCalls++; return 'unexpected'; },
+      },
+    });
+    await assert.rejects(helper.readPlanningMonthForecast({}, householdId, '2026-10'), error => error === invalid);
+    assert.equal(fallbackCalls, 0, 'Invalid publication must not fall back to a live forecast');
+    passed++;
+  }
   await tick();
   assert.deepEqual(unhandled, [], 'No abandoned rejected Promise');
   console.log(`COMPOSER_ORCHESTRATION PASS (${passed} cases, order, failures, missing input, UNKNOWN, publication, scopes)`);

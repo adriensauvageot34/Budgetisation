@@ -159,7 +159,12 @@ await test("ADAPTER-READ-ONLY",async()=>{const hh=randomUUID(),ops=Array.from({l
   const reads=[],client={from(table){reads.push(table);let values=[...(tables[table]??[])];const q={select(){return q;},eq(k,v){values=values.filter(r=>r[k]===v);return q;},gte(k,v){values=values.filter(r=>r[k]>=v);return q;},lte(k,v){values=values.filter(r=>r[k]<=v);return q;},lt(k,v){values=values.filter(r=>r[k]<v);return q;},order(k,o){values.sort((a,b)=>String(a[k]).localeCompare(String(b[k]))*(o?.ascending===false?-1:1));return q;},limit(n){values=values.slice(0,n);return q;},range(a,b){values=values.slice(a,b+1);return q;},maybeSingle(){return Promise.resolve({data:values[0]??null,error:null});},then(resolve,reject){return Promise.resolve({data:values,error:null}).then(resolve,reject);}};return q;}};
   await assert.rejects(readMonthPredictionEvidence(client,randomUUID(),month,false,{asOfDate:date}),/SCOPE_INVALID/);assert.deepEqual(reads,["canonical_household_scope_control"]);reads.length=0;
   const e=await readMonthPredictionEvidence(client,hh,month,false,{asOfDate:date});assert.equal(e.history.economicEntries.length,1001);assert.equal(e.coverageBySource.BANK.safeThrough,null);assert.equal(e.coverageBySource.SWILE.coverageThrough,date);assert.equal(e.latestObservedBookingDate,"2026-06-30");assert(reads.filter(t=>t==="financial_economic_cost_canonical").length===2);
+  const permissive=await readMonthPredictionEvidence(client,hh,month,true,{asOfDate:date,timezone:"Europe/Paris"});
+  assert.deepEqual(permissive,e,"Strict evidence satisfies Baseline when the household date and history match");
   assert.deepEqual(e.manualBankBalanceObservation,{amount:"500.00",asOfDate:"2026-06-30"});assert.equal(e.declaredResources,undefined);
+  tables.operations=[];
+  await assert.rejects(readMonthPredictionEvidence(client,hh,month,false,{asOfDate:date,timezone:"Europe/Paris"}),/MONTH_PREDICTION_HISTORY_MISSING/);
+  assert.equal((await readMonthPredictionEvidence(client,hh,month,true,{asOfDate:date,timezone:"Europe/Paris"})).history.endMonth,"2026-06");
 });
 fs.mkdirSync("outputs",{recursive:true});fs.writeFileSync("outputs/phase2-temporal-tests-report.json",JSON.stringify({results,historicalWrites:0,liveDatabaseWrites:0},null,2)+"\n");
 console.log(`PASS TEMPORAL_UNIT_INTEGRATION: ${results.length} checks; cutoff, coverage, purchase dedup, lifecycle, funding/cash, real Preview/Save/reload, read-only adapter and UI buckets`);

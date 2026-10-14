@@ -1,0 +1,2091 @@
+{
+  "status": "EXECUTED_PASS_TARGETED_HISTORY_FIXTURE_ONLY",
+  "checks": [
+    "P3-FULL-FACTS-RELATIONS-PROJECTIONS-A",
+    "P3-FULL-FACTS-RELATIONS-PROJECTIONS-B",
+    "P3-BASELINE-COMPOSER-FINANCIAL-DIGEST-PARITY",
+    "P3-UNKNOWN-PARTIAL-MULTIPERSON-PARENT-CHILD",
+    "P3-OUTSIDE-PERIOD-ABSENT-IDENTITIES-AND-TRANSIT",
+    "P3-OVERLAPPING-KEYS-EMPTY-AND-CONCURRENT-READS",
+    "P3-CAPPED-GROUP-AND-RANGE-FALLBACK-NO-FALSE-ABSENCE",
+    "P3-ERROR-ATOMIC-AND-DUPLICATE-CONFLICT",
+    "P3-REPOSITORIES-HOUSEHOLDS-RETROACTIVE-CHANGES",
+    "P3-RECORD-SINGLE-UNIQUENESS-NOT-BYPASSED",
+    "P3-PAGINATION-ALL-PAGES-AND-SECOND-PAGE-FAIL-CLOSED",
+    "P3-TEMPORAL-BOUNDARIES-PROJECTION-AND-PUBLICATION",
+    "P3-CACHED-RANGE-NOT-PROOF-OF-LIVE-SOURCE-REVISION"
+  ],
+  "reference": {
+    "physicalReads": 78,
+    "rows": 6493,
+    "bytes": 1513004,
+    "transportCpuMs": 195.53469999998197,
+    "peakPhysicalConcurrency": 1,
+    "byTable": {
+      "person_days": {
+        "gets": 7,
+        "rows": 1200,
+        "bytes": 199207
+      },
+      "canonical_household_scope_control": {
+        "gets": 1,
+        "rows": 1,
+        "bytes": 94
+      },
+      "life_events": {
+        "gets": 17,
+        "rows": 793,
+        "bytes": 274752
+      },
+      "location_occurrences": {
+        "gets": 25,
+        "rows": 2056,
+        "bytes": 519329
+      },
+      "life_event_types": {
+        "gets": 1,
+        "rows": 1,
+        "bytes": 124
+      },
+      "life_event_participations": {
+        "gets": 19,
+        "rows": 1586,
+        "bytes": 421903
+      },
+      "life_event_localizations": {
+        "gets": 5,
+        "rows": 856,
+        "bytes": 97589
+      },
+      "life_event_financial_links": {
+        "gets": 3,
+        "rows": 0,
+        "bytes": 6
+      }
+    },
+    "wallMs": 1778.8466000000008,
+    "cpuMs": 2782,
+    "heapDeltaBytes": 18809128,
+    "historicalRows": {
+      "identityEntries": 0,
+      "ranges": 0,
+      "identityHits": 0,
+      "rangeHits": 0
+    },
+    "logicalTargetCalls": 30,
+    "logicalMethods": {
+      "loadPlaceVisits": 8,
+      "loadActivityOccurrences": 8,
+      "loadLifeEventRecords": 3,
+      "loadLifeEventParticipationRows": 3,
+      "loadLifeEventLocalizationRows": 3,
+      "loadActivityOccurrenceById": 5
+    }
+  },
+  "variants": [
+    {
+      "variant": "A",
+      "physicalReads": 52,
+      "rows": 5119,
+      "bytes": 1187998,
+      "transportCpuMs": 109.31130000000121,
+      "peakPhysicalConcurrency": 1,
+      "byTable": {
+        "person_days": {
+          "gets": 7,
+          "rows": 1200,
+          "bytes": 199207
+        },
+        "canonical_household_scope_control": {
+          "gets": 1,
+          "rows": 1,
+          "bytes": 94
+        },
+        "life_events": {
+          "gets": 15,
+          "rows": 653,
+          "bytes": 218622
+        },
+        "life_event_types": {
+          "gets": 1,
+          "rows": 1,
+          "bytes": 124
+        },
+        "location_occurrences": {
+          "gets": 16,
+          "rows": 1536,
+          "bytes": 403600
+        },
+        "life_event_participations": {
+          "gets": 6,
+          "rows": 1152,
+          "bytes": 300678
+        },
+        "life_event_localizations": {
+          "gets": 3,
+          "rows": 576,
+          "bytes": 65667
+        },
+        "life_event_financial_links": {
+          "gets": 3,
+          "rows": 0,
+          "bytes": 6
+        }
+      },
+      "wallMs": 1092.821899999999,
+      "cpuMs": 1328,
+      "heapDeltaBytes": 21573448,
+      "historicalRows": {
+        "identityEntries": 0,
+        "ranges": 0,
+        "identityHits": 0,
+        "rangeHits": 0
+      },
+      "logicalTargetCalls": 30,
+      "logicalMethods": {
+        "loadPlaceVisits": 8,
+        "loadActivityOccurrences": 8,
+        "loadLifeEventRecords": 3,
+        "loadLifeEventParticipationRows": 3,
+        "loadLifeEventLocalizationRows": 3,
+        "loadActivityOccurrenceById": 5
+      }
+    },
+    {
+      "variant": "B",
+      "physicalReads": 32,
+      "rows": 3890,
+      "bytes": 989387,
+      "transportCpuMs": 74.55929999998625,
+      "peakPhysicalConcurrency": 1,
+      "byTable": {
+        "person_days": {
+          "gets": 7,
+          "rows": 1200,
+          "bytes": 199207
+        },
+        "canonical_household_scope_control": {
+          "gets": 1,
+          "rows": 1,
+          "bytes": 94
+        },
+        "life_events": {
+          "gets": 4,
+          "rows": 576,
+          "bytes": 196852
+        },
+        "location_occurrences": {
+          "gets": 10,
+          "rows": 960,
+          "bytes": 340810
+        },
+        "life_event_types": {
+          "gets": 1,
+          "rows": 1,
+          "bytes": 124
+        },
+        "life_event_participations": {
+          "gets": 3,
+          "rows": 576,
+          "bytes": 186627
+        },
+        "life_event_localizations": {
+          "gets": 3,
+          "rows": 576,
+          "bytes": 65667
+        },
+        "life_event_financial_links": {
+          "gets": 3,
+          "rows": 0,
+          "bytes": 6
+        }
+      },
+      "wallMs": 941.1525000000001,
+      "cpuMs": 1016,
+      "heapDeltaBytes": 18475184,
+      "historicalRows": {
+        "identityEntries": 1248,
+        "ranges": 1,
+        "identityHits": 861,
+        "rangeHits": 6
+      },
+      "logicalTargetCalls": 30,
+      "logicalMethods": {
+        "loadPlaceVisits": 8,
+        "loadActivityOccurrences": 8,
+        "loadLifeEventRecords": 3,
+        "loadLifeEventParticipationRows": 3,
+        "loadLifeEventLocalizationRows": 3,
+        "loadActivityOccurrenceById": 5
+      }
+    }
+  ],
+  "samples": [
+    {
+      "variant": "P2",
+      "latency": 0,
+      "physicalReads": 78,
+      "rows": 6493,
+      "bytes": 1513004,
+      "transportCpuMs": 285.4801999999945,
+      "peakPhysicalConcurrency": 1,
+      "byTable": {
+        "person_days": {
+          "gets": 7,
+          "rows": 1200,
+          "bytes": 199207
+        },
+        "canonical_household_scope_control": {
+          "gets": 1,
+          "rows": 1,
+          "bytes": 94
+        },
+        "life_events": {
+          "gets": 17,
+          "rows": 793,
+          "bytes": 274752
+        },
+        "location_occurrences": {
+          "gets": 25,
+          "rows": 2056,
+          "bytes": 519329
+        },
+        "life_event_types": {
+          "gets": 1,
+          "rows": 1,
+          "bytes": 124
+        },
+        "life_event_participations": {
+          "gets": 19,
+          "rows": 1586,
+          "bytes": 421903
+        },
+        "life_event_localizations": {
+          "gets": 5,
+          "rows": 856,
+          "bytes": 97589
+        },
+        "life_event_financial_links": {
+          "gets": 3,
+          "rows": 0,
+          "bytes": 6
+        }
+      },
+      "wallMs": 1128.5175000000017,
+      "cpuMs": 1297,
+      "heapDeltaBytes": 3478504,
+      "historicalRows": {
+        "identityEntries": 0,
+        "ranges": 0,
+        "identityHits": 0,
+        "rangeHits": 0
+      },
+      "logicalTargetCalls": 30,
+      "logicalMethods": {
+        "loadPlaceVisits": 8,
+        "loadActivityOccurrences": 8,
+        "loadLifeEventRecords": 3,
+        "loadLifeEventParticipationRows": 3,
+        "loadLifeEventLocalizationRows": 3,
+        "loadActivityOccurrenceById": 5
+      }
+    },
+    {
+      "variant": "A",
+      "latency": 0,
+      "physicalReads": 52,
+      "rows": 5119,
+      "bytes": 1187998,
+      "transportCpuMs": 266.9874999999993,
+      "peakPhysicalConcurrency": 1,
+      "byTable": {
+        "person_days": {
+          "gets": 7,
+          "rows": 1200,
+          "bytes": 199207
+        },
+        "canonical_household_scope_control": {
+          "gets": 1,
+          "rows": 1,
+          "bytes": 94
+        },
+        "life_events": {
+          "gets": 15,
+          "rows": 653,
+          "bytes": 218622
+        },
+        "life_event_types": {
+          "gets": 1,
+          "rows": 1,
+          "bytes": 124
+        },
+        "location_occurrences": {
+          "gets": 16,
+          "rows": 1536,
+          "bytes": 403600
+        },
+        "life_event_participations": {
+          "gets": 6,
+          "rows": 1152,
+          "bytes": 300678
+        },
+        "life_event_localizations": {
+          "gets": 3,
+          "rows": 576,
+          "bytes": 65667
+        },
+        "life_event_financial_links": {
+          "gets": 3,
+          "rows": 0,
+          "bytes": 6
+        }
+      },
+      "wallMs": 1134.6216999999997,
+      "cpuMs": 1156,
+      "heapDeltaBytes": 937384,
+      "historicalRows": {
+        "identityEntries": 0,
+        "ranges": 0,
+        "identityHits": 0,
+        "rangeHits": 0
+      },
+      "logicalTargetCalls": 30,
+      "logicalMethods": {
+        "loadPlaceVisits": 8,
+        "loadActivityOccurrences": 8,
+        "loadLifeEventRecords": 3,
+        "loadLifeEventParticipationRows": 3,
+        "loadLifeEventLocalizationRows": 3,
+        "loadActivityOccurrenceById": 5
+      }
+    },
+    {
+      "variant": "B",
+      "latency": 0,
+      "physicalReads": 32,
+      "rows": 3890,
+      "bytes": 989387,
+      "transportCpuMs": 175.32049999999435,
+      "peakPhysicalConcurrency": 1,
+      "byTable": {
+        "person_days": {
+          "gets": 7,
+          "rows": 1200,
+          "bytes": 199207
+        },
+        "canonical_household_scope_control": {
+          "gets": 1,
+          "rows": 1,
+          "bytes": 94
+        },
+        "life_events": {
+          "gets": 4,
+          "rows": 576,
+          "bytes": 196852
+        },
+        "location_occurrences": {
+          "gets": 10,
+          "rows": 960,
+          "bytes": 340810
+        },
+        "life_event_types": {
+          "gets": 1,
+          "rows": 1,
+          "bytes": 124
+        },
+        "life_event_participations": {
+          "gets": 3,
+          "rows": 576,
+          "bytes": 186627
+        },
+        "life_event_localizations": {
+          "gets": 3,
+          "rows": 576,
+          "bytes": 65667
+        },
+        "life_event_financial_links": {
+          "gets": 3,
+          "rows": 0,
+          "bytes": 6
+        }
+      },
+      "wallMs": 1005.4076000000023,
+      "cpuMs": 1109,
+      "heapDeltaBytes": 1797040,
+      "historicalRows": {
+        "identityEntries": 1248,
+        "ranges": 1,
+        "identityHits": 861,
+        "rangeHits": 6
+      },
+      "logicalTargetCalls": 30,
+      "logicalMethods": {
+        "loadPlaceVisits": 8,
+        "loadActivityOccurrences": 8,
+        "loadLifeEventRecords": 3,
+        "loadLifeEventParticipationRows": 3,
+        "loadLifeEventLocalizationRows": 3,
+        "loadActivityOccurrenceById": 5
+      }
+    },
+    {
+      "variant": "B",
+      "latency": 0,
+      "physicalReads": 32,
+      "rows": 3890,
+      "bytes": 989387,
+      "transportCpuMs": 176.55189999999857,
+      "peakPhysicalConcurrency": 1,
+      "byTable": {
+        "person_days": {
+          "gets": 7,
+          "rows": 1200,
+          "bytes": 199207
+        },
+        "canonical_household_scope_control": {
+          "gets": 1,
+          "rows": 1,
+          "bytes": 94
+        },
+        "life_events": {
+          "gets": 4,
+          "rows": 576,
+          "bytes": 196852
+        },
+        "location_occurrences": {
+          "gets": 10,
+          "rows": 960,
+          "bytes": 340810
+        },
+        "life_event_types": {
+          "gets": 1,
+          "rows": 1,
+          "bytes": 124
+        },
+        "life_event_participations": {
+          "gets": 3,
+          "rows": 576,
+          "bytes": 186627
+        },
+        "life_event_localizations": {
+          "gets": 3,
+          "rows": 576,
+          "bytes": 65667
+        },
+        "life_event_financial_links": {
+          "gets": 3,
+          "rows": 0,
+          "bytes": 6
+        }
+      },
+      "wallMs": 1014.4070999999967,
+      "cpuMs": 1094,
+      "heapDeltaBytes": -1767560,
+      "historicalRows": {
+        "identityEntries": 1248,
+        "ranges": 1,
+        "identityHits": 861,
+        "rangeHits": 6
+      },
+      "logicalTargetCalls": 30,
+      "logicalMethods": {
+        "loadPlaceVisits": 8,
+        "loadActivityOccurrences": 8,
+        "loadLifeEventRecords": 3,
+        "loadLifeEventParticipationRows": 3,
+        "loadLifeEventLocalizationRows": 3,
+        "loadActivityOccurrenceById": 5
+      }
+    },
+    {
+      "variant": "A",
+      "latency": 0,
+      "physicalReads": 52,
+      "rows": 5119,
+      "bytes": 1187998,
+      "transportCpuMs": 270.0538000000088,
+      "peakPhysicalConcurrency": 1,
+      "byTable": {
+        "person_days": {
+          "gets": 7,
+          "rows": 1200,
+          "bytes": 199207
+        },
+        "canonical_household_scope_control": {
+          "gets": 1,
+          "rows": 1,
+          "bytes": 94
+        },
+        "life_events": {
+          "gets": 15,
+          "rows": 653,
+          "bytes": 218622
+        },
+        "life_event_types": {
+          "gets": 1,
+          "rows": 1,
+          "bytes": 124
+        },
+        "location_occurrences": {
+          "gets": 16,
+          "rows": 1536,
+          "bytes": 403600
+        },
+        "life_event_participations": {
+          "gets": 6,
+          "rows": 1152,
+          "bytes": 300678
+        },
+        "life_event_localizations": {
+          "gets": 3,
+          "rows": 576,
+          "bytes": 65667
+        },
+        "life_event_financial_links": {
+          "gets": 3,
+          "rows": 0,
+          "bytes": 6
+        }
+      },
+      "wallMs": 1084.8727,
+      "cpuMs": 1110,
+      "heapDeltaBytes": 19372528,
+      "historicalRows": {
+        "identityEntries": 0,
+        "ranges": 0,
+        "identityHits": 0,
+        "rangeHits": 0
+      },
+      "logicalTargetCalls": 30,
+      "logicalMethods": {
+        "loadPlaceVisits": 8,
+        "loadActivityOccurrences": 8,
+        "loadLifeEventRecords": 3,
+        "loadLifeEventParticipationRows": 3,
+        "loadLifeEventLocalizationRows": 3,
+        "loadActivityOccurrenceById": 5
+      }
+    },
+    {
+      "variant": "P2",
+      "latency": 0,
+      "physicalReads": 78,
+      "rows": 6493,
+      "bytes": 1513004,
+      "transportCpuMs": 371.22400000001653,
+      "peakPhysicalConcurrency": 1,
+      "byTable": {
+        "person_days": {
+          "gets": 7,
+          "rows": 1200,
+          "bytes": 199207
+        },
+        "canonical_household_scope_control": {
+          "gets": 1,
+          "rows": 1,
+          "bytes": 94
+        },
+        "life_events": {
+          "gets": 17,
+          "rows": 793,
+          "bytes": 274752
+        },
+        "location_occurrences": {
+          "gets": 25,
+          "rows": 2056,
+          "bytes": 519329
+        },
+        "life_event_types": {
+          "gets": 1,
+          "rows": 1,
+          "bytes": 124
+        },
+        "life_event_participations": {
+          "gets": 19,
+          "rows": 1586,
+          "bytes": 421903
+        },
+        "life_event_localizations": {
+          "gets": 5,
+          "rows": 856,
+          "bytes": 97589
+        },
+        "life_event_financial_links": {
+          "gets": 3,
+          "rows": 0,
+          "bytes": 6
+        }
+      },
+      "wallMs": 1204.023000000001,
+      "cpuMs": 1187,
+      "heapDeltaBytes": -1872576,
+      "historicalRows": {
+        "identityEntries": 0,
+        "ranges": 0,
+        "identityHits": 0,
+        "rangeHits": 0
+      },
+      "logicalTargetCalls": 30,
+      "logicalMethods": {
+        "loadPlaceVisits": 8,
+        "loadActivityOccurrences": 8,
+        "loadLifeEventRecords": 3,
+        "loadLifeEventParticipationRows": 3,
+        "loadLifeEventLocalizationRows": 3,
+        "loadActivityOccurrenceById": 5
+      }
+    },
+    {
+      "variant": "P2",
+      "latency": 0,
+      "physicalReads": 78,
+      "rows": 6493,
+      "bytes": 1513004,
+      "transportCpuMs": 361.3565000000017,
+      "peakPhysicalConcurrency": 1,
+      "byTable": {
+        "person_days": {
+          "gets": 7,
+          "rows": 1200,
+          "bytes": 199207
+        },
+        "canonical_household_scope_control": {
+          "gets": 1,
+          "rows": 1,
+          "bytes": 94
+        },
+        "life_events": {
+          "gets": 17,
+          "rows": 793,
+          "bytes": 274752
+        },
+        "location_occurrences": {
+          "gets": 25,
+          "rows": 2056,
+          "bytes": 519329
+        },
+        "life_event_types": {
+          "gets": 1,
+          "rows": 1,
+          "bytes": 124
+        },
+        "life_event_participations": {
+          "gets": 19,
+          "rows": 1586,
+          "bytes": 421903
+        },
+        "life_event_localizations": {
+          "gets": 5,
+          "rows": 856,
+          "bytes": 97589
+        },
+        "life_event_financial_links": {
+          "gets": 3,
+          "rows": 0,
+          "bytes": 6
+        }
+      },
+      "wallMs": 1198.9379000000044,
+      "cpuMs": 1172,
+      "heapDeltaBytes": -429344,
+      "historicalRows": {
+        "identityEntries": 0,
+        "ranges": 0,
+        "identityHits": 0,
+        "rangeHits": 0
+      },
+      "logicalTargetCalls": 30,
+      "logicalMethods": {
+        "loadPlaceVisits": 8,
+        "loadActivityOccurrences": 8,
+        "loadLifeEventRecords": 3,
+        "loadLifeEventParticipationRows": 3,
+        "loadLifeEventLocalizationRows": 3,
+        "loadActivityOccurrenceById": 5
+      }
+    },
+    {
+      "variant": "A",
+      "latency": 0,
+      "physicalReads": 52,
+      "rows": 5119,
+      "bytes": 1187998,
+      "transportCpuMs": 262.11659999998665,
+      "peakPhysicalConcurrency": 1,
+      "byTable": {
+        "person_days": {
+          "gets": 7,
+          "rows": 1200,
+          "bytes": 199207
+        },
+        "canonical_household_scope_control": {
+          "gets": 1,
+          "rows": 1,
+          "bytes": 94
+        },
+        "life_events": {
+          "gets": 15,
+          "rows": 653,
+          "bytes": 218622
+        },
+        "life_event_types": {
+          "gets": 1,
+          "rows": 1,
+          "bytes": 124
+        },
+        "location_occurrences": {
+          "gets": 16,
+          "rows": 1536,
+          "bytes": 403600
+        },
+        "life_event_participations": {
+          "gets": 6,
+          "rows": 1152,
+          "bytes": 300678
+        },
+        "life_event_localizations": {
+          "gets": 3,
+          "rows": 576,
+          "bytes": 65667
+        },
+        "life_event_financial_links": {
+          "gets": 3,
+          "rows": 0,
+          "bytes": 6
+        }
+      },
+      "wallMs": 1083.4971000000005,
+      "cpuMs": 1109,
+      "heapDeltaBytes": 1765080,
+      "historicalRows": {
+        "identityEntries": 0,
+        "ranges": 0,
+        "identityHits": 0,
+        "rangeHits": 0
+      },
+      "logicalTargetCalls": 30,
+      "logicalMethods": {
+        "loadPlaceVisits": 8,
+        "loadActivityOccurrences": 8,
+        "loadLifeEventRecords": 3,
+        "loadLifeEventParticipationRows": 3,
+        "loadLifeEventLocalizationRows": 3,
+        "loadActivityOccurrenceById": 5
+      }
+    },
+    {
+      "variant": "B",
+      "latency": 0,
+      "physicalReads": 32,
+      "rows": 3890,
+      "bytes": 989387,
+      "transportCpuMs": 181.56370000001334,
+      "peakPhysicalConcurrency": 1,
+      "byTable": {
+        "person_days": {
+          "gets": 7,
+          "rows": 1200,
+          "bytes": 199207
+        },
+        "canonical_household_scope_control": {
+          "gets": 1,
+          "rows": 1,
+          "bytes": 94
+        },
+        "life_events": {
+          "gets": 4,
+          "rows": 576,
+          "bytes": 196852
+        },
+        "location_occurrences": {
+          "gets": 10,
+          "rows": 960,
+          "bytes": 340810
+        },
+        "life_event_types": {
+          "gets": 1,
+          "rows": 1,
+          "bytes": 124
+        },
+        "life_event_participations": {
+          "gets": 3,
+          "rows": 576,
+          "bytes": 186627
+        },
+        "life_event_localizations": {
+          "gets": 3,
+          "rows": 576,
+          "bytes": 65667
+        },
+        "life_event_financial_links": {
+          "gets": 3,
+          "rows": 0,
+          "bytes": 6
+        }
+      },
+      "wallMs": 1004.4879000000001,
+      "cpuMs": 1016,
+      "heapDeltaBytes": 17175040,
+      "historicalRows": {
+        "identityEntries": 1248,
+        "ranges": 1,
+        "identityHits": 861,
+        "rangeHits": 6
+      },
+      "logicalTargetCalls": 30,
+      "logicalMethods": {
+        "loadPlaceVisits": 8,
+        "loadActivityOccurrences": 8,
+        "loadLifeEventRecords": 3,
+        "loadLifeEventParticipationRows": 3,
+        "loadLifeEventLocalizationRows": 3,
+        "loadActivityOccurrenceById": 5
+      }
+    },
+    {
+      "variant": "P2",
+      "latency": 15,
+      "physicalReads": 78,
+      "rows": 6493,
+      "bytes": 1513004,
+      "transportCpuMs": 374.3009999999995,
+      "peakPhysicalConcurrency": 9,
+      "byTable": {
+        "person_days": {
+          "gets": 7,
+          "rows": 1200,
+          "bytes": 199207
+        },
+        "canonical_household_scope_control": {
+          "gets": 1,
+          "rows": 1,
+          "bytes": 94
+        },
+        "location_occurrences": {
+          "gets": 25,
+          "rows": 2056,
+          "bytes": 519329
+        },
+        "life_events": {
+          "gets": 17,
+          "rows": 793,
+          "bytes": 274752
+        },
+        "life_event_types": {
+          "gets": 1,
+          "rows": 1,
+          "bytes": 124
+        },
+        "life_event_participations": {
+          "gets": 19,
+          "rows": 1586,
+          "bytes": 421903
+        },
+        "life_event_localizations": {
+          "gets": 5,
+          "rows": 856,
+          "bytes": 97589
+        },
+        "life_event_financial_links": {
+          "gets": 3,
+          "rows": 0,
+          "bytes": 6
+        }
+      },
+      "wallMs": 2282.450800000006,
+      "cpuMs": 1673,
+      "heapDeltaBytes": -130229024,
+      "historicalRows": {
+        "identityEntries": 0,
+        "ranges": 0,
+        "identityHits": 0,
+        "rangeHits": 0
+      },
+      "logicalTargetCalls": 30,
+      "logicalMethods": {
+        "loadPlaceVisits": 8,
+        "loadActivityOccurrences": 8,
+        "loadLifeEventRecords": 3,
+        "loadLifeEventParticipationRows": 3,
+        "loadLifeEventLocalizationRows": 3,
+        "loadActivityOccurrenceById": 5
+      }
+    },
+    {
+      "variant": "A",
+      "latency": 15,
+      "physicalReads": 52,
+      "rows": 5119,
+      "bytes": 1187998,
+      "transportCpuMs": 103.71269999997457,
+      "peakPhysicalConcurrency": 9,
+      "byTable": {
+        "person_days": {
+          "gets": 7,
+          "rows": 1200,
+          "bytes": 199207
+        },
+        "canonical_household_scope_control": {
+          "gets": 1,
+          "rows": 1,
+          "bytes": 94
+        },
+        "location_occurrences": {
+          "gets": 16,
+          "rows": 1536,
+          "bytes": 403600
+        },
+        "life_events": {
+          "gets": 15,
+          "rows": 653,
+          "bytes": 218622
+        },
+        "life_event_types": {
+          "gets": 1,
+          "rows": 1,
+          "bytes": 124
+        },
+        "life_event_participations": {
+          "gets": 6,
+          "rows": 1152,
+          "bytes": 300678
+        },
+        "life_event_localizations": {
+          "gets": 3,
+          "rows": 576,
+          "bytes": 65667
+        },
+        "life_event_financial_links": {
+          "gets": 3,
+          "rows": 0,
+          "bytes": 6
+        }
+      },
+      "wallMs": 1583.887800000004,
+      "cpuMs": 1156,
+      "heapDeltaBytes": 5850808,
+      "historicalRows": {
+        "identityEntries": 0,
+        "ranges": 0,
+        "identityHits": 0,
+        "rangeHits": 0
+      },
+      "logicalTargetCalls": 30,
+      "logicalMethods": {
+        "loadPlaceVisits": 8,
+        "loadActivityOccurrences": 8,
+        "loadLifeEventRecords": 3,
+        "loadLifeEventParticipationRows": 3,
+        "loadLifeEventLocalizationRows": 3,
+        "loadActivityOccurrenceById": 5
+      }
+    },
+    {
+      "variant": "B",
+      "latency": 15,
+      "physicalReads": 32,
+      "rows": 3890,
+      "bytes": 989387,
+      "transportCpuMs": 176.3521999999939,
+      "peakPhysicalConcurrency": 7,
+      "byTable": {
+        "person_days": {
+          "gets": 7,
+          "rows": 1200,
+          "bytes": 199207
+        },
+        "canonical_household_scope_control": {
+          "gets": 1,
+          "rows": 1,
+          "bytes": 94
+        },
+        "location_occurrences": {
+          "gets": 10,
+          "rows": 960,
+          "bytes": 340810
+        },
+        "life_events": {
+          "gets": 4,
+          "rows": 576,
+          "bytes": 196852
+        },
+        "life_event_types": {
+          "gets": 1,
+          "rows": 1,
+          "bytes": 124
+        },
+        "life_event_participations": {
+          "gets": 3,
+          "rows": 576,
+          "bytes": 186627
+        },
+        "life_event_localizations": {
+          "gets": 3,
+          "rows": 576,
+          "bytes": 65667
+        },
+        "life_event_financial_links": {
+          "gets": 3,
+          "rows": 0,
+          "bytes": 6
+        }
+      },
+      "wallMs": 1229.926400000004,
+      "cpuMs": 1078,
+      "heapDeltaBytes": -10215360,
+      "historicalRows": {
+        "identityEntries": 1248,
+        "ranges": 1,
+        "identityHits": 861,
+        "rangeHits": 6
+      },
+      "logicalTargetCalls": 30,
+      "logicalMethods": {
+        "loadPlaceVisits": 8,
+        "loadActivityOccurrences": 8,
+        "loadLifeEventRecords": 3,
+        "loadLifeEventParticipationRows": 3,
+        "loadLifeEventLocalizationRows": 3,
+        "loadActivityOccurrenceById": 5
+      }
+    },
+    {
+      "variant": "B",
+      "latency": 15,
+      "physicalReads": 32,
+      "rows": 3890,
+      "bytes": 989387,
+      "transportCpuMs": 179.50200000002224,
+      "peakPhysicalConcurrency": 7,
+      "byTable": {
+        "person_days": {
+          "gets": 7,
+          "rows": 1200,
+          "bytes": 199207
+        },
+        "canonical_household_scope_control": {
+          "gets": 1,
+          "rows": 1,
+          "bytes": 94
+        },
+        "location_occurrences": {
+          "gets": 10,
+          "rows": 960,
+          "bytes": 340810
+        },
+        "life_events": {
+          "gets": 4,
+          "rows": 576,
+          "bytes": 196852
+        },
+        "life_event_types": {
+          "gets": 1,
+          "rows": 1,
+          "bytes": 124
+        },
+        "life_event_participations": {
+          "gets": 3,
+          "rows": 576,
+          "bytes": 186627
+        },
+        "life_event_localizations": {
+          "gets": 3,
+          "rows": 576,
+          "bytes": 65667
+        },
+        "life_event_financial_links": {
+          "gets": 3,
+          "rows": 0,
+          "bytes": 6
+        }
+      },
+      "wallMs": 1207.017399999997,
+      "cpuMs": 1078,
+      "heapDeltaBytes": 3355640,
+      "historicalRows": {
+        "identityEntries": 1248,
+        "ranges": 1,
+        "identityHits": 861,
+        "rangeHits": 6
+      },
+      "logicalTargetCalls": 30,
+      "logicalMethods": {
+        "loadPlaceVisits": 8,
+        "loadActivityOccurrences": 8,
+        "loadLifeEventRecords": 3,
+        "loadLifeEventParticipationRows": 3,
+        "loadLifeEventLocalizationRows": 3,
+        "loadActivityOccurrenceById": 5
+      }
+    },
+    {
+      "variant": "A",
+      "latency": 15,
+      "physicalReads": 52,
+      "rows": 5119,
+      "bytes": 1187998,
+      "transportCpuMs": 235.24259999997594,
+      "peakPhysicalConcurrency": 9,
+      "byTable": {
+        "person_days": {
+          "gets": 7,
+          "rows": 1200,
+          "bytes": 199207
+        },
+        "canonical_household_scope_control": {
+          "gets": 1,
+          "rows": 1,
+          "bytes": 94
+        },
+        "location_occurrences": {
+          "gets": 16,
+          "rows": 1536,
+          "bytes": 403600
+        },
+        "life_events": {
+          "gets": 15,
+          "rows": 653,
+          "bytes": 218622
+        },
+        "life_event_types": {
+          "gets": 1,
+          "rows": 1,
+          "bytes": 124
+        },
+        "life_event_participations": {
+          "gets": 6,
+          "rows": 1152,
+          "bytes": 300678
+        },
+        "life_event_localizations": {
+          "gets": 3,
+          "rows": 576,
+          "bytes": 65667
+        },
+        "life_event_financial_links": {
+          "gets": 3,
+          "rows": 0,
+          "bytes": 6
+        }
+      },
+      "wallMs": 1612.961000000003,
+      "cpuMs": 1125,
+      "heapDeltaBytes": 10973920,
+      "historicalRows": {
+        "identityEntries": 0,
+        "ranges": 0,
+        "identityHits": 0,
+        "rangeHits": 0
+      },
+      "logicalTargetCalls": 30,
+      "logicalMethods": {
+        "loadPlaceVisits": 8,
+        "loadActivityOccurrences": 8,
+        "loadLifeEventRecords": 3,
+        "loadLifeEventParticipationRows": 3,
+        "loadLifeEventLocalizationRows": 3,
+        "loadActivityOccurrenceById": 5
+      }
+    },
+    {
+      "variant": "P2",
+      "latency": 15,
+      "physicalReads": 78,
+      "rows": 6493,
+      "bytes": 1513004,
+      "transportCpuMs": 361.7253000000128,
+      "peakPhysicalConcurrency": 9,
+      "byTable": {
+        "person_days": {
+          "gets": 7,
+          "rows": 1200,
+          "bytes": 199207
+        },
+        "canonical_household_scope_control": {
+          "gets": 1,
+          "rows": 1,
+          "bytes": 94
+        },
+        "location_occurrences": {
+          "gets": 25,
+          "rows": 2056,
+          "bytes": 519329
+        },
+        "life_events": {
+          "gets": 17,
+          "rows": 793,
+          "bytes": 274752
+        },
+        "life_event_types": {
+          "gets": 1,
+          "rows": 1,
+          "bytes": 124
+        },
+        "life_event_participations": {
+          "gets": 19,
+          "rows": 1586,
+          "bytes": 421903
+        },
+        "life_event_localizations": {
+          "gets": 5,
+          "rows": 856,
+          "bytes": 97589
+        },
+        "life_event_financial_links": {
+          "gets": 3,
+          "rows": 0,
+          "bytes": 6
+        }
+      },
+      "wallMs": 2073.863600000004,
+      "cpuMs": 1156,
+      "heapDeltaBytes": 3658424,
+      "historicalRows": {
+        "identityEntries": 0,
+        "ranges": 0,
+        "identityHits": 0,
+        "rangeHits": 0
+      },
+      "logicalTargetCalls": 30,
+      "logicalMethods": {
+        "loadPlaceVisits": 8,
+        "loadActivityOccurrences": 8,
+        "loadLifeEventRecords": 3,
+        "loadLifeEventParticipationRows": 3,
+        "loadLifeEventLocalizationRows": 3,
+        "loadActivityOccurrenceById": 5
+      }
+    },
+    {
+      "variant": "P2",
+      "latency": 15,
+      "physicalReads": 78,
+      "rows": 6493,
+      "bytes": 1513004,
+      "transportCpuMs": 365.4276999999711,
+      "peakPhysicalConcurrency": 9,
+      "byTable": {
+        "person_days": {
+          "gets": 7,
+          "rows": 1200,
+          "bytes": 199207
+        },
+        "canonical_household_scope_control": {
+          "gets": 1,
+          "rows": 1,
+          "bytes": 94
+        },
+        "location_occurrences": {
+          "gets": 25,
+          "rows": 2056,
+          "bytes": 519329
+        },
+        "life_events": {
+          "gets": 17,
+          "rows": 793,
+          "bytes": 274752
+        },
+        "life_event_types": {
+          "gets": 1,
+          "rows": 1,
+          "bytes": 124
+        },
+        "life_event_participations": {
+          "gets": 19,
+          "rows": 1586,
+          "bytes": 421903
+        },
+        "life_event_localizations": {
+          "gets": 5,
+          "rows": 856,
+          "bytes": 97589
+        },
+        "life_event_financial_links": {
+          "gets": 3,
+          "rows": 0,
+          "bytes": 6
+        }
+      },
+      "wallMs": 2208.357100000001,
+      "cpuMs": 1204,
+      "heapDeltaBytes": 3907536,
+      "historicalRows": {
+        "identityEntries": 0,
+        "ranges": 0,
+        "identityHits": 0,
+        "rangeHits": 0
+      },
+      "logicalTargetCalls": 30,
+      "logicalMethods": {
+        "loadPlaceVisits": 8,
+        "loadActivityOccurrences": 8,
+        "loadLifeEventRecords": 3,
+        "loadLifeEventParticipationRows": 3,
+        "loadLifeEventLocalizationRows": 3,
+        "loadActivityOccurrenceById": 5
+      }
+    },
+    {
+      "variant": "A",
+      "latency": 15,
+      "physicalReads": 52,
+      "rows": 5119,
+      "bytes": 1187998,
+      "transportCpuMs": 269.7367999999915,
+      "peakPhysicalConcurrency": 9,
+      "byTable": {
+        "person_days": {
+          "gets": 7,
+          "rows": 1200,
+          "bytes": 199207
+        },
+        "canonical_household_scope_control": {
+          "gets": 1,
+          "rows": 1,
+          "bytes": 94
+        },
+        "location_occurrences": {
+          "gets": 16,
+          "rows": 1536,
+          "bytes": 403600
+        },
+        "life_events": {
+          "gets": 15,
+          "rows": 653,
+          "bytes": 218622
+        },
+        "life_event_types": {
+          "gets": 1,
+          "rows": 1,
+          "bytes": 124
+        },
+        "life_event_participations": {
+          "gets": 6,
+          "rows": 1152,
+          "bytes": 300678
+        },
+        "life_event_localizations": {
+          "gets": 3,
+          "rows": 576,
+          "bytes": 65667
+        },
+        "life_event_financial_links": {
+          "gets": 3,
+          "rows": 0,
+          "bytes": 6
+        }
+      },
+      "wallMs": 1637.832699999999,
+      "cpuMs": 1047,
+      "heapDeltaBytes": 4313528,
+      "historicalRows": {
+        "identityEntries": 0,
+        "ranges": 0,
+        "identityHits": 0,
+        "rangeHits": 0
+      },
+      "logicalTargetCalls": 30,
+      "logicalMethods": {
+        "loadPlaceVisits": 8,
+        "loadActivityOccurrences": 8,
+        "loadLifeEventRecords": 3,
+        "loadLifeEventParticipationRows": 3,
+        "loadLifeEventLocalizationRows": 3,
+        "loadActivityOccurrenceById": 5
+      }
+    },
+    {
+      "variant": "B",
+      "latency": 15,
+      "physicalReads": 32,
+      "rows": 3890,
+      "bytes": 989387,
+      "transportCpuMs": 179.55520000000251,
+      "peakPhysicalConcurrency": 7,
+      "byTable": {
+        "person_days": {
+          "gets": 7,
+          "rows": 1200,
+          "bytes": 199207
+        },
+        "canonical_household_scope_control": {
+          "gets": 1,
+          "rows": 1,
+          "bytes": 94
+        },
+        "location_occurrences": {
+          "gets": 10,
+          "rows": 960,
+          "bytes": 340810
+        },
+        "life_events": {
+          "gets": 4,
+          "rows": 576,
+          "bytes": 196852
+        },
+        "life_event_types": {
+          "gets": 1,
+          "rows": 1,
+          "bytes": 124
+        },
+        "life_event_participations": {
+          "gets": 3,
+          "rows": 576,
+          "bytes": 186627
+        },
+        "life_event_localizations": {
+          "gets": 3,
+          "rows": 576,
+          "bytes": 65667
+        },
+        "life_event_financial_links": {
+          "gets": 3,
+          "rows": 0,
+          "bytes": 6
+        }
+      },
+      "wallMs": 1212.2073000000019,
+      "cpuMs": 1109,
+      "heapDeltaBytes": 2827776,
+      "historicalRows": {
+        "identityEntries": 1248,
+        "ranges": 1,
+        "identityHits": 861,
+        "rangeHits": 6
+      },
+      "logicalTargetCalls": 30,
+      "logicalMethods": {
+        "loadPlaceVisits": 8,
+        "loadActivityOccurrences": 8,
+        "loadLifeEventRecords": 3,
+        "loadLifeEventParticipationRows": 3,
+        "loadLifeEventLocalizationRows": 3,
+        "loadActivityOccurrenceById": 5
+      }
+    },
+    {
+      "variant": "P2",
+      "latency": 75,
+      "physicalReads": 78,
+      "rows": 6493,
+      "bytes": 1513004,
+      "transportCpuMs": 382.7183000000441,
+      "peakPhysicalConcurrency": 9,
+      "byTable": {
+        "person_days": {
+          "gets": 7,
+          "rows": 1200,
+          "bytes": 199207
+        },
+        "canonical_household_scope_control": {
+          "gets": 1,
+          "rows": 1,
+          "bytes": 94
+        },
+        "location_occurrences": {
+          "gets": 25,
+          "rows": 2056,
+          "bytes": 519329
+        },
+        "life_events": {
+          "gets": 17,
+          "rows": 793,
+          "bytes": 274752
+        },
+        "life_event_types": {
+          "gets": 1,
+          "rows": 1,
+          "bytes": 124
+        },
+        "life_event_participations": {
+          "gets": 19,
+          "rows": 1586,
+          "bytes": 421903
+        },
+        "life_event_localizations": {
+          "gets": 5,
+          "rows": 856,
+          "bytes": 97589
+        },
+        "life_event_financial_links": {
+          "gets": 3,
+          "rows": 0,
+          "bytes": 6
+        }
+      },
+      "wallMs": 4765.960100000004,
+      "cpuMs": 1266,
+      "heapDeltaBytes": 4915376,
+      "historicalRows": {
+        "identityEntries": 0,
+        "ranges": 0,
+        "identityHits": 0,
+        "rangeHits": 0
+      },
+      "logicalTargetCalls": 30,
+      "logicalMethods": {
+        "loadPlaceVisits": 8,
+        "loadActivityOccurrences": 8,
+        "loadLifeEventRecords": 3,
+        "loadLifeEventParticipationRows": 3,
+        "loadLifeEventLocalizationRows": 3,
+        "loadActivityOccurrenceById": 5
+      }
+    },
+    {
+      "variant": "A",
+      "latency": 75,
+      "physicalReads": 52,
+      "rows": 5119,
+      "bytes": 1187998,
+      "transportCpuMs": 271.2079000000158,
+      "peakPhysicalConcurrency": 9,
+      "byTable": {
+        "person_days": {
+          "gets": 7,
+          "rows": 1200,
+          "bytes": 199207
+        },
+        "canonical_household_scope_control": {
+          "gets": 1,
+          "rows": 1,
+          "bytes": 94
+        },
+        "location_occurrences": {
+          "gets": 16,
+          "rows": 1536,
+          "bytes": 403600
+        },
+        "life_events": {
+          "gets": 15,
+          "rows": 653,
+          "bytes": 218622
+        },
+        "life_event_types": {
+          "gets": 1,
+          "rows": 1,
+          "bytes": 124
+        },
+        "life_event_participations": {
+          "gets": 6,
+          "rows": 1152,
+          "bytes": 300678
+        },
+        "life_event_localizations": {
+          "gets": 3,
+          "rows": 576,
+          "bytes": 65667
+        },
+        "life_event_financial_links": {
+          "gets": 3,
+          "rows": 0,
+          "bytes": 6
+        }
+      },
+      "wallMs": 3039.559000000001,
+      "cpuMs": 1109,
+      "heapDeltaBytes": 4157912,
+      "historicalRows": {
+        "identityEntries": 0,
+        "ranges": 0,
+        "identityHits": 0,
+        "rangeHits": 0
+      },
+      "logicalTargetCalls": 30,
+      "logicalMethods": {
+        "loadPlaceVisits": 8,
+        "loadActivityOccurrences": 8,
+        "loadLifeEventRecords": 3,
+        "loadLifeEventParticipationRows": 3,
+        "loadLifeEventLocalizationRows": 3,
+        "loadActivityOccurrenceById": 5
+      }
+    },
+    {
+      "variant": "B",
+      "latency": 75,
+      "physicalReads": 32,
+      "rows": 3890,
+      "bytes": 989387,
+      "transportCpuMs": 185.90499999999156,
+      "peakPhysicalConcurrency": 7,
+      "byTable": {
+        "person_days": {
+          "gets": 7,
+          "rows": 1200,
+          "bytes": 199207
+        },
+        "canonical_household_scope_control": {
+          "gets": 1,
+          "rows": 1,
+          "bytes": 94
+        },
+        "location_occurrences": {
+          "gets": 10,
+          "rows": 960,
+          "bytes": 340810
+        },
+        "life_events": {
+          "gets": 4,
+          "rows": 576,
+          "bytes": 196852
+        },
+        "life_event_types": {
+          "gets": 1,
+          "rows": 1,
+          "bytes": 124
+        },
+        "life_event_participations": {
+          "gets": 3,
+          "rows": 576,
+          "bytes": 186627
+        },
+        "life_event_localizations": {
+          "gets": 3,
+          "rows": 576,
+          "bytes": 65667
+        },
+        "life_event_financial_links": {
+          "gets": 3,
+          "rows": 0,
+          "bytes": 6
+        }
+      },
+      "wallMs": 1954.4925000000003,
+      "cpuMs": 1062,
+      "heapDeltaBytes": 2902488,
+      "historicalRows": {
+        "identityEntries": 1248,
+        "ranges": 1,
+        "identityHits": 861,
+        "rangeHits": 6
+      },
+      "logicalTargetCalls": 30,
+      "logicalMethods": {
+        "loadPlaceVisits": 8,
+        "loadActivityOccurrences": 8,
+        "loadLifeEventRecords": 3,
+        "loadLifeEventParticipationRows": 3,
+        "loadLifeEventLocalizationRows": 3,
+        "loadActivityOccurrenceById": 5
+      }
+    },
+    {
+      "variant": "B",
+      "latency": 75,
+      "physicalReads": 32,
+      "rows": 3890,
+      "bytes": 989387,
+      "transportCpuMs": 184.2117000000144,
+      "peakPhysicalConcurrency": 7,
+      "byTable": {
+        "person_days": {
+          "gets": 7,
+          "rows": 1200,
+          "bytes": 199207
+        },
+        "canonical_household_scope_control": {
+          "gets": 1,
+          "rows": 1,
+          "bytes": 94
+        },
+        "location_occurrences": {
+          "gets": 10,
+          "rows": 960,
+          "bytes": 340810
+        },
+        "life_events": {
+          "gets": 4,
+          "rows": 576,
+          "bytes": 196852
+        },
+        "life_event_types": {
+          "gets": 1,
+          "rows": 1,
+          "bytes": 124
+        },
+        "life_event_participations": {
+          "gets": 3,
+          "rows": 576,
+          "bytes": 186627
+        },
+        "life_event_localizations": {
+          "gets": 3,
+          "rows": 576,
+          "bytes": 65667
+        },
+        "life_event_financial_links": {
+          "gets": 3,
+          "rows": 0,
+          "bytes": 6
+        }
+      },
+      "wallMs": 1953.7080999999962,
+      "cpuMs": 1078,
+      "heapDeltaBytes": 3818400,
+      "historicalRows": {
+        "identityEntries": 1248,
+        "ranges": 1,
+        "identityHits": 861,
+        "rangeHits": 6
+      },
+      "logicalTargetCalls": 30,
+      "logicalMethods": {
+        "loadPlaceVisits": 8,
+        "loadActivityOccurrences": 8,
+        "loadLifeEventRecords": 3,
+        "loadLifeEventParticipationRows": 3,
+        "loadLifeEventLocalizationRows": 3,
+        "loadActivityOccurrenceById": 5
+      }
+    },
+    {
+      "variant": "A",
+      "latency": 75,
+      "physicalReads": 52,
+      "rows": 5119,
+      "bytes": 1187998,
+      "transportCpuMs": 274.1959000000061,
+      "peakPhysicalConcurrency": 9,
+      "byTable": {
+        "person_days": {
+          "gets": 7,
+          "rows": 1200,
+          "bytes": 199207
+        },
+        "canonical_household_scope_control": {
+          "gets": 1,
+          "rows": 1,
+          "bytes": 94
+        },
+        "location_occurrences": {
+          "gets": 16,
+          "rows": 1536,
+          "bytes": 403600
+        },
+        "life_events": {
+          "gets": 15,
+          "rows": 653,
+          "bytes": 218622
+        },
+        "life_event_types": {
+          "gets": 1,
+          "rows": 1,
+          "bytes": 124
+        },
+        "life_event_participations": {
+          "gets": 6,
+          "rows": 1152,
+          "bytes": 300678
+        },
+        "life_event_localizations": {
+          "gets": 3,
+          "rows": 576,
+          "bytes": 65667
+        },
+        "life_event_financial_links": {
+          "gets": 3,
+          "rows": 0,
+          "bytes": 6
+        }
+      },
+      "wallMs": 3104.886599999998,
+      "cpuMs": 1172,
+      "heapDeltaBytes": 5188960,
+      "historicalRows": {
+        "identityEntries": 0,
+        "ranges": 0,
+        "identityHits": 0,
+        "rangeHits": 0
+      },
+      "logicalTargetCalls": 30,
+      "logicalMethods": {
+        "loadPlaceVisits": 8,
+        "loadActivityOccurrences": 8,
+        "loadLifeEventRecords": 3,
+        "loadLifeEventParticipationRows": 3,
+        "loadLifeEventLocalizationRows": 3,
+        "loadActivityOccurrenceById": 5
+      }
+    },
+    {
+      "variant": "P2",
+      "latency": 75,
+      "physicalReads": 78,
+      "rows": 6493,
+      "bytes": 1513004,
+      "transportCpuMs": 392.91579999998794,
+      "peakPhysicalConcurrency": 9,
+      "byTable": {
+        "person_days": {
+          "gets": 7,
+          "rows": 1200,
+          "bytes": 199207
+        },
+        "canonical_household_scope_control": {
+          "gets": 1,
+          "rows": 1,
+          "bytes": 94
+        },
+        "location_occurrences": {
+          "gets": 25,
+          "rows": 2056,
+          "bytes": 519329
+        },
+        "life_events": {
+          "gets": 17,
+          "rows": 793,
+          "bytes": 274752
+        },
+        "life_event_types": {
+          "gets": 1,
+          "rows": 1,
+          "bytes": 124
+        },
+        "life_event_participations": {
+          "gets": 19,
+          "rows": 1586,
+          "bytes": 421903
+        },
+        "life_event_localizations": {
+          "gets": 5,
+          "rows": 856,
+          "bytes": 97589
+        },
+        "life_event_financial_links": {
+          "gets": 3,
+          "rows": 0,
+          "bytes": 6
+        }
+      },
+      "wallMs": 4784.0985999999975,
+      "cpuMs": 1250,
+      "heapDeltaBytes": 3789360,
+      "historicalRows": {
+        "identityEntries": 0,
+        "ranges": 0,
+        "identityHits": 0,
+        "rangeHits": 0
+      },
+      "logicalTargetCalls": 30,
+      "logicalMethods": {
+        "loadPlaceVisits": 8,
+        "loadActivityOccurrences": 8,
+        "loadLifeEventRecords": 3,
+        "loadLifeEventParticipationRows": 3,
+        "loadLifeEventLocalizationRows": 3,
+        "loadActivityOccurrenceById": 5
+      }
+    },
+    {
+      "variant": "P2",
+      "latency": 75,
+      "physicalReads": 78,
+      "rows": 6493,
+      "bytes": 1513004,
+      "transportCpuMs": 371.4906000000774,
+      "peakPhysicalConcurrency": 9,
+      "byTable": {
+        "person_days": {
+          "gets": 7,
+          "rows": 1200,
+          "bytes": 199207
+        },
+        "canonical_household_scope_control": {
+          "gets": 1,
+          "rows": 1,
+          "bytes": 94
+        },
+        "location_occurrences": {
+          "gets": 25,
+          "rows": 2056,
+          "bytes": 519329
+        },
+        "life_events": {
+          "gets": 17,
+          "rows": 793,
+          "bytes": 274752
+        },
+        "life_event_types": {
+          "gets": 1,
+          "rows": 1,
+          "bytes": 124
+        },
+        "life_event_participations": {
+          "gets": 19,
+          "rows": 1586,
+          "bytes": 421903
+        },
+        "life_event_localizations": {
+          "gets": 5,
+          "rows": 856,
+          "bytes": 97589
+        },
+        "life_event_financial_links": {
+          "gets": 3,
+          "rows": 0,
+          "bytes": 6
+        }
+      },
+      "wallMs": 4665.414799999999,
+      "cpuMs": 1219,
+      "heapDeltaBytes": 3988552,
+      "historicalRows": {
+        "identityEntries": 0,
+        "ranges": 0,
+        "identityHits": 0,
+        "rangeHits": 0
+      },
+      "logicalTargetCalls": 30,
+      "logicalMethods": {
+        "loadPlaceVisits": 8,
+        "loadActivityOccurrences": 8,
+        "loadLifeEventRecords": 3,
+        "loadLifeEventParticipationRows": 3,
+        "loadLifeEventLocalizationRows": 3,
+        "loadActivityOccurrenceById": 5
+      }
+    },
+    {
+      "variant": "A",
+      "latency": 75,
+      "physicalReads": 52,
+      "rows": 5119,
+      "bytes": 1187998,
+      "transportCpuMs": 268.5941000000457,
+      "peakPhysicalConcurrency": 9,
+      "byTable": {
+        "person_days": {
+          "gets": 7,
+          "rows": 1200,
+          "bytes": 199207
+        },
+        "canonical_household_scope_control": {
+          "gets": 1,
+          "rows": 1,
+          "bytes": 94
+        },
+        "location_occurrences": {
+          "gets": 16,
+          "rows": 1536,
+          "bytes": 403600
+        },
+        "life_events": {
+          "gets": 15,
+          "rows": 653,
+          "bytes": 218622
+        },
+        "life_event_types": {
+          "gets": 1,
+          "rows": 1,
+          "bytes": 124
+        },
+        "life_event_participations": {
+          "gets": 6,
+          "rows": 1152,
+          "bytes": 300678
+        },
+        "life_event_localizations": {
+          "gets": 3,
+          "rows": 576,
+          "bytes": 65667
+        },
+        "life_event_financial_links": {
+          "gets": 3,
+          "rows": 0,
+          "bytes": 6
+        }
+      },
+      "wallMs": 3026.4872999999934,
+      "cpuMs": 1188,
+      "heapDeltaBytes": 4050504,
+      "historicalRows": {
+        "identityEntries": 0,
+        "ranges": 0,
+        "identityHits": 0,
+        "rangeHits": 0
+      },
+      "logicalTargetCalls": 30,
+      "logicalMethods": {
+        "loadPlaceVisits": 8,
+        "loadActivityOccurrences": 8,
+        "loadLifeEventRecords": 3,
+        "loadLifeEventParticipationRows": 3,
+        "loadLifeEventLocalizationRows": 3,
+        "loadActivityOccurrenceById": 5
+      }
+    },
+    {
+      "variant": "B",
+      "latency": 75,
+      "physicalReads": 32,
+      "rows": 3890,
+      "bytes": 989387,
+      "transportCpuMs": 182.25489999995625,
+      "peakPhysicalConcurrency": 7,
+      "byTable": {
+        "person_days": {
+          "gets": 7,
+          "rows": 1200,
+          "bytes": 199207
+        },
+        "canonical_household_scope_control": {
+          "gets": 1,
+          "rows": 1,
+          "bytes": 94
+        },
+        "location_occurrences": {
+          "gets": 10,
+          "rows": 960,
+          "bytes": 340810
+        },
+        "life_events": {
+          "gets": 4,
+          "rows": 576,
+          "bytes": 196852
+        },
+        "life_event_types": {
+          "gets": 1,
+          "rows": 1,
+          "bytes": 124
+        },
+        "life_event_participations": {
+          "gets": 3,
+          "rows": 576,
+          "bytes": 186627
+        },
+        "life_event_localizations": {
+          "gets": 3,
+          "rows": 576,
+          "bytes": 65667
+        },
+        "life_event_financial_links": {
+          "gets": 3,
+          "rows": 0,
+          "bytes": 6
+        }
+      },
+      "wallMs": 1931.6088000000018,
+      "cpuMs": 1047,
+      "heapDeltaBytes": 2994504,
+      "historicalRows": {
+        "identityEntries": 1248,
+        "ranges": 1,
+        "identityHits": 861,
+        "rangeHits": 6
+      },
+      "logicalTargetCalls": 30,
+      "logicalMethods": {
+        "loadPlaceVisits": 8,
+        "loadActivityOccurrences": 8,
+        "loadLifeEventRecords": 3,
+        "loadLifeEventParticipationRows": 3,
+        "loadLifeEventLocalizationRows": 3,
+        "loadActivityOccurrenceById": 5
+      }
+    }
+  ],
+  "realWorld": "NOT_MEASURED",
+  "realSupabase": "NOT_RUN",
+  "remoteWrites": 0
+}

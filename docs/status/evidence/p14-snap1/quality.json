@@ -1,0 +1,10 @@
+{
+  "baselineExit": 0,
+  "typecheckExit": 0,
+  "buildExit": 0,
+  "node": "v22.18.0",
+  "next": "16.2.6",
+  "P3": "0",
+  "SNAP1": "0",
+  "dependencies": "local_reused"
+}

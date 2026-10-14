@@ -1,0 +1,62 @@
+[
+  {
+    "exitCode": 0,
+    "test": "check-composer-p14-p1-read-reuse"
+  },
+  {
+    "exitCode": 0,
+    "test": "check-composer-p14-p1-opening"
+  },
+  {
+    "exitCode": 0,
+    "test": "check-composer-p14-p2-mutation"
+  },
+  {
+    "exitCode": 0,
+    "test": "check-composer-p14-p2-scheduler"
+  },
+  {
+    "exitCode": 0,
+    "test": "check-composer-p03-interaction"
+  },
+  {
+    "exitCode": 0,
+    "test": "check-phase2-planner-p02-conservation"
+  },
+  {
+    "exitCode": 0,
+    "test": "check-phase2-planner-composer"
+  },
+  {
+    "exitCode": 1,
+    "test": "check-phase2-planner-interactions"
+  },
+  {
+    "exitCode": 0,
+    "test": "check-phase2-planner-kernel"
+  },
+  {
+    "exitCode": 0,
+    "test": "check-phase2-planner-baseline"
+  },
+  {
+    "exitCode": 0,
+    "test": "check-phase2-planner-mobility"
+  },
+  {
+    "exitCode": 0,
+    "test": "check-phase2-planner-p11"
+  },
+  {
+    "exitCode": 0,
+    "test": "check-phase2-planner-p13"
+  },
+  {
+    "exitCode": 0,
+    "test": "check-planner-performance-parity"
+  },
+  {
+    "exitCode": 0,
+    "test": "check-composer-r6-presentation"
+  }
+]

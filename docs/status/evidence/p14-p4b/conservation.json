@@ -1,0 +1,121 @@
+{
+  "draftId": "fc99df84-71c4-496b-9a60-e84f8655e029",
+  "version": 9,
+  "digest": "18e570e4d8d09fd8a7b8f38e20ebea4a37b54fe18533a27d31bb7fd4ebfe122d",
+  "contexts": [
+    {
+      "id": "11059469-10e6-4d9f-b92d-f1f625c2bd27",
+      "template": "night-out",
+      "fields": {
+        "fieldSchemaVersion": "context-fields@v2",
+        "label": "Soirée P4B finale"
+      },
+      "slotSelections": {
+        "food": {
+          "items": [
+            {
+              "selectionId": "ca737724-bfa4-402f-9ec1-68f954c4ab5b",
+              "optionKey": "restaurant",
+              "kind": "COMPONENT",
+              "provenance": "EXPLICIT_USER_DECISION",
+              "label": "Restaurant",
+              "quantity": "1",
+              "unitBasis": "ITEM",
+              "cost": {
+                "kind": "UNKNOWN"
+              },
+              "fundingAllocations": [],
+              "binding": {
+                "mode": "AUTO"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "55e89ab1-25b1-47ac-80ad-746b81ae8373",
+      "template": "gift",
+      "fields": {
+        "fieldSchemaVersion": "context-fields@v3",
+        "recipientRef": {
+          "kind": "HOUSEHOLD_PERSON",
+          "personId": "00000000-0000-4000-8000-000000000001"
+        },
+        "occasion": "Anniversaire",
+        "objectLabel": "Livre P4B final",
+        "objectAssetRef": {
+          "catalogVersion": "planned-assets@v1",
+          "assetKey": "gift:book",
+          "labelAtSelection": "Livre",
+          "provenance": "EXPLICIT_USER_DECISION"
+        }
+      },
+      "slotSelections": {
+        "item": {
+          "items": [
+            {
+              "selectionId": "4c9a817c-a2d5-48e0-975b-6552e81b36ff",
+              "optionKey": "gift",
+              "kind": "COMPONENT",
+              "provenance": "EXPLICIT_USER_DECISION",
+              "label": "Livre P4B final",
+              "quantity": "1",
+              "unitBasis": "ITEM",
+              "cost": {
+                "kind": "UNKNOWN"
+              },
+              "fundingAllocations": []
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "7ca9a8ba-dcf1-45ee-8837-c749909b7c16",
+      "template": "short-stay",
+      "fields": {
+        "fieldSchemaVersion": "context-fields@v5",
+        "label": "Séjour P4B final",
+        "participantRefs": [],
+        "lodgingKind": "RELATIVE"
+      },
+      "slotSelections": {
+        "groceries": {
+          "items": [
+            {
+              "selectionId": "94a6b1c7-3392-43b6-8dfa-19b0585f2162",
+              "optionKey": "groceries",
+              "kind": "COMPONENT",
+              "provenance": "EXPLICIT_USER_DECISION",
+              "label": "Courses du séjour",
+              "quantity": "1",
+              "unitBasis": "ITEM",
+              "cost": {
+                "kind": "UNKNOWN"
+              },
+              "fundingAllocations": [],
+              "binding": {
+                "mode": "AUTO"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "817574ae-6382-4b35-ae79-638a7353a8f5",
+      "template": "family-visit",
+      "fields": {
+        "fieldSchemaVersion": "context-fields@v4",
+        "label": "Visite P4B finale",
+        "personVisitedRef": {
+          "kind": "HOUSEHOLD_PERSON",
+          "personId": "00000000-0000-4000-8000-000000000001"
+        },
+        "participantRefs": []
+      },
+      "slotSelections": {}
+    }
+  ]
+}

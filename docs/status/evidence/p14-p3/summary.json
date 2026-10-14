@@ -1,0 +1,834 @@
+{
+  "fixtureProfiles": [
+    {
+      "latency": 0,
+      "variant": "P2",
+      "wallMs": {
+        "n": 3,
+        "raw": [
+          1128.5175000000017,
+          1204.023000000001,
+          1198.9379000000044
+        ],
+        "p50": 1198.9379000000044,
+        "p95NearestRank": 1204.023000000001,
+        "min": 1128.5175000000017,
+        "max": 1204.023000000001
+      },
+      "cpuMs": {
+        "n": 3,
+        "raw": [
+          1297,
+          1187,
+          1172
+        ],
+        "p50": 1187,
+        "p95NearestRank": 1297,
+        "min": 1172,
+        "max": 1297
+      },
+      "transportCpuMs": {
+        "n": 3,
+        "raw": [
+          285.4801999999945,
+          371.22400000001653,
+          361.3565000000017
+        ],
+        "p50": 361.3565000000017,
+        "p95NearestRank": 371.22400000001653,
+        "min": 285.4801999999945,
+        "max": 371.22400000001653
+      },
+      "heapDeltaBytes": {
+        "n": 3,
+        "raw": [
+          3478504,
+          -1872576,
+          -429344
+        ],
+        "p50": -429344,
+        "p95NearestRank": 3478504,
+        "min": -1872576,
+        "max": 3478504
+      },
+      "peakPhysicalConcurrency": 1
+    },
+    {
+      "latency": 0,
+      "variant": "A",
+      "wallMs": {
+        "n": 3,
+        "raw": [
+          1134.6216999999997,
+          1084.8727,
+          1083.4971000000005
+        ],
+        "p50": 1084.8727,
+        "p95NearestRank": 1134.6216999999997,
+        "min": 1083.4971000000005,
+        "max": 1134.6216999999997
+      },
+      "cpuMs": {
+        "n": 3,
+        "raw": [
+          1156,
+          1110,
+          1109
+        ],
+        "p50": 1110,
+        "p95NearestRank": 1156,
+        "min": 1109,
+        "max": 1156
+      },
+      "transportCpuMs": {
+        "n": 3,
+        "raw": [
+          266.9874999999993,
+          270.0538000000088,
+          262.11659999998665
+        ],
+        "p50": 266.9874999999993,
+        "p95NearestRank": 270.0538000000088,
+        "min": 262.11659999998665,
+        "max": 270.0538000000088
+      },
+      "heapDeltaBytes": {
+        "n": 3,
+        "raw": [
+          937384,
+          19372528,
+          1765080
+        ],
+        "p50": 1765080,
+        "p95NearestRank": 19372528,
+        "min": 937384,
+        "max": 19372528
+      },
+      "peakPhysicalConcurrency": 1
+    },
+    {
+      "latency": 0,
+      "variant": "B",
+      "wallMs": {
+        "n": 3,
+        "raw": [
+          1005.4076000000023,
+          1014.4070999999967,
+          1004.4879000000001
+        ],
+        "p50": 1005.4076000000023,
+        "p95NearestRank": 1014.4070999999967,
+        "min": 1004.4879000000001,
+        "max": 1014.4070999999967
+      },
+      "cpuMs": {
+        "n": 3,
+        "raw": [
+          1109,
+          1094,
+          1016
+        ],
+        "p50": 1094,
+        "p95NearestRank": 1109,
+        "min": 1016,
+        "max": 1109
+      },
+      "transportCpuMs": {
+        "n": 3,
+        "raw": [
+          175.32049999999435,
+          176.55189999999857,
+          181.56370000001334
+        ],
+        "p50": 176.55189999999857,
+        "p95NearestRank": 181.56370000001334,
+        "min": 175.32049999999435,
+        "max": 181.56370000001334
+      },
+      "heapDeltaBytes": {
+        "n": 3,
+        "raw": [
+          1797040,
+          -1767560,
+          17175040
+        ],
+        "p50": 1797040,
+        "p95NearestRank": 17175040,
+        "min": -1767560,
+        "max": 17175040
+      },
+      "peakPhysicalConcurrency": 1
+    },
+    {
+      "latency": 15,
+      "variant": "P2",
+      "wallMs": {
+        "n": 3,
+        "raw": [
+          2282.450800000006,
+          2073.863600000004,
+          2208.357100000001
+        ],
+        "p50": 2208.357100000001,
+        "p95NearestRank": 2282.450800000006,
+        "min": 2073.863600000004,
+        "max": 2282.450800000006
+      },
+      "cpuMs": {
+        "n": 3,
+        "raw": [
+          1673,
+          1156,
+          1204
+        ],
+        "p50": 1204,
+        "p95NearestRank": 1673,
+        "min": 1156,
+        "max": 1673
+      },
+      "transportCpuMs": {
+        "n": 3,
+        "raw": [
+          374.3009999999995,
+          361.7253000000128,
+          365.4276999999711
+        ],
+        "p50": 365.4276999999711,
+        "p95NearestRank": 374.3009999999995,
+        "min": 361.7253000000128,
+        "max": 374.3009999999995
+      },
+      "heapDeltaBytes": {
+        "n": 3,
+        "raw": [
+          -130229024,
+          3658424,
+          3907536
+        ],
+        "p50": 3658424,
+        "p95NearestRank": 3907536,
+        "min": -130229024,
+        "max": 3907536
+      },
+      "peakPhysicalConcurrency": 9
+    },
+    {
+      "latency": 15,
+      "variant": "A",
+      "wallMs": {
+        "n": 3,
+        "raw": [
+          1583.887800000004,
+          1612.961000000003,
+          1637.832699999999
+        ],
+        "p50": 1612.961000000003,
+        "p95NearestRank": 1637.832699999999,
+        "min": 1583.887800000004,
+        "max": 1637.832699999999
+      },
+      "cpuMs": {
+        "n": 3,
+        "raw": [
+          1156,
+          1125,
+          1047
+        ],
+        "p50": 1125,
+        "p95NearestRank": 1156,
+        "min": 1047,
+        "max": 1156
+      },
+      "transportCpuMs": {
+        "n": 3,
+        "raw": [
+          103.71269999997457,
+          235.24259999997594,
+          269.7367999999915
+        ],
+        "p50": 235.24259999997594,
+        "p95NearestRank": 269.7367999999915,
+        "min": 103.71269999997457,
+        "max": 269.7367999999915
+      },
+      "heapDeltaBytes": {
+        "n": 3,
+        "raw": [
+          5850808,
+          10973920,
+          4313528
+        ],
+        "p50": 5850808,
+        "p95NearestRank": 10973920,
+        "min": 4313528,
+        "max": 10973920
+      },
+      "peakPhysicalConcurrency": 9
+    },
+    {
+      "latency": 15,
+      "variant": "B",
+      "wallMs": {
+        "n": 3,
+        "raw": [
+          1229.926400000004,
+          1207.017399999997,
+          1212.2073000000019
+        ],
+        "p50": 1212.2073000000019,
+        "p95NearestRank": 1229.926400000004,
+        "min": 1207.017399999997,
+        "max": 1229.926400000004
+      },
+      "cpuMs": {
+        "n": 3,
+        "raw": [
+          1078,
+          1078,
+          1109
+        ],
+        "p50": 1078,
+        "p95NearestRank": 1109,
+        "min": 1078,
+        "max": 1109
+      },
+      "transportCpuMs": {
+        "n": 3,
+        "raw": [
+          176.3521999999939,
+          179.50200000002224,
+          179.55520000000251
+        ],
+        "p50": 179.50200000002224,
+        "p95NearestRank": 179.55520000000251,
+        "min": 176.3521999999939,
+        "max": 179.55520000000251
+      },
+      "heapDeltaBytes": {
+        "n": 3,
+        "raw": [
+          -10215360,
+          3355640,
+          2827776
+        ],
+        "p50": 2827776,
+        "p95NearestRank": 3355640,
+        "min": -10215360,
+        "max": 3355640
+      },
+      "peakPhysicalConcurrency": 7
+    },
+    {
+      "latency": 75,
+      "variant": "P2",
+      "wallMs": {
+        "n": 3,
+        "raw": [
+          4765.960100000004,
+          4784.0985999999975,
+          4665.414799999999
+        ],
+        "p50": 4765.960100000004,
+        "p95NearestRank": 4784.0985999999975,
+        "min": 4665.414799999999,
+        "max": 4784.0985999999975
+      },
+      "cpuMs": {
+        "n": 3,
+        "raw": [
+          1266,
+          1250,
+          1219
+        ],
+        "p50": 1250,
+        "p95NearestRank": 1266,
+        "min": 1219,
+        "max": 1266
+      },
+      "transportCpuMs": {
+        "n": 3,
+        "raw": [
+          382.7183000000441,
+          392.91579999998794,
+          371.4906000000774
+        ],
+        "p50": 382.7183000000441,
+        "p95NearestRank": 392.91579999998794,
+        "min": 371.4906000000774,
+        "max": 392.91579999998794
+      },
+      "heapDeltaBytes": {
+        "n": 3,
+        "raw": [
+          4915376,
+          3789360,
+          3988552
+        ],
+        "p50": 3988552,
+        "p95NearestRank": 4915376,
+        "min": 3789360,
+        "max": 4915376
+      },
+      "peakPhysicalConcurrency": 9
+    },
+    {
+      "latency": 75,
+      "variant": "A",
+      "wallMs": {
+        "n": 3,
+        "raw": [
+          3039.559000000001,
+          3104.886599999998,
+          3026.4872999999934
+        ],
+        "p50": 3039.559000000001,
+        "p95NearestRank": 3104.886599999998,
+        "min": 3026.4872999999934,
+        "max": 3104.886599999998
+      },
+      "cpuMs": {
+        "n": 3,
+        "raw": [
+          1109,
+          1172,
+          1188
+        ],
+        "p50": 1172,
+        "p95NearestRank": 1188,
+        "min": 1109,
+        "max": 1188
+      },
+      "transportCpuMs": {
+        "n": 3,
+        "raw": [
+          271.2079000000158,
+          274.1959000000061,
+          268.5941000000457
+        ],
+        "p50": 271.2079000000158,
+        "p95NearestRank": 274.1959000000061,
+        "min": 268.5941000000457,
+        "max": 274.1959000000061
+      },
+      "heapDeltaBytes": {
+        "n": 3,
+        "raw": [
+          4157912,
+          5188960,
+          4050504
+        ],
+        "p50": 4157912,
+        "p95NearestRank": 5188960,
+        "min": 4050504,
+        "max": 5188960
+      },
+      "peakPhysicalConcurrency": 9
+    },
+    {
+      "latency": 75,
+      "variant": "B",
+      "wallMs": {
+        "n": 3,
+        "raw": [
+          1954.4925000000003,
+          1953.7080999999962,
+          1931.6088000000018
+        ],
+        "p50": 1953.7080999999962,
+        "p95NearestRank": 1954.4925000000003,
+        "min": 1931.6088000000018,
+        "max": 1954.4925000000003
+      },
+      "cpuMs": {
+        "n": 3,
+        "raw": [
+          1062,
+          1078,
+          1047
+        ],
+        "p50": 1062,
+        "p95NearestRank": 1078,
+        "min": 1047,
+        "max": 1078
+      },
+      "transportCpuMs": {
+        "n": 3,
+        "raw": [
+          185.90499999999156,
+          184.2117000000144,
+          182.25489999995625
+        ],
+        "p50": 184.2117000000144,
+        "p95NearestRank": 185.90499999999156,
+        "min": 182.25489999995625,
+        "max": 185.90499999999156
+      },
+      "heapDeltaBytes": {
+        "n": 3,
+        "raw": [
+          2902488,
+          3818400,
+          2994504
+        ],
+        "p50": 2994504,
+        "p95NearestRank": 3818400,
+        "min": 2902488,
+        "max": 3818400
+      },
+      "peakPhysicalConcurrency": 7
+    }
+  ],
+  "fixtureTransport": [
+    {
+      "variant": "P2",
+      "physicalReads": 78,
+      "rows": 6493,
+      "bytes": 1513004,
+      "transportCpuMs": 105.85619999999108,
+      "peakPhysicalConcurrency": 1,
+      "byTable": {
+        "person_days": {
+          "gets": 7,
+          "rows": 1200,
+          "bytes": 199207
+        },
+        "canonical_household_scope_control": {
+          "gets": 1,
+          "rows": 1,
+          "bytes": 94
+        },
+        "life_events": {
+          "gets": 17,
+          "rows": 793,
+          "bytes": 274752
+        },
+        "location_occurrences": {
+          "gets": 25,
+          "rows": 2056,
+          "bytes": 519329
+        },
+        "life_event_types": {
+          "gets": 1,
+          "rows": 1,
+          "bytes": 124
+        },
+        "life_event_participations": {
+          "gets": 19,
+          "rows": 1586,
+          "bytes": 421903
+        },
+        "life_event_localizations": {
+          "gets": 5,
+          "rows": 856,
+          "bytes": 97589
+        },
+        "life_event_financial_links": {
+          "gets": 3,
+          "rows": 0,
+          "bytes": 6
+        }
+      },
+      "wallMs": 418.46399999999994,
+      "cpuMs": 641,
+      "heapDeltaBytes": 2978096,
+      "historicalPayloadBytes": 29,
+      "historicalRows": {
+        "identityEntries": 0,
+        "ranges": 0,
+        "identityHits": 0,
+        "rangeHits": 0
+      },
+      "logicalTargetCalls": 30,
+      "logicalMethods": {
+        "loadPlaceVisits": 8,
+        "loadActivityOccurrences": 8,
+        "loadLifeEventRecords": 3,
+        "loadLifeEventParticipationRows": 3,
+        "loadLifeEventLocalizationRows": 3,
+        "loadActivityOccurrenceById": 5
+      }
+    },
+    {
+      "variant": "A",
+      "physicalReads": 52,
+      "rows": 5119,
+      "bytes": 1187998,
+      "transportCpuMs": 18.372000000021217,
+      "peakPhysicalConcurrency": 1,
+      "byTable": {
+        "person_days": {
+          "gets": 7,
+          "rows": 1200,
+          "bytes": 199207
+        },
+        "canonical_household_scope_control": {
+          "gets": 1,
+          "rows": 1,
+          "bytes": 94
+        },
+        "life_events": {
+          "gets": 15,
+          "rows": 653,
+          "bytes": 218622
+        },
+        "life_event_types": {
+          "gets": 1,
+          "rows": 1,
+          "bytes": 124
+        },
+        "location_occurrences": {
+          "gets": 16,
+          "rows": 1536,
+          "bytes": 403600
+        },
+        "life_event_participations": {
+          "gets": 6,
+          "rows": 1152,
+          "bytes": 300678
+        },
+        "life_event_localizations": {
+          "gets": 3,
+          "rows": 576,
+          "bytes": 65667
+        },
+        "life_event_financial_links": {
+          "gets": 3,
+          "rows": 0,
+          "bytes": 6
+        }
+      },
+      "wallMs": 215.91820000000007,
+      "cpuMs": 328,
+      "heapDeltaBytes": 7487856,
+      "historicalPayloadBytes": 29,
+      "historicalRows": {
+        "identityEntries": 0,
+        "ranges": 0,
+        "identityHits": 0,
+        "rangeHits": 0
+      },
+      "logicalTargetCalls": 30,
+      "logicalMethods": {
+        "loadPlaceVisits": 8,
+        "loadActivityOccurrences": 8,
+        "loadLifeEventRecords": 3,
+        "loadLifeEventParticipationRows": 3,
+        "loadLifeEventLocalizationRows": 3,
+        "loadActivityOccurrenceById": 5
+      }
+    },
+    {
+      "variant": "B",
+      "physicalReads": 32,
+      "rows": 3890,
+      "bytes": 989387,
+      "transportCpuMs": 17.32939999998416,
+      "peakPhysicalConcurrency": 1,
+      "byTable": {
+        "person_days": {
+          "gets": 7,
+          "rows": 1200,
+          "bytes": 199207
+        },
+        "canonical_household_scope_control": {
+          "gets": 1,
+          "rows": 1,
+          "bytes": 94
+        },
+        "life_events": {
+          "gets": 4,
+          "rows": 576,
+          "bytes": 196852
+        },
+        "location_occurrences": {
+          "gets": 10,
+          "rows": 960,
+          "bytes": 340810
+        },
+        "life_event_types": {
+          "gets": 1,
+          "rows": 1,
+          "bytes": 124
+        },
+        "life_event_participations": {
+          "gets": 3,
+          "rows": 576,
+          "bytes": 186627
+        },
+        "life_event_localizations": {
+          "gets": 3,
+          "rows": 576,
+          "bytes": 65667
+        },
+        "life_event_financial_links": {
+          "gets": 3,
+          "rows": 0,
+          "bytes": 6
+        }
+      },
+      "wallMs": 265.0074999999997,
+      "cpuMs": 297,
+      "heapDeltaBytes": 2844272,
+      "historicalPayloadBytes": 267485,
+      "historicalRows": {
+        "identityEntries": 1248,
+        "ranges": 1,
+        "identityHits": 861,
+        "rangeHits": 6
+      },
+      "logicalTargetCalls": 30,
+      "logicalMethods": {
+        "loadPlaceVisits": 8,
+        "loadActivityOccurrences": 8,
+        "loadLifeEventRecords": 3,
+        "loadLifeEventParticipationRows": 3,
+        "loadLifeEventLocalizationRows": 3,
+        "loadActivityOccurrenceById": 5
+      }
+    }
+  ],
+  "previewSummary": [
+    {
+      "variant": "P2",
+      "totalMs": {
+        "n": 3,
+        "raw": [
+          15678.581550000004,
+          15900.14209400001,
+          13926.081714000087
+        ],
+        "p50": 15678.581550000004,
+        "p95NearestRank": 15900.14209400001,
+        "min": 13926.081714000087,
+        "max": 15900.14209400001
+      },
+      "worldMs": {
+        "n": 3,
+        "raw": [
+          14430.98363199993,
+          15053.824381000011,
+          12778.119081999874
+        ],
+        "p50": 14430.98363199993,
+        "p95NearestRank": 15053.824381000011,
+        "min": 12778.119081999874,
+        "max": 15053.824381000011
+      },
+      "baselineSourcesMs": {
+        "n": 3,
+        "raw": [
+          14377.88501800003,
+          15018.071169000004,
+          12754.886045999823
+        ],
+        "p50": 14377.88501800003,
+        "p95NearestRank": 15018.071169000004,
+        "min": 12754.886045999823,
+        "max": 15018.071169000004
+      },
+      "freshMs": {
+        "n": 3,
+        "raw": [
+          18853.39999997616,
+          16685.399999976158,
+          14618.5
+        ],
+        "p50": 16685.399999976158,
+        "p95NearestRank": 18853.39999997616,
+        "min": 14618.5,
+        "max": 18853.39999997616
+      },
+      "businessGets": [
+        282,
+        282,
+        282
+      ],
+      "bytes": [
+        11744470,
+        11744470,
+        11744470
+      ],
+      "errors": 0,
+      "timeouts": 0,
+      "fingerprints": [
+        "28c871e31ee64345ebbc814ed37963449bde4816da38fb93f074c7464fc9b559"
+      ]
+    },
+    {
+      "variant": "P3",
+      "totalMs": {
+        "n": 3,
+        "raw": [
+          60802.79349500002,
+          48888.78442499996,
+          12824.138605999991
+        ],
+        "p50": 48888.78442499996,
+        "p95NearestRank": 60802.79349500002,
+        "min": 12824.138605999991,
+        "max": 60802.79349500002
+      },
+      "worldMs": {
+        "n": 3,
+        "raw": [
+          59871.57668499998,
+          47814.18247599999,
+          11789.336305000004
+        ],
+        "p50": 47814.18247599999,
+        "p95NearestRank": 59871.57668499998,
+        "min": 11789.336305000004,
+        "max": 59871.57668499998
+      },
+      "baselineSourcesMs": {
+        "n": 3,
+        "raw": [
+          59838.78698199999,
+          47771.79600600002,
+          11758.89608700003
+        ],
+        "p50": 47771.79600600002,
+        "p95NearestRank": 59838.78698199999,
+        "min": 11758.89608700003,
+        "max": 59838.78698199999
+      },
+      "freshMs": {
+        "n": 3,
+        "raw": [
+          62072.19999998808,
+          49664.40000003576,
+          13495.899999976158
+        ],
+        "p50": 49664.40000003576,
+        "p95NearestRank": 62072.19999998808,
+        "min": 13495.899999976158,
+        "max": 62072.19999998808
+      },
+      "businessGets": [
+        272,
+        272,
+        272
+      ],
+      "bytes": [
+        11516372,
+        11516372,
+        11516372
+      ],
+      "errors": 0,
+      "timeouts": 0,
+      "fingerprints": [
+        "28c871e31ee64345ebbc814ed37963449bde4816da38fb93f074c7464fc9b559"
+      ]
+    }
+  ],
+  "conclusions": {
+    "comparativeOpeningLatency": "NOT_CERTIFIED_P3_MEDIAN_AND_MAX_SLOWER",
+    "boardComparability": "DIFFERENT_VIEWPORTS_918x811_AND_1280x720",
+    "fixtureP95": "DESCRIPTIVE_NEAREST_RANK_MAX_N3_NOT_STABLE_P95",
+    "previewP95": "DESCRIPTIVE_NEAREST_RANK_MAX_N3_NOT_STABLE_P95",
+    "realAvoidedBusinessGets": 10,
+    "realAvoidedBytes": 228098,
+    "fixtureAvoidedPhysicalGets": 46,
+    "fixtureAvoidedBytes": 523617
+  }
+}

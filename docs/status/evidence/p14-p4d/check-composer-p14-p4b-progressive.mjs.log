@@ -1,0 +1,5 @@
+P4B_CODE_ONLY_INTENT PASS
+P4B_INFLIGHT_AND_FULFILLED_DEDUP PASS
+P4B_IMPORT_RETRY_WITHOUT_DRAFT_MUTATION PASS
+P4B_COMPLETE_MODULE_EXPORTS_AND_SEMANTIC_PARITY PASS
+PASS: code imports only; no World, Finance V2, Mobility or durable writer invoked. Browser chunk retry tested separately.

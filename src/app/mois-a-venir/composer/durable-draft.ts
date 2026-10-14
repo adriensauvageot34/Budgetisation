@@ -1,5 +1,5 @@
 "use client";
-import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
 import { semanticStateDigest, type PlanSemanticStateV1 } from "@/domain/phase2/planner/semantic-state";
 import type { ComposerDraftLifecycleCommand, ComposerDraftResult, ComposerDraftSaveCommand,
   ComposerDraftSnapshot, StoredComposerDraft } from "@/domain/phase2/planner/composer-draft-contract";
@@ -21,19 +21,19 @@ const serverConnectionSnapshot = () => true;
 /** Owns persistence only. Finance preview remains in ComposerPreviewScheduler. */
 export function useDurableDraft(transport: DraftTransport | null, initial: ComposerDraftSnapshot | null,
   targetMonth: string, state: PlanSemanticStateV1, suspended: boolean) {
+  const stateDigest = useMemo(() => semanticStateDigest(state), [state]);
   const [snapshot, setSnapshot] = useState(initial);
   const [status, setStatus] = useState<SaveStatus>(initial?.baseStale ? "CONFLICT" : initial?.active ? "SAVED" : "CLEAN");
   const [message, setMessage] = useState(initial?.baseStale ? "Le Plan actif a changé depuis ce brouillon." : "");
   const online = useSyncExternalStore(subscribeConnection, connectionSnapshot, serverConnectionSnapshot);
   const currentState = useRef(state);
   const currentSnapshot = useRef(initial);
-  const confirmed = useRef(initial?.active?.digest ?? semanticStateDigest(state));
+  const confirmed = useRef(initial?.active?.digest ?? stateDigest);
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const firstDirtyAt = useRef<number | null>(null);
   const inFlight = useRef(false);
   const pendingRequest = useRef<{ digest: string; command: ComposerDraftSaveCommand } | null>(null);
   const blocked = useRef(!!initial?.baseStale);
-  const stateDigest = semanticStateDigest(state);
 
   const updateSnapshot = useCallback((next: ComposerDraftSnapshot) => {
     currentSnapshot.current = next; setSnapshot(next);

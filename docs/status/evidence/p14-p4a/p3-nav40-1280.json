@@ -1,0 +1,652 @@
+{
+  "samples": [
+    {
+      "label": "Page suivante du mois",
+      "at": 25923.899999976158,
+      "trusted": true,
+      "commitMs": 48.5,
+      "domMs": 55.5,
+      "paintUpperMs": 67.40000003576279,
+      "status": "FRESH",
+      "nodes": 10133,
+      "visibility": "visible",
+      "viewport": [
+        1280,
+        720
+      ]
+    },
+    {
+      "label": "Page précédente du mois",
+      "at": 26238.69999998808,
+      "trusted": true,
+      "commitMs": 44.60000002384186,
+      "domMs": 51.40000003576279,
+      "paintUpperMs": 60.60000002384186,
+      "status": "FRESH",
+      "nodes": 10133,
+      "visibility": "visible",
+      "viewport": [
+        1280,
+        720
+      ]
+    },
+    {
+      "label": "Page suivante du mois",
+      "at": 26634.399999976158,
+      "trusted": true,
+      "commitMs": 48.80000001192093,
+      "domMs": 56.700000047683716,
+      "paintUpperMs": 66.10000002384186,
+      "status": "FRESH",
+      "nodes": 10133,
+      "visibility": "visible",
+      "viewport": [
+        1280,
+        720
+      ]
+    },
+    {
+      "label": "Page précédente du mois",
+      "at": 27017.5,
+      "trusted": true,
+      "commitMs": 46.89999997615814,
+      "domMs": 54.10000002384186,
+      "paintUpperMs": 63.60000002384186,
+      "status": "FRESH",
+      "nodes": 10133,
+      "visibility": "visible",
+      "viewport": [
+        1280,
+        720
+      ]
+    },
+    {
+      "label": "Page suivante du mois",
+      "at": 27426.899999976158,
+      "trusted": true,
+      "commitMs": 45.200000047683716,
+      "domMs": 51.10000002384186,
+      "paintUpperMs": 61.40000003576279,
+      "status": "FRESH",
+      "nodes": 10133,
+      "visibility": "visible",
+      "viewport": [
+        1280,
+        720
+      ]
+    },
+    {
+      "label": "Page précédente du mois",
+      "at": 27822.600000023842,
+      "trusted": true,
+      "commitMs": 44.299999952316284,
+      "domMs": 50.09999996423721,
+      "paintUpperMs": 59.39999997615814,
+      "status": "FRESH",
+      "nodes": 10133,
+      "visibility": "visible",
+      "viewport": [
+        1280,
+        720
+      ]
+    },
+    {
+      "label": "Page suivante du mois",
+      "at": 28206.19999998808,
+      "trusted": true,
+      "commitMs": 48,
+      "domMs": 54.30000001192093,
+      "paintUpperMs": 63.60000002384186,
+      "status": "FRESH",
+      "nodes": 10133,
+      "visibility": "visible",
+      "viewport": [
+        1280,
+        720
+      ]
+    },
+    {
+      "label": "Page précédente du mois",
+      "at": 28603.80000001192,
+      "trusted": true,
+      "commitMs": 45.09999996423721,
+      "domMs": 52.09999996423721,
+      "paintUpperMs": 61.30000001192093,
+      "status": "FRESH",
+      "nodes": 10133,
+      "visibility": "visible",
+      "viewport": [
+        1280,
+        720
+      ]
+    },
+    {
+      "label": "Page suivante du mois",
+      "at": 28995.899999976158,
+      "trusted": true,
+      "commitMs": 48.5,
+      "domMs": 55.80000001192093,
+      "paintUpperMs": 65.30000001192093,
+      "status": "FRESH",
+      "nodes": 10133,
+      "visibility": "visible",
+      "viewport": [
+        1280,
+        720
+      ]
+    },
+    {
+      "label": "Page précédente du mois",
+      "at": 29393.19999998808,
+      "trusted": true,
+      "commitMs": 45,
+      "domMs": 50.40000003576279,
+      "paintUpperMs": 60,
+      "status": "FRESH",
+      "nodes": 10133,
+      "visibility": "visible",
+      "viewport": [
+        1280,
+        720
+      ]
+    },
+    {
+      "label": "Page suivante du mois",
+      "at": 29782.80000001192,
+      "trusted": true,
+      "commitMs": 44.89999997615814,
+      "domMs": 50.59999996423721,
+      "paintUpperMs": 73.30000001192093,
+      "status": "FRESH",
+      "nodes": 10133,
+      "visibility": "visible",
+      "viewport": [
+        1280,
+        720
+      ]
+    },
+    {
+      "label": "Page précédente du mois",
+      "at": 30200.100000023842,
+      "trusted": true,
+      "commitMs": 48.89999997615814,
+      "domMs": 55,
+      "paintUpperMs": 64.19999998807907,
+      "status": "FRESH",
+      "nodes": 10133,
+      "visibility": "visible",
+      "viewport": [
+        1280,
+        720
+      ]
+    },
+    {
+      "label": "Page suivante du mois",
+      "at": 30628.100000023842,
+      "trusted": true,
+      "commitMs": 49.89999997615814,
+      "domMs": 56.89999997615814,
+      "paintUpperMs": 66.69999998807907,
+      "status": "FRESH",
+      "nodes": 10133,
+      "visibility": "visible",
+      "viewport": [
+        1280,
+        720
+      ]
+    },
+    {
+      "label": "Page précédente du mois",
+      "at": 31028.69999998808,
+      "trusted": true,
+      "commitMs": 49.10000002384186,
+      "domMs": 55,
+      "paintUpperMs": 64.5,
+      "status": "FRESH",
+      "nodes": 10133,
+      "visibility": "visible",
+      "viewport": [
+        1280,
+        720
+      ]
+    },
+    {
+      "label": "Page suivante du mois",
+      "at": 31433.80000001192,
+      "trusted": true,
+      "commitMs": 72.80000001192093,
+      "domMs": 78.59999996423721,
+      "paintUpperMs": 90,
+      "status": "FRESH",
+      "nodes": 10133,
+      "visibility": "visible",
+      "viewport": [
+        1280,
+        720
+      ]
+    },
+    {
+      "label": "Page précédente du mois",
+      "at": 31799.600000023842,
+      "trusted": true,
+      "commitMs": 43.299999952316284,
+      "domMs": 49.59999996423721,
+      "paintUpperMs": 59.89999997615814,
+      "status": "FRESH",
+      "nodes": 10133,
+      "visibility": "visible",
+      "viewport": [
+        1280,
+        720
+      ]
+    },
+    {
+      "label": "Page suivante du mois",
+      "at": 32151.899999976158,
+      "trusted": true,
+      "commitMs": 57.80000001192093,
+      "domMs": 65.60000002384186,
+      "paintUpperMs": 77.5,
+      "status": "FRESH",
+      "nodes": 10133,
+      "visibility": "visible",
+      "viewport": [
+        1280,
+        720
+      ]
+    },
+    {
+      "label": "Page précédente du mois",
+      "at": 32521.80000001192,
+      "trusted": true,
+      "commitMs": 51.69999998807907,
+      "domMs": 57.59999996423721,
+      "paintUpperMs": 68.30000001192093,
+      "status": "FRESH",
+      "nodes": 10133,
+      "visibility": "visible",
+      "viewport": [
+        1280,
+        720
+      ]
+    },
+    {
+      "label": "Page suivante du mois",
+      "at": 32937,
+      "trusted": true,
+      "commitMs": 43.30000001192093,
+      "domMs": 48.89999997615814,
+      "paintUpperMs": 58.19999998807907,
+      "status": "FRESH",
+      "nodes": 10133,
+      "visibility": "visible",
+      "viewport": [
+        1280,
+        720
+      ]
+    },
+    {
+      "label": "Page précédente du mois",
+      "at": 33318.19999998808,
+      "trusted": true,
+      "commitMs": 43.60000002384186,
+      "domMs": 49.5,
+      "paintUpperMs": 58.90000003576279,
+      "status": "FRESH",
+      "nodes": 10133,
+      "visibility": "visible",
+      "viewport": [
+        1280,
+        720
+      ]
+    },
+    {
+      "label": "Page suivante du mois",
+      "at": 33709.89999997616,
+      "trusted": true,
+      "commitMs": 43.10000002384186,
+      "domMs": 48.5,
+      "paintUpperMs": 57.80000001192093,
+      "status": "FRESH",
+      "nodes": 10133,
+      "visibility": "visible",
+      "viewport": [
+        1280,
+        720
+      ]
+    },
+    {
+      "label": "Page précédente du mois",
+      "at": 34108.19999998808,
+      "trusted": true,
+      "commitMs": 44.40000003576279,
+      "domMs": 51.69999998807907,
+      "paintUpperMs": 63.30000001192093,
+      "status": "FRESH",
+      "nodes": 10133,
+      "visibility": "visible",
+      "viewport": [
+        1280,
+        720
+      ]
+    },
+    {
+      "label": "Page suivante du mois",
+      "at": 34529.39999997616,
+      "trusted": true,
+      "commitMs": 49.200000047683716,
+      "domMs": 55.90000003576279,
+      "paintUpperMs": 65.80000001192093,
+      "status": "FRESH",
+      "nodes": 10133,
+      "visibility": "visible",
+      "viewport": [
+        1280,
+        720
+      ]
+    },
+    {
+      "label": "Page précédente du mois",
+      "at": 34867.89999997616,
+      "trusted": true,
+      "commitMs": 45.80000001192093,
+      "domMs": 52.10000002384186,
+      "paintUpperMs": 61.200000047683716,
+      "status": "FRESH",
+      "nodes": 10133,
+      "visibility": "visible",
+      "viewport": [
+        1280,
+        720
+      ]
+    },
+    {
+      "label": "Page suivante du mois",
+      "at": 35290.80000001192,
+      "trusted": true,
+      "commitMs": 45.39999997615814,
+      "domMs": 51.69999998807907,
+      "paintUpperMs": 61.19999998807907,
+      "status": "FRESH",
+      "nodes": 10133,
+      "visibility": "visible",
+      "viewport": [
+        1280,
+        720
+      ]
+    },
+    {
+      "label": "Page précédente du mois",
+      "at": 35687.80000001192,
+      "trusted": true,
+      "commitMs": 42.89999997615814,
+      "domMs": 48.89999997615814,
+      "paintUpperMs": 58,
+      "status": "FRESH",
+      "nodes": 10133,
+      "visibility": "visible",
+      "viewport": [
+        1280,
+        720
+      ]
+    },
+    {
+      "label": "Page suivante du mois",
+      "at": 36093.89999997616,
+      "trusted": true,
+      "commitMs": 46.30000001192093,
+      "domMs": 51.80000001192093,
+      "paintUpperMs": 62.10000002384186,
+      "status": "FRESH",
+      "nodes": 10133,
+      "visibility": "visible",
+      "viewport": [
+        1280,
+        720
+      ]
+    },
+    {
+      "label": "Page précédente du mois",
+      "at": 36489.80000001192,
+      "trusted": true,
+      "commitMs": 44.5,
+      "domMs": 49.89999997615814,
+      "paintUpperMs": 60.39999997615814,
+      "status": "FRESH",
+      "nodes": 10133,
+      "visibility": "visible",
+      "viewport": [
+        1280,
+        720
+      ]
+    },
+    {
+      "label": "Page suivante du mois",
+      "at": 36890.69999998808,
+      "trusted": true,
+      "commitMs": 42.60000002384186,
+      "domMs": 48.10000002384186,
+      "paintUpperMs": 58.19999998807907,
+      "status": "FRESH",
+      "nodes": 10133,
+      "visibility": "visible",
+      "viewport": [
+        1280,
+        720
+      ]
+    },
+    {
+      "label": "Page précédente du mois",
+      "at": 37288.39999997616,
+      "trusted": true,
+      "commitMs": 44.90000003576279,
+      "domMs": 54.200000047683716,
+      "paintUpperMs": 65.70000004768372,
+      "status": "FRESH",
+      "nodes": 10133,
+      "visibility": "visible",
+      "viewport": [
+        1280,
+        720
+      ]
+    },
+    {
+      "label": "Page suivante du mois",
+      "at": 37651.39999997616,
+      "trusted": true,
+      "commitMs": 44.5,
+      "domMs": 50.10000002384186,
+      "paintUpperMs": 59.5,
+      "status": "FRESH",
+      "nodes": 10133,
+      "visibility": "visible",
+      "viewport": [
+        1280,
+        720
+      ]
+    },
+    {
+      "label": "Page précédente du mois",
+      "at": 38078.30000001192,
+      "trusted": true,
+      "commitMs": 43.59999996423721,
+      "domMs": 49.19999998807907,
+      "paintUpperMs": 60.69999998807907,
+      "status": "FRESH",
+      "nodes": 10133,
+      "visibility": "visible",
+      "viewport": [
+        1280,
+        720
+      ]
+    },
+    {
+      "label": "Page suivante du mois",
+      "at": 38489.69999998808,
+      "trusted": true,
+      "commitMs": 48.80000001192093,
+      "domMs": 54.40000003576279,
+      "paintUpperMs": 67.30000001192093,
+      "status": "FRESH",
+      "nodes": 10133,
+      "visibility": "visible",
+      "viewport": [
+        1280,
+        720
+      ]
+    },
+    {
+      "label": "Page précédente du mois",
+      "at": 38831.69999998808,
+      "trusted": true,
+      "commitMs": 46.90000003576279,
+      "domMs": 52.90000003576279,
+      "paintUpperMs": 63.40000003576279,
+      "status": "FRESH",
+      "nodes": 10133,
+      "visibility": "visible",
+      "viewport": [
+        1280,
+        720
+      ]
+    },
+    {
+      "label": "Page suivante du mois",
+      "at": 39246.69999998808,
+      "trusted": true,
+      "commitMs": 44.40000003576279,
+      "domMs": 49.80000001192093,
+      "paintUpperMs": 59.10000002384186,
+      "status": "FRESH",
+      "nodes": 10133,
+      "visibility": "visible",
+      "viewport": [
+        1280,
+        720
+      ]
+    },
+    {
+      "label": "Page précédente du mois",
+      "at": 39654.69999998808,
+      "trusted": true,
+      "commitMs": 45.19999998807907,
+      "domMs": 50.5,
+      "paintUpperMs": 60.19999998807907,
+      "status": "FRESH",
+      "nodes": 10133,
+      "visibility": "visible",
+      "viewport": [
+        1280,
+        720
+      ]
+    },
+    {
+      "label": "Page suivante du mois",
+      "at": 40038.10000002384,
+      "trusted": true,
+      "commitMs": 46.39999997615814,
+      "domMs": 51.799999952316284,
+      "paintUpperMs": 61.19999998807907,
+      "status": "FRESH",
+      "nodes": 10133,
+      "visibility": "visible",
+      "viewport": [
+        1280,
+        720
+      ]
+    },
+    {
+      "label": "Page précédente du mois",
+      "at": 40464.39999997616,
+      "trusted": true,
+      "commitMs": 53.90000003576279,
+      "domMs": 59.10000002384186,
+      "paintUpperMs": 68,
+      "status": "FRESH",
+      "nodes": 10133,
+      "visibility": "visible",
+      "viewport": [
+        1280,
+        720
+      ]
+    },
+    {
+      "label": "Page suivante du mois",
+      "at": 40860.30000001192,
+      "trusted": true,
+      "commitMs": 47.80000001192093,
+      "domMs": 53.30000001192093,
+      "paintUpperMs": 63.30000001192093,
+      "status": "FRESH",
+      "nodes": 10133,
+      "visibility": "visible",
+      "viewport": [
+        1280,
+        720
+      ]
+    },
+    {
+      "label": "Page précédente du mois",
+      "at": 41263.10000002384,
+      "trusted": true,
+      "commitMs": 48.69999998807907,
+      "domMs": 54.39999997615814,
+      "paintUpperMs": 63.5,
+      "status": "FRESH",
+      "nodes": 10133,
+      "visibility": "visible",
+      "viewport": [
+        1280,
+        720
+      ]
+    }
+  ],
+  "spans": {},
+  "renders": {},
+  "profiles": [],
+  "longTasks": [
+    57,
+    52,
+    58,
+    55,
+    52,
+    51,
+    56,
+    54,
+    57,
+    51,
+    52,
+    56,
+    58,
+    56,
+    80,
+    50,
+    67,
+    59,
+    50,
+    50,
+    54,
+    57,
+    53,
+    53,
+    50,
+    53,
+    51,
+    55,
+    51,
+    50,
+    55,
+    54,
+    51,
+    51,
+    53,
+    60,
+    54,
+    56
+  ],
+  "requests": [],
+  "rectCalls": 0,
+  "rectMs": 0,
+  "heapStart": 23698834,
+  "heapEnd": 32100745
+}

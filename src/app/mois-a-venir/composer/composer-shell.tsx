@@ -19,17 +19,15 @@ import { money } from "./display";
 import { finishComparison, type ComparisonSnapshot } from "./comparison";
 import { AtomicPopover } from "./atomic-popover";
 import { stageLocalDecision, visualDraftModel } from "./local-draft";
-import { ComposerPreviewScheduler, type PreviewStatus } from "./preview-scheduler";
-import { GiftEditor } from "./gift-editor";
+import { ComposerPreviewScheduler, composerInteractionReuseEnabled, type PreviewStatus } from "./preview-scheduler";
+import { editorChunks, type EditorChunkKind, type LoadedEditorChunks } from "./editor-chunks";
 import { NightOutEditor } from "./night-out-editor";
-import { ShortStayEditor } from "./short-stay-editor";
-import { CatalogContextEditor } from "./catalog-context-editor";
-import { FamilyVisitEditor } from "./family-visit-editor";
 import { CardKnowledgePanel } from "./card-knowledge-panel";
 import { useDurableDraft, type DraftTransport } from "./durable-draft";
 import type { ComposerDraftSnapshot, StoredComposerDraft } from "@/domain/phase2/planner/composer-draft-contract";
 import type { PlannerApplyCommand } from "@/domain/phase2/planner/compiler-contract";
 import type { ComposerApplyReceipt } from "@/domain/phase2/planner/composer-ui-contract";
+import { useCommittedEvent } from "./use-committed-event";
 
 type Editor = { title: string; compact?: boolean; side?: boolean; fields: readonly ComposerField[]; values: Record<string, string>;
   giftContextId?: string; nightContextId?: string; familyContextId?: string; stayContextId?: string; catalogContextId?: string; familyMode?: string;
@@ -37,13 +35,47 @@ type Editor = { title: string; compact?: boolean; side?: boolean; fields: readon
   operation: (values: Record<string, string>) => ComposerOperation };
 type DraftConfirmation = { kind: "ABANDON" | "RESTART" | "RESTORE" | "LOAD_SERVER"; draftId?: string; version?: number };
 type PendingApply = { draft: PlanSemanticStateV1; command: PlannerApplyCommand; checkedAbsent?: boolean };
-export function ComposerShell({ initialModel, transport, initialDrafts = null, draftTransport = null }: {
+export function ComposerShell({ initialModel, transport: suppliedTransport, initialDrafts = null, draftTransport = null, snapshotMetrics = false }: {
   initialModel: ComposerUiModel; transport: ComposerTransport;
   initialDrafts?: ComposerDraftSnapshot | null; draftTransport?: DraftTransport | null;
+  snapshotMetrics?: boolean;
 }) {
+  const transport: ComposerTransport = useCommittedEvent(async (request: ComposerRequest) => {
+    const started = performance.now();
+    const response = await suppliedTransport(request);
+    if (snapshotMetrics) {
+      const metrics = (response as typeof response & { snapMetrics?: unknown }).snapMetrics;
+      document.querySelector("[data-composer]")?.setAttribute("data-snap-action", JSON.stringify({
+        kind: request.kind, sequence: request.sequence, responseMs: performance.now() - started,
+        ok: response.ok, metrics,
+      }));
+    }
+    return response;
+  });
   const [model, setModel] = useState(initialModel), current = useRef(initialModel);
   const [draftState, setDraftState] = useState(initialModel.semanticState), localDraft = useRef(initialModel.semanticState);
   const [previewStatus, setPreviewStatus] = useState<PreviewStatus>(initialModel.board.cockpit.applyReadiness === "BLOCKED" ? "BLOCKED" : "FRESH");
+  const snapshotIntent = useRef<number | null>(null);
+  useEffect(() => {
+    if (!snapshotMetrics) return;
+    let frame = requestAnimationFrame(() => { frame = requestAnimationFrame(() => {
+      const navigation=performance.getEntriesByType("navigation")[0] as PerformanceNavigationTiming | undefined;
+      if (!performance.getEntriesByName("snap-board-usable").length) performance.mark("snap-board-usable");
+      if (previewStatus === "FRESH" && !performance.getEntriesByName("snap-preview-fresh").length) performance.mark("snap-preview-fresh");
+      document.querySelector("[data-composer]")?.setAttribute("data-snap-browser", JSON.stringify({
+        boardMs:performance.getEntriesByName("snap-board-usable")[0]?.startTime,
+        freshMs:performance.getEntriesByName("snap-preview-fresh")[0]?.startTime,previewStatus,
+        navigation:navigation?{type:navigation.type,ttfbMs:navigation.responseStart-navigation.requestStart,
+          responseMs:navigation.responseEnd-navigation.requestStart,transferBytes:navigation.transferSize,
+          decodedBytes:navigation.decodedBodySize}:null}));
+      if (previewStatus === "FRESH" && snapshotIntent.current !== null) {
+        document.querySelector("[data-composer]")?.setAttribute("data-snap-intent", JSON.stringify({
+          visualFreshMs:performance.now()-snapshotIntent.current}));
+        snapshotIntent.current=null;
+      }
+    }); });
+    return () => cancelAnimationFrame(frame);
+  }, [snapshotMetrics, previewStatus]);
   const scheduler = useRef(new ComposerPreviewScheduler());
   const [busy, setBusy] = useState(false), busyRef = useRef(false);
   const [selected, setSelected] = useState<string | null>(null), [message, setMessage] = useState("");
@@ -51,8 +83,25 @@ export function ComposerShell({ initialModel, transport, initialDrafts = null, d
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [past, setPast] = useState<PlanSemanticStateV1[]>([]), [future, setFuture] = useState<PlanSemanticStateV1[]>([]);
   const [editor, setEditor] = useState<Editor | null>(null), [balanceOpen, setBalanceOpen] = useState(false), [suggestions, setSuggestions] = useState<PlanBalanceSuggestions | null>(null);
+  const [loadedEditors, setLoadedEditors] = useState<LoadedEditorChunks>({});
+  const [editorLoadError, setEditorLoadError] = useState<EditorChunkKind | null>(null);
+  const [editorLoadRetry, setEditorLoadRetry] = useState(0);
+  const editorKind: EditorChunkKind | null = editor?.stayContextId ? "stay" : editor?.familyContextId ? "family"
+    : editor?.giftContextId ? "gift" : editor?.catalogContextId ? "catalog" : null;
+  useEffect(() => {
+    if (!editorKind || loadedEditors[editorKind]) return;
+    let current = true;
+    setEditorLoadError(null);
+    void editorChunks[editorKind]().then(component => {
+      if (current) setLoadedEditors(previous => ({ ...previous, [editorKind]: component }) as LoadedEditorChunks);
+    }).catch(() => { if (current) setEditorLoadError(editorKind); });
+    return () => { current = false; };
+  }, [editorKind, editorLoadRetry, loadedEditors]);
+  const FamilyVisitEditor = loadedEditors.family;
+  const ShortStayEditor = loadedEditors.stay, GiftEditor = loadedEditors.gift, CatalogContextEditor = loadedEditors.catalog;
   const [projectionOpen, setProjectionOpen] = useState(false), [libraryOpenToken, setLibraryOpenToken] = useState(0);
   const [hoverModel, setHoverModel] = useState<ComposerUiModel | null>(null), gate = useRef(new ComposerResponseGate()), timer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const pendingHover = useRef<{ key: string; draftDigest: string; worldVersion: string; sequence: number } | null>(null);
   const dialog = useRef<HTMLDialogElement>(null), invoker = useRef<HTMLElement | null>(null);
   const applyAttempt = useRef<{ key: string; applyRequestId: string } | null>(null);
   const [pendingApply, setPendingApply] = useState<PendingApply | null>(null);
@@ -60,6 +109,15 @@ export function ComposerShell({ initialModel, transport, initialDrafts = null, d
   const [comparison, setComparison] = useState<ComparisonSnapshot | null>(null);
   const durable = useDurableDraft(draftTransport, initialDrafts, initialModel.semanticState.targetMonth, draftState, !!comparison);
   const skipUnloadWarning = useRef(false);
+  const editorReloadSafe = editorLoadError !== null && !!draftTransport && !comparison && durable.online && durable.status === "SAVED" && !durable.unsaved
+    && durable.snapshot?.active?.digest === semanticStateDigest(draftState);
+  function reloadSavedEditor() {
+    // A browser can remember a failed module import for this document. Reload
+    // only a server-confirmed Draft, never an unconfirmed in-memory decision.
+    if (!editorReloadSafe || durable.snapshot?.active?.digest !== semanticStateDigest(localDraft.current)) return;
+    skipUnloadWarning.current = true;
+    window.location.reload();
+  }
   const confirmationDialog = useRef<HTMLDialogElement>(null);
   const [draftConfirmation, setDraftConfirmation] = useState<DraftConfirmation | null>(null);
   const [draftConfirmationBusy, setDraftConfirmationBusy] = useState(false);
@@ -88,11 +146,14 @@ export function ComposerShell({ initialModel, transport, initialDrafts = null, d
     });
   }
   function stage(operation: ComposerOperation, history: "push" | "undo" | "redo" = "push", restored?: PlanSemanticStateV1) {
+    if (snapshotMetrics) snapshotIntent.current=performance.now();
     const before = localDraft.current;
     const next = restored ?? stageLocalDecision(current.current, before, operation);
     if (!next) { void run(operation, history, restored); return false; }
+    const beforeDigest = semanticStateDigest(before), nextDigest = semanticStateDigest(next);
+    if (composerInteractionReuseEnabled && beforeDigest === nextDigest && ["FRESH", "BLOCKED", "PENDING"].includes(previewStatus)) return true;
     clearHover(); gate.current.invalidate(); scheduler.current.cancel();
-    if (semanticStateDigest(before) !== semanticStateDigest(next)) {
+    if (beforeDigest !== nextDigest) {
       if (history === "push") { setPast(p => [...p, before]); setFuture([]); }
       else if (history === "undo") { setPast(p => p.slice(0, -1)); setFuture(f => [...f, before]); }
       else { setFuture(f => f.slice(0, -1)); setPast(p => [...p, before]); }
@@ -102,7 +163,7 @@ export function ComposerShell({ initialModel, transport, initialDrafts = null, d
     schedulePreview(next);
     return true;
   }
-  const clearHover = () => { if (timer.current) clearTimeout(timer.current); if (!busyRef.current) gate.current.invalidate(); setHoverModel(null); setHoverPending(false); setInteractionImpact(null); };
+  const clearHover = () => { if (timer.current) clearTimeout(timer.current); pendingHover.current = null; if (!busyRef.current) gate.current.invalidate(); setHoverModel(null); setHoverPending(false); setInteractionImpact(null); };
   useEffect(() => { scheduler.current.revive(); return () => { if (timer.current) clearTimeout(timer.current); if (motionTimer.current) clearTimeout(motionTimer.current); gate.current.invalidate(); scheduler.current.dispose(); }; }, []);
   useEffect(() => {
     const historyKey = (event: KeyboardEvent) => {
@@ -197,6 +258,7 @@ export function ComposerShell({ initialModel, transport, initialDrafts = null, d
   }
   async function run(operation: ComposerOperation, history: "push" | "undo" | "redo" | "none" = "push", draft?: PlanSemanticStateV1) {
     if (busyRef.current) return;
+    if (snapshotMetrics) snapshotIntent.current=performance.now();
     scheduler.current.cancel();
     clearHover(); busyRef.current = true; setBusy(true); setSuggestions(null); setErrorMessage(null);
     const beforeDraft = localDraft.current, sourceDigest = semanticStateDigest(beforeDraft), ticket = gate.current.next(sourceDigest);
@@ -260,9 +322,17 @@ export function ComposerShell({ initialModel, transport, initialDrafts = null, d
     previewGesture(mutation ? { kind: "MUTATE", mutation } : null);
   }
   function previewGesture(operation: ComposerOperation | null) {
+    const same = pendingHover.current;
+    if (composerInteractionReuseEnabled && operation && same?.key === JSON.stringify(operation)
+      && same.draftDigest === current.current.board.draft.semanticStateDigest && same.worldVersion === currentAuthority().worldVersion
+      && gate.current.accepts({ sequence: same.sequence, sourceDigest: same.draftDigest }, same.sequence, same.draftDigest)) return;
     clearHover();
-    if (!operation || operation.kind === "APPLY" || busyRef.current || previewStatus !== "FRESH" || editor || projectionOpen) return;
+    if (!operation || operation.kind === "APPLY" || busyRef.current || previewStatus !== "FRESH" || editor || projectionOpen
+      || composerInteractionReuseEnabled && scheduler.current.pending()) return;
     const before = current.current, ticket = gate.current.next(before.board.draft.semanticStateDigest);
+    const hovering = { key: JSON.stringify(operation), draftDigest: before.board.draft.semanticStateDigest,
+      worldVersion: currentAuthority().worldVersion, sequence: ticket.sequence };
+    pendingHover.current = hovering;
     setHoverPending(true);
     timer.current = setTimeout(async () => {
       try {
@@ -271,6 +341,7 @@ export function ComposerShell({ initialModel, transport, initialDrafts = null, d
           setHoverPending(false); if (response.ok) { setHoverModel(response.model); setInteractionImpact(response.interactionImpact ?? null); }
         }
       } catch { if (gate.current.accepts(ticket, ticket.sequence, current.current.board.draft.semanticStateDigest)) setHoverPending(false); }
+      finally { if (pendingHover.current === hovering) pendingHover.current = null; }
     }, 200);
   }
   function animate(kind: "snap" | "undo" | "redo" | "recoil", target: string | null) {
@@ -487,12 +558,24 @@ export function ComposerShell({ initialModel, transport, initialDrafts = null, d
     : !model.board.draft.dirty ? model.activeRevisionNumber ? "Le mois est déjà appliqué. Modifiez un élément pour créer une nouvelle révision." : `Composez un premier choix pour appliquer votre mois.${model.presentation.unresolvedCount ? ` ${model.presentation.unresolvedCount} éléments à préciser.` : ""}`
     : model.presentation.unresolvedCount ? `${model.presentation.unresolvedCount} éléments restent à préciser avant l’application.`
     : "Les contraintes signalées doivent être précisées avant l’application.";
-  return <ComposerInteractionContext.Provider value={{ grabbed, overTarget, motion, motionTarget, completenessFocus, unresolvedRefs: model.presentation.unresolvedRefs,
-    start: startDrag, end: endDrag, over, place, equip,
-    canTarget: ref => assistantGrab.current?.targetRef === ref, reject: () => animate("recoil", grab.current?.sourceKey ?? null),
-    overAssistant: ref => { if (ref === assistantOver.current) return; assistantOver.current = ref; clearHover(); },
-    placeAssistant: ref => { if (assistantGrab.current?.targetRef !== ref) return; const operation = assistantGrab.current.operation; nextMotionTarget.current = ref; endDrag(); void run(operation); } }}>
-  <div className={styles.workspace} data-composer data-digest={shown.board.draft.semanticStateDigest} data-preview-state={previewStatus} data-save-state={durable.status} data-world-version={worldVersion} data-exploratory-digest={hoverModel?.board.draft.semanticStateDigest} data-dragging={!!grabbed} data-comparing={!!comparison} data-motion={motion} data-revision={model.activeRevisionNumber} aria-busy={busy}
+  const stableStart=useCommittedEvent(startDrag),stableEnd=useCommittedEvent(endDrag),stableOver=useCommittedEvent(over),stablePlace=useCommittedEvent(place),stableEquip=useCommittedEvent(equip);
+  const stableCanTarget=useCommittedEvent((ref:string)=>assistantGrab.current?.targetRef===ref);
+  const stableReject=useCommittedEvent(()=>animate("recoil",grab.current?.sourceKey??null));
+  const stableOverAssistant=useCommittedEvent((ref:string|null)=>{if(ref===assistantOver.current)return;assistantOver.current=ref;clearHover();});
+  const stablePlaceAssistant=useCommittedEvent((ref:string)=>{if(assistantGrab.current?.targetRef!==ref)return;const operation=assistantGrab.current.operation;nextMotionTarget.current=ref;endDrag();void run(operation);});
+  const interactionView=useMemo(()=>({grabbed,overTarget,motion,motionTarget,completenessFocus,unresolvedRefs:model.presentation.unresolvedRefs,
+    start:stableStart,end:stableEnd,over:stableOver,place:stablePlace,equip:stableEquip,canTarget:stableCanTarget,reject:stableReject,overAssistant:stableOverAssistant,placeAssistant:stablePlaceAssistant}),
+    [grabbed,overTarget,motion,motionTarget,completenessFocus,model.presentation.unresolvedRefs,stableStart,stableEnd,stableOver,stablePlace,stableEquip,stableCanTarget,stableReject,stableOverAssistant,stablePlaceAssistant]);
+  const stableChoose=useCommittedEvent(choose),stableEdit=useCommittedEvent(edit),stableEditContext=useCommittedEvent(editContext),stableDrop=useCommittedEvent(drop),stableHover=useCommittedEvent(hover);
+  const stableRequest=useCommittedEvent((operation:ComposerOperation)=>stage(operation));
+  const stableLibraryChoose=useCommittedEvent((asset:ComposerAssetView)=>choose(asset));
+  const stableLibraryDrag=useCommittedEvent((key:string|null)=>{clearHover();setSelected(key);});
+  const stableAdd=useCommittedEvent(()=>{clearHover();setLibraryOpenToken(n=>n+1);});
+  const stablePreview=useCommittedEvent(()=>void run({kind:"READ"},"none"));
+  const stableBalance=useCommittedEvent(()=>{clearHover();setBalanceOpen(v=>!v);if(!balanceOpen)void run({kind:"SUGGESTIONS"},"none");});
+  const stableDetails=useCommittedEvent(openProjectionDetails);
+  return <ComposerInteractionContext.Provider value={interactionView}>
+  <div className={styles.workspace} data-composer data-digest={shown.board.draft.semanticStateDigest} data-snap-preview-digest={snapshotMetrics?model.proof.expectedPreviewDigest:undefined} data-preview-state={previewStatus} data-save-state={durable.status} data-world-version={worldVersion} data-exploratory-digest={hoverModel?.board.draft.semanticStateDigest} data-dragging={!!grabbed} data-comparing={!!comparison} data-motion={motion} data-revision={model.activeRevisionNumber} aria-busy={busy}
     onDragOverCapture={e => { if (grab.current && e.target instanceof Element && !e.target.closest("[data-board-drop],[data-trash]")) { over(null); if (assistantOver.current) { assistantOver.current = null; clearHover(); } } }}>
     <header className={styles.workspaceHeader}><div className={styles.headerIdentity}><a href={`/mois-a-venir?month=${model.semanticState.targetMonth}&control=center`} className={styles.backLink}><ArrowLeft size={14} /> Centre de contrôle</a>
       <h1>Composer <span>{monthLabel(model.semanticState.targetMonth)}</span></h1><div className={styles.headerMeta}>{comparison && <span className={styles.variantMarker} data-variant-marker>VARIANTE</span>}<span className={styles.draftStatus} data-draft-status>{draftTransport ? ({ CLEAN: "Aucun brouillon sauvegardé", DIRTY: "Modifications non enregistrées", SAVING: "Sauvegarde en cours…", SAVED: "Brouillon sauvegardé", ERROR: "Erreur de sauvegarde", CONFLICT: "Conflit de brouillon", OFFLINE: "Hors ligne · non enregistré" }[durable.status]) : !model.activeRevisionNumber ? "Brouillon" : shown.board.draft.dirty ? "Nouvelle modification" : `Appliqué · révision ${model.activeRevisionNumber}`}</span>
@@ -527,10 +610,9 @@ export function ComposerShell({ initialModel, transport, initialDrafts = null, d
         </div>}
         {draftTransport && ["ERROR", "CONFLICT", "OFFLINE"].includes(durable.status) && <span className={styles.saveMessage} data-save-message role="status">{durable.message}</span>}
       </div></header>
-    <div className={styles.columns}><ComposerLibrary model={shown} openToken={libraryOpenToken} busy={busy} selected={selected} choose={asset => choose(asset)} drag={key => { clearHover(); setSelected(key); }} />
-      <ComposerBoard model={shown} busy={busy} selected={selected} focused={focusedContext} focus={setFocusedContext} edit={edit} editContext={editContext} choose={choose} drag={setSelected} drop={drop} request={operation => stage(operation)} hover={hover}
-        add={() => { clearHover(); setLibraryOpenToken(n => n + 1); }} preview={() => void run({ kind: "READ" }, "none")}
-        balance={() => { clearHover(); setBalanceOpen(v => !v); if (!balanceOpen) void run({ kind: "SUGGESTIONS" }, "none"); }} details={openProjectionDetails} /></div>
+    <div className={styles.columns}><ComposerLibrary model={shown} openToken={libraryOpenToken} busy={busy} selected={selected} choose={stableLibraryChoose} drag={stableLibraryDrag} />
+      <ComposerBoard model={shown} busy={busy} selected={selected} focused={focusedContext} focus={setFocusedContext} edit={stableEdit} editContext={stableEditContext} choose={stableChoose} drag={setSelected} drop={stableDrop} request={stableRequest} hover={stableHover}
+        add={stableAdd} preview={stablePreview} balance={stableBalance} details={stableDetails} /></div>
     {balanceOpen && (!suggestions || suggestions.candidates.length > 0) && <section className={styles.suggestionHand} data-suggestion-hand aria-label="Pistes pour votre mois"><header><span><Sparkles size={14} /> Quelques façons de retrouver de la marge</span><button className={styles.iconButton} aria-label="Fermer les suggestions" onClick={() => setBalanceOpen(false)}><X size={16} /></button></header>
       {suggestions ? <BalanceLayer suggestions={suggestions} busy={busy} accept={candidateId => void run({ kind: "ACCEPT", candidateSetDigest: suggestions.candidateSetDigest, candidateId })} /> : <p role="status">Le serveur resimule les pistes…</p>}</section>}
     <div ref={dragImage} className={styles.dragPreview} data-drag-preview data-protected={grabbed?.protected} aria-hidden="true">{[...new Set(Object.values(shown.presentation.dragSources).map(s => s.iconKey))].map(key => <span key={key} data-drag-icon={key} style={{ display: grabbed?.iconKey === key ? "inline-flex" : "none" }}><PlannerIcon iconKey={key} scale="SATELLITE" /></span>)}<span><b data-drag-label>{grabbed?.label}</b><small data-drag-amount>{grabbed?.protected ? <><LockKeyhole size={11} /> Protégée</> : money(grabbed?.economicAmount ?? null)}</small></span></div>
@@ -546,12 +628,22 @@ export function ComposerShell({ initialModel, transport, initialDrafts = null, d
     <dialog ref={dialog} className={styles.dialog} data-night-editor={!!editor?.nightContextId || !!editor?.familyContextId || !!editor?.stayContextId || undefined} data-side-panel={editor?.side || undefined} data-compact-editor={editor?.compact || undefined} aria-labelledby="composer-dialog-title" onCancel={e => { e.preventDefault(); closeDialog(); }} onKeyDown={e => { if (e.key === "Escape" && editor?.side) { e.preventDefault(); closeDialog(); } }}>
       <header><h2 id="composer-dialog-title">{editor?.title ?? (projectionOpen ? "Le détail de votre mois" : "Des pistes pour votre mois")}</h2><button className={styles.iconButton} disabled={busy} aria-label="Fermer" onClick={closeDialog}><X size={19} /></button></header>
       {errorMessage && <p role="alert" className={styles.formError}>{errorMessage}</p>}
-      {editor?.stayContextId && draftState.contexts.find(context => context.contextOccurrenceId === editor.stayContextId)
+      {editorKind && !loadedEditors[editorKind]
+        ? <section className={styles.editorLoading} role={editorLoadError === editorKind ? "alert" : "status"} aria-live="polite" data-editor-loading={editorKind}>
+          <p>{editorLoadError === editorKind ? "Le formulaire n’a pas pu être chargé. Votre brouillon et votre carte sont conservés." : "Chargement du formulaire…"}</p>
+          {editorLoadError === editorKind && <button type="button" className={styles.secondary} onClick={() => setEditorLoadRetry(value => value + 1)}>Réessayer le chargement</button>}
+          {editorLoadError === editorKind && <>
+            <p>{editorReloadSafe ? "Votre brouillon est sauvegardé. Vous pouvez recharger Composer, puis rouvrir cette carte."
+              : "Gardez cette page ouverte : un rechargement attend la sauvegarde confirmée de votre brouillon."}</p>
+            {editorReloadSafe && <button type="button" className={styles.secondary} onClick={reloadSavedEditor}>Recharger Composer avec mon brouillon sauvegardé</button>}
+          </>}
+        </section>
+        : editor?.stayContextId && ShortStayEditor && draftState.contexts.find(context => context.contextOccurrenceId === editor.stayContextId)
         ? <ShortStayEditor key={`${editor.stayContextId}:${editor.familyMode ?? "edit"}`} context={draftState.contexts.find(context => context.contextOccurrenceId === editor.stayContextId)!}
           semanticState={draftState} targetMonth={draftState.targetMonth} householdPersons={model.householdPersons} options={model.mobilityOptions} initialMode={editor.familyMode}
           summary={model.mobilitySummaries?.find(item => item.contextOccurrenceId === editor.stayContextId)} fresh={previewStatus === "FRESH"}
           knowledge={model.cardKnowledge[editor.cardKey ?? ""]} busy={busy} onCancel={closeDialog} onSave={operation => { stage(operation); setEditor(null); }} />
-        : editor?.familyContextId && draftState.contexts.find(context => context.contextOccurrenceId === editor.familyContextId)
+        : editor?.familyContextId && FamilyVisitEditor && draftState.contexts.find(context => context.contextOccurrenceId === editor.familyContextId)
         ? <FamilyVisitEditor key={`${editor.familyContextId}:${editor.familyMode ?? "edit"}`} context={draftState.contexts.find(context => context.contextOccurrenceId === editor.familyContextId)!}
           targetMonth={draftState.targetMonth} householdPersons={model.householdPersons} options={model.mobilityOptions} initialMode={editor.familyMode}
           summary={model.mobilitySummaries?.find(item => item.contextOccurrenceId === editor.familyContextId)} fresh={previewStatus === "FRESH"}
@@ -560,11 +652,11 @@ export function ComposerShell({ initialModel, transport, initialDrafts = null, d
         ? <NightOutEditor key={editor.nightContextId} context={draftState.contexts.find(context => context.contextOccurrenceId === editor.nightContextId)!}
           semanticState={draftState} householdPersons={model.householdPersons} knowledge={model.cardKnowledge[editor.cardKey ?? ""]}
           busy={busy} onCancel={closeDialog} onSave={operation => { stage(operation); setEditor(null); }} />
-        : editor?.giftContextId && draftState.contexts.find(context => context.contextOccurrenceId === editor.giftContextId)
+        : editor?.giftContextId && GiftEditor && draftState.contexts.find(context => context.contextOccurrenceId === editor.giftContextId)
         ? <GiftEditor key={editor.giftContextId} context={draftState.contexts.find(context => context.contextOccurrenceId === editor.giftContextId)!}
           householdPersons={model.householdPersons} knowledge={model.cardKnowledge[editor.cardKey ?? ""]}
           busy={busy} onCancel={closeDialog} onSave={operation => { stage(operation); setEditor(null); }} />
-        : editor?.catalogContextId && draftState.contexts.find(context => context.contextOccurrenceId === editor.catalogContextId)
+        : editor?.catalogContextId && CatalogContextEditor && draftState.contexts.find(context => context.contextOccurrenceId === editor.catalogContextId)
         ? <CatalogContextEditor key={editor.catalogContextId} context={draftState.contexts.find(context => context.contextOccurrenceId === editor.catalogContextId)!}
           editor={{ assetKey: editor.cardKey ?? "", fields: editor.fields }} targetMonth={draftState.targetMonth} householdPersons={model.householdPersons}
           options={model.mobilityOptions} knowledge={model.cardKnowledge[editor.cardKey ?? ""]} busy={busy} onCancel={closeDialog}

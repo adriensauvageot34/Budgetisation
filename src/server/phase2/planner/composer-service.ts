@@ -1,4 +1,5 @@
 import "server-only";
+import { composerMutationDependencies } from "./composer-mutation-world";
 import Big from "big.js";
 import type { ComposerApplyReceipt, ComposerEditor, ComposerField, ComposerRequest, ComposerResponse, ComposerUiModel } from "@/domain/phase2/planner/composer-ui-contract";
 import type { MonthComposerReadModel } from "@/domain/phase2/planner/composer-contract";
@@ -16,10 +17,11 @@ import { decisionAmount } from "@/domain/phase2/month-decision-contract";
 import { declareComponentQuantity } from "@/domain/phase2/planner/component-quantity";
 import type { PlannerDependencies } from "./apply";
 import { applyPlanScenario, readAppliedPlanScenario, type AppliedPlanScenario } from "./apply";
-import { composerNeedLabel, readMonthComposer, resolveComposerDrop } from "./read-model";
+import { composerNeedLabel, composerFromDraftRead, readMonthComposer, resolveComposerDrop } from "./read-model";
 import { publishContextRegistry, resolveContextTemplate } from "./context-registry";
 import { mutatePlanSemanticState } from "./semantic-mutations";
-import { acceptPlanBalanceSuggestion, readPlanBalanceSuggestions } from "./balance-assistant";
+import { acceptPlanBalanceSuggestion, balanceSuggestionsFromDraftRead } from "./balance-assistant";
+import { readPlannerDraft } from "./draft-reader";
 import { parseMobilityPricing } from "./mobility-selections";
 import { patchContextEditorFields, setContextSlotSelections } from "./context-state";
 import { composerAssetIcon, composerPresentation } from "./composer-presentation";
@@ -218,7 +220,17 @@ export async function handleComposerRequest(deps: PlannerDependencies, household
           message: `Révision ${committed.revision.revisionNumber} enregistrée, mais sa relecture est indisponible. Actualisez la prévisualisation avant toute autre action.` };
       }
     }
-    const model = await readMonthComposer(deps, household, month, request.draft);
+    // The opt-in historical reader is never passed into Apply or its post-commit reload.
+    if (deps.readComposerWorld) deps = { ...deps, readWorld: deps.readComposerWorld };
+    const mutationRead = ["MUTATE", "DROP", "CLEAR_SOCKET", "EDIT_GIFT", "EDIT_NIGHT_OUT", "EDIT_SHORT_STAY", "EDIT_FAMILY_VISIT", "EDIT_CONTEXT", "PRESERVE"].includes(request.kind);
+    const readDeps = mutationRead && process.env.COMPOSER_P14_P2_SINGLE_WORLD !== "0"
+      ? composerMutationDependencies(deps, household, month) : deps;
+    // Suggestions and Board describe the same admitted state in this request.
+    // ACCEPT and APPLY deliberately retain their independent authoritative reads.
+    const suggestionsRead = request.kind === "SUGGESTIONS"
+      ? await readPlannerDraft(deps, household, month, request.draft) : null;
+    const model = suggestionsRead ? composerFromDraftRead(suggestionsRead)
+      : await readMonthComposer(readDeps, household, month, request.draft);
     let state = model.semanticState, mutationKind: string | undefined;
     let suggestions;
     if (request.kind === "MUTATE") {
@@ -309,12 +321,12 @@ export async function handleComposerRequest(deps: PlannerDependencies, household
     } else if (request.kind === "PRESERVE") {
       if (![...model.board.contexts.map(c => c.contextOccurrenceId), ...model.board.baselineControls.map(c => c.targetRef), ...model.board.discretionaryControls.map(c => c.targetRef), ...model.board.savings.map(c => c.targetRef)].includes(request.targetRef)) throw new TypeError("COMPOSER_PREFERENCE_TARGET_UNKNOWN");
       state = parsePlanSemanticState({ ...state, preferences: { ...state.preferences, flexibility: { ...state.preferences.flexibility, [request.targetRef]: request.preserve ? "PRESERVE" : "NORMAL" } } });
-    } else if (request.kind === "SUGGESTIONS") suggestions = await readPlanBalanceSuggestions(deps, household, month, state);
+    } else if (request.kind === "SUGGESTIONS" && suggestionsRead) suggestions = await balanceSuggestionsFromDraftRead(deps, suggestionsRead);
     else if (request.kind === "ACCEPT") {
       const accepted = await acceptPlanBalanceSuggestion(deps, household, month, state, request.candidateSetDigest, request.candidateId);
       state = accepted.semanticState; suggestions = accepted.suggestions;
     } else if (request.kind !== "READ") throw new TypeError("COMPOSER_REQUEST_INVALID");
-    const next = state === model.semanticState ? model : await readMonthComposer(deps, household, month, state);
+    const next = state === model.semanticState ? model : await readMonthComposer(readDeps, household, month, state);
     const before = model.board.cockpit.plan.economicMonthEndRemainder, after = next.board.cockpit.plan.economicMonthEndRemainder;
     // Difference of two real Compiler projections, just as for an assistant candidate.
     const interactionImpact = before === null || after === null ? null : new Big(after).minus(before).toFixed(2);

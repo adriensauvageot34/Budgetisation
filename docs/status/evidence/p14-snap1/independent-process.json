@@ -1,0 +1,25 @@
+{
+  "pid": 12972,
+  "status": "PASS_PERSISTENT_STORAGE_NEW_PROCESS",
+  "events": [
+    {
+      "status": "HIT",
+      "validationMs": 42.08190000000013,
+      "decodeMs": 30.476900000000114
+    }
+  ],
+  "metrics": {
+    "sqlReads": 1,
+    "sourceReads": 0,
+    "sourceBytes": 0,
+    "inspectReads": 1,
+    "inspectBytes": 133401,
+    "calls": [
+      {
+        "table": "artifact+versions+authorization",
+        "ms": 40.56269999999995
+      }
+    ]
+  },
+  "factsDigest": "a9b5f49d5cabeff442cc97ea2ed8510e310575edb4dcd0ad596f86fdbb9bf35f"
+}

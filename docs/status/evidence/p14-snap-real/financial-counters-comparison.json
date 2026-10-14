@@ -1,0 +1,192 @@
+{
+  "environment": "Supabase principal, read-only pg_stat_user_tables",
+  "before": "Before SNAP migration",
+  "after": "2026-10-14T12:18Z",
+  "statsReset": null,
+  "result": "UNCHANGED_ALL_CONTROLLED_TABLES",
+  "limit": "Counters, not exhaustive row hashes. Other user changes could affect counters. Nonexistent/view names are not counted.",
+  "tables": [
+    {
+      "table": "operations",
+      "before": {
+        "insert": 0,
+        "update": 0,
+        "delete": 0
+      },
+      "after": {
+        "insert": 0,
+        "update": 0,
+        "delete": 0
+      },
+      "unchanged": true
+    },
+    {
+      "table": "life_event_types",
+      "before": {
+        "insert": 0,
+        "update": 0,
+        "delete": 0
+      },
+      "after": {
+        "insert": 0,
+        "update": 0,
+        "delete": 0
+      },
+      "unchanged": true
+    },
+    {
+      "table": "life_events",
+      "before": {
+        "insert": 0,
+        "update": 0,
+        "delete": 0
+      },
+      "after": {
+        "insert": 0,
+        "update": 0,
+        "delete": 0
+      },
+      "unchanged": true
+    },
+    {
+      "table": "life_event_participations",
+      "before": {
+        "insert": 0,
+        "update": 0,
+        "delete": 0
+      },
+      "after": {
+        "insert": 0,
+        "update": 0,
+        "delete": 0
+      },
+      "unchanged": true
+    },
+    {
+      "table": "life_event_financial_links",
+      "before": {
+        "insert": 0,
+        "update": 0,
+        "delete": 0
+      },
+      "after": {
+        "insert": 0,
+        "update": 0,
+        "delete": 0
+      },
+      "unchanged": true
+    },
+    {
+      "table": "mobility_legs",
+      "before": {
+        "insert": 1368,
+        "update": 0,
+        "delete": 0
+      },
+      "after": {
+        "insert": 1368,
+        "update": 0,
+        "delete": 0
+      },
+      "unchanged": true
+    },
+    {
+      "table": "benefit_wallets",
+      "before": {
+        "insert": 2,
+        "update": 1,
+        "delete": 0
+      },
+      "after": {
+        "insert": 2,
+        "update": 1,
+        "delete": 0
+      },
+      "unchanged": true
+    },
+    {
+      "table": "benefit_wallet_ledger_entries",
+      "before": {
+        "insert": 213,
+        "update": 0,
+        "delete": 0
+      },
+      "after": {
+        "insert": 213,
+        "update": 0,
+        "delete": 0
+      },
+      "unchanged": true
+    },
+    {
+      "table": "phase2_month_inputs",
+      "before": {
+        "insert": 2,
+        "update": 44,
+        "delete": 1
+      },
+      "after": {
+        "insert": 2,
+        "update": 44,
+        "delete": 1
+      },
+      "unchanged": true
+    },
+    {
+      "table": "phase2_planned_expenses",
+      "before": {
+        "insert": 32,
+        "update": 37,
+        "delete": 25
+      },
+      "after": {
+        "insert": 32,
+        "update": 37,
+        "delete": 25
+      },
+      "unchanged": true
+    },
+    {
+      "table": "phase2_forecast_checkpoints",
+      "before": {
+        "insert": 0,
+        "update": 0,
+        "delete": 0
+      },
+      "after": {
+        "insert": 0,
+        "update": 0,
+        "delete": 0
+      },
+      "unchanged": true
+    },
+    {
+      "table": "phase2_month_plans",
+      "before": {
+        "insert": 0,
+        "update": 0,
+        "delete": 0
+      },
+      "after": {
+        "insert": 0,
+        "update": 0,
+        "delete": 0
+      },
+      "unchanged": true
+    },
+    {
+      "table": "phase2_composer_drafts",
+      "before": {
+        "insert": 4,
+        "update": 25,
+        "delete": 0
+      },
+      "after": {
+        "insert": 4,
+        "update": 25,
+        "delete": 0
+      },
+      "unchanged": true
+    }
+  ]
+}

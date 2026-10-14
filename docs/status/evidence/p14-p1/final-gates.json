@@ -1,0 +1,17 @@
+{
+  "productionWrites": "NOT_EXECUTED",
+  "probeTypecheckExitCode": 0,
+  "newOpeningFixtureChecks": 11,
+  "authenticatedRealApply": "NOT_RUN",
+  "r3Pass": 21,
+  "fullNextBuildExitCode": 0,
+  "verdict": "SAFE_PROTOTYPE_REAL_GAIN_NOT_YET_CERTIFIED",
+  "performanceTarget5s": "NOT_REACHED",
+  "r3Fail": "R3-008 CONTEXT_REFERENCE_OWNER_UNAVAILABLE (preexisting)",
+  "financialParityCases": 22,
+  "hashesPerCase": 9,
+  "typecheckExitCode": 0,
+  "newCanonicalFixtureChecks": 13,
+  "finalGuardedAuthenticatedPerformance": "NOT_RUN",
+  "buildAfterCapacityGuardExitCode": 0
+}

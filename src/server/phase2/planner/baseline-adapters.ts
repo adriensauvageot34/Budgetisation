@@ -12,13 +12,16 @@ import { loadMonthForecastAuthorities } from "../live-month-forecast";
 import { assembleMonthForecast } from "../month-forecast";
 import type { MonthForecast } from "../month-forecast";
 import { readMonthPredictionEvidence } from "../month-prediction-evidence";
+import type { MonthPredictionEvidence } from "../remaining-month-forecast";
 import { readMonthInputs } from "../month-inputs";
 import type { MonthInputs } from "../month-scenario";
 import { readPlannedExpenses } from "../planned-expenses";
 import type { PersonHabitAssertion, PlanningBaselineSources } from "./baseline-sources";
 import { buildPlanningBaseline } from "./baseline";
-import { parseActivityCausalFinancialLinks } from "@/analytics/facts";
+import { readActivityHistory, type ActivityHistoryStore } from "./activity-history-artifact";
 import { RENEWAL_NEED_KEYS } from "./renewal-engine";
+import { activityHistoryPeriod } from "./activity-history-period";
+import { snapshotHistoryTrace } from "./snapshot-observation";
 
 /** Explicit downstream compatibility payload; never accepted by the Baseline builder. */
 export const legacySeedDecisions = (inputs: MonthInputs) => parsePlannerJsonObject(inputs.decision ?? {});
@@ -49,29 +52,29 @@ export async function readPersonHabitAssertions(client: SupabaseClient, househol
  * context. Habit assertions require its trusted server read client (existing SELECT grants).
  * No new credential, Plan read, materialization, migration, or financial evaluation occurs. */
 export async function readPlanningBaselineSources(repository: CanonicalRepository, targetMonth: string,
-  knowledgeCutoff: string, options: Readonly<{ simpleOccurrences?: boolean; renewals?: boolean; forecast?: MonthForecast | Promise<MonthForecast> }> = {}): Promise<PlanningBaselineSources> {
+  knowledgeCutoff: string, options: Readonly<{ simpleOccurrences?: boolean; renewals?: boolean; forecast?: MonthForecast | Promise<MonthForecast>;
+    predictionEvidence?: Promise<MonthPredictionEvidence>; activityHistory?: ActivityHistoryStore }> = {}): Promise<PlanningBaselineSources> {
   const month = plannerMonth(targetMonth), cutoff = Temporal.Instant.from(knowledgeCutoff);
   const { client, context } = repository, householdId = String(context.householdId);
-  const today = cutoff.toZonedDateTimeISO(context.timezone).toPlainDate();
-  const lastHistorical = Temporal.PlainDate.from(`${month}-01`).subtract({ days: 1 });
-  const through = Temporal.PlainDate.compare(today, lastHistorical) < 0 ? today : lastHistorical;
-  const firstMonth = context.periods.map(p => p.month.slice(0, 7)).sort()[0];
-  if (!firstMonth || `${firstMonth}-01` > through.toString()) throw new TypeError("BASELINE_CANONICAL_PERIODS_UNAVAILABLE");
-  const range = { start: parseLocalDate(`${firstMonth}-01`), endExclusive: parseLocalDate(through.add({ days: 1 }).toString()) };
+  const { today, through, range } = activityHistoryPeriod(context, month, knowledgeCutoff);
   const simpleRead = async () => {
     if (!options.simpleOccurrences) return undefined;
-    const occurrences = await repository.loadActivityOccurrences(range);
-    const links = parseActivityCausalFinancialLinks(await repository.loadActivityCausalFinancialLinkRows(occurrences.map(e => e.lifeEventId)));
-    return { occurrences, links };
+    return readActivityHistory(repository, range, today.toString(), options.activityHistory, snapshotHistoryTrace);
   };
+  const simpleOccurrencesPromise = simpleRead();
+  // C1 and M7 use the same owner projection for this exact authorized range.
+  // M7 still reads its richer event/participation/location data independently.
+  const activityOccurrences = options.simpleOccurrences
+    ? { range, facts: simpleOccurrencesPromise.then(result => result!.occurrences) } : undefined;
   const [authorities, storedInputs, evidence, plannedExpenses, habitAssertions, productObservations, mobilityLegs, mobilityContext, canonicalPurchases, simpleOccurrences] = await Promise.all([
     loadMonthForecastAuthorities(client, householdId), readMonthInputs(client, householdId, month),
-    readMonthPredictionEvidence(client, householdId, month, true, { asOfDate: today.toString(), timezone: context.timezone }),
+    options.predictionEvidence ?? readMonthPredictionEvidence(client, householdId, month, true, { asOfDate: today.toString(), timezone: context.timezone }),
     readPlannedExpenses(client, householdId, month), readPersonHabitAssertions(client, householdId, context.personIds.map(String), cutoff.toString()),
     resolveGlobalPersonaProductObservations({ repository, certifiedThrough: parseLocalDate(through.toString()) }),
-    repository.loadMobilityLegFacts(range), resolveGlobalM7MobilityContextAuthority({ repository, certifiedThrough: through.toString() }),
+    repository.loadMobilityLegFacts(range), resolveGlobalM7MobilityContextAuthority({ repository, certifiedThrough: through.toString(),
+      ...(activityOccurrences ? { activityOccurrences } : {}) }),
     repository.loadPurchaseAwareCanonical(range, "PURCHASE_AWARE_PILOT"),
-    simpleRead(),
+    simpleOccurrencesPromise,
   ]);
   // Source reads depend on the authorized scope/cutoff, not the pending forecast.
   // Admit that exact published generation before exposing any Baseline facts.

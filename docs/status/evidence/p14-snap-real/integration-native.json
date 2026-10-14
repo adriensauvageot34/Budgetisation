@@ -1,0 +1,25 @@
+{
+  "environment": "PG17 synthetic only",
+  "results": [
+    {
+      "name": "MAINTENANCE-LOST-COMMIT-RECOVERED-WITHOUT-SECOND-PUBLISH",
+      "status": "PASS"
+    },
+    {
+      "name": "MAINTENANCE-DEFINITE-CAS-REJECTION-BOUNDED-TO-TWO",
+      "status": "PASS"
+    },
+    {
+      "name": "TRUSTED-INSPECT-AND-REGISTRY-SERVICE-ONLY",
+      "status": "PASS"
+    },
+    {
+      "name": "TRUSTED-CURRENT-MEMBERSHIP-AND-BAN-NOT-CACHED",
+      "status": "PASS"
+    },
+    {
+      "name": "PERIOD-SHARED-WITH-BASELINE-WITHOUT-DATE-CHANGE",
+      "status": "PASS"
+    }
+  ]
+}

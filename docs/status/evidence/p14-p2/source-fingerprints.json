@@ -1,0 +1,30 @@
+{
+  "base": "a934f60f7f796b4522cbccfbb7b01edfab96dea5",
+  "scope": "same product sources for final browser fixture, TypeScript and full Next build",
+  "productFiles": [
+    {
+      "path": "src/server/phase2/planner/composer-service.ts",
+      "sha256": "AFB7E33B9168EF391EF596D46CF558C0058779761B28FA9F26931367327498C0"
+    },
+    {
+      "path": "src/server/phase2/planner/composer-mutation-world.ts",
+      "sha256": "DC055460205429223171EA3342EA8B9E19C6EDE7BBBEE3A3CFDD4DD64C781F2B"
+    },
+    {
+      "path": "src/app/mois-a-venir/composer/composer-shell.tsx",
+      "sha256": "DCEBA1ECD97190191A95376AF0A8BE75A7A777EDA1A483E9369E5170E10456D8"
+    },
+    {
+      "path": "src/app/mois-a-venir/composer/preview-scheduler.ts",
+      "sha256": "DF02A007443E3D4676CC71B6233FAC1165FA9E158FC965369214A4E144DAB2DF"
+    },
+    {
+      "path": "src/app/mois-a-venir/composer/local-draft.ts",
+      "sha256": "61632ADABB0FAF88C9B31A4FD52774E5CA71616CCFF479F942C91315D86432CB"
+    },
+    {
+      "path": "src/app/mois-a-venir/composer/durable-draft.ts",
+      "sha256": "3C7F2E3FB1FD0FB70D45D9685007F084EC920C7EE6307092514B7A9B6EAE3898"
+    }
+  ]
+}

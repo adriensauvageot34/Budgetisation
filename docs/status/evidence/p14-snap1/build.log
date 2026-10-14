@@ -1,0 +1,49 @@
+
+> budgetisation@0.1.0 build
+> next build
+
+▲ Next.js 16.2.6 (Turbopack)
+
+  Creating an optimized production build ...
+✓ Compiled successfully in 38.4s
+  Running TypeScript ...
+  Finished TypeScript in 93s ...
+  Collecting page data using 11 workers ...
+  Generating static pages using 11 workers (0/8) ...
+  Generating static pages using 11 workers (2/8) 
+  Generating static pages using 11 workers (4/8) 
+  Generating static pages using 11 workers (6/8) 
+✓ Generating static pages using 11 workers (8/8) in 662ms
+  Finalizing page optimization ...
+
+Route (app)
+┌ ƒ /
+├ ○ /_not-found
+├ ○ /acces-refuse
+├ ○ /analyse
+├ ƒ /analyse-globale
+├ ƒ /api/global-v2/query
+├ ƒ /api/persona-portrait/[name]
+├ ƒ /api/places/autocomplete
+├ ƒ /api/places/details
+├ ƒ /api/places/photo
+├ ƒ /api/query
+├ ƒ /categorie/[slug]
+├ ○ /connexion
+├ ƒ /diagnostic
+├ ƒ /historique
+├ ƒ /historique/[month]
+├ ƒ /historique/analyse/global
+├ ○ /imports
+├ ○ /mentions-places
+├ ƒ /mois-a-venir
+├ ƒ /mois-a-venir/composer
+├ ƒ /operations
+└ ○ /parametres
+
+
+ƒ Proxy (Middleware)
+
+○  (Static)   prerendered as static content
+ƒ  (Dynamic)  server-rendered on demand
+

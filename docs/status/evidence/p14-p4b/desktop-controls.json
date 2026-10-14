@@ -1,0 +1,35 @@
+[
+  {
+    "width": 1920,
+    "height": 1080,
+    "geometry": {
+      "clientWidth": 1872,
+      "scrollWidth": 1872
+    },
+    "queryCount": 5,
+    "assets": 1,
+    "save": "SAVED"
+  },
+  {
+    "width": 1728,
+    "height": 900,
+    "geometry": {
+      "clientWidth": 1680,
+      "scrollWidth": 1680
+    },
+    "queryCount": 5,
+    "assets": 1,
+    "save": "SAVED"
+  },
+  {
+    "width": 1280,
+    "height": 720,
+    "geometry": {
+      "clientWidth": 1232,
+      "scrollWidth": 1232
+    },
+    "queryCount": 5,
+    "assets": 1,
+    "save": "SAVED"
+  }
+]
