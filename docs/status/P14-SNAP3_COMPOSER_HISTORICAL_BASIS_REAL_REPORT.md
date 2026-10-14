@@ -33,7 +33,7 @@ SHA-256 des octets du fichier : **35582B111D8B22B921D4E7BF49E6653CEF5F6A2AC0AC1C
 - Les triggers n'écrivent que le compteur privé. Compteur global conservateur : son verrou peut ajouter de la contention et son indisponibilité peut faire échouer un writer source. Coût/contension Production **NOT_RUN**. Aucune prétention à une granularité par mois.
 - La migration est atomique dans son SQL avec lock_timeout 5 s ; publish limite l'attente du compteur à 2 s. Aucun relèvement de statement_timeout.
 
-**La revue automatique a rejeté `apply_migration`**, estimant que l'autorisation générale ne couvrait pas assez explicitement ce SQL exact et les triggers sur plusieurs tables financières. Aucune DDL distante n'a été effectuée. Une validation explicite du fichier et de son empreinte a été demandée ; elle reste en attente.
+**La revue automatique a rejeté `apply_migration`**, estimant que l'autorisation générale ne couvrait pas assez explicitement ce SQL exact et les triggers sur plusieurs tables financières. Une validation explicite du fichier et de son empreinte a été demandée. Après le message « CONTINUE », deux soumissions du même fichier par l'outil officiel ont renvoyé `Invalid or expired requestState`. La lecture distante effectuée après chacune confirme : table absente, RPC absente, zéro trigger SNAP-3. Aucune DDL distante n'a été effectuée ; aucune autre voie d'exécution n'a été utilisée. Le gate d'approbation reste à lever par une réponse explicite sur le SQL et son empreinte.
 
 ## C. Contrôles exécutés
 
