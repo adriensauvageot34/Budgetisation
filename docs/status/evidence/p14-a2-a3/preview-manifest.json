@@ -1,0 +1,24 @@
+{
+  "status": "READY_FOR_AUTHENTICATED_MEASUREMENT",
+  "productionSha": "7098e3bad96ff6be724284246f95d4370c028e9b",
+  "draftPullRequest": 32,
+  "performanceAlias": "budgetisation-p14-perf-adriensauvageot34-6137s-projects.vercel.app",
+  "variants": [
+    { "name": "reference_iad1", "sha": "34798ffd4f9296d5196fc0d2e95d285ab8186c64", "deployment": "dpl_Hy6YDfpzcV8caTaLfMWy9nGsxQLH", "url": "https://budgetisation-4kyat2noq-adriensauvageot34-6137s-projects.vercel.app", "configuredRegion": "iad1", "state": "READY", "source": "CLI upload of clean application tree" },
+    { "name": "reference_fra1", "sha": "34798ffd4f9296d5196fc0d2e95d285ab8186c64", "deployment": "dpl_6DN9YC3xgRPAwyAXUpuLeWXt517K", "url": "https://budgetisation-cbm2a7o1a-adriensauvageot34-6137s-projects.vercel.app", "configuredRegion": "fra1", "state": "READY", "source": "CLI upload of the same application tree" },
+    { "name": "candidate_iad1", "sha": "cd58a1e5f039ecc52a8a0504d02d0ab893856f8d", "deployment": "dpl_B8GV8PZ28m8neBs85Ho9sS9tWdLz", "url": "https://budgetisation-i5mwmow53-adriensauvageot34-6137s-projects.vercel.app", "configuredRegion": "iad1", "state": "READY", "source": "Git integration" }
+  ],
+  "flags": {
+    "COMPOSER_P14_SNAP3_HISTORICAL_BASIS": "1",
+    "COMPOSER_P14_P3_HISTORICAL_REUSE": "0",
+    "COMPOSER_WORLD_TRACE_ENABLED": "1",
+    "COMPOSER_SNAP_METRICS_ENABLED": "1",
+    "COMPOSER_SNAP_BENCHMARK_READ_ONLY": "1",
+    "COMPOSER_DRAFT_AUTOSAVE_ENABLED": "false",
+    "COMPOSER_P14_SNAP3_PREPARE_ENABLED": "0"
+  },
+  "financialWrites": 0,
+  "authenticatedSamples": [],
+  "realGain": "NOT_MEASURED",
+  "browserAccess": "WAITING_FOR_2026-10-15_03:12_EUROPE_PARIS"
+}
