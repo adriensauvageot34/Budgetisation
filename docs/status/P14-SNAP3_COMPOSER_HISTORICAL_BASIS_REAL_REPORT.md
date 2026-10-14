@@ -76,11 +76,14 @@ Code produit identique dans les deux uploads CLI : `920549d`. Même iad1, P3=0, 
 
 | Mesure réelle SNAP-3 | OFF | ON | Gain |
 |---|---|---|---|
-| Ouverture FRESH P50/P95 | NOT_RUN | NOT_RUN | Non établi |
+| Ouverture FRESH P50/P95, première tranche Canonical, n=5 | 16,57 / 27,34 s | 11,73 / 12,23 s | Médiane appariée 7,35 s ; P95 descriptif |
 | Dernière décision → FRESH / Soirée / SUGGESTIONS | NOT_RUN | NOT_RUN | Non établi |
-| World / Canonical / M7 / Global / Evidence / Finance | NOT_RUN | NOT_RUN | Non établi |
-| GET/RPC / octets / admission / préparation | NOT_RUN | NOT_RUN | Non établi |
-| HIT/MISS, timeouts | NOT_RUN | NOT_RUN | Non établi |
+| World, première tranche Canonical, n=5 | 13,51 / 24,07 s | 7,34 / 8,52 s | Descriptif, branches parallèles variables |
+| Canonical direct / admission, n=5 | 13,30 / 23,85 s | 1,79 / 3,14 s | Reconstruction remplacée par admission |
+| M7 / Global / Evidence / Finance | Mesures détaillées à compléter | Mesures détaillées à compléter | M7 est devenu la barrière ON |
+| GET/RPC métier par ouverture | 284 | 127 | 157 évités sur cette première tranche |
+| Octets / admission / préparation | Dernière paire 11,75 Mio lus | 7,51 Mio lus ; préparation 34,24 s hors READ | Octets fetch, non trafic facturé |
+| HIT/MISS, timeouts | 5 lectures directes | 5 HIT Canonical | Aucun timeout dans ces dix ouvertures |
 
 Un artifact réel SNAP-3 a été publié puis relu. Cinq paires alternées de rechargement chaud authentifié, même compte/mois/région `iad1`/viewport 1728×900/code et même digest de projection. Détails individuels sans données personnelles : [preuve JSON](evidence/p14-snap3/real-canonical-first-proof.json).
 
@@ -100,10 +103,14 @@ Production/main restent `f765f6d`, inchangés. Aucun push, PR ou merge SNAP-3 ; 
 
 Rollback applicatif prévu : `COMPOSER_P14_SNAP3_HISTORICAL_BASIS=0`, lecteur direct et aucun coût d'admission. En cas d'incident des writers, désactiver non destructivement la consommation et le state, puis examiner le mécanisme de version avant toute suppression de trigger ; ne jamais réactiver un ancien artifact sans nouvelle preuve. Aucune suppression d'artifact, Draft ou Plan.
 
-## F. Reprise minimale
+## F. Extension M7 et Global compact (14 octobre)
 
-1. Préparer et publier la première portion Canonical via la route authentifiée dédiée, mesurer sa complétude, sa taille, son coût et sa parité.
-2. Mesurer OFF/ON alternés à scope/viewport/Draft identiques ; distinguer World et FRESH, préserver les essais défavorables.
-3. Étendre M7 et le lecteur Global compact **uniquement après cette première preuve** ; puis gates de livraison/activation prévus par la mission.
+Après la preuve Canonical, le commit local `d01a06e6e63640873c6c51dbf09a0dfaaba472a3` ajoute le socle M7 et la lecture Global/FOOD compacte. M7 prépare hors READ les occurrences, legs et relations Mobility propriétaires, puis les admet avec scope, digest, version et preuve de couverture. Les données MonthInputs, PlannedExpenses, Wallet, Draft et Plan actif restent lues en direct ; Compiler/Finance V2 et Apply restent inchangés. Global réutilise la publication `analysis_global_background_rhythms` de la même génération que Forecast, avec le validateur du propriétaire ; le chemin sans Forecast fourni conserve son lecteur complet.
 
-Le premier gate réel Canonical justifie l'étude de M7 et Global compact. SNAP-3 reste une mission en cours ; SNAP-4 n'est pas commencé.
+La variante SQL M7 approuvée, SHA-256 `E81B79F8CB4948A3335C90404D728428DD320C6AF7C0514C08239E5FBE28D041`, a passé huit contrôles PostgreSQL 17 synthétiques et a été appliquée officiellement comme `20261014174653_composer_historical_basis_m7`. La copie versionnée est identique octet pour octet. Elle étend la couverture à 30 triggers ALWAYS et élève l'époque de schéma : l'ancien artifact Canonical est volontairement inadmissible jusqu'à republication. Les deux tables privées, RPC et grants restent les mêmes. Les contrôles distants ont confirmé la couverture de writers et les droits attendus ; ils ne remplacent pas un test de consommation M7 avec vrai JWT. Aucun writer financier n'a été sollicité.
+
+Contrôles locaux après extension : TypeScript PASS ; PostgreSQL 17 M7 8/8 PASS ; Global/FOOD 50 contrôles PASS dont les rejets de publication absente, méthode invalide et génération discordante ; Baseline 14/14 PASS après adaptation du mock au lecteur compact. Le build Next local est **NOT_CERTIFIED** : arrêté après blocage prolongé à l'optimisation Turbopack, sans erreur produit démontrée. Les deux Previews Vercel du même code sont **READY**, vérification de build distante distincte.
+
+Previews instrumentées et protégées, sans promotion : SNAP-3 ON `dpl_6GkiiBE63opkvZPpdZr23NDuZJMC`, OFF `dpl_GZazrLT3kNpPRQDxKPtYcwedU47h`. Les deux premières Previews du même code, dépourvues de télémétrie garantie, sont exclues des chiffres. Publication M7 et comparaison authentifiée ON/OFF : **NOT_RUN à ce stade**. Les résultats Canonical du tableau ci-dessus concernent le commit antérieur `920549d`, et ne sont pas attribués à M7/Global.
+
+SNAP-3 reste en cours. Production et `main` sont inchangés ; aucune activation, push ou PR de cette extension n'a été faite. SNAP-4 n'est pas commencé.

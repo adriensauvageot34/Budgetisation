@@ -134,6 +134,10 @@ await test("BASE-ADAPT-002", async () => {
     assert.equal(household, s.householdId); return { background: { food: s.food }, publication: {
       publication_id: s.forecast.meta.sourcePublicationId, source_revision: s.forecast.meta.sourceRevision, published_analytics_revision: s.forecast.meta.analyticsRevision } };
   });
+  replace("@/server/phase2/live-month-forecast.ts", "loadPlanningBaselineGlobalContext", async (_client, household) => {
+    assert.equal(household, s.householdId); return { background: { food: s.food }, publication: {
+      publication_id: s.forecast.meta.sourcePublicationId, source_revision: s.forecast.meta.sourceRevision, published_analytics_revision: s.forecast.meta.analyticsRevision } };
+  });
   replace("@/server/phase2/month-forecast.ts", "assembleMonthForecast", (_authorities, month) => { assembledReads++; assert.equal(month, s.targetMonth); return s.forecast; });
   replace("@/server/phase2/month-inputs.ts", "readMonthInputs", async (_client, household, month) => {
     assert.equal(household, s.householdId); assert.equal(month, s.targetMonth); return { inputs: s.monthInputs };
