@@ -740,10 +740,10 @@ export class CanonicalRepository {
   private loadTimingRowsForRange(
     range: CanonicalDateRange,
   ): Promise<readonly CanonicalRecord[]> {
-    return this.readRows(
+    return this.readRowsPaginated(
       `timing:range:${range.start}:${range.endExclusive}`,
       "timing",
-      () =>
+      (from, to) =>
         this.client
           .from("financial_economic_timing_canonical")
           .select(
@@ -753,7 +753,8 @@ export class CanonicalRepository {
           .gte("economic_month", range.start)
           .lt("economic_month", range.endExclusive)
           .order("canonical_component_key", { ascending: true })
-          .order("economic_segment_id", { ascending: true }),
+          .order("economic_segment_id", { ascending: true })
+          .range(from, to),
     );
   }
 
@@ -768,16 +769,23 @@ export class CanonicalRepository {
       keys,
       ["canonical_component_key", "economic_segment_id"],
       ["canonical_component_key", "economic_segment_id"],
-      (batch) =>
-        this.client
-          .from("financial_economic_timing_canonical")
-          .select(
-            "household_id,canonical_component_key,economic_segment_id,timing_state,period_start,period_end,economic_month,economic_amount::text,attribution_method,method_version",
-          )
-          .eq("household_id", this.context.householdId)
-          .in("canonical_component_key", batch)
-          .order("canonical_component_key", { ascending: true })
-          .order("economic_segment_id", { ascending: true }),
+      async (batch) => {
+        const rows: CanonicalRecord[] = [];
+        for (let from = 0; ; from += CANONICAL_PAGE_SIZE) {
+          const page = await this.queryRows("timing", () => this.client
+            .from("financial_economic_timing_canonical")
+            .select(
+              "household_id,canonical_component_key,economic_segment_id,timing_state,period_start,period_end,economic_month,economic_amount::text,attribution_method,method_version",
+            )
+            .eq("household_id", this.context.householdId)
+            .in("canonical_component_key", batch)
+            .order("canonical_component_key", { ascending: true })
+            .order("economic_segment_id", { ascending: true })
+            .range(from, from + CANONICAL_PAGE_SIZE - 1));
+          rows.push(...page);
+          if (page.length < CANONICAL_PAGE_SIZE) return { data: rows, error: null };
+        }
+      },
       CANONICAL_ECONOMIC_IN_BATCH_SIZE,
       { namespace: "economic-timing-by-key", keyColumn: "canonical_component_key" },
     );

@@ -402,6 +402,7 @@ const economicDiscoveryClient = {
         gte() { return query; },
         lt() { return query; },
         order() { return query; },
+        range() { return query; },
         then(resolve, reject) {
           return Promise.resolve({ data: [], error: null }).then(resolve, reject);
         },

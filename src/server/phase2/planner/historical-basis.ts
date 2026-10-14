@@ -2,6 +2,7 @@ import "server-only";
 import { deflateRawSync, inflateRawSync } from "node:zlib";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { CanonicalRepository, type CanonicalDateRange } from "@/server/canonical/repository";
+import { CANONICAL_ECONOMIC_IN_BATCH_SIZE } from "@/server/canonical/in-batches";
 import type { PurchaseAwareEconomicFact } from "@/analytics/facts/purchase-aware";
 import { plannerDigest, plannerInteger, plannerKeys, plannerRecord, canonicalPlannerJson } from "@/domain/phase2/planner/json";
 import { activityHistoryScope, type ActivityHistoryScope } from "./activity-history-artifact";
@@ -100,12 +101,19 @@ export function completeBasisSourceClient(client: SupabaseClient): SupabaseClien
   return new Proxy(client, { get(target, property) {
     if (property !== "from") return Reflect.get(target, property);
     return (table: string) => {
-      let paged = false, limited = false;
+      let paged = false, limited = false, boundedPlaceKeyCount: number | null = null;
+      const boundedOwnerView = table === "operation_place_canonical" || table === "financial_economic_timing_canonical";
       const wrap = (builder: object): object => new Proxy(builder, { get(object, name) {
         const member = Reflect.get(object, name);
         if (name === "then") return (resolve: (v: unknown) => unknown, reject: (e: unknown) => unknown) => Promise.resolve(object).then(result => {
           const r = result as { error: unknown; data: unknown[] | null; count: number | null };
-          if (!r.error && !paged && !limited && (!Number.isSafeInteger(r.count) || r.count !== r.data?.length))
+          // The place view has one row at most per requested component key;
+          // timing reads are explicitly paged. Other unbounded reads still
+          // require an exact count, so no truncated source becomes publishable.
+          if (!r.error && !paged && !limited && boundedPlaceKeyCount === null
+            && (!Number.isSafeInteger(r.count) || r.count !== r.data?.length))
+            throw new TypeError("BASIS_SOURCE_INCOMPLETE");
+          if (!r.error && boundedPlaceKeyCount !== null && (r.data?.length ?? 0) > boundedPlaceKeyCount)
             throw new TypeError("BASIS_SOURCE_INCOMPLETE");
           return result;
         }).then(resolve, reject);
@@ -113,7 +121,11 @@ export function completeBasisSourceClient(client: SupabaseClient): SupabaseClien
         return (...args: unknown[]) => {
           if (name === "range") paged = true;
           if (name === "limit") limited = true;
-          return wrap(Reflect.apply(member, object, name === "select" ? [args[0], { count: "exact" }] : args));
+          if (name === "in" && table === "operation_place_canonical" && args[0] === "canonical_component_key"
+            && Array.isArray(args[1]) && args[1].length <= CANONICAL_ECONOMIC_IN_BATCH_SIZE)
+            boundedPlaceKeyCount = args[1].length;
+          return wrap(Reflect.apply(member, object, name === "select" && !boundedOwnerView
+            ? [args[0], { count: "exact" }] : args));
         };
       } });
       return wrap(target.from(table));
