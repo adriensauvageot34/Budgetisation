@@ -1,0 +1,5 @@
+{"status":"PASS","methodVersion":"global_food_rhythm@v1","checks":146,"annual":{"courses":"5275.88","restaurants":"1303.53","deliveries":"159.17","total":"6738.58"},"groceryKnownCostCount":87,"groceryEligibleMonthCount":9,"deliveryPaymentCount":8,"highlightPolicy":"global_food_composition_highlight@v1","reconciliation":"PASS"}
+(node:25660) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///C:/Users/AdrienSauvageot/Documents/Codex/p14-c4-candidate/src/analytics/global-v2/food-rhythm.ts is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to C:\Users\AdrienSauvageot\Documents\Codex\p14-c4-candidate\package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)

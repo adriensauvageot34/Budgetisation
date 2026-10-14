@@ -1,6 +1,6 @@
 {
   "environment": "PostgreSQL 17 synthetic, SQL roles not real JWT",
-  "database": "snap2_snap3_1791990834582",
+  "database": "snap2_snap3_1791991559908",
   "results": [
     {
       "name": "MIGRATION-EXACT-PG17",
@@ -15,7 +15,7 @@
       "status": "PASS"
     },
     {
-      "name": "CAS-CONCURRENT-PUBLISH-ONE-WINNER",
+      "name": "CAS-CONCURRENT-PUBLISH-TWO-BACKENDS-ONE-WINNER",
       "status": "PASS"
     },
     {

@@ -1,0 +1,28 @@
+LIFE-001 root preview scheduled briefly, not executed immediately PASS
+LIFE-002 quick exit at 100: zero action calls PASS
+LIFE-002 quick exit at 500: zero action calls PASS
+LIFE-003 stays: unchanged action result retained PASS
+LIFE-004 non-root interaction flushes deferred preview PASS
+LIFE-005 navigation before launch then return restarts once PASS
+LIFE-006 already started action: discard result after navigation PASS
+LIFE-007 already started error after navigation is silent PASS
+LIFE-008 double navigation cancels pending work PASS
+LIFE-009 unmount before launch PASS
+LIFE-010 unmount after start: no state writes PASS
+LIFE-011 effect cleanup/setup replay schedules one action PASS
+LIFE-012 close and reopen reschedules once PASS
+LIFE-013 legacy V2 without Composer remains immediate PASS
+LIFE-014 latest request wins over slower previous reply PASS
+LIFE-015 current error and recovery PASS
+LIFE-016 authority changes before launch use new month/publication PASS
+LIFE-017 old publication reply cannot populate same-digest model PASS
+LIFE-018 month keyed unmount/remount ignores old result PASS
+LIFE-019 auth/authority refresh recomputes, stale facts refresh router PASS
+LIFE-020 explicit draft edits retain existing 180ms debounce and payload PASS
+LIFE-021 navigation callback and focus redirect both cancel PASS
+LIFE-022 popstate return clears departure guard PASS
+LIFE-023 authority refresh during departure never revives preview PASS
+LIFE-024 obsolete slow request cannot keep latest preview loading PASS
+LIFE-025 timer boundary: navigation runs first PASS
+LIFE-026 timer boundary: action runs first, response discarded PASS
+CONTROL_CENTER_PREVIEW_LIFECYCLE 27/27 PASS

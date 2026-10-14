@@ -1,0 +1,22 @@
+{
+  "result": "PASS",
+  "passed": [
+    "BASE-BLD-001",
+    "BASE-BLD-002",
+    "BASE-BLD-003",
+    "BASE-BLD-004",
+    "BASE-BLD-005",
+    "BASE-BLD-006",
+    "BASE-BLD-007",
+    "BASE-BLD-008",
+    "BASE-BLD-009",
+    "BASE-BLD-010",
+    "BASE-ADAPT-001",
+    "BASE-ADAPT-002",
+    "BASE-UNMAPPED-PRODUCT",
+    "BASE-BOUNDARY-001"
+  ],
+  "C1_READY_FOR_C2": "YES",
+  "remoteWrites": 0,
+  "baselinePersistence": false
+}
