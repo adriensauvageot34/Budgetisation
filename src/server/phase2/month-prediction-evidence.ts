@@ -52,18 +52,18 @@ export async function readMonthPredictionEvidence(client: SupabaseClient, househ
     return snapshotWork(label, async () => {
     const rows: T[] = [];
     for (let offset = 0; ; offset += 1000) {
-      const result = await read(offset); if (result.error) throw result.error;
+      const result = await snapshotWork(`${label}_Page${offset / 1000}`, () => read(offset)); if (result.error) throw result.error;
       rows.push(...(result.data ?? [])); if ((result.data?.length ?? 0) < 1000) return rows;
     }
     });
   }
   const [subcategories, needs, people, batches, wallets, datasets, balanceRows] = await snapshotWork("Evidence_Metadata", () => Promise.all([
-    client.from("subcategories").select("subcategory_id,nom_canonique"),
-    client.from("needs").select("need_id,name,personne_concernee"),
-    client.from("persons").select("person_id,display_name").eq("household_id", householdId),
-    client.from("import_batches").select("import_batch_id,source_instance_key,source_system,period_start,period_end,coverage_status,status").eq("household_id", householdId),
-    client.from("benefit_wallets").select("benefit_wallet_id,provider,owner_person_id,currency,status,source_instance_key,import_batch_id,coverage_start,coverage_end,opening_balance,opening_balance_status,closing_balance,closing_balance_status").eq("household_id", householdId),
-    client.from("mobility_datasets").select("period_start,period_end").eq("household_id", householdId),
+    snapshotWork("Evidence_Subcategories", () => client.from("subcategories").select("subcategory_id,nom_canonique")),
+    snapshotWork("Evidence_Needs", () => client.from("needs").select("need_id,name,personne_concernee")),
+    snapshotWork("Evidence_Persons", () => client.from("persons").select("person_id,display_name").eq("household_id", householdId)),
+    snapshotWork("Evidence_ImportCoverage", () => client.from("import_batches").select("import_batch_id,source_instance_key,source_system,period_start,period_end,coverage_status,status").eq("household_id", householdId)),
+    snapshotWork("Evidence_WalletDefinitions", () => client.from("benefit_wallets").select("benefit_wallet_id,provider,owner_person_id,currency,status,source_instance_key,import_batch_id,coverage_start,coverage_end,opening_balance,opening_balance_status,closing_balance,closing_balance_status").eq("household_id", householdId)),
+    snapshotWork("Evidence_MobilityCoverage", () => client.from("mobility_datasets").select("period_start,period_end").eq("household_id", householdId)),
     page("Evidence_LiveBalances", offset => client.from("phase2_month_inputs").select("payload,target_month").eq("household_id", householdId)
       .order("target_month", { ascending: false }).range(offset, offset + 999)),
   ]));

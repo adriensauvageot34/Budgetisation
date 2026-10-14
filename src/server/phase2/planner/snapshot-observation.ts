@@ -60,8 +60,10 @@ export async function observeSnapshot<T>(run:()=>Promise<T>){
  const context:Observation={start:performance.now(),requests:[],pending:[],spans:[],history:[],blockedWrites:0,
   trace:process.env.COMPOSER_WORLD_TRACE_ENABLED==="1",traceId:randomUUID(),nextId:0};
  return contexts.run(context,async()=>{
-  const value=await run(),serverMs=performance.now()-context.start;await Promise.allSettled(context.pending);
+  const value=await run(),serverMs=performance.now()-context.start,drainAt=performance.now();
+  await Promise.allSettled(context.pending);
+  const metricsDrainMs=performance.now()-drainAt,responseReadyMs=performance.now()-context.start;
   return {value,metrics:{version:context.trace?"world-trace@1":"snap-real@1",...(context.trace?{traceId:context.traceId}:{}),variant:process.env.COMPOSER_P14_SNAP3_HISTORICAL_BASIS==="1"?"SNAP3_ON":process.env.COMPOSER_P14_SNAP1_ACTIVITY_HISTORY==="1"?"ON":"OFF",
-   region:process.env.VERCEL_REGION??"unknown",serverMs,spans:context.spans,history:context.history,requests:context.requests,blockedWrites:context.blockedWrites}};
+   region:process.env.VERCEL_REGION??"unknown",serverMs,metricsDrainMs,responseReadyMs,spans:context.spans,history:context.history,requests:context.requests,blockedWrites:context.blockedWrites}};
  });
 }
