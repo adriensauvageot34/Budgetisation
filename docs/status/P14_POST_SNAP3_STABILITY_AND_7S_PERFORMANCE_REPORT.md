@@ -71,7 +71,7 @@ L'accès à l'onglet Preview a été **refusé par la revue automatique pour lim
 
 ### D. Performance résiduelle
 
-La série authentifiée **avant** correction, n=10, reste 6,59 s P50 et 8,79 s P95 descriptif pour ouverture→FRESH. La branche Evidence/Forecast était 2,51 s P50, 3,63 s P95. Le code `readMonthPredictionEvidence` montre des barrières de métadonnées et d'historique en parallèle, avec pagination ; la trace existante ne départage pas les requêtes individuelles. Aucun gain de temps n'est attribué au correctif Draft. Édition→FRESH après correction, transport/RSC/commit React et chiffres appariés : `NOT_RUN` ; le délai après réponse demeure `UNATTRIBUTED`. Aucun changement de calcul Evidence, Forecast ou Finance V2 sans preuve plus fine.
+La série authentifiée **avant** correction, n=10, reste 6,59 s P50 et 8,79 s P95 descriptif pour ouverture→FRESH. La branche Evidence/Forecast était 2,51 s P50, 3,63 s P95. Le code `readMonthPredictionEvidence` montre quatre étapes séquentielles (scope, fuseau, dernière date, puis lectures), avec des barrières de métadonnées et d'historique en parallèle et une pagination. Une lecture bornée de `pg_stat_statements` sur des requêtes Canonical/timing a trouvé, parmi huit signatures cumulées, des moyennes SQL de 5,3 à 29,4 ms ; ces statistiques ne sont ni bornées à Composer ni à une ouverture et ne désignent donc pas le goulot. Les spans Evidence déjà prévus par le code devront être capturés avec la même requête authentifiée pour trancher. Aucun gain de temps n'est attribué au correctif Draft. Édition→FRESH après correction, transport/RSC/commit React et chiffres appariés : `NOT_RUN` ; le délai après réponse demeure `UNATTRIBUTED`. Aucun changement de calcul Evidence, Forecast ou Finance V2 sans preuve plus fine.
 
 ### E. Maintenance SNAP-3
 
@@ -88,6 +88,7 @@ La série authentifiée **avant** correction, n=10, reste 6,59 s P50 et 8,79 s P
 | Golden ciblé, Finance V2, Apply | Code inchangé ; pas de nouvelle certification authentifiée |
 | SNAP-3 | État lu sans écriture ; future invalidation naturelle `NOT_RUN` |
 | Performance après correction | `NOT_RUN` |
+| R3-008 | Incident préexistant non rejoué dans ce lot ; statut inchangé |
 
 **Fiabilité Draft : `READY_FOR_AUTHENTICATED_CROSS_DEPLOYMENT_TEST`, pas `PRODUCTION_PASS`. Performance : `MEASURED_PRECHANGE_ONLY`. Verdict global : `POST_SNAP3_PARTIAL_BLOCKED` tant que l'ancien onglet authentifié entre A et B n'est pas vérifié.**
 
