@@ -1,6 +1,6 @@
-# P14-SNAP-3 — progression de la première tranche Canonical
+# P14-SNAP-3 — socle Canonical/M7/Global, mesures réelles et gate de livraison
 
-Date : 14 octobre 2026. **SNAP3_CANONICAL_REAL_GAIN_FIRST_PROOF**. La mission n'est pas clôturée.
+Date : 14 octobre 2026. **SNAP3_REAL_GAIN_PARTIAL_BLOCKED_CANONICAL_REFRESH**. La première tranche Canonical avait démontré un gain réel avant M7. Après la migration M7, l'ancien artifact Canonical est correctement invalidé, mais sa republication a rencontré un timeout PostgreSQL. M7 est publié et relu avec une session authentifiée ; la consommation combinée Canonical + M7 n'est donc pas certifiée. SNAP-3 reste désactivé en Production.
 
 ## Point de départ
 
@@ -11,13 +11,13 @@ Date : 14 octobre 2026. **SNAP3_CANONICAL_REAL_GAIN_FIRST_PROOF**. La mission n'
 
 ## A. Travail développé
 
-`historical-basis.ts` prépare avec **le vrai `CanonicalRepository.loadPurchaseAwareCanonical(PURCHASE_AWARE_PILOT)`** puis conserve exactement ses faits `fct_purchase_aware_economic_component` consommés par Baseline. La préparation inclut toujours la découverte bancaire/date réelle/forced-month, coûts, timing, rapprochements et classifications du propriétaire. Aucun filtrage économique simplifié n'est ajouté.
+`historical-basis.ts` prépare avec **le vrai `CanonicalRepository.loadPurchaseAwareCanonical(PURCHASE_AWARE_PILOT)`** puis conserve exactement ses faits `fct_purchase_aware_economic_component` consommés par Baseline. La préparation inclut toujours la découverte bancaire/date réelle/forced-month, coûts, timing, rapprochements et classifications du propriétaire. Aucun filtrage économique simplifié n'est ajouté. Cette section décrit la première tranche ; l'extension M7/Global est documentée en F.
 
 Les sorties préparées sont compressées sans perte (`deflate-raw-json@1`), avec digest du payload et de l'enveloppe, limites de 8 Mio décodés et 2 Mio pour l'enveloppe SQL. Ce sont des plafonds de protection, pas des mesures de volumétrie réelle. Le READ n'effectue aucune préparation ni publication ; OFF ne construit aucun store et n'exécute aucune RPC d'admission. MISS confirmé revient au lecteur direct ; erreur de transport, permission ou corruption reste une erreur explicite.
 
 Le scope exact conserve auteur/foyer/personnes/timezone/contrat/plage/méthode. La borne historique remplace le jour courant dans l'identité : une plage close ne change pas simplement parce que le jour avance. Les corrections rétroactives doivent avancer la preuve de dépendances.
 
-Apply et CHECK_APPLY conservent les chemins autoritaires existants. Draft, Plan, MonthInputs, PlannedExpenses, Wallet, épargne, évidence courante et devis restent vivants. **M7, Global compact et préparation d'évidence historique : non implémentés**, conformément au gate du premier test réel.
+Apply et CHECK_APPLY conservent les chemins autoritaires existants. Draft, Plan, MonthInputs, PlannedExpenses, Wallet, épargne, évidence courante et devis restent vivants. La préparation d'évidence historique n'a pas été ajoutée ; M7 et Global compact figurent en F.
 
 ## B. Migration Canonical appliquée
 
@@ -99,7 +99,7 @@ Gains FRESH appariés : **15,61 ; 3,23 ; 7,35 ; 8,14 ; 2,50 s**, médiane 7,35 s
 
 ## E. Livraison et rollback
 
-Production/main restent `f765f6d`, inchangés. Aucun push, PR ou merge SNAP-3 ; aucune activation Production. Aucune écriture financière, Apply, publication Global/Forecast forcée ou compte fictif.
+Production/main restent `f765f6d`, inchangés. Aucun push, PR ou merge SNAP-3 ; aucune activation Production. Aucune écriture financière, Apply, publication Global/Forecast forcée ou compte fictif. Ce maintien est une décision de gate : après M7, l'artifact Canonical est obsolète et la seule tentative de republication a échoué sur `57014`.
 
 Rollback applicatif prévu : `COMPOSER_P14_SNAP3_HISTORICAL_BASIS=0`, lecteur direct et aucun coût d'admission. En cas d'incident des writers, désactiver non destructivement la consommation et le state, puis examiner le mécanisme de version avant toute suppression de trigger ; ne jamais réactiver un ancien artifact sans nouvelle preuve. Aucune suppression d'artifact, Draft ou Plan.
 
@@ -111,6 +111,35 @@ La variante SQL M7 approuvée, SHA-256 `E81B79F8CB4948A3335C90404D728428DD320C6A
 
 Contrôles locaux après extension : TypeScript PASS ; PostgreSQL 17 M7 8/8 PASS ; Global/FOOD 50 contrôles PASS dont les rejets de publication absente, méthode invalide et génération discordante ; Baseline 14/14 PASS après adaptation du mock au lecteur compact. Le build Next local est **NOT_CERTIFIED** : arrêté après blocage prolongé à l'optimisation Turbopack, sans erreur produit démontrée. Les deux Previews Vercel du même code sont **READY**, vérification de build distante distincte.
 
-Previews instrumentées et protégées, sans promotion : SNAP-3 ON `dpl_6GkiiBE63opkvZPpdZr23NDuZJMC`, OFF `dpl_GZazrLT3kNpPRQDxKPtYcwedU47h`. Les deux premières Previews du même code, dépourvues de télémétrie garantie, sont exclues des chiffres. Publication M7 et comparaison authentifiée ON/OFF : **NOT_RUN à ce stade**. Les résultats Canonical du tableau ci-dessus concernent le commit antérieur `920549d`, et ne sont pas attribués à M7/Global.
+Previews instrumentées et protégées, sans promotion : SNAP-3 ON `dpl_6GkiiBE63opkvZPpdZr23NDuZJMC`, OFF `dpl_GZazrLT3kNpPRQDxKPtYcwedU47h`. Les deux premières Previews du même code, dépourvues de télémétrie garantie, sont exclues des chiffres. Les résultats Canonical du tableau ci-dessus concernent le commit antérieur `920549d`, et ne sont pas attribués à M7/Global.
 
-SNAP-3 reste en cours. Production et `main` sont inchangés ; aucune activation, push ou PR de cette extension n'a été faite. SNAP-4 n'est pas commencé.
+### Publication authentifiée et échec Canonical
+
+- M7 a été préparé une fois dans la Preview ON, publié puis relu avec un vrai JWT Budgetisation. La vérification ultérieure indique « historique disponible et relu » ; les trois READ ON ci-dessous sont des **HIT M7**. Ce n'est pas une preuve d'invalidation par mutation réelle ni un test de scope altéré pour M7.
+- L'époque de schéma M7 rend l'artifact Canonical précédent inadmissible, comme prévu. Une tentative de republication Canonical via la Preview a rendu HTTP 503 et aucune publication n'a été confirmée. Les logs de cette tentative contiennent `CanonicalReadError` sur `places` et `timing`, PostgreSQL `57014` (`statement_timeout`). La requête propriétaire exacte n'est pas isolée davantage. Aucune nouvelle préparation Canonical lourde n'a été lancée après ce constat.
+- Les mesures finales suivantes comparent donc **M7 HIT ON contre M7 direct OFF, avec Canonical direct dans les deux variantes**. Elles ne mesurent pas le socle complet à deux artifacts.
+
+### A/B authentifié M7, trois paires bornées
+
+Même code produit `d01a06e`, même compte, octobre 2026, région `iad1`, fenêtre **1440×900**, mois et digest Finance V2 identiques. Les trois paires alternent ON puis OFF ; tous les Boards ont atteint `FRESH`, aucune écriture n'a été interceptée et aucune des six lectures n'a signalé de timeout. Les essais initiaux avec des fenêtres différentes ont été exclus. [Paires et protocole sans données personnelles](evidence/p14-snap3/real-m7-controlled-proof.json).
+
+| Mesure, n=3 par variante | OFF P50 / P95 descriptif | ON P50 / P95 descriptif |
+|---|---:|---:|
+| Board et Preview `FRESH` navigateur | 27,70 / 31,42 s | 19,45 / 19,75 s |
+| World serveur | 14,53 / 28,77 s | 14,36 / 16,65 s |
+| Canonical direct, encore sur la barrière | 14,30 / 28,48 s | 13,68 / 15,83 s |
+| M7 direct / admission | 13,43 / 23,56 s | 1,66 / 1,84 s |
+| GET/RPC métier par ouverture | 274 | 200 |
+| Corps HTTP décodés observés par ouverture | 9,89 Mo | 6,58 Mo |
+
+Gains `FRESH` appariés OFF − ON : **8,25 s ; −0,21 s ; 11,67 s**, médiane 8,25 s. **74 GET/RPC** sont évités par ouverture dans ce protocole. Le gain de M7 est directement visible sur sa branche ; le gain utilisateur global est **instable et non causalement attribuable** avec trois paires : Canonical direct varie fortement, jusqu'à 28,48 s côté OFF, et reste le chemin critique côté ON. Le P95 à n=3 est une statistique descriptive, pas une certification de fiabilité ni une preuve que les cibles 5 s/2 s sont atteintes. Le champ « corps HTTP décodés » ne représente pas le trafic réseau facturé.
+
+Global/FOOD compact réutilise la publication de même génération que Forecast ; dans les READ ON observés, sa branche de publications est de 0,55 à 1,67 s, sans publication Global supplémentaire. Son gain isolé, l'ajout Soirée → FRESH, SUGGESTIONS et la dernière décision → FRESH restent **NOT_RUN** dans le protocole final. Finance V2 a pris 0,29 à 0,32 s sur les READ ON, sans divergence de digest. Le délai hors serveur est variable et ne peut pas être attribué à un composant unique à partir de ces trois paires.
+
+### Verdict et décision de livraison
+
+`SNAP3_REAL_GAIN_PARTIAL_BLOCKED_CANONICAL_REFRESH` : M7 montre une réduction réelle de travail avec parité observée, et la première tranche Canonical avait démontré un gain FRESH. Le socle complet ne peut pas être activé tant que Canonical n'est pas republié et mesuré après M7. Le build Next local de l'extension reste `NOT_CERTIFIED` ; les deux builds Preview sont `READY`. Le test d'invalidation par écriture financière réelle et les tests de sécurité M7 avec scope altéré restent `NOT_RUN`.
+
+**Aucun push, PR, merge, activation ni déploiement Production SNAP-3** à ce gate. Production et `main` servent toujours `f765f6d`. Les deux migrations additives sont déjà déployées et tracées localement : Canonical `20261014165936`, M7 `20261014174653`. Leur couverture de writers a été vérifiée structurellement ; le coût opérationnel réel de leurs triggers n'a pas été quantifié. SNAP-3 OFF évite l'admission en Production, mais n'annule pas le coût potentiel des triggers SQL déjà installés.
+
+Étape minimale : rendre la préparation Canonical propriétaire fiable sous la limite SQL, sans augmenter `statement_timeout` ni perdre des faits, puis republier **une seule fois** et mesurer de nouveau Canonical + M7 ensemble. Si cela demande une autre migration ou une modification de doctrine Canonical, la soumettre à revue avant exécution. Conserver les artifacts et la possibilité de désactiver la consommation sans suppression. SNAP-4 n'est pas commencé.

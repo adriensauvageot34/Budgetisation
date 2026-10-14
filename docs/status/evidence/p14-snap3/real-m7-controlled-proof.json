@@ -1,0 +1,37 @@
+{
+  "date": "2026-10-14",
+  "scope": "One authenticated Budgetisation account, October 2026, protected iad1 Previews, 1440x900, three alternating warm reload pairs",
+  "productCode": "d01a06e6e63640873c6c51dbf09a0dfaaba472a3",
+  "onDeployment": "dpl_6GkiiBE63opkvZPpdZr23NDuZJMC",
+  "offDeployment": "dpl_GZazrLT3kNpPRQDxKPtYcwedU47h",
+  "sameFinancialPreviewDigest": true,
+  "sameMonthAndViewport": true,
+  "allFresh": true,
+  "blockedWrites": 0,
+  "canonical": {
+    "state": "STALE_AFTER_M7_SCHEMA_EPOCH",
+    "republishAttempts": 1,
+    "republishResult": "HTTP_503_NO_COMMIT_CONFIRMED",
+    "runtimeErrors": ["CanonicalReadError places PostgreSQL 57014", "CanonicalReadError timing PostgreSQL 57014"],
+    "readPath": "DIRECT_ON_BOTH_VARIANTS"
+  },
+  "m7": {
+    "preparation": "PUBLISHED_AND_RELECT_WITH_REAL_JWT",
+    "onRead": "HIT_ALL_THREE_PAIRS",
+    "offRead": "DIRECT_ALL_THREE_PAIRS"
+  },
+  "pairs": [
+    { "onFreshMs": 19452, "offFreshMs": 27698, "onServerMs": 15514, "offServerMs": 16310, "onWorldMs": 14364, "offWorldMs": 14534, "onCanonicalMs": 13682, "offCanonicalMs": 14304, "onM7Ms": 1610, "offM7Ms": 13431, "onRequests": 200, "offRequests": 274, "onDecodedHttpBytes": 6584333, "offDecodedHttpBytes": 9892535, "onTimeouts": 0, "offTimeouts": 0 },
+    { "onFreshMs": 16244, "offFreshMs": 16039, "onServerMs": 14045, "offServerMs": 14836, "onWorldMs": 13183, "offWorldMs": 13976, "onCanonicalMs": 12453, "offCanonicalMs": 13753, "onM7Ms": 1838, "offM7Ms": 12762, "onRequests": 200, "offRequests": 274, "onDecodedHttpBytes": 6584333, "offDecodedHttpBytes": 9892535, "onTimeouts": 0, "offTimeouts": 0 },
+    { "onFreshMs": 19746, "offFreshMs": 31416, "onServerMs": 17616, "offServerMs": 29859, "onWorldMs": 16647, "offWorldMs": 28765, "onCanonicalMs": 15828, "offCanonicalMs": 28480, "onM7Ms": 1660, "offM7Ms": 23564, "onRequests": 200, "offRequests": 274, "onDecodedHttpBytes": 6584333, "offDecodedHttpBytes": 9892535, "onTimeouts": 0, "offTimeouts": 0 }
+  ],
+  "summaryNearestRankDescriptive": {
+    "freshMs": { "onP50": 19452, "onP95": 19746, "offP50": 27698, "offP95": 31416 },
+    "worldMs": { "onP50": 14364, "onP95": 16647, "offP50": 14534, "offP95": 28765 },
+    "canonicalMs": { "onP50": 13682, "onP95": 15828, "offP50": 14304, "offP95": 28480 },
+    "m7Ms": { "onP50": 1660, "onP95": 1838, "offP50": 13431, "offP95": 23564 },
+    "freshPairedGainMs": [8246, -205, 11670],
+    "requestsAvoidedPerPair": 74
+  },
+  "limits": "n=3; P95 is descriptive. Canonical direct execution varied strongly and dominated all reads; the paired FRESH difference cannot be attributed causally to M7. Browser metric includes navigation/runtime work and excludes the duration of the Codex tool. Canonical republish failed before these pairs. No real financial source was mutated."
+}
