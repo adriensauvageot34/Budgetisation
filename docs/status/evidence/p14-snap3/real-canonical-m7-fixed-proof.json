@@ -1,0 +1,39 @@
+{
+  "date": "2026-10-14",
+  "codeCommit": "ceb23e33850398fc9a8ad5f8ee718662cd1be495",
+  "onDeployment": "dpl_61R71xz3bTjUzA8MAdjtyCWv6qXW",
+  "offDeployment": "dpl_6DiAQQVFnWXT9rGg2ktnkQnirFM7",
+  "protocol": "Five alternating authenticated warm reload pairs, same account/month/code/iAD1, explicit 1728x900 viewport in each tab. Earlier unmatched-viewport samples excluded.",
+  "viewport": { "width": 1728, "height": 900 },
+  "allFresh": true,
+  "sameFinancialDigest": true,
+  "sameDraftDigest": true,
+  "onCanonicalAndM7HitEveryRead": true,
+  "timeouts": 0,
+  "blockedWrites": 0,
+  "requestsPerRead": { "on": 42, "off": 274 },
+  "decodedResponseBytesPerRead": { "on": 2351081, "off": 9892539 },
+  "pairs": [
+    { "onFreshMs": 5862, "offFreshMs": 17829, "onWorldMs": 2456, "offWorldMs": 13441, "onCanonicalMs": 855, "offCanonicalMs": 13102, "onM7Ms": 1723, "offM7Ms": 12065 },
+    { "onFreshMs": 7274, "offFreshMs": 21811, "onWorldMs": 2748, "offWorldMs": 12923, "onCanonicalMs": 813, "offCanonicalMs": 12729, "onM7Ms": 2065, "offM7Ms": 11433 },
+    { "onFreshMs": 6995, "offFreshMs": 18100, "onWorldMs": 2466, "offWorldMs": 12428, "onCanonicalMs": 644, "offCanonicalMs": 12212, "onM7Ms": 1823, "offM7Ms": 11679 },
+    { "onFreshMs": 7751, "offFreshMs": 17960, "onWorldMs": 2563, "offWorldMs": 14132, "onCanonicalMs": 684, "offCanonicalMs": 13900, "onM7Ms": 1541, "offM7Ms": 10859 },
+    { "onFreshMs": 5860, "offFreshMs": 17531, "onWorldMs": 2227, "offWorldMs": 11837, "onCanonicalMs": 519, "offCanonicalMs": 11592, "onM7Ms": 1534, "offM7Ms": 10707 }
+  ],
+  "nearestRankDescriptive": {
+    "freshMs": { "onP50": 6995, "onP95": 7751, "offP50": 17960, "offP95": 21811 },
+    "worldMs": { "onP50": 2466, "onP95": 2748, "offP50": 12923, "offP95": 14132 },
+    "canonicalMs": { "onP50": 684, "onP95": 855, "offP50": 12729, "offP95": 13900 },
+    "m7Ms": { "onP50": 1723, "onP95": 2065, "offP50": 11433, "offP95": 12065 },
+    "freshPairedGainMs": [11966, 14537, 11105, 10208, 11672],
+    "freshPairedMedianGainMs": 11672
+  },
+  "editToFreshSinglePairMs": { "on": 5285, "off": 19126 },
+  "editDigestsEqual": true,
+  "lastPairOtherReadersMs": {
+    "on": { "globalFood": 625, "predictionEvidence": 1996, "financeV2": 278 },
+    "off": { "globalFood": 532, "predictionEvidence": 3177, "financeV2": 306 }
+  },
+  "artifactStateReadOnly": { "canonicalGeneration": 2, "m7Generation": 1, "schemaEpoch": 2, "writerCoverage": true, "alwaysTriggers": 30 },
+  "limits": "P95 n=5 is descriptive. SQL runtime cause of the former timeout is probable, not proved uniquely. Trigger overhead on real financial writes and real source-mutation invalidation were not measured because production financial writes were forbidden. No <2s result. Browser response bytes are decoded fetch bodies, not billed network transfer."
+}

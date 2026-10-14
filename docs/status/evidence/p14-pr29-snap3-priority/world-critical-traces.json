@@ -1,0 +1,601 @@
+{
+  "status": "MEASURED_REAL_TECHNICAL_AGGREGATES",
+  "origin": "Selected spans transcribed from actual CUA DOM instrumentation outputs, rounded to 0.001ms. No financial rows or identifiers exported.",
+  "region": "iad1",
+  "month": "2026-10",
+  "viewport": {
+    "width": 1920,
+    "height": 1080
+  },
+  "P3": "OFF",
+  "snapshot": "HIT",
+  "callsPerRead": 263,
+  "decodedJSONBytesPerRead": 11638973,
+  "errors": 0,
+  "timeouts": 0,
+  "financialParity": "Same opening digests as 512e771; same edited digests as corrected A/B 350.00",
+  "traces": [
+    {
+      "phase": "opening-original-instrumentation",
+      "traceId": "cf2fd9d4-91e1-4e70-a067-19aa8d70bf5f",
+      "serverMs": 18690.247307,
+      "worldMs": 17101.173204,
+      "freshMs": 22418.3,
+      "code": "5231c74",
+      "groupAttributionLimit": "Thenable query subspans did not inherit the fetch parent correctly; top async group wall/count totals are usable. Fixed in dd18315; no changed financial calls.",
+      "groups": [
+        {
+          "label": "World",
+          "startMs": 1250.939,
+          "endMs": 18352.109,
+          "wallMs": 17101.173,
+          "calls": 255,
+          "decodedBytes": 11632665,
+          "inclusive": true
+        },
+        {
+          "label": "Baseline_ReadBarrier",
+          "startMs": 1253.826,
+          "endMs": 18122.644,
+          "wallMs": 16868.819,
+          "calls": 229,
+          "decodedBytes": 9633124,
+          "inclusive": true
+        },
+        {
+          "label": "Canonical_PurchaseAware",
+          "startMs": 1254.963,
+          "endMs": 18122.635,
+          "wallMs": 16867.674,
+          "calls": 158,
+          "decodedBytes": 4278703,
+          "inclusive": true
+        },
+        {
+          "label": "Mobility_M7_Context",
+          "startMs": 1254.622,
+          "endMs": 14870.353,
+          "wallMs": 13615.732,
+          "calls": 53,
+          "decodedBytes": 2113066,
+          "inclusive": true
+        },
+        {
+          "label": "Publications_Global_Food",
+          "startMs": 1253.926,
+          "endMs": 12998.431,
+          "wallMs": 11744.506,
+          "calls": 12,
+          "decodedBytes": 1903007,
+          "inclusive": true
+        },
+        {
+          "label": "PredictionEvidence",
+          "startMs": 1252.115,
+          "endMs": 5711.535,
+          "wallMs": 4459.421,
+          "calls": 20,
+          "decodedBytes": 1436828,
+          "inclusive": true
+        },
+        {
+          "label": "Forecast",
+          "startMs": 1252.238,
+          "endMs": 5711.57,
+          "wallMs": 4459.333,
+          "calls": 4,
+          "decodedBytes": 78096,
+          "inclusive": true
+        },
+        {
+          "label": "Mobility_Legs",
+          "startMs": 1254.582,
+          "endMs": 3258.372,
+          "wallMs": 2003.791,
+          "calls": 1,
+          "decodedBytes": 1329614,
+          "inclusive": true
+        },
+        {
+          "label": "Persona_ProductObservations",
+          "startMs": 1254.428,
+          "endMs": 2235.101,
+          "wallMs": 980.674,
+          "calls": 2,
+          "decodedBytes": 6644,
+          "inclusive": true
+        },
+        {
+          "label": "Habits",
+          "startMs": 1254.288,
+          "endMs": 1617.301,
+          "wallMs": 363.013,
+          "calls": 1,
+          "decodedBytes": 329,
+          "inclusive": true
+        },
+        {
+          "label": "Live_MonthInputs",
+          "startMs": 1254.055,
+          "endMs": 1672.452,
+          "wallMs": 418.398,
+          "calls": 1,
+          "decodedBytes": 1759,
+          "inclusive": true
+        },
+        {
+          "label": "Live_PlannedExpenses",
+          "startMs": 1254.091,
+          "endMs": 1616.611,
+          "wallMs": 362.52,
+          "calls": 1,
+          "decodedBytes": 2,
+          "inclusive": true
+        },
+        {
+          "label": "Plan_Active",
+          "startMs": 1255.332,
+          "endMs": 1607.559,
+          "wallMs": 352.227,
+          "calls": 1,
+          "decodedBytes": 2,
+          "inclusive": true
+        },
+        {
+          "label": "M7_Localizations",
+          "startMs": 3984.506,
+          "endMs": 14037.282,
+          "wallMs": 10052.777,
+          "calls": 24,
+          "decodedBytes": 314140,
+          "inclusive": true
+        },
+        {
+          "label": "M7_Join_Context_Build",
+          "startMs": 14037.301,
+          "endMs": 14870.335,
+          "wallMs": 833.035,
+          "calls": 0,
+          "decodedBytes": 0,
+          "inclusive": true
+        },
+        {
+          "label": "Global_ReferenceMobility",
+          "startMs": 7580.063,
+          "endMs": 12998.022,
+          "wallMs": 5417.959,
+          "calls": null,
+          "decodedBytes": null,
+          "inclusive": true
+        },
+        {
+          "label": "Baseline_Renewal_Build",
+          "startMs": 18311.18,
+          "endMs": 18351.889,
+          "wallMs": 40.71,
+          "calls": 0,
+          "decodedBytes": 0,
+          "inclusive": true
+        },
+        {
+          "label": "Compiler_Finance_V2",
+          "startMs": 18353.4,
+          "endMs": 18683.599,
+          "wallMs": 330.2,
+          "calls": 0,
+          "decodedBytes": 0,
+          "inclusive": true
+        }
+      ],
+      "counterfactualZeroCost": {
+        "status": "ESTIMATED_NOT_EXECUTED_GAIN",
+        "canonicalOnlyExposedTailMs": 3252.2819999999992,
+        "canonicalAndM7ExposedTailMs": 5124.203999999998,
+        "canonicalM7AndGlobalExposedTailMs": 12411.099999999999,
+        "warning": "Holding other measured branch times fixed. New admission/live suffix costs, shared dependencies and load changes are not measured. Do not add inclusive spans."
+      }
+    },
+    {
+      "phase": "opening-fixed-1",
+      "traceId": "ea612445-9951-4321-ab8f-9df71d674f62",
+      "serverMs": 28944.238755,
+      "worldMs": 26921.569813,
+      "freshMs": 30713.8,
+      "code": "dd18315",
+      "groups": [
+        {
+          "label": "Authentication",
+          "startMs": 0.321,
+          "endMs": 706.384,
+          "wallMs": 706.064,
+          "calls": 1,
+          "decodedBytes": 986,
+          "inclusive": true
+        },
+        {
+          "label": "Bootstrap_CanonicalContext",
+          "startMs": 706.392,
+          "endMs": 1677.33,
+          "wallMs": 970.939,
+          "calls": 5,
+          "decodedBytes": 5318,
+          "inclusive": true
+        },
+        {
+          "label": "World",
+          "startMs": 1680.491,
+          "endMs": 28602.06,
+          "wallMs": 26921.57,
+          "calls": 255,
+          "decodedBytes": 11632665,
+          "inclusive": true
+        },
+        {
+          "label": "Baseline_ReadBarrier",
+          "startMs": 1683.518,
+          "endMs": 28367.394,
+          "wallMs": 26683.877,
+          "calls": 229,
+          "decodedBytes": 9633124,
+          "inclusive": true
+        },
+        {
+          "label": "Canonical_PurchaseAware",
+          "startMs": 1684.814,
+          "endMs": 28367.383,
+          "wallMs": 26682.571,
+          "calls": 158,
+          "decodedBytes": 4278703,
+          "inclusive": true
+        },
+        {
+          "label": "Mobility_M7_Context",
+          "startMs": 1684.386,
+          "endMs": 24471.034,
+          "wallMs": 22786.649,
+          "calls": 53,
+          "decodedBytes": 2113066,
+          "inclusive": true
+        },
+        {
+          "label": "Publications_Global_Food",
+          "startMs": 1683.643,
+          "endMs": 16829.119,
+          "wallMs": 15145.477,
+          "calls": 12,
+          "decodedBytes": 1903007,
+          "inclusive": true
+        },
+        {
+          "label": "PredictionEvidence",
+          "startMs": 1681.697,
+          "endMs": 7270.811,
+          "wallMs": 5589.114,
+          "calls": 20,
+          "decodedBytes": 1436828,
+          "inclusive": true
+        },
+        {
+          "label": "Forecast",
+          "startMs": 1681.839,
+          "endMs": 7270.845,
+          "wallMs": 5589.006,
+          "calls": 4,
+          "decodedBytes": 78096,
+          "inclusive": true
+        },
+        {
+          "label": "Mobility_Legs",
+          "startMs": 1684.365,
+          "endMs": 4267.138,
+          "wallMs": 2582.775,
+          "calls": 1,
+          "decodedBytes": 1329614,
+          "inclusive": true
+        },
+        {
+          "label": "Persona_ProductObservations",
+          "startMs": 1684.217,
+          "endMs": 4020.844,
+          "wallMs": 2336.628,
+          "calls": 2,
+          "decodedBytes": 6644,
+          "inclusive": true
+        },
+        {
+          "label": "Habits",
+          "startMs": 1684.034,
+          "endMs": 2480.22,
+          "wallMs": 796.187,
+          "calls": 1,
+          "decodedBytes": 329,
+          "inclusive": true
+        },
+        {
+          "label": "Live_MonthInputs",
+          "startMs": 1683.763,
+          "endMs": 2479.531,
+          "wallMs": 795.769,
+          "calls": 1,
+          "decodedBytes": 1759,
+          "inclusive": true
+        },
+        {
+          "label": "Live_PlannedExpenses",
+          "startMs": 1683.808,
+          "endMs": 2453.957,
+          "wallMs": 770.149,
+          "calls": 1,
+          "decodedBytes": 2,
+          "inclusive": true
+        },
+        {
+          "label": "Plan_Active",
+          "startMs": 1685.297,
+          "endMs": 2067.162,
+          "wallMs": 381.866,
+          "calls": 1,
+          "decodedBytes": 2,
+          "inclusive": true
+        },
+        {
+          "label": "M7_Localizations",
+          "startMs": 5653.371,
+          "endMs": 23592.042,
+          "wallMs": 17938.672,
+          "calls": 24,
+          "decodedBytes": 314140,
+          "inclusive": true
+        },
+        {
+          "label": "M7_Join_Context_Build",
+          "startMs": 23592.062,
+          "endMs": 24471.016,
+          "wallMs": 878.956,
+          "calls": 0,
+          "decodedBytes": 0,
+          "inclusive": true
+        },
+        {
+          "label": "Global_ReferenceMobility",
+          "startMs": 7958.219,
+          "endMs": 16828.787,
+          "wallMs": 8870.568,
+          "calls": 1,
+          "decodedBytes": 116455,
+          "inclusive": true
+        },
+        {
+          "label": "Baseline_Renewal_Build",
+          "startMs": 28560.845,
+          "endMs": 28601.844,
+          "wallMs": 41,
+          "calls": 0,
+          "decodedBytes": 0,
+          "inclusive": true
+        },
+        {
+          "label": "Compiler_Finance_V2",
+          "startMs": 28602.448,
+          "endMs": 28933.696,
+          "wallMs": 331.25,
+          "calls": 0,
+          "decodedBytes": 0,
+          "inclusive": true
+        },
+        {
+          "label": "UIModel",
+          "startMs": 28940.796,
+          "endMs": 28944.224,
+          "wallMs": 3.43,
+          "calls": 1,
+          "decodedBytes": 2,
+          "inclusive": true
+        }
+      ],
+      "counterfactualZeroCost": {
+        "status": "ESTIMATED_NOT_EXECUTED_GAIN",
+        "canonicalOnlyExposedTailMs": 3896.349000000002,
+        "canonicalAndM7ExposedTailMs": 11538.264000000003,
+        "canonicalM7AndGlobalExposedTailMs": 21096.572,
+        "warning": "Holding other measured branch times fixed. New admission/live suffix costs, shared dependencies and load changes are not measured. Do not add inclusive spans."
+      }
+    },
+    {
+      "phase": "edit-fixed-350",
+      "traceId": "304dea97-4397-4864-9ca1-fef5f1ed9c9c",
+      "serverMs": 23870.509678,
+      "worldMs": 21962.422507,
+      "visualFreshMs": 45069.2,
+      "responseMs": 44849.2,
+      "code": "dd18315",
+      "groups": [
+        {
+          "label": "World",
+          "startMs": 918.941,
+          "endMs": 22881.363,
+          "wallMs": 21962.423,
+          "calls": 255,
+          "decodedBytes": 11632665,
+          "inclusive": true
+        },
+        {
+          "label": "Baseline_ReadBarrier",
+          "startMs": 920.053,
+          "endMs": 22598.568,
+          "wallMs": 21678.515,
+          "calls": 229,
+          "decodedBytes": 9633124,
+          "inclusive": true
+        },
+        {
+          "label": "Canonical_PurchaseAware",
+          "startMs": 920.757,
+          "endMs": 22598.557,
+          "wallMs": 21677.802,
+          "calls": 158,
+          "decodedBytes": 4278703,
+          "inclusive": true
+        },
+        {
+          "label": "Mobility_M7_Context",
+          "startMs": 920.512,
+          "endMs": 10687.094,
+          "wallMs": 9766.583,
+          "calls": 53,
+          "decodedBytes": 2113066,
+          "inclusive": true
+        },
+        {
+          "label": "Publications_Global_Food",
+          "startMs": 920.058,
+          "endMs": 6454.934,
+          "wallMs": 5534.876,
+          "calls": 12,
+          "decodedBytes": 1903007,
+          "inclusive": true
+        },
+        {
+          "label": "PredictionEvidence",
+          "startMs": 919.37,
+          "endMs": 5759.16,
+          "wallMs": 4839.792,
+          "calls": 20,
+          "decodedBytes": 1436828,
+          "inclusive": true
+        },
+        {
+          "label": "Forecast",
+          "startMs": 919.455,
+          "endMs": 5759.192,
+          "wallMs": 4839.738,
+          "calls": 4,
+          "decodedBytes": 78096,
+          "inclusive": true
+        },
+        {
+          "label": "Mobility_Legs",
+          "startMs": 920.505,
+          "endMs": 3299.934,
+          "wallMs": 2379.43,
+          "calls": 1,
+          "decodedBytes": 1329614,
+          "inclusive": true
+        },
+        {
+          "label": "Persona_ProductObservations",
+          "startMs": 920.43,
+          "endMs": 3211.22,
+          "wallMs": 2290.791,
+          "calls": 2,
+          "decodedBytes": 6644,
+          "inclusive": true
+        },
+        {
+          "label": "Habits",
+          "startMs": 920.321,
+          "endMs": 1391.556,
+          "wallMs": 471.235,
+          "calls": 1,
+          "decodedBytes": 329,
+          "inclusive": true
+        },
+        {
+          "label": "Live_MonthInputs",
+          "startMs": 920.113,
+          "endMs": 1409.356,
+          "wallMs": 489.244,
+          "calls": 1,
+          "decodedBytes": 1759,
+          "inclusive": true
+        },
+        {
+          "label": "Live_PlannedExpenses",
+          "startMs": 920.134,
+          "endMs": 1291.462,
+          "wallMs": 371.329,
+          "calls": 1,
+          "decodedBytes": 2,
+          "inclusive": true
+        },
+        {
+          "label": "Plan_Active",
+          "startMs": 920.83,
+          "endMs": 1168.064,
+          "wallMs": 247.235,
+          "calls": 1,
+          "decodedBytes": 2,
+          "inclusive": true
+        },
+        {
+          "label": "M7_Localizations",
+          "startMs": 4687.655,
+          "endMs": 9853.868,
+          "wallMs": 5166.214,
+          "calls": 24,
+          "decodedBytes": 314140,
+          "inclusive": true
+        },
+        {
+          "label": "M7_Join_Context_Build",
+          "startMs": 9853.893,
+          "endMs": 10687.069,
+          "wallMs": 833.178,
+          "calls": 0,
+          "decodedBytes": 0,
+          "inclusive": true
+        },
+        {
+          "label": "Global_ReferenceMobility",
+          "startMs": 6213.618,
+          "endMs": 6454.567,
+          "wallMs": 240.95,
+          "calls": 1,
+          "decodedBytes": 116455,
+          "inclusive": true
+        },
+        {
+          "label": "Baseline_Renewal_Build",
+          "startMs": 22843.316,
+          "endMs": 22881.301,
+          "wallMs": 37.986,
+          "calls": 0,
+          "decodedBytes": 0,
+          "inclusive": true
+        },
+        {
+          "label": "Compiler_Finance_V2",
+          "startMs": 22881.65,
+          "endMs": 23699.664,
+          "wallMs": 818.016,
+          "calls": 0,
+          "decodedBytes": 0,
+          "inclusive": true
+        },
+        {
+          "label": "UIModel",
+          "startMs": 23702.758,
+          "endMs": 23870.495,
+          "wallMs": 167.739,
+          "calls": 1,
+          "decodedBytes": 2,
+          "inclusive": true
+        }
+      ],
+      "counterfactualZeroCost": {
+        "status": "ESTIMATED_NOT_EXECUTED_GAIN",
+        "canonicalOnlyExposedTailMs": 11911.463000000002,
+        "canonicalAndM7ExposedTailMs": 16143.623,
+        "canonicalM7AndGlobalExposedTailMs": 16839.397,
+        "warning": "Holding other measured branch times fixed. New admission/live suffix costs, shared dependencies and load changes are not measured. Do not add inclusive spans."
+      }
+    }
+  ],
+  "limits": [
+    "n=3 real READs, of which two have corrected thenable attribution; no robust P95 of exclusive group costs",
+    "HTTP timing does not isolate SQL CPU from network/PostgREST wait",
+    "Physical fetch ownership follows the first initiated shared Promise, not exclusive semantic ownership",
+    "Trace builds have instrumentation overhead; this is not an A/B acceleration benchmark",
+    "Synchronous M7 duration is elapsed SYNC_WALL, not OS-exclusive CPU"
+  ]
+}

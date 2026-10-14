@@ -8,9 +8,9 @@ import type { CanonicalRepository } from "@/server/canonical/repository";
 import { resolveGlobalM7MobilityContextAuthority } from "@/server/analytics/global-v2-mobility-context-authority";
 import { resolveGlobalPersonaProductObservations } from "@/server/analytics/global-v2-persona-signals";
 import { resolveGlobalM2NeedSubjects } from "@/server/analytics/global-v2-need-subject-authority";
-import { loadMonthForecastAuthorities } from "../live-month-forecast";
+import { loadMonthForecastAuthorities, loadPlanningBaselineGlobalContext } from "../live-month-forecast";
 import { assembleMonthForecast } from "../month-forecast";
-import type { MonthForecast } from "../month-forecast";
+import type { ForecastAuthorities, MonthForecast } from "../month-forecast";
 import { readMonthPredictionEvidence } from "../month-prediction-evidence";
 import type { MonthPredictionEvidence } from "../remaining-month-forecast";
 import { readMonthInputs } from "../month-inputs";
@@ -21,7 +21,9 @@ import { buildPlanningBaseline } from "./baseline";
 import { readActivityHistory, type ActivityHistoryStore } from "./activity-history-artifact";
 import { RENEWAL_NEED_KEYS } from "./renewal-engine";
 import { activityHistoryPeriod } from "./activity-history-period";
-import { snapshotHistoryTrace } from "./snapshot-observation";
+import { snapshotHistoryTrace, snapshotWork, snapshotSync } from "./snapshot-observation";
+import { readHistoricalBasis, type HistoricalBasisStore } from "./historical-basis";
+import { inspectHistoricalM7Basis } from "./historical-m7-basis";
 
 /** Explicit downstream compatibility payload; never accepted by the Baseline builder. */
 export const legacySeedDecisions = (inputs: MonthInputs) => parsePlannerJsonObject(inputs.decision ?? {});
@@ -53,34 +55,49 @@ export async function readPersonHabitAssertions(client: SupabaseClient, househol
  * No new credential, Plan read, materialization, migration, or financial evaluation occurs. */
 export async function readPlanningBaselineSources(repository: CanonicalRepository, targetMonth: string,
   knowledgeCutoff: string, options: Readonly<{ simpleOccurrences?: boolean; renewals?: boolean; forecast?: MonthForecast | Promise<MonthForecast>;
-    predictionEvidence?: Promise<MonthPredictionEvidence>; activityHistory?: ActivityHistoryStore }> = {}): Promise<PlanningBaselineSources> {
+    predictionEvidence?: Promise<MonthPredictionEvidence>; activityHistory?: ActivityHistoryStore; historicalBasis?: HistoricalBasisStore }> = {}): Promise<PlanningBaselineSources> {
   const month = plannerMonth(targetMonth), cutoff = Temporal.Instant.from(knowledgeCutoff);
   const { client, context } = repository, householdId = String(context.householdId);
   const { today, through, range } = activityHistoryPeriod(context, month, knowledgeCutoff);
+  const m7BasisPromise = options.historicalBasis && options.simpleOccurrences
+    ? inspectHistoricalM7Basis(repository, range, options.historicalBasis) : Promise.resolve(null);
   const simpleRead = async () => {
     if (!options.simpleOccurrences) return undefined;
+    const basis = await m7BasisPromise;
+    if (basis) return basis.simpleOccurrences;
     return readActivityHistory(repository, range, today.toString(), options.activityHistory, snapshotHistoryTrace);
   };
-  const simpleOccurrencesPromise = simpleRead();
+  const simpleOccurrencesPromise = snapshotWork("ActivityHistory", simpleRead);
   // C1 and M7 use the same owner projection for this exact authorized range.
   // M7 still reads its richer event/participation/location data independently.
   const activityOccurrences = options.simpleOccurrences
     ? { range, facts: simpleOccurrencesPromise.then(result => result!.occurrences) } : undefined;
-  const [authorities, storedInputs, evidence, plannedExpenses, habitAssertions, productObservations, mobilityLegs, mobilityContext, canonicalPurchases, simpleOccurrences] = await Promise.all([
-    loadMonthForecastAuthorities(client, householdId), readMonthInputs(client, householdId, month),
+  type GlobalContext = Readonly<{ kind: "compact"; authorities: Pick<ForecastAuthorities, "publication" | "background"> }>
+    | Readonly<{ kind: "full"; authorities: ForecastAuthorities }>;
+  const globalPromise = snapshotWork("Publications_Global_Food", async (): Promise<GlobalContext> => options.forecast
+    ? { kind: "compact", authorities: await loadPlanningBaselineGlobalContext(client, householdId) }
+    : { kind: "full", authorities: await loadMonthForecastAuthorities(client, householdId) });
+  const [global, storedInputs, evidence, plannedExpenses, habitAssertions, productObservations, mobilityLegs, mobilityContext, canonicalPurchases, simpleOccurrences] = await snapshotWork("Baseline_ReadBarrier", () => Promise.all([
+    globalPromise, snapshotWork("Live_MonthInputs", () => readMonthInputs(client, householdId, month)),
     options.predictionEvidence ?? readMonthPredictionEvidence(client, householdId, month, true, { asOfDate: today.toString(), timezone: context.timezone }),
-    readPlannedExpenses(client, householdId, month), readPersonHabitAssertions(client, householdId, context.personIds.map(String), cutoff.toString()),
-    resolveGlobalPersonaProductObservations({ repository, certifiedThrough: parseLocalDate(through.toString()) }),
-    repository.loadMobilityLegFacts(range), resolveGlobalM7MobilityContextAuthority({ repository, certifiedThrough: through.toString(),
-      ...(activityOccurrences ? { activityOccurrences } : {}) }),
-    repository.loadPurchaseAwareCanonical(range, "PURCHASE_AWARE_PILOT"),
+    snapshotWork("Live_PlannedExpenses", () => readPlannedExpenses(client, householdId, month)), snapshotWork("Habits", () => readPersonHabitAssertions(client, householdId, context.personIds.map(String), cutoff.toString())),
+    snapshotWork("Persona_ProductObservations", () => resolveGlobalPersonaProductObservations({ repository, certifiedThrough: parseLocalDate(through.toString()) })),
+    snapshotWork("Mobility_Legs", async () => (await m7BasisPromise)?.mobilityLegs ?? repository.loadMobilityLegFacts(range)),
+    snapshotWork("Mobility_M7_Context", async () => (await m7BasisPromise)?.mobilityContext ?? resolveGlobalM7MobilityContextAuthority({ repository, certifiedThrough: through.toString(),
+      ...(activityOccurrences ? { activityOccurrences } : {}) })),
+    readHistoricalBasis(repository, range, options.historicalBasis),
     simpleOccurrencesPromise,
-  ]);
+  ]));
   // Source reads depend on the authorized scope/cutoff, not the pending forecast.
   // Admit that exact published generation before exposing any Baseline facts.
-  const suppliedForecast = await options.forecast;
-  const forecast = suppliedForecast ? admitPlanningForecast(authorities.publication, month, suppliedForecast) : assembleMonthForecast(authorities, month);
-  if (canonicalPurchases.status !== "PASS") throw new TypeError("BASELINE_PURCHASE_OWNER_BLOCKED");
+  let forecast: MonthForecast;
+  if (global.kind === "full") forecast = assembleMonthForecast(global.authorities, month);
+  else {
+    const suppliedForecast = await options.forecast;
+    if (!suppliedForecast) throw new TypeError("PLANNER_FORECAST_REQUIRED_FOR_COMPACT_GLOBAL");
+    forecast = admitPlanningForecast(global.authorities.publication, month, suppliedForecast);
+  }
+  const authorities = global.authorities;
   // Product owner has already verified the Canonical household scope; resolve the same
   // Need subjects from Canonical person_id, without inferring them from legacy names.
   const needKeys = [...new Set([...productObservations.map(o => o.needKey), ...(options.renewals ? RENEWAL_NEED_KEYS : [])])].sort();
@@ -101,12 +118,12 @@ export async function readPlanningBaselineSources(repository: CanonicalRepositor
     && evidence.completeMonthsBySource?.MOBILITY?.includes(p.month.slice(0, 7))).map(p => p.month.slice(0, 7)));
   const closedLegs = mobilityLegs.filter(l => closed.has(l.date.slice(0, 7))), legIds = new Set(closedLegs.map(l => String(l.legId)));
   const mobilityContexts = mobilityContext.contextLinks.filter(c => legIds.has(c.mobilityLegId));
-  const personalMobility = buildGlobalM7PersonalMobilityAuthority({ mobilityLegs: closedLegs, contextLinks: mobilityContexts,
-    presenceResolutions: mobilityContext.presenceResolutions.filter(p => legIds.has(p.mobilityLegId)) });
+  const personalMobility = snapshotSync("Mobility_M7_PersonalBuild", () => buildGlobalM7PersonalMobilityAuthority({ mobilityLegs: closedLegs, contextLinks: mobilityContexts,
+    presenceResolutions: mobilityContext.presenceResolutions.filter(p => legIds.has(p.mobilityLegId)) }));
   return { householdId, targetMonth: month, knowledgeCutoff: cutoff.toString(), timezone: context.timezone,
     forecast, monthInputs: storedInputs.inputs,
     periods: context.periods, evidence, food: authorities.background.food,
-    purchaseFacts: canonicalPurchases.facts.filter(f => f.fact === "fct_purchase_aware_economic_component"), habitAssertions, productObservations,
+    purchaseFacts: canonicalPurchases.purchaseFacts, habitAssertions, productObservations,
     needSubjects, mobilityLegs: closedLegs, mobilityContexts, personalMobility, plannedExpenses,
     ...(simpleOccurrences ? { simpleOccurrences } : {}) };
 }

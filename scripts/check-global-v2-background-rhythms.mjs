@@ -194,6 +194,48 @@ const productionSizedRepeat = query.buildGlobalBackgroundRhythmSnapshots({
 });
 check(() => assert.equal(core.canonicalSerializeGlobal(productionSizedRepeat), core.canonicalSerializeGlobal(productionSizedSnapshots)));
 
+// Baseline already has Forecast in World: the compact path must read only the
+// matching published FOOD background, preserving the owner's parser and gates.
+const { loadPlanningBaselineGlobalContext } = await import("../src/server/phase2/live-month-forecast.ts");
+const compactPayload = { ...snapshots.annual, food: { ...snapshots.annual.food, methodVersion: "global_food_rhythm@v2-purchase-aware" } };
+const publishedRow = {
+  resource: "analysis_global_background_rhythms",
+  method_signature: resourceMeta("analysis_global_background_rhythms", {}).methodSignature,
+  contract_version: query.globalV2QueryRegistry.analysis_global_background_rhythms.contractVersion,
+  payload: compactPayload,
+  publication_id: publicationMeta.publicationId,
+  is_active: true,
+  invalidated_at: null,
+};
+const compactPublication = {
+  publication_id: publicationMeta.publicationId, household_id: "household:fixture",
+  source_revision: "95", published_analytics_revision: publicationMeta.revision,
+};
+function compactClient(rows = [publishedRow], publication = compactPublication) {
+  const reads = [];
+  return { reads, from(table) {
+    reads.push({ table, filters: [] });
+    const queryRead = reads.at(-1);
+    const builder = {
+      select() { return this; }, eq(key, value) { queryRead.filters.push([key, value]); return this; },
+      is() { return this; }, order() { return this; }, limit() { return this; },
+      maybeSingle() { return Promise.resolve({ data: publication, error: null }); },
+      range() { return Promise.resolve({ data: rows, error: null }); },
+    };
+    return builder;
+  } };
+}
+const compact = compactClient();
+const compactRead = await loadPlanningBaselineGlobalContext(compact, compactPublication.household_id);
+check(() => assert.deepEqual(compact.reads.map(({ table }) => table), ["analytics_publications", "analytics_query_snapshots"]));
+check(() => assert.ok(compact.reads[1].filters.some(([key, value]) => key === "resource" && value === "analysis_global_background_rhythms")));
+check(() => assert.equal(compactRead.publication.publication_id, publicationMeta.publicationId));
+check(() => assert.equal(core.canonicalSerializeGlobal(compactRead.background),
+  core.canonicalSerializeGlobal(query.parseGlobalBackgroundRhythmsReadModel(compactPayload))));
+await assert.rejects(loadPlanningBaselineGlobalContext(compactClient([]), compactPublication.household_id), /FORECAST_AUTHORITY_CARDINALITY/u); checks += 1;
+await assert.rejects(loadPlanningBaselineGlobalContext(compactClient([{ ...publishedRow, method_signature: "invalid" }]), compactPublication.household_id), /FORECAST_QUERY_REGISTRY_MISMATCH/u); checks += 1;
+await assert.rejects(loadPlanningBaselineGlobalContext(compactClient([{ ...publishedRow, payload: { ...compactPayload, publicationMeta: { ...compactPayload.publicationMeta, publicationId: "other" } } }]), compactPublication.household_id), /FORECAST_SNAPSHOT_PUBLICATION_MISMATCH/u); checks += 1;
+
 console.log(JSON.stringify({
   checks,
   annualSerializedBytes: productionSizedSnapshots.annualSerializedBytes,

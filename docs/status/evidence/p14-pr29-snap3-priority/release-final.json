@@ -1,0 +1,49 @@
+{
+  "status": "EXECUTED_PASS_OFF_LIMITED_AUTHENTICATED_SMOKE",
+  "PR": "https://github.com/adriensauvageot34/Budgetisation/pull/29",
+  "initialHead": "9bb35730286286226d3952c284a7f0efc679a47c",
+  "reviewedReleaseHead": "7c6349bed38b3e904bf90ef584b93a83f1de9e4d",
+  "merge": {
+    "sha": "f765f6d3e38d9f338f6a442071bc4eddfa01b6e7",
+    "merged": true,
+    "message": "Pull Request successfully merged"
+  },
+  "treeComparedToReviewedHead": "IDENTICAL",
+  "production": {
+    "id": "dpl_8iJQAbAApS9whAw2i92bdsrRoz7J",
+    "state": "READY",
+    "target": "production",
+    "commit": "f765f6d3e38d9f338f6a442071bc4eddfa01b6e7",
+    "region": [
+      "iad1"
+    ],
+    "alias": "budgetisation-tan.vercel.app"
+  },
+  "flags": {
+    "SNAP": 0,
+    "PREPARE": 0,
+    "P3": 0,
+    "cronSchedule": [],
+    "metrics": "OFF"
+  },
+  "migration": {
+    "version": "20261014105944",
+    "sha256": "8CFC89722E986A22FC47972538130E08D82696D4CF07973673DE19BF94A0E004",
+    "newDDLThisMission": false
+  },
+  "checks": {
+    "previous28Suites": "REUSED_PASS",
+    "preexistingR3008": "FAIL_PREEXISTING_RETAINED",
+    "openingP1": 12,
+    "snap1": 16,
+    "suggestionsP4D": 10,
+    "trace": 6,
+    "typescript": "PASS",
+    "fullBuild": "PASS_LOCAL_AND_VERCEL_READY",
+    "productionSmoke": "PASS_LIMITED_AUTHENTICATED_READ_ONLY",
+    "realApply": "NOT_RUN",
+    "cronJob": "NOT_RUN_UNSCHEDULED",
+    "crossUserJWT": "NOT_RUN",
+    "secondPhysicalDevice": "NOT_RUN"
+  }
+}

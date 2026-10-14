@@ -1,0 +1,18 @@
+{
+  "status": "MEASURED_LOCAL_REUSED_EVIDENCE",
+  "source": "p14-snap-real/native-tests.json",
+  "n": 21,
+  "mutationWithTriggersMs": {
+    "p50": 1.8101999999998952,
+    "p95": 5.402900000000955
+  },
+  "missMs": {
+    "p50": 81.72410000000673,
+    "p95": 113.15389999999752
+  },
+  "validationMs": {
+    "p50": 13.324300000000221,
+    "p95": 16.35410000000411
+  },
+  "limits": "Elapsed native synthetic mutation including existing write and trigger, not incremental overhead vs no trigger. Not production lock contention. Trigger executes even if application SNAP is OFF; no financial production writer benchmark allowed."
+}

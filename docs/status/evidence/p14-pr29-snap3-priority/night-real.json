@@ -1,0 +1,21 @@
+{
+  "status": "MEASURED_REAL_LIMITED_PREVIEW",
+  "commit": "512e771384eccf614b1fc210819bb169d3d8b74a",
+  "dateAbsent": true,
+  "namePreserved": true,
+  "childPrice": "50",
+  "declaredBankFunding": "50",
+  "parentAddsNoOwnCost": "Native parity executed PASS; UI explicitly states grouping only, no parent own cost",
+  "preview": "FRESH",
+  "history": "HIT",
+  "worldMs": 19701.5556,
+  "serverMs": 23586.32425,
+  "financeMs": 1256.180118,
+  "calls": 273,
+  "errors": 0,
+  "saveState": "CLEAN",
+  "apply": "NOT_RUN",
+  "sourcesMutated": false,
+  "fieldReopen": "EXECUTED_PASS",
+  "instrumentLimit": "Playwright fill of rich price field failed; documented accessible setValue succeeded. UI rejected missing explicit bank funding before correct complete submission."
+}

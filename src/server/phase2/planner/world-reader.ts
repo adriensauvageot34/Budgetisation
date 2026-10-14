@@ -18,51 +18,53 @@ import { expandComposableContexts } from "./context-compiler";
 import { materializePlanSlots } from "./plan-slot-resolver";
 import { resolveJourneyRequirements } from "./journey-resolver";
 import type { ActivityHistoryStore } from "./activity-history-artifact";
-import { snapshotSpan } from "./snapshot-observation";
+import { snapshotWork, snapshotSync } from "./snapshot-observation";
+import type { HistoricalBasisStore } from "./historical-basis";
 
 /** Canonical may use its trusted read client; Plan writes always use the authenticated
  * household client supplied separately by the authorized server entry point. */
 export function createPlannerDependencies(canonical: CanonicalRepository, authenticatedClient: SupabaseClient,
-  clock: () => string = () => new Date().toISOString(), activityHistory?: ActivityHistoryStore): EffectiveMonthDependencies {
+  clock: () => string = () => new Date().toISOString(), activityHistory?: ActivityHistoryStore, historicalBasis?: HistoricalBasisStore): EffectiveMonthDependencies {
   const scope = (householdId: string) => {
     if (householdId !== String(canonical.context.householdId)) throw new TypeError("PLANNER_AUTHORIZED_HOUSEHOLD_MISMATCH");
   };
   // One owner read within this server request, shared by validation, pricing and editor options. No persistent cache.
   let optionsPromise: ReturnType<typeof readPlannedContextOptions> | undefined;
   const mobilityOptions = (householdId: string) => { scope(householdId); return optionsPromise ??=
-    readPlannedContextOptions(canonical.client, householdId, canonical.context.persons); };
-  const loadWorldWithStore = async (householdId: string, targetMonth: string, history?: ActivityHistoryStore) => {
-    const end = snapshotSpan("World");try {
+    snapshotWork("Mobility_EditorOptions", () => readPlannedContextOptions(canonical.client, householdId, canonical.context.persons)); };
+  const loadWorldWithStore = async (householdId: string, targetMonth: string, history?: ActivityHistoryStore, basis?: HistoricalBasisStore) => {
+    return snapshotWork("World", async () => {
     scope(householdId);
     const cutoff = Temporal.Instant.from(clock()), asOfDate = cutoff.toZonedDateTimeISO(canonical.context.timezone).toPlainDate().toString();
     // Forecast requires history; Baseline permits empty history. When the two readers
     // use the same household day, a successful strict read satisfies both contracts.
     // A clock crossing the calendar boundary keeps the original independent reads.
     const predictionEvidence = asOfDate === planningDate(canonical.context.timezone)
-      ? readMonthPredictionEvidence(canonical.client, householdId, targetMonth, false,
-        { asOfDate, timezone: canonical.context.timezone }) : undefined;
+      ? snapshotWork("PredictionEvidence", () => readMonthPredictionEvidence(canonical.client, householdId, targetMonth, false,
+        { asOfDate, timezone: canonical.context.timezone })) : undefined;
     predictionEvidence?.catch(() => undefined);
-    const forecastPromise = readPlanningMonthForecast(canonical.client, householdId, targetMonth, predictionEvidence);
-    const sourcesPromise = readPlanningBaselineSources(canonical, targetMonth, cutoff.toString(),
+    const forecastPromise = snapshotWork("Forecast", () => readPlanningMonthForecast(canonical.client, householdId, targetMonth, predictionEvidence));
+    const sourcesPromise = snapshotWork("BaselineSources", () => readPlanningBaselineSources(canonical, targetMonth, cutoff.toString(),
       { simpleOccurrences: true, renewals: true, forecast: forecastPromise, ...(history ? { activityHistory: history } : {}),
-        ...(predictionEvidence ? { predictionEvidence } : {}) });
+        ...(basis ? { historicalBasis: basis } : {}),
+        ...(predictionEvidence ? { predictionEvidence } : {}) }));
     // Observe early source rejection while retaining the original Forecast-first
     // failure boundary. Await the original Promise below; no error is replaced.
     sourcesPromise.catch(() => undefined);
     const forecast = await forecastPromise;
     const sources = await sourcesPromise;
     // One admitted canonical evidence read for both C1 and financial calculation.
-    return { baseline: buildRenewalPlanningBaseline(sources), forecast: { ...forecast, predictionEvidence: sources.evidence },
+    return { baseline: snapshotSync("Baseline_Renewal_Build", () => buildRenewalPlanningBaseline(sources)), forecast: { ...forecast, predictionEvidence: sources.evidence },
       monthInputs: sources.monthInputs, externalIntents: sources.plannedExpenses, asOfDate, costQuotes: {},
-      mobilityFacts: buildProspectiveMobilityFacts(sources),
+      mobilityFacts: snapshotSync("Mobility_ProspectiveFacts_Build", () => buildProspectiveMobilityFacts(sources)),
       modelVersions: { financialOwner: "deriveMonthScenario@v2", forecast: forecast.resourceMeta.contractVersion } };
-    } finally { end(); }
+    });
   };
   return { repository: createPlanApplyRepository(authenticatedClient), householdPersons: (canonical.context.persons ?? []).map(person =>
     ({ personId: String(person.personId), displayName: person.displayName })), readMobilityOptions: mobilityOptions,
     readWorld: (householdId, targetMonth) => loadWorldWithStore(householdId, targetMonth),
-    ...(activityHistory ? { readComposerWorld: (householdId: string, targetMonth: string) =>
-      loadWorldWithStore(householdId, targetMonth, activityHistory) } : {}),
+    ...(activityHistory || historicalBasis ? { readComposerWorld: (householdId: string, targetMonth: string) =>
+      loadWorldWithStore(householdId, targetMonth, activityHistory, historicalBasis) } : {}),
     async validateContextReferences(householdId, refs) {
       scope(householdId);
       const persons = new Set(canonical.context.persons.map(person => String(person.personId)));

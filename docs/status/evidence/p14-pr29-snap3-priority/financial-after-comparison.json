@@ -1,0 +1,377 @@
+{
+  "status": "MEASURED_REAL_READ_ONLY_COUNTERS",
+  "allUnchanged": true,
+  "statsReset": null,
+  "checked": [
+    {
+      "table": "benefit_wallet_ledger_entries",
+      "unchanged": true,
+      "before": {
+        "table": "benefit_wallet_ledger_entries",
+        "schema": "public",
+        "deleted": 0,
+        "updated": 0,
+        "inserted": 213
+      },
+      "after": {
+        "table": "benefit_wallet_ledger_entries",
+        "deleted": 0,
+        "updated": 0,
+        "inserted": 213
+      }
+    },
+    {
+      "table": "benefit_wallets",
+      "unchanged": true,
+      "before": {
+        "table": "benefit_wallets",
+        "schema": "public",
+        "deleted": 0,
+        "updated": 1,
+        "inserted": 2
+      },
+      "after": {
+        "table": "benefit_wallets",
+        "deleted": 0,
+        "updated": 1,
+        "inserted": 2
+      }
+    },
+    {
+      "table": "life_event_financial_links",
+      "unchanged": true,
+      "before": {
+        "table": "life_event_financial_links",
+        "schema": "public",
+        "deleted": 0,
+        "updated": 0,
+        "inserted": 0
+      },
+      "after": {
+        "table": "life_event_financial_links",
+        "deleted": 0,
+        "updated": 0,
+        "inserted": 0
+      }
+    },
+    {
+      "table": "life_event_participations",
+      "unchanged": true,
+      "before": {
+        "table": "life_event_participations",
+        "schema": "public",
+        "deleted": 0,
+        "updated": 0,
+        "inserted": 0
+      },
+      "after": {
+        "table": "life_event_participations",
+        "deleted": 0,
+        "updated": 0,
+        "inserted": 0
+      }
+    },
+    {
+      "table": "life_event_types",
+      "unchanged": true,
+      "before": {
+        "table": "life_event_types",
+        "schema": "public",
+        "deleted": 0,
+        "updated": 0,
+        "inserted": 0
+      },
+      "after": {
+        "table": "life_event_types",
+        "deleted": 0,
+        "updated": 0,
+        "inserted": 0
+      }
+    },
+    {
+      "table": "life_events",
+      "unchanged": true,
+      "before": {
+        "table": "life_events",
+        "schema": "public",
+        "deleted": 0,
+        "updated": 0,
+        "inserted": 0
+      },
+      "after": {
+        "table": "life_events",
+        "deleted": 0,
+        "updated": 0,
+        "inserted": 0
+      }
+    },
+    {
+      "table": "mobility_legs",
+      "unchanged": true,
+      "before": {
+        "table": "mobility_legs",
+        "schema": "public",
+        "deleted": 0,
+        "updated": 0,
+        "inserted": 1368
+      },
+      "after": {
+        "table": "mobility_legs",
+        "deleted": 0,
+        "updated": 0,
+        "inserted": 1368
+      }
+    },
+    {
+      "table": "operations",
+      "unchanged": true,
+      "before": {
+        "table": "operations",
+        "schema": "public",
+        "deleted": 0,
+        "updated": 0,
+        "inserted": 0
+      },
+      "after": {
+        "table": "operations",
+        "deleted": 0,
+        "updated": 0,
+        "inserted": 0
+      }
+    },
+    {
+      "table": "phase2_composer_drafts",
+      "unchanged": true,
+      "before": {
+        "table": "phase2_composer_drafts",
+        "schema": "public",
+        "deleted": 0,
+        "updated": 25,
+        "inserted": 4
+      },
+      "after": {
+        "table": "phase2_composer_drafts",
+        "deleted": 0,
+        "updated": 25,
+        "inserted": 4
+      }
+    },
+    {
+      "table": "phase2_forecast_checkpoints",
+      "unchanged": true,
+      "before": {
+        "table": "phase2_forecast_checkpoints",
+        "schema": "public",
+        "deleted": 0,
+        "updated": 0,
+        "inserted": 0
+      },
+      "after": {
+        "table": "phase2_forecast_checkpoints",
+        "deleted": 0,
+        "updated": 0,
+        "inserted": 0
+      }
+    },
+    {
+      "table": "phase2_month_inputs",
+      "unchanged": true,
+      "before": {
+        "table": "phase2_month_inputs",
+        "schema": "public",
+        "deleted": 1,
+        "updated": 44,
+        "inserted": 2
+      },
+      "after": {
+        "table": "phase2_month_inputs",
+        "deleted": 1,
+        "updated": 44,
+        "inserted": 2
+      }
+    },
+    {
+      "table": "phase2_month_plan_revisions",
+      "unchanged": true,
+      "before": {
+        "table_name": "phase2_month_plan_revisions",
+        "inserted": 0,
+        "updated": 0,
+        "deleted": 0,
+        "table": "phase2_month_plan_revisions"
+      },
+      "after": {
+        "table": "phase2_month_plan_revisions",
+        "deleted": 0,
+        "updated": 0,
+        "inserted": 0
+      }
+    },
+    {
+      "table": "phase2_month_plans",
+      "unchanged": true,
+      "before": {
+        "table": "phase2_month_plans",
+        "schema": "public",
+        "deleted": 0,
+        "updated": 0,
+        "inserted": 0
+      },
+      "after": {
+        "table": "phase2_month_plans",
+        "deleted": 0,
+        "updated": 0,
+        "inserted": 0
+      }
+    },
+    {
+      "table": "phase2_planned_expenses",
+      "unchanged": true,
+      "before": {
+        "table_name": "phase2_planned_expenses",
+        "inserted": 32,
+        "updated": 37,
+        "deleted": 25,
+        "table": "phase2_planned_expenses"
+      },
+      "after": {
+        "table": "phase2_planned_expenses",
+        "deleted": 25,
+        "updated": 37,
+        "inserted": 32
+      }
+    },
+    {
+      "table": "purchase_economic_components",
+      "unchanged": true,
+      "before": {
+        "table_name": "purchase_economic_components",
+        "inserted": 146,
+        "updated": 0,
+        "deleted": 0,
+        "table": "purchase_economic_components"
+      },
+      "after": {
+        "table": "purchase_economic_components",
+        "deleted": 0,
+        "updated": 0,
+        "inserted": 146
+      }
+    },
+    {
+      "table": "purchase_event_channel_assertions",
+      "unchanged": true,
+      "before": {
+        "table_name": "purchase_event_channel_assertions",
+        "inserted": 200,
+        "updated": 0,
+        "deleted": 0,
+        "table": "purchase_event_channel_assertions"
+      },
+      "after": {
+        "table": "purchase_event_channel_assertions",
+        "deleted": 0,
+        "updated": 0,
+        "inserted": 200
+      }
+    },
+    {
+      "table": "purchase_event_classification_assertions",
+      "unchanged": true,
+      "before": {
+        "table_name": "purchase_event_classification_assertions",
+        "inserted": 600,
+        "updated": 0,
+        "deleted": 0,
+        "table": "purchase_event_classification_assertions"
+      },
+      "after": {
+        "table": "purchase_event_classification_assertions",
+        "deleted": 0,
+        "updated": 0,
+        "inserted": 600
+      }
+    },
+    {
+      "table": "purchase_event_memberships",
+      "unchanged": true,
+      "before": {
+        "table_name": "purchase_event_memberships",
+        "inserted": 200,
+        "updated": 0,
+        "deleted": 0,
+        "table": "purchase_event_memberships"
+      },
+      "after": {
+        "table": "purchase_event_memberships",
+        "deleted": 0,
+        "updated": 0,
+        "inserted": 200
+      }
+    },
+    {
+      "table": "purchase_event_timing_assertions",
+      "unchanged": true,
+      "before": {
+        "table_name": "purchase_event_timing_assertions",
+        "inserted": 200,
+        "updated": 0,
+        "deleted": 0,
+        "table": "purchase_event_timing_assertions"
+      },
+      "after": {
+        "table": "purchase_event_timing_assertions",
+        "deleted": 0,
+        "updated": 0,
+        "inserted": 200
+      }
+    },
+    {
+      "table": "purchase_events",
+      "unchanged": true,
+      "before": {
+        "table_name": "purchase_events",
+        "inserted": 200,
+        "updated": 0,
+        "deleted": 0,
+        "table": "purchase_events"
+      },
+      "after": {
+        "table": "purchase_events",
+        "deleted": 0,
+        "updated": 0,
+        "inserted": 200
+      }
+    },
+    {
+      "table": "purchase_funding_components",
+      "unchanged": true,
+      "before": {
+        "table_name": "purchase_funding_components",
+        "inserted": 255,
+        "updated": 0,
+        "deleted": 0,
+        "table": "purchase_funding_components"
+      },
+      "after": {
+        "table": "purchase_funding_components",
+        "deleted": 0,
+        "updated": 0,
+        "inserted": 255
+      }
+    }
+  ],
+  "limits": "Counters, not exhaustive hashes; combined with read-only benchmark guard and executed code paths. SNAP state/artifact metadata writes were separately authorized.",
+  "productionSmoke": {
+    "status": "EXECUTED_PASS_LIMITED_AUTHENTICATED_READ_ONLY",
+    "composer": "FRESH",
+    "saveState": "CLEAN",
+    "library": true,
+    "protectedSavings": 1,
+    "detailsPopover": true,
+    "metricsExposed": false,
+    "apply": "NOT_RUN",
+    "snapshot": "OFF",
+    "cron": "UNSCHEDULED"
+  }
+}

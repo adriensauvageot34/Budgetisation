@@ -1,0 +1,295 @@
+{
+  "status": "MEASURED_REAL",
+  "origin": "Transcribed from actual CUA DOM product-mark outputs. Rounded to 0.001ms, no Codex elapsed time used.",
+  "commit": "512e771384eccf614b1fc210819bb169d3d8b74a",
+  "region": "iad1",
+  "viewport": {
+    "width": 1920,
+    "height": 1080
+  },
+  "month": "2026-10",
+  "sourceRevision": 1,
+  "cutoff": "2026-10-14",
+  "sameDigests": {
+    "semantic": "f523db27e084e00fced4a18fd452416794764476743b4e676236479bd1a1d7f1",
+    "baseline": "c27f43b48ee9511c8c7327008fcb1fe52ca49c8cf207549f4372561ce310b4ff",
+    "preview": "286c168b192a5a12eef702370aa9a3bd7ae29d119e6474abb5533ed057aafc1b"
+  },
+  "pairs": [
+    {
+      "pair": 1,
+      "order": "OFF_ON",
+      "OFF": {
+        "freshMs": 17939.1,
+        "boardMs": 17939,
+        "serverMs": 15094.206643,
+        "worldMs": 13528.242297,
+        "financeMs": 304.387311,
+        "responseMs": 15593.7,
+        "documentTransferBytes": 42970
+      },
+      "ON": {
+        "freshMs": 21676.3,
+        "boardMs": 21676.2,
+        "serverMs": 15980.966742,
+        "worldMs": 14068.901776,
+        "financeMs": 403.455129,
+        "responseMs": 18740,
+        "admissionMs": 1321.024107,
+        "decodeMs": 125.650856,
+        "documentTransferBytes": 42178
+      },
+      "freshDeltaOnMinusOffMs": 3737.2000000000007
+    },
+    {
+      "pair": 2,
+      "order": "OFF_ON",
+      "OFF": {
+        "freshMs": 20240.9,
+        "boardMs": 20240.8,
+        "serverMs": 15917.260172,
+        "worldMs": 14402.668945,
+        "financeMs": 282.803383,
+        "responseMs": 16593.7,
+        "documentTransferBytes": 42960
+      },
+      "ON": {
+        "freshMs": 17552.8,
+        "boardMs": 17552.6,
+        "serverMs": 14262.577913,
+        "worldMs": 12747.298427,
+        "financeMs": 358.872965,
+        "responseMs": 14828.2,
+        "admissionMs": 922.907356,
+        "decodeMs": 184.663358,
+        "documentTransferBytes": 42517
+      },
+      "freshDeltaOnMinusOffMs": -2688.100000000002
+    },
+    {
+      "pair": 3,
+      "order": "ON_OFF",
+      "OFF": {
+        "freshMs": 17904.6,
+        "boardMs": 17904.4,
+        "serverMs": 14755.242441,
+        "worldMs": 13936.21075,
+        "financeMs": 298.565477,
+        "responseMs": 15426.6,
+        "documentTransferBytes": 43113
+      },
+      "ON": {
+        "freshMs": 29976.4,
+        "boardMs": 29976.2,
+        "serverMs": 20997.284983,
+        "worldMs": 20159.888239,
+        "financeMs": 316.514075,
+        "responseMs": 21495.1,
+        "admissionMs": 1170.739195,
+        "decodeMs": 72.964936,
+        "documentTransferBytes": 42364
+      },
+      "freshDeltaOnMinusOffMs": 12071.800000000003
+    },
+    {
+      "pair": 4,
+      "order": "OFF_ON",
+      "OFF": {
+        "freshMs": 32346.9,
+        "boardMs": 32346.6,
+        "serverMs": 26267.281427,
+        "worldMs": 23797.714068,
+        "financeMs": 401.848181,
+        "responseMs": 29777.6,
+        "documentTransferBytes": 42892
+      },
+      "ON": {
+        "freshMs": 26805.1,
+        "boardMs": 26804.9,
+        "serverMs": 22761.265958,
+        "worldMs": 21596.2053,
+        "financeMs": 264.861576,
+        "responseMs": 25506.7,
+        "admissionMs": 1059.162114,
+        "decodeMs": 59.318463,
+        "documentTransferBytes": 42217
+      },
+      "freshDeltaOnMinusOffMs": -5541.800000000003
+    },
+    {
+      "pair": 5,
+      "order": "ON_OFF",
+      "OFF": {
+        "freshMs": 21119,
+        "boardMs": 21118.9,
+        "serverMs": 15785.795516,
+        "worldMs": 14507.185635,
+        "financeMs": 385.088471,
+        "responseMs": 18598.2,
+        "documentTransferBytes": 42706
+      },
+      "ON": {
+        "freshMs": 27211.5,
+        "boardMs": 27211.2,
+        "serverMs": 21133.109736,
+        "worldMs": 19116.931982,
+        "financeMs": 380.724804,
+        "responseMs": 24039.4,
+        "admissionMs": 1102.262163,
+        "decodeMs": 95.889638,
+        "documentTransferBytes": 42191
+      },
+      "freshDeltaOnMinusOffMs": 6092.5
+    }
+  ],
+  "stats": {
+    "OFF": {
+      "fresh": {
+        "n": 5,
+        "p50": 20240.9,
+        "p95": 32346.9,
+        "min": 17904.6,
+        "max": 32346.9
+      },
+      "board": {
+        "n": 5,
+        "p50": 20240.8,
+        "p95": 32346.6,
+        "min": 17904.4,
+        "max": 32346.6
+      },
+      "server": {
+        "n": 5,
+        "p50": 15785.795516,
+        "p95": 26267.281427,
+        "min": 14755.242441,
+        "max": 26267.281427
+      },
+      "world": {
+        "n": 5,
+        "p50": 14402.668945,
+        "p95": 23797.714068,
+        "min": 13528.242297,
+        "max": 23797.714068
+      },
+      "finance": {
+        "n": 5,
+        "p50": 304.387311,
+        "p95": 401.848181,
+        "min": 282.803383,
+        "max": 401.848181
+      },
+      "response": {
+        "n": 5,
+        "p50": 16593.7,
+        "p95": 29777.6,
+        "min": 15426.6,
+        "max": 29777.6
+      },
+      "transfer": {
+        "n": 5,
+        "p50": 42960,
+        "p95": 43113,
+        "min": 42706,
+        "max": 43113
+      }
+    },
+    "ON": {
+      "fresh": {
+        "n": 5,
+        "p50": 26805.1,
+        "p95": 29976.4,
+        "min": 17552.8,
+        "max": 29976.4
+      },
+      "board": {
+        "n": 5,
+        "p50": 26804.9,
+        "p95": 29976.2,
+        "min": 17552.6,
+        "max": 29976.2
+      },
+      "server": {
+        "n": 5,
+        "p50": 20997.284983,
+        "p95": 22761.265958,
+        "min": 14262.577913,
+        "max": 22761.265958
+      },
+      "world": {
+        "n": 5,
+        "p50": 19116.931982,
+        "p95": 21596.2053,
+        "min": 12747.298427,
+        "max": 21596.2053
+      },
+      "finance": {
+        "n": 5,
+        "p50": 358.872965,
+        "p95": 403.455129,
+        "min": 264.861576,
+        "max": 403.455129
+      },
+      "response": {
+        "n": 5,
+        "p50": 21495.1,
+        "p95": 25506.7,
+        "min": 14828.2,
+        "max": 25506.7
+      },
+      "transfer": {
+        "n": 5,
+        "p50": 42217,
+        "p95": 42517,
+        "min": 42178,
+        "max": 42517
+      },
+      "admission": {
+        "n": 5,
+        "p50": 1102.262163,
+        "p95": 1321.024107,
+        "min": 922.907356,
+        "max": 1321.024107
+      },
+      "decode": {
+        "n": 5,
+        "p50": 95.889638,
+        "p95": 184.663358,
+        "min": 59.318463,
+        "max": 184.663358
+      }
+    },
+    "pairedFreshDeltaMs": {
+      "n": 5,
+      "p50": 3737.2000000000007,
+      "p95": 12071.800000000003,
+      "min": -5541.800000000003,
+      "max": 12071.800000000003
+    }
+  },
+  "calls": {
+    "OFF": {
+      "total": 284,
+      "GET": 284,
+      "decodedJSONBytes": 11746442
+    },
+    "ON": {
+      "total": 263,
+      "GET": 262,
+      "RPC": 1,
+      "decodedJSONBytes": 11638973,
+      "HIT": 5
+    }
+  },
+  "errors": 0,
+  "timeouts": 0,
+  "blockedWrites": 0,
+  "limits": [
+    "Descriptive nearest-rank P95, not robust n=5",
+    "Pair 1 ON navigate vs OFF reload; pairs 2-5 reload/reload. Cache or cold start not certified.",
+    "Pair 3 OFF completed before access denial; observation recovered afterwards.",
+    "Browser transfer values concern the document, not Supabase compressed network bytes.",
+    "No net gain certified; ON slower in 3/5 pairs."
+  ],
+  "decision": "PRODUCTION_SNAP_OFF"
+}

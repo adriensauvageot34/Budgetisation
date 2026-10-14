@@ -1,0 +1,59 @@
+{
+  "status": "MEASURED_REAL_READ_ONLY",
+  "tables": [
+    {
+      "table_name": "phase2_month_plan_revisions",
+      "inserted": 0,
+      "updated": 0,
+      "deleted": 0
+    },
+    {
+      "table_name": "phase2_planned_expenses",
+      "inserted": 32,
+      "updated": 37,
+      "deleted": 25
+    },
+    {
+      "table_name": "purchase_economic_components",
+      "inserted": 146,
+      "updated": 0,
+      "deleted": 0
+    },
+    {
+      "table_name": "purchase_event_channel_assertions",
+      "inserted": 200,
+      "updated": 0,
+      "deleted": 0
+    },
+    {
+      "table_name": "purchase_event_classification_assertions",
+      "inserted": 600,
+      "updated": 0,
+      "deleted": 0
+    },
+    {
+      "table_name": "purchase_event_memberships",
+      "inserted": 200,
+      "updated": 0,
+      "deleted": 0
+    },
+    {
+      "table_name": "purchase_event_timing_assertions",
+      "inserted": 200,
+      "updated": 0,
+      "deleted": 0
+    },
+    {
+      "table_name": "purchase_events",
+      "inserted": 200,
+      "updated": 0,
+      "deleted": 0
+    },
+    {
+      "table_name": "purchase_funding_components",
+      "inserted": 255,
+      "updated": 0,
+      "deleted": 0
+    }
+  ]
+}

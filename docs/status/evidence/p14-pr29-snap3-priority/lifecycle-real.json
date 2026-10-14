@@ -1,0 +1,84 @@
+{
+  "status": "MEASURED_REAL_EXECUTED_PASS",
+  "scope": "Nonfinancial SNAP configuration and existing two artifacts only; financial sources unchanged",
+  "initialRevision": 1,
+  "disabledRevision": 2,
+  "reenabledRevision": 3,
+  "disabled": {
+    "history": "MISS",
+    "reason": "DEPENDENCY_COVERAGE_UNAVAILABLE",
+    "calls": 285,
+    "directMs": 3908.457206,
+    "serverMs": 17731.063013,
+    "worldMs": 15359.836058,
+    "sameDigests": true
+  },
+  "reenabledBeforePublication": {
+    "status": "MISS",
+    "oldGeneration": 1
+  },
+  "publication202610": {
+    "status": "PUBLISHED",
+    "generation": 2,
+    "preparationMs": 5407.495387
+  },
+  "publication202611": {
+    "status": "PUBLISHED",
+    "generation": 2,
+    "preparationMs": 5791.665114
+  },
+  "republishedHit": {
+    "status": "HIT",
+    "calls": 263,
+    "serverMs": 15815.850435,
+    "worldMs": 14568.35149,
+    "sameDigests": true
+  },
+  "final": {
+    "enabled": true,
+    "coverage": true,
+    "revision": 3,
+    "artifacts": [
+      {
+        "proof": {
+          "coverage": "canonical-activity-transactional-triggers@v2",
+          "revisions": {
+            "life_events": "3",
+            "life_event_types": "3",
+            "authorization_scope": "3",
+            "life_event_participations": "3",
+            "life_event_financial_links": "3"
+          }
+        },
+        "cutoff": "2026-10-14",
+        "digest": "42c8163fd6bffeb19c61657453bb9b7014f20e4f5bf01abff4c85832ba6b1f13",
+        "generation": 2,
+        "endExclusive": "2026-10-01",
+        "storageBytes": 96154
+      },
+      {
+        "proof": {
+          "coverage": "canonical-activity-transactional-triggers@v2",
+          "revisions": {
+            "life_events": "3",
+            "life_event_types": "3",
+            "authorization_scope": "3",
+            "life_event_participations": "3",
+            "life_event_financial_links": "3"
+          }
+        },
+        "cutoff": "2026-10-14",
+        "digest": "76597b57d96f4a28146254b94f40637807a7ee3c9e20e6f569538b8bb154af49",
+        "generation": 2,
+        "endExclusive": "2026-10-15",
+        "storageBytes": 96153
+      }
+    ]
+  },
+  "limits": [
+    "Real lifecycle invalidated configuration, not financial source rows. Native isolated tests certify financial/live changes and true source triggers.",
+    "A read of old opening metrics after a dirty memory reload was discarded; a new clean authenticated tab supplied the actual MISS proof.",
+    "Cron actual job NOT_RUN; production scheduling explicitly disabled."
+  ],
+  "autoReview": "Initial state write refused; performed only after user explicit follow-up authorization."
+}

@@ -1,4 +1,5 @@
 import "server-only";
+import { snapshotWork, snapshotSync } from "@/server/phase2/planner/snapshot-observation";
 
 import { Temporal } from "@js-temporal/polyfill";
 import {
@@ -47,18 +48,19 @@ export async function resolveGlobalM7MobilityContextAuthority(input: {
     endExclusive: addDays(parseLocalDate(certifiedThrough), 1),
   };
   const [mobilityLegs, placeVisits, personDays, occurrences] = await Promise.all([
-    repository.loadMobilityLegFacts(range),
-    repository.loadPlaceVisits(range),
-    repository.loadPersonDays(range),
+    snapshotWork("M7_Legs", () => repository.loadMobilityLegFacts(range)),
+    snapshotWork("M7_PlaceVisits", () => repository.loadPlaceVisits(range)),
+    snapshotWork("M7_PersonDays", () => repository.loadPersonDays(range)),
     input.activityOccurrences?.range.start === range.start && input.activityOccurrences.range.endExclusive === range.endExclusive
-      ? input.activityOccurrences.facts : repository.loadActivityOccurrences(range),
+      ? input.activityOccurrences.facts : snapshotWork("M7_ActivityFallback", () => repository.loadActivityOccurrences(range)),
   ]);
   const eventIds = occurrences.map((event) => String(event.lifeEventId));
   const [eventRows, participationRows, localizationRows] = await Promise.all([
-    repository.loadLifeEventRecords(eventIds),
-    repository.loadLifeEventParticipationRows(eventIds),
-    repository.loadLifeEventLocalizationRows(eventIds),
+    snapshotWork("M7_Events", () => repository.loadLifeEventRecords(eventIds)),
+    snapshotWork("M7_Participations", () => repository.loadLifeEventParticipationRows(eventIds)),
+    snapshotWork("M7_Localizations", () => repository.loadLifeEventLocalizationRows(eventIds)),
   ]);
+  return snapshotSync("M7_Join_Context_Build", () => {
   const authorizedPersonIds = new Set(context.personIds.map(String));
   const eventRowById = new Map(eventRows.map((row) => [canonicalString(row, ["life_event_id"], "life_events"), row]));
   const participationsByEvent = new Map<string, MobilityLifeEventParticipationAuthority[]>();
@@ -114,5 +116,6 @@ export async function resolveGlobalM7MobilityContextAuthority(input: {
     lifeEventContexts,
     placeVisits,
     personDays,
+  });
   });
 }
