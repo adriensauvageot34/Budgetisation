@@ -1,0 +1,189 @@
+[
+  {
+    "test": "check-planner-performance-parity",
+    "exitCode": 0,
+    "ms": 9631.0827,
+    "log": "outputs/p14-snap1/check-planner-performance-parity.log",
+    "status": "PASS_FIXTURE"
+  },
+  {
+    "test": "check-phase2-planner-p11",
+    "exitCode": 0,
+    "ms": 35506.7454,
+    "log": "outputs/p14-snap1/check-phase2-planner-p11.log",
+    "status": "PASS_FIXTURE"
+  },
+  {
+    "test": "check-phase2-planner-p12",
+    "exitCode": 0,
+    "ms": 77801.4652,
+    "log": "outputs/p14-snap1/check-phase2-planner-p12.log",
+    "status": "PASS_FIXTURE"
+  },
+  {
+    "test": "check-phase2-planner-p13",
+    "exitCode": 0,
+    "ms": 19926.5238,
+    "log": "outputs/p14-snap1/check-phase2-planner-p13.log",
+    "status": "PASS_FIXTURE"
+  },
+  {
+    "test": "check-phase2-planner-kernel",
+    "exitCode": 1,
+    "ms": 25208.985,
+    "log": "outputs/p14-snap1/check-phase2-planner-kernel.log",
+    "status": "INITIAL_FAIL_FIXED_RETEST_PASS"
+  },
+  {
+    "test": "check-phase2-planner-contexts",
+    "exitCode": 0,
+    "ms": 29976.2786,
+    "log": "outputs/p14-snap1/check-phase2-planner-contexts.log",
+    "status": "PASS_FIXTURE"
+  },
+  {
+    "test": "check-composer-p14-p1-read-reuse",
+    "exitCode": 0,
+    "ms": 13522.9198,
+    "log": "outputs/p14-snap1/check-composer-p14-p1-read-reuse.log",
+    "status": "PASS_FIXTURE"
+  },
+  {
+    "test": "check-composer-p14-p1-opening",
+    "exitCode": 0,
+    "ms": 9259.7231,
+    "log": "outputs/p14-snap1/check-composer-p14-p1-opening.log",
+    "status": "PASS_FIXTURE"
+  },
+  {
+    "test": "check-composer-p14-p2-mutation",
+    "exitCode": 0,
+    "ms": 20986.3807,
+    "log": "outputs/p14-snap1/check-composer-p14-p2-mutation.log",
+    "status": "PASS_FIXTURE"
+  },
+  {
+    "test": "check-composer-p14-p2-scheduler",
+    "exitCode": 0,
+    "ms": 3307.5426,
+    "log": "outputs/p14-snap1/check-composer-p14-p2-scheduler.log",
+    "status": "PASS_FIXTURE"
+  },
+  {
+    "test": "check-composer-p14-p2-presentation",
+    "exitCode": 0,
+    "ms": 14985.9325,
+    "log": "outputs/p14-snap1/check-composer-p14-p2-presentation.log",
+    "status": "PASS_FIXTURE"
+  },
+  {
+    "test": "check-composer-p14-p2-durable",
+    "exitCode": 0,
+    "ms": 2426.8194,
+    "log": "outputs/p14-snap1/check-composer-p14-p2-durable.log",
+    "status": "PASS_FIXTURE"
+  },
+  {
+    "test": "check-composer-p14-p3-history",
+    "exitCode": 0,
+    "ms": 89226.7935,
+    "log": "outputs/p14-snap1/check-composer-p14-p3-history.log",
+    "status": "PASS_FIXTURE"
+  },
+  {
+    "test": "check-composer-r6-p45",
+    "exitCode": 0,
+    "ms": 13359.538,
+    "log": "outputs/p14-snap1/check-composer-r6-p45.log",
+    "status": "PASS_FIXTURE"
+  },
+  {
+    "test": "check-composer-r6-presentation",
+    "exitCode": 0,
+    "ms": 8802.4253,
+    "log": "outputs/p14-snap1/check-composer-r6-presentation.log",
+    "status": "PASS_FIXTURE"
+  },
+  {
+    "test": "check-phase2-planner-atomic-ui",
+    "exitCode": 0,
+    "ms": 16392.3028,
+    "log": "outputs/p14-snap1/check-phase2-planner-atomic-ui.log",
+    "status": "PASS_FIXTURE"
+  },
+  {
+    "test": "check-phase2-planner-composer",
+    "exitCode": 0,
+    "ms": 34616.1644,
+    "log": "outputs/p14-snap1/check-phase2-planner-composer.log",
+    "status": "PASS_FIXTURE"
+  },
+  {
+    "test": "check-composer-p14-p4b-progressive",
+    "exitCode": 0,
+    "ms": 2274.8639,
+    "log": "outputs/p14-snap1/check-composer-p14-p4b-progressive.log",
+    "status": "PASS_FIXTURE"
+  },
+  {
+    "test": "check-composer-p14-p4d-suggestions",
+    "exitCode": 0,
+    "ms": 128916.6678,
+    "log": "outputs/p14-snap1/check-composer-p14-p4d-suggestions.log",
+    "status": "PASS_FIXTURE"
+  },
+  {
+    "test": "check-phase2-planner-p02-conservation",
+    "exitCode": 0,
+    "ms": 15982.0154,
+    "log": "outputs/p14-snap1/check-phase2-planner-p02-conservation.log",
+    "status": "PASS_FIXTURE"
+  },
+  {
+    "test": "check-phase2-planner-mobility",
+    "exitCode": 0,
+    "ms": 32275.7893,
+    "log": "outputs/p14-snap1/check-phase2-planner-mobility.log",
+    "status": "PASS_FIXTURE"
+  },
+  {
+    "test": "check-phase2-planner-p09",
+    "exitCode": 0,
+    "ms": 34757.1863,
+    "log": "outputs/p14-snap1/check-phase2-planner-p09.log",
+    "status": "PASS_FIXTURE"
+  },
+  {
+    "test": "check-phase2-planner-p10",
+    "exitCode": 0,
+    "ms": 24748.5463,
+    "log": "outputs/p14-snap1/check-phase2-planner-p10.log",
+    "status": "PASS_FIXTURE"
+  },
+  {
+    "test": "check-phase2-planner-interactions",
+    "exitCode": 1,
+    "ms": 23711.9319,
+    "log": "outputs/p14-snap1/check-phase2-planner-interactions.log",
+    "status": "FAIL_PREEXISTING_R3_008"
+  },
+  {
+    "test": "check-canonical-in-batching",
+    "exitCode": 0,
+    "ms": 2480.5523,
+    "log": "outputs/p14-snap1/check-canonical-in-batching.log",
+    "status": "PASS_FIXTURE"
+  },
+  {
+    "test": "check-phase2-planner-kernel-final",
+    "exitCode": 0,
+    "status": "PASS_FIXTURE",
+    "log": "kernel-final.log"
+  },
+  {
+    "test": "check-phase2-planner-baseline",
+    "exitCode": 0,
+    "status": "PASS_FIXTURE",
+    "log": "baseline-final.log"
+  }
+]

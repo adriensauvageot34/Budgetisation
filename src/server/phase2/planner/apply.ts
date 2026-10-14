@@ -16,6 +16,8 @@ export type PlannerDependencies = Readonly<{ repository: PlanRepository;
   householdPersons?: readonly Readonly<{ personId: string; displayName: string }>[];
   readMobilityOptions?(householdId: string): Promise<Readonly<{ places: readonly PlannedPlaceOption[]; vehicle: PlannedVehicleEstimate | null }>>;
   readWorld(householdId: string, targetMonth: string): Promise<PlanningWorldFacts>;
+  /** Composer opening/READ only. Apply, CHECK_APPLY and official Mon Plan retain readWorld. */
+  readComposerWorld?(householdId: string, targetMonth: string): Promise<PlanningWorldFacts>;
   prepareWorld?(world: PlanningWorldFacts, state: PlanSemanticStateV1): Promise<PlanningWorldFacts>;
   validateContextReferences?(householdId: string, refs: Readonly<{ personIds: readonly string[]; placeIds: readonly string[] }>): Promise<void> }>;
 export type AppliedPlanScenario = Readonly<{ revision: PlanRevision; projectionEvidence: PlanRevision["projectionEvidence"]; replayed: boolean }>;

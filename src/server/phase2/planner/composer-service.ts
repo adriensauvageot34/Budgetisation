@@ -220,6 +220,8 @@ export async function handleComposerRequest(deps: PlannerDependencies, household
           message: `Révision ${committed.revision.revisionNumber} enregistrée, mais sa relecture est indisponible. Actualisez la prévisualisation avant toute autre action.` };
       }
     }
+    // The opt-in historical reader is never passed into Apply or its post-commit reload.
+    if (deps.readComposerWorld) deps = { ...deps, readWorld: deps.readComposerWorld };
     const mutationRead = ["MUTATE", "DROP", "CLEAR_SOCKET", "EDIT_GIFT", "EDIT_NIGHT_OUT", "EDIT_SHORT_STAY", "EDIT_FAMILY_VISIT", "EDIT_CONTEXT", "PRESERVE"].includes(request.kind);
     const readDeps = mutationRead && process.env.COMPOSER_P14_P2_SINGLE_WORLD !== "0"
       ? composerMutationDependencies(deps, household, month) : deps;

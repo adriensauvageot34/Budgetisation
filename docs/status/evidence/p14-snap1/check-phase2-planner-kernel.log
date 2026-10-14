@@ -1,0 +1,272 @@
+C2-007 PASS
+BASE-001 PASS
+BASE-002 PASS
+BASE-003 PASS
+BASE-004 PASS
+BASE-005 PASS
+BASE-006 PASS
+BASE-007 PASS
+FIN-001 PASS
+FIN-002 PASS
+FIN-005 PASS
+FIN-006 PASS
+C2-001 PASS
+C2-002 PASS
+C2-003 PASS
+C2-004 PASS
+C2-006 PASS
+PARITY-001 PASS
+PARITY-002 PASS
+PARITY-003 PASS
+PARITY-004 PASS
+PARITY-005 PASS
+C2-005 PASS
+KERNEL-IDEMPOTENCY PASS
+KERNEL-RELATIONS PASS
+KERNEL-UNKNOWN-COST PASS
+KERNEL-PROTECTED-SAVINGS PASS
+KERNEL-SET-STATE-NORMALIZATION PASS
+KERNEL-CAPACITY PASS
+KERNEL-EVIDENCE-STALE PASS
+KERNEL-QUOTE-CUTOFF PASS
+KERNEL-MAPPING-GUARDS PASS
+KERNEL-OBSERVED-GUARD PASS
+KERNEL-RELOAD-AUTHORITIES PASS
+KERNEL-ATOMIC-CAS PASS
+KERNEL-CONCURRENT-IDEMPOTENCY PASS
+KERNEL-EVIDENCE-INTEGRITY PASS
+node:internal/modules/run_main:123
+    triggerUncaughtException(
+    ^
+
+AssertionError [ERR_ASSERTION]: Expected values to be strictly deep-equal:
++ actual - expected
+
+  {
++   activityHistory: undefined,
+    forecast: {
+      cash: {
+        grossBeforeUnconfirmedFunding: {
+          central: '710.00',
+          high: '710.00',
+
+    at file:///C:/Users/AdrienSauvageot/Documents/Codex/p14-c4-candidate/scripts/check-phase2-planner-kernel.mjs:184:14 {
+  generatedMessage: true,
+  code: 'ERR_ASSERTION',
+  actual: {
+    simpleOccurrences: true,
+    renewals: true,
+    forecast: {
+      meta: {
+        targetMonth: '2026-11',
+        sourcePublicationId: 'synthetic-publication',
+        sourceRevision: 1,
+        analyticsRevision: 1,
+        computedAt: '2026-10-05T10:00:00Z'
+      },
+      publicationMeta: {
+        publicationId: 'synthetic-publication',
+        revision: 1,
+        factsHash: 'synthetic',
+        manifestHash: 'synthetic'
+      },
+      resourceMeta: {
+        contractVersion: 'synthetic-forecast@v1',
+        methodSignature: 'synthetic',
+        policyVersions: {},
+        resourceInputHash: 'synthetic'
+      },
+      income: {
+        low: '2000.00',
+        central: '2000.00',
+        high: '2000.00',
+        components: [
+          {
+            key: 'income:Digital Learning Contest',
+            label: 'Synthetic salary A',
+            central: '1000.00'
+          },
+          {
+            key: 'income:Promotrans',
+            label: 'Synthetic salary B',
+            central: '1000.00'
+          }
+        ]
+      },
+      components: [
+        {
+          key: 'obligation:rent',
+          label: 'obligation:rent',
+          nature: 'CONTRACTUAL_EXPECTED',
+          additiveGroup: 'obligations',
+          knowledgeState: 'PROBABLE',
+          low: '500.00',
+          central: '500.00',
+          high: '500.00'
+        }
+      ],
+      obligations: { low: '500.00', central: '500.00', high: '500.00' },
+      economicCost: { low: '710.00', central: '710.00', high: '710.00' },
+      freeToSpend: { low: '1290.00', central: '1290.00', high: '1290.00' },
+      cash: {
+        grossBeforeUnconfirmedFunding: { low: '710.00', central: '710.00', high: '710.00' }
+      },
+      reserve: { amount: '0.00' },
+      referencePlan: {
+        targetMonth: '2026-11',
+        necessary: [
+          {
+            key: 'groceries',
+            low: '100.00',
+            central: '100.00',
+            high: '100.00',
+            method: 'synthetic-reference@v1',
+            observationCount: 6,
+            provenance: [Array],
+            note: null,
+            decisionCapabilities: [Object]
+          }
+        ],
+        flexible: [
+          {
+            key: 'household-restaurants',
+            low: '60.00',
+            central: '60.00',
+            high: '60.00',
+            method: 'synthetic-reference@v1',
+            observationCount: 6,
+            provenance: [Array],
+            note: null,
+            decisionCapabilities: [Object]
+          },
+          {
+            key: 'clothing',
+            low: '50.00',
+            central: '50.00',
+            high: '50.00',
+            method: 'synthetic-reference@v1',
+            observationCount: 6,
+            provenance: [Array],
+            note: null,
+            decisionCapabilities: [Object]
+          }
+        ],
+        necessaryTotal: { low: '100.00', central: '100.00', high: '100.00' },
+        flexibleTotal: { low: '110.00', central: '110.00', high: '110.00' },
+        restaurantCorpus: [],
+        excludedRestaurantSubcategories: [],
+        estimatedDays: {}
+      }
+    },
+    activityHistory: undefined
+  },
+  expected: {
+    simpleOccurrences: true,
+    renewals: true,
+    forecast: {
+      meta: {
+        targetMonth: '2026-11',
+        sourcePublicationId: 'synthetic-publication',
+        sourceRevision: 1,
+        analyticsRevision: 1,
+        computedAt: '2026-10-05T10:00:00Z'
+      },
+      publicationMeta: {
+        publicationId: 'synthetic-publication',
+        revision: 1,
+        factsHash: 'synthetic',
+        manifestHash: 'synthetic'
+      },
+      resourceMeta: {
+        contractVersion: 'synthetic-forecast@v1',
+        methodSignature: 'synthetic',
+        policyVersions: {},
+        resourceInputHash: 'synthetic'
+      },
+      income: {
+        low: '2000.00',
+        central: '2000.00',
+        high: '2000.00',
+        components: [
+          {
+            key: 'income:Digital Learning Contest',
+            label: 'Synthetic salary A',
+            central: '1000.00'
+          },
+          {
+            key: 'income:Promotrans',
+            label: 'Synthetic salary B',
+            central: '1000.00'
+          }
+        ]
+      },
+      components: [
+        {
+          key: 'obligation:rent',
+          label: 'obligation:rent',
+          nature: 'CONTRACTUAL_EXPECTED',
+          additiveGroup: 'obligations',
+          knowledgeState: 'PROBABLE',
+          low: '500.00',
+          central: '500.00',
+          high: '500.00'
+        }
+      ],
+      obligations: { low: '500.00', central: '500.00', high: '500.00' },
+      economicCost: { low: '710.00', central: '710.00', high: '710.00' },
+      freeToSpend: { low: '1290.00', central: '1290.00', high: '1290.00' },
+      cash: {
+        grossBeforeUnconfirmedFunding: { low: '710.00', central: '710.00', high: '710.00' }
+      },
+      reserve: { amount: '0.00' },
+      referencePlan: {
+        targetMonth: '2026-11',
+        necessary: [
+          {
+            key: 'groceries',
+            low: '100.00',
+            central: '100.00',
+            high: '100.00',
+            method: 'synthetic-reference@v1',
+            observationCount: 6,
+            provenance: [Array],
+            note: null,
+            decisionCapabilities: [Object]
+          }
+        ],
+        flexible: [
+          {
+            key: 'household-restaurants',
+            low: '60.00',
+            central: '60.00',
+            high: '60.00',
+            method: 'synthetic-reference@v1',
+            observationCount: 6,
+            provenance: [Array],
+            note: null,
+            decisionCapabilities: [Object]
+          },
+          {
+            key: 'clothing',
+            low: '50.00',
+            central: '50.00',
+            high: '50.00',
+            method: 'synthetic-reference@v1',
+            observationCount: 6,
+            provenance: [Array],
+            note: null,
+            decisionCapabilities: [Object]
+          }
+        ],
+        necessaryTotal: { low: '100.00', central: '100.00', high: '100.00' },
+        flexibleTotal: { low: '110.00', central: '110.00', high: '110.00' },
+        restaurantCorpus: [],
+        excludedRestaurantSubcategories: [],
+        estimatedDays: {}
+      }
+    }
+  },
+  operator: 'deepStrictEqual'
+}
+
+Node.js v22.18.0

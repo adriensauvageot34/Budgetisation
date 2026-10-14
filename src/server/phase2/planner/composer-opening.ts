@@ -11,7 +11,7 @@ import { composerUiModel } from "./composer-service";
  * rejection without turning it into a successful or partial financial result. */
 export async function readComposerOpening(deps: PlannerDependencies, householdId: string, month: string,
   readDrafts: () => Promise<ComposerDraftSnapshot | null>) {
-  const world = Promise.resolve().then(() => deps.readWorld(householdId, month));
+  const world = Promise.resolve().then(() => (deps.readComposerWorld ?? deps.readWorld)(householdId, month));
   void world.catch(() => undefined);
   const drafts = await readDrafts();
   const openingDeps: PlannerDependencies = { ...deps, readWorld: (household, targetMonth) => {

@@ -1,0 +1,130 @@
+P3-FULL-FACTS-RELATIONS-PROJECTIONS-A PASS
+P3-FULL-FACTS-RELATIONS-PROJECTIONS-B PASS
+P3-BASELINE-COMPOSER-FINANCIAL-DIGEST-PARITY PASS
+P3-UNKNOWN-PARTIAL-MULTIPERSON-PARENT-CHILD PASS
+P3-OUTSIDE-PERIOD-ABSENT-IDENTITIES-AND-TRANSIT PASS
+P3-OVERLAPPING-KEYS-EMPTY-AND-CONCURRENT-READS PASS
+P3-CAPPED-GROUP-AND-RANGE-FALLBACK-NO-FALSE-ABSENCE PASS
+P3-ERROR-ATOMIC-AND-DUPLICATE-CONFLICT PASS
+{
+  event: 'canonical_read_error',
+  source: 'life_events',
+  errorCode: '57014',
+  message: 'Synthetic read failure',
+  environment: null,
+  commitSha: null
+}
+{
+  event: 'canonical_read_error',
+  source: 'life_events',
+  errorCode: '57014',
+  message: 'Synthetic read failure',
+  environment: null,
+  commitSha: null
+}
+{
+  event: 'canonical_read_error',
+  source: 'life_events',
+  errorCode: '57014',
+  message: 'Synthetic read failure',
+  environment: null,
+  commitSha: null
+}
+{
+  event: 'canonical_read_error',
+  source: 'life_events',
+  errorCode: '42501',
+  message: 'Synthetic read failure',
+  environment: null,
+  commitSha: null
+}
+{
+  event: 'canonical_read_error',
+  source: 'life_events',
+  errorCode: '42501',
+  message: 'Synthetic read failure',
+  environment: null,
+  commitSha: null
+}
+{
+  event: 'canonical_read_error',
+  source: 'life_events',
+  errorCode: '42501',
+  message: 'Synthetic read failure',
+  environment: null,
+  commitSha: null
+}
+{
+  event: 'canonical_read_error',
+  source: 'life_events',
+  errorCode: '42501',
+  message: 'Synthetic read failure',
+  environment: null,
+  commitSha: null
+}
+{
+  event: 'canonical_read_error',
+  source: 'life_events',
+  errorCode: '42501',
+  message: 'Synthetic read failure',
+  environment: null,
+  commitSha: null
+}
+{
+  event: 'canonical_read_error',
+  source: 'life_events',
+  errorCode: '42501',
+  message: 'Synthetic read failure',
+  environment: null,
+  commitSha: null
+}
+{
+  event: 'canonical_read_error',
+  source: 'life_events',
+  errorCode: '42501',
+  message: 'Synthetic read failure',
+  environment: null,
+  commitSha: null
+}
+P3-PERMISSION-AND-NETWORK-FAIL-CLOSED PASS
+P3-REPOSITORIES-HOUSEHOLDS-RETROACTIVE-CHANGES PASS
+P3-RECORD-SINGLE-UNIQUENESS-NOT-BYPASSED PASS
+{
+  event: 'canonical_read_error',
+  source: 'life_events',
+  errorCode: '57014',
+  message: 'Synthetic read failure',
+  environment: null,
+  commitSha: null
+}
+P3-PAGINATION-ALL-PAGES-AND-SECOND-PAGE-FAIL-CLOSED PASS
+P3-TEMPORAL-BOUNDARIES-PROJECTION-AND-PUBLICATION PASS
+P3-CACHED-RANGE-NOT-PROOF-OF-LIVE-SOURCE-REVISION PASS
+P3 sample variant=P2 latency=0 reads=78
+P3 sample variant=A latency=0 reads=52
+P3 sample variant=B latency=0 reads=32
+P3 sample variant=B latency=0 reads=32
+P3 sample variant=A latency=0 reads=52
+P3 sample variant=P2 latency=0 reads=78
+P3 sample variant=P2 latency=0 reads=78
+P3 sample variant=A latency=0 reads=52
+P3 sample variant=B latency=0 reads=32
+P3 sample variant=P2 latency=15 reads=78
+P3 sample variant=A latency=15 reads=52
+P3 sample variant=B latency=15 reads=32
+P3 sample variant=B latency=15 reads=32
+P3 sample variant=A latency=15 reads=52
+P3 sample variant=P2 latency=15 reads=78
+P3 sample variant=P2 latency=15 reads=78
+P3 sample variant=A latency=15 reads=52
+P3 sample variant=B latency=15 reads=32
+P3 sample variant=P2 latency=75 reads=78
+P3 sample variant=A latency=75 reads=52
+P3 sample variant=B latency=75 reads=32
+P3 sample variant=B latency=75 reads=32
+P3 sample variant=A latency=75 reads=52
+P3 sample variant=P2 latency=75 reads=78
+P3 sample variant=P2 latency=75 reads=78
+P3 sample variant=A latency=75 reads=52
+P3 sample variant=B latency=75 reads=32
+{"status":"EXECUTED_PASS_TARGETED_HISTORY_FIXTURE_ONLY","checks":14,"reference":{"physicalReads":78,"rows":6493,"bytes":1513004,"transportCpuMs":157.77929999999105,"peakPhysicalConcurrency":1,"byTable":{"person_days":{"gets":7,"rows":1200,"bytes":199207},"canonical_household_scope_control":{"gets":1,"rows":1,"bytes":94},"life_events":{"gets":17,"rows":793,"bytes":274752},"location_occurrences":{"gets":25,"rows":2056,"bytes":519329},"life_event_types":{"gets":1,"rows":1,"bytes":124},"life_event_participations":{"gets":19,"rows":1586,"bytes":421903},"life_event_localizations":{"gets":5,"rows":856,"bytes":97589},"life_event_financial_links":{"gets":3,"rows":0,"bytes":6}},"wallMs":1790.6566999999995,"cpuMs":2531,"heapDeltaBytes":1006840,"historicalPayloadBytes":29,"historicalRows":{"identityEntries":0,"ranges":0,"identityHits":0,"rangeHits":0},"logicalTargetCalls":30,"logicalMethods":{"loadPlaceVisits":8,"loadActivityOccurrences":8,"loadLifeEventRecords":3,"loadLifeEventParticipationRows":3,"loadLifeEventLocalizationRows":3,"loadActivityOccurrenceById":5}},"variants":[{"variant":"A","physicalReads":52,"rows":5119,"bytes":1187998,"transportCpuMs":68.59050000000207,"peakPhysicalConcurrency":1,"byTable":{"person_days":{"gets":7,"rows":1200,"bytes":199207},"canonical_household_scope_control":{"gets":1,"rows":1,"bytes":94},"life_events":{"gets":15,"rows":653,"bytes":218622},"life_event_types":{"gets":1,"rows":1,"bytes":124},"location_occurrences":{"gets":16,"rows":1536,"bytes":403600},"life_event_participations":{"gets":6,"rows":1152,"bytes":300678},"life_event_localizations":{"gets":3,"rows":576,"bytes":65667},"life_event_financial_links":{"gets":3,"rows":0,"bytes":6}},"wallMs":1075.5,"cpuMs":1235,"heapDeltaBytes":22034664,"historicalPayloadBytes":29,"historicalRows":{"identityEntries":0,"ranges":0,"identityHits":0,"rangeHits":0},"logicalTargetCalls":30,"logicalMethods":{"loadPlaceVisits":8,"loadActivityOccurrences":8,"loadLifeEventRecords":3,"loadLifeEventParticipationRows":3,"loadLifeEventLocalizationRows":3,"loadActivityOccurrenceById":5}},{"variant":"B","physicalReads":32,"rows":3890,"bytes":989387,"transportCpuMs":72.45029999998587,"peakPhysicalConcurrency":1,"byTable":{"person_days":{"gets":7,"rows":1200,"bytes":199207},"canonical_household_scope_control":{"gets":1,"rows":1,"bytes":94},"life_events":{"gets":4,"rows":576,"bytes":196852},"location_occurrences":{"gets":10,"rows":960,"bytes":340810},"life_event_types":{"gets":1,"rows":1,"bytes":124},"life_event_participations":{"gets":3,"rows":576,"bytes":186627},"life_event_localizations":{"gets":3,"rows":576,"bytes":65667},"life_event_financial_links":{"gets":3,"rows":0,"bytes":6}},"wallMs":920.2217999999993,"cpuMs":1016,"heapDeltaBytes":19338480,"historicalPayloadBytes":267485,"historicalRows":{"identityEntries":1248,"ranges":1,"identityHits":861,"rangeHits":6},"logicalTargetCalls":30,"logicalMethods":{"loadPlaceVisits":8,"loadActivityOccurrences":8,"loadLifeEventRecords":3,"loadLifeEventParticipationRows":3,"loadLifeEventLocalizationRows":3,"loadActivityOccurrenceById":5}}]}

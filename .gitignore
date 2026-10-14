@@ -29,3 +29,4 @@ next-env.d.ts
 # Generated local P4B bundles and logs; reviewed synthetic evidence lives in docs.
 /outputs/p14-p4b-*/
 /outputs/p14-p4d/
+/outputs/p14-snap1/

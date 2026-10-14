@@ -8,7 +8,8 @@ import {
 } from "@/analytics/global-v2";
 import { addDays, parseLocalDate } from "@/core/time";
 import { canonicalString, optionalCanonicalString } from "@/server/canonical/record";
-import type { CanonicalRepository } from "@/server/canonical/repository";
+import type { CanonicalRepository, CanonicalDateRange } from "@/server/canonical/repository";
+import type { ActivityOccurrenceFact } from "@/analytics/facts";
 
 const participationStatus = (value: string): MobilityLifeEventParticipationAuthority["status"] => {
   if (value === "Confirmée") return "CONFIRMED";
@@ -31,6 +32,9 @@ const participationPrecision = (value: string): MobilityLifeEventParticipationAu
 export async function resolveGlobalM7MobilityContextAuthority(input: {
   readonly repository: CanonicalRepository;
   readonly certifiedThrough?: string;
+  /** Optional server-admitted Canonical projection, only for this exact range.
+   * Places, detailed participation, observed legs and all M7 calculations stay live. */
+  readonly activityOccurrences?: Readonly<{ range: CanonicalDateRange; facts: Promise<readonly ActivityOccurrenceFact[]> }>;
 }) {
   const { repository } = input;
   const context = repository.context;
@@ -46,7 +50,8 @@ export async function resolveGlobalM7MobilityContextAuthority(input: {
     repository.loadMobilityLegFacts(range),
     repository.loadPlaceVisits(range),
     repository.loadPersonDays(range),
-    repository.loadActivityOccurrences(range),
+    input.activityOccurrences?.range.start === range.start && input.activityOccurrences.range.endExclusive === range.endExclusive
+      ? input.activityOccurrences.facts : repository.loadActivityOccurrences(range),
   ]);
   const eventIds = occurrences.map((event) => String(event.lifeEventId));
   const [eventRows, participationRows, localizationRows] = await Promise.all([
