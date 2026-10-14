@@ -7,8 +7,9 @@ const {plannerDigest}=require('@/domain/phase2/planner/json');
 const sourceTables=ACTIVITY_HISTORY_DEPENDENCIES.slice(0,4);
 const schemaSQL=fs.readFileSync('scripts/fixtures/snap1-isolated.sql','utf8');
 const bodyOf=name=>schemaSQL.match(new RegExp(`CREATE FUNCTION snap1_isolated\\.${name}\\(\\).*?AS \\$\\$(.*?)\\$\\$`,'s'))[1];
-export async function isolatedStore(directory,{initialize=false,data}={}){
-  const pg=new PGlite(directory),metrics={sqlReads:0,sourceReads:0,sourceBytes:0,inspectReads:0,inspectBytes:0,calls:[]};
+export async function isolatedStore(directory,{initialize=false,data,nativeTestDatabase}={}){
+  // Optional explicitly supplied synthetic test connection; never a runtime adapter.
+  const pg=nativeTestDatabase??new PGlite(directory),metrics={sqlReads:0,sourceReads:0,sourceBytes:0,inspectReads:0,inspectBytes:0,calls:[]};
   await pg.waitReady;
   if(initialize){
     await pg.exec(schemaSQL);

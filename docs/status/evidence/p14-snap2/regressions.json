@@ -1,0 +1,176 @@
+[
+  {
+    "name": "planner-performance-parity",
+    "command": "node --experimental-strip-types scripts/check-planner-performance-parity.mjs",
+    "exit": 0,
+    "status": "PASS"
+  },
+  {
+    "name": "phase2-planner-p11",
+    "command": "node --experimental-strip-types scripts/check-phase2-planner-p11.mjs",
+    "exit": 0,
+    "status": "PASS"
+  },
+  {
+    "name": "phase2-planner-p12",
+    "command": "node --experimental-strip-types scripts/check-phase2-planner-p12.mjs",
+    "exit": 0,
+    "status": "PASS"
+  },
+  {
+    "name": "phase2-planner-p13",
+    "command": "node --experimental-strip-types scripts/check-phase2-planner-p13.mjs",
+    "exit": 0,
+    "status": "PASS"
+  },
+  {
+    "name": "phase2-planner-kernel",
+    "command": "node --experimental-strip-types scripts/check-phase2-planner-kernel.mjs",
+    "exit": 0,
+    "status": "PASS"
+  },
+  {
+    "name": "phase2-planner-contexts",
+    "command": "node --experimental-strip-types scripts/check-phase2-planner-contexts.mjs",
+    "exit": 0,
+    "status": "PASS"
+  },
+  {
+    "name": "phase2-planner-baseline",
+    "command": "node --experimental-strip-types scripts/check-phase2-planner-baseline.mjs",
+    "exit": 0,
+    "status": "PASS"
+  },
+  {
+    "name": "composer-p14-p1-read-reuse",
+    "command": "node --experimental-strip-types scripts/check-composer-p14-p1-read-reuse.mjs",
+    "exit": 0,
+    "status": "PASS"
+  },
+  {
+    "name": "composer-p14-p1-opening",
+    "command": "node --experimental-strip-types scripts/check-composer-p14-p1-opening.mjs",
+    "exit": 0,
+    "status": "PASS"
+  },
+  {
+    "name": "composer-p14-p2-mutation",
+    "command": "node --experimental-strip-types scripts/check-composer-p14-p2-mutation.mjs",
+    "exit": 0,
+    "status": "PASS"
+  },
+  {
+    "name": "composer-p14-p2-scheduler",
+    "command": "node --experimental-strip-types scripts/check-composer-p14-p2-scheduler.mjs",
+    "exit": 0,
+    "status": "PASS"
+  },
+  {
+    "name": "composer-p14-p2-presentation",
+    "command": "node --experimental-strip-types scripts/check-composer-p14-p2-presentation.mjs",
+    "exit": 0,
+    "status": "PASS"
+  },
+  {
+    "name": "composer-p14-p2-durable",
+    "command": "node --experimental-strip-types scripts/check-composer-p14-p2-durable.mjs",
+    "exit": 0,
+    "status": "PASS"
+  },
+  {
+    "name": "composer-p14-p3-history",
+    "command": "node --experimental-strip-types scripts/check-composer-p14-p3-history.mjs",
+    "exit": 0,
+    "status": "PASS"
+  },
+  {
+    "name": "composer-r6-p45",
+    "command": "node --experimental-strip-types scripts/check-composer-r6-p45.mjs",
+    "exit": 0,
+    "status": "PASS"
+  },
+  {
+    "name": "composer-r6-presentation",
+    "command": "node --experimental-strip-types scripts/check-composer-r6-presentation.mjs",
+    "exit": 0,
+    "status": "PASS"
+  },
+  {
+    "name": "phase2-planner-atomic-ui",
+    "command": "node --experimental-strip-types scripts/check-phase2-planner-atomic-ui.mjs",
+    "exit": 0,
+    "status": "PASS"
+  },
+  {
+    "name": "phase2-planner-composer",
+    "command": "node --experimental-strip-types scripts/check-phase2-planner-composer.mjs",
+    "exit": 0,
+    "status": "PASS"
+  },
+  {
+    "name": "composer-p14-p4b-progressive",
+    "command": "node --experimental-strip-types scripts/check-composer-p14-p4b-progressive.mjs",
+    "exit": 0,
+    "status": "PASS"
+  },
+  {
+    "name": "composer-p14-p4d-suggestions",
+    "command": "node --experimental-strip-types scripts/check-composer-p14-p4d-suggestions.mjs",
+    "exit": 0,
+    "status": "PASS"
+  },
+  {
+    "name": "phase2-planner-p02-conservation",
+    "command": "node --experimental-strip-types scripts/check-phase2-planner-p02-conservation.mjs",
+    "exit": 0,
+    "status": "PASS"
+  },
+  {
+    "name": "phase2-planner-mobility",
+    "command": "node --experimental-strip-types scripts/check-phase2-planner-mobility.mjs",
+    "exit": 0,
+    "status": "PASS"
+  },
+  {
+    "name": "phase2-planner-p09",
+    "command": "node --experimental-strip-types scripts/check-phase2-planner-p09.mjs",
+    "exit": 0,
+    "status": "PASS"
+  },
+  {
+    "name": "phase2-planner-p10",
+    "command": "node --experimental-strip-types scripts/check-phase2-planner-p10.mjs",
+    "exit": 0,
+    "status": "PASS"
+  },
+  {
+    "name": "phase2-planner-interactions",
+    "command": "node --experimental-strip-types scripts/check-phase2-planner-interactions.mjs",
+    "exit": 1,
+    "status": "FAIL"
+  },
+  {
+    "name": "canonical-in-batching",
+    "command": "node --experimental-strip-types scripts/check-canonical-in-batching.mjs",
+    "exit": 0,
+    "status": "PASS"
+  },
+  {
+    "name": "mobility-context",
+    "command": "node --experimental-strip-types scripts/check-mobility-context.mjs",
+    "exit": 0,
+    "status": "PASS"
+  },
+  {
+    "name": "mobility-trip-contexts",
+    "command": "node --experimental-strip-types scripts/check-mobility-trip-contexts.mjs",
+    "exit": 0,
+    "status": "PASS"
+  },
+  {
+    "name": "analytics-materialization",
+    "command": "node --experimental-strip-types scripts/check-analytics-materialization.mjs",
+    "exit": 0,
+    "status": "PASS"
+  }
+]

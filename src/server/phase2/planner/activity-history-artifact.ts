@@ -13,6 +13,7 @@ export const ACTIVITY_HISTORY_DEPENDENCIES = ["life_events", "life_event_types",
 // This attestation is deliberately restricted to the isolated implementation.
 // Generic household_revisions / record_analytics_mutation do not prove writer coverage.
 export const ACTIVITY_HISTORY_COVERAGE = "snap1-isolated-always-triggers@v1";
+export const ACTIVITY_HISTORY_DURABLE_COVERAGE = "canonical-activity-transactional-triggers@v2";
 export type ActivityHistory = NonNullable<PlanningBaselineSources["simpleOccurrences"]>;
 export type ActivityHistoryScope = Readonly<{ userId: string; householdId: string; personIds: readonly string[];
   timezone: string; start: string; endExclusive: string; cutoffDate: string; contract: string; method: string; schema: 1 }>;
@@ -44,7 +45,7 @@ const keyOf = (scope: ActivityHistoryScope) => plannerDigest(scope);
 function covered(proof: unknown): proof is ActivityHistoryProof {
   if (!proof || typeof proof !== "object" || Array.isArray(proof)) return false;
   const value = proof as ActivityHistoryProof;
-  return value.coverage === ACTIVITY_HISTORY_COVERAGE && !!value.revisions && typeof value.revisions === "object"
+  return [ACTIVITY_HISTORY_COVERAGE, ACTIVITY_HISTORY_DURABLE_COVERAGE].includes(value.coverage) && !!value.revisions && typeof value.revisions === "object"
     && Object.keys(value).length === 2 && Object.keys(value.revisions).length === ACTIVITY_HISTORY_DEPENDENCIES.length
     && ACTIVITY_HISTORY_DEPENDENCIES.every(name => typeof value.revisions[name] === "string" && /^(0|[1-9]\d*)$/u.test(value.revisions[name]));
 }
