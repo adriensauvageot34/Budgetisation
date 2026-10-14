@@ -1,6 +1,6 @@
 # P14-SNAP-3 — socle Canonical/M7/Global, mesures réelles et gate de livraison
 
-Date : 14 octobre 2026. **SNAP3_REAL_GAIN_PARTIAL_BLOCKED_CANONICAL_REFRESH**. La première tranche Canonical avait démontré un gain réel avant M7. Après la migration M7, l'ancien artifact Canonical est correctement invalidé, mais sa republication a rencontré un timeout PostgreSQL. M7 est publié et relu avec une session authentifiée ; la consommation combinée Canonical + M7 n'est donc pas certifiée. SNAP-3 reste désactivé en Production.
+Date : 14 octobre 2026. **Reprise ciblée SNAP-3 : Canonical et M7 republiés et admis ensemble ; livraison Production à contrôler.** Les sections A–F conservent les constats de la tranche antérieure, notamment son verdict alors bloqué par la republication Canonical. La section G contient les nouvelles preuves et le verdict courant.
 
 ## Point de départ
 
@@ -142,4 +142,37 @@ Global/FOOD compact réutilise la publication de même génération que Forecast
 
 **Aucun push, PR, merge, activation ni déploiement Production SNAP-3** à ce gate. Production et `main` servent toujours `f765f6d`. Les deux migrations additives sont déjà déployées et tracées localement : Canonical `20261014165936`, M7 `20261014174653`. Leur couverture de writers a été vérifiée structurellement ; le coût opérationnel réel de leurs triggers n'a pas été quantifié. SNAP-3 OFF évite l'admission en Production, mais n'annule pas le coût potentiel des triggers SQL déjà installés.
 
-Étape minimale : rendre la préparation Canonical propriétaire fiable sous la limite SQL, sans augmenter `statement_timeout` ni perdre des faits, puis republier **une seule fois** et mesurer de nouveau Canonical + M7 ensemble. Si cela demande une autre migration ou une modification de doctrine Canonical, la soumettre à revue avant exécution. Conserver les artifacts et la possibilité de désactiver la consommation sans suppression. SNAP-4 n'est pas commencé.
+Étape minimale à ce gate : rendre la préparation Canonical propriétaire fiable sous la limite SQL, sans augmenter `statement_timeout` ni perdre des faits, puis republier **une seule fois** et mesurer de nouveau Canonical + M7 ensemble. Si cela demande une autre migration ou une modification de doctrine Canonical, la soumettre à revue avant exécution. Conserver les artifacts et la possibilité de désactiver la consommation sans suppression. SNAP-4 n'est pas commencé.
+
+## G. Reprise ciblée après timeout Canonical
+
+Point de départ `78deb58dafe76baa9a9c3748ea3ac32b81b39b03`. Le correctif local est `ceb23e33850398fc9a8ad5f8ee718662cd1be495`. Les deux Previews protégées, même code et région `iad1`, sont ON `dpl_61R71xz3bTjUzA8MAdjtyCWv6qXW` et OFF `dpl_6DiAQQVFnWXT9rGg2ktnkQnirFM7`, toutes deux READY après build Next complet Vercel.
+
+Les logs PostgreSQL de l'échec antérieur identifient des lectures `operation_place_canonical` et `financial_economic_timing_canonical` avec `57014`. Le préparateur demandait `count=exact` à chaque lot, alors que PostgREST calculait également les lignes. `EXPLAIN` sans `ANALYZE` d'un lot technique de 120 clés montre une quasi-division par deux du coût planifié quand ce comptage disparaît : places ~2703→1455, timing ~5344→2672. Le nombre de scans `operations` passe de 6→3 et 14→7. Ce plan prouve du travail redondant ; il ne prouve pas que le comptage était l'unique cause de l'intermittence.
+
+Le correctif supprime `count=exact` seulement pour ces deux vues. Places est lu par lots de clés et sa cardinalité maximale d'une ligne par clé est contrôlée. Timing est paginé explicitement par 1000 lignes, avec ordre déterministe clé/segment ; toute erreur d'une page bloque le résultat au lieu de perdre silencieusement des faits. Les autres sources gardent le comptage exact. Aucun plafonnement, changement de période, de règle économique, de Compiler ou de Finance V2. Régressions : six tests ciblés, lot Canonical, Baseline 14/14, Kernel, parité 22 scénarios × 9 digests et TypeScript PASS. Le build Next local n'a pas abouti après blocage Turbopack ; les builds Next complets des deux Previews ont réussi.
+
+Une seule republication Canonical sur le vrai Supabase a abouti ; l'interface a confirmé « préparé et publication relue ». Vérification SQL en lecture seule : Canonical génération 2, M7 génération 1, deux artifacts READY, époque de schéma 2, couverture des writers vraie, 30 triggers ALWAYS, inspect accessible à `authenticated`, publication refusée à `authenticated` et autorisée à `service_role`. L'artifact Canonical contient 368 328 octets décodés ; M7 4 715 479. Aucune nouvelle migration ni écriture dans les sources financières.
+
+### A/B authentifié du socle complet
+
+Après exclusion de cinq paires dont les viewports différaient, **cinq nouvelles paires** de rechargement chaud ont été alternées avec le même compte, mois, code, région et viewport vérifié **1728×900 dans chaque onglet**. Tous les Boards ont atteint FRESH ; chaque READ ON contient **Canonical HIT + M7 HIT** ; les digests financiers sont identiques entre ON et OFF ; zéro timeout et zéro écriture interceptée. [Preuve chiffrée sans données personnelles](evidence/p14-snap3/real-canonical-m7-fixed-proof.json).
+
+| Mesure réelle, n=5 par variante | OFF P50 / P95 descriptif | ON P50 / P95 descriptif |
+|---|---:|---:|
+| Ouverture → Board/Preview FRESH | 17,96 / 21,81 s | 7,00 / 7,75 s |
+| World serveur | 12,92 / 14,13 s | 2,47 / 2,75 s |
+| Canonical direct / admission | 12,73 / 13,90 s | 0,68 / 0,86 s |
+| M7 direct / admission avec contexte | 11,43 / 12,07 s | 1,72 / 2,07 s |
+| GET/RPC par READ | 274 | 42 |
+| Corps HTTP décodés par READ | 9,89 Mio | 2,35 Mio |
+
+Gains FRESH appariés OFF − ON : **11,97 ; 14,54 ; 11,10 ; 10,21 ; 11,67 s**, médiane **11,67 s**. 232 GET/RPC et environ 7,54 Mo de corps HTTP décodés sont évités par READ observé. Ce volume n'est pas le trafic facturé. Le P95 sur cinq échantillons reste descriptif, non une certification de fiabilité. Le dernier READ donne Global/FOOD 0,63 s ON contre 0,53 s OFF, Evidence 2,00 contre 3,18 s et Finance V2 0,28 contre 0,31 s ; ces trois comparaisons n'ont qu'un échantillon chacune. Les branches parallèles ne s'additionnent pas pour reconstituer le temps de page.
+
+Sur une édition locale identique, avec autosauvegarde désactivée et garde d'écritures Preview actif, dernière édition→FRESH a pris **5,28 s ON contre 19,13 s OFF** (une paire). Les digests du Draft et de la projection finale sont égaux. Aucun Apply ni écriture financière n'a été effectué.
+
+### Réserves et décision
+
+La cible d'ouverture <2 s n'est **pas atteinte** : 7,00 s P50 ON. Le prochain coût dominant observé est Evidence/Forecast et le temps hors serveur, pas le lecteur Canonical direct remplacé. La cause exclusive de l'ancien `57014` reste non prouvée ; aucune récidive n'est apparue dans la republication unique ou les dix READ stricts. La fraîcheur sous mutation réelle d'une source financière n'a pas été testée, car cela aurait enfreint la consigne de ne pas écrire dans les finances de Production ; les tests PostgreSQL 17 synthétiques, les 30 triggers distants et l'admission réelle couvrent les autres parties du contrat. Le coût de ces triggers sur les writers réels reste `NOT_RUN` (`track_functions=none`) ; les triggers sont déjà déployés, donc l'activation du lecteur ne modifie pas leur coût. En cas d'invalidation, le READ revient au propriétaire direct ; il peut alors retrouver sa latence et ses timeouts préexistants jusqu'à republication.
+
+Le gain net de lecture est significatif et les contrôles de parité disponibles passent. **Livraison contrôlée admissible**, avec SNAP-3 OFF au premier déploiement, contrôle Production puis activation séparée du flag, et retour immédiat à OFF si une divergence, une admission invalide ou un timeout nouveau apparaît. L'activation ne constitue pas une certification de l'objectif <2 s ni du coût des triggers.
