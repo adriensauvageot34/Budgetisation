@@ -1,6 +1,6 @@
 # P14-SNAP-3 — progression de la première tranche Canonical
 
-Date : 14 octobre 2026. **SNAP3_PENDING_EXACT_MIGRATION_APPROVAL**. La mission n'est pas clôturée.
+Date : 14 octobre 2026. **SNAP3_CANONICAL_MIGRATED_PENDING_REAL_ARTIFACT**. La mission n'est pas clôturée.
 
 ## Point de départ
 
@@ -19,7 +19,7 @@ Le scope exact conserve auteur/foyer/personnes/timezone/contrat/plage/méthode. 
 
 Apply et CHECK_APPLY conservent les chemins autoritaires existants. Draft, Plan, MonthInputs, PlannedExpenses, Wallet, épargne, évidence courante et devis restent vivants. **M7, Global compact et préparation d'évidence historique : non implémentés**, conformément au gate du premier test réel.
 
-## B. Migration exacte proposée, non appliquée
+## B. Migration Canonical appliquée
 
 Fichier complet : [P14_SNAP3_CANONICAL_BASIS_REVIEW.sql](../../supabase/candidates/P14_SNAP3_CANONICAL_BASIS_REVIEW.sql).
 
@@ -33,7 +33,9 @@ SHA-256 des octets du fichier : **35582B111D8B22B921D4E7BF49E6653CEF5F6A2AC0AC1C
 - Les triggers n'écrivent que le compteur privé. Compteur global conservateur : son verrou peut ajouter de la contention et son indisponibilité peut faire échouer un writer source. Coût/contension Production **NOT_RUN**. Aucune prétention à une granularité par mois.
 - La migration est atomique dans son SQL avec lock_timeout 5 s ; publish limite l'attente du compteur à 2 s. Aucun relèvement de statement_timeout.
 
-**La revue automatique a rejeté `apply_migration`**, estimant que l'autorisation générale ne couvrait pas assez explicitement ce SQL exact et les triggers sur plusieurs tables financières. Une validation explicite du fichier et de son empreinte a été demandée. Après le message « CONTINUE », deux soumissions du même fichier par l'outil officiel ont renvoyé `Invalid or expired requestState`. La lecture distante effectuée après chacune confirme : table absente, RPC absente, zéro trigger SNAP-3. Aucune DDL distante n'a été effectuée ; aucune autre voie d'exécution n'a été utilisée. Le gate d'approbation reste à lever par une réponse explicite sur le SQL et son empreinte.
+La revue automatique avait demandé un accord explicite sur ce SQL exact, en raison des 22 triggers sur des sources financières. Après cet accord, le fichier à l'empreinte ci-dessus a été appliqué par `supabase_apply_migration` : **`20261014165936_composer_historical_basis_canonical`**. Sa copie versionnée se trouve dans `supabase/migrations/` avec la même empreinte. Aucun contournement ni exécution SQL parallèle n'a été utilisé.
+
+Contrôles distants immédiats : deux tables avec RLS, 22 triggers ALWAYS, couverture des writers `true`, propriétaires RPC `postgres`, inspect exécutable par `authenticated` mais pas `anon`, publish exécutable par `service_role` mais pas `authenticated`, aucun INSERT direct `authenticated` sur l'artifact. Un seul état, zéro artifact. L'Advisor signale `rls_enabled_no_policy` pour les deux tables privées ; c'est cohérent avec l'absence voulue d'accès direct et les RPC `SECURITY DEFINER`. Aucun test JWT SNAP-3 n'a encore été réalisé.
 
 ## C. Contrôles exécutés
 
@@ -57,7 +59,8 @@ SHA-256 des octets du fichier : **35582B111D8B22B921D4E7BF49E6653CEF5F6A2AC0AC1C
 | SNAP-1 | PASS 16 contrôles ; premier essai arrêté par dossier existant, log initial conservé |
 | SNAP-2 | PASS 17 contrôles PostgreSQL 17 synthétique, World/Finance/Apply inclus |
 | API Preview sans session Budgetisation | PASS, HTTP 401 AUTHENTICATION_REQUIRED via vercel curl officiel |
-| JWT Supabase SNAP-3 / publication réelle / invalidation réelle | NOT_RUN, migration bloquée |
+| Migration réelle / RLS-grants-couverture structurels | PASS lecture distante, aucun writer métier sollicité |
+| JWT Supabase SNAP-3 / publication réelle / invalidation réelle | NOT_RUN, Preview en attente d'une session applicative |
 
 R3-008 `CONTEXT_REFERENCE_OWNER_UNAVAILABLE` reste un échec préexistant documenté ; il n'a pas été réexécuté ni requalifié en PASS ici. Les contrôles React des deux composants concernés préservent authentification serveur, gating, boutons natifs, état accessible et absence de calcul financier client.
 
@@ -87,10 +90,8 @@ Rollback applicatif prévu : `COMPOSER_P14_SNAP3_HISTORICAL_BASIS=0`, lecteur di
 
 ## F. Reprise minimale
 
-1. Obtenir l'accord explicite sur **ce SQL exact** ; vérifier son SHA inchangé.
-2. Appliquer via migration officielle, enregistrer le numéro réellement attribué et vérifier owners/grants/RLS/couverture.
-3. Préparer et publier la première portion Canonical via la route authentifiée dédiée, mesurer sa complétude, sa taille, son coût et sa parité.
-4. Mesurer OFF/ON alternés à scope/viewport/Draft identiques ; distinguer World et FRESH, préserver les essais défavorables.
-5. Étendre M7 et le lecteur Global compact **uniquement après cette première preuve** ; puis gates de livraison/activation prévus par la mission.
+1. Préparer et publier la première portion Canonical via la route authentifiée dédiée, mesurer sa complétude, sa taille, son coût et sa parité.
+2. Mesurer OFF/ON alternés à scope/viewport/Draft identiques ; distinguer World et FRESH, préserver les essais défavorables.
+3. Étendre M7 et le lecteur Global compact **uniquement après cette première preuve** ; puis gates de livraison/activation prévus par la mission.
 
-Le seul blocage de la publication de la première tranche est actuellement **l'approbation de migration exigée par la revue automatique**. SNAP-3 reste une mission en cours ; SNAP-4 n'est pas commencé.
+La Preview ON attend une session Budgetisation pour publier le premier artifact. SNAP-3 reste une mission en cours ; SNAP-4 n'est pas commencé.
