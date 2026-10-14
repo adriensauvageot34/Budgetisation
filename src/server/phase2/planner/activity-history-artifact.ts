@@ -55,7 +55,7 @@ export async function readDirectActivityHistory(repository: CanonicalRepository,
   return { occurrences, links: parseActivityCausalFinancialLinks(
     await repository.loadActivityCausalFinancialLinkRows(occurrences.map(fact => fact.lifeEventId))) };
 }
-function decodePayload(value: unknown, scope: ActivityHistoryScope): ActivityHistory {
+export function decodeActivityHistoryPayload(value: unknown, scope: ActivityHistoryScope): ActivityHistory {
   const payload = plannerRecord(value); plannerKeys(payload, ["occurrences", "links"]);
   if (!Array.isArray(payload.occurrences) || !Array.isArray(payload.links)) throw new TypeError("ACTIVITY_ARTIFACT_PAYLOAD_INVALID");
   const timeZoneValidation = createHouseholdTimeZoneValidationScope(scope.householdId);
@@ -115,7 +115,7 @@ export function admittedActivityHistory(scope: ActivityHistoryScope, current: Re
       || plannerDigest(artifact.provenance) !== plannerDigest(ACTIVITY_HISTORY_DEPENDENCIES.slice(0, 4)))
       throw new TypeError("ACTIVITY_ARTIFACT_CORRUPT_OR_INCOMPATIBLE");
     if (plannerDigest(artifact.proof) === plannerDigest(current.proof)) {
-      return decodePayload(artifact.payload, scope);
+      return decodeActivityHistoryPayload(artifact.payload, scope);
     }
   }
   return null;
@@ -153,7 +153,7 @@ export async function prepareActivityHistory(repository: CanonicalRepository, ra
   const before = await store.inspect(scope, key);
   if (!covered(before.proof)) throw new TypeError("ACTIVITY_ARTIFACT_WRITERS_NOT_COVERED");
   const strictRepository = new CanonicalRepository(completeSourceClient(repository.client), repository.context);
-  const payload = decodePayload(await readDirectActivityHistory(strictRepository, range), scope);
+  const payload = decodeActivityHistoryPayload(await readDirectActivityHistory(strictRepository, range), scope);
   const body = { scope, proof: before.proof, generation: before.generation + 1, status: "READY" as const,
     coverage: "COMPLETE_SOURCE_ROWS" as const, provenance: ACTIVITY_HISTORY_DEPENDENCIES.slice(0, 4), payload };
   const accepted = await store.publish(scope, key, before.generation, { ...body, digest: plannerDigest(body) });

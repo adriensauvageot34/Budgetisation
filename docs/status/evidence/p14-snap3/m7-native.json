@@ -1,0 +1,37 @@
+{
+  "environment": "PostgreSQL 17 synthetic; SQL roles, no real JWT",
+  "results": [
+    {
+      "name": "BASE-MIGRATION-PG17",
+      "status": "PASS"
+    },
+    {
+      "name": "CANONICAL-ARTIFACT-BEFORE-UPGRADE",
+      "status": "PASS"
+    },
+    {
+      "name": "M7-MIGRATION-PG17",
+      "status": "PASS"
+    },
+    {
+      "name": "SCHEMA-EPOCH-FENCES-OLD-ARTIFACT",
+      "status": "PASS"
+    },
+    {
+      "name": "M7-OWNER-OUTPUT-LOSSLESS",
+      "status": "PASS"
+    },
+    {
+      "name": "M7-NONEMPTY-LEG-ROUNDTRIP",
+      "status": "PASS"
+    },
+    {
+      "name": "M7-WRITERS-ALWAYS-AND-ROLLBACK",
+      "status": "PASS"
+    },
+    {
+      "name": "M7-AUTH-SCOPE-AND-NO-DIRECT-DML",
+      "status": "PASS"
+    }
+  ]
+}

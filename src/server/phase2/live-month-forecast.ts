@@ -17,13 +17,42 @@ const RESOURCES = [
   "analysis_global_category_need_detail", "analysis_global_routine_detail", "analysis_global_transformations",
 ] as const;
 
-export async function loadMonthForecastAuthorities(client: SupabaseClient, householdId: string): Promise<ForecastAuthorities> {
+async function activeGlobalPublication(client: SupabaseClient, householdId: string): Promise<ForecastAuthorities["publication"]> {
   const { data: publication, error: publicationError } = await snapshotWork("Global_PublicationIdentity", () => client.from("analytics_publications")
     .select("publication_id,household_id,source_revision,published_analytics_revision")
     .eq("household_id", householdId).eq("scope_kind", "global").eq("status", "published")
     .order("published_analytics_revision", { ascending: false }).limit(1).maybeSingle());
   if (publicationError) throw publicationError;
   if (!publication) throw new TypeError("FORECAST_ACTIVE_GLOBAL_PUBLICATION_MISSING");
+  return publication;
+}
+
+/** Baseline already receives the admitted monthly Forecast in World. In that path it
+ * only needs the active publication identity and the existing FOOD publication. */
+export async function loadPlanningBaselineGlobalContext(client: SupabaseClient, householdId: string):
+  Promise<Pick<ForecastAuthorities, "publication" | "background">> {
+  const publication = await activeGlobalPublication(client, householdId);
+  const { data: rows, error } = await snapshotWork("Global_PublishedSnapshots", () => client.from("analytics_query_snapshots")
+    .select("resource,method_signature,contract_version,payload,publication_id,is_active,invalidated_at")
+    .eq("publication_id", publication.publication_id).eq("is_active", true).is("invalidated_at", null)
+    .eq("resource", "analysis_global_background_rhythms").range(0, 1));
+  if (error) throw error;
+  if (rows?.length !== 1) throw new TypeError("FORECAST_AUTHORITY_CARDINALITY:analysis_global_background_rhythms");
+  const snapshot = rows[0]!;
+  const resource = snapshot.resource as GlobalV2QueryResourceName;
+  const registry = globalV2QueryRegistry[resource];
+  if (!registry || snapshot.contract_version !== registry.contractVersion
+    || !globalV2AcceptedQueryMethodSignatures(resource).includes(snapshot.method_signature))
+    throw new TypeError(`FORECAST_QUERY_REGISTRY_MISMATCH:${resource}`);
+  if (snapshot.payload?.publicationMeta?.publicationId !== publication.publication_id)
+    throw new TypeError(`FORECAST_SNAPSHOT_PUBLICATION_MISMATCH:${resource}`);
+  const background = parseGlobalBackgroundRhythmsReadModel(snapshot.payload);
+  if (background.food.methodVersion !== "global_food_rhythm@v2-purchase-aware") throw new TypeError("FORECAST_FOOD_PURCHASE_AWARE_REQUIRED");
+  return { publication, background };
+}
+
+export async function loadMonthForecastAuthorities(client: SupabaseClient, householdId: string): Promise<ForecastAuthorities> {
+  const publication = await activeGlobalPublication(client, householdId);
 
   const { data: snapshots, error: snapshotError } = await snapshotWork("Global_PublishedSnapshots", () => client.from("analytics_query_snapshots")
     .select("resource,method_signature,contract_version,payload,publication_id,is_active,invalidated_at")

@@ -10,6 +10,7 @@ import { snapshotHistoryTrace, snapshotWork } from "./snapshot-observation";
 
 export const HISTORICAL_BASIS_METHOD = "composer-canonical-basis@v1";
 export const HISTORICAL_BASIS_COVERAGE = "composer-canonical-writers@v1";
+export const HISTORICAL_BASIS_SHARED_COVERAGE = "composer-historical-writers@v2";
 export type BasisPayload = Readonly<{ purchaseFacts: readonly PurchaseAwareEconomicFact[] }>;
 export type BasisProof = Readonly<{ coverage: string; revision: string; schemaEpoch: string }>;
 export type BasisArtifact = Readonly<{ scope: ActivityHistoryScope; proof: BasisProof; generation: number;
@@ -38,10 +39,10 @@ export function historicalBasisScope(repository: CanonicalRepository, range: Can
   // A closed range remains reusable tomorrow; any retroactive writer fences it.
   return activityHistoryScope(repository, range, range.endExclusive, HISTORICAL_BASIS_METHOD);
 }
-function validProof(value: unknown): value is BasisProof {
+export function validBasisProof(value: unknown): value is BasisProof {
   if (!value || typeof value !== "object") return false;
   const p = value as BasisProof;
-  return Object.keys(p).length === 3 && p.coverage === HISTORICAL_BASIS_COVERAGE
+  return Object.keys(p).length === 3 && [HISTORICAL_BASIS_COVERAGE, HISTORICAL_BASIS_SHARED_COVERAGE].includes(p.coverage)
     && /^\d+$/u.test(p.revision) && /^\d+$/u.test(p.schemaEpoch);
 }
 function payload(value: unknown, scope: ActivityHistoryScope): BasisPayload {
@@ -58,13 +59,14 @@ function payload(value: unknown, scope: ActivityHistoryScope): BasisPayload {
   // produce it; no client payload is accepted and no financial rule is rebuilt.
   return p as unknown as BasisPayload;
 }
-export function admittedHistoricalBasis(scope: ActivityHistoryScope, current: Awaited<ReturnType<HistoricalBasisStore["inspect"]>>): BasisPayload | null {
-  if (!validProof(current.proof) || !current.artifact) return null;
+export function decodeHistoricalBasisEnvelope(scope: ActivityHistoryScope,
+  current: Awaited<ReturnType<HistoricalBasisStore["inspect"]>>): unknown | null {
+  if (!validBasisProof(current.proof) || !current.artifact) return null;
   const a = plannerRecord(current.artifact);
   plannerKeys(a, ["scope", "proof", "generation", "status", "codec", "payload", "payloadBytes", "payloadDigest", "digest"]);
   const { digest, ...body } = a;
   if (digest !== plannerDigest(body) || plannerDigest(a.scope) !== plannerDigest(scope) || a.generation !== current.generation
-    || a.status !== "READY" || a.codec !== "deflate-raw-json@1" || !validProof(a.proof)
+    || a.status !== "READY" || a.codec !== "deflate-raw-json@1" || !validBasisProof(a.proof)
     || typeof a.payload !== "string" || !Number.isSafeInteger(a.payloadBytes) || Number(a.payloadBytes) < 0
     || Number(a.payloadBytes) > 8 * 1024 * 1024) throw new TypeError("BASIS_ARTIFACT_INVALID");
   if (plannerDigest(a.proof) !== plannerDigest(current.proof)) return null;
@@ -72,7 +74,20 @@ export function admittedHistoricalBasis(scope: ActivityHistoryScope, current: Aw
   if (decoded.byteLength !== a.payloadBytes) throw new TypeError("BASIS_PAYLOAD_SIZE_INVALID");
   const parsed = JSON.parse(decoded.toString("utf8"));
   if (plannerDigest(parsed) !== a.payloadDigest) throw new TypeError("BASIS_PAYLOAD_DIGEST_INVALID");
-  return payload(parsed, scope);
+  return parsed;
+}
+export function admittedHistoricalBasis(scope: ActivityHistoryScope, current: Awaited<ReturnType<HistoricalBasisStore["inspect"]>>): BasisPayload | null {
+  const decoded = decodeHistoricalBasisEnvelope(scope, current);
+  return decoded === null ? null : payload(decoded, scope);
+}
+export function makeHistoricalBasisArtifact(scope: ActivityHistoryScope, proof: BasisProof,
+  generation: number, prepared: unknown): BasisArtifact {
+  const encoded = canonicalPlannerJson(prepared), bytes = Buffer.byteLength(encoded);
+  if (bytes > 8 * 1024 * 1024) throw new TypeError("BASIS_PAYLOAD_TOO_LARGE");
+  const body = { scope, proof, generation, status: "READY" as const,
+    codec: "deflate-raw-json@1" as const, payload: deflateRawSync(encoded).toString("base64"),
+    payloadBytes: bytes, payloadDigest: plannerDigest(prepared) };
+  return { ...body, digest: plannerDigest(body) };
 }
 export async function directCanonicalBasis(repository: CanonicalRepository, range: CanonicalDateRange): Promise<BasisPayload> {
   const canonical = await repository.loadPurchaseAwareCanonical(range, "PURCHASE_AWARE_PILOT");
@@ -122,14 +137,10 @@ export async function readHistoricalBasis(repository: CanonicalRepository, range
 export async function prepareHistoricalBasis(repository: CanonicalRepository, month: string, store: HistoricalBasisStore) {
   const at = performance.now(), { range } = activityHistoryPeriod(repository.context, month, repository.context.asOf);
   const scope = historicalBasisScope(repository, range), key = plannerDigest(scope), before = await store.inspect(scope, key);
-  if (!validProof(before.proof)) throw new TypeError("BASIS_WRITERS_NOT_COVERED");
+  if (!validBasisProof(before.proof)) throw new TypeError("BASIS_WRITERS_NOT_COVERED");
   // A fresh repository avoids reusing an earlier request result after inspection.
   const prepared = payload(await directCanonicalBasis(new CanonicalRepository(completeBasisSourceClient(repository.client), repository.context, { shareEconomicReads: true }), range), scope);
-  const encoded = canonicalPlannerJson(prepared), bytes = Buffer.byteLength(encoded);
-  if (bytes > 8 * 1024 * 1024) throw new TypeError("BASIS_PAYLOAD_TOO_LARGE");
-  const body = { scope, proof: before.proof, generation: before.generation + 1, status: "READY" as const,
-    codec: "deflate-raw-json@1" as const, payload: deflateRawSync(encoded).toString("base64"), payloadBytes: bytes, payloadDigest: plannerDigest(prepared) };
-  const artifact = { ...body, digest: plannerDigest(body) };
+  const artifact = makeHistoricalBasisArtifact(scope, before.proof, before.generation + 1, prepared), bytes = artifact.payloadBytes;
   let recovered = false, accepted: boolean;
   try { accepted = await store.publish(scope, key, before.generation, artifact); }
   catch (error) {
