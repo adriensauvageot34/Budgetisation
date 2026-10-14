@@ -1,6 +1,6 @@
 # P14 POST SNAP-3 — stabilité et latence résiduelle
 
-**État au 15 octobre 2026 : `POST_SNAP3_PARTIAL_BLOCKED`.** Base `origin/main` et Production `7098e3bad96ff6be724284246f95d4370c028e9b`. Branche `codex/composer-v3-p14-post-snap3-stability-performance`. Une Preview du correctif est en construction ; aucun merge ou déploiement Production. Aucun Apply, mutation financière, migration ou publication d'artifact pendant cette reprise.
+**État au 15 octobre 2026 : `POST_SNAP3_PARTIAL_BLOCKED`.** Base `origin/main` et Production `7098e3bad96ff6be724284246f95d4370c028e9b`. Branche `codex/composer-v3-p14-post-snap3-stability-performance`. Deux Previews du correctif sont READY ; aucun merge ou déploiement Production. Aucun Apply, mutation financière, migration ou publication d'artifact pendant cette reprise.
 
 ## SNAP-3 en Production
 
@@ -59,12 +59,14 @@ L'accès à l'onglet Preview a été **refusé par la revue automatique pour lim
 - Le transport passe toujours par l'URL stable `/api/composer/drafts` et les services Draft existants. Le nouveau contrat `composer-draft-http@1` est envoyé et exigé sur GET/POST. Un serveur d'une version incompatible répond 409 ; le client refuse aussi toute réponse sans version conforme.
 - Le client valide la forme du Draft, son mois, sa version sémantique, son digest, le request ID, la version CAS attendue et l'opération confirmée avant `SAVED`. Une réponse mal formée ou d'une génération incompatible reste `ERROR` avec le travail local conservé. La relecture incompatible affiche une explication ; une erreur de cycle de vie n'est plus présentée automatiquement comme un conflit CAS.
 - `check-composer-post-snap3-draft-http.mjs` : cinq contrôles PASS avec service simulé, dont origine/version, auth, opérations autorisées, réponse perdue et refus de réponse incompatible. `check-composer-p14-p2-durable.mjs` : sept contrôles PASS sur hook déterministe. Ces tests ne constituent pas une preuve JWT réelle ni le test entre déploiements.
-- TypeScript : PASS sur le dernier commit (`npx.cmd tsc --noEmit`, code de sortie 0). Build local Webpack : une tentative autorisée a démarré la compilation, sans sortie finale pendant l'observation ; elle a été interrompue après une modification du code en cours de build. Le dossier `.next/types/app/api` acceptait une écriture de son propriétaire ; la cause exacte de l'`EPERM` antérieur reste non attribuée. Une Preview Vercel du SHA `75b11296e6e188849927036c7ab7df2d85400d37` a été déclenchée pour fournir une preuve de build propre.
+- TypeScript : PASS sur le dernier commit (`npx.cmd tsc --noEmit`, code de sortie 0). Build local Webpack : une tentative autorisée a démarré la compilation, sans sortie finale pendant l'observation ; elle a été interrompue après une modification du code en cours de build. Le dossier `.next/types/app/api` acceptait une écriture de son propriétaire ; la cause exacte de l'`EPERM` antérieur reste non attribuée. Les deux builds Vercel Preview sont complets et READY ; cela certifie la compilation distante, pas la réparation de Windows.
 
 ### C. Livraison
 
 - Branche distante de test : `codex/composer-v3-p14-post-snap3-stability-performance`, push PASS. Premier commit correctif `e31b654fb990b1c761cf8c05fd5510da791e65a6`, second commit de validation HTTP `75b11296e6e188849927036c7ab7df2d85400d37`.
-- Preview A : `dpl_5EyccroraNuRtFELxCAhB4Z8xUxs`, `BUILDING` à la première lecture, SHA `75b1129`. Preview B, test inter-déploiement, PR, merge, déploiement Production et smoke : `NOT_RUN` à cette étape.
+- Preview A : `dpl_5EyccroraNuRtFELxCAhB4Z8xUxs`, `READY`, SHA `75b11296e6e188849927036c7ab7df2d85400d37`. Journaux : `npm run build` → `next build` → compilation réussie en 28,9 s → build complet → déploiement terminé.
+- Preview B : `dpl_Gzzra6P9uEAVhThCaTwvdrgnBtZS`, `READY`, SHA `262ce74e37898eb99958b8d4c4fac88d4c1800c6`. Journaux : même commande, compilation réussie en 38,5 s, build complet et déploiement terminés. Le diff A→B ne contient que ce rapport et sa preuve locale JSON ; aucun code applicatif différent.
+- Alias de test `budgetisation-p14-draft-skew-adriensauvageot34-6137s-projects.vercel.app` vérifié sur A, hors Production. Le basculement vers B attend qu'un onglet authentifié soit ouvert sur A. Test inter-déploiement, PR, merge, déploiement Production et smoke : `NOT_RUN`.
 - Rollback si une future livraison échoue : désactiver l'autosauvegarde via son cutover existant et restaurer le déploiement Production précédent, en conservant Drafts/archives/Plans ; aucune suppression SQL.
 
 ### D. Performance résiduelle
@@ -81,13 +83,13 @@ La série authentifiée **avant** correction, n=10, reste 6,59 s P50 et 8,79 s P
 |---|---|
 | Auth, CAS, idempotence, réponse perdue | PASS sur simulateur/service et hook local ; JWT réel `NOT_RUN` |
 | TypeScript | PASS local, code de sortie 0 sur le commit final |
-| Build complet du SHA final | Preview `BUILDING` ; `NOT_CERTIFIED` |
+| Build complet du code candidat | `EXECUTED_PASS_VERCEL_PREVIEW` sur A et B ; build local Windows `NOT_CERTIFIED` |
 | Inter-déploiement A→B authentifié | `NOT_RUN` |
 | Golden ciblé, Finance V2, Apply | Code inchangé ; pas de nouvelle certification authentifiée |
 | SNAP-3 | État lu sans écriture ; future invalidation naturelle `NOT_RUN` |
 | Performance après correction | `NOT_RUN` |
 
-**Fiabilité Draft : `READY_FOR_PREVIEW_TEST`, pas `PRODUCTION_PASS`. Performance : `MEASURED_PRECHANGE_ONLY`. Verdict global : `POST_SNAP3_PARTIAL_BLOCKED` tant que le build Preview et l'ancien onglet authentifié ne sont pas vérifiés.**
+**Fiabilité Draft : `READY_FOR_AUTHENTICATED_CROSS_DEPLOYMENT_TEST`, pas `PRODUCTION_PASS`. Performance : `MEASURED_PRECHANGE_ONLY`. Verdict global : `POST_SNAP3_PARTIAL_BLOCKED` tant que l'ancien onglet authentifié entre A et B n'est pas vérifié.**
 
 ## Suite minimale
 
