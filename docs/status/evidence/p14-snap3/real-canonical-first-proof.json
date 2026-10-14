@@ -1,0 +1,40 @@
+{
+  "date": "2026-10-14",
+  "scope": "one authenticated Budgetisation account, October 2026, protected iad1 previews, 1728x900, five alternating warm reload pairs",
+  "previewCode": "920549d54c81dae362649bee3f5e70186996abb0",
+  "offDeployment": "dpl_4tbs8pu7kq8QuZnbA1WWwL3u5Rig",
+  "onDeployment": "dpl_CZxtZr2paTTBJw9AJjoCCtQ5YVUT",
+  "sameFinancialPreviewDigestAllPairs": true,
+  "allFresh": true,
+  "allReadOnlyWorlds": true,
+  "publication": {
+    "status": "PUBLISHED_AND_RELECT",
+    "generation": 1,
+    "facts": 200,
+    "preparationMs": 34244,
+    "decodedPayloadBytes": 368328,
+    "transferArtifactBytes": 45408,
+    "storedArtifactBytes": 45450,
+    "jwtChecks": {
+      "wrongAuthorDenied": true,
+      "wrongHouseholdDenied": true,
+      "wrongPeopleDenied": true,
+      "publishDeniedForAuthenticated": true
+    }
+  },
+  "pairs": [
+    { "offFreshMs": 27342, "onFreshMs": 11728, "offWorldMs": 24069, "onWorldMs": 8520, "offCanonicalMs": 23846, "onAdmissionMs": 1791, "offM7Ms": 21925, "onM7Ms": 8309, "offRequests": 284, "onRequests": 127 },
+    { "offFreshMs": 15458, "onFreshMs": 12225, "offWorldMs": 13138, "onWorldMs": 7343, "offCanonicalMs": 12918, "onAdmissionMs": 2196, "offM7Ms": 12893, "onM7Ms": 7137, "offRequests": 284, "onRequests": 127 },
+    { "offFreshMs": 16567, "onFreshMs": 9217, "offWorldMs": 13505, "onWorldMs": 6644, "offCanonicalMs": 13302, "onAdmissionMs": 814, "offM7Ms": 12285, "onM7Ms": 6450, "offRequests": 284, "onRequests": 127 },
+    { "offFreshMs": 18854, "onFreshMs": 10717, "offWorldMs": 15477, "onWorldMs": 6672, "offCanonicalMs": 15232, "onAdmissionMs": 888, "offM7Ms": 13544, "onM7Ms": 6481, "offRequests": 284, "onRequests": 127 },
+    { "offFreshMs": 14663, "onFreshMs": 12168, "offWorldMs": 12695, "onWorldMs": 8169, "offCanonicalMs": 12479, "onAdmissionMs": 3139, "offM7Ms": 12026, "onM7Ms": 7952, "offRequests": 284, "onRequests": 127 }
+  ],
+  "summaryNearestRankDescriptive": {
+    "freshMs": { "offP50": 16567, "offP95": 27342, "onP50": 11728, "onP95": 12225 },
+    "worldMs": { "offP50": 13505, "offP95": 24069, "onP50": 7343, "onP95": 8520 },
+    "onAdmissionMs": { "p50": 1791, "p95": 3139 },
+    "pairedFreshGainMs": [15614, 3233, 7350, 8137, 2495],
+    "requestsAvoidedEachPair": 157
+  },
+  "limits": "P95 is descriptive with n=5. Other parallel readers varied strongly; the measured FRESH gain cannot all be attributed causally to Canonical. No source mutation/invalidation test was performed on real financial rows."
+}
