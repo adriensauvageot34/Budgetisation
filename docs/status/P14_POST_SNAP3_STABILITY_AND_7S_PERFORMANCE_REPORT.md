@@ -1,6 +1,6 @@
 # P14 POST SNAP-3 — stabilité et latence résiduelle
 
-**État au 15 octobre 2026 : `PARTIAL_LOCAL_FIX_NOT_RELEASED`.** Base `origin/main` et Production `7098e3bad96ff6be724284246f95d4370c028e9b`. Branche locale `codex/composer-v3-p14-post-snap3-stability-performance`. Aucun push, PR, merge ou déploiement de cette correction. Aucun Apply, mutation financière, migration ou publication d'artifact pendant cette mission.
+**État au 15 octobre 2026 : `POST_SNAP3_PARTIAL_BLOCKED`.** Base `origin/main` et Production `7098e3bad96ff6be724284246f95d4370c028e9b`. Branche `codex/composer-v3-p14-post-snap3-stability-performance`. Une Preview du correctif est en construction ; aucun merge ou déploiement Production. Aucun Apply, mutation financière, migration ou publication d'artifact pendant cette reprise.
 
 ## SNAP-3 en Production
 
@@ -45,6 +45,49 @@ Evidence et le délai après réponse sont les premiers leviers à examiner. Le 
 | Parité Finance V2 / Apply | Code financier inchangé ; aucune nouvelle certification authentifiée |
 
 L'accès à l'onglet Preview a été **refusé par la revue automatique pour limite d'usage**, avec reprise annoncée le 15 octobre 2026 à 03:12. L'action a été rejetée avant exécution. Aucun navigateur ou canal indirect n'a été utilisé pour contourner ce refus. Les tests authentifiés, le contrôle entre builds et la livraison restent bloqués par cette limite. La correction doit donc rester locale ; pas de PR ni de déploiement avant vérification réelle.
+
+## Reprise ciblée du 15 octobre
+
+### A. État vérifié
+
+- GitHub `main` et Production sont restés au SHA `7098e3bad96ff6be724284246f95d4370c028e9b` après `git fetch`. Production `dpl_F8GXVCgTa4D6tTBmnQyEKAc5sKnF` était `READY`.
+- Supabase : `private.composer_historical_basis_state` révision 1, époque 2, `enabled=true`, couverture des writers vraie. Les deux artifacts publiés sont toujours `READY`, Canonical génération 2 et M7 génération 1. Cette lecture ne reconstitue pas à elle seule une preuve d'admission pour un nouvel utilisateur ou mois.
+- Aucun accès navigateur n'a été tenté avant la fin annoncée de la limite d'usage, le 15 octobre à 03:12 heure de Paris.
+
+### B. Correction Draft et contrôles
+
+- Le transport passe toujours par l'URL stable `/api/composer/drafts` et les services Draft existants. Le nouveau contrat `composer-draft-http@1` est envoyé et exigé sur GET/POST. Un serveur d'une version incompatible répond 409 ; le client refuse aussi toute réponse sans version conforme.
+- Le client valide la forme du Draft, son mois, sa version sémantique, son digest, le request ID, la version CAS attendue et l'opération confirmée avant `SAVED`. Une réponse mal formée ou d'une génération incompatible reste `ERROR` avec le travail local conservé. La relecture incompatible affiche une explication ; une erreur de cycle de vie n'est plus présentée automatiquement comme un conflit CAS.
+- `check-composer-post-snap3-draft-http.mjs` : cinq contrôles PASS avec service simulé, dont origine/version, auth, opérations autorisées, réponse perdue et refus de réponse incompatible. `check-composer-p14-p2-durable.mjs` : sept contrôles PASS sur hook déterministe. Ces tests ne constituent pas une preuve JWT réelle ni le test entre déploiements.
+- TypeScript : PASS sur le dernier commit (`npx.cmd tsc --noEmit`, code de sortie 0). Build local Webpack : une tentative autorisée a démarré la compilation, sans sortie finale pendant l'observation ; elle a été interrompue après une modification du code en cours de build. Le dossier `.next/types/app/api` acceptait une écriture de son propriétaire ; la cause exacte de l'`EPERM` antérieur reste non attribuée. Une Preview Vercel du SHA `75b11296e6e188849927036c7ab7df2d85400d37` a été déclenchée pour fournir une preuve de build propre.
+
+### C. Livraison
+
+- Branche distante de test : `codex/composer-v3-p14-post-snap3-stability-performance`, push PASS. Premier commit correctif `e31b654fb990b1c761cf8c05fd5510da791e65a6`, second commit de validation HTTP `75b11296e6e188849927036c7ab7df2d85400d37`.
+- Preview A : `dpl_5EyccroraNuRtFELxCAhB4Z8xUxs`, `BUILDING` à la première lecture, SHA `75b1129`. Preview B, test inter-déploiement, PR, merge, déploiement Production et smoke : `NOT_RUN` à cette étape.
+- Rollback si une future livraison échoue : désactiver l'autosauvegarde via son cutover existant et restaurer le déploiement Production précédent, en conservant Drafts/archives/Plans ; aucune suppression SQL.
+
+### D. Performance résiduelle
+
+La série authentifiée **avant** correction, n=10, reste 6,59 s P50 et 8,79 s P95 descriptif pour ouverture→FRESH. La branche Evidence/Forecast était 2,51 s P50, 3,63 s P95. Le code `readMonthPredictionEvidence` montre des barrières de métadonnées et d'historique en parallèle, avec pagination ; la trace existante ne départage pas les requêtes individuelles. Aucun gain de temps n'est attribué au correctif Draft. Édition→FRESH après correction, transport/RSC/commit React et chiffres appariés : `NOT_RUN` ; le délai après réponse demeure `UNATTRIBUTED`. Aucun changement de calcul Evidence, Forecast ou Finance V2 sans preuve plus fine.
+
+### E. Maintenance SNAP-3
+
+État présent : deux artifacts READY, 30 triggers d'invalidation, pas de Cron, préparation POST désactivée en Production. Après une invalidation naturelle, `inspect_composer_historical_basis_v1` relit la preuve et la génération ; une preuve ou un digest divergent empêche l'admission et déclenche le fallback direct. Le GET `/api/composer/historical-basis?month=…&owner=canonical|m7` permet de constater `READY` ou `MISS` sans préparation. Pour republier hors READ, vérifier d'abord la couverture des writers, activer temporairement et de manière contrôlée le mécanisme de préparation existant pour chaque owner, puis vérifier la génération, le digest, la relecture et l'admission. La publication utilise `expected_generation` en CAS ; une génération devenue obsolète est rejetée et une réponse perdue est réconciliée par relecture. Après timeout, ne relancer qu'après inspection de la génération et de la preuve, avec une limite d'essais et une fenêtre d'exploitation explicite. Surveiller durée de préparation, taille et fréquence réelle des MISS. Aucune republication, activation de route ou automatisation n'a été exécutée dans cette reprise. Le coût observé d'environ 34 s pour Canonical interdit une préparation implicite durant READ ; l'absence de fréquence d'invalidation mesurée ne justifie pas encore un Cron.
+
+### F. Gates et verdict
+
+| Gate | Statut à cette étape |
+|---|---|
+| Auth, CAS, idempotence, réponse perdue | PASS sur simulateur/service et hook local ; JWT réel `NOT_RUN` |
+| TypeScript | PASS local, code de sortie 0 sur le commit final |
+| Build complet du SHA final | Preview `BUILDING` ; `NOT_CERTIFIED` |
+| Inter-déploiement A→B authentifié | `NOT_RUN` |
+| Golden ciblé, Finance V2, Apply | Code inchangé ; pas de nouvelle certification authentifiée |
+| SNAP-3 | État lu sans écriture ; future invalidation naturelle `NOT_RUN` |
+| Performance après correction | `NOT_RUN` |
+
+**Fiabilité Draft : `READY_FOR_PREVIEW_TEST`, pas `PRODUCTION_PASS`. Performance : `MEASURED_PRECHANGE_ONLY`. Verdict global : `POST_SNAP3_PARTIAL_BLOCKED` tant que le build Preview et l'ancien onglet authentifié ne sont pas vérifiés.**
 
 ## Suite minimale
 
