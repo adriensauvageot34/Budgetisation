@@ -1,0 +1,115 @@
+{
+  "at": "2026-10-14T13:00Z",
+  "status": "MEASURED_REAL_READ_ONLY",
+  "state": {
+    "enabled": true,
+    "revision": 1,
+    "schema_epoch": 1
+  },
+  "coverage": true,
+  "artifacts": [
+    {
+      "start": "2025-08-01",
+      "cutoff": "2026-10-14",
+      "digest": "df306fd92bbfeebd1599f32400745d0eb7ae0f74e7e37a8961f847fb2a3f87f6",
+      "jsonBytes": 484073,
+      "generation": 1,
+      "endExclusive": "2026-10-01"
+    },
+    {
+      "start": "2025-08-01",
+      "cutoff": "2026-10-14",
+      "digest": "e34c916f0bc5e2f9c2d4d4b38e167a0a7961db90b18438ddf94707a64f97b146",
+      "jsonBytes": 484073,
+      "generation": 1,
+      "endExclusive": "2026-10-15"
+    }
+  ],
+  "statsReset": null,
+  "financeCounters": [
+    {
+      "table": "operations",
+      "schema": "public",
+      "deleted": 0,
+      "updated": 0,
+      "inserted": 0
+    },
+    {
+      "table": "life_event_types",
+      "schema": "public",
+      "deleted": 0,
+      "updated": 0,
+      "inserted": 0
+    },
+    {
+      "table": "life_events",
+      "schema": "public",
+      "deleted": 0,
+      "updated": 0,
+      "inserted": 0
+    },
+    {
+      "table": "life_event_participations",
+      "schema": "public",
+      "deleted": 0,
+      "updated": 0,
+      "inserted": 0
+    },
+    {
+      "table": "life_event_financial_links",
+      "schema": "public",
+      "deleted": 0,
+      "updated": 0,
+      "inserted": 0
+    },
+    {
+      "table": "mobility_legs",
+      "schema": "public",
+      "deleted": 0,
+      "updated": 0,
+      "inserted": 1368
+    },
+    {
+      "table": "benefit_wallets",
+      "schema": "public",
+      "deleted": 0,
+      "updated": 1,
+      "inserted": 2
+    },
+    {
+      "table": "benefit_wallet_ledger_entries",
+      "schema": "public",
+      "deleted": 0,
+      "updated": 0,
+      "inserted": 213
+    },
+    {
+      "table": "phase2_month_inputs",
+      "schema": "public",
+      "deleted": 1,
+      "updated": 44,
+      "inserted": 2
+    },
+    {
+      "table": "phase2_forecast_checkpoints",
+      "schema": "public",
+      "deleted": 0,
+      "updated": 0,
+      "inserted": 0
+    },
+    {
+      "table": "phase2_month_plans",
+      "schema": "public",
+      "deleted": 0,
+      "updated": 0,
+      "inserted": 0
+    },
+    {
+      "table": "phase2_composer_drafts",
+      "schema": "public",
+      "deleted": 0,
+      "updated": 25,
+      "inserted": 4
+    }
+  ]
+}

@@ -1,12 +1,12 @@
 "use client";
 import { useState } from "react";
-export function HistoryPreparation({month,securityChecks}: {month:string;securityChecks:boolean}) {
+export function HistoryPreparation({month,securityChecks,endpoint="activity-history"}: {month:string;securityChecks:boolean;endpoint?:"activity-history"|"historical-basis"}) {
   const [busy,setBusy]=useState(false),[status,setStatus]=useState(""),[proof,setProof]=useState<unknown>(null);
   async function prepare() {
     if (busy) return;
     setBusy(true);setStatus("Préparation en cours…");setProof(null);
     try {
-      const response = await fetch("/api/composer/activity-history", {method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({month})});
+      const response = await fetch(`/api/composer/${endpoint}`, {method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({month})});
       const result = await response.json();
       if (!response.ok) throw new Error("Préparation indisponible. Aucune donnée financière n’a été modifiée.");
       setProof(result);setStatus(result.status === "STALE_REJECTED" ? "L’historique a changé pendant la préparation. Réessayez lorsque la mise à jour est terminée." : "Historique préparé et publication relue.");
@@ -17,7 +17,7 @@ export function HistoryPreparation({month,securityChecks}: {month:string;securit
     if (busy) return;
     setBusy(true);setProof(null);
     try {
-      const response=await fetch(`/api/composer/activity-history?month=${month}${securityChecks?'&checks=1':''}`);
+      const response=await fetch(`/api/composer/${endpoint}?month=${month}${securityChecks?'&checks=1':''}`);
       const result=await response.json();
       if (!response.ok) throw new Error();
       setProof(result);setStatus(result.status==='READY'?'Historique disponible et relu.':'Historique à préparer ; Composer utilise la lecture directe.');

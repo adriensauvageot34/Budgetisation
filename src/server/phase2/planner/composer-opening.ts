@@ -1,4 +1,5 @@
 import "server-only";
+import { snapshotWork } from "./snapshot-observation";
 import type { ComposerDraftSnapshot } from "@/domain/phase2/planner/composer-draft-contract";
 import type { PlannerDependencies } from "./apply";
 import { readMonthComposer } from "./read-model";
@@ -13,7 +14,7 @@ export async function readComposerOpening(deps: PlannerDependencies, householdId
   readDrafts: () => Promise<ComposerDraftSnapshot | null>) {
   const world = Promise.resolve().then(() => (deps.readComposerWorld ?? deps.readWorld)(householdId, month));
   void world.catch(() => undefined);
-  const drafts = await readDrafts();
+  const drafts = await snapshotWork("Draft_Read", readDrafts);
   const openingDeps: PlannerDependencies = { ...deps, readWorld: (household, targetMonth) => {
     if (household !== householdId || targetMonth !== month) throw new TypeError("COMPOSER_OPENING_SCOPE_MISMATCH");
     return world;

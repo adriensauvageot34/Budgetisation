@@ -1,0 +1,46 @@
+{
+  "environment": "PostgreSQL 17 synthetic, SQL roles not real JWT",
+  "database": "snap2_snap3_1791990834582",
+  "results": [
+    {
+      "name": "MIGRATION-EXACT-PG17",
+      "status": "PASS"
+    },
+    {
+      "name": "OWNER-OUTPUT-LOSSLESS-UNKNOWN-PARTIAL-TIMING",
+      "status": "PASS"
+    },
+    {
+      "name": "HIT-NO-CANONICAL-RECONSTRUCTION-OFF-NO-ADMISSION",
+      "status": "PASS"
+    },
+    {
+      "name": "CAS-CONCURRENT-PUBLISH-ONE-WINNER",
+      "status": "PASS"
+    },
+    {
+      "name": "LOST-RESPONSE-REINSPECT-RECOGNIZES-COMMIT",
+      "status": "PASS"
+    },
+    {
+      "name": "ALL-22-DEPENDENCY-WRITERS-INSERT-UPDATE-DELETE-TRUNCATE",
+      "status": "PASS"
+    },
+    {
+      "name": "ROLLBACK-NO-INVALIDATION",
+      "status": "PASS"
+    },
+    {
+      "name": "AUTHORIZATION-AND-NO-DIRECT-DML",
+      "status": "PASS"
+    },
+    {
+      "name": "MEMBERSHIP-REVOCATION-FRESH-ON-EVERY-INSPECT",
+      "status": "PASS"
+    },
+    {
+      "name": "DISABLED-MISSING-TRIGGER-AND-DDL-FAIL-CLOSED",
+      "status": "PASS"
+    }
+  ]
+}

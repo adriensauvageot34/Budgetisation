@@ -1,0 +1,67 @@
+{
+  "status": "MEASURED_REAL",
+  "origin": "Actual CUA DOM data-snap-action / data-snap-intent at identical 1920x1080; n=1 per variant, not robust P95.",
+  "month": "2026-10",
+  "commit": "512e771384eccf614b1fc210819bb169d3d8b74a",
+  "amount": "350.00",
+  "edits": {
+    "OFF": {
+      "responseMs": 38257.7,
+      "visualFreshMs": 38469.8,
+      "serverMs": 16075.087219,
+      "worldMs": 13843.4362,
+      "financeMs": 814.285011,
+      "calls": 284,
+      "decodedBytes": 11746442
+    },
+    "ON": {
+      "responseMs": 32231.4,
+      "visualFreshMs": 32489.9,
+      "serverMs": 14896.61593,
+      "worldMs": 13120.170353,
+      "financeMs": 787.05229,
+      "calls": 263,
+      "decodedBytes": 11638973,
+      "admissionMs": 1341.018462,
+      "decodeMs": 39.584156
+    }
+  },
+  "suggestions": {
+    "OFF": {
+      "responseMs": 16639.6,
+      "visualFreshMs": 16721.2,
+      "serverMs": 16070.337899,
+      "worldMs": 13419.711212,
+      "financeMs": 796.478396,
+      "calls": 284,
+      "decodedBytes": 11746442
+    },
+    "ON": {
+      "responseMs": 15459.3,
+      "visualFreshMs": 15487.2,
+      "serverMs": 14883.401056,
+      "worldMs": 12604.50857,
+      "financeMs": 797.41592,
+      "calls": 263,
+      "decodedBytes": 11638973,
+      "admissionMs": 800.443705,
+      "decodeMs": 145.971027
+    }
+  },
+  "sameDigests": {
+    "semantic": "d15fe78d1746c26dc4408a97992fc1a1c1a17393492cf1e7402fd034b38d83e6",
+    "baseline": "c27f43b48ee9511c8c7327008fcb1fe52ca49c8cf207549f4372561ce310b4ff",
+    "preview": "3438c262b7da6e5c840623bded069f04670fbf102f1d3295446c668634853fad"
+  },
+  "errors": 0,
+  "timeouts": 0,
+  "blockedWrites": 0,
+  "HIT_ON": true,
+  "noApplyOrAutosave": true,
+  "applyDisabledDuringPending": true,
+  "limits": [
+    "Edits show 17-22s outside measured server span; no exclusive attribution to network or framework queue established.",
+    "n=1 does not certify performance improvement.",
+    "SUGGESTIONS did not mutate semantic state or retain a suggestion implicitly."
+  ]
+}

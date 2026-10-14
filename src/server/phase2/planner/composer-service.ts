@@ -1,4 +1,5 @@
 import "server-only";
+import { snapshotWork } from "./snapshot-observation";
 import { composerMutationDependencies } from "./composer-mutation-world";
 import Big from "big.js";
 import type { ComposerApplyReceipt, ComposerEditor, ComposerField, ComposerRequest, ComposerResponse, ComposerUiModel } from "@/domain/phase2/planner/composer-ui-contract";
@@ -35,8 +36,11 @@ const fieldLabels: Record<string, string> = { label: "Nom de l’intention", pla
 const choiceLabels: Record<string, string> = { clothing: "Vêtements", "home-small": "Maison petit", "games-digital": "Jeux et numérique", other: "Autre" };
 const familyLabels: Record<string, string> = { FOOD: "Sortir & manger", ACTIVITY: "Activités", VISIT: "Voir quelqu’un", PURCHASE: "Acheter", SOCIAL: "Sortir", TRAVEL: "Partir", BEAUTY: "Prendre soin", HOME: "Maison", OTHER: "Autres envies" };
 
-export async function composerUiModel(deps: PlannerDependencies, household: string, model: MonthComposerReadModel): Promise<ComposerUiModel> {
-  const active = await deps.repository.readActivePlan(household, model.semanticState.targetMonth);
+export function composerUiModel(deps: PlannerDependencies, household: string, model: MonthComposerReadModel): Promise<ComposerUiModel> {
+  return snapshotWork("UIModel", () => buildComposerUiModel(deps, household, model));
+}
+async function buildComposerUiModel(deps: PlannerDependencies, household: string, model: MonthComposerReadModel): Promise<ComposerUiModel> {
+  const active = await snapshotWork("UIModel_PlanActive", () => deps.repository.readActivePlan(household, model.semanticState.targetMonth));
   const { preview, ...view } = model;
   const templates = publishContextRegistry().templates;
   const editors = view.library.searchableAssets.flatMap<ComposerEditor>(asset => {
