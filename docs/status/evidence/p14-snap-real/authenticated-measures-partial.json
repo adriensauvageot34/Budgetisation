@@ -1,0 +1,187 @@
+{
+  "measuredCommit": "512e771384eccf614b1fc210819bb169d3d8b74a",
+  "region": "iad1",
+  "supabaseRegion": "eu-central-1",
+  "month": "2026-10",
+  "cutoff": "2026-10-14",
+  "revision": 1,
+  "generation": 1,
+  "origin": "Transcribed from actually executed browser tool results; not generated benchmarks. Full browser array remains in the interrupted session.",
+  "method": "Product performance marks after double requestAnimationFrame; server AsyncLocalStorage spans, counted client HTTP calls and decoded JSON bytes. Not Codex wall-clock timings, not SQL statement execution time.",
+  "parity": "Opening semantic/Baseline/Preview digests equal; three identical budget edit states and SUGGESTIONS equal across variants.",
+  "initialSeries": {
+    "verdict": "VISUAL_COMPARISON_INVALID_VIEWPORT; SERVER_DESCRIPTIVE_ONLY",
+    "OFF": {
+      "viewport": {
+        "width": 486,
+        "height": 619
+      },
+      "freshMs": [
+        17005.2,
+        15600,
+        15104.8,
+        16829.3,
+        13850.9,
+        15463.3
+      ],
+      "serverMs": {
+        "n": 6,
+        "p50": 14567.555807,
+        "p95": 15922.426538,
+        "min": 13160.222675,
+        "max": 15922.426538
+      },
+      "worldMs": {
+        "n": 6,
+        "p50": 13528.500506,
+        "p95": 14325.197816,
+        "min": 12387.294898,
+        "max": 14325.197816
+      },
+      "calls": 284,
+      "get": 284,
+      "jsonBytes": 11746442,
+      "timeouts": 0
+    },
+    "ON": {
+      "viewport": {
+        "width": 1920,
+        "height": 1080
+      },
+      "freshMs": [
+        17134.3,
+        16383.6,
+        15537.7,
+        13324.5,
+        16574.3,
+        19355.7
+      ],
+      "serverMs": {
+        "n": 6,
+        "p50": 15484.354324,
+        "p95": 18613.203939,
+        "min": 12746.627924,
+        "max": 18613.203939
+      },
+      "worldMs": {
+        "n": 6,
+        "p50": 13814.783621,
+        "p95": 16763.485127,
+        "min": 11787.925656,
+        "max": 16763.485127
+      },
+      "calls": 263,
+      "get": 262,
+      "jsonBytes": 11638973,
+      "timeouts": 0
+    }
+  },
+  "correctedSeries": {
+    "viewport": {
+      "width": 1920,
+      "height": 1080
+    },
+    "verdict": "PARTIAL_INTERRUPTED_REVIEW_LIMIT",
+    "completePairs": 2,
+    "OFF": {
+      "freshMs": [
+        17939.1,
+        20240.9
+      ],
+      "serverMs": [
+        15094.206643,
+        15917.260172
+      ]
+    },
+    "ON": {
+      "freshMs": [
+        21676.3,
+        17552.8
+      ],
+      "serverMs": [
+        15980.966742,
+        14262.577913
+      ]
+    },
+    "unpairedON": {
+      "freshMs": 29976.4,
+      "serverMs": 20997.284983
+    },
+    "nextOFF": "Navigation had been initiated; collection was refused by automatic approval review. NOT_COLLECTED. No workaround."
+  },
+  "edits": {
+    "verdict": "FINANCIAL_PARITY_PASS; VISUAL_A_B_INVALID_VIEWPORT",
+    "n": 3,
+    "OFF": {
+      "visualFreshMs": [
+        17085.5,
+        18301,
+        21711.6
+      ],
+      "responseMs": [
+        16902.1,
+        18103,
+        21525.4
+      ],
+      "calls": 284
+    },
+    "ON": {
+      "visualFreshMs": [
+        20249.4,
+        22069.6,
+        16964.9
+      ],
+      "responseMs": [
+        20066.5,
+        21874.9,
+        16776.2
+      ],
+      "calls": 263
+    }
+  },
+  "suggestions": {
+    "verdict": "FINANCIAL_PARITY_PASS; VISUAL_A_B_INVALID_VIEWPORT",
+    "n": 1,
+    "OFF": {
+      "visualFreshMs": 24497,
+      "serverMs": 21683.059728,
+      "calls": 284
+    },
+    "ON": {
+      "visualFreshMs": 22308.8,
+      "serverMs": 19680.360506,
+      "calls": 263
+    }
+  },
+  "firstON": {
+    "worldMs": 13814.783621,
+    "financeMs": 457.752648,
+    "admissionAndEnvelopeMs": 649.30824,
+    "decodeMs": 138.992704,
+    "rpcHttpMs": 516.897511,
+    "rpcJsonBytes": 484332
+  },
+  "security": {
+    "actualJWTs": "two distinct sessions of the same authorized author",
+    "sameArtifactReread": true,
+    "wrongAuthorDenied": true,
+    "wrongHouseholdDenied": true,
+    "wrongPeopleDenied": true,
+    "trustedRPCDenied": true,
+    "anonymousAppHTTP": 401,
+    "crossUserJWT": "NOT_RUN",
+    "directDMLJWT": "NOT_RUN; native roles and actual grants verified",
+    "secondPhysicalDevice": "NOT_RUN"
+  },
+  "blocker": {
+    "type": "AUTOMATIC_APPROVAL_REVIEW_USAGE_LIMIT",
+    "announcedResumeParis": "2026-10-14 15:16",
+    "blockedOutcome": "Remaining browser measurements; no alternative access used"
+  },
+  "production": {
+    "code": "7d7e8833305c7479bea7edd1778da46f729a0e68",
+    "snapConsumption": "OFF",
+    "newCodeDeployment": "NOT_RUN",
+    "merge": "NOT_RUN"
+  }
+}
