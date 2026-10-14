@@ -55,14 +55,24 @@ export function ComposerShell({ initialModel, transport: suppliedTransport, init
   const [model, setModel] = useState(initialModel), current = useRef(initialModel);
   const [draftState, setDraftState] = useState(initialModel.semanticState), localDraft = useRef(initialModel.semanticState);
   const [previewStatus, setPreviewStatus] = useState<PreviewStatus>(initialModel.board.cockpit.applyReadiness === "BLOCKED" ? "BLOCKED" : "FRESH");
+  const snapshotIntent = useRef<number | null>(null);
   useEffect(() => {
     if (!snapshotMetrics) return;
     let frame = requestAnimationFrame(() => { frame = requestAnimationFrame(() => {
+      const navigation=performance.getEntriesByType("navigation")[0] as PerformanceNavigationTiming | undefined;
       if (!performance.getEntriesByName("snap-board-usable").length) performance.mark("snap-board-usable");
       if (previewStatus === "FRESH" && !performance.getEntriesByName("snap-preview-fresh").length) performance.mark("snap-preview-fresh");
       document.querySelector("[data-composer]")?.setAttribute("data-snap-browser", JSON.stringify({
         boardMs:performance.getEntriesByName("snap-board-usable")[0]?.startTime,
-        freshMs:performance.getEntriesByName("snap-preview-fresh")[0]?.startTime,previewStatus}));
+        freshMs:performance.getEntriesByName("snap-preview-fresh")[0]?.startTime,previewStatus,
+        navigation:navigation?{type:navigation.type,ttfbMs:navigation.responseStart-navigation.requestStart,
+          responseMs:navigation.responseEnd-navigation.requestStart,transferBytes:navigation.transferSize,
+          decodedBytes:navigation.decodedBodySize}:null}));
+      if (previewStatus === "FRESH" && snapshotIntent.current !== null) {
+        document.querySelector("[data-composer]")?.setAttribute("data-snap-intent", JSON.stringify({
+          visualFreshMs:performance.now()-snapshotIntent.current}));
+        snapshotIntent.current=null;
+      }
     }); });
     return () => cancelAnimationFrame(frame);
   }, [snapshotMetrics, previewStatus]);
@@ -136,6 +146,7 @@ export function ComposerShell({ initialModel, transport: suppliedTransport, init
     });
   }
   function stage(operation: ComposerOperation, history: "push" | "undo" | "redo" = "push", restored?: PlanSemanticStateV1) {
+    if (snapshotMetrics) snapshotIntent.current=performance.now();
     const before = localDraft.current;
     const next = restored ?? stageLocalDecision(current.current, before, operation);
     if (!next) { void run(operation, history, restored); return false; }
@@ -247,6 +258,7 @@ export function ComposerShell({ initialModel, transport: suppliedTransport, init
   }
   async function run(operation: ComposerOperation, history: "push" | "undo" | "redo" | "none" = "push", draft?: PlanSemanticStateV1) {
     if (busyRef.current) return;
+    if (snapshotMetrics) snapshotIntent.current=performance.now();
     scheduler.current.cancel();
     clearHover(); busyRef.current = true; setBusy(true); setSuggestions(null); setErrorMessage(null);
     const beforeDraft = localDraft.current, sourceDigest = semanticStateDigest(beforeDraft), ticket = gate.current.next(sourceDigest);
@@ -563,7 +575,7 @@ export function ComposerShell({ initialModel, transport: suppliedTransport, init
   const stableBalance=useCommittedEvent(()=>{clearHover();setBalanceOpen(v=>!v);if(!balanceOpen)void run({kind:"SUGGESTIONS"},"none");});
   const stableDetails=useCommittedEvent(openProjectionDetails);
   return <ComposerInteractionContext.Provider value={interactionView}>
-  <div className={styles.workspace} data-composer data-digest={shown.board.draft.semanticStateDigest} data-preview-state={previewStatus} data-save-state={durable.status} data-world-version={worldVersion} data-exploratory-digest={hoverModel?.board.draft.semanticStateDigest} data-dragging={!!grabbed} data-comparing={!!comparison} data-motion={motion} data-revision={model.activeRevisionNumber} aria-busy={busy}
+  <div className={styles.workspace} data-composer data-digest={shown.board.draft.semanticStateDigest} data-snap-preview-digest={snapshotMetrics?model.proof.expectedPreviewDigest:undefined} data-preview-state={previewStatus} data-save-state={durable.status} data-world-version={worldVersion} data-exploratory-digest={hoverModel?.board.draft.semanticStateDigest} data-dragging={!!grabbed} data-comparing={!!comparison} data-motion={motion} data-revision={model.activeRevisionNumber} aria-busy={busy}
     onDragOverCapture={e => { if (grab.current && e.target instanceof Element && !e.target.closest("[data-board-drop],[data-trash]")) { over(null); if (assistantOver.current) { assistantOver.current = null; clearHover(); } } }}>
     <header className={styles.workspaceHeader}><div className={styles.headerIdentity}><a href={`/mois-a-venir?month=${model.semanticState.targetMonth}&control=center`} className={styles.backLink}><ArrowLeft size={14} /> Centre de contrôle</a>
       <h1>Composer <span>{monthLabel(model.semanticState.targetMonth)}</span></h1><div className={styles.headerMeta}>{comparison && <span className={styles.variantMarker} data-variant-marker>VARIANTE</span>}<span className={styles.draftStatus} data-draft-status>{draftTransport ? ({ CLEAN: "Aucun brouillon sauvegardé", DIRTY: "Modifications non enregistrées", SAVING: "Sauvegarde en cours…", SAVED: "Brouillon sauvegardé", ERROR: "Erreur de sauvegarde", CONFLICT: "Conflit de brouillon", OFFLINE: "Hors ligne · non enregistré" }[durable.status]) : !model.activeRevisionNumber ? "Brouillon" : shown.board.draft.dirty ? "Nouvelle modification" : `Appliqué · révision ${model.activeRevisionNumber}`}</span>

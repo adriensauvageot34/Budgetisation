@@ -21,6 +21,7 @@ import { buildPlanningBaseline } from "./baseline";
 import { readActivityHistory, type ActivityHistoryStore } from "./activity-history-artifact";
 import { RENEWAL_NEED_KEYS } from "./renewal-engine";
 import { activityHistoryPeriod } from "./activity-history-period";
+import { snapshotHistoryTrace } from "./snapshot-observation";
 
 /** Explicit downstream compatibility payload; never accepted by the Baseline builder. */
 export const legacySeedDecisions = (inputs: MonthInputs) => parsePlannerJsonObject(inputs.decision ?? {});
@@ -58,7 +59,7 @@ export async function readPlanningBaselineSources(repository: CanonicalRepositor
   const { today, through, range } = activityHistoryPeriod(context, month, knowledgeCutoff);
   const simpleRead = async () => {
     if (!options.simpleOccurrences) return undefined;
-    return readActivityHistory(repository, range, today.toString(), options.activityHistory);
+    return readActivityHistory(repository, range, today.toString(), options.activityHistory, snapshotHistoryTrace);
   };
   const simpleOccurrencesPromise = simpleRead();
   // C1 and M7 use the same owner projection for this exact authorized range.

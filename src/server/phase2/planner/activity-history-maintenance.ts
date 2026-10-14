@@ -14,6 +14,7 @@ import { activityHistoryPeriod } from "./activity-history-period";
 /** Definite CAS rejection may retry once; ambiguous write ALWAYS re-inspects.
  * No retry after an unconfirmed commit and no financial writer is available. */
 export async function prepareRegisteredActivityHistory(repository: CanonicalRepository, targetMonth: string, store: ActivityHistoryStore) {
+  const started = performance.now();
   const { range, cutoffDate } = activityHistoryPeriod(repository.context, targetMonth, repository.context.asOf);
   const scope = activityHistoryScope(repository, range, cutoffDate), key = plannerDigest(scope);
   for (let attempt = 0; attempt < 2; attempt++) {
@@ -28,16 +29,16 @@ export async function prepareRegisteredActivityHistory(repository: CanonicalRepo
       if (!expected) throw error;
       const current = await store.inspect(scope, key);
       if (current.generation !== expected.generation || plannerRecord(current.artifact).digest !== expected.digest) throw error;
-      return { status: "RECOVERED_COMMIT" as const, generation: current.generation, digest: expected.digest };
+      return { status: "RECOVERED_COMMIT" as const, generation: current.generation, digest: expected.digest, preparationMs: performance.now()-started };
     }
     if (accepted) {
       const current = await store.inspect(scope, key);
       if (current.generation !== expected?.generation || plannerRecord(current.artifact).digest !== expected.digest)
         throw new TypeError("SNAP_PUBLICATION_RELECTURE_UNCONFIRMED");
-      return { status: "PUBLISHED" as const, generation: current.generation, digest: expected.digest };
+      return { status: "PUBLISHED" as const, generation: current.generation, digest: expected.digest, preparationMs: performance.now()-started };
     }
   }
-  return { status: "STALE_REJECTED" as const };
+  return { status: "STALE_REJECTED" as const, preparationMs: performance.now()-started };
 }
 
 /** Supabase secret client stays server-side. A separate service-only inspect
