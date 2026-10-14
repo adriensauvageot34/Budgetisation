@@ -1,12 +1,14 @@
 import { BootstrapAuthenticationRequiredError } from "@/server/bootstrap/errors";
 import { plannerMonth, plannerRecord } from "@/domain/phase2/planner/json";
 import type { ComposerDraftLifecycleCommand, ComposerDraftSaveCommand } from "@/domain/phase2/planner/composer-draft-contract";
+import { COMPOSER_DRAFT_HTTP_CONTRACT } from "@/domain/phase2/planner/composer-draft-contract";
 import { authorizedPlanner } from "@/server/phase2/planner/runtime";
 import { composerDraftAutosaveEnabledFor } from "@/server/phase2/planner/composer-draft-cutover";
 import { changeComposerDraftLifecycle, readComposerDrafts, saveComposerDraft } from "@/server/phase2/planner/composer-draft-service";
 
 export const dynamic = "force-dynamic";
-const headers = { "Cache-Control": "private, no-store", Vary: "Cookie" };
+const contractHeader = "X-Composer-Draft-Contract";
+const headers = { "Cache-Control": "private, no-store", Vary: "Cookie", [contractHeader]: COMPOSER_DRAFT_HTTP_CONTRACT };
 const maxRequestBytes = 1_200_000;
 
 function reply(value: unknown, status = 200) {
@@ -31,6 +33,8 @@ async function boundary(run: () => Promise<Response>) {
 }
 
 export const GET = (request: Request) => boundary(async () => {
+  if (request.headers.get(contractHeader) !== COMPOSER_DRAFT_HTTP_CONTRACT)
+    return reply({ code: "DRAFT_CONTRACT_INCOMPATIBLE" }, 409);
   const month = plannerMonth(new URL(request.url).searchParams.get("month"));
   return reply(await readComposerDrafts(await scope(), month));
 });
@@ -39,6 +43,8 @@ export const POST = (request: Request) => boundary(async () => {
   // Cookie authentication requires an exact same-origin POST guard. A request
   // from an old build still reaches this stable path without a Server Action ID.
   if (request.headers.get("origin") !== new URL(request.url).origin) return reply({ code: "DRAFT_ORIGIN_REFUSED" }, 403);
+  if (request.headers.get(contractHeader) !== COMPOSER_DRAFT_HTTP_CONTRACT)
+    return reply({ code: "DRAFT_CONTRACT_INCOMPATIBLE" }, 409);
   if (request.headers.get("content-type")?.split(";")[0]?.trim().toLowerCase() !== "application/json")
     return reply({ code: "DRAFT_CONTENT_TYPE_INVALID" }, 415);
   if (Number(request.headers.get("content-length") ?? 0) > maxRequestBytes)
