@@ -9,6 +9,7 @@ import { deriveCompiledMonthScenario } from "./financial-adapter";
 import { buildPlanProjection, PLAN_PROJECTION_MODEL } from "./projection";
 import { mutatePlanSemanticState } from "./semantic-mutations";
 import { materializePlanSlots } from "./plan-slot-resolver";
+import { snapshotSpan } from "./snapshot-observation";
 
 /** The branches share all authorities/versions. In the audited v6 Compiler,
  * forcedOwnedSlotKeys only affects materialization. Compare both complete slot
@@ -28,6 +29,7 @@ function isSemanticallyNeutralPlanEvaluation(world: PlanningWorldFacts, state: P
 
 /** Same pure evaluation for preview, server apply, assistant and immediate reload. */
 export function evaluatePlanScenario(world: PlanningWorldFacts, semanticState: PlanSemanticStateV1, base: PlannerExpectedBase): PlanScenarioPreview {
+  const end = snapshotSpan("Compiler_Finance_V2");try {
   const state = parsePlanSemanticState(semanticState);
   const input = { baseline: world.baseline, semanticState: state, externalIntents: world.externalIntents, world,
     compilerVersion: PLANNER_COMPILER_VERSION, modelVersions: { ...world.modelVersions, projection: PLAN_PROJECTION_MODEL } };
@@ -63,4 +65,5 @@ export function evaluatePlanScenario(world: PlanningWorldFacts, semanticState: P
   return { baseline: world.baseline, baselineDigest: world.baseline.digest, baseActiveRevisionId: base.expectedActiveRevisionId,
     baseRevisionNumber: base.expectedActiveRevisionNumber, semanticStateDigest: compiled.semanticStateDigest,
     compiledManifestDigest: compiled.manifestDigest, previewDigest, projectionDigest, projection, compiled, scenario };
+  } finally { end(); }
 }

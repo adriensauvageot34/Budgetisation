@@ -35,13 +35,37 @@ type Editor = { title: string; compact?: boolean; side?: boolean; fields: readon
   operation: (values: Record<string, string>) => ComposerOperation };
 type DraftConfirmation = { kind: "ABANDON" | "RESTART" | "RESTORE" | "LOAD_SERVER"; draftId?: string; version?: number };
 type PendingApply = { draft: PlanSemanticStateV1; command: PlannerApplyCommand; checkedAbsent?: boolean };
-export function ComposerShell({ initialModel, transport, initialDrafts = null, draftTransport = null }: {
+export function ComposerShell({ initialModel, transport: suppliedTransport, initialDrafts = null, draftTransport = null, snapshotMetrics = false }: {
   initialModel: ComposerUiModel; transport: ComposerTransport;
   initialDrafts?: ComposerDraftSnapshot | null; draftTransport?: DraftTransport | null;
+  snapshotMetrics?: boolean;
 }) {
+  const transport: ComposerTransport = useCommittedEvent(async (request: ComposerRequest) => {
+    const started = performance.now();
+    const response = await suppliedTransport(request);
+    if (snapshotMetrics) {
+      const metrics = (response as typeof response & { snapMetrics?: unknown }).snapMetrics;
+      document.querySelector("[data-composer]")?.setAttribute("data-snap-action", JSON.stringify({
+        kind: request.kind, sequence: request.sequence, responseMs: performance.now() - started,
+        ok: response.ok, metrics,
+      }));
+    }
+    return response;
+  });
   const [model, setModel] = useState(initialModel), current = useRef(initialModel);
   const [draftState, setDraftState] = useState(initialModel.semanticState), localDraft = useRef(initialModel.semanticState);
   const [previewStatus, setPreviewStatus] = useState<PreviewStatus>(initialModel.board.cockpit.applyReadiness === "BLOCKED" ? "BLOCKED" : "FRESH");
+  useEffect(() => {
+    if (!snapshotMetrics) return;
+    let frame = requestAnimationFrame(() => { frame = requestAnimationFrame(() => {
+      if (!performance.getEntriesByName("snap-board-usable").length) performance.mark("snap-board-usable");
+      if (previewStatus === "FRESH" && !performance.getEntriesByName("snap-preview-fresh").length) performance.mark("snap-preview-fresh");
+      document.querySelector("[data-composer]")?.setAttribute("data-snap-browser", JSON.stringify({
+        boardMs:performance.getEntriesByName("snap-board-usable")[0]?.startTime,
+        freshMs:performance.getEntriesByName("snap-preview-fresh")[0]?.startTime,previewStatus}));
+    }); });
+    return () => cancelAnimationFrame(frame);
+  }, [snapshotMetrics, previewStatus]);
   const scheduler = useRef(new ComposerPreviewScheduler());
   const [busy, setBusy] = useState(false), busyRef = useRef(false);
   const [selected, setSelected] = useState<string | null>(null), [message, setMessage] = useState("");

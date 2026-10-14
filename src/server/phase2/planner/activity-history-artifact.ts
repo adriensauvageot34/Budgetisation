@@ -27,6 +27,7 @@ export type ActivityHistoryArtifact = Readonly<{ scope: ActivityHistoryScope; pr
  * and compare BOTH versions and expected artifact generation before publishing.
  * No production adapter is supplied until writer coverage is certified. */
 export interface ActivityHistoryStore {
+  trace?: ActivityHistoryTrace;
   inspect(scope: ActivityHistoryScope, key: string): Promise<Readonly<{ proof: ActivityHistoryProof | null;
     generation: number; artifact: unknown | null }>>;
   publish(scope: ActivityHistoryScope, key: string, expectedGeneration: number, artifact: ActivityHistoryArtifact): Promise<boolean>;
@@ -82,6 +83,7 @@ function decodePayload(value: unknown, scope: ActivityHistoryScope): ActivityHis
 
 export async function readActivityHistory(repository: CanonicalRepository, range: CanonicalDateRange, cutoffDate: string,
   store?: ActivityHistoryStore, trace?: ActivityHistoryTrace): Promise<ActivityHistory> {
+  trace ??= store?.trace;
   if (process.env.COMPOSER_P14_SNAP1_ACTIVITY_HISTORY !== "1" || !store) {
     trace?.({ status: "OFF" }); return readDirectActivityHistory(repository, range);
   }
@@ -90,7 +92,21 @@ export async function readActivityHistory(repository: CanonicalRepository, range
   const validationMs = performance.now() - start;
   let reason = !covered(current.proof) ? "DEPENDENCY_COVERAGE_UNAVAILABLE" : "ABSENT";
   if (covered(current.proof) && current.artifact !== null) {
-    const at = performance.now(), artifact = plannerRecord(current.artifact);
+    const at = performance.now(), payload = admittedActivityHistory(scope, current);
+    if (payload) {
+      trace?.({ status: "HIT", validationMs, decodeMs: performance.now() - at }); return payload;
+    }
+    reason = "SOURCE_VERSION_CHANGED";
+  }
+  const direct = performance.now(), result = await readDirectActivityHistory(repository, range);
+  trace?.({ status: "MISS", reason, validationMs, directMs: performance.now() - direct }); return result;
+}
+
+/** Same strict admission for status/maintenance and the financial reader. */
+export function admittedActivityHistory(scope: ActivityHistoryScope, current: Readonly<{
+  proof: ActivityHistoryProof | null; generation: number; artifact: unknown | null }>): ActivityHistory | null {
+  if (covered(current.proof) && current.artifact !== null) {
+    const artifact = plannerRecord(current.artifact);
     plannerKeys(artifact, ["scope", "proof", "generation", "status", "coverage", "provenance", "payload", "digest"]);
     const { digest, ...body } = artifact;
     if (digest !== plannerDigest(body) || !covered(artifact.proof) || artifact.status !== "READY" || artifact.coverage !== "COMPLETE_SOURCE_ROWS"
@@ -99,13 +115,10 @@ export async function readActivityHistory(repository: CanonicalRepository, range
       || plannerDigest(artifact.provenance) !== plannerDigest(ACTIVITY_HISTORY_DEPENDENCIES.slice(0, 4)))
       throw new TypeError("ACTIVITY_ARTIFACT_CORRUPT_OR_INCOMPATIBLE");
     if (plannerDigest(artifact.proof) === plannerDigest(current.proof)) {
-      const payload = decodePayload(artifact.payload, scope);
-      trace?.({ status: "HIT", validationMs, decodeMs: performance.now() - at }); return payload;
+      return decodePayload(artifact.payload, scope);
     }
-    reason = "SOURCE_VERSION_CHANGED";
   }
-  const direct = performance.now(), result = await readDirectActivityHistory(repository, range);
-  trace?.({ status: "MISS", reason, validationMs, directMs: performance.now() - direct }); return result;
+  return null;
 }
 
 /** Preparation deliberately uses a FRESH repository and exact source counts.

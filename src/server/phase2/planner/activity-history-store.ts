@@ -5,8 +5,8 @@ import type { ActivityHistoryStore, ActivityHistoryProof } from "./activity-hist
 
 /** Reader uses the authenticated server client. Only the trusted existing owner
  * preparing facts may supply a publisher (service-role, never browser input).
- * This adapter is NOT wired into authorizedPlanner until a separate deployment
- * review. Its migration is a candidate; a flag alone cannot enable the runtime. */
+ * authorizedPlanner constructs it only when consumption is explicitly enabled.
+ * Ordinary READ has no publisher and cannot rebuild or write an artifact. */
 export function createActivityHistoryStore(reader: SupabaseClient, publisher?: SupabaseClient): ActivityHistoryStore {
   return {
     async inspect(scope, key) {

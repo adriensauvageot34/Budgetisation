@@ -1,0 +1,191 @@
+{
+  "checkedAt": "2026-10-14",
+  "environment": "Supabase principal; metadata only",
+  "candidateHash": "8CFC89722E986A22FC47972538130E08D82696D4CF07973673DE19BF94A0E004",
+  "verified": [
+    {
+      "verified": {
+        "state": {
+          "epoch": 1,
+          "enabled": false,
+          "coverage": true,
+          "revision": 0
+        },
+        "tables": [
+          {
+            "rls": true,
+            "name": "planner_activity_history_artifacts",
+            "owner": "postgres",
+            "anon_read": false,
+            "auth_read": false,
+            "service_write": false
+          },
+          {
+            "rls": true,
+            "name": "planner_activity_history_state",
+            "owner": "postgres",
+            "anon_read": false,
+            "auth_read": false,
+            "service_write": false
+          }
+        ],
+        "triggers": [
+          {
+            "type": 60,
+            "table": "households",
+            "enabled": "A"
+          },
+          {
+            "type": 60,
+            "table": "persons",
+            "enabled": "A"
+          },
+          {
+            "type": 60,
+            "table": "life_event_types",
+            "enabled": "A"
+          },
+          {
+            "type": 60,
+            "table": "life_events",
+            "enabled": "A"
+          },
+          {
+            "type": 60,
+            "table": "life_event_participations",
+            "enabled": "A"
+          },
+          {
+            "type": 60,
+            "table": "life_event_financial_links",
+            "enabled": "A"
+          },
+          {
+            "type": 60,
+            "table": "private.household_memberships",
+            "enabled": "A"
+          }
+        ],
+        "artifacts": 0,
+        "functions": [
+          {
+            "name": "public.inspect_planner_activity_history_trusted_v1",
+            "owner": "postgres",
+            "config": [
+              "search_path=\"\""
+            ],
+            "definer": true,
+            "anon_execute": false,
+            "auth_execute": false,
+            "service_execute": true
+          },
+          {
+            "name": "public.inspect_planner_activity_history_v1",
+            "owner": "postgres",
+            "config": [
+              "search_path=\"\""
+            ],
+            "definer": true,
+            "anon_execute": false,
+            "auth_execute": true,
+            "service_execute": false
+          },
+          {
+            "name": "public.publish_planner_activity_history_v1",
+            "owner": "postgres",
+            "config": [
+              "search_path=\"\""
+            ],
+            "definer": true,
+            "anon_execute": false,
+            "auth_execute": false,
+            "service_execute": true
+          },
+          {
+            "name": "public.registered_planner_activity_history_v1",
+            "owner": "postgres",
+            "config": [
+              "search_path=\"\""
+            ],
+            "definer": true,
+            "anon_execute": false,
+            "auth_execute": false,
+            "service_execute": true
+          },
+          {
+            "name": "private.bump_planner_activity_history",
+            "owner": "postgres",
+            "config": [
+              "search_path=\"\""
+            ],
+            "definer": true,
+            "anon_execute": false,
+            "auth_execute": false,
+            "service_execute": false
+          },
+          {
+            "name": "private.activity_history_canonical_json",
+            "owner": "postgres",
+            "config": [
+              "search_path=\"\""
+            ],
+            "definer": false,
+            "anon_execute": false,
+            "auth_execute": false,
+            "service_execute": false
+          },
+          {
+            "name": "private.fence_planner_activity_history_configuration",
+            "owner": "postgres",
+            "config": [
+              "search_path=\"\""
+            ],
+            "definer": false,
+            "anon_execute": false,
+            "auth_execute": false,
+            "service_execute": false
+          },
+          {
+            "name": "private.activity_history_proof",
+            "owner": "postgres",
+            "config": [
+              "search_path=\"\""
+            ],
+            "definer": false,
+            "anon_execute": false,
+            "auth_execute": false,
+            "service_execute": false
+          },
+          {
+            "name": "private.activity_history_scope_allowed",
+            "owner": "postgres",
+            "config": [
+              "search_path=\"\""
+            ],
+            "definer": true,
+            "anon_execute": false,
+            "auth_execute": false,
+            "service_execute": false
+          },
+          {
+            "name": "private.activity_history_writer_coverage",
+            "owner": "postgres",
+            "config": [
+              "search_path=\"\""
+            ],
+            "definer": false,
+            "anon_execute": false,
+            "auth_execute": false,
+            "service_execute": false
+          }
+        ],
+        "migration": [
+          {
+            "name": "planner_activity_history_durable",
+            "version": "20261014105944"
+          }
+        ]
+      }
+    }
+  ]
+}

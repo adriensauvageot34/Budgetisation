@@ -20,6 +20,7 @@ import type { PersonHabitAssertion, PlanningBaselineSources } from "./baseline-s
 import { buildPlanningBaseline } from "./baseline";
 import { readActivityHistory, type ActivityHistoryStore } from "./activity-history-artifact";
 import { RENEWAL_NEED_KEYS } from "./renewal-engine";
+import { activityHistoryPeriod } from "./activity-history-period";
 
 /** Explicit downstream compatibility payload; never accepted by the Baseline builder. */
 export const legacySeedDecisions = (inputs: MonthInputs) => parsePlannerJsonObject(inputs.decision ?? {});
@@ -54,12 +55,7 @@ export async function readPlanningBaselineSources(repository: CanonicalRepositor
     predictionEvidence?: Promise<MonthPredictionEvidence>; activityHistory?: ActivityHistoryStore }> = {}): Promise<PlanningBaselineSources> {
   const month = plannerMonth(targetMonth), cutoff = Temporal.Instant.from(knowledgeCutoff);
   const { client, context } = repository, householdId = String(context.householdId);
-  const today = cutoff.toZonedDateTimeISO(context.timezone).toPlainDate();
-  const lastHistorical = Temporal.PlainDate.from(`${month}-01`).subtract({ days: 1 });
-  const through = Temporal.PlainDate.compare(today, lastHistorical) < 0 ? today : lastHistorical;
-  const firstMonth = context.periods.map(p => p.month.slice(0, 7)).sort()[0];
-  if (!firstMonth || `${firstMonth}-01` > through.toString()) throw new TypeError("BASELINE_CANONICAL_PERIODS_UNAVAILABLE");
-  const range = { start: parseLocalDate(`${firstMonth}-01`), endExclusive: parseLocalDate(through.add({ days: 1 }).toString()) };
+  const { today, through, range } = activityHistoryPeriod(context, month, knowledgeCutoff);
   const simpleRead = async () => {
     if (!options.simpleOccurrences) return undefined;
     return readActivityHistory(repository, range, today.toString(), options.activityHistory);

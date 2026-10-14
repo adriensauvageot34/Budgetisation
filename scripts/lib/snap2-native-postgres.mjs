@@ -52,7 +52,9 @@ export async function setupNative(data){
    const fields=Object.keys(row).filter(key=>key!=='extra_unselected');
    await c.query(`INSERT INTO ${table}(${fields.join(',')}) VALUES(${fields.map((_,i)=>'$'+(i+1)).join(',')})`,fields.map(f=>row[f]));
   }
- await c.query(fs.readFileSync('supabase/candidates/P14_SNAP2_ACTIVITY_HISTORY_DO_NOT_APPLY.sql','utf8'));
+ const migration=process.env.SNAP2_MIGRATION_SQL??'supabase/candidates/P14_SNAP2_ACTIVITY_HISTORY_DO_NOT_APPLY.sql';
+ if(!/^supabase\/(candidates|migrations)\/[a-zA-Z0-9_]+\.sql$/.test(migration))throw Error('SNAP_TEST_MIGRATION_PATH_INVALID');
+ await c.query(fs.readFileSync(migration,'utf8'));
  return c;
 }
 export async function rpcClient(actor,role='authenticated'){

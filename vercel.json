@@ -1,0 +1,3 @@
+{
+  "crons": [{ "path": "/api/cron/composer-history", "schedule": "15 0 * * *" }]
+}

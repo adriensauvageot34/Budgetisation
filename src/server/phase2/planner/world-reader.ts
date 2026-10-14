@@ -18,6 +18,7 @@ import { expandComposableContexts } from "./context-compiler";
 import { materializePlanSlots } from "./plan-slot-resolver";
 import { resolveJourneyRequirements } from "./journey-resolver";
 import type { ActivityHistoryStore } from "./activity-history-artifact";
+import { snapshotSpan } from "./snapshot-observation";
 
 /** Canonical may use its trusted read client; Plan writes always use the authenticated
  * household client supplied separately by the authorized server entry point. */
@@ -31,6 +32,7 @@ export function createPlannerDependencies(canonical: CanonicalRepository, authen
   const mobilityOptions = (householdId: string) => { scope(householdId); return optionsPromise ??=
     readPlannedContextOptions(canonical.client, householdId, canonical.context.persons); };
   const loadWorldWithStore = async (householdId: string, targetMonth: string, history?: ActivityHistoryStore) => {
+    const end = snapshotSpan("World");try {
     scope(householdId);
     const cutoff = Temporal.Instant.from(clock()), asOfDate = cutoff.toZonedDateTimeISO(canonical.context.timezone).toPlainDate().toString();
     // Forecast requires history; Baseline permits empty history. When the two readers
@@ -54,6 +56,7 @@ export function createPlannerDependencies(canonical: CanonicalRepository, authen
       monthInputs: sources.monthInputs, externalIntents: sources.plannedExpenses, asOfDate, costQuotes: {},
       mobilityFacts: buildProspectiveMobilityFacts(sources),
       modelVersions: { financialOwner: "deriveMonthScenario@v2", forecast: forecast.resourceMeta.contractVersion } };
+    } finally { end(); }
   };
   return { repository: createPlanApplyRepository(authenticatedClient), householdPersons: (canonical.context.persons ?? []).map(person =>
     ({ personId: String(person.personId), displayName: person.displayName })), readMobilityOptions: mobilityOptions,
