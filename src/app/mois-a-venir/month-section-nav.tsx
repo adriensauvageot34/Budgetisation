@@ -9,12 +9,12 @@ import { usePlannedContentMotion } from "./use-planned-content-motion";
 
 const sections = [["resources-title", "Ressources"], ["outflows-title", "Charges"], ["planned-expense-title", "Projets"],
   ["timeline-title", "Calendrier"], ["necessary-title", "Quotidien"], ["flexible-title", "Extras"], ["final-projection", "Projection"]] as const;
-const appliedSections = [["final-projection", "Projection"], ["resources-title", "Ressources"], ["plan-contexts", "Moments"],
-  ["planned-expense-title", "Dépenses externes"], ["timeline-title", "Calendrier"], ["plan-evidence", "Informations"]] as const;
+const appliedSections = [["final-projection", "Mon mois"], ["my-plan-title", "Décisions"], ["plan-understand", "Comprendre"],
+  ["resources-title", "Ressources"], ["plan-external", "Dépenses externes"], ["timeline-title", "Calendrier"]] as const;
 
 export function MonthSectionNav({ hasProjects, actionableCount, composerHref, appliedPlan = false }: { hasProjects: boolean; actionableCount?: number; composerHref?: string; appliedPlan?: boolean }) {
   const interactions = usePlannedExpenseInteractions();
-  const available = useMemo(() => (appliedPlan ? appliedSections : sections).filter(([id]) => hasProjects || id !== "planned-expense-title"), [hasProjects, appliedPlan]);
+  const available = useMemo(() => (appliedPlan ? appliedSections : sections).filter(([id]) => hasProjects || !["planned-expense-title", "plan-external"].includes(id)), [hasProjects, appliedPlan]);
   const ids = useMemo(() => available.map(([id]) => id), [available]);
   const { anchor, toolbar, tabs, indicator, active } = usePlannedScrollScene(ids);
   usePlannedContentMotion(toolbar);
