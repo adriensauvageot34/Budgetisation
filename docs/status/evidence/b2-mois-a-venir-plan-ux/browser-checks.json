@@ -1,0 +1,34 @@
+{
+  "scope": "B2; synthetic persisted C0 revisions + authenticated DIRECT_V2 preview; no personal Plan",
+  "productHead": "d4901991ebb247097a73e483e0a32da52b88b6a5",
+  "syntheticBrowser": {
+    "A_650_580_minus70": "EXECUTED_PASS",
+    "B_coveredRestaurant": "EXECUTED_PASS",
+    "C_parentTwoChildrenOnePhysicalJourney": "EXECUTED_PASS",
+    "D_protectedReservationNoReduction": "EXECUTED_PASS",
+    "E_mobilityUsageNotCashMissingDate": "EXECUTED_PASS",
+    "F_known100UnknownTotal": "EXECUTED_PASS",
+    "G_supersededR1R2": "EXECUTED_PASS",
+    "changedAuthorities590Current580Historical": "EXECUTED_PASS",
+    "unavailableHonestNotice": "EXECUTED_PASS",
+    "giftFreeLabelIndependentClassification": "EXECUTED_PASS",
+    "conditionalNonAdditiveMarginal": "EXECUTED_PASS",
+    "enterOnChildSummaryAndMarginal": "EXECUTED_PASS",
+    "visibleFocusOutline": "EXECUTED_PASS",
+    "longMoneyOverflow": "EXECUTED_PASS",
+    "externalWriterActions": "DISABLED_IN_FIXTURE"
+  },
+  "authenticatedPreview": {
+    "DIRECT_V2": "EXECUTED_PASS",
+    "sameForecastAsB1": true,
+    "noOfficialComparison": true,
+    "composerInvitation": true,
+    "controlCenterOpenEscapeFocusReturn": "EXECUTED_PASS",
+    "composerNavigationFreshDraftClean": "EXECUTED_PASS",
+    "financialActionsExecuted": 0
+  },
+  "authenticatedWithPlan": "NOT_RUN",
+  "screenReader": "NOT_RUN",
+  "browserZoom": "NOT_RUN",
+  "latestUserScope": "DESKTOP_ONLY; existing mobile evidence retained, no further mobile work"
+}
