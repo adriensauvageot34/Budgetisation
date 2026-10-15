@@ -1,0 +1,19 @@
+[
+  {
+    "name": "l1-reference",
+    "appBytes": 350235,
+    "appGzipBytes": 107726,
+    "restaurant": []
+  },
+  {
+    "name": "l1-browser",
+    "appBytes": 327438,
+    "appGzipBytes": 101118,
+    "restaurant": [
+      {
+        "path": "outputs/l1-browser/chunks/restaurant-editor-43CM2I3N.js",
+        "bytes": 20872
+      }
+    ]
+  }
+]
