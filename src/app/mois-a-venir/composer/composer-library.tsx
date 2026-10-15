@@ -1,7 +1,8 @@
 import { memo, useState, useRef, useEffect, useMemo } from "react";
-import { COMPOSER_PRESETS, type ComposerPresetKey } from "@/domain/phase2/planner/composer-presets";
+import type { ComposerPresetKey } from "@/domain/phase2/planner/composer-presets";
+import { composerLibraryIndex, filterLibraryIntentions, LIBRARY_CATEGORIES, normalizeLibrarySearch, type LibraryIntention } from "@/domain/phase2/planner/composer-library-index";
 import { PresetIllustration } from "./preset-illustration";
-import { Search } from "lucide-react";
+import { Search, Star } from "lucide-react";
 import type { ComposerUiModel } from "@/domain/phase2/planner/composer-ui-contract";
 import type { ComposerAssetView } from "@/domain/phase2/planner/composer-contract";
 import styles from "./composer.module.css";
@@ -10,84 +11,69 @@ import { useComposerInteractions } from "./interactions";
 import { composerRenderIndex } from "./render-index";
 import { preloadEditorForAsset, preloadEditorForPreset } from "./editor-chunks";
 
-// These aliases only order and name existing server groups. They admit no assets.
-const groupOrder = ["SOCIAL", "FOOD", "ACTIVITY", "PURCHASE", "BEAUTY", "VISIT", "TRAVEL", "HOME", "OTHER", "controls", "options"];
-const groupName = (key: string, label: string) => key === "controls" ? "Habitudes & cagnottes" : key === "options" ? "Équipements" : label;
-const normalize = (text: string) => text.normalize("NFD").replace(/\p{Diacritic}/gu, "").toLocaleLowerCase("fr");
+const FAVORITES_KEY="budgetisation.composer.library-favorites.v1";
 export const ComposerLibrary=memo(ComposerLibraryView);
-function ComposerLibraryView({ model, openToken, busy, selected, choose, choosePreset, drag }: { model: ComposerUiModel; openToken: number; busy: boolean; selected: string | null;
-  choose: (asset: ComposerAssetView) => void; choosePreset: (asset: ComposerAssetView, key: ComposerPresetKey) => void; drag: (key: string | null) => void }) {
-  const [query, setQuery] = useState("");
-  const [opened, setOpened] = useState<ReadonlySet<string>>(() => new Set(["SOCIAL"]));
-  const [activeAsset, setActiveAsset] = useState<string | null>(null);
-  const search = useRef<HTMLInputElement>(null), hoverTimer = useRef<ReturnType<typeof setTimeout> | null>(null), interaction = useComposerInteractions();
-  useEffect(() => () => { if (hoverTimer.current) clearTimeout(hoverTimer.current); }, []);
-  useEffect(() => { if (openToken > 0) { setQuery(""); search.current?.focus(); } }, [openToken]);
-  useEffect(() => {
-    const quickFind = (event: KeyboardEvent) => {
-      if (event.key !== "/" || event.ctrlKey || event.metaKey || event.altKey || event.target instanceof Element && event.target.closest("input,textarea,select,[contenteditable=true],dialog[open]")) return;
-      event.preventDefault(); search.current?.focus();
-    };
-    window.addEventListener("keydown", quickFind); return () => window.removeEventListener("keydown", quickFind);
-  }, []);
-  const groups = useMemo(() => {
-    const assets = composerRenderIndex(model).assets, term = normalize(query.trim());
-    return model.library.sections.toSorted((a, b) => {
-      const rank = (key: string) => groupOrder.includes(key) ? groupOrder.indexOf(key) : groupOrder.length;
-      return rank(a.sectionKey) - rank(b.sectionKey);
-    }).map(section => {
-      const label = groupName(section.sectionKey, model.sectionLabels[section.sectionKey] ?? section.sectionKey);
-      const matches = section.assetKeys.map(key => assets.get(key)).filter((asset): asset is ComposerAssetView => !!asset)
-        .filter(asset => !term || normalize(`${asset.label} ${label}`).includes(term));
-      return { ...section, label, matches, total: section.assetKeys.length };
-    }).filter(group => group.matches.length);
-  }, [model, query]);
-  const presets = COMPOSER_PRESETS.flatMap(preset => {
-    const asset = model.library.searchableAssets.find(a => a.kind === "CONTEXT_ASSET" && a.templateKey === preset.templateKey);
-    const admitted = asset && model.dropCapabilities.some(d => d.sourceAssetKey === asset.assetKey && d.target.kind === "BOARD_ZONE" && d.resolution !== "BLOCKED");
-    return asset && admitted && (!query.trim() || normalize([preset.label, ...preset.searchTerms].join(" ")).includes(normalize(query.trim()))) ? [{ preset, asset }] : [];
-  });
-  const visibleGroups = groups.map(group => ({ ...group, expanded: !!query.trim() || opened.has(group.sectionKey) }));
-  const visibleAssets = visibleGroups.flatMap(group => group.expanded ? group.matches : []);
-  const toggleGroup = (key: string) => setOpened(current => {
-    const next = new Set(current); if (next.has(key)) next.delete(key); else next.add(key); return next;
-  });
+function ComposerLibraryView({model,openToken,busy,selected,choose,choosePreset,drag,inspectContext}:{model:ComposerUiModel;openToken:number;busy:boolean;selected:string|null;
+  choose:(asset:ComposerAssetView)=>void;choosePreset:(asset:ComposerAssetView,key:ComposerPresetKey)=>void;drag:(key:string|null)=>void;inspectContext:(id:string)=>void}) {
+  const [space,setSpace]=useState<"add"|"manage">("add"),[query,setQuery]=useState(""),[opened,setOpened]=useState<string|null>("SOCIAL");
+  const [expanded,setExpanded]=useState<ReadonlySet<string>>(()=>new Set()),[favorites,setFavorites]=useState<readonly string[]>([]);
+  const [favoriteNotice,setFavoriteNotice]=useState("");
+  const search=useRef<HTMLInputElement>(null), interaction=useComposerInteractions();
+  const index=useMemo(()=>composerLibraryIndex(model),[model]);
+  useEffect(()=>{try {const stored:unknown=JSON.parse(localStorage.getItem(FAVORITES_KEY)??"[]");if(Array.isArray(stored))setFavorites(stored.filter((v):v is string=>typeof v==="string").slice(0,100));}catch{setFavoriteNotice("Favoris indisponibles dans ce navigateur.");}},[]);
+  useEffect(()=>{if(openToken>0){setSpace("add");setQuery("");search.current?.focus();}},[openToken]);
+  useEffect(()=>{const quick=(event:KeyboardEvent)=>{if(event.key!=="/"||event.ctrlKey||event.metaKey||event.altKey||event.target instanceof Element&&event.target.closest("input,textarea,select,[contenteditable=true],dialog[open]"))return;event.preventDefault();search.current?.focus();};window.addEventListener("keydown",quick);return()=>window.removeEventListener("keydown",quick);},[]);
+  const toggleFavorite=(key:string)=>{
+    const next=favorites.includes(key)?favorites.filter(k=>k!==key):[...favorites,key];setFavorites(next);
+    try{localStorage.setItem(FAVORITES_KEY,JSON.stringify(next));setFavoriteNotice("");}catch{setFavoriteNotice("Favoris conservés pour cette session uniquement.");}
+  };
+  const matches=useMemo(()=>filterLibraryIntentions(index.intentions,query),[index.intentions,query]);
+  const favoriteItems=matches.filter(item=>favorites.includes(item.key));
+  const categories=LIBRARY_CATEGORIES.map(([key,label])=>({key,label,items:matches.filter(item=>item.category===key)})).filter(g=>g.items.length);
+  const activate=(item:LibraryIntention)=>item.preset?choosePreset(item.asset,item.preset.presetKey):choose(item.asset);
+  const tile=(item:LibraryIntention)=>{
+    const asset=item.asset, source=model.presentation.dragSources[asset.assetKey];
+    const draggable=!item.preset && (!!source?.editorDropTarget || (composerRenderIndex(model).drops.get(asset.assetKey)??[]).some(d=>d.resolution!=="BLOCKED")) && asset.provenance!=="DERIVED_CONSEQUENCE";
+    return <div className={styles.libraryTile} key={item.key}>
+      <button type="button" className={item.preset?styles.presetTile:styles.asset} data-preset={item.preset?.presetKey} data-asset={item.preset?undefined:asset.assetKey}
+        data-selected={selected===asset.assetKey} disabled={busy}
+        onFocus={()=>item.preset?preloadEditorForPreset(asset):preloadEditorForAsset(asset)}
+        onClick={()=>activate(item)} draggable={!busy&&draggable} data-drag-source={draggable?asset.assetKey:undefined}
+        onDragStart={event=>{if(interaction)interaction.start(asset.assetKey,event);else{event.dataTransfer.setData("application/x-planner-asset",asset.assetKey);drag(asset.assetKey);}}}
+        onDragEnd={()=>{interaction?.end();drag(null);}}>
+        {item.preset?<PresetIllustration preset={item.preset}/>:<PlannerIcon iconKey={asset.iconKey} identityRef={asset.capabilityRef} scale="LIBRARY" className={styles.assetIcon}/>}
+        <span>{item.label}</span>{!item.preset&&<small>À personnaliser</small>}
+      </button>
+      <button type="button" className={styles.libraryFavorite} aria-label={`${favorites.includes(item.key)?"Retirer":"Épingler"} ${item.label}`} aria-pressed={favorites.includes(item.key)} onClick={()=>toggleFavorite(item.key)}><Star size={13} fill={favorites.includes(item.key)?"currentColor":"none"}/></button>
+    </div>;
+  };
   return <aside className={styles.library} data-library aria-label="Bibliothèque d’intentions">
-    <header className={styles.panelHeader}><h2><button className={styles.libraryOpen} data-library-open onClick={() => search.current?.focus()}>Ajouter à mon mois</button></h2></header>
-    <label className={styles.search} title="Rechercher dans la bibliothèque (/)" ><Search size={15} aria-hidden="true" />
-      <input ref={search} data-library-search aria-label="Rechercher une intention" value={query} onChange={e => setQuery(e.target.value)} placeholder="Une idée en tête ?"
-        onKeyDown={e => { if (e.key === "Enter" && query && !busy && (presets.length || groups[0]?.matches[0])) { e.preventDefault(); if (presets[0]) choosePreset(presets[0].asset, presets[0].preset.presetKey); else choose(groups[0].matches[0]); }
-          else if (e.key === "ArrowDown" && visibleAssets.length) { e.preventDefault(); e.currentTarget.closest("aside")?.querySelector<HTMLButtonElement>("[data-asset]")?.focus(); } }} /></label>
-    <div className={styles.libraryScroll}>{presets.length > 0 && <section className={styles.assetGroup} data-preset-library><h3>Des idées pour vous</h3><div className={styles.presetGrid}>{presets.map(({preset,asset}) => <button key={preset.presetKey} type="button" className={styles.presetTile} data-preset={preset.presetKey} disabled={busy} onFocus={() => preloadEditorForPreset(asset)} onClick={() => choosePreset(asset,preset.presetKey)}><PresetIllustration preset={preset} /><span>{preset.label}</span></button>)}</div></section>}{visibleGroups.map(section => <section key={section.sectionKey} className={styles.assetGroup} data-library-group={section.sectionKey}>
-      <h3><button type="button" className={styles.assetGroupToggle} data-library-group-toggle={section.sectionKey}
-        aria-expanded={section.expanded} aria-controls={`composer-assets-${section.sectionKey}`} disabled={!!query.trim()}
-        onClick={() => toggleGroup(section.sectionKey)}
-        onKeyDown={e => { if (!["ArrowUp", "ArrowDown", "Home", "End"].includes(e.key)) return; e.preventDefault();
-          const headings = Array.from(e.currentTarget.closest("aside")!.querySelectorAll<HTMLButtonElement>("[data-library-group-toggle]"));
-          const index = headings.indexOf(e.currentTarget);
-          headings[e.key === "Home" ? 0 : e.key === "End" ? headings.length - 1 : Math.max(0, Math.min(headings.length - 1, index + (e.key === "ArrowUp" ? -1 : 1)))]?.focus(); }}>
-        <span aria-hidden="true">{section.expanded ? "▾" : "▸"}</span>{section.label}<small>{section.matches.length}{query ? ` / ${section.total}` : ""}</small>
-      </button></h3>
-      <div id={`composer-assets-${section.sectionKey}`} className={styles.assetGrid}>{section.expanded && section.matches.map(asset => {
-        const source = model.presentation.dragSources[asset.assetKey];
-        const draggable = (!!source?.editorDropTarget || (composerRenderIndex(model).drops.get(asset.assetKey) ?? []).some(d => d.resolution !== "BLOCKED")) && asset.provenance !== "DERIVED_CONSEQUENCE";
-        return <button type="button" className={styles.asset} key={asset.assetKey} data-asset={asset.assetKey} data-selected={selected === asset.assetKey} disabled={busy}
-          title={`${asset.label}${source?.editorTargetRef ? " · choisir une allocation" : ""} · parcourir avec les flèches`}
-          tabIndex={(section.matches.some(item => item.assetKey === activeAsset) ? activeAsset : section.matches[0]?.assetKey) === asset.assetKey ? 0 : -1}
-          onFocus={() => { setActiveAsset(asset.assetKey); preloadEditorForAsset(asset); }}
-          onPointerEnter={() => { if (hoverTimer.current) clearTimeout(hoverTimer.current);
-            hoverTimer.current = setTimeout(() => preloadEditorForAsset(asset), 150); }}
-          onPointerLeave={() => { if (hoverTimer.current) clearTimeout(hoverTimer.current); hoverTimer.current = null; }}
-          onPointerDown={() => preloadEditorForAsset(asset)}
-          onKeyDown={e => { if (!["ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown", "Home", "End"].includes(e.key)) return; e.preventDefault();
-            const assets = Array.from(e.currentTarget.closest("aside")!.querySelectorAll<HTMLButtonElement>("[data-asset]")), index = assets.indexOf(e.currentTarget);
-            const next = e.key === "Home" ? 0 : e.key === "End" ? assets.length - 1 : index + (e.key === "ArrowLeft" ? -1 : e.key === "ArrowRight" ? 1 : e.key === "ArrowUp" ? -2 : 2);
-            assets[Math.max(0, Math.min(assets.length - 1, next))]?.focus(); }}
-          draggable={draggable && !busy} data-drag-source={asset.assetKey} data-grabbed={interaction?.grabbed?.sourceKey === asset.assetKey}
-          onDragStart={e => { preloadEditorForAsset(asset); if (interaction) interaction.start(asset.assetKey, e); else { e.dataTransfer.setData("application/x-planner-asset", asset.assetKey); drag(asset.assetKey); } }}
-          onDragEnd={() => { interaction?.end(); drag(null); }} onClick={() => choose(asset)}>
-          <PlannerIcon iconKey={asset.iconKey} identityRef={asset.capabilityRef} scale="LIBRARY" className={styles.assetIcon} /><span>{asset.label}</span>
-        </button>;
-      })}</div></section>)}{!groups.length && !presets.length && <p className={styles.searchEmpty}>Aucun élément trouvé.</p>}</div>
+    <header className={styles.panelHeader}><h2><button className={styles.libraryOpen} data-library-open onClick={()=>search.current?.focus()}>Que veux-tu prévoir ?</button></h2></header>
+    <nav className={styles.libraryTabs} aria-label="Espaces de la bibliothèque"><button type="button" aria-pressed={space==="add"} onClick={()=>setSpace("add")}>À ajouter</button><button type="button" aria-pressed={space==="manage"} onClick={()=>setSpace("manage")}>À piloter</button></nav>
+    <label className={styles.search}><Search size={15} aria-hidden="true"/><input ref={search} data-library-search aria-label="Rechercher une intention" placeholder={space==="add"?"Soirée, repas, achat…":"Budget ou cagnotte…"} value={query} onChange={e=>setQuery(e.target.value)}
+      onKeyDown={e=>{if(e.key==="Enter"&&space==="add"&&query&&matches[0]&&!busy){e.preventDefault();activate(matches[0]);}else if(e.key==="ArrowDown"){e.preventDefault();e.currentTarget.closest("aside")?.querySelector<HTMLButtonElement>("[data-library-scroll] button")?.focus();}}}/></label>
+    <div className={styles.libraryScroll} data-library-scroll onKeyDown={e=>{if(!["ArrowDown","ArrowUp","Home","End"].includes(e.key)||!(e.target instanceof HTMLButtonElement))return;e.preventDefault();const buttons=Array.from(e.currentTarget.querySelectorAll<HTMLButtonElement>("button:not(:disabled)"));const at=buttons.indexOf(e.target);buttons[e.key==="Home"?0:e.key==="End"?buttons.length-1:Math.max(0,Math.min(buttons.length-1,at+(e.key==="ArrowUp"?-1:1)))]?.focus();}}>
+    {space==="add"?<>
+      {favoriteItems.length>0&&<section className={styles.assetGroup} data-library-favorites><h3>Épinglés par vous</h3><div className={styles.presetGrid}>{favoriteItems.map(tile)}</div></section>}
+      <p className={styles.libraryLocalNote}>Favoris locaux à ce navigateur · aucun budget engagé.{favoriteNotice&&` ${favoriteNotice}`}</p>
+      {categories.map(group=>{const isOpen=!!query.trim()||opened===group.key;const all=!!query.trim()||expanded.has(group.key);return <section className={styles.assetGroup} key={group.key} data-library-group={group.key}>
+        <h3><button type="button" className={styles.assetGroupToggle} data-library-group-toggle={group.key} aria-expanded={isOpen} aria-controls={`library-${group.key}`} onClick={()=>{if(query)setQuery("");setOpened(opened===group.key?null:group.key);}}>
+          <span aria-hidden="true">{isOpen?"▾":"▸"}</span>{group.label}<small>{group.items.length}</small></button></h3>
+        {isOpen&&<div id={`library-${group.key}`}><div className={styles.presetGrid}>{(all?group.items:group.items.slice(0,6)).map(tile)}</div>
+          {!all&&group.items.length>6&&<button type="button" className={styles.libraryShowAll} onClick={()=>setExpanded(old=>new Set([...old,group.key]))}>Tout voir · {group.items.length}</button>}</div>}
+      </section>;})}
+      {!matches.length&&<p className={styles.searchEmpty}>Aucune intention correspondante. Les compléments se trouvent dans la palette de leur carte.</p>}
+    </>:<>
+      <p className={styles.libraryLocalNote}>Retrouvez la carte déjà présente dans votre mois. Aucun doublon n’est créé.</p>
+      <div className={styles.assetGrid}>{index.controls.filter(asset=>!query||normalizeLibrarySearch(asset.label).includes(normalizeLibrarySearch(query))).map(asset=>{
+        const control=composerRenderIndex(model).controls.get(asset.capabilityRef);
+        const consult=!control?.capability?.actions.length||control.capability.flexibility==="LOCKED";
+        return <button type="button" className={styles.asset} key={asset.assetKey} data-asset={asset.assetKey} disabled={busy} onClick={()=>choose(asset)}>
+          <PlannerIcon iconKey={asset.iconKey} scale="LIBRARY" className={styles.assetIcon}/><span>{asset.label}</span><small>{consult?"Consulter · protégé":"Ajuster la carte"}</small></button>;
+      })}</div>
+      {model.board.contexts.filter(c=>c.readOnly&&(!query||normalizeLibrarySearch(c.label).includes(normalizeLibrarySearch(query)))).map(c=><button type="button" className={styles.asset} key={c.contextOccurrenceId} onClick={()=>inspectContext(c.contextOccurrenceId)}>{c.label}<small>Référence externe · lecture seule</small></button>)}
+    </>}
+    </div>
   </aside>;
 }
+

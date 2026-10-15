@@ -1,4 +1,4 @@
-import { useRef } from "react";
+import { useRef, useState } from "react";
 import { Check, Sparkle, ArrowLeftRight, Plus, X, ChevronDown } from "lucide-react";
 import type { ComposerUiModel } from "@/domain/phase2/planner/composer-ui-contract";
 import type { ComposerAssetView, ComposerContextCardView, DropTarget } from "@/domain/phase2/planner/composer-contract";
@@ -72,21 +72,31 @@ function EquipmentTileButton({ tile, groupKey, card, model, assets, busy, choose
   </>;
 }
 
-export function ContextPalette({ card, model, busy, choose, close, configure = false }: { card: ComposerContextCardView; model: ComposerUiModel; busy: boolean; configure?: boolean;
+export function ContextPalette({ card, model, busy, choose, close, configure = false, onConfigure }: { card: ComposerContextCardView; model: ComposerUiModel; busy: boolean; configure?: boolean; onConfigure?: () => void;
   choose: (asset: ComposerAssetView, target: DropTarget) => void; close: () => void;
 }) {
   const groups = displayEquipmentGroups(card, model);
   const assets = new Map(model.library.searchableAssets.map(asset => [asset.assetKey, asset]));
+  const [mode, setMode] = useState<"complete" | "all">("complete"), [query, setQuery] = useState("");
+  const normalize = (text: string) => text.normalize("NFD").replace(/\p{Diacritic}/gu, "").toLocaleLowerCase("fr");
+  const visible = groups.map(group => ({ ...group, tiles: group.tiles.filter(tile => !query.trim()
+    || tile.routes.some(route => normalize(assets.get(route.option.assetKey)?.label ?? "").includes(normalize(query.trim())))) }))
+    .filter(group => group.tiles.length);
   const iconKey = model.presentation.objects[card.contextOccurrenceId]?.iconKey ?? "activity";
   return <section className={styles.contextPalette} data-context-palette={card.contextOccurrenceId} aria-label={`Équiper ${card.label}`}>
     <header><div className={styles.paletteHeading}><PlannerIcon iconKey={iconKey} scale="SATELLITE" /><div><h3>Équiper · {card.label}</h3><p>Choisissez un objet pour ce moment</p></div></div>
+      <div className={styles.paletteModes}>{onConfigure && <button type="button" onClick={onConfigure}>Configurer</button>}
+        <button type="button" aria-pressed={mode === "complete"} onClick={() => { setMode("complete"); setQuery(""); }}>Compléter</button>
+        <button type="button" aria-pressed={mode === "all"} onClick={() => setMode("all")}>Autres options</button></div>
       <button className={styles.iconButton} aria-label="Quitter la sélection du moment" onClick={close}><X size={16} /></button></header>
+    {mode === "all" && <label className={styles.paletteSearch}>Rechercher un complément<input aria-label="Rechercher un complément" value={query} onChange={event => setQuery(event.target.value)} /></label>}
     {groups.length ? <div className={styles.paletteOptions} data-palette-options tabIndex={0} aria-label={`Options pour ${card.label}`}
       onKeyDown={event => { if (event.target !== event.currentTarget || !["ArrowLeft", "ArrowRight"].includes(event.key)) return;
         event.preventDefault(); event.currentTarget.scrollBy({ left: event.key === "ArrowRight" ? 150 : -150, behavior: "smooth" }); }}>
-      {groups.map(group => <div key={group.key} className={styles.paletteGroup} data-palette-group={group.key}>
-        <span>{group.title}</span><div>{group.tiles.map(tile => <EquipmentTileButton key={tile.visualKey} tile={tile} groupKey={group.key} card={card} model={model}
+      {visible.map(group => <div key={group.key} className={styles.paletteGroup} data-palette-group={group.key}>
+        <span>{group.title}</span><div>{(mode === "all" ? group.tiles : group.tiles.slice(0,5)).map(tile => <EquipmentTileButton key={tile.visualKey} tile={tile} groupKey={group.key} card={card} model={model}
           assets={assets} busy={busy} choose={choose} configure={configure} />)}</div>
       </div>)}</div> : <p className={styles.popoverNote}>Ce moment est préservé ou suivi par son éditeur habituel.</p>}
+    {mode === "complete" && groups.some(group => group.tiles.length > 5) && <button type="button" className={styles.libraryShowAll} onClick={() => setMode("all")}>Voir tous les compléments admissibles</button>}
   </section>;
 }

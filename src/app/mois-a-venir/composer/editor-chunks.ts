@@ -36,7 +36,7 @@ export function preloadEditorForAsset(asset: ComposerAssetView) {
 }
 
 export function preloadEditorForPreset(asset: ComposerAssetView) {
-  if (asset.kind === "CONTEXT_ASSET" && ["delivery", "activity", "purchase"].includes(asset.templateKey ?? ""))
+  if (asset.kind === "CONTEXT_ASSET" && ["fast-food", "delivery", "activity", "purchase"].includes(asset.templateKey ?? ""))
     void editorChunks.restaurant().catch(() => { /* The normal open-panel retry remains available. */ });
   else preloadEditorForAsset(asset);
 }

@@ -46,11 +46,13 @@ export function RestaurantEditor({ context, card, model, creating, busy, decide,
   context: PlannedContextState; card: ComposerContextCardView; model: ComposerUiModel; creating: boolean; busy: boolean;
   decide: (operation: ComposerOperation) => boolean; close: () => void;
 }) {
-  const shape = guidedContextShape(context.templateKey), preset = presetForContext(context);
+  const baseShape = guidedContextShape(context.templateKey), preset = presetForContext(context);
+  const purchaseEnvelope = context.fields.budgetDomain === "clothing" ? "Vêtements" : context.fields.budgetDomain === "home-small" ? "Petits achats maison" : context.fields.budgetDomain === "games-digital" ? "Jeux/Numérique" : null;
+  const shape = { ...baseShape, envelope: context.templateKey === "purchase" ? purchaseEnvelope : baseShape.envelope };
   const mainSlot = shape.slot, heading = card.label;
   const operation = (edit: GuidedContextEdit): ComposerOperation => context.templateKey === "restaurant" ? { kind: "EDIT_RESTAURANT", edit: edit as RestaurantEdit } : { kind: "EDIT_PRESET_CONTEXT", edit };
   const questions: readonly {id: Exclude<Step,null>; key: string; title:string}[] = [
-    ...(context.templateKey === "purchase" ? [{id:"product" as const,key:"productLabel",title:"Quel vêtement ou achat préparez-vous ?"}] : []),
+    ...(context.templateKey === "purchase" ? [{id:"product" as const,key:"productLabel",title:"Quel article ou achat préparez-vous ?"}] : []),
     ...restaurantQuestions.filter(q => (q.id !== "participants" || shape.participants) && (q.id !== "binding" || !!shape.envelope)).map(q => ({...q,key:q.key === "meal" ? mainSlot : q.key,title:preset ? ({participants:"Qui est concerné ?",place:"Où prévoyez-vous ce moment ?",date:"Quand ? Vous pouvez décider plus tard.",budget:"Quel budget souhaitez-vous prévoir ?",binding:"Dans quelle enveloppe ?"}[q.id]) : q.title}))];
   const main = components(context, mainSlot)[0], extras = components(context, "extras");
   const answered = (id: string) => id === "budget" ? !!main && main.provenance === "EXPLICIT_USER_DECISION"
