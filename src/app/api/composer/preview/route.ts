@@ -6,7 +6,6 @@ import { handleComposerRequest } from "@/server/phase2/planner/composer-service"
 import { observeSnapshot } from "@/server/phase2/planner/snapshot-observation";
 
 export const dynamic = "force-dynamic";
-export const preferredRegion = "fra1";
 const contract = "composer-preview-http@1", header = "X-Composer-Preview-Contract";
 const headers = { "Cache-Control": "private, no-store", Vary: "Cookie", [header]: contract };
 const reply = (value: unknown, status = 200) => Response.json(value, { status, headers });

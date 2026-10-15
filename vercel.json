@@ -1,3 +1,7 @@
 {
-  "crons": []
+  "crons": [],
+  "functions": {
+    "src/app/mois-a-venir/composer/page.tsx": { "regions": ["fra1"] },
+    "src/app/api/composer/preview/route.ts": { "regions": ["fra1"] }
+  }
 }

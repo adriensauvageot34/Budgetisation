@@ -11,7 +11,6 @@ import { ComposerShell } from "./composer-shell";
 import { composerInteraction } from "./actions";
 import { observeSnapshot } from "@/server/phase2/planner/snapshot-observation";
 export const dynamic = "force-dynamic";
-export const preferredRegion = "fra1";
 export const metadata = { title: "Composer mon mois" };
 export default async function ComposerPage({ searchParams }: { searchParams: Promise<Record<string, string | string[] | undefined>> }) {
   if (!plannerComposerEnabled()) notFound();
