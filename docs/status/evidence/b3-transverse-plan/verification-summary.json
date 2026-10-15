@@ -3,37 +3,152 @@
   "base": "9199de55ff28428d592288e099860dd570170eae",
   "domain": "SYNTHETIC_ONLY_UNLESS_MARKED_REMOTE_READ",
   "commands": [
-    {"command":"node scripts/check-b3-transverse-plan.mjs","exitCode":0,"checks":27},
-    {"command":"node scripts/check-b0-b1-plan-forecast.mjs","exitCode":0,"checks":18},
-    {"command":"node scripts/check-b2-plan-ux.mjs","exitCode":0,"cases":12},
-    {"command":"node scripts/check-phase2-planner-kernel.mjs","exitCode":0,"groups":40},
-    {"command":"node scripts/check-planner-performance-parity.mjs","exitCode":0,"cases":22,"hashesPerCase":9},
-    {"command":"node scripts/check-phase2-month-control-center.mjs","exitCode":0,"checks":85,"environment":"synthetic undo key only"},
-    {"command":"node scripts/check-phase2-planned-reality.mjs","exitCode":0},
-    {"command":"node scripts/check-phase2-planned-finance.mjs","exitCode":0},
-    {"command":"node scripts/check-phase2-planned-guards.mjs","exitCode":0},
-    {"command":"node scripts/check-phase2-planned-reliability.mjs","exitCode":0},
-    {"command":"node scripts/check-control-center-preview-lifecycle.mjs","exitCode":0,"checks":27},
-    {"command":"node node_modules/typescript/bin/tsc --noEmit --pretty false","exitCode":0},
-    {"command":"node node_modules/next/dist/bin/next build --webpack","exitCode":1,"environment":"sandbox","cause":"EPERM mkdir .next/types/app/api"},
-    {"command":"node node_modules/next/dist/bin/next build --webpack","exitCode":1,"environment":"authorized local","cause":"UnhandledSchemeError node:crypto in client query-client import path; not the normal Turbopack workflow"}
+    {
+      "command": "node scripts/check-b3-transverse-plan.mjs",
+      "exitCode": 0,
+      "checks": 27
+    },
+    {
+      "command": "node scripts/check-b0-b1-plan-forecast.mjs",
+      "exitCode": 0,
+      "checks": 18
+    },
+    {
+      "command": "node scripts/check-b2-plan-ux.mjs",
+      "exitCode": 0,
+      "cases": 12
+    },
+    {
+      "command": "node scripts/check-phase2-planner-kernel.mjs",
+      "exitCode": 0,
+      "groups": 40
+    },
+    {
+      "command": "node scripts/check-planner-performance-parity.mjs",
+      "exitCode": 0,
+      "cases": 22,
+      "hashesPerCase": 9
+    },
+    {
+      "command": "node scripts/check-phase2-month-control-center.mjs",
+      "exitCode": 0,
+      "checks": 85,
+      "environment": "synthetic undo key only"
+    },
+    {
+      "command": "node scripts/check-phase2-planned-reality.mjs",
+      "exitCode": 0
+    },
+    {
+      "command": "node scripts/check-phase2-planned-finance.mjs",
+      "exitCode": 0
+    },
+    {
+      "command": "node scripts/check-phase2-planned-guards.mjs",
+      "exitCode": 0
+    },
+    {
+      "command": "node scripts/check-phase2-planned-reliability.mjs",
+      "exitCode": 0
+    },
+    {
+      "command": "node scripts/check-control-center-preview-lifecycle.mjs",
+      "exitCode": 0,
+      "checks": 27
+    },
+    {
+      "command": "node node_modules/typescript/bin/tsc --noEmit --pretty false",
+      "exitCode": 0
+    },
+    {
+      "command": "node node_modules/next/dist/bin/next build --webpack",
+      "exitCode": 1,
+      "environment": "sandbox",
+      "cause": "EPERM mkdir .next/types/app/api"
+    },
+    {
+      "command": "node node_modules/next/dist/bin/next build --webpack",
+      "exitCode": 1,
+      "environment": "authorized local",
+      "cause": "UnhandledSchemeError node:crypto in client query-client import path; not the normal Turbopack workflow"
+    }
   ],
   "remoteRead": {
-    "isolatedAuthenticatedProjectAvailable":false,
-    "projectsFound":1,
-    "branchesFound":0,
-    "hasActivePlan":false,
-    "snapshot":{"enabled":true,"revision":1,"schemaEpoch":2,"writerCoverage":true},
-    "financialCounters":{
-      "benefit_wallet_ledger_entries":[213,0,0],"benefit_wallets":[2,1,0],"mobility_legs":[1368,0,0],
-      "operations":[0,0,0],"phase2_month_inputs":[2,44,1],"phase2_month_plan_revisions":[0,0,0],
-      "phase2_month_plans":[0,0,0],"phase2_planned_expenses":[32,37,25],"purchase_events":[200,0,0]
+    "isolatedAuthenticatedProjectAvailable": false,
+    "projectsFound": 1,
+    "branchesFound": 0,
+    "hasActivePlan": false,
+    "snapshot": {
+      "enabled": true,
+      "revision": 1,
+      "schemaEpoch": 2,
+      "writerCoverage": true
     },
-    "counterOrder":"INSERT_UPDATE_DELETE"
+    "financialCounters": {
+      "benefit_wallet_ledger_entries": [
+        213,
+        0,
+        0
+      ],
+      "benefit_wallets": [
+        2,
+        1,
+        0
+      ],
+      "mobility_legs": [
+        1368,
+        0,
+        0
+      ],
+      "operations": [
+        0,
+        0,
+        0
+      ],
+      "phase2_month_inputs": [
+        2,
+        44,
+        1
+      ],
+      "phase2_month_plan_revisions": [
+        0,
+        0,
+        0
+      ],
+      "phase2_month_plans": [
+        0,
+        0,
+        0
+      ],
+      "phase2_planned_expenses": [
+        32,
+        37,
+        25
+      ],
+      "purchase_events": [
+        200,
+        0,
+        0
+      ]
+    },
+    "counterOrder": "INSERT_UPDATE_DELETE"
   },
-  "authenticatedPlanE2E":"NOT_RUN",
-  "browser":"NOT_RUN_REVIEW_USAGE_LIMIT_UNTIL_17_LOCAL",
-  "remoteBusinessWrites":0,
-  "migrations":0,
-  "crossOwnerSQLAtomicity":"NOT_IMPLEMENTED_NO_NEW_MIGRATION"
+  "authenticatedPlanE2E": "NOT_RUN",
+  "browser": "NOT_RUN_REVIEW_USAGE_LIMIT_UNTIL_17_LOCAL",
+  "remoteBusinessWrites": 0,
+  "migrations": 0,
+  "crossOwnerSQLAtomicity": "NOT_IMPLEMENTED_NO_NEW_MIGRATION",
+  "delivery": {
+    "verdict": "B3_RELEASED_WITH_VALIDATION_LIMITATIONS",
+    "sourceCommit": "56554479df4dc776f107141d86a27318f566c430",
+    "merge": "d464c34b7c1408094d88655955f958db1feef179",
+    "pullRequest": 39,
+    "preview": "dpl_8U9DXmhbSJNBsKqxRXjvQtKtZC1T",
+    "production": "dpl_hth5DFsadhkpibeF5PoVx5rBLFgD",
+    "state": "READY",
+    "productionAnonymousHTTP": "EXECUTED_PASS_3_GET",
+    "productionAuthenticated": "NOT_RUN",
+    "snapshot3": "ON",
+    "financialCounters": "UNCHANGED"
+  }
 }

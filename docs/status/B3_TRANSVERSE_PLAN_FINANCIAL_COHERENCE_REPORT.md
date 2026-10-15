@@ -2,7 +2,7 @@
 
 Date : 15 octobre 2026. Branche : `codex/budgetisation-b3-effective-plan`.
 
-**État de préparation : `B3_IMPLEMENTED_NOT_RELEASED`.** La livraison sera renseignée en section I après les contrôles Vercel. Les PASS ci-dessous sont synthétiques sauf mention contraire. Aucun Plan personnel ni fait financier de production n’a été écrit.
+**Verdict : `B3_RELEASED_WITH_VALIDATION_LIMITATIONS`.** Le correctif applicatif est livré en Production ; les réserves authentifiées et transactionnelles restent explicites. Les PASS ci-dessous sont synthétiques sauf mention contraire. Aucun Plan personnel ni fait financier de production n’a été écrit.
 
 ## A. État initial
 
@@ -95,7 +95,7 @@ Persistance : PGlite avec SQL C0, les six migrations PE existantes et MonthInput
 | TypeScript | PASS, `tsc --noEmit` |
 | Build local webpack sandbox | FAIL outillage : EPERM dans `.next/types/app/api` |
 | Build local webpack autorisé | FAIL compilation webpack : import client `node:crypto` via `query-client` ; ces fichiers ne sont pas modifiés par B3. Le workflow habituel utilise Turbopack. Pas de certification locale complète revendiquée. |
-| Build Vercel habituel | PASS sur 31834e0, Next/Turbopack complet, TypeScript, 8 pages générées ; variante finale attendue |
+| Build Vercel habituel | PASS sur le candidat final 5655447 et le merge d464c34 : Next/Turbopack complet, TypeScript, 8 pages générées ; Production READY |
 
 Deux oracles textuels ont été ajustés : avertissement SUPERSEDED renommé par B2, et filtre d’édition déplacé de `saved` vers `effective.expenses`. Les assertions économiques, scénarios de remplacement et empreintes financières ne sont pas affaiblis. Aucun calcul financier modifié pour satisfaire un golden.
 
@@ -103,8 +103,9 @@ Deux oracles textuels ont été ajustés : avertissement SUPERSEDED renommé par
 
 - Inventaire ciblé réellement consulté : un seul projet Supabase, Budgetisation principal ; aucune branche isolée. Aucun compte ni Plan synthétique créé dans ce projet.
 - Avec Plan + vrai JWT : **NOT_RUN** faute d’environnement admissible. Les fixtures PGlite ne changent pas ce statut.
-- Navigateur réel : limite de revue automatique héritée de B2, à respecter jusqu’à sa levée ; aucun contournement par cookies/CDP/autre navigateur.
-- Les lectures de métadonnées Supabase confirment absence de Plan actif et SNAP-3 enabled/revision 1/epoch 2/writer coverage true.
+- Navigateur réel B3 avec ou sans Plan : **NOT_RUN**, limite de revue automatique héritée de B2 annoncée jusqu’à 17 h locale, toujours non levée au moment de ces vérifications. Aucun contournement par cookies/CDP/autre navigateur. Le smoke authentifié post-B2 reste donc ouvert.
+- Les lectures de métadonnées Supabase avant/après confirment absence de Plan actif et SNAP-3 enabled/revision 1/epoch 2/writer coverage true. Aucun HIT Canonical/M7 authentifié supplémentaire n’est revendiqué.
+- Smoke Production HTTP anonyme réellement exécuté : Connexion 200, mois protégé 307 vers Connexion, API Draft avec contrat correct mais sans JWT 401 AUTHENTICATION_REQUIRED et private/no-store. Trois GET seulement ; aucune connexion contournée. Cela ne certifie pas un parcours authentifié.
 - Compteurs financiers de production inchangés depuis l’entrée : operations 0/0/0 ; purchases 200/0/0 ; Mobility 1368/0/0 ; MonthInputs 2/44/1 ; PE 32/37/25 ; Wallets 2/1/0 ; ledger 213/0/0 ; Plans/révisions 0/0/0 (ordre insert/update/delete). Ces statistiques corroborent la non-écriture ; elles ne remplacent pas un journal d’audit par utilisateur.
 - Aucun nouveau privilège, endpoint public, secret navigateur ou politique RLS. Les requêtes utilisent l’utilisateur authentifié et les filtres foyer/mois existants.
 
@@ -113,11 +114,17 @@ Deux oracles textuels ont été ajustés : avertissement SUPERSEDED renommé par
 - Sans Plan : une lecture étroite de présence du Plan par phase ; zéro World/Compiler Composer. Dernière vérification du pointeur pour les mutations.
 - Avec Plan : lecture Plan+révision et un World préparé partagé par simulation. L’enregistrement a un preflight puis une relecture autoritaire séparée ; ce second READ n’est pas un cache du preflight.
 - Aucun World par carte, aucun appel de comparaison B1 pour l’affichage d’un élément. Les variantes financières sont mémoïsées dans la requête, puis libérées.
-- Série bornée : cinq paires de preflights synthétiques, dans le JSON de preuve. Le chemin historique DIRECT_V2 est plus léger mais financièrement inapproprié avec Plan ; ce n’est pas une référence financière équivalente. Le chemin effectif ajoute un World par Preview et six appels Compiler/Finance dans le petit scénario testé (au lieu de huit avant suppression des attributions des variantes). Médianes observées : 60.7 ms (ancien direct) et 249.8 ms (effectif), n=5, CPU/transport synthétique. Aucun gain de latence utilisateur réelle revendiqué ; aucune réouverture de P14.
+- Série bornée : cinq paires de preflights synthétiques, dans le JSON de preuve. Le chemin historique DIRECT_V2 est plus léger mais financièrement inapproprié avec Plan ; ce n’est pas une référence financière équivalente. Le chemin effectif ajoute un World par Preview et six appels Compiler/Finance dans le petit scénario testé (au lieu de huit avant suppression des attributions des variantes). Médianes observées : 17.2 ms (ancien direct) et 96.0 ms (effectif), n=5, CPU/transport synthétique. Aucun gain de latence utilisateur réelle revendiqué ; aucune réouverture de P14.
 
 ## I. Livraison et rollback
 
-- Premier commit : 31834e0161cfa41723e0bf40cacb52c7950161dc. PR #39 : https://github.com/adriensauvageot34/Budgetisation/pull/39. Preview dpl_GoCyd5BeifX61kA6knMmw7qyJQBc READY, build complet observé. Dernier ajustement : tuple PE/scénario relu depuis la même lecture effective. Variante finale et Production encore en attente.
+- Commits applicatifs : `31834e0`, `f06af44`, puis **`56554479df4dc776f107141d86a27318f566c430`** (tuple PE/scénario cohérent et replay de déclaration reconnu avant le contrôle devenu périmé).
+- [PR #39](https://github.com/adriensauvageot34/Budgetisation/pull/39) fusionnée ; contrôles GitHub Vercel success, aucun avis de revue externe déposé.
+- Merge : **`d464c34b7c1408094d88655955f958db1feef179`**. Arbre Git identique au candidat testé : `6b7cdad58af974a55b3848f0c67508fa95cd79e4`. Main n’avait pas dérivé.
+- Preview finale : `dpl_8U9DXmhbSJNBsKqxRXjvQtKtZC1T`, READY, SHA 5655447 ; journal complet conservé.
+- Production applicative : `dpl_hth5DFsadhkpibeF5PoVx5rBLFgD`, READY, SHA d464c34, alias https://budgetisation-tan.vercel.app vérifié. Compilation 35,6 s, TypeScript 40 s, génération 8/8 pages ; ce sont des durées de build, pas des performances utilisateur.
+- Smoke anonyme et compteurs après livraison : PASS dans leur périmètre ci-dessus. Smoke navigateur/authentifié : NOT_RUN.
+- Ce compte rendu et ses preuves de livraison sont ensuite publiés en suivi documentaire sans modifier le code applicatif.
 - Aucun SQL à déployer ; compatibilité des anciens Plans et migrations existantes conservée.
 - Rollback applicatif : revenir au déploiement antérieur `9199de5` ou revert du commit B3 via le workflow habituel. Aucun Plan, Draft ou fait financier à supprimer. Le rollback retrouve aussi les limites de preflight DIRECT_V2 antérieures : ne pas le présenter comme une nouvelle garantie financière.
 
