@@ -1,0 +1,27 @@
+{
+  "deployment": "dpl_DuUcZ9ouCpXvyjVnZ8CHbPTCqve6",
+  "sha": "6a60f12cbe933d1493207e7767a580fa91d2837f",
+  "authenticated": true,
+  "autosave": "DISABLED_BY_PREVIEW_CONFIG",
+  "checks": [
+    "Achat guide published domain choices and explicit Amazon merchant",
+    "Beauty editor loaded with palette options",
+    "No Apply; no financial write"
+  ],
+  "observation": {
+    "applyDisabled": true,
+    "paletteOptions": [
+      "option:beauty-restock:products:product",
+      "option:beauty-restock:transport:car",
+      "option:beauty-restock:transport:train",
+      "option:beauty-restock:transport:bus",
+      "option:beauty-restock:transport:taxi",
+      "option:beauty-restock:transport:free"
+    ],
+    "presets": [
+      "purchase"
+    ],
+    "save": "CLEAN",
+    "state": "BLOCKED"
+  }
+}
