@@ -1,0 +1,12 @@
+{
+ "source":"7287c47a004efab680813e42aadf26f85689798e",
+ "deployment":"dpl_4BEYZx3KTGvZ6fmPZ8kWjreZtDV1",
+ "conditions":"A2 Evidence candidate, iad1, authenticated read-only Preview, autosave OFF; viewport 1280x720. Browser visibility not controlled: descriptive observations, not certified foreground performance.",
+ "samples":[
+  {"kind":"COURSES_350","status":"FRESH","sequence":2,"decisionToFreshMs":8027.4,"transportMs":7832.2,"serverMs":3324.207986,"worldMs":1682.518155,"evidenceMs":1483.352774,"requests":41,"bytes":2351052,"hits":2,"timeouts":0,"blockedWrites":0,"attribution":"UNATTRIBUTED","semanticDigest":"d15fe78d1746c26dc4408a97992fc1a1c1a17393492cf1e7402fd034b38d83e6","previewDigest":"ca0a6b93dd5d68c5f740401e2645f1c451be111b02e1af230d1b3283066446bf"},
+  {"kind":"COURSES_RAPID_351_352_353","status":"FRESH","lastValue":353,"sequence":8,"decisionToFreshMs":14831,"transportMs":14613.7,"serverMs":3012.612992,"worldMs":1610.434449,"evidenceMs":1437.524526,"requests":41,"bytes":2351052,"hits":2,"timeouts":0,"blockedWrites":0,"attribution":"UNATTRIBUTED","sequentialFetches":[{"startMs":192217.2,"endMs":195747.4},{"startMs":195750.2,"endMs":200605.2}],"semanticDigest":"05d2486634e1416471b99102d3f01dd8e8fd88cc7d88099dc5c460dd3f858516","previewDigest":"5e70211f33c84e5ef50c3b638641e2626e060422b5d67c121b56dd40a926f606"},
+  {"kind":"SOIREE_EDIT","status":"FRESH","sequence":12,"decisionToFreshMs":8261.4,"transportMs":6750.6,"serverMs":6059.697789,"worldMs":2459.870799,"evidenceMs":2280.295828,"financeMs":1120.130228,"requests":51,"bytes":2782673,"hits":2,"timeouts":0,"blockedWrites":0,"attribution":"UNATTRIBUTED","identityComparison":"Generated context identity; not digest-comparable to a separately created context"}
+ ],
+ "writes":0,
+ "note":"No Apply, no durable Draft save. Discard this in-memory scenario by navigation; none of its choices is an official Plan. These three samples cannot establish a P95."
+}

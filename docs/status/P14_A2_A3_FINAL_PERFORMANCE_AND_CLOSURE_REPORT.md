@@ -1,78 +1,119 @@
-# P14-A2/A3 — performances et clôture
+# P14-A2/A3 — performances, livraison et clôture
 
-État de travail du 15 octobre 2026 : **PARTIAL — preuves authentifiées en attente de l'accès navigateur**. Le verdict de clôture provisoire est `P14_NOT_READY_TO_CLOSE`, car le gate Draft inter-déploiement et la comparaison réelle de ce candidat ne sont pas encore exécutés. Les travaux indépendants ci-dessous sont développés et compilés en Preview ; aucune livraison Production de performance n'a été faite.
+15 octobre 2026. **Exécution en cours : Draft livré ; candidat A2/A3 en validation Preview.** Le verdict de clôture reste provisoirement `P14_NOT_READY_TO_CLOSE` jusqu'au smoke du candidat effectivement livré. Les résultats ci-dessous remplacent les anciens NOT_RUN de cette mission ; ils ne certifient pas une limite P95 de production.
 
-## A. État initial vérifié
+## A. État réel et fiabilité Draft
 
-- GitHub `main` et Vercel Production : `7098e3bad96ff6be724284246f95d4370c028e9b`, déploiement `dpl_F8GXVCgTa4D6tTBmnQyEKAc5sKnF`, READY, région configurée `iad1`.
-- PR Draft [#32](https://github.com/adriensauvageot34/Budgetisation/pull/32) sur `b8d365d` : contrôles Vercel PASS. Son test A→B est programmé séparément ; cette branche et son alias n'ont pas été modifiés par A2/A3.
-- Production : SNAP-3 `1`, P14-P3 `0`, SNAP-1 `0`. Supabase reste en `eu-central-1` selon le préflight existant.
-- État SNAP-3 relu : révision 1, époque 2, enabled=true, couverture des writers vraie. Artifacts READY : Canonical génération 2, digest `78ce99e0d65ca81ad84fcc9c9e7ab1df5e0a5e99dbad5d45271fb3edc5117dcc` ; M7 génération 1, digest `5d887dd265744dfbd7e4160a6c0fd106f8f14249d24aa2460ebdb838baea516f`. Aucune invalidation naturelle nouvelle n'est visible dans cette révision.
-- Branche isolée `codex/composer-v3-p14-a2-a3-performance`, worktree `p14-a2-a3-performance`, issue de `main`. La Production restera inchangée jusqu'à résolution du gate Draft.
+- Départ : `main`/Production `7098e3b`, SNAP-3 ON, P3 OFF, PR [#32](https://github.com/adriensauvageot34/Budgetisation/pull/32) ouverte sur `b8d365d`.
+- Le test authentifié A→B a été exécuté sur le même alias protégé. Les anciens builds de test avaient Draft OFF ; deux builds identiques ont été reconstruits avec Draft ON, sans changer Production : A `dpl_CwteHBcNADEL5F5GnrYJRVLaG2Rz`, B `dpl_DD7Uhq3dMiGKL5BXmQFA8EEaG1SA`.
+- Vrai JWT : sauvegarde v1 sur A ; sauvegarde v2 depuis l'ancien onglet après basculement vers B ; relecture sur B ; v3 puis refus CAS de l'ancien onglet, sans incrément double. SAVED reste distinct de la simulation FAILED, Apply est désactivé. L'archive préexistante v8 est intacte.
+- Défaut découvert et corrigé dans `9603681` : le callback beforeunload doit consulter le drapeau de confirmation au moment de l'événement. Rejeu ciblé : conflit puis confirmation, rechargement effectif du Draft v4 en SAVED. L'outil a expiré pendant cette navigation ; la reconnexion officielle a constaté le résultat, sans réémettre de mutation.
+- PR #32 fusionnée : `13838678e69e86e3abeff4843926e6cdff92ec95`. Production `dpl_ox7cLBCZ1dvfp7W5tgTNPYvaV4Jt`, READY. Smoke authentifié : sauvegarde v5, rechargement fidèle, archivage récupérable v6 du seul essai créé. Aucun Apply. Octobre préparé s'ouvre FRESH ; les métriques détaillées sont désactivées sur cette Production, donc aucun HIT d'exécution n'y est prétendu sur la seule base de l'interface.
+- Les neuf compteurs de tables financières suivis sont identiques avant/après le gate A→B. Les Drafts d'essai restent archivés ; aucune suppression. Preuve détaillée dans `evidence/p14-post-snap3/cross-deployment-authenticated.json`, intégrée par #32.
+- La reprise automatique antérieure du gate Draft a été mise en pause après retour de l'accès officiel. Aucune tâche en double.
 
-## B. Diagnostic borné
+## B. Causes isolées et corrections
 
-La référence authentifiée précédente contient dix ouvertures chaudes : FRESH P50 6,59 s / P95 descriptif 8,79 s ; World 2,82 / 4,08 s ; Evidence 2,51 / 3,63 s. Elle ne contient pas les sous-étapes nécessaires pour attribuer chacune des secondes restantes.
+### Evidence
 
-Le graphe du lecteur révèle deux attentes supprimables sans changement financier : un SELECT du fuseau alors que Composer fournit déjà le fuseau du contexte autorisé, puis une barrière métadonnées attendue avant des requêtes historiques qui utilisent uniquement le scope et les dates déjà admis. La portée singleton Canonical est toujours contrôlée avant toute lecture suivante. Les deux groupes conservent les mêmes requêtes, filtres, pagination et transformations ; leur chevauchement augmente la concurrence de lecture et doit être validé sur les vraies traces, en arrêtant la série si un timeout réapparaît.
+Le vrai lecteur attendait scope → fuseau → dernière date → métadonnées → historique. Une trace de référence iad1 montre 652 / 205 / 472 / 772 / 984 ms pour ces barrières, puis 20 ms de jointure locale. Ces durées ne décrivent pas un temps SQL exclusif. Correction `cd58a1e` : éviter la lecture du fuseau déjà fourni par le contexte autorisé et chevaucher métadonnées/historique, après admission du scope et des dates. Même pagination complète, mêmes filtres, mêmes faits et transformations ; priorité de l'erreur métadonnées conservée. Aucun cache inter-requêtes.
 
-L'instrumentation existante a été complétée : spans par page et par source de métadonnées ; `metricsDrainMs` distingue l'attente de collecte des corps de réponse du travail serveur ; `responseReadyMs` mesure la sortie du collecteur. Le navigateur expose des horodatages monotones de début/résolution d'action, les Resource Timings du fetch correspondant, le commit observé, la première observation FRESH après peinture et responseEnd→FRESH. Si plusieurs fetchs correspondent, l'attribution reste `UNATTRIBUTED`. Ces marqueurs ne mesurent pas une durée exclusive du rendu React ou du parsing RSC.
+### Transport des Preview et saisie
 
-## C. Modifications développées
+Les intentions rapides conservaient la bonne décision, mais attendaient longtemps des réponses de Server Actions : 13,17 s jusqu'à FRESH pour la dernière décision, contre 3,65 s d'observation serveur du dernier calcul. Les fetchs observés se succédaient. [Next.js documente le dispatch séquentiel des Server Functions](https://nextjs.org/docs/app/getting-started/mutating-data). Cela établit une contrainte de transport ; toute différence navigateur/serveur n'est pas attribuée exclusivement à cette file.
 
-| Commit | Changement | Preuve disponible | Gain réel |
-|---|---|---|---|
-| `34798ff` | Sous-étapes Evidence, pages, collecte métriques et chronologie navigateur | Tests d'observation, TypeScript, builds Preview | Instrumentation seulement |
-| `cd58a1e` | Évite la relecture du fuseau fourni et chevauche métadonnées/historique | Parité exacte du lecteur avant/après sur fixtures ; 1 requête évitée dans cette fixture | `NOT_MEASURED` |
+`db359ac` ajoute `/api/composer/preview`, uniquement READ/SUGGESTIONS, avec le même `authorizedPlanner` et `handleComposerRequest`. Le scheduler P2, les tickets, digests et rejets de réponses anciennes restent propriétaires de l'admission. Apply/CHECK_APPLY conservent leur transport et leur relecture autoritaire ; Draft conserve sa route distincte. Contrat HTTP versionné, origine exacte, JSON borné à 1 200 000 octets, aucun foyer fourni par le client, auth serveur, réponse no-store et validation du modèle avant retour au scheduler. Erreur HTTP : aucune nouvelle tentative silencieuse via Server Action. Activation contrôlée par `COMPOSER_PREVIEW_HTTP_ENABLED=1`, OFF par défaut pour rollback.
 
-Aucun calcul Canonical, M7, Forecast ou Finance V2 n'a été remplacé. Aucun cache, snapshot ou mécanisme de republication supplémentaire. Le consommateur autonome qui ne fournit pas de fuseau garde la lecture du foyer.
+Un résultat défavorable a ensuite révélé des réponses MUTATE exploratoires tardives. `composer-card.tsx` envoyait une simulation après une pause de 200 ms dans la saisie du montant, avant le clic explicite de Preview. `c44b45c` conserve la saisie locale et annule cette exploration de champ ; le bouton déclenche la Preview. Les autres explorations S2 restent disponibles. Aucun montant n'est décidé automatiquement.
 
-## D. Previews et protocole réel
+### Région
 
-| Variante | Source | Déploiement | État | Région configurée |
-|---|---|---|---|---|
-| Référence | `34798ff`, code instrumenté sans optimisation | `dpl_Hy6YDfpzcV8caTaLfMWy9nGsxQLH` | READY | iad1 |
-| Même référence | même arbre applicatif local | `dpl_6DN9YC3xgRPAwyAXUpuLeWXt517K` | READY | fra1 |
-| Candidat Evidence | `cd58a1e` | `dpl_B8GV8PZ28m8neBs85Ho9sS9tWdLz` | READY | iad1, à confirmer dans la trace d'exécution |
+Trois paires exploratoires du même code instrumenté favorisent fra1 pour World : médianes 3,55 s iad1 / 2,08 s fra1 ; Evidence 3,23 / 1,92 s. FRESH reste variable et les dimensions n'avaient pas été conservées avant une reconnexion de l'outil ; première ouverture fra1 plus froide. Ces observations sont directionnelles, pas une certification régionale.
 
-Alias de performance dédié : `budgetisation-p14-perf-adriensauvageot34-6137s-projects.vercel.app`, initialement sur la référence iad1. Il permet une même session applicative pendant les basculements de variantes, avec rechargement complet entre chaque mesure. L'alias de test Draft reste indépendant.
+Le test de `preferredRegion` dans les deux fichiers Node est resté **iad1 à l'exécution** malgré un build READY. Ce réglage est retiré. La configuration officielle par fonction dans `vercel.json` est vérifiée : **fra1 observé pour le GET Composer et le POST Preview**, global iad1 et route Draft inchangés. La région de la page concerne aussi ses Server Actions ; leur logique Apply/CAS n'a pas changé et aucun Apply réel n'est exécuté pour le test. [Vercel documente cette portée par fonction et la limite Hobby](https://vercel.com/docs/functions/configuring-functions/region). Aucun déplacement de Supabase, aucun abonnement modifié.
 
-Flags identiques : SNAP-3 ON, P3 OFF, métriques/trace ON, benchmark read-only ON, autosauvegarde OFF, préparation SNAP-3 OFF. Les protections Vercel sont conservées. Les déploiements CLI proviennent du même arbre Git propre pour le code, avec `outputs`, `.env*`, `.git` et dépendances exclus de l'upload.
+## C. Mesures authentifiées conservées
 
-À la levée de la limite navigateur : même compte/mois/viewport, contrôle des deux HIT et des digests, petite série alternée puis dix paires si la charge et les résultats le permettent. Comparer d'abord référence iad1/fra1, puis référence/candidat dans la même région. Conserver les essais défavorables ; stopper les essais lourds au premier timeout reproduit. Pour l'édition : Courses, Soirée, trois montants rapides et Suggestions ; aucun Apply. Capturer uniquement métriques, versions et digests, sans contenu financier ni session. Un gain régional éventuel ne justifiera une modification Production qu'après contrôle de la portée des fonctions concernées.
+Sources : `evidence/p14-a2-a3/authenticated-samples.json`, `paired-opening-rows.json`, `paired-opening-analysis.json`, `editing-before-http.json`, `editing-transport-pairs.json`. Même compte/mois/alias, deux HIT, P3 OFF, autosave OFF et garde read-only. Horodatages Performance navigateur et observation serveur ; aucune durée de l'outil Codex utilisée comme métrique produit.
 
-| Indicateur | Avant authentifié hérité | Après A2/A3 | Gain |
-|---|---:|---|---|
-| Ouverture→FRESH P50 | 6,59 s, n=10 | NOT_RUN | Non revendiqué |
-| Ouverture→FRESH P95 descriptif | 8,79 s, n=10 | NOT_RUN | Non revendiqué |
-| Édition→FRESH P50/P95 | NOT_RUN dans cette campagne | NOT_RUN | Non revendiqué |
-| Evidence P50 | 2,51 s | NOT_RUN | Non revendiqué |
-| World P50 | 2,82 s | NOT_RUN | Non revendiqué |
-| Temps navigateur après réponse | UNATTRIBUTED | NOT_RUN | Non revendiqué |
-| Requêtes Supabase | 42 par READ de la référence héritée | NOT_RUN | 20→19 concerne uniquement la fixture |
-| Octets décodés | 2 351 081 par READ hérité | NOT_RUN | Non revendiqué |
+### Ouverture — A2 seul, iad1
 
-## E. Intégrité et régressions
+Cinq paires enregistrées. Une paire garde un smoke Production concurrent comme facteur de confusion ; deux observations supplémentaires à 498×646 sont conservées hors paires. Quatre paires exploitables à 1280×720. Visibilité et activités locales non totalement contrôlées dans cette première série : le gain navigateur est descriptif. Les quatre paires ont les mêmes digests sémantiques et Preview ; aucune requête en timeout.
 
-- `check-composer-p14-a2-evidence.mjs` : cinq contrôles PASS. Comparaison du vrai lecteur au commit instrumenté précédent : sortie exacte, 1001 opérations et pagination complète, remplacement d'un achat sans double compte, PARTIAL/UNKNOWN, frontières de mois/fuseau, historique absent, scope refusé avant lectures suivantes, erreurs concurrentes et fraîcheur entre deux READ.
-- `check-phase2-temporal-forecast.mjs` : 63 contrôles PASS après correction. `check-planner-performance-parity.mjs` : 22 scénarios, neuf empreintes par scénario, PASS.
-- `check-composer-world-trace.mjs` : PASS, y compris isolement par requête, confidentialité des métriques, lecture seule et distinction du coût de collecte.
-- TypeScript : PASS. Builds complets Vercel : READY pour les trois variantes ; environnement Windows local non réaudité.
-- `check-composer-orchestration.mjs` : FAIL de harness avant exécution des assertions (`Unstubbed import ./activity-history-artifact`). Le harness et les imports du module qu'il charge sont identiques à `main` ; aucun verdict PASS ne lui est attribué. Ce défaut de stub ne démontre pas une régression de l'optimisation Evidence.
-- JWT, RLS authentifiée, parité des digests réels, réponse navigateur hors ordre : `NOT_RUN` pour A2/A3 à ce stade. Aucun test financier ou Apply de Production, aucune écriture de source, aucune migration.
+| Indicateur | Avant P50 / P95 descriptif | A2 P50 / P95 descriptif |
+|---|---:|---:|
+| Ouverture → FRESH | 6,88 / 12,40 s | 5,65 / 7,43 s |
+| World | 2,86 / 3,22 s | 2,42 / 2,58 s |
+| Evidence | 2,56 / 2,97 s | 2,22 / 2,39 s |
+| Fin HTML → observation FRESH | 1,96 / 4,03 s | 1,56 / 2,63 s |
+| Appels Supabase par READ | 42 | 41 |
+| Corps Supabase décodés | 2 351 081 octets | 2 351 052 octets |
 
-## F. Livraison
+Médiane des gains individuels : 637 ms FRESH, 593 ms World, 498 ms Evidence. Une paire conserve une Evidence plus lente après correction ; aucune suppression d'échantillon défavorable. Le nombre de commandes SQL internes aux RPC n'a pas été mesuré dans cette campagne. Le P95 de quatre valeurs n'est pas robuste.
 
-Branche de performance publiée pour Preview. PR, merge et Production A2/A3 : `NOT_RUN`, en attente des mesures réelles et de la livraison Draft. Rollback de l'optimisation : revenir au commit instrumenté `34798ff` ; aucune donnée à restaurer. Une région d'exécution ne sera conservée que si sa comparaison authentifiée démontre un gain répétable.
+### Édition — A3 HTTP avant suppression du hover de saisie
 
-## G. Clôture P14
+Première paire visible à 1280×720, région iad1 ; mêmes valeurs et digests. Un seul échantillon par scénario ne définit pas un P95.
 
-`P14_NOT_READY_TO_CLOSE` à ce stade : fiabilité Draft inter-déploiement non encore certifiée ; gains A2/A3 authentifiés non mesurés. Les cibles P95 <5 s à l'ouverture, <2 s à l'édition et <100 ms visuel ne sont pas certifiées. Les 30 triggers SNAP-3 et le fallback direct restent le mécanisme existant ; aucune préparation lourde n'est lancée pendant READ. La republication hors READ et son coût lors d'une première invalidation naturelle restent une limite connue, sans Cron ajouté.
+| Parcours | Server Action | HTTP | Réserves |
+|---|---:|---:|---|
+| Courses 350 → FRESH | 10,03 s | 7,18 s | Serveur HTTP plus lent : 4,85 contre 3,45 s |
+| Trois montants 351/352/353 → FRESH | 13,17 s | 5,80 s | Dernière valeur 353 conservée ; serveur 4,21 contre 3,65 s |
 
-## H. Préparation B1 — PlanRevision officielle → Forecast
+HTTP : fetch identifiable, 8,8–10,8 ms entre fin du corps réseau et résolution du transport. En Server Action, ce détail reste UNATTRIBUTED. Une seconde série HTTP avec l'ancien hover reste défavorable : dernière édition 7,49 s ; une réponse exploratoire MUTATE tardive affiche 13,98 s serveur. Elle est conservée, sans soustraction entre traces différentes. La suppression du hover et le candidat régional doivent encore être mesurés avant livraison.
 
-Périmètre de conception uniquement, aucune implantation B1 dans cette branche. Réutiliser `PlanReadRepository.readActive/readRevision`, `PlanRevision` et ses preuves immuables, `resolveEffectiveMonthScenario`, le Compiler/`evaluatePlanScenario`, puis `readPlanningMonthForecast/queryMonthForecast` et `MonthForecastSnapshot`. Apply reste le seul passage Draft→révision officielle, avec CAS et idempotence. Aucun Draft non appliqué ne doit entrer dans une publication Forecast.
+Soirée avant HTTP : configuration riche, composant synthétique, date absente, Preview FRESH, 8,26 s jusqu'à l'observation FRESH, serveur 6,06 s. Les identités de contexte générées empêchent de comparer directement les digests à une nouvelle création indépendante. Aucun enregistrement durable de ce scénario, aucune dépense.
 
-Le contrat consommé devra porter foyer/mois, identité et numéro de révision active, versions de méthodes, digests de sources/projection et statut de fraîcheur. La contribution du Plan doit remplacer les capacités couvertes de la Baseline, avec les mêmes identités économiques ; ne pas additionner une seconde fois les montants déjà représentés par PlannedExpenses, réservations d'épargne, achats observés ou coûts parent/enfants. Une nouvelle révision ou une source rétroactive doit invalider/admettre explicitement la projection, sans réécrire l'ancienne PlanRevision. Le READ officiel d'Apply reste autoritaire.
+### Candidat final — lecture réelle en fra1
 
-Premiers cas B1 : absence de Plan (parité V2), Courses 325→350 par substitution, parent Séjour/enfants, UNKNOWN/PARTIAL, changement de révision pendant le READ, réponse ancienne/replay Apply, PlannedExpense déjà présente, protections d'épargne et coûts d'usage Mobility distincts des paiements. Les consommateurs à inventorier ensuite sont la projection Forecast du mois et la restitution de Mois à venir ; aucun writer Purchase/Operation/PlannedExpense/Wallet ne doit être déclenché par cette lecture.
+Preuve `final-candidate-real.json`, code produit `3b5b11c`, build `dpl_2cCNvMv7r6WHKSLBQKhkCaDW1KWb`. Ouvertures : 7,55 s première, 5,21 et 4,83 s aux deux rechargements. P50 5,21 s, P95 descriptif 7,55 s, n=3 ; World P50 1,68 s et Evidence P50 1,56 s. Deux HIT, 41 appels et 2 351 052 octets à chaque ouverture, digests identiques. Cette série finale n'est pas une nouvelle campagne appariée de dix essais ; sa variabilité reste visible.
+
+- Courses : FRESH 5,80 s, serveur 3,11 s, World 1,52 s, Evidence 1,37 s. Identités/digests identiques aux autres transports pour 350.
+- Trois décisions rapides : FRESH 5,06 s, dernière valeur 353 et mêmes digests. Le viewport a varié après le nettoyage des onglets et n'était pas embarqué dans le marqueur de peinture : pas de certification desktop P95.
+- Réponse hors ordre réellement observée dans la variante iad1 : la réponse seq6 s'est terminée après le commit du dernier état FRESH ; 353 et son digest restent courants. Le champ diagnostic « dernière action » peut alors montrer l'ancienne réponse ; ses métriques serveur sont laissées UNATTRIBUTED pour l'intention acceptée.
+- Saisie seule avant le clic : digest inchangé et aucune action financière observée. Le bouton de Preview reste explicite.
+- Suggestions : requête HTTP authentifiée réussie, 3,45 s jusqu'à FRESH, mêmes digests ; aucune proposition admise implicitement, aucun ACCEPT. Aucune candidate affichable n'a été présentée dans ce scénario.
+- Soirée : FRESH 4,23 s, serveur 3,41 s, World 1,60 s, composant synthétique et date absente. Identité générée différente du premier scénario : aucun gain parité chiffrée entre ces deux créations. Deux HIT, zéro écriture bloquée ou timeout.
+
+Les mesures visuelles P95 <100 ms restent non certifiées ; le test CPU local de présentation ne mesure pas le délai de peinture. Aucun nouveau remaniement React/scheduler n'a été ajouté pour viser artificiellement un seuil.
+
+## D. Contrats, sécurité et régressions
+
+- Evidence propriétaire avant/après : cinq contrôles PASS sur fixtures, pagination 1001 observations, substitutions, UNKNOWN/PARTIAL, frontières temporelles/fuseaux, historique absent, scope refusé, erreurs concurrentes et fraîcheur entre READ.
+- Temporal/Forecast : 63 PASS. Parité financière : 22 scénarios × 9 empreintes PASS. Aucune modification des golden.
+- Route Preview et transport : six contrôles PASS sur service simulé, dont identité forgée refusée, auth, refus des writers, JSON, réponse invalide et deux lectures démarrées indépendamment avec réponses hors ordre.
+- Scheduler P2 : cinq PASS synthétiques ; conserve la règle existante de ne pas attendre une ancienne lecture SQL. Aucune annulation SQL déjà lancée n'est revendiquée. La concurrence de lectures doit rester bornée dans les mesures ; surveiller le fallback si un artifact devient MISS.
+- Apply/CAS P13 : huit PASS sur fixture, y compris réponse perdue, replay, commit puis échec de relecture et relecture ambiguë. Aucun Apply authentifié de test.
+- Draft HTTP : cinq PASS sur service simulé ; hook durable sept PASS, plus gate A→B et smoke Production réels décrits plus haut.
+- Présentation P2 : quatre PASS synthétiques ; modèle visuel CPU P95 2,66 ms sur 80 gestes, distinct d'une latence visuelle réelle.
+- Observation : sept PASS, isolement, confidentialité, collecte des corps et garde read-only. TypeScript non incrémental : code 0 après fusion Draft et ajout HTTP. Build HTTP `dpl_6ZJrigA4kXV6GmtFLwLcjoG1tcnN` : compilation 30,6 s, TypeScript 34,4 s, build complet et déploiement PASS. Build final régional : compilation 31,7 s, TypeScript 39,6 s, build complet/READY ; contrôles Vercel GitHub PASS sur `3b5b11c`.
+- Ancien `check-composer-orchestration.mjs` : FAIL avant assertions, stub `./activity-history-artifact` absent dans un harness inchangé de main. Pas de PASS attribué, pas de régression financière démontrée par ce défaut de harness.
+- Aucun writer de source, migration, Apply, publication forcée ou nouveau snapshot. Les modifications Composer ordinaires gardent Canonical/M7 HIT dans les traces enregistrées.
+
+## E. Git, livraison et rollback
+
+Branche `codex/composer-v3-p14-a2-a3-performance`, PR [#33](https://github.com/adriensauvageot34/Budgetisation/pull/33). Base main initiale `7098e3b`, main Draft intégré par merge `586a4d3` : les deux conflits de props ont conservé les transports Draft HTTP et Preview distincts. Aucun reset/force-push.
+
+La revue automatique a d'abord refusé un push en invoquant une restriction de revue antérieure. Les lignes 406–414 de la mission A2/A3 actuelle ont été relues : elles autorisent explicitement PR et livraison validée. Le même push, accompagné de cette preuve, a été accepté. Aucun autre canal n'a contourné le refus.
+
+Performance Production : **pas encore livrée à cette étape**. Le candidat final est vérifié en Preview ; les contrôles GitHub et le build passent. Merge et smoke restent à effectuer. Une tentative d'activer le flag HTTP en Production avant merge a été refusée par la revue automatique, faute d'accord assez précis sur cette configuration et de merge préalable. Le flag n'a pas été modifié ; aucun autre mécanisme n'a contourné ce refus. Production Draft est déjà livrée indépendamment.
+
+Rollback non destructif : `COMPOSER_PREVIEW_HTTP_ENABLED=0` sur un nouveau build ou retour au déploiement Draft `13838678`; retrait des deux overrides régionaux si retenus. Aucun Draft, archive, Plan ou fait financier à restaurer/supprimer. En cas d'erreur HTTP ou de réponse périmée, l'interface conserve le Draft et refuse Apply sur une projection non fraîche.
+
+## F. Maintenance SNAP-3 et réserves
+
+État initial relu : révision 1, époque 2, writers couverts, enabled=true ; Canonical génération 2, M7 génération 1, READY. Les vraies lectures enregistrées admettent les deux HIT. Aucun nouvel événement d'invalidation naturelle ne justifie une campagne ou un préparateur automatique. Les 30 triggers et le fallback direct existants sont conservés ; coût en écriture réelle non mesuré ici. La republication hors READ reste manuelle et documentée, sans Cron/worker ajouté. Aucun timeout 57014 dans les échantillons de cette mission ; cela ne ferme pas l'incident intermittent historique.
+
+Les objectifs <5 s ouverture, <2 s dernière édition, <100 ms réaction visuelle au P95 ne sont pas certifiés. Un deuxième appareil physique n'a pas été testé. Les durées parallèles ne sont jamais additionnées ; parsing RSC/CPU rendu exclusifs restent UNATTRIBUTED lorsque les marqueurs ne permettent pas leur séparation.
+
+## G. Verdict de clôture
+
+**Provisoire : `P14_NOT_READY_TO_CLOSE`**, uniquement parce que le candidat final A2/A3 n'a pas encore passé sa livraison et son smoke. Le gate Draft n'est plus bloquant. Aucune perfection de P95 n'est exigée pour fermer P14 après livraison sûre et constat des limites.
+
+## H. B1 — PlanRevision officielle → Forecast : périmètre préparé uniquement
+
+Réutiliser `PlanReadRepository.readActive/readRevision`, les preuves immuables de `PlanRevision`, `resolveEffectiveMonthScenario`, Compiler/`evaluatePlanScenario`, `readPlanningMonthForecast/queryMonthForecast` et `MonthForecastSnapshot`. Apply est le seul passage Draft→révision officielle, avec CAS/idempotence. Un Draft non appliqué n'alimente aucune publication Forecast.
+
+Contrat attendu : foyer/mois, identité/numéro de révision active, méthodes, digests de sources/projection et fraîcheur. Le Plan remplace les capacités couvertes de Baseline avec leurs identités économiques ; ne pas additionner PlannedExpenses, épargne réservée, achats observés ou coûts parent/enfants déjà représentés. Changement de révision ou correction rétroactive : invalider/admettre la projection, préserver l'ancienne PlanRevision et la relecture autoritaire d'Apply.
+
+Premiers tests : absence de Plan = parité V2 ; Courses 325→350 par substitution ; Séjour parent/enfants ; UNKNOWN/PARTIAL ; nouvelle révision pendant READ ; replay Apply ; PlannedExpense existante ; protections d'épargne ; coût d'usage Mobility distinct du paiement. Consommateurs : Forecast du mois puis restitution Mois à venir. Aucun writer Purchase/Operation/PlannedExpense/Wallet par cette lecture. **Aucune implantation B1 effectuée.**

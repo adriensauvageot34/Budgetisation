@@ -1,0 +1,699 @@
+{
+  "status": "DERIVED_FROM_RECORDED_MEASUREMENTS",
+  "percentiles": "Median and nearest-rank descriptive P95; no robust tail certification.",
+  "notes": [
+    "Server spans overlap; never sum them.",
+    "No cross-clock subtraction.",
+    "All observations are retained, including failures and unfavorable pairs."
+  ],
+  "groups": [
+    {
+      "key": "candidate_iad1|OPEN|OPEN",
+      "n": 5,
+      "comparable": 4,
+      "metrics": {
+        "freshMs": {
+          "p50": 5744,
+          "p95Descriptive": 7425.1,
+          "min": 5308.9,
+          "max": 7425.1
+        },
+        "worldMs": {
+          "p50": 2487.591994,
+          "p95Descriptive": 3568.58874,
+          "min": 1948.480392,
+          "max": 3568.58874
+        },
+        "evidenceMs": {
+          "p50": 2285.452563,
+          "p95Descriptive": 3304.640113,
+          "min": 1735.09089,
+          "max": 3304.640113
+        },
+        "forecastMs": {
+          "p50": null,
+          "p95Descriptive": null,
+          "min": null,
+          "max": null
+        },
+        "metadataMs": {
+          "p50": null,
+          "p95Descriptive": null,
+          "min": null,
+          "max": null
+        },
+        "historyMs": {
+          "p50": null,
+          "p95Descriptive": null,
+          "min": null,
+          "max": null
+        },
+        "joinMs": {
+          "p50": null,
+          "p95Descriptive": null,
+          "min": null,
+          "max": null
+        },
+        "metricsDrainMs": {
+          "p50": null,
+          "p95Descriptive": null,
+          "min": null,
+          "max": null
+        },
+        "responseReadyMs": {
+          "p50": null,
+          "p95Descriptive": null,
+          "min": null,
+          "max": null
+        },
+        "responseEndToFreshMs": {
+          "p50": 1408.7,
+          "p95Descriptive": 2633.7,
+          "min": 625.4,
+          "max": 2633.7
+        },
+        "calls": {
+          "p50": 41,
+          "p95Descriptive": 41,
+          "min": 41,
+          "max": 41
+        },
+        "decodedBytes": {
+          "p50": 2351052,
+          "p95Descriptive": 2351052,
+          "min": 2351052,
+          "max": 2351052
+        }
+      }
+    },
+    {
+      "key": "reference_iad1|OPEN|OPEN",
+      "n": 7,
+      "comparable": 5,
+      "metrics": {
+        "freshMs": {
+          "p50": 6119.6,
+          "p95Descriptive": 12397.5,
+          "min": 3921.7,
+          "max": 12397.5
+        },
+        "worldMs": {
+          "p50": 2464.541078,
+          "p95Descriptive": 3218.165343,
+          "min": 2104.782994,
+          "max": 3218.165343
+        },
+        "evidenceMs": {
+          "p50": 2253.371092,
+          "p95Descriptive": 2971.653115,
+          "min": 1923.19852,
+          "max": 2971.653115
+        },
+        "forecastMs": {
+          "p50": null,
+          "p95Descriptive": null,
+          "min": null,
+          "max": null
+        },
+        "metadataMs": {
+          "p50": null,
+          "p95Descriptive": null,
+          "min": null,
+          "max": null
+        },
+        "historyMs": {
+          "p50": null,
+          "p95Descriptive": null,
+          "min": null,
+          "max": null
+        },
+        "joinMs": {
+          "p50": null,
+          "p95Descriptive": null,
+          "min": null,
+          "max": null
+        },
+        "metricsDrainMs": {
+          "p50": null,
+          "p95Descriptive": null,
+          "min": null,
+          "max": null
+        },
+        "responseReadyMs": {
+          "p50": null,
+          "p95Descriptive": null,
+          "min": null,
+          "max": null
+        },
+        "responseEndToFreshMs": {
+          "p50": 2183,
+          "p95Descriptive": 4027.2,
+          "min": 1646.1,
+          "max": 4027.2
+        },
+        "calls": {
+          "p50": 42,
+          "p95Descriptive": 42,
+          "min": 42,
+          "max": 42
+        },
+        "decodedBytes": {
+          "p50": 2351081,
+          "p95Descriptive": 2351081,
+          "min": 2351081,
+          "max": 2351081
+        }
+      }
+    }
+  ],
+  "pairs": [
+    {
+      "pair": 1,
+      "phase": "OPEN",
+      "kind": "OPEN",
+      "reference": "reference_iad1",
+      "candidate": "candidate_iad1",
+      "parity": true,
+      "comparable": true,
+      "deltas": {
+        "freshMs": -6653.5,
+        "worldMs": -858.1333690000001,
+        "evidenceMs": -821.6055470000001,
+        "forecastMs": null,
+        "metadataMs": null,
+        "historyMs": null,
+        "joinMs": null,
+        "metricsDrainMs": null,
+        "responseReadyMs": null,
+        "responseEndToFreshMs": -3401.7999999999997,
+        "calls": -1,
+        "decodedBytes": -29
+      }
+    },
+    {
+      "pair": 2,
+      "phase": "OPEN",
+      "kind": "OPEN",
+      "reference": "reference_iad1",
+      "candidate": "candidate_iad1",
+      "parity": true,
+      "comparable": false,
+      "deltas": {
+        "freshMs": 254.10000000000036,
+        "worldMs": 1104.047662,
+        "evidenceMs": 1051.269021,
+        "forecastMs": null,
+        "metadataMs": null,
+        "historyMs": null,
+        "joinMs": null,
+        "metricsDrainMs": null,
+        "responseReadyMs": null,
+        "responseEndToFreshMs": -1321.8,
+        "calls": -1,
+        "decodedBytes": -29
+      }
+    },
+    {
+      "pair": 3,
+      "phase": "OPEN",
+      "kind": "OPEN",
+      "reference": "reference_iad1",
+      "candidate": "candidate_iad1",
+      "parity": true,
+      "comparable": true,
+      "deltas": {
+        "freshMs": -218,
+        "worldMs": -372.6620640000001,
+        "evidenceMs": -345.922826,
+        "forecastMs": null,
+        "metadataMs": null,
+        "historyMs": null,
+        "joinMs": null,
+        "metricsDrainMs": null,
+        "responseReadyMs": null,
+        "responseEndToFreshMs": 450.6999999999998,
+        "calls": -1,
+        "decodedBytes": -29
+      }
+    },
+    {
+      "pair": 4,
+      "phase": "OPEN",
+      "kind": "OPEN",
+      "reference": "reference_iad1",
+      "candidate": "candidate_iad1",
+      "parity": true,
+      "comparable": true,
+      "deltas": {
+        "freshMs": -709.5,
+        "worldMs": -814.0586109999999,
+        "evidenceMs": -650.159756,
+        "forecastMs": null,
+        "metadataMs": null,
+        "historyMs": null,
+        "joinMs": null,
+        "metricsDrainMs": null,
+        "responseReadyMs": null,
+        "responseEndToFreshMs": 286.8000000000002,
+        "calls": -1,
+        "decodedBytes": -29
+      }
+    },
+    {
+      "pair": 5,
+      "phase": "OPEN",
+      "kind": "OPEN",
+      "reference": "reference_iad1",
+      "candidate": "candidate_iad1",
+      "parity": true,
+      "comparable": true,
+      "deltas": {
+        "freshMs": -563.9000000000005,
+        "worldMs": 243.48354199999994,
+        "evidenceMs": 220.38556299999982,
+        "forecastMs": null,
+        "metadataMs": null,
+        "historyMs": null,
+        "joinMs": null,
+        "metricsDrainMs": null,
+        "responseReadyMs": null,
+        "responseEndToFreshMs": -547.0999999999999,
+        "calls": -1,
+        "decodedBytes": -29
+      }
+    }
+  ],
+  "pairedSummaries": [
+    {
+      "key": "reference_iad1|candidate_iad1",
+      "n": 4,
+      "excluded": 1,
+      "before": {
+        "freshMs": {
+          "p50": 6881.35,
+          "p95Descriptive": 12397.5
+        },
+        "worldMs": {
+          "p50": 2858.5933335,
+          "p95Descriptive": 3218.165343
+        },
+        "evidenceMs": {
+          "p50": 2558.2849515,
+          "p95Descriptive": 2971.653115
+        },
+        "forecastMs": {
+          "p50": null,
+          "p95Descriptive": null
+        },
+        "metadataMs": {
+          "p50": null,
+          "p95Descriptive": null
+        },
+        "historyMs": {
+          "p50": null,
+          "p95Descriptive": null
+        },
+        "joinMs": {
+          "p50": null,
+          "p95Descriptive": null
+        },
+        "metricsDrainMs": {
+          "p50": null,
+          "p95Descriptive": null
+        },
+        "responseReadyMs": {
+          "p50": null,
+          "p95Descriptive": null
+        },
+        "responseEndToFreshMs": {
+          "p50": 1955.8,
+          "p95Descriptive": 4027.2
+        },
+        "calls": {
+          "p50": 42,
+          "p95Descriptive": 42
+        },
+        "decodedBytes": {
+          "p50": 2351081,
+          "p95Descriptive": 2351081
+        }
+      },
+      "after": {
+        "freshMs": {
+          "p50": 5649.85,
+          "p95Descriptive": 7425.1
+        },
+        "worldMs": {
+          "p50": 2423.811984,
+          "p95Descriptive": 2581.9856
+        },
+        "evidenceMs": {
+          "p50": 2217.7500655,
+          "p95Descriptive": 2385.396431
+        },
+        "forecastMs": {
+          "p50": null,
+          "p95Descriptive": null
+        },
+        "metadataMs": {
+          "p50": null,
+          "p95Descriptive": null
+        },
+        "historyMs": {
+          "p50": null,
+          "p95Descriptive": null
+        },
+        "joinMs": {
+          "p50": null,
+          "p95Descriptive": null
+        },
+        "metricsDrainMs": {
+          "p50": null,
+          "p95Descriptive": null
+        },
+        "responseReadyMs": {
+          "p50": null,
+          "p95Descriptive": null
+        },
+        "responseEndToFreshMs": {
+          "p50": 1557.2,
+          "p95Descriptive": 2633.7
+        },
+        "calls": {
+          "p50": 41,
+          "p95Descriptive": 41
+        },
+        "decodedBytes": {
+          "p50": 2351052,
+          "p95Descriptive": 2351052
+        }
+      },
+      "deltaP50": {
+        "freshMs": -636.7000000000003,
+        "worldMs": -593.3603375,
+        "evidenceMs": -498.041291,
+        "forecastMs": null,
+        "metadataMs": null,
+        "historyMs": null,
+        "joinMs": null,
+        "metricsDrainMs": null,
+        "responseReadyMs": null,
+        "responseEndToFreshMs": -130.14999999999986,
+        "calls": -1,
+        "decodedBytes": -29
+      }
+    }
+  ],
+  "samples": [
+    {
+      "pair": 1,
+      "variant": "candidate_iad1",
+      "phase": "OPEN",
+      "kind": "OPEN",
+      "semanticDigest": "f523db27e084e00fced4a18fd452416794764476743b4e676236479bd1a1d7f1",
+      "previewDigest": "a2497c85a0c89593f872c15f03dcb65be9d51e176f5af971d1c4d44ea5fff9fc",
+      "status": "FRESH",
+      "completeSnap3Hit": true,
+      "failedRequests": 0,
+      "values": {
+        "freshMs": 5744,
+        "worldMs": 2360.031974,
+        "evidenceMs": 2150.047568,
+        "forecastMs": null,
+        "metadataMs": null,
+        "historyMs": null,
+        "joinMs": null,
+        "responseEndToFreshMs": 625.4,
+        "calls": 41,
+        "decodedBytes": 2351052
+      },
+      "exclusion": null,
+      "comparable": true
+    },
+    {
+      "pair": 1,
+      "variant": "reference_iad1",
+      "phase": "OPEN",
+      "kind": "OPEN",
+      "semanticDigest": "f523db27e084e00fced4a18fd452416794764476743b4e676236479bd1a1d7f1",
+      "previewDigest": "a2497c85a0c89593f872c15f03dcb65be9d51e176f5af971d1c4d44ea5fff9fc",
+      "status": "FRESH",
+      "completeSnap3Hit": true,
+      "failedRequests": 0,
+      "values": {
+        "freshMs": 12397.5,
+        "worldMs": 3218.165343,
+        "evidenceMs": 2971.653115,
+        "forecastMs": null,
+        "metadataMs": null,
+        "historyMs": null,
+        "joinMs": null,
+        "responseEndToFreshMs": 4027.2,
+        "calls": 42,
+        "decodedBytes": 2351081
+      },
+      "exclusion": null,
+      "comparable": true
+    },
+    {
+      "pair": 2,
+      "variant": "reference_iad1",
+      "phase": "OPEN",
+      "kind": "OPEN",
+      "semanticDigest": "f523db27e084e00fced4a18fd452416794764476743b4e676236479bd1a1d7f1",
+      "previewDigest": "a2497c85a0c89593f872c15f03dcb65be9d51e176f5af971d1c4d44ea5fff9fc",
+      "status": "FRESH",
+      "completeSnap3Hit": true,
+      "failedRequests": 0,
+      "values": {
+        "freshMs": 7048.9,
+        "worldMs": 2464.541078,
+        "evidenceMs": 2253.371092,
+        "forecastMs": null,
+        "metadataMs": null,
+        "historyMs": null,
+        "joinMs": null,
+        "responseEndToFreshMs": 2730.5,
+        "calls": 42,
+        "decodedBytes": 2351081
+      },
+      "exclusion": null,
+      "comparable": true
+    },
+    {
+      "pair": 2,
+      "variant": "candidate_iad1",
+      "phase": "OPEN",
+      "kind": "OPEN",
+      "semanticDigest": "f523db27e084e00fced4a18fd452416794764476743b4e676236479bd1a1d7f1",
+      "previewDigest": "a2497c85a0c89593f872c15f03dcb65be9d51e176f5af971d1c4d44ea5fff9fc",
+      "status": "FRESH",
+      "completeSnap3Hit": true,
+      "failedRequests": 0,
+      "values": {
+        "freshMs": 7303,
+        "worldMs": 3568.58874,
+        "evidenceMs": 3304.640113,
+        "forecastMs": null,
+        "metadataMs": null,
+        "historyMs": null,
+        "joinMs": null,
+        "responseEndToFreshMs": 1408.7,
+        "calls": 41,
+        "decodedBytes": 2351052
+      },
+      "exclusion": "Concurrent production smoke Preview; retained as unfavorable observation, not clean paired attribution",
+      "comparable": false
+    },
+    {
+      "pair": 3,
+      "variant": "candidate_iad1",
+      "phase": "OPEN",
+      "kind": "OPEN",
+      "semanticDigest": "f523db27e084e00fced4a18fd452416794764476743b4e676236479bd1a1d7f1",
+      "previewDigest": "a2497c85a0c89593f872c15f03dcb65be9d51e176f5af971d1c4d44ea5fff9fc",
+      "status": "FRESH",
+      "completeSnap3Hit": true,
+      "failedRequests": 0,
+      "values": {
+        "freshMs": 7425.1,
+        "worldMs": 2581.9856,
+        "evidenceMs": 2385.396431,
+        "forecastMs": null,
+        "metadataMs": null,
+        "historyMs": null,
+        "joinMs": null,
+        "responseEndToFreshMs": 2633.7,
+        "calls": 41,
+        "decodedBytes": 2351052
+      },
+      "exclusion": null,
+      "comparable": true
+    },
+    {
+      "pair": 4,
+      "variant": "candidate_iad1",
+      "phase": "OPEN",
+      "kind": "OPEN",
+      "semanticDigest": "f523db27e084e00fced4a18fd452416794764476743b4e676236479bd1a1d7f1",
+      "previewDigest": "a2497c85a0c89593f872c15f03dcb65be9d51e176f5af971d1c4d44ea5fff9fc",
+      "status": "FRESH",
+      "completeSnap3Hit": true,
+      "failedRequests": 0,
+      "values": {
+        "freshMs": 5308.9,
+        "worldMs": 1948.480392,
+        "evidenceMs": 1735.09089,
+        "forecastMs": null,
+        "metadataMs": null,
+        "historyMs": null,
+        "joinMs": null,
+        "responseEndToFreshMs": 1932.9,
+        "calls": 41,
+        "decodedBytes": 2351052
+      },
+      "exclusion": null,
+      "comparable": true
+    },
+    {
+      "pair": 3,
+      "variant": "reference_iad1",
+      "phase": "OPEN",
+      "kind": "OPEN",
+      "semanticDigest": "f523db27e084e00fced4a18fd452416794764476743b4e676236479bd1a1d7f1",
+      "previewDigest": "a2497c85a0c89593f872c15f03dcb65be9d51e176f5af971d1c4d44ea5fff9fc",
+      "status": "FRESH",
+      "completeSnap3Hit": true,
+      "failedRequests": 0,
+      "values": {
+        "freshMs": 7643.1,
+        "worldMs": 2954.647664,
+        "evidenceMs": 2731.319257,
+        "forecastMs": null,
+        "metadataMs": null,
+        "historyMs": null,
+        "joinMs": null,
+        "responseEndToFreshMs": 2183,
+        "calls": 42,
+        "decodedBytes": 2351081
+      },
+      "exclusion": null,
+      "comparable": true
+    },
+    {
+      "pair": 4,
+      "variant": "reference_iad1",
+      "phase": "OPEN",
+      "kind": "OPEN",
+      "semanticDigest": "f523db27e084e00fced4a18fd452416794764476743b4e676236479bd1a1d7f1",
+      "previewDigest": "a2497c85a0c89593f872c15f03dcb65be9d51e176f5af971d1c4d44ea5fff9fc",
+      "status": "FRESH",
+      "completeSnap3Hit": true,
+      "failedRequests": 0,
+      "values": {
+        "freshMs": 6018.4,
+        "worldMs": 2762.539003,
+        "evidenceMs": 2385.250646,
+        "forecastMs": null,
+        "metadataMs": null,
+        "historyMs": null,
+        "joinMs": null,
+        "responseEndToFreshMs": 1646.1,
+        "calls": 42,
+        "decodedBytes": 2351081
+      },
+      "exclusion": null,
+      "comparable": true
+    },
+    {
+      "pair": "viewport-observation-1",
+      "variant": "reference_iad1",
+      "phase": "OPEN",
+      "kind": "OPEN",
+      "status": "FRESH",
+      "completeSnap3Hit": true,
+      "failedRequests": 0,
+      "values": {
+        "freshMs": 3921.7,
+        "worldMs": 2336.897543,
+        "evidenceMs": 2140.95551,
+        "forecastMs": null,
+        "metadataMs": null,
+        "historyMs": null,
+        "joinMs": null
+      },
+      "exclusion": "Viewport changed to 498x646",
+      "comparable": false
+    },
+    {
+      "pair": "viewport-observation-2",
+      "variant": "reference_iad1",
+      "phase": "OPEN",
+      "kind": "OPEN",
+      "status": "FRESH",
+      "completeSnap3Hit": true,
+      "failedRequests": 0,
+      "values": {
+        "freshMs": 5053.8,
+        "worldMs": 2104.782994,
+        "evidenceMs": 1923.19852,
+        "forecastMs": null,
+        "metadataMs": null,
+        "historyMs": null,
+        "joinMs": null
+      },
+      "exclusion": "Viewport override did not resize the existing tab; 498x646 retained until a new tab was opened",
+      "comparable": false
+    },
+    {
+      "pair": 5,
+      "variant": "reference_iad1",
+      "phase": "OPEN",
+      "kind": "OPEN",
+      "semanticDigest": "f523db27e084e00fced4a18fd452416794764476743b4e676236479bd1a1d7f1",
+      "previewDigest": "a2497c85a0c89593f872c15f03dcb65be9d51e176f5af971d1c4d44ea5fff9fc",
+      "status": "FRESH",
+      "completeSnap3Hit": true,
+      "failedRequests": 0,
+      "values": {
+        "freshMs": 6119.6,
+        "worldMs": 2244.108452,
+        "evidenceMs": 2065.067,
+        "forecastMs": null,
+        "metadataMs": null,
+        "historyMs": null,
+        "joinMs": null,
+        "responseEndToFreshMs": 1728.6,
+        "calls": 42,
+        "decodedBytes": 2351081
+      },
+      "exclusion": null,
+      "comparable": true
+    },
+    {
+      "pair": 5,
+      "variant": "candidate_iad1",
+      "phase": "OPEN",
+      "kind": "OPEN",
+      "semanticDigest": "f523db27e084e00fced4a18fd452416794764476743b4e676236479bd1a1d7f1",
+      "previewDigest": "a2497c85a0c89593f872c15f03dcb65be9d51e176f5af971d1c4d44ea5fff9fc",
+      "status": "FRESH",
+      "completeSnap3Hit": true,
+      "failedRequests": 0,
+      "values": {
+        "freshMs": 5555.7,
+        "worldMs": 2487.591994,
+        "evidenceMs": 2285.452563,
+        "forecastMs": null,
+        "metadataMs": null,
+        "historyMs": null,
+        "joinMs": null,
+        "responseEndToFreshMs": 1181.5,
+        "calls": 41,
+        "decodedBytes": 2351052
+      },
+      "exclusion": null,
+      "comparable": true
+    }
+  ]
+}

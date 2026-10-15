@@ -41,6 +41,14 @@ for(const [reference,candidate]of [['reference_iad1','reference_fra1'],['referen
    deltas:Object.fromEntries(Object.keys(before.values).map(k=>[k,Number.isFinite(before.values[k])&&Number.isFinite(after.values[k])?after.values[k]-before.values[k]:null]))});
  }
 }
+const pairedSummaries=[];
+for(const key of new Set(pairs.map(p=>`${p.reference}|${p.candidate}`))){
+ const all=pairs.filter(p=>`${p.reference}|${p.candidate}`===key),eligible=all.filter(p=>p.comparable);
+ const rows=variant=>eligible.map(p=>measured.find(s=>s.variant===variant&&s.pair===p.pair&&s.phase===p.phase&&s.kind===p.kind));
+ const summary=items=>Object.fromEntries(Object.keys(measured[0]?.values??{}).map(metric=>[metric,{p50:percentile(items.map(s=>s.values[metric]),.5),p95Descriptive:percentile(items.map(s=>s.values[metric]),.95)}]));
+ pairedSummaries.push({key,n:eligible.length,excluded:all.length-eligible.length,before:summary(rows(all[0].reference)),after:summary(rows(all[0].candidate)),
+  deltaP50:Object.fromEntries(Object.keys(eligible[0]?.deltas??{}).map(metric=>[metric,percentile(eligible.map(p=>p.deltas[metric]),.5)]))});
+}
 const result={status:'DERIVED_FROM_RECORDED_MEASUREMENTS',percentiles:'Median and nearest-rank descriptive P95; no robust tail certification.',
- notes:['Server spans overlap; never sum them.','No cross-clock subtraction.','All observations are retained, including failures and unfavorable pairs.'],groups,pairs,samples:measured};
+ notes:['Server spans overlap; never sum them.','No cross-clock subtraction.','All observations are retained, including failures and unfavorable pairs.'],groups,pairs,pairedSummaries,samples:measured};
 if(process.argv[3])fs.writeFileSync(process.argv[3],JSON.stringify(result,null,2)+'\n');else console.log(JSON.stringify(result,null,2));
