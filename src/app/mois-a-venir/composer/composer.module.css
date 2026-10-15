@@ -2,7 +2,7 @@
    < palette < popover < trash < modal. Native popovers/dialogs use the top layer. */
 .restaurantInspector { position:fixed; z-index:20; top:155px; right:20px; bottom:190px; width:min(350px,calc(100vw - 24px)); min-height:180px; overflow:auto; box-sizing:border-box; padding:18px; border:1px solid #e6d9ec; border-radius:22px; background:#fffdfb; color:#252d48; box-shadow:0 16px 50px #3422412b; font:13px var(--font-sans,Arial,sans-serif); }
 .restaurantInspector * { box-sizing:border-box; }
-.restaurantInspector header { display:flex; gap:10px; align-items:center; }
+.restaurantInspector header { position:sticky; top:-18px; z-index:2; display:flex; gap:10px; align-items:center; margin:-18px -18px 0; padding:14px 18px; background:#fffdfb; border-bottom:1px solid #ebe3ee; }
 .restaurantInspector header > div { flex:1; }
 .restaurantInspector h2 { margin:2px 0; font-size:22px; }
 .restaurantInspector h3 { font-size:16px; margin:14px 0; }

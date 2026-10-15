@@ -134,7 +134,7 @@ export function RestaurantEditor({ context, card, model, creating, busy, decide,
       amount: currentTransport.pricing?.fare.kind === "MANUAL" ? currentTransport.pricing.fare.unitAmount : "",
       funding: currentTransport.pricing?.fundingAllocations.length ? currentTransport.pricing.fundingAllocations.some(a => a.source !== "BANK") ? "EXISTING" : "BANK" : "",
       fundingAmount: currentTransport.pricing?.fundingAllocations[0]?.amount ?? "", preference: currentTransport.pricing?.preference ?? "FASTEST",
-      parkingMode: currentTransport.pricing?.parking.kind === "MANUAL" ? Number(currentTransport.pricing.parking.unitAmount) === 0 ? "NO" : "YES" : "UNKNOWN",
+      parkingMode: currentTransport.pricing?.parking.kind === "MANUAL" ? Number(currentTransport.pricing.parking.unitAmount) === 0 ? "NO" : "YES" : currentTransport.pricing?.parking.kind === "QUOTE" ? "EXISTING" : "UNKNOWN",
       parkingAmount: currentTransport.pricing?.parking.kind === "MANUAL" ? currentTransport.pricing.parking.unitAmount : "",
       targetIntentId: currentTransport.journey?.targetIntentId ?? "" } : {}) } : {};
   const panelContent = <aside ref={panel} className={styles.restaurantInspector} role="dialog" aria-modal="false" aria-labelledby="restaurant-heading" data-restaurant-editor
@@ -205,13 +205,16 @@ export function RestaurantEditor({ context, card, model, creating, busy, decide,
           const cost = values.costMode === "UNKNOWN" ? { kind: "UNKNOWN" as const }
             : values.amount?.trim() ? { kind: "MANUAL" as const, unitAmount: decisionAmount(values.amount.replace(",", ".")) }
               : sameRoute ? currentTransport?.pricing?.fare ?? { kind: "UNKNOWN" as const } : { kind: "UNKNOWN" as const };
-          const parking = values.parkingMode === "NO" ? { kind: "MANUAL" as const, unitAmount: "0.00" }
+          const parking = values.parkingMode === "EXISTING" && sameRoute ? currentTransport?.pricing?.parking ?? { kind: "UNKNOWN" as const }
+            : values.parkingMode === "NO" ? { kind: "MANUAL" as const, unitAmount: "0.00" }
             : values.parkingAmount?.trim() ? { kind: "MANUAL" as const, unitAmount: decisionAmount(values.parkingAmount.replace(",", ".")) } : { kind: "UNKNOWN" as const };
           const selection: Extract<ComponentSelectionV1, { kind: "MOBILITY_INTENT" }> = {
             selectionId: currentTransport?.selectionId ?? crypto.randomUUID(), kind: "MOBILITY_INTENT", optionKey: equipment.asset.optionKey!, provenance: "EXPLICIT_USER_DECISION",
             origin, destination, returnRequired, plannedTime: values.plannedTime || null, returnTime: values.returnTime || null,
             ...(values.targetIntentId ? { journey: sameRoute && currentTransport?.journey?.relation === "SHARES_JOURNEY" && currentTransport.journey.targetIntentId === values.targetIntentId
               ? currentTransport.journey : { relation: "SHARES_JOURNEY", certainty: "CERTAIN", targetIntentId: values.targetIntentId, externalExpenseId: null, externalCostLineIds: [], choice: null, stopIndex: null, accessLegIndex: null } }
+              : sameRoute && currentTransport?.journey?.relation === "SHARES_JOURNEY" && !currentTransport.journey.targetIntentId
+                ? { journey: currentTransport.journey }
               : { pricing: { fare: cost, parking: equipment.asset.optionKey === "car" ? parking : { kind: "UNKNOWN" },
                 fundingAllocations: values.funding === "EXISTING" && sameMode ? currentTransport?.pricing?.fundingAllocations ?? []
                   : values.funding === "BANK" ? [{ source: "BANK", amount: decisionAmount(values.fundingAmount.replace(",", ".")) }] : [], preference: values.preference === "AVOID_TOLLS" ? "AVOID_TOLLS" : "FASTEST" } }),
@@ -222,7 +225,8 @@ export function RestaurantEditor({ context, card, model, creating, busy, decide,
       }}><h4>{equipment.asset.label}</h4><p>Un coût d’usage n’est pas un plein bancaire. Les données absentes restent inconnues.</p>
         {model.editors.find(e => e.assetKey === equipment.asset.assetKey)?.fields.map(field => <label key={field.key}>{field.label}{field.kind === "CHOICE"
           ? <select name={field.key} defaultValue={transportValues[field.key] ?? field.choices?.[0]?.value ?? ""}>{field.choices?.map(choice => <option key={choice.value} value={choice.value}>{choice.label}</option>)}
-            {field.key === "funding" && transportValues.funding === "EXISTING" && <option value="EXISTING">Conserver le financement antérieur</option>}</select>
+            {field.key === "funding" && transportValues.funding === "EXISTING" && <option value="EXISTING">Conserver le financement antérieur</option>}
+            {field.key === "parkingMode" && transportValues.parkingMode === "EXISTING" && <option value="EXISTING">Conserver le devis de stationnement</option>}</select>
           : <input name={field.key} defaultValue={transportValues[field.key] ?? field.initial ?? ""} inputMode={field.kind === "AMOUNT" ? "decimal" : undefined} />}</label>)}
         <button type="submit" disabled={busy}>Valider ce trajet</button></form>}
       {error && <p role="alert" className={styles.formError}>{error}</p>}
