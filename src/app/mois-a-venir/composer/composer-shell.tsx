@@ -32,6 +32,7 @@ import type { ComposerApplyReceipt } from "@/domain/phase2/planner/composer-ui-c
 import { useCommittedEvent } from "./use-committed-event";
 
 type Editor = { title: string; compact?: boolean; side?: boolean; fields: readonly ComposerField[]; values: Record<string, string>;
+  restaurantContextId?: string; restaurantCreating?: boolean;
   giftContextId?: string; nightContextId?: string; familyContextId?: string; stayContextId?: string; catalogContextId?: string; familyMode?: string;
   cardKey?: string;
   operation: (values: Record<string, string>) => ComposerOperation };
@@ -111,7 +112,7 @@ export function ComposerShell({ initialModel, transport: suppliedTransport, init
   const [loadedEditors, setLoadedEditors] = useState<LoadedEditorChunks>({});
   const [editorLoadError, setEditorLoadError] = useState<EditorChunkKind | null>(null);
   const [editorLoadRetry, setEditorLoadRetry] = useState(0);
-  const editorKind: EditorChunkKind | null = editor?.stayContextId ? "stay" : editor?.familyContextId ? "family"
+  const editorKind: EditorChunkKind | null = editor?.restaurantContextId ? "restaurant" : editor?.stayContextId ? "stay" : editor?.familyContextId ? "family"
     : editor?.giftContextId ? "gift" : editor?.catalogContextId ? "catalog" : null;
   useEffect(() => {
     if (!editorKind || loadedEditors[editorKind]) return;
@@ -123,6 +124,8 @@ export function ComposerShell({ initialModel, transport: suppliedTransport, init
     return () => { current = false; };
   }, [editorKind, editorLoadRetry, loadedEditors]);
   const FamilyVisitEditor = loadedEditors.family;
+  const RestaurantEditor = loadedEditors.restaurant;
+  useEffect(() => { if (editor?.restaurantContextId && !draftState.contexts.some(c => c.contextOccurrenceId === editor.restaurantContextId)) setEditor(null); }, [draftState.contexts, editor?.restaurantContextId]);
   const ShortStayEditor = loadedEditors.stay, GiftEditor = loadedEditors.gift, CatalogContextEditor = loadedEditors.catalog;
   const [projectionOpen, setProjectionOpen] = useState(false), [libraryOpenToken, setLibraryOpenToken] = useState(0);
   const [hoverModel, setHoverModel] = useState<ComposerUiModel | null>(null), gate = useRef(new ComposerResponseGate()), timer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -244,11 +247,12 @@ export function ComposerShell({ initialModel, transport: suppliedTransport, init
     else if (!draftConfirmation && confirmationDialog.current?.open) confirmationDialog.current.close();
   }, [draftConfirmation]);
   useEffect(() => {
+    if (editor?.restaurantContextId) { dialog.current?.close(); return; }
     if (editor || projectionOpen) { invoker.current = document.activeElement as HTMLElement;
       if (dialog.current?.open) dialog.current.close();
       if (editor?.side && !projectionOpen) dialog.current?.show(); else dialog.current?.showModal(); }
     else { dialog.current?.close(); invoker.current?.focus(); }
-  }, [!!editor, editor?.side, projectionOpen]);
+  }, [!!editor, editor?.side, editor?.restaurantContextId, projectionOpen]);
   async function checkApply(pending: PendingApply) {
     const ticket = gate.current.next(semanticStateDigest(localDraft.current));
     try {
@@ -506,7 +510,8 @@ export function ComposerShell({ initialModel, transport: suppliedTransport, init
           ...(asset.templateKey === "night-out" ? { nightContextId: identity } : {}),
           ...(asset.templateKey === "short-stay" ? { stayContextId: identity } : {}),
           ...(asset.templateKey === "family-visit" ? { familyContextId: identity } : {}),
-          ...(!["gift", "night-out", "short-stay", "family-visit"].includes(asset.templateKey ?? "") ? { catalogContextId: identity } : {}),
+          ...(asset.templateKey === "restaurant" ? { restaurantContextId: identity, restaurantCreating: true } : {}),
+          ...(!["restaurant", "gift", "night-out", "short-stay", "family-visit"].includes(asset.templateKey ?? "") ? { catalogContextId: identity } : {}),
           fields: model.editors.find(e => e.assetKey === asset.assetKey)?.fields ?? [], values: {},
           operation: values => ({ kind: "EDIT_CONTEXT", contextOccurrenceId: identity, values }) });
         return;
@@ -539,6 +544,7 @@ export function ComposerShell({ initialModel, transport: suppliedTransport, init
   const closeDialog = () => { if (!busyRef.current) { setEditor(null); setProjectionOpen(false); setErrorMessage(null); } };
   function editContext(card: ComposerContextCardView) {
     clearHover();
+    setFocusedContext(card.contextOccurrenceId);
     prepareDialogFocus();
     setEditor({ title: `Modifier ${card.label}`, side: !["night-out", "short-stay", "family-visit"].includes(card.templateKey),
       cardKey: `template:${card.templateKey}`,
@@ -546,7 +552,8 @@ export function ComposerShell({ initialModel, transport: suppliedTransport, init
       ...(card.templateKey === "night-out" ? { nightContextId: card.contextOccurrenceId } : {}),
       ...(card.templateKey === "short-stay" ? { stayContextId: card.contextOccurrenceId } : {}),
       ...(card.templateKey === "family-visit" ? { familyContextId: card.contextOccurrenceId } : {}),
-      ...(!["gift", "night-out", "short-stay", "family-visit"].includes(card.templateKey) ? { catalogContextId: card.contextOccurrenceId } : {}),
+      ...(card.templateKey === "restaurant" ? { restaurantContextId: card.contextOccurrenceId } : {}),
+      ...(!["restaurant", "gift", "night-out", "short-stay", "family-visit"].includes(card.templateKey) ? { catalogContextId: card.contextOccurrenceId } : {}),
       fields: model.editors.find(e => e.assetKey === `template:${card.templateKey}`)?.fields ?? [],
       values: Object.fromEntries(Object.entries(card.fields).filter((entry): entry is [string, string] => typeof entry[1] === "string")),
       operation: values => ({ kind: "EDIT_CONTEXT", contextOccurrenceId: card.contextOccurrenceId, values }) });
@@ -600,6 +607,7 @@ export function ComposerShell({ initialModel, transport: suppliedTransport, init
   const stablePreview=useCommittedEvent(()=>void run({kind:"READ"},"none"));
   const stableBalance=useCommittedEvent(()=>{clearHover();setBalanceOpen(v=>!v);if(!balanceOpen)void run({kind:"SUGGESTIONS"},"none");});
   const stableDetails=useCommittedEvent(openProjectionDetails);
+  const stableFocus=useCommittedEvent((id:string|null)=>{setFocusedContext(id);if(editor?.restaurantContextId&&id!==editor.restaurantContextId)setEditor(null);});
   return <ComposerInteractionContext.Provider value={interactionView}>
   <div className={styles.workspace} data-composer data-digest={shown.board.draft.semanticStateDigest} data-snap-preview-digest={snapshotMetrics?model.proof.expectedPreviewDigest:undefined} data-preview-state={previewStatus} data-save-state={durable.status} data-world-version={worldVersion} data-exploratory-digest={hoverModel?.board.draft.semanticStateDigest} data-dragging={!!grabbed} data-comparing={!!comparison} data-motion={motion} data-revision={model.activeRevisionNumber} aria-busy={busy}
     onDragOverCapture={e => { if (grab.current && e.target instanceof Element && !e.target.closest("[data-board-drop],[data-trash]")) { over(null); if (assistantOver.current) { assistantOver.current = null; clearHover(); } } }}>
@@ -639,8 +647,17 @@ export function ComposerShell({ initialModel, transport: suppliedTransport, init
           Recharger avec mon brouillon sauvegardé</button>}
       </div></header>
     <div className={styles.columns}><ComposerLibrary model={shown} openToken={libraryOpenToken} busy={busy} selected={selected} choose={stableLibraryChoose} drag={stableLibraryDrag} />
-      <ComposerBoard model={shown} busy={busy} selected={selected} focused={focusedContext} focus={setFocusedContext} edit={stableEdit} editContext={stableEditContext} choose={stableChoose} drag={setSelected} drop={stableDrop} request={stableRequest} hover={stableHover}
-        add={stableAdd} preview={stablePreview} balance={stableBalance} details={stableDetails} /></div>
+      <ComposerBoard model={shown} busy={busy} selected={selected} focused={focusedContext} focus={stableFocus} edit={stableEdit} editContext={stableEditContext} choose={stableChoose} drag={setSelected} drop={stableDrop} request={stableRequest} hover={stableHover}
+        add={stableAdd} preview={stablePreview} balance={stableBalance} details={stableDetails}
+        contextGuide={editor?.restaurantContextId && focusedContext === editor.restaurantContextId && RestaurantEditor
+          && draftState.contexts.some(c => c.contextOccurrenceId === editor.restaurantContextId)
+          && shown.board.contexts.some(c => c.contextOccurrenceId === editor.restaurantContextId)
+          ? <RestaurantEditor key={editor.restaurantContextId} context={draftState.contexts.find(c => c.contextOccurrenceId === editor.restaurantContextId)!}
+            card={shown.board.contexts.find(c => c.contextOccurrenceId === editor.restaurantContextId)!} model={shown}
+            creating={!!editor.restaurantCreating} busy={busy} decide={stage} close={closeDialog} />
+          : editor?.restaurantContextId ? <section className={styles.contextPalette} role="status"><p>{editorLoadError ? "L’éditeur Restaurant n’a pas pu être chargé. Le brouillon est conservé." : "Ouverture de Restaurant…"}</p>
+            {editorLoadError && <button type="button" onClick={() => setEditorLoadRetry(n => n + 1)}>Réessayer l’éditeur</button>}<button type="button" onClick={closeDialog}>Retour au Board</button></section>
+          : undefined} /></div>
     {balanceOpen && (!suggestions || suggestions.candidates.length > 0) && <section className={styles.suggestionHand} data-suggestion-hand aria-label="Pistes pour votre mois"><header><span><Sparkles size={14} /> Quelques façons de retrouver de la marge</span><button className={styles.iconButton} aria-label="Fermer les suggestions" onClick={() => setBalanceOpen(false)}><X size={16} /></button></header>
       {suggestions ? <BalanceLayer suggestions={suggestions} busy={busy} accept={candidateId => void run({ kind: "ACCEPT", candidateSetDigest: suggestions.candidateSetDigest, candidateId })} /> : <p role="status">Le serveur resimule les pistes…</p>}</section>}
     <div ref={dragImage} className={styles.dragPreview} data-drag-preview data-protected={grabbed?.protected} aria-hidden="true">{[...new Set(Object.values(shown.presentation.dragSources).map(s => s.iconKey))].map(key => <span key={key} data-drag-icon={key} style={{ display: grabbed?.iconKey === key ? "inline-flex" : "none" }}><PlannerIcon iconKey={key} scale="SATELLITE" /></span>)}<span><b data-drag-label>{grabbed?.label}</b><small data-drag-amount>{grabbed?.protected ? <><LockKeyhole size={11} /> Protégée</> : money(grabbed?.economicAmount ?? null)}</small></span></div>

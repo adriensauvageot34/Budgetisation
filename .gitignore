@@ -39,3 +39,6 @@ next-env.d.ts
 
 # Generated B3 test/build logs; reviewed proofs live in docs/status/evidence.
 /outputs/b3-*
+
+# L1 generated browser bundles and intermediate logs.
+/outputs/l1-*

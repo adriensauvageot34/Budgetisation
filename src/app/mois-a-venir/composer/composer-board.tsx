@@ -1,4 +1,4 @@
-import { memo, useCallback, useEffect, useMemo, useState } from "react";
+import { memo, useCallback, useEffect, useMemo, useState, type ReactNode } from "react";
 import { Plus, Trash2, LockKeyhole } from "lucide-react";
 import type { ComposerUiModel, ComposerOperation } from "@/domain/phase2/planner/composer-ui-contract";
 import type { ComposerCardView, ComposerContextCardView, DropTarget, ComposerAssetView } from "@/domain/phase2/planner/composer-contract";
@@ -12,7 +12,7 @@ import { useComposerInteractions, sameTarget, leftSurface } from "./interactions
 import { PlannerIcon } from "./planner-icons/planner-icon";
 import { BoardCarousel } from "./board-carousel";
 import { inventoryItems } from "./inventory-layout";
-import type { AtomicNode, VisualClusterNode } from "./presentation/node-types";
+import type { AtomicNode, VisualClusterNode, ComposerPresentationNode } from "./presentation/node-types";
 import { VisualClusterCard, VisualClusterOverlay } from "./visual-cluster";
 import { composerRenderIndex } from "./render-index";
 type BoardProps=Parameters<typeof ComposerBoard>[0];
@@ -26,11 +26,11 @@ const InventoryAtomic = memo(function InventoryAtomic({item,inCluster,closeClust
     preserve={()=>request({kind:"PRESERVE",targetRef:item.id,preserve:model.semanticState.preferences.flexibility[item.id]!=="PRESERVE"})}
     mutate={mutation=>request({kind:"MUTATE",mutation})} hover={hover}/>;
 });
-export function ComposerBoard({ model, busy, selected, focused, focus, edit, choose, drag, drop, request, hover, editContext, add, preview, balance, details }: { model: ComposerUiModel; busy: boolean; selected: string | null;
+export function ComposerBoard({ model, busy, selected, focused, focus, edit, choose, drag, drop, request, hover, editContext, add, preview, balance, details, contextGuide }: { model: ComposerUiModel; busy: boolean; selected: string | null;
   focused: string | null; focus: (id: string | null) => void;
   edit: (card: ComposerCardView) => void; choose: (asset: ComposerAssetView, target: DropTarget, selection?: ComponentSelectionV1) => void;
   drag: (key: string | null) => void; drop: (target: DropTarget, key?: string) => void; request: (operation: ComposerOperation) => void; hover: (mutation: SemanticMutation | null) => void; editContext: (card: ComposerContextCardView) => void;
-  add: () => void; preview: () => void; balance: () => void; details: () => void }) {
+  add: () => void; preview: () => void; balance: () => void; details: () => void; contextGuide?: ReactNode }) {
   const boardAccepts = !!selected && (model.dropCapabilities.some(d => d.sourceAssetKey === selected && d.target.kind === "BOARD_ZONE" && d.resolution !== "BLOCKED")
     || model.presentation.dragSources[selected]?.editorDropTarget?.kind === "BOARD_ZONE");
   const trashAccepts = !!selected && model.dropCapabilities.some(d => d.sourceAssetKey === selected && d.target.kind === "TRASH" && d.resolution !== "BLOCKED");
@@ -39,13 +39,21 @@ export function ComposerBoard({ model, busy, selected, focused, focus, edit, cho
   const trashVisible = !!interaction?.grabbed && (!!interaction.grabbed.removeOperation || interaction.grabbed.protected);
   const boardTarget: DropTarget = { kind: "BOARD_ZONE" }, trashTarget: DropTarget = { kind: "TRASH" };
   const [openClusterId, setOpenClusterId] = useState<string | null>(null);
-  const items=useMemo(()=>inventoryItems(model),[model]),closeCluster=useCallback(()=>setOpenClusterId(null),[]);
+  const restaurantFocus = contextGuide && focusedCard?.templateKey === "restaurant" ? focusedCard.contextOccurrenceId : null;
+  const items=useMemo(()=>inventoryItems(model).flatMap<ComposerPresentationNode>(item => {
+    if (item.kind !== "CLUSTER" || !restaurantFocus) return [item];
+    const selected = item.children.find(child => child.id === restaurantFocus);
+    if (!selected) return [item];
+    const remaining = item.children.filter(child => child.id !== restaurantFocus);
+    // Keep the intention visible while its guide is open; this is transient layout only.
+    return [selected, ...(remaining.length > 1 ? [{ ...item, children: remaining }] : remaining)];
+  }),[model,restaurantFocus]),closeCluster=useCallback(()=>setOpenClusterId(null),[]);
   const openCluster = items.find((item): item is VisualClusterNode => item.kind === "CLUSTER" && item.id === openClusterId);
   useEffect(() => { if (openClusterId && !openCluster) setOpenClusterId(null); }, [openClusterId, openCluster]);
   const focusedInCluster = !!openCluster?.children.some(child => child.id === focusedCard?.contextOccurrenceId);
   const renderAtomic = (item:AtomicNode,inCluster=false)=><InventoryAtomic item={item} inCluster={inCluster} closeCluster={closeCluster}
     model={model} busy={busy} selected={selected} focused={focused} focus={focus} drag={drag} drop={drop} choose={choose} request={request} edit={edit} editContext={editContext} hover={hover}/>;
-  const palette = focusedCard && <div className={styles.paletteDock} data-palette-dock><ContextPalette card={focusedCard} model={model} busy={busy} choose={choose} close={() => focus(null)} /></div>;
+  const palette = focusedCard && <div className={styles.paletteDock} data-palette-dock>{contextGuide ?? <ContextPalette card={focusedCard} model={model} busy={busy} choose={choose} close={() => focus(null)} />}</div>;
   const trashZone = trashVisible && <div className={styles.trash} data-trash data-protected={interaction?.grabbed?.protected} data-compatible={trashAccepts || !!interaction?.grabbed?.removeOperation} data-drag-over={sameTarget(interaction?.overTarget ?? null, trashTarget)}
     role="status" aria-label={interaction?.grabbed?.protected ? "Protégée · retrait interdit" : "Retirer l’élément saisi"}
     onDragOver={e => { e.stopPropagation(); if (!busy && !interaction?.grabbed?.protected) { e.preventDefault(); interaction?.over(trashTarget); } }}

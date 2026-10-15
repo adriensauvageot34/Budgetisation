@@ -8,6 +8,7 @@ function once<T>(importer: () => Promise<T>) {
 }
 
 export const editorChunks = {
+  restaurant: once(async () => (await import("./restaurant-editor")).RestaurantEditor),
   family: once(async () => (await import("./family-visit-editor")).FamilyVisitEditor),
   stay: once(async () => (await import("./short-stay-editor")).ShortStayEditor),
   gift: once(async () => (await import("./gift-editor")).GiftEditor),
@@ -20,6 +21,7 @@ export type LoadedEditorChunks = { [K in EditorChunkKind]?: Awaited<ReturnType<(
 export function editorChunkForAsset(asset: ComposerAssetView): EditorChunkKind | null {
   if (asset.kind !== "CONTEXT_ASSET") return null;
   switch (asset.templateKey) {
+    case "restaurant": return "restaurant";
     case "night-out": return null; // The frequent cold editor is in the entry.
     case "family-visit": return "family";
     case "short-stay": return "stay";

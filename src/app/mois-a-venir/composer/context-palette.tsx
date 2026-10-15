@@ -13,9 +13,9 @@ function routeCaption(groupKey: string, slotKey: string, assetKey: string, socke
   return socketLabel ?? slotKey;
 }
 
-function EquipmentTileButton({ tile, groupKey, card, model, assets, busy, choose }: {
+function EquipmentTileButton({ tile, groupKey, card, model, assets, busy, choose, configure = false }: {
   tile: EquipmentTile; groupKey: string; card: ComposerContextCardView; model: ComposerUiModel;
-  assets: ReadonlyMap<string, ComposerAssetView>; busy: boolean; choose: (asset: ComposerAssetView, target: DropTarget) => void;
+  assets: ReadonlyMap<string, ComposerAssetView>; busy: boolean; choose: (asset: ComposerAssetView, target: DropTarget) => void; configure?: boolean;
 }) {
   const interaction = useComposerInteractions();
   const trigger = useRef<HTMLButtonElement>(null), menu = useRef<HTMLDivElement>(null);
@@ -33,7 +33,7 @@ function EquipmentTileButton({ tile, groupKey, card, model, assets, busy, choose
   const first = routes[0], multiple = routes.length > 1;
   const state = routes.some(route => route.state === "EQUIPPED") ? "EQUIPPED" : first.state;
   const action = state === "EQUIPPED" ? "Équipé" : state === "ALTERNATIVE" ? "Remplacer avec" : "Équiper";
-  const equip = (route: typeof first) => interaction ? interaction.equip(route.sourceKey, route.target) : choose(route.asset, route.target);
+  const equip = (route: typeof first) => interaction && !configure ? interaction.equip(route.sourceKey, route.target) : choose(route.asset, route.target);
   const openChoices = () => {
     const node = menu.current, button = trigger.current;
     if (!node || !button) return;
@@ -48,8 +48,8 @@ function EquipmentTileButton({ tile, groupKey, card, model, assets, busy, choose
     <button ref={trigger} className={styles.equipmentTile} data-palette-asset={first.asset.assetKey} data-visual-key={tile.visualKey}
       data-option-state={state} disabled={busy} title={`${action} ${first.asset.label}${multiple ? " · choisir une utilisation" : ""}`}
       aria-label={multiple ? `Choisir comment utiliser ${first.asset.label}` : `${action} ${first.asset.label} dans ${first.caption}`}
-      aria-haspopup={multiple ? "dialog" : undefined} draggable={!busy && !multiple}
-      data-drag-source={!multiple ? first.sourceKey : undefined} data-grabbed={!multiple && interaction?.grabbed?.sourceKey === first.sourceKey}
+      aria-haspopup={multiple ? "dialog" : undefined} draggable={!busy && !multiple && !configure}
+      data-drag-source={!multiple && !configure ? first.sourceKey : undefined} data-grabbed={!multiple && interaction?.grabbed?.sourceKey === first.sourceKey}
       onDragStart={event => { if (!multiple) interaction?.start(first.sourceKey, event); }} onDragEnd={() => interaction?.end()}
       onClick={() => multiple ? openChoices() : equip(first)}>
       <PlannerIcon iconKey={first.asset.iconKey} scale="PALETTE" /><span>{first.asset.label}</span>
@@ -62,7 +62,7 @@ function EquipmentTileButton({ tile, groupKey, card, model, assets, busy, choose
       <strong>{first.asset.label}</strong><p>Choisissez l'utilisation avant d'équiper ou de glisser.</p>
       {routes.map(route => <button key={`${route.target.slotKey}:${route.asset.assetKey}`} type="button"
         data-palette-route={route.asset.assetKey} data-palette-slot={route.target.slotKey} data-drag-source={route.sourceKey}
-        aria-label={`${route.asset.label} · ${route.caption}`} disabled={busy} draggable={!busy}
+        aria-label={`${route.asset.label} · ${route.caption}`} disabled={busy} draggable={!busy && !configure}
         onDragStart={event => interaction?.start(route.sourceKey, event)} onDragEnd={() => { interaction?.end(); menu.current?.hidePopover(); }}
         onClick={() => { menu.current?.hidePopover(); equip(route); }}>
         <PlannerIcon iconKey={route.asset.iconKey} scale="SATELLITE" /><span>{route.caption}</span>
@@ -72,7 +72,7 @@ function EquipmentTileButton({ tile, groupKey, card, model, assets, busy, choose
   </>;
 }
 
-export function ContextPalette({ card, model, busy, choose, close }: { card: ComposerContextCardView; model: ComposerUiModel; busy: boolean;
+export function ContextPalette({ card, model, busy, choose, close, configure = false }: { card: ComposerContextCardView; model: ComposerUiModel; busy: boolean; configure?: boolean;
   choose: (asset: ComposerAssetView, target: DropTarget) => void; close: () => void;
 }) {
   const groups = displayEquipmentGroups(card, model);
@@ -86,7 +86,7 @@ export function ContextPalette({ card, model, busy, choose, close }: { card: Com
         event.preventDefault(); event.currentTarget.scrollBy({ left: event.key === "ArrowRight" ? 150 : -150, behavior: "smooth" }); }}>
       {groups.map(group => <div key={group.key} className={styles.paletteGroup} data-palette-group={group.key}>
         <span>{group.title}</span><div>{group.tiles.map(tile => <EquipmentTileButton key={tile.visualKey} tile={tile} groupKey={group.key} card={card} model={model}
-          assets={assets} busy={busy} choose={choose} />)}</div>
+          assets={assets} busy={busy} choose={choose} configure={configure} />)}</div>
       </div>)}</div> : <p className={styles.popoverNote}>Ce moment est préservé ou suivi par son éditeur habituel.</p>}
   </section>;
 }

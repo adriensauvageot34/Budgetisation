@@ -5,6 +5,7 @@ import type { ComposerOperation, ComposerUiModel } from "@/domain/phase2/planner
 import { editNightOut } from "@/domain/phase2/planner/night-out-edit";
 import { editShortStay } from "@/domain/phase2/planner/short-stay-edit";
 import { editFamilyVisit } from "@/domain/phase2/planner/family-visit-edit";
+import { editRestaurant } from "@/domain/phase2/planner/restaurant-edit";
 import type { ComponentSelectionV1 } from "@/domain/phase2/planner/component-contract";
 
 function patchLocalSocket(model: ComposerUiModel, state: PlanSemanticStateV1, contextId: string, slotKey: string,
@@ -73,6 +74,12 @@ export function stageLocalDecision(model: ComposerUiModel, raw: PlanSemanticStat
       ? "context-fields@v3" : "context-fields@v2";
     return parsePlanSemanticState({ ...state, contexts: state.contexts.map(c => c.contextOccurrenceId === context.contextOccurrenceId
       ? { ...c, fields, slotSelections: { ...c.slotSelections, item: { items: [operation.item] } } } : c) });
+  }
+  if (operation.kind === "EDIT_RESTAURANT") {
+    const card = model.board.contexts.find(c => c.contextOccurrenceId === operation.edit.contextOccurrenceId);
+    if (card ? !card.capabilityRefs.includes("PATCH_CONTEXT") || card.readOnly
+      : !model.dropCapabilities.some(d => d.sourceAssetKey === "template:restaurant" && d.target.kind === "BOARD_ZONE" && d.resolution !== "BLOCKED")) return null;
+    return editRestaurant(state, operation.edit);
   }
   if (operation.kind === "EDIT_SHORT_STAY") {
     const card = model.board.contexts.find(c => c.contextOccurrenceId === operation.edit.contextOccurrenceId);
