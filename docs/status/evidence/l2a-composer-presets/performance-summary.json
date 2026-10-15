@@ -1,0 +1,60 @@
+{
+  "scope": "SYNTHETIC_REACT_PRODUCTION_LOCALHOST_ONLY",
+  "viewport": [
+    1280,
+    720
+  ],
+  "samples": 3,
+  "delayReadMs": 500,
+  "p95": "NOT_CERTIFIED_SMALL_SAMPLE",
+  "variants": {
+    "L1": {
+      "openingMs": [
+        189,
+        209.70000000298023,
+        303.40000000596046
+      ],
+      "openingP50Ms": 209.70000000298023,
+      "decisionMs": [
+        836.2000000029802,
+        776.4000000059605,
+        774.7999999970198
+      ],
+      "decisionP50Ms": 776.4000000059605,
+      "editorMs": [
+        164.09999999403954
+      ],
+      "initialJsRequests": 5,
+      "initialJsDecodedBytes": 429402,
+      "initialJsGzipBytes": 135996,
+      "imageRequests": 0,
+      "imageDecodedBytes": 0,
+      "domNodes": 1884,
+      "initialFetchRequests": 1
+    },
+    "L2A": {
+      "openingMs": [
+        220.70000000298023,
+        265.79999999701977,
+        319.29999999701977
+      ],
+      "openingP50Ms": 265.79999999701977,
+      "decisionMs": [
+        782.9000000059605,
+        804,
+        762
+      ],
+      "decisionP50Ms": 782.9000000059605,
+      "editorMs": [
+        165.70000000298023
+      ],
+      "initialJsRequests": 5,
+      "initialJsDecodedBytes": 436942,
+      "initialJsGzipBytes": 138674,
+      "imageRequests": 5,
+      "imageDecodedBytes": 140366,
+      "domNodes": 1902,
+      "initialFetchRequests": 1
+    }
+  }
+}

@@ -2,7 +2,7 @@
 
 ## État de livraison
 
-En préparation : livraison non encore certifiée. Les résultats sont distingués entre fixtures, Preview authentifiée et Production.
+PR #44 ouverte ; Preview READY et authentifiée. Livraison Production en préparation. Les résultats sont distingués entre fixtures, Preview authentifiée et Production.
 
 ## A. État initial
 
@@ -73,9 +73,26 @@ L’identité ne dépend jamais du titre. Library, carte, miniature de groupe et
 
 Aucune modification de Canonical/M7, artifacts, triggers, admission, publications, sources historiques, Finance V2 ou readWorld. Aucun nouveau snapshot, cache persistant ou dépendance produit.
 
-TypeScript : PASS. Build local Next : bloqué par la jonction node_modules pointant hors de la racine Turbopack ; ce résultat n’est pas un build complet réussi. Le build Git Vercel doit être vérifié pour la livraison.
+TypeScript : PASS. Build local Next : bloqué par la jonction node_modules pointant hors de la racine Turbopack ; ce résultat n’est pas un build complet réussi. **Build Git Vercel complet PASS** sur `232238d6749b2d86ef8e1c88153ce7d95a88e36e` : Next 16.2.6, compilation 39,6 s, TypeScript 43 s, pages générées et déploiement READY (`preview-build.log`).
 
-Mesures finales de ressources et comparaison synthétique : en cours. Aucun gain réel, P95 robuste ou objectif d’ouverture certifié n’est revendiqué.
+Comparaison bornée L1/L2-A, trois rechargements chauds par variante, React production minifié/split, même fixture vide, même viewport réel **1280×720**, même délai artificiel Preview de 500 ms, mêmes dépendances. Les trois tests UX desktop sont distincts de cette comparaison. Premier chargement de chaque contexte exclu (largeurs différentes observées avant correction). Horloge Performance navigateur et double requestAnimationFrame ; pas de durée de l’outil.
+
+| Mesure descriptive | L1 | L2-A |
+|---|---:|---:|
+| Ouverture → FRESH P50, n=3 | 209,7 ms | 265,8 ms |
+| Étendue des ouvertures | 189–303,4 ms | 220,7–319,3 ms |
+| Décision Restaurant → FRESH P50, n=3 | 776,4 ms | 782,9 ms |
+| Étendue des décisions | 774,8–836,2 ms | 762–804 ms |
+| Ouverture éditeur après peinture, n=1 | 164,1 ms | 165,7 ms |
+| JS initial effectivement demandé (5 ressources) | 429 402 octets | 436 942 octets |
+| Somme gzip locale de ces mêmes ressources | 135 996 octets | 138 674 octets |
+| Images de presets demandées | 0 | 5 / 140 366 octets décodés |
+| Requête initiale métier de fixture | 1 | 1 |
+| Nœuds DOM initiaux | 1 884 | 1 902 |
+
+JS initial : +7 540 octets bruts / +2 678 octets gzip. Les éditeurs ne sont pas dans ces cinq ressources initiales ; leur chunk n’est demandé qu’au focus/clic. Les cinq nouvelles vignettes étant visibles ensemble, leurs cinq images sont admises par le lazy loading ; aucune collection complète Builder n’est chargée. Le cache navigateur est chaud pour les images dans la série retenue : les octets décodés ne sont pas des octets effectivement retransférés.
+
+**Aucun gain de performance revendiqué.** L’ouverture médiane de cette minuscule série augmente de 56,1 ms ; le parcours d’édition comparable de 6,5 ms. P95 non certifié, échantillons insuffisants ; aucune extrapolation aux latences Supabase réelles. Preuves brutes et conditions : `performance-opening.json`, `performance-editing.json`, `performance-summary.json`.
 
 ## H. Navigateur
 
@@ -89,11 +106,17 @@ Fixture locale compilée avec React en mode production, faux providers et PGlite
 - Largeurs effectives 1440×900, 1728×900 et 1920×1080 contrôlées ; aucun débordement horizontal. Correction ciblée de la flex-basis de l’image pour ne pas agrandir verticalement les cartes.
 - Captures : `desktop-1440.jpg`, `desktop-1728-reedit.jpg`, `desktop-1920.jpg`.
 
-Preview authentifiée et Production : non exécutées à ce stade. Les timeouts Canonical préexistants restent une réserve L1/P14 ; cette mission ne les réaudite pas.
+Preview authentifiée : connexion réelle, cinq illustrations chargées et cinq éditeurs ouverts ; budget Livraison 32 € admis en mémoire, retour Compiler sans erreur et état BLOCKED pour scénario incomplet. Apply reste interdit. L’autosauvegarde est désactivée par la configuration de Preview ; aucun contournement ni modification de ses variables. **Sauvegarde/Reload authentifiés Preview : NOT_RUN**. La preuve de sauvegarde/reprise complète des cinq presets est synthétique, pas authentifiée.
+
+Production : à compléter. Les timeouts Canonical préexistants restent une réserve L1/P14 ; cette mission ne les réaudite pas. Aucune certification globale FRESH réelle n’est revendiquée.
 
 ## I. Livraison et rollback
 
-PR / Preview / Production : à compléter après les gates de livraison.
+PR : https://github.com/adriensauvageot34/Budgetisation/pull/44
+
+Preview : https://budgetisation-m1xw217eb-adriensauvageot34-6137s-projects.vercel.app
+
+Déploiement `dpl_CqnG9FHDMUKHandMwue8jyQ187gP`, source Git `232238d`, READY. Checks GitHub/Vercel success ; pas de workflow Actions supplémentaire publié. Merge et Production à compléter.
 
 Rollback : retirer les entrées de création et les adaptations UI L2-A tout en conservant le lecteur de `composerPresentation@v1` pour les Drafts/Plans déjà enregistrés. Ne pas redéployer aveuglément L1 sans ce lecteur : L1 ignorait cette nouvelle namespace. Aucun Draft, archive ou Plan n’est supprimé ; aucune opération SQL n’est nécessaire.
 
