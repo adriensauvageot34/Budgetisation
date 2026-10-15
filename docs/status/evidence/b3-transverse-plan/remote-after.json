@@ -1,0 +1,66 @@
+{
+  "recordedAtUTC": "2026-10-15 14:44:31 UTC",
+  "hasActivePlan": false,
+  "snapshot": {
+    "enabled": true,
+    "revision": 1,
+    "schema_epoch": 2,
+    "writer_coverage": true
+  },
+  "counters": [
+    {
+      "table": "benefit_wallet_ledger_entries",
+      "delete": 0,
+      "insert": 213,
+      "update": 0
+    },
+    {
+      "table": "benefit_wallets",
+      "delete": 0,
+      "insert": 2,
+      "update": 1
+    },
+    {
+      "table": "mobility_legs",
+      "delete": 0,
+      "insert": 1368,
+      "update": 0
+    },
+    {
+      "table": "operations",
+      "delete": 0,
+      "insert": 0,
+      "update": 0
+    },
+    {
+      "table": "phase2_month_inputs",
+      "delete": 1,
+      "insert": 2,
+      "update": 44
+    },
+    {
+      "table": "phase2_month_plan_revisions",
+      "delete": 0,
+      "insert": 0,
+      "update": 0
+    },
+    {
+      "table": "phase2_month_plans",
+      "delete": 0,
+      "insert": 0,
+      "update": 0
+    },
+    {
+      "table": "phase2_planned_expenses",
+      "delete": 25,
+      "insert": 32,
+      "update": 37
+    },
+    {
+      "table": "purchase_events",
+      "delete": 0,
+      "insert": 200,
+      "update": 0
+    }
+  ]
+}
