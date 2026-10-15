@@ -191,8 +191,8 @@ export async function savePlannedExpense(targetMonth: string, rawDraft: unknown,
 async function freshReadModel(targetMonth: string, id: string) {
   try {
   const current = await monthContext(targetMonth);
-  const expense = current.saved.find((row) => row.id === id);
   const effective=await current.effective(),evaluation=effective.evaluate();
+  const expense = effective.expenses.find((row) => row.id === id);
   return { expense: expense ?? null, ...evaluation,preview:undefined,owner:effective.owner,planRevisionId:effective.revisionId };
   } catch { throw new TypeError("PLANNED_EXPENSE_COMMITTED_RELOAD_FAILED"); }
 }

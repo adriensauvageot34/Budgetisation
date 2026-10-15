@@ -95,7 +95,7 @@ Persistance : PGlite avec SQL C0, les six migrations PE existantes et MonthInput
 | TypeScript | PASS, `tsc --noEmit` |
 | Build local webpack sandbox | FAIL outillage : EPERM dans `.next/types/app/api` |
 | Build local webpack autorisé | FAIL compilation webpack : import client `node:crypto` via `query-client` ; ces fichiers ne sont pas modifiés par B3. Le workflow habituel utilise Turbopack. Pas de certification locale complète revendiquée. |
-| Build Vercel habituel | À renseigner section I |
+| Build Vercel habituel | PASS sur 31834e0, Next/Turbopack complet, TypeScript, 8 pages générées ; variante finale attendue |
 
 Deux oracles textuels ont été ajustés : avertissement SUPERSEDED renommé par B2, et filtre d’édition déplacé de `saved` vers `effective.expenses`. Les assertions économiques, scénarios de remplacement et empreintes financières ne sont pas affaiblis. Aucun calcul financier modifié pour satisfaire un golden.
 
@@ -117,7 +117,7 @@ Deux oracles textuels ont été ajustés : avertissement SUPERSEDED renommé par
 
 ## I. Livraison et rollback
 
-- Commit applicatif, PR, Preview, merge et Production : en préparation à la rédaction initiale ; à remplacer par les résultats observés.
+- Premier commit : 31834e0161cfa41723e0bf40cacb52c7950161dc. PR #39 : https://github.com/adriensauvageot34/Budgetisation/pull/39. Preview dpl_GoCyd5BeifX61kA6knMmw7qyJQBc READY, build complet observé. Dernier ajustement : tuple PE/scénario relu depuis la même lecture effective. Variante finale et Production encore en attente.
 - Aucun SQL à déployer ; compatibilité des anciens Plans et migrations existantes conservée.
 - Rollback applicatif : revenir au déploiement antérieur `9199de5` ou revert du commit B3 via le workflow habituel. Aucun Plan, Draft ou fait financier à supprimer. Le rollback retrouve aussi les limites de preflight DIRECT_V2 antérieures : ne pas le présenter comme une nouvelle garantie financière.
 
