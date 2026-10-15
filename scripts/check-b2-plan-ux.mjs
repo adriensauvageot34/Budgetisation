@@ -12,8 +12,9 @@ const React=require('react'),{renderToStaticMarkup}=require('react-dom/server');
 const {AppliedMonthView}=require('@/app/mois-a-venir/applied-month-view');
 const {plannerDigest}=require('@/domain/phase2/planner/json');
 const out='docs/status/evidence/b2-mois-a-venir-plan-ux';fs.mkdirSync(out,{recursive:true});
-const results=[],timings=[];
-for (const key of cases) {
+const results=[],timings=[],selected=process.argv.slice(2).length?process.argv.slice(2):cases;
+for (const key of selected) {
+  assert.ok(cases.includes(key));
   const {props,proof}=await persistedCase(key), before=plannerDigest(props);
   const start=performance.now(),html=renderToStaticMarkup(React.createElement(AppliedMonthView,props));
   timings.push({case:key,renderMs:+(performance.now()-start).toFixed(3),htmlBytes:Buffer.byteLength(html)});
@@ -32,7 +33,7 @@ for (const key of cases) {
   if(key==='E'){assert.ok(html.includes('pas un plein'));assert.ok(html.includes('Peugeot 207'));assert.ok(html.includes('Non fixée'));}
   if(key==='F'){assert.equal(proof.remainder,null);assert.ok(html.includes('100,00'));assert.ok(html.includes('À préciser'));}
   if(key==='G'){assert.equal(proof.counts.revisions,2);assert.equal(proof.freshness.activeRevision,'SUPERSEDED');assert.ok(html.includes('Une version plus récente de votre Plan existe.'));}
-  if(key==='CHANGED'){assert.equal(proof.freshness.authorities,'CHANGED_AUTHORITIES');assert.ok(html.includes('Prévision actualisée'));}
+  if(key==='CHANGED'){assert.equal(proof.freshness.authorities,'CHANGED_AUTHORITIES');assert.ok(html.includes('Prévision actualisée'));assert.equal(props.historicalRemainder,'580.00');assert.equal(proof.remainder,'590.00');}
   if(key==='UNAVAILABLE'){assert.equal(proof.freshness.activeRevision,'UNAVAILABLE');assert.ok(html.includes('La dernière version n’a pas pu être vérifiée.'));assert.ok(!html.includes('Plan à jour'));}
   if(key==='INTERACTIONS'){
     assert.equal(proof.impact,'-40.00');assert.equal((html.match(/data-plan-context=/g)??[]).length,4);
@@ -47,5 +48,5 @@ assert.ok(!/readWorld|deriveMonthScenario|evaluatePlanScenario|\.reduce\(/.test(
 assert.ok(view.includes('projection.plan.impactOnMonthEnd'));
 const noPlan=fs.readFileSync('src/app/mois-a-venir/month-forecast-view.tsx','utf8');
 assert.ok(noPlan.includes('!hasAppliedPlan') || noPlan.includes('!activePlan'));
-fs.writeFileSync(`${out}/contract-results.json`,JSON.stringify({results,timings,financialWrites:'ONLY_EPHEMERAL_SYNTHETIC_C0',authenticatedPlan:'NOT_RUN'},null,2));
+fs.writeFileSync(`${out}/contract-${selected.length===cases.length?'results':selected.join('-')}.json`,JSON.stringify({results,timings,financialWrites:'ONLY_EPHEMERAL_SYNTHETIC_C0',authenticatedPlan:'NOT_RUN'},null,2));
 console.log(`${results.length} persisted B2 scenarios PASS; no authenticated Supabase claim.`);

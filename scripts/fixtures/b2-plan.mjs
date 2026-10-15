@@ -13,13 +13,13 @@ const { appliedPlanRevisionControls } = require('@/server/phase2/planner/applied
 const { mobilitySummaries } = require('@/server/phase2/planner/mobility-presentation');
 const { plannerDigest } = require('@/domain/phase2/planner/json');
 
-export const cases = ['A','B','C','D','E','F','G','CHANGED','UNAVAILABLE','INTERACTIONS','GIFT'];
+export const cases = ['A','B','C','D','E','F','G','CHANGED','UNAVAILABLE','INTERACTIONS','GIFT','LONG'];
 export async function persistedCase(key) {
   const pg = await createKernelPostgres(), repository = createPlanApplyRepository(pg.client);
   let world = kernel(), semantic = state(), reads = 0, request = 94000;
   world.monthInputs.declaredOutflows[0].label = 'Projet voyage';
   world.baseline.structuralFacts.savingsReservations[0].label = 'Projet voyage';
-  if (key === 'A' || key === 'G' || key === 'CHANGED' || key === 'UNAVAILABLE') {
+  if (key === 'A' || key === 'G' || key === 'CHANGED' || key === 'UNAVAILABLE' || key === 'LONG') {
     world.baseline.slots.find(slot => slot.slotIdentityKey === 'groceries').baselineValue.amount = '350.00';
     const ref = world.forecast.referencePlan.necessary[0]; ref.low = ref.central = ref.high = '350.00';
     world.forecast.referencePlan.necessaryTotal = {low:'350.00',central:'350.00',high:'350.00'};
@@ -29,6 +29,10 @@ export async function persistedCase(key) {
     world.forecast.economicCost = {low:'960.00',central:'960.00',high:'960.00'};
     world.forecast.freeToSpend = {low:'750.00',central:'750.00',high:'750.00'};
     semantic = state([control('groceries',{amount:'320.00'})],[night(400,'100.00')]);
+    if (key === 'LONG') {
+      world.forecast.income.low=world.forecast.income.central=world.forecast.income.high='123457499.00';
+      world.forecast.income.components[0].central='123456789.00';
+    }
   } else if (key === 'B' || key === 'INTERACTIONS') {
     world.baseline.slots.find(slot => slot.slotIdentityKey === 'restaurants').baselineValue.unitAmount = '40.00';
     const ref = world.forecast.referencePlan.flexible[0]; ref.low = ref.central = ref.high = '120.00';
@@ -66,7 +70,11 @@ export async function persistedCase(key) {
   }
   try {
     const applied = await apply(semantic), immutable = plannerDigest(applied.revision);
-    if (key === 'CHANGED') { world.forecast.publicationMeta.revision++; world.forecast.meta.sourceRevision++; world.forecast.resourceMeta.resourceInputHash='synthetic-new-generation'; }
+    if (key === 'CHANGED') {
+      world.forecast.publicationMeta.revision++; world.forecast.meta.sourceRevision++; world.forecast.resourceMeta.resourceInputHash='synthetic-new-generation';
+      world.forecast.income.components[0].central='1010.00';
+      world.forecast.income.low=world.forecast.income.central=world.forecast.income.high='1720.00';
+    }
     let result;
     if (key === 'G') {
       let once = false;
@@ -79,7 +87,7 @@ export async function persistedCase(key) {
     const counts = await pg.counts(); await pg.verifyCanaries();
     return {key, props:{projection:result.projection,semanticState:result.semanticState,controls:appliedPlanRevisionControls(result.revision),
       plan:result.scenario.economicPlan,revision:result.revision.revisionNumber,comparison:result.comparison,evidenceStatus:result.evidenceStatus,
-      historicalRemainder:applied.revision.projection?.plan?.economicMonthEndRemainder ?? null,today:world.asOfDate,
+      historicalRemainder:applied.revision.projectionEvidence.projection?.plan?.economicMonthEndRemainder ?? null,today:world.asOfDate,
       composerHref:'/mois-a-venir/composer?month=2026-11', persons:[],places:world.mobilityFacts?.places ?? [],
       mobility:mobilitySummaries(result.preview.compiled.journeys,result.preview.compiled.journeyPrices)},
       proof:{counts,reads,revision:result.revision.planRevisionId,projectionDigest:result.preview.projectionDigest,semanticDigest:result.revision.semanticStateDigest,

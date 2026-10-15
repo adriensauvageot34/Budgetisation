@@ -1,0 +1,68 @@
+{
+  "method": "Alternating SSR production React; C composite fixture; 2 warm-ups, 20 retained samples per view; no IO in render",
+  "reference": "ef1cb54",
+  "summary": {
+    "before": {
+      "n": 20,
+      "p50": 7.383,
+      "p95": 10.143,
+      "htmlBytes": 14022
+    },
+    "after": {
+      "n": 20,
+      "p50": 11.958,
+      "p95": 16.312,
+      "htmlBytes": 33171
+    }
+  },
+  "samples": {
+    "before": [
+      9.841,
+      9.453,
+      10.143,
+      8.46,
+      7.675,
+      7.642,
+      10.455,
+      7.63,
+      7.038,
+      6.76,
+      6.882,
+      6.126,
+      6.081,
+      6.302,
+      6.967,
+      6.431,
+      7.218,
+      7.383,
+      7.964,
+      8.954
+    ],
+    "after": [
+      18.408,
+      15.68,
+      15.311,
+      13.767,
+      12.481,
+      11.546,
+      14.074,
+      12.922,
+      11.499,
+      11.958,
+      11.496,
+      10.178,
+      10.497,
+      10.584,
+      10.753,
+      10.338,
+      12.63,
+      11.66,
+      16.312,
+      14.141
+    ]
+  },
+  "worldReadsDuringScenario": 3,
+  "additionalReadsDuringPresentation": 0,
+  "newFinancialEvaluationsInPresentation": 0,
+  "userLatency": "NOT_MEASURED"
+}

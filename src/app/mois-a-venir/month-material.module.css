@@ -85,7 +85,7 @@
 .composerInvitation { margin:.7rem 0 1rem; color:var(--muted); font-size:.8rem; line-height:1.55; }
 .composerInvitation a { color:var(--accent-primary); font-weight:650; text-decoration:underline; text-underline-offset:3px; }
 .page .monthHeader { display:grid; grid-template-columns:minmax(0,1fr) minmax(0,2fr) minmax(0,1fr); gap:.5rem; padding-block:.75rem 1rem; }
-.page .monthHeader h1 { font-size:clamp(1.15rem,3vw,2rem); line-height:1.2; overflow-wrap:anywhere; }
+.page .monthHeader h1 { order:0; width:auto; font-size:clamp(1.15rem,3vw,2rem); line-height:1.2; overflow-wrap:anywhere; }
 .page .monthLink { padding:.5rem; font-size:clamp(.65rem,1vw,.8rem); overflow-wrap:anywhere; }
 .page .monthLink:last-child { text-align:right; }
 @media(max-width:767px) {
