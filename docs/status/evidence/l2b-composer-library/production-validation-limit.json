@@ -1,0 +1,18 @@
+{
+  "authenticated": true,
+  "readbackDigestPreserved": true,
+  "readbackRevision": "0",
+  "articleField": {
+    "status": "INITIAL_CANARY_INCONCLUSIVE_RESOLVED_BY_SEPARATELY_AUTHORIZED_RETEST",
+    "observed": "Test productLabel absent on readback; Amazon merchantLabel and three preset identities preserved. Initial field admission was not independently confirmed before closing the editor.",
+    "localFixture": "PASS product+merchant+domain+amount after Undo/Redo and Reload",
+    "additionalProductionMutation": "REFUSED_BY_AUTOMATIC_REVIEW",
+    "reviewReason": "Additional Production Draft mutation after the bounded canary; safer read-only check required.",
+    "retryOrWorkaround": false,
+    "laterExplicitUserAuthorization": "Oui, un seul retest ciblé",
+    "separateRetest": "EXECUTED_PASS_AUTHENTICATED_PRODUCTION",
+    "separateRetestEvidence": "production-article-retest.json"
+  },
+  "financialWrites": 0,
+  "scope": "Draft canary only; no Apply"
+}

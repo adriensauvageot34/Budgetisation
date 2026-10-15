@@ -2,7 +2,7 @@
 
 ## État de livraison
 
-**L2B_IMPLEMENTED_NOT_RELEASED** — 21 nouveaux presets et 21 WebP originaux implémentés, 5 presets L2-A conservés. PR #45 prête pour livraison, build final et smoke authentifié Preview PASS. Production encore à exécuter.
+**L2B_RELEASED_WITH_VALIDATION_LIMITATIONS** — PR #45 fusionnée, Production READY sur `ddfcf4b41d36b1ee024d4aecb0698907d7144cca`. **21 nouveaux presets et 21 WebP originaux livrés**, 5 presets L2-A conservés. Sauvegarde et reprise authentifiées Production confirmées après une attente serveur prolongée.
 
 ## A. État initial et périmètre
 
@@ -42,31 +42,31 @@ Navigation native clavier, recherche par /, Entrée pour ajouter le premier rés
 
 ## C. Catalogue de livraison
 
-« LIVRÉ dans le candidat » décrit le périmètre existant et testé, sans promettre un sous-modèle métier absent.
+« LIVRÉ » décrit le périmètre existant et testé, sans promettre un sous-modèle métier absent.
 
 | Preset | Clé stable | Context | État | WebP octets |
 |---|---|---|---|---:|
-| Bar / Apéro | bar-apero | night-out | LIVRÉ dans le candidat | 20890 |
-| Boîte de nuit | nightclub | night-out | LIVRÉ dans le candidat | 23776 |
-| Soirée chez des amis | friends-evening | night-out | LIVRÉ dans le candidat | 28480 |
-| Soirée chez nous | home-evening | night-out | LIVRÉ dans le candidat | 30898 |
-| Snack / Chicken | chicken-snack | fast-food | LIVRÉ dans le candidat | 34430 |
-| Restaurant à deux | restaurant-for-two | restaurant | LIVRÉ dans le candidat | 39508 |
-| Randonnée / Nature | hiking-nature | activity | LIVRÉ dans le candidat | 42492 |
-| Journée plage | beach-day | activity | LIVRÉ dans le candidat | 24286 |
-| Cinéma | cinema | activity | LIVRÉ dans le candidat | 27250 |
-| Spa / Détente | spa-relax | activity | LIVRÉ dans le candidat | 24538 |
-| Visite Servian | servian-family-visit | family-visit | LIVRÉ dans le candidat | 58022 |
-| Voir des amis | visit-friends | friend-visit | LIVRÉ dans le candidat | 18830 |
-| Week-end / Gîte | weekend-gite | short-stay | LIVRÉ dans le candidat | 44888 |
-| Acheter un jeu vidéo | video-game-purchase | purchase | LIVRÉ dans le candidat | 16366 |
-| Amazon | amazon-purchase | purchase | LIVRÉ dans le candidat | 26648 |
-| Shein | shein-purchase | purchase | LIVRÉ dans le candidat | 30062 |
-| AliExpress | aliexpress-purchase | purchase | LIVRÉ dans le candidat | 20160 |
-| Mascara | mascara | beauty-restock | LIVRÉ dans le candidat | 14796 |
-| Cire coiffante | hair-wax | beauty-restock | LIVRÉ dans le candidat | 14762 |
-| Lessive | laundry-detergent | purchase | LIVRÉ dans le candidat | 14048 |
-| Liquide vaisselle | dishwashing-liquid | purchase | LIVRÉ dans le candidat | 11962 |
+| Bar / Apéro | bar-apero | night-out | LIVRÉ | 20890 |
+| Boîte de nuit | nightclub | night-out | LIVRÉ | 23776 |
+| Soirée chez des amis | friends-evening | night-out | LIVRÉ | 28480 |
+| Soirée chez nous | home-evening | night-out | LIVRÉ | 30898 |
+| Snack / Chicken | chicken-snack | fast-food | LIVRÉ | 34430 |
+| Restaurant à deux | restaurant-for-two | restaurant | LIVRÉ | 39508 |
+| Randonnée / Nature | hiking-nature | activity | LIVRÉ | 42492 |
+| Journée plage | beach-day | activity | LIVRÉ | 24286 |
+| Cinéma | cinema | activity | LIVRÉ | 27250 |
+| Spa / Détente | spa-relax | activity | LIVRÉ | 24538 |
+| Visite Servian | servian-family-visit | family-visit | LIVRÉ | 58022 |
+| Voir des amis | visit-friends | friend-visit | LIVRÉ | 18830 |
+| Week-end / Gîte | weekend-gite | short-stay | LIVRÉ | 44888 |
+| Acheter un jeu vidéo | video-game-purchase | purchase | LIVRÉ | 16366 |
+| Amazon | amazon-purchase | purchase | LIVRÉ | 26648 |
+| Shein | shein-purchase | purchase | LIVRÉ | 30062 |
+| AliExpress | aliexpress-purchase | purchase | LIVRÉ | 20160 |
+| Mascara | mascara | beauty-restock | LIVRÉ | 14796 |
+| Cire coiffante | hair-wax | beauty-restock | LIVRÉ | 14762 |
+| Lessive | laundry-detergent | purchase | LIVRÉ | 14048 |
+| Liquide vaisselle | dishwashing-liquid | purchase | LIVRÉ | 11962 |
 
 ### Limites fonctionnelles explicites
 
@@ -191,7 +191,40 @@ Tête produit finale : `6a60f12cbe933d1493207e7767a580fa91d2837f`. Preview `dpl_
 
 Smoke authentifié de cette tête : Amazon conserve son vendeur texte et expose les quatre domaines publiés + inconnu ; Cire ouvre l’éditeur Beauté et sa palette après retour du Compiler. Apply reste désactivé, aucune erreur affichée. Sauvegarde Preview désactivée, save/reload authentifiés NOT_RUN ; preuve `preview-authenticated.json`. GitHub/Vercel success.
 
-État au présent rapport : merge et Production non exécutés. Les gates produit locaux et Preview sont satisfaits ; livraison autorisée avec réserves de validation documentées.
+PR #45 fusionnée à la tête `e70b1f0b4fcb2beb81d6b8ad3d28047df202b478`, checks Vercel/GitHub success, sans conflit. Le commit documentaire ne change pas le produit testé en `6a60f12`.
+
+Merge/main : **`ddfcf4b41d36b1ee024d4aecb0698907d7144cca`** ; arbre strictement identique à la tête de PR : `6276c8bae8f0bcef1fa6ddfbfb6342ca94cc9405`. Synchronisation locale par fast-forward, aucun écrasement distant.
+
+Production : **`dpl_BqKqvvRswKGtcWCVGcNvXCdH7Thr` READY**, alias `https://budgetisation-tan.vercel.app` vérifié sur le SHA du merge. Build complet Next PASS : compilation 27,1 s, TypeScript 26,7 s, build terminé en 58 s. Preuves `production-deployment.json` et `production-build.log`.
+
+### Smoke Production authentifié, Draft uniquement
+
+- Décembre 2026 : révision officielle 0, aucun Draft ACTIVE avant test, aucune occurrence sur le Board.
+- Création volontaire de trois intentions : Amazon, Mascara, Soirée chez nous. Une première saisie d’article a été tentée, sans vérification indépendante de son admission avant fermeture. Aucun montant, lieu, personne, date ou trajet entré ; aucun Apply.
+- **SAVED authentifié**, digest `92d1c5232dcb75632307e2e99b47537e0aa86adf35151c9db3c47b872605abe2`, Apply désactivé et révision toujours 0. Images réellement chargées 1200×600.
+- Relecture SQL bornée au même auteur/mois : Draft ACTIVE version 2, trois clés attendues et même digest. Les archives préexistantes sont conservées. Cette corroboration privilégiée n’est pas une nouvelle preuve RLS.
+- Rechargement authentifié : **PASS**, SAVED et digest exactement identique, révision officielle 0, Apply désactivé. Projection BLOCKED car ces intentions sont volontairement incomplètes. Aucun nouvel enregistrement requis pour récupérer le contenu. Le rendu a demandé une attente serveur/CDP prolongée ; aucune erreur n’a été trouvée dans les fenêtres de logs consultées, la cause de ce délai n’est pas attribuée au lot.
+- Réédition : les identités et le vendeur Amazon sont conservés ; le premier texte d’article est absent. Son admission initiale n’ayant pas été constatée, cette observation ne prouve pas la perte d’un champ accepté. La revue automatique a refusé une écriture supplémentaire : refus respecté, limite conservée dans `production-validation-limit.json`.
+- Archivage récupérable du premier canari : **PASS**, ABANDONED version 3, même digest, trois Contexts, aucun Draft ACTIVE restant sur ce mois ; anciennes archives inchangées. Preuve `production-after-archive.json`.
+- L’utilisateur a ensuite autorisé explicitement **un unique retest Article**, sur un nouveau Draft Amazon sans montant, suivi d’un archivage récupérable. Cette autorisation ciblée ne relance pas les autres tests ni le canari initial.
+- **Retest Article : PASS authentifié Production.** Saisie vérifiée dans le champ avant confirmation, résumé local correspondant, puis SAVED. Relecture bornée : version 2, un Context, article et vendeur exacts, aucun composant économique, digest `18a4eb5e51c44332a6f84d08bbf34661d89ddbd0e0fbbc06e926a5b16c7cc524`. Après un unique Reload : même digest, SAVED, révision officielle 0 et Apply désactivé. Réouverture de l’éditeur : article exact visible ; capture `production-article-reloaded.jpg` cadrée sur le formulaire de test, sans données financières personnelles.
+- Archivage récupérable du retest via l’interface : **PASS**, ABANDONED version 3, article et digest préservés. Aucun Draft ACTIVE restant ; les cinq archives antérieures sont conservées. Pas de suppression, Apply, montant ni écriture financière. Preuves `production-article-retest.json` et `production-article-after-archive.json`. Le premier incident reste consigné ; ce retest ne démontre pas rétroactivement que la première saisie avait été admise.
+
+### Verdict des gates de livraison
+
+| Contrôle | Résultat et portée |
+|---|---|
+| 26 recettes, conservation, parité, UNKNOWN, parent/enfant | PASS, fixtures synthétiques |
+| Régressions ciblées et parité historique 22×9 | PASS, contrôles locaux |
+| TypeScript et Next complet | PASS, local TypeScript et build Vercel final |
+| UX desktop 1440 / 1728 / 1920 | PASS, fixture avec largeurs effectives mesurées |
+| PR, merge exact et Production READY | PASS, SHA `ddfcf4b` |
+| Autosauvegarde / Reload / Article | PASS, canaris authentifiés Production, sans montant ni Apply |
+| Archivage des deux canaris | PASS, récupérable, aucun ACTIVE restant |
+| Apply réel, nouvelle certification RLS, deuxième appareil | NOT_RUN |
+| P95 utilisateur réel / objectif de performance | NOT_CERTIFIED |
+
+Le produit livré n’est pas modifié par les preuves de clôture conservées dans un commit documentaire local après le merge. Worktree vérifié propre après ce commit ; aucun nouveau déploiement documentaire nécessaire.
 
 Rollback : masquer les recettes de création et revenir à la présentation précédente tout en gardant **le lecteur v1, les 26 clés et les fichiers d’illustration** pour les Drafts/Plans enregistrés. Ne pas redéployer aveuglément une ancienne version qui refuse des clés nouvelles. Aucun DELETE, SQL ou perte d’archive nécessaire.
 

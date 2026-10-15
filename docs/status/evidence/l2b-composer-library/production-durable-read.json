@@ -1,0 +1,53 @@
+{
+  "method": "PRIVILEGED_SQL_READ_ONLY_NOT_AUTHENTICATED_RLS_PROOF",
+  "scope": "same authorized author / 2026-12 only",
+  "rows": [
+    {
+      "lifecycle": "ACTIVE",
+      "draft_version": 2,
+      "matches_confirmed_digest": true,
+      "context_count": 3,
+      "preset_keys": [
+        "amazon-purchase",
+        "home-evening",
+        "mascara"
+      ]
+    },
+    {
+      "lifecycle": "ABANDONED",
+      "draft_version": 3,
+      "matches_confirmed_digest": false,
+      "context_count": 5,
+      "preset_keys": [
+        "clothing-shopping",
+        "fishing-day",
+        "fontes-family-visit",
+        "techno-night",
+        "uber-eats-order"
+      ]
+    },
+    {
+      "lifecycle": "ABANDONED",
+      "draft_version": 2,
+      "matches_confirmed_digest": false,
+      "context_count": 0,
+      "preset_keys": []
+    },
+    {
+      "lifecycle": "ABANDONED",
+      "draft_version": 6,
+      "matches_confirmed_digest": false,
+      "context_count": 0,
+      "preset_keys": []
+    },
+    {
+      "lifecycle": "ABANDONED",
+      "draft_version": 8,
+      "matches_confirmed_digest": false,
+      "context_count": 1,
+      "preset_keys": [
+        null
+      ]
+    }
+  ]
+}
