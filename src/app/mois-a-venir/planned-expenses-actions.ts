@@ -13,7 +13,7 @@ import {
   createPlannedExpense, deletePlannedExpense,
   declarePlannedExpense, readPlannedExpenses, reportPlannedExpense,
   restorePlannedExpense, preparePlannedExpenseSimulation, updatePlannedExpense,
-  resolvePlannedExpenseDraft,assertPlannedExpenseCreationReplay,
+  resolvePlannedExpenseDraft,assertPlannedExpenseCreationReplay,isPlannedExpenseDeclarationReplay,
 } from "@/server/phase2/planned-expenses";
 import { plannedMutationIssue, type PlannedResult, type PlannedWriteCommand } from "@/domain/phase2/planned-mutations";
 import { readPlannedRouteHistory, readPlannedContextOptions } from "@/server/phase2/planned-context";
@@ -202,6 +202,11 @@ export async function confirmPlannedExpenseReality(targetMonth: string, rawDraft
   return result(async () => {
     const context = await monthContext(targetMonth);
     requireMonthlyResources(context);
+    const previous=scopedExpense(context,command.id);
+    if(!correction&&previous.status==="DECLARED_REALIZED"){
+      const resolved=await resolvePlannedExpenseDraft(context.supabase,context.household.householdId,targetMonth,rawDraft);
+      if(isPlannedExpenseDeclarationReplay(previous,resolved,context.user.id))return freshReadModel(targetMonth,previous.id);
+    }
     const effective=await context.effective();expectCommand(effective,command,true);
     const expense = await declarePlannedExpense(context.supabase, context.household.householdId, command.id,
       context.user.id, rawDraft, command.expectedUpdatedAt!, async (draft, previous) => {

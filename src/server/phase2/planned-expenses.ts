@@ -887,6 +887,9 @@ export function assertPlannedExpenseCreationReplay(existing:PlannedExpense,draft
   if(existing.createdBy!==userId||existing.targetMonth!==targetMonth||!sameIntent(existing,draft))
     throw new TypeError("PLANNED_EXPENSE_IDEMPOTENCY_CONFLICT");
 }
+export function isPlannedExpenseDeclarationReplay(existing:PlannedExpense,draft:PlannedExpenseDraft,userId:string) {
+  return existing.status==="DECLARED_REALIZED"&&existing.updatedBy===userId&&sameIntent(existing,draft);
+}
 function assertVersion(previous: PlannedExpense, expected: string, reality = false) {
   if (!expected || Number.isNaN(Date.parse(expected)) || previous.updatedAt !== expected)
     throw new TypeError(reality ? "REALITY_DRAFT_STALE" : "PLANNED_EXPENSE_EDIT_STALE");

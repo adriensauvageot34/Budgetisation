@@ -256,8 +256,12 @@ try{
     const raw=extra('8.00'),p=value(await a.previewPlannedExpense(month,raw));
     let row=value(await a.savePlannedExpense(month,raw,command(p))).expense;
     const reality=value(await a.previewPlannedExpense(month,expenseDraft(row),row.id,true));
-    row=value(await a.confirmPlannedExpenseReality(month,expenseDraft(row),command(reality,row))).expense;
+    const declaredDraft=expenseDraft(row),declaredCommand=command(reality,row);
+    row=value(await a.confirmPlannedExpenseReality(month,declaredDraft,declaredCommand)).expense;
     assert.equal(row.status,'DECLARED_REALIZED');
+    const writes=sql.writes.length;
+    assert.equal(value(await a.confirmPlannedExpenseReality(month,declaredDraft,declaredCommand)).expense.id,row.id);
+    assert.equal(sql.writes.length,writes,'recognize declared receipt despite the now-stale initial Preview');
     const restored=value(await a.restorePlannedExpenseAction(month,{id:row.id,expectedUpdatedAt:row.updatedAt,expectedPlanRevisionId:p.planRevisionId}));
     assert.equal(restored.owner,'PLAN_V1');assert.equal(restored.expense.status,'PLANNED');
     value(await a.removePlannedExpense(month,{id:row.id,expectedUpdatedAt:restored.expense.updatedAt,expectedPlanRevisionId:p.planRevisionId}));
