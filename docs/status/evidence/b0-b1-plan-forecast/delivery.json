@@ -139,7 +139,63 @@
         "update": 0
       }
     ],
-    "changed": false
+    "changed": false,
+    "afterProduction": [
+      {
+        "table": "benefit_wallet_ledger_entries",
+        "delete": 0,
+        "insert": 213,
+        "update": 0
+      },
+      {
+        "table": "benefit_wallets",
+        "delete": 0,
+        "insert": 2,
+        "update": 1
+      },
+      {
+        "table": "mobility_legs",
+        "delete": 0,
+        "insert": 1368,
+        "update": 0
+      },
+      {
+        "table": "operations",
+        "delete": 0,
+        "insert": 0,
+        "update": 0
+      },
+      {
+        "table": "phase2_month_inputs",
+        "delete": 1,
+        "insert": 2,
+        "update": 44
+      },
+      {
+        "table": "phase2_month_plan_revisions",
+        "delete": 0,
+        "insert": 0,
+        "update": 0
+      },
+      {
+        "table": "phase2_month_plans",
+        "delete": 0,
+        "insert": 0,
+        "update": 0
+      },
+      {
+        "table": "phase2_planned_expenses",
+        "delete": 25,
+        "insert": 32,
+        "update": 37
+      },
+      {
+        "table": "purchase_events",
+        "delete": 0,
+        "insert": 200,
+        "update": 0
+      }
+    ]
   },
   "snapshot": {
     "enabled": true,
@@ -147,5 +203,46 @@
     "schema_epoch": 2,
     "writer_coverage": true
   },
-  "production": "NOT_YET_DEPLOYED"
+  "production": {
+    "id": "dpl_4EraMfAFRP5wcorQ7UL1hGuDZDZk",
+    "state": "READY",
+    "url": "budgetisation-noi87flt6-adriensauvageot34-6137s-projects.vercel.app",
+    "sha": "671c475144f8c1634ddb7213dad9678de25189fb",
+    "alias": [
+      "budgetisation-tan.vercel.app",
+      "budgetisation-adriensauvageot34-6137s-projects.vercel.app",
+      "budgetisation-git-main-adriensauvageot34-6137s-projects.vercel.app"
+    ],
+    "merge": "671c475144f8c1634ddb7213dad9678de25189fb",
+    "candidateAndMergeTree": "353b059a3f13a5462b5b0060bae0dbac902f48af",
+    "smoke": {
+      "authenticated": true,
+      "owner": "DIRECT_V2",
+      "visiblePageIdenticalToReference": true,
+      "withOfficialPlan": "NOT_RUN_NO_ACTIVE_REVISION_EXISTS",
+      "apply": false
+    },
+    "runtimeErrors": {
+      "window": "10m",
+      "deploymentScoped": true,
+      "errorOrFatalLogsFound": 0,
+      "globalCertification": false
+    },
+    "flags": [
+      {
+        "key": "COMPOSER_PREVIEW_HTTP_ENABLED",
+        "value": "1"
+      },
+      {
+        "key": "COMPOSER_P14_SNAP3_HISTORICAL_BASIS",
+        "value": "1"
+      },
+      {
+        "key": "COMPOSER_P14_P3_HISTORICAL_REUSE",
+        "value": "0"
+      }
+    ]
+  },
+  "verdict": "B1_PRODUCTION_PASS",
+  "B2Started": false
 }
