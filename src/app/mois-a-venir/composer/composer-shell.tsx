@@ -184,7 +184,7 @@ export function ComposerShell({ initialModel, transport: suppliedTransport, init
   }, []);
   useEffect(() => {
     if (!(draftTransport ? durable.unsaved : shown.board.draft.dirty) || skipUnloadWarning.current) return;
-    const warn = (event: BeforeUnloadEvent) => { event.preventDefault(); };
+    const warn = (event: BeforeUnloadEvent) => { if (!skipUnloadWarning.current) event.preventDefault(); };
     window.addEventListener("beforeunload", warn); return () => window.removeEventListener("beforeunload", warn);
   }, [durable.unsaved, shown.board.draft.dirty, draftTransport]);
   function archiveDraft(returnToCenter: boolean) {

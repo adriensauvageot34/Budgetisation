@@ -94,4 +94,12 @@ La série authentifiée **avant** correction, n=10, reste 6,59 s P50 et 8,79 s P
 
 ## Suite minimale
 
+### Test authentifié A→B du 15 octobre — complément
+
+L'accès navigateur officiel est revenu. Les anciens déploiements de test avaient l'autosauvegarde désactivée ; deux builds du même arbre `b8d365d` ont donc été construits avec Draft activé uniquement sur l'alias de test. A `dpl_CwteHBcNADEL5F5GnrYJRVLaG2Rz`, B `dpl_DD7Uhq3dMiGKL5BXmQFA8EEaG1SA`, tous deux READY. Aucun changement de configuration Production.
+
+Le vrai JWT applicatif a sauvegardé le nouveau Draft de décembre v1 sur A puis v2 depuis l'ancien onglet A après le basculement officiel de l'alias vers B. L'ancienne simulation a échoué ; l'interface a conservé SAVED, désactivé Apply et proposé le rechargement sûr. B a relu la même décision puis sauvegardé v3. Une écriture v2 depuis A est devenue CONFLICT avec le travail local conservé ; la base reste v3, sans double incrément. L'archive existante v8 est inchangée. Preuve : `evidence/p14-post-snap3/cross-deployment-authenticated.json`.
+
+Défaut ciblé trouvé : la confirmation « Charger la version sauvegardée » restait bloquée par `beforeunload`. Le listener consultait le drapeau d'autorisation uniquement lors de son installation, puis empêchait toujours la navigation. Le callback consulte désormais le drapeau au moment de l'événement. La protection des modifications non confirmées reste active. Rejeu navigateur de cette seule reprise en attente du build corrigé ; route Draft et hook déterministe repassés PASS, TypeScript PASS. Aucun calcul financier modifié.
+
 Une fois l'accès navigateur revenu : (1) déployer une Preview de ce commit, (2) sauvegarder un Draft réel admissible sans Apply et vérifier qu'un ancien onglet issu de cette version traverse un nouveau build en conservant la sauvegarde et le bouton de reprise, (3) comparer dix ouvertures/éditions avant et après avec les mêmes données et digests, (4) vérifier le build et les contrôles de permission, puis livrer si ces gates passent. Pour la maintenance SNAP-3, mesurer la première invalidation naturelle et le coût de republication avant de choisir un déclenchement automatique hors READ. Aucun SNAP-4 requis.
