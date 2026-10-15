@@ -1,0 +1,34 @@
+{
+  "date": "2026-10-15",
+  "baseProductCommit": "d965d54713c20d3ab614e3fe730ee70af2876ea8",
+  "candidateProductCommit": "8d8a6530f4415e797397135c04fac2bdbd9c6088",
+  "correctedTestCommit": "805b05038442dbe56fd2d455348ae0fb4a5fe43f",
+  "node": "22.18.0",
+  "dependencies": "Same existing node_modules junction target on both checkouts",
+  "database": "Independent PGlite synthetic databases; no Supabase mutation",
+  "initialResultsOnBoth": {
+    "C8": "FAIL: MONTH_WRITE_FAILED instead of PLAN_V3_ACTIVE_READ_ONLY",
+    "P11": "FAIL: lowercase tarif par nuit absent from the B2 view",
+    "P05B": "FAIL: old concatenated gift classification caption absent from the B2 view"
+  },
+  "corrections": {
+    "C8": "Provide the B3 authenticated runtime fixture, frozen planning date and expected choice digest. Prove missing digest rejects STALE_PREVIEW, owned slot rejects PLAN_V3_ACTIVE_READ_ONLY, independent inputs remain writable. Update the lowercase low-point unknown-date caption.",
+    "P11": "Match the exact B2 captions Tarif par nuit and Date non fixee; all financial assertions retained.",
+    "P05B": "Check structured Type d'objet fact and explicit retired-reference message plus preserved historical key; all identity/financial/refusal assertions retained."
+  },
+  "correctedCommonTestsOnBothProducts": {
+    "C8": { "status": "PASS", "controls": 35 },
+    "P11": { "status": "PASS", "controls": 21 },
+    "P05B": { "status": "PASS", "controls": 9 }
+  },
+  "foundations": {
+    "typescript": "PASS",
+    "financialParity22x9": "PASS",
+    "restaurant": "PASS_SYNTHETIC",
+    "draftHttp": "PASS_MOCK",
+    "previewScheduler": "PASS",
+    "applyCAS": "PASS_SYNTHETIC"
+  },
+  "productChangesDuringFinalization": 0,
+  "realApply": 0
+}

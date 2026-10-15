@@ -1,0 +1,18 @@
+[
+  {
+    "test": "restaurant",
+    "exitCode": 0
+  },
+  {
+    "test": "draft",
+    "exitCode": 0
+  },
+  {
+    "test": "scheduler",
+    "exitCode": 0
+  },
+  {
+    "test": "apply-cas",
+    "exitCode": 0
+  }
+]

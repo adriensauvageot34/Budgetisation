@@ -1,0 +1,61 @@
+{
+  "deployment": "dpl_3W66NxNQYAk3BUnbQ3Um4GSt2BfC",
+  "sha": "3e4eaa7352b33fb094fc83ddd639c0693ef2950a",
+  "productionDomain": "budgetisation-tan.vercel.app",
+  "state": "READY",
+  "productTreeEqualsPRHead": "805b05038442dbe56fd2d455348ae0fb4a5fe43f",
+  "markers": [
+    {
+      "timestamp": 1792091826122,
+      "text": "Running build in Washington, D.C., USA (East) – iad1"
+    },
+    {
+      "timestamp": 1792091828986,
+      "text": "Running \"vercel build\""
+    },
+    {
+      "timestamp": 1792091830531,
+      "text": "Detected Next.js version: 16.2.6"
+    },
+    {
+      "timestamp": 1792091830536,
+      "text": "Running \"npm run build\""
+    },
+    {
+      "timestamp": 1792091831486,
+      "text": "▲ Next.js 16.2.6 (Turbopack)"
+    },
+    {
+      "timestamp": 1792091873895,
+      "text": "✓ Compiled successfully in 42s"
+    },
+    {
+      "timestamp": 1792091917996,
+      "text": "  Generating static pages using 1 worker (0/8) ..."
+    },
+    {
+      "timestamp": 1792091918434,
+      "text": "  Generating static pages using 1 worker (2/8) \r"
+    },
+    {
+      "timestamp": 1792091918435,
+      "text": "  Generating static pages using 1 worker (4/8) \r"
+    },
+    {
+      "timestamp": 1792091918436,
+      "text": "  Generating static pages using 1 worker (6/8) \r"
+    },
+    {
+      "timestamp": 1792091918437,
+      "text": "✓ Generating static pages using 1 worker (8/8) in 440ms"
+    },
+    {
+      "timestamp": 1792091919291,
+      "text": "Build Completed in /vercel/output [1m]"
+    },
+    {
+      "timestamp": 1792091929271,
+      "text": "Deployment completed"
+    }
+  ]
+}
