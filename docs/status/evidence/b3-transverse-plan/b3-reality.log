@@ -1,0 +1,2 @@
+PASS: October resources, certain outflows, scenarios, negative invariants, override propagation and undo
+PASS: C7 REAL-01..07, atomic final costs, RESERVED/USED_DECLARED, IDEMP-REAL-01, STALE-REAL-01, REPORT-01/02, delete/restore/status, META-09..13/19, historical zero-write

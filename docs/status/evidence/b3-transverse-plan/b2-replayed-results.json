@@ -1,0 +1,364 @@
+{
+  "results": [
+    {
+      "case": "A",
+      "status": "EXECUTED_PASS_PGLITE_SYNTHETIC_ONLY",
+      "counts": {
+        "plans": 1,
+        "revisions": 1
+      },
+      "reads": 3,
+      "revision": "b632ff2e-4bd5-4d6f-a918-3949f958de26",
+      "projectionDigest": "00d37d5e0e265642cc810ed367838ca58553e0330867ac9c055a5e78a7f4bc07",
+      "semanticDigest": "038edb373299b58a4ed7d449d67301ea973b2e820ddec2245713d6c5490fd2c9",
+      "baseline": "650.00",
+      "remainder": "580.00",
+      "impact": "-70.00",
+      "freshness": {
+        "activeRevision": "CURRENT_AT_CHECK",
+        "checkedPointer": {
+          "planId": "bd98d47f-a3c1-44ce-89d2-98286abc2405",
+          "activeRevisionId": "b632ff2e-4bd5-4d6f-a918-3949f958de26",
+          "activeRevisionNumber": 1
+        },
+        "authorities": "EXACT"
+      },
+      "financialCanaries": "PASS"
+    },
+    {
+      "case": "B",
+      "status": "EXECUTED_PASS_PGLITE_SYNTHETIC_ONLY",
+      "counts": {
+        "plans": 1,
+        "revisions": 1
+      },
+      "reads": 3,
+      "revision": "e95a2f79-3a43-4f3c-9787-ea13715ffe1d",
+      "projectionDigest": "d8659fc1b1c7b0c30821b6537387f90da00f76d9c346df8576cbfd53e89747bc",
+      "semanticDigest": "91cc1e60ad27e016d602da3d0a0ca30a0544dc1858ccfcc8298977ff5af5d863",
+      "baseline": "1130.00",
+      "remainder": "1130.00",
+      "impact": "0.00",
+      "freshness": {
+        "activeRevision": "CURRENT_AT_CHECK",
+        "checkedPointer": {
+          "planId": "325e8325-213b-4eb7-af06-3f406d51ee98",
+          "activeRevisionId": "e95a2f79-3a43-4f3c-9787-ea13715ffe1d",
+          "activeRevisionNumber": 1
+        },
+        "authorities": "EXACT"
+      },
+      "financialCanaries": "PASS"
+    },
+    {
+      "case": "C",
+      "status": "EXECUTED_PASS_PGLITE_SYNTHETIC_ONLY",
+      "counts": {
+        "plans": 1,
+        "revisions": 1
+      },
+      "reads": 3,
+      "revision": "a0e364da-7926-4c36-96aa-02f70832103c",
+      "projectionDigest": "ddd59abd4547161ef5121ee025a20241dc82919b27810004769a305cc1839fb1",
+      "semanticDigest": "229aba515e1a52a405ffc0e5527c1be7f20aaf26b7ba535251b86ed0dadbe9f1",
+      "baseline": "917.00",
+      "remainder": "805.00",
+      "impact": "-112.00",
+      "freshness": {
+        "activeRevision": "CURRENT_AT_CHECK",
+        "checkedPointer": {
+          "planId": "01b06935-dc2b-4889-b237-eeecd2083ae0",
+          "activeRevisionId": "a0e364da-7926-4c36-96aa-02f70832103c",
+          "activeRevisionNumber": 1
+        },
+        "authorities": "EXACT"
+      },
+      "financialCanaries": "PASS"
+    },
+    {
+      "case": "D",
+      "status": "EXECUTED_PASS_PGLITE_SYNTHETIC_ONLY",
+      "counts": {
+        "plans": 1,
+        "revisions": 1
+      },
+      "reads": 3,
+      "revision": "72681ff1-c561-4f48-ac52-783481fe83a6",
+      "projectionDigest": "34e32377f7c33e2e84c2861668ac584154016661cb15c85d83038b36160642b9",
+      "semanticDigest": "7ed03c37b4d9acc359e6679482b53e9d5dfc1855282de89d6ad897235c6a9e85",
+      "baseline": "1190.00",
+      "remainder": "1190.00",
+      "impact": "0.00",
+      "freshness": {
+        "activeRevision": "CURRENT_AT_CHECK",
+        "checkedPointer": {
+          "planId": "238bcf82-bad5-4210-8ab4-7f7810d6d45b",
+          "activeRevisionId": "72681ff1-c561-4f48-ac52-783481fe83a6",
+          "activeRevisionNumber": 1
+        },
+        "authorities": "EXACT"
+      },
+      "financialCanaries": "PASS"
+    },
+    {
+      "case": "E",
+      "status": "EXECUTED_PASS_PGLITE_SYNTHETIC_ONLY",
+      "counts": {
+        "plans": 1,
+        "revisions": 1
+      },
+      "reads": 3,
+      "revision": "d7ba1030-085f-4ca2-b418-2d8610b2d8d2",
+      "projectionDigest": "c063866d6c59a2b1285494b4598662f6f2ff0b013ccdbfad645dab8c831d096e",
+      "semanticDigest": "ff47c5b80cb6a7b7fab66a36f8b4989e8b3be252e9d94ed22e07d256e6f7c141",
+      "baseline": "917.00",
+      "remainder": "915.00",
+      "impact": "-2.00",
+      "freshness": {
+        "activeRevision": "CURRENT_AT_CHECK",
+        "checkedPointer": {
+          "planId": "e1440437-e9e4-438d-a0e9-c54faa389c1f",
+          "activeRevisionId": "d7ba1030-085f-4ca2-b418-2d8610b2d8d2",
+          "activeRevisionNumber": 1
+        },
+        "authorities": "EXACT"
+      },
+      "financialCanaries": "PASS"
+    },
+    {
+      "case": "F",
+      "status": "EXECUTED_PASS_PGLITE_SYNTHETIC_ONLY",
+      "counts": {
+        "plans": 1,
+        "revisions": 1
+      },
+      "reads": 3,
+      "revision": "41eb3542-e0a7-4c8c-a216-b25b8da219f9",
+      "projectionDigest": "1e00c7aacbff3a9e9d4f630f38bd4e1159858070d779d21259ca1f01a838a0f5",
+      "semanticDigest": "a939ae139a7d265f61fa35d601c0f423246bf91ada3697681004d0a905097b16",
+      "baseline": "1190.00",
+      "remainder": null,
+      "impact": null,
+      "freshness": {
+        "activeRevision": "CURRENT_AT_CHECK",
+        "checkedPointer": {
+          "planId": "54d0b4b1-fa29-4639-be66-26a240a4d40c",
+          "activeRevisionId": "41eb3542-e0a7-4c8c-a216-b25b8da219f9",
+          "activeRevisionNumber": 1
+        },
+        "authorities": "EXACT"
+      },
+      "financialCanaries": "PASS"
+    },
+    {
+      "case": "G",
+      "status": "EXECUTED_PASS_PGLITE_SYNTHETIC_ONLY",
+      "counts": {
+        "plans": 1,
+        "revisions": 2
+      },
+      "reads": 4,
+      "revision": "77367561-3be2-4312-8c66-3e88da7b9568",
+      "projectionDigest": "00d37d5e0e265642cc810ed367838ca58553e0330867ac9c055a5e78a7f4bc07",
+      "semanticDigest": "038edb373299b58a4ed7d449d67301ea973b2e820ddec2245713d6c5490fd2c9",
+      "baseline": "650.00",
+      "remainder": "580.00",
+      "impact": "-70.00",
+      "freshness": {
+        "activeRevision": "SUPERSEDED",
+        "checkedPointer": {
+          "planId": "7c0ee55c-7363-4fc5-a6eb-cef543319c9a",
+          "activeRevisionId": "5afe2ae3-4a37-4f82-a87c-f458fb6f3eb6",
+          "activeRevisionNumber": 2
+        },
+        "authorities": "EXACT"
+      },
+      "financialCanaries": "PASS"
+    },
+    {
+      "case": "CHANGED",
+      "status": "EXECUTED_PASS_PGLITE_SYNTHETIC_ONLY",
+      "counts": {
+        "plans": 1,
+        "revisions": 1
+      },
+      "reads": 3,
+      "revision": "36f63f44-7e9f-482b-b643-734d269eefcf",
+      "projectionDigest": "cbd189d359a8428f1a87d1bb80b51cf189e6986b54f2d480990fe5fb15f927a2",
+      "semanticDigest": "038edb373299b58a4ed7d449d67301ea973b2e820ddec2245713d6c5490fd2c9",
+      "baseline": "660.00",
+      "remainder": "590.00",
+      "impact": "-70.00",
+      "freshness": {
+        "activeRevision": "CURRENT_AT_CHECK",
+        "checkedPointer": {
+          "planId": "8fddfaf7-641d-48d6-ba4b-ca129cf026a8",
+          "activeRevisionId": "36f63f44-7e9f-482b-b643-734d269eefcf",
+          "activeRevisionNumber": 1
+        },
+        "authorities": "CHANGED_AUTHORITIES"
+      },
+      "financialCanaries": "PASS"
+    },
+    {
+      "case": "UNAVAILABLE",
+      "status": "EXECUTED_PASS_PGLITE_SYNTHETIC_ONLY",
+      "counts": {
+        "plans": 1,
+        "revisions": 1
+      },
+      "reads": 3,
+      "revision": "d5b4c095-3f73-40bd-aebe-99c05741a249",
+      "projectionDigest": "00d37d5e0e265642cc810ed367838ca58553e0330867ac9c055a5e78a7f4bc07",
+      "semanticDigest": "038edb373299b58a4ed7d449d67301ea973b2e820ddec2245713d6c5490fd2c9",
+      "baseline": "650.00",
+      "remainder": "580.00",
+      "impact": "-70.00",
+      "freshness": {
+        "activeRevision": "UNAVAILABLE",
+        "checkedPointer": null,
+        "authorities": "EXACT"
+      },
+      "financialCanaries": "PASS"
+    },
+    {
+      "case": "INTERACTIONS",
+      "status": "EXECUTED_PASS_PGLITE_SYNTHETIC_ONLY",
+      "counts": {
+        "plans": 1,
+        "revisions": 1
+      },
+      "reads": 3,
+      "revision": "0941a5fc-1f7a-4040-a249-dcb43ff88b82",
+      "projectionDigest": "67e81c97fff6bd5c3a38b0fd7d94ce0cdf67d51ab2003a53f4c2eacd04f67eff",
+      "semanticDigest": "18bbb9655da63cdb5b0ec98d67079f145d029b5a6ebffe1002c105fd75b23752",
+      "baseline": "1130.00",
+      "remainder": "1090.00",
+      "impact": "-40.00",
+      "freshness": {
+        "activeRevision": "CURRENT_AT_CHECK",
+        "checkedPointer": {
+          "planId": "b10a81e3-500e-470c-be20-b267c09866d1",
+          "activeRevisionId": "0941a5fc-1f7a-4040-a249-dcb43ff88b82",
+          "activeRevisionNumber": 1
+        },
+        "authorities": "EXACT"
+      },
+      "financialCanaries": "PASS"
+    },
+    {
+      "case": "GIFT",
+      "status": "EXECUTED_PASS_PGLITE_SYNTHETIC_ONLY",
+      "counts": {
+        "plans": 1,
+        "revisions": 1
+      },
+      "reads": 3,
+      "revision": "def9f278-8be9-4572-b9d1-0cadb23b2a4d",
+      "projectionDigest": "e0711d042092c37b15a71b031dd2f49b6d7df0aca8af7c72df63742fa7fc0301",
+      "semanticDigest": "27610ca9f976353a68db516972bdaed770da3ac9d404080fd29a3d042e1465b0",
+      "baseline": "1190.00",
+      "remainder": "1155.00",
+      "impact": "-35.00",
+      "freshness": {
+        "activeRevision": "CURRENT_AT_CHECK",
+        "checkedPointer": {
+          "planId": "72069b45-97e3-47a6-b8ae-03883ca44dd9",
+          "activeRevisionId": "def9f278-8be9-4572-b9d1-0cadb23b2a4d",
+          "activeRevisionNumber": 1
+        },
+        "authorities": "EXACT"
+      },
+      "financialCanaries": "PASS"
+    },
+    {
+      "case": "LONG",
+      "status": "EXECUTED_PASS_PGLITE_SYNTHETIC_ONLY",
+      "counts": {
+        "plans": 1,
+        "revisions": 1
+      },
+      "reads": 3,
+      "revision": "15aaa5d4-4423-42b5-83cd-00b67a410b20",
+      "projectionDigest": "7ebe2f66d91c4492945e7c87758d3e7f1a0f0fa8b592609546375999263835b1",
+      "semanticDigest": "038edb373299b58a4ed7d449d67301ea973b2e820ddec2245713d6c5490fd2c9",
+      "baseline": "123456439.00",
+      "remainder": "123456369.00",
+      "impact": "-70.00",
+      "freshness": {
+        "activeRevision": "CURRENT_AT_CHECK",
+        "checkedPointer": {
+          "planId": "ec7df2d2-e177-4d86-a178-801f11752ebd",
+          "activeRevisionId": "15aaa5d4-4423-42b5-83cd-00b67a410b20",
+          "activeRevisionNumber": 1
+        },
+        "authorities": "EXACT"
+      },
+      "financialCanaries": "PASS"
+    }
+  ],
+  "timings": [
+    {
+      "case": "A",
+      "renderMs": 198.686,
+      "htmlBytes": 20154
+    },
+    {
+      "case": "B",
+      "renderMs": 1814.264,
+      "htmlBytes": 18247
+    },
+    {
+      "case": "C",
+      "renderMs": 108.958,
+      "htmlBytes": 33171
+    },
+    {
+      "case": "D",
+      "renderMs": 41.674,
+      "htmlBytes": 14036
+    },
+    {
+      "case": "E",
+      "renderMs": 109.624,
+      "htmlBytes": 21834
+    },
+    {
+      "case": "F",
+      "renderMs": 3202.174,
+      "htmlBytes": 19785
+    },
+    {
+      "case": "G",
+      "renderMs": 59.514,
+      "htmlBytes": 20384
+    },
+    {
+      "case": "CHANGED",
+      "renderMs": 126.461,
+      "htmlBytes": 20567
+    },
+    {
+      "case": "UNAVAILABLE",
+      "renderMs": 278.581,
+      "htmlBytes": 20176
+    },
+    {
+      "case": "INTERACTIONS",
+      "renderMs": 127.136,
+      "htmlBytes": 28038
+    },
+    {
+      "case": "GIFT",
+      "renderMs": 165.238,
+      "htmlBytes": 18862
+    },
+    {
+      "case": "LONG",
+      "renderMs": 184.848,
+      "htmlBytes": 20194
+    }
+  ],
+  "financialWrites": "ONLY_EPHEMERAL_SYNTHETIC_C0",
+  "authenticatedPlan": "NOT_RUN"
+}

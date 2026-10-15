@@ -3,7 +3,7 @@ import { PGlite } from "@electric-sql/pglite";
 import { householdId, userId } from "../fixtures/planner-kernel.mjs";
 
 /** Executes the unchanged C0 SQL on synthetic PostgreSQL only. No Supabase stack or network. */
-export async function createKernelPostgres() {
+export async function createKernelPostgres(options = {}) {
   const db = new PGlite(); let rpcCalls = 0;
   await db.exec(`create role anon; create role authenticated; create role service_role bypassrls;
     create schema auth; create schema private; create table auth.users(id uuid primary key);
@@ -18,13 +18,18 @@ export async function createKernelPostgres() {
   await db.query("insert into auth.users values($1)",[userId]);
   await db.query("insert into public.households values($1)",[householdId]);
   await db.query("insert into private.household_memberships values($1,$2)",[userId,householdId]);
-  const canaries = ["operations","purchase_events","mobility_fixture","analytics_fixture","phase2_month_inputs","phase2_planned_expenses","benefit_wallet_fixture","household_revisions"];
+  const canaries = ["operations","purchase_events","mobility_fixture","analytics_fixture",
+    ...options.monthlyInputs?[]:["phase2_month_inputs"],...options.plannedExpenses?[]:["phase2_planned_expenses"],"benefit_wallet_fixture","household_revisions"];
   for (const table of canaries) await db.exec(`create table public.${table}(fixture_id integer primary key); insert into public.${table} values(1);
     create function private.deny_${table}_write() returns trigger language plpgsql as $$ begin raise exception 'HISTORICAL_WRITE_FORBIDDEN'; end; $$;
     create trigger deny_write before insert or update or delete on public.${table} for each row execute function private.deny_${table}_write();
     create trigger deny_truncate before truncate on public.${table} for each statement execute function private.deny_${table}_write();
     grant select on public.${table} to authenticated;`);
   await db.exec(fs.readFileSync("supabase/migrations/20261005202346_phase2_month_plan_foundation.sql","utf8"));
+  if(options.monthlyInputs)await db.exec(fs.readFileSync("supabase/migrations/20260926182348_phase2_month_inputs.sql","utf8"));
+  if(options.plannedExpenses)for(const migration of ["20260928163114_phase2_planned_expenses.sql","20260928205006_phase2_planned_cost_items_guard.sql",
+    "20260929211001_phase2_planned_module_path_v1.sql","20260929232710_phase2_planned_report_month.sql","20261001083235_phase2_planned_zero_cost.sql","20261002114837_phase2_project_unknown_budget.sql"])
+    await db.exec(fs.readFileSync(`supabase/migrations/${migration}`,"utf8"));
   await db.query("select set_config('request.jwt.claim.sub',$1,false)",[userId]); await db.exec("set role authenticated");
   const tables = new Set(["phase2_month_plans","phase2_month_plan_revisions"]);
   const client = { from(table) {

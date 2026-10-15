@@ -8,11 +8,13 @@ import { evaluatePlanScenario } from "./preview";
 import { assertRevisionEvidence } from "./revision-evidence";
 import { officialPlanComparison } from "./official-comparison";
 import type { ActivePlanPointer } from "@/domain/phase2/planner/official-comparison-contract";
+import { planEffectiveSimulation } from "./effective-simulation";
 
 export type DirectMonthFacts = Readonly<{ forecast: MonthForecastSnapshot; monthInputs: MonthInputs;
   externalIntents: readonly PlannedExpenseScenarioEntry[]; asOfDate: string }>;
 export type EffectiveMonthDependencies = PlannerDependencies & Readonly<{
-  readDirectWorld(householdId: string, targetMonth: string): Promise<DirectMonthFacts> }>;
+  readDirectWorld(householdId: string, targetMonth: string): Promise<DirectMonthFacts>;
+  captureSimulation?(simulation:ReturnType<typeof planEffectiveSimulation>):void }>;
 /** Applied-month owner shared by Composer and the monthly view. With no active Plan, invoke the
  * existing V2 flow exactly, without requiring C1 owners or altering its inputs. */
 export async function resolveEffectiveMonthScenario(deps: EffectiveMonthDependencies, householdId: string, targetMonth: string) {
@@ -49,6 +51,7 @@ export async function resolveEffectiveMonthScenario(deps: EffectiveMonthDependen
     pointerAvailable = false;
   }
   const evidenceStatus = sameAuthorities ? "EXACT" as const : "CHANGED_AUTHORITIES" as const;
+  deps.captureSimulation?.(planEffectiveSimulation(stored,prepared,preview,deps.repository));
   return { owner: "PLAN_V1" as const, scenario: preview.scenario, revision, preview,
     semanticState: revision.semanticState, projection: preview.projection,
     evidenceStatus, comparison: officialPlanComparison(revision, preview, prepared, evidenceStatus, pointer, pointerAvailable) };

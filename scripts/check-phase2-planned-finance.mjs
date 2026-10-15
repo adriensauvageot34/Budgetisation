@@ -46,7 +46,7 @@ for (const p of [h, e, marginal]) for (const [axis, scenario] of [["low", "lowCo
 // Editing excludes the edited row from before; its new total, not only the amount change, is explained.
 const edited = draft([line("restaurant:main", "65.00")]);
 assert.equal(preview(edited, [another]).grossCost, "65.00"); assert.equal(preview(edited, [another]).netAdditionalImpact.central, "65.00");
-assert.match(fs.readFileSync("src/app/mois-a-venir/planned-expenses-actions.ts", "utf8"), /saved\.filter\(\(expense\) => expense\.id !== editedId\)/);
+assert.match(fs.readFileSync("src/app/mois-a-venir/planned-expenses-actions.ts", "utf8"), /effective\.expenses\.filter\(expense=>expense\.id!==editedId\)/);
 // FIN-05, META-09: lifecycle preserves economics and moves RESERVED to USED_DECLARED.
 const planned = plan([expense(habitual)]), realized = plan([expense(habitual, "DECLARED_REALIZED")]);
 assert.deepEqual(planned.scenarios, realized.scenarios);

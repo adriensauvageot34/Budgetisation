@@ -27,7 +27,7 @@ type Person = { personId: string; displayName: string; isCurrentUser?: boolean }
 type Draft = Pick<PlannedExpenseCard, "familyKey" | "subtypeKey" | "title" | "plannedDate" | "costItems" | "context">;
 type Preview = Extract<Awaited<ReturnType<typeof previewPlannedExpense>>, { ok: true }>["value"];
 type Funding = NonNullable<Preview["funding"]>;
-type Props = { targetMonth: string; expenses: readonly PlannedExpenseCard[]; persons: readonly Person[];
+type Props = { targetMonth: string; expectedPlanRevisionId?:string|null; expenses: readonly PlannedExpenseCard[]; persons: readonly Person[];
   places: readonly PlannedPlaceOption[]; vehicle: PlannedVehicleEstimate | null;
   prices: readonly PlannedPriceSuggestion[]; wallets: readonly PlannedWalletOption[]; funding: Funding;
   observationCandidates?: import("@/server/phase2/month-scenario").MonthEconomicPlan["observationCandidates"] };
@@ -47,7 +47,7 @@ function unwrap<T>(result: PlannedResult<T>): T {
   return result.value;
 }
 
-export function PlannedExpensesControl({ targetMonth, expenses, persons, places, vehicle, prices, wallets, funding, observationCandidates = {} }: Props) {
+export function PlannedExpensesControl({ targetMonth, expectedPlanRevisionId, expenses, persons, places, vehicle, prices, wallets, funding, observationCandidates = {} }: Props) {
   const router = useRouter();
   const interactions = usePlannedExpenseInteractions();
   const [open, setOpen] = useState(false);
@@ -142,7 +142,7 @@ export function PlannedExpensesControl({ targetMonth, expenses, persons, places,
     const revision = builder.revision;
     const session = draftSession.current;
     setBusy(true); setError("");
-    try { const value = unwrap(await previewPlannedExpense(targetMonth, materializeBuilderDraft(builder, true), editedId));
+    try { const value = unwrap(await previewPlannedExpense(targetMonth, materializeBuilderDraft(builder, true), editedId,!!realityMode,requestId));
       if (currentRevision.current !== revision || draftSession.current !== session) return;
       const adopted = synchronizeIntentBuilder(adoptBuilderResolvedTransport(builder, value.resolvedDraft), places, persons);
       setBuilderState(adopted); setPreview(value); setPreviewRevision(adopted.revision); setStep(5); }
@@ -153,12 +153,12 @@ export function PlannedExpensesControl({ targetMonth, expenses, persons, places,
   };
   const save = () => run(async () => {
     if (!readiness.saveReady || !previewCurrent) return;
-    const command = { id: requestId, expectedUpdatedAt };
+    const command = { id: requestId, expectedUpdatedAt,expectedPlanRevisionId:preview!.planRevisionId,expectedEffectiveDigest:preview!.effectiveBaseDigest??undefined };
     if (realityMode) {
       const realityDraft: RealityConfirmationDraft = { expenseId: requestId, expectedUpdatedAt: expectedUpdatedAt!,
         finalDraft: materializeBuilderDraft(builder) };
       unwrap(await confirmPlannedExpenseReality(targetMonth, realityDraft.finalDraft,
-        { id: realityDraft.expenseId, expectedUpdatedAt: realityDraft.expectedUpdatedAt }, realityMode === "CORRECT"));
+        { ...command,id: realityDraft.expenseId, expectedUpdatedAt: realityDraft.expectedUpdatedAt }, realityMode === "CORRECT"));
       setNotice(realityMode === "CORRECT" ? "Déclaration corrigée." : "Réalisation déclarée. Le financement prévu devient utilisé déclaré.");
     } else {
       const saved = unwrap(await savePlannedExpense(targetMonth, materializeBuilderDraft(builder), command));
@@ -191,7 +191,7 @@ export function PlannedExpensesControl({ targetMonth, expenses, persons, places,
     if (inFlight.current || open && builder.revision > 0) {
       setError("Terminez ou fermez le brouillon ouvert avant de poursuivre cette action.");
     } else if (pending.action === "RESTORE") {
-      void run(async () => { unwrap(await restorePlannedExpenseAction(targetMonth, { id: item.id, expectedUpdatedAt: item.updatedAt })); });
+      void run(async () => { unwrap(await restorePlannedExpenseAction(targetMonth, { id: item.id, expectedUpdatedAt: item.updatedAt,expectedPlanRevisionId })); });
     } else if (pending.action === "REPORT") { setReportId(item.id); setReportDate(item.plannedDate ?? ""); }
     else if (pending.action === "DELETE") setDeleteId(item.id);
     else start(item, pending.action === "DECLARE" ? "DECLARE" : pending.action === "CORRECT" ? "CORRECT" : null);
@@ -207,13 +207,13 @@ export function PlannedExpensesControl({ targetMonth, expenses, persons, places,
     <div className="mt-3 flex flex-wrap gap-2 border-t border-slate-100 pt-3">{calendarExpenseActions(item).filter(({ action }) => action !== "DELETE").map(({ action, label }) =>
       <button key={action} type="button" className={secondary} disabled={busy} onClick={() => {
         if (action === "REPORT") { setReportId(item.id); setReportDate(item.plannedDate ?? ""); }
-        else if (action === "RESTORE") void run(async () => { unwrap(await restorePlannedExpenseAction(targetMonth, { id: item.id, expectedUpdatedAt: item.updatedAt })); setNotice("Remise en prévu, avec les mêmes coûts."); });
+        else if (action === "RESTORE") void run(async () => { unwrap(await restorePlannedExpenseAction(targetMonth, { id: item.id, expectedUpdatedAt: item.updatedAt,expectedPlanRevisionId })); setNotice("Remise en prévu, avec les mêmes coûts."); });
         else start(item, action === "DECLARE" ? "DECLARE" : action === "CORRECT" ? "CORRECT" : null);
       }}>{label}</button>)}
-      {deleteId === item.id ? <><span className="self-center text-xs">{item.status === "PLANNED" ? "Confirmer que ce projet n’a pas eu lieu et supprimer sa prévision ?" : "Supprimer définitivement cette déclaration ?"} Son coût et son financement seront retirés du mois.</span><button type="button" className={secondary} disabled={busy} onClick={() => run(async () => { unwrap(await removePlannedExpense(targetMonth, { id: item.id, expectedUpdatedAt: item.updatedAt })); setDeleteId(null); setNotice("Dépense supprimée du mois."); })}>Confirmer la suppression</button><button type="button" className={secondary} onClick={() => setDeleteId(null)}>Annuler</button></>
+      {deleteId === item.id ? <><span className="self-center text-xs">{item.status === "PLANNED" ? "Confirmer que ce projet n’a pas eu lieu et supprimer sa prévision ?" : "Supprimer définitivement cette déclaration ?"} Son coût et son financement seront retirés du mois.</span><button type="button" className={secondary} disabled={busy} onClick={() => run(async () => { unwrap(await removePlannedExpense(targetMonth, { id: item.id, expectedUpdatedAt: item.updatedAt,expectedPlanRevisionId })); setDeleteId(null); setNotice("Dépense supprimée du mois."); })}>Confirmer la suppression</button><button type="button" className={secondary} onClick={() => setDeleteId(null)}>Annuler</button></>
         : <button type="button" className={secondary} disabled={busy} onClick={() => setDeleteId(item.id)}><Trash2 size={14} className="mr-1 inline" />{calendarExpenseActions(item).find(({ action }) => action === "DELETE")?.label}</button>}
     </div>
-    {reportId === item.id && <div className="mt-3 grid gap-2 rounded-xl bg-slate-50 p-3"><label className="grid gap-1 text-sm font-semibold">Nouvelle date prévue<input type="date" className={inputClass} value={reportDate} onChange={(event) => setReportDate(event.target.value)} /></label><p className="text-xs">La même dépense rejoindra le mois choisi. Ses ressources et ses estimations seront revérifiées.</p><div className="flex gap-2"><button className={secondary} disabled={busy || !reportDate} onClick={() => run(async () => { const moved = unwrap(await reportPlannedExpenseAction(targetMonth, { id: item.id, expectedUpdatedAt: item.updatedAt }, reportDate)); setReportId(null); setNotice(`Projet reporté en ${moved.targetMonth}.`); if (moved.targetMonth !== targetMonth) router.push(`/mois-a-venir?month=${moved.targetMonth}`); })}>Confirmer le report</button><button className={secondary} onClick={() => setReportId(null)}>Annuler</button></div></div>}
+    {reportId === item.id && <div className="mt-3 grid gap-2 rounded-xl bg-slate-50 p-3"><label className="grid gap-1 text-sm font-semibold">Nouvelle date prévue<input type="date" className={inputClass} value={reportDate} onChange={(event) => setReportDate(event.target.value)} /></label><p className="text-xs">La même dépense rejoindra le mois choisi. Ses ressources et ses estimations seront revérifiées.</p><div className="flex gap-2"><button className={secondary} disabled={busy || !reportDate} onClick={() => run(async () => { const moved = unwrap(await reportPlannedExpenseAction(targetMonth, { id: item.id, expectedUpdatedAt: item.updatedAt,expectedPlanRevisionId }, reportDate)); setReportId(null); setNotice(`Projet reporté en ${moved.targetMonth}.`); if (moved.targetMonth !== targetMonth) router.push(`/mois-a-venir?month=${moved.targetMonth}`); })}>Confirmer le report</button><button className={secondary} onClick={() => setReportId(null)}>Annuler</button></div></div>}
   </ProjectHeroCard>;
 
   return <>

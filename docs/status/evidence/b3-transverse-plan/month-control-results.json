@@ -1,0 +1,434 @@
+{
+  "status": "PASS",
+  "scope": "Offline fixtures; real owners/actions, mocked authenticated transport only. STATIC tests are source boundary checks, not browser evidence.",
+  "historicalWrites": 0,
+  "plannedExpenseWrites": 0,
+  "monthlyFixtureWrites": 9,
+  "results": [
+    {
+      "id": "CC-001",
+      "kind": "STATIC",
+      "status": "PASS"
+    },
+    {
+      "id": "CC-002",
+      "kind": "BEHAVIOR",
+      "status": "PASS"
+    },
+    {
+      "id": "CC-003",
+      "kind": "BEHAVIOR",
+      "status": "PASS"
+    },
+    {
+      "id": "CC-004",
+      "kind": "BEHAVIOR",
+      "status": "PASS"
+    },
+    {
+      "id": "CC-005",
+      "kind": "BEHAVIOR",
+      "status": "PASS"
+    },
+    {
+      "id": "CC-006",
+      "kind": "BEHAVIOR",
+      "status": "PASS"
+    },
+    {
+      "id": "CC-007",
+      "kind": "BEHAVIOR",
+      "status": "PASS"
+    },
+    {
+      "id": "CC-008",
+      "kind": "BEHAVIOR",
+      "status": "PASS"
+    },
+    {
+      "id": "CC-009",
+      "kind": "BEHAVIOR",
+      "status": "PASS"
+    },
+    {
+      "id": "CC-010",
+      "kind": "BEHAVIOR",
+      "status": "PASS"
+    },
+    {
+      "id": "CC-011",
+      "kind": "BEHAVIOR",
+      "status": "PASS"
+    },
+    {
+      "id": "CC-012",
+      "kind": "BEHAVIOR",
+      "status": "PASS"
+    },
+    {
+      "id": "CC-013",
+      "kind": "BEHAVIOR",
+      "status": "PASS"
+    },
+    {
+      "id": "CC-014",
+      "kind": "BEHAVIOR",
+      "status": "PASS"
+    },
+    {
+      "id": "CC-015",
+      "kind": "STATIC",
+      "status": "PASS"
+    },
+    {
+      "id": "CC-016",
+      "kind": "STATIC",
+      "status": "PASS"
+    },
+    {
+      "id": "CC-017",
+      "kind": "STATIC",
+      "status": "PASS"
+    },
+    {
+      "id": "CC-018",
+      "kind": "STATIC",
+      "status": "PASS"
+    },
+    {
+      "id": "CC-019",
+      "kind": "STATIC",
+      "status": "PASS"
+    },
+    {
+      "id": "CC-020",
+      "kind": "STATIC",
+      "status": "PASS"
+    },
+    {
+      "id": "CC-021",
+      "kind": "STATIC",
+      "status": "PASS"
+    },
+    {
+      "id": "CC-022",
+      "kind": "STATIC",
+      "status": "PASS"
+    },
+    {
+      "id": "CC-023",
+      "kind": "STATIC",
+      "status": "PASS"
+    },
+    {
+      "id": "CC-024",
+      "kind": "BEHAVIOR",
+      "status": "PASS"
+    },
+    {
+      "id": "CC-025",
+      "kind": "STATIC",
+      "status": "PASS"
+    },
+    {
+      "id": "CC-026",
+      "kind": "BEHAVIOR",
+      "status": "PASS"
+    },
+    {
+      "id": "CC-027",
+      "kind": "STATIC",
+      "status": "PASS"
+    },
+    {
+      "id": "CC-028",
+      "kind": "BEHAVIOR",
+      "status": "PASS"
+    },
+    {
+      "id": "CC-029",
+      "kind": "BEHAVIOR",
+      "status": "PASS"
+    },
+    {
+      "id": "CC-030",
+      "kind": "BEHAVIOR",
+      "status": "PASS"
+    },
+    {
+      "id": "CC-031",
+      "kind": "BEHAVIOR",
+      "status": "PASS"
+    },
+    {
+      "id": "CC-032",
+      "kind": "BEHAVIOR",
+      "status": "PASS"
+    },
+    {
+      "id": "CC-033",
+      "kind": "BEHAVIOR",
+      "status": "PASS"
+    },
+    {
+      "id": "CC-034",
+      "kind": "BEHAVIOR",
+      "status": "PASS"
+    },
+    {
+      "id": "CC-035",
+      "kind": "BEHAVIOR",
+      "status": "PASS"
+    },
+    {
+      "id": "CC-036",
+      "kind": "BEHAVIOR",
+      "status": "PASS"
+    },
+    {
+      "id": "CC-037",
+      "kind": "BEHAVIOR",
+      "status": "PASS"
+    },
+    {
+      "id": "CC-038",
+      "kind": "BEHAVIOR",
+      "status": "PASS"
+    },
+    {
+      "id": "CC-039",
+      "kind": "BEHAVIOR",
+      "status": "PASS"
+    },
+    {
+      "id": "CC-040",
+      "kind": "BEHAVIOR",
+      "status": "PASS"
+    },
+    {
+      "id": "CC-041",
+      "kind": "BEHAVIOR",
+      "status": "PASS"
+    },
+    {
+      "id": "CC-042",
+      "kind": "BEHAVIOR",
+      "status": "PASS"
+    },
+    {
+      "id": "CC-043",
+      "kind": "BEHAVIOR",
+      "status": "PASS"
+    },
+    {
+      "id": "CC-044",
+      "kind": "BEHAVIOR",
+      "status": "PASS"
+    },
+    {
+      "id": "CC-045",
+      "kind": "BEHAVIOR",
+      "status": "PASS"
+    },
+    {
+      "id": "CC-046",
+      "kind": "BEHAVIOR",
+      "status": "PASS"
+    },
+    {
+      "id": "CC-047",
+      "kind": "BEHAVIOR",
+      "status": "PASS"
+    },
+    {
+      "id": "CC-048",
+      "kind": "BEHAVIOR",
+      "status": "PASS"
+    },
+    {
+      "id": "CC-049",
+      "kind": "BEHAVIOR",
+      "status": "PASS"
+    },
+    {
+      "id": "CC-050",
+      "kind": "BEHAVIOR",
+      "status": "PASS"
+    },
+    {
+      "id": "CC-051",
+      "kind": "BEHAVIOR",
+      "status": "PASS"
+    },
+    {
+      "id": "CC-052",
+      "kind": "BEHAVIOR",
+      "status": "PASS"
+    },
+    {
+      "id": "CC-053",
+      "kind": "BEHAVIOR",
+      "status": "PASS"
+    },
+    {
+      "id": "CC-054",
+      "kind": "BEHAVIOR",
+      "status": "PASS"
+    },
+    {
+      "id": "CC-055",
+      "kind": "BEHAVIOR",
+      "status": "PASS"
+    },
+    {
+      "id": "CC-056",
+      "kind": "STATIC",
+      "status": "PASS"
+    },
+    {
+      "id": "CC-057",
+      "kind": "BEHAVIOR",
+      "status": "PASS"
+    },
+    {
+      "id": "CC-058",
+      "kind": "BEHAVIOR",
+      "status": "PASS"
+    },
+    {
+      "id": "CC-059",
+      "kind": "BEHAVIOR",
+      "status": "PASS"
+    },
+    {
+      "id": "CC-060",
+      "kind": "BEHAVIOR",
+      "status": "PASS"
+    },
+    {
+      "id": "CC-061",
+      "kind": "BEHAVIOR",
+      "status": "PASS"
+    },
+    {
+      "id": "CC-062",
+      "kind": "BEHAVIOR",
+      "status": "PASS"
+    },
+    {
+      "id": "CC-063",
+      "kind": "BEHAVIOR",
+      "status": "PASS"
+    },
+    {
+      "id": "CC-064",
+      "kind": "BEHAVIOR",
+      "status": "PASS"
+    },
+    {
+      "id": "CC-065",
+      "kind": "BEHAVIOR",
+      "status": "PASS"
+    },
+    {
+      "id": "CC-066",
+      "kind": "BEHAVIOR",
+      "status": "PASS"
+    },
+    {
+      "id": "CC-067",
+      "kind": "BEHAVIOR",
+      "status": "PASS"
+    },
+    {
+      "id": "CC-068",
+      "kind": "STATIC",
+      "status": "PASS"
+    },
+    {
+      "id": "CC-069",
+      "kind": "STATIC",
+      "status": "PASS"
+    },
+    {
+      "id": "CC-070",
+      "kind": "BEHAVIOR",
+      "status": "PASS"
+    },
+    {
+      "id": "CC-071",
+      "kind": "BEHAVIOR",
+      "status": "PASS"
+    },
+    {
+      "id": "CC-072",
+      "kind": "BEHAVIOR",
+      "status": "PASS"
+    },
+    {
+      "id": "CC-073",
+      "kind": "STATIC",
+      "status": "PASS"
+    },
+    {
+      "id": "CC-074",
+      "kind": "BEHAVIOR",
+      "status": "PASS"
+    },
+    {
+      "id": "CC-075",
+      "kind": "STATIC",
+      "status": "PASS"
+    },
+    {
+      "id": "CC-076",
+      "kind": "STATIC",
+      "status": "PASS"
+    },
+    {
+      "id": "CC-077",
+      "kind": "STATIC",
+      "status": "PASS"
+    },
+    {
+      "id": "CC-078",
+      "kind": "BEHAVIOR",
+      "status": "PASS"
+    },
+    {
+      "id": "CC-079",
+      "kind": "STATIC",
+      "status": "PASS"
+    },
+    {
+      "id": "CC-080",
+      "kind": "BEHAVIOR",
+      "status": "PASS"
+    },
+    {
+      "id": "CC-081",
+      "kind": "BEHAVIOR",
+      "status": "PASS"
+    },
+    {
+      "id": "CC-082",
+      "kind": "STATIC",
+      "status": "PASS"
+    },
+    {
+      "id": "CC-083",
+      "kind": "BEHAVIOR",
+      "status": "PASS"
+    },
+    {
+      "id": "CC-084",
+      "kind": "STATIC",
+      "status": "PASS"
+    },
+    {
+      "id": "CC-085",
+      "kind": "BEHAVIOR",
+      "status": "PASS"
+    }
+  ]
+}

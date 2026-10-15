@@ -156,7 +156,8 @@ try {
     const html = renderToStaticMarkup(React.createElement(AppliedMonthView, { projection: result.projection, semanticState: result.semanticState,
       plan: null, revision: result.revision.revisionNumber, comparison: result.comparison, today: world.asOfDate }));
     assert.ok(html.includes('data-official-comparison="official-plan-comparison@v1"'));
-    assert.ok(html.includes('Une nouvelle révision a été appliquée'));
+    assert.ok(html.includes('Une version plus récente de votre Plan existe.'));
+    assert.ok(html.includes('Consulter la dernière version'));
   });
   await check('T12_CHANGED_AUTHORITIES_COHERENT_CURRENT_COMPARISON', async () => {
     const before = await repository.readActivePlan(householdId, '2026-11'), digest = plannerDigest(before.activeRevision);

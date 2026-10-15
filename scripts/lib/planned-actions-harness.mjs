@@ -7,8 +7,8 @@ const require = createRequire(import.meta.url);
 
 /** Runs the real server actions, parsers, resolver, mutations and finance engine.
  * Only authenticated transport, canonical reads and Next invalidation are faked. */
-export function planningHarness() {
-  const householdId = randomUUID(), userId = randomUUID();
+export function planningHarness(identity = {}) {
+  const householdId = identity.householdId ?? randomUUID(), userId = identity.userId ?? randomUUID();
   const client = plannedExpenseMemoryClient();
   const facts = { places: [], vehicle: null, history: [], inputs: { "2026-10": structuredClone(inputs) },
     refreshes: 0, monthReads: [], canonicalReads: 0 };
