@@ -1,13 +1,19 @@
 {
-  "status": "EXECUTED_PASS_VERCEL_PREVIEW",
+  "status": "EXECUTED_PASS_VERCEL_PREVIEW_AND_PRODUCTION",
   "command": "npm run build",
   "deployments": [
     { "id": "dpl_Hy6YDfpzcV8caTaLfMWy9nGsxQLH", "compiledSeconds": 28.8, "buildCompleted": true, "deploymentCompleted": true },
     { "id": "dpl_6DN9YC3xgRPAwyAXUpuLeWXt517K", "compiledSeconds": 29.6, "buildCompleted": true, "deploymentCompleted": true },
-    { "id": "dpl_B8GV8PZ28m8neBs85Ho9sS9tWdLz", "compiledSeconds": 29.1, "buildCompleted": true, "deploymentCompleted": true }
+    { "id": "dpl_B8GV8PZ28m8neBs85Ho9sS9tWdLz", "compiledSeconds": 29.1, "buildCompleted": true, "deploymentCompleted": true, "benchmarkEligible": false, "reason": "Metrics flag was not enabled in this Git deployment" },
+    { "id": "dpl_6ZJrigA4kXV6GmtFLwLcjoG1tcnN", "compiledSeconds": 30.6, "typescriptSeconds": 34.4, "buildCompleted": true, "deploymentCompleted": true },
+    { "id": "dpl_2cCNvMv7r6WHKSLBQKhkCaDW1KWb", "compiledSeconds": 31.7, "typescriptSeconds": 39.6, "buildCompleted": true, "deploymentCompleted": true, "source": "3b5b11c7d5f0b4ac1d7705d4ac6adea748d16b85" },
+    { "id": "dpl_9Q4ZLMcGktWn4yjHUwLZZuRPNHFM", "target": "production", "source": "9cea51cca588eddb05ded0b478cb04f016f966ef", "buildCompleted": true, "deploymentCompleted": true, "observedLogMarkers": ["Running npm run build", "Build Completed in /vercel/output [1m]", "Deployment completed"] }
   ],
   "typescript": "EXECUTED_PASS_LOCAL_EXIT_0",
   "financialParity": { "cases": 22, "hashesPerCase": 9, "status": "PASS" },
   "legacyOrchestrationHarness": { "status": "FAIL", "error": "Unstubbed import ./activity-history-artifact", "affectedFilesUnchangedFromMain": true },
-  "authenticatedBrowser": "NOT_RUN"
+  "authenticatedBrowser": "EXECUTED_PASS_LIMITED_AUTHENTICATED_PREVIEWS",
+  "authenticatedApply": "NOT_RUN",
+  "browserTailSLO": "NOT_CERTIFIED",
+  "draftProductionSmoke": "EXECUTED_PASS_AUTHENTICATED_ON_13838678_AND_9cea51cc"
 }

@@ -1,0 +1,23 @@
+{
+ "date":"2026-10-15",
+ "draftPR":32,
+ "draftMerge":"13838678e69e86e3abeff4843926e6cdff92ec95",
+ "performancePR":33,
+ "candidate":"b523cc74bbc84b629436a0f7149aaaed8463dedf",
+ "merge":"9cea51cca588eddb05ded0b478cb04f016f966ef",
+ "candidateAndMergeTree":"beaa6cba49a45beecf198527e2bcdeb41ebd74cf",
+ "deployment":"dpl_9Q4ZLMcGktWn4yjHUwLZZuRPNHFM",
+ "deploymentURL":"https://budgetisation-md4582hs4-adriensauvageot34-6137s-projects.vercel.app",
+ "deploymentState":"READY",
+ "flags":{"COMPOSER_PREVIEW_HTTP_ENABLED":"1","COMPOSER_P14_SNAP3_HISTORICAL_BASIS":"1","COMPOSER_P14_P3_HISTORICAL_REUSE":"0","COMPOSER_P14_SNAP1_ACTIVITY_HISTORY":"0"},
+ "region":{"projectDefault":"iad1","composerPageAndPreviewOverride":"fra1","overrideRuntimeVerified":"AUTHENTICATED_PREVIEW","productionRuntimeRegionNotDirectlyInstrumented":true},
+ "productionSmoke":{"authenticated":true,"preparedMonth":"FRESH","boardPresent":true,"existingPreparedMonthDraftUntouched":true,"testMonth":"2026-12","initialActiveDrafts":0,"save":"SAVED","preview":"BLOCKED_INCOMPLETE_MONTH","reloadPreservesDecision":true,"finalLifecycle":"ABANDONED","finalVersion":2,"digest":"70d36c088f55d7705bfc9ce020cd53e021e6b8b59bffe3b5ce79d9344defd59c","earlierArchivesUnchanged":[8,6],"applyExecuted":false},
+ "financialCounters":{"tablesCompared":9,"changed":0,"note":"Same pg_stat_user_tables insert/update/delete counters before and after; no destructive operations or financial writer invoked."},
+ "snapshotState":{"revision":1,"schemaEpoch":2,"enabled":true,"writerCoverage":true,"canonicalGeneration":2,"m7Generation":1,"changed":false},
+ "snapshotAdmission":{"authenticatedPreviews":"CANONICAL_HIT_AND_M7_HIT","productionDirectTrace":"NOT_RUN_METRICS_OFF","diagnosticAPIBrowserNavigation":"BLOCKED_BY_CLIENT_NOT_BYPASSED"},
+ "runtimeErrors":{"window":"10 minutes","deploymentScoped":true,"errorOrFatalLogsFound":0,"globalCertification":false},
+ "screenshot":{"capturedAndDisplayed":true,"persisted":false,"reason":"Browser artifact file write EPERM"},
+ "realPerformanceSLO":"NOT_CERTIFIED",
+ "verdict":"P14_READY_TO_CLOSE_WITH_DOCUMENTED_LIMITS",
+ "B1ImplementationStarted":false
+}

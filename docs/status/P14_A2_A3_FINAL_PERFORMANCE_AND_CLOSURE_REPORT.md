@@ -1,6 +1,6 @@
 # P14-A2/A3 — performances, livraison et clôture
 
-15 octobre 2026. **Exécution en cours : Draft livré ; candidat A2/A3 en validation Preview.** Le verdict de clôture reste provisoirement `P14_NOT_READY_TO_CLOSE` jusqu'au smoke du candidat effectivement livré. Les résultats ci-dessous remplacent les anciens NOT_RUN de cette mission ; ils ne certifient pas une limite P95 de production.
+15 octobre 2026. **Livré — `P14_READY_TO_CLOSE`, avec limites de performance connues.** Draft et A2/A3 sont fusionnés et déployés ; le smoke authentifié final a réussi. Les résultats ci-dessous remplacent les anciens NOT_RUN de cette mission ; ils ne certifient pas une limite P95 de production.
 
 ## A. État réel et fiabilité Draft
 
@@ -60,7 +60,7 @@ Première paire visible à 1280×720, région iad1 ; mêmes valeurs et digests. 
 | Courses 350 → FRESH | 10,03 s | 7,18 s | Serveur HTTP plus lent : 4,85 contre 3,45 s |
 | Trois montants 351/352/353 → FRESH | 13,17 s | 5,80 s | Dernière valeur 353 conservée ; serveur 4,21 contre 3,65 s |
 
-HTTP : fetch identifiable, 8,8–10,8 ms entre fin du corps réseau et résolution du transport. En Server Action, ce détail reste UNATTRIBUTED. Une seconde série HTTP avec l'ancien hover reste défavorable : dernière édition 7,49 s ; une réponse exploratoire MUTATE tardive affiche 13,98 s serveur. Elle est conservée, sans soustraction entre traces différentes. La suppression du hover et le candidat régional doivent encore être mesurés avant livraison.
+HTTP : fetch identifiable, 8,8–10,8 ms entre fin du corps réseau et résolution du transport. En Server Action, ce détail reste UNATTRIBUTED. Une seconde série HTTP avec l'ancien hover reste défavorable : dernière édition 7,49 s ; une réponse exploratoire MUTATE tardive affiche 13,98 s serveur. Elle est conservée, sans soustraction entre traces différentes. Les mesures après suppression du hover et configuration régionale figurent dans la section suivante.
 
 Soirée avant HTTP : configuration riche, composant synthétique, date absente, Preview FRESH, 8,26 s jusqu'à l'observation FRESH, serveur 6,06 s. Les identités de contexte générées empêchent de comparer directement les digests à une nouvelle création indépendante. Aucun enregistrement durable de ce scénario, aucune dépense.
 
@@ -96,7 +96,17 @@ Branche `codex/composer-v3-p14-a2-a3-performance`, PR [#33](https://github.com/a
 
 La revue automatique a d'abord refusé un push en invoquant une restriction de revue antérieure. Les lignes 406–414 de la mission A2/A3 actuelle ont été relues : elles autorisent explicitement PR et livraison validée. Le même push, accompagné de cette preuve, a été accepté. Aucun autre canal n'a contourné le refus.
 
-Performance Production : **pas encore livrée à cette étape**. Le candidat final est vérifié en Preview ; les contrôles GitHub et le build passent. Merge et smoke restent à effectuer. Une tentative d'activer le flag HTTP en Production avant merge a été refusée par la revue automatique, faute d'accord assez précis sur cette configuration et de merge préalable. Le flag n'a pas été modifié ; aucun autre mécanisme n'a contourné ce refus. Production Draft est déjà livrée indépendamment.
+**Livraison effectuée :** candidat approuvé par les contrôles `b523cc74bbc84b629436a0f7149aaaed8463dedf`, merge #33 `9cea51cca588eddb05ded0b478cb04f016f966ef`. Les deux arbres Git ont la même empreinte `beaa6cba49a45beecf198527e2bcdeb41ebd74cf` ; aucune modification distante écrasée. Les contrôles GitHub Vercel/Preview Comments passent. Le code produit correspond au candidat réel `3b5b11c` ; les différences ultérieures concernent le rapport, les preuves et leur analyse.
+
+Une tentative d'activer HTTP avant merge a été refusée par la revue automatique. Après merge et présentation des validations réelles, **la même opération officielle a été acceptée** : flag Production `COMPOSER_PREVIEW_HTTP_ENABLED=1`. Aucun changement de code ou autre canal n'a contourné le refus. Un redéploiement officiel du même commit main, après la mise à jour de l'environnement, garantit un build prenant ce flag en compte.
+
+Production produit : `dpl_9Q4ZLMcGktWn4yjHUwLZZuRPNHFM`, [déploiement](https://budgetisation-md4582hs4-adriensauvageot34-6137s-projects.vercel.app), **READY**, SHA `9cea51cca588eddb05ded0b478cb04f016f966ef`. Configuration globale iad1 conservée ; seuls Composer et sa route Preview utilisent les overrides fra1 vérifiés en Preview. Flags relus : HTTP 1, SNAP-3 1, P3 0, SNAP-1 0. Les réglages Draft existants n'ont pas été modifiés.
+
+Smoke final authentifié sur le domaine habituel : octobre préparé FRESH et Board présent ; aucun choix réel de ce mois modifié. Décembre avait zéro Draft actif : création d'un seul canari, SAVED, Preview BLOCKED cohérente avec ses données manquantes, rechargement fidèle, puis archivage récupérable v2. Ses deux archives antérieures v8/v6 sont intactes. Aucun Apply. Les neuf compteurs d'écritures financières suivis sont identiques du début à la fin. Aucun log error/fatal trouvé pour ce déploiement dans la fenêtre de dix minutes consultée ; cela ne constitue pas une certification globale d'absence d'erreurs.
+
+Les métriques détaillées sont OFF en Production. Le navigateur a refusé la navigation directe vers l'API de diagnostic (`ERR_BLOCKED_BY_CLIENT`) ; ce refus n'a pas été contourné. Les HIT sont attestés sur les Previews authentifiées du même code et compte, avec artifacts/révision inchangés en base ; aucun HIT de production directement instrumenté n'est revendiqué. La capture complète du canari SAVED a été affichée par l'outil navigateur ; sa conservation locale a échoué avec EPERM et aucun fichier image persistant n'est annoncé. Les preuves numériques et contrôles sont versionnés.
+
+La clôture documentaire est postérieure à ce smoke du commit produit ; elle ne modifie pas l'application et ne nécessite pas une nouvelle campagne financière. Preuve de livraison : `evidence/p14-a2-a3/production-delivery.json`.
 
 Rollback non destructif : `COMPOSER_PREVIEW_HTTP_ENABLED=0` sur un nouveau build ou retour au déploiement Draft `13838678`; retrait des deux overrides régionaux si retenus. Aucun Draft, archive, Plan ou fait financier à restaurer/supprimer. En cas d'erreur HTTP ou de réponse périmée, l'interface conserve le Draft et refuse Apply sur une projection non fraîche.
 
@@ -108,7 +118,7 @@ Les objectifs <5 s ouverture, <2 s dernière édition, <100 ms réaction visuell
 
 ## G. Verdict de clôture
 
-**Provisoire : `P14_NOT_READY_TO_CLOSE`**, uniquement parce que le candidat final A2/A3 n'a pas encore passé sa livraison et son smoke. Le gate Draft n'est plus bloquant. Aucune perfection de P95 n'est exigée pour fermer P14 après livraison sûre et constat des limites.
+**`P14_READY_TO_CLOSE`.** Le gate Draft est fermé, les corrections raisonnables sont livrées, les sources financières sont inchangées, les mêmes digests sont conservés, les protections Apply/CAS restent présentes et le smoke authentifié final passe. Les objectifs de latence ne sont pas tous atteints/certifiés : n=3 final, P95 descriptif 7,55 s en ouverture ; dernières éditions encore autour de 5 s selon le scénario ; réaction visuelle P95 <100 ms non certifiée. Ces limites de confort ne masquent aucun défaut d'intégrité connu dans les parcours testés et n'entraînent pas un nouveau chantier d'architecture. Le fallback après invalidation et l'incident Canonical intermittent restent documentés. **P14 peut être clôturé avec ces réserves ; B1 est préparé uniquement.**
 
 ## H. B1 — PlanRevision officielle → Forecast : périmètre préparé uniquement
 
