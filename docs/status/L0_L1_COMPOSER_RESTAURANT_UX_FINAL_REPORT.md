@@ -66,7 +66,7 @@ Le mois de test n'avait pas de Draft actif au départ ; une archive antérieure 
 5. « Abandonner mes essais » a été confirmé : le seul Draft créé par ce smoke est `ABANDONED`, version 4, montant 70 € conservé. Il n'y a plus de Draft actif sur ce mois ; les deux archives (ancienne + test) sont récupérables. L'UI est revenue au Centre de contrôle du mois.
 6. Révision officielle avant/après : **0**. Aucun clic Apply, aucune création de PlanRevision, aucune saisie dans les finances réelles.
 
-[Smoke de production](evidence/l0-l1-composer-restaurant/release-production-smoke.json), [résumé Restaurant après reprise](evidence/l0-l1-composer-restaurant/release-production-summary.png). Les assertions de concurrence et Apply/CAS ont été rejouées sur fixtures ; aucun Apply authentifié réel ni nouveau test sur un deuxième appareil physique n'est revendiqué. Les tables financières réelles n'ont pas fait l'objet d'un hachage exhaustif pendant ce smoke.
+[Smoke de production](evidence/l0-l1-composer-restaurant/release-production-smoke.json). La capture enregistrée pendant ce smoke était vide et a été écartée après contrôle ; les captures UX conservées sont celles de la fixture et de la Preview authentifiée. Les assertions de concurrence et Apply/CAS ont été rejouées sur fixtures ; aucun Apply authentifié réel ni nouveau test sur un deuxième appareil physique n'est revendiqué. Les tables financières réelles n'ont pas fait l'objet d'un hachage exhaustif pendant ce smoke.
 
 ## H. SNAP-3, performance et incident de lecture
 
