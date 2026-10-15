@@ -2,7 +2,9 @@
 
 ## État de livraison
 
-PR #44 ouverte ; Preview READY et authentifiée. Livraison Production en préparation. Les résultats sont distingués entre fixtures, Preview authentifiée et Production.
+**L2A_RELEASED_WITH_VALIDATION_LIMITATIONS**
+
+PR #44 fusionnée ; Production READY sur `c5d33fc6117417e83d66d2ec6c3348bc7df01937`. Cinq presets et cinq créations originales livrés. Sauvegarde et reprise authentifiées Production confirmées, après un incident Canonical. Brouillon de test archivé sans suppression. Aucune certification globale de performance ou RLS n’est ajoutée.
 
 ## A. État initial
 
@@ -108,7 +110,18 @@ Fixture locale compilée avec React en mode production, faux providers et PGlite
 
 Preview authentifiée : connexion réelle, cinq illustrations chargées et cinq éditeurs ouverts ; budget Livraison 32 € admis en mémoire, retour Compiler sans erreur et état BLOCKED pour scénario incomplet. Apply reste interdit. L’autosauvegarde est désactivée par la configuration de Preview ; aucun contournement ni modification de ses variables. **Sauvegarde/Reload authentifiés Preview : NOT_RUN**. La preuve de sauvegarde/reprise complète des cinq presets est synthétique, pas authentifiée.
 
-Production : à compléter. Les timeouts Canonical préexistants restent une réserve L1/P14 ; cette mission ne les réaudite pas. Aucune certification globale FRESH réelle n’est revendiquée.
+Production authentifiée (décembre 2026, aucun Draft actif et révision officielle 0 avant test) :
+
+- Site servi sur le SHA du merge ; cinq vignettes et éditeurs disponibles, aucune erreur à l’ouverture initiale.
+- Création des cinq presets. Livraison 32 € explicitement choisi ; article « Article de test L2-A » conservé pour Vêtements ; autres intentions laissées incomplètes sans montant, trajet ou date inventés.
+- Autosauvegarde : **SAVED**, digest `74b34dd7acd71fcff00928ac8f98810b22c1c826dbdac3ec65772ac5958f8da8`.
+- Corroboration SQL strictement en lecture seule, bornée au même auteur et mois : Draft ACTIVE version 2, cinq Contexts et cinq clés distinctes, digest identique, révision officielle toujours 0. Une archive vide préexistante reste conservée. Cette lecture privilégiée **n’est pas une nouvelle preuve RLS authentifiée**.
+- Premier Reload : erreur serveur Canonical **timing / 57014**, digest d’erreur navigateur `3982295859`. Logs corrélés au GET et à des POST Preview. Même classe d’incident déjà consignée lors de L1 ; aucun chemin Canonical/SNAP-3 n’est modifié par L2-A.
+- Une seule reprise du GET après la fin des appels précédents : **PASS authentifié**, SAVED et digest exactement identique. Les cinq Contexts sont conservés ; réouverture Vêtements avec l’article de test et l’illustration correcte, Apply désactivé pendant cette configuration. Aucune relance de sauvegarde ou écriture en double.
+- Archivage par le bouton authentifié « Abandonner mes essais », après lecture de la confirmation explicite : **PASS**, archive ABANDONED version 3 conservant le même digest et les cinq Contexts, aucun Draft actif restant. Archive vide préexistante inchangée ; révision officielle toujours 0. Retour visible au Centre de contrôle de décembre. Preuves : `production-smoke.json`, `production-durable-read.json`, `production-after-archive.json`.
+- Aucun Apply réel. Aucun appel à un writer de données financières, aucune PlanRevision de test. La comparaison par hash de l’ensemble des tables financières réelles est **NOT_RUN** ; la preuve se limite aux opérations exécutées, aux contrats et à la révision officielle relue.
+
+Les réserves restent : Canonical intermittent, E2E financiers réels avec Apply NOT_RUN (interdit par cette mission), deuxième appareil physique NOT_RUN, P95 réel NOT_CERTIFIED. Les tests de conservation/Apply/Mon Plan complets restent explicitement synthétiques.
 
 ## I. Livraison et rollback
 
@@ -116,7 +129,36 @@ PR : https://github.com/adriensauvageot34/Budgetisation/pull/44
 
 Preview : https://budgetisation-m1xw217eb-adriensauvageot34-6137s-projects.vercel.app
 
-Déploiement `dpl_CqnG9FHDMUKHandMwue8jyQ187gP`, source Git `232238d`, READY. Checks GitHub/Vercel success ; pas de workflow Actions supplémentaire publié. Merge et Production à compléter.
+Déploiement `dpl_CqnG9FHDMUKHandMwue8jyQ187gP`, source Git `232238d`, READY ; authentification et parcours testés sur ce build.
+
+Commit documentaire `76037c50ac2762b38e90420ce18a01b380abf4fe` : arbre produit identique, deuxième Preview `dpl_HPX8SbfBt5b8r3jbwcgH5JsfJKzi` READY, checks Vercel/GitHub success. Aucun workflow Actions supplémentaire publié.
+
+Merge main : **`c5d33fc6117417e83d66d2ec6c3348bc7df01937`**. Arbres du merge et de la tête PR strictement identiques : `f30b60ba5c9d3dec2c3c1d70ef93188fd785c83f`. Checkout synchronisé par fast-forward, aucun écrasement distant.
+
+Production : **`dpl_TXMpiRaKakPxBtGERkn4sy9eSkv3`**, READY, alias vérifié `https://budgetisation-tan.vercel.app`, source Git main au SHA du merge. Build complet Next PASS : compilation 39,5 s, TypeScript 39,8 s, génération des pages et déploiement terminés. Preuves : `production-build.log`, `production-deployment.json`.
+
+Pas de rollback produit déclenché pour le timeout préexistant non introduit par ce diff. Aucune modification SQL ou de configuration tentée pour masquer l’incident. Aucun déploiement supplémentaire de performances, aucun L2-B.
+
+### Verdicts finaux
+
+| Gate | Résultat exact |
+|---|---|
+| Cinq recettes liées aux capacités publiées | PASS |
+| Cinq images originales, exports, hashes, inspection | PASS |
+| Conservation complète, parité, Apply/Reload/Mon Plan | EXECUTED_PASS_PGLITE_SYNTHETIC_ONLY |
+| Parité historique 22×9 | EXECUTED_PASS |
+| TypeScript / Next complet Vercel Preview et Production | EXECUTED_PASS |
+| Desktop 1440/1728/1920, Undo/Redo | EXECUTED_PASS_LIMITED_FIXTURE |
+| Création et éditeurs sur Preview authentifiée | EXECUTED_PASS_LIMITED_READ_ONLY_PREVIEW |
+| Sauvegarde/reprise/archivage Production | EXECUTED_PASS_AFTER_ONE_CANONICAL_TIMEOUT_RETRY |
+| RLS authentifiée nouvelle campagne | NOT_RUN, protections inchangées |
+| Apply réel / PlanRevision personnelle | NOT_RUN, interdit et non exécuté |
+| SNAP-3 / sources financières / migrations | UNCHANGED |
+| Performance réelle / P95 | NOT_CERTIFIED |
+| Anciennes assertions P09/P10 | FAIL_PREEXISTING_REPRODUCED_ON_BASE |
+| Livraison | L2A_RELEASED_WITH_VALIDATION_LIMITATIONS |
+
+La clôture documentaire locale est conservée après le merge ; elle ne change pas l’arbre produit déployé. Aucun développement L2-B commencé.
 
 Rollback : retirer les entrées de création et les adaptations UI L2-A tout en conservant le lecteur de `composerPresentation@v1` pour les Drafts/Plans déjà enregistrés. Ne pas redéployer aveuglément L1 sans ce lecteur : L1 ignorait cette nouvelle namespace. Aucun Draft, archive ou Plan n’est supprimé ; aucune opération SQL n’est nécessaire.
 

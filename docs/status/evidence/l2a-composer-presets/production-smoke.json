@@ -1,0 +1,30 @@
+{
+  "commit": "c5d33fc6117417e83d66d2ec6c3348bc7df01937",
+  "deployment": "dpl_TXMpiRaKakPxBtGERkn4sy9eSkv3",
+  "targetMonth": "2026-12",
+  "authenticated": true,
+  "initialActiveDraft": false,
+  "officialRevisionBefore": "0",
+  "applyExecuted": false,
+  "financialWriteActionsExecuted": 0,
+  "savedDigest": "74b34dd7acd71fcff00928ac8f98810b22c1c826dbdac3ec65772ac5958f8da8",
+  "allFiveSave": "SAVED",
+  "reload": "PASS_AFTER_ONE_CANONICAL_TIMEOUT_RETRY",
+  "durableCorroboration": "PRIVILEGED_READ_ONLY_SQL_MATCHED_ALL_FIVE_AND_CONFIRMED_DIGEST",
+  "preview": "NOT_CERTIFIED_REAL_FRESH_CANONICAL_TIMING_57014",
+  "officialRevisionAfter": 0,
+  "officialRevisionAfterReload": 0,
+  "reedit": {
+    "applyDisabled": true,
+    "articlePreserved": true,
+    "illustration": "clothing-shopping",
+    "save": "SAVED"
+  },
+  "archive": "PASS_AUTHENTICATED_UI_CORROBORATED_BY_READ_ONLY_SQL",
+  "archiveVersion": 3,
+  "finalActiveDrafts": 0,
+  "testArchiveKeepsFivePresets": true,
+  "existingEmptyArchiveUnchanged": true,
+  "realFinancialTableHashComparison": "NOT_RUN",
+  "productionPreview": "CANONICAL_TIMING_57014_OBSERVED"
+}
