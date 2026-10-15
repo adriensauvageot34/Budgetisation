@@ -1,6 +1,6 @@
 # B0 + B1 — PlanRevision officielle → Forecast
 
-15 octobre 2026. État de préparation : **B1_IMPLEMENTED_NOT_RELEASED**. Gates Preview/Production encore en attente dans cette version du rapport.
+15 octobre 2026. **B1_PRODUCTION_PASS**, pour le périmètre livré ; test authentifié avec Plan officiel **NOT_RUN** faute de révision existante. Le cycle avec Plan est vérifié sur PostgreSQL synthétique avec les vrais services. Cette limite reste distincte des contrôles de production réussis.
 
 ## A. État initial
 
@@ -21,6 +21,8 @@ Main et Production `83bb1a91da3442e893e5c804fb4f71007f61c467`, déploiement `dpl
 
 Ces montants sont des fixtures synthétiques. Aucun Plan ni paiement personnel n'a été créé pour la certification.
 
+Limite de financement conservée : le Kernel accepte actuellement BANK et refuse Swile/Edenred tant que leur admissibilité n'est pas certifiée. Une réserve d'épargne n'est pas une source d'allocation définie dans `FundingSource`. B0 vérifie donc séparément réservation et financement admissible ; il ne certifie pas un parcours de dépense directement financée par une réserve. Aucun financement de remplacement ni retrait d'épargne n'est inventé. Cette extension de contrat reste hors B1.
+
 ## C. B1 — contrat opérationnel
 
 `official-plan-comparison@v1` est retourné sous `comparison` par le résolveur officiel. Il est transmis par la page Mois à venir à son consommateur serveur existant `AppliedMonthView`, sans route parallèle ni refonte B2.
@@ -40,7 +42,7 @@ La révision immuable conserve ses preuves et leurs digests inchangés. Le contr
 
 Un SELECT étroit de `phase2_month_plans` après l'évaluation vérifie le pointeur actif. Le résultat reste attaché à R1 si R2 a été appliquée pendant READ, avec SUPERSEDED et une indication demandant de recharger ; une erreur de lecture devient UNAVAILABLE, sans prétendre à la fraîcheur. CURRENT_AT_CHECK est limité à l'instant de vérification et n'est pas une garantie contre un Apply ultérieur. Les anciens adaptateurs restent compatibles via `readActivePlan` ; le runtime utilise la lecture étroite. Aucun SELECT supplémentaire sans Plan.
 
-Ni le schéma `PlanSemanticState`, ni le stockage Draft, ni les preuves persistées, ni Compiler/Finance V2/Apply/CAS ne changent. Les anciennes révisions restent lisibles sans migration.
+Ni le schéma `PlanSemanticState`, ni le stockage Draft, ni les preuves persistées, ni Compiler/Finance V2/Apply/CAS ne changent. Les anciennes révisions restent lisibles sans migration. Une décision appliquée reste un scénario adopté, pas un paiement observé ni une preuve de réalisation. Aucun nouveau statut UX « confirmé/envisagé » n'est introduit.
 
 ## D. Tests et preuves
 
@@ -58,7 +60,7 @@ Preuves : `evidence/b0-b1-plan-forecast/contracts.json`, `contracts.log`, `regre
 
 La vérification SQL bornée et en lecture seule constate **aucun Plan officiel actif** sur Supabase. Le parcours authentifié avec Plan reste donc NOT_RUN ; aucune révision personnelle ne sera créée pour combler cette limite. Le cycle PlanRevision → lecture → projection → impact est exécuté sur la base synthétique, avec les vrais services et la persistance C0.
 
-Le chemin authentifié sans Plan est **PASS en Preview** : alias de test protégé, même session utilisateur admissible, propriétaire DIRECT_V2, texte visible de la page financière entièrement identique à la référence Production avant livraison. Aucune donnée personnelle de cette page n'est conservée dans les preuves. Les neuf compteurs financiers sont inchangés après ce test. Les navigations ont dépassé l'attente de l'outil, mais les pages ont ensuite été constatées chargées ; aucune durée de cet outil n'est annoncée comme latence produit. Aucun service_role dans le navigateur, aucune nouvelle permission/RPC/migration, aucun Apply distant. Smoke Production encore à effectuer.
+Le chemin authentifié sans Plan est **PASS en Preview et en Production** : alias de test protégé puis domaine habituel, session utilisateur admissible, propriétaire DIRECT_V2, texte visible de la page financière entièrement identique à la référence Production avant livraison. Aucune donnée personnelle de cette page n'est conservée dans les preuves. Les neuf compteurs financiers sont inchangés après Preview puis après Production. Les premières navigations ont dépassé l'attente de l'outil, mais les pages ont ensuite été constatées chargées, sans nouvelle navigation aveugle ; aucune durée de cet outil n'est annoncée comme latence produit. Aucun service_role dans le navigateur, aucune nouvelle permission/RPC/migration, aucun Apply distant.
 
 ## F. Performance
 
@@ -66,7 +68,13 @@ Le nouveau contrat réutilise intégralement la projection déjà calculée. Mes
 
 ## G. Livraison / rollback
 
-PR [#35](https://github.com/adriensauvageot34/Budgetisation/pull/35), candidat produit `25121b0f34e14040f9a27d93566246c893ce8d8b`, Preview `dpl_5Quzx3zm9rqVFVbZZCXfE5AonQut` READY. Les contrôles GitHub Vercel/Preview Comments passent ; l'alias de test seul a été déplacé. Aucun flag P14 modifié. Merge et smoke Production restent à effectuer. Retour au déploiement `83bb1a9` ou revert des changements B1 : aucune donnée à supprimer/restaurer, car les schémas et preuves restent inchangés.
+PR [#35](https://github.com/adriensauvageot34/Budgetisation/pull/35) fusionnée. Candidat produit `25121b0f34e14040f9a27d93566246c893ce8d8b`, preuves ajoutées par `243b2419f48aeb3c44fedf3b1554695d0d423395`, merge `671c475144f8c1634ddb7213dad9678de25189fb`. Candidat et merge ont le même arbre `353b059a3f13a5462b5b0060bae0dbac902f48af`. Preview produit `dpl_5Quzx3zm9rqVFVbZZCXfE5AonQut` et Preview du HEAD `dpl_F33TXtpeAuBgZoeqiY9hGagt5M9G` READY ; contrôles GitHub Vercel/Preview Comments PASS. Aucun écrasement distant ni force-push.
+
+Production `dpl_4EraMfAFRP5wcorQ7UL1hGuDZDZk` **READY**, SHA `671c475144f8c1634ddb7213dad9678de25189fb`, domaine habituel `budgetisation-tan.vercel.app`. Smoke authentifié READ-only PASS, même restitution DIRECT_V2. Aucun log error/fatal dans la fenêtre de dix minutes propre à ce déploiement ; ce contrôle n'est pas une certification globale d'absence d'erreurs.
+
+Flags relus sans modification : SNAP-3 1, Preview HTTP 1, P3 0. État SNAP-3 inchangé : révision 1, époque 2, enabled=true, couverture writers=true. Aucun nouveau traceur HIT n'a été activé en Production pour cette mission ; ne pas confondre la configuration vérifiée avec une mesure détaillée d'admission. Les preuves sont dans `evidence/b0-b1-plan-forecast/delivery.json`. La clôture documentaire ultérieure ne modifie pas le code produit testé.
+
+Rollback : retour au déploiement `83bb1a9` ou revert des changements B1. Aucune donnée à supprimer/restaurer, car les schémas, révisions et preuves restent inchangés. Le contrat B1 est uniquement lu ; aucune publication Forecast n'est écrite pendant READ.
 
 ## H. B2 — données prêtes, UX non développée
 
