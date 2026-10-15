@@ -15,7 +15,7 @@
     "local": "FAIL_TOOLING_JUNCTION_OUTSIDE_TURBOPACK_ROOT",
     "command": "node node_modules/next/dist/bin/next build",
     "npmPowerShellLauncher": "NOT_STARTED_UNSIGNED_NPM_PS1",
-    "remote": "PENDING"
+    "remote": "EXECUTED_PASS_FULL_NEXT_VERCEL_25121b0"
   },
   "authenticatedPlan": "NOT_RUN_NO_OFFICIAL_PLAN_EXISTS",
   "productionApply": "NOT_RUN_FORBIDDEN"

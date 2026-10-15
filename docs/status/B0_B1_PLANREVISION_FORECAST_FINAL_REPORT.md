@@ -50,7 +50,7 @@ Régressions : parité 22 scénarios × 9 empreintes PASS, P13 huit PASS, Kernel
 
 Ancien `check-phase2-planner-headless.mjs` : FAIL avant les assertions du parcours Soirée, `CONTEXT_REFERENCE_OWNER_UNAVAILABLE`. Son harness omet `validateContextReferences`, alors que le garde existe déjà sur main. Ces deux fichiers sont inchangés par B1. Aucun PASS attribué à ce script ; les nouveaux round-trips couvrent le garde avec le validateur fourni.
 
-Build local : FAIL d'outillage, jonction node_modules hors racine Turbopack. Le lanceur npm.ps1 non signé n'avait pas démarré ; l'appel direct au binaire Next a confirmé cette erreur. Aucune politique PowerShell ni configuration produit modifiée pour la masquer. Le build Vercel à dépendances normales est le gate de livraison restant.
+Build local : FAIL d'outillage, jonction node_modules hors racine Turbopack. Le lanceur npm.ps1 non signé n'avait pas démarré ; l'appel direct au binaire Next a confirmé cette erreur. Aucune politique PowerShell ni configuration produit modifiée pour la masquer. **Build Vercel normal PASS** sur `25121b0` : `npm run build`, compilation 38 s, TypeScript 43 s, build complet et Preview READY.
 
 Preuves : `evidence/b0-b1-plan-forecast/contracts.json`, `contracts.log`, `regressions.json`, `headless.log`, `next-build.log`.
 
@@ -58,7 +58,7 @@ Preuves : `evidence/b0-b1-plan-forecast/contracts.json`, `contracts.log`, `regre
 
 La vérification SQL bornée et en lecture seule constate **aucun Plan officiel actif** sur Supabase. Le parcours authentifié avec Plan reste donc NOT_RUN ; aucune révision personnelle ne sera créée pour combler cette limite. Le cycle PlanRevision → lecture → projection → impact est exécuté sur la base synthétique, avec les vrais services et la persistance C0.
 
-Le chemin authentifié sans Plan sera vérifié en Preview puis Production. Les neuf compteurs d'écritures financières et l'état SNAP-3 ont été relevés avant la campagne. Aucun service_role dans le navigateur, aucune nouvelle permission/RPC/migration, aucun Apply distant.
+Le chemin authentifié sans Plan est **PASS en Preview** : alias de test protégé, même session utilisateur admissible, propriétaire DIRECT_V2, texte visible de la page financière entièrement identique à la référence Production avant livraison. Aucune donnée personnelle de cette page n'est conservée dans les preuves. Les neuf compteurs financiers sont inchangés après ce test. Les navigations ont dépassé l'attente de l'outil, mais les pages ont ensuite été constatées chargées ; aucune durée de cet outil n'est annoncée comme latence produit. Aucun service_role dans le navigateur, aucune nouvelle permission/RPC/migration, aucun Apply distant. Smoke Production encore à effectuer.
 
 ## F. Performance
 
@@ -66,7 +66,7 @@ Le nouveau contrat réutilise intégralement la projection déjà calculée. Mes
 
 ## G. Livraison / rollback
 
-En attente des contrôles Preview. Aucun flag P14 modifié. Retour au déploiement `83bb1a9` ou revert des changements B1 : aucune donnée à supprimer/restaurer, car les schémas et preuves restent inchangés.
+PR [#35](https://github.com/adriensauvageot34/Budgetisation/pull/35), candidat produit `25121b0f34e14040f9a27d93566246c893ce8d8b`, Preview `dpl_5Quzx3zm9rqVFVbZZCXfE5AonQut` READY. Les contrôles GitHub Vercel/Preview Comments passent ; l'alias de test seul a été déplacé. Aucun flag P14 modifié. Merge et smoke Production restent à effectuer. Retour au déploiement `83bb1a9` ou revert des changements B1 : aucune donnée à supprimer/restaurer, car les schémas et preuves restent inchangés.
 
 ## H. B2 — données prêtes, UX non développée
 
