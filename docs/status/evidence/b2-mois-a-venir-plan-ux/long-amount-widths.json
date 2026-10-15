@@ -1,0 +1,72 @@
+[
+  {
+    "requested": [
+      1280,
+      720
+    ],
+    "clipped": [],
+    "overflow": false,
+    "scrollWidth": 1270,
+    "width": 1280
+  },
+  {
+    "requested": [
+      1440,
+      900
+    ],
+    "clipped": [],
+    "overflow": false,
+    "scrollWidth": 1430,
+    "width": 1440
+  },
+  {
+    "requested": [
+      1728,
+      900
+    ],
+    "clipped": [],
+    "overflow": false,
+    "scrollWidth": 1718,
+    "width": 1728
+  },
+  {
+    "requested": [
+      1920,
+      1080
+    ],
+    "clipped": [],
+    "overflow": false,
+    "scrollWidth": 1910,
+    "width": 1920
+  },
+  {
+    "requested": [
+      320,
+      844
+    ],
+    "clipped": [],
+    "overflow": false,
+    "scrollWidth": 310,
+    "width": 320
+  },
+  {
+    "requested": [
+      375,
+      844
+    ],
+    "clipped": [],
+    "overflow": false,
+    "scrollWidth": 366,
+    "width": 375
+  },
+  {
+    "requested": [
+      768,
+      1024
+    ],
+    "clipped": [],
+    "overflow": false,
+    "scrollWidth": 758,
+    "width": 768
+  }
+]

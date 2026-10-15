@@ -1,0 +1,68 @@
+{
+  "results": [
+    {
+      "case": "CHANGED",
+      "status": "EXECUTED_PASS_PGLITE_SYNTHETIC_ONLY",
+      "counts": {
+        "plans": 1,
+        "revisions": 1
+      },
+      "reads": 3,
+      "revision": "ab3f6804-884c-4f0a-bc45-a6eb65ecf386",
+      "projectionDigest": "cbd189d359a8428f1a87d1bb80b51cf189e6986b54f2d480990fe5fb15f927a2",
+      "semanticDigest": "038edb373299b58a4ed7d449d67301ea973b2e820ddec2245713d6c5490fd2c9",
+      "baseline": "660.00",
+      "remainder": "590.00",
+      "impact": "-70.00",
+      "freshness": {
+        "activeRevision": "CURRENT_AT_CHECK",
+        "checkedPointer": {
+          "planId": "b970a584-bc66-493d-8fc5-498fa8fe1480",
+          "activeRevisionId": "ab3f6804-884c-4f0a-bc45-a6eb65ecf386",
+          "activeRevisionNumber": 1
+        },
+        "authorities": "CHANGED_AUTHORITIES"
+      },
+      "financialCanaries": "PASS"
+    },
+    {
+      "case": "LONG",
+      "status": "EXECUTED_PASS_PGLITE_SYNTHETIC_ONLY",
+      "counts": {
+        "plans": 1,
+        "revisions": 1
+      },
+      "reads": 3,
+      "revision": "561b19fb-98e0-466a-b705-3d66d7e33131",
+      "projectionDigest": "7ebe2f66d91c4492945e7c87758d3e7f1a0f0fa8b592609546375999263835b1",
+      "semanticDigest": "038edb373299b58a4ed7d449d67301ea973b2e820ddec2245713d6c5490fd2c9",
+      "baseline": "123456439.00",
+      "remainder": "123456369.00",
+      "impact": "-70.00",
+      "freshness": {
+        "activeRevision": "CURRENT_AT_CHECK",
+        "checkedPointer": {
+          "planId": "ae73bafb-e479-49a4-b549-1063d7813bc9",
+          "activeRevisionId": "561b19fb-98e0-466a-b705-3d66d7e33131",
+          "activeRevisionNumber": 1
+        },
+        "authorities": "EXACT"
+      },
+      "financialCanaries": "PASS"
+    }
+  ],
+  "timings": [
+    {
+      "case": "CHANGED",
+      "renderMs": 215.111,
+      "htmlBytes": 20567
+    },
+    {
+      "case": "LONG",
+      "renderMs": 62.416,
+      "htmlBytes": 20194
+    }
+  ],
+  "financialWrites": "ONLY_EPHEMERAL_SYNTHETIC_C0",
+  "authenticatedPlan": "NOT_RUN"
+}

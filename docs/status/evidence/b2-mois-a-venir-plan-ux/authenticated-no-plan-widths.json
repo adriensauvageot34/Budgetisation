@@ -1,0 +1,194 @@
+{
+  "sameForecastAsB1": true,
+  "measurements": [
+    {
+      "requested": [
+        1280,
+        720
+      ],
+      "buttons": [
+        {
+          "clipped": false,
+          "tag": "A",
+          "width": 169.3625030517578
+        },
+        {
+          "clipped": false,
+          "tag": "BUTTON",
+          "width": 181.2624969482422
+        },
+        {
+          "clipped": false,
+          "tag": "BUTTON",
+          "width": 195.9250030517578
+        }
+      ],
+      "outside": [],
+      "overflow": false,
+      "scrollWidth": 1270,
+      "width": 1280
+    },
+    {
+      "requested": [
+        1440,
+        900
+      ],
+      "buttons": [
+        {
+          "clipped": false,
+          "tag": "A",
+          "width": 169.3625030517578
+        },
+        {
+          "clipped": false,
+          "tag": "BUTTON",
+          "width": 181.2624969482422
+        },
+        {
+          "clipped": false,
+          "tag": "BUTTON",
+          "width": 195.9250030517578
+        }
+      ],
+      "outside": [],
+      "overflow": false,
+      "scrollWidth": 1430,
+      "width": 1440
+    },
+    {
+      "requested": [
+        1728,
+        900
+      ],
+      "buttons": [
+        {
+          "clipped": false,
+          "tag": "A",
+          "width": 169.3625030517578
+        },
+        {
+          "clipped": false,
+          "tag": "BUTTON",
+          "width": 181.2624969482422
+        },
+        {
+          "clipped": false,
+          "tag": "BUTTON",
+          "width": 195.9250030517578
+        }
+      ],
+      "outside": [],
+      "overflow": false,
+      "scrollWidth": 1718,
+      "width": 1728
+    },
+    {
+      "requested": [
+        1920,
+        1080
+      ],
+      "buttons": [
+        {
+          "clipped": false,
+          "tag": "A",
+          "width": 169.3625030517578
+        },
+        {
+          "clipped": false,
+          "tag": "BUTTON",
+          "width": 181.2624969482422
+        },
+        {
+          "clipped": false,
+          "tag": "BUTTON",
+          "width": 195.9250030517578
+        }
+      ],
+      "outside": [],
+      "overflow": false,
+      "scrollWidth": 1910,
+      "width": 1920
+    },
+    {
+      "requested": [
+        320,
+        844
+      ],
+      "buttons": [
+        {
+          "clipped": false,
+          "tag": "A",
+          "width": 131.0124969482422
+        },
+        {
+          "clipped": false,
+          "tag": "BUTTON",
+          "width": 138.5625
+        },
+        {
+          "clipped": false,
+          "tag": "BUTTON",
+          "width": 136.02500915527344
+        }
+      ],
+      "outside": [],
+      "overflow": false,
+      "scrollWidth": 310,
+      "width": 320
+    },
+    {
+      "requested": [
+        375,
+        844
+      ],
+      "buttons": [
+        {
+          "clipped": false,
+          "tag": "A",
+          "width": 131.0124969482422
+        },
+        {
+          "clipped": false,
+          "tag": "BUTTON",
+          "width": 138.5625
+        },
+        {
+          "clipped": false,
+          "tag": "BUTTON",
+          "width": 136.02500915527344
+        }
+      ],
+      "outside": [],
+      "overflow": false,
+      "scrollWidth": 366,
+      "width": 375
+    },
+    {
+      "requested": [
+        768,
+        1024
+      ],
+      "buttons": [
+        {
+          "clipped": false,
+          "tag": "A",
+          "width": 169.3625030517578
+        },
+        {
+          "clipped": false,
+          "tag": "BUTTON",
+          "width": 181.2624969482422
+        },
+        {
+          "clipped": false,
+          "tag": "BUTTON",
+          "width": 195.9250030517578
+        }
+      ],
+      "outside": [],
+      "overflow": false,
+      "scrollWidth": 758,
+      "width": 768
+    }
+  ]
+}
