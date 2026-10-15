@@ -1,0 +1,19 @@
+{
+  "date": "2026-10-15",
+  "conditions": "Authenticated protected Previews; same alias/account/month; SNAP3 ON/P3 OFF; autosave OFF; read-only benchmark; durations from instrumented browser and server, not tool wall time.",
+  "excluded": ["login navigation", "uninstrumented candidate deployment dpl_B8GV8PZ28m8neBs85Ho9sS9tWdLz"],
+  "exploratoryRegion": {
+    "limitation": "Only three pairs, first fra1 load cold; viewport dimensions not retained before tool reconnect. Directional evidence only, no robust P95 or release decision alone.",
+    "rows": [
+      {"pair":1,"region":"iad1","freshMs":10626.4,"worldMs":3552.567105,"evidenceMs":3106.843575,"requests":42,"bytes":2351081,"timeouts":0,"hits":2,"responseEndToFreshMs":1588,"serverMs":5957.128144},
+      {"pair":1,"region":"fra1","freshMs":11145.8,"worldMs":2512.77,"evidenceMs":2360.8,"requests":42,"bytes":2351081,"timeouts":0,"hits":2,"responseEndToFreshMs":5013.7,"serverMs":3768.789031},
+      {"pair":2,"region":"fra1","freshMs":5545.6,"worldMs":1604.569105,"evidenceMs":1494.997539,"timeouts":0},
+      {"pair":2,"region":"iad1","freshMs":8333,"worldMs":3505.57828,"evidenceMs":3232.992507,"timeouts":0},
+      {"pair":3,"region":"iad1","freshMs":17245.3,"worldMs":3747.779252,"evidenceMs":3494.245179,"timeouts":0},
+      {"pair":3,"region":"fra1","freshMs":9174.8,"worldMs":2080.461399,"evidenceMs":1918.218548,"timeouts":0}
+    ]
+  },
+  "samples": [
+    {"pair":"evidence1","variant":"candidate_iad1","phase":"warm","viewport":{"height":720,"width":1280},"status":"FRESH","semanticDigest":"f523db27e084e00fced4a18fd452416794764476743b4e676236479bd1a1d7f1","previewDigest":"a2497c85a0c89593f872c15f03dcb65be9d51e176f5af971d1c4d44ea5fff9fc","browser":{"boardMs":5744,"freshMs":5744,"initialCommitMs":5673,"navigation":{"decodedBytes":532664,"requestStartMs":49.5,"responseEndMs":5118.6,"responseMs":5069.1,"responseStartMs":66.1,"transferBytes":42170,"ttfbMs":16.6,"type":"reload"},"previewStatus":"FRESH","responseEndToFreshMs":625.4,"statusCommitMs":5673},"server":{"blockedWrites":0,"bytes":2351052,"history":[{"decodeMs":37.002793,"reason":"SNAP3_CANONICAL","status":"HIT","validationMs":694.428285},{"decodeMs":464.583178,"reason":"SNAP3_M7","status":"HIT","validationMs":1352.086627}],"metricsDrainMs":0.030171,"region":"iad1","requestCount":41,"responseReadyMs":4284.377866,"serverMs":4284.345073,"spans":{"Authentication":688.910127,"BaselineSources":2320.876277,"Bootstrap_CanonicalContext":858.830202,"Compiler_Finance_V2":365.405881,"Evidence_HistoryBarrier":1461.176136,"Evidence_Join_Coverage":20.743616,"Evidence_LatestDate":241.040127,"Evidence_Metadata":603.062016,"Evidence_Scope":426.470365,"PredictionEvidence":2150.047568,"World":2360.031974},"timeouts":0}}
+  ]
+}

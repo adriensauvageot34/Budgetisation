@@ -4,22 +4,24 @@ const input=JSON.parse(fs.readFileSync(process.argv[2],'utf8'));
 const samples=input.samples??input;
 const percentile=(values,p)=>{const sorted=values.filter(Number.isFinite).sort((a,b)=>a-b);if(!sorted.length)return null;
  return p===.5&&sorted.length%2===0?(sorted[sorted.length/2-1]+sorted[sorted.length/2])/2:sorted[Math.max(0,Math.ceil(p*sorted.length)-1)];};
-const span=(metrics,label)=>metrics.spans?.find(s=>s.label===label)?.ms??null;
+const span=(metrics,label)=>Array.isArray(metrics.spans)?metrics.spans.find(s=>s.label===label)?.ms??null:metrics.spans?.[label]??null;
 const measured=samples.map(s=>{
- const m=s.server??s.action?.metrics??{},browser=s.browser??{},history=m.history??[];
- const values={freshMs:s.phase==='EDIT'?s.intent?.visualFreshMs:browser.freshMs,
-  worldMs:span(m,'World'),evidenceMs:span(m,'PredictionEvidence'),forecastMs:span(m,'Forecast'),
+ const flat=!s.server&&!s.action,m=s.server??s.action?.metrics??{},browser=s.browser??{},history=m.history??[];
+ const values={freshMs:flat?s.freshMs:s.phase==='EDIT'?s.intent?.visualFreshMs:browser.freshMs,
+  worldMs:flat?s.worldMs:span(m,'World'),evidenceMs:flat?s.evidenceMs:span(m,'PredictionEvidence'),forecastMs:span(m,'Forecast'),
   metadataMs:span(m,'Evidence_Metadata'),historyMs:span(m,'Evidence_HistoryBarrier'),joinMs:span(m,'Evidence_Join_Coverage'),
   metricsDrainMs:m.metricsDrainMs,responseReadyMs:m.responseReadyMs,
-  responseEndToFreshMs:s.phase==='EDIT'?null:browser.responseEndToFreshMs,
-  calls:m.requests?.length,decodedBytes:m.requests?.reduce((n,r)=>n+r.bytes,0)};
- const hits=['SNAP3_CANONICAL','SNAP3_M7'].every(reason=>history.some(h=>h.reason===reason&&h.status==='HIT'));
- const failures=m.requests?.filter(r=>r.timeout||r.status>=400||r.status===0).length??0;
- return {pair:s.pair,variant:s.variant,phase:s.phase,kind:s.kind??'OPEN',region:m.region,
+  responseEndToFreshMs:flat?s.responseEndToFreshMs:s.phase==='EDIT'?null:browser.responseEndToFreshMs,
+  calls:flat?s.requests:m.requestCount??m.requests?.length,decodedBytes:flat?s.bytes:m.bytes??m.requests?.reduce((n,r)=>n+r.bytes,0)};
+ const hits=flat?s.hits===2:['SNAP3_CANONICAL','SNAP3_M7'].every(reason=>history.some(h=>h.reason===reason&&h.status==='HIT'));
+ const failures=flat?s.timeouts??0:m.requests?.filter(r=>r.timeout||r.status>=400||r.status===0).length??0;
+ const status=s.status??browser.previewStatus??input.status;
+ return {pair:s.pair,variant:s.variant,phase:s.phase??'OPEN',kind:s.kind??'OPEN',region:flat?s.region:m.region,
   semanticDigest:s.semanticDigest,previewDigest:s.previewDigest,readTrace:m.traceId,
-  status:s.status??browser.previewStatus,completeSnap3Hit:hits,failedRequests:failures,values,
-  evidenceSpans:m.spans?.filter(x=>x.label.startsWith('Evidence_')).map(x=>({label:x.label,startMs:x.startMs,endMs:x.endMs,ms:x.ms,failed:x.failed})),
-  comparable:hits&&!failures&&(s.status??browser.previewStatus)==='FRESH'};
+  status,completeSnap3Hit:hits,failedRequests:failures,values,
+  evidenceSpans:Array.isArray(m.spans)?m.spans.filter(x=>x.label.startsWith('Evidence_')).map(x=>({label:x.label,startMs:x.startMs,endMs:x.endMs,ms:x.ms,failed:x.failed})):undefined,
+  exclusion:s.excludeFromPairs??s.confounder??null,
+  comparable:!s.excludeFromPairs&&!s.confounder&&hits&&!failures&&status==='FRESH'};
 });
 const groups=[];
 for(const key of new Set(measured.map(s=>`${s.variant}|${s.phase}|${s.kind}`))){

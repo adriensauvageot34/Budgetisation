@@ -20,6 +20,7 @@ import { finishComparison, type ComparisonSnapshot } from "./comparison";
 import { AtomicPopover } from "./atomic-popover";
 import { stageLocalDecision, visualDraftModel } from "./local-draft";
 import { ComposerPreviewScheduler, composerInteractionReuseEnabled, type PreviewStatus } from "./preview-scheduler";
+import { composerPreviewHttp } from "./preview-http";
 import { editorChunks, type EditorChunkKind, type LoadedEditorChunks } from "./editor-chunks";
 import { NightOutEditor } from "./night-out-editor";
 import { CardKnowledgePanel } from "./card-knowledge-panel";
@@ -35,22 +36,23 @@ type Editor = { title: string; compact?: boolean; side?: boolean; fields: readon
   operation: (values: Record<string, string>) => ComposerOperation };
 type DraftConfirmation = { kind: "ABANDON" | "RESTART" | "RESTORE" | "LOAD_SERVER"; draftId?: string; version?: number };
 type PendingApply = { draft: PlanSemanticStateV1; command: PlannerApplyCommand; checkedAbsent?: boolean };
-export function ComposerShell({ initialModel, transport: suppliedTransport, initialDrafts = null, draftTransport = null, snapshotMetrics = false }: {
+export function ComposerShell({ initialModel, transport: suppliedTransport, initialDrafts = null, draftTransport = null, snapshotMetrics = false, previewHttp = false }: {
   initialModel: ComposerUiModel; transport: ComposerTransport;
   initialDrafts?: ComposerDraftSnapshot | null; draftTransport?: DraftTransport | null;
-  snapshotMetrics?: boolean;
+  snapshotMetrics?: boolean; previewHttp?: boolean;
 }) {
   const transport: ComposerTransport = useCommittedEvent(async (request: ComposerRequest) => {
     const started = performance.now();
-    const response = await suppliedTransport(request);
+    const response = await (previewHttp && (request.kind === "READ" || request.kind === "SUGGESTIONS") ? composerPreviewHttp(request) : suppliedTransport(request));
     if (snapshotMetrics) {
       const settled = performance.now();
       // All stamps use the browser's monotonic clock. A resource is attributable
       // only when exactly one matching fetch occurred inside this action window.
+      const requestPath = previewHttp && (request.kind === "READ" || request.kind === "SUGGESTIONS") ? "/api/composer/preview" : window.location.pathname;
       const resources = (performance.getEntriesByType("resource") as PerformanceResourceTiming[])
         .filter(entry => entry.initiatorType === "fetch" && entry.startTime >= started && entry.responseEnd <= settled
           && new URL(entry.name).origin === window.location.origin
-          && new URL(entry.name).pathname === window.location.pathname)
+          && new URL(entry.name).pathname === requestPath)
         .slice(-8).map(entry => ({ startMs: entry.startTime, requestStartMs: entry.requestStart,
           responseStartMs: entry.responseStart, responseEndMs: entry.responseEnd,
           durationMs: entry.duration, decodedBytes: entry.decodedBodySize, transferBytes: entry.transferSize }));

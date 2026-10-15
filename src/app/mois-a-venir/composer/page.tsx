@@ -27,7 +27,7 @@ export default async function ComposerPage({ searchParams }: { searchParams: Pro
     return { model, drafts };
   }));
   const { model, drafts } = observed.value;
-  return <><ComposerShell initialModel={model} transport={composerInteraction} initialDrafts={drafts} snapshotMetrics={!!observed.metrics}
+  return <><ComposerShell initialModel={model} transport={composerInteraction} initialDrafts={drafts} snapshotMetrics={!!observed.metrics} previewHttp={process.env.COMPOSER_PREVIEW_HTTP_ENABLED === "1"}
     draftTransport={drafts ? { read: composerDraftRead, save: composerDraftSave,
       archive: composerDraftArchive, restore: composerDraftRestore } : null} />
     {observed.metrics && <span hidden data-snap-server={JSON.stringify(observed.metrics)} />}</>;
