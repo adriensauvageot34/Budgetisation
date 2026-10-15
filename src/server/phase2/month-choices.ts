@@ -11,7 +11,9 @@ import { categoryDecisionFacts, categoryTargetGap, projectCategoryControls } fro
 import { forecastTemporalPolicy } from "./forecast-temporal-policy";
 
 export type MonthChoiceContext = Readonly<{ forecast: MonthForecastSnapshot; inputs: MonthInputs;
-  expenses: readonly PlannedExpenseScenarioEntry[]; asOf: string }>;
+  expenses: readonly PlannedExpenseScenarioEntry[]; asOf: string;
+  effective?:Readonly<{revisionId:string;authorityDigest:string;ownership:{categoryKeys:readonly string[];savingsIds:readonly string[]};derive:(inputs:MonthInputs)=>ReturnType<typeof deriveMonthScenario>}> }>;
+export const deriveChoiceScenario=(ctx:MonthChoiceContext,inputs=ctx.inputs)=>ctx.effective?ctx.effective.derive(inputs):deriveMonthScenario(ctx.forecast,inputs,null,ctx.asOf,ctx.expenses);
 const positive = (value: Big) => value.gt(0) ? value : new Big(0);
 const min = (a: Big, b: Big) => a.lt(b) ? a : b;
 const digest = (value: unknown) => createHash("sha256").update(canonicalSerializeGlobal(value)).digest("hex");
@@ -22,7 +24,9 @@ export const monthChoiceDigest = (ctx: MonthChoiceContext) => digest(JSON.parse(
 /** Pure scenario replay, with no persistence or synthetic facts. */
 export function simulateMonthChoice(ctx: MonthChoiceContext, rawChoice: unknown) {
   const choice = parseMonthChoice(rawChoice), inputs = monthInputsSchema.parse(ctx.inputs);
-  const before = deriveMonthScenario(ctx.forecast, inputs, null, ctx.asOf, ctx.expenses).economicPlan;
+  for(const op of choice.operations) if(ctx.effective && (op.kind==="CATEGORY"?ctx.effective.ownership.categoryKeys.includes(op.categoryKey):ctx.effective.ownership.savingsIds.includes(op.savingsId)))
+    throw new TypeError("PLAN_V3_ACTIVE_READ_ONLY");
+  const before = deriveChoiceScenario(ctx,inputs).economicPlan;
   if (!before?.narrative.prediction) throw new TypeError("MONTH_CHOICE_FORECAST_UNAVAILABLE");
   const settings = parseMonthDecisionSettings(inputs.decision), controls = projectCategoryControls(before, settings);
   const assumptions = { ...settings.assumptions }, limitations: string[] = [];
@@ -43,7 +47,7 @@ export function simulateMonthChoice(ctx: MonthChoiceContext, rawChoice: unknown)
     const remaining = new Big(categoryDecisionFacts(category).reducibleRemaining);
     if (op.strategy === "TEST_AMOUNT") {
       const origin = op.testOrigin;
-      const habitual = origin?.kind === "habitualPreset" ? deriveMonthScenario(ctx.forecast, { ...inputs, decision: { ...settings, assumptions: {} } }, null, ctx.asOf, ctx.expenses).economicPlan : null;
+      const habitual = origin?.kind === "habitualPreset" ? deriveChoiceScenario(ctx, { ...inputs, decision: { ...settings, assumptions: {} } }).economicPlan : null;
       const tested = origin?.kind === "percentagePreset" ? new Big(control.forecast).times(new Big(100).plus(origin.value)).div(100).round(2)
         : origin?.kind === "amountDelta" ? new Big(control.forecast).plus(origin.value)
         : origin?.kind === "habitualPreset" ? new Big(projectCategoryControls(habitual!, settings).find(row => row.key === op.categoryKey)!.forecast)
@@ -68,7 +72,7 @@ export function simulateMonthChoice(ctx: MonthChoiceContext, rawChoice: unknown)
     limitations.push(...control.limitations);
   }
   const nextInputs = monthInputsSchema.parse({ ...inputs, declaredOutflows, decision: { ...settings, assumptions } });
-  const after = deriveMonthScenario(ctx.forecast, nextInputs, null, ctx.asOf, ctx.expenses).economicPlan!;
+  const after = deriveChoiceScenario(ctx,nextInputs).economicPlan!;
   const afterControls = projectCategoryControls(after, nextInputs.decision!);
   const categoryImpacts = controls.map(row => ({ key: row.key, label: row.label, before: row.forecast,
     after: afterControls.find(other => other.key === row.key)!.forecast,
@@ -92,12 +96,13 @@ export type MonthChoiceOffer = Readonly<{ id: string; label: string; preview: Mo
 /** Bounded deterministic proposals from actually published capabilities. */
 export function proposeMonthChoices(ctx: MonthChoiceContext, options: { gap?: string; onlyCategory?: string;
   excludeTargets?: readonly string[]; allowCombination?: boolean } = {}): readonly MonthChoiceOffer[] {
-  const plan = deriveMonthScenario(ctx.forecast, ctx.inputs, null, ctx.asOf, ctx.expenses).economicPlan;
+  const plan = deriveChoiceScenario(ctx).economicPlan;
   if (!plan?.narrative.prediction) return [];
   const controls = projectCategoryControls(plan, parseMonthDecisionSettings(ctx.inputs.decision));
   const gap = new Big(options.gap ?? categoryTargetGap(controls)), candidates: { label: string; operation: MonthChoiceOperation }[] = [];
   const ranked = [...controls].sort((a, b) => Number(b.varianceToTarget ?? 0) - Number(a.varianceToTarget ?? 0) || a.key.localeCompare(b.key));
   for (const row of ranked) {
+    if(ctx.effective?.ownership.categoryKeys.includes(row.key))continue;
     if (options.onlyCategory && row.key !== options.onlyCategory || options.excludeTargets?.includes(`category:${row.key}`)) continue;
     if (row.capabilities.adjustability !== "ADJUSTABLE" || new Big(row.reducibleRemaining).lte(0)) continue;
     const category = [...plan.narrative.prediction.essential, ...plan.narrative.prediction.optional].find(c => c.key === row.key)!;
@@ -123,6 +128,7 @@ export function proposeMonthChoices(ctx: MonthChoiceContext, options: { gap?: st
     seen.add(key); add({ operations: [candidate.operation] }, candidate.label);
   }
   for (const savings of plan.savingsAllocations.items.filter(row => !options.onlyCategory && row.adjustability === "ADJUSTABLE"
+    && !ctx.effective?.ownership.savingsIds.includes(row.id)
     && !options.excludeTargets?.includes(`savings:${row.id}`) && new Big(row.amount).gt(0)).slice(0, 2))
     add({ operations: [{ kind: "SAVINGS", savingsId: savings.id, strategy: "ADJUST_SAVINGS", amount: (gap.gt(0) ? gap : new Big(savings.amount).times(.1)).toFixed(2) }] }, `${savings.label} : réduire la contribution du mois`);
   for (const candidate of candidates.filter(row => row.operation.strategy === "REDUCE_AMOUNT").slice(0, Math.max(0, 8 - offers.length)))

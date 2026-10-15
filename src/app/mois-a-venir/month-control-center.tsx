@@ -211,6 +211,7 @@ export function MonthControlCenter({ model, initialSection = null, initialFocus 
     event.preventDefault(); event.stopPropagation(); if (pending) return;
     if (form.dataset.saveReady === "false") return;
     const data = new FormData(form);
+    if(!data.has("expectedDigest"))data.set("expectedDigest",model.baseDigest);
     const triage = form.closest<HTMLElement>('[data-update-triage="true"]')?.dataset.updateItem;
     startTransition(async () => {
       try { const result = await updateMonthControlInputs(data);

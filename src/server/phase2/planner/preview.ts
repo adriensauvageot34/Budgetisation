@@ -29,6 +29,16 @@ function isSemanticallyNeutralPlanEvaluation(world: PlanningWorldFacts, state: P
 
 /** Same pure evaluation for preview, server apply, assistant and immediate reload. */
 export function evaluatePlanScenario(world: PlanningWorldFacts, semanticState: PlanSemanticStateV1, base: PlannerExpectedBase): PlanScenarioPreview {
+  return evaluate(world,semanticState,base,true);
+}
+
+/** Prospective mutation preflight only. Absolute scenario/constraints remain
+ * identical; per-decision attribution is unnecessary. Never used for Apply
+ * receipts or official evidence digests. */
+export function evaluatePlanMutation(world:PlanningWorldFacts,semanticState:PlanSemanticStateV1,base:PlannerExpectedBase):PlanScenarioPreview {
+  return evaluate(world,semanticState,base,false);
+}
+function evaluate(world:PlanningWorldFacts,semanticState:PlanSemanticStateV1,base:PlannerExpectedBase,includeMarginals:boolean):PlanScenarioPreview {
   return snapshotSync("Compiler_Finance_V2", () => {
   const state = parsePlanSemanticState(semanticState);
   const input = { baseline: world.baseline, semanticState: state, externalIntents: world.externalIntents, world,
@@ -55,9 +65,9 @@ export function evaluatePlanScenario(world: PlanningWorldFacts, semanticState: P
       return jsonEnvelope({ targetRef, marginalImpactOnMonthEnd: null, rationaleCode: "MARGINAL_REQUIRES_RESOLUTION", resolution: error.message });
     }
   };
-  const projection = { ...initial, impacts: [...compiled.contextualEffects.map(jsonEnvelope),
+  const projection = includeMarginals ? { ...initial, impacts: [...compiled.contextualEffects.map(jsonEnvelope),
     ...state.controls.map(c => marginal(c.decisionId, () => parsePlanSemanticState({ ...state, controls: state.controls.filter(item => item.decisionId !== c.decisionId) }))),
-    ...state.contexts.map(c => marginal(c.contextOccurrenceId, () => mutatePlanSemanticState(state, { kind: "REMOVE_CONTEXT", contextOccurrenceId: c.contextOccurrenceId })))] };
+    ...state.contexts.map(c => marginal(c.contextOccurrenceId, () => mutatePlanSemanticState(state, { kind: "REMOVE_CONTEXT", contextOccurrenceId: c.contextOccurrenceId })))] } : initial;
   const projectionDigest = plannerDigest(projection);
   const previewDigest = plannerDigest({ version: "planner-preview@v1", baselineDigest: world.baseline.digest,
     semanticStateDigest: compiled.semanticStateDigest, compiledManifestDigest: compiled.manifestDigest, projectionDigest,

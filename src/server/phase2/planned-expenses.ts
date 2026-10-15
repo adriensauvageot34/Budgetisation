@@ -24,7 +24,7 @@ import { parsePlannedProject, assertProjectIntent, projectLinkCompatible, projec
 import { groceryBasketEstimate } from "@/domain/phase2/planned-price-estimates";
 import { estimatePlannedCar } from "./planned-car-estimation";
 import type { MonthForecastSnapshot } from "./month-forecast-snapshot";
-import { simulatePlannedExpenseScenario, type MonthInputs } from "./month-scenario";
+import { simulatePlannedExpenseScenario, type MonthInputs, type MonthScenario } from "./month-scenario";
 import { readMonthPredictionEvidence } from "./month-prediction-evidence";
 import { matchesForecastCategory } from "./remaining-month-forecast";
 import { coherentPlannedObservation, economicObservations } from "./planned-observation-reconciliation";
@@ -772,7 +772,8 @@ export async function readPlannedCalendarCarryovers(client: SupabaseClient, hous
 /** A draft never writes to Supabase. Editing replaces the saved ID in the same financial path. */
 export async function preparePlannedExpenseSimulation(client: SupabaseClient, householdId: string,
   forecast: MonthForecastSnapshot, inputs: MonthInputs, saved: readonly PlannedExpense[],
-  rawDraft: unknown, asOfDate: string, editedId?: string, purpose: "WRITE" | "PREVIEW" = "WRITE") {
+  rawDraft: unknown, asOfDate: string, editedId?: string, purpose: "WRITE" | "PREVIEW" = "WRITE",
+  effective?: {id?:string;actorId:string;status?:PlannedExpenseStatus;simulate:(expenses:readonly PlannedExpense[])=>MonthScenario}) {
   const draft = await resolvePlannedExpenseDraft(client, householdId, forecast.meta.targetMonth, rawDraft, purpose);
   for (const item of draft.costItems) if (draft.context.project?.version === 2 && item.assetKey === "groceries:food" && item.priceSource === "LAST_KNOWN") {
     const estimate = groceryBasketEstimate(forecast.predictionEvidence?.history.economicEntries ?? []);
@@ -788,6 +789,14 @@ export async function preparePlannedExpenseSimulation(client: SupabaseClient, ho
   if (realityLink && saved.some(item => item.id !== editedId
     && item.context.realityLink?.kind === realityLink.kind && item.context.realityLink.id === realityLink.id))
     throw new TypeError("PLANNED_REALITY_LINK_ALREADY_CLAIMED");
+  if(effective){
+    const now=new Date().toISOString();
+    const candidate:PlannedExpense={...draft,id:existing?.id??effective.id??randomUUID(),householdId,targetMonth:forecast.meta.targetMonth,
+      status:effective.status??existing?.status??"PLANNED",createdBy:existing?.createdBy??effective.actorId,updatedBy:effective.actorId,
+      createdAt:existing?.createdAt??now,updatedAt:existing?.updatedAt??now};
+    const expenses=[...saved.filter(row=>row.id!==candidate.id),candidate];
+    return {draft,scenario:effective.simulate(expenses),expenses};
+  }
   return { draft, scenario: simulatePlannedExpenseScenario(forecast, inputs, saved,
     { id: existing?.id ?? randomUUID(), targetMonth: forecast.meta.targetMonth,
       status: existing?.status ?? "PLANNED", costItems: draft.costItems, plannedDate: draft.plannedDate, context: draft.context }, asOfDate) };
@@ -796,10 +805,11 @@ export async function simulatePlannedExpense(...args: Parameters<typeof prepareP
   return (await preparePlannedExpenseSimulation(...args)).scenario;
 }
 export async function createPlannedExpense(client: SupabaseClient, householdId: string, targetMonth: string,
-  userId: string, rawDraft: unknown, requestId: string): Promise<PlannedExpense> {
+  userId: string, rawDraft: unknown, requestId: string, beforeWrite?:()=>Promise<void>): Promise<PlannedExpense> {
   const id = uuid(requestId, "PLANNED_EXPENSE_ID_INVALID");
   const draft = await resolvePlannedExpenseDraft(client, householdId, targetMonth, rawDraft);
   if (draft.context.project?.linkedProjectId === id) throw new TypeError("PLANNED_PROJECT_LINK_INVALID");
+  await beforeWrite?.();
   const { data, error } = await client.from("phase2_planned_expenses").insert({
     planned_expense_id: id, household_id: householdId, target_month: `${targetMonth}-01`,
     ...draftColumns(draft), status: "PLANNED", created_by: uuid(userId, "PLANNED_EXPENSE_USER_INVALID"), updated_by: userId,
@@ -823,18 +833,20 @@ async function requireExpense(client: SupabaseClient, householdId: string, id: s
   return parseRow(data);
 }
 export async function updatePlannedExpense(client: SupabaseClient, householdId: string, id: string,
-  userId: string, rawDraft: unknown, expectedUpdatedAt: string): Promise<PlannedExpense> {
+  userId: string, rawDraft: unknown, expectedUpdatedAt: string,beforeWrite?:()=>Promise<void>): Promise<PlannedExpense> {
   const previous = await requireExpense(client, householdId, id);
   if (previous.status !== "PLANNED") throw new TypeError("PLANNED_EXPENSE_REALIZED_EDIT_FORBIDDEN");
   assertVersion(previous, expectedUpdatedAt);
   const draft = await resolvePlannedExpenseDraft(client, householdId, previous.targetMonth, rawDraft);
   if (draft.context.project?.linkedProjectId === id) throw new TypeError("PLANNED_PROJECT_LINK_INVALID");
+  await beforeWrite?.();
   return compareAndSet(client, previous, userId, draft, "PLANNED", expectedUpdatedAt);
 }
 export async function deletePlannedExpense(client: SupabaseClient, householdId: string, id: string,
-  expectedUpdatedAt: string): Promise<void> {
+  expectedUpdatedAt: string,beforeWrite?:()=>Promise<void>): Promise<void> {
   const previous = await requireExpense(client, householdId, id);
   assertVersion(previous, expectedUpdatedAt);
+  await beforeWrite?.();
   const { data, error } = await client.from("phase2_planned_expenses").delete()
     .eq("household_id", householdId).eq("planned_expense_id", id).eq("updated_at", expectedUpdatedAt)
     .select("planned_expense_id").maybeSingle();
@@ -867,6 +879,16 @@ function sameIntent(left: PlannedExpenseDraft, right: PlannedExpenseDraft): bool
     return JSON.stringify(canonical(copy));
   };
   return intent(left) === intent(right);
+}
+
+/** Read-only recovery of the exact creation receipt. Never overwrites a later
+ * lifecycle state, or treats a reused ID with different intent as a replay. */
+export function assertPlannedExpenseCreationReplay(existing:PlannedExpense,draft:PlannedExpenseDraft,userId:string,targetMonth:string) {
+  if(existing.createdBy!==userId||existing.targetMonth!==targetMonth||!sameIntent(existing,draft))
+    throw new TypeError("PLANNED_EXPENSE_IDEMPOTENCY_CONFLICT");
+}
+export function isPlannedExpenseDeclarationReplay(existing:PlannedExpense,draft:PlannedExpenseDraft,userId:string) {
+  return existing.status==="DECLARED_REALIZED"&&existing.updatedBy===userId&&sameIntent(existing,draft);
 }
 function assertVersion(previous: PlannedExpense, expected: string, reality = false) {
   if (!expected || Number.isNaN(Date.parse(expected)) || previous.updatedAt !== expected)
@@ -909,10 +931,11 @@ export async function declarePlannedExpense(client: SupabaseClient, householdId:
   }
 }
 export async function restorePlannedExpense(client: SupabaseClient, householdId: string, id: string,
-  userId: string, expected: string) {
+  userId: string, expected: string,beforeWrite?:()=>Promise<void>) {
   const previous = await requireExpense(client, householdId, id);
   assertVersion(previous, expected, true);
   if (previous.status !== "DECLARED_REALIZED") throw new TypeError("PLANNED_EXPENSE_STATUS_TRANSITION_INVALID");
+  await beforeWrite?.();
   // Inverse presentation/funding transition preserves the final content exactly.
   return compareAndSet(client, previous, userId, previous, "PLANNED", expected, previous.targetMonth, true);
 }

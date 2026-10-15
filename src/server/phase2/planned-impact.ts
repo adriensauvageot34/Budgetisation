@@ -6,7 +6,7 @@ import { plannedLineGross, costItemCashTreatment } from "@/domain/phase2/planned
 
 /** Display projection only. The scenario delta, rather than a separate cost-minus-baseline engine,
  * is the authority for the additional impact. Caller supplies a before-plan excluding the edited ID. */
-export function projectPlannedExpenseImpact(before: MonthEconomicPlan, after: MonthEconomicPlan, draft: PlannedExpenseDraft) {
+export function projectPlannedExpenseImpact(before: MonthEconomicPlan, after: MonthEconomicPlan, draft: PlannedExpenseDraft, economicKnown = true) {
   const scenarios = ["low", "central", "high"] as const;
   const scenarioKey = { low: "lowConsumption", central: "central", high: "highConsumption" } as const;
   const gross = draft.costItems.reduce((sum, item) => sum.plus(plannedLineGross(item)), new Big(0));
@@ -33,9 +33,14 @@ export function projectPlannedExpenseImpact(before: MonthEconomicPlan, after: Mo
     ? `Une dépense similaire était déjà estimée à environ ${euro(anticipated)}. Votre projet devrait coûter ${euro(gross)} : environ ${euro(centralImpact.abs())} de moins que l’estimation habituelle.`
     : anticipated.gt(0) ? `Environ ${euro(anticipated)} étaient déjà anticipés dans le mois. Votre projet coûte ${euro(gross)} ; ${euro(centralImpact)} s’ajoutent réellement à la projection.`
       : `Ce projet s’ajoute aux dépenses prévues : ${euro(centralImpact)} supplémentaires dans la projection du mois.`;
-  return { grossCost: gross.toFixed(2), fuelUsage: fuel.toFixed(2), payableGross: gross.minus(fuel).toFixed(2), effectNarrative,
-    projectionIncomplete: before.narrative.prediction?.currentImportsMissing === true || after.narrative.prediction?.currentImportsMissing === true,
-    remainingDifference: centralImpact.times(-1).toFixed(2),
+  const partialScenarios = {lowConsumption:null,central:null,highConsumption:null};
+  const partialImpact = {low:null,central:null,high:null};
+  return { grossCost: gross.toFixed(2), fuelUsage: fuel.toFixed(2), payableGross: gross.minus(fuel).toFixed(2),
+    effectNarrative:economicKnown ? effectNarrative : "Les coûts connus sont conservés. Le Plan comporte des montants inconnus ; son impact total reste à préciser.",
+    projectionIncomplete: !economicKnown || before.narrative.prediction?.currentImportsMissing === true || after.narrative.prediction?.currentImportsMissing === true,
+    remainingDifference:economicKnown ? centralImpact.times(-1).toFixed(2) : null,
     economicLines: draft.costItems.map((item) => ({ id: item.id, label: item.variantLabel || item.label, amount: plannedLineGross(item), economicOnly: costItemCashTreatment(item) === "ECONOMIC_ONLY" })),
-    netAdditionalImpact, absorbedByBaseline, projectPayment, before: before.scenarios, after: after.scenarios, funding: after.plannedFunding };
+    netAdditionalImpact:economicKnown ? netAdditionalImpact : partialImpact,
+    absorbedByBaseline:economicKnown ? absorbedByBaseline : partialImpact, projectPayment,
+    before:economicKnown ? before.scenarios : partialScenarios, after:economicKnown ? after.scenarios : partialScenarios, funding: after.plannedFunding };
 }

@@ -122,6 +122,8 @@ export function AppliedMonthView({ projection, semanticState, controls = [], pla
       <details id="resources-title" className={styles.practical}><summary>Banque et ressources</summary><div className={styles.practicalBody}>{plan ? <><BankStockCard balance={plan.bankCash.currentRealBankBalance} /><div className={styles.resourceGrid}>{plan.resources.map(resource => <ResourceEditor key={resource.key} resource={resource} targetMonth={projection.targetMonth} controls={false} walletObservation={resource.key === "benefit:swile" ? plan.benefitWallets.SWILE.latestObservation : resource.key === "benefit:edenred" ? plan.benefitWallets.EDENRED.latestObservation : null} />)}</div></> : <p>Les ressources restent accessibles dans le Centre de contrôle.</p>}</div></details>
       <details id="timeline-title" className={styles.practical}><summary>Calendrier du mois</summary><div className={styles.practicalBody}>{plan && external ? <MonthCalendar targetMonth={projection.targetMonth} today={today} {...projectMonthCalendar(plan.certainOutflows.items, [...external.expenses, ...calendarCarryovers])} /> : <p>Calendrier disponible après renseignement des ressources.</p>}</div></details>
     </div>
-    {external && external.expenses.length > 0 && <details id="plan-external" className={styles.practical}><summary>Dépenses planifiées indépendantes · {external.expenses.length}</summary><div className={styles.practicalBody}><PlannedExpensesControl {...external} /></div></details>}
+    {external && (external.expenses.length > 0
+      ? <details id="plan-external" className={styles.practical}><summary>Dépenses planifiées indépendantes · {external.expenses.length}</summary><div className={styles.practicalBody}><PlannedExpensesControl {...external} /></div></details>
+      : <PlannedExpensesControl {...external} />)}
   </div>;
 }

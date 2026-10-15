@@ -1,0 +1,9 @@
+▲ Next.js 16.2.6 (webpack)
+
+  Creating an optimized production build ...
+Failed to compile.
+
+Error: EPERM: operation not permitted, mkdir 'C:\Users\AdrienSauvageot\Documents\Codex\p14-a2-a3-performance\.next\types\app\api'
+
+
+> Build failed because of webpack errors

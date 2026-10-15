@@ -5,7 +5,7 @@ import { parseMonthDecisionSettings } from "@/domain/phase2/month-decision-contr
 import { categoryDecisionCapabilities, type MonthChoiceOperation } from "@/domain/phase2/month-choice-contract";
 import { parseMonthControlDraft, parseMonthControlPurpose, monthChoiceTarget, monthControlCategoryPresets, type MonthControlSection, type MonthControlPurpose } from "@/domain/phase2/month-control-contract";
 import { deriveMonthScenario } from "./month-scenario";
-import { monthChoiceDigest, simulateMonthChoice, proposeMonthChoices, type MonthChoiceContext } from "./month-choices";
+import { deriveChoiceScenario, monthChoiceDigest, simulateMonthChoice, proposeMonthChoices, type MonthChoiceContext } from "./month-choices";
 import { projectMonthDecision } from "./month-decision-projection";
 import { comparableForecastCheckpoints, calibrateForecast } from "./forecast-memory";
 import { forecastTemporalPolicy } from "./forecast-temporal-policy";
@@ -27,15 +27,15 @@ const settingsDestination = (focus: string): Destination => ({ section: "update"
 
 /** Interpretation only. Amounts are supplied by the existing scenario owners. */
 export function projectMonthControlCenter(ctx: MonthChoiceContext, effectiveScenario?: ReturnType<typeof deriveMonthScenario>, appliedProjection?: PlanProjectionV1) {
-  const scenario = effectiveScenario ?? deriveMonthScenario(ctx.forecast, ctx.inputs, null, ctx.asOf, ctx.expenses), inputs = scenario.inputs;
+  const scenario = effectiveScenario ?? deriveChoiceScenario(ctx), inputs = ctx.inputs;
   const settings = parseMonthDecisionSettings(inputs.decision), plan = scenario.economicPlan;
   const update = projectMonthUpdatePresentation(ctx.forecast, scenario);
   const decision = plan ? projectMonthDecision(plan, settings, ctx.forecast.meta.targetMonth, ctx.asOf, ctx.expenses, ctx.forecast.forecastMemory) : null;
   const categoryControls = decision?.categoryControls ?? [];
   // Presentation reference for relative draft controls. The existing forecast owner
   // publishes the usual remainder; the client never reverses an applied assumption.
-  const referencePlan = !effectiveScenario && Object.keys(settings.assumptions).length ? deriveMonthScenario(ctx.forecast,
-    { ...inputs, decision: { ...settings, assumptions: {} } }, null, ctx.asOf, ctx.expenses).economicPlan : plan;
+  const referencePlan = !effectiveScenario && Object.keys(settings.assumptions).length ? deriveChoiceScenario(ctx,
+    { ...inputs, decision: { ...settings, assumptions: {} } }).economicPlan : plan;
   const habitualControls = !Object.keys(settings.assumptions).length ? categoryControls : referencePlan ? projectMonthDecision(referencePlan, { ...settings, assumptions: {} },
     ctx.forecast.meta.targetMonth, ctx.asOf, ctx.expenses, ctx.forecast.forecastMemory).categoryControls : [];
   const globalDelta = appliedProjection?.plan.economicMonthEndRemainder === null ? null : decision?.goal?.central ?? null;
@@ -127,10 +127,10 @@ export function projectMonthControlCenter(ctx: MonthChoiceContext, effectiveScen
       bank: appliedProjection?.cash.knowledge === "UNKNOWN" ? null : plan?.bankCash.endOfMonth ?? null,
       globalGoal: settings.goal, globalDelta, globalGap, globalSatisfied: globalDelta !== null && new Big(globalDelta).gte(0),
       remainingDailyLife: plan?.monthlyLayers.remainingDailyLife ?? null, categoryGap: decision?.totalCategoryGap ?? "0.00", protectedSavings: plan?.savingsAllocations.protectedTotal ?? null, totalSavings: plan?.savingsAllocations.total ?? null },
-    pilotCandidates: plan ? [...categoryControls.filter(row => row.capabilities.adjustability === "ADJUSTABLE" && row.capabilities.strategies.includes("REDUCE_AMOUNT") && new Big(row.forecast).gte(row.irreversibleFloor)).map(row => ({ target: `category:${row.key}`, label: row.label, focus: `pilot:category:${row.key}` })),
-      ...savings.filter(row => row.adjustability === "ADJUSTABLE" && row.source === "MONTH_INPUT").map(row => ({ target: `savings:${row.id}`, label: row.label, focus: `pilot:saving:${row.id}` }))] : [],
+    pilotCandidates: plan ? [...categoryControls.filter(row => !ctx.effective?.ownership.categoryKeys.includes(row.key) && row.capabilities.adjustability === "ADJUSTABLE" && row.capabilities.strategies.includes("REDUCE_AMOUNT") && new Big(row.forecast).gte(row.irreversibleFloor)).map(row => ({ target: `category:${row.key}`, label: row.label, focus: `pilot:category:${row.key}` })),
+      ...savings.filter(row => !ctx.effective?.ownership.savingsIds.includes(row.id) && row.adjustability === "ADJUSTABLE" && row.source === "MONTH_INPUT").map(row => ({ target: `savings:${row.id}`, label: row.label, focus: `pilot:saving:${row.id}` }))] : [],
     categoryTestPresets: Object.fromEntries(categoryControls.map(row => {
-      if (row.capabilities.adjustability !== "ADJUSTABLE" || !row.capabilities.strategies.includes("REDUCE_AMOUNT")) return [row.key, []];
+      if (ctx.effective?.ownership.categoryKeys.includes(row.key) || row.capabilities.adjustability !== "ADJUSTABLE" || !row.capabilities.strategies.includes("REDUCE_AMOUNT")) return [row.key, []];
       const base = new Big(row.forecast), floor = new Big(row.irreversibleFloor);
       const candidates = [
         ...(base.gt(0) ? [-10, -5, 5, 10].map(percent => ({ label: `${percent > 0 ? "+" : "−"}${Math.abs(percent)} %`, amount: base.times(100 + percent).div(100).toFixed(2), testOrigin: { kind: "percentagePreset" as const, value: String(percent) } })) : []),
@@ -189,7 +189,7 @@ export function projectMonthControlWorkbench(ctx: MonthChoiceContext, rawPurpose
           : positive(new Big(remainingNeed).minus(positive(new Big(offer.preview.delta)))).toFixed(2) }));
   // Alternative UX intensities reuse the exact same operation parser and replay owner.
   const shortcuts = purpose.kind === "NONE" || resolved || operations.length >= 2 || !current.editable || !scenario.projectionSummary.economic ? []
-    : scenario.categoryControls.filter(row => row.capabilities.adjustability === "ADJUSTABLE" && new Big(row.reducibleRemaining).gt(0)
+    : scenario.categoryControls.filter(row => !ctx.effective?.ownership.categoryKeys.includes(row.key) && row.capabilities.adjustability === "ADJUSTABLE" && new Big(row.reducibleRemaining).gt(0)
       && !operations.some(op => monthChoiceTarget(op) === `category:${row.key}`)
       && (purpose.kind !== "CATEGORY_CORRECTION" || row.key === categoryKey))
       .flatMap(row => monthControlCategoryPresets(row.key, row.label, row.capabilities).flatMap(preset => {

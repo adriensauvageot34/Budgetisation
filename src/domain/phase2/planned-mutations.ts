@@ -1,7 +1,7 @@
 import type { PlannedExpenseDraft } from "./planned-contract";
 
 /** Commands and local UI state, never fields of the prospective row. */
-export type PlannedWriteCommand = { id: string; expectedUpdatedAt?: string };
+export type PlannedWriteCommand = { id: string; expectedUpdatedAt?: string; expectedPlanRevisionId?:string|null; expectedEffectiveDigest?:string };
 export type PlannedIssue = { code: string; path: string; message: string;
   repairTarget: "context" | "cost" | "route" | "funding" | "reload" | "date" | "month" };
 export type PlannedResult<T> = { ok: true; value: T } | { ok: false; issue: PlannedIssue };
@@ -11,6 +11,10 @@ export type RealityConfirmationDraft = { expenseId: string; expectedUpdatedAt: s
 export function plannedMutationIssue(error: unknown): PlannedIssue {
   const raw = error instanceof Error ? error.message : "";
   const code = /^(?:PLANNED_|REALITY_|VISIT_)[A-Z0-9_:]+$/u.test(raw) ? raw : "PLANNED_EXPENSE_REQUEST_FAILED";
+  if(code==="PLANNED_EFFECTIVE_PLAN_STALE")return {code,path:"planRevision",repairTarget:"reload",message:"Le Plan ou ses sources ont changé. Actualisez le mois puis relancez la prévisualisation ; votre saisie est conservée."};
+  if(code==="PLANNED_EFFECTIVE_LINKED_INTENTION")return {code,path:"context",repairTarget:"context",message:"Cette dépense est référencée par le Plan officiel. Modifiez d’abord ce lien dans Composer ; aucun report ni retrait silencieux n’a été effectué."};
+  if(code==="PLANNED_EFFECTIVE_REAL_RECONCILIATION_REQUIRED")return {code,path:"context.realityLink",repairTarget:"context",message:"Cette enveloppe est pilotée par le Plan et nécessite une réconciliation avec le réel qui n’est pas encore disponible. La dépense et les faits connus restent conservés."};
+  if(code==="PLANNED_EXPENSE_COMMITTED_RELOAD_FAILED")return {code,path:"updatedAt",repairTarget:"reload",message:"La modification a été enregistrée, mais la relecture du mois a échoué. Actualisez avant toute nouvelle action ; ne répétez pas l’enregistrement."};
   if (code.startsWith("PLANNED_REALITY_LINK_")) return { code, path: "context.realityLink", repairTarget: "context",
     message: "Choisissez une dépense observée compatible de votre foyer, ou retirez ce rapprochement. Le projet et l’historique sont conservés." };
   if (code === "PLANNED_REALITY_BUDGET_UNKNOWN") return { code, path: "context.project.unpricedComponents", repairTarget: "cost", message: "Précisez les coûts réels avant de confirmer la réalisation." };
