@@ -32,111 +32,111 @@
   "timings": [
     {
       "id": "B3-01_NO_PLAN_LIGHT_PARITY",
-      "ms": 176.5261999999966
+      "ms": 143.39280000000144
     },
     {
       "id": "B3-EXTRA_FIRST_EXTERNAL_EXPENSE_HANDLER_MOUNTED",
-      "ms": 1158.556700000001
+      "ms": 3779.9794
     },
     {
       "id": "B3-02_EXTRA_PREVIEW_SAVE_RELOAD",
-      "ms": 276.65880000000107
+      "ms": 822.6080000000002
     },
     {
       "id": "B3-03_RESTAURANT_ABSORBED",
-      "ms": 285.65420000000086
+      "ms": 804.4557000000023
     },
     {
       "id": "B3-04_EDIT_REPLACES_SAME_ID",
-      "ms": 245.5645000000004
+      "ms": 702.4716000000008
     },
     {
       "id": "B3-13_OWNED_GUARDS_AND_INDEPENDENT_CHOICES",
-      "ms": 774.5465000000004
+      "ms": 1925.711800000001
     },
     {
       "id": "B3-05_KNOWN_OBSERVATION_HAS_PRIORITY",
-      "ms": 267.25930000000153
+      "ms": 649.1273000000001
     },
     {
       "id": "B3-06_AMBIGUOUS_OBSERVATIONS_NO_MATCH",
-      "ms": 0.3400000000001455
+      "ms": 1.503099999998085
     },
     {
       "id": "B3-07_PURCHASE_BANK_SINGLE_COST",
-      "ms": 65.73199999999997
+      "ms": 135.09679999999935
     },
     {
       "id": "B3-08_COMPOSITE_PARTIAL_GUARD",
-      "ms": 132.28020000000106
+      "ms": 394.4721999999965
     },
     {
       "id": "B3-09_INCOME_UPDATE_IMMUTABLE_PLAN",
-      "ms": 249.84760000000097
+      "ms": 635.956299999998
     },
     {
       "id": "B3-10_FORECAST_GENERATION_RECHECK",
-      "ms": 235.376400000001
+      "ms": 543.2555999999968
     },
     {
       "id": "B3-11_R1_R2_KEEP_EXTERNAL_AND_REAL",
-      "ms": 205.56269999999859
+      "ms": 508.8188000000009
     },
     {
       "id": "B3-12_REPORT_ONE_ROOT_BOTH_MONTHS",
-      "ms": 231.6928999999982
+      "ms": 458.3496000000014
     },
     {
       "id": "B3-14_STALE_PREVIEW_REVISION_AND_ROW_CAS",
-      "ms": 462.3367999999973
+      "ms": 843.0797999999995
     },
     {
       "id": "B3-15_UNKNOWN_PRESERVES_KNOWN",
-      "ms": 34.60269999999946
+      "ms": 48.06380000000354
     },
     {
       "id": "B3-16_MOBILITY_USAGE_IS_NOT_BANK_CASH",
-      "ms": 101.80559999999969
+      "ms": 162.42380000000412
     },
     {
       "id": "B3-17_SCOPE_REFUSAL",
-      "ms": 56.909200000001874
+      "ms": 116.7309000000023
     },
     {
       "id": "B3-18_PREVIEW_READ_ZERO_WRITE",
-      "ms": 240.77210000000196
+      "ms": 408.6993000000002
     },
     {
       "id": "B3-EXTRA_FINANCIAL_ONLY_PREFLIGHT_PARITY",
-      "ms": 299.27310000000216
+      "ms": 574.3574999999983
     },
     {
       "id": "B3-EXTRA_UNAVAILABLE_NO_DIRECT_FALLBACK",
-      "ms": 13.457300000001851
+      "ms": 26.75409999999829
     },
     {
       "id": "B3-EXTRA_MONTH_INPUTS_DATABASE_CAS",
-      "ms": 11.833800000000338
+      "ms": 14.824699999997392
     },
     {
       "id": "B3-EXTRA_PERSISTED_PLAN_QUOTE_BECOMES_UNKNOWN",
-      "ms": 440.9206000000013
+      "ms": 872.3437999999951
     },
     {
       "id": "B3-EXTRA_DECLARATION_RESTORE_DELETE_WITH_PLAN",
-      "ms": 714.4506000000001
+      "ms": 1584.8138000000035
     },
     {
       "id": "B3-EXTRA_LINKED_ROOT_EDIT_KEEP_REPORT_GUARD",
-      "ms": 741.0241999999998
+      "ms": 1484.9075000000012
     },
     {
       "id": "B3-EXTRA_COMMITTED_RELOAD_ERROR_NO_BLIND_RETRY",
-      "ms": 339.5386000000035
+      "ms": 617.7572
     },
     {
       "id": "B3-EXTRA_BOUNDED_SIMULATION_COST",
-      "ms": 605.9351999999999
+      "ms": 1241.994200000001
     }
   ],
   "worldReads": 90,
@@ -149,8 +149,8 @@
     "samples": [
       {
         "sample": 1,
-        "legacyDirectPreflightMs": 12.842799999998533,
-        "effectivePlanPreflightMs": 99.20360000000073,
+        "legacyDirectPreflightMs": 29.39419999999518,
+        "effectivePlanPreflightMs": 217.67629999999917,
         "addedWorldReads": 1,
         "compiledFinanceCalls": 6,
         "compilerCalls": 6,
@@ -160,8 +160,8 @@
       },
       {
         "sample": 2,
-        "legacyDirectPreflightMs": 17.19419999999809,
-        "effectivePlanPreflightMs": 94.03759999999966,
+        "legacyDirectPreflightMs": 37.915799999995215,
+        "effectivePlanPreflightMs": 191.77440000000206,
         "addedWorldReads": 1,
         "compiledFinanceCalls": 6,
         "compilerCalls": 6,
@@ -171,8 +171,8 @@
       },
       {
         "sample": 3,
-        "legacyDirectPreflightMs": 10.189900000001217,
-        "effectivePlanPreflightMs": 84.62259999999878,
+        "legacyDirectPreflightMs": 32.03259999999864,
+        "effectivePlanPreflightMs": 189.6001000000033,
         "addedWorldReads": 1,
         "compiledFinanceCalls": 6,
         "compilerCalls": 6,
@@ -182,8 +182,8 @@
       },
       {
         "sample": 4,
-        "legacyDirectPreflightMs": 20.076199999999517,
-        "effectivePlanPreflightMs": 101.88639999999941,
+        "legacyDirectPreflightMs": 33.20650000000023,
+        "effectivePlanPreflightMs": 189.55079999999725,
         "addedWorldReads": 1,
         "compiledFinanceCalls": 6,
         "compilerCalls": 6,
@@ -193,8 +193,8 @@
       },
       {
         "sample": 5,
-        "legacyDirectPreflightMs": 22.33179999999993,
-        "effectivePlanPreflightMs": 95.95469999999841,
+        "legacyDirectPreflightMs": 32.090799999998126,
+        "effectivePlanPreflightMs": 182.37189999999828,
         "addedWorldReads": 1,
         "compiledFinanceCalls": 6,
         "compilerCalls": 6,

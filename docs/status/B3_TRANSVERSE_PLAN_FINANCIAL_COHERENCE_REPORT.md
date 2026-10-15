@@ -48,6 +48,7 @@ La page obtient la simulation déjà préparée par un callback serveur facultat
 - L’impact d’une root explicitement référencée compare sa version actuelle à sa version modifiée : pas de suppression temporaire d’un lien requis, ni de fausse absorption déduite.
 - Avec Plan et aucune PE externe, le contrôleur d’ajout reste monté : le bouton existant « Ajouter une dépense » possède désormais son consommateur avant la première création. Le panneau existant et son portail sont réutilisés.
 - UNKNOWN masque la conclusion économique et la projection bancaire non certifiée ; coûts, financements connus et solde réel restent visibles.
+- Suivi ciblé avant clôture : les réglages affichés dans les contrôles proviennent de `scenario.inputs`, après neutralisation par le Compiler. Le digest continue de lier les entrées brutes de l’owner. Un ancien objectif/ajustement MonthInputs sur un slot possédé ne réapparaît donc pas comme décision effective. B3-13 couvre explicitement ce cas ; les 27 contrôles B3, les 85 contrôles mensuels et TypeScript ont été rejoués avec succès.
 
 ### Coût des calculs
 
@@ -125,6 +126,7 @@ Deux oracles textuels ont été ajustés : avertissement SUPERSEDED renommé par
 - Production applicative : `dpl_hth5DFsadhkpibeF5PoVx5rBLFgD`, READY, SHA d464c34, alias https://budgetisation-tan.vercel.app vérifié. Compilation 35,6 s, TypeScript 40 s, génération 8/8 pages ; ce sont des durées de build, pas des performances utilisateur.
 - Smoke anonyme et compteurs après livraison : PASS dans leur périmètre ci-dessus. Smoke navigateur/authentifié : NOT_RUN.
 - Ce compte rendu et ses preuves de livraison sont ensuite publiés en suivi documentaire sans modifier le code applicatif.
+- Suivi documentaire fusionné via PR #40, main `6907cbe3cb3b954290e528d3ebae8ffbec403711`, Production `dpl_CU5JktLAErthJHvqKo2FuEyuGimb` READY, code applicatif identique à d464c34. Le correctif ciblé de restitution des réglages effectifs est ensuite livré sur `codex/budgetisation-b3-effective-controls` ; aucune doctrine financière ni migration supplémentaire.
 - Aucun SQL à déployer ; compatibilité des anciens Plans et migrations existantes conservée.
 - Rollback applicatif : revenir au déploiement antérieur `9199de5` ou revert du commit B3 via le workflow habituel. Aucun Plan, Draft ou fait financier à supprimer. Le rollback retrouve aussi les limites de preflight DIRECT_V2 antérieures : ne pas le présenter comme une nouvelle garantie financière.
 
