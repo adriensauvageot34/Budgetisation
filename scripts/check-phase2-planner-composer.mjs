@@ -123,18 +123,30 @@ try {
     const independent = structuredClone(before); independent.openingBalance = { amount: '123.00', asOfDate: '2026-11-02' };
     independent.decision.categoryTargets['tobacco-vape'] = '45'; await assertLegacyMonthWrite(deps.repository, householdId, '2026-11', before, independent); });
   await check('C8-018-AUTHENTICATED-OLD-WRITER', async () => {
-    const { planningHarness } = await import('./lib/planned-actions-harness.mjs'), h = planningHarness();
+    const { planningHarness } = await import('./lib/planned-actions-harness.mjs'), h = planningHarness({ householdId });
     const originalFrom = h.client.from.bind(h.client), writes = [];
     h.client.from = table => table.startsWith('phase2_month_plan') ? pg.client.from(table) : originalFrom(table);
     require('@/server/bootstrap/queries').getCurrentHousehold = async () => ({ householdId, timezone: 'Europe/Paris' });
     h.facts.inputs['2026-11'] = structuredClone(world.monthInputs);
+    // B3 resolves the immutable Plan through the authenticated runtime before
+    // checking a monthly writer. Supply that owner and its current CAS digest,
+    // rather than accidentally reaching live bootstrap readers in this fixture.
+    const actionDeps = { ...deps, readWorld: async () => ({ ...world, monthInputs: h.facts.inputs['2026-11'] }) };
+    require('@/server/phase2/planner/runtime').authorizedPlanner = async () => ({ householdId, supabase: h.client, deps: actionDeps });
+    require('@/server/phase2/month-planning-read').readPlanningMonthForecast = async () => world.forecast;
+    require('@/server/phase2/planning-date').planningDate = () => world.asOfDate;
+    const { loadEffectiveMonthSimulation, effectiveChoiceContext } = require('@/server/phase2/planner/effective-simulation');
+    const { monthChoiceDigest } = require('@/server/phase2/month-choices');
+    const stamp = async form => form.set('expectedDigest', monthChoiceDigest(effectiveChoiceContext(await loadEffectiveMonthSimulation(
+      actionDeps, householdId, '2026-11', { forecast: world.forecast, monthInputs: h.facts.inputs['2026-11'], externalIntents: [], asOfDate: world.asOfDate }))));
     require('@/server/phase2/month-inputs').saveMonthInputs = async (_client, _household, month, _user, next) => { writes.push(month); h.facts.inputs[month] = next; };
     const actions = require('@/app/mois-a-venir/actions'), form = new FormData();
     for (const [key, value] of Object.entries({ targetMonth: '2026-11', intent: 'save-month-assumption', categoryKey: 'groceries', assumptionMode: 'CUSTOM', assumptionAmount: '999' })) form.set(key, value);
-    assert.equal((await actions.updateMonthControlInputs(form)).code, 'PLAN_V3_ACTIVE_READ_ONLY'); assert.equal(writes.length, 0);
-    form.set('categoryKey', 'tobacco-vape'); assert.equal((await actions.updateMonthControlInputs(form)).ok, true); assert.equal(writes.length, 1);
+    assert.equal((await actions.updateMonthControlInputs(form)).code, 'STALE_PREVIEW'); assert.equal(writes.length, 0);
+    await stamp(form); assert.equal((await actions.updateMonthControlInputs(form)).code, 'PLAN_V3_ACTIVE_READ_ONLY'); assert.equal(writes.length, 0);
+    form.set('categoryKey', 'tobacco-vape'); await stamp(form); assert.equal((await actions.updateMonthControlInputs(form)).ok, true); assert.equal(writes.length, 1);
     form.set('intent', 'save-bank-balance'); form.set('openingAmount', '123'); form.set('openingDate', '2026-11-02');
-    assert.equal((await actions.updateMonthControlInputs(form)).ok, true); assert.equal(writes.length, 2);
+    await stamp(form); assert.equal((await actions.updateMonthControlInputs(form)).ok, true); assert.equal(writes.length, 2);
     assert.equal((await actions.preserveMonthForecast('2026-11')).ok, true); assert.equal(writes.length, 2); assert.equal(h.client.writes.length, 0);
   });
   await check('C8-SECOND-REVISION', async () => { const edited = ok(await request({ kind: 'MUTATE', mutation: { kind: 'SET_STATE', targetRef: findSlot(world, 'groceries').slotIdentityKey, value: { amount: '310' } } }, model.semanticState));
@@ -174,7 +186,8 @@ try {
     assert.equal(center.projectionSummary.economic, null); assert.equal(center.appliedMarginGain, null);
     const React = require('react'), { renderToStaticMarkup } = require('react-dom/server'), { AppliedMonthView } = require('@/app/mois-a-venir/applied-month-view');
     const html = renderToStaticMarkup(React.createElement(AppliedMonthView, { projection: p.projection, semanticState: fixture.semantic, plan: null, revision: 1, today: world.asOfDate }));
-    assert.match(html, /data-applied-remainder[^>]*>À préciser/); assert.match(html, /Date non établie/);
+    assert.match(html, /data-applied-remainder[^>]*>À préciser/);
+    assert.match(html, /Point bas bancaire : À préciser · date non établie/);
   });
   await check('C8-016', async () => { const source = fs.readFileSync('src/app/mois-a-venir/composer/composer-cockpit.tsx', 'utf8');
     assert.ok(!/reduce\(|new Big|parseFloat|\.plus\(|\.minus\(/u.test(source)); assert.match(source, /projection\.plan\.economicMonthEndRemainder/u); });

@@ -61,7 +61,9 @@ try {
     const effective = await resolveEffectiveMonthScenario(deps, householdId, '2026-11');
     const html = renderToStaticMarkup(React.createElement(AppliedMonthView, { projection: effective.projection,
       semanticState: effective.semanticState, plan: null, revision: 1, today: world.asOfDate }));
-    assert.match(html, /Achat · Cadeau · Livre/);
+    // B2 presents classification as a structured business fact, independently
+    // from the gift title and free object label.
+    assert.match(html, /<dt>Type d’objet<\/dt><dd>Livre<\/dd>/);
     assert.match(html, /Roman dédicacé/);
     assert.match(html, /90,00/);
   });
@@ -96,7 +98,8 @@ try {
     const preview = await previewPlanScenario(deps, householdId, changed.semanticState);
     const html = renderToStaticMarkup(React.createElement(AppliedMonthView, { projection: preview.projection,
       semanticState: changed.semanticState, plan: null, revision: 0, today: world.asOfDate }));
-    assert.match(html, /Référence de catalogue indisponible · Livre \(gift:retired\)/);
+    assert.match(html, /<dt>Type d’objet<\/dt><dd>Livre · référence indisponible<\/dd>/);
+    assert.match(html, /gift:retired/); // The historical identity remains in the persisted detail.
   });
   await check('GIFT04-INVALID-NEW-REFERENCES-REJECTED', async () => {
     for (const candidate of [
